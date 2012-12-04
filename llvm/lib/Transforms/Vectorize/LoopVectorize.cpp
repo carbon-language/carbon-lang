@@ -50,6 +50,7 @@
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/LoopIterator.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
@@ -134,6 +135,9 @@ public:
  }
 
 private:
+  /// A small list of PHINodes.
+  typedef SmallVector<PHINode*, 4> PhiVector;
+
   /// Add code that checks at runtime if the accessed arrays overlap.
   /// Returns the comperator value or NULL if no check is needed.
   Value *addRuntimeCheck(LoopVectorizationLegality *Legal,
@@ -142,6 +146,19 @@ private:
   void createEmptyLoop(LoopVectorizationLegality *Legal);
   /// Copy and widen the instructions from the old loop.
   void vectorizeLoop(LoopVectorizationLegality *Legal);
+
+  /// A helper function that computes the predicate of the block BB, assuming
+  /// that the header block of the loop is set to True. It returns the *entry*
+  /// mask for the block BB.
+  Value *createBlockInMask(BasicBlock *BB);
+  /// A helper function that computes the predicate of the edge between SRC
+  /// and DST.
+  Value *createEdgeMask(BasicBlock *Src, BasicBlock *Dst);
+
+  /// A helper function to vectorize a single BB within the innermost loop.
+  void vectorizeBlockInLoop(LoopVectorizationLegality *Legal, BasicBlock *BB,
+                            PhiVector *PV);
+
   /// Insert the new loop to the loop hierarchy and pass manager
   /// and update the analysis passes.
   void updateAnalysis();
@@ -816,7 +833,7 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
     DL->getIntPtrType(SE->getContext());
 
   // Find the loop boundaries.
-  const SCEV *ExitCount = SE->getExitCount(OrigLoop, OrigLoop->getHeader());
+  const SCEV *ExitCount = SE->getExitCount(OrigLoop, OrigLoop->getLoopLatch());
   assert(ExitCount != SE->getCouldNotCompute() && "Invalid loop count");
 
   // Get the total trip count from the count by adding 1.
@@ -838,7 +855,6 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
     OldInduction->getIncomingValueForBlock(BypassBlock):
     ConstantInt::get(IdxTy, 0);
 
-  assert(OrigLoop->getNumBlocks() == 1 && "Invalid loop");
   assert(BypassBlock && "Invalid loop structure");
 
   // Generate the code that checks in runtime if arrays overlap.
@@ -1044,7 +1060,6 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   // the cost-model.
   //
   //===------------------------------------------------===//
-  typedef SmallVector<PHINode*, 4> PhiVector;
   BasicBlock &BB = *OrigLoop->getHeader();
   Constant *Zero = ConstantInt::get(
     IntegerType::getInt32Ty(BB.getContext()), 0);
@@ -1059,250 +1074,17 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   // construct the PHI.
   PhiVector RdxPHIsToFix;
 
-  // For each instruction in the old loop.
-  for (BasicBlock::iterator it = BB.begin(), e = BB.end(); it != e; ++it) {
-    Instruction *Inst = it;
+  // Scan the loop in a topological order to ensure that defs are vectorized
+  // before users.
+  LoopBlocksDFS DFS(OrigLoop);
+  DFS.perform(LI);
 
-    switch (Inst->getOpcode()) {
-      case Instruction::Br:
-        // Nothing to do for PHIs and BR, since we already took care of the
-        // loop control flow instructions.
-        continue;
-      case Instruction::PHI:{
-        PHINode* P = cast<PHINode>(Inst);
-        // Handle reduction variables:
-        if (Legal->getReductionVars()->count(P)) {
-          // This is phase one of vectorizing PHIs.
-          Type *VecTy = VectorType::get(Inst->getType(), VF);
-          WidenMap[Inst] = PHINode::Create(VecTy, 2, "vec.phi",
-                                  LoopVectorBody->getFirstInsertionPt());
-          RdxPHIsToFix.push_back(P);
-          continue;
-        }
+  // Vectorize all of the blocks in the original loop.
+  for (LoopBlocksDFS::RPOIterator bb = DFS.beginRPO(),
+       be = DFS.endRPO(); bb != be; ++bb)
+    vectorizeBlockInLoop(Legal, *bb, &RdxPHIsToFix);
 
-        // This PHINode must be an induction variable.
-        // Make sure that we know about it.
-        assert(Legal->getInductionVars()->count(P) &&
-               "Not an induction variable");
-
-        if (P->getType()->isIntegerTy()) {
-          assert(P == OldInduction && "Unexpected PHI");
-          Value *Broadcasted = getBroadcastInstrs(Induction);
-          // After broadcasting the induction variable we need to make the
-          // vector consecutive by adding 0, 1, 2 ...
-          Value *ConsecutiveInduction = getConsecutiveVector(Broadcasted);
-
-          WidenMap[OldInduction] = ConsecutiveInduction;
-          continue;
-        }
-
-        // Handle pointer inductions.
-        assert(P->getType()->isPointerTy() && "Unexpected type.");
-        Value *StartIdx = OldInduction ?
-          Legal->getInductionVars()->lookup(OldInduction) :
-          ConstantInt::get(Induction->getType(), 0);
-
-        // This is the pointer value coming into the loop.
-        Value *StartPtr = Legal->getInductionVars()->lookup(P);
-
-        // This is the normalized GEP that starts counting at zero.
-        Value *NormalizedIdx = Builder.CreateSub(Induction, StartIdx,
-                                                 "normalized.idx");
-
-        // This is the vector of results. Notice that we don't generate vector
-        // geps because scalar geps result in better code.
-        Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
-        for (unsigned int i = 0; i < VF; ++i) {
-          Constant *Idx = ConstantInt::get(Induction->getType(), i);
-          Value *GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx, "gep.idx");
-          Value *SclrGep = Builder.CreateGEP(StartPtr, GlobalIdx, "next.gep");
-          VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
-                                               Builder.getInt32(i),
-                                               "insert.gep");
-        }
-
-        WidenMap[Inst] = VecVal;
-        continue;
-      }
-      case Instruction::Add:
-      case Instruction::FAdd:
-      case Instruction::Sub:
-      case Instruction::FSub:
-      case Instruction::Mul:
-      case Instruction::FMul:
-      case Instruction::UDiv:
-      case Instruction::SDiv:
-      case Instruction::FDiv:
-      case Instruction::URem:
-      case Instruction::SRem:
-      case Instruction::FRem:
-      case Instruction::Shl:
-      case Instruction::LShr:
-      case Instruction::AShr:
-      case Instruction::And:
-      case Instruction::Or:
-      case Instruction::Xor: {
-        // Just widen binops.
-        BinaryOperator *BinOp = dyn_cast<BinaryOperator>(Inst);
-        Value *A = getVectorValue(Inst->getOperand(0));
-        Value *B = getVectorValue(Inst->getOperand(1));
-
-        // Use this vector value for all users of the original instruction.
-        Value *V = Builder.CreateBinOp(BinOp->getOpcode(), A, B);
-        WidenMap[Inst] = V;
-
-        // Update the NSW, NUW and Exact flags.
-        BinaryOperator *VecOp = cast<BinaryOperator>(V);
-        if (isa<OverflowingBinaryOperator>(BinOp)) {
-          VecOp->setHasNoSignedWrap(BinOp->hasNoSignedWrap());
-          VecOp->setHasNoUnsignedWrap(BinOp->hasNoUnsignedWrap());
-        }
-        if (isa<PossiblyExactOperator>(VecOp))
-          VecOp->setIsExact(BinOp->isExact());
-        break;
-      }
-      case Instruction::Select: {
-        // Widen selects.
-        // If the selector is loop invariant we can create a select
-        // instruction with a scalar condition. Otherwise, use vector-select.
-        Value *Cond = Inst->getOperand(0);
-        bool InvariantCond = SE->isLoopInvariant(SE->getSCEV(Cond), OrigLoop);
-
-        // The condition can be loop invariant  but still defined inside the
-        // loop. This means that we can't just use the original 'cond' value.
-        // We have to take the 'vectorized' value and pick the first lane.
-        // Instcombine will make this a no-op.
-        Cond = getVectorValue(Cond);
-        if (InvariantCond)
-          Cond = Builder.CreateExtractElement(Cond, Builder.getInt32(0));
-
-        Value *Op0 = getVectorValue(Inst->getOperand(1));
-        Value *Op1 = getVectorValue(Inst->getOperand(2));
-        WidenMap[Inst] = Builder.CreateSelect(Cond, Op0, Op1);
-        break;
-      }
-
-      case Instruction::ICmp:
-      case Instruction::FCmp: {
-        // Widen compares. Generate vector compares.
-        bool FCmp = (Inst->getOpcode() == Instruction::FCmp);
-        CmpInst *Cmp = dyn_cast<CmpInst>(Inst);
-        Value *A = getVectorValue(Inst->getOperand(0));
-        Value *B = getVectorValue(Inst->getOperand(1));
-        if (FCmp)
-          WidenMap[Inst] = Builder.CreateFCmp(Cmp->getPredicate(), A, B);
-        else
-          WidenMap[Inst] = Builder.CreateICmp(Cmp->getPredicate(), A, B);
-        break;
-      }
-
-      case Instruction::Store: {
-        // Attempt to issue a wide store.
-        StoreInst *SI = dyn_cast<StoreInst>(Inst);
-        Type *StTy = VectorType::get(SI->getValueOperand()->getType(), VF);
-        Value *Ptr = SI->getPointerOperand();
-        unsigned Alignment = SI->getAlignment();
-
-        assert(!Legal->isUniform(Ptr) &&
-               "We do not allow storing to uniform addresses");
-
-        GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
-
-        // This store does not use GEPs.
-        if (!Legal->isConsecutivePtr(Ptr)) {
-          scalarizeInstruction(Inst);
-          break;
-        }
-
-        if (Gep) {
-          // The last index does not have to be the induction. It can be
-          // consecutive and be a function of the index. For example A[I+1];
-          unsigned NumOperands = Gep->getNumOperands();
-          Value *LastIndex = getVectorValue(Gep->getOperand(NumOperands - 1));
-          LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
-
-          // Create the new GEP with the new induction variable.
-          GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-          Gep2->setOperand(NumOperands - 1, LastIndex);
-          Ptr = Builder.Insert(Gep2);
-        } else {
-          // Use the induction element ptr.
-          assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
-          Ptr = Builder.CreateExtractElement(getVectorValue(Ptr), Zero);
-        }
-        Ptr = Builder.CreateBitCast(Ptr, StTy->getPointerTo());
-        Value *Val = getVectorValue(SI->getValueOperand());
-        Builder.CreateStore(Val, Ptr)->setAlignment(Alignment);
-        break;
-      }
-      case Instruction::Load: {
-        // Attempt to issue a wide load.
-        LoadInst *LI = dyn_cast<LoadInst>(Inst);
-        Type *RetTy = VectorType::get(LI->getType(), VF);
-        Value *Ptr = LI->getPointerOperand();
-        unsigned Alignment = LI->getAlignment();
-        GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
-
-        // If the pointer is loop invariant or if it is non consecutive,
-        // scalarize the load.
-        bool Con = Legal->isConsecutivePtr(Ptr);
-        if (Legal->isUniform(Ptr) || !Con) {
-          scalarizeInstruction(Inst);
-          break;
-        }
-
-        if (Gep) {
-          // The last index does not have to be the induction. It can be
-          // consecutive and be a function of the index. For example A[I+1];
-          unsigned NumOperands = Gep->getNumOperands();
-          Value *LastIndex = getVectorValue(Gep->getOperand(NumOperands -1));
-          LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
-
-          // Create the new GEP with the new induction variable.
-          GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
-          Gep2->setOperand(NumOperands - 1, LastIndex);
-          Ptr = Builder.Insert(Gep2);
-        } else {
-          // Use the induction element ptr.
-          assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
-          Ptr = Builder.CreateExtractElement(getVectorValue(Ptr), Zero);
-        }
-
-        Ptr = Builder.CreateBitCast(Ptr, RetTy->getPointerTo());
-        LI = Builder.CreateLoad(Ptr);
-        LI->setAlignment(Alignment);
-        // Use this vector value for all users of the load.
-        WidenMap[Inst] = LI;
-        break;
-      }
-      case Instruction::ZExt:
-      case Instruction::SExt:
-      case Instruction::FPToUI:
-      case Instruction::FPToSI:
-      case Instruction::FPExt:
-      case Instruction::PtrToInt:
-      case Instruction::IntToPtr:
-      case Instruction::SIToFP:
-      case Instruction::UIToFP:
-      case Instruction::Trunc:
-      case Instruction::FPTrunc:
-      case Instruction::BitCast: {
-        /// Vectorize bitcasts.
-        CastInst *CI = dyn_cast<CastInst>(Inst);
-        Value *A = getVectorValue(Inst->getOperand(0));
-        Type *DestTy = VectorType::get(CI->getType()->getScalarType(), VF);
-        WidenMap[Inst] = Builder.CreateCast(CI->getOpcode(), A, DestTy);
-        break;
-      }
-
-      default:
-        /// All other instructions are unsupported. Scalarize them.
-        scalarizeInstruction(Inst);
-        break;
-    }// end of switch.
-  }// end of for_each instr.
-
-  // At this point every instruction in the original loop is widended to
+  // At this point every instruction in the original loop is widened to
   // a vector form. We are almost done. Now, we need to fix the PHI nodes
   // that we vectorized. The PHI nodes are currently empty because we did
   // not want to introduce cycles. Notice that the remaining PHI nodes
@@ -1425,6 +1207,313 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
   }// end of for each redux variable.
 }
+
+Value *InnerLoopVectorizer::createEdgeMask(BasicBlock *Src, BasicBlock *Dst) {
+  assert(std::find(pred_begin(Dst), pred_end(Dst), Src) != pred_end(Dst) &&
+         "Invalid edge");
+
+  Value *SrcMask = createBlockInMask(Src);
+
+  // The terminator has to be a branch inst!
+  BranchInst *BI = dyn_cast<BranchInst>(Src->getTerminator());
+  assert(BI && "Unexpected terminator found");
+
+  Value *EdgeMask = SrcMask;
+  if (BI->isConditional()) {
+    EdgeMask = getVectorValue(BI->getCondition());
+    if (BI->getSuccessor(0) != Dst)
+      EdgeMask = Builder.CreateNot(EdgeMask);
+  }
+
+  return Builder.CreateAnd(EdgeMask, SrcMask);
+}
+
+Value *InnerLoopVectorizer::createBlockInMask(BasicBlock *BB) {
+  assert(OrigLoop->contains(BB) && "Block is not a part of a loop");
+
+  // Loop incoming mask is all-one.
+  if (OrigLoop->getHeader() == BB)
+    return getVectorValue(
+      ConstantInt::get(IntegerType::getInt1Ty(BB->getContext()), 1));
+
+  // This is the block mask. We OR all incoming edges, and with zero.
+  Value *BlockMask = getVectorValue(
+    ConstantInt::get(IntegerType::getInt1Ty(BB->getContext()), 0));
+
+  // For each pred:
+  for (pred_iterator it = pred_begin(BB), e = pred_end(BB); it != e; ++it)
+    BlockMask = Builder.CreateOr(BlockMask, createEdgeMask(*it, BB));
+
+  return BlockMask;
+}
+
+void
+InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
+                                            BasicBlock *BB, PhiVector *PV) {
+  Constant *Zero =
+  ConstantInt::get(IntegerType::getInt32Ty(BB->getContext()), 0);
+
+  // For each instruction in the old loop.
+  for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
+    switch (it->getOpcode()) {
+      case Instruction::Br:
+        // Nothing to do for PHIs and BR, since we already took care of the
+        // loop control flow instructions.
+        continue;
+      case Instruction::PHI:{
+        PHINode* P = cast<PHINode>(it);
+        // Handle reduction variables:
+        if (Legal->getReductionVars()->count(P)) {
+          // This is phase one of vectorizing PHIs.
+          Type *VecTy = VectorType::get(it->getType(), VF);
+          WidenMap[it] =
+          PHINode::Create(VecTy, 2, "vec.phi",
+                          LoopVectorBody->getFirstInsertionPt());
+          PV->push_back(P);
+          continue;
+        }
+
+        // Check for PHI nodes that are lowered to vector selects.
+        if (P->getParent() != OrigLoop->getHeader()) {
+          // We know that all PHIs in non header blocks are converted into
+          // selects, so we don't have to worry about the insertion order and we
+          // can just use the builder.
+
+          // At this point we generate the predication tree. There may be
+          // duplications since this is a simple recursive scan, but future
+          // optimizations will clean it up.
+          Value *Cond = createBlockInMask(P->getIncomingBlock(0));
+          WidenMap[P] =
+            Builder.CreateSelect(Cond,
+                                 getVectorValue(P->getIncomingValue(0)),
+                                 getVectorValue(P->getIncomingValue(1)),
+                                 "predphi");
+          continue;
+        }
+
+        // This PHINode must be an induction variable.
+        // Make sure that we know about it.
+        assert(Legal->getInductionVars()->count(P) &&
+               "Not an induction variable");
+
+        if (P->getType()->isIntegerTy()) {
+          assert(P == OldInduction && "Unexpected PHI");
+          Value *Broadcasted = getBroadcastInstrs(Induction);
+          // After broadcasting the induction variable we need to make the
+          // vector consecutive by adding 0, 1, 2 ...
+          Value *ConsecutiveInduction = getConsecutiveVector(Broadcasted);
+
+          WidenMap[OldInduction] = ConsecutiveInduction;
+          continue;
+        }
+
+        // Handle pointer inductions.
+        assert(P->getType()->isPointerTy() && "Unexpected type.");
+        Value *StartIdx = OldInduction ?
+        Legal->getInductionVars()->lookup(OldInduction) :
+        ConstantInt::get(Induction->getType(), 0);
+
+        // This is the pointer value coming into the loop.
+        Value *StartPtr = Legal->getInductionVars()->lookup(P);
+
+        // This is the normalized GEP that starts counting at zero.
+        Value *NormalizedIdx = Builder.CreateSub(Induction, StartIdx,
+                                                 "normalized.idx");
+
+        // This is the vector of results. Notice that we don't generate vector
+        // geps because scalar geps result in better code.
+        Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
+        for (unsigned int i = 0; i < VF; ++i) {
+          Constant *Idx = ConstantInt::get(Induction->getType(), i);
+          Value *GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx, "gep.idx");
+          Value *SclrGep = Builder.CreateGEP(StartPtr, GlobalIdx, "next.gep");
+          VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
+                                               Builder.getInt32(i),
+                                               "insert.gep");
+        }
+
+        WidenMap[it] = VecVal;
+        continue;
+      }
+      case Instruction::Add:
+      case Instruction::FAdd:
+      case Instruction::Sub:
+      case Instruction::FSub:
+      case Instruction::Mul:
+      case Instruction::FMul:
+      case Instruction::UDiv:
+      case Instruction::SDiv:
+      case Instruction::FDiv:
+      case Instruction::URem:
+      case Instruction::SRem:
+      case Instruction::FRem:
+      case Instruction::Shl:
+      case Instruction::LShr:
+      case Instruction::AShr:
+      case Instruction::And:
+      case Instruction::Or:
+      case Instruction::Xor: {
+        // Just widen binops.
+        BinaryOperator *BinOp = dyn_cast<BinaryOperator>(it);
+        Value *A = getVectorValue(it->getOperand(0));
+        Value *B = getVectorValue(it->getOperand(1));
+
+        // Use this vector value for all users of the original instruction.
+        Value *V = Builder.CreateBinOp(BinOp->getOpcode(), A, B);
+        WidenMap[it] = V;
+
+        // Update the NSW, NUW and Exact flags.
+        BinaryOperator *VecOp = cast<BinaryOperator>(V);
+        if (isa<OverflowingBinaryOperator>(BinOp)) {
+          VecOp->setHasNoSignedWrap(BinOp->hasNoSignedWrap());
+          VecOp->setHasNoUnsignedWrap(BinOp->hasNoUnsignedWrap());
+        }
+        if (isa<PossiblyExactOperator>(VecOp))
+          VecOp->setIsExact(BinOp->isExact());
+        break;
+      }
+      case Instruction::Select: {
+        // Widen selects.
+        // If the selector is loop invariant we can create a select
+        // instruction with a scalar condition. Otherwise, use vector-select.
+        Value *Cond = it->getOperand(0);
+        bool InvariantCond = SE->isLoopInvariant(SE->getSCEV(Cond), OrigLoop);
+
+        // The condition can be loop invariant  but still defined inside the
+        // loop. This means that we can't just use the original 'cond' value.
+        // We have to take the 'vectorized' value and pick the first lane.
+        // Instcombine will make this a no-op.
+        Cond = getVectorValue(Cond);
+        if (InvariantCond)
+          Cond = Builder.CreateExtractElement(Cond, Builder.getInt32(0));
+
+        Value *Op0 = getVectorValue(it->getOperand(1));
+        Value *Op1 = getVectorValue(it->getOperand(2));
+        WidenMap[it] = Builder.CreateSelect(Cond, Op0, Op1);
+        break;
+      }
+
+      case Instruction::ICmp:
+      case Instruction::FCmp: {
+        // Widen compares. Generate vector compares.
+        bool FCmp = (it->getOpcode() == Instruction::FCmp);
+        CmpInst *Cmp = dyn_cast<CmpInst>(it);
+        Value *A = getVectorValue(it->getOperand(0));
+        Value *B = getVectorValue(it->getOperand(1));
+        if (FCmp)
+          WidenMap[it] = Builder.CreateFCmp(Cmp->getPredicate(), A, B);
+        else
+          WidenMap[it] = Builder.CreateICmp(Cmp->getPredicate(), A, B);
+        break;
+      }
+
+      case Instruction::Store: {
+        // Attempt to issue a wide store.
+        StoreInst *SI = dyn_cast<StoreInst>(it);
+        Type *StTy = VectorType::get(SI->getValueOperand()->getType(), VF);
+        Value *Ptr = SI->getPointerOperand();
+        unsigned Alignment = SI->getAlignment();
+
+        assert(!Legal->isUniform(Ptr) &&
+               "We do not allow storing to uniform addresses");
+
+        GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
+
+        // This store does not use GEPs.
+        if (!Legal->isConsecutivePtr(Ptr)) {
+          scalarizeInstruction(it);
+          break;
+        }
+
+        if (Gep) {
+          // The last index does not have to be the induction. It can be
+          // consecutive and be a function of the index. For example A[I+1];
+          unsigned NumOperands = Gep->getNumOperands();
+          Value *LastIndex = getVectorValue(Gep->getOperand(NumOperands - 1));
+          LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
+
+          // Create the new GEP with the new induction variable.
+          GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
+          Gep2->setOperand(NumOperands - 1, LastIndex);
+          Ptr = Builder.Insert(Gep2);
+        } else {
+          // Use the induction element ptr.
+          assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
+          Ptr = Builder.CreateExtractElement(getVectorValue(Ptr), Zero);
+        }
+        Ptr = Builder.CreateBitCast(Ptr, StTy->getPointerTo());
+        Value *Val = getVectorValue(SI->getValueOperand());
+        Builder.CreateStore(Val, Ptr)->setAlignment(Alignment);
+        break;
+      }
+      case Instruction::Load: {
+        // Attempt to issue a wide load.
+        LoadInst *LI = dyn_cast<LoadInst>(it);
+        Type *RetTy = VectorType::get(LI->getType(), VF);
+        Value *Ptr = LI->getPointerOperand();
+        unsigned Alignment = LI->getAlignment();
+        GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
+
+        // If the pointer is loop invariant or if it is non consecutive,
+        // scalarize the load.
+        bool Con = Legal->isConsecutivePtr(Ptr);
+        if (Legal->isUniform(Ptr) || !Con) {
+          scalarizeInstruction(it);
+          break;
+        }
+
+        if (Gep) {
+          // The last index does not have to be the induction. It can be
+          // consecutive and be a function of the index. For example A[I+1];
+          unsigned NumOperands = Gep->getNumOperands();
+          Value *LastIndex = getVectorValue(Gep->getOperand(NumOperands -1));
+          LastIndex = Builder.CreateExtractElement(LastIndex, Zero);
+
+          // Create the new GEP with the new induction variable.
+          GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
+          Gep2->setOperand(NumOperands - 1, LastIndex);
+          Ptr = Builder.Insert(Gep2);
+        } else {
+          // Use the induction element ptr.
+          assert(isa<PHINode>(Ptr) && "Invalid induction ptr");
+          Ptr = Builder.CreateExtractElement(getVectorValue(Ptr), Zero);
+        }
+
+        Ptr = Builder.CreateBitCast(Ptr, RetTy->getPointerTo());
+        LI = Builder.CreateLoad(Ptr);
+        LI->setAlignment(Alignment);
+        // Use this vector value for all users of the load.
+        WidenMap[it] = LI;
+        break;
+      }
+      case Instruction::ZExt:
+      case Instruction::SExt:
+      case Instruction::FPToUI:
+      case Instruction::FPToSI:
+      case Instruction::FPExt:
+      case Instruction::PtrToInt:
+      case Instruction::IntToPtr:
+      case Instruction::SIToFP:
+      case Instruction::UIToFP:
+      case Instruction::Trunc:
+      case Instruction::FPTrunc:
+      case Instruction::BitCast: {
+        /// Vectorize bitcasts.
+        CastInst *CI = dyn_cast<CastInst>(it);
+        Value *A = getVectorValue(it->getOperand(0));
+        Type *DestTy = VectorType::get(CI->getType()->getScalarType(), VF);
+        WidenMap[it] = Builder.CreateCast(CI->getOpcode(), A, DestTy);
+        break;
+      }
+        
+      default:
+        /// All other instructions are unsupported. Scalarize them.
+        scalarizeInstruction(it);
+        break;
+    }// end of switch.
+  }// end of for_each instr.
+}
+
 
 void InnerLoopVectorizer::updateAnalysis() {
   // Forget the original basic block.
