@@ -125,8 +125,7 @@ ScopedReport::ScopedReport(ReportType typ) {
 
 ScopedReport::~ScopedReport() {
   ctx_->report_mtx.Unlock();
-  rep_->~ReportDesc();
-  internal_free(rep_);
+  DestroyAndFree(rep_);
 }
 
 void ScopedReport::AddStack(const StackTrace *stack) {
@@ -158,6 +157,7 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
   rt->id = tctx->tid;
   rt->pid = tctx->os_id;
   rt->running = (tctx->status == ThreadStatusRunning);
+  rt->name = tctx->name ? internal_strdup(tctx->name) : 0;
   rt->stack = SymbolizeStack(tctx->creation_stack);
 }
 

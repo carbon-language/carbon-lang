@@ -98,6 +98,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
   ThreadContext *tctx = 0;
   if (ctx->dead_list_size > kThreadQuarantineSize
       || ctx->thread_seq >= kMaxTid) {
+    // Reusing old thread descriptor and tid.
     if (ctx->dead_list_size == 0) {
       Printf("ThreadSanitizer: %d thread limit exceeded. Dying.\n",
                  kMaxTid);
@@ -117,7 +118,12 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
     tctx->sync.Reset();
     tid = tctx->tid;
     DestroyAndFree(tctx->dead_info);
+    if (tctx->name) {
+      internal_free(tctx->name);
+      tctx->name = 0;
+    }
   } else {
+    // Allocating new thread descriptor and tid.
     StatInc(thr, StatThreadMaxTid);
     tid = ctx->thread_seq++;
     void *mem = internal_alloc(MBlockThreadContex, sizeof(ThreadContext));
@@ -322,6 +328,20 @@ void ThreadDetach(ThreadState *thr, uptr pc, int tid) {
   } else {
     tctx->detached = true;
   }
+}
+
+void ThreadSetName(ThreadState *thr, const char *name) {
+  Context *ctx = CTX();
+  Lock l(&ctx->thread_mtx);
+  ThreadContext *tctx = ctx->threads[thr->tid];
+  CHECK_NE(tctx, 0);
+  CHECK_EQ(tctx->status, ThreadStatusRunning);
+  if (tctx->name) {
+    internal_free(tctx->name);
+    tctx->name = 0;
+  }
+  if (name)
+    tctx->name = internal_strdup(name);
 }
 
 void MemoryAccessRange(ThreadState *thr, uptr pc, uptr addr,

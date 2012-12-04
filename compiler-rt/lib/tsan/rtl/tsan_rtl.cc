@@ -84,7 +84,8 @@ ThreadContext::ThreadContext(int tid)
   , epoch0()
   , epoch1()
   , dead_info()
-  , dead_next() {
+  , dead_next()
+  , name() {
 }
 
 static void WriteMemoryProfile(char *buf, uptr buf_size, int num) {

@@ -373,6 +373,7 @@ struct ThreadContext {
   StackTrace creation_stack;
   ThreadDeadInfo *dead_info;
   ThreadContext *dead_next;  // In dead thread list.
+  char *name;  // As annotated by user.
 
   explicit ThreadContext(int tid);
 };
@@ -529,6 +530,7 @@ int ThreadTid(ThreadState *thr, uptr pc, uptr uid);
 void ThreadJoin(ThreadState *thr, uptr pc, int tid);
 void ThreadDetach(ThreadState *thr, uptr pc, int tid);
 void ThreadFinalize(ThreadState *thr);
+void ThreadSetName(ThreadState *thr, const char *name);
 int ThreadCount(ThreadState *thr);
 void ProcessPendingSignals(ThreadState *thr);
 

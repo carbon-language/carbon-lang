@@ -26,6 +26,7 @@ ReportDesc::ReportDesc()
 }
 
 ReportDesc::~ReportDesc() {
+  // FIXME(dvyukov): it must be leaking a lot of memory.
 }
 
 #ifndef TSAN_GO

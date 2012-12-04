@@ -338,7 +338,7 @@ void INTERFACE_ATTRIBUTE AnnotateIgnoreWritesBegin(char *f, int l) {
 
 void INTERFACE_ATTRIBUTE AnnotateIgnoreWritesEnd(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreWritesEnd);
-  IgnoreCtl(cur_thread(), true, false);
+  IgnoreCtl(thr, true, false);
 }
 
 void INTERFACE_ATTRIBUTE AnnotatePublishMemoryRange(
@@ -354,6 +354,7 @@ void INTERFACE_ATTRIBUTE AnnotateUnpublishMemoryRange(
 void INTERFACE_ATTRIBUTE AnnotateThreadName(
     char *f, int l, char *name) {
   SCOPED_ANNOTATION(AnnotateThreadName);
+  ThreadSetName(thr, name);
 }
 
 void INTERFACE_ATTRIBUTE WTFAnnotateHappensBefore(char *f, int l, uptr addr) {
