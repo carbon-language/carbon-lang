@@ -37,8 +37,7 @@ User Guides
 
    Notes on building and testing LLVM/Clang on ARM.
 
-* `Getting Started with the LLVM System using Microsoft Visual Studio
-  <GettingStartedVS.html>`_
+* :doc:`GettingStartedVS`
 
    An addendum to the main Getting Started guide for those using Visual Studio
    on Windows.
