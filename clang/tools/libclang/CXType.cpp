@@ -265,6 +265,21 @@ unsigned long long clang_getEnumConstantDeclUnsignedValue(CXCursor C) {
   return ULLONG_MAX;
 }
 
+int clang_getFieldDeclBitWidth(CXCursor C) {
+  using namespace cxcursor;
+
+  if (clang_isDeclaration(C.kind)) {
+    Decl *D = getCursorDecl(C);
+
+    if (FieldDecl *FD = dyn_cast_or_null<FieldDecl>(D)) {
+      if (FD->isBitField())
+        return FD->getBitWidthValue(getCursorContext(C));
+    }
+  }
+
+  return -1;
+}
+
 CXType clang_getCanonicalType(CXType CT) {
   if (CT.kind == CXType_Invalid)
     return CT;
