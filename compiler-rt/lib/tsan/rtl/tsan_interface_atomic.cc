@@ -114,33 +114,100 @@ static morder ConvertOrder(morder mo) {
   return mo;
 }
 
-template<typename T> T func_xchg(T v, T op) {
-  return op;
+template<typename T> T func_xchg(volatile T *v, T op) {
+  return __sync_lock_test_and_set(v, op);
 }
 
-template<typename T> T func_add(T v, T op) {
-  return v + op;
+template<typename T> T func_add(volatile T *v, T op) {
+  return __sync_fetch_and_add(v, op);
 }
 
-template<typename T> T func_sub(T v, T op) {
-  return v - op;
+template<typename T> T func_sub(volatile T *v, T op) {
+  return __sync_fetch_and_sub(v, op);
 }
 
-template<typename T> T func_and(T v, T op) {
-  return v & op;
+template<typename T> T func_and(volatile T *v, T op) {
+  return __sync_fetch_and_and(v, op);
 }
 
-template<typename T> T func_or(T v, T op) {
-  return v | op;
+template<typename T> T func_or(volatile T *v, T op) {
+  return __sync_fetch_and_or(v, op);
 }
 
-template<typename T> T func_xor(T v, T op) {
-  return v ^ op;
+template<typename T> T func_xor(volatile T *v, T op) {
+  return __sync_fetch_and_xor(v, op);
 }
 
-template<typename T> T func_nand(T v, T op) {
-  return ~(v & op);
+template<typename T> T func_nand(volatile T *v, T op) {
+  // clang does not support __sync_fetch_and_nand.
+  T cmp = *v;
+  for (;;) {
+    T newv = ~(cmp & op);
+    T cur = __sync_val_compare_and_swap(v, cmp, newv);
+    if (cmp == cur)
+      return cmp;
+    cmp = cur;
+  }
 }
+
+template<typename T> T func_cas(volatile T *v, T cmp, T xch) {
+  return __sync_val_compare_and_swap(v, cmp, xch);
+}
+
+// clang does not support 128-bit atomic ops.
+// Atomic ops are executed under tsan internal mutex,
+// here we assume that the atomic variables are not accessed
+// from non-instrumented code.
+#ifndef __GCC_HAVE_SYNC_COMPARE_AND_SWAP_16
+a128 func_xchg(volatile a128 *v, a128 op) {
+  a128 cmp = *v;
+  *v = op;
+  return cmp;
+}
+
+a128 func_add(volatile a128 *v, a128 op) {
+  a128 cmp = *v;
+  *v = cmp + op;
+  return cmp;
+}
+
+a128 func_sub(volatile a128 *v, a128 op) {
+  a128 cmp = *v;
+  *v = cmp - op;
+  return cmp;
+}
+
+a128 func_and(volatile a128 *v, a128 op) {
+  a128 cmp = *v;
+  *v = cmp & op;
+  return cmp;
+}
+
+a128 func_or(volatile a128 *v, a128 op) {
+  a128 cmp = *v;
+  *v = cmp | op;
+  return cmp;
+}
+
+a128 func_xor(volatile a128 *v, a128 op) {
+  a128 cmp = *v;
+  *v = cmp ^ op;
+  return cmp;
+}
+
+a128 func_nand(volatile a128 *v, a128 op) {
+  a128 cmp = *v;
+  *v = ~(cmp & op);
+  return cmp;
+}
+
+a128 func_cas(volatile a128 *v, a128 cmp, a128 xch) {
+  a128 cur = *v;
+  if (cur == cmp)
+    *v = xch;
+  return cur;
+}
+#endif
 
 #define SCOPED_ATOMIC(func, ...) \
     mo = ConvertOrder(mo); \
@@ -166,6 +233,7 @@ static T AtomicLoad(ThreadState *thr, uptr pc, const volatile T *a,
   thr->clock.acquire(&s->clock);
   T v = *a;
   s->mtx.ReadUnlock();
+  __sync_synchronize();
   return v;
 }
 
@@ -181,6 +249,7 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
     *a = v;
     return;
   }
+  __sync_synchronize();
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, true);
   thr->clock.set(thr->tid, thr->fast_state.epoch());
   thr->clock.ReleaseStore(&s->clock);
@@ -188,7 +257,7 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
   s->mtx.Unlock();
 }
 
-template<typename T, T (*F)(T v, T op)>
+template<typename T, T (*F)(volatile T *v, T op)>
 static T AtomicRMW(ThreadState *thr, uptr pc, volatile T *a, T v, morder mo) {
   SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, true);
   thr->clock.set(thr->tid, thr->fast_state.epoch());
@@ -198,10 +267,9 @@ static T AtomicRMW(ThreadState *thr, uptr pc, volatile T *a, T v, morder mo) {
     thr->clock.release(&s->clock);
   else if (IsAcquireOrder(mo))
     thr->clock.acquire(&s->clock);
-  T c = *a;
-  *a = F(c, v);
+  v = F(a, v);
   s->mtx.Unlock();
-  return c;
+  return v;
 }
 
 template<typename T>
@@ -258,16 +326,13 @@ static bool AtomicCAS(ThreadState *thr, uptr pc,
     thr->clock.release(&s->clock);
   else if (IsAcquireOrder(mo))
     thr->clock.acquire(&s->clock);
-  T cur = *a;
-  bool res = false;
-  if (cur == *c) {
-    *a = v;
-    res = true;
-  } else {
-    *c = cur;
-  }
+  T cc = *c;
+  T pr = func_cas(a, cc, v);
   s->mtx.Unlock();
-  return res;
+  if (pr == cc)
+    return true;
+  *c = pr;
+  return false;
 }
 
 template<typename T>
