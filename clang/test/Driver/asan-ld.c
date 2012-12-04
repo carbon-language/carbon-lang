@@ -19,7 +19,7 @@
 //
 // CHECK-LINUX-CXX: "{{.*}}ld{{(.exe)?}}"
 // CHECK-LINUX-CXX-NOT: "-lc"
-// CHECK-LINUX-CXX: libclang_rt.asan-i386.a"
+// CHECK-LINUX-CXX: "-whole-archive" "{{.*}}libclang_rt.asan-i386.a" "-no-whole-archive"
 // CHECK-LINUX-CXX: "-lpthread"
 // CHECK-LINUX-CXX: "-ldl"
 // CHECK-LINUX-CXX: "-export-dynamic"
@@ -32,7 +32,7 @@
 //
 // CHECK-LINUX-CXX-STATIC: "{{.*}}ld{{(.exe)?}}"
 // CHECK-LINUX-CXX-STATIC-NOT: stdc++
-// CHECK-LINUX-CXX-STATIC: libclang_rt.asan-i386.a"
+// CHECK-LINUX-CXX-STATIC: "-whole-archive" "{{.*}}libclang_rt.asan-i386.a" "-no-whole-archive"
 // CHECK-LINUX-CXX-STATIC: stdc++
 
 // RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \

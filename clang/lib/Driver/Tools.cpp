@@ -1524,8 +1524,14 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
       // The ASan runtime needs to come before -lstdc++ (or -lc++, libstdc++.a,
       // etc.) so that the linker picks ASan's versions of the global 'operator
       // new' and 'operator delete' symbols. We take the extreme (but simple)
-      // strategy of inserting it at the front of the link command.
-      CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibAsan));
+      // strategy of inserting it at the front of the link command. It also
+      // needs to be forced to end up in the executable, so wrap it in
+      // whole-archive.
+      SmallVector<const char*, 3> PrefixArgs;
+      PrefixArgs.push_back("-whole-archive");
+      PrefixArgs.push_back(Args.MakeArgString(LibAsan));
+      PrefixArgs.push_back("-no-whole-archive");
+      CmdArgs.insert(CmdArgs.begin(), PrefixArgs.begin(), PrefixArgs.end());
       CmdArgs.push_back("-lpthread");
       CmdArgs.push_back("-ldl");
       CmdArgs.push_back("-export-dynamic");
