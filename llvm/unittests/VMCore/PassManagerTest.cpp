@@ -148,8 +148,10 @@ namespace llvm {
     template<typename T, typename P>
     struct PassTest : public PassTestBase<P> {
     public:
+#ifndef _MSC_VER // MSVC complains that Pass is not base class.
       using llvm::Pass::doInitialization;
       using llvm::Pass::doFinalization;
+#endif
       virtual bool doInitialization(T &t) {
         EXPECT_FALSE(PassTestBase<P>::initialized);
         PassTestBase<P>::initialized = true;
