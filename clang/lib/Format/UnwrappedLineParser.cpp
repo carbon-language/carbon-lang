@@ -72,7 +72,10 @@ void UnwrappedLineParser::parseBlock() {
   parseLevel();
   if (!IsNamespace)
     --Line.Level;
-  assert(FormatTok.Tok.is(tok::r_brace) && "expected '}'");
+  // FIXME: Add error handling.
+  if (!FormatTok.Tok.is(tok::r_brace))
+    return;
+
   nextToken();
   if (FormatTok.Tok.is(tok::semi))
     nextToken();
@@ -218,7 +221,12 @@ void UnwrappedLineParser::parseDoWhile() {
     --Line.Level;
   }
 
-  assert(FormatTok.Tok.is(tok::kw_while) && "'while' expected");
+  // FIXME: Add error handling.
+  if (!FormatTok.Tok.is(tok::kw_while)) {
+    addUnwrappedLine();
+    return;
+  }
+
   nextToken();
   parseStatement();
 }

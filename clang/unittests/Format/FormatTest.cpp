@@ -363,5 +363,23 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
 //               "};");
 //}
 
+TEST_F(FormatTest, IncorrectCodeUnbalancedBraces) {
+  verifyFormat("{");
+}
+
+TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
+  verifyFormat("do {\n"
+               "};");
+  verifyFormat("do {\n"
+               "};\n"
+               "f();");
+  verifyFormat("do {\n"
+               "}\n"
+               "wheeee(fun);");
+  verifyFormat("do {\n"
+               "  f();\n"
+               "};");
+}
+
 }  // end namespace tooling
 }  // end namespace clang
