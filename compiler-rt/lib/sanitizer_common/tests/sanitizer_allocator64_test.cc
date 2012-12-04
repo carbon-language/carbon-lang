@@ -260,7 +260,7 @@ void TestCombinedAllocator() {
 TEST(SanitizerCommon, CombinedAllocator) {
   TestCombinedAllocator<Allocator64,
       LargeMmapAllocator,
-      SizeClassAllocatorLocalCache<Allocator64::kNumClasses, Allocator64> > ();
+      SizeClassAllocatorLocalCache<Allocator64> > ();
 }
 
 template <class AllocatorCache>
@@ -295,7 +295,6 @@ void TestSizeClassAllocatorLocalCache() {
 }
 
 TEST(SanitizerCommon, SizeClassAllocator64LocalCache) {
-  typedef SizeClassAllocatorLocalCache<Allocator64::kNumClasses, Allocator64>
-      AllocatorCache;
-  TestSizeClassAllocatorLocalCache<AllocatorCache> ();
+  TestSizeClassAllocatorLocalCache<
+      SizeClassAllocatorLocalCache<Allocator64> >();
 }

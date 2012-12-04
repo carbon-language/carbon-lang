@@ -58,8 +58,7 @@ const uptr kAllocatorSize  =  0x10000000000ULL;  // 1T.
 
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, sizeof(MBlock),
     DefaultSizeClassMap> PrimaryAllocator;
-typedef SizeClassAllocatorLocalCache<PrimaryAllocator::kNumClasses,
-    PrimaryAllocator> AllocatorCache;
+typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 typedef LargeMmapAllocator SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
     SecondaryAllocator> Allocator;

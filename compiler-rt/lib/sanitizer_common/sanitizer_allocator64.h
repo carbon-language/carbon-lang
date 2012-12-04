@@ -139,8 +139,8 @@ class SizeClassAllocator64 {
   static uptr AllocBeg()  { return kSpaceBeg; }
   static uptr AllocSize() { return kSpaceSize + AdditionalSize(); }
 
-  static const uptr kNumClasses = 256;  // Power of two <= 256
   typedef SizeClassMap SizeClassMapT;
+  static const uptr kNumClasses = SizeClassMap::kNumClasses;  // 2^k <= 256
 
  private:
   COMPILER_CHECK(kSpaceBeg % kSpaceSize == 0);

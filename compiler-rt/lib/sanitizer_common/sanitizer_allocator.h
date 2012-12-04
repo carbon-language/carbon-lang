@@ -41,11 +41,13 @@ class SplineSizeClassMap {
   static const uptr u4 = u3 + (l5 - l4) / s4;
 
  public:
+  // The number of size classes should be a power of two for fast division.
   static const uptr kNumClasses = u4 + 1;
   static const uptr kMaxSize = l5;
   static const uptr kMinSize = l0;
 
   COMPILER_CHECK(kNumClasses <= 256);
+  COMPILER_CHECK((kNumClasses & (kNumClasses - 1)) == 0);
   COMPILER_CHECK((kMaxSize & (kMaxSize - 1)) == 0);
 
   static uptr Size(uptr class_id) {
@@ -100,9 +102,10 @@ typedef IntrusiveList<AllocatorListNode> AllocatorFreeList;
 // Objects of this type should be used as local caches for SizeClassAllocator64.
 // Since the typical use of this class is to have one object per thread in TLS,
 // is has to be POD.
-template<const uptr kNumClasses, class SizeClassAllocator>
+template<class SizeClassAllocator>
 struct SizeClassAllocatorLocalCache {
   typedef SizeClassAllocator Allocator;
+  static const uptr kNumClasses = SizeClassAllocator::kNumClasses;
   // Don't need to call Init if the object is a global (i.e. zero-initialized).
   void Init() {
     internal_memset(this, 0, sizeof(*this));
