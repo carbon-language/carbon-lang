@@ -15,13 +15,13 @@
 #define XCORETARGETMACHINE_H
 
 #include "XCoreFrameLowering.h"
-#include "XCoreSubtarget.h"
-#include "XCoreInstrInfo.h"
 #include "XCoreISelLowering.h"
+#include "XCoreInstrInfo.h"
 #include "XCoreSelectionDAGInfo.h"
+#include "XCoreSubtarget.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"
-#include "llvm/DataLayout.h"
 
 namespace llvm {
 

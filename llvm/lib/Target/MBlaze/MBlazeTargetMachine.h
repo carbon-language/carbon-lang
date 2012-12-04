@@ -14,16 +14,16 @@
 #ifndef MBLAZE_TARGETMACHINE_H
 #define MBLAZE_TARGETMACHINE_H
 
-#include "MBlazeSubtarget.h"
-#include "MBlazeInstrInfo.h"
-#include "MBlazeISelLowering.h"
-#include "MBlazeSelectionDAGInfo.h"
-#include "MBlazeIntrinsicInfo.h"
 #include "MBlazeFrameLowering.h"
-#include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetMachine.h"
+#include "MBlazeISelLowering.h"
+#include "MBlazeInstrInfo.h"
+#include "MBlazeIntrinsicInfo.h"
+#include "MBlazeSelectionDAGInfo.h"
+#include "MBlazeSubtarget.h"
 #include "llvm/DataLayout.h"
+#include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {

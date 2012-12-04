@@ -15,10 +15,10 @@
 #define ARMBASEINSTRUCTIONINFO_H
 
 #include "ARM.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 #define GET_INSTRINFO_HEADER
 #include "ARMGenInstrInfo.inc"

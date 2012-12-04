@@ -14,14 +14,14 @@
 #ifndef BITCODE_READER_H
 #define BITCODE_READER_H
 
-#include "llvm/GVMaterializer.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/Attributes.h"
-#include "llvm/Type.h"
-#include "llvm/OperandTraits.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Bitcode/LLVMBitCodes.h"
+#include "llvm/GVMaterializer.h"
+#include "llvm/OperandTraits.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/Type.h"
 #include <vector>
 
 namespace llvm {

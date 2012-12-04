@@ -15,14 +15,14 @@
 #define LLVM_ASMPARSER_LLPARSER_H
 
 #include "LLLexer.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Attributes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Operator.h"
-#include "llvm/Type.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Type.h"
 #include <map>
 
 namespace llvm {

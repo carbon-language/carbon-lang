@@ -21,12 +21,12 @@
 
 #include "llvm/Config/config.h"     // Get autoconf configuration settings
 #include "llvm/Support/Errno.h"
-#include <cstdlib>
-#include <cstdio>
-#include <cstring>
-#include <cerrno>
-#include <string>
 #include <algorithm>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

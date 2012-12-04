@@ -14,10 +14,10 @@
 #ifndef LLVM_RUNTIME_DYLD_MACHO_H
 #define LLVM_RUNTIME_DYLD_MACHO_H
 
+#include "RuntimeDyldImpl.h"
 #include "llvm/ADT/IndexedMap.h"
 #include "llvm/Object/MachOObject.h"
 #include "llvm/Support/Format.h"
-#include "RuntimeDyldImpl.h"
 
 using namespace llvm;
 using namespace llvm::object;

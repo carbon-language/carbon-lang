@@ -15,8 +15,8 @@
 #define LLVM_CODEGEN_SDNODEDBGVALUE_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/DebugLoc.h"
 
 namespace llvm {
 

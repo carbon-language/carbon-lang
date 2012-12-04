@@ -15,9 +15,9 @@
 
 #include "PPC.h"
 #include "PPCSubtarget.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/ADT/STLExtras.h"
 
 namespace llvm {
   class PPCSubtarget;

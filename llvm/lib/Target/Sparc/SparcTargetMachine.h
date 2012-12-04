@@ -14,14 +14,14 @@
 #ifndef SPARCTARGETMACHINE_H
 #define SPARCTARGETMACHINE_H
 
-#include "SparcInstrInfo.h"
-#include "SparcISelLowering.h"
 #include "SparcFrameLowering.h"
+#include "SparcISelLowering.h"
+#include "SparcInstrInfo.h"
 #include "SparcSelectionDAGInfo.h"
 #include "SparcSubtarget.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {

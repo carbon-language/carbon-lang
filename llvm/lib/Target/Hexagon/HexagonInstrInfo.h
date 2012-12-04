@@ -16,8 +16,8 @@
 
 #include "HexagonRegisterInfo.h"
 #include "MCTargetDesc/HexagonBaseInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetInstrInfo.h"
 
 
 #define GET_INSTRINFO_HEADER

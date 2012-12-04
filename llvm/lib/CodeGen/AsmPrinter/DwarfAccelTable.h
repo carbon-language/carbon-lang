@@ -14,18 +14,18 @@
 #ifndef CODEGEN_ASMPRINTER_DWARFACCELTABLE_H__
 #define CODEGEN_ASMPRINTER_DWARFACCELTABLE_H__
 
-#include "llvm/ADT/StringMap.h"
+#include "DIE.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
-#include "DIE.h"
-#include <vector>
 #include <map>
+#include <vector>
 
 // The dwarf accelerator tables are an indirect hash table optimized
 // for null lookup rather than access to known data. They are output into

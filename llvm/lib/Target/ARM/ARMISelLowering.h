@@ -17,11 +17,11 @@
 
 #include "ARM.h"
 #include "ARMSubtarget.h"
-#include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/CallingConvLower.h"
 #include "llvm/CodeGen/FastISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include <vector>
 
 namespace llvm {

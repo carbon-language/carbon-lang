@@ -14,8 +14,8 @@
 #ifndef HEXAGONMCINST_H
 #define HEXAGONMCINST_H
 
-#include "llvm/MC/MCInst.h"
 #include "llvm/CodeGen/MachineInstr.h"
+#include "llvm/MC/MCInst.h"
 
 namespace llvm {
   class HexagonMCInst: public MCInst {

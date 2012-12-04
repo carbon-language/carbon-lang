@@ -14,8 +14,8 @@
 #ifndef MIPS16INSTRUCTIONINFO_H
 #define MIPS16INSTRUCTIONINFO_H
 
-#include "MipsInstrInfo.h"
 #include "Mips16RegisterInfo.h"
+#include "MipsInstrInfo.h"
 
 namespace llvm {
 

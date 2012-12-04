@@ -17,8 +17,8 @@
 #ifndef LLVM_CODEGEN_ALLOCATIONORDER_H
 #define LLVM_CODEGEN_ALLOCATIONORDER_H
 
-#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/MC/MCRegisterInfo.h"
 
 namespace llvm {
 

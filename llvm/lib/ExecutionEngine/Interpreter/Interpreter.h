@@ -15,10 +15,10 @@
 #define LLI_INTERPRETER_H
 
 #include "llvm/DataLayout.h"
-#include "llvm/Function.h"
-#include "llvm/InstVisitor.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/Function.h"
+#include "llvm/InstVisitor.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/ErrorHandling.h"

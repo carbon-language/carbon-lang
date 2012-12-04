@@ -16,8 +16,8 @@
 #ifndef LLVM_EDINST_H
 #define LLVM_EDINST_H
 
-#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataTypes.h"
 #include <string>
 #include <vector>
 

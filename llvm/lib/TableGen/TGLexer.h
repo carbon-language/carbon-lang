@@ -15,9 +15,9 @@
 #define TGLEXER_H
 
 #include "llvm/Support/DataTypes.h"
+#include <cassert>
 #include <string>
 #include <vector>
-#include <cassert>
 
 namespace llvm {
 class MemoryBuffer;

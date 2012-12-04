@@ -22,11 +22,11 @@
 #ifndef LLVM_CODEGEN_PEI_H
 #define LLVM_CODEGEN_PEI_H
 
-#include "llvm/CodeGen/Passes.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SparseBitVector.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
-#include "llvm/ADT/SparseBitVector.h"
-#include "llvm/ADT/DenseMap.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {

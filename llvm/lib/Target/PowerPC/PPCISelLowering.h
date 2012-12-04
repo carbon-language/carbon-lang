@@ -17,8 +17,8 @@
 
 #include "PPC.h"
 #include "PPCSubtarget.h"
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
   namespace PPCISD {

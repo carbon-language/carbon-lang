@@ -15,8 +15,8 @@
 #ifndef NVPTX_SPLIT_BB_AT_BAR_H
 #define NVPTX_SPLIT_BB_AT_BAR_H
 
-#include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
+#include "llvm/Pass.h"
 
 namespace llvm {
 

@@ -14,11 +14,11 @@
 #ifndef TGPARSER_H
 #define TGPARSER_H
 
-#include "llvm/TableGen/Record.h"
 #include "TGLexer.h"
-#include "llvm/TableGen/Error.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/Record.h"
 #include <map>
 
 namespace llvm {

@@ -17,8 +17,8 @@
 
 #include "MBlaze.h"
 #include "MBlazeSubtarget.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {

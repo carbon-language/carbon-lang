@@ -14,8 +14,8 @@
 #ifndef XCOREMACHINEFUNCTIONINFO_H
 #define XCOREMACHINEFUNCTIONINFO_H
 
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include <vector>
 
 namespace llvm {

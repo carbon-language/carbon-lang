@@ -15,22 +15,22 @@
 #ifndef LLVM_LLVMCONTEXT_IMPL_H
 #define LLVM_LLVMCONTEXT_IMPL_H
 
-#include "llvm/LLVMContext.h"
 #include "AttributesImpl.h"
 #include "ConstantsContext.h"
 #include "LeaksContext.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Metadata.h"
-#include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/Hashing.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Metadata.h"
+#include "llvm/Support/ValueHandle.h"
 #include <vector>
 
 namespace llvm {

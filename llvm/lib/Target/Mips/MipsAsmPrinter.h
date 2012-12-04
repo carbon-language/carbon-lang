@@ -14,8 +14,8 @@
 #ifndef MIPSASMPRINTER_H
 #define MIPSASMPRINTER_H
 
-#include "MipsMachineFunction.h"
 #include "MipsMCInstLower.h"
+#include "MipsMachineFunction.h"
 #include "MipsSubtarget.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Support/Compiler.h"

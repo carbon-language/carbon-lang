@@ -17,12 +17,12 @@
 #define SELECTIONDAG_LEGALIZETYPES_H
 
 #define DEBUG_TYPE "legalize-types"
-#include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/Target/TargetLowering.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Target/TargetLowering.h"
 
 namespace llvm {
 

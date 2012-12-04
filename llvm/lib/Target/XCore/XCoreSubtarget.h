@@ -14,8 +14,8 @@
 #ifndef XCORESUBTARGET_H
 #define XCORESUBTARGET_H
 
-#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
 
 #define GET_SUBTARGETINFO_HEADER

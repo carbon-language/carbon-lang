@@ -14,12 +14,12 @@
 #ifndef SELECTIONDAGBUILDER_H
 #define SELECTIONDAGBUILDER_H
 
-#include "llvm/Constants.h"
-#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/Constants.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <vector>

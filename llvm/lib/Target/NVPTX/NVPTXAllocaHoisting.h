@@ -15,8 +15,8 @@
 #define NVPTX_ALLOCA_HOISTING_H_
 
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
-#include "llvm/Pass.h"
 #include "llvm/DataLayout.h"
+#include "llvm/Pass.h"
 
 namespace llvm {
 

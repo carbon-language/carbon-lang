@@ -17,9 +17,9 @@
 #define LLVM_Hexagon_CODEGEN_CALLINGCONVLOWER_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/CodeGen/ValueTypes.h"
 
 //
 // Need to handle varargs.

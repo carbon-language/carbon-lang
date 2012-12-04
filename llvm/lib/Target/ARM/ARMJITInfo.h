@@ -15,12 +15,12 @@
 #define ARMJITINFO_H
 
 #include "ARMMachineFunctionInfo.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/Target/TargetJITInfo.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallVector.h"
 
 namespace llvm {
   class ARMTargetMachine;

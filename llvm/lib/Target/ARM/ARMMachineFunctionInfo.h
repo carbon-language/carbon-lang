@@ -15,10 +15,10 @@
 #define ARMMACHINEFUNCTIONINFO_H
 
 #include "ARMSubtarget.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 namespace llvm {
 

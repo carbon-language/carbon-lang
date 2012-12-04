@@ -14,9 +14,9 @@
 #include "DWARFDebugAranges.h"
 #include "DWARFDebugLine.h"
 #include "DWARFDebugRangeList.h"
-#include "llvm/DebugInfo/DIContext.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/DebugInfo/DIContext.h"
 
 namespace llvm {
 

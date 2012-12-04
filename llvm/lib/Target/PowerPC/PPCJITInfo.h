@@ -14,8 +14,8 @@
 #ifndef POWERPC_JITINFO_H
 #define POWERPC_JITINFO_H
 
-#include "llvm/Target/TargetJITInfo.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
+#include "llvm/Target/TargetJITInfo.h"
 
 namespace llvm {
   class PPCTargetMachine;

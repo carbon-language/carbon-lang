@@ -18,10 +18,10 @@
 #define LLVM_MC_DISASSEMBLER_H
 
 #include "llvm-c/Disassembler.h"
-#include <string>
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
+#include <string>
 
 namespace llvm {
 class MCContext;

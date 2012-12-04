@@ -15,15 +15,15 @@
 #define X86TARGETMACHINE_H
 
 #include "X86.h"
-#include "X86InstrInfo.h"
-#include "X86ISelLowering.h"
 #include "X86FrameLowering.h"
+#include "X86ISelLowering.h"
+#include "X86InstrInfo.h"
 #include "X86JITInfo.h"
 #include "X86SelectionDAGInfo.h"
 #include "X86Subtarget.h"
-#include "llvm/Target/TargetMachine.h"
 #include "llvm/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {

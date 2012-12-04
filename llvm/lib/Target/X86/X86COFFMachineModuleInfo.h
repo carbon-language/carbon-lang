@@ -15,8 +15,8 @@
 #define X86COFF_MACHINEMODULEINFO_H
 
 #include "X86MachineFunctionInfo.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
 
 namespace llvm {
   class X86MachineFunctionInfo;

@@ -15,8 +15,8 @@
 #ifndef HexagonREGISTERINFO_H
 #define HexagonREGISTERINFO_H
 
-#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/MC/MachineLocation.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 
 #define GET_REGINFO_HEADER
 #include "HexagonGenRegisterInfo.inc"

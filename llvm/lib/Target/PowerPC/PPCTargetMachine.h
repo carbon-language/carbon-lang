@@ -15,14 +15,14 @@
 #define PPC_TARGETMACHINE_H
 
 #include "PPCFrameLowering.h"
-#include "PPCSubtarget.h"
-#include "PPCJITInfo.h"
-#include "PPCInstrInfo.h"
 #include "PPCISelLowering.h"
+#include "PPCInstrInfo.h"
+#include "PPCJITInfo.h"
 #include "PPCSelectionDAGInfo.h"
+#include "PPCSubtarget.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"
-#include "llvm/DataLayout.h"
 
 namespace llvm {
 

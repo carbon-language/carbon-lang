@@ -14,8 +14,8 @@
 #ifndef NVPTXSUBTARGET_H
 #define NVPTXSUBTARGET_H
 
-#include "llvm/Target/TargetSubtargetInfo.h"
 #include "NVPTX.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
 
 #define GET_SUBTARGETINFO_HEADER
 #include "NVPTXGenSubtargetInfo.inc"

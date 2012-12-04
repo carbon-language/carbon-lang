@@ -17,13 +17,13 @@
 #define LLVM_CODEGEN_CRITICALANTIDEPBREAKER_H
 
 #include "AntiDepBreaker.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/RegisterClassInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
-#include "llvm/ADT/BitVector.h"
 #include <map>
 
 namespace llvm {

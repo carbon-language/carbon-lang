@@ -15,8 +15,8 @@
 #define LIB_ASMPARSER_LLLEXER_H
 
 #include "LLToken.h"
-#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/APFloat.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/Support/SourceMgr.h"
 #include <string>
 

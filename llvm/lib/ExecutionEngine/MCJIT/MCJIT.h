@@ -10,10 +10,10 @@
 #ifndef LLVM_LIB_EXECUTIONENGINE_MCJIT_H
 #define LLVM_LIB_EXECUTIONENGINE_MCJIT_H
 
-#include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/RuntimeDyld.h"
+#include "llvm/PassManager.h"
 
 namespace llvm {
 

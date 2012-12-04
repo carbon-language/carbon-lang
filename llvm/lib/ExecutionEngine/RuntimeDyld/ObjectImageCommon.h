@@ -14,9 +14,9 @@
 #ifndef LLVM_RUNTIMEDYLD_OBJECTIMAGECOMMON_H
 #define LLVM_RUNTIMEDYLD_OBJECTIMAGECOMMON_H
 
-#include "llvm/Object/ObjectFile.h"
-#include "llvm/ExecutionEngine/ObjectImage.h"
 #include "llvm/ExecutionEngine/ObjectBuffer.h"
+#include "llvm/ExecutionEngine/ObjectImage.h"
+#include "llvm/Object/ObjectFile.h"
 
 namespace llvm {
 

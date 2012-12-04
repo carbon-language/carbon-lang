@@ -16,9 +16,9 @@
 #ifndef INSTREMITTER_H
 #define INSTREMITTER_H
 
-#include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 
 namespace llvm {
 

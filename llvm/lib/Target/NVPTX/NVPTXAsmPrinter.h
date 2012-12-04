@@ -16,19 +16,19 @@
 #define NVPTXASMPRINTER_H
 
 #include "NVPTX.h"
-#include "NVPTXTargetMachine.h"
 #include "NVPTXSubtarget.h"
-#include "llvm/Function.h"
-#include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/MC/MCAsmInfo.h"
-#include "llvm/MC/MCExpr.h"
-#include "llvm/Target/TargetMachine.h"
-#include "llvm/MC/MCSymbol.h"
-#include "llvm/Support/FormattedStream.h"
-#include "llvm/Target/Mangler.h"
+#include "NVPTXTargetMachine.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/Function.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCSymbol.h"
+#include "llvm/Support/CommandLine.h"
+#include "llvm/Support/FormattedStream.h"
+#include "llvm/Target/Mangler.h"
+#include "llvm/Target/TargetMachine.h"
 #include <fstream>
 
 // The ptx syntax and format is very different from that usually seem in a .s

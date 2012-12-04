@@ -15,10 +15,10 @@
 #ifndef LLVM_ANALYSIS_MAXIMUMSPANNINGTREE_H
 #define LLVM_ANALYSIS_MAXIMUMSPANNINGTREE_H
 
-#include "llvm/BasicBlock.h"
 #include "llvm/ADT/EquivalenceClasses.h"
-#include <vector>
+#include "llvm/BasicBlock.h"
 #include <algorithm>
+#include <vector>
 
 namespace llvm {
 
