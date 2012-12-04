@@ -8,9 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Tooling/RefactoringCallbacks.h"
-#include "clang/ASTMatchers/ASTMatchers.h"
 #include "RewriterTestContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "clang/ASTMatchers/ASTMatchers.h"
 #include "gtest/gtest.h"
 
 namespace clang {
