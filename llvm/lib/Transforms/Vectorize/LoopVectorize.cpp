@@ -1985,19 +1985,19 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
   // Also, we can't have multiple block-local users.
   Instruction *Iter = Phi;
   while (true) {
-    // Any reduction instr must be of one of the allowed kinds.
-    if (!isReductionInstr(Iter, Kind))
-      return false;
-
-    // Did we found a user inside this block ?
-    bool FoundInBlockUser = false;
-    // Did we reach the initial PHI node ?
-    bool FoundStartPHI = false;
-
     // If the instruction has no users then this is a broken
     // chain and can't be a reduction variable.
     if (Iter->use_empty())
       return false;
+
+    // Any reduction instr must be of one of the allowed kinds.
+    if (!isReductionInstr(Iter, Kind))
+      return false;
+
+    // Did we find a user inside this block ?
+    bool FoundInBlockUser = false;
+    // Did we reach the initial PHI node ?
+    bool FoundStartPHI = false;
 
     // For each of the *users* of iter.
     for (Value::use_iterator it = Iter->use_begin(), e = Iter->use_end();
@@ -2009,21 +2009,22 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
         continue;
       }
 
-      // We allow in-loop PHINodes which are not the original reduction PHI
-      // node. If this PHI is the only user of Iter (happens in IF w/ no ELSE
-      // structure) then don't skip this PHI.
-      if (isa<PHINode>(U) && U->getParent() != TheLoop->getHeader() &&
-          TheLoop->contains(U->getParent()) && Iter->getNumUses() > 1)
-        continue;
-
       // Check if we found the exit user.
       BasicBlock *Parent = U->getParent();
       if (!TheLoop->contains(Parent)) {
-        // We must have a single exit instruction.
+        // Exit if you find multiple outside users.
         if (ExitInstruction != 0)
           return false;
         ExitInstruction = Iter;
       }
+
+      // We allow in-loop PHINodes which are not the original reduction PHI
+      // node. If this PHI is the only user of Iter (happens in IF w/ no ELSE
+      // structure) then don't skip this PHI.
+      if (isa<PHINode>(U) && U->getParent() != TheLoop->getHeader() &&
+          TheLoop->contains(U) && Iter->getNumUses() > 1)
+        continue;
+
       // We can't have multiple inside users.
       if (FoundInBlockUser)
         return false;
@@ -2043,6 +2044,11 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
      Reductions[Phi] = RD;
      return true;
    }
+
+    // If we've reached the start PHI but did not find an outside user then
+    // this is dead code. Abort.
+    if (FoundStartPHI)
+      return false;
   }
 }
 
