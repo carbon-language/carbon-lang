@@ -41,40 +41,54 @@ multiclass CMP32_rr<string OpcStr, PatFrag OpNode> {
                        (OpNode (i32 IntRegs:$b), (i32 IntRegs:$c)))]>;
 }
 
-multiclass CMP32_rr_ri_s10<string OpcStr, PatFrag OpNode> {
-  def rr : ALU32_rr<(outs PredRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                 !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
-                 [(set (i1 PredRegs:$dst),
-                       (OpNode (i32 IntRegs:$b), (i32 IntRegs:$c)))]>;
-  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, s10Imm:$c),
-                 !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
-                 [(set (i1 PredRegs:$dst),
-                       (OpNode (i32 IntRegs:$b), s10ImmPred:$c))]>;
+multiclass CMP32_rr_ri_s10<string OpcStr, string CextOp, PatFrag OpNode> {
+  let CextOpcode = CextOp in {
+    let InputType = "reg" in
+    def rr : ALU32_rr<(outs PredRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
+                   !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
+                   [(set (i1 PredRegs:$dst),
+                         (OpNode (i32 IntRegs:$b), (i32 IntRegs:$c)))]>;
+
+    let isExtendable = 1, opExtendable = 2, isExtentSigned = 1,
+    opExtentBits = 10, InputType = "imm" in
+    def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, s10Ext:$c),
+                   !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
+                   [(set (i1 PredRegs:$dst),
+                         (OpNode (i32 IntRegs:$b), s10ExtPred:$c))]>;
+  }
 }
 
-multiclass CMP32_rr_ri_u9<string OpcStr, PatFrag OpNode> {
-  def rr : ALU32_rr<(outs PredRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
-                 !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
-                 [(set (i1 PredRegs:$dst),
-                       (OpNode (i32 IntRegs:$b), (i32 IntRegs:$c)))]>;
-  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u9Imm:$c),
-                 !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
-                 [(set (i1 PredRegs:$dst),
-                       (OpNode (i32 IntRegs:$b), u9ImmPred:$c))]>;
+multiclass CMP32_rr_ri_u9<string OpcStr, string CextOp, PatFrag OpNode> {
+  let CextOpcode = CextOp in {
+    let InputType = "reg" in
+    def rr : ALU32_rr<(outs PredRegs:$dst), (ins IntRegs:$b, IntRegs:$c),
+                   !strconcat("$dst = ", !strconcat(OpcStr, "($b, $c)")),
+                   [(set (i1 PredRegs:$dst),
+                         (OpNode (i32 IntRegs:$b), (i32 IntRegs:$c)))]>;
+
+    let isExtendable = 1, opExtendable = 2, isExtentSigned = 0,
+    opExtentBits = 9, InputType = "imm" in
+    def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u9Ext:$c),
+                   !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
+                   [(set (i1 PredRegs:$dst),
+                         (OpNode (i32 IntRegs:$b), u9ExtPred:$c))]>;
+  }
 }
 
 multiclass CMP32_ri_u8<string OpcStr, PatFrag OpNode> {
-  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u8Imm:$c),
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 0, opExtentBits = 8 in
+  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, u8Ext:$c),
                  !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
                  [(set (i1 PredRegs:$dst), (OpNode (i32 IntRegs:$b),
-                                                   u8ImmPred:$c))]>;
+                                                   u8ExtPred:$c))]>;
 }
 
 multiclass CMP32_ri_s8<string OpcStr, PatFrag OpNode> {
-  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, s8Imm:$c),
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 8 in
+  def ri : ALU32_ri<(outs PredRegs:$dst), (ins IntRegs:$b, s8Ext:$c),
                  !strconcat("$dst = ", !strconcat(OpcStr, "($b, #$c)")),
                  [(set (i1 PredRegs:$dst), (OpNode (i32 IntRegs:$b),
-                                                   s8ImmPred:$c))]>;
+                                                   s8ExtPred:$c))]>;
 }
 }
 
@@ -132,7 +146,7 @@ defm SUB_rr : ALU32_base<"sub", "SUB", sub>, ImmRegRel, PredNewRel;
 multiclass ALU32ri_Pbase<string mnemonic, bit isNot, bit isPredNew> {
   let PNewValue = #!if(isPredNew, "new", "") in
   def #NAME# : ALU32_ri<(outs IntRegs:$dst),
-            (ins PredRegs:$src1, IntRegs:$src2, s8Imm: $src3),
+            (ins PredRegs:$src1, IntRegs:$src2, s8Ext: $src3),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
             ") $dst = ")#mnemonic#"($src2, #$src3)",
             []>;
@@ -146,17 +160,19 @@ multiclass ALU32ri_Pred<string mnemonic, bit PredNot> {
   }
 }
 
-let InputType = "imm" in
+let isExtendable = 1, InputType = "imm" in
 multiclass ALU32ri_base<string mnemonic, string CextOp, SDNode OpNode> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_ri in {
-    let isPredicable = 1 in
+    let opExtendable = 2, isExtentSigned = 1, opExtentBits = 16,
+    isPredicable = 1 in
     def #NAME# : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s16Imm:$src2),
+            (ins IntRegs:$src1, s16Ext:$src2),
             "$dst = "#mnemonic#"($src1, #$src2)",
             [(set (i32 IntRegs:$dst), (OpNode (i32 IntRegs:$src1),
-                                              (s16ImmPred:$src2)))]>;
+                                              (s16ExtPred:$src2)))]>;
 
-    let neverHasSideEffects = 1, isPredicated = 1 in {
+    let opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
+    neverHasSideEffects = 1, isPredicated = 1 in {
       defm Pt : ALU32ri_Pred<mnemonic, 0>;
       defm NotPt : ALU32ri_Pred<mnemonic, 1>;
     }
@@ -165,23 +181,26 @@ multiclass ALU32ri_base<string mnemonic, string CextOp, SDNode OpNode> {
 
 defm ADD_ri : ALU32ri_base<"add", "ADD", add>, ImmRegRel, PredNewRel;
 
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 10,
+CextOpcode = "OR", InputType = "imm" in
 def OR_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s10Imm:$src2),
+            (ins IntRegs:$src1, s10Ext:$src2),
             "$dst = or($src1, #$src2)",
             [(set (i32 IntRegs:$dst), (or (i32 IntRegs:$src1),
-                                          s10ImmPred:$src2))]>;
+                                          s10ExtPred:$src2))]>, ImmRegRel;
 
 def NOT_rr : ALU32_rr<(outs IntRegs:$dst),
             (ins IntRegs:$src1),
             "$dst = not($src1)",
             [(set (i32 IntRegs:$dst), (not (i32 IntRegs:$src1)))]>;
 
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 10,
+InputType = "imm", CextOpcode = "AND" in
 def AND_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins IntRegs:$src1, s10Imm:$src2),
+            (ins IntRegs:$src1, s10Ext:$src2),
             "$dst = and($src1, #$src2)",
             [(set (i32 IntRegs:$dst), (and (i32 IntRegs:$src1),
-                                           s10ImmPred:$src2))]>;
-
+                                           s10ExtPred:$src2))]>, ImmRegRel;
 // Negate.
 def NEG : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
           "$dst = neg($src1)",
@@ -193,10 +212,13 @@ def NOP : ALU32_rr<(outs), (ins),
           []>;
 
 // Rd32=sub(#s10,Rs32)
+let isExtendable = 1, opExtendable = 1, isExtentSigned = 1, opExtentBits = 10,
+CextOpcode = "SUB", InputType = "imm" in
 def SUB_ri : ALU32_ri<(outs IntRegs:$dst),
-            (ins s10Imm:$src1, IntRegs:$src2),
+            (ins s10Ext:$src1, IntRegs:$src2),
             "$dst = sub(#$src1, $src2)",
-            [(set IntRegs:$dst, (sub s10ImmPred:$src1, IntRegs:$src2))]>;
+            [(set IntRegs:$dst, (sub s10ExtPred:$src1, IntRegs:$src2))]>,
+            ImmRegRel;
 
 
 multiclass TFR_Pred<bit PredNot> {
@@ -331,32 +353,38 @@ def VMUX_prr64 : ALU64_rr<(outs DoubleRegs:$dst), (ins PredRegs:$src1,
             "$dst = vmux($src1, $src2, $src3)",
             []>;
 
+let CextOpcode = "MUX", InputType = "reg" in
 def MUX_rr : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
                                             IntRegs:$src2, IntRegs:$src3),
              "$dst = mux($src1, $src2, $src3)",
-             [(set (i32 IntRegs:$dst), (i32 (select (i1 PredRegs:$src1),
-                                                    (i32 IntRegs:$src2),
-                                                    (i32 IntRegs:$src3))))]>;
+             [(set (i32 IntRegs:$dst),
+                   (i32 (select (i1 PredRegs:$src1), (i32 IntRegs:$src2),
+                                (i32 IntRegs:$src3))))]>, ImmRegRel;
 
-def MUX_ir : ALU32_ir<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Imm:$src2,
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 8,
+CextOpcode = "MUX", InputType = "imm" in
+def MUX_ir : ALU32_ir<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Ext:$src2,
                                                 IntRegs:$src3),
              "$dst = mux($src1, #$src2, $src3)",
-             [(set (i32 IntRegs:$dst), (i32 (select (i1 PredRegs:$src1),
-                                                    s8ImmPred:$src2,
-                                                    (i32 IntRegs:$src3))))]>;
+             [(set (i32 IntRegs:$dst),
+                   (i32 (select (i1 PredRegs:$src1), s8ExtPred:$src2,
+                                (i32 IntRegs:$src3))))]>, ImmRegRel;
 
+let isExtendable = 1, opExtendable = 3, isExtentSigned = 1, opExtentBits = 8,
+CextOpcode = "MUX", InputType = "imm" in
 def MUX_ri : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1, IntRegs:$src2,
-                                                s8Imm:$src3),
+                                                s8Ext:$src3),
              "$dst = mux($src1, $src2, #$src3)",
-             [(set (i32 IntRegs:$dst), (i32 (select (i1 PredRegs:$src1),
-                                                    (i32 IntRegs:$src2),
-                                                    s8ImmPred:$src3)))]>;
+             [(set (i32 IntRegs:$dst),
+                   (i32 (select (i1 PredRegs:$src1), (i32 IntRegs:$src2),
+                                 s8ExtPred:$src3)))]>, ImmRegRel;
 
-def MUX_ii : ALU32_ii<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Imm:$src2,
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 8 in
+def MUX_ii : ALU32_ii<(outs IntRegs:$dst), (ins PredRegs:$src1, s8Ext:$src2,
                                                 s8Imm:$src3),
              "$dst = mux($src1, #$src2, #$src3)",
              [(set (i32 IntRegs:$dst), (i32 (select (i1 PredRegs:$src1),
-                                                    s8ImmPred:$src2,
+                                                    s8ExtPred:$src2,
                                                     s8ImmPred:$src3)))]>;
 
 // Shift halfword.
@@ -427,11 +455,11 @@ def COMBINE_rr_cdnNotPt : ALU32_rr<(outs DoubleRegs:$dst),
             []>;
 
 // Compare.
-defm CMPGTU : CMP32_rr_ri_u9<"cmp.gtu", setugt>;
-defm CMPGT : CMP32_rr_ri_s10<"cmp.gt", setgt>;
+defm CMPGTU : CMP32_rr_ri_u9<"cmp.gtu", "CMPGTU", setugt>, ImmRegRel;
+defm CMPGT : CMP32_rr_ri_s10<"cmp.gt", "CMPGT", setgt>, ImmRegRel;
 defm CMPLT : CMP32_rr<"cmp.lt", setlt>;
 defm CMPLTU : CMP32_rr<"cmp.ltu", setult>;
-defm CMPEQ : CMP32_rr_ri_s10<"cmp.eq", seteq>;
+defm CMPEQ : CMP32_rr_ri_s10<"cmp.eq", "CMPEQ", seteq>, ImmRegRel;
 defm CMPGE : CMP32_ri_s8<"cmp.ge", setge>;
 defm CMPGEU : CMP32_ri_u8<"cmp.geu", setuge>;
 //===----------------------------------------------------------------------===//
