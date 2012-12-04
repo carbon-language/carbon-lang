@@ -17,10 +17,6 @@
 #include "DNBDefs.h"
 #include <mach/thread_info.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define DNB_EXPORT __attribute__((visibility("default")))
 
 typedef bool (*DNBShouldCancelCallback) (void *);
@@ -159,9 +155,5 @@ nub_size_t      DNBPrintf (nub_process_t pid, nub_thread_t tid, nub_addr_t addr,
 //----------------------------------------------------------------------
 const char *    DNBStateAsString (nub_state_t state) DNB_EXPORT;
 nub_bool_t      DNBResolveExecutablePath (const char *path, char *resolved_path, size_t resolved_path_size) DNB_EXPORT;
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif
