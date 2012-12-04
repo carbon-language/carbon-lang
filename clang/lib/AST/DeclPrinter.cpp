@@ -893,7 +893,17 @@ void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
     Out << "@implementation " << I << " : " << *SID;
   else
     Out << "@implementation " << I;
-  Out << "\n";
+  
+  if (OID->ivar_size() > 0) {
+    Out << "{\n";
+    Indentation += Policy.Indentation;
+    for (ObjCImplementationDecl::ivar_iterator I = OID->ivar_begin(),
+         E = OID->ivar_end(); I != E; ++I) {
+      Indent() << I->getType().getAsString(Policy) << ' ' << **I << ";\n";
+    }
+    Indentation -= Policy.Indentation;
+    Out << "}\n";
+  }
   VisitDeclContext(OID, false);
   Out << "@end";
 }
