@@ -10,4 +10,4 @@ A a;
 // CHECK: [[ARRAY_TYPE]] = metadata !{i32 {{.*}}, null, metadata !"", null, i32 0, i64 0, i64 32, i32 0, i32 0, metadata [[BASE_TYPE:.*]], metadata [[ELEM_TYPE:.*]], i32 0, i32 0} ; [ DW_TAG_array_type ]
 // CHECK: [[BASE_TYPE]] = metadata !{i32 {{.*}}, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 // CHECK: [[ELEM_TYPE]] = metadata !{metadata [[SUBRANGE:.*]]}
-// CHECK: [[SUBRANGE]] = metadata !{i32 786465, i64 1, i64 0, i64 -1} ; [ DW_TAG_subrange_type ] [1, 0]
+// CHECK: [[SUBRANGE]] = metadata !{i32 786465, i64 0, i64 -1} ; [ DW_TAG_subrange_type ] [unbound]
