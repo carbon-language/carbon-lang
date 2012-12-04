@@ -12,6 +12,7 @@ add_clang_library(clangLex
   ModuleMap.cpp
   PPCaching.cpp
   PPCallbacks.cpp
+  PPConditionalDirectiveRecord.cpp
   PPDirectives.cpp
   PPExpressions.cpp
   PPLexerChange.cpp
