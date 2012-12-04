@@ -2159,17 +2159,17 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
 
     // For each instruction in the old loop.
     for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
-
       unsigned C = getInstructionCost(it, VF);
       Cost += C;
       DEBUG(dbgs() << "LV: Found an estimated cost of "<< C <<" for VF " <<
             VF << " For instruction: "<< *it << "\n");
     }
 
-    // TODO: if-converted blocks can have a high-nest level. We need to
-    // calculate the loop nest level and multiply the cost accordingly.
-    if (Legal->blockNeedsPredication(*bb))
-      BlockCost *= 2;
+    // We assume that if-converted blocks have a 50% chance of being executed.
+    // When the code is scalar then some of the blocks are avoided due to CF.
+    // When the code is vectorized we execute all code paths.
+    if (Legal->blockNeedsPredication(*bb) && VF == 1)
+      BlockCost /= 2;
 
     Cost += BlockCost;
   }
