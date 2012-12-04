@@ -18,8 +18,12 @@ def sort_includes(f):
   if 'INPUTS/' in f.name or 'test/' in f.name:
     return
 
+  ext = os.path.splitext(f.name)[1]
+  if ext not in ['.cpp', '.c', '.h', '.inc', '.def']:
+    return
+
   lines = f.readlines()
-  look_for_api_header = os.path.splitext(f.name)[1] == '.cpp'
+  look_for_api_header = ext in ['.cpp', '.c']
   found_headers = False
   headers_begin = 0
   headers_end = 0
