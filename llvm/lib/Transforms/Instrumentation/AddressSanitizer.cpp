@@ -115,6 +115,8 @@ static cl::opt<bool> ClInitializers("asan-initialization-order",
        cl::desc("Handle C++ initializer order"), cl::Hidden, cl::init(false));
 static cl::opt<bool> ClMemIntrin("asan-memintrin",
        cl::desc("Handle memset/memcpy/memmove"), cl::Hidden, cl::init(true));
+static cl::opt<bool> ClRealignStack("asan-realign-stack",
+       cl::desc("Realign stack to 32"), cl::Hidden, cl::init(true));
 static cl::opt<std::string> ClBlacklistFile("asan-blacklist",
        cl::desc("File containing the list of objects to ignore "
                 "during instrumentation"), cl::Hidden);
@@ -1159,6 +1161,7 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
 
   // Filter out Alloca instructions we want (and can) handle.
   // Collect Ret instructions.
+  unsigned ResultAlignment = 1 << MappingScale();
   for (Function::iterator FI = F.begin(), FE = F.end();
        FI != FE; ++FI) {
     BasicBlock &BB = *FI;
@@ -1174,7 +1177,7 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
       if (AI->isArrayAllocation()) continue;
       if (!AI->isStaticAlloca()) continue;
       if (!AI->getAllocatedType()->isSized()) continue;
-      if (AI->getAlignment() > RedzoneSize()) continue;
+      ResultAlignment = std::max(ResultAlignment, AI->getAlignment());
       AllocaVec.push_back(AI);
       uint64_t AlignedSize =  getAlignedAllocaSize(AI);
       TotalSize += AlignedSize;
@@ -1195,7 +1198,9 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
   Type *ByteArrayTy = ArrayType::get(IRB.getInt8Ty(), LocalStackSize);
   AllocaInst *MyAlloca =
       new AllocaInst(ByteArrayTy, "MyAlloca", InsBefore);
-  MyAlloca->setAlignment(RedzoneSize());
+  if (ClRealignStack && ResultAlignment < RedzoneSize())
+    ResultAlignment = RedzoneSize();
+  MyAlloca->setAlignment(ResultAlignment);
   assert(MyAlloca->isStaticAlloca());
   Value *OrigStackBase = IRB.CreatePointerCast(MyAlloca, IntptrTy);
   Value *LocalStackBase = OrigStackBase;
