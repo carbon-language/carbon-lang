@@ -59,6 +59,17 @@ clang_CompilationDatabase_getCompileCommands(CXCompilationDatabase CDb,
   return 0;
 }
 
+CXCompileCommands
+clang_CompilationDatabase_getAllCompileCommands(CXCompilationDatabase CDb) {
+  if (CompilationDatabase *db = static_cast<CompilationDatabase *>(CDb)) {
+    const std::vector<CompileCommand> CCmd(db->getAllCompileCommands());
+    if (!CCmd.empty())
+      return new AllocatedCXCompileCommands( CCmd );
+  }
+
+  return 0;
+}
+
 void
 clang_CompileCommands_dispose(CXCompileCommands Cmds)
 {

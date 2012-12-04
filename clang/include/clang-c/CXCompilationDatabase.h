@@ -95,6 +95,12 @@ clang_CompilationDatabase_getCompileCommands(CXCompilationDatabase,
                                              const char *CompleteFileName);
 
 /**
+ * \brief Get all the compile commands in the given compilation database.
+ */
+CINDEX_LINKAGE CXCompileCommands
+clang_CompilationDatabase_getAllCompileCommands(CXCompilationDatabase);
+
+/**
  * \brief Free the given CompileCommands
  */
 CINDEX_LINKAGE void clang_CompileCommands_dispose(CXCompileCommands);

@@ -51,6 +51,17 @@ static std::vector<std::string> getAllFiles(StringRef JSONDatabase,
   return Database->getAllFiles();
 }
 
+static std::vector<CompileCommand> getAllCompileCommands(StringRef JSONDatabase,
+                                                    std::string &ErrorMessage) {
+  llvm::OwningPtr<CompilationDatabase> Database(
+      JSONCompilationDatabase::loadFromBuffer(JSONDatabase, ErrorMessage));
+  if (!Database) {
+    ADD_FAILURE() << ErrorMessage;
+    return std::vector<CompileCommand>();
+  }
+  return Database->getAllCompileCommands();
+}
+
 TEST(JSONCompilationDatabase, GetAllFiles) {
   std::string ErrorMessage;
   EXPECT_EQ(std::vector<std::string>(),
@@ -70,6 +81,35 @@ TEST(JSONCompilationDatabase, GetAllFiles) {
       "\"command\":\"command\","
       "\"file\":\"file2\"}]",
     ErrorMessage)) << ErrorMessage;
+}
+
+TEST(JSONCompilationDatabase, GetAllCompileCommands) {
+  std::string ErrorMessage;
+  EXPECT_EQ(0u,
+            getAllCompileCommands("[]", ErrorMessage).size()) << ErrorMessage;
+
+  StringRef Directory1("//net/dir1");
+  StringRef FileName1("file1");
+  StringRef Command1("command1");
+  StringRef Directory2("//net/dir2");
+  StringRef FileName2("file1");
+  StringRef Command2("command1");
+
+  std::vector<CompileCommand> Commands = getAllCompileCommands(
+      ("[{\"directory\":\"" + Directory1 + "\"," +
+             "\"command\":\"" + Command1 + "\","
+             "\"file\":\"" + FileName1 + "\"},"
+       " {\"directory\":\"" + Directory2 + "\"," +
+             "\"command\":\"" + Command2 + "\","
+             "\"file\":\"" + FileName2 + "\"}]").str(),
+      ErrorMessage);
+  EXPECT_EQ(2U, Commands.size()) << ErrorMessage;
+  EXPECT_EQ(Directory1, Commands[0].Directory) << ErrorMessage;
+  ASSERT_EQ(1u, Commands[0].CommandLine.size());
+  EXPECT_EQ(Command1, Commands[0].CommandLine[0]) << ErrorMessage;
+  EXPECT_EQ(Directory2, Commands[1].Directory) << ErrorMessage;
+  ASSERT_EQ(1u, Commands[1].CommandLine.size());
+  EXPECT_EQ(Command2, Commands[1].CommandLine[0]) << ErrorMessage;
 }
 
 static CompileCommand findCompileArgsInJsonDatabase(StringRef FileName,
@@ -374,6 +414,15 @@ TEST(FixedCompilationDatabase, GetAllFiles) {
   FixedCompilationDatabase Database(".", CommandLine);
 
   EXPECT_EQ(0ul, Database.getAllFiles().size());
+}
+
+TEST(FixedCompilationDatabase, GetAllCompileCommands) {
+  std::vector<std::string> CommandLine;
+  CommandLine.push_back("one");
+  CommandLine.push_back("two");
+  FixedCompilationDatabase Database(".", CommandLine);
+
+  EXPECT_EQ(0ul, Database.getAllCompileCommands().size());
 }
 
 TEST(ParseFixedCompilationDatabase, ReturnsNullOnEmptyArgumentList) {

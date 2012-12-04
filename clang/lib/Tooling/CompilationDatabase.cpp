@@ -132,6 +132,11 @@ FixedCompilationDatabase::getAllFiles() const {
   return std::vector<std::string>();
 }
 
+std::vector<CompileCommand>
+FixedCompilationDatabase::getAllCompileCommands() const {
+  return std::vector<CompileCommand>();
+}
+
 // This anchor is used to force the linker to link in the generated object file
 // and thus register the JSONCompilationDatabasePlugin.
 extern volatile int JSONAnchorSource;

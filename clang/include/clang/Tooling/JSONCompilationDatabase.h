@@ -75,6 +75,10 @@ public:
   /// These are the 'file' entries of the JSON objects.
   virtual std::vector<std::string> getAllFiles() const;
 
+  /// \brief Returns all compile commands for all the files in the compilation
+  /// database.
+  virtual std::vector<CompileCommand> getAllCompileCommands() const;
+
 private:
   /// \brief Constructs a JSON compilation database on a memory buffer.
   JSONCompilationDatabase(llvm::MemoryBuffer *Database)
@@ -90,6 +94,10 @@ private:
   // corresponding nodes in the YAML stream.
   typedef std::pair<llvm::yaml::ScalarNode*,
                     llvm::yaml::ScalarNode*> CompileCommandRef;
+
+  /// \brief Converts the given array of CompileCommandRefs to CompileCommands.
+  void getCommands(ArrayRef<CompileCommandRef> CommandsRef,
+                   std::vector<CompileCommand> &Commands) const;
 
   // Maps file paths to the compile command lines for that file.
   llvm::StringMap< std::vector<CompileCommandRef> > IndexByFile;
