@@ -22,6 +22,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "llvm/Operator.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/MDBuilder.h"
 #include "llvm/DataLayout.h"
@@ -46,6 +47,15 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
     TerminateHandler(0), TrapBB(0) {
   if (!suppressNewContext)
     CGM.getCXXABI().getMangleContext().startNewFunction();
+
+  llvm::FastMathFlags FMF;
+  if (CGM.getLangOpts().FastMath)
+    FMF.UnsafeAlgebra = true;
+  if (CGM.getLangOpts().FiniteMathOnly) {
+    FMF.NoNaNs = true;
+    FMF.NoInfs = true;
+  }
+  Builder.SetFastMathFlags(FMF);
 }
 
 CodeGenFunction::~CodeGenFunction() {
