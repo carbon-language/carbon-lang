@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "tsan_interface_ann.h"
 #include "tsan_mutex.h"
@@ -159,48 +160,50 @@ bool IsExpectedReport(uptr addr, uptr size) {
 using namespace __tsan;  // NOLINT
 
 extern "C" {
-void AnnotateHappensBefore(char *f, int l, uptr addr) {
+void INTERFACE_ATTRIBUTE AnnotateHappensBefore(char *f, int l, uptr addr) {
   SCOPED_ANNOTATION(AnnotateHappensBefore);
   Release(cur_thread(), CALLERPC, addr);
 }
 
-void AnnotateHappensAfter(char *f, int l, uptr addr) {
+void INTERFACE_ATTRIBUTE AnnotateHappensAfter(char *f, int l, uptr addr) {
   SCOPED_ANNOTATION(AnnotateHappensAfter);
   Acquire(cur_thread(), CALLERPC, addr);
 }
 
-void AnnotateCondVarSignal(char *f, int l, uptr cv) {
+void INTERFACE_ATTRIBUTE AnnotateCondVarSignal(char *f, int l, uptr cv) {
   SCOPED_ANNOTATION(AnnotateCondVarSignal);
 }
 
-void AnnotateCondVarSignalAll(char *f, int l, uptr cv) {
+void INTERFACE_ATTRIBUTE AnnotateCondVarSignalAll(char *f, int l, uptr cv) {
   SCOPED_ANNOTATION(AnnotateCondVarSignalAll);
 }
 
-void AnnotateMutexIsNotPHB(char *f, int l, uptr mu) {
+void INTERFACE_ATTRIBUTE AnnotateMutexIsNotPHB(char *f, int l, uptr mu) {
   SCOPED_ANNOTATION(AnnotateMutexIsNotPHB);
 }
 
-void AnnotateCondVarWait(char *f, int l, uptr cv, uptr lock) {
+void INTERFACE_ATTRIBUTE AnnotateCondVarWait(char *f, int l, uptr cv,
+                                             uptr lock) {
   SCOPED_ANNOTATION(AnnotateCondVarWait);
 }
 
-void AnnotateRWLockCreate(char *f, int l, uptr m) {
+void INTERFACE_ATTRIBUTE AnnotateRWLockCreate(char *f, int l, uptr m) {
   SCOPED_ANNOTATION(AnnotateRWLockCreate);
   MutexCreate(thr, pc, m, true, true, false);
 }
 
-void AnnotateRWLockCreateStatic(char *f, int l, uptr m) {
+void INTERFACE_ATTRIBUTE AnnotateRWLockCreateStatic(char *f, int l, uptr m) {
   SCOPED_ANNOTATION(AnnotateRWLockCreateStatic);
   MutexCreate(thr, pc, m, true, true, true);
 }
 
-void AnnotateRWLockDestroy(char *f, int l, uptr m) {
+void INTERFACE_ATTRIBUTE AnnotateRWLockDestroy(char *f, int l, uptr m) {
   SCOPED_ANNOTATION(AnnotateRWLockDestroy);
   MutexDestroy(thr, pc, m);
 }
 
-void AnnotateRWLockAcquired(char *f, int l, uptr m, uptr is_w) {
+void INTERFACE_ATTRIBUTE AnnotateRWLockAcquired(char *f, int l, uptr m,
+                                                uptr is_w) {
   SCOPED_ANNOTATION(AnnotateRWLockAcquired);
   if (is_w)
     MutexLock(thr, pc, m);
@@ -208,7 +211,8 @@ void AnnotateRWLockAcquired(char *f, int l, uptr m, uptr is_w) {
     MutexReadLock(thr, pc, m);
 }
 
-void AnnotateRWLockReleased(char *f, int l, uptr m, uptr is_w) {
+void INTERFACE_ATTRIBUTE AnnotateRWLockReleased(char *f, int l, uptr m,
+                                                uptr is_w) {
   SCOPED_ANNOTATION(AnnotateRWLockReleased);
   if (is_w)
     MutexUnlock(thr, pc, m);
@@ -216,19 +220,20 @@ void AnnotateRWLockReleased(char *f, int l, uptr m, uptr is_w) {
     MutexReadUnlock(thr, pc, m);
 }
 
-void AnnotateTraceMemory(char *f, int l, uptr mem) {
+void INTERFACE_ATTRIBUTE AnnotateTraceMemory(char *f, int l, uptr mem) {
   SCOPED_ANNOTATION(AnnotateTraceMemory);
 }
 
-void AnnotateFlushState(char *f, int l) {
+void INTERFACE_ATTRIBUTE AnnotateFlushState(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateFlushState);
 }
 
-void AnnotateNewMemory(char *f, int l, uptr mem, uptr size) {
+void INTERFACE_ATTRIBUTE AnnotateNewMemory(char *f, int l, uptr mem,
+                                           uptr size) {
   SCOPED_ANNOTATION(AnnotateNewMemory);
 }
 
-void AnnotateNoOp(char *f, int l, uptr mem) {
+void INTERFACE_ATTRIBUTE AnnotateNoOp(char *f, int l, uptr mem) {
   SCOPED_ANNOTATION(AnnotateNoOp);
 }
 
@@ -240,7 +245,7 @@ static void ReportMissedExpectedRace(ExpectRace *race) {
   Printf("==================\n");
 }
 
-void AnnotateFlushExpectedRaces(char *f, int l) {
+void INTERFACE_ATTRIBUTE AnnotateFlushExpectedRaces(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateFlushExpectedRaces);
   Lock lock(&dyn_ann_ctx->mtx);
   while (dyn_ann_ctx->expect.next != &dyn_ann_ctx->expect) {
@@ -255,32 +260,39 @@ void AnnotateFlushExpectedRaces(char *f, int l) {
   }
 }
 
-void AnnotateEnableRaceDetection(char *f, int l, int enable) {
+void INTERFACE_ATTRIBUTE AnnotateEnableRaceDetection(
+    char *f, int l, int enable) {
   SCOPED_ANNOTATION(AnnotateEnableRaceDetection);
   // FIXME: Reconsider this functionality later. It may be irrelevant.
 }
 
-void AnnotateMutexIsUsedAsCondVar(char *f, int l, uptr mu) {
+void INTERFACE_ATTRIBUTE AnnotateMutexIsUsedAsCondVar(
+    char *f, int l, uptr mu) {
   SCOPED_ANNOTATION(AnnotateMutexIsUsedAsCondVar);
 }
 
-void AnnotatePCQGet(char *f, int l, uptr pcq) {
+void INTERFACE_ATTRIBUTE AnnotatePCQGet(
+    char *f, int l, uptr pcq) {
   SCOPED_ANNOTATION(AnnotatePCQGet);
 }
 
-void AnnotatePCQPut(char *f, int l, uptr pcq) {
+void INTERFACE_ATTRIBUTE AnnotatePCQPut(
+    char *f, int l, uptr pcq) {
   SCOPED_ANNOTATION(AnnotatePCQPut);
 }
 
-void AnnotatePCQDestroy(char *f, int l, uptr pcq) {
+void INTERFACE_ATTRIBUTE AnnotatePCQDestroy(
+    char *f, int l, uptr pcq) {
   SCOPED_ANNOTATION(AnnotatePCQDestroy);
 }
 
-void AnnotatePCQCreate(char *f, int l, uptr pcq) {
+void INTERFACE_ATTRIBUTE AnnotatePCQCreate(
+    char *f, int l, uptr pcq) {
   SCOPED_ANNOTATION(AnnotatePCQCreate);
 }
 
-void AnnotateExpectRace(char *f, int l, uptr mem, char *desc) {
+void INTERFACE_ATTRIBUTE AnnotateExpectRace(
+    char *f, int l, uptr mem, char *desc) {
   SCOPED_ANNOTATION(AnnotateExpectRace);
   Lock lock(&dyn_ann_ctx->mtx);
   AddExpectRace(&dyn_ann_ctx->expect,
@@ -288,7 +300,8 @@ void AnnotateExpectRace(char *f, int l, uptr mem, char *desc) {
   DPrintf("Add expected race: %s addr=%zx %s:%d\n", desc, mem, f, l);
 }
 
-static void BenignRaceImpl(char *f, int l, uptr mem, uptr size, char *desc) {
+static void BenignRaceImpl(
+    char *f, int l, uptr mem, uptr size, char *desc) {
   Lock lock(&dyn_ann_ctx->mtx);
   AddExpectRace(&dyn_ann_ctx->benign,
                 f, l, mem, size, desc);
@@ -296,69 +309,75 @@ static void BenignRaceImpl(char *f, int l, uptr mem, uptr size, char *desc) {
 }
 
 // FIXME: Turn it off later. WTF is benign race?1?? Go talk to Hans Boehm.
-void AnnotateBenignRaceSized(char *f, int l, uptr mem, uptr size, char *desc) {
+void INTERFACE_ATTRIBUTE AnnotateBenignRaceSized(
+    char *f, int l, uptr mem, uptr size, char *desc) {
   SCOPED_ANNOTATION(AnnotateBenignRaceSized);
   BenignRaceImpl(f, l, mem, size, desc);
 }
 
-void AnnotateBenignRace(char *f, int l, uptr mem, char *desc) {
+void INTERFACE_ATTRIBUTE AnnotateBenignRace(
+    char *f, int l, uptr mem, char *desc) {
   SCOPED_ANNOTATION(AnnotateBenignRace);
   BenignRaceImpl(f, l, mem, 1, desc);
 }
 
-void AnnotateIgnoreReadsBegin(char *f, int l) {
+void INTERFACE_ATTRIBUTE AnnotateIgnoreReadsBegin(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreReadsBegin);
   IgnoreCtl(cur_thread(), false, true);
 }
 
-void AnnotateIgnoreReadsEnd(char *f, int l) {
+void INTERFACE_ATTRIBUTE AnnotateIgnoreReadsEnd(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreReadsEnd);
   IgnoreCtl(cur_thread(), false, false);
 }
 
-void AnnotateIgnoreWritesBegin(char *f, int l) {
+void INTERFACE_ATTRIBUTE AnnotateIgnoreWritesBegin(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreWritesBegin);
   IgnoreCtl(cur_thread(), true, true);
 }
 
-void AnnotateIgnoreWritesEnd(char *f, int l) {
+void INTERFACE_ATTRIBUTE AnnotateIgnoreWritesEnd(char *f, int l) {
   SCOPED_ANNOTATION(AnnotateIgnoreWritesEnd);
   IgnoreCtl(cur_thread(), true, false);
 }
 
-void AnnotatePublishMemoryRange(char *f, int l, uptr addr, uptr size) {
+void INTERFACE_ATTRIBUTE AnnotatePublishMemoryRange(
+    char *f, int l, uptr addr, uptr size) {
   SCOPED_ANNOTATION(AnnotatePublishMemoryRange);
 }
 
-void AnnotateUnpublishMemoryRange(char *f, int l, uptr addr, uptr size) {
+void INTERFACE_ATTRIBUTE AnnotateUnpublishMemoryRange(
+    char *f, int l, uptr addr, uptr size) {
   SCOPED_ANNOTATION(AnnotateUnpublishMemoryRange);
 }
 
-void AnnotateThreadName(char *f, int l, char *name) {
+void INTERFACE_ATTRIBUTE AnnotateThreadName(
+    char *f, int l, char *name) {
   SCOPED_ANNOTATION(AnnotateThreadName);
 }
 
-void WTFAnnotateHappensBefore(char *f, int l, uptr addr) {
+void INTERFACE_ATTRIBUTE WTFAnnotateHappensBefore(char *f, int l, uptr addr) {
   SCOPED_ANNOTATION(AnnotateHappensBefore);
 }
 
-void WTFAnnotateHappensAfter(char *f, int l, uptr addr) {
+void INTERFACE_ATTRIBUTE WTFAnnotateHappensAfter(char *f, int l, uptr addr) {
   SCOPED_ANNOTATION(AnnotateHappensAfter);
 }
 
-void WTFAnnotateBenignRaceSized(char *f, int l, uptr mem, uptr sz, char *desc) {
+void INTERFACE_ATTRIBUTE WTFAnnotateBenignRaceSized(
+    char *f, int l, uptr mem, uptr sz, char *desc) {
   SCOPED_ANNOTATION(AnnotateBenignRaceSized);
 }
 
-int RunningOnValgrind() {
+int INTERFACE_ATTRIBUTE RunningOnValgrind() {
   return flags()->running_on_valgrind;
 }
 
-double __attribute__((weak)) ValgrindSlowdown(void) {
+double __attribute__((weak)) INTERFACE_ATTRIBUTE ValgrindSlowdown(void) {
   return 10.0;
 }
 
-const char *ThreadSanitizerQuery(const char *query) {
+const char INTERFACE_ATTRIBUTE* ThreadSanitizerQuery(const char *query) {
   if (internal_strcmp(query, "pure_happens_before") == 0)
     return "1";
   else

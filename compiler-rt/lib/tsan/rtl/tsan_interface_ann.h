@@ -14,6 +14,8 @@
 #ifndef TSAN_INTERFACE_ANN_H
 #define TSAN_INTERFACE_ANN_H
 
+#include <sanitizer/common_interface_defs.h>
+
 // This header should NOT include any other headers.
 // All functions in this header are extern "C" and start with __tsan_.
 
@@ -21,8 +23,8 @@
 extern "C" {
 #endif
 
-void __tsan_acquire(void *addr);
-void __tsan_release(void *addr);
+void __tsan_acquire(void *addr) SANITIZER_INTERFACE_ATTRIBUTE;
+void __tsan_release(void *addr) SANITIZER_INTERFACE_ATTRIBUTE;
 
 #ifdef __cplusplus
 }  // extern "C"
