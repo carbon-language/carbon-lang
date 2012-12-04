@@ -4453,7 +4453,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new BitrigTargetInfo<ARMTargetInfo>(T);
     case llvm::Triple::RTEMS:
       return new RTEMSTargetInfo<ARMTargetInfo>(T);
-    case llvm::Triple::NativeClient:
+    case llvm::Triple::NaCl:
       return new NaClTargetInfo<ARMTargetInfo>(T);
     default:
       return new ARMTargetInfo(T);
@@ -4524,7 +4524,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
 
   case llvm::Triple::le32:
     switch (os) {
-      case llvm::Triple::NativeClient:
+      case llvm::Triple::NaCl:
         return new NaClTargetInfo<PNaClTargetInfo>(T);
       default:
         return NULL;
@@ -4629,7 +4629,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new HaikuX86_32TargetInfo(T);
     case llvm::Triple::RTEMS:
       return new RTEMSX86_32TargetInfo(T);
-    case llvm::Triple::NativeClient:
+    case llvm::Triple::NaCl:
       return new NaClTargetInfo<X86_32TargetInfo>(T);
     default:
       return new X86_32TargetInfo(T);
@@ -4660,7 +4660,7 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new MinGWX86_64TargetInfo(T);
     case llvm::Triple::Win32:   // This is what Triple.h supports now.
       return new VisualStudioWindowsX86_64TargetInfo(T);
-    case llvm::Triple::NativeClient:
+    case llvm::Triple::NaCl:
       return new NaClTargetInfo<X86_64TargetInfo>(T);
     default:
       return new X86_64TargetInfo(T);

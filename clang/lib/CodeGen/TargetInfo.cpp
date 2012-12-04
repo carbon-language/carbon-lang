@@ -1387,7 +1387,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     } else if ((k == BuiltinType::Float || k == BuiltinType::Double) ||
                (k == BuiltinType::LongDouble &&
                 getContext().getTargetInfo().getTriple().getOS() ==
-                llvm::Triple::NativeClient)) {
+                llvm::Triple::NaCl)) {
       Current = SSE;
     } else if (k == BuiltinType::LongDouble) {
       Lo = X87;
@@ -1476,7 +1476,7 @@ void X86_64ABIInfo::classify(QualType Ty, uint64_t OffsetBase,
     else if (ET == getContext().DoubleTy ||
              (ET == getContext().LongDoubleTy &&
               getContext().getTargetInfo().getTriple().getOS() ==
-              llvm::Triple::NativeClient))
+              llvm::Triple::NaCl))
       Lo = Hi = SSE;
     else if (ET == getContext().LongDoubleTy)
       Current = ComplexX87;
@@ -4357,7 +4357,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
         Kind = ARMABIInfo::AAPCS_VFP;
 
       switch (Triple.getOS()) {
-        case llvm::Triple::NativeClient:
+        case llvm::Triple::NaCl:
           return *(TheTargetCodeGenInfo =
                    new NaClARMTargetCodeGenInfo(Types, Kind));
         default:
@@ -4429,7 +4429,7 @@ const TargetCodeGenInfo &CodeGenModule::getTargetCodeGenInfo() {
     case llvm::Triple::MinGW32:
     case llvm::Triple::Cygwin:
       return *(TheTargetCodeGenInfo = new WinX86_64TargetCodeGenInfo(Types));
-    case llvm::Triple::NativeClient:
+    case llvm::Triple::NaCl:
       return *(TheTargetCodeGenInfo = new NaClX86_64TargetCodeGenInfo(Types, HasAVX));
     default:
       return *(TheTargetCodeGenInfo = new X86_64TargetCodeGenInfo(Types,
