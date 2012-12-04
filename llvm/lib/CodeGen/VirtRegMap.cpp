@@ -88,6 +88,15 @@ unsigned VirtRegMap::getRegAllocPref(unsigned virtReg) {
   return TRI->ResolveRegAllocHint(Hint.first, physReg, *MF);
 }
 
+bool VirtRegMap::hasPreferredPhys(unsigned VirtReg) {
+  unsigned Hint = MRI->getSimpleHint(VirtReg);
+  if (!Hint)
+    return 0;
+  if (TargetRegisterInfo::isVirtualRegister(Hint))
+    Hint = getPhys(Hint);
+  return getPhys(VirtReg) == Hint;
+}
+
 bool VirtRegMap::hasKnownPreference(unsigned VirtReg) {
   std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(VirtReg);
   if (TargetRegisterInfo::isPhysicalRegister(Hint.second))

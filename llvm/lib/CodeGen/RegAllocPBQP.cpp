@@ -526,7 +526,7 @@ void RegAllocPBQP::finalizeAlloc() const {
          itr != end; ++itr) {
     LiveInterval *li = &lis->getInterval(*itr);
 
-    unsigned physReg = vrm->getRegAllocPref(li->reg);
+    unsigned physReg = mri->getSimpleHint(li->reg);
 
     if (physReg == 0) {
       const TargetRegisterClass *liRC = mri->getRegClass(li->reg);

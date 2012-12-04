@@ -130,9 +130,7 @@ namespace llvm {
     unsigned getRegAllocPref(unsigned virtReg);
 
     /// @brief returns true if VirtReg is assigned to its preferred physreg.
-    bool hasPreferredPhys(unsigned VirtReg) {
-      return getPhys(VirtReg) == getRegAllocPref(VirtReg);
-    }
+    bool hasPreferredPhys(unsigned VirtReg);
 
     /// @brief returns true if VirtReg has a known preferred register.
     /// This returns false if VirtReg has a preference that is a virtual
