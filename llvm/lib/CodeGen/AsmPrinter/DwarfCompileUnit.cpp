@@ -1250,24 +1250,25 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
                                        DIE *IndexTy) {
   DIE *DW_Subrange = new DIE(dwarf::DW_TAG_subrange_type);
   addDIEEntry(DW_Subrange, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IndexTy);
-  uint64_t L = SR.getLo();
-  uint64_t H = SR.getHi();
-  int64_t Count = SR.getCount();
 
   // The L value defines the lower bounds which is typically zero for C/C++. The
-  // H value is the upper bounds.  Values are 64 bit.  H - L + 1 is the size
-  // of the array. If L > H then do not emit DW_AT_lower_bound and
-  // DW_AT_upper_bound attributes. If L is zero and H is also zero then the
-  // array has one element and in such case do not emit lower bound.
+  // Count value is the number of elements.  Values are 64 bit. If Count == -1
+  // then the array is unbounded and we do not emit DW_AT_lower_bound and
+  // DW_AT_upper_bound attributes. If L == 0 and Count == 0, then the array has
+  // zero elements in which case we do not emit an upper bound.
+  uint64_t L = SR.getLo();
+  int64_t Count = SR.getCount();
 
-  if (L > H) {
-    Buffer.addChild(DW_Subrange);
-    return;
+  if (Count != -1) {
+    // FIXME: An unbounded array should reference the expression that defines
+    // the array.
+    if (L)
+      addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, L);
+
+    if (Count != 0)
+      addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, Count - 1);
   }
-  if (L)
-    addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, L);
-  if (H > 0 || Count != 0)
-    addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, H);
+
   Buffer.addChild(DW_Subrange);
 }
 

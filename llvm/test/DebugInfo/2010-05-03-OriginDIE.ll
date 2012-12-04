@@ -81,6 +81,6 @@ declare void @uuid_LtoB(i8*, i8*)
 !30 = metadata !{i32 524310, metadata !3, metadata !"uint32_t", metadata !12, i32 55, i64 0, i64 0, i64 0, i32 0, metadata !31} ; [ DW_TAG_typedef ]
 !31 = metadata !{i32 524324, metadata !3, metadata !"unsigned int", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, i32 7} ; [ DW_TAG_base_type ]
 !32 = metadata !{metadata !33}
-!33 = metadata !{i32 524321, i64 0, i64 1, i64 2}        ; [ DW_TAG_subrange_type ]
+!33 = metadata !{i32 524321, i64 0, i64 2}        ; [ DW_TAG_subrange_type ]
 !34 = metadata !{i32 524544, metadata !24, metadata !"addr", metadata !10, i32 96, metadata !35} ; [ DW_TAG_auto_variable ]
 !35 = metadata !{i32 524303, metadata !3, metadata !"", metadata !3, i32 0, i64 32, i64 32, i64 0, i32 0, metadata !11} ; [ DW_TAG_pointer_type ]

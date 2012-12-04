@@ -741,12 +741,10 @@ DIArray DIBuilder::getOrCreateArray(ArrayRef<Value *> Elements) {
 
 /// getOrCreateSubrange - Create a descriptor for a value range.  This
 /// implicitly uniques the values returned.
-DISubrange DIBuilder::getOrCreateSubrange(int64_t Lo, int64_t Hi,
-                                          int64_t Count) {
+DISubrange DIBuilder::getOrCreateSubrange(int64_t Lo, int64_t Count) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_subrange_type),
     ConstantInt::get(Type::getInt64Ty(VMContext), Lo),
-    ConstantInt::get(Type::getInt64Ty(VMContext), Hi),
     ConstantInt::get(Type::getInt64Ty(VMContext), Count)
   };
 

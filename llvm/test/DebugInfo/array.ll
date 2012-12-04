@@ -29,6 +29,6 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ;CHECK-NOT: DW_AT_lower_bound
 ;CHECK-NOT: DW_AT_upper_bound
 ;CHECK-NEXT: End Of Children Mark
-!10 = metadata !{i32 589857, i64 1, i64 0, i64 -1}        ; [ DW_TAG_subrange_type ]
+!10 = metadata !{i32 589857, i64 0, i64 -1}        ; [ DW_TAG_subrange_type ]
 !11 = metadata !{i32 4, i32 7, metadata !7, null}
 !12 = metadata !{i32 5, i32 3, metadata !7, null}

@@ -97,7 +97,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !17 = metadata !{i32 720948, i32 0, null, metadata !"zero_arr", metadata !"zero_arr", metadata !"", metadata !6, i32 3, metadata !18, i32 0, i32 1, [10 x i32]* @zero_arr} ; [ DW_TAG_variable ]
 !18 = metadata !{i32 720897, null, metadata !"", null, i32 0, i64 320, i64 32, i32 0, i32 0, metadata !9, metadata !19, i32 0, i32 0} ; [ DW_TAG_array_type ]
 !19 = metadata !{metadata !20}
-!20 = metadata !{i32 720929, i64 0, i64 9, i64 10}        ; [ DW_TAG_subrange_type ]
+!20 = metadata !{i32 720929, i64 0, i64 10}        ; [ DW_TAG_subrange_type ]
 !21 = metadata !{i32 7, i32 5, metadata !22, null}
 !22 = metadata !{i32 720907, metadata !5, i32 6, i32 1, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
 !23 = metadata !{i32 9, i32 5, metadata !22, null}

@@ -31,7 +31,7 @@ entry:
 !14 = metadata !{i32 720897, null, metadata !"", null, i32 0, i64 34359738368, i64 8, i32 0, i32 0, metadata !15, metadata !16, i32 0, i32 0} ; [ DW_TAG_array_type ]
 !15 = metadata !{i32 720932, null, metadata !"char", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
 !16 = metadata !{metadata !17}
-!17 = metadata !{i32 720929, i64 0, i64 4294967295, i64 4294967296} ; [ DW_TAG_subrange_type ]
+!17 = metadata !{i32 720929, i64 0, i64 4294967296} ; [ DW_TAG_subrange_type ]
 !18 = metadata !{i32 5, i32 3, metadata !19, null}
 !19 = metadata !{i32 720907, metadata !5, i32 4, i32 1, metadata !6, i32 0} ; [ DW_TAG_lexical_block ]
 !20 = metadata !{i32 6, i32 1, metadata !19, null}

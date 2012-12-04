@@ -50,6 +50,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; CHECK-NEXT: 0x000000b2:     DW_AT_type [DW_FORM_ref4]    (cu + 0x0074 => {0x00000074})
 ; CHECK:      0x000000b6:     DW_TAG_subrange_type [11]  
 ; CHECK-NEXT: 0x000000b7:       DW_AT_type [DW_FORM_ref4]  (cu + 0x007b => {0x0000007b})
+; CHECK-NOT:  DW_AT_upper_bound
 
 ; int bar::b[0]:
 ; CHECK:      0x000000d3:     DW_TAG_member [10]  
@@ -76,7 +77,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !15 = metadata !{i32 786445, metadata !12, metadata !"b", metadata !6, i32 3, i64 32, i64 32, i64 32, i32 0, metadata !16} ; [ DW_TAG_member ] [b] [line 3, size 32, align 32, offset 32] [from ]
 !16 = metadata !{i32 786433, null, metadata !"", null, i32 0, i64 32, i64 32, i32 0, i32 0, metadata !9, metadata !17, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 32, align 32, offset 0] [from int]
 !17 = metadata !{metadata !18}
-!18 = metadata !{i32 786465, i64 0, i64 0, i64 1} ; [ DW_TAG_subrange_type ] [0, 0]
+!18 = metadata !{i32 786465, i64 0, i64 1} ; [ DW_TAG_subrange_type ] [0, 1]
 !19 = metadata !{i32 12, i32 0, metadata !11, null}
 !20 = metadata !{i32 786688, metadata !11, metadata !"my_bar", metadata !6, i32 13, metadata !21, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [my_bar] [line 13]
 !21 = metadata !{i32 786451, null, metadata !"bar", metadata !6, i32 6, i64 32, i64 32, i32 0, i32 0, null, metadata !22, i32 0, i32 0, i32 0} ; [ DW_TAG_structure_type ] [bar] [line 6, size 32, align 32, offset 0] [from ]
@@ -85,7 +86,7 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !24 = metadata !{i32 786445, metadata !21, metadata !"b", metadata !6, i32 8, i64 0, i64 32, i64 32, i32 0, metadata !25} ; [ DW_TAG_member ] [b] [line 8, size 0, align 32, offset 32] [from ]
 !25 = metadata !{i32 786433, null, metadata !"", null, i32 0, i64 0, i64 32, i32 0, i32 0, metadata !9, metadata !26, i32 0, i32 0} ; [ DW_TAG_array_type ] [line 0, size 0, align 32, offset 0] [from int]
 !26 = metadata !{metadata !27}
-!27 = metadata !{i32 786465, i64 0, i64 0, i64 0} ; [ DW_TAG_subrange_type ] [0, 0]
+!27 = metadata !{i32 786465, i64 0, i64 0} ; [ DW_TAG_subrange_type ] [0, 0]
 !28 = metadata !{i32 13, i32 0, metadata !11, null}
 !29 = metadata !{i32 15, i32 0, metadata !11, null}
 !30 = metadata !{i32 16, i32 0, metadata !11, null}

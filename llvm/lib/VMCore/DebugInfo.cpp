@@ -1049,7 +1049,11 @@ void DIDescriptor::print(raw_ostream &OS) const {
 }
 
 void DISubrange::printInternal(raw_ostream &OS) const {
-  OS << " [" << getLo() << ", " << getHi() << ']';
+  int64_t Count = getCount();
+  if (Count != -1)
+    OS << " [" << getLo() << ", " << Count - 1 << ']';
+  else
+    OS << " [unbound]";
 }
 
 void DIScope::printInternal(raw_ostream &OS) const {

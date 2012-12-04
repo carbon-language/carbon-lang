@@ -154,7 +154,7 @@ declare void @llvm.memcpy.p0i8.p0i8.i64(i8* nocapture, i8* nocapture, i64, i32, 
 !24 = metadata !{i32 720909, metadata !20, metadata !"c2", metadata !6, i32 24, i64 16, i64 8, i64 8, i32 0, metadata !25} ; [ DW_TAG_member ]
 !25 = metadata !{i32 720897, null, metadata !"", null, i32 0, i64 16, i64 8, i32 0, i32 0, metadata !23, metadata !26, i32 0, i32 0} ; [ DW_TAG_array_type ]
 !26 = metadata !{metadata !27}
-!27 = metadata !{i32 720929, i64 0, i64 1, i64 2}        ; [ DW_TAG_subrange_type ]
+!27 = metadata !{i32 720929, i64 0, i64 2}        ; [ DW_TAG_subrange_type ]
 !28 = metadata !{i32 720942, i32 0, metadata !20, metadata !"char_struct", metadata !"char_struct", metadata !"", metadata !6, i32 22, metadata !29, i1 false, i1 false, i32 0, i32 0, null, i32 320, i1 false, null, null, i32 0, metadata !10} ; [ DW_TAG_subprogram ]
 !29 = metadata !{i32 720917, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !30, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !30 = metadata !{null, metadata !31}
