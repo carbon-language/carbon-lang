@@ -17,9 +17,11 @@
 static const uptr kAllocatorSpace = 0x700000000000ULL;
 static const uptr kAllocatorSize  = 0x010000000000ULL;  // 1T.
 
-typedef DefaultSizeClassMap SCMap;
-typedef
-  SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 16, SCMap> Allocator64;
+typedef SizeClassAllocator64<
+  kAllocatorSpace, kAllocatorSize, 16, DefaultSizeClassMap> Allocator64;
+
+typedef SizeClassAllocator64<
+  kAllocatorSpace, kAllocatorSize, 16, CompactSizeClassMap> Allocator64Compact;
 
 template <class SizeClassMap>
 void TestSizeClassMap() {
@@ -74,6 +76,7 @@ void TestSizeClassAllocator() {
     // Allocate a bunch of chunks.
     for (uptr s = 0; s < sizeof(sizes) /sizeof(sizes[0]); s++) {
       uptr size = sizes[s];
+      if (!a.CanAllocate(size, 1)) continue;
       // printf("s = %ld\n", size);
       uptr n_iter = std::max((uptr)2, 1000000 / size);
       for (uptr i = 0; i < n_iter; i++) {
@@ -82,7 +85,7 @@ void TestSizeClassAllocator() {
         CHECK(a.PointerIsMine(x));
         CHECK_GE(a.GetActuallyAllocatedSize(x), size);
         uptr class_id = a.GetSizeClass(x);
-        CHECK_EQ(class_id, SCMap::ClassID(size));
+        CHECK_EQ(class_id, Allocator::SizeClassMapT::ClassID(size));
         uptr *metadata = reinterpret_cast<uptr*>(a.GetMetaData(x));
         metadata[0] = reinterpret_cast<uptr>(x) + 1;
         metadata[1] = 0xABCD;
@@ -108,6 +111,10 @@ void TestSizeClassAllocator() {
 
 TEST(SanitizerCommon, SizeClassAllocator64) {
   TestSizeClassAllocator<Allocator64>();
+}
+
+TEST(SanitizerCommon, SizeClassAllocator64Compact) {
+  TestSizeClassAllocator<Allocator64Compact>();
 }
 
 template <class Allocator>
@@ -137,6 +144,10 @@ void SizeClassAllocator64MetadataStress() {
 
 TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
   SizeClassAllocator64MetadataStress<Allocator64>();
+}
+
+TEST(SanitizerCommon, SizeClassAllocator64CompactMetadataStress) {
+  SizeClassAllocator64MetadataStress<Allocator64Compact>();
 }
 
 template<class Allocator>
@@ -255,7 +266,6 @@ void TestCombinedAllocator() {
   }
   a.TestOnlyUnmap();
 }
-
 
 TEST(SanitizerCommon, CombinedAllocator) {
   TestCombinedAllocator<Allocator64,
