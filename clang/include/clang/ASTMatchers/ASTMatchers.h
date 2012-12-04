@@ -1974,6 +1974,19 @@ AST_MATCHER_P(FunctionDecl, hasAnyParameter,
   return false;
 }
 
+/// \brief Matches \c FunctionDecls that have a specific parameter count.
+///
+/// Given
+/// \code
+///   void f(int i) {}
+///   void g(int i, int j) {}
+/// \endcode
+/// functionDecl(parameterCountIs(2))
+///   matches g(int i, int j) {}
+AST_MATCHER_P(FunctionDecl, parameterCountIs, unsigned, N) {
+  return Node.getNumParams() == N;
+}
+
 /// \brief Matches the return type of a function declaration.
 ///
 /// Given:

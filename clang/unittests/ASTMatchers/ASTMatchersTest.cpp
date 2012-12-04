@@ -1238,6 +1238,14 @@ TEST(Matcher, ArgumentCount) {
   EXPECT_TRUE(notMatches("void x(int, int) { x(0, 0); }", Call1Arg));
 }
 
+TEST(Matcher, ParameterCount) {
+  DeclarationMatcher Function1Arg = functionDecl(parameterCountIs(1));
+  EXPECT_TRUE(matches("void f(int i) {}", Function1Arg));
+  EXPECT_TRUE(matches("class X { void f(int i) {} };", Function1Arg));
+  EXPECT_TRUE(notMatches("void f() {}", Function1Arg));
+  EXPECT_TRUE(notMatches("void f(int i, int j, int k) {}", Function1Arg));
+}
+
 TEST(Matcher, References) {
   DeclarationMatcher ReferenceClassX = varDecl(
       hasType(references(recordDecl(hasName("X")))));
