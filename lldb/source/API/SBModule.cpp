@@ -328,6 +328,68 @@ SBModule::GetSymbolAtIndex (size_t idx)
     return sb_symbol;
 }
 
+lldb::SBSymbol
+SBModule::FindSymbol (const char *name,
+                      lldb::SymbolType symbol_type)
+{
+    SBSymbol sb_symbol;
+    if (name && name[0])
+    {
+        ModuleSP module_sp (GetSP ());
+        if (module_sp)
+        {
+            ObjectFile *obj_file = module_sp->GetObjectFile();
+            if (obj_file)
+            {
+                Symtab *symtab = obj_file->GetSymtab();
+                if (symtab)
+                    sb_symbol.SetSymbol(symtab->FindFirstSymbolWithNameAndType(ConstString(name), symbol_type, Symtab::eDebugAny, Symtab::eVisibilityAny));
+            }
+        }
+    }
+    return sb_symbol;
+}
+
+
+lldb::SBSymbolContextList
+SBModule::FindSymbols (const char *name, lldb::SymbolType symbol_type)
+{
+    SBSymbolContextList sb_sc_list;
+    if (name && name[0])
+    {
+        ModuleSP module_sp (GetSP ());
+        if (module_sp)
+        {
+            ObjectFile *obj_file = module_sp->GetObjectFile();
+            if (obj_file)
+            {
+                Symtab *symtab = obj_file->GetSymtab();
+                if (symtab)
+                {
+                    std::vector<uint32_t> matching_symbol_indexes;
+                    const size_t num_matches = symtab->FindAllSymbolsWithNameAndType(ConstString(name), symbol_type, matching_symbol_indexes);
+                    if (num_matches)
+                    {
+                        SymbolContext sc;
+                        sc.module_sp = module_sp;
+                        SymbolContextList &sc_list = *sb_sc_list;
+                        for (size_t i=0; i<num_matches; ++i)
+                        {
+                            sc.symbol = symtab->SymbolAtIndex (matching_symbol_indexes[i]);
+                            if (sc.symbol)
+                                sc_list.Append(sc);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return sb_sc_list;
+    
+}
+
+
+
 size_t
 SBModule::GetNumSections ()
 {

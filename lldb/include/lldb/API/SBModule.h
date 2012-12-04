@@ -120,6 +120,14 @@ public:
     lldb::SBSymbol
     GetSymbolAtIndex (size_t idx);
 
+    lldb::SBSymbol
+    FindSymbol (const char *name,
+                lldb::SymbolType type = eSymbolTypeAny);
+
+    lldb::SBSymbolContextList
+    FindSymbols (const char *name,
+                 lldb::SymbolType type = eSymbolTypeAny);
+
     size_t
     GetNumSections ();
     

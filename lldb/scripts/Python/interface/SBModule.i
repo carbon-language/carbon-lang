@@ -177,6 +177,15 @@ public:
     lldb::SBSymbol
     GetSymbolAtIndex (size_t idx);
 
+    lldb::SBSymbol
+    FindSymbol (const char *name,
+                lldb::SymbolType type = eSymbolTypeAny);
+
+    lldb::SBSymbolContextList
+    FindSymbols (const char *name,
+                 lldb::SymbolType type = eSymbolTypeAny);
+             
+
     size_t
     GetNumSections ();
 
@@ -269,9 +278,10 @@ public:
                         return self.sbmodule.GetSymbolAtIndex(key)
                 elif type(key) is str:
                     matches = []
-                    for idx in range(count):
-                        symbol = self.sbmodule.GetSymbolAtIndex(idx)
-                        if symbol.name == key or symbol.mangled == key:
+                    sc_list = self.sbmodule.FindSymbols(key)
+                    for sc in sc_list:
+                        symbol = sc.symbol
+                        if symbol:
                             matches.append(symbol)
                     return matches
                 elif isinstance(key, self.re_compile_type):

@@ -2355,3 +2355,24 @@ SBTarget::ClearModuleLoadAddress (lldb::SBModule module)
 }
 
 
+lldb::SBSymbolContextList
+SBTarget::FindSymbols (const char *name, lldb::SymbolType symbol_type)
+{
+    SBSymbolContextList sb_sc_list;
+    if (name && name[0])
+    {
+        TargetSP target_sp(GetSP());
+        if (target_sp)
+        {
+            bool append = true;
+            target_sp->GetImages().FindSymbolsWithNameAndType (ConstString(name),
+                                                               symbol_type,
+                                                               *sb_sc_list,
+                                                               append);
+        }
+    }
+    return sb_sc_list;
+    
+}
+
+
