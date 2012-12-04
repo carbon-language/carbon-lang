@@ -3660,8 +3660,8 @@ static SDValue LowerCTPOP(SDNode *N, SelectionDAG &DAG,
   EVT VT = N->getValueType(0);
 
   assert(ST->hasNEON() && "Custom ctpop lowering requires NEON.");
-  assert((VT == MVT::v2i32 || VT == MVT::v4i32) ||
-         (VT == MVT::v4i16 || VT == MVT::v8i16) &&
+  assert((VT == MVT::v2i32 || VT == MVT::v4i32 ||
+          VT == MVT::v4i16 || VT == MVT::v8i16) &&
          "Unexpected type for custom ctpop lowering");
 
   if (VT.getVectorElementType() == MVT::i32)
