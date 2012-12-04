@@ -931,19 +931,21 @@ ABIMacOSX_i386::RegisterIsVolatile (const RegisterInfo *reg_info)
     return RegisterIsCalleeSaved (reg_info);
 }
 
+// v. http://developer.apple.com/library/mac/#documentation/developertools/Conceptual/LowLevelABI/130-IA-32_Function_Calling_Conventions/IA32.html#//apple_ref/doc/uid/TP40002492-SW4
+
 bool
 ABIMacOSX_i386::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
 {
     if (reg_info)
     {
-        // Volatile registers include: ebx, ebp, esi, edi, esp, eip
+        // Saved registers are ebx, ebp, esi, edi, esp, eip
         const char *name = reg_info->name;
         if (name[0] == 'e')
         {
             switch (name[1])
             {
             case 'b': 
-                if (name[2] == 'x') // ebp is volatile in the ABI, but the unwinders can find it
+                if (name[2] == 'x' || name[2] == 'p')
                     return name[3] == '\0';
                 break;
             case 'd':
@@ -960,6 +962,12 @@ ABIMacOSX_i386::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
                 break;
             }
         }
+        if (name[0] == 's' && name[1] == 'p' && name[2] == '\0')   // sp
+            return true;
+        if (name[0] == 'f' && name[1] == 'p' && name[2] == '\0')   // fp
+            return true;
+        if (name[0] == 'p' && name[1] == 'c' && name[2] == '\0')   // pc
+            return true;
     }
     return false;
 }
