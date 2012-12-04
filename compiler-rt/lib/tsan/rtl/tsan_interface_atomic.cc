@@ -139,7 +139,7 @@ template<typename T> T func_xor(T v, T op) {
 }
 
 template<typename T> T func_nand(T v, T op) {
-  return ~v & op;
+  return ~(v & op);
 }
 
 #define SCOPED_ATOMIC(func, ...) \
