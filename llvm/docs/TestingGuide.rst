@@ -169,18 +169,7 @@ The LLVM regression tests are driven by :program:`lit` and are located in the
 This directory contains a large array of small tests that exercise
 various features of LLVM and to ensure that regressions do not occur.
 The directory is broken into several sub-directories, each focused on a
-particular area of LLVM. A few of the important ones are:
-
--  ``Analysis``: checks Analysis passes.
--  ``Archive``: checks the Archive library.
--  ``Assembler``: checks Assembly reader/writer functionality.
--  ``Bitcode``: checks Bitcode reader/writer functionality.
--  ``CodeGen``: checks code generation and each target.
--  ``Features``: checks various features of the LLVM language.
--  ``Linker``: tests bitcode linking.
--  ``Transforms``: tests each of the scalar, IPO, and utility transforms
-   to ensure they make the right transformations.
--  ``Verifier``: tests the IR verifier.
+particular area of LLVM.
 
 Writing new regression tests
 ----------------------------
