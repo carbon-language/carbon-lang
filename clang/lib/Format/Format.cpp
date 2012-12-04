@@ -686,6 +686,9 @@ public:
         StructuralError(false) {
   }
 
+  virtual ~Formatter() {
+  }
+
   tooling::Replacements format() {
     UnwrappedLineParser Parser(Lex, SourceMgr, *this);
     StructuralError = Parser.parse();

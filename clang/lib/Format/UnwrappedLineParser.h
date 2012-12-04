@@ -71,6 +71,8 @@ struct UnwrappedLine {
 
 class UnwrappedLineConsumer {
 public:
+  virtual ~UnwrappedLineConsumer() {
+  }
   virtual void formatUnwrappedLine(const UnwrappedLine &Line) = 0;
 };
 
