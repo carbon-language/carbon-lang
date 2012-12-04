@@ -12,11 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
+#include "clang/AST/CXXInheritance.h"
+#include "clang/AST/CharUnits.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
-#include "clang/AST/CharUnits.h"
-#include "clang/AST/CXXInheritance.h"
-#include "clang/AST/DeclObjC.h"
 
 using namespace clang;
 using namespace ento;

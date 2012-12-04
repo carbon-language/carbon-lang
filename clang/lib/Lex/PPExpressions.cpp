@@ -17,11 +17,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/MacroInfo.h"
-#include "clang/Lex/LiteralSupport.h"
-#include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Lex/LexDiagnostic.h"
+#include "clang/Lex/LiteralSupport.h"
+#include "clang/Lex/MacroInfo.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;

@@ -13,10 +13,10 @@
 
 #include "CodeGenModule.h"
 #include "CGCXXABI.h"
+#include "CGObjCRuntime.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Type.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "CGObjCRuntime.h"
 
 using namespace clang;
 using namespace CodeGen;

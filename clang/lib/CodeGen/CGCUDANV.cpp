@@ -20,7 +20,6 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Support/CallSite.h"
-
 #include <vector>
 
 using namespace clang;

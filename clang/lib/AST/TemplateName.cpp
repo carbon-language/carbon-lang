@@ -1,4 +1,4 @@
-//===--- TemplateName.h - C++ Template Name Representation-------*- C++ -*-===//
+//===--- TemplateName.cpp - C++ Template Name Representation---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,10 +12,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/TemplateName.h"
-#include "clang/AST/TemplateBase.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/AST/TemplateBase.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LangOptions.h"
 #include "llvm/Support/raw_ostream.h"

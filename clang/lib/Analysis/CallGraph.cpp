@@ -11,11 +11,9 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Analysis/CallGraph.h"
-
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/StmtVisitor.h"
-
 #include "llvm/Support/GraphWriter.h"
 
 using namespace clang;

@@ -8,10 +8,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Types.h"
-
 #include "llvm/ADT/StringSwitch.h"
-#include <string.h>
 #include <cassert>
+#include <string.h>
 
 using namespace clang::driver;
 using namespace clang::driver::types;

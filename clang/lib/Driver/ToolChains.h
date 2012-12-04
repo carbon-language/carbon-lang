@@ -10,14 +10,12 @@
 #ifndef CLANG_LIB_DRIVER_TOOLCHAINS_H_
 #define CLANG_LIB_DRIVER_TOOLCHAINS_H_
 
+#include "Tools.h"
+#include "clang/Basic/VersionTuple.h"
 #include "clang/Driver/Action.h"
 #include "clang/Driver/ToolChain.h"
-
-#include "clang/Basic/VersionTuple.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Compiler.h"
-
-#include "Tools.h"
 
 namespace clang {
 namespace driver {

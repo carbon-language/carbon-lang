@@ -12,20 +12,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "CodeGenFunction.h"
-#include "CodeGenModule.h"
 #include "CGCUDARuntime.h"
 #include "CGCXXABI.h"
 #include "CGDebugInfo.h"
-#include "clang/Basic/TargetInfo.h"
+#include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "llvm/Operator.h"
+#include "llvm/DataLayout.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/MDBuilder.h"
-#include "llvm/DataLayout.h"
+#include "llvm/Operator.h"
 using namespace clang;
 using namespace CodeGen;
 

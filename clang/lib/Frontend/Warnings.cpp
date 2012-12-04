@@ -22,13 +22,13 @@
 //
 #include "clang/Frontend/Utils.h"
 #include "clang/Basic/Diagnostic.h"
-#include "clang/Sema/SemaDiagnostic.h"
-#include "clang/Lex/LexDiagnostic.h"
 #include "clang/Basic/DiagnosticOptions.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Lex/LexDiagnostic.h"
+#include "clang/Sema/SemaDiagnostic.h"
+#include <algorithm>
 #include <cstring>
 #include <utility>
-#include <algorithm>
 using namespace clang;
 
 // EmitUnknownDiagWarning - Emit a warning and typo hint for unknown warning

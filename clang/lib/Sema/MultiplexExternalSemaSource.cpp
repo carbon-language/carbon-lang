@@ -11,7 +11,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/Sema/MultiplexExternalSemaSource.h"
-
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/Sema/Lookup.h"
 

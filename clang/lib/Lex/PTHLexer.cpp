@@ -11,17 +11,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/TokenKinds.h"
+#include "clang/Lex/PTHLexer.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/FileSystemStatCache.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/OnDiskHashTable.h"
+#include "clang/Basic/TokenKinds.h"
 #include "clang/Lex/LexDiagnostic.h"
-#include "clang/Lex/PTHLexer.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/PTHManager.h"
-#include "clang/Lex/Token.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/Token.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"

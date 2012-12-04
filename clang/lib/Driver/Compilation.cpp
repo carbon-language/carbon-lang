@@ -8,20 +8,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Compilation.h"
-
 #include "clang/Driver/Action.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Driver.h"
 #include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/Options.h"
 #include "clang/Driver/ToolChain.h"
-
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringSwitch.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Program.h"
-#include <sys/stat.h>
+#include "llvm/Support/raw_ostream.h"
 #include <errno.h>
+#include <sys/stat.h>
 
 using namespace clang::driver;
 using namespace clang;

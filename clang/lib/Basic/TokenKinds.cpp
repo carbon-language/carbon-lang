@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Basic/TokenKinds.h"
-
 #include <cassert>
 using namespace clang;
 

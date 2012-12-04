@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
-#include "CodeGenModule.h"
+#include "CGDebugInfo.h"
 #include "CGOpenCLRuntime.h"
+#include "CodeGenModule.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
@@ -22,9 +22,9 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
+#include "llvm/DataLayout.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Type.h"
 using namespace clang;
 using namespace CodeGen;

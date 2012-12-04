@@ -1,4 +1,4 @@
-//===--- UnwrappedLineParser.cpp - Format C++ code ------------------------===//
+//===--- UnwrappedLineParser.h - Format C++ code ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,8 +19,8 @@
 #ifndef LLVM_CLANG_FORMAT_UNWRAPPED_LINE_PARSER_H
 #define LLVM_CLANG_FORMAT_UNWRAPPED_LINE_PARSER_H
 
-#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
 
 namespace clang {

@@ -8,12 +8,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/ARCMigrate/FileRemapper.h"
-#include "clang/Lex/PreprocessorOptions.h"
-#include "clang/Basic/FileManager.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Lex/PreprocessorOptions.h"
+#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
-#include "llvm/Support/FileSystem.h"
 #include "llvm/Support/raw_ostream.h"
 #include <fstream>
 

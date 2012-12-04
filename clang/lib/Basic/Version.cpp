@@ -13,10 +13,10 @@
 
 #include "clang/Basic/Version.h"
 #include "clang/Basic/LLVM.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Config/config.h"
-#include <cstring>
+#include "llvm/Support/raw_ostream.h"
 #include <cstdlib>
+#include <cstring>
 
 namespace clang {
 

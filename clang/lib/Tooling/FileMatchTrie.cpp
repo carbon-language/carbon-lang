@@ -11,12 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <sstream>
 #include "clang/Tooling/FileMatchTrie.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/PathV2.h"
 #include "llvm/Support/raw_ostream.h"
+#include <sstream>
 
 namespace clang {
 namespace tooling {

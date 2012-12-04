@@ -7,19 +7,19 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include <vector>
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/DenseSet.h"
-#include "clang/Basic/DiagnosticOptions.h"
-#include "clang/Basic/SourceManager.h"
-#include "clang/Basic/FileManager.h"
-#include "clang/Basic/Diagnostic.h"
-#include "clang/Basic/Version.h"
-#include "clang/Lex/Lexer.h"
 #include "clang/Frontend/SerializedDiagnosticPrinter.h"
+#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/DiagnosticOptions.h"
+#include "clang/Basic/FileManager.h"
+#include "clang/Basic/SourceManager.h"
+#include "clang/Basic/Version.h"
 #include "clang/Frontend/DiagnosticRenderer.h"
+#include "clang/Lex/Lexer.h"
+#include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/Support/raw_ostream.h"
+#include <vector>
 
 using namespace clang;
 using namespace clang::serialized_diags;

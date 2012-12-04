@@ -14,14 +14,14 @@
 
 #define DEBUG_TYPE "CoreEngine"
 
-#include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CoreEngine.h"
-#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/StmtCXX.h"
-#include "llvm/Support/Casting.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Casting.h"
 
 using namespace clang;
 using namespace ento;

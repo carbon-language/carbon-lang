@@ -13,7 +13,6 @@
 #include "clang/Driver/Tool.h"
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
-
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Compiler.h"
 

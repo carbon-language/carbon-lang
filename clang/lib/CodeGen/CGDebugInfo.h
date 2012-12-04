@@ -14,16 +14,15 @@
 #ifndef CLANG_CODEGEN_CGDEBUGINFO_H
 #define CLANG_CODEGEN_CGDEBUGINFO_H
 
-#include "clang/AST/Type.h"
-#include "clang/AST/Expr.h"
-#include "clang/Basic/SourceLocation.h"
-#include "llvm/DebugInfo.h"
-#include "llvm/DIBuilder.h"
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/Support/ValueHandle.h"
-#include "llvm/Support/Allocator.h"
-
 #include "CGBuilder.h"
+#include "clang/AST/Expr.h"
+#include "clang/AST/Type.h"
+#include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/DIBuilder.h"
+#include "llvm/DebugInfo.h"
+#include "llvm/Support/Allocator.h"
+#include "llvm/Support/ValueHandle.h"
 
 namespace llvm {
   class MDNode;

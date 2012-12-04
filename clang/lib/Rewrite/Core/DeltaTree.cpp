@@ -13,8 +13,8 @@
 
 #include "clang/Rewrite/Core/DeltaTree.h"
 #include "clang/Basic/LLVM.h"
-#include <cstring>
 #include <cstdio>
+#include <cstring>
 using namespace clang;
 
 /// The DeltaTree class is a multiway search tree (BTree) structure with some

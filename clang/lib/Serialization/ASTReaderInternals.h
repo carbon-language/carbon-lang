@@ -13,11 +13,12 @@
 #ifndef LLVM_CLANG_SERIALIZATION_ASTREADER_INTERNALS_H
 #define LLVM_CLANG_SERIALIZATION_ASTREADER_INTERNALS_H
 
-#include "clang/Basic/OnDiskHashTable.h"
+#include "ASTReaderInternals.h"
 #include "clang/AST/DeclarationName.h"
+#include "clang/Basic/OnDiskHashTable.h"
 #include "llvm/Support/Endian.h"
-#include <utility>
 #include <sys/stat.h>
+#include <utility>
 
 namespace clang {
 

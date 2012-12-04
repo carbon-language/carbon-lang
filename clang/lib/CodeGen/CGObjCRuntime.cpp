@@ -14,15 +14,12 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGObjCRuntime.h"
-
-#include "CGRecordLayout.h"
-#include "CodeGenModule.h"
-#include "CodeGenFunction.h"
 #include "CGCleanup.h"
-
+#include "CGRecordLayout.h"
+#include "CodeGenFunction.h"
+#include "CodeGenModule.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtObjC.h"
-
 #include "llvm/Support/CallSite.h"
 
 using namespace clang;

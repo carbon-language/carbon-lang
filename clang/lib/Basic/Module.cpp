@@ -1,4 +1,4 @@
-//===--- Module.h - Describe a module ---------------------------*- C++ -*-===//
+//===--- Module.cpp - Describe a module -----------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,10 +15,10 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 using namespace clang;
 
 Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 

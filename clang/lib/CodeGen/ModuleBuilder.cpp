@@ -13,16 +13,16 @@
 
 #include "clang/CodeGen/ModuleBuilder.h"
 #include "CodeGenModule.h"
-#include "clang/Frontend/CodeGenOptions.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/TargetInfo.h"
+#include "clang/Frontend/CodeGenOptions.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/DataLayout.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/DataLayout.h"
-#include "llvm/ADT/OwningPtr.h"
 using namespace clang;
 
 namespace {

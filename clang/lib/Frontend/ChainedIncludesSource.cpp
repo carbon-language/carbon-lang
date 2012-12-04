@@ -13,14 +13,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/ChainedIncludesSource.h"
-#include "clang/Frontend/TextDiagnosticPrinter.h"
-#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "clang/Frontend/CompilerInstance.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Parse/ParseAST.h"
 #include "clang/Serialization/ASTReader.h"
 #include "clang/Serialization/ASTWriter.h"
-#include "clang/Parse/ParseAST.h"
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/MemoryBuffer.h"
 
 using namespace clang;

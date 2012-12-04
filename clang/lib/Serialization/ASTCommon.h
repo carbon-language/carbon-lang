@@ -14,8 +14,8 @@
 #ifndef LLVM_CLANG_SERIALIZATION_LIB_AST_COMMON_H
 #define LLVM_CLANG_SERIALIZATION_LIB_AST_COMMON_H
 
-#include "clang/Serialization/ASTBitCodes.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Serialization/ASTBitCodes.h"
 
 namespace clang {
 

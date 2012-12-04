@@ -13,16 +13,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Sema/SemaInternal.h"
-#include "clang/Sema/Initialization.h"
-#include "clang/AST/DeclObjC.h"
-#include "clang/AST/ExprObjC.h"
-#include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTMutationListener.h"
-#include "clang/Lex/Lexer.h"
+#include "clang/AST/DeclObjC.h"
+#include "clang/AST/ExprCXX.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Lex/Lexer.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Sema/Initialization.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallString.h"
-#include "clang/Lex/Preprocessor.h"
 
 using namespace clang;
 

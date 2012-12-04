@@ -8,14 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Option.h"
-
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/Twine.h"
-#include <cassert>
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <cassert>
 using namespace clang::driver;
 
 Option::Option(const OptTable::Info *info, const OptTable *owner)

@@ -14,10 +14,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGCUDARuntime.h"
-#include "clang/AST/Decl.h"
-#include "clang/AST/ExprCXX.h"
 #include "CGCall.h"
 #include "CodeGenFunction.h"
+#include "clang/AST/Decl.h"
+#include "clang/AST/ExprCXX.h"
 
 using namespace clang;
 using namespace CodeGen;

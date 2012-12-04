@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_ANALYSIS_BUGTYPE
 #define LLVM_CLANG_ANALYSIS_BUGTYPE
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/FoldingSet.h"
 #include <string>
 

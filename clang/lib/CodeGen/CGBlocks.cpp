@@ -11,15 +11,15 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "CGDebugInfo.h"
-#include "CodeGenFunction.h"
-#include "CGObjCRuntime.h"
-#include "CodeGenModule.h"
 #include "CGBlocks.h"
+#include "CGDebugInfo.h"
+#include "CGObjCRuntime.h"
+#include "CodeGenFunction.h"
+#include "CodeGenModule.h"
 #include "clang/AST/DeclObjC.h"
-#include "llvm/Module.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/DataLayout.h"
+#include "llvm/Module.h"
 #include <algorithm>
 #include <cstdio>
 

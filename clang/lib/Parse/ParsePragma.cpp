@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "ParsePragma.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/ParseDiagnostic.h"
 #include "clang/Parse/Parser.h"
-#include "clang/Lex/Preprocessor.h"
 using namespace clang;
 
 /// \brief Handle the annotation token produced for #pragma unused(...)

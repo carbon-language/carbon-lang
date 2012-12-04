@@ -8,9 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Driver/Job.h"
-
 #include "llvm/ADT/STLExtras.h"
-
 #include <cassert>
 using namespace clang::driver;
 

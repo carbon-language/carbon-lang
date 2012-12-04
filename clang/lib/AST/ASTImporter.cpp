@@ -12,7 +12,6 @@
 //
 //===----------------------------------------------------------------------===//
 #include "clang/AST/ASTImporter.h"
-
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/DeclCXX.h"

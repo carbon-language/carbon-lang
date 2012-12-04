@@ -13,10 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/LiteralSupport.h"
-#include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/LexDiagnostic.h"
-#include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/ConvertUTF.h"
+#include "clang/Basic/TargetInfo.h"
+#include "clang/Lex/LexDiagnostic.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;

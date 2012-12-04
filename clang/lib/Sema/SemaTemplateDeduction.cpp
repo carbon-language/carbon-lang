@@ -10,18 +10,18 @@
 //
 //===----------------------------------------------------------------------===/
 
-#include "clang/Sema/Sema.h"
-#include "clang/Sema/DeclSpec.h"
-#include "clang/Sema/Template.h"
 #include "clang/Sema/TemplateDeduction.h"
+#include "TreeTransform.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
-#include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "clang/AST/StmtVisitor.h"
+#include "clang/Sema/DeclSpec.h"
+#include "clang/Sema/Sema.h"
+#include "clang/Sema/Template.h"
 #include "llvm/ADT/SmallBitVector.h"
-#include "TreeTransform.h"
 #include <algorithm>
 
 namespace clang {

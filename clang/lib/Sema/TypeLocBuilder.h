@@ -15,8 +15,8 @@
 #ifndef LLVM_CLANG_SEMA_TYPELOCBUILDER_H
 #define LLVM_CLANG_SEMA_TYPELOCBUILDER_H
 
-#include "clang/AST/TypeLoc.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/TypeLoc.h"
 
 namespace clang {
 

@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/RecordLayout.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/RecordLayout.h"
 #include "llvm/ADT/SetVector.h"
 #include <algorithm>
 #include <set>

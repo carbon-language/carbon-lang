@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Rewrite/Frontend/Rewriters.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
+#include "clang/Lex/Preprocessor.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;

@@ -15,7 +15,6 @@
 #define LLVM_CLANG_MACROARGS_H
 
 #include "llvm/ADT/ArrayRef.h"
-
 #include <vector>
 
 namespace clang {

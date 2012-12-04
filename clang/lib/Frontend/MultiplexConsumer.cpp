@@ -14,7 +14,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Frontend/MultiplexConsumer.h"
-
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/Serialization/ASTDeserializationListener.h"

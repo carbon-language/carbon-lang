@@ -10,11 +10,11 @@
 #include "clang/AST/RawCommentList.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Comment.h"
-#include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentBriefParser.h"
-#include "clang/AST/CommentSema.h"
-#include "clang/AST/CommentParser.h"
 #include "clang/AST/CommentCommandTraits.h"
+#include "clang/AST/CommentLexer.h"
+#include "clang/AST/CommentParser.h"
+#include "clang/AST/CommentSema.h"
 #include "llvm/ADT/STLExtras.h"
 
 using namespace clang;

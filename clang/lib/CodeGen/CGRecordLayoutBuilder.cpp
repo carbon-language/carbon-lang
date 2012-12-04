@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGRecordLayout.h"
+#include "CGCXXABI.h"
+#include "CodeGenTypes.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
 #include "clang/AST/CXXInheritance.h"
@@ -19,13 +21,11 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "CodeGenTypes.h"
-#include "CGCXXABI.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Type.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/DataLayout.h"
+#include "llvm/Type.h"
 using namespace clang;
 using namespace CodeGen;
 

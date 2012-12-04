@@ -15,8 +15,8 @@
 #ifndef LLVM_CLANG_ANALYSIS_BODYFARM_H
 #define LLVM_CLANG_ANALYSIS_BODYFARM_H
 
-#include "llvm/ADT/Optional.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Optional.h"
 
 namespace clang {
 

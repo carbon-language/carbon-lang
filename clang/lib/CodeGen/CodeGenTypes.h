@@ -16,8 +16,8 @@
 
 #include "CGCall.h"
 #include "clang/AST/GlobalDecl.h"
-#include "llvm/Module.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Module.h"
 #include <vector>
 
 namespace llvm {

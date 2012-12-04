@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTCommon.h"
-#include "clang/Serialization/ASTDeserializationListener.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Serialization/ASTDeserializationListener.h"
 #include "llvm/ADT/StringExtras.h"
 
 using namespace clang;

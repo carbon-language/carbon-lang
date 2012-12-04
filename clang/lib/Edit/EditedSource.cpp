@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Edit/EditedSource.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Edit/Commit.h"
 #include "clang/Edit/EditsReceiver.h"
 #include "clang/Lex/Lexer.h"
-#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 

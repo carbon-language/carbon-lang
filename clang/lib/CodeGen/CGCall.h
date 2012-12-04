@@ -15,12 +15,11 @@
 #ifndef CLANG_CODEGEN_CGCALL_H
 #define CLANG_CODEGEN_CGCALL_H
 
+#include "CGValue.h"
+#include "clang/AST/CanonicalType.h"
+#include "clang/AST/Type.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Value.h"
-#include "clang/AST/Type.h"
-#include "clang/AST/CanonicalType.h"
-
-#include "CGValue.h"
 
 // FIXME: Restructure so we don't have to expose so much stuff.
 #include "ABIInfo.h"

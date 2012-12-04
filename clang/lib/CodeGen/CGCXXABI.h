@@ -15,9 +15,8 @@
 #ifndef CLANG_CODEGEN_CXXABI_H
 #define CLANG_CODEGEN_CXXABI_H
 
-#include "clang/Basic/LLVM.h"
-
 #include "CodeGenFunction.h"
+#include "clang/Basic/LLVM.h"
 
 namespace llvm {
   class Constant;

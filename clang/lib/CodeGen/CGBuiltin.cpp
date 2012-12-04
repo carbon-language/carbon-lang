@@ -11,16 +11,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "TargetInfo.h"
 #include "CodeGenFunction.h"
-#include "CodeGenModule.h"
 #include "CGObjCRuntime.h"
-#include "clang/Basic/TargetInfo.h"
+#include "CodeGenModule.h"
+#include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/Basic/TargetBuiltins.h"
-#include "llvm/Intrinsics.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/DataLayout.h"
+#include "llvm/Intrinsics.h"
 
 using namespace clang;
 using namespace CodeGen;

@@ -16,8 +16,8 @@
 #define CLANG_CODEGEN_CODEGENTBAA_H
 
 #include "clang/Basic/LLVM.h"
-#include "llvm/MDBuilder.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/MDBuilder.h"
 
 namespace llvm {
   class LLVMContext;
