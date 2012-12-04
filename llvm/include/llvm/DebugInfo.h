@@ -144,6 +144,7 @@ namespace llvm {
 
     uint64_t getLo() const { return getUInt64Field(1); }
     uint64_t getHi() const { return getUInt64Field(2); }
+    int64_t  getCount() const { return getInt64Field(3); }
   };
 
   /// DIArray - This descriptor holds an array of descriptors.
