@@ -32,7 +32,7 @@ static OptionDefinition
 g_option_table[] =
 {
     { LLDB_OPT_SET_1 , false, "outfile", 'o', required_argument, NULL, 0, eArgTypeFilename , "Specify a path for capturing command output."},
-    { LLDB_OPT_SET_1 , false, "append-outfile" , 'A', no_argument, NULL, 0, eArgTypeNone , "Append to the the file specified with '--outfile <path>'."},
+    { LLDB_OPT_SET_1 , false, "append-outfile" , 'apnd', no_argument, NULL, 0, eArgTypeNone , "Append to the the file specified with '--outfile <path>'."},
 };
 
 uint32_t
@@ -49,11 +49,11 @@ OptionGroupOutputFile::GetDefinitions ()
 
 Error
 OptionGroupOutputFile::SetOptionValue (CommandInterpreter &interpreter,
-                                         uint32_t option_idx,
-                                         const char *option_arg)
+                                       uint32_t option_idx,
+                                       const char *option_arg)
 {
     Error error;
-    char short_option = (char) g_option_table[option_idx].short_option;
+    const int short_option = g_option_table[option_idx].short_option;
 
     switch (short_option)
     {
@@ -61,7 +61,7 @@ OptionGroupOutputFile::SetOptionValue (CommandInterpreter &interpreter,
             error = m_file.SetValueFromCString (option_arg);
             break;
 
-        case 'A':
+        case 'apnd':
             m_append.SetCurrentValue(true);
             break;
 

@@ -113,7 +113,7 @@ OptionGroupPlatform::SetOptionValue (CommandInterpreter &interpreter,
     if (!m_include_platform_option)
         ++option_idx;
     
-    char short_option = (char) g_option_table[option_idx].short_option;
+    const int short_option = g_option_table[option_idx].short_option;
     
     switch (short_option)
     {

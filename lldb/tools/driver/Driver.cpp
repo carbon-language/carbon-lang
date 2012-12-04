@@ -63,7 +63,7 @@ typedef struct
                                              // then this option belongs to option set n.
     bool required;                           // This option is required (in the current usage level)
     const char * long_option;                // Full name for this option.
-    char short_option;                       // Single character for this option.
+    int short_option;                        // Single character for this option.
     int option_has_arg;                      // no_argument, required_argument or optional_argument
     uint32_t completion_type;                // Cookie the option class can use to do define the argument completion.
     lldb::CommandArgumentType argument_type; // Type of argument this option takes
@@ -578,7 +578,7 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
 
             if (long_options_index >= 0)
             {
-                const char short_option = (char) g_options[long_options_index].short_option;
+                const int short_option = g_options[long_options_index].short_option;
 
                 switch (short_option)
                 {

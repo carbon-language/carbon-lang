@@ -56,7 +56,7 @@ class StdMapDataFormatterTestCase(TestBase):
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.runCmd("frame variable ii -T")
+        self.runCmd("frame variable ii --show-types")
         
         self.runCmd("type summary add -x \"std::map<\" --summary-string \"map has ${svar%#} items\" -e") 
         
@@ -136,7 +136,7 @@ class StdMapDataFormatterTestCase(TestBase):
                                '{}'])
         
         self.runCmd("n")
-        self.runCmd("frame variable si -T")
+        self.runCmd("frame variable si --show-types")
 
         self.expect('frame variable si',
                     substrs = ['map has 0 items',
@@ -211,7 +211,7 @@ class StdMapDataFormatterTestCase(TestBase):
                                '{}'])
 
         self.runCmd("n")
-        self.runCmd("frame variable is -T")
+        self.runCmd("frame variable is --show-types")
         
         self.expect('frame variable is',
                     substrs = ['map has 0 items',
@@ -272,7 +272,7 @@ class StdMapDataFormatterTestCase(TestBase):
                                '{}'])
 
         self.runCmd("n")
-        self.runCmd("frame variable ss -T")
+        self.runCmd("frame variable ss --show-types")
         
         self.expect('frame variable ss',
                     substrs = ['map has 0 items',

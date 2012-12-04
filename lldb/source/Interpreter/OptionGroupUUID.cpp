@@ -47,11 +47,11 @@ OptionGroupUUID::GetDefinitions ()
 
 Error
 OptionGroupUUID::SetOptionValue (CommandInterpreter &interpreter,
-                                         uint32_t option_idx,
-                                         const char *option_arg)
+                                 uint32_t option_idx,
+                                 const char *option_arg)
 {
     Error error;
-    char short_option = (char) g_option_table[option_idx].short_option;
+    const int short_option = g_option_table[option_idx].short_option;
 
     switch (short_option)
     {

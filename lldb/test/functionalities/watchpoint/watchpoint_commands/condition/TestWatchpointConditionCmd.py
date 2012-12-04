@@ -77,7 +77,7 @@ class WatchpointConditionCmdTestCase(TestBase):
         # The stop reason of the thread should be watchpoint.
         self.expect("thread backtrace", STOPPED_DUE_TO_WATCHPOINT,
             substrs = ['stop reason = watchpoint'])
-        self.expect("frame variable -g global",
+        self.expect("frame variable --show-globals global",
             substrs = ['(int32_t)', 'global = 5'])
 
         # Use the '-v' option to do verbose listing of the watchpoint.

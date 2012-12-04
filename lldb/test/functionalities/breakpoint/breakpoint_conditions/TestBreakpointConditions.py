@@ -85,8 +85,8 @@ class BreakpointConditionsTestCase(TestBase):
         self.expect("process status", PROCESS_STOPPED,
             patterns = ['Process .* stopped'])
 
-        # 'frame variable -T val' should return 3 due to breakpoint condition.
-        self.expect("frame variable -T val", VARIABLES_DISPLAYED_CORRECTLY,
+        # 'frame variable --show-types val' should return 3 due to breakpoint condition.
+        self.expect("frame variable --show-types val", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) val = 3')
 
         # Also check the hit count, which should be 3, by design.
@@ -116,8 +116,8 @@ class BreakpointConditionsTestCase(TestBase):
         self.expect("process status", PROCESS_STOPPED,
             patterns = ['Process .* stopped'])
 
-        # 'frame variable -T val' should return 1 since it is the first breakpoint hit.
-        self.expect("frame variable -T val", VARIABLES_DISPLAYED_CORRECTLY,
+        # 'frame variable --show-types val' should return 1 since it is the first breakpoint hit.
+        self.expect("frame variable --show-types val", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) val = 1')
 
 

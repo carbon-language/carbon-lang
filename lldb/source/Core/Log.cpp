@@ -100,7 +100,7 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
         if (m_options.Test (LLDB_LOG_OPTION_PREPEND_TIMESTAMP))
         {
             struct timeval tv = TimeValue::Now().GetAsTimeVal();
-            header.Printf ("%9ld.%6.6ld ", tv.tv_sec, tv.tv_usec);
+            header.Printf ("%9ld.%6.6" PRIi32 " ", tv.tv_sec, tv.tv_usec);
         }
 
         // Add the process and thread if requested

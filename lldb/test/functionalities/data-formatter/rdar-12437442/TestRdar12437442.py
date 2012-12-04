@@ -64,7 +64,7 @@ class DataFormatterRdar12437442TestCase(TestBase):
         id_x.SetPreferSyntheticValue(True)
         
         if self.TraceOn():
-            self.runCmd("frame variable x -d run-target --ptr-depth 1")
+            self.runCmd("frame variable x --dynamic-type run-target --ptr-depth 1")
         
         self.assertTrue(id_x.GetSummary() == '@"5 objects"', "array does not get correct summary")
 
@@ -75,7 +75,7 @@ class DataFormatterRdar12437442TestCase(TestBase):
         id_x.SetPreferSyntheticValue(True)
 
         if self.TraceOn():
-            self.runCmd("frame variable x -d run-target --ptr-depth 1")
+            self.runCmd("frame variable x --dynamic-type run-target --ptr-depth 1")
 
         self.assertTrue(id_x.GetNumChildren() == 7, "dictionary does not have 7 children")
         id_x.SetPreferSyntheticValue(False)

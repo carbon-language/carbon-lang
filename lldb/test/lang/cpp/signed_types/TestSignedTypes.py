@@ -54,7 +54,7 @@ class UnsignedTypesTestCase(TestBase):
         self.runCmd("thread step-over")
 
         # Test that signed types display correctly.
-        self.expect("frame variable -T -a", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types --no-args", VARIABLES_DISPLAYED_CORRECTLY,
             patterns = ["\((short int|short)\) the_signed_short = 99"],
             substrs = ["(signed char) the_signed_char = 'c'",
                        "(int) the_signed_int = 99",

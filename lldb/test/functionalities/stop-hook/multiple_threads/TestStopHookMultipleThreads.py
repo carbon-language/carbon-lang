@@ -61,7 +61,7 @@ class StopHookForMultipleThreadsTestCase(TestBase):
         # Now run the program, expect to stop at the the first breakpoint which is within the stop-hook range.
         child.sendline('run')
         child.expect_exact(prompt)
-        child.sendline('target stop-hook add -o "frame variable -g g_val"')
+        child.sendline('target stop-hook add -o "frame variable --show-globals g_val"')
         child.expect_exact(prompt)
 
         # Continue and expect to find the output emitted by the firing of our stop hook.

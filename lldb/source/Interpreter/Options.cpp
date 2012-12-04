@@ -13,7 +13,7 @@
 // C++ Includes
 #include <algorithm>
 #include <bitset>
-#include <set>
+#include <map>
 
 // Other libraries and framework includes
 // Project includes
@@ -58,7 +58,7 @@ Options::NotifyOptionParsingFinished ()
 void
 Options::OptionSeen (int option_idx)
 {
-    m_seen_options.insert ((char) option_idx);
+    m_seen_options.insert (option_idx);
 }
 
 // Returns true is set_a is a subset of set_b;  Otherwise returns false.
@@ -266,37 +266,54 @@ Options::GetLongOptions ()
             return NULL;
 
         uint32_t i;
-        uint32_t j;
         const OptionDefinition *opt_defs = GetDefinitions();
 
-        std::bitset<256> option_seen;
+        std::map<int, uint32_t> option_seen;
 
         m_getopt_table.resize(num_options + 1);
-        for (i = 0, j = 0; i < num_options; ++i)
+        for (i = 0; i < num_options; ++i)
         {
-            const char short_opt = opt_defs[i].short_option;
+            const int short_opt = opt_defs[i].short_option;
 
-            if (option_seen.test(short_opt) == false)
+            m_getopt_table[i].name    = opt_defs[i].long_option;
+            m_getopt_table[i].has_arg = opt_defs[i].option_has_arg;
+            m_getopt_table[i].flag    = NULL;
+            m_getopt_table[i].val     = short_opt;
+
+            if (option_seen.find(short_opt) == option_seen.end())
             {
-                m_getopt_table[j].name    = opt_defs[i].long_option;
-                m_getopt_table[j].has_arg = opt_defs[i].option_has_arg;
-                m_getopt_table[j].flag    = NULL;
-                m_getopt_table[j].val     = short_opt;
-                option_seen.set(short_opt);
-                ++j;
+                option_seen[short_opt] = i;
             }
-            else
+            else if (short_opt)
             {
-                assert (!"duplicate short option character");
+                m_getopt_table[i].val = 0;
+                std::map<int, uint32_t>::const_iterator pos = option_seen.find(short_opt);
+                StreamString strm;
+                if (isprint(short_opt))
+                    Host::SystemLog (Host::eSystemLogError, "option[%u] --%s has a short option -%c that conflicts with option[%u] --%s, short option won't be used for --%s\n",
+                                i,
+                                opt_defs[i].long_option,
+                                short_opt,
+                                pos->second,
+                                m_getopt_table[pos->second].name,
+                                opt_defs[i].long_option);
+                else
+                    Host::SystemLog (Host::eSystemLogError, "option[%u] --%s has a short option 0x%x that conflicts with option[%u] --%s, short option won't be used for --%s\n",
+                                i,
+                                opt_defs[i].long_option,
+                                short_opt,
+                                pos->second,
+                                m_getopt_table[pos->second].name,
+                                opt_defs[i].long_option);
             }
         }
 
         //getopt_long requires a NULL final entry in the table:
 
-        m_getopt_table[j].name    = NULL;
-        m_getopt_table[j].has_arg = 0;
-        m_getopt_table[j].flag    = NULL;
-        m_getopt_table[j].val     = 0;
+        m_getopt_table[i].name    = NULL;
+        m_getopt_table[i].has_arg = 0;
+        m_getopt_table[i].flag    = NULL;
+        m_getopt_table[i].val     = 0;
     }
 
     if (m_getopt_table.empty())
@@ -393,6 +410,57 @@ Options::SupportsLongOption (const char *long_option)
     return false;
 }
 
+enum OptionDisplayType
+{
+    eDisplayBestOption,
+    eDisplayShortOption,
+    eDisplayLongOption
+};
+
+static bool
+PrintOption (const OptionDefinition &opt_def,
+             OptionDisplayType display_type,
+             const char *header,
+             const char *footer,
+             bool show_optional,
+             Stream &strm)
+{
+    const bool has_short_option = isprint(opt_def.short_option) != 0;
+
+    if (display_type == eDisplayShortOption && !has_short_option)
+        return false;
+
+    if (header && header[0])
+        strm.PutCString(header);
+    
+    if (show_optional && !opt_def.required)
+    strm.PutChar('[');
+    const bool show_short_option = has_short_option && display_type != eDisplayLongOption;
+    if (show_short_option)
+        strm.Printf ("-%c", opt_def.short_option);
+    else
+        strm.Printf ("--%s", opt_def.long_option);
+    switch (opt_def.option_has_arg)
+    {
+        case no_argument:
+            break;
+        case required_argument:
+            strm.Printf (" <%s>", CommandObject::GetArgumentName (opt_def.argument_type));
+            break;
+            
+        case optional_argument:
+            strm.Printf ("%s[<%s>]",
+                         show_short_option ? "" : "=",
+                         CommandObject::GetArgumentName (opt_def.argument_type));
+            break;
+    }
+    if (show_optional && !opt_def.required)
+        strm.PutChar(']');
+    if (footer && footer[0])
+        strm.PutCString(footer);
+    return true;
+}
+
 void
 Options::GenerateOptionUsage
 (
@@ -450,12 +518,12 @@ Options::GenerateOptionUsage
         // a single string. If a command has "-a" "-b" and "-c", this will show
         // up as [-abc]
 
-        std::set<char> options;
-        std::set<char>::const_iterator options_pos, options_end;
+        std::set<int> options;
+        std::set<int>::const_iterator options_pos, options_end;
         bool first;
         for (i = 0, first = true; i < num_options; ++i)
         {
-            if (opt_defs[i].usage_mask & opt_set_mask)
+            if (opt_defs[i].usage_mask & opt_set_mask && isprint(opt_defs[i].short_option))
             {
                 // Add current option to the end of out_stream.
 
@@ -476,17 +544,17 @@ Options::GenerateOptionUsage
                      options_pos != options_end;
                      ++options_pos)
                 {
-                    if (i==0 && ::isupper (*options_pos))
+                    if (i==0 && ::islower (*options_pos))
                         continue;
-                    if (i==1 && ::islower (*options_pos))
+                    if (i==1 && ::isupper (*options_pos))
                         continue;
-                    strm << *options_pos;
+                    strm << (char)*options_pos;
                 }
         }
 
         for (i = 0, options.clear(); i < num_options; ++i)
         {
-            if (opt_defs[i].usage_mask & opt_set_mask)
+            if (opt_defs[i].usage_mask & opt_set_mask && isprint(opt_defs[i].short_option))
             {
                 // Add current option to the end of out_stream.
 
@@ -507,11 +575,11 @@ Options::GenerateOptionUsage
                      options_pos != options_end;
                      ++options_pos)
                 {
-                    if (i==0 && ::isupper (*options_pos))
+                    if (i==0 && ::islower (*options_pos))
                         continue;
-                    if (i==1 && ::islower (*options_pos))
+                    if (i==1 && ::isupper (*options_pos))
                         continue;
-                    strm << *options_pos;
+                    strm << (char)*options_pos;
                 }
             strm.PutChar(']');
         }
@@ -520,26 +588,10 @@ Options::GenerateOptionUsage
         
         for (i = 0; i < num_options; ++i)
         {
-            if (opt_defs[i].usage_mask & opt_set_mask)
+            if (opt_defs[i].usage_mask & opt_set_mask && isprint(opt_defs[i].short_option))
             {
-                // Add current option to the end of out_stream.
-                CommandArgumentType arg_type = opt_defs[i].argument_type;
-                
-                if (opt_defs[i].required)
-                {
-                    if (opt_defs[i].option_has_arg == required_argument)
-                    {
-                        strm.Printf (" -%c <%s>",
-                                     opt_defs[i].short_option, 
-                                     CommandObject::GetArgumentName (arg_type));
-                    }
-                    else if (opt_defs[i].option_has_arg == optional_argument)
-                    {
-                        strm.Printf (" -%c [<%s>]",
-                                     opt_defs[i].short_option,
-                                     CommandObject::GetArgumentName (arg_type));
-                    }
-                }
+                if (opt_defs[i].required && opt_defs[i].option_has_arg != no_argument)
+                    PrintOption (opt_defs[i], eDisplayBestOption, " ", NULL, true, strm);
             }
         }
 
@@ -551,17 +603,8 @@ Options::GenerateOptionUsage
             {
                 // Add current option to the end of out_stream.
 
-                CommandArgumentType arg_type = opt_defs[i].argument_type;
-                
-                if (! opt_defs[i].required)
-                {
-                    if (opt_defs[i].option_has_arg == required_argument)
-                        strm.Printf (" [-%c <%s>]", opt_defs[i].short_option,
-                                     CommandObject::GetArgumentName (arg_type));
-                    else if (opt_defs[i].option_has_arg == optional_argument)
-                        strm.Printf (" [-%c [<%s>]]", opt_defs[i].short_option,
-                                     CommandObject::GetArgumentName (arg_type));
-                }
+                if (!opt_defs[i].required && opt_defs[i].option_has_arg != no_argument)
+                    PrintOption (opt_defs[i], eDisplayBestOption, " ", NULL, true, strm);
             }
         }
         
@@ -592,86 +635,69 @@ Options::GenerateOptionUsage
     // This variable is used to keep track of which options' info we've printed out, because some options can be in
     // more than one usage level, but we only want to print the long form of its information once.
 
-    OptionSet options_seen;
-    OptionSet::iterator pos;
+    std::multimap<int, uint32_t> options_seen;
     strm.IndentMore (5);
-
-    std::vector<char> sorted_options;
-
 
     // Put the unique command options in a vector & sort it, so we can output them alphabetically (by short_option)
     // when writing out detailed help for each option.
 
     for (i = 0; i < num_options; ++i)
-    {
-        pos = options_seen.find (opt_defs[i].short_option);
-        if (pos == options_seen.end())
-        {
-            options_seen.insert (opt_defs[i].short_option);
-            sorted_options.push_back (opt_defs[i].short_option);
-        }
-    }
-
-    std::sort (sorted_options.begin(), sorted_options.end());
+        options_seen.insert(std::make_pair(opt_defs[i].short_option, i));
 
     // Go through the unique'd and alphabetically sorted vector of options, find the table entry for each option
     // and write out the detailed help information for that option.
 
-    int first_option_printed = 1;
-    size_t end = sorted_options.size();
-    for (size_t j = 0; j < end; ++j)
+    bool first_option_printed = false;;
+
+    for (auto pos : options_seen)
     {
-        char option = sorted_options[j];
-        bool found = false;
-        for (i = 0; i < num_options && !found; ++i)
+        i = pos.second;
+        //Print out the help information for this option.
+
+        // Put a newline separation between arguments
+        if (first_option_printed)
+            strm.EOL();
+        else
+            first_option_printed = true;
+        
+        CommandArgumentType arg_type = opt_defs[i].argument_type;
+        
+        StreamString arg_name_str;
+        arg_name_str.Printf ("<%s>", CommandObject::GetArgumentName (arg_type));
+
+        strm.Indent ();
+        if (opt_defs[i].short_option && isprint(opt_defs[i].short_option))
         {
-            if (opt_defs[i].short_option == option)
-            {
-                found = true;
-                //Print out the help information for this option.
-
-                // Put a newline separation between arguments
-                if (first_option_printed)
-                    first_option_printed = 0;
-                else
-                    strm.EOL();
-                
-                CommandArgumentType arg_type = opt_defs[i].argument_type;
-                
-                StreamString arg_name_str;
-                arg_name_str.Printf ("<%s>", CommandObject::GetArgumentName (arg_type));
-
-                strm.Indent ();
-                strm.Printf ("-%c", opt_defs[i].short_option);
-                if (arg_type != eArgTypeNone)
-                    strm.Printf (" <%s>",  CommandObject::GetArgumentName (arg_type));
-                strm.Printf ("  ( --%s", opt_defs[i].long_option);
-                if (arg_type != eArgTypeNone)
-                    strm.Printf (" <%s>", CommandObject::GetArgumentName (arg_type));
-                strm.PutCString(" )\n");
-                
-                strm.IndentMore (5);
-                
-                if (opt_defs[i].usage_text)
-                    OutputFormattedUsageText (strm,
-                                              opt_defs[i].usage_text,
-                                              screen_width);
-                if (opt_defs[i].enum_values != NULL)
-                {
-                    strm.Indent ();
-                    strm.Printf("Values: ");
-                    for (int k = 0; opt_defs[i].enum_values[k].string_value != NULL; k++) 
-                    {
-                        if (k == 0)
-                            strm.Printf("%s", opt_defs[i].enum_values[k].string_value);
-                        else
-                            strm.Printf(" | %s", opt_defs[i].enum_values[k].string_value);
-                    }
-                    strm.EOL();
-                }
-                strm.IndentLess (5);
-            }
+            PrintOption (opt_defs[i], eDisplayShortOption, NULL, NULL, false, strm);
+            PrintOption (opt_defs[i], eDisplayLongOption, " ( ", " )", false, strm);
         }
+        else
+        {
+            // Short option is not printable, just print long option
+            PrintOption (opt_defs[i], eDisplayLongOption, NULL, NULL, false, strm);
+        }
+        strm.EOL();
+        
+        strm.IndentMore (5);
+        
+        if (opt_defs[i].usage_text)
+            OutputFormattedUsageText (strm,
+                                      opt_defs[i].usage_text,
+                                      screen_width);
+        if (opt_defs[i].enum_values != NULL)
+        {
+            strm.Indent ();
+            strm.Printf("Values: ");
+            for (int k = 0; opt_defs[i].enum_values[k].string_value != NULL; k++) 
+            {
+                if (k == 0)
+                    strm.Printf("%s", opt_defs[i].enum_values[k].string_value);
+                else
+                    strm.Printf(" | %s", opt_defs[i].enum_values[k].string_value);
+            }
+            strm.EOL();
+        }
+        strm.IndentLess (5);
     }
 
     // Restore the indent level

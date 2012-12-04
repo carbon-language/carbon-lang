@@ -284,7 +284,7 @@ class AdvDataFormatterTestCase(TestBase):
                                'i_2',
                                'k_2',
                                'o_2'])
-        self.expect('frame variable a_long_guy -A', matching=False,
+        self.expect('frame variable a_long_guy --show-all-children', matching=False,
                     substrs = ['...'])
 
 

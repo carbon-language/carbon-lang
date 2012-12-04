@@ -20,7 +20,7 @@ using namespace lldb_private;
 OptionGroupBoolean::OptionGroupBoolean (uint32_t usage_mask,
                                         bool required,
                                         const char *long_option, 
-                                        char short_option,
+                                        int short_option,
                                         const char *usage_text,
                                         bool default_value,
                                         bool no_argument_toggle_default) :

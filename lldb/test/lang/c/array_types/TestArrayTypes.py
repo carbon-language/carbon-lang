@@ -71,7 +71,7 @@ class ArrayTypesTestCase(TestBase):
 
         # Issue 'variable list' command on several array-type variables.
 
-        self.expect("frame variable -T strings", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types strings", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(char *[4])',
             substrs = ['(char *) [0]',
                        '(char *) [1]',
@@ -82,14 +82,14 @@ class ArrayTypesTestCase(TestBase):
                        'Bonjour',
                        'Guten Tag'])
 
-        self.expect("frame variable -T char_16", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types char_16", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(char) [0]',
                        '(char) [15]'])
 
-        self.expect("frame variable -T ushort_matrix", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types ushort_matrix", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(unsigned short [2][3])')
 
-        self.expect("frame variable -T long_6", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types long_6", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(long [6])')
 
     def array_types_python(self):

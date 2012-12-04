@@ -73,7 +73,7 @@ OptionGroupWatchpoint::SetOptionValue (CommandInterpreter &interpreter,
                                        const char *option_arg)
 {
     Error error;
-    char short_option = (char) g_option_table[option_idx].short_option;
+    const int short_option = g_option_table[option_idx].short_option;
     switch (short_option)
     {
         case 'w':

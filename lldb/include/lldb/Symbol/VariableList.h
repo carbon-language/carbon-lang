@@ -42,7 +42,7 @@ public:
     Dump(Stream *s, bool show_context) const;
 
     lldb::VariableSP
-    GetVariableAtIndex(uint32_t idx);
+    GetVariableAtIndex(uint32_t idx) const;
 
     lldb::VariableSP
     RemoveVariableAtIndex (uint32_t idx);

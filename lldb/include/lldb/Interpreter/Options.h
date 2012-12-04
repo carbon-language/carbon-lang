@@ -296,7 +296,7 @@ public:
     
 protected:
     // This is a set of options expressed as indexes into the options table for this Option.
-    typedef std::set<char> OptionSet;
+    typedef std::set<int> OptionSet;
     typedef std::vector<OptionSet> OptionSetVector;
 
     CommandInterpreter &m_interpreter;

@@ -602,8 +602,8 @@ public:
         m_option_group (interpreter),
         m_option_variable (false), // Don't include frame options
         m_option_format (eFormatDefault),
-        m_option_compile_units    (LLDB_OPT_SET_1, false, "file", 'f', 0, eArgTypeFilename, "A basename or fullpath to a file that contains global variables. This option can be specified multiple times."),
-        m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",'s', 0, eArgTypeFilename, "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
+        m_option_compile_units    (LLDB_OPT_SET_1, false, "file", 'file', 0, eArgTypeFilename, "A basename or fullpath to a file that contains global variables. This option can be specified multiple times."),
+        m_option_shared_libraries (LLDB_OPT_SET_1, false, "shlib",'shlb', 0, eArgTypeFilename, "A basename or fullpath to a shared library to use in the search for global variables. This option can be specified multiple times."),
         m_varobj_options()
     {
         CommandArgumentEntry arg;
@@ -719,6 +719,51 @@ public:
     }
     
 protected:
+    
+    void
+    DumpGlobalVariableList(const ExecutionContext &exe_ctx, const SymbolContext &sc, const VariableList &variable_list, Stream &s)
+    {
+        size_t count = variable_list.GetSize();
+        if (count > 0)
+        {
+            if (sc.module_sp)
+            {
+                if (sc.comp_unit)
+                {
+                    s.Printf ("Global variables for %s/%s in %s/%s:\n",
+                              sc.comp_unit->GetDirectory().GetCString(),
+                              sc.comp_unit->GetFilename().GetCString(),
+                              sc.module_sp->GetFileSpec().GetDirectory().GetCString(),
+                              sc.module_sp->GetFileSpec().GetFilename().GetCString());
+                }
+                else
+                {
+                    s.Printf ("Global variables for %s/%s\n",
+                              sc.module_sp->GetFileSpec().GetDirectory().GetCString(),
+                              sc.module_sp->GetFileSpec().GetFilename().GetCString());
+                }
+            }
+            else if (sc.comp_unit)
+            {
+                s.Printf ("Global variables for %s/%s\n",
+                          sc.comp_unit->GetDirectory().GetCString(),
+                          sc.comp_unit->GetFilename().GetCString());
+            }
+            
+            for (uint32_t i=0; i<count; ++i)
+            {
+                VariableSP var_sp (variable_list.GetVariableAtIndex(i));
+                if (var_sp)
+                {
+                    ValueObjectSP valobj_sp (ValueObjectVariable::Create (exe_ctx.GetBestExecutionContextScope(), var_sp));
+                    
+                    if (valobj_sp)
+                        DumpValueObject (s, var_sp, valobj_sp, var_sp->GetName().GetCString());
+                }
+            }
+        }
+
+    }
     virtual bool
     DoExecute (Args& args, CommandReturnObject &result)
     {
@@ -728,6 +773,7 @@ protected:
         {
             const size_t argc = args.GetArgumentCount();
             Stream &s = result.GetOutputStream();
+            
             if (argc > 0)
             {
 
@@ -791,55 +837,120 @@ protected:
             }
             else
             {
-                bool success = false;
-                StackFrame *frame = exe_ctx.GetFramePtr();
-                CompileUnit *comp_unit = NULL;
-                if (frame)
+                const FileSpecList &compile_units = m_option_compile_units.GetOptionValue().GetCurrentValue();
+                const FileSpecList &shlibs = m_option_shared_libraries.GetOptionValue().GetCurrentValue();
+                SymbolContextList sc_list;
+                const size_t num_compile_units = compile_units.GetSize();
+                const size_t num_shlibs = shlibs.GetSize();
+                if (num_compile_units == 0 && num_shlibs == 0)
                 {
-                    comp_unit = frame->GetSymbolContext (eSymbolContextCompUnit).comp_unit;
-                    if (comp_unit)
+                    bool success = false;
+                    StackFrame *frame = exe_ctx.GetFramePtr();
+                    CompileUnit *comp_unit = NULL;
+                    if (frame)
                     {
-                        const bool can_create = true;
-                        VariableListSP comp_unit_varlist_sp (comp_unit->GetVariableList(can_create));
-                        if (comp_unit_varlist_sp)
+                        SymbolContext sc = frame->GetSymbolContext (eSymbolContextCompUnit);
+                        if (sc.comp_unit)
                         {
-                            size_t count = comp_unit_varlist_sp->GetSize();
-                            if (count > 0)
+                            const bool can_create = true;
+                            VariableListSP comp_unit_varlist_sp (sc.comp_unit->GetVariableList(can_create));
+                            if (comp_unit_varlist_sp)
                             {
-                                s.Printf ("Global variables for %s/%s:\n", 
-                                          comp_unit->GetDirectory().GetCString(),
-                                          comp_unit->GetFilename().GetCString());
-
-                                success = true;
-                                for (uint32_t i=0; i<count; ++i)
+                                size_t count = comp_unit_varlist_sp->GetSize();
+                                if (count > 0)
                                 {
-                                    VariableSP var_sp (comp_unit_varlist_sp->GetVariableAtIndex(i));
-                                    if (var_sp)
-                                    {
-                                        ValueObjectSP valobj_sp (ValueObjectVariable::Create (exe_ctx.GetBestExecutionContextScope(), var_sp));
-                                        
-                                        if (valobj_sp)
-                                            DumpValueObject (s, var_sp, valobj_sp, var_sp->GetName().GetCString());
-                                    }
+                                    DumpGlobalVariableList(exe_ctx, sc, *comp_unit_varlist_sp, s);
+                                    success = true;
                                 }
                             }
                         }
                     }
-                }
-                if (!success)
-                {
-                    if (frame)
+                    if (!success)
                     {
-                        if (comp_unit)
-                            result.AppendErrorWithFormat ("no global variables in current compile unit: %s/%s\n", 
-                                                          comp_unit->GetDirectory().GetCString(), 
-                                                          comp_unit->GetFilename().GetCString());
+                        if (frame)
+                        {
+                            if (comp_unit)
+                                result.AppendErrorWithFormat ("no global variables in current compile unit: %s/%s\n", 
+                                                              comp_unit->GetDirectory().GetCString(), 
+                                                              comp_unit->GetFilename().GetCString());
+                            else
+                                result.AppendError ("no debug information for frame %u\n", frame->GetFrameIndex());
+                        }                        
                         else
-                            result.AppendError ("no debug information for frame %u\n", frame->GetFrameIndex());
-                    }                        
+                            result.AppendError ("'target variable' takes one or more global variable names as arguments\n");
+                        result.SetStatus (eReturnStatusFailed);
+                    }
+                }
+                else
+                {
+                    SymbolContextList sc_list;
+                    const bool append = true;
+                    // We have one or more compile unit or shlib
+                    if (num_shlibs > 0)
+                    {
+                        for (size_t shlib_idx=0; shlib_idx<num_shlibs; ++shlib_idx)
+                        {
+                            const FileSpec module_file(shlibs.GetFileSpecAtIndex(shlib_idx));
+                            ModuleSpec module_spec (module_file);
+                            
+                            ModuleSP module_sp (target->GetImages().FindFirstModule(module_spec));
+                            if (module_sp)
+                            {
+                                if (num_compile_units > 0)
+                                {
+                                    for (size_t cu_idx=0; cu_idx<num_compile_units; ++cu_idx)
+                                        module_sp->FindCompileUnits(compile_units.GetFileSpecAtIndex(cu_idx), append, sc_list);
+                                }
+                                else
+                                {
+                                    SymbolContext sc;
+                                    sc.module_sp = module_sp;
+                                    sc_list.Append(sc);
+                                }
+                            }
+                            else
+                            {
+                                // Didn't find matching shlib/module in target...
+                                result.AppendErrorWithFormat ("target doesn't contain the specified shared library: %s%s%s\n",
+                                                              module_file.GetDirectory().GetCString(),
+                                                              module_file.GetDirectory() ? "/" : "",
+                                                              module_file.GetFilename().GetCString());
+                            }
+                        }
+                    }
                     else
-                        result.AppendError ("'target variable' takes one or more global variable names as arguments\n");
-                    result.SetStatus (eReturnStatusFailed);
+                    {
+                        // No shared libraries, we just want to find globals for the compile units files that were specified
+                        for (size_t cu_idx=0; cu_idx<num_compile_units; ++cu_idx)
+                            target->GetImages().FindCompileUnits(compile_units.GetFileSpecAtIndex(cu_idx), append, sc_list);
+                    }
+                    
+                    const uint32_t num_scs = sc_list.GetSize();
+                    if (num_scs > 0)
+                    {
+                        SymbolContext sc;
+                        for (uint32_t sc_idx=0; sc_idx<num_scs; ++sc_idx)
+                        {
+                            if (sc_list.GetContextAtIndex(sc_idx, sc))
+                            {
+                                if (sc.comp_unit)
+                                {
+                                    const bool can_create = true;
+                                    VariableListSP comp_unit_varlist_sp (sc.comp_unit->GetVariableList(can_create));
+                                    if (comp_unit_varlist_sp)
+                                        DumpGlobalVariableList(exe_ctx, sc, *comp_unit_varlist_sp, s);
+                                }
+                                else if (sc.module_sp)
+                                {
+                                    // Get all global variables for this module
+                                    lldb_private::RegularExpression all_globals_regex("."); // Any global with at least one character
+                                    VariableList variable_list;
+                                    sc.module_sp->FindGlobalVariables(all_globals_regex, append, UINT32_MAX, variable_list);
+                                    DumpGlobalVariableList(exe_ctx, sc, variable_list, s);
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -1980,7 +2091,7 @@ public:
         SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
-            char short_option = (char) m_getopt_table[option_idx].val;
+            const int short_option = m_getopt_table[option_idx].val;
             
             switch (short_option)
             {
@@ -2913,7 +3024,7 @@ public:
         virtual Error
         SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
-            char short_option = (char) m_getopt_table[option_idx].val;
+            const int short_option = m_getopt_table[option_idx].val;
             if (short_option == 'g')
             {
                 m_use_global_module_list = true;
@@ -3368,7 +3479,7 @@ public:
         {
             Error error;
 
-            char short_option = (char) m_getopt_table[option_idx].val;
+            const int short_option = m_getopt_table[option_idx].val;
 
             switch (short_option)
             {
@@ -3601,7 +3712,7 @@ public:
         {
             Error error;
             
-            char short_option = (char) m_getopt_table[option_idx].val;
+            const int short_option = m_getopt_table[option_idx].val;
             
             switch (short_option)
             {
@@ -4489,7 +4600,7 @@ public:
         SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
-            char short_option = (char) m_getopt_table[option_idx].val;
+            const int short_option = m_getopt_table[option_idx].val;
             bool success;
 
             switch (short_option)

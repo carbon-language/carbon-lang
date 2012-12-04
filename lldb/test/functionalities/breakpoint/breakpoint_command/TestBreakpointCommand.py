@@ -54,7 +54,7 @@ class BreakpointCommandTestCase(TestBase):
         lldbutil.run_break_set_by_file_and_line (self, "main.c", self.line, num_expected_locations=1, loc_exact=True)
 
         # Now add callbacks for the breakpoints just created.
-        self.runCmd("breakpoint command add -s command -o 'frame variable -T -s' 1")
+        self.runCmd("breakpoint command add -s command -o 'frame variable --show-types --scope' 1")
         self.runCmd("breakpoint command add -s python -o 'here = open(\"output.txt\", \"w\"); print >> here, \"lldb\"; here.close()' 2")
         self.runCmd("breakpoint command add --python-function bktptcmd.function 3")
 
@@ -73,7 +73,7 @@ class BreakpointCommandTestCase(TestBase):
 
         self.expect("breakpoint command list 1", "Breakpoint 1 command ok",
             substrs = ["Breakpoint commands:",
-                          "frame variable -T -s"])
+                          "frame variable --show-types --scope"])
         self.expect("breakpoint command list 2", "Breakpoint 2 command ok",
             substrs = ["Breakpoint commands:",
                           "here = open",

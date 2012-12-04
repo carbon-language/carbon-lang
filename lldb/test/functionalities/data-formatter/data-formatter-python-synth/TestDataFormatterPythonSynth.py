@@ -126,7 +126,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
                                'a = 280']);
 
         # check that expanding a pointer does the right thing
-        self.expect("frame variable -P 1 f00_ptr",
+        self.expect("frame variable --ptr-depth 1 f00_ptr",
             substrs = ['r = 45',
                        'fake_a = 218103808',
                        'a = 12'])
@@ -139,7 +139,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.expect('frame variable f00_1', matching=False,
             substrs = ['b = 1',
                        'j = 17'])
-        self.expect("frame variable -P 1 f00_ptr",
+        self.expect("frame variable --ptr-depth 1 f00_ptr",
                     substrs = ['r = 45',
                                'fake_a = 218103808',
                                'a = 12'])
@@ -151,7 +151,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.expect('frame variable f00_1',
                         substrs = ['b = 1',
                                    'j = 17'])
-        self.expect("frame variable -P 1 f00_ptr", matching=False,
+        self.expect("frame variable --ptr-depth 1 f00_ptr", matching=False,
                     substrs = ['r = 45',
                                'fake_a = 218103808',
                                'a = 12'])
@@ -176,7 +176,7 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.expect('frame variable f00_1', matching=False,
                     substrs = ['b = 1',
                                'j = 17'])
-        self.expect("frame variable -P 1 f00_ptr", 
+        self.expect("frame variable --ptr-depth 1 f00_ptr", 
                     substrs = ['r = 45',
                                'fake_a = 218103808',
                                'a = 12'])

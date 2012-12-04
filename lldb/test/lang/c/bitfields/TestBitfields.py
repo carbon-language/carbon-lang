@@ -64,7 +64,7 @@ class BitfieldsTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # This should display correctly.
-        self.expect("frame variable -T bits", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types bits", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(uint32_t:1) b1 = 1',
                        '(uint32_t:2) b2 = 3',
                        '(uint32_t:3) b3 = 7',
@@ -76,7 +76,7 @@ class BitfieldsTestCase(TestBase):
 
         # And so should this.
         # rdar://problem/8348251
-        self.expect("frame variable -T", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['(uint32_t:1) b1 = 1',
                        '(uint32_t:2) b2 = 3',
                        '(uint32_t:3) b3 = 7',

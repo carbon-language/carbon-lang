@@ -146,7 +146,7 @@ class FoundationTestCase(TestBase):
                        'NSString * str;',
                        'NSDate * date;'])
 
-        self.expect("frame variable -T -s", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types --scope", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["ARG: (MyString *) self"],
             patterns = ["ARG: \(.*\) _cmd",
                         "(objc_selector *)|(SEL)"])
@@ -158,16 +158,16 @@ class FoundationTestCase(TestBase):
         # rdar://problem/8492646
         # test/foundation fails after updating to tot r115023
         # self->str displays nothing as output
-        self.expect("frame variable -T self->str", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types self->str", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(NSString *) self->str")
 
         # rdar://problem/8447030
         # 'frame variable self->date' displays the wrong data member
-        self.expect("frame variable -T self->date", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types self->date", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = "(NSDate *) self->date")
 
         # This should display the str and date member fields as well.
-        self.expect("frame variable -T *self", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types *self", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["(MyString) *self",
                        "(NSString *) str",
                        "(NSDate *) date"])

@@ -625,13 +625,16 @@ Args::ParseOptions (Options &options)
     {
         if (long_options[i].flag == NULL)
         {
-            sstr << (char)long_options[i].val;
-            switch (long_options[i].has_arg)
+            if (isprint(long_options[i].val))
             {
-            default:
-            case no_argument:                       break;
-            case required_argument: sstr << ':';    break;
-            case optional_argument: sstr << "::";   break;
+                sstr << (char)long_options[i].val;
+                switch (long_options[i].has_arg)
+                {
+                default:
+                case no_argument:                       break;
+                case required_argument: sstr << ':';    break;
+                case optional_argument: sstr << "::";   break;
+                }
             }
         }
     }
@@ -645,7 +648,10 @@ Args::ParseOptions (Options &options)
     while (1)
     {
         int long_options_index = -1;
-        val = ::getopt_long(GetArgumentCount(), GetArgumentVector(), sstr.GetData(), long_options,
+        val = ::getopt_long(GetArgumentCount(),
+                            GetArgumentVector(),
+                            sstr.GetData(),
+                            long_options,
                             &long_options_index);
         if (val == -1)
             break;
@@ -1092,7 +1098,7 @@ Args::FindArgumentIndexForOption (struct option *long_options, int long_options_
 {
     char short_buffer[3];
     char long_buffer[255];
-    ::snprintf (short_buffer, sizeof (short_buffer), "-%c", (char) long_options[long_options_index].val);
+    ::snprintf (short_buffer, sizeof (short_buffer), "-%c", long_options[long_options_index].val);
     ::snprintf (long_buffer, sizeof (long_buffer),  "--%s", long_options[long_options_index].name);
     size_t end = GetArgumentCount ();
     size_t idx = 0;
@@ -1216,7 +1222,7 @@ Args::ParseAliasOptions (Options &options,
         if (long_options_index >= 0)
         {
             StreamString option_str;
-            option_str.Printf ("-%c", (char) val);
+            option_str.Printf ("-%c", val);
 
             switch (long_options[long_options_index].has_arg)
             {
@@ -1256,16 +1262,14 @@ Args::ParseAliasOptions (Options &options,
                 }
                 break;
             default:
-                result.AppendErrorWithFormat
-                ("error with options table; invalid value in has_arg field for option '%c'.\n",
-                 (char) val);
+                result.AppendErrorWithFormat ("error with options table; invalid value in has_arg field for option '%c'.\n", val);
                 result.SetStatus (eReturnStatusFailed);
                 break;
             }
         }
         else
         {
-            result.AppendErrorWithFormat ("Invalid option with value '%c'.\n", (char) val);
+            result.AppendErrorWithFormat ("Invalid option with value '%c'.\n", val);
             result.SetStatus (eReturnStatusFailed);
         }
 

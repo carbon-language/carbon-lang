@@ -20,7 +20,7 @@ using namespace lldb_private;
 OptionGroupFile::OptionGroupFile (uint32_t usage_mask,
                                   bool required,
                                   const char *long_option, 
-                                  char short_option,
+                                  int short_option,
                                   uint32_t completion_type,
                                   lldb::CommandArgumentType argument_type,
                                   const char *usage_text) :
@@ -60,7 +60,7 @@ OptionGroupFile::OptionParsingStarting (CommandInterpreter &interpreter)
 OptionGroupFileList::OptionGroupFileList (uint32_t usage_mask,
                                           bool required,
                                           const char *long_option, 
-                                          char short_option,
+                                          int short_option,
                                           uint32_t completion_type,
                                           lldb::CommandArgumentType argument_type,
                                           const char *usage_text) :
@@ -83,8 +83,8 @@ OptionGroupFileList::~OptionGroupFileList ()
 
 Error
 OptionGroupFileList::SetOptionValue (CommandInterpreter &interpreter,
-                                 uint32_t option_idx,
-                                 const char *option_arg)
+                                     uint32_t option_idx,
+                                     const char *option_arg)
 {
     Error error (m_file_list.SetValueFromCString (option_arg));
     return error;

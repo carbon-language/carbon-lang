@@ -66,7 +66,7 @@ class FunctionTypesTestCase(TestBase):
         self.runToBreakpoint()
 
         # Check that the 'callback' variable display properly.
-        self.expect("frame variable -T callback", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types callback", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int (*)(const char *)) callback =')
 
         # And that we can break on the callback function.

@@ -54,7 +54,7 @@ class CommandObjectSourceInfo : public CommandObjectParsed
         SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
-            const char short_option = g_option_table[option_idx].short_option;
+            const int short_option = g_option_table[option_idx].short_option;
             switch (short_option)
             {
             case 'l':
@@ -162,7 +162,7 @@ class CommandObjectSourceList : public CommandObjectParsed
         SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
             Error error;
-            const char short_option = g_option_table[option_idx].short_option;
+            const int short_option = g_option_table[option_idx].short_option;
             switch (short_option)
             {
             case 'l':

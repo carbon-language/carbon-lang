@@ -90,7 +90,7 @@ class WatchpointPythonCommandTestCase(TestBase):
                        'new value:', ' = 1'])
 
         # The watchpoint command "forced" our global variable 'cookie' to become 777.
-        self.expect("frame variable -g cookie",
+        self.expect("frame variable --show-globals cookie",
             substrs = ['(int32_t)', 'cookie = 777'])
 
 

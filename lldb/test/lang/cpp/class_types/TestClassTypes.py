@@ -92,7 +92,7 @@ class ClassTypesTestCase(TestBase):
             substrs = [' resolved, hit count = 1'])
 
         # We should be stopped on the ctor function of class C.
-        self.expect("frame variable -T this", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types this", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['C *',
                        ' this = '])
 
@@ -188,10 +188,10 @@ class ClassTypesTestCase(TestBase):
         self.expect("frame variable this",VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ['C *'])
 
-        # Verify that frame variable -T this->m_c_int behaves correctly.
+        # Verify that frame variable --show-types this->m_c_int behaves correctly.
         self.runCmd("register read pc")
         self.runCmd("expr m_c_int")
-        self.expect("frame variable -T this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("frame variable --show-types this->m_c_int", VARIABLES_DISPLAYED_CORRECTLY,
             startstr = '(int) this->m_c_int = 66')
 
         # Verify that 'expression this' gets the data type correct.
