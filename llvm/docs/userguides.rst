@@ -21,6 +21,7 @@ User Guides
    SphinxQuickstartTemplate
    Phabricator
    TestingGuide
+   tutorial/index
 
 * :ref:`getting_started`
     
@@ -42,7 +43,7 @@ User Guides
    An addendum to the main Getting Started guide for those using Visual Studio
    on Windows.
     
-* `LLVM Tutorial <tutorial/>`_
+* :doc:`tutorial/index`
 
    A walk through the process of using LLVM for a custom language, and the
    facilities LLVM offers in tutorial form.
