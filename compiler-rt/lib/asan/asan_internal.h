@@ -161,6 +161,7 @@ const int kAsanStackPartialRedzoneMagic = 0xf4;
 const int kAsanStackAfterReturnMagic = 0xf5;
 const int kAsanInitializationOrderMagic = 0xf6;
 const int kAsanUserPoisonedMemoryMagic = 0xf7;
+const int kAsanStackUseAfterScopeMagic = 0xf8;
 const int kAsanGlobalRedzoneMagic = 0xf9;
 const int kAsanInternalHeapMagic = 0xfe;
 

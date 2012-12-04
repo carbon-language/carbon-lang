@@ -457,6 +457,9 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
       case kAsanUserPoisonedMemoryMagic:
         bug_descr = "use-after-poison";
         break;
+      case kAsanStackUseAfterScopeMagic:
+        bug_descr = "stack-use-after-scope";
+        break;
       case kAsanGlobalRedzoneMagic:
         bug_descr = "global-buffer-overflow";
         break;

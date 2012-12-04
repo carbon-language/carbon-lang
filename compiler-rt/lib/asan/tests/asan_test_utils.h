@@ -55,7 +55,7 @@ typedef __int64          int64_t;
 
 // Make the compiler thinks that something is going on there.
 inline void break_optimization(void *arg) {
-  __asm__ __volatile__ ("" : : "r" (arg) : "memory");
+  __asm__ __volatile__("" : : "r" (arg) : "memory");
 }
 
 // This function returns its parameter but in such a way that compiler

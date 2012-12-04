@@ -248,6 +248,8 @@ static NOINLINE void force_interface_symbols() {
     case 34: __asan_malloc_hook(0, 0); break;
     case 35: __asan_free_hook(0); break;
     case 36: __asan_symbolize(0, 0, 0); break;
+    case 37: __asan_poison_stack_memory(0, 0); break;
+    case 38: __asan_unpoison_stack_memory(0, 0); break;
   }
 }
 

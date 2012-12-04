@@ -66,6 +66,15 @@ extern "C" {
   void __asan_stack_free(uptr ptr, uptr size, uptr real_stack)
       SANITIZER_INTERFACE_ATTRIBUTE;
 
+  // These two functions are used by instrumented code in the
+  // use-after-scope mode. They mark memory for local variables as
+  // unaddressable when they leave scope and addressable before the
+  // function exits.
+  void __asan_poison_stack_memory(uptr addr, uptr size)
+      SANITIZER_INTERFACE_ATTRIBUTE;
+  void __asan_unpoison_stack_memory(uptr addr, uptr size)
+      SANITIZER_INTERFACE_ATTRIBUTE;
+
   // Marks memory region [addr, addr+size) as unaddressable.
   // This memory must be previously allocated by the user program. Accessing
   // addresses in this region from instrumented code is forbidden until

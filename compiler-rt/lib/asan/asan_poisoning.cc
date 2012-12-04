@@ -151,3 +151,40 @@ void __asan_unpoison_memory_region(void const volatile *addr, uptr size) {
 bool __asan_address_is_poisoned(void const volatile *addr) {
   return __asan::AddressIsPoisoned((uptr)addr);
 }
+
+// This is a simplified version of __asan_(un)poison_memory_region, which
+// assumes that left border of region to be poisoned is properly aligned.
+static void PoisonAlignedStackMemory(uptr addr, uptr size, bool do_poison) {
+  if (size == 0) return;
+  uptr aligned_size = size & ~(SHADOW_GRANULARITY - 1);
+  PoisonShadow(addr, aligned_size,
+               do_poison ? kAsanStackUseAfterScopeMagic : 0);
+  if (size == aligned_size)
+    return;
+  s8 end_offset = (s8)(size - aligned_size);
+  s8* shadow_end = (s8*)MemToShadow(addr + aligned_size);
+  s8 end_value = *shadow_end;
+  if (do_poison) {
+    // If possible, mark all the bytes mapping to last shadow byte as
+    // unaddressable.
+    if (end_value > 0 && end_value <= end_offset)
+      *shadow_end = kAsanStackUseAfterScopeMagic;
+  } else {
+    // If necessary, mark few first bytes mapping to last shadow byte
+    // as addressable
+    if (end_value != 0)
+      *shadow_end = Max(end_value, end_offset);
+  }
+}
+
+void __asan_poison_stack_memory(uptr addr, uptr size) {
+  if (flags()->verbosity > 0)
+    Report("poisoning: %p %zx\n", (void*)addr, size);
+  PoisonAlignedStackMemory(addr, size, true);
+}
+
+void __asan_unpoison_stack_memory(uptr addr, uptr size) {
+  if (flags()->verbosity > 0)
+    Report("unpoisoning: %p %zx\n", (void*)addr, size);
+  PoisonAlignedStackMemory(addr, size, false);
+}
