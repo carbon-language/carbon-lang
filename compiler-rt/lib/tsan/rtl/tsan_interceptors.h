@@ -42,6 +42,10 @@ class ScopedInterceptor {
 
 #define SCOPED_TSAN_INTERCEPTOR(func, ...) \
     SCOPED_INTERCEPTOR_RAW(func, __VA_ARGS__); \
+    if (REAL(func) == 0) { \
+      Printf("FATAL: ThreadSanitizer: failed to intercept %s\n", #func); \
+      Die(); \
+    } \
     if (thr->in_rtl > 1) \
       return REAL(func)(__VA_ARGS__); \
 /**/

@@ -261,7 +261,6 @@ static void finalize(void *arg) {
 TSAN_INTERCEPTOR(int, atexit, void (*f)()) {
   SCOPED_TSAN_INTERCEPTOR(atexit, f);
   return atexit_ctx->atexit(thr, pc, f);
-  return 0;
 }
 
 TSAN_INTERCEPTOR(void, longjmp, void *env, int val) {
@@ -1432,6 +1431,11 @@ void ProcessPendingSignals(ThreadState *thr) {
   thr->in_signal_handler = false;
 }
 
+static void unreachable() {
+  Printf("FATAL: ThreadSanitizer: unreachable called\n");
+  Die();
+}
+
 void InitializeInterceptors() {
   CHECK_GT(cur_thread()->in_rtl, 0);
 
@@ -1566,6 +1570,9 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(mlockall);
   TSAN_INTERCEPT(munlockall);
 
+  // Need to setup it, because interceptors check that the function is resolved.
+  // But atexit is emitted directly into the module, so can't be resolved.
+  REAL(atexit) = (int(*)(void(*)()))unreachable;
   atexit_ctx = new(internal_alloc(MBlockAtExit, sizeof(AtExitContext)))
       AtExitContext();
 
