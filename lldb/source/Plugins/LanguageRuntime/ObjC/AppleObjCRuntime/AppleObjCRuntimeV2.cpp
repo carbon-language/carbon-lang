@@ -727,7 +727,8 @@ public:
                    lldb::addr_t load_addr) :
         m_process(process),
         m_end_iterator(*this, -1ll),
-        m_load_addr(load_addr)
+        m_load_addr(load_addr),
+        m_classheader_size(sizeof(int32_t) * 2)
     {
         lldb::addr_t cursor = load_addr;
         
@@ -946,7 +947,7 @@ private:
     lldb_private::Process *m_process;
     const_iterator m_end_iterator;
     lldb::addr_t m_load_addr;
-    const size_t m_classheader_size = (sizeof(int32_t) * 2);
+    const size_t m_classheader_size;
 };
 
 class ClassDescriptorV2 : public ObjCLanguageRuntime::ClassDescriptor

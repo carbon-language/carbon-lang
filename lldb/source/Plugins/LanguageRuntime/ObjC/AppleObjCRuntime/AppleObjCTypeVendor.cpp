@@ -344,7 +344,7 @@ public:
         
         while (*name_cursor != '\0')
         {
-            char *colon_loc = strchr(name_cursor, ':');
+            const char *colon_loc = strchr(name_cursor, ':');
             if (!colon_loc)
             {
                 selector_components.push_back(&ast_ctx.Idents.get(llvm::StringRef(name_cursor)));

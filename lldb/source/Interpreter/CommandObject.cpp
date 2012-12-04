@@ -752,9 +752,9 @@ LanguageTypeHelpTextCallback ()
     StreamString sstr;
     sstr << "One of the following languages:\n";
     
-    for (LanguageType l = eLanguageTypeUnknown; l < eNumLanguageTypes; ++l)
+    for (unsigned int l = eLanguageTypeUnknown; l < eNumLanguageTypes; ++l)
     {
-        sstr << "  " << LanguageRuntime::GetNameForLanguageType(l) << "\n";
+        sstr << "  " << LanguageRuntime::GetNameForLanguageType(static_cast<LanguageType>(l)) << "\n";
     }
     
     sstr.Flush();
