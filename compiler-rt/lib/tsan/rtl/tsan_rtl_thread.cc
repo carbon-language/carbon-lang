@@ -187,7 +187,9 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
   CHECK_EQ(tctx->status, ThreadStatusCreated);
   tctx->status = ThreadStatusRunning;
   tctx->os_id = os_id;
-  tctx->epoch0 = tctx->epoch1 + 1;
+  // RoundUp so that one trace part does not contain events
+  // from different threads.
+  tctx->epoch0 = RoundUp(tctx->epoch1 + 1, kTracePartSize);
   tctx->epoch1 = (u64)-1;
   new(thr) ThreadState(CTX(), tid, tctx->unique_id,
       tctx->epoch0, stk_addr, stk_size,
@@ -205,6 +207,8 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
   thr->clock.set(tid, tctx->epoch0);
   thr->clock.acquire(&tctx->sync);
   thr->fast_state.SetHistorySize(flags()->history_size);
+  const uptr trace = (tctx->epoch0 / kTracePartSize) % TraceParts();
+  thr->trace.headers[trace].epoch0 = tctx->epoch0;
   StatInc(thr, StatSyncAcquire);
   DPrintf("#%d: ThreadStart epoch=%zu stk_addr=%zx stk_size=%zx "
           "tls_addr=%zx tls_size=%zx\n",
@@ -250,7 +254,7 @@ void ThreadFinish(ThreadState *thr) {
   // Save from info about the thread.
   tctx->dead_info = new(internal_alloc(MBlockDeadInfo, sizeof(ThreadDeadInfo)))
       ThreadDeadInfo();
-  for (int i = 0; i < kTraceParts; i++) {
+  for (uptr i = 0; i < TraceParts(); i++) {
     tctx->dead_info->trace.headers[i].epoch0 = thr->trace.headers[i].epoch0;
     tctx->dead_info->trace.headers[i].stack0.CopyFrom(
         thr->trace.headers[i].stack0);

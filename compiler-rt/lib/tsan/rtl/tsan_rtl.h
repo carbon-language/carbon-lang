@@ -568,6 +568,7 @@ void AfterSleep(ThreadState *thr, uptr pc);
 void TraceSwitch(ThreadState *thr);
 uptr TraceTopPC(ThreadState *thr);
 uptr TraceSize();
+uptr TraceParts();
 
 extern "C" void __tsan_trace_switch();
 void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, FastState fs,
