@@ -1838,6 +1838,7 @@ void StmtPrinter::VisitBlockExpr(BlockExpr *Node) {
     }
     OS << ')';
   }
+  OS << "{ }";
 }
 
 void StmtPrinter::VisitOpaqueValueExpr(OpaqueValueExpr *Node) { 
