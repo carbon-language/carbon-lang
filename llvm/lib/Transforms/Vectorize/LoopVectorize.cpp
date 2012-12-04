@@ -1495,9 +1495,9 @@ bool LoopVectorizationLegality::canVectorize() {
   }
 
   // We need to have a loop header.
-  BasicBlock *Header = TheLoop->getHeader();
   BasicBlock *Latch = TheLoop->getLoopLatch();
-  DEBUG(dbgs() << "LV: Found a loop: " << Header->getName() << "\n");
+  DEBUG(dbgs() << "LV: Found a loop: " <<
+        TheLoop->getHeader()->getName() << "\n");
 
   // ScalarEvolution needs to be able to find the exit count.
   const SCEV *ExitCount = SE->getExitCount(TheLoop, Latch);
