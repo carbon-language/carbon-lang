@@ -896,8 +896,8 @@ main checks are:
 <li id="opt_fsanitize_undefined"><tt>-fsanitize=undefined</tt>:
     Fast and compatible undefined behavior checker.  Enables the undefined behavior
     checks that have small runtime cost and no impact on address space layout
-    or ABI.  This includes all of the checks listed below other than unsigned
-    integer overflow.</li>
+    or ABI.  This includes all of the checks listed below other than
+    <tt>unsigned-integer-overflow</tt> and <tt>bounds</tt>.</li>
 </ul>
 
 The following more fine-grained checks are also available:
@@ -905,6 +905,9 @@ The following more fine-grained checks are also available:
 <ul>
 <li id="opt_fsanitize_alignment"><tt>-fsanitize=alignment</tt>:
     Use of a misaligned pointer or creation of a misaligned reference.</li>
+<li id="opt_fsanitize_bounds"><tt>-fsanitize=bounds</tt>:
+    Out of bounds array indexing, in cases where the array bound can be
+    statically determined.</li>
 <li id="opt_fsanitize_float-cast-overflow"><tt>-fsanitize=float-cast-overflow</tt>:
     Conversion to, from, or between floating-point types which would overflow
     the destination.</li>
