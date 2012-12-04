@@ -25,17 +25,17 @@
 //===--------------------------------------------------------------------===//
 
 #include "BrainF.h"
-#include "llvm/Constants.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Constants.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/raw_ostream.h"
-#include <iostream>
 #include <fstream>
+#include <iostream>
 using namespace llvm;
 
 //Command line options

@@ -13,12 +13,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 

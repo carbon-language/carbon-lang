@@ -17,17 +17,17 @@
 // call into the JIT at the same time (or the best possible approximation of the
 // same time). This test had assertion errors until I got the locking right.
 
-#include <pthread.h>
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
+#include "llvm/ExecutionEngine/JIT.h"
+#include "llvm/Instructions.h"
+#include "llvm/LLVMContext.h"
+#include "llvm/Module.h"
 #include "llvm/Support/TargetSelect.h"
 #include <iostream>
+#include <pthread.h>
 using namespace llvm;
 
 static Function* createAdd1(Module *M) {

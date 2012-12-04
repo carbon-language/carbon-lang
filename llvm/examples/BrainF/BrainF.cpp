@@ -24,10 +24,10 @@
 //===--------------------------------------------------------------------===//
 
 #include "BrainF.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/ADT/STLExtras.h"
 #include <iostream>
 using namespace llvm;
 
