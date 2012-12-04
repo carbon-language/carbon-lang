@@ -7,11 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
+// FIXME: This needs to be listed first until we fix the broken include guards
+// in these files and the LLVM config.h files.
+#include "clang/Config/config.h" // for GCC_INSTALL_PREFIX
+
 #include "ToolChains.h"
 #include "SanitizerArgs.h"
 #include "clang/Basic/ObjCRuntime.h"
 #include "clang/Basic/Version.h"
-#include "clang/Config/config.h" // for GCC_INSTALL_PREFIX
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
