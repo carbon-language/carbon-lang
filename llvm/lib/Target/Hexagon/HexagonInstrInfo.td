@@ -14,41 +14,6 @@
 include "HexagonInstrFormats.td"
 include "HexagonOperands.td"
 
-//===----------------------------------------------------------------------===//
-// Classes used for relation maps.
-//===----------------------------------------------------------------------===//
-// PredRel - Filter class used to relate non-predicated instructions with their
-// predicated forms.
-class PredRel;
-// PredNewRel - Filter class used to relate predicated instructions with their
-// predicate-new forms.
-class PredNewRel: PredRel;
-// ImmRegRel - Filter class used to relate instructions having reg-reg form
-// with their reg-imm counterparts.
-class ImmRegRel;
-// NewValueRel - Filter class used to relate regular store instructions with
-// their new-value store form.
-class NewValueRel: PredNewRel;
-// NewValueRel - Filter class used to relate load/store instructions having
-// different addressing modes with each other.
-class AddrModeRel: NewValueRel;
-
-//===----------------------------------------------------------------------===//
-// Hexagon Instruction Predicate Definitions.
-//===----------------------------------------------------------------------===//
-def HasV2T                      : Predicate<"Subtarget.hasV2TOps()">;
-def HasV2TOnly                  : Predicate<"Subtarget.hasV2TOpsOnly()">;
-def NoV2T                       : Predicate<"!Subtarget.hasV2TOps()">;
-def HasV3T                      : Predicate<"Subtarget.hasV3TOps()">;
-def HasV3TOnly                  : Predicate<"Subtarget.hasV3TOpsOnly()">;
-def NoV3T                       : Predicate<"!Subtarget.hasV3TOps()">;
-def HasV4T                      : Predicate<"Subtarget.hasV4TOps()">;
-def NoV4T                       : Predicate<"!Subtarget.hasV4TOps()">;
-def HasV5T                      : Predicate<"Subtarget.hasV5TOps()">;
-def NoV5T                       : Predicate<"!Subtarget.hasV5TOps()">;
-def UseMEMOP                    : Predicate<"Subtarget.useMemOps()">;
-def IEEERndNearV5T              : Predicate<"Subtarget.modeIEEERndNear()">;
-
 // Addressing modes.
 def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [], []>;
 def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex], []>;
@@ -3111,32 +3076,3 @@ include "HexagonInstrInfoV5.td"
 //===----------------------------------------------------------------------===//
 // V5 Instructions -
 //===----------------------------------------------------------------------===//
-
-//===----------------------------------------------------------------------===//
-// Generate mapping table to relate non-predicate instructions with their
-// predicated formats - true and false.
-//
-
-def getPredOpcode : InstrMapping {
-  let FilterClass = "PredRel";
-  // Instructions with the same BaseOpcode and isNVStore values form a row.
-  let RowFields = ["BaseOpcode", "isNVStore", "PNewValue"];
-  // Instructions with the same predicate sense form a column.
-  let ColFields = ["PredSense"];
-  // The key column is the unpredicated instructions.
-  let KeyCol = [""];
-  // Value columns are PredSense=true and PredSense=false
-  let ValueCols = [["true"], ["false"]];
-}
-
-//===----------------------------------------------------------------------===//
-// Generate mapping table to relate predicated instructions with their .new
-// format.
-//
-def getPredNewOpcode : InstrMapping {
-  let FilterClass = "PredNewRel";
-  let RowFields = ["BaseOpcode", "PredSense", "isNVStore"];
-  let ColFields = ["PNewValue"];
-  let KeyCol = [""];
-  let ValueCols = [["new"]];
-}
