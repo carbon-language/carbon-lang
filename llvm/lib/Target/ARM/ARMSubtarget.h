@@ -244,7 +244,7 @@ protected:
   bool isTargetIOS() const { return TargetTriple.getOS() == Triple::IOS; }
   bool isTargetDarwin() const { return TargetTriple.isOSDarwin(); }
   bool isTargetNaCl() const {
-    return TargetTriple.getOS() == Triple::NativeClient;
+    return TargetTriple.getOS() == Triple::NaCl;
   }
   bool isTargetELF() const { return !isTargetDarwin(); }
 
