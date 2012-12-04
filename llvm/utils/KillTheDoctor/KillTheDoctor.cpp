@@ -47,13 +47,13 @@
 #include <cerrno>
 #include <cstdlib>
 #include <map>
-#include <psapi.h>
 #include <string>
 
 // This includes must be last.
-#include <Dbghelp.h>
-#include <WinError.h>
 #include <Windows.h>
+#include <WinError.h>
+#include <Dbghelp.h>
+#include <psapi.h>
 
 using namespace llvm;
 
