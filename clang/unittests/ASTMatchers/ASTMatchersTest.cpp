@@ -1040,7 +1040,7 @@ TEST(Matcher, VariableUsage) {
       "}", Reference));
 }
 
-TEST(Matcher, FindsVarDeclInFuncitonParameter) {
+TEST(Matcher, FindsVarDeclInFunctionParameter) {
   EXPECT_TRUE(matches(
       "void f(int i) {}",
       varDecl(hasName("i"))));
