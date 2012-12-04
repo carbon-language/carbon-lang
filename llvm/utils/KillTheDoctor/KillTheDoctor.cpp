@@ -39,19 +39,22 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/type_traits.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cerrno>
 #include <cstdlib>
 #include <map>
-#include <string>
-#include <Windows.h>
-#include <WinError.h>
-#include <Dbghelp.h>
 #include <psapi.h>
+#include <string>
+
+// This includes must be last.
+#include <Dbghelp.h>
+#include <WinError.h>
+#include <Windows.h>
+
 using namespace llvm;
 
 #undef max

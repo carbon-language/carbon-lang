@@ -14,10 +14,9 @@
 #define LLVM_UTILS_OBJ2YAML_H
 
 #include "llvm/ADT/ArrayRef.h"
-
-#include "llvm/Support/system_error.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 
 namespace yaml {  // routines for writing YAML
 // Write a hex stream:

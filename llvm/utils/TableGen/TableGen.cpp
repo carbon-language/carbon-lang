@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "TableGenBackends.h" // Declares all backends.
-
 #include "SetTheory.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PrettyStackTrace.h"

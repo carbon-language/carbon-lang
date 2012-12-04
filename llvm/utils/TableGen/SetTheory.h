@@ -47,8 +47,8 @@
 #ifndef SETTHEORY_H
 #define SETTHEORY_H
 
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/SourceMgr.h"
 #include <map>
 #include <vector>

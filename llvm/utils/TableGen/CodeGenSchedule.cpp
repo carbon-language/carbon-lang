@@ -16,10 +16,10 @@
 
 #include "CodeGenSchedule.h"
 #include "CodeGenTarget.h"
-#include "llvm/TableGen/Error.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Regex.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/TableGen/Error.h"
 
 using namespace llvm;
 

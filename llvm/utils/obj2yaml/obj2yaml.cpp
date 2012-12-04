@@ -8,16 +8,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "obj2yaml.h"
-
 #include "llvm/ADT/OwningPtr.h"
-
+#include "llvm/Object/Archive.h"
+#include "llvm/Object/COFF.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Signals.h"
-
-#include "llvm/Object/Archive.h"
-#include "llvm/Object/COFF.h"
 
 const char endl = '\n';
 

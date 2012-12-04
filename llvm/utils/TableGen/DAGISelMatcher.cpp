@@ -10,9 +10,9 @@
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
 #include "CodeGenTarget.h"
-#include "llvm/TableGen/Record.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/TableGen/Record.h"
 using namespace llvm;
 
 void Matcher::anchor() { }

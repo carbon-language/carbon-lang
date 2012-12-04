@@ -17,10 +17,10 @@
 #ifndef CODEGEN_TARGET_H
 #define CODEGEN_TARGET_H
 
-#include "CodeGenRegisters.h"
 #include "CodeGenInstruction.h"
-#include "llvm/TableGen/Record.h"
+#include "CodeGenRegisters.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/TableGen/Record.h"
 #include <algorithm>
 
 namespace llvm {

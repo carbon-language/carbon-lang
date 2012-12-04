@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "SetTheory.h"
+#include "llvm/Support/Format.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
-#include "llvm/Support/Format.h"
 
 using namespace llvm;
 

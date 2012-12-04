@@ -19,9 +19,7 @@
 
 #include "X86DisassemblerShared.h"
 #include "X86ModRMFilters.h"
-
 #include "llvm/Support/raw_ostream.h"
-
 #include <vector>
 
 namespace llvm {

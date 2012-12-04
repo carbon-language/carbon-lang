@@ -16,17 +16,17 @@
 #define CODEGEN_REGISTERS_H
 
 #include "SetTheory.h"
-#include "llvm/TableGen/Record.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/TableGen/Record.h"
 #include <cstdlib>
 #include <map>
-#include <string>
 #include <set>
+#include <string>
 #include <vector>
 
 namespace llvm {

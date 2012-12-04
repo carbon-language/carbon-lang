@@ -14,12 +14,12 @@
 
 #include "CodeGenRegisters.h"
 #include "CodeGenTarget.h"
-#include "llvm/TableGen/Error.h"
 #include "llvm/ADT/IntEqClasses.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/TableGen/Error.h"
 
 using namespace llvm;
 

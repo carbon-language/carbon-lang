@@ -14,12 +14,12 @@
 #ifndef CODEGEN_INSTRUCTION_H
 #define CODEGEN_INSTRUCTION_H
 
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/SourceMgr.h"
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 namespace llvm {
   class Record;

@@ -17,11 +17,11 @@
 #define TBLGEN_SEQUENCE_TO_OFFSET_TABLE_H
 
 #include "llvm/Support/raw_ostream.h"
-#include <functional>
 #include <algorithm>
-#include <vector>
 #include <cassert>
 #include <cctype>
+#include <functional>
+#include <vector>
 
 namespace llvm {
 

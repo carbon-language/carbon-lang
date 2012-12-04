@@ -10,8 +10,8 @@
 #ifndef X86DISASSEMBLERSHARED_H
 #define X86DISASSEMBLERSHARED_H
 
-#include <string>
 #include <string.h>
+#include <string>
 
 #define INSTRUCTION_SPECIFIER_FIELDS       \
   struct OperandSpecifier operands[X86_MAX_OPERANDS]; \

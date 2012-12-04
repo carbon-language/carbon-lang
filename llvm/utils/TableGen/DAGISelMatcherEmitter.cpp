@@ -13,12 +13,12 @@
 
 #include "DAGISelMatcher.h"
 #include "CodeGenDAGPatterns.h"
-#include "llvm/TableGen/Record.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/TableGen/Record.h"
 using namespace llvm;
 
 enum {

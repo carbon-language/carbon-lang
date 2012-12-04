@@ -13,11 +13,11 @@
 
 #include "CodeGenInstruction.h"
 #include "CodeGenTarget.h"
-#include "llvm/TableGen/Error.h"
-#include "llvm/TableGen/Record.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/STLExtras.h"
+#include "llvm/TableGen/Error.h"
+#include "llvm/TableGen/Record.h"
 #include <set>
 using namespace llvm;
 

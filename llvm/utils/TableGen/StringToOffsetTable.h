@@ -11,8 +11,8 @@
 #define TBLGEN_STRING_TO_OFFSET_TABLE_H
 
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/ADT/StringMap.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cctype>
 

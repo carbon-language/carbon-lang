@@ -17,11 +17,11 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/system_error.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/YAMLParser.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
 
 using namespace llvm;
 
