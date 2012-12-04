@@ -236,7 +236,11 @@ MemoryMappingLayout::MemoryMappingLayout() {
 }
 
 MemoryMappingLayout::~MemoryMappingLayout() {
-  UnmapOrDie(proc_self_maps_.data, proc_self_maps_.mmaped_size);
+  // Only unmap the buffer if it is different from the cached one. Otherwise
+  // it will be unmapped when the cache is refreshed.
+  if (proc_self_maps_.data != cached_proc_self_maps_.data) {
+    UnmapOrDie(proc_self_maps_.data, proc_self_maps_.mmaped_size);
+  }
 }
 
 void MemoryMappingLayout::Reset() {
