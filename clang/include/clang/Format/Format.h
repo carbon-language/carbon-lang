@@ -15,7 +15,7 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_FORMAT_FORMAT_H_
+#ifndef LLVM_CLANG_FORMAT_FORMAT_H
 #define LLVM_CLANG_FORMAT_FORMAT_H
 
 #include "clang/Frontend/FrontendAction.h"

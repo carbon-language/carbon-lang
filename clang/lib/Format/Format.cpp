@@ -26,9 +26,10 @@ namespace format {
 
 // FIXME: Move somewhere sane.
 struct TokenAnnotation {
-  enum TokenType { TT_Unknown, TT_TemplateOpener, TT_BinaryOperator,
-      TT_UnaryOperator, TT_OverloadedOperator, TT_PointerOrReference,
-      TT_ConditionalExpr, TT_LineComment, TT_BlockComment };
+  enum TokenType { TT_Unknown, TT_TemplateOpener, TT_TemplateCloser,
+      TT_BinaryOperator, TT_UnaryOperator, TT_OverloadedOperator,
+      TT_PointerOrReference, TT_ConditionalExpr, TT_LineComment,
+      TT_BlockComment };
 
   TokenType Type;
 
@@ -165,14 +166,13 @@ private:
         State.Column = State.Column - Previous.Tok.getLength();
       else if (Previous.Tok.is(tok::equal) && ParenLevel != 0)
         State.Column = State.Indent[ParenLevel] + 4;
-      else if (ParenLevel < State.Indent.size())
+      else
         State.Column = State.Indent[ParenLevel];
       if (!DryRun)
         replaceWhitespace(Current, 1, State.Column);
 
       State.Column += Current.Tok.getLength();
-      if (ParenLevel < State.LastSpace.size())
-        State.LastSpace[ParenLevel] = State.Indent[ParenLevel];
+      State.LastSpace[ParenLevel] = State.Indent[ParenLevel];
       if (Current.Tok.is(tok::colon) &&
           Annotations[Index].Type != TokenAnnotation::TT_ConditionalExpr) {
         State.Indent[ParenLevel] += 2;
@@ -187,24 +187,20 @@ private:
         replaceWhitespace(Current, 0, Spaces);
       if (Previous.Tok.is(tok::l_paren))
         State.Indent[ParenLevel] = State.Column;
-      if (Previous.Tok.is(tok::less) &&
-          Annotations[Index - 1].Type == TokenAnnotation::TT_TemplateOpener &&
-          ParenLevel < State.Indent.size())
+      if (Annotations[Index - 1].Type == TokenAnnotation::TT_TemplateOpener)
         State.Indent[ParenLevel] = State.Column;
       if (Current.Tok.is(tok::colon)) {
         State.Indent[ParenLevel] = State.Column + 3;
         State.InCtorInitializer = true;
       }
       // Top-level spaces are exempt as that mostly leads to better results.
-      if (Spaces > 0 && ParenLevel != 0 &&
-          ParenLevel < State.LastSpace.size())
+      if (Spaces > 0 && ParenLevel != 0)
         State.LastSpace[ParenLevel] = State.Column + Spaces;
       State.Column += Current.Tok.getLength() + Spaces;
     }
 
-    if (!DryRun &&
-        (Current.Tok.is(tok::r_paren) || Current.Tok.is(tok::r_square) ||
-         Annotations[Index].Type == TokenAnnotation::TT_TemplateOpener)) {
+    if (Current.Tok.is(tok::r_paren) || Current.Tok.is(tok::r_square) ||
+        Annotations[Index].Type == TokenAnnotation::TT_TemplateCloser) {
       State.Indent.pop_back();
       State.LastSpace.pop_back();
     }
@@ -353,7 +349,7 @@ public:
     bool parseAngle(unsigned Level) {
       while (Index < Tokens.size()) {
         if (Tokens[Index].Tok.is(tok::greater)) {
-          Annotations[Index].Type = TokenAnnotation::TT_TemplateOpener;
+          Annotations[Index].Type = TokenAnnotation::TT_TemplateCloser;
           Annotations[Index].ParenLevel = Level;
           next();
           return true;
@@ -426,6 +422,7 @@ public:
         if (parseAngle(Level + 1))
           Annotations[CurrentIndex].Type = TokenAnnotation::TT_TemplateOpener;
         else {
+          Annotations[CurrentIndex].ParenLevel = Level;
           Annotations[CurrentIndex].Type = TokenAnnotation::TT_BinaryOperator;
           Index = CurrentIndex + 1;
         }
@@ -495,6 +492,9 @@ public:
         if (Annotation.Type == TokenAnnotation::TT_TemplateOpener &&
             Annotations[i - 1].Type == TokenAnnotation::TT_TemplateOpener)
           Annotation.SpaceRequiredBefore = Style.SplitTemplateClosingGreater;
+        else if (Annotation.Type == TokenAnnotation::TT_TemplateCloser &&
+                 Annotations[i - 1].Type == TokenAnnotation::TT_TemplateCloser)
+          Annotation.SpaceRequiredBefore = Style.SplitTemplateClosingGreater;
         else
           Annotation.SpaceRequiredBefore = false;
       } else if (
@@ -502,7 +502,7 @@ public:
           Annotations[i - 1].Type == TokenAnnotation::TT_BinaryOperator) {
         Annotation.SpaceRequiredBefore = true;
       } else if (
-          Annotations[i - 1].Type == TokenAnnotation::TT_TemplateOpener &&
+          Annotations[i - 1].Type == TokenAnnotation::TT_TemplateCloser &&
           Line.Tokens[i].Tok.is(tok::l_paren)) {
         Annotation.SpaceRequiredBefore = false;
       } else {
