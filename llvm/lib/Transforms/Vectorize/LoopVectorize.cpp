@@ -1091,7 +1091,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
           // After broadcasting the induction variable we need to make the
           // vector consecutive by adding 0, 1, 2 ...
           Value *ConsecutiveInduction = getConsecutiveVector(Broadcasted);
-           
+
           WidenMap[OldInduction] = ConsecutiveInduction;
           continue;
         }
@@ -2067,7 +2067,7 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
        be = TheLoop->block_end(); bb != be; ++bb) {
     unsigned BlockCost = 0;
     BasicBlock *BB = *bb;
-    
+
     // For each instruction in the old loop.
     for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
 
@@ -2081,7 +2081,7 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
     // calculate the loop nest level and multiply the cost accordingly.
     if (Legal->blockNeedsPredication(*bb))
       BlockCost *= 2;
-    
+
     Cost += BlockCost;
   }
 
@@ -2265,4 +2265,3 @@ namespace llvm {
     return new LoopVectorize();
   }
 }
-
