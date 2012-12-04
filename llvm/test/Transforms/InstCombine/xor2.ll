@@ -66,3 +66,19 @@ test5:
 ; CHECK: lshr i32 %val1, 8
 ; CHECK: ret
 }
+
+; defect-1 in rdar://12329730
+; Simplify (X^Y) -> X or Y in the user's context if we know that 
+; only bits from X or Y are demanded.
+; e.g. the "x ^ 1234" can be optimized into x in the context of "t >> 16".
+;  Put in other word, t >> 16 -> x >> 16.
+; unsigned foo(unsigned x) { nsigned t = x ^ 1234; ;  return (t >> 16) + t;}
+define i32 @test6(i32 %x) {
+  %xor = xor i32 %x, 1234
+  %shr = lshr i32 %xor, 16
+  %add = add i32 %shr, %xor
+  ret i32 %add
+; CHECK: @test6
+; CHECK: lshr i32 %x, 16
+; CHECK: ret
+}

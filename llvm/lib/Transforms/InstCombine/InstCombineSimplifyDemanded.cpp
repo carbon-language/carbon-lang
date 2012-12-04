@@ -200,8 +200,21 @@ Value *InstCombiner::SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
       if ((DemandedMask & (~LHSKnownZero) & RHSKnownOne) == 
           (DemandedMask & (~LHSKnownZero)))
         return I->getOperand(1);
+    } else if (I->getOpcode() == Instruction::Xor) {
+      // We can simplify (X^Y) -> X or Y in the user's context if we know that
+      // only bits from X or Y are demanded.
+      
+      ComputeMaskedBits(I->getOperand(1), RHSKnownZero, RHSKnownOne, Depth+1);
+      ComputeMaskedBits(I->getOperand(0), LHSKnownZero, LHSKnownOne, Depth+1);
+      
+      // If all of the demanded bits are known zero on one side, return the
+      // other. 
+      if ((DemandedMask & RHSKnownZero) == DemandedMask)
+        return I->getOperand(0);
+      if ((DemandedMask & LHSKnownZero) == DemandedMask)
+        return I->getOperand(1);
     }
-    
+
     // Compute the KnownZero/KnownOne bits to simplify things downstream.
     ComputeMaskedBits(I, KnownZero, KnownOne, Depth);
     return 0;

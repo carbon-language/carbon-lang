@@ -523,9 +523,9 @@ entry:
   %tmp51 = xor i8 %tmp50, %tmp5
   %tmp52 = and i8 %tmp51, -128
   %tmp53 = lshr i8 %tmp52, 7
-; CHECK: lshr i8 %tmp51, 7
   %tmp54 = mul i8 %tmp53, 16
-; CHECK: shl nuw nsw i8 %tmp53, 4
+; CHECK: %0 = shl i8 %tmp4, 2
+; CHECK: %tmp54 = and i8 %0, 16
   %tmp55 = xor i8 %tmp54, %tmp51
 ; CHECK: ret i8 %tmp551
   ret i8 %tmp55
