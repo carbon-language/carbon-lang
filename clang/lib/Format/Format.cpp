@@ -72,28 +72,29 @@ public:
   UnwrappedLineFormatter(const FormatStyle &Style, SourceManager &SourceMgr,
                          const UnwrappedLine &Line,
                          const std::vector<TokenAnnotation> &Annotations,
-                         tooling::Replacements &Replaces)
+                         tooling::Replacements &Replaces, bool StructuralError)
       : Style(Style),
         SourceMgr(SourceMgr),
         Line(Line),
         Annotations(Annotations),
-        Replaces(Replaces) {
+        Replaces(Replaces),
+        StructuralError(StructuralError) {
     Parameters.PenaltyExtraLine = 100;
     Parameters.PenaltyIndentLevel = 5;
   }
 
   void format() {
-    formatFirstToken();
+    unsigned Indent = formatFirstToken();
     count = 0;
     IndentState State;
-    State.Column = Line.Level * 2 + Line.Tokens[0].Tok.getLength();
+    State.Column = Indent + Line.Tokens[0].Tok.getLength();
     State.CtorInitializerOnNewLine = false;
     State.InCtorInitializer = false;
     State.ConsumedTokens = 1;
 
     //State.UsedIndent.push_back(Line.Level * 2);
-    State.Indent.push_back(Line.Level * 2 + 4);
-    State.LastSpace.push_back(Line.Level * 2);
+    State.Indent.push_back(Indent + 4);
+    State.LastSpace.push_back(Indent);
 
     // Start iterating at 1 as we have correctly formatted of Token #0 above.
     for (unsigned i = 1, n = Line.Tokens.size(); i != n; ++i) {
@@ -315,20 +316,22 @@ private:
 
   /// \brief Add a new line and the required indent before the first Token
   /// of the \c UnwrappedLine.
-  void formatFirstToken() {
+  unsigned formatFirstToken() {
     const FormatToken &Token = Line.Tokens[0];
-    if (Token.WhiteSpaceStart.isValid()) {
-      unsigned Newlines =
-          std::min(Token.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
-      unsigned Offset = SourceMgr.getFileOffset(Token.WhiteSpaceStart);
-      if (Newlines == 0 && Offset != 0)
-        Newlines = 1;
-      unsigned Indent = Line.Level * 2;
-      if (Token.Tok.is(tok::kw_public) || Token.Tok.is(tok::kw_protected) ||
-          Token.Tok.is(tok::kw_private))
-        Indent += Style.AccessModifierOffset;
-      replaceWhitespace(Token, Newlines, Indent);
-    }
+    if (!Token.WhiteSpaceStart.isValid() || StructuralError)
+      return SourceMgr.getSpellingColumnNumber(Token.Tok.getLocation()) - 1;
+
+    unsigned Newlines =
+        std::min(Token.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
+    unsigned Offset = SourceMgr.getFileOffset(Token.WhiteSpaceStart);
+    if (Newlines == 0 && Offset != 0)
+      Newlines = 1;
+    unsigned Indent = Line.Level * 2;
+    if (Token.Tok.is(tok::kw_public) || Token.Tok.is(tok::kw_protected) ||
+        Token.Tok.is(tok::kw_private))
+      Indent += Style.AccessModifierOffset;
+    replaceWhitespace(Token, Newlines, Indent);
+    return Indent;
   }
 
   FormatStyle Style;
@@ -337,6 +340,7 @@ private:
   const std::vector<TokenAnnotation> &Annotations;
   tooling::Replacements &Replaces;
   unsigned int count;
+  bool StructuralError;
 
   OptimizationParameters Parameters;
 };
@@ -678,17 +682,26 @@ public:
       : Style(Style),
         Lex(Lex),
         SourceMgr(SourceMgr),
-        Ranges(Ranges) {
+        Ranges(Ranges),
+        StructuralError(false) {
   }
 
   tooling::Replacements format() {
     UnwrappedLineParser Parser(Lex, SourceMgr, *this);
-    Parser.parse();
+    StructuralError = Parser.parse();
+    for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),
+                                              E = UnwrappedLines.end();
+         I != E; ++I)
+      doFormatUnwrappedLine(*I);
     return Replaces;
   }
 
 private:
   virtual void formatUnwrappedLine(const UnwrappedLine &TheLine) {
+    UnwrappedLines.push_back(TheLine);
+  }
+
+  void doFormatUnwrappedLine(const UnwrappedLine &TheLine) {
     if (TheLine.Tokens.size() == 0)
       return;
 
@@ -706,7 +719,8 @@ private:
       TokenAnnotator Annotator(TheLine, Style, SourceMgr);
       Annotator.annotate();
       UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine,
-                                       Annotator.getAnnotations(), Replaces);
+                                       Annotator.getAnnotations(), Replaces,
+                                       StructuralError);
       Formatter.format();
       return;
     }
@@ -717,6 +731,8 @@ private:
   SourceManager &SourceMgr;
   tooling::Replacements Replaces;
   std::vector<CharSourceRange> Ranges;
+  std::vector<UnwrappedLine> UnwrappedLines;
+  bool StructuralError;
 };
 
 tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,

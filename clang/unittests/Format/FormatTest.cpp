@@ -381,5 +381,23 @@ TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
                "};");
 }
 
+TEST_F(FormatTest, IncorrectCodeErrorDetection) {
+  EXPECT_EQ("{\n{\n}\n", format("{\n{\n}\n"));
+  EXPECT_EQ("{\n  {\n}\n", format("{\n  {\n}\n"));
+  EXPECT_EQ("{\n  {\n  }\n", format("{\n  {\n  }\n"));
+
+  FormatStyle Style = getLLVMStyle();
+  Style.ColumnLimit = 10;
+  EXPECT_EQ("{\n"
+            "    {\n"
+            " breakme(\n"
+            "     qwe);\n"
+            "}\n", format("{\n"
+                          "    {\n"
+                          " breakme(qwe);\n"
+                          "}\n", Style));
+
+}
+
 }  // end namespace tooling
 }  // end namespace clang

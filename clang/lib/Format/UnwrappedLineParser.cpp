@@ -32,12 +32,13 @@ UnwrappedLineParser::UnwrappedLineParser(Lexer &Lex, SourceManager &SourceMgr,
   Lex.SetKeepWhitespaceMode(true);
 }
 
-void UnwrappedLineParser::parse() {
+bool UnwrappedLineParser::parse() {
   parseToken();
-  parseLevel();
+  return parseLevel();
 }
 
-void UnwrappedLineParser::parseLevel() {
+bool UnwrappedLineParser::parseLevel() {
+  bool Error = false;
   do {
     switch (FormatTok.Tok.getKind()) {
     case tok::hash:
@@ -47,19 +48,20 @@ void UnwrappedLineParser::parseLevel() {
       parseComment();
       break;
     case tok::l_brace:
-      parseBlock();
+      Error |= parseBlock();
       addUnwrappedLine();
       break;
     case tok::r_brace:
-      return;
+      return false;
     default:
       parseStatement();
       break;
     }
   } while (!eof());
+  return Error;
 }
 
-void UnwrappedLineParser::parseBlock() {
+bool UnwrappedLineParser::parseBlock() {
   nextToken();
 
   // FIXME: Remove this hack to handle namespaces.
@@ -74,11 +76,12 @@ void UnwrappedLineParser::parseBlock() {
     --Line.Level;
   // FIXME: Add error handling.
   if (!FormatTok.Tok.is(tok::r_brace))
-    return;
+    return true;
 
   nextToken();
   if (FormatTok.Tok.is(tok::semi))
     nextToken();
+  return false;
 }
 
 void UnwrappedLineParser::parsePPDirective() {
