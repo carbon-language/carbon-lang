@@ -12,24 +12,24 @@
 //
 //===----------------------------------------------------------------------===//
 #include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/PassManager.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Assembly/PrintModulePass.h"
+#include "llvm/CallGraphSCCPass.h"
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
-#include "llvm/CallGraphSCCPass.h"
-#include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Support/PassNameParser.h"
+#include "llvm/Module.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
+#include "llvm/Support/PassNameParser.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/ToolOutputFile.h"
-#include <memory>
-#include <sstream>
-#include <set>
-#include <vector>
 #include <algorithm>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <vector>
 using namespace llvm;
 
 static cl::opt<unsigned> SeedCL("seed",

@@ -13,22 +13,22 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/PassManager.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Transforms/IPO.h"
 #include "llvm/DataLayout.h"
+#include "llvm/Module.h"
+#include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/IRReader.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/ToolOutputFile.h"
-#include "llvm/Support/SystemUtils.h"
-#include "llvm/Support/Signals.h"
 #include "llvm/Support/Regex.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/SetVector.h"
+#include "llvm/Support/Signals.h"
+#include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Transforms/IPO.h"
 #include <memory>
 using namespace llvm;
 

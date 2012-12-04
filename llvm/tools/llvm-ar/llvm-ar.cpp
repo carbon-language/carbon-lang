@@ -13,19 +13,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
 #include "llvm/Bitcode/Archive.h"
+#include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/Format.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <cstdlib>
-#include <memory>
 #include <fstream>
+#include <memory>
 using namespace llvm;
 
 // Option for compatibility with AIX, not used but must allow it to be present.

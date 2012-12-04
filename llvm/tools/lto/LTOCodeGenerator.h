@@ -14,10 +14,10 @@
 #ifndef LTO_CODE_GENERATOR_H
 #define LTO_CODE_GENERATOR_H
 
-#include "llvm/Linker.h"
-#include "llvm/ADT/StringMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm-c/lto.h"
+#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/Linker.h"
 #include <string>
 
 namespace llvm {

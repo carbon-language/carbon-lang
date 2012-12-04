@@ -14,17 +14,14 @@
 
 #include "llvm/Config/config.h" // plugin-api.h requires HAVE_STDINT_H
 #include "plugin-api.h"
-
 #include "llvm-c/lto.h"
-
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Support/system_error.h"
-#include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Errno.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
-
+#include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/system_error.h"
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>

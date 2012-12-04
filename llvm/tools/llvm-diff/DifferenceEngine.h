@@ -15,11 +15,10 @@
 #ifndef _LLVM_DIFFERENCE_ENGINE_H_
 #define _LLVM_DIFFERENCE_ENGINE_H_
 
+#include "DiffConsumer.h"
+#include "DiffLog.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "DiffLog.h"
-#include "DiffConsumer.h"
-
 #include <utility>
 
 namespace llvm {

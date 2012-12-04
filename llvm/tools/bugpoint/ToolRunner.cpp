@@ -13,12 +13,12 @@
 
 #define DEBUG_TYPE "toolrunner"
 #include "ToolRunner.h"
-#include "llvm/Support/Program.h"
+#include "llvm/Config/config.h"   // for HAVE_LINK_R
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Config/config.h"   // for HAVE_LINK_R
 #include <fstream>
 #include <sstream>
 using namespace llvm;

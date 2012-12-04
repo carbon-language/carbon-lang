@@ -12,9 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "DiffConsumer.h"
-
-#include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;

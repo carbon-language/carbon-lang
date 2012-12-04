@@ -16,16 +16,16 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Object/ObjectFile.h"
-#include "llvm/Object/ELF.h"
-#include "llvm/Analysis/Verifier.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/Support/Format.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Object/ELF.h"
+#include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Signals.h"
+#include "llvm/Support/Format.h"
 #include "llvm/Support/FormattedStream.h"
+#include "llvm/Support/PrettyStackTrace.h"
+#include "llvm/Support/Signals.h"
 
 using namespace llvm;
 using namespace llvm::object;

@@ -17,21 +17,21 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/LLVMContext.h"
-#include "llvm/DebugInfo.h"
-#include "llvm/Module.h"
-#include "llvm/Type.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
+#include "llvm/Bitcode/ReaderWriter.h"
+#include "llvm/DebugInfo.h"
+#include "llvm/IntrinsicInst.h"
+#include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PrettyStackTrace.h"
-#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/Signals.h"
+#include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
+#include "llvm/Type.h"
 using namespace llvm;
 
 static cl::opt<std::string>

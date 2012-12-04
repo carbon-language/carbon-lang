@@ -16,18 +16,18 @@
 //===----------------------------------------------------------------------===//
 
 #include "BugDriver.h"
+#include "llvm/Analysis/Verifier.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/DataLayout.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
-#include "llvm/Analysis/Verifier.h"
-#include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Support/SystemUtils.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/SystemUtils.h"
+#include "llvm/Support/ToolOutputFile.h"
 
 #define DONT_GET_PLUGIN_LOADER_OPTION
 #include "llvm/Support/PluginLoader.h"

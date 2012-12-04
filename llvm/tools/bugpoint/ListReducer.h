@@ -15,11 +15,11 @@
 #ifndef BUGPOINT_LIST_REDUCER_H
 #define BUGPOINT_LIST_REDUCER_H
 
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
-#include <vector>
-#include <cstdlib>
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <cstdlib>
+#include <vector>
 
 namespace llvm {
   

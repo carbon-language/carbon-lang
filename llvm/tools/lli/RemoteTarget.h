@@ -15,8 +15,8 @@
 #ifndef REMOTEPROCESS_H
 #define REMOTEPROCESS_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/Memory.h"
 #include <stdlib.h>

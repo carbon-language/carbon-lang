@@ -13,22 +13,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "DifferenceEngine.h"
-
-#include "llvm/Constants.h"
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSet.h"
-#include "llvm/Support/CallSite.h"
+#include "llvm/Constants.h"
+#include "llvm/Function.h"
+#include "llvm/Instructions.h"
+#include "llvm/Module.h"
 #include "llvm/Support/CFG.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/type_traits.h"
-
 #include <utility>
 
 using namespace llvm;

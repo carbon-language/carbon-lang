@@ -18,8 +18,8 @@
 
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace llvm {
 

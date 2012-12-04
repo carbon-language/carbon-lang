@@ -13,19 +13,20 @@
 //===----------------------------------------------------------------------===//
 
 #include "LTOModule.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Constants.h"
 #include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCParser/MCAsmParser.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/MC/MCParser/MCAsmParser.h"
-#include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -34,8 +35,7 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/ADT/OwningPtr.h"
-#include "llvm/ADT/Triple.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
 
 static cl::opt<bool>

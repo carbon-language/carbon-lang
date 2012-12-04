@@ -14,15 +14,15 @@
 #ifndef LTO_MODULE_H
 #define LTO_MODULE_H
 
-#include "llvm/Module.h"
-#include "llvm/MC/MCContext.h"
-#include "llvm/Target/Mangler.h"
-#include "llvm/Target/TargetMachine.h"
+#include "llvm-c/lto.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm-c/lto.h"
-#include <vector>
+#include "llvm/MC/MCContext.h"
+#include "llvm/Module.h"
+#include "llvm/Target/Mangler.h"
+#include "llvm/Target/TargetMachine.h"
 #include <string>
+#include <vector>
 
 // Forward references to llvm classes.
 namespace llvm {
