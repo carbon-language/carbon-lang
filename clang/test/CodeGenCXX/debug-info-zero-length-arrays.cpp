@@ -1,4 +1,4 @@
-// RUN: %clang -fverbose-asm -g -O0 -S %s -o - | FileCheck %s
+// RUN: %clang -target x86_64-unknown-unknown -fverbose-asm -g -O0 -S %s -o - | FileCheck %s
 // <rdar://problem/12566646>
 
 class A {
