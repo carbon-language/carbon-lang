@@ -126,9 +126,6 @@ namespace llvm {
       grow();
     }
 
-    /// @brief returns the register allocation preference.
-    unsigned getRegAllocPref(unsigned virtReg);
-
     /// @brief returns true if VirtReg is assigned to its preferred physreg.
     bool hasPreferredPhys(unsigned VirtReg);
 

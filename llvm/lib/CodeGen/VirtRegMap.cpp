@@ -77,17 +77,6 @@ unsigned VirtRegMap::createSpillSlot(const TargetRegisterClass *RC) {
   return SS;
 }
 
-unsigned VirtRegMap::getRegAllocPref(unsigned virtReg) {
-  std::pair<unsigned, unsigned> Hint = MRI->getRegAllocationHint(virtReg);
-  unsigned physReg = Hint.second;
-  if (TargetRegisterInfo::isVirtualRegister(physReg) && hasPhys(physReg))
-    physReg = getPhys(physReg);
-  if (Hint.first == 0)
-    return (TargetRegisterInfo::isPhysicalRegister(physReg))
-      ? physReg : 0;
-  return TRI->ResolveRegAllocHint(Hint.first, physReg, *MF);
-}
-
 bool VirtRegMap::hasPreferredPhys(unsigned VirtReg) {
   unsigned Hint = MRI->getSimpleHint(VirtReg);
   if (!Hint)
