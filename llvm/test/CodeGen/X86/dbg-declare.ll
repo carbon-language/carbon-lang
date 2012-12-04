@@ -51,7 +51,7 @@ declare void @llvm.stackrestore(i8*) nounwind
 !19 = metadata !{i32 786433, null, metadata !"", null, i32 0, i64 0, i64 8, i32 0, i32 0, metadata !20, metadata !21, i32 0, i32 0} ; [ DW_TAG_array_type ]
 !20 = metadata !{i32 786468, null, metadata !"char", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ]
 !21 = metadata !{metadata !22}
-!22 = metadata !{i32 786465, i64 1, i64 0}        ; [ DW_TAG_subrange_type ]
+!22 = metadata !{i32 786465, i64 1, i64 0, i64 -1}        ; [ DW_TAG_subrange_type ]
 !23 = metadata !{i32 7, i32 8, metadata !17, null}
 !24 = metadata !{i32 9, i32 1, metadata !17, null}
 !25 = metadata !{i32 8, i32 3, metadata !17, null}

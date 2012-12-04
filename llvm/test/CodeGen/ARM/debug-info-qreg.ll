@@ -49,7 +49,7 @@ declare void @llvm.dbg.value(metadata, i64, metadata) nounwind readnone
 !6 = metadata !{i32 590083, metadata !2, metadata !"", metadata !2, i32 0, i64 128, i64 128, i32 0, i32 0, metadata !7, metadata !8, i32 0, i32 0} ; [ DW_TAG_vector_type ]
 !7 = metadata !{i32 589860, metadata !2, metadata !"float", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 4} ; [ DW_TAG_base_type ]
 !8 = metadata !{metadata !9}
-!9 = metadata !{i32 589857, i64 0, i64 3}         ; [ DW_TAG_subrange_type ]
+!9 = metadata !{i32 589857, i64 0, i64 3, i64 4}         ; [ DW_TAG_subrange_type ]
 !10 = metadata !{i32 589870, i32 0, metadata !1, metadata !"main", metadata !"main", metadata !"", metadata !1, i32 59, metadata !11, i1 false, i1 true, i32 0, i32 0, i32 0, i32 256, i1 true, i32 (i32, i8**)* @main, null} ; [ DW_TAG_subprogram ]
 !11 = metadata !{i32 589845, metadata !1, metadata !"", metadata !1, i32 0, i64 0, i64 0, i32 0, i32 0, i32 0, metadata !12, i32 0, i32 0} ; [ DW_TAG_subroutine_type ]
 !12 = metadata !{metadata !13}

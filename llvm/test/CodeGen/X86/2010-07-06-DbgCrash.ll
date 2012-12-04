@@ -16,7 +16,7 @@
 !103 = metadata !{i32 524299, metadata !97, i32 73, i32 0} ; [ DW_TAG_lexical_block ]
 !104 = metadata !{i32 524289, metadata !38, metadata !"", metadata !38, i32 0, i64 85312, i64 64, i64 0, i32 0, metadata !46, metadata !105, i32 0, null} ; [ DW_TAG_array_type ]
 !105 = metadata !{metadata !106}
-!106 = metadata !{i32 524321, i64 0, i64 1332}    ; [ DW_TAG_subrange_type ]
+!106 = metadata !{i32 524321, i64 0, i64 1332, i64 1333}    ; [ DW_TAG_subrange_type ]
 !107 = metadata !{i32 73, i32 0, metadata !103, null}
 
 define i32 @main() nounwind ssp {

@@ -17,4 +17,4 @@
 !7 = metadata !{i32 720897, null, metadata !"", null, i32 0, i64 320, i64 32, i32 0, i32 0, metadata !8, metadata !9, i32 0, i32 0} ; [ DW_TAG_array_type ]
 !8 = metadata !{i32 720932, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 !9 = metadata !{metadata !10}
-!10 = metadata !{i32 720929, i64 0, i64 9}        ; [ DW_TAG_subrange_type ]
+!10 = metadata !{i32 720929, i64 0, i64 9, i64 10}        ; [ DW_TAG_subrange_type ]
