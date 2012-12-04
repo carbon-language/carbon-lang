@@ -81,7 +81,8 @@ Here are some useful links:
    <http://www.research.att.com/%7Ebs/C++.html>`_.
 
 #. `Bruce Eckel's Thinking in C++, 2nd ed. Volume 2 Revision 4.0
-   (even better, get the book) <http://64.78.49.204/>`_.
+   (even better, get the book)
+   <http://www.mindview.net/Books/TICPP/ThinkingInCPP2e.html>`_.
 
 You are also encouraged to take a look at the :ref:`LLVM Coding Standards
 <coding_standards>` guide which focuses on how to write maintainable code more
