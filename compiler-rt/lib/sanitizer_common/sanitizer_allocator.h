@@ -102,6 +102,7 @@ typedef IntrusiveList<AllocatorListNode> AllocatorFreeList;
 // is has to be POD.
 template<const uptr kNumClasses, class SizeClassAllocator>
 struct SizeClassAllocatorLocalCache {
+  typedef SizeClassAllocator Allocator;
   // Don't need to call Init if the object is a global (i.e. zero-initialized).
   void Init() {
     internal_memset(this, 0, sizeof(*this));

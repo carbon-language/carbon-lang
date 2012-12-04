@@ -19,9 +19,7 @@ static const uptr kAllocatorSize  = 0x010000000000ULL;  // 1T.
 
 typedef DefaultSizeClassMap SCMap;
 typedef
-  SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 16, SCMap> Allocator;
-typedef SizeClassAllocatorLocalCache<Allocator::kNumClasses, Allocator>
-  AllocatorCache;
+  SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 16, SCMap> Allocator64;
 
 template <class SizeClassMap>
 void TestSizeClassMap() {
@@ -61,7 +59,8 @@ TEST(SanitizerCommon, CompactSizeClassMap) {
   TestSizeClassMap<CompactSizeClassMap>();
 }
 
-TEST(SanitizerCommon, SizeClassAllocator64) {
+template <class Allocator>
+void TestSizeClassAllocator() {
   Allocator a;
   a.Init();
 
@@ -107,8 +106,12 @@ TEST(SanitizerCommon, SizeClassAllocator64) {
   a.TestOnlyUnmap();
 }
 
+TEST(SanitizerCommon, SizeClassAllocator64) {
+  TestSizeClassAllocator<Allocator64>();
+}
 
-TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
+template <class Allocator>
+void SizeClassAllocator64MetadataStress() {
   Allocator a;
   a.Init();
   static volatile void *sink;
@@ -132,6 +135,11 @@ TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
   (void)sink;
 }
 
+TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
+  SizeClassAllocator64MetadataStress<Allocator64>();
+}
+
+template<class Allocator>
 void FailInAssertionOnOOM() {
   Allocator a;
   a.Init();
@@ -144,8 +152,7 @@ void FailInAssertionOnOOM() {
 }
 
 TEST(SanitizerCommon, SizeClassAllocator64Overflow) {
-  EXPECT_DEATH(FailInAssertionOnOOM(),
-               "Out of memory");
+  EXPECT_DEATH(FailInAssertionOnOOM<Allocator64>(), "Out of memory");
 }
 
 TEST(SanitizerCommon, LargeMmapAllocator) {
@@ -203,15 +210,13 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   }
 }
 
-TEST(SanitizerCommon, CombinedAllocator) {
-  typedef Allocator PrimaryAllocator;
-  typedef LargeMmapAllocator SecondaryAllocator;
-  typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
-          SecondaryAllocator> Allocator;
+template
+<class PrimaryAllocator, class SecondaryAllocator, class AllocatorCache>
+void TestCombinedAllocator() {
+  CombinedAllocator<PrimaryAllocator, AllocatorCache, SecondaryAllocator> a;
+  a.Init();
 
   AllocatorCache cache;
-  Allocator a;
-  a.Init();
   cache.Init();
 
   EXPECT_EQ(a.Allocate(&cache, -1, 1), (void*)0);
@@ -251,13 +256,19 @@ TEST(SanitizerCommon, CombinedAllocator) {
   a.TestOnlyUnmap();
 }
 
-static THREADLOCAL AllocatorCache static_allocator_cache;
 
-TEST(SanitizerCommon, SizeClassAllocatorLocalCache) {
+TEST(SanitizerCommon, CombinedAllocator) {
+  TestCombinedAllocator<Allocator64,
+      LargeMmapAllocator,
+      SizeClassAllocatorLocalCache<Allocator64::kNumClasses, Allocator64> > ();
+}
+
+template <class AllocatorCache>
+void TestSizeClassAllocatorLocalCache() {
+  static THREADLOCAL AllocatorCache static_allocator_cache;
   static_allocator_cache.Init();
-
-  Allocator a;
   AllocatorCache cache;
+  typename AllocatorCache::Allocator a;
 
   a.Init();
   cache.Init();
@@ -281,4 +292,10 @@ TEST(SanitizerCommon, SizeClassAllocatorLocalCache) {
   }
 
   a.TestOnlyUnmap();
+}
+
+TEST(SanitizerCommon, SizeClassAllocator64LocalCache) {
+  typedef SizeClassAllocatorLocalCache<Allocator64::kNumClasses, Allocator64>
+      AllocatorCache;
+  TestSizeClassAllocatorLocalCache<AllocatorCache> ();
 }
