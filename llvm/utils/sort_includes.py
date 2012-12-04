@@ -10,13 +10,12 @@ welcome for more functionality, and sorting other header groups.
 
 import argparse
 import os
-import re
-import sys
-import tempfile
 
 def sort_includes(f):
+  """Sort the #include lines of a specific file."""
   lines = f.readlines()
-  look_for_api_header = f.name[-4:] == '.cpp'
+  look_for_api_header = os.path.splitext(f.name)[1] == '.cpp'
+  found_headers = False
   headers_begin = 0
   headers_end = 0
   api_headers = []
@@ -27,8 +26,9 @@ def sort_includes(f):
     if l.strip() == '':
       continue
     if l.startswith('#include'):
-      if headers_begin == 0:
+      if not found_headers:
         headers_begin = i
+        found_headers = True
       headers_end = i
       header = l[len('#include'):].lstrip()
       if look_for_api_header and header.startswith('"'):
@@ -38,7 +38,8 @@ def sort_includes(f):
       if header.startswith('<'):
         system_headers.append(header)
         continue
-      if header.startswith('"llvm/') or header.startswith('"clang/'):
+      if (header.startswith('"llvm/') or header.startswith('"llvm-c/') or
+          header.startswith('"clang/') or header.startswith('"clang-c/')):
         project_headers.append(header)
         continue
       local_headers.append(header)
@@ -46,12 +47,12 @@ def sort_includes(f):
 
     # Only allow comments and #defines prior to any includes. If either are
     # mixed with includes, the order might be sensitive.
-    if headers_begin != 0:
+    if found_headers:
       break
     if l.startswith('//') or l.startswith('#define') or l.startswith('#ifndef'):
       continue
     break
-  if headers_begin == 0:
+  if not found_headers:
     return
 
   local_headers.sort()
@@ -61,8 +62,6 @@ def sort_includes(f):
   header_lines = ['#include ' + h for h in headers]
   lines = lines[:headers_begin] + header_lines + lines[headers_end + 1:]
 
-  #for l in lines[headers_begin:headers_end]:
-  #  print l.rstrip()
   f.seek(0)
   f.truncate()
   f.writelines(lines)
