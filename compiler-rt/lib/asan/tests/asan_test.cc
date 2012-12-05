@@ -1606,7 +1606,7 @@ NOINLINE static int LargeFunction(bool do_bad_access) {
 TEST(AddressSanitizer, DISABLED_LargeFunctionSymbolizeTest) {
   int failing_line = LargeFunction(false);
   char expected_warning[128];
-  sprintf(expected_warning, "LargeFunction.*asan_test.cc:%d", failing_line);
+  sprintf(expected_warning, "LargeFunction.*asan_test.*:%d", failing_line);
   EXPECT_DEATH(LargeFunction(true), expected_warning);
 }
 
@@ -1750,7 +1750,7 @@ TEST(AddressSanitizer, FileNameInGlobalReportTest) {
   static char zoo[10];
   const char *p = Ident(zoo);
   // The file name should be present in the report.
-  EXPECT_DEATH(Ident(p[15]), "zoo.*asan_test.cc");
+  EXPECT_DEATH(Ident(p[15]), "zoo.*asan_test.");
 }
 
 int *ReturnsPointerToALocalObject() {
