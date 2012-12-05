@@ -17,6 +17,7 @@
 #define LLVM_SUPPORT_WIN64EH_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Endian.h"
 
 namespace llvm {
 namespace Win64EH {
@@ -39,11 +40,17 @@ enum UnwindOpcodes {
 /// or part thereof.
 union UnwindCode {
   struct {
-    uint8_t codeOffset;
-    uint8_t unwindOp:4,
-            opInfo:4;
+    support::ulittle8_t CodeOffset;
+    support::ulittle8_t UnwindOpAndOpInfo;
   } u;
-  uint16_t frameOffset;
+  support::ulittle16_t FrameOffset;
+
+  uint8_t getUnwindOp() const {
+    return u.UnwindOpAndOpInfo & 0x0F;
+  }
+  uint8_t getOpInfo() const {
+    return (u.UnwindOpAndOpInfo >> 4) & 0x0F;
+  }
 };
 
 enum {
@@ -60,36 +67,64 @@ enum {
 
 /// RuntimeFunction - An entry in the table of functions with unwind info.
 struct RuntimeFunction {
-  uint64_t startAddress;
-  uint64_t endAddress;
-  uint64_t unwindInfoOffset;
+  support::ulittle32_t StartAddress;
+  support::ulittle32_t EndAddress;
+  support::ulittle32_t UnwindInfoOffset;
 };
 
 /// UnwindInfo - An entry in the exception table.
 struct UnwindInfo {
-  uint8_t version:3,
-          flags:5;
-  uint8_t prologSize;
-  uint8_t numCodes;
-  uint8_t frameRegister:4,
-          frameOffset:4;
-  UnwindCode unwindCodes[1];
+  support::ulittle8_t VersionAndFlags;
+  support::ulittle8_t PrologSize;
+  support::ulittle8_t NumCodes;
+  support::ulittle8_t FrameRegisterAndOffset;
+  UnwindCode UnwindCodes[1];
 
+  uint8_t getVersion() const {
+    return VersionAndFlags & 0x07;
+  }
+  uint8_t getFlags() const {
+    return (VersionAndFlags >> 3) & 0x1f;
+  }
+  uint8_t getFrameRegister() const {
+    return FrameRegisterAndOffset & 0x0f;
+  }
+  uint8_t getFrameOffset() const {
+    return (FrameRegisterAndOffset >> 4) & 0x0f;
+  }
+
+  // The data after unwindCodes depends on flags.
+  // If UNW_ExceptionHandler or UNW_TerminateHandler is set then follows
+  // the address of the language-specific exception handler.
+  // If UNW_ChainInfo is set then follows a RuntimeFunction which defines
+  // the chained unwind info.
+  // For more information please see MSDN at:
+  // http://msdn.microsoft.com/en-us/library/ddssxxy8.aspx
+
+  /// \brief Return pointer to language specific data part of UnwindInfo.
   void *getLanguageSpecificData() {
-    return reinterpret_cast<void *>(&unwindCodes[(numCodes+1) & ~1]);
+    return reinterpret_cast<void *>(&UnwindCodes[(NumCodes+1) & ~1]);
   }
-  uint64_t getLanguageSpecificHandlerOffset() {
-    return *reinterpret_cast<uint64_t *>(getLanguageSpecificData());
+
+  /// \brief Return image-relativ offset of language-specific exception handler.
+  uint32_t getLanguageSpecificHandlerOffset() {
+    return *reinterpret_cast<uint32_t *>(getLanguageSpecificData());
   }
-  void setLanguageSpecificHandlerOffset(uint64_t offset) {
-    *reinterpret_cast<uint64_t *>(getLanguageSpecificData()) = offset;
+
+  /// \brief Set image-relativ offset of language-specific exception handler.
+  void setLanguageSpecificHandlerOffset(uint32_t offset) {
+    *reinterpret_cast<uint32_t *>(getLanguageSpecificData()) = offset;
   }
+
+  /// \brief Return pointer to exception-specific data.
+  void *getExceptionData() {
+    return reinterpret_cast<void *>(reinterpret_cast<uint32_t *>(
+                                                  getLanguageSpecificData())+1);
+  }
+
+  /// \brief Return pointer to chained unwind info.
   RuntimeFunction *getChainedFunctionEntry() {
     return reinterpret_cast<RuntimeFunction *>(getLanguageSpecificData());
-  }
-  void *getExceptionData() {
-    return reinterpret_cast<void *>(reinterpret_cast<uint64_t *>(
-                                                  getLanguageSpecificData())+1);
   }
 };
 
