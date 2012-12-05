@@ -97,7 +97,7 @@ void RegisterPressure::dump(const TargetRegisterInfo *TRI) const {
   dbgs() << '\n';
 }
 
-void RegPressureTracker::dump(const TargetRegisterInfo *TRI) const {
+void RegPressureTracker::dump() const {
   dbgs() << "Curr Pressure: ";
   dumpSetPressure(CurrSetPressure, TRI);
   P.dump(TRI);

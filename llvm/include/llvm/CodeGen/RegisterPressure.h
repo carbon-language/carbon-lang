@@ -304,7 +304,7 @@ public:
     return getDownwardPressure(MI, PressureResult, MaxPressureResult);
   }
 
-  void dump(const TargetRegisterInfo *TRI) const;
+  void dump() const;
 
 protected:
   const LiveInterval *getInterval(unsigned Reg) const;
