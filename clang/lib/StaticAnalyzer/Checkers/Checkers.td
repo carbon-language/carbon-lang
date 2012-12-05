@@ -417,7 +417,11 @@ def IvarInvalidationChecker : Checker<"InstanceVariableInvalidation">,
   DescFile<"IvarInvalidationChecker.cpp">;
 
 def DirectIvarAssignment : Checker<"DirectIvarAssignment">,
-  HelpText<"Check that the invalidatable instance variables are invalidated in the methods annotated with objc_instance_variable_invalidator">,
+  HelpText<"Check for direct assignments to instance variables">,
+  DescFile<"DirectIvarAssignment.cpp">;
+
+def DirectIvarAssignmentForAnnotatedFunctions : Checker<"DirectIvarAssignmentForAnnotatedFunctions">,
+  HelpText<"Check for direct assignments to instance variables in the methods annotated with objc_no_direct_instance_variable_assignmemt">,
   DescFile<"DirectIvarAssignment.cpp">;
 
 def ObjCSuperCallChecker : Checker<"MissingSuperCall">,
