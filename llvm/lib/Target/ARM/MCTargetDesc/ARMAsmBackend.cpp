@@ -220,7 +220,7 @@ void ARMAsmBackend::relaxInstruction(const MCInst &Inst, MCInst &Res) const {
 bool ARMAsmBackend::writeNopData(uint64_t Count, MCObjectWriter *OW) const {
   const uint16_t Thumb1_16bitNopEncoding = 0x46c0; // using MOV r8,r8
   const uint16_t Thumb2_16bitNopEncoding = 0xbf00; // NOP
-  const uint32_t ARMv4_NopEncoding = 0xe1a0000; // using MOV r0,r0
+  const uint32_t ARMv4_NopEncoding = 0xe1a00000; // using MOV r0,r0
   const uint32_t ARMv6T2_NopEncoding = 0xe320f000; // NOP
   if (isThumb()) {
     const uint16_t nopEncoding = hasNOP() ? Thumb2_16bitNopEncoding
