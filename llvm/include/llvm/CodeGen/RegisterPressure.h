@@ -30,7 +30,7 @@ struct RegisterPressure {
   /// Map of max reg pressure indexed by pressure set ID, not class ID.
   std::vector<unsigned> MaxSetPressure;
 
-  /// List of live in registers.
+  /// List of live in virtual registers or physical register units.
   SmallVector<unsigned,8> LiveInRegs;
   SmallVector<unsigned,8> LiveOutRegs;
 
@@ -39,9 +39,15 @@ struct RegisterPressure {
   /// to account for live through (global liveness).
   void increase(const TargetRegisterClass *RC, const TargetRegisterInfo *TRI);
 
+  /// Increase pressure for each pressure set impacted by this register unit.
+  void increase(unsigned RU, const TargetRegisterInfo *TRI);
+
   /// Decrease register pressure for each pressure set impacted by this register
   /// class. This is only useful to account for spilling or rematerialization.
   void decrease(const TargetRegisterClass *RC, const TargetRegisterInfo *TRI);
+
+  /// Decrease pressure for each pressure set impacted by this register unit.
+  void decrease(unsigned RU, const TargetRegisterInfo *TRI);
 
   void dump(const TargetRegisterInfo *TRI) const;
 };
@@ -172,8 +178,9 @@ public:
             const LiveIntervals *lis, const MachineBasicBlock *mbb,
             MachineBasicBlock::const_iterator pos);
 
-  /// Force liveness of registers. Particularly useful to initialize the
-  /// livein/out state of the tracker before the first call to advance/recede.
+  /// Force liveness of virtual registers or physical register
+  /// units. Particularly useful to initialize the livein/out state of the
+  /// tracker before the first call to advance/recede.
   void addLiveRegs(ArrayRef<unsigned> Regs);
 
   /// Get the MI position corresponding to this register pressure.

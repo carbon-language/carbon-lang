@@ -1,6 +1,9 @@
 ; RUN: llc < %s -march=x86-64 -mcpu=core2 -x86-early-ifcvt -enable-misched \
 ; RUN:          -misched=shuffle -misched-bottomup -verify-machineinstrs \
 ; RUN:     | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=core2 -x86-early-ifcvt -enable-misched \
+; RUN:          -misched=shuffle -misched-topdown -verify-machineinstrs \
+; RUN:     | FileCheck %s --check-prefix TOPDOWN
 ; REQUIRES: asserts
 ;
 ; Interesting MachineScheduler cases.
@@ -75,5 +78,32 @@ define void @hasundef() unnamed_addr uwtable ssp align 2 {
   unreachable
 
 ; <label>:5                                       ; preds = %3
+  ret void
+}
+
+; Test top-down subregister liveness tracking. Self-verification
+; catches any pressure set underflow.
+; rdar://12797931.
+;
+; TOPDOWN: @testSubregTracking
+; TOPDOWN: divb
+; TOPDOWN: movzbl %al
+; TOPDOWN: ret
+define void @testSubregTracking() nounwind uwtable ssp align 2 {
+  %tmp = load i8* undef, align 1
+  %tmp6 = sub i8 0, %tmp
+  %tmp7 = load i8* undef, align 1
+  %tmp8 = udiv i8 %tmp6, %tmp7
+  %tmp9 = zext i8 %tmp8 to i64
+  %tmp10 = load i8* undef, align 1
+  %tmp11 = zext i8 %tmp10 to i64
+  %tmp12 = mul i64 %tmp11, %tmp9
+  %tmp13 = urem i8 %tmp6, %tmp7
+  %tmp14 = zext i8 %tmp13 to i32
+  %tmp15 = add nsw i32 %tmp14, 0
+  %tmp16 = add i32 %tmp15, 0
+  store i32 %tmp16, i32* undef, align 4
+  %tmp17 = add i64 0, %tmp12
+  store i64 %tmp17, i64* undef, align 8
   ret void
 }
