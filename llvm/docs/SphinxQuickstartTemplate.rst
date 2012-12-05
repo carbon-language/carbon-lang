@@ -116,6 +116,26 @@ For a shell session, use a ``bash`` code block:
 
 If you need to show LLVM IR use the ``llvm`` code block.
 
+You can show preformatted text without any syntax highlighting like this:
+
+::
+
+                          .
+                           +:.
+                       ..:: ::
+                    .++:+:: ::+:.:.
+                   .:+           :
+            ::.::..::            .+.
+          ..:+    ::              :
+    ......+:.                    ..
+          :++.    ..              :
+            .+:::+::              :
+            ..   . .+            ::
+                     +.:      .::+.
+                      ...+. .: .
+                         .++:..
+                          ...
+
 Hopefully you won't need to be this deep
 """"""""""""""""""""""""""""""""""""""""
 
