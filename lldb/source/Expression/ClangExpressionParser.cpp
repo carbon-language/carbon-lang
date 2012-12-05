@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "lldb/Expression/ClangExpressionParser.h"
 
 #include "lldb/Core/ArchSpec.h"

@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/ArchSpec.h"

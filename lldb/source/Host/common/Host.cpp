@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "lldb/Host/Host.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/ConstString.h"

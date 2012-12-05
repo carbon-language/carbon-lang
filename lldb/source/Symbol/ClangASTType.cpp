@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "lldb/Symbol/ClangASTType.h"
 
 #include "clang/AST/ASTConsumer.h"

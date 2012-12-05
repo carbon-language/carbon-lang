@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "lldb/Core/Error.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/DataBuffer.h"

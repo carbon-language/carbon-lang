@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "lldb/API/SBTypeSynthetic.h"
 
 #include "lldb/API/SBStream.h"

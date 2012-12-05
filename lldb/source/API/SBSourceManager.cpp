@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBSourceManager.h"
 #include "lldb/API/SBTarget.h"

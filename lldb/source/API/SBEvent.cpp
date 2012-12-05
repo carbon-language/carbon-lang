@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBStream.h"

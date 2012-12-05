@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "lldb/Core/CXXFormatterFunctions.h"
 
 // needed to get ConvertUTF16/32ToUTF8

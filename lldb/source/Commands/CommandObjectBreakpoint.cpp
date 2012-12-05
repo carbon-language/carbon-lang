@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lldb/lldb-python.h"
+
 #include "CommandObjectBreakpoint.h"
 #include "CommandObjectBreakpointCommand.h"
 
