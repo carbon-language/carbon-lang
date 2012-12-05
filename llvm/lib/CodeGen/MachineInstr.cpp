@@ -518,16 +518,6 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
 // MachineInstr Implementation
 //===----------------------------------------------------------------------===//
 
-/// MachineInstr ctor - This constructor creates a dummy MachineInstr with
-/// MCID NULL and no operands.
-MachineInstr::MachineInstr()
-  : MCID(0), Flags(0), AsmPrinterFlags(0),
-    NumMemRefs(0), MemRefs(0),
-    Parent(0) {
-  // Make sure that we get added to a machine basicblock
-  LeakDetector::addGarbageObject(this);
-}
-
 void MachineInstr::addImplicitDefUseOperands() {
   if (MCID->ImplicitDefs)
     for (const uint16_t *ImpDefs = MCID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
@@ -552,23 +542,6 @@ MachineInstr::MachineInstr(const MCInstrDesc &tid, const DebugLoc dl,
     addImplicitDefUseOperands();
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
-}
-
-/// MachineInstr ctor - Work exactly the same as the ctor two above, except
-/// that the MachineInstr is created and added to the end of the specified
-/// basic block.
-MachineInstr::MachineInstr(MachineBasicBlock *MBB, const DebugLoc dl,
-                           const MCInstrDesc &tid)
-  : MCID(&tid), Flags(0), AsmPrinterFlags(0),
-    NumMemRefs(0), MemRefs(0), Parent(0), debugLoc(dl) {
-  assert(MBB && "Cannot use inserting ctor with null basic block!");
-  unsigned NumImplicitOps =
-    MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
-  Operands.reserve(NumImplicitOps + MCID->getNumOperands());
-  addImplicitDefUseOperands();
-  // Make sure that we get added to a machine basicblock
-  LeakDetector::addGarbageObject(this);
-  MBB->push_back(this);  // Add instruction to end of basic block!
 }
 
 /// MachineInstr ctor - Copies MachineInstr arg exactly
