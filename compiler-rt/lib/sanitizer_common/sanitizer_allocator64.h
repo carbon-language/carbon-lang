@@ -20,12 +20,10 @@
 
 #include "sanitizer_allocator.h"
 
-#if SANITIZER_WORDSIZE != 64
-# error "sanitizer_allocator64.h can only be used on 64-bit platforms"
-#endif
-
 namespace __sanitizer {
 
+// SizeClassAllocator64 -- allocator for 64-bit address space.
+//
 // Space: a portion of address space of kSpaceSize bytes starting at
 // a fixed address (kSpaceBeg). Both constants are powers of two and
 // kSpaceBeg is kSpaceSize-aligned.
@@ -143,10 +141,11 @@ class SizeClassAllocator64 {
   static const uptr kNumClasses = SizeClassMap::kNumClasses;  // 2^k <= 256
 
  private:
+  static const uptr kRegionSize = kSpaceSize / kNumClasses;
   COMPILER_CHECK(kSpaceBeg % kSpaceSize == 0);
   COMPILER_CHECK(kNumClasses <= SizeClassMap::kNumClasses);
-  static const uptr kRegionSize = kSpaceSize / kNumClasses;
-  COMPILER_CHECK((kRegionSize >> 32) > 0);  // kRegionSize must be >= 2^32.
+  // kRegionSize must be >= 2^32.
+  COMPILER_CHECK((kRegionSize) >= (1ULL << (SANITIZER_WORDSIZE / 2)));
   // Populate the free list with at most this number of bytes at once
   // or with one element if its size is greater.
   static const uptr kPopulateSize = 1 << 18;
