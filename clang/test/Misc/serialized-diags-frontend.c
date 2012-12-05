@@ -1,5 +1,5 @@
 // RUN: rm -f %t
-// RUN: %clang -fsyntax-only %s -Wblahblah --serialize-diagnostics %t > /dev/null 2>&1 || true
+// RUN: %clang -fsyntax-only %s -Wblahblah --serialize-diagnostics %t > /dev/null 2>&1
 // RUN: c-index-test -read-diagnostics %t 2>&1 | FileCheck %s
 
 // This test case tests that we can handle frontend diagnostics.

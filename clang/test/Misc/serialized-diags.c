@@ -31,7 +31,7 @@ void rdar11040133() {
 }
 
 // RUN: rm -f %t
-// RUN: %clang -Wall -fsyntax-only %s --serialize-diagnostics %t.diag > /dev/null 2>&1 || true
+// RUN: not %clang -Wall -fsyntax-only %s --serialize-diagnostics %t.diag > /dev/null 2>&1
 // RUN: c-index-test -read-diagnostics %t.diag > %t 2>&1
 // RUN: FileCheck --input-file=%t %s
 
