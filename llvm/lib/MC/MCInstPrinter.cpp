@@ -55,7 +55,7 @@ StringRef MCInstPrinter::markup(StringRef a, StringRef b) const {
 /// Utility function to print immediates in decimal or hex.
 format_object1<int64_t> MCInstPrinter::formatImm(const int64_t Value) const {
   if (getPrintImmHex())
-    return format("0x%llx", Value);
+    return format("0x%" PRIx64, Value);
   else
-    return format("%lld", Value);
+    return format("%" PRId64, Value);
 }
