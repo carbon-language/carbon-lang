@@ -73,7 +73,7 @@ class UnwrappedLineConsumer {
 public:
   virtual ~UnwrappedLineConsumer() {
   }
-  virtual void formatUnwrappedLine(const UnwrappedLine &Line) = 0;
+  virtual void consumeUnwrappedLine(const UnwrappedLine &Line) = 0;
 };
 
 class UnwrappedLineParser {

@@ -315,7 +315,8 @@ private:
   }
 
   /// \brief Add a new line and the required indent before the first Token
-  /// of the \c UnwrappedLine.
+  /// of the \c UnwrappedLine if there was no structural parsing error.
+  /// Returns the indent level of the \c UnwrappedLine.
   unsigned formatFirstToken() {
     const FormatToken &Token = Line.Tokens[0];
     if (!Token.WhiteSpaceStart.isValid() || StructuralError)
@@ -706,16 +707,16 @@ public:
     for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),
                                               E = UnwrappedLines.end();
          I != E; ++I)
-      doFormatUnwrappedLine(*I);
+      formatUnwrappedLine(*I);
     return Replaces;
   }
 
 private:
-  virtual void formatUnwrappedLine(const UnwrappedLine &TheLine) {
+  virtual void consumeUnwrappedLine(const UnwrappedLine &TheLine) {
     UnwrappedLines.push_back(TheLine);
   }
 
-  void doFormatUnwrappedLine(const UnwrappedLine &TheLine) {
+  void formatUnwrappedLine(const UnwrappedLine &TheLine) {
     if (TheLine.Tokens.size() == 0)
       return;
 

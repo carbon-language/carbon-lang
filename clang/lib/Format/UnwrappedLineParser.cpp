@@ -52,6 +52,7 @@ bool UnwrappedLineParser::parseLevel() {
       addUnwrappedLine();
       break;
     case tok::r_brace:
+      // FIXME: We need a test when it has to be "return Error;"
       return false;
     default:
       parseStatement();
@@ -318,7 +319,7 @@ void UnwrappedLineParser::addUnwrappedLine() {
          FormatTok.Tok.is(tok::comment)) {
     nextToken();
   }
-  Callback.formatUnwrappedLine(Line);
+  Callback.consumeUnwrappedLine(Line);
   Line.Tokens.clear();
 }
 
