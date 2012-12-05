@@ -457,8 +457,7 @@ TEST(DeclPrinter, TestCXXConstructorDecl6) {
     "  explicit A(int a);"
     "};",
     constructorDecl(ofClass(hasName("A"))).bind("id"),
-    "A(int a)"));
-    // WRONG; Should be: "explicit A(int a);"
+    "explicit A(int a)"));
 }
 
 TEST(DeclPrinter, TestCXXConstructorDecl7) {

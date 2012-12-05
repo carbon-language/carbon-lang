@@ -397,6 +397,7 @@ void DeclPrinter::VisitEnumConstantDecl(EnumConstantDecl *D) {
 }
 
 void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
+  CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D);
   if (!Policy.SuppressSpecifiers) {
     switch (D->getStorageClassAsWritten()) {
     case SC_None: break;
@@ -410,6 +411,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
     if (D->isInlineSpecified())  Out << "inline ";
     if (D->isVirtualAsWritten()) Out << "virtual ";
     if (D->isModulePrivate())    Out << "__module_private__ ";
+    if (CDecl && CDecl->isExplicitSpecified())
+      Out << "explicit ";
   }
 
   PrintingPolicy SubPolicy(Policy);
@@ -485,7 +488,7 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
       }
     }
 
-    if (CXXConstructorDecl *CDecl = dyn_cast<CXXConstructorDecl>(D)) {
+    if (CDecl) {
       bool HasInitializerList = false;
       for (CXXConstructorDecl::init_const_iterator B = CDecl->init_begin(),
            E = CDecl->init_end();
