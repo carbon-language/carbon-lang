@@ -9,6 +9,7 @@ set(LLVM_LINK_COMPONENTS
 
 add_llvm_tool(llvm-objdump
   llvm-objdump.cpp
+  COFFDump.cpp
   MachODump.cpp
   MCFunction.cpp
   )
