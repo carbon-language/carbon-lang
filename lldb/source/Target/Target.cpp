@@ -584,10 +584,12 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
         }
     }
 
-    if (!wp_sp) {
+    if (!wp_sp) 
+    {
         Watchpoint *new_wp = new Watchpoint(*this, addr, size, type);
-        if (!new_wp) {
-            printf("Watchpoint ctor failed, out of memory?\n");
+        if (!new_wp) 
+        {
+            error.SetErrorString("Watchpoint ctor failed, out of memory?");
             return wp_sp;
         }
         new_wp->SetWatchpointType(kind);
@@ -597,12 +599,13 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
 
     error = m_process_sp->EnableWatchpoint(wp_sp.get());
     if (log)
-            log->Printf("Target::%s (creation of watchpoint %s with id = %u)\n",
-                        __FUNCTION__,
-                        error.Success() ? "succeeded" : "failed",
-                        wp_sp->GetID());
+        log->Printf("Target::%s (creation of watchpoint %s with id = %u)\n",
+                    __FUNCTION__,
+                    error.Success() ? "succeeded" : "failed",
+                    wp_sp->GetID());
 
-    if (error.Fail()) {
+    if (error.Fail()) 
+    {
         // Enabling the watchpoint on the device side failed.
         // Remove the said watchpoint from the list maintained by the target instance.
         m_watchpoint_list.Remove(wp_sp->GetID());
@@ -1055,7 +1058,7 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
     {
         // If we have an executable file, try to reset the executable to the desired architecture
         if (log)
-          printf ("Target::SetArchitecture changing architecture to %s (%s)", arch_spec.GetArchitectureName(), arch_spec.GetTriple().getTriple().c_str());
+          log->Printf ("Target::SetArchitecture changing architecture to %s (%s)", arch_spec.GetArchitectureName(), arch_spec.GetTriple().getTriple().c_str());
         m_arch = arch_spec;
         ModuleSP executable_sp = GetExecutableModule ();
         m_images.Clear();
