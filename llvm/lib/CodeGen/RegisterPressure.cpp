@@ -680,6 +680,8 @@ static bool findUseBetween(unsigned Reg,
          UI = MRI->use_nodbg_begin(Reg), UE = MRI->use_nodbg_end();
          UI != UE; UI.skipInstruction()) {
       const MachineInstr* MI = &*UI;
+      if (MI->isDebugValue())
+        continue;
       SlotIndex InstSlot = LIS->getInstructionIndex(MI).getRegSlot();
       if (InstSlot >= PriorUseIdx && InstSlot < NextUseIdx)
         return true;

@@ -83,3 +83,52 @@ declare i32 @__sprintf_chk(i8*, i32, i64, i8*, ...)
 !16 = metadata !{i32 786468, null, metadata !"char", null, i32 0, i64 8, i64 8, i64 0, i32 0, i32 6} ; [ DW_TAG_base_type ] [char] [line 0, size 8, align 8, offset 0, enc DW_ATE_signed_char]
 !17 = metadata !{metadata !18}
 !18 = metadata !{i32 786465, i64 0, i64 20}       ; [ DW_TAG_subrange_type ] [0, 19]
+
+; Test DebugValue uses visited by RegisterPressureTracker findUseBetween().
+;
+; CHECK: @main
+; CHECK: DEBUG_VALUE: X
+; CHECK: call
+
+%"class.__gnu_cxx::hash_map" = type { %"class.__gnu_cxx::hashtable" }
+%"class.__gnu_cxx::hashtable" = type { i64, i64, i64, i64, i64, i64 }
+
+define void @main() uwtable ssp {
+entry:
+  %X = alloca %"class.__gnu_cxx::hash_map", align 8
+  br i1 undef, label %cond.true, label %cond.end
+
+cond.true:                                        ; preds = %entry
+  unreachable
+
+cond.end:                                         ; preds = %entry
+  call void @llvm.dbg.declare(metadata !{%"class.__gnu_cxx::hash_map"* %X}, metadata !21)
+  %_M_num_elements.i.i.i.i = getelementptr inbounds %"class.__gnu_cxx::hash_map"* %X, i64 0, i32 0, i32 5
+  invoke void @_Znwm()
+          to label %exit.i unwind label %lpad2.i.i.i.i
+
+exit.i:                                           ; preds = %cond.end
+  unreachable
+
+lpad2.i.i.i.i:                                    ; preds = %cond.end
+  %0 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          cleanup
+  br i1 undef, label %lpad.body.i.i, label %if.then.i.i.i.i.i.i.i.i
+
+if.then.i.i.i.i.i.i.i.i:                          ; preds = %lpad2.i.i.i.i
+  unreachable
+
+lpad.body.i.i:                                    ; preds = %lpad2.i.i.i.i
+  resume { i8*, i32 } %0
+}
+
+declare i32 @__gxx_personality_v0(...)
+
+declare void @_Znwm()
+
+!llvm.dbg.cu = !{!20}
+
+!20 = metadata !{i32 786449, i32 0, i32 4, metadata !"SingleSource/Benchmarks/Shootout-C++/hash.cpp", metadata !"SingleSource/Benchmarks/Shootout-C++", metadata !"clang version 3.3 (trunk 169129) (llvm/trunk 169135)", i1 true, i1 true, metadata !"", i32 0, null, null, null, null} ; [ DW_TAG_compile_unit ] [SingleSource/Benchmarks/Shootout-C++/hash.cpp] [DW_LANG_C_plus_plus]
+!21 = metadata !{i32 786688, null, metadata !"X", null, i32 29, metadata !22, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [X] [line 29]
+!22 = metadata !{i32 786454, null, metadata !"HM", metadata !23, i32 28, i64 0, i64 0, i64 0, i32 0, null} ; [ DW_TAG_typedef ] [HM] [line 28, size 0, align 0, offset 0] [from ]
+!23 = metadata !{i32 786473, metadata !"SingleSource/Benchmarks/Shootout-C++/hash.cpp", metadata !"SingleSource/Benchmarks/Shootout-C++", null} ; [ DW_TAG_file_type ]
