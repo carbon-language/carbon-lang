@@ -641,28 +641,6 @@ public:
                                      const MachineFunction &MF,
                                      const VirtRegMap *VRM = 0) const;
 
-  /// getRawAllocationOrder - Returns the register allocation order for a
-  /// specified register class with a target-dependent hint. The returned list
-  /// may contain reserved registers that cannot be allocated.
-  ///
-  /// Register allocators need only call this function to resolve
-  /// target-dependent hints, but it should work without hinting as well.
-  virtual ArrayRef<MCPhysReg>
-  getRawAllocationOrder(const TargetRegisterClass *RC,
-                        unsigned HintType, unsigned HintReg,
-                        const MachineFunction &MF) const {
-    return RC->getRawAllocationOrder(MF);
-  }
-
-  /// ResolveRegAllocHint - Resolves the specified register allocation hint
-  /// to a physical register. Returns the physical register if it is successful.
-  virtual unsigned ResolveRegAllocHint(unsigned Type, unsigned Reg,
-                                       const MachineFunction &MF) const {
-    if (Type == 0 && Reg && isPhysicalRegister(Reg))
-      return Reg;
-    return 0;
-  }
-
   /// avoidWriteAfterWrite - Return true if the register allocator should avoid
   /// writing a register from RC in two consecutive instructions.
   /// This can avoid pipeline stalls on certain architectures.
