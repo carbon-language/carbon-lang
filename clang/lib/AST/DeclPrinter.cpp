@@ -547,6 +547,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
         }
         Out << ")";
       }
+      if (!Proto.empty())
+        Out << Proto;
     }
     else
       AFT->getResultType().print(Out, Policy, Proto);
