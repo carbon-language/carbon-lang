@@ -291,7 +291,7 @@ Options::GetLongOptions ()
                 m_getopt_table[i].val = 0;
                 std::map<int, uint32_t>::const_iterator pos = option_seen.find(short_opt);
                 StreamString strm;
-                if (isprint(short_opt))
+                if (isprint8(short_opt))
                     Host::SystemLog (Host::eSystemLogError, "option[%u] --%s has a short option -%c that conflicts with option[%u] --%s, short option won't be used for --%s\n",
                                 i,
                                 opt_defs[i].long_option,
@@ -427,7 +427,7 @@ PrintOption (const OptionDefinition &opt_def,
              bool show_optional,
              Stream &strm)
 {
-    const bool has_short_option = isprint(opt_def.short_option) != 0;
+    const bool has_short_option = isprint8(opt_def.short_option) != 0;
 
     if (display_type == eDisplayShortOption && !has_short_option)
         return false;
@@ -525,7 +525,7 @@ Options::GenerateOptionUsage
         bool first;
         for (i = 0, first = true; i < num_options; ++i)
         {
-            if (opt_defs[i].usage_mask & opt_set_mask && isprint(opt_defs[i].short_option))
+            if (opt_defs[i].usage_mask & opt_set_mask && isprint8(opt_defs[i].short_option))
             {
                 // Add current option to the end of out_stream.
 
@@ -556,7 +556,7 @@ Options::GenerateOptionUsage
 
         for (i = 0, options.clear(); i < num_options; ++i)
         {
-            if (opt_defs[i].usage_mask & opt_set_mask && isprint(opt_defs[i].short_option))
+            if (opt_defs[i].usage_mask & opt_set_mask && isprint8(opt_defs[i].short_option))
             {
                 // Add current option to the end of out_stream.
 
@@ -590,7 +590,7 @@ Options::GenerateOptionUsage
         
         for (i = 0; i < num_options; ++i)
         {
-            if (opt_defs[i].usage_mask & opt_set_mask && isprint(opt_defs[i].short_option))
+            if (opt_defs[i].usage_mask & opt_set_mask && isprint8(opt_defs[i].short_option))
             {
                 if (opt_defs[i].required && opt_defs[i].option_has_arg != no_argument)
                     PrintOption (opt_defs[i], eDisplayBestOption, " ", NULL, true, strm);
@@ -668,7 +668,7 @@ Options::GenerateOptionUsage
         arg_name_str.Printf ("<%s>", CommandObject::GetArgumentName (arg_type));
 
         strm.Indent ();
-        if (opt_defs[i].short_option && isprint(opt_defs[i].short_option))
+        if (opt_defs[i].short_option && isprint8(opt_defs[i].short_option))
         {
             PrintOption (opt_defs[i], eDisplayShortOption, NULL, NULL, false, strm);
             PrintOption (opt_defs[i], eDisplayLongOption, " ( ", " )", false, strm);

@@ -627,7 +627,7 @@ Args::ParseOptions (Options &options)
     {
         if (long_options[i].flag == NULL)
         {
-            if (isprint(long_options[i].val))
+            if (isprint8(long_options[i].val))
             {
                 sstr << (char)long_options[i].val;
                 switch (long_options[i].has_arg)
@@ -1628,7 +1628,7 @@ Args::ExpandEscapedCharacters (const char *src, std::string &dst)
     {
         for (const char *p = src; *p != '\0'; ++p)
         {
-            if (isprint(*p))
+            if (isprint8(*p))
                 dst.append(1, *p);
             else
             {

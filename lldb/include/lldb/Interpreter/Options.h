@@ -23,6 +23,18 @@
 #include "lldb/lldb-defines.h"
 #include "lldb/Interpreter/Args.h"
 
+namespace {
+
+  static inline bool
+  isprint8 (int ch)
+  {
+      if (ch & 0xffffff00u)
+          return false;
+      return isprint(ch);
+  }
+
+}
+
 namespace lldb_private {
 
 //----------------------------------------------------------------------
