@@ -241,11 +241,16 @@ def executeShCmd(cmd, cfg, cwd, results):
     return exitCode
 
 def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
-    ln = ' &&\n'.join(commands)
-    try:
-        cmd = ShUtil.ShParser(ln, litConfig.isWindows).parse()
-    except:
-        return (Test.FAIL, "shell parser error on: %r" % ln)
+    cmds = []
+    for ln in commands:
+        try:
+            cmds.append(ShUtil.ShParser(ln, litConfig.isWindows).parse())
+        except:
+            return (Test.FAIL, "shell parser error on: %r" % ln)
+
+    cmd = cmds[0]
+    for c in cmds[1:]:
+        cmd = ShUtil.Seq(cmd, '&&', c)
 
     results = []
     try:
