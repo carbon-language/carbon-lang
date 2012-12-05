@@ -9299,7 +9299,9 @@ CreateNewDecl:
   AddPushedVisibilityAttribute(New);
 
   OwnedDecl = true;
-  return New;
+  // In C++, don't return an invalid declaration. We can't recover well from
+  // the cases where we make the type anonymous.
+  return (Invalid && getLangOpts().CPlusPlus) ? 0 : New;
 }
 
 void Sema::ActOnTagStartDefinition(Scope *S, Decl *TagD) {

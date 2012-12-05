@@ -43,3 +43,10 @@ strcut Uuuu { // expected-error {{did you mean the keyword 'struct'}} \
               // expected-note {{'Uuuu' declared here}}
 } *u[3];
 uuuu v; // expected-error {{did you mean 'Uuuu'}}
+
+struct Redefined { // expected-note {{previous}}
+  Redefined() {}
+};
+struct Redefined { // expected-error {{redefinition}}
+  Redefined() {}
+};
