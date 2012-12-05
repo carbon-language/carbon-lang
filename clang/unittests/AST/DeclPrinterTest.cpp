@@ -476,8 +476,8 @@ TEST(DeclPrinter, TestCXXConstructorDecl8) {
     "  A() = default;"
     "};",
     constructorDecl(ofClass(hasName("A"))).bind("id"),
-    "A() noexcept"));
-    // WRONG; Should be: "A() = default;"
+    "A() noexcept = default"));
+    // Should be: "A() = default;" if we care about noexcept as written
 }
 
 TEST(DeclPrinter, TestCXXConstructorDecl9) {
