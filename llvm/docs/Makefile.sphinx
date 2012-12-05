@@ -50,8 +50,6 @@ html:
 	@# Kind of a hack, but HTML-formatted docs are on the way out anyway.
 	@echo "Copying legacy HTML-formatted docs into $(BUILDDIR)/html"
 	@cp -a *.html $(BUILDDIR)/html
-	@mkdir -p $(BUILDDIR)/html/tutorial
-	@cp tutorial/*.html tutorial/*.png $(BUILDDIR)/html/tutorial
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 dirhtml:
