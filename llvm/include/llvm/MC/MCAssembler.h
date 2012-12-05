@@ -184,10 +184,7 @@ public:
   const SmallVectorImpl<char> &getCode() const { return Code; }
 
   unsigned getInstSize() const { return Code.size(); }
-
-  MCInst &getInst() { return Inst; }
   const MCInst &getInst() const { return Inst; }
-
   void setInst(const MCInst& Value) { Inst = Value; }
 
   /// @}
