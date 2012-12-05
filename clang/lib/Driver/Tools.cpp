@@ -1472,10 +1472,19 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args) {
   // Only one runtime library can be used at once.
   bool NeedsAsan = needsAsanRt();
   bool NeedsTsan = needsTsanRt();
+  bool NeedsMsan = needsMsanRt();
   if (NeedsAsan && NeedsTsan)
     D.Diag(diag::err_drv_argument_not_allowed_with)
       << lastArgumentForKind(D, Args, NeedsAsanRt)
       << lastArgumentForKind(D, Args, NeedsTsanRt);
+  if (NeedsAsan && NeedsMsan)
+    D.Diag(diag::err_drv_argument_not_allowed_with)
+      << lastArgumentForKind(D, Args, NeedsAsanRt)
+      << lastArgumentForKind(D, Args, NeedsMsanRt);
+  if (NeedsTsan && NeedsMsan)
+    D.Diag(diag::err_drv_argument_not_allowed_with)
+      << lastArgumentForKind(D, Args, NeedsTsanRt)
+      << lastArgumentForKind(D, Args, NeedsMsanRt);
 
   // If -fsanitize contains extra features of ASan, it should also
   // explicitly contain -fsanitize=address.
@@ -1545,8 +1554,8 @@ static void addTsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
   if (!Args.hasArg(options::OPT_shared)) {
     if (!Args.hasArg(options::OPT_pie))
-      TC.getDriver().Diag(diag::err_drv_sanitizer_requires_pie) <<
-        /* Thread */ 0;
+      TC.getDriver().Diag(diag::err_drv_argument_only_allowed_with) <<
+        "-fsanitize=thread" << "-pie";
     // LibTsan is "libclang_rt.tsan-<ArchName>.a" in the Linux library
     // resource directory.
     SmallString<128> LibTsan(TC.getDriver().ResourceDir);
@@ -1566,8 +1575,8 @@ static void addMsanRTLinux(const ToolChain &TC, const ArgList &Args,
                            ArgStringList &CmdArgs) {
   if (!Args.hasArg(options::OPT_shared)) {
     if (!Args.hasArg(options::OPT_pie))
-      TC.getDriver().Diag(diag::err_drv_sanitizer_requires_pie) <<
-        /* Memory */ 1;
+      TC.getDriver().Diag(diag::err_drv_argument_only_allowed_with) <<
+        "-fsanitize=memory" << "-pie";
     // LibMsan is "libclang_rt.msan-<ArchName>.a" in the Linux library
     // resource directory.
     SmallString<128> LibMsan(TC.getDriver().ResourceDir);

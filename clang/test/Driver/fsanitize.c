@@ -20,6 +20,15 @@
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address,thread -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANA-SANT
 // CHECK-SANA-SANT: '-fsanitize=address' not allowed with '-fsanitize=thread'
 
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=address,memory -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANA-SANM
+// CHECK-SANA-SANM: '-fsanitize=address' not allowed with '-fsanitize=memory'
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=thread,memory -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANT-SANM
+// CHECK-SANT-SANM: '-fsanitize=thread' not allowed with '-fsanitize=memory'
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=memory,thread -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANM-SANT
+// CHECK-SANM-SANT: '-fsanitize=thread' not allowed with '-fsanitize=memory'
+
 // RUN: %clang -target x86_64-linux-gnu -faddress-sanitizer -fthread-sanitizer -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ASAN-TSAN
 // CHECK-ASAN-TSAN: '-faddress-sanitizer' not allowed with '-fthread-sanitizer'
 
@@ -39,3 +48,12 @@
 // CHECK-DEPRECATED: argument '-faddress-sanitizer' is deprecated, use '-fsanitize=address' instead
 // CHECK-DEPRECATED: argument '-fno-address-sanitizer' is deprecated, use '-fno-sanitize=address' instead
 // CHECK-DEPRECATED: argument '-fbounds-checking' is deprecated, use '-fsanitize=bounds' instead
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=thread %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-TSAN-NO-PIE
+// CHECK-TSAN-NO-PIE: invalid argument '-fsanitize=thread' only allowed with '-pie'
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=memory %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-MSAN-NO-PIE
+// CHECK-MSAN-NO-PIE: invalid argument '-fsanitize=memory' only allowed with '-pie'
+
+// RUN: %clang -target arm-linux-androideabi -fsanitize=address %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ANDROID-ASAN-NO-PIE
+// CHECK-ANDROID-ASAN-NO-PIE: AddressSanitizer on Android requires '-pie'
