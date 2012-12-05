@@ -506,7 +506,7 @@ bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
 
   // Set conversion specifier and disable any flags which do not apply to it.
   // Let typedefs to char fall through to int, as %c is silly for uint8_t.
-  if (isa<TypedefType>(QT) && QT->isAnyCharacterType()) {
+  if (!isa<TypedefType>(QT) && QT->isCharType()) {
     CS.setKind(ConversionSpecifier::cArg);
     LM.setKind(LengthModifier::None);
     Precision.setHowSpecified(OptionalAmount::NotSpecified);

@@ -93,3 +93,57 @@ void test_named_fixed_enum_correction(enum SomeSize x) {
   // CHECK: fix-it:"{{.*}}":{92:11-92:13}:"%zu"
 }
 
+
+typedef unsigned char uint8_t;
+void test_char(char c, signed char s, unsigned char u, uint8_t n) {
+  NSLog(@"%s", c); // expected-warning{{format specifies type 'char *' but the argument has type 'char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+  NSLog(@"%lf", c); // expected-warning{{format specifies type 'double' but the argument has type 'char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:14}:"%c"
+
+  NSLog(@"%@", c); // expected-warning{{format specifies type 'id' but the argument has type 'char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+  NSLog(@"%c", c); // no-warning
+  // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+  
+  NSLog(@"%s", s); // expected-warning{{format specifies type 'char *' but the argument has type 'signed char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+  NSLog(@"%lf", s); // expected-warning{{format specifies type 'double' but the argument has type 'signed char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:14}:"%c"
+
+  NSLog(@"%@", s); // expected-warning{{format specifies type 'id' but the argument has type 'signed char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+  NSLog(@"%c", s); // no-warning
+  // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+
+  NSLog(@"%s", u); // expected-warning{{format specifies type 'char *' but the argument has type 'unsigned char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+  NSLog(@"%lf", u); // expected-warning{{format specifies type 'double' but the argument has type 'unsigned char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:14}:"%c"
+
+  NSLog(@"%@", u); // expected-warning{{format specifies type 'id' but the argument has type 'unsigned char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+  NSLog(@"%c", u); // no-warning
+  // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+
+  NSLog(@"%s", n); // expected-warning{{format specifies type 'char *' but the argument has type 'uint8_t' (aka 'unsigned char')}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%hhu"
+
+  NSLog(@"%lf", n); // expected-warning{{format specifies type 'double' but the argument has type 'uint8_t' (aka 'unsigned char')}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:14}:"%hhu"
+
+  NSLog(@"%@", n); // expected-warning{{format specifies type 'id' but the argument has type 'uint8_t' (aka 'unsigned char')}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%hhu"
+
+  NSLog(@"%c", n); // no-warning
+  // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%hhu"
+}
