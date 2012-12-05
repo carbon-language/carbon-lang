@@ -1053,7 +1053,7 @@ void DISubrange::printInternal(raw_ostream &OS) const {
   if (Count != -1)
     OS << " [" << getLo() << ", " << Count - 1 << ']';
   else
-    OS << " [unbound]";
+    OS << " [unbounded]";
 }
 
 void DIScope::printInternal(raw_ostream &OS) const {
