@@ -8,7 +8,7 @@
 // %t.h might be touched by scanners as a hot file on Windows,
 // to fail to remove %.h with single run.
 // FIXME: Do we really want to work around bugs in virus checkers here?
-// RUN: (rm %t.h || rm %t.h || rm %t.h)
+// RUN: rm %t.h || rm %t.h || rm %t.h
 
 // Check diagnostic with location in original source:
 // RUN: not %clang_cc1 -include-pch %t.h.pch -emit-obj -o %t.o %s 2> %t.stderr
