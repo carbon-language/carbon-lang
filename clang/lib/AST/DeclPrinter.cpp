@@ -52,6 +52,7 @@ namespace {
     void VisitRecordDecl(RecordDecl *D);
     void VisitEnumConstantDecl(EnumConstantDecl *D);
     void VisitFunctionDecl(FunctionDecl *D);
+    void VisitFriendDecl(FriendDecl *D);
     void VisitFieldDecl(FieldDecl *D);
     void VisitVarDecl(VarDecl *D);
     void VisitLabelDecl(LabelDecl *D);
@@ -577,6 +578,30 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 
     D->getBody()->printPretty(Out, 0, SubPolicy, Indentation);
     Out << '\n';
+  }
+}
+
+void DeclPrinter::VisitFriendDecl(FriendDecl *D) {
+  if (TypeSourceInfo *TSI = D->getFriendType()) {
+    if (CXXRecordDecl *FriendD = TSI->getType()->getAsCXXRecordDecl()) {
+      Out << "friend ";
+      VisitCXXRecordDecl(FriendD);
+    }
+  }
+  else if (FunctionDecl *FD =
+      dyn_cast<FunctionDecl>(D->getFriendDecl())) {
+    Out << "friend ";
+    VisitFunctionDecl(FD);
+  }
+  else if (FunctionTemplateDecl *FTD =
+           dyn_cast<FunctionTemplateDecl>(D->getFriendDecl())) {
+    Out << "friend ";
+    VisitFunctionTemplateDecl(FTD);
+  }
+  else if (ClassTemplateDecl *CTD =
+           dyn_cast<ClassTemplateDecl>(D->getFriendDecl())) {
+    Out << "friend ";
+    VisitClassTemplateDecl(CTD);
   }
 }
 
