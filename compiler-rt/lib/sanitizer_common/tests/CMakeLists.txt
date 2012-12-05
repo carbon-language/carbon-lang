@@ -8,9 +8,6 @@ set(SANITIZER_UNITTESTS
   sanitizer_stackdepot_test.cc
   sanitizer_test_main.cc
   )
-if(CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT LLVM_BUILD_32_BITS)
-  list(APPEND SANITIZER_UNITTESTS sanitizer_allocator64_test.cc)
-endif()
 
 include_directories(..)
 include_directories(../..)

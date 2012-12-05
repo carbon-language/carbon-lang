@@ -27,7 +27,7 @@
 #define TSAN_RTL_H
 
 #include "sanitizer_common/sanitizer_common.h"
-#include "sanitizer_common/sanitizer_allocator64.h"
+#include "sanitizer_common/sanitizer_allocator.h"
 #include "tsan_clock.h"
 #include "tsan_defs.h"
 #include "tsan_flags.h"

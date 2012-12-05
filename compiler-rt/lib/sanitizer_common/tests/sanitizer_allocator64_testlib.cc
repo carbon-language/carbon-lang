@@ -10,7 +10,7 @@
 // The primary purpose of this file is an end-to-end integration test
 // for CombinedAllocator.
 //===----------------------------------------------------------------------===//
-#include "sanitizer_common/sanitizer_allocator64.h"
+#include "sanitizer_common/sanitizer_allocator.h"
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
