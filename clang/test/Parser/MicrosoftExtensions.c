@@ -18,6 +18,15 @@ void * __ptr32 PtrToPtr32(const void *p)
   return((void * __ptr32) (unsigned __int32) (ULONG_PTR)p );
 }
 
+void __forceinline InterlockedBitTestAndSet (long *Base, long Bit)
+{
+  __asm { // expected-warning {{MS-style inline assembly is not supported}}
+    mov eax, Bit
+    mov ecx, Base
+    lock bts [ecx], eax
+    setc al
+  };
+}
 _inline int foo99() { return 99; }
 
 void test_ms_alignof_alias() {
