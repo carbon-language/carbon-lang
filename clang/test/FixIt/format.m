@@ -146,4 +146,37 @@ void test_char(char c, signed char s, unsigned char u, uint8_t n) {
 
   NSLog(@"%c", n); // no-warning
   // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%hhu"
+
+
+  NSLog(@"%s", 'a'); // expected-warning{{format specifies type 'char *' but the argument has type 'char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+  NSLog(@"%lf", 'a'); // expected-warning{{format specifies type 'double' but the argument has type 'char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:14}:"%c"
+
+  NSLog(@"%@", 'a'); // expected-warning{{format specifies type 'id' but the argument has type 'char'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+  NSLog(@"%c", 'a'); // no-warning
+  // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
+
+
+  NSLog(@"%s", 'abcd'); // expected-warning{{format specifies type 'char *' but the argument has type 'int'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%d"
+
+  NSLog(@"%lf", 'abcd'); // expected-warning{{format specifies type 'double' but the argument has type 'int'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:14}:"%d"
+
+  NSLog(@"%@", 'abcd'); // expected-warning{{format specifies type 'id' but the argument has type 'int'}}
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%d"
+}
+
+void multichar_constants_false_negative() {
+  // The value of a multi-character constant is implementation-defined, but
+  // almost certainly shouldn't be printed with %c. However, the current
+  // type-checker expects %c to correspond to an integer argument, because
+  // many C library functions like fgetc() actually return an int (using -1
+  // as a sentinel).
+  NSLog(@"%c", 'abcd'); // missing-warning{{format specifies type 'char' but the argument has type 'int'}}
+  // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%d"
 }

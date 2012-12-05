@@ -2717,8 +2717,8 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
   if (!AT.isValid())
     return true;
 
-  QualType IntendedTy = E->getType();
-  if (AT.matchesType(S.Context, IntendedTy))
+  QualType ExprTy = E->getType();
+  if (AT.matchesType(S.Context, ExprTy))
     return true;
 
   // Look through argument promotions for our error message's reported type.
@@ -2729,7 +2729,7 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
     if (ICE->getCastKind() == CK_IntegralCast ||
         ICE->getCastKind() == CK_FloatingCast) {
       E = ICE->getSubExpr();
-      IntendedTy = E->getType();
+      ExprTy = E->getType();
 
       // Check if we didn't match because of an implicit cast from a 'char'
       // or 'short' to an 'int'.  This is done because printf is a varargs
@@ -2737,12 +2737,20 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
       if (ICE->getType() == S.Context.IntTy ||
           ICE->getType() == S.Context.UnsignedIntTy) {
         // All further checking is done on the subexpression.
-        if (AT.matchesType(S.Context, IntendedTy))
+        if (AT.matchesType(S.Context, ExprTy))
           return true;
       }
     }
+  } else if (const CharacterLiteral *CL = dyn_cast<CharacterLiteral>(E)) {
+    // Special case for 'a', which has type 'int' in C.
+    // Note, however, that we do /not/ want to treat multibyte constants like
+    // 'MooV' as characters! This form is deprecated but still exists.
+    if (ExprTy == S.Context.IntTy)
+      if (llvm::isUIntN(S.Context.getCharWidth(), CL->getValue()))
+        ExprTy = S.Context.CharTy;
   }
 
+  QualType IntendedTy = ExprTy;
   if (S.Context.getTargetInfo().getTriple().isOSDarwin()) {
     // Special-case some of Darwin's platform-independence types.
     if (const TypedefType *UserTy = IntendedTy->getAs<TypedefType>()) {
@@ -2769,7 +2777,7 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
 
     CharSourceRange SpecRange = getSpecifierRange(StartSpecifier, SpecifierLen);
 
-    if (IntendedTy != E->getType()) {
+    if (IntendedTy != ExprTy) {
       // The canonical type for formatting this value is different from the
       // actual type of the expression. (This occurs, for example, with Darwin's
       // NSInteger on 32-bit platforms, where it is typedef'd as 'int', but
@@ -2809,7 +2817,7 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
 
       // We extract the name from the typedef because we don't want to show
       // the underlying type in the diagnostic.
-      const TypedefType *UserTy = cast<TypedefType>(E->getType());
+      const TypedefType *UserTy = cast<TypedefType>(ExprTy);
       StringRef Name = UserTy->getDecl()->getName();
 
       // Finally, emit the diagnostic.
@@ -2834,9 +2842,9 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
     // Since the warning for passing non-POD types to variadic functions
     // was deferred until now, we emit a warning for non-POD
     // arguments here.
-    if (S.isValidVarArgType(E->getType()) == Sema::VAK_Invalid) {
+    if (S.isValidVarArgType(ExprTy) == Sema::VAK_Invalid) {
       unsigned DiagKind;
-      if (E->getType()->isObjCObjectType())
+      if (ExprTy->isObjCObjectType())
         DiagKind = diag::err_cannot_pass_objc_interface_to_vararg_format;
       else
         DiagKind = diag::warn_non_pod_vararg_with_format_string;
@@ -2844,7 +2852,7 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
       EmitFormatDiagnostic(
         S.PDiag(DiagKind)
           << S.getLangOpts().CPlusPlus0x
-          << E->getType()
+          << ExprTy
           << CallType
           << AT.getRepresentativeTypeName(S.Context)
           << CSR
@@ -2855,7 +2863,7 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
     } else
       EmitFormatDiagnostic(
         S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-          << AT.getRepresentativeTypeName(S.Context) << E->getType()
+          << AT.getRepresentativeTypeName(S.Context) << ExprTy
           << CSR
           << E->getSourceRange(),
         E->getLocStart(), /*IsStringLocation*/false, CSR);
