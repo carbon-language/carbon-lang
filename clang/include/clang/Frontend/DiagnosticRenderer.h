@@ -114,13 +114,16 @@ private:
   void emitImportStackRecursively(SourceLocation Loc, StringRef ModuleName,
                                   const SourceManager &SM);
   void emitModuleBuildStack(const SourceManager &SM);
-  void emitMacroExpansionsAndCarets(SourceLocation Loc,
-                                    DiagnosticsEngine::Level Level,
-                                    SmallVectorImpl<CharSourceRange>& Ranges,
-                                    ArrayRef<FixItHint> Hints,
-                                    const SourceManager &SM,
-                                    unsigned &MacroDepth,
-                                    unsigned OnMacroInst = 0);
+  void emitCaret(SourceLocation Loc, DiagnosticsEngine::Level Level,
+                 ArrayRef<CharSourceRange> Ranges, ArrayRef<FixItHint> Hints,
+                 const SourceManager &SM);
+  void emitMacroExpansions(SourceLocation Loc,
+                           DiagnosticsEngine::Level Level,
+                           ArrayRef<CharSourceRange> Ranges,
+                           ArrayRef<FixItHint> Hints,
+                           const SourceManager &SM,
+                           unsigned &MacroDepth,
+                           unsigned OnMacroInst = 0);
 public:
   /// \brief Emit a diagnostic.
   ///

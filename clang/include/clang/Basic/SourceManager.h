@@ -1473,18 +1473,6 @@ public:
     return !isLoadedFileID(FID);
   }
 
-  /// Get a presumed location suitable for displaying in a diagnostic message,
-  /// taking into account macro arguments and expansions.
-  PresumedLoc getPresumedLocForDisplay(SourceLocation Loc,
-                                       bool UseLineDirectives = true) const{
-    // This is a condensed form of the algorithm used by emitCaretDiagnostic to
-    // walk to the top of the macro call stack.
-    while (Loc.isMacroID())
-      Loc = getImmediateMacroCallerLoc(Loc);
-
-    return getPresumedLoc(Loc, UseLineDirectives);
-  }
-
   /// Gets the location of the immediate macro caller, one level up the stack
   /// toward the initial macro typed into the source.
   SourceLocation getImmediateMacroCallerLoc(SourceLocation Loc) const {
