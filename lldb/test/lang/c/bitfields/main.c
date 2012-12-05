@@ -45,6 +45,23 @@ int main (int argc, char const *argv[])
         bits.b7 = i;        //// break $source:$line
     for (i=0; i<(1<<4); i++)
         bits.four = i;      //// break $source:$line
+
+    struct MoreBits
+    {
+        uint32_t    a : 3;
+        uint8_t       : 1;
+        uint8_t     b : 1;
+        uint8_t     c : 1;
+        uint8_t     d : 1;
+    };
+
+    struct MoreBits more_bits;
+
+    more_bits.a = 3;
+    more_bits.b = 0;
+    more_bits.c = 1;
+    more_bits.d = 0;
+
     return 0;               //// Set break point at this line.
 
 }

@@ -1550,6 +1550,24 @@ private:
     std::auto_ptr<ClangASTMetadata>        m_metadata_ap;
 };
 
+struct BitfieldInfo
+{
+    uint64_t bit_size;
+    uint64_t bit_offset;
+    
+    BitfieldInfo () :
+        bit_size (LLDB_INVALID_ADDRESS),
+        bit_offset (LLDB_INVALID_ADDRESS)
+    {
+    }
+    
+    bool IsValid ()
+    {
+        return (bit_size != LLDB_INVALID_ADDRESS) &&
+               (bit_offset != LLDB_INVALID_ADDRESS);
+    }
+};
+
 size_t
 SymbolFileDWARF::ParseChildMembers
 (
@@ -1561,7 +1579,6 @@ SymbolFileDWARF::ParseChildMembers
     std::vector<clang::CXXBaseSpecifier *>& base_classes,
     std::vector<int>& member_accessibilities,
     DWARFDIECollection& member_function_dies,
-    BitfieldMap &bitfield_map,
     DelayedPropertyList& delayed_properties,
     AccessType& default_accessibility,
     bool &is_a_class,
@@ -1575,6 +1592,7 @@ SymbolFileDWARF::ParseChildMembers
     const DWARFDebugInfoEntry *die;
     const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
     uint32_t member_idx = 0;
+    BitfieldInfo last_field_info;
 
     for (die = parent_die->GetFirstChild(); die != NULL; die = die->GetSibling())
     {
@@ -1764,12 +1782,68 @@ SymbolFileDWARF::ParseChildMembers
                                 if (accessibility == eAccessNone)
                                     accessibility = default_accessibility;
                                 member_accessibilities.push_back(accessibility);
-
-                                // Code to detect unnamed bitifields
-                                if (bit_size > 0 && member_byte_offset != UINT32_MAX)
+                                
+                                BitfieldInfo this_field_info;
+                        
+                                this_field_info.bit_size = bit_size;
+                                
+                                if (member_byte_offset != UINT32_MAX || bit_size != 0)
                                 {
-                                    // Objective C has invalid DW_AT_bit_offset values in older versions
-                                    // of clang, so we have to be careful and only detect unnammed bitfields
+                                    /////////////////////////////////////////////////////////////
+                                    // How to locate a field given the DWARF debug information
+                                    //
+                                    // AT_byte_size indicates the size of the word in which the
+                                    // bit offset must be interpreted.
+                                    //
+                                    // AT_data_member_location indicates the byte offset of the
+                                    // word from the base address of the structure.
+                                    //
+                                    // AT_bit_offset indicates how many bits into the word
+                                    // (according to the host endianness) the low-order bit of
+                                    // the field starts.  AT_bit_offset can be negative.
+                                    //
+                                    // AT_bit_size indicates the size of the field in bits.
+                                    /////////////////////////////////////////////////////////////
+                                    
+                                    this_field_info.bit_offset = 0;
+                                    
+                                    this_field_info.bit_offset += (member_byte_offset == UINT32_MAX ? 0 : (member_byte_offset * 8));
+                                    
+                                    if (GetObjectFile()->GetByteOrder() == eByteOrderLittle)
+                                    {
+                                        this_field_info.bit_offset += byte_size * 8;
+                                        this_field_info.bit_offset -= (bit_offset + bit_size);
+                                    }
+                                    else
+                                    {
+                                        this_field_info.bit_offset += bit_offset;
+                                    }
+                                }
+
+                                // If the member to be emitted did not start on a character boundary and there is
+                                // empty space between the last field and this one, then we need to emit an
+                                // anonymous member filling up the space up to its start.  There are three cases
+                                // here:
+                                //
+                                // 1 If the previous member ended on a character boundary, then we can emit an
+                                //   anonymous member starting at the most recent character boundary.
+                                //
+                                // 2 If the previous member did not end on a character boundary and the distance
+                                //   from the end of the previous member to the current member is less than a
+                                //   word width, then we can emit an anonymous member starting right after the
+                                //   previous member and right before this member.
+                                //
+                                // 3 If the previous member did not end on a character boundary and the distance
+                                //   from the end of the previous member to the current member is greater than
+                                //   or equal a word width, then we act as in Case 1.
+                                
+                                const uint64_t character_width = 8;
+                                const uint64_t word_width = 32;
+                                
+                                if (this_field_info.IsValid())
+                                {
+                                    // Objective-C has invalid DW_AT_bit_offset values in older versions
+                                    // of clang, so we have to be careful and only insert unnammed bitfields
                                     // if we have a new enough clang.
                                     bool detect_unnamed_bitfields = true;
                                     
@@ -1778,73 +1852,44 @@ SymbolFileDWARF::ParseChildMembers
                                     
                                     if (detect_unnamed_bitfields)
                                     {
-                                        // We have a bitfield, we need to watch out for
-                                        // unnamed bitfields that we need to insert if
-                                        // there is a gap in the bytes as many compilers
-                                        // doesn't emit DWARF DW_TAG_member tags for
-                                        // unnammed bitfields.
-                                        BitfieldMap::iterator bit_pos = bitfield_map.find(member_byte_offset);
-                                        uint32_t unnamed_bit_size = 0;
-                                        uint32_t unnamed_bit_offset = 0;
-                                        if (bit_pos == bitfield_map.end())
+                                        BitfieldInfo anon_field_info;
+                                        
+                                        if ((this_field_info.bit_offset % character_width) != 0) // not char aligned
                                         {
-                                            // First bitfield in an integral type.
+                                            uint64_t last_field_end = 0;
                                             
-                                            // We might need to insert a leading unnamed bitfield
-                                            if (bit_offset < byte_size * 8)
-                                            {
-                                                unnamed_bit_size = byte_size * 8 - (bit_size + bit_offset);
-                                                unnamed_bit_offset = byte_size * 8 - unnamed_bit_size;
-                                            }
+                                            if (last_field_info.IsValid())
+                                                last_field_end = last_field_info.bit_offset + last_field_info.bit_size;
                                             
-                                            // Now put the current bitfield info into the map
-                                            bitfield_map[member_byte_offset].bit_size = bit_size;
-                                            bitfield_map[member_byte_offset].bit_offset = bit_offset;
-                                        }
-                                        else
-                                        {
-                                            // Subsequent bitfield in an integral type.
-
-                                            // We have a bitfield that isn't the first for this
-                                            // integral type, check to make sure there aren't any
-                                            // gaps.
-                                            assert (bit_pos->second.bit_size > 0);
-                                            if (bit_offset < bit_pos->second.bit_offset)
-                                            {
-                                                unnamed_bit_size = bit_pos->second.bit_offset - (bit_size + bit_offset);
-                                                unnamed_bit_offset = bit_pos->second.bit_offset - unnamed_bit_size;
+                                            if (this_field_info.bit_offset != last_field_end)
+                                            {                                                
+                                                if (((last_field_end % character_width) == 0) ||                    // case 1
+                                                    (this_field_info.bit_offset - last_field_end >= word_width))    // case 3
+                                                {
+                                                    anon_field_info.bit_size = this_field_info.bit_offset % character_width;
+                                                    anon_field_info.bit_offset = this_field_info.bit_offset - anon_field_info.bit_size;
+                                                }
+                                                else                                                                // case 2
+                                                {
+                                                    anon_field_info.bit_size = this_field_info.bit_offset - last_field_end;
+                                                    anon_field_info.bit_offset = last_field_end;
+                                                }
                                             }
-
-                                            // Now put the current bitfield info into the map
-                                            bit_pos->second.bit_size = bit_size;
-                                            bit_pos->second.bit_offset = bit_offset;
                                         }
                                         
-                                        if (unnamed_bit_size > 0)
+                                        if (anon_field_info.IsValid())
                                         {
                                             clang::FieldDecl *unnamed_bitfield_decl = GetClangASTContext().AddFieldToRecordType (class_clang_type,
                                                                                                                                  NULL,
-                                                                                                                                 member_type->GetClangLayoutType(),
+                                                                                                                                 GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize(eEncodingSint, word_width),
                                                                                                                                  accessibility,
-                                                                                                                                 unnamed_bit_size);
-                                            uint64_t total_bit_offset = 0;
+                                                                                                                                 anon_field_info.bit_size);
                                             
-                                            total_bit_offset += (member_byte_offset == UINT32_MAX ? 0 : (member_byte_offset * 8));
-                                            
-                                            if (GetObjectFile()->GetByteOrder() == eByteOrderLittle)
-                                            {
-                                                total_bit_offset += byte_size * 8;
-                                                total_bit_offset -= (unnamed_bit_offset + unnamed_bit_size);
-                                            }
-                                            else
-                                            {
-                                                total_bit_offset += unnamed_bit_size;
-                                            }
-                                            
-                                            layout_info.field_offsets.insert(std::make_pair(unnamed_bitfield_decl, total_bit_offset));
+                                            layout_info.field_offsets.insert(std::make_pair(unnamed_bitfield_decl, anon_field_info.bit_offset));
                                         }
                                     }
                                 }
+                                
                                 field_decl = GetClangASTContext().AddFieldToRecordType (class_clang_type,
                                                                                         name, 
                                                                                         member_type->GetClangLayoutType(), 
@@ -1852,6 +1897,12 @@ SymbolFileDWARF::ParseChildMembers
                                                                                         bit_size);
                                 
                                 GetClangASTContext().SetMetadataAsUserID ((uintptr_t)field_decl, MakeUserID(die->GetOffset()));
+                                
+                                if (this_field_info.IsValid())
+                                {
+                                    layout_info.field_offsets.insert(std::make_pair(field_decl, this_field_info.bit_offset));
+                                    last_field_info = this_field_info;
+                                }
                             }
                             else
                             {
@@ -1864,41 +1915,6 @@ SymbolFileDWARF::ParseChildMembers
                                     GetObjectFile()->GetModule()->ReportError ("0x%8.8" PRIx64 ": DW_TAG_member refers to type 0x%8.8" PRIx64 " which was unable to be parsed",
                                                                                MakeUserID(die->GetOffset()),
                                                                                encoding_uid);
-                            }
-
-                            if (member_byte_offset != UINT32_MAX || bit_size != 0)
-                            {
-                                /////////////////////////////////////////////////////////////
-                                // How to locate a field given the DWARF debug information
-                                //
-                                // AT_byte_size indicates the size of the word in which the
-                                // bit offset must be interpreted.
-                                //
-                                // AT_data_member_location indicates the byte offset of the
-                                // word from the base address of the structure.
-                                //
-                                // AT_bit_offset indicates how many bits into the word
-                                // (according to the host endianness) the low-order bit of
-                                // the field starts.  AT_bit_offset can be negative.
-                                //
-                                // AT_bit_size indicates the size of the field in bits.
-                                /////////////////////////////////////////////////////////////
-                                                        
-                                uint64_t total_bit_offset = 0;
-                                
-                                total_bit_offset += (member_byte_offset == UINT32_MAX ? 0 : (member_byte_offset * 8));
-                                
-                                if (GetObjectFile()->GetByteOrder() == eByteOrderLittle)
-                                {  
-                                    total_bit_offset += byte_size * 8;
-                                    total_bit_offset -= (bit_offset + bit_size);
-                                }
-                                else
-                                {
-                                    total_bit_offset += bit_offset;
-                                }
-                                                            
-                                layout_info.field_offsets.insert(std::make_pair(field_decl, total_bit_offset));
                             }
                         }
                         
@@ -2251,7 +2267,6 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                     DWARFDIECollection member_function_dies;
                                         
                     DelayedPropertyList delayed_properties;
-                    BitfieldMap bitfield_map;
                     ParseChildMembers (sc,
                                        dwarf_cu,
                                        die, 
@@ -2260,7 +2275,6 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                                        base_classes, 
                                        member_accessibilities,
                                        member_function_dies,
-                                       bitfield_map,
                                        delayed_properties,
                                        default_accessibility, 
                                        is_a_class,

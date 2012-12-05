@@ -59,18 +59,10 @@ class DWARFDIECollection;
 class DWARFFormValue;
 class SymbolFileDWARFDebugMap;
 
-struct BitfieldInfo
-{
-    uint32_t bit_size;
-    uint32_t bit_offset;
-};
-
-typedef std::map<int64_t, BitfieldInfo> BitfieldMap;
-
 class SymbolFileDWARF : public lldb_private::SymbolFile, public lldb_private::UserID
 {
 public:
-    friend class SymbolFileDWARFDebugMap;    
+    friend class SymbolFileDWARFDebugMap;
     friend class DebugMapModule;
     //------------------------------------------------------------------
     // Static Functions
@@ -353,7 +345,6 @@ protected:
                                 std::vector<clang::CXXBaseSpecifier *>& base_classes,
                                 std::vector<int>& member_accessibilities,
                                 DWARFDIECollection& member_function_dies,
-                                BitfieldMap &bitfield_map,
                                 DelayedPropertyList& delayed_properties,
                                 lldb::AccessType &default_accessibility,
                                 bool &is_a_class,
