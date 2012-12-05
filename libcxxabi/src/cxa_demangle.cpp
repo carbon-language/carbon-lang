@@ -3941,11 +3941,11 @@ public:
     }
 };
 
-class __lambda_node
+class ___lambda_node
     : public __node
 {
 public:
-    __lambda_node(__node* params, const char *number, size_t number_size)
+    ___lambda_node(__node* params, const char *number, size_t number_size)
     {
         __right_ = params;
         __name_ = number;
@@ -7024,7 +7024,7 @@ __demangle_tree::__parse_unnamed_type_name(const char* first, const char* last)
             t = number_end + 1;
             if (type == 'l')
             {
-                if (!__make<__lambda_node>(params, number_start, static_cast<size_t>(number_end - number_start)))
+                if (!__make<___lambda_node>(params, number_start, static_cast<size_t>(number_end - number_start)))
                     return first;
             }
             else
