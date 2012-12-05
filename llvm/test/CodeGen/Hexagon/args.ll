@@ -1,6 +1,5 @@
 ; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-hexagon-misched < %s | FileCheck %s
-; CHECK: r[[T0:[0-9]+]] = #7
-; CHECK: memw(r29 + #0) = r[[T0]]
+; CHECK: memw(r29{{ *}}+{{ *}}#0){{ *}}={{ *}}#7
 ; CHECK: r5 = #6
 ; CHECK: r0 = #1
 ; CHECK: r1 = #2

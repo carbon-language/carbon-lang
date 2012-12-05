@@ -1698,15 +1698,67 @@ def POST_STdri_cdnNotPt_V4 : STInst2PI<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 
-// Store byte.
-// memb(Rs+#u6:0)=#S8
-let AddedComplexity = 10, isPredicable = 1 in
-def STrib_imm_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u6_0Imm:$src2, s8Imm:$src3),
-            "memb($src1+#$src2) = #$src3",
-            [(truncstorei8 s8ImmPred:$src3, (add (i32 IntRegs:$src1),
-                                                 u6_0ImmPred:$src2))]>,
+// multiclass for store instructions with base + immediate offset
+// addressing mode and immediate stored value.
+multiclass ST_Imm_Pbase<string mnemonic, Operand OffsetOp, bit isNot,
+                        bit isPredNew> {
+  let PNewValue = #!if(isPredNew, "new", "") in
+  def #NAME# : STInst2<(outs),
+            (ins PredRegs:$src1, IntRegs:$src2, OffsetOp:$src3, s6Ext:$src4),
+            #!if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+            ") ")#mnemonic#"($src2+#$src3) = #$src4",
+            []>,
             Requires<[HasV4T]>;
+}
+
+multiclass ST_Imm_Pred<string mnemonic, Operand OffsetOp, bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true") in {
+    defm _c#NAME# : ST_Imm_Pbase<mnemonic, OffsetOp, PredNot, 0>;
+    // Predicate new
+    defm _cdn#NAME# : ST_Imm_Pbase<mnemonic, OffsetOp, PredNot, 1>;
+  }
+}
+
+let isExtendable = 1, isExtentSigned = 1, neverHasSideEffects = 1 in
+multiclass ST_Imm<string mnemonic, string CextOp, Operand OffsetOp> {
+  let CextOpcode = CextOp, BaseOpcode = CextOp#_imm in {
+    let opExtendable = 2, opExtentBits = 8, isPredicable = 1 in
+    def #NAME#_V4 : STInst2<(outs),
+            (ins IntRegs:$src1, OffsetOp:$src2, s8Ext:$src3),
+            #mnemonic#"($src1+#$src2) = #$src3",
+            []>,
+            Requires<[HasV4T]>;
+
+    let opExtendable = 3, opExtentBits = 6, isPredicated = 1 in {
+      defm Pt_V4 : ST_Imm_Pred<mnemonic, OffsetOp, 0>;
+      defm NotPt_V4 : ST_Imm_Pred<mnemonic, OffsetOp, 1 >;
+    }
+  }
+}
+
+let addrMode = BaseImmOffset, InputType = "imm",
+    validSubTargets = HasV4SubT in {
+  defm STrib_imm : ST_Imm<"memb", "STrib", u6_0Imm>, ImmRegRel;
+  defm STrih_imm : ST_Imm<"memh", "STrih", u6_1Imm>, ImmRegRel;
+  defm STriw_imm : ST_Imm<"memw", "STriw", u6_2Imm>, ImmRegRel;
+}
+
+let Predicates = [HasV4T], AddedComplexity = 10 in {
+def: Pat<(truncstorei8 s8ExtPred:$src3, (add IntRegs:$src1, u6_0ImmPred:$src2)),
+            (STrib_imm_V4 IntRegs:$src1, u6_0ImmPred:$src2, s8ExtPred:$src3)>;
+
+def: Pat<(truncstorei16 s8ExtPred:$src3, (add IntRegs:$src1,
+                                              u6_1ImmPred:$src2)),
+            (STrih_imm_V4 IntRegs:$src1, u6_1ImmPred:$src2, s8ExtPred:$src3)>;
+
+def: Pat<(store s8ExtPred:$src3, (add IntRegs:$src1, u6_2ImmPred:$src2)),
+            (STriw_imm_V4 IntRegs:$src1, u6_2ImmPred:$src2, s8ExtPred:$src3)>;
+}
+
+let AddedComplexity = 6 in
+def : Pat <(truncstorei8 s8ExtPred:$src2, (i32 IntRegs:$src1)),
+           (STrib_imm_V4 IntRegs:$src1, 0, s8ExtPred:$src2)>,
+           Requires<[HasV4T]>;
 
 // memb(Ru<<#u2+#U6)=Rt
 let AddedComplexity = 10 in
@@ -1727,43 +1779,6 @@ def STrib_shl_V4 : STInst<(outs),
 
 // Store byte conditionally.
 // if ([!]Pv[.new]) memb(#u6)=Rt
-// if ([!]Pv[.new]) memb(Rs+#u6:0)=#S6
-// if (Pv) memb(Rs+#u6:0)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_imm_cPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, s6Imm:$src4),
-            "if ($src1) memb($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (Pv.new) memb(Rs+#u6:0)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_imm_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, s6Imm:$src4),
-            "if ($src1.new) memb($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memb(Rs+#u6:0)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_imm_cNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, s6Imm:$src4),
-            "if (!$src1) memb($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv.new) memb(Rs+#u6:0)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_imm_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_0Imm:$src3, s6Imm:$src4),
-            "if (!$src1.new) memb($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
 // if ([!]Pv[.new]) memb(Rx++#s4:0)=Rt
 // if (Pv) memb(Rx++#s4:0)=Rt
 // if (Pv.new) memb(Rx++#s4:0)=Rt
@@ -1790,14 +1805,10 @@ def POST_STbri_cdnNotPt_V4 : STInst2PI<(outs IntRegs:$dst),
 // TODO: needs to be implemented
 // memh(Re=#U6)=Rt.H
 // memh(Rs+#s11:1)=Rt.H
-// memh(Rs+#u6:1)=#S8
-let AddedComplexity = 10, isPredicable = 1 in
-def STrih_imm_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u6_1Imm:$src2, s8Imm:$src3),
-            "memh($src1+#$src2) = #$src3",
-            [(truncstorei16 s8ImmPred:$src3, (add (i32 IntRegs:$src1),
-                                                  u6_1ImmPred:$src2))]>,
-            Requires<[HasV4T]>;
+let AddedComplexity = 6 in
+def : Pat <(truncstorei16 s8ExtPred:$src2, (i32 IntRegs:$src1)),
+           (STrih_imm_V4 IntRegs:$src1, 0, s8ExtPred:$src2)>,
+           Requires<[HasV4T]>;
 
 // memh(Rs+Ru<<#u2)=Rt.H
 // TODO: needs to be implemented.
@@ -1825,42 +1836,6 @@ def STrih_shl_V4 : STInst<(outs),
 // if ([!]Pv[.new]) memh(#u6)=Rt.H
 // if ([!]Pv[.new]) memh(#u6)=Rt
 
-// if ([!]Pv[.new]) memh(Rs+#u6:1)=#S6
-// if (Pv) memh(Rs+#u6:1)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_imm_cPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, s6Imm:$src4),
-            "if ($src1) memh($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (Pv.new) memh(Rs+#u6:1)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_imm_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, s6Imm:$src4),
-            "if ($src1.new) memh($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memh(Rs+#u6:1)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_imm_cNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, s6Imm:$src4),
-            "if (!$src1) memh($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv.new) memh(Rs+#u6:1)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_imm_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_1Imm:$src3, s6Imm:$src4),
-            "if (!$src1.new) memh($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
 
 // if ([!]Pv[.new]) memh(Rs+#u6:1)=Rt.H
 // TODO: needs to be implemented.
@@ -1902,16 +1877,10 @@ def STriw_pred_V4 : STInst2<(outs),
             []>,
             Requires<[HasV4T]>;
 
-
-// memw(Rs+#u6:2)=#S8
-let AddedComplexity = 10, isPredicable = 1 in
-def STriw_imm_V4 : STInst<(outs),
-            (ins IntRegs:$src1, u6_2Imm:$src2, s8Imm:$src3),
-            "memw($src1+#$src2) = #$src3",
-            [(store s8ImmPred:$src3, (add (i32 IntRegs:$src1),
-                                          u6_2ImmPred:$src2))]>,
-            Requires<[HasV4T]>;
-
+let AddedComplexity = 6 in
+def : Pat <(store s8ExtPred:$src2, (i32 IntRegs:$src1)),
+           (STriw_imm_V4 IntRegs:$src1, 0, s8ExtPred:$src2)>,
+           Requires<[HasV4T]>;
 
 // memw(Ru<<#u2+#U6)=Rt
 let AddedComplexity = 10 in
@@ -1930,45 +1899,6 @@ def STriw_shl_V4 : STInst<(outs),
 // memw(Rx++Mu:brev)=Rt
 // memw(gp+#u16:2)=Rt
 
-
-// Store word conditionally.
-
-// if ([!]Pv[.new]) memw(Rs+#u6:2)=#S6
-// if (Pv) memw(Rs+#u6:2)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_imm_cPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, s6Imm:$src4),
-            "if ($src1) memw($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (Pv.new) memw(Rs+#u6:2)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_imm_cdnPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, s6Imm:$src4),
-            "if ($src1.new) memw($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memw(Rs+#u6:2)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_imm_cNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, s6Imm:$src4),
-            "if (!$src1) memw($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv.new) memw(Rs+#u6:2)=#S6
-let neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_imm_cdnNotPt_V4 : STInst2<(outs),
-            (ins PredRegs:$src1, IntRegs:$src2, u6_2Imm:$src3, s6Imm:$src4),
-            "if (!$src1.new) memw($src2+#$src3) = #$src4",
-            []>,
-            Requires<[HasV4T]>;
 
 // if ([!]Pv[.new]) memw(Rx++#s4:2)=Rt
 // if (Pv) memw(Rx++#s4:2)=Rt

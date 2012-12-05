@@ -1,8 +1,8 @@
 ; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
 ; Check that we generate dual stores in one packet in V4
 
-; CHECK: memw(r{{[0-9]+}} + #{{[0-9]+}}) = r{{[0-9]+}}
-; CHECK-NEXT: memw(r{{[0-9]+}} + #{{[0-9]+}}) = r{{[0-9]+}}
+; CHECK: memw(r{{[0-9]+}}{{ *}}+{{ *}}#{{[0-9]+}}){{ *}}={{ *}}#100000
+; CHECK-NEXT: memw(r{{[0-9]+}}{{ *}}+{{ *}}#{{[0-9]+}}){{ *}}={{ *}}#500000
 ; CHECK-NEXT: }
 
 @Reg = global i32 0, align 4
