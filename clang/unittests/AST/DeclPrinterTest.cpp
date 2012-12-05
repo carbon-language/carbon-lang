@@ -478,7 +478,7 @@ TEST(DeclPrinter, TestCXXConstructorDecl8) {
     "};",
     constructorDecl(ofClass(hasName("A"))).bind("id"),
     "A() noexcept"));
-    // WRONG; Should be: "A() = delete;"
+    // WRONG; Should be: "A() = default;"
 }
 
 TEST(DeclPrinter, TestCXXConstructorDecl9) {
