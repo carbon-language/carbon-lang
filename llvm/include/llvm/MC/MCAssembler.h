@@ -142,8 +142,6 @@ public:
   fixup_iterator fixup_end() {return Fixups.end();}
   const_fixup_iterator fixup_end() const {return Fixups.end();}
 
-  size_t fixup_size() const { return Fixups.size(); }
-
   /// @}
 
   static bool classof(const MCFragment *F) {
@@ -199,8 +197,6 @@ public:
 
   fixup_iterator fixup_end() {return Fixups.end();}
   const_fixup_iterator fixup_end() const {return Fixups.end();}
-
-  size_t fixup_size() const { return Fixups.size(); }
 
   /// @}
 
