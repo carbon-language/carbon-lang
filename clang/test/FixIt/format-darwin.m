@@ -65,7 +65,7 @@ void testParens(Foo *obj, struct Bar *record) {
   NSInteger arr[4] = {0};
   NSInteger i = 0;
 
-  // These cases match the cases in CheckPrintfHandler::checkFormatExpr.
+  // These cases match the relevant cases in CheckPrintfHandler::checkFormatExpr.
   printf("%s", arr[0]);  // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
   printf("%s", getNSInteger());  // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
   printf("%s", i);  // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}

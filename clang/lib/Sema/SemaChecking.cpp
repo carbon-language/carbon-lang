@@ -2690,12 +2690,24 @@ static bool requiresParensToAddCast(const Expr *E) {
   switch (Inside->getStmtClass()) {
   case Stmt::ArraySubscriptExprClass:
   case Stmt::CallExprClass:
+  case Stmt::CharacterLiteralClass:
+  case Stmt::CXXBoolLiteralExprClass:
   case Stmt::DeclRefExprClass:
+  case Stmt::FloatingLiteralClass:
+  case Stmt::IntegerLiteralClass:
   case Stmt::MemberExprClass:
+  case Stmt::ObjCArrayLiteralClass:
+  case Stmt::ObjCBoolLiteralExprClass:
+  case Stmt::ObjCBoxedExprClass:
+  case Stmt::ObjCDictionaryLiteralClass:
+  case Stmt::ObjCEncodeExprClass:
   case Stmt::ObjCIvarRefExprClass:
   case Stmt::ObjCMessageExprClass:
   case Stmt::ObjCPropertyRefExprClass:
+  case Stmt::ObjCStringLiteralClass:
+  case Stmt::ObjCSubscriptRefExprClass:
   case Stmt::ParenExprClass:
+  case Stmt::StringLiteralClass:
   case Stmt::UnaryOperatorClass:
     return false;
   default:
