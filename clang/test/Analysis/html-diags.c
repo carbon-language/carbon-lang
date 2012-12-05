@@ -1,6 +1,6 @@
+// RUN: rm -fR %T/dir
 // RUN: mkdir %T/dir
 // RUN: %clang_cc1 -analyze -analyzer-output=html -analyzer-checker=core -o %T/dir %s
-// RUN: rm -fR %T/dir
 
 // Currently this test mainly checks that the HTML diagnostics doesn't crash
 // when handling macros will calls with macros.  We should actually validate
