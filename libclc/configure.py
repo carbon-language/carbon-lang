@@ -35,7 +35,8 @@ def llvm_config(args):
     sys.exit(1)
 
 llvm_bindir = llvm_config(['--bindir'])
-llvm_core_libs = llvm_config(['--ldflags', '--libs', 'core', 'bitreader', 'bitwriter'])
+llvm_core_libs = llvm_config(['--libs', 'core', 'bitreader', 'bitwriter']) + ' ' + \
+                 llvm_config(['--ldflags'])
 llvm_cxxflags = llvm_config(['--cxxflags']) + ' -fno-exceptions -fno-rtti'
 
 llvm_clang = os.path.join(llvm_bindir, 'clang')
@@ -97,7 +98,7 @@ for target in targets:
   install_files += [(incdir, incdir[len(srcdir)+1:]) for incdir in incdirs]
 
   # The rule for building a .bc file for the specified architecture using clang.
-  clang_bc_flags = "-ccc-host-triple %s -I`dirname $in` %s " \
+  clang_bc_flags = "-target %s -I`dirname $in` %s " \
                    "-Dcl_clang_storage_class_specifiers " \
                    "-Dcl_khr_fp64 " \
                    "-emit-llvm" % (target, clang_cl_includes)
