@@ -870,7 +870,7 @@ void MCFragment::dump() {
     }
     OS << "] (" << Contents.size() << " bytes)";
 
-    if (!DF->getFixups().empty()) {
+    if (DF->fixup_begin() != DF->fixup_end()) {
       OS << ",\n       ";
       OS << " Fixups:[";
       for (MCDataFragment::const_fixup_iterator it = DF->fixup_begin(),

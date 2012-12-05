@@ -107,11 +107,11 @@ class MCDataFragment : public MCFragment {
   SmallString<32> Contents;
 
   /// Fixups - The list of fixups in this fragment.
-  std::vector<MCFixup> Fixups;
+  SmallVector<MCFixup, 4> Fixups;
 
 public:
-  typedef std::vector<MCFixup>::const_iterator const_fixup_iterator;
-  typedef std::vector<MCFixup>::iterator fixup_iterator;
+  typedef SmallVectorImpl<MCFixup>::const_iterator const_fixup_iterator;
+  typedef SmallVectorImpl<MCFixup>::iterator fixup_iterator;
 
 public:
   MCDataFragment(MCSectionData *SD = 0) : MCFragment(FT_Data, SD) {}
@@ -132,9 +132,6 @@ public:
            "Fixups must be added in order!");
     Fixups.push_back(Fixup);
   }
-
-  std::vector<MCFixup> &getFixups() { return Fixups; }
-  const std::vector<MCFixup> &getFixups() const { return Fixups; }
 
   fixup_iterator fixup_begin() { return Fixups.begin(); }
   const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
