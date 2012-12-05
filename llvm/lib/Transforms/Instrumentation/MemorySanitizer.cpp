@@ -1101,6 +1101,25 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     VAHelper->visitVACopyInst(I);
   }
 
+  void handleBswap(IntrinsicInst &I) {
+    IRBuilder<> IRB(&I);
+    Value *Op = I.getArgOperand(0);
+    Type *OpType = Op->getType();
+    Function *BswapFunc = Intrinsic::getDeclaration(
+      F.getParent(), Intrinsic::bswap, ArrayRef<Type*>(&OpType, 1));
+    setShadow(&I, IRB.CreateCall(BswapFunc, getShadow(Op)));
+    setOrigin(&I, getOrigin(Op));
+  }
+
+  void visitIntrinsicInst(IntrinsicInst &I) {
+    switch (I.getIntrinsicID()) {
+    case llvm::Intrinsic::bswap:
+      handleBswap(I); break;
+    default:
+      visitInstruction(I); break;
+    }
+  }
+
   void visitCallSite(CallSite CS) {
     Instruction &I = *CS.getInstruction();
     assert((CS.isCall() || CS.isInvoke()) && "Unknown type of CallSite");
@@ -1120,12 +1139,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       // will get propagated to a void RetVal.
       if (Call->isTailCall() && Call->getType() != Call->getParent()->getType())
         Call->setTailCall(false);
-      if (isa<IntrinsicInst>(&I)) {
-        // All intrinsics we care about are handled in corresponding visit*
-        // methods. Add checks for the arguments, mark retval as clean.
-        visitInstruction(I);
-        return;
-      }
+
+      assert(!isa<IntrinsicInst>(&I) && "intrinsics are handled elsewhere");
     }
     IRBuilder<> IRB(&I);
     unsigned ArgOffset = 0;

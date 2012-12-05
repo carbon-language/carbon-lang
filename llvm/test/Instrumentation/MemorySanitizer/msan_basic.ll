@@ -351,3 +351,19 @@ define <4 x i32> @ShuffleVector(<4 x i32> %vec, <4 x i32> %vec1) {
 ; CHECK-NOT: call void @__msan_warning
 ; CHECK: shufflevector
 ; CHECK: ret <4 x i32>
+
+; Test bswap intrinsic instrumentation
+define i32 @BSwap(i32 %x) nounwind uwtable readnone {
+  %y = tail call i32 @llvm.bswap.i32(i32 %x)
+  ret i32 %y
+}
+
+declare i32 @llvm.bswap.i32(i32) nounwind readnone
+
+; CHECK: @BSwap
+; CHECK-NOT: call void @__msan_warning
+; CHECK: @llvm.bswap.i32
+; CHECK-NOT: call void @__msan_warning
+; CHECK: @llvm.bswap.i32
+; CHECK-NOT: call void @__msan_warning
+; CHECK: ret i32
