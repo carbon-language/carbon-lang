@@ -22,6 +22,7 @@
 namespace llvm {
 
 class LiveIntervals;
+class LiveInterval;
 class RegisterClassInfo;
 class MachineInstr;
 
@@ -37,17 +38,17 @@ struct RegisterPressure {
   /// Increase register pressure for each pressure set impacted by this register
   /// class. Normally called by RegPressureTracker, but may be called manually
   /// to account for live through (global liveness).
-  void increase(const TargetRegisterClass *RC, const TargetRegisterInfo *TRI);
-
-  /// Increase pressure for each pressure set impacted by this register unit.
-  void increase(unsigned RU, const TargetRegisterInfo *TRI);
+  ///
+  /// \param Reg is either a virtual register number or register unit number.
+  void increase(unsigned Reg, const TargetRegisterInfo *TRI,
+                const MachineRegisterInfo *MRI);
 
   /// Decrease register pressure for each pressure set impacted by this register
   /// class. This is only useful to account for spilling or rematerialization.
-  void decrease(const TargetRegisterClass *RC, const TargetRegisterInfo *TRI);
-
-  /// Decrease pressure for each pressure set impacted by this register unit.
-  void decrease(unsigned RU, const TargetRegisterInfo *TRI);
+  ///
+  /// \param Reg is either a virtual register number or register unit number.
+  void decrease(unsigned Reg, const TargetRegisterInfo *TRI,
+                const MachineRegisterInfo *MRI);
 
   void dump(const TargetRegisterInfo *TRI) const;
 };
@@ -122,6 +123,33 @@ struct RegPressureDelta {
   RegPressureDelta() {}
 };
 
+/// \brief A set of live virtual registers and physical register units.
+///
+/// Virtual and physical register numbers require separate sparse sets, but most
+/// of the RegisterPressureTracker handles them uniformly.
+struct LiveRegSet {
+  SparseSet<unsigned> PhysRegs;
+  SparseSet<unsigned, VirtReg2IndexFunctor> VirtRegs;
+
+  bool contains(unsigned Reg) {
+    if (TargetRegisterInfo::isVirtualRegister(Reg))
+      return VirtRegs.count(Reg);
+    return PhysRegs.count(Reg);
+  }
+
+  bool insert(unsigned Reg) {
+    if (TargetRegisterInfo::isVirtualRegister(Reg))
+      return VirtRegs.insert(Reg).second;
+    return PhysRegs.insert(Reg).second;
+  }
+
+  bool erase(unsigned Reg) {
+    if (TargetRegisterInfo::isVirtualRegister(Reg))
+      return VirtRegs.erase(Reg);
+    return PhysRegs.erase(Reg);
+  }
+};
+
 /// Track the current register pressure at some position in the instruction
 /// stream, and remember the high water mark within the region traversed. This
 /// does not automatically consider live-through ranges. The client may
@@ -163,9 +191,8 @@ class RegPressureTracker {
   /// Pressure map indexed by pressure set ID, not class ID.
   std::vector<unsigned> CurrSetPressure;
 
-  /// List of live registers.
-  SparseSet<unsigned> LivePhysRegs;
-  SparseSet<unsigned, VirtReg2IndexFunctor> LiveVirtRegs;
+  /// Set of live registers.
+  LiveRegSet LiveRegs;
 
 public:
   RegPressureTracker(IntervalPressure &rp) :
@@ -215,11 +242,8 @@ public:
   /// than the pressure across the traversed region.
   std::vector<unsigned> &getRegSetPressureAtPos() { return CurrSetPressure; }
 
-  void discoverPhysLiveIn(unsigned Reg);
-  void discoverPhysLiveOut(unsigned Reg);
-
-  void discoverVirtLiveIn(unsigned Reg);
-  void discoverVirtLiveOut(unsigned Reg);
+  void discoverLiveOut(unsigned Reg);
+  void discoverLiveIn(unsigned Reg);
 
   bool isTopClosed() const;
   bool isBottomClosed() const;
@@ -283,11 +307,10 @@ public:
   void dump(const TargetRegisterInfo *TRI) const;
 
 protected:
-  void increasePhysRegPressure(ArrayRef<unsigned> Regs);
-  void decreasePhysRegPressure(ArrayRef<unsigned> Regs);
+  const LiveInterval *getInterval(unsigned Reg) const;
 
-  void increaseVirtRegPressure(ArrayRef<unsigned> Regs);
-  void decreaseVirtRegPressure(ArrayRef<unsigned> Regs);
+  void increaseRegPressure(ArrayRef<unsigned> Regs);
+  void decreaseRegPressure(ArrayRef<unsigned> Regs);
 
   void bumpUpwardPressure(const MachineInstr *MI);
   void bumpDownwardPressure(const MachineInstr *MI);

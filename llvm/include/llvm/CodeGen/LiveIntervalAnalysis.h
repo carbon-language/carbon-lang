@@ -347,6 +347,10 @@ namespace llvm {
       return RegUnitIntervals[Unit];
     }
 
+    const LiveInterval *getCachedRegUnit(unsigned Unit) const {
+      return RegUnitIntervals[Unit];
+    }
+
   private:
     /// computeIntervals - Compute live intervals.
     void computeIntervals();
