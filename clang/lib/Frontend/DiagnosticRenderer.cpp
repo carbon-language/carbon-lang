@@ -123,32 +123,17 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
                                         const SourceManager *SM,
                                         DiagOrStoredDiag D) {
   assert(SM || Loc.isInvalid());
-  
+
   beginDiagnostic(D, Level);
-  
-  SourceLocation ExpandedLoc = Loc;
-  PresumedLoc PLoc;
-  if (Loc.isValid()) {
-    // Perform the same walk as emitMacroExpansions, to find the ultimate
-    // expansion location for the diagnostic.
-    while (ExpandedLoc.isMacroID())
-      ExpandedLoc = SM->getImmediateMacroCallerLoc(ExpandedLoc);
-    PLoc = SM->getPresumedLoc(ExpandedLoc, DiagOpts->ShowPresumedLoc);
-  
-    // First, if this diagnostic is not in the main file, print out the
-    // "included from" lines.
-    emitIncludeStack(ExpandedLoc, PLoc, Level, *SM);
-  }
-  
-  // Next, emit the actual diagnostic message.
-  emitDiagnosticMessage(ExpandedLoc, PLoc, Level, Message, Ranges, SM, D);
-  
-  // Only recurse if we have a valid location.
-  if (Loc.isValid()) {
+
+  if (!Loc.isValid())
+    // If we have no source location, just emit the diagnostic message.
+    emitDiagnosticMessage(Loc, PresumedLoc(), Level, Message, Ranges, SM, D);
+  else {
     // Get the ranges into a local array we can hack on.
     SmallVector<CharSourceRange, 20> MutableRanges(Ranges.begin(),
                                                    Ranges.end());
-    
+
     llvm::SmallVector<FixItHint, 8> MergedFixits;
     if (!FixItHints.empty()) {
       mergeFixits(FixItHints, *SM, LangOpts, MergedFixits);
@@ -161,20 +146,35 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
       if (I->RemoveRange.isValid())
         MutableRanges.push_back(I->RemoveRange);
 
-    emitCaret(ExpandedLoc, Level, MutableRanges, FixItHints, *SM);
+    SourceLocation UnexpandedLoc = Loc;
 
-    // If this location is within a macro, walk from the unexpanded location
-    // up to ExpandedLoc and produce a macro backtrace.
-    if (Loc.isMacroID()) {
+    // Perform the same walk as emitMacroExpansions, to find the ultimate
+    // expansion location for the diagnostic.
+    while (Loc.isMacroID())
+      Loc = SM->getImmediateMacroCallerLoc(Loc);
+
+    PresumedLoc PLoc = SM->getPresumedLoc(Loc, DiagOpts->ShowPresumedLoc);
+
+    // First, if this diagnostic is not in the main file, print out the
+    // "included from" lines.
+    emitIncludeStack(Loc, PLoc, Level, *SM);
+
+    // Next, emit the actual diagnostic message and caret.
+    emitDiagnosticMessage(Loc, PLoc, Level, Message, Ranges, SM, D);
+    emitCaret(Loc, Level, MutableRanges, FixItHints, *SM);
+
+    // If this location is within a macro, walk from UnexpandedLoc up to Loc
+    // and produce a macro backtrace.
+    if (UnexpandedLoc.isValid() && UnexpandedLoc.isMacroID()) {
       unsigned MacroDepth = 0;
-      emitMacroExpansions(Loc, Level, MutableRanges, FixItHints, *SM,
+      emitMacroExpansions(UnexpandedLoc, Level, MutableRanges, FixItHints, *SM,
                           MacroDepth);
     }
   }
-  
+
   LastLoc = Loc;
   LastLevel = Level;
-  
+
   endDiagnostic(D, Level);
 }
 
@@ -314,7 +314,7 @@ void DiagnosticRenderer::emitModuleBuildStack(const SourceManager &SM) {
 static void mapDiagnosticRanges(
     SourceLocation CaretLoc,
     ArrayRef<CharSourceRange> Ranges,
-    SmallVectorImpl<CharSourceRange>& SpellingRanges,
+    SmallVectorImpl<CharSourceRange> &SpellingRanges,
     const SourceManager *SM) {
   FileID CaretLocFileID = SM->getFileID(CaretLoc);
 
