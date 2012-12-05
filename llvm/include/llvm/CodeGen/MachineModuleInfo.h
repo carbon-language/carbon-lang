@@ -180,6 +180,10 @@ public:
                     const MCObjectFileInfo *MOFI);
   ~MachineModuleInfo();
 
+  // Initialization and Finalization
+  virtual bool doInitialization(Module &);
+  virtual bool doFinalization(Module &);
+
   /// EndFunction - Discard function meta information.
   ///
   void EndFunction();
