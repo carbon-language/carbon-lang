@@ -135,6 +135,7 @@ enum StatType {
   StatInt_atexit,
   StatInt___cxa_guard_acquire,
   StatInt___cxa_guard_release,
+  StatInt___cxa_guard_abort,
   StatInt_pthread_create,
   StatInt_pthread_join,
   StatInt_pthread_detach,

@@ -138,6 +138,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_atexit]                   = "  atexit                          ";
   name[StatInt___cxa_guard_acquire]      = "  __cxa_guard_acquire             ";
   name[StatInt___cxa_guard_release]      = "  __cxa_guard_release             ";
+  name[StatInt___cxa_guard_abort]        = "  __cxa_guard_abort               ";
   name[StatInt_pthread_create]           = "  pthread_create                  ";
   name[StatInt_pthread_join]             = "  pthread_join                    ";
   name[StatInt_pthread_detach]           = "  pthread_detach                  ";

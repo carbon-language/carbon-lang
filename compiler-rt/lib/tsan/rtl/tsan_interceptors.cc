@@ -619,21 +619,31 @@ TSAN_INTERCEPTOR(int, posix_memalign, void **memptr, uptr align, uptr sz) {
 }
 
 // Used in thread-safe function static initialization.
-TSAN_INTERCEPTOR(int, __cxa_guard_acquire, char *m) {
-  SCOPED_TSAN_INTERCEPTOR(__cxa_guard_acquire, m);
-  int res = REAL(__cxa_guard_acquire)(m);
-  if (res) {
-    // This thread does the init.
-  } else {
-    Acquire(thr, pc, (uptr)m);
+extern "C" int INTERFACE_ATTRIBUTE __cxa_guard_acquire(atomic_uint32_t *g) {
+  SCOPED_INTERCEPTOR_RAW(__cxa_guard_acquire, g);
+  for (;;) {
+    u32 cmp = atomic_load(g, memory_order_acquire);
+    if (cmp == 0) {
+      if (atomic_compare_exchange_strong(g, &cmp, 1<<16, memory_order_relaxed))
+        return 1;
+    } else if (cmp == 1) {
+      Acquire(thr, pc, (uptr)g);
+      return 0;
+    } else {
+      internal_sched_yield();
+    }
   }
-  return res;
 }
 
-TSAN_INTERCEPTOR(void, __cxa_guard_release, char *m) {
-  SCOPED_TSAN_INTERCEPTOR(__cxa_guard_release, m);
-  Release(thr, pc, (uptr)m);
-  REAL(__cxa_guard_release)(m);
+extern "C" void INTERFACE_ATTRIBUTE __cxa_guard_release(atomic_uint32_t *g) {
+  SCOPED_INTERCEPTOR_RAW(__cxa_guard_release, g);
+  Release(thr, pc, (uptr)g);
+  atomic_store(g, 1, memory_order_release);
+}
+
+extern "C" void INTERFACE_ATTRIBUTE __cxa_guard_abort(atomic_uint32_t *g) {
+  SCOPED_INTERCEPTOR_RAW(__cxa_guard_abort, g);
+  atomic_store(g, 0, memory_order_relaxed);
 }
 
 static void thread_finalize(void *v) {
@@ -1509,9 +1519,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(strcpy);  // NOLINT
   TSAN_INTERCEPT(strncpy);
   TSAN_INTERCEPT(strstr);
-
-  TSAN_INTERCEPT(__cxa_guard_acquire);
-  TSAN_INTERCEPT(__cxa_guard_release);
 
   TSAN_INTERCEPT(pthread_create);
   TSAN_INTERCEPT(pthread_join);
