@@ -41,6 +41,7 @@
 #define LIBLLDB_LOG_TYPES               (1u << 19)
 #define LIBLLDB_LOG_SYMBOLS             (1u << 20)
 #define LIBLLDB_LOG_MODULES             (1u << 21)
+#define LIBLLDB_LOG_TARGET              (1u << 22)
 #define LIBLLDB_LOG_ALL                 (UINT32_MAX)
 #define LIBLLDB_LOG_DEFAULT             (LIBLLDB_LOG_PROCESS              |\
                                          LIBLLDB_LOG_THREAD               |\
@@ -50,6 +51,7 @@
                                          LIBLLDB_LOG_STEP                 |\
                                          LIBLLDB_LOG_STATE                |\
                                          LIBLLDB_LOG_SYMBOLS              |\
+                                         LIBLLDB_LOG_TARGET               |\
                                          LIBLLDB_LOG_COMMANDS)
 
 namespace lldb_private {

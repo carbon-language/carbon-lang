@@ -94,6 +94,11 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
         log->Printf ("%p Target::Target()", this);
+    if (m_arch.IsValid())
+    {
+        LogSP log_target(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
+        log_target->Printf("Target::Target created with architecture %s (%s)", m_arch.GetArchitectureName(), m_arch.GetTriple().getTriple().c_str());
+    }
 }
 
 //----------------------------------------------------------------------
@@ -978,6 +983,7 @@ LoadScriptingResourceForModule (const ModuleSP &module_sp, Target *target)
 void
 Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
     m_images.Clear();
     m_scratch_ast_context_ap.reset();
     m_scratch_ast_source_ap.reset();
@@ -994,8 +1000,12 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 
         // If we haven't set an architecture yet, reset our architecture based on what we found in the executable module.
         if (!m_arch.IsValid())
+        {
             m_arch = executable_sp->GetArchitecture();
-        
+            if (log)
+              log->Printf ("Target::SetExecutableModule setting architecture to %s (%s) based on executable file", m_arch.GetArchitectureName(), m_arch.GetTriple().getTriple().c_str());
+        }
+
         FileSpecList dependent_files;
         ObjectFile *executable_objfile = executable_sp->GetObjectFile();
 
@@ -1028,6 +1038,7 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
 bool
 Target::SetArchitecture (const ArchSpec &arch_spec)
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
     if (m_arch == arch_spec || !m_arch.IsValid())
     {
         // If we haven't got a valid arch spec, or the architectures are
@@ -1035,11 +1046,15 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
         // equal, yet the triple OS and vendor might change, so we need to do
         // the assignment here just in case.
         m_arch = arch_spec;
+        if (log)
+            log->Printf ("Target::SetArchitecture setting architecture to %s (%s)", arch_spec.GetArchitectureName(), arch_spec.GetTriple().getTriple().c_str());
         return true;
     }
     else
     {
         // If we have an executable file, try to reset the executable to the desired architecture
+        if (log)
+          printf ("Target::SetArchitecture changing architecture to %s (%s)", arch_spec.GetArchitectureName(), arch_spec.GetTriple().getTriple().c_str());
         m_arch = arch_spec;
         ModuleSP executable_sp = GetExecutableModule ();
         m_images.Clear();
@@ -1050,6 +1065,8 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
         
         if (executable_sp)
         {
+            if (log)
+              log->Printf("Target::SetArchitecture Trying to select executable file architecture %s (%s)", arch_spec.GetArchitectureName(), arch_spec.GetTriple().getTriple().c_str());
             ModuleSpec module_spec (executable_sp->GetFileSpec(), arch_spec);
             Error error = ModuleList::GetSharedModule (module_spec, 
                                                        executable_sp, 
