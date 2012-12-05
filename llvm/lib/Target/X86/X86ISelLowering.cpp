@@ -8918,6 +8918,11 @@ SDValue X86TargetLowering::ConvertCmpIfNecessary(SDValue Cmp,
   return DAG.getNode(X86ISD::SAHF, dl, MVT::i32, TruncSrl);
 }
 
+static bool isAllOnes(SDValue V) {
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
+  return C && C->isAllOnesValue();
+}
+
 /// LowerToBT - Result of 'and' is compared against zero. Turn it into a BT node
 /// if it's possible.
 SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
@@ -8966,6 +8971,14 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
   }
 
   if (LHS.getNode()) {
+    // If the LHS is of the form (x ^ -1) then replace the LHS with x and flip
+    // the condition code later.
+    bool Invert = false;
+    if (LHS.getOpcode() == ISD::XOR && isAllOnes(LHS.getOperand(1))) {
+      Invert = true;
+      LHS = LHS.getOperand(0);
+    }
+
     // If LHS is i8, promote it to i32 with any_extend.  There is no i8 BT
     // instruction.  Since the shift amount is in-range-or-undefined, we know
     // that doing a bittest on the i32 value is ok.  We extend to i32 because
@@ -8981,7 +8994,10 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
       RHS = DAG.getNode(ISD::ANY_EXTEND, dl, LHS.getValueType(), RHS);
 
     SDValue BT = DAG.getNode(X86ISD::BT, dl, MVT::i32, LHS, RHS);
-    unsigned Cond = CC == ISD::SETEQ ? X86::COND_AE : X86::COND_B;
+    X86::CondCode Cond = CC == ISD::SETEQ ? X86::COND_AE : X86::COND_B;
+    // Flip the condition if the LHS was a not instruction
+    if (Invert)
+      Cond = X86::GetOppositeBranchCondition(Cond);
     return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
                        DAG.getConstant(Cond, MVT::i8), BT);
   }
@@ -9237,11 +9253,6 @@ static bool isX86LogicalCmp(SDValue Op) {
 static bool isZero(SDValue V) {
   ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
   return C && C->isNullValue();
-}
-
-static bool isAllOnes(SDValue V) {
-  ConstantSDNode *C = dyn_cast<ConstantSDNode>(V);
-  return C && C->isAllOnesValue();
 }
 
 static bool isTruncWithZeroHighBitsInput(SDValue V, SelectionDAG &DAG) {
