@@ -15,7 +15,7 @@
 #include "sanitizer_common/sanitizer_libc.h"
 #include "sanitizer_common/sanitizer_placement_new.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
-#include "tsan_interceptors.h"
+#include "interception/interception.h"
 #include "tsan_interface.h"
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
@@ -137,6 +137,15 @@ static SignalContext *SigCtx(ThreadState *thr) {
 
 static unsigned g_thread_finalize_key;
 
+class ScopedInterceptor {
+ public:
+  ScopedInterceptor(ThreadState *thr, const char *fname, uptr pc);
+  ~ScopedInterceptor();
+ private:
+  ThreadState *const thr_;
+  const int in_rtl_;
+};
+
 ScopedInterceptor::ScopedInterceptor(ThreadState *thr, const char *fname,
                                      uptr pc)
     : thr_(thr)
@@ -159,6 +168,30 @@ ScopedInterceptor::~ScopedInterceptor() {
   }
   CHECK_EQ(in_rtl_, thr_->in_rtl);
 }
+
+#define SCOPED_INTERCEPTOR_RAW(func, ...) \
+    ThreadState *thr = cur_thread(); \
+    StatInc(thr, StatInterceptor); \
+    StatInc(thr, StatInt_##func); \
+    const uptr caller_pc = GET_CALLER_PC(); \
+    ScopedInterceptor si(thr, #func, caller_pc); \
+    /* Subtract one from pc as we need current instruction address */ \
+    const uptr pc = __sanitizer::StackTrace::GetCurrentPc() - 1; \
+    (void)pc; \
+/**/
+
+#define SCOPED_TSAN_INTERCEPTOR(func, ...) \
+    SCOPED_INTERCEPTOR_RAW(func, __VA_ARGS__); \
+    if (REAL(func) == 0) { \
+      Printf("FATAL: ThreadSanitizer: failed to intercept %s\n", #func); \
+      Die(); \
+    } \
+    if (thr->in_rtl > 1) \
+      return REAL(func)(__VA_ARGS__); \
+/**/
+
+#define TSAN_INTERCEPTOR(ret, func, ...) INTERCEPTOR(ret, func, __VA_ARGS__)
+#define TSAN_INTERCEPT(func) INTERCEPT_FUNCTION(func)
 
 #define BLOCK_REAL(name) (BlockingCall(thr), REAL(name))
 
