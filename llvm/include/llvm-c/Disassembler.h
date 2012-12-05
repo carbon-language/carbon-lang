@@ -153,6 +153,8 @@ int LLVMSetDisasmOptions(LLVMDisasmContextRef DC, uint64_t Options);
 
 /* The option to produce marked up assembly. */
 #define LLVMDisassembler_Option_UseMarkup 1
+/* The option to print immediates as hex. */
+#define LLVMDisassembler_Option_PrintImmHex 2
 
 /**
  * Dispose of a disassembler context.

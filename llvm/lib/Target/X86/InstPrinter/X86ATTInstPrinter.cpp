@@ -131,7 +131,7 @@ void X86ATTInstPrinter::printPCRelImm(const MCInst *MI, unsigned OpNo,
                                       raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isImm())
-    O << Op.getImm();
+    O << formatImm(Op.getImm());
   else {
     assert(Op.isExpr() && "unknown pcrel immediate operand");
     // If a symbolic branch target was added as a constant expression then print
@@ -157,7 +157,7 @@ void X86ATTInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
   } else if (Op.isImm()) {
     // Print X86 immediates as signed values.
     O << markup("<imm:")
-      << '$' << (int64_t)Op.getImm()
+      << '$' << formatImm((int64_t)Op.getImm())
       << markup(">");
     
     if (CommentStream && (Op.getImm() > 255 || Op.getImm() < -256))
@@ -189,7 +189,7 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
   if (DispSpec.isImm()) {
     int64_t DispVal = DispSpec.getImm();
     if (DispVal || (!IndexReg.getReg() && !BaseReg.getReg()))
-      O << DispVal;
+      O << formatImm(DispVal);
   } else {
     assert(DispSpec.isExpr() && "non-immediate displacement for LEA?");
     O << *DispSpec.getExpr();
@@ -207,7 +207,7 @@ void X86ATTInstPrinter::printMemReference(const MCInst *MI, unsigned Op,
       if (ScaleVal != 1) {
         O << ','
 	  << markup("<imm:")
-          << ScaleVal
+          << ScaleVal // never printed in hex.
 	  << markup(">");
       }
     }

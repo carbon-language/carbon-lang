@@ -10,6 +10,8 @@
 #ifndef LLVM_MC_MCINSTPRINTER_H
 #define LLVM_MC_MCINSTPRINTER_H
 
+#include "llvm/Support/Format.h"
+
 namespace llvm {
 class MCInst;
 class raw_ostream;
@@ -36,13 +38,16 @@ protected:
   /// True if we are printing marked up assembly.
   bool UseMarkup;
 
+  /// True if we are printing immediates as hex.
+  bool PrintImmHex;
+
   /// Utility function for printing annotations.
   void printAnnotation(raw_ostream &OS, StringRef Annot);
 public:
   MCInstPrinter(const MCAsmInfo &mai, const MCInstrInfo &mii,
                 const MCRegisterInfo &mri)
     : CommentStream(0), MAI(mai), MII(mii), MRI(mri), AvailableFeatures(0),
-      UseMarkup(0) {}
+      UseMarkup(0), PrintImmHex(0) {}
 
   virtual ~MCInstPrinter();
 
@@ -70,6 +75,12 @@ public:
   /// Utility functions to make adding mark ups simpler.
   StringRef markup(StringRef s) const;
   StringRef markup(StringRef a, StringRef b) const;
+
+  bool getPrintImmHex() const { return PrintImmHex; }
+  void setPrintImmHex(bool Value) { PrintImmHex = Value; }
+
+  /// Utility function to print immediates in decimal or hex.
+  format_object1<int64_t> formatImm(const int64_t Value) const;
 };
 
 } // namespace llvm

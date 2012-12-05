@@ -162,7 +162,8 @@ enum ActionType {
   AC_Assemble,
   AC_Disassemble,
   AC_EDisassemble,
-  AC_MDisassemble
+  AC_MDisassemble,
+  AC_HDisassemble
 };
 
 static cl::opt<ActionType>
@@ -178,6 +179,9 @@ Action(cl::desc("Action to perform:"),
                              "Enhanced disassembly of strings of hex bytes"),
                   clEnumValN(AC_MDisassemble, "mdis",
                              "Marked up disassembly of strings of hex bytes"),
+                  clEnumValN(AC_HDisassemble, "hdis",
+                             "Disassemble strings of hex bytes printing "
+                             "immediates as hex"),
                   clEnumValEnd));
 
 static const Target *GetTarget(const char *ProgName) {
@@ -437,6 +441,7 @@ int main(int argc, char **argv) {
   }
 
   int Res = 1;
+  bool disassemble = false;
   switch (Action) {
   case AC_AsLex:
     Res = AsLexInput(SrcMgr, *MAI, Out.get());
@@ -446,15 +451,22 @@ int main(int argc, char **argv) {
     break;
   case AC_MDisassemble:
     IP->setUseMarkup(1);
-    // Fall through to do disassembly.
+    disassemble = true;
+    break;
+  case AC_HDisassemble:
+    IP->setPrintImmHex(1);
+    disassemble = true;
+    break;
   case AC_Disassemble:
-    Res = Disassembler::disassemble(*TheTarget, TripleName, *STI, *Str,
-                                    *Buffer, SrcMgr, Out->os());
+    disassemble = true;
     break;
   case AC_EDisassemble:
     Res =  Disassembler::disassembleEnhanced(TripleName, *Buffer, SrcMgr, Out->os());
     break;
   }
+  if (disassemble)
+    Res = Disassembler::disassemble(*TheTarget, TripleName, *STI, *Str,
+                                    *Buffer, SrcMgr, Out->os());
 
   // Keep output if no errors.
   if (Res == 0) Out->keep();

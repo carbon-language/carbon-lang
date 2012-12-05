@@ -182,5 +182,11 @@ int LLVMSetDisasmOptions(LLVMDisasmContextRef DCR, uint64_t Options){
       IP->setUseMarkup(1);
       Options &= ~LLVMDisassembler_Option_UseMarkup;
   }
+  if (Options & LLVMDisassembler_Option_PrintImmHex){
+      LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
+      MCInstPrinter *IP = DC->getIP();
+      IP->setPrintImmHex(1);
+      Options &= ~LLVMDisassembler_Option_PrintImmHex;
+  }
   return (Options == 0);
 }
