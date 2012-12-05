@@ -1939,6 +1939,10 @@ def warn_fun_requires_lock_precise : Warning<
   InGroup<ThreadSafetyPrecise>, DefaultIgnore;
 def note_found_mutex_near_match : Note<"found near match '%0'">;
 
+// Dummy warning that will trigger "beta" warnings from the analysis if enabled. 
+def warn_thread_safety_beta : Warning<
+  "Thread safety beta warning.">, InGroup<ThreadSafetyBeta>, DefaultIgnore;
+
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,
   InGroup<DiagGroup<"conversion">>, DefaultIgnore;

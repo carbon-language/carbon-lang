@@ -1544,6 +1544,10 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
     SourceLocation FL = AC.getDecl()->getLocation();
     SourceLocation FEL = AC.getDecl()->getLocEnd();
     thread_safety::ThreadSafetyReporter Reporter(S, FL, FEL);
+    if (Diags.getDiagnosticLevel(diag::warn_thread_safety_beta,D->getLocStart())
+        != DiagnosticsEngine::Ignored)
+      Reporter.setIssueBetaWarnings(true);
+
     thread_safety::runThreadSafetyAnalysis(AC, Reporter);
     Reporter.emitDiagnostics();
   }
