@@ -2056,6 +2056,43 @@ void BuildLockset::VisitCastExpr(CastExpr *CE) {
 
 
 void BuildLockset::VisitCallExpr(CallExpr *Exp) {
+  if (Analyzer->Handler.issueBetaWarnings()) {
+    if (CXXMemberCallExpr *CE = dyn_cast<CXXMemberCallExpr>(Exp)) {
+      MemberExpr *ME = dyn_cast<MemberExpr>(CE->getCallee());
+      // ME can be null when calling a method pointer
+      CXXMethodDecl *MD = CE->getMethodDecl();
+
+      if (ME && MD) {
+        if (ME->isArrow()) {
+          if (MD->isConst()) {
+            checkPtAccess(CE->getImplicitObjectArgument(), AK_Read);
+          } else {  // FIXME -- should be AK_Written
+            checkPtAccess(CE->getImplicitObjectArgument(), AK_Read);
+          }
+        } else {
+          if (MD->isConst())
+            checkAccess(CE->getImplicitObjectArgument(), AK_Read);
+          else     // FIXME -- should be AK_Written
+            checkAccess(CE->getImplicitObjectArgument(), AK_Read);
+        }
+      }
+    } else if (CXXOperatorCallExpr *OE = dyn_cast<CXXOperatorCallExpr>(Exp)) {
+      switch (OE->getOperator()) {
+        case OO_Equal: {
+          const Expr *Target = OE->getArg(0);
+          const Expr *Source = OE->getArg(1);
+          checkAccess(Target, AK_Written);
+          checkAccess(Source, AK_Read);
+          break;
+        }
+        default: {
+          const Expr *Source = OE->getArg(0);
+          checkAccess(Source, AK_Read);
+          break;
+        }
+      }
+    }
+  }
   NamedDecl *D = dyn_cast_or_null<NamedDecl>(Exp->getCalleeDecl());
   if(!D || !D->hasAttrs())
     return;
@@ -2063,6 +2100,13 @@ void BuildLockset::VisitCallExpr(CallExpr *Exp) {
 }
 
 void BuildLockset::VisitCXXConstructExpr(CXXConstructExpr *Exp) {
+  if (Analyzer->Handler.issueBetaWarnings()) {
+    const CXXConstructorDecl *D = Exp->getConstructor();
+    if (D && D->isCopyConstructor()) {
+      const Expr* Source = Exp->getArg(0);
+      checkAccess(Source, AK_Read);
+    }
+  }
   // FIXME -- only handles constructors in DeclStmt below.
 }
 

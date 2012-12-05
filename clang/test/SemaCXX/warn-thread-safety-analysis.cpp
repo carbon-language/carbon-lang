@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wthread-safety -std=c++11 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wthread-safety -Wthread-safety-beta %s
 
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety -std=c++11 -Wc++98-compat %s
 // FIXME: should also run  %clang_cc1 -fsyntax-only -verify -Wthread-safety %s
@@ -3711,4 +3711,113 @@ void Foo::test() {
 
 }  // end namespace MultipleAttributeTest
 
+
+namespace GuardedNonPrimitiveTypeTest {
+
+
+class Data {
+public:
+  Data(int i) : dat(i) { }
+
+  int  getValue() const { return dat; }
+  void setValue(int i)  { dat = i; }
+
+  int  operator[](int i) const { return dat; }
+  int& operator[](int i)       { return dat; }
+
+  void operator()() { }
+
+private:
+  int dat;
+};
+
+
+class DataCell {
+public:
+  DataCell(const Data& d) : dat(d) { }
+
+private:
+  Data dat;
+};
+
+
+void showDataCell(const DataCell& dc);
+
+
+class Foo {
+public:
+  // method call tests
+  void test() {
+    data_.setValue(0);         // FIXME -- should be writing \
+      // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+    int a = data_.getValue();  // \
+      // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+
+    datap1_->setValue(0);      // FIXME -- should be writing \
+      // expected-warning {{reading variable 'datap1_' requires locking 'mu_'}}
+    a = datap1_->getValue();   // \
+      // expected-warning {{reading variable 'datap1_' requires locking 'mu_'}}
+
+    datap2_->setValue(0);      // FIXME -- should be writing \
+      // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+    a = datap2_->getValue();   // \
+      // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+
+    (*datap2_).setValue(0);    // FIXME -- should be writing \
+      // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+    a = (*datap2_).getValue(); // \
+      // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+
+    mu_.Lock();
+    data_.setValue(1);
+    datap1_->setValue(1);
+    datap2_->setValue(1);
+    mu_.Unlock();
+
+    mu_.ReaderLock();
+    a = data_.getValue();
+    datap1_->setValue(0);  // reads datap1_, writes *datap1_
+    a = datap1_->getValue();
+    a = datap2_->getValue();
+    mu_.Unlock();
+  }
+
+  // operator tests
+  void test2() {
+    data_    = Data(1);   // expected-warning {{writing variable 'data_' requires locking 'mu_' exclusively}}
+    *datap1_ = data_;     // expected-warning {{reading variable 'datap1_' requires locking 'mu_'}} \
+                          // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+    *datap2_ = data_;     // expected-warning {{writing the value pointed to by 'datap2_' requires locking 'mu_' exclusively}} \
+                          // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+    data_ = *datap1_;     // expected-warning {{writing variable 'data_' requires locking 'mu_' exclusively}} \
+                          // expected-warning {{reading variable 'datap1_' requires locking 'mu_'}}
+    data_ = *datap2_;     // expected-warning {{writing variable 'data_' requires locking 'mu_' exclusively}} \
+                          // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+
+    data_[0] = 0;         // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+    (*datap2_)[0] = 0;    // expected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+
+    data_();              // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+  }
+
+  // const operator tests
+  void test3() const {
+    Data mydat(data_);      // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+
+    //FIXME
+    //showDataCell(data_);    // xpected-warning {{reading variable 'data_' requires locking 'mu_'}}
+    //showDataCell(*datap2_); // xpected-warning {{reading the value pointed to by 'datap2_' requires locking 'mu_'}}
+
+    int a = data_[0];       // expected-warning {{reading variable 'data_' requires locking 'mu_'}}
+  }
+
+private:
+  Mutex mu_;
+  Data  data_   GUARDED_BY(mu_);
+  Data* datap1_ GUARDED_BY(mu_);
+  Data* datap2_ PT_GUARDED_BY(mu_);
+};
+
+
+}  // end namespace GuardedNonPrimitiveTypeTest
 
