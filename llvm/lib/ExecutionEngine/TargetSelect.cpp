@@ -32,8 +32,18 @@ TargetMachine *EngineBuilder::selectTarget() {
   // must use the host architecture.
   if (UseMCJIT && WhichEngine != EngineKind::Interpreter && M)
     TT.setTriple(M->getTargetTriple());
-  else
+  else {
     TT.setTriple(LLVM_HOSTTRIPLE);
+#if defined(__APPLE__)
+#if defined(__LP64__)
+    if (TT.isArch32Bit())
+      TT = TT.get64BitArchVariant();
+#else
+    if (TT.isArch64Bit())
+      TT = TT.get32BitArchVariant();
+#endif
+#endif // APPLE
+  }
   return selectTarget(TT, MArch, MCPU, MAttrs);
 }
 
