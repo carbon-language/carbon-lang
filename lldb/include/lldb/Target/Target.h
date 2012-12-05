@@ -390,6 +390,8 @@ public:
     void
     DeleteCurrentProcess ();
 
+    void
+    CleanupProcess ();
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
     ///

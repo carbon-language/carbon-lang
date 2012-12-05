@@ -862,6 +862,49 @@ private:
     ThreadPlanSP m_plan_sp;
     ValueObjectSP m_return_valobj_sp;
 };
+    
+class StopInfoExec : public StopInfo
+{
+public:
+    
+    StopInfoExec (Thread &thread) :
+        StopInfo (thread, LLDB_INVALID_UID),
+        m_performed_action (false)
+    {
+    }
+    
+    virtual
+    ~StopInfoExec ()
+    {
+    }
+    
+    virtual StopReason
+    GetStopReason () const
+    {
+        return eStopReasonExec;
+    }
+    
+    virtual const char *
+    GetDescription ()
+    {
+        return "exec";
+    }
+protected:
+protected:
+    
+    virtual void
+    PerformAction (Event *event_ptr)
+    {
+        // Only perform the action once
+        if (m_performed_action)
+            return;
+        m_performed_action = true;
+        m_thread.GetProcess()->DidExec();
+    }
+    
+    bool m_performed_action;
+};
+
 } // namespace lldb_private
 
 StopInfoSP
@@ -904,6 +947,12 @@ StopInfoSP
 StopInfo::CreateStopReasonWithException (Thread &thread, const char *description)
 {
     return StopInfoSP (new StopInfoException (thread, description));
+}
+
+StopInfoSP
+StopInfo::CreateStopReasonWithExec (Thread &thread)
+{
+    return StopInfoSP (new StopInfoExec (thread));
 }
 
 ValueObjectSP

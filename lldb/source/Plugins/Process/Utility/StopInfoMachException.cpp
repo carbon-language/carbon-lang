@@ -16,6 +16,8 @@
 #include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Symbol/Symbol.h"
+#include "lldb/Target/DynamicLoader.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
@@ -300,7 +302,39 @@ StopInfoMachException::CreateStopReasonWithMachException
 
         case 5: // EXC_SOFTWARE
             if (exc_code == 0x10003) // EXC_SOFT_SIGNAL
+            {
+                if (exc_sub_code == 5)
+                {
+                    // On MacOSX, a SIGTRAP can signify that a process has called
+                    // exec, so we should check with our dynamic loader to verify.
+                    ProcessSP process_sp (thread.GetProcess());
+                    if (process_sp)
+                    {
+                        DynamicLoader *dynamic_loader = process_sp->GetDynamicLoader();
+                        if (dynamic_loader && dynamic_loader->ProcessDidExec())
+                        {
+                            // The program was re-exec'ed
+                            return StopInfo::CreateStopReasonWithExec (thread);
+                        }
+//                        if (!process_did_exec)
+//                        {
+//                            // We have a SIGTRAP, make sure we didn't exec by checking
+//                            // for the PC being at "_dyld_start"...
+//                            lldb::StackFrameSP frame_sp (thread.GetStackFrameAtIndex(0));
+//                            if (frame_sp)
+//                            {
+//                                const Symbol *symbol = frame_sp->GetSymbolContext(eSymbolContextSymbol).symbol;
+//                                if (symbol)
+//                                {
+//                                    if (symbol->GetName() == ConstString("_dyld_start"))
+//                                        process_did_exec = true;
+//                                }
+//                            }
+//                        }
+                    }
+                }
                 return StopInfo::CreateStopReasonWithSignal (thread, exc_sub_code);
+            }
             break;
         
         case 6: // EXC_BREAKPOINT

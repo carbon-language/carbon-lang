@@ -130,6 +130,21 @@ Target::Dump (Stream *s, lldb::DescriptionLevel description_level)
 }
 
 void
+Target::CleanupProcess ()
+{
+    // Do any cleanup of the target we need to do between process instances.
+    // NB It is better to do this before destroying the process in case the
+    // clean up needs some help from the process.
+    m_breakpoint_list.ClearAllBreakpointSites();
+    m_internal_breakpoint_list.ClearAllBreakpointSites();
+    // Disable watchpoints just on the debugger side.
+    Mutex::Locker locker;
+    this->GetWatchpointList().GetListMutex(locker);
+    DisableAllWatchpoints(false);
+    ClearAllWatchpointHitCounts();
+}
+
+void
 Target::DeleteCurrentProcess ()
 {
     if (m_process_sp.get())
@@ -140,16 +155,8 @@ Target::DeleteCurrentProcess ()
         
         m_process_sp->Finalize();
 
-        // Do any cleanup of the target we need to do between process instances.
-        // NB It is better to do this before destroying the process in case the
-        // clean up needs some help from the process.
-        m_breakpoint_list.ClearAllBreakpointSites();
-        m_internal_breakpoint_list.ClearAllBreakpointSites();
-        // Disable watchpoints just on the debugger side.
-        Mutex::Locker locker;
-        this->GetWatchpointList().GetListMutex(locker);
-        DisableAllWatchpoints(false);
-        ClearAllWatchpointHitCounts();
+        CleanupProcess ();
+
         m_process_sp.reset();
     }
 }

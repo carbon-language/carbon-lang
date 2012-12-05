@@ -251,6 +251,7 @@ ThreadPlanStepOut::PlanExplainsStop ()
         case eStopReasonWatchpoint:
         case eStopReasonSignal:
         case eStopReasonException:
+        case eStopReasonExec:
             return false;
 
         default:

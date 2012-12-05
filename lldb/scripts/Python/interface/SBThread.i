@@ -88,6 +88,7 @@ public:
     /// eStopReasonWatchpoint    1     watchpoint id
     /// eStopReasonSignal        1     unix signal number
     /// eStopReasonException     N     exception data
+    /// eStopReasonExec          0
     /// eStopReasonPlanComplete  0
     //--------------------------------------------------------------------------
     ") GetStopReasonDataAtIndex;

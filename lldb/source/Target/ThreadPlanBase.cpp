@@ -139,6 +139,14 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
             m_thread.DiscardThreadPlans(false);
             return true;
 
+        case eStopReasonExec:
+            // If we crashed, discard thread plans and stop.  Don't force the discard, however,
+            // since on rerun the target may clean up this exception and continue normally from there.
+            if (log)
+                log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4" PRIx64 " (exec.)", m_thread.GetID());
+            m_thread.DiscardThreadPlans(false);
+            return true;
+            
         case eStopReasonSignal:
             if (stop_info_sp->ShouldStop(event_ptr))
             {

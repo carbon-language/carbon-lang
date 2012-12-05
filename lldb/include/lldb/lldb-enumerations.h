@@ -176,6 +176,7 @@ namespace lldb {
         eStopReasonWatchpoint,
         eStopReasonSignal,
         eStopReasonException,
+        eStopReasonExec,        // Program was re-exec'ed
         eStopReasonPlanComplete
     } StopReason;
 

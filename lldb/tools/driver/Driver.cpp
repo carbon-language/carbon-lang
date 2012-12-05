@@ -806,6 +806,7 @@ Driver::UpdateSelectedThread ()
                 case eStopReasonWatchpoint:
                 case eStopReasonSignal:
                 case eStopReasonException:
+                case eStopReasonExec:
                     if (!other_thread.IsValid())
                         other_thread = thread;
                     break;

@@ -139,7 +139,8 @@ DynamicLoaderMacOSXDYLD::DynamicLoaderMacOSXDYLD (Process* process) :
     m_break_id(LLDB_INVALID_BREAK_ID),
     m_dyld_image_infos(),
     m_dyld_image_infos_stop_id (UINT32_MAX),
-    m_mutex(Mutex::eMutexTypeRecursive)
+    m_mutex(Mutex::eMutexTypeRecursive),
+    m_process_image_addr_is_all_images_infos (false)
 {
 }
 
@@ -178,6 +179,54 @@ DynamicLoaderMacOSXDYLD::DidLaunch ()
     LocateDYLD ();
     SetNotificationBreakpoint ();
 }
+
+bool
+DynamicLoaderMacOSXDYLD::ProcessDidExec ()
+{
+    if (m_process)
+    {
+        // If we are stopped after an exec, we will have only one thread...
+        if (m_process->GetThreadList().GetSize() == 1)
+        {
+            // We know if a process has exec'ed if our "m_dyld_all_image_infos_addr"
+            // value differs from the Process' image info address. When a process
+            // execs itself it might cause a change if ASLR is enabled.
+            const addr_t shlib_addr = m_process->GetImageInfoAddress ();
+            if (m_process_image_addr_is_all_images_infos == true && shlib_addr != m_dyld_all_image_infos_addr)
+            {
+                // The image info address from the process is the 'dyld_all_image_infos'
+                // address and it has changed.
+                return true;
+            }
+            
+            if (m_process_image_addr_is_all_images_infos == false && shlib_addr == m_dyld.address)
+            {
+                // The image info address from the process is the mach_header
+                // address for dyld and it has changed.
+                return true;
+            }
+            
+            // ASLR might be disabled and dyld could have ended up in the same
+            // location. We should try and detect if we are stopped at '_dyld_start'
+            ThreadSP thread_sp (m_process->GetThreadList().GetThreadAtIndex(0));
+            if (thread_sp)
+            {
+                lldb::StackFrameSP frame_sp (thread_sp->GetStackFrameAtIndex(0));
+                if (frame_sp)
+                {
+                    const Symbol *symbol = frame_sp->GetSymbolContext(eSymbolContextSymbol).symbol;
+                    if (symbol)
+                    {
+                        if (symbol->GetName() == ConstString("_dyld_start"))
+                            return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
+
 
 
 //----------------------------------------------------------------------
@@ -224,7 +273,6 @@ DynamicLoaderMacOSXDYLD::LocateDYLD()
         // mach header for dyld, or it might point to the 
         // dyld_all_image_infos struct
         const addr_t shlib_addr = m_process->GetImageInfoAddress ();
-
         ByteOrder byte_order = m_process->GetTarget().GetArchitecture().GetByteOrder();
         uint8_t buf[4];
         DataExtractor data (buf, sizeof(buf), byte_order, 4);
@@ -239,6 +287,7 @@ DynamicLoaderMacOSXDYLD::LocateDYLD()
             case llvm::MachO::HeaderMagic64:
             case llvm::MachO::HeaderMagic32Swapped:
             case llvm::MachO::HeaderMagic64Swapped:
+                m_process_image_addr_is_all_images_infos = false;
                 return ReadDYLDInfoFromMemoryAndSetNotificationCallback(shlib_addr);
                 
             default:
@@ -247,6 +296,7 @@ DynamicLoaderMacOSXDYLD::LocateDYLD()
         }
         // Maybe it points to the all image infos?
         m_dyld_all_image_infos_addr = shlib_addr;
+        m_process_image_addr_is_all_images_infos = true;
     }
 
     if (m_dyld_all_image_infos_addr != LLDB_INVALID_ADDRESS)

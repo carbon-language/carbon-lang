@@ -62,6 +62,9 @@ public:
     virtual void
     DidLaunch ();
 
+    virtual bool
+    ProcessDidExec ();
+
     virtual lldb::ThreadPlanSP
     GetStepThroughTrampolinePlan (lldb_private::Thread &thread,
                                   bool stop_others);
@@ -372,6 +375,7 @@ protected:
     uint32_t m_dyld_image_infos_stop_id;    // The process stop ID that "m_dyld_image_infos" is valid for
     mutable lldb_private::Mutex m_mutex;
     lldb_private::Process::Notifications m_notification_callbacks;
+    bool m_process_image_addr_is_all_images_infos;
 
 private:
     DISALLOW_COPY_AND_ASSIGN (DynamicLoaderMacOSXDYLD);

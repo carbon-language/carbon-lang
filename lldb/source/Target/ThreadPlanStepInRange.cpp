@@ -335,6 +335,7 @@ ThreadPlanStepInRange::PlanExplainsStop ()
         case eStopReasonWatchpoint:
         case eStopReasonSignal:
         case eStopReasonException:
+        case eStopReasonExec:
             {
                 LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                 if (log)

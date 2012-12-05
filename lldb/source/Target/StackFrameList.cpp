@@ -147,6 +147,7 @@ StackFrameList::ResetCurrentInlinedDepth ()
                             {
                             case eStopReasonWatchpoint:
                             case eStopReasonException:
+                            case eStopReasonExec:
                             case eStopReasonSignal:
                                 // In all these cases we want to stop in the deepest most frame.
                                 m_current_inlined_pc = curr_pc;
