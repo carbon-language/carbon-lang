@@ -599,6 +599,9 @@ public:
   virtual const RegClassWeight &getRegClassWeight(
     const TargetRegisterClass *RC) const = 0;
 
+  /// Get the weight in units of pressure for this register unit.
+  virtual unsigned getRegUnitWeight(unsigned RegUnit) const = 0;
+
   /// Get the number of dimensions of register pressure.
   virtual unsigned getNumRegPressureSets() const = 0;
 
@@ -613,6 +616,10 @@ public:
   /// Returns a -1 terminated array of pressure set IDs.
   virtual const int *getRegClassPressureSets(
     const TargetRegisterClass *RC) const = 0;
+
+  /// Get the dimensions of register pressure impacted by this register unit.
+  /// Returns a -1 terminated array of pressure set IDs.
+  virtual const int *getRegUnitPressureSets(unsigned RegUnit) const = 0;
 
   /// Get a list of 'hint' registers that the register allocator should try
   /// first when allocating a physical register for the virtual register
@@ -633,6 +640,28 @@ public:
                                      SmallVectorImpl<MCPhysReg> &Hints,
                                      const MachineFunction &MF,
                                      const VirtRegMap *VRM = 0) const;
+
+  /// getRawAllocationOrder - Returns the register allocation order for a
+  /// specified register class with a target-dependent hint. The returned list
+  /// may contain reserved registers that cannot be allocated.
+  ///
+  /// Register allocators need only call this function to resolve
+  /// target-dependent hints, but it should work without hinting as well.
+  virtual ArrayRef<MCPhysReg>
+  getRawAllocationOrder(const TargetRegisterClass *RC,
+                        unsigned HintType, unsigned HintReg,
+                        const MachineFunction &MF) const {
+    return RC->getRawAllocationOrder(MF);
+  }
+
+  /// ResolveRegAllocHint - Resolves the specified register allocation hint
+  /// to a physical register. Returns the physical register if it is successful.
+  virtual unsigned ResolveRegAllocHint(unsigned Type, unsigned Reg,
+                                       const MachineFunction &MF) const {
+    if (Type == 0 && Reg && isPhysicalRegister(Reg))
+      return Reg;
+    return 0;
+  }
 
   /// avoidWriteAfterWrite - Return true if the register allocator should avoid
   /// writing a register from RC in two consecutive instructions.

@@ -403,7 +403,11 @@ namespace llvm {
     // these two registers and their super-registers.
     const CodeGenRegister *Roots[2];
 
-    RegUnit() : Weight(0) { Roots[0] = Roots[1] = 0; }
+    // Index into RegClassUnitSets where we can find the list of UnitSets that
+    // contain this unit.
+    unsigned RegClassUnitSetsIdx;
+
+    RegUnit() : Weight(0), RegClassUnitSetsIdx(0) { Roots[0] = Roots[1] = 0; }
 
     ArrayRef<const CodeGenRegister*> getRoots() const {
       assert(!(Roots[1] && !Roots[0]) && "Invalid roots array");
@@ -462,6 +466,10 @@ namespace llvm {
 
     // Map RegisterClass index to the index of the RegUnitSet that contains the
     // class's units and any inferred RegUnit supersets.
+    //
+    // NOTE: This could grow beyond the number of register classes when we map
+    // register units to lists of unit sets. If the list of unit sets does not
+    // already exist for a register class, we create a new entry in this vector.
     std::vector<std::vector<unsigned> > RegClassUnitSets;
 
     // Add RC to *2RC maps.
@@ -613,6 +621,13 @@ namespace llvm {
     // Get a set of register unit IDs for a given dimension of pressure.
     RegUnitSet getRegPressureSet(unsigned Idx) const {
       return RegUnitSets[Idx];
+    }
+
+    // The number of pressure set lists may be larget than the number of
+    // register classes if some register units appeared in a list of sets that
+    // did not correspond to an existing register class.
+    unsigned getNumRegClassPressureSetLists() const {
+      return RegClassUnitSets.size();
     }
 
     // Get a list of pressure set IDs for a register class. Liveness of a
