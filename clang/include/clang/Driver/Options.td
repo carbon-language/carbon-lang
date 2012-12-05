@@ -300,7 +300,7 @@ def fthread_sanitizer : Flag<["-"], "fthread-sanitizer">, Group<f_Group>;
 def fno_thread_sanitizer : Flag<["-"], "fno-thread-sanitizer">, Group<f_Group>;
 def fasm : Flag<["-"], "fasm">, Group<f_Group>;
 
-def fasm_blocks : Flag<["-"], "fasm-blocks">, Group<f_Group>;
+def fasm_blocks : Flag<["-"], "fasm-blocks">, Group<f_Group>, Flags<[CC1Option]>;
 def fno_asm_blocks : Flag<["-"], "fno-asm-blocks">, Group<f_Group>;
 
 def fassume_sane_operator_new : Flag<["-"], "fassume-sane-operator-new">, Group<f_Group>;

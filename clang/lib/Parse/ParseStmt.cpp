@@ -1820,7 +1820,7 @@ StmtResult Parser::ParseAsmStatement(bool &msAsm) {
   assert(Tok.is(tok::kw_asm) && "Not an asm stmt");
   SourceLocation AsmLoc = ConsumeToken();
 
-  if (getLangOpts().MicrosoftExt && Tok.isNot(tok::l_paren) &&
+  if (getLangOpts().AsmBlocks && Tok.isNot(tok::l_paren) &&
       !isTypeQualifier()) {
     msAsm = true;
     return ParseMicrosoftAsmStatement(AsmLoc);

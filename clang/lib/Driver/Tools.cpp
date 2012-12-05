@@ -2942,9 +2942,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-fno-spell-checking");
 
 
-  // Silently ignore -fasm-blocks for now.
-  (void) Args.hasFlag(options::OPT_fasm_blocks, options::OPT_fno_asm_blocks,
-                      false);
+  // -fno-asm-blocks is default.
+  if (Args.hasFlag(options::OPT_fasm_blocks, options::OPT_fno_asm_blocks,
+                   false))
+    CmdArgs.push_back("-fasm-blocks");
 
   if (Arg *A = Args.getLastArg(options::OPT_fshow_overloads_EQ))
     A->render(Args, CmdArgs);

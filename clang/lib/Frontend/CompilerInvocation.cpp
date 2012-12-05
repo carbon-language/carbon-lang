@@ -1172,6 +1172,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.MicrosoftExt
     = Args.hasArg(OPT_fms_extensions) || Args.hasArg(OPT_fms_compatibility);
   Opts.MicrosoftMode = Args.hasArg(OPT_fms_compatibility);
+  Opts.AsmBlocks = Args.hasArg(OPT_fasm_blocks);
   Opts.MSCVersion = Args.getLastArgIntValue(OPT_fmsc_version, 0, Diags);
   Opts.Borland = Args.hasArg(OPT_fborland_extensions);
   Opts.WritableStrings = Args.hasArg(OPT_fwritable_strings);
