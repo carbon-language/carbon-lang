@@ -28,10 +28,18 @@ namespace format {
 
 // FIXME: Move somewhere sane.
 struct TokenAnnotation {
-  enum TokenType { TT_Unknown, TT_TemplateOpener, TT_TemplateCloser,
-      TT_BinaryOperator, TT_UnaryOperator, TT_OverloadedOperator,
-      TT_PointerOrReference, TT_ConditionalExpr, TT_LineComment,
-      TT_BlockComment };
+  enum TokenType {
+    TT_Unknown,
+    TT_TemplateOpener,
+    TT_TemplateCloser,
+    TT_BinaryOperator,
+    TT_UnaryOperator,
+    TT_OverloadedOperator,
+    TT_PointerOrReference,
+    TT_ConditionalExpr,
+    TT_LineComment,
+    TT_BlockComment
+  };
 
   TokenType Type;
 
@@ -85,7 +93,6 @@ public:
 
   void format() {
     unsigned Indent = formatFirstToken();
-    count = 0;
     IndentState State;
     State.Column = Indent + Line.Tokens[0].Tok.getLength();
     State.CtorInitializerOnNewLine = false;
@@ -230,9 +237,6 @@ private:
     ++State.ConsumedTokens;
   }
 
-  typedef std::map<IndentState, unsigned> StateMap;
-  StateMap Memory;
-
   unsigned splitPenalty(const FormatToken &Token) {
     if (Token.Tok.is(tok::semi))
       return 0;
@@ -272,36 +276,41 @@ private:
     if (NewLine && State.InCtorInitializer && !State.CtorInitializerOnNewLine)
       return UINT_MAX;
 
+    unsigned CurrentPenalty = 0;
+    if (NewLine) {
+      CurrentPenalty += Parameters.PenaltyIndentLevel * State.Indent.size() +
+          Parameters.PenaltyExtraLine +
+          splitPenalty(Line.Tokens[State.ConsumedTokens - 1]);
+    }
+
     addTokenToState(NewLine, true, State);
 
     // Exceeding column limit is bad.
     if (State.Column > Style.ColumnLimit)
       return UINT_MAX;
 
-    unsigned CurrentPenalty = 0;
-    if (NewLine) {
-      CurrentPenalty += Parameters.PenaltyIndentLevel * State.Indent.size() +
-          Parameters.PenaltyExtraLine +
-          splitPenalty(Line.Tokens[State.ConsumedTokens - 2]);
-    }
-
     if (StopAt <= CurrentPenalty)
       return UINT_MAX;
     StopAt -= CurrentPenalty;
 
-    // Has this state already been examined?
     StateMap::iterator I = Memory.find(State);
-    if (I != Memory.end())
-      return I->second;
-    ++count;
+    if (I != Memory.end()) {
+      // If this state has already been examined, we can safely return the
+      // previous result if we
+      // - have not hit the optimatization (and thus returned UINT_MAX) OR
+      // - are now computing for a smaller or equal StopAt.
+      unsigned SavedResult = I->second.first;
+      unsigned SavedStopAt = I->second.second;
+      if (SavedResult != UINT_MAX || StopAt <= SavedStopAt)
+        return SavedResult;
+    }
 
     unsigned NoBreak = calcPenalty(State, false, StopAt);
     unsigned WithBreak = calcPenalty(State, true, std::min(StopAt, NoBreak));
     unsigned Result = std::min(NoBreak, WithBreak);
     if (Result != UINT_MAX)
       Result += CurrentPenalty;
-    Memory[State] = Result;
-    assert(Memory.find(State) != Memory.end());
+    Memory[State] = std::pair<unsigned, unsigned>(Result, StopAt);
     return Result;
   }
 
@@ -340,8 +349,11 @@ private:
   const UnwrappedLine &Line;
   const std::vector<TokenAnnotation> &Annotations;
   tooling::Replacements &Replaces;
-  unsigned int count;
   bool StructuralError;
+
+  // A map from an indent state to a pair (Result, Used-StopAt).
+  typedef std::map<IndentState, std::pair<unsigned, unsigned> > StateMap;
+  StateMap Memory;
 
   OptimizationParameters Parameters;
 };
@@ -548,16 +560,18 @@ public:
 
 private:
   void determineTokenTypes() {
-    bool EqualEncountered = false;
+    bool AssignmentEncountered = false;
     for (int i = 0, e = Line.Tokens.size(); i != e; ++i) {
       TokenAnnotation &Annotation = Annotations[i];
       const FormatToken &Tok = Line.Tokens[i];
 
-      if (Tok.Tok.is(tok::equal))
-        EqualEncountered = true;
+      if (Tok.Tok.is(tok::equal) || Tok.Tok.is(tok::plusequal) ||
+          Tok.Tok.is(tok::minusequal) || Tok.Tok.is(tok::starequal) ||
+          Tok.Tok.is(tok::slashequal))
+        AssignmentEncountered = true;
 
       if (Tok.Tok.is(tok::star) || Tok.Tok.is(tok::amp))
-        Annotation.Type = determineStarAmpUsage(i, EqualEncountered);
+        Annotation.Type = determineStarAmpUsage(i, AssignmentEncountered);
       else if (isUnaryOperator(i))
         Annotation.Type = TokenAnnotation::TT_UnaryOperator;
       else if (isBinaryOperator(Line.Tokens[i]))
@@ -605,7 +619,7 @@ private:
   }
 
   TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index,
-                                                   bool EqualEncountered) {
+                                                   bool AssignmentEncountered) {
     if (Index == Annotations.size())
       return TokenAnnotation::TT_Unknown;
 
@@ -620,7 +634,7 @@ private:
 
     // It is very unlikely that we are going to find a pointer or reference type
     // definition on the RHS of an assignment.
-    if (EqualEncountered)
+    if (AssignmentEncountered)
       return TokenAnnotation::TT_BinaryOperator;
 
     return TokenAnnotation::TT_PointerOrReference;
@@ -676,8 +690,9 @@ private:
       return false;
     if (isBinaryOperator(Left))
       return true;
-    return Right.Tok.is(tok::colon) || Left.Tok.is(tok::comma) || Left.Tok.is(
-        tok::semi) || Left.Tok.is(tok::equal) || Left.Tok.is(tok::ampamp) ||
+    return Right.Tok.is(tok::colon) || Left.Tok.is(tok::comma) ||
+        Left.Tok.is(tok::semi) || Left.Tok.is(tok::equal) ||
+        Left.Tok.is(tok::ampamp) || Left.Tok.is(tok::pipepipe) ||
         (Left.Tok.is(tok::l_paren) && !Right.Tok.is(tok::r_paren));
   }
 

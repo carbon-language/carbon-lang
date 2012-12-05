@@ -106,6 +106,12 @@ void UnwrappedLineParser::parseComment() {
 }
 
 void UnwrappedLineParser::parseStatement() {
+  // Consume leading line comments, e.g. for branches without compounds.
+  while (FormatTok.Tok.is(tok::comment)) {
+    nextToken();
+    addUnwrappedLine();
+  }
+
   switch (FormatTok.Tok.getKind()) {
   case tok::kw_public:
   case tok::kw_protected:
