@@ -547,12 +547,16 @@ public:
 
 private:
   void determineTokenTypes() {
+    bool EqualEncountered = false;
     for (int i = 0, e = Line.Tokens.size(); i != e; ++i) {
       TokenAnnotation &Annotation = Annotations[i];
       const FormatToken &Tok = Line.Tokens[i];
 
+      if (Tok.Tok.is(tok::equal))
+        EqualEncountered = true;
+
       if (Tok.Tok.is(tok::star) || Tok.Tok.is(tok::amp))
-        Annotation.Type = determineStarAmpUsage(i);
+        Annotation.Type = determineStarAmpUsage(i, EqualEncountered);
       else if (isUnaryOperator(i))
         Annotation.Type = TokenAnnotation::TT_UnaryOperator;
       else if (isBinaryOperator(Line.Tokens[i]))
@@ -583,6 +587,7 @@ private:
     switch (Tok.Tok.getKind()) {
     case tok::equal:
     case tok::equalequal:
+    case tok::exclaimequal:
     case tok::star:
       //case tok::amp:
     case tok::plus:
@@ -598,7 +603,8 @@ private:
     }
   }
 
-  TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index) {
+  TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index,
+                                                   bool EqualEncountered) {
     if (Index == Annotations.size())
       return TokenAnnotation::TT_Unknown;
 
@@ -609,6 +615,11 @@ private:
 
     if (Line.Tokens[Index - 1].Tok.isLiteral() ||
         Line.Tokens[Index + 1].Tok.isLiteral())
+      return TokenAnnotation::TT_BinaryOperator;
+
+    // It is very unlikely that we are going to find a pointer or reference type
+    // definition on the RHS of an assignment.
+    if (EqualEncountered)
       return TokenAnnotation::TT_BinaryOperator;
 
     return TokenAnnotation::TT_PointerOrReference;

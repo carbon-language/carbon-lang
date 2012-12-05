@@ -333,6 +333,10 @@ TEST_F(FormatTest, UndestandsUnaryOperators) {
   verifyFormat("f(-1, -2, -3);");
   verifyFormat("a[-1] = 5;");
   verifyFormat("int a = 5 + -2;");
+  verifyFormat("if (i == -1) {\n}");
+  verifyFormat("if (i != -1) {\n}");
+  verifyFormat("if (i > -1) {\n}");
+  verifyFormat("if (i < -1) {\n}");
 }
 
 TEST_F(FormatTest, UndestandsOverloadedOperators) {
@@ -345,10 +349,10 @@ TEST_F(FormatTest, UnderstandsUsesOfStar) {
   verifyFormat("f(*a);");
   verifyFormat("int a = b * 10;");
   verifyFormat("int a = 10 * b;");
-  // verifyFormat("int a = b * c;");
+  verifyFormat("int a = b * c;");
   verifyFormat("int a = *b;");
-  // verifyFormat("int a = *b * c;");
-  // verifyFormat("int a = b * *c;");
+  verifyFormat("int a = *b * c;");
+  verifyFormat("int a = b * *c;");
 }
 
 TEST_F(FormatTest, HandlesIncludeDirectives) {
