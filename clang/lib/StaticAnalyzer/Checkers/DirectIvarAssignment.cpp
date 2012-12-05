@@ -33,6 +33,7 @@ namespace {
 /// Checks for the init, dealloc, and any other functions that might be allowed
 /// to perform direct instance variable assignment based on their name.
 struct MethodFilter {
+  virtual ~MethodFilter() {}
   virtual bool operator()(ObjCMethodDecl *M) {
     if (M->getMethodFamily() == OMF_init ||
         M->getMethodFamily() == OMF_dealloc ||
@@ -203,6 +204,7 @@ void ento::registerDirectIvarAssignment(CheckerManager &mgr) {
 // with __attribute__((annotate("objc_no_direct_instance_variable_assignmemt"))).
 namespace {
 struct InvalidatorMethodFilter : MethodFilter {
+  virtual ~InvalidatorMethodFilter() {}
   virtual bool operator()(ObjCMethodDecl *M) {
     for (specific_attr_iterator<AnnotateAttr>
          AI = M->specific_attr_begin<AnnotateAttr>(),
