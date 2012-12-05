@@ -47,6 +47,11 @@ static StringRef getImmediateMacroName(SourceLocation Loc,
    while (SM.isMacroArgExpansion(Loc))
      Loc = SM.getImmediateExpansionRange(Loc).first;
 
+   // If the macro's spelling has no FileID, then it's actually a token paste
+   // or stringization (or similar) and not a macro at all.
+   if (!SM.getFileEntryForID(SM.getFileID(SM.getSpellingLoc(Loc))))
+     return StringRef();
+
    // Find the spelling location of the start of the non-argument expansion
    // range. This is where the macro name was spelled in order to begin
    // expanding this macro.
@@ -448,8 +453,11 @@ void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
 
   SmallString<100> MessageStorage;
   llvm::raw_svector_ostream Message(MessageStorage);
-  Message << "expanded from macro '"
-          << getImmediateMacroName(Loc, SM, LangOpts) << "'";
+  StringRef MacroName = getImmediateMacroName(Loc, SM, LangOpts);
+  if (MacroName.empty())
+    Message << "expanded from here";
+  else
+    Message << "expanded from macro '" << MacroName << "'";
   emitDiagnostic(SpellingLoc, DiagnosticsEngine::Note,
                  Message.str(),
                  SpellingRanges, ArrayRef<FixItHint>(), &SM);

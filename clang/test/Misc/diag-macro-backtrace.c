@@ -12,7 +12,7 @@
 #define DROOL WAZ
 #define FOOL DROOL
 
-FOOL
+FOOL;
 
 // CHECK: :15:1: error: expected identifier or '('
 // CHECK: FOOL
@@ -50,4 +50,17 @@ FOOL
 // CHECK: :3:13: note: expanded from macro 'FOO'
 // CHECK: #define FOO 1+"hi" 
 // CHECK:             ^
-// CHECK: 1 error generated.
+
+#define ADD(a, b) a ## #b
+ADD(L, foo)
+// CHECK:    error: expected identifier or '('
+// CHECK:    ADD(L, foo)
+// CHECK: {{^\^}}
+// CHECK:    note: expanded from macro 'ADD'
+// CHECK:    #define ADD(a, b) a ## #b
+// CHECK: {{^                  \^}}
+// CHECK:    note: expanded from here
+// CHECK:    L"foo"
+// CHECK: {{^\^}}
+
+// CHECK: 2 errors generated.
