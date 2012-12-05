@@ -509,11 +509,8 @@ public:
           canBreakBetween(Line.Tokens[i - 1], Line.Tokens[i]);
 
       if (Line.Tokens[i].Tok.is(tok::colon)) {
-        if (Line.Tokens[0].Tok.is(tok::kw_case) || i == e - 1) {
-          Annotation.SpaceRequiredBefore = false;
-        } else {
-          Annotation.SpaceRequiredBefore = TokenAnnotation::TT_ConditionalExpr;
-        }
+        Annotation.SpaceRequiredBefore =
+            Line.Tokens[0].Tok.isNot(tok::kw_case) && i != e - 1;
       } else if (Annotations[i - 1].Type == TokenAnnotation::TT_UnaryOperator) {
         Annotation.SpaceRequiredBefore = false;
       } else if (Annotation.Type == TokenAnnotation::TT_UnaryOperator) {
