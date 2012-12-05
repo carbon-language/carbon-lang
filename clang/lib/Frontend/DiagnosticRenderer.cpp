@@ -380,7 +380,7 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
        unsigned OnMacroInst)
 {
   assert(!Loc.isInvalid() && "must have a valid source location here");
-  
+
   // If this is a file source location, directly emit the source snippet and
   // caret line. Also record the macro depth reached.
   if (Loc.isFileID()) {
@@ -394,22 +394,12 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
     return;
   }
   // Otherwise recurse through each macro expansion layer.
-  
-  // When processing macros, skip over the expansions leading up to
-  // a macro argument, and trace the argument's expansion stack instead.
-  Loc = SM.skipToMacroArgExpansion(Loc);
-  
-  SourceLocation OneLevelUp = SM.getImmediateMacroCallerLoc(Loc);
 
+  // Walk up to the caller of this macro, and produce a backtrace down to there.
+  SourceLocation OneLevelUp = SM.getImmediateMacroCallerLoc(Loc);
   emitMacroExpansionsAndCarets(OneLevelUp, Level, Ranges, Hints, SM, MacroDepth,
                                OnMacroInst + 1);
-  
-  // Save the original location so we can find the spelling of the macro call.
-  SourceLocation MacroLoc = Loc;
-  
-  // Map the location.
-  Loc = SM.getImmediateMacroCalleeLoc(Loc);
-  
+
   unsigned MacroSkipStart = 0, MacroSkipEnd = 0;
   if (MacroDepth > DiagOpts->MacroBacktraceLimit &&
       DiagOpts->MacroBacktraceLimit != 0) {
@@ -417,11 +407,11 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
     DiagOpts->MacroBacktraceLimit % 2;
     MacroSkipEnd = MacroDepth - DiagOpts->MacroBacktraceLimit / 2;
   }
-  
+
   // Whether to suppress printing this macro expansion.
   bool Suppressed = (OnMacroInst >= MacroSkipStart &&
                      OnMacroInst < MacroSkipEnd);
-  
+
   if (Suppressed) {
     // Tell the user that we've skipped contexts.
     if (OnMacroInst == MacroSkipStart) {
@@ -435,15 +425,24 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
     return;
   }
 
-  // Map the ranges.
+  // Find the spelling location for the macro definition. We must use the
+  // spelling location here to avoid emitting a macro bactrace for the note.
+  SourceLocation SpellingLoc = Loc;
+  // If this is the expansion of a macro argument, point the caret at the
+  // use of the argument in the definition of the macro, not the expansion.
+  if (SM.isMacroArgExpansion(Loc))
+    SpellingLoc = SM.getImmediateExpansionRange(Loc).first;
+  SpellingLoc = SM.getSpellingLoc(SpellingLoc);
+
+  // Map the ranges into the FileID of the diagnostic location.
   SmallVector<CharSourceRange, 4> SpellingRanges;
-  mapDiagnosticRanges(MacroLoc, Ranges, SpellingRanges, &SM);
+  mapDiagnosticRanges(Loc, Ranges, SpellingRanges, &SM);
 
   SmallString<100> MessageStorage;
   llvm::raw_svector_ostream Message(MessageStorage);
   Message << "expanded from macro '"
-          << getImmediateMacroName(MacroLoc, SM, LangOpts) << "'";
-  emitDiagnostic(SM.getSpellingLoc(Loc), DiagnosticsEngine::Note,
+          << getImmediateMacroName(Loc, SM, LangOpts) << "'";
+  emitDiagnostic(SpellingLoc, DiagnosticsEngine::Note,
                  Message.str(),
                  SpellingRanges, ArrayRef<FixItHint>(), &SM);
 }
