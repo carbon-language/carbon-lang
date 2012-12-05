@@ -97,7 +97,8 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     if (m_arch.IsValid())
     {
         LogSP log_target(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
-        log_target->Printf("Target::Target created with architecture %s (%s)", m_arch.GetArchitectureName(), m_arch.GetTriple().getTriple().c_str());
+        if (log_target)
+            log_target->Printf("Target::Target created with architecture %s (%s)", m_arch.GetArchitectureName(), m_arch.GetTriple().getTriple().c_str());
     }
 }
 
