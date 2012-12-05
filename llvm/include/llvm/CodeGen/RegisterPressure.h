@@ -273,6 +273,8 @@ public:
     return getDownwardPressure(MI, PressureResult, MaxPressureResult);
   }
 
+  void dump(const TargetRegisterInfo *TRI) const;
+
 protected:
   void increasePhysRegPressure(ArrayRef<unsigned> Regs);
   void decreasePhysRegPressure(ArrayRef<unsigned> Regs);

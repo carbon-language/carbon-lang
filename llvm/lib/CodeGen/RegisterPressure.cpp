@@ -64,7 +64,17 @@ void RegisterPressure::decrease(const TargetRegisterClass *RC,
 }
 
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
+static void dumpSetPressure(const std::vector<unsigned> &SetPressure,
+                            const TargetRegisterInfo *TRI) {
+  for (unsigned i = 0, e = SetPressure.size(); i < e; ++i) {
+    if (SetPressure[i] != 0)
+      dbgs() << TRI->getRegPressureSetName(i) << "=" << SetPressure[i] << '\n';
+  }
+}
+
 void RegisterPressure::dump(const TargetRegisterInfo *TRI) const {
+  dbgs() << "Max Pressure: ";
+  dumpSetPressure(MaxSetPressure, TRI);
   dbgs() << "Live In: ";
   for (unsigned i = 0, e = LiveInRegs.size(); i < e; ++i)
     dbgs() << PrintReg(LiveInRegs[i], TRI) << " ";
@@ -73,11 +83,12 @@ void RegisterPressure::dump(const TargetRegisterInfo *TRI) const {
   for (unsigned i = 0, e = LiveOutRegs.size(); i < e; ++i)
     dbgs() << PrintReg(LiveOutRegs[i], TRI) << " ";
   dbgs() << '\n';
-  for (unsigned i = 0, e = MaxSetPressure.size(); i < e; ++i) {
-    if (MaxSetPressure[i] != 0)
-      dbgs() << TRI->getRegPressureSetName(i) << "=" << MaxSetPressure[i]
-             << '\n';
-  }
+}
+
+void RegPressureTracker::dump(const TargetRegisterInfo *TRI) const {
+  dbgs() << "Curr Pressure: ";
+  dumpSetPressure(CurrSetPressure, TRI);
+  P.dump(TRI);
 }
 #endif
 
