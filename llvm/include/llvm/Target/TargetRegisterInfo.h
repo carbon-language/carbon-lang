@@ -595,7 +595,7 @@ public:
     return 0;
   }
 
-// Get the weight in units of pressure for this register class.
+  /// Get the weight in units of pressure for this register class.
   virtual const RegClassWeight &getRegClassWeight(
     const TargetRegisterClass *RC) const = 0;
 
