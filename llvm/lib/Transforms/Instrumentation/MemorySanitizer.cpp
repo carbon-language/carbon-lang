@@ -244,7 +244,7 @@ bool MemorySanitizer::doInitialization(Module &M) {
   appendToGlobalCtors(M, cast<Function>(M.getOrInsertFunction(
                       "__msan_init", IRB.getVoidTy(), NULL)), 0);
 
-  new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::LinkOnceODRLinkage,
+  new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
                      IRB.getInt32(ClTrackOrigins), "__msan_track_origins");
 
   // Create the callback.

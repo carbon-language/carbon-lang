@@ -4,6 +4,9 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; Check the presence of __msan_init
 ; CHECK: @llvm.global_ctors {{.*}} @__msan_init
 
+; Check the presence and the linkage type of __msan_track_origins
+; CHECK: @__msan_track_origins = weak_odr constant i32 0
+
 ; load followed by cmp: check that we load the shadow and call __msan_warning.
 define void @LoadAndCmp(i32* nocapture %a) nounwind uwtable {
 entry:
