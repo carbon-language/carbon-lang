@@ -957,7 +957,7 @@ bool llvm::isImageOrSamplerVal(const Value *arg, const Module *context) {
     return false;
 
   const StructType *STy = dyn_cast<StructType>(PTy->getElementType());
-  const std::string TypeName = STy ? STy->getName() : "";
+  const std::string TypeName = STy && !STy->isLiteral() ? STy->getName() : "";
 
   for (int i = 0, e = array_lengthof(specialTypes); i != e; ++i)
     if (TypeName == specialTypes[i])
