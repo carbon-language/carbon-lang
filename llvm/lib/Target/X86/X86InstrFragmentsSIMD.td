@@ -187,9 +187,7 @@ def X86VPerm2x128 : SDNode<"X86ISD::VPERM2X128", SDTShuff3OpI>;
 
 def X86VBroadcast : SDNode<"X86ISD::VBROADCAST", SDTVBroadcast>;
 
-def X86Blendpw   : SDNode<"X86ISD::BLENDPW",   SDTBlend>;
-def X86Blendps   : SDNode<"X86ISD::BLENDPS",   SDTBlend>;
-def X86Blendpd   : SDNode<"X86ISD::BLENDPD",   SDTBlend>;
+def X86Blendi    : SDNode<"X86ISD::BLENDI",   SDTBlend>;
 def X86Fmadd     : SDNode<"X86ISD::FMADD",     SDTFma>;
 def X86Fnmadd    : SDNode<"X86ISD::FNMADD",    SDTFma>;
 def X86Fmsub     : SDNode<"X86ISD::FMSUB",     SDTFma>;

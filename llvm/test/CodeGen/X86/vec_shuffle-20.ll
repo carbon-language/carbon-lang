@@ -1,4 +1,4 @@
-; RUN: llc < %s -o /dev/null -march=x86 -mcpu=corei7 -mtriple=i686-apple-darwin9 -stats -info-output-file - | grep asm-printer | grep 3
+; RUN: llc < %s -o /dev/null -march=x86 -mcpu=corei7 -mtriple=i686-apple-darwin9 -stats -info-output-file - | grep asm-printer | grep 2
 
 define <4 x float> @func(<4 x float> %fp0, <4 x float> %fp1) nounwind  {
 entry:

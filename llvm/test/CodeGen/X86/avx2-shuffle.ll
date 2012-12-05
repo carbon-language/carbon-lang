@@ -4,13 +4,60 @@
 ; The mask for the vpblendw instruction needs to be identical for both halves
 ; of the YMM. Need to use two vpblendw instructions.
 
-; CHECK: blendw1
-; CHECK: vpblendw
-; CHECK: vpblendw
+; CHECK: vpblendw_test1
+; mask = 10010110,b = 150,d
+; CHECK: vpblendw  $150, %ymm
 ; CHECK: ret
-define <16 x i16> @blendw1(<16 x i16> %a, <16 x i16> %b) nounwind alwaysinline {
-  %t = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 0, i32 17, i32 18, i32 3, i32 20, i32 5, i32 6, i32 7, i32 8, i32 9, i32 10, i32 11, i32 12, i32 13, i32 14, i32 31>
+define <16 x i16> @vpblendw_test1(<16 x i16> %a, <16 x i16> %b) nounwind alwaysinline {
+  %t = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 0, i32 17, i32 18, i32 3,  i32 20, i32 5,  i32 6,  i32 23, 
+                                                               i32 8, i32 25, i32 26, i32 11, i32 28, i32 13, i32 14, i32 31>
   ret <16 x i16> %t
+}
+
+; CHECK: vpblendw_test2
+; mask1 = 00010110 = 22
+; mask2 = 10000000 = 128
+; CHECK: vpblendw  $128, %xmm
+; CHECK: vpblendw  $22, %xmm
+; CHECK: vinserti128
+; CHECK: ret
+define <16 x i16> @vpblendw_test2(<16 x i16> %a, <16 x i16> %b) nounwind alwaysinline {
+  %t = shufflevector <16 x i16> %a, <16 x i16> %b, <16 x i32> <i32 0, i32 17, i32 18, i32 3, i32 20, i32 5, i32 6, i32 7, 
+                                                               i32 8, i32 9,  i32 10, i32 11, i32 12, i32 13, i32 14, i32 31>
+  ret <16 x i16> %t
+}
+
+; CHECK: blend_test1
+; CHECK: vpblendd
+; CHECK: ret
+define <8 x i32> @blend_test1(<8 x i32> %a, <8 x i32> %b) nounwind alwaysinline {
+  %t = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 0, i32 9, i32 10, i32 3, i32 12, i32 5, i32 6, i32 7>
+  ret <8 x i32> %t
+}
+
+; CHECK: blend_test2
+; CHECK: vpblendd
+; CHECK: ret
+define <8 x i32> @blend_test2(<8 x i32> %a, <8 x i32> %b) nounwind alwaysinline {
+  %t = shufflevector <8 x i32> %a, <8 x i32> %b, <8 x i32> <i32 0, i32 9, i32 10, i32 3, i32 12, i32 5, i32 6, i32 7>
+  ret <8 x i32> %t
+}
+
+
+; CHECK: blend_test3
+; CHECK: vblendps
+; CHECK: ret
+define <8 x float> @blend_test3(<8 x float> %a, <8 x float> %b) nounwind alwaysinline {
+  %t = shufflevector <8 x float> %a, <8 x float> %b, <8 x i32> <i32 0, i32 9, i32 10, i32 3, i32 12, i32 5, i32 6, i32 7>
+  ret <8 x float> %t
+}
+
+; CHECK: blend_test4
+; CHECK: vblendpd
+; CHECK: ret
+define <4 x i64> @blend_test4(<4 x i64> %a, <4 x i64> %b) nounwind alwaysinline {
+  %t = shufflevector <4 x i64> %a, <4 x i64> %b, <4 x i32> <i32 0, i32 5, i32 6, i32 3>
+  ret <4 x i64> %t
 }
 
 ; CHECK: vpshufhw $27, %ymm

@@ -176,13 +176,11 @@ namespace llvm {
       /// PSIGN - Copy integer sign.
       PSIGN,
 
-      /// BLENDV - Blend where the selector is an XMM.
+      /// BLENDV - Blend where the selector is a register.
       BLENDV,
 
-      /// BLENDxx - Blend where the selector is an immediate.
-      BLENDPW,
-      BLENDPS,
-      BLENDPD,
+      /// BLENDI - Blend where the selector is an immediate.
+      BLENDI,
 
       /// HADD - Integer horizontal add.
       HADD,
