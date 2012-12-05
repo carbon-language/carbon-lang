@@ -2762,17 +2762,46 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
         ExprTy = S.Context.CharTy;
   }
 
+  // %C in an Objective-C context prints a unichar, not a wchar_t.
+  // If the argument is an integer of some kind, believe the %C and suggest
+  // a cast instead of changing the conversion specifier.
   QualType IntendedTy = ExprTy;
+  if (ObjCContext &&
+      FS.getConversionSpecifier().getKind() == ConversionSpecifier::CArg) {
+    if (ExprTy->isIntegralOrUnscopedEnumerationType() &&
+        !ExprTy->isCharType()) {
+      // 'unichar' is defined as a typedef of unsigned short, but we should
+      // prefer using the typedef if it is visible.
+      IntendedTy = S.Context.UnsignedShortTy;
+      
+      LookupResult Result(S, &S.Context.Idents.get("unichar"), E->getLocStart(),
+                          Sema::LookupOrdinaryName);
+      if (S.LookupName(Result, S.getCurScope())) {
+        NamedDecl *ND = Result.getFoundDecl();
+        if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(ND))
+          if (TD->getUnderlyingType() == IntendedTy)
+            IntendedTy = S.Context.getTypedefType(TD);
+      }
+    }
+  }
+
+  // Special-case some of Darwin's platform-independence types by suggesting
+  // casts to primitive types that are known to be large enough.
+  bool ShouldNotPrintDirectly = false;
   if (S.Context.getTargetInfo().getTriple().isOSDarwin()) {
-    // Special-case some of Darwin's platform-independence types.
     if (const TypedefType *UserTy = IntendedTy->getAs<TypedefType>()) {
       StringRef Name = UserTy->getDecl()->getName();
-      IntendedTy = llvm::StringSwitch<QualType>(Name)
+      QualType CastTy = llvm::StringSwitch<QualType>(Name)
         .Case("NSInteger", S.Context.LongTy)
         .Case("NSUInteger", S.Context.UnsignedLongTy)
         .Case("SInt32", S.Context.IntTy)
         .Case("UInt32", S.Context.UnsignedIntTy)
-        .Default(IntendedTy);
+        .Default(QualType());
+
+      if (!CastTy.isNull()) {
+        ShouldNotPrintDirectly = true;
+        IntendedTy = CastTy;
+      }
     }
   }
 
@@ -2789,7 +2818,19 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
 
     CharSourceRange SpecRange = getSpecifierRange(StartSpecifier, SpecifierLen);
 
-    if (IntendedTy != ExprTy) {
+    if (IntendedTy == ExprTy) {
+      // In this case, the specifier is wrong and should be changed to match
+      // the argument.
+      EmitFormatDiagnostic(
+        S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
+          << AT.getRepresentativeTypeName(S.Context) << IntendedTy
+          << E->getSourceRange(),
+        E->getLocStart(),
+        /*IsStringLocation*/false,
+        SpecRange,
+        FixItHint::CreateReplacement(SpecRange, os.str()));
+
+    } else {
       // The canonical type for formatting this value is different from the
       // actual type of the expression. (This occurs, for example, with Darwin's
       // NSInteger on 32-bit platforms, where it is typedef'd as 'int', but
@@ -2827,26 +2868,28 @@ CheckPrintfHandler::checkFormatExpr(const analyze_printf::PrintfSpecifier &FS,
         Hints.push_back(FixItHint::CreateInsertion(After, ")"));
       }
 
-      // We extract the name from the typedef because we don't want to show
-      // the underlying type in the diagnostic.
-      const TypedefType *UserTy = cast<TypedefType>(ExprTy);
-      StringRef Name = UserTy->getDecl()->getName();
+      if (ShouldNotPrintDirectly) {
+        // The expression has a type that should not be printed directly.
+        // We extract the name from the typedef because we don't want to show
+        // the underlying type in the diagnostic.
+        StringRef Name = cast<TypedefType>(ExprTy)->getDecl()->getName();
 
-      // Finally, emit the diagnostic.
-      EmitFormatDiagnostic(S.PDiag(diag::warn_format_argument_needs_cast)
-                             << Name << IntendedTy
-                             << E->getSourceRange(),
-                           E->getLocStart(), /*IsStringLocation=*/false,
-                           SpecRange, Hints);
-    } else {
-      EmitFormatDiagnostic(
-        S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
-          << AT.getRepresentativeTypeName(S.Context) << IntendedTy
-          << E->getSourceRange(),
-        E->getLocStart(),
-        /*IsStringLocation*/false,
-        SpecRange,
-        FixItHint::CreateReplacement(SpecRange, os.str()));
+        EmitFormatDiagnostic(S.PDiag(diag::warn_format_argument_needs_cast)
+                               << Name << IntendedTy
+                               << E->getSourceRange(),
+                             E->getLocStart(), /*IsStringLocation=*/false,
+                             SpecRange, Hints);
+      } else {
+        // In this case, the expression could be printed using a different
+        // specifier, but we've decided that the specifier is probably correct 
+        // and we should cast instead. Just use the normal warning message.
+        EmitFormatDiagnostic(
+          S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
+            << AT.getRepresentativeTypeName(S.Context) << ExprTy
+            << E->getSourceRange(),
+          E->getLocStart(), /*IsStringLocation*/false,
+          SpecRange, Hints);
+      }
     }
   } else {
     const CharSourceRange &CSR = getSpecifierRange(StartSpecifier,

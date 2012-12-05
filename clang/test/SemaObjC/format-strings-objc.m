@@ -145,7 +145,7 @@ void test_percent_S() {
   NSLog(@"%S", ptr);  // no-warning
 
   const wchar_t* wchar_ptr = L"ab";
-  NSLog(@"%S", wchar_ptr);  // expected-warning{{format specifies type 'const unsigned short *' but the argument has type 'const wchar_t *'}}
+  NSLog(@"%S", wchar_ptr);  // expected-warning{{format specifies type 'const unichar *' (aka 'const unsigned short *') but the argument has type 'const wchar_t *'}}
 }
 
 void test_percent_ls() {
@@ -154,7 +154,7 @@ void test_percent_ls() {
   NSLog(@"%ls", ptr);  // no-warning
 
   const wchar_t* wchar_ptr = L"ab";
-  NSLog(@"%ls", wchar_ptr);  // expected-warning{{format specifies type 'const unsigned short *' but the argument has type 'const wchar_t *'}}
+  NSLog(@"%ls", wchar_ptr);  // expected-warning{{format specifies type 'const unichar *' (aka 'const unsigned short *') but the argument has type 'const wchar_t *'}}
 }
 
 void test_percent_C() {
@@ -162,7 +162,7 @@ void test_percent_C() {
   NSLog(@"%C", data);  // no-warning
 
   const wchar_t wchar_data = L'a';
-  NSLog(@"%C", wchar_data);  // expected-warning{{format specifies type 'unsigned short' but the argument has type 'wchar_t'}}
+  NSLog(@"%C", wchar_data);  // expected-warning{{format specifies type 'unichar' (aka 'unsigned short') but the argument has type 'wchar_t'}}
 }
 
 // Test that %@ works with toll-free bridging (<rdar://problem/10814120>).

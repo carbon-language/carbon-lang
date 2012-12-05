@@ -359,17 +359,19 @@ ArgType PrintfSpecifier::getArgType(ASTContext &Ctx,
     case ConversionSpecifier::sArg:
       if (LM.getKind() == LengthModifier::AsWideChar) {
         if (IsObjCLiteral)
-          return Ctx.getPointerType(Ctx.UnsignedShortTy.withConst());
+          return ArgType(Ctx.getPointerType(Ctx.UnsignedShortTy.withConst()),
+                         "const unichar *");
         return ArgType(ArgType::WCStrTy, "wchar_t *");
       }
       return ArgType::CStrTy;
     case ConversionSpecifier::SArg:
       if (IsObjCLiteral)
-        return Ctx.getPointerType(Ctx.UnsignedShortTy.withConst());
+        return ArgType(Ctx.getPointerType(Ctx.UnsignedShortTy.withConst()),
+                       "const unichar *");
       return ArgType(ArgType::WCStrTy, "wchar_t *");
     case ConversionSpecifier::CArg:
       if (IsObjCLiteral)
-        return Ctx.UnsignedShortTy;
+        return ArgType(Ctx.UnsignedShortTy, "unichar");
       return ArgType(Ctx.WCharTy, "wchar_t");
     case ConversionSpecifier::pArg:
       return ArgType::CPointerTy;
