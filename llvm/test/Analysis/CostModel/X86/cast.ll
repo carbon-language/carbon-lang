@@ -28,7 +28,7 @@ define i32 @add(i32 %arg) {
   ;CHECK: cost of 0 {{.*}} trunc
   %H = trunc i32 undef to i1
 
-  ;CHECK: cost of 1 {{.*}} ret
+  ;CHECK: cost of 0 {{.*}} ret
   ret i32 undef
 }
 

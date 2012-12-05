@@ -283,7 +283,7 @@ unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
  }
 
 unsigned VectorTargetTransformImpl::getCFInstrCost(unsigned Opcode) const {
-  return 1;
+  return 0;
 }
 
 unsigned VectorTargetTransformImpl::getCmpSelInstrCost(unsigned Opcode,

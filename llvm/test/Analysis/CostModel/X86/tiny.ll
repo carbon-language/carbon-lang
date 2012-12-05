@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-macosx10.8.0"
 
 ;CHECK: cost of 1 {{.*}} add
-;CHECK: cost of 1 {{.*}} ret
+;CHECK: cost of 0 {{.*}} ret
 define i32 @no_info(i32 %arg) {
   %e = add i32 %arg, %arg
   ret i32 %e

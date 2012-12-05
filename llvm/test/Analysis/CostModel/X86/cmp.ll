@@ -35,7 +35,7 @@ define i32 @cmp(i32 %arg) {
   ;CHECK: cost of 4 {{.*}} icmp
   %M = icmp eq <32 x i8> undef, undef
 
-  ;CHECK: cost of 1 {{.*}} ret
+  ;CHECK: cost of 0 {{.*}} ret
   ret i32 undef
 }
 

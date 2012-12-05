@@ -41,7 +41,7 @@ vector.body:                                      ; preds = %for.body.lr.ph, %ve
   store <8 x i32> %11, <8 x i32>* %9, align 4
   %index.next = add i64 %index, 8
   %12 = icmp eq i64 %index.next, %end.idx.rnd.down
-  ;CHECK: cost of 1 {{.*}} br
+  ;CHECK: cost of 0 {{.*}} br
   br i1 %12, label %middle.block, label %vector.body
 
 middle.block:                                     ; preds = %vector.body, %for.body.lr.ph
@@ -65,11 +65,11 @@ for.body:                                         ; preds = %middle.block, %for.
   ;CHECK: cost of 0 {{.*}} trunc
   %16 = trunc i64 %indvars.iv.next to i32
   %cmp = icmp slt i32 %16, %end
-  ;CHECK: cost of 1 {{.*}} br
+  ;CHECK: cost of 0 {{.*}} br
   br i1 %cmp, label %for.body, label %for.end
 
 for.end:                                          ; preds = %middle.block, %for.body, %entry
-  ;CHECK: cost of 1 {{.*}} ret
+  ;CHECK: cost of 0 {{.*}} ret
   ret i32 undef
 }
 
