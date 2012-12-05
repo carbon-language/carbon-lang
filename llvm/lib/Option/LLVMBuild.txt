@@ -1,4 +1,4 @@
-;===- ./lib/LLVMBuild.txt --------------------------------------*- Conf -*--===;
+;===- ./lib/Option/LLVMBuild.txt -------------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,10 +15,8 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = Analysis Archive AsmParser Bitcode CodeGen DebugInfo ExecutionEngine Linker MC Object Option Support TableGen Target Transforms VMCore
-
 [component_0]
-type = Group
-name = Libraries
-parent = $ROOT
+type = Library
+name = Option
+parent = Libraries
+required_libraries = Support
