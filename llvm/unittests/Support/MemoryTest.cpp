@@ -98,8 +98,9 @@ TEST_P(MappedMemoryTest, MultipleAllocAndRelease) {
 }
 
 TEST_P(MappedMemoryTest, BasicWrite) {
-  // This test applies only to writeable combinations
-  if (Flags && !(Flags & Memory::MF_WRITE))
+  // This test applies only to readable and writeable combinations
+  if (Flags &&
+      !((Flags & Memory::MF_READ) && (Flags & Memory::MF_WRITE)))
     return;
 
   error_code EC;
@@ -117,8 +118,9 @@ TEST_P(MappedMemoryTest, BasicWrite) {
 }
 
 TEST_P(MappedMemoryTest, MultipleWrite) {
-  // This test applies only to writeable combinations
-  if (Flags && !(Flags & Memory::MF_WRITE))
+  // This test applies only to readable and writeable combinations
+  if (Flags &&
+      !((Flags & Memory::MF_READ) && (Flags & Memory::MF_WRITE)))
     return;
   error_code EC;
   MemoryBlock M1 = Memory::allocateMappedMemory(sizeof(int), 0, Flags, EC);
