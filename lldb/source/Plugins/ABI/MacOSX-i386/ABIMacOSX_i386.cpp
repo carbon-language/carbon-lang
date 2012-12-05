@@ -945,7 +945,7 @@ ABIMacOSX_i386::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
             switch (name[1])
             {
             case 'b': 
-                if (name[2] == 'x' || name[2] == 'p')
+                if (name[2] == 'x')// || name[2] == 'p')
                     return name[3] == '\0';
                 break;
             case 'd':
