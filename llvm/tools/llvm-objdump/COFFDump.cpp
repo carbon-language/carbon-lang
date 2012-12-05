@@ -277,26 +277,26 @@ void llvm::printCOFFUnwindInfo(const COFFObjectFile *Obj) {
 
       outs() << "  Start Address: ";
       printCOFFSymbolAddress(outs(), Rels, SectionOffset +
-                             offsetof(RuntimeFunction, StartAddress),
+                             /*offsetof(RuntimeFunction, StartAddress)*/ 0,
                              I->StartAddress);
       outs() << "\n";
 
       outs() << "  End Address: ";
       printCOFFSymbolAddress(outs(), Rels, SectionOffset +
-                             offsetof(RuntimeFunction, EndAddress),
+                             /*offsetof(RuntimeFunction, EndAddress)*/ 4,
                              I->EndAddress);
       outs() << "\n";
 
       outs() << "  Unwind Info Address: ";
       printCOFFSymbolAddress(outs(), Rels, SectionOffset +
-                             offsetof(RuntimeFunction, UnwindInfoOffset),
+                             /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
                              I->UnwindInfoOffset);
       outs() << "\n";
 
       ArrayRef<uint8_t> XContents;
       uint64_t UnwindInfoOffset = 0;
       if (error(getSectionContents(Obj, Rels, SectionOffset +
-                                   offsetof(RuntimeFunction, UnwindInfoOffset),
+                              /*offsetof(RuntimeFunction, UnwindInfoOffset)*/ 8,
                                    XContents, UnwindInfoOffset))) continue;
       if (XContents.empty()) continue;
 
