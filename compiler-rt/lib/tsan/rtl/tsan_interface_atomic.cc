@@ -115,7 +115,10 @@ static morder ConvertOrder(morder mo) {
 }
 
 template<typename T> T func_xchg(volatile T *v, T op) {
-  return __sync_lock_test_and_set(v, op);
+  T res = __sync_lock_test_and_set(v, op);
+  // __sync_lock_test_and_set does not contain full barrier.
+  __sync_synchronize();
+  return res;
 }
 
 template<typename T> T func_add(volatile T *v, T op) {
@@ -255,6 +258,9 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
   thr->clock.ReleaseStore(&s->clock);
   *a = v;
   s->mtx.Unlock();
+  // Trainling memory barrier to provide sequential consistency
+  // for Dekker-like store-load synchronization.
+  __sync_synchronize();
 }
 
 template<typename T, T (*F)(volatile T *v, T op)>
