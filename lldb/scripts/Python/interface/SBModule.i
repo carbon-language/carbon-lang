@@ -222,6 +222,8 @@ public:
     lldb::SBTypeList
     FindTypes (const char* type);
 
+    lldb::SBType
+    GetBasicType(lldb::BasicType type);
 
     %feature("docstring", "
     //------------------------------------------------------------------

@@ -2064,52 +2064,87 @@ SBTarget::FindFunctions (const char *name, uint32_t name_type_mask)
 }
 
 lldb::SBType
-SBTarget::FindFirstType (const char* type)
+SBTarget::FindFirstType (const char* typename_cstr)
 {
     TargetSP target_sp(GetSP());
-    if (type && target_sp)
+    if (typename_cstr && typename_cstr[0] && target_sp)
     {
-        size_t count = target_sp->GetImages().GetSize();
+        ConstString const_typename(typename_cstr);
+        SymbolContext sc;
+        const bool exact_match = false;
+
+        const ModuleList &module_list = target_sp->GetImages();
+        size_t count = module_list.GetSize();
         for (size_t idx = 0; idx < count; idx++)
         {
-            SBType found_at_idx = GetModuleAtIndex(idx).FindFirstType(type);
-            
-            if (found_at_idx.IsValid())
-                return found_at_idx;
+            ModuleSP module_sp (module_list.GetModuleAtIndex(idx));
+            if (module_sp)
+            {
+                TypeSP type_sp (module_sp->FindFirstType(sc, const_typename, exact_match));
+                if (type_sp)
+                    return SBType(type_sp);
+            }
         }
+
+        // No matches, search for basic typename matches
+        ClangASTContext *clang_ast = target_sp->GetScratchClangASTContext();
+        if (clang_ast)
+            return SBType (ClangASTType::GetBasicType (clang_ast->getASTContext(), const_typename));
     }
     return SBType();
 }
 
-lldb::SBTypeList
-SBTarget::FindTypes (const char* type)
+SBType
+SBTarget::GetBasicType(lldb::BasicType type)
 {
-    
-    SBTypeList retval;
-    
     TargetSP target_sp(GetSP());
-    if (type && target_sp)
+    if (target_sp)
+    {
+        ClangASTContext *clang_ast = target_sp->GetScratchClangASTContext();
+        if (clang_ast)
+            return SBType (ClangASTType::GetBasicType (clang_ast->getASTContext(), type));
+    }
+    return SBType();
+}
+
+
+lldb::SBTypeList
+SBTarget::FindTypes (const char* typename_cstr)
+{
+    SBTypeList sb_type_list;
+    TargetSP target_sp(GetSP());
+    if (typename_cstr && typename_cstr[0] && target_sp)
     {
         ModuleList& images = target_sp->GetImages();
-        ConstString name_const(type);
+        ConstString const_typename(typename_cstr);
         bool exact_match = false;
         SymbolContext sc;
         TypeList type_list;
         
         uint32_t num_matches = images.FindTypes (sc,
-                                                 name_const,
+                                                 const_typename,
                                                  exact_match,
                                                  UINT32_MAX,
                                                  type_list);
         
-        for (size_t idx = 0; idx < num_matches; idx++)
+        if (num_matches > 0)
         {
-            TypeSP type_sp (type_list.GetTypeAtIndex(idx));
-            if (type_sp)
-                retval.Append(SBType(type_sp));
+            for (size_t idx = 0; idx < num_matches; idx++)
+            {
+                TypeSP type_sp (type_list.GetTypeAtIndex(idx));
+                if (type_sp)
+                    sb_type_list.Append(SBType(type_sp));
+            }
+        }
+        else
+        {
+            // No matches, search for basic typename matches
+            ClangASTContext *clang_ast = target_sp->GetScratchClangASTContext();
+            if (clang_ast)
+                sb_type_list.Append (SBType (ClangASTType::GetBasicType (clang_ast->getASTContext(), const_typename)));
         }
     }
-    return retval;
+    return sb_type_list;
 }
 
 SBValueList

@@ -408,6 +408,11 @@ public:
                uint32_t max_matches,
                TypeList& types);
 
+    lldb::TypeSP
+    FindFirstType (const SymbolContext& sc,
+                   const ConstString &type_name,
+                   bool exact_match);
+
     //------------------------------------------------------------------
     /// Find types by name that are in a namespace. This function is
     /// used by the expression parser when searches need to happen in

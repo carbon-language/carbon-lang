@@ -690,6 +690,19 @@ Module::FindTypesInNamespace (const SymbolContext& sc,
     return FindTypes_Impl(sc, type_name, namespace_decl, append, max_matches, type_list);
 }
 
+lldb::TypeSP
+Module::FindFirstType (const SymbolContext& sc,
+                       const ConstString &name,
+                       bool exact_match)
+{
+    TypeList type_list;
+    const uint32_t num_matches = FindTypes (sc, name, exact_match, 1, type_list);
+    if (num_matches)
+        return type_list.GetTypeAtIndex(0);
+    return TypeSP();
+}
+
+
 uint32_t
 Module::FindTypes (const SymbolContext& sc,
                    const ConstString &name,

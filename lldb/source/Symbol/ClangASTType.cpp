@@ -1,4 +1,4 @@
-//===-- ClangASTType.cpp ---------------------------------------------*- C++ -*-===//
+//===-- ClangASTType.cpp ----------------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -36,9 +36,12 @@
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/UniqueCStringMap.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
+
+#include <mutex>
 
 using namespace lldb;
 using namespace lldb_private;
@@ -1787,3 +1790,191 @@ lldb_private::operator != (const lldb_private::ClangASTType &lhs, const lldb_pri
 {
     return lhs.GetASTContext() != rhs.GetASTContext() || lhs.GetOpaqueQualType() != rhs.GetOpaqueQualType();
 }
+
+lldb::BasicType
+ClangASTType::GetBasicTypeEnumeration (const ConstString &name)
+{
+    if (name)
+    {
+        typedef UniqueCStringMap<lldb::BasicType> TypeNameToBasicTypeMap;
+        static TypeNameToBasicTypeMap g_type_map;
+        static std::once_flag g_once_flag;
+        std::call_once(g_once_flag, [](){
+            // "void"
+            g_type_map.Append(ConstString("void").GetCString(), eBasicTypeVoid);
+            
+            // "char"
+            g_type_map.Append(ConstString("char").GetCString(), eBasicTypeChar);
+            g_type_map.Append(ConstString("signed char").GetCString(), eBasicTypeSignedChar);
+            g_type_map.Append(ConstString("unsigned char").GetCString(), eBasicTypeUnsignedChar);
+            g_type_map.Append(ConstString("wchar_t").GetCString(), eBasicTypeWChar);
+            g_type_map.Append(ConstString("signed wchar_t").GetCString(), eBasicTypeSignedWChar);
+            g_type_map.Append(ConstString("unsigned wchar_t").GetCString(), eBasicTypeUnsignedWChar);
+            // "short"
+            g_type_map.Append(ConstString("short").GetCString(), eBasicTypeShort);
+            g_type_map.Append(ConstString("short int").GetCString(), eBasicTypeShort);
+            g_type_map.Append(ConstString("unsigned short").GetCString(), eBasicTypeUnsignedShort);
+            g_type_map.Append(ConstString("unsigned short int").GetCString(), eBasicTypeUnsignedShort);
+            
+            // "int"
+            g_type_map.Append(ConstString("int").GetCString(), eBasicTypeInt);
+            g_type_map.Append(ConstString("signed int").GetCString(), eBasicTypeInt);
+            g_type_map.Append(ConstString("unsigned int").GetCString(), eBasicTypeUnsignedInt);
+            g_type_map.Append(ConstString("unsigned").GetCString(), eBasicTypeUnsignedInt);
+            
+            // "long"
+            g_type_map.Append(ConstString("long").GetCString(), eBasicTypeLong);
+            g_type_map.Append(ConstString("long int").GetCString(), eBasicTypeLong);
+            g_type_map.Append(ConstString("unsigned long").GetCString(), eBasicTypeUnsignedLong);
+            g_type_map.Append(ConstString("unsigned long int").GetCString(), eBasicTypeUnsignedLong);
+            
+            // "long long"
+            g_type_map.Append(ConstString("long long").GetCString(), eBasicTypeLongLong);
+            g_type_map.Append(ConstString("long long int").GetCString(), eBasicTypeLongLong);
+            g_type_map.Append(ConstString("unsigned long long").GetCString(), eBasicTypeUnsignedLongLong);
+            g_type_map.Append(ConstString("unsigned long long int").GetCString(), eBasicTypeUnsignedLongLong);
+
+            // "int128"
+            g_type_map.Append(ConstString("__int128_t").GetCString(), eBasicTypeInt128);
+            g_type_map.Append(ConstString("__uint128_t").GetCString(), eBasicTypeUnsignedInt128);
+            
+            // Miscelaneous
+            g_type_map.Append(ConstString("bool").GetCString(), eBasicTypeBool);
+            g_type_map.Append(ConstString("float").GetCString(), eBasicTypeFloat);
+            g_type_map.Append(ConstString("double").GetCString(), eBasicTypeDouble);
+            g_type_map.Append(ConstString("long double").GetCString(), eBasicTypeLongDouble);
+            g_type_map.Append(ConstString("id").GetCString(), eBasicTypeObjCID);
+            g_type_map.Append(ConstString("SEL").GetCString(), eBasicTypeObjCSel);
+            g_type_map.Append(ConstString("nullptr").GetCString(), eBasicTypeNullPtr);
+            g_type_map.Sort();
+        });
+
+        return g_type_map.Find(name.GetCString(), eBasicTypeInvalid);
+    }
+    return eBasicTypeInvalid;
+}
+
+ClangASTType
+ClangASTType::GetBasicType (clang::ASTContext *ast, const ConstString &name)
+{
+    if (ast)
+    {
+        lldb::BasicType basic_type = ClangASTType::GetBasicTypeEnumeration (name);
+        return ClangASTType::GetBasicType (ast, basic_type);
+    }
+    return ClangASTType();
+}
+
+ClangASTType
+ClangASTType::GetBasicType (clang::ASTContext *ast, lldb::BasicType type)
+{
+    if (ast)
+    {
+        clang_type_t clang_type = NULL;
+        
+        switch (type)
+        {
+            case eBasicTypeInvalid:
+            case eBasicTypeOther:
+                break;
+            case eBasicTypeVoid:
+                clang_type = ast->VoidTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeChar:
+                clang_type = ast->CharTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeSignedChar:
+                clang_type = ast->SignedCharTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeUnsignedChar:
+                clang_type = ast->UnsignedCharTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeWChar:
+                clang_type = ast->getWCharType().getAsOpaquePtr();
+                break;
+            case eBasicTypeSignedWChar:
+                clang_type = ast->getSignedWCharType().getAsOpaquePtr();
+                break;
+            case eBasicTypeUnsignedWChar:
+                clang_type = ast->getUnsignedWCharType().getAsOpaquePtr();
+                break;
+            case eBasicTypeChar16:
+                clang_type = ast->Char16Ty.getAsOpaquePtr();
+                break;
+            case eBasicTypeChar32:
+                clang_type = ast->Char32Ty.getAsOpaquePtr();
+                break;
+            case eBasicTypeShort:
+                clang_type = ast->ShortTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeUnsignedShort:
+                clang_type = ast->UnsignedShortTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeInt:
+                clang_type = ast->IntTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeUnsignedInt:
+                clang_type = ast->UnsignedIntTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeLong:
+                clang_type = ast->LongTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeUnsignedLong:
+                clang_type = ast->UnsignedLongTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeLongLong:
+                clang_type = ast->LongLongTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeUnsignedLongLong:
+                clang_type = ast->UnsignedLongLongTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeInt128:
+                clang_type = ast->Int128Ty.getAsOpaquePtr();
+                break;
+            case eBasicTypeUnsignedInt128:
+                clang_type = ast->UnsignedInt128Ty.getAsOpaquePtr();
+                break;
+            case eBasicTypeBool:
+                clang_type = ast->BoolTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeHalf:
+                clang_type = ast->HalfTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeFloat:
+                clang_type = ast->FloatTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeDouble:
+                clang_type = ast->DoubleTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeLongDouble:
+                clang_type = ast->LongDoubleTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeFloatComplex:
+                clang_type = ast->FloatComplexTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeDoubleComplex:
+                clang_type = ast->DoubleComplexTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeLongDoubleComplex:
+                clang_type = ast->LongDoubleComplexTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeObjCID:
+                clang_type = ast->ObjCBuiltinIdTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeObjCClass:
+                clang_type = ast->ObjCBuiltinClassTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeObjCSel:
+                clang_type = ast->ObjCBuiltinSelTy.getAsOpaquePtr();
+                break;
+            case eBasicTypeNullPtr:
+                clang_type = ast->NullPtrTy.getAsOpaquePtr();
+                break;
+        }
+        
+        if (clang_type)
+            return ClangASTType (ast, clang_type);
+    }
+    return ClangASTType();
+}
+
