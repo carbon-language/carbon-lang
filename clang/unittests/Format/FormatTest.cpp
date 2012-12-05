@@ -81,11 +81,26 @@ TEST_F(FormatTest, FormatsNestedBlockStatements) {
 TEST_F(FormatTest, FormatsForLoop) {
   verifyFormat(
       "for (int VeryVeryLongLoopVariable = 0; VeryVeryLongLoopVariable < 10;\n"
-      "     ++VeryVeryLongLoopVariable);");
+      "     ++VeryVeryLongLoopVariable)\n"
+      "  ;");
+  verifyFormat("for (;;)\n"
+               "  f();");
+  verifyFormat("for (;;) {\n"
+               "}");
+  verifyFormat("for (;;) {\n"
+               "  f();\n"
+               "}");
 }
 
 TEST_F(FormatTest, FormatsWhileLoop) {
   verifyFormat("while (true) {\n}");
+  verifyFormat("while (true)\n"
+               "  f();");
+  verifyFormat("while () {\n"
+               "}");
+  verifyFormat("while () {\n"
+               "  f();\n"
+               "}");
 }
 
 TEST_F(FormatTest, FormatsNestedCall) {
