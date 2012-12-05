@@ -179,8 +179,6 @@ INTERCEPTOR(void, siglongjmp, void *env, int val) {
 
 #if ASAN_INTERCEPT___CXA_THROW
 INTERCEPTOR(void, __cxa_throw, void *a, void *b, void *c) {
-  Printf("__asan's __cxa_throw %p; REAL(__cxa_throw) %p PLAIN %p\n",
-         __interceptor___cxa_throw, REAL(__cxa_throw), __cxa_throw);
   CHECK(REAL(__cxa_throw));
   __asan_handle_no_return();
   REAL(__cxa_throw)(a, b, c);
