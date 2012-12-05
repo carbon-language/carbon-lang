@@ -129,13 +129,15 @@ namespace {
 /// uninitialized reads.
 class MemorySanitizer : public FunctionPass {
 public:
-  MemorySanitizer() : FunctionPass(ID), TD(0) { }
+  MemorySanitizer() : FunctionPass(ID), TD(0), WarningFn(0) { }
   const char *getPassName() const { return "MemorySanitizer"; }
   bool runOnFunction(Function &F);
   bool doInitialization(Module &M);
   static char ID;  // Pass identification, replacement for typeid.
 
 private:
+  void initializeCallbacks(Module &M);
+
   DataLayout *TD;
   LLVMContext *C;
   Type *IntptrTy;
@@ -209,44 +211,14 @@ static GlobalVariable *createPrivateNonConstGlobalForString(Module &M,
                             GlobalValue::PrivateLinkage, StrConst, "");
 }
 
-/// \brief Module-level initialization.
-///
-/// Obtains pointers to the required runtime library functions, and
-/// inserts a call to __msan_init to the module's constructor list.
-bool MemorySanitizer::doInitialization(Module &M) {
-  TD = getAnalysisIfAvailable<DataLayout>();
-  if (!TD)
-    return false;
-  BL.reset(new BlackList(ClBlackListFile));
-  C = &(M.getContext());
-  unsigned PtrSize = TD->getPointerSizeInBits(/* AddressSpace */0);
-  switch (PtrSize) {
-    case 64:
-      ShadowMask = kShadowMask64;
-      OriginOffset = kOriginOffset64;
-      break;
-    case 32:
-      ShadowMask = kShadowMask32;
-      OriginOffset = kOriginOffset32;
-      break;
-    default:
-      report_fatal_error("unsupported pointer size");
-      break;
-  }
+
+/// \brief Insert extern declaration of runtime-provided functions and globals.
+void MemorySanitizer::initializeCallbacks(Module &M) {
+  // Only do this once.
+  if (WarningFn)
+    return;
 
   IRBuilder<> IRB(*C);
-  IntptrTy = IRB.getIntPtrTy(TD);
-  OriginTy = IRB.getInt32Ty();
-
-  ColdCallWeights = MDBuilder(*C).createBranchWeights(1, 1000);
-
-  // Insert a call to __msan_init/__msan_track_origins into the module's CTORs.
-  appendToGlobalCtors(M, cast<Function>(M.getOrInsertFunction(
-                      "__msan_init", IRB.getVoidTy(), NULL)), 0);
-
-  new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
-                     IRB.getInt32(ClTrackOrigins), "__msan_track_origins");
-
   // Create the callback.
   // FIXME: this function should have "Cold" calling conv,
   // which is not yet implemented.
@@ -305,6 +277,45 @@ bool MemorySanitizer::doInitialization(Module &M) {
   EmptyAsm = InlineAsm::get(FunctionType::get(IRB.getVoidTy(), false),
                             StringRef(""), StringRef(""),
                             /*hasSideEffects=*/true);
+}
+
+/// \brief Module-level initialization.
+///
+/// inserts a call to __msan_init to the module's constructor list.
+bool MemorySanitizer::doInitialization(Module &M) {
+  TD = getAnalysisIfAvailable<DataLayout>();
+  if (!TD)
+    return false;
+  BL.reset(new BlackList(ClBlackListFile));
+  C = &(M.getContext());
+  unsigned PtrSize = TD->getPointerSizeInBits(/* AddressSpace */0);
+  switch (PtrSize) {
+    case 64:
+      ShadowMask = kShadowMask64;
+      OriginOffset = kOriginOffset64;
+      break;
+    case 32:
+      ShadowMask = kShadowMask32;
+      OriginOffset = kOriginOffset32;
+      break;
+    default:
+      report_fatal_error("unsupported pointer size");
+      break;
+  }
+
+  IRBuilder<> IRB(*C);
+  IntptrTy = IRB.getIntPtrTy(TD);
+  OriginTy = IRB.getInt32Ty();
+
+  ColdCallWeights = MDBuilder(*C).createBranchWeights(1, 1000);
+
+  // Insert a call to __msan_init/__msan_track_origins into the module's CTORs.
+  appendToGlobalCtors(M, cast<Function>(M.getOrInsertFunction(
+                      "__msan_init", IRB.getVoidTy(), NULL)), 0);
+
+  new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
+                     IRB.getInt32(ClTrackOrigins), "__msan_track_origins");
+
   return true;
 }
 
@@ -411,6 +422,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   /// \brief Add MemorySanitizer instrumentation to a function.
   bool runOnFunction() {
+    MS.initializeCallbacks(*F.getParent());
     if (!MS.TD) return false;
     // Iterate all BBs in depth-first order and create shadow instructions
     // for all instructions (where applicable).
