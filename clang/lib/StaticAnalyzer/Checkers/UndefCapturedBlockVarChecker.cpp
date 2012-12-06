@@ -68,7 +68,7 @@ UndefCapturedBlockVarChecker::checkPostStmt(const BlockExpr *BE,
   for (; I != E; ++I) {
     // This VarRegion is the region associated with the block; we need
     // the one associated with the encompassing context.
-    const VarRegion *VR = *I;
+    const VarRegion *VR = I.getCapturedRegion();
     const VarDecl *VD = VR->getDecl();
 
     if (VD->getAttr<BlocksAttr>() || !VD->hasLocalStorage())

@@ -642,22 +642,14 @@ public:
     explicit referenced_vars_iterator(const MemRegion * const *r,
                                       const MemRegion * const *originalR)
       : R(r), OriginalR(originalR) {}
-    
-    operator const MemRegion * const *() const {
-      return R;
-    }
-  
-    const MemRegion *getCapturedRegion() const {
-      return *R;
-    }
-    const MemRegion *getOriginalRegion() const {
-      return *OriginalR;
-    }
 
-    const VarRegion* operator*() const {
+    const VarRegion *getCapturedRegion() const {
       return cast<VarRegion>(*R);
     }
-    
+    const VarRegion *getOriginalRegion() const {
+      return cast<VarRegion>(*OriginalR);
+    }
+
     bool operator==(const referenced_vars_iterator &I) const {
       return I.R == R;
     }

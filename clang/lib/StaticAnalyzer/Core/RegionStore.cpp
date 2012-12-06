@@ -740,7 +740,7 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
     for (BlockDataRegion::referenced_vars_iterator
          BI = BR->referenced_vars_begin(), BE = BR->referenced_vars_end() ;
          BI != BE; ++BI) {
-      const VarRegion *VR = *BI;
+      const VarRegion *VR = BI.getCapturedRegion();
       const VarDecl *VD = VR->getDecl();
       if (VD->getAttr<BlocksAttr>() || !VD->hasLocalStorage()) {
         AddToWorkList(VR);
