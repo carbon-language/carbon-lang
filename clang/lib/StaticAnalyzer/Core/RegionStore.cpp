@@ -217,8 +217,7 @@ public:
 
 public:   // Made public for helper classes.
 
-  RegionBindings removeSubRegionBindings(RegionBindings B, const SubRegion *R,
-                                         bool Canonicalize = true);
+  RegionBindings removeSubRegionBindings(RegionBindings B, const SubRegion *R);
 
   RegionBindings addBinding(RegionBindings B, BindingKey K, SVal V);
 
@@ -228,17 +227,13 @@ public:   // Made public for helper classes.
   const SVal *lookup(RegionBindings B, BindingKey K);
   const SVal *lookup(RegionBindings B, const MemRegion *R, BindingKey::Kind k);
 
-  RegionBindings removeBinding(RegionBindings B, BindingKey K,
-                               bool Canonicalize);
+  RegionBindings removeBinding(RegionBindings B, BindingKey K);
   RegionBindings removeBinding(RegionBindings B, const MemRegion *R,
-                               BindingKey::Kind k, bool Canonicalize = true) {
-    return removeBinding(B, BindingKey::Make(R, k), Canonicalize);
-  }
+                               BindingKey::Kind k);
 
-  RegionBindings removeBinding(RegionBindings B, const MemRegion *R,
-                               bool Canonicalize = true) {
-    return removeBinding(removeBinding(B, R, BindingKey::Direct, false),
-                         R, BindingKey::Default, Canonicalize);
+  RegionBindings removeBinding(RegionBindings B, const MemRegion *R) {
+    return removeBinding(removeBinding(B, R, BindingKey::Direct), R,
+                        BindingKey::Default);
   }
 
   RegionBindings removeCluster(RegionBindings B, const MemRegion *R);
@@ -569,15 +564,12 @@ static bool isCompatibleWithFields(BindingKey K, const FieldVector &Fields) {
 }
 
 RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
-                                                           const SubRegion *R,
-                                                           bool Canonicalize) {
+                                                           const SubRegion *R) {
   BindingKey SRKey = BindingKey::Make(R, BindingKey::Default);
   const MemRegion *ClusterHead = SRKey.getBaseRegion();
   if (R == ClusterHead) {
     // We can remove an entire cluster's bindings all in one go.
-    if (Canonicalize)
-      return RBFactory.remove(B, R);
-    return RBFactory.add(B, R, CBFactory.getEmptyMap(), /*Canonicalize=*/false);
+    return RBFactory.remove(B, R);
   }
 
   FieldVector FieldsInSymbolicSubregions;
@@ -622,7 +614,7 @@ RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
           NextKey.getOffset() - SRKey.getOffset() < Length) {
         // Case 1: The next binding is inside the region we're invalidating.
         // Remove it.
-        Result = CBFactory.remove(Result, NextKey, /*Canonicalize=*/false);
+        Result = CBFactory.remove(Result, NextKey);
 
       } else if (NextKey.getOffset() == SRKey.getOffset()) {
         // Case 2: The next binding is at the same offset as the region we're
@@ -632,7 +624,7 @@ RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
         // FIXME: This is probably incorrect; consider invalidating an outer
         // struct whose first field is bound to a LazyCompoundVal.
         if (NextKey.isDirect())
-          Result = CBFactory.remove(Result, NextKey, /*Canonicalize=*/false);
+          Result = CBFactory.remove(Result, NextKey);
       }
       
     } else if (NextKey.hasSymbolicOffset()) {
@@ -643,13 +635,13 @@ RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
         // we'll be conservative and remove it.
         if (NextKey.isDirect())
           if (isCompatibleWithFields(NextKey, FieldsInSymbolicSubregions))
-            Result = CBFactory.remove(Result, NextKey, /*Canonicalize=*/false);
+            Result = CBFactory.remove(Result, NextKey);
       } else if (const SubRegion *BaseSR = dyn_cast<SubRegion>(Base)) {
         // Case 4: The next key is symbolic, but we changed a known
         // super-region. In this case the binding is certainly no longer valid.
         if (R == Base || BaseSR->isSubRegionOf(R))
           if (isCompatibleWithFields(NextKey, FieldsInSymbolicSubregions))
-            Result = CBFactory.remove(Result, NextKey, /*Canonicalize=*/false);
+            Result = CBFactory.remove(Result, NextKey);
       }
     }
   }
@@ -658,14 +650,11 @@ RegionBindings RegionStoreManager::removeSubRegionBindings(RegionBindings B,
   // we don't treat the base region as uninitialized anymore.
   // FIXME: This isn't very precise; see the example in the loop.
   if (HasSymbolicOffset)
-    Result = CBFactory.add(Result, SRKey, UnknownVal(), /*Canonicalize=*/false);
+    Result = CBFactory.add(Result, SRKey, UnknownVal());
 
-  if (Canonicalize) {
-    if (Result.isEmpty())
-      return RBFactory.remove(B, ClusterHead, Canonicalize);
-    Result = CBFactory.getCanonicalMap(Result);
-  }
-  return RBFactory.add(B, ClusterHead, Result, Canonicalize);
+  if (Result.isEmpty())
+    return RBFactory.remove(B, ClusterHead);
+  return RBFactory.add(B, ClusterHead, Result);
 }
 
 namespace {
@@ -840,7 +829,7 @@ RegionBindings RegionStoreManager::invalidateGlobalRegion(MemRegion::Kind K,
                                         /* type does not matter */ Ctx.IntTy,
                                         Count);
 
-  B = removeBinding(B, GS, /*Canonicalize=*/false);
+  B = removeBinding(B, GS);
   B = addBinding(B, BindingKey::Make(GS, BindingKey::Default), V);
 
   // Even if there are no bindings in the global scope, we still need to
@@ -1541,7 +1530,7 @@ StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
 
   // Perform the binding.
   RegionBindings B = GetRegionBindings(store);
-  B = removeSubRegionBindings(B, cast<SubRegion>(R), /*Canonicalize=*/false);
+  B = removeSubRegionBindings(B, cast<SubRegion>(R));
   BindingKey Key = BindingKey::Make(R, BindingKey::Direct);
   return StoreRef(addBinding(B, Key, V).getRootWithoutRetain(), *this);
 }
@@ -1749,7 +1738,7 @@ StoreRef RegionStoreManager::BindAggregate(Store store, const TypedRegion *R,
   // we will invalidate. Then add the new binding.
   RegionBindings B = GetRegionBindings(store);
 
-  B = removeSubRegionBindings(B, R, /*Canonicalize=*/false);
+  B = removeSubRegionBindings(B, R);
   B = addBinding(B, R, BindingKey::Default, Val);
 
   return StoreRef(B.getRootWithoutRetain(), *this);
@@ -1793,17 +1782,22 @@ const SVal *RegionStoreManager::lookup(RegionBindings B,
 }
 
 RegionBindings RegionStoreManager::removeBinding(RegionBindings B,
-                                                 BindingKey K,
-                                                 bool Canonicalize) {
+                                                 BindingKey K) {
   const MemRegion *Base = K.getBaseRegion();
   const ClusterBindings *Cluster = B.lookup(Base);
   if (!Cluster)
     return B;
 
-  ClusterBindings NewCluster = CBFactory.remove(*Cluster, K, Canonicalize);
-  if (Canonicalize && NewCluster.isEmpty())
+  ClusterBindings NewCluster = CBFactory.remove(*Cluster, K);
+  if (NewCluster.isEmpty())
     return RBFactory.remove(B, Base);
-  return RBFactory.add(B, Base, NewCluster, Canonicalize);
+  return RBFactory.add(B, Base, NewCluster);
+}
+
+RegionBindings RegionStoreManager::removeBinding(RegionBindings B,
+                                                 const MemRegion *R,
+                                                 BindingKey::Kind k){
+  return removeBinding(B, BindingKey::Make(R, k));
 }
 
 RegionBindings RegionStoreManager::removeCluster(RegionBindings B,
@@ -1976,7 +1970,7 @@ StoreRef RegionStoreManager::removeDeadBindings(Store store,
       continue;
 
     // Remove the dead entry.
-    B = RBFactory.remove(B, Base, /*Canonicalize=*/false);
+    B = removeCluster(B, Base);
 
     if (const SymbolicRegion *SymR = dyn_cast<SymbolicRegion>(Base))
       SymReaper.maybeDead(SymR->getSymbol());
@@ -1992,7 +1986,7 @@ StoreRef RegionStoreManager::removeDeadBindings(Store store,
     }
   }
 
-  return StoreRef(RBFactory.getCanonicalMap(B).getRootWithoutRetain(), *this);
+  return StoreRef(B.getRootWithoutRetain(), *this);
 }
 
 //===----------------------------------------------------------------------===//
