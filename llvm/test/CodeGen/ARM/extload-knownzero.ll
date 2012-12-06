@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm -O0 | FileCheck %s
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 | FileCheck %s
 ; rdar://12771555
 
 define void @foo(i16* %ptr, i32 %a) nounwind {
@@ -7,7 +7,6 @@ entry:
   %tmp1 = icmp ult i32 %a, 100
   br i1 %tmp1, label %bb1, label %bb2
 bb1:
-; CHECK: %bb1
 ; CHECK: ldrh
   %tmp2 = load i16* %ptr, align 2
   br label %bb2
