@@ -928,7 +928,7 @@ ABIMacOSX_i386::CreateDefaultUnwindPlan (UnwindPlan &unwind_plan)
 bool
 ABIMacOSX_i386::RegisterIsVolatile (const RegisterInfo *reg_info)
 {
-    return RegisterIsCalleeSaved (reg_info);
+    return !RegisterIsCalleeSaved (reg_info);
 }
 
 // v. http://developer.apple.com/library/mac/#documentation/developertools/Conceptual/LowLevelABI/130-IA-32_Function_Calling_Conventions/IA32.html#//apple_ref/doc/uid/TP40002492-SW4
@@ -945,7 +945,7 @@ ABIMacOSX_i386::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
             switch (name[1])
             {
             case 'b': 
-                if (name[2] == 'x')// || name[2] == 'p')
+                if (name[2] == 'x' || name[2] == 'p')
                     return name[3] == '\0';
                 break;
             case 'd':
