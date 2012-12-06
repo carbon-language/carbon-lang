@@ -1209,6 +1209,29 @@ RegionOffset MemRegion::getAsOffset() const {
 // BlockDataRegion
 //===----------------------------------------------------------------------===//
 
+std::pair<const VarRegion *, const VarRegion *>
+BlockDataRegion::getCaptureRegions(const VarDecl *VD) {
+  MemRegionManager &MemMgr = *getMemRegionManager();
+  const VarRegion *VR = 0;
+  const VarRegion *OriginalVR = 0;
+
+  if (!VD->getAttr<BlocksAttr>() && VD->hasLocalStorage()) {
+    VR = MemMgr.getVarRegion(VD, this);
+    OriginalVR = MemMgr.getVarRegion(VD, LC);
+  }
+  else {
+    if (LC) {
+      VR = MemMgr.getVarRegion(VD, LC);
+      OriginalVR = VR;
+    }
+    else {
+      VR = MemMgr.getVarRegion(VD, MemMgr.getUnknownRegion());
+      OriginalVR = MemMgr.getVarRegion(VD, LC);
+    }
+  }
+  return std::make_pair(VR, OriginalVR);
+}
+
 void BlockDataRegion::LazyInitializeReferencedVars() {
   if (ReferencedVars)
     return;
@@ -1233,25 +1256,9 @@ void BlockDataRegion::LazyInitializeReferencedVars() {
   new (BVOriginal) VarVec(BC, E - I);
 
   for ( ; I != E; ++I) {
-    const VarDecl *VD = *I;
     const VarRegion *VR = 0;
     const VarRegion *OriginalVR = 0;
-
-    if (!VD->getAttr<BlocksAttr>() && VD->hasLocalStorage()) {
-      VR = MemMgr.getVarRegion(VD, this);
-      OriginalVR = MemMgr.getVarRegion(VD, LC);
-    }
-    else {
-      if (LC) {
-        VR = MemMgr.getVarRegion(VD, LC);
-        OriginalVR = VR;
-      }
-      else {
-        VR = MemMgr.getVarRegion(VD, MemMgr.getUnknownRegion());
-        OriginalVR = MemMgr.getVarRegion(VD, LC);
-      }
-    }
-
+    llvm::tie(VR, OriginalVR) = getCaptureRegions(*I);
     assert(VR);
     assert(OriginalVR);
     BV->push_back(VR, BC);

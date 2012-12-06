@@ -686,6 +686,8 @@ public:
   }
 private:
   void LazyInitializeReferencedVars();
+  std::pair<const VarRegion *, const VarRegion *>
+  getCaptureRegions(const VarDecl *VD);
 };
 
 /// SymbolicRegion - A special, "non-concrete" region. Unlike other region
