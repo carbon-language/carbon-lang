@@ -200,11 +200,11 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
     const User *U = *UI;
     if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       GS.HasNonInstructionUser = true;
-      
+
       // If the result of the constantexpr isn't pointer type, then we won't
       // know to expect it in various places.  Just reject early.
       if (!isa<PointerType>(CE->getType())) return true;
-      
+
       if (AnalyzeGlobal(CE, GS, PHIUsers)) return true;
     } else if (const Instruction *I = dyn_cast<Instruction>(U)) {
       if (!GS.HasMultipleAccessingFunctions) {
@@ -2157,7 +2157,7 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
 GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
   GlobalVariable *GV = M.getGlobalVariable("llvm.global_ctors");
   if (GV == 0) return 0;
-  
+
   // Verify that the initializer is simple enough for us to handle. We are
   // only allowed to optimize the initializer if it is unique.
   if (!GV->hasUniqueInitializer()) return 0;
@@ -2263,7 +2263,7 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
 }
 
 
-static inline bool 
+static inline bool
 isSimpleEnoughValueToCommit(Constant *C,
                             SmallPtrSet<Constant*, 8> &SimpleConstants,
                             const DataLayout *TD);
@@ -2285,7 +2285,7 @@ static bool isSimpleEnoughValueToCommitHelper(Constant *C,
   if (C->getNumOperands() == 0 || isa<BlockAddress>(C) ||
       isa<GlobalValue>(C))
     return true;
-  
+
   // Aggregate values are safe if all their elements are.
   if (isa<ConstantArray>(C) || isa<ConstantStruct>(C) ||
       isa<ConstantVector>(C)) {
@@ -2296,7 +2296,7 @@ static bool isSimpleEnoughValueToCommitHelper(Constant *C,
     }
     return true;
   }
-  
+
   // We don't know exactly what relocations are allowed in constant expressions,
   // so we allow &global+constantoffset, which is safe and uniformly supported
   // across targets.
@@ -2314,14 +2314,14 @@ static bool isSimpleEnoughValueToCommitHelper(Constant *C,
                TD->getTypeSizeInBits(CE->getOperand(0)->getType()))
       return false;
     return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants, TD);
-      
+
   // GEP is fine if it is simple + constant offset.
   case Instruction::GetElementPtr:
     for (unsigned i = 1, e = CE->getNumOperands(); i != e; ++i)
       if (!isa<ConstantInt>(CE->getOperand(i)))
         return false;
     return isSimpleEnoughValueToCommit(CE->getOperand(0), SimpleConstants, TD);
-      
+
   case Instruction::Add:
     // We allow simple+cst.
     if (!isa<ConstantInt>(CE->getOperand(1)))
@@ -2331,7 +2331,7 @@ static bool isSimpleEnoughValueToCommitHelper(Constant *C,
   return false;
 }
 
-static inline bool 
+static inline bool
 isSimpleEnoughValueToCommit(Constant *C,
                             SmallPtrSet<Constant*, 8> &SimpleConstants,
                             const DataLayout *TD) {
@@ -2379,7 +2379,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
         return false;
 
       return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
-    
+
     // A constantexpr bitcast from a pointer to another pointer is a no-op,
     // and we know how to evaluate it by moving the bitcast from the pointer
     // operand to the value operand.
@@ -2390,7 +2390,7 @@ static bool isSimpleEnoughPointerToCommit(Constant *C) {
       return cast<GlobalVariable>(CE->getOperand(0))->hasUniqueInitializer();
     }
   }
-  
+
   return false;
 }
 
@@ -2420,7 +2420,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     // Return the modified struct.
     return ConstantStruct::get(STy, Elts);
   }
-  
+
   ConstantInt *CI = cast<ConstantInt>(Addr->getOperand(OpNo));
   SequentialType *InitTy = cast<SequentialType>(Init->getType());
 
@@ -2597,23 +2597,23 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
       if (!isSimpleEnoughPointerToCommit(Ptr))
         // If this is too complex for us to commit, reject it.
         return false;
-      
+
       Constant *Val = getVal(SI->getOperand(0));
 
       // If this might be too difficult for the backend to handle (e.g. the addr
       // of one global variable divided by another) then we can't commit it.
       if (!isSimpleEnoughValueToCommit(Val, SimpleConstants, TD))
         return false;
-        
+
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
         if (CE->getOpcode() == Instruction::BitCast) {
           // If we're evaluating a store through a bitcast, then we need
           // to pull the bitcast off the pointer type and push it onto the
           // stored value.
           Ptr = CE->getOperand(0);
-          
+
           Type *NewTy = cast<PointerType>(Ptr->getType())->getElementType();
-          
+
           // In order to push the bitcast onto the stored value, a bitcast
           // from NewTy to Val's type must be legal.  If it's not, we can try
           // introspecting NewTy to find a legal conversion.
@@ -2638,12 +2638,12 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
               return false;
             }
           }
-          
+
           // If we found compatible types, go ahead and push the bitcast
           // onto the stored value.
           Val = ConstantExpr::getBitCast(Val, NewTy);
         }
-          
+
       MutatedMemory[Ptr] = Val;
     } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CurInst)) {
       InstResult = ConstantExpr::get(BO->getOpcode(),
@@ -2805,7 +2805,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
     if (!CurInst->use_empty()) {
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(InstResult))
         InstResult = ConstantFoldConstantExpression(CE, TD, TLI);
-      
+
       setVal(CurInst, InstResult);
     }
 
@@ -2891,7 +2891,7 @@ static bool EvaluateStaticConstructor(Function *F, const DataLayout *TD,
   Constant *RetValDummy;
   bool EvalSuccess = Eval.EvaluateFunction(F, RetValDummy,
                                            SmallVector<Constant*, 0>());
-  
+
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
     DEBUG(dbgs() << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
@@ -3011,13 +3011,13 @@ static Function *FindCXAAtExit(Module &M, TargetLibraryInfo *TLI) {
     return 0;
 
   Function *Fn = M.getFunction(TLI->getName(LibFunc::cxa_atexit));
-  
+
   if (!Fn)
     return 0;
 
   FunctionType *FTy = Fn->getFunctionType();
-  
-  // Checking that the function has the right return type, the right number of 
+
+  // Checking that the function has the right return type, the right number of
   // parameters and that they all have pointer types should be enough.
   if (!FTy->getReturnType()->isIntegerTy() ||
       FTy->getNumParams() != 3 ||
@@ -3092,7 +3092,7 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
   // and remove them.
   bool Changed = false;
 
-  for (Function::use_iterator I = CXAAtExitFn->use_begin(), 
+  for (Function::use_iterator I = CXAAtExitFn->use_begin(),
        E = CXAAtExitFn->use_end(); I != E;) {
     // We're only interested in calls. Theoretically, we could handle invoke
     // instructions as well, but neither llvm-gcc nor clang generate invokes
@@ -3101,7 +3101,7 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
     if (!CI)
       continue;
 
-    Function *DtorFn = 
+    Function *DtorFn =
       dyn_cast<Function>(CI->getArgOperand(0)->stripPointerCasts());
     if (!DtorFn)
       continue;
