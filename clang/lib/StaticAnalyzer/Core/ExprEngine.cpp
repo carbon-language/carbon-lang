@@ -1263,18 +1263,21 @@ void ExprEngine::processBranch(const Stmt *Condition, const Stmt *Term,
 
     DefinedSVal V = cast<DefinedSVal>(X);
 
+    ProgramStateRef StTrue, StFalse;
+    tie(StTrue, StFalse) = PrevState->assume(V);
+
     // Process the true branch.
     if (builder.isFeasible(true)) {
-      if (ProgramStateRef state = PrevState->assume(V, true))
-        builder.generateNode(state, true, PredI);
+      if (StTrue)
+        builder.generateNode(StTrue, true, PredI);
       else
         builder.markInfeasible(true);
     }
 
     // Process the false branch.
     if (builder.isFeasible(false)) {
-      if (ProgramStateRef state = PrevState->assume(V, false))
-        builder.generateNode(state, false, PredI);
+      if (StFalse)
+        builder.generateNode(StFalse, false, PredI);
       else
         builder.markInfeasible(false);
     }
@@ -1815,15 +1818,18 @@ void ExprEngine::evalEagerlyAssumeBinOpBifurcation(ExplodedNodeSet &Dst,
       const std::pair<const ProgramPointTag *, const ProgramPointTag*> &tags =
         geteagerlyAssumeBinOpBifurcationTags();
 
+      ProgramStateRef StateTrue, StateFalse;
+      tie(StateTrue, StateFalse) = state->assume(*SEV);
+
       // First assume that the condition is true.
-      if (ProgramStateRef StateTrue = state->assume(*SEV, true)) {
+      if (StateTrue) {
         SVal Val = svalBuilder.makeIntVal(1U, Ex->getType());        
         StateTrue = StateTrue->BindExpr(Ex, Pred->getLocationContext(), Val);
         Bldr.generateNode(Ex, Pred, StateTrue, tags.first);
       }
 
       // Next, assume that the condition is false.
-      if (ProgramStateRef StateFalse = state->assume(*SEV, false)) {
+      if (StateFalse) {
         SVal Val = svalBuilder.makeIntVal(0U, Ex->getType());
         StateFalse = StateFalse->BindExpr(Ex, Pred->getLocationContext(), Val);
         Bldr.generateNode(Ex, Pred, StateFalse, tags.second);
