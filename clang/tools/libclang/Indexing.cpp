@@ -23,9 +23,13 @@
 #include "clang/Frontend/Utils.h"
 #include "clang/Lex/PPCallbacks.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PPConditionalDirectiveRecord.h"
+#include "clang/Lex/HeaderSearch.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "llvm/Support/CrashRecoveryContext.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Mutex.h"
+#include "llvm/Support/MutexGuard.h"
 
 using namespace clang;
 using namespace cxstring;
@@ -35,6 +39,203 @@ using namespace cxindex;
 static void indexDiagnostics(CXTranslationUnit TU, IndexingContext &IdxCtx);
 
 namespace {
+
+//===----------------------------------------------------------------------===//
+// Skip Parsed Bodies
+//===----------------------------------------------------------------------===//
+
+#ifdef LLVM_ON_WIN32
+
+// FIXME: On windows it is disabled since current implementation depends on
+// file inodes.
+
+class SessionSkipBodyData { };
+
+class TUSkipBodyControl {
+public:
+  TUSkipBodyControl(SessionSkipBodyData &sessionData,
+                    PPConditionalDirectiveRecord &ppRec) { }
+  bool isParsed(SourceLocation Loc, FileID FID, const FileEntry *FE) {
+    return false;
+  }
+  void finished() { }
+};
+
+#else
+
+/// \brief A "region" in source code identified by the file/offset of the
+/// preprocessor conditional directive that it belongs to.
+/// Multiple, non-consecutive ranges can be parts of the same region.
+///
+/// As an example of different regions separated by preprocessor directives:
+///
+/// \code
+///   #1
+/// #ifdef BLAH
+///   #2
+/// #ifdef CAKE
+///   #3
+/// #endif
+///   #2
+/// #endif
+///   #1
+/// \endcode
+///
+/// There are 3 regions, with non-consecutive parts:
+///   #1 is identified as the beginning of the file
+///   #2 is identified as the location of "#ifdef BLAH"
+///   #3 is identified as the location of "#ifdef CAKE"
+///
+class PPRegion {
+  ino_t ino;
+  time_t ModTime;
+  dev_t dev;
+  unsigned Offset;
+public:
+  PPRegion() : ino(), ModTime(), dev(), Offset() {}
+  PPRegion(dev_t dev, ino_t ino, unsigned offset, time_t modTime)
+    : ino(ino), ModTime(modTime), dev(dev), Offset(offset) {}
+
+  ino_t getIno() const { return ino; }
+  dev_t getDev() const { return dev; }
+  unsigned getOffset() const { return Offset; }
+  time_t getModTime() const { return ModTime; }
+
+  bool isInvalid() const { return *this == PPRegion(); }
+
+  friend bool operator==(const PPRegion &lhs, const PPRegion &rhs) {
+    return lhs.dev == rhs.dev && lhs.ino == rhs.ino &&
+        lhs.Offset == rhs.Offset && lhs.ModTime == rhs.ModTime;
+  }
+};
+
+typedef llvm::DenseSet<PPRegion> PPRegionSetTy;
+
+} // end anonymous namespace
+
+namespace llvm {
+  template <> struct isPodLike<PPRegion> {
+    static const bool value = true;
+  };
+
+  template <>
+  struct DenseMapInfo<PPRegion> {
+    static inline PPRegion getEmptyKey() {
+      return PPRegion(0, 0, unsigned(-1), 0);
+    }
+    static inline PPRegion getTombstoneKey() {
+      return PPRegion(0, 0, unsigned(-2), 0);
+    }
+
+    static unsigned getHashValue(const PPRegion &S) {
+      llvm::FoldingSetNodeID ID;
+      ID.AddInteger(S.getIno());
+      ID.AddInteger(S.getDev());
+      ID.AddInteger(S.getOffset());
+      ID.AddInteger(S.getModTime());
+      return ID.ComputeHash();
+    }
+
+    static bool isEqual(const PPRegion &LHS, const PPRegion &RHS) {
+      return LHS == RHS;
+    }
+  };
+}
+
+namespace {
+
+class SessionSkipBodyData {
+  llvm::sys::Mutex Mux;
+  PPRegionSetTy ParsedRegions;
+
+public:
+  SessionSkipBodyData() : Mux(/*recursive=*/false) {}
+  ~SessionSkipBodyData() {
+    //llvm::errs() << "RegionData: " << Skipped.size() << " - " << Skipped.getMemorySize() << "\n";
+  }
+
+  void copyTo(PPRegionSetTy &Set) {
+    llvm::MutexGuard MG(Mux);
+    Set = ParsedRegions;
+  }
+
+  void update(ArrayRef<PPRegion> Regions) {
+    llvm::MutexGuard MG(Mux);
+    ParsedRegions.insert(Regions.begin(), Regions.end());
+  }
+};
+
+class TUSkipBodyControl {
+  SessionSkipBodyData &SessionData;
+  PPConditionalDirectiveRecord &PPRec;
+  Preprocessor &PP;
+
+  PPRegionSetTy ParsedRegions;
+  SmallVector<PPRegion, 32> NewParsedRegions;
+  PPRegion LastRegion;
+  bool LastIsParsed;
+
+public:
+  TUSkipBodyControl(SessionSkipBodyData &sessionData,
+                    PPConditionalDirectiveRecord &ppRec,
+                    Preprocessor &pp)
+    : SessionData(sessionData), PPRec(ppRec), PP(pp) {
+    SessionData.copyTo(ParsedRegions);
+  }
+
+  bool isParsed(SourceLocation Loc, FileID FID, const FileEntry *FE) {
+    PPRegion region = getRegion(Loc, FID, FE);
+    if (region.isInvalid())
+      return false;
+
+    // Check common case, consecutive functions in the same region.
+    if (LastRegion == region)
+      return LastIsParsed;
+
+    LastRegion = region;
+    LastIsParsed = ParsedRegions.count(region);
+    if (!LastIsParsed)
+      NewParsedRegions.push_back(region);
+    return LastIsParsed;
+  }
+
+  void finished() {
+    SessionData.update(NewParsedRegions);
+  }
+
+private:
+  PPRegion getRegion(SourceLocation Loc, FileID FID, const FileEntry *FE) {
+    SourceLocation RegionLoc = PPRec.findConditionalDirectiveRegionLoc(Loc);
+    if (RegionLoc.isInvalid()) {
+      if (isParsedOnceInclude(FE))
+        return PPRegion(FE->getDevice(), FE->getInode(), 0,
+                        FE->getModificationTime());
+      return PPRegion();
+    }
+
+    const SourceManager &SM = PPRec.getSourceManager();
+    assert(RegionLoc.isFileID());
+    FileID RegionFID;
+    unsigned RegionOffset;
+    llvm::tie(RegionFID, RegionOffset) = SM.getDecomposedLoc(RegionLoc);
+
+    if (RegionFID != FID) {
+      if (isParsedOnceInclude(FE))
+        return PPRegion(FE->getDevice(), FE->getInode(), 0,
+                        FE->getModificationTime());
+      return PPRegion();
+    }
+
+    return PPRegion(FE->getDevice(), FE->getInode(), RegionOffset,
+                    FE->getModificationTime());
+  }
+
+  bool isParsedOnceInclude(const FileEntry *FE) {
+    return PP.getHeaderSearchInfo().isFileMultipleIncludeGuarded(FE);
+  }
+};
+
+#endif
 
 //===----------------------------------------------------------------------===//
 // IndexPPCallbacks
@@ -91,7 +292,7 @@ public:
   virtual void MacroExpands(const Token &MacroNameTok, const MacroInfo* MI,
                             SourceRange Range) {
   }
-  
+
   /// SourceRangeSkipped - This hook is called when a source range is skipped.
   /// \param Range The SourceRange that was skipped. The range begins at the
   /// #if/#else directive and ends after the #endif/#else directive.
@@ -105,10 +306,11 @@ public:
 
 class IndexingConsumer : public ASTConsumer {
   IndexingContext &IndexCtx;
+  TUSkipBodyControl *SKCtrl;
 
 public:
-  explicit IndexingConsumer(IndexingContext &indexCtx)
-    : IndexCtx(indexCtx) { }
+  IndexingConsumer(IndexingContext &indexCtx, TUSkipBodyControl *skCtrl)
+    : IndexCtx(indexCtx), SKCtrl(skCtrl) { }
 
   // ASTConsumer Implementation
 
@@ -118,6 +320,8 @@ public:
   }
 
   virtual void HandleTranslationUnit(ASTContext &Ctx) {
+    if (SKCtrl)
+      SKCtrl->finished();
   }
 
   virtual bool HandleTopLevelDecl(DeclGroupRef DG) {
@@ -151,6 +355,32 @@ public:
 
     IndexCtx.indexDecl(D);
   }
+
+  virtual bool shouldSkipFunctionBody(Decl *D) {
+    if (!SKCtrl) {
+      // Always skip bodies.
+      return true;
+    }
+
+    const SourceManager &SM = IndexCtx.getASTContext().getSourceManager();
+    SourceLocation Loc = D->getLocation();
+    if (Loc.isMacroID())
+      return false;
+    if (SM.isInSystemHeader(Loc))
+      return true; // always skip bodies from system headers.
+
+    FileID FID;
+    unsigned Offset;
+    llvm::tie(FID, Offset) = SM.getDecomposedLoc(Loc);
+    // Don't skip bodies from main files; this may be revisited.
+    if (SM.getMainFileID() == FID)
+      return false;
+    const FileEntry *FE = SM.getFileEntryForID(FID);
+    if (!FE)
+      return false;
+
+    return SKCtrl->isParsed(Loc, FID, FE);
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -180,13 +410,17 @@ class IndexingFrontendAction : public ASTFrontendAction {
   IndexingContext IndexCtx;
   CXTranslationUnit CXTU;
 
+  SessionSkipBodyData *SKData;
+  OwningPtr<TUSkipBodyControl> SKCtrl;
+
 public:
   IndexingFrontendAction(CXClientData clientData,
                          IndexerCallbacks &indexCallbacks,
                          unsigned indexOptions,
-                         CXTranslationUnit cxTU)
+                         CXTranslationUnit cxTU,
+                         SessionSkipBodyData *skData)
     : IndexCtx(clientData, indexCallbacks, indexOptions, cxTU),
-      CXTU(cxTU) { }
+      CXTU(cxTU), SKData(skData) { }
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile) {
@@ -201,7 +435,15 @@ public:
     Preprocessor &PP = CI.getPreprocessor();
     PP.addPPCallbacks(new IndexPPCallbacks(PP, IndexCtx));
     IndexCtx.setPreprocessor(PP);
-    return new IndexingConsumer(IndexCtx);
+
+    if (SKData) {
+      PPConditionalDirectiveRecord *
+        PPRec = new PPConditionalDirectiveRecord(PP.getSourceManager());
+      PP.addPPCallbacks(PPRec);
+      SKCtrl.reset(new TUSkipBodyControl(*SKData, *PPRec, PP));
+    }
+
+    return new IndexingConsumer(IndexCtx, SKCtrl.get());
   }
 
   virtual void EndSourceFileAction() {
@@ -220,6 +462,14 @@ public:
 //===----------------------------------------------------------------------===//
 // clang_indexSourceFileUnit Implementation
 //===----------------------------------------------------------------------===//
+
+struct IndexSessionData {
+  CXIndex CIdx;
+  OwningPtr<SessionSkipBodyData> SkipBodyData;
+
+  explicit IndexSessionData(CXIndex cIdx)
+    : CIdx(cIdx), SkipBodyData(new SessionSkipBodyData) {}
+};
 
 struct IndexSourceFileInfo {
   CXIndexAction idxAction;
@@ -252,7 +502,7 @@ struct MemBufferOwner {
 static void clang_indexSourceFile_Impl(void *UserData) {
   IndexSourceFileInfo *ITUI =
     static_cast<IndexSourceFileInfo*>(UserData);
-  CXIndex CIdx = (CXIndex)ITUI->idxAction;
+  CXIndexAction cxIdxAction = ITUI->idxAction;
   CXClientData client_data = ITUI->client_data;
   IndexerCallbacks *client_index_callbacks = ITUI->index_callbacks;
   unsigned index_callbacks_size = ITUI->index_callbacks_size;
@@ -270,7 +520,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
     *out_TU = 0;
   bool requestedToGetTU = (out_TU != 0); 
 
-  if (!CIdx)
+  if (!cxIdxAction)
     return;
   if (!client_index_callbacks || index_callbacks_size == 0)
     return;
@@ -281,7 +531,8 @@ static void clang_indexSourceFile_Impl(void *UserData) {
                                   ? index_callbacks_size : sizeof(CB);
   memcpy(&CB, client_index_callbacks, ClientCBSize);
 
-  CIndexer *CXXIdx = static_cast<CIndexer *>(CIdx);
+  IndexSessionData *IdxSession = static_cast<IndexSessionData *>(cxIdxAction);
+  CIndexer *CXXIdx = static_cast<CIndexer *>(IdxSession->CIdx);
 
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForIndexing))
     setThreadBackgroundPriority();
@@ -366,9 +617,17 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   llvm::CrashRecoveryContextCleanupRegistrar<CXTUOwner>
     CXTUCleanup(CXTU.get());
 
+  // Enable the skip-parsed-bodies optimization only for C++; this may be
+  // revisited.
+  bool SkipBodies = (index_options & CXIndexOpt_SkipParsedBodiesInSession) &&
+      CInvok->getLangOpts()->CPlusPlus;
+  if (SkipBodies)
+    CInvok->getFrontendOpts().SkipFunctionBodies = true;
+
   OwningPtr<IndexingFrontendAction> IndexAction;
   IndexAction.reset(new IndexingFrontendAction(client_data, CB,
-                                               index_options, CXTU->getTU()));
+                                               index_options, CXTU->getTU(),
+                              SkipBodies ? IdxSession->SkipBodyData.get() : 0));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<IndexingFrontendAction>
@@ -519,7 +778,7 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
     IndexCtxCleanup(IndexCtx.get());
 
   OwningPtr<IndexingConsumer> IndexConsumer;
-  IndexConsumer.reset(new IndexingConsumer(*IndexCtx));
+  IndexConsumer.reset(new IndexingConsumer(*IndexCtx, 0));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<IndexingConsumer>
@@ -689,12 +948,12 @@ void clang_index_setClientEntity(const CXIdxEntityInfo *info,
 }
 
 CXIndexAction clang_IndexAction_create(CXIndex CIdx) {
-  // For now, CXIndexAction is featureless. 
-  return CIdx;
+  return new IndexSessionData(CIdx);
 }
 
 void clang_IndexAction_dispose(CXIndexAction idxAction) {
-  // For now, CXIndexAction is featureless. 
+  if (idxAction)
+    delete static_cast<IndexSessionData *>(idxAction);
 }
 
 int clang_indexSourceFile(CXIndexAction idxAction,

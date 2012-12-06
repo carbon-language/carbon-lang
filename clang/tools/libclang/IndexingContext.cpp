@@ -364,8 +364,18 @@ bool IndexingContext::handleObjCContainer(const ObjCContainerDecl *D,
 }
 
 bool IndexingContext::handleFunction(const FunctionDecl *D) {
-  DeclInfo DInfo(!D->isFirstDeclaration(), D->isThisDeclarationADefinition(),
-                 D->isThisDeclarationADefinition());
+  bool isDef = D->isThisDeclarationADefinition();
+  bool isContainer = isDef;
+  bool isSkipped = false;
+  if (D->hasSkippedBody()) {
+    isSkipped = true;
+    isDef = true;
+    isContainer = false;
+  }
+
+  DeclInfo DInfo(!D->isFirstDeclaration(), isDef, isContainer);
+  if (isSkipped)
+    DInfo.flags |= CXIdxDeclFlag_Skipped;
   return handleDecl(D, D->getLocation(), getCursor(D), DInfo);
 }
 
@@ -548,8 +558,18 @@ bool IndexingContext::handleObjCCategoryImpl(const ObjCCategoryImplDecl *D) {
 }
 
 bool IndexingContext::handleObjCMethod(const ObjCMethodDecl *D) {
-  DeclInfo DInfo(!D->isCanonicalDecl(), D->isThisDeclarationADefinition(),
-                 D->isThisDeclarationADefinition());
+  bool isDef = D->isThisDeclarationADefinition();
+  bool isContainer = isDef;
+  bool isSkipped = false;
+  if (D->hasSkippedBody()) {
+    isSkipped = true;
+    isDef = true;
+    isContainer = false;
+  }
+
+  DeclInfo DInfo(!D->isCanonicalDecl(), isDef, isContainer);
+  if (isSkipped)
+    DInfo.flags |= CXIdxDeclFlag_Skipped;
   return handleDecl(D, D->getLocation(), getCursor(D), DInfo);
 }
 

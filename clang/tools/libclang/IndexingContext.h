@@ -88,6 +88,7 @@ struct DeclInfo : public CXIdxDeclInfo {
     attributes = 0;
     numAttributes = 0;
     declAsContainer = semanticContainer = lexicalContainer = 0;
+    flags = 0;
   }
   DeclInfo(DInfoKind K,
            bool isRedeclaration, bool isDefinition, bool isContainer)
@@ -98,6 +99,7 @@ struct DeclInfo : public CXIdxDeclInfo {
     attributes = 0;
     numAttributes = 0;
     declAsContainer = semanticContainer = lexicalContainer = 0;
+    flags = 0;
   }
 };
 

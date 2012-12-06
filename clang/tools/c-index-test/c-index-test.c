@@ -2497,7 +2497,12 @@ static void index_indexDeclaration(CXClientData client_data,
   printCXIndexContainer(info->lexicalContainer);
   printf(" | isRedecl: %d", info->isRedeclaration);
   printf(" | isDef: %d", info->isDefinition);
-  printf(" | isContainer: %d", info->isContainer);
+  if (info->flags & CXIdxDeclFlag_Skipped) {
+    assert(!info->isContainer);
+    printf(" | isContainer: skipped");
+  } else {
+    printf(" | isContainer: %d", info->isContainer);
+  }
   printf(" | isImplicit: %d\n", info->isImplicit);
 
   for (i = 0; i != info->numAttributes; ++i) {
@@ -2608,6 +2613,8 @@ static unsigned getIndexOptions(void) {
     index_opts |= CXIndexOpt_SuppressRedundantRefs;
   if (getenv("CINDEXTEST_INDEXLOCALSYMBOLS"))
     index_opts |= CXIndexOpt_IndexFunctionLocalSymbols;
+  if (!getenv("CINDEXTEST_DISABLE_SKIPPARSEDBODIES"))
+    index_opts |= CXIndexOpt_SkipParsedBodiesInSession;
 
   return index_opts;
 }
