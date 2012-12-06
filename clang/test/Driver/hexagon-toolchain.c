@@ -14,7 +14,7 @@
 // CHECK001: "-cc1" {{.*}} "-internal-externc-isystem" "[[INSTALL_DIR:.*]]/Inputs/hexagon_tree/qc/bin/../../gnu/lib/gcc/hexagon/4.4.0/include"
 // CHECK001:   "-internal-externc-isystem" "[[INSTALL_DIR]]/Inputs/hexagon_tree/qc/bin/../../gnu/lib/gcc/hexagon/4.4.0/include-fixed"
 // CHECK001:   "-internal-externc-isystem" "[[INSTALL_DIR]]/Inputs/hexagon_tree/qc/bin/../../gnu/hexagon/include"
-// CHECK001-NEXT: "[[INSTALL_DIR]]/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-as"
+// CHECK001-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-as"
 
 // RUN: %clang -ccc-cxx -x c++ -### -target hexagon-unknown-linux     \
 // RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
@@ -24,7 +24,7 @@
 // CHECK002:   "-internal-externc-isystem" "[[INSTALL_DIR]]/Inputs/hexagon_tree/qc/bin/../../gnu/lib/gcc/hexagon/4.4.0/include"
 // CHECK002:   "-internal-externc-isystem" "[[INSTALL_DIR]]/Inputs/hexagon_tree/qc/bin/../../gnu/lib/gcc/hexagon/4.4.0/include-fixed"
 // CHECK002:   "-internal-externc-isystem" "[[INSTALL_DIR]]/Inputs/hexagon_tree/qc/bin/../../gnu/hexagon/include"
-// CHECK002-NEXT: "[[INSTALL_DIR]]/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-as"
+// CHECK002-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-as"
 
 // -----------------------------------------------------------------------------
 // Test -nostdinc, -nostdlibinc, -nostdinc++
