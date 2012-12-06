@@ -19,6 +19,7 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
 
@@ -200,6 +201,14 @@ public:
     }
   }
 
+#if LLVM_HAS_RVALUE_REFERENCES
+  PartialDiagnostic(PartialDiagnostic &&Other)
+    : DiagID(Other.DiagID), DiagStorage(Other.DiagStorage),
+      Allocator(Other.Allocator) {
+    Other.DiagStorage = 0;
+  }
+#endif
+
   PartialDiagnostic(const PartialDiagnostic &Other, Storage *DiagStorage)
     : DiagID(Other.DiagID), DiagStorage(DiagStorage),
       Allocator(reinterpret_cast<StorageAllocator *>(~uintptr_t(0)))
@@ -241,6 +250,23 @@ public:
 
     return *this;
   }
+
+#if LLVM_HAS_RVALUE_REFERENCES
+  PartialDiagnostic &operator=(PartialDiagnostic &&Other) {
+    if (this != &Other) {
+      if (DiagStorage)
+        freeStorage();
+
+      DiagID = Other.DiagID;
+      DiagStorage = Other.DiagStorage;
+      Allocator = Other.Allocator;
+
+      Other.DiagStorage = 0;
+    }
+
+    return *this;
+  }
+#endif
 
   ~PartialDiagnostic() {
     freeStorage();
