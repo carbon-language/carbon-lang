@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=arm | FileCheck %s
+; RUN: llc < %s -march=arm -O0 | FileCheck %s
 ; rdar://12771555
 
 define void @foo(i16* %ptr, i32 %a) nounwind {
