@@ -96,6 +96,8 @@ void TestSizeClassAllocator() {
       for (uptr i = 0; i < n_iter; i++) {
         void *x = a->Allocate(size, 1);
         allocated.push_back(x);
+        CHECK_EQ(x, a->GetBlockBegin(x));
+        CHECK_EQ(x, a->GetBlockBegin((char*)x + size - 1));
         CHECK(a->PointerIsMine(x));
         CHECK_GE(a->GetActuallyAllocatedSize(x), size);
         uptr class_id = a->GetSizeClass(x);

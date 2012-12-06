@@ -354,7 +354,7 @@ class SizeClassAllocator32 {
     u32 offset = mem - beg;
     uptr n = offset / (u32)size;  // 32-bit division
     uptr meta = (beg + kRegionSize) - (n + 1) * kMetadataSize;
-    return (void*)meta;
+    return reinterpret_cast<void*>(meta);
   }
 
   bool PointerIsMine(void *p) {
@@ -363,6 +363,17 @@ class SizeClassAllocator32 {
 
   uptr GetSizeClass(void *p) {
     return possible_regions_[ComputeRegionId(reinterpret_cast<uptr>(p))] - 1;
+  }
+
+  void *GetBlockBegin(void *p) {
+    CHECK(PointerIsMine(p));
+    uptr mem = reinterpret_cast<uptr>(p);
+    uptr beg = ComputeRegionBeg(mem);
+    uptr size = SizeClassMap::Size(GetSizeClass(p));
+    u32 offset = mem - beg;
+    u32 n = offset / (u32)size;  // 32-bit division
+    uptr res = beg + (n * (u32)size);
+    return reinterpret_cast<void*>(res);
   }
 
   uptr GetActuallyAllocatedSize(void *p) {
