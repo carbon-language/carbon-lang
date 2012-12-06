@@ -3994,7 +3994,8 @@ ASTContext::getConstantArrayElementCount(const ConstantArrayType *CA)  const {
   uint64_t ElementCount = 1;
   do {
     ElementCount *= CA->getSize().getZExtValue();
-    CA = dyn_cast<ConstantArrayType>(CA->getElementType());
+    CA = dyn_cast_or_null<ConstantArrayType>(
+      CA->getElementType()->getAsArrayTypeUnsafe());
   } while (CA);
   return ElementCount;
 }

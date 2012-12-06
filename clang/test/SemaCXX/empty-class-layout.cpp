@@ -156,3 +156,18 @@ namespace Test7 {
   };
   SA(0, sizeof(Test) == 2);
 }
+
+namespace Test8 {
+  // Test that type sugar doesn't make us incorrectly determine the size of an
+  // array of empty classes.
+  struct Empty1 {};
+  struct Empty2 {};
+  struct Empties : Empty1, Empty2 {};
+  typedef Empty1 Sugar[4];
+  struct A : Empty2, Empties {
+    // This must go at offset 2, because if it were at offset 0,
+    // V[0][1] would overlap Empties::Empty1.
+    Sugar V[1];
+  };
+  SA(0, sizeof(A) == 6);
+}
