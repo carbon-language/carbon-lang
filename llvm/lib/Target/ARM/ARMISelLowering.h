@@ -333,6 +333,11 @@ namespace llvm {
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth) const;
 
+    virtual void computeMaskedBitsForAnyExtend(const SDValue Op,
+                                               APInt &KnownZero,
+                                               APInt &KnownOne,
+                                               const SelectionDAG &DAG,
+                                               unsigned Depth) const;
 
     virtual bool ExpandInlineAsm(CallInst *CI) const;
 

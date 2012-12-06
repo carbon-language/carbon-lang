@@ -14112,6 +14112,38 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   }
 }
 
+void X86TargetLowering::computeMaskedBitsForAnyExtend(const SDValue Op,
+                                                      APInt &KnownZero,
+                                                      APInt &KnownOne,
+                                                      const SelectionDAG &DAG,
+                                                      unsigned Depth) const {
+  unsigned BitWidth = Op.getValueType().getScalarType().getSizeInBits();
+  if (Op.getOpcode() == ISD::ANY_EXTEND) {
+    // Implemented as a zero_extend except for i16 -> i32
+    EVT InVT = Op.getOperand(0).getValueType();
+    unsigned InBits = InVT.getScalarType().getSizeInBits();
+    KnownZero = KnownZero.trunc(InBits);
+    KnownOne = KnownOne.trunc(InBits);
+    DAG.ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
+    if (BitWidth != 32 || InBits != 16) {
+      APInt NewBits = APInt::getHighBitsSet(BitWidth, BitWidth - InBits);
+      KnownZero |= NewBits;
+    }
+    return;
+  } else if (ISD::isEXTLoad(Op.getNode())) {
+    // Implemented as zextloads or implicitly zero-extended (i32 -> i64)
+    LoadSDNode *LD = cast<LoadSDNode>(Op);
+    EVT VT = LD->getMemoryVT();
+    unsigned MemBits = VT.getScalarType().getSizeInBits();
+    KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
+    return;
+  }
+  
+  assert(0 && "Expecting an ANY_EXTEND or extload!");
+}
+
 unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(SDValue Op,
                                                          unsigned Depth) const {
   // SETCC_CARRY sets the dest to ~0 for true or 0 for false.

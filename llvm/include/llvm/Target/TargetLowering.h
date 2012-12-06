@@ -935,6 +935,16 @@ public:
                                               const SelectionDAG &DAG,
                                               unsigned Depth = 0) const;
 
+  /// computeMaskedBitsForAnyExtend - Since each target implement ANY_EXTEND
+  /// and ExtLoad nodes specifically, let the target determine which of the bits
+  /// specified in Mask are known to be either zero or one and return them in
+  /// the KnownZero/KnownOne bitsets.
+  virtual void computeMaskedBitsForAnyExtend(const SDValue Op,
+                                             APInt &KnownZero,
+                                             APInt &KnownOne,
+                                             const SelectionDAG &DAG,
+                                             unsigned Depth = 0) const;
+
   /// ComputeNumSignBitsForTargetNode - This method can be implemented by
   /// targets that want to expose additional information about sign bits to the
   /// DAG Combiner.

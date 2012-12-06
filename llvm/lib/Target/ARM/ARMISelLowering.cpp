@@ -9878,6 +9878,36 @@ void ARMTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   }
 }
 
+void ARMTargetLowering::computeMaskedBitsForAnyExtend(const SDValue Op,
+                                                      APInt &KnownZero,
+                                                      APInt &KnownOne,
+                                                      const SelectionDAG &DAG,
+                                                      unsigned Depth) const {
+  unsigned BitWidth = Op.getValueType().getScalarType().getSizeInBits();
+  if (Op.getOpcode() == ISD::ANY_EXTEND) {
+    // Implemented as a zero_extend.
+    EVT InVT = Op.getOperand(0).getValueType();
+    unsigned InBits = InVT.getScalarType().getSizeInBits();
+    KnownZero = KnownZero.trunc(InBits);
+    KnownOne = KnownOne.trunc(InBits);
+    DAG.ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
+    APInt NewBits   = APInt::getHighBitsSet(BitWidth, BitWidth - InBits);
+    KnownZero |= NewBits;
+    return;
+  } else if (ISD::isEXTLoad(Op.getNode())) {
+    // Implemented as zextloads.
+    LoadSDNode *LD = cast<LoadSDNode>(Op);
+    EVT VT = LD->getMemoryVT();
+    unsigned MemBits = VT.getScalarType().getSizeInBits();
+    KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
+    return;
+  }
+  
+  assert(0 && "Expecting an ANY_EXTEND or extload!");
+}
+
 //===----------------------------------------------------------------------===//
 //                           ARM Inline Assembly Support
 //===----------------------------------------------------------------------===//
