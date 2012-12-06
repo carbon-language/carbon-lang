@@ -7613,9 +7613,9 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
     // information to check if it interferes with anything.
     SDNode *NextInChain = Index->getChain().getNode();
     while (1) {
-      if (isa<StoreSDNode>(NextInChain)) {
+      if (StoreSDNode *STn = dyn_cast<StoreSDNode>(NextInChain)) {
         // We found a store node. Use it for the next iteration.
-        Index = cast<StoreSDNode>(NextInChain);
+        Index = STn;
         break;
       } else if (LoadSDNode *Ldn = dyn_cast<LoadSDNode>(NextInChain)) {
         // Save the load node for later. Continue the scan.
@@ -7641,10 +7641,15 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
   // store memory address.
   unsigned LastConsecutiveStore = 0;
   int64_t StartAddress = StoreNodes[0].OffsetFromBase;
-  for (unsigned i = 1, e = StoreNodes.size(); i < e; ++i) {
-    int64_t CurrAddress = StoreNodes[i].OffsetFromBase;
-    if (CurrAddress - StartAddress != (ElementSizeBytes * i))
-      break;
+  for (unsigned i = 0, e = StoreNodes.size(); i < e; ++i) {
+
+    // Check that the addresses are consecutive starting from the second
+    // element in the list of stores.
+    if (i > 0) {
+      int64_t CurrAddress = StoreNodes[i].OffsetFromBase;
+      if (CurrAddress - StartAddress != (ElementSizeBytes * i))
+        break;
+    }
 
     bool Alias = false;
     // Check if this store interferes with any of the loads that we found.
@@ -7653,7 +7658,6 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
         Alias = true;
         break;
       }
-
     // We found a load that alias with this store. Stop the sequence.
     if (Alias)
       break;
@@ -9746,9 +9750,9 @@ bool DAGCombiner::isAlias(LSBaseSDNode *Op0, LSBaseSDNode *Op1) {
   FindAliasInfo(Op1, Ptr1, Size1, SrcValue1, SrcValueOffset1,
                 SrcValueAlign1, SrcTBAAInfo1);
   return isAlias(Ptr0, Size0, SrcValue0, SrcValueOffset0,
-               SrcValueAlign0, SrcTBAAInfo0,
-               Ptr1, Size1, SrcValue1, SrcValueOffset1,
-               SrcValueAlign1, SrcTBAAInfo1);
+                 SrcValueAlign0, SrcTBAAInfo0,
+                 Ptr1, Size1, SrcValue1, SrcValueOffset1,
+                 SrcValueAlign1, SrcTBAAInfo1);
 }
 
 /// FindAliasInfo - Extracts the relevant alias information from the memory
