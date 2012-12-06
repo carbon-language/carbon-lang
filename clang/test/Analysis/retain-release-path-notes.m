@@ -138,7 +138,7 @@ CFTypeRef CFGetRuleViolation () {
 - (id)copyAutorelease {
   id result = [[Foo alloc] init]; // expected-note{{Method returns an Objective-C object with a +1 retain count}}
   [result autorelease]; // expected-note{{Object sent -autorelease message}}
-  return result; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}} expected-note{{Object returned to caller with a +0 retain count}} expected-note{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
+  return result; // expected-warning{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}} expected-note{{Object with a +0 retain count returned to caller where a +1 (owning) retain count is expected}}
 }
 @end
 
@@ -3801,47 +3801,6 @@ void testDictionary(id key, id value) {
 // CHECK-NEXT:          </array>
 // CHECK-NEXT:        </dict>
 // CHECK-NEXT:       </array>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>141</integer>
-// CHECK-NEXT:       <key>col</key><integer>3</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>141</integer>
-// CHECK-NEXT:          <key>col</key><integer>3</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>141</integer>
-// CHECK-NEXT:          <key>col</key><integer>15</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>141</integer>
-// CHECK-NEXT:          <key>col</key><integer>10</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>141</integer>
-// CHECK-NEXT:          <key>col</key><integer>15</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Object returned to caller with a +0 retain count</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Object returned to caller with a +0 retain count</string>
 // CHECK-NEXT:     </dict>
 // CHECK-NEXT:     <dict>
 // CHECK-NEXT:      <key>kind</key><string>event</string>
