@@ -64,6 +64,7 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
 static std::pair<const Stmt*,
                  const CFGBlock*> getLastStmt(const ExplodedNode *Node) {
   const Stmt *S = 0;
+  const CFGBlock *Blk = 0;
   const StackFrameContext *SF =
           Node->getLocation().getLocationContext()->getCurrentStackFrame();
 
@@ -91,6 +92,8 @@ static std::pair<const Stmt*,
         } while (!CE || CE->getCalleeContext() != CEE->getCalleeContext());
 
         // Continue searching the graph.
+      } else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&PP)) {
+        Blk = BE->getSrc();
       }
     } else if (const CallEnter *CE = dyn_cast<CallEnter>(&PP)) {
       // If we reached the CallEnter for this function, it has no statements.
@@ -102,24 +105,6 @@ static std::pair<const Stmt*,
       return std::pair<const Stmt*, const CFGBlock*>((Stmt*)0, (CFGBlock*)0);
 
     Node = *Node->pred_begin();
-  }
-
-  const CFGBlock *Blk = 0;
-  if (S) {
-    // Now, get the enclosing basic block.
-    while (Node) {
-      const ProgramPoint &PP = Node->getLocation();
-      if (isa<BlockEdge>(PP) &&
-          (PP.getLocationContext()->getCurrentStackFrame() == SF)) {
-        BlockEdge &EPP = cast<BlockEdge>(PP);
-        Blk = EPP.getDst();
-        break;
-      }
-      if (Node->pred_empty())
-        return std::pair<const Stmt*, const CFGBlock*>(S, (CFGBlock*)0);
-
-      Node = *Node->pred_begin();
-    }
   }
 
   return std::pair<const Stmt*, const CFGBlock*>(S, Blk);
