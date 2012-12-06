@@ -51,6 +51,50 @@ DIEEntry *CompileUnit::createDIEEntry(DIE *Entry) {
   return Value;
 }
 
+/// getLowerBoundDefault - Return the default lower bound for an array. If the
+/// DWARF version doesn't handle the language, return -1.
+int64_t CompileUnit::getLowerBoundDefault() const {
+  switch (Language) {
+  default:
+    break;
+
+  case dwarf::DW_LANG_C89:
+  case dwarf::DW_LANG_C99:
+  case dwarf::DW_LANG_C:
+  case dwarf::DW_LANG_C_plus_plus:
+  case dwarf::DW_LANG_ObjC:
+  case dwarf::DW_LANG_ObjC_plus_plus:
+    return 0;
+
+  case dwarf::DW_LANG_Fortran77:
+  case dwarf::DW_LANG_Fortran90:
+  case dwarf::DW_LANG_Fortran95:
+    return 1;
+
+  // The languages below have valid values only if the DWARF version >= 4.
+  case dwarf::DW_LANG_Java:
+  case dwarf::DW_LANG_Python:
+  case dwarf::DW_LANG_UPC:
+  case dwarf::DW_LANG_D:
+    if (dwarf::DWARF_VERSION >= 4)
+      return 0;
+    break;
+
+  case dwarf::DW_LANG_Ada83:
+  case dwarf::DW_LANG_Ada95:
+  case dwarf::DW_LANG_Cobol74:
+  case dwarf::DW_LANG_Cobol85:
+  case dwarf::DW_LANG_Modula2:
+  case dwarf::DW_LANG_Pascal83:
+  case dwarf::DW_LANG_PLI:
+    if (dwarf::DWARF_VERSION >= 4)
+      return 1;
+    break;
+  }
+
+  return -1;
+}
+
 /// addFlag - Add a flag that is true.
 void CompileUnit::addFlag(DIE *Die, unsigned Attribute) {
   if (!DD->useDarwinGDBCompat())
@@ -1251,23 +1295,23 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
   DIE *DW_Subrange = new DIE(dwarf::DW_TAG_subrange_type);
   addDIEEntry(DW_Subrange, dwarf::DW_AT_type, dwarf::DW_FORM_ref4, IndexTy);
 
-  // The L value defines the lower bounds which is typically zero for C/C++. The
-  // Count value is the number of elements.  Values are 64 bit. If Count == -1
-  // then the array is unbounded and we do not emit DW_AT_lower_bound and
-  // DW_AT_upper_bound attributes. If L == 0 and Count == 0, then the array has
-  // zero elements in which case we do not emit an upper bound.
-  uint64_t L = SR.getLo();
+  // The LowerBound value defines the lower bounds which is typically zero for
+  // C/C++. The Count value is the number of elements.  Values are 64 bit. If
+  // Count == -1 then the array is unbounded and we do not emit
+  // DW_AT_lower_bound and DW_AT_upper_bound attributes. If LowerBound == 0 and
+  // Count == 0, then the array has zero elements in which case we do not emit
+  // an upper bound.
+  int64_t LowerBound = SR.getLo();
+  int64_t DefaultLowerBound = getLowerBoundDefault();
   int64_t Count = SR.getCount();
 
-  if (Count != -1) {
+  if (LowerBound != DefaultLowerBound || DefaultLowerBound == -1)
+    addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, LowerBound);
+
+  if (Count != -1 && Count != 0)
     // FIXME: An unbounded array should reference the expression that defines
     // the array.
-    if (L)
-      addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, L);
-
-    if (Count != 0)
-      addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, Count - 1);
-  }
+    addUInt(DW_Subrange, dwarf::DW_AT_upper_bound, 0, LowerBound + Count - 1);
 
   Buffer.addChild(DW_Subrange);
 }

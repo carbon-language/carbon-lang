@@ -79,6 +79,8 @@ class CompileUnit {
   /// corresponds to the MDNode mapped with the subprogram DIE.
   DenseMap<DIE *, const MDNode *> ContainingTypeMap;
 
+  int64_t getLowerBoundDefault() const;
+
 public:
   CompileUnit(unsigned UID, unsigned L, DIE *D, AsmPrinter *A, DwarfDebug *DW);
   ~CompileUnit();
@@ -174,7 +176,6 @@ public:
   void setIndexTyDie(DIE *D) {
     IndexTyDie = D;
   }
-public:
 
   /// addFlag - Add a flag that is true to the DIE.
   void addFlag(DIE *Die, unsigned Attribute);
