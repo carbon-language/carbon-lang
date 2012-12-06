@@ -92,16 +92,21 @@ public:
   }
 
   void format() {
+    // Format first token and initialize indent.
     unsigned Indent = formatFirstToken();
+
+    // Initialize state dependent on indent.
     IndentState State;
-    State.Column = Indent + Line.Tokens[0].Tok.getLength();
+    State.Column = Indent;
     State.CtorInitializerOnNewLine = false;
     State.InCtorInitializer = false;
-    State.ConsumedTokens = 1;
-
-    //State.UsedIndent.push_back(Line.Level * 2);
+    State.ConsumedTokens = 0;
     State.Indent.push_back(Indent + 4);
     State.LastSpace.push_back(Indent);
+    State.FirstLessLess.push_back(0);
+
+    // The first token has already been indented and thus consumed.
+    moveStateToNextToken(State);
 
     // Start iterating at 1 as we have correctly formatted of Token #0 above.
     for (unsigned i = 1, n = Line.Tokens.size(); i != n; ++i) {
@@ -126,7 +131,18 @@ private:
     /// indented.
     std::vector<unsigned> Indent;
 
+    /// \brief The position of the last space on each level.
+    ///
+    /// Used e.g. to break like:
+    /// functionCall(Parameter, otherCall(
+    ///                             OtherParameter));
     std::vector<unsigned> LastSpace;
+
+    /// \brief The position the first "<<" operator encountered on each level.
+    ///
+    /// Used to align "<<" operators. 0 if no such operator has been encountered
+    /// on a level.
+    std::vector<unsigned> FirstLessLess;
 
     bool CtorInitializerOnNewLine;
     bool InCtorInitializer;
@@ -148,6 +164,12 @@ private:
       for (int i = 0, e = LastSpace.size(); i != e; ++i) {
         if (Other.LastSpace[i] != LastSpace[i])
           return Other.LastSpace[i] > LastSpace[i];
+      }
+      if (Other.FirstLessLess.size() != FirstLessLess.size())
+        return Other.FirstLessLess.size() > FirstLessLess.size();
+      for (int i = 0, e = FirstLessLess.size(); i != e; ++i) {
+        if (Other.FirstLessLess[i] != FirstLessLess[i])
+          return Other.FirstLessLess[i] > FirstLessLess[i];
       }
       return false;
     }
@@ -171,6 +193,9 @@ private:
       if (Current.Tok.is(tok::string_literal) &&
           Previous.Tok.is(tok::string_literal))
         State.Column = State.Column - Previous.Tok.getLength();
+      else if (Current.Tok.is(tok::lessless) &&
+               State.FirstLessLess[ParenLevel] != 0)
+        State.Column = State.FirstLessLess[ParenLevel];
       else if (Previous.Tok.is(tok::equal) && ParenLevel != 0)
         // Indent and extra 4 spaces after '=' as it continues an expression.
         // Don't do that on the top level, as we already indent 4 there.
@@ -181,7 +206,6 @@ private:
       if (!DryRun)
         replaceWhitespace(Current, 1, State.Column);
 
-      State.Column += Current.Tok.getLength();
       State.LastSpace[ParenLevel] = State.Indent[ParenLevel];
       if (Current.Tok.is(tok::colon) &&
           Annotations[Index].Type != TokenAnnotation::TT_ConditionalExpr) {
@@ -205,9 +229,9 @@ private:
         State.InCtorInitializer = true;
       }
       // Top-level spaces are exempt as that mostly leads to better results.
+      State.Column += Spaces;
       if (Spaces > 0 && ParenLevel != 0)
-        State.LastSpace[ParenLevel] = State.Column + Spaces;
-      State.Column += Current.Tok.getLength() + Spaces;
+        State.LastSpace[ParenLevel] = State.Column;
     }
     moveStateToNextToken(State);
   }
@@ -217,6 +241,12 @@ private:
   void moveStateToNextToken(IndentState &State) {
     unsigned Index = State.ConsumedTokens;
     const FormatToken &Current = Line.Tokens[Index];
+    unsigned ParenLevel = State.Indent.size() - 1;
+
+    if (Current.Tok.is(tok::lessless) && State.FirstLessLess[ParenLevel] == 0)
+      State.FirstLessLess[ParenLevel] = State.Column;
+
+    State.Column += Current.Tok.getLength();
 
     // If we encounter an opening (, [ or <, we add a level to our stacks to
     // prepare for the following tokens.
@@ -224,6 +254,7 @@ private:
         Annotations[Index].Type == TokenAnnotation::TT_TemplateOpener) {
       State.Indent.push_back(4 + State.LastSpace.back());
       State.LastSpace.push_back(State.LastSpace.back());
+      State.FirstLessLess.push_back(0);
     }
 
     // If we encounter a closing ), ] or >, we can remove a level from our
@@ -232,6 +263,7 @@ private:
         Annotations[Index].Type == TokenAnnotation::TT_TemplateCloser) {
       State.Indent.pop_back();
       State.LastSpace.pop_back();
+      State.FirstLessLess.pop_back();
     }
 
     ++State.ConsumedTokens;
@@ -686,6 +718,8 @@ private:
     if (Right.Tok.is(tok::r_paren))
       return false;
     if (isBinaryOperator(Left))
+      return true;
+    if (Right.Tok.is(tok::lessless))
       return true;
     return Right.Tok.is(tok::colon) || Left.Tok.is(tok::comma) ||
         Left.Tok.is(tok::semi) || Left.Tok.is(tok::equal) ||

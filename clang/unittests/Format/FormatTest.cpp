@@ -386,6 +386,11 @@ TEST_F(FormatTest, UnderstandsUsesOfStar) {
   verifyFormat("int a = b * *c;");
 }
 
+TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
+  verifyFormat("(a)->b();");
+  verifyFormat("--a;");
+}
+
 TEST_F(FormatTest, HandlesIncludeDirectives) {
   EXPECT_EQ("#include <string>\n", format("#include <string>\n"));
   EXPECT_EQ("#include \"a/b/string\"\n", format("#include \"a/b/string\"\n"));
@@ -432,6 +437,27 @@ TEST_F(FormatTest, IncorrectCodeErrorDetection) {
                           " breakme(qwe);\n"
                           "}\n", Style));
 
+}
+
+TEST_F(FormatTest, AlignsPipes) {
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "    << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "    << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaa\n"
+      "                     << aaaaaaaaaaaaaaaaaaaa;");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "                                 << aaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
+  verifyFormat(
+      "llvm::outs() << \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n"
+      "                \"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\"\n"
+      "             << \"ccccccccccccccccccccccccccccccccccccccccccccccccc\";");
+  verifyFormat(
+      "aaaaaaaa << (aaaaaaaaaaaaaaaaaaa << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+      "                                 << aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+      "         << aaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
 }
 
 }  // end namespace tooling
