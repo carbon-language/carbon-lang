@@ -53,3 +53,16 @@ namespace DeduceNonTypeTemplateArgsInArray {
                      tuple<unsigned_c<1>, unsigned_c<2>, unsigned_c<3>>
                      >::value? 1 : -1];
 }
+
+namespace DeduceWithDefaultArgs {
+  template<template<typename...> class Container> void f(Container<int>); // expected-note {{substitution failure [with Container = X]}}
+  template<typename, typename = int> struct X {};
+  void g() {
+    // OK, use default argument for the second template parameter.
+    f(X<int>{});
+    f(X<int, int>{});
+
+    // Not OK.
+    f(X<int, double>{}); // expected-error {{no matching function for call to 'f'}}
+  }
+}

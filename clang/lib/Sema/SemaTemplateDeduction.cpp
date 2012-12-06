@@ -130,8 +130,7 @@ DeduceTemplateArguments(Sema &S,
                         const TemplateArgument *Params, unsigned NumParams,
                         const TemplateArgument *Args, unsigned NumArgs,
                         TemplateDeductionInfo &Info,
-                        SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                        bool NumberOfArgumentsMustMatch = true);
+                        SmallVectorImpl<DeducedTemplateArgument> &Deduced);
 
 /// \brief If the given expression is of a form that permits the deduction
 /// of a non-type template parameter, return the declaration of that
@@ -482,8 +481,7 @@ DeduceTemplateArguments(Sema &S,
     return DeduceTemplateArguments(S, TemplateParams,
                                    Param->getArgs(), Param->getNumArgs(),
                                    SpecArg->getArgs(), SpecArg->getNumArgs(),
-                                   Info, Deduced,
-                                   /*NumberOfArgumentsMustMatch=*/false);
+                                   Info, Deduced);
   }
 
   // If the argument type is a class template specialization, we
@@ -1749,8 +1747,7 @@ DeduceTemplateArguments(Sema &S,
                         const TemplateArgument *Params, unsigned NumParams,
                         const TemplateArgument *Args, unsigned NumArgs,
                         TemplateDeductionInfo &Info,
-                    SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                        bool NumberOfArgumentsMustMatch) {
+                        SmallVectorImpl<DeducedTemplateArgument> &Deduced) {
   // C++0x [temp.deduct.type]p9:
   //   If the template argument list of P contains a pack expansion that is not
   //   the last template argument, the entire template argument list is a
@@ -1770,8 +1767,7 @@ DeduceTemplateArguments(Sema &S,
 
       // Check whether we have enough arguments.
       if (!hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs))
-        return NumberOfArgumentsMustMatch? Sema::TDK_NonDeducedMismatch
-                                         : Sema::TDK_Success;
+        return Sema::TDK_Success;
 
       if (Args[ArgIdx].isPackExpansion()) {
         // FIXME: We follow the logic of C++0x [temp.deduct.type]p22 here,
@@ -1866,11 +1862,6 @@ DeduceTemplateArguments(Sema &S,
                                         NewlyDeducedPacks, Info))
       return Result;
   }
-
-  // If there is an argument remaining, then we had too many arguments.
-  if (NumberOfArgumentsMustMatch &&
-      hasTemplateArgumentForDeduction(Args, ArgIdx, NumArgs))
-    return Sema::TDK_NonDeducedMismatch;
 
   return Sema::TDK_Success;
 }
