@@ -3026,6 +3026,8 @@ public:
         virtual Error
         SetOptionValue (uint32_t option_idx, const char *option_arg)
         {
+            Error error;
+
             const int short_option = m_getopt_table[option_idx].val;
             if (short_option == 'g')
             {
@@ -3033,13 +3035,7 @@ public:
             }
             else if (short_option == 'a')
             {
-                bool success;
-                m_module_addr = Args::StringToAddress(option_arg, LLDB_INVALID_ADDRESS, &success);
-                if (!success)
-                {
-                    Error error;
-                    error.SetErrorStringWithFormat("invalid address: \"%s\"", option_arg);
-                }
+                m_module_addr = Args::StringToAddress(NULL, option_arg, LLDB_INVALID_ADDRESS, &error);
             }
             else
             {
@@ -3048,7 +3044,6 @@ public:
                     width = strtoul (option_arg, NULL, 0);
                 m_format_array.push_back(std::make_pair(short_option, width));
             }
-            Error error;
             return error;
         }
         

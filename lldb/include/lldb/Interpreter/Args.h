@@ -382,7 +382,10 @@ public:
     }
 
     static lldb::addr_t
-    StringToAddress (const char *s, lldb::addr_t fail_value = LLDB_INVALID_ADDRESS, bool *success_ptr = NULL);
+    StringToAddress (const ExecutionContext *exe_ctx,
+                     const char *s,
+                     lldb::addr_t fail_value,
+                     Error *error);
 
     static bool
     StringToBoolean (const char *s, bool fail_value, bool *success_ptr);

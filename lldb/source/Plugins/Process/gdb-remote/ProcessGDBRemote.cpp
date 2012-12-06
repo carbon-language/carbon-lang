@@ -2050,7 +2050,7 @@ ProcessGDBRemote::DoReadMemory (addr_t addr, void *buf, size_t size, Error &erro
             return response.GetHexBytes(buf, size, '\xdd');
         }
         else if (response.IsErrorResponse())
-            error.SetErrorString("memory read failed");
+            error.SetErrorStringWithFormat("memory read failed for 0x%" PRIx64, addr);
         else if (response.IsUnsupportedResponse())
             error.SetErrorStringWithFormat("GDB server does not support reading memory");
         else
@@ -2086,7 +2086,7 @@ ProcessGDBRemote::DoWriteMemory (addr_t addr, const void *buf, size_t size, Erro
             return size;
         }
         else if (response.IsErrorResponse())
-            error.SetErrorString("memory write failed");
+            error.SetErrorStringWithFormat("memory write failed for 0x%" PRIx64, addr);
         else if (response.IsUnsupportedResponse())
             error.SetErrorStringWithFormat("GDB server does not support writing memory");
         else

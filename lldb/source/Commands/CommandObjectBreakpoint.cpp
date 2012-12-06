@@ -125,12 +125,10 @@ public:
             switch (short_option)
             {
                 case 'a':
-                    m_load_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 0);
-                    if (m_load_addr == LLDB_INVALID_ADDRESS)
-                        m_load_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 16);
-
-                    if (m_load_addr == LLDB_INVALID_ADDRESS)
-                        error.SetErrorStringWithFormat ("invalid address string '%s'", option_arg);
+                    {
+                        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+                        m_load_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
+                    }
                     break;
 
                 case 'b':

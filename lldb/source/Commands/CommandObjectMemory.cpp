@@ -369,8 +369,7 @@ public:
 
 protected:
     virtual bool
-    DoExecute (Args& command,
-             CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
         Target *target = exe_ctx.GetTargetPtr();
@@ -385,7 +384,8 @@ protected:
         
         if ((argc == 0 && m_next_addr == LLDB_INVALID_ADDRESS) || argc > 2)
         {
-            result.AppendErrorWithFormat ("%s takes 1 or two args.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat ("%s takes a start address expression with an optional end address expression.\n", m_cmd_name.c_str());
+            result.AppendRawWarning("Expressions should be quoted if they contain spaces or other special characters.");
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -565,7 +565,7 @@ protected:
         // Look for invalid combinations of settings
         if (error.Fail())
         {
-            result.AppendErrorWithFormat("%s", error.AsCString());
+            result.AppendError(error.AsCString());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -602,21 +602,23 @@ protected:
         }
 
         if (argc > 0)
-            addr = Args::StringToUInt64(command.GetArgumentAtIndex(0), LLDB_INVALID_ADDRESS, 0);
+            addr = Args::StringToAddress(&exe_ctx, command.GetArgumentAtIndex(0), LLDB_INVALID_ADDRESS, &error);
 
         if (addr == LLDB_INVALID_ADDRESS)
         {
-            result.AppendErrorWithFormat("invalid start address string '%s'.\n", command.GetArgumentAtIndex(0));
+            result.AppendError("invalid start address expression.");
+            result.AppendError(error.AsCString());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
 
         if (argc == 2)
         {
-            lldb::addr_t end_addr = Args::StringToUInt64(command.GetArgumentAtIndex(1), LLDB_INVALID_ADDRESS, 0);
+            lldb::addr_t end_addr = Args::StringToAddress(&exe_ctx, command.GetArgumentAtIndex(1), LLDB_INVALID_ADDRESS, 0);
             if (end_addr == LLDB_INVALID_ADDRESS)
             {
-                result.AppendErrorWithFormat("invalid end address string '%s'.\n", command.GetArgumentAtIndex(1));
+                result.AppendError("invalid end address expression.");
+                result.AppendError(error.AsCString());
                 result.SetStatus(eReturnStatusFailed);
                 return false;
             }
@@ -667,7 +669,7 @@ protected:
             }
             
             if (bytes_read < total_byte_size)
-                result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%" PRIx64 ".\n", bytes_read, total_byte_size, addr);
+                result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%" PRIx64 ".", bytes_read, total_byte_size, addr);
             else
             {
                 m_next_addr = addr + bytes_read;
@@ -987,7 +989,8 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
+        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
+        Process *process = exe_ctx.GetProcessPtr();
         if (process == NULL)
         {
             result.AppendError("need a process to read memory");
@@ -1020,11 +1023,16 @@ protected:
         OptionValueUInt64 &byte_size_value = m_format_options.GetByteSizeValue();
         size_t item_byte_size = byte_size_value.GetCurrentValue();
 
-        lldb::addr_t addr = Args::StringToUInt64(command.GetArgumentAtIndex(0), LLDB_INVALID_ADDRESS, 0);
+        Error error;
+        lldb::addr_t addr = Args::StringToAddress (&exe_ctx,
+                                                   command.GetArgumentAtIndex(0),
+                                                   LLDB_INVALID_ADDRESS,
+                                                   &error);
 
         if (addr == LLDB_INVALID_ADDRESS)
         {
-            result.AppendErrorWithFormat("Invalid address string '%s'.\n", command.GetArgumentAtIndex(0));
+            result.AppendError("invalid address expression\n");
+            result.AppendError(error.AsCString());
             result.SetStatus(eReturnStatusFailed);
             return false;
         }

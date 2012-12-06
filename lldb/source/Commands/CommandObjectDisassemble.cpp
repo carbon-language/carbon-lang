@@ -88,23 +88,21 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         break;
 
     case 's':
-        start_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 0);
-        if (start_addr == LLDB_INVALID_ADDRESS)
-            start_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 16);
-
-        if (start_addr == LLDB_INVALID_ADDRESS)
-            error.SetErrorStringWithFormat ("invalid start address string '%s'", option_arg);
-        some_location_specified = true;
+        {
+            ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+            start_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
+            if (start_addr != LLDB_INVALID_ADDRESS)
+                some_location_specified = true;
+        }
         break;
     case 'e':
-        end_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 0);
-        if (end_addr == LLDB_INVALID_ADDRESS)
-            end_addr = Args::StringToUInt64(option_arg, LLDB_INVALID_ADDRESS, 16);
-
-        if (end_addr == LLDB_INVALID_ADDRESS)
-            error.SetErrorStringWithFormat ("invalid end address string '%s'", option_arg);
+        {
+            ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+            end_addr = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
+            if (end_addr != LLDB_INVALID_ADDRESS)
+                some_location_specified = true;
+        }
         break;
-        some_location_specified = true;
     case 'n':
         func_name.assign (option_arg);
         some_location_specified = true;
