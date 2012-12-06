@@ -411,6 +411,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
       StoreInst *NewSI = IRB.CreateAlignedStore(Shadow, ShadowPtr, I.getAlignment());
       DEBUG(dbgs() << "  STORE: " << *NewSI << "\n");
+      (void)NewSI;
       // If the store is volatile, add a check.
       if (I.isVolatile())
         insertCheck(Val, &I);
