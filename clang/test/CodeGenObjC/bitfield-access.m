@@ -15,8 +15,8 @@
 // end of the structure.
 //
 // CHECK-I386: define i32 @f0(
-// CHECK-I386:   [[t0_0:%.*]] = load i16* {{.*}}, align 1
-// CHECK-I386:   lshr i16 [[t0_0]], 7
+// CHECK-I386:   [[t0_0:%.*]] = load i8* {{.*}}, align 1
+// CHECK-I386:   lshr i8 [[t0_0]], 7
 // CHECK-I386: }
 int f0(I0 *a) {
   return a->y;
@@ -26,13 +26,11 @@ int f0(I0 *a) {
 //
 // CHECK-ARM: define i32 @f1(
 // CHECK-ARM:    [[t1_ptr:%.*]] = getelementptr
-// CHECK-ARM:    [[t1_base:%.*]] = bitcast i8* [[t1_ptr]] to i32*
-// CHECK-ARM:    [[t1_0:%.*]] = load i32* [[t1_base]], align 1
-// CHECK-ARM:    lshr i32 [[t1_0]], 1
-// CHECK-ARM:    [[t1_base_2_cast:%.*]] = bitcast i32* %{{.*}} to i8*
-// CHECK-ARM:    [[t1_base_2:%.*]] = getelementptr i8* [[t1_base_2_cast]]
-// CHECK-ARM:    [[t1_1:%.*]] = load i8* [[t1_base_2]], align 1
-// CHECK-ARM:    and i8 [[t1_1:%.*]], 1
+// CHECK-ARM:    [[t1_base:%.*]] = bitcast i8* [[t1_ptr]] to i40*
+// CHECK-ARM:    [[t1_0:%.*]] = load i40* [[t1_base]], align 1
+// CHECK-ARM:    [[t1_1:%.*]] = lshr i40 [[t1_0]], 1
+// CHECK-ARM:    [[t1_2:%.*]] = and i40 [[t1_1]],
+// CHECK-ARM:                   trunc i40 [[t1_2]] to i32
 // CHECK-ARM: }
 @interface I1 {
 @public

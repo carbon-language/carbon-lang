@@ -89,14 +89,13 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
                                                unsigned CVRQualifiers,
                                                llvm::Value *Offset) {
   // Compute (type*) ( (char *) BaseValue + Offset)
-  llvm::Type *I8Ptr = CGF.Int8PtrTy;
   QualType IvarTy = Ivar->getType();
   llvm::Type *LTy = CGF.CGM.getTypes().ConvertTypeForMem(IvarTy);
-  llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, I8Ptr);
+  llvm::Value *V = CGF.Builder.CreateBitCast(BaseValue, CGF.Int8PtrTy);
   V = CGF.Builder.CreateInBoundsGEP(V, Offset, "add.ptr");
-  V = CGF.Builder.CreateBitCast(V, llvm::PointerType::getUnqual(LTy));
 
   if (!Ivar->isBitField()) {
+    V = CGF.Builder.CreateBitCast(V, llvm::PointerType::getUnqual(LTy));
     LValue LV = CGF.MakeNaturalAlignAddrLValue(V, IvarTy);
     LV.getQuals().addCVRQualifiers(CVRQualifiers);
     return LV;
@@ -116,16 +115,14 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // Note, there is a subtle invariant here: we can only call this routine on
   // non-synthesized ivars but we may be called for synthesized ivars.  However,
   // a synthesized ivar can never be a bit-field, so this is safe.
-  const ASTRecordLayout &RL =
-    CGF.CGM.getContext().getASTObjCInterfaceLayout(OID);
-  uint64_t TypeSizeInBits = CGF.CGM.getContext().toBits(RL.getSize());
   uint64_t FieldBitOffset = LookupFieldBitOffset(CGF.CGM, OID, 0, Ivar);
   uint64_t BitOffset = FieldBitOffset % CGF.CGM.getContext().getCharWidth();
-  uint64_t ContainingTypeAlign = CGF.CGM.getContext().getTargetInfo().getCharAlign();
-  uint64_t ContainingTypeSize = TypeSizeInBits - (FieldBitOffset - BitOffset);
+  uint64_t AlignmentBits = CGF.CGM.getContext().getTargetInfo().getCharAlign();
   uint64_t BitFieldSize = Ivar->getBitWidthValue(CGF.getContext());
-  CharUnits ContainingTypeAlignCharUnits = 
-    CGF.CGM.getContext().toCharUnitsFromBits(ContainingTypeAlign);
+  CharUnits StorageSize =
+    CGF.CGM.getContext().toCharUnitsFromBits(
+      llvm::RoundUpToAlignment(BitOffset + BitFieldSize, AlignmentBits));
+  CharUnits Alignment = CGF.CGM.getContext().toCharUnitsFromBits(AlignmentBits);
 
   // Allocate a new CGBitFieldInfo object to describe this access.
   //
@@ -135,11 +132,15 @@ LValue CGObjCRuntime::EmitValueForIvarAtOffset(CodeGen::CodeGenFunction &CGF,
   // objects.
   CGBitFieldInfo *Info = new (CGF.CGM.getContext()) CGBitFieldInfo(
     CGBitFieldInfo::MakeInfo(CGF.CGM.getTypes(), Ivar, BitOffset, BitFieldSize,
-                             ContainingTypeSize, ContainingTypeAlign));
+                             CGF.CGM.getContext().toBits(StorageSize),
+                             Alignment.getQuantity()));
 
+  V = CGF.Builder.CreateBitCast(V,
+                                llvm::Type::getIntNPtrTy(CGF.getLLVMContext(),
+                                                         Info->StorageSize));
   return LValue::MakeBitfield(V, *Info,
                               IvarTy.withCVRQualifiers(CVRQualifiers),
-                              ContainingTypeAlignCharUnits);
+                              Alignment);
 }
 
 namespace {

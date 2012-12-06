@@ -14,12 +14,7 @@
 // CHECK-RECORD:   LLVMType:%struct.s0 = type <{ [3 x i8] }>
 // CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
-// CHECK-RECORD:     <CGBitFieldInfo Size:24 IsSigned:1
-// CHECK-RECORD:                     NumComponents:2 Components: [
-// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:0 AccessWidth:16
-// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:0 TargetBitWidth:16>
-// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:2 FieldBitStart:0 AccessWidth:8
-// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:16 TargetBitWidth:8>
+// CHECK-RECORD:     <CGBitFieldInfo Offset:0 Size:24 IsSigned:1 StorageSize:24 StorageAlignment:1>
 struct __attribute((packed)) s0 {
   int f0 : 24;
 };
@@ -56,20 +51,11 @@ unsigned long long test_0() {
 // CHECK-RECORD: *** Dumping IRgen Record Layout
 // CHECK-RECORD: Record: struct s1
 // CHECK-RECORD: Layout: <CGRecordLayout
-// CHECK-RECORD:   LLVMType:%struct.s1 = type <{ [2 x i8], i8 }>
+// CHECK-RECORD:   LLVMType:%struct.s1 = type <{ [3 x i8] }>
 // CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
-// CHECK-RECORD:     <CGBitFieldInfo Size:10 IsSigned:1
-// CHECK-RECORD:                     NumComponents:1 Components: [
-// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:0 AccessWidth:16
-// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:0 TargetBitWidth:10>
-// CHECK-RECORD:     ]>
-// CHECK-RECORD:     <CGBitFieldInfo Size:10 IsSigned:1
-// CHECK-RECORD:                     NumComponents:2 Components: [
-// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:10 AccessWidth:16
-// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:0 TargetBitWidth:6>
-// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:2 FieldBitStart:0 AccessWidth:8
-// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:6 TargetBitWidth:4>
+// CHECK-RECORD:     <CGBitFieldInfo Offset:0 Size:10 IsSigned:1 StorageSize:24 StorageAlignment:1>
+// CHECK-RECORD:     <CGBitFieldInfo Offset:10 Size:10 IsSigned:1 StorageSize:24 StorageAlignment:1>
 
 #pragma pack(push)
 #pragma pack(1)
@@ -116,10 +102,7 @@ unsigned long long test_1() {
 // CHECK-RECORD:   LLVMType:%union.u2 = type <{ i8 }>
 // CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
-// CHECK-RECORD:     <CGBitFieldInfo Size:3 IsSigned:0
-// CHECK-RECORD:                     NumComponents:1 Components: [
-// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:0 FieldBitStart:0 AccessWidth:8
-// CHECK-RECORD:                     AccessAlignment:1 TargetBitOffset:0 TargetBitWidth:3>
+// CHECK-RECORD:     <CGBitFieldInfo Offset:0 Size:3 IsSigned:0 StorageSize:8 StorageAlignment:1>
 
 union __attribute__((packed)) u2 {
   unsigned long long f0 : 3;
@@ -291,15 +274,8 @@ _Bool test_6() {
 // CHECK-RECORD:   LLVMType:%struct.s7 = type { i32, i32, i32, i8, [3 x i8], [4 x i8], [12 x i8] }
 // CHECK-RECORD:   IsZeroInitializable:1
 // CHECK-RECORD:   BitFields:[
-// CHECK-RECORD:     <CGBitFieldInfo Size:5 IsSigned:1
-// CHECK-RECORD:                     NumComponents:1 Components: [
-// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:12 FieldBitStart:0 AccessWidth:32
-// CHECK-RECORD:                     AccessAlignment:4 TargetBitOffset:0 TargetBitWidth:5>
-// CHECK-RECORD:     ]>
-// CHECK-RECORD:     <CGBitFieldInfo Size:29 IsSigned:1
-// CHECK-RECORD:                     NumComponents:1 Components: [
-// CHECK-RECORD:         <AccessInfo FieldIndex:0 FieldByteOffset:16 FieldBitStart:0 AccessWidth:32
-// CHECK-RECORD:                     AccessAlignment:16 TargetBitOffset:0 TargetBitWidth:29>
+// CHECK-RECORD:     <CGBitFieldInfo Offset:0 Size:5 IsSigned:1 StorageSize:8 StorageAlignment:4>
+// CHECK-RECORD:     <CGBitFieldInfo Offset:0 Size:29 IsSigned:1 StorageSize:32 StorageAlignment:16>
 
 struct __attribute__((aligned(16))) s7 {
   int a, b, c;

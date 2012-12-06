@@ -283,12 +283,11 @@ namespace PR9565 {
   void f() {
     // CHECK: call void @llvm.memcpy
     a x = { 0, 0 };
-    // CHECK: [[WITH_SEVENTEEN:%[a-zA-Z0-9]+]] = or i32 [[WITHOUT_SEVENTEEN:%[a-zA-Z0-9]+]], 17
-    // CHECK: store i32 [[WITH_SEVENTEEN]], i32* [[XA:%[a-zA-Z0-9]+]]
+    // CHECK: [[WITH_SEVENTEEN:%[.a-zA-Z0-9]+]] = or i32 [[WITHOUT_SEVENTEEN:%[.a-zA-Z0-9]+]], 17
+    // CHECK: store i32 [[WITH_SEVENTEEN]], i32* [[XA:%[.a-zA-Z0-9]+]]
     x.a = 17;
     // CHECK-NEXT: bitcast
-    // CHECK-NEXT: load 
-    // CHECK-NEXT: and
+    // CHECK-NEXT: load
     // CHECK-NEXT: shl
     // CHECK-NEXT: ashr
     // CHECK-NEXT: store i32
@@ -297,7 +296,7 @@ namespace PR9565 {
     // CHECK-NEXT: bitcast
     // CHECK-NEXT: load
     // CHECK-NEXT: and
-    // CHECK-NEXT: or
+    // CHECK-NEXT: or i32 {{.*}}, 19456
     // CHECK-NEXT: store i32
     x.b = 19;
     // CHECK-NEXT: ret void

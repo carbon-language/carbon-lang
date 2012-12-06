@@ -100,10 +100,6 @@ private:
   /// Alignment - Contains the alignment of the RecordDecl.
   CharUnits Alignment;
 
-  /// BitsAvailableInLastField - If a bit field spans only part of a LLVM field,
-  /// this will have the number of bits still available in the field.
-  char BitsAvailableInLastField;
-
   /// NextFieldOffset - Holds the next field offset.
   CharUnits NextFieldOffset;
 
@@ -114,6 +110,12 @@ private:
   
   /// LayoutUnion - Will layout a union RecordDecl.
   void LayoutUnion(const RecordDecl *D);
+
+  /// Lay out a sequence of contiguous bitfields.
+  bool LayoutBitfields(const ASTRecordLayout &Layout,
+                       unsigned &FirstFieldNo,
+                       RecordDecl::field_iterator &FI,
+                       RecordDecl::field_iterator FE);
 
   /// LayoutField - try to layout all fields in the record decl.
   /// Returns false if the operation failed because the struct is not packed.
@@ -194,7 +196,7 @@ public:
     : BaseSubobjectType(0),
       IsZeroInitializable(true), IsZeroInitializableAsBase(true),
       Packed(false), IsMsStruct(false),
-      Types(Types), BitsAvailableInLastField(0) { }
+      Types(Types) { }
 
   /// Layout - Will layout a RecordDecl.
   void Layout(const RecordDecl *D);
@@ -230,13 +232,10 @@ void CGRecordLayoutBuilder::Layout(const RecordDecl *D) {
 }
 
 CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
-                               const FieldDecl *FD,
-                               uint64_t FieldOffset,
-                               uint64_t FieldSize,
-                               uint64_t ContainingTypeSizeInBits,
-                               unsigned ContainingTypeAlign) {
-  assert(ContainingTypeAlign && "Expected alignment to be specified");
-
+                                        const FieldDecl *FD,
+                                        uint64_t Offset, uint64_t Size,
+                                        uint64_t StorageSize,
+                                        uint64_t StorageAlignment) {
   llvm::Type *Ty = Types.ConvertTypeForMem(FD->getType());
   CharUnits TypeSizeInBytes =
     CharUnits::fromQuantity(Types.getDataLayout().getTypeAllocSize(Ty));
@@ -244,7 +243,7 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
 
   bool IsSigned = FD->getType()->isSignedIntegerOrEnumerationType();
 
-  if (FieldSize > TypeSizeInBits) {
+  if (Size > TypeSizeInBits) {
     // We have a wide bit-field. The extra bits are only used for padding, so
     // if we have a bitfield of type T, with size N:
     //
@@ -254,173 +253,127 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
     //
     // T t : sizeof(T);
     //
-    FieldSize = TypeSizeInBits;
+    Size = TypeSizeInBits;
   }
 
-  // in big-endian machines the first fields are in higher bit positions,
-  // so revert the offset. The byte offsets are reversed(back) later.
-  if (Types.getDataLayout().isBigEndian()) {
-    FieldOffset = ((ContainingTypeSizeInBits)-FieldOffset-FieldSize);
-  }
+  // Reverse the bit offsets for big endian machines.
+  if (Types.getDataLayout().isBigEndian())
+    Offset = Size - Offset - 1;
 
-  // Compute the access components. The policy we use is to start by attempting
-  // to access using the width of the bit-field type itself and to always access
-  // at aligned indices of that type. If such an access would fail because it
-  // extends past the bound of the type, then we reduce size to the next smaller
-  // power of two and retry. The current algorithm assumes pow2 sized types,
-  // although this is easy to fix.
-  //
-  assert(llvm::isPowerOf2_32(TypeSizeInBits) && "Unexpected type size!");
-  CGBitFieldInfo::AccessInfo Components[3];
-  unsigned NumComponents = 0;
-  unsigned AccessedTargetBits = 0;       // The number of target bits accessed.
-  unsigned AccessWidth = TypeSizeInBits; // The current access width to attempt.
-
-  // If requested, widen the initial bit-field access to be register sized. The
-  // theory is that this is most likely to allow multiple accesses into the same
-  // structure to be coalesced, and that the backend should be smart enough to
-  // narrow the store if no coalescing is ever done.
-  //
-  // The subsequent code will handle align these access to common boundaries and
-  // guaranteeing that we do not access past the end of the structure.
-  if (Types.getCodeGenOpts().UseRegisterSizedBitfieldAccess) {
-    if (AccessWidth < Types.getTarget().getRegisterWidth())
-      AccessWidth = Types.getTarget().getRegisterWidth();
-  }
-
-  // Round down from the field offset to find the first access position that is
-  // at an aligned offset of the initial access type.
-  uint64_t AccessStart = FieldOffset - (FieldOffset % AccessWidth);
-
-  // Adjust initial access size to fit within record.
-  while (AccessWidth > Types.getTarget().getCharWidth() &&
-         AccessStart + AccessWidth > ContainingTypeSizeInBits) {
-    AccessWidth >>= 1;
-    AccessStart = FieldOffset - (FieldOffset % AccessWidth);
-  }
-
-  while (AccessedTargetBits < FieldSize) {
-    // Check that we can access using a type of this size, without reading off
-    // the end of the structure. This can occur with packed structures and
-    // -fno-bitfield-type-align, for example.
-    if (AccessStart + AccessWidth > ContainingTypeSizeInBits) {
-      // If so, reduce access size to the next smaller power-of-two and retry.
-      AccessWidth >>= 1;
-      assert(AccessWidth >= Types.getTarget().getCharWidth()
-             && "Cannot access under byte size!");
-      continue;
-    }
-
-    // Otherwise, add an access component.
-
-    // First, compute the bits inside this access which are part of the
-    // target. We are reading bits [AccessStart, AccessStart + AccessWidth); the
-    // intersection with [FieldOffset, FieldOffset + FieldSize) gives the bits
-    // in the target that we are reading.
-    assert(FieldOffset < AccessStart + AccessWidth && "Invalid access start!");
-    assert(AccessStart < FieldOffset + FieldSize && "Invalid access start!");
-    uint64_t AccessBitsInFieldStart = std::max(AccessStart, FieldOffset);
-    uint64_t AccessBitsInFieldSize =
-      std::min(AccessWidth + AccessStart,
-               FieldOffset + FieldSize) - AccessBitsInFieldStart;
-
-    assert(NumComponents < 3 && "Unexpected number of components!");
-    CGBitFieldInfo::AccessInfo &AI = Components[NumComponents++];
-    AI.FieldIndex = 0;
-    // FIXME: We still follow the old access pattern of only using the field
-    // byte offset. We should switch this once we fix the struct layout to be
-    // pretty.
-
-    // on big-endian machines we reverted the bit offset because first fields are
-    // in higher bits. But this also reverts the bytes, so fix this here by reverting
-    // the byte offset on big-endian machines.
-    if (Types.getDataLayout().isBigEndian()) {
-      AI.FieldByteOffset = Types.getContext().toCharUnitsFromBits(
-          ContainingTypeSizeInBits - AccessStart - AccessWidth);
-    } else {
-      AI.FieldByteOffset = Types.getContext().toCharUnitsFromBits(AccessStart);
-    }
-    AI.FieldBitStart = AccessBitsInFieldStart - AccessStart;
-    AI.AccessWidth = AccessWidth;
-    AI.AccessAlignment = Types.getContext().toCharUnitsFromBits(
-        llvm::MinAlign(ContainingTypeAlign, AccessStart));
-    AI.TargetBitOffset = AccessedTargetBits;
-    AI.TargetBitWidth = AccessBitsInFieldSize;
-
-    AccessStart += AccessWidth;
-    AccessedTargetBits += AI.TargetBitWidth;
-  }
-
-  assert(AccessedTargetBits == FieldSize && "Invalid bit-field access!");
-  return CGBitFieldInfo(FieldSize, NumComponents, Components, IsSigned);
+  return CGBitFieldInfo(Offset, Size, IsSigned, StorageSize, StorageAlignment);
 }
 
-CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
-                                        const FieldDecl *FD,
-                                        uint64_t FieldOffset,
-                                        uint64_t FieldSize) {
-  const RecordDecl *RD = FD->getParent();
-  const ASTRecordLayout &RL = Types.getContext().getASTRecordLayout(RD);
-  uint64_t ContainingTypeSizeInBits = Types.getContext().toBits(RL.getSize());
-  unsigned ContainingTypeAlign = Types.getContext().toBits(RL.getAlignment());
+/// \brief Layout the range of bitfields from BFI to BFE as contiguous storage.
+bool CGRecordLayoutBuilder::LayoutBitfields(const ASTRecordLayout &Layout,
+                                            unsigned &FirstFieldNo,
+                                            RecordDecl::field_iterator &FI,
+                                            RecordDecl::field_iterator FE) {
+  assert(FI != FE);
+  uint64_t FirstFieldOffset = Layout.getFieldOffset(FirstFieldNo);
+  uint64_t NextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
 
-  return MakeInfo(Types, FD, FieldOffset, FieldSize, ContainingTypeSizeInBits,
-                  ContainingTypeAlign);
-}
+  unsigned CharAlign = Types.getContext().getTargetInfo().getCharAlign();
+  assert(FirstFieldOffset % CharAlign == 0 &&
+         "First field offset is misaligned");
+  CharUnits FirstFieldOffsetInBytes
+    = Types.getContext().toCharUnitsFromBits(FirstFieldOffset);
 
-void CGRecordLayoutBuilder::LayoutBitField(const FieldDecl *D,
-                                           uint64_t fieldOffset) {
-  uint64_t fieldSize = D->getBitWidthValue(Types.getContext());
+  unsigned StorageAlignment
+    = llvm::MinAlign(Alignment.getQuantity(),
+                     FirstFieldOffsetInBytes.getQuantity());
 
-  if (fieldSize == 0)
-    return;
-
-  uint64_t nextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
-  CharUnits numBytesToAppend;
-  unsigned charAlign = Types.getContext().getTargetInfo().getCharAlign();
-
-  if (fieldOffset < nextFieldOffsetInBits && !BitsAvailableInLastField) {
-    assert(fieldOffset % charAlign == 0 && 
-           "Field offset not aligned correctly");
-
-    CharUnits fieldOffsetInCharUnits = 
-      Types.getContext().toCharUnitsFromBits(fieldOffset);
+  if (FirstFieldOffset < NextFieldOffsetInBits) {
+    CharUnits FieldOffsetInCharUnits =
+      Types.getContext().toCharUnitsFromBits(FirstFieldOffset);
 
     // Try to resize the last base field.
-    if (ResizeLastBaseFieldIfNecessary(fieldOffsetInCharUnits))
-      nextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
+    if (!ResizeLastBaseFieldIfNecessary(FieldOffsetInCharUnits))
+      llvm_unreachable("We must be able to resize the last base if we need to "
+                       "pack bits into it.");
+
+    NextFieldOffsetInBits = Types.getContext().toBits(NextFieldOffset);
+    assert(FirstFieldOffset >= NextFieldOffsetInBits);
   }
 
-  if (fieldOffset < nextFieldOffsetInBits) {
-    assert(BitsAvailableInLastField && "Bitfield size mismatch!");
-    assert(!NextFieldOffset.isZero() && "Must have laid out at least one byte");
+  // Append padding if necessary.
+  AppendPadding(Types.getContext().toCharUnitsFromBits(FirstFieldOffset),
+                CharUnits::One());
 
-    // The bitfield begins in the previous bit-field.
-    numBytesToAppend = Types.getContext().toCharUnitsFromBits(
-      llvm::RoundUpToAlignment(fieldSize - BitsAvailableInLastField, 
-                               charAlign));
-  } else {
-    assert(fieldOffset % charAlign == 0 && 
-           "Field offset not aligned correctly");
+  // Find the last bitfield in a contiguous run of bitfields.
+  RecordDecl::field_iterator BFI = FI;
+  unsigned LastFieldNo = FirstFieldNo;
+  uint64_t NextContiguousFieldOffset = FirstFieldOffset;
+  for (RecordDecl::field_iterator FJ = FI;
+       (FJ != FE && (*FJ)->isBitField() &&
+        NextContiguousFieldOffset == Layout.getFieldOffset(LastFieldNo) &&
+        (*FJ)->getBitWidthValue(Types.getContext()) != 0); FI = FJ++) {
+    NextContiguousFieldOffset += (*FJ)->getBitWidthValue(Types.getContext());
+    ++LastFieldNo;
 
-    // Append padding if necessary.
-    AppendPadding(Types.getContext().toCharUnitsFromBits(fieldOffset), 
-                  CharUnits::One());
+    // We must use packed structs for packed fields, and also unnamed bit
+    // fields since they don't affect the struct alignment.
+    if (!Packed && ((*FJ)->hasAttr<PackedAttr>() || !(*FJ)->getDeclName()))
+      return false;
+  }
+  RecordDecl::field_iterator BFE = llvm::next(FI);
+  --LastFieldNo;
+  assert(LastFieldNo >= FirstFieldNo && "Empty run of contiguous bitfields");
+  FieldDecl *LastFD = *FI;
 
-    numBytesToAppend = Types.getContext().toCharUnitsFromBits(
-        llvm::RoundUpToAlignment(fieldSize, charAlign));
+  // Find the last bitfield's offset, add its size, and round it up to the
+  // character alignment to compute the storage required.
+  uint64_t LastFieldOffset = Layout.getFieldOffset(LastFieldNo);
+  uint64_t LastFieldSize = LastFD->getBitWidthValue(Types.getContext());
+  uint64_t TotalBits = (LastFieldOffset + LastFieldSize) - FirstFieldOffset;
+  CharUnits StorageBytes = Types.getContext().toCharUnitsFromBits(
+    llvm::RoundUpToAlignment(TotalBits, CharAlign));
+  uint64_t StorageBits = Types.getContext().toBits(StorageBytes);
 
-    assert(!numBytesToAppend.isZero() && "No bytes to append!");
+  // Grow the storage to encompass any known padding in the layout when doing
+  // so will make the storage a power-of-two. There are two cases when we can
+  // do this. The first is when we have a subsequent field and can widen up to
+  // its offset. The second is when the data size of the AST record layout is
+  // past the end of the current storage. The latter is true when there is tail
+  // padding on a struct and no members of a super class can be packed into it.
+  //
+  // Note that we widen the storage as much as possible here to express the
+  // maximum latitude the language provides, and rely on the backend to lower
+  // these in conjunction with shifts and masks to narrower operations where
+  // beneficial.
+  uint64_t EndOffset = Types.getContext().toBits(Layout.getDataSize());
+  if (BFE != FE)
+    // If there are more fields to be laid out, the offset at the end of the
+    // bitfield is the offset of the next field in the record.
+    EndOffset = Layout.getFieldOffset(LastFieldNo + 1);
+  assert(EndOffset >= (FirstFieldOffset + TotalBits) &&
+         "End offset is not past the end of the known storage bits.");
+  uint64_t SpaceBits = EndOffset - FirstFieldOffset;
+  uint64_t LongBits = Types.getContext().getTargetInfo().getLongWidth();
+  uint64_t WidenedBits = (StorageBits / LongBits) * LongBits +
+                         llvm::NextPowerOf2(StorageBits % LongBits - 1);
+  assert(WidenedBits >= StorageBits && "Widening shrunk the bits!");
+  if (WidenedBits <= SpaceBits) {
+    StorageBits = WidenedBits;
+    StorageBytes = Types.getContext().toCharUnitsFromBits(StorageBits);
+    assert(StorageBits == (uint64_t)Types.getContext().toBits(StorageBytes));
   }
 
-  // Add the bit field info.
-  BitFields.insert(std::make_pair(D,
-                   CGBitFieldInfo::MakeInfo(Types, D, fieldOffset, fieldSize)));
+  unsigned FieldIndex = FieldTypes.size();
+  AppendBytes(StorageBytes);
 
-  AppendBytes(numBytesToAppend);
-
-  BitsAvailableInLastField =
-    Types.getContext().toBits(NextFieldOffset) - (fieldOffset + fieldSize);
+  // Now walk the bitfields associating them with this field of storage and
+  // building up the bitfield specific info.
+  unsigned FieldNo = FirstFieldNo;
+  for (; BFI != BFE; ++BFI, ++FieldNo) {
+    FieldDecl *FD = *BFI;
+    uint64_t FieldOffset = Layout.getFieldOffset(FieldNo) - FirstFieldOffset;
+    uint64_t FieldSize = FD->getBitWidthValue(Types.getContext());
+    Fields[FD] = FieldIndex;
+    BitFields[FD] = CGBitFieldInfo::MakeInfo(Types, FD, FieldOffset, FieldSize,
+                                             StorageBits, StorageAlignment);
+  }
+  FirstFieldNo = LastFieldNo;
+  return true;
 }
 
 bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
@@ -429,15 +382,7 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
   if (!Packed && D->hasAttr<PackedAttr>())
     return false;
 
-  if (D->isBitField()) {
-    // We must use packed structs for unnamed bit fields since they
-    // don't affect the struct alignment.
-    if (!Packed && !D->getDeclName())
-      return false;
-
-    LayoutBitField(D, fieldOffset);
-    return true;
-  }
+  assert(!D->isBitField() && "Bitfields should be laid out seperately.");
 
   CheckZeroInitializable(D->getType());
 
@@ -497,6 +442,7 @@ bool CGRecordLayoutBuilder::LayoutField(const FieldDecl *D,
 llvm::Type *
 CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
                                         const ASTRecordLayout &Layout) {
+  Fields[Field] = 0;
   if (Field->isBitField()) {
     uint64_t FieldSize = Field->getBitWidthValue(Types.getContext());
 
@@ -504,22 +450,23 @@ CGRecordLayoutBuilder::LayoutUnionField(const FieldDecl *Field,
     if (FieldSize == 0)
       return 0;
 
-    llvm::Type *FieldTy = llvm::Type::getInt8Ty(Types.getLLVMContext());
-    CharUnits NumBytesToAppend = Types.getContext().toCharUnitsFromBits(
-      llvm::RoundUpToAlignment(FieldSize, 
-                               Types.getContext().getTargetInfo().getCharAlign()));
+    unsigned StorageBits = llvm::RoundUpToAlignment(
+      FieldSize, Types.getContext().getTargetInfo().getCharAlign());
+    CharUnits NumBytesToAppend
+      = Types.getContext().toCharUnitsFromBits(StorageBits);
 
+    llvm::Type *FieldTy = llvm::Type::getInt8Ty(Types.getLLVMContext());
     if (NumBytesToAppend > CharUnits::One())
       FieldTy = llvm::ArrayType::get(FieldTy, NumBytesToAppend.getQuantity());
 
     // Add the bit field info.
-    BitFields.insert(std::make_pair(Field,
-                         CGBitFieldInfo::MakeInfo(Types, Field, 0, FieldSize)));
+    BitFields[Field] = CGBitFieldInfo::MakeInfo(Types, Field, 0, FieldSize,
+                                                StorageBits,
+                                                Alignment.getQuantity());
     return FieldTy;
   }
 
   // This is a regular union field.
-  Fields[Field] = 0;
   return Types.ConvertTypeForMem(Field->getType());
 }
 
@@ -815,20 +762,38 @@ bool CGRecordLayoutBuilder::LayoutFields(const RecordDecl *D) {
   unsigned FieldNo = 0;
   const FieldDecl *LastFD = 0;
   
-  for (RecordDecl::field_iterator Field = D->field_begin(),
-       FieldEnd = D->field_end(); Field != FieldEnd; ++Field, ++FieldNo) {
+  for (RecordDecl::field_iterator FI = D->field_begin(), FE = D->field_end();
+       FI != FE; ++FI, ++FieldNo) {
+    FieldDecl *FD = *FI;
     if (IsMsStruct) {
       // Zero-length bitfields following non-bitfield members are
       // ignored:
-      const FieldDecl *FD = *Field;
       if (Types.getContext().ZeroBitfieldFollowsNonBitfield(FD, LastFD)) {
         --FieldNo;
         continue;
       }
       LastFD = FD;
     }
-    
-    if (!LayoutField(*Field, Layout.getFieldOffset(FieldNo))) {
+
+    // If this field is a bitfield, layout all of the consecutive
+    // non-zero-length bitfields and the last zero-length bitfield; these will
+    // all share storage.
+    if (FD->isBitField()) {
+      // If all we have is a zero-width bitfield, skip it.
+      if (FD->getBitWidthValue(Types.getContext()) == 0)
+        continue;
+
+      // Layout this range of bitfields.
+      if (!LayoutBitfields(Layout, FieldNo, FI, FE)) {
+        assert(!Packed &&
+               "Could not layout bitfields even with a packed LLVM struct!");
+        return false;
+      }
+      assert(FI != FE && "Advanced past the last bitfield");
+      continue;
+    }
+
+    if (!LayoutField(FD, Layout.getFieldOffset(FieldNo))) {
       assert(!Packed &&
              "Could not layout fields even with a packed LLVM struct!");
       return false;
@@ -889,7 +854,6 @@ void CGRecordLayoutBuilder::AppendField(CharUnits fieldOffset,
   FieldTypes.push_back(fieldType);
 
   NextFieldOffset = fieldOffset + fieldSize;
-  BitsAvailableInLastField = 0;
 }
 
 void CGRecordLayoutBuilder::AppendPadding(CharUnits fieldOffset,
@@ -1090,18 +1054,30 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
       LastFD = FD;
       continue;
     }
-    
-    const CGBitFieldInfo &Info = RL->getBitFieldInfo(FD);
-    for (unsigned i = 0, e = Info.getNumComponents(); i != e; ++i) {
-      const CGBitFieldInfo::AccessInfo &AI = Info.getComponent(i);
 
-      // Verify that every component access is within the structure.
-      uint64_t FieldOffset = SL->getElementOffsetInBits(AI.FieldIndex);
-      uint64_t AccessBitOffset = FieldOffset +
-        getContext().toBits(AI.FieldByteOffset);
-      assert(AccessBitOffset + AI.AccessWidth <= TypeSizeInBits &&
-             "Invalid bit-field access (out of range)!");
+    // Don't inspect zero-length bitfields.
+    if (FD->getBitWidthValue(getContext()) == 0)
+      continue;
+
+      unsigned FieldNo = RL->getLLVMFieldNo(FD);
+    const CGBitFieldInfo &Info = RL->getBitFieldInfo(FD);
+    llvm::Type *ElementTy = ST->getTypeAtIndex(FieldNo);
+    // Unions have overlapping elements dictating their layout, but for
+    // non-unions we can verify that this section of the layout is the exact
+    // expected size. For unions we verify that the start is zero and the size
+    // is in-bounds.
+    if (D->isUnion()) {
+      assert(Info.Offset == 0 && "Union bitfield with a non-zero offset");
+      assert(Info.StorageSize <= SL->getSizeInBits() &&
+             "Union not large enough for bitfield storage");
+    } else {
+      assert(Info.StorageSize ==
+             getDataLayout().getTypeAllocSizeInBits(ElementTy) &&
+             "Storage size does not match the element type size");
     }
+    assert(Info.Size > 0 && "Empty bitfield!");
+    assert(Info.Offset + Info.Size <= Info.StorageSize &&
+           "Bitfield outside of its allocated storage");
   }
 #endif
 
@@ -1143,32 +1119,12 @@ void CGRecordLayout::dump() const {
 }
 
 void CGBitFieldInfo::print(raw_ostream &OS) const {
-  OS << "<CGBitFieldInfo";
-  OS << " Size:" << Size;
-  OS << " IsSigned:" << IsSigned << "\n";
-
-  OS.indent(4 + strlen("<CGBitFieldInfo"));
-  OS << " NumComponents:" << getNumComponents();
-  OS << " Components: [";
-  if (getNumComponents()) {
-    OS << "\n";
-    for (unsigned i = 0, e = getNumComponents(); i != e; ++i) {
-      const AccessInfo &AI = getComponent(i);
-      OS.indent(8);
-      OS << "<AccessInfo"
-         << " FieldIndex:" << AI.FieldIndex
-         << " FieldByteOffset:" << AI.FieldByteOffset.getQuantity()
-         << " FieldBitStart:" << AI.FieldBitStart
-         << " AccessWidth:" << AI.AccessWidth << "\n";
-      OS.indent(8 + strlen("<AccessInfo"));
-      OS << " AccessAlignment:" << AI.AccessAlignment.getQuantity()
-         << " TargetBitOffset:" << AI.TargetBitOffset
-         << " TargetBitWidth:" << AI.TargetBitWidth
-         << ">\n";
-    }
-    OS.indent(4);
-  }
-  OS << "]>";
+  OS << "<CGBitFieldInfo"
+     << " Offset:" << Offset
+     << " Size:" << Size
+     << " IsSigned:" << IsSigned
+     << " StorageSize:" << StorageSize
+     << " StorageAlignment:" << StorageAlignment << ">";
 }
 
 void CGBitFieldInfo::dump() const {

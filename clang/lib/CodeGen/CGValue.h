@@ -28,7 +28,7 @@ namespace llvm {
 namespace clang {
 namespace CodeGen {
   class AggValueSlot;
-  class CGBitFieldInfo;
+  struct CGBitFieldInfo;
 
 /// RValue - This trivial value class is used to represent the result of an
 /// expression that is evaluated.  It can be one of three things: either a
@@ -246,7 +246,7 @@ public:
   }
 
   // bitfield lvalue
-  llvm::Value *getBitFieldBaseAddr() const {
+  llvm::Value *getBitFieldAddr() const {
     assert(isBitField());
     return V;
   }
@@ -290,16 +290,16 @@ public:
 
   /// \brief Create a new object to represent a bit-field access.
   ///
-  /// \param BaseValue - The base address of the structure containing the
-  /// bit-field.
+  /// \param BaseValue - The base address of the bit-field sequence this
+  /// bit-field refers to.
   /// \param Info - The information describing how to perform the bit-field
   /// access.
-  static LValue MakeBitfield(llvm::Value *BaseValue,
+  static LValue MakeBitfield(llvm::Value *Addr,
                              const CGBitFieldInfo &Info,
                              QualType type, CharUnits Alignment) {
     LValue R;
     R.LVType = BitField;
-    R.V = BaseValue;
+    R.V = Addr;
     R.BitFieldInfo = &Info;
     R.Initialize(type, type.getQualifiers(), Alignment);
     return R;
