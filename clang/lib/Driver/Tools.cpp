@@ -1273,7 +1273,6 @@ void Clang::AddHexagonTargetArgs(const ArgList &Args,
   CmdArgs.push_back("-target-cpu");
   CmdArgs.push_back(Args.MakeArgString("hexagon" + getHexagonTargetCPU(Args)));
   CmdArgs.push_back("-fno-signed-char");
-  CmdArgs.push_back("-nobuiltininc");
 
   if (Args.hasArg(options::OPT_mqdsp6_compat))
     CmdArgs.push_back("-mqdsp6-compat");

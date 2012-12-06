@@ -143,21 +143,6 @@ protected:
   /// @}
 };
 
-class LLVM_LIBRARY_VISIBILITY Hexagon_TC : public ToolChain {
-protected:
-  mutable llvm::DenseMap<unsigned, Tool*> Tools;
-
-public:
-  Hexagon_TC(const Driver &D, const llvm::Triple& Triple);
-  ~Hexagon_TC();
-
-  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
-                           const ActionList &Inputs) const;
-
-  virtual bool isPICDefault() const;
-  virtual bool isPICDefaultForced() const;
-};
-
   /// Darwin - The base Darwin tool chain.
 class LLVM_LIBRARY_VISIBILITY Darwin : public ToolChain {
 public:
@@ -523,6 +508,29 @@ private:
                                        ArgStringList &CC1Args);
 };
 
+class LLVM_LIBRARY_VISIBILITY Hexagon_TC : public Linux {
+protected:
+  mutable llvm::DenseMap<unsigned, Tool*> Tools;
+
+  GCCVersion GCCLibAndIncVersion;
+
+public:
+  Hexagon_TC(const Driver &D, const llvm::Triple &Triple,
+             const ArgList &Args);
+  ~Hexagon_TC();
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
+
+  virtual void AddClangSystemIncludeArgs(const ArgList &DriverArgs,
+                                         ArgStringList &CC1Args) const;
+  virtual void AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+                                            ArgStringList &CC1Args) const;
+
+  StringRef GetGCCLibAndIncVersion() const { return GCCLibAndIncVersion.Text; }
+
+  static std::string GetGnuDir(const std::string &InstalledDir);
+};
 
 /// TCEToolChain - A tool chain using the llvm bitcode tools to perform
 /// all subcommands. See http://tce.cs.tut.fi for our peculiar target.

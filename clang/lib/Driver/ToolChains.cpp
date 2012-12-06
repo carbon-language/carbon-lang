@@ -1402,11 +1402,46 @@ bool Generic_GCC::isPICDefaultForced() const {
 
 /// Hexagon Toolchain
 
-Hexagon_TC::Hexagon_TC(const Driver &D, const llvm::Triple& Triple)
-  : ToolChain(D, Triple) {
-  getProgramPaths().push_back(getDriver().getInstalledDir());
-  if (getDriver().getInstalledDir() != getDriver().Dir.c_str())
-    getProgramPaths().push_back(getDriver().Dir);
+std::string Hexagon_TC::GetGnuDir(const std::string &InstalledDir) {
+
+  // Locate the rest of the toolchain ...
+  if (strlen(GCC_INSTALL_PREFIX))
+    return std::string(GCC_INSTALL_PREFIX);
+
+  std::string InstallRelDir = InstalledDir + "/../../gnu";
+  if (llvm::sys::fs::exists(InstallRelDir))
+    return InstallRelDir;
+
+  std::string PrefixRelDir = std::string(LLVM_PREFIX) + "/../gnu";
+  if (llvm::sys::fs::exists(PrefixRelDir))
+    return PrefixRelDir;
+
+  return InstallRelDir;
+}
+
+Hexagon_TC::Hexagon_TC(const Driver &D, const llvm::Triple &Triple,
+                       const ArgList &Args)
+  : Linux(D, Triple, Args) {
+  const std::string InstalledDir(getDriver().getInstalledDir());
+  const std::string GnuDir = Hexagon_TC::GetGnuDir(InstalledDir);
+
+  // Note: Generic_GCC::Generic_GCC adds InstalledDir and getDriver().Dir to
+  // program paths
+  const std::string BinDir(GnuDir + "/bin");
+  if (llvm::sys::fs::exists(BinDir))
+    getProgramPaths().push_back(BinDir);
+
+  // Determine version of GCC libraries and headers to use.
+  const std::string HexagonDir(GnuDir + "/lib/gcc/hexagon");
+  llvm::error_code ec;
+  GCCVersion MaxVersion= GCCVersion::Parse("0.0.0");
+  for (llvm::sys::fs::directory_iterator di(HexagonDir, ec), de;
+       !ec && di != de; di = di.increment(ec)) {
+    GCCVersion cv = GCCVersion::Parse(llvm::sys::path::filename(di->path()));
+    if (MaxVersion < cv)
+      MaxVersion = cv;
+  }
+  GCCLibAndIncVersion = MaxVersion;
 }
 
 Hexagon_TC::~Hexagon_TC() {
@@ -1453,13 +1488,39 @@ Tool &Hexagon_TC::SelectTool(const Compilation &C,
   return *T;
 }
 
-bool Hexagon_TC::isPICDefault() const {
-  return false;
+void Hexagon_TC::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
+                                           ArgStringList &CC1Args) const {
+  const Driver &D = getDriver();
+
+  if (DriverArgs.hasArg(options::OPT_nostdinc) ||
+      DriverArgs.hasArg(options::OPT_nostdlibinc))
+    return;
+
+  llvm::sys::Path InstallDir(D.InstalledDir);
+  std::string Ver(GetGCCLibAndIncVersion());
+  std::string GnuDir = Hexagon_TC::GetGnuDir(D.InstalledDir);
+  std::string HexagonDir(GnuDir + "/lib/gcc/hexagon/" + Ver);
+  addExternCSystemInclude(DriverArgs, CC1Args, HexagonDir + "/include");
+  addExternCSystemInclude(DriverArgs, CC1Args, HexagonDir + "/include-fixed");
+  addExternCSystemInclude(DriverArgs, CC1Args, GnuDir + "/hexagon/include");
 }
 
-bool Hexagon_TC::isPICDefaultForced() const {
-  return false;
+void Hexagon_TC::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
+                                              ArgStringList &CC1Args) const {
+
+  if (DriverArgs.hasArg(options::OPT_nostdlibinc) ||
+      DriverArgs.hasArg(options::OPT_nostdincxx))
+    return;
+
+  const Driver &D = getDriver();
+  std::string Ver(GetGCCLibAndIncVersion());
+  llvm::sys::Path IncludeDir(Hexagon_TC::GetGnuDir(D.InstalledDir));
+
+  IncludeDir.appendComponent("hexagon/include/c++/");
+  IncludeDir.appendComponent(Ver);
+  addSystemInclude(DriverArgs, CC1Args, IncludeDir.str());
 }
+// End Hexagon
 
 /// TCEToolChain - A tool chain using the llvm bitcode tools to perform
 /// all subcommands. See http://tce.cs.tut.fi for our peculiar target.
