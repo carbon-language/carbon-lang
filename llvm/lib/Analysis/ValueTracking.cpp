@@ -1312,7 +1312,12 @@ bool llvm::CannotBeNegativeZero(const Value *V, unsigned Depth) {
 
   const Operator *I = dyn_cast<Operator>(V);
   if (I == 0) return false;
-  
+
+  // Check if the nsz fast-math flag is set
+  if (const FPMathOperator *FPO = dyn_cast<FPMathOperator>(I))
+    if (FPO->hasNoSignedZeros())
+      return true;
+
   // (add x, 0.0) is guaranteed to return +0.0, not -0.0.
   if (I->getOpcode() == Instruction::FAdd &&
       isa<ConstantFP>(I->getOperand(1)) && 
