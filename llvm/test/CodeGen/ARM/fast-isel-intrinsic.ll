@@ -35,7 +35,7 @@ define void @t1() nounwind ssp {
 ; THUMB-LONG: movt r3, :upper16:L_memset$non_lazy_ptr
 ; THUMB-LONG: ldr r3, [r3]
 ; THUMB-LONG: blx r3
-  call void @llvm.memset.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @message1, i32 0, i32 5), i8 64, i32 10, i32 1, i1 false)
+  call void @llvm.memset.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @message1, i32 0, i32 5), i8 64, i32 10, i32 4, i1 false)
   ret void
 }
 
@@ -73,7 +73,7 @@ define void @t2() nounwind ssp {
 ; THUMB-LONG: movt r3, :upper16:L_memcpy$non_lazy_ptr
 ; THUMB-LONG: ldr r3, [r3]
 ; THUMB-LONG: blx r3
-  call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 17, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 17, i32 4, i1 false)
   ret void
 }
 
@@ -125,6 +125,7 @@ define void @t4() nounwind ssp {
 ; ARM: ldrh r1, [r0, #24]
 ; ARM: strh r1, [r0, #12]
 ; ARM: bx lr
+; THUMB: t4
 ; THUMB: movw r0, :lower16:L_temp$non_lazy_ptr
 ; THUMB: movt r0, :upper16:L_temp$non_lazy_ptr
 ; THUMB: ldr r0, [r0]
@@ -135,8 +136,98 @@ define void @t4() nounwind ssp {
 ; THUMB: ldrh r1, [r0, #24]
 ; THUMB: strh r1, [r0, #12]
 ; THUMB: bx lr
-  call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 10, i32 1, i1 false)
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 10, i32 4, i1 false)
   ret void
 }
 
 declare void @llvm.memmove.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
+
+define void @t5() nounwind ssp {
+; ARM: t5
+; ARM: movw r0, :lower16:L_temp$non_lazy_ptr
+; ARM: movt r0, :upper16:L_temp$non_lazy_ptr
+; ARM: ldr r0, [r0]
+; ARM: ldrh r1, [r0, #16]
+; ARM: strh r1, [r0, #4]
+; ARM: ldrh r1, [r0, #18]
+; ARM: strh r1, [r0, #6]
+; ARM: ldrh r1, [r0, #20]
+; ARM: strh r1, [r0, #8]
+; ARM: ldrh r1, [r0, #22]
+; ARM: strh r1, [r0, #10]
+; ARM: ldrh r1, [r0, #24]
+; ARM: strh r1, [r0, #12]
+; ARM: bx lr
+; THUMB: t5
+; THUMB: movw r0, :lower16:L_temp$non_lazy_ptr
+; THUMB: movt r0, :upper16:L_temp$non_lazy_ptr
+; THUMB: ldr r0, [r0]
+; THUMB: ldrh r1, [r0, #16]
+; THUMB: strh r1, [r0, #4]
+; THUMB: ldrh r1, [r0, #18]
+; THUMB: strh r1, [r0, #6]
+; THUMB: ldrh r1, [r0, #20]
+; THUMB: strh r1, [r0, #8]
+; THUMB: ldrh r1, [r0, #22]
+; THUMB: strh r1, [r0, #10]
+; THUMB: ldrh r1, [r0, #24]
+; THUMB: strh r1, [r0, #12]
+; THUMB: bx lr
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 10, i32 2, i1 false)
+  ret void
+}
+
+define void @t6() nounwind ssp {
+; ARM: t6
+; ARM: movw r0, :lower16:L_temp$non_lazy_ptr
+; ARM: movt r0, :upper16:L_temp$non_lazy_ptr
+; ARM: ldr r0, [r0]
+; ARM: ldrb r1, [r0, #16]
+; ARM: strb r1, [r0, #4]
+; ARM: ldrb r1, [r0, #17]
+; ARM: strb r1, [r0, #5]
+; ARM: ldrb r1, [r0, #18]
+; ARM: strb r1, [r0, #6]
+; ARM: ldrb r1, [r0, #19]
+; ARM: strb r1, [r0, #7]
+; ARM: ldrb r1, [r0, #20]
+; ARM: strb r1, [r0, #8]
+; ARM: ldrb r1, [r0, #21]
+; ARM: strb r1, [r0, #9]
+; ARM: ldrb r1, [r0, #22]
+; ARM: strb r1, [r0, #10]
+; ARM: ldrb r1, [r0, #23]
+; ARM: strb r1, [r0, #11]
+; ARM: ldrb r1, [r0, #24]
+; ARM: strb r1, [r0, #12]
+; ARM: ldrb r1, [r0, #25]
+; ARM: strb r1, [r0, #13]
+; ARM: bx lr
+; THUMB: t6
+; THUMB: movw r0, :lower16:L_temp$non_lazy_ptr
+; THUMB: movt r0, :upper16:L_temp$non_lazy_ptr
+; THUMB: ldr r0, [r0]
+; THUMB: ldrb r1, [r0, #16]
+; THUMB: strb r1, [r0, #4]
+; THUMB: ldrb r1, [r0, #17]
+; THUMB: strb r1, [r0, #5]
+; THUMB: ldrb r1, [r0, #18]
+; THUMB: strb r1, [r0, #6]
+; THUMB: ldrb r1, [r0, #19]
+; THUMB: strb r1, [r0, #7]
+; THUMB: ldrb r1, [r0, #20]
+; THUMB: strb r1, [r0, #8]
+; THUMB: ldrb r1, [r0, #21]
+; THUMB: strb r1, [r0, #9]
+; THUMB: ldrb r1, [r0, #22]
+; THUMB: strb r1, [r0, #10]
+; THUMB: ldrb r1, [r0, #23]
+; THUMB: strb r1, [r0, #11]
+; THUMB: ldrb r1, [r0, #24]
+; THUMB: strb r1, [r0, #12]
+; THUMB: ldrb r1, [r0, #25]
+; THUMB: strb r1, [r0, #13]
+; THUMB: bx lr
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 4), i8* getelementptr inbounds ([60 x i8]* @temp, i32 0, i32 16), i32 10, i32 1, i1 false)
+  ret void
+}
