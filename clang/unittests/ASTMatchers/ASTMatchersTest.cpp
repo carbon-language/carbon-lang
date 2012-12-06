@@ -3044,6 +3044,42 @@ TEST(HasParent, MatchesOnlyParent) {
       compoundStmt(hasParent(ifStmt()))));
 }
 
+TEST(HasAncestor, MatchesAllAncestors) {
+  EXPECT_TRUE(matches(
+      "template <typename T> struct C { static void f() { 42; } };"
+      "void t() { C<int>::f(); }",
+      integerLiteral(
+          equals(42),
+          allOf(hasAncestor(recordDecl(isTemplateInstantiation())),
+                hasAncestor(recordDecl(unless(isTemplateInstantiation())))))));
+}
+
+TEST(HasParent, MatchesAllParents) {
+  EXPECT_TRUE(matches(
+      "template <typename T> struct C { static void f() { 42; } };"
+      "void t() { C<int>::f(); }",
+      integerLiteral(
+          equals(42),
+          hasParent(compoundStmt(hasParent(functionDecl(
+              hasParent(recordDecl(isTemplateInstantiation())))))))));
+  EXPECT_TRUE(matches(
+      "template <typename T> struct C { static void f() { 42; } };"
+      "void t() { C<int>::f(); }",
+      integerLiteral(
+          equals(42),
+          hasParent(compoundStmt(hasParent(functionDecl(
+              hasParent(recordDecl(unless(isTemplateInstantiation()))))))))));
+  EXPECT_TRUE(matches(
+      "template <typename T> struct C { static void f() { 42; } };"
+      "void t() { C<int>::f(); }",
+      integerLiteral(equals(42),
+                     hasParent(compoundStmt(allOf(
+                         hasParent(functionDecl(
+                             hasParent(recordDecl(isTemplateInstantiation())))),
+                         hasParent(functionDecl(hasParent(recordDecl(
+                             unless(isTemplateInstantiation())))))))))));
+}
+
 TEST(TypeMatching, MatchesTypes) {
   EXPECT_TRUE(matches("struct S {};", qualType().bind("loc")));
 }
