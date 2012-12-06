@@ -6458,23 +6458,6 @@ static bool MayFoldVectorLoad(SDValue V) {
   return MayFoldLoad(V);
 }
 
-// FIXME: the version above should always be used. Since there's
-// a bug where several vector shuffles can't be folded because the
-// DAG is not updated during lowering and a node claims to have two
-// uses while it only has one, use this version, and let isel match
-// another instruction if the load really happens to have more than
-// one use. Remove this version after this bug get fixed.
-// rdar://8434668, PR8156
-static bool RelaxedMayFoldVectorLoad(SDValue V) {
-  if (V.hasOneUse() && V.getOpcode() == ISD::BITCAST)
-    V = V.getOperand(0);
-  if (V.hasOneUse() && V.getOpcode() == ISD::SCALAR_TO_VECTOR)
-    V = V.getOperand(0);
-  if (ISD::isNormalLoad(V.getNode()))
-    return true;
-  return false;
-}
-
 static
 SDValue getMOVDDup(SDValue &Op, DebugLoc &dl, SDValue V1, SelectionDAG &DAG) {
   EVT VT = Op.getValueType();
@@ -6778,7 +6761,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(X86ISD::UNPCKH, dl, VT, V1, V1, DAG);
 
   if (isMOVDDUPMask(M, VT) && Subtarget->hasSSE3() &&
-      V2IsUndef && RelaxedMayFoldVectorLoad(V1))
+      V2IsUndef && MayFoldVectorLoad(V1))
     return getMOVDDup(Op, dl, V1, DAG);
 
   if (isMOVHLPS_v_undef_Mask(M, VT))
