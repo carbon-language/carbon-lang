@@ -1,7 +1,7 @@
 // REQUIRES: hexagon-registered-target
 
-// Tests disabled for now in non-Unix-like systems where we can't seem to find hexagon-as
-// XFAIL: mingw32,win32
+// Tests disabled for now on windows where we can't seem to find hexagon-as
+// XFAIL: win32
 
 // -----------------------------------------------------------------------------
 // Test standard include paths
