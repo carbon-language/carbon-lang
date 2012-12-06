@@ -152,7 +152,8 @@ def E : Flag<["-"], "E">, Flags<[DriverOption,CC1Option]>, Group<Action_Group>,
   HelpText<"Only run the preprocessor">;
 def F : JoinedOrSeparate<["-"], "F">, Flags<[RenderJoined,CC1Option]>,
     HelpText<"Add directory to framework include search path">;
-def G : Separate<["-"], "G">, Flags<[DriverOption]>;
+def G : JoinedOrSeparate<["-"], "G">, Flags<[DriverOption]>;
+def G_EQ : Joined<["-"], "G=">, Flags<[DriverOption]>;
 def H : Flag<["-"], "H">, Flags<[CC1Option]>,
     HelpText<"Show header includes and nesting depth">;
 def I_ : Flag<["-"], "I-">, Group<I_Group>;

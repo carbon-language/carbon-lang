@@ -3,9 +3,6 @@
 // Tests disabled for now in non-Unix-like systems where we can't seem to find hexagon-as
 // XFAIL: mingw32,win32
 
-// Temporarily 
-// XFAIL
-
 // -----------------------------------------------------------------------------
 // Test standard include paths
 // -----------------------------------------------------------------------------
@@ -439,3 +436,88 @@
 // CHECK022: "-lstdc++" "-lm"
 // CHECK022: "--start-group" "-lstandalone" "-lc" "-lgcc" "--end-group"
 // CHECK022: "[[GNU_DIR]]/hexagon/lib/v4/fini.o"
+
+// -----------------------------------------------------------------------------
+// pic, small data threshold
+// -----------------------------------------------------------------------------
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK023 %s
+// CHECK023:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK023:        "-mrelocation-model" "static"
+// CHECK023-NEXT: "[[GNU_DIR:.*]]/bin/hexagon-as"
+// CHECK023-NOT:    "-G{{[0-9]+}}"
+// CHECK023-NEXT: "[[GNU_DIR]]/bin/hexagon-ld"
+// CHECK023-NOT:    "-G{{[0-9]+}}"
+
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -fpic \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK024 %s
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -fPIC \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK024 %s
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -fPIC \
+// RUN:   -msmall_data_threshold=8 \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK024 %s
+// CHECK024:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK024-NOT:    "-mrelocation-model" "static"
+// CHECK024:        "-pic-level" "{{[12]}}"
+// CHECK024:        "-mllvm" "-hexagon-small-data-threshold=0"
+// CHECK024-NEXT: "[[GNU_DIR:.*]]/bin/hexagon-as"
+// CHECK024:        "-G0"
+// CHECK024-NEXT: "[[GNU_DIR]]/bin/hexagon-ld"
+// CHECK024:        "-G0"
+
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -G=8 \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK025 %s
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -G 8 \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK025 %s
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -msmall-data-threshold=8 \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK025 %s
+// CHECK025:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK025:        "-mrelocation-model" "static"
+// CHECK025:        "-mllvm" "-hexagon-small-data-threshold=8"
+// CHECK025-NEXT: "[[GNU_DIR:.*]]/bin/hexagon-as"
+// CHECK025:        "-G8"
+// CHECK025-NEXT: "[[GNU_DIR]]/bin/hexagon-ld"
+// CHECK025:        "-G8"
+
+// -----------------------------------------------------------------------------
+// pie
+// -----------------------------------------------------------------------------
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -pie \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK026 %s
+// CHECK026:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK026-NEXT: "[[GNU_DIR:.*]]/bin/hexagon-as"
+// CHECK026-NEXT: "[[GNU_DIR]]/bin/hexagon-ld"
+// CHECK026:        "-pie"
+
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -pie -shared \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK027 %s
+// CHECK027:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK027-NEXT: "[[GNU_DIR:.*]]/bin/hexagon-as"
+// CHECK027-NEXT: "[[GNU_DIR]]/bin/hexagon-ld"
+// CHECK027-NOT:    "-pie"
