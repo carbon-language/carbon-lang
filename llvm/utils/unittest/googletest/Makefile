@@ -36,4 +36,6 @@ endif
 
 NO_INSTALL = 1
 
+Source = $(filter-out gtest-all.cc,$(wildcard *.cc))
+
 include $(LEVEL)/Makefile.common
