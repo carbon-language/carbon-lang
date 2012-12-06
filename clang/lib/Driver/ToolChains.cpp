@@ -1419,6 +1419,57 @@ std::string Hexagon_TC::GetGnuDir(const std::string &InstalledDir) {
   return InstallRelDir;
 }
 
+static void GetHexagonLibraryPaths(
+  const ArgList &Args,
+  const std::string Ver,
+  const std::string MarchString,
+  const std::string &InstalledDir,
+  ToolChain::path_list *LibPaths)
+{
+  bool buildingLib = Args.hasArg(options::OPT_shared);
+
+  //----------------------------------------------------------------------------
+  // -L Args
+  //----------------------------------------------------------------------------
+  for (arg_iterator
+         it = Args.filtered_begin(options::OPT_L),
+         ie = Args.filtered_end();
+       it != ie;
+       ++it) {
+    for (unsigned i = 0, e = (*it)->getNumValues(); i != e; ++i)
+      LibPaths->push_back((*it)->getValue(i));
+  }
+
+  //----------------------------------------------------------------------------
+  // Other standard paths
+  //----------------------------------------------------------------------------
+  const std::string MarchSuffix = "/" + MarchString;
+  const std::string G0Suffix = "/G0";
+  const std::string MarchG0Suffix = MarchSuffix + G0Suffix;
+  const std::string RootDir = Hexagon_TC::GetGnuDir(InstalledDir) + "/";
+
+  // lib/gcc/hexagon/...
+  std::string LibGCCHexagonDir = RootDir + "lib/gcc/hexagon/";
+  if (buildingLib) {
+    LibPaths->push_back(LibGCCHexagonDir + Ver + MarchG0Suffix);
+    LibPaths->push_back(LibGCCHexagonDir + Ver + G0Suffix);
+  }
+  LibPaths->push_back(LibGCCHexagonDir + Ver + MarchSuffix);
+  LibPaths->push_back(LibGCCHexagonDir + Ver);
+
+  // lib/gcc/...
+  LibPaths->push_back(RootDir + "lib/gcc");
+
+  // hexagon/lib/...
+  std::string HexagonLibDir = RootDir + "hexagon/lib";
+  if (buildingLib) {
+    LibPaths->push_back(HexagonLibDir + MarchG0Suffix);
+    LibPaths->push_back(HexagonLibDir + G0Suffix);
+  }
+  LibPaths->push_back(HexagonLibDir + MarchSuffix);
+  LibPaths->push_back(HexagonLibDir);
+}
+
 Hexagon_TC::Hexagon_TC(const Driver &D, const llvm::Triple &Triple,
                        const ArgList &Args)
   : Linux(D, Triple, Args) {
@@ -1442,6 +1493,20 @@ Hexagon_TC::Hexagon_TC(const Driver &D, const llvm::Triple &Triple,
       MaxVersion = cv;
   }
   GCCLibAndIncVersion = MaxVersion;
+
+  ToolChain::path_list *LibPaths= &getFilePaths();
+
+  // Remove paths added by Linux toolchain. Currently Hexagon_TC really targets
+  // 'elf' OS type, so the Linux paths are not appropriate. When we actually
+  // support 'linux' we'll need to fix this up
+  LibPaths->clear();
+
+  GetHexagonLibraryPaths(
+    Args,
+    GetGCCLibAndIncVersion(),
+    GetTargetCPU(Args),
+    InstalledDir,
+    LibPaths);
 }
 
 Hexagon_TC::~Hexagon_TC() {
@@ -1521,7 +1586,22 @@ void Hexagon_TC::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   addSystemInclude(DriverArgs, CC1Args, IncludeDir.str());
 }
 
-static Arg *GetLastHexagonArchArg (const ArgList &Args)
+ToolChain::CXXStdlibType
+Hexagon_TC::GetCXXStdlibType(const ArgList &Args) const {
+  Arg *A = Args.getLastArg(options::OPT_stdlib_EQ);
+  if (!A)
+    return ToolChain::CST_Libstdcxx;
+
+  StringRef Value = A->getValue();
+  if (Value != "libstdc++") {
+    getDriver().Diag(diag::err_drv_invalid_stdlib_name)
+      << A->getAsString(Args);
+  }
+
+  return ToolChain::CST_Libstdcxx;
+}
+
+static Arg *GetLastHexagonArchArg(const ArgList &Args)
 {
   Arg *A = NULL;
 

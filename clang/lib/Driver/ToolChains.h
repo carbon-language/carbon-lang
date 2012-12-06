@@ -526,6 +526,7 @@ public:
                                          ArgStringList &CC1Args) const;
   virtual void AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
                                             ArgStringList &CC1Args) const;
+  virtual CXXStdlibType GetCXXStdlibType(const ArgList &Args) const;
 
   StringRef GetGCCLibAndIncVersion() const { return GCCLibAndIncVersion.Text; }
 

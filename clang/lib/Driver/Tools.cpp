@@ -3528,68 +3528,158 @@ void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
                                const ArgList &Args,
                                const char *LinkingOutput) const {
 
-  const Driver &D = getToolChain().getDriver();
+  const toolchains::Hexagon_TC& ToolChain =
+    static_cast<const toolchains::Hexagon_TC&>(getToolChain());
+  const Driver &D = ToolChain.getDriver();
+
   ArgStringList CmdArgs;
 
-  for (ArgList::const_iterator
-         it = Args.begin(), ie = Args.end(); it != ie; ++it) {
-    Arg *A = *it;
-    if (forwardToGCC(A->getOption())) {
-      // Don't forward any -g arguments to assembly steps.
-      if (isa<AssembleJobAction>(JA) &&
-          A->getOption().matches(options::OPT_g_Group))
-        continue;
+  //----------------------------------------------------------------------------
+  //
+  //----------------------------------------------------------------------------
+  bool hasStaticArg = Args.hasArg(options::OPT_static);
+  bool buildingLib = Args.hasArg(options::OPT_shared);
+  bool incStdLib = !Args.hasArg(options::OPT_nostdlib);
+  bool incStartFiles = !Args.hasArg(options::OPT_nostartfiles);
+  bool incDefLibs = !Args.hasArg(options::OPT_nodefaultlibs);
+  bool useShared = buildingLib && !hasStaticArg;
 
-      // It is unfortunate that we have to claim here, as this means
-      // we will basically never report anything interesting for
-      // platforms using a generic gcc, even if we are just using gcc
-      // to get to the assembler.
-      A->claim();
-      A->render(Args, CmdArgs);
-    }
-  }
+  //----------------------------------------------------------------------------
+  // Silence warnings for various options
+  //----------------------------------------------------------------------------
 
-  RenderExtraToolArgs(JA, CmdArgs);
+  Args.ClaimAllArgs(options::OPT_g_Group);
+  Args.ClaimAllArgs(options::OPT_emit_llvm);
+  Args.ClaimAllArgs(options::OPT_w); // Other warning options are already
+                                     // handled somewhere else.
+  Args.ClaimAllArgs(options::OPT_static_libgcc);
+
+  //----------------------------------------------------------------------------
+  //
+  //----------------------------------------------------------------------------
+  for (std::vector<std::string>::const_iterator i = ToolChain.ExtraOpts.begin(),
+         e = ToolChain.ExtraOpts.end();
+       i != e; ++i)
+    CmdArgs.push_back(i->c_str());
 
   std::string MarchString = toolchains::Hexagon_TC::GetTargetCPU(Args);
   CmdArgs.push_back(Args.MakeArgString("-m" + MarchString));
 
-  CmdArgs.push_back("-mqdsp6-compat");
-
-  const char *GCCName;
-  if (C.getDriver().CCCIsCXX)
-    GCCName = "hexagon-g++";
-  else
-    GCCName = "hexagon-gcc";
-  const char *Exec =
-    Args.MakeArgString(getToolChain().GetProgramPath(GCCName));
-
-  if (Output.isFilename()) {
-    CmdArgs.push_back("-o");
-    CmdArgs.push_back(Output.getFilename());
+  if (buildingLib) {
+    CmdArgs.push_back("-shared");
+    CmdArgs.push_back("-call_shared"); // should be the default, but doing as
+                                       // hexagon-gcc does
   }
 
-  for (InputInfoList::const_iterator
-         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
-    const InputInfo &II = *it;
+  if (hasStaticArg)
+    CmdArgs.push_back("-static");
 
-    // Don't try to pass LLVM or AST inputs to a generic gcc.
-    if (II.getType() == types::TY_LLVM_IR || II.getType() == types::TY_LTO_IR ||
-        II.getType() == types::TY_LLVM_BC || II.getType() == types::TY_LTO_BC)
-      D.Diag(clang::diag::err_drv_no_linker_llvm_support)
-        << getToolChain().getTripleString();
-    else if (II.getType() == types::TY_AST)
-      D.Diag(clang::diag::err_drv_no_ast_support)
-        << getToolChain().getTripleString();
+  //----------------------------------------------------------------------------
+  //
+  //----------------------------------------------------------------------------
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
 
-    if (II.isFilename())
-      CmdArgs.push_back(II.getFilename());
-    else
-      // Don't render as input, we need gcc to do the translations. FIXME: Pranav: What is this ?
-      II.getInputArg().render(Args, CmdArgs);
+  const std::string MarchSuffix = "/" + MarchString;
+  const std::string G0Suffix = "/G0";
+  const std::string MarchG0Suffix = MarchSuffix + G0Suffix;
+  const std::string RootDir = toolchains::Hexagon_TC::GetGnuDir(D.InstalledDir)
+                              + "/";
+  const std::string StartFilesDir = RootDir
+                                    + "hexagon/lib"
+                                    + (buildingLib
+                                       ? MarchG0Suffix : MarchSuffix);
+
+  //----------------------------------------------------------------------------
+  // moslib
+  //----------------------------------------------------------------------------
+  std::vector<std::string> oslibs;
+  bool hasStandalone= false;
+
+  for (arg_iterator it = Args.filtered_begin(options::OPT_moslib_EQ),
+         ie = Args.filtered_end(); it != ie; ++it) {
+    (*it)->claim();
+    oslibs.push_back((*it)->getValue());
+    hasStandalone = hasStandalone || (oslibs.back() == "standalone");
   }
-  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+  if (oslibs.empty()) {
+    oslibs.push_back("standalone");
+    hasStandalone = true;
+  }
 
+  //----------------------------------------------------------------------------
+  // Start Files
+  //----------------------------------------------------------------------------
+  if (incStdLib && incStartFiles) {
+
+    if (!buildingLib) {
+      if (hasStandalone) {
+        CmdArgs.push_back(
+          Args.MakeArgString(StartFilesDir + "/crt0_standalone.o"));
+      }
+      CmdArgs.push_back(Args.MakeArgString(StartFilesDir + "/crt0.o"));
+    }
+    std::string initObj = useShared ? "/initS.o" : "/init.o";
+    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + initObj));
+  }
+
+  //----------------------------------------------------------------------------
+  // Library Search Paths
+  //----------------------------------------------------------------------------
+  const ToolChain::path_list &LibPaths = ToolChain.getFilePaths();
+  for (ToolChain::path_list::const_iterator
+         i = LibPaths.begin(),
+         e = LibPaths.end();
+       i != e;
+       ++i)
+    CmdArgs.push_back(Args.MakeArgString(StringRef("-L") + *i));
+
+  //----------------------------------------------------------------------------
+  //
+  //----------------------------------------------------------------------------
+  Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_e);
+  Args.AddAllArgs(CmdArgs, options::OPT_s);
+  Args.AddAllArgs(CmdArgs, options::OPT_t);
+  Args.AddAllArgs(CmdArgs, options::OPT_u_Group);
+
+  AddLinkerInputs(ToolChain, Inputs, Args, CmdArgs);
+
+  //----------------------------------------------------------------------------
+  // Libraries
+  //----------------------------------------------------------------------------
+  if (incStdLib && incDefLibs) {
+    if (D.CCCIsCXX) {
+      ToolChain.AddCXXStdlibLibArgs(Args, CmdArgs);
+      CmdArgs.push_back("-lm");
+    }
+
+    CmdArgs.push_back("--start-group");
+
+    if (!buildingLib) {
+      for(std::vector<std::string>::iterator i = oslibs.begin(),
+            e = oslibs.end(); i != e; ++i)
+        CmdArgs.push_back(Args.MakeArgString("-l" + *i));
+      CmdArgs.push_back("-lc");
+    }
+    CmdArgs.push_back("-lgcc");
+
+    CmdArgs.push_back("--end-group");
+  }
+
+  //----------------------------------------------------------------------------
+  // End files
+  //----------------------------------------------------------------------------
+  if (incStdLib && incStartFiles) {
+    std::string finiObj = useShared ? "/finiS.o" : "/fini.o";
+    CmdArgs.push_back(Args.MakeArgString(StartFilesDir + finiObj));
+  }
+
+  std::string Linker = ToolChain.GetProgramPath("hexagon-ld");
+  C.addCommand(
+    new Command(
+      JA, *this,
+      Args.MakeArgString(Linker), CmdArgs));
 }
 // Hexagon tools end.
 
