@@ -8,6 +8,7 @@ set(TSAN_SOURCES
   tsan_md5.cc
   tsan_mman.cc
   tsan_mutex.cc
+  tsan_mutexset.cc
   tsan_report.cc
   tsan_rtl.cc
   tsan_rtl_mutex.cc
