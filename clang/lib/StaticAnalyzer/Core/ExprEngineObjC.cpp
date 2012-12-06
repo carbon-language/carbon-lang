@@ -179,13 +179,13 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
         if (ObjCNoRet.isImplicitNoReturn(ME)) {
           // If we raise an exception, for now treat it as a sink.
           // Eventually we will want to handle exceptions properly.
-          Bldr.generateSink(currStmt, Pred, State);
+          Bldr.generateSink(ME, Pred, State);
           continue;
         }
         
         // Generate a transition to non-Nil state.
         if (notNilState != State) {
-          Pred = Bldr.generateNode(currStmt, Pred, notNilState);
+          Pred = Bldr.generateNode(ME, Pred, notNilState);
           assert(Pred && "Should have cached out already!");
         }
       }
@@ -195,7 +195,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessageExpr *ME,
       if (ObjCNoRet.isImplicitNoReturn(ME)) {
         // If we raise an exception, for now treat it as a sink.
         // Eventually we will want to handle exceptions properly.
-        Bldr.generateSink(currStmt, Pred, Pred->getState());
+        Bldr.generateSink(ME, Pred, Pred->getState());
         continue;
       }
     }

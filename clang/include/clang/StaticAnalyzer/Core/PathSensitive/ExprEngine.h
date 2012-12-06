@@ -64,15 +64,6 @@ class ExprEngine : public SubEngine {
   /// svalBuilder - SValBuilder object that creates SVals from expressions.
   SValBuilder &svalBuilder;
 
-  /// EntryNode - The immediate predecessor node.
-  ExplodedNode *EntryNode;
-
-  /// CleanedState - The state for EntryNode "cleaned" of all dead
-  ///  variables and symbols (as determined by a liveness analysis).
-  ProgramStateRef CleanedState;
-
-  /// currStmt - The current block-level statement.
-  const Stmt *currStmt;
   unsigned int currStmtIdx;
   const NodeBuilderContext *currBldrCtx;
   
