@@ -119,7 +119,7 @@ public:
   /// the state of the program before the checker ran. Note, checkers should
   /// not retain the node in their state since the nodes might get invalidated.
   ExplodedNode *getPredecessor() { return Pred; }
-  ProgramStateRef getState() const { return Pred->getState(); }
+  const ProgramStateRef &getState() const { return Pred->getState(); }
 
   /// \brief Check if the checker changed the state of the execution; ex: added
   /// a new transition or a bug report.

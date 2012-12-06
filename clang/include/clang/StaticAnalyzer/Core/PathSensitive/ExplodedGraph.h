@@ -122,7 +122,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
 
 public:
 
-  explicit ExplodedNode(const ProgramPoint &loc, ProgramStateRef state,
+  explicit ExplodedNode(const ProgramPoint &loc, const ProgramStateRef &state,
                         bool IsSink)
     : Location(loc), State(state), Succs(IsSink) {
     assert(isSink() == IsSink);
@@ -152,7 +152,7 @@ public:
     return *getLocationContext()->getAnalysis<T>();
   }
 
-  ProgramStateRef getState() const { return State; }
+  const ProgramStateRef &getState() const { return State; }
 
   template <typename T>
   const T* getLocationAs() const LLVM_LVALUE_FUNCTION {
