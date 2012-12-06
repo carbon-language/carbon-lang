@@ -253,17 +253,13 @@ public:
 
 #if LLVM_HAS_RVALUE_REFERENCES
   PartialDiagnostic &operator=(PartialDiagnostic &&Other) {
-    if (this != &Other) {
-      if (DiagStorage)
-        freeStorage();
+    freeStorage();
 
-      DiagID = Other.DiagID;
-      DiagStorage = Other.DiagStorage;
-      Allocator = Other.Allocator;
+    DiagID = Other.DiagID;
+    DiagStorage = Other.DiagStorage;
+    Allocator = Other.Allocator;
 
-      Other.DiagStorage = 0;
-    }
-
+    Other.DiagStorage = 0;
     return *this;
   }
 #endif
