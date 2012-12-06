@@ -461,6 +461,7 @@ static bool IsJavaNonsense(const ReportDesc *rep) {
         || internal_strcmp(frame->func, "memcpy") == 0
         || internal_strcmp(frame->func, "strcmp") == 0
         || internal_strcmp(frame->func, "strncpy") == 0
+        || internal_strcmp(frame->func, "free") == 0
         || internal_strcmp(frame->func, "pthread_mutex_lock") == 0)) {
       frame = frame->next;
       if (frame == 0
