@@ -671,7 +671,9 @@ define void @test_x86_sse2_storeu_dq(i8* %a0, <16 x i8> %a1) {
   ; CHECK: test_x86_sse2_storeu_dq
   ; CHECK: movl
   ; CHECK: vmovdqu
-  call void @llvm.x86.sse2.storeu.dq(i8* %a0, <16 x i8> %a1)
+  ; add operation forces the execution domain.
+  %a2 = add <16 x i8> %a1, <i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1, i8 1>
+  call void @llvm.x86.sse2.storeu.dq(i8* %a0, <16 x i8> %a2)
   ret void
 }
 declare void @llvm.x86.sse2.storeu.dq(i8*, <16 x i8>) nounwind
@@ -681,6 +683,7 @@ define void @test_x86_sse2_storeu_pd(i8* %a0, <2 x double> %a1) {
   ; CHECK: test_x86_sse2_storeu_pd
   ; CHECK: movl
   ; CHECK: vmovupd
+  ; fadd operation forces the execution domain.
   %a2 = fadd <2 x double> %a1, <double 0x0, double 0x4200000000000000>
   call void @llvm.x86.sse2.storeu.pd(i8* %a0, <2 x double> %a2)
   ret void

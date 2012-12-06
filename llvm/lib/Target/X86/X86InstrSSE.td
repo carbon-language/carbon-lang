@@ -3606,25 +3606,17 @@ def MOVDQUmr :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
                  XS, Requires<[UseSSE2]>;
 }
 
-// Intrinsic forms of MOVDQU load and store
-def VMOVDQUmr_Int : I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
-                       "vmovdqu\t{$src, $dst|$dst, $src}",
-                       [(int_x86_sse2_storeu_dq addr:$dst, VR128:$src)],
-                       IIC_SSE_MOVU_P_MR>,
-                     XS, VEX, Requires<[HasAVX]>;
-
-def MOVDQUmr_Int :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
-                       "movdqu\t{$src, $dst|$dst, $src}",
-                       [(int_x86_sse2_storeu_dq addr:$dst, VR128:$src)],
-                       IIC_SSE_MOVU_P_MR>,
-                     XS, Requires<[UseSSE2]>;
-
 } // ExeDomain = SSEPackedInt
 
 let Predicates = [HasAVX] in {
+  def : Pat<(int_x86_sse2_storeu_dq addr:$dst, VR128:$src),
+            (VMOVDQUmr addr:$dst, VR128:$src)>;
   def : Pat<(int_x86_avx_storeu_dq_256 addr:$dst, VR256:$src),
             (VMOVDQUYmr addr:$dst, VR256:$src)>;
 }
+let Predicates = [UseSSE2] in
+def : Pat<(int_x86_sse2_storeu_dq addr:$dst, VR128:$src),
+          (MOVDQUmr addr:$dst, VR128:$src)>;
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Arithmetic Instructions
