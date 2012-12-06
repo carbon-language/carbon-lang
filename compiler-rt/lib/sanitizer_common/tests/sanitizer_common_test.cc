@@ -63,4 +63,19 @@ TEST(SanitizerCommon, SortTest) {
   EXPECT_TRUE(IsSorted(array, 2));
 }
 
+TEST(SanitizerCommon, MmapAlignedOrDie) {
+  uptr PageSize = GetPageSizeCached();
+  for (uptr size = 1; size <= 32; size *= 2) {
+    for (uptr alignment = 1; alignment <= 32; alignment *= 2) {
+      for (int iter = 0; iter < 100; iter++) {
+        uptr res = (uptr)MmapAlignedOrDie(
+            size * PageSize, alignment * PageSize, "MmapAlignedOrDieTest");
+        EXPECT_EQ(0U, res % (alignment * PageSize));
+        memset((void*)res, 1, size * PageSize);
+        UnmapOrDie((void*)res, size * PageSize);
+      }
+    }
+  }
+}
+
 }  // namespace sanitizer
