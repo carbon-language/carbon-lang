@@ -3,32 +3,36 @@
 #include <stdio.h>
 #include <unistd.h>
 
-extern "C" void AnnotateThreadName(const char *f, int l, const char *name);
-
 int Global;
+pthread_mutex_t mtx;
 
 void *Thread1(void *x) {
   usleep(100*1000);
-  AnnotateThreadName(__FILE__, __LINE__, "Thread1");
+  pthread_mutex_lock(&mtx);
   Global++;
+  pthread_mutex_unlock(&mtx);
   return NULL;
 }
 
 void *Thread2(void *x) {
-  AnnotateThreadName(__FILE__, __LINE__, "Thread2");
   Global--;
   return NULL;
 }
 
 int main() {
+  pthread_mutex_init(&mtx, 0);
   pthread_t t[2];
   pthread_create(&t[0], NULL, Thread1, NULL);
   pthread_create(&t[1], NULL, Thread2, NULL);
   pthread_join(t[0], NULL);
   pthread_join(t[1], NULL);
+  pthread_mutex_destroy(&mtx);
 }
 
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK:   Thread T1 'Thread1'
-// CHECK:   Thread T2 'Thread2'
+// CHECK:   Write of size 4 at {{.*}} by thread T1 (mutexes: write M1):
+// CHECK:   Previous write of size 4 at {{.*}} by thread T2:
+// CHECK:   Mutex M1 created at:
+// CHECK:     #0 pthread_mutex_init
+// CHECK:     #1 main {{.*}}/mutexset1.cc:23
 

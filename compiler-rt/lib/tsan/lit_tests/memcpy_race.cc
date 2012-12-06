@@ -32,9 +32,9 @@ int main() {
 
 // CHECK: addr=[[ADDR:0x[0-9,a-f]+]]
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK:   Write of size 1 at [[ADDR]] by thread 2:
+// CHECK:   Write of size 1 at [[ADDR]] by thread T2:
 // CHECK:     #0 memcpy
 // CHECK:     #1 Thread2
-// CHECK:   Previous write of size 1 at [[ADDR]] by thread 1:
+// CHECK:   Previous write of size 1 at [[ADDR]] by thread T1:
 // CHECK:     #0 memcpy
 // CHECK:     #1 Thread1

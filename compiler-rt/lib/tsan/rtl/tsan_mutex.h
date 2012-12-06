@@ -29,6 +29,7 @@ enum MutexType {
   MutexTypeSlab,
   MutexTypeAnnotations,
   MutexTypeAtExit,
+  MutexTypeMBlock,
 
   // This must be the last.
   MutexTypeCount

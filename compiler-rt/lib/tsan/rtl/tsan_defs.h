@@ -139,6 +139,12 @@ T RoundDown(T p, u64 align) {
   return (T)((u64)p & ~(align - 1));
 }
 
+// Zeroizes high part, returns 'bits' lsb bits.
+template<typename T>
+T GetLsb(T v, int bits) {
+  return (T)((u64)v & ((1ull << bits) - 1));
+}
+
 struct MD5Hash {
   u64 hash[2];
   bool operator==(const MD5Hash &other) const;

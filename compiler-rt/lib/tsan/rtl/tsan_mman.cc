@@ -60,8 +60,9 @@ void *user_alloc(ThreadState *thr, uptr pc, uptr sz, uptr align) {
   void *p = allocator()->Allocate(&thr->alloc_cache, sz, align);
   if (p == 0)
     return 0;
-  MBlock *b = (MBlock*)allocator()->GetMetaData(p);
+  MBlock *b = new(allocator()->GetMetaData(p)) MBlock;
   b->size = sz;
+  b->head = 0;
   b->alloc_tid = thr->unique_id;
   b->alloc_stack_id = CurrentStackId(thr, pc);
   if (CTX() && CTX()->initialized) {
@@ -92,6 +93,7 @@ void user_free(ThreadState *thr, uptr pc, void *p) {
   if (CTX() && CTX()->initialized && thr->in_rtl == 1) {
     MemoryRangeFreed(thr, pc, (uptr)p, b->size);
   }
+  b->~MBlock();
   allocator()->Deallocate(&thr->alloc_cache, p);
   SignalUnsafeCall(thr, pc);
 }

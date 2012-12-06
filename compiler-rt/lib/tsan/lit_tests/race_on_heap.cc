@@ -37,11 +37,11 @@ int main() {
 // CHECK: addr=[[ADDR:0x[0-9,a-f]+]]
 // CHECK: WARNING: ThreadSanitizer: data race
 // ...
-// CHECK:   Location is heap block of size 99 at [[ADDR]] allocated by thread 1:
+// CHECK: Location is heap block of size 99 at [[ADDR]] allocated by thread T1:
 // CHCEKL     #0 malloc
 // CHECK:     #1 alloc
 // CHECK:     #2 AllocThread
 // ...
-// CHECK:   Thread 1 (tid={{.*}}, finished) created at:
+// CHECK:   Thread T1 (tid={{.*}}, finished) created at:
 // CHECK:     #0 pthread_create
 // CHECK:     #1 main

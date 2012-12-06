@@ -48,19 +48,19 @@ int main() {
 }
 
 // CHECK:      WARNING: ThreadSanitizer: data race
-// CHECK-NEXT:   Write of size 4 at {{.*}} by thread 1:
+// CHECK-NEXT:   Write of size 4 at {{.*}} by thread T1:
 // CHECK-NEXT:     #0 foo1{{.*}} {{.*}}simple_stack.c:9{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #1 bar1{{.*}} {{.*}}simple_stack.c:14{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 Thread1{{.*}} {{.*}}simple_stack.c:28{{(:3)?}} ({{.*}})
-// CHECK:        Previous read of size 4 at {{.*}} by thread 2:
+// CHECK:        Previous read of size 4 at {{.*}} by thread T2:
 // CHECK-NEXT:     #0 foo2{{.*}} {{.*}}simple_stack.c:18{{(:26)?}} ({{.*}})
 // CHECK-NEXT:     #1 bar2{{.*}} {{.*}}simple_stack.c:23{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 Thread2{{.*}} {{.*}}simple_stack.c:33{{(:3)?}} ({{.*}})
-// CHECK:        Thread 1 (tid={{.*}}, running) created at:
+// CHECK:        Thread T1 (tid={{.*}}, running) created at:
 // CHECK-NEXT:     #0 pthread_create {{.*}} ({{.*}})
 // CHECK-NEXT:     #1 StartThread{{.*}} {{.*}}simple_stack.c:38{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 main{{.*}} {{.*}}simple_stack.c:43{{(:3)?}} ({{.*}})
-// CHECK:        Thread 2 ({{.*}}) created at:
+// CHECK:        Thread T2 ({{.*}}) created at:
 // CHECK-NEXT:     #0 pthread_create {{.*}} ({{.*}})
 // CHECK-NEXT:     #1 StartThread{{.*}} {{.*}}simple_stack.c:38{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 main{{.*}} {{.*}}simple_stack.c:44{{(:3)?}} ({{.*}})

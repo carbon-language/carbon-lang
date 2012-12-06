@@ -50,12 +50,13 @@ class StackTrace {
 };
 
 struct SyncVar {
-  explicit SyncVar(uptr addr);
+  explicit SyncVar(uptr addr, u64 uid);
 
   static const int kInvalidTid = -1;
 
   Mutex mtx;
   const uptr addr;
+  const u64 uid;  // Globally unique id.
   SyncClock clock;
   SyncClock read_clock;  // Used for rw mutexes only.
   StackTrace creation_stack;
@@ -69,6 +70,18 @@ struct SyncVar {
   SyncVar *next;  // In SyncTab hashtable.
 
   uptr GetMemoryConsumption();
+  u64 GetId() const {
+    // 47 lsb is addr, then 14 bits is low part of uid, then 3 zero bits.
+    return GetLsb((u64)addr | (uid << 47), 61);
+  }
+  bool CheckId(u64 uid) const {
+    CHECK_EQ(uid, GetLsb(uid, 14));
+    return GetLsb(this->uid, 14) == uid;
+  }
+  static uptr SplitId(u64 id, u64 *uid) {
+    *uid = id >> 47;
+    return (uptr)GetLsb(id, 47);
+  }
 };
 
 class SyncTab {
@@ -76,9 +89,9 @@ class SyncTab {
   SyncTab();
   ~SyncTab();
 
-  // If the SyncVar does not exist yet, it is created.
-  SyncVar* GetAndLock(ThreadState *thr, uptr pc,
-                      uptr addr, bool write_lock);
+  SyncVar* GetOrCreateAndLock(ThreadState *thr, uptr pc,
+                              uptr addr, bool write_lock);
+  SyncVar* GetIfExistsAndLock(uptr addr, bool write_lock);
 
   // If the SyncVar does not exist, returns 0.
   SyncVar* GetAndRemove(ThreadState *thr, uptr pc, uptr addr);
@@ -96,8 +109,12 @@ class SyncTab {
   // FIXME: Implement something more sane.
   static const int kPartCount = 1009;
   Part tab_[kPartCount];
+  atomic_uint64_t uid_gen_;
 
   int PartIdx(uptr addr);
+
+  SyncVar* GetAndLock(ThreadState *thr, uptr pc,
+                      uptr addr, bool write_lock, bool create);
 
   SyncTab(const SyncTab&);  // Not implemented.
   void operator = (const SyncTab&);  // Not implemented.

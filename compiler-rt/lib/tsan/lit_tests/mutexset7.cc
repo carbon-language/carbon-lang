@@ -3,20 +3,21 @@
 #include <stdio.h>
 #include <unistd.h>
 
-extern "C" void AnnotateThreadName(const char *f, int l, const char *name);
-
 int Global;
 
 void *Thread1(void *x) {
   usleep(100*1000);
-  AnnotateThreadName(__FILE__, __LINE__, "Thread1");
   Global++;
   return NULL;
 }
 
 void *Thread2(void *x) {
-  AnnotateThreadName(__FILE__, __LINE__, "Thread2");
+  pthread_mutex_t mtx;
+  pthread_mutex_init(&mtx, 0);
+  pthread_mutex_lock(&mtx);
   Global--;
+  pthread_mutex_unlock(&mtx);
+  pthread_mutex_destroy(&mtx);
   return NULL;
 }
 
@@ -29,6 +30,9 @@ int main() {
 }
 
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK:   Thread T1 'Thread1'
-// CHECK:   Thread T2 'Thread2'
+// CHECK: Write of size 4 at {{.*}} by thread T1:
+// CHECK: Previous write of size 4 at {{.*}} by thread T2
+// CHECK:                                          (mutexes: write M{{[0-9]+}}):
+// CHECK: Mutex M{{[0-9]+}} is already destroyed
+// CHECK-NOT: Mutex {{.*}} created at
 

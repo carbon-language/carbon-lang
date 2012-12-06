@@ -255,6 +255,7 @@ enum StatType {
   StatMtxSlab,
   StatMtxAnnotations,
   StatMtxAtExit,
+  StatMtxMBlock,
 
   // This must be the last.
   StatCnt

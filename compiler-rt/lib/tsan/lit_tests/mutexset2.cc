@@ -1,43 +1,38 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
 #include <pthread.h>
-#include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 
-// Ensure that we can restore a stack of a finished thread.
-
-int g_data;
-
-void __attribute__((noinline)) foobar(int *p) {
-  *p = 42;
-}
+int Global;
+pthread_mutex_t mtx;
 
 void *Thread1(void *x) {
-  foobar(&g_data);
+  pthread_mutex_lock(&mtx);
+  Global++;
+  pthread_mutex_unlock(&mtx);
   return NULL;
 }
 
 void *Thread2(void *x) {
-  usleep(1000*1000);
-  g_data = 43;
+  usleep(100*1000);
+  Global--;
   return NULL;
 }
 
 int main() {
+  pthread_mutex_init(&mtx, 0);
   pthread_t t[2];
   pthread_create(&t[0], NULL, Thread1, NULL);
   pthread_create(&t[1], NULL, Thread2, NULL);
   pthread_join(t[0], NULL);
   pthread_join(t[1], NULL);
-  return 0;
+  pthread_mutex_destroy(&mtx);
 }
 
 // CHECK: WARNING: ThreadSanitizer: data race
 // CHECK:   Write of size 4 at {{.*}} by thread T2:
-// CHECK:   Previous write of size 4 at {{.*}} by thread T1:
-// CHECK:     #0 foobar
-// CHECK:     #1 Thread1
-// CHECK:   Thread T1 (tid={{.*}}, finished) created at:
-// CHECK:     #0 pthread_create
-// CHECK:     #1 main
+// CHECK:   Previous write of size 4 at {{.*}} by thread T1 (mutexes: write M1):
+// CHECK:   Mutex M1 created at:
+// CHECK:     #0 pthread_mutex_init
+// CHECK:     #1 main {{.*}}/mutexset2.cc:23
+

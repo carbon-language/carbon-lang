@@ -35,9 +35,9 @@ int main() {
 }
 
 // CHECK: WARNING: ThreadSanitizer: heap-use-after-free
-// CHECK:   Write of size 4 at {{.*}} by main thread:
+// CHECK:   Write of size 4 at {{.*}} by main thread{{.*}}:
 // CHECK:     #0 Thread2
 // CHECK:     #1 main
-// CHECK:   Previous write of size 8 at {{.*}} by thread 1:
+// CHECK:   Previous write of size 8 at {{.*}} by thread T1{{.*}}:
 // CHECK:     #0 free
 // CHECK:     #1 Thread1

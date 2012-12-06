@@ -30,12 +30,13 @@ static MutexType CanLockTab[MutexTypeCount][MutexTypeCount] = {
   /*0 MutexTypeInvalid*/     {},
   /*1 MutexTypeTrace*/       {MutexTypeLeaf},
   /*2 MutexTypeThreads*/     {MutexTypeReport},
-  /*3 MutexTypeReport*/      {},
+  /*3 MutexTypeReport*/      {MutexTypeSyncTab, MutexTypeMBlock},
   /*4 MutexTypeSyncVar*/     {},
   /*5 MutexTypeSyncTab*/     {MutexTypeSyncVar},
   /*6 MutexTypeSlab*/        {MutexTypeLeaf},
   /*7 MutexTypeAnnotations*/ {},
   /*8 MutexTypeAtExit*/      {MutexTypeSyncTab},
+  /*9 MutexTypeMBlock*/      {MutexTypeSyncVar},
 };
 
 static bool CanLockAdj[MutexTypeCount][MutexTypeCount];
@@ -122,6 +123,8 @@ DeadlockDetector::DeadlockDetector() {
 
 void DeadlockDetector::Lock(MutexType t) {
   // Printf("LOCK %d @%zu\n", t, seq_ + 1);
+  CHECK_GT(t, MutexTypeInvalid);
+  CHECK_LT(t, MutexTypeCount);
   u64 max_seq = 0;
   u64 max_idx = MutexTypeInvalid;
   for (int i = 0; i != MutexTypeCount; i++) {

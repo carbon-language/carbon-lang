@@ -291,6 +291,7 @@ void TraceSwitch(ThreadState *thr) {
   TraceHeader *hdr = &thr->trace.headers[trace];
   hdr->epoch0 = thr->fast_state.epoch();
   hdr->stack0.ObtainCurrent(thr, 0);
+  hdr->mset0 = thr->mset;
   thr->nomalloc--;
 }
 

@@ -16,6 +16,7 @@
 #include "tsan_defs.h"
 #include "tsan_mutex.h"
 #include "tsan_sync.h"
+#include "tsan_mutexset.h"
 
 namespace __tsan {
 
@@ -43,6 +44,7 @@ typedef u64 Event;
 struct TraceHeader {
   StackTrace stack0;  // Start stack for the trace.
   u64        epoch0;  // Start epoch for the trace.
+  MutexSet   mset0;
 #ifndef TSAN_GO
   uptr       stack0buf[kTraceStackSize];
 #endif

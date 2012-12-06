@@ -253,6 +253,7 @@ void StatOutput(u64 *stat) {
   name[StatMtxSlab]                      = "  Slab                            ";
   name[StatMtxAtExit]                    = "  Atexit                          ";
   name[StatMtxAnnotations]               = "  Annotations                     ";
+  name[StatMtxMBlock]                    = "  MBlock                          ";
 
   Printf("Statistics:\n");
   for (int i = 0; i < StatCnt; i++)

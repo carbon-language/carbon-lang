@@ -231,7 +231,7 @@ static T AtomicLoad(ThreadState *thr, uptr pc, const volatile T *a,
   // Assume the access is atomic.
   if (!IsAcquireOrder(mo) && sizeof(T) <= sizeof(a))
     return *a;
-  SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, false);
+  SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, false);
   thr->clock.set(thr->tid, thr->fast_state.epoch());
   thr->clock.acquire(&s->clock);
   T v = *a;
@@ -253,7 +253,7 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
     return;
   }
   __sync_synchronize();
-  SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, true);
+  SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
   thr->clock.set(thr->tid, thr->fast_state.epoch());
   thr->clock.ReleaseStore(&s->clock);
   *a = v;
@@ -265,7 +265,7 @@ static void AtomicStore(ThreadState *thr, uptr pc, volatile T *a, T v,
 
 template<typename T, T (*F)(volatile T *v, T op)>
 static T AtomicRMW(ThreadState *thr, uptr pc, volatile T *a, T v, morder mo) {
-  SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, true);
+  SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
   thr->clock.set(thr->tid, thr->fast_state.epoch());
   if (IsAcqRelOrder(mo))
     thr->clock.acq_rel(&s->clock);
@@ -324,7 +324,7 @@ template<typename T>
 static bool AtomicCAS(ThreadState *thr, uptr pc,
     volatile T *a, T *c, T v, morder mo, morder fmo) {
   (void)fmo;  // Unused because llvm does not pass it yet.
-  SyncVar *s = CTX()->synctab.GetAndLock(thr, pc, (uptr)a, true);
+  SyncVar *s = CTX()->synctab.GetOrCreateAndLock(thr, pc, (uptr)a, true);
   thr->clock.set(thr->tid, thr->fast_state.epoch());
   if (IsAcqRelOrder(mo))
     thr->clock.acq_rel(&s->clock);

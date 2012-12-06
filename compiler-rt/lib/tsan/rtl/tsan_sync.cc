@@ -17,9 +17,10 @@
 
 namespace __tsan {
 
-SyncVar::SyncVar(uptr addr)
+SyncVar::SyncVar(uptr addr, u64 uid)
   : mtx(MutexTypeSyncVar, StatMtxSyncVar)
   , addr(addr)
+  , uid(uid)
   , owner_tid(kInvalidTid)
   , last_lock()
   , recursion()
@@ -47,8 +48,17 @@ SyncTab::~SyncTab() {
   }
 }
 
+SyncVar* SyncTab::GetOrCreateAndLock(ThreadState *thr, uptr pc,
+                                     uptr addr, bool write_lock) {
+  return GetAndLock(thr, pc, addr, write_lock, true);
+}
+
+SyncVar* SyncTab::GetIfExistsAndLock(uptr addr, bool write_lock) {
+  return GetAndLock(0, 0, addr, write_lock, false);
+}
+
 SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
-                             uptr addr, bool write_lock) {
+                             uptr addr, bool write_lock, bool create) {
 #ifndef TSAN_GO
   if (PrimaryAllocator::PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(thr, (void*)addr);
@@ -59,9 +69,12 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
         break;
     }
     if (res == 0) {
+      if (!create)
+        return 0;
       StatInc(thr, StatSyncCreated);
       void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
-      res = new(mem) SyncVar(addr);
+      const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
+      res = new(mem) SyncVar(addr, uid);
       res->creation_stack.ObtainCurrent(thr, pc);
       res->next = b->head;
       b->head = res;
@@ -87,6 +100,8 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
       }
     }
   }
+  if (!create)
+    return 0;
   {
     Lock l(&p->mtx);
     SyncVar *res = p->val;
@@ -97,7 +112,8 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
     if (res == 0) {
       StatInc(thr, StatSyncCreated);
       void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
-      res = new(mem) SyncVar(addr);
+      const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
+      res = new(mem) SyncVar(addr, uid);
 #ifndef TSAN_GO
       res->creation_stack.ObtainCurrent(thr, pc);
 #endif

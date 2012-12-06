@@ -36,7 +36,7 @@ TEST(Sync, Table) {
     uintptr_t addr = rand_r(&seed) % (kRange - 1) + 1;
     if (rand_r(&seed) % 2) {
       // Get or add.
-      SyncVar *v = tab.GetAndLock(thr, pc, addr, true);
+      SyncVar *v = tab.GetOrCreateAndLock(thr, pc, addr, true);
       EXPECT_TRUE(golden[addr] == 0 || golden[addr] == v);
       EXPECT_EQ(v->addr, addr);
       golden[addr] = v;

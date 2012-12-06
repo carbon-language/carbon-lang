@@ -36,6 +36,7 @@
 #include "tsan_vector.h"
 #include "tsan_report.h"
 #include "tsan_platform.h"
+#include "tsan_mutexset.h"
 
 #if SANITIZER_WORDSIZE != 64
 # error "ThreadSanitizer is supported only on 64-bit platforms"
@@ -50,6 +51,10 @@ struct MBlock {
   u32 alloc_tid;
   u32 alloc_stack_id;
   SyncVar *head;
+
+  MBlock()
+    : mtx(MutexTypeMBlock, StatMtxMBlock) {
+  }
 };
 
 #ifndef TSAN_GO
@@ -300,6 +305,7 @@ struct ThreadState {
   uptr *shadow_stack;
   uptr *shadow_stack_end;
 #endif
+  MutexSet mset;
   ThreadClock clock;
 #ifndef TSAN_GO
   AllocatorCache alloc_cache;
@@ -447,7 +453,8 @@ class ScopedReport {
   ~ScopedReport();
 
   void AddStack(const StackTrace *stack);
-  void AddMemoryAccess(uptr addr, Shadow s, const StackTrace *stack);
+  void AddMemoryAccess(uptr addr, Shadow s, const StackTrace *stack,
+                       const MutexSet *mset);
   void AddThread(const ThreadContext *tctx);
   void AddMutex(const SyncVar *s);
   void AddLocation(uptr addr, uptr size);
@@ -459,11 +466,13 @@ class ScopedReport {
   Context *ctx_;
   ReportDesc *rep_;
 
+  void AddMutex(u64 id);
+
   ScopedReport(const ScopedReport&);
   void operator = (const ScopedReport&);
 };
 
-void RestoreStack(int tid, const u64 epoch, StackTrace *stk);
+void RestoreStack(int tid, const u64 epoch, StackTrace *stk, MutexSet *mset);
 
 void StatAggregate(u64 *dst, u64 *src);
 void StatOutput(u64 *stat);
@@ -577,7 +586,10 @@ uptr TraceParts();
 
 extern "C" void __tsan_trace_switch();
 void ALWAYS_INLINE INLINE TraceAddEvent(ThreadState *thr, FastState fs,
-                                        EventType typ, uptr addr) {
+                                        EventType typ, u64 addr) {
+  DCHECK_GE((int)typ, 0);
+  DCHECK_LE((int)typ, 7);
+  DCHECK_EQ(GetLsb(addr, 61), addr);
   StatInc(thr, StatEvents);
   u64 pos = fs.GetTracePos();
   if (UNLIKELY((pos % kTracePartSize) == 0)) {
