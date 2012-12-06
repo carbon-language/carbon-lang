@@ -270,6 +270,9 @@ MachineModuleInfo::~MachineModuleInfo() {
 }
 
 bool MachineModuleInfo::doInitialization(Module &M) {
+  
+  Context.doInitialization();
+
   ObjFileMMI = 0;
   CompactUnwindEncoding = 0;
   CurCallSite = 0;
@@ -290,6 +293,8 @@ bool MachineModuleInfo::doFinalization(Module &M) {
 
   delete AddrLabelSymbols;
   AddrLabelSymbols = 0;
+
+  Context.doFinalization();
 
   return false;
 }

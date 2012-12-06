@@ -44,23 +44,48 @@ MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
   SecureLogFile = getenv("AS_SECURE_LOG_FILE");
   SecureLog = 0;
   SecureLogUsed = false;
-
-  DwarfLocSeen = false;
-  GenDwarfForAssembly = false;
-  GenDwarfFileNumber = 0;
 }
 
 MCContext::~MCContext() {
   // NOTE: The symbols are all allocated out of a bump pointer allocator,
   // we don't need to free them here.
+  
+  // If the stream for the .secure_log_unique directive was created free it.
+  delete (raw_ostream*)SecureLog;
+}
+
+//===----------------------------------------------------------------------===//
+// Module Lifetime Management
+//===----------------------------------------------------------------------===//
+
+void MCContext::doInitialization() {
+  NextUniqueID = 0;
+  AllowTemporaryLabels = true;
+  DwarfLocSeen = false;
+  GenDwarfForAssembly = false;
+  GenDwarfFileNumber = 0;
+}
+
+void MCContext::doFinalization() {
+  UsedNames.clear();
+  Symbols.clear();
+  Allocator.Reset();
+  Instances.clear();
+  MCDwarfFiles.clear();
+  MCDwarfDirs.clear();
+  MCGenDwarfLabelEntries.clear();
+  DwarfDebugFlags = StringRef();
+  MCLineSections.clear();
+  MCLineSectionOrder.clear();
+  CurrentDwarfLoc = MCDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0);
 
   // If we have the MachO uniquing map, free it.
   delete (MachOUniqueMapTy*)MachOUniquingMap;
   delete (ELFUniqueMapTy*)ELFUniquingMap;
   delete (COFFUniqueMapTy*)COFFUniquingMap;
-
-  // If the stream for the .secure_log_unique directive was created free it.
-  delete (raw_ostream*)SecureLog;
+  MachOUniquingMap = 0;
+  ELFUniquingMap = 0;
+  COFFUniquingMap = 0;
 }
 
 //===----------------------------------------------------------------------===//

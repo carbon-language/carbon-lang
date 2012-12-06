@@ -154,6 +154,17 @@ namespace llvm {
 
     void setAllowTemporaryLabels(bool Value) { AllowTemporaryLabels = Value; }
 
+    /// @name Module Lifetime Management
+    /// @{
+
+    /// doInitialization - prepare to process a new module
+    void doInitialization();
+
+    /// doFinalization - clean up state from the current module
+    void doFinalization();
+
+    /// @}
+
     /// @name Symbol Management
     /// @{
 
