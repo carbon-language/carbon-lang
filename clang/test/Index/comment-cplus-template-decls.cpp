@@ -42,3 +42,28 @@ template <typename T> struct D : A<T> {
 };
 // CHECK: <Declaration>template &lt;typename T&gt; struct D :  A&lt;T&gt; {\n}</Declaration>
 // CHECK: <Declaration>using A&lt;T&gt;::f</Declaration>
+
+struct Base {
+    int foo;
+};
+/**
+ * \brief
+*/
+template<typename T> struct E : Base {
+/**
+ * \brief
+*/
+  using Base::foo;
+};
+// CHECK: <Declaration>template &lt;typename T&gt; struct E :  Base {\n}</Declaration>
+// CHECK: <Declaration>using Base::foo</Declaration>
+
+/// \tparam
+/// \param AAA Blah blah
+template<typename T>
+void func_template_1(T AAA);
+// CHECK: <Declaration>template &lt;typename T&gt; void func_template_1(T AAA)</Declaration>
+
+template<template<template<typename CCC> class DDD, class BBB> class AAA>
+void func_template_2();
+<Declaration>template &lt;template &lt;template &lt;typename CCC&gt; class DDD, class BBB&gt; class AAA&gt; void func_template_2()</Declaration>
