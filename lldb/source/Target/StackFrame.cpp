@@ -792,6 +792,7 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                     deref = false;
                                 }
                                 
+                                bool is_incomplete_array = false;
                                 if (valobj_sp->IsPointerType ())
                                 {
                                     bool is_objc_pointer = true;
@@ -855,11 +856,14 @@ StackFrame::GetValueForVariableExpressionPath (const char *var_expr_cstr,
                                         }
                                     }
                                 }
-                                else if (ClangASTContext::IsArrayType (valobj_sp->GetClangType(), NULL, NULL))
+                                else if (ClangASTContext::IsArrayType (valobj_sp->GetClangType(), NULL, NULL, &is_incomplete_array))
                                 {
                                     // Pass false to dynamic_value here so we can tell the difference between
                                     // no dynamic value and no member of this type...
                                     child_valobj_sp = valobj_sp->GetChildAtIndex (child_index, true);
+                                    if (!child_valobj_sp && (is_incomplete_array || no_synth_child == false))
+                                        child_valobj_sp = valobj_sp->GetSyntheticArrayMember (child_index, true);
+
                                     if (!child_valobj_sp)
                                     {
                                         valobj_sp->GetExpressionPath (var_expr_path_strm, false);

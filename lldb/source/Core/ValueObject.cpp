@@ -675,7 +675,7 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
                                                                   child_bitfield_bit_offset,
                                                                   child_is_base_class,
                                                                   child_is_deref_of_parent);
-    if (child_clang_type && child_byte_size)
+    if (child_clang_type)
     {
         if (synthetic_index)
             child_byte_offset += child_byte_size * synthetic_index;
@@ -1798,7 +1798,7 @@ ValueObject::IsPointerType ()
 bool
 ValueObject::IsArrayType ()
 {
-    return ClangASTContext::IsArrayType (GetClangType());
+    return ClangASTContext::IsArrayType (GetClangType(), NULL, NULL, NULL);
 }
 
 bool

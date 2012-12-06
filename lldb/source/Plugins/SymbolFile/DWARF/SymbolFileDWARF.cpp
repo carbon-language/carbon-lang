@@ -4218,6 +4218,7 @@ SymbolFileDWARF::ParseChildArrayInfo
                     uint64_t num_elements = 0;
                     uint64_t lower_bound = 0;
                     uint64_t upper_bound = 0;
+                    bool upper_bound_valid = false;
                     uint32_t i;
                     for (i=0; i<num_child_attributes; ++i)
                     {
@@ -4247,6 +4248,7 @@ SymbolFileDWARF::ParseChildArrayInfo
                                 break;
 
                             case DW_AT_upper_bound:
+                                upper_bound_valid = true;
                                 upper_bound = form_value.Unsigned();
                                 break;
 
@@ -4269,7 +4271,7 @@ SymbolFileDWARF::ParseChildArrayInfo
 
                     if (num_elements == 0)
                     {
-                        if (upper_bound >= lower_bound)
+                        if (upper_bound_valid && upper_bound >= lower_bound)
                             num_elements = upper_bound - lower_bound + 1;
                     }
 
@@ -6534,10 +6536,9 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                             {
                                 num_elements = *pos;
                                 clang_type = ast.CreateArrayType (array_element_type, 
-                                                                  num_elements, 
-                                                                  num_elements * array_element_bit_stride);
+                                                                  num_elements);
                                 array_element_type = clang_type;
-                                array_element_bit_stride = array_element_bit_stride * num_elements;
+                                array_element_bit_stride = num_elements ? array_element_bit_stride * num_elements : array_element_bit_stride;
                             }
                             ConstString empty_name;
                             type_sp.reset( new Type (MakeUserID(die->GetOffset()), 

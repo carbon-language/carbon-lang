@@ -785,9 +785,8 @@ public:
     //------------------------------------------------------------------
 
     lldb::clang_type_t
-    CreateArrayType (lldb::clang_type_t  element_type,
-                     size_t element_count,
-                     uint32_t bit_stride);
+    CreateArrayType (lldb::clang_type_t element_type,
+                     size_t element_count);
 
     //------------------------------------------------------------------
     // Tag Declarations
@@ -887,15 +886,17 @@ public:
     
     static lldb::clang_type_t
     GetAsArrayType (lldb::clang_type_t clang_type, 
-                    lldb::clang_type_t *member_type = NULL, 
-                    uint64_t *size = NULL);
+                    lldb::clang_type_t *member_type,
+                    uint64_t *size,
+                    bool *is_incomplete);
     
     static bool
     IsArrayType (lldb::clang_type_t clang_type,
-                 lldb::clang_type_t *member_type = NULL,
-                 uint64_t *size = NULL)
+                 lldb::clang_type_t *member_type,
+                 uint64_t *size,
+                 bool *is_incomplete)
     {
-        return GetAsArrayType(clang_type, member_type, size) != 0;
+        return GetAsArrayType(clang_type, member_type, size, is_incomplete) != 0;
     }
 
     //------------------------------------------------------------------

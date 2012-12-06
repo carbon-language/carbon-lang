@@ -1178,7 +1178,13 @@ ClangASTType::GetClangTypeBitWidth (clang::ASTContext *ast_context, clang_type_t
     if (ClangASTContext::GetCompleteType (ast_context, clang_type))
     {
         clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
-        return ast_context->getTypeSize (qual_type);
+        const uint32_t bit_size = ast_context->getTypeSize (qual_type);
+        if (bit_size == 0)
+        {
+            if (qual_type->isIncompleteArrayType())
+                return ast_context->getTypeSize (qual_type->getArrayElementTypeNoTypeQual()->getCanonicalTypeUnqualified());
+        }
+        return bit_size;
     }
     return 0;
 }

@@ -20,5 +20,5 @@ int main (int argc, char const *argv[])
     };
     struct point_tag pt = { 2, 3, {} }; // This is the first executable statement.
     struct rect_tag rect = {{1, 2, {}}, {3, 4, {}}};
-    return 0;
+    return 0; // This is the return statement.
 }

@@ -1551,7 +1551,7 @@ Debugger::FormatPrompt
                                 }
                                 
                                 // TODO use flags for these
-                                bool is_array = ClangASTContext::IsArrayType(target->GetClangType());
+                                bool is_array = ClangASTContext::IsArrayType(target->GetClangType(), NULL, NULL, NULL);
                                 bool is_pointer = ClangASTContext::IsPointerType(target->GetClangType());
                                 bool is_aggregate = ClangASTContext::IsAggregateType(target->GetClangType());
                                 

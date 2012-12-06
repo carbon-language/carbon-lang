@@ -201,8 +201,7 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
         if (GetRegisterInfo())
             byte_size = GetRegisterInfo()->byte_size;
         else if (error_ptr)
-                error_ptr->SetErrorString ("Can't determine byte size with NULL RegisterInfo *.");
-
+            error_ptr->SetErrorString ("Can't determine byte size with NULL RegisterInfo *.");
         break;
 
     case eContextTypeLLDBType:             // Type *
