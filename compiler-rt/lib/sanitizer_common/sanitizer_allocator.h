@@ -149,7 +149,7 @@ class SizeClassAllocator64 {
   void *Allocate(uptr size, uptr alignment) {
     if (size < alignment) size = alignment;
     CHECK(CanAllocate(size, alignment));
-    return AllocateBySizeClass(SizeClassMap::ClassID(size));
+    return AllocateBySizeClass(ClassID(size));
   }
 
   void Deallocate(void *p) {
@@ -347,7 +347,7 @@ class SizeClassAllocator32 {
   void *Allocate(uptr size, uptr alignment) {
     if (size < alignment) size = alignment;
     CHECK(CanAllocate(size, alignment));
-    return AllocateBySizeClass(SizeClassMap::ClassID(size));
+    return AllocateBySizeClass(ClassID(size));
   }
 
   void Deallocate(void *p) {

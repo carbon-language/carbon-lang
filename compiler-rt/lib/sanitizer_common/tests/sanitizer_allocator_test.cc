@@ -326,9 +326,10 @@ void TestSizeClassAllocatorLocalCache() {
   static THREADLOCAL AllocatorCache static_allocator_cache;
   static_allocator_cache.Init();
   AllocatorCache cache;
-  typename AllocatorCache::Allocator a;
+  typedef typename AllocatorCache::Allocator Allocator;
+  Allocator *a = new Allocator();
 
-  a.Init();
+  a->Init();
   cache.Init();
 
   const uptr kNumAllocs = 10000;
@@ -337,19 +338,20 @@ void TestSizeClassAllocatorLocalCache() {
   for (int i = 0; i < kNumIter; i++) {
     void *allocated[kNumAllocs];
     for (uptr i = 0; i < kNumAllocs; i++) {
-      allocated[i] = cache.Allocate(&a, 0);
+      allocated[i] = cache.Allocate(a, 0);
     }
     for (uptr i = 0; i < kNumAllocs; i++) {
-      cache.Deallocate(&a, 0, allocated[i]);
+      cache.Deallocate(a, 0, allocated[i]);
     }
-    cache.Drain(&a);
-    uptr total_allocated = a.TotalMemoryUsed();
+    cache.Drain(a);
+    uptr total_allocated = a->TotalMemoryUsed();
     if (saved_total)
       CHECK_EQ(saved_total, total_allocated);
     saved_total = total_allocated;
   }
 
-  a.TestOnlyUnmap();
+  a->TestOnlyUnmap();
+  delete a;
 }
 
 #if SANITIZER_WORDSIZE == 64
@@ -357,7 +359,17 @@ TEST(SanitizerCommon, SizeClassAllocator64LocalCache) {
   TestSizeClassAllocatorLocalCache<
       SizeClassAllocatorLocalCache<Allocator64> >();
 }
+
+TEST(SanitizerCommon, SizeClassAllocator64CompactLocalCache) {
+  TestSizeClassAllocatorLocalCache<
+      SizeClassAllocatorLocalCache<Allocator64Compact> >();
+}
 #endif
+
+TEST(SanitizerCommon, SizeClassAllocator32CompactLocalCache) {
+  TestSizeClassAllocatorLocalCache<
+      SizeClassAllocatorLocalCache<Allocator32Compact> >();
+}
 
 TEST(Allocator, Basic) {
   char *p = (char*)InternalAlloc(10);
