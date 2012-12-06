@@ -203,12 +203,6 @@ public:
   ProgramStateRef BindExpr(const Stmt *S, const LocationContext *LCtx,
                                SVal V, bool Invalidate = true) const;
 
-  /// Create a new state by binding the value 'V' and location 'locaton' to the
-  /// statement 'S' in the state's environment.
-  ProgramStateRef bindExprAndLocation(const Stmt *S,
-                                          const LocationContext *LCtx,
-                                          SVal location, SVal V) const;
-
   ProgramStateRef bindLoc(Loc location,
                           SVal V,
                           bool notifyChanges = true) const;

@@ -150,19 +150,6 @@ Environment EnvironmentManager::bindExpr(Environment Env,
   return Environment(F.add(Env.ExprBindings, E, V));
 }
 
-EnvironmentEntry EnvironmentEntry::makeLocation() const {
-  EnvironmentEntry Result = *this;
-  reinterpret_cast<uintptr_t &>(Result.first) |= 0x1;
-  return Result;
-}
-
-Environment EnvironmentManager::bindExprAndLocation(Environment Env,
-                                                    const EnvironmentEntry &E,
-                                                    SVal location, SVal V) {
-  return Environment(F.add(F.add(Env.ExprBindings, E.makeLocation(), location),
-                           E, V));
-}
-
 namespace {
 class MarkLiveCallback : public SymbolVisitor {
   SymbolReaper &SymReaper;
@@ -178,14 +165,6 @@ public:
   }
 };
 } // end anonymous namespace
-
-// In addition to mapping from EnvironmentEntry - > SVals in the Environment,
-// we also maintain a mapping from EnvironmentEntry -> SVals (locations)
-// that were used during a load and store.
-static inline bool IsLocation(const EnvironmentEntry &E) {
-  const Stmt *S = E.getStmt();
-  return (bool) (((uintptr_t) S) & 0x1);
-}
 
 // removeDeadBindings:
 //  - Remove subexpression bindings.
@@ -203,8 +182,6 @@ EnvironmentManager::removeDeadBindings(Environment Env,
   // individually removing all the subexpression bindings (which will greatly
   // outnumber block-level expression bindings).
   Environment NewEnv = getInitialEnvironment();
-  
-  SmallVector<std::pair<EnvironmentEntry, SVal>, 10> deferredLocations;
 
   MarkLiveCallback CB(SymReaper);
   ScanReachableSymbols RSScaner(ST, CB);
@@ -218,15 +195,6 @@ EnvironmentManager::removeDeadBindings(Environment Env,
        I != E; ++I) {
 
     const EnvironmentEntry &BlkExpr = I.getKey();
-    // For recorded locations (used when evaluating loads and stores), we
-    // consider them live only when their associated normal expression is
-    // also live.
-    // NOTE: This assumes that loads/stores that evaluated to UnknownVal
-    // still have an entry in the map.
-    if (IsLocation(BlkExpr)) {
-      deferredLocations.push_back(std::make_pair(BlkExpr, I.getData()));
-      continue;
-    }
     const SVal &X = I.getData();
 
     if (SymReaper.isLive(BlkExpr.getStmt(), BlkExpr.getLocationContext())) {
@@ -248,16 +216,6 @@ EnvironmentManager::removeDeadBindings(Environment Env,
         SymReaper.maybeDead(*SI);
     }
   }
-  
-  // Go through he deferred locations and add them to the new environment if
-  // the correspond Stmt* is in the map as well.
-  for (SmallVectorImpl<std::pair<EnvironmentEntry, SVal> >::iterator
-      I = deferredLocations.begin(), E = deferredLocations.end(); I != E; ++I) {
-    const EnvironmentEntry &En = I->first;
-    const Stmt *S = (Stmt*) (((uintptr_t) En.getStmt()) & (uintptr_t) ~0x1);
-    if (EBMapRef.lookup(EnvironmentEntry(S, En.getLocationContext())))
-      EBMapRef = EBMapRef.add(En, I->second);
-  }
 
   NewEnv.ExprBindings = EBMapRef.asImmutableMap();
   return NewEnv;
@@ -265,30 +223,14 @@ EnvironmentManager::removeDeadBindings(Environment Env,
 
 void Environment::print(raw_ostream &Out, const char *NL,
                         const char *Sep) const {
-  printAux(Out, false, NL, Sep);
-  printAux(Out, true, NL, Sep);
-}
-  
-void Environment::printAux(raw_ostream &Out, bool printLocations,
-                           const char *NL,
-                           const char *Sep) const{
-
   bool isFirst = true;
 
   for (Environment::iterator I = begin(), E = end(); I != E; ++I) {
     const EnvironmentEntry &En = I.getKey();
-    if (IsLocation(En)) {
-      if (!printLocations)
-        continue;
-    }
-    else {
-      if (printLocations)
-        continue;
-    }
     
     if (isFirst) {
       Out << NL << NL
-          << (printLocations ? "Load/Store locations:" : "Expressions:")
+          << "Expressions:"
           << NL;      
       isFirst = false;
     } else {
@@ -296,9 +238,6 @@ void Environment::printAux(raw_ostream &Out, bool printLocations,
     }
     
     const Stmt *S = En.getStmt();
-    if (printLocations) {
-      S = (Stmt*) (((uintptr_t) S) & ((uintptr_t) ~0x1));
-    }
     
     Out << " (" << (const void*) En.getLocationContext() << ','
       << (const void*) S << ") ";

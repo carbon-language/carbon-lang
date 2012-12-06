@@ -268,23 +268,6 @@ ProgramStateRef ProgramState::BindExpr(const Stmt *S,
   return getStateManager().getPersistentState(NewSt);
 }
 
-ProgramStateRef 
-ProgramState::bindExprAndLocation(const Stmt *S, const LocationContext *LCtx,
-                                  SVal location,
-                                  SVal V) const {
-  Environment NewEnv =
-    getStateManager().EnvMgr.bindExprAndLocation(Env,
-                                                 EnvironmentEntry(S, LCtx),
-                                                 location, V);
-
-  if (NewEnv == Env)
-    return this;
-  
-  ProgramState NewSt = *this;
-  NewSt.Env = NewEnv;
-  return getStateManager().getPersistentState(NewSt);
-}
-
 ProgramStateRef ProgramState::assumeInBound(DefinedOrUnknownSVal Idx,
                                       DefinedOrUnknownSVal UpperBound,
                                       bool Assumption,

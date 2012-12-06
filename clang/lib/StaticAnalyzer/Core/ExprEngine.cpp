@@ -1736,20 +1736,15 @@ void ExprEngine::evalLoadCommon(ExplodedNodeSet &Dst,
     state = (*NI)->getState();
     const LocationContext *LCtx = (*NI)->getLocationContext();
 
-    if (location.isUnknown()) {
-      // This is important.  We must nuke the old binding.
-      Bldr.generateNode(NodeEx, *NI,
-                        state->BindExpr(BoundEx, LCtx, UnknownVal()),
-                        tag, ProgramPoint::PostLoadKind);
-    }
-    else {
+    SVal V = UnknownVal();
+    if (location.isValid()) {
       if (LoadTy.isNull())
         LoadTy = BoundEx->getType();
-      SVal V = state->getSVal(cast<Loc>(location), LoadTy);
-      Bldr.generateNode(NodeEx, *NI,
-                        state->bindExprAndLocation(BoundEx, LCtx, location, V),
-                        tag, ProgramPoint::PostLoadKind);
+      V = state->getSVal(cast<Loc>(location), LoadTy);
     }
+
+    Bldr.generateNode(NodeEx, *NI, state->BindExpr(BoundEx, LCtx, V), tag,
+                      ProgramPoint::PostLoadKind);
   }
 }
 

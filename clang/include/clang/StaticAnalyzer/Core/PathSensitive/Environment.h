@@ -33,9 +33,6 @@ class SValBuilder;
 /// other things.
 class EnvironmentEntry : public std::pair<const Stmt*,
                                           const StackFrameContext *> {
-  friend class EnvironmentManager;
-  EnvironmentEntry makeLocation() const;
-
 public:
   EnvironmentEntry(const Stmt *s, const LocationContext *L);
 
@@ -118,13 +115,6 @@ public:
   /// Bind a symbolic value to the given environment entry.
   Environment bindExpr(Environment Env, const EnvironmentEntry &E, SVal V,
                        bool Invalidate);
-  
-  /// Bind the location 'location' and value 'V' to the specified
-  /// environment entry.
-  Environment bindExprAndLocation(Environment Env,
-                                  const EnvironmentEntry &E,
-                                  SVal location,
-                                  SVal V);
 
   Environment removeDeadBindings(Environment Env,
                                  SymbolReaper &SymReaper,
