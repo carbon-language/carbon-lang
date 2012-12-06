@@ -148,17 +148,13 @@ struct GlobalStatus {
   /// an instruction (e.g. a constant expr or GV initializer).
   bool HasNonInstructionUser;
 
-  /// HasPHIUser - Set to true if this global has a user that is a PHI node.
-  bool HasPHIUser;
-
   /// AtomicOrdering - Set to the strongest atomic ordering requirement.
   AtomicOrdering Ordering;
 
   GlobalStatus() : isCompared(false), isLoaded(false), StoredType(NotStored),
                    StoredOnceValue(0), AccessingFunction(0),
                    HasMultipleAccessingFunctions(false),
-                   HasNonInstructionUser(false), HasPHIUser(false),
-                   Ordering(NotAtomic) {}
+                   HasNonInstructionUser(false), Ordering(NotAtomic) {}
 };
 
 }
@@ -274,7 +270,6 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
         // have to be careful about infinite recursion.
         if (PHIUsers.insert(PN))  // Not already visited.
           if (AnalyzeGlobal(I, GS, PHIUsers)) return true;
-        GS.HasPHIUser = true;
       } else if (isa<CmpInst>(I)) {
         GS.isCompared = true;
       } else if (const MemTransferInst *MTI = dyn_cast<MemTransferInst>(I)) {
