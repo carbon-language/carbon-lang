@@ -96,25 +96,38 @@ public:
 
   class Factory {
     typename TreeTy::Factory F;
-    const bool Canonicalize;
+    const bool Canonicalizing;
 
   public:
     Factory(bool canonicalize = true)
-      : Canonicalize(canonicalize) {}
+      : Canonicalizing(canonicalize) {}
     
     Factory(BumpPtrAllocator& Alloc, bool canonicalize = true)
-      : F(Alloc), Canonicalize(canonicalize) {}
+      : F(Alloc), Canonicalizing(canonicalize) {}
 
     ImmutableMap getEmptyMap() { return ImmutableMap(F.getEmptyTree()); }
 
-    ImmutableMap add(ImmutableMap Old, key_type_ref K, data_type_ref D) {
+    ImmutableMap add(ImmutableMap Old, key_type_ref K, data_type_ref D,
+                     bool Canonicalize) {
       TreeTy *T = F.add(Old.Root, std::pair<key_type,data_type>(K,D));
       return ImmutableMap(Canonicalize ? F.getCanonicalTree(T): T);
     }
 
-    ImmutableMap remove(ImmutableMap Old, key_type_ref K) {
+    ImmutableMap add(ImmutableMap Old, key_type_ref K, data_type_ref D) {
+      return add(Old, K, D, Canonicalizing);
+    }
+
+    ImmutableMap remove(ImmutableMap Old, key_type_ref K, bool Canonicalize) {
       TreeTy *T = F.remove(Old.Root,K);
       return ImmutableMap(Canonicalize ? F.getCanonicalTree(T): T);
+    }
+
+    ImmutableMap remove(ImmutableMap Old, key_type_ref K) {
+      return remove(Old, K, Canonicalizing);
+    }
+
+    ImmutableMap getCanonicalMap(ImmutableMap Map) {
+      return ImmutableMap(F.getCanonicalTree(Map.Root));
     }
 
     typename TreeTy::Factory *getTreeFactory() const {
