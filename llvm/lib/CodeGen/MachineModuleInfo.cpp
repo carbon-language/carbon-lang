@@ -253,7 +253,7 @@ void MMIAddrLabelMapCallbackPtr::allUsesReplacedWith(Value *V2) {
 MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI,
                                      const MCRegisterInfo &MRI,
                                      const MCObjectFileInfo *MOFI)
-  : ImmutablePass(ID), Context(MAI, MRI, MOFI) {
+  : ImmutablePass(ID), Context(MAI, MRI, MOFI, 0, false) {
   initializeMachineModuleInfoPass(*PassRegistry::getPassRegistry());
 }
 
@@ -270,6 +270,9 @@ MachineModuleInfo::~MachineModuleInfo() {
 }
 
 bool MachineModuleInfo::doInitialization(Module &M) {
+  
+  Context.doInitialization();
+
   ObjFileMMI = 0;
   CompactUnwindEncoding = 0;
   CurCallSite = 0;
@@ -290,6 +293,8 @@ bool MachineModuleInfo::doFinalization(Module &M) {
 
   delete AddrLabelSymbols;
   AddrLabelSymbols = 0;
+
+  Context.doFinalization();
 
   return false;
 }
