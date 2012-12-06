@@ -241,7 +241,7 @@ private:
     IsDefined(isDefined), IsRedeclaration(0), HasRedeclaration(0),
     DeclImplementation(impControl), objcDeclQualifier(OBJC_TQ_None),
     RelatedResultType(HasRelatedResultType),
-    SelLocsKind(SelLoc_StandardNoSpace), IsOverriding(0),
+    SelLocsKind(SelLoc_StandardNoSpace), IsOverriding(0), HasSkippedBody(0),
     MethodDeclType(T), ResultTInfo(ResultTInfo),
     ParamsAndSelLocs(0), NumParams(0),
     DeclEndLoc(endLoc), Body(), SelfDecl(0), CmdDecl(0) {
