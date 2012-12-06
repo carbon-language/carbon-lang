@@ -23,13 +23,19 @@
 #if SANITIZER_WORDSIZE == 64
 static const uptr kAllocatorSpace = 0x700000000000ULL;
 static const uptr kAllocatorSize  = 0x010000000000ULL;  // 1T.
+static const u64 kAddressSpaceSize = 1ULL << 47;
 
 typedef SizeClassAllocator64<
   kAllocatorSpace, kAllocatorSize, 16, DefaultSizeClassMap> Allocator64;
 
 typedef SizeClassAllocator64<
   kAllocatorSpace, kAllocatorSize, 16, CompactSizeClassMap> Allocator64Compact;
+#else
+static const u64 kAddressSpaceSize = 1ULL << 32;
 #endif
+
+typedef SizeClassAllocator32<
+  0, kAddressSpaceSize, 16, CompactSizeClassMap> Allocator32Compact;
 
 template <class SizeClassMap>
 void TestSizeClassMap() {
@@ -71,8 +77,8 @@ TEST(SanitizerCommon, CompactSizeClassMap) {
 
 template <class Allocator>
 void TestSizeClassAllocator() {
-  Allocator a;
-  a.Init();
+  Allocator *a = new Allocator;
+  a->Init();
 
   static const uptr sizes[] = {1, 16, 30, 40, 100, 1000, 10000,
     50000, 60000, 100000, 300000, 500000, 1000000, 2000000};
@@ -82,19 +88,19 @@ void TestSizeClassAllocator() {
   uptr last_total_allocated = 0;
   for (int i = 0; i < 5; i++) {
     // Allocate a bunch of chunks.
-    for (uptr s = 0; s < sizeof(sizes) /sizeof(sizes[0]); s++) {
+    for (uptr s = 0; s < ARRAY_SIZE(sizes); s++) {
       uptr size = sizes[s];
-      if (!a.CanAllocate(size, 1)) continue;
+      if (!a->CanAllocate(size, 1)) continue;
       // printf("s = %ld\n", size);
       uptr n_iter = std::max((uptr)2, 1000000 / size);
       for (uptr i = 0; i < n_iter; i++) {
-        void *x = a.Allocate(size, 1);
+        void *x = a->Allocate(size, 1);
         allocated.push_back(x);
-        CHECK(a.PointerIsMine(x));
-        CHECK_GE(a.GetActuallyAllocatedSize(x), size);
-        uptr class_id = a.GetSizeClass(x);
+        CHECK(a->PointerIsMine(x));
+        CHECK_GE(a->GetActuallyAllocatedSize(x), size);
+        uptr class_id = a->GetSizeClass(x);
         CHECK_EQ(class_id, Allocator::SizeClassMapT::ClassID(size));
-        uptr *metadata = reinterpret_cast<uptr*>(a.GetMetaData(x));
+        uptr *metadata = reinterpret_cast<uptr*>(a->GetMetaData(x));
         metadata[0] = reinterpret_cast<uptr>(x) + 1;
         metadata[1] = 0xABCD;
       }
@@ -102,19 +108,20 @@ void TestSizeClassAllocator() {
     // Deallocate all.
     for (uptr i = 0; i < allocated.size(); i++) {
       void *x = allocated[i];
-      uptr *metadata = reinterpret_cast<uptr*>(a.GetMetaData(x));
+      uptr *metadata = reinterpret_cast<uptr*>(a->GetMetaData(x));
       CHECK_EQ(metadata[0], reinterpret_cast<uptr>(x) + 1);
       CHECK_EQ(metadata[1], 0xABCD);
-      a.Deallocate(x);
+      a->Deallocate(x);
     }
     allocated.clear();
-    uptr total_allocated = a.TotalMemoryUsed();
+    uptr total_allocated = a->TotalMemoryUsed();
     if (last_total_allocated == 0)
       last_total_allocated = total_allocated;
     CHECK_EQ(last_total_allocated, total_allocated);
   }
 
-  a.TestOnlyUnmap();
+  a->TestOnlyUnmap();
+  delete a;
 }
 
 #if SANITIZER_WORDSIZE == 64
@@ -126,6 +133,10 @@ TEST(SanitizerCommon, SizeClassAllocator64Compact) {
   TestSizeClassAllocator<Allocator64Compact>();
 }
 #endif
+
+TEST(SanitizerCommon, SizeClassAllocator32Compact) {
+  TestSizeClassAllocator<Allocator32Compact>();
+}
 
 template <class Allocator>
 void SizeClassAllocator64MetadataStress() {
@@ -181,7 +192,6 @@ TEST(SanitizerCommon, SizeClassAllocator64Overflow) {
 #endif
 
 TEST(SanitizerCommon, LargeMmapAllocator) {
-  fprintf(stderr, "xxxx %ld\n", 0L);
   LargeMmapAllocator a;
   a.Init();
 
@@ -190,7 +200,6 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   static const uptr size = 1000;
   // Allocate some.
   for (int i = 0; i < kNumAllocs; i++) {
-    fprintf(stderr, "zzz0 %ld\n", size);
     allocated[i] = a.Allocate(size, 1);
   }
   // Deallocate all.
@@ -205,7 +214,6 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
 
   // Allocate some more, also add metadata.
   for (int i = 0; i < kNumAllocs; i++) {
-    fprintf(stderr, "zzz1 %ld\n", size);
     void *x = a.Allocate(size, 1);
     CHECK_GE(a.GetActuallyAllocatedSize(x), size);
     uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(x));
@@ -227,7 +235,6 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   for (uptr alignment = 8; alignment <= max_alignment; alignment *= 2) {
     for (int i = 0; i < kNumAllocs; i++) {
       uptr size = ((i % 10) + 1) * 4096;
-      fprintf(stderr, "zzz1 %ld %ld\n", size, alignment);
       allocated[i] = a.Allocate(size, alignment);
       CHECK_EQ(0, (uptr)allocated[i] % alignment);
       char *p = (char*)allocated[i];
