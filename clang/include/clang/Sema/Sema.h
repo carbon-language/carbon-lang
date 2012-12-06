@@ -1412,6 +1412,7 @@ public:
   void computeNRVO(Stmt *Body, sema::FunctionScopeInfo *Scope);
   Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body);
   Decl *ActOnFinishFunctionBody(Decl *Decl, Stmt *Body, bool IsInstantiation);
+  Decl *ActOnSkippedFunctionBody(Decl *Decl);
 
   /// ActOnFinishDelayedAttribute - Invoked when we have finished parsing an
   /// attribute for which parsing is delayed.

@@ -528,6 +528,7 @@ void ASTDeclReader::VisitFunctionDecl(FunctionDecl *FD) {
   FD->IsExplicitlyDefaulted = Record[Idx++];
   FD->HasImplicitReturnZero = Record[Idx++];
   FD->IsConstexpr = Record[Idx++];
+  FD->HasSkippedBody = Record[Idx++];
   FD->EndRangeLoc = ReadSourceLocation(Record, Idx);
 
   switch ((FunctionDecl::TemplatedKind)Record[Idx++]) {
@@ -652,6 +653,7 @@ void ASTDeclReader::VisitObjCMethodDecl(ObjCMethodDecl *MD) {
   MD->setPropertyAccessor(Record[Idx++]);
   MD->setDefined(Record[Idx++]);
   MD->IsOverriding = Record[Idx++];
+  MD->HasSkippedBody = Record[Idx++];
 
   MD->IsRedeclaration = Record[Idx++];
   MD->HasRedeclaration = Record[Idx++];

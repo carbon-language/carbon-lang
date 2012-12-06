@@ -328,6 +328,7 @@ void ASTDeclWriter::VisitFunctionDecl(FunctionDecl *D) {
   Record.push_back(D->isExplicitlyDefaulted());
   Record.push_back(D->hasImplicitReturnZero());
   Record.push_back(D->isConstexpr());
+  Record.push_back(D->HasSkippedBody);
   Writer.AddSourceLocation(D->getLocEnd(), Record);
 
   Record.push_back(D->getTemplatedKind());
@@ -419,6 +420,7 @@ void ASTDeclWriter::VisitObjCMethodDecl(ObjCMethodDecl *D) {
   Record.push_back(D->isPropertyAccessor());
   Record.push_back(D->isDefined());
   Record.push_back(D->IsOverriding);
+  Record.push_back(D->HasSkippedBody);
 
   Record.push_back(D->IsRedeclaration);
   Record.push_back(D->HasRedeclaration);

@@ -2006,7 +2006,7 @@ Decl *Parser::ParseFunctionStatementBody(Decl *Decl, ParseScope &BodyScope) {
   if (SkipFunctionBodies && Actions.canSkipFunctionBody(Decl) &&
       trySkippingFunctionBody()) {
     BodyScope.Exit();
-    return Actions.ActOnFinishFunctionBody(Decl, 0);
+    return Actions.ActOnSkippedFunctionBody(Decl);
   }
 
   PrettyDeclStackTraceEntry CrashInfo(Actions, Decl, LBraceLoc,
@@ -2049,7 +2049,7 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl, ParseScope &BodyScope) {
   if (SkipFunctionBodies && Actions.canSkipFunctionBody(Decl) &&
       trySkippingFunctionBody()) {
     BodyScope.Exit();
-    return Actions.ActOnFinishFunctionBody(Decl, 0);
+    return Actions.ActOnSkippedFunctionBody(Decl);
   }
 
   SourceLocation LBraceLoc = Tok.getLocation();

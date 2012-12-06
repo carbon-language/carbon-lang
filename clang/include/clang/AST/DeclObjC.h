@@ -159,6 +159,9 @@ private:
   /// method in the interface or its categories.
   unsigned IsOverriding : 1;
 
+  /// \brief Indicates if the method was a definition but its body was skipped.
+  unsigned HasSkippedBody : 1;
+
   // Result type of this method.
   QualType MethodDeclType;
 
@@ -428,6 +431,10 @@ public:
   /// method in the interface or its categories.
   void getOverriddenMethods(
                      SmallVectorImpl<const ObjCMethodDecl *> &Overridden) const;
+
+  /// \brief True if the method was a definition but its body was skipped.
+  bool hasSkippedBody() const { return HasSkippedBody; }
+  void setHasSkippedBody(bool Skipped = true) { HasSkippedBody = Skipped; }
 
   /// \brief Returns the property associated with this method's selector.
   ///

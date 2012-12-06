@@ -1472,6 +1472,10 @@ private:
   bool IsLateTemplateParsed : 1;
   bool IsConstexpr : 1;
 
+  /// \brief Indicates if the function was a definition but its body was
+  /// skipped.
+  unsigned HasSkippedBody : 1;
+
   /// \brief End part of this FunctionDecl's source range.
   ///
   /// We could compute the full range in getSourceRange(). However, when we're
@@ -1781,6 +1785,10 @@ public:
 
   /// \brief Determines whether this is a global function.
   bool isGlobal() const;
+
+  /// \brief True if the function was a definition but its body was skipped.
+  bool hasSkippedBody() const { return HasSkippedBody; }
+  void setHasSkippedBody(bool Skipped = true) { HasSkippedBody = Skipped; }
 
   void setPreviousDeclaration(FunctionDecl * PrevDecl);
 

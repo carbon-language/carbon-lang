@@ -8016,6 +8016,14 @@ bool Sema::canSkipFunctionBody(Decl *D) {
   return !FD->isConstexpr();
 }
 
+Decl *Sema::ActOnSkippedFunctionBody(Decl *Decl) {
+  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(Decl))
+    FD->setHasSkippedBody();
+  else if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(Decl))
+    MD->setHasSkippedBody();
+  return ActOnFinishFunctionBody(Decl, 0);
+}
+
 Decl *Sema::ActOnFinishFunctionBody(Decl *D, Stmt *BodyArg) {
   return ActOnFinishFunctionBody(D, BodyArg, false);
 }
