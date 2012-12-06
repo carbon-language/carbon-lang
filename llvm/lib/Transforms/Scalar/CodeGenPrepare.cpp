@@ -195,6 +195,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
     }
 
     // Delete the dead blocks and any of their dead successors.
+    MadeChange |= !WorkList.empty();
     while (!WorkList.empty()) {
       BasicBlock *BB = *WorkList.begin();
       WorkList.erase(BB);
