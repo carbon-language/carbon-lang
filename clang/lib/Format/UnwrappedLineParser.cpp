@@ -22,9 +22,11 @@
 namespace clang {
 namespace format {
 
-UnwrappedLineParser::UnwrappedLineParser(Lexer &Lex, SourceManager &SourceMgr,
+UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style, Lexer &Lex,
+                                         SourceManager &SourceMgr,
                                          UnwrappedLineConsumer &Callback)
     : GreaterStashed(false),
+      Style(Style),
       Lex(Lex),
       SourceMgr(SourceMgr),
       IdentTable(Lex.getLangOpts()),
@@ -62,20 +64,16 @@ bool UnwrappedLineParser::parseLevel() {
   return Error;
 }
 
-bool UnwrappedLineParser::parseBlock() {
+bool UnwrappedLineParser::parseBlock(unsigned AddLevels) {
   assert(FormatTok.Tok.is(tok::l_brace) && "'{' expected");
   nextToken();
 
-  // FIXME: Remove this hack to handle namespaces.
-  bool IsNamespace = Line.Tokens[0].Tok.is(tok::kw_namespace);
-
   addUnwrappedLine();
 
-  if (!IsNamespace)
-    ++Line.Level;
+  Line.Level += AddLevels;
   parseLevel();
-  if (!IsNamespace)
-    --Line.Level;
+  Line.Level -= AddLevels;
+
   // FIXME: Add error handling.
   if (!FormatTok.Tok.is(tok::r_brace))
     return true;
@@ -114,6 +112,9 @@ void UnwrappedLineParser::parseStatement() {
   }
 
   switch (FormatTok.Tok.getKind()) {
+  case tok::kw_namespace:
+    parseNamespace();
+    return;
   case tok::kw_public:
   case tok::kw_protected:
   case tok::kw_private:
@@ -224,6 +225,18 @@ void UnwrappedLineParser::parseIfThenElse() {
   }
 }
 
+void UnwrappedLineParser::parseNamespace() {
+  assert(FormatTok.Tok.is(tok::kw_namespace) && "'namespace' expected");
+  nextToken();
+  if (FormatTok.Tok.is(tok::identifier))
+    nextToken();
+  if (FormatTok.Tok.is(tok::l_brace)) {
+    parseBlock(0);
+    addUnwrappedLine();
+  }
+  // FIXME: Add error handling.
+}
+
 void UnwrappedLineParser::parseForOrWhileLoop() {
   assert((FormatTok.Tok.is(tok::kw_for) || FormatTok.Tok.is(tok::kw_while)) &&
          "'for' or 'while' expected");
@@ -290,13 +303,13 @@ void UnwrappedLineParser::parseSwitch() {
   nextToken();
   parseParens();
   if (FormatTok.Tok.is(tok::l_brace)) {
-    parseBlock();
+    parseBlock(Style.IndentCaseLabels ? 2 : 1);
     addUnwrappedLine();
   } else {
     addUnwrappedLine();
-    ++Line.Level;
+    Line.Level += (Style.IndentCaseLabels ? 2 : 1);
     parseStatement();
-    --Line.Level;
+    Line.Level -= (Style.IndentCaseLabels ? 2 : 1);
   }
 }
 

@@ -21,6 +21,7 @@
 
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Format/Format.h"
 #include "clang/Lex/Lexer.h"
 
 namespace clang {
@@ -78,7 +79,8 @@ public:
 
 class UnwrappedLineParser {
 public:
-  UnwrappedLineParser(Lexer &Lex, SourceManager &SourceMgr,
+  UnwrappedLineParser(const FormatStyle &Style, Lexer &Lex,
+                      SourceManager &SourceMgr,
                       UnwrappedLineConsumer &Callback);
 
   /// Returns true in case of a structural error.
@@ -86,7 +88,7 @@ public:
 
 private:
   bool parseLevel();
-  bool parseBlock();
+  bool parseBlock(unsigned AddLevels = 1);
   void parsePPDirective();
   void parseComment();
   void parseStatement();
@@ -97,6 +99,7 @@ private:
   void parseLabel();
   void parseCaseLabel();
   void parseSwitch();
+  void parseNamespace();
   void parseAccessSpecifier();
   void parseEnum();
   void addUnwrappedLine();
@@ -111,6 +114,7 @@ private:
   FormatToken FormatTok;
   bool GreaterStashed;
 
+  const FormatStyle &Style;
   Lexer &Lex;
   SourceManager &SourceMgr;
   IdentifierTable IdentTable;

@@ -46,6 +46,12 @@ struct FormatStyle {
   /// \brief Split two consecutive closing '>' by a space, i.e. use
   /// A<A<int> > instead of A<A<int>>.
   bool SplitTemplateClosingGreater;
+
+  /// \brief Indent case labels one level from the switch statement.
+  ///
+  /// When false, use the same indentation level as for the switch statement.
+  /// Switch statement body is always indented one level more than case labels.
+  bool IndentCaseLabels;
 };
 
 /// \brief Returns a format style complying with the LLVM coding standards:

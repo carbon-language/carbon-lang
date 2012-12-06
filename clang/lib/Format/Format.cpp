@@ -57,6 +57,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.PointerAndReferenceBindToType = false;
   LLVMStyle.AccessModifierOffset = -2;
   LLVMStyle.SplitTemplateClosingGreater = true;
+  LLVMStyle.IndentCaseLabels = false;
   return LLVMStyle;
 }
 
@@ -67,6 +68,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.PointerAndReferenceBindToType = true;
   GoogleStyle.AccessModifierOffset = -1;
   GoogleStyle.SplitTemplateClosingGreater = false;
+  GoogleStyle.IndentCaseLabels = true;
   return GoogleStyle;
 }
 
@@ -760,7 +762,7 @@ public:
   }
 
   tooling::Replacements format() {
-    UnwrappedLineParser Parser(Lex, SourceMgr, *this);
+    UnwrappedLineParser Parser(Style, Lex, SourceMgr, *this);
     StructuralError = Parser.parse();
     for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),
                                               E = UnwrappedLines.end();
