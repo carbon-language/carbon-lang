@@ -19,9 +19,10 @@ $ rmdir src
 $ mv *.h include/gtest/internal/
 
 # Update paths to the included files
+$ perl -pi -e 's|^#include "src/|#include "|' gtest-all.cc
 $ perl -pi -e 's|^#include "src/|#include "gtest/internal/|' *.cc
 
-$ rm -f gtest-all.cc gtest_main.cc
+$ rm -f gtest_main.cc
 
 $ mv COPYING LICENSE.TXT
 
