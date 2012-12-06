@@ -500,7 +500,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     VAHelper->finalizeInstrumentation();
 
     // Delayed instrumentation of StoreInst.
-    // This make add new checks to inserted later.
+    // This may add new checks to be inserted later.
     materializeStores();
 
     // Insert shadow value checks.
