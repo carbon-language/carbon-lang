@@ -97,7 +97,26 @@ struct AllocatorListNode {
   AllocatorListNode *next;
 };
 
-typedef IntrusiveList<AllocatorListNode> AllocatorFreeList;
+class AllocatorFreeList: public IntrusiveList<AllocatorListNode> {
+ public:
+  // Move at most max_count chunks to other_free_list.
+  void BulkAllocate(uptr max_count, AllocatorFreeList *other_free_list) {
+    CHECK(!empty());
+    CHECK(other_free_list->empty());
+    if (size() <= max_count) {
+      other_free_list->append_front(this);
+      CHECK(empty());
+    } else {
+      for (uptr i = 0; i < max_count; i++) {
+        AllocatorListNode *node = front();
+        pop_front();
+        other_free_list->push_front(node);
+      }
+      CHECK(!empty());
+    }
+    CHECK(!other_free_list->empty());
+  }
+};
 
 // SizeClassAllocator64 -- allocator for 64-bit address space.
 //
@@ -146,18 +165,8 @@ class SizeClassAllocator64 {
     if (region->free_list.empty()) {
       PopulateFreeList(class_id, region);
     }
-    CHECK(!region->free_list.empty());
-    uptr count = SizeClassMap::MaxCached(class_id);
-    if (region->free_list.size() <= count) {
-      free_list->append_front(&region->free_list);
-    } else {
-      for (uptr i = 0; i < count; i++) {
-        AllocatorListNode *node = region->free_list.front();
-        region->free_list.pop_front();
-        free_list->push_front(node);
-      }
-    }
-    CHECK(!free_list->empty());
+    region->free_list.BulkAllocate(
+        SizeClassMap::MaxCached(class_id), free_list);
   }
 
   // Swallow the entire free_list for the given class_id.
