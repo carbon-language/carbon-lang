@@ -14,7 +14,7 @@ ifndef CLANG_LEVEL
 
 IS_UNITTEST_LEVEL := 1
 CLANG_LEVEL := ..
-PARALLEL_DIRS = ASTMatchers Basic AST Frontend Lex Tooling
+PARALLEL_DIRS = ASTMatchers Basic AST Frontend Lex Tooling Format
 
 endif  # CLANG_LEVEL
 
