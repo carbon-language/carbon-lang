@@ -366,6 +366,22 @@ class SizeClassAllocator32 {
     return reinterpret_cast<void*>(meta);
   }
 
+  // Allocate several chunks of the given class_id.
+  void BulkAllocate(uptr class_id, AllocatorFreeList *free_list) {
+    SizeClassInfo *sci = GetSizeClassInfo(class_id);
+    SpinMutexLock l(&sci->mutex);
+    EnsureSizeClassHasAvailableChunks(sci, class_id);
+    CHECK(!sci->free_list.empty());
+    sci->free_list.BulkAllocate(SizeClassMap::MaxCached(class_id), free_list);
+  }
+
+  // Swallow the entire free_list for the given class_id.
+  void BulkDeallocate(uptr class_id, AllocatorFreeList *free_list) {
+    SizeClassInfo *sci = GetSizeClassInfo(class_id);
+    SpinMutexLock l(&sci->mutex);
+    sci->free_list.append_front(free_list);
+  }
+
   bool PointerIsMine(void *p) {
     return possible_regions_[ComputeRegionId(reinterpret_cast<uptr>(p))] != 0;
   }
@@ -389,6 +405,8 @@ class SizeClassAllocator32 {
     CHECK(PointerIsMine(p));
     return SizeClassMap::Size(GetSizeClass(p));
   }
+
+  uptr ClassID(uptr size) { return SizeClassMap::ClassID(size); }
 
   uptr TotalMemoryUsed() {
     // No need to lock here.
