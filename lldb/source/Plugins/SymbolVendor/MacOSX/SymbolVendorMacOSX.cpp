@@ -183,17 +183,15 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp)
             {
                 // No symbol file was specified in the module, lets try and find
                 // one ourselves.
-                const FileSpec &file_spec = obj_file->GetFileSpec();
-                if (file_spec)
-                {
-                    ModuleSpec module_spec(file_spec, module_sp->GetArchitecture());
-                    module_spec.GetUUID() = module_sp->GetUUID();
-                    dsym_fspec = Symbols::LocateExecutableSymbolFile (module_spec);
-                    if (module_spec.GetSourceMappingList().GetSize())
-                    {
-                        module_sp->GetSourceMappingList().Append (module_spec.GetSourceMappingList (), true);
-                    }
-                }
+                FileSpec file_spec = obj_file->GetFileSpec();
+                if (!file_spec)
+                    file_spec = module_sp->GetFileSpec();
+                
+                ModuleSpec module_spec(file_spec, module_sp->GetArchitecture());
+                module_spec.GetUUID() = module_sp->GetUUID();
+                dsym_fspec = Symbols::LocateExecutableSymbolFile (module_spec);
+                if (module_spec.GetSourceMappingList().GetSize())
+                    module_sp->GetSourceMappingList().Append (module_spec.GetSourceMappingList (), true);
             }
             
             if (dsym_fspec)
