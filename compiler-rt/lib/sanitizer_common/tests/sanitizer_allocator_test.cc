@@ -139,39 +139,43 @@ TEST(SanitizerCommon, SizeClassAllocator32Compact) {
 }
 
 template <class Allocator>
-void SizeClassAllocator64MetadataStress() {
-  Allocator a;
-  a.Init();
+void SizeClassAllocatorMetadataStress() {
+  Allocator *a = new Allocator;
+  a->Init();
   static volatile void *sink;
 
   const uptr kNumAllocs = 10000;
   void *allocated[kNumAllocs];
   for (uptr i = 0; i < kNumAllocs; i++) {
     uptr size = (i % 4096) + 1;
-    void *x = a.Allocate(size, 1);
+    void *x = a->Allocate(size, 1);
     allocated[i] = x;
   }
   // Get Metadata kNumAllocs^2 times.
   for (uptr i = 0; i < kNumAllocs * kNumAllocs; i++) {
-    sink = a.GetMetaData(allocated[i % kNumAllocs]);
+    sink = a->GetMetaData(allocated[i % kNumAllocs]);
   }
   for (uptr i = 0; i < kNumAllocs; i++) {
-    a.Deallocate(allocated[i]);
+    a->Deallocate(allocated[i]);
   }
 
-  a.TestOnlyUnmap();
+  a->TestOnlyUnmap();
   (void)sink;
+  delete a;
 }
 
 #if SANITIZER_WORDSIZE == 64
 TEST(SanitizerCommon, SizeClassAllocator64MetadataStress) {
-  SizeClassAllocator64MetadataStress<Allocator64>();
+  SizeClassAllocatorMetadataStress<Allocator64>();
 }
 
 TEST(SanitizerCommon, SizeClassAllocator64CompactMetadataStress) {
-  SizeClassAllocator64MetadataStress<Allocator64Compact>();
+  SizeClassAllocatorMetadataStress<Allocator64Compact>();
 }
 #endif
+TEST(SanitizerCommon, SizeClassAllocator32CompactMetadataStress) {
+  SizeClassAllocatorMetadataStress<Allocator32Compact>();
+}
 
 template<class Allocator>
 void FailInAssertionOnOOM() {
