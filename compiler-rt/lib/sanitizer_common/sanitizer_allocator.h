@@ -97,8 +97,7 @@ struct AllocatorListNode {
   AllocatorListNode *next;
 };
 
-class AllocatorFreeList: public IntrusiveList<AllocatorListNode> {
- public:
+struct AllocatorFreeList: IntrusiveList<AllocatorListNode> {
   // Move at most max_count chunks to other_free_list.
   void BulkAllocate(uptr max_count, AllocatorFreeList *other_free_list) {
     CHECK(!empty());
