@@ -294,6 +294,7 @@ namespace llvm {
                                     bool MemcpyStrSrc,
                                     MachineFunction &MF) const;
 
+    using TargetLowering::isZExtFree;
     virtual bool isZExtFree(SDValue Val, EVT VT2) const;
 
     /// isLegalAddressingMode - Return true if the addressing mode represented
