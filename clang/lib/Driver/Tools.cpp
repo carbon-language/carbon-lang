@@ -1227,51 +1227,14 @@ void Clang::AddX86TargetArgs(const ArgList &Args,
   }
 }
 
-static Arg* getLastHexagonArchArg (const ArgList &Args)
-{
-  Arg * A = NULL;
-
-  for (ArgList::const_iterator it = Args.begin(), ie = Args.end();
-       it != ie; ++it) {
-    if ((*it)->getOption().matches(options::OPT_march_EQ) ||
-        (*it)->getOption().matches(options::OPT_mcpu_EQ)) {
-      A = *it;
-      A->claim();
-    }
-    else if ((*it)->getOption().matches(options::OPT_m_Joined)){
-      StringRef Value = (*it)->getValue(0);
-      if (Value.startswith("v")) {
-        A = *it;
-        A->claim();
-      }
-    }
-  }
-  return A;
-}
-
-static StringRef getHexagonTargetCPU(const ArgList &Args)
-{
-  Arg *A;
-  llvm::StringRef WhichHexagon;
-
-  // Select the default CPU (v4) if none was given or detection failed.
-  if ((A = getLastHexagonArchArg (Args))) {
-    WhichHexagon = A->getValue();
-    if (WhichHexagon == "")
-      return "v4";
-    else
-      return WhichHexagon;
-  }
-  else
-    return "v4";
-}
-
 void Clang::AddHexagonTargetArgs(const ArgList &Args,
                                  ArgStringList &CmdArgs) const {
   llvm::Triple Triple = getToolChain().getTriple();
 
   CmdArgs.push_back("-target-cpu");
-  CmdArgs.push_back(Args.MakeArgString("hexagon" + getHexagonTargetCPU(Args)));
+  CmdArgs.push_back(Args.MakeArgString(
+                      "hexagon"
+                      + toolchains::Hexagon_TC::GetTargetCPU(Args)));
   CmdArgs.push_back("-fno-signed-char");
 
   if (Args.hasArg(options::OPT_mqdsp6_compat))
@@ -3506,7 +3469,7 @@ void hexagon::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
   ArgStringList CmdArgs;
 
   std::string MarchString = "-march=";
-  MarchString += getHexagonTargetCPU(Args);
+  MarchString += toolchains::Hexagon_TC::GetTargetCPU(Args);
   CmdArgs.push_back(Args.MakeArgString(MarchString));
 
   RenderExtraToolArgs(JA, CmdArgs);
@@ -3588,17 +3551,8 @@ void hexagon::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   RenderExtraToolArgs(JA, CmdArgs);
 
-  // Add Arch Information
-  Arg *A;
-  if ((A = getLastHexagonArchArg(Args))) {
-    if (A->getOption().matches(options::OPT_m_Joined))
-      A->render(Args, CmdArgs);
-    else
-      CmdArgs.push_back (Args.MakeArgString("-m" + getHexagonTargetCPU(Args)));
-  }
-  else {
-    CmdArgs.push_back (Args.MakeArgString("-m" + getHexagonTargetCPU(Args)));
-  }
+  std::string MarchString = toolchains::Hexagon_TC::GetTargetCPU(Args);
+  CmdArgs.push_back(Args.MakeArgString("-m" + MarchString));
 
   CmdArgs.push_back("-mqdsp6-compat");
 

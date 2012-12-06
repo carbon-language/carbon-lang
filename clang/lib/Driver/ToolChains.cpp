@@ -1520,6 +1520,42 @@ void Hexagon_TC::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   IncludeDir.appendComponent(Ver);
   addSystemInclude(DriverArgs, CC1Args, IncludeDir.str());
 }
+
+static Arg *GetLastHexagonArchArg (const ArgList &Args)
+{
+  Arg *A = NULL;
+
+  for (ArgList::const_iterator it = Args.begin(), ie = Args.end();
+       it != ie; ++it) {
+    if ((*it)->getOption().matches(options::OPT_march_EQ) ||
+        (*it)->getOption().matches(options::OPT_mcpu_EQ)) {
+      A = *it;
+      A->claim();
+    } else if ((*it)->getOption().matches(options::OPT_m_Joined)) {
+      StringRef Value = (*it)->getValue(0);
+      if (Value.startswith("v")) {
+        A = *it;
+        A->claim();
+      }
+    }
+  }
+  return A;
+}
+
+StringRef Hexagon_TC::GetTargetCPU(const ArgList &Args)
+{
+  // Select the default CPU (v4) if none was given or detection failed.
+  Arg *A = GetLastHexagonArchArg (Args);
+  if (A) {
+    llvm::StringRef WhichHexagon = A->getValue();
+    if (WhichHexagon.startswith("hexagon"))
+      return WhichHexagon.substr(sizeof("hexagon") - 1);
+    if (WhichHexagon != "")
+      return WhichHexagon;
+  }
+
+  return "v4";
+}
 // End Hexagon
 
 /// TCEToolChain - A tool chain using the llvm bitcode tools to perform

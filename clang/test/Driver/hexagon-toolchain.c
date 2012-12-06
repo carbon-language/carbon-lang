@@ -72,3 +72,41 @@
 // CHECK006: "-cc1"
 // CHECK006-NOT: "-internal-isystem" "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/hexagon/include/c++/4.4.0"
 // CHECK006-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-as"
+
+// -----------------------------------------------------------------------------
+// Test -march=<archname> -mcpu=<archname> -mv<number>
+// -----------------------------------------------------------------------------
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -march=hexagonv3 \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK007 %s
+// CHECK007: "-cc1" {{.*}} "-target-cpu" "hexagonv3"
+// CHECK007-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-as"{{.*}} "-march=v3"
+// CHECK007-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-gcc"{{.*}} "-mv3"
+
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -mcpu=hexagonv5 \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK008 %s
+// CHECK008: "-cc1" {{.*}} "-target-cpu" "hexagonv5"
+// CHECK008-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-as"{{.*}} "-march=v5"
+// CHECK008-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-gcc"{{.*}} "-mv5"
+
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -mv2 \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK009 %s
+// CHECK009: "-cc1" {{.*}} "-target-cpu" "hexagonv2"
+// CHECK009-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-as"{{.*}} "-march=v2"
+// CHECK009-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-gcc"{{.*}} "-mv2"
+
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK010 %s
+// CHECK010: "-cc1" {{.*}} "-target-cpu" "hexagonv4"
+// CHECK010-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-as"{{.*}} "-march=v4"
+// CHECK010-NEXT: "{{.*}}/Inputs/hexagon_tree/qc/bin/../../gnu/bin/hexagon-gcc"{{.*}} "-mv4"

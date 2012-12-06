@@ -530,6 +530,8 @@ public:
   StringRef GetGCCLibAndIncVersion() const { return GCCLibAndIncVersion.Text; }
 
   static std::string GetGnuDir(const std::string &InstalledDir);
+
+  static StringRef GetTargetCPU(const ArgList &Args);
 };
 
 /// TCEToolChain - A tool chain using the llvm bitcode tools to perform
