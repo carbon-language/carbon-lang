@@ -364,6 +364,9 @@ TEST_F(FormatTest, UndestandsUnaryOperators) {
   verifyFormat("if (i != -1) {\n}");
   verifyFormat("if (i > -1) {\n}");
   verifyFormat("if (i < -1) {\n}");
+  verifyFormat("++(a->f());");
+  verifyFormat("--(a->f());");
+  verifyFormat("if (!(a->f())) {\n}");
 }
 
 TEST_F(FormatTest, UndestandsOverloadedOperators) {

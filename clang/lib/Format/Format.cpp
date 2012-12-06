@@ -618,12 +618,24 @@ private:
 
   bool isUnaryOperator(unsigned Index) {
     const Token &Tok = Line.Tokens[Index].Tok;
+
+    // '++', '--' and '!' are always unary operators.
+    if (Tok.is(tok::minusminus) || Tok.is(tok::plusplus) ||
+        Tok.is(tok::exclaim))
+      return true;
+
+    // The other possible unary operators are '+' and '-' as we
+    // determine the usage of '*' and '&' in determineStarAmpUsage().
     if (Tok.isNot(tok::minus) && Tok.isNot(tok::plus))
       return false;
+
+    // Use heuristics to recognize unary operators.
     const Token &PreviousTok = Line.Tokens[Index - 1].Tok;
     if (PreviousTok.is(tok::equal) || PreviousTok.is(tok::l_paren) ||
         PreviousTok.is(tok::comma) || PreviousTok.is(tok::l_square))
       return true;
+
+    // Fall back to marking the token as binary operator.
     return Annotations[Index - 1].Type == TokenAnnotation::TT_BinaryOperator;
   }
 
