@@ -98,6 +98,24 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Set environment variables for process before launching.</td></tr>
+                        <td class="content">
+                            <b>(gdb)</b> set env DEBUG 1<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> settings set target.env-vars DEBUG=1<br>
+                            <b>(lldb)</b> set se target.env-vars DEBUG=1<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Set environment variables for process and launch process in one command.</td></tr>
+                        <td class="content">
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> process launch -v DEBUG=1<br>
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Attach to a process with process ID 123.</td></tr>
                     <tr>
                         <td class="content">
