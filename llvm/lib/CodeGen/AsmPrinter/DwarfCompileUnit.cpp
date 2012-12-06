@@ -51,9 +51,9 @@ DIEEntry *CompileUnit::createDIEEntry(DIE *Entry) {
   return Value;
 }
 
-/// getLowerBoundDefault - Return the default lower bound for an array. If the
+/// getDefaultLowerBound - Return the default lower bound for an array. If the
 /// DWARF version doesn't handle the language, return -1.
-int64_t CompileUnit::getLowerBoundDefault() const {
+int64_t CompileUnit::getDefaultLowerBound() const {
   switch (Language) {
   default:
     break;
@@ -1302,10 +1302,10 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
   // Count == 0, then the array has zero elements in which case we do not emit
   // an upper bound.
   int64_t LowerBound = SR.getLo();
-  int64_t DefaultLowerBound = getLowerBoundDefault();
+  int64_t DefaultLowerBound = getDefaultLowerBound();
   int64_t Count = SR.getCount();
 
-  if (LowerBound != DefaultLowerBound || DefaultLowerBound == -1)
+  if (DefaultLowerBound == -1 || LowerBound != DefaultLowerBound)
     addUInt(DW_Subrange, dwarf::DW_AT_lower_bound, 0, LowerBound);
 
   if (Count != -1 && Count != 0)
