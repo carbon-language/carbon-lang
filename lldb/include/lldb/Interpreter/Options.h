@@ -23,7 +23,7 @@
 #include "lldb/lldb-defines.h"
 #include "lldb/Interpreter/Args.h"
 
-namespace {
+namespace lldb_private {
 
   static inline bool
   isprint8 (int ch)
@@ -33,9 +33,6 @@ namespace {
       return isprint(ch);
   }
 
-}
-
-namespace lldb_private {
 
 //----------------------------------------------------------------------
 /// @class Options Options.h "lldb/Interpreter/Options.h"
