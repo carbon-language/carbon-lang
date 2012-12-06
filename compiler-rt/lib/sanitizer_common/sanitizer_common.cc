@@ -167,7 +167,7 @@ void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type) {
   uptr map_end = map_res + map_size;
   uptr res = map_res;
   if (res & (alignment - 1))  // Not aligned.
-    res = (map_res + alignment) & ~ (alignment - 1);
+    res = (map_res + alignment) & ~(alignment - 1);
   uptr end = res + size;
   if (res != map_res)
     UnmapOrDie((void*)map_res, res - map_res);

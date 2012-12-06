@@ -28,4 +28,4 @@ int main() {
   return 0;
 }
 
-// CHECK-NOT: ThreadSanitizer
+// CHECK-NOT: WARNING: ThreadSanitizer: data race
