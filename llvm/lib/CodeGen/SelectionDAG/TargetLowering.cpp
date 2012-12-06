@@ -1856,30 +1856,6 @@ void TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
   KnownZero = KnownOne = APInt(KnownOne.getBitWidth(), 0);
 }
 
-void TargetLowering::computeMaskedBitsForAnyExtend(const SDValue Op,
-                                                   APInt &KnownZero,
-                                                   APInt &KnownOne,
-                                                   const SelectionDAG &DAG,
-                                                   unsigned Depth) const {
-  unsigned BitWidth = Op.getValueType().getScalarType().getSizeInBits();
-  if (Op.getOpcode() == ISD::ANY_EXTEND) {
-    EVT InVT = Op.getOperand(0).getValueType();
-    unsigned InBits = InVT.getScalarType().getSizeInBits();
-    KnownZero = KnownZero.trunc(InBits);
-    KnownOne = KnownOne.trunc(InBits);
-    DAG.ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
-    KnownZero = KnownZero.zext(BitWidth);
-    KnownOne = KnownOne.zext(BitWidth);
-    return;
-  } else if (ISD::isEXTLoad(Op.getNode())) {
-    KnownZero = KnownOne = APInt(BitWidth, 0);
-    return;
-  }
-  
-  assert(0 && "Expecting an ANY_EXTEND or extload!");
-}
-
-
 /// ComputeNumSignBitsForTargetNode - This method can be implemented by
 /// targets that want to expose additional information about sign bits to the
 /// DAG Combiner.

@@ -935,16 +935,6 @@ public:
                                               const SelectionDAG &DAG,
                                               unsigned Depth = 0) const;
 
-  /// computeMaskedBitsForAnyExtend - Since each target implement ANY_EXTEND
-  /// and ExtLoad nodes specifically, let the target determine which of the bits
-  /// specified in Mask are known to be either zero or one and return them in
-  /// the KnownZero/KnownOne bitsets.
-  virtual void computeMaskedBitsForAnyExtend(const SDValue Op,
-                                             APInt &KnownZero,
-                                             APInt &KnownOne,
-                                             const SelectionDAG &DAG,
-                                             unsigned Depth = 0) const;
-
   /// ComputeNumSignBitsForTargetNode - This method can be implemented by
   /// targets that want to expose additional information about sign bits to the
   /// DAG Combiner.
@@ -1721,6 +1711,13 @@ public:
 
   virtual bool isZExtFree(EVT /*VT1*/, EVT /*VT2*/) const {
     return false;
+  }
+
+  /// isZExtFree - Return true if zero-extending the specific node Val to type
+  /// VT2 is free (either because it's implicitly zero-extended such as ARM
+  /// ldrb / ldrh or because it's folded such as X86 zero-extending loads).
+  virtual bool isZExtFree(SDValue Val, EVT VT2) const {
+    return isZExtFree(Val.getValueType(), VT2);
   }
 
   /// isFNegFree - Return true if an fneg operation is free to the point where

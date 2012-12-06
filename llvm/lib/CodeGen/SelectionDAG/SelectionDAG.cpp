@@ -1930,8 +1930,6 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
       KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
     } else if (const MDNode *Ranges = LD->getRanges()) {
       computeMaskedBitsLoad(*Ranges, KnownZero);
-    } else if (ISD::isEXTLoad(Op.getNode())) {
-      TLI.computeMaskedBitsForAnyExtend(Op, KnownZero, KnownOne, *this, Depth);
     }
     return;
   }
@@ -1974,7 +1972,13 @@ void SelectionDAG::ComputeMaskedBits(SDValue Op, APInt &KnownZero,
     return;
   }
   case ISD::ANY_EXTEND: {
-    TLI.computeMaskedBitsForAnyExtend(Op, KnownZero, KnownOne, *this, Depth);
+    EVT InVT = Op.getOperand(0).getValueType();
+    unsigned InBits = InVT.getScalarType().getSizeInBits();
+    KnownZero = KnownZero.trunc(InBits);
+    KnownOne = KnownOne.trunc(InBits);
+    ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
+    KnownZero = KnownZero.zext(BitWidth);
+    KnownOne = KnownOne.zext(BitWidth);
     return;
   }
   case ISD::TRUNCATE: {

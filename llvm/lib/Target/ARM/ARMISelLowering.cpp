@@ -9462,6 +9462,27 @@ EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
   return MVT::Other;
 }
 
+bool ARMTargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
+  if (Val.getOpcode() != ISD::LOAD)
+    return false;
+
+  EVT VT1 = Val.getValueType();
+  if (!VT1.isSimple() || !VT1.isInteger() ||
+      !VT2.isSimple() || !VT2.isInteger())
+    return false;
+
+  switch (VT1.getSimpleVT().SimpleTy) {
+  default: break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+    // 8-bit and 16-bit loads implicitly zero-extend to 32-bits.
+    return true;
+  }
+
+  return false;
+}
+
 static bool isLegalT1AddressImmediate(int64_t V, EVT VT) {
   if (V < 0)
     return false;
@@ -9876,36 +9897,6 @@ void ARMTargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
     return;
   }
   }
-}
-
-void ARMTargetLowering::computeMaskedBitsForAnyExtend(const SDValue Op,
-                                                      APInt &KnownZero,
-                                                      APInt &KnownOne,
-                                                      const SelectionDAG &DAG,
-                                                      unsigned Depth) const {
-  unsigned BitWidth = Op.getValueType().getScalarType().getSizeInBits();
-  if (Op.getOpcode() == ISD::ANY_EXTEND) {
-    // Implemented as a zero_extend.
-    EVT InVT = Op.getOperand(0).getValueType();
-    unsigned InBits = InVT.getScalarType().getSizeInBits();
-    KnownZero = KnownZero.trunc(InBits);
-    KnownOne = KnownOne.trunc(InBits);
-    DAG.ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
-    KnownZero = KnownZero.zext(BitWidth);
-    KnownOne = KnownOne.zext(BitWidth);
-    APInt NewBits   = APInt::getHighBitsSet(BitWidth, BitWidth - InBits);
-    KnownZero |= NewBits;
-    return;
-  } else if (ISD::isEXTLoad(Op.getNode())) {
-    // Implemented as zextloads.
-    LoadSDNode *LD = cast<LoadSDNode>(Op);
-    EVT VT = LD->getMemoryVT();
-    unsigned MemBits = VT.getScalarType().getSizeInBits();
-    KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
-    return;
-  }
-  
-  assert(0 && "Expecting an ANY_EXTEND or extload!");
 }
 
 //===----------------------------------------------------------------------===//

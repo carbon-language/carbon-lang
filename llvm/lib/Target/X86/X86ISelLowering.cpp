@@ -12142,6 +12142,30 @@ bool X86TargetLowering::isZExtFree(EVT VT1, EVT VT2) const {
   return VT1 == MVT::i32 && VT2 == MVT::i64 && Subtarget->is64Bit();
 }
 
+bool X86TargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
+  EVT VT1 = Val.getValueType();
+  if (isZExtFree(VT1, VT2))
+    return true;
+
+  if (Val.getOpcode() != ISD::LOAD)
+    return false;
+
+  if (!VT1.isSimple() || !VT1.isInteger() ||
+      !VT2.isSimple() || !VT2.isInteger())
+    return false;
+
+  switch (VT1.getSimpleVT().SimpleTy) {
+  default: break;
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+    // X86 has 8, 16, and 32-bit zero-extending loads.
+    return true;
+  }
+
+  return false;
+}
+
 bool X86TargetLowering::isNarrowingProfitable(EVT VT1, EVT VT2) const {
   // i16 instructions are longer (0x66 prefix) and potentially slower.
   return !(VT1 == MVT::i32 && VT2 == MVT::i16);
@@ -14091,38 +14115,6 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
     break;
   }
   }
-}
-
-void X86TargetLowering::computeMaskedBitsForAnyExtend(const SDValue Op,
-                                                      APInt &KnownZero,
-                                                      APInt &KnownOne,
-                                                      const SelectionDAG &DAG,
-                                                      unsigned Depth) const {
-  unsigned BitWidth = Op.getValueType().getScalarType().getSizeInBits();
-  if (Op.getOpcode() == ISD::ANY_EXTEND) {
-    // Implemented as a zero_extend except for i16 -> i32
-    EVT InVT = Op.getOperand(0).getValueType();
-    unsigned InBits = InVT.getScalarType().getSizeInBits();
-    KnownZero = KnownZero.trunc(InBits);
-    KnownOne = KnownOne.trunc(InBits);
-    DAG.ComputeMaskedBits(Op.getOperand(0), KnownZero, KnownOne, Depth+1);
-    KnownZero = KnownZero.zext(BitWidth);
-    KnownOne = KnownOne.zext(BitWidth);
-    if (BitWidth != 32 || InBits != 16) {
-      APInt NewBits = APInt::getHighBitsSet(BitWidth, BitWidth - InBits);
-      KnownZero |= NewBits;
-    }
-    return;
-  } else if (ISD::isEXTLoad(Op.getNode())) {
-    // Implemented as zextloads or implicitly zero-extended (i32 -> i64)
-    LoadSDNode *LD = cast<LoadSDNode>(Op);
-    EVT VT = LD->getMemoryVT();
-    unsigned MemBits = VT.getScalarType().getSizeInBits();
-    KnownZero |= APInt::getHighBitsSet(BitWidth, BitWidth - MemBits);
-    return;
-  }
-  
-  assert(0 && "Expecting an ANY_EXTEND or extload!");
 }
 
 unsigned X86TargetLowering::ComputeNumSignBitsForTargetNode(SDValue Op,

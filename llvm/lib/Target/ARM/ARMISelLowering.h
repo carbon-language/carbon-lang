@@ -294,6 +294,8 @@ namespace llvm {
                                     bool MemcpyStrSrc,
                                     MachineFunction &MF) const;
 
+    virtual bool isZExtFree(SDValue Val, EVT VT2) const;
+
     /// isLegalAddressingMode - Return true if the addressing mode represented
     /// by AM is legal for this target, for a load/store of the specified type.
     virtual bool isLegalAddressingMode(const AddrMode &AM, Type *Ty)const;
@@ -333,11 +335,6 @@ namespace llvm {
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth) const;
 
-    virtual void computeMaskedBitsForAnyExtend(const SDValue Op,
-                                               APInt &KnownZero,
-                                               APInt &KnownOne,
-                                               const SelectionDAG &DAG,
-                                               unsigned Depth) const;
 
     virtual bool ExpandInlineAsm(CallInst *CI) const;
 

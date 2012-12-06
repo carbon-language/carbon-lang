@@ -558,12 +558,6 @@ namespace llvm {
                                                 const SelectionDAG &DAG,
                                                 unsigned Depth = 0) const;
 
-    virtual void computeMaskedBitsForAnyExtend(const SDValue Op,
-                                               APInt &KnownZero,
-                                               APInt &KnownOne,
-                                               const SelectionDAG &DAG,
-                                               unsigned Depth) const;
-
     // ComputeNumSignBitsForTargetNode - Determine the number of bits in the
     // operation that are sign bits.
     virtual unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
@@ -634,6 +628,7 @@ namespace llvm {
     /// result out to 64 bits.
     virtual bool isZExtFree(Type *Ty1, Type *Ty2) const;
     virtual bool isZExtFree(EVT VT1, EVT VT2) const;
+    virtual bool isZExtFree(SDValue Val, EVT VT2) const;
 
     /// isFMAFasterThanMulAndAdd - Return true if an FMA operation is faster than
     /// a pair of mul and add instructions. fmuladd intrinsics will be expanded to
