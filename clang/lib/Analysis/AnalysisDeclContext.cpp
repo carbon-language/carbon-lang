@@ -402,9 +402,6 @@ public:
       if (!VD->hasLocalStorage()) {
         if (Visited.insert(VD))
           BEVals.push_back(VD, BC);
-      } else if (DR->refersToEnclosingLocal()) {
-        if (Visited.insert(VD) && IsTrackedDecl(VD))
-          BEVals.push_back(VD, BC);
       }
     }
   }
@@ -439,7 +436,13 @@ static DeclVec* LazyInitializeReferencedDecls(const BlockDecl *BD,
   DeclVec *BV = (DeclVec*) A.Allocate<DeclVec>();
   new (BV) DeclVec(BC, 10);
 
-  // Find the referenced variables.
+  // Go through the capture list.
+  for (BlockDecl::capture_const_iterator CI = BD->capture_begin(),
+       CE = BD->capture_end(); CI != CE; ++CI) {
+    BV->push_back(CI->getVariable(), BC);
+  }
+
+  // Find the referenced global/static variables.
   FindBlockDeclRefExprsVals F(*BV, BC);
   F.Visit(BD->getBody());
 
