@@ -159,7 +159,7 @@ void SortArray(uptr *array, uptr size) {
 // We do it by maping a bit more and then unmaping redundant pieces.
 // We probably can do it with fewer syscalls in some OS-dependent way.
 void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type) {
-  uptr PageSize = GetPageSizeCached();
+// uptr PageSize = GetPageSizeCached();
   CHECK(IsPowerOfTwo(size));
   CHECK(IsPowerOfTwo(alignment));
   uptr map_size = size + alignment;
