@@ -65,7 +65,7 @@ define i32 @test9(i32 %i) {
 ; CHECK: @test9
         %j = mul i32 %i, -1             ; <i32> [#uses=1]
         ret i32 %j
-; CHECJ: sub i32 0, %i
+; CHECK: sub i32 0, %i
 }
 
 define i32 @test10(i32 %a, i32 %b) {

@@ -295,7 +295,7 @@ entry:
 }
 
 define <2 x i8> @PR14349.1(i32 %x) {
-; CEHCK: @PR14349.1
+; CHECK: @PR14349.1
 ; The first testcase for broken SROA rewriting of split integer loads and
 ; stores due to smaller vector loads and stores. This particular test ensures
 ; that we can rewrite a split store of an integer to a store of a vector.
@@ -317,7 +317,7 @@ entry:
 }
 
 define i32 @PR14349.2(<2 x i8> %x) {
-; CEHCK: @PR14349.2
+; CHECK: @PR14349.2
 ; The first testcase for broken SROA rewriting of split integer loads and
 ; stores due to smaller vector loads and stores. This particular test ensures
 ; that we can rewrite a split load of an integer to a load of a vector.

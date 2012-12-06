@@ -15,7 +15,7 @@ entry:
 ; CHECK: t1:
 ; CHECK: mla     r0, r2, r0, r1
 ; CHECK: add.w   r0, r0, r0, lsl #3
-; CHECL: add.w   r0, r3, r0, lsl #2
+; CHECK: add.w   r0, r3, r0, lsl #2
   %mul = mul i32 %n, %i
   %add = add i32 %mul, %j
   %0 = ptrtoint %struct.CMPoint* %thePoints to i32

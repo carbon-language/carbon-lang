@@ -78,7 +78,7 @@ define float @test_ineligible(float, float %in) {
   ; use-def chains would be messed up. Primarily a compile-test (we used to
   ; internal fault).
   call void @bar()
-; CHECL: bl bar
+; CHECK: bl bar
 ; CHECK: vext.32
 ; CHECK: vext.32
   ret float %val
