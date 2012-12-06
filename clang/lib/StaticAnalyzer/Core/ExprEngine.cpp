@@ -527,16 +527,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
   ExplodedNodeSet Dst;
   StmtNodeBuilder Bldr(Pred, DstTop, *currBldrCtx);
 
-  // Expressions to ignore.
-  if (const Expr *Ex = dyn_cast<Expr>(S))
-    S = Ex->IgnoreParens();
-  
-  // FIXME: add metadata to the CFG so that we can disable
-  //  this check when we KNOW that there is no block-level subexpression.
-  //  The motivation is that this check requires a hashtable lookup.
-
-  if (S != currStmt && Pred->getLocationContext()->getCFG()->isBlkExpr(S))
-    return;
+  assert(!isa<Expr>(S) || S == cast<Expr>(S)->IgnoreParens());
 
   switch (S->getStmtClass()) {
     // C++ and ARC stuff we don't support yet.
