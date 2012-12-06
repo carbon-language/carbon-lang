@@ -236,3 +236,7 @@ namespace PR13860 {
 namespace PR13854 {
   auto l = [](void){};
 }
+
+namespace PR14518 {
+  auto f = [](void) { return __func__; }; // no-warning
+}

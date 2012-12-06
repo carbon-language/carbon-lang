@@ -2571,8 +2571,14 @@ ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {
   // string.
 
   Decl *currentDecl = getCurFunctionOrMethodDecl();
-  if (!currentDecl && getCurBlock())
-    currentDecl = getCurBlock()->TheDecl;
+  // Blocks and lambdas can occur at global scope. Don't emit a warning.
+  if (!currentDecl) {
+    if (const BlockScopeInfo *BSI = getCurBlock())
+      currentDecl = BSI->TheDecl;
+    else if (const LambdaScopeInfo *LSI = getCurLambda())
+      currentDecl = LSI->CallOperator;
+  }
+
   if (!currentDecl) {
     Diag(Loc, diag::ext_predef_outside_function);
     currentDecl = Context.getTranslationUnitDecl();
