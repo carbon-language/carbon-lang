@@ -23,6 +23,8 @@ class StructTypesTestCase(TestBase):
         self.buildDsym()
         self.struct_types()
 
+    # rdar://problem/12566646
+    @unittest2.expectedFailure
     @dwarf_test
     def test_with_dwarf(self):
         """Test that break on a struct declaration has no effect."""
