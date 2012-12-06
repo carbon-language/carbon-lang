@@ -1,4 +1,5 @@
 ; RUN: opt < %s -msan -S | FileCheck %s
+; RUN: opt < %s -msan -msan-track-origins=1 -S | FileCheck -check-prefix=CHECK-ORIGINS %s
 target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
 
 ; Check the presence of __msan_init
@@ -6,6 +7,31 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 
 ; Check the presence and the linkage type of __msan_track_origins
 ; CHECK: @__msan_track_origins = weak_odr constant i32 0
+
+; Check instrumentation of stores
+define void @Store(i32* nocapture %p, i32 %x) nounwind uwtable {
+entry:
+  store i32 %x, i32* %p, align 4
+  ret void
+}
+
+; CHECK: @Store
+; CHECK: load {{.*}} @__msan_param_tls
+; CHECK: store
+; CHECK: store
+; CHECK: ret void
+; CHECK-ORIGINS: @Store
+; CHECK-ORIGINS: load {{.*}} @__msan_param_tls
+; CHECK-ORIGINS: store
+; CHECK-ORIGINS: icmp
+; CHECK-ORIGINS: br i1
+; CHECK-ORIGINS: <label>
+; CHECK-ORIGINS: store
+; CHECK-ORIGINS: br label
+; CHECK-ORIGINS: <label>
+; CHECK-ORIGINS: store
+; CHECK-ORIGINS: ret void
+
 
 ; load followed by cmp: check that we load the shadow and call __msan_warning.
 define void @LoadAndCmp(i32* nocapture %a) nounwind uwtable {
