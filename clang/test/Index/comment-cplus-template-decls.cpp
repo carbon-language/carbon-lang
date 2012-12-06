@@ -26,7 +26,7 @@ template<typename T> struct A {
   void f() { }
 };
 // CHECK: <Declaration>template &lt;typename T&gt; struct A {\n}</Declaration>
-// CHECL: <Declaration>A&lt;T&gt;()</Declaration>
+// CHECK: <Declaration>A&lt;T&gt;()</Declaration>
 // CHECK: <Declaration>void ~A&lt;T&gt;()</Declaration>
 
 /**
