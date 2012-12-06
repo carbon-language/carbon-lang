@@ -428,6 +428,7 @@ TEST_F(FormatTest, IncorrectCodeErrorDetection) {
   EXPECT_EQ("{\n{\n}\n", format("{\n{\n}\n"));
   EXPECT_EQ("{\n  {\n}\n", format("{\n  {\n}\n"));
   EXPECT_EQ("{\n  {\n  }\n", format("{\n  {\n  }\n"));
+  EXPECT_EQ("{\n  {\n    }\n  }\n}\n", format("{\n  {\n    }\n  }\n}\n"));
 
   FormatStyle Style = getLLVMStyle();
   Style.ColumnLimit = 10;

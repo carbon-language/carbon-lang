@@ -52,8 +52,8 @@ bool UnwrappedLineParser::parseLevel() {
       addUnwrappedLine();
       break;
     case tok::r_brace:
-      // FIXME: We need a test when it has to be "return Error;"
-      return false;
+      // Stray '}' is an error.
+      return true;
     default:
       parseStatement();
       break;
@@ -63,6 +63,7 @@ bool UnwrappedLineParser::parseLevel() {
 }
 
 bool UnwrappedLineParser::parseBlock() {
+  assert(FormatTok.Tok.is(tok::l_brace) && "'{' expected");
   nextToken();
 
   // FIXME: Remove this hack to handle namespaces.
