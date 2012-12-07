@@ -41,13 +41,13 @@ bool match(Val *V, const Pattern &P) {
   return const_cast<Pattern&>(P).match(V);
 }
 
-  
+
 template<typename SubPattern_t>
 struct OneUse_match {
   SubPattern_t SubPattern;
-  
+
   OneUse_match(const SubPattern_t &SP) : SubPattern(SP) {}
-  
+
   template<typename OpTy>
   bool match(OpTy *V) {
     return V->hasOneUse() && SubPattern.match(V);
@@ -56,8 +56,8 @@ struct OneUse_match {
 
 template<typename T>
 inline OneUse_match<T> m_OneUse(const T &SubPattern) { return SubPattern; }
-  
-  
+
+
 template<typename Class>
 struct class_match {
   template<typename ITy>
@@ -74,7 +74,7 @@ inline class_match<ConstantInt> m_ConstantInt() {
 inline class_match<UndefValue> m_Undef() { return class_match<UndefValue>(); }
 
 inline class_match<Constant> m_Constant() { return class_match<Constant>(); }
-  
+
 struct match_zero {
   template<typename ITy>
   bool match(ITy *V) {
@@ -83,12 +83,12 @@ struct match_zero {
     return false;
   }
 };
-  
+
 /// m_Zero() - Match an arbitrary zero/null constant.  This includes
 /// zero_initializer for vectors and ConstantPointerNull for pointers.
 inline match_zero m_Zero() { return match_zero(); }
-  
-  
+
+
 struct apint_match {
   const APInt *&Res;
   apint_match(const APInt *&R) : Res(R) {}
@@ -114,12 +114,12 @@ struct apint_match {
     return false;
   }
 };
-  
+
 /// m_APInt - Match a ConstantInt or splatted ConstantVector, binding the
 /// specified pointer to the contained APInt.
 inline apint_match m_APInt(const APInt *&Res) { return Res; }
 
-  
+
 template<int64_t Val>
 struct constantint_match {
   template<typename ITy>
@@ -161,7 +161,7 @@ struct cst_pred_ty : public Predicate {
     return false;
   }
 };
-  
+
 /// api_pred_ty - This helper class is used to match scalar and vector constants
 /// that satisfy a specified predicate, and bind them to an APInt.
 template<typename Predicate>
@@ -175,7 +175,7 @@ struct api_pred_ty : public Predicate {
         Res = &CI->getValue();
         return true;
       }
-    
+
     // FIXME: remove.
     if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
       if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CV->getSplatValue()))
@@ -183,7 +183,7 @@ struct api_pred_ty : public Predicate {
           Res = &CI->getValue();
           return true;
         }
-    
+
     if (const ConstantDataVector *CV = dyn_cast<ConstantDataVector>(V))
       if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CV->getSplatValue()))
         if (this->isValue(CI->getValue())) {
@@ -194,8 +194,8 @@ struct api_pred_ty : public Predicate {
     return false;
   }
 };
-  
-  
+
+
 struct is_one {
   bool isValue(const APInt &C) { return C == 1; }
 };
@@ -203,11 +203,11 @@ struct is_one {
 /// m_One() - Match an integer 1 or a vector with all elements equal to 1.
 inline cst_pred_ty<is_one> m_One() { return cst_pred_ty<is_one>(); }
 inline api_pred_ty<is_one> m_One(const APInt *&V) { return V; }
-    
+
 struct is_all_ones {
   bool isValue(const APInt &C) { return C.isAllOnesValue(); }
 };
-  
+
 /// m_AllOnes() - Match an integer or vector with all bits set to true.
 inline cst_pred_ty<is_all_ones> m_AllOnes() {return cst_pred_ty<is_all_ones>();}
 inline api_pred_ty<is_all_ones> m_AllOnes(const APInt *&V) { return V; }
@@ -269,7 +269,7 @@ inline specificval_ty m_Specific(const Value *V) { return V; }
 struct bind_const_intval_ty {
   uint64_t &VR;
   bind_const_intval_ty(uint64_t &V) : VR(V) {}
-  
+
   template<typename ITy>
   bool match(ITy *V) {
     if (ConstantInt *CV = dyn_cast<ConstantInt>(V))
@@ -284,7 +284,7 @@ struct bind_const_intval_ty {
 /// m_ConstantInt - Match a ConstantInt and bind to its value.  This does not
 /// match ConstantInts wider than 64-bits.
 inline bind_const_intval_ty m_ConstantInt(uint64_t &V) { return V; }
-  
+
 //===----------------------------------------------------------------------===//
 // Matchers for specific binary operators.
 //
@@ -583,7 +583,7 @@ inline CastClass_match<OpTy, Instruction::BitCast>
 m_BitCast(const OpTy &Op) {
   return CastClass_match<OpTy, Instruction::BitCast>(Op);
 }
-  
+
 /// m_PtrToInt
 template<typename OpTy>
 inline CastClass_match<OpTy, Instruction::PtrToInt>
@@ -611,7 +611,7 @@ inline CastClass_match<OpTy, Instruction::ZExt>
 m_ZExt(const OpTy &Op) {
   return CastClass_match<OpTy, Instruction::ZExt>(Op);
 }
-  
+
 
 //===----------------------------------------------------------------------===//
 // Matchers for unary operators
