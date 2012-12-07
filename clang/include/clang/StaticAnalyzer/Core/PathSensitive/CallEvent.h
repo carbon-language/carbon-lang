@@ -142,12 +142,10 @@ private:
 protected:
   friend class CallEventManager;
 
-  CallEvent(const Expr *E, const ProgramStateRef &state,
-            const LocationContext *lctx)
+  CallEvent(const Expr *E, ProgramStateRef state, const LocationContext *lctx)
     : State(state), LCtx(lctx), Origin(E), RefCount(0) {}
 
-  CallEvent(const Decl *D, const ProgramStateRef &state,
-            const LocationContext *lctx)
+  CallEvent(const Decl *D, ProgramStateRef state, const LocationContext *lctx)
     : State(state), LCtx(lctx), Origin(D), RefCount(0) {}
 
   // DO NOT MAKE PUBLIC

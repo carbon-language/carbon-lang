@@ -122,7 +122,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
 
 public:
 
-  explicit ExplodedNode(const ProgramPoint &loc, const ProgramStateRef &state,
+  explicit ExplodedNode(const ProgramPoint &loc, ProgramStateRef state,
                         bool IsSink)
     : Location(loc), State(state), Succs(IsSink) {
     assert(isSink() == IsSink);
