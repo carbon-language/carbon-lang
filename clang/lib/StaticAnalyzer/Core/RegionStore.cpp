@@ -131,7 +131,8 @@ void BindingKey::dump() const {
 // Actual Store type.
 //===----------------------------------------------------------------------===//
 
-typedef llvm::ImmutableMap<BindingKey, SVal> ClusterBindings;
+typedef llvm::ImmutableMap<BindingKey, SVal>    ClusterBindings;
+typedef llvm::ImmutableMapRef<BindingKey, SVal> ClusterBindingsRef;
 
 typedef llvm::ImmutableMap<const MemRegion *, ClusterBindings>
         RegionBindings;
@@ -705,7 +706,7 @@ RegionStoreManager::removeSubRegionBindings(RegionBindingsRef B,
   if (!Cluster)
     return B;
 
-  ClusterBindings Result = *Cluster;
+  ClusterBindingsRef Result(*Cluster, CBFactory);
 
   // It is safe to iterate over the bindings as they are being changed
   // because they are in an ImmutableMap.
@@ -722,7 +723,7 @@ RegionStoreManager::removeSubRegionBindings(RegionBindingsRef B,
           NextKey.getOffset() - SRKey.getOffset() < Length) {
         // Case 1: The next binding is inside the region we're invalidating.
         // Remove it.
-        Result = CBFactory.remove(Result, NextKey);
+        Result = Result.remove(NextKey);
 
       } else if (NextKey.getOffset() == SRKey.getOffset()) {
         // Case 2: The next binding is at the same offset as the region we're
@@ -732,7 +733,7 @@ RegionStoreManager::removeSubRegionBindings(RegionBindingsRef B,
         // FIXME: This is probably incorrect; consider invalidating an outer
         // struct whose first field is bound to a LazyCompoundVal.
         if (NextKey.isDirect())
-          Result = CBFactory.remove(Result, NextKey);
+          Result = Result.remove(NextKey);
       }
       
     } else if (NextKey.hasSymbolicOffset()) {
@@ -743,13 +744,13 @@ RegionStoreManager::removeSubRegionBindings(RegionBindingsRef B,
         // we'll be conservative and remove it.
         if (NextKey.isDirect())
           if (isCompatibleWithFields(NextKey, FieldsInSymbolicSubregions))
-            Result = CBFactory.remove(Result, NextKey);
+            Result = Result.remove(NextKey);
       } else if (const SubRegion *BaseSR = dyn_cast<SubRegion>(Base)) {
         // Case 4: The next key is symbolic, but we changed a known
         // super-region. In this case the binding is certainly no longer valid.
         if (R == Base || BaseSR->isSubRegionOf(R))
           if (isCompatibleWithFields(NextKey, FieldsInSymbolicSubregions))
-            Result = CBFactory.remove(Result, NextKey);
+            Result = Result.remove(NextKey);
       }
     }
   }
@@ -758,11 +759,11 @@ RegionStoreManager::removeSubRegionBindings(RegionBindingsRef B,
   // we don't treat the base region as uninitialized anymore.
   // FIXME: This isn't very precise; see the example in the loop.
   if (HasSymbolicOffset)
-    Result = CBFactory.add(Result, SRKey, UnknownVal());
+    Result = Result.add(SRKey, UnknownVal());
 
   if (Result.isEmpty())
     return B.remove(ClusterHead);
-  return B.add(ClusterHead, Result);
+  return B.add(ClusterHead, Result.asImmutableMap());
 }
 
 namespace {
