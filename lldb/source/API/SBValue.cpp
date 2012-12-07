@@ -388,7 +388,6 @@ SBValue::GetValueType ()
         case eValueTypeRegister:        log->Printf ("SBValue(%p)::GetValueType () => eValueTypeRegister", value_sp.get()); break;
         case eValueTypeRegisterSet:     log->Printf ("SBValue(%p)::GetValueType () => eValueTypeRegisterSet", value_sp.get()); break;
         case eValueTypeConstResult:     log->Printf ("SBValue(%p)::GetValueType () => eValueTypeConstResult", value_sp.get()); break;
-        default:     log->Printf ("SBValue(%p)::GetValueType () => %i ???", value_sp.get(), result); break;
         }
     }
     return result;

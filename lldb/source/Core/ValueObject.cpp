@@ -420,9 +420,6 @@ ValueObject::GetLocationAsCString ()
 
             switch (m_value.GetValueType())
             {
-            default:
-                break;
-
             case Value::eValueTypeScalar:
             case Value::eValueTypeVector:
                 if (m_value.GetContextType() == Value::eContextTypeRegisterInfo)
@@ -926,7 +923,6 @@ ValueObject::GetPointeeData (DataExtractor& data,
                 }
                 break;
             case eAddressTypeInvalid:
-            default:
                 break;
         }
     }
@@ -1523,9 +1519,6 @@ ValueObject::DumpPrintableRepresentation(Stream& s,
                 
             case eValueObjectRepresentationStyleType:
                 return_value = GetTypeName().AsCString();
-                break;
-                
-            default:
                 break;
         }
         
@@ -3674,7 +3667,6 @@ ValueObject::AddressOf (Error &error)
     {
         switch (address_type)
         {
-        default:
         case eAddressTypeInvalid:
             {
                 StreamString expr_path_strm;

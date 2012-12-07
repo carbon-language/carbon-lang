@@ -218,10 +218,6 @@ Mutex::Mutex (Mutex::Type type) :
     case eMutexTypeRecursive:
         err = ::pthread_mutexattr_settype (&attr, PTHREAD_MUTEX_RECURSIVE);
         break;
-
-    default:
-        err = -1;
-        break;
     }
     assert(err == 0);
     err = ::pthread_mutex_init (&m_mutex, &attr);

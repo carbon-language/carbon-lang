@@ -1605,9 +1605,6 @@ DynamicLoaderMacOSXDYLD::PrivateProcessStateChanged (Process *process, StateType
     case eStateCrashed:
     case eStateSuspended:
         break;
-
-    default:
-        break;
     }
 }
 

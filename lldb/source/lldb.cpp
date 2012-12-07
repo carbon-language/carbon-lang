@@ -249,8 +249,6 @@ lldb_private::GetVoteAsCString (Vote vote)
     case eVoteNo:           return "no";
     case eVoteNoOpinion:    return "no opinion";
     case eVoteYes:          return "yes";
-    default:
-        break;
     }
     return "invalid";
 }
@@ -326,9 +324,6 @@ lldb_private::NameMatches (const char *name,
                 RegularExpression regex (match);
                 return regex.Execute (name);
             }
-            break;
-        default:
-            assert (!"unhandled NameMatchType in lldb_private::NameMatches()");
             break;
         }
     }

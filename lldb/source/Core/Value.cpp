@@ -156,7 +156,6 @@ Value::ValueOf(ExecutionContext *exe_ctx, clang::ASTContext *ast_context)
 {
     switch (m_context_type)
     {
-    default:
     case eContextTypeInvalid:
     case eContextTypeClangType:         // clang::Type *
     case eContextTypeRegisterInfo:      // RegisterInfo *
@@ -177,7 +176,6 @@ Value::GetValueByteSize (clang::ASTContext *ast_context, Error *error_ptr)
 
     switch (m_context_type)
     {
-    default:
     case eContextTypeInvalid:
         // If we have no context, there is no way to know how much memory to read
         if (error_ptr)
@@ -244,7 +242,6 @@ Value::GetClangType ()
 {
     switch (m_context_type)
     {
-    default:
     case eContextTypeInvalid:
         break;
 
@@ -273,7 +270,6 @@ Value::GetValueDefaultFormat ()
 {
     switch (m_context_type)
     {
-    default:
     case eContextTypeInvalid:
         break;
 

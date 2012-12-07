@@ -594,7 +594,6 @@ UnwindAssemblyInstEmulation::WriteRegister (EmulateInstruction *instruction,
 
     switch (context.type)
     {
-        default:
         case EmulateInstruction::eContextInvalid:
         case EmulateInstruction::eContextReadOpcode:
         case EmulateInstruction::eContextImmediate:

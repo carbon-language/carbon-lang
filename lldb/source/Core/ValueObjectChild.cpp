@@ -164,7 +164,6 @@ ValueObjectChild::UpdateValue ()
                             m_value.SetValueType(Value::eValueTypeHostAddress);
                             break;
                         case eAddressTypeInvalid:
-                        default:
                             // TODO: does this make sense?
                             m_value.SetValueType(Value::eValueTypeScalar);
                             break;

@@ -450,7 +450,6 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
     const uint32_t byte_size = reg_info->byte_size;
     switch (reg_info->encoding)
     {
-        default:
         case eEncodingInvalid:
             error.SetErrorString ("Invalid encoding.");
             break;
@@ -637,7 +636,6 @@ RegisterValue::CopyValue (const RegisterValue &rhs)
     m_type = rhs.m_type;
     switch (m_type)
     {
-        default:
         case eTypeInvalid: 
             return false;
         case eTypeUInt8:        m_data.uint8 = rhs.m_data.uint8; break;

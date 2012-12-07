@@ -1987,7 +1987,6 @@ GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type,
     case eWatchpointWrite:      if (!m_supports_z2) return UINT8_MAX; break;
     case eWatchpointRead:       if (!m_supports_z3) return UINT8_MAX; break;
     case eWatchpointReadWrite:  if (!m_supports_z4) return UINT8_MAX; break;
-    default:                    return UINT8_MAX;
     }
 
     char packet[64];
@@ -2017,7 +2016,6 @@ GDBRemoteCommunicationClient::SendGDBStoppointTypePacket (GDBStoppointType type,
             case eWatchpointWrite:      m_supports_z2 = false; break;
             case eWatchpointRead:       m_supports_z3 = false; break;
             case eWatchpointReadWrite:  m_supports_z4 = false; break;
-            default:                    break;
         }
     }
 

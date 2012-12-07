@@ -13001,7 +13001,6 @@ EmulateInstructionARM::CurrentCond (const uint32_t opcode)
 {
     switch (m_opcode_mode)
     {
-    default:
     case eModeInvalid:
         break;
 

@@ -587,10 +587,6 @@ EmulateInstruction::Context::Dump (Stream &strm,
         
     case eInfoTypeNoArgs:
         break;
-
-    default:
-        strm.Printf (" (unknown <info_type>)");
-        break;
     }
 }
 

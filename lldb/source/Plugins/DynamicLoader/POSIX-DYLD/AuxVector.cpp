@@ -125,10 +125,6 @@ AuxVector::GetEntryName(EntryType type)
 #define ENTRY_NAME(_type) _type: name = #_type
     switch (type) 
     {
-    default:
-        name = "unkown";
-        break;
-
     case ENTRY_NAME(AT_NULL);   break;
     case ENTRY_NAME(AT_IGNORE); break;
     case ENTRY_NAME(AT_EXECFD); break;

@@ -1131,8 +1131,6 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
                     success = PyArg_Parse (py_return, format, (char *) ret_value);
                     break;
                 }
-                default:
-                  {}
             }
             Py_DECREF (py_return);
             if (success)

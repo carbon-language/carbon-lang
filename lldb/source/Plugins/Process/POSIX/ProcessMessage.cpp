@@ -102,10 +102,6 @@ ProcessMessage::PrintCrashReason(CrashReason reason)
 
     switch (reason)
     {
-    default:
-        assert(false && "invalid CrashReason");
-        break;
-
         case eInvalidCrashReason:
             str = "eInvalidCrashReason";
             break;
@@ -204,10 +200,6 @@ ProcessMessage::PrintKind(Kind kind)
 
     switch (kind)
     {
-    default:
-        assert(false && "invalid Kind");
-        break;
-
     case eInvalidMessage:
         str = "eInvalidMessage";
         break;

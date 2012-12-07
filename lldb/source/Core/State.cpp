@@ -83,7 +83,6 @@ lldb_private::StateIsRunningState (StateType state)
     case eStateCrashed:
     case eStateExited:
     case eStateSuspended:
-    default:
         break;
     }
     return false;
@@ -101,7 +100,6 @@ lldb_private::StateIsStoppedState (StateType state, bool must_exist)
     case eStateRunning:
     case eStateStepping:
     case eStateDetached:
-    default:
         break;
 
     case eStateUnloaded:

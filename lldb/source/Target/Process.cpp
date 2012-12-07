@@ -671,10 +671,6 @@ ProcessLaunchInfo::FileAction::AddPosixSpawnFileAction (posix_spawn_file_actions
                                    file_actions, info->m_fd, info->m_path.c_str(), oflag, mode);
             }
             break;
-        
-        default:
-            error.SetErrorStringWithFormat ("invalid file action: %i", info->m_action);
-            break;
     }
     return error.Success();
 }
@@ -3369,7 +3365,6 @@ Process::ShouldBroadcastEvent (Event *event_ptr)
                     // This is a transition from stop to run.
                     switch (m_thread_list.ShouldReportRun (event_ptr))
                     {
-                        default:
                         case eVoteYes:
                         case eVoteNoOpinion:
                             return_value = true;

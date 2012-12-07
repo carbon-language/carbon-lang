@@ -796,7 +796,6 @@ Driver::UpdateSelectedThread ()
                 StopReason thread_stop_reason = thread.GetStopReason();
                 switch (thread_stop_reason)
                 {
-                default:
                 case eStopReasonInvalid:
                 case eStopReasonNone:
                     break;

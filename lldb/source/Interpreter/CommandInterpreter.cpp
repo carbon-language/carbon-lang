@@ -2589,8 +2589,6 @@ CommandInterpreter::GetScriptInterpreter (bool can_create)
         case eScriptLanguageNone:
             m_script_interpreter_ap.reset (new ScriptInterpreterNone (*this));
             break;
-        default:
-            break;
     };
     
     return m_script_interpreter_ap.get();

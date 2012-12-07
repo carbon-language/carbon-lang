@@ -219,7 +219,6 @@ ValueObjectConstResult::ValueObjectConstResult
     //m_value.SetValueType(Value::eValueTypeHostAddress); 
     switch (address_type)
     {
-    default:
     case eAddressTypeInvalid:   m_value.SetValueType(Value::eValueTypeScalar);      break;
     case eAddressTypeFile:      m_value.SetValueType(Value::eValueTypeFileAddress); break;
     case eAddressTypeLoad:      m_value.SetValueType(Value::eValueTypeLoadAddress); break;    

@@ -1093,9 +1093,6 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
             // TODO: where would user LLDB plug-ins be located on linux? Other systems?
             return false;
         }
-    default:
-        assert (!"Unhandled PathType");
-        break;
     }
 
     return false;

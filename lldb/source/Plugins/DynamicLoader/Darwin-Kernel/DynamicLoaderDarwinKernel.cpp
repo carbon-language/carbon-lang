@@ -893,9 +893,6 @@ DynamicLoaderDarwinKernel::PrivateProcessStateChanged (Process *process, StateTy
     case eStateCrashed:
     case eStateSuspended:
         break;
-
-    default:
-        break;
     }
 }
 

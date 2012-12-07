@@ -453,7 +453,6 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
                 switch (scalar.GetType())
                 {
                 case Scalar::e_void:
-                default:
                     return false;
                 case Scalar::e_sint: 
                 case Scalar::e_uint:

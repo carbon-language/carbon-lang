@@ -322,10 +322,6 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
 
     switch (message.GetKind())
     {
-    default:
-        assert(false && "Unexpected process message!");
-        break;
-
     case ProcessMessage::eInvalidMessage:
         return;
 

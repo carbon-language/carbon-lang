@@ -1928,7 +1928,6 @@ DataExtractor::PutToLog
 
         switch (type)
         {
-            default:
             case TypeUInt8:   sstr.Printf (format ? format : " %2.2x", GetU8(&offset)); break;
             case TypeChar:
                 {

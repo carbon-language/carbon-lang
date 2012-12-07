@@ -374,7 +374,6 @@ Communication::ReadThread (void *p)
         case eConnectionStatusLostConnection:   // Lost connection while connected to a valid connection
             done = true;
             // Fall through...
-        default:
         case eConnectionStatusError:            // Check GetError() for details
         case eConnectionStatusTimedOut:         // Request timed out
             if (log)

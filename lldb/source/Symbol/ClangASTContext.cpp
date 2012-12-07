@@ -194,7 +194,6 @@ ConvertAccessTypeToObjCIvarAccessControl (AccessType access)
 {
     switch (access)
     {
-    default:               break;
     case eAccessNone:      return ObjCIvarDecl::None;
     case eAccessPublic:    return ObjCIvarDecl::Public;
     case eAccessPrivate:   return ObjCIvarDecl::Private;
@@ -707,8 +706,6 @@ ClangASTContext::GetBuiltinTypeForEncodingAndBitSize (ASTContext *ast, Encoding 
         // Sanity check that bit_size is a multiple of 8's.
         if (bit_size && !(bit_size & 0x7u))
             return ast->getExtVectorType (ast->UnsignedCharTy, bit_size/8).getAsOpaquePtr();
-        break;
-    default:
         break;
     }
     

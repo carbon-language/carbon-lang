@@ -89,9 +89,6 @@ public:
                 
             case eInstructionTypeAll:
                 return false;
-                
-            default:
-                break;
         }
         return false;
     }

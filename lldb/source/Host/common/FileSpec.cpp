@@ -938,7 +938,6 @@ FileSpec::EnumerateDirectory
                         
                         switch (result)
                         {
-                        default:
                         case eEnumerateDirectoryResultNext:  
                             // Enumerate next entry in the current directory. We just
                             // exit this switch and will continue enumerating the
