@@ -203,6 +203,25 @@ static void DescribeAccessToHeapChunk(AsanChunkView chunk, uptr addr,
          (void*)(chunk.Beg()), (void*)(chunk.End()));
 }
 
+// Return " (thread_name) " or an empty string if the name is empty.
+const char *ThreadNameWithParenthesis(AsanThreadSummary *t, char buff[],
+                                      uptr buff_len) {
+  const char *name = t->name();
+  if (*name == 0) return "";
+  buff[0] = 0;
+  internal_strncat(buff, " (", 3);
+  internal_strncat(buff, name, buff_len - 4);
+  internal_strncat(buff, ")", 2);
+  return buff;
+}
+
+const char *ThreadNameWithParenthesis(u32 tid, char buff[],
+                                      uptr buff_len) {
+  if (tid == kInvalidTid) return "";
+  AsanThreadSummary *t = asanThreadRegistry().FindByTid(tid);
+  return ThreadNameWithParenthesis(t, buff, buff_len);
+}
+
 void DescribeHeapAddress(uptr addr, uptr access_size) {
   AsanChunkView chunk = FindHeapChunkByAddress(addr);
   if (!chunk.IsValid()) return;
@@ -214,20 +233,25 @@ void DescribeHeapAddress(uptr addr, uptr access_size) {
   chunk.GetAllocStack(&alloc_stack);
   AsanThread *t = asanThreadRegistry().GetCurrent();
   CHECK(t);
+  char tname[128];
   if (chunk.FreeTid() != kInvalidTid) {
     AsanThreadSummary *free_thread =
         asanThreadRegistry().FindByTid(chunk.FreeTid());
-    Printf("freed by thread T%d here:\n", free_thread->tid());
+    Printf("freed by thread T%d%s here:\n", free_thread->tid(),
+           ThreadNameWithParenthesis(free_thread, tname, sizeof(tname)));
     StackTrace free_stack;
     chunk.GetFreeStack(&free_stack);
     PrintStack(&free_stack);
-    Printf("previously allocated by thread T%d here:\n", alloc_thread->tid());
+    Printf("previously allocated by thread T%d%s here:\n",
+           alloc_thread->tid(),
+           ThreadNameWithParenthesis(alloc_thread, tname, sizeof(tname)));
     PrintStack(&alloc_stack);
     DescribeThread(t->summary());
     DescribeThread(free_thread);
     DescribeThread(alloc_thread);
   } else {
-    Printf("allocated by thread T%d here:\n", alloc_thread->tid());
+    Printf("allocated by thread T%d%s here:\n", alloc_thread->tid(),
+           ThreadNameWithParenthesis(alloc_thread, tname, sizeof(tname)));
     PrintStack(&alloc_stack);
     DescribeThread(t->summary());
     DescribeThread(alloc_thread);
@@ -256,8 +280,13 @@ void DescribeThread(AsanThreadSummary *summary) {
     return;
   }
   summary->set_announced(true);
-  Printf("Thread T%d created by T%d here:\n",
-         summary->tid(), summary->parent_tid());
+  char tname[128];
+  Printf("Thread T%d%s", summary->tid(),
+         ThreadNameWithParenthesis(summary->tid(), tname, sizeof(tname)));
+  Printf(" created by T%d%s here:\n",
+         summary->parent_tid(),
+         ThreadNameWithParenthesis(summary->parent_tid(),
+                                   tname, sizeof(tname)));
   PrintStack(summary->stack());
   // Recursively described parent thread if needed.
   if (flags()->print_full_thread_history) {
@@ -471,9 +500,11 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
              bug_descr, (void*)addr, pc, bp, sp);
 
   u32 curr_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
-  Printf("%s of size %zu at %p thread T%d\n",
+  char tname[128];
+  Printf("%s of size %zu at %p thread T%d%s\n",
              access_size ? (is_write ? "WRITE" : "READ") : "ACCESS",
-             access_size, (void*)addr, curr_tid);
+             access_size, (void*)addr, curr_tid,
+             ThreadNameWithParenthesis(curr_tid, tname, sizeof(tname)));
 
   GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
   PrintStack(&stack);

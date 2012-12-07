@@ -39,6 +39,7 @@ class AsanThreadSummary {
       internal_memcpy(&stack_, stack, sizeof(*stack));
     }
     thread_ = 0;
+    name_[0] = 0;
   }
   u32 tid() { return tid_; }
   void set_tid(u32 tid) { tid_ = tid; }
@@ -49,6 +50,10 @@ class AsanThreadSummary {
   AsanThread *thread() { return thread_; }
   void set_thread(AsanThread *thread) { thread_ = thread; }
   static void TSDDtor(void *tsd);
+  void set_name(const char *name) {
+    internal_strncpy(name_, name, sizeof(name_) - 1);
+  }
+  const char *name() { return name_; }
 
  private:
   u32 tid_;
@@ -56,7 +61,11 @@ class AsanThreadSummary {
   bool announced_;
   StackTrace stack_;
   AsanThread *thread_;
+  char name_[128];
 };
+
+// AsanThreadSummary objects are never freed, so we need many of them.
+COMPILER_CHECK(sizeof(AsanThreadSummary) <= 4094);
 
 // AsanThread are stored in TSD and destroyed when the thread dies.
 class AsanThread {
