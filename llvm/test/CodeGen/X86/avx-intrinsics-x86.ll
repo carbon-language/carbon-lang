@@ -2348,7 +2348,7 @@ declare <4 x double> @llvm.x86.avx.vpermil.pd.256(<4 x double>, i8) nounwind rea
 
 
 define <4 x float> @test_x86_avx_vpermil_ps(<4 x float> %a0) {
-  ; CHECK: vpermilps
+  ; CHECK: vpshufd
   %res = call <4 x float> @llvm.x86.avx.vpermil.ps(<4 x float> %a0, i8 7) ; <<4 x float>> [#uses=1]
   ret <4 x float> %res
 }

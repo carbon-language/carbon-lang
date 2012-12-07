@@ -6,7 +6,7 @@ define <4 x float> @test1(<4 x float> %a) nounwind {
   ret <4 x float> %b
 ; CHECK: test1:
 ; CHECK: vshufps
-; CHECK: vpermilps
+; CHECK: vpshufd
 }
 
 ; rdar://10538417
@@ -106,7 +106,7 @@ define <4 x float> @test11(<4 x float> %a) nounwind  {
 
 define <4 x float> @test12(<4 x float>* %a) nounwind  {
 ; CHECK: test12
-; CHECK: vpermilps $27, (
+; CHECK: vpshufd
   %tmp0 = load <4 x float>* %a
   %tmp1 = shufflevector <4 x float> %tmp0, <4 x float> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
   ret <4 x float> %tmp1

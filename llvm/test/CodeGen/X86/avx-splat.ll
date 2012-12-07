@@ -84,7 +84,7 @@ define <8 x float> @funcF(i32 %val) nounwind {
   ret <8 x float> %tmp
 }
 
-; CHECK: vpermilps  $0
+; CHECK: vpshufd  $0
 ; CHECK-NEXT: vinsertf128  $1
 define <8 x float> @funcG(<8 x float> %a) nounwind uwtable readnone ssp {
 entry:
@@ -93,7 +93,7 @@ entry:
 }
 
 ; CHECK: vextractf128  $1
-; CHECK-NEXT: vpermilps  $85
+; CHECK-NEXT: vpshufd
 ; CHECK-NEXT: vinsertf128  $1
 define <8 x float> @funcH(<8 x float> %a) nounwind uwtable readnone ssp {
 entry:

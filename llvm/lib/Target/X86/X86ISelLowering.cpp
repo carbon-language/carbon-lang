@@ -6781,11 +6781,12 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
     unsigned TargetMask = getShuffleSHUFImmediate(SVOp);
 
-    if (HasFp256 && (VT == MVT::v4f32 || VT == MVT::v2f64))
-      return getTargetShuffleNode(X86ISD::VPERMILP, dl, VT, V1, TargetMask, DAG);
-
     if (HasSSE2 && (VT == MVT::v4f32 || VT == MVT::v4i32))
       return getTargetShuffleNode(X86ISD::PSHUFD, dl, VT, V1, TargetMask, DAG);
+
+    if (HasFp256 && (VT == MVT::v4f32 || VT == MVT::v2f64))
+      return getTargetShuffleNode(X86ISD::VPERMILP, dl, VT, V1, TargetMask,
+                                  DAG);
 
     return getTargetShuffleNode(X86ISD::SHUFP, dl, VT, V1, V1,
                                 TargetMask, DAG);
