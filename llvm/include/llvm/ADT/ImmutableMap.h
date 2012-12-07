@@ -288,6 +288,13 @@ public:
       Factory(F) {
     if (Root) { Root->retain(); }
   }
+
+  explicit ImmutableMapRef(const ImmutableMap<KeyT, ValT> &X,
+                           typename ImmutableMap<KeyT, ValT>::Factory &F)
+    : Root(X.getRootWithoutRetain()),
+      Factory(F.getTreeFactory()) {
+    if (Root) { Root->retain(); }
+  }
   
   ImmutableMapRef(const ImmutableMapRef &X)
     : Root(X.Root),
@@ -316,6 +323,14 @@ public:
   
   static inline ImmutableMapRef getEmptyMap(FactoryTy *F) {
     return ImmutableMapRef(0, F);
+  }
+
+  void manualRetain() {
+    if (Root) Root->retain();
+  }
+
+  void manualRelease() {
+    if (Root) Root->release();
   }
 
   ImmutableMapRef add(key_type_ref K, data_type_ref D) {
