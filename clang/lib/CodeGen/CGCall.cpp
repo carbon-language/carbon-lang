@@ -316,6 +316,37 @@ CodeGenTypes::arrangeGlobalDeclaration(GlobalDecl GD) {
   return arrangeFunctionDeclaration(FD);
 }
 
+/// Arrange a call as unto a free function, except possibly with an
+/// additional number of formal parameters considered required.
+static const CGFunctionInfo &
+arrangeFreeFunctionLikeCall(CodeGenTypes &CGT,
+                            const CallArgList &args,
+                            const FunctionType *fnType,
+                            unsigned numExtraRequiredArgs) {
+  assert(args.size() >= numExtraRequiredArgs);
+
+  // In most cases, there are no optional arguments.
+  RequiredArgs required = RequiredArgs::All;
+
+  // If we have a variadic prototype, the required arguments are the
+  // extra prefix plus the arguments in the prototype.
+  if (const FunctionProtoType *proto = dyn_cast<FunctionProtoType>(fnType)) {
+    if (proto->isVariadic())
+      required = RequiredArgs(proto->getNumArgs() + numExtraRequiredArgs);
+
+  // If we don't have a prototype at all, but we're supposed to
+  // explicitly use the variadic convention for unprototyped calls,
+  // treat all of the arguments as required but preserve the nominal
+  // possibility of variadics.
+  } else if (CGT.CGM.getTargetCodeGenInfo()
+               .isNoProtoCallVariadic(args, cast<FunctionNoProtoType>(fnType))) {
+    required = RequiredArgs(args.size());
+  }
+
+  return CGT.arrangeFreeFunctionCall(fnType->getResultType(), args,
+                                     fnType->getExtInfo(), required);
+}
+
 /// Figure out the rules for calling a function with the given formal
 /// type using the given arguments.  The arguments are necessary
 /// because the function might be unprototyped, in which case it's
@@ -323,17 +354,15 @@ CodeGenTypes::arrangeGlobalDeclaration(GlobalDecl GD) {
 const CGFunctionInfo &
 CodeGenTypes::arrangeFreeFunctionCall(const CallArgList &args,
                                       const FunctionType *fnType) {
-  RequiredArgs required = RequiredArgs::All;
-  if (const FunctionProtoType *proto = dyn_cast<FunctionProtoType>(fnType)) {
-    if (proto->isVariadic())
-      required = RequiredArgs(proto->getNumArgs());
-  } else if (CGM.getTargetCodeGenInfo()
-               .isNoProtoCallVariadic(args, cast<FunctionNoProtoType>(fnType))) {
-    required = RequiredArgs(0);
-  }
+  return arrangeFreeFunctionLikeCall(*this, args, fnType, 0);
+}
 
-  return arrangeFreeFunctionCall(fnType->getResultType(), args,
-                                 fnType->getExtInfo(), required);
+/// A block function call is essentially a free-function call with an
+/// extra implicit argument.
+const CGFunctionInfo &
+CodeGenTypes::arrangeBlockFunctionCall(const CallArgList &args,
+                                       const FunctionType *fnType) {
+  return arrangeFreeFunctionLikeCall(*this, args, fnType, 1);
 }
 
 const CGFunctionInfo &
@@ -865,8 +894,14 @@ CodeGenTypes::GetFunctionType(const CGFunctionInfo &FI) {
     break;
   }
 
-  for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
-         ie = FI.arg_end(); it != ie; ++it) {
+  // Add in all of the required arguments.
+  CGFunctionInfo::const_arg_iterator it = FI.arg_begin(), ie;
+  if (FI.isVariadic()) {
+    ie = it + FI.getRequiredArgs().getNumRequiredArgs();
+  } else {
+    ie = FI.arg_end();
+  }
+  for (; it != ie; ++it) {
     const ABIArgInfo &argAI = it->info;
 
     // Insert a padding type to ensure proper alignment.

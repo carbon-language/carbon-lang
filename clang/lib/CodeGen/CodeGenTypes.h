@@ -58,6 +58,7 @@ namespace CodeGen {
 /// CodeGenTypes - This class organizes the cross-module state that is used
 /// while lowering AST types to LLVM types.
 class CodeGenTypes {
+public:
   // Some of this stuff should probably be left on the CGM.
   ASTContext &Context;
   const TargetInfo &Target;
@@ -68,6 +69,7 @@ class CodeGenTypes {
   const CodeGenOptions &CodeGenOpts;
   CodeGenModule &CGM;
 
+private:
   /// The opaque type map for Objective-C interfaces. All direct
   /// manipulation is done by the runtime interfaces, which are
   /// responsible for coercing to the appropriate type; these opaque
@@ -195,6 +197,8 @@ public:
                                                 const CallArgList &args,
                                                 FunctionType::ExtInfo info,
                                                 RequiredArgs required);
+  const CGFunctionInfo &arrangeBlockFunctionCall(const CallArgList &args,
+                                                 const FunctionType *type);
 
   const CGFunctionInfo &arrangeCXXMethodCall(const CallArgList &args,
                                              const FunctionProtoType *type,

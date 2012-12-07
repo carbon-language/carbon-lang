@@ -134,7 +134,7 @@ namespace CodeGen {
     }
 
     bool allowsOptionalArgs() const { return NumRequired != ~0U; }
-    bool getNumRequiredArgs() const {
+    unsigned getNumRequiredArgs() const {
       assert(allowsOptionalArgs());
       return NumRequired;
     }

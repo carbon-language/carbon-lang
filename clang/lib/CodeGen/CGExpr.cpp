@@ -2930,7 +2930,7 @@ RValue CodeGenFunction::EmitCall(QualType CalleeType, llvm::Value *Callee,
   // through an unprototyped function type works like a *non-variadic*
   // call.  The way we make this work is to cast to the exact type
   // of the promoted arguments.
-  if (isa<FunctionNoProtoType>(FnType) && !FnInfo.isVariadic()) {
+  if (isa<FunctionNoProtoType>(FnType)) {
     llvm::Type *CalleeTy = getTypes().GetFunctionType(FnInfo);
     CalleeTy = CalleeTy->getPointerTo();
     Callee = Builder.CreateBitCast(Callee, CalleeTy, "callee.knr.cast");

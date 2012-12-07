@@ -100,3 +100,35 @@ void test2(Test2 *x) {
 // CHECK-NEXT: [[T4:%.*]] = load [[WEAK_T]]{{.*}}** [[T3]]
 // CHECK-NEXT: [[WEAKX:%.*]] = getelementptr inbounds [[WEAK_T]]{{.*}}* [[T4]], i32 0, i32 6
 // CHECK-NEXT: [[T0:%.*]] = load [[TEST2]]** [[WEAKX]], align 4
+
+// rdar://problem/12722954
+// Make sure that ... is appropriately positioned in a block call.
+void test3(void (^block)(int, ...)) {
+  block(0, 1, 2, 3);
+}
+// CHECK:    define void @test3(
+// CHECK:      [[BLOCK:%.*]] = alloca void (i32, ...)*, align 4
+// CHECK-NEXT: store void (i32, ...)*
+// CHECK-NEXT: [[T0:%.*]] = load void (i32, ...)** [[BLOCK]], align 4
+// CHECK-NEXT: [[T1:%.*]] = bitcast void (i32, ...)* [[T0]] to [[BLOCK_T:%.*]]*
+// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[T1]], i32 0, i32 3
+// CHECK-NEXT: [[T3:%.*]] = bitcast [[BLOCK_T]]* [[T1]] to i8*
+// CHECK-NEXT: [[T4:%.*]] = load i8** [[T2]]
+// CHECK-NEXT: [[T5:%.*]] = bitcast i8* [[T4]] to void (i8*, i32, ...)*
+// CHECK-NEXT: call void (i8*, i32, ...)* [[T5]](i8* [[T3]], i32 0, i32 1, i32 2, i32 3)
+// CHECK-NEXT: ret void
+
+void test4(void (^block)()) {
+  block(0, 1, 2, 3);
+}
+// CHECK:    define void @test4(
+// CHECK:      [[BLOCK:%.*]] = alloca void (...)*, align 4
+// CHECK-NEXT: store void (...)*
+// CHECK-NEXT: [[T0:%.*]] = load void (...)** [[BLOCK]], align 4
+// CHECK-NEXT: [[T1:%.*]] = bitcast void (...)* [[T0]] to [[BLOCK_T:%.*]]*
+// CHECK-NEXT: [[T2:%.*]] = getelementptr inbounds [[BLOCK_T]]* [[T1]], i32 0, i32 3
+// CHECK-NEXT: [[T3:%.*]] = bitcast [[BLOCK_T]]* [[T1]] to i8*
+// CHECK-NEXT: [[T4:%.*]] = load i8** [[T2]]
+// CHECK-NEXT: [[T5:%.*]] = bitcast i8* [[T4]] to void (i8*, i32, i32, i32, i32)*
+// CHECK-NEXT: call void [[T5]](i8* [[T3]], i32 0, i32 1, i32 2, i32 3)
+// CHECK-NEXT: ret void

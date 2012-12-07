@@ -374,3 +374,21 @@ T1 test48(void) {
 // CHECK: memcpy
   return T1_retval;
 }
+
+void test49_helper(double, ...);
+void test49(double d, double e) {
+  test49_helper(d, e);
+}
+// CHECK:    define void @test49(
+// CHECK:      [[T0:%.*]] = load double*
+// CHECK-NEXT: [[T1:%.*]] = load double*
+// CHECK-NEXT: call void (double, ...)* @test49_helper(double [[T0]], double [[T1]])
+
+void test50_helper();
+void test50(double d, double e) {
+  test50_helper(d, e);
+}
+// CHECK:    define void @test50(
+// CHECK:      [[T0:%.*]] = load double*
+// CHECK-NEXT: [[T1:%.*]] = load double*
+// CHECK-NEXT: call void (double, double, ...)* bitcast (void (...)* @test50_helper to void (double, double, ...)*)(double [[T0]], double [[T1]])
