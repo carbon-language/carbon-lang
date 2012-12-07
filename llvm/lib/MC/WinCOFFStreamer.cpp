@@ -193,8 +193,6 @@ void WinCOFFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   // don't really even do.
 
   if (Value->getKind() != MCExpr::SymbolRef) {
-    // TODO: This is exactly the same as MachOStreamer. Consider merging into
-    // MCObjectStreamer.
     getAssembler().getOrCreateSymbolData(*Symbol);
     AddValueSymbols(Value);
     Symbol->setVariableValue(Value);

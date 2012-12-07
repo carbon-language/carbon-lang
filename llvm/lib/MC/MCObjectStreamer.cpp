@@ -159,6 +159,11 @@ void MCObjectStreamer::ChangeSection(const MCSection *Section) {
   CurSectionData = &getAssembler().getOrCreateSectionData(*Section);
 }
 
+void MCObjectStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
+  getAssembler().getOrCreateSymbolData(*Symbol);
+  Symbol->setVariableValue(AddValueSymbols(Value));
+}
+
 void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
   // Scan for values.
   for (unsigned i = Inst.getNumOperands(); i--; )

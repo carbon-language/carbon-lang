@@ -48,7 +48,6 @@ public:
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitDataRegion(MCDataRegionType Kind);
   virtual void EmitThumbFunc(MCSymbol *Func);
-  virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue);
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
@@ -198,14 +197,6 @@ void MCMachOStreamer::EmitThumbFunc(MCSymbol *Symbol) {
   // Mark the thumb bit on the symbol.
   MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
   SD.setFlags(SD.getFlags() | SF_ThumbFunc);
-}
-
-void MCMachOStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
-  // TODO: This is exactly the same as WinCOFFStreamer. Consider merging into
-  // MCObjectStreamer.
-  // FIXME: Lift context changes into super class.
-  getAssembler().getOrCreateSymbolData(*Symbol);
-  Symbol->setVariableValue(AddValueSymbols(Value));
 }
 
 void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
