@@ -9,6 +9,7 @@ Development Process Documentation
    MakefileGuide
    Projects
    LLVMBuild
+   HowToReleaseLLVM
 
 * :ref:`projects`
 
@@ -26,6 +27,6 @@ Development Process Documentation
 
   Describes how the LLVM makefiles work and how to use them.
 
-* `How To Release LLVM To The Public <HowToReleaseLLVM.html>`_
+* :doc:`HowToReleaseLLVM`
 
   This is a guide to preparing LLVM releases. Most developers can ignore it.
