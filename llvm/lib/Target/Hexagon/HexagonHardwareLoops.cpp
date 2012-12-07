@@ -461,6 +461,9 @@ bool HexagonHardwareLoops::convertToHardwareLoop(MachineLoop *L) {
     return false;
   }
   MachineBasicBlock::iterator LastI = LastMBB->getFirstTerminator();
+  if (LastI == LastMBB->end()) {
+    return false;
+  }
 
   // Determine the loop start.
   MachineBasicBlock *LoopStart = L->getTopBlock();
@@ -478,6 +481,9 @@ bool HexagonHardwareLoops::convertToHardwareLoop(MachineLoop *L) {
 
   // Convert the loop to a hardware loop
   DEBUG(dbgs() << "Change to hardware loop at "; L->dump());
+  DebugLoc InsertPosDL;
+  if (InsertPos != Preheader->end())
+    InsertPosDL = InsertPos->getDebugLoc();
 
   if (TripCount->isReg()) {
     // Create a copy of the loop count register.
@@ -485,23 +491,23 @@ bool HexagonHardwareLoops::convertToHardwareLoop(MachineLoop *L) {
     const TargetRegisterClass *RC =
       MF->getRegInfo().getRegClass(TripCount->getReg());
     unsigned CountReg = MF->getRegInfo().createVirtualRegister(RC);
-    BuildMI(*Preheader, InsertPos, InsertPos->getDebugLoc(),
+    BuildMI(*Preheader, InsertPos, InsertPosDL,
             TII->get(TargetOpcode::COPY), CountReg).addReg(TripCount->getReg());
     if (TripCount->isNeg()) {
       unsigned CountReg1 = CountReg;
       CountReg = MF->getRegInfo().createVirtualRegister(RC);
-      BuildMI(*Preheader, InsertPos, InsertPos->getDebugLoc(),
+      BuildMI(*Preheader, InsertPos, InsertPosDL,
               TII->get(Hexagon::NEG), CountReg).addReg(CountReg1);
     }
 
     // Add the Loop instruction to the beginning of the loop.
-    BuildMI(*Preheader, InsertPos, InsertPos->getDebugLoc(),
+    BuildMI(*Preheader, InsertPos, InsertPosDL,
             TII->get(Hexagon::LOOP0_r)).addMBB(LoopStart).addReg(CountReg);
   } else {
     assert(TripCount->isImm() && "Expecting immedate vaule for trip count");
     // Add the Loop immediate instruction to the beginning of the loop.
     int64_t CountImm = TripCount->getImm();
-    BuildMI(*Preheader, InsertPos, InsertPos->getDebugLoc(),
+    BuildMI(*Preheader, InsertPos, InsertPosDL,
             TII->get(Hexagon::LOOP0_i)).addMBB(LoopStart).addImm(CountImm);
   }
 
@@ -514,8 +520,9 @@ bool HexagonHardwareLoops::convertToHardwareLoop(MachineLoop *L) {
   BlockAddress::get(const_cast<BasicBlock *>(LoopStart->getBasicBlock()));
 
   // Replace the loop branch with an endloop instruction.
-  DebugLoc dl = LastI->getDebugLoc();
-  BuildMI(*LastMBB, LastI, dl, TII->get(Hexagon::ENDLOOP0)).addMBB(LoopStart);
+  DebugLoc LastIDL = LastI->getDebugLoc();
+  BuildMI(*LastMBB, LastI, LastIDL,
+          TII->get(Hexagon::ENDLOOP0)).addMBB(LoopStart);
 
   // The loop ends with either:
   //  - a conditional branch followed by an unconditional branch, or
@@ -530,7 +537,7 @@ bool HexagonHardwareLoops::convertToHardwareLoop(MachineLoop *L) {
         TII->RemoveBranch(*LastMBB);
       }
       SmallVector<MachineOperand, 0> Cond;
-      TII->InsertBranch(*LastMBB, BranchTarget, 0, Cond, dl);
+      TII->InsertBranch(*LastMBB, BranchTarget, 0, Cond, LastIDL);
     }
   } else {
     // Conditional branch to loop start; just delete it.
