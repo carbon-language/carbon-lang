@@ -33,8 +33,6 @@ def SDT_MipsDivRem       : SDTypeProfile<0, 2,
 
 def SDT_MipsThreadPointer : SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;
 
-def SDT_MipsDynAlloc    : SDTypeProfile<1, 1, [SDTCisVT<0, iPTR>,
-                                               SDTCisSameAs<0, 1>]>;
 def SDT_Sync             : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
 
 def SDT_Ext : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<0, 1>,
@@ -110,10 +108,6 @@ def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
 // This instruction is illegal since movn can take only register operands.
 
 def MipsWrapper    : SDNode<"MipsISD::Wrapper", SDTIntBinOp>;
-
-// Pointer to dynamically allocated stack area.
-def MipsDynAlloc  : SDNode<"MipsISD::DynAlloc", SDT_MipsDynAlloc,
-                           [SDNPHasChain, SDNPInGlue]>;
 
 def MipsSync : SDNode<"MipsISD::Sync", SDT_Sync, [SDNPHasChain,SDNPSideEffect]>;
 
@@ -1069,12 +1063,6 @@ let addr=0 in
 // can be matched. It's similar to Sparc LEA_ADDRi
 def LEA_ADDiu : EffectiveAddress<0x09,"addiu\t$rt, $addr", CPURegs, mem_ea>;
 
-// DynAlloc node points to dynamically allocated stack space.
-// $sp is added to the list of implicitly used registers to prevent dead code
-// elimination from removing instructions that modify $sp.
-let Uses = [SP] in
-def DynAlloc : EffectiveAddress<0x09,"addiu\t$rt, $addr", CPURegs, mem_ea>;
-
 // MADD*/MSUB*
 def MADD  : MArithR<0, "madd", MipsMAdd, 1>;
 def MADDU : MArithR<1, "maddu", MipsMAddu, 1>;
@@ -1288,9 +1276,6 @@ defm : SetlePats<CPURegs, SLT, SLTu>;
 defm : SetgtPats<CPURegs, SLT, SLTu>;
 defm : SetgePats<CPURegs, SLT, SLTu>;
 defm : SetgeImmPats<CPURegs, SLTi, SLTiu>;
-
-// select MipsDynAlloc
-def : MipsPat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
 
 // bswap pattern
 def : MipsPat<(bswap CPURegs:$rt), (ROTR (WSBH CPURegs:$rt), 16)>;

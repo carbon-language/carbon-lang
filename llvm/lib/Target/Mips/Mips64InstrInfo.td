@@ -205,9 +205,6 @@ def DSHD : SubwordSwap<0x24, 0x5, "dshd", CPU64Regs>;
 
 def LEA_ADDiu64 : EffectiveAddress<0x19,"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>;
 }
-let Uses = [SP_64], DecoderNamespace = "Mips64" in
-def DynAlloc64 : EffectiveAddress<0x19,"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>,
-                 Requires<[IsN64, HasStdEnc]>;
 let DecoderNamespace = "Mips64" in {
 def RDHWR64 : ReadHardware<CPU64Regs, HWRegs64>;
 
@@ -292,10 +289,6 @@ defm : SetlePats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgtPats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgePats<CPU64Regs, SLT64, SLTu64>;
 defm : SetgeImmPats<CPU64Regs, SLTi64, SLTiu64>;
-
-// select MipsDynAlloc
-def : MipsPat<(MipsDynAlloc addr:$f), (DynAlloc64 addr:$f)>,
-      Requires<[IsN64, HasStdEnc]>;
 
 // truncate
 def : MipsPat<(i32 (trunc CPU64Regs:$src)),
