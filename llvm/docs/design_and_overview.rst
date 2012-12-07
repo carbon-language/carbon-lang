@@ -6,9 +6,10 @@ LLVM Design & Overview
 .. toctree::
    :hidden:
 
+   LangRef
    GetElementPtr
 
-* `LLVM Language Reference Manual <LangRef.html>`_
+* :doc:`LangRef`
 
   Defines the LLVM intermediate representation.
 
