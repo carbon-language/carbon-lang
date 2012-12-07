@@ -22,20 +22,16 @@
 namespace clang {
 namespace format {
 
-UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style, Lexer &Lex,
-                                         SourceManager &SourceMgr,
+UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
+                                         FormatTokenSource &Tokens,
                                          UnwrappedLineConsumer &Callback)
-    : GreaterStashed(false),
-      Style(Style),
-      Lex(Lex),
-      SourceMgr(SourceMgr),
-      IdentTable(Lex.getLangOpts()),
+    : Style(Style),
+      Tokens(Tokens),
       Callback(Callback) {
-  Lex.SetKeepWhitespaceMode(true);
 }
 
 bool UnwrappedLineParser::parse() {
-  parseToken();
+  FormatTok = Tokens.getNextToken();
   return parseLevel();
 }
 
@@ -371,47 +367,7 @@ void UnwrappedLineParser::nextToken() {
   if (eof())
     return;
   Line.Tokens.push_back(FormatTok);
-  parseToken();
-}
-
-void UnwrappedLineParser::parseToken() {
-  if (GreaterStashed) {
-    FormatTok.NewlinesBefore = 0;
-    FormatTok.WhiteSpaceStart = FormatTok.Tok.getLocation().getLocWithOffset(1);
-    FormatTok.WhiteSpaceLength = 0;
-    GreaterStashed = false;
-    return;
-  }
-
-  FormatTok = FormatToken();
-  Lex.LexFromRawLexer(FormatTok.Tok);
-  FormatTok.WhiteSpaceStart = FormatTok.Tok.getLocation();
-
-  // Consume and record whitespace until we find a significant token.
-  while (FormatTok.Tok.is(tok::unknown)) {
-    FormatTok.NewlinesBefore += tokenText().count('\n');
-    FormatTok.WhiteSpaceLength += FormatTok.Tok.getLength();
-
-    if (eof())
-      return;
-    Lex.LexFromRawLexer(FormatTok.Tok);
-  }
-
-  if (FormatTok.Tok.is(tok::raw_identifier)) {
-    const IdentifierInfo &Info = IdentTable.get(tokenText());
-    FormatTok.Tok.setKind(Info.getTokenID());
-  }
-
-  if (FormatTok.Tok.is(tok::greatergreater)) {
-    FormatTok.Tok.setKind(tok::greater);
-    GreaterStashed = true;
-  }
-}
-
-StringRef UnwrappedLineParser::tokenText() {
-  StringRef Data(SourceMgr.getCharacterData(FormatTok.Tok.getLocation()),
-                 FormatTok.Tok.getLength());
-  return Data;
+  FormatTok = Tokens.getNextToken();
 }
 
 }  // end namespace format
