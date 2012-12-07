@@ -79,6 +79,8 @@ public:
 
 class FormatTokenSource {
 public:
+  virtual ~FormatTokenSource() {
+  }
   virtual FormatToken getNextToken() = 0;
 };
 
