@@ -3,21 +3,21 @@
 // RUN: echo "fun:*brokenFunction*" > %tmp
 // RUN: echo "global:*badGlobal*" >> %tmp
 // RUN: echo "src:*blacklist-extra.cc" >> %tmp
-// RUN: %clangxx_asan -mllvm -asan-blacklist=%tmp -m64 -O0 %s -o %t \
+// RUN: %clangxx_asan -fsanitize-blacklist=%tmp -m64 -O0 %s -o %t \
 // RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
-// RUN: %clangxx_asan -mllvm -asan-blacklist=%tmp -m64 -O1 %s -o %t \
+// RUN: %clangxx_asan -fsanitize-blacklist=%tmp -m64 -O1 %s -o %t \
 // RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
-// RUN: %clangxx_asan -mllvm -asan-blacklist=%tmp -m64 -O2 %s -o %t \
+// RUN: %clangxx_asan -fsanitize-blacklist=%tmp -m64 -O2 %s -o %t \
 // RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
-// RUN: %clangxx_asan -mllvm -asan-blacklist=%tmp -m64 -O3 %s -o %t \
+// RUN: %clangxx_asan -fsanitize-blacklist=%tmp -m64 -O3 %s -o %t \
 // RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
-// RUN: %clangxx_asan -mllvm -asan-blacklist=%tmp -m32 -O0 %s -o %t \
+// RUN: %clangxx_asan -fsanitize-blacklist=%tmp -m32 -O0 %s -o %t \
 // RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
-// RUN: %clangxx_asan -mllvm -asan-blacklist=%tmp -m32 -O1 %s -o %t \
+// RUN: %clangxx_asan -fsanitize-blacklist=%tmp -m32 -O1 %s -o %t \
 // RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
-// RUN: %clangxx_asan -mllvm -asan-blacklist=%tmp -m32 -O2 %s -o %t \
+// RUN: %clangxx_asan -fsanitize-blacklist=%tmp -m32 -O2 %s -o %t \
 // RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
-// RUN: %clangxx_asan -mllvm -asan-blacklist=%tmp -m32 -O3 %s -o %t \
+// RUN: %clangxx_asan -fsanitize-blacklist=%tmp -m32 -O3 %s -o %t \
 // RUN: %p/Helpers/blacklist-extra.cc && %t 2>&1
 
 // badGlobal is accessed improperly, but we blacklisted it.
