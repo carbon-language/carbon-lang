@@ -391,7 +391,7 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
 ///        a MCEncodedFragment.
 static void writeFragmentContents(const MCFragment &F, MCObjectWriter *OW) {
   MCEncodedFragment &EF = cast<MCEncodedFragment>(F);
-  OW->WriteBytes(EF.getContents().str());
+  OW->WriteBytes(EF.getContents());
 }
 
 /// \brief Write the fragment \p F to the output file.

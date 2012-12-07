@@ -113,8 +113,8 @@ public:
   typedef SmallVectorImpl<MCFixup>::const_iterator const_fixup_iterator;
   typedef SmallVectorImpl<MCFixup>::iterator fixup_iterator;
 
-  virtual SmallString<32> &getContents() = 0;
-  virtual const SmallString<32> &getContents() const = 0;
+  virtual SmallVectorImpl<char> &getContents() = 0;
+  virtual const SmallVectorImpl<char> &getContents() const = 0;
 
   virtual SmallVectorImpl<MCFixup> &getFixups() = 0;
   virtual const SmallVectorImpl<MCFixup> &getFixups() const = 0;
@@ -132,7 +132,7 @@ public:
 
 class MCDataFragment : public MCEncodedFragment {
   virtual void anchor();
-  SmallString<32> Contents;
+  SmallVector<char, 32> Contents;
 
   /// Fixups - The list of fixups in this fragment.
   SmallVector<MCFixup, 4> Fixups;
@@ -142,8 +142,8 @@ public:
     : MCEncodedFragment(FT_Data, SD) {
   }
 
-  SmallString<32> &getContents() { return Contents; }
-  const SmallString<32> &getContents() const { return Contents; }
+  virtual SmallVectorImpl<char> &getContents() { return Contents; }
+  virtual const SmallVectorImpl<char> &getContents() const { return Contents; }
 
   SmallVectorImpl<MCFixup> &getFixups() {
     return Fixups;
@@ -171,7 +171,7 @@ class MCInstFragment : public MCEncodedFragment {
   MCInst Inst;
 
   /// Contents - Binary data for the currently encoded instruction.
-  SmallString<32> Contents;
+  SmallVector<char, 8> Contents;
 
   /// Fixups - The list of fixups in this fragment.
   SmallVector<MCFixup, 1> Fixups;
@@ -181,8 +181,8 @@ public:
     : MCEncodedFragment(FT_Inst, SD), Inst(_Inst) {
   }
 
-  SmallString<32> &getContents() { return Contents; }
-  const SmallString<32> &getContents() const { return Contents; }
+  virtual SmallVectorImpl<char> &getContents() { return Contents; }
+  virtual const SmallVectorImpl<char> &getContents() const { return Contents; }
 
   unsigned getInstSize() const { return Contents.size(); }
   const MCInst &getInst() const { return Inst; }
