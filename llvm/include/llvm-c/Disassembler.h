@@ -139,11 +139,24 @@ extern "C" {
  * by passing a block of information in the DisInfo parameter and specifying the
  * TagType and callback functions as described above.  These can all be passed
  * as NULL.  If successful, this returns a disassembler context.  If not, it
- * returns NULL.
+ * returns NULL. This function is equivalent to calling LLVMCreateDisasmCPU()
+ * with an empty CPU name.
  */
 LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
                                       int TagType, LLVMOpInfoCallback GetOpInfo,
                                       LLVMSymbolLookupCallback SymbolLookUp);
+
+/**
+ * Create a disassembler for the TripleName and a specific CPU.  Symbolic
+ * disassembly is supported by passing a block of information in the DisInfo
+ * parameter and specifying the TagType and callback functions as described
+ * above.  These can all be passed * as NULL.  If successful, this returns a
+ * disassembler context.  If not, it returns NULL.
+ */
+LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
+                                         void *DisInfo, int TagType,
+                                         LLVMOpInfoCallback GetOpInfo,
+                                         LLVMSymbolLookupCallback SymbolLookUp);
 
 /**
  * Set the disassembler's options.  Returns 1 if it can set the Options and 0

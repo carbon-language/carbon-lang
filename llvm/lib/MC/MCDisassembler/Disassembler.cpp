@@ -33,29 +33,29 @@ using namespace llvm;
 // functions can all be passed as NULL.  If successful, this returns a
 // disassembler context.  If not, it returns NULL.
 //
-LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
-                                      int TagType, LLVMOpInfoCallback GetOpInfo,
-                                      LLVMSymbolLookupCallback SymbolLookUp) {
+LLVMDisasmContextRef LLVMCreateDisasmCPU(const char *Triple, const char *CPU,
+                                         void *DisInfo, int TagType,
+                                         LLVMOpInfoCallback GetOpInfo,
+                                         LLVMSymbolLookupCallback SymbolLookUp){
   // Get the target.
   std::string Error;
-  const Target *TheTarget = TargetRegistry::lookupTarget(TripleName, Error);
+  const Target *TheTarget = TargetRegistry::lookupTarget(Triple, Error);
   assert(TheTarget && "Unable to create target!");
 
   // Get the assembler info needed to setup the MCContext.
-  const MCAsmInfo *MAI = TheTarget->createMCAsmInfo(TripleName);
+  const MCAsmInfo *MAI = TheTarget->createMCAsmInfo(Triple);
   assert(MAI && "Unable to create target asm info!");
 
   const MCInstrInfo *MII = TheTarget->createMCInstrInfo();
   assert(MII && "Unable to create target instruction info!");
 
-  const MCRegisterInfo *MRI = TheTarget->createMCRegInfo(TripleName);
+  const MCRegisterInfo *MRI = TheTarget->createMCRegInfo(Triple);
   assert(MRI && "Unable to create target register info!");
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
-  std::string CPU;
 
-  const MCSubtargetInfo *STI = TheTarget->createMCSubtargetInfo(TripleName, CPU,
+  const MCSubtargetInfo *STI = TheTarget->createMCSubtargetInfo(Triple, CPU,
                                                                 FeaturesStr);
   assert(STI && "Unable to create subtarget info!");
 
@@ -74,13 +74,20 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
                                                      *MAI, *MII, *MRI, *STI);
   assert(IP && "Unable to create instruction printer!");
 
-  LLVMDisasmContext *DC = new LLVMDisasmContext(TripleName, DisInfo, TagType,
+  LLVMDisasmContext *DC = new LLVMDisasmContext(Triple, DisInfo, TagType,
                                                 GetOpInfo, SymbolLookUp,
                                                 TheTarget, MAI, MRI,
                                                 STI, MII, Ctx, DisAsm, IP);
   assert(DC && "Allocation failure!");
 
   return DC;
+}
+
+LLVMDisasmContextRef LLVMCreateDisasm(const char *Triple, void *DisInfo,
+                                      int TagType, LLVMOpInfoCallback GetOpInfo,
+                                      LLVMSymbolLookupCallback SymbolLookUp) {
+  return LLVMCreateDisasmCPU(Triple, "", DisInfo, TagType, GetOpInfo,
+                             SymbolLookUp);
 }
 
 //
