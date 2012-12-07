@@ -1179,7 +1179,9 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error)
         {
             StreamString scripting_stream;
             scripting_fspec.Dump(&scripting_stream);
-            bool did_load = script_interpreter->LoadScriptingModule(scripting_stream.GetData(), false, true, error);
+            const bool can_reload = false;
+            const bool init_lldb_globals = false;
+            bool did_load = script_interpreter->LoadScriptingModule(scripting_stream.GetData(), can_reload, init_lldb_globals, error);
             if (!did_load)
                 return false;
         }

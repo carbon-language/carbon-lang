@@ -203,7 +203,7 @@ public:
 protected:
 
     void
-    EnterSession ();
+    EnterSession (bool init_lldb_globals);
     
     void
     LeaveSession ();
@@ -264,7 +264,8 @@ private:
         enum OnEntry
         {
             AcquireLock         = 0x0001,
-            InitSession         = 0x0002
+            InitSession         = 0x0002,
+            InitGlobals         = 0x0004
         };
         
         enum OnLeave
@@ -287,7 +288,7 @@ private:
         DoAcquireLock ();
         
         bool
-        DoInitSession ();
+        DoInitSession (bool init_lldb_globals);
         
         bool
         DoFreeLock ();
