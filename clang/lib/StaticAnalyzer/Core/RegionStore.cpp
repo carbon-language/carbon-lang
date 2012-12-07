@@ -196,6 +196,11 @@ public:
   /// getDefaultBinding - Returns an SVal* representing an optional default
   ///  binding associated with a region and its subregions.
   Optional<SVal> getDefaultBinding(const MemRegion *R);
+
+  /// Return the internal tree as a Store.
+  Store asStore() const {
+    return asImmutableMap().getRootWithoutRetain();
+  }
 };
 } // end anonymous namespace
 
@@ -860,7 +865,7 @@ void invalidateRegionsWorker::VisitBaseRegion(const MemRegion *baseR) {
         // invalidate that region.  This is because a block may capture
         // a pointer value, but the thing pointed by that pointer may
         // get invalidated.
-        Store store = B.asImmutableMap().getRootWithoutRetain();
+        Store store = B.asStore();
         SVal V = RM.getBinding(store, loc::MemRegionVal(VR));
         if (const Loc *L = dyn_cast<Loc>(&V)) {
           if (const MemRegion *LR = L->getAsRegion())
@@ -991,7 +996,7 @@ RegionStoreManager::invalidateRegions(Store store,
                                Ex, Count, LCtx, B, Invalidated);
   }
 
-  return StoreRef(B.asImmutableMap().getRootWithoutRetain(), *this);
+  return StoreRef(B.asStore(), *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1623,7 +1628,7 @@ StoreRef RegionStoreManager::Bind(Store store, Loc L, SVal V) {
   RegionBindingsRef B = getRegionBindings(store);
   B = removeSubRegionBindings(B, cast<SubRegion>(R));
   BindingKey Key = BindingKey::Make(R, BindingKey::Direct);
-  return StoreRef(B.addBinding(Key, V).asImmutableMap().getRootWithoutRetain(),
+  return StoreRef(B.addBinding(Key, V).asStore(),
                   *this);
 }
 
@@ -1660,7 +1665,7 @@ StoreRef RegionStoreManager::setImplicitDefaultValue(Store store,
   }
 
   return StoreRef(B.addBinding(R, BindingKey::Default, V)
-                   .asImmutableMap().getRootWithoutRetain(), *this);
+                   .asStore(), *this);
 }
 
 StoreRef RegionStoreManager::BindArray(Store store, const TypedValueRegion* R,
@@ -1818,7 +1823,7 @@ StoreRef RegionStoreManager::BindStruct(Store store, const TypedValueRegion* R,
   if (FI != FE) {
     RegionBindingsRef B = getRegionBindings(newStore.getStore());
     B = B.addBinding(R, BindingKey::Default, svalBuilder.makeIntVal(0, false));
-    newStore = StoreRef(B.asImmutableMap().getRootWithoutRetain(), *this);
+    newStore = StoreRef(B.asStore(), *this);
   }
 
   return newStore;
@@ -1830,7 +1835,7 @@ StoreRef RegionStoreManager::BindAggregate(Store store, const TypedRegion *R,
   // we will invalidate. Then add the new binding.
   RegionBindingsRef B = getRegionBindings(store);
   B = removeSubRegionBindings(B, R).addBinding(R, BindingKey::Default, Val);
-  return StoreRef(B.asImmutableMap().getRootWithoutRetain(), *this);
+  return StoreRef(B.asStore(), *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2015,7 +2020,7 @@ StoreRef RegionStoreManager::removeDeadBindings(Store store,
     }
   }
 
-  return StoreRef(B.asImmutableMap().getRootWithoutRetain(), *this);
+  return StoreRef(B.asStore(), *this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -2026,7 +2031,7 @@ void RegionStoreManager::print(Store store, raw_ostream &OS,
                                const char* nl, const char *sep) {
   RegionBindingsRef B = getRegionBindings(store);
   OS << "Store (direct and default bindings), "
-     << (void*) B.asImmutableMap().getRootWithoutRetain()
+     << B.asStore()
      << " :" << nl;
 
   for (RegionBindingsRef::iterator I = B.begin(), E = B.end(); I != E; ++I) {
