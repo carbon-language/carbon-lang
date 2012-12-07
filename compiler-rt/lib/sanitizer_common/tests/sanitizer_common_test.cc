@@ -91,7 +91,6 @@ TEST(SanitizerCommon, SanitizerSetThreadName) {
     EXPECT_TRUE(SanitizerSetThreadName(names[i]));
     char buff[100];
     EXPECT_TRUE(SanitizerGetThreadName(buff, sizeof(buff) - 1));
-    Printf("buff: %s\n", buff);
     EXPECT_EQ(0, internal_strcmp(buff, names[i]));
   }
 }

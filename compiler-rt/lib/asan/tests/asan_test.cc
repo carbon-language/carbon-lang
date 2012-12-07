@@ -1681,7 +1681,6 @@ TEST(AddressSanitizer, ThreadNamesTest) {
                ".*Thread T2 .FreeThr. created by T0 here:"
                ".*Thread T1 .AllocThr. created by T0 here:"
                "");
-
 }
 #endif
 
