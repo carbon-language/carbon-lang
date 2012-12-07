@@ -50,23 +50,23 @@ class Div64<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
 
 multiclass Atomic2Ops64<PatFrag Op, string Opstr> {
   def #NAME# : Atomic2Ops<Op, Opstr, CPU64Regs, CPURegs>,
-               Requires<[NotN64, HasStandardEncoding]>;
+               Requires<[NotN64, HasStdEnc]>;
   def _P8    : Atomic2Ops<Op, Opstr, CPU64Regs, CPU64Regs>,
-               Requires<[IsN64, HasStandardEncoding]> {
+               Requires<[IsN64, HasStdEnc]> {
     let isCodeGenOnly = 1;
   }
 }
 
 multiclass AtomicCmpSwap64<PatFrag Op, string Width>  {
   def #NAME# : AtomicCmpSwap<Op, Width, CPU64Regs, CPURegs>,
-               Requires<[NotN64, HasStandardEncoding]>;
+               Requires<[NotN64, HasStdEnc]>;
   def _P8    : AtomicCmpSwap<Op, Width, CPU64Regs, CPU64Regs>,
-               Requires<[IsN64, HasStandardEncoding]> {
+               Requires<[IsN64, HasStdEnc]> {
     let isCodeGenOnly = 1;
   }
 }
 }
-let usesCustomInserter = 1, Predicates = [HasStandardEncoding],
+let usesCustomInserter = 1, Predicates = [HasStdEnc],
   DecoderNamespace = "Mips64" in {
   defm ATOMIC_LOAD_ADD_I64  : Atomic2Ops64<atomic_load_add_64, "load_add_64">;
   defm ATOMIC_LOAD_SUB_I64  : Atomic2Ops64<atomic_load_sub_64, "load_sub_64">;
@@ -119,7 +119,7 @@ let Pattern = []<dag> in {
 }
 }
 // Rotate Instructions
-let Predicates = [HasMips64r2, HasStandardEncoding],
+let Predicates = [HasMips64r2, HasStdEnc],
     DecoderNamespace = "Mips64" in {
   def DROTR    : shift_rotate_imm64<0x3a, 0x01, "drotr", rotr>;
   def DROTRV   : shift_rotate_reg<0x16, 0x01, "drotrv", rotr, CPU64Regs>;
@@ -154,15 +154,15 @@ defm SDR   : StoreLeftRightM64<0x2d, "sdr", MipsSDR>;
 
 /// Load-linked, Store-conditional
 def LLD    : LLBase<0x34, "lld", CPU64Regs, mem>,
-             Requires<[NotN64, HasStandardEncoding]>;
+             Requires<[NotN64, HasStdEnc]>;
 def LLD_P8 : LLBase<0x34, "lld", CPU64Regs, mem64>,
-             Requires<[IsN64, HasStandardEncoding]> {
+             Requires<[IsN64, HasStdEnc]> {
   let isCodeGenOnly = 1;
 }
 def SCD    : SCBase<0x3c, "scd", CPU64Regs, mem>,
-             Requires<[NotN64, HasStandardEncoding]>;
+             Requires<[NotN64, HasStdEnc]>;
 def SCD_P8 : SCBase<0x3c, "scd", CPU64Regs, mem64>,
-             Requires<[IsN64, HasStandardEncoding]> {
+             Requires<[IsN64, HasStdEnc]> {
   let isCodeGenOnly = 1;
 }
 
@@ -207,7 +207,7 @@ def LEA_ADDiu64 : EffectiveAddress<0x19,"daddiu\t$rt, $addr", CPU64Regs, mem_ea_
 }
 let Uses = [SP_64], DecoderNamespace = "Mips64" in
 def DynAlloc64 : EffectiveAddress<0x19,"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>,
-                 Requires<[IsN64, HasStandardEncoding]>;
+                 Requires<[IsN64, HasStdEnc]>;
 let DecoderNamespace = "Mips64" in {
 def RDHWR64 : ReadHardware<CPU64Regs, HWRegs64>;
 
@@ -236,13 +236,13 @@ let isCodeGenOnly = 1, rs = 0, shamt = 0 in {
 //===----------------------------------------------------------------------===//
 
 // extended loads
-let Predicates = [NotN64, HasStandardEncoding] in {
+let Predicates = [NotN64, HasStdEnc] in {
   def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64 addr:$src)>;
   def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64 addr:$src)>;
   def : MipsPat<(i64 (extloadi16 addr:$src)), (LH64 addr:$src)>;
   def : MipsPat<(i64 (extloadi32 addr:$src)), (LW64 addr:$src)>;
 }
-let Predicates = [IsN64, HasStandardEncoding] in {
+let Predicates = [IsN64, HasStdEnc] in {
   def : MipsPat<(i64 (extloadi1  addr:$src)), (LB64_P8 addr:$src)>;
   def : MipsPat<(i64 (extloadi8  addr:$src)), (LB64_P8 addr:$src)>;
   def : MipsPat<(i64 (extloadi16 addr:$src)), (LH64_P8 addr:$src)>;
@@ -295,12 +295,12 @@ defm : SetgeImmPats<CPU64Regs, SLTi64, SLTiu64>;
 
 // select MipsDynAlloc
 def : MipsPat<(MipsDynAlloc addr:$f), (DynAlloc64 addr:$f)>,
-      Requires<[IsN64, HasStandardEncoding]>;
+      Requires<[IsN64, HasStdEnc]>;
 
 // truncate
 def : MipsPat<(i32 (trunc CPU64Regs:$src)),
               (SLL (EXTRACT_SUBREG CPU64Regs:$src, sub_32), 0)>,
-      Requires<[IsN64, HasStandardEncoding]>;
+      Requires<[IsN64, HasStdEnc]>;
 
 // 32-to-64-bit extension
 def : MipsPat<(i64 (anyext CPURegs:$src)), (SLL64_32 CPURegs:$src)>;
