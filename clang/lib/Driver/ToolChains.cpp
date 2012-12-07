@@ -1094,6 +1094,7 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
     "i686-pc-linux-gnu",
     "i486-linux-gnu",
     "i386-linux-gnu",
+    "i386-redhat-linux6E",
     "i686-redhat-linux",
     "i586-redhat-linux",
     "i386-redhat-linux",
