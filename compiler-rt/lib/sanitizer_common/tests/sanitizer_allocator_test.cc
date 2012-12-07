@@ -404,7 +404,7 @@ TEST(Allocator, ScopedBuffer) {
   }
   InternalScopedBuffer<char> char_buf(kSize);
   EXPECT_EQ(sizeof(char) * kSize, char_buf.size());  // NOLINT
-  memset(char_buf.data(), 'c', kSize);
+  internal_memset(char_buf.data(), 'c', kSize);
   for (int i = 0; i < kSize; i++) {
     EXPECT_EQ('c', char_buf[i]);
   }
