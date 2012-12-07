@@ -101,8 +101,8 @@ void rdar9371763() {
 // CHECK: usrs.cpp c:@N@foo@C@ClsB@F@ClsB# Extent=[19:5 - 19:27]
 // CHECK: usrs.cpp c:@N@foo@C@ClsB@F@result#1 Extent=[20:5 - 20:23]
 // CHECK: usrs.cpp c:@N@foo@C@ClsB@F@result#1 Extent=[24:1 - 26:2]
-// CHECK: usrs.cpp c:@aN@C@ClsC Extent=[29:3 - 29:35]
-// CHECK: usrs.cpp c:@aN@w Extent=[30:3 - 30:8]
+// CHECK: usrs.cpp c:usrs.cpp@360@aN@C@ClsC Extent=[29:3 - 29:35]
+// CHECK: usrs.cpp c:usrs.cpp@396@aN@w Extent=[30:3 - 30:8]
 // CHECK: usrs.cpp c:@z Extent=[33:1 - 33:6]
 // CHECK: usrs.cpp c:@N@foo Extent=[35:1 - 40:2]
 // CHECK: usrs.cpp c:@N@foo@N@taz Extent=[35:17 - 39:2]
@@ -137,7 +137,7 @@ void rdar9371763() {
 // CHECK-NOT: ClsB
 // CHECK: usrs.cpp c:@NA@foo_alias3
 // CHECK: usrs.cpp c:@aN Extent=[68:1 - 73:2]
-// CHECK: usrs.cpp c:@aN@C@RDar9371763_Foo Extent=[69:1 - 72:2]
+// CHECK: usrs.cpp c:usrs.cpp@1097@aN@C@RDar9371763_Foo Extent=[69:1 - 72:2]
 // CHECK: usrs.cpp c: Extent=[70:1 - 70:8]
 // CHECK: usrs.cpp c:usrs.cpp@1131@aN@C@RDar9371763_Foo@F@bar# Extent=[71:3 - 71:13]
 // CHECK: usrs.cpp c:usrs.cpp@1131@aN@C@RDar9371763_Foo@F@bar# Extent=[75:1 - 75:31]

@@ -151,14 +151,8 @@ bool USRGenerator::EmitDeclName(const NamedDecl *D) {
   return startSize == endSize;
 }
 
-static bool InAnonymousNamespace(const Decl *D) {
-  if (const NamespaceDecl *ND = dyn_cast<NamespaceDecl>(D->getDeclContext()))
-    return ND->isAnonymousNamespace();
-  return false;
-}
-
 static inline bool ShouldGenerateLocation(const NamedDecl *D) {
-  return D->getLinkage() != ExternalLinkage && !InAnonymousNamespace(D);
+  return D->getLinkage() != ExternalLinkage;
 }
 
 void USRGenerator::VisitDeclContext(DeclContext *DC) {
