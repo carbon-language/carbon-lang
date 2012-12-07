@@ -145,6 +145,15 @@ bool PlatformHasDifferentMemcpyAndMemmove();
 # define PLATFORM_HAS_DIFFERENT_MEMCPY_AND_MEMMOVE true
 #endif  // __APPLE__
 
+// Add convenient macro for interface functions that may be represented as
+// weak hooks.
+#define ASAN_MALLOC_HOOK(ptr, size) \
+  if (&__asan_malloc_hook) __asan_malloc_hook(ptr, size)
+#define ASAN_FREE_HOOK(ptr) \
+  if (&__asan_free_hook) __asan_free_hook(ptr)
+#define ASAN_ON_ERROR() \
+  if (&__asan_on_error) __asan_on_error()
+
 extern int asan_inited;
 // Used to avoid infinite recursion in __asan_init().
 extern bool asan_init_is_running;

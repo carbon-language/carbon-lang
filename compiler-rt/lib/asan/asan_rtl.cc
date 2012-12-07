@@ -66,6 +66,10 @@ Flags *flags() {
   return &asan_flags;
 }
 
+static const char *MaybeCallAsanDefaultOptions() {
+  return (&__asan_default_options) ? __asan_default_options() : "";
+}
+
 static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->quarantine_size, "quarantine_size");
   ParseFlag(str, &f->symbolize, "symbolize");
@@ -102,12 +106,6 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->log_path, "log_path");
 }
 
-extern "C" {
-SANITIZER_WEAK_ATTRIBUTE
-SANITIZER_INTERFACE_ATTRIBUTE
-const char* __asan_default_options() { return ""; }
-}  // extern "C"
-
 void InitializeFlags(Flags *f, const char *env) {
   internal_memset(f, 0, sizeof(*f));
 
@@ -141,10 +139,10 @@ void InitializeFlags(Flags *f, const char *env) {
   f->log_path = 0;
 
   // Override from user-specified string.
-  ParseFlagsFromString(f, __asan_default_options());
+  ParseFlagsFromString(f, MaybeCallAsanDefaultOptions());
   if (flags()->verbosity) {
     Report("Using the defaults from __asan_default_options: %s\n",
-           __asan_default_options());
+           MaybeCallAsanDefaultOptions());
   }
 
   // Override from command line.
@@ -241,15 +239,10 @@ static NOINLINE void force_interface_symbols() {
     case 27: __asan_set_error_exit_code(0); break;
     case 28: __asan_stack_free(0, 0, 0); break;
     case 29: __asan_stack_malloc(0, 0); break;
-    case 30: __asan_on_error(); break;
-    case 31: __asan_default_options(); break;
-    case 32: __asan_before_dynamic_init(0, 0); break;
-    case 33: __asan_after_dynamic_init(); break;
-    case 34: __asan_malloc_hook(0, 0); break;
-    case 35: __asan_free_hook(0); break;
-    case 36: __asan_symbolize(0, 0, 0); break;
-    case 37: __asan_poison_stack_memory(0, 0); break;
-    case 38: __asan_unpoison_stack_memory(0, 0); break;
+    case 30: __asan_before_dynamic_init(0, 0); break;
+    case 31: __asan_after_dynamic_init(); break;
+    case 32: __asan_poison_stack_memory(0, 0); break;
+    case 33: __asan_unpoison_stack_memory(0, 0); break;
   }
 }
 
@@ -262,6 +255,13 @@ static void asan_atexit() {
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
+
+#if !SANITIZER_SUPPORTS_WEAK_HOOKS
+extern "C" {
+SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
+const char* __asan_default_options() { return ""; }
+}  // extern "C"
+#endif
 
 int NOINLINE __asan_set_error_exit_code(int exit_code) {
   int old = flags()->exitcode;

@@ -322,7 +322,7 @@ class ScopedInErrorReport {
       // Die() to bypass any additional checks.
       Exit(flags()->exitcode);
     }
-    __asan_on_error();
+    ASAN_ON_ERROR();
     reporting_thread_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
     Printf("===================================================="
            "=============\n");
@@ -524,7 +524,9 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
   }
 }
 
+#if !SANITIZER_SUPPORTS_WEAK_HOOKS
 // Provide default implementation of __asan_on_error that does nothing
 // and may be overriden by user.
 SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE NOINLINE
 void __asan_on_error() {}
+#endif

@@ -140,7 +140,7 @@ extern "C" {
   // User may provide function that would be called right when ASan detects
   // an error. This can be used to notice cases when ASan detects an error, but
   // the program crashes before ASan report is printed.
-  void __asan_on_error()
+  /* OPTIONAL */ void __asan_on_error()
       SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
 
   // User may provide its own implementation for symbolization function.
@@ -148,7 +148,8 @@ extern "C" {
   // "out_buffer". Description should be at most "out_size" bytes long.
   // User-specified function should return true if symbolization was
   // successful.
-  bool __asan_symbolize(const void *pc, char *out_buffer, int out_size)
+  /* OPTIONAL */ bool __asan_symbolize(const void *pc, char *out_buffer,
+                                       int out_size)
       SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
 
   // Returns the estimated number of bytes that will be reserved by allocator
@@ -188,20 +189,19 @@ extern "C" {
   void __asan_print_accumulated_stats()
       SANITIZER_INTERFACE_ATTRIBUTE;
 
-  // This function may be overriden by user to provide a string containing
-  // ASan runtime options. See asan_flags.h for details.
-  const char* __asan_default_options()
+  // This function may be optionally provided by user and should return
+  // a string containing ASan runtime options. See asan_flags.h for details.
+  /* OPTIONAL */ const char* __asan_default_options()
       SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
 
-  // Malloc hooks that may be overriden by user.
+  // Malloc hooks that may be optionally provided by user.
   // __asan_malloc_hook(ptr, size) is called immediately after
   //   allocation of "size" bytes, which returned "ptr".
   // __asan_free_hook(ptr) is called immediately before
   //   deallocation of "ptr".
-  // If user doesn't provide implementations of these hooks, they are no-op.
-  void __asan_malloc_hook(void *ptr, uptr size)
+  /* OPTIONAL */ void __asan_malloc_hook(void *ptr, uptr size)
       SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
-  void __asan_free_hook(void *ptr)
+  /* OPTIONAL */ void __asan_free_hook(void *ptr)
       SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
 }  // extern "C"
 

@@ -757,7 +757,8 @@ static u8 *Reallocate(u8 *old_ptr, uptr new_size,
 
 }  // namespace __asan
 
-// Default (no-op) implementation of malloc hooks.
+#if !SANITIZER_SUPPORTS_WEAK_HOOKS
+// Provide default (no-op) implementation of malloc hooks.
 extern "C" {
 SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
 void __asan_malloc_hook(void *ptr, uptr size) {
@@ -769,26 +770,27 @@ void __asan_free_hook(void *ptr) {
   (void)ptr;
 }
 }  // extern "C"
+#endif
 
 namespace __asan {
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_memalign(uptr alignment, uptr size, StackTrace *stack) {
   void *ptr = (void*)Allocate(alignment, size, stack);
-  __asan_malloc_hook(ptr, size);
+  ASAN_MALLOC_HOOK(ptr, size);
   return ptr;
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void asan_free(void *ptr, StackTrace *stack) {
-  __asan_free_hook(ptr);
+  ASAN_FREE_HOOK(ptr);
   Deallocate((u8*)ptr, stack);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_malloc(uptr size, StackTrace *stack) {
   void *ptr = (void*)Allocate(0, size, stack);
-  __asan_malloc_hook(ptr, size);
+  ASAN_MALLOC_HOOK(ptr, size);
   return ptr;
 }
 
@@ -796,17 +798,17 @@ void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
   void *ptr = (void*)Allocate(0, nmemb * size, stack);
   if (ptr)
     REAL(memset)(ptr, 0, nmemb * size);
-  __asan_malloc_hook(ptr, nmemb * size);
+  ASAN_MALLOC_HOOK(ptr, size);
   return ptr;
 }
 
 void *asan_realloc(void *p, uptr size, StackTrace *stack) {
   if (p == 0) {
     void *ptr = (void*)Allocate(0, size, stack);
-    __asan_malloc_hook(ptr, size);
+    ASAN_MALLOC_HOOK(ptr, size);
     return ptr;
   } else if (size == 0) {
-    __asan_free_hook(p);
+    ASAN_FREE_HOOK(p);
     Deallocate((u8*)p, stack);
     return 0;
   }
@@ -815,7 +817,7 @@ void *asan_realloc(void *p, uptr size, StackTrace *stack) {
 
 void *asan_valloc(uptr size, StackTrace *stack) {
   void *ptr = (void*)Allocate(GetPageSizeCached(), size, stack);
-  __asan_malloc_hook(ptr, size);
+  ASAN_MALLOC_HOOK(ptr, size);
   return ptr;
 }
 
@@ -827,7 +829,7 @@ void *asan_pvalloc(uptr size, StackTrace *stack) {
     size = PageSize;
   }
   void *ptr = (void*)Allocate(PageSize, size, stack);
-  __asan_malloc_hook(ptr, size);
+  ASAN_MALLOC_HOOK(ptr, size);
   return ptr;
 }
 
@@ -835,7 +837,7 @@ int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
                           StackTrace *stack) {
   void *ptr = Allocate(alignment, size, stack);
   CHECK(IsAligned((uptr)ptr, alignment));
-  __asan_malloc_hook(ptr, size);
+  ASAN_MALLOC_HOOK(ptr, size);
   *memptr = ptr;
   return 0;
 }

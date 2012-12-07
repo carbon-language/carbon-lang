@@ -30,6 +30,12 @@
 # define SANITIZER_WEAK_ATTRIBUTE  __attribute__((weak))
 #endif
 
+#ifdef __linux__
+# define SANITIZER_SUPPORTS_WEAK_HOOKS 1
+#else
+# define SANITIZER_SUPPORTS_WEAK_HOOKS 0
+#endif
+
 // __has_feature
 #if !defined(__has_feature)
 # define __has_feature(x) 0
