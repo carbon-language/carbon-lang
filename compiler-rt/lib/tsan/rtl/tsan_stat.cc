@@ -186,6 +186,13 @@ void StatOutput(u64 *stat) {
   name[StatInt_dup]                      = "  dup                             ";
   name[StatInt_dup2]                     = "  dup2                            ";
   name[StatInt_dup3]                     = "  dup3                            ";
+  name[StatInt_eventfd]                  = "  eventfd                         ";
+  name[StatInt_socket]                   = "  socket                          ";
+  name[StatInt_connect]                  = "  connect                         ";
+  name[StatInt_accept]                   = "  accept                          ";
+  name[StatInt_accept4]                  = "  accept4                         ";
+  name[StatInt_epoll_create]             = "  epoll_create                    ";
+  name[StatInt_epoll_create1]            = "  epoll_create1                   ";
   name[StatInt_close]                    = "  close                           ";
   name[StatInt_pipe]                     = "  pipe                            ";
   name[StatInt_pipe2]                    = "  pipe2                           ";
