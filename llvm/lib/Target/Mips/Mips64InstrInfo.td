@@ -66,7 +66,7 @@ multiclass AtomicCmpSwap64<PatFrag Op, string Width>  {
   }
 }
 }
-let usesCustomInserter = 1, Predicates = [HasMips64, HasStandardEncoding],
+let usesCustomInserter = 1, Predicates = [HasStandardEncoding],
   DecoderNamespace = "Mips64" in {
   defm ATOMIC_LOAD_ADD_I64  : Atomic2Ops64<atomic_load_add_64, "load_add_64">;
   defm ATOMIC_LOAD_SUB_I64  : Atomic2Ops64<atomic_load_sub_64, "load_sub_64">;

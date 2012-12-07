@@ -107,7 +107,7 @@ multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
 
 // Instantiation of instructions.
 def MOVZ_I_I     : CondMovIntInt<CPURegs, CPURegs, 0x0a, "movz">;
-let Predicates = [HasMips64, HasStandardEncoding],
+let Predicates = [HasStandardEncoding],
                   DecoderNamespace = "Mips64" in {
   def MOVZ_I_I64   : CondMovIntInt<CPURegs, CPU64Regs, 0x0a, "movz">;
   def MOVZ_I64_I   : CondMovIntInt<CPU64Regs, CPURegs, 0x0a, "movz"> {
@@ -119,7 +119,7 @@ let Predicates = [HasMips64, HasStandardEncoding],
 }
 
 def MOVN_I_I     : CondMovIntInt<CPURegs, CPURegs, 0x0b, "movn">;
-let Predicates = [HasMips64, HasStandardEncoding],
+let Predicates = [HasStandardEncoding],
                   DecoderNamespace = "Mips64" in {
   def MOVN_I_I64   : CondMovIntInt<CPURegs, CPU64Regs, 0x0b, "movn">;
   def MOVN_I64_I   : CondMovIntInt<CPU64Regs, CPURegs, 0x0b, "movn"> {

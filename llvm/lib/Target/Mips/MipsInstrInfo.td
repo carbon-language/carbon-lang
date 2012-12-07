@@ -1084,7 +1084,7 @@ def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 // MUL is a assembly macro in the current used ISAs. In recent ISA's
 // it is a real instruction.
 def MUL   : ArithLogicR<0x1c, 0x02, "mul", mul, IIImul, CPURegs, 1>,
-            Requires<[HasMips32, HasStandardEncoding]>;
+            Requires<[HasStandardEncoding]>;
 
 def RDHWR : ReadHardware<CPURegs, HWRegs>;
 
