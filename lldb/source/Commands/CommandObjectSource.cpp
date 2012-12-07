@@ -18,6 +18,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/FileLineResolver.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/ModuleSpec.h"
 #include "lldb/Core/SourceManager.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
@@ -187,6 +188,12 @@ class CommandObjectSourceList : public CommandObjectParsed
                 symbol_name = option_arg;
                 break;
 
+            case 'a':
+                {
+                    ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
+                    address = Args::StringToAddress(&exe_ctx, option_arg, LLDB_INVALID_ADDRESS, &error);
+                }
+                break;
             case 's':
                 modules.push_back (std::string (option_arg));
                 break;
@@ -208,6 +215,7 @@ class CommandObjectSourceList : public CommandObjectParsed
             file_spec.Clear();
             file_name.clear();
             symbol_name.clear();
+            address = LLDB_INVALID_ADDRESS;
             start_line = 0;
             num_lines = 10;
             show_bp_locs = false;
@@ -225,6 +233,7 @@ class CommandObjectSourceList : public CommandObjectParsed
         FileSpec file_spec;
         std::string file_name;
         std::string symbol_name;
+        lldb::addr_t address;
         uint32_t start_line;
         uint32_t num_lines;
         STLStringArray modules;        
@@ -296,10 +305,10 @@ protected:
             return false;
         }
 
+        SymbolContextList sc_list;
         if (!m_options.symbol_name.empty())
         {
             // Displaying the source for a symbol:
-            SymbolContextList sc_list;
             ConstString name(m_options.symbol_name.c_str());
             bool include_symbols = false;
             bool include_inlines = true;
@@ -449,6 +458,108 @@ protected:
             result.SetStatus (eReturnStatusSuccessFinishResult);
             return true;
 
+        }
+        else if (m_options.address != LLDB_INVALID_ADDRESS)
+        {
+            SymbolContext sc;
+            Address so_addr;
+            StreamString error_strm;
+
+            if (target->GetSectionLoadList().IsEmpty())
+            {
+                // The target isn't loaded yet, we need to lookup the file address
+                // in all modules
+                const ModuleList &module_list = target->GetImages();
+                const uint32_t num_modules = module_list.GetSize();
+                for (uint32_t i=0; i<num_modules; ++i)
+                {
+                    ModuleSP module_sp (module_list.GetModuleAtIndex(i));
+                    if (module_sp && module_sp->ResolveFileAddress(m_options.address, so_addr))
+                    {
+                        sc.Clear();
+                        if (module_sp->ResolveSymbolContextForAddress (so_addr, eSymbolContextEverything, sc) & eSymbolContextLineEntry)
+                            sc_list.Append(sc);
+                    }
+                }
+                
+                if (sc_list.GetSize() == 0)
+                {
+                    result.AppendErrorWithFormat("no modules have source information for file address 0x%" PRIx64 ".\n",
+                                                 m_options.address);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+            else
+            {
+                // The target has some things loaded, resolve this address to a
+                // compile unit + file + line and display
+                if (target->GetSectionLoadList().ResolveLoadAddress (m_options.address, so_addr))
+                {
+                    ModuleSP module_sp (so_addr.GetModule());
+                    if (module_sp)
+                    {
+                        sc.Clear();
+                        if (module_sp->ResolveSymbolContextForAddress (so_addr, eSymbolContextEverything, sc) & eSymbolContextLineEntry)
+                        {
+                            sc_list.Append(sc);
+                        }
+                        else
+                        {
+                            so_addr.Dump(&error_strm, NULL, Address::DumpStyleModuleWithFileAddress);
+                            result.AppendErrorWithFormat("address resolves to %s, but there is no line table information available for this address.\n",
+                                                         error_strm.GetData());
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                    }
+                }
+
+                if (sc_list.GetSize() == 0)
+                {
+                    result.AppendErrorWithFormat("no modules contain load address 0x%" PRIx64 ".\n", m_options.address);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+            }
+            uint32_t num_matches = sc_list.GetSize();
+            for (uint32_t i=0; i<num_matches; ++i)
+            {
+                sc_list.GetContextAtIndex(i, sc);
+                if (sc.comp_unit)
+                {
+                    if (m_options.show_bp_locs)
+                    {
+                        m_breakpoint_locations.Clear();
+                        const bool show_inlines = true;
+                        m_breakpoint_locations.Reset (*sc.comp_unit, 0, show_inlines);
+                        SearchFilter target_search_filter (target->shared_from_this());
+                        target_search_filter.Search (m_breakpoint_locations);
+                    }
+                    
+                    bool show_fullpaths = true;
+                    bool show_module = true;
+                    bool show_inlined_frames = true;
+                    sc.DumpStopContext(&result.GetOutputStream(),
+                                       exe_ctx.GetBestExecutionContextScope(),
+                                       sc.line_entry.range.GetBaseAddress(),
+                                       show_fullpaths,
+                                       show_module,
+                                       show_inlined_frames);
+                    result.GetOutputStream().EOL();
+                    
+                    size_t lines_to_back_up = m_options.num_lines >= 10 ? 5 : m_options.num_lines/2;
+
+                    target->GetSourceManager().DisplaySourceLinesWithLineNumbers (sc.comp_unit,
+                                                                                  sc.line_entry.line,
+                                                                                  lines_to_back_up,
+                                                                                  m_options.num_lines - lines_to_back_up,
+                                                                                  "->",
+                                                                                  &result.GetOutputStream(),
+                                                                                  GetBreakpointLocations ());
+                    result.SetStatus (eReturnStatusSuccessFinishResult);
+                }
+            }
         }
         else if (m_options.file_name.empty())
         {
@@ -619,12 +730,14 @@ protected:
 OptionDefinition
 CommandObjectSourceList::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL, false, "count",    'c', required_argument, NULL, 0, eArgTypeCount,   "The number of source lines to display."},
-{ LLDB_OPT_SET_ALL, false, "shlib",    's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName, "Look up the source file in the given shared library."},
+{ LLDB_OPT_SET_ALL, false, "count",  'c', required_argument, NULL, 0, eArgTypeCount,   "The number of source lines to display."},
+{ LLDB_OPT_SET_1  |
+  LLDB_OPT_SET_2  , false, "shlib",  's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName, "Look up the source file in the given shared library."},
 { LLDB_OPT_SET_ALL, false, "show-breakpoints", 'b', no_argument, NULL, 0, eArgTypeNone, "Show the line table locations from the debug information that indicate valid places to set source level breakpoints."},
-{ LLDB_OPT_SET_1, false, "file",       'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,    "The file from which to display source."},
-{ LLDB_OPT_SET_1, false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,    "The line number at which to start the display source."},
-{ LLDB_OPT_SET_2, false, "name",       'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeSymbol,    "The name of a function whose source to display."},
+{ LLDB_OPT_SET_1  , false, "file",   'f', required_argument, NULL, CommandCompletions::eSourceFileCompletion, eArgTypeFilename,    "The file from which to display source."},
+{ LLDB_OPT_SET_1  , false, "line",   'l', required_argument, NULL, 0, eArgTypeLineNum,    "The line number at which to start the display source."},
+{ LLDB_OPT_SET_2  , false, "name",   'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeSymbol,    "The name of a function whose source to display."},
+{ LLDB_OPT_SET_3  , false, "address",'a', required_argument, NULL, 0, eArgTypeAddress, "Lookup the address and display the source information for the corresponding file and line."},
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
