@@ -182,6 +182,12 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     
+    // First thing we have to do is get the API lock, and the run lock.  We're going to change the thread
+    // content of the process, and we're going to use python, which requires the API lock to do it.
+    // So get & hold that.  This is a recursive lock so we can grant it to any Python code called on the stack below us.
+    Target &target = m_process->GetTarget();
+    Mutex::Locker api_locker (target.GetAPIMutex());
+    
     if (log)
         log->Printf ("OperatingSystemPython::UpdateThreadList() fetching thread data from python for pid %" PRIu64, m_process->GetID());
 
@@ -251,6 +257,12 @@ OperatingSystemPython::CreateRegisterContextForThread (Thread *thread, lldb::add
     if (!m_interpreter || !m_python_object || !thread)
         return RegisterContextSP();
     
+    // First thing we have to do is get the API lock, and the run lock.  We're going to change the thread
+    // content of the process, and we're going to use python, which requires the API lock to do it.
+    // So get & hold that.  This is a recursive lock so we can grant it to any Python code called on the stack below us.
+    Target &target = m_process->GetTarget();
+    Mutex::Locker api_locker (target.GetAPIMutex());
+
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_THREAD));
 
     if (reg_data_addr != LLDB_INVALID_ADDRESS)
