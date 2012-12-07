@@ -894,6 +894,38 @@ unsigned MachineInstr::getNumExplicitOperands() const {
   return NumOperands;
 }
 
+void MachineInstr::bundleWithPred() {
+  assert(!isBundledWithPred() && "MI is already bundled with its predecessor");
+  setFlag(BundledPred);
+  MachineBasicBlock::instr_iterator Pred = this;
+  --Pred;
+  Pred->setFlag(BundledSucc);
+}
+
+void MachineInstr::bundleWithSucc() {
+  assert(!isBundledWithSucc() && "MI is already bundled with its successor");
+  setFlag(BundledSucc);
+  MachineBasicBlock::instr_iterator Succ = this;
+  ++Succ;
+  Succ->setFlag(BundledPred);
+}
+
+void MachineInstr::unbundleFromPred() {
+  assert(isBundledWithPred() && "MI isn't bundled with its predecessor");
+  clearFlag(BundledPred);
+  MachineBasicBlock::instr_iterator Pred = this;
+  --Pred;
+  Pred->clearFlag(BundledSucc);
+}
+
+void MachineInstr::unbundleFromSucc() {
+  assert(isBundledWithSucc() && "MI isn't bundled with its successor");
+  clearFlag(BundledSucc);
+  MachineBasicBlock::instr_iterator Succ = this;
+  --Succ;
+  Succ->clearFlag(BundledPred);
+}
+
 /// isBundled - Return true if this instruction part of a bundle. This is true
 /// if either itself or its following instruction is marked "InsideBundle".
 bool MachineInstr::isBundled() const {

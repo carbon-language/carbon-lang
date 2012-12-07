@@ -58,8 +58,8 @@ public:
     NoFlags      = 0,
     FrameSetup   = 1 << 0,              // Instruction is used as a part of
                                         // function frame setup code.
-    InsideBundle = 1 << 1               // Instruction is inside a bundle (not
-                                        // the first MI in a bundle)
+    BundledPred  = 1 << 1,              // Instruction has bundled predecessors.
+    BundledSucc  = 1 << 2               // Instruction has bundled successors.
   };
 private:
   const MCInstrDesc *MCID;              // Instruction descriptor.
@@ -195,21 +195,43 @@ public:
   /// The first instruction has the special opcode "BUNDLE". It's not "inside"
   /// a bundle, but the next three MIs are.
   bool isInsideBundle() const {
-    return getFlag(InsideBundle);
+    return getFlag(BundledPred);
   }
 
   /// setIsInsideBundle - Set InsideBundle bit.
   ///
   void setIsInsideBundle(bool Val = true) {
     if (Val)
-      setFlag(InsideBundle);
+      setFlag(BundledPred);
     else
-      clearFlag(InsideBundle);
+      clearFlag(BundledPred);
   }
 
   /// isBundled - Return true if this instruction part of a bundle. This is true
   /// if either itself or its following instruction is marked "InsideBundle".
   bool isBundled() const;
+
+  /// Return true if this instruction is part of a bundle, and it is not the
+  /// first instruction in the bundle.
+  bool isBundledWithPred() const { return getFlag(BundledPred); }
+
+  /// Return true if this instruction is part of a bundle, and it is not the
+  /// last instruction in the bundle.
+  bool isBundledWithSucc() const { return getFlag(BundledSucc); }
+
+  /// Bundle this instruction with its predecessor. This can be an unbundled
+  /// instruction, or it can be the first instruction in a bundle.
+  void bundleWithPred();
+
+  /// Bundle this instruction with its successor. This can be an unbundled
+  /// instruction, or it can be the last instruction in a bundle.
+  void bundleWithSucc();
+
+  /// Break bundle above this instruction.
+  void unbundleFromPred();
+
+  /// Break bundle below this instruction.
+  void unbundleFromSucc();
 
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
   ///
