@@ -55,8 +55,8 @@ ANALYSIS_IPA(DynamicDispatchBifurcate, "dynamic-bifurcate", "Experimental: Enabl
 #define ANALYSIS_INLINING_MODE(NAME, CMDFLAG, DESC)
 #endif
 
-ANALYSIS_INLINING_MODE(All,  "all", "Analyze all functions in the order defined in the TU")
-ANALYSIS_INLINING_MODE(NoRedundancy, "noredundancy", "Do not analyze a function which has been previously inlined, use call graph to order")
+ANALYSIS_INLINING_MODE(All,  "all", "Analyze all functions as top level")
+ANALYSIS_INLINING_MODE(NoRedundancy, "noredundancy", "Do not analyze a function which has been previously inlined")
 
 #undef ANALYSIS_STORE
 #undef ANALYSIS_CONSTRAINTS
