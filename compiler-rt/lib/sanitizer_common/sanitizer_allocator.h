@@ -97,25 +97,29 @@ struct AllocatorListNode {
   AllocatorListNode *next;
 };
 
-struct AllocatorFreeList: IntrusiveList<AllocatorListNode> {
-  // Move at most max_count chunks to other_free_list.
-  void BulkAllocate(uptr max_count, AllocatorFreeList *other_free_list) {
-    CHECK(!empty());
-    CHECK(other_free_list->empty());
-    if (size() <= max_count) {
-      other_free_list->append_front(this);
-      CHECK(empty());
-    } else {
-      for (uptr i = 0; i < max_count; i++) {
-        AllocatorListNode *node = front();
-        pop_front();
-        other_free_list->push_front(node);
-      }
-      CHECK(!empty());
+typedef IntrusiveList<AllocatorListNode> AllocatorFreeList;
+
+// Move at most max_count chunks from allocate_from to allocate_to.
+// This function is better be a method of AllocatorFreeList, but we can't
+// inherit it from IntrusiveList as the ancient gcc complains about non-PODness.
+static inline void BulkMove(uptr max_count,
+                            AllocatorFreeList *allocate_from,
+                            AllocatorFreeList *allocate_to) {
+  CHECK(!allocate_from->empty());
+  CHECK(allocate_to->empty());
+  if (allocate_from->size() <= max_count) {
+    allocate_to->append_front(allocate_from);
+    CHECK(allocate_from->empty());
+  } else {
+    for (uptr i = 0; i < max_count; i++) {
+      AllocatorListNode *node = allocate_from->front();
+      allocate_from->pop_front();
+      allocate_to->push_front(node);
     }
-    CHECK(!other_free_list->empty());
+    CHECK(!allocate_from->empty());
   }
-};
+  CHECK(!allocate_to->empty());
+}
 
 // SizeClassAllocator64 -- allocator for 64-bit address space.
 //
@@ -164,8 +168,7 @@ class SizeClassAllocator64 {
     if (region->free_list.empty()) {
       PopulateFreeList(class_id, region);
     }
-    region->free_list.BulkAllocate(
-        SizeClassMap::MaxCached(class_id), free_list);
+    BulkMove(SizeClassMap::MaxCached(class_id), &region->free_list, free_list);
   }
 
   // Swallow the entire free_list for the given class_id.
@@ -371,7 +374,7 @@ class SizeClassAllocator32 {
     SpinMutexLock l(&sci->mutex);
     EnsureSizeClassHasAvailableChunks(sci, class_id);
     CHECK(!sci->free_list.empty());
-    sci->free_list.BulkAllocate(SizeClassMap::MaxCached(class_id), free_list);
+    BulkMove(SizeClassMap::MaxCached(class_id), &sci->free_list, free_list);
   }
 
   // Swallow the entire free_list for the given class_id.
@@ -424,6 +427,7 @@ class SizeClassAllocator32 {
 
   typedef SizeClassMap SizeClassMapT;
   static const uptr kNumClasses = SizeClassMap::kNumClasses;  // 2^k <= 128
+
  private:
   static const uptr kRegionSizeLog = SANITIZER_WORDSIZE == 64 ? 24 : 20;
   static const uptr kRegionSize = 1 << kRegionSizeLog;
@@ -433,7 +437,7 @@ class SizeClassAllocator32 {
   struct SizeClassInfo {
     SpinMutex mutex;
     AllocatorFreeList free_list;
-    char padding[kCacheLineSize - sizeof(uptr) - sizeof (AllocatorFreeList)];
+    char padding[kCacheLineSize - sizeof(uptr) - sizeof(AllocatorFreeList)];
   };
   COMPILER_CHECK(sizeof(SizeClassInfo) == kCacheLineSize);
 
