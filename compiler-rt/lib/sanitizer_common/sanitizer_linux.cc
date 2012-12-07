@@ -358,12 +358,12 @@ bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
 }
 
 bool SanitizerSetThreadName(const char *name) {
-  return 0 == prctl(PR_SET_NAME, (unsigned long)name, 0, 0, 0);
+  return 0 == prctl(PR_SET_NAME, (unsigned long)name, 0, 0, 0);  // NOLINT
 }
 
 bool SanitizerGetThreadName(char *name, int max_len) {
   char buff[17];
-  if (prctl(PR_GET_NAME, (unsigned long)buff, 0, 0, 0))
+  if (prctl(PR_GET_NAME, (unsigned long)buff, 0, 0, 0))  // NOLINT
     return false;
   internal_strncpy(name, buff, max_len);
   name[max_len] = 0;
