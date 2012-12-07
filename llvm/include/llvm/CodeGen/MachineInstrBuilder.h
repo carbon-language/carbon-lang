@@ -331,6 +331,70 @@ inline unsigned getInternalReadRegState(bool B) {
   return B ? RegState::InternalRead : 0;
 }
 
+
+/// Helper class for constructing bundles of MachineInstrs.
+///
+/// MIBundleBuilder can create a bundle from scratch by inserting new
+/// MachineInstrs one at a time, or it can create a bundle from a sequence of
+/// existing MachineInstrs in a basic block.
+class MIBundleBuilder {
+  MachineBasicBlock &MBB;
+  MachineBasicBlock::instr_iterator Begin;
+  MachineBasicBlock::instr_iterator End;
+
+public:
+  /// Create an MIBundleBuilder that inserts instructions into a new bundle in
+  /// BB above the bundle or instruction at Pos.
+  MIBundleBuilder(MachineBasicBlock &BB,
+                  MachineBasicBlock::iterator Pos)
+    : MBB(BB), Begin(Pos.getInstrIterator()), End(Begin) {}
+
+  /// Create a bundle from the sequence of instructions between B and E.
+  MIBundleBuilder(MachineBasicBlock &BB,
+                  MachineBasicBlock::iterator B,
+                  MachineBasicBlock::iterator E)
+    : MBB(BB), Begin(B.getInstrIterator()), End(E.getInstrIterator()) {
+    assert(B != E && "No instructions to bundle");
+    ++B;
+    while (B != E) {
+      MachineInstr *MI = B;
+      ++B;
+      MI->bundleWithPred();
+    }
+  }
+
+  /// Return true if no instructions have been inserted in this bundle yet.
+  /// Empty bundles aren't representable in a MachineBasicBlock.
+  bool empty() const { return Begin == End; }
+
+  /// Return an iterator to the first bundled instruction.
+  MachineBasicBlock::instr_iterator begin() const { return Begin; }
+
+  /// Return an iterator beyond the last bundled instruction.
+  MachineBasicBlock::instr_iterator end() const { return End; }
+
+  /// Insert MI into MBB by prepending it to the instructions in the bundle.
+  /// MI will become the first instruction in the bundle.
+  MIBundleBuilder &prepend(MachineInstr *MI) {
+    MBB.insert(Begin, MI);
+    if (!empty())
+      MI->bundleWithSucc();
+    Begin = MI;
+    return *this;
+  }
+
+  /// Insert MI into MBB by appending it to the instructions in the bundle.
+  /// MI will become the last instruction in the bundle.
+  MIBundleBuilder &append(MachineInstr *MI) {
+    MBB.insert(End, MI);
+    if (empty())
+      Begin = MI;
+    else
+      MI->bundleWithPred();
+    return *this;
+  }
+};
+
 } // End llvm namespace
 
 #endif
