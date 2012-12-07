@@ -271,16 +271,16 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
     Args.assign(CS.arg_begin(), CS.arg_begin() + NumArgs);
 
     // Drop any attributes that were on the vararg arguments.
-    AttrListPtr PAL = CS.getAttributes();
+    AttributeSet PAL = CS.getAttributes();
     if (!PAL.isEmpty() && PAL.getSlot(PAL.getNumSlots() - 1).Index > NumArgs) {
       SmallVector<AttributeWithIndex, 8> AttributesVec;
       for (unsigned i = 0; PAL.getSlot(i).Index <= NumArgs; ++i)
         AttributesVec.push_back(PAL.getSlot(i));
       Attributes FnAttrs = PAL.getFnAttributes();
       if (FnAttrs.hasAttributes())
-        AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+        AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                         FnAttrs));
-      PAL = AttrListPtr::get(Fn.getContext(), AttributesVec);
+      PAL = AttributeSet::get(Fn.getContext(), AttributesVec);
     }
 
     Instruction *New;
@@ -698,7 +698,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
   // Set up to build a new list of parameter attributes.
   SmallVector<AttributeWithIndex, 8> AttributesVec;
-  const AttrListPtr &PAL = F->getAttributes();
+  const AttributeSet &PAL = F->getAttributes();
 
   // The existing function return attributes.
   Attributes RAttrs = PAL.getRetAttributes();
@@ -773,7 +773,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
            "Return attributes no longer compatible?");
 
   if (RAttrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+    AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
                                                     RAttrs));
 
   // Remember which arguments are still alive.
@@ -802,11 +802,11 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   }
 
   if (FnAttrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+    AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                     FnAttrs));
 
   // Reconstruct the AttributesList based on the vector we constructed.
-  AttrListPtr NewPAL = AttrListPtr::get(F->getContext(), AttributesVec);
+  AttributeSet NewPAL = AttributeSet::get(F->getContext(), AttributesVec);
 
   // Create the new function type based on the recomputed parameters.
   FunctionType *NFTy = FunctionType::get(NRetTy, Params, FTy->isVarArg());
@@ -833,7 +833,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     Instruction *Call = CS.getInstruction();
 
     AttributesVec.clear();
-    const AttrListPtr &CallPAL = CS.getAttributes();
+    const AttributeSet &CallPAL = CS.getAttributes();
 
     // The call return attributes.
     Attributes RAttrs = CallPAL.getRetAttributes();
@@ -843,7 +843,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       Attributes::get(NF->getContext(), AttrBuilder(RAttrs).
            removeAttributes(Attributes::typeIncompatible(NF->getReturnType())));
     if (RAttrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+      AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
                                                       RAttrs));
 
     // Declare these outside of the loops, so we can reuse them for the second
@@ -870,11 +870,11 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     }
 
     if (FnAttrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+      AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                       FnAttrs));
 
     // Reconstruct the AttributesList based on the vector we constructed.
-    AttrListPtr NewCallPAL = AttrListPtr::get(F->getContext(), AttributesVec);
+    AttributeSet NewCallPAL = AttributeSet::get(F->getContext(), AttributesVec);
 
     Instruction *New;
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {

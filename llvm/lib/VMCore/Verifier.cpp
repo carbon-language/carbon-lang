@@ -299,7 +299,7 @@ namespace {
                              SmallVectorImpl<Type*> &ArgTys);
     void VerifyParameterAttrs(Attributes Attrs, Type *Ty,
                               bool isReturnValue, const Value *V);
-    void VerifyFunctionAttrs(FunctionType *FT, const AttrListPtr &Attrs,
+    void VerifyFunctionAttrs(FunctionType *FT, const AttributeSet &Attrs,
                              const Value *V);
 
     void WriteValue(const Value *V) {
@@ -585,7 +585,7 @@ void Verifier::VerifyParameterAttrs(Attributes Attrs, Type *Ty,
 // VerifyFunctionAttrs - Check parameter attributes against a function type.
 // The value V is printed in error messages.
 void Verifier::VerifyFunctionAttrs(FunctionType *FT,
-                                   const AttrListPtr &Attrs,
+                                   const AttributeSet &Attrs,
                                    const Value *V) {
   if (Attrs.isEmpty())
     return;
@@ -651,7 +651,7 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
           "'noinline and alwaysinline' are incompatible!", V);
 }
 
-static bool VerifyAttributeCount(const AttrListPtr &Attrs, unsigned Params) {
+static bool VerifyAttributeCount(const AttributeSet &Attrs, unsigned Params) {
   if (Attrs.isEmpty())
     return true;
 
@@ -687,7 +687,7 @@ void Verifier::visitFunction(Function &F) {
   Assert1(!F.hasStructRetAttr() || F.getReturnType()->isVoidTy(),
           "Invalid struct return type!", &F);
 
-  const AttrListPtr &Attrs = F.getAttributes();
+  const AttributeSet &Attrs = F.getAttributes();
 
   Assert1(VerifyAttributeCount(Attrs, FT->getNumParams()),
           "Attributes after last parameter!", &F);
@@ -1200,7 +1200,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
             "Call parameter type does not match function signature!",
             CS.getArgument(i), FTy->getParamType(i), I);
 
-  const AttrListPtr &Attrs = CS.getAttributes();
+  const AttributeSet &Attrs = CS.getAttributes();
 
   Assert1(VerifyAttributeCount(Attrs, CS.arg_size()),
           "Attributes after last parameter!", I);

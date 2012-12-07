@@ -515,12 +515,12 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   // that we are *not* promoting. For the ones that we do promote, the parameter
   // attributes are lost
   SmallVector<AttributeWithIndex, 8> AttributesVec;
-  const AttrListPtr &PAL = F->getAttributes();
+  const AttributeSet &PAL = F->getAttributes();
 
   // Add any return attributes.
   Attributes attrs = PAL.getRetAttributes();
   if (attrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+    AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
                                                     attrs));
 
   // First, determine the new argument list
@@ -593,7 +593,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   // Add any function attributes.
   attrs = PAL.getFnAttributes();
   if (attrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+    AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                     attrs));
 
   Type *RetTy = FTy->getReturnType();
@@ -611,7 +611,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   
   // Recompute the parameter attributes list based on the new arguments for
   // the function.
-  NF->setAttributes(AttrListPtr::get(F->getContext(), AttributesVec));
+  NF->setAttributes(AttributeSet::get(F->getContext(), AttributesVec));
   AttributesVec.clear();
 
   F->getParent()->getFunctionList().insert(F, NF);
@@ -636,12 +636,12 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     CallSite CS(F->use_back());
     assert(CS.getCalledFunction() == F);
     Instruction *Call = CS.getInstruction();
-    const AttrListPtr &CallPAL = CS.getAttributes();
+    const AttributeSet &CallPAL = CS.getAttributes();
 
     // Add any return attributes.
     Attributes attrs = CallPAL.getRetAttributes();
     if (attrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+      AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
                                                       attrs));
 
     // Loop over the operands, inserting GEP and loads in the caller as
@@ -723,7 +723,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     // Add any function attributes.
     attrs = CallPAL.getFnAttributes();
     if (attrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+      AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                       attrs));
 
     Instruction *New;
@@ -731,12 +731,12 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       New = InvokeInst::Create(NF, II->getNormalDest(), II->getUnwindDest(),
                                Args, "", Call);
       cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<InvokeInst>(New)->setAttributes(AttrListPtr::get(II->getContext(),
+      cast<InvokeInst>(New)->setAttributes(AttributeSet::get(II->getContext(),
                                                             AttributesVec));
     } else {
       New = CallInst::Create(NF, Args, "", Call);
       cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
-      cast<CallInst>(New)->setAttributes(AttrListPtr::get(New->getContext(),
+      cast<CallInst>(New)->setAttributes(AttributeSet::get(New->getContext(),
                                                           AttributesVec));
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();

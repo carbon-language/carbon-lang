@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Attributes, AttributeImpl, AttrBuilder,
-// AttributeListImpl, and AttrListPtr classes.
+// AttributeListImpl, and AttributeSet classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -355,11 +355,11 @@ uint64_t AttributesImpl::getStackAlignment() const {
 // AttributeListImpl Definition
 //===----------------------------------------------------------------------===//
 
-AttrListPtr AttrListPtr::get(LLVMContext &C,
+AttributeSet AttributeSet::get(LLVMContext &C,
                              ArrayRef<AttributeWithIndex> Attrs) {
   // If there are no attributes then return a null AttributesList pointer.
   if (Attrs.empty())
-    return AttrListPtr();
+    return AttributeSet();
 
 #ifndef NDEBUG
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
@@ -387,14 +387,14 @@ AttrListPtr AttrListPtr::get(LLVMContext &C,
   }
 
   // Return the AttributesList that we found or created.
-  return AttrListPtr(PA);
+  return AttributeSet(PA);
 }
 
 //===----------------------------------------------------------------------===//
-// AttrListPtr Method Implementations
+// AttributeSet Method Implementations
 //===----------------------------------------------------------------------===//
 
-const AttrListPtr &AttrListPtr::operator=(const AttrListPtr &RHS) {
+const AttributeSet &AttributeSet::operator=(const AttributeSet &RHS) {
   if (AttrList == RHS.AttrList) return *this;
 
   AttrList = RHS.AttrList;
@@ -404,13 +404,13 @@ const AttrListPtr &AttrListPtr::operator=(const AttrListPtr &RHS) {
 /// getNumSlots - Return the number of slots used in this attribute list.
 /// This is the number of arguments that have an attribute set on them
 /// (including the function itself).
-unsigned AttrListPtr::getNumSlots() const {
+unsigned AttributeSet::getNumSlots() const {
   return AttrList ? AttrList->Attrs.size() : 0;
 }
 
 /// getSlot - Return the AttributeWithIndex at the specified slot.  This
 /// holds a number plus a set of attributes.
-const AttributeWithIndex &AttrListPtr::getSlot(unsigned Slot) const {
+const AttributeWithIndex &AttributeSet::getSlot(unsigned Slot) const {
   assert(AttrList && Slot < AttrList->Attrs.size() && "Slot # out of range!");
   return AttrList->Attrs[Slot];
 }
@@ -418,7 +418,7 @@ const AttributeWithIndex &AttrListPtr::getSlot(unsigned Slot) const {
 /// getAttributes - The attributes for the specified index are returned.
 /// Attributes for the result are denoted with Idx = 0.  Function notes are
 /// denoted with idx = ~0.
-Attributes AttrListPtr::getAttributes(unsigned Idx) const {
+Attributes AttributeSet::getAttributes(unsigned Idx) const {
   if (AttrList == 0) return Attributes();
 
   const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;
@@ -431,7 +431,7 @@ Attributes AttrListPtr::getAttributes(unsigned Idx) const {
 
 /// hasAttrSomewhere - Return true if the specified attribute is set for at
 /// least one parameter or for the return value.
-bool AttrListPtr::hasAttrSomewhere(Attributes::AttrVal Attr) const {
+bool AttributeSet::hasAttrSomewhere(Attributes::AttrVal Attr) const {
   if (AttrList == 0) return false;
 
   const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;
@@ -442,17 +442,17 @@ bool AttrListPtr::hasAttrSomewhere(Attributes::AttrVal Attr) const {
   return false;
 }
 
-unsigned AttrListPtr::getNumAttrs() const {
+unsigned AttributeSet::getNumAttrs() const {
   return AttrList ? AttrList->Attrs.size() : 0;
 }
 
-Attributes &AttrListPtr::getAttributesAtIndex(unsigned i) const {
+Attributes &AttributeSet::getAttributesAtIndex(unsigned i) const {
   assert(AttrList && "Trying to get an attribute from an empty list!");
   assert(i < AttrList->Attrs.size() && "Index out of range!");
   return AttrList->Attrs[i].Attrs;
 }
 
-AttrListPtr AttrListPtr::addAttr(LLVMContext &C, unsigned Idx,
+AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
                                  Attributes Attrs) const {
   Attributes OldAttrs = getAttributes(Idx);
 #ifndef NDEBUG
@@ -497,7 +497,7 @@ AttrListPtr AttrListPtr::addAttr(LLVMContext &C, unsigned Idx,
   return get(C, NewAttrList);
 }
 
-AttrListPtr AttrListPtr::removeAttr(LLVMContext &C, unsigned Idx,
+AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
                                     Attributes Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
@@ -505,7 +505,7 @@ AttrListPtr AttrListPtr::removeAttr(LLVMContext &C, unsigned Idx,
   assert(!Attrs.hasAttribute(Attributes::Alignment) &&
          "Attempt to exclude alignment!");
 #endif
-  if (AttrList == 0) return AttrListPtr();
+  if (AttrList == 0) return AttributeSet();
 
   Attributes OldAttrs = getAttributes(Idx);
   AttrBuilder NewAttrs =
@@ -536,7 +536,7 @@ AttrListPtr AttrListPtr::removeAttr(LLVMContext &C, unsigned Idx,
   return get(C, NewAttrList);
 }
 
-void AttrListPtr::dump() const {
+void AttributeSet::dump() const {
   dbgs() << "PAL[ ";
   for (unsigned i = 0; i < getNumSlots(); ++i) {
     const AttributeWithIndex &PAWI = getSlot(i);

@@ -26,7 +26,7 @@ class FunctionType;
 class Function;
 class LLVMContext;
 class Module;
-class AttrListPtr;
+class AttributeSet;
 
 /// Intrinsic Namespace - This namespace contains an enum with a value for
 /// every intrinsic/builtin function known by LLVM.  These enum values are
@@ -58,7 +58,7 @@ namespace Intrinsic {
 
   /// Intrinsic::getAttributes(ID) - Return the attributes for an intrinsic.
   ///
-  AttrListPtr getAttributes(LLVMContext &C, ID id);
+  AttributeSet getAttributes(LLVMContext &C, ID id);
 
   /// Intrinsic::getDeclaration(M, ID) - Create or insert an LLVM Function
   /// declaration for an intrinsic, and return it.

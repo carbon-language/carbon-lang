@@ -298,14 +298,14 @@ struct AttributeWithIndex {
 };
 
 //===----------------------------------------------------------------------===//
-// AttrListPtr Smart Pointer
+// AttributeSet Smart Pointer
 //===----------------------------------------------------------------------===//
 
 class AttributeListImpl;
 
-/// AttrListPtr - This class manages the ref count for the opaque
+/// AttributeSet - This class manages the ref count for the opaque
 /// AttributeListImpl object and provides accessors for it.
-class AttrListPtr {
+class AttributeSet {
 public:
   enum AttrIndex {
     ReturnIndex = 0U,
@@ -320,28 +320,28 @@ private:
   /// for the result are denoted with Idx = 0.
   Attributes getAttributes(unsigned Idx) const;
 
-  explicit AttrListPtr(AttributeListImpl *LI) : AttrList(LI) {}
+  explicit AttributeSet(AttributeListImpl *LI) : AttrList(LI) {}
 public:
-  AttrListPtr() : AttrList(0) {}
-  AttrListPtr(const AttrListPtr &P) : AttrList(P.AttrList) {}
-  const AttrListPtr &operator=(const AttrListPtr &RHS);
+  AttributeSet() : AttrList(0) {}
+  AttributeSet(const AttributeSet &P) : AttrList(P.AttrList) {}
+  const AttributeSet &operator=(const AttributeSet &RHS);
 
   //===--------------------------------------------------------------------===//
   // Attribute List Construction and Mutation
   //===--------------------------------------------------------------------===//
 
   /// get - Return a Attributes list with the specified parameters in it.
-  static AttrListPtr get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
+  static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
 
   /// addAttr - Add the specified attribute at the specified index to this
   /// attribute list.  Since attribute lists are immutable, this
   /// returns the new list.
-  AttrListPtr addAttr(LLVMContext &C, unsigned Idx, Attributes Attrs) const;
+  AttributeSet addAttr(LLVMContext &C, unsigned Idx, Attributes Attrs) const;
 
   /// removeAttr - Remove the specified attribute at the specified index from
   /// this attribute list.  Since attribute lists are immutable, this
   /// returns the new list.
-  AttrListPtr removeAttr(LLVMContext &C, unsigned Idx, Attributes Attrs) const;
+  AttributeSet removeAttr(LLVMContext &C, unsigned Idx, Attributes Attrs) const;
 
   //===--------------------------------------------------------------------===//
   // Attribute List Accessors
@@ -383,9 +383,9 @@ public:
   Attributes &getAttributesAtIndex(unsigned i) const;
 
   /// operator==/!= - Provide equality predicates.
-  bool operator==(const AttrListPtr &RHS) const
+  bool operator==(const AttributeSet &RHS) const
   { return AttrList == RHS.AttrList; }
-  bool operator!=(const AttrListPtr &RHS) const
+  bool operator!=(const AttributeSet &RHS) const
   { return AttrList != RHS.AttrList; }
 
   //===--------------------------------------------------------------------===//

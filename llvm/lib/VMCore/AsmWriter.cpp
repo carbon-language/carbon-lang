@@ -1556,7 +1556,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   }
 
   FunctionType *FT = F->getFunctionType();
-  const AttrListPtr &Attrs = F->getAttributes();
+  const AttributeSet &Attrs = F->getAttributes();
   Attributes RetAttrs = Attrs.getRetAttributes();
   if (RetAttrs.hasAttributes())
     Out <<  Attrs.getRetAttributes().getAsString() << ' ';
@@ -1849,7 +1849,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     PointerType *PTy = cast<PointerType>(Operand->getType());
     FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
     Type *RetTy = FTy->getReturnType();
-    const AttrListPtr &PAL = CI->getAttributes();
+    const AttributeSet &PAL = CI->getAttributes();
 
     if (PAL.getRetAttributes().hasAttributes())
       Out << ' ' << PAL.getRetAttributes().getAsString();
@@ -1882,7 +1882,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     PointerType *PTy = cast<PointerType>(Operand->getType());
     FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
     Type *RetTy = FTy->getReturnType();
-    const AttrListPtr &PAL = II->getAttributes();
+    const AttributeSet &PAL = II->getAttributes();
 
     // Print the calling convention being used.
     if (II->getCallingConv() != CallingConv::C) {

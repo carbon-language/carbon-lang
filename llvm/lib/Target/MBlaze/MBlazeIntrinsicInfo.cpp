@@ -104,7 +104,7 @@ Function *MBlazeIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
                                                 Type **Tys,
                                                 unsigned numTy) const {
   assert(!isOverloaded(IntrID) && "MBlaze intrinsics are not overloaded");
-  AttrListPtr AList = getAttributes(M->getContext(),
+  AttributeSet AList = getAttributes(M->getContext(),
                                     (mblazeIntrinsic::ID) IntrID);
   return cast<Function>(M->getOrInsertFunction(getName(IntrID),
                                                getType(M->getContext(), IntrID),

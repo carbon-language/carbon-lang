@@ -85,7 +85,7 @@ private:
   BasicBlockListType  BasicBlocks;        ///< The basic blocks
   mutable ArgumentListType ArgumentList;  ///< The formal arguments
   ValueSymbolTable *SymTab;               ///< Symbol table of args/instructions
-  AttrListPtr AttributeList;              ///< Parameter attributes
+  AttributeSet AttributeList;              ///< Parameter attributes
 
   // HasLazyArguments is stored in Value::SubclassData.
   /*bool HasLazyArguments;*/
@@ -162,11 +162,11 @@ public:
   
   /// getAttributes - Return the attribute list for this Function.
   ///
-  const AttrListPtr &getAttributes() const { return AttributeList; }
+  const AttributeSet &getAttributes() const { return AttributeList; }
 
   /// setAttributes - Set the attribute list for this Function.
   ///
-  void setAttributes(const AttrListPtr &attrs) { AttributeList = attrs; }
+  void setAttributes(const AttributeSet &attrs) { AttributeList = attrs; }
 
   /// getFnAttributes - Return the function attributes for querying.
   ///
@@ -178,7 +178,7 @@ public:
   ///
   void addFnAttr(Attributes::AttrVal N) { 
     // Function Attributes are stored at ~0 index 
-    addAttribute(AttrListPtr::FunctionIndex, Attributes::get(getContext(), N));
+    addAttribute(AttributeSet::FunctionIndex, Attributes::get(getContext(), N));
   }
 
   /// removeFnAttr - Remove function attributes from this function.

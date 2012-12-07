@@ -1487,7 +1487,7 @@ void NVPTXAsmPrinter::printParamName(int paramIndex, raw_ostream &O) {
 void NVPTXAsmPrinter::emitFunctionParamList(const Function *F,
                                             raw_ostream &O) {
   const DataLayout *TD = TM.getDataLayout();
-  const AttrListPtr &PAL = F->getAttributes();
+  const AttributeSet &PAL = F->getAttributes();
   const TargetLowering *TLI = TM.getTargetLowering();
   Function::const_arg_iterator I, E;
   unsigned paramIndex = 0;

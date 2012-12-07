@@ -511,10 +511,10 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   OS << "// Add parameter attributes that are not common to all intrinsics.\n";
   OS << "#ifdef GET_INTRINSIC_ATTRIBUTES\n";
   if (TargetOnly)
-    OS << "static AttrListPtr getAttributes(LLVMContext &C, " << TargetPrefix
+    OS << "static AttributeSet getAttributes(LLVMContext &C, " << TargetPrefix
        << "Intrinsic::ID id) {\n";
   else
-    OS << "AttrListPtr Intrinsic::getAttributes(LLVMContext &C, ID id) {\n";
+    OS << "AttributeSet Intrinsic::getAttributes(LLVMContext &C, ID id) {\n";
 
   // Compute the maximum number of attribute arguments and the map
   typedef std::map<const CodeGenIntrinsic*, unsigned,
@@ -608,20 +608,20 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
         break;
       }
       OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(C, "
-         << "AttrListPtr::FunctionIndex, AttrVec);\n";
+         << "AttributeSet::FunctionIndex, AttrVec);\n";
     }
 
     if (numAttrs) {
       OS << "      NumAttrs = " << numAttrs << ";\n";
       OS << "      break;\n";
     } else {
-      OS << "      return AttrListPtr();\n";
+      OS << "      return AttributeSet();\n";
     }
   }
   
   OS << "    }\n";
   OS << "  }\n";
-  OS << "  return AttrListPtr::get(C, ArrayRef<AttributeWithIndex>(AWI, "
+  OS << "  return AttributeSet::get(C, ArrayRef<AttributeWithIndex>(AWI, "
              "NumAttrs));\n";
   OS << "}\n";
   OS << "#endif // GET_INTRINSIC_ATTRIBUTES\n\n";

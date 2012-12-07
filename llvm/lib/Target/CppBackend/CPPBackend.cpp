@@ -141,7 +141,7 @@ namespace {
     std::string getCppName(const Value* val);
     inline void printCppName(const Value* val);
 
-    void printAttributes(const AttrListPtr &PAL, const std::string &name);
+    void printAttributes(const AttributeSet &PAL, const std::string &name);
     void printType(Type* Ty);
     void printTypes(const Module* M);
 
@@ -464,9 +464,9 @@ void CppWriter::printCppName(const Value* val) {
   printEscapedString(getCppName(val));
 }
 
-void CppWriter::printAttributes(const AttrListPtr &PAL,
+void CppWriter::printAttributes(const AttributeSet &PAL,
                                 const std::string &name) {
-  Out << "AttrListPtr " << name << "_PAL;";
+  Out << "AttributeSet " << name << "_PAL;";
   nl(Out);
   if (!PAL.isEmpty()) {
     Out << '{'; in(); nl(Out);
@@ -518,7 +518,7 @@ void CppWriter::printAttributes(const AttrListPtr &PAL,
       Out << "Attrs.push_back(PAWI);";
       nl(Out);
     }
-    Out << name << "_PAL = AttrListPtr::get(mod->getContext(), Attrs);";
+    Out << name << "_PAL = AttributeSet::get(mod->getContext(), Attrs);";
     nl(Out);
     out(); nl(Out);
     Out << '}'; nl(Out);

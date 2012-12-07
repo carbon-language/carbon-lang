@@ -81,7 +81,7 @@ namespace llvm {
   /// 'l' is added as the suffix of name, if 'Op' is a float, we add a 'f'
   /// suffix.
   Value *EmitUnaryFloatFnCall(Value *Op, StringRef Name, IRBuilder<> &B,
-                              const AttrListPtr &Attrs);
+                              const AttributeSet &Attrs);
 
   /// EmitPutChar - Emit a call to the putchar function.  This assumes that Char
   /// is an integer.

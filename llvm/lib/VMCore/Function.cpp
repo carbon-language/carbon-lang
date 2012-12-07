@@ -249,13 +249,13 @@ void Function::dropAllReferences() {
 }
 
 void Function::addAttribute(unsigned i, Attributes attr) {
-  AttrListPtr PAL = getAttributes();
+  AttributeSet PAL = getAttributes();
   PAL = PAL.addAttr(getContext(), i, attr);
   setAttributes(PAL);
 }
 
 void Function::removeAttribute(unsigned i, Attributes attr) {
-  AttrListPtr PAL = getAttributes();
+  AttributeSet PAL = getAttributes();
   PAL = PAL.removeAttr(getContext(), i, attr);
   setAttributes(PAL);
 }

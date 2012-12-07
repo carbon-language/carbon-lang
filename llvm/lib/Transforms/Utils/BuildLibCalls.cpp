@@ -43,12 +43,12 @@ Value *llvm::EmitStrLen(Value *Ptr, IRBuilder<> &B, const DataLayout *TD,
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(M->getContext(), 1, Attributes::NoCapture);
   Attributes::AttrVal AVs[2] = { Attributes::ReadOnly, Attributes::NoUnwind };
-  AWI[1] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[1] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    ArrayRef<Attributes::AttrVal>(AVs, 2));
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Constant *StrLen = M->getOrInsertFunction("strlen",
-                                            AttrListPtr::get(M->getContext(),
+                                            AttributeSet::get(M->getContext(),
                                                              AWI),
                                             TD->getIntPtrType(Context),
                                             B.getInt8PtrTy(),
@@ -72,12 +72,12 @@ Value *llvm::EmitStrNLen(Value *Ptr, Value *MaxLen, IRBuilder<> &B,
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(M->getContext(), 1, Attributes::NoCapture);
   Attributes::AttrVal AVs[2] = { Attributes::ReadOnly, Attributes::NoUnwind };
-  AWI[1] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[1] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    ArrayRef<Attributes::AttrVal>(AVs, 2));
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Constant *StrNLen = M->getOrInsertFunction("strnlen",
-                                             AttrListPtr::get(M->getContext(),
+                                             AttributeSet::get(M->getContext(),
                                                               AWI),
                                              TD->getIntPtrType(Context),
                                              B.getInt8PtrTy(),
@@ -101,13 +101,13 @@ Value *llvm::EmitStrChr(Value *Ptr, char C, IRBuilder<> &B,
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   Attributes::AttrVal AVs[2] = { Attributes::ReadOnly, Attributes::NoUnwind };
   AttributeWithIndex AWI =
-    AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+    AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                             ArrayRef<Attributes::AttrVal>(AVs, 2));
 
   Type *I8Ptr = B.getInt8PtrTy();
   Type *I32Ty = B.getInt32Ty();
   Constant *StrChr = M->getOrInsertFunction("strchr",
-                                            AttrListPtr::get(M->getContext(),
+                                            AttributeSet::get(M->getContext(),
                                                              AWI),
                                             I8Ptr, I8Ptr, I32Ty, NULL);
   CallInst *CI = B.CreateCall2(StrChr, CastToCStr(Ptr, B),
@@ -129,12 +129,12 @@ Value *llvm::EmitStrNCmp(Value *Ptr1, Value *Ptr2, Value *Len,
   AWI[0] = AttributeWithIndex::get(M->getContext(), 1, Attributes::NoCapture);
   AWI[1] = AttributeWithIndex::get(M->getContext(), 2, Attributes::NoCapture);
   Attributes::AttrVal AVs[2] = { Attributes::ReadOnly, Attributes::NoUnwind };
-  AWI[2] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[2] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    ArrayRef<Attributes::AttrVal>(AVs, 2));
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Value *StrNCmp = M->getOrInsertFunction("strncmp",
-                                          AttrListPtr::get(M->getContext(),
+                                          AttributeSet::get(M->getContext(),
                                                            AWI),
                                           B.getInt32Ty(),
                                           B.getInt8PtrTy(),
@@ -160,11 +160,11 @@ Value *llvm::EmitStrCpy(Value *Dst, Value *Src, IRBuilder<> &B,
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(M->getContext(), 2, Attributes::NoCapture);
-  AWI[1] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[1] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    Attributes::NoUnwind);
   Type *I8Ptr = B.getInt8PtrTy();
   Value *StrCpy = M->getOrInsertFunction(Name,
-                                         AttrListPtr::get(M->getContext(), AWI),
+                                         AttributeSet::get(M->getContext(), AWI),
                                          I8Ptr, I8Ptr, I8Ptr, NULL);
   CallInst *CI = B.CreateCall2(StrCpy, CastToCStr(Dst, B), CastToCStr(Src, B),
                                Name);
@@ -184,11 +184,11 @@ Value *llvm::EmitStrNCpy(Value *Dst, Value *Src, Value *Len,
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(M->getContext(), 2, Attributes::NoCapture);
-  AWI[1] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[1] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    Attributes::NoUnwind);
   Type *I8Ptr = B.getInt8PtrTy();
   Value *StrNCpy = M->getOrInsertFunction(Name,
-                                          AttrListPtr::get(M->getContext(),
+                                          AttributeSet::get(M->getContext(),
                                                            AWI),
                                           I8Ptr, I8Ptr, I8Ptr,
                                           Len->getType(), NULL);
@@ -210,11 +210,11 @@ Value *llvm::EmitMemCpyChk(Value *Dst, Value *Src, Value *Len, Value *ObjSize,
 
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI;
-  AWI = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                 Attributes::NoUnwind);
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Value *MemCpy = M->getOrInsertFunction("__memcpy_chk",
-                                         AttrListPtr::get(M->getContext(), AWI),
+                                         AttributeSet::get(M->getContext(), AWI),
                                          B.getInt8PtrTy(),
                                          B.getInt8PtrTy(),
                                          B.getInt8PtrTy(),
@@ -239,11 +239,11 @@ Value *llvm::EmitMemChr(Value *Ptr, Value *Val,
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI;
   Attributes::AttrVal AVs[2] = { Attributes::ReadOnly, Attributes::NoUnwind };
-  AWI = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                 ArrayRef<Attributes::AttrVal>(AVs, 2));
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Value *MemChr = M->getOrInsertFunction("memchr",
-                                         AttrListPtr::get(M->getContext(), AWI),
+                                         AttributeSet::get(M->getContext(), AWI),
                                          B.getInt8PtrTy(),
                                          B.getInt8PtrTy(),
                                          B.getInt32Ty(),
@@ -269,12 +269,12 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
   AWI[0] = AttributeWithIndex::get(M->getContext(), 1, Attributes::NoCapture);
   AWI[1] = AttributeWithIndex::get(M->getContext(), 2, Attributes::NoCapture);
   Attributes::AttrVal AVs[2] = { Attributes::ReadOnly, Attributes::NoUnwind };
-  AWI[2] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[2] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    ArrayRef<Attributes::AttrVal>(AVs, 2));
 
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   Value *MemCmp = M->getOrInsertFunction("memcmp",
-                                         AttrListPtr::get(M->getContext(), AWI),
+                                         AttributeSet::get(M->getContext(), AWI),
                                          B.getInt32Ty(),
                                          B.getInt8PtrTy(),
                                          B.getInt8PtrTy(),
@@ -293,7 +293,7 @@ Value *llvm::EmitMemCmp(Value *Ptr1, Value *Ptr2,
 /// returns one value with the same type.  If 'Op' is a long double, 'l' is
 /// added as the suffix of name, if 'Op' is a float, we add a 'f' suffix.
 Value *llvm::EmitUnaryFloatFnCall(Value *Op, StringRef Name, IRBuilder<> &B,
-                                  const AttrListPtr &Attrs) {
+                                  const AttributeSet &Attrs) {
   SmallString<20> NameBuffer;
   if (!Op->getType()->isDoubleTy()) {
     // If we need to add a suffix, copy into NameBuffer.
@@ -348,11 +348,11 @@ Value *llvm::EmitPutS(Value *Str, IRBuilder<> &B, const DataLayout *TD,
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(M->getContext(), 1, Attributes::NoCapture);
-  AWI[1] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[1] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    Attributes::NoUnwind);
 
   Value *PutS = M->getOrInsertFunction("puts",
-                                       AttrListPtr::get(M->getContext(), AWI),
+                                       AttributeSet::get(M->getContext(), AWI),
                                        B.getInt32Ty(),
                                        B.getInt8PtrTy(),
                                        NULL);
@@ -372,12 +372,12 @@ Value *llvm::EmitFPutC(Value *Char, Value *File, IRBuilder<> &B,
   Module *M = B.GetInsertBlock()->getParent()->getParent();
   AttributeWithIndex AWI[2];
   AWI[0] = AttributeWithIndex::get(M->getContext(), 2, Attributes::NoCapture);
-  AWI[1] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[1] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    Attributes::NoUnwind);
   Constant *F;
   if (File->getType()->isPointerTy())
     F = M->getOrInsertFunction("fputc",
-                               AttrListPtr::get(M->getContext(), AWI),
+                               AttributeSet::get(M->getContext(), AWI),
                                B.getInt32Ty(),
                                B.getInt32Ty(), File->getType(),
                                NULL);
@@ -406,13 +406,13 @@ Value *llvm::EmitFPutS(Value *Str, Value *File, IRBuilder<> &B,
   AttributeWithIndex AWI[3];
   AWI[0] = AttributeWithIndex::get(M->getContext(), 1, Attributes::NoCapture);
   AWI[1] = AttributeWithIndex::get(M->getContext(), 2, Attributes::NoCapture);
-  AWI[2] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[2] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    Attributes::NoUnwind);
   StringRef FPutsName = TLI->getName(LibFunc::fputs);
   Constant *F;
   if (File->getType()->isPointerTy())
     F = M->getOrInsertFunction(FPutsName,
-                               AttrListPtr::get(M->getContext(), AWI),
+                               AttributeSet::get(M->getContext(), AWI),
                                B.getInt32Ty(),
                                B.getInt8PtrTy(),
                                File->getType(), NULL);
@@ -439,14 +439,14 @@ Value *llvm::EmitFWrite(Value *Ptr, Value *Size, Value *File,
   AttributeWithIndex AWI[3];
   AWI[0] = AttributeWithIndex::get(M->getContext(), 1, Attributes::NoCapture);
   AWI[1] = AttributeWithIndex::get(M->getContext(), 4, Attributes::NoCapture);
-  AWI[2] = AttributeWithIndex::get(M->getContext(), AttrListPtr::FunctionIndex,
+  AWI[2] = AttributeWithIndex::get(M->getContext(), AttributeSet::FunctionIndex,
                                    Attributes::NoUnwind);
   LLVMContext &Context = B.GetInsertBlock()->getContext();
   StringRef FWriteName = TLI->getName(LibFunc::fwrite);
   Constant *F;
   if (File->getType()->isPointerTy())
     F = M->getOrInsertFunction(FWriteName,
-                               AttrListPtr::get(M->getContext(), AWI),
+                               AttributeSet::get(M->getContext(), AWI),
                                TD->getIntPtrType(Context),
                                B.getInt8PtrTy(),
                                TD->getIntPtrType(Context),

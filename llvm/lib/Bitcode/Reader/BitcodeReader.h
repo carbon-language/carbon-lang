@@ -146,7 +146,7 @@ class BitcodeReader : public GVMaterializer {
   /// MAttributes - The set of attributes by index.  Index zero in the
   /// file is for null, and is thus not represented here.  As such all indices
   /// are off by one.
-  std::vector<AttrListPtr> MAttributes;
+  std::vector<AttributeSet> MAttributes;
 
   /// FunctionBBs - While parsing a function body, this is a list of the basic
   /// blocks for the function.
@@ -246,10 +246,10 @@ private:
     if (ID >= FunctionBBs.size()) return 0; // Invalid ID
     return FunctionBBs[ID];
   }
-  AttrListPtr getAttributes(unsigned i) const {
+  AttributeSet getAttributes(unsigned i) const {
     if (i-1 < MAttributes.size())
       return MAttributes[i-1];
-    return AttrListPtr();
+    return AttributeSet();
   }
 
   /// getValueTypePair - Read a value/type pair out of the specified record from

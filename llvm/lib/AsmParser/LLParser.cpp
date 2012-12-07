@@ -2813,7 +2813,7 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
   if (RetAttrs.hasAttributes())
     Attrs.push_back(
-      AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+      AttributeWithIndex::get(AttributeSet::ReturnIndex,
                               Attributes::get(RetType->getContext(),
                                               RetAttrs)));
 
@@ -2825,11 +2825,11 @@ bool LLParser::ParseFunctionHeader(Function *&Fn, bool isDefine) {
 
   if (FuncAttrs.hasAttributes())
     Attrs.push_back(
-      AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+      AttributeWithIndex::get(AttributeSet::FunctionIndex,
                               Attributes::get(RetType->getContext(),
                                               FuncAttrs)));
 
-  AttrListPtr PAL = AttrListPtr::get(Context, Attrs);
+  AttributeSet PAL = AttributeSet::get(Context, Attrs);
 
   if (PAL.getParamAttributes(1).hasAttribute(Attributes::StructRet) &&
       !RetType->isVoidTy())
@@ -3358,7 +3358,7 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
   SmallVector<AttributeWithIndex, 8> Attrs;
   if (RetAttrs.hasAttributes())
     Attrs.push_back(
-      AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+      AttributeWithIndex::get(AttributeSet::ReturnIndex,
                               Attributes::get(Callee->getContext(),
                                               RetAttrs)));
 
@@ -3389,12 +3389,12 @@ bool LLParser::ParseInvoke(Instruction *&Inst, PerFunctionState &PFS) {
 
   if (FnAttrs.hasAttributes())
     Attrs.push_back(
-      AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+      AttributeWithIndex::get(AttributeSet::FunctionIndex,
                               Attributes::get(Callee->getContext(),
                                               FnAttrs)));
 
   // Finish off the Attributes and check them
-  AttrListPtr PAL = AttrListPtr::get(Context, Attrs);
+  AttributeSet PAL = AttributeSet::get(Context, Attrs);
 
   InvokeInst *II = InvokeInst::Create(Callee, NormalBB, UnwindBB, Args);
   II->setCallingConv(CC);
@@ -3760,7 +3760,7 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
   SmallVector<AttributeWithIndex, 8> Attrs;
   if (RetAttrs.hasAttributes())
     Attrs.push_back(
-      AttributeWithIndex::get(AttrListPtr::ReturnIndex,
+      AttributeWithIndex::get(AttributeSet::ReturnIndex,
                               Attributes::get(Callee->getContext(),
                                               RetAttrs)));
 
@@ -3791,12 +3791,12 @@ bool LLParser::ParseCall(Instruction *&Inst, PerFunctionState &PFS,
 
   if (FnAttrs.hasAttributes())
     Attrs.push_back(
-      AttributeWithIndex::get(AttrListPtr::FunctionIndex,
+      AttributeWithIndex::get(AttributeSet::FunctionIndex,
                               Attributes::get(Callee->getContext(),
                                               FnAttrs)));
 
   // Finish off the Attributes and check them
-  AttrListPtr PAL = AttrListPtr::get(Context, Attrs);
+  AttributeSet PAL = AttributeSet::get(Context, Attrs);
 
   CallInst *CI = CallInst::Create(Callee, Args);
   CI->setTailCall(isTail);

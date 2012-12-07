@@ -976,7 +976,7 @@ NVPTXTargetLowering::LowerFormalArguments(SDValue Chain,
   const DataLayout *TD = getDataLayout();
 
   const Function *F = MF.getFunction();
-  const AttrListPtr &PAL = F->getAttributes();
+  const AttributeSet &PAL = F->getAttributes();
 
   SDValue Root = DAG.getRoot();
   std::vector<SDValue> OutChains;

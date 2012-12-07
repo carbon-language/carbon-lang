@@ -137,7 +137,7 @@ void Module::getMDKindNames(SmallVectorImpl<StringRef> &Result) const {
 //
 Constant *Module::getOrInsertFunction(StringRef Name,
                                       FunctionType *Ty,
-                                      AttrListPtr AttributeList) {
+                                      AttributeSet AttributeList) {
   // See if we have a definition for the specified function already.
   GlobalValue *F = getNamedValue(Name);
   if (F == 0) {
@@ -170,7 +170,7 @@ Constant *Module::getOrInsertFunction(StringRef Name,
 
 Constant *Module::getOrInsertTargetIntrinsic(StringRef Name,
                                              FunctionType *Ty,
-                                             AttrListPtr AttributeList) {
+                                             AttributeSet AttributeList) {
   // See if we have a definition for the specified function already.
   GlobalValue *F = getNamedValue(Name);
   if (F == 0) {
@@ -187,7 +187,7 @@ Constant *Module::getOrInsertTargetIntrinsic(StringRef Name,
 
 Constant *Module::getOrInsertFunction(StringRef Name,
                                       FunctionType *Ty) {
-  return getOrInsertFunction(Name, Ty, AttrListPtr());
+  return getOrInsertFunction(Name, Ty, AttributeSet());
 }
 
 // getOrInsertFunction - Look up the specified function in the module symbol
@@ -196,7 +196,7 @@ Constant *Module::getOrInsertFunction(StringRef Name,
 // arguments, which makes it easier for clients to use.
 //
 Constant *Module::getOrInsertFunction(StringRef Name,
-                                      AttrListPtr AttributeList,
+                                      AttributeSet AttributeList,
                                       Type *RetTy, ...) {
   va_list Args;
   va_start(Args, RetTy);
@@ -229,7 +229,7 @@ Constant *Module::getOrInsertFunction(StringRef Name,
   // Build the function type and chain to the other getOrInsertFunction...
   return getOrInsertFunction(Name,
                              FunctionType::get(RetTy, ArgTys, false),
-                             AttrListPtr());
+                             AttributeSet());
 }
 
 // getFunction - Look up the specified function in the module symbol table.

@@ -312,7 +312,7 @@ public:
   ///   4. Finally, the function exists but has the wrong prototype: return the
   ///      function with a constantexpr cast to the right prototype.
   Constant *getOrInsertFunction(StringRef Name, FunctionType *T,
-                                AttrListPtr AttributeList);
+                                AttributeSet AttributeList);
 
   Constant *getOrInsertFunction(StringRef Name, FunctionType *T);
 
@@ -324,7 +324,7 @@ public:
   /// null terminated list of function arguments, which makes it easier for
   /// clients to use.
   Constant *getOrInsertFunction(StringRef Name,
-                                AttrListPtr AttributeList,
+                                AttributeSet AttributeList,
                                 Type *RetTy, ...)  END_WITH_NULL;
 
   /// getOrInsertFunction - Same as above, but without the attributes.
@@ -333,7 +333,7 @@ public:
 
   Constant *getOrInsertTargetIntrinsic(StringRef Name,
                                        FunctionType *Ty,
-                                       AttrListPtr AttributeList);
+                                       AttributeSet AttributeList);
 
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.

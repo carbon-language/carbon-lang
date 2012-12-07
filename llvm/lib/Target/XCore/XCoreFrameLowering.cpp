@@ -98,7 +98,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
 
   bool FP = hasFP(MF);
-  const AttrListPtr &PAL = MF.getFunction()->getAttributes();
+  const AttributeSet &PAL = MF.getFunction()->getAttributes();
 
   for (unsigned I = 0, E = PAL.getNumAttrs(); I != E; ++I)
     if (PAL.getAttributesAtIndex(I).hasAttribute(Attributes::Nest)) {

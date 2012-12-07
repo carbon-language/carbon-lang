@@ -1156,7 +1156,7 @@ public:
 /// hold the calling convention of the call.
 ///
 class CallInst : public Instruction {
-  AttrListPtr AttributeList; ///< parameter attributes for call
+  AttributeSet AttributeList; ///< parameter attributes for call
   CallInst(const CallInst &CI);
   void init(Value *Func, ArrayRef<Value *> Args, const Twine &NameStr);
   void init(Value *Func, const Twine &NameStr);
@@ -1254,11 +1254,11 @@ public:
 
   /// getAttributes - Return the parameter attributes for this call.
   ///
-  const AttrListPtr &getAttributes() const { return AttributeList; }
+  const AttributeSet &getAttributes() const { return AttributeList; }
 
   /// setAttributes - Set the parameter attributes for this call.
   ///
-  void setAttributes(const AttrListPtr &Attrs) { AttributeList = Attrs; }
+  void setAttributes(const AttributeSet &Attrs) { AttributeList = Attrs; }
 
   /// addAttribute - adds the attribute to the list of attributes.
   void addAttribute(unsigned i, Attributes attr);
@@ -1280,7 +1280,7 @@ public:
   /// \brief Return true if the call should not be inlined.
   bool isNoInline() const { return hasFnAttr(Attributes::NoInline); }
   void setIsNoInline() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::NoInline));
   }
 
@@ -1289,7 +1289,7 @@ public:
     return hasFnAttr(Attributes::ReturnsTwice);
   }
   void setCanReturnTwice() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::ReturnsTwice));
   }
 
@@ -1298,7 +1298,7 @@ public:
     return hasFnAttr(Attributes::ReadNone);
   }
   void setDoesNotAccessMemory() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::ReadNone));
   }
 
@@ -1307,21 +1307,21 @@ public:
     return doesNotAccessMemory() || hasFnAttr(Attributes::ReadOnly);
   }
   void setOnlyReadsMemory() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::ReadOnly));
   }
 
   /// \brief Determine if the call cannot return.
   bool doesNotReturn() const { return hasFnAttr(Attributes::NoReturn); }
   void setDoesNotReturn() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::NoReturn));
   }
 
   /// \brief Determine if the call cannot unwind.
   bool doesNotThrow() const { return hasFnAttr(Attributes::NoUnwind); }
   void setDoesNotThrow() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::NoUnwind));
   }
 
@@ -2942,7 +2942,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(IndirectBrInst, Value)
 /// calling convention of the call.
 ///
 class InvokeInst : public TerminatorInst {
-  AttrListPtr AttributeList;
+  AttributeSet AttributeList;
   InvokeInst(const InvokeInst &BI);
   void init(Value *Func, BasicBlock *IfNormal, BasicBlock *IfException,
             ArrayRef<Value *> Args, const Twine &NameStr);
@@ -3003,11 +3003,11 @@ public:
 
   /// getAttributes - Return the parameter attributes for this invoke.
   ///
-  const AttrListPtr &getAttributes() const { return AttributeList; }
+  const AttributeSet &getAttributes() const { return AttributeList; }
 
   /// setAttributes - Set the parameter attributes for this invoke.
   ///
-  void setAttributes(const AttrListPtr &Attrs) { AttributeList = Attrs; }
+  void setAttributes(const AttributeSet &Attrs) { AttributeList = Attrs; }
 
   /// addAttribute - adds the attribute to the list of attributes.
   void addAttribute(unsigned i, Attributes attr);
@@ -3029,7 +3029,7 @@ public:
   /// \brief Return true if the call should not be inlined.
   bool isNoInline() const { return hasFnAttr(Attributes::NoInline); }
   void setIsNoInline() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::NoInline));
   }
 
@@ -3038,7 +3038,7 @@ public:
     return hasFnAttr(Attributes::ReadNone);
   }
   void setDoesNotAccessMemory() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::ReadNone));
   }
 
@@ -3047,21 +3047,21 @@ public:
     return doesNotAccessMemory() || hasFnAttr(Attributes::ReadOnly);
   }
   void setOnlyReadsMemory() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::ReadOnly));
   }
 
   /// \brief Determine if the call cannot return.
   bool doesNotReturn() const { return hasFnAttr(Attributes::NoReturn); }
   void setDoesNotReturn() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::NoReturn));
   }
 
   /// \brief Determine if the call cannot unwind.
   bool doesNotThrow() const { return hasFnAttr(Attributes::NoUnwind); }
   void setDoesNotThrow() {
-    addAttribute(AttrListPtr::FunctionIndex,
+    addAttribute(AttributeSet::FunctionIndex,
                  Attributes::get(getContext(), Attributes::NoUnwind));
   }
 

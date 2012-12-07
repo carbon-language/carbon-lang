@@ -177,10 +177,10 @@ public:
 
   /// getAttributes/setAttributes - get or set the parameter attributes of
   /// the call.
-  const AttrListPtr &getAttributes() const {
+  const AttributeSet &getAttributes() const {
     CALLSITE_DELEGATE_GETTER(getAttributes());
   }
-  void setAttributes(const AttrListPtr &PAL) {
+  void setAttributes(const AttributeSet &PAL) {
     CALLSITE_DELEGATE_SETTER(setAttributes(PAL));
   }
 

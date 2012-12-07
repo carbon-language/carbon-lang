@@ -215,13 +215,13 @@ bool FunctionAttrs::AddReadAttrs(const CallGraphSCC &SCC) {
     AttrBuilder B;
     B.addAttribute(Attributes::ReadOnly)
       .addAttribute(Attributes::ReadNone);
-    F->removeAttribute(AttrListPtr::FunctionIndex,
+    F->removeAttribute(AttributeSet::FunctionIndex,
                        Attributes::get(F->getContext(), B));
 
     // Add in the new attribute.
     B.clear();
     B.addAttribute(ReadsMemory ? Attributes::ReadOnly : Attributes::ReadNone);
-    F->addAttribute(AttrListPtr::FunctionIndex,
+    F->addAttribute(AttributeSet::FunctionIndex,
                     Attributes::get(F->getContext(), B));
 
     if (ReadsMemory)

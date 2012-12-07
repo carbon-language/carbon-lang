@@ -1380,27 +1380,27 @@ void LLVMSetGC(LLVMValueRef Fn, const char *GC) {
 
 void LLVMAddFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Function *Func = unwrap<Function>(Fn);
-  const AttrListPtr PAL = Func->getAttributes();
+  const AttributeSet PAL = Func->getAttributes();
   AttrBuilder B(PA);
-  const AttrListPtr PALnew =
-    PAL.addAttr(Func->getContext(), AttrListPtr::FunctionIndex,
+  const AttributeSet PALnew =
+    PAL.addAttr(Func->getContext(), AttributeSet::FunctionIndex,
                 Attributes::get(Func->getContext(), B));
   Func->setAttributes(PALnew);
 }
 
 void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   Function *Func = unwrap<Function>(Fn);
-  const AttrListPtr PAL = Func->getAttributes();
+  const AttributeSet PAL = Func->getAttributes();
   AttrBuilder B(PA);
-  const AttrListPtr PALnew =
-    PAL.removeAttr(Func->getContext(), AttrListPtr::FunctionIndex,
+  const AttributeSet PALnew =
+    PAL.removeAttr(Func->getContext(), AttributeSet::FunctionIndex,
                    Attributes::get(Func->getContext(), B));
   Func->setAttributes(PALnew);
 }
 
 LLVMAttribute LLVMGetFunctionAttr(LLVMValueRef Fn) {
   Function *Func = unwrap<Function>(Fn);
-  const AttrListPtr PAL = Func->getAttributes();
+  const AttributeSet PAL = Func->getAttributes();
   Attributes attr = PAL.getFnAttributes();
   return (LLVMAttribute)attr.Raw();
 }

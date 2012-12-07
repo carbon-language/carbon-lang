@@ -418,7 +418,7 @@ void ValueEnumerator::EnumerateOperandType(const Value *V) {
     EnumerateMetadata(V);
 }
 
-void ValueEnumerator::EnumerateAttributes(const AttrListPtr &PAL) {
+void ValueEnumerator::EnumerateAttributes(const AttributeSet &PAL) {
   if (PAL.isEmpty()) return;  // null is always 0.
   // Do a lookup.
   unsigned &Entry = AttributeMap[PAL.getRawPointer()];
