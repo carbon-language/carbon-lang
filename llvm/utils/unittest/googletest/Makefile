@@ -36,6 +36,6 @@ endif
 
 NO_INSTALL = 1
 
-Source = $(filter-out gtest-all.cc,$(wildcard *.cc))
+SOURCES = $(filter-out gtest-all.cc, $(notdir $(wildcard $(PROJ_SRC_DIR)/*.cc)))
 
 include $(LEVEL)/Makefile.common
