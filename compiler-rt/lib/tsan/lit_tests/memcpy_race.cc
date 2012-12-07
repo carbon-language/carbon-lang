@@ -15,7 +15,7 @@ void *Thread1(void *x) {
 }
 
 void *Thread2(void *x) {
-  usleep(500*1000);
+  sleep(1);
   memcpy(data+3, data2, 4);
   return NULL;
 }

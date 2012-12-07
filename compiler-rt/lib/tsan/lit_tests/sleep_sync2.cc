@@ -11,7 +11,7 @@ void *Thread(void *p) {
 
 int main() {
   pthread_t t;
-  usleep(100*1000);
+  sleep(1);
   pthread_create(&t, 0, Thread, 0);
   X = 43;
   pthread_join(t, 0);

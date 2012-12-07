@@ -5,7 +5,7 @@
 int X = 0;
 
 void MySleep() {
-  usleep(50*1000);
+  sleep(1);
 }
 
 void *Thread(void *p) {
@@ -25,6 +25,6 @@ int main() {
 // CHECK: WARNING: ThreadSanitizer: data race
 // ...
 // CHECK:   As if synchronized via sleep:
-// CHECK-NEXT:     #0 usleep
+// CHECK-NEXT:     #0 sleep
 // CHECK-NEXT:     #1 MySleep
 // CHECK-NEXT:     #2 Thread

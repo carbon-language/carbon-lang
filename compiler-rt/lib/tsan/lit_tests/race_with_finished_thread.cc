@@ -19,7 +19,7 @@ void *Thread1(void *x) {
 }
 
 void *Thread2(void *x) {
-  usleep(1000*1000);
+  sleep(1);
   g_data = 43;
   return NULL;
 }

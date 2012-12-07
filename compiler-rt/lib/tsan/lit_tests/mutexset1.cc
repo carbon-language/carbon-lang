@@ -7,7 +7,7 @@ int Global;
 pthread_mutex_t mtx;
 
 void *Thread1(void *x) {
-  usleep(100*1000);
+  sleep(1);
   pthread_mutex_lock(&mtx);
   Global++;
   pthread_mutex_unlock(&mtx);

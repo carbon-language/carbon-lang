@@ -14,7 +14,7 @@ void *Thread1(void *x) {
 }
 
 void *Thread2(void *x) {
-  usleep(100*1000);
+  sleep(1);
   Global--;
   return NULL;
 }

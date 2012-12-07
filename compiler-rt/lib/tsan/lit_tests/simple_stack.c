@@ -24,7 +24,7 @@ void __attribute__((noinline)) bar2() {
 }
 
 void *Thread1(void *x) {
-  usleep(1000000);
+  sleep(1);
   bar1();
   return NULL;
 }

@@ -8,7 +8,7 @@ extern "C" void AnnotateThreadName(const char *f, int l, const char *name);
 int Global;
 
 void *Thread1(void *x) {
-  usleep(100*1000);
+  sleep(1);
   AnnotateThreadName(__FILE__, __LINE__, "Thread1");
   Global++;
   return NULL;

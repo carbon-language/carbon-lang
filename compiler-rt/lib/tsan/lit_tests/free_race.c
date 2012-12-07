@@ -16,7 +16,7 @@ void *Thread1(void *x) {
 }
 
 void *Thread2(void *x) {
-  usleep(1000000);
+  sleep(1);
   pthread_mutex_lock(&mtx);
   mem[0] = 42;
   pthread_mutex_unlock(&mtx);

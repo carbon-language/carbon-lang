@@ -12,7 +12,7 @@ int main() {
   pthread_mutex_init(&m, 0);
   pthread_t t;
   pthread_create(&t, 0, Thread, &m);
-  usleep(1000*1000);
+  sleep(1);
   pthread_mutex_destroy(&m);
   pthread_join(t, 0);
   return 0;

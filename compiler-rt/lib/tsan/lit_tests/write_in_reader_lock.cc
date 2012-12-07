@@ -9,7 +9,7 @@ void *Thread1(void *p) {
   (void)p;
   pthread_rwlock_rdlock(&rwlock);
   // Write under reader lock.
-  usleep(100);
+  sleep(1);
   GLOB++;
   pthread_rwlock_unlock(&rwlock);
   return 0;

@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 void *Thread1(void *x) {
-  usleep(500*1000);
+  sleep(1);
   int *p = (int*)x;
   p[0] = 1;
   return NULL;

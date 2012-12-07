@@ -6,7 +6,7 @@
 int Global;
 
 void *Thread1(void *x) {
-  usleep(100*1000);
+  sleep(1);
   Global++;
   return NULL;
 }

@@ -22,7 +22,7 @@ void *Thread(void *x) {
 int main() {
   pthread_t t;
   pthread_create(&t, 0, Thread, 0);
-  usleep(100000);
+  sleep(1);
   Global = 43;
   pthread_join(t, 0);
   return 0;

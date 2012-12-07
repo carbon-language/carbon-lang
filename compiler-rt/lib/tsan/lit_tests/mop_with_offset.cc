@@ -11,7 +11,7 @@ void *Thread1(void *x) {
 }
 
 void *Thread2(void *x) {
-  usleep(500*1000);
+  sleep(1);
   char *p = (char*)x;
   p[2] = 1;
   return NULL;
