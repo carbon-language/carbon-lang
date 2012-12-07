@@ -5407,6 +5407,9 @@ def warn_cxx98_compat_explicit_conversion_functions : Warning<
 def err_defaulted_special_member_params : Error<
   "an explicitly-defaulted %select{|copy |move }0constructor cannot "
   "have default arguments">;
+def err_defaulted_special_member_variadic : Error<
+  "an explicitly-defaulted %select{|copy |move }0constructor cannot "
+  "be variadic">;
 def err_defaulted_special_member_return_type : Error<
   "explicitly-defaulted %select{copy|move}0 assignment operator must "
   "return %1">;
