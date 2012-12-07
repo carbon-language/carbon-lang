@@ -4223,6 +4223,10 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
     Diag(MD->getLocation(), diag::err_defaulted_special_member_params)
       << CSM << MD->getSourceRange();
     HadError = true;
+  } else if (MD->isVariadic()) {
+    Diag(MD->getLocation(), diag::err_defaulted_special_member_variadic)
+      << CSM << MD->getSourceRange();
+    HadError = true;
   }
 
   const FunctionProtoType *Type = MD->getType()->getAs<FunctionProtoType>();
