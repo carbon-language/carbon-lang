@@ -288,9 +288,10 @@ void WinCOFFStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol)
 {
   MCDataFragment *DF = getOrCreateDataFragment();
 
-  DF->addFixup(MCFixup::Create(DF->getContents().size(),
-                               MCSymbolRefExpr::Create (Symbol, getContext ()),
-                               FK_SecRel_4));
+  DF->getFixups().push_back(
+      MCFixup::Create(DF->getContents().size(),
+                      MCSymbolRefExpr::Create (Symbol, getContext ()),
+                      FK_SecRel_4));
   DF->getContents().resize(DF->getContents().size() + 4, 0);
 }
 
@@ -339,7 +340,7 @@ void WinCOFFStreamer::EmitInstruction(const MCInst &Instruction) {
   MCInstFragment *Fragment =
     new MCInstFragment(Instruction, getCurrentSectionData());
 
-  raw_svector_ostream VecOS(Fragment->getCode());
+  raw_svector_ostream VecOS(Fragment->getContents());
 
   getAssembler().getEmitter().EncodeInstruction(Instruction, VecOS,
                                                 Fragment->getFixups());

@@ -168,6 +168,11 @@ MCFragment::MCFragment(FragmentType _Kind, MCSectionData *_Parent)
 
 /* *** */
 
+MCEncodedFragment::~MCEncodedFragment() {
+}
+
+/* *** */
+
 MCSectionData::MCSectionData() : Section(0) {}
 
 MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
@@ -382,9 +387,16 @@ void MCAsmLayout::LayoutFragment(MCFragment *F) {
   LastValidFragment[F->getParent()] = F;
 }
 
-/// WriteFragmentData - Write the \p F data to the output file.
-static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
-                              const MCFragment &F) {
+/// \brief Write the contents of a fragment to the given object writer. Expects
+///        a MCEncodedFragment.
+static void writeFragmentContents(const MCFragment &F, MCObjectWriter *OW) {
+  MCEncodedFragment &EF = cast<MCEncodedFragment>(F);
+  OW->WriteBytes(EF.getContents().str());
+}
+
+/// \brief Write the fragment \p F to the output file.
+static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
+                          const MCFragment &F) {
   MCObjectWriter *OW = &Asm.getWriter();
   uint64_t Start = OW->getStream().tell();
   (void) Start;
@@ -433,13 +445,15 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
     break;
   }
 
-  case MCFragment::FT_Data: {
+  case MCFragment::FT_Data: 
     ++stats::EmittedDataFragments;
-    MCDataFragment &DF = cast<MCDataFragment>(F);
-    assert(FragmentSize == DF.getContents().size() && "Invalid size!");
-    OW->WriteBytes(DF.getContents().str());
+    writeFragmentContents(F, OW);
     break;
-  }
+
+  case MCFragment::FT_Inst:
+    ++stats::EmittedInstFragments;
+    writeFragmentContents(F, OW);
+    break;
 
   case MCFragment::FT_Fill: {
     MCFillFragment &FF = cast<MCFillFragment>(F);
@@ -455,13 +469,6 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
       case 8: OW->Write64(uint64_t(FF.getValue())); break;
       }
     }
-    break;
-  }
-
-  case MCFragment::FT_Inst: {
-    ++stats::EmittedInstFragments;
-    MCInstFragment &IF = cast<MCInstFragment>(F);
-    OW->WriteBytes(StringRef(IF.getCode().begin(), IF.getCode().size()));
     break;
   }
 
@@ -538,9 +545,9 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
   uint64_t Start = getWriter().getStream().tell();
   (void)Start;
 
-  for (MCSectionData::const_iterator it = SD->begin(),
-         ie = SD->end(); it != ie; ++it)
-    WriteFragmentData(*this, Layout, *it);
+  for (MCSectionData::const_iterator it = SD->begin(), ie = SD->end();
+       it != ie; ++it)
+    writeFragment(*this, Layout, *it);
 
   assert(getWriter().getStream().tell() - Start ==
          Layout.getSectionAddressSize(SD));
@@ -617,24 +624,14 @@ void MCAssembler::Finish() {
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
     for (MCSectionData::iterator it2 = it->begin(),
            ie2 = it->end(); it2 != ie2; ++it2) {
-      MCDataFragment *DF = dyn_cast<MCDataFragment>(it2);
-      if (DF) {
-        for (MCDataFragment::fixup_iterator it3 = DF->fixup_begin(),
-               ie3 = DF->fixup_end(); it3 != ie3; ++it3) {
+      MCEncodedFragment *F = dyn_cast<MCEncodedFragment>(it2);
+      if (F) {
+        for (MCEncodedFragment::fixup_iterator it3 = F->fixup_begin(),
+             ie3 = F->fixup_end(); it3 != ie3; ++it3) {
           MCFixup &Fixup = *it3;
-          uint64_t FixedValue = handleFixup(Layout, *DF, Fixup);
-          getBackend().applyFixup(Fixup, DF->getContents().data(),
-                                  DF->getContents().size(), FixedValue);
-        }
-      }
-      MCInstFragment *IF = dyn_cast<MCInstFragment>(it2);
-      if (IF) {
-        for (MCInstFragment::fixup_iterator it3 = IF->fixup_begin(),
-               ie3 = IF->fixup_end(); it3 != ie3; ++it3) {
-          MCFixup &Fixup = *it3;
-          uint64_t FixedValue = handleFixup(Layout, *IF, Fixup);
-          getBackend().applyFixup(Fixup, IF->getCode().data(),
-                                  IF->getCode().size(), FixedValue);
+          uint64_t FixedValue = handleFixup(Layout, *F, Fixup);
+          getBackend().applyFixup(Fixup, F->getContents().data(),
+                                  F->getContents().size(), FixedValue);
         }
       }
     }
@@ -704,11 +701,8 @@ bool MCAssembler::relaxInstruction(MCAsmLayout &Layout,
 
   // Update the instruction fragment.
   IF.setInst(Relaxed);
-  IF.getCode() = Code;
-  IF.getFixups().clear();
-  // FIXME: Eliminate copy.
-  for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
-    IF.getFixups().push_back(Fixups[i]);
+  IF.getContents() = Code;
+  IF.getFixups() = Fixups;
 
   return true;
 }
@@ -977,6 +971,7 @@ void MCAssembler::dump() {
 #endif
 
 // anchors for MC*Fragment vtables
+void MCEncodedFragment::anchor() { }
 void MCDataFragment::anchor() { }
 void MCInstFragment::anchor() { }
 void MCAlignFragment::anchor() { }

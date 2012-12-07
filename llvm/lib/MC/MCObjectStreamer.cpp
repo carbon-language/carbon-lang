@@ -99,9 +99,9 @@ void MCObjectStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
     EmitIntValue(AbsValue, Size, AddrSpace);
     return;
   }
-  DF->addFixup(MCFixup::Create(DF->getContents().size(),
-                               Value,
-                               MCFixup::getKindForSize(Size, false)));
+  DF->getFixups().push_back(
+      MCFixup::Create(DF->getContents().size(), Value,
+                      MCFixup::getKindForSize(Size, false)));
   DF->getContents().resize(DF->getContents().size() + Size, 0);
 }
 
@@ -204,7 +204,7 @@ void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
   raw_svector_ostream VecOS(Code);
   getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups());
   VecOS.flush();
-  IF->getCode().append(Code.begin(), Code.end());
+  IF->getContents().append(Code.begin(), Code.end());
 }
 
 void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,
@@ -288,7 +288,8 @@ bool MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
 void MCObjectStreamer::EmitGPRel32Value(const MCExpr *Value) {
   MCDataFragment *DF = getOrCreateDataFragment();
 
-  DF->addFixup(MCFixup::Create(DF->getContents().size(), Value, FK_GPRel_4));
+  DF->getFixups().push_back(MCFixup::Create(DF->getContents().size(), 
+                                            Value, FK_GPRel_4));
   DF->getContents().resize(DF->getContents().size() + 4, 0);
 }
 
@@ -296,7 +297,8 @@ void MCObjectStreamer::EmitGPRel32Value(const MCExpr *Value) {
 void MCObjectStreamer::EmitGPRel64Value(const MCExpr *Value) {
   MCDataFragment *DF = getOrCreateDataFragment();
 
-  DF->addFixup(MCFixup::Create(DF->getContents().size(), Value, FK_GPRel_4));
+  DF->getFixups().push_back(MCFixup::Create(DF->getContents().size(), 
+                                            Value, FK_GPRel_4));
   DF->getContents().resize(DF->getContents().size() + 8, 0);
 }
 
