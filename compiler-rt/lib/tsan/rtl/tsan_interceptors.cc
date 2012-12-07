@@ -364,14 +364,20 @@ static void *FdAddr(int fd) {
 
 static void FdAcquire(ThreadState *thr, uptr pc, int fd) {
   void *addr = FdAddr(fd);
-  if (addr)
+  DPrintf("#%d: FdAcquire(%d) -> %p\n", thr->tid, fd, addr);
+  if (addr) {
     Acquire(thr, pc, (uptr)addr);
+    MemoryRead1Byte(thr, pc, (uptr)addr);
+  }
 }
 
 static void FdRelease(ThreadState *thr, uptr pc, int fd) {
   void *addr = FdAddr(fd);
-  if (addr)
-    Acquire(thr, pc, (uptr)addr);
+  DPrintf("#%d: FdRelease(%d) -> %p\n", thr->tid, fd, addr);
+  if (addr) {
+    Release(thr, pc, (uptr)addr);
+    MemoryRead1Byte(thr, pc, (uptr)addr);
+  }
 }
 
 static void FdClose(ThreadState *thr, uptr pc, int fd) {
@@ -390,7 +396,7 @@ static void FdClose(ThreadState *thr, uptr pc, int fd) {
 }
 
 static void FdCreatePipe(ThreadState *thr, uptr pc, int rfd, int wfd) {
-  if (rfd >= FdContext::kMaxFds || rfd >= FdContext::kMaxFds) {
+  if (rfd >= FdContext::kMaxFds || wfd >= FdContext::kMaxFds) {
     if (rfd < FdContext::kMaxFds) {
       FdDesc *rdesc = &fdctx.desc[rfd];
       rdesc->type = FdGlobal;
@@ -404,16 +410,18 @@ static void FdCreatePipe(ThreadState *thr, uptr pc, int rfd, int wfd) {
   rdesc->type = FdPipe;
   void *raddr = FdAddr(rfd);
   if (raddr) {
-    // To catch races between fd usage and close.
+    // To catch races between fd usage and open.
     MemoryWrite1Byte(thr, pc, (uptr)raddr);
   }
   FdDesc *wdesc = &fdctx.desc[wfd];
   wdesc->type = FdPipe;
   void *waddr = FdAddr(wfd);
   if (waddr) {
-    // To catch races between fd usage and close.
+    // To catch races between fd usage and open.
     MemoryWrite1Byte(thr, pc, (uptr)waddr);
   }
+  DPrintf("#%d: FdCreatePipe(%d, %d) -> (%p, %p)\n",
+      thr->tid, rfd, wfd, raddr, waddr);
 }
 
 static uptr file2addr(char *path) {
@@ -1184,15 +1192,15 @@ TSAN_INTERCEPTOR(int, close, int fd) {
   return REAL(close)(fd);
 }
 
-TSAN_INTERCEPTOR(int, pipe, int pipefd[2]) {
+TSAN_INTERCEPTOR(int, pipe, int *pipefd) {
   SCOPED_TSAN_INTERCEPTOR(pipe, pipefd);
   int res = REAL(pipe)(pipefd);
   if (res == 0)
     FdCreatePipe(thr, pc, pipefd[0], pipefd[1]);
-  return res;  
+  return res;
 }
 
-TSAN_INTERCEPTOR(int, pipe2, int pipefd[2], int flags) {
+TSAN_INTERCEPTOR(int, pipe2, int *pipefd, int flags) {
   SCOPED_TSAN_INTERCEPTOR(pipe2, pipefd, flags);
   int res = REAL(pipe2)(pipefd, flags);
   if (res == 0)
