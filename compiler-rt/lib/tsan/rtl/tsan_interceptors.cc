@@ -315,7 +315,7 @@ enum FdType {
   FdSock,
   FdPipe,
   FdEvent,  // see eventfd()
-  FdPoll,
+  FdPoll
 };
 
 struct FdDesc {
