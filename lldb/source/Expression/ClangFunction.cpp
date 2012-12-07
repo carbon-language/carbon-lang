@@ -517,9 +517,7 @@ ClangFunction::ExecuteFunction (
                                                                                  this_arg));
     if (!call_plan_sp)
         return eExecutionSetupError;
-    
-    call_plan_sp->SetPrivate(true);
-    
+        
     // <rdar://problem/12027563> we need to make sure we record the fact that we are running an expression here
     // otherwise this fact will fail to be recorded when fetching an Objective-C object description
     if (exe_ctx.GetProcessPtr())

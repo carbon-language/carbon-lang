@@ -633,9 +633,7 @@ ClangUserExpression::Execute (Stream &error_stream,
             return eExecutionSetupError;
         
         lldb::addr_t function_stack_pointer = static_cast<ThreadPlanCallFunction *>(call_plan_sp.get())->GetFunctionStackPointer();
-    
-        call_plan_sp->SetPrivate(true);
-    
+
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression begins --");
         

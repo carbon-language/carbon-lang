@@ -86,7 +86,6 @@ AppleThreadPlanStepThroughObjCTrampoline::InitializeClangFunction ()
         ExecutionContext exc_ctx;
         m_thread.CalculateExecutionContext(exc_ctx);
         m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx, m_args_addr, errors, m_stop_others));
-        m_func_sp->SetPrivate(true);
         m_func_sp->SetOkayToDiscard(true);
         m_thread.QueueThreadPlan (m_func_sp, false);
     }
