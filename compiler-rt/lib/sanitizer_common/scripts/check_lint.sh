@@ -13,7 +13,7 @@ fi
 # Cpplint setup
 cd ${SCRIPT_DIR}
 if [ ! -d cpplint ]; then
-  svn co -r82 http://google-styleguide.googlecode.com/svn/trunk/cpplint cpplint
+  svn co -r83 http://google-styleguide.googlecode.com/svn/trunk/cpplint cpplint
 fi
 CPPLINT=${SCRIPT_DIR}/cpplint/cpplint.py
 
