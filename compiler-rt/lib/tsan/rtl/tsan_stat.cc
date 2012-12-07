@@ -181,6 +181,11 @@ void StatOutput(u64 *stat) {
   name[StatInt_sem_timedwait]            = "  sem_timedwait                   ";
   name[StatInt_sem_post]                 = "  sem_post                        ";
   name[StatInt_sem_getvalue]             = "  sem_getvalue                    ";
+  name[StatInt_open]                     = "  open                            ";
+  name[StatInt_creat]                    = "  creat                           ";
+  name[StatInt_dup]                      = "  dup                             ";
+  name[StatInt_dup2]                     = "  dup2                            ";
+  name[StatInt_dup3]                     = "  dup3                            ";
   name[StatInt_close]                    = "  close                           ";
   name[StatInt_pipe]                     = "  pipe                            ";
   name[StatInt_pipe2]                    = "  pipe2                           ";

@@ -2,23 +2,29 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
-int fds[2];
+int X;
 
 void *Thread1(void *x) {
-  write(fds[1], "a", 1);
+  sleep(1);
+  int f = open("/dev/random", O_RDONLY);
+  char buf;
+  read(f, &buf, 1);
+  close(f);
+  X = 42;
   return NULL;
 }
 
 void *Thread2(void *x) {
-  sleep(1);
-  close(fds[0]);
-  close(fds[1]);
+  X = 43;
+  write(STDOUT_FILENO, "a", 1);
   return NULL;
 }
 
 int main() {
-  pipe(fds);
   pthread_t t[2];
   pthread_create(&t[0], NULL, Thread1, NULL);
   pthread_create(&t[1], NULL, Thread2, NULL);
@@ -27,11 +33,9 @@ int main() {
 }
 
 // CHECK: WARNING: ThreadSanitizer: data race
-// CHECK:   Write of size 8
-// CHECK:     #0 close
-// CHECK:     #1 Thread2
-// CHECK:   Previous read of size 8
-// CHECK:     #0 write
-// CHECK:     #1 Thread1
+// CHECK:   Write of size 4
+// CHECK:     #0 Thread1
+// CHECK:   Previous write of size 4
+// CHECK:     #0 Thread2
 
 
