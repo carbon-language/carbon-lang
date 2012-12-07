@@ -333,12 +333,12 @@ public:
     if (Root) Root->release();
   }
 
-  ImmutableMapRef add(key_type_ref K, data_type_ref D) {
+  ImmutableMapRef add(key_type_ref K, data_type_ref D) const {
     TreeTy *NewT = Factory->add(Root, std::pair<key_type, data_type>(K, D));
     return ImmutableMapRef(NewT, Factory);
   }
 
-  ImmutableMapRef remove(key_type_ref K) {
+  ImmutableMapRef remove(key_type_ref K) const {
     TreeTy *NewT = Factory->remove(Root, K);
     return ImmutableMapRef(NewT, Factory);
   }
