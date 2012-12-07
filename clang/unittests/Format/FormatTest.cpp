@@ -277,6 +277,8 @@ TEST_F(FormatTest, UnderstandsAccessSpecifiers) {
 TEST_F(FormatTest, FormatsDerivedClass) {
   verifyFormat("class A : public B {\n"
                "};");
+  verifyFormat("class A : public ::B {\n"
+               "};");
 }
 
 TEST_F(FormatTest, FormatsEnum) {
@@ -474,6 +476,9 @@ TEST_F(FormatTest, UnderstandsUsesOfStar) {
   verifyFormat("int a = *b;");
   verifyFormat("int a = *b * c;");
   verifyFormat("int a = b * *c;");
+  verifyFormat("int main(int argc, char **argv) {\n}");
+
+  verifyGoogleFormat("int main(int argc, char** argv) {\n}");
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
