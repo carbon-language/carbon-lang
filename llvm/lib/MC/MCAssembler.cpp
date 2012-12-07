@@ -33,7 +33,9 @@ using namespace llvm;
 
 namespace {
 namespace stats {
-STATISTIC(EmittedFragments, "Number of emitted assembler fragments");
+STATISTIC(EmittedFragments, "Number of emitted assembler fragments - total");
+STATISTIC(EmittedInstFragments, "Number of emitted assembler fragments - instruction");
+STATISTIC(EmittedDataFragments, "Number of emitted assembler fragments - data");
 STATISTIC(evaluateFixup, "Number of evaluated fixups");
 STATISTIC(FragmentLayouts, "Number of fragment layouts");
 STATISTIC(ObjectBytes, "Number of emitted object file bytes");
@@ -432,6 +434,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
   }
 
   case MCFragment::FT_Data: {
+    ++stats::EmittedDataFragments;
     MCDataFragment &DF = cast<MCDataFragment>(F);
     assert(FragmentSize == DF.getContents().size() && "Invalid size!");
     OW->WriteBytes(DF.getContents().str());
@@ -456,6 +459,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
   }
 
   case MCFragment::FT_Inst: {
+    ++stats::EmittedInstFragments;
     MCInstFragment &IF = cast<MCInstFragment>(F);
     OW->WriteBytes(StringRef(IF.getCode().begin(), IF.getCode().size()));
     break;
