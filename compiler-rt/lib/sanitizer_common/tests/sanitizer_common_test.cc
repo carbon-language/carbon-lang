@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_common.h"
+#include "sanitizer_common/sanitizer_libc.h"
 #include "gtest/gtest.h"
 
 namespace __sanitizer {
@@ -77,5 +78,23 @@ TEST(SanitizerCommon, MmapAlignedOrDie) {
     }
   }
 }
+
+#ifdef __linux__
+TEST(SanitizerCommon, SanitizerSetThreadName) {
+  const char *names[] = {
+    "0123456789012",
+    "01234567890123",
+    "012345678901234",  // Larger names will be truncated on linux.
+  };
+
+  for (size_t i = 0; i < ARRAY_SIZE(names); i++) {
+    EXPECT_TRUE(SanitizerSetThreadName(names[i]));
+    char buff[100];
+    EXPECT_TRUE(SanitizerGetThreadName(buff, sizeof(buff) - 1));
+    Printf("buff: %s\n", buff);
+    EXPECT_EQ(0, internal_strcmp(buff, names[i]));
+  }
+}
+#endif
 
 }  // namespace sanitizer

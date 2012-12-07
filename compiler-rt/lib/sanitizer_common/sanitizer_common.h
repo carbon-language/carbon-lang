@@ -137,6 +137,13 @@ void NORETURN Die();
 void NORETURN SANITIZER_INTERFACE_ATTRIBUTE
 CheckFailed(const char *file, int line, const char *cond, u64 v1, u64 v2);
 
+// Set the name of the current thread to 'name', return true on succees.
+// The name may be truncated to a system-dependent limit.
+bool SanitizerSetThreadName(const char *name);
+// Get the name of the current thread (no more than max_len bytes),
+// return true on succees. name should have space for at least max_len+1 bytes.
+bool SanitizerGetThreadName(char *name, int max_len);
+
 // Specific tools may override behavior of "Die" and "CheckFailed" functions
 // to do tool-specific job.
 void SetDieCallback(void (*callback)(void));

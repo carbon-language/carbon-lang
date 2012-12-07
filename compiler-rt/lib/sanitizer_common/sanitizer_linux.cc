@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <errno.h>
+#include <sys/prctl.h>
 
 // Are we using 32-bit or 64-bit syscalls?
 // x32 (which defines __x86_64__) has SANITIZER_WORDSIZE == 32
@@ -354,6 +355,19 @@ bool MemoryMappingLayout::GetObjectNameAndOffset(uptr addr, uptr *offset,
                                                  char filename[],
                                                  uptr filename_size) {
   return IterateForObjectNameAndOffset(addr, offset, filename, filename_size);
+}
+
+bool SanitizerSetThreadName(const char *name) {
+  return 0 == prctl(PR_SET_NAME, (unsigned long)name, 0, 0, 0);
+}
+
+bool SanitizerGetThreadName(char *name, int max_len) {
+  char buff[17];
+  if (prctl(PR_GET_NAME, (unsigned long)buff, 0, 0, 0))
+    return false;
+  internal_strncpy(name, buff, max_len);
+  name[max_len] = 0;
+  return true;
 }
 
 }  // namespace __sanitizer
