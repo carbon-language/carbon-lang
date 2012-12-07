@@ -177,10 +177,11 @@ INTERCEPTOR(void, siglongjmp, void *env, int val) {
 }
 #endif
 
+#if ASAN_INTERCEPT_PRCTL
 #define PR_SET_NAME 15
-
-INTERCEPTOR(int, prctl, int option, unsigned long arg2, unsigned long arg3,
-            unsigned long arg4, unsigned long arg5) {
+INTERCEPTOR(int, prctl, int option,
+            unsigned long arg2, unsigned long arg3,  // NOLINT
+            unsigned long arg4, unsigned long arg5) {  // NOLINT
   int res = REAL(prctl(option, arg2, arg3, arg4, arg5));
   if (option == PR_SET_NAME) {
     AsanThread *t = asanThreadRegistry().GetCurrent();
@@ -193,6 +194,7 @@ INTERCEPTOR(int, prctl, int option, unsigned long arg2, unsigned long arg3,
   }
   return res;
 }
+#endif
 
 #if ASAN_INTERCEPT___CXA_THROW
 INTERCEPTOR(void, __cxa_throw, void *a, void *b, void *c) {
@@ -737,7 +739,9 @@ void InitializeAsanInterceptors() {
 #if ASAN_INTERCEPT_SIGLONGJMP
   ASAN_INTERCEPT_FUNC(siglongjmp);
 #endif
+#if ASAN_INTERCEPT_PRCTL
   ASAN_INTERCEPT_FUNC(prctl);
+#endif
 
   // Intercept exception handling functions.
 #if ASAN_INTERCEPT___CXA_THROW
