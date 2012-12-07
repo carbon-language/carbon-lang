@@ -308,16 +308,73 @@ TSAN_INTERCEPTOR(void, siglongjmp, void *env, int val) {
   Die();
 }
 
-static uptr fd2addr(int fd) {
-  (void)fd;
-  static u64 addr;
-  return (uptr)&addr;
+enum FdType {
+  FdOther,  // Something we don't know about, global sync.
+  FdNone,  // Does not require any sync.
+  FdFile,
+  FdSock,
+  FdPipe,
+  FdEvent,  // see eventfd()
+  FdPoll,
+};
+
+struct FdDesc {
+  FdType type;
+  u64 sync;
+};
+
+struct FdContext {
+  static const int kMaxFds = 10 * 1024;  // Everything else is synced globally.
+  FdDesc desc[kMaxFds];
+  // Addresses used for synchronization.
+  u64 fdother;
+  u64 fdfile;
+  u64 fdsock;
+  u64 fdpipe;
+  u64 fdpoll;
+  u64 fdevent;
+};
+
+static FdContext fdctx;
+
+static void FdInit() {
+  fdctx.desc[0].type = FdNone;
+  fdctx.desc[1].type = FdNone;
+  fdctx.desc[2].type = FdNone;
 }
 
-static uptr epollfd2addr(int fd) {
-  (void)fd;
-  static u64 addr;
-  return (uptr)&addr;
+static void *FdAddr(int fd) {
+  if (fd >= FdContext::kMaxFds)
+    return &fdctx.fdother;
+  FdDesc *desc = &fdctx.desc[fd];
+  if (desc->type == FdOther)
+    return &fdctx.fdother;
+  if (desc->type == FdNone)
+    return 0;
+  if (desc->type == FdFile)
+    return &fdctx.fdfile;
+  if (desc->type == FdSock)
+    return &fdctx.fdsock;
+  if (desc->type == FdPipe)
+    return &fdctx.fdpipe;
+  if (desc->type == FdEvent)
+    return &fdctx.fdevent;
+  if (desc->type == FdPoll)
+    return &fdctx.fdpoll;
+  CHECK(0);
+  return 0;
+}
+
+static void FdAcquire(ThreadState *thr, uptr pc, int fd) {
+  void *addr = FdAddr(fd);
+  if (addr)
+    Acquire(thr, pc, (uptr)addr);
+}
+
+static void FdRelease(ThreadState *thr, uptr pc, int fd) {
+  void *addr = FdAddr(fd);
+  if (addr)
+    Acquire(thr, pc, (uptr)addr);
 }
 
 static uptr file2addr(char *path) {
@@ -1086,7 +1143,7 @@ TSAN_INTERCEPTOR(long_t, read, int fd, void *buf, long_t sz) {
   SCOPED_TSAN_INTERCEPTOR(read, fd, buf, sz);
   int res = REAL(read)(fd, buf, sz);
   if (res >= 0) {
-    Acquire(thr, pc, fd2addr(fd));
+    FdAcquire(thr, pc, fd);
   }
   return res;
 }
@@ -1095,7 +1152,7 @@ TSAN_INTERCEPTOR(long_t, pread, int fd, void *buf, long_t sz, unsigned off) {
   SCOPED_TSAN_INTERCEPTOR(pread, fd, buf, sz, off);
   int res = REAL(pread)(fd, buf, sz, off);
   if (res >= 0) {
-    Acquire(thr, pc, fd2addr(fd));
+    FdAcquire(thr, pc, fd);
   }
   return res;
 }
@@ -1104,7 +1161,7 @@ TSAN_INTERCEPTOR(long_t, pread64, int fd, void *buf, long_t sz, u64 off) {
   SCOPED_TSAN_INTERCEPTOR(pread64, fd, buf, sz, off);
   int res = REAL(pread64)(fd, buf, sz, off);
   if (res >= 0) {
-    Acquire(thr, pc, fd2addr(fd));
+    FdAcquire(thr, pc, fd);
   }
   return res;
 }
@@ -1113,7 +1170,7 @@ TSAN_INTERCEPTOR(long_t, readv, int fd, void *vec, int cnt) {
   SCOPED_TSAN_INTERCEPTOR(readv, fd, vec, cnt);
   int res = REAL(readv)(fd, vec, cnt);
   if (res >= 0) {
-    Acquire(thr, pc, fd2addr(fd));
+    FdAcquire(thr, pc, fd);
   }
   return res;
 }
@@ -1122,56 +1179,56 @@ TSAN_INTERCEPTOR(long_t, preadv64, int fd, void *vec, int cnt, u64 off) {
   SCOPED_TSAN_INTERCEPTOR(preadv64, fd, vec, cnt, off);
   int res = REAL(preadv64)(fd, vec, cnt, off);
   if (res >= 0) {
-    Acquire(thr, pc, fd2addr(fd));
+    FdAcquire(thr, pc, fd);
   }
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, write, int fd, void *buf, long_t sz) {
   SCOPED_TSAN_INTERCEPTOR(write, fd, buf, sz);
-  Release(thr, pc, fd2addr(fd));
+  FdRelease(thr, pc, fd);
   int res = REAL(write)(fd, buf, sz);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, pwrite, int fd, void *buf, long_t sz, unsigned off) {
   SCOPED_TSAN_INTERCEPTOR(pwrite, fd, buf, sz, off);
-  Release(thr, pc, fd2addr(fd));
+  FdRelease(thr, pc, fd);
   int res = REAL(pwrite)(fd, buf, sz, off);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, pwrite64, int fd, void *buf, long_t sz, u64 off) {
   SCOPED_TSAN_INTERCEPTOR(pwrite64, fd, buf, sz, off);
-  Release(thr, pc, fd2addr(fd));
+  FdRelease(thr, pc, fd);
   int res = REAL(pwrite64)(fd, buf, sz, off);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, writev, int fd, void *vec, int cnt) {
   SCOPED_TSAN_INTERCEPTOR(writev, fd, vec, cnt);
-  Release(thr, pc, fd2addr(fd));
+  FdRelease(thr, pc, fd);
   int res = REAL(writev)(fd, vec, cnt);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, pwritev64, int fd, void *vec, int cnt, u64 off) {
   SCOPED_TSAN_INTERCEPTOR(pwritev64, fd, vec, cnt, off);
-  Release(thr, pc, fd2addr(fd));
+  FdRelease(thr, pc, fd);
   int res = REAL(pwritev64)(fd, vec, cnt, off);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, send, int fd, void *buf, long_t len, int flags) {
   SCOPED_TSAN_INTERCEPTOR(send, fd, buf, len, flags);
-  Release(thr, pc, fd2addr(fd));
+  FdRelease(thr, pc, fd);
   int res = REAL(send)(fd, buf, len, flags);
   return res;
 }
 
 TSAN_INTERCEPTOR(long_t, sendmsg, int fd, void *msg, int flags) {
   SCOPED_TSAN_INTERCEPTOR(sendmsg, fd, msg, flags);
-  Release(thr, pc, fd2addr(fd));
+  FdRelease(thr, pc, fd);
   int res = REAL(sendmsg)(fd, msg, flags);
   return res;
 }
@@ -1180,7 +1237,7 @@ TSAN_INTERCEPTOR(long_t, recv, int fd, void *buf, long_t len, int flags) {
   SCOPED_TSAN_INTERCEPTOR(recv, fd, buf, len, flags);
   int res = REAL(recv)(fd, buf, len, flags);
   if (res >= 0) {
-    Acquire(thr, pc, fd2addr(fd));
+    FdAcquire(thr, pc, fd);
   }
   return res;
 }
@@ -1189,7 +1246,7 @@ TSAN_INTERCEPTOR(long_t, recvmsg, int fd, void *msg, int flags) {
   SCOPED_TSAN_INTERCEPTOR(recvmsg, fd, msg, flags);
   int res = REAL(recvmsg)(fd, msg, flags);
   if (res >= 0) {
-    Acquire(thr, pc, fd2addr(fd));
+    FdAcquire(thr, pc, fd);
   }
   return res;
 }
@@ -1243,7 +1300,7 @@ TSAN_INTERCEPTOR(void*, opendir, char *path) {
 TSAN_INTERCEPTOR(int, epoll_ctl, int epfd, int op, int fd, void *ev) {
   SCOPED_TSAN_INTERCEPTOR(epoll_ctl, epfd, op, fd, ev);
   if (op == EPOLL_CTL_ADD) {
-    Release(thr, pc, epollfd2addr(epfd));
+    FdRelease(thr, pc, epfd);
   }
   int res = REAL(epoll_ctl)(epfd, op, fd, ev);
   return res;
@@ -1253,7 +1310,7 @@ TSAN_INTERCEPTOR(int, epoll_wait, int epfd, void *ev, int cnt, int timeout) {
   SCOPED_TSAN_INTERCEPTOR(epoll_wait, epfd, ev, cnt, timeout);
   int res = BLOCK_REAL(epoll_wait)(epfd, ev, cnt, timeout);
   if (res > 0) {
-    Acquire(thr, pc, epollfd2addr(epfd));
+    FdAcquire(thr, pc, epfd);
   }
   return res;
 }
@@ -1625,6 +1682,8 @@ void InitializeInterceptors() {
     Printf("ThreadSanitizer: failed to create thread key\n");
     Die();
   }
+
+  FdInit();
 }
 
 void internal_start_thread(void(*func)(void *arg), void *arg) {
