@@ -1182,6 +1182,19 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         Call->setTailCall(false);
 
       assert(!isa<IntrinsicInst>(&I) && "intrinsics are handled elsewhere");
+
+      // We are going to insert code that relies on the fact that the callee
+      // will become a non-readonly function after it is instrumented by us. To
+      // prevent this code from being optimized out, mark that function
+      // non-readonly in advance.
+      if (Function *Func = Call->getCalledFunction()) {
+        // Clear out readonly/readnone attributes.
+        AttrBuilder B;
+        B.addAttribute(Attributes::ReadOnly)
+          .addAttribute(Attributes::ReadNone);
+        Func->removeAttribute(AttrListPtr::FunctionIndex,
+                              Attributes::get(Func->getContext(), B));
+      }
     }
     IRBuilder<> IRB(&I);
     unsigned ArgOffset = 0;
