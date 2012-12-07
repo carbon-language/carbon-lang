@@ -147,10 +147,12 @@ public:
   RegionBindingsRef(ClusterBindings::Factory &CBFactory,
                     const RegionBindings::TreeTy *T,
                     RegionBindings::TreeTy::Factory *F)
-    : ImmutableMapRef(T, F), CBFactory(CBFactory) {}
+    : llvm::ImmutableMapRef<const MemRegion *, ClusterBindings>(T, F),
+      CBFactory(CBFactory) {}
 
   RegionBindingsRef(const ParentTy &P, ClusterBindings::Factory &CBFactory)
-    : ImmutableMapRef(P), CBFactory(CBFactory) {}
+    : llvm::ImmutableMapRef<const MemRegion *, ClusterBindings>(P),
+      CBFactory(CBFactory) {}
 
   RegionBindingsRef add(key_type_ref K, data_type_ref D) {
     return RegionBindingsRef(static_cast<ParentTy*>(this)->add(K, D),
