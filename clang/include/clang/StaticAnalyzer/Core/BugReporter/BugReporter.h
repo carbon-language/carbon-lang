@@ -440,8 +440,7 @@ public:
     return true;
   }
 
-  bool RemoveUneededCalls(PathPieces &pieces, BugReport *R,
-                          PathDiagnosticLocation *LastCallLocation = 0);
+  bool RemoveUnneededCalls(PathPieces &pieces, BugReport *R);
 
   void Register(BugType *BT);
 

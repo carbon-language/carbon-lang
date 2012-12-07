@@ -191,9 +191,8 @@ static void removeRedundantMsgs(PathPieces &path) {
 
 /// Recursively scan through a path and prune out calls and macros pieces
 /// that aren't needed.  Return true if afterwards the path contains
-/// "interesting stuff" which means it should be pruned from the parent path.
-bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R,
-                                     PathDiagnosticLocation *LastCallLocation) {
+/// "interesting stuff" which means it shouldn't be pruned from the parent path.
+bool BugReporter::RemoveUnneededCalls(PathPieces &pieces, BugReport *R) {
   bool containsSomethingInteresting = false;
   const unsigned N = pieces.size();
   
@@ -203,7 +202,9 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R,
     IntrusiveRefCntPtr<PathDiagnosticPiece> piece(pieces.front());
     pieces.pop_front();
     
-    // Throw away pieces with invalid locations.
+    // Throw away pieces with invalid locations. Note that we can't throw away
+    // calls just yet because they might have something interesting inside them.
+    // If so, their locations will be adjusted as necessary later.
     if (piece->getKind() != PathDiagnosticPiece::Call &&
         piece->getLocation().asLocation().isInvalid())
       continue;
@@ -218,23 +219,7 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R,
           break;
         }
 
-        if (LastCallLocation) {
-          if (!call->callEnter.asLocation().isValid())
-            call->callEnter = *LastCallLocation;
-          if (!call->callReturn.asLocation().isValid())
-            call->callReturn = *LastCallLocation;
-        }
-
-        // Recursively clean out the subclass.  Keep this call around if
-        // it contains any informative diagnostics.
-        PathDiagnosticLocation *ThisCallLocation;
-        if (call->callEnterWithin.asLocation().isValid())
-          ThisCallLocation = &call->callEnterWithin;
-        else
-          ThisCallLocation = &call->callEnter;
-
-        assert(ThisCallLocation && "Outermost call has an invalid location");
-        if (!RemoveUneededCalls(call->path, R, ThisCallLocation))
+        if (!RemoveUnneededCalls(call->path, R))
           continue;
         
         containsSomethingInteresting = true;
@@ -242,7 +227,7 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R,
       }
       case PathDiagnosticPiece::Macro: {
         PathDiagnosticMacroPiece *macro = cast<PathDiagnosticMacroPiece>(piece);
-        if (!RemoveUneededCalls(macro->subPieces, R))
+        if (!RemoveUnneededCalls(macro->subPieces, R))
           continue;
         containsSomethingInteresting = true;
         break;
@@ -263,6 +248,39 @@ bool BugReporter::RemoveUneededCalls(PathPieces &pieces, BugReport *R,
   }
   
   return containsSomethingInteresting;
+}
+
+/// Recursively scan through a path and make sure that all call pieces have
+/// valid locations. Note that all other pieces with invalid locations should
+/// have already been pruned out.
+static void adjustCallLocations(PathPieces &Pieces,
+                                PathDiagnosticLocation *LastCallLocation = 0) {
+  for (PathPieces::iterator I = Pieces.begin(), E = Pieces.end(); I != E; ++I) {
+    PathDiagnosticCallPiece *Call = dyn_cast<PathDiagnosticCallPiece>(*I);
+
+    if (!Call) {
+      assert((*I)->getLocation().asLocation().isValid());
+      continue;
+    }
+
+    if (LastCallLocation) {
+      if (!Call->callEnter.asLocation().isValid())
+        Call->callEnter = *LastCallLocation;
+      if (!Call->callReturn.asLocation().isValid())
+        Call->callReturn = *LastCallLocation;
+    }
+
+    // Recursively clean out the subclass.  Keep this call around if
+    // it contains any informative diagnostics.
+    PathDiagnosticLocation *ThisCallLocation;
+    if (Call->callEnterWithin.asLocation().isValid())
+      ThisCallLocation = &Call->callEnterWithin;
+    else
+      ThisCallLocation = &Call->callEnter;
+
+    assert(ThisCallLocation && "Outermost call has an invalid location");
+    adjustCallLocations(Call->path, ThisCallLocation);
+  }
 }
 
 //===----------------------------------------------------------------------===//
@@ -2102,11 +2120,13 @@ bool GRBugReporter::generatePathDiagnostic(PathDiagnostic& PD,
     removeRedundantMsgs(PD.getMutablePieces());
 
     if (R->shouldPrunePath()) {
-      bool hasSomethingInteresting = RemoveUneededCalls(PD.getMutablePieces(),
-                                                        R);
+      bool hasSomethingInteresting = RemoveUnneededCalls(PD.getMutablePieces(),
+                                                         R);
       assert(hasSomethingInteresting);
       (void) hasSomethingInteresting;
     }
+
+    adjustCallLocations(PD.getMutablePieces());
   }
 
   return true;
