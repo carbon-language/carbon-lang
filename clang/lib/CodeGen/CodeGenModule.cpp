@@ -533,7 +533,7 @@ void CodeGenModule::SetLLVMFunctionAttributes(const Decl *D,
   unsigned CallingConv;
   AttributeListType AttributeList;
   ConstructAttributeList(Info, D, AttributeList, CallingConv);
-  F->setAttributes(llvm::AttrListPtr::get(getLLVMContext(), AttributeList));
+  F->setAttributes(llvm::AttributeSet::get(getLLVMContext(), AttributeList));
   F->setCallingConv(static_cast<llvm::CallingConv::ID>(CallingConv));
 }
 
@@ -1143,7 +1143,7 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
   if (D.getDecl())
     SetFunctionAttributes(D, F, IsIncompleteFunction);
   if (ExtraAttrs.hasAttributes())
-    F->addAttribute(llvm::AttrListPtr::FunctionIndex, ExtraAttrs);
+    F->addAttribute(llvm::AttributeSet::FunctionIndex, ExtraAttrs);
 
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
@@ -1819,7 +1819,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
 
     // Get the attribute list.
     llvm::SmallVector<llvm::AttributeWithIndex, 8> AttrVec;
-    llvm::AttrListPtr AttrList = CI->getAttributes();
+    llvm::AttributeSet AttrList = CI->getAttributes();
 
     // Get any return attributes.
     llvm::Attributes RAttrs = AttrList.getRetAttributes();
@@ -1827,7 +1827,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     // Add the return attributes.
     if (RAttrs.hasAttributes())
       AttrVec.push_back(llvm::
-                        AttributeWithIndex::get(llvm::AttrListPtr::ReturnIndex,
+                        AttributeWithIndex::get(llvm::AttributeSet::ReturnIndex,
                                                 RAttrs));
 
     // If the function was passed too few arguments, don't transform.  If extra
@@ -1854,7 +1854,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     llvm::Attributes FnAttrs =  AttrList.getFnAttributes();
     if (FnAttrs.hasAttributes())
       AttrVec.push_back(llvm::
-                       AttributeWithIndex::get(llvm::AttrListPtr::FunctionIndex,
+                       AttributeWithIndex::get(llvm::AttributeSet::FunctionIndex,
                                                FnAttrs));
 
     // Okay, we can transform this.  Create the new call instruction and copy
@@ -1864,7 +1864,7 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
     ArgList.clear();
     if (!NewCall->getType()->isVoidTy())
       NewCall->takeName(CI);
-    NewCall->setAttributes(llvm::AttrListPtr::get(OldFn->getContext(), AttrVec));
+    NewCall->setAttributes(llvm::AttributeSet::get(OldFn->getContext(), AttrVec));
     NewCall->setCallingConv(CI->getCallingConv());
 
     // Finally, remove the old call, replacing any uses with the new one.
