@@ -28,7 +28,7 @@
 #    built in any order.  All DIRS are built in order before PARALLEL_DIRS are
 #    built, which are then built in any order.
 #
-# 4. Source - If specified, this sets the source code filenames.  If this
+# 4. SOURCES - If specified, this sets the source code filenames.  If this
 #    is not set, it defaults to be all of the .cpp, .c, .y, and .l files
 #    in the current directory.
 #
