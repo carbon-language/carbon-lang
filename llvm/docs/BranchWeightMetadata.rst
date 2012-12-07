@@ -27,8 +27,8 @@ Supported Instructions
 ``BranchInst``
 ^^^^^^^^^^^^^^
 
-Metadata is only assign to the conditional branches. There are two extra
-operarands, for the true and the false branch.
+Metadata is only assigned to the conditional branches. There are two extra
+operarands for the true and the false branch.
 
 .. code-block:: llvm
 
@@ -41,8 +41,8 @@ operarands, for the true and the false branch.
 ``SwitchInst``
 ^^^^^^^^^^^^^^
 
-Branch weights are assign to every case (including ``default`` case which is
-always case #0).
+Branch weights are assigned to every case (including the ``default`` case which
+is always case #0).
 
 .. code-block:: llvm
 
@@ -55,7 +55,7 @@ always case #0).
 ``IndirectBrInst``
 ^^^^^^^^^^^^^^^^^^
 
-Branch weights are assign to every destination.
+Branch weights are assigned to every destination.
 
 .. code-block:: llvm
 
