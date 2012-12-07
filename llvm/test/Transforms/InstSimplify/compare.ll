@@ -165,6 +165,46 @@ entry:
   ret i1 %cmp
 }
 
+define i1 @gep13(i8* %ptr) {
+; CHECK: @gep13
+; We can prove this GEP is non-null because it is inbounds.
+  %x = getelementptr inbounds i8* %ptr, i32 1
+  %cmp = icmp eq i8* %x, null
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @gep14({ {}, i8 }* %ptr) {
+; CHECK: @gep14
+; We can't simplify this because the offset of one in the GEP actually doesn't
+; move the pointer.
+  %x = getelementptr inbounds { {}, i8 }* %ptr, i32 0, i32 1
+  %cmp = icmp eq i8* %x, null
+  ret i1 %cmp
+; CHECK-NOT: ret i1 false
+}
+
+define i1 @gep15({ {}, [4 x {i8, i8}]}* %ptr, i32 %y) {
+; CHECK: @gep15
+; We can prove this GEP is non-null even though there is a user value, as we
+; would necessarily violate inbounds on one side or the other.
+  %x = getelementptr inbounds { {}, [4 x {i8, i8}]}* %ptr, i32 0, i32 1, i32 %y, i32 1
+  %cmp = icmp eq i8* %x, null
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @gep16(i8* %ptr, i32 %a) {
+; CHECK: @gep16
+; We can prove this GEP is non-null because it is inbounds and because we know
+; %b is non-zero even though we don't know its value.
+  %b = or i32 %a, 1
+  %x = getelementptr inbounds i8* %ptr, i32 %b
+  %cmp = icmp eq i8* %x, null
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 false
+}
+
 define i1 @zext(i32 %x) {
 ; CHECK: @zext
   %e1 = zext i32 %x to i64
