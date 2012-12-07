@@ -28,7 +28,7 @@ define <4 x i8> @vsel_4xi8(<4 x i8> %v1, <4 x i8> %v2) {
 ; reduce the mask in this case.
 ;CHECK: vsel_8xi16
 ;CHECK: psllw
-;CHECK: psraw
+;CHECK-NOT: psraw
 ;CHECK: pblendvb
 ;CHECK: ret
 define <8 x i16> @vsel_8xi16(<8 x i16> %v1, <8 x i16> %v2) {

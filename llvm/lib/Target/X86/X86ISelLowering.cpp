@@ -15675,6 +15675,11 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
 
       DebugLoc DL = N->getDebugLoc();
 
+      // We are going to replace the AND, OR, NAND with either BLEND
+      // or PSIGN, which only look at the MSB. The VSRAI instruction
+      // does not affect the highest bit, so we can get rid of it.
+      Mask = Mask.getOperand(0);
+
       // Now we know we at least have a plendvb with the mask val.  See if
       // we can form a psignb/w/d.
       // psign = x.type == y.type == mask.type && y = sub(0, x);
@@ -15683,7 +15688,7 @@ static SDValue PerformOrCombine(SDNode *N, SelectionDAG &DAG,
           X.getValueType() == MaskVT && Y.getValueType() == MaskVT) {
         assert((EltBits == 8 || EltBits == 16 || EltBits == 32) &&
                "Unsupported VT for PSIGN");
-        Mask = DAG.getNode(X86ISD::PSIGN, DL, MaskVT, X, Mask.getOperand(0));
+        Mask = DAG.getNode(X86ISD::PSIGN, DL, MaskVT, X, Mask);
         return DAG.getNode(ISD::BITCAST, DL, VT, Mask);
       }
       // PBLENDVB only available on SSE 4.1
