@@ -309,8 +309,8 @@ TSAN_INTERCEPTOR(void, siglongjmp, void *env, int val) {
 }
 
 enum FdType {
-  FdOther,  // Something we don't know about, global sync.
   FdNone,  // Does not require any sync.
+  FdGlobal,  // Something we don't know about, global sync.
   FdFile,
   FdSock,
   FdPipe,
@@ -327,7 +327,7 @@ struct FdContext {
   static const int kMaxFds = 10 * 1024;  // Everything else is synced globally.
   FdDesc desc[kMaxFds];
   // Addresses used for synchronization.
-  u64 fdother;
+  u64 fdglobal;
   u64 fdfile;
   u64 fdsock;
   u64 fdpipe;
@@ -338,19 +338,16 @@ struct FdContext {
 static FdContext fdctx;
 
 static void FdInit() {
-  fdctx.desc[0].type = FdNone;
-  fdctx.desc[1].type = FdNone;
-  fdctx.desc[2].type = FdNone;
 }
 
 static void *FdAddr(int fd) {
   if (fd >= FdContext::kMaxFds)
-    return &fdctx.fdother;
+    return &fdctx.fdglobal;
   FdDesc *desc = &fdctx.desc[fd];
-  if (desc->type == FdOther)
-    return &fdctx.fdother;
   if (desc->type == FdNone)
     return 0;
+  if (desc->type == FdGlobal)
+    return &fdctx.fdglobal;
   if (desc->type == FdFile)
     return &fdctx.fdfile;
   if (desc->type == FdSock)
@@ -375,6 +372,48 @@ static void FdRelease(ThreadState *thr, uptr pc, int fd) {
   void *addr = FdAddr(fd);
   if (addr)
     Acquire(thr, pc, (uptr)addr);
+}
+
+static void FdClose(ThreadState *thr, uptr pc, int fd) {
+  if (fd >= FdContext::kMaxFds)
+    return;
+  void *addr = FdAddr(fd);
+  if (addr) {
+    // To catch races between fd usage and close.
+    MemoryWrite1Byte(thr, pc, (uptr)addr);
+    SyncVar *s = CTX()->synctab.GetAndRemove(thr, pc, (uptr)addr);
+    if (s)
+      DestroyAndFree(s);
+  }
+  FdDesc *desc = &fdctx.desc[fd];
+  desc->type = FdNone;
+}
+
+static void FdCreatePipe(ThreadState *thr, uptr pc, int rfd, int wfd) {
+  if (rfd >= FdContext::kMaxFds || rfd >= FdContext::kMaxFds) {
+    if (rfd < FdContext::kMaxFds) {
+      FdDesc *rdesc = &fdctx.desc[rfd];
+      rdesc->type = FdGlobal;
+    }
+    if (wfd < FdContext::kMaxFds) {
+      FdDesc *wdesc = &fdctx.desc[wfd];
+      wdesc->type = FdGlobal;
+    }
+  }
+  FdDesc *rdesc = &fdctx.desc[rfd];
+  rdesc->type = FdPipe;
+  void *raddr = FdAddr(rfd);
+  if (raddr) {
+    // To catch races between fd usage and close.
+    MemoryWrite1Byte(thr, pc, (uptr)raddr);
+  }
+  FdDesc *wdesc = &fdctx.desc[wfd];
+  wdesc->type = FdPipe;
+  void *waddr = FdAddr(wfd);
+  if (waddr) {
+    // To catch races between fd usage and close.
+    MemoryWrite1Byte(thr, pc, (uptr)waddr);
+  }
 }
 
 static uptr file2addr(char *path) {
@@ -1139,6 +1178,28 @@ TSAN_INTERCEPTOR(int, sem_getvalue, void *s, int *sval) {
   return res;
 }
 
+TSAN_INTERCEPTOR(int, close, int fd) {
+  SCOPED_TSAN_INTERCEPTOR(close, fd);
+  FdClose(thr, pc, fd);
+  return REAL(close)(fd);
+}
+
+TSAN_INTERCEPTOR(int, pipe, int pipefd[2]) {
+  SCOPED_TSAN_INTERCEPTOR(pipe, pipefd);
+  int res = REAL(pipe)(pipefd);
+  if (res == 0)
+    FdCreatePipe(thr, pc, pipefd[0], pipefd[1]);
+  return res;  
+}
+
+TSAN_INTERCEPTOR(int, pipe2, int pipefd[2], int flags) {
+  SCOPED_TSAN_INTERCEPTOR(pipe2, pipefd, flags);
+  int res = REAL(pipe2)(pipefd, flags);
+  if (res == 0)
+    FdCreatePipe(thr, pc, pipefd[0], pipefd[1]);
+  return res;
+}
+
 TSAN_INTERCEPTOR(long_t, read, int fd, void *buf, long_t sz) {
   SCOPED_TSAN_INTERCEPTOR(read, fd, buf, sz);
   int res = REAL(read)(fd, buf, sz);
@@ -1624,6 +1685,10 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(sem_timedwait);
   TSAN_INTERCEPT(sem_post);
   TSAN_INTERCEPT(sem_getvalue);
+
+  TSAN_INTERCEPT(close);
+  TSAN_INTERCEPT(pipe);
+  TSAN_INTERCEPT(pipe2);
 
   TSAN_INTERCEPT(read);
   TSAN_INTERCEPT(pread);
