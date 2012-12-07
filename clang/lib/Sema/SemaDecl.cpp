@@ -8125,7 +8125,9 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     if (PP.getDiagnostics().hasErrorOccurred() ||
         PP.getDiagnostics().getSuppressAllDiagnostics()) {
       DiscardCleanupsInEvaluationContext();
-    } else if (!isa<FunctionTemplateDecl>(dcl)) {
+    }
+    if (!PP.getDiagnostics().hasUncompilableErrorOccurred() &&
+        !isa<FunctionTemplateDecl>(dcl)) {
       // Since the body is valid, issue any analysis-based warnings that are
       // enabled.
       ActivePolicy = &WP;
