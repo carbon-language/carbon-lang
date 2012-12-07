@@ -87,6 +87,7 @@ RegisterContextLLDB::RegisterContextLLDB
 void
 RegisterContextLLDB::InitializeZerothFrame()
 {
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     ExecutionContext exe_ctx(m_thread.shared_from_this());
     RegisterContextSP reg_ctx_sp = m_thread.GetRegisterContext();
 

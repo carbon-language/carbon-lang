@@ -448,7 +448,7 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
             else
             {
                 comp_unit_info->symbol_file_supported = false;
-                return false;
+                return NULL;
             }
         }
         // Always create a new module for .o files. Why? Because we

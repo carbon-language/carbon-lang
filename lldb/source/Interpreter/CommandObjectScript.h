@@ -35,9 +35,6 @@ public:
 protected:
     virtual bool
     DoExecute (const char *command, CommandReturnObject &result);
-
-private:
-    lldb::ScriptLanguage m_script_lang;
 };
 
 } // namespace lldb_private

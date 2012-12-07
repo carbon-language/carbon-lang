@@ -10,6 +10,8 @@ LLDB_LEVEL := ../..
 
 TOOLNAME = lldb
 
+NO_PEDANTIC = 1
+
 LLVMLibsOptions += -ledit -llldb -llldbUtility
 
 include $(LLDB_LEVEL)/Makefile

@@ -28,8 +28,7 @@ using namespace llvm;
 
 IRInterpreter::IRInterpreter(lldb_private::ClangExpressionDeclMap &decl_map,
                                            lldb_private::Stream *error_stream) :
-    m_decl_map(decl_map),
-    m_error_stream(error_stream)
+    m_decl_map(decl_map)
 {
     
 }

@@ -178,7 +178,7 @@ bool
 OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_thread_list)
 {
     if (!m_interpreter || !m_python_object)
-        return NULL;
+        return false;
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS));
     
@@ -193,7 +193,7 @@ OperatingSystemPython::UpdateThreadList (ThreadList &old_thread_list, ThreadList
 
     auto object_sp = m_interpreter->OSPlugin_QueryForThreadsInfo(m_interpreter->MakeScriptObject(m_python_object));
     if (!object_sp)
-        return NULL;
+        return false;
     PythonDataObject pyobj((PyObject*)object_sp->GetObject());
     PythonDataArray threads_array (pyobj.GetArrayObject());
     if (threads_array)

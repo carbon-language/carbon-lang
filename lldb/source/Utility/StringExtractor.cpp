@@ -148,8 +148,8 @@ StringExtractor::GetHexU8 (uint8_t fail_value, bool set_eof_on_fail)
     uint32_t i = m_index;
     if ((i + 2) <= m_packet.size())
     {
-        const uint8_t hi_nibble = g_hex_ascii_to_hex_integer[m_packet[i]];
-        const uint8_t lo_nibble = g_hex_ascii_to_hex_integer[m_packet[i+1]];
+        const uint8_t hi_nibble = g_hex_ascii_to_hex_integer[static_cast<uint8_t>(m_packet[i])];
+        const uint8_t lo_nibble = g_hex_ascii_to_hex_integer[static_cast<uint8_t>(m_packet[i+1])];
         if (hi_nibble < 16 && lo_nibble < 16)
         {
             m_index += 2;

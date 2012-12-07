@@ -18,6 +18,10 @@ CPPFLAGS += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Utility
 
 ifeq ($(HOST_OS),Linux)
 CPPFLAGS += -I$(PROJ_SRC_DIR)/$(LLDB_LEVEL)/source/Plugins/Process/Linux
+
+# Disable warning for now as offsetof is used with an index into a structure member array
+# in defining register info tables.
+CPPFLAGS += -Wno-extended-offsetof
 endif
 
 ifeq ($(HOST_OS),FreeBSD)

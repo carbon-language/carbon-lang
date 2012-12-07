@@ -522,7 +522,7 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         interface_decl->setSuperClass(superclass_decl);
     };
     
-    auto instance_method_func = [log, interface_decl, this](const char *name, const char *types)
+    auto instance_method_func = [log, interface_decl, this](const char *name, const char *types) -> bool
     {        
         ObjCRuntimeMethodType method_type(types);
         
@@ -537,7 +537,7 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
         return false;
     };
     
-    auto class_method_func = [log, interface_decl, this](const char *name, const char *types)
+    auto class_method_func = [log, interface_decl, this](const char *name, const char *types) -> bool
     {
         ObjCRuntimeMethodType method_type(types);
         

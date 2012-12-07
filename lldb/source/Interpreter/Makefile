@@ -16,6 +16,13 @@ BUILT_SOURCES := LLDBWrapPython.cpp
 include $(LLDB_LEVEL)/Makefile
 -include $(PROJ_OBJ_DIR)/LLDBWrapPython.cpp.d
 
+# Drop -Wfour-char-constants,  which we are not currently clean with.
+EXTRA_OPTIONS += -Wno-four-char-constants
+
+# Drop -Wself-assign, -Wmissing-field-initializers and -Wsometimes-uninitialized,
+# which we are not currently clean with (due to SWIG generated cpp source).
+EXTRA_OPTIONS += -Wno-missing-field-initializers -Wno-self-assign -Wno-sometimes-uninitialized
+
 # edit-swig-python-wrapper-file.py needs $(SRCROOT)
 export SRCROOT := $(PROJ_SRC_DIR)/$(LLDB_LEVEL)
 

@@ -294,7 +294,6 @@ namespace lldb_private {
         private:
             ExecutionContextRef m_exe_ctx_ref;
             uint8_t m_ptr_size;
-            uint64_t m_items;
             DataDescriptor_32 *m_data_32;
             DataDescriptor_64 *m_data_64;
             std::vector<DictionaryItemDescriptor> m_children;

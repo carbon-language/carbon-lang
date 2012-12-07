@@ -472,7 +472,7 @@ IOChannel::Run ()
     }
     BroadcastEventByType (IOChannel::eBroadcastBitThreadDidExit);
     m_driver = NULL;
-    m_read_thread = NULL;
+    m_read_thread = 0;
 }
 
 bool

@@ -849,7 +849,7 @@ public:
             return *this;
         }
         
-        const ObjCLanguageRuntime::ObjCISA operator*() const
+        ObjCLanguageRuntime::ObjCISA operator*() const
         {
             if (m_index == -1)
                 return 0;
@@ -2012,7 +2012,7 @@ AppleObjCRuntimeV2::LookupRuntimeSymbol (const ConstString &name)
                     const ConstString ivar_name_cs(class_and_ivar.second);
                     const char *ivar_name_cstr = ivar_name_cs.AsCString();
                     
-                    auto ivar_func = [&ret, ivar_name_cstr](const char *name, const char *type, lldb::addr_t offset_addr, uint64_t size)
+                    auto ivar_func = [&ret, ivar_name_cstr](const char *name, const char *type, lldb::addr_t offset_addr, uint64_t size) -> lldb::addr_t
                     {
                         if (!strcmp(name, ivar_name_cstr))
                         {

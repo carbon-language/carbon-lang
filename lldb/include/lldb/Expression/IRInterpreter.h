@@ -95,7 +95,6 @@ public:
 private:
     /// Flags
     lldb_private::ClangExpressionDeclMap &m_decl_map;       ///< The DeclMap containing the Decls 
-    lldb_private::Stream *m_error_stream;
     
     bool
     supportsFunction (llvm::Function &llvm_function,

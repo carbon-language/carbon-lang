@@ -10,5 +10,6 @@
 LLDB_LEVEL := ../..
 LIBRARYNAME := lldbUtility
 BUILD_ARCHIVE = 1
+NO_PEDANTIC = 1
 
 include $(LLDB_LEVEL)/Makefile

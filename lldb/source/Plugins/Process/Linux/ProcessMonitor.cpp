@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <poll.h>
 #include <string.h>
+#include <stdint.h>
 #include <unistd.h>
 #include <sys/ptrace.h>
 #include <sys/socket.h>
@@ -200,7 +201,7 @@ DoReadMemory(lldb::pid_t pid,
 
         // Copy the data into our buffer
         if (log)
-            memset(dst, 0, sizeof(dst));
+            memset(dst, 0, sizeof(unsigned char));
         for (unsigned i = 0; i < remainder; ++i)
             dst[i] = ((data >> i*8) & 0xFF);
 
@@ -414,7 +415,7 @@ public:
     void Execute(ProcessMonitor *monitor);
 
 private:
-    unsigned m_offset;
+    uintptr_t m_offset;
     RegisterValue &m_value;
     bool &m_result;
 };
@@ -453,7 +454,7 @@ public:
     void Execute(ProcessMonitor *monitor);
 
 private:
-    unsigned m_offset;
+    uintptr_t m_offset;
     const RegisterValue &m_value;
     bool &m_result;
 };
@@ -465,13 +466,11 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
     lldb::pid_t pid = monitor->GetPID();
     LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
-    if (sizeof(void*) == sizeof(uint64_t))
-        buf = (void*) m_value.GetAsUInt64();
-    else
-    {
-        assert(sizeof(void*) == sizeof(uint32_t));
-        buf = (void*) m_value.GetAsUInt32();
-    }
+#if __WORDSIZE == 32
+    buf = (void*) m_value.GetAsUInt32();
+#else
+    buf = (void*) m_value.GetAsUInt64();
+#endif
 
     if (log)
         log->Printf ("ProcessMonitor::%s() reg %s: %p", __FUNCTION__,
@@ -606,7 +605,7 @@ private:
 void
 ResumeOperation::Execute(ProcessMonitor *monitor)
 {
-    int data = 0;
+    intptr_t data = 0;
 
     if (m_signo != LLDB_INVALID_SIGNAL_NUMBER)
         data = m_signo;
@@ -637,7 +636,7 @@ private:
 void
 SingleStepOperation::Execute(ProcessMonitor *monitor)
 {
-    int data = 0;
+    intptr_t data = 0;
 
     if (m_signo != LLDB_INVALID_SIGNAL_NUMBER)
         data = m_signo;
@@ -986,7 +985,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
         goto FINISH;
     }
 
-    if ((pid = terminal.Fork(err_str, err_len)) < 0)
+    if ((pid = terminal.Fork(err_str, err_len)) == -1)
     {
         args->m_error.SetErrorToGenericError();
         args->m_error.SetErrorString("Process fork failed.");

@@ -40,7 +40,7 @@ lldb_private::formatters::ExtractValueFromObjCExpression (ValueObject &valobj,
     if (!selector || !*selector)
         return false;
     StreamString expr;
-    expr.Printf("(%s)[(id)0x%llx %s]",target_type,valobj.GetPointerValue(),selector);
+    expr.Printf("(%s)[(id)0x%" PRIx64 " %s]",target_type,valobj.GetPointerValue(),selector);
     ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
     lldb::ValueObjectSP result_sp;
     Target* target = exe_ctx.GetTargetPtr();

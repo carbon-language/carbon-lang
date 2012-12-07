@@ -1101,7 +1101,7 @@ DynamicLoaderMacOSXDYLD::InitializeFromAllImageInfos ()
             if (!AddModulesUsingImageInfosAddress (m_dyld_all_image_infos.dylib_info_addr, 
                                                    m_dyld_all_image_infos.dylib_info_count))
             {
-                DEBUG_PRINTF( "unable to read all data for all_dylib_infos.");
+                DEBUG_PRINTF("%s", "unable to read all data for all_dylib_infos.");
                 m_dyld_image_infos.clear();
             }
         }

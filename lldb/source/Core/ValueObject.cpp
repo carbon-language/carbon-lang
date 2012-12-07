@@ -2527,7 +2527,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     
                     if (child_valobj_sp.get()) // we know we are done, so just return
                     {
-                        *first_unparsed = '\0';
+                        *first_unparsed = "";
                         *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEndOfString;
                         *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                         return child_valobj_sp;
@@ -2551,7 +2551,7 @@ ValueObject::GetValueForExpressionPath_Impl(const char* expression_cstr,
                     // so we hit the "else" branch, and return an error
                     if(child_valobj_sp.get()) // if it worked, just return
                     {
-                        *first_unparsed = '\0';
+                        *first_unparsed = "";
                         *reason_to_stop = ValueObject::eExpressionPathScanEndReasonEndOfString;
                         *final_result = ValueObject::eExpressionPathEndResultTypePlain;
                         return child_valobj_sp;

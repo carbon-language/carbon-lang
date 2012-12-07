@@ -12,3 +12,5 @@ LIBRARYNAME := lldbCommands
 BUILD_ARCHIVE = 1
 
 include $(LLDB_LEVEL)/Makefile
+
+EXTRA_OPTIONS += -Wno-four-char-constants
