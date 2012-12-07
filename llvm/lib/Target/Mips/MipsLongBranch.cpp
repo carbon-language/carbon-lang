@@ -284,9 +284,10 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
         .addReg(Mips::SP).addImm(-8);
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::SW)).addReg(Mips::RA)
         .addReg(Mips::SP).addImm(0);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::LUi), Mips::AT).addImm(Hi)
-        ->setIsInsideBundle();
+
+      MIBundleBuilder(*LongBrMBB, Pos)
+        .append(BuildMI(*MF, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB))
+        .append(BuildMI(*MF, DL, TII->get(Mips::LUi), Mips::AT).addImm(Hi));
 
       Pos = BalTgtMBB->begin();
 
@@ -296,9 +297,11 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
         .addReg(Mips::RA).addReg(Mips::AT);
       BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::LW), Mips::RA)
         .addReg(Mips::SP).addImm(0);
-      BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::JR)).addReg(Mips::AT);
-      BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::ADDiu), Mips::SP)
-        .addReg(Mips::SP).addImm(8)->setIsInsideBundle();
+
+      MIBundleBuilder(*BalTgtMBB, Pos)
+        .append(BuildMI(*MF, DL, TII->get(Mips::JR)).addReg(Mips::AT))
+        .append(BuildMI(*MF, DL, TII->get(Mips::ADDiu), Mips::SP)
+                .addReg(Mips::SP).addImm(8));
     } else {
       // $longbr:
       //  daddiu $sp, $sp, -16
@@ -336,9 +339,11 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
         .addReg(Mips::AT_64).addImm(16);
       BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::DADDiu), Mips::AT_64)
         .addReg(Mips::AT_64).addImm(Hi);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB);
-      BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::DSLL), Mips::AT_64)
-        .addReg(Mips::AT_64).addImm(16)->setIsInsideBundle();
+
+      MIBundleBuilder(*LongBrMBB, Pos)
+        .append(BuildMI(*MF, DL, TII->get(Mips::BAL_BR)).addMBB(BalTgtMBB))
+        .append(BuildMI(*MF, DL, TII->get(Mips::DSLL), Mips::AT_64)
+                .addReg(Mips::AT_64).addImm(16));
 
       Pos = BalTgtMBB->begin();
 
@@ -348,9 +353,11 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
         .addReg(Mips::RA_64).addReg(Mips::AT_64);
       BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::LD), Mips::RA_64)
         .addReg(Mips::SP_64).addImm(0);
-      BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::JR64)).addReg(Mips::AT_64);
-      BuildMI(*BalTgtMBB, Pos, DL, TII->get(Mips::DADDiu), Mips::SP_64)
-        .addReg(Mips::SP_64).addImm(16)->setIsInsideBundle();
+
+      MIBundleBuilder(*BalTgtMBB, Pos)
+        .append(BuildMI(*MF, DL, TII->get(Mips::JR64)).addReg(Mips::AT_64))
+        .append(BuildMI(*MF, DL, TII->get(Mips::DADDiu), Mips::SP_64)
+                .addReg(Mips::SP_64).addImm(16));
     }
 
     assert(BalTgtMBBSize == BalTgtMBB->size());
@@ -363,8 +370,9 @@ void MipsLongBranch::expandToLongBranch(MBBInfo &I) {
     //
     Pos = LongBrMBB->begin();
     LongBrMBB->addSuccessor(TgtMBB);
-    BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::J)).addMBB(TgtMBB);
-    BuildMI(*LongBrMBB, Pos, DL, TII->get(Mips::NOP))->setIsInsideBundle();
+    MIBundleBuilder(*LongBrMBB, Pos)
+      .append(BuildMI(*MF, DL, TII->get(Mips::J)).addMBB(TgtMBB))
+      .append(BuildMI(*MF, DL, TII->get(Mips::NOP)));
 
     assert(LongBrMBB->size() == LongBranchSeqSize);
   }

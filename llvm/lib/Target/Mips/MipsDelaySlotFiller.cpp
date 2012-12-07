@@ -112,7 +112,7 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
     if (I->hasDelaySlot()) {
       ++FilledSlots;
       Changed = true;
-
+      InstrIter InstrWithSlot = I;
       InstrIter D;
 
       // Delay slot filling is disabled at -O0.
@@ -127,9 +127,9 @@ runOnMachineBasicBlock(MachineBasicBlock &MBB) {
       // The instruction after it will be visited in the next iteration.
       LastFiller = ++I;
 
-      // Set InsideBundle bit so that the machine verifier doesn't expect this
-      // instruction to be a terminator.
-      LastFiller->setIsInsideBundle();
+      // Bundle the delay slot filler to InstrWithSlot so that the machine
+      // verifier doesn't expect this instruction to be a terminator.
+      MIBundleBuilder(MBB, InstrWithSlot, llvm::next(LastFiller));
      }
   return Changed;
 
