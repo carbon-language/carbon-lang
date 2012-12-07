@@ -44,6 +44,7 @@ ThreadPlanCallFunction::ConstructorSetup (Thread &thread,
 {
     SetIsMasterPlan (true);
     SetOkayToDiscard (false);
+    SetPrivate (true);
 
     ProcessSP process_sp (thread.GetProcess());
     if (!process_sp)
