@@ -518,3 +518,16 @@
 // CHECK027-NEXT: "{{.*}}/bin/hexagon-as"
 // CHECK027-NEXT: "{{.*}}/bin/hexagon-ld"
 // CHECK027-NOT:    "-pie"
+
+// -----------------------------------------------------------------------------
+// Misc Defaults
+// -----------------------------------------------------------------------------
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK028 %s
+// CHECK028:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK028:        "-mqdsp6-compat"
+// CHECK028:        "-Wreturn-type"
+// CHECK028-NEXT: "{{.*}}/bin/hexagon-as"
+// CHECK028-NEXT: "{{.*}}/bin/hexagon-ld"

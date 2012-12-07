@@ -1258,9 +1258,8 @@ void Clang::AddHexagonTargetArgs(const ArgList &Args,
                       "hexagon"
                       + toolchains::Hexagon_TC::GetTargetCPU(Args)));
   CmdArgs.push_back("-fno-signed-char");
-
-  if (Args.hasArg(options::OPT_mqdsp6_compat))
-    CmdArgs.push_back("-mqdsp6-compat");
+  CmdArgs.push_back("-mqdsp6-compat");
+  CmdArgs.push_back("-Wreturn-type");
 
   std::string SmallDataThreshold = GetHexagonSmallDataThresholdValue(Args);
   if (!SmallDataThreshold.empty()) {
