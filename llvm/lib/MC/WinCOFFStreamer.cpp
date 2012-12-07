@@ -193,9 +193,7 @@ void WinCOFFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
   // don't really even do.
 
   if (Value->getKind() != MCExpr::SymbolRef) {
-    getAssembler().getOrCreateSymbolData(*Symbol);
-    AddValueSymbols(Value);
-    Symbol->setVariableValue(Value);
+    MCObjectStreamer::EmitAssignment(Symbol, Value);
   } else {
     // FIXME: This is a horrible way to do this :(. This should really be
     // handled after we are done with the MC* objects and immediately before
