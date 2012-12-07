@@ -46,6 +46,16 @@ class CallEvent;
 class SimpleCall;
 
 class ExprEngine : public SubEngine {
+public:
+  /// The modes of inlining.
+  enum InliningModes {
+    /// Do not inline any of the callees.
+    Inline_None = 0,
+    /// Inline all callees.
+    Inline_All = 0x1
+  } ;
+
+private:
   AnalysisManager &AMgr;
   
   AnalysisDeclContextManager &AnalysisDeclContexts;
@@ -83,10 +93,14 @@ class ExprEngine : public SubEngine {
   /// AnalysisConsumer. It can be null.
   SetOfConstDecls *VisitedCallees;
 
+  /// The flag, which specifies the mode of inlining for the engine.
+  InliningModes HowToInline;
+
 public:
   ExprEngine(AnalysisManager &mgr, bool gcEnabled,
              SetOfConstDecls *VisitedCalleesIn,
-             FunctionSummariesTy *FS);
+             FunctionSummariesTy *FS,
+             InliningModes HowToInlineIn);
 
   ~ExprEngine();
 

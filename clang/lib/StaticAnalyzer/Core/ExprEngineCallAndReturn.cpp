@@ -708,7 +708,7 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
   ProgramStateRef State = Pred->getState();
   CallEventRef<> Call = CallTemplate.cloneWithState(State);
 
-  if (!getAnalysisManager().shouldInlineCall()) {
+  if (HowToInline == Inline_None) {
     conservativeEvalCall(*Call, Bldr, Pred, State);
     return;
   }

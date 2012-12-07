@@ -56,7 +56,8 @@ STATISTIC(NumTimesRetriedWithoutInlining,
 
 ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
                        SetOfConstDecls *VisitedCalleesIn,
-                       FunctionSummariesTy *FS)
+                       FunctionSummariesTy *FS,
+                       InliningModes HowToInlineIn)
   : AMgr(mgr),
     AnalysisDeclContexts(mgr.getAnalysisDeclContextManager()),
     Engine(*this, FS),
@@ -69,7 +70,8 @@ ExprEngine::ExprEngine(AnalysisManager &mgr, bool gcEnabled,
     currStmtIdx(0), currBldrCtx(0),
     ObjCNoRet(mgr.getASTContext()),
     ObjCGCEnabled(gcEnabled), BR(mgr, *this),
-    VisitedCallees(VisitedCalleesIn)
+    VisitedCallees(VisitedCalleesIn),
+    HowToInline(HowToInlineIn)
 {
   unsigned TrimInterval = mgr.options.getGraphTrimInterval();
   if (TrimInterval != 0) {

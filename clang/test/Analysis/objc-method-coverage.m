@@ -14,4 +14,4 @@ int f() {
 @end
 
 // CHECK: ... Statistics Collected ...
-// CHECK: 2 AnalysisConsumer - The # of functions analysed (as top level).
+// CHECK: 2 AnalysisConsumer - The # of functions and blocks analyzed (as top level).

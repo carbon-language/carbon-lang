@@ -52,7 +52,8 @@ using llvm::SmallPtrSet;
 static ExplodedNode::Auditor* CreateUbiViz();
 
 STATISTIC(NumFunctionTopLevel, "The # of functions at top level.");
-STATISTIC(NumFunctionsAnalyzed, "The # of functions analysed (as top level).");
+STATISTIC(NumFunctionsAnalyzed,
+                     "The # of functions and blocks analyzed (as top level).");
 STATISTIC(NumBlocksInAnalyzedFunctions,
                      "The # of basic blocks in the analyzed functions.");
 STATISTIC(PercentReachableBlocks, "The % of reachable basic blocks.");
@@ -266,6 +267,12 @@ public:
 
   virtual void HandleTranslationUnit(ASTContext &C);
 
+  /// \brief Determine which inlining mode should be used when this function is
+  /// analyzed. For example, determines if the callees should be inlined.
+  ExprEngine::InliningModes
+  getInliningModeForFunction(CallGraphNode *N,
+                             SmallPtrSet<CallGraphNode*,24> Visited);
+
   /// \brief Build the call graph for all the top level decls of this TU and
   /// use it to define the order in which the functions should be visited.
   void HandleDeclsCallGraph(const unsigned LocalTUDeclsSize);
@@ -277,10 +284,14 @@ public:
   /// set of functions which should be considered analyzed after analyzing the
   /// given root function.
   void HandleCode(Decl *D, AnalysisMode Mode,
+                  ExprEngine::InliningModes IMode = ExprEngine::Inline_None,
                   SetOfConstDecls *VisitedCallees = 0);
 
-  void RunPathSensitiveChecks(Decl *D, SetOfConstDecls *VisitedCallees);
+  void RunPathSensitiveChecks(Decl *D,
+                              ExprEngine::InliningModes IMode,
+                              SetOfConstDecls *VisitedCallees);
   void ActionExprEngine(Decl *D, bool ObjCGCEnabled,
+                        ExprEngine::InliningModes IMode,
                         SetOfConstDecls *VisitedCallees);
 
   /// Visitors for the RecursiveASTVisitor.
@@ -303,14 +314,17 @@ public:
     // only determined when they are instantiated.
     if (FD->isThisDeclarationADefinition() &&
         !FD->isDependentContext()) {
+      assert(RecVisitorMode == AM_Syntax || Mgr->shouldInlineCall() == false);
       HandleCode(FD, RecVisitorMode);
     }
     return true;
   }
 
   bool VisitObjCMethodDecl(ObjCMethodDecl *MD) {
-    if (MD->isThisDeclarationADefinition())
+    if (MD->isThisDeclarationADefinition()) {
+      assert(RecVisitorMode == AM_Syntax || Mgr->shouldInlineCall() == false);
       HandleCode(MD, RecVisitorMode);
+    }
     return true;
   }
 
@@ -351,12 +365,16 @@ void AnalysisConsumer::storeTopLevelDecls(DeclGroupRef DG) {
 }
 
 static bool shouldSkipFunction(CallGraphNode *N,
-                               SmallPtrSet<CallGraphNode*,24> Visited) {
-  // We want to re-analyse the functions as top level in several cases:
+                             SmallPtrSet<CallGraphNode*,24> Visited,
+                             SmallPtrSet<CallGraphNode*,24> VisitedAsTopLevel) {
+  if (VisitedAsTopLevel.count(N))
+    return true;
+
+  // We want to re-analyse the functions as top level in the following cases:
   // - The 'init' methods should be reanalyzed because
   //   ObjCNonNilReturnValueChecker assumes that '[super init]' never returns
-  //   'nil' and unless we analyze the 'init' functions as top level, we will not
-  //   catch errors within defensive code.
+  //   'nil' and unless we analyze the 'init' functions as top level, we will
+  //   not catch errors within defensive code.
   // - We want to reanalyze all ObjC methods as top level to report Retain
   //   Count naming convention errors more aggressively.
   if (isa<ObjCMethodDecl>(N->getDecl()))
@@ -364,6 +382,27 @@ static bool shouldSkipFunction(CallGraphNode *N,
 
   // Otherwise, if we visited the function before, do not reanalyze it.
   return Visited.count(N);
+}
+
+ExprEngine::InliningModes
+AnalysisConsumer::getInliningModeForFunction(CallGraphNode *N,
+                                       SmallPtrSet<CallGraphNode*,24> Visited) {
+  ExprEngine::InliningModes HowToInline =
+      (Mgr->shouldInlineCall()) ? ExprEngine::Inline_All :
+                                  ExprEngine::Inline_None;
+
+  // We want to reanalyze all ObjC methods as top level to report Retain
+  // Count naming convention errors more aggressively. But we can turn off
+  // inlining when reanalyzing an already inlined function.
+  if (Visited.count(N)) {
+    assert(isa<ObjCMethodDecl>(N->getDecl()) &&
+           "We are only reanalyzing ObjCMethods.");
+    ObjCMethodDecl *ObjCM = cast<ObjCMethodDecl>(N->getDecl());
+    if (ObjCM->getMethodFamily() != OMF_init)
+      HowToInline = ExprEngine::Inline_None;
+  }
+
+  return HowToInline;
 }
 
 void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
@@ -408,6 +447,7 @@ void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
   // the previously processed functions. Use external Visited set, which is
   // also modified when we inline a function.
   SmallPtrSet<CallGraphNode*,24> Visited;
+  SmallPtrSet<CallGraphNode*,24> VisitedAsTopLevel;
   while(!BFSQueue.empty()) {
     CallGraphNode *N = BFSQueue.front();
     BFSQueue.pop_front();
@@ -415,20 +455,21 @@ void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
     // Push the children into the queue.
     for (CallGraphNode::const_iterator CI = N->begin(),
          CE = N->end(); CI != CE; ++CI) {
-      if (!shouldSkipFunction(*CI, Visited))
+      if (!shouldSkipFunction(*CI, Visited, VisitedAsTopLevel))
         BFSQueue.push_back(*CI);
     }
 
     // Skip the functions which have been processed already or previously
     // inlined.
-    if (shouldSkipFunction(N, Visited))
+    if (shouldSkipFunction(N, Visited, VisitedAsTopLevel))
       continue;
 
     // Analyze the function.
     SetOfConstDecls VisitedCallees;
     Decl *D = N->getDecl();
     assert(D);
-    HandleCode(D, AM_Path,
+
+    HandleCode(D, AM_Path, getInliningModeForFunction(N, Visited),
                (Mgr->options.InliningMode == All ? 0 : &VisitedCallees));
 
     // Add the visited callees to the global visited set.
@@ -438,7 +479,7 @@ void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
       if (VN)
         Visited.insert(VN);
     }
-    Visited.insert(N);
+    VisitedAsTopLevel.insert(N);
   }
 }
 
@@ -546,6 +587,7 @@ AnalysisConsumer::getModeForDecl(Decl *D, AnalysisMode Mode) {
 }
 
 void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
+                                  ExprEngine::InliningModes IMode,
                                   SetOfConstDecls *VisitedCallees) {
   Mode = getModeForDecl(D, Mode);
   if (Mode == AM_None)
@@ -576,7 +618,7 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
       if (Mode & AM_Syntax)
         checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
       if ((Mode & AM_Path) && checkerMgr->hasPathSensitiveCheckers()) {
-        RunPathSensitiveChecks(*WI, VisitedCallees);
+        RunPathSensitiveChecks(*WI, IMode, VisitedCallees);
         NumFunctionsAnalyzed++;
       }
     }
@@ -587,6 +629,7 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
 //===----------------------------------------------------------------------===//
 
 void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
+                                        ExprEngine::InliningModes IMode,
                                         SetOfConstDecls *VisitedCallees) {
   // Construct the analysis engine.  First check if the CFG is valid.
   // FIXME: Inter-procedural analysis will need to handle invalid CFGs.
@@ -597,7 +640,7 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
   if (!Mgr->getAnalysisDeclContext(D)->getAnalysis<RelaxedLiveVariables>())
     return;
 
-  ExprEngine Eng(*Mgr, ObjCGCEnabled, VisitedCallees, &FunctionSummaries);
+  ExprEngine Eng(*Mgr, ObjCGCEnabled, VisitedCallees, &FunctionSummaries,IMode);
 
   // Set the graph auditor.
   OwningPtr<ExplodedNode::Auditor> Auditor;
@@ -623,20 +666,21 @@ void AnalysisConsumer::ActionExprEngine(Decl *D, bool ObjCGCEnabled,
 }
 
 void AnalysisConsumer::RunPathSensitiveChecks(Decl *D,
+                                              ExprEngine::InliningModes IMode,
                                               SetOfConstDecls *Visited) {
 
   switch (Mgr->getLangOpts().getGC()) {
   case LangOptions::NonGC:
-    ActionExprEngine(D, false, Visited);
+    ActionExprEngine(D, false, IMode, Visited);
     break;
   
   case LangOptions::GCOnly:
-    ActionExprEngine(D, true, Visited);
+    ActionExprEngine(D, true, IMode, Visited);
     break;
   
   case LangOptions::HybridGC:
-    ActionExprEngine(D, false, Visited);
-    ActionExprEngine(D, true, Visited);
+    ActionExprEngine(D, false, IMode, Visited);
+    ActionExprEngine(D, true, IMode, Visited);
     break;
   }
 }
