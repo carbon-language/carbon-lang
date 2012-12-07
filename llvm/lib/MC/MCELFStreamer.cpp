@@ -12,15 +12,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/MC/MCELFStreamer.h"
-
-#include "MCELF.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/StringExtras.h"
-#include "llvm/ADT/Twine.h"
-#include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCELF.h"
 #include "llvm/MC/MCELFSymbolFlags.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
@@ -102,15 +98,6 @@ void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   }
 
   llvm_unreachable("invalid assembler flag!");
-}
-
-void MCELFStreamer::EmitThumbFunc(MCSymbol *Func) {
-  // FIXME: Anything needed here to flag the function as thumb?
-
-  getAssembler().setIsThumbFunc(Func);
-
-  MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Func);
-  SD.setFlags(SD.getFlags() | ELF_Other_ThumbFunc);
 }
 
 void MCELFStreamer::EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
@@ -396,9 +383,7 @@ void MCELFStreamer::FinishImpl() {
 
   this->MCObjectStreamer::FinishImpl();
 }
-
-void MCELFStreamer::EmitTCEntry(const MCSymbol &S)
-{
+void MCELFStreamer::EmitTCEntry(const MCSymbol &S) {
   // Creates a R_PPC64_TOC relocation
   MCObjectStreamer::EmitSymbolValue(&S, 8, 0);
 }
@@ -412,6 +397,10 @@ MCStreamer *llvm::createELFStreamer(MCContext &Context, MCAsmBackend &MAB,
   if (NoExecStack)
     S->getAssembler().setNoExecStack(true);
   return S;
+}
+
+void MCELFStreamer::EmitThumbFunc(MCSymbol *Func) {
+  llvm_unreachable("Generic ELF doesn't support this directive");
 }
 
 void MCELFStreamer::EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {

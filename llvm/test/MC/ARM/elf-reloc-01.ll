@@ -62,9 +62,9 @@ declare void @exit(i32) noreturn nounwind
 
 ;; OBJ:          Relocation 1
 ;; OBJ-NEXT:     'r_offset',
-;; OBJ-NEXT:     'r_sym', 0x000002
+;; OBJ-NEXT:     'r_sym', 0x000007
 ;; OBJ-NEXT:     'r_type', 0x2b
 
-;; OBJ:         Symbol 2
+;; OBJ:         Symbol 7
 ;; OBJ-NEXT:    '_MergedGlobals'
 ;; OBJ-NEXT:    'st_value', 0x00000010

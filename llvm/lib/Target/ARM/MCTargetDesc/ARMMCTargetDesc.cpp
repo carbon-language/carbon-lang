@@ -12,6 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARMMCTargetDesc.h"
+#include "ARMELFStreamer.h"
+#include "ARMMCAsmInfo.h"
 #include "ARMBaseInfo.h"
 #include "ARMMCAsmInfo.h"
 #include "InstPrinter/ARMInstPrinter.h"
@@ -186,7 +188,8 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
     llvm_unreachable("ARM does not support Windows COFF format");
   }
 
-  return createELFStreamer(Ctx, MAB, OS, Emitter, false, NoExecStack);
+  return createARMELFStreamer(Ctx, MAB, OS, Emitter, false, NoExecStack,
+                              TheTriple.getArch() == Triple::thumb);
 }
 
 static MCInstPrinter *createARMMCInstPrinter(const Target &T,

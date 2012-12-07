@@ -42,9 +42,9 @@ declare i32 @write(...)
 declare void @exit(i32) noreturn nounwind
 
 ;; OBJ:        Relocation 0
-;; OBJ-NEXT:    'r_offset', 
-;; OBJ-NEXT:    'r_sym', 0x000002
+;; OBJ-NEXT:    'r_offset',
+;; OBJ-NEXT:    'r_sym', 0x000005
 ;; OBJ-NEXT:    'r_type', 0x2b
 
-;; OBJ:          Symbol 2
+;; OBJ:          Symbol 5
 ;; OBJ-NEXT:    '.L.str'

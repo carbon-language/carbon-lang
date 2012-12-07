@@ -28,10 +28,10 @@ entry:
 ; 00000008  0000070a R_ARM_THM_CALL    00000001   foo
 ; CHECK:           Relocation 0
 ; CHECK-NEXT:      'r_offset', 0x00000008
-; CHECK-NEXT:      'r_sym', 0x000007
+; CHECK-NEXT:      'r_sym', 0x000009
 ; CHECK-NEXT:      'r_type', 0x0a
 
 ; make sure foo is thumb function: bit 0 = 1
-; CHECK:           Symbol 7
+; CHECK:           Symbol 9
 ; CHECK-NEXT:      'foo'
 ; CHECK-NEXT:      'st_value', 0x00000001

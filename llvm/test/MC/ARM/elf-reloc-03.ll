@@ -89,9 +89,9 @@ entry:
 declare void @exit(i32) noreturn nounwind
 
 ;; OBJ:           Relocation 1
-;; OBJ-NEXT:     'r_offset', 
-;; OBJ-NEXT:     'r_sym', 0x00000c
+;; OBJ-NEXT:     'r_offset',
+;; OBJ-NEXT:     'r_sym', 0x000010
 ;; OBJ-NEXT:     'r_type', 0x2b
 
-;; OBJ:      Symbol 12
+;; OBJ:      Symbol 16
 ;; OBJ-NEXT:    'vtable'
