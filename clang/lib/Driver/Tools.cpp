@@ -3506,6 +3506,10 @@ void hexagon::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(
       Args.MakeArgString(std::string("-G") + SmallDataThreshold));
 
+  Args.AddAllArgs(CmdArgs, options::OPT_g_Group);
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
+
   // Only pass -x if gcc will understand it; otherwise hope gcc
   // understands the suffix correctly. The main use case this would go
   // wrong in is for linker inputs if they happened to have an odd

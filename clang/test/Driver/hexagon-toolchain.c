@@ -531,3 +531,18 @@
 // CHECK028:        "-Wreturn-type"
 // CHECK028-NEXT: "{{.*}}/bin/hexagon-as"
 // CHECK028-NEXT: "{{.*}}/bin/hexagon-ld"
+
+// -----------------------------------------------------------------------------
+// Test Assembler related args
+// -----------------------------------------------------------------------------
+// RUN: %clang -### -target hexagon-unknown-linux     \
+// RUN:   -ccc-install-dir %S/Inputs/hexagon_tree/qc/bin \
+// RUN:   -gdwarf-2 \
+// RUN:   -Wa,--noexecstack,--trap \
+// RUN:   -Xassembler --keep-locals \
+// RUN:   %s 2>&1 \
+// RUN:   | FileCheck -check-prefix=CHECK029 %s
+// CHECK029:      "{{.*}}clang{{.*}}" "-cc1"
+// CHECK029-NEXT: "{{.*}}/bin/hexagon-as"
+// CHECK029:        "-gdwarf-2" "--noexecstack" "--trap" "--keep-locals"
+// CHECK029-NEXT: "{{.*}}/bin/hexagon-ld"
