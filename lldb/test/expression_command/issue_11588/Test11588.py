@@ -63,8 +63,8 @@ class Issue11581TestCase(TestBase):
                 self.expect("print *(StgClosure*)$r14",
                     substrs = ["(StgClosure) $",
                     "(StgClosure *) &$","0x",
-                    "(long) addr = ",
-                    "(long) load_address = ",
+                    "addr = ",
+                    "load_address = ",
                     hex(addr)[2:].rstrip("L"),
                     str(addr)])
 
