@@ -42,17 +42,37 @@ void TextDiagnosticBuffer::HandleDiagnostic(DiagnosticsEngine::Level Level,
   }
 }
 
+/// \brief Escape diagnostic texts to avoid problems when they are fed into the
+/// diagnostic formatter a second time.
+static StringRef escapeDiag(StringRef Str, SmallVectorImpl<char> &Buf) {
+  size_t Pos = Str.find('%');
+  if (Pos == StringRef::npos)
+    return Str;
+
+  // We found a '%'. Replace this and all following '%' with '%%'.
+  Buf.clear();
+  Buf.append(Str.data(), Str.data() + Pos);
+  for (size_t I = Pos, E = Str.size(); I != E; ++I) {
+    if (Str[I] == '%')
+      Buf.push_back('%');
+    Buf.push_back(Str[I]);
+  }
+
+  return StringRef(Buf.data(), Buf.size());
+}
+
 void TextDiagnosticBuffer::FlushDiagnostics(DiagnosticsEngine &Diags) const {
+  SmallVector<char, 64> Buf;
   // FIXME: Flush the diagnostics in order.
   for (const_iterator it = err_begin(), ie = err_end(); it != ie; ++it)
     Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Error,
-                 it->second.c_str()));
+                                       escapeDiag(it->second, Buf)));
   for (const_iterator it = warn_begin(), ie = warn_end(); it != ie; ++it)
     Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Warning,
-                 it->second.c_str()));
+                                       escapeDiag(it->second, Buf)));
   for (const_iterator it = note_begin(), ie = note_end(); it != ie; ++it)
     Diags.Report(Diags.getCustomDiagID(DiagnosticsEngine::Note,
-                 it->second.c_str()));
+                                       escapeDiag(it->second, Buf)));
 }
 
 DiagnosticConsumer *TextDiagnosticBuffer::clone(DiagnosticsEngine &) const {
