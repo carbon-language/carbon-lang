@@ -149,26 +149,41 @@ static_assert(__has_trivial_constructor(Trivial), "Trivial is nontrivial");
 class NonTrivialDefCtor1 { NonTrivialDefCtor1(); };
 static_assert(!__has_trivial_constructor(NonTrivialDefCtor1), "NonTrivialDefCtor1 is trivial");
 
+#define ASSERT_NONTRIVIAL_IMPL(Class, Bases, Body) \
+  class Class Bases { Body }; \
+  static_assert(!__has_trivial_constructor(Class), "");
+#define ASSERT_NONTRIVIAL(Class, Bases, Body) \
+  ASSERT_NONTRIVIAL_IMPL(Class, Bases, Body) \
+  ASSERT_NONTRIVIAL_IMPL(Def ## Class, Bases, Def ## Class() = default; Body) \
+  ASSERT_NONTRIVIAL_IMPL(Del ## Class, Bases, Del ## Class() = delete; Body)
+
 // - its class has no virtual functions (10.3) and no virtual base classes (10.1), and
-class NonTrivialDefCtor2 { virtual void f(); };
-static_assert(!__has_trivial_constructor(NonTrivialDefCtor2), "NonTrivialDefCtor2 is trivial");
-class NonTrivialDefCtor3 : virtual Trivial {};
-static_assert(!__has_trivial_constructor(NonTrivialDefCtor3), "NonTrivialDefCtor3 is trivial");
+ASSERT_NONTRIVIAL(NonTrivialDefCtor2, , virtual void f();)
+ASSERT_NONTRIVIAL(NonTrivialDefCtor3, : virtual Trivial, )
 
 // - no non-static data member of its class has a brace-or-equal-initializer, and
-class NonTrivialDefCtor4 { int m = 52; };
-static_assert(!__has_trivial_constructor(NonTrivialDefCtor4), "NonTrivialDefCtor4 is trivial");
+ASSERT_NONTRIVIAL(NonTrivialDefCtor4, , int m = 52;)
 
 // - all the direct base classes of its class have trivial default constructors, and
-class NonTrivialDefCtor5 : NonTrivialDefCtor1 {};
-static_assert(!__has_trivial_constructor(NonTrivialDefCtor5), "NonTrivialDefCtor5 is trivial");
+ASSERT_NONTRIVIAL(NonTrivialDefCtor5, : NonTrivialDefCtor1, )
 
 // - for all the non-static data members of its class that are of class type (or array thereof), each such class
 // has a trivial default constructor.
-class NonTrivialDefCtor6 { NonTrivialDefCtor1 t; };
-static_assert(!__has_trivial_constructor(NonTrivialDefCtor6), "NonTrivialDefCtor5 is trivial");
+ASSERT_NONTRIVIAL(NonTrivialDefCtor6, , NonTrivialDefCtor1 t;)
+
+// FIXME: No core issue number yet.
+// - its parameter-declaration-clause is equivalent to that of an implicit declaration.
+struct NonTrivialDefCtor7 {
+  NonTrivialDefCtor7(...) = delete;
+};
+static_assert(!__has_trivial_constructor(NonTrivialDefCtor7), "");
+struct NonTrivialDefCtor8 {
+  NonTrivialDefCtor8(int = 0) = delete;
+};
+static_assert(!__has_trivial_constructor(NonTrivialDefCtor8), "");
 
 // Otherwise, the default constructor is non-trivial.
+
 class Trivial2 { Trivial2() = delete; };
 static_assert(__has_trivial_constructor(Trivial2), "Trivial2 is trivial");
 

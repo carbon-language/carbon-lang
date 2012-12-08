@@ -39,7 +39,7 @@ struct UserProvDtor {
 struct NonTrivDtor {
   constexpr NonTrivDtor();
   constexpr int f(); // expected-error {{non-literal type 'NonTrivDtor' cannot have constexpr members}}
-  virtual ~NonTrivDtor() = default; // expected-note {{has a non-trivial destructor}}
+  virtual ~NonTrivDtor() = default; // expected-note {{has a non-trivial destructor}} expected-note {{because it is virtual}}
 };
 struct NonTrivDtorBase {
   ~NonTrivDtorBase();

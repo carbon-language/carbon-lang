@@ -9772,7 +9772,7 @@ bool Sema::CheckNontrivialField(FieldDecl *FD) {
 
   QualType EltTy = Context.getBaseElementType(FD->getType());
   if (const RecordType *RT = EltTy->getAs<RecordType>()) {
-    CXXRecordDecl* RDecl = cast<CXXRecordDecl>(RT->getDecl());
+    CXXRecordDecl *RDecl = cast<CXXRecordDecl>(RT->getDecl());
     if (RDecl->getDefinition()) {
       // We check for copy constructors before constructors
       // because otherwise we'll never get complaints about
@@ -9814,192 +9814,13 @@ bool Sema::CheckNontrivialField(FieldDecl *FD) {
                diag::warn_cxx98_compat_nontrivial_union_or_anon_struct_member :
                diag::err_illegal_union_or_anon_struct_member)
           << (int)FD->getParent()->isUnion() << FD->getDeclName() << member;
-        DiagnoseNontrivial(RT, member);
+        DiagnoseNontrivial(RDecl, member);
         return !getLangOpts().CPlusPlus0x;
       }
     }
   }
-  
+
   return false;
-}
-
-/// If the given constructor is user-declared, produce a diagnostic explaining
-/// that it makes the class non-trivial.
-static bool diagnoseNonTrivialUserDeclaredCtor(Sema &S, QualType QT,
-                                               CXXConstructorDecl *CD,
-                                               Sema::CXXSpecialMember CSM) {
-  if (CD->isImplicit())
-    return false;
-
-  SourceLocation CtorLoc = CD->getLocation();
-  S.Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << CSM;
-  return true;
-}
-
-/// DiagnoseNontrivial - Given that a class has a non-trivial
-/// special member, figure out why.
-/// FIXME: These checks are not correct in C++11 mode. Currently, this is OK
-/// since we only use this in C++11 for a -Wc++98-compat warning.
-void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
-  QualType QT(T, 0U);
-  CXXRecordDecl* RD = cast<CXXRecordDecl>(T->getDecl());
-
-  // Check whether the member was user-declared.
-  switch (member) {
-  case CXXInvalid:
-    break;
-
-  case CXXDefaultConstructor:
-    if (RD->hasUserDeclaredConstructor()) {
-      typedef CXXRecordDecl::ctor_iterator ctor_iter;
-      for (ctor_iter CI = RD->ctor_begin(), CE = RD->ctor_end(); CI != CE; ++CI)
-        if (diagnoseNonTrivialUserDeclaredCtor(*this, QT, *CI, member))
-          return;
-
-      // No user-delcared constructors; look for constructor templates.
-      typedef CXXRecordDecl::specific_decl_iterator<FunctionTemplateDecl>
-          tmpl_iter;
-      for (tmpl_iter TI(RD->decls_begin()), TE(RD->decls_end());
-           TI != TE; ++TI) {
-        CXXConstructorDecl *CD =
-            dyn_cast<CXXConstructorDecl>(TI->getTemplatedDecl());
-        if (CD && diagnoseNonTrivialUserDeclaredCtor(*this, QT, CD, member))
-          return;
-      }
-    }
-    break;
-
-  case CXXCopyConstructor:
-    if (RD->hasUserDeclaredCopyConstructor()) {
-      SourceLocation CtorLoc =
-        RD->getCopyConstructor(0)->getLocation();
-      Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << member;
-      return;
-    }
-    break;
-
-  case CXXMoveConstructor:
-    if (RD->hasUserDeclaredMoveConstructor()) {
-      SourceLocation CtorLoc = RD->getMoveConstructor()->getLocation();
-      Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << member;
-      return;
-    }
-    break;
-
-  case CXXCopyAssignment:
-    if (RD->hasUserDeclaredCopyAssignment()) {
-      SourceLocation AssignLoc =
-        RD->getCopyAssignmentOperator(0)->getLocation();
-      Diag(AssignLoc, diag::note_nontrivial_user_defined) << QT << member;
-      return;
-    }
-    break;
-
-  case CXXMoveAssignment:
-    if (RD->hasUserDeclaredMoveAssignment()) {
-      SourceLocation AssignLoc = RD->getMoveAssignmentOperator()->getLocation();
-      Diag(AssignLoc, diag::note_nontrivial_user_defined) << QT << member;
-      return;
-    }
-    break;
-
-  case CXXDestructor:
-    if (RD->hasUserDeclaredDestructor()) {
-      SourceLocation DtorLoc = LookupDestructor(RD)->getLocation();
-      Diag(DtorLoc, diag::note_nontrivial_user_defined) << QT << member;
-      return;
-    }
-    break;
-  }
-
-  typedef CXXRecordDecl::base_class_iterator base_iter;
-
-  // Virtual bases and members inhibit trivial copying/construction,
-  // but not trivial destruction.
-  if (member != CXXDestructor) {
-    // Check for virtual bases.  vbases includes indirect virtual bases,
-    // so we just iterate through the direct bases.
-    for (base_iter bi = RD->bases_begin(), be = RD->bases_end(); bi != be; ++bi)
-      if (bi->isVirtual()) {
-        SourceLocation BaseLoc = bi->getLocStart();
-        Diag(BaseLoc, diag::note_nontrivial_has_virtual) << QT << 1;
-        return;
-      }
-
-    // Check for virtual methods.
-    typedef CXXRecordDecl::method_iterator meth_iter;
-    for (meth_iter mi = RD->method_begin(), me = RD->method_end(); mi != me;
-         ++mi) {
-      if (mi->isVirtual()) {
-        SourceLocation MLoc = mi->getLocStart();
-        Diag(MLoc, diag::note_nontrivial_has_virtual) << QT << 0;
-        return;
-      }
-    }
-  }
-
-  bool (CXXRecordDecl::*hasNonTrivial)() const;
-  switch (member) {
-  case CXXDefaultConstructor:
-    hasNonTrivial = &CXXRecordDecl::hasNonTrivialDefaultConstructor; break;
-  case CXXCopyConstructor:
-    hasNonTrivial = &CXXRecordDecl::hasNonTrivialCopyConstructor; break;
-  case CXXCopyAssignment:
-    hasNonTrivial = &CXXRecordDecl::hasNonTrivialCopyAssignment; break;
-  case CXXMoveConstructor:
-    hasNonTrivial = &CXXRecordDecl::hasNonTrivialMoveConstructor; break;
-  case CXXMoveAssignment:
-    hasNonTrivial = &CXXRecordDecl::hasNonTrivialMoveAssignment; break;
-  case CXXDestructor:
-    hasNonTrivial = &CXXRecordDecl::hasNonTrivialDestructor; break;
-  case CXXInvalid:
-    llvm_unreachable("unexpected special member");
-  }
-
-  // Check for nontrivial bases (and recurse).
-  for (base_iter bi = RD->bases_begin(), be = RD->bases_end(); bi != be; ++bi) {
-    const RecordType *BaseRT = bi->getType()->getAs<RecordType>();
-    assert(BaseRT && "Don't know how to handle dependent bases");
-    CXXRecordDecl *BaseRecTy = cast<CXXRecordDecl>(BaseRT->getDecl());
-    if ((BaseRecTy->*hasNonTrivial)()) {
-      SourceLocation BaseLoc = bi->getLocStart();
-      Diag(BaseLoc, diag::note_nontrivial_has_nontrivial) << QT << 1 << member;
-      DiagnoseNontrivial(BaseRT, member);
-      return;
-    }
-  }
-
-  // Check for nontrivial members (and recurse).
-  typedef RecordDecl::field_iterator field_iter;
-  for (field_iter fi = RD->field_begin(), fe = RD->field_end(); fi != fe;
-       ++fi) {
-    QualType EltTy = Context.getBaseElementType(fi->getType());
-    if (const RecordType *EltRT = EltTy->getAs<RecordType>()) {
-      CXXRecordDecl* EltRD = cast<CXXRecordDecl>(EltRT->getDecl());
-
-      if ((EltRD->*hasNonTrivial)()) {
-        SourceLocation FLoc = fi->getLocation();
-        Diag(FLoc, diag::note_nontrivial_has_nontrivial) << QT << 0 << member;
-        DiagnoseNontrivial(EltRT, member);
-        return;
-      }
-    }
-    
-    if (EltTy->isObjCLifetimeType()) {
-      switch (EltTy.getObjCLifetime()) {
-      case Qualifiers::OCL_None:
-      case Qualifiers::OCL_ExplicitNone:
-        break;
-          
-      case Qualifiers::OCL_Autoreleasing:
-      case Qualifiers::OCL_Weak:
-      case Qualifiers::OCL_Strong:
-        Diag(fi->getLocation(), diag::note_nontrivial_objc_ownership)
-          << QT << EltTy.getObjCLifetime();
-        return;
-      }
-    }
-  }
 }
 
 /// TranslateIvarVisibility - Translate visibility from a token ID to an

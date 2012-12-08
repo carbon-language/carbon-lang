@@ -1736,7 +1736,7 @@ public:
 
   /// Whether this is a (C++11) constexpr function or constexpr constructor.
   bool isConstexpr() const { return IsConstexpr; }
-  void setConstexpr(bool IC);
+  void setConstexpr(bool IC) { IsConstexpr = IC; }
 
   /// \brief Whether this function has been deleted.
   ///

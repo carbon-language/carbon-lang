@@ -360,8 +360,19 @@ class CXXRecordDecl : public RecordDecl {
 
     /// \brief The trivial special members which this class has, per
     /// C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25,
-    /// C++11 [class.dtor]p5.
+    /// C++11 [class.dtor]p5, or would have if the member were not suppressed.
+    ///
+    /// This excludes any user-declared but not user-provided special members
+    /// which have been declared but not yet defined.
     unsigned HasTrivialSpecialMembers : 6;
+
+    /// \brief The declared special members of this class which are known to be
+    /// non-trivial.
+    ///
+    /// This excludes any user-declared but not user-provided special members
+    /// which have been declared but not yet defined, and any implicit special
+    /// members which have not yet been declared.
+    unsigned DeclaredNonTrivialSpecialMembers : 6;
 
     /// HasIrrelevantDestructor - True when this class has a destructor with no
     /// semantic effect.
@@ -564,9 +575,6 @@ class CXXRecordDecl : public RecordDecl {
 
   void markedVirtualFunctionPure();
   friend void FunctionDecl::setPure(bool);
-
-  void markedConstructorConstexpr(CXXConstructorDecl *CD);
-  friend void FunctionDecl::setConstexpr(bool);
 
   friend class ASTNodeImporter;
 
@@ -1035,7 +1043,6 @@ public:
 
   /// \brief Determine whether this class has a trivial default constructor
   /// (C++11 [class.ctor]p5).
-  /// FIXME: This can be wrong when the class has multiple default constructors.
   bool hasTrivialDefaultConstructor() const {
     return hasDefaultConstructor() &&
            (data().HasTrivialSpecialMembers & SMF_DefaultConstructor);
@@ -1044,8 +1051,9 @@ public:
   /// \brief Determine whether this class has a non-trivial default constructor
   /// (C++11 [class.ctor]p5).
   bool hasNonTrivialDefaultConstructor() const {
-    return hasDefaultConstructor() &&
-           !(data().HasTrivialSpecialMembers & SMF_DefaultConstructor);
+    return (data().DeclaredNonTrivialSpecialMembers & SMF_DefaultConstructor) ||
+           (needsImplicitDefaultConstructor() &&
+            !(data().HasTrivialSpecialMembers & SMF_DefaultConstructor));
   }
 
   /// \brief Determine whether this class has at least one constexpr constructor
@@ -1072,7 +1080,6 @@ public:
 
   /// \brief Determine whether this class has a trivial copy constructor
   /// (C++ [class.copy]p6, C++11 [class.copy]p12)
-  /// FIXME: This can be wrong if the class has multiple copy constructors.
   bool hasTrivialCopyConstructor() const {
     return data().HasTrivialSpecialMembers & SMF_CopyConstructor;
   }
@@ -1080,13 +1087,14 @@ public:
   /// \brief Determine whether this class has a non-trivial copy constructor
   /// (C++ [class.copy]p6, C++11 [class.copy]p12)
   bool hasNonTrivialCopyConstructor() const {
-    return !(data().HasTrivialSpecialMembers & SMF_CopyConstructor);
+    return data().DeclaredNonTrivialSpecialMembers & SMF_CopyConstructor ||
+           !hasTrivialCopyConstructor();
   }
 
   /// \brief Determine whether this class has a trivial move constructor
   /// (C++11 [class.copy]p12)
-  /// FIXME: This can be wrong if the class has multiple move constructors,
-  /// or if the implicit move constructor would be deleted.
+  /// FIXME: This can be wrong if the implicit move constructor would be
+  /// deleted.
   bool hasTrivialMoveConstructor() const {
     return hasMoveConstructor() &&
            (data().HasTrivialSpecialMembers & SMF_MoveConstructor);
@@ -1097,14 +1105,13 @@ public:
   /// FIXME: This can be wrong if the implicit move constructor would be
   /// deleted.
   bool hasNonTrivialMoveConstructor() const {
-    return hasMoveConstructor() &&
-           !(data().HasTrivialSpecialMembers & SMF_MoveConstructor);
+    return (data().DeclaredNonTrivialSpecialMembers & SMF_MoveConstructor) ||
+           (needsImplicitMoveConstructor() &&
+            !(data().HasTrivialSpecialMembers & SMF_MoveConstructor));
   }
 
   /// \brief Determine whether this class has a trivial copy assignment operator
   /// (C++ [class.copy]p11, C++11 [class.copy]p25)
-  /// FIXME: This can be wrong if the class has multiple copy assignment
-  /// operators.
   bool hasTrivialCopyAssignment() const {
     return data().HasTrivialSpecialMembers & SMF_CopyAssignment;
   }
@@ -1112,13 +1119,13 @@ public:
   /// \brief Determine whether this class has a non-trivial copy assignment
   /// operator (C++ [class.copy]p11, C++11 [class.copy]p25)
   bool hasNonTrivialCopyAssignment() const {
-    return !(data().HasTrivialSpecialMembers & SMF_CopyAssignment);
+    return data().DeclaredNonTrivialSpecialMembers & SMF_CopyAssignment ||
+           !hasTrivialCopyAssignment();
   }
 
   /// \brief Determine whether this class has a trivial move assignment operator
   /// (C++11 [class.copy]p25)
-  /// FIXME: This can be wrong if the class has multiple move assignment
-  /// operators, or if the implicit move assignment operator would be deleted.
+  /// FIXME: This can be wrong if the implicit move assignment would be deleted.
   bool hasTrivialMoveAssignment() const {
     return hasMoveAssignment() &&
            (data().HasTrivialSpecialMembers & SMF_MoveAssignment);
@@ -1128,8 +1135,9 @@ public:
   /// operator (C++11 [class.copy]p25)
   /// FIXME: This can be wrong if the implicit move assignment would be deleted.
   bool hasNonTrivialMoveAssignment() const {
-    return hasMoveAssignment() &&
-           !(data().HasTrivialSpecialMembers & SMF_MoveAssignment);
+    return (data().DeclaredNonTrivialSpecialMembers & SMF_MoveAssignment) ||
+           (needsImplicitMoveAssignment() &&
+            !(data().HasTrivialSpecialMembers & SMF_MoveAssignment));
   }
 
   /// \brief Determine whether this class has a trivial destructor
@@ -1446,6 +1454,10 @@ public:
     if (DeclAccess == AS_private) return AS_none;
     return (PathAccess > DeclAccess ? PathAccess : DeclAccess);
   }
+
+  /// \brief Indicates that the declaration of a defaulted or deleted special
+  /// member function is now complete.
+  void finishedDefaultedOrDeletedMember(CXXMethodDecl *MD);
 
   /// \brief Indicates that the definition of this class is now complete.
   virtual void completeDefinition();

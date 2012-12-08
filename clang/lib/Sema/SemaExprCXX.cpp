@@ -3058,6 +3058,13 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //
     //   1: http://gcc.gnu/.org/onlinedocs/gcc/Type-Traits.html
     //   2: http://docwiki.embarcadero.com/RADStudio/XE/en/Type_Trait_Functions_(C%2B%2B0x)_Index
+    //
+    // Note that these builtins do not behave as documented in g++: if a class
+    // has both a trivial and a non-trivial special member of a particular kind,
+    // they return false! For now, we emulate this behavior.
+    // FIXME: This appears to be a g++ bug: more complex cases reveal that it
+    // does not correctly compute triviality in the presence of multiple special
+    // members of the same kind. Revisit this once the g++ bug is fixed.
   case UTT_HasTrivialDefaultConstructor:
     // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
     //   If __is_pod (type) is true then the trait is true, else if type is
@@ -3065,9 +3072,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   constructor ([class.ctor]) then the trait is true, else it is false.
     if (T.isPODType(Self.Context))
       return true;
-    if (const RecordType *RT =
-          C.getBaseElementType(T)->getAs<RecordType>())
-      return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDefaultConstructor();
+    if (CXXRecordDecl *RD = C.getBaseElementType(T)->getAsCXXRecordDecl())
+      return RD->hasTrivialDefaultConstructor() &&
+             !RD->hasNonTrivialDefaultConstructor();
     return false;
   case UTT_HasTrivialCopy:
     // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
@@ -3077,8 +3084,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   is true, else it is false.
     if (T.isPODType(Self.Context) || T->isReferenceType())
       return true;
-    if (const RecordType *RT = T->getAs<RecordType>())
-      return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyConstructor();
+    if (CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+      return RD->hasTrivialCopyConstructor() &&
+             !RD->hasNonTrivialCopyConstructor();
     return false;
   case UTT_HasTrivialAssign:
     // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
@@ -3093,12 +3101,13 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     // errors if the copy assignment operator is actually used, q.v.
     // [class.copy]p12).
 
-    if (C.getBaseElementType(T).isConstQualified())
+    if (T.isConstQualified())
       return false;
     if (T.isPODType(Self.Context))
       return true;
-    if (const RecordType *RT = T->getAs<RecordType>())
-      return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialCopyAssignment();
+    if (CXXRecordDecl *RD = T->getAsCXXRecordDecl())
+      return RD->hasTrivialCopyAssignment() &&
+             !RD->hasNonTrivialCopyAssignment();
     return false;
   case UTT_HasTrivialDestructor:
     // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
@@ -3115,9 +3124,8 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
         T.getObjCLifetime() == Qualifiers::OCL_Autoreleasing)
       return true;
       
-    if (const RecordType *RT =
-          C.getBaseElementType(T)->getAs<RecordType>())
-      return cast<CXXRecordDecl>(RT->getDecl())->hasTrivialDestructor();
+    if (CXXRecordDecl *RD = C.getBaseElementType(T)->getAsCXXRecordDecl())
+      return RD->hasTrivialDestructor();
     return false;
   // TODO: Propagate nothrowness for implicitly declared special members.
   case UTT_HasNothrowAssign:
@@ -3134,9 +3142,8 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
       return false;
     if (T.isPODType(Self.Context) || T->isObjCLifetimeType())
       return true;     
-    if (const RecordType *RT = T->getAs<RecordType>()) {
-      CXXRecordDecl* RD = cast<CXXRecordDecl>(RT->getDecl());
-      if (RD->hasTrivialCopyAssignment())
+    if (CXXRecordDecl *RD = T->getAsCXXRecordDecl()) {
+      if (RD->hasTrivialCopyAssignment() && !RD->hasNonTrivialCopyAssignment())
         return true;
 
       bool FoundAssign = false;
@@ -3175,9 +3182,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   false.
     if (T.isPODType(C) || T->isReferenceType() || T->isObjCLifetimeType())
       return true;
-    if (const RecordType *RT = T->getAs<RecordType>()) {
-      CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-      if (RD->hasTrivialCopyConstructor())
+    if (CXXRecordDecl *RD = T->getAsCXXRecordDecl()) {
+      if (RD->hasTrivialCopyConstructor() &&
+          !RD->hasNonTrivialCopyConstructor())
         return true;
 
       bool FoundConstructor = false;
@@ -3216,9 +3223,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     //   throw an exception then the trait is true, else it is false.
     if (T.isPODType(C) || T->isObjCLifetimeType())
       return true;
-    if (const RecordType *RT = C.getBaseElementType(T)->getAs<RecordType>()) {
-      CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
-      if (RD->hasTrivialDefaultConstructor())
+    if (CXXRecordDecl *RD = C.getBaseElementType(T)->getAsCXXRecordDecl()) {
+      if (RD->hasTrivialDefaultConstructor() &&
+          !RD->hasNonTrivialDefaultConstructor())
         return true;
 
       DeclContext::lookup_const_iterator Con, ConEnd;
@@ -3245,11 +3252,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
     // http://gcc.gnu.org/onlinedocs/gcc/Type-Traits.html:
     //   If type is a class type with a virtual destructor ([class.dtor])
     //   then the trait is true, else it is false.
-    if (const RecordType *Record = T->getAs<RecordType>()) {
-      CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl());
+    if (CXXRecordDecl *RD = T->getAsCXXRecordDecl())
       if (CXXDestructorDecl *Destructor = Self.LookupDestructor(RD))
         return Destructor->isVirtual();
-    }
     return false;
 
     // These type trait expressions are modeled on the specifications for the

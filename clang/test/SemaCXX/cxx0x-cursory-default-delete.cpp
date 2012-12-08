@@ -36,9 +36,9 @@ struct non_const_derived : non_const_copy {
 };
 
 struct bad_decls {
-  bad_decls(volatile bad_decls&) = default; // expected-error {{may not be volatile}} expected-error {{must be defaulted outside the class}}
+  bad_decls(volatile bad_decls&) = default; // expected-error {{may not be volatile}}
   bad_decls&& operator = (bad_decls) = default; // expected-error {{lvalue reference}} expected-error {{must return 'bad_decls &'}}
-  bad_decls& operator = (volatile bad_decls&) = default; // expected-error {{may not be volatile}} expected-error {{must be defaulted outside the class}}
+  bad_decls& operator = (volatile bad_decls&) = default; // expected-error {{may not be volatile}}
   bad_decls& operator = (const bad_decls&) const = default; // expected-error {{may not have 'const', 'constexpr' or 'volatile' qualifiers}}
 };
 
@@ -57,14 +57,18 @@ struct except_spec_d_good : except_spec_a, except_spec_b {
   ~except_spec_d_good();
 };
 except_spec_d_good::~except_spec_d_good() = default;
-// FIXME: This should error in the virtual override check.
-// It doesn't because we generate the implicit specification later than
-// appropriate.
-struct except_spec_d_bad : except_spec_a, except_spec_b {
-  ~except_spec_d_bad() = default;
+struct except_spec_d_good2 : except_spec_a, except_spec_b {
+  ~except_spec_d_good2() = default;
 };
+struct except_spec_d_bad : except_spec_a, except_spec_b {
+  ~except_spec_d_bad() noexcept;
+};
+// FIXME: This should error because this exception spec is not
+// compatible with the implicit exception spec.
+except_spec_d_bad::~except_spec_d_bad() noexcept = default;
 
-// FIXME: This should error because the exceptions spec doesn't match.
+// FIXME: This should error because this exception spec is not
+// compatible with the implicit exception spec.
 struct except_spec_d_mismatch : except_spec_a, except_spec_b {
   except_spec_d_mismatch() throw(A) = default;
 };

@@ -43,6 +43,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     HasMutableFields(false), HasOnlyCMembers(true),
     HasInClassInitializer(false), HasUninitializedReferenceMember(false),
     HasTrivialSpecialMembers(SMF_All),
+    DeclaredNonTrivialSpecialMembers(0),
     HasIrrelevantDestructor(true),
     HasConstexprNonCopyMoveConstructor(false),
     DefaultedDefaultConstructorIsConstexpr(true),
@@ -261,7 +262,7 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
       if (!BaseClassDecl->hasConstexprDefaultConstructor())
         data().DefaultedDefaultConstructorIsConstexpr = false;
     }
-    
+
     // C++ [class.ctor]p3:
     //   A destructor is trivial if all the direct base classes of its class
     //   have trivial destructors.
@@ -470,14 +471,6 @@ void CXXRecordDecl::markedVirtualFunctionPure() {
   data().Abstract = true;
 }
 
-void CXXRecordDecl::markedConstructorConstexpr(CXXConstructorDecl *CD) {
-  if (!CD->isCopyOrMoveConstructor())
-    data().HasConstexprNonCopyMoveConstructor = true;
-
-  if (CD->isDefaultConstructor())
-    data().HasConstexprDefaultConstructor = true;
-}
-
 void CXXRecordDecl::addedMember(Decl *D) {
   if (!D->isImplicit() &&
       !isa<FieldDecl>(D) &&
@@ -638,6 +631,20 @@ void CXXRecordDecl::addedMember(Decl *D) {
     }
 
     if (SMKind) {
+      // If this is the first declaration of a special member, we no longer have
+      // an implicit trivial special member.
+      data().HasTrivialSpecialMembers &=
+        data().DeclaredSpecialMembers | ~SMKind;
+
+      if (!Method->isImplicit() && !Method->isUserProvided()) {
+        // This method is user-declared but not user-provided. We can't work out
+        // whether it's trivial yet (not until we get to the end of the class).
+        // We'll handle this method in finishedDefaultedOrDeletedMember.
+      } else if (Method->isTrivial())
+        data().HasTrivialSpecialMembers |= SMKind;
+      else
+        data().DeclaredNonTrivialSpecialMembers |= SMKind;
+
       // Note when we have declared a declared special member, and suppress the
       // implicit declaration of this special member.
       data().DeclaredSpecialMembers |= SMKind;
@@ -658,14 +665,6 @@ void CXXRecordDecl::addedMember(Decl *D) {
         // This is an extension in C++03.
         data().PlainOldData = false;
       }
-
-      // C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25,
-      // C++11 [class.dtor]p5:
-      //   A [special member] is trivial if it is not user-provided [...]
-      // FIXME: This is bogus. A class can have both (say) a trivial copy
-      // constructor *and* a user-provided copy constructor.
-      if (Method->isUserProvided())
-        data().HasTrivialSpecialMembers &= ~SMKind;
     }
 
     return;
@@ -908,6 +907,40 @@ void CXXRecordDecl::addedMember(Decl *D) {
     if (Shadow->getDeclName().getNameKind()
           == DeclarationName::CXXConversionFunctionName)
       data().Conversions.addDecl(getASTContext(), Shadow, Shadow->getAccess());
+}
+
+void CXXRecordDecl::finishedDefaultedOrDeletedMember(CXXMethodDecl *D) {
+  assert(!D->isImplicit() && !D->isUserProvided());
+
+  // The kind of special member this declaration is, if any.
+  unsigned SMKind = 0;
+
+  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
+    if (Constructor->isDefaultConstructor()) {
+      SMKind |= SMF_DefaultConstructor;
+      if (Constructor->isConstexpr())
+        data().HasConstexprDefaultConstructor = true;
+    }
+    if (Constructor->isCopyConstructor())
+      SMKind |= SMF_CopyConstructor;
+    else if (Constructor->isMoveConstructor())
+      SMKind |= SMF_MoveConstructor;
+    else if (Constructor->isConstexpr())
+      // We may now know that the constructor is constexpr.
+      data().HasConstexprNonCopyMoveConstructor = true;
+  } else if (isa<CXXDestructorDecl>(D))
+    SMKind |= SMF_Destructor;
+  else if (D->isCopyAssignmentOperator())
+    SMKind |= SMF_CopyAssignment;
+  else if (D->isMoveAssignmentOperator())
+    SMKind |= SMF_MoveAssignment;
+
+  // Update which trivial / non-trivial special members we have.
+  // addedMember will have skipped this step for this member.
+  if (D->isTrivial())
+    data().HasTrivialSpecialMembers |= SMKind;
+  else
+    data().DeclaredNonTrivialSpecialMembers |= SMKind;
 }
 
 bool CXXRecordDecl::isCLike() const {

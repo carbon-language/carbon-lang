@@ -1073,6 +1073,7 @@ def err_missing_default_ctor : Error<
   "%select{|implicit default }0constructor for %1 must explicitly initialize "
   "the %select{base class|member}2 %3 which does not have a default "
   "constructor">;
+
 def err_illegal_union_or_anon_struct_member : Error<
   "%select{anonymous struct|union}0 member %1 has a non-trivial "
   "%select{constructor|copy constructor|move constructor|copy assignment "
@@ -1082,16 +1083,40 @@ def warn_cxx98_compat_nontrivial_union_or_anon_struct_member : Warning<
   "%select{constructor|copy constructor|move constructor|copy assignment "
   "operator|move assignment operator|destructor}2 is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
+
+def note_nontrivial_virtual_dtor : Note<
+  "destructor for %0 is not trivial because it is virtual">;
 def note_nontrivial_has_virtual : Note<
   "because type %0 has a virtual %select{member function|base class}1">;
-def note_nontrivial_has_nontrivial : Note<
-  "because type %0 has a %select{member|base class}1 with a non-trivial "
-  "%select{constructor|copy constructor|move constructor|copy assignment "
-  "operator|move assignment operator|destructor}2">;
-def note_nontrivial_user_defined : Note<
-  "because type %0 has a user-declared %select{constructor|copy constructor|"
-  "move constructor|copy assignment operator|move assignment operator|"
-  "destructor}1">;
+def note_nontrivial_no_def_ctor : Note<
+  "because %select{base class of |field of |}0type %1 has no "
+  "default constructor">;
+def note_user_declared_ctor : Note<
+  "implicit default constructor suppressed by user-declared constructor">;
+def note_nontrivial_no_copy : Note<
+  "because no %select{<<ERROR>>|constructor|constructor|assignment operator|"
+  "assignment operator|<<ERROR>>}2 can be used to "
+  "%select{<<ERROR>>|copy|move|copy|move|<<ERROR>>}2 "
+  "%select{base class|field|an object}0 of type %3">;
+def note_nontrivial_user_provided : Note<
+  "because %select{base class of |field of |}0type %1 has a user-provided "
+  "%select{default constructor|copy constructor|move constructor|"
+  "copy assignment operator|move assignment operator|destructor}2">;
+def note_nontrivial_in_class_init : Note<
+  "because field %0 has an initializer">;
+def note_nontrivial_param_type : Note<
+  "because its parameter is %diff{of type $, not $|of the wrong type}2,3">;
+def note_nontrivial_default_arg : Note<"because it has a default argument">;
+def note_nontrivial_variadic : Note<"because it is a variadic function">;
+def note_nontrivial_subobject : Note<
+  "because the function selected to %select{construct|copy|move|copy|move|"
+  "destroy}2 %select{base class|field}0 of type %1 is not trivial">;
+def note_nontrivial_user_declared_ctor : Note<
+  "because type %0 has a user-declared constructor">;
+def note_nontrivial_objc_ownership : Note<
+  "because type %0 has a member with %select{no|no|__strong|__weak|"
+  "__autoreleasing}1 ownership">;
+
 def err_static_data_member_not_allowed_in_anon_struct : Error<
   "static data member %0 not allowed in anonymous struct">;
 def ext_static_data_member_in_union : ExtWarn<
@@ -3706,9 +3731,6 @@ def note_arc_retain_cycle_owner : Note<
 
 } // end "ARC Retain Cycle" category
 
-def note_nontrivial_objc_ownership : Note<
-  "because type %0 has %select{no|no|__strong|__weak|__autoreleasing}1 "
-  "ownership">;
 def warn_arc_object_memaccess : Warning<
   "%select{destination for|source of}0 this %1 call is a pointer to "
   "ownership-qualified type %2">, InGroup<ARCNonPodMemAccess>;
@@ -5429,10 +5451,6 @@ def err_defaulted_special_member_copy_const_param : Error<
   "the parameter for this explicitly-defaulted copy "
   "%select{constructor|assignment operator}0 is const, but a member or base "
   "requires it to be non-const">;
-def err_defaulted_special_member_copy_non_const_param : Error<
-  "explicitly-defaulted copy %select{constructor|assignment operator}0 with "
-  "a non-const parameter must be defaulted outside the class, unless a base or "
-  "member requires the parameter to be non-const">;
 def err_defaulted_copy_assign_not_ref : Error<
   "the parameter for an explicitly-defaulted copy assignment operator must be an "
   "lvalue reference type">;

@@ -3990,42 +3990,6 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     }
   }
 
-  // C++0x [dcl.constexpr]p8: A constexpr specifier for a non-static member
-  // function that is not a constructor declares that member function to be
-  // const. [...] The class of which that function is a member shall be
-  // a literal type.
-  //
-  // If the class has virtual bases, any constexpr members will already have
-  // been diagnosed by the checks performed on the member declaration, so
-  // suppress this (less useful) diagnostic.
-  if (LangOpts.CPlusPlus0x && !Record->isDependentType() &&
-      !Record->isLiteral() && !Record->getNumVBases()) {
-    for (CXXRecordDecl::method_iterator M = Record->method_begin(),
-                                     MEnd = Record->method_end();
-         M != MEnd; ++M) {
-      if (M->isConstexpr() && M->isInstance() && !isa<CXXConstructorDecl>(*M)) {
-        switch (Record->getTemplateSpecializationKind()) {
-        case TSK_ImplicitInstantiation:
-        case TSK_ExplicitInstantiationDeclaration:
-        case TSK_ExplicitInstantiationDefinition:
-          // If a template instantiates to a non-literal type, but its members
-          // instantiate to constexpr functions, the template is technically
-          // ill-formed, but we allow it for sanity.
-          continue;
-
-        case TSK_Undeclared:
-        case TSK_ExplicitSpecialization:
-          RequireLiteralType(M->getLocation(), Context.getRecordType(Record),
-                             diag::err_constexpr_method_non_literal);
-          break;
-        }
-
-        // Only produce one error per class.
-        break;
-      }
-    }
-  }
-
   // Declare inherited constructors. We do this eagerly here because:
   // - The standard requires an eager diagnostic for conflicting inherited
   //   constructors from different classes.
@@ -4036,12 +4000,25 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   DeclareInheritedConstructors(Record);
 }
 
-void Sema::CheckExplicitlyDefaultedMethods(CXXRecordDecl *Record) {
+void Sema::CheckExplicitlyDefaultedAndDeletedMethods(CXXRecordDecl *Record) {
   for (CXXRecordDecl::method_iterator MI = Record->method_begin(),
                                       ME = Record->method_end();
-       MI != ME; ++MI)
+       MI != ME; ++MI) {
     if (!MI->isInvalidDecl() && MI->isExplicitlyDefaulted())
       CheckExplicitlyDefaultedSpecialMember(*MI);
+
+    if (!MI->isImplicit() && !MI->isUserProvided()) {
+      // For an explicitly defaulted or deleted special member, we defer
+      // determining triviality until the class is complete. That time is now!
+      CXXSpecialMember CSM = getSpecialMember(*MI);
+      if (CSM != CXXInvalid) {
+        MI->setTrivial(SpecialMemberIsTrivial(*MI, CSM));
+
+        // Inform the class that we've finished declaring this member.
+        Record->finishedDefaultedOrDeletedMember(*MI);
+      }
+    }
+  }
 }
 
 /// Is the special member function which would be selected to perform the
@@ -4231,33 +4208,11 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
 
   const FunctionProtoType *Type = MD->getType()->getAs<FunctionProtoType>();
 
-  // Compute argument constness, constexpr, and triviality.
   bool CanHaveConstParam = false;
-  bool Trivial = false;
-  switch (CSM) {
-  case CXXDefaultConstructor:
-    Trivial = RD->hasTrivialDefaultConstructor();
-    break;
-  case CXXCopyConstructor:
+  if (CSM == CXXCopyConstructor)
     CanHaveConstParam = RD->implicitCopyConstructorHasConstParam();
-    Trivial = RD->hasTrivialCopyConstructor();
-    break;
-  case CXXCopyAssignment:
+  else if (CSM == CXXCopyAssignment)
     CanHaveConstParam = RD->implicitCopyAssignmentHasConstParam();
-    Trivial = RD->hasTrivialCopyAssignment();
-    break;
-  case CXXMoveConstructor:
-    Trivial = RD->hasTrivialMoveConstructor();
-    break;
-  case CXXMoveAssignment:
-    Trivial = RD->hasTrivialMoveAssignment();
-    break;
-  case CXXDestructor:
-    Trivial = RD->hasTrivialDestructor();
-    break;
-  case CXXInvalid:
-    llvm_unreachable("non-special member explicitly defaulted!");
-  }
 
   QualType ReturnType = Context.VoidTy;
   if (CSM == CXXCopyAssignment || CSM == CXXMoveAssignment) {
@@ -4306,14 +4261,6 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
       }
       HadError = true;
     }
-
-    // If a function is explicitly defaulted on its first declaration, it shall
-    // have the same parameter type as if it had been implicitly declared.
-    // (Presumably this is to prevent it from being trivial?)
-    if (!HasConstParam && CanHaveConstParam && First)
-      Diag(MD->getLocation(),
-           diag::err_defaulted_special_member_copy_non_const_param)
-        << (CSM == CXXCopyAssignment);
   } else if (ExpectedParams) {
     // A copy assignment operator can take its argument by value, but a
     // defaulted one cannot.
@@ -4363,10 +4310,6 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
     //  -- it is implicitly considered to have the same exception-specification
     //     as if it had been implicitly declared,
     MD->setType(QualType(ImplicitType, 0));
-
-    // Such a function is also trivial if the implicitly-declared function
-    // would have been.
-    MD->setTrivial(Trivial);
   }
 
   if (ShouldDeleteSpecialMember(MD, CSM)) {
@@ -4803,6 +4746,427 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
     return true;
 
   return false;
+}
+
+/// Perform lookup for a special member of the specified kind, and determine
+/// whether it is trivial. If the triviality can be determined without the
+/// lookup, skip it. This is intended for use when determining whether a
+/// special member of a containing object is trivial, and thus does not ever
+/// perform overload resolution for default constructors.
+///
+/// If \p Selected is not \c NULL, \c *Selected will be filled in with the
+/// member that was most likely to be intended to be trivial, if any.
+static bool findTrivialSpecialMember(Sema &S, CXXRecordDecl *RD,
+                                     Sema::CXXSpecialMember CSM, unsigned Quals,
+                                     CXXMethodDecl **Selected) {
+  if (Selected)
+    *Selected = 0;
+
+  switch (CSM) {
+  case Sema::CXXInvalid:
+    llvm_unreachable("not a special member");
+
+  case Sema::CXXDefaultConstructor:
+    // C++11 [class.ctor]p5:
+    //   A default constructor is trivial if:
+    //    - all the [direct subobjects] have trivial default constructors
+    //
+    // Note, no overload resolution is performed in this case.
+    if (RD->hasTrivialDefaultConstructor())
+      return true;
+
+    if (Selected) {
+      // If there's a default constructor which could have been trivial, dig it
+      // out. Otherwise, if there's any user-provided default constructor, point
+      // to that as an example of why there's not a trivial one.
+      CXXConstructorDecl *DefCtor = 0;
+      if (RD->needsImplicitDefaultConstructor())
+        S.DeclareImplicitDefaultConstructor(RD);
+      for (CXXRecordDecl::ctor_iterator CI = RD->ctor_begin(),
+                                        CE = RD->ctor_end(); CI != CE; ++CI) {
+        if (!CI->isDefaultConstructor())
+          continue;
+        DefCtor = *CI;
+        if (!DefCtor->isUserProvided())
+          break;
+      }
+
+      *Selected = DefCtor;
+    }
+
+    return false;
+
+  case Sema::CXXDestructor:
+    // C++11 [class.dtor]p5:
+    //   A destructor is trivial if:
+    //    - all the direct [subobjects] have trivial destructors
+    if (RD->hasTrivialDestructor())
+      return true;
+
+    if (Selected) {
+      if (RD->needsImplicitDestructor())
+        S.DeclareImplicitDestructor(RD);
+      *Selected = RD->getDestructor();
+    }
+
+    return false;
+
+  case Sema::CXXCopyConstructor:
+    // C++11 [class.copy]p12:
+    //   A copy constructor is trivial if:
+    //    - the constructor selected to copy each direct [subobject] is trivial
+    if (RD->hasTrivialCopyConstructor()) {
+      if (Quals == Qualifiers::Const)
+        // We must either select the trivial copy constructor or reach an
+        // ambiguity; no need to actually perform overload resolution.
+        return true;
+    } else if (!Selected) {
+      return false;
+    }
+    // In C++98, we are not supposed to perform overload resolution here, but we
+    // treat that as a language defect, as suggested on cxx-abi-dev, to treat
+    // cases like B as having a non-trivial copy constructor:
+    //   struct A { template<typename T> A(T&); };
+    //   struct B { mutable A a; };
+    goto NeedOverloadResolution;
+
+  case Sema::CXXCopyAssignment:
+    // C++11 [class.copy]p25:
+    //   A copy assignment operator is trivial if:
+    //    - the assignment operator selected to copy each direct [subobject] is
+    //      trivial
+    if (RD->hasTrivialCopyAssignment()) {
+      if (Quals == Qualifiers::Const)
+        return true;
+    } else if (!Selected) {
+      return false;
+    }
+    // In C++98, we are not supposed to perform overload resolution here, but we
+    // treat that as a language defect.
+    goto NeedOverloadResolution;
+
+  case Sema::CXXMoveConstructor:
+  case Sema::CXXMoveAssignment:
+  NeedOverloadResolution:
+    Sema::SpecialMemberOverloadResult *SMOR =
+      S.LookupSpecialMember(RD, CSM,
+                            Quals & Qualifiers::Const,
+                            Quals & Qualifiers::Volatile,
+                            /*RValueThis*/false, /*ConstThis*/false,
+                            /*VolatileThis*/false);
+
+    // The standard doesn't describe how to behave if the lookup is ambiguous.
+    // We treat it as not making the member non-trivial, just like the standard
+    // mandates for the default constructor. This should rarely matter, because
+    // the member will also be deleted.
+    if (SMOR->getKind() == Sema::SpecialMemberOverloadResult::Ambiguous)
+      return true;
+
+    if (!SMOR->getMethod()) {
+      assert(SMOR->getKind() ==
+             Sema::SpecialMemberOverloadResult::NoMemberOrDeleted);
+      return false;
+    }
+
+    // We deliberately don't check if we found a deleted special member. We're
+    // not supposed to!
+    if (Selected)
+      *Selected = SMOR->getMethod();
+    return SMOR->getMethod()->isTrivial();
+  }
+
+  llvm_unreachable("unknown special method kind");
+}
+
+CXXConstructorDecl *findUserDeclaredCtor(CXXRecordDecl *RD) {
+  for (CXXRecordDecl::ctor_iterator CI = RD->ctor_begin(), CE = RD->ctor_end();
+       CI != CE; ++CI)
+    if (!CI->isImplicit())
+      return *CI;
+
+  // Look for constructor templates.
+  typedef CXXRecordDecl::specific_decl_iterator<FunctionTemplateDecl> tmpl_iter;
+  for (tmpl_iter TI(RD->decls_begin()), TE(RD->decls_end()); TI != TE; ++TI) {
+    if (CXXConstructorDecl *CD =
+          dyn_cast<CXXConstructorDecl>(TI->getTemplatedDecl()))
+      return CD;
+  }
+
+  return 0;
+}
+
+/// The kind of subobject we are checking for triviality. The values of this
+/// enumeration are used in diagnostics.
+enum TrivialSubobjectKind {
+  /// The subobject is a base class.
+  TSK_BaseClass,
+  /// The subobject is a non-static data member.
+  TSK_Field,
+  /// The object is actually the complete object.
+  TSK_CompleteObject
+};
+
+/// Check whether the special member selected for a given type would be trivial.
+static bool checkTrivialSubobjectCall(Sema &S, SourceLocation SubobjLoc,
+                                      QualType SubType,
+                                      Sema::CXXSpecialMember CSM,
+                                      TrivialSubobjectKind Kind,
+                                      bool Diagnose) {
+  CXXRecordDecl *SubRD = SubType->getAsCXXRecordDecl();
+  if (!SubRD)
+    return true;
+
+  CXXMethodDecl *Selected;
+  if (findTrivialSpecialMember(S, SubRD, CSM, SubType.getCVRQualifiers(),
+                               Diagnose ? &Selected : 0))
+    return true;
+
+  if (Diagnose) {
+    if (!Selected && CSM == Sema::CXXDefaultConstructor) {
+      S.Diag(SubobjLoc, diag::note_nontrivial_no_def_ctor)
+        << Kind << SubType.getUnqualifiedType();
+      if (CXXConstructorDecl *CD = findUserDeclaredCtor(SubRD))
+        S.Diag(CD->getLocation(), diag::note_user_declared_ctor);
+    } else if (!Selected)
+      S.Diag(SubobjLoc, diag::note_nontrivial_no_copy)
+        << Kind << SubType.getUnqualifiedType() << CSM << SubType;
+    else if (Selected->isUserProvided()) {
+      if (Kind == TSK_CompleteObject)
+        S.Diag(Selected->getLocation(), diag::note_nontrivial_user_provided)
+          << Kind << SubType.getUnqualifiedType() << CSM;
+      else {
+        S.Diag(SubobjLoc, diag::note_nontrivial_user_provided)
+          << Kind << SubType.getUnqualifiedType() << CSM;
+        S.Diag(Selected->getLocation(), diag::note_declared_at);
+      }
+    } else {
+      if (Kind != TSK_CompleteObject)
+        S.Diag(SubobjLoc, diag::note_nontrivial_subobject)
+          << Kind << SubType.getUnqualifiedType() << CSM;
+
+      // Explain why the defaulted or deleted special member isn't trivial.
+      S.SpecialMemberIsTrivial(Selected, CSM, Diagnose);
+    }
+  }
+
+  return false;
+}
+
+/// Check whether the members of a class type allow a special member to be
+/// trivial.
+static bool checkTrivialClassMembers(Sema &S, CXXRecordDecl *RD,
+                                     Sema::CXXSpecialMember CSM,
+                                     bool ConstArg, bool Diagnose) {
+  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
+                                     FE = RD->field_end(); FI != FE; ++FI) {
+    if (FI->isInvalidDecl() || FI->isUnnamedBitfield())
+      continue;
+
+    QualType FieldType = S.Context.getBaseElementType(FI->getType());
+
+    // Pretend anonymous struct or union members are members of this class.
+    if (FI->isAnonymousStructOrUnion()) {
+      if (!checkTrivialClassMembers(S, FieldType->getAsCXXRecordDecl(),
+                                    CSM, ConstArg, Diagnose))
+        return false;
+      continue;
+    }
+
+    // C++11 [class.ctor]p5:
+    //   A default constructor is trivial if [...]
+    //    -- no non-static data member of its class has a
+    //       brace-or-equal-initializer
+    if (CSM == Sema::CXXDefaultConstructor && FI->hasInClassInitializer()) {
+      if (Diagnose)
+        S.Diag(FI->getLocation(), diag::note_nontrivial_in_class_init) << *FI;
+      return false;
+    }
+
+    // Objective C ARC 4.3.5:
+    //   [...] nontrivally ownership-qualified types are [...] not trivially
+    //   default constructible, copy constructible, move constructible, copy
+    //   assignable, move assignable, or destructible [...]
+    if (S.getLangOpts().ObjCAutoRefCount &&
+        FieldType.hasNonTrivialObjCLifetime()) {
+      if (Diagnose)
+        S.Diag(FI->getLocation(), diag::note_nontrivial_objc_ownership)
+          << RD << FieldType.getObjCLifetime();
+      return false;
+    }
+
+    if (ConstArg && !FI->isMutable())
+      FieldType.addConst();
+    if (!checkTrivialSubobjectCall(S, FI->getLocation(), FieldType, CSM,
+                                   TSK_Field, Diagnose))
+      return false;
+  }
+
+  return true;
+}
+
+/// Diagnose why the specified class does not have a trivial special member of
+/// the given kind.
+void Sema::DiagnoseNontrivial(const CXXRecordDecl *RD, CXXSpecialMember CSM) {
+  QualType Ty = Context.getRecordType(RD);
+  if (CSM == CXXCopyConstructor || CSM == CXXCopyAssignment)
+    Ty.addConst();
+
+  checkTrivialSubobjectCall(*this, RD->getLocation(), Ty, CSM,
+                            TSK_CompleteObject, /*Diagnose*/true);
+}
+
+/// Determine whether a defaulted or deleted special member function is trivial,
+/// as specified in C++11 [class.ctor]p5, C++11 [class.copy]p12,
+/// C++11 [class.copy]p25, and C++11 [class.dtor]p5.
+bool Sema::SpecialMemberIsTrivial(CXXMethodDecl *MD, CXXSpecialMember CSM,
+                                  bool Diagnose) {
+  // Note that we can't work out CSM for ourselves. Consider this:
+  //
+  //   struct S { S(int); S(const S&=0) = delete; };
+  //
+  // The same function is a trivial copy constructor but a non-trivial default
+  // constructor.
+  assert(!MD->isUserProvided() && CSM != CXXInvalid && "not special enough");
+
+  CXXRecordDecl *RD = MD->getParent();
+
+  bool ConstArg = false;
+  ParmVarDecl *Param0 = MD->getNumParams() ? MD->getParamDecl(0) : 0;
+
+  // C++11 [class.copy]p12, p25:
+  //   A [special member] is trivial if its declared parameter type is the same
+  //   as if it had been implicitly declared [...]
+  switch (CSM) {
+  case CXXDefaultConstructor:
+  case CXXDestructor:
+    // Trivial default constructors and destructors cannot have parameters.
+    break;
+
+  case CXXCopyConstructor:
+  case CXXCopyAssignment: {
+    // Trivial copy operations always have const, non-volatile parameter types.
+    ConstArg = true;
+    const ReferenceType *RT = Param0->getType()->getAs<ReferenceType>();
+    if (!RT || RT->getPointeeType().getCVRQualifiers() != Qualifiers::Const) {
+      if (Diagnose)
+        Diag(Param0->getLocation(), diag::note_nontrivial_param_type)
+          << Param0->getSourceRange() << Param0->getType()
+          << Context.getLValueReferenceType(
+               Context.getRecordType(RD).withConst());
+      return false;
+    }
+    break;
+  }
+
+  case CXXMoveConstructor:
+  case CXXMoveAssignment: {
+    // Trivial move operations always have non-cv-qualified parameters.
+    const RValueReferenceType *RT =
+      Param0->getType()->getAs<RValueReferenceType>();
+    if (!RT || RT->getPointeeType().getCVRQualifiers()) {
+      if (Diagnose)
+        Diag(Param0->getLocation(), diag::note_nontrivial_param_type)
+          << Param0->getSourceRange() << Param0->getType()
+          << Context.getRValueReferenceType(Context.getRecordType(RD));
+      return false;
+    }
+    break;
+  }
+
+  case CXXInvalid:
+    llvm_unreachable("not a special member");
+  }
+
+  // FIXME: We require that the parameter-declaration-clause is equivalent to
+  // that of an implicit declaration, not just that the declared parameter type
+  // matches, in order to prevent absuridities like a function simultaneously
+  // being a trivial copy constructor and a non-trivial default constructor.
+  // This issue has not yet been assigned a core issue number.
+  if (MD->getMinRequiredArguments() < MD->getNumParams()) {
+    if (Diagnose)
+      Diag(MD->getParamDecl(MD->getMinRequiredArguments())->getLocation(),
+           diag::note_nontrivial_default_arg)
+        << MD->getParamDecl(MD->getMinRequiredArguments())->getSourceRange();
+    return false;
+  }
+  if (MD->isVariadic()) {
+    if (Diagnose)
+      Diag(MD->getLocation(), diag::note_nontrivial_variadic);
+    return false;
+  }
+
+  // C++11 [class.ctor]p5, C++11 [class.dtor]p5:
+  //   A copy/move [constructor or assignment operator] is trivial if
+  //    -- the [member] selected to copy/move each direct base class subobject
+  //       is trivial
+  //
+  // C++11 [class.copy]p12, C++11 [class.copy]p25:
+  //   A [default constructor or destructor] is trivial if
+  //    -- all the direct base classes have trivial [default constructors or
+  //       destructors]
+  for (CXXRecordDecl::base_class_iterator BI = RD->bases_begin(),
+                                          BE = RD->bases_end(); BI != BE; ++BI)
+    if (!checkTrivialSubobjectCall(*this, BI->getLocStart(),
+                                   ConstArg ? BI->getType().withConst()
+                                            : BI->getType(),
+                                   CSM, TSK_BaseClass, Diagnose))
+      return false;
+
+  // C++11 [class.ctor]p5, C++11 [class.dtor]p5:
+  //   A copy/move [constructor or assignment operator] for a class X is
+  //   trivial if
+  //    -- for each non-static data member of X that is of class type (or array
+  //       thereof), the constructor selected to copy/move that member is
+  //       trivial
+  //
+  // C++11 [class.copy]p12, C++11 [class.copy]p25:
+  //   A [default constructor or destructor] is trivial if
+  //    -- for all of the non-static data members of its class that are of class
+  //       type (or array thereof), each such class has a trivial [default
+  //       constructor or destructor]
+  if (!checkTrivialClassMembers(*this, RD, CSM, ConstArg, Diagnose))
+    return false;
+
+  // C++11 [class.dtor]p5:
+  //   A destructor is trivial if [...]
+  //    -- the destructor is not virtual
+  if (CSM == CXXDestructor && MD->isVirtual()) {
+    if (Diagnose)
+      Diag(MD->getLocation(), diag::note_nontrivial_virtual_dtor) << RD;
+    return false;
+  }
+
+  // C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25:
+  //   A [special member] for class X is trivial if [...]
+  //    -- class X has no virtual functions and no virtual base classes
+  if (CSM != CXXDestructor && MD->getParent()->isDynamicClass()) {
+    if (!Diagnose)
+      return false;
+
+    if (RD->getNumVBases()) {
+      // Check for virtual bases. We already know that the corresponding
+      // member in all bases is trivial, so vbases must all be direct.
+      CXXBaseSpecifier &BS = *RD->vbases_begin();
+      assert(BS.isVirtual());
+      Diag(BS.getLocStart(), diag::note_nontrivial_has_virtual) << RD << 1;
+      return false;
+    }
+
+    // Must have a virtual method.
+    for (CXXRecordDecl::method_iterator MI = RD->method_begin(),
+                                        ME = RD->method_end(); MI != ME; ++MI) {
+      if (MI->isVirtual()) {
+        SourceLocation MLoc = MI->getLocStart();
+        Diag(MLoc, diag::note_nontrivial_has_virtual) << RD << 0;
+        return false;
+      }
+    }
+
+    llvm_unreachable("dynamic class with no vbases and no virtual functions");
+  }
+
+  // Looks like it's trivial!
+  return true;
 }
 
 /// \brief Data used with FindHiddenVirtualMethod
@@ -7113,7 +7477,46 @@ void Sema::ActOnFinishDelayedMemberInitializers(Decl *D) {
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(D);
 
   if (!ClassDecl->isDependentType())
-    CheckExplicitlyDefaultedMethods(ClassDecl);
+    CheckExplicitlyDefaultedAndDeletedMethods(ClassDecl);
+
+  // C++11 [dcl.constexpr]p8: A constexpr specifier for a non-static member
+  // function that is not a constructor declares that member function to be
+  // const. [...] The class of which that function is a member shall be
+  // a literal type.
+  //
+  // If the class has virtual bases, any constexpr members will already have
+  // been diagnosed by the checks performed on the member declaration, so
+  // suppress this (less useful) diagnostic.
+  //
+  // We delay this until we know whether an explicitly-defaulted (or deleted)
+  // destructor for the class is trivial.
+  if (LangOpts.CPlusPlus0x && !ClassDecl->isDependentType() &&
+      !ClassDecl->isLiteral() && !ClassDecl->getNumVBases()) {
+    for (CXXRecordDecl::method_iterator M = ClassDecl->method_begin(),
+                                     MEnd = ClassDecl->method_end();
+         M != MEnd; ++M) {
+      if (M->isConstexpr() && M->isInstance() && !isa<CXXConstructorDecl>(*M)) {
+        switch (ClassDecl->getTemplateSpecializationKind()) {
+        case TSK_ImplicitInstantiation:
+        case TSK_ExplicitInstantiationDeclaration:
+        case TSK_ExplicitInstantiationDefinition:
+          // If a template instantiates to a non-literal type, but its members
+          // instantiate to constexpr functions, the template is technically
+          // ill-formed, but we allow it for sanity.
+          continue;
+
+        case TSK_Undeclared:
+        case TSK_ExplicitSpecialization:
+          RequireLiteralType(M->getLocation(), Context.getRecordType(ClassDecl),
+                             diag::err_constexpr_method_non_literal);
+          break;
+        }
+
+        // Only produce one error per class.
+        break;
+      }
+    }
+  }
 }
 
 void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
@@ -10395,35 +10798,6 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     // recovery.
   }
   Fn->setDeletedAsWritten();
-
-  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Dcl);
-  if (!MD)
-    return;
-
-  // A deleted special member function is trivial if the corresponding
-  // implicitly-declared function would have been.
-  switch (getSpecialMember(MD)) {
-  case CXXInvalid:
-    break;
-  case CXXDefaultConstructor:
-    MD->setTrivial(MD->getParent()->hasTrivialDefaultConstructor());
-    break;
-  case CXXCopyConstructor:
-    MD->setTrivial(MD->getParent()->hasTrivialCopyConstructor());
-    break;
-  case CXXMoveConstructor:
-    MD->setTrivial(MD->getParent()->hasTrivialMoveConstructor());
-    break;
-  case CXXCopyAssignment:
-    MD->setTrivial(MD->getParent()->hasTrivialCopyAssignment());
-    break;
-  case CXXMoveAssignment:
-    MD->setTrivial(MD->getParent()->hasTrivialMoveAssignment());
-    break;
-  case CXXDestructor:
-    MD->setTrivial(MD->getParent()->hasTrivialDestructor());
-    break;
-  }
 }
 
 void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {

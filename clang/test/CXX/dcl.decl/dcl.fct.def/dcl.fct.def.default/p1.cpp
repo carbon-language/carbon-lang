@@ -14,11 +14,10 @@ struct A {
   //    (except for possibly differing ref-qualifiers
   A &operator=(A &&) & = default;
 
-  // FIXME:
   //    and except that in the case of a copy constructor or copy assignment
   //    operator, the parameter type may be "reference to non-const T")
-  A(A &) = default; // FIXME: expected-error {{must be defaulted outside the class}}
-  A &operator=(A &) = default; // FIXME: expected-error {{must be defaulted outside the class}}
+  A(A &) = default;
+  A &operator=(A &) = default;
 
   // -- not have default arguments
   A(double = 0.0) = default; // expected-error {{cannot have default arguments}}

@@ -4564,6 +4564,8 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
     Diag(Dtor->getLocation(), Dtor->isUserProvided() ?
          diag::note_non_literal_user_provided_dtor :
          diag::note_non_literal_nontrivial_dtor) << RD;
+    if (!Dtor->isUserProvided())
+      SpecialMemberIsTrivial(Dtor, CXXDestructor, /*Diagnose*/true);
   }
 
   return true;
