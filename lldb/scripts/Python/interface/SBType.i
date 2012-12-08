@@ -180,6 +180,9 @@ public:
     lldb::SBType
     GetUnqualifiedType();
     
+    lldb::SBType
+    GetCanonicalType();
+
     lldb::BasicType
     GetBasicType();
 

@@ -274,6 +274,18 @@ SBType::GetUnqualifiedType()
     return SBType(ClangASTType(m_opaque_sp->GetASTContext(),qt.getUnqualifiedType().getAsOpaquePtr()));
 }
 
+lldb::SBType
+SBType::GetCanonicalType()
+{
+    if (IsValid())
+    {
+        QualType qt (QualType::getFromOpaquePtr(m_opaque_sp->GetOpaqueQualType()));
+        return SBType(ClangASTType(m_opaque_sp->GetASTContext(),qt.getCanonicalType().getAsOpaquePtr()));
+    }
+    return SBType();
+}
+
+
 lldb::BasicType
 SBType::GetBasicType()
 {
