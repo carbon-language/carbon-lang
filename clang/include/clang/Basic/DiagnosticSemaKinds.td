@@ -1238,6 +1238,8 @@ def err_reference_var_requires_init : Error<
   "declaration of reference variable %0 requires an initializer">;
 def err_reference_without_init : Error<
   "reference to type %0 requires an initializer">;
+def note_value_initialization_here : Note<
+  "in value-initialization of type %0 here">;
 def err_reference_has_multiple_inits : Error<
   "reference cannot be initialized with multiple values">;
 def err_init_non_aggr_init_list : Error<

@@ -41,7 +41,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     Abstract(false), IsStandardLayout(true), HasNoNonEmptyBases(true),
     HasPrivateFields(false), HasProtectedFields(false), HasPublicFields(false),
     HasMutableFields(false), HasOnlyCMembers(true),
-    HasInClassInitializer(false),
+    HasInClassInitializer(false), HasUninitializedReferenceMember(false),
     HasTrivialSpecialMembers(SMF_All),
     HasIrrelevantDestructor(true),
     HasConstexprNonCopyMoveConstructor(false),
@@ -295,6 +295,9 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     // Keep track of the presence of mutable fields.
     if (BaseClassDecl->hasMutableFields())
       data().HasMutableFields = true;
+
+    if (BaseClassDecl->hasUninitializedReferenceMember())
+      data().HasUninitializedReferenceMember = true;
   }
   
   if (VBases.empty())
@@ -727,7 +730,8 @@ void CXXRecordDecl::addedMember(Decl *D) {
       data().PlainOldData = false;
     
     if (T->isReferenceType()) {
-      data().HasTrivialSpecialMembers &= ~SMF_DefaultConstructor;
+      if (!Field->hasInClassInitializer())
+        data().HasUninitializedReferenceMember = true;
 
       // C++0x [class]p7:
       //   A standard-layout class is a class that:
@@ -866,6 +870,10 @@ void CXXRecordDecl::addedMember(Decl *D) {
         //   parameter is of type 'const M&', 'const volatile M&' or 'M'.
         if (!FieldRec->hasCopyAssignmentWithConstParam())
           data().ImplicitCopyAssignmentHasConstParam = false;
+
+        if (FieldRec->hasUninitializedReferenceMember() &&
+            !Field->hasInClassInitializer())
+          data().HasUninitializedReferenceMember = true;
       }
     } else {
       // Base element type of field is a non-class type.

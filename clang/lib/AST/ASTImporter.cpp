@@ -1921,6 +1921,8 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     ToData.HasMutableFields = FromData.HasMutableFields;
     ToData.HasOnlyCMembers = FromData.HasOnlyCMembers;
     ToData.HasInClassInitializer = FromData.HasInClassInitializer;
+    ToData.HasUninitializedReferenceMember
+      = FromData.HasUninitializedReferenceMember;
     ToData.HasTrivialSpecialMembers = FromData.HasTrivialSpecialMembers;
     ToData.HasIrrelevantDestructor = FromData.HasIrrelevantDestructor;
     ToData.HasConstexprNonCopyMoveConstructor

@@ -102,6 +102,12 @@ union U5 {
   int& i1; // expected-error {{union member 'i1' has reference type 'int &'}}
 };
 
+union U6 {
+  struct S {
+    int &i;
+  } s; // ok
+};
+
 template <class A, class B> struct Either {
   bool tag;
   union { // expected-note 6 {{in instantiation of member class}}

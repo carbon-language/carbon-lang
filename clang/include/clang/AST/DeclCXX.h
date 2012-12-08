@@ -353,6 +353,11 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief True if any field has an in-class initializer.
     bool HasInClassInitializer : 1;
 
+    /// \brief True if any field is of reference type, and does not have an
+    /// in-class initializer. In this case, value-initialization of this class
+    /// is illegal in C++98 even if the class has a trivial default constructor.
+    bool HasUninitializedReferenceMember : 1;
+
     /// \brief The trivial special members which this class has, per
     /// C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25,
     /// C++11 [class.dtor]p5.
@@ -981,6 +986,20 @@ public:
   /// hasInClassInitializer - Whether this class has any in-class initializers
   /// for non-static data members.
   bool hasInClassInitializer() const { return data().HasInClassInitializer; }
+
+  /// \brief Whether this class or any of its subobjects has any members of
+  /// reference type which would make value-initialization ill-formed, per
+  /// C++03 [dcl.init]p5:
+  ///  -- if T is a non-union class type without a user-declared constructor,
+  ///     then every non-static data member and base-class component of T is
+  ///     value-initialized
+  /// [...]
+  /// A program that calls for [...] value-initialization of an entity of
+  /// reference type is ill-formed.
+  bool hasUninitializedReferenceMember() const {
+    return !isUnion() && !hasUserDeclaredConstructor() &&
+           data().HasUninitializedReferenceMember;
+  }
 
   /// isPOD - Whether this class is a POD-type (C++ [class]p4), which is a class
   /// that is an aggregate that has no non-static non-POD data members, no

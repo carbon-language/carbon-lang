@@ -3623,6 +3623,22 @@ static void TryValueInitialization(Sema &S,
       if (NeedZeroInitialization)
         Sequence.AddZeroInitializationStep(Entity.getType());
 
+      // C++03:
+      // -- if T is a non-union class type without a user-declared constructor,
+      //    then every non-static data member and base class component of T is
+      //    value-initialized;
+      // [...] A program that calls for [...] value-initialization of an
+      // entity of reference type is ill-formed.
+      //
+      // C++11 doesn't need this handling, because value-initialization does not
+      // occur recursively there, and the implicit default constructor is
+      // defined as deleted in the problematic cases.
+      if (!S.getLangOpts().CPlusPlus0x &&
+          ClassDecl->hasUninitializedReferenceMember()) {
+        Sequence.SetFailed(InitializationSequence::FK_TooManyInitsForReference);
+        return;
+      }
+
       // If this is list-value-initialization, pass the empty init list on when
       // building the constructor call. This affects the semantics of a few
       // things (such as whether an explicit default constructor can be called).
@@ -5443,6 +5459,43 @@ InitializationSequence::Perform(Sema &S,
   return CurInit;
 }
 
+/// Somewhere within T there is an uninitialized reference subobject.
+/// Dig it out and diagnose it.
+bool DiagnoseUninitializedReference(Sema &S, SourceLocation Loc, QualType T) {
+  if (T->isReferenceType()) {
+    S.Diag(Loc, diag::err_reference_without_init)
+      << T.getNonReferenceType();
+    return true;
+  }
+
+  CXXRecordDecl *RD = T->getBaseElementTypeUnsafe()->getAsCXXRecordDecl();
+  if (!RD || !RD->hasUninitializedReferenceMember())
+    return false;
+
+  for (CXXRecordDecl::field_iterator FI = RD->field_begin(),
+                                     FE = RD->field_end(); FI != FE; ++FI) {
+    if (FI->isUnnamedBitfield())
+      continue;
+
+    if (DiagnoseUninitializedReference(S, FI->getLocation(), FI->getType())) {
+      S.Diag(Loc, diag::note_value_initialization_here) << RD;
+      return true;
+    }
+  }
+
+  for (CXXRecordDecl::base_class_iterator BI = RD->bases_begin(),
+                                          BE = RD->bases_end();
+       BI != BE; ++BI) {
+    if (DiagnoseUninitializedReference(S, BI->getLocStart(), BI->getType())) {
+      S.Diag(Loc, diag::note_value_initialization_here) << RD;
+      return true;
+    }
+  }
+
+  return false;
+}
+
+
 //===----------------------------------------------------------------------===//
 // Diagnose initialization failures
 //===----------------------------------------------------------------------===//
@@ -5457,10 +5510,17 @@ bool InitializationSequence::Diagnose(Sema &S,
   switch (Failure) {
   case FK_TooManyInitsForReference:
     // FIXME: Customize for the initialized entity?
-    if (NumArgs == 0)
-      S.Diag(Kind.getLocation(), diag::err_reference_without_init)
-        << DestType.getNonReferenceType();
-    else  // FIXME: diagnostic below could be better!
+    if (NumArgs == 0) {
+      // Dig out the reference subobject which is uninitialized and diagnose it.
+      // If this is value-initialization, this could be nested some way within
+      // the target type.
+      assert(Kind.getKind() == InitializationKind::IK_Value ||
+             DestType->isReferenceType());
+      bool Diagnosed =
+        DiagnoseUninitializedReference(S, Kind.getLocation(), DestType);
+      assert(Diagnosed && "couldn't find uninitialized reference to diagnose");
+      (void)Diagnosed;
+    } else  // FIXME: diagnostic below could be better!
       S.Diag(Kind.getLocation(), diag::err_reference_has_multiple_inits)
         << SourceRange(Args[0]->getLocStart(), Args[NumArgs - 1]->getLocEnd());
     break;
