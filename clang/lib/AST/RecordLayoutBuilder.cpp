@@ -2577,6 +2577,11 @@ static void PrintOffset(raw_ostream &OS,
   OS.indent(IndentLevel * 2);
 }
 
+static void PrintIndentNoOffset(raw_ostream &OS, unsigned IndentLevel) {
+  OS << "     | ";
+  OS.indent(IndentLevel * 2);
+}
+
 static void DumpCXXRecordLayout(raw_ostream &OS,
                                 const CXXRecordDecl *RD, const ASTContext &C,
                                 CharUnits Offset,
@@ -2680,11 +2685,14 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
                         /*IncludeVirtualBases=*/false);
   }
 
-  OS << "  sizeof=" << Layout.getSize().getQuantity();
+  PrintIndentNoOffset(OS, IndentLevel - 1);
+  OS << "[sizeof=" << Layout.getSize().getQuantity();
   OS << ", dsize=" << Layout.getDataSize().getQuantity();
   OS << ", align=" << Layout.getAlignment().getQuantity() << '\n';
-  OS << "  nvsize=" << Layout.getNonVirtualSize().getQuantity();
-  OS << ", nvalign=" << Layout.getNonVirtualAlign().getQuantity() << '\n';
+
+  PrintIndentNoOffset(OS, IndentLevel - 1);
+  OS << " nvsize=" << Layout.getNonVirtualSize().getQuantity();
+  OS << ", nvalign=" << Layout.getNonVirtualAlign().getQuantity() << "]\n";
   OS << '\n';
 }
 
