@@ -2045,6 +2045,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
   CheckCompletedCXXClass(Instantiation);
 
   // Attach any in-class member initializers now the class is complete.
+  // FIXME: We are supposed to defer instantiating these until they are needed.
   if (!FieldsWithMemberInitializers.empty()) {
     // C++11 [expr.prim.general]p4:
     //   Otherwise, if a member-declarator declares a non-static data member 
