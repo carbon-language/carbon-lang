@@ -1923,6 +1923,17 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     ToData.HasInClassInitializer = FromData.HasInClassInitializer;
     ToData.HasUninitializedReferenceMember
       = FromData.HasUninitializedReferenceMember;
+    ToData.NeedOverloadResolutionForMoveConstructor
+      = FromData.NeedOverloadResolutionForMoveConstructor;
+    ToData.NeedOverloadResolutionForMoveAssignment
+      = FromData.NeedOverloadResolutionForMoveAssignment;
+    ToData.NeedOverloadResolutionForDestructor
+      = FromData.NeedOverloadResolutionForDestructor;
+    ToData.DefaultedMoveConstructorIsDeleted
+      = FromData.DefaultedMoveConstructorIsDeleted;
+    ToData.DefaultedMoveAssignmentIsDeleted
+      = FromData.DefaultedMoveAssignmentIsDeleted;
+    ToData.DefaultedDestructorIsDeleted = FromData.DefaultedDestructorIsDeleted;
     ToData.HasTrivialSpecialMembers = FromData.HasTrivialSpecialMembers;
     ToData.HasIrrelevantDestructor = FromData.HasIrrelevantDestructor;
     ToData.HasConstexprNonCopyMoveConstructor

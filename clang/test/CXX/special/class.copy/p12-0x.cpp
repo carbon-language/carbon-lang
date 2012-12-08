@@ -1,5 +1,7 @@
 // RUN: %clang_cc1 -std=c++11 -verify %s
 
+// expected-no-diagnostics
+
 template<typename T, bool B> struct trivially_copyable_check {
   static_assert(B == __has_trivial_copy(T), "");
   static_assert(B == __is_trivially_constructible(T, T), "");
@@ -52,9 +54,7 @@ using _ = trivially_copyable<TemplateCtorMember>;
 struct MutableTemplateCtorMember {
   mutable TemplateCtor mtc;
 };
-// FIXME: This is wrong! The "trivial" copy constructor calls the templated
-//        constructor for the mutable member.
-static_assert(!__is_trivially_constructible(MutableTemplateCtorMember, const MutableTemplateCtorMember &), ""); // expected-error {{}}
+static_assert(!__is_trivially_constructible(MutableTemplateCtorMember, const MutableTemplateCtorMember &), "");
 static_assert(__is_trivially_constructible(MutableTemplateCtorMember, MutableTemplateCtorMember &&), "");
 struct MutableTemplateCtorMember2 {
   MutableTemplateCtorMember2(const MutableTemplateCtorMember2 &) = default;
@@ -118,3 +118,99 @@ static_assert(!__is_trivially_constructible(NCCTNT, volatile NCCTNT &), "");
 static_assert(!__is_trivially_constructible(NCCTNT, NCCTNT &&), "");
 static_assert(!__is_trivially_constructible(NCCTNT, const NCCTNT &&), "");
 static_assert(!__is_trivially_constructible(NCCTNT, volatile NCCTNT &&), "");
+
+struct TemplateCtorNoMove {
+  TemplateCtorNoMove(const TemplateCtorNoMove &) = default;
+  template<typename T> TemplateCtorNoMove(T &&);
+};
+static_assert(__is_trivially_constructible(TemplateCtorNoMove, const TemplateCtorNoMove &), "");
+static_assert(!__is_trivially_constructible(TemplateCtorNoMove, TemplateCtorNoMove &&), "");
+
+struct UseTemplateCtorNoMove {
+  TemplateCtorNoMove tcnm;
+};
+static_assert(__is_trivially_constructible(UseTemplateCtorNoMove, const UseTemplateCtorNoMove &), "");
+static_assert(!__is_trivially_constructible(UseTemplateCtorNoMove, UseTemplateCtorNoMove &&), "");
+
+struct TemplateCtorNoMoveSFINAE {
+  TemplateCtorNoMoveSFINAE(const TemplateCtorNoMoveSFINAE &) = default;
+  template<typename T, typename U = typename T::error> TemplateCtorNoMoveSFINAE(T &&);
+};
+static_assert(__is_trivially_constructible(TemplateCtorNoMoveSFINAE, const TemplateCtorNoMoveSFINAE &), "");
+static_assert(__is_trivially_constructible(TemplateCtorNoMoveSFINAE, TemplateCtorNoMoveSFINAE &&), "");
+
+struct UseTemplateCtorNoMoveSFINAE {
+  TemplateCtorNoMoveSFINAE tcnm;
+};
+static_assert(__is_trivially_constructible(UseTemplateCtorNoMoveSFINAE, const UseTemplateCtorNoMoveSFINAE &), "");
+static_assert(__is_trivially_constructible(UseTemplateCtorNoMoveSFINAE, UseTemplateCtorNoMoveSFINAE &&), "");
+
+namespace TrivialityDependsOnImplicitDeletion {
+  struct PrivateMove {
+    PrivateMove(const PrivateMove &) = default;
+  private:
+    PrivateMove(PrivateMove &&);
+    friend class Access;
+  };
+  static_assert(__is_trivially_constructible(PrivateMove, const PrivateMove &), "");
+  static_assert(!__is_trivially_constructible(PrivateMove, PrivateMove &&), "");
+
+  struct NoAccess {
+    PrivateMove pm;
+    // NoAccess's move would be deleted, so is suppressed,
+    // so moves of it use PrivateMove's copy ctor, which is trivial.
+  };
+  static_assert(__is_trivially_constructible(NoAccess, const NoAccess &), "");
+  static_assert(__is_trivially_constructible(NoAccess, NoAccess &&), "");
+  struct TopNoAccess : NoAccess {};
+  static_assert(__is_trivially_constructible(TopNoAccess, const TopNoAccess &), "");
+  static_assert(__is_trivially_constructible(TopNoAccess, TopNoAccess &&), "");
+
+  struct Access {
+    PrivateMove pm;
+    // NoAccess's move would *not* be deleted, so is *not* suppressed,
+    // so moves of it use PrivateMove's move ctor, which is not trivial.
+  };
+  static_assert(__is_trivially_constructible(Access, const Access &), "");
+  static_assert(!__is_trivially_constructible(Access, Access &&), "");
+  struct TopAccess : Access {};
+  static_assert(__is_trivially_constructible(TopAccess, const TopAccess &), "");
+  static_assert(!__is_trivially_constructible(TopAccess, TopAccess &&), "");
+}
+
+namespace TrivialityDependsOnDestructor {
+  class HasInaccessibleDestructor { ~HasInaccessibleDestructor() = default; };
+  struct HasImplicitlyDeletedDestructor : HasInaccessibleDestructor {};
+  struct HasImplicitlyDeletedCopyCtor : HasImplicitlyDeletedDestructor {
+    HasImplicitlyDeletedCopyCtor() = default;
+    template<typename T> HasImplicitlyDeletedCopyCtor(T &&);
+    // Copy ctor is deleted but trivial.
+    // Move ctor is suppressed.
+    HasImplicitlyDeletedCopyCtor(const HasImplicitlyDeletedCopyCtor&) = default;
+    HasImplicitlyDeletedCopyCtor(HasImplicitlyDeletedCopyCtor&&) = default;
+  };
+  struct Test : HasImplicitlyDeletedCopyCtor {
+    Test(const Test&) = default;
+    Test(Test&&) = default;
+  };
+  // Implicit copy ctor calls deleted trivial copy ctor.
+  static_assert(__has_trivial_copy(Test), "");
+  // This is false because the destructor is deleted.
+  static_assert(!__is_trivially_constructible(Test, const Test &), "");
+  // Implicit move ctor calls template ctor.
+  static_assert(!__is_trivially_constructible(Test, Test &&), "");
+
+  struct HasAccessibleDestructor { ~HasAccessibleDestructor() = default; };
+  struct HasImplicitlyDefaultedDestructor : HasAccessibleDestructor {};
+  struct HasImplicitlyDefaultedCopyCtor : HasImplicitlyDefaultedDestructor {
+    template<typename T> HasImplicitlyDefaultedCopyCtor(T &&);
+    // Copy ctor is trivial.
+    // Move ctor is trivial.
+  };
+  struct Test2 : HasImplicitlyDefaultedCopyCtor {};
+  // Implicit copy ctor calls trivial copy ctor.
+  static_assert(__has_trivial_copy(Test2), "");
+  static_assert(__is_trivially_constructible(Test2, const Test2 &), "");
+  // Implicit move ctor calls trivial move ctor.
+  static_assert(__is_trivially_constructible(Test2, Test2 &&), "");
+}

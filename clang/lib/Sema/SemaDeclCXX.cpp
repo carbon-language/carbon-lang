@@ -5036,12 +5036,6 @@ void Sema::DiagnoseNontrivial(const CXXRecordDecl *RD, CXXSpecialMember CSM) {
 /// C++11 [class.copy]p25, and C++11 [class.dtor]p5.
 bool Sema::SpecialMemberIsTrivial(CXXMethodDecl *MD, CXXSpecialMember CSM,
                                   bool Diagnose) {
-  // Note that we can't work out CSM for ourselves. Consider this:
-  //
-  //   struct S { S(int); S(const S&=0) = delete; };
-  //
-  // The same function is a trivial copy constructor but a non-trivial default
-  // constructor.
   assert(!MD->isUserProvided() && CSM != CXXInvalid && "not special enough");
 
   CXXRecordDecl *RD = MD->getParent();
@@ -5337,20 +5331,32 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
   if (!ClassDecl->hasUserDeclaredConstructor())
     ++ASTContext::NumImplicitDefaultConstructors;
 
-  if (!ClassDecl->hasUserDeclaredCopyConstructor())
+  if (!ClassDecl->hasUserDeclaredCopyConstructor()) {
     ++ASTContext::NumImplicitCopyConstructors;
 
-  if (getLangOpts().CPlusPlus0x && ClassDecl->needsImplicitMoveConstructor())
+    // If the properties or semantics of the copy constructor couldn't be
+    // determined while the class was being declared, force a declaration
+    // of it now.
+    if (ClassDecl->needsOverloadResolutionForCopyConstructor())
+      DeclareImplicitCopyConstructor(ClassDecl);
+  }
+
+  if (getLangOpts().CPlusPlus0x && ClassDecl->needsImplicitMoveConstructor()) {
     ++ASTContext::NumImplicitMoveConstructors;
+
+    if (ClassDecl->needsOverloadResolutionForMoveConstructor())
+      DeclareImplicitMoveConstructor(ClassDecl);
+  }
 
   if (!ClassDecl->hasUserDeclaredCopyAssignment()) {
     ++ASTContext::NumImplicitCopyAssignmentOperators;
-    
-    // If we have a dynamic class, then the copy assignment operator may be 
+
+    // If we have a dynamic class, then the copy assignment operator may be
     // virtual, so we have to declare it immediately. This ensures that, e.g.,
-    // it shows up in the right place in the vtable and that we diagnose 
-    // problems with the implicit exception specification.    
-    if (ClassDecl->isDynamicClass())
+    // it shows up in the right place in the vtable and that we diagnose
+    // problems with the implicit exception specification.
+    if (ClassDecl->isDynamicClass() ||
+        ClassDecl->needsOverloadResolutionForCopyAssignment())
       DeclareImplicitCopyAssignment(ClassDecl);
   }
 
@@ -5358,18 +5364,20 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
     ++ASTContext::NumImplicitMoveAssignmentOperators;
 
     // Likewise for the move assignment operator.
-    if (ClassDecl->isDynamicClass())
+    if (ClassDecl->isDynamicClass() ||
+        ClassDecl->needsOverloadResolutionForMoveAssignment())
       DeclareImplicitMoveAssignment(ClassDecl);
   }
 
   if (!ClassDecl->hasUserDeclaredDestructor()) {
     ++ASTContext::NumImplicitDestructors;
-    
-    // If we have a dynamic class, then the destructor may be virtual, so we 
+
+    // If we have a dynamic class, then the destructor may be virtual, so we
     // have to declare the destructor immediately. This ensures that, e.g., it
     // shows up in the right place in the vtable and that we diagnose problems
     // with the implicit exception specification.
-    if (ClassDecl->isDynamicClass())
+    if (ClassDecl->isDynamicClass() ||
+        ClassDecl->needsOverloadResolutionForDestructor())
       DeclareImplicitDestructor(ClassDecl);
   }
 }
@@ -7434,7 +7442,6 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   DefaultCon->setAccess(AS_public);
   DefaultCon->setDefaulted();
   DefaultCon->setImplicit();
-  DefaultCon->setTrivial(ClassDecl->hasTrivialDefaultConstructor());
 
   // Build an exception specification pointing back at this constructor.
   FunctionProtoType::ExtProtoInfo EPI;
@@ -7442,16 +7449,20 @@ CXXConstructorDecl *Sema::DeclareImplicitDefaultConstructor(
   EPI.ExceptionSpecDecl = DefaultCon;
   DefaultCon->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
 
+  // We don't need to use SpecialMemberIsTrivial here; triviality for default
+  // constructors is easy to compute.
+  DefaultCon->setTrivial(ClassDecl->hasTrivialDefaultConstructor());
+
+  if (ShouldDeleteSpecialMember(DefaultCon, CXXDefaultConstructor))
+    DefaultCon->setDeletedAsWritten();
+
   // Note that we have declared this constructor.
   ++ASTContext::NumImplicitDefaultConstructorsDeclared;
-  
+
   if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(DefaultCon, S, false);
   ClassDecl->addDecl(DefaultCon);
 
-  if (ShouldDeleteSpecialMember(DefaultCon, CXXDefaultConstructor))
-    DefaultCon->setDeletedAsWritten();
-  
   return DefaultCon;
 }
 
@@ -7785,13 +7796,21 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   Destructor->setAccess(AS_public);
   Destructor->setDefaulted();
   Destructor->setImplicit();
-  Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
 
   // Build an exception specification pointing back at this destructor.
   FunctionProtoType::ExtProtoInfo EPI;
   EPI.ExceptionSpecType = EST_Unevaluated;
   EPI.ExceptionSpecDecl = Destructor;
   Destructor->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
+
+  AddOverriddenMethods(ClassDecl, Destructor);
+
+  // We don't need to use SpecialMemberIsTrivial here; triviality for
+  // destructors is easy to compute.
+  Destructor->setTrivial(ClassDecl->hasTrivialDestructor());
+
+  if (ShouldDeleteSpecialMember(Destructor, CXXDestructor))
+    Destructor->setDeletedAsWritten();
 
   // Note that we have declared this destructor.
   ++ASTContext::NumImplicitDestructorsDeclared;
@@ -7800,11 +7819,6 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
   if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(Destructor, S, false);
   ClassDecl->addDecl(Destructor);
-
-  AddOverriddenMethods(ClassDecl, Destructor);
-
-  if (ShouldDeleteSpecialMember(Destructor, CXXDestructor))
-    Destructor->setDeletedAsWritten();
 
   return Destructor;
 }
@@ -8278,7 +8292,6 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   CopyAssignment->setAccess(AS_public);
   CopyAssignment->setDefaulted();
   CopyAssignment->setImplicit();
-  CopyAssignment->setTrivial(ClassDecl->hasTrivialCopyAssignment());
 
   // Build an exception specification pointing back at this member.
   FunctionProtoType::ExtProtoInfo EPI;
@@ -8293,14 +8306,14 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
                                                SC_None,
                                                SC_None, 0);
   CopyAssignment->setParams(FromParam);
-  
-  // Note that we have added this copy-assignment operator.
-  ++ASTContext::NumImplicitCopyAssignmentOperatorsDeclared;
 
-  if (Scope *S = getScopeForContext(ClassDecl))
-    PushOnScopeChains(CopyAssignment, S, false);
-  ClassDecl->addDecl(CopyAssignment);
-  
+  AddOverriddenMethods(ClassDecl, CopyAssignment);
+
+  CopyAssignment->setTrivial(
+    ClassDecl->needsOverloadResolutionForCopyAssignment()
+      ? SpecialMemberIsTrivial(CopyAssignment, CXXCopyAssignment)
+      : ClassDecl->hasTrivialCopyAssignment());
+
   // C++0x [class.copy]p19:
   //   ....  If the class definition does not explicitly declare a copy
   //   assignment operator, there is no user-declared move constructor, and
@@ -8309,7 +8322,13 @@ CXXMethodDecl *Sema::DeclareImplicitCopyAssignment(CXXRecordDecl *ClassDecl) {
   if (ShouldDeleteSpecialMember(CopyAssignment, CXXCopyAssignment))
     CopyAssignment->setDeletedAsWritten();
 
-  AddOverriddenMethods(ClassDecl, CopyAssignment);
+  // Note that we have added this copy-assignment operator.
+  ++ASTContext::NumImplicitCopyAssignmentOperatorsDeclared;
+
+  if (Scope *S = getScopeForContext(ClassDecl))
+    PushOnScopeChains(CopyAssignment, S, false);
+  ClassDecl->addDecl(CopyAssignment);
+
   return CopyAssignment;
 }
 
@@ -8723,7 +8742,6 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
   MoveAssignment->setAccess(AS_public);
   MoveAssignment->setDefaulted();
   MoveAssignment->setImplicit();
-  MoveAssignment->setTrivial(ClassDecl->hasTrivialMoveAssignment());
 
   // Build an exception specification pointing back at this member.
   FunctionProtoType::ExtProtoInfo EPI;
@@ -8739,8 +8757,12 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
                                                SC_None, 0);
   MoveAssignment->setParams(FromParam);
 
-  // Note that we have added this copy-assignment operator.
-  ++ASTContext::NumImplicitMoveAssignmentOperatorsDeclared;
+  AddOverriddenMethods(ClassDecl, MoveAssignment);
+
+  MoveAssignment->setTrivial(
+    ClassDecl->needsOverloadResolutionForMoveAssignment()
+      ? SpecialMemberIsTrivial(MoveAssignment, CXXMoveAssignment)
+      : ClassDecl->hasTrivialMoveAssignment());
 
   // C++0x [class.copy]p9:
   //   If the definition of a class X does not explicitly declare a move
@@ -8756,11 +8778,13 @@ CXXMethodDecl *Sema::DeclareImplicitMoveAssignment(CXXRecordDecl *ClassDecl) {
     return 0;
   }
 
+  // Note that we have added this copy-assignment operator.
+  ++ASTContext::NumImplicitMoveAssignmentOperatorsDeclared;
+
   if (Scope *S = getScopeForContext(ClassDecl))
     PushOnScopeChains(MoveAssignment, S, false);
   ClassDecl->addDecl(MoveAssignment);
 
-  AddOverriddenMethods(ClassDecl, MoveAssignment);
   return MoveAssignment;
 }
 
@@ -9071,7 +9095,6 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
       Constexpr);
   CopyConstructor->setAccess(AS_public);
   CopyConstructor->setDefaulted();
-  CopyConstructor->setTrivial(ClassDecl->hasTrivialCopyConstructor());
 
   // Build an exception specification pointing back at this member.
   FunctionProtoType::ExtProtoInfo EPI;
@@ -9080,9 +9103,6 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   CopyConstructor->setType(
       Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI));
 
-  // Note that we have declared this constructor.
-  ++ASTContext::NumImplicitCopyConstructorsDeclared;
-  
   // Add the parameter to the constructor.
   ParmVarDecl *FromParam = ParmVarDecl::Create(Context, CopyConstructor,
                                                ClassLoc, ClassLoc,
@@ -9092,9 +9112,10 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
                                                SC_None, 0);
   CopyConstructor->setParams(FromParam);
 
-  if (Scope *S = getScopeForContext(ClassDecl))
-    PushOnScopeChains(CopyConstructor, S, false);
-  ClassDecl->addDecl(CopyConstructor);
+  CopyConstructor->setTrivial(
+    ClassDecl->needsOverloadResolutionForCopyConstructor()
+      ? SpecialMemberIsTrivial(CopyConstructor, CXXCopyConstructor)
+      : ClassDecl->hasTrivialCopyConstructor());
 
   // C++11 [class.copy]p8:
   //   ... If the class definition does not explicitly declare a copy
@@ -9103,6 +9124,13 @@ CXXConstructorDecl *Sema::DeclareImplicitCopyConstructor(
   //   declared as defaulted.
   if (ShouldDeleteSpecialMember(CopyConstructor, CXXCopyConstructor))
     CopyConstructor->setDeletedAsWritten();
+
+  // Note that we have declared this constructor.
+  ++ASTContext::NumImplicitCopyConstructorsDeclared;
+
+  if (Scope *S = getScopeForContext(ClassDecl))
+    PushOnScopeChains(CopyConstructor, S, false);
+  ClassDecl->addDecl(CopyConstructor);
 
   return CopyConstructor;
 }
@@ -9254,7 +9282,6 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
       Constexpr);
   MoveConstructor->setAccess(AS_public);
   MoveConstructor->setDefaulted();
-  MoveConstructor->setTrivial(ClassDecl->hasTrivialMoveConstructor());
 
   // Build an exception specification pointing back at this member.
   FunctionProtoType::ExtProtoInfo EPI;
@@ -9271,6 +9298,11 @@ CXXConstructorDecl *Sema::DeclareImplicitMoveConstructor(
                                                SC_None,
                                                SC_None, 0);
   MoveConstructor->setParams(FromParam);
+
+  MoveConstructor->setTrivial(
+    ClassDecl->needsOverloadResolutionForMoveConstructor()
+      ? SpecialMemberIsTrivial(MoveConstructor, CXXMoveConstructor)
+      : ClassDecl->hasTrivialMoveConstructor());
 
   // C++0x [class.copy]p9:
   //   If the definition of a class X does not explicitly declare a move

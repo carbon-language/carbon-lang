@@ -358,6 +358,22 @@ class CXXRecordDecl : public RecordDecl {
     /// is illegal in C++98 even if the class has a trivial default constructor.
     bool HasUninitializedReferenceMember : 1;
 
+    /// \brief These flags are \c true if a defaulted corresponding special
+    /// member can't be fully analyzed without performing overload resolution.
+    /// @{
+    bool NeedOverloadResolutionForMoveConstructor : 1;
+    bool NeedOverloadResolutionForMoveAssignment : 1;
+    bool NeedOverloadResolutionForDestructor : 1;
+    /// @}
+
+    /// \brief These flags are \c true if an implicit defaulted corresponding
+    /// special member would be defined as deleted.
+    /// @{
+    bool DefaultedMoveConstructorIsDeleted : 1;
+    bool DefaultedMoveAssignmentIsDeleted : 1;
+    bool DefaultedDestructorIsDeleted : 1;
+    /// @}
+
     /// \brief The trivial special members which this class has, per
     /// C++11 [class.ctor]p5, C++11 [class.copy]p12, C++11 [class.copy]p25,
     /// C++11 [class.dtor]p5, or would have if the member were not suppressed.
@@ -566,6 +582,10 @@ class CXXRecordDecl : public RecordDecl {
   friend class DeclContext;
   friend class LambdaExpr;
 
+  /// \brief Called from setBases and addedMember to notify the class that a
+  /// direct or virtual base class or a member of class type has been added.
+  void addedClassSubobject(CXXRecordDecl *Base);
+
   /// \brief Notify the class that member has been added.
   ///
   /// This routine helps maintain information about the class based on which
@@ -733,6 +753,23 @@ public:
     return data().FirstFriend != 0;
   }
 
+  /// \brief \c true if we know for sure that this class has a single,
+  /// accessible, unambiguous move constructor that is not deleted.
+  bool hasSimpleMoveConstructor() const {
+    return !hasUserDeclaredMoveConstructor() && hasMoveConstructor();
+  }
+  /// \brief \c true if we know for sure that this class has a single,
+  /// accessible, unambiguous move assignment operator that is not deleted.
+  bool hasSimpleMoveAssignment() const {
+    return !hasUserDeclaredMoveAssignment() && hasMoveAssignment();
+  }
+  /// \brief \c true if we know for sure that this class has an accessible
+  /// destructor that is not deleted.
+  bool hasSimpleDestructor() const {
+    return !hasUserDeclaredDestructor() &&
+           !data().DefaultedDestructorIsDeleted;
+  }
+
   /// \brief Determine whether this class has any default constructors.
   bool hasDefaultConstructor() const {
     return (data().DeclaredSpecialMembers & SMF_DefaultConstructor) ||
@@ -774,6 +811,12 @@ public:
     return !(data().DeclaredSpecialMembers & SMF_CopyConstructor);
   }
 
+  /// \brief Determine whether we need to eagerly declare a defaulted copy
+  /// constructor for this class.
+  bool needsOverloadResolutionForCopyConstructor() const {
+    return data().HasMutableFields;
+  }
+
   /// \brief Determine whether an implicit copy constructor for this type
   /// would have a parameter with a const-qualified reference type.
   bool implicitCopyConstructorHasConstParam() const {
@@ -803,8 +846,6 @@ public:
   }
 
   /// \brief Determine whether this class has a move constructor.
-  /// FIXME: This can be wrong if the implicit move constructor would be
-  /// deleted.
   bool hasMoveConstructor() const {
     return (data().DeclaredSpecialMembers & SMF_MoveConstructor) ||
            needsImplicitMoveConstructor();
@@ -824,17 +865,20 @@ public:
 
   /// \brief Determine whether this class should get an implicit move
   /// constructor or if any existing special member function inhibits this.
-  ///
-  /// Covers all bullets of C++0x [class.copy]p9 except the last, that the
-  /// constructor wouldn't be deleted, which is only looked up from a cached
-  /// result.
   bool needsImplicitMoveConstructor() const {
     return !hasFailedImplicitMoveConstructor() &&
            !(data().DeclaredSpecialMembers & SMF_MoveConstructor) &&
            !hasUserDeclaredCopyConstructor() &&
            !hasUserDeclaredCopyAssignment() &&
            !hasUserDeclaredMoveAssignment() &&
-           !hasUserDeclaredDestructor();
+           !hasUserDeclaredDestructor() &&
+           !data().DefaultedMoveConstructorIsDeleted;
+  }
+
+  /// \brief Determine whether we need to eagerly declare a defaulted move
+  /// constructor for this class.
+  bool needsOverloadResolutionForMoveConstructor() const {
+    return data().NeedOverloadResolutionForMoveConstructor;
   }
 
   /// hasUserDeclaredCopyAssignment - Whether this class has a
@@ -848,6 +892,12 @@ public:
   /// assignment operator to be lazily declared.
   bool needsImplicitCopyAssignment() const {
     return !(data().DeclaredSpecialMembers & SMF_CopyAssignment);
+  }
+
+  /// \brief Determine whether we need to eagerly declare a defaulted copy
+  /// assignment operator for this class.
+  bool needsOverloadResolutionForCopyAssignment() const {
+    return data().HasMutableFields;
   }
 
   /// \brief Determine whether an implicit copy assignment operator for this
@@ -872,7 +922,6 @@ public:
   }
 
   /// \brief Determine whether this class has a move assignment operator.
-  /// FIXME: This can be wrong if the implicit move assignment would be deleted.
   bool hasMoveAssignment() const {
     return (data().DeclaredSpecialMembers & SMF_MoveAssignment) ||
            needsImplicitMoveAssignment();
@@ -893,16 +942,20 @@ public:
   /// \brief Determine whether this class should get an implicit move
   /// assignment operator or if any existing special member function inhibits
   /// this.
-  ///
-  /// Covers all bullets of C++0x [class.copy]p20 except the last, that the
-  /// constructor wouldn't be deleted.
   bool needsImplicitMoveAssignment() const {
     return !hasFailedImplicitMoveAssignment() &&
            !(data().DeclaredSpecialMembers & SMF_MoveAssignment) &&
            !hasUserDeclaredCopyConstructor() &&
            !hasUserDeclaredCopyAssignment() &&
            !hasUserDeclaredMoveConstructor() &&
-           !hasUserDeclaredDestructor();
+           !hasUserDeclaredDestructor() &&
+           !data().DefaultedMoveAssignmentIsDeleted;
+  }
+
+  /// \brief Determine whether we need to eagerly declare a move assignment
+  /// operator for this class.
+  bool needsOverloadResolutionForMoveAssignment() const {
+    return data().NeedOverloadResolutionForMoveAssignment;
   }
 
   /// hasUserDeclaredDestructor - Whether this class has a
@@ -918,9 +971,15 @@ public:
     return !(data().DeclaredSpecialMembers & SMF_Destructor);
   }
 
+  /// \brief Determine whether we need to eagerly declare a destructor for this
+  /// class.
+  bool needsOverloadResolutionForDestructor() const {
+    return data().NeedOverloadResolutionForDestructor;
+  }
+
   /// \brief Determine whether this class describes a lambda function object.
   bool isLambda() const { return hasDefinition() && data().IsLambda; }
-  
+
   /// \brief For a closure type, retrieve the mapping from captured
   /// variables and this to the non-static data members that store the
   /// values or references of the captures.
@@ -1067,8 +1126,6 @@ public:
 
   /// \brief Determine whether this class has a trivial move constructor
   /// (C++11 [class.copy]p12)
-  /// FIXME: This can be wrong if the implicit move constructor would be
-  /// deleted.
   bool hasTrivialMoveConstructor() const {
     return hasMoveConstructor() &&
            (data().HasTrivialSpecialMembers & SMF_MoveConstructor);
@@ -1076,8 +1133,6 @@ public:
 
   /// \brief Determine whether this class has a non-trivial move constructor
   /// (C++11 [class.copy]p12)
-  /// FIXME: This can be wrong if the implicit move constructor would be
-  /// deleted.
   bool hasNonTrivialMoveConstructor() const {
     return (data().DeclaredNonTrivialSpecialMembers & SMF_MoveConstructor) ||
            (needsImplicitMoveConstructor() &&
@@ -1099,7 +1154,6 @@ public:
 
   /// \brief Determine whether this class has a trivial move assignment operator
   /// (C++11 [class.copy]p25)
-  /// FIXME: This can be wrong if the implicit move assignment would be deleted.
   bool hasTrivialMoveAssignment() const {
     return hasMoveAssignment() &&
            (data().HasTrivialSpecialMembers & SMF_MoveAssignment);
@@ -1107,7 +1161,6 @@ public:
 
   /// \brief Determine whether this class has a non-trivial move assignment
   /// operator (C++11 [class.copy]p25)
-  /// FIXME: This can be wrong if the implicit move assignment would be deleted.
   bool hasNonTrivialMoveAssignment() const {
     return (data().DeclaredNonTrivialSpecialMembers & SMF_MoveAssignment) ||
            (needsImplicitMoveAssignment() &&
