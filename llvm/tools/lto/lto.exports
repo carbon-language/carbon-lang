@@ -27,6 +27,7 @@ lto_codegen_debug_options
 lto_codegen_set_assembler_args
 lto_codegen_set_assembler_path
 lto_codegen_set_cpu
+lto_codegen_set_export_dynamic
 lto_codegen_compile_to_file
 LLVMCreateDisasm
 LLVMCreateDisasmCPU

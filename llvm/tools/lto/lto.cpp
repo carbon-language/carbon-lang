@@ -174,6 +174,12 @@ void lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
   // In here only for backwards compatibility. We use MC now.
 }
 
+/// lto_codegen_set_export_dynamic - If set, then codegen will export all
+/// symbols (e.g. the internalize pass won't run).
+void lto_codegen_set_export_dynamic(lto_code_gen_t cg, bool val) {
+  cg->setExportDynamic(val);
+}
+
 /// lto_codegen_add_must_preserve_symbol - Adds to a list of all global symbols
 /// that must exist in the final generated code. If a function is not listed
 /// there, it might be inlined into every usage and optimized away.

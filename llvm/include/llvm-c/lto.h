@@ -251,6 +251,13 @@ lto_codegen_set_assembler_args(lto_code_gen_t cg, const char **args,
                                int nargs);
 
 /**
+ * If set, then codegen will export all symbols (e.g. the internalize
+ * pass won't run).
+ */
+extern void
+lto_codegen_set_export_dynamic(lto_code_gen_t cg, bool val);
+
+/**
  * Adds to a list of all global symbols that must exist in the final
  * generated code.  If a function is not listed, it might be
  * inlined into every usage and optimized away.
