@@ -624,6 +624,13 @@ ScriptInterpreterPython::EnterSession (bool init_lldb_globals)
         run_string.PutCString ("; lldb.frame = lldb.thread.GetSelectedFrame ()");
         run_string.PutCString ("')");
     }
+    else
+    {
+        // If we aren't initing the globals, we should still always set the debugger (since that is always unique.)
+        run_string.Printf (    "run_one_line (%s, \"lldb.debugger_unique_id = %" PRIu64, m_dictionary_name.c_str(), GetCommandInterpreter().GetDebugger().GetID());
+        run_string.Printf (    "; lldb.debugger = lldb.SBDebugger.FindDebuggerWithID (%" PRIu64 ")", GetCommandInterpreter().GetDebugger().GetID());
+        run_string.PutCString ("\")");
+    }
 
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
