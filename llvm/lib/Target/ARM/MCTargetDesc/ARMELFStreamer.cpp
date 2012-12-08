@@ -150,8 +150,9 @@ private:
     MCSymbol *Start = getContext().CreateTempSymbol();
     EmitLabel(Start);
 
-    StringRef UniqueName = Name.str() + "." + itostr(MappingSymbolCounter++);
-    MCSymbol *Symbol = getContext().GetOrCreateSymbol(UniqueName);
+    MCSymbol *Symbol =
+      getContext().GetOrCreateSymbol(Name.str() + "." +
+                                     itostr(MappingSymbolCounter++));
 
     MCSymbolData &SD = getAssembler().getOrCreateSymbolData(*Symbol);
     MCELF::SetType(SD, ELF::STT_NOTYPE);
