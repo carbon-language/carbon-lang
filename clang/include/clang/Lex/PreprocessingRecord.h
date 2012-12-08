@@ -570,6 +570,15 @@ namespace clang {
                                     StringRef SearchPath,
                                     StringRef RelativePath,
                                     const Module *Imported);
+    virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
+                       const MacroInfo *MI);
+    virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
+                        const MacroInfo *MI);
+    /// \brief Hook called whenever the 'defined' operator is seen.
+    virtual void Defined(const Token &MacroNameTok, const MacroInfo *MI);
+
+    void addMacroExpansion(const Token &Id, const MacroInfo *MI,
+                           SourceRange Range);
 
     /// \brief Cached result of the last \see getPreprocessedEntitiesInRange
     /// query.

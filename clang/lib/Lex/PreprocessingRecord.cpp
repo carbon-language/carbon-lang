@@ -357,8 +357,9 @@ MacroDefinition *PreprocessingRecord::findMacroDefinition(const MacroInfo *MI) {
   return cast<MacroDefinition>(Entity);
 }
 
-void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI,
-                                       SourceRange Range) {
+void PreprocessingRecord::addMacroExpansion(const Token &Id,
+                                            const MacroInfo *MI,
+                                            SourceRange Range) {
   // We don't record nested macro expansions.
   if (Id.getLocation().isMacroID())
     return;
@@ -369,6 +370,32 @@ void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI,
   else if (MacroDefinition *Def = findMacroDefinition(MI))
     addPreprocessedEntity(
                        new (*this) MacroExpansion(Def, Range));
+}
+
+void PreprocessingRecord::Ifdef(SourceLocation Loc, const Token &MacroNameTok,
+                                const MacroInfo *MI) {
+  // This is not actually a macro expansion but record it as a macro reference.
+  if (MI)
+    addMacroExpansion(MacroNameTok, MI, MacroNameTok.getLocation());
+}
+
+void PreprocessingRecord::Ifndef(SourceLocation Loc, const Token &MacroNameTok,
+                                 const MacroInfo *MI) {
+  // This is not actually a macro expansion but record it as a macro reference.
+  if (MI)
+    addMacroExpansion(MacroNameTok, MI, MacroNameTok.getLocation());
+}
+
+void PreprocessingRecord::Defined(const Token &MacroNameTok,
+                                  const MacroInfo *MI) {
+  // This is not actually a macro expansion but record it as a macro reference.
+  if (MI)
+    addMacroExpansion(MacroNameTok, MI, MacroNameTok.getLocation());
+}
+
+void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI,
+                                       SourceRange Range) {
+  addMacroExpansion(Id, MI, Range);
 }
 
 void PreprocessingRecord::MacroDefined(const Token &Id,
