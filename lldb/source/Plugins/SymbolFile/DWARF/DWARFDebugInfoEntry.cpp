@@ -798,6 +798,7 @@ DWARFDebugInfoEntry::GetDIENamesAndRanges
                     break;
 
                 case DW_AT_MIPS_linkage_name:
+                case DW_AT_linkage_name:
                     if (mangled == NULL)
                         mangled = form_value.AsCString(&dwarf2Data->get_debug_str_data());
                     break;
@@ -1488,6 +1489,9 @@ DWARFDebugInfoEntry::GetMangledName
     if (GetAttributeValue(dwarf2Data, cu, DW_AT_MIPS_linkage_name, form_value))
         name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
 
+    if (GetAttributeValue(dwarf2Data, cu, DW_AT_linkage_name, form_value))
+        name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+
     if (substitute_name_allowed && name == NULL)
     {
         if (GetAttributeValue(dwarf2Data, cu, DW_AT_name, form_value))
@@ -1517,6 +1521,8 @@ DWARFDebugInfoEntry::GetPubname
     DWARFFormValue form_value;
 
     if (GetAttributeValue(dwarf2Data, cu, DW_AT_MIPS_linkage_name, form_value))
+        name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
+    else if (GetAttributeValue(dwarf2Data, cu, DW_AT_linkage_name, form_value))
         name = form_value.AsCString(&dwarf2Data->get_debug_str_data());
     else if (GetAttributeValue(dwarf2Data, cu, DW_AT_name, form_value))
         name = form_value.AsCString(&dwarf2Data->get_debug_str_data());

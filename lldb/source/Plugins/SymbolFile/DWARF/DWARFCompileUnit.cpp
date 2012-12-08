@@ -657,6 +657,7 @@ DWARFCompileUnit::Index (const uint32_t cu_idx,
 //                    break;
 
                 case DW_AT_MIPS_linkage_name:
+                case DW_AT_linkage_name:
                     if (attributes.ExtractFormValueAtIndex(m_dwarf2Data, i, form_value))
                         mangled_cstr = form_value.AsCString(debug_str);                        
                     break;

@@ -3274,6 +3274,8 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
         DWARFFormValue form_value;
         die->GetAttributes(this, dwarf_cu, NULL, attributes);
         uint32_t idx = attributes.FindAttributeIndex(DW_AT_MIPS_linkage_name);
+        if (idx == UINT32_MAX)
+            idx = attributes.FindAttributeIndex(DW_AT_linkage_name);
         if (idx != UINT32_MAX)
         {
             if (attributes.ExtractFormValueAtIndex(this, idx, form_value))
@@ -6056,6 +6058,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                     type_name_const_str.SetCString(type_name_cstr);
                                     break;
 
+                                case DW_AT_linkage_name:
                                 case DW_AT_MIPS_linkage_name:   break; // mangled = form_value.AsCString(&get_debug_str_data()); break;
                                 case DW_AT_type:                type_die_offset = form_value.Reference(dwarf_cu); break;
                                 case DW_AT_accessibility:       accessibility = DW_ACCESS_to_AccessType(form_value.Unsigned()); break;
@@ -6893,6 +6896,7 @@ SymbolFileDWARF::ParseVariableDIE
                     case DW_AT_decl_line:   decl.SetLine(form_value.Unsigned()); break;
                     case DW_AT_decl_column: decl.SetColumn(form_value.Unsigned()); break;
                     case DW_AT_name:        name = form_value.AsCString(&get_debug_str_data()); break;
+                    case DW_AT_linkage_name:
                     case DW_AT_MIPS_linkage_name: mangled = form_value.AsCString(&get_debug_str_data()); break;
                     case DW_AT_type:        type_uid = form_value.Reference(dwarf_cu); break;
                     case DW_AT_external:    is_external = form_value.Unsigned() != 0; break;
