@@ -3818,6 +3818,67 @@ private:
   Data* datap2_ PT_GUARDED_BY(mu_);
 };
 
-
 }  // end namespace GuardedNonPrimitiveTypeTest
+
+
+namespace GuardedNonPrimitive_MemberAccess {
+
+class Cell {
+public:
+  Cell(int i);
+
+  void cellMethod();
+
+  int a;
+};
+
+
+class Foo {
+public:
+  int   a;
+  Cell  c  GUARDED_BY(cell_mu_);
+  Cell* cp PT_GUARDED_BY(cell_mu_);
+
+  void myMethod();
+
+  Mutex cell_mu_;
+};
+
+
+class Bar {
+private:
+  Mutex mu_;
+  Foo  foo  GUARDED_BY(mu_);
+  Foo* foop PT_GUARDED_BY(mu_);
+
+  void test() {
+    foo.myMethod();      // expected-warning {{reading variable 'foo' requires locking 'mu_'}}
+
+    int fa = foo.a;      // expected-warning {{reading variable 'foo' requires locking 'mu_'}}
+    foo.a  = fa;         // expected-warning {{writing variable 'foo' requires locking 'mu_' exclusively}}
+
+    fa = foop->a;        // expected-warning {{reading the value pointed to by 'foop' requires locking 'mu_'}}
+    foop->a = fa;        // expected-warning {{writing the value pointed to by 'foop' requires locking 'mu_' exclusively}}
+
+    fa = (*foop).a;      // expected-warning {{reading the value pointed to by 'foop' requires locking 'mu_'}}
+    (*foop).a = fa;      // expected-warning {{writing the value pointed to by 'foop' requires locking 'mu_' exclusively}}
+
+    foo.c  = Cell(0);    // expected-warning {{writing variable 'foo' requires locking 'mu_'}} \
+                         // expected-warning {{writing variable 'c' requires locking 'foo.cell_mu_' exclusively}}
+    foo.c.cellMethod();  // expected-warning {{reading variable 'foo' requires locking 'mu_'}} \
+                         // expected-warning {{reading variable 'c' requires locking 'foo.cell_mu_'}}
+
+    foop->c  = Cell(0);    // expected-warning {{writing the value pointed to by 'foop' requires locking 'mu_'}} \
+                           // expected-warning {{writing variable 'c' requires locking 'foop->cell_mu_' exclusively}}
+    foop->c.cellMethod();  // expected-warning {{reading the value pointed to by 'foop' requires locking 'mu_'}} \
+                           // expected-warning {{reading variable 'c' requires locking 'foop->cell_mu_'}}
+
+    (*foop).c  = Cell(0);    // expected-warning {{writing the value pointed to by 'foop' requires locking 'mu_'}} \
+                             // expected-warning {{writing variable 'c' requires locking 'foop->cell_mu_' exclusively}}
+    (*foop).c.cellMethod();  // expected-warning {{reading the value pointed to by 'foop' requires locking 'mu_'}} \
+                             // expected-warning {{reading variable 'c' requires locking 'foop->cell_mu_'}}
+  };
+};
+
+}  // namespace GuardedNonPrimitive_MemberAccess
 

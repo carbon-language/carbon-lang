@@ -1858,6 +1858,15 @@ void BuildLockset::checkAccess(const Expr *Exp, AccessKind AK) {
     return;
   }
 
+  if (Analyzer->Handler.issueBetaWarnings()) {
+    if (const MemberExpr *ME = dyn_cast<MemberExpr>(Exp)) {
+      if (ME->isArrow())
+        checkPtAccess(ME->getBase(), AK);
+      else
+        checkAccess(ME->getBase(), AK);
+    }
+  }
+
   const ValueDecl *D = getValueDecl(Exp);
   if (!D || !D->hasAttrs())
     return;
