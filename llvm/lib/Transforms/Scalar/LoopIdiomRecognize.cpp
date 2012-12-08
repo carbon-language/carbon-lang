@@ -455,7 +455,7 @@ bool NclPopcountRecognize::detectIdiom(Instruction *&CntInst,
         continue;
 
       PHINode *Phi = dyn_cast<PHINode>(Inst->getOperand(0));
-      if (!Phi && Phi->getParent() != LoopEntry)
+      if (!Phi || Phi->getParent() != LoopEntry)
         continue;
 
       // Check if the result of the instruction is live of the loop.
