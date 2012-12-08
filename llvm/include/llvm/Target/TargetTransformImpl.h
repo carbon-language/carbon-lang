@@ -26,7 +26,7 @@ class TargetLowering;
 /// ScalarTargetTransformInfo interface. Different targets can implement
 /// this interface differently.
 class ScalarTargetTransformImpl : public ScalarTargetTransformInfo {
-protected:
+private:
   const TargetLowering *TLI;
 
 public:
