@@ -89,8 +89,10 @@ private:
   virtual void If(SourceLocation Loc, SourceRange ConditionRange);
   virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
                     SourceLocation IfLoc);
-  virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok);
-  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok);
+  virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
+                     const MacroInfo *MI);
+  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
+                      const MacroInfo *MI);
   virtual void Else(SourceLocation Loc, SourceLocation IfLoc);
   virtual void Endif(SourceLocation Loc, SourceLocation IfLoc);
 };

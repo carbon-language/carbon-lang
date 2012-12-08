@@ -111,15 +111,21 @@ static bool EvaluateDefined(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   Result.Val = II->hasMacroDefinition();
   Result.Val.setIsUnsigned(false);  // Result is signed intmax_t.
 
+  MacroInfo *Macro = 0;
   // If there is a macro, mark it used.
   if (Result.Val != 0 && ValueLive) {
-    MacroInfo *Macro = PP.getMacroInfo(II);
+    Macro = PP.getMacroInfo(II);
     PP.markMacroAsUsed(Macro);
   }
 
   // Invoke the 'defined' callback.
-  if (PPCallbacks *Callbacks = PP.getPPCallbacks())
-    Callbacks->Defined(PeekTok);
+  if (PPCallbacks *Callbacks = PP.getPPCallbacks()) {
+    MacroInfo *MI = Macro;
+    // Pass the MacroInfo for the macro name even if the value is dead.
+    if (!MI && Result.Val != 0)
+      MI = PP.getMacroInfo(II);
+    Callbacks->Defined(PeekTok, MI);
+  }
 
   // If we are in parens, ensure we have a trailing ).
   if (LParenLoc.isValid()) {

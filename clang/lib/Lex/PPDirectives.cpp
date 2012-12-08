@@ -2047,9 +2047,9 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
 
   if (Callbacks) {
     if (isIfndef)
-      Callbacks->Ifndef(DirectiveTok.getLocation(), MacroNameTok);
+      Callbacks->Ifndef(DirectiveTok.getLocation(), MacroNameTok, MI);
     else
-      Callbacks->Ifdef(DirectiveTok.getLocation(), MacroNameTok);
+      Callbacks->Ifdef(DirectiveTok.getLocation(), MacroNameTok, MI);
   }
 
   // Should we include the stuff contained by this directive?

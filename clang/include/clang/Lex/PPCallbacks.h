@@ -199,7 +199,8 @@ public:
   }
   
   /// \brief Hook called whenever the 'defined' operator is seen.
-  virtual void Defined(const Token &MacroNameTok) {
+  /// \param MI The MacroInfo if the name was a macro, null otherwise.
+  virtual void Defined(const Token &MacroNameTok, const MacroInfo *MI) {
   }
   
   /// \brief Hook called when a source range is skipped.
@@ -228,13 +229,17 @@ public:
   /// \brief Hook called whenever an \#ifdef is seen.
   /// \param Loc the source location of the directive.
   /// \param MacroNameTok Information on the token being tested.
-  virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok) {
+  /// \param MI The MacroInfo if the name was a macro, null otherwise.
+  virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
+                     const MacroInfo *MI) {
   }
 
   /// \brief Hook called whenever an \#ifndef is seen.
   /// \param Loc the source location of the directive.
   /// \param MacroNameTok Information on the token being tested.
-  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok) {
+  /// \param MI The MacroInfo if the name was a macro, null otherwise.
+  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
+                      const MacroInfo *MI) {
   }
 
   /// \brief Hook called whenever an \#else is seen.
@@ -362,9 +367,9 @@ public:
     Second->MacroUndefined(MacroNameTok, MI);
   }
 
-  virtual void Defined(const Token &MacroNameTok) {
-    First->Defined(MacroNameTok);
-    Second->Defined(MacroNameTok);
+  virtual void Defined(const Token &MacroNameTok, const MacroInfo *MI) {
+    First->Defined(MacroNameTok, MI);
+    Second->Defined(MacroNameTok, MI);
   }
 
   virtual void SourceRangeSkipped(SourceRange Range) {
@@ -386,15 +391,17 @@ public:
   }
 
   /// \brief Hook called whenever an \#ifdef is seen.
-  virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok) {
-    First->Ifdef(Loc, MacroNameTok);
-    Second->Ifdef(Loc, MacroNameTok);
+  virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok,
+                     const MacroInfo *MI) {
+    First->Ifdef(Loc, MacroNameTok, MI);
+    Second->Ifdef(Loc, MacroNameTok, MI);
   }
 
   /// \brief Hook called whenever an \#ifndef is seen.
-  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok) {
-    First->Ifndef(Loc, MacroNameTok);
-    Second->Ifndef(Loc, MacroNameTok);
+  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok,
+                      const MacroInfo *MI) {
+    First->Ifndef(Loc, MacroNameTok, MI);
+    Second->Ifndef(Loc, MacroNameTok, MI);
   }
 
   /// \brief Hook called whenever an \#else is seen.
