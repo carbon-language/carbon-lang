@@ -324,10 +324,6 @@ bool CXXRecordDecl::hasAnyDependentBases() const {
   return !forallBases(SawBase, 0);
 }
 
-bool CXXRecordDecl::hasConstCopyConstructor() const {
-  return getCopyConstructor(Qualifiers::Const) != 0;
-}
-
 bool CXXRecordDecl::isTriviallyCopyable() const {
   // C++0x [class]p5:
   //   A trivially copyable class is a class that:
@@ -343,126 +339,6 @@ bool CXXRecordDecl::isTriviallyCopyable() const {
   if (!hasTrivialDestructor()) return false;
 
   return true;
-}
-
-/// \brief Perform a simplistic form of overload resolution that only considers
-/// cv-qualifiers on a single parameter, and return the best overload candidate
-/// (if there is one).
-static CXXMethodDecl *
-GetBestOverloadCandidateSimple(
-  const SmallVectorImpl<std::pair<CXXMethodDecl *, Qualifiers> > &Cands) {
-  if (Cands.empty())
-    return 0;
-  if (Cands.size() == 1)
-    return Cands[0].first;
-  
-  unsigned Best = 0, N = Cands.size();
-  for (unsigned I = 1; I != N; ++I)
-    if (Cands[Best].second.compatiblyIncludes(Cands[I].second))
-      Best = I;
-  
-  for (unsigned I = 0; I != N; ++I)
-    if (I != Best && Cands[Best].second.compatiblyIncludes(Cands[I].second))
-      return 0;
-  
-  return Cands[Best].first;
-}
-
-CXXConstructorDecl *CXXRecordDecl::getCopyConstructor(unsigned TypeQuals) const{
-  ASTContext &Context = getASTContext();
-  QualType ClassType
-    = Context.getTypeDeclType(const_cast<CXXRecordDecl*>(this));
-  DeclarationName ConstructorName
-    = Context.DeclarationNames.getCXXConstructorName(
-                                          Context.getCanonicalType(ClassType));
-  unsigned FoundTQs;
-  SmallVector<std::pair<CXXMethodDecl *, Qualifiers>, 4> Found;
-  DeclContext::lookup_const_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = this->lookup(ConstructorName);
-       Con != ConEnd; ++Con) {
-    // C++ [class.copy]p2:
-    //   A non-template constructor for class X is a copy constructor if [...]
-    if (isa<FunctionTemplateDecl>(*Con))
-      continue;
-
-    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(*Con);
-    if (Constructor->isCopyConstructor(FoundTQs)) {
-      if (((TypeQuals & Qualifiers::Const) == (FoundTQs & Qualifiers::Const)) ||
-          (!(TypeQuals & Qualifiers::Const) && (FoundTQs & Qualifiers::Const)))
-        Found.push_back(std::make_pair(
-                                 const_cast<CXXConstructorDecl *>(Constructor), 
-                                       Qualifiers::fromCVRMask(FoundTQs)));
-    }
-  }
-  
-  return cast_or_null<CXXConstructorDecl>(
-                                        GetBestOverloadCandidateSimple(Found));
-}
-
-CXXConstructorDecl *CXXRecordDecl::getMoveConstructor() const {
-  for (ctor_iterator I = ctor_begin(), E = ctor_end(); I != E; ++I)
-    if (I->isMoveConstructor())
-      return *I;
-
-  return 0;
-}
-
-CXXMethodDecl *CXXRecordDecl::getCopyAssignmentOperator(bool ArgIsConst) const {
-  ASTContext &Context = getASTContext();
-  QualType Class = Context.getTypeDeclType(const_cast<CXXRecordDecl *>(this));
-  DeclarationName Name = Context.DeclarationNames.getCXXOperatorName(OO_Equal);
-  
-  SmallVector<std::pair<CXXMethodDecl *, Qualifiers>, 4> Found;
-  DeclContext::lookup_const_iterator Op, OpEnd;
-  for (llvm::tie(Op, OpEnd) = this->lookup(Name); Op != OpEnd; ++Op) {
-    // C++ [class.copy]p9:
-    //   A user-declared copy assignment operator is a non-static non-template
-    //   member function of class X with exactly one parameter of type X, X&,
-    //   const X&, volatile X& or const volatile X&.
-    const CXXMethodDecl* Method = dyn_cast<CXXMethodDecl>(*Op);
-    if (!Method || Method->isStatic() || Method->getPrimaryTemplate())
-      continue;
-    
-    const FunctionProtoType *FnType 
-      = Method->getType()->getAs<FunctionProtoType>();
-    assert(FnType && "Overloaded operator has no prototype.");
-    // Don't assert on this; an invalid decl might have been left in the AST.
-    if (FnType->getNumArgs() != 1 || FnType->isVariadic())
-      continue;
-    
-    QualType ArgType = FnType->getArgType(0);
-    Qualifiers Quals;
-    if (const LValueReferenceType *Ref = ArgType->getAs<LValueReferenceType>()) {
-      ArgType = Ref->getPointeeType();
-      // If we have a const argument and we have a reference to a non-const,
-      // this function does not match.
-      if (ArgIsConst && !ArgType.isConstQualified())
-        continue;
-      
-      Quals = ArgType.getQualifiers();
-    } else {
-      // By-value copy-assignment operators are treated like const X&
-      // copy-assignment operators.
-      Quals = Qualifiers::fromCVRMask(Qualifiers::Const);
-    }
-    
-    if (!Context.hasSameUnqualifiedType(ArgType, Class))
-      continue;
-
-    // Save this copy-assignment operator. It might be "the one".
-    Found.push_back(std::make_pair(const_cast<CXXMethodDecl *>(Method), Quals));
-  }
-  
-  // Use a simplistic form of overload resolution to find the candidate.
-  return GetBestOverloadCandidateSimple(Found);
-}
-
-CXXMethodDecl *CXXRecordDecl::getMoveAssignmentOperator() const {
-  for (method_iterator I = method_begin(), E = method_end(); I != E; ++I)
-    if (I->isMoveAssignmentOperator())
-      return *I;
-
-  return 0;
 }
 
 void CXXRecordDecl::markedVirtualFunctionPure() {

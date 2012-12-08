@@ -4687,12 +4687,28 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
     if (RD->hasUserDeclaredMoveConstructor() &&
         (!getLangOpts().MicrosoftMode || CSM == CXXCopyConstructor)) {
       if (!Diagnose) return true;
-      UserDeclaredMove = RD->getMoveConstructor();
+
+      // Find any user-declared move constructor.
+      for (CXXRecordDecl::ctor_iterator I = RD->ctor_begin(),
+                                        E = RD->ctor_end(); I != E; ++I) {
+        if (I->isMoveConstructor()) {
+          UserDeclaredMove = *I;
+          break;
+        }
+      }
       assert(UserDeclaredMove);
     } else if (RD->hasUserDeclaredMoveAssignment() &&
                (!getLangOpts().MicrosoftMode || CSM == CXXCopyAssignment)) {
       if (!Diagnose) return true;
-      UserDeclaredMove = RD->getMoveAssignmentOperator();
+
+      // Find any user-declared move assignment operator.
+      for (CXXRecordDecl::method_iterator I = RD->method_begin(),
+                                          E = RD->method_end(); I != E; ++I) {
+        if (I->isMoveAssignmentOperator()) {
+          UserDeclaredMove = *I;
+          break;
+        }
+      }
       assert(UserDeclaredMove);
     }
 

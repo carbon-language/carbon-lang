@@ -748,32 +748,6 @@ public:
            !(data().DeclaredSpecialMembers & SMF_DefaultConstructor);
   }
 
-  /// hasConstCopyConstructor - Determines whether this class has a
-  /// copy constructor that accepts a const-qualified argument.
-  bool hasConstCopyConstructor() const;
-
-  /// getCopyConstructor - Returns the copy constructor for this class
-  CXXConstructorDecl *getCopyConstructor(unsigned TypeQuals) const;
-
-  /// getMoveConstructor - Returns the move constructor for this class
-  CXXConstructorDecl *getMoveConstructor() const;
-
-  /// \brief Retrieve the copy-assignment operator for this class, if available.
-  ///
-  /// This routine attempts to find the copy-assignment operator for this
-  /// class, using a simplistic form of overload resolution.
-  ///
-  /// \param ArgIsConst Whether the argument to the copy-assignment operator
-  /// is const-qualified.
-  ///
-  /// \returns The copy-assignment operator that can be invoked, or NULL if
-  /// a unique copy-assignment operator could not be found.
-  CXXMethodDecl *getCopyAssignmentOperator(bool ArgIsConst) const;
-
-  /// getMoveAssignmentOperator - Returns the move assignment operator for this
-  /// class
-  CXXMethodDecl *getMoveAssignmentOperator() const;
-
   /// hasUserDeclaredConstructor - Whether this class has any
   /// user-declared constructors. When true, a default constructor
   /// will not be implicitly declared.
