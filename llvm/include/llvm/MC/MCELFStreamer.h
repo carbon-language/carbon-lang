@@ -14,10 +14,9 @@
 #include "llvm/MC/MCDirectives.h"
 #include "llvm/MC/MCObjectStreamer.h"
 #include "llvm/MC/SectionKind.h"
+#include "llvm/Support/DataTypes.h"
 
 #include <vector>
-
-#include <stdint.h>
 
 namespace llvm {
 class MCAsmBackend;
