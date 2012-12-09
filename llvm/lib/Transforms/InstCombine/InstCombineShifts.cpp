@@ -430,9 +430,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         Value *Op0BOOp1 = Op0BO->getOperand(1);
         if (isLeftShift && Op0BOOp1->hasOneUse() &&
             match(Op0BOOp1,
-                  m_And(m_Shr(m_Value(V1), m_Specific(Op1)),
-                        m_ConstantInt(CC))) &&
-            cast<BinaryOperator>(Op0BOOp1)->getOperand(0)->hasOneUse()) {
+                  m_And(m_OneUse(m_Shr(m_Value(V1), m_Specific(Op1))),
+                        m_ConstantInt(CC)))) {
           Value *YS =   // (Y << C)
             Builder->CreateShl(Op0BO->getOperand(0), Op1,
                                          Op0BO->getName());
@@ -462,10 +461,8 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantInt *Op1,
         // Turn (((X >> C)&CC) + Y) << C  ->  (X + (Y << C)) & (CC << C)
         if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
             match(Op0BO->getOperand(0),
-                  m_And(m_Shr(m_Value(V1), m_Value(V2)),
-                        m_ConstantInt(CC))) && V2 == Op1 &&
-            cast<BinaryOperator>(Op0BO->getOperand(0))
-                ->getOperand(0)->hasOneUse()) {
+                  m_And(m_OneUse(m_Shr(m_Value(V1), m_Value(V2))),
+                        m_ConstantInt(CC))) && V2 == Op1) {
           Value *YS = // (Y << C)
             Builder->CreateShl(Op0BO->getOperand(1), Op1, Op0BO->getName());
           // X & (CC << C)
