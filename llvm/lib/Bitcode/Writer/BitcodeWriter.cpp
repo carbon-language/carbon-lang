@@ -552,15 +552,15 @@ static uint64_t GetOptimizationFlags(const Value *V) {
   } else if (const FPMathOperator *FPMO =
              dyn_cast<const FPMathOperator>(V)) {
     if (FPMO->hasUnsafeAlgebra())
-      Flags |= 1 << bitc::FMF_UNSAFE_ALGEBRA;
+      Flags |= FPMathOperator::UnsafeAlgebra;
     if (FPMO->hasNoNaNs())
-      Flags |= 1 << bitc::FMF_NO_NANS;
+      Flags |= FPMathOperator::NoNaNs;
     if (FPMO->hasNoInfs())
-      Flags |= 1 << bitc::FMF_NO_INFS;
+      Flags |= FPMathOperator::NoInfs;
     if (FPMO->hasNoSignedZeros())
-      Flags |= 1 << bitc::FMF_NO_SIGNED_ZEROS;
+      Flags |= FPMathOperator::NoSignedZeros;
     if (FPMO->hasAllowReciprocal())
-      Flags |= 1 << bitc::FMF_ALLOW_RECIPROCAL;
+      Flags |= FPMathOperator::AllowReciprocal;
   }
 
   return Flags;
