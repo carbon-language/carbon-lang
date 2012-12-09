@@ -25,7 +25,7 @@ namespace llvm {
   class DominatorTree;
   class Instruction;
   class DataLayout;
-  struct FastMathFlags;
+  class FastMathFlags;
   class TargetLibraryInfo;
   class Type;
   class Value;

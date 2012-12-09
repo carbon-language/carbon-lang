@@ -900,8 +900,8 @@ static Value *SimplifyFMulInst(Value *Op0, Value *Op1,
  }
 
  // Check for some fast-math optimizations
- if (FMF.NoNaNs) {
-   if (FMF.NoSignedZeros) {
+ if (FMF.noNaNs()) {
+   if (FMF.noSignedZeros()) {
      // fmul N S 0, x ==> 0
      if (match(Op0, m_Zero()))
        return Op0;

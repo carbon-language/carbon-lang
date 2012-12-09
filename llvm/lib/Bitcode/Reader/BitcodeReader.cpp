@@ -2047,16 +2047,16 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
             cast<BinaryOperator>(I)->setIsExact(true);
         } else if (isa<FPMathOperator>(I)) {
           FastMathFlags FMF;
-          FMF.UnsafeAlgebra =
-            0 != (Record[OpNum] & FPMathOperator::UnsafeAlgebra);
-          FMF.NoNaNs =
-            0 != (Record[OpNum] & FPMathOperator::NoNaNs);
-          FMF.NoInfs =
-            0 != (Record[OpNum] & FPMathOperator::NoInfs);
-          FMF.NoSignedZeros =
-            0 != (Record[OpNum] & FPMathOperator::NoSignedZeros);
-          FMF.AllowReciprocal =
-            0 != (Record[OpNum] & FPMathOperator::AllowReciprocal);
+          if (0 != (Record[OpNum] & FastMathFlags::UnsafeAlgebra))
+            FMF.setUnsafeAlgebra();
+          if (0 != (Record[OpNum] & FastMathFlags::NoNaNs))
+            FMF.setNoNaNs();
+          if (0 != (Record[OpNum] & FastMathFlags::NoInfs))
+            FMF.setNoInfs();
+          if (0 != (Record[OpNum] & FastMathFlags::NoSignedZeros))
+            FMF.setNoSignedZeros();
+          if (0 != (Record[OpNum] & FastMathFlags::AllowReciprocal))
+            FMF.setAllowReciprocal();
           if (FMF.any())
             I->setFastMathFlags(FMF);
         }

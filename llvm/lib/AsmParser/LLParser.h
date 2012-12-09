@@ -160,11 +160,11 @@ namespace llvm {
       FastMathFlags FMF;
       while (true)
         switch (Lex.getKind()) {
-        case lltok::kw_fast: FMF.UnsafeAlgebra   = true; Lex.Lex(); continue;
-        case lltok::kw_nnan: FMF.NoNaNs          = true; Lex.Lex(); continue;
-        case lltok::kw_ninf: FMF.NoInfs          = true; Lex.Lex(); continue;
-        case lltok::kw_nsz:  FMF.NoSignedZeros   = true; Lex.Lex(); continue;
-        case lltok::kw_arcp: FMF.AllowReciprocal = true; Lex.Lex(); continue;
+        case lltok::kw_fast: FMF.setUnsafeAlgebra();   Lex.Lex(); continue;
+        case lltok::kw_nnan: FMF.setNoNaNs();          Lex.Lex(); continue;
+        case lltok::kw_ninf: FMF.setNoInfs();          Lex.Lex(); continue;
+        case lltok::kw_nsz:  FMF.setNoSignedZeros();   Lex.Lex(); continue;
+        case lltok::kw_arcp: FMF.setAllowReciprocal(); Lex.Lex(); continue;
         default: return FMF;
         }
       return FMF;

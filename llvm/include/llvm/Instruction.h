@@ -21,7 +21,7 @@
 
 namespace llvm {
 
-struct FastMathFlags;
+class FastMathFlags;
 class LLVMContext;
 class MDNode;
 

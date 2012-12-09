@@ -129,7 +129,7 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   F = Builder.CreateFAdd(F, F);
   EXPECT_FALSE(Builder.getFastMathFlags().any());
 
-  FMF.UnsafeAlgebra = true;
+  FMF.setUnsafeAlgebra();
   Builder.SetFastMathFlags(FMF);
 
   F = Builder.CreateFAdd(F, F);
@@ -153,7 +153,7 @@ TEST_F(IRBuilderTest, FastMathFlags) {
   EXPECT_FALSE(FDiv->hasAllowReciprocal());
 
   FMF.clear();
-  FMF.AllowReciprocal = true;
+  FMF.setAllowReciprocal();
   Builder.SetFastMathFlags(FMF);
 
   F = Builder.CreateFDiv(F, F);
