@@ -1135,6 +1135,10 @@ def err_different_return_type_for_overriding_virtual_function : Error<
   "than the function it overrides}1,2">;
 def note_overridden_virtual_function : Note<
   "overridden virtual function is here">;
+def err_conflicting_overriding_cc_attributes : Error<
+  "virtual function %0 has different calling convention attributes "
+  "%diff{($) than the function it overrides (which has calling convention $)|"
+  "than the function it overrides}1,2">;
 
 def err_covariant_return_inaccessible_base : Error<
   "invalid covariant return for virtual function: %1 is a "

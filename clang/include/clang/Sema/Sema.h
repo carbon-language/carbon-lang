@@ -2291,7 +2291,8 @@ public:
   void checkUnusedDeclAttributes(Declarator &D);
 
   bool CheckRegparmAttr(const AttributeList &attr, unsigned &value);
-  bool CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC);
+  bool CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC, 
+                            const FunctionDecl *FD = 0);
   bool CheckNoReturnAttr(const AttributeList &attr);
 
   /// \brief Stmt attributes - this routine is the top level dispatcher.
@@ -4486,6 +4487,9 @@ public:
                                     CXXCastPath *BasePath);
 
   std::string getAmbiguousPathsDisplayString(CXXBasePaths &Paths);
+
+  bool CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
+                                         const CXXMethodDecl *Old);
 
   /// CheckOverridingFunctionReturnType - Checks whether the return types are
   /// covariant, according to C++ [class.virtual]p5.

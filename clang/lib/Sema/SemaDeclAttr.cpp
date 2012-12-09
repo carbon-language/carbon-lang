@@ -3557,10 +3557,11 @@ static void handleGNUInlineAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 static void handleCallConvAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (hasDeclarator(D)) return;
 
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
   // Diagnostic is emitted elsewhere: here we store the (valid) Attr
   // in the Decl node for syntactic reasoning, e.g., pretty-printing.
   CallingConv CC;
-  if (S.CheckCallingConvAttr(Attr, CC))
+  if (S.CheckCallingConvAttr(Attr, CC, FD))
     return;
 
   if (!isa<ObjCMethodDecl>(D)) {
@@ -3615,7 +3616,8 @@ static void handleOpenCLKernelAttr(Sema &S, Decl *D, const AttributeList &Attr){
   D->addAttr(::new (S.Context) OpenCLKernelAttr(Attr.getRange(), S.Context));
 }
 
-bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
+bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC, 
+                                const FunctionDecl *FD) {
   if (attr.isInvalid())
     return true;
 
@@ -3665,7 +3667,12 @@ bool Sema::CheckCallingConvAttr(const AttributeList &attr, CallingConv &CC) {
   TargetInfo::CallingConvCheckResult A = TI.checkCallingConvention(CC);
   if (A == TargetInfo::CCCR_Warning) {
     Diag(attr.getLoc(), diag::warn_cconv_ignored) << attr.getName();
-    CC = TI.getDefaultCallingConv();
+
+    TargetInfo::CallingConvMethodType MT = TargetInfo::CCMT_Unknown;
+    if (FD)
+      MT = FD->isCXXInstanceMember() ? TargetInfo::CCMT_Member : 
+                                    TargetInfo::CCMT_NonMember;
+    CC = TI.getDefaultCallingConv(MT);
   }
 
   return false;

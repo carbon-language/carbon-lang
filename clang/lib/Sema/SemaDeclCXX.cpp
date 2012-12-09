@@ -26,6 +26,7 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Sema/CXXFieldCollector.h"
 #include "clang/Sema/DeclSpec.h"
@@ -10948,6 +10949,40 @@ void Sema::DiagnoseReturnInConstructorExceptionHandler(CXXTryStmt *TryBlock) {
     CXXCatchStmt *Handler = TryBlock->getHandler(I);
     SearchForReturnInStmt(*this, Handler);
   }
+}
+
+bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
+                                             const CXXMethodDecl *Old) {
+  const FunctionType *NewFT = New->getType()->getAs<FunctionType>();
+  const FunctionType *OldFT = Old->getType()->getAs<FunctionType>();
+
+  CallingConv NewCC = NewFT->getCallConv(), OldCC = OldFT->getCallConv();
+
+  // If the calling conventions match, everything is fine
+  if (NewCC == OldCC)
+    return false;
+
+  // If either of the calling conventions are set to "default", we need to pick
+  // something more sensible based on the target. This supports code where the
+  // one method explicitly sets thiscall, and another has no explicit calling
+  // convention.
+  CallingConv Default = 
+    Context.getTargetInfo().getDefaultCallingConv(TargetInfo::CCMT_Member);
+  if (NewCC == CC_Default)
+    NewCC = Default;
+  if (OldCC == CC_Default)
+    OldCC = Default;
+
+  // If the calling conventions still don't match, then report the error
+  if (NewCC != OldCC) {
+    Diag(New->getLocation(),
+         diag::err_conflicting_overriding_cc_attributes)
+      << New->getDeclName() << New->getType() << Old->getType();
+    Diag(Old->getLocation(), diag::note_overridden_virtual_function);
+    return true;
+  }
+
+  return false;
 }
 
 bool Sema::CheckOverridingFunctionReturnType(const CXXMethodDecl *New,
