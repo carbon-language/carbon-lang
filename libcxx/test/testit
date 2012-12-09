@@ -8,6 +8,24 @@
 # //
 # //===--------------------------------------------------------------------===//
 
+currentpath=`pwd`
+origpath=$currentpath
+currentdir=`basename $currentpath`
+while [ $currentdir != "test" ]; do
+	if [ $currentdir == "/" ]
+	then
+		echo "current directory must be in or under \"test\"."
+		exit 1
+	fi
+	cd ..
+	currentpath=`pwd`
+	currentdir=`basename $currentpath`
+done
+
+cd ..
+LIBCXX_ROOT=`pwd`
+cd $origpath
+
 if [ -z "$CC" ]
 then
 	if which xcrun >/dev/null
@@ -21,6 +39,16 @@ fi
 if [ -z "$OPTIONS" ]
 then
 	OPTIONS="-std=c++0x -stdlib=libc++"
+fi
+
+if [ -z "$HEADER_INCLUDE" ]
+then
+       HEADER_INCLUDE="-I$LIBCXX_ROOT/include"
+fi
+
+if [ -z "$SOURCE_LIB" ]
+then
+       SOURCE_LIB="-L$LIBCXX_ROOT/lib"
 fi
 
 case $TRIPLE in
