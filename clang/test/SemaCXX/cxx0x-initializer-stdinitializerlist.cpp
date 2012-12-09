@@ -191,3 +191,11 @@ namespace rdar11948732 {
 namespace PR14272 {
   auto x { { 0, 0 } }; // expected-error {{cannot deduce actual type for variable 'x' with type 'auto' from initializer list}}
 }
+
+namespace initlist_of_array {
+  void f(std::initializer_list<int[2]>) {}
+  void f(std::initializer_list<int[2][2]>) = delete;
+  void h() {
+    f({{1,2},{3,4}});
+  }
+}

@@ -4377,7 +4377,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
   bool toStdInitializerList = false;
   QualType X;
   if (ToType->isArrayType())
-    X = S.Context.getBaseElementType(ToType);
+    X = S.Context.getAsArrayType(ToType)->getElementType();
   else
     toStdInitializerList = S.isStdInitializerList(ToType, &X);
   if (!X.isNull()) {
