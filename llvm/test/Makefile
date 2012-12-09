@@ -78,8 +78,10 @@ else # !SunOS
 ifeq ($(HOST_OS),AuroraUX)
 ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -v 512000 ;
 else # !AuroraUX
-# Fedora 13 x86-64 python fails with -v 76800
-ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ; ulimit -v 1024000 ;
+# Newer versions of python try to allocate an insane amount of address space for
+# its thread-local storage, don't set a limit here.
+# FIXME: Those limits should be enforced by lit instead of globally.
+ULIMIT=ulimit -t 600 ; ulimit -d 512000 ; ulimit -m 512000 ;
 endif # AuroraUX
 endif # SunOS
 
