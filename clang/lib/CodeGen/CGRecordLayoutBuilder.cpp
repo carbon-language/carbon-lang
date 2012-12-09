@@ -256,9 +256,13 @@ CGBitFieldInfo CGBitFieldInfo::MakeInfo(CodeGenTypes &Types,
     Size = TypeSizeInBits;
   }
 
-  // Reverse the bit offsets for big endian machines.
-  if (Types.getDataLayout().isBigEndian())
-    Offset = Size - Offset - 1;
+  // Reverse the bit offsets for big endian machines. Because we represent
+  // a bitfield as a single large integer load, we can imagine the bits
+  // counting from the most-significant-bit instead of the
+  // least-significant-bit.
+  if (Types.getDataLayout().isBigEndian()) {
+    Offset = StorageSize - (Offset + Size);
+  }
 
   return CGBitFieldInfo(Offset, Size, IsSigned, StorageSize, StorageAlignment);
 }
