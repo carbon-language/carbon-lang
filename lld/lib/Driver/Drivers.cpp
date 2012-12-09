@@ -130,6 +130,11 @@ public:
     if (llvm::opt::Arg *A = _inputArgs->getLastArg(ld::OPT_relocatable))
       newArgs->AddFlagArg(A, _core.getOption(core::OPT_relocatable));
 
+    if (llvm::opt::Arg *A =
+          _inputArgs->getLastArg(ld::OPT_OCTOTHORPE_OCTOTHORPE_OCTOTHORPE))
+      newArgs->AddFlagArg(A, _core.getOption(
+                               core::OPT_OCTOTHORPE_OCTOTHORPE_OCTOTHORPE));
+
     // Copy input args.
     for (llvm::opt::arg_iterator it = _inputArgs->filtered_begin(ld::OPT_INPUT),
                                  ie = _inputArgs->filtered_end();
@@ -173,6 +178,7 @@ LinkerOptions lld::generateOptions(const llvm::opt::ArgList &args) {
   ret._outputPath = args.getLastArgValue(core::OPT_output);
   ret._entrySymbol = args.getLastArgValue(core::OPT_entry);
   ret._relocatable = args.hasArg(core::OPT_relocatable);
+  ret._outputCommands = args.hasArg(core::OPT_OCTOTHORPE_OCTOTHORPE_OCTOTHORPE);
 
   return std::move(ret);
 }

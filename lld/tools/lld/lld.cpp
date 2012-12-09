@@ -129,12 +129,24 @@ int main(int argc, char **argv) {
   if (!coreArgs)
     return 1;
 
-  for (auto arg : *coreArgs) {
-    llvm::outs() << arg->getAsString(*coreArgs) << " ";
+  for (const auto &arg : *coreArgs) {
+    if (arg->getOption().getKind() == llvm::opt::Option::UnknownClass) {
+      llvm::errs() << "Unknown option: " << arg->getAsString(*coreArgs) << "\n";
+    }
   }
-  llvm::outs() << "\n";
 
   LinkerOptions lo(generateOptions(*coreArgs));
+
+  if (lo._outputCommands) {
+    for (auto arg : *coreArgs) {
+      llvm::outs() << arg->getAsString(*coreArgs) << " ";
+    }
+    llvm::outs() << "\n";
+
+    // Don't do the link if we are just outputting commands.
+    return 0;
+  }
+
   LinkerInvocation invocation(lo);
   invocation();
 

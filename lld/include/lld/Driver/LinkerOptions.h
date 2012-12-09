@@ -110,13 +110,16 @@ struct LinkerOptions {
     , _target(std::move(other._target))
     , _outputPath(std::move(other._outputPath))
     , _entrySymbol(std::move(other._entrySymbol))
-    , _relocatable(other._relocatable) {}
+    , _relocatable(other._relocatable)
+    , _outputCommands(other._outputCommands) {}
 
   std::vector<LinkerInput> _input;
   std::string _target;
   std::string _outputPath;
   std::string _entrySymbol;
   unsigned _relocatable : 1;
+  /// \brief -###
+  unsigned _outputCommands : 1;
 
 private:
   LinkerOptions(const LinkerOptions&) LLVM_DELETED_FUNCTION;

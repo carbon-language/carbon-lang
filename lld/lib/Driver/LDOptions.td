@@ -11,3 +11,5 @@ def output_e : Separate<["-"], "o">, Alias<output>;
 
 def relocatable : Flag<["--"], "relocatable">;
 def relocatable_r : Flag<["-"], "r">, Alias<relocatable>;
+
+def OCTOTHORPE_OCTOTHORPE_OCTOTHORPE : Flag<["-"], "###">;
