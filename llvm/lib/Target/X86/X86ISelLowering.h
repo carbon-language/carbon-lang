@@ -932,6 +932,14 @@ namespace llvm {
                              const TargetLibraryInfo *libInfo);
   }
 
+  class X86ScalarTargetTransformImpl : public ScalarTargetTransformImpl {
+  public:
+    explicit X86ScalarTargetTransformImpl(const TargetLowering *TL) :
+      ScalarTargetTransformImpl(TL) {};
+
+    virtual PopcntHwSupport getPopcntHwSupport(unsigned TyWidth) const;
+  };
+
   class X86VectorTargetTransformInfo : public VectorTargetTransformImpl {
   public:
     explicit X86VectorTargetTransformInfo(const TargetLowering *TL) :

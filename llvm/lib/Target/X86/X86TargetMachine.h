@@ -118,7 +118,7 @@ class X86_64TargetMachine : public X86TargetMachine {
   X86SelectionDAGInfo TSInfo;
   X86TargetLowering TLInfo;
   X86JITInfo        JITInfo;
-  ScalarTargetTransformImpl STTI;
+  X86ScalarTargetTransformImpl STTI;
   X86VectorTargetTransformInfo VTTI;
 public:
   X86_64TargetMachine(const Target &T, StringRef TT,
