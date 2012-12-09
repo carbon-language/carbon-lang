@@ -1063,15 +1063,23 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
     if (FD->getBitWidthValue(getContext()) == 0)
       continue;
 
-      unsigned FieldNo = RL->getLLVMFieldNo(FD);
     const CGBitFieldInfo &Info = RL->getBitFieldInfo(FD);
-    llvm::Type *ElementTy = ST->getTypeAtIndex(FieldNo);
+    llvm::Type *ElementTy = ST->getTypeAtIndex(RL->getLLVMFieldNo(FD));
+
     // Unions have overlapping elements dictating their layout, but for
     // non-unions we can verify that this section of the layout is the exact
-    // expected size. For unions we verify that the start is zero and the size
-    // is in-bounds.
+    // expected size.
     if (D->isUnion()) {
-      assert(Info.Offset == 0 && "Union bitfield with a non-zero offset");
+      // For unions we verify that the start is zero and the size
+      // is in-bounds. However, on BE systems, the offset may be non-zero, but
+      // the size + offset should match the storage size in that case as it
+      // "starts" at the back.
+      if (getDataLayout().isBigEndian())
+        assert((Info.Offset + Info.Size) == Info.StorageSize &&
+               "Big endian union bitfield does not end at the back");
+      else
+        assert(Info.Offset == 0 &&
+               "Little endian union bitfield with a non-zero offset");
       assert(Info.StorageSize <= SL->getSizeInBits() &&
              "Union not large enough for bitfield storage");
     } else {
