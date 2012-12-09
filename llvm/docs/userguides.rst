@@ -22,6 +22,7 @@ User Guides
    Phabricator
    TestingGuide
    tutorial/index
+   ReleaseNotes
 
 * :ref:`getting_started`
     
@@ -65,7 +66,7 @@ User Guides
 
    A list of common questions and problems and their solutions.
     
-* `Release notes for the current release <ReleaseNotes.html>`_
+* :doc:`Release notes for the current release <ReleaseNotes>`
 
    This describes new features, known bugs, and other limitations.
 

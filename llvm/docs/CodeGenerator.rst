@@ -1732,6 +1732,8 @@ This section of the document explains features or design decisions that are
 specific to the code generator for a particular target.  First we start with a
 table that summarizes what features are supported by each target.
 
+.. _target-feature-matrix:
+
 Target Feature Matrix
 ---------------------
 
