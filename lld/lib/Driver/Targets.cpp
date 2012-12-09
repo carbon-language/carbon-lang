@@ -26,7 +26,7 @@ using namespace lld;
 
 class X86LinuxTarget final : public Target {
 public:
-  X86LinuxTarget(const LinkerOptions &lo) : Target(lo), _woe() {
+  X86LinuxTarget(const LinkerOptions &lo) : Target(lo), _woe(lo._entrySymbol) {
     _readerELF.reset(createReaderELF(_roe, _roa));
     _readerYAML.reset(createReaderYAML(_roy));
     _writer.reset(createWriterELF(_woe));
@@ -63,12 +63,12 @@ private:
   } _roy;
 
   struct WOpts : lld::WriterOptionsELF {
-    WOpts() {
+    WOpts(StringRef entry) {
       _endianness = llvm::support::little;
       _is64Bit = false;
       _type = llvm::ELF::ET_EXEC;
       _machine = llvm::ELF::EM_386;
-      _entryPoint = "_start";
+      _entryPoint = entry;
     }
   } _woe;
 

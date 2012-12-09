@@ -118,7 +118,8 @@ public:
     if (llvm::opt::Arg *A = _inputArgs->getLastArg(ld::OPT_entry))
       newArgs->AddJoinedArg(A, _core.getOption(core::OPT_entry), A->getValue());
     else
-      newArgs->AddJoinedArg(nullptr, _core.getOption(core::OPT_entry), "start");
+      newArgs->AddJoinedArg(nullptr, _core.getOption(core::OPT_entry),
+                            "_start");
 
     if (llvm::opt::Arg *A = _inputArgs->getLastArg(ld::OPT_output))
       newArgs->AddJoinedArg(A, _core.getOption(core::OPT_output),
