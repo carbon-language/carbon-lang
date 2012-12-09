@@ -26,7 +26,7 @@ using namespace lld;
 
 class X86LinuxTarget final : public Target {
 public:
-  X86LinuxTarget(const LinkerOptions &lo) : Target(lo) {
+  X86LinuxTarget(const LinkerOptions &lo) : Target(lo), _woe() {
     _readerELF.reset(createReaderELF(_roe, _roa));
     _readerYAML.reset(createReaderYAML(_roy));
     _writer.reset(createWriterELF(_woe));
@@ -61,7 +61,16 @@ private:
       return k;
     }
   } _roy;
-  lld::WriterOptionsELF _woe;
+
+  struct WOpts : lld::WriterOptionsELF {
+    WOpts() {
+      _endianness = llvm::support::little;
+      _is64Bit = false;
+      _type = llvm::ELF::ET_EXEC;
+      _machine = llvm::ELF::EM_386;
+      _entryPoint = "_start";
+    }
+  } _woe;
 
   std::unique_ptr<lld::Reader> _readerELF, _readerYAML;
   std::unique_ptr<lld::Writer> _writer;
@@ -69,7 +78,7 @@ private:
 
 std::unique_ptr<Target> Target::create(const LinkerOptions &lo) {
   llvm::Triple t(lo._target);
-  if (t.getOS() == llvm::Triple::Linux && t.getArch() == llvm::Triple::x86_64)
+  if (t.getOS() == llvm::Triple::Linux && t.getArch() == llvm::Triple::x86)
     return std::unique_ptr<Target>(new X86LinuxTarget(lo));
   return std::unique_ptr<Target>();
 }
