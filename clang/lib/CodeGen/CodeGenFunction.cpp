@@ -50,10 +50,10 @@ CodeGenFunction::CodeGenFunction(CodeGenModule &cgm, bool suppressNewContext)
 
   llvm::FastMathFlags FMF;
   if (CGM.getLangOpts().FastMath)
-    FMF.UnsafeAlgebra = true;
+    FMF.setUnsafeAlgebra();
   if (CGM.getLangOpts().FiniteMathOnly) {
-    FMF.NoNaNs = true;
-    FMF.NoInfs = true;
+    FMF.setNoNaNs();
+    FMF.setNoInfs();
   }
   Builder.SetFastMathFlags(FMF);
 }
