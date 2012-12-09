@@ -2782,7 +2782,6 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
       }
     }
   }
-      
 
   return SDValue();
 }
