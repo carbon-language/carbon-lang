@@ -139,7 +139,7 @@ private:
   typedef SmallVector<PHINode*, 4> PhiVector;
 
   /// Add code that checks at runtime if the accessed arrays overlap.
-  /// Returns the comperator value or NULL if no check is needed.
+  /// Returns the comparator value or NULL if no check is needed.
   Value *addRuntimeCheck(LoopVectorizationLegality *Legal,
                          Instruction *Loc);
   /// Create an empty loop, based on the loop ranges of the old loop.
