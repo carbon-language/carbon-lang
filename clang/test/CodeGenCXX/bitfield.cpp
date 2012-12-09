@@ -6,6 +6,153 @@
 // Tests for bitfield access patterns in C++ with special attention to
 // conformance to C++11 memory model requirements.
 
+namespace N0 {
+  // Test basic bitfield layout access across interesting byte and word
+  // boundaries on both little endian and big endian platforms.
+  struct __attribute__((packed)) S {
+    unsigned b00 : 14;
+    unsigned b01 : 2;
+    unsigned b20 : 6;
+    unsigned b21 : 2;
+    unsigned b30 : 30;
+    unsigned b31 : 2;
+    unsigned b70 : 6;
+    unsigned b71 : 2;
+  };
+  unsigned read00(S* s) {
+    // CHECK-X86-64: define i32 @_ZN2N06read00
+    // CHECK-X86-64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-X86-64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-X86-64:   %[[and:.*]]   = and i64 %[[val]], 16383
+    // CHECK-X86-64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-X86-64:                   ret i32 %[[trunc]]
+    // CHECK-PPC64: define zeroext i32 @_ZN2N06read00
+    // CHECK-PPC64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-PPC64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-PPC64:   %[[shr:.*]]   = lshr i64 %[[val]], 50
+    // CHECK-PPC64:   %[[trunc:.*]] = trunc i64 %[[shr]] to i32
+    // CHECK-PPC64:                   ret i32 %[[trunc]]
+    return s->b00;
+  }
+  unsigned read01(S* s) {
+    // CHECK-X86-64: define i32 @_ZN2N06read01
+    // CHECK-X86-64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-X86-64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-X86-64:   %[[shr:.*]]   = lshr i64 %[[val]], 14
+    // CHECK-X86-64:   %[[and:.*]]   = and i64 %[[shr]], 3
+    // CHECK-X86-64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-X86-64:                   ret i32 %[[trunc]]
+    // CHECK-PPC64: define zeroext i32 @_ZN2N06read01
+    // CHECK-PPC64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-PPC64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-PPC64:   %[[shr:.*]]   = lshr i64 %[[val]], 48
+    // CHECK-PPC64:   %[[and:.*]]   = and i64 %[[shr]], 3
+    // CHECK-PPC64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-PPC64:                   ret i32 %[[trunc]]
+    return s->b01;
+  }
+  unsigned read20(S* s) {
+    // CHECK-X86-64: define i32 @_ZN2N06read20
+    // CHECK-X86-64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-X86-64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-X86-64:   %[[shr:.*]]   = lshr i64 %[[val]], 16
+    // CHECK-X86-64:   %[[and:.*]]   = and i64 %[[shr]], 63
+    // CHECK-X86-64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-X86-64:                   ret i32 %[[trunc]]
+    // CHECK-PPC64: define zeroext i32 @_ZN2N06read20
+    // CHECK-PPC64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-PPC64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-PPC64:   %[[shr:.*]]   = lshr i64 %[[val]], 42
+    // CHECK-PPC64:   %[[and:.*]]   = and i64 %[[shr]], 63
+    // CHECK-PPC64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-PPC64:                   ret i32 %[[trunc]]
+    return s->b20;
+  }
+  unsigned read21(S* s) {
+    // CHECK-X86-64: define i32 @_ZN2N06read21
+    // CHECK-X86-64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-X86-64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-X86-64:   %[[shr:.*]]   = lshr i64 %[[val]], 22
+    // CHECK-X86-64:   %[[and:.*]]   = and i64 %[[shr]], 3
+    // CHECK-X86-64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-X86-64:                   ret i32 %[[trunc]]
+    // CHECK-PPC64: define zeroext i32 @_ZN2N06read21
+    // CHECK-PPC64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-PPC64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-PPC64:   %[[shr:.*]]   = lshr i64 %[[val]], 40
+    // CHECK-PPC64:   %[[and:.*]]   = and i64 %[[shr]], 3
+    // CHECK-PPC64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-PPC64:                   ret i32 %[[trunc]]
+    return s->b21;
+  }
+  unsigned read30(S* s) {
+    // CHECK-X86-64: define i32 @_ZN2N06read30
+    // CHECK-X86-64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-X86-64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-X86-64:   %[[shr:.*]]   = lshr i64 %[[val]], 24
+    // CHECK-X86-64:   %[[and:.*]]   = and i64 %[[shr]], 1073741823
+    // CHECK-X86-64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-X86-64:                   ret i32 %[[trunc]]
+    // CHECK-PPC64: define zeroext i32 @_ZN2N06read30
+    // CHECK-PPC64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-PPC64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-PPC64:   %[[shr:.*]]   = lshr i64 %[[val]], 10
+    // CHECK-PPC64:   %[[and:.*]]   = and i64 %[[shr]], 1073741823
+    // CHECK-PPC64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-PPC64:                   ret i32 %[[trunc]]
+    return s->b30;
+  }
+  unsigned read31(S* s) {
+    // CHECK-X86-64: define i32 @_ZN2N06read31
+    // CHECK-X86-64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-X86-64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-X86-64:   %[[shr:.*]]   = lshr i64 %[[val]], 54
+    // CHECK-X86-64:   %[[and:.*]]   = and i64 %[[shr]], 3
+    // CHECK-X86-64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-X86-64:                   ret i32 %[[trunc]]
+    // CHECK-PPC64: define zeroext i32 @_ZN2N06read31
+    // CHECK-PPC64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-PPC64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-PPC64:   %[[shr:.*]]   = lshr i64 %[[val]], 8
+    // CHECK-PPC64:   %[[and:.*]]   = and i64 %[[shr]], 3
+    // CHECK-PPC64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-PPC64:                   ret i32 %[[trunc]]
+    return s->b31;
+  }
+  unsigned read70(S* s) {
+    // CHECK-X86-64: define i32 @_ZN2N06read70
+    // CHECK-X86-64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-X86-64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-X86-64:   %[[shr:.*]]   = lshr i64 %[[val]], 56
+    // CHECK-X86-64:   %[[and:.*]]   = and i64 %[[shr]], 63
+    // CHECK-X86-64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-X86-64:                   ret i32 %[[trunc]]
+    // CHECK-PPC64: define zeroext i32 @_ZN2N06read70
+    // CHECK-PPC64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-PPC64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-PPC64:   %[[shr:.*]]   = lshr i64 %[[val]], 2
+    // CHECK-PPC64:   %[[and:.*]]   = and i64 %[[shr]], 63
+    // CHECK-PPC64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-PPC64:                   ret i32 %[[trunc]]
+    return s->b70;
+  }
+  unsigned read71(S* s) {
+    // CHECK-X86-64: define i32 @_ZN2N06read71
+    // CHECK-X86-64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-X86-64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-X86-64:   %[[shr:.*]]   = lshr i64 %[[val]], 62
+    // CHECK-X86-64:   %[[trunc:.*]] = trunc i64 %[[shr]] to i32
+    // CHECK-X86-64:                   ret i32 %[[trunc]]
+    // CHECK-PPC64: define zeroext i32 @_ZN2N06read71
+    // CHECK-PPC64:   %[[ptr:.*]]   = bitcast %{{.*}}* %{{.*}} to i64*
+    // CHECK-PPC64:   %[[val:.*]]   = load i64* %[[ptr]]
+    // CHECK-PPC64:   %[[and:.*]]   = and i64 %[[val]], 3
+    // CHECK-PPC64:   %[[trunc:.*]] = trunc i64 %[[and]] to i32
+    // CHECK-PPC64:                   ret i32 %[[trunc]]
+    return s->b71;
+  }
+}
+
 namespace N1 {
   // Ensure that neither loads nor stores to bitfields are not widened into
   // other memory locations. (PR13691)
