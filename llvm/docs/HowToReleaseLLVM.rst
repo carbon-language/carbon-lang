@@ -68,7 +68,7 @@ release process to begin.  Specifically, it involves:
 * Creating the release branch,
 
 * Setting version numbers, and
-  
+
 * Tagging release candidates for the release team to begin testing.
 
 Create Release Branch
@@ -88,18 +88,18 @@ Branch the Subversion trunk using the following procedure:
    ``dragonegg`` from the last known good revision.  The branch's name is
    ``release_XY``, where ``X`` is the major and ``Y`` the minor release
    numbers.  The branches should be created using the following commands:
-  
+
    ::
-    
+
      $ svn copy https://llvm.org/svn/llvm-project/llvm/trunk \
                 https://llvm.org/svn/llvm-project/llvm/branches/release_XY
-     
+
      $ svn copy https://llvm.org/svn/llvm-project/cfe/trunk \
                 https://llvm.org/svn/llvm-project/cfe/branches/release_XY
-     
+
      $ svn copy https://llvm.org/svn/llvm-project/dragonegg/trunk \
                 https://llvm.org/svn/llvm-project/dragonegg/branches/release_XY
-     
+
      $ svn copy https://llvm.org/svn/llvm-project/test-suite/trunk \
                 https://llvm.org/svn/llvm-project/test-suite/branches/release_XY
 
@@ -107,17 +107,17 @@ Branch the Subversion trunk using the following procedure:
    tree again.
 
 #. The Release Manager should switch to the release branch, because all changes
-   to the release will now be done in the branch.  The easiest way to do this is 
+   to the release will now be done in the branch.  The easiest way to do this is
    to grab a working copy using the following commands:
 
    ::
-   
+
      $ svn co https://llvm.org/svn/llvm-project/llvm/branches/release_XY llvm-X.Y
-     
+
      $ svn co https://llvm.org/svn/llvm-project/cfe/branches/release_XY clang-X.Y
-     
+
      $ svn co https://llvm.org/svn/llvm-project/dragonegg/branches/release_XY dragonegg-X.Y
-     
+
      $ svn co https://llvm.org/svn/llvm-project/test-suite/branches/release_XY test-suite-X.Y
 
 Update LLVM Version
@@ -144,7 +144,7 @@ following commands:
   $ svn mkdir https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XY
   $ svn copy https://llvm.org/svn/llvm-project/llvm/branches/release_XY \
              https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XY/rc1
-  
+
   $ svn mkdir https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XY
   $ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
              https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XY/rc1
@@ -171,7 +171,7 @@ be done with the following commands:
   $ svn export https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XY/rc1 clang-X.Yrc1
   $ svn export https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XY/rc1 dragonegg-X.Yrc1
   $ svn export https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XY/rc1 llvm-test-X.Yrc1
-  
+
   $ tar -cvf - llvm-X.Yrc1        | gzip > llvm-X.Yrc1.src.tar.gz
   $ tar -cvf - clang-X.Yrc1       | gzip > clang-X.Yrc1.src.tar.gz
   $ tar -cvf - dragonegg-X.Yrc1   | gzip > dragonegg-X.Yrc1.src.tar.gz
@@ -321,10 +321,10 @@ to the list.  Verify that there are no regressions from the previous release.
 The results are not used to qualify a release, but to spot other potential
 problems.  For unsupported targets, verify that ``make check`` is at least
 clean.
-  
+
 During the first round of testing, all regressions must be fixed before the
 second release candidate is tagged.
-  
+
 If this is the second round of testing, the testing is only to ensure that bug
 fixes previously merged in have not created new major problems. *This is not
 the time to solve additional and unrelated bugs!* If no patches are merged in,
@@ -376,13 +376,13 @@ Tag the final release sources using the following procedure:
 
   $ svn copy https://llvm.org/svn/llvm-project/llvm/branches/release_XY \
              https://llvm.org/svn/llvm-project/llvm/tags/RELEASE_XY/Final
-  
+
   $ svn copy https://llvm.org/svn/llvm-project/cfe/branches/release_XY \
              https://llvm.org/svn/llvm-project/cfe/tags/RELEASE_XY/Final
-  
+
   $ svn copy https://llvm.org/svn/llvm-project/dragonegg/branches/release_XY \
              https://llvm.org/svn/llvm-project/dragonegg/tags/RELEASE_XY/Final
-  
+
   $ svn copy https://llvm.org/svn/llvm-project/test-suite/branches/release_XY \
              https://llvm.org/svn/llvm-project/test-suite/tags/RELEASE_XY/Final
 
