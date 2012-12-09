@@ -6,9 +6,6 @@ LLVM Language Reference Manual
    :local:
    :depth: 3
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_ and `Vikram
-Adve <mailto:vadve@cs.uiuc.edu>`_
-
 Abstract
 ========
 
