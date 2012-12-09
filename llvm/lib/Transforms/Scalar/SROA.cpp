@@ -522,11 +522,10 @@ public:
 
   /// \brief Run the builder over the allocation.
   bool operator()() {
-    // Note that we have to re-evaluate size on each trip through the loop as
-    // the queue grows at the tail.
-    for (unsigned Idx = 0; Idx < Queue.size(); ++Idx) {
-      U = Queue[Idx].U;
-      Offset = Queue[Idx].Offset;
+    while (!Queue.empty()) {
+      U = Queue.back().U;
+      Offset = Queue.back().Offset;
+      Queue.pop_back();
       if (!visit(cast<Instruction>(U->getUser())))
         return false;
     }
@@ -851,11 +850,10 @@ public:
 
   /// \brief Run the builder over the allocation.
   void operator()() {
-    // Note that we have to re-evaluate size on each trip through the loop as
-    // the queue grows at the tail.
-    for (unsigned Idx = 0; Idx < Queue.size(); ++Idx) {
-      U = Queue[Idx].U;
-      Offset = Queue[Idx].Offset;
+    while (!Queue.empty()) {
+      U = Queue.back().U;
+      Offset = Queue.back().Offset;
+      Queue.pop_back();
       this->visit(cast<Instruction>(U->getUser()));
     }
   }
