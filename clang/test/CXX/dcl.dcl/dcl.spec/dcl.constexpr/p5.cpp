@@ -1,5 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -triple x86_64-unknown-unknown -verify -std=c++11 -fcxx-exceptions %s
-// RUN: %clang_cc1 -fsyntax-only -triple x86_64-unknown-unknown -std=c++11 -fcxx-exceptions -Wno-invalid-constexpr %s
+// RUN: %clang_cc1 -fsyntax-only -triple x86_64-unknown-unknown -std=c++11 -fcxx-exceptions -Wno-invalid-constexpr %s -DNO_INVALID_CONSTEXPR
 
 namespace StdExample {
 
@@ -110,3 +110,23 @@ int y1 = Y<int>().get(); // ok
 int y2 = Y<Z>().get(); // ok
 
 }
+
+#ifndef NO_INVALID_CONSTEXPR
+namespace PR14550 {
+  // As an "extension", we allow functions which can't produce constant
+  // expressions to be declared constexpr in system headers (libstdc++
+  // marks some functions as constexpr which use builtins which we don't
+  // support constant folding). Ensure that we don't mark those functions
+  // as invalid after suppressing the diagnostic.
+# 122 "p5.cpp" 1 3
+  int n;
+  struct A {
+    static constexpr int f() { return n; }
+  };
+  template<typename T> struct B {
+    B() { g(T::f()); } // expected-error {{undeclared identifier 'g'}}
+  };
+# 130 "p5.cpp" 2
+  template class B<A>; // expected-note {{here}}
+}
+#endif

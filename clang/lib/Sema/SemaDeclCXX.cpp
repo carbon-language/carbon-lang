@@ -994,11 +994,12 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
   //     base class sub-objects shall be a constexpr constructor.
   llvm::SmallVector<PartialDiagnosticAt, 8> Diags;
   if (!Expr::isPotentialConstantExpr(Dcl, Diags)) {
-    Diag(Dcl->getLocation(), diag::err_constexpr_function_never_constant_expr)
+    Diag(Dcl->getLocation(), diag::ext_constexpr_function_never_constant_expr)
       << isa<CXXConstructorDecl>(Dcl);
     for (size_t I = 0, N = Diags.size(); I != N; ++I)
       Diag(Diags[I].first, Diags[I].second);
-    return false;
+    // Don't return false here: we allow this for compatibility in
+    // system headers.
   }
 
   return true;
