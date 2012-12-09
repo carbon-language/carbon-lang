@@ -90,6 +90,9 @@ public:
                                    unsigned Alignment,
                                    unsigned AddressSpace) const;
 
+  virtual unsigned getIntrinsicInstrCost(Intrinsic::ID, Type *RetTy,
+                                         ArrayRef<Type*> Tys) const;
+
   virtual unsigned getNumberOfParts(Type *Tp) const;
 };
 

@@ -23,6 +23,7 @@
 #define LLVM_TRANSFORMS_TARGET_TRANSFORM_INTERFACE
 
 #include "llvm/AddressingMode.h"
+#include "llvm/Intrinsics.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Type.h"
@@ -206,6 +207,13 @@ public:
   virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
                                    unsigned AddressSpace) const {
+    return 1;
+  }
+
+  /// Returns the cost of Intrinsic instructions.
+  virtual unsigned getIntrinsicInstrCost(Intrinsic::ID,
+                                         Type *RetTy,
+                                         ArrayRef<Type*> Tys) const {
     return 1;
   }
 

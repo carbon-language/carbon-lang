@@ -62,6 +62,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
@@ -1051,6 +1052,35 @@ getReductionIdentity(LoopVectorizationLegality::ReductionKind K) {
   }
 }
 
+static bool
+isTriviallyVectorizableIntrinsic(Instruction *Inst) {
+  IntrinsicInst *II = dyn_cast<IntrinsicInst>(Inst);
+  if (!II)
+    return false;
+  switch (II->getIntrinsicID()) {
+  case Intrinsic::sqrt:
+  case Intrinsic::sin:
+  case Intrinsic::cos:
+  case Intrinsic::exp:
+  case Intrinsic::exp2:
+  case Intrinsic::log:
+  case Intrinsic::log10:
+  case Intrinsic::log2:
+  case Intrinsic::fabs:
+  case Intrinsic::floor:
+  case Intrinsic::ceil:
+  case Intrinsic::trunc:
+  case Intrinsic::rint:
+  case Intrinsic::nearbyint:
+  case Intrinsic::pow:
+  case Intrinsic::fma:
+    return true;
+  default:
+    return false;
+  }
+  return false;
+}
+
 void
 InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   //===------------------------------------------------===//
@@ -1509,8 +1539,22 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
         break;
       }
         
+      case Instruction::Call: {
+        assert(isTriviallyVectorizableIntrinsic(it));
+        Module *M = BB->getParent()->getParent();
+        IntrinsicInst *II = cast<IntrinsicInst>(it);
+        Intrinsic::ID ID = II->getIntrinsicID();
+        SmallVector<Value*, 4> Args;
+        for (unsigned i = 0, ie = II->getNumArgOperands(); i != ie; ++i) 
+          Args.push_back(getVectorValue(II->getArgOperand(i)));
+        Type *Tys[] = { VectorType::get(II->getType()->getScalarType(), VF) };
+        Function *F = Intrinsic::getDeclaration(M, ID, Tys);
+        WidenMap[it] = Builder.CreateCall(F, Args);
+        break;
+      }
+
       default:
-        /// All other instructions are unsupported. Scalarize them.
+        // All other instructions are unsupported. Scalarize them.
         scalarizeInstruction(it);
         break;
     }// end of switch.
@@ -1706,7 +1750,7 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
 
       // We still don't handle functions.
       CallInst *CI = dyn_cast<CallInst>(it);
-      if (CI) {
+      if (CI && !isTriviallyVectorizableIntrinsic(it)) {
         DEBUG(dbgs() << "LV: Found a call site.\n");
         return false;
       }
@@ -2325,6 +2369,15 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     case Instruction::BitCast: {
       Type *SrcVecTy = ToVectorTy(I->getOperand(0)->getType(), VF);
       return VTTI->getCastInstrCost(I->getOpcode(), VectorTy, SrcVecTy);
+    }
+    case Instruction::Call: {
+      assert(isTriviallyVectorizableIntrinsic(I));
+      IntrinsicInst *II = cast<IntrinsicInst>(I);
+      Type *RetTy = ToVectorTy(II->getType(), VF);
+      SmallVector<Type*, 4> Tys;
+      for (unsigned i = 0, ie = II->getNumArgOperands(); i != ie; ++i) 
+        Tys.push_back(ToVectorTy(II->getArgOperand(i)->getType(), VF));
+      return VTTI->getIntrinsicInstrCost(II->getIntrinsicID(), RetTy, Tys);
     }
     default: {
       // We are scalarizing the instruction. Return the cost of the scalar
