@@ -107,10 +107,8 @@ public:
       new llvm::opt::DerivedArgList(*_inputArgs));
 
     if (llvm::opt::Arg *A = _inputArgs->getLastArg(ld::OPT_target)) {
-      llvm::errs() << A->getValue() << "\n";
       newArgs->AddSeparateArg( A, _core.getOption(core::OPT_target)
                              , A->getValue());
-      llvm::errs() << A->getValue() << "\n";
     } else {
       assert(!_defaultTargetTriple.empty() && "Got empty target triple!");
       newArgs->AddSeparateArg(nullptr, _core.getOption(core::OPT_target)
