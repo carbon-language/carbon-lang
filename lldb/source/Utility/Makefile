@@ -12,4 +12,11 @@ LIBRARYNAME := lldbUtility
 BUILD_ARCHIVE = 1
 NO_PEDANTIC = 1
 
+# Enable RTTI on GCC builds because liblldbCore.a requires RTTI.
+# See source/Core/Makefile for details.
+ifeq (g++,$(shell basename $(CXX)))
+  REQUIRES_RTTI = 1
+endif
+
+
 include $(LLDB_LEVEL)/Makefile

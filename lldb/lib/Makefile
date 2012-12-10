@@ -67,6 +67,14 @@ USEDLIBS = lldbAPI.a \
 	lldbPluginPlatformLinux.a \
 	lldbPluginPlatformFreeBSD.a
 
+# Because GCC requires RTTI enabled for lldbCore (see source/Core/Makefile) it is
+# necessary to also link the clang rewriter libraries so vtable references can
+# be resolved correctly, if we are building with GCC.
+ifeq (g++,$(shell basename $(CXX)))
+  USEDLIBS += clangRewriteCore.a \
+              clangRewriteFrontend.a
+endif
+
 include $(LLDB_LEVEL)/../../Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
