@@ -890,10 +890,9 @@ void SelectionDAGLegalize::LegalizeLoadOps(SDNode *Node) {
       break;
     }
     case TargetLowering::Promote: {
-      // Only promote a load of vector type to another.
-      assert(VT.isVector() && "Cannot promote this load!");
-      // Change base type to a different vector type.
       EVT NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), VT);
+      assert(NVT.getSizeInBits() == VT.getSizeInBits() &&
+             "Can only promote loads to same size type");
 
       SDValue Res = DAG.getLoad(NVT, dl, Chain, Ptr, LD->getPointerInfo(),
                          LD->isVolatile(), LD->isNonTemporal(),
