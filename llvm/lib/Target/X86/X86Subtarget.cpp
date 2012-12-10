@@ -240,7 +240,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     if (IsIntel &&
         ((Family == 6 && Model == 0x1E) || // Nehalem: Clarksfield, Lynnfield,
                                            //          Jasper Froest
-         (Family == 6 && Model == 0x2A) || // Nehalem: Bloomfield, Nehalem-EP
+         (Family == 6 && Model == 0x1A) || // Nehalem: Bloomfield, Nehalem-EP
          (Family == 6 && Model == 0x2E) || // Nehalem: Nehalem-EX
          (Family == 6 && Model == 0x25) || // Westmere: Arrandale, Clarksdale
          (Family == 6 && Model == 0x2C) || // Westmere: Gulftown, Westmere-EP
