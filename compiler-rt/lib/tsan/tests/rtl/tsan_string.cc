@@ -46,6 +46,9 @@ TEST(ThreadSanitizer, MemcpyRace1) {
   t2.Memcpy(data, data2, 10, true);
 }
 
+// The test fails with TSAN_SHADOW_COUNT=2,
+// because the old racy access is evicted.
+#if defined(TSAN_SHADOW_COUNT) && TSAN_SHADOW_COUNT >= 4
 TEST(ThreadSanitizer, MemcpyRace2) {
   char *data = new char[10];
   char *data1 = new char[10];
@@ -54,6 +57,7 @@ TEST(ThreadSanitizer, MemcpyRace2) {
   t1.Memcpy(data+5, data1, 1);
   t2.Memcpy(data+3, data2, 4, true);
 }
+#endif
 
 TEST(ThreadSanitizer, MemcpyRace3) {
   char *data = new char[10];
