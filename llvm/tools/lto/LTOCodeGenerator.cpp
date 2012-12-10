@@ -379,7 +379,12 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   // keeps only main if it exists and does nothing for libraries. Instead
   // we create the pass ourselves with the symbol list provided by the linker.
   PassManagerBuilder().populateLTOPassManager(passes,
-                                              /*Internalize=*/!_exportDynamic,
+                                              /*Internalize=*/
+                                              // FIXME: remove 'false' once
+                                              // Darwin linker can pass this
+                                              // option.
+                                              // <rdar://problem/12839986>
+                                              false /*!_exportDynamic*/,
                                               !DisableInline,
                                               DisableGVNLoadPRE);
 
