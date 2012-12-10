@@ -498,10 +498,26 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
 // Error recovery tests.
 //===----------------------------------------------------------------------===//
 
-//TEST_F(FormatTest, IncorrectDerivedClass) {
-//  verifyFormat("public B {\n"
-//               "};");
-//}
+TEST_F(FormatTest, IncorrectAccessSpecifier) {
+  verifyFormat("public:");
+  verifyFormat("class A {\n"
+               "public\n"
+               "  void f() {\n"
+               "  }\n"
+               "};");
+  verifyFormat("public\n"
+               "int qwerty;");
+  verifyFormat("public\n"
+               "B {\n"
+               "};");
+  verifyFormat("public\n"
+               "{\n"
+               "};");
+  verifyFormat("public\n"
+               "B {\n"
+               "  int x;\n"
+               "};");
+}
 
 TEST_F(FormatTest, IncorrectCodeUnbalancedBraces) {
   verifyFormat("{");

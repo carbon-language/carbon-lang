@@ -311,7 +311,9 @@ void UnwrappedLineParser::parseSwitch() {
 
 void UnwrappedLineParser::parseAccessSpecifier() {
   nextToken();
-  nextToken();
+  // Otherwise, we don't know what it is, and we'd better keep the next token.
+  if (FormatTok.Tok.is(tok::colon))
+    nextToken();
   addUnwrappedLine();
 }
 

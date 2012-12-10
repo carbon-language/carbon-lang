@@ -371,8 +371,9 @@ private:
     if (Newlines == 0 && Offset != 0)
       Newlines = 1;
     unsigned Indent = Line.Level * 2;
-    if (Token.Tok.is(tok::kw_public) || Token.Tok.is(tok::kw_protected) ||
-        Token.Tok.is(tok::kw_private))
+    if ((Token.Tok.is(tok::kw_public) || Token.Tok.is(tok::kw_protected) ||
+         Token.Tok.is(tok::kw_private)) &&
+        static_cast<int>(Indent) + Style.AccessModifierOffset >= 0)
       Indent += Style.AccessModifierOffset;
     replaceWhitespace(Token, Newlines, Indent);
     return Indent;
