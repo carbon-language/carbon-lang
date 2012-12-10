@@ -24,8 +24,9 @@
 // Once freed, the body of the chunk contains the stack trace of the free call.
 //
 //===----------------------------------------------------------------------===//
-
 #include "asan_allocator.h"
+
+#if ASAN_ALLOCATOR_VERSION == 1
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_lock.h"
@@ -1049,3 +1050,4 @@ uptr __asan_get_allocated_size(const void *p) {
   }
   return allocated_size;
 }
+#endif  // ASAN_ALLOCATOR_VERSION

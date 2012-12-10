@@ -18,6 +18,12 @@
 #include "asan_internal.h"
 #include "asan_interceptors.h"
 
+// We are in the process of transitioning from the old allocator (version 1)
+// to a new one (version 2). The change is quite intrusive so both allocators
+// will co-exist in the source base for a while. The actual allocator is chosen
+// at build time by redefining this macrozz.
+#define ASAN_ALLOCATOR_VERSION 1
+
 namespace __asan {
 
 static const uptr kNumberOfSizeClasses = 255;
