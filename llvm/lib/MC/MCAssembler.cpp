@@ -80,7 +80,7 @@ bool MCAsmLayout::isFragmentUpToDate(const MCFragment *F) const {
   return F->getLayoutOrder() <= LastValid->getLayoutOrder();
 }
 
-void MCAsmLayout::Invalidate(MCFragment *F) {
+void MCAsmLayout::invalidateFragmentsAfter(MCFragment *F) {
   // If this fragment wasn't already up-to-date, we don't need to do anything.
   if (!isFragmentUpToDate(F))
     return;
@@ -678,7 +678,7 @@ bool MCAssembler::fragmentNeedsRelaxation(const MCInstFragment *IF,
     return false;
 
   for (MCInstFragment::const_fixup_iterator it = IF->fixup_begin(),
-         ie = IF->fixup_end(); it != ie; ++it)
+       ie = IF->fixup_end(); it != ie; ++it)
     if (fixupNeedsRelaxation(*it, IF, Layout))
       return true;
 
@@ -767,39 +767,39 @@ bool MCAssembler::relaxDwarfCallFrameFragment(MCAsmLayout &Layout,
   return OldSize != Data.size();
 }
 
-bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout,
-                                    MCSectionData &SD) {
+bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD) {
+  // Holds the first fragment which needed relaxing during this layout. It will
+  // remain NULL if none were relaxed.
   MCFragment *FirstInvalidFragment = NULL;
+
   // Scan for fragments that need relaxation.
-  for (MCSectionData::iterator it2 = SD.begin(),
-         ie2 = SD.end(); it2 != ie2; ++it2) {
-    // Check if this is an fragment that needs relaxation.
-    bool relaxedFrag = false;
-    switch(it2->getKind()) {
+  for (MCSectionData::iterator I = SD.begin(), IE = SD.end(); I != IE; ++I) {
+    // Check if this is a fragment that needs relaxation.
+    bool RelaxedFrag = false;
+    switch(I->getKind()) {
     default:
-          break;
+      break;
     case MCFragment::FT_Inst:
-      relaxedFrag = relaxInstruction(Layout, *cast<MCInstFragment>(it2));
+      RelaxedFrag = relaxInstruction(Layout, *cast<MCInstFragment>(I));
       break;
     case MCFragment::FT_Dwarf:
-      relaxedFrag = relaxDwarfLineAddr(Layout,
-                                       *cast<MCDwarfLineAddrFragment>(it2));
+      RelaxedFrag = relaxDwarfLineAddr(Layout,
+                                       *cast<MCDwarfLineAddrFragment>(I));
       break;
     case MCFragment::FT_DwarfFrame:
-      relaxedFrag =
+      RelaxedFrag =
         relaxDwarfCallFrameFragment(Layout,
-                                    *cast<MCDwarfCallFrameFragment>(it2));
+                                    *cast<MCDwarfCallFrameFragment>(I));
       break;
     case MCFragment::FT_LEB:
-      relaxedFrag = relaxLEB(Layout, *cast<MCLEBFragment>(it2));
+      RelaxedFrag = relaxLEB(Layout, *cast<MCLEBFragment>(I));
       break;
     }
-    // Update the layout, and remember that we relaxed.
-    if (relaxedFrag && !FirstInvalidFragment)
-      FirstInvalidFragment = it2;
+    if (RelaxedFrag && !FirstInvalidFragment)
+      FirstInvalidFragment = I;
   }
   if (FirstInvalidFragment) {
-    Layout.Invalidate(FirstInvalidFragment);
+    Layout.invalidateFragmentsAfter(FirstInvalidFragment);
     return true;
   }
   return false;
@@ -811,7 +811,7 @@ bool MCAssembler::layoutOnce(MCAsmLayout &Layout) {
   bool WasRelaxed = false;
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     MCSectionData &SD = *it;
-    while(layoutSectionOnce(Layout, SD))
+    while (layoutSectionOnce(Layout, SD))
       WasRelaxed = true;
   }
 

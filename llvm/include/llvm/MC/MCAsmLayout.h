@@ -21,10 +21,10 @@ class MCSymbolData;
 
 /// Encapsulates the layout of an assembly file at a particular point in time.
 ///
-/// Assembly may requiring compute multiple layouts for a particular assembly
+/// Assembly may require computing multiple layouts for a particular assembly
 /// file as part of the relaxation process. This class encapsulates the layout
 /// at a single point in time in such a way that it is always possible to
-/// efficiently compute the exact addresses of any symbol in the assembly file,
+/// efficiently compute the exact address of any symbol in the assembly file,
 /// even during the relaxation process.
 class MCAsmLayout {
 public:
@@ -54,9 +54,9 @@ public:
   /// Get the assembler object this is a layout for.
   MCAssembler &getAssembler() const { return Assembler; }
 
-  /// \brief Invalidate all following fragments because a fragment has been
-  /// resized. The fragments size should have already been updated.
-  void Invalidate(MCFragment *F);
+  /// \brief Invalidate the fragments after F because it has been resized.
+  /// The fragment's size should have already been updated.
+  void invalidateFragmentsAfter(MCFragment *F);
 
   /// \brief Perform layout for a single fragment, assuming that the previous
   /// fragment has already been laid out correctly, and the parent section has

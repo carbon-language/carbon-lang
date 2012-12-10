@@ -738,10 +738,12 @@ private:
   bool fragmentNeedsRelaxation(const MCInstFragment *IF,
                                const MCAsmLayout &Layout) const;
 
-  /// layoutOnce - Perform one layout iteration and return true if any offsets
+  /// \brief Perform one layout iteration and return true if any offsets
   /// were adjusted.
   bool layoutOnce(MCAsmLayout &Layout);
 
+  /// \brief Perform one layout iteration of the given section and return true
+  /// if any offsets were adjusted.
   bool layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD);
 
   bool relaxInstruction(MCAsmLayout &Layout, MCInstFragment &IF);
