@@ -981,6 +981,9 @@ void DwarfDebug::endModule() {
   for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
          E = CUMap.end(); I != E; ++I)
     delete I->second;
+
+  delete FissionCU;
+
   // Reset these for the next Module if we have one.
   FirstCU = NULL;
   FissionCU = NULL;
