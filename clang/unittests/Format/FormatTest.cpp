@@ -478,7 +478,17 @@ TEST_F(FormatTest, UnderstandsUsesOfStar) {
   verifyFormat("int a = b * *c;");
   verifyFormat("int main(int argc, char **argv) {\n}");
 
+  // FIXME: Is this desired for LLVM? Fix if not.
+  verifyFormat("A<int *> a;");
+  verifyFormat("A<int **> a;");
+  verifyFormat("A<int *, int *> a;");
+  verifyFormat("A<int **, int **> a;");
+
   verifyGoogleFormat("int main(int argc, char** argv) {\n}");
+  verifyGoogleFormat("A<int*> a;");
+  verifyGoogleFormat("A<int**> a;");
+  verifyGoogleFormat("A<int*, int*> a;");
+  verifyGoogleFormat("A<int**, int**> a;");
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {

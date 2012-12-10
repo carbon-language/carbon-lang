@@ -689,6 +689,8 @@ private:
   }
 
   bool spaceRequiredBetween(Token Left, Token Right) {
+    if (Right.is(tok::r_paren) || Right.is(tok::semi) || Right.is(tok::comma))
+      return false;
     if (Left.is(tok::kw_template) && Right.is(tok::less))
       return true;
     if (Left.is(tok::arrow) || Right.is(tok::arrow))
@@ -724,8 +726,6 @@ private:
     if (Left.is(tok::l_paren))
       return false;
     if (Left.is(tok::hash))
-      return false;
-    if (Right.is(tok::r_paren) || Right.is(tok::semi) || Right.is(tok::comma))
       return false;
     if (Right.is(tok::l_paren)) {
       return !Left.isAnyIdentifier() || isIfForOrWhile(Left);
