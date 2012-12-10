@@ -133,24 +133,6 @@ class StdListSynthProvider:
 			pass
 
 	def has_children(self):
-		logger = lldb.formatters.Logger.Logger()
-		if self.count == None:
-			self.update ()
-			try:
-				next_val = self.next.GetValueAsUnsigned(0)
-				prev_val = self.prev.GetValueAsUnsigned(0)
-				if next_val == 0 or prev_val == 0:
-					return False
-				if next_val == self.node_address:
-					return False
-				# skip all the advanced logic to detect the exact count of children
-				# in the interest of speed from this point on, we MIGHT have children
-				# our loop detection logic will still make nothing show up :)
-				return True
-			except:
-				return False
-		if self.count == 0:
-			return False
 		return True
 
 class StdVectorSynthProvider:
@@ -249,7 +231,7 @@ class StdVectorSynthProvider:
 			
 
 	def has_children(self):
-		return self.num_children() > 0
+		return True
 
 
 class StdMapSynthProvider:
@@ -434,7 +416,7 @@ class StdMapSynthProvider:
 			return x;
 
 	def has_children(self):
-		return self.num_children() > 0
+		return True
 
 _map_capping_size = 255
 _list_capping_size = 255
