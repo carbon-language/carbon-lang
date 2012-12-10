@@ -1,0 +1,4 @@
+RUN: lld -flavor ld -### -target i686-linux -e adena -o out.a 2>&1 \
+RUN:   | FileCheck %s
+
+CHECK: -target i686-linux -entry=adena -output=out.a
