@@ -242,8 +242,7 @@ include(config-ix)
 # invocation time.
 set(LLVM_DEFAULT_TARGET_TRIPLE "${LLVM_HOST_TRIPLE}" CACHE STRING
   "Default target for which LLVM will generate code." )
-set(TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}" CACHE STRING
-  "Default target for which LLVM will generate code." )
+set(TARGET_TRIPLE "${LLVM_DEFAULT_TARGET_TRIPLE}")
 
 include(HandleLLVMOptions)
 
