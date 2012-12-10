@@ -277,8 +277,8 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, uptr size) {
       // See http://llvm.org/bugs/show_bug.cgi?id=11763.
       CHECK_RANGES_OVERLAP("memcpy", to, size, from, size);
     }
-    ASAN_WRITE_RANGE(from, size);
-    ASAN_READ_RANGE(to, size);
+    ASAN_READ_RANGE(from, size);
+    ASAN_WRITE_RANGE(to, size);
   }
 #if MAC_INTERPOSE_FUNCTIONS
   // Interposing of resolver functions is broken on Mac OS 10.7 and 10.8.
@@ -296,8 +296,8 @@ INTERCEPTOR(void*, memmove, void *to, const void *from, uptr size) {
   }
   ENSURE_ASAN_INITED();
   if (flags()->replace_intrin) {
-    ASAN_WRITE_RANGE(from, size);
-    ASAN_READ_RANGE(to, size);
+    ASAN_READ_RANGE(from, size);
+    ASAN_WRITE_RANGE(to, size);
   }
 #if MAC_INTERPOSE_FUNCTIONS
   // Interposing of resolver functions is broken on Mac OS 10.7 and 10.8.
