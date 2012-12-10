@@ -3324,7 +3324,7 @@ SDValue TargetLowering::BuildExactSDIV(SDValue Op1, SDValue Op2, DebugLoc dl,
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDValue TargetLowering::
 BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
-          std::vector<SDNode*>* Created) const {
+          std::vector<SDNode*> *Created) const {
   EVT VT = N->getValueType(0);
   DebugLoc dl= N->getDebugLoc();
 
@@ -3384,7 +3384,7 @@ BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDValue TargetLowering::
 BuildUDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
-          std::vector<SDNode*>* Created) const {
+          std::vector<SDNode*> *Created) const {
   EVT VT = N->getValueType(0);
   DebugLoc dl = N->getDebugLoc();
 

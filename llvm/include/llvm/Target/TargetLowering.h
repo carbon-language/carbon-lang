@@ -1753,9 +1753,9 @@ public:
   SDValue BuildExactSDIV(SDValue Op1, SDValue Op2, DebugLoc dl,
                          SelectionDAG &DAG) const;
   SDValue BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
-                      std::vector<SDNode*>* Created) const;
+                      std::vector<SDNode*> *Created) const;
   SDValue BuildUDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
-                      std::vector<SDNode*>* Created) const;
+                      std::vector<SDNode*> *Created) const;
 
 
   //===--------------------------------------------------------------------===//
