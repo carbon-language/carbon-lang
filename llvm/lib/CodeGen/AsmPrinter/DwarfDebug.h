@@ -309,12 +309,14 @@ class DwarfDebug {
   // table for the same directory as DW_at_comp_dir.
   StringRef CompilationDir;
 
-  // Holders for the various debug information flags that we might need to
-  // have exposed. See accessor functions below for description.
-  bool IsDarwinGDBCompat;
-
   // Counter for assigning globally unique IDs for CUs.
   unsigned GlobalCUIndexCount;
+
+  // Holders for the various debug information flags that we might need to
+  // have exposed. See accessor functions below for description.
+
+  // Whether or not we're emitting info for older versions of gdb on darwin.
+  bool IsDarwinGDBCompat;
 
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
