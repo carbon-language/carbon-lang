@@ -182,17 +182,17 @@ def : Proc<"westmere",        [FeatureSSE42, FeatureCMPXCHG16B,
 // Sandy Bridge
 // SSE is not listed here since llvm treats AVX as a reimplementation of SSE,
 // rather than a superset.
-def : Proc<"corei7-avx",      [FeatureAVX, FeatureCMPXCHG16B, FeaturePOPCNT,
-                               FeatureAES, FeaturePCLMUL]>;
+def : Proc<"corei7-avx",      [FeatureAVX, FeatureCMPXCHG16B, FeatureFastUAMem,
+                               FeaturePOPCNT, FeatureAES, FeaturePCLMUL]>;
 // Ivy Bridge
-def : Proc<"core-avx-i",      [FeatureAVX, FeatureCMPXCHG16B, FeaturePOPCNT,
-                               FeatureAES, FeaturePCLMUL,
+def : Proc<"core-avx-i",      [FeatureAVX, FeatureCMPXCHG16B, FeatureFastUAMem,
+                               FeaturePOPCNT, FeatureAES, FeaturePCLMUL,
                                FeatureRDRAND, FeatureF16C, FeatureFSGSBase]>;
 
 // Haswell
-def : Proc<"core-avx2",       [FeatureAVX2, FeatureCMPXCHG16B, FeaturePOPCNT,
-                               FeatureAES, FeaturePCLMUL, FeatureRDRAND,
-                               FeatureF16C, FeatureFSGSBase,
+def : Proc<"core-avx2",       [FeatureAVX2, FeatureCMPXCHG16B, FeatureFastUAMem,
+                               FeaturePOPCNT, FeatureAES, FeaturePCLMUL,
+                               FeatureRDRAND, FeatureF16C, FeatureFSGSBase,
                                FeatureMOVBE, FeatureLZCNT, FeatureBMI,
                                FeatureBMI2, FeatureFMA,
                                FeatureRTM]>;

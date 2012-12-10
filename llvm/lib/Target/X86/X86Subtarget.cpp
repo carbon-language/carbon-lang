@@ -234,12 +234,20 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
       ToggleFeature(X86::FeatureSlowBTMem);
     }
 
-    // If it's Nehalem, unaligned memory access is fast.
-    // Include Westmere and Sandy Bridge as well.
-    // FIXME: add later processors.
-    if (IsIntel && ((Family == 6 && Model == 26) ||
-        (Family == 6 && Model == 44) ||
-        (Family == 6 && Model == 42))) {
+    // If it's an Intel chip since Nehalem and not an Atom chip, unaligned
+    // memory access is fast. We hard code model numbers here because they
+    // aren't strictly increasing for Intel chips it seems.
+    if (IsIntel &&
+        ((Family == 6 && Model == 0x1E) || // Nehalem: Clarksfield, Lynnfield,
+                                           //          Jasper Froest
+         (Family == 6 && Model == 0x2A) || // Nehalem: Bloomfield, Nehalem-EP
+         (Family == 6 && Model == 0x2E) || // Nehalem: Nehalem-EX
+         (Family == 6 && Model == 0x25) || // Westmere: Arrandale, Clarksdale
+         (Family == 6 && Model == 0x2C) || // Westmere: Gulftown, Westmere-EP
+         (Family == 6 && Model == 0x2F) || // Westmere: Westmere-EX
+         (Family == 6 && Model == 0x2A) || // SandyBridge
+         (Family == 6 && Model == 0x2D) || // SandyBridge: SandyBridge-E*
+         (Family == 6 && Model == 0x3A))) {// IvyBridge
       IsUAMemFast = true;
       ToggleFeature(X86::FeatureFastUAMem);
     }
