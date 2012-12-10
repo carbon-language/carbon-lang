@@ -156,7 +156,9 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   : Asm(A), MMI(Asm->MMI), FirstCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize),
     SourceIdMap(DIEValueAllocator), StringPool(DIEValueAllocator),
-    PrevLabel(NULL), GlobalCUIndexCount(0), SkeletonCU(0) {
+    PrevLabel(NULL), GlobalCUIndexCount(0),
+    InfoHolder(A, &AbbreviationsSet, &Abbreviations),
+    SkeletonCU(0), SkeletonHolder(A, &AbbreviationsSet, &Abbreviations) {
   NextStringPoolNumber = 0;
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
@@ -222,21 +224,21 @@ MCSymbol *DwarfDebug::getStringPoolEntry(StringRef Str) {
 
 // Define a unique number for the abbreviation.
 //
-void DwarfDebug::assignAbbrevNumber(DIEAbbrev &Abbrev) {
+void DwarfUnits::assignAbbrevNumber(DIEAbbrev &Abbrev) {
   // Profile the node so that we can make it unique.
   FoldingSetNodeID ID;
   Abbrev.Profile(ID);
 
   // Check the set for priors.
-  DIEAbbrev *InSet = AbbreviationsSet.GetOrInsertNode(&Abbrev);
+  DIEAbbrev *InSet = AbbreviationsSet->GetOrInsertNode(&Abbrev);
 
   // If it's newly added.
   if (InSet == &Abbrev) {
     // Add to abbreviation list.
-    Abbreviations.push_back(&Abbrev);
+    Abbreviations->push_back(&Abbrev);
 
     // Assign the vector position + 1 as its number.
-    Abbrev.setNumber(Abbreviations.size());
+    Abbrev.setNumber(Abbreviations->size());
   } else {
     // Assign existing abbreviation number.
     Abbrev.setNumber(InSet->getNumber());
@@ -655,6 +657,8 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   if (useSplitDwarf() && !SkeletonCU)
     SkeletonCU = constructSkeletonCU(N);
 
+  InfoHolder.addUnit(NewCU);
+
   CUMap.insert(std::make_pair(N, NewCU));
   return NewCU;
 }
@@ -871,7 +875,9 @@ void DwarfDebug::finalizeModuleInfo() {
   }
 
    // Compute DIE offsets and sizes.
-  computeSizeAndOffsets();
+  InfoHolder.computeSizeAndOffsets();
+  if (useSplitDwarf())
+    SkeletonHolder.computeSizeAndOffsets();
 }
 
 void DwarfDebug::endSections() {
@@ -1635,7 +1641,7 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
 
 // Compute the size and offset of a DIE.
 unsigned
-DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset) {
+DwarfUnits::computeSizeAndOffset(DIE *Die, unsigned Offset) {
   // Get the children.
   const std::vector<DIE *> &Children = Die->getChildren();
 
@@ -1644,7 +1650,7 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset) {
 
   // Get the abbreviation for this DIE.
   unsigned AbbrevNumber = Die->getAbbrevNumber();
-  const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
+  const DIEAbbrev *Abbrev = Abbreviations->at(AbbrevNumber - 1);
 
   // Set DIE offset
   Die->setOffset(Offset);
@@ -1677,25 +1683,16 @@ DwarfDebug::computeSizeAndOffset(DIE *Die, unsigned Offset) {
 }
 
 // Compute the size and offset of all the DIEs.
-void DwarfDebug::computeSizeAndOffsets() {
-  if (SkeletonCU) {
+void DwarfUnits::computeSizeAndOffsets() {
+  for (SmallVector<CompileUnit *, 1>::iterator I = CUs.begin(),
+         E = CUs.end(); I != E; ++I) {
     unsigned Offset =
       sizeof(int32_t) + // Length of Compilation Unit Info
       sizeof(int16_t) + // DWARF version number
       sizeof(int32_t) + // Offset Into Abbrev. Section
       sizeof(int8_t);   // Pointer Size (in bytes)
 
-    computeSizeAndOffset(SkeletonCU->getCUDie(), Offset);
-  }
-  for (DenseMap<const MDNode *, CompileUnit *>::iterator I = CUMap.begin(),
-         E = CUMap.end(); I != E; ++I) {
-    // Compute size of compile unit header.
-    unsigned Offset =
-      sizeof(int32_t) + // Length of Compilation Unit Info
-      sizeof(int16_t) + // DWARF version number
-      sizeof(int32_t) + // Offset Into Abbrev. Section
-      sizeof(int8_t);   // Pointer Size (in bytes)
-    computeSizeAndOffset(I->second->getCUDie(), Offset);
+    computeSizeAndOffset((*I)->getCUDie(), Offset);
   }
 }
 
@@ -2350,6 +2347,8 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
 
   if (!CompilationDir.empty())
     NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
+
+  SkeletonHolder.addUnit(NewCU);
 
   return NewCU;
 }

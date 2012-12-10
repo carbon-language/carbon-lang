@@ -188,6 +188,39 @@ public:
   DIType getType() const;
 };
 
+/// \brief Collects and handles information specific to a particular
+/// collection of units.
+class DwarfUnits {
+  // Target of Dwarf emission, used for sizing of abbreviations.
+  AsmPrinter *Asm;
+
+  // Used to uniquely define abbreviations.
+  FoldingSet<DIEAbbrev> *AbbreviationsSet;
+
+  // A list of all the unique abbreviations in use.
+  std::vector<DIEAbbrev *> *Abbreviations;
+
+  // A pointer to all units in the section.
+  SmallVector<CompileUnit *, 1> CUs;
+
+public:
+  DwarfUnits(AsmPrinter *AP, FoldingSet<DIEAbbrev> *AS,
+             std::vector<DIEAbbrev *> *A) :
+    Asm(AP), AbbreviationsSet(AS), Abbreviations(A) {}
+
+  /// \brief Compute the size and offset of a DIE given an incoming Offset.
+  unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
+
+  /// \brief Compute the size and offset of all the DIEs.
+  void computeSizeAndOffsets();
+
+  /// \brief Define a unique number for the abbreviation.
+  void assignAbbrevNumber(DIEAbbrev &Abbrev);
+
+  /// \brief Add a unit to the list of CUs.
+  void addUnit(CompileUnit *CU) { CUs.push_back(CU); }
+};
+
 /// \brief Collects and handles dwarf debug information.
 class DwarfDebug {
   // Target of Dwarf emission.
@@ -312,6 +345,9 @@ class DwarfDebug {
   // Counter for assigning globally unique IDs for CUs.
   unsigned GlobalCUIndexCount;
 
+  // Holder for the file specific debug information.
+  DwarfUnits InfoHolder;
+
   // Holders for the various debug information flags that we might need to
   // have exposed. See accessor functions below for description.
 
@@ -329,11 +365,9 @@ class DwarfDebug {
 
   // The CU left in the original object file for Fission debug info.
   CompileUnit *SkeletonCU;
+  DwarfUnits SkeletonHolder;
 
 private:
-
-  /// \brief Define a unique number for the abbreviation.
-  void assignAbbrevNumber(DIEAbbrev &Abbrev);
 
   void addScopeVariable(LexicalScope *LS, DbgVariable *Var);
 
