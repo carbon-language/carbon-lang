@@ -54,7 +54,7 @@ class NSTaggedNumber_SummaryProvider:
 		if self.info_bits == 12:
 			return '(long)' + str(ctypes.c_long(self.data).value)
 		else:
-			return 'absurd value:(info=' + str(self.info_bits) + ", value = " + str(self.data) + ')'
+			return 'unexpected value:(info=' + str(self.info_bits) + ", value = " + str(self.data) + ')'
 
 
 class NSUntaggedNumber_SummaryProvider:
@@ -158,7 +158,7 @@ class NSUntaggedNumber_SummaryProvider:
 			statistics.metric_hit('code_notrun',self.valobj)
 			return '(double)' + str(data_double)
 		statistics.metric_hit('unknown_class',str(valobj.GetName()) + " had unknown data_type " + str(data_type))
-		return 'absurd: dt = ' + str(data_type)
+		return 'unexpected: dt = ' + str(data_type)
 
 
 class NSUnknownNumber_SummaryProvider:
