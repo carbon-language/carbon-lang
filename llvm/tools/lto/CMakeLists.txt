@@ -11,6 +11,8 @@ set(SOURCES
   LTOModule.cpp
   )
 
+set(LLVM_COMMON_DEPENDS intrinsics_gen)
+
 if( NOT WIN32 AND LLVM_ENABLE_PIC )
   set(bsl ${BUILD_SHARED_LIBS})
   set(BUILD_SHARED_LIBS ON)
