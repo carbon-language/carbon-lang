@@ -1237,8 +1237,8 @@ AST_MATCHER_P(NamedDecl, hasName, std::string, Name) {
   }
 }
 
-/// \brief Matches NamedDecl nodes whose full names partially match the
-/// given RegExp.
+/// \brief Matches NamedDecl nodes whose fully qualified names contain
+/// a substring matched by the given RegExp.
 ///
 /// Supports specifying enclosing namespaces or classes by
 /// prefixing the name with '<enclosing>::'.  Does not match typedefs

@@ -56,6 +56,10 @@ namespace ast_matchers {
 /// that will trigger the callbacks specified via addMatcher(...) when a match
 /// is found.
 ///
+/// The order of matches is guaranteed to be equivalent to doing a pre-order
+/// traversal on the AST, and applying the matchers in the order in which they
+/// were added to the MatchFinder.
+///
 /// See ASTMatchers.h for more information about how to create matchers.
 ///
 /// Not intended to be subclassed.
