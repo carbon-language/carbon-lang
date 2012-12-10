@@ -45,11 +45,11 @@ namespace {
     static char ID;
     GCOVProfiler()
         : ModulePass(ID), EmitNotes(true), EmitData(true), Use402Format(false),
-          UseExtraChecksum(false) {
+          UseExtraChecksum(false), NoRedZone(false) {
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
     GCOVProfiler(bool EmitNotes, bool EmitData, bool use402Format = false,
-                 bool useExtraChecksum = false)
+                 bool useExtraChecksum = false, bool NoRedZone = false)
         : ModulePass(ID), EmitNotes(EmitNotes), EmitData(EmitData),
           Use402Format(use402Format), UseExtraChecksum(useExtraChecksum) {
       assert((EmitNotes || EmitData) && "GCOVProfiler asked to do nothing?");
@@ -98,6 +98,7 @@ namespace {
     bool EmitData;
     bool Use402Format;
     bool UseExtraChecksum;
+    bool NoRedZone;
 
     Module *M;
     LLVMContext *Ctx;
@@ -110,8 +111,10 @@ INITIALIZE_PASS(GCOVProfiler, "insert-gcov-profiling",
 
 ModulePass *llvm::createGCOVProfilerPass(bool EmitNotes, bool EmitData,
                                          bool Use402Format,
-                                         bool UseExtraChecksum) {
-  return new GCOVProfiler(EmitNotes, EmitData, Use402Format, UseExtraChecksum);
+                                         bool UseExtraChecksum,
+                                         bool NoRedZone) {
+  return new GCOVProfiler(EmitNotes, EmitData, Use402Format, UseExtraChecksum,
+                          NoRedZone);
 }
 
 namespace {
@@ -638,6 +641,9 @@ void GCOVProfiler::insertCounterWriteout(
     WriteoutF = Function::Create(WriteoutFTy, GlobalValue::InternalLinkage,
                                  "__llvm_gcov_writeout", M);
   WriteoutF->setUnnamedAddr(true);
+  WriteoutF->addFnAttr(Attributes::NoInline);
+  if (NoRedZone)
+    WriteoutF->addFnAttr(Attributes::NoRedZone);
 
   BasicBlock *BB = BasicBlock::Create(*Ctx, "entry", WriteoutF);
   IRBuilder<> Builder(BB);
@@ -683,6 +689,8 @@ void GCOVProfiler::insertCounterWriteout(
   F->setUnnamedAddr(true);
   F->setLinkage(GlobalValue::InternalLinkage);
   F->addFnAttr(Attributes::NoInline);
+  if (NoRedZone)
+    F->addFnAttr(Attributes::NoRedZone);
 
   BB = BasicBlock::Create(*Ctx, "entry", F);
   Builder.SetInsertPoint(BB);
@@ -702,6 +710,8 @@ void GCOVProfiler::insertIndirectCounterIncrement() {
   Fn->setUnnamedAddr(true);
   Fn->setLinkage(GlobalValue::InternalLinkage);
   Fn->addFnAttr(Attributes::NoInline);
+  if (NoRedZone)
+    Fn->addFnAttr(Attributes::NoRedZone);
 
   Type *Int32Ty = Type::getInt32Ty(*Ctx);
   Type *Int64Ty = Type::getInt64Ty(*Ctx);
@@ -758,6 +768,9 @@ insertFlush(ArrayRef<std::pair<GlobalVariable*, MDNode*> > CountersBySP) {
   else
     FlushF->setLinkage(GlobalValue::InternalLinkage);
   FlushF->setUnnamedAddr(true);
+  FlushF->addFnAttr(Attributes::NoInline);
+  if (NoRedZone)
+    FlushF->addFnAttr(Attributes::NoRedZone);
 
   BasicBlock *Entry = BasicBlock::Create(*Ctx, "entry", FlushF);
 
