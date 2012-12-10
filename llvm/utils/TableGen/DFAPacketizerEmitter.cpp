@@ -279,6 +279,7 @@ DFAPacketizerEmitter::DFAPacketizerEmitter(RecordKeeper &R):
 //
 //
 void DFA::writeTableAndAPI(raw_ostream &OS, const std::string &TargetName) {
+  static const std::string SentinelEntry = "{-1, -1}";
   DFA::StateSet::iterator SI = states.begin();
   // This table provides a map to the beginning of the transitions for State s
   // in DFAStateInputTable.
@@ -305,12 +306,17 @@ void DFA::writeTableAndAPI(raw_ostream &OS, const std::string &TargetName) {
     // If there are no valid transitions from this stage, we need a sentinel
     // transition.
     if (ValidTransitions == StateEntry[i]) {
-      OS << "{-1, -1},";
+      OS << SentinelEntry << ",";
       ++ValidTransitions;
     }
 
     OS << "\n";
   }
+
+  // Print out a sentinel entry at the end of the StateInputTable. This is
+  // needed to iterate over StateInputTable in DFAPacketizer::ReadTable()
+  OS << SentinelEntry << "\n";
+  
   OS << "};\n\n";
   OS << "const unsigned int " << TargetName << "DFAStateEntryTable[] = {\n";
 
@@ -318,6 +324,9 @@ void DFA::writeTableAndAPI(raw_ostream &OS, const std::string &TargetName) {
   // two numbers.
   for (unsigned i = 0; i < states.size(); ++i)
     OS << StateEntry[i] << ", ";
+
+  // Print out the index to the sentinel entry in StateInputTable
+  OS << ValidTransitions << ", ";
 
   OS << "\n};\n";
   OS << "} // namespace\n";
