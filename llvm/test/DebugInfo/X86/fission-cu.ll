@@ -1,4 +1,4 @@
-; RUN: llc -dwarf-fission=Enable -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
+; RUN: llc -split-dwarf=Enable -O0 %s -mtriple=x86_64-unknown-linux-gnu -filetype=obj -o %t
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
 @a = common global i32 0, align 4

@@ -318,7 +318,7 @@ class DwarfDebug {
 
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
-  bool HasDwarfFission;
+  bool HasSplitDwarf;
 
   // Fission Variables
   // In general these will all be for bits that are left in the
@@ -326,7 +326,7 @@ class DwarfDebug {
   // to be in the .dwo sections.
 
   // The CU left in the original object file for Fission debug info.
-  CompileUnit *FissionCU;
+  CompileUnit *SkeletonCU;
 
 private:
 
@@ -428,13 +428,14 @@ private:
   /// \brief Emit inline info using custom format.
   void emitDebugInlineInfo();
 
-  /// DWARF 5 Experimental Fission Emitters
+  /// DWARF 5 Experimental Split Dwarf Emitters
 
-  /// \brief Construct the fission compile unit for the debug info section.
-  CompileUnit *constructFissionCU(const MDNode *);
+  /// \brief Construct the split debug info compile unit for the debug info
+  /// section.
+  CompileUnit *constructSkeletonCU(const MDNode *);
 
-  /// \brief Emit the fission debug info section.
-  void emitFissionSkeletonCU(const MCSection *);
+  /// \brief Emit the local split debug info section.
+  void emitSkeletonCU(const MCSection *);
 
   /// \brief Emit the debug info dwo section.
   void emitDebugInfoDWO();
@@ -543,8 +544,8 @@ public:
   bool useDwarfAccelTables() { return HasDwarfAccelTables; }
 
   /// \brief Returns whether or not to change the current debug info for the
-  /// fission proposal support.
-  bool useDwarfFission() { return HasDwarfFission; }
+  /// split dwarf proposal support.
+  bool useSplitDwarf() { return HasSplitDwarf; }
 };
 } // End of namespace llvm
 
