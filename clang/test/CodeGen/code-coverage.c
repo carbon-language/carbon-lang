@@ -1,4 +1,5 @@
-// RUN: %clang -O0 -S -mno-red-zone -fprofile-arcs -ftest-coverage -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -O0 -emit-llvm -disable-red-zone -femit-coverage-notes -femit-coverage-data %s -o - | FileCheck %s
+
 // <rdar://problem/12843084>
 
 int test1(int a) {
