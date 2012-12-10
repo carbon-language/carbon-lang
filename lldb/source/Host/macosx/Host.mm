@@ -1377,7 +1377,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         return error;
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
-        
+    
     uid_t requested_uid = launch_info.GetUserID();
     const char *xpc_service  = nil;
     bool send_auth = false;
@@ -1394,7 +1394,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         }
         else
         {
-            error.SetError(4, eErrorTypeGeneric);
+            error.SetError(3, eErrorTypeGeneric);
             error.SetErrorStringWithFormat("Launching root via XPC needs to externalize authorization reference.");
             if (log)
             {
@@ -1406,7 +1406,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
     }
     else
     {
-        error.SetError(3, eErrorTypeGeneric);
+        error.SetError(4, eErrorTypeGeneric);
         error.SetErrorStringWithFormat("Launching via XPC is only currently available for either the login user or root.");
         if (log)
         {
@@ -1422,7 +1422,7 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
         
         if (type == XPC_TYPE_ERROR) {
             if (event == XPC_ERROR_CONNECTION_INTERRUPTED) {
-                // The service has either canceled itself, crashed, or been terminated. 
+                // The service has either canceled itself, crashed, or been terminated.
                 // The XPC connection is still valid and sending a message to it will re-launch the service.
                 // If the service is state-full, this is the time to initialize the new service.
                 return;
@@ -1435,12 +1435,12 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
                 // printf("Unexpected error from service: %s", xpc_dictionary_get_string(event, XPC_ERROR_KEY_DESCRIPTION));
             }
             
-        } else {			
+        } else {
             // printf("Received unexpected event in handler");
         }
     });
     
-        xpc_connection_set_finalizer_f (conn, xpc_finalizer_t(xpc_release));
+    xpc_connection_set_finalizer_f (conn, xpc_finalizer_t(xpc_release));
 	xpc_connection_resume (conn);
     xpc_object_t message = xpc_dictionary_create (nil, nil, 0);
     
@@ -1457,24 +1457,36 @@ LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t 
     xpc_dictionary_set_int64(message, LauncherXPCServicePosixspawnFlagsKey, GetPosixspawnFlags(launch_info));
     
     xpc_object_t reply = xpc_connection_send_message_with_reply_sync(conn, message);
-    
-    pid = xpc_dictionary_get_int64(reply, LauncherXPCServiceChildPIDKey);
-    if (pid == 0)
+    xpc_type_t returnType = xpc_get_type(reply);
+    if (returnType == XPC_TYPE_DICTIONARY)
     {
-        int errorType = xpc_dictionary_get_int64(reply, LauncherXPCServiceErrorTypeKey);
-        int errorCode = xpc_dictionary_get_int64(reply, LauncherXPCServiceCodeTypeKey);
-        
-        error.SetError(errorCode, eErrorTypeGeneric);
-        error.SetErrorStringWithFormat("Problems with launching via XPC. Error type : %i, code : %i", errorType, errorCode);
+        pid = xpc_dictionary_get_int64(reply, LauncherXPCServiceChildPIDKey);
+        if (pid == 0)
+        {
+            int errorType = xpc_dictionary_get_int64(reply, LauncherXPCServiceErrorTypeKey);
+            int errorCode = xpc_dictionary_get_int64(reply, LauncherXPCServiceCodeTypeKey);
+            
+            error.SetError(errorCode, eErrorTypeGeneric);
+            error.SetErrorStringWithFormat("Problems with launching via XPC. Error type : %i, code : %i", errorType, errorCode);
+            if (log)
+            {
+                error.PutToLog(log.get(), "%s", error.AsCString());
+            }
+            
+            if (authorizationRef)
+            {
+                AuthorizationFree(authorizationRef, kAuthorizationFlagDefaults);
+                authorizationRef = NULL;
+            }
+        }
+    }
+    else if (returnType == XPC_TYPE_ERROR)
+    {
+        error.SetError(5, eErrorTypeGeneric);
+        error.SetErrorStringWithFormat("Problems with launching via XPC. XPC error : %s", xpc_dictionary_get_string(reply, XPC_ERROR_KEY_DESCRIPTION));
         if (log)
         {
             error.PutToLog(log.get(), "%s", error.AsCString());
-        }
-        
-        if (authorizationRef)
-        {
-            AuthorizationFree(authorizationRef, kAuthorizationFlagDefaults);
-            authorizationRef = NULL;
         }
     }
     
@@ -1658,6 +1670,7 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
 static bool
 ShouldLaunchUsingXPC(const char *exe_path, ProcessLaunchInfo &launch_info)
 {
+    return true;
     bool result = false;
 
 #if !NO_XPC_SERVICES    
