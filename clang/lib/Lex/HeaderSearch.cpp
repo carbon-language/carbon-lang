@@ -749,7 +749,8 @@ bool HeaderSearch::isFileMultipleIncludeGuarded(const FileEntry *File) {
   if (ExternalSource && !HFI.Resolved)
     mergeHeaderFileInfo(HFI, ExternalSource->GetHeaderFileInfo(File));
 
-  return HFI.isPragmaOnce || HFI.ControllingMacro || HFI.ControllingMacroID;
+  return HFI.isPragmaOnce || HFI.isImport ||
+      HFI.ControllingMacro || HFI.ControllingMacroID;
 }
 
 void HeaderSearch::setHeaderFileInfoForUID(HeaderFileInfo HFI, unsigned UID) {
