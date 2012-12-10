@@ -4115,6 +4115,9 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (Args.hasArg(options::OPT_ObjC) || Args.hasArg(options::OPT_ObjCXX))
     CmdArgs.push_back("-ObjC");
 
+  if (Args.hasArg(options::OPT_rdynamic))
+    CmdArgs.push_back("-export_dynamic");
+
   CmdArgs.push_back("-o");
   CmdArgs.push_back(Output.getFilename());
 
