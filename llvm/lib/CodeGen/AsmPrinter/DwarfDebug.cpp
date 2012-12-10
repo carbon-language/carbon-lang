@@ -153,10 +153,10 @@ DIType DbgVariable::getType() const {
 } // end llvm namespace
 
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
-  : Asm(A), MMI(Asm->MMI), FirstCU(0), FissionCU(0),
+  : Asm(A), MMI(Asm->MMI), FirstCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize),
     SourceIdMap(DIEValueAllocator), StringPool(DIEValueAllocator),
-    PrevLabel(NULL), GlobalCUIndexCount(0) {
+    PrevLabel(NULL), GlobalCUIndexCount(0), FissionCU(0) {
   NextStringPoolNumber = 0;
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;

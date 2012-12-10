@@ -205,9 +205,6 @@ class DwarfDebug {
 
   CompileUnit *FirstCU;
 
-  // The CU left in the original object file for Fission debug info.
-  CompileUnit *FissionCU;
-
   // Maps MDNode with its corresponding CompileUnit.
   DenseMap <const MDNode *, CompileUnit *> CUMap;
 
@@ -322,6 +319,15 @@ class DwarfDebug {
   // DWARF5 Experimental Options
   bool HasDwarfAccelTables;
   bool HasDwarfFission;
+
+  // Fission Variables
+  // In general these will all be for bits that are left in the
+  // original object file, rather than things that are meant
+  // to be in the .dwo sections.
+
+  // The CU left in the original object file for Fission debug info.
+  CompileUnit *FissionCU;
+
 private:
 
   /// \brief Define a unique number for the abbreviation.
