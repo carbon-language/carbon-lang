@@ -507,10 +507,9 @@ namespace llvm {
                         MachineFunction &MF) const;
 
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
-    /// unaligned memory accesses. of the specified type.
-    virtual bool allowsUnalignedMemoryAccesses(EVT VT) const {
-      return true;
-    }
+    /// unaligned memory accesses. of the specified type. Returns whether it
+    /// is "fast" by reference in the second argument.
+    virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///

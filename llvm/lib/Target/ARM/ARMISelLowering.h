@@ -285,8 +285,9 @@ namespace llvm {
     bool isDesirableToTransformToIntegerOp(unsigned Opc, EVT VT) const;
 
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
-    /// unaligned memory accesses. of the specified type.
-    virtual bool allowsUnalignedMemoryAccesses(EVT VT) const;
+    /// unaligned memory accesses of the specified type. Returns whether it
+    /// is "fast" by reference in the second argument.
+    virtual bool allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const;
 
     virtual EVT getOptimalMemOpType(uint64_t Size,
                                     unsigned DstAlign, unsigned SrcAlign,
@@ -385,6 +386,8 @@ namespace llvm {
     /// specified FP immediate natively. If false, the legalizer will
     /// materialize the FP immediate as a load from a constant pool.
     virtual bool isFPImmLegal(const APFloat &Imm, EVT VT) const;
+
+    virtual bool isIntImmLegal(const APInt &Imm, EVT VT) const;
 
     virtual bool getTgtMemIntrinsic(IntrinsicInfo &Info,
                                     const CallInst &I,

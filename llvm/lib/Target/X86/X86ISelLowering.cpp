@@ -1412,6 +1412,13 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
   return MVT::i32;
 }
 
+bool
+X86TargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
+  if (Fast)
+    *Fast = Subtarget->isUnalignedMemAccessFast();
+  return true;
+}
+
 /// getJumpTableEncoding - Return the entry encoding for a jump table in the
 /// current function.  The returned value is a member of the
 /// MachineJumpTableInfo::JTEntryKind enum.

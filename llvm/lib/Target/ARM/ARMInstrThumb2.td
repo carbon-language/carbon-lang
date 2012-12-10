@@ -2315,13 +2315,15 @@ defm t2ORN  : T2I_bin_irs<0b0011, "orn",
 /// changed to modify CPSR.
 multiclass T2I_un_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
-                      PatFrag opnode, bit Cheap = 0, bit ReMat = 0> {
+                      PatFrag opnode,
+                      bit Cheap = 0, bit ReMat = 0, bit MoveImm = 0> {
    // shifted imm
    def i : T2sOneRegImm<(outs rGPR:$Rd), (ins t2_so_imm:$imm), iii,
                 opc, "\t$Rd, $imm",
                 [(set rGPR:$Rd, (opnode t2_so_imm:$imm))]> {
      let isAsCheapAsAMove = Cheap;
      let isReMaterializable = ReMat;
+     let isMoveImm = MoveImm;
      let Inst{31-27} = 0b11110;
      let Inst{25} = 0;
      let Inst{24-21} = opcod;
@@ -2355,7 +2357,7 @@ multiclass T2I_un_irs<bits<4> opcod, string opc,
 let AddedComplexity = 1 in
 defm t2MVN  : T2I_un_irs <0b0011, "mvn",
                           IIC_iMVNi, IIC_iMVNr, IIC_iMVNsi,
-                          UnOpFrag<(not node:$Src)>, 1, 1>;
+                          UnOpFrag<(not node:$Src)>, 1, 1, 1>;
 
 let AddedComplexity = 1 in
 def : T2Pat<(and     rGPR:$src, t2_so_imm_not:$imm),

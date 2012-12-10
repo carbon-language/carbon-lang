@@ -457,7 +457,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   maxStoresPerMemcpy = 16;
 }
 
-bool MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
+bool
+MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
   MVT::SimpleValueType SVT = VT.getSimpleVT().SimpleTy;
 
   if (Subtarget->inMips16Mode())
@@ -466,6 +467,8 @@ bool MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
   switch (SVT) {
   case MVT::i64:
   case MVT::i32:
+    if (Fast)
+      *Fast = true;
     return true;
   default:
     return false;

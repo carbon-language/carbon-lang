@@ -833,9 +833,12 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setSchedulingPreference(Sched::Hybrid);
 
   //// temporary - rewrite interface to use type
-  maxStoresPerMemcpy = maxStoresPerMemcpyOptSize = 1;
-  maxStoresPerMemset = 16;
+  maxStoresPerMemset = 8;
   maxStoresPerMemsetOptSize = Subtarget->isTargetDarwin() ? 8 : 4;
+  maxStoresPerMemcpy = 4; // For @llvm.memcpy -> sequence of stores
+  maxStoresPerMemcpyOptSize = Subtarget->isTargetDarwin() ? 4 : 2;
+  maxStoresPerMemmove = 4; // For @llvm.memmove -> sequence of stores
+  maxStoresPerMemmoveOptSize = Subtarget->isTargetDarwin() ? 4 : 2;
 
   // On ARM arguments smaller than 4 bytes are extended, so all arguments
   // are at least 4 bytes aligned.
@@ -9406,7 +9409,7 @@ bool ARMTargetLowering::isDesirableToTransformToIntegerOp(unsigned Opc,
   return (VT == MVT::f32) && (Opc == ISD::LOAD || Opc == ISD::STORE);
 }
 
-bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
+bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
   // The AllowsUnaliged flag models the SCTLR.A setting in ARM cpus
   bool AllowsUnaligned = Subtarget->allowsUnalignedMem();
 
@@ -9415,15 +9418,27 @@ bool ARMTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
     return false;
   case MVT::i8:
   case MVT::i16:
-  case MVT::i32:
+  case MVT::i32: {
     // Unaligned access can use (for example) LRDB, LRDH, LDR
-    return AllowsUnaligned;
+    if (AllowsUnaligned) {
+      if (Fast)
+        *Fast = Subtarget->hasV7Ops();
+      return true;
+    }
+    return false;
+  }
   case MVT::f64:
-  case MVT::v2f64:
+  case MVT::v2f64: {
     // For any little-endian targets with neon, we can support unaligned ld/st
     // of D and Q (e.g. {D0,D1}) registers by using vld1.i8/vst1.i8.
     // A big-endian target may also explictly support unaligned accesses
-    return Subtarget->hasNEON() && (AllowsUnaligned || isLittleEndian());
+    if (Subtarget->hasNEON() && (AllowsUnaligned || isLittleEndian())) {
+      if (Fast)
+        *Fast = true;
+      return true;
+    }
+    return false;
+  }
   }
 }
 
@@ -9442,12 +9457,17 @@ EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
 
   // See if we can use NEON instructions for this...
   if (IsZeroVal &&
-      !F->getFnAttributes().hasAttribute(Attributes::NoImplicitFloat) &&
-      Subtarget->hasNEON()) {
-    if (memOpAlign(SrcAlign, DstAlign, 16) && Size >= 16) {
-      return MVT::v4i32;
-    } else if (memOpAlign(SrcAlign, DstAlign, 8) && Size >= 8) {
-      return MVT::v2i32;
+      Subtarget->hasNEON() &&
+      !F->getFnAttributes().hasAttribute(Attributes::NoImplicitFloat)) {
+    bool Fast;
+    if (Size >= 16 && (memOpAlign(SrcAlign, DstAlign, 16) ||
+                       (allowsUnalignedMemoryAccesses(MVT::v2f64, &Fast) &&
+                        Fast))) {
+      return MVT::v2f64;
+    } else if (Size >= 8 && (memOpAlign(SrcAlign, DstAlign, 8) ||
+                             (allowsUnalignedMemoryAccesses(MVT::f64, &Fast) &&
+                              Fast))) {
+      return MVT::f64;
     }
   }
 
@@ -10239,6 +10259,24 @@ bool ARMTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
   if (VT == MVT::f64)
     return ARM_AM::getFP64Imm(Imm) != -1;
   return false;
+}
+
+bool ARMTargetLowering::isIntImmLegal(const APInt &Imm, EVT VT) const {
+  if (VT.getSizeInBits() > 32)
+    return false;
+
+  int32_t ImmVal = Imm.getSExtValue();
+  if (!Subtarget->isThumb()) {
+    return (ImmVal >= 0 && ImmVal < 65536) ||
+      (ARM_AM::getSOImmVal(ImmVal) != -1) ||
+      (ARM_AM::getSOImmVal(~ImmVal) != -1);
+  } else if (Subtarget->isThumb2()) {
+    return (ImmVal >= 0 && ImmVal < 65536) ||
+      (ARM_AM::getT2SOImmVal(ImmVal) != -1) ||
+      (ARM_AM::getT2SOImmVal(~ImmVal) != -1);
+  } else /*Thumb1*/ {
+    return (ImmVal >= 0 && ImmVal < 256);
+  }
 }
 
 /// getTgtMemIntrinsic - Represent NEON load and store intrinsics as
