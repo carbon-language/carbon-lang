@@ -181,5 +181,40 @@ uptr asan_mz_size(const void *ptr);
 void asan_mz_force_lock();
 void asan_mz_force_unlock();
 
+// Log2 and RoundUpToPowerOfTwo should be inlined for performance.
+
+static inline uptr Log2(uptr x) {
+  CHECK(IsPowerOfTwo(x));
+#if !defined(_WIN32) || defined(__clang__)
+  return __builtin_ctzl(x);
+#elif defined(_WIN64)
+  unsigned long ret;  // NOLINT
+  _BitScanForward64(&ret, x);
+  return ret;
+#else
+  unsigned long ret;  // NOLINT
+  _BitScanForward(&ret, x);
+  return ret;
+#endif
+}
+
+static inline uptr RoundUpToPowerOfTwo(uptr size) {
+  CHECK(size);
+  if (IsPowerOfTwo(size)) return size;
+
+  unsigned long up;  // NOLINT
+#if !defined(_WIN32) || defined(__clang__)
+  up = SANITIZER_WORDSIZE - 1 - __builtin_clzl(size);
+#elif defined(_WIN64)
+  _BitScanReverse64(&up, size);
+#else
+  _BitScanReverse(&up, size);
+#endif
+  CHECK(size < (1ULL << (up + 1)));
+  CHECK(size > (1ULL << up));
+  return 1UL << (up + 1);
+}
+
+
 }  // namespace __asan
 #endif  // ASAN_ALLOCATOR_H
