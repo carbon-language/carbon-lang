@@ -175,9 +175,9 @@ private:
   /// element.
   Value *getBroadcastInstrs(Value *V);
 
-  /// This is a helper function used by getBroadcastInstrs. It adds 0, 1, 2 ..
-  /// for each element in the vector. Starting from zero.
-  Value *getConsecutiveVector(Value* Val);
+  /// This function adds 0, 1, 2 ... to each vector element, starting at zero.
+  /// If Negate is set then negative numbers are added e.g. (0, -1, -2, ...).
+  Value *getConsecutiveVector(Value* Val, bool Negate = false);
 
   /// When we go over instructions in the basic block we rely on previous
   /// values within the current basic block or on loop invariant values.
@@ -252,7 +252,7 @@ public:
                               DominatorTree *Dt):
   TheLoop(Lp), SE(Se), DL(Dl), DT(Dt), Induction(0) { }
 
-  /// This represents the kinds of reductions that we support.
+  /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
     NoReduction, /// Not a reduction.
     IntegerAdd,  /// Sum of numbers.
@@ -260,6 +260,14 @@ public:
     IntegerOr,   /// Bitwise or logical OR of numbers.
     IntegerAnd,  /// Bitwise or logical AND of numbers.
     IntegerXor   /// Bitwise or logical XOR of numbers.
+  };
+
+  /// This enum represents the kinds of inductions that we support.
+  enum InductionKind {
+    NoInduction,         /// Not an induction variable.
+    IntInduction,        /// Integer induction variable. Step = 1.
+    ReverseIntInduction, /// Reverse int induction variable. Step = -1.
+    PtrInduction         /// Pointer induction variable. Step = sizeof(elem).
   };
 
   /// This POD struct holds information about reduction variables.
@@ -316,13 +324,25 @@ public:
     SmallVector<const SCEV*, 2> Ends;
   };
 
+  /// A POD for saving information about induction variables.
+  struct InductionInfo {
+    /// Ctors.
+    InductionInfo(Value *Start, InductionKind K):
+      StartValue(Start), IK(K) {};
+    InductionInfo(): StartValue(0), IK(NoInduction) {};
+    /// Start value.
+    Value *StartValue;
+    /// Induction kind.
+    InductionKind IK;
+  };
+
   /// ReductionList contains the reduction descriptors for all
   /// of the reductions that were found in the loop.
   typedef DenseMap<PHINode*, ReductionDescriptor> ReductionList;
 
-  /// InductionList saves induction variables and maps them to the initial
-  /// value entring the loop.
-  typedef DenseMap<PHINode*, Value*> InductionList;
+  /// InductionList saves induction variables and maps them to the
+  /// induction descriptor.
+  typedef DenseMap<PHINode*, InductionInfo> InductionList;
 
   /// Returns true if it is legal to vectorize this loop.
   /// This does not mean that it is profitable to vectorize this
@@ -385,8 +405,9 @@ private:
   /// Returns true if the instruction I can be a reduction variable of type
   /// 'Kind'.
   bool isReductionInstr(Instruction *I, ReductionKind Kind);
-  /// Returns True, if 'Phi' is an induction variable.
-  bool isInductionVariable(PHINode *Phi);
+  /// Returns the induction kind of Phi. This function may return NoInduction
+  /// if the PHI is not an induction variable.
+  InductionKind isInductionVariable(PHINode *Phi);
   /// Return true if can compute the address bounds of Ptr within the loop.
   bool hasComputableBounds(Value *Ptr);
 
@@ -558,7 +579,9 @@ Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
   Instruction *Loc = Builder.GetInsertPoint();
 
   // We need to place the broadcast of invariant variables outside the loop.
-  bool Invariant = (OrigLoop->isLoopInvariant(V) && V != Induction);
+  Instruction *Instr = dyn_cast<Instruction>(V);
+  bool NewInstr = (Instr && Instr->getParent() == LoopVectorBody);
+  bool Invariant = OrigLoop->isLoopInvariant(V) && !NewInstr;
 
   // Place the code for broadcasting invariant variables in the new preheader.
   if (Invariant)
@@ -580,19 +603,19 @@ Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
   return Shuf;
 }
 
-Value *InnerLoopVectorizer::getConsecutiveVector(Value* Val) {
+Value *InnerLoopVectorizer::getConsecutiveVector(Value* Val, bool Negate) {
   assert(Val->getType()->isVectorTy() && "Must be a vector");
   assert(Val->getType()->getScalarType()->isIntegerTy() &&
          "Elem must be an integer");
   // Create the types.
   Type *ITy = Val->getType()->getScalarType();
   VectorType *Ty = cast<VectorType>(Val->getType());
-  unsigned VLen = Ty->getNumElements();
+  int VLen = Ty->getNumElements();
   SmallVector<Constant*, 8> Indices;
 
   // Create a vector of consecutive numbers from zero to VF.
-  for (unsigned i = 0; i < VLen; ++i)
-    Indices.push_back(ConstantInt::get(ITy, i));
+  for (int i = 0; i < VLen; ++i)
+    Indices.push_back(ConstantInt::get(ITy, Negate ? (-i): i ));
 
   // Add the consecutive indices to the vector value.
   Constant *Cv = ConstantVector::get(Indices);
@@ -603,10 +626,13 @@ Value *InnerLoopVectorizer::getConsecutiveVector(Value* Val) {
 bool LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
   assert(Ptr->getType()->isPointerTy() && "Unexpected non ptr");
 
-  // If this pointer is an induction variable, return it.
+  // If this value is a pointer induction variable we know it is consecutive.
   PHINode *Phi = dyn_cast_or_null<PHINode>(Ptr);
-  if (Phi && getInductionVars()->count(Phi))
-    return true;
+  if (Phi && Inductions.count(Phi)) {
+    InductionInfo II = Inductions[Phi];
+    if (PtrInduction == II.IK)
+      return true;
+  }
 
   GetElementPtrInst *Gep = dyn_cast_or_null<GetElementPtrInst>(Ptr);
   if (!Gep)
@@ -730,7 +756,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
 
 Value*
 InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
-                                           Instruction *Loc) {
+                                     Instruction *Loc) {
   LoopVectorizationLegality::RuntimePointerCheck *PtrRtCheck =
     Legal->getRuntimePointerCheck();
 
@@ -745,7 +771,7 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
   SCEVExpander Exp(*SE, "induction");
 
   // Use this type for pointer arithmetic.
-  Type* PtrArithTy = PtrRtCheck->Pointers[0]->getType();
+  Type* PtrArithTy = Type::getInt8PtrTy(Loc->getContext(), 0);
 
   for (unsigned i = 0; i < NumPointers; ++i) {
     Value *Ptr = PtrRtCheck->Pointers[i];
@@ -759,8 +785,7 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
     } else {
       DEBUG(dbgs() << "LV: Adding RT check for range:" << *Ptr <<"\n");
 
-      Value *Start = Exp.expandCodeFor(PtrRtCheck->Starts[i],
-                                       PtrArithTy, Loc);
+      Value *Start = Exp.expandCodeFor(PtrRtCheck->Starts[i], PtrArithTy, Loc);
       Value *End = Exp.expandCodeFor(PtrRtCheck->Ends[i], PtrArithTy, Loc);
       Starts.push_back(Start);
       Ends.push_back(End);
@@ -769,10 +794,16 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
 
   for (unsigned i = 0; i < NumPointers; ++i) {
     for (unsigned j = i+1; j < NumPointers; ++j) {
+      Instruction::CastOps Op = Instruction::BitCast;
+      Value *Start0 = CastInst::Create(Op, Starts[i], PtrArithTy, "bc", Loc);
+      Value *Start1 = CastInst::Create(Op, Starts[j], PtrArithTy, "bc", Loc);
+      Value *End0 =   CastInst::Create(Op, Ends[i],   PtrArithTy, "bc", Loc);
+      Value *End1 =   CastInst::Create(Op, Ends[j],   PtrArithTy, "bc", Loc);
+
       Value *Cmp0 = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_ULE,
-                                    Starts[i], Ends[j], "bound0", Loc);
+                                    Start0, End1, "bound0", Loc);
       Value *Cmp1 = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_ULE,
-                                    Starts[j], Ends[i], "bound1", Loc);
+                                    Start1, End0, "bound1", Loc);
       Value *IsConflict = BinaryOperator::Create(Instruction::And, Cmp0, Cmp1,
                                                  "found.conflict", Loc);
       if (MemoryRuntimeCheck)
@@ -936,27 +967,54 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   LoopVectorizationLegality::InductionList *List = Legal->getInductionVars();
   for (I = List->begin(), E = List->end(); I != E; ++I) {
     PHINode *OrigPhi = I->first;
+    LoopVectorizationLegality::InductionInfo II = I->second;
     PHINode *ResumeVal = PHINode::Create(OrigPhi->getType(), 2, "resume.val",
                                            MiddleBlock->getTerminator());
     Value *EndValue = 0;
-    if (OrigPhi->getType()->isIntegerTy()) {
+    switch (II.IK) {
+    case LoopVectorizationLegality::NoInduction:
+      llvm_unreachable("Unknown induction");
+    case LoopVectorizationLegality::IntInduction: {
       // Handle the integer induction counter:
+      assert(OrigPhi->getType()->isIntegerTy() && "Invalid type");
       assert(OrigPhi == OldInduction && "Unknown integer PHI");
       // We know what the end value is.
       EndValue = IdxEndRoundDown;
       // We also know which PHI node holds it.
       ResumeIndex = ResumeVal;
-    } else {
+      break;
+    }
+    case LoopVectorizationLegality::ReverseIntInduction: {
+      // Convert the CountRoundDown variable to the PHI size.
+      unsigned CRDSize = CountRoundDown->getType()->getScalarSizeInBits();
+      unsigned IISize = II.StartValue->getType()->getScalarSizeInBits();
+      Value *CRD = CountRoundDown;
+      if (CRDSize > IISize)
+        CRD = CastInst::Create(Instruction::Trunc, CountRoundDown,
+                               II.StartValue->getType(),
+                               "tr.crd", BypassBlock->getTerminator());
+      else if (CRDSize < IISize)
+        CRD = CastInst::Create(Instruction::SExt, CountRoundDown,
+                               II.StartValue->getType(),
+                               "sext.crd", BypassBlock->getTerminator());
+      // Handle reverse integer induction counter:
+      EndValue = BinaryOperator::CreateSub(II.StartValue, CRD, "rev.ind.end",
+                                           BypassBlock->getTerminator());
+      break;
+    }
+    case LoopVectorizationLegality::PtrInduction: {
       // For pointer induction variables, calculate the offset using
       // the end index.
-      EndValue = GetElementPtrInst::Create(I->second, CountRoundDown,
+      EndValue = GetElementPtrInst::Create(II.StartValue, CountRoundDown,
                                            "ptr.ind.end",
                                            BypassBlock->getTerminator());
+      break;
     }
+    }// end of case
 
     // The new PHI merges the original incoming value, in case of a bypass,
     // or the value at the end of the vectorized loop.
-    ResumeVal->addIncoming(I->second, BypassBlock);
+    ResumeVal->addIncoming(II.StartValue, BypassBlock);
     ResumeVal->addIncoming(EndValue, VecBody);
 
     // Fix the scalar body counter (PHI node).
@@ -1188,19 +1246,19 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
         Builder.CreateExtractElement(NewPhi, Builder.getInt32(i));
       switch (RdxDesc.Kind) {
         case LoopVectorizationLegality::IntegerAdd:
-          Scalar0 = Builder.CreateAdd(Scalar0, Scalar1);
+          Scalar0 = Builder.CreateAdd(Scalar0, Scalar1, "add.rdx");
           break;
         case LoopVectorizationLegality::IntegerMult:
-          Scalar0 = Builder.CreateMul(Scalar0, Scalar1);
+          Scalar0 = Builder.CreateMul(Scalar0, Scalar1, "mul.rdx");
           break;
         case LoopVectorizationLegality::IntegerOr:
-          Scalar0 = Builder.CreateOr(Scalar0, Scalar1);
+          Scalar0 = Builder.CreateOr(Scalar0, Scalar1, "or.rdx");
           break;
         case LoopVectorizationLegality::IntegerAnd:
-          Scalar0 = Builder.CreateAnd(Scalar0, Scalar1);
+          Scalar0 = Builder.CreateAnd(Scalar0, Scalar1, "and.rdx");
           break;
         case LoopVectorizationLegality::IntegerXor:
-          Scalar0 = Builder.CreateXor(Scalar0, Scalar1);
+          Scalar0 = Builder.CreateXor(Scalar0, Scalar1, "xor.rdx");
           break;
         default:
           llvm_unreachable("Unknown reduction operation");
@@ -1282,7 +1340,7 @@ Value *InnerLoopVectorizer::createBlockInMask(BasicBlock *BB) {
 
 void
 InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
-                                            BasicBlock *BB, PhiVector *PV) {
+                                          BasicBlock *BB, PhiVector *PV) {
   Constant *Zero =
   ConstantInt::get(IntegerType::getInt32Ty(BB->getContext()), 0);
 
@@ -1329,45 +1387,77 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
         assert(Legal->getInductionVars()->count(P) &&
                "Not an induction variable");
 
-        if (P->getType()->isIntegerTy()) {
+        LoopVectorizationLegality::InductionInfo II =
+          Legal->getInductionVars()->lookup(P);
+
+        switch (II.IK) {
+        case LoopVectorizationLegality::NoInduction:
+          llvm_unreachable("Unknown induction");
+        case LoopVectorizationLegality::IntInduction: {
           assert(P == OldInduction && "Unexpected PHI");
           Value *Broadcasted = getBroadcastInstrs(Induction);
           // After broadcasting the induction variable we need to make the
           // vector consecutive by adding 0, 1, 2 ...
           Value *ConsecutiveInduction = getConsecutiveVector(Broadcasted);
-
           WidenMap[OldInduction] = ConsecutiveInduction;
           continue;
         }
+        case LoopVectorizationLegality::ReverseIntInduction:
+        case LoopVectorizationLegality::PtrInduction:
+          // Handle reverse integer and pointer inductions.
+          Value *StartIdx = 0;
+          // If we have a single integer induction variable then use it.
+          // Otherwise, start counting at zero.
+          if (OldInduction) {
+            LoopVectorizationLegality::InductionInfo OldII =
+              Legal->getInductionVars()->lookup(OldInduction);
+            StartIdx = OldII.StartValue;
+          } else {
+            StartIdx = ConstantInt::get(Induction->getType(), 0);
+          }
+          // This is the normalized GEP that starts counting at zero.
+          Value *NormalizedIdx = Builder.CreateSub(Induction, StartIdx,
+                                                   "normalized.idx");
 
-        // Handle pointer inductions.
-        assert(P->getType()->isPointerTy() && "Unexpected type.");
-        Value *StartIdx = OldInduction ?
-        Legal->getInductionVars()->lookup(OldInduction) :
-        ConstantInt::get(Induction->getType(), 0);
+          // Handle the reverse integer induction variable case.
+          if (LoopVectorizationLegality::ReverseIntInduction == II.IK) {
+            IntegerType *DstTy = cast<IntegerType>(II.StartValue->getType());
+            Value *CNI = Builder.CreateSExtOrTrunc(NormalizedIdx, DstTy,
+                                                   "resize.norm.idx");
+            Value *ReverseInd  = Builder.CreateSub(II.StartValue, CNI,
+                                                   "reverse.idx");
 
-        // This is the pointer value coming into the loop.
-        Value *StartPtr = Legal->getInductionVars()->lookup(P);
+            // This is a new value so do not hoist it out.
+            Value *Broadcasted = getBroadcastInstrs(ReverseInd);
+            // After broadcasting the induction variable we need to make the
+            // vector consecutive by adding  ... -3, -2, -1, 0.
+            Value *ConsecutiveInduction = getConsecutiveVector(Broadcasted,
+                                                               true);
+            WidenMap[it] = ConsecutiveInduction;
+            continue;
+          }
 
-        // This is the normalized GEP that starts counting at zero.
-        Value *NormalizedIdx = Builder.CreateSub(Induction, StartIdx,
-                                                 "normalized.idx");
+          // Handle the pointer induction variable case.
+          assert(P->getType()->isPointerTy() && "Unexpected type.");
 
-        // This is the vector of results. Notice that we don't generate vector
-        // geps because scalar geps result in better code.
-        Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
-        for (unsigned int i = 0; i < VF; ++i) {
-          Constant *Idx = ConstantInt::get(Induction->getType(), i);
-          Value *GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx, "gep.idx");
-          Value *SclrGep = Builder.CreateGEP(StartPtr, GlobalIdx, "next.gep");
-          VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
-                                               Builder.getInt32(i),
-                                               "insert.gep");
+          // This is the vector of results. Notice that we don't generate vector
+          // geps because scalar geps result in better code.
+          Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
+          for (unsigned int i = 0; i < VF; ++i) {
+            Constant *Idx = ConstantInt::get(Induction->getType(), i);
+            Value *GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx, "gep.idx");
+            Value *SclrGep = Builder.CreateGEP(II.StartValue, GlobalIdx, "next.gep");
+            VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
+                                                 Builder.getInt32(i),
+                                                 "insert.gep");
+          }
+
+          WidenMap[it] = VecVal;
+          continue;
         }
 
-        WidenMap[it] = VecVal;
-        continue;
-      }
+      }// End of PHI.
+
       case Instruction::Add:
       case Instruction::FAdd:
       case Instruction::Sub:
@@ -1561,7 +1651,6 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
   }// end of for_each instr.
 }
 
-
 void InnerLoopVectorizer::updateAnalysis() {
   // Forget the original basic block.
   SE->forgetLoop(OrigLoop);
@@ -1579,7 +1668,6 @@ void InnerLoopVectorizer::updateAnalysis() {
 
   DEBUG(DT->verifyAnalysis());
 }
-
 
 bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
   if (!EnableIfConversion)
@@ -1694,35 +1782,39 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
           return false;
         }
 
+        // Check that this PHI type is allowed.
+        if (!Phi->getType()->isIntegerTy() &&
+            !Phi->getType()->isPointerTy()) {
+          DEBUG(dbgs() << "LV: Found an non-int non-pointer PHI.\n");
+          return false;
+        }
+
         // If this PHINode is not in the header block, then we know that we
-        // can convert it to select during if-conversion.
+        // can convert it to select during if-conversion. No need to check if
+        // the PHIs in this block are induction or reduction variables.
         if (*bb != Header)
           continue;
 
         // This is the value coming from the preheader.
         Value *StartValue = Phi->getIncomingValueForBlock(PreHeader);
+        // Check if this is an induction variable.
+        InductionKind IK = isInductionVariable(Phi);
 
-        // We only look at integer and pointer phi nodes.
-        if (Phi->getType()->isPointerTy() && isInductionVariable(Phi)) {
-          DEBUG(dbgs() << "LV: Found a pointer induction variable.\n");
-          Inductions[Phi] = StartValue;
-          continue;
-        } else if (!Phi->getType()->isIntegerTy()) {
-          DEBUG(dbgs() << "LV: Found an non-int non-pointer PHI.\n");
-          return false;
-        }
-
-        // Handle integer PHIs:
-        if (isInductionVariable(Phi)) {
-          if (Induction) {
-            DEBUG(dbgs() << "LV: Found too many inductions."<< *Phi <<"\n");
-            return false;
+        if (NoInduction != IK) {
+          // Int inductions are special because we only allow one IV.
+          if (IK == IntInduction) {
+            if (Induction) {
+              DEBUG(dbgs() << "LV: Found too many inductions."<< *Phi <<"\n");
+              return false;
+            }
+            Induction = Phi;
           }
-          DEBUG(dbgs() << "LV: Found the induction PHI."<< *Phi <<"\n");
-          Induction = Phi;
-          Inductions[Phi] = StartValue;
+
+          DEBUG(dbgs() << "LV: Found an induction variable.\n");
+          Inductions[Phi] = InductionInfo(StartValue, IK);
           continue;
         }
+
         if (AddReductionVar(Phi, IntegerAdd)) {
           DEBUG(dbgs() << "LV: Found an ADD reduction PHI."<< *Phi <<"\n");
           continue;
@@ -2119,32 +2211,42 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
     }
 }
 
-bool LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
+LoopVectorizationLegality::InductionKind
+LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
   Type *PhiTy = Phi->getType();
   // We only handle integer and pointer inductions variables.
   if (!PhiTy->isIntegerTy() && !PhiTy->isPointerTy())
-    return false;
+    return NoInduction;
 
   // Check that the PHI is consecutive and starts at zero.
   const SCEV *PhiScev = SE->getSCEV(Phi);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PhiScev);
   if (!AR) {
     DEBUG(dbgs() << "LV: PHI is not a poly recurrence.\n");
-    return false;
+    return NoInduction;
   }
   const SCEV *Step = AR->getStepRecurrence(*SE);
 
   // Integer inductions need to have a stride of one.
-  if (PhiTy->isIntegerTy())
-    return Step->isOne();
+  if (PhiTy->isIntegerTy()) {
+    if (Step->isOne())
+      return IntInduction;
+    if (Step->isAllOnesValue())
+      return ReverseIntInduction;
+    return NoInduction;
+  }
 
   // Calculate the pointer stride and check if it is consecutive.
   const SCEVConstant *C = dyn_cast<SCEVConstant>(Step);
-  if (!C) return false;
+  if (!C)
+    return NoInduction;
 
   assert(PhiTy->isPointerTy() && "The PHI must be a pointer");
   uint64_t Size = DL->getTypeAllocSize(PhiTy->getPointerElementType());
-  return (C->getValue()->equalsInt(Size));
+  if (C->getValue()->equalsInt(Size))
+    return PtrInduction;
+
+  return NoInduction;
 }
 
 bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
@@ -2251,7 +2353,6 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
 
   Type *RetTy = I->getType();
   Type *VectorTy = ToVectorTy(RetTy, VF);
-
 
   // TODO: We need to estimate the cost of intrinsic calls.
   switch (I->getOpcode()) {
