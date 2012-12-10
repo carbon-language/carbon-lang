@@ -295,6 +295,15 @@ class ObjCDataFormatterTestCase(TestBase):
                     '(NSURL *) nsurl2 =','@"page.html -- http://www.foo.bar',
                     '(NSURL *) nsurl3 = ','@"?whatever -- http://www.foo.bar/page.html"'])
 
+        self.expect('frame variable nserror',
+                    substrs = ['domain: @"Foobar" - code: 12'])
+
+        self.expect('frame variable nserror->_userInfo',
+                    substrs = ['2 key/value pairs'])
+
+        self.expect('frame variable nserror->_userInfo --ptr-depth 1 -d run-target',
+                    substrs = ['@"a"','@"b"',"1","2"])
+
         self.expect('frame variable bundle_string bundle_url main_bundle',
                     substrs = ['(NSBundle *) bundle_string = ',' @"/System/Library/Frameworks/Accelerate.framework"',
                     '(NSBundle *) bundle_url = ',' @"/System/Library/Frameworks/Cocoa.framework"',

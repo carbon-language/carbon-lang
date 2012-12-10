@@ -879,10 +879,10 @@ FormatManager::LoadSystemFormatters()
 }
 
 static void
-AddSummary(TypeCategoryImpl::SharedPointer category_sp,
-           const char* string,
-           ConstString type_name,
-           TypeSummaryImpl::Flags flags)
+AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,
+                 const char* string,
+                 ConstString type_name,
+                 TypeSummaryImpl::Flags flags)
 {
     lldb::TypeSummaryImplSP summary_sp(new StringSummaryFormat(flags,
                                                                string));
@@ -972,80 +972,80 @@ FormatManager::LoadObjCFormatters()
 
     TypeCategoryImpl::SharedPointer corefoundation_category_sp = GetCategory(m_corefoundation_category_name);
 
-    AddSummary(corefoundation_category_sp,
-               "${var.years} years, ${var.months} months, ${var.days} days, ${var.hours} hours, ${var.minutes} minutes ${var.seconds} seconds",
-               ConstString("CFGregorianUnits"),
-               objc_flags);
-    AddSummary(corefoundation_category_sp,
-               "location=${var.location} length=${var.length}",
-               ConstString("CFRange"),
-               objc_flags);
-    AddSummary(corefoundation_category_sp,
-               "(x=${var.x}, y=${var.y})",
-               ConstString("NSPoint"),
-               objc_flags);
-    AddSummary(corefoundation_category_sp,
-               "location=${var.location}, length=${var.length}",
-               ConstString("NSRange"),
-               objc_flags);
-    AddSummary(corefoundation_category_sp,
-               "${var.origin}, ${var.size}",
-               ConstString("NSRect"),
-               objc_flags);
-    AddSummary(corefoundation_category_sp,
-               "(${var.origin}, ${var.size}), ...",
-               ConstString("NSRectArray"),
-               objc_flags);
-    AddSummary(objc_category_sp,
-               "(width=${var.width}, height=${var.height})",
-               ConstString("NSSize"),
-               objc_flags);
+    AddStringSummary(corefoundation_category_sp,
+                     "${var.years} years, ${var.months} months, ${var.days} days, ${var.hours} hours, ${var.minutes} minutes ${var.seconds} seconds",
+                     ConstString("CFGregorianUnits"),
+                     objc_flags);
+    AddStringSummary(corefoundation_category_sp,
+                     "location=${var.location} length=${var.length}",
+                     ConstString("CFRange"),
+                     objc_flags);
+    AddStringSummary(corefoundation_category_sp,
+                     "(x=${var.x}, y=${var.y})",
+                     ConstString("NSPoint"),
+                     objc_flags);
+    AddStringSummary(corefoundation_category_sp,
+                     "location=${var.location}, length=${var.length}",
+                     ConstString("NSRange"),
+                     objc_flags);
+    AddStringSummary(corefoundation_category_sp,
+                     "${var.origin}, ${var.size}",
+                     ConstString("NSRect"),
+                     objc_flags);
+    AddStringSummary(corefoundation_category_sp,
+                     "(${var.origin}, ${var.size}), ...",
+                     ConstString("NSRectArray"),
+                     objc_flags);
+    AddStringSummary(objc_category_sp,
+                     "(width=${var.width}, height=${var.height})",
+                     ConstString("NSSize"),
+                     objc_flags);
     
     TypeCategoryImpl::SharedPointer coregraphics_category_sp = GetCategory(m_coregraphics_category_name);
     
-    AddSummary(coregraphics_category_sp,
-               "(width=${var.width}, height=${var.height})",
-               ConstString("CGSize"),
-               objc_flags);
-    AddSummary(coregraphics_category_sp,
-               "(x=${var.x}, y=${var.y})",
-               ConstString("CGPoint"),
-               objc_flags);
-    AddSummary(coregraphics_category_sp,
-               "origin=${var.origin} size=${var.size}",
-               ConstString("CGRect"),
-               objc_flags);
+    AddStringSummary(coregraphics_category_sp,
+                     "(width=${var.width}, height=${var.height})",
+                     ConstString("CGSize"),
+                     objc_flags);
+    AddStringSummary(coregraphics_category_sp,
+                     "(x=${var.x}, y=${var.y})",
+                     ConstString("CGPoint"),
+                     objc_flags);
+    AddStringSummary(coregraphics_category_sp,
+                     "origin=${var.origin} size=${var.size}",
+                     ConstString("CGRect"),
+                     objc_flags);
     
     TypeCategoryImpl::SharedPointer coreservices_category_sp = GetCategory(m_coreservices_category_name);
     
-    AddSummary(coreservices_category_sp,
-               "red=${var.red} green=${var.green} blue=${var.blue}",
-               ConstString("RGBColor"),
-               objc_flags);
-    AddSummary(coreservices_category_sp,
-               "(t=${var.top}, l=${var.left}, b=${var.bottom}, r=${var.right})",
-               ConstString("Rect"),
-               objc_flags);
-    AddSummary(coreservices_category_sp,
-               "(v=${var.v}, h=${var.h})",
-               ConstString("Point"),
-               objc_flags);
-    AddSummary(coreservices_category_sp,
-               "${var.month}/${var.day}/${var.year}  ${var.hour} :${var.minute} :${var.second} dayOfWeek:${var.dayOfWeek}",
-               ConstString("DateTimeRect *"),
-               objc_flags);
-    AddSummary(coreservices_category_sp,
-               "${var.ld.month}/${var.ld.day}/${var.ld.year} ${var.ld.hour} :${var.ld.minute} :${var.ld.second} dayOfWeek:${var.ld.dayOfWeek}",
-               ConstString("LongDateRect"),
-               objc_flags);
-    AddSummary(coreservices_category_sp,
-               "(x=${var.x}, y=${var.y})",
-               ConstString("HIPoint"),
-               objc_flags);
-    AddSummary(coreservices_category_sp,
-               "origin=${var.origin} size=${var.size}",
-               ConstString("HIRect"),
-               objc_flags);
+    AddStringSummary(coreservices_category_sp,
+                     "red=${var.red} green=${var.green} blue=${var.blue}",
+                     ConstString("RGBColor"),
+                     objc_flags);
+    AddStringSummary(coreservices_category_sp,
+                     "(t=${var.top}, l=${var.left}, b=${var.bottom}, r=${var.right})",
+                     ConstString("Rect"),
+                     objc_flags);
+    AddStringSummary(coreservices_category_sp,
+                     "(v=${var.v}, h=${var.h})",
+                     ConstString("Point"),
+                     objc_flags);
+    AddStringSummary(coreservices_category_sp,
+                     "${var.month}/${var.day}/${var.year}  ${var.hour} :${var.minute} :${var.second} dayOfWeek:${var.dayOfWeek}",
+                     ConstString("DateTimeRect *"),
+                     objc_flags);
+    AddStringSummary(coreservices_category_sp,
+                     "${var.ld.month}/${var.ld.day}/${var.ld.year} ${var.ld.hour} :${var.ld.minute} :${var.ld.second} dayOfWeek:${var.ld.dayOfWeek}",
+                     ConstString("LongDateRect"),
+                     objc_flags);
+    AddStringSummary(coreservices_category_sp,
+                     "(x=${var.x}, y=${var.y})",
+                     ConstString("HIPoint"),
+                     objc_flags);
+    AddStringSummary(coreservices_category_sp,
+                     "origin=${var.origin} size=${var.size}",
+                     ConstString("HIRect"),
+                     objc_flags);
     
     TypeCategoryImpl::SharedPointer appkit_category_sp = GetCategory(m_appkit_category_name);
     
@@ -1130,6 +1130,8 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSNotification.NSNotification_SummaryProvider", ConstString("NSNotification"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSNotification.NSNotification_SummaryProvider", ConstString("NSConcreteNotification"), appkit_flags);
 
+    AddStringSummary(appkit_category_sp, "domain: ${var._domain} - code: ${var._code}", ConstString("NSError"), appkit_flags);
+    
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("NSNumber"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("__NSCFBoolean"), appkit_flags);
     AddCXXSummary(appkit_category_sp, lldb_private::formatters::NSNumberSummaryProvider, "NSNumber summary provider", ConstString("__NSCFNumber"), appkit_flags);
@@ -1170,7 +1172,10 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSIndexSet"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSMutableIndexSet"), appkit_flags);
 
-    AddSummary(appkit_category_sp, "@\"${var.month%d}/${var.day%d}/${var.year%d} ${var.hour%d}:${var.minute%d}:${var.second}\"", ConstString("CFGregorianDate"), appkit_flags);
+    AddStringSummary(appkit_category_sp,
+                     "@\"${var.month%d}/${var.day%d}/${var.year%d} ${var.hour%d}:${var.minute%d}:${var.second}\"",
+                     ConstString("CFGregorianDate"),
+                     appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBitVector.CFBitVector_SummaryProvider", ConstString("CFBitVectorRef"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "lldb.formatters.objc.CFBitVector.CFBitVector_SummaryProvider", ConstString("CFMutableBitVectorRef"), appkit_flags);
@@ -1189,61 +1194,61 @@ FormatManager::LoadObjCFormatters()
     .SetShowMembersOneLiner(true)
     .SetHideItemNames(true);
     
-    AddSummary(vectors_category_sp,
-               "${var.uint128}",
-               ConstString("builtin_type_vec128"),
-               objc_flags);
+    AddStringSummary(vectors_category_sp,
+                     "${var.uint128}",
+                     ConstString("builtin_type_vec128"),
+                     objc_flags);
 
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("float [4]"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("int32_t [4]"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("int16_t [8]"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vDouble"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vFloat"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vSInt8"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vSInt16"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vSInt32"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vUInt16"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vUInt8"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vUInt16"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vUInt32"),
-               vector_flags);
-    AddSummary(vectors_category_sp,
-               "",
-               ConstString("vBool32"),
-               vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("float [4]"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("int32_t [4]"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("int16_t [8]"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vDouble"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vFloat"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vSInt8"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vSInt16"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vSInt32"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vUInt16"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vUInt8"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vUInt16"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vUInt32"),
+                     vector_flags);
+    AddStringSummary(vectors_category_sp,
+                     "",
+                     ConstString("vBool32"),
+                     vector_flags);
 }
