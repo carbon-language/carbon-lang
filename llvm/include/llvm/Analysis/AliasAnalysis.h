@@ -373,7 +373,7 @@ public:
     return getModRefInfo(I, Location(P, Size));
   }
 
-  /// getModRefInfo (for call sites) - Return whether information about whether
+  /// getModRefInfo (for call sites) - Return information about whether
   /// a particular call site modifies or reads the specified memory location.
   virtual ModRefResult getModRefInfo(ImmutableCallSite CS,
                                      const Location &Loc);
@@ -384,7 +384,7 @@ public:
     return getModRefInfo(CS, Location(P, Size));
   }
 
-  /// getModRefInfo (for calls) - Return whether information about whether
+  /// getModRefInfo (for calls) - Return information about whether
   /// a particular call modifies or reads the specified memory location.
   ModRefResult getModRefInfo(const CallInst *C, const Location &Loc) {
     return getModRefInfo(ImmutableCallSite(C), Loc);
@@ -395,7 +395,7 @@ public:
     return getModRefInfo(C, Location(P, Size));
   }
 
-  /// getModRefInfo (for invokes) - Return whether information about whether
+  /// getModRefInfo (for invokes) - Return information about whether
   /// a particular invoke modifies or reads the specified memory location.
   ModRefResult getModRefInfo(const InvokeInst *I,
                              const Location &Loc) {
@@ -408,7 +408,7 @@ public:
     return getModRefInfo(I, Location(P, Size));
   }
 
-  /// getModRefInfo (for loads) - Return whether information about whether
+  /// getModRefInfo (for loads) - Return information about whether
   /// a particular load modifies or reads the specified memory location.
   ModRefResult getModRefInfo(const LoadInst *L, const Location &Loc);
 
@@ -417,7 +417,7 @@ public:
     return getModRefInfo(L, Location(P, Size));
   }
 
-  /// getModRefInfo (for stores) - Return whether information about whether
+  /// getModRefInfo (for stores) - Return information about whether
   /// a particular store modifies or reads the specified memory location.
   ModRefResult getModRefInfo(const StoreInst *S, const Location &Loc);
 
@@ -426,7 +426,7 @@ public:
     return getModRefInfo(S, Location(P, Size));
   }
 
-  /// getModRefInfo (for fences) - Return whether information about whether
+  /// getModRefInfo (for fences) - Return information about whether
   /// a particular store modifies or reads the specified memory location.
   ModRefResult getModRefInfo(const FenceInst *S, const Location &Loc) {
     // Conservatively correct.  (We could possibly be a bit smarter if
@@ -439,7 +439,7 @@ public:
     return getModRefInfo(S, Location(P, Size));
   }
 
-  /// getModRefInfo (for cmpxchges) - Return whether information about whether
+  /// getModRefInfo (for cmpxchges) - Return information about whether
   /// a particular cmpxchg modifies or reads the specified memory location.
   ModRefResult getModRefInfo(const AtomicCmpXchgInst *CX, const Location &Loc);
 
@@ -449,7 +449,7 @@ public:
     return getModRefInfo(CX, Location(P, Size));
   }
 
-  /// getModRefInfo (for atomicrmws) - Return whether information about whether
+  /// getModRefInfo (for atomicrmws) - Return information about whether
   /// a particular atomicrmw modifies or reads the specified memory location.
   ModRefResult getModRefInfo(const AtomicRMWInst *RMW, const Location &Loc);
 
@@ -459,7 +459,7 @@ public:
     return getModRefInfo(RMW, Location(P, Size));
   }
 
-  /// getModRefInfo (for va_args) - Return whether information about whether
+  /// getModRefInfo (for va_args) - Return information about whether
   /// a particular va_arg modifies or reads the specified memory location.
   ModRefResult getModRefInfo(const VAArgInst* I, const Location &Loc);
 
