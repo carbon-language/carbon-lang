@@ -218,6 +218,14 @@ void ReExec() {
   execv(argv[0], argv.data());
 }
 
+void PrepareForSandboxing() {
+  // Some kinds of sandboxes may forbid filesystem access, so we won't be able
+  // to read the file mappings from /proc/self/maps. Luckily, neither the
+  // process will be able to load additional libraries, so it's fine to use the
+  // cached mappings.
+  MemoryMappingLayout::CacheMemoryMappings();
+}
+
 // ----------------- sanitizer_procmaps.h
 // Linker initialized.
 ProcSelfMapsBuff MemoryMappingLayout::cached_proc_self_maps_;

@@ -126,6 +126,10 @@ void ReExec() {
   UNIMPLEMENTED();
 }
 
+void PrepareForSandboxing() {
+  // Nothing here for now.
+}
+
 // ----------------- sanitizer_procmaps.h
 
 MemoryMappingLayout::MemoryMappingLayout() {

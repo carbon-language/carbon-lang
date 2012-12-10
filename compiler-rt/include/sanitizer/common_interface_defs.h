@@ -81,6 +81,12 @@ extern "C" {
   // stderr.
   void __sanitizer_set_report_fd(int fd)
       SANITIZER_INTERFACE_ATTRIBUTE;
+
+  // Notify the tools that the sandbox is going to be turned on. The reserved
+  // parameter will be used in the future to hold a structure with functions
+  // that the tools may call to bypass the sandbox.
+  void __sanitizer_sandbox_on_notify(void *reserved)
+      SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE;
 }  // extern "C"
 
 #endif  // SANITIZER_COMMON_INTERFACE_DEFS_H

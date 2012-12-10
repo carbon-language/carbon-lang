@@ -201,4 +201,10 @@ void __sanitizer_set_report_fd(int fd) {
     internal_close(report_fd);
   report_fd = fd;
 }
+
+void NOINLINE __sanitizer_sandbox_on_notify(void *reserved) {
+  (void)reserved;
+  PrepareForSandboxing();
+}
+
 }  // extern "C"

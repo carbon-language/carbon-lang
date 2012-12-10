@@ -123,6 +123,7 @@ const char *GetPwd();
 void ReExec();
 bool StackSizeIsUnlimited();
 void SetStackSizeLimitInBytes(uptr limit);
+void PrepareForSandboxing();
 
 // Other
 void SleepForSeconds(int seconds);

@@ -129,6 +129,10 @@ void ReExec() {
   UNIMPLEMENTED();
 }
 
+void PrepareForSandboxing() {
+  // Nothing here for now.
+}
+
 bool StackSizeIsUnlimited() {
   UNIMPLEMENTED();
 }
