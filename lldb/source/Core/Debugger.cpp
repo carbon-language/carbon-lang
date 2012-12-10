@@ -2269,12 +2269,12 @@ Debugger::FormatPrompt
                                                         ValueObjectSP var_value_sp (ValueObjectVariable::Create (exe_scope, var_sp));
                                                         const char *var_name = var_value_sp->GetName().GetCString();
                                                         const char *var_value = var_value_sp->GetValueAsCString();
+                                                        if (arg_idx > 0)
+                                                            s.PutCString (", ");
                                                         if (var_value_sp->GetError().Success())
-                                                        {
-                                                            if (arg_idx > 0)
-                                                                s.PutCString (", ");
                                                             s.Printf ("%s=%s", var_name, var_value);
-                                                        }
+                                                        else
+                                                            s.Printf ("%s=<unavailable>", var_name);
                                                     }
                                                     
                                                     if (close_paren)
