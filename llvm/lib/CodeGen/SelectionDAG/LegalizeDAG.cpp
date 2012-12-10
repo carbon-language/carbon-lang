@@ -731,9 +731,10 @@ void SelectionDAGLegalize::LegalizeStoreOps(SDNode *Node) {
           return;
         }
         case TargetLowering::Promote: {
-          assert(VT.isVector() && "Unknown legal promote case!");
-          Value = DAG.getNode(ISD::BITCAST, dl,
-                             TLI.getTypeToPromoteTo(ISD::STORE, VT), Value);
+          EVT NVT = TLI.getTypeToPromoteTo(ISD::STORE, VT);
+          assert(NVT.getSizeInBits() == VT.getSizeInBits() &&
+                 "Can only promote stores to same size type");
+          Value = DAG.getNode(ISD::BITCAST, dl, NVT, Value);
           SDValue Result =
             DAG.getStore(Chain, dl, Value, Ptr,
                          ST->getPointerInfo(), isVolatile,
