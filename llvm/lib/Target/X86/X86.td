@@ -155,8 +155,7 @@ def : Proc<"pentium3m",       [FeatureSSE1, FeatureSlowBTMem]>;
 def : Proc<"pentium-m",       [FeatureSSE2, FeatureSlowBTMem]>;
 def : Proc<"pentium4",        [FeatureSSE2]>;
 def : Proc<"pentium4m",       [FeatureSSE2, FeatureSlowBTMem]>;
-def : Proc<"x86-64",          [FeatureSSE2, Feature64Bit, FeatureSlowBTMem,
-                               FeatureFastUAMem]>;
+def : Proc<"x86-64",          [FeatureSSE2, Feature64Bit, FeatureSlowBTMem]>;
 def : Proc<"yonah",           [FeatureSSE3, FeatureSlowBTMem]>;
 def : Proc<"prescott",        [FeatureSSE3, FeatureSlowBTMem]>;
 def : Proc<"nocona",          [FeatureSSE3, FeatureCMPXCHG16B,
