@@ -19,52 +19,43 @@ def sub_hi     : SubRegIndex;
 }
 
 // We have banks of 32 registers each.
-class MipsReg<string n> : Register<n> {
-  field bits<5> Num;
+class MipsReg<bits<16> Enc, string n> : Register<n> {
+  let HWEncoding = Enc;
   let Namespace = "Mips";
 }
 
-class MipsRegWithSubRegs<string n, list<Register> subregs>
+class MipsRegWithSubRegs<bits<16> Enc, string n, list<Register> subregs>
   : RegisterWithSubRegs<n, subregs> {
-  field bits<5> Num;
+  let HWEncoding = Enc;
   let Namespace = "Mips";
 }
 
 // Mips CPU Registers
-class MipsGPRReg<bits<5> num, string n> : MipsReg<n> {
-  let Num = num;
-}
+class MipsGPRReg<bits<16> Enc, string n> : MipsReg<Enc, n>;
 
 // Mips 64-bit CPU Registers
-class Mips64GPRReg<bits<5> num, string n, list<Register> subregs>
-  : MipsRegWithSubRegs<n, subregs> {
-  let Num = num;
+class Mips64GPRReg<bits<16> Enc, string n, list<Register> subregs>
+  : MipsRegWithSubRegs<Enc, n, subregs> {
   let SubRegIndices = [sub_32];
 }
 
 // Mips 32-bit FPU Registers
-class FPR<bits<5> num, string n> : MipsReg<n> {
-  let Num = num;
-}
+class FPR<bits<16> Enc, string n> : MipsReg<Enc, n>;
 
 // Mips 64-bit (aliased) FPU Registers
-class AFPR<bits<5> num, string n, list<Register> subregs>
-  : MipsRegWithSubRegs<n, subregs> {
-  let Num = num;
+class AFPR<bits<16> Enc, string n, list<Register> subregs>
+  : MipsRegWithSubRegs<Enc, n, subregs> {
   let SubRegIndices = [sub_fpeven, sub_fpodd];
   let CoveredBySubRegs = 1;
 }
 
-class AFPR64<bits<5> num, string n, list<Register> subregs>
-  : MipsRegWithSubRegs<n, subregs> {
-  let Num = num;
+class AFPR64<bits<16> Enc, string n, list<Register> subregs>
+  : MipsRegWithSubRegs<Enc, n, subregs> {
   let SubRegIndices = [sub_32];
 }
 
 // Mips Hardware Registers
-class HWR<bits<5> num, string n> : MipsReg<n> {
-  let Num = num;
-}
+class HWR<bits<16> Enc, string n> : MipsReg<Enc, n>;
 
 //===----------------------------------------------------------------------===//
 //  Registers
@@ -239,21 +230,21 @@ let Namespace = "Mips" in {
   def FCR31 : Register<"31">;
 
   // fcc0 register
-  def FCC0 : Register<"fcc0">;
+  def FCC0 : MipsReg<0, "fcc0">;
 
   // PC register
   def PC : Register<"pc">;
 
   // Hardware register $29
-  def HWR29 : Register<"29">;
-  def HWR29_64 : Register<"29">;
+  def HWR29 : MipsReg<29, "29">;
+  def HWR29_64 : MipsReg<29, "29">;
 
   // Accum registers
   let SubRegIndices = [sub_lo, sub_hi] in
-  def AC0 : RegisterWithSubRegs<"ac0", [LO, HI]>;
-  def AC1 : Register<"ac1">;
-  def AC2 : Register<"ac2">;
-  def AC3 : Register<"ac3">;
+  def AC0 : MipsRegWithSubRegs<0, "ac0", [LO, HI]>;
+  def AC1 : MipsReg<1, "ac1">;
+  def AC2 : MipsReg<2, "ac2">;
+  def AC3 : MipsReg<3, "ac3">;
 
   def DSPCtrl : Register<"dspctrl">;
 }

@@ -139,7 +139,7 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
     if (Mips::CPURegsRegClass.contains(Reg))
       break;
 
-    unsigned RegNum = getMipsRegisterNumbering(Reg);
+    unsigned RegNum = TM.getRegisterInfo()->getEncodingValue(Reg);
     if (Mips::AFGR64RegClass.contains(Reg)) {
       FPUBitmask |= (3 << RegNum);
       CSFPRegsSize += AFGR64RegSize;
@@ -154,7 +154,7 @@ void MipsAsmPrinter::printSavedRegsBitmask(raw_ostream &O) {
   // Set CPU Bitmask.
   for (; i != e; ++i) {
     unsigned Reg = CSI[i].getReg();
-    unsigned RegNum = getMipsRegisterNumbering(Reg);
+    unsigned RegNum = TM.getRegisterInfo()->getEncodingValue(Reg);
     CPUBitmask |= (1 << RegNum);
   }
 
