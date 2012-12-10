@@ -149,6 +149,8 @@ void AsmPrinter::getAnalysisUsage(AnalysisUsage &AU) const {
 }
 
 bool AsmPrinter::doInitialization(Module &M) {
+  OutStreamer.InitStreamer();
+
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
   MMI->AnalyzeModule(M);
 

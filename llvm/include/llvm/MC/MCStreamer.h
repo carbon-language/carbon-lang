@@ -70,6 +70,8 @@ namespace llvm {
     SmallVector<std::pair<const MCSection *,
                 const MCSection *>, 4> SectionStack;
 
+    bool AutoInitSections;
+
   protected:
     MCStreamer(MCContext &Ctx);
 
@@ -212,6 +214,17 @@ namespace llvm {
       SectionStack.back().second = curSection;
       if (Section != curSection)
         SectionStack.back().first = Section;
+    }
+
+    /// Initialize the streamer.
+    void InitStreamer() {
+      if (AutoInitSections)
+        InitSections();
+    }
+
+    /// Tell this MCStreamer to call InitSections upon initialization.
+    void setAutoInitSections(bool AutoInitSections) {
+      this->AutoInitSections = AutoInitSections;
     }
 
     /// InitSections - Create the default sections and set the initial one.

@@ -202,7 +202,7 @@ bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                                          *Context, *MAB, Out,
                                                          MCE, hasMCRelaxAll(),
                                                          hasMCNoExecStack()));
-    AsmStreamer.get()->InitSections();
+    AsmStreamer.get()->setAutoInitSections(true);
     break;
   }
   case CGFT_Null:
