@@ -80,6 +80,13 @@ TEST(NameableDeclaration, REMatchesVariousDecls) {
   EXPECT_TRUE(matches("int aFOObBARc;", Abc));
   EXPECT_TRUE(notMatches("int cab;", Abc));
   EXPECT_TRUE(matches("int cabc;", Abc));
+
+  DeclarationMatcher StartsWithK = namedDecl(matchesName(":k[^:]*$"));
+  EXPECT_TRUE(matches("int k;", StartsWithK));
+  EXPECT_TRUE(matches("int kAbc;", StartsWithK));
+  EXPECT_TRUE(matches("namespace x { int kTest; }", StartsWithK));
+  EXPECT_TRUE(matches("class C { int k; };", StartsWithK));
+  EXPECT_TRUE(notMatches("class C { int ckc; };", StartsWithK));
 }
 
 TEST(DeclarationMatcher, MatchClass) {
