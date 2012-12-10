@@ -1064,48 +1064,20 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
                    Location(V2, V2Size, V2TBAAInfo));
       if (PN > V2)
         std::swap(Locs.first, Locs.second);
-
-      // Find the first incoming phi value not from its parent.
-      unsigned f = 0;
-      while (PN->getIncomingBlock(f) == PN->getParent() &&
-             f < PN->getNumIncomingValues()-1)
-        ++f;
-
-      AliasResult Alias =
-        aliasCheck(PN->getIncomingValue(f), PNSize, PNTBAAInfo,
-                   PN2->getIncomingValueForBlock(PN->getIncomingBlock(f)),
-                   V2Size, V2TBAAInfo);
-      if (Alias == MayAlias)
-        return MayAlias;
-
-      // If the first source of the PHI nodes NoAlias and the other inputs are
-      // the PHI node itself through some amount of recursion this does not add
-      // any new information so just return NoAlias.
-      // bb:
-      //    ptr = ptr2 + 1
-      // loop:
-      //    ptr_phi = phi [bb, ptr], [loop, ptr_plus_one]
-      //    ptr2_phi = phi [bb, ptr2], [loop, ptr2_plus_one]
-      //    ...
-      //    ptr_plus_one = gep ptr_phi, 1
-      //    ptr2_plus_one = gep ptr2_phi, 1
-      // We assume for the recursion that the the phis (ptr_phi, ptr2_phi) do
-      // not alias each other.
-      bool ArePhisAssumedNoAlias = false;
-      AliasResult OrigAliasResult = NoAlias;
-      if (Alias == NoAlias) {
-        // Pretend the phis do not alias.
-        assert(AliasCache.count(Locs) &&
-               "There must exist an entry for the phi node");
-        OrigAliasResult = AliasCache[Locs];
-        AliasCache[Locs] = NoAlias;
-        ArePhisAssumedNoAlias = true;
-      }
+      // Analyse the PHIs' inputs under the assumption that the PHIs are
+      // NoAlias.
+      // If the PHIs are May/MustAlias there must be (recursively) an input
+      // operand from outside the PHIs' cycle that is MayAlias/MustAlias or
+      // there must be an operation on the PHIs within the PHIs' value cycle
+      // that causes a MayAlias.
+      // Pretend the phis do not alias.
+      AliasResult Alias = NoAlias;
+      assert(AliasCache.count(Locs) &&
+             "There must exist an entry for the phi node");
+      AliasResult OrigAliasResult = AliasCache[Locs];
+      AliasCache[Locs] = NoAlias;
 
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
-        if (i == f)
-          continue;
-
         AliasResult ThisAlias =
           aliasCheck(PN->getIncomingValue(i), PNSize, PNTBAAInfo,
                      PN2->getIncomingValueForBlock(PN->getIncomingBlock(i)),
@@ -1116,7 +1088,7 @@ BasicAliasAnalysis::aliasPHI(const PHINode *PN, uint64_t PNSize,
       }
 
       // Reset if speculation failed.
-      if (ArePhisAssumedNoAlias && Alias != NoAlias)
+      if (Alias != NoAlias)
         AliasCache[Locs] = OrigAliasResult;
 
       return Alias;
