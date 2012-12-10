@@ -34,8 +34,16 @@ using namespace llvm;
 namespace {
 namespace stats {
 STATISTIC(EmittedFragments, "Number of emitted assembler fragments - total");
-STATISTIC(EmittedInstFragments, "Number of emitted assembler fragments - instruction");
-STATISTIC(EmittedDataFragments, "Number of emitted assembler fragments - data");
+STATISTIC(EmittedInstFragments,
+          "Number of emitted assembler fragments - instruction");
+STATISTIC(EmittedDataFragments,
+          "Number of emitted assembler fragments - data");
+STATISTIC(EmittedAlignFragments,
+          "Number of emitted assembler fragments - align");
+STATISTIC(EmittedFillFragments,
+          "Number of emitted assembler fragments - fill");
+STATISTIC(EmittedOrgFragments,
+          "Number of emitted assembler fragments - org");
 STATISTIC(evaluateFixup, "Number of evaluated fixups");
 STATISTIC(FragmentLayouts, "Number of fragment layouts");
 STATISTIC(ObjectBytes, "Number of emitted object file bytes");
@@ -407,6 +415,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
   uint64_t FragmentSize = Asm.computeFragmentSize(Layout, F);
   switch (F.getKind()) {
   case MCFragment::FT_Align: {
+    ++stats::EmittedAlignFragments;
     MCAlignFragment &AF = cast<MCAlignFragment>(F);
     uint64_t Count = FragmentSize / AF.getValueSize();
 
@@ -456,6 +465,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     break;
 
   case MCFragment::FT_Fill: {
+    ++stats::EmittedFillFragments;
     MCFillFragment &FF = cast<MCFillFragment>(F);
 
     assert(FF.getValueSize() && "Invalid virtual align in concrete fragment!");
@@ -479,6 +489,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
   }
 
   case MCFragment::FT_Org: {
+    ++stats::EmittedOrgFragments;
     MCOrgFragment &OF = cast<MCOrgFragment>(F);
 
     for (uint64_t i = 0, e = FragmentSize; i != e; ++i)
