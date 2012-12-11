@@ -1263,6 +1263,10 @@ bool LoopVectorizationLegality::canVectorizeWithIfConvert() {
   for (unsigned i = 0, e = LoopBlocks.size(); i < e; ++i) {
     BasicBlock *BB = LoopBlocks[i];
 
+    // We don't support switch statements inside loops.
+    if (!isa<BranchInst>(BB->getTerminator()))
+      return false;
+
     // We must have at most two predecessors because we need to convert
     // all PHIs to selects.
     unsigned Preds = std::distance(pred_begin(BB), pred_end(BB));
