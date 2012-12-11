@@ -499,6 +499,9 @@ static bool isFreeWhenDoneSetToZero(const ObjCMethodCall &Call) {
 
 void MallocChecker::checkPostObjCMessage(const ObjCMethodCall &Call,
                                          CheckerContext &C) const {
+  if (C.wasInlined)
+    return;
+
   // If the first selector is dataWithBytesNoCopy, assume that the memory will
   // be released with 'free' by the new object.
   // Ex:  [NSData dataWithBytesNoCopy:bytes length:10];

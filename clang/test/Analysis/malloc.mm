@@ -5,6 +5,16 @@ typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
 
+@interface Wrapper : NSData
+- (id)initWithBytesNoCopy:(void *)bytes length:(NSUInteger)len;
+@end
+
+@implementation Wrapper
+- (id)initWithBytesNoCopy:(void *)bytes length:(NSUInteger)len {
+  return [self initWithBytesNoCopy:bytes length:len freeWhenDone:1]; // no-warning
+}
+@end
+
 // Done with headers. Start testing.
 void testNSDatafFreeWhenDoneNoError(NSUInteger dataLength) {
   unsigned char *data = (unsigned char *)malloc(42);
@@ -19,6 +29,11 @@ void testNSDataFreeWhenDoneYES(NSUInteger dataLength) {
 void testNSDataFreeWhenDoneYES2(NSUInteger dataLength) {
   unsigned char *data = (unsigned char *)malloc(42);
   NSData *nsdata = [[NSData alloc] initWithBytesNoCopy:data length:dataLength freeWhenDone:1]; // no-warning
+}
+
+void testNSDataFreeWhenDoneYES2_with_wrapper(NSUInteger dataLength) {
+  unsigned char *data = (unsigned char *)malloc(42);
+  Wrapper *nsdata = [[Wrapper alloc] initWithBytesNoCopy:data length:dataLength]; // no-warning
 }
 
 void testNSStringFreeWhenDoneYES3(NSUInteger dataLength) {
