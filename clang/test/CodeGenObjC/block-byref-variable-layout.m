@@ -40,3 +40,10 @@ int main() {
   };
   c();
 }
+
+// rdar://12787751
+typedef char mds_path_t[1024];
+void directVolumePerfWaitForStoreState()
+{
+ __block mds_path_t path;
+}

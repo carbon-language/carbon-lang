@@ -4413,7 +4413,7 @@ bool ASTContext::getByrefLifetime(QualType Ty,
     return false;
   
   HasByrefExtendedLayout = false;
-  if (Ty->isAggregateType()) {
+  if (Ty->isRecordType()) {
     HasByrefExtendedLayout = true;
     LifeTime = Qualifiers::OCL_None;
   }
