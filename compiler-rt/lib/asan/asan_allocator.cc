@@ -183,33 +183,6 @@ void AsanChunkView::GetFreeStack(StackTrace *stack) {
                               chunk_->compressed_free_stack_size());
 }
 
-bool AsanChunkView::AddrIsInside(uptr addr, uptr access_size, uptr *offset) {
-  if (addr >= Beg() && (addr + access_size) <= End()) {
-    *offset = addr - Beg();
-    return true;
-  }
-  return false;
-}
-
-bool AsanChunkView::AddrIsAtLeft(uptr addr, uptr access_size, uptr *offset) {
-  if (addr < Beg()) {
-    *offset = Beg() - addr;
-    return true;
-  }
-  return false;
-}
-
-bool AsanChunkView::AddrIsAtRight(uptr addr, uptr access_size, uptr *offset) {
-  if (addr + access_size >= End()) {
-    if (addr <= End())
-      *offset = 0;
-    else
-      *offset = addr - End();
-    return true;
-  }
-  return false;
-}
-
 static AsanChunk *PtrToChunk(uptr ptr) {
   AsanChunk *m = (AsanChunk*)(ptr - REDZONE);
   if (m->chunk_state == CHUNK_MEMALIGN) {

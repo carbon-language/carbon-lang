@@ -206,5 +206,4 @@ void NOINLINE __sanitizer_sandbox_on_notify(void *reserved) {
   (void)reserved;
   PrepareForSandboxing();
 }
-
 }  // extern "C"

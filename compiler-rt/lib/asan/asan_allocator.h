@@ -40,9 +40,31 @@ class AsanChunkView {
   uptr FreeTid();
   void GetAllocStack(StackTrace *stack);
   void GetFreeStack(StackTrace *stack);
-  bool AddrIsInside(uptr addr, uptr access_size, uptr *offset);
-  bool AddrIsAtLeft(uptr addr, uptr access_size, uptr *offset);
-  bool AddrIsAtRight(uptr addr, uptr access_size, uptr *offset);
+  bool AddrIsInside(uptr addr, uptr access_size, uptr *offset) {
+    if (addr >= Beg() && (addr + access_size) <= End()) {
+      *offset = addr - Beg();
+      return true;
+    }
+    return false;
+  }
+  bool AddrIsAtLeft(uptr addr, uptr access_size, uptr *offset) {
+    if (addr < Beg()) {
+      *offset = Beg() - addr;
+      return true;
+    }
+    return false;
+  }
+  bool AddrIsAtRight(uptr addr, uptr access_size, uptr *offset) {
+    if (addr + access_size >= End()) {
+      if (addr <= End())
+        *offset = 0;
+      else
+        *offset = addr - End();
+      return true;
+    }
+    return false;
+  }
+
  private:
   AsanChunk *const chunk_;
 };
