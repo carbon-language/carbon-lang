@@ -34,21 +34,23 @@ void FileSystemStatCache::anchor() { }
 /// path, using the cache to accelerate it if possible.  This returns true if
 /// the path does not exist or false if it exists.
 ///
-/// If FileDescriptor is non-null, then this lookup should only return success
-/// for files (not directories).  If it is null this lookup should only return
+/// If isFile is true, then this lookup should only return success for files
+/// (not directories).  If it is false this lookup should only return
 /// success for directories (not files).  On a successful file lookup, the
 /// implementation can optionally fill in FileDescriptor with a valid
 /// descriptor and the client guarantees that it will close it.
 bool FileSystemStatCache::get(const char *Path, struct stat &StatBuf,
-                              int *FileDescriptor, FileSystemStatCache *Cache) {
+                              bool isFile, int *FileDescriptor,
+                              FileSystemStatCache *Cache) {
   LookupResult R;
-  bool isForDir = FileDescriptor == 0;
+  bool isForDir = !isFile;
 
   // If we have a cache, use it to resolve the stat query.
   if (Cache)
-    R = Cache->getStat(Path, StatBuf, FileDescriptor);
-  else if (isForDir) {
-    // If this is a directory and we have no cache, just go to the file system.
+    R = Cache->getStat(Path, StatBuf, isFile, FileDescriptor);
+  else if (isForDir || !FileDescriptor) {
+    // If this is a directory or a file descriptor is not needed and we have
+    // no cache, just go to the file system.
     R = ::stat(Path, &StatBuf) != 0 ? CacheMissing : CacheExists;
   } else {
     // Otherwise, we have to go to the filesystem.  We can always just use
@@ -104,8 +106,8 @@ bool FileSystemStatCache::get(const char *Path, struct stat &StatBuf,
 
 MemorizeStatCalls::LookupResult
 MemorizeStatCalls::getStat(const char *Path, struct stat &StatBuf,
-                           int *FileDescriptor) {
-  LookupResult Result = statChained(Path, StatBuf, FileDescriptor);
+                           bool isFile, int *FileDescriptor) {
+  LookupResult Result = statChained(Path, StatBuf, isFile, FileDescriptor);
   
   // Do not cache failed stats, it is easy to construct common inconsistent
   // situations if we do, and they are not important for PCH performance (which

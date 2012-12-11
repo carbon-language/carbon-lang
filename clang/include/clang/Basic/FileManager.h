@@ -164,7 +164,7 @@ class FileManager : public RefCountedBase<FileManager> {
   OwningPtr<FileSystemStatCache> StatCache;
 
   bool getStatValue(const char *Path, struct stat &StatBuf,
-                    int *FileDescriptor);
+                    bool isFile, int *FileDescriptor);
 
   /// Add all ancestors of the given path (pointing to either a file
   /// or a directory) as virtual directories.

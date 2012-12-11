@@ -311,7 +311,7 @@ const DirectoryEntry *FileManager::getDirectory(StringRef DirName,
 
   // Check to see if the directory exists.
   struct stat StatBuf;
-  if (getStatValue(InterndDirName, StatBuf, 0/*directory lookup*/)) {
+  if (getStatValue(InterndDirName, StatBuf, false, 0/*directory lookup*/)) {
     // There's no real directory at the given path.
     if (!CacheFailure)
       SeenDirEntries.erase(DirName);
@@ -376,7 +376,8 @@ const FileEntry *FileManager::getFile(StringRef Filename, bool openFile,
   // Nope, there isn't.  Check to see if the file exists.
   int FileDescriptor = -1;
   struct stat StatBuf;
-  if (getStatValue(InterndFileName, StatBuf, &FileDescriptor)) {
+  if (getStatValue(InterndFileName, StatBuf, true,
+                   openFile ? &FileDescriptor : 0)) {
     // There's no real file at the given path.
     if (!CacheFailure)
       SeenFileEntries.erase(Filename);
@@ -444,14 +445,9 @@ FileManager::getVirtualFile(StringRef Filename, off_t Size,
          "The directory of a virtual file should already be in the cache.");
 
   // Check to see if the file exists. If so, drop the virtual file
-  int FileDescriptor = -1;
   struct stat StatBuf;
   const char *InterndFileName = NamedFileEnt.getKeyData();
-  if (getStatValue(InterndFileName, StatBuf, &FileDescriptor) == 0) {
-    // If the stat process opened the file, close it to avoid a FD leak.
-    if (FileDescriptor != -1)
-      close(FileDescriptor);
-
+  if (getStatValue(InterndFileName, StatBuf, true, 0) == 0) {
     StatBuf.st_size = Size;
     StatBuf.st_mtime = ModificationTime;
     UFE = &UniqueRealFiles.getFile(InterndFileName, StatBuf);
@@ -564,18 +560,18 @@ getBufferForFile(StringRef Filename, std::string *ErrorStr) {
 /// false if it's an existent real file.  If FileDescriptor is NULL,
 /// do directory look-up instead of file look-up.
 bool FileManager::getStatValue(const char *Path, struct stat &StatBuf,
-                               int *FileDescriptor) {
+                               bool isFile, int *FileDescriptor) {
   // FIXME: FileSystemOpts shouldn't be passed in here, all paths should be
   // absolute!
   if (FileSystemOpts.WorkingDir.empty())
-    return FileSystemStatCache::get(Path, StatBuf, FileDescriptor,
+    return FileSystemStatCache::get(Path, StatBuf, isFile, FileDescriptor,
                                     StatCache.get());
 
   SmallString<128> FilePath(Path);
   FixupRelativePath(FilePath);
 
-  return FileSystemStatCache::get(FilePath.c_str(), StatBuf, FileDescriptor,
-                                  StatCache.get());
+  return FileSystemStatCache::get(FilePath.c_str(), StatBuf,
+                                  isFile, FileDescriptor, StatCache.get());
 }
 
 bool FileManager::getNoncachedStatValue(StringRef Path, 
