@@ -44,7 +44,7 @@ private:
     const char        *name;
     uint32_t           attributes;
     bool               isFunction;
-    llvm::GlobalValue *symbol;
+    const llvm::GlobalValue *symbol;
   };
 
   llvm::OwningPtr<llvm::Module>           _module;
@@ -138,16 +138,16 @@ private:
 
   /// addPotentialUndefinedSymbol - Add a symbol which isn't defined just yet
   /// to a list to be resolved later.
-  void addPotentialUndefinedSymbol(llvm::GlobalValue *dcl, bool isFunc);
+  void addPotentialUndefinedSymbol(const llvm::GlobalValue *dcl, bool isFunc);
 
   /// addDefinedSymbol - Add a defined symbol to the list.
-  void addDefinedSymbol(llvm::GlobalValue *def, bool isFunction);
+  void addDefinedSymbol(const llvm::GlobalValue *def, bool isFunction);
 
   /// addDefinedFunctionSymbol - Add a function symbol as defined to the list.
-  void addDefinedFunctionSymbol(llvm::Function *f);
+  void addDefinedFunctionSymbol(const llvm::Function *f);
 
   /// addDefinedDataSymbol - Add a data symbol as defined to the list.
-  void addDefinedDataSymbol(llvm::GlobalValue *v);
+  void addDefinedDataSymbol(const llvm::GlobalValue *v);
 
   /// addAsmGlobalSymbols - Add global symbols from module-level ASM to the
   /// defined or undefined lists.
@@ -162,17 +162,17 @@ private:
   void addAsmGlobalSymbolUndef(const char *);
 
   /// addObjCClass - Parse i386/ppc ObjC class data structure.
-  void addObjCClass(llvm::GlobalVariable *clgv);
+  void addObjCClass(const llvm::GlobalVariable *clgv);
 
   /// addObjCCategory - Parse i386/ppc ObjC category data structure.
-  void addObjCCategory(llvm::GlobalVariable *clgv);
+  void addObjCCategory(const llvm::GlobalVariable *clgv);
 
   /// addObjCClassRef - Parse i386/ppc ObjC class list data structure.
-  void addObjCClassRef(llvm::GlobalVariable *clgv);
+  void addObjCClassRef(const llvm::GlobalVariable *clgv);
 
   /// objcClassNameFromExpression - Get string that the data pointer points
   /// to.
-  bool objcClassNameFromExpression(llvm::Constant* c, std::string &name);
+  bool objcClassNameFromExpression(const llvm::Constant* c, std::string &name);
 
   /// isTargetMatch - Returns 'true' if the memory buffer is for the specified
   /// target triple.
