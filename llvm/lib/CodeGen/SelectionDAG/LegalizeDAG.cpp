@@ -321,7 +321,7 @@ static void ExpandUnalignedStore(StoreSDNode *ST, SelectionDAG &DAG,
     // Do a (aligned) store to a stack slot, then copy from the stack slot
     // to the final destination using (unaligned) integer loads and stores.
     EVT StoredVT = ST->getMemoryVT();
-    EVT RegVT =
+    MVT RegVT =
       TLI.getRegisterType(*DAG.getContext(),
                           EVT::getIntegerVT(*DAG.getContext(),
                                             StoredVT.getSizeInBits()));
@@ -447,7 +447,7 @@ ExpandUnalignedLoad(LoadSDNode *LD, SelectionDAG &DAG,
 
     // Copy the value to a (aligned) stack slot using (unaligned) integer
     // loads and stores, then do a (aligned) load from the stack slot.
-    EVT RegVT = TLI.getRegisterType(*DAG.getContext(), intVT);
+    MVT RegVT = TLI.getRegisterType(*DAG.getContext(), intVT);
     unsigned LoadedBytes = LoadedVT.getSizeInBits() / 8;
     unsigned RegBytes = RegVT.getSizeInBits() / 8;
     unsigned NumRegs = (LoadedBytes + RegBytes - 1) / RegBytes;

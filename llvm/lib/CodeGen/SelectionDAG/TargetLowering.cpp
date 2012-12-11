@@ -688,7 +688,7 @@ static unsigned getVectorTypeBreakdownMVT(MVT VT, MVT &IntermediateVT,
   if (!isPowerOf2_32(NewVTSize))
     NewVTSize = NextPowerOf2(NewVTSize);
 
-  EVT DestVT = TLI->getRegisterType(NewVT);
+  MVT DestVT = TLI->getRegisterType(NewVT);
   RegisterVT = DestVT;
   if (EVT(DestVT).bitsLT(NewVT))    // Value is expanded, e.g. i64 -> i16.
     return NumVectorRegs*(NewVTSize/DestVT.getSizeInBits());
@@ -870,7 +870,7 @@ void TargetLowering::computeRegisterProperties() {
     NumRegistersForVT[i] =
       getVectorTypeBreakdownMVT(VT, IntermediateVT, NumIntermediates,
                                 RegisterVT, this);
-    RegisterTypeForVT[i] = RegisterVT;
+    RegisterTypeForVT[i] = RegisterVT.getSimpleVT();
 
     MVT NVT = VT.getPow2VectorType();
     if (NVT == VT) {
@@ -1011,13 +1011,13 @@ void llvm::GetReturnInfo(Type* ReturnType, Attributes attr,
     // conventions. The frontend should mark functions whose return values
     // require promoting with signext or zeroext attributes.
     if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger()) {
-      EVT MinVT = TLI.getRegisterType(ReturnType->getContext(), MVT::i32);
+      MVT MinVT = TLI.getRegisterType(ReturnType->getContext(), MVT::i32);
       if (VT.bitsLT(MinVT))
         VT = MinVT;
     }
 
     unsigned NumParts = TLI.getNumRegisters(ReturnType->getContext(), VT);
-    EVT PartVT = TLI.getRegisterType(ReturnType->getContext(), VT);
+    MVT PartVT = TLI.getRegisterType(ReturnType->getContext(), VT);
 
     // 'inreg' on function refers to return value
     ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();

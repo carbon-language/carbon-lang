@@ -703,7 +703,7 @@ SDValue DAGTypeLegalizer::PromoteIntRes_VAARG(SDNode *N) {
   EVT VT = N->getValueType(0);
   DebugLoc dl = N->getDebugLoc();
 
-  EVT RegVT = TLI.getRegisterType(*DAG.getContext(), VT);
+  MVT RegVT = TLI.getRegisterType(*DAG.getContext(), VT);
   unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), VT);
   // The argument is passed as NumRegs registers of type RegVT.
 

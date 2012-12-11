@@ -610,7 +610,7 @@ namespace {
       for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
         EVT ValueVT = ValueVTs[Value];
         unsigned NumRegs = tli.getNumRegisters(Context, ValueVT);
-        EVT RegisterVT = tli.getRegisterType(Context, ValueVT);
+        MVT RegisterVT = tli.getRegisterType(Context, ValueVT);
         for (unsigned i = 0; i != NumRegs; ++i)
           Regs.push_back(Reg + i);
         RegVTs.push_back(RegisterVT);
@@ -1238,7 +1238,7 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
           VT = TLI.getTypeForExtArgOrReturn(*DAG.getContext(), VT, ExtendKind);
 
         unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), VT);
-        EVT PartVT = TLI.getRegisterType(*DAG.getContext(), VT);
+        MVT PartVT = TLI.getRegisterType(*DAG.getContext(), VT);
         SmallVector<SDValue, 4> Parts(NumParts);
         getCopyToParts(DAG, getCurDebugLoc(),
                        SDValue(RetOp.getNode(), RetOp.getResNo() + j),
@@ -6412,7 +6412,7 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
         Flags.setNest();
       Flags.setOrigAlign(OriginalAlignment);
 
-      EVT PartVT = getRegisterType(CLI.RetTy->getContext(), VT);
+      MVT PartVT = getRegisterType(CLI.RetTy->getContext(), VT);
       unsigned NumParts = getNumRegisters(CLI.RetTy->getContext(), VT);
       SmallVector<SDValue, 4> Parts(NumParts);
       ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
@@ -6447,11 +6447,11 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
   ComputeValueVTs(*this, CLI.RetTy, RetTys);
   for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
     EVT VT = RetTys[I];
-    EVT RegisterVT = getRegisterType(CLI.RetTy->getContext(), VT);
+    MVT RegisterVT = getRegisterType(CLI.RetTy->getContext(), VT);
     unsigned NumRegs = getNumRegisters(CLI.RetTy->getContext(), VT);
     for (unsigned i = 0; i != NumRegs; ++i) {
       ISD::InputArg MyFlags;
-      MyFlags.VT = RegisterVT.getSimpleVT();
+      MyFlags.VT = RegisterVT;
       MyFlags.Used = CLI.IsReturnValueUsed;
       if (CLI.RetSExt)
         MyFlags.Flags.setSExt();
@@ -6501,7 +6501,7 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
   unsigned CurReg = 0;
   for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
     EVT VT = RetTys[I];
-    EVT RegisterVT = getRegisterType(CLI.RetTy->getContext(), VT);
+    MVT RegisterVT = getRegisterType(CLI.RetTy->getContext(), VT);
     unsigned NumRegs = getNumRegisters(CLI.RetTy->getContext(), VT);
 
     ReturnValues.push_back(getCopyFromParts(CLI.DAG, CLI.DL, &InVals[CurReg],
@@ -6591,7 +6591,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
     // or one register.
     ISD::ArgFlagsTy Flags;
     Flags.setSRet();
-    EVT RegisterVT = TLI.getRegisterType(*DAG.getContext(), ValueVTs[0]);
+    MVT RegisterVT = TLI.getRegisterType(*DAG.getContext(), ValueVTs[0]);
     ISD::InputArg RetArg(Flags, RegisterVT, true, 0, 0);
     Ins.push_back(RetArg);
   }
@@ -6637,7 +6637,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
         Flags.setNest();
       Flags.setOrigAlign(OriginalAlignment);
 
-      EVT RegisterVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
+      MVT RegisterVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
       unsigned NumRegs = TLI.getNumRegisters(*CurDAG->getContext(), VT);
       for (unsigned i = 0; i != NumRegs; ++i) {
         ISD::InputArg MyFlags(Flags, RegisterVT, isArgValueUsed,
@@ -6684,7 +6684,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
     SmallVector<EVT, 1> ValueVTs;
     ComputeValueVTs(TLI, PointerType::getUnqual(F.getReturnType()), ValueVTs);
     MVT VT = ValueVTs[0].getSimpleVT();
-    MVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT).getSimpleVT();
+    MVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
     ISD::NodeType AssertOp = ISD::DELETED_NODE;
     SDValue ArgValue = getCopyFromParts(DAG, dl, &InVals[0], 1,
                                         RegVT, VT, NULL, AssertOp);
@@ -6716,7 +6716,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
     for (unsigned Val = 0; Val != NumValues; ++Val) {
       EVT VT = ValueVTs[Val];
-      EVT PartVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
+      MVT PartVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
       unsigned NumParts = TLI.getNumRegisters(*CurDAG->getContext(), VT);
 
       if (!I->use_empty()) {

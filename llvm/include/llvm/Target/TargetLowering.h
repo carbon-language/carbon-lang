@@ -595,14 +595,14 @@ public:
 
   /// getRegisterType - Return the type of registers that this ValueType will
   /// eventually require.
-  EVT getRegisterType(MVT VT) const {
+  MVT getRegisterType(MVT VT) const {
     assert((unsigned)VT.SimpleTy < array_lengthof(RegisterTypeForVT));
     return RegisterTypeForVT[VT.SimpleTy];
   }
 
   /// getRegisterType - Return the type of registers that this ValueType will
   /// eventually require.
-  EVT getRegisterType(LLVMContext &Context, EVT VT) const {
+  MVT getRegisterType(LLVMContext &Context, EVT VT) const {
     if (VT.isSimple()) {
       assert((unsigned)VT.getSimpleVT().SimpleTy <
                 array_lengthof(RegisterTypeForVT));
@@ -613,7 +613,7 @@ public:
       unsigned NumIntermediates;
       (void)getVectorTypeBreakdown(Context, VT, VT1,
                                    NumIntermediates, RegisterVT);
-      return RegisterVT;
+      return RegisterVT.getSimpleVT();
     }
     if (VT.isInteger()) {
       return getRegisterType(Context, getTypeToTransformTo(Context, VT));
@@ -1931,7 +1931,7 @@ private:
   /// each ValueType the target supports natively.
   const TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
   unsigned char NumRegistersForVT[MVT::LAST_VALUETYPE];
-  EVT RegisterTypeForVT[MVT::LAST_VALUETYPE];
+  MVT RegisterTypeForVT[MVT::LAST_VALUETYPE];
 
   /// RepRegClassForVT - This indicates the "representative" register class to
   /// use for each ValueType the target supports natively. This information is
