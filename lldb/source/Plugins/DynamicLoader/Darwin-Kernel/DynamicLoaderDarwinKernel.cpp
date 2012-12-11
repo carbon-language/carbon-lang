@@ -338,14 +338,21 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
     }
     
 
+    static ConstString g_section_name_LINKEDIT ("__LINKEDIT");
+
     if (memory_module_sp && module_sp)
     {
         if (module_sp->GetUUID() == memory_module_sp->GetUUID())
         {
             ObjectFile *ondisk_object_file = module_sp->GetObjectFile();
             ObjectFile *memory_object_file = memory_module_sp->GetObjectFile();
+            
             if (memory_object_file && ondisk_object_file)
             {
+                // Kexts are classified with a type of ObjectFile::eTypeSharedLibrary and
+                // a strata of ObjectFile::eStrataKernel. Ignore __LINKEDIT for kexts
+                const bool ignore_linkedit = ondisk_object_file->GetType() == ObjectFile::eTypeSharedLibrary;
+                
                 SectionList *ondisk_section_list = ondisk_object_file->GetSectionList ();
                 SectionList *memory_section_list = memory_object_file->GetSectionList ();
                 if (memory_section_list && ondisk_section_list)
@@ -367,6 +374,14 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
                         SectionSP ondisk_section_sp(ondisk_section_list->GetSectionAtIndex(sect_idx));
                         if (ondisk_section_sp)
                         {
+                            // Don't ever load __LINKEDIT as it may or may not be actually
+                            // mapped into memory and there is no current way to tell.
+                            // I filed rdar://problem/12851706 to track being able to tell
+                            // if the __LINKEDIT is actually mapped, but until then, we need
+                            // to not load the __LINKEDIT
+                            if (ignore_linkedit && ondisk_section_sp->GetName() == g_section_name_LINKEDIT)
+                                continue;
+
                             const Section *memory_section = memory_section_list->FindSectionByName(ondisk_section_sp->GetName()).get();
                             if (memory_section)
                             {
