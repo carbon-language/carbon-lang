@@ -2425,15 +2425,55 @@ let addrMode = BaseImmOffset, validSubTargets = HasV4SubT in {
                                  u6_2Ext, 13, 8>, AddrModeRel;
 }
 
-// Store new-value byte.
-
-// memb(Re=#U6)=Nt.new
-// memb(Rs+#s11:0)=Nt.new
-let mayStore = 1, isPredicable = 1 in
-def STrib_nv_V4 : NVInst_V4<(outs), (ins MEMri:$addr, IntRegs:$src1),
-            "memb($addr) = $src1.new",
+// multiclass for new-value store instructions with base + immediate offset.
+// and MEMri operand.
+multiclass ST_MEMri_Pbase_nv<string mnemonic, RegisterClass RC, bit isNot,
+                          bit isPredNew> {
+  let PNewValue = #!if(isPredNew, "new", "") in
+  def #NAME#_nv_V4 : NVInst_V4<(outs),
+            (ins PredRegs:$src1, MEMri:$addr, RC: $src2),
+            !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
+            ") ")#mnemonic#"($addr) = $src2.new",
             []>,
             Requires<[HasV4T]>;
+}
+
+multiclass ST_MEMri_Pred_nv<string mnemonic, RegisterClass RC, bit PredNot> {
+  let PredSense = #!if(PredNot, "false", "true") in {
+    defm _c#NAME# : ST_MEMri_Pbase_nv<mnemonic, RC, PredNot, 0>;
+
+    // Predicate new
+    defm _cdn#NAME# : ST_MEMri_Pbase_nv<mnemonic, RC, PredNot, 1>;
+  }
+}
+
+let mayStore = 1, isNVStore = 1, isExtendable = 1, neverHasSideEffects = 1 in
+multiclass ST_MEMri_nv<string mnemonic, string CextOp, RegisterClass RC,
+                    bits<5> ImmBits, bits<5> PredImmBits> {
+
+  let CextOpcode = CextOp, BaseOpcode = CextOp in {
+    let opExtendable = 1, isExtentSigned = 1, opExtentBits = ImmBits,
+         isPredicable = 1 in
+    def #NAME#_nv_V4 : NVInst_V4<(outs),
+            (ins MEMri:$addr, RC:$src),
+            #mnemonic#"($addr) = $src.new",
+            []>,
+            Requires<[HasV4T]>;
+
+    let opExtendable = 2, isExtentSigned = 0, opExtentBits = PredImmBits,
+        neverHasSideEffects = 1, isPredicated = 1 in {
+      defm Pt : ST_MEMri_Pred_nv<mnemonic, RC, 0>;
+      defm NotPt : ST_MEMri_Pred_nv<mnemonic, RC, 1>;
+    }
+  }
+}
+
+let addrMode = BaseImmOffset, isMEMri = "true", validSubTargets = HasV4SubT,
+mayStore = 1 in {
+  defm STrib: ST_MEMri_nv<"memb", "STrib", IntRegs, 11, 6>, AddrModeRel;
+  defm STrih: ST_MEMri_nv<"memh", "STrih", IntRegs, 12, 7>, AddrModeRel;
+  defm STriw: ST_MEMri_nv<"memw", "STriw", IntRegs, 13, 8>, AddrModeRel;
+}
 
 // memb(Ru<<#u2+#U6)=Nt.new
 let mayStore = 1, AddedComplexity = 10 in
@@ -2473,44 +2513,6 @@ def STb_GP_nv_V4 : NVInst_V4<(outs),
             []>,
             Requires<[HasV4T]>;
 
-// Store new-value byte conditionally.
-// if ([!]Pv[.new]) memb(#u6)=Nt.new
-// if (Pv) memb(Rs+#u6:0)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_cPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if ($src1) memb($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (Pv.new) memb(Rs+#u6:0)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_cdnPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if ($src1.new) memb($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memb(Rs+#u6:0)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_cNotPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if (!$src1) memb($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv.new) memb(Rs+#u6:0)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrib_cdnNotPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if (!$src1.new) memb($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
 // if ([!]Pv[.new]) memb(Rx++#s4:0)=Nt.new
 // if (Pv) memb(Rx++#s4:0)=Nt.new
 let mayStore = 1, hasCtrlDep = 1,
@@ -2546,16 +2548,6 @@ def POST_STbri_cdnNotPt_nv_V4 : NVInstPI_V4<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_0Imm:$offset),
             "if (!$src1.new) memb($src3++#$offset) = $src2.new",
             [],"$src3 = $dst">,
-            Requires<[HasV4T]>;
-
-
-// Store new-value halfword.
-// memh(Re=#U6)=Nt.new
-// memh(Rs+#s11:1)=Nt.new
-let mayStore = 1, isPredicable = 1 in
-def STrih_nv_V4 : NVInst_V4<(outs), (ins MEMri:$addr, IntRegs:$src1),
-            "memh($addr) = $src1.new",
-            []>,
             Requires<[HasV4T]>;
 
 // memh(Ru<<#u2+#U6)=Nt.new
@@ -2597,47 +2589,6 @@ def STh_GP_nv_V4 : NVInst_V4<(outs),
             Requires<[HasV4T]>;
 
 
-// Store new-value halfword conditionally.
-
-// if ([!]Pv[.new]) memh(#u6)=Nt.new
-
-// if ([!]Pv[.new]) memh(Rs+#u6:1)=Nt.new
-// if (Pv) memh(Rs+#u6:1)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_cPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if ($src1) memh($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (Pv.new) memh(Rs+#u6:1)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_cdnPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if ($src1.new) memh($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memh(Rs+#u6:1)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_cNotPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if (!$src1) memh($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv.new) memh(Rs+#u6:1)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STrih_cdnNotPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if (!$src1.new) memh($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
 // if ([!]Pv[]) memh(Rx++#s4:1)=Nt.new
 // if (Pv) memh(Rx++#s4:1)=Nt.new
 let mayStore = 1, hasCtrlDep = 1,
@@ -2675,18 +2626,6 @@ def POST_SThri_cdnNotPt_nv_V4 : NVInstPI_V4<(outs IntRegs:$dst),
             [],"$src3 = $dst">,
             Requires<[HasV4T]>;
 
-
-// Store new-value word.
-
-// memw(Re=#U6)=Nt.new
-// memw(Rs+#s11:2)=Nt.new
-let mayStore = 1, isPredicable = 1 in
-def STriw_nv_V4 : NVInst_V4<(outs),
-            (ins MEMri:$addr, IntRegs:$src1),
-            "memw($addr) = $src1.new",
-            []>,
-            Requires<[HasV4T]>;
-
 // memw(Ru<<#u2+#U6)=Nt.new
 let mayStore = 1, AddedComplexity = 10 in
 def STriw_shl_nv_V4 : NVInst_V4<(outs),
@@ -2720,47 +2659,6 @@ let mayStore = 1, neverHasSideEffects = 1 in
 def STw_GP_nv_V4 : NVInst_V4<(outs),
             (ins globaladdress:$global, IntRegs:$src),
             "memw(#$global) = $src.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// Store new-value word conditionally.
-
-// if ([!]Pv[.new]) memw(#u6)=Nt.new
-
-// if ([!]Pv[.new]) memw(Rs+#u6:2)=Nt.new
-// if (Pv) memw(Rs+#u6:2)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_cPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if ($src1) memw($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (Pv.new) memw(Rs+#u6:2)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_cdnPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if ($src1.new) memw($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv) memw(Rs+#u6:2)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_cNotPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if (!$src1) memw($addr) = $src2.new",
-            []>,
-            Requires<[HasV4T]>;
-
-// if (!Pv.new) memw(Rs+#u6:2)=Nt.new
-let mayStore = 1, neverHasSideEffects = 1,
-    isPredicated = 1 in
-def STriw_cdnNotPt_nv_V4 : NVInst_V4<(outs),
-            (ins PredRegs:$src1, MEMri:$addr, IntRegs:$src2),
-            "if (!$src1.new) memw($addr) = $src2.new",
             []>,
             Requires<[HasV4T]>;
 
