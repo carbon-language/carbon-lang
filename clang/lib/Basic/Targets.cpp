@@ -4423,6 +4423,89 @@ void PNaClTargetInfo::getGCCRegAliases(const GCCRegAlias *&Aliases,
 }
 } // end anonymous namespace.
 
+namespace {
+  static const unsigned SPIRAddrSpaceMap[] = {
+    1,    // opencl_global
+    3,    // opencl_local
+    2,    // opencl_constant
+    0,    // cuda_device
+    0,    // cuda_constant
+    0     // cuda_shared
+  };
+  class SPIRTargetInfo : public TargetInfo {
+    static const char * const GCCRegNames[];
+    static const Builtin::Info BuiltinInfo[];
+    std::vector<llvm::StringRef> AvailableFeatures;
+  public:
+    SPIRTargetInfo(const std::string& triple) : TargetInfo(triple) {
+      assert(getTriple().getOS() == llvm::Triple::UnknownOS &&
+        "SPIR target must use unknown OS");
+      assert(getTriple().getEnvironment() == llvm::Triple::UnknownEnvironment &&
+        "SPIR target must use unknown environment type");
+      BigEndian = false;
+      TLSSupported = false;
+      LongWidth = LongAlign = 64;
+      AddrSpaceMap = &SPIRAddrSpaceMap;
+      // Define available target features
+      // These must be defined in sorted order!
+      NoAsmVariants = true;
+    }
+    virtual void getTargetDefines(const LangOptions &Opts,
+                                  MacroBuilder &Builder) const {
+      DefineStd(Builder, "SPIR", Opts);
+    }
+    virtual bool hasFeature(StringRef Feature) const {
+      return Feature == "spir";
+    }
+    
+    virtual void getTargetBuiltins(const Builtin::Info *&Records,
+                                   unsigned &NumRecords) const {}
+    virtual const char *getClobbers() const {
+      return "";
+    }
+    virtual void getGCCRegNames(const char * const *&Names,
+                                unsigned &NumNames) const {}
+    virtual bool validateAsmConstraint(const char *&Name,
+                                       TargetInfo::ConstraintInfo &info) const {
+      return true;
+    }
+    virtual void getGCCRegAliases(const GCCRegAlias *&Aliases,
+                                  unsigned &NumAliases) const {}
+    virtual BuiltinVaListKind getBuiltinVaListKind() const {
+      return TargetInfo::VoidPtrBuiltinVaList;
+    }
+  };
+
+
+  class SPIR32TargetInfo : public SPIRTargetInfo {
+  public:
+    SPIR32TargetInfo(const std::string& triple) : SPIRTargetInfo(triple) {
+      PointerWidth = PointerAlign = 32;
+      SizeType     = TargetInfo::UnsignedInt;
+      PtrDiffType = IntPtrType = TargetInfo::SignedInt;
+      DescriptionString
+        = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
+          "f32:32:32-f64:64:64-v16:16:16-v24:32:32-v32:32:32-v48:64:64-"
+          "v64:64:64-v96:128:128-v128:128:128-v192:256:256-v256:256:256-"
+          "v512:512:512-v1024:1024:1024";
+  }
+  };
+
+  class SPIR64TargetInfo : public SPIRTargetInfo {
+  public:
+    SPIR64TargetInfo(const std::string& triple) : SPIRTargetInfo(triple) {
+      PointerWidth = PointerAlign = 64;
+      SizeType     = TargetInfo::UnsignedLong;
+      PtrDiffType = IntPtrType = TargetInfo::SignedLong;
+      DescriptionString
+        = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-"
+          "f32:32:32-f64:64:64-v16:16:16-v24:32:32-v32:32:32-v48:64:64-"
+          "v64:64:64-v96:128:128-v128:128:128-v192:256:256-v256:256:256-"
+          "v512:512:512-v1024:1024:1024";
+  }
+  };
+}
+
 
 //===----------------------------------------------------------------------===//
 // Driver code
@@ -4668,6 +4751,21 @@ static TargetInfo *AllocateTarget(const std::string &T) {
       return new NaClTargetInfo<X86_64TargetInfo>(T);
     default:
       return new X86_64TargetInfo(T);
+    }
+
+    case llvm::Triple::spir: {
+      llvm::Triple Triple(T);
+      if (Triple.getOS() != llvm::Triple::UnknownOS ||
+        Triple.getEnvironment() != llvm::Triple::UnknownEnvironment)
+        return NULL;
+      return new SPIR32TargetInfo(T);
+    }
+    case llvm::Triple::spir64: {
+      llvm::Triple Triple(T);
+      if (Triple.getOS() != llvm::Triple::UnknownOS ||
+        Triple.getEnvironment() != llvm::Triple::UnknownEnvironment)
+        return NULL;
+      return new SPIR64TargetInfo(T);
     }
   }
 }
