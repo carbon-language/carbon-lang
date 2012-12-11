@@ -1113,19 +1113,21 @@ void SelectionDAGISel::SelectAllBasicBlocks(const Function &Fn) {
           }
 
           bool HadTailCall = false;
+          MachineBasicBlock::iterator SavedInsertPt = FuncInfo->InsertPt;
           SelectBasicBlock(Inst, BI, HadTailCall);
+
+          // If the call was emitted as a tail call, we're done with the block.
+          // We also need to delete any previously emitted instructions.
+          if (HadTailCall) {
+            FastIS->removeDeadCode(SavedInsertPt, FuncInfo->MBB->end());
+            --BI;
+            break;
+          }
 
           // Recompute NumFastIselRemaining as Selection DAG instruction
           // selection may have handled the call, input args, etc.
           unsigned RemainingNow = std::distance(Begin, BI);
           NumFastIselFailures += NumFastIselRemaining - RemainingNow;
-
-          // If the call was emitted as a tail call, we're done with the block.
-          if (HadTailCall) {
-            --BI;
-            break;
-          }
-
           NumFastIselRemaining = RemainingNow;
           continue;
         }

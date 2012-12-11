@@ -5273,11 +5273,6 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
       !isInTailCallPosition(CS, CS.getAttributes().getRetAttributes(), TLI))
     isTailCall = false;
 
-  // If there's a possibility that fast-isel has already selected some amount
-  // of the current basic block, don't emit a tail call.
-  if (isTailCall && TM.Options.EnableFastISel)
-    isTailCall = false;
-
   TargetLowering::
   CallLoweringInfo CLI(getRoot(), RetTy, FTy, isTailCall, Callee, Args, DAG,
                        getCurDebugLoc(), CS);

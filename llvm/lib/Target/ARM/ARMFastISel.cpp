@@ -2284,6 +2284,9 @@ bool ARMFastISel::SelectCall(const Instruction *I,
   // Can't handle inline asm.
   if (isa<InlineAsm>(Callee)) return false;
 
+  // Allow SelectionDAG isel to handle tail calls.
+  if (CI->isTailCall()) return false;
+
   // Check the calling convention.
   ImmutableCallSite CS(CI);
   CallingConv::ID CC = CS.getCallingConv();

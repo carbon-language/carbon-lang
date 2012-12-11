@@ -1,12 +1,11 @@
-; RUN: llc < %s -march=x86-64 -tailcallopt -fast-isel | not grep TAILCALL
-
-; Fast-isel shouldn't attempt to cope with tail calls.
+; RUN: llc < %s -march=x86-64 -tailcallopt -fast-isel -fast-isel-abort | FileCheck %s
 
 %0 = type { i64, i32, i8* }
 
 define fastcc i8* @"visit_array_aux<`Reference>"(%0 %arg, i32 %arg1) nounwind {
 fail:                                             ; preds = %entry
   %tmp20 = tail call fastcc i8* @"visit_array_aux<`Reference>"(%0 %arg, i32 undef) ; <i8*> [#uses=1]
+; CHECK: jmp "_visit_array_aux<`Reference>" ## TAILCALL
   ret i8* %tmp20
 }
 

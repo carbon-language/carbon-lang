@@ -1529,6 +1529,10 @@ bool X86FastISel::X86SelectCall(const Instruction *I) {
   if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI))
     return X86VisitIntrinsicCall(*II);
 
+  // Allow SelectionDAG isel to handle tail calls.
+  if (cast<CallInst>(I)->isTailCall())
+    return false;
+
   return DoSelectCall(I, 0);
 }
 
