@@ -358,12 +358,12 @@ class DwarfDebug {
   bool HasDwarfAccelTables;
   bool HasSplitDwarf;
 
-  // Fission Variables
+  // Separated Dwarf Variables
   // In general these will all be for bits that are left in the
   // original object file, rather than things that are meant
   // to be in the .dwo sections.
 
-  // The CU left in the original object file for Fission debug info.
+  // The CU left in the original object file for separated debug info.
   CompileUnit *SkeletonCU;
   DwarfUnits SkeletonHolder;
 

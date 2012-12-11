@@ -935,7 +935,7 @@ void DwarfDebug::endModule() {
     if (useDarwinGDBCompat())
       emitDebugInlineInfo();
   } else {
-    // TODO: Fill this in for Fission sections and separate
+    // TODO: Fill this in for separated debug sections and separate
     // out information into new sections.
 
     // Emit the debug info section and compile units.
@@ -2315,7 +2315,7 @@ void DwarfDebug::emitDebugInlineInfo() {
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_inlined_end", 1));
 }
 
-// DWARF5 Experimental Fission emitters.
+// DWARF5 Experimental Separate Dwarf emitters.
 
 // This DIE has the following attributes: DW_AT_comp_dir, DW_AT_stmt_list,
 // DW_AT_low_pc, DW_AT_high_pc, DW_AT_ranges, DW_AT_dwo_name, DW_AT_dwo_id,
@@ -2384,8 +2384,8 @@ void DwarfDebug::emitSkeletonCU(const MCSection *Section) {
 
 }
 
-// Emit the .debug_info.dwo section for fission. This contains the compile
-// units that would normally be in debug_info.
+// Emit the .debug_info.dwo section for separated dwarf. This contains the
+// compile units that would normally be in debug_info.
 void DwarfDebug::emitDebugInfoDWO() {
   assert(useSplitDwarf() && "No split dwarf debug info?");
   emitCompileUnits(Asm->getObjFileLowering().getDwarfInfoDWOSection());
