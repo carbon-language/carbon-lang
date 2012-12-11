@@ -2782,7 +2782,6 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   EnterExpressionEvaluationContext EvalContext(*this,
                                                Sema::PotentiallyEvaluated);
-  ActOnStartOfFunctionDef(0, Function);
 
   // Introduce a new scope where local variable instantiations will be
   // recorded, unless we're actually a member function within a local
@@ -2794,21 +2793,21 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
   LocalInstantiationScope Scope(*this, MergeWithParentScope);
 
-  // Enter the scope of this instantiation. We don't use
-  // PushDeclContext because we don't have a scope.
-  Sema::ContextRAII savedContext(*this, Function);
-
-  MultiLevelTemplateArgumentList TemplateArgs =
-    getTemplateInstantiationArgs(Function, 0, false, PatternDecl);
-
-  addInstantiatedParametersToScope(*this, Function, PatternDecl, Scope,
-                                   TemplateArgs);
-
-  if (PatternDecl->isDefaulted()) {
-    ActOnFinishFunctionBody(Function, 0, /*IsInstantiation=*/true);
-
+  if (PatternDecl->isDefaulted())
     SetDeclDefaulted(Function, PatternDecl->getLocation());
-  } else {
+  else {
+    ActOnStartOfFunctionDef(0, Function);
+
+    // Enter the scope of this instantiation. We don't use
+    // PushDeclContext because we don't have a scope.
+    Sema::ContextRAII savedContext(*this, Function);
+
+    MultiLevelTemplateArgumentList TemplateArgs =
+      getTemplateInstantiationArgs(Function, 0, false, PatternDecl);
+
+    addInstantiatedParametersToScope(*this, Function, PatternDecl, Scope,
+                                     TemplateArgs);
+
     // If this is a constructor, instantiate the member initializers.
     if (const CXXConstructorDecl *Ctor =
           dyn_cast<CXXConstructorDecl>(PatternDecl)) {
@@ -2824,11 +2823,11 @@ void Sema::InstantiateFunctionDefinition(SourceLocation PointOfInstantiation,
 
     ActOnFinishFunctionBody(Function, Body.get(),
                             /*IsInstantiation=*/true);
+
+    PerformDependentDiagnostics(PatternDecl, TemplateArgs);
+
+    savedContext.pop();
   }
-
-  PerformDependentDiagnostics(PatternDecl, TemplateArgs);
-
-  savedContext.pop();
 
   DeclGroupRef DG(Function);
   Consumer.HandleTopLevelDecl(DG);

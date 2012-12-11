@@ -3981,14 +3981,69 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     DiagnoseAbstractType(Record);
   }
 
-  // See if a method overloads virtual methods in a base
-  /// class without overriding any.
   if (!Record->isDependentType()) {
     for (CXXRecordDecl::method_iterator M = Record->method_begin(),
                                      MEnd = Record->method_end();
          M != MEnd; ++M) {
+      // See if a method overloads virtual methods in a base
+      // class without overriding any.
       if (!M->isStatic())
         DiagnoseHiddenVirtualMethods(Record, *M);
+
+      // Check whether the explicitly-defaulted special members are valid.
+      if (!M->isInvalidDecl() && M->isExplicitlyDefaulted())
+        CheckExplicitlyDefaultedSpecialMember(*M);
+
+      // For an explicitly defaulted or deleted special member, we defer
+      // determining triviality until the class is complete. That time is now!
+      if (!M->isImplicit() && !M->isUserProvided()) {
+        CXXSpecialMember CSM = getSpecialMember(*M);
+        if (CSM != CXXInvalid) {
+          M->setTrivial(SpecialMemberIsTrivial(*M, CSM));
+
+          // Inform the class that we've finished declaring this member.
+          Record->finishedDefaultedOrDeletedMember(*M);
+        }
+      }
+    }
+  }
+
+  // C++11 [dcl.constexpr]p8: A constexpr specifier for a non-static member
+  // function that is not a constructor declares that member function to be
+  // const. [...] The class of which that function is a member shall be
+  // a literal type.
+  //
+  // If the class has virtual bases, any constexpr members will already have
+  // been diagnosed by the checks performed on the member declaration, so
+  // suppress this (less useful) diagnostic.
+  //
+  // We delay this until we know whether an explicitly-defaulted (or deleted)
+  // destructor for the class is trivial.
+  if (LangOpts.CPlusPlus0x && !Record->isDependentType() &&
+      !Record->isLiteral() && !Record->getNumVBases()) {
+    for (CXXRecordDecl::method_iterator M = Record->method_begin(),
+                                     MEnd = Record->method_end();
+         M != MEnd; ++M) {
+      if (M->isConstexpr() && M->isInstance() && !isa<CXXConstructorDecl>(*M)) {
+        switch (Record->getTemplateSpecializationKind()) {
+        case TSK_ImplicitInstantiation:
+        case TSK_ExplicitInstantiationDeclaration:
+        case TSK_ExplicitInstantiationDefinition:
+          // If a template instantiates to a non-literal type, but its members
+          // instantiate to constexpr functions, the template is technically
+          // ill-formed, but we allow it for sanity.
+          continue;
+
+        case TSK_Undeclared:
+        case TSK_ExplicitSpecialization:
+          RequireLiteralType(M->getLocation(), Context.getRecordType(Record),
+                             diag::err_constexpr_method_non_literal);
+          break;
+        }
+
+        // Only produce one error per class.
+        break;
+      }
     }
   }
 
@@ -4000,27 +4055,6 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   //   instantiated (e.g. meta-functions). This doesn't apply to classes that
   //   have inherited constructors.
   DeclareInheritedConstructors(Record);
-}
-
-void Sema::CheckExplicitlyDefaultedAndDeletedMethods(CXXRecordDecl *Record) {
-  for (CXXRecordDecl::method_iterator MI = Record->method_begin(),
-                                      ME = Record->method_end();
-       MI != ME; ++MI) {
-    if (!MI->isInvalidDecl() && MI->isExplicitlyDefaulted())
-      CheckExplicitlyDefaultedSpecialMember(*MI);
-
-    if (!MI->isImplicit() && !MI->isUserProvided()) {
-      // For an explicitly defaulted or deleted special member, we defer
-      // determining triviality until the class is complete. That time is now!
-      CXXSpecialMember CSM = getSpecialMember(*MI);
-      if (CSM != CXXInvalid) {
-        MI->setTrivial(SpecialMemberIsTrivial(*MI, CSM));
-
-        // Inform the class that we've finished declaring this member.
-        Record->finishedDefaultedOrDeletedMember(*MI);
-      }
-    }
-  }
 }
 
 /// Is the special member function which would be selected to perform the
@@ -4271,16 +4305,6 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
     HadError = true;
   }
 
-  // Rebuild the type with the implicit exception specification added, if we
-  // are going to need it.
-  const FunctionProtoType *ImplicitType = 0;
-  if (First || Type->hasExceptionSpec()) {
-    FunctionProtoType::ExtProtoInfo EPI = Type->getExtProtoInfo();
-    computeImplicitExceptionSpec(*this, MD->getLocation(), MD).getEPI(EPI);
-    ImplicitType = cast<FunctionProtoType>(
-      Context.getFunctionType(ReturnType, &ArgType, ExpectedParams, EPI));
-  }
-
   // C++11 [dcl.fct.def.default]p2:
   //   An explicitly-defaulted function may be declared constexpr only if it
   //   would have been implicitly declared as constexpr,
@@ -4295,13 +4319,17 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
     // FIXME: Explain why the constructor can't be constexpr.
     HadError = true;
   }
+
   //   and may have an explicit exception-specification only if it is compatible
   //   with the exception-specification on the implicit declaration.
-  if (Type->hasExceptionSpec() &&
-      CheckEquivalentExceptionSpec(
-        PDiag(diag::err_incorrect_defaulted_exception_spec) << CSM,
-        PDiag(), ImplicitType, SourceLocation(), Type, MD->getLocation()))
-    HadError = true;
+  if (Type->hasExceptionSpec()) {
+    // Delay the check if this is the first declaration of the special member,
+    // since we may not have parsed some necessary in-class initializers yet.
+    if (First)
+      DelayedDefaultedMemberExceptionSpecs.push_back(std::make_pair(MD, Type));
+    else
+      CheckExplicitlyDefaultedMemberExceptionSpec(MD, Type);
+  }
 
   //   If a function is explicitly defaulted on its first declaration,
   if (First) {
@@ -4311,7 +4339,11 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
 
     //  -- it is implicitly considered to have the same exception-specification
     //     as if it had been implicitly declared,
-    MD->setType(QualType(ImplicitType, 0));
+    FunctionProtoType::ExtProtoInfo EPI = Type->getExtProtoInfo();
+    EPI.ExceptionSpecType = EST_Unevaluated;
+    EPI.ExceptionSpecDecl = MD;
+    MD->setType(Context.getFunctionType(ReturnType, &ArgType,
+                                        ExpectedParams, EPI));
   }
 
   if (ShouldDeleteSpecialMember(MD, CSM)) {
@@ -4328,6 +4360,36 @@ void Sema::CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD) {
 
   if (HadError)
     MD->setInvalidDecl();
+}
+
+/// Check whether the exception specification provided for an
+/// explicitly-defaulted special member matches the exception specification
+/// that would have been generated for an implicit special member, per
+/// C++11 [dcl.fct.def.default]p2.
+void Sema::CheckExplicitlyDefaultedMemberExceptionSpec(
+    CXXMethodDecl *MD, const FunctionProtoType *SpecifiedType) {
+  // Compute the implicit exception specification.
+  FunctionProtoType::ExtProtoInfo EPI;
+  computeImplicitExceptionSpec(*this, MD->getLocation(), MD).getEPI(EPI);
+  const FunctionProtoType *ImplicitType = cast<FunctionProtoType>(
+    Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
+
+  // Ensure that it matches.
+  CheckEquivalentExceptionSpec(
+    PDiag(diag::err_incorrect_defaulted_exception_spec)
+      << getSpecialMember(MD), PDiag(),
+    ImplicitType, SourceLocation(),
+    SpecifiedType, MD->getLocation());
+}
+
+void Sema::CheckDelayedExplicitlyDefaultedMemberExceptionSpecs() {
+  for (unsigned I = 0, N = DelayedDefaultedMemberExceptionSpecs.size();
+       I != N; ++I)
+    CheckExplicitlyDefaultedMemberExceptionSpec(
+      DelayedDefaultedMemberExceptionSpecs[I].first,
+      DelayedDefaultedMemberExceptionSpecs[I].second);
+
+  DelayedDefaultedMemberExceptionSpecs.clear();
 }
 
 namespace {
@@ -7500,52 +7562,9 @@ void Sema::DefineImplicitDefaultConstructor(SourceLocation CurrentLocation,
 }
 
 void Sema::ActOnFinishDelayedMemberInitializers(Decl *D) {
-  if (!D) return;
-  AdjustDeclIfTemplate(D);
-
-  CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(D);
-
-  if (!ClassDecl->isDependentType())
-    CheckExplicitlyDefaultedAndDeletedMethods(ClassDecl);
-
-  // C++11 [dcl.constexpr]p8: A constexpr specifier for a non-static member
-  // function that is not a constructor declares that member function to be
-  // const. [...] The class of which that function is a member shall be
-  // a literal type.
-  //
-  // If the class has virtual bases, any constexpr members will already have
-  // been diagnosed by the checks performed on the member declaration, so
-  // suppress this (less useful) diagnostic.
-  //
-  // We delay this until we know whether an explicitly-defaulted (or deleted)
-  // destructor for the class is trivial.
-  if (LangOpts.CPlusPlus0x && !ClassDecl->isDependentType() &&
-      !ClassDecl->isLiteral() && !ClassDecl->getNumVBases()) {
-    for (CXXRecordDecl::method_iterator M = ClassDecl->method_begin(),
-                                     MEnd = ClassDecl->method_end();
-         M != MEnd; ++M) {
-      if (M->isConstexpr() && M->isInstance() && !isa<CXXConstructorDecl>(*M)) {
-        switch (ClassDecl->getTemplateSpecializationKind()) {
-        case TSK_ImplicitInstantiation:
-        case TSK_ExplicitInstantiationDeclaration:
-        case TSK_ExplicitInstantiationDefinition:
-          // If a template instantiates to a non-literal type, but its members
-          // instantiate to constexpr functions, the template is technically
-          // ill-formed, but we allow it for sanity.
-          continue;
-
-        case TSK_Undeclared:
-        case TSK_ExplicitSpecialization:
-          RequireLiteralType(M->getLocation(), Context.getRecordType(ClassDecl),
-                             diag::err_constexpr_method_non_literal);
-          break;
-        }
-
-        // Only produce one error per class.
-        break;
-      }
-    }
-  }
+  // Check that any explicitly-defaulted methods have exception specifications
+  // compatible with their implicit exception specifications.
+  CheckDelayedExplicitlyDefaultedMemberExceptionSpecs();
 }
 
 void Sema::DeclareInheritedConstructors(CXXRecordDecl *ClassDecl) {
@@ -10881,6 +10900,11 @@ void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
       return;
 
     CheckExplicitlyDefaultedSpecialMember(MD);
+
+    // The exception specification is needed because we are defining the
+    // function.
+    ResolveExceptionSpec(DefaultLoc,
+                         MD->getType()->castAs<FunctionProtoType>());
 
     switch (Member) {
     case CXXDefaultConstructor: {

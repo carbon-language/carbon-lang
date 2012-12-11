@@ -366,6 +366,16 @@ public:
                               const CXXDestructorDecl*>, 2>
       DelayedDestructorExceptionSpecChecks;
 
+  /// \brief All the members seen during a class definition which were both
+  /// explicitly defaulted and had explicitly-specified exception
+  /// specifications, along with the function type containing their
+  /// user-specified exception specification. Those exception specifications
+  /// were overridden with the default specifications, but we still need to
+  /// check whether they are compatible with the default specification, and
+  /// we can't do that until the nesting set of class definitions is complete.
+  SmallVector<std::pair<CXXMethodDecl*, const FunctionProtoType*>, 2>
+    DelayedDefaultedMemberExceptionSpecs;
+
   /// \brief Callback to the parser to parse templated functions when needed.
   typedef void LateTemplateParserCB(void *P, const FunctionDecl *FD);
   LateTemplateParserCB *LateTemplateParser;
@@ -4441,8 +4451,10 @@ public:
                                  StorageClass& SC);
   Decl *ActOnConversionDeclarator(CXXConversionDecl *Conversion);
 
-  void CheckExplicitlyDefaultedAndDeletedMethods(CXXRecordDecl *Record);
   void CheckExplicitlyDefaultedSpecialMember(CXXMethodDecl *MD);
+  void CheckExplicitlyDefaultedMemberExceptionSpec(CXXMethodDecl *MD,
+                                                   const FunctionProtoType *T);
+  void CheckDelayedExplicitlyDefaultedMemberExceptionSpecs();
 
   //===--------------------------------------------------------------------===//
   // C++ Derived Classes

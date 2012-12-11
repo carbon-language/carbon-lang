@@ -195,3 +195,15 @@ static_assert(__has_trivial_constructor(Trivial4<int>), "Trivial4 is trivial");
 
 template<typename T> class Trivial5 { Trivial5() = delete; };
 static_assert(__has_trivial_constructor(Trivial5<int>), "Trivial5 is trivial");
+
+namespace PR14558 {
+  // Ensure we determine whether an explicitly-defaulted or deleted special
+  // member is trivial before we return to parsing the containing class.
+  struct A {
+    struct B { B() = default; } b;
+    struct C { C() = delete; } c;
+  };
+
+  static_assert(__has_trivial_constructor(A), "");
+  static_assert(__has_trivial_constructor(A::B), "");
+}
