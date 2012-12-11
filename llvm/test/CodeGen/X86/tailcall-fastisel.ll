@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -tailcallopt -fast-isel -fast-isel-abort | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin -tailcallopt -fast-isel -fast-isel-abort | FileCheck %s
 
 %0 = type { i64, i32, i8* }
 
