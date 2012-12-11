@@ -534,10 +534,10 @@ public:
 
   /// isCondCodeLegal - Return true if the specified condition code is legal
   /// on this target.
-  bool isCondCodeLegal(ISD::CondCode CC, EVT VT) const {
+  bool isCondCodeLegal(ISD::CondCode CC, MVT VT) const {
     return
-      getCondCodeAction(CC, VT.getSimpleVT()) == Legal ||
-      getCondCodeAction(CC, VT.getSimpleVT()) == Custom;
+      getCondCodeAction(CC, VT) == Legal ||
+      getCondCodeAction(CC, VT) == Custom;
   }
 
 
