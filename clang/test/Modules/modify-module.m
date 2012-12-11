@@ -8,7 +8,7 @@
 // RUN: cp %S/Inputs/Modified/module.map %t/include
 // RUN: %clang_cc1 -fmodule-cache-path %t/cache -fmodules -I %t/include %s -verify
 // expected-no-diagnostics
-// RUN: touch %t/include/B.h
+// RUN: echo '' >> %t/include/B.h
 // RUN: %clang_cc1 -fmodule-cache-path %t/cache -fmodules -I %t/include %s -verify
 // RUN: echo 'int getA(); int getA2();' > %t/include/A.h
 // RUN: %clang_cc1 -fmodule-cache-path %t/cache -fmodules -I %t/include %s -verify
