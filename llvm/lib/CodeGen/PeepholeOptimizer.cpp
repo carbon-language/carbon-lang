@@ -49,6 +49,11 @@
 //     v1 = bitcast v0
 //        = v0
 //
+// - Optimize Loads:
+//
+//     Loads that can be folded into a later instruction. A load is foldable
+//     if it loads to virtual registers and the virtual register defined has 
+//     a single use.
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "peephole-opt"
