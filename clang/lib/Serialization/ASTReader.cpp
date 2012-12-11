@@ -53,7 +53,6 @@
 #include <algorithm>
 #include <cstdio>
 #include <iterator>
-#include <sys/stat.h>
 
 using namespace clang;
 using namespace clang::serialization;
@@ -1560,20 +1559,12 @@ ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
     if (Overridden)
       return InputFile(File, Overridden);
 
-    // The stat info from the FileEntry came from the cached stat
-    // info of the PCH, so we cannot trust it.
-    struct stat StatBuf;
-    if (::stat(File->getName(), &StatBuf) != 0) {
-      StatBuf.st_size = File->getSize();
-      StatBuf.st_mtime = File->getModificationTime();
-    }
-
-    if ((StoredSize != StatBuf.st_size
+    if ((StoredSize != File->getSize()
 #if !defined(LLVM_ON_WIN32)
          // In our regression testing, the Windows file system seems to
          // have inconsistent modification times that sometimes
          // erroneously trigger this error-handling path.
-         || StoredTime != StatBuf.st_mtime
+         || StoredTime != File->getModificationTime()
 #endif
          )) {
       if (Complain)
