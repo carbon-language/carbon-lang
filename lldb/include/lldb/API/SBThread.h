@@ -26,7 +26,8 @@ public:
         eBroadcastBitStackChanged           = (1 << 0),
         eBroadcastBitThreadSuspended        = (1 << 1),
         eBroadcastBitThreadResumed          = (1 << 2),
-        eBroadcastBitSelectedFrameChanged  = (1 << 3)
+        eBroadcastBitSelectedFrameChanged   = (1 << 3),
+        eBroadcastBitThreadSelected         = (1 << 4)
     };
 
     static const char *

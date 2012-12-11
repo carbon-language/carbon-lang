@@ -1185,17 +1185,9 @@ protected:
             return false;
         }
 
-        process->GetThreadList().SetSelectedThreadByID(new_thread->GetID());
+        process->GetThreadList().SetSelectedThreadByID(new_thread->GetID(), true);
         result.SetStatus (eReturnStatusSuccessFinishNoResult);
         
-        const uint32_t start_frame = 0;
-        const uint32_t num_frames = 1;
-        const uint32_t num_frames_with_source = 1;
-        new_thread->GetStatus (result.GetOutputStream(), 
-                               start_frame,
-                               num_frames,
-                               num_frames_with_source);
-
         return result.Succeeded();
     }
 

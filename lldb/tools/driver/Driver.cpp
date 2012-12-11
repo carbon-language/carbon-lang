@@ -986,7 +986,8 @@ Driver::HandleThreadEvent (const SBEvent &event)
     // reprint the thread status for that thread.
     using namespace lldb;
     const uint32_t event_type = event.GetType();
-    if (event_type == SBThread::eBroadcastBitStackChanged)
+    if (event_type == SBThread::eBroadcastBitStackChanged
+        || event_type == SBThread::eBroadcastBitThreadSelected)
     {
         SBThread thread = SBThread::GetThreadFromEvent (event);
         if (thread.IsValid())
@@ -1302,7 +1303,8 @@ Driver::MainLoop ()
                                          SBTarget::eBroadcastBitBreakpointChanged);
         listener.StartListeningForEventClass(m_debugger, 
                                          SBThread::GetBroadcasterClassName(),
-                                         SBThread::eBroadcastBitStackChanged);
+                                         SBThread::eBroadcastBitStackChanged |
+                                         SBThread::eBroadcastBitThreadSelected);
         listener.StartListeningForEvents (*m_io_channel_ap,
                                           IOChannel::eBroadcastBitHasUserInput |
                                           IOChannel::eBroadcastBitUserInterrupt |

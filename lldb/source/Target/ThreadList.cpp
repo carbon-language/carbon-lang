@@ -555,7 +555,7 @@ ThreadList::GetSelectedThread ()
 }
 
 bool
-ThreadList::SetSelectedThreadByID (lldb::tid_t tid)
+ThreadList::SetSelectedThreadByID (lldb::tid_t tid, bool notify)
 {
     Mutex::Locker locker(m_threads_mutex);
     ThreadSP selected_thread_sp(FindThreadByID(tid));
@@ -567,11 +567,14 @@ ThreadList::SetSelectedThreadByID (lldb::tid_t tid)
     else
         m_selected_tid = LLDB_INVALID_THREAD_ID;
 
+    if (notify)
+        NotifySelectedThreadChanged(m_selected_tid);
+    
     return m_selected_tid != LLDB_INVALID_THREAD_ID;
 }
 
 bool
-ThreadList::SetSelectedThreadByIndexID (uint32_t index_id)
+ThreadList::SetSelectedThreadByIndexID (uint32_t index_id, bool notify)
 {
     Mutex::Locker locker(m_threads_mutex);
     ThreadSP selected_thread_sp (FindThreadByIndexID(index_id));
@@ -583,7 +586,19 @@ ThreadList::SetSelectedThreadByIndexID (uint32_t index_id)
     else
         m_selected_tid = LLDB_INVALID_THREAD_ID;
 
+    if (notify)
+        NotifySelectedThreadChanged(m_selected_tid);
+    
     return m_selected_tid != LLDB_INVALID_THREAD_ID;
+}
+
+void
+ThreadList::NotifySelectedThreadChanged (lldb::tid_t tid)
+{
+    ThreadSP selected_thread_sp (FindThreadByID(tid));
+    if (selected_thread_sp->EventTypeHasListeners(Thread::eBroadcastBitThreadSelected))
+        selected_thread_sp->BroadcastEvent(Thread::eBroadcastBitThreadSelected,
+                                           new Thread::ThreadEventData(selected_thread_sp));
 }
 
 void
