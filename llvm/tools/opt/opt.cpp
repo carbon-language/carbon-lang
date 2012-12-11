@@ -30,6 +30,7 @@
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/TargetTransformInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRReader.h"
 #include "llvm/Support/ManagedStatic.h"
