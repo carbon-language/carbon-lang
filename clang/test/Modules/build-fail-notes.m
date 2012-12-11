@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodule-cache-path %t -fmodules -F %S/Inputs -DgetModuleVersion="epic fail" %s 2>&1 | FileCheck %s
 
-@__experimental_modules_import DependsOnModule;
+@import DependsOnModule;
 
 // CHECK: While building module 'DependsOnModule' imported from
 // CHECK: While building module 'Module' imported from
@@ -22,10 +22,10 @@ extern int Module;
 // RUN: c-index-test -read-diagnostics %t/tmp.diag 2>&1 | FileCheck -check-prefix=CHECK-SDIAG %s
 
 // CHECK-SDIAG: Module.h:9:13: error: expected ';' after top level declarator
-// CHECK-SDIAG: build-fail-notes.m:4:32: note: while building module 'DependsOnModule' imported from
+// CHECK-SDIAG: build-fail-notes.m:4:9: note: while building module 'DependsOnModule' imported from
 // CHECK-SDIAG: DependsOnModule.h:1:10: note: while building module 'Module' imported from
 // CHECK-SDIAG: note: expanded from here
 // CHECK-SDIAG: warning: umbrella header does not include header 'NotInModule.h' [-Wincomplete-umbrella]
 // CHECK-SDIAG: DependsOnModule.h:1:10: fatal: could not build module 'Module'
-// CHECK-SDIAG: build-fail-notes.m:4:32: note: while building module 'DependsOnModule' imported from
+// CHECK-SDIAG: build-fail-notes.m:4:9: note: while building module 'DependsOnModule' imported from
 

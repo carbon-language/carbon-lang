@@ -1476,7 +1476,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
       Diag(HashLoc, diag::warn_auto_module_import)
         << IncludeKind << PathString 
         << FixItHint::CreateReplacement(ReplaceRange,
-             "@__experimental_modules_import " + PathString.str().str() + ";");
+             "@import " + PathString.str().str() + ";");
     }
     
     // Load the module.

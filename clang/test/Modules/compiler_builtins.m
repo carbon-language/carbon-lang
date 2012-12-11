@@ -4,9 +4,9 @@
 // expected-no-diagnostics
 
 #ifdef __SSE__
-@__experimental_modules_import _Builtin_intrinsics.intel.sse;
+@import _Builtin_intrinsics.intel.sse;
 #endif
 
 #ifdef __AVX2__
-@__experimental_modules_import _Builtin_intrinsics.intel.avx2;
+@import _Builtin_intrinsics.intel.avx2;
 #endif

@@ -3,6 +3,6 @@
 // expected-no-diagnostics
 
 #import "point.h"
-@__experimental_modules_import Module;
+@import Module;
 #import "point.h"
 

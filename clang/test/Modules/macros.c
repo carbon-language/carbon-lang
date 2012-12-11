@@ -16,7 +16,7 @@
 
 // expected-note{{other definition of 'TOP_RIGHT_REDEF'}}
 
-@__experimental_modules_import macros;
+@import macros;
 
 #ifndef INTEGER
 #  error INTEGER macro should be visible
@@ -65,7 +65,7 @@ void f() {
 #endif
 
 // Import left module (which also imports top)
-@__experimental_modules_import macros_left;
+@import macros_left;
 
 #ifndef LEFT
 #  error LEFT should be visible
@@ -91,7 +91,7 @@ void test1() {
 #define LEFT_RIGHT_DIFFERENT2 double // FIXME: expected-warning{{'LEFT_RIGHT_DIFFERENT2' macro redefined}}
 
 // Import right module (which also imports top)
-@__experimental_modules_import macros_right;
+@import macros_right;
 
 #undef LEFT_RIGHT_DIFFERENT3
 
@@ -130,7 +130,7 @@ void test3() {
 #  error TOP_RIGHT_UNDEF should still be defined
 #endif
 
-@__experimental_modules_import macros_right.undef;
+@import macros_right.undef;
 
 #ifdef TOP_RIGHT_UNDEF
 # error TOP_RIGHT_UNDEF should not be defined

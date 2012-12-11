@@ -1,11 +1,11 @@
-@__experimental_modules_import redecl_merge_left;
+@import redecl_merge_left;
 
 @class C4;
 @class C4;
 @protocol P4;
 @protocol P4;
 @protocol P4;
-@__experimental_modules_import redecl_merge_right;
+@import redecl_merge_right;
 
 @class B;
 

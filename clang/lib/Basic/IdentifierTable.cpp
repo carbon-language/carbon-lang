@@ -82,7 +82,7 @@ IdentifierTable::IdentifierTable(const LangOptions &LangOpts,
       
 
   // Add the '_experimental_modules_import' contextual keyword.
-  get("__experimental_modules_import").setModulesImport(true);
+  get("import").setModulesImport(true);
 }
 
 //===----------------------------------------------------------------------===//

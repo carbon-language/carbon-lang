@@ -1,4 +1,4 @@
-@__experimental_modules_import macros_top;
+@import macros_top;
 #define LEFT unsigned long
 
 #undef TOP_LEFT_UNDEF

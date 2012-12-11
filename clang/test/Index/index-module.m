@@ -1,6 +1,6 @@
 
 #include <DependsOnModule/DependsOnModule.h>
-@__experimental_modules_import DependsOnModule;
+@import DependsOnModule;
 int glob;
 
 // RUN: rm -rf %t.cache

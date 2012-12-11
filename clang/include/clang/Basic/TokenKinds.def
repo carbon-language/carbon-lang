@@ -566,7 +566,7 @@ OBJC2_AT_KEYWORD(required)
 OBJC2_AT_KEYWORD(optional)
 OBJC2_AT_KEYWORD(synthesize)
 OBJC2_AT_KEYWORD(dynamic)
-OBJC2_AT_KEYWORD(__experimental_modules_import)
+OBJC2_AT_KEYWORD(import)
 
 // TODO: What to do about context-sensitive keywords like:
 //       bycopy/byref/in/inout/oneway/out?

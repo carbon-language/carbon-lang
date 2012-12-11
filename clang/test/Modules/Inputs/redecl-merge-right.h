@@ -1,4 +1,4 @@
-@__experimental_modules_import redecl_merge_top;
+@import redecl_merge_top;
 
 @interface Super
 @end
@@ -79,7 +79,7 @@ extern int var2;
 static double var3;
 
 int ONE;
-@__experimental_modules_import redecl_merge_top.Explicit;
+@import redecl_merge_top.Explicit;
 const int one = ONE;
 
 @interface ClassWithDef 

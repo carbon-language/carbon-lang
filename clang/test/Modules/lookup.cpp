@@ -1,8 +1,8 @@
 
-#define import @__experimental_modules_import
+#define import @import
 import lookup_left_cxx;
 #undef import
-#define IMPORT(X) @__experimental_modules_import X
+#define IMPORT(X) @import X
 IMPORT(lookup_right_cxx);
 
 // in lookup_left.hpp: expected-warning@3 {{weak identifier 'weak_identifier' never declared}}

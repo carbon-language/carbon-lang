@@ -1,4 +1,4 @@
-@__experimental_modules_import redecl_merge_top;
+@import redecl_merge_top;
 
 @class A;
 

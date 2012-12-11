@@ -1,4 +1,4 @@
-@__experimental_modules_import redecl_merge_left;
+@import redecl_merge_left;
 
 @class C4;
 void accept_a_C4(C4*);

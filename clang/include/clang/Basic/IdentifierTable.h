@@ -297,11 +297,11 @@ public:
   }
   
   /// \brief Determine whether this is the contextual keyword
-  /// '__experimental_modules_import'.
+  /// 'import'.
   bool isModulesImport() const { return IsModulesImport; }
   
   /// \brief Set whether this identifier is the contextual keyword 
-  /// '__experimental_modules_import'.
+  /// 'import'.
   void setModulesImport(bool I) {
     IsModulesImport = I;
     if (I)

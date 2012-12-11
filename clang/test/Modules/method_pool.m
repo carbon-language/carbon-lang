@@ -1,7 +1,7 @@
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodule-cache-path %t -fmodules -I %S/Inputs %s -verify
 
-@__experimental_modules_import MethodPoolA;
+@import MethodPoolA;
 
 
 // in other file: // expected-note{{using}}
@@ -19,7 +19,7 @@ void testMethod2(id object) {
   [object method2:1];
 } 
 
-@__experimental_modules_import MethodPoolB;
+@import MethodPoolB;
 
 void testMethod1Again(id object) {
   [object method1];

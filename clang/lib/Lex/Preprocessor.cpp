@@ -631,10 +631,10 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   if (II.isExtensionToken() && !DisableMacroExpansion)
     Diag(Identifier, diag::ext_token_used);
   
-  // If this is the '__experimental_modules_import' contextual keyword, note
+  // If this is the 'import' contextual keyword, note
   // that the next token indicates a module name.
   //
-  // Note that we do not treat '__experimental_modules_import' as a contextual
+  // Note that we do not treat 'import' as a contextual
   // keyword when we're in a caching lexer, because caching lexers only get
   // used in contexts where import declarations are disallowed.
   if (II.isModulesImport() && !InMacroArgs && !DisableMacroExpansion &&

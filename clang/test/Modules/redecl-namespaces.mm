@@ -1,5 +1,5 @@
-@__experimental_modules_import redecl_namespaces_left;
-@__experimental_modules_import redecl_namespaces_right;
+@import redecl_namespaces_left;
+@import redecl_namespaces_right;
 
 void test() {
   A::i;

@@ -13,7 +13,7 @@
 // RUN: echo 'int getA(); int getA2();' > %t/include/A.h
 // RUN: %clang_cc1 -fmodule-cache-path %t/cache -fmodules -I %t/include %s -verify
 
-@__experimental_modules_import B;
+@import B;
 
 int getValue() { return getA() + getB(); }
 

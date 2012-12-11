@@ -1,4 +1,4 @@
-@__experimental_modules_import namespaces_top;
+@import namespaces_top;
 
 namespace N2 { }
 

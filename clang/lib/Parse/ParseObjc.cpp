@@ -65,7 +65,7 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
   case tok::objc_dynamic:
     SingleDecl = ParseObjCPropertyDynamic(AtLoc);
     break;
-  case tok::objc___experimental_modules_import:
+  case tok::objc_import:
     if (getLangOpts().Modules)
       return ParseModuleImport(AtLoc);
       

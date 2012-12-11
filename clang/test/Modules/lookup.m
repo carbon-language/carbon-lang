@@ -1,8 +1,8 @@
 
 // lookup_left.h: expected-note{{using}}
 // lookup_right.h: expected-note{{also found}}
-@__experimental_modules_import lookup_left_objc;
-@__experimental_modules_import lookup_right_objc;
+@import lookup_left_objc;
+@import lookup_right_objc;
 
 void test(id x) {
   [x method]; // expected-warning{{multiple methods named 'method' found}}

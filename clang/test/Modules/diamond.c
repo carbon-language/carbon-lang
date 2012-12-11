@@ -3,7 +3,7 @@
 
 // in diamond-bottom.h: expected-note{{passing argument to parameter 'x' here}}
 
-@__experimental_modules_import diamond_bottom;
+@import diamond_bottom;
 
 void test_diamond(int i, float f, double d, char c) {
   top(&i);

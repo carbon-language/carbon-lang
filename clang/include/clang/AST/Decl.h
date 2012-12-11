@@ -3218,7 +3218,7 @@ public:
 ///
 /// An import declaration imports the named module (or submodule). For example:
 /// \code
-///   @__experimental_modules_import std.vector;
+///   @import std.vector;
 /// \endcode
 ///
 /// Import declarations can also be implicitly generated from

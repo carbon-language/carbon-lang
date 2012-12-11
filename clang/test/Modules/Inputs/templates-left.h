@@ -1,4 +1,4 @@
-@__experimental_modules_import templates_top;
+@import templates_top;
 
 template<typename T> class Vector;
 

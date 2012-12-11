@@ -3,6 +3,6 @@
 
 #include <NotAModule/NotAModule.h>
 
-@__experimental_modules_import NotAModule; // expected-error{{module 'NotAModule' not found}}
+@import NotAModule; // expected-error{{module 'NotAModule' not found}}
 
 

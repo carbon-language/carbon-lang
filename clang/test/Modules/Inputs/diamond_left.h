@@ -1,4 +1,4 @@
-@__experimental_modules_import diamond_top;
+@import diamond_top;
 
 float left(float *);
 
