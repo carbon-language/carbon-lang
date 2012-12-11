@@ -1235,9 +1235,14 @@ void ASTWriter::WriteInputFiles(SourceManager &SourceMgr, StringRef isysroot) {
     if (!Cache->OrigEntry)
       continue;
 
+    uint32_t &InputFileID = InputFileIDs[Cache->OrigEntry];
+    if (InputFileID != 0)
+      continue; // already recorded this file.
+
     // Record this entry's offset.
     InputFileOffsets.push_back(Stream.GetCurrentBitNo());
-    InputFileIDs[Cache->OrigEntry] = InputFileOffsets.size();
+
+    InputFileID = InputFileOffsets.size();
 
     Record.clear();
     Record.push_back(INPUT_FILE);
