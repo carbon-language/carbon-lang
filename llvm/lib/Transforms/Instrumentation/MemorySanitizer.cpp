@@ -76,6 +76,7 @@ static const uint64_t kShadowMask32 = 1ULL << 31;
 static const uint64_t kShadowMask64 = 1ULL << 46;
 static const uint64_t kOriginOffset32 = 1ULL << 30;
 static const uint64_t kOriginOffset64 = 1ULL << 45;
+static const uint64_t kShadowTLSAlignment = 8;
 
 // This is an important flag that makes the reports much more
 // informative at the cost of greater slowdown. Not fully implemented
@@ -1226,11 +1227,13 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                                  Size, Alignment);
       } else {
         Size = MS.TD->getTypeAllocSize(A->getType());
-        Store = IRB.CreateStore(ArgShadow, ArgShadowBase);
+        Store = IRB.CreateAlignedStore(ArgShadow, ArgShadowBase,
+                                       kShadowTLSAlignment);
       }
       if (ClTrackOrigins)
-        IRB.CreateStore(getOrigin(A),
-                        getOriginPtrForArgument(A, IRB, ArgOffset));
+        IRB.CreateAlignedStore(getOrigin(A),
+                               getOriginPtrForArgument(A, IRB, ArgOffset),
+                               kShadowTLSAlignment);
       assert(Size != 0 && Store != 0);
       DEBUG(dbgs() << "  Param:" << *Store << "\n");
       ArgOffset += DataLayout::RoundUpAlignment(Size, 8);
@@ -1248,7 +1251,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     IRBuilder<> IRBBefore(&I);
     // Untill we have full dynamic coverage, make sure the retval shadow is 0.
     Value *Base = getShadowPtrForRetval(&I, IRBBefore);
-    IRBBefore.CreateStore(getCleanShadow(&I), Base);
+    IRBBefore.CreateAlignedStore(getCleanShadow(&I), Base, kShadowTLSAlignment);
     Instruction *NextInsn = 0;
     if (CS.isCall()) {
       NextInsn = I.getNextNode();
@@ -1267,8 +1270,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
              "Could not find insertion point for retval shadow load");
     }
     IRBuilder<> IRBAfter(NextInsn);
-    setShadow(&I, IRBAfter.CreateLoad(getShadowPtrForRetval(&I, IRBAfter),
-                                      "_msret"));
+    Value *RetvalShadow =
+      IRBAfter.CreateAlignedLoad(getShadowPtrForRetval(&I, IRBAfter),
+                                 kShadowTLSAlignment, "_msret");
+    setShadow(&I, RetvalShadow);
     if (ClTrackOrigins)
       setOrigin(&I, IRBAfter.CreateLoad(getOriginPtrForRetval(IRBAfter)));
   }
@@ -1280,7 +1285,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       Value *Shadow = getShadow(RetVal);
       Value *ShadowPtr = getShadowPtrForRetval(RetVal, IRB);
       DEBUG(dbgs() << "Return: " << *Shadow << "\n" << *ShadowPtr << "\n");
-      IRB.CreateStore(Shadow, ShadowPtr);
+      IRB.CreateAlignedStore(Shadow, ShadowPtr, kShadowTLSAlignment);
       if (ClTrackOrigins)
         IRB.CreateStore(getOrigin(RetVal), getOriginPtrForRetval(IRB));
     }
@@ -1471,7 +1476,7 @@ struct VarArgAMD64Helper : public VarArgHelper {
         Base = getShadowPtrForVAArgument(A, IRB, OverflowOffset);
         OverflowOffset += DataLayout::RoundUpAlignment(ArgSize, 8);
       }
-      IRB.CreateStore(MSV.getShadow(A), Base);
+      IRB.CreateAlignedStore(MSV.getShadow(A), Base, kShadowTLSAlignment);
     }
     Constant *OverflowSize =
       ConstantInt::get(IRB.getInt64Ty(), OverflowOffset - AMD64FpEndOffset);
