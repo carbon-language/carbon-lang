@@ -954,7 +954,7 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
         // At this point we generate the predication tree. There may be
         // duplications since this is a simple recursive scan, but future
         // optimizations will clean it up.
-        Value *Cond = createBlockInMask(P->getIncomingBlock(0));
+        Value *Cond = createEdgeMask(P->getIncomingBlock(0), P->getParent());
         WidenMap[P] =
           Builder.CreateSelect(Cond,
                                getVectorValue(P->getIncomingValue(0)),
