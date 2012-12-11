@@ -22,6 +22,7 @@
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/TargetTransformInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/PrettyStackTrace.h"
