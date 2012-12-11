@@ -1674,12 +1674,12 @@ TEST(AddressSanitizer, ThreadNamesTest) {
   // ThreadedTestSpawn();
   EXPECT_DEATH(ThreadedTestSpawn(),
                ASAN_PCRE_DOTALL
-               "WRITE .*thread T3 .UseThr."
-               ".*freed by thread T2 .FreeThr. here:"
-               ".*previously allocated by thread T1 .AllocThr. here:"
-               ".*Thread T3 .UseThr. created by T0 here:"
-               ".*Thread T2 .FreeThr. created by T0 here:"
-               ".*Thread T1 .AllocThr. created by T0 here:"
+               "WRITE .*thread T. .UseThr."
+               ".*freed by thread T. .FreeThr. here:"
+               ".*previously allocated by thread T. .AllocThr. here:"
+               ".*Thread T. .UseThr. created by T. here:"
+               ".*Thread T. .FreeThr. created by T. here:"
+               ".*Thread T. .AllocThr. created by T. here:"
                "");
 }
 #endif
