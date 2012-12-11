@@ -29,7 +29,6 @@
 #include "llvm/InstVisitor.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Support/Compiler.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
 
 namespace llvm {
 

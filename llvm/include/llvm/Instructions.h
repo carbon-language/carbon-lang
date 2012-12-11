@@ -29,9 +29,10 @@
 
 namespace llvm {
 
+class APInt;
 class ConstantInt;
 class ConstantRange;
-class APInt;
+class DataLayout;
 class LLVMContext;
 
 enum AtomicOrdering {
@@ -849,6 +850,16 @@ public:
 
   /// isInBounds - Determine whether the GEP has the inbounds flag.
   bool isInBounds() const;
+
+  /// \brief Accumulate the constant address offset of this GEP if possible.
+  ///
+  /// This routine accepts an APInt into which it will accumulate the constant
+  /// offset of this GEP if the GEP is in fact constant. If the GEP is not
+  /// all-constant, it returns false and the value of the offset APInt is
+  /// undefined (it is *not* preserved!). The APInt passed into this routine
+  /// must be at least as wide as the IntPtr type for the address space of
+  /// the base GEP pointer.
+  bool accumulateConstantOffset(const DataLayout &DL, APInt &Offset) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Instruction *I) {

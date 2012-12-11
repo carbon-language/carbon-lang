@@ -32,27 +32,5 @@ bool detail::PtrUseVisitorBase::adjustOffsetForGEP(GetElementPtrInst &GEPI) {
   if (!IsOffsetKnown)
     return false;
 
-  for (gep_type_iterator GTI = gep_type_begin(GEPI), GTE = gep_type_end(GEPI);
-       GTI != GTE; ++GTI) {
-    ConstantInt *OpC = dyn_cast<ConstantInt>(GTI.getOperand());
-    if (!OpC)
-      return false;
-    if (OpC->isZero())
-      continue;
-
-    // Handle a struct index, which adds its field offset to the pointer.
-    if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-      unsigned ElementIdx = OpC->getZExtValue();
-      const StructLayout *SL = DL.getStructLayout(STy);
-      Offset += APInt(Offset.getBitWidth(),
-                         SL->getElementOffset(ElementIdx));
-      continue;
-    }
-
-    // For array or vector indices, scale the index by the size of the type.
-    APInt Index = OpC->getValue().sextOrTrunc(Offset.getBitWidth());
-    Offset += Index * APInt(Offset.getBitWidth(),
-                               DL.getTypeAllocSize(GTI.getIndexedType()));
-  }
-  return true;
+  return GEPI.accumulateConstantOffset(DL, Offset);
 }
