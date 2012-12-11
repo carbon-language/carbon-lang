@@ -23,6 +23,7 @@ ASAN_RTL_LINT_FILTER=-readability/casting,-readability/check,-build/include,-bui
 ASAN_TEST_LINT_FILTER=-readability/casting,-build/include,-legal/copyright,-whitespace/newline,-runtime/sizeof,-runtime/int,-runtime/printf,-build/header_guard
 TSAN_RTL_LINT_FILTER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
 TSAN_TEST_LINT_FILTER=${TSAN_RTL_LINT_FILTER},-runtime/threadsafe_fn,-runtime/int
+MSAN_RTL_LINT_FILTER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
 
 cd ${LLVM_CHECKOUT}
 
@@ -44,7 +45,7 @@ COMMON_RTL=${COMPILER_RT}/lib/sanitizer_common
 ${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${COMMON_RTL}/*.{cc,h}
 ${CPPLINT} --filter=${TSAN_RTL_LINT_FILTER} ${COMMON_RTL}/tests/*.cc
 
-#Interception
+# Interception
 INTERCEPTION=${COMPILER_RT}/lib/interception
 ${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.{cc,h}
 
@@ -61,3 +62,6 @@ ${CPPLINT} --filter=${TSAN_RTL_LINT_FILTER} ${TSAN_RTL}/rtl/*.{cc,h}
 ${CPPLINT} --filter=${TSAN_TEST_LINT_FILTER} ${TSAN_RTL}/tests/rtl/*.{cc,h} \
                                              ${TSAN_RTL}/tests/unit/*.cc \
                                              ${TSAN_RTL}/lit_tests/*.cc
+# MSan
+MSAN_RTL=${COMPILER_RT}/lib/msan
+${CPPLINT} --filter=${MSAN_RTL_LINT_FILTER} ${MSAN_RTL}/*.{cc,h}
