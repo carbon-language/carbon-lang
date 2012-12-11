@@ -205,12 +205,14 @@ void asan_mz_force_unlock();
 
 // Log2 and RoundUpToPowerOfTwo should be inlined for performance.
 #if defined(_WIN32) && !defined(__clang__)
+extern "C" {
 unsigned char _BitScanForward(unsigned long *index, unsigned long mask);
 unsigned char _BitScanReverse(unsigned long *index, unsigned long mask);
 #if defined(_WIN64)
 unsigned char _BitScanForward64(unsigned long *index, unsigned __int64 mask);
 unsigned char _BitScanReverse64(unsigned long *index, unsigned __int64 mask);
 #endif
+}
 #endif
 
 static inline uptr Log2(uptr x) {
