@@ -278,8 +278,8 @@ public:
       return (LegalizeTypeAction)ValueTypeActions[VT.SimpleTy];
     }
 
-    void setTypeAction(EVT VT, LegalizeTypeAction Action) {
-      unsigned I = VT.getSimpleVT().SimpleTy;
+    void setTypeAction(MVT VT, LegalizeTypeAction Action) {
+      unsigned I = VT.SimpleTy;
       ValueTypeActions[I] = Action;
     }
   };
