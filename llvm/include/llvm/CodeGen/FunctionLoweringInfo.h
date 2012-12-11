@@ -136,7 +136,7 @@ public:
     return ValueMap.count(V);
   }
 
-  unsigned CreateReg(EVT VT);
+  unsigned CreateReg(MVT VT);
   
   unsigned CreateRegs(Type *Ty);
   

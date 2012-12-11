@@ -1732,7 +1732,7 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
                                              MachineBasicBlock *SwitchBB) {
   // Subtract the minimum value
   SDValue SwitchOp = getValue(B.SValue);
-  EVT VT = SwitchOp.getValueType();
+  MVT VT = SwitchOp.getSimpleValueType();
   SDValue Sub = DAG.getNode(ISD::SUB, getCurDebugLoc(), VT, SwitchOp,
                             DAG.getConstant(B.First, VT));
 
@@ -6145,7 +6145,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
           RegsForValue MatchedRegs;
           MatchedRegs.ValueVTs.push_back(InOperandVal.getValueType());
-          EVT RegVT = AsmNodeOperands[CurOp+1].getValueType();
+          MVT RegVT = AsmNodeOperands[CurOp+1].getSimpleValueType();
           MatchedRegs.RegVTs.push_back(RegVT);
           MachineRegisterInfo &RegInfo = DAG.getMachineFunction().getRegInfo();
           for (unsigned i = 0, e = InlineAsm::getNumOperandRegisters(OpFlag);
@@ -6683,8 +6683,8 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
     // from the sret argument into it.
     SmallVector<EVT, 1> ValueVTs;
     ComputeValueVTs(TLI, PointerType::getUnqual(F.getReturnType()), ValueVTs);
-    EVT VT = ValueVTs[0];
-    EVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
+    MVT VT = ValueVTs[0].getSimpleVT();
+    MVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT).getSimpleVT();
     ISD::NodeType AssertOp = ISD::DELETED_NODE;
     SDValue ArgValue = getCopyFromParts(DAG, dl, &InVals[0], 1,
                                         RegVT, VT, NULL, AssertOp);

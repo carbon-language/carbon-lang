@@ -94,9 +94,9 @@ ResourcePriorityQueue::numberRCValPredInSU(SUnit *SU, unsigned RCId) {
       continue;
 
     for (unsigned i = 0, e = ScegN->getNumValues(); i != e; ++i) {
-      EVT VT = ScegN->getValueType(i);
+      MVT VT = ScegN->getSimpleValueType(i);
       if (TLI->isTypeLegal(VT)
-         && (TLI->getRegClassFor(VT)->getID() == RCId)) {
+          && (TLI->getRegClassFor(VT)->getID() == RCId)) {
         NumberDeps++;
         break;
       }
@@ -132,9 +132,9 @@ unsigned ResourcePriorityQueue::numberRCValSuccInSU(SUnit *SU,
 
     for (unsigned i = 0, e = ScegN->getNumOperands(); i != e; ++i) {
       const SDValue &Op = ScegN->getOperand(i);
-      EVT VT = Op.getNode()->getValueType(Op.getResNo());
+      MVT VT = Op.getNode()->getSimpleValueType(Op.getResNo());
       if (TLI->isTypeLegal(VT)
-         && (TLI->getRegClassFor(VT)->getID() == RCId)) {
+          && (TLI->getRegClassFor(VT)->getID() == RCId)) {
         NumberDeps++;
         break;
       }
@@ -332,7 +332,7 @@ signed ResourcePriorityQueue::rawRegPressureDelta(SUnit *SU, unsigned RCId) {
 
   // Gen estimate.
   for (unsigned i = 0, e = SU->getNode()->getNumValues(); i != e; ++i) {
-      EVT VT = SU->getNode()->getValueType(i);
+      MVT VT = SU->getNode()->getSimpleValueType(i);
       if (TLI->isTypeLegal(VT)
           && TLI->getRegClassFor(VT)
           && TLI->getRegClassFor(VT)->getID() == RCId)
@@ -341,7 +341,7 @@ signed ResourcePriorityQueue::rawRegPressureDelta(SUnit *SU, unsigned RCId) {
   // Kill estimate.
   for (unsigned i = 0, e = SU->getNode()->getNumOperands(); i != e; ++i) {
       const SDValue &Op = SU->getNode()->getOperand(i);
-      EVT VT = Op.getNode()->getValueType(Op.getResNo());
+      MVT VT = Op.getNode()->getSimpleValueType(Op.getResNo());
       if (isa<ConstantSDNode>(Op.getNode()))
         continue;
 
@@ -485,7 +485,7 @@ void ResourcePriorityQueue::scheduledNode(SUnit *SU) {
   if (ScegN->isMachineOpcode()) {
     // Estimate generated regs.
     for (unsigned i = 0, e = ScegN->getNumValues(); i != e; ++i) {
-      EVT VT = ScegN->getValueType(i);
+      MVT VT = ScegN->getSimpleValueType(i);
 
       if (TLI->isTypeLegal(VT)) {
         const TargetRegisterClass *RC = TLI->getRegClassFor(VT);
@@ -496,7 +496,7 @@ void ResourcePriorityQueue::scheduledNode(SUnit *SU) {
     // Estimate killed regs.
     for (unsigned i = 0, e = ScegN->getNumOperands(); i != e; ++i) {
       const SDValue &Op = ScegN->getOperand(i);
-      EVT VT = Op.getNode()->getValueType(Op.getResNo());
+      MVT VT = Op.getNode()->getSimpleValueType(Op.getResNo());
 
       if (TLI->isTypeLegal(VT)) {
         const TargetRegisterClass *RC = TLI->getRegClassFor(VT);

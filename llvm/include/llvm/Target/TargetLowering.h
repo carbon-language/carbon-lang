@@ -232,9 +232,8 @@ public:
 
   /// getRegClassFor - Return the register class that should be used for the
   /// specified value type.
-  virtual const TargetRegisterClass *getRegClassFor(EVT VT) const {
-    assert(VT.isSimple() && "getRegClassFor called on illegal type!");
-    const TargetRegisterClass *RC = RegClassForVT[VT.getSimpleVT().SimpleTy];
+  virtual const TargetRegisterClass *getRegClassFor(MVT VT) const {
+    const TargetRegisterClass *RC = RegClassForVT[VT.SimpleTy];
     assert(RC && "This value type is not natively supported!");
     return RC;
   }
@@ -588,7 +587,11 @@ public:
     }
     return EVT::getEVT(Ty, AllowUnknown);
   }
-  
+
+  /// Return the MVT corresponding to this LLVM type. See getValueType.
+  MVT getSimpleValueType(Type *Ty, bool AllowUnknown = false) const {
+    return getValueType(Ty, AllowUnknown).getSimpleVT();
+  }
 
   /// getByValTypeAlignment - Return the desired alignment for ByVal aggregate
   /// function arguments in the caller parameter area.  This is the actual
