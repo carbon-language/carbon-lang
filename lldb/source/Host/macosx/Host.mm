@@ -1670,7 +1670,6 @@ LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, :
 static bool
 ShouldLaunchUsingXPC(const char *exe_path, ProcessLaunchInfo &launch_info)
 {
-    return true;
     bool result = false;
 
 #if !NO_XPC_SERVICES    
