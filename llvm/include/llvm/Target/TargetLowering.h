@@ -339,7 +339,7 @@ public:
   unsigned getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
                                   EVT &IntermediateVT,
                                   unsigned &NumIntermediates,
-                                  EVT &RegisterVT) const;
+                                  MVT &RegisterVT) const;
 
   /// getTgtMemIntrinsic: Given an intrinsic, checks if on the target the
   /// intrinsic will need to map to a MemIntrinsicNode (touches memory). If
@@ -609,11 +609,12 @@ public:
       return RegisterTypeForVT[VT.getSimpleVT().SimpleTy];
     }
     if (VT.isVector()) {
-      EVT VT1, RegisterVT;
+      EVT VT1;
+      MVT RegisterVT;
       unsigned NumIntermediates;
       (void)getVectorTypeBreakdown(Context, VT, VT1,
                                    NumIntermediates, RegisterVT);
-      return RegisterVT.getSimpleVT();
+      return RegisterVT;
     }
     if (VT.isInteger()) {
       return getRegisterType(Context, getTypeToTransformTo(Context, VT));
@@ -634,7 +635,8 @@ public:
       return NumRegistersForVT[VT.getSimpleVT().SimpleTy];
     }
     if (VT.isVector()) {
-      EVT VT1, VT2;
+      EVT VT1;
+      MVT VT2;
       unsigned NumIntermediates;
       return getVectorTypeBreakdown(Context, VT, VT1, NumIntermediates, VT2);
     }

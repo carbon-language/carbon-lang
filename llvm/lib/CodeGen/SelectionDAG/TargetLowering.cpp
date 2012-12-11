@@ -653,7 +653,7 @@ bool TargetLowering::canOpTrap(unsigned Op, EVT VT) const {
 
 static unsigned getVectorTypeBreakdownMVT(MVT VT, MVT &IntermediateVT,
                                           unsigned &NumIntermediates,
-                                          EVT &RegisterVT,
+                                          MVT &RegisterVT,
                                           TargetLowering *TLI) {
   // Figure out the right, legal destination reg to copy into.
   unsigned NumElts = VT.getVectorNumElements();
@@ -865,12 +865,12 @@ void TargetLowering::computeRegisterProperties() {
     }
 
     MVT IntermediateVT;
-    EVT RegisterVT;
+    MVT RegisterVT;
     unsigned NumIntermediates;
     NumRegistersForVT[i] =
       getVectorTypeBreakdownMVT(VT, IntermediateVT, NumIntermediates,
                                 RegisterVT, this);
-    RegisterTypeForVT[i] = RegisterVT.getSimpleVT();
+    RegisterTypeForVT[i] = RegisterVT;
 
     MVT NVT = VT.getPow2VectorType();
     if (NVT == VT) {
@@ -924,7 +924,7 @@ MVT::SimpleValueType TargetLowering::getCmpLibcallReturnType() const {
 unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
                                                 EVT &IntermediateVT,
                                                 unsigned &NumIntermediates,
-                                                EVT &RegisterVT) const {
+                                                MVT &RegisterVT) const {
   unsigned NumElts = VT.getVectorNumElements();
 
   // If there is a wider vector type with the same element type as this one,
@@ -934,9 +934,10 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
   // <4 x i1> -> <4 x i32>.
   LegalizeTypeAction TA = getTypeAction(Context, VT);
   if (NumElts != 1 && (TA == TypeWidenVector || TA == TypePromoteInteger)) {
-    RegisterVT = getTypeToTransformTo(Context, VT);
-    if (isTypeLegal(RegisterVT)) {
-      IntermediateVT = RegisterVT;
+    EVT RegisterEVT = getTypeToTransformTo(Context, VT);
+    if (isTypeLegal(RegisterEVT)) {
+      IntermediateVT = RegisterEVT;
+      RegisterVT = RegisterEVT.getSimpleVT();
       NumIntermediates = 1;
       return 1;
     }
@@ -969,7 +970,7 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
     NewVT = EltTy;
   IntermediateVT = NewVT;
 
-  EVT DestVT = getRegisterType(Context, NewVT);
+  MVT DestVT = getRegisterType(Context, NewVT);
   RegisterVT = DestVT;
   unsigned NewVTSize = NewVT.getSizeInBits();
 
@@ -977,7 +978,7 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
   if (!isPowerOf2_32(NewVTSize))
     NewVTSize = NextPowerOf2(NewVTSize);
 
-  if (DestVT.bitsLT(NewVT))   // Value is expanded, e.g. i64 -> i16.
+  if (EVT(DestVT).bitsLT(NewVT))   // Value is expanded, e.g. i64 -> i16.
     return NumVectorRegs*(NewVTSize/DestVT.getSizeInBits());
 
   // Otherwise, promotion or legal types use the same number of registers as
