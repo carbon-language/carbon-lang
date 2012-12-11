@@ -268,7 +268,7 @@ static void GetCostForDef(const ScheduleDAGSDNodes::RegDefIter &RegDefPos,
                           const TargetRegisterInfo *TRI,
                           unsigned &RegClass, unsigned &Cost,
                           const MachineFunction &MF) {
-  EVT VT = RegDefPos.GetValue();
+  MVT VT = RegDefPos.GetValue();
 
   // Special handling for untyped values.  These values can only come from
   // the expansion of custom DAG-to-DAG patterns.
@@ -1939,7 +1939,7 @@ bool RegReductionPQBase::MayReduceRegPressure(SUnit *SU) const {
 
   unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
   for (unsigned i = 0; i != NumDefs; ++i) {
-    EVT VT = N->getValueType(i);
+    MVT VT = N->getSimpleValueType(i);
     if (!N->hasAnyUseOfValue(i))
       continue;
     unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
@@ -1973,7 +1973,7 @@ int RegReductionPQBase::RegPressureDiff(SUnit *SU, unsigned &LiveUses) const {
     }
     for (ScheduleDAGSDNodes::RegDefIter RegDefPos(PredSU, scheduleDAG);
          RegDefPos.IsValid(); RegDefPos.Advance()) {
-      EVT VT = RegDefPos.GetValue();
+      MVT VT = RegDefPos.GetValue();
       unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
       if (RegPressure[RCId] >= RegLimit[RCId])
         ++PDiff;
@@ -1986,7 +1986,7 @@ int RegReductionPQBase::RegPressureDiff(SUnit *SU, unsigned &LiveUses) const {
 
   unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
   for (unsigned i = 0; i != NumDefs; ++i) {
-    EVT VT = N->getValueType(i);
+    MVT VT = N->getSimpleValueType(i);
     if (!N->hasAnyUseOfValue(i))
       continue;
     unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
@@ -2097,7 +2097,7 @@ void RegReductionPQBase::unscheduledNode(SUnit *SU) {
     const SDNode *PN = PredSU->getNode();
     if (!PN->isMachineOpcode()) {
       if (PN->getOpcode() == ISD::CopyFromReg) {
-        EVT VT = PN->getValueType(0);
+        MVT VT = PN->getSimpleValueType(0);
         unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
         RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
       }
@@ -2109,14 +2109,14 @@ void RegReductionPQBase::unscheduledNode(SUnit *SU) {
     if (POpc == TargetOpcode::EXTRACT_SUBREG ||
         POpc == TargetOpcode::INSERT_SUBREG ||
         POpc == TargetOpcode::SUBREG_TO_REG) {
-      EVT VT = PN->getValueType(0);
+      MVT VT = PN->getSimpleValueType(0);
       unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
       RegPressure[RCId] += TLI->getRepRegClassCostFor(VT);
       continue;
     }
     unsigned NumDefs = TII->get(PN->getMachineOpcode()).getNumDefs();
     for (unsigned i = 0; i != NumDefs; ++i) {
-      EVT VT = PN->getValueType(i);
+      MVT VT = PN->getSimpleValueType(i);
       if (!PN->hasAnyUseOfValue(i))
         continue;
       unsigned RCId = TLI->getRepRegClassFor(VT)->getID();
@@ -2133,7 +2133,7 @@ void RegReductionPQBase::unscheduledNode(SUnit *SU) {
   if (SU->NumSuccs && N->isMachineOpcode()) {
     unsigned NumDefs = TII->get(N->getMachineOpcode()).getNumDefs();
     for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
-      EVT VT = N->getValueType(i);
+      MVT VT = N->getSimpleValueType(i);
       if (VT == MVT::Glue || VT == MVT::Other)
         continue;
       if (!N->hasAnyUseOfValue(i))
