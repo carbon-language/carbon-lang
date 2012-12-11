@@ -2107,7 +2107,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
       case ISD::SETUGE:
       case ISD::SETULT:
       case ISD::SETULE: {
-        EVT newVT = N0.getOperand(0).getValueType();
+        MVT newVT = N0.getOperand(0).getSimpleValueType();
         if (DCI.isBeforeLegalizeOps() ||
             (isOperationLegal(ISD::SETCC, newVT) &&
               getCondCodeAction(Cond, newVT)==Legal))
@@ -2468,7 +2468,7 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
     // if it is not already.
     ISD::CondCode NewCond = UOF == 0 ? ISD::SETO : ISD::SETUO;
     if (NewCond != Cond && (DCI.isBeforeLegalizeOps() ||
-          getCondCodeAction(NewCond, N0.getValueType()) == Legal))
+          getCondCodeAction(NewCond, N0.getSimpleValueType()) == Legal))
       return DAG.getSetCC(dl, VT, N0, N1, NewCond);
   }
 

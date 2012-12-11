@@ -519,16 +519,15 @@ public:
   /// either it is legal, needs to be expanded to some other code sequence,
   /// or the target has a custom expander for it.
   LegalizeAction
-  getCondCodeAction(ISD::CondCode CC, EVT VT) const {
+  getCondCodeAction(ISD::CondCode CC, MVT VT) const {
     assert((unsigned)CC < array_lengthof(CondCodeActions) &&
-           (unsigned)VT.getSimpleVT().SimpleTy < sizeof(CondCodeActions[0])*4 &&
+           (unsigned)VT.SimpleTy < sizeof(CondCodeActions[0])*4 &&
            "Table isn't big enough!");
     /// The lower 5 bits of the SimpleTy index into Nth 2bit set from the 64bit
     /// value and the upper 27 bits index into the second dimension of the
     /// array to select what 64bit value to use.
     LegalizeAction Action = (LegalizeAction)
-      ((CondCodeActions[CC][VT.getSimpleVT().SimpleTy >> 5]
-        >> (2*(VT.getSimpleVT().SimpleTy & 0x1F))) & 3);
+      ((CondCodeActions[CC][VT.SimpleTy >> 5] >> (2*(VT.SimpleTy & 0x1F))) & 3);
     assert(Action != Promote && "Can't promote condition code!");
     return Action;
   }
@@ -536,8 +535,9 @@ public:
   /// isCondCodeLegal - Return true if the specified condition code is legal
   /// on this target.
   bool isCondCodeLegal(ISD::CondCode CC, EVT VT) const {
-    return getCondCodeAction(CC, VT) == Legal ||
-           getCondCodeAction(CC, VT) == Custom;
+    return
+      getCondCodeAction(CC, VT.getSimpleVT()) == Legal ||
+      getCondCodeAction(CC, VT.getSimpleVT()) == Custom;
   }
 
 
