@@ -619,7 +619,7 @@ public:
         // array then we need to build an extra level of indirection
         // for it.  This is the default; only magic arguments like
         // "this", "self", and "_cmd" are direct.
-        bool indirect_variable = true; 
+        bool variable_is_this = false;
         
         // Attempt to resolve the value using the program's data.
         // If it is, the values to be created are:
@@ -664,68 +664,120 @@ public:
                     name_str == "_cmd")
                     resolved_value = m_decl_map.GetSpecialValue(lldb_private::ConstString(name_str.c_str()));
                 
-                indirect_variable = false;
+                variable_is_this = true;
             }
             
             if (resolved_value.GetScalar().GetType() != lldb_private::Scalar::e_void)
             {
                 if (resolved_value.GetContextType() == lldb_private::Value::eContextTypeRegisterInfo)
                 {
-                    bool bare_register = (flags & lldb_private::ClangExpressionVariable::EVBareRegister);
-
-                    if (bare_register)
-                        indirect_variable = false;
-                    
-                    lldb_private::RegisterInfo *reg_info = resolved_value.GetRegisterInfo();
-                    Memory::Region data_region = (reg_info->encoding == lldb::eEncodingVector) ?
+                    if (variable_is_this)
+                    {
+                        Memory::Region data_region = m_memory.Place(value->getType(), resolved_value.GetScalar().ULongLong(), resolved_value);
+                        
+                        lldb_private::Value origin;
+                        
+                        origin.SetValueType(lldb_private::Value::eValueTypeLoadAddress);
+                        origin.SetContext(lldb_private::Value::eContextTypeInvalid, NULL);
+                        origin.GetScalar() = resolved_value.GetScalar();
+                        
+                        data_region.m_allocation->m_origin = origin;
+                        
+                        Memory::Region ref_region = m_memory.Malloc(value->getType());
+                         
+                        if (ref_region.IsInvalid())
+                            return Memory::Region();
+                        
+                        DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
+                        
+                        if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
+                            return Memory::Region();
+                        
+                        if (log)
+                        {
+                            log->Printf("Made an allocation for \"this\" register variable %s", PrintValue(value).c_str());
+                            log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
+                            log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
+                        }
+                        
+                        m_values[value] = ref_region;
+                        return ref_region;
+                    }
+                    else if (flags & lldb_private::ClangExpressionVariable::EVBareRegister)
+                    {                        
+                        lldb_private::RegisterInfo *reg_info = resolved_value.GetRegisterInfo();
+                        Memory::Region data_region = (reg_info->encoding == lldb::eEncodingVector) ?
                         m_memory.Malloc(reg_info->byte_size, m_target_data.getPrefTypeAlignment(value->getType())) :
                         m_memory.Malloc(value->getType());
-
-                    data_region.m_allocation->m_origin = resolved_value;
-                    Memory::Region ref_region = m_memory.Malloc(value->getType());
-                    Memory::Region pointer_region;
-                    
-                    if (indirect_variable)
-                        pointer_region = m_memory.Malloc(value->getType());
-                    
-                    if (!Cache(data_region.m_allocation, value->getType()))
-                        return Memory::Region();
-
-                    if (ref_region.IsInvalid())
-                        return Memory::Region();
-                    
-                    if (pointer_region.IsInvalid() && indirect_variable)
-                        return Memory::Region();
-                    
-                    DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
-                    
-                    if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
-                        return Memory::Region();
-                    
-                    if (log)
-                    {
-                        log->Printf("Made an allocation for register variable %s", PrintValue(value).c_str());
-                        log->Printf("  Data contents  : %s", m_memory.PrintData(data_region.m_base, data_region.m_extent).c_str());
-                        log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
-                        log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
-                        if (indirect_variable)
-                            log->Printf("  Pointer region : %llx", (unsigned long long)pointer_region.m_base);
-                    }
-                    
-                    if (indirect_variable)
-                    {
-                        DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
                         
+                        data_region.m_allocation->m_origin = resolved_value;
+                        Memory::Region ref_region = m_memory.Malloc(value->getType());
+                        
+                        if (!Cache(data_region.m_allocation, value->getType()))
+                            return Memory::Region();
+                        
+                        if (ref_region.IsInvalid())
+                            return Memory::Region();
+                        
+                        DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
+                        
+                        if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
+                            return Memory::Region();
+                        
+                        if (log)
+                        {
+                            log->Printf("Made an allocation for bare register variable %s", PrintValue(value).c_str());
+                            log->Printf("  Data contents  : %s", m_memory.PrintData(data_region.m_base, data_region.m_extent).c_str());
+                            log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
+                            log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
+                        }
+                        
+                        m_values[value] = ref_region;
+                        return ref_region;
+                    }
+                    else
+                    {                        
+                        lldb_private::RegisterInfo *reg_info = resolved_value.GetRegisterInfo();
+                        Memory::Region data_region = (reg_info->encoding == lldb::eEncodingVector) ?
+                        m_memory.Malloc(reg_info->byte_size, m_target_data.getPrefTypeAlignment(value->getType())) :
+                        m_memory.Malloc(value->getType());
+                        
+                        data_region.m_allocation->m_origin = resolved_value;
+                        Memory::Region ref_region = m_memory.Malloc(value->getType());
+                        Memory::Region pointer_region;
+                        
+                        pointer_region = m_memory.Malloc(value->getType());
+                        
+                        if (!Cache(data_region.m_allocation, value->getType()))
+                            return Memory::Region();
+                        
+                        if (ref_region.IsInvalid())
+                            return Memory::Region();
+                        
+                        if (pointer_region.IsInvalid())
+                            return Memory::Region();
+                        
+                        DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
+                        
+                        if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
+                            return Memory::Region();
+                        
+                        if (log)
+                        {
+                            log->Printf("Made an allocation for ordinary register variable %s", PrintValue(value).c_str());
+                            log->Printf("  Data contents  : %s", m_memory.PrintData(data_region.m_base, data_region.m_extent).c_str());
+                            log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
+                            log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
+                            log->Printf("  Pointer region : %llx", (unsigned long long)pointer_region.m_base);
+                        }
+                        
+                        DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
+                            
                         if (pointer_encoder->PutAddress(0, ref_region.m_base) == UINT32_MAX)
                             return Memory::Region();
                         
                         m_values[value] = pointer_region;
                         return pointer_region;
-                    }
-                    else
-                    {
-                        m_values[value] = ref_region;
-                        return ref_region;
                     }
                 }
                 else
@@ -734,13 +786,13 @@ public:
                     Memory::Region ref_region = m_memory.Malloc(value->getType());
                     Memory::Region pointer_region;
                     
-                    if (indirect_variable)
+                    if (!variable_is_this)
                         pointer_region = m_memory.Malloc(value->getType());
                            
                     if (ref_region.IsInvalid())
                         return Memory::Region();
                     
-                    if (pointer_region.IsInvalid() && indirect_variable)
+                    if (pointer_region.IsInvalid() && !variable_is_this)
                         return Memory::Region();
                     
                     DataEncoderSP ref_encoder = m_memory.GetEncoder(ref_region);
@@ -748,7 +800,7 @@ public:
                     if (ref_encoder->PutAddress(0, data_region.m_base) == UINT32_MAX)
                         return Memory::Region();
                     
-                    if (indirect_variable)
+                    if (!variable_is_this)
                     {
                         DataEncoderSP pointer_encoder = m_memory.GetEncoder(pointer_region);
                     
@@ -764,14 +816,14 @@ public:
                         log->Printf("  Data contents  : %s", m_memory.PrintData(data_region.m_base, data_region.m_extent).c_str());
                         log->Printf("  Data region    : %llx", (unsigned long long)data_region.m_base);
                         log->Printf("  Ref region     : %llx", (unsigned long long)ref_region.m_base);
-                        if (indirect_variable)
+                        if (!variable_is_this)
                             log->Printf("  Pointer region : %llx", (unsigned long long)pointer_region.m_base);
                     }
                     
-                    if (indirect_variable)
-                        return pointer_region;
-                    else 
+                    if (variable_is_this)
                         return ref_region;
+                    else
+                        return pointer_region;
                 }
             }
         }
