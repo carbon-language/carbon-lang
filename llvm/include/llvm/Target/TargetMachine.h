@@ -18,8 +18,6 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetTransformImpl.h"
-#include "llvm/TargetTransformInfo.h"
 #include <cassert>
 #include <string>
 
@@ -43,6 +41,8 @@ class TargetPassConfig;
 class TargetRegisterInfo;
 class TargetSelectionDAGInfo;
 class TargetSubtargetInfo;
+class ScalarTargetTransformInfo;
+class VectorTargetTransformInfo;
 class formatted_raw_ostream;
 class raw_ostream;
 
