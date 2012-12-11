@@ -20,8 +20,10 @@ A
 B
 -
 
+.. _lexicon-bb-vectorization:
+
 **BB Vectorization**
-    Basic Block Vectorization
+    Basic-Block Vectorization
 
 **BURS**
     Bottom Up Rewriting System --- A method of instruction selection for code
@@ -184,6 +186,10 @@ S
 
 **SCCP**
     Sparse Conditional Constant Propagation
+
+**SLP**
+    Superword-Level Parallelism, same as :ref:`Basic-Block Vectorization
+    <lexicon-bb-vectorization>`.
 
 **SRoA**
     Scalar Replacement of Aggregates
