@@ -530,6 +530,58 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
+  case PPC::ADDIStlsgdHA: {
+    // Transform: %Xd = ADDIStlsgdHA %X2, <ga:@sym>
+    // Into:      %Xd = ADDIS8 %X2, sym@got@tlsgd@ha
+    assert(Subtarget.isPPC64() && "Not supported for 32-bit PowerPC");
+    const MachineOperand &MO = MI->getOperand(2);
+    const GlobalValue *GValue = MO.getGlobal();
+    MCSymbol *MOSymbol = Mang->getSymbol(GValue);
+    const MCExpr *SymGotTlsGD =
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_GOT_TLSGD16_HA,
+                              OutContext);
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDIS8)
+                                .addReg(MI->getOperand(0).getReg())
+                                .addReg(PPC::X2)
+                                .addExpr(SymGotTlsGD));
+    return;
+  }
+  case PPC::ADDItlsgdL: {
+    // Transform: %Xd = ADDItlsgdL %Xs, <ga:@sym>
+    // Into:      %Xd = ADDI8L %Xs, sym@got@tlsgd@l
+    assert(Subtarget.isPPC64() && "Not supported for 32-bit PowerPC");
+    const MachineOperand &MO = MI->getOperand(2);
+    const GlobalValue *GValue = MO.getGlobal();
+    MCSymbol *MOSymbol = Mang->getSymbol(GValue);
+    const MCExpr *SymGotTlsGD =
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_GOT_TLSGD16_LO,
+                              OutContext);
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDI8L)
+                                .addReg(MI->getOperand(0).getReg())
+                                .addReg(MI->getOperand(1).getReg())
+                                .addExpr(SymGotTlsGD));
+    return;
+  }
+  case PPC::GETtlsADDR: {
+    // Transform: %X3 = GETtlsADDR %X3, <ga:@sym>
+    // Into:      BL8_NOP_ELF_TLSGD __tls_get_addr(sym@tlsgd)
+    assert(Subtarget.isPPC64() && "Not supported for 32-bit PowerPC");
+
+    StringRef Name = "__tls_get_addr";
+    MCSymbol *TlsGetAddr = OutContext.GetOrCreateSymbol(Name);
+    const MCSymbolRefExpr *TlsRef = 
+      MCSymbolRefExpr::Create(TlsGetAddr, MCSymbolRefExpr::VK_None, OutContext);
+    const MachineOperand &MO = MI->getOperand(2);
+    const GlobalValue *GValue = MO.getGlobal();
+    MCSymbol *MOSymbol = Mang->getSymbol(GValue);
+    const MCExpr *SymVar =
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_TLSGD,
+                              OutContext);
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::BL8_NOP_ELF_TLSGD)
+                                .addExpr(TlsRef)
+                                .addExpr(SymVar));
+    return;
+  }
   case PPC::MFCRpseud:
   case PPC::MFCR8pseud:
     // Transform: %R3 = MFCRpseud %CR7

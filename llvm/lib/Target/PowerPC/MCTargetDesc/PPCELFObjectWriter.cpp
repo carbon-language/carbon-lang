@@ -85,6 +85,9 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_TOC16_HA:
         Type = ELF::R_PPC64_TOC16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TLSGD16_HA:
+        Type = ELF::R_PPC64_GOT_TLSGD16_HA;
+        break;
       }
       break;
     case PPC::fixup_ppc_lo16:
@@ -98,6 +101,9 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
 	break;
       case MCSymbolRefExpr::VK_PPC_TOC16_LO:
         Type = ELF::R_PPC64_TOC16_LO;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TLSGD16_LO:
+        Type = ELF::R_PPC64_GOT_TLSGD16_LO;
         break;
       }
       break;
@@ -126,6 +132,9 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       break;
     case PPC::fixup_ppc_tlsreg:
       Type = ELF::R_PPC64_TLS;
+      break;
+    case PPC::fixup_ppc_tlsgd:
+      Type = ELF::R_PPC64_TLSGD;
       break;
     case FK_Data_8:
       switch (Modifier) {

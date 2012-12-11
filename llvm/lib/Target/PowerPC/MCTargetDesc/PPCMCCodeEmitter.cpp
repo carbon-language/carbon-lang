@@ -17,6 +17,7 @@
 #include "MCTargetDesc/PPCFixupKinds.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/MC/MCCodeEmitter.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
@@ -119,6 +120,16 @@ getDirectBrEncoding(const MCInst &MI, unsigned OpNo,
   // Add a fixup for the branch target.
   Fixups.push_back(MCFixup::Create(0, MO.getExpr(),
                                    (MCFixupKind)PPC::fixup_ppc_br24));
+
+  // For special TLS calls, add another fixup for the symbol.  Apparently
+  // BL8_NOP_ELF and BL8_NOP_ELF_TLSGD are sufficiently similar that TblGen
+  // will not generate a separate case for the latter, so this is the only
+  // way to get the extra fixup generated.
+  if (MI.getOpcode() == PPC::BL8_NOP_ELF_TLSGD) {
+    const MCOperand &MO2 = MI.getOperand(OpNo+1);
+    Fixups.push_back(MCFixup::Create(0, MO2.getExpr(),
+                                     (MCFixupKind)PPC::fixup_ppc_tlsgd));
+  }
   return 0;
 }
 
@@ -222,7 +233,6 @@ unsigned PPCMCCodeEmitter::getTLSRegEncoding(const MCInst &MI, unsigned OpNo,
                                    (MCFixupKind)PPC::fixup_ppc_tlsreg));
   return getPPCRegisterNumbering(PPC::X13);
 }
-
 
 unsigned PPCMCCodeEmitter::
 get_crbitm_encoding(const MCInst &MI, unsigned OpNo,

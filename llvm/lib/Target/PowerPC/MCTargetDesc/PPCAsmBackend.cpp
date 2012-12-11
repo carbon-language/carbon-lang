@@ -32,6 +32,7 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
   case FK_Data_8:
   case PPC::fixup_ppc_toc:
   case PPC::fixup_ppc_tlsreg:
+  case PPC::fixup_ppc_tlsgd:
     return Value;
   case PPC::fixup_ppc_lo14:
   case PPC::fixup_ppc_toc16_ds:
@@ -85,7 +86,8 @@ public:
       { "fixup_ppc_toc",          0,     64,   0 },
       { "fixup_ppc_toc16",       16,     16,   0 },
       { "fixup_ppc_toc16_ds",    16,     14,   0 },
-      { "fixup_ppc_tlsreg",       0,      0,   0 }
+      { "fixup_ppc_tlsreg",       0,      0,   0 },
+      { "fixup_ppc_tlsgd",        0,      0,   0 }
     };
 
     if (Kind < FirstTargetFixupKind)

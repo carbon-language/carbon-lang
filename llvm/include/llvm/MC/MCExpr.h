@@ -181,6 +181,9 @@ public:
     VK_PPC_TOC16_LO,     // symbol@toc@l
     VK_PPC_GOT_TPREL16_DS, // symbol@got@tprel
     VK_PPC_TLS,            // symbol@tls
+    VK_PPC_GOT_TLSGD16_HA, // symbol@got@tlsgd@ha
+    VK_PPC_GOT_TLSGD16_LO, // symbol@got@tlsgd@l
+    VK_PPC_TLSGD,          // symbol@tlsgd
 
     VK_Mips_GPREL,
     VK_Mips_GOT_CALL,

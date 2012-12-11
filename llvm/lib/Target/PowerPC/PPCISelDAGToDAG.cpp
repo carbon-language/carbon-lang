@@ -1316,6 +1316,22 @@ SDNode *PPCDAGToDAGISel::Select(SDNode *N) {
     return CurDAG->getMachineNode(PPC::LDgotTPREL, dl, MVT::i64, 
                                   N->getOperand(0), N->getOperand(1));
   }
+  // FIXME: Try without these.  Doesn't seem necessary.
+  case PPCISD::ADDIS_TLSGD_HA: {
+    assert (PPCSubTarget.isPPC64() && "Only supported for 64-bit ABI");
+    return CurDAG->getMachineNode(PPC::ADDIStlsgdHA, dl, MVT::i64,
+                                  N->getOperand(0), N->getOperand(1));
+  }
+  case PPCISD::ADDI_TLSGD_L: {
+    assert (PPCSubTarget.isPPC64() && "Only supported for 64-bit ABI");
+    return CurDAG->getMachineNode(PPC::ADDItlsgdL, dl, MVT::i64,
+                                  N->getOperand(0), N->getOperand(1));
+  }
+  case PPCISD::GET_TLS_ADDR: {
+    assert (PPCSubTarget.isPPC64() && "Only supported for 64-bit ABI");
+    return CurDAG->getMachineNode(PPC::GETtlsADDR, dl, MVT::i64,
+                                  N->getOperand(0), N->getOperand(1));
+  }
   }
 
   return SelectCode(N);

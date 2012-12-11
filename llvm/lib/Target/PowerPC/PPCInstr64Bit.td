@@ -43,6 +43,7 @@ def tlsaddr : Operand<i64> {
 def tlsreg : Operand<i64> {
   let EncoderMethod = "getTLSRegEncoding";
 }
+def tlsgd : Operand<i64> {}
 
 //===----------------------------------------------------------------------===//
 // 64-bit transformation functions.
@@ -109,6 +110,11 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
     def BL8_NOP_ELF  : IForm_and_DForm_4_zero<18, 0, 1, 24,
                              (outs), (ins calltarget:$func),
                              "bl $func\n\tnop", BrB, []>;
+
+    let isCodeGenOnly = 1 in
+    def BL8_NOP_ELF_TLSGD : IForm_and_DForm_4_zero<18, 0, 1, 24,
+                                  (outs), (ins calltarget:$func, tlsgd:$sym),
+                                  "bl $func($sym)\n\tnop", BrB, []>;
 
     def BLA8_ELF : IForm<18, 1, 1,
                          (outs), (ins aaddr:$func),
@@ -716,6 +722,21 @@ def LDgotTPREL: Pseudo<(outs G8RC:$rD), (ins tlsaddr:$disp, G8RC:$reg),
                       isPPC64;
 def : Pat<(PPCaddTls G8RC:$in, tglobaltlsaddr:$g),
           (ADD8TLS G8RC:$in, tglobaltlsaddr:$g)>;
+def ADDIStlsgdHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
+                         "#ADDIStlsgdHA",
+                         [(set G8RC:$rD,
+                           (PPCaddisTlsgdHA G8RC:$reg, tglobaladdr:$disp))]>,
+                  isPPC64;
+def ADDItlsgdL : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolLo64:$disp),
+                       "#ADDItlsgdL",
+                       [(set G8RC:$rD,
+                         (PPCaddiTlsgdL G8RC:$reg, tglobaladdr:$disp))]>,
+                 isPPC64;
+def GETtlsADDR : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tlsgd:$sym),
+                        "#GETtlsADDR",
+                        [(set G8RC:$rD,
+                          (PPCgetTlsAddr G8RC:$reg, tglobaladdr:$sym))]>,
+                 isPPC64;
 
 let PPC970_Unit = 2 in {
 // Truncating stores.                       

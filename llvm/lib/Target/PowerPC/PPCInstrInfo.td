@@ -93,6 +93,9 @@ def PPCvnmsubfp : SDNode<"PPCISD::VNMSUBFP", SDTFPTernaryOp, []>;
 
 def PPCldGotTprel : SDNode<"PPCISD::LD_GOT_TPREL", SDTIntBinOp, [SDNPMayLoad]>;
 def PPCaddTls     : SDNode<"PPCISD::ADD_TLS", SDTIntBinOp, []>;
+def PPCaddisTlsgdHA : SDNode<"PPCISD::ADDIS_TLSGD_HA", SDTIntBinOp>;
+def PPCaddiTlsgdL   : SDNode<"PPCISD::ADDI_TLSGD_L", SDTIntBinOp>;
+def PPCgetTlsAddr   : SDNode<"PPCISD::GET_TLS_ADDR", SDTIntBinOp>;
 
 def PPCvperm    : SDNode<"PPCISD::VPERM", SDT_PPCvperm, []>;
 

@@ -580,6 +580,9 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::ADDI_TOC_L:      return "PPCISD::ADDI_TOC_L";
   case PPCISD::LD_GOT_TPREL:    return "PPCISD::LD_GOT_TPREL";
   case PPCISD::ADD_TLS:         return "PPCISD::ADD_TLS";
+  case PPCISD::ADDIS_TLSGD_HA:  return "PPCISD::ADDIS_TLSGD_HA";
+  case PPCISD::ADDI_TLSGD_L:    return "PPCISD::ADDI_TLSGD_L";
+  case PPCISD::GET_TLS_ADDR:    return "PPCISD::GET_TLS_ADDR";
   }
 }
 
@@ -1342,18 +1345,42 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
   if (!is64bit)
     llvm_unreachable("only local-exec is currently supported for ppc32");
 
-  if (Model != TLSModel::InitialExec)
-    llvm_unreachable("only local-exec and initial-exec TLS modes supported");
+  if (Model == TLSModel::InitialExec) {
+    SDValue GOTOffset = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
+                                                   PPCII::MO_GOT_TPREL16_DS);
+    SDValue TPReg = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
+                                               PPCII::MO_TLS);
+    SDValue GOTReg = DAG.getRegister(is64bit ? PPC::X2  : PPC::R2,
+                                     is64bit ? MVT::i64 : MVT::i32);
+    SDValue TPOffset = DAG.getNode(PPCISD::LD_GOT_TPREL, dl, PtrVT,
+                                   GOTOffset, GOTReg);
+    return DAG.getNode(PPCISD::ADD_TLS, dl, PtrVT, TPOffset, TPReg);
+  }
 
-  SDValue GOTOffset = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
-                                                 PPCII::MO_GOT_TPREL16_DS);
-  SDValue TPReg = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
-                                             PPCII::MO_TLS);
-  SDValue GOTReg = DAG.getRegister(is64bit ? PPC::X2  : PPC::R2,
-                                   is64bit ? MVT::i64 : MVT::i32);
-  SDValue TPOffset = DAG.getNode(PPCISD::LD_GOT_TPREL, dl, PtrVT,
-                                 GOTOffset, GOTReg);
-  return DAG.getNode(PPCISD::ADD_TLS, dl, PtrVT, TPOffset, TPReg);
+  if (Model == TLSModel::GeneralDynamic) {
+    SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, 0);
+    SDValue GOTReg = DAG.getRegister(PPC::X2, MVT::i64);
+    SDValue GOTEntryHi = DAG.getNode(PPCISD::ADDIS_TLSGD_HA, dl, PtrVT,
+                                     GOTReg, TGA);
+    SDValue GOTEntry = DAG.getNode(PPCISD::ADDI_TLSGD_L, dl, PtrVT,
+                                   GOTEntryHi, TGA);
+
+    // We need a chain node, and don't have one handy.  The underlying
+    // call has no side effects, so using the function entry node
+    // suffices.
+    SDValue Chain = DAG.getEntryNode();
+    Chain = DAG.getCopyToReg(Chain, dl, PPC::X3, GOTEntry);
+    SDValue ParmReg = DAG.getRegister(PPC::X3, MVT::i64);
+    SDValue TLSAddr = DAG.getNode(PPCISD::GET_TLS_ADDR, dl,
+                                  PtrVT, ParmReg, TGA);
+    // The call to GET_TLS_ADDR really is in X3 already, but
+    // some hacks are needed here to tie everything together.
+    // The extra copies dissolve during subsequent transforms.
+    Chain = DAG.getCopyToReg(Chain, dl, PPC::X3, TLSAddr);
+    return DAG.getCopyFromReg(Chain, dl, PPC::X3, PtrVT);
+  }
+
+  llvm_unreachable("local-dynamic TLS mode is not yet supported");
 }
 
 SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,
