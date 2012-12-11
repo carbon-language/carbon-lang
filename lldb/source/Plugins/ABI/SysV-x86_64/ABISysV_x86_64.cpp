@@ -1153,14 +1153,23 @@ ABISysV_x86_64::RegisterIsVolatile (const RegisterInfo *reg_info)
 
 
 
-
+// See "Register Usage" in the 
+// "System V Application Binary Interface"
+// "AMD64 Architecture Processor Supplement" 
+// (or "x86-64(tm) Architecture Processor Supplement" in earlier revisions)
+// Edited by Michael Matz, Jan Hubicka, Andreas Jaeger, and Mark Mitchell
+// current version is 0.99.6 released 2012-05-15 at http://x86-64.org/documentation/abi.pdf
 
 bool
 ABISysV_x86_64::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
 {
     if (reg_info)
     {
-        // Volatile registers include: rbx, rbp, rsp, r12, r13, r14, r15, rip
+        // Preserved registers are :
+        //    rbx, rsp, rbp, r12, r13, r14, r15
+        //    mxcsr (partially preserved)
+        //    x87 control word
+
         const char *name = reg_info->name;
         if (name[0] == 'r')
         {
@@ -1198,6 +1207,12 @@ ABISysV_x86_64::RegisterIsCalleeSaved (const RegisterInfo *reg_info)
 
             }
         }
+        if (name[0] == 's' && name[1] == 'p' && name[2] == '\0')   // sp
+            return true;
+        if (name[0] == 'f' && name[1] == 'p' && name[2] == '\0')   // fp
+            return true;
+        if (name[0] == 'p' && name[1] == 'c' && name[2] == '\0')   // pc
+            return true;
     }
     return false;
 }
