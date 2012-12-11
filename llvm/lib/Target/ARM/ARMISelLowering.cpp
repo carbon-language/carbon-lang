@@ -9460,23 +9460,22 @@ EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
       Subtarget->hasNEON() &&
       !F->getFnAttributes().hasAttribute(Attributes::NoImplicitFloat)) {
     bool Fast;
-    if (Size >= 16 && (memOpAlign(SrcAlign, DstAlign, 16) ||
-                       (allowsUnalignedMemoryAccesses(MVT::v2f64, &Fast) &&
-                        Fast))) {
+    if (Size >= 16 &&
+        (memOpAlign(SrcAlign, DstAlign, 16) ||
+         (allowsUnalignedMemoryAccesses(MVT::v2f64, &Fast) && Fast))) {
       return MVT::v2f64;
-    } else if (Size >= 8 && (memOpAlign(SrcAlign, DstAlign, 8) ||
-                             (allowsUnalignedMemoryAccesses(MVT::f64, &Fast) &&
-                              Fast))) {
+    } else if (Size >= 8 &&
+               (memOpAlign(SrcAlign, DstAlign, 8) ||
+                (allowsUnalignedMemoryAccesses(MVT::f64, &Fast) && Fast))) {
       return MVT::f64;
     }
   }
 
   // Lowering to i32/i16 if the size permits.
-  if (Size >= 4) {
+  if (Size >= 4)
     return MVT::i32;
-  } else if (Size >= 2) {
+  else if (Size >= 2)
     return MVT::i16;
-  }
 
   // Let the target-independent logic figure it out.
   return MVT::Other;
