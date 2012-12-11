@@ -61,20 +61,36 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
     case eVarSetOperationInsertBefore:
     case eVarSetOperationInsertAfter:
     case eVarSetOperationRemove:
+        if (m_validator)
+        {
+            error = m_validator(value_cstr,m_validator_baton);
+            if (error.Fail())
+                return error;
+        }
         error = OptionValue::SetValueFromCString (value_cstr, op);
         break;
 
     case eVarSetOperationAppend:
+        {
+        std::string new_value(m_current_value);
         if (value_cstr && value_cstr[0])
         {
             if (m_options.Test (eOptionEncodeCharacterEscapeSequences))
             {
                 std::string str;
                 Args::EncodeEscapeSequences (value_cstr, str);
-                m_current_value += str;
+                new_value.append(str);
             }
             else
-                m_current_value += value_cstr;
+                new_value.append(value_cstr);
+        }
+        if (m_validator)
+        {
+            error = m_validator(new_value.c_str(),m_validator_baton);
+            if (error.Fail())
+                return error;
+        }
+        m_current_value.assign(new_value);
         }
         break;
 
@@ -84,6 +100,12 @@ OptionValueString::SetValueFromCString (const char *value_cstr,
 
     case eVarSetOperationReplace:
     case eVarSetOperationAssign:
+        if (m_validator)
+        {
+            error = m_validator(value_cstr,m_validator_baton);
+            if (error.Fail())
+                return error;
+        }
         m_value_was_set = true;
         if (m_options.Test (eOptionEncodeCharacterEscapeSequences))
         {
@@ -103,4 +125,40 @@ lldb::OptionValueSP
 OptionValueString::DeepCopy () const
 {
     return OptionValueSP(new OptionValueString(*this));
+}
+
+Error
+OptionValueString::SetCurrentValue (const char *value)
+{
+    if (m_validator)
+    {
+        Error error(m_validator(value,m_validator_baton));
+        if (error.Fail())
+            return error;
+    }
+    if (value && value[0])
+        m_current_value.assign (value);
+    else
+        m_current_value.clear();
+    return Error();
+}
+
+Error
+OptionValueString::AppendToCurrentValue (const char *value)
+{
+    if (value && value[0])
+    {
+        if (m_validator)
+        {
+            std::string new_value(m_current_value);
+            new_value.append(value);
+            Error error(m_validator(value,m_validator_baton));
+            if (error.Fail())
+                return error;
+            m_current_value.assign(new_value);
+        }
+        else
+            m_current_value.append (value);
+    }
+    return Error();
 }
