@@ -160,6 +160,9 @@ INLINE uptr RoundUpTo(uptr size, uptr boundary) {
   CHECK(IsPowerOfTwo(boundary));
   return (size + boundary - 1) & ~(boundary - 1);
 }
+INLINE bool IsAligned(uptr a, uptr alignment) {
+  return (a & (alignment - 1)) == 0;
+}
 // Don't use std::min, std::max or std::swap, to minimize dependency
 // on libstdc++.
 template<class T> T Min(T a, T b) { return a < b ? a : b; }

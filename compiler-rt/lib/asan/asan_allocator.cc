@@ -57,11 +57,6 @@ static const uptr kMallocSizeClassStep = 1UL << kMallocSizeClassStepLog;
 static const uptr kMaxAllowedMallocSize =
     (SANITIZER_WORDSIZE == 32) ? 3UL << 30 : 8UL << 30;
 
-static inline bool IsAligned(uptr a, uptr alignment) {
-  return (a & (alignment - 1)) == 0;
-}
-
-
 static inline uptr SizeClassToSize(u8 size_class) {
   CHECK(size_class < kNumberOfSizeClasses);
   if (size_class <= kMallocSizeClassStepLog) {
