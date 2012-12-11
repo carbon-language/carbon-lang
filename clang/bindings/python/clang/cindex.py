@@ -3046,13 +3046,13 @@ class Config:
         Config.library_path = path
 
     @staticmethod
-    def set_library_file(file):
-        """Set the exact location of libclang from"""
+    def set_library_file(filename):
+        """Set the exact location of libclang"""
         if Config.loaded:
             raise Exception("library file must be set before before using " \
                             "any other functionalities in libclang.")
 
-        Config.library_file = path
+        Config.library_file = filename
 
     @staticmethod
     def set_compatibility_check(check_status):
