@@ -657,9 +657,6 @@ void MCAssembler::Finish() {
 bool MCAssembler::fixupNeedsRelaxation(const MCFixup &Fixup,
                                        const MCInstFragment *DF,
                                        const MCAsmLayout &Layout) const {
-  if (getRelaxAll())
-    return true;
-
   // If we cannot resolve the fixup value, it requires relaxation.
   MCValue Target;
   uint64_t Value;
@@ -780,6 +777,8 @@ bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD) {
     default:
       break;
     case MCFragment::FT_Inst:
+      assert(!getRelaxAll() &&
+             "Did not expect a MCInstFragment in RelaxAll mode");
       RelaxedFrag = relaxInstruction(Layout, *cast<MCInstFragment>(I));
       break;
     case MCFragment::FT_Dwarf:
