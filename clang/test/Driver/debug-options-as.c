@@ -1,5 +1,5 @@
 // cygming have not supported integrated-as yet.
-// XFAIL: cygwin,mingw32
+// REQUIRES: clang-driver
 //
 // Check to make sure clang is somewhat picky about -g options.
 // (Delived from debug-options.c)

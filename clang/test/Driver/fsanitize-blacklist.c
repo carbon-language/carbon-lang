@@ -15,4 +15,4 @@
 // CHECK-NO-SUCH-FILE: error: no such file or directory: 'unexisting.txt'
 
 // PR12920
-// XFAIL: cygwin,mingw32
+// REQUIRES: clang-driver
