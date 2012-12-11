@@ -49,7 +49,7 @@
 #include <map>
 #include <string>
 
-// This includes must be last.
+// These includes must be last.
 #include <Windows.h>
 #include <WinError.h>
 #include <Dbghelp.h>
