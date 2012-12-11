@@ -4,7 +4,6 @@
 // RUN: llvm-tblgen %s | grep "LAST" | count 1
 // RUN: llvm-tblgen %s | grep "TVAR" | count 2
 // RUN: llvm-tblgen %s | grep "Bogus" | count 1
-// XFAIL: vg_leak
 
 class Honorific<string t> {
   string honorific = t;

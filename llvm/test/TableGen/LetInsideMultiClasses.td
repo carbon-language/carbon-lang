@@ -1,5 +1,4 @@
 // RUN: llvm-tblgen %s | grep "bit IsDouble = 1;" | count 3
-// XFAIL: vg_leak
 
 class Instruction<bits<4> opc, string Name> {
   bits<4> opcode = opc;

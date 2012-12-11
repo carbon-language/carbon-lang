@@ -1,5 +1,4 @@
 // RUN: llvm-tblgen %s | grep WorldHelloCC | count 1
-// XFAIL: vg_leak
 
 class C<string n> {
   string name = n;
