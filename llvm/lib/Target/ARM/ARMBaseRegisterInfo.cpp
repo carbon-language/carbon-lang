@@ -44,10 +44,6 @@
 
 using namespace llvm;
 
-static cl::opt<bool>
-EnableLocalStackAlloc("enable-local-stack-alloc", cl::init(true), cl::Hidden,
-          cl::desc("Enable pre-regalloc stack frame index allocation"));
-
 ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
                                          const ARMSubtarget &sti)
   : ARMGenRegisterInfo(ARM::LR), TII(tii), STI(sti),
@@ -401,7 +397,7 @@ requiresFrameIndexScavenging(const MachineFunction &MF) const {
 
 bool ARMBaseRegisterInfo::
 requiresVirtualBaseRegisters(const MachineFunction &MF) const {
-  return EnableLocalStackAlloc;
+  return true;
 }
 
 static void
