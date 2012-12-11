@@ -2928,6 +2928,13 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    false))
     CmdArgs.push_back("-fasm-blocks");
 
+  // -fno-vectorize is default.
+  if (Args.hasFlag(options::OPT_fvectorize,
+                   options::OPT_fno_vectorize, false)) {
+    CmdArgs.push_back("-backend-option");
+    CmdArgs.push_back("-vectorize-loops");
+  }
+
   if (Arg *A = Args.getLastArg(options::OPT_fshow_overloads_EQ))
     A->render(Args, CmdArgs);
 

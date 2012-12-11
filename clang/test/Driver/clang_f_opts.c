@@ -38,3 +38,12 @@
 
 // RUN: %clang -fms-extensions -fenable-experimental-ms-inline-asm %s -### 2>&1 | FileCheck -check-prefix=CHECK-OPTIONS3 %s
 // CHECK-OPTIONS3: -fenable-experimental-ms-inline-asm
+
+// RUN: %clang -### -S -fvectorize %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE %s
+// RUN: %clang -### -S -fno-vectorize -fvectorize %s 2>&1 | FileCheck -check-prefix=CHECK-VECTORIZE %s
+// RUN: %clang -### -S -fno-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-NO-VECTORIZE %s
+// RUN: %clang -### -S -fvectorize -fno-vectorize %s 2>&1 | FileCheck -check-prefix=CHECK-NO-VECTORIZE %s
+// CHECK-VECTORIZE: "-backend-option"
+// CHECK-VECTORIZE: "-vectorize-loops"
+// CHECK-NO-VECTORIZE-NOT: "-backend-option"
+// CHECK-NO-VECTORIZE-NOT: "-vectorize-loops"
