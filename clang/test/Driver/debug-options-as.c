@@ -14,7 +14,7 @@
 // rdar://9275556
 // RUN: touch %t.s
 // RUN: %clang -### -c -integrated-as -g %t.s 2>&1 \
-// RUN:   | FileCheck -check-prefix=S %s
+// RUN:   | FileCheck %s
 //
-// S: "-cc1as"
-// S: "-g"
+// CHECK: "-cc1as"
+// CHECK: "-g"
