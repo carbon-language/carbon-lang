@@ -38,10 +38,6 @@
 #include "sanitizer/asan_interface.h"
 #include "sanitizer_common/sanitizer_atomic.h"
 
-#if defined(_WIN32) && !defined(__clang__)
-#include <intrin.h>
-#endif
-
 namespace __asan {
 
 #define REDZONE ((uptr)(flags()->redzone))

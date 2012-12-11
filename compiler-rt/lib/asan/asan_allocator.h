@@ -182,6 +182,9 @@ void asan_mz_force_lock();
 void asan_mz_force_unlock();
 
 // Log2 and RoundUpToPowerOfTwo should be inlined for performance.
+#if defined(_WIN32) && !defined(__clang__)
+#include <intrin.h>
+#endif
 
 static inline uptr Log2(uptr x) {
   CHECK(IsPowerOfTwo(x));
