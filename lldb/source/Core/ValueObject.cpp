@@ -1242,7 +1242,7 @@ ValueObject::GetValueAsCString ()
     if (UpdateValueIfNeeded(true) && m_value_str.empty())
     {
         lldb::Format my_format = GetFormat();
-        if (m_format == lldb::eFormatDefault)
+        if (my_format == lldb::eFormatDefault)
         {
             if (m_type_format_sp)
                 my_format = m_type_format_sp->GetFormat();
@@ -3428,7 +3428,7 @@ DumpValueObject_Impl (Stream &s,
                         }
 
                         ValueObject::DumpValueObjectOptions child_options(options);
-                        child_options.SetFormat().SetSummary().SetRootValueObjectName();
+                        child_options.SetFormat(options.m_format).SetSummary().SetRootValueObjectName();
                         child_options.SetScopeChecked(true)
                         .SetOmitSummaryDepth(child_options.m_omit_summary_depth > 1 ? child_options.m_omit_summary_depth - 1 : 0);
                         for (uint32_t idx=0; idx<num_children; ++idx)
