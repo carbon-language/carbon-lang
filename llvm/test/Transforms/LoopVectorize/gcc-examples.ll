@@ -329,7 +329,7 @@ define void @example11() nounwind uwtable ssp {
 }
 
 ;CHECK: @example12
-;CHECK: trunc <4 x i64>
+;CHECK: trunc i64
 ;CHECK: store <4 x i32>
 ;CHECK: ret void
 define void @example12() nounwind uwtable ssp {

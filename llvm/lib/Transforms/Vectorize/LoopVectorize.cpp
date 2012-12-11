@@ -1204,8 +1204,20 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
     case Instruction::Trunc:
     case Instruction::FPTrunc:
     case Instruction::BitCast: {
-      /// Vectorize bitcasts.
       CastInst *CI = dyn_cast<CastInst>(it);
+      /// Optimize the special case where the source is the induction
+      /// variable. Notice that we can only optimize the 'trunc' case
+      /// because: a. FP conversions lose precision, b. sext/zext may wrap,
+      /// c. other casts depend on pointer size.
+      if (CI->getOperand(0) == OldInduction &&
+          it->getOpcode() == Instruction::Trunc) {
+        Value *ScalarCast = Builder.CreateCast(CI->getOpcode(), Induction,
+                                               CI->getType());
+        Value *Broadcasted = getBroadcastInstrs(ScalarCast);
+        WidenMap[it] = getConsecutiveVector(Broadcasted);
+        break;
+      }
+      /// Vectorize casts.
       Value *A = getVectorValue(it->getOperand(0));
       Type *DestTy = VectorType::get(CI->getType()->getScalarType(), VF);
       WidenMap[it] = Builder.CreateCast(CI->getOpcode(), A, DestTy);

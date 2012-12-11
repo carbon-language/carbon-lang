@@ -6,8 +6,7 @@ target triple = "x86_64-apple-macosx10.8.0"
 @array = common global [1024 x i32] zeroinitializer, align 16
 
 ;CHECK: @array_at_plus_one
-;CHECK: add <4 x i64>
-;CHECK: trunc <4 x i64>
+;CHECK: trunc i64
 ;CHECK: add i64 %index, 12
 ;CHECK: ret i32
 define i32 @array_at_plus_one(i32 %n) nounwind uwtable ssp {
