@@ -371,16 +371,6 @@ public:
     return false;
   }
 
-  /// isIntImmLegal - Returns true if the target can instruction select the
-  /// specified integer immediate natively (that is, it's materialized with one
-  /// instruction). The current *assumption* in isel is all of integer
-  /// immediates are "legal" and only the memcpy / memset expansion code is
-  /// making use of this. The rest of isel doesn't have proper cost model for
-  /// immediate materialization.
-  virtual bool isIntImmLegal(const APInt &/*Imm*/, EVT /*VT*/) const {
-    return true;
-  }
-
   /// isShuffleMaskLegal - Targets can use this to indicate that they only
   /// support *some* VECTOR_SHUFFLE operations, those with specific masks.
   /// By default, if a target supports the VECTOR_SHUFFLE node, all mask values

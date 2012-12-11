@@ -66,7 +66,7 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   ARMTargetLowering   TLInfo;
   ARMSelectionDAGInfo TSInfo;
   ARMFrameLowering    FrameLowering;
-  ScalarTargetTransformImpl STTI;
+  ARMScalarTargetTransformImpl STTI;
   VectorTargetTransformImpl VTTI;
  public:
   ARMTargetMachine(const Target &T, StringRef TT,
@@ -112,7 +112,7 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   ARMSelectionDAGInfo TSInfo;
   // Either Thumb1FrameLowering or ARMFrameLowering.
   OwningPtr<ARMFrameLowering> FrameLowering;
-  ScalarTargetTransformImpl STTI;
+  ARMScalarTargetTransformImpl STTI;
   VectorTargetTransformImpl VTTI;
 public:
   ThumbTargetMachine(const Target &T, StringRef TT,

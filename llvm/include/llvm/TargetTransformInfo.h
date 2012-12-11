@@ -140,6 +140,13 @@ public:
   virtual PopcntHwSupport getPopcntHwSupport(unsigned IntTyWidthInBit) const {
     return None;
   }
+
+  /// getIntImmCost - Return the expected cost of materializing the given
+  /// integer immediate of the specified type.
+  virtual unsigned getIntImmCost(const APInt&, Type*) const {
+    // Default assumption is immediate is cheap.
+    return 1;
+  }
 };
 
 /// VectorTargetTransformInfo - This interface is used by the vectorizers

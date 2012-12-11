@@ -41,6 +41,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/TargetTransformInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -3382,7 +3383,10 @@ static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
       Val |= (uint64_t)(unsigned char)Str[i] << (NumVTBytes-i-1)*8;
   }
 
-  if (TLI.isIntImmLegal(Val, VT))
+  // If the "cost" of materializing the integer immediate is 1 or free, then
+  // it is cost effective to turn the load into the immediate.
+  if (DAG.getTarget().getScalarTargetTransformInfo()->
+      getIntImmCost(Val, VT.getTypeForEVT(*DAG.getContext())) < 2)
     return DAG.getConstant(Val, VT);
   return SDValue(0, 0);
 }
