@@ -712,9 +712,9 @@ bool TargetLowering::isLegalRC(const TargetRegisterClass *RC) const {
 /// findRepresentativeClass - Return the largest legal super-reg register class
 /// of the register class for the specified type and its associated "cost".
 std::pair<const TargetRegisterClass*, uint8_t>
-TargetLowering::findRepresentativeClass(EVT VT) const {
+TargetLowering::findRepresentativeClass(MVT VT) const {
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
-  const TargetRegisterClass *RC = RegClassForVT[VT.getSimpleVT().SimpleTy];
+  const TargetRegisterClass *RC = RegClassForVT[VT.SimpleTy];
   if (!RC)
     return std::make_pair(RC, 0);
 
