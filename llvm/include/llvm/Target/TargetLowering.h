@@ -543,22 +543,22 @@ public:
 
   /// getTypeToPromoteTo - If the action for this operation is to promote, this
   /// method returns the ValueType to promote to.
-  EVT getTypeToPromoteTo(unsigned Op, EVT VT) const {
+  MVT getTypeToPromoteTo(unsigned Op, MVT VT) const {
     assert(getOperationAction(Op, VT) == Promote &&
            "This operation isn't promoted!");
 
     // See if this has an explicit type specified.
     std::map<std::pair<unsigned, MVT::SimpleValueType>,
              MVT::SimpleValueType>::const_iterator PTTI =
-      PromoteToType.find(std::make_pair(Op, VT.getSimpleVT().SimpleTy));
+      PromoteToType.find(std::make_pair(Op, VT.SimpleTy));
     if (PTTI != PromoteToType.end()) return PTTI->second;
 
     assert((VT.isInteger() || VT.isFloatingPoint()) &&
            "Cannot autopromote this type, add it with AddPromotedToType.");
 
-    EVT NVT = VT;
+    MVT NVT = VT;
     do {
-      NVT = (MVT::SimpleValueType)(NVT.getSimpleVT().SimpleTy+1);
+      NVT = (MVT::SimpleValueType)(NVT.SimpleTy+1);
       assert(NVT.isInteger() == VT.isInteger() && NVT != MVT::isVoid &&
              "Didn't find type to promote to!");
     } while (!isTypeLegal(NVT) ||
