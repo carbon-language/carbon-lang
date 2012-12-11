@@ -250,9 +250,8 @@ public:
 
   /// getRepRegClassCostFor - Return the cost of the 'representative' register
   /// class for the specified value type.
-  virtual uint8_t getRepRegClassCostFor(EVT VT) const {
-    assert(VT.isSimple() && "getRepRegClassCostFor called on illegal type!");
-    return RepRegClassCostForVT[VT.getSimpleVT().SimpleTy];
+  virtual uint8_t getRepRegClassCostFor(MVT VT) const {
+    return RepRegClassCostForVT[VT.SimpleTy];
   }
 
   /// isTypeLegal - Return true if the target has native support for the
@@ -478,11 +477,10 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction
-  getIndexedLoadAction(unsigned IdxMode, EVT VT) const {
-    assert(IdxMode < ISD::LAST_INDEXED_MODE &&
-           VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
+  getIndexedLoadAction(unsigned IdxMode, MVT VT) const {
+    assert(IdxMode < ISD::LAST_INDEXED_MODE && VT < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
-    unsigned Ty = (unsigned)VT.getSimpleVT().SimpleTy;
+    unsigned Ty = (unsigned)VT.SimpleTy;
     return (LegalizeAction)((IndexedModeActions[Ty][IdxMode] & 0xf0) >> 4);
   }
 
@@ -490,8 +488,8 @@ public:
   /// on this target.
   bool isIndexedLoadLegal(unsigned IdxMode, EVT VT) const {
     return VT.isSimple() &&
-      (getIndexedLoadAction(IdxMode, VT) == Legal ||
-       getIndexedLoadAction(IdxMode, VT) == Custom);
+      (getIndexedLoadAction(IdxMode, VT.getSimpleVT()) == Legal ||
+       getIndexedLoadAction(IdxMode, VT.getSimpleVT()) == Custom);
   }
 
   /// getIndexedStoreAction - Return how the indexed store should be treated:
@@ -499,11 +497,10 @@ public:
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
   LegalizeAction
-  getIndexedStoreAction(unsigned IdxMode, EVT VT) const {
-    assert(IdxMode < ISD::LAST_INDEXED_MODE &&
-           VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
+  getIndexedStoreAction(unsigned IdxMode, MVT VT) const {
+    assert(IdxMode < ISD::LAST_INDEXED_MODE && VT < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
-    unsigned Ty = (unsigned)VT.getSimpleVT().SimpleTy;
+    unsigned Ty = (unsigned)VT.SimpleTy;
     return (LegalizeAction)(IndexedModeActions[Ty][IdxMode] & 0x0f);
   }
 
@@ -511,8 +508,8 @@ public:
   /// on this target.
   bool isIndexedStoreLegal(unsigned IdxMode, EVT VT) const {
     return VT.isSimple() &&
-      (getIndexedStoreAction(IdxMode, VT) == Legal ||
-       getIndexedStoreAction(IdxMode, VT) == Custom);
+      (getIndexedStoreAction(IdxMode, VT.getSimpleVT()) == Legal ||
+       getIndexedStoreAction(IdxMode, VT.getSimpleVT()) == Custom);
   }
 
   /// getCondCodeAction - Return how the condition code should be treated:
@@ -1129,10 +1126,10 @@ protected:
   /// addRegisterClass - Add the specified register class as an available
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
-  void addRegisterClass(EVT VT, const TargetRegisterClass *RC) {
-    assert((unsigned)VT.getSimpleVT().SimpleTy < array_lengthof(RegClassForVT));
+  void addRegisterClass(MVT VT, const TargetRegisterClass *RC) {
+    assert((unsigned)VT.SimpleTy < array_lengthof(RegClassForVT));
     AvailableRegClasses.push_back(std::make_pair(VT, RC));
-    RegClassForVT[VT.getSimpleVT().SimpleTy] = RC;
+    RegClassForVT[VT.SimpleTy] = RC;
   }
 
   /// findRepresentativeClass - Return the largest legal super-reg register class
@@ -2111,7 +2108,7 @@ public:
   }
 
 private:
-  std::vector<std::pair<EVT, const TargetRegisterClass*> > AvailableRegClasses;
+  std::vector<std::pair<MVT, const TargetRegisterClass*> > AvailableRegClasses;
 
   /// TargetDAGCombineArray - Targets can specify ISD nodes that they would
   /// like PerformDAGCombine callbacks for by calling setTargetDAGCombine(),
