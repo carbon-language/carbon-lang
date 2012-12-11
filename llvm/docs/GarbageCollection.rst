@@ -49,8 +49,6 @@ techniques dominates any low-level losses.
 This document describes the mechanisms and interfaces provided by LLVM to
 support accurate garbage collection.
 
-.. _feature:
-
 Goals and non-goals
 -------------------
 
@@ -121,8 +119,6 @@ lot of work for the developer of a novel language.  However, it's easy to get
 started quickly and scale up to a more sophisticated implementation as your
 compiler matures.
 
-.. _quickstart:
-
 Getting started
 ===============
 
@@ -177,8 +173,6 @@ To help with several of these tasks (those indicated with a \*), LLVM includes a
 highly portable, built-in ShadowStack code generator.  It is compiled into
 ``llc`` and works even with the interpreter and C backends.
 
-.. _quickstart-compiler:
-
 In your compiler
 ----------------
 
@@ -199,8 +193,6 @@ if evaluating ``g()`` triggers a collection.
 There's no need to use ``@llvm.gcread`` and ``@llvm.gcwrite`` over plain
 ``load`` and ``store`` for now.  You will need them when switching to a more
 advanced GC.
-
-.. _quickstart-runtime:
 
 In your runtime
 ---------------
@@ -263,8 +255,6 @@ data structure, but there are only 20 lines of meaningful code.)
     }
   }
 
-.. _shadow-stack:
-
 About the shadow stack
 ----------------------
 
@@ -283,8 +273,9 @@ The tradeoff for this simplicity and portability is:
 * Not thread-safe.
 
 Still, it's an easy way to get started.  After your compiler and runtime are up
-and running, writing a plugin_ will allow you to take advantage of :ref:`more
-advanced GC features <collector-algos>` of LLVM in order to improve performance.
+and running, writing a :ref:`plugin <plugin>` will allow you to take advantage
+of :ref:`more advanced GC features <collector-algos>` of LLVM in order to
+improve performance.
 
 .. _gc_intrinsics:
 
@@ -299,8 +290,6 @@ generation plugin <plugin>`, not by this document.
 These facilities are limited to those strictly necessary; they are not intended
 to be a complete interface to any garbage collector.  A program will need to
 interface with the GC library using the facilities provided by that program.
-
-.. _gcattr:
 
 Specifying GC code generation: ``gc "..."``
 -------------------------------------------
@@ -392,8 +381,6 @@ could be compiled to this LLVM code:
      store %Object* null, %Object** %X
      ...
 
-.. _barriers:
-
 Reading and writing references in the heap
 ------------------------------------------
 
@@ -423,14 +410,12 @@ pointer:
   %derived = getelementptr %object, i32 0, i32 2, i32 %n
 
 LLVM does not enforce this relationship between the object and derived pointer
-(although a plugin_ might).  However, it would be an unusual collector that
-violated it.
+(although a :ref:`plugin <plugin>` might).  However, it would be an unusual
+collector that violated it.
 
 The use of these intrinsics is naturally optional if the target GC does require
 the corresponding barrier.  Such a GC plugin will replace the intrinsic calls
 with the corresponding ``load`` or ``store`` instruction if they are used.
-
-.. _gcwrite:
 
 Write barrier: ``llvm.gcwrite``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -442,13 +427,11 @@ Write barrier: ``llvm.gcwrite``
 For write barriers, LLVM provides the ``llvm.gcwrite`` intrinsic function.  It
 has exactly the same semantics as a non-volatile ``store`` to the derived
 pointer (the third argument).  The exact code generated is specified by a
-compiler plugin_.
+compiler :ref:`plugin <plugin>`.
 
 Many important algorithms require write barriers, including generational and
 concurrent collectors.  Additionally, write barriers could be used to implement
 reference counting.
-
-.. _gcread:
 
 Read barrier: ``llvm.gcread``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -459,8 +442,8 @@ Read barrier: ``llvm.gcread``
 
 For read barriers, LLVM provides the ``llvm.gcread`` intrinsic function.  It has
 exactly the same semantics as a non-volatile ``load`` from the derived pointer
-(the second argument).  The exact code generated is specified by a compiler
-plugin_.
+(the second argument).  The exact code generated is specified by a
+:ref:`compiler plugin <plugin>`.
 
 Read barriers are needed by fewer algorithms than write barriers, and may have a
 greater performance impact since pointer reads are more frequent than writes.
@@ -738,8 +721,6 @@ occurs before custom lowering, so the two may be used together.
 Since LLVM does not yet compute liveness information, there is no means of
 distinguishing an uninitialized stack root from an initialized one.  Therefore,
 this feature should be used by all GC plugins.  It is enabled by default.
-
-.. _custom:
 
 Custom lowering of intrinsics: ``CustomRoots``, ``CustomReadBarriers``, and ``CustomWriteBarriers``
 ---------------------------------------------------------------------------------------------------
