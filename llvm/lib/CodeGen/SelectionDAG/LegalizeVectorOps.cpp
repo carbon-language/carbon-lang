@@ -142,9 +142,9 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
   } else if (Op.getOpcode() == ISD::STORE) {
     StoreSDNode *ST = cast<StoreSDNode>(Op.getNode());
     EVT StVT = ST->getMemoryVT();
-    MVT ValVT = ST->getValue().getSimpleValueType();
+    EVT ValVT = ST->getValue().getValueType();
     if (StVT.isVector() && ST->isTruncatingStore())
-      switch (TLI.getTruncStoreAction(ValVT, StVT.getSimpleVT())) {
+      switch (TLI.getTruncStoreAction(ValVT, StVT)) {
       default: llvm_unreachable("This action is not supported yet!");
       case TargetLowering::Legal:
         return TranslateLegalizeResults(Op, Result);
@@ -293,10 +293,10 @@ SDValue VectorLegalizer::PromoteVectorOp(SDValue Op) {
   // Vector "promotion" is basically just bitcasting and doing the operation
   // in a different type.  For example, x86 promotes ISD::AND on v2i32 to
   // v1i64.
-  MVT VT = Op.getSimpleValueType();
+  EVT VT = Op.getValueType();
   assert(Op.getNode()->getNumValues() == 1 &&
          "Can't promote a vector with multiple results!");
-  MVT NVT = TLI.getTypeToPromoteTo(Op.getOpcode(), VT);
+  EVT NVT = TLI.getTypeToPromoteTo(Op.getOpcode(), VT);
   DebugLoc dl = Op.getDebugLoc();
   SmallVector<SDValue, 4> Operands(Op.getNumOperands());
 

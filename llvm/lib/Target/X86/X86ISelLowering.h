@@ -708,7 +708,7 @@ namespace llvm {
 
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
-    findRepresentativeClass(MVT VT) const;
+    findRepresentativeClass(EVT VT) const;
 
   private:
     /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
@@ -859,8 +859,8 @@ namespace llvm {
 
     virtual bool mayBeEmittedAsTailCall(CallInst *CI) const;
 
-    virtual MVT
-    getTypeForExtArgOrReturn(LLVMContext &Context, MVT VT,
+    virtual EVT
+    getTypeForExtArgOrReturn(LLVMContext &Context, EVT VT,
                              ISD::NodeType ExtendKind) const;
 
     virtual bool

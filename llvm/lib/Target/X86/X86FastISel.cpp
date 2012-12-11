@@ -1909,11 +1909,11 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   ComputeValueVTs(TLI, I->getType(), RetTys);
   for (unsigned i = 0, e = RetTys.size(); i != e; ++i) {
     EVT VT = RetTys[i];
-    MVT RegisterVT = TLI.getRegisterType(I->getParent()->getContext(), VT);
+    EVT RegisterVT = TLI.getRegisterType(I->getParent()->getContext(), VT);
     unsigned NumRegs = TLI.getNumRegisters(I->getParent()->getContext(), VT);
     for (unsigned j = 0; j != NumRegs; ++j) {
       ISD::InputArg MyFlags;
-      MyFlags.VT = RegisterVT;
+      MyFlags.VT = RegisterVT.getSimpleVT();
       MyFlags.Used = !CS.getInstruction()->use_empty();
       if (CS.paramHasAttr(0, Attributes::SExt))
         MyFlags.Flags.setSExt();

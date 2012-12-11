@@ -863,10 +863,10 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
 // due to the common occurrence of cross class copies and subregister insertions
 // and extractions.
 std::pair<const TargetRegisterClass*, uint8_t>
-ARMTargetLowering::findRepresentativeClass(MVT VT) const{
+ARMTargetLowering::findRepresentativeClass(EVT VT) const{
   const TargetRegisterClass *RRC = 0;
   uint8_t Cost = 1;
-  switch (VT.SimpleTy) {
+  switch (VT.getSimpleVT().SimpleTy) {
   default:
     return TargetLowering::findRepresentativeClass(VT);
   // Use DPR as representative register class for all floating point
@@ -1046,7 +1046,7 @@ EVT ARMTargetLowering::getSetCCResultType(EVT VT) const {
 
 /// getRegClassFor - Return the register class that should be used for the
 /// specified value type.
-const TargetRegisterClass *ARMTargetLowering::getRegClassFor(MVT VT) const {
+const TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
   // Map v4i64 to QQ registers but do not make the type legal. Similarly map
   // v8i64 to QQQQ registers. v4i64 and v8i64 are only used for REG_SEQUENCE to
   // load / store 4 to 8 consecutive D registers.

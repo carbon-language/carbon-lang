@@ -1472,10 +1472,10 @@ getPICJumpTableRelocBaseExpr(const MachineFunction *MF, unsigned JTI,
 
 // FIXME: Why this routine is here? Move to RegInfo!
 std::pair<const TargetRegisterClass*, uint8_t>
-X86TargetLowering::findRepresentativeClass(MVT VT) const{
+X86TargetLowering::findRepresentativeClass(EVT VT) const{
   const TargetRegisterClass *RRC = 0;
   uint8_t Cost = 1;
-  switch (VT.SimpleTy) {
+  switch (VT.getSimpleVT().SimpleTy) {
   default:
     return TargetLowering::findRepresentativeClass(VT);
   case MVT::i8: case MVT::i16: case MVT::i32: case MVT::i64:
@@ -1689,8 +1689,8 @@ bool X86TargetLowering::isUsedByReturnOnly(SDNode *N, SDValue &Chain) const {
   return true;
 }
 
-MVT
-X86TargetLowering::getTypeForExtArgOrReturn(LLVMContext &Context, MVT VT,
+EVT
+X86TargetLowering::getTypeForExtArgOrReturn(LLVMContext &Context, EVT VT,
                                             ISD::NodeType ExtendKind) const {
   MVT ReturnMVT;
   // TODO: Is this also valid on 32-bit?
@@ -1699,7 +1699,7 @@ X86TargetLowering::getTypeForExtArgOrReturn(LLVMContext &Context, MVT VT,
   else
     ReturnMVT = MVT::i32;
 
-  MVT MinVT = getRegisterType(Context, ReturnMVT);
+  EVT MinVT = getRegisterType(Context, ReturnMVT);
   return VT.bitsLT(MinVT) ? MinVT : VT;
 }
 

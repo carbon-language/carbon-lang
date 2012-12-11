@@ -99,7 +99,7 @@ EmitCopyFromReg(SDNode *Node, unsigned ResNo, bool IsClone, bool IsCloned,
   // the CopyToReg'd destination register instead of creating a new vreg.
   bool MatchReg = true;
   const TargetRegisterClass *UseRC = NULL;
-  MVT VT = Node->getSimpleValueType(ResNo);
+  EVT VT = Node->getValueType(ResNo);
 
   // Stick to the preferred register classes for legal types.
   if (TLI->isTypeLegal(VT))
@@ -272,8 +272,7 @@ unsigned InstrEmitter::getVR(SDValue Op,
     // IMPLICIT_DEF can produce any type of result so its MCInstrDesc
     // does not include operand register class info.
     if (!VReg) {
-      const TargetRegisterClass *RC =
-        TLI->getRegClassFor(Op.getSimpleValueType());
+      const TargetRegisterClass *RC = TLI->getRegClassFor(Op.getValueType());
       VReg = MRI->createVirtualRegister(RC);
     }
     BuildMI(*MBB, InsertPos, Op.getDebugLoc(),
@@ -427,7 +426,7 @@ void InstrEmitter::AddOperand(MachineInstr *MI, SDValue Op,
 }
 
 unsigned InstrEmitter::ConstrainForSubReg(unsigned VReg, unsigned SubIdx,
-                                          MVT VT, DebugLoc DL) {
+                                          EVT VT, DebugLoc DL) {
   const TargetRegisterClass *VRC = MRI->getRegClass(VReg);
   const TargetRegisterClass *RC = TRI->getSubClassWithSubReg(VRC, SubIdx);
 
@@ -478,8 +477,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     // constraints on the %dst register, COPY can target all legal register
     // classes.
     unsigned SubIdx = cast<ConstantSDNode>(Node->getOperand(1))->getZExtValue();
-    const TargetRegisterClass *TRC =
-      TLI->getRegClassFor(Node->getSimpleValueType(0));
+    const TargetRegisterClass *TRC = TLI->getRegClassFor(Node->getValueType(0));
 
     unsigned VReg = getVR(Node->getOperand(0), VRBaseMap);
     MachineInstr *DefMI = MRI->getVRegDef(VReg);
@@ -502,7 +500,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
       // constrain its register class or issue a COPY to a compatible register
       // class.
       VReg = ConstrainForSubReg(VReg, SubIdx,
-                                Node->getOperand(0).getSimpleValueType(),
+                                Node->getOperand(0).getValueType(),
                                 Node->getDebugLoc());
 
       // Create the destreg if it is missing.
@@ -534,7 +532,7 @@ void InstrEmitter::EmitSubregNode(SDNode *Node,
     //
     // There is no constraint on the %src register class.
     //
-    const TargetRegisterClass *SRC = TLI->getRegClassFor(Node->getSimpleValueType(0));
+    const TargetRegisterClass *SRC = TLI->getRegClassFor(Node->getValueType(0));
     SRC = TRI->getSubClassWithSubReg(SRC, SubIdx);
     assert(SRC && "No register class supports VT and SubIdx for INSERT_SUBREG");
 

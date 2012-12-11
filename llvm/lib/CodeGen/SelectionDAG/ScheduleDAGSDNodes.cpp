@@ -562,7 +562,7 @@ void ScheduleDAGSDNodes::RegDefIter::Advance() {
     for (;DefIdx < NodeNumDefs; ++DefIdx) {
       if (!Node->hasAnyUseOfValue(DefIdx))
         continue;
-      ValueType = Node->getSimpleValueType(DefIdx);
+      ValueType = Node->getValueType(DefIdx);
       ++DefIdx;
       return; // Found a normal regdef.
     }

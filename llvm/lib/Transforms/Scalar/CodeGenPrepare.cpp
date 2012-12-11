@@ -1093,7 +1093,7 @@ bool CodeGenPrepare::MoveExtToFormExtLoad(Instruction *I) {
     assert(isa<SExtInst>(I) && "Unexpected ext type!");
     LType = ISD::SEXTLOAD;
   }
-  if (TLI && !TLI->isLoadExtLegal(LType, TLI->getSimpleValueType(LI->getType())))
+  if (TLI && !TLI->isLoadExtLegal(LType, TLI->getValueType(LI->getType())))
     return false;
 
   // Move the extend into the same block as the load, so that SelectionDAG

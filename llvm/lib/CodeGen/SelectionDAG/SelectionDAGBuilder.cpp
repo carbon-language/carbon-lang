@@ -227,17 +227,15 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
 
   // Handle a multi-element vector.
   if (NumParts > 1) {
-    EVT IntermediateVT;
-    MVT RegisterVT;
+    EVT IntermediateVT, RegisterVT;
     unsigned NumIntermediates;
     unsigned NumRegs =
     TLI.getVectorTypeBreakdown(*DAG.getContext(), ValueVT, IntermediateVT,
                                NumIntermediates, RegisterVT);
     assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
     NumParts = NumRegs; // Silence a compiler warning.
-    assert(RegisterVT == PartVT.getSimpleVT() &&
-           "Part type doesn't match vector breakdown!");
-    assert(RegisterVT == Parts[0].getSimpleValueType() &&
+    assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
+    assert(RegisterVT == Parts[0].getValueType() &&
            "Part type doesn't match part!");
 
     // Assemble the parts into intermediate operands.
@@ -526,8 +524,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
   }
 
   // Handle a multi-element vector.
-  EVT IntermediateVT;
-  MVT RegisterVT;
+  EVT IntermediateVT, RegisterVT;
   unsigned NumIntermediates;
   unsigned NumRegs = TLI.getVectorTypeBreakdown(*DAG.getContext(), ValueVT,
                                                 IntermediateVT,
@@ -536,8 +533,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
 
   assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
   NumParts = NumRegs; // Silence a compiler warning.
-  assert(RegisterVT == PartVT.getSimpleVT() &&
-         "Part type doesn't match vector breakdown!");
+  assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
 
   // Split the vector into intermediate operands.
   SmallVector<SDValue, 8> Ops(NumIntermediates);
@@ -593,7 +589,7 @@ namespace {
     /// getRegisterType member function, however when with physical registers
     /// it is necessary to have a separate record of the types.
     ///
-    SmallVector<MVT, 4> RegVTs;
+    SmallVector<EVT, 4> RegVTs;
 
     /// Regs - This list holds the registers assigned to the values.
     /// Each legal or promoted value requires one register, and each
@@ -604,7 +600,7 @@ namespace {
     RegsForValue() {}
 
     RegsForValue(const SmallVector<unsigned, 4> &regs,
-                 MVT regvt, EVT valuevt)
+                 EVT regvt, EVT valuevt)
       : ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(regs) {}
 
     RegsForValue(LLVMContext &Context, const TargetLowering &tli,
@@ -614,7 +610,7 @@ namespace {
       for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
         EVT ValueVT = ValueVTs[Value];
         unsigned NumRegs = tli.getNumRegisters(Context, ValueVT);
-        MVT RegisterVT = tli.getRegisterType(Context, ValueVT);
+        EVT RegisterVT = tli.getRegisterType(Context, ValueVT);
         for (unsigned i = 0; i != NumRegs; ++i)
           Regs.push_back(Reg + i);
         RegVTs.push_back(RegisterVT);
@@ -625,7 +621,7 @@ namespace {
     /// areValueTypesLegal - Return true if types of all the values are legal.
     bool areValueTypesLegal(const TargetLowering &TLI) {
       for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
-        MVT RegisterVT = RegVTs[Value];
+        EVT RegisterVT = RegVTs[Value];
         if (!TLI.isTypeLegal(RegisterVT))
           return false;
       }
@@ -687,7 +683,7 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     // Copy the legal parts from the registers.
     EVT ValueVT = ValueVTs[Value];
     unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
-    MVT RegisterVT = RegVTs[Value];
+    EVT RegisterVT = RegVTs[Value];
 
     Parts.resize(NumRegs);
     for (unsigned i = 0; i != NumRegs; ++i) {
@@ -772,7 +768,7 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
   for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
     EVT ValueVT = ValueVTs[Value];
     unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
-    MVT RegisterVT = RegVTs[Value];
+    EVT RegisterVT = RegVTs[Value];
     ISD::NodeType ExtendKind =
       TLI.isZExtFree(Val, RegisterVT)? ISD::ZERO_EXTEND: ISD::ANY_EXTEND;
 
@@ -840,7 +836,7 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
 
   for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
     unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVTs[Value]);
-    MVT RegisterVT = RegVTs[Value];
+    EVT RegisterVT = RegVTs[Value];
     for (unsigned i = 0; i != NumRegs; ++i) {
       assert(Reg < Regs.size() && "Mismatch in # registers expected");
       Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
@@ -1239,11 +1235,10 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
           ExtendKind = ISD::ZERO_EXTEND;
 
         if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger())
-          VT = TLI.getTypeForExtArgOrReturn(*DAG.getContext(),
-                                            VT.getSimpleVT(), ExtendKind);
+          VT = TLI.getTypeForExtArgOrReturn(*DAG.getContext(), VT, ExtendKind);
 
         unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), VT);
-        MVT PartVT = TLI.getRegisterType(*DAG.getContext(), VT);
+        EVT PartVT = TLI.getRegisterType(*DAG.getContext(), VT);
         SmallVector<SDValue, 4> Parts(NumParts);
         getCopyToParts(DAG, getCurDebugLoc(),
                        SDValue(RetOp.getNode(), RetOp.getResNo() + j),
@@ -1737,7 +1732,7 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
                                              MachineBasicBlock *SwitchBB) {
   // Subtract the minimum value
   SDValue SwitchOp = getValue(B.SValue);
-  MVT VT = SwitchOp.getSimpleValueType();
+  EVT VT = SwitchOp.getValueType();
   SDValue Sub = DAG.getNode(ISD::SUB, getCurDebugLoc(), VT, SwitchOp,
                             DAG.getConstant(B.First, VT));
 
@@ -1800,7 +1795,7 @@ void SelectionDAGBuilder::visitBitTestCase(BitTestBlock &BB,
                                            unsigned Reg,
                                            BitTestCase &B,
                                            MachineBasicBlock *SwitchBB) {
-  MVT VT = BB.RegVT;
+  EVT VT = BB.RegVT;
   SDValue ShiftOp = DAG.getCopyFromReg(getControlRoot(), getCurDebugLoc(),
                                        Reg, VT);
   SDValue Cmp;
@@ -5749,7 +5744,7 @@ static void GetRegistersForValue(SelectionDAG &DAG,
       // Try to convert to the first EVT that the reg class contains.  If the
       // types are identical size, use a bitcast to convert (e.g. two differing
       // vector types).
-      MVT RegVT = *PhysReg.second->vt_begin();
+      EVT RegVT = *PhysReg.second->vt_begin();
       if (RegVT.getSizeInBits() == OpInfo.ConstraintVT.getSizeInBits()) {
         OpInfo.CallOperand = DAG.getNode(ISD::BITCAST, DL,
                                          RegVT, OpInfo.CallOperand);
@@ -5759,7 +5754,8 @@ static void GetRegistersForValue(SelectionDAG &DAG,
         // bitcast to the corresponding integer type.  This turns an f64 value
         // into i64, which can be passed with two i32 values on a 32-bit
         // machine.
-        RegVT = MVT::getIntegerVT(OpInfo.ConstraintVT.getSizeInBits());
+        RegVT = EVT::getIntegerVT(Context,
+                                  OpInfo.ConstraintVT.getSizeInBits());
         OpInfo.CallOperand = DAG.getNode(ISD::BITCAST, DL,
                                          RegVT, OpInfo.CallOperand);
         OpInfo.ConstraintVT = RegVT;
@@ -5769,7 +5765,7 @@ static void GetRegistersForValue(SelectionDAG &DAG,
     NumRegs = TLI.getNumRegisters(Context, OpInfo.ConstraintVT);
   }
 
-  MVT RegVT;
+  EVT RegVT;
   EVT ValueVT = OpInfo.ConstraintVT;
 
   // If this is a constraint for a specific physical register, like {r17},
@@ -6149,7 +6145,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
 
           RegsForValue MatchedRegs;
           MatchedRegs.ValueVTs.push_back(InOperandVal.getValueType());
-          MVT RegVT = AsmNodeOperands[CurOp+1].getSimpleValueType();
+          EVT RegVT = AsmNodeOperands[CurOp+1].getValueType();
           MatchedRegs.RegVTs.push_back(RegVT);
           MachineRegisterInfo &RegInfo = DAG.getMachineFunction().getRegInfo();
           for (unsigned i = 0, e = InlineAsm::getNumOperandRegisters(OpFlag);
@@ -6416,7 +6412,7 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
         Flags.setNest();
       Flags.setOrigAlign(OriginalAlignment);
 
-      MVT PartVT = getRegisterType(CLI.RetTy->getContext(), VT);
+      EVT PartVT = getRegisterType(CLI.RetTy->getContext(), VT);
       unsigned NumParts = getNumRegisters(CLI.RetTy->getContext(), VT);
       SmallVector<SDValue, 4> Parts(NumParts);
       ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
@@ -6451,11 +6447,11 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
   ComputeValueVTs(*this, CLI.RetTy, RetTys);
   for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
     EVT VT = RetTys[I];
-    MVT RegisterVT = getRegisterType(CLI.RetTy->getContext(), VT);
+    EVT RegisterVT = getRegisterType(CLI.RetTy->getContext(), VT);
     unsigned NumRegs = getNumRegisters(CLI.RetTy->getContext(), VT);
     for (unsigned i = 0; i != NumRegs; ++i) {
       ISD::InputArg MyFlags;
-      MyFlags.VT = RegisterVT;
+      MyFlags.VT = RegisterVT.getSimpleVT();
       MyFlags.Used = CLI.IsReturnValueUsed;
       if (CLI.RetSExt)
         MyFlags.Flags.setSExt();
@@ -6505,7 +6501,7 @@ TargetLowering::LowerCallTo(TargetLowering::CallLoweringInfo &CLI) const {
   unsigned CurReg = 0;
   for (unsigned I = 0, E = RetTys.size(); I != E; ++I) {
     EVT VT = RetTys[I];
-    MVT RegisterVT = getRegisterType(CLI.RetTy->getContext(), VT);
+    EVT RegisterVT = getRegisterType(CLI.RetTy->getContext(), VT);
     unsigned NumRegs = getNumRegisters(CLI.RetTy->getContext(), VT);
 
     ReturnValues.push_back(getCopyFromParts(CLI.DAG, CLI.DL, &InVals[CurReg],
@@ -6595,7 +6591,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
     // or one register.
     ISD::ArgFlagsTy Flags;
     Flags.setSRet();
-    MVT RegisterVT = TLI.getRegisterType(*DAG.getContext(), ValueVTs[0]);
+    EVT RegisterVT = TLI.getRegisterType(*DAG.getContext(), ValueVTs[0]);
     ISD::InputArg RetArg(Flags, RegisterVT, true, 0, 0);
     Ins.push_back(RetArg);
   }
@@ -6641,7 +6637,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
         Flags.setNest();
       Flags.setOrigAlign(OriginalAlignment);
 
-      MVT RegisterVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
+      EVT RegisterVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
       unsigned NumRegs = TLI.getNumRegisters(*CurDAG->getContext(), VT);
       for (unsigned i = 0; i != NumRegs; ++i) {
         ISD::InputArg MyFlags(Flags, RegisterVT, isArgValueUsed,
@@ -6687,8 +6683,8 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
     // from the sret argument into it.
     SmallVector<EVT, 1> ValueVTs;
     ComputeValueVTs(TLI, PointerType::getUnqual(F.getReturnType()), ValueVTs);
-    MVT VT = ValueVTs[0].getSimpleVT();
-    MVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
+    EVT VT = ValueVTs[0];
+    EVT RegVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
     ISD::NodeType AssertOp = ISD::DELETED_NODE;
     SDValue ArgValue = getCopyFromParts(DAG, dl, &InVals[0], 1,
                                         RegVT, VT, NULL, AssertOp);
@@ -6720,7 +6716,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
     for (unsigned Val = 0; Val != NumValues; ++Val) {
       EVT VT = ValueVTs[Val];
-      MVT PartVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
+      EVT PartVT = TLI.getRegisterType(*CurDAG->getContext(), VT);
       unsigned NumParts = TLI.getNumRegisters(*CurDAG->getContext(), VT);
 
       if (!I->use_empty()) {

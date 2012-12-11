@@ -366,7 +366,7 @@ namespace llvm {
 
     /// getRegClassFor - Return the register class that should be used for the
     /// specified value type.
-    virtual const TargetRegisterClass *getRegClassFor(MVT VT) const;
+    virtual const TargetRegisterClass *getRegClassFor(EVT VT) const;
 
     /// getMaximalGlobalOffset - Returns the maximal possible offset which can
     /// be used for loads / stores from the global.
@@ -394,7 +394,7 @@ namespace llvm {
                                     unsigned Intrinsic) const;
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
-    findRepresentativeClass(MVT VT) const;
+    findRepresentativeClass(EVT VT) const;
 
   private:
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
