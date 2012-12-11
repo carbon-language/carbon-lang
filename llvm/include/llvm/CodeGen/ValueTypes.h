@@ -389,6 +389,27 @@ namespace llvm {
       return getStoreSize() * 8;
     }
 
+    /// Return true if this has more bits than VT.
+    bool bitsGT(MVT VT) const {
+      return getSizeInBits() > VT.getSizeInBits();
+    }
+
+    /// Return true if this has no less bits than VT.
+    bool bitsGE(MVT VT) const {
+      return getSizeInBits() >= VT.getSizeInBits();
+    }
+
+    /// Return true if this has less bits than VT.
+    bool bitsLT(MVT VT) const {
+      return getSizeInBits() < VT.getSizeInBits();
+    }
+
+    /// Return true if this has no more bits than VT.
+    bool bitsLE(MVT VT) const {
+      return getSizeInBits() <= VT.getSizeInBits();
+    }
+
+
     static MVT getFloatingPointVT(unsigned BitWidth) {
       switch (BitWidth) {
       default:

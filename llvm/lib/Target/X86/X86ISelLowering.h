@@ -859,8 +859,8 @@ namespace llvm {
 
     virtual bool mayBeEmittedAsTailCall(CallInst *CI) const;
 
-    virtual EVT
-    getTypeForExtArgOrReturn(LLVMContext &Context, EVT VT,
+    virtual MVT
+    getTypeForExtArgOrReturn(LLVMContext &Context, MVT VT,
                              ISD::NodeType ExtendKind) const;
 
     virtual bool
