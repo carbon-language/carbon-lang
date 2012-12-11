@@ -657,39 +657,6 @@ Value *llvm::SimplifyAddInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
                            RecursionLimit);
 }
 
-/// \brief Accumulate the constant integer offset a GEP represents.
-///
-/// Given a getelementptr instruction/constantexpr, accumulate the constant
-/// offset from the base pointer into the provided APInt 'Offset'. Returns true
-/// if the GEP has all-constant indices. Returns false if any non-constant
-/// index is encountered leaving the 'Offset' in an undefined state. The
-/// 'Offset' APInt must be the bitwidth of the target's pointer size.
-static bool accumulateGEPOffset(const DataLayout &TD, GEPOperator *GEP,
-                                APInt &Offset) {
-  unsigned IntPtrWidth = TD.getPointerSizeInBits();
-  assert(IntPtrWidth == Offset.getBitWidth());
-
-  gep_type_iterator GTI = gep_type_begin(GEP);
-  for (User::op_iterator I = GEP->op_begin() + 1, E = GEP->op_end(); I != E;
-       ++I, ++GTI) {
-    ConstantInt *OpC = dyn_cast<ConstantInt>(*I);
-    if (!OpC) return false;
-    if (OpC->isZero()) continue;
-
-    // Handle a struct index, which adds its field offset to the pointer.
-    if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-      unsigned ElementIdx = OpC->getZExtValue();
-      const StructLayout *SL = TD.getStructLayout(STy);
-      Offset += APInt(IntPtrWidth, SL->getElementOffset(ElementIdx));
-      continue;
-    }
-
-    APInt TypeSize(IntPtrWidth, TD.getTypeAllocSize(GTI.getIndexedType()));
-    Offset += OpC->getValue().sextOrTrunc(IntPtrWidth) * TypeSize;
-  }
-  return true;
-}
-
 /// \brief Compute the base pointer and cumulative constant offsets for V.
 ///
 /// This strips all constant offsets off of V, leaving it the base pointer, and
@@ -710,7 +677,7 @@ static Constant *stripAndComputeConstantOffsets(const DataLayout &TD,
   Visited.insert(V);
   do {
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
-      if (!GEP->isInBounds() || !accumulateGEPOffset(TD, GEP, Offset))
+      if (!GEP->isInBounds() || !GEP->accumulateConstantOffset(TD, Offset))
         break;
       V = GEP->getPointerOperand();
     } else if (Operator::getOpcode(V) == Instruction::BitCast) {

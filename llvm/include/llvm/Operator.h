@@ -16,9 +16,11 @@
 #define LLVM_OPERATOR_H
 
 #include "llvm/Constants.h"
+#include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
 #include "llvm/Type.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
 
 namespace llvm {
 
@@ -430,6 +432,45 @@ public:
     }
     return true;
   }
+
+  /// \brief Accumulate the constant address offset of this GEP if possible.
+  ///
+  /// This routine accepts an APInt into which it will accumulate the constant
+  /// offset of this GEP if the GEP is in fact constant. If the GEP is not
+  /// all-constant, it returns false and the value of the offset APInt is
+  /// undefined (it is *not* preserved!). The APInt passed into this routine
+  /// must be at least as wide as the IntPtr type for the address space of
+  /// the base GEP pointer.
+  bool accumulateConstantOffset(const DataLayout &DL, APInt &Offset) const {
+    assert(Offset.getBitWidth() ==
+           DL.getPointerSizeInBits(getPointerAddressSpace()) &&
+           "The offset must have exactly as many bits as our pointer.");
+
+    for (gep_type_iterator GTI = gep_type_begin(this), GTE = gep_type_end(this);
+         GTI != GTE; ++GTI) {
+      ConstantInt *OpC = dyn_cast<ConstantInt>(GTI.getOperand());
+      if (!OpC)
+        return false;
+      if (OpC->isZero())
+        continue;
+
+      // Handle a struct index, which adds its field offset to the pointer.
+      if (StructType *STy = dyn_cast<StructType>(*GTI)) {
+        unsigned ElementIdx = OpC->getZExtValue();
+        const StructLayout *SL = DL.getStructLayout(STy);
+        Offset += APInt(Offset.getBitWidth(),
+                        SL->getElementOffset(ElementIdx));
+        continue;
+      }
+
+      // For array or vector indices, scale the index by the size of the type.
+      APInt Index = OpC->getValue().sextOrTrunc(Offset.getBitWidth());
+      Offset += Index * APInt(Offset.getBitWidth(),
+                              DL.getTypeAllocSize(GTI.getIndexedType()));
+    }
+    return true;
+  }
+
 };
 
 } // End llvm namespace
