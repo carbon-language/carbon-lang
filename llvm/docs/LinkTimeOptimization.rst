@@ -85,9 +85,10 @@ invokes system linker.
     return foo1();
   }
 
-.. code-block:: bash
+To compile, run:
 
-  --- command lines ---
+.. code-block:: console
+
   % clang -emit-llvm -c a.c -o a.o   # <-- a.o is LLVM bitcode file
   % clang -c main.c -o main.o        # <-- main.o is native object file
   % clang a.o main.o -o main         # <-- standard link command without modifications
@@ -96,7 +97,7 @@ invokes system linker.
   visible symbol defined in LLVM bitcode file. The linker completes its usual
   symbol resolution pass and finds that ``foo2()`` is not used
   anywhere. This information is used by the LLVM optimizer and it
-  removes ``foo2()``.</li>
+  removes ``foo2()``.
 
 * As soon as ``foo2()`` is removed, the optimizer recognizes that condition ``i
   < 0`` is always false, which means ``foo3()`` is never used. Hence, the
