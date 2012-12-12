@@ -677,3 +677,29 @@ define i1 @test66(i64 %A, i64 %B) {
 ; CHECK-NEXT: ret i1 true
   ret i1 %cmp
 }
+
+define i1 @test67(i32 %A, i32 %B) {
+  %neg = xor i32 %A, -1
+  %shl = shl i32 1, %B
+  %and = and i32 %shl, %neg
+  %cmp = icmp ne i32 %and, 0
+; CHECK: @test67
+; CHECK-NEXT: %shl = shl i32 1, %B
+; CHECK-NEXT: %1 = and i32 %shl, %A
+; CHECK-NEXT: %cmp = icmp eq i32 %1, 0
+; CHECK-NEXT: ret i1 %cmp
+  ret i1 %cmp
+}
+
+define i1 @test68(i32 %A, i32 %B) {
+  %neg = xor i32 %A, -1
+  %shl = shl i32 1, %B
+  %and = and i32 %shl, %neg
+  %cmp = icmp eq i32 %and, 0
+; CHECK: @test68
+; CHECK-NEXT: %shl = shl i32 1, %B
+; CHECK-NEXT: %1 = and i32 %shl, %A
+; CHECK-NEXT: %cmp = icmp ne i32 %1, 0
+; CHECK-NEXT: ret i1 %cmp
+  ret i1 %cmp
+}
