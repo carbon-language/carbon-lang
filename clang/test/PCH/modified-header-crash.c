@@ -5,6 +5,9 @@
 // RUN: echo 'int foobar;' >> %t.h
 // RUN: not %clang_cc1 %s -include-pch %t -fsyntax-only
 
+// FIXME: It is intended to suppress this on win32.
+// REQUIRES: ansi-escape-sequences
+
 void f(void) {
   foo = 3;
 }
