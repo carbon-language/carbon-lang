@@ -88,6 +88,34 @@ struct match_zero {
 /// zero_initializer for vectors and ConstantPointerNull for pointers.
 inline match_zero m_Zero() { return match_zero(); }
 
+struct match_neg_zero {
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (const Constant *C = dyn_cast<Constant>(V))
+      return C->isNegativeZeroValue();
+    return false;
+  }
+};
+
+/// m_NegZero() - Match an arbitrary zero/null constant.  This includes
+/// zero_initializer for vectors and ConstantPointerNull for pointers. For
+/// floating point constants, this will match negative zero but not positive
+/// zero
+inline match_neg_zero m_NegZero() { return match_neg_zero(); }
+
+struct match_any_zero {
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (const Constant *C = dyn_cast<Constant>(V))
+      return C->isNullValue() || C->isNegativeZeroValue();
+    return false;
+  }
+};
+
+/// m_AnyZero() - Match an arbitrary zero/null constant.  This includes
+/// zero_initializer for vectors and ConstantPointerNull for pointers. For
+/// floating point constants, this will match negative zero and positive zero
+inline match_any_zero m_AnyZero() { return match_any_zero(); }
 
 struct apint_match {
   const APInt *&Res;
@@ -236,6 +264,9 @@ inline bind_ty<ConstantInt> m_ConstantInt(ConstantInt *&CI) { return CI; }
 /// m_Constant - Match a Constant, capturing the value if we match.
 inline bind_ty<Constant> m_Constant(Constant *&C) { return C; }
 
+/// m_ConstantFP - Match a ConstantFP, capturing the value if we match.
+inline bind_ty<ConstantFP> m_ConstantFP(ConstantFP *&C) { return C; }
+
 /// specificval_ty - Match a specified Value*.
 struct specificval_ty {
   const Value *Val;
@@ -249,6 +280,31 @@ struct specificval_ty {
 
 /// m_Specific - Match if we have a specific specified value.
 inline specificval_ty m_Specific(const Value *V) { return V; }
+
+/// Match a specified floating point value or vector of all elements of that
+/// value.
+struct specific_fpval {
+  double Val;
+  specific_fpval(double V) : Val(V) {}
+
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (const ConstantFP *CFP = dyn_cast<ConstantFP>(V))
+      return CFP->isExactlyValue(Val);
+    if (V->getType()->isVectorTy())
+      if (const Constant *C = dyn_cast<Constant>(V))
+        if (ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(C->getSplatValue()))
+          return CFP->isExactlyValue(Val);
+    return false;
+  }
+};
+
+/// Match a specific floating point value or vector with all elements equal to
+/// the value.
+inline specific_fpval m_SpecificFP(double V) { return specific_fpval(V); }
+
+/// Match a float 1.0 or vector with all elements equal to 1.0.
+inline specific_fpval m_FPOne() { return m_SpecificFP(1.0); }
 
 struct bind_const_intval_ty {
   uint64_t &VR;
