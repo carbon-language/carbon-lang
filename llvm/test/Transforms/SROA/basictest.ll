@@ -575,8 +575,8 @@ entry:
   store i8 0, i8* %a2ptr
   %aiptr = bitcast [3 x i8]* %a to i24*
   %ai = load i24* %aiptr
-; CHCEK-NOT: store
-; CHCEK-NOT: load
+; CHECK-NOT: store
+; CHECK-NOT: load
 ; CHECK:      %[[ext2:.*]] = zext i8 0 to i24
 ; CHECK-NEXT: %[[shift2:.*]] = shl i24 %[[ext2]], 16
 ; CHECK-NEXT: %[[mask2:.*]] = and i24 undef, 65535
@@ -597,8 +597,8 @@ entry:
   %b1 = load i8* %b1ptr
   %b2ptr = getelementptr [3 x i8]* %b, i64 0, i32 2
   %b2 = load i8* %b2ptr
-; CHCEK-NOT: store
-; CHCEK-NOT: load
+; CHECK-NOT: store
+; CHECK-NOT: load
 ; CHECK:      %[[trunc0:.*]] = trunc i24 %[[insert0]] to i8
 ; CHECK-NEXT: %[[shift1:.*]] = lshr i24 %[[insert0]], 8
 ; CHECK-NEXT: %[[trunc1:.*]] = trunc i24 %[[shift1]] to i8
