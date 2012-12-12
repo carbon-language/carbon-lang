@@ -79,7 +79,7 @@ grabbing the wrong linker/assembler/etc, there are two ways to fix it:
 #. Run ``configure`` with an alternative ``PATH`` that is correct. In a
    Bourne compatible shell, the syntax would be:
 
-.. code-block:: bash
+.. code-block:: console
 
    % PATH=[the path without the bad program] ./configure ...
 
@@ -106,7 +106,7 @@ I've modified a Makefile in my source tree, but my build tree keeps using the ol
 If the Makefile already exists in your object tree, you can just run the
 following command in the top level directory of your object tree:
 
-.. code-block:: bash
+.. code-block:: console
 
    % ./config.status <relative path to Makefile>;
 
@@ -133,13 +133,13 @@ This is most likely occurring because you built a profile or release
 
 For example, if you built LLVM with the command:
 
-.. code-block:: bash
+.. code-block:: console
 
    % gmake ENABLE_PROFILING=1
 
 ...then you must run the tests with the following commands:
 
-.. code-block:: bash
+.. code-block:: console
 
    % cd llvm/test
    % gmake ENABLE_PROFILING=1
@@ -175,17 +175,17 @@ After Subversion update, rebuilding gives the error "No rule to make target".
 -----------------------------------------------------------------------------
 If the error is of the form:
 
-.. code-block:: bash
+.. code-block:: console
 
    gmake[2]: *** No rule to make target `/path/to/somefile',
-   needed by `/path/to/another/file.d'.
+                 needed by `/path/to/another/file.d'.
    Stop.
 
 This may occur anytime files are moved within the Subversion repository or
 removed entirely.  In this case, the best solution is to erase all ``.d``
 files, which list dependencies for source files, and rebuild:
 
-.. code-block:: bash
+.. code-block:: console
 
    % cd $LLVM_OBJ_DIR
    % rm -f `find . -name \*\.d`
