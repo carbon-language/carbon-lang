@@ -9,6 +9,27 @@
 //
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
+// This file handles synchronization via IO.
+// People use IO for synchronization along the lines of:
+//
+// int X;
+// int client_socket;  // initialized elsewhere
+// int server_socket;  // initialized elsewhere
+//
+// Thread 1:
+// X = 42;
+// send(client_socket, ...);
+//
+// Thread 2:
+// if (recv(server_socket, ...) > 0)
+//   assert(X == 42);
+//
+// This file determines the scope of the file descriptor (pipe, socket,
+// all local files, etc) and executes acquire and release operations on
+// the scope as necessary.  Some scopes are very fine grained (e.g. pipe
+// operations synchronize only with operations on the same pipe), while
+// others are corse-grained (e.g. all operations on local files synchronize
+// with each other).
 //===----------------------------------------------------------------------===//
 #ifndef TSAN_FD_H
 #define TSAN_FD_H
