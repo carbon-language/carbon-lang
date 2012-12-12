@@ -97,11 +97,14 @@ struct ParseStatementInfo {
   /// Opcode - The opcode from the last parsed instruction.
   unsigned Opcode;
 
+  /// Error - Was there an error parsing the inline assembly?
+  bool ParseError;
+
   SmallVectorImpl<AsmRewrite> *AsmRewrites;
 
-  ParseStatementInfo() : Opcode(~0U), AsmRewrites(0) {}
+  ParseStatementInfo() : Opcode(~0U), ParseError(false), AsmRewrites(0) {}
   ParseStatementInfo(SmallVectorImpl<AsmRewrite> *rewrites)
-    : Opcode(~0), AsmRewrites(rewrites) {}
+    : Opcode(~0), ParseError(false), AsmRewrites(rewrites) {}
 
   ~ParseStatementInfo() {
     // Free any parsed operands.
@@ -1385,6 +1388,7 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
   ParseInstructionInfo IInfo(Info.AsmRewrites);
   bool HadError = getTargetParser().ParseInstruction(IInfo, OpcodeStr.str(),
                                                      IDLoc,Info.ParsedOperands);
+  Info.ParseError = HadError;
 
   // Dump the parsed representation, if requested.
   if (getShowParsedOperands()) {
@@ -3703,6 +3707,9 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
   while (getLexer().isNot(AsmToken::Eof)) {
     ParseStatementInfo Info(&AsmStrRewrites);
     if (ParseStatement(Info))
+      return true;
+
+    if (Info.ParseError)
       return true;
 
     if (Info.Opcode != ~0U) {
