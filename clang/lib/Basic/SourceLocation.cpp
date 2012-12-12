@@ -65,7 +65,7 @@ std::string SourceLocation::printToString(const SourceManager &SM) const {
   std::string S;
   llvm::raw_string_ostream OS(S);
   print(OS, SM);
-  return S;
+  return OS.str();
 }
 
 void SourceLocation::dump(const SourceManager &SM) const {
