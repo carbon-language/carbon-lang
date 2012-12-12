@@ -173,8 +173,9 @@ CommandObjectHelp::DoExecute (Args& command, CommandReturnObject &result)
                     {
                             // Also emit a warning about using "--" in case you are using a command that takes options and arguments.
                             m_interpreter.OutputFormattedHelpText (output_strm, "", "",
-                                                                   "\nThis command takes options and arguments, if your arguments look like option specifiers"
-                                                                   " you must use '--' to terminate the options before starting to give the arguments.", 1);
+                                                                   "\nThis command takes options and free-form arguments.  If your arguments resemble"
+                                                                   " option specifiers (i.e., they start with a - or --), you must use ' -- ' between"
+                                                                   " the end of the command options and the beginning of the arguments.", 1);
                     }
 
                     // Mark this help command with a success status.
