@@ -130,7 +130,8 @@ public:
                                 const Diagnostic &Info) {
     if (DiagnosticIDs::isARCDiagnostic(Info.getID()) ||
         level >= DiagnosticsEngine::Error || level == DiagnosticsEngine::Note) {
-      CapturedDiags.push_back(StoredDiagnostic(level, Info));
+      if (Info.getLocation().isValid())
+        CapturedDiags.push_back(StoredDiagnostic(level, Info));
       return;
     }
 
