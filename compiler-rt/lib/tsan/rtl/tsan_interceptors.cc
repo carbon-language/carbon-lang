@@ -22,6 +22,7 @@
 #include "tsan_platform.h"
 #include "tsan_rtl.h"
 #include "tsan_mman.h"
+#include "tsan_fd.h"
 
 using namespace __tsan;  // NOLINT
 
@@ -54,6 +55,7 @@ extern "C" void *pthread_self();
 extern "C" void _exit(int status);
 extern "C" int __cxa_atexit(void (*func)(void *arg), void *arg, void *dso);
 extern "C" int *__errno_location();
+extern "C" int fileno(void *stream);
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int kPthreadAttrSize = 56;
@@ -128,10 +130,8 @@ static SignalContext *SigCtx(ThreadState *thr) {
   SignalContext *ctx = (SignalContext*)thr->signal_ctx;
   if (ctx == 0 && thr->is_alive) {
     ScopedInRtl in_rtl;
-    ctx = (SignalContext*)internal_alloc(
-        MBlockSignal, sizeof(*ctx));
-    MemoryResetRange(thr, 0, (uptr)ctx, sizeof(*ctx));
-    internal_memset(ctx, 0, sizeof(*ctx));
+    ctx = (SignalContext*)MmapOrDie(sizeof(*ctx), "SignalContext");
+    MemoryResetRange(thr, (uptr)&SigCtx, (uptr)ctx, sizeof(*ctx));
     thr->signal_ctx = ctx;
   }
   return ctx;
@@ -308,216 +308,6 @@ TSAN_INTERCEPTOR(void, siglongjmp, void *env, int val) {
   SCOPED_TSAN_INTERCEPTOR(siglongjmp, env, val);
   Printf("ThreadSanitizer: siglongjmp() is not supported\n");
   Die();
-}
-
-enum FdType {
-  FdGlobal,  // Something we don't know about, global sync.
-  FdNone,  // Does not require any sync.
-  FdFile,
-  FdSock,
-  FdPipe,
-  FdEvent,  // see eventfd()
-  FdPoll
-};
-
-struct FdDesc {
-  FdType type;
-  u64 sync;
-};
-
-struct FdContext {
-  static const int kMaxFds = 10 * 1024;  // Everything else is synced globally.
-  FdDesc desc[kMaxFds];
-  // Addresses used for synchronization.
-  u64 fdglobal;
-  u64 fdfile;
-  u64 fdsock;
-  u64 fdpipe;
-  u64 fdpoll;
-  u64 fdevent;
-};
-
-static FdContext fdctx;
-
-static void FdInit() {
-  fdctx.desc[0].type = FdNone;
-  fdctx.desc[1].type = FdNone;
-  fdctx.desc[2].type = FdNone;
-}
-
-static void *FdAddr(int fd) {
-  if (fd >= FdContext::kMaxFds)
-    return &fdctx.fdglobal;
-  FdDesc *desc = &fdctx.desc[fd];
-  if (desc->type == FdNone)
-    return 0;
-  if (desc->type == FdGlobal)
-    return &fdctx.fdglobal;
-  if (desc->type == FdFile)
-    return &fdctx.fdfile;
-  if (desc->type == FdSock)
-    return &fdctx.fdsock;
-  if (desc->type == FdPipe)
-    return &fdctx.fdpipe;
-  if (desc->type == FdEvent)
-    return &fdctx.fdevent;
-  if (desc->type == FdPoll)
-    return &fdctx.fdpoll;
-  CHECK(0);
-  return 0;
-}
-
-static void FdAcquire(ThreadState *thr, uptr pc, int fd) {
-  void *addr = FdAddr(fd);
-  DPrintf("#%d: FdAcquire(%d) -> %p\n", thr->tid, fd, addr);
-  if (addr)
-    Acquire(thr, pc, (uptr)addr);
-  if (fd < FdContext::kMaxFds)
-    MemoryRead8Byte(thr, pc, (uptr)&fdctx.desc[fd].sync);
-}
-
-static void FdRelease(ThreadState *thr, uptr pc, int fd) {
-  void *addr = FdAddr(fd);
-  DPrintf("#%d: FdRelease(%d) -> %p\n", thr->tid, fd, addr);
-  if (addr)
-    Release(thr, pc, (uptr)addr);
-  if (fd < FdContext::kMaxFds)
-    MemoryRead8Byte(thr, pc, (uptr)&fdctx.desc[fd].sync);
-}
-
-static void FdClose(ThreadState *thr, uptr pc, int fd) {
-  if (fd >= FdContext::kMaxFds)
-    return;
-  FdDesc *desc = &fdctx.desc[fd];
-  SyncVar *s = CTX()->synctab.GetAndRemove(thr, pc, (uptr)&desc->sync);
-  if (s)
-    DestroyAndFree(s);
-  // FIXME(dvyukov): change to FdNone once we handle all fd operations.
-  desc->type = FdGlobal;
-  // To catch races between fd usage and close.
-  MemoryWrite8Byte(thr, pc, (uptr)&desc->sync);
-  // We need to clear it, because if we do not intercept any call out there
-  // that creates fd, we will hit false postives.
-  MemoryResetRange(thr, pc, (uptr)&desc->sync, sizeof(desc->sync));
-}
-
-static void FdFileCreate(ThreadState *thr, uptr pc, int fd) {
-  if (fd >= FdContext::kMaxFds)
-    return;
-  FdDesc *desc = &fdctx.desc[fd];
-  desc->type = FdFile;
-  // To catch races between fd usage and open.
-  MemoryRangeImitateWrite(thr, pc, (uptr)&desc->sync, sizeof(desc->sync));
-}
-
-static void FdDup(ThreadState *thr, uptr pc, int oldfd, int newfd) {
-  if (oldfd >= FdContext::kMaxFds || newfd >= FdContext::kMaxFds) {
-    if (oldfd < FdContext::kMaxFds) {
-      // FIXME(dvyukov): here we lose old sync object associated with the fd,
-      // this can lead to false positives.
-      FdDesc *odesc = &fdctx.desc[oldfd];
-      odesc->type = FdGlobal;
-    }
-    if (newfd < FdContext::kMaxFds) {
-      FdClose(thr, pc, newfd);
-      FdDesc *ndesc = &fdctx.desc[newfd];
-      ndesc->type = FdGlobal;
-    }
-    return;
-  }
-
-  FdClose(thr, pc, newfd);
-  FdDesc *ndesc = &fdctx.desc[newfd];
-  ndesc->type = FdFile;
-  // To catch races between fd usage and open.
-  MemoryRangeImitateWrite(thr, pc, (uptr)&ndesc->sync, sizeof(ndesc->sync));
-}
-
-static void FdPipeCreate(ThreadState *thr, uptr pc, int rfd, int wfd) {
-  if (rfd >= FdContext::kMaxFds || wfd >= FdContext::kMaxFds) {
-    if (rfd < FdContext::kMaxFds) {
-      FdDesc *rdesc = &fdctx.desc[rfd];
-      rdesc->type = FdGlobal;
-    }
-    if (wfd < FdContext::kMaxFds) {
-      FdDesc *wdesc = &fdctx.desc[wfd];
-      wdesc->type = FdGlobal;
-    }
-    return;
-  }
-
-  FdDesc *rdesc = &fdctx.desc[rfd];
-  rdesc->type = FdPipe;
-  // To catch races between fd usage and open.
-  MemoryRangeImitateWrite(thr, pc, (uptr)&rdesc->sync, sizeof(rdesc->sync));
-
-  FdDesc *wdesc = &fdctx.desc[wfd];
-  wdesc->type = FdPipe;
-  // To catch races between fd usage and open.
-  MemoryRangeImitateWrite(thr, pc, (uptr)&wdesc->sync, sizeof(rdesc->sync));
-
-  DPrintf("#%d: FdCreatePipe(%d, %d)\n", thr->tid, rfd, wfd);
-}
-
-static void FdEventCreate(ThreadState *thr, uptr pc, int fd) {
-  if (fd >= FdContext::kMaxFds)
-    return;
-  FdDesc *desc = &fdctx.desc[fd];
-  desc->type = FdEvent;
-  // To catch races between fd usage and open.
-  MemoryRangeImitateWrite(thr, pc, (uptr)&desc->sync, sizeof(desc->sync));
-}
-
-static void FdPollCreate(ThreadState *thr, uptr pc, int fd) {
-  if (fd >= FdContext::kMaxFds)
-    return;
-  FdDesc *desc = &fdctx.desc[fd];
-  desc->type = FdPoll;
-  // To catch races between fd usage and open.
-  MemoryRangeImitateWrite(thr, pc, (uptr)&desc->sync, sizeof(desc->sync));
-}
-
-static void FdSocketCreate(ThreadState *thr, uptr pc, int fd) {
-  if (fd >= FdContext::kMaxFds)
-    return;
-  FdDesc *desc = &fdctx.desc[fd];
-  // It can be UDP socket, let's assume they are not used for synchronization.
-  desc->type = FdNone;
-  // To catch races between fd usage and open.
-  MemoryRangeImitateWrite(thr, pc, (uptr)&desc->sync, sizeof(desc->sync));
-}
-
-static void FdSocketAccept(ThreadState *thr, uptr pc, int fd, int newfd) {
-  if (fd < FdContext::kMaxFds) {
-    FdDesc *desc = &fdctx.desc[fd];
-    desc->type = FdNone;
-    MemoryRead8Byte(thr, pc, (uptr)&desc->sync);
-  }
-  if (newfd < FdContext::kMaxFds) {
-    FdDesc *desc = &fdctx.desc[newfd];
-    desc->type = FdSock;
-    MemoryWrite8Byte(thr, pc, (uptr)&desc->sync);
-  }
-}
-
-static void FdSocketConnect(ThreadState *thr, uptr pc, int fd) {
-  if (fd >= FdContext::kMaxFds)
-    return;
-  FdDesc *desc = &fdctx.desc[fd];
-  desc->type = FdSock;
-  MemoryWrite8Byte(thr, pc, (uptr)&desc->sync);
-}
-
-static uptr file2addr(char *path) {
-  (void)path;
-  static u64 addr;
-  return (uptr)&addr;
-}
-
-static uptr dir2addr(char *path) {
-  (void)path;
-  static u64 addr;
-  return (uptr)&addr;
 }
 
 TSAN_INTERCEPTOR(void*, malloc, uptr size) {
@@ -850,7 +640,7 @@ static void thread_finalize(void *v) {
     SignalContext *sctx = thr->signal_ctx;
     if (sctx) {
       thr->signal_ctx = 0;
-      internal_free(sctx);
+      UnmapOrDie(sctx, sizeof(*sctx));
     }
   }
 }
@@ -1124,11 +914,13 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_unlock, void *m) {
   return res;
 }
 
+/*
 TSAN_INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_init, c, a);
   int res = REAL(pthread_cond_init)(c, a);
   return res;
 }
+*/
 
 TSAN_INTERCEPTOR(int, pthread_cond_destroy, void *c) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_destroy, c);
@@ -1278,9 +1070,25 @@ TSAN_INTERCEPTOR(int, open, const char *name, int flags, int mode) {
   return fd;
 }
 
+TSAN_INTERCEPTOR(int, open64, const char *name, int flags, int mode) {
+  SCOPED_TSAN_INTERCEPTOR(open64, name, flags, mode);
+  int fd = REAL(open64)(name, flags, mode);
+  if (fd >= 0)
+    FdFileCreate(thr, pc, fd);
+  return fd;
+}
+
 TSAN_INTERCEPTOR(int, creat, const char *name, int mode) {
   SCOPED_TSAN_INTERCEPTOR(creat, name, mode);
   int fd = REAL(creat)(name, mode);
+  if (fd >= 0)
+    FdFileCreate(thr, pc, fd);
+  return fd;
+}
+
+TSAN_INTERCEPTOR(int, creat64, const char *name, int mode) {
+  SCOPED_TSAN_INTERCEPTOR(creat64, name, mode);
+  int fd = REAL(creat64)(name, mode);
   if (fd >= 0)
     FdFileCreate(thr, pc, fd);
   return fd;
@@ -1368,8 +1176,16 @@ TSAN_INTERCEPTOR(int, epoll_create1, int flags) {
 
 TSAN_INTERCEPTOR(int, close, int fd) {
   SCOPED_TSAN_INTERCEPTOR(close, fd);
-  FdClose(thr, pc, fd);
+  if (fd >= 0)
+    FdClose(thr, pc, fd);
   return REAL(close)(fd);
+}
+
+TSAN_INTERCEPTOR(int, __close, int fd) {
+  SCOPED_TSAN_INTERCEPTOR(__close, fd);
+  if (fd >= 0)
+    FdClose(thr, pc, fd);
+  return REAL(__close)(fd);
 }
 
 TSAN_INTERCEPTOR(int, pipe, int *pipefd) {
@@ -1502,7 +1318,7 @@ TSAN_INTERCEPTOR(long_t, recvmsg, int fd, void *msg, int flags) {
 
 TSAN_INTERCEPTOR(int, unlink, char *path) {
   SCOPED_TSAN_INTERCEPTOR(unlink, path);
-  Release(thr, pc, file2addr(path));
+  Release(thr, pc, File2addr(path));
   int res = REAL(unlink)(path);
   return res;
 }
@@ -1510,7 +1326,40 @@ TSAN_INTERCEPTOR(int, unlink, char *path) {
 TSAN_INTERCEPTOR(void*, fopen, char *path, char *mode) {
   SCOPED_TSAN_INTERCEPTOR(fopen, path, mode);
   void *res = REAL(fopen)(path, mode);
-  Acquire(thr, pc, file2addr(path));
+  Acquire(thr, pc, File2addr(path));
+  if (res) {
+    int fd = fileno(res);
+    if (fd >= 0)
+      FdFileCreate(thr, pc, fd);
+  }
+  return res;
+}
+
+TSAN_INTERCEPTOR(void*, freopen, char *path, char *mode, void *stream) {
+  SCOPED_TSAN_INTERCEPTOR(freopen, path, mode, stream);
+  if (stream) {
+    int fd = fileno(stream);
+    if (fd >= 0)
+      FdClose(thr, pc, fd);
+  }
+  void *res = REAL(freopen)(path, mode, stream);
+  Acquire(thr, pc, File2addr(path));
+  if (res) {
+    int fd = fileno(res);
+    if (fd >= 0)
+      FdFileCreate(thr, pc, fd);
+  }
+  return res;
+}
+
+TSAN_INTERCEPTOR(int, fclose, void *stream) {
+  SCOPED_TSAN_INTERCEPTOR(fclose, stream);
+  if (stream) {
+    int fd = fileno(stream);
+    if (fd >= 0)
+      FdClose(thr, pc, fd);
+  }
+  int res = REAL(fclose)(stream);
   return res;
 }
 
@@ -1534,7 +1383,7 @@ TSAN_INTERCEPTOR(int, puts, const char *s) {
 
 TSAN_INTERCEPTOR(int, rmdir, char *path) {
   SCOPED_TSAN_INTERCEPTOR(rmdir, path);
-  Release(thr, pc, dir2addr(path));
+  Release(thr, pc, Dir2addr(path));
   int res = REAL(rmdir)(path);
   return res;
 }
@@ -1542,7 +1391,8 @@ TSAN_INTERCEPTOR(int, rmdir, char *path) {
 TSAN_INTERCEPTOR(void*, opendir, char *path) {
   SCOPED_TSAN_INTERCEPTOR(opendir, path);
   void *res = REAL(opendir)(path);
-  Acquire(thr, pc, dir2addr(path));
+  if (res != 0)
+    Acquire(thr, pc, Dir2addr(path));
   return res;
 }
 
@@ -1853,7 +1703,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pthread_rwlock_timedwrlock);
   TSAN_INTERCEPT(pthread_rwlock_unlock);
 
-  TSAN_INTERCEPT(pthread_cond_init);
+  // TSAN_INTERCEPT(pthread_cond_init);
   TSAN_INTERCEPT(pthread_cond_destroy);
   TSAN_INTERCEPT(pthread_cond_signal);
   TSAN_INTERCEPT(pthread_cond_broadcast);
@@ -1875,7 +1725,9 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(sem_getvalue);
 
   TSAN_INTERCEPT(open);
+  TSAN_INTERCEPT(open64);
   TSAN_INTERCEPT(creat);
+  TSAN_INTERCEPT(creat64);
   TSAN_INTERCEPT(dup);
   TSAN_INTERCEPT(dup2);
   TSAN_INTERCEPT(dup3);
@@ -1907,6 +1759,8 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(unlink);
   TSAN_INTERCEPT(fopen);
+  TSAN_INTERCEPT(freopen);
+  TSAN_INTERCEPT(fclose);
   TSAN_INTERCEPT(fread);
   TSAN_INTERCEPT(fwrite);
   TSAN_INTERCEPT(puts);

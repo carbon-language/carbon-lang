@@ -59,6 +59,7 @@ enum MBlockType {
   MBlockSuppression,
   MBlockExpectRace,
   MBlockSignal,
+  MBlockFD,
 
   // This must be the last.
   MBlockTypeCount
