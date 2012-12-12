@@ -858,8 +858,8 @@ Value *InstCombiner::SimplifyShrShlDemandedBits(Instruction *Shr,
   Value *VarX = Shr->getOperand(0);
   Type *Ty = VarX->getType();
 
-  APInt BitMask1(Ty->getIntegerBitWidth(), (uint64_t)-1);
-  APInt BitMask2(Ty->getIntegerBitWidth(), (uint64_t)-1);
+  APInt BitMask1(APInt::getAllOnesValue(Ty->getIntegerBitWidth()));
+  APInt BitMask2(APInt::getAllOnesValue(Ty->getIntegerBitWidth()));
 
   bool isLshr = (Shr->getOpcode() == Instruction::LShr);
   BitMask1 = isLshr ? (BitMask1.lshr(ShrAmt) << ShlAmt) :
@@ -891,6 +891,8 @@ Value *InstCombiner::SimplifyShrShlDemandedBits(Instruction *Shr,
       Constant *Amt = ConstantInt::get(VarX->getType(), ShrAmt - ShlAmt);
       New = isLshr ? BinaryOperator::CreateLShr(VarX, Amt) :
                      BinaryOperator::CreateAShr(VarX, Amt);
+      if (cast<BinaryOperator>(Shr)->isExact())
+        New->setIsExact(true);
     }
 
     return InsertNewInstWith(New, *Shl);

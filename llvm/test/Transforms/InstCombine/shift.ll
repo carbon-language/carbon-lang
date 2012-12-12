@@ -735,3 +735,13 @@ define i32 @test61(i32 %x) {
 ; CHECK: @test61
 ; CHECK: ashr i32 %x, 4
 }
+
+; propagate "exact" trait
+define i32 @test62(i32 %x) {
+  %shr = ashr exact i32 %x, 4
+  %shl = shl i32 %shr, 1
+  %or = or i32 %shl, 1
+  ret i32 %or
+; CHECK: @test62
+; CHECK: ashr exact i32 %x, 3
+}
