@@ -189,7 +189,7 @@ void PassManagerBuilder::populateModulePassManager(PassManagerBase &MPM) {
   MPM.add(createLoopDeletionPass());          // Delete dead loops
 
   if (LoopVectorize && OptLevel > 1)
-    MPM.add(createLoopVectorizePass());
+    MPM.add(createLoopVectorizePass(SizeLevel));
 
   if (!DisableUnrollLoops)
     MPM.add(createLoopUnrollPass());          // Unroll small loops

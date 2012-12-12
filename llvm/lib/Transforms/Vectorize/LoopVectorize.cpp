@@ -51,9 +51,12 @@ namespace {
 
 /// The LoopVectorize Pass.
 struct LoopVectorize : public LoopPass {
-  static char ID; // Pass identification, replacement for typeid
+  /// Pass identification, replacement for typeid
+  static char ID;
+  /// Optimize for size. Do not generate tail loops.
+  bool OptForSize;
 
-  LoopVectorize() : LoopPass(ID) {
+  explicit LoopVectorize(bool OptSz = false) : LoopPass(ID), OptForSize(OptSz) {
     initializeLoopVectorizePass(*PassRegistry::getPassRegistry());
   }
 
@@ -85,23 +88,17 @@ struct LoopVectorize : public LoopPass {
     }
 
     // Select the preffered vectorization factor.
-    unsigned VF = 1;
-    if (VectorizationFactor == 0) {
-      const VectorTargetTransformInfo *VTTI = 0;
-      if (TTI)
-        VTTI = TTI->getVectorTargetTransformInfo();
-      // Use the cost model.
-      LoopVectorizationCostModel CM(L, SE, &LVL, VTTI);
-      VF = CM.findBestVectorizationFactor();
+    const VectorTargetTransformInfo *VTTI = 0;
+    if (TTI)
+      VTTI = TTI->getVectorTargetTransformInfo();
+    // Use the cost model.
+    LoopVectorizationCostModel CM(L, SE, &LVL, VTTI);
+    unsigned VF = CM.selectVectorizationFactor(OptForSize,
+                                                 VectorizationFactor);
 
-      if (VF == 1) {
-        DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
-        return false;
-      }
-
-    } else {
-      // Use the user command flag.
-      VF = VectorizationFactor;
+    if (VF == 1) {
+      DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
+      return false;
     }
 
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF << ") in "<<
@@ -1886,7 +1883,48 @@ bool LoopVectorizationLegality::hasComputableBounds(Value *Ptr) {
 }
 
 unsigned
-LoopVectorizationCostModel::findBestVectorizationFactor(unsigned VF) {
+LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
+                                                        unsigned UserVF) {
+  if (OptForSize && Legal->getRuntimePointerCheck()->Need) {
+    DEBUG(dbgs() << "LV: Aborting. Runtime ptr check is required in Os.\n");
+    return 1;
+  }
+
+  // Find the trip count.
+  unsigned TC = SE->getSmallConstantTripCount(TheLoop, TheLoop->getLoopLatch());
+  DEBUG(dbgs() << "LV: Found trip count:"<<TC<<"\n");
+
+  unsigned VF = MaxVectorSize;
+
+  // If we optimize the program for size, avoid creating the tail loop.
+  if (OptForSize) {
+    // If we are unable to calculate the trip count then don't try to vectorize.
+    if (TC < 2) {
+      DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
+      return 1;
+    }
+
+    // Find the maximum SIMD width that can fit within the trip count.
+    VF = TC % MaxVectorSize;
+
+    if (VF == 0)
+      VF = MaxVectorSize;
+
+    // If the trip count that we found modulo the vectorization factor is not
+    // zero then we require a tail.
+    if (VF < 2) {
+      DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
+      return 1;
+    }
+  }
+
+  if (UserVF != 0) {
+    assert(isPowerOf2_32(UserVF) && "VF needs to be a power of two");
+    DEBUG(dbgs() << "LV: Using user VF "<<UserVF<<".\n");
+
+    return UserVF;
+  }
+
   if (!VTTI) {
     DEBUG(dbgs() << "LV: No vector target information. Not vectorizing. \n");
     return 1;
@@ -2121,8 +2159,8 @@ INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(LoopVectorize, LV_NAME, lv_name, false, false)
 
 namespace llvm {
-  Pass *createLoopVectorizePass() {
-    return new LoopVectorize();
+  Pass *createLoopVectorizePass(bool OptForSize = false) {
+    return new LoopVectorize(OptForSize);
   }
 }
 
