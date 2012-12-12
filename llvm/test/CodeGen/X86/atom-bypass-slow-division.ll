@@ -35,7 +35,7 @@ define i32 @Test_get_quotient_and_remainder(i32 %a, i32 %b) nounwind {
 ; CHECK: divb
 ; CHECK: addl
 ; CHECK: ret
-; CEECK-NOT: idivl
+; CHECK-NOT: idivl
 ; CHECK-NOT: divb
   %resultdiv = sdiv i32 %a, %b
   %resultrem = srem i32 %a, %b
@@ -66,7 +66,7 @@ define i32 @Test_use_div_imm_imm() nounwind {
 
 define i32 @Test_use_div_reg_imm(i32 %a) nounwind {
 ; CHECK: Test_use_div_reg_imm:
-; CEHCK-NOT: test
+; CHECK-NOT: test
 ; CHECK-NOT: idiv
 ; CHECK-NOT: divb
   %resultdiv = sdiv i32 %a, 33
@@ -75,7 +75,7 @@ define i32 @Test_use_div_reg_imm(i32 %a) nounwind {
 
 define i32 @Test_use_rem_reg_imm(i32 %a) nounwind {
 ; CHECK: Test_use_rem_reg_imm:
-; CEHCK-NOT: test
+; CHECK-NOT: test
 ; CHECK-NOT: idiv
 ; CHECK-NOT: divb
   %resultrem = srem i32 %a, 33
@@ -84,7 +84,7 @@ define i32 @Test_use_rem_reg_imm(i32 %a) nounwind {
 
 define i32 @Test_use_divrem_reg_imm(i32 %a) nounwind {
 ; CHECK: Test_use_divrem_reg_imm:
-; CEHCK-NOT: test
+; CHECK-NOT: test
 ; CHECK-NOT: idiv
 ; CHECK-NOT: divb
   %resultdiv = sdiv i32 %a, 33
