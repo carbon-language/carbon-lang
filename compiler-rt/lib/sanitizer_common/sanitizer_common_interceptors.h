@@ -41,6 +41,7 @@ INTERCEPTOR(ssize_t, pread, int fd, void *ptr, size_t count, off_t offset) {
   return res;
 }
 
+#if ASAN_INTERCEPT_PREAD64
 INTERCEPTOR(ssize_t, pread64, int fd, void *ptr, size_t count, off64_t offset) {
   COMMON_INTERCEPTOR_ENTER(pread64, fd, ptr, count, offset);
   ssize_t res = REAL(pread64)(fd, ptr, count, offset);
@@ -48,10 +49,17 @@ INTERCEPTOR(ssize_t, pread64, int fd, void *ptr, size_t count, off64_t offset) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ptr, res);
   return res;
 }
+#endif
+
+#if ASAN_INTERCEPT_PREAD64
+#define INIT_PREAD64 CHECK(INTERCEPT_FUNCTION(pread64))
+#else
+#define INIT_PREAD64
+#endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   CHECK(INTERCEPT_FUNCTION(read));         \
   CHECK(INTERCEPT_FUNCTION(pread));        \
-  CHECK(INTERCEPT_FUNCTION(pread64));
+  INIT_PREAD64;                            \
 
 #endif  // SANITIZER_COMMON_INTERCEPTORS_H

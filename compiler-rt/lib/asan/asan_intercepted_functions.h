@@ -49,8 +49,10 @@ using __sanitizer::uptr;
 
 #if !defined(__APPLE__)
 # define ASAN_INTERCEPT_STRNLEN 1
+# define ASAN_INTERCEPT_PREAD64 1
 #else
 # define ASAN_INTERCEPT_STRNLEN 0
+# define ASAN_INTERCEPT_PREAD64 0
 #endif
 
 #if defined(__linux__) && !defined(ANDROID)
@@ -152,6 +154,16 @@ DECLARE_FUNCTION_AND_WRAPPER(long, strtol, const char *nptr, char **endptr, int 
 DECLARE_FUNCTION_AND_WRAPPER(long long, atoll, const char *nptr);  // NOLINT
 DECLARE_FUNCTION_AND_WRAPPER(long long, strtoll, const char *nptr, char **endptr, int base);  // NOLINT
 # endif
+
+// unistd.h
+typedef uptr size_t;
+typedef sptr ssize_t;
+typedef u64 off_t;
+typedef u64 off64_t;
+
+DECLARE_FUNCTION_AND_WRAPPER(ssize_t, read, int fd, void *buf, size_t count);
+DECLARE_FUNCTION_AND_WRAPPER(ssize_t, pread, int fd, void *buf, size_t count, off_t offset);
+DECLARE_FUNCTION_AND_WRAPPER(ssize_t, pread64, int fd, void *buf, size_t count, off64_t offset);
 
 # if ASAN_INTERCEPT_MLOCKX
 // mlock/munlock
