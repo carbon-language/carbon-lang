@@ -9481,6 +9481,10 @@ EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
   return MVT::Other;
 }
 
+bool ARMTargetLowering::isLegalMemOpType(MVT VT) const {
+  return VT.isInteger() || VT == MVT::f64 || VT == MVT::v2f64;
+}
+
 bool ARMTargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
   if (Val.getOpcode() != ISD::LOAD)
     return false;

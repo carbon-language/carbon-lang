@@ -1412,6 +1412,14 @@ X86TargetLowering::getOptimalMemOpType(uint64_t Size,
   return MVT::i32;
 }
 
+bool X86TargetLowering::isLegalMemOpType(MVT VT) const {
+  if (VT == MVT::f32)
+    return X86ScalarSSEf32;
+  else if (VT == MVT::f64)
+    return X86ScalarSSEf64;
+  return VT.isInteger();
+}
+
 bool
 X86TargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
   if (Fast)

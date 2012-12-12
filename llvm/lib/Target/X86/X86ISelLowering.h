@@ -506,6 +506,13 @@ namespace llvm {
                         bool IsZeroVal, bool MemcpyStrSrc,
                         MachineFunction &MF) const;
 
+    /// isLegalMemOpType - Returns true if it's legal to use load / store of the
+    /// specified type to expand memcpy / memset inline. This is mostly true
+    /// for legal types except for some special cases. For example, on X86
+    /// targets without SSE2 f64 load / store are done with fldl / fstpl which
+    /// also does type conversion.
+    virtual bool isLegalMemOpType(MVT VT) const;
+
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
     /// unaligned memory accesses. of the specified type. Returns whether it
     /// is "fast" by reference in the second argument.

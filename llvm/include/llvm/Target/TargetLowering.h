@@ -716,6 +716,15 @@ public:
     return MVT::Other;
   }
 
+  /// isLegalMemOpType - Returns true if it's legal to use load / store of the
+  /// specified type to expand memcpy / memset inline. This is mostly true
+  /// for legal types except for some special cases. For example, on X86
+  /// targets without SSE2 f64 load / store are done with fldl / fstpl which
+  /// also does type conversion.
+  virtual bool isLegalMemOpType(MVT VT) const {
+    return VT.isInteger();
+  }
+
   /// usesUnderscoreSetJmp - Determine if we should use _setjmp or setjmp
   /// to implement llvm.setjmp.
   bool usesUnderscoreSetJmp() const {

@@ -3474,26 +3474,32 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
     unsigned VTSize = VT.getSizeInBits() / 8;
     while (VTSize > Size) {
       // For now, only use non-vector load / store's for the left-over pieces.
-      EVT NewVT;
+      EVT NewVT = VT;
       unsigned NewVTSize;
+
+      bool Found = false;
       if (VT.isVector() || VT.isFloatingPoint()) {
         NewVT = (VT.getSizeInBits() > 64) ? MVT::i64 : MVT::i32;
-        while (!TLI.isOperationLegalOrCustom(ISD::STORE, NewVT)) {
-          if (NewVT == MVT::i64 &&
-              TLI.isOperationLegalOrCustom(ISD::STORE, MVT::f64)) {
-            // i64 is usually not legal on 32-bit targets, but f64 may be.
-            NewVT = MVT::f64;
-            break;
-          }
-          NewVT = (MVT::SimpleValueType)(NewVT.getSimpleVT().SimpleTy - 1);
+        if (TLI.isOperationLegalOrCustom(ISD::STORE, NewVT) &&
+            TLI.isLegalMemOpType(NewVT.getSimpleVT()))
+          Found = true;
+        else if (NewVT == MVT::i64 &&
+                 TLI.isOperationLegalOrCustom(ISD::STORE, MVT::f64) &&
+                 TLI.isLegalMemOpType(MVT::f64)) {
+          // i64 is usually not legal on 32-bit targets, but f64 may be.
+          NewVT = MVT::f64;
+          Found = true;
         }
-        NewVTSize = NewVT.getSizeInBits() / 8;
-      } else {
-        // This can result in a type that is not legal on the target, e.g.
-        // 1 or 2 bytes on PPC.
-        NewVT = (MVT::SimpleValueType)(VT.getSimpleVT().SimpleTy - 1);
-        NewVTSize = VTSize >> 1;
       }
+
+      if (!Found) {
+        do {
+          NewVT = (MVT::SimpleValueType)(NewVT.getSimpleVT().SimpleTy - 1);
+          if (NewVT == MVT::i8)
+            break;
+        } while (!TLI.isLegalMemOpType(NewVT.getSimpleVT()));
+      }
+      NewVTSize = NewVT.getSizeInBits() / 8;
 
       // If the new VT cannot cover all of the remaining bits, then consider
       // issuing a (or a pair of) unaligned and overlapping load / store.

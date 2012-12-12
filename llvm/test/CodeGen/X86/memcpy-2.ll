@@ -17,11 +17,11 @@ entry:
 ; SSE2: movb $0, 24(%esp)
 
 ; SSE1: t1:
-; SSE1: fldl _.str+16
-; SSE1: fstpl 16(%esp)
 ; SSE1: movaps _.str, %xmm0
 ; SSE1: movaps %xmm0
 ; SSE1: movb $0, 24(%esp)
+; SSE1: movl $0, 20(%esp)
+; SSE1: movl $0, 16(%esp)
 
 ; NOSSE: t1:
 ; NOSSE: movb $0
