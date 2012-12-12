@@ -351,18 +351,8 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *LHS = I.getOperand(0), *RHS = I.getOperand(1);
 
-  if (Constant *RHSC = dyn_cast<Constant>(RHS)) {
-    // X + 0 --> X
-    if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
-      if (CFP->isExactlyValue(ConstantFP::getNegativeZero
-                              (I.getType())->getValueAPF()))
-        return ReplaceInstUsesWith(I, LHS);
-    }
-
-    if (isa<PHINode>(LHS))
-      if (Instruction *NV = FoldOpIntoPhi(I))
-        return NV;
-  }
+  if (Value *V = SimplifyFAddInst(LHS, RHS, I.getFastMathFlags(), TD))
+    return ReplaceInstUsesWith(I, V);
 
   // -A + B  -->  B - A
   // -A + -B  -->  -(A + B)
@@ -373,11 +363,6 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   if (!isa<Constant>(RHS))
     if (Value *V = dyn_castFNegVal(RHS))
       return BinaryOperator::CreateFSub(LHS, V);
-
-  // Check for X+0.0.  Simplify it to X if we know X is not -0.0.
-  if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHS))
-    if (CFP->getValueAPF().isPosZero() && CannotBeNegativeZero(LHS))
-      return ReplaceInstUsesWith(I, LHS);
 
   // Check for (fadd double (sitofp x), y), see if we can merge this into an
   // integer add followed by a promotion.
@@ -652,6 +637,9 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
 Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (Value *V = SimplifyFSubInst(Op0, Op1, I.getFastMathFlags(), TD))
+    return ReplaceInstUsesWith(I, V);
 
   // If this is a 'B = x-(-A)', change to B = x+A...
   if (Value *V = dyn_castFNegVal(Op1))
