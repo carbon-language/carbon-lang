@@ -4,7 +4,7 @@
 __attribute__((objc_root_class)) @interface MyObject {
 @public
     id _myMaster;
-    id _isTickledPink;
+    id _isTickledPink; // expected-error {{existing instance variable '_isTickledPink' for property 'isTickledPink'}}
     int _myIntProp;
 }
 @property(retain) id myMaster;
@@ -15,7 +15,7 @@ __attribute__((objc_root_class)) @interface MyObject {
 @implementation MyObject
 
 @synthesize myMaster = _myMaster;
-@synthesize isTickledPink = _isTickledPink; // expected-error {{existing instance variable '_isTickledPink' for property 'isTickledPink'}}
+@synthesize isTickledPink = _isTickledPink; // expected-note {{property synthesized here}}
 @synthesize myIntProp = _myIntProp;
 
 - (void) doSomething {

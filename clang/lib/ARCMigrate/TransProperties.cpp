@@ -226,8 +226,10 @@ private:
 
     for (PropsTy::iterator I = props.begin(), E = props.end(); I != E; ++I) {
       if (I->ImplD)
-        Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
-                                I->ImplD->getLocation());
+        Pass.TA.clearDiagnostic(diag::err_arc_strong_property_ownership,
+                                diag::err_arc_assign_property_ownership,
+                                diag::err_arc_inconsistent_property_ownership,
+                                I->IvarD->getLocation());
     }
   }
 
@@ -253,8 +255,10 @@ private:
         }
       }
       if (I->ImplD)
-        Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
-                                I->ImplD->getLocation());
+        Pass.TA.clearDiagnostic(diag::err_arc_strong_property_ownership,
+                                diag::err_arc_assign_property_ownership,
+                                diag::err_arc_inconsistent_property_ownership,
+                                I->IvarD->getLocation());
     }
   }
 
@@ -276,8 +280,10 @@ private:
                          canUseWeak ? "__weak " : "__unsafe_unretained ");
       }
       if (I->ImplD) {
-        Pass.TA.clearDiagnostic(diag::err_arc_assign_property_ownership,
-                                I->ImplD->getLocation());
+        Pass.TA.clearDiagnostic(diag::err_arc_strong_property_ownership,
+                                diag::err_arc_assign_property_ownership,
+                                diag::err_arc_inconsistent_property_ownership,
+                                I->IvarD->getLocation());
         Pass.TA.clearDiagnostic(
                            diag::err_arc_objc_property_default_assign_on_object,
                            I->ImplD->getLocation());
