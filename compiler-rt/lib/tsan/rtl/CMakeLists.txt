@@ -1,6 +1,7 @@
 set(TSAN_SOURCES
   tsan_clock.cc
   tsan_flags.cc
+  tsan_fd.cc
   tsan_interceptors.cc
   tsan_interface_ann.cc
   tsan_interface_atomic.cc
