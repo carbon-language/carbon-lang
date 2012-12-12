@@ -447,9 +447,7 @@ error_code MachOObjectFile::getSectionNext(DataRefImpl DRI,
 void
 MachOObjectFile::getSection(DataRefImpl DRI,
                             InMemoryStruct<macho::Section> &Res) const {
-  InMemoryStruct<macho::SegmentLoadCommand> SLC;
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-  MachOObj->ReadSegmentLoadCommand(LCI, SLC);
   MachOObj->ReadSection(LCI, DRI.d.b, Res);
 }
 
@@ -463,9 +461,7 @@ std::size_t MachOObjectFile::getSectionIndex(DataRefImpl Sec) const {
 void
 MachOObjectFile::getSection64(DataRefImpl DRI,
                             InMemoryStruct<macho::Section64> &Res) const {
-  InMemoryStruct<macho::Segment64LoadCommand> SLC;
   LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-  MachOObj->ReadSegment64LoadCommand(LCI, SLC);
   MachOObj->ReadSection64(LCI, DRI.d.b, Res);
 }
 
@@ -482,9 +478,7 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
   // FIXME: thread safety.
   static char result[34];
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
-    InMemoryStruct<macho::Segment64LoadCommand> SLC;
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-    MachOObj->ReadSegment64LoadCommand(LCI, SLC);
     InMemoryStruct<macho::Section64> Sect;
     MachOObj->ReadSection64(LCI, DRI.d.b, Sect);
 
@@ -492,9 +486,7 @@ error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
     strcat(result, ",");
     strcat(result, Sect->Name);
   } else {
-    InMemoryStruct<macho::SegmentLoadCommand> SLC;
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
-    MachOObj->ReadSegmentLoadCommand(LCI, SLC);
     InMemoryStruct<macho::Section> Sect;
     MachOObj->ReadSection(LCI, DRI.d.b, Sect);
 
