@@ -238,7 +238,8 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
   if (char *env = ::getenv("COMPILER_PATH")) {
     StringRef CompilerPath = env;
     while (!CompilerPath.empty()) {
-      std::pair<StringRef, StringRef> Split = CompilerPath.split(':');
+      std::pair<StringRef, StringRef> Split
+        = CompilerPath.split(llvm::sys::PathSeparator);
       PrefixDirs.push_back(Split.first);
       CompilerPath = Split.second;
     }
