@@ -10,6 +10,9 @@
 // This file is a part of MemorySanitizer.
 //
 // Interceptors for standard library functions.
+//
+// FIXME: move as many interceptors as possible into
+// sanitizer_common/sanitizer_common_interceptors.h
 //===----------------------------------------------------------------------===//
 
 #include "interception/interception.h"

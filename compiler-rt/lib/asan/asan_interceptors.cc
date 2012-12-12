@@ -46,9 +46,9 @@ namespace __asan {
 // checking the first and the last byte of a range.
 #define ACCESS_MEMORY_RANGE(offset, size, isWrite) do { \
   if (size > 0) { \
-    uptr ptr = (uptr)(offset); \
-    ACCESS_ADDRESS(ptr, isWrite); \
-    ACCESS_ADDRESS(ptr + (size) - 1, isWrite); \
+    uptr _ptr = (uptr)(offset); \
+    ACCESS_ADDRESS(_ptr, isWrite); \
+    ACCESS_ADDRESS(_ptr + (size) - 1, isWrite); \
   } \
 } while (0)
 
@@ -97,6 +97,11 @@ static inline uptr MaybeRealStrnlen(const char *s, uptr maxlen) {
 
 // ---------------------- Wrappers ---------------- {{{1
 using namespace __asan;  // NOLINT
+
+#define COMMON_INTERCEPTOR_WRITE_RANGE(ptr, size) ASAN_WRITE_RANGE(ptr, size)
+#define COMMON_INTERCEPTOR_READ_RANGE(ptr, size) ASAN_READ_RANGE(ptr, size)
+#define COMMON_INTERCEPTOR_ENTER(func, ...) ENSURE_ASAN_INITED()
+#include "sanitizer_common/sanitizer_common_interceptors.h"
 
 static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
   AsanThread *t = (AsanThread*)arg;
@@ -667,6 +672,9 @@ void InitializeAsanInterceptors() {
 #if MAC_INTERPOSE_FUNCTIONS
   return;
 #endif
+
+  SANITIZER_COMMON_INTERCEPTORS_INIT;
+
   // Intercept mem* functions.
   ASAN_INTERCEPT_FUNC(memcmp);
   ASAN_INTERCEPT_FUNC(memmove);

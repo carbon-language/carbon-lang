@@ -22,6 +22,9 @@
 
 #ifdef __linux__
 # include <sys/prctl.h>
+# include <sys/types.h>
+# include <sys/stat.h>
+# include <fcntl.h>
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -1562,6 +1565,45 @@ TEST(AddressSanitizer, DISABLED_MemIntrinsicCallByPointerTest) {
   CallMemTransferByPointer(&memcpy);
   CallMemTransferByPointer(&memmove);
 }
+
+#ifdef __linux__
+TEST(AddressSanitizer, pread) {
+  char *x = new char [10];
+  int fd = open("/proc/self/stat", O_RDONLY);
+  ASSERT_GT(fd, 0);
+  EXPECT_DEATH(pread(fd, x, 15, 0),
+               ASAN_PCRE_DOTALL
+               "AddressSanitizer: heap-buffer-overflow"
+               ".* is located 4 bytes to the right of 10-byte region");
+  close(fd);
+  delete x;
+}
+
+TEST(AddressSanitizer, pread64) {
+  char *x = new char [10];
+  int fd = open("/proc/self/stat", O_RDONLY);
+  ASSERT_GT(fd, 0);
+  EXPECT_DEATH(pread64(fd, x, 15, 0),
+               ASAN_PCRE_DOTALL
+               "AddressSanitizer: heap-buffer-overflow"
+               ".* is located 4 bytes to the right of 10-byte region");
+  close(fd);
+  delete x;
+}
+
+TEST(AddressSanitizer, read) {
+  char *x = new char [10];
+  int fd = open("/proc/self/stat", O_RDONLY);
+  ASSERT_GT(fd, 0);
+  EXPECT_DEATH(read(fd, x, 15),
+               ASAN_PCRE_DOTALL
+               "AddressSanitizer: heap-buffer-overflow"
+               ".* is located 4 bytes to the right of 10-byte region");
+  close(fd);
+  delete x;
+}
+
+#endif  // __linux__
 
 // This test case fails
 // Clang optimizes memcpy/memset calls which lead to unaligned access

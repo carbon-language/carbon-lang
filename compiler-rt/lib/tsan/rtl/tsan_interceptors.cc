@@ -9,6 +9,8 @@
 //
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
+// FIXME: move as many interceptors as possible into
+// sanitizer_common/sanitizer_common_interceptors.h
 //===----------------------------------------------------------------------===//
 
 #include "sanitizer_common/sanitizer_atomic.h"
