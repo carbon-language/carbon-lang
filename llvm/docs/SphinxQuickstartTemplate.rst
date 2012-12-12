@@ -107,14 +107,15 @@ You can make blocks of code like this:
      return 0
    }
 
-For a shell session, use a ``bash`` code block:
+For a shell session, use a ``console`` code block:
 
-.. code-block:: bash
+.. code-block:: console
 
    $ echo "Goodbye cruel world!"
    $ rm -rf /
 
-If you need to show LLVM IR use the ``llvm`` code block.
+If you need to show LLVM IR use the ``llvm`` code block.  Code blocks of ``c``,
+``c++``, ``objc``, ``bash``, ``makefile`` kinds are supported.
 
 You can show preformatted text without any syntax highlighting like this:
 
@@ -135,6 +136,8 @@ You can show preformatted text without any syntax highlighting like this:
                       ...+. .: .
                          .++:..
                           ...
+
+One can also use a ``none`` code block to turn off highlighting.
 
 Hopefully you won't need to be this deep
 """"""""""""""""""""""""""""""""""""""""
