@@ -96,9 +96,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
         log->Printf ("%p Target::Target()", this);
     if (m_arch.IsValid())
     {
-        LogSP log_target(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
-        if (log_target)
-            log_target->Printf("Target::Target created with architecture %s (%s)", m_arch.GetArchitectureName(), m_arch.GetTriple().getTriple().c_str());
+        LogIfAnyCategoriesSet(LIBLLDB_LOG_TARGET, "Target::Target created with architecture %s (%s)", m_arch.GetArchitectureName(), m_arch.GetTriple().getTriple().c_str());
     }
 }
 
@@ -1672,7 +1670,10 @@ Target::SetDefaultArchitecture (const ArchSpec &arch)
 {
     TargetPropertiesSP properties_sp(Target::GetGlobalProperties());
     if (properties_sp)
+    {
+        LogIfAnyCategoriesSet(LIBLLDB_LOG_TARGET, "Target::SetDefaultArchitecture setting target's default architecture to  %s (%s)", arch.GetArchitectureName(), arch.GetTriple().getTriple().c_str());
         return properties_sp->SetDefaultArchitecture(arch);
+    }
 }
 
 Target *
