@@ -12,6 +12,12 @@ progress. This page will get filled out with docs soon...
 .. toctree::
    :maxdepth: 2
 
+   LanguageExtensions
+   LibASTMatchers
+   LibTooling
+   PCHInternals
+   ThreadSanitizer
+   Tooling
 
 
 Indices and tables
