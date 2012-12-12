@@ -46,10 +46,6 @@ clean:
 html:
 	$(SPHINXBUILD) -b html $(ALLSPHINXOPTS) $(BUILDDIR)/html
 	@echo
-	@# FIXME: Remove this `cp` once HTML->Sphinx transition is completed.
-	@# Kind of a hack, but HTML-formatted docs are on the way out anyway.
-	@echo "Copying legacy HTML-formatted docs into $(BUILDDIR)/html"
-	@cp -a *.html $(BUILDDIR)/html
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 dirhtml:
