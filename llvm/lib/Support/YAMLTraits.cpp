@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define BUILDING_YAMLIO
 #include "llvm/Support/YAMLTraits.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Casting.h"
@@ -16,11 +15,8 @@
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cstring>
-
-namespace llvm {
-namespace yaml {
-
-
+using namespace llvm;
+using namespace yaml;
 
 //===----------------------------------------------------------------------===//
 //  IO
@@ -40,23 +36,20 @@ void IO::setContext(void *Context) {
   Ctxt = Context;
 }
 
-
 //===----------------------------------------------------------------------===//
 //  Input
 //===----------------------------------------------------------------------===//
 
-Input::Input(StringRef InputContent, void *Ctxt)
-    : IO(Ctxt), CurrentNode(NULL) {
+Input::Input(StringRef InputContent, void *Ctxt) : IO(Ctxt), CurrentNode(NULL) {
   Strm = new Stream(InputContent, SrcMgr);
   DocIterator = Strm->begin();
 }
 
-
-llvm::error_code Input::error() {
+error_code Input::error() {
   return EC;
 }
 
-void Input::setDiagHandler(llvm::SourceMgr::DiagHandlerTy Handler, void *Ctxt) {
+void Input::setDiagHandler(SourceMgr::DiagHandlerTy Handler, void *Ctxt) {
   SrcMgr.setDiagHandler(Handler, Ctxt);
 }
 
@@ -65,9 +58,9 @@ bool Input::outputting() {
 }
 
 bool Input::setCurrentDocument() {
-  if ( DocIterator != Strm->end() ) {
+  if (DocIterator != Strm->end()) {
     Node *N = DocIterator->getRoot();
-    if (llvm::isa<NullNode>(N)) {
+    if (isa<NullNode>(N)) {
       // Empty files are allowed and ignored
       ++DocIterator;
       return setCurrentDocument();
@@ -83,32 +76,32 @@ void Input::nextDocument() {
 }
 
 void Input::beginMapping() {
-  if ( EC )
+  if (EC)
     return;
-  MapHNode *MN = llvm::dyn_cast<MapHNode>(CurrentNode);
-  if ( MN ) {
+  MapHNode *MN = dyn_cast<MapHNode>(CurrentNode);
+  if (MN) {
     MN->ValidKeys.clear();
   }
 }
 
-bool Input::preflightKey(const char *Key, bool Required, bool,
-                                          bool &UseDefault, void *&SaveInfo) {
+bool Input::preflightKey(const char *Key, bool Required, bool, bool &UseDefault,
+                         void *&SaveInfo) {
   UseDefault = false;
-  if ( EC )
+  if (EC)
     return false;
-  MapHNode *MN = llvm::dyn_cast<MapHNode>(CurrentNode);
-  if ( !MN ) {
+  MapHNode *MN = dyn_cast<MapHNode>(CurrentNode);
+  if (!MN) {
     setError(CurrentNode, "not a mapping");
     return false;
   }
   MN->ValidKeys.push_back(Key);
   HNode *Value = MN->Mapping[Key];
-  if ( !Value ) {
-    if ( Required )
+  if (!Value) {
+    if (Required)
       setError(CurrentNode, Twine("missing required key '") + Key + "'");
     else
       UseDefault = true;
-   return false;
+    return false;
   }
   SaveInfo = CurrentNode;
   CurrentNode = Value;
@@ -116,79 +109,83 @@ bool Input::preflightKey(const char *Key, bool Required, bool,
 }
 
 void Input::postflightKey(void *saveInfo) {
-  CurrentNode = reinterpret_cast<HNode*>(saveInfo);
+  CurrentNode = reinterpret_cast<HNode *>(saveInfo);
 }
 
 void Input::endMapping() {
-  if ( EC )
+  if (EC)
     return;
-  MapHNode *MN = llvm::dyn_cast<MapHNode>(CurrentNode);
-  if ( !MN )
+  MapHNode *MN = dyn_cast<MapHNode>(CurrentNode);
+  if (!MN)
     return;
-  for (MapHNode::NameToNode::iterator i=MN->Mapping.begin(),
-                                        End=MN->Mapping.end(); i != End; ++i) {
-    if ( ! MN->isValidKey(i->first) ) {
-       setError(i->second, Twine("unknown key '") + i->first + "'" );
+  for (MapHNode::NameToNode::iterator i = MN->Mapping.begin(),
+       End = MN->Mapping.end(); i != End; ++i) {
+    if (!MN->isValidKey(i->first)) {
+      setError(i->second, Twine("unknown key '") + i->first + "'");
       break;
     }
   }
 }
 
-
 unsigned Input::beginSequence() {
-  if ( SequenceHNode *SQ = llvm::dyn_cast<SequenceHNode>(CurrentNode) ) {
+  if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     return SQ->Entries.size();
   }
   return 0;
 }
+
 void Input::endSequence() {
 }
+
 bool Input::preflightElement(unsigned Index, void *&SaveInfo) {
-  if ( EC )
+  if (EC)
     return false;
-  if ( SequenceHNode *SQ = llvm::dyn_cast<SequenceHNode>(CurrentNode) ) {
+  if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     SaveInfo = CurrentNode;
     CurrentNode = SQ->Entries[Index];
     return true;
   }
   return false;
 }
+
 void Input::postflightElement(void *SaveInfo) {
-  CurrentNode = reinterpret_cast<HNode*>(SaveInfo);
+  CurrentNode = reinterpret_cast<HNode *>(SaveInfo);
 }
 
 unsigned Input::beginFlowSequence() {
-   if ( SequenceHNode *SQ = llvm::dyn_cast<SequenceHNode>(CurrentNode) ) {
+  if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     return SQ->Entries.size();
   }
   return 0;
 }
+
 bool Input::preflightFlowElement(unsigned index, void *&SaveInfo) {
-  if ( EC )
+  if (EC)
     return false;
-  if ( SequenceHNode *SQ = llvm::dyn_cast<SequenceHNode>(CurrentNode) ) {
+  if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     SaveInfo = CurrentNode;
     CurrentNode = SQ->Entries[index];
     return true;
   }
   return false;
 }
+
 void Input::postflightFlowElement(void *SaveInfo) {
-  CurrentNode = reinterpret_cast<HNode*>(SaveInfo);
-}
-void Input::endFlowSequence() {
+  CurrentNode = reinterpret_cast<HNode *>(SaveInfo);
 }
 
+void Input::endFlowSequence() {
+}
 
 void Input::beginEnumScalar() {
   ScalarMatchFound = false;
 }
 
 bool Input::matchEnumScalar(const char *Str, bool) {
-  if ( ScalarMatchFound )
+  if (ScalarMatchFound)
     return false;
-  if ( ScalarHNode *SN = llvm::dyn_cast<ScalarHNode>(CurrentNode) ) {
-    if ( SN->value().equals(Str) ) {
+  if (ScalarHNode *SN = dyn_cast<ScalarHNode>(CurrentNode)) {
+    if (SN->value().equals(Str)) {
       ScalarMatchFound = true;
       return true;
     }
@@ -197,19 +194,16 @@ bool Input::matchEnumScalar(const char *Str, bool) {
 }
 
 void Input::endEnumScalar() {
-  if ( !ScalarMatchFound ) {
+  if (!ScalarMatchFound) {
     setError(CurrentNode, "unknown enumerated scalar");
   }
 }
 
-
-
 bool Input::beginBitSetScalar(bool &DoClear) {
   BitValuesUsed.clear();
-  if ( SequenceHNode *SQ = llvm::dyn_cast<SequenceHNode>(CurrentNode) ) {
+  if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     BitValuesUsed.insert(BitValuesUsed.begin(), SQ->Entries.size(), false);
-  }
-  else {
+  } else {
     setError(CurrentNode, "expected sequence of bit values");
   }
   DoClear = true;
@@ -217,37 +211,35 @@ bool Input::beginBitSetScalar(bool &DoClear) {
 }
 
 bool Input::bitSetMatch(const char *Str, bool) {
-  if ( EC )
+  if (EC)
     return false;
-  if ( SequenceHNode *SQ = llvm::dyn_cast<SequenceHNode>(CurrentNode) ) {
+  if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     unsigned Index = 0;
-    for (std::vector<HNode*>::iterator i=SQ->Entries.begin(),
-                                       End=SQ->Entries.end(); i != End; ++i) {
-      if ( ScalarHNode *SN = llvm::dyn_cast<ScalarHNode>(*i) ) {
-        if ( SN->value().equals(Str) ) {
+    for (std::vector<HNode *>::iterator i = SQ->Entries.begin(),
+         End = SQ->Entries.end(); i != End; ++i) {
+      if (ScalarHNode *SN = dyn_cast<ScalarHNode>(*i)) {
+        if (SN->value().equals(Str)) {
           BitValuesUsed[Index] = true;
           return true;
         }
-      }
-      else {
+      } else {
         setError(CurrentNode, "unexpected scalar in sequence of bit values");
       }
       ++Index;
     }
-  }
-  else {
+  } else {
     setError(CurrentNode, "expected sequence of bit values");
   }
   return false;
 }
 
 void Input::endBitSetScalar() {
-  if ( EC )
+  if (EC)
     return;
-  if ( SequenceHNode *SQ = llvm::dyn_cast<SequenceHNode>(CurrentNode) ) {
+  if (SequenceHNode *SQ = dyn_cast<SequenceHNode>(CurrentNode)) {
     assert(BitValuesUsed.size() == SQ->Entries.size());
-    for ( unsigned i=0; i < SQ->Entries.size(); ++i ) {
-      if ( !BitValuesUsed[i] ) {
+    for (unsigned i = 0; i < SQ->Entries.size(); ++i) {
+      if (!BitValuesUsed[i]) {
         setError(SQ->Entries[i], "unknown bit value");
         return;
       }
@@ -255,12 +247,10 @@ void Input::endBitSetScalar() {
   }
 }
 
-
 void Input::scalarString(StringRef &S) {
-  if ( ScalarHNode *SN = llvm::dyn_cast<ScalarHNode>(CurrentNode) ) {
+  if (ScalarHNode *SN = dyn_cast<ScalarHNode>(CurrentNode)) {
     S = SN->value();
-  }
-  else {
+  } else {
     setError(CurrentNode, "unexpected scalar");
   }
 }
@@ -275,62 +265,59 @@ void Input::setError(Node *node, const Twine &message) {
 }
 
 Input::HNode *Input::createHNodes(Node *N) {
-  llvm::SmallString<128> StringStorage;
-  if ( ScalarNode *SN = llvm::dyn_cast<ScalarNode>(N) ) {
+  SmallString<128> StringStorage;
+  if (ScalarNode *SN = dyn_cast<ScalarNode>(N)) {
     StringRef KeyStr = SN->getValue(StringStorage);
-    if ( !StringStorage.empty() ) {
+    if (!StringStorage.empty()) {
       // Copy string to permanent storage
       unsigned Len = StringStorage.size();
-      char* Buf = Allocator.Allocate<char>(Len);
+      char *Buf = Allocator.Allocate<char>(Len);
       memcpy(Buf, &StringStorage[0], Len);
       KeyStr = StringRef(Buf, Len);
     }
     return new (Allocator) ScalarHNode(N, KeyStr);
-  }
-  else if ( SequenceNode *SQ = llvm::dyn_cast<SequenceNode>(N) ) {
+  } else if (SequenceNode *SQ = dyn_cast<SequenceNode>(N)) {
     SequenceHNode *SQHNode = new (Allocator) SequenceHNode(N);
-    for (SequenceNode::iterator i=SQ->begin(),End=SQ->end(); i != End; ++i ) {
+    for (SequenceNode::iterator i = SQ->begin(), End = SQ->end(); i != End;
+         ++i) {
       HNode *Entry = this->createHNodes(i);
-      if ( EC )
+      if (EC)
         break;
       SQHNode->Entries.push_back(Entry);
     }
     return SQHNode;
-  }
-  else if ( MappingNode *Map = llvm::dyn_cast<MappingNode>(N) ) {
+  } else if (MappingNode *Map = dyn_cast<MappingNode>(N)) {
     MapHNode *mapHNode = new (Allocator) MapHNode(N);
-    for (MappingNode::iterator i=Map->begin(), End=Map->end(); i != End; ++i ) {
-      ScalarNode *KeyScalar = llvm::dyn_cast<ScalarNode>(i->getKey());
+    for (MappingNode::iterator i = Map->begin(), End = Map->end(); i != End;
+         ++i) {
+      ScalarNode *KeyScalar = dyn_cast<ScalarNode>(i->getKey());
       StringStorage.clear();
-      llvm::StringRef KeyStr = KeyScalar->getValue(StringStorage);
-      if ( !StringStorage.empty() ) {
+      StringRef KeyStr = KeyScalar->getValue(StringStorage);
+      if (!StringStorage.empty()) {
         // Copy string to permanent storage
         unsigned Len = StringStorage.size();
-        char* Buf = Allocator.Allocate<char>(Len);
+        char *Buf = Allocator.Allocate<char>(Len);
         memcpy(Buf, &StringStorage[0], Len);
         KeyStr = StringRef(Buf, Len);
       }
-     HNode *ValueHNode = this->createHNodes(i->getValue());
-      if ( EC )
+      HNode *ValueHNode = this->createHNodes(i->getValue());
+      if (EC)
         break;
       mapHNode->Mapping[KeyStr] = ValueHNode;
     }
     return mapHNode;
-  }
-  else if ( llvm::isa<NullNode>(N) ) {
+  } else if (isa<NullNode>(N)) {
     return new (Allocator) EmptyHNode(N);
-  }
-  else {
+  } else {
     setError(N, "unknown node kind");
     return NULL;
   }
 }
 
-
 bool Input::MapHNode::isValidKey(StringRef Key) {
-  for (SmallVector<const char*, 6>::iterator i=ValidKeys.begin(),
-                                  End=ValidKeys.end(); i != End; ++i) {
-    if ( Key.equals(*i) )
+  for (SmallVector<const char *, 6>::iterator i = ValidKeys.begin(),
+       End = ValidKeys.end(); i != End; ++i) {
+    if (Key.equals(*i))
       return true;
   }
   return false;
@@ -340,15 +327,19 @@ void Input::setError(const Twine &Message) {
   this->setError(CurrentNode, Message);
 }
 
-
 //===----------------------------------------------------------------------===//
 //  Output
 //===----------------------------------------------------------------------===//
 
-Output::Output(llvm::raw_ostream &yout, void *context)
-    : IO(context), Out(yout), Column(0), ColumnAtFlowStart(0),
-       NeedBitValueComma(false), NeedFlowSequenceComma(false),
-       EnumerationMatchFound(false), NeedsNewLine(false) {
+Output::Output(raw_ostream &yout, void *context)
+    : IO(context),
+      Out(yout),
+      Column(0),
+      ColumnAtFlowStart(0),
+      NeedBitValueComma(false),
+      NeedFlowSequenceComma(false),
+      EnumerationMatchFound(false),
+      NeedsNewLine(false) {
 }
 
 Output::~Output() {
@@ -367,11 +358,10 @@ void Output::endMapping() {
   StateStack.pop_back();
 }
 
-
 bool Output::preflightKey(const char *Key, bool Required, bool SameAsDefault,
-                                                bool &UseDefault, void *&) {
+                          bool &UseDefault, void *&) {
   UseDefault = false;
-  if ( Required || !SameAsDefault ) {
+  if (Required || !SameAsDefault) {
     this->newLineCheck();
     this->paddedKey(Key);
     return true;
@@ -379,8 +369,8 @@ bool Output::preflightKey(const char *Key, bool Required, bool SameAsDefault,
   return false;
 }
 
-void Output::postflightKey(void*) {
-  if ( StateStack.back() == inMapFirstKey ) {
+void Output::postflightKey(void *) {
+  if (StateStack.back() == inMapFirstKey) {
     StateStack.pop_back();
     StateStack.push_back(inMapOtherKey);
   }
@@ -391,7 +381,7 @@ void Output::beginDocuments() {
 }
 
 bool Output::preflightDocument(unsigned index) {
-  if ( index > 0 )
+  if (index > 0)
     this->outputUpToEndOfLine("\n---");
   return true;
 }
@@ -408,13 +398,16 @@ unsigned Output::beginSequence() {
   NeedsNewLine = true;
   return 0;
 }
+
 void Output::endSequence() {
   StateStack.pop_back();
 }
-bool Output::preflightElement(unsigned , void *&) {
+
+bool Output::preflightElement(unsigned, void *&) {
   return true;
 }
-void Output::postflightElement(void*) {
+
+void Output::postflightElement(void *) {
 }
 
 unsigned Output::beginFlowSequence() {
@@ -425,34 +418,35 @@ unsigned Output::beginFlowSequence() {
   NeedFlowSequenceComma = false;
   return 0;
 }
+
 void Output::endFlowSequence() {
   StateStack.pop_back();
   this->outputUpToEndOfLine(" ]");
 }
-bool Output::preflightFlowElement(unsigned , void *&) {
-  if ( NeedFlowSequenceComma )
+
+bool Output::preflightFlowElement(unsigned, void *&) {
+  if (NeedFlowSequenceComma)
     output(", ");
-  if ( Column > 70 ) {
+  if (Column > 70) {
     output("\n");
-    for(int  i=0; i < ColumnAtFlowStart; ++i)
+    for (int i = 0; i < ColumnAtFlowStart; ++i)
       output(" ");
     Column = ColumnAtFlowStart;
     output("  ");
   }
   return true;
 }
-void Output::postflightFlowElement(void*) {
+
+void Output::postflightFlowElement(void *) {
   NeedFlowSequenceComma = true;
 }
-
-
 
 void Output::beginEnumScalar() {
   EnumerationMatchFound = false;
 }
 
 bool Output::matchEnumScalar(const char *Str, bool Match) {
-  if ( Match && !EnumerationMatchFound ) {
+  if (Match && !EnumerationMatchFound) {
     this->newLineCheck();
     this->outputUpToEndOfLine(Str);
     EnumerationMatchFound = true;
@@ -461,11 +455,9 @@ bool Output::matchEnumScalar(const char *Str, bool Match) {
 }
 
 void Output::endEnumScalar() {
-  if ( !EnumerationMatchFound )
+  if (!EnumerationMatchFound)
     llvm_unreachable("bad runtime enum value");
 }
-
-
 
 bool Output::beginBitSetScalar(bool &DoClear) {
   this->newLineCheck();
@@ -476,8 +468,8 @@ bool Output::beginBitSetScalar(bool &DoClear) {
 }
 
 bool Output::bitSetMatch(const char *Str, bool Matches) {
- if ( Matches ) {
-    if ( NeedBitValueComma )
+  if (Matches) {
+    if (NeedBitValueComma)
       output(", ");
     this->output(Str);
     NeedBitValueComma = true;
@@ -517,7 +509,6 @@ void Output::scalarString(StringRef &S) {
 void Output::setError(const Twine &message) {
 }
 
-
 void Output::output(StringRef s) {
   Column += s.size();
   Out << s;
@@ -525,7 +516,7 @@ void Output::output(StringRef s) {
 
 void Output::outputUpToEndOfLine(StringRef s) {
   this->output(s);
-  if ( StateStack.back() != inFlowSeq )
+  if (StateStack.back() != inFlowSeq)
     NeedsNewLine = true;
 }
 
@@ -539,7 +530,7 @@ void Output::outputNewLine() {
 //
 
 void Output::newLineCheck() {
-  if ( ! NeedsNewLine )
+  if (!NeedsNewLine)
     return;
   NeedsNewLine = false;
 
@@ -549,20 +540,18 @@ void Output::newLineCheck() {
   unsigned Indent = StateStack.size() - 1;
   bool OutputDash = false;
 
-  if ( StateStack.back() == inSeq ) {
+  if (StateStack.back() == inSeq) {
     OutputDash = true;
-  }
-  else if ( (StateStack.size() > 1)
-            && (StateStack.back() == inMapFirstKey)
-            && (StateStack[StateStack.size()-2] == inSeq) ) {
+  } else if ((StateStack.size() > 1) && (StateStack.back() == inMapFirstKey) &&
+             (StateStack[StateStack.size() - 2] == inSeq)) {
     --Indent;
     OutputDash = true;
   }
 
-  for (unsigned i=0; i < Indent; ++i) {
+  for (unsigned i = 0; i < Indent; ++i) {
     output("  ");
   }
-  if ( OutputDash ) {
+  if (OutputDash) {
     output("- ");
   }
 
@@ -572,7 +561,7 @@ void Output::paddedKey(StringRef key) {
   output(key);
   output(":");
   const char *spaces = "                ";
-  if ( key.size() < strlen(spaces) )
+  if (key.size() < strlen(spaces))
     output(&spaces[key.size()]);
   else
     output(" ");
@@ -582,302 +571,234 @@ void Output::paddedKey(StringRef key) {
 //  traits for built-in types
 //===----------------------------------------------------------------------===//
 
-template<>
-struct ScalarTraits<bool> {
-  static void output(const bool &Val, void*, llvm::raw_ostream &Out) {
-    Out << ( Val ? "true" : "false");
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, bool &Val) {
-    if ( Scalar.equals("true") ) {
-      Val = true;
-      return StringRef();
-    }
-    else if ( Scalar.equals("false") ) {
-      Val = false;
-      return StringRef();
-    }
-    return "invalid boolean";
-  }
-};
+void ScalarTraits<bool>::output(const bool &Val, void *, raw_ostream &Out) {
+  Out << (Val ? "true" : "false");
+}
 
-
-template<>
-struct ScalarTraits<StringRef> {
-  static void output(const StringRef &Val, void*, llvm::raw_ostream &Out) {
-    Out << Val;
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, StringRef &Val){
-    Val = Scalar;
+StringRef ScalarTraits<bool>::input(StringRef Scalar, void *, bool &Val) {
+  if (Scalar.equals("true")) {
+    Val = true;
+    return StringRef();
+  } else if (Scalar.equals("false")) {
+    Val = false;
     return StringRef();
   }
-};
+  return "invalid boolean";
+}
 
+void ScalarTraits<StringRef>::output(const StringRef &Val, void *,
+                                     raw_ostream &Out) {
+  Out << Val;
+}
 
-template<>
-struct ScalarTraits<uint8_t> {
-  static void output(const uint8_t &Val, void*, llvm::raw_ostream &Out) {
-    // use temp uin32_t because ostream thinks uint8_t is a character
-    uint32_t Num = Val;
-    Out << Num;
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, uint8_t &Val) {
-    unsigned long long n;
-    if ( getAsUnsignedInteger(Scalar, 0, n) )
-      return "invalid number";
-    if ( n > 0xFF )
-      return "out of range number";
-    Val = n;
-    return StringRef();
-  }
-};
+StringRef ScalarTraits<StringRef>::input(StringRef Scalar, void *,
+                                         StringRef &Val) {
+  Val = Scalar;
+  return StringRef();
+}
 
+void ScalarTraits<uint8_t>::output(const uint8_t &Val, void *,
+                                   raw_ostream &Out) {
+  // use temp uin32_t because ostream thinks uint8_t is a character
+  uint32_t Num = Val;
+  Out << Num;
+}
 
-template<>
-struct ScalarTraits<uint16_t> {
-  static void output(const uint16_t &Val, void*, llvm::raw_ostream &Out) {
-    Out << Val;
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, uint16_t &Val) {
-    unsigned long long n;
-    if ( getAsUnsignedInteger(Scalar, 0, n) )
-      return "invalid number";
-    if ( n > 0xFFFF )
-      return "out of range number";
-    Val = n;
-    return StringRef();
-  }
-};
+StringRef ScalarTraits<uint8_t>::input(StringRef Scalar, void *, uint8_t &Val) {
+  unsigned long long n;
+  if (getAsUnsignedInteger(Scalar, 0, n))
+    return "invalid number";
+  if (n > 0xFF)
+    return "out of range number";
+  Val = n;
+  return StringRef();
+}
 
-template<>
-struct ScalarTraits<uint32_t> {
-  static void output(const uint32_t &Val, void*, llvm::raw_ostream &Out) {
-    Out << Val;
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, uint32_t &Val) {
-    unsigned long long n;
-    if ( getAsUnsignedInteger(Scalar, 0, n) )
-      return "invalid number";
-    if ( n > 0xFFFFFFFFUL )
-      return "out of range number";
-    Val = n;
-    return StringRef();
-  }
-};
+void ScalarTraits<uint16_t>::output(const uint16_t &Val, void *,
+                                    raw_ostream &Out) {
+  Out << Val;
+}
 
+StringRef ScalarTraits<uint16_t>::input(StringRef Scalar, void *,
+                                        uint16_t &Val) {
+  unsigned long long n;
+  if (getAsUnsignedInteger(Scalar, 0, n))
+    return "invalid number";
+  if (n > 0xFFFF)
+    return "out of range number";
+  Val = n;
+  return StringRef();
+}
 
-template<>
-struct ScalarTraits<uint64_t> {
-  static void output(const uint64_t &Val, void*, llvm::raw_ostream &Out) {
-    Out << Val;
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, uint64_t &Val) {
-    unsigned long long N;
-    if ( getAsUnsignedInteger(Scalar, 0, N) )
-      return "invalid number";
-    Val = N;
-    return StringRef();
-  }
-};
+void ScalarTraits<uint32_t>::output(const uint32_t &Val, void *,
+                                    raw_ostream &Out) {
+  Out << Val;
+}
 
+StringRef ScalarTraits<uint32_t>::input(StringRef Scalar, void *,
+                                        uint32_t &Val) {
+  unsigned long long n;
+  if (getAsUnsignedInteger(Scalar, 0, n))
+    return "invalid number";
+  if (n > 0xFFFFFFFFUL)
+    return "out of range number";
+  Val = n;
+  return StringRef();
+}
 
-template<>
-struct ScalarTraits<int8_t> {
-  static void output(const int8_t &Val, void*, llvm::raw_ostream &Out) {
-    // use temp in32_t because ostream thinks int8_t is a character
-    int32_t Num = Val;
-    Out << Num;
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, int8_t &Val) {
-    long long N;
-    if ( getAsSignedInteger(Scalar, 0, N) )
-      return "invalid number";
-    if ( (N > 127) || (N < -128) )
-      return "out of range number";
-    Val = N;
-    return StringRef();
-  }
-};
+void ScalarTraits<uint64_t>::output(const uint64_t &Val, void *,
+                                    raw_ostream &Out) {
+  Out << Val;
+}
 
+StringRef ScalarTraits<uint64_t>::input(StringRef Scalar, void *,
+                                        uint64_t &Val) {
+  unsigned long long N;
+  if (getAsUnsignedInteger(Scalar, 0, N))
+    return "invalid number";
+  Val = N;
+  return StringRef();
+}
 
-template<>
-struct ScalarTraits<int16_t> {
-  static void output(const int16_t &Val, void*, llvm::raw_ostream &Out) {
-    Out << Val;
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, int16_t &Val) {
-    long long N;
-    if ( getAsSignedInteger(Scalar, 0, N) )
-      return "invalid number";
-    if ( (N > INT16_MAX) || (N < INT16_MIN) )
-      return "out of range number";
-    Val = N;
-    return StringRef();
-  }
-};
+void ScalarTraits<int8_t>::output(const int8_t &Val, void *, raw_ostream &Out) {
+  // use temp in32_t because ostream thinks int8_t is a character
+  int32_t Num = Val;
+  Out << Num;
+}
 
+StringRef ScalarTraits<int8_t>::input(StringRef Scalar, void *, int8_t &Val) {
+  long long N;
+  if (getAsSignedInteger(Scalar, 0, N))
+    return "invalid number";
+  if ((N > 127) || (N < -128))
+    return "out of range number";
+  Val = N;
+  return StringRef();
+}
 
-template<>
-struct ScalarTraits<int32_t> {
-  static void output(const int32_t &Val, void*, llvm::raw_ostream &Out) {
-    Out << Val;
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, int32_t &Val) {
-    long long N;
-    if ( getAsSignedInteger(Scalar, 0, N) )
-      return "invalid number";
-    if ( (N > INT32_MAX) || (N < INT32_MIN) )
-      return "out of range number";
-    Val = N;
-    return StringRef();
-  }
-};
+void ScalarTraits<int16_t>::output(const int16_t &Val, void *,
+                                   raw_ostream &Out) {
+  Out << Val;
+}
 
-template<>
-struct ScalarTraits<int64_t> {
-  static void output(const int64_t &Val, void*, llvm::raw_ostream &Out) {
-    Out << Val;
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, int64_t &Val) {
-    long long N;
-    if ( getAsSignedInteger(Scalar, 0, N) )
-      return "invalid number";
-    Val = N;
-    return StringRef();
-  }
-};
+StringRef ScalarTraits<int16_t>::input(StringRef Scalar, void *, int16_t &Val) {
+  long long N;
+  if (getAsSignedInteger(Scalar, 0, N))
+    return "invalid number";
+  if ((N > INT16_MAX) || (N < INT16_MIN))
+    return "out of range number";
+  Val = N;
+  return StringRef();
+}
 
-template<>
-struct ScalarTraits<double> {
-  static void output(const double &Val, void*, llvm::raw_ostream &Out) {
+void ScalarTraits<int32_t>::output(const int32_t &Val, void *,
+                                   raw_ostream &Out) {
+  Out << Val;
+}
+
+StringRef ScalarTraits<int32_t>::input(StringRef Scalar, void *, int32_t &Val) {
+  long long N;
+  if (getAsSignedInteger(Scalar, 0, N))
+    return "invalid number";
+  if ((N > INT32_MAX) || (N < INT32_MIN))
+    return "out of range number";
+  Val = N;
+  return StringRef();
+}
+
+void ScalarTraits<int64_t>::output(const int64_t &Val, void *,
+                                   raw_ostream &Out) {
+  Out << Val;
+}
+
+StringRef ScalarTraits<int64_t>::input(StringRef Scalar, void *, int64_t &Val) {
+  long long N;
+  if (getAsSignedInteger(Scalar, 0, N))
+    return "invalid number";
+  Val = N;
+  return StringRef();
+}
+
+void ScalarTraits<double>::output(const double &Val, void *, raw_ostream &Out) {
   Out << format("%g", Val);
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, double &Val) {
-    SmallString<32> buff(Scalar.begin(), Scalar.end());
-    char *end;
-    Val = strtod(buff.c_str(), &end);
-    if ( *end != '\0' )
-      return "invalid floating point number";
-    return StringRef();
-  }
-};
+}
 
-template<>
-struct ScalarTraits<float> {
-  static void output(const float &Val, void*, llvm::raw_ostream &Out) {
+StringRef ScalarTraits<double>::input(StringRef Scalar, void *, double &Val) {
+  SmallString<32> buff(Scalar.begin(), Scalar.end());
+  char *end;
+  Val = strtod(buff.c_str(), &end);
+  if (*end != '\0')
+    return "invalid floating point number";
+  return StringRef();
+}
+
+void ScalarTraits<float>::output(const float &Val, void *, raw_ostream &Out) {
   Out << format("%g", Val);
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, float &Val) {
-    SmallString<32> buff(Scalar.begin(), Scalar.end());
-    char *end;
-    Val = strtod(buff.c_str(), &end);
-    if ( *end != '\0' )
-      return "invalid floating point number";
-    return StringRef();
-  }
-};
+}
 
+StringRef ScalarTraits<float>::input(StringRef Scalar, void *, float &Val) {
+  SmallString<32> buff(Scalar.begin(), Scalar.end());
+  char *end;
+  Val = strtod(buff.c_str(), &end);
+  if (*end != '\0')
+    return "invalid floating point number";
+  return StringRef();
+}
 
+void ScalarTraits<Hex8>::output(const Hex8 &Val, void *, raw_ostream &Out) {
+  uint8_t Num = Val;
+  Out << format("0x%02X", Num);
+}
 
-template<>
-struct ScalarTraits<Hex8> {
-  static void output(const Hex8 &Val, void*, llvm::raw_ostream &Out) {
-    uint8_t Num = Val;
-    Out << format("0x%02X", Num);
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, Hex8 &Val) {
-    unsigned long long n;
-    if ( getAsUnsignedInteger(Scalar, 0, n) )
-      return "invalid hex8 number";
-    if ( n > 0xFF )
-      return "out of range hex8 number";
-    Val = n;
-    return StringRef();
-  }
-};
+StringRef ScalarTraits<Hex8>::input(StringRef Scalar, void *, Hex8 &Val) {
+  unsigned long long n;
+  if (getAsUnsignedInteger(Scalar, 0, n))
+    return "invalid hex8 number";
+  if (n > 0xFF)
+    return "out of range hex8 number";
+  Val = n;
+  return StringRef();
+}
 
+void ScalarTraits<Hex16>::output(const Hex16 &Val, void *, raw_ostream &Out) {
+  uint16_t Num = Val;
+  Out << format("0x%04X", Num);
+}
 
-template<>
-struct ScalarTraits<Hex16> {
-  static void output(const Hex16 &Val, void*, llvm::raw_ostream &Out) {
-    uint16_t Num = Val;
-    Out << format("0x%04X", Num);
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, Hex16 &Val) {
-    unsigned long long n;
-    if ( getAsUnsignedInteger(Scalar, 0, n) )
-      return "invalid hex16 number";
-    if ( n > 0xFFFF )
-      return "out of range hex16 number";
-    Val = n;
-    return StringRef();
-  }
-};
+StringRef ScalarTraits<Hex16>::input(StringRef Scalar, void *, Hex16 &Val) {
+  unsigned long long n;
+  if (getAsUnsignedInteger(Scalar, 0, n))
+    return "invalid hex16 number";
+  if (n > 0xFFFF)
+    return "out of range hex16 number";
+  Val = n;
+  return StringRef();
+}
 
-template<>
-struct ScalarTraits<Hex32> {
-  static void output(const Hex32 &Val, void*, llvm::raw_ostream &Out) {
-    uint32_t Num = Val;
-    Out << format("0x%08X", Num);
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, Hex32 &Val) {
-    unsigned long long n;
-    if ( getAsUnsignedInteger(Scalar, 0, n) )
-      return "invalid hex32 number";
-    if ( n > 0xFFFFFFFFUL )
-      return "out of range hex32 number";
-    Val = n;
-    return StringRef();
-  }
-};
+void ScalarTraits<Hex32>::output(const Hex32 &Val, void *, raw_ostream &Out) {
+  uint32_t Num = Val;
+  Out << format("0x%08X", Num);
+}
 
+StringRef ScalarTraits<Hex32>::input(StringRef Scalar, void *, Hex32 &Val) {
+  unsigned long long n;
+  if (getAsUnsignedInteger(Scalar, 0, n))
+    return "invalid hex32 number";
+  if (n > 0xFFFFFFFFUL)
+    return "out of range hex32 number";
+  Val = n;
+  return StringRef();
+}
 
-template<>
-struct ScalarTraits<Hex64> {
-  static void output(const Hex64 &Val, void*, llvm::raw_ostream &Out) {
-    uint64_t Num = Val;
-    Out << format("0x%016llX", Num);
-  }
-  static llvm::StringRef input(llvm::StringRef Scalar, void*, Hex64 &Val) {
-    unsigned long long Num;
-    if ( getAsUnsignedInteger(Scalar, 0, Num) )
-      return "invalid hex64 number";
-    Val = Num;
-    return StringRef();
-  }
-};
+void ScalarTraits<Hex64>::output(const Hex64 &Val, void *, raw_ostream &Out) {
+  uint64_t Num = Val;
+  Out << format("0x%016llX", Num);
+}
 
-
-
-
-// We want all the ScalarTrait specialized on built-in types
-// to be instantiated here.
-template <typename T>
-struct ForceUse {
-  ForceUse() : oproc(ScalarTraits<T>::output), iproc(ScalarTraits<T>::input) {}
-  void (*oproc)(const T &, void*, llvm::raw_ostream &);
-  llvm::StringRef (*iproc)(llvm::StringRef, void*, T &);
-};
-
-static ForceUse<bool>            Dummy1;
-static ForceUse<llvm::StringRef> Dummy2;
-static ForceUse<uint8_t>         Dummy3;
-static ForceUse<uint16_t>        Dummy4;
-static ForceUse<uint32_t>        Dummy5;
-static ForceUse<uint64_t>        Dummy6;
-static ForceUse<int8_t>          Dummy7;
-static ForceUse<int16_t>         Dummy8;
-static ForceUse<int32_t>         Dummy9;
-static ForceUse<int64_t>         Dummy10;
-static ForceUse<float>           Dummy11;
-static ForceUse<double>          Dummy12;
-static ForceUse<Hex8>            Dummy13;
-static ForceUse<Hex16>           Dummy14;
-static ForceUse<Hex32>           Dummy15;
-static ForceUse<Hex64>           Dummy16;
-
-
-
-} // namespace yaml
-} // namespace llvm
-
-
+StringRef ScalarTraits<Hex64>::input(StringRef Scalar, void *, Hex64 &Val) {
+  unsigned long long Num;
+  if (getAsUnsignedInteger(Scalar, 0, Num))
+    return "invalid hex64 number";
+  Val = Num;
+  return StringRef();
+}

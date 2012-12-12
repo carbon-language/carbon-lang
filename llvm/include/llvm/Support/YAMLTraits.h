@@ -20,10 +20,10 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/SourceMgr.h"
-#include "llvm/Support/system_error.h"
-#include "llvm/Support/type_traits.h"
 #include "llvm/Support/YAMLParser.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/system_error.h"
+#include "llvm/Support/type_traits.h"
 
 
 namespace llvm {
@@ -486,13 +486,11 @@ yamlize(IO &io, T &Val, bool) {
   io.endMapping();
 }
 
-#ifndef BUILDING_YAMLIO
 template<typename T>
 typename llvm::enable_if_c<missingTraits<T>::value, void>::type
 yamlize(IO &io, T &Val, bool) {
   char missing_yaml_trait_for_type[sizeof(MissingTrait<T>)];
 }
-#endif
 
 template<typename T>
 typename llvm::enable_if_c<has_SequenceTraits<T>::value,void>::type
@@ -526,11 +524,6 @@ yamlize(IO &io, T &Seq, bool) {
 
 
 
-// Clients of YAML I/O only see declaration of the traits for built-in
-// types.  The implementation is in the LLVM Support library.  Without
-// this #ifdef, every client would get a copy of the implementation of
-// these traits.
-#ifndef BUILDING_YAMLIO
 template<>
 struct ScalarTraits<bool> {
   static void output(const bool &, void*, llvm::raw_ostream &);
@@ -602,7 +595,6 @@ struct ScalarTraits<double> {
   static void output(const double &, void*, llvm::raw_ostream &);
   static llvm::StringRef input(llvm::StringRef , void*, double &);
 };
-#endif
 
 
 
@@ -630,9 +622,9 @@ struct MappingNormalization {
   TNorm* operator->() { return BufPtr; }
 
 private:
-  //typedef typename llvm::AlignedCharArrayUnion<TNorm> Storage;
-  //Storage       Buffer;
-  char          Buffer[sizeof(TNorm)];
+  typedef llvm::AlignedCharArrayUnion<TNorm> Storage;
+
+  Storage       Buffer;
   IO           &io;
   TNorm        *BufPtr;
   TFinal       &Result;
@@ -666,9 +658,9 @@ struct MappingNormalizationHeap {
   TNorm* operator->() { return BufPtr; }
 
 private:
-  //typedef typename llvm::AlignedCharArrayUnion<TNorm> Storage;
-  //Storage       Buffer;
-  char          Buffer[sizeof(TNorm)];
+  typedef llvm::AlignedCharArrayUnion<TNorm> Storage;
+
+  Storage       Buffer;
   IO           &io;
   TNorm        *BufPtr;
   TFinal       &Result;
@@ -910,11 +902,6 @@ LLVM_YAML_STRONG_TYPEDEF(uint32_t, Hex32)
 LLVM_YAML_STRONG_TYPEDEF(uint64_t, Hex64)
 
 
-// Clients of YAML I/O only see declaration of the traits for Hex*
-// types.  The implementation is in the LLVM Support library.  Without
-// this #ifdef, every client would get a copy of the implementation of
-// these traits.
-#ifndef BUILDING_YAMLIO
 template<>
 struct ScalarTraits<Hex8> {
   static void output(const Hex8 &, void*, llvm::raw_ostream &);
@@ -938,7 +925,6 @@ struct ScalarTraits<Hex64> {
   static void output(const Hex64 &, void*, llvm::raw_ostream &);
   static llvm::StringRef input(llvm::StringRef , void*, Hex64 &);
 };
-#endif
 
 
 // Define non-member operator>> so that Input can stream in a document list.
@@ -978,7 +964,6 @@ operator>>(Input &yin, T &docSeq) {
   return yin;
 }
 
-#ifndef BUILDING_YAMLIO
 // Provide better error message about types missing a trait specialization
 template <typename T>
 inline
@@ -987,7 +972,6 @@ operator>>(Input &yin, T &docSeq) {
   char missing_yaml_trait_for_type[sizeof(MissingTrait<T>)];
   return yin;
 }
-#endif
 
 
 // Define non-member operator<< so that Output can stream out document list.
@@ -1035,7 +1019,6 @@ operator<<(Output &yout, T &seq) {
   return yout;
 }
 
-#ifndef BUILDING_YAMLIO
 // Provide better error message about types missing a trait specialization
 template <typename T>
 inline
@@ -1044,7 +1027,6 @@ operator<<(Output &yout, T &seq) {
   char missing_yaml_trait_for_type[sizeof(MissingTrait<T>)];
   return yout;
 }
-#endif
 
 
 } // namespace yaml
