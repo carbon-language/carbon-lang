@@ -53,10 +53,8 @@ namespace {
 struct LoopVectorize : public LoopPass {
   /// Pass identification, replacement for typeid
   static char ID;
-  /// Optimize for size. Do not generate tail loops.
-  bool OptForSize;
 
-  explicit LoopVectorize(bool OptSz = false) : LoopPass(ID), OptForSize(OptSz) {
+  explicit LoopVectorize() : LoopPass(ID) {
     initializeLoopVectorizePass(*PassRegistry::getPassRegistry());
   }
 
@@ -93,8 +91,15 @@ struct LoopVectorize : public LoopPass {
       VTTI = TTI->getVectorTargetTransformInfo();
     // Use the cost model.
     LoopVectorizationCostModel CM(L, SE, &LVL, VTTI);
+
+    // Check the function attribues to find out if this function should be
+    // optimized for size.
+    Function *F = L->getHeader()->getParent();
+    bool OptForSize =
+    F->getFnAttributes().hasAttribute(Attributes::OptimizeForSize);
+
     unsigned VF = CM.selectVectorizationFactor(OptForSize,
-                                                 VectorizationFactor);
+                                               VectorizationFactor);
 
     if (VF == 1) {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
@@ -2159,8 +2164,8 @@ INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(LoopVectorize, LV_NAME, lv_name, false, false)
 
 namespace llvm {
-  Pass *createLoopVectorizePass(bool OptForSize = false) {
-    return new LoopVectorize(OptForSize);
+  Pass *createLoopVectorizePass() {
+    return new LoopVectorize();
   }
 }
 

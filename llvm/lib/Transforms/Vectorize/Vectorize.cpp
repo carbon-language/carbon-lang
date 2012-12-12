@@ -39,5 +39,5 @@ void LLVMAddBBVectorizePass(LLVMPassManagerRef PM) {
 }
 
 void LLVMAddLoopVectorizePass(LLVMPassManagerRef PM) {
-  unwrap(PM)->add(createLoopVectorizePass(0));
+  unwrap(PM)->add(createLoopVectorizePass());
 }
