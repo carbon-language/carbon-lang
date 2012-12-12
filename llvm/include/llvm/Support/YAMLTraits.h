@@ -630,9 +630,9 @@ struct MappingNormalization {
   TNorm* operator->() { return BufPtr; }
 
 private:
-  typedef typename llvm::AlignedCharArrayUnion<TNorm> Storage;
-
-  Storage       Buffer;
+  //typedef typename llvm::AlignedCharArrayUnion<TNorm> Storage;
+  //Storage       Buffer;
+  char          Buffer[sizeof(TNorm)];
   IO           &io;
   TNorm        *BufPtr;
   TFinal       &Result;
@@ -666,9 +666,9 @@ struct MappingNormalizationHeap {
   TNorm* operator->() { return BufPtr; }
 
 private:
-  typedef typename llvm::AlignedCharArrayUnion<TNorm> Storage;
-
-  Storage       Buffer;
+  //typedef typename llvm::AlignedCharArrayUnion<TNorm> Storage;
+  //Storage       Buffer;
+  char          Buffer[sizeof(TNorm)];
   IO           &io;
   TNorm        *BufPtr;
   TFinal       &Result;
