@@ -9450,13 +9450,13 @@ static bool memOpAlign(unsigned DstAlign, unsigned SrcAlign,
 
 EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
                                            unsigned DstAlign, unsigned SrcAlign,
-                                           bool IsZeroVal,
+                                           bool ZeroOrLdSrc,
                                            bool MemcpyStrSrc,
                                            MachineFunction &MF) const {
   const Function *F = MF.getFunction();
 
   // See if we can use NEON instructions for this...
-  if (IsZeroVal &&
+  if (ZeroOrLdSrc &&
       Subtarget->hasNEON() &&
       !F->getFnAttributes().hasAttribute(Attributes::NoImplicitFloat)) {
     bool Fast;
@@ -9479,10 +9479,6 @@ EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
 
   // Let the target-independent logic figure it out.
   return MVT::Other;
-}
-
-bool ARMTargetLowering::isLegalMemOpType(MVT VT) const {
-  return VT.isInteger() || VT == MVT::f64 || VT == MVT::v2f64;
 }
 
 bool ARMTargetLowering::isZExtFree(SDValue Val, EVT VT2) const {

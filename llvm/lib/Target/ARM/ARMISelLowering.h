@@ -292,16 +292,9 @@ namespace llvm {
 
     virtual EVT getOptimalMemOpType(uint64_t Size,
                                     unsigned DstAlign, unsigned SrcAlign,
-                                    bool IsZeroVal,
+                                    bool ZeroOrLdSrc,
                                     bool MemcpyStrSrc,
                                     MachineFunction &MF) const;
-
-    /// isLegalMemOpType - Returns true if it's legal to use load / store of the
-    /// specified type to expand memcpy / memset inline. This is mostly true
-    /// for legal types except for some special cases. For example, on X86
-    /// targets without SSE2 f64 load / store are done with fldl / fstpl which
-    /// also does type conversion.
-    virtual bool isLegalMemOpType(MVT VT) const;
 
     using TargetLowering::isZExtFree;
     virtual bool isZExtFree(SDValue Val, EVT VT2) const;

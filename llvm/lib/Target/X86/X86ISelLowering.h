@@ -495,7 +495,7 @@ namespace llvm {
     /// alignment can satisfy any constraint. Similarly if SrcAlign is zero it
     /// means there isn't a need to check it against alignment requirement,
     /// probably because the source does not need to be loaded. If
-    /// 'IsZeroVal' is true, that means it's safe to return a
+    /// 'ZeroOrLdSrc' is true, that means it's safe to return a
     /// non-scalar-integer type, e.g. empty string source, constant, or loaded
     /// from memory. 'MemcpyStrSrc' indicates whether the memcpy source is
     /// constant so it does not need to be loaded.
@@ -503,15 +503,16 @@ namespace llvm {
     /// target-independent logic.
     virtual EVT
     getOptimalMemOpType(uint64_t Size, unsigned DstAlign, unsigned SrcAlign,
-                        bool IsZeroVal, bool MemcpyStrSrc,
+                        bool ZeroOrLdSrc, bool MemcpyStrSrc,
                         MachineFunction &MF) const;
 
-    /// isLegalMemOpType - Returns true if it's legal to use load / store of the
+    /// isSafeMemOpType - Returns true if it's safe to use load / store of the
     /// specified type to expand memcpy / memset inline. This is mostly true
-    /// for legal types except for some special cases. For example, on X86
+    /// for all types except for some special cases. For example, on X86
     /// targets without SSE2 f64 load / store are done with fldl / fstpl which
-    /// also does type conversion.
-    virtual bool isLegalMemOpType(MVT VT) const;
+    /// also does type conversion. Note the specified type doesn't have to be
+    /// legal as the hook is used before type legalization.
+    virtual bool isSafeMemOpType(MVT VT) const;
 
     /// allowsUnalignedMemoryAccesses - Returns true if the target allows
     /// unaligned memory accesses. of the specified type. Returns whether it

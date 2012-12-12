@@ -3426,7 +3426,7 @@ static bool isMemSrcFromString(SDValue Src, StringRef &Str) {
 static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
                                      unsigned Limit, uint64_t Size,
                                      unsigned DstAlign, unsigned SrcAlign,
-                                     bool IsZeroVal,
+                                     bool ZeroOrLdSrc,
                                      bool MemcpyStrSrc,
                                      bool AllowOverlap,
                                      SelectionDAG &DAG,
@@ -3441,7 +3441,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
   // 'MemcpyStrSrc' indicates whether the memcpy source is constant so it does
   // not need to be loaded.
   EVT VT = TLI.getOptimalMemOpType(Size, DstAlign, SrcAlign,
-                                   IsZeroVal, MemcpyStrSrc,
+                                   ZeroOrLdSrc, MemcpyStrSrc,
                                    DAG.getMachineFunction());
 
   if (VT == MVT::Other) {
@@ -3481,11 +3481,11 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
       if (VT.isVector() || VT.isFloatingPoint()) {
         NewVT = (VT.getSizeInBits() > 64) ? MVT::i64 : MVT::i32;
         if (TLI.isOperationLegalOrCustom(ISD::STORE, NewVT) &&
-            TLI.isLegalMemOpType(NewVT.getSimpleVT()))
+            TLI.isSafeMemOpType(NewVT.getSimpleVT()))
           Found = true;
         else if (NewVT == MVT::i64 &&
                  TLI.isOperationLegalOrCustom(ISD::STORE, MVT::f64) &&
-                 TLI.isLegalMemOpType(MVT::f64)) {
+                 TLI.isSafeMemOpType(MVT::f64)) {
           // i64 is usually not legal on 32-bit targets, but f64 may be.
           NewVT = MVT::f64;
           Found = true;
@@ -3497,7 +3497,7 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
           NewVT = (MVT::SimpleValueType)(NewVT.getSimpleVT().SimpleTy - 1);
           if (NewVT == MVT::i8)
             break;
-        } while (!TLI.isLegalMemOpType(NewVT.getSimpleVT()));
+        } while (!TLI.isSafeMemOpType(NewVT.getSimpleVT()));
       }
       NewVTSize = NewVT.getSizeInBits() / 8;
 
