@@ -404,27 +404,27 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
    the vectorized instructions while the old loop will continue to run the
    scalar remainder.
 
-   [ ] <-- vector loop bypass.
-   /  |
-   /   v
+       [ ] <-- vector loop bypass.
+     /  |
+    /   v
    |   [ ]     <-- vector pre header.
    |    |
    |    v
    |   [  ] \
    |   [  ]_|   <-- vector loop.
    |    |
-   \   v
-   >[ ]   <--- middle-block.
-   /  |
-   /   v
+    \   v
+      >[ ]   <--- middle-block.
+     /  |
+    /   v
    |   [ ]     <--- new preheader.
    |    |
    |    v
    |   [ ] \
    |   [ ]_|   <-- old scalar loop to handle remainder.
-   \   |
-   \  v
-   >[ ]     <-- exit block.
+    \   |
+     \  v
+      >[ ]     <-- exit block.
    ...
    */
 
