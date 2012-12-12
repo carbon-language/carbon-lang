@@ -9450,13 +9450,13 @@ static bool memOpAlign(unsigned DstAlign, unsigned SrcAlign,
 
 EVT ARMTargetLowering::getOptimalMemOpType(uint64_t Size,
                                            unsigned DstAlign, unsigned SrcAlign,
-                                           bool ZeroOrLdSrc,
+                                           bool IsMemset, bool ZeroMemset,
                                            bool MemcpyStrSrc,
                                            MachineFunction &MF) const {
   const Function *F = MF.getFunction();
 
   // See if we can use NEON instructions for this...
-  if (ZeroOrLdSrc &&
+  if ((!IsMemset || ZeroMemset) &&
       Subtarget->hasNEON() &&
       !F->getFnAttributes().hasAttribute(Attributes::NoImplicitFloat)) {
     bool Fast;
