@@ -621,7 +621,7 @@ struct ScalarTraits<uint8_t> {
     Out << Num;
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, uint8_t &Val) {
-    uint64_t n;
+    unsigned long long n;
     if ( getAsUnsignedInteger(Scalar, 0, n) )
       return "invalid number";
     if ( n > 0xFF )
@@ -638,7 +638,7 @@ struct ScalarTraits<uint16_t> {
     Out << Val;
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, uint16_t &Val) {
-    uint64_t n;
+    unsigned long long n;
     if ( getAsUnsignedInteger(Scalar, 0, n) )
       return "invalid number";
     if ( n > 0xFFFF )
@@ -654,7 +654,7 @@ struct ScalarTraits<uint32_t> {
     Out << Val;
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, uint32_t &Val) {
-    uint64_t n;
+    unsigned long long n;
     if ( getAsUnsignedInteger(Scalar, 0, n) )
       return "invalid number";
     if ( n > 0xFFFFFFFFUL )
@@ -671,8 +671,10 @@ struct ScalarTraits<uint64_t> {
     Out << Val;
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, uint64_t &Val) {
-    if ( getAsUnsignedInteger(Scalar, 0, Val) )
+    unsigned long long N;
+    if ( getAsUnsignedInteger(Scalar, 0, N) )
       return "invalid number";
+    Val = N;
     return StringRef();
   }
 };
@@ -686,12 +688,12 @@ struct ScalarTraits<int8_t> {
     Out << Num;
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, int8_t &Val) {
-    int64_t n;
-    if ( getAsSignedInteger(Scalar, 0, n) )
+    long long N;
+    if ( getAsSignedInteger(Scalar, 0, N) )
       return "invalid number";
-    if ( (n > 127) || (n < -128) )
+    if ( (N > 127) || (N < -128) )
       return "out of range number";
-    Val = n;
+    Val = N;
     return StringRef();
   }
 };
@@ -703,12 +705,12 @@ struct ScalarTraits<int16_t> {
     Out << Val;
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, int16_t &Val) {
-    int64_t n;
-    if ( getAsSignedInteger(Scalar, 0, n) )
+    long long N;
+    if ( getAsSignedInteger(Scalar, 0, N) )
       return "invalid number";
-    if ( (n > INT16_MAX) || (n < INT16_MIN) )
+    if ( (N > INT16_MAX) || (N < INT16_MIN) )
       return "out of range number";
-    Val = n;
+    Val = N;
     return StringRef();
   }
 };
@@ -720,12 +722,12 @@ struct ScalarTraits<int32_t> {
     Out << Val;
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, int32_t &Val) {
-    int64_t n;
-    if ( getAsSignedInteger(Scalar, 0, n) )
+    long long N;
+    if ( getAsSignedInteger(Scalar, 0, N) )
       return "invalid number";
-    if ( (n > INT32_MAX) || (n < INT32_MIN) )
+    if ( (N > INT32_MAX) || (N < INT32_MIN) )
       return "out of range number";
-    Val = n;
+    Val = N;
     return StringRef();
   }
 };
@@ -736,8 +738,10 @@ struct ScalarTraits<int64_t> {
     Out << Val;
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, int64_t &Val) {
-    if ( getAsSignedInteger(Scalar, 0, Val) )
+    long long N;
+    if ( getAsSignedInteger(Scalar, 0, N) )
       return "invalid number";
+    Val = N;
     return StringRef();
   }
 };
@@ -781,7 +785,7 @@ struct ScalarTraits<Hex8> {
     Out << format("0x%02X", Num);
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, Hex8 &Val) {
-    uint64_t n;
+    unsigned long long n;
     if ( getAsUnsignedInteger(Scalar, 0, n) )
       return "invalid hex8 number";
     if ( n > 0xFF )
@@ -799,7 +803,7 @@ struct ScalarTraits<Hex16> {
     Out << format("0x%04X", Num);
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, Hex16 &Val) {
-    uint64_t n;
+    unsigned long long n;
     if ( getAsUnsignedInteger(Scalar, 0, n) )
       return "invalid hex16 number";
     if ( n > 0xFFFF )
@@ -816,7 +820,7 @@ struct ScalarTraits<Hex32> {
     Out << format("0x%08X", Num);
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, Hex32 &Val) {
-    uint64_t n;
+    unsigned long long n;
     if ( getAsUnsignedInteger(Scalar, 0, n) )
       return "invalid hex32 number";
     if ( n > 0xFFFFFFFFUL )
@@ -834,7 +838,7 @@ struct ScalarTraits<Hex64> {
     Out << format("0x%016llX", Num);
   }
   static llvm::StringRef input(llvm::StringRef Scalar, void*, Hex64 &Val) {
-    uint64_t Num;
+    unsigned long long Num;
     if ( getAsUnsignedInteger(Scalar, 0, Num) )
       return "invalid hex64 number";
     Val = Num;
