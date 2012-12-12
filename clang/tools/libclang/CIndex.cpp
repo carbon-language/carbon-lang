@@ -4935,9 +4935,7 @@ void AnnotateTokensWorker::AnnotateTokens() {
 
   for (unsigned I = 0 ; I < TokIdx ; ++I) {
     AnnotateTokensData::iterator Pos = Annotated.find(Tokens[I].int_data[1]);
-    if (Pos != Annotated.end() && 
-        (clang_isInvalid(Cursors[I].kind) ||
-         Pos->second.kind != CXCursor_PreprocessingDirective))
+    if (Pos != Annotated.end() && !clang_isPreprocessing(Cursors[I].kind))
       Cursors[I] = Pos->second;
   }
 
@@ -5067,13 +5065,6 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   }
   
   if (clang_isPreprocessing(cursor.kind)) {    
-    // For macro expansions, just note where the beginning of the macro
-    // expansion occurs.
-    if (cursor.kind == CXCursor_MacroExpansion) {
-      Annotated[Loc.int_data] = cursor;
-      return CXChildVisit_Recurse;
-    }
-    
     // Items in the preprocessing record are kept separate from items in
     // declarations, so we keep a separate token index.
     unsigned SavedTokIdx = TokIdx;
@@ -5107,6 +5098,10 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
       case RangeOverlap:
         Cursors[I] = cursor;
         AdvanceToken();
+        // For macro expansions, just note where the beginning of the macro
+        // expansion occurs.
+        if (cursor.kind == CXCursor_MacroExpansion)
+          break;
         continue;
       }
       break;

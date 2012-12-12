@@ -30,8 +30,20 @@ void test() {
 
 const char *fname = __FILE__;
 
-// RUN: c-index-test -test-annotate-tokens=%s:2:1:32:1 -I%S/Inputs %s | FileCheck %s
-// RUN: env CINDEXTEST_EDITING=1 c-index-test -test-annotate-tokens=%s:2:1:32:1 -I%S/Inputs %s | FileCheck %s
+#define SOME_MACRO 3
+
+#ifdef SOME_MACRO
+#endif
+
+struct A
+{
+#ifdef SOME_MACRO
+  int x;
+#endif
+};
+
+// RUN: c-index-test -test-annotate-tokens=%s:2:1:44:1 -I%S/Inputs %s | FileCheck %s
+// RUN: env CINDEXTEST_EDITING=1 c-index-test -test-annotate-tokens=%s:2:1:44:1 -I%S/Inputs %s | FileCheck %s
 // CHECK: Punctuation: "#" [2:1 - 2:2] preprocessing directive=
 // CHECK: Identifier: "define" [2:2 - 2:8] preprocessing directive=
 // CHECK: Identifier: "STILL_NOTHING" [2:9 - 2:22] macro definition=STILL_NOTHING
@@ -196,3 +208,20 @@ const char *fname = __FILE__;
 // CHECK: {{28:1.*inclusion directive=pragma-once.h.*multi-include guarded}}
 // CHECK: {{29:1.*inclusion directive=guarded.h.*multi-include guarded}}
 // CHECK: Identifier: "__FILE__" [31:21 - 31:29] macro expansion=__FILE__
+// CHECK: Punctuation: "#" [35:1 - 35:2] preprocessing directive=
+// CHECK: Identifier: "ifdef" [35:2 - 35:7] preprocessing directive=
+// CHECK: Identifier: "SOME_MACRO" [35:8 - 35:18] macro expansion=SOME_MACRO:33:9
+// CHECK: Punctuation: "#" [36:1 - 36:2] preprocessing directive=
+// CHECK: Identifier: "endif" [36:2 - 36:7] preprocessing directive=
+// CHECK: Keyword: "struct" [38:1 - 38:7] StructDecl=A:38:8 (Definition)
+// CHECK: Identifier: "A" [38:8 - 38:9] StructDecl=A:38:8 (Definition)
+// CHECK: Punctuation: "{" [39:1 - 39:2] StructDecl=A:38:8 (Definition)
+// CHECK: Punctuation: "#" [40:1 - 40:2] preprocessing directive=
+// CHECK: Identifier: "ifdef" [40:2 - 40:7] preprocessing directive=
+// CHECK: Identifier: "SOME_MACRO" [40:8 - 40:18] macro expansion=SOME_MACRO:33:9
+// CHECK: Keyword: "int" [41:3 - 41:6] FieldDecl=x:41:7 (Definition)
+// CHECK: Identifier: "x" [41:7 - 41:8] FieldDecl=x:41:7 (Definition)
+// CHECK: Punctuation: ";" [41:8 - 41:9] StructDecl=A:38:8 (Definition)
+// CHECK: Punctuation: "#" [42:1 - 42:2] preprocessing directive=
+// CHECK: Identifier: "endif" [42:2 - 42:7] preprocessing directive=
+// CHECK: Punctuation: "}" [43:1 - 43:2] StructDecl=A:38:8 (Definition)
