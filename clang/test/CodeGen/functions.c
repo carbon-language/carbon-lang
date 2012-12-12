@@ -24,7 +24,7 @@ void f0() {}
 
 void f1();
 void f2(void) {
-// CHECK: call void bitcast (void ()* @f1 to void (i32, i32, i32)*)(i32 1, i32 2, i32 3)
+// CHECK: call void @f1()
   f1(1, 2, 3);
 }
 // CHECK: define void @f1()

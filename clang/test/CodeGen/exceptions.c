@@ -19,3 +19,12 @@ void test1() {
   // CHECK-ARM:      landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gcc_personality_sj0 to i8*)
   // CHECK-ARM-NEXT:   cleanup
 }
+
+void test2_helper();
+void test2() {
+  __block int x = 10;
+  test2_helper(5, 6, 7);
+}
+void test2_helper(int x, int y) {
+}
+// CHECK: invoke void @test2_helper(i32 5, i32 6)
