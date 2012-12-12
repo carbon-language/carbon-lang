@@ -592,9 +592,7 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
   // If this is a macro to be expanded, do it.
   if (MacroInfo *MI = getMacroInfo(&II)) {
     if (!DisableMacroExpansion) {
-      if (Identifier.isExpandDisabled()) {
-        Diag(Identifier, diag::pp_disabled_macro_expansion);
-      } else if (MI->isEnabled()) {
+      if (!Identifier.isExpandDisabled() && MI->isEnabled()) {
         if (!HandleMacroExpandedIdentifier(Identifier, MI))
           return;
       } else {
@@ -602,7 +600,8 @@ void Preprocessor::HandleIdentifier(Token &Identifier) {
         // expanded, even if it's in a context where it could be expanded in the
         // future.
         Identifier.setFlag(Token::DisableExpand);
-        Diag(Identifier, diag::pp_disabled_macro_expansion);
+        if (MI->isObjectLike() || isNextPPTokenLParen())
+          Diag(Identifier, diag::pp_disabled_macro_expansion);
       }
     }
   }
