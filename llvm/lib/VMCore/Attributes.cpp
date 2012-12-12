@@ -356,7 +356,7 @@ uint64_t AttributesImpl::getStackAlignment() const {
 //===----------------------------------------------------------------------===//
 
 AttributeSet AttributeSet::get(LLVMContext &C,
-                             ArrayRef<AttributeWithIndex> Attrs) {
+                               ArrayRef<AttributeWithIndex> Attrs) {
   // If there are no attributes then return a null AttributesList pointer.
   if (Attrs.empty())
     return AttributeSet();
