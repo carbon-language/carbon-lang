@@ -473,14 +473,12 @@ define i64 @test51(i64 %A, i1 %cond) {
   %F = sext i32 %E to i64
   ret i64 %F
 ; CHECK: @test51
-
-; FIXME: disabled, see PR5997
-; HECK-NEXT: %C = and i64 %A, 4294967294
-; HECK-NEXT: %D = or i64 %A, 1
-; HECK-NEXT: %E = select i1 %cond, i64 %C, i64 %D
-; HECK-NEXT: %sext = shl i64 %E, 32
-; HECK-NEXT: %F = ashr i64 %sext, 32
-; HECK-NEXT: ret i64 %F
+; CHECK-NEXT: %C = and i64 %A, 4294967294
+; CHECK-NEXT: %D = or i64 %A, 1
+; CHECK-NEXT: %E = select i1 %cond, i64 %C, i64 %D
+; CHECK-NEXT: %sext = shl i64 %E, 32
+; CHECK-NEXT: %F = ashr exact i64 %sext, 32
+; CHECK-NEXT: ret i64 %F
 }
 
 define i32 @test52(i64 %A) {
