@@ -64,6 +64,7 @@ class SymbolFileDWARF : public lldb_private::SymbolFile, public lldb_private::Us
 public:
     friend class SymbolFileDWARFDebugMap;
     friend class DebugMapModule;
+    friend class DWARFCompileUnit;
     //------------------------------------------------------------------
     // Static Functions
     //------------------------------------------------------------------

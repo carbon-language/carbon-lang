@@ -448,5 +448,42 @@ LineTable::GetDescription (Stream *s, Target *target, DescriptionLevel level)
     }
 }
 
+size_t
+LineTable::GetContiguousFileAddressRanges (FileAddressRanges &file_ranges, bool append)
+{
+    if (!append)
+        file_ranges.Clear();
+    const size_t initial_count = file_ranges.GetSize();
+    
+    const size_t count = m_entries.size();
+    LineEntry line_entry;
+    std::vector<addr_t> section_base_file_addrs (m_section_list.GetSize(), LLDB_INVALID_ADDRESS);
+    FileAddressRanges::Entry range (LLDB_INVALID_ADDRESS, 0);
+    for (size_t idx = 0; idx < count; ++idx)
+    {
+        const Entry& entry = m_entries[idx];
+
+        if (entry.is_terminal_entry)
+        {
+            if (range.GetRangeBase() != LLDB_INVALID_ADDRESS)
+            {
+                if (section_base_file_addrs[entry.sect_idx] == LLDB_INVALID_ADDRESS)
+                    section_base_file_addrs[entry.sect_idx] = m_section_list.GetSectionAtIndex (entry.sect_idx)->GetFileAddress();
+                range.SetRangeEnd(section_base_file_addrs[entry.sect_idx] + entry.sect_offset);
+                file_ranges.Append(range);
+                range.Clear(LLDB_INVALID_ADDRESS);
+            }
+        }
+        else if (range.GetRangeBase() == LLDB_INVALID_ADDRESS)
+        {
+            if (section_base_file_addrs[entry.sect_idx] == LLDB_INVALID_ADDRESS)
+                section_base_file_addrs[entry.sect_idx] = m_section_list.GetSectionAtIndex (entry.sect_idx)->GetFileAddress();
+            range.SetRangeBase(section_base_file_addrs[entry.sect_idx] + entry.sect_offset);
+        }
+    }
+    return file_ranges.GetSize() - initial_count;
+}
+
+
 
 

@@ -13,6 +13,8 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Core/Timer.h"
+#include "lldb/Symbol/CompileUnit.h"
+#include "lldb/Symbol/LineTable.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
 
@@ -392,6 +394,31 @@ DWARFCompileUnit::BuildAddressRangeTable (SymbolFileDWARF* dwarf2Data,
     const DWARFDebugInfoEntry* die = DIE();
     if (die)
         die->BuildAddressRangeTable(dwarf2Data, this, debug_aranges);
+    
+    if (debug_aranges->IsEmpty())
+    {
+        // We got nothing from the functions, maybe we have a line tables only
+        // situation. Check the line tables and build the arange table from this.
+        SymbolContext sc;
+        sc.comp_unit = dwarf2Data->GetCompUnitForDWARFCompUnit(this);
+        if (sc.comp_unit)
+        {
+            LineTable *line_table = sc.comp_unit->GetLineTable();
+
+            if (line_table)
+            {
+                LineTable::FileAddressRanges file_ranges;
+                const bool append = true;
+                const size_t num_ranges = line_table->GetContiguousFileAddressRanges (file_ranges, append);
+                for (uint32_t idx=0; idx<num_ranges; ++idx)
+                {
+                    const LineTable::FileAddressRanges::Entry &range = file_ranges.GetEntryRef(idx);
+                    debug_aranges->AppendRange(GetOffset(), range.GetRangeBase(), range.GetRangeEnd());
+                    printf ("0x%8.8x: [0x%16.16llx - 0x%16.16llx)\n", GetOffset(), range.GetRangeBase(), range.GetRangeEnd());
+                }
+            }
+        }
+    }
     
     // Keep memory down by clearing DIEs if this generate function
     // caused them to be parsed

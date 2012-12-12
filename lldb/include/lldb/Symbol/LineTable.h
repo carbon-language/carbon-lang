@@ -16,6 +16,7 @@
 #include "lldb/Symbol/LineEntry.h"
 #include "lldb/Core/ModuleChild.h"
 #include "lldb/Core/Section.h"
+#include "lldb/Core/RangeMap.h"
 
 namespace lldb_private {
 
@@ -203,6 +204,25 @@ public:
     //------------------------------------------------------------------
     uint32_t
     GetSize () const;
+
+    typedef lldb_private::RangeArray<lldb::addr_t, lldb::addr_t, 32> FileAddressRanges;
+    
+    //------------------------------------------------------------------
+    /// Gets all contiguous file address ranges for the entire line table.
+    ///
+    /// @param[out] file_ranges
+    ///     A collection of file address ranges that will be filled in
+    ///     by this function.
+    ///
+    /// @param[out] append
+    ///     If \b true, then append to \a file_ranges, otherwise clear
+    ///     \a file_ranges prior to adding any ranges. 
+    ///
+    /// @return
+    ///     The number of address ranges added to \a file_ranges
+    //------------------------------------------------------------------
+    size_t
+    GetContiguousFileAddressRanges (FileAddressRanges &file_ranges, bool append);
 
 protected:
 

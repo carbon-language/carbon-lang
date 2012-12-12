@@ -2566,27 +2566,7 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
                     {
                         resolved |= eSymbolContextCompUnit;
 
-                        if (resolve_scope & eSymbolContextLineEntry)
-                        {
-                            LineTable *line_table = sc.comp_unit->GetLineTable();
-                            if (line_table != NULL)
-                            {
-                                if (so_addr.IsLinkedAddress())
-                                {
-                                    Address linked_addr (so_addr);
-                                    linked_addr.ResolveLinkedAddress();
-                                    if (line_table->FindLineEntryByAddress (linked_addr, sc.line_entry))
-                                    {
-                                        resolved |= eSymbolContextLineEntry;
-                                    }
-                                }
-                                else if (line_table->FindLineEntryByAddress (so_addr, sc.line_entry))
-                                {
-                                    resolved |= eSymbolContextLineEntry;
-                                }
-                            }
-                        }
-
+                        bool force_check_line_table = false;
                         if (resolve_scope & (eSymbolContextFunction | eSymbolContextBlock))
                         {
                             DWARFDebugInfoEntry *function_die = NULL;
@@ -2614,8 +2594,7 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
                                 // should only happen when there aren't other functions from
                                 // other compile units in these gaps. This helps keep the size
                                 // of the aranges down.
-                                sc.comp_unit = NULL;
-                                resolved &= ~eSymbolContextCompUnit;
+                                force_check_line_table = true;
                             }
 
                             if (sc.function != NULL)
@@ -2634,6 +2613,39 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
                                         resolved |= eSymbolContextBlock;
                                 }
                             }
+                        }
+                        
+                        if ((resolve_scope & eSymbolContextLineEntry) || force_check_line_table)
+                        {
+                            LineTable *line_table = sc.comp_unit->GetLineTable();
+                            if (line_table != NULL)
+                            {
+                                if (so_addr.IsLinkedAddress())
+                                {
+                                    Address linked_addr (so_addr);
+                                    linked_addr.ResolveLinkedAddress();
+                                    if (line_table->FindLineEntryByAddress (linked_addr, sc.line_entry))
+                                    {
+                                        resolved |= eSymbolContextLineEntry;
+                                    }
+                                }
+                                else if (line_table->FindLineEntryByAddress (so_addr, sc.line_entry))
+                                {
+                                    resolved |= eSymbolContextLineEntry;
+                                }
+                            }
+                        }
+                        
+                        if (force_check_line_table && !(resolved & eSymbolContextLineEntry))
+                        {
+                            // We might have had a compile unit that had discontiguous
+                            // address ranges where the gaps are symbols that don't have
+                            // any debug info. Discontiguous compile unit address ranges
+                            // should only happen when there aren't other functions from
+                            // other compile units in these gaps. This helps keep the size
+                            // of the aranges down.
+                            sc.comp_unit = NULL;
+                            resolved &= ~eSymbolContextCompUnit;
                         }
                     }
                     else
