@@ -552,7 +552,7 @@ namespace yaml {
     }
 
     static StringRef input(StringRef scalar, void *, MyNumber &value) {
-      int64_t n;
+      long long n;
       if ( getAsSignedInteger(scalar, 0, n) )
         return "invalid number";
       value = n;
