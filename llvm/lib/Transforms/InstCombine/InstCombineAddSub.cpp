@@ -354,6 +354,10 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
   if (Value *V = SimplifyFAddInst(LHS, RHS, I.getFastMathFlags(), TD))
     return ReplaceInstUsesWith(I, V);
 
+  if (isa<PHINode>(LHS))
+    if (Instruction *NV = FoldOpIntoPhi(I))
+      return NV;
+
   // -A + B  -->  B - A
   // -A + -B  -->  -(A + B)
   if (Value *LHSV = dyn_castFNegVal(LHS))
