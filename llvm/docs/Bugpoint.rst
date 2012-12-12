@@ -136,9 +136,9 @@ non-obvious ways.  Here are some hints and tips:
   It is often useful to capture the output of the program to file.  For example,
   in the C shell, you can run:
 
-  .. code-block:: bash
+  .. code-block:: console
 
-    bugpoint  ... |& tee bugpoint.log
+    $ bugpoint  ... |& tee bugpoint.log
 
   to get a copy of ``bugpoint``'s output in the file ``bugpoint.log``, as well
   as on your terminal.

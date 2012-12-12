@@ -36,7 +36,7 @@ We use here the command-line, non-interactive CMake interface.
 #. Create a directory for containing the build. It is not supported to build
    LLVM on the source directory. cd to this directory:
 
-   .. code-block:: bash
+   .. code-block:: console
 
      $ mkdir mybuilddir
      $ cd mybuilddir
@@ -44,7 +44,7 @@ We use here the command-line, non-interactive CMake interface.
 #. Execute this command on the shell replacing `path/to/llvm/source/root` with
    the path to the root of your LLVM source tree:
 
-   .. code-block:: bash
+   .. code-block:: console
 
      $ cmake path/to/llvm/source/root
 
@@ -80,14 +80,14 @@ the corresponding *Generator* for creating files for your build tool. You can
 explicitly specify the generator with the command line option ``-G "Name of the
 generator"``. For knowing the available generators on your platform, execute
 
-.. code-block:: bash
+.. code-block:: console
 
   $ cmake --help
 
 This will list the generator's names at the end of the help text. Generator's
 names are case-sensitive. Example:
 
-.. code-block:: bash
+.. code-block:: console
 
   $ cmake -G "Visual Studio 9 2008" path/to/llvm/source/root
 
@@ -110,14 +110,14 @@ Variables customize how the build will be generated. Options are boolean
 variables, with possible values ON/OFF. Options and variables are defined on the
 CMake command line like this:
 
-.. code-block:: bash
+.. code-block:: console
 
   $ cmake -DVARIABLE=value path/to/llvm/source
 
 You can set a variable after the initial CMake invocation for changing its
 value. You can also undefine a variable:
 
-.. code-block:: bash
+.. code-block:: console
 
   $ cmake -UVARIABLE path/to/llvm/source
 
@@ -127,7 +127,7 @@ on the root of the build directory. Do not hand-edit it.
 Variables are listed here appending its type after a colon. It is correct to
 write the variable and the type on the CMake command line:
 
-.. code-block:: bash
+.. code-block:: console
 
   $ cmake -DVARIABLE:TYPE=value path/to/llvm/source
 
@@ -280,7 +280,7 @@ Testing is performed when the *check* target is built. For instance, if you are
 using makefiles, execute this command while on the top level of your build
 directory:
 
-.. code-block:: bash
+.. code-block:: console
 
   $ make check
 
@@ -361,7 +361,7 @@ Developing LLVM pass out of source
 It is possible to develop LLVM passes against installed LLVM.  An example of
 project layout provided below:
 
-.. code-block:: bash
+.. code-block:: none
 
   <project dir>/
       |
