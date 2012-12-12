@@ -24,6 +24,7 @@ add_llvm_unittest(SupportTests
   SwapByteOrderTest.cpp
   TimeValue.cpp
   ValueHandleTest.cpp
+  YAMLIOTest.cpp
   YAMLParserTest.cpp
   formatted_raw_ostream_test.cpp
   raw_ostream_test.cpp

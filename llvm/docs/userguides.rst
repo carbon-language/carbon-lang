@@ -24,6 +24,7 @@ User Guides
    tutorial/index
    ReleaseNotes
    Passes
+   YamlIO
 
 * :ref:`getting_started`
     
@@ -100,6 +101,10 @@ User Guides
 
    Instructions for adding new builder to LLVM buildbot master.
     
+* :ref:`yamlio`
+
+   A reference guide for using LLVM's YAML I/O library.
+
 * **IRC** -- You can probably find help on the unofficial LLVM IRC.
 
    We often are on irc.oftc.net in the #llvm channel.  If you are using the
