@@ -23,6 +23,7 @@ User Guides
    TestingGuide
    tutorial/index
    ReleaseNotes
+   Passes
 
 * :ref:`getting_started`
     
@@ -58,10 +59,10 @@ User Guides
    A reference manual for the LLVM command line utilities ("man" pages for LLVM
    tools).
     
-* `LLVM's Analysis and Transform Passes <Passes.html>`_
+* :doc:`Passes`
 
    A list of optimizations and analyses implemented in LLVM.
-    
+
 * :ref:`faq`
 
    A list of common questions and problems and their solutions.

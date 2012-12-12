@@ -23,14 +23,15 @@ Subsystem Documentation
    SourceLevelDebugging
    WritingAnLLVMBackend
    GarbageCollection
+   WritingAnLLVMPass
 
 .. FIXME: once LangRef is Sphinxified, HowToUseInstrMappings should be put
    under LangRef's toctree instead of this page's toctree.
 
-* `Writing an LLVM Pass <WritingAnLLVMPass.html>`_
-    
+* :doc:`WritingAnLLVMPass`
+
    Information on how to write LLVM transformations and analyses.
-    
+
 * :doc:`WritingAnLLVMBackend`
 
    Information on how to write LLVM backends for machine targets.

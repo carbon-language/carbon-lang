@@ -355,6 +355,8 @@ an equivalent variant of snippet shown above:
 
   target_link_libraries(mycompiler ${REQ_LLVM_LIBRARIES})
 
+.. _cmake-out-of-source-pass:
+
 Developing LLVM pass out of source
 ----------------------------------
 

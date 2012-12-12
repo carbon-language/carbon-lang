@@ -758,10 +758,10 @@ If ``CustomReadBarriers`` or ``CustomWriteBarriers`` are specified, then
 ``performCustomLowering`` **must** eliminate the corresponding barriers.
 
 ``performCustomLowering`` must comply with the same restrictions as
-`FunctionPass::runOnFunction <WritingAnLLVMPass.html#runOnFunction>`__
+:ref:`FunctionPass::runOnFunction <writing-an-llvm-pass-runOnFunction>`
 Likewise, ``initializeCustomLowering`` has the same semantics as
-`Pass::doInitialization(Module&)
-<WritingAnLLVMPass.html#doInitialization_mod>`__
+:ref:`Pass::doInitialization(Module&)
+<writing-an-llvm-pass-doInitialization-mod>`
 
 The following can be used as a template:
 
