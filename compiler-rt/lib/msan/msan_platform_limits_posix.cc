@@ -48,6 +48,6 @@ namespace __msan {
   uptr __msan_get_msghdr_iovlen(void* msg) {
     return ((struct msghdr *)msg)->msg_iovlen;
   }
-};
+}
 
 #endif  // __linux__
