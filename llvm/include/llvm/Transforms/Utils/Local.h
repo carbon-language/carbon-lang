@@ -252,6 +252,11 @@ bool LowerDbgDeclare(Function &F);
 /// an alloca, if any.
 DbgDeclareInst *FindAllocaDbgDeclare(Value *V);
 
+/// replaceDbgDeclareForAlloca - Replaces llvm.dbg.declare instruction when
+/// alloca is replaced with a new value.
+bool replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
+                                DIBuilder &Builder);
+
 } // End llvm namespace
 
 #endif

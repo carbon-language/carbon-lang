@@ -928,3 +928,38 @@ DbgDeclareInst *llvm::FindAllocaDbgDeclare(Value *V) {
 
   return 0;
 }
+
+bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
+                                      DIBuilder &Builder) {
+  DbgDeclareInst *DDI = FindAllocaDbgDeclare(AI);
+  if (!DDI)
+    return false;
+  DIVariable DIVar(DDI->getVariable());
+  if (!DIVar.Verify())
+    return false;
+
+  // Create a copy of the original DIDescriptor for user variable, appending
+  // "deref" operation to a list of address elements, as new llvm.dbg.declare
+  // will take a value storing address of the memory for variable, not
+  // alloca itself.
+  Type *Int64Ty = Type::getInt64Ty(AI->getContext());
+  SmallVector<Value*, 4> NewDIVarAddress;
+  if (DIVar.hasComplexAddress()) {
+    for (unsigned i = 0, n = DIVar.getNumAddrElements(); i < n; ++i) {
+      NewDIVarAddress.push_back(
+          ConstantInt::get(Int64Ty, DIVar.getAddrElement(i)));
+    }
+  }
+  NewDIVarAddress.push_back(ConstantInt::get(Int64Ty, DIBuilder::OpDeref));
+  DIVariable NewDIVar = Builder.createComplexVariable(
+      DIVar.getTag(), DIVar.getContext(), DIVar.getName(),
+      DIVar.getFile(), DIVar.getLineNumber(), DIVar.getType(),
+      NewDIVarAddress, DIVar.getArgNumber());
+
+  // Insert llvm.dbg.declare in the same basic block as the original alloca,
+  // and remove old llvm.dbg.declare.
+  BasicBlock *BB = AI->getParent();
+  Builder.insertDeclare(NewAllocaAddress, NewDIVar, BB);
+  DDI->eraseFromParent();
+  return true;
+}

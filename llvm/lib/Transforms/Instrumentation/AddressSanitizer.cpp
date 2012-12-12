@@ -25,6 +25,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/DataLayout.h"
+#include "llvm/DIBuilder.h"
 #include "llvm/Function.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/InlineAsm.h"
@@ -38,6 +39,7 @@
 #include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "llvm/Type.h"
 #include <algorithm>
@@ -1158,6 +1160,7 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
   SmallVector<Instruction*, 8> RetVec;
   uint64_t TotalSize = 0;
   bool HavePoisonedAllocas = false;
+  DIBuilder DIB(*F.getParent());
 
   // Filter out Alloca instructions we want (and can) handle.
   // Collect Ret instructions.
@@ -1228,6 +1231,7 @@ bool AddressSanitizer::poisonStackInFunction(Function &F) {
     Value *NewAllocaPtr = IRB.CreateIntToPtr(
             IRB.CreateAdd(LocalStackBase, ConstantInt::get(IntptrTy, Pos)),
             AI->getType());
+    replaceDbgDeclareForAlloca(AI, NewAllocaPtr, DIB);
     AI->replaceAllUsesWith(NewAllocaPtr);
     // Analyze lifetime intrinsics only for static allocas we handle.
     if (CheckLifetime)
