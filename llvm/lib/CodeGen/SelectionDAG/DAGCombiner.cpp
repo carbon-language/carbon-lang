@@ -7433,7 +7433,8 @@ SDValue DAGCombiner::ReduceLoadOpStoreWidth(SDNode *N) {
     // start at the previous one.
     if (ShAmt % NewBW)
       ShAmt = (((ShAmt + NewBW - 1) / NewBW) * NewBW) - NewBW;
-    APInt Mask = APInt::getBitsSet(BitWidth, ShAmt, ShAmt + NewBW);
+    APInt Mask = APInt::getBitsSet(BitWidth, ShAmt,
+                                   std::min(BitWidth, ShAmt + NewBW));
     if ((Imm & Mask) == Imm) {
       APInt NewImm = (Imm & Mask).lshr(ShAmt).trunc(NewBW);
       if (Opc == ISD::AND)
