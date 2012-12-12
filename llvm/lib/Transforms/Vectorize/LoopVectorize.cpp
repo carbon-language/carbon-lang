@@ -1859,7 +1859,7 @@ bool LoopVectorizationLegality::blockCanBePredicated(BasicBlock *BB) {
     if (it->mayReadFromMemory() || it->mayWriteToMemory() || it->mayThrow())
       return false;
 
-    // The isntructions below can trap.
+    // The instructions below can trap.
     switch (it->getOpcode()) {
     default: continue;
     case Instruction::UDiv:
