@@ -71,7 +71,7 @@ MCAsmLayout::MCAsmLayout(MCAssembler &Asm)
       SectionOrder.push_back(&*it);
 }
 
-bool MCAsmLayout::isFragmentUpToDate(const MCFragment *F) const {
+bool MCAsmLayout::isFragmentValid(const MCFragment *F) const {
   const MCSectionData &SD = *F->getParent();
   const MCFragment *LastValid = LastValidFragment.lookup(&SD);
   if (!LastValid)
@@ -81,8 +81,8 @@ bool MCAsmLayout::isFragmentUpToDate(const MCFragment *F) const {
 }
 
 void MCAsmLayout::invalidateFragmentsAfter(MCFragment *F) {
-  // If this fragment wasn't already up-to-date, we don't need to do anything.
-  if (!isFragmentUpToDate(F))
+  // If this fragment wasn't already valid, we don't need to do anything.
+  if (!isFragmentValid(F))
     return;
 
   // Otherwise, reset the last valid fragment to this fragment.
@@ -90,7 +90,7 @@ void MCAsmLayout::invalidateFragmentsAfter(MCFragment *F) {
   LastValidFragment[&SD] = F;
 }
 
-void MCAsmLayout::EnsureValid(const MCFragment *F) const {
+void MCAsmLayout::ensureValid(const MCFragment *F) const {
   MCSectionData &SD = *F->getParent();
 
   MCFragment *Cur = LastValidFragment[&SD];
@@ -99,15 +99,16 @@ void MCAsmLayout::EnsureValid(const MCFragment *F) const {
   else
     Cur = Cur->getNextNode();
 
-  // Advance the layout position until the fragment is up-to-date.
-  while (!isFragmentUpToDate(F)) {
-    const_cast<MCAsmLayout*>(this)->LayoutFragment(Cur);
+  // Advance the layout position until the fragment is valid.
+  while (!isFragmentValid(F)) {
+    assert(Cur && "Layout bookkeeping error");
+    const_cast<MCAsmLayout*>(this)->layoutFragment(Cur);
     Cur = Cur->getNextNode();
   }
 }
 
 uint64_t MCAsmLayout::getFragmentOffset(const MCFragment *F) const {
-  EnsureValid(F);
+  ensureValid(F);
   assert(F->Offset != ~UINT64_C(0) && "Address not set!");
   return F->Offset;
 }
@@ -374,15 +375,15 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
   llvm_unreachable("invalid fragment kind");
 }
 
-void MCAsmLayout::LayoutFragment(MCFragment *F) {
+void MCAsmLayout::layoutFragment(MCFragment *F) {
   MCFragment *Prev = F->getPrevNode();
 
-  // We should never try to recompute something which is up-to-date.
-  assert(!isFragmentUpToDate(F) && "Attempt to recompute up-to-date fragment!");
-  // We should never try to compute the fragment layout if it's predecessor
-  // isn't up-to-date.
-  assert((!Prev || isFragmentUpToDate(Prev)) &&
-         "Attempt to compute fragment before it's predecessor!");
+  // We should never try to recompute something which is valid.
+  assert(!isFragmentValid(F) && "Attempt to recompute a valid fragment!");
+  // We should never try to compute the fragment layout if its predecessor
+  // isn't valid.
+  assert((!Prev || isFragmentValid(Prev)) &&
+         "Attempt to compute fragment before its predecessor!");
 
   ++stats::FragmentLayouts;
 
@@ -605,9 +606,9 @@ void MCAssembler::Finish() {
     SD->setLayoutOrder(i);
 
     unsigned FragmentIndex = 0;
-    for (MCSectionData::iterator it2 = SD->begin(),
-           ie2 = SD->end(); it2 != ie2; ++it2)
-      it2->setLayoutOrder(FragmentIndex++);
+    for (MCSectionData::iterator iFrag = SD->begin(), iFragEnd = SD->end();
+         iFrag != iFragEnd; ++iFrag)
+      iFrag->setLayoutOrder(FragmentIndex++);
   }
 
   // Layout until everything fits.
@@ -767,9 +768,11 @@ bool MCAssembler::relaxDwarfCallFrameFragment(MCAsmLayout &Layout,
 bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD) {
   // Holds the first fragment which needed relaxing during this layout. It will
   // remain NULL if none were relaxed.
-  MCFragment *FirstInvalidFragment = NULL;
+  // When a fragment is relaxed, all the fragments following it should get
+  // invalidated because their offset is going to change.
+  MCFragment *FirstRelaxedFragment = NULL;
 
-  // Scan for fragments that need relaxation.
+  // Attempt to relax all the fragments in the section.
   for (MCSectionData::iterator I = SD.begin(), IE = SD.end(); I != IE; ++I) {
     // Check if this is a fragment that needs relaxation.
     bool RelaxedFrag = false;
@@ -794,11 +797,11 @@ bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD) {
       RelaxedFrag = relaxLEB(Layout, *cast<MCLEBFragment>(I));
       break;
     }
-    if (RelaxedFrag && !FirstInvalidFragment)
-      FirstInvalidFragment = I;
+    if (RelaxedFrag && !FirstRelaxedFragment)
+      FirstRelaxedFragment = I;
   }
-  if (FirstInvalidFragment) {
-    Layout.invalidateFragmentsAfter(FirstInvalidFragment);
+  if (FirstRelaxedFragment) {
+    Layout.invalidateFragmentsAfter(FirstRelaxedFragment);
     return true;
   }
   return false;

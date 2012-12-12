@@ -39,14 +39,15 @@ private:
 
   /// The last fragment which was laid out, or 0 if nothing has been laid
   /// out. Fragments are always laid out in order, so all fragments with a
-  /// lower ordinal will be up to date.
-  mutable DenseMap<const MCSectionData*, MCFragment *> LastValidFragment;
+  /// lower ordinal will be valid.
+  mutable DenseMap<const MCSectionData*, MCFragment*> LastValidFragment;
 
   /// \brief Make sure that the layout for the given fragment is valid, lazily
   /// computing it if necessary.
-  void EnsureValid(const MCFragment *F) const;
+  void ensureValid(const MCFragment *F) const;
 
-  bool isFragmentUpToDate(const MCFragment *F) const;
+  /// \brief Is the layout for this fragment valid?
+  bool isFragmentValid(const MCFragment *F) const;
 
 public:
   MCAsmLayout(MCAssembler &_Assembler);
@@ -61,7 +62,7 @@ public:
   /// \brief Perform layout for a single fragment, assuming that the previous
   /// fragment has already been laid out correctly, and the parent section has
   /// been initialized.
-  void LayoutFragment(MCFragment *Fragment);
+  void layoutFragment(MCFragment *Fragment);
 
   /// @name Section Access (in layout order)
   /// @{
