@@ -48,6 +48,7 @@ class AsanChunkView {
     return false;
   }
   bool AddrIsAtLeft(uptr addr, uptr access_size, uptr *offset) {
+    (void)access_size;
     if (addr < Beg()) {
       *offset = Beg() - addr;
       return true;
