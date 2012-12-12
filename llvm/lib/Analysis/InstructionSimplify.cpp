@@ -853,6 +853,85 @@ Value *llvm::SimplifySubInst(Value *Op0, Value *Op1, bool isNSW, bool isNUW,
                            RecursionLimit);
 }
 
+/// Given operands for an FAdd, see if we can fold the result.  If not, this
+/// returns null.
+static Value *SimplifyFAddInst(Value *Op0, Value *Op1, FastMathFlags FMF,
+                              const Query &Q, unsigned MaxRecurse) {
+  if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
+    if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
+      Constant *Ops[] = { CLHS, CRHS };
+      return ConstantFoldInstOperands(Instruction::FAdd, CLHS->getType(),
+                                      Ops, Q.TD, Q.TLI);
+    }
+
+    // Canonicalize the constant to the RHS.
+    std::swap(Op0, Op1);
+  }
+
+  // fadd X, -0 ==> X
+  if (match(Op1, m_NegZero()))
+    return Op0;
+
+  // fadd X, 0 ==> X, when we know X is not -0
+  if (match(Op1, m_Zero()) &&
+      (FMF.noSignedZeros() || CannotBeNegativeZero(Op0)))
+    return Op0;
+
+  // fadd [nnan ninf] X, (fsub [nnan ninf] 0, X) ==> 0
+  //   where nnan and ninf have to occur at least once somewhere in this
+  //   expression
+  Value *SubOp = 0;
+  if (match(Op1, m_FSub(m_AnyZero(), m_Specific(Op0))))
+    SubOp = Op1;
+  else if (match(Op0, m_FSub(m_AnyZero(), m_Specific(Op1))))
+    SubOp = Op0;
+  if (SubOp) {
+    Instruction *FSub = cast<Instruction>(SubOp);
+    if ((FMF.noNaNs() || FSub->hasNoNaNs()) &&
+        (FMF.noInfs() || FSub->hasNoInfs()))
+      return Constant::getNullValue(Op0->getType());
+  }
+
+  return 0;
+}
+
+/// Given operands for an FSub, see if we can fold the result.  If not, this
+/// returns null.
+static Value *SimplifyFSubInst(Value *Op0, Value *Op1, FastMathFlags FMF,
+                              const Query &Q, unsigned MaxRecurse) {
+  if (Constant *CLHS = dyn_cast<Constant>(Op0)) {
+    if (Constant *CRHS = dyn_cast<Constant>(Op1)) {
+      Constant *Ops[] = { CLHS, CRHS };
+      return ConstantFoldInstOperands(Instruction::FSub, CLHS->getType(),
+                                      Ops, Q.TD, Q.TLI);
+    }
+  }
+
+  // fsub X, 0 ==> X
+  if (match(Op1, m_Zero()))
+    return Op0;
+
+  // fsub X, -0 ==> X, when we know X is not -0
+  if (match(Op1, m_NegZero()) &&
+      (FMF.noSignedZeros() || CannotBeNegativeZero(Op0)))
+    return Op0;
+
+  // fsub 0, (fsub -0.0, X) ==> X
+  Value *X;
+  if (match(Op0, m_AnyZero())) {
+    if (match(Op1, m_FSub(m_NegZero(), m_Value(X))))
+      return X;
+    if (FMF.noSignedZeros() && match(Op1, m_FSub(m_AnyZero(), m_Value(X))))
+      return X;
+  }
+
+  // fsub nnan ninf x, x ==> 0.0
+  if (FMF.noNaNs() && FMF.noInfs() && Op0 == Op1)
+    return Constant::getNullValue(Op0->getType());
+
+  return 0;
+}
+
 /// Given the operands for an FMul, see if we can fold the result
 static Value *SimplifyFMulInst(Value *Op0, Value *Op1,
                                FastMathFlags FMF,
@@ -864,18 +943,18 @@ static Value *SimplifyFMulInst(Value *Op0, Value *Op1,
       return ConstantFoldInstOperands(Instruction::FMul, CLHS->getType(),
                                       Ops, Q.TD, Q.TLI);
     }
+
+    // Canonicalize the constant to the RHS.
+    std::swap(Op0, Op1);
  }
 
- // Check for some fast-math optimizations
- if (FMF.noNaNs()) {
-   if (FMF.noSignedZeros()) {
-     // fmul N S 0, x ==> 0
-     if (match(Op0, m_Zero()))
-       return Op0;
-     if (match(Op1, m_Zero()))
-       return Op1;
-   }
- }
+ // fmul X, 1.0 ==> X
+ if (match(Op1, m_FPOne()))
+   return Op0;
+
+ // fmul nnan nsz X, 0 ==> 0
+ if (FMF.noNaNs() && FMF.noSignedZeros() && match(Op1, m_AnyZero()))
+   return Op1;
 
  return 0;
 }
@@ -943,6 +1022,18 @@ static Value *SimplifyMulInst(Value *Op0, Value *Op1, const Query &Q,
       return V;
 
   return 0;
+}
+
+Value *llvm::SimplifyFAddInst(Value *Op0, Value *Op1, FastMathFlags FMF,
+                             const DataLayout *TD, const TargetLibraryInfo *TLI,
+                             const DominatorTree *DT) {
+  return ::SimplifyFAddInst(Op0, Op1, FMF, Query (TD, TLI, DT), RecursionLimit);
+}
+
+Value *llvm::SimplifyFSubInst(Value *Op0, Value *Op1, FastMathFlags FMF,
+                             const DataLayout *TD, const TargetLibraryInfo *TLI,
+                             const DominatorTree *DT) {
+  return ::SimplifyFSubInst(Op0, Op1, FMF, Query (TD, TLI, DT), RecursionLimit);
 }
 
 Value *llvm::SimplifyFMulInst(Value *Op0, Value *Op1,
@@ -2789,11 +2880,19 @@ Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout *TD,
   default:
     Result = ConstantFoldInstruction(I, TD, TLI);
     break;
+  case Instruction::FAdd:
+    Result = SimplifyFAddInst(I->getOperand(0), I->getOperand(1),
+                              I->getFastMathFlags(), TD, TLI, DT);
+    break;
   case Instruction::Add:
     Result = SimplifyAddInst(I->getOperand(0), I->getOperand(1),
                              cast<BinaryOperator>(I)->hasNoSignedWrap(),
                              cast<BinaryOperator>(I)->hasNoUnsignedWrap(),
                              TD, TLI, DT);
+    break;
+  case Instruction::FSub:
+    Result = SimplifyFSubInst(I->getOperand(0), I->getOperand(1),
+                              I->getFastMathFlags(), TD, TLI, DT);
     break;
   case Instruction::Sub:
     Result = SimplifySubInst(I->getOperand(0), I->getOperand(1),
