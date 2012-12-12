@@ -52,7 +52,6 @@ INTERCEPTOR(ssize_t, pread64, int fd, void *ptr, size_t count, off64_t offset) {
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   CHECK(INTERCEPT_FUNCTION(read));         \
   CHECK(INTERCEPT_FUNCTION(pread));        \
-  CHECK(INTERCEPT_FUNCTION(pread64))       \
-  ;
+  CHECK(INTERCEPT_FUNCTION(pread64));
 
 #endif  // SANITIZER_COMMON_INTERCEPTORS_H

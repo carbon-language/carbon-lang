@@ -1568,7 +1568,7 @@ TEST(AddressSanitizer, DISABLED_MemIntrinsicCallByPointerTest) {
 
 #ifdef __linux__
 TEST(AddressSanitizer, pread) {
-  char *x = new char [10];
+  char *x = new char[10];
   int fd = open("/proc/self/stat", O_RDONLY);
   ASSERT_GT(fd, 0);
   EXPECT_DEATH(pread(fd, x, 15, 0),
@@ -1579,8 +1579,9 @@ TEST(AddressSanitizer, pread) {
   delete x;
 }
 
+#ifndef ANDROID
 TEST(AddressSanitizer, pread64) {
-  char *x = new char [10];
+  char *x = new char[10];
   int fd = open("/proc/self/stat", O_RDONLY);
   ASSERT_GT(fd, 0);
   EXPECT_DEATH(pread64(fd, x, 15, 0),
@@ -1590,9 +1591,10 @@ TEST(AddressSanitizer, pread64) {
   close(fd);
   delete x;
 }
+#endif  // ANDROID
 
 TEST(AddressSanitizer, read) {
-  char *x = new char [10];
+  char *x = new char[10];
   int fd = open("/proc/self/stat", O_RDONLY);
   ASSERT_GT(fd, 0);
   EXPECT_DEATH(read(fd, x, 15),
