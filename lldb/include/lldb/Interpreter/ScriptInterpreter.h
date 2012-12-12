@@ -378,6 +378,12 @@ public:
 		dest.clear();
         return false;
     }
+    
+    virtual bool
+    CheckObjectExists (const char* name)
+    {
+        return false;
+    }
 
     virtual bool
     LoadScriptingModule (const char* filename,

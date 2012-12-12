@@ -818,7 +818,7 @@ public:
         ScriptAddOptions *options_ptr = ((ScriptAddOptions*)data.baton);
         if (!options_ptr)
         {
-            out_stream->Printf ("Internal error #1: no script attached.\n");
+            out_stream->Printf ("internal synchronization information missing or invalid.\n");
             out_stream->Flush();
             return;
         }
@@ -828,7 +828,7 @@ public:
         ScriptInterpreter *interpreter = data.reader.GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
         if (!interpreter)
         {
-            out_stream->Printf ("Internal error #2: no script attached.\n");
+            out_stream->Printf ("no script interprter.\n");
             out_stream->Flush();
             return;
         }
@@ -836,13 +836,13 @@ public:
         if (!interpreter->GenerateTypeScriptFunction (options->m_user_source, 
                                                       funct_name_str))
         {
-            out_stream->Printf ("Internal error #3: no script attached.\n");
+            out_stream->Printf ("unable to generate a function.\n");
             out_stream->Flush();
             return;
         }
         if (funct_name_str.empty())
         {
-            out_stream->Printf ("Internal error #4: no script attached.\n");
+            out_stream->Printf ("unable to obtain a valid function name from the script interpreter.\n");
             out_stream->Flush();
             return;
         }
@@ -1037,17 +1037,10 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
     
     if (!m_options.m_python_function.empty()) // we have a Python function ready to use
     {
-        ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
-        if (!interpreter)
-        {
-            result.AppendError ("Internal error #1N: no script attached.\n");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
         const char *funct_name = m_options.m_python_function.c_str();
         if (!funct_name || !funct_name[0])
         {
-            result.AppendError ("Internal error #2N: no script attached.\n");
+            result.AppendError ("function name empty.\n");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
@@ -1057,13 +1050,18 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
         script_format.reset(new ScriptSummaryFormat(m_options.m_flags,
                                                     funct_name,
                                                     code.c_str()));
+        
+        ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
+        
+        if (interpreter && interpreter->CheckObjectExists(funct_name) == false)
+            result.AppendWarning("The provided function does not exist - please define it before attempting to use this summary");
     }
     else if (!m_options.m_python_script.empty()) // we have a quick 1-line script, just use it
     {
         ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
         if (!interpreter)
         {
-            result.AppendError ("Internal error #1Q: no script attached.\n");
+            result.AppendError ("script interpreter missing - unable to generate function wrapper.\n");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
@@ -1073,13 +1071,13 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
         if (!interpreter->GenerateTypeScriptFunction (funct_sl, 
                                                       funct_name_str))
         {
-            result.AppendError ("Internal error #2Q: no script attached.\n");
+            result.AppendError ("unable to generate function wrapper.\n");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
         if (funct_name_str.empty())
         {
-            result.AppendError ("Internal error #3Q: no script attached.\n");
+            result.AppendError ("script interpreter failed to generate a valid function name.\n");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
@@ -3353,7 +3351,7 @@ public:
         SynthAddOptions *options_ptr = ((SynthAddOptions*)data.baton);
         if (!options_ptr)
         {
-            out_stream->Printf ("Internal error #1: no script attached.\n");
+            out_stream->Printf ("internal synchronization data missing.\n");
             out_stream->Flush();
             return;
         }
@@ -3363,7 +3361,7 @@ public:
         ScriptInterpreter *interpreter = data.reader.GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
         if (!interpreter)
         {
-            out_stream->Printf ("Internal error #2: no script attached.\n");
+            out_stream->Printf ("no script interpreter.\n");
             out_stream->Flush();
             return;
         }
@@ -3371,13 +3369,13 @@ public:
         if (!interpreter->GenerateTypeSynthClass (options->m_user_source, 
                                                   class_name_str))
         {
-            out_stream->Printf ("Internal error #3: no script attached.\n");
+            out_stream->Printf ("unable to generate a class.\n");
             out_stream->Flush();
             return;
         }
         if (class_name_str.empty())
         {
-            out_stream->Printf ("Internal error #4: no script attached.\n");
+            out_stream->Printf ("unable to obtain a proper name for the class.\n");
             out_stream->Flush();
             return;
         }
@@ -3415,7 +3413,7 @@ public:
             }
             else
             {
-                out_stream->Printf ("Internal error #6: no script attached.\n");
+                out_stream->Printf ("invalid type name.\n");
                 out_stream->Flush();
                 return;
             }
@@ -3511,6 +3509,11 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
                                                     m_options.m_class_name.c_str());
     
     entry.reset(impl);
+    
+    ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
+    
+    if (interpreter && interpreter->CheckObjectExists(impl->GetPythonClassName()) == false)
+        result.AppendWarning("The provided class does not exist - please define it before attempting to use this synthetic provider");
     
     // now I have a valid provider, let's add it to every type
     

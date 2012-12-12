@@ -159,6 +159,15 @@ public:
     GetDocumentationForItem (const char* item, std::string& dest);
     
     virtual bool
+    CheckObjectExists (const char* name)
+    {
+        if (!name || !name[0])
+            return false;
+        std::string temp;
+        return GetDocumentationForItem (name,temp);
+    }
+    
+    virtual bool
     LoadScriptingModule (const char* filename,
                          bool can_reload,
                          bool init_session,
