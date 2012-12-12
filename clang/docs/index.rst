@@ -7,7 +7,7 @@ Welcome to Clang's documentation!
 =================================
 
 The conversion to Sphinx/reStructuredText based documentation is in
-progress. This page will get filled out with more docs soon...
+progress. This page will get filled out with docs soon...
 
 .. toctree::
    :maxdepth: 2
