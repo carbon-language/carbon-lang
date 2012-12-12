@@ -179,6 +179,60 @@ TEST(SanitizerCommon, SizeClassAllocator32CompactMetadataStress) {
   SizeClassAllocatorMetadataStress<Allocator32Compact>();
 }
 
+struct TestMapUnmapCallback {
+  static int map_count, unmap_count;
+  void OnMap(uptr p, uptr size) const { map_count++; }
+  void OnUnmap(uptr p, uptr size) const { unmap_count++; }
+};
+int TestMapUnmapCallback::map_count;
+int TestMapUnmapCallback::unmap_count;
+
+#if SANITIZER_WORDSIZE == 64
+TEST(SanitizerCommon, SizeClassAllocator64MapUnmapCallback) {
+  TestMapUnmapCallback::map_count = 0;
+  TestMapUnmapCallback::unmap_count = 0;
+  typedef SizeClassAllocator64<
+      kAllocatorSpace, kAllocatorSize, 16, DefaultSizeClassMap,
+      TestMapUnmapCallback> Allocator64WithCallBack;
+  Allocator64WithCallBack *a = new Allocator64WithCallBack;
+  a->Init();
+  EXPECT_EQ(TestMapUnmapCallback::map_count, 1);  // Allocator state.
+  a->TestOnlyUnmap();
+  EXPECT_EQ(TestMapUnmapCallback::unmap_count, 1);  // The whole thing.
+  delete a;
+}
+#endif
+
+TEST(SanitizerCommon, SizeClassAllocator32MapUnmapCallback) {
+  TestMapUnmapCallback::map_count = 0;
+  TestMapUnmapCallback::unmap_count = 0;
+  typedef SizeClassAllocator32<
+      0, kAddressSpaceSize, 16, CompactSizeClassMap,
+      TestMapUnmapCallback> Allocator32WithCallBack;
+  Allocator32WithCallBack *a = new Allocator32WithCallBack;
+  a->Init();
+  EXPECT_EQ(TestMapUnmapCallback::map_count, 1);  // Allocator state.
+  a->Allocate(100, 1);
+  EXPECT_EQ(TestMapUnmapCallback::map_count, 2);  // alloc.
+  a->TestOnlyUnmap();
+  EXPECT_EQ(TestMapUnmapCallback::unmap_count, 2);  // The whole thing + alloc.
+  delete a;
+  fprintf(stderr, "Map: %d Unmap: %d\n",
+          TestMapUnmapCallback::map_count,
+          TestMapUnmapCallback::unmap_count);
+}
+
+TEST(SanitizerCommon, LargeMmapAllocatorMapUnmapCallback) {
+  TestMapUnmapCallback::map_count = 0;
+  TestMapUnmapCallback::unmap_count = 0;
+  LargeMmapAllocator<TestMapUnmapCallback> a;
+  a.Init();
+  void *x = a.Allocate(1 << 20, 1);
+  EXPECT_EQ(TestMapUnmapCallback::map_count, 1);
+  a.Deallocate(x);
+  EXPECT_EQ(TestMapUnmapCallback::unmap_count, 1);
+}
+
 template<class Allocator>
 void FailInAssertionOnOOM() {
   Allocator a;
@@ -198,7 +252,7 @@ TEST(SanitizerCommon, SizeClassAllocator64Overflow) {
 #endif
 
 TEST(SanitizerCommon, LargeMmapAllocator) {
-  LargeMmapAllocator a;
+  LargeMmapAllocator<> a;
   a.Init();
 
   static const int kNumAllocs = 100;
@@ -304,20 +358,20 @@ void TestCombinedAllocator() {
 #if SANITIZER_WORDSIZE == 64
 TEST(SanitizerCommon, CombinedAllocator64) {
   TestCombinedAllocator<Allocator64,
-      LargeMmapAllocator,
+      LargeMmapAllocator<>,
       SizeClassAllocatorLocalCache<Allocator64> > ();
 }
 
 TEST(SanitizerCommon, CombinedAllocator64Compact) {
   TestCombinedAllocator<Allocator64Compact,
-      LargeMmapAllocator,
+      LargeMmapAllocator<>,
       SizeClassAllocatorLocalCache<Allocator64Compact> > ();
 }
 #endif
 
 TEST(SanitizerCommon, CombinedAllocator32Compact) {
   TestCombinedAllocator<Allocator32Compact,
-      LargeMmapAllocator,
+      LargeMmapAllocator<>,
       SizeClassAllocatorLocalCache<Allocator32Compact> > ();
 }
 

@@ -121,6 +121,12 @@ static inline void BulkMove(uptr max_count,
   CHECK(!allocate_to->empty());
 }
 
+// Allocators call these callbacks on mmap/munmap.
+struct NoOpMapUnmapCallback {
+  void OnMap(uptr p, uptr size) const { }
+  void OnUnmap(uptr p, uptr size) const { }
+};
+
 // SizeClassAllocator64 -- allocator for 64-bit address space.
 //
 // Space: a portion of address space of kSpaceSize bytes starting at
@@ -136,12 +142,24 @@ static inline void BulkMove(uptr max_count,
 // A Region looks like this:
 // UserChunk1 ... UserChunkN <gap> MetaChunkN ... MetaChunk1
 template <const uptr kSpaceBeg, const uptr kSpaceSize,
-          const uptr kMetadataSize, class SizeClassMap>
+          const uptr kMetadataSize, class SizeClassMap,
+          class MapUnmapCallback = NoOpMapUnmapCallback>
 class SizeClassAllocator64 {
  public:
   void Init() {
-    CHECK_EQ(AllocBeg(), reinterpret_cast<uptr>(MmapFixedNoReserve(
-             AllocBeg(), AllocSize())));
+    CHECK_EQ(kSpaceBeg, reinterpret_cast<uptr>(MmapFixedNoReserve(
+             kSpaceBeg, kSpaceSize)));
+    MapWithCallback(kSpaceEnd, AdditionalSize());
+  }
+
+  void MapWithCallback(uptr beg, uptr size) {
+    CHECK_EQ(beg, reinterpret_cast<uptr>(MmapFixedNoReserve(beg, size)));
+    MapUnmapCallback().OnMap(beg, size);
+  }
+
+  void UnmapWithCallback(uptr beg, uptr size) {
+    MapUnmapCallback().OnUnmap(beg, size);
+    UnmapOrDie(reinterpret_cast<void *>(beg), size);
   }
 
   bool CanAllocate(uptr size, uptr alignment) {
@@ -220,17 +238,15 @@ class SizeClassAllocator64 {
 
   // Test-only.
   void TestOnlyUnmap() {
-    UnmapOrDie(reinterpret_cast<void*>(AllocBeg()), AllocSize());
+    UnmapWithCallback(kSpaceBeg, kSpaceSize + AdditionalSize());
   }
-
-  static uptr AllocBeg()  { return kSpaceBeg; }
-  static uptr AllocSize() { return kSpaceSize + AdditionalSize(); }
 
   typedef SizeClassMap SizeClassMapT;
   static const uptr kNumClasses = SizeClassMap::kNumClasses;  // 2^k <= 256
 
  private:
   static const uptr kRegionSize = kSpaceSize / kNumClasses;
+  static const uptr kSpaceEnd = kSpaceBeg + kSpaceSize;
   COMPILER_CHECK(kSpaceBeg % kSpaceSize == 0);
   // kRegionSize must be >= 2^32.
   COMPILER_CHECK((kRegionSize) >= (1ULL << (SANITIZER_WORDSIZE / 2)));
@@ -323,7 +339,7 @@ class SizeClassAllocator64 {
 //   a result of a single call to MmapAlignedOrDie(kRegionSize, kRegionSize).
 // Since the regions are aligned by kRegionSize, there are exactly
 // kNumPossibleRegions possible regions in the address space and so we keep
-// an u8 array possible_regions_[kNumPossibleRegions] to store the size classes.
+// an u8 array possible_regions[kNumPossibleRegions] to store the size classes.
 // 0 size class means the region is not used by the allocator.
 //
 // One Region is used to allocate chunks of a single size class.
@@ -333,12 +349,23 @@ class SizeClassAllocator64 {
 // In order to avoid false sharing the objects of this class should be
 // chache-line aligned.
 template <const uptr kSpaceBeg, const u64 kSpaceSize,
-          const uptr kMetadataSize, class SizeClassMap>
+          const uptr kMetadataSize, class SizeClassMap,
+          class MapUnmapCallback = NoOpMapUnmapCallback>
 class SizeClassAllocator32 {
  public:
-  // Don't need to call Init if the object is a global (i.e. zero-initialized).
   void Init() {
-    internal_memset(this, 0, sizeof(*this));
+    state_ = reinterpret_cast<State *>(MapWithCallback(sizeof(State)));
+  }
+
+  void *MapWithCallback(uptr size) {
+    size = RoundUpTo(size, GetPageSizeCached());
+    void *res = MmapOrDie(size, "SizeClassAllocator32");
+    MapUnmapCallback().OnMap((uptr)res, size);
+    return res;
+  }
+  void UnmapWithCallback(uptr beg, uptr size) {
+    MapUnmapCallback().OnUnmap(beg, size);
+    UnmapOrDie(reinterpret_cast<void *>(beg), size);
   }
 
   bool CanAllocate(uptr size, uptr alignment) {
@@ -385,11 +412,13 @@ class SizeClassAllocator32 {
   }
 
   bool PointerIsMine(void *p) {
-    return possible_regions_[ComputeRegionId(reinterpret_cast<uptr>(p))] != 0;
+    return
+      state_->possible_regions[ComputeRegionId(reinterpret_cast<uptr>(p))] != 0;
   }
 
   uptr GetSizeClass(void *p) {
-    return possible_regions_[ComputeRegionId(reinterpret_cast<uptr>(p))] - 1;
+    return
+      state_->possible_regions[ComputeRegionId(reinterpret_cast<uptr>(p))] - 1;
   }
 
   void *GetBlockBegin(void *p) {
@@ -414,15 +443,16 @@ class SizeClassAllocator32 {
     // No need to lock here.
     uptr res = 0;
     for (uptr i = 0; i < kNumPossibleRegions; i++)
-      if (possible_regions_[i])
+      if (state_->possible_regions[i])
         res += kRegionSize;
     return res;
   }
 
   void TestOnlyUnmap() {
     for (uptr i = 0; i < kNumPossibleRegions; i++)
-      if (possible_regions_[i])
-        UnmapOrDie(reinterpret_cast<void*>(i * kRegionSize), kRegionSize);
+      if (state_->possible_regions[i])
+        UnmapWithCallback((i * kRegionSize), kRegionSize);
+    UnmapWithCallback(reinterpret_cast<uptr>(state_), sizeof(State));
   }
 
   typedef SizeClassMap SizeClassMapT;
@@ -455,15 +485,16 @@ class SizeClassAllocator32 {
     CHECK_LT(class_id, kNumClasses);
     uptr res = reinterpret_cast<uptr>(MmapAlignedOrDie(kRegionSize, kRegionSize,
                                       "SizeClassAllocator32"));
+    MapUnmapCallback().OnMap(res, kRegionSize);
     CHECK_EQ(0U, (res & (kRegionSize - 1)));
-    CHECK_EQ(0U, possible_regions_[ComputeRegionId(res)]);
-    possible_regions_[ComputeRegionId(res)] = class_id + 1;
+    CHECK_EQ(0U, state_->possible_regions[ComputeRegionId(res)]);
+    state_->possible_regions[ComputeRegionId(res)] = class_id + 1;
     return res;
   }
 
   SizeClassInfo *GetSizeClassInfo(uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
-    return &size_class_info_array_[class_id];
+    return &state_->size_class_info_array[class_id];
   }
 
   void EnsureSizeClassHasAvailableChunks(SizeClassInfo *sci, uptr class_id) {
@@ -493,8 +524,11 @@ class SizeClassAllocator32 {
     sci->free_list.push_front(reinterpret_cast<AllocatorListNode*>(p));
   }
 
-  u8 possible_regions_[kNumPossibleRegions];
-  SizeClassInfo size_class_info_array_[kNumClasses];
+  struct State {
+    u8 possible_regions[kNumPossibleRegions];
+    SizeClassInfo size_class_info_array[kNumClasses];
+  };
+  State *state_;
 };
 
 // Objects of this type should be used as local caches for SizeClassAllocator64.
@@ -556,6 +590,7 @@ struct SizeClassAllocatorLocalCache {
 // This class can (de)allocate only large chunks of memory using mmap/unmap.
 // The main purpose of this allocator is to cover large and rare allocation
 // sizes not covered by more efficient allocators (e.g. SizeClassAllocator64).
+template <class MapUnmapCallback = NoOpMapUnmapCallback>
 class LargeMmapAllocator {
  public:
   void Init() {
@@ -570,6 +605,7 @@ class LargeMmapAllocator {
     if (map_size < size) return 0;  // Overflow.
     uptr map_beg = reinterpret_cast<uptr>(
         MmapOrDie(map_size, "LargeMmapAllocator"));
+    MapUnmapCallback().OnMap(map_beg, map_size);
     uptr map_end = map_beg + map_size;
     uptr res = map_beg + page_size_;
     if (res & (alignment - 1))  // Align.
@@ -604,6 +640,7 @@ class LargeMmapAllocator {
       if (h == list_)
         list_ = next;
     }
+    MapUnmapCallback().OnUnmap(h->map_beg, h->map_size);
     UnmapOrDie(reinterpret_cast<void*>(h->map_beg), h->map_size);
   }
 

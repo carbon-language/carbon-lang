@@ -162,8 +162,10 @@ typedef u64 off_t;
 typedef u64 off64_t;
 
 DECLARE_FUNCTION_AND_WRAPPER(ssize_t, read, int fd, void *buf, size_t count);
-DECLARE_FUNCTION_AND_WRAPPER(ssize_t, pread, int fd, void *buf, size_t count, off_t offset);
-DECLARE_FUNCTION_AND_WRAPPER(ssize_t, pread64, int fd, void *buf, size_t count, off64_t offset);
+DECLARE_FUNCTION_AND_WRAPPER(ssize_t, pread, int fd, void *buf,
+                             size_t count, off_t offset);
+DECLARE_FUNCTION_AND_WRAPPER(ssize_t, pread64, int fd, void *buf,
+                             size_t count, off64_t offset);
 
 # if ASAN_INTERCEPT_MLOCKX
 // mlock/munlock
