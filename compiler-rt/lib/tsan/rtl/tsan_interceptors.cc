@@ -914,6 +914,8 @@ TSAN_INTERCEPTOR(int, pthread_rwlock_unlock, void *m) {
   return res;
 }
 
+// libpthread.so contains several versions of pthread_cond_init symbol.
+// When we just dlsym() it, we get the wrong (old) version.
 /*
 TSAN_INTERCEPTOR(int, pthread_cond_init, void *c, void *a) {
   SCOPED_TSAN_INTERCEPTOR(pthread_cond_init, c, a);
