@@ -81,7 +81,7 @@ class AddDsymCommandCase(TestBase):
 
         right_path = os.path.join("%s.dSYM" % exe_name, "Contents", "Resources", "DWARF", exe_name)
         self.expect("add-dsym " + right_path, error=True,
-            substrs = ['symbol file', 'with UUID', 'does not match'])
+            substrs = ['symbol file', 'does not match'])
 
     def do_add_dsym_with_success(self, exe_name):
         """Test that the 'add-dsym' command informs the user about success."""
@@ -90,8 +90,7 @@ class AddDsymCommandCase(TestBase):
         # This time, the UUID should match and we expect some feedback from lldb.
         right_path = os.path.join("%s.dSYM" % exe_name, "Contents", "Resources", "DWARF", exe_name)
         self.expect("add-dsym " + right_path,
-            substrs = ['symbol file', 'with UUID', 'has been successfully added to the',
-                       'module'])
+            substrs = ['symbol file', 'has been added to'])
 
     def do_add_dsym_with_dSYM_bundle(self, exe_name):
         """Test that the 'add-dsym' command informs the user about success when loading files in bundles."""
@@ -100,8 +99,7 @@ class AddDsymCommandCase(TestBase):
         # This time, the UUID should be found inside the bundle
         right_path = "%s.dSYM" % exe_name
         self.expect("add-dsym " + right_path,
-            substrs = ['symbol file', 'with UUID', 'has been successfully added to the',
-                       'module'])
+            substrs = ['symbol file', 'has been added to'])
 
 
 if __name__ == '__main__':

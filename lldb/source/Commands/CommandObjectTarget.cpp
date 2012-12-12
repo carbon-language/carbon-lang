@@ -4259,63 +4259,100 @@ protected:
     
     bool
     AddModuleSymbols (Target *target,
-                      const FileSpec &symfile_spec,
+                      ModuleSpec &module_spec,
                       bool &flush,
                       CommandReturnObject &result)
     {
-        ModuleSP symfile_module_sp (new Module (symfile_spec, target->GetArchitecture()));
-        const UUID &symfile_uuid = symfile_module_sp->GetUUID();
-        StreamString ss_symfile_uuid;
-        symfile_uuid.Dump(&ss_symfile_uuid);
-        
-        if (symfile_module_sp)
+        const FileSpec &symbol_fspec = module_spec.GetSymbolFileSpec();
+        if (symbol_fspec)
         {
             char symfile_path[PATH_MAX];
-            symfile_spec.GetPath (symfile_path, sizeof(symfile_path));
+            symbol_fspec.GetPath (symfile_path, sizeof(symfile_path));
+            
+            if (!module_spec.GetUUID().IsValid())
+            {
+                if (!module_spec.GetFileSpec() && !module_spec.GetPlatformFileSpec())
+                    module_spec.GetFileSpec().GetFilename() = symbol_fspec.GetFilename();
+            }
             // We now have a module that represents a symbol file
             // that can be used for a module that might exist in the
             // current target, so we need to find that module in the
             // target
-            
-            ModuleSP old_module_sp (target->GetImages().FindModule (symfile_uuid));
-            if (old_module_sp)
+            ModuleList matching_module_list;
+            const size_t num_matches = target->GetImages().FindModules (module_spec, matching_module_list);
+            if (num_matches > 1)
             {
+                result.AppendErrorWithFormat ("multiple modules match symbol file '%s', use the --uuid option to resolve the ambiguity.\n", symfile_path);
+            }
+            else if (num_matches == 1)
+            {
+                ModuleSP module_sp (matching_module_list.GetModuleAtIndex(0));
+                
                 // The module has not yet created its symbol vendor, we can just
                 // give the existing target module the symfile path to use for
                 // when it decides to create it!
-                old_module_sp->SetSymbolFileFileSpec (symfile_module_sp->GetFileSpec());
+                module_sp->SetSymbolFileFileSpec (symbol_fspec);
                 
-                // Provide feedback that the symfile has been successfully added.
-                const FileSpec &module_fs = old_module_sp->GetFileSpec();
-                result.AppendMessageWithFormat("symbol file '%s' with UUID %s has been successfully added to the '%s/%s' module\n",
-                                               symfile_path, ss_symfile_uuid.GetData(),
-                                               module_fs.GetDirectory().AsCString(), module_fs.GetFilename().AsCString());
-                
-                // Let clients know something changed in the module
-                // if it is currently loaded
-                ModuleList module_list;
-                module_list.Append (old_module_sp);
-                target->ModulesDidLoad (module_list);
-                flush = true;
+                SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor();
+                if (symbol_vendor)
+                {
+                    SymbolFile *symbol_file = symbol_vendor->GetSymbolFile();
+                    
+                    if (symbol_file)
+                    {
+                        ObjectFile *object_file = symbol_file->GetObjectFile();
+                        
+                        if (object_file && object_file->GetFileSpec() == symbol_fspec)
+                        {
+                            // Provide feedback that the symfile has been successfully added.
+                            const FileSpec &module_fs = module_sp->GetFileSpec();
+                            result.AppendMessageWithFormat("symbol file '%s' has been added to '%s/%s'\n",
+                                                           symfile_path,
+                                                           module_fs.GetDirectory().AsCString(),
+                                                           module_fs.GetFilename().AsCString());
+                            
+                            // Let clients know something changed in the module
+                            // if it is currently loaded
+                            ModuleList module_list;
+                            module_list.Append (module_sp);
+                            target->ModulesDidLoad (module_list);
+                            flush = true;
+                            result.SetStatus (eReturnStatusSuccessFinishResult);
+                            return true;
+                        }
+                    }
+                }
+                // Clear the symbol file spec if anything went wrong
+                module_sp->SetSymbolFileFileSpec (FileSpec());
+
+            }
+
+            if (module_spec.GetUUID().IsValid())
+            {
+                StreamString ss_symfile_uuid;
+                module_spec.GetUUID().Dump(&ss_symfile_uuid);
+                result.AppendErrorWithFormat ("symbol file '%s' (%s) does not match any existing module%s\n",
+                                              symfile_path,
+                                              ss_symfile_uuid.GetData(),
+                                              (symbol_fspec.GetFileType() != FileSpec::eFileTypeRegular)
+                                                ? "\n       please specify the full path to the symbol file"
+                                                : "");
             }
             else
             {
-                result.AppendErrorWithFormat ("symbol file '%s' with UUID %s does not match any existing module%s\n",
-                                              symfile_path, ss_symfile_uuid.GetData(),
-                                              (symfile_spec.GetFileType() != FileSpec::eFileTypeRegular)
-                                              ? "\n       please specify the full path to the symbol file"
-                                              : "");
-                return false;
+                result.AppendErrorWithFormat ("symbol file '%s' does not match any existing module%s\n",
+                                              symfile_path,
+                                              (symbol_fspec.GetFileType() != FileSpec::eFileTypeRegular)
+                                                ? "\n       please specify the full path to the symbol file"
+                                                : "");
             }
         }
         else
         {
             result.AppendError ("one or more executable image paths must be specified");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
         }
-        result.SetStatus (eReturnStatusSuccessFinishResult);
-        return true;
+        result.SetStatus (eReturnStatusFailed);
+        return false;
     }
 
     virtual bool
@@ -4332,7 +4369,7 @@ protected:
         else
         {
             bool flush = false;
-            ModuleSpec sym_spec;
+            ModuleSpec module_spec;
             const bool uuid_option_set = m_uuid_option_group.GetOptionValue().OptionWasSet();
             const bool file_option_set = m_file_option.GetOptionValue().OptionWasSet();
             const bool frame_option_set = m_current_frame_option.GetOptionValue().OptionWasSet();
@@ -4360,11 +4397,11 @@ protected:
                                     {
                                         if (frame_module_sp->GetPlatformFileSpec().Exists())
                                         {
-                                            sym_spec.GetArchitecture() = frame_module_sp->GetArchitecture();
-                                            sym_spec.GetFileSpec() = frame_module_sp->GetPlatformFileSpec();
+                                            module_spec.GetArchitecture() = frame_module_sp->GetArchitecture();
+                                            module_spec.GetFileSpec() = frame_module_sp->GetPlatformFileSpec();
                                         }
-                                        sym_spec.GetUUID() = frame_module_sp->GetUUID();
-                                        success = sym_spec.GetUUID().IsValid() || sym_spec.GetFileSpec();
+                                        module_spec.GetUUID() = frame_module_sp->GetUUID();
+                                        success = module_spec.GetUUID().IsValid() || module_spec.GetFileSpec();
                                     }
                                     else
                                     {
@@ -4394,34 +4431,34 @@ protected:
                     {
                         if (uuid_option_set)
                         {
-                            sym_spec.GetUUID() = m_uuid_option_group.GetOptionValue().GetCurrentValue();
-                            success |= sym_spec.GetUUID().IsValid();
+                            module_spec.GetUUID() = m_uuid_option_group.GetOptionValue().GetCurrentValue();
+                            success |= module_spec.GetUUID().IsValid();
                         }
                         else if (file_option_set)
                         {
-                            sym_spec.GetFileSpec() = m_file_option.GetOptionValue().GetCurrentValue();
-                            ModuleSP module_sp (target->GetImages().FindFirstModule(sym_spec));
+                            module_spec.GetFileSpec() = m_file_option.GetOptionValue().GetCurrentValue();
+                            ModuleSP module_sp (target->GetImages().FindFirstModule(module_spec));
                             if (module_sp)
                             {
-                                sym_spec.GetFileSpec() = module_sp->GetFileSpec();
-                                sym_spec.GetPlatformFileSpec() = module_sp->GetPlatformFileSpec();
-                                sym_spec.GetUUID() = module_sp->GetUUID();
-                                sym_spec.GetArchitecture() = module_sp->GetArchitecture();
+                                module_spec.GetFileSpec() = module_sp->GetFileSpec();
+                                module_spec.GetPlatformFileSpec() = module_sp->GetPlatformFileSpec();
+                                module_spec.GetUUID() = module_sp->GetUUID();
+                                module_spec.GetArchitecture() = module_sp->GetArchitecture();
                             }
                             else
                             {
-                                sym_spec.GetArchitecture() = target->GetArchitecture();
+                                module_spec.GetArchitecture() = target->GetArchitecture();
                             }
-                            success |= sym_spec.GetFileSpec().Exists();
+                            success |= module_spec.GetFileSpec().Exists();
                         }
                     }
 
                     if (success)
                     {
-                        if (Symbols::DownloadObjectAndSymbolFile (sym_spec))
+                        if (Symbols::DownloadObjectAndSymbolFile (module_spec))
                         {
-                            if (sym_spec.GetSymbolFileSpec())
-                                success = AddModuleSymbols (target, sym_spec.GetSymbolFileSpec(), flush, result);
+                            if (module_spec.GetSymbolFileSpec())
+                                success = AddModuleSymbols (target, module_spec, flush, result);
                         }
                     }
 
@@ -4431,12 +4468,12 @@ protected:
                         if (uuid_option_set)
                         {
                             error_strm.PutCString("unable to find debug symbols for UUID ");
-                            sym_spec.GetUUID().Dump (&error_strm);
+                            module_spec.GetUUID().Dump (&error_strm);
                         }
                         else if (file_option_set)
                         {
                             error_strm.PutCString("unable to find debug symbols for the executable file ");
-                            error_strm << sym_spec.GetFileSpec();
+                            error_strm << module_spec.GetFileSpec();
                         }
                         else if (frame_option_set)
                         {
@@ -4473,25 +4510,26 @@ protected:
                         const char *symfile_path = args.GetArgumentAtIndex(i);
                         if (symfile_path)
                         {
-                            FileSpec symfile_spec;
-                            sym_spec.GetSymbolFileSpec().SetFile(symfile_path, true);
+                            module_spec.GetSymbolFileSpec().SetFile(symfile_path, true);
                             if (platform_sp)
-                                platform_sp->ResolveSymbolFile(*target, sym_spec, symfile_spec);
-                            else
-                                symfile_spec.SetFile(symfile_path, true);
+                            {
+                                FileSpec symfile_spec;
+                                if (platform_sp->ResolveSymbolFile(*target, module_spec, symfile_spec).Success())
+                                    module_spec.GetSymbolFileSpec() = symfile_spec;
+                            }
                             
                             ArchSpec arch;
-                            bool symfile_exists = symfile_spec.Exists();
+                            bool symfile_exists = module_spec.GetSymbolFileSpec().Exists();
 
                             if (symfile_exists)
                             {
-                                if (!AddModuleSymbols (target, symfile_spec, flush, result))
+                                if (!AddModuleSymbols (target, module_spec, flush, result))
                                     break;
                             }
                             else
                             {
                                 char resolved_symfile_path[PATH_MAX];
-                                if (symfile_spec.GetPath (resolved_symfile_path, sizeof(resolved_symfile_path)))
+                                if (module_spec.GetSymbolFileSpec().GetPath (resolved_symfile_path, sizeof(resolved_symfile_path)))
                                 {
                                     if (strcmp (resolved_symfile_path, symfile_path) != 0)
                                     {
