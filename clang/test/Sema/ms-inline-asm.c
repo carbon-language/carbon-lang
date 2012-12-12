@@ -31,5 +31,8 @@ void f() {
   __asm {
     mov eax, LENGTH foo // expected-error {{Unsupported directive!}}
   }
-
+  f();
+  __asm {
+    mov eax, TYPE bar // expected-error {{Unable to lookup TYPE of expr!}}
+  }
 }
