@@ -793,18 +793,36 @@ TEST(AddressSanitizer, Store128Test) {
 }
 #endif
 
-static string RightOOBErrorMessage(int oob_distance) {
+static string RightOOBErrorMessage(int oob_distance, bool is_write) {
   assert(oob_distance >= 0);
   char expected_str[100];
-  sprintf(expected_str, "located %d bytes to the right", oob_distance);
+  sprintf(expected_str, "%s.*located %d bytes to the right",
+          is_write ? "WRITE" : "READ", oob_distance);
   return string(expected_str);
 }
 
-static string LeftOOBErrorMessage(int oob_distance) {
+static string RightOOBWriteMessage(int oob_distance) {
+  return RightOOBErrorMessage(oob_distance, /*is_write*/true);
+}
+
+static string RightOOBReadMessage(int oob_distance) {
+  return RightOOBErrorMessage(oob_distance, /*is_write*/false);
+}
+
+static string LeftOOBErrorMessage(int oob_distance, bool is_write) {
   assert(oob_distance > 0);
   char expected_str[100];
-  sprintf(expected_str, "located %d bytes to the left", oob_distance);
+  sprintf(expected_str, "%s.*located %d bytes to the left",
+          is_write ? "WRITE" : "READ", oob_distance);
   return string(expected_str);
+}
+
+static string LeftOOBWriteMessage(int oob_distance) {
+  return LeftOOBErrorMessage(oob_distance, /*is_write*/true);
+}
+
+static string LeftOOBReadMessage(int oob_distance) {
+  return LeftOOBErrorMessage(oob_distance, /*is_write*/false);
 }
 
 template<typename T>
@@ -829,29 +847,29 @@ void MemSetOOBTestTemplate(size_t length) {
 
   // try to memset bytes to the right of array
   EXPECT_DEATH(memset(array, 0, size + 1),
-               RightOOBErrorMessage(0));
+               RightOOBWriteMessage(0));
   EXPECT_DEATH(memset((char*)(array + length) - 1, element, 6),
-               RightOOBErrorMessage(4));
+               RightOOBWriteMessage(4));
   EXPECT_DEATH(memset(array + 1, element, size + sizeof(T)),
-               RightOOBErrorMessage(2 * sizeof(T) - 1));
+               RightOOBWriteMessage(2 * sizeof(T) - 1));
   // whole interval is to the right
   EXPECT_DEATH(memset(array + length + 1, 0, 10),
-               RightOOBErrorMessage(sizeof(T)));
+               RightOOBWriteMessage(sizeof(T)));
 
   // try to memset bytes to the left of array
   EXPECT_DEATH(memset((char*)array - 1, element, size),
-               LeftOOBErrorMessage(1));
+               LeftOOBWriteMessage(1));
   EXPECT_DEATH(memset((char*)array - 5, 0, 6),
-               LeftOOBErrorMessage(5));
+               LeftOOBWriteMessage(5));
   EXPECT_DEATH(memset(array - 5, element, size + 5 * sizeof(T)),
-               LeftOOBErrorMessage(5 * sizeof(T)));
+               LeftOOBWriteMessage(5 * sizeof(T)));
   // whole interval is to the left
   EXPECT_DEATH(memset(array - 2, 0, sizeof(T)),
-               LeftOOBErrorMessage(2 * sizeof(T)));
+               LeftOOBWriteMessage(2 * sizeof(T)));
 
   // try to memset bytes both to the left & to the right
   EXPECT_DEATH(memset((char*)array - 2, element, size + 4),
-               LeftOOBErrorMessage(2));
+               LeftOOBWriteMessage(2));
 
   free(array);
 }
@@ -886,27 +904,27 @@ void MemTransferOOBTestTemplate(size_t length) {
 
   // try to change mem to the right of dest
   EXPECT_DEATH(M::transfer(dest + 1, src, size),
-               RightOOBErrorMessage(sizeof(T) - 1));
+               RightOOBWriteMessage(sizeof(T) - 1));
   EXPECT_DEATH(M::transfer((char*)(dest + length) - 1, src, 5),
-               RightOOBErrorMessage(3));
+               RightOOBWriteMessage(3));
 
   // try to change mem to the left of dest
   EXPECT_DEATH(M::transfer(dest - 2, src, size),
-               LeftOOBErrorMessage(2 * sizeof(T)));
+               LeftOOBWriteMessage(2 * sizeof(T)));
   EXPECT_DEATH(M::transfer((char*)dest - 3, src, 4),
-               LeftOOBErrorMessage(3));
+               LeftOOBWriteMessage(3));
 
   // try to access mem to the right of src
   EXPECT_DEATH(M::transfer(dest, src + 2, size),
-               RightOOBErrorMessage(2 * sizeof(T) - 1));
+               RightOOBReadMessage(2 * sizeof(T) - 1));
   EXPECT_DEATH(M::transfer(dest, (char*)(src + length) - 3, 6),
-               RightOOBErrorMessage(2));
+               RightOOBReadMessage(2));
 
   // try to access mem to the left of src
   EXPECT_DEATH(M::transfer(dest, src - 1, size),
-               LeftOOBErrorMessage(sizeof(T)));
+               LeftOOBReadMessage(sizeof(T)));
   EXPECT_DEATH(M::transfer(dest, (char*)src - 6, 7),
-               LeftOOBErrorMessage(6));
+               LeftOOBReadMessage(6));
 
   // Generally we don't need to test cases where both accessing src and writing
   // to dest address to poisoned memory.
@@ -915,10 +933,10 @@ void MemTransferOOBTestTemplate(size_t length) {
   T *big_dest = Ident((T*)malloc(size * 2));
   // try to change mem to both sides of dest
   EXPECT_DEATH(M::transfer(dest - 1, big_src, size * 2),
-               LeftOOBErrorMessage(sizeof(T)));
+               LeftOOBWriteMessage(sizeof(T)));
   // try to access mem to both sides of src
   EXPECT_DEATH(M::transfer(big_dest, src - 2, size * 2),
-               LeftOOBErrorMessage(2 * sizeof(T)));
+               LeftOOBReadMessage(2 * sizeof(T)));
 
   free(src);
   free(dest);
@@ -967,15 +985,15 @@ void StrLenOOBTestTemplate(char *str, size_t length, bool is_global) {
   // Arg of strlen is not malloced, OOB access
   if (!is_global) {
     // We don't insert RedZones to the left of global variables
-    EXPECT_DEATH(Ident(strlen(str - 1)), LeftOOBErrorMessage(1));
-    EXPECT_DEATH(Ident(strlen(str - 5)), LeftOOBErrorMessage(5));
+    EXPECT_DEATH(Ident(strlen(str - 1)), LeftOOBReadMessage(1));
+    EXPECT_DEATH(Ident(strlen(str - 5)), LeftOOBReadMessage(5));
   }
-  EXPECT_DEATH(Ident(strlen(str + length + 1)), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(strlen(str + length + 1)), RightOOBReadMessage(0));
   // Overwrite terminator
   str[length] = 'a';
   // String is not zero-terminated, strlen will lead to OOB access
-  EXPECT_DEATH(Ident(strlen(str)), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(strlen(str + length)), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(strlen(str)), RightOOBReadMessage(0));
+  EXPECT_DEATH(Ident(strlen(str + length)), RightOOBReadMessage(0));
   // Restore terminator
   str[length] = 0;
 }
@@ -1019,11 +1037,11 @@ TEST(AddressSanitizer, StrNLenOOBTest) {
   str[size - 1] = '\0';
   Ident(strnlen(str, 2 * size));
   // Argument points to not allocated memory.
-  EXPECT_DEATH(Ident(strnlen(str - 1, 1)), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(strnlen(str + size, 1)), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(strnlen(str - 1, 1)), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(strnlen(str + size, 1)), RightOOBReadMessage(0));
   // Overwrite the terminating '\0' and hit unallocated memory.
   str[size - 1] = 'z';
-  EXPECT_DEATH(Ident(strnlen(str, size + 1)), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(strnlen(str, size + 1)), RightOOBReadMessage(0));
   free(str);
 }
 #endif
@@ -1039,11 +1057,11 @@ TEST(AddressSanitizer, StrDupOOBTest) {
   new_str = strdup(str + size - 1);
   free(new_str);
   // Argument points to not allocated memory.
-  EXPECT_DEATH(Ident(strdup(str - 1)), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(strdup(str + size)), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(strdup(str - 1)), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(strdup(str + size)), RightOOBReadMessage(0));
   // Overwrite the terminating '\0' and hit unallocated memory.
   str[size - 1] = 'z';
-  EXPECT_DEATH(Ident(strdup(str)), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(strdup(str)), RightOOBReadMessage(0));
   free(str);
 }
 
@@ -1057,15 +1075,15 @@ TEST(AddressSanitizer, StrCpyOOBTest) {
   strcpy(to, from);
   strcpy(to + to_size - from_size, from);
   // Length of "from" is too small.
-  EXPECT_DEATH(Ident(strcpy(from, "hello2")), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(strcpy(from, "hello2")), RightOOBWriteMessage(0));
   // "to" or "from" points to not allocated memory.
-  EXPECT_DEATH(Ident(strcpy(to - 1, from)), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(strcpy(to, from - 1)), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(strcpy(to, from + from_size)), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(strcpy(to + to_size, from)), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(strcpy(to - 1, from)), LeftOOBWriteMessage(1));
+  EXPECT_DEATH(Ident(strcpy(to, from - 1)), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(strcpy(to, from + from_size)), RightOOBReadMessage(0));
+  EXPECT_DEATH(Ident(strcpy(to + to_size, from)), RightOOBWriteMessage(0));
   // Overwrite the terminating '\0' character and hit unallocated memory.
   from[from_size - 1] = '!';
-  EXPECT_DEATH(Ident(strcpy(to, from)), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(strcpy(to, from)), RightOOBReadMessage(0));
   free(to);
   free(from);
 }
@@ -1087,25 +1105,25 @@ TEST(AddressSanitizer, StrNCpyOOBTest) {
   strncpy(to + to_size - 1, from, 1);
   // One of {to, from} points to not allocated memory
   EXPECT_DEATH(Ident(strncpy(to, from - 1, from_size)),
-               LeftOOBErrorMessage(1));
+               LeftOOBReadMessage(1));
   EXPECT_DEATH(Ident(strncpy(to - 1, from, from_size)),
-               LeftOOBErrorMessage(1));
+               LeftOOBWriteMessage(1));
   EXPECT_DEATH(Ident(strncpy(to, from + from_size, 1)),
-               RightOOBErrorMessage(0));
+               RightOOBReadMessage(0));
   EXPECT_DEATH(Ident(strncpy(to + to_size, from, 1)),
-               RightOOBErrorMessage(0));
+               RightOOBWriteMessage(0));
   // Length of "to" is too small
   EXPECT_DEATH(Ident(strncpy(to + to_size - from_size + 1, from, from_size)),
-               RightOOBErrorMessage(0));
+               RightOOBWriteMessage(0));
   EXPECT_DEATH(Ident(strncpy(to + 1, from, to_size)),
-               RightOOBErrorMessage(0));
+               RightOOBWriteMessage(0));
   // Overwrite terminator in from
   from[from_size - 1] = '!';
   // normal strncpy call
   strncpy(to, from, from_size);
   // Length of "from" is too small
   EXPECT_DEATH(Ident(strncpy(to, from, to_size)),
-               RightOOBErrorMessage(0));
+               RightOOBReadMessage(0));
   free(to);
   free(from);
 }
@@ -1126,11 +1144,11 @@ USED static void RunStrChrTest(PointerToStrChr1 StrChr) {
   EXPECT_EQ(str + 10, StrChr(str, 'q'));
   EXPECT_EQ(NULL, StrChr(str, 'a'));
   // StrChr argument points to not allocated memory.
-  EXPECT_DEATH(Ident(StrChr(str - 1, 'z')), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(StrChr(str + size, 'z')), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrChr(str - 1, 'z')), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(StrChr(str + size, 'z')), RightOOBReadMessage(0));
   // Overwrite the terminator and hit not allocated memory.
   str[11] = 'z';
-  EXPECT_DEATH(Ident(StrChr(str, 'a')), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrChr(str, 'a')), RightOOBReadMessage(0));
   free(str);
 }
 USED static void RunStrChrTest(PointerToStrChr2 StrChr) {
@@ -1142,11 +1160,11 @@ USED static void RunStrChrTest(PointerToStrChr2 StrChr) {
   EXPECT_EQ(str + 10, StrChr(str, 'q'));
   EXPECT_EQ(NULL, StrChr(str, 'a'));
   // StrChr argument points to not allocated memory.
-  EXPECT_DEATH(Ident(StrChr(str - 1, 'z')), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(StrChr(str + size, 'z')), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrChr(str - 1, 'z')), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(StrChr(str + size, 'z')), RightOOBReadMessage(0));
   // Overwrite the terminator and hit not allocated memory.
   str[11] = 'z';
-  EXPECT_DEATH(Ident(StrChr(str, 'a')), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrChr(str, 'a')), RightOOBReadMessage(0));
   free(str);
 }
 
@@ -1219,14 +1237,14 @@ void RunStrCmpTest(PointerToStrCmp StrCmp) {
   s2[size - 1] = 'x';
   Ident(StrCmp(s1, s2));
   // One of arguments points to not allocated memory.
-  EXPECT_DEATH(Ident(StrCmp)(s1 - 1, s2), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(StrCmp)(s1, s2 - 1), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(StrCmp)(s1 + size, s2), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(StrCmp)(s1, s2 + size), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrCmp)(s1 - 1, s2), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(StrCmp)(s1, s2 - 1), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(StrCmp)(s1 + size, s2), RightOOBReadMessage(0));
+  EXPECT_DEATH(Ident(StrCmp)(s1, s2 + size), RightOOBReadMessage(0));
   // Hit unallocated memory and die.
   s2[size - 1] = 'z';
-  EXPECT_DEATH(Ident(StrCmp)(s1, s1), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(StrCmp)(s1 + size - 1, s2), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrCmp)(s1, s1), RightOOBReadMessage(0));
+  EXPECT_DEATH(Ident(StrCmp)(s1 + size - 1, s2), RightOOBReadMessage(0));
   free(s1);
   free(s2);
 }
@@ -1255,13 +1273,13 @@ void RunStrNCmpTest(PointerToStrNCmp StrNCmp) {
   Ident(StrNCmp(s1 - 1, s2 - 1, 0));
   Ident(StrNCmp(s1 + size - 1, s2 + size - 1, 1));
   // One of arguments points to not allocated memory.
-  EXPECT_DEATH(Ident(StrNCmp)(s1 - 1, s2, 1), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(StrNCmp)(s1, s2 - 1, 1), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(StrNCmp)(s1 + size, s2, 1), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(StrNCmp)(s1, s2 + size, 1), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrNCmp)(s1 - 1, s2, 1), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(StrNCmp)(s1, s2 - 1, 1), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(StrNCmp)(s1 + size, s2, 1), RightOOBReadMessage(0));
+  EXPECT_DEATH(Ident(StrNCmp)(s1, s2 + size, 1), RightOOBReadMessage(0));
   // Hit unallocated memory and die.
-  EXPECT_DEATH(Ident(StrNCmp)(s1 + 1, s2 + 1, size), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(StrNCmp)(s1 + size - 1, s2, 2), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(StrNCmp)(s1 + 1, s2 + 1, size), RightOOBReadMessage(0));
+  EXPECT_DEATH(Ident(StrNCmp)(s1 + size - 1, s2, 2), RightOOBReadMessage(0));
   free(s1);
   free(s2);
 }
@@ -1283,17 +1301,17 @@ TEST(AddressSanitizer, MemCmpOOBTest) {
   Ident(memcmp(s1 + size - 1, s2 + size - 1, 1));
   Ident(memcmp(s1 - 1, s2 - 1, 0));
   // One of arguments points to not allocated memory.
-  EXPECT_DEATH(Ident(memcmp)(s1 - 1, s2, 1), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(memcmp)(s1, s2 - 1, 1), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(Ident(memcmp)(s1 + size, s2, 1), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(memcmp)(s1, s2 + size, 1), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(memcmp)(s1 - 1, s2, 1), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(memcmp)(s1, s2 - 1, 1), LeftOOBReadMessage(1));
+  EXPECT_DEATH(Ident(memcmp)(s1 + size, s2, 1), RightOOBReadMessage(0));
+  EXPECT_DEATH(Ident(memcmp)(s1, s2 + size, 1), RightOOBReadMessage(0));
   // Hit unallocated memory and die.
-  EXPECT_DEATH(Ident(memcmp)(s1 + 1, s2 + 1, size), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Ident(memcmp)(s1 + size - 1, s2, 2), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(memcmp)(s1 + 1, s2 + 1, size), RightOOBReadMessage(0));
+  EXPECT_DEATH(Ident(memcmp)(s1 + size - 1, s2, 2), RightOOBReadMessage(0));
   // Zero bytes are not terminators and don't prevent from OOB.
   s1[size - 1] = '\0';
   s2[size - 1] = '\0';
-  EXPECT_DEATH(Ident(memcmp)(s1, s2, size + 1), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Ident(memcmp)(s1, s2, size + 1), RightOOBReadMessage(0));
   free(s1);
   free(s2);
 }
@@ -1311,23 +1329,23 @@ TEST(AddressSanitizer, StrCatOOBTest) {
   strcat(to + from_size, from + from_size - 2);
   // Passing an invalid pointer is an error even when concatenating an empty
   // string.
-  EXPECT_DEATH(strcat(to - 1, from + from_size - 1), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(strcat(to - 1, from + from_size - 1), LeftOOBWriteMessage(1));
   // One of arguments points to not allocated memory.
-  EXPECT_DEATH(strcat(to - 1, from), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(strcat(to, from - 1), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(strcat(to + to_size, from), RightOOBErrorMessage(0));
-  EXPECT_DEATH(strcat(to, from + from_size), RightOOBErrorMessage(0));
+  EXPECT_DEATH(strcat(to - 1, from), LeftOOBWriteMessage(1));
+  EXPECT_DEATH(strcat(to, from - 1), LeftOOBReadMessage(1));
+  EXPECT_DEATH(strcat(to + to_size, from), RightOOBWriteMessage(0));
+  EXPECT_DEATH(strcat(to, from + from_size), RightOOBReadMessage(0));
 
   // "from" is not zero-terminated.
   from[from_size - 1] = 'z';
-  EXPECT_DEATH(strcat(to, from), RightOOBErrorMessage(0));
+  EXPECT_DEATH(strcat(to, from), RightOOBReadMessage(0));
   from[from_size - 1] = '\0';
   // "to" is not zero-terminated.
   memset(to, 'z', to_size);
-  EXPECT_DEATH(strcat(to, from), RightOOBErrorMessage(0));
+  EXPECT_DEATH(strcat(to, from), RightOOBWriteMessage(0));
   // "to" is too short to fit "from".
   to[to_size - from_size + 1] = '\0';
-  EXPECT_DEATH(strcat(to, from), RightOOBErrorMessage(0));
+  EXPECT_DEATH(strcat(to, from), RightOOBWriteMessage(0));
   // length of "to" is just enough.
   strcat(to, from + 1);
 
@@ -1347,25 +1365,25 @@ TEST(AddressSanitizer, StrNCatOOBTest) {
   from[from_size - 1] = '\0';
   strncat(to, from, 2 * from_size);
   // Catenating empty string with an invalid string is still an error.
-  EXPECT_DEATH(strncat(to - 1, from, 0), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(strncat(to - 1, from, 0), LeftOOBWriteMessage(1));
   strncat(to, from + from_size - 1, 10);
   // One of arguments points to not allocated memory.
-  EXPECT_DEATH(strncat(to - 1, from, 2), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(strncat(to, from - 1, 2), LeftOOBErrorMessage(1));
-  EXPECT_DEATH(strncat(to + to_size, from, 2), RightOOBErrorMessage(0));
-  EXPECT_DEATH(strncat(to, from + from_size, 2), RightOOBErrorMessage(0));
+  EXPECT_DEATH(strncat(to - 1, from, 2), LeftOOBWriteMessage(1));
+  EXPECT_DEATH(strncat(to, from - 1, 2), LeftOOBReadMessage(1));
+  EXPECT_DEATH(strncat(to + to_size, from, 2), RightOOBWriteMessage(0));
+  EXPECT_DEATH(strncat(to, from + from_size, 2), RightOOBReadMessage(0));
 
   memset(from, 'z', from_size);
   memset(to, 'z', to_size);
   to[0] = '\0';
   // "from" is too short.
-  EXPECT_DEATH(strncat(to, from, from_size + 1), RightOOBErrorMessage(0));
+  EXPECT_DEATH(strncat(to, from, from_size + 1), RightOOBReadMessage(0));
   // "to" is not zero-terminated.
-  EXPECT_DEATH(strncat(to + 1, from, 1), RightOOBErrorMessage(0));
+  EXPECT_DEATH(strncat(to + 1, from, 1), RightOOBWriteMessage(0));
   // "to" is too short to fit "from".
   to[0] = 'z';
   to[to_size - from_size + 1] = '\0';
-  EXPECT_DEATH(strncat(to, from, from_size - 1), RightOOBErrorMessage(0));
+  EXPECT_DEATH(strncat(to, from, from_size - 1), RightOOBWriteMessage(0));
   // "to" is just enough.
   strncat(to, from, from_size - 2);
 
@@ -1456,10 +1474,10 @@ typedef void(*PointerToCallAtoi)(const char*);
 void RunAtoiOOBTest(PointerToCallAtoi Atoi) {
   char *array = MallocAndMemsetString(10, '1');
   // Invalid pointer to the string.
-  EXPECT_DEATH(Atoi(array + 11), RightOOBErrorMessage(1));
-  EXPECT_DEATH(Atoi(array - 1), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Atoi(array + 11), RightOOBReadMessage(1));
+  EXPECT_DEATH(Atoi(array - 1), LeftOOBReadMessage(1));
   // Die if a buffer doesn't have terminating NULL.
-  EXPECT_DEATH(Atoi(array), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Atoi(array), RightOOBReadMessage(0));
   // Make last symbol a terminating NULL or other non-digit.
   array[9] = '\0';
   Atoi(array);
@@ -1468,10 +1486,10 @@ void RunAtoiOOBTest(PointerToCallAtoi Atoi) {
   Atoi(array + 9);
   // Sometimes we need to detect overflow if no digits are found.
   memset(array, ' ', 10);
-  EXPECT_DEATH(Atoi(array), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Atoi(array), RightOOBReadMessage(0));
   array[9] = '-';
-  EXPECT_DEATH(Atoi(array), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Atoi(array + 9), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Atoi(array), RightOOBReadMessage(0));
+  EXPECT_DEATH(Atoi(array + 9), RightOOBReadMessage(0));
   array[8] = '-';
   Atoi(array);
   delete array;
@@ -1498,16 +1516,16 @@ void RunStrtolOOBTest(PointerToCallStrtol Strtol) {
   array[1] = '2';
   array[2] = '3';
   // Invalid pointer to the string.
-  EXPECT_DEATH(Strtol(array + 3, NULL, 0), RightOOBErrorMessage(0));
-  EXPECT_DEATH(Strtol(array - 1, NULL, 0), LeftOOBErrorMessage(1));
+  EXPECT_DEATH(Strtol(array + 3, NULL, 0), RightOOBReadMessage(0));
+  EXPECT_DEATH(Strtol(array - 1, NULL, 0), LeftOOBReadMessage(1));
   // Buffer overflow if there is no terminating null (depends on base).
   Strtol(array, &endptr, 3);
   EXPECT_EQ(array + 2, endptr);
-  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBReadMessage(0));
   array[2] = 'z';
   Strtol(array, &endptr, 35);
   EXPECT_EQ(array + 2, endptr);
-  EXPECT_DEATH(Strtol(array, NULL, 36), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 36), RightOOBReadMessage(0));
   // Add terminating zero to get rid of overflow.
   array[2] = '\0';
   Strtol(array, NULL, 36);
@@ -1516,11 +1534,11 @@ void RunStrtolOOBTest(PointerToCallStrtol Strtol) {
   Strtol(array + 3, NULL, 1);
   // Sometimes we need to detect overflow if no digits are found.
   array[0] = array[1] = array[2] = ' ';
-  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBReadMessage(0));
   array[2] = '+';
-  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBReadMessage(0));
   array[2] = '-';
-  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBErrorMessage(0));
+  EXPECT_DEATH(Strtol(array, NULL, 0), RightOOBReadMessage(0));
   array[1] = '+';
   Strtol(array, NULL, 0);
   array[1] = array[2] = 'z';
@@ -1547,7 +1565,7 @@ typedef void*(*PointerToMemSet)(void*, int, size_t);
 void CallMemSetByPointer(PointerToMemSet MemSet) {
   size_t size = Ident(100);
   char *array = Ident((char*)malloc(size));
-  EXPECT_DEATH(MemSet(array, 0, 101), RightOOBErrorMessage(0));
+  EXPECT_DEATH(MemSet(array, 0, 101), RightOOBWriteMessage(0));
   free(array);
 }
 
@@ -1555,7 +1573,7 @@ void CallMemTransferByPointer(PointerToMemTransfer MemTransfer) {
   size_t size = Ident(100);
   char *src = Ident((char*)malloc(size));
   char *dst = Ident((char*)malloc(size));
-  EXPECT_DEATH(MemTransfer(dst, src, 101), RightOOBErrorMessage(0));
+  EXPECT_DEATH(MemTransfer(dst, src, 101), RightOOBWriteMessage(0));
   free(src);
   free(dst);
 }
@@ -1612,7 +1630,7 @@ TEST(AddressSanitizer, read) {
 TEST(AddressSanitizer, DISABLED_MemIntrinsicUnalignedAccessTest) {
   int size = Ident(4096);
   char *s = Ident((char*)malloc(size));
-  EXPECT_DEATH(memset(s + size - 1, 0, 2), RightOOBErrorMessage(0));
+  EXPECT_DEATH(memset(s + size - 1, 0, 2), RightOOBWriteMessage(0));
   free(s);
 }
 
