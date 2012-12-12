@@ -205,7 +205,7 @@ look at the `various alias analysis implementations`_ included with LLVM.
 Different Pass styles
 ---------------------
 
-The first step to determining what type of `LLVM pass <WritingAnLLVMPass.html>`_
+The first step to determining what type of :doc:`LLVM pass <WritingAnLLVMPass>`
 you need to use for your Alias Analysis.  As is the case with most other
 analyses and transformations, the answer should be fairly obvious from what type
 of problem you are trying to solve:
@@ -253,25 +253,24 @@ Interfaces which may be specified
 
 All of the `AliasAnalysis
 <http://llvm.org/doxygen/classllvm_1_1AliasAnalysis.html>`__ virtual methods
-default to providing `chaining`_ to another alias analysis implementation, which
-ends up returning conservatively correct information (returning "May" Alias and
-"Mod/Ref" for alias and mod/ref queries respectively).  Depending on the
-capabilities of the analysis you are implementing, you just override the
-interfaces you can improve.
+default to providing :ref:`chaining <aliasanalysis-chaining>` to another alias
+analysis implementation, which ends up returning conservatively correct
+information (returning "May" Alias and "Mod/Ref" for alias and mod/ref queries
+respectively).  Depending on the capabilities of the analysis you are
+implementing, you just override the interfaces you can improve.
 
-.. _chaining:
-.. _chain:
+.. _aliasanalysis-chaining:
 
 ``AliasAnalysis`` chaining behavior
 -----------------------------------
 
-With only one special exception (the `no-aa`_ pass) every alias analysis pass
-chains to another alias analysis implementation (for example, the user can
-specify "``-basicaa -ds-aa -licm``" to get the maximum benefit from both alias
-analyses).  The alias analysis class automatically takes care of most of this
-for methods that you don't override.  For methods that you do override, in code
-paths that return a conservative MayAlias or Mod/Ref result, simply return
-whatever the superclass computes.  For example:
+With only one special exception (the :ref:`-no-aa <aliasanalysis-no-aa>` pass)
+every alias analysis pass chains to another alias analysis implementation (for
+example, the user can specify "``-basicaa -ds-aa -licm``" to get the maximum
+benefit from both alias analyses).  The alias analysis class automatically
+takes care of most of this for methods that you don't override.  For methods
+that you do override, in code paths that return a conservative MayAlias or
+Mod/Ref result, simply return whatever the superclass computes.  For example:
 
 .. code-block:: c++
 
@@ -504,11 +503,11 @@ Available ``AliasAnalysis`` implementations
 -------------------------------------------
 
 This section lists the various implementations of the ``AliasAnalysis``
-interface.  With the exception of the `-no-aa`_ implementation, all of these
-`chain`_ to other alias analysis implementations.
+interface.  With the exception of the :ref:`-no-aa <aliasanalysis-no-aa>`
+implementation, all of these :ref:`chain <aliasanalysis-chaining>` to other
+alias analysis implementations.
 
-.. _no-aa:
-.. _-no-aa:
+.. _aliasanalysis-no-aa:
 
 The ``-no-aa`` pass
 ^^^^^^^^^^^^^^^^^^^
