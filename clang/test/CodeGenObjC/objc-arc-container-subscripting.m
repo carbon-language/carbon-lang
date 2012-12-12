@@ -15,6 +15,6 @@ id func() {
 // CHECK: [[SIX:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[call]]) nounwind
 // CHECK: [[ARRAY_CASTED:%.*]] = bitcast %0** {{%.*}} to i8**
 // CHECK: call void @objc_storeStrong(i8** [[ARRAY_CASTED]], i8* null)
-// CHECK: [[EIGHT:%.*]] = call i8* @objc_autoreleaseReturnValue(i8* [[SIX]]) nounwind
+// CHECK: [[EIGHT:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[SIX]]) nounwind
 // CHECK: ret i8* [[EIGHT]]
 

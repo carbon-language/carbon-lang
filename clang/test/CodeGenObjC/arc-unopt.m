@@ -9,7 +9,7 @@ Test0 *test0(void) {
 
   // CHECK:      [[LD:%.*]] = load [[TEST0:%.*]]** @test0_helper
   // CHECK-NEXT: [[T0:%.*]] = bitcast [[TEST0]]* [[LD]] to i8*
-  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_retainAutoreleaseReturnValue(i8* [[T0]])
+  // CHECK-NEXT: [[T1:%.*]] = tail call i8* @objc_retainAutoreleaseReturnValue(i8* [[T0]])
   // CHECK-NEXT: [[T2:%.*]] = bitcast i8* [[T1]] to [[TEST0]]*
   // CHECK-NEXT: ret [[TEST0]]* [[T2]]
 }
@@ -19,7 +19,7 @@ id test1(void) {
   return test1_helper;
 
   // CHECK:      [[LD:%.*]] = load i8** @test1_helper
-  // CHECK-NEXT: [[T0:%.*]] = call i8* @objc_retainAutoreleaseReturnValue(i8* [[LD]])
+  // CHECK-NEXT: [[T0:%.*]] = tail call i8* @objc_retainAutoreleaseReturnValue(i8* [[LD]])
   // CHECK-NEXT: ret i8* [[T0]]
 }
 

@@ -16,7 +16,7 @@ int (^test1(int x))(void) {
   // CHECK-NEXT: [[T2:%.*]] = call i8* @objc_retainBlock(i8* [[T1]]) nounwind
   // CHECK-NEXT: [[T3:%.*]] = bitcast i8* [[T2]] to i32 ()*
   // CHECK-NEXT: [[T4:%.*]] = bitcast i32 ()* [[T3]] to i8*
-  // CHECK-NEXT: [[T5:%.*]] = call i8* @objc_autoreleaseReturnValue(i8* [[T4]]) nounwind
+  // CHECK-NEXT: [[T5:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[T4]]) nounwind
   // CHECK-NEXT: [[T6:%.*]] = bitcast i8* [[T5]] to i32 ()*
   // CHECK-NEXT: ret i32 ()* [[T6]]
   return ^{ return x; };
@@ -314,7 +314,7 @@ id test9(void) {
 // CHECK:      load i8** getelementptr
 // CHECK-NEXT: bitcast i8*
 // CHECK-NEXT: call i8* 
-// CHECK-NEXT: call i8* @objc_autoreleaseReturnValue
+// CHECK-NEXT: tail call i8* @objc_autoreleaseReturnValue
 // CHECK-NEXT: ret i8*
 
 // CHECK:      call i8* @test9_produce()

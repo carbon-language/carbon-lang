@@ -29,7 +29,7 @@ id test1(id x) {
   // CHECK-NEXT: call void @objc_release(i8* [[T0]])
   // CHECK-NEXT: [[T1:%.*]] = load i8** [[X]]
   // CHECK-NEXT: call void @objc_release(i8* [[T1]])
-  // CHECK-NEXT: [[T1:%.*]] = call i8* @objc_autoreleaseReturnValue(i8* [[RET]])
+  // CHECK-NEXT: [[T1:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[RET]])
   // CHECK-NEXT: ret i8* [[T1]]
   id y;
   return y;
@@ -156,7 +156,7 @@ id test4() {
   // Retain/release elided.
   // CHECK-NEXT: bitcast
   // CHECK-NEXT: [[INIT:%.*]] = bitcast
-  // CHECK-NEXT: [[RET:%.*]] = call i8* @objc_autoreleaseReturnValue(i8* [[INIT]])
+  // CHECK-NEXT: [[RET:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[INIT]])
 
   // CHECK-NEXT: ret i8* [[RET]]
 
@@ -1191,7 +1191,7 @@ id test52(void) {
 // CHECK-NEXT: store i32 5, i32* [[X]],
 // CHECK-NEXT: [[T0:%.*]] = load i32* [[X]],
 // CHECK-NEXT: [[T1:%.*]] = call i8* @test52_helper(i32 [[T0]])
-// CHECK-NEXT: [[T2:%.*]] = call i8* @objc_autoreleaseReturnValue(i8* [[T1]])
+// CHECK-NEXT: [[T2:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[T1]])
 // CHECK-NEXT: ret i8* [[T2]]
 }
 
@@ -1292,7 +1292,7 @@ void test56_test(void) {
 // CHECK-NEXT: [[T3:%.*]] = getelementptr inbounds i8* [[T2]], i64 [[T1]]
 // CHECK-NEXT: [[T4:%.*]] = bitcast i8* [[T3]] to i8**
 // CHECK-NEXT: [[T5:%.*]] = call i8* @objc_loadWeakRetained(i8** [[T4]])
-// CHECK-NEXT: [[T6:%.*]] = call i8* @objc_autoreleaseReturnValue(i8* [[T5]])
+// CHECK-NEXT: [[T6:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[T5]])
 // CHECK-NEXT: ret i8* [[T6]]
 
 // CHECK: define internal i8* @"\01-[Test57 unsafe]"(

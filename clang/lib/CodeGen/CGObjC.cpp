@@ -1725,7 +1725,8 @@ static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
 static llvm::Value *emitARCValueOperation(CodeGenFunction &CGF,
                                           llvm::Value *value,
                                           llvm::Constant *&fn,
-                                          StringRef fnName) {
+                                          StringRef fnName,
+                                          bool isTailCall = false) {
   if (isa<llvm::ConstantPointerNull>(value)) return value;
 
   if (!fn) {
@@ -1742,6 +1743,8 @@ static llvm::Value *emitARCValueOperation(CodeGenFunction &CGF,
   // Call the function.
   llvm::CallInst *call = CGF.Builder.CreateCall(fn, value);
   call->setDoesNotThrow();
+  if (isTailCall)
+    call->setTailCall();
 
   // Cast the result back to the original type.
   return CGF.Builder.CreateBitCast(call, origType);
@@ -2054,7 +2057,8 @@ llvm::Value *
 CodeGenFunction::EmitARCAutoreleaseReturnValue(llvm::Value *value) {
   return emitARCValueOperation(*this, value,
                             CGM.getARCEntrypoints().objc_autoreleaseReturnValue,
-                               "objc_autoreleaseReturnValue");
+                               "objc_autoreleaseReturnValue",
+                               /*isTailCall*/ true);
 }
 
 /// Do a fused retain/autorelease of the given object.
@@ -2063,7 +2067,8 @@ llvm::Value *
 CodeGenFunction::EmitARCRetainAutoreleaseReturnValue(llvm::Value *value) {
   return emitARCValueOperation(*this, value,
                      CGM.getARCEntrypoints().objc_retainAutoreleaseReturnValue,
-                               "objc_retainAutoreleaseReturnValue");
+                               "objc_retainAutoreleaseReturnValue",
+                               /*isTailCall*/ true);
 }
 
 /// Do a fused retain/autorelease of the given object.

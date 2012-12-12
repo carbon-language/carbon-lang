@@ -22,7 +22,7 @@
 // CHECK-NEXT:  [[T3:%.*]] = getelementptr inbounds i8* [[T2]], i64 [[T1]]
 // CHECK-NEXT:  [[T4:%.*]] = bitcast i8* [[T3]] to i8**
 // CHECK-NEXT:  [[T5:%.*]] = call i8* @objc_loadWeakRetained(i8** [[T4]])
-// CHECK-NEXT:  [[T6:%.*]] = call i8* @objc_autoreleaseReturnValue(i8* [[T5]])
+// CHECK-NEXT:  [[T6:%.*]] = tail call i8* @objc_autoreleaseReturnValue(i8* [[T5]])
 // CHECK-NEXT:  ret i8* [[T6]]
 
 // CHECK:     define internal void @"\01-[WeakPropertyTest setPROP:]"
