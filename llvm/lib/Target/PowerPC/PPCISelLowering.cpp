@@ -583,6 +583,11 @@ const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case PPCISD::ADDIS_TLSGD_HA:  return "PPCISD::ADDIS_TLSGD_HA";
   case PPCISD::ADDI_TLSGD_L:    return "PPCISD::ADDI_TLSGD_L";
   case PPCISD::GET_TLS_ADDR:    return "PPCISD::GET_TLS_ADDR";
+  case PPCISD::ADDIS_TLSLD_HA:  return "PPCISD::ADDIS_TLSLD_HA";
+  case PPCISD::ADDI_TLSLD_L:    return "PPCISD::ADDI_TLSLD_L";
+  case PPCISD::GET_TLSLD_ADDR:  return "PPCISD::GET_TLSLD_ADDR";
+  case PPCISD::ADDIS_DTPREL_HA: return "PPCISD::ADDIS_DTPREL_HA";
+  case PPCISD::ADDI_DTPREL_L:   return "PPCISD::ADDI_DTPREL_L";
   }
 }
 
@@ -1373,14 +1378,39 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
     SDValue ParmReg = DAG.getRegister(PPC::X3, MVT::i64);
     SDValue TLSAddr = DAG.getNode(PPCISD::GET_TLS_ADDR, dl,
                                   PtrVT, ParmReg, TGA);
-    // The call to GET_TLS_ADDR really is in X3 already, but
-    // some hacks are needed here to tie everything together.
-    // The extra copies dissolve during subsequent transforms.
+    // The return value from GET_TLS_ADDR really is in X3 already, but
+    // some hacks are needed here to tie everything together.  The extra
+    // copies dissolve during subsequent transforms.
     Chain = DAG.getCopyToReg(Chain, dl, PPC::X3, TLSAddr);
     return DAG.getCopyFromReg(Chain, dl, PPC::X3, PtrVT);
   }
 
-  llvm_unreachable("local-dynamic TLS mode is not yet supported");
+  if (Model == TLSModel::LocalDynamic) {
+    SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, 0);
+    SDValue GOTReg = DAG.getRegister(PPC::X2, MVT::i64);
+    SDValue GOTEntryHi = DAG.getNode(PPCISD::ADDIS_TLSLD_HA, dl, PtrVT,
+                                     GOTReg, TGA);
+    SDValue GOTEntry = DAG.getNode(PPCISD::ADDI_TLSLD_L, dl, PtrVT,
+                                   GOTEntryHi, TGA);
+
+    // We need a chain node, and don't have one handy.  The underlying
+    // call has no side effects, so using the function entry node
+    // suffices.
+    SDValue Chain = DAG.getEntryNode();
+    Chain = DAG.getCopyToReg(Chain, dl, PPC::X3, GOTEntry);
+    SDValue ParmReg = DAG.getRegister(PPC::X3, MVT::i64);
+    SDValue TLSAddr = DAG.getNode(PPCISD::GET_TLSLD_ADDR, dl,
+                                  PtrVT, ParmReg, TGA);
+    // The return value from GET_TLSLD_ADDR really is in X3 already, but
+    // some hacks are needed here to tie everything together.  The extra
+    // copies dissolve during subsequent transforms.
+    Chain = DAG.getCopyToReg(Chain, dl, PPC::X3, TLSAddr);
+    SDValue DtvOffsetHi = DAG.getNode(PPCISD::ADDIS_DTPREL_HA, dl, PtrVT,
+                                      ParmReg, TGA, Chain);
+    return DAG.getNode(PPCISD::ADDI_DTPREL_L, dl, PtrVT, DtvOffsetHi, TGA);
+  }
+
+  llvm_unreachable("Unknown TLS model!");
 }
 
 SDValue PPCTargetLowering::LowerGlobalAddress(SDValue Op,

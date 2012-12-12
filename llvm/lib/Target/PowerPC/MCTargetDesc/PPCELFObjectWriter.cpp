@@ -79,6 +79,9 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_TPREL16_HA:
         Type = ELF::R_PPC_TPREL16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL16_HA:
+        Type = ELF::R_PPC64_DTPREL16_HA;
+        break;
       case MCSymbolRefExpr::VK_None:
         Type = ELF::R_PPC_ADDR16_HA;
 	break;
@@ -88,6 +91,9 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_PPC_GOT_TLSGD16_HA:
         Type = ELF::R_PPC64_GOT_TLSGD16_HA;
         break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_HA:
+        Type = ELF::R_PPC64_GOT_TLSLD16_HA;
+        break;
       }
       break;
     case PPC::fixup_ppc_lo16:
@@ -95,6 +101,9 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
       default: llvm_unreachable("Unsupported Modifier");
       case MCSymbolRefExpr::VK_PPC_TPREL16_LO:
         Type = ELF::R_PPC_TPREL16_LO;
+        break;
+      case MCSymbolRefExpr::VK_PPC_DTPREL16_LO:
+        Type = ELF::R_PPC64_DTPREL16_LO;
         break;
       case MCSymbolRefExpr::VK_None:
         Type = ELF::R_PPC_ADDR16_LO;
@@ -104,6 +113,9 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
         break;
       case MCSymbolRefExpr::VK_PPC_GOT_TLSGD16_LO:
         Type = ELF::R_PPC64_GOT_TLSGD16_LO;
+        break;
+      case MCSymbolRefExpr::VK_PPC_GOT_TLSLD16_LO:
+        Type = ELF::R_PPC64_GOT_TLSLD16_LO;
         break;
       }
       break;
@@ -133,8 +145,16 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
     case PPC::fixup_ppc_tlsreg:
       Type = ELF::R_PPC64_TLS;
       break;
-    case PPC::fixup_ppc_tlsgd:
-      Type = ELF::R_PPC64_TLSGD;
+    case PPC::fixup_ppc_nofixup:
+      switch (Modifier) {
+      default: llvm_unreachable("Unsupported Modifier");
+      case MCSymbolRefExpr::VK_PPC_TLSGD:
+        Type = ELF::R_PPC64_TLSGD;
+        break;
+      case MCSymbolRefExpr::VK_PPC_TLSLD:
+        Type = ELF::R_PPC64_TLSLD;
+        break;
+      }
       break;
     case FK_Data_8:
       switch (Modifier) {

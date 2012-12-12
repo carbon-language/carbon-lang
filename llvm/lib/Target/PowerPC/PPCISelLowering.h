@@ -206,6 +206,32 @@ namespace llvm {
       /// model, produces a call to __tls_get_addr(sym@tlsgd).
       GET_TLS_ADDR,
 
+      /// G8RC = ADDIS_TLSLD_HA %X2, Symbol - For the local-dynamic TLS
+      /// model, produces an ADDIS8 instruction that adds the GOT base
+      /// register to sym@got@tlsld@ha.
+      ADDIS_TLSLD_HA,
+
+      /// G8RC = ADDI_TLSLD_L G8RReg, Symbol - For the local-dynamic TLS
+      /// model, produces an ADDI8 instruction that adds G8RReg to
+      /// sym@got@tlsld@l.
+      ADDI_TLSLD_L,
+
+      /// G8RC = GET_TLSLD_ADDR %X3, Symbol - For the local-dynamic TLS
+      /// model, produces a call to __tls_get_addr(sym@tlsld).
+      GET_TLSLD_ADDR,
+
+      /// G8RC = ADDIS_DTPREL_HA %X3, Symbol, Chain - For the
+      /// local-dynamic TLS model, produces an ADDIS8 instruction
+      /// that adds X3 to sym@dtprel@ha.  The Chain operand is needed 
+      /// to tie this in place following a copy to %X3 from the result
+      /// of a GET_TLSLD_ADDR.
+      ADDIS_DTPREL_HA,
+
+      /// G8RC = ADDI_DTPREL_L G8RReg, Symbol - For the local-dynamic TLS
+      /// model, produces an ADDI8 instruction that adds G8RReg to
+      /// sym@got@dtprel@l.
+      ADDI_DTPREL_L,
+
       /// STD_32 - This is the STD instruction for use with "32-bit" registers.
       STD_32 = ISD::FIRST_TARGET_MEMORY_OPCODE,
 

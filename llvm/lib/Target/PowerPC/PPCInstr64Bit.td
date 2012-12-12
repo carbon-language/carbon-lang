@@ -116,6 +116,11 @@ let isCall = 1, PPC970_Unit = 7, Defs = [LR8] in {
                                   (outs), (ins calltarget:$func, tlsgd:$sym),
                                   "bl $func($sym)\n\tnop", BrB, []>;
 
+    let isCodeGenOnly = 1 in
+    def BL8_NOP_ELF_TLSLD : IForm_and_DForm_4_zero<18, 0, 1, 24,
+                                  (outs), (ins calltarget:$func, tlsgd:$sym),
+                                  "bl $func($sym)\n\tnop", BrB, []>;
+
     def BLA8_ELF : IForm<18, 1, 1,
                          (outs), (ins aaddr:$func),
                          "bla $func", BrB, [(PPCcall_SVR4 (i64 imm:$func))]>;
@@ -737,6 +742,31 @@ def GETtlsADDR : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tlsgd:$sym),
                         [(set G8RC:$rD,
                           (PPCgetTlsAddr G8RC:$reg, tglobaladdr:$sym))]>,
                  isPPC64;
+def ADDIStlsldHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
+                         "#ADDIStlsldHA",
+                         [(set G8RC:$rD,
+                           (PPCaddisTlsldHA G8RC:$reg, tglobaladdr:$disp))]>,
+                  isPPC64;
+def ADDItlsldL : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolLo64:$disp),
+                       "#ADDItlsldL",
+                       [(set G8RC:$rD,
+                         (PPCaddiTlsldL G8RC:$reg, tglobaladdr:$disp))]>,
+                 isPPC64;
+def GETtlsldADDR : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tlsgd:$sym),
+                          "#GETtlsldADDR",
+                          [(set G8RC:$rD,
+                            (PPCgetTlsldAddr G8RC:$reg, tglobaladdr:$sym))]>,
+                   isPPC64;
+def ADDISdtprelHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
+                          "#ADDISdtprelHA",
+                          [(set G8RC:$rD,
+                            (PPCaddisDtprelHA G8RC:$reg, tglobaladdr:$disp))]>,
+                   isPPC64;
+def ADDIdtprelL : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolLo64:$disp),
+                         "#ADDIdtprelL",
+                         [(set G8RC:$rD,
+                           (PPCaddiDtprelL G8RC:$reg, tglobaladdr:$disp))]>,
+                  isPPC64;
 
 let PPC970_Unit = 2 in {
 // Truncating stores.                       

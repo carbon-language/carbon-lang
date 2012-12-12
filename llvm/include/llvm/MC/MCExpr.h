@@ -179,6 +179,8 @@ public:
     VK_PPC_GAS_LO16,     // symbol@l
     VK_PPC_TPREL16_HA,   // symbol@tprel@ha
     VK_PPC_TPREL16_LO,   // symbol@tprel@l
+    VK_PPC_DTPREL16_HA,  // symbol@dtprel@ha
+    VK_PPC_DTPREL16_LO,  // symbol@dtprel@l
     VK_PPC_TOC16_HA,     // symbol@toc@ha
     VK_PPC_TOC16_LO,     // symbol@toc@l
     VK_PPC_GOT_TPREL16_DS, // symbol@got@tprel
@@ -186,6 +188,9 @@ public:
     VK_PPC_GOT_TLSGD16_HA, // symbol@got@tlsgd@ha
     VK_PPC_GOT_TLSGD16_LO, // symbol@got@tlsgd@l
     VK_PPC_TLSGD,          // symbol@tlsgd
+    VK_PPC_GOT_TLSLD16_HA, // symbol@got@tlsld@ha
+    VK_PPC_GOT_TLSLD16_LO, // symbol@got@tlsld@l
+    VK_PPC_TLSLD,          // symbol@tlsld
 
     VK_Mips_GPREL,
     VK_Mips_GOT_CALL,
