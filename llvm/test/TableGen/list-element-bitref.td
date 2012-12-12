@@ -9,6 +9,6 @@ class C<list<bits<8>> L> {
 def c0 : C<[0b0101, 0b1010]>;
 
 // CHECK: def c0
-// CHECk-NEXT: bits<2> V0 = { 0, 1 };
-// CHECk-NEXT: bits<2> V1 = { 1, 0 };
-// CHECk-NEXT: string V2 = "Odd";
+// CHECK-NEXT: bits<2> V0 = { 0, 1 };
+// CHECK-NEXT: bits<2> V1 = { 1, 0 };
+// CHECK-NEXT: string V2 = "Odd";
