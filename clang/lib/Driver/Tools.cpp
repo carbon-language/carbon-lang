@@ -2281,6 +2281,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       A->render(Args, CmdArgs);
   }
 
+  // Don't warn about unused -flto.  This can happen when we're preprocessing or
+  // precompiling.
+  Args.ClaimAllArgs(options::OPT_flto);
+
   Args.AddAllArgs(CmdArgs, options::OPT_W_Group);
   if (Args.hasFlag(options::OPT_pedantic, options::OPT_no_pedantic, false))
     CmdArgs.push_back("-pedantic");
