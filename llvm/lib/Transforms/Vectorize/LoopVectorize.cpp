@@ -95,11 +95,10 @@ struct LoopVectorize : public LoopPass {
     // Check the function attribues to find out if this function should be
     // optimized for size.
     Function *F = L->getHeader()->getParent();
-    bool OptForSize =
-    F->getFnAttributes().hasAttribute(Attributes::OptimizeForSize);
+    Attributes::AttrVal SzAttr= Attributes::OptimizeForSize;
+    bool OptForSize = F->getFnAttributes().hasAttribute(SzAttr);
 
-    unsigned VF = CM.selectVectorizationFactor(OptForSize,
-                                               VectorizationFactor);
+    unsigned VF = CM.selectVectorizationFactor(OptForSize, VectorizationFactor);
 
     if (VF == 1) {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
