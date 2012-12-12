@@ -37,10 +37,10 @@ static Constant *SubOne(ConstantInt *C) {
 static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
   if (!V->hasOneUse() || !V->getType()->isIntegerTy())
     return 0;
-  
+
   Instruction *I = dyn_cast<Instruction>(V);
   if (I == 0) return 0;
-  
+
   if (I->getOpcode() == Instruction::Mul)
     if ((CST = dyn_cast<ConstantInt>(I->getOperand(1))))
       return I->getOperand(0);
@@ -64,22 +64,22 @@ static inline Value *dyn_castFoldableMul(Value *V, ConstantInt *&CST) {
 bool InstCombiner::WillNotOverflowSignedAdd(Value *LHS, Value *RHS) {
   // There are different heuristics we can use for this.  Here are some simple
   // ones.
-  
-  // Add has the property that adding any two 2's complement numbers can only 
+
+  // Add has the property that adding any two 2's complement numbers can only
   // have one carry bit which can change a sign.  As such, if LHS and RHS each
   // have at least two sign bits, we know that the addition of the two values
   // will sign extend fine.
   if (ComputeNumSignBits(LHS) > 1 && ComputeNumSignBits(RHS) > 1)
     return true;
-  
-  
+
+
   // If one of the operands only has one non-zero bit, and if the other operand
   // has a known-zero bit in a more significant place than it (not including the
   // sign bit) the ripple may go up to and fill the zero, but won't change the
   // sign.  For example, (X & ~4) + 1.
-  
+
   // TODO: Implement.
-  
+
   return false;
 }
 
@@ -100,7 +100,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     const APInt &Val = CI->getValue();
     if (Val.isSignBit())
       return BinaryOperator::CreateXor(LHS, RHS);
-    
+
     // See if SimplifyDemandedBits can simplify this.  This handles stuff like
     // (X & 254)+1 -> (X&254)|1
     if (SimplifyDemandedInstructionBits(I))
@@ -110,7 +110,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (ZExtInst *ZI = dyn_cast<ZExtInst>(LHS))
       if (ZI->getSrcTy()->isIntegerTy(1))
         return SelectInst::Create(ZI->getOperand(0), AddOne(CI), CI);
-    
+
     Value *XorLHS = 0; ConstantInt *XorRHS = 0;
     if (match(LHS, m_Xor(m_Value(XorLHS), m_ConstantInt(XorRHS)))) {
       uint32_t TySizeBits = I.getType()->getScalarSizeInBits();
@@ -124,13 +124,13 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         else if (XorRHS->getValue().isPowerOf2())
           ExtendAmt = TySizeBits - XorRHS->getValue().logBase2() - 1;
       }
-      
+
       if (ExtendAmt) {
         APInt Mask = APInt::getHighBitsSet(TySizeBits, ExtendAmt);
         if (!MaskedValueIsZero(XorLHS, Mask))
           ExtendAmt = 0;
       }
-      
+
       if (ExtendAmt) {
         Constant *ShAmt = ConstantInt::get(I.getType(), ExtendAmt);
         Value *NewShl = Builder->CreateShl(XorLHS, ShAmt, "sext");
@@ -175,7 +175,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
         Value *NewAdd = Builder->CreateAdd(LHSV, RHSV, "sum");
         return BinaryOperator::CreateNeg(NewAdd);
       }
-    
+
     return BinaryOperator::CreateSub(RHS, LHSV);
   }
 
@@ -209,7 +209,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       APInt RHSKnownOne(IT->getBitWidth(), 0);
       APInt RHSKnownZero(IT->getBitWidth(), 0);
       ComputeMaskedBits(RHS, RHSKnownZero, RHSKnownOne);
-      
+
       // No bits in common -> bitwise or.
       if ((LHSKnownZero|RHSKnownZero).isAllOnesValue())
         return BinaryOperator::CreateOr(LHS, RHS);
@@ -251,7 +251,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       // See if all bits from the first bit set in the Add RHS up are included
       // in the mask.  First, get the rightmost bit.
       const APInt &AddRHSV = CRHS->getValue();
-      
+
       // Form a mask of all bits from the lowest bit added through the top.
       APInt AddRHSHighBits(~((AddRHSV & -AddRHSV)-1));
 
@@ -289,7 +289,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (match(FV, m_Zero()) && match(TV, m_Sub(m_Value(N), m_Specific(A))))
         // Fold the add into the true select value.
         return SelectInst::Create(SI->getCondition(), N, A);
-      
+
       if (match(TV, m_Zero()) && match(FV, m_Sub(m_Value(N), m_Specific(A))))
         // Fold the add into the false select value.
         return SelectInst::Create(SI->getCondition(), A, N);
@@ -301,18 +301,18 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
   if (SExtInst *LHSConv = dyn_cast<SExtInst>(LHS)) {
     // (add (sext x), cst) --> (sext (add x, cst'))
     if (ConstantInt *RHSC = dyn_cast<ConstantInt>(RHS)) {
-      Constant *CI = 
+      Constant *CI =
         ConstantExpr::getTrunc(RHSC, LHSConv->getOperand(0)->getType());
       if (LHSConv->hasOneUse() &&
           ConstantExpr::getSExt(CI, I.getType()) == RHSC &&
           WillNotOverflowSignedAdd(LHSConv->getOperand(0), CI)) {
         // Insert the new, smaller add.
-        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0), 
+        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0),
                                               CI, "addconv");
         return new SExtInst(NewAdd, I.getType());
       }
     }
-    
+
     // (add (sext x), (sext y)) --> (sext (add int x, y))
     if (SExtInst *RHSConv = dyn_cast<SExtInst>(RHS)) {
       // Only do this if x/y have the same type, if at last one of them has a
@@ -323,7 +323,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
           WillNotOverflowSignedAdd(LHSConv->getOperand(0),
                                    RHSConv->getOperand(0))) {
         // Insert the new integer add.
-        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0), 
+        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0),
                                              RHSConv->getOperand(0), "addconv");
         return new SExtInst(NewAdd, I.getType());
       }
@@ -373,7 +373,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
     // requires a constant pool load, and generally allows the add to be better
     // instcombined.
     if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHS)) {
-      Constant *CI = 
+      Constant *CI =
       ConstantExpr::getFPToSI(CFP, LHSConv->getOperand(0)->getType());
       if (LHSConv->hasOneUse() &&
           ConstantExpr::getSIToFP(CI, I.getType()) == CFP &&
@@ -384,7 +384,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
         return new SIToFPInst(NewAdd, I.getType());
       }
     }
-    
+
     // (fadd double (sitofp x), (sitofp y)) --> (sitofp (add int x, y))
     if (SIToFPInst *RHSConv = dyn_cast<SIToFPInst>(RHS)) {
       // Only do this if x/y have the same type, if at last one of them has a
@@ -395,13 +395,13 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
           WillNotOverflowSignedAdd(LHSConv->getOperand(0),
                                    RHSConv->getOperand(0))) {
         // Insert the new integer add.
-        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0), 
+        Value *NewAdd = Builder->CreateNSWAdd(LHSConv->getOperand(0),
                                               RHSConv->getOperand(0),"addconv");
         return new SIToFPInst(NewAdd, I.getType());
       }
     }
   }
-  
+
   return Changed ? &I : 0;
 }
 
@@ -413,7 +413,7 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
 Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
                                                Type *Ty) {
   assert(TD && "Must have target data info for this");
-  
+
   // If LHS is a gep based on RHS or RHS is a gep based on LHS, we can optimize
   // this.
   bool Swapped = false;
@@ -436,7 +436,7 @@ Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
       }
     }
   }
-  
+
   if (GEPOperator *RHSGEP = dyn_cast<GEPOperator>(RHS)) {
     // X - (gep X, ...)
     if (RHSGEP->getOperand(0) == LHS) {
@@ -452,16 +452,16 @@ Value *InstCombiner::OptimizePointerDifference(Value *LHS, Value *RHS,
       }
     }
   }
-  
+
   // Avoid duplicating the arithmetic if GEP2 has non-constant indices and
   // multiple users.
   if (GEP1 == 0 ||
       (GEP2 != 0 && !GEP2->hasAllConstantIndices() && !GEP2->hasOneUse()))
     return 0;
-  
+
   // Emit the offset of the GEP and an intptr_t.
   Value *Result = EmitGEPOffset(GEP1);
-  
+
   // If we had a constant expression GEP on the other side offsetting the
   // pointer, subtract it from the offset we have.
   if (GEP2) {
@@ -502,7 +502,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
   // Replace (-1 - A) with (~A).
   if (match(Op0, m_AllOnes()))
     return BinaryOperator::CreateNot(Op1);
-  
+
   if (ConstantInt *C = dyn_cast<ConstantInt>(Op0)) {
     // C - ~X == X + (1+C)
     Value *X = 0;
@@ -538,18 +538,18 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       return &I;
   }
 
-  
+
   { Value *Y;
     // X-(X+Y) == -Y    X-(Y+X) == -Y
     if (match(Op1, m_Add(m_Specific(Op0), m_Value(Y))) ||
         match(Op1, m_Add(m_Value(Y), m_Specific(Op0))))
       return BinaryOperator::CreateNeg(Y);
-    
+
     // (X-Y)-X == -Y
     if (match(Op0, m_Sub(m_Specific(Op1), m_Value(Y))))
       return BinaryOperator::CreateNeg(Y);
   }
-  
+
   if (Op1->hasOneUse()) {
     Value *X = 0, *Y = 0, *Z = 0;
     Constant *C = 0;
@@ -566,7 +566,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         match(Op1, m_And(m_Specific(Op0), m_Value(Y))))
       return BinaryOperator::CreateAnd(Op0,
                                   Builder->CreateNot(Y, Y->getName() + ".not"));
-    
+
     // 0 - (X sdiv C)  -> (X sdiv -C)
     if (match(Op1, m_SDiv(m_Value(X), m_Constant(C))) &&
         match(Op0, m_Zero()))
@@ -589,14 +589,14 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       C = ConstantExpr::getSub(One, ConstantExpr::getShl(One, CI));
       return BinaryOperator::CreateMul(Op0, C);
     }
-    
+
     // X - A*-B -> X + A*B
     // X - -A*B -> X + A*B
     Value *A, *B;
     if (match(Op1, m_Mul(m_Value(A), m_Neg(m_Value(B)))) ||
         match(Op1, m_Mul(m_Neg(m_Value(A)), m_Value(B))))
       return BinaryOperator::CreateAdd(Op0, Builder->CreateMul(A, B));
-      
+
     // X - A*CI -> X + A*-CI
     // X - CI*A -> X + A*-CI
     if (match(Op1, m_Mul(m_Value(A), m_ConstantInt(CI))) ||
@@ -615,7 +615,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
     if (X == dyn_castFoldableMul(Op1, C2))
       return BinaryOperator::CreateMul(X, ConstantExpr::getSub(C1, C2));
   }
-  
+
   // Optimize pointer differences into the same array into a size.  Consider:
   //  &A[10] - &A[0]: we should compile this to "10".
   if (TD) {
@@ -624,14 +624,14 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         match(Op1, m_PtrToInt(m_Value(RHSOp))))
       if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
         return ReplaceInstUsesWith(I, Res);
-    
+
     // trunc(p)-trunc(q) -> trunc(p-q)
     if (match(Op0, m_Trunc(m_PtrToInt(m_Value(LHSOp)))) &&
         match(Op1, m_Trunc(m_PtrToInt(m_Value(RHSOp)))))
       if (Value *Res = OptimizePointerDifference(LHSOp, RHSOp, I.getType()))
         return ReplaceInstUsesWith(I, Res);
   }
-  
+
   return 0;
 }
 
