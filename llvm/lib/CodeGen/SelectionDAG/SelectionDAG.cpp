@@ -3469,9 +3469,6 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
 
   unsigned NumMemOps = 0;
   while (Size != 0) {
-    if (++NumMemOps > Limit)
-      return false;
-
     unsigned VTSize = VT.getSizeInBits() / 8;
     while (VTSize > Size) {
       // For now, only use non-vector load / store's for the left-over pieces.
@@ -3507,7 +3504,8 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
       // FIXME: Only does this for 64-bit or more since we don't have proper
       // cost model for unaligned load / store.
       bool Fast;
-      if (AllowOverlap && VTSize >= 8 && NewVTSize < Size &&
+      if (NumMemOps && AllowOverlap &&
+          VTSize >= 8 && NewVTSize < Size &&
           TLI.allowsUnalignedMemoryAccesses(VT, &Fast) && Fast)
         VTSize = Size;
       else {
@@ -3515,6 +3513,9 @@ static bool FindOptimalMemOpLowering(std::vector<EVT> &MemOps,
         VTSize = NewVTSize;
       }
     }
+
+    if (++NumMemOps > Limit)
+      return false;
 
     MemOps.push_back(VT);
     Size -= VTSize;
