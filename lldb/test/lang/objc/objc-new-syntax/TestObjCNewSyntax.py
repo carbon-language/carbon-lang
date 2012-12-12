@@ -64,62 +64,62 @@ class ObjCNewSyntaxTestCase(TestBase):
 
         self.common_setup()
 
-        self.expect("expr -o -- immutable_array[0]", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- immutable_array[0]", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["foo"])
 
-        self.expect("expr -o -- mutable_array[0]", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- mutable_array[0]", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["foo"])
 
-        self.expect("expr -o -- mutable_array[0] = @\"bar\"", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- mutable_array[0] = @\"bar\"", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["bar"])
 
-        self.expect("expr -o -- mutable_array[0]", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- mutable_array[0]", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["bar"])
 
-        self.expect("expr -o -- immutable_dictionary[@\"key\"]", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- immutable_dictionary[@\"key\"]", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["value"])
 
-        self.expect("expr -o -- mutable_dictionary[@\"key\"]", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- mutable_dictionary[@\"key\"]", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["value"])
 
-        self.expect("expr -o -- mutable_dictionary[@\"key\"] = @\"object\"", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- mutable_dictionary[@\"key\"] = @\"object\"", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["object"])
 
-        self.expect("expr -o -- mutable_dictionary[@\"key\"]", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- mutable_dictionary[@\"key\"]", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["object"])
 
-        self.expect("expr -o -- @[ @\"foo\", @\"bar\" ]", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @[ @\"foo\", @\"bar\" ]", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSArray", "foo", "bar"])
 
-        self.expect("expr -o -- @{ @\"key\" : @\"object\" }", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @{ @\"key\" : @\"object\" }", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSDictionary", "key", "object"])
 
-        self.expect("expr -o -- @'a'", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @'a'", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", str(ord('a'))])
 
-        self.expect("expr -o -- @1", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @1", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "1"])
 
-        self.expect("expr -o -- @1l", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @1l", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "1"])
 
-        self.expect("expr -o -- @1ul", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @1ul", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "1"])
 
-        self.expect("expr -o -- @1ll", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @1ll", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "1"])
 
-        self.expect("expr -o -- @1ull", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @1ull", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "1"])
 
-        self.expect("expr -o -- @123.45", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @123.45", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "123.45"])
-        self.expect("expr -o -- @123.45f", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @123.45f", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "123.45"])
 
-        self.expect("expr -o -- @( 1 + 3 )", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @( 1 + 3 )", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSNumber", "4"])
-        self.expect("expr -o -- @(\"Hello world\" + 6)", VARIABLES_DISPLAYED_CORRECTLY,
+        self.expect("expr --object-description -- @(\"Hello world\" + 6)", VARIABLES_DISPLAYED_CORRECTLY,
             substrs = ["NSString", "world"])
 
             

@@ -279,7 +279,7 @@ CommandInterpreter::Initialize ()
         AddOrReplaceAliasOptions ("call", alias_arguments_vector_sp);
 
         alias_arguments_vector_sp.reset (new OptionArgVector);
-        ProcessAliasOptionsArgs (cmd_obj_sp, "-o --", alias_arguments_vector_sp);
+        ProcessAliasOptionsArgs (cmd_obj_sp, "-O --", alias_arguments_vector_sp);
         AddAlias ("po", cmd_obj_sp);
         AddOrReplaceAliasOptions ("po", alias_arguments_vector_sp);
     }

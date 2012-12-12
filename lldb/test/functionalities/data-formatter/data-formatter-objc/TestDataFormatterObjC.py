@@ -420,9 +420,9 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('expr -d true -- @"Hello"',
             substrs = ['Hello'])
 
-        self.expect('expr -d true -o -- @"Hello"',
+        self.expect('expr -d true --object-description -- @"Hello"',
             substrs = ['Hello'])
-        self.expect('expr -d true -o -- @"Hello"', matching=False,
+        self.expect('expr -d true --object-description -- @"Hello"', matching=False,
             substrs = ['@"Hello" Hello'])
 
 

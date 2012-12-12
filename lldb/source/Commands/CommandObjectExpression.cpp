@@ -56,7 +56,7 @@ CommandObjectExpression::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "dynamic-value",      'd', required_argument, NULL, 0, eArgTypeBoolean,    "Upcast the value resulting from the expression to its dynamic type if available."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "timeout",            't', required_argument, NULL, 0, eArgTypeUnsignedInteger,  "Timeout value for running the expression."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "unwind-on-error",    'u', required_argument, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
-    { LLDB_OPT_SET_2                 , false, "object-description", 'o', no_argument,       NULL, 0, eArgTypeNone,       "Print the object description of the value resulting from the expression."},
+    { LLDB_OPT_SET_2                 , false, "object-description", 'O', no_argument,       NULL, 0, eArgTypeNone,       "Print the object description of the value resulting from the expression."},
 };
 
 
@@ -113,7 +113,7 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
         }
         break;
         
-    case 'o':
+    case 'O':
         print_object = true;
         break;
         

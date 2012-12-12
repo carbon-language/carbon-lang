@@ -204,7 +204,7 @@ class FoundationTestCase(TestBase):
         #
         # Test new feature with r115115:
         # Add "-o" option to "expression" which prints the object description if available.
-        self.expect("expression -o -- my", "Object description displayed correctly",
+        self.expect("expression --object-description -- my", "Object description displayed correctly",
             patterns = ["Hello from.*a.out.*with timestamp: "])
 
     # See: <rdar://problem/8717050> lldb needs to use the ObjC runtime symbols for ivar offsets
