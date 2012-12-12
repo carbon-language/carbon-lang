@@ -50,8 +50,7 @@ namespace llvm {
   /// be a power of two when defined.  Supports values with integer or pointer
   /// type and vectors of integers.  If 'OrZero' is set then returns true if the
   /// given value is either a power of two or zero.
-  bool isPowerOfTwo(Value *V, const DataLayout *TD = 0, bool OrZero = false,
-                    unsigned Depth = 0);
+  bool isPowerOfTwo(Value *V, bool OrZero = false, unsigned Depth = 0);
 
   /// isKnownNonZero - Return true if the given value is known to be non-zero
   /// when defined.  For vectors return true if every element is known to be

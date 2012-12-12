@@ -37,7 +37,7 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
   if (match(V, m_LShr(m_OneUse(m_Shl(m_Value(PowerOf2), m_Value(A))),
                       m_Value(B))) &&
       // The "1" can be any value known to be a power of 2.
-      isPowerOfTwo(PowerOf2, IC.getDataLayout())) {
+      isPowerOfTwo(PowerOf2)) {
     A = IC.Builder->CreateSub(A, B);
     return IC.Builder->CreateShl(PowerOf2, A);
   }
@@ -45,8 +45,7 @@ static Value *simplifyValueKnownNonZero(Value *V, InstCombiner &IC) {
   // (PowerOfTwo >>u B) --> isExact since shifting out the result would make it
   // inexact.  Similarly for <<.
   if (BinaryOperator *I = dyn_cast<BinaryOperator>(V))
-    if (I->isLogicalShift() &&
-        isPowerOfTwo(I->getOperand(0), IC.getDataLayout())) {
+    if (I->isLogicalShift() && isPowerOfTwo(I->getOperand(0))) {
       // We know that this is an exact/nuw shift and that the input is a
       // non-zero context as well.
       if (Value *V2 = simplifyValueKnownNonZero(I->getOperand(0), IC)) {
