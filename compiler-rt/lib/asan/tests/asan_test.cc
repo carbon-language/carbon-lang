@@ -825,6 +825,13 @@ static string LeftOOBReadMessage(int oob_distance) {
   return LeftOOBErrorMessage(oob_distance, /*is_write*/false);
 }
 
+static string LeftOOBAccessMessage(int oob_distance) {
+  assert(oob_distance > 0);
+  char expected_str[100];
+  sprintf(expected_str, "located %d bytes to the left", oob_distance);
+  return string(expected_str);
+}
+
 template<typename T>
 void MemSetOOBTestTemplate(size_t length) {
   if (length == 0) return;
@@ -1317,6 +1324,7 @@ TEST(AddressSanitizer, MemCmpOOBTest) {
 }
 
 TEST(AddressSanitizer, StrCatOOBTest) {
+  // strcat() reads strlen(to) bytes from |to| before concatenating.
   size_t to_size = Ident(100);
   char *to = MallocAndMemsetString(to_size);
   to[0] = '\0';
@@ -1329,9 +1337,9 @@ TEST(AddressSanitizer, StrCatOOBTest) {
   strcat(to + from_size, from + from_size - 2);
   // Passing an invalid pointer is an error even when concatenating an empty
   // string.
-  EXPECT_DEATH(strcat(to - 1, from + from_size - 1), LeftOOBWriteMessage(1));
+  EXPECT_DEATH(strcat(to - 1, from + from_size - 1), LeftOOBAccessMessage(1));
   // One of arguments points to not allocated memory.
-  EXPECT_DEATH(strcat(to - 1, from), LeftOOBWriteMessage(1));
+  EXPECT_DEATH(strcat(to - 1, from), LeftOOBAccessMessage(1));
   EXPECT_DEATH(strcat(to, from - 1), LeftOOBReadMessage(1));
   EXPECT_DEATH(strcat(to + to_size, from), RightOOBWriteMessage(0));
   EXPECT_DEATH(strcat(to, from + from_size), RightOOBReadMessage(0));
@@ -1354,6 +1362,7 @@ TEST(AddressSanitizer, StrCatOOBTest) {
 }
 
 TEST(AddressSanitizer, StrNCatOOBTest) {
+  // strncat() reads strlen(to) bytes from |to| before concatenating.
   size_t to_size = Ident(100);
   char *to = MallocAndMemsetString(to_size);
   to[0] = '\0';
@@ -1365,10 +1374,10 @@ TEST(AddressSanitizer, StrNCatOOBTest) {
   from[from_size - 1] = '\0';
   strncat(to, from, 2 * from_size);
   // Catenating empty string with an invalid string is still an error.
-  EXPECT_DEATH(strncat(to - 1, from, 0), LeftOOBWriteMessage(1));
+  EXPECT_DEATH(strncat(to - 1, from, 0), LeftOOBAccessMessage(1));
   strncat(to, from + from_size - 1, 10);
   // One of arguments points to not allocated memory.
-  EXPECT_DEATH(strncat(to - 1, from, 2), LeftOOBWriteMessage(1));
+  EXPECT_DEATH(strncat(to - 1, from, 2), LeftOOBAccessMessage(1));
   EXPECT_DEATH(strncat(to, from - 1, 2), LeftOOBReadMessage(1));
   EXPECT_DEATH(strncat(to + to_size, from, 2), RightOOBWriteMessage(0));
   EXPECT_DEATH(strncat(to, from + from_size, 2), RightOOBReadMessage(0));
