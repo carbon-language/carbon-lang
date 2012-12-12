@@ -254,14 +254,11 @@ Cont:
   %A = load i8* %P3
   ret i8 %A
 
-;; FIXME: This is disabled because this caused a miscompile in the llvm-gcc
-;; bootstrap, see r82411
-;
-; HECK: @coerce_mustalias_nonlocal1
-; HECK: Cont:
-; HECK:   %A = phi i8 [
-; HECK-NOT: load
-; HECK: ret i8 %A
+; CHECK: @coerce_mustalias_nonlocal1
+; CHECK: Cont:
+; CHECK:   %A = phi i8 [
+; CHECK-NOT: load
+; CHECK: ret i8 %A
 }
 
 
