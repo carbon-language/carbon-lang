@@ -52,6 +52,23 @@ ThreadPlanStepInRange::ThreadPlanStepInRange
     SetFlagsToDefault ();
 }
 
+ThreadPlanStepInRange::ThreadPlanStepInRange
+(
+    Thread &thread,
+    const AddressRange &range,
+    const SymbolContext &addr_context,
+    const char *step_into_target,
+    lldb::RunMode stop_others
+) :
+    ThreadPlanStepRange (ThreadPlan::eKindStepInRange, "Step Range stepping in", thread, range, addr_context, stop_others),
+    ThreadPlanShouldStopHere (this, ThreadPlanStepInRange::DefaultShouldStopHereCallback, NULL),
+    m_step_past_prologue (true),
+    m_virtual_step (false),
+    m_step_into_target (step_into_target)
+{
+    SetFlagsToDefault ();
+}
+
 ThreadPlanStepInRange::~ThreadPlanStepInRange ()
 {
 }
@@ -65,6 +82,7 @@ ThreadPlanStepInRange::GetDescription (Stream *s, lldb::DescriptionLevel level)
     {
         s->Printf ("Stepping through range (stepping into functions): ");
         DumpRanges(s);
+        s->Printf ("targeting %s.", m_step_into_target.AsCString());
     }
 }
 
@@ -140,6 +158,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
             }
         
             SetPlanComplete();
+            m_no_more_plans = true;
             return true;
         }
         
@@ -279,14 +298,39 @@ ThreadPlanStepInRange::DefaultShouldStopHereCallback (ThreadPlan *current_plan, 
         }
     }
     
-    if (!should_step_out)
+    if (current_plan->GetKind() == eKindStepInRange)
     {
-        if (current_plan->GetKind() == eKindStepInRange)
+        ThreadPlanStepInRange *step_in_range_plan = static_cast<ThreadPlanStepInRange *> (current_plan);
+        if (step_in_range_plan->m_step_into_target)
         {
-            ThreadPlanStepInRange *step_in_range_plan = static_cast<ThreadPlanStepInRange *> (current_plan);
-            should_step_out = step_in_range_plan->FrameMatchesAvoidRegexp ();
+            SymbolContext sc = frame->GetSymbolContext(eSymbolContextFunction|eSymbolContextBlock|eSymbolContextSymbol);
+            if (sc.symbol != NULL)
+            {
+                // First try an exact match, since that's cheap with ConstStrings.  Then do a strstr compare.
+                if (step_in_range_plan->m_step_into_target == sc.GetFunctionName())
+                {
+                    should_step_out = false;
+                }
+                else
+                {
+                    const char *target_name = step_in_range_plan->m_step_into_target.AsCString();
+                    const char *function_name = sc.GetFunctionName().AsCString();
+                    
+                    if (function_name == NULL)
+                        should_step_out = true;
+                    else if (strstr (function_name, target_name) == NULL)
+                        should_step_out = true;
+                }
+            }
+        }
+        
+        if (!should_step_out)
+        {
+                ThreadPlanStepInRange *step_in_range_plan = static_cast<ThreadPlanStepInRange *> (current_plan);
+                should_step_out = step_in_range_plan->FrameMatchesAvoidRegexp ();
         }
     }
+    
     
     if (should_step_out)
     {
@@ -313,8 +357,12 @@ ThreadPlanStepInRange::PlanExplainsStop ()
     // case we'll do our ordinary processing, or we stopped for some
     // reason that isn't handled by our sub-plans, in which case we want to just stop right
     // away.
-    // We also set ourselves complete when we stop for this sort of unintended reason, but mark
-    // success as false so we don't end up being the reason for the stop.
+    // In general, we don't want to mark the plan as complete for unexplained stops.
+    // For instance, if you step in to some code with no debug info, so you step out
+    // and in the course of that hit a breakpoint, then you want to stop & show the user
+    // the breakpoint, but not unship the step in plan, since you still may want to complete that
+    // plan when you continue.  This is particularly true when doing "step in to target function."
+    // stepping.
     //
     // The only variation is that if we are doing "step by running to next branch" in which case
     // if we hit our branch breakpoint we don't set the plan to complete.
@@ -340,8 +388,8 @@ ThreadPlanStepInRange::PlanExplainsStop ()
                 LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                 if (log)
                     log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");
-                SetPlanComplete(false);
             }
+            return false;
             break;
         default:
             break;

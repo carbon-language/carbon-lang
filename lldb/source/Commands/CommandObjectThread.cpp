@@ -325,6 +325,13 @@ public:
                 }
                 break;
 
+            case 't':
+                {
+                    m_step_in_target.clear();
+                    m_step_in_target.assign(option_arg);
+
+                }
+                break;
             default:
                 error.SetErrorStringWithFormat("invalid short option character '%c'", short_option);
                 break;
@@ -339,6 +346,7 @@ public:
             m_avoid_no_debug = true;
             m_run_mode = eOnlyDuringStepping;
             m_avoid_regexp.clear();
+            m_step_in_target.clear();
         }
 
         const OptionDefinition*
@@ -355,6 +363,7 @@ public:
         bool m_avoid_no_debug;
         RunMode m_run_mode;
         std::string m_avoid_regexp;
+        std::string m_step_in_target;
     };
 
     CommandObjectThreadStepWithTypeAndScope (CommandInterpreter &interpreter,
@@ -469,9 +478,10 @@ protected:
 
                 if (frame->HasDebugInformation ())
                 {
-                    new_plan = thread->QueueThreadPlanForStepRange (abort_other_plans, m_step_type, 
+                    new_plan = thread->QueueThreadPlanForStepInRange (abort_other_plans,
                                                                     frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
-                                                                    frame->GetSymbolContext(eSymbolContextEverything), 
+                                                                    frame->GetSymbolContext(eSymbolContextEverything),
+                                                                    m_options.m_step_in_target.c_str(),
                                                                     stop_other_threads,
                                                                     m_options.m_avoid_no_debug);
                     if (new_plan && !m_options.m_avoid_regexp.empty())
@@ -489,12 +499,10 @@ protected:
                 StackFrame *frame = thread->GetStackFrameAtIndex(0).get();
 
                 if (frame->HasDebugInformation())
-                    new_plan = thread->QueueThreadPlanForStepRange (abort_other_plans, 
-                                                                    m_step_type, 
-                                                                    frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
-                                                                    frame->GetSymbolContext(eSymbolContextEverything), 
-                                                                    stop_other_threads,
-                                                                    false);
+                    new_plan = thread->QueueThreadPlanForStepOverRange (abort_other_plans,
+                                                                        frame->GetSymbolContext(eSymbolContextEverything).line_entry.range, 
+                                                                        frame->GetSymbolContext(eSymbolContextEverything), 
+                                                                        stop_other_threads);
                 else
                     new_plan = thread->QueueThreadPlanForStepSingleInstruction (true, 
                                                                                 abort_other_plans, 
@@ -595,7 +603,8 @@ CommandObjectThreadStepWithTypeAndScope::CommandOptions::g_option_table[] =
 {
 { LLDB_OPT_SET_1, false, "avoid-no-debug",  'a', required_argument, NULL,               0, eArgTypeBoolean,     "A boolean value that sets whether step-in will step over functions with no debug information."},
 { LLDB_OPT_SET_1, false, "run-mode",        'm', required_argument, g_tri_running_mode, 0, eArgTypeRunMode, "Determine how to run other threads while stepping the current thread."},
-{ LLDB_OPT_SET_1, false, "step-over-regexp",'r', required_argument, NULL,               0, eArgTypeRegularExpression,   "A regular expression that defines function names to step over."},
+{ LLDB_OPT_SET_1, false, "step-over-regexp",'r', required_argument, NULL,               0, eArgTypeRegularExpression,   "A regular expression that defines function names to not to stop at when stepping in."},
+{ LLDB_OPT_SET_1, false, "step-in-target",  't', required_argument, NULL,               0, eArgTypeFunctionName,   "The name of the directly called function step in should stop at when stepping into."},
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 

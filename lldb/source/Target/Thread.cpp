@@ -1188,28 +1188,41 @@ Thread::QueueThreadPlanForStepSingleInstruction
 }
 
 ThreadPlan *
-Thread::QueueThreadPlanForStepRange 
+Thread::QueueThreadPlanForStepOverRange
 (
     bool abort_other_plans, 
-    StepType type, 
     const AddressRange &range, 
-    const SymbolContext &addr_context, 
+    const SymbolContext &addr_context,
+    lldb::RunMode stop_other_threads
+)
+{
+    ThreadPlanSP thread_plan_sp;
+    thread_plan_sp.reset (new ThreadPlanStepOverRange (*this, range, addr_context, stop_other_threads));
+
+    QueueThreadPlan (thread_plan_sp, abort_other_plans);
+    return thread_plan_sp.get();
+}
+
+ThreadPlan *
+Thread::QueueThreadPlanForStepInRange
+(
+    bool abort_other_plans, 
+    const AddressRange &range, 
+    const SymbolContext &addr_context,
+    const char *step_in_target,
     lldb::RunMode stop_other_threads,
     bool avoid_code_without_debug_info
 )
 {
     ThreadPlanSP thread_plan_sp;
-    if (type == eStepTypeInto)
-    {
-        ThreadPlanStepInRange *plan = new ThreadPlanStepInRange (*this, range, addr_context, stop_other_threads);
-        if (avoid_code_without_debug_info)
-            plan->GetFlags().Set (ThreadPlanShouldStopHere::eAvoidNoDebug);
-        else
-            plan->GetFlags().Clear (ThreadPlanShouldStopHere::eAvoidNoDebug);
-        thread_plan_sp.reset (plan);
-    }
+    ThreadPlanStepInRange *plan = new ThreadPlanStepInRange (*this, range, addr_context, stop_other_threads);
+    if (avoid_code_without_debug_info)
+        plan->GetFlags().Set (ThreadPlanShouldStopHere::eAvoidNoDebug);
     else
-        thread_plan_sp.reset (new ThreadPlanStepOverRange (*this, range, addr_context, stop_other_threads));
+        plan->GetFlags().Clear (ThreadPlanShouldStopHere::eAvoidNoDebug);
+    if (step_in_target)
+        plan->SetStepInTarget(step_in_target);
+    thread_plan_sp.reset (plan);
 
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp.get();

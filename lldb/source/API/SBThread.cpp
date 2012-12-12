@@ -564,13 +564,10 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
             if (frame_sp->HasDebugInformation ())
             {
                 SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-                new_plan = thread->QueueThreadPlanForStepRange (abort_other_plans,
-                                                                eStepTypeOver,
-                                                                sc.line_entry.range,
-                                                                sc,
-                                                                stop_other_threads,
-                                                                false);
-                
+                new_plan = thread->QueueThreadPlanForStepOverRange (abort_other_plans,
+                                                                    sc.line_entry.range,
+                                                                    sc,
+                                                                    stop_other_threads);
             }
             else
             {
@@ -588,14 +585,23 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
 void
 SBThread::StepInto (lldb::RunMode stop_other_threads)
 {
+    StepInto (NULL, stop_other_threads);
+}
+
+void
+SBThread::StepInto (const char *target_name, lldb::RunMode stop_other_threads)
+{
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     Mutex::Locker api_locker;
     ExecutionContext exe_ctx (m_opaque_sp.get(), api_locker);
 
     if (log)
-        log->Printf ("SBThread(%p)::StepInto (stop_other_threads='%s')", exe_ctx.GetThreadPtr(),
+        log->Printf ("SBThread(%p)::StepInto (target_name='%s', stop_other_threads='%s')",
+                     exe_ctx.GetThreadPtr(),
+                     target_name? target_name: "<NULL>",
                      Thread::RunModeAsCString (stop_other_threads));
+    
     if (exe_ctx.HasThreadScope())
     {
         bool abort_other_plans = false;
@@ -608,12 +614,12 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
         {
             bool avoid_code_without_debug_info = true;
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-            new_plan = thread->QueueThreadPlanForStepRange (abort_other_plans,
-                                                            eStepTypeInto,
-                                                            sc.line_entry.range,
-                                                            sc,
-                                                            stop_other_threads,
-                                                            avoid_code_without_debug_info);
+            new_plan = thread->QueueThreadPlanForStepInRange (abort_other_plans,
+                                                              sc.line_entry.range,
+                                                              sc,
+                                                              target_name,
+                                                              stop_other_threads,
+                                                              avoid_code_without_debug_info);
         }
         else
         {

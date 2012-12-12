@@ -124,6 +124,9 @@ public:
     StepInto (lldb::RunMode stop_other_threads = lldb::eOnlyDuringStepping);
 
     void
+    StepInto (const char *target_name, lldb::RunMode stop_other_threads = lldb::eOnlyDuringStepping);
+
+    void
     StepOut ();
 
     void

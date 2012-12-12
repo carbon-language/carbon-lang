@@ -32,6 +32,12 @@ public:
                            const SymbolContext &addr_context,
                            lldb::RunMode stop_others);
 
+    ThreadPlanStepInRange (Thread &thread,
+                           const AddressRange &range,
+                           const SymbolContext &addr_context,
+                           const char *step_into_function_name,
+                           lldb::RunMode stop_others);
+
     virtual
     ~ThreadPlanStepInRange ();
 
@@ -42,6 +48,11 @@ public:
     ShouldStop (Event *event_ptr);
 
     void SetAvoidRegexp(const char *name);
+    
+    void SetStepInTarget (const char *target)
+    {
+        m_step_into_target.SetCString(target);
+    }
     
     static ThreadPlan *
     DefaultShouldStopHereCallback (ThreadPlan *current_plan, Flags &flags, void *baton);
@@ -65,10 +76,15 @@ protected:
 private:
 
     friend ThreadPlan *
-    Thread::QueueThreadPlanForStepRange (bool abort_other_plans,
-                                         StepType type,
+    Thread::QueueThreadPlanForStepOverRange (bool abort_other_plans,
                                          const AddressRange &range,
                                          const SymbolContext &addr_context,
+                                         lldb::RunMode stop_others);
+    friend ThreadPlan *
+    Thread::QueueThreadPlanForStepInRange (bool abort_other_plans,
+                                         const AddressRange &range,
+                                         const SymbolContext &addr_context,
+                                         const char *step_in_target,
                                          lldb::RunMode stop_others,
                                          bool avoid_code_without_debug_info);
 
@@ -81,7 +97,7 @@ private:
     bool m_step_past_prologue;  // FIXME: For now hard-coded to true, we could put a switch in for this if there's
                                 // demand for that.
     bool m_virtual_step;        // true if we've just done a "virtual step", i.e. just moved the inline stack depth.
-
+    ConstString m_step_into_target;
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepInRange);
 
 };
