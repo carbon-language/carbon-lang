@@ -133,6 +133,7 @@ const MCSymbol *ARMELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
     switch (RelocType) {
     default: EmitThisSym = true; break;
     case ELF::R_ARM_ABS32: EmitThisSym = false; break;
+    case ELF::R_ARM_PREL31: EmitThisSym = false; break;
     }
   }
 
@@ -225,6 +226,9 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
     case FK_Data_4:
       switch (Modifier) {
       default: llvm_unreachable("Unsupported Modifier");
+      case MCSymbolRefExpr::VK_ARM_NONE:
+        Type = ELF::R_ARM_NONE;
+        break;
       case MCSymbolRefExpr::VK_ARM_GOT:
         Type = ELF::R_ARM_GOT_BREL;
         break;
@@ -249,7 +253,10 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
       case MCSymbolRefExpr::VK_ARM_TARGET2:
         Type = ELF::R_ARM_TARGET2;
         break;
-      } 
+      case MCSymbolRefExpr::VK_ARM_PREL31:
+        Type = ELF::R_ARM_PREL31;
+        break;
+      }
       break;
     case ARM::fixup_arm_ldst_pcrel_12:
     case ARM::fixup_arm_pcrel_10:
