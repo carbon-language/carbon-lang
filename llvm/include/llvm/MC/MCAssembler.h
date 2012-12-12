@@ -802,6 +802,10 @@ public:
               raw_ostream &OS);
   ~MCAssembler();
 
+  /// Reuse an assembler instance
+  ///
+  void reset();
+
   MCContext &getContext() const { return Context; }
 
   MCAsmBackend &getBackend() const { return Backend; }

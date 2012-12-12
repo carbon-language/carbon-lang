@@ -92,6 +92,10 @@ namespace llvm {
   public:
     virtual ~MCStreamer();
 
+    /// State management
+    ///
+    virtual void reset();
+
     MCContext &getContext() const { return Context; }
 
     unsigned getNumFrameInfos() {

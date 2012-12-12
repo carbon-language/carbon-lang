@@ -32,13 +32,14 @@ typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
                      const MCObjectFileInfo *mofi, const SourceMgr *mgr,
-                     bool DoAutoInitializationFinalization ) :
+                     bool DoAutoReset ) :
   SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi),
   Allocator(), Symbols(Allocator), UsedNames(Allocator),
-  NextUniqueID(0),
-  CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0),
-  AllowTemporaryLabels(true),
-  AutoInitializationFinalization(DoAutoInitializationFinalization) {
+  NextUniqueID(0), 
+  CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0), 
+  DwarfLocSeen(false), GenDwarfForAssembly(false), GenDwarfFileNumber(0),
+  AllowTemporaryLabels(true), AutoReset(DoAutoReset) {
+
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;
   COFFUniquingMap = 0;
@@ -46,15 +47,12 @@ MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
   SecureLogFile = getenv("AS_SECURE_LOG_FILE");
   SecureLog = 0;
   SecureLogUsed = false;
-
-  if (AutoInitializationFinalization)
-    doInitialization();
 }
 
 MCContext::~MCContext() {
 
-  if (AutoInitializationFinalization)
-    doFinalization();
+  if (AutoReset)
+    reset();
 
   // NOTE: The symbols are all allocated out of a bump pointer allocator,
   // we don't need to free them here.
@@ -67,15 +65,7 @@ MCContext::~MCContext() {
 // Module Lifetime Management
 //===----------------------------------------------------------------------===//
 
-void MCContext::doInitialization() {
-  NextUniqueID = 0;
-  AllowTemporaryLabels = true;
-  DwarfLocSeen = false;
-  GenDwarfForAssembly = false;
-  GenDwarfFileNumber = 0;
-}
-
-void MCContext::doFinalization() {
+void MCContext::reset() {
   UsedNames.clear();
   Symbols.clear();
   Allocator.Reset();
@@ -95,6 +85,12 @@ void MCContext::doFinalization() {
   MachOUniquingMap = 0;
   ELFUniquingMap = 0;
   COFFUniquingMap = 0;
+
+  NextUniqueID = 0;
+  AllowTemporaryLabels = true;
+  DwarfLocSeen = false;
+  GenDwarfForAssembly = false;
+  GenDwarfFileNumber = 0;
 }
 
 //===----------------------------------------------------------------------===//

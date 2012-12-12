@@ -34,6 +34,19 @@ MCStreamer::~MCStreamer() {
     delete W64UnwindInfos[i];
 }
 
+void MCStreamer::reset() {
+  for (unsigned i = 0; i < getNumW64UnwindInfos(); ++i)
+    delete W64UnwindInfos[i];
+  EmitEHFrame = true;
+  EmitDebugFrame = false;
+  CurrentW64UnwindInfo = 0;
+  LastSymbol = 0;
+  AutoInitSections = false;
+  const MCSection *section = NULL;
+  SectionStack.clear();
+  SectionStack.push_back(std::make_pair(section, section));  
+}
+
 const MCExpr *MCStreamer::BuildSymbolDiff(MCContext &Context,
                                           const MCSymbol *A,
                                           const MCSymbol *B) {

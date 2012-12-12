@@ -221,6 +221,19 @@ MCAssembler::MCAssembler(MCContext &Context_, MCAsmBackend &Backend_,
 MCAssembler::~MCAssembler() {
 }
 
+void MCAssembler::reset() {
+  Sections.clear();
+  Symbols.clear();
+  SectionMap.clear();
+  SymbolMap.clear();
+  IndirectSymbols.clear();
+  DataRegions.clear();
+  ThumbFuncs.clear();
+  RelaxAll = false;
+  NoExecStack = false;
+  SubsectionsViaSymbols = false;
+}
+
 bool MCAssembler::isSymbolLinkerVisible(const MCSymbol &Symbol) const {
   // Non-temporary labels should always be visible to the linker.
   if (!Symbol.isTemporary())

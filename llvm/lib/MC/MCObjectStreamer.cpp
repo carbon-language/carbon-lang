@@ -44,6 +44,11 @@ MCObjectStreamer::~MCObjectStreamer() {
   delete Assembler;
 }
 
+void MCObjectStreamer::reset() {
+  Assembler->reset();
+  MCStreamer::reset();
+}
+
 MCFragment *MCObjectStreamer::getCurrentFragment() const {
   assert(getCurrentSectionData() && "No current section!");
 

@@ -45,6 +45,11 @@ protected:
                    MCAssembler *_Assembler);
   ~MCObjectStreamer();
 
+public:
+  /// state management
+  virtual void reset();
+
+protected:
   MCSectionData *getCurrentSectionData() const {
     return CurSectionData;
   }

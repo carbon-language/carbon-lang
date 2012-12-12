@@ -946,6 +946,8 @@ bool AsmPrinter::doFinalization(Module &M) {
   MMI = 0;
 
   OutStreamer.Finish();
+  OutStreamer.reset();
+
   return false;
 }
 

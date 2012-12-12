@@ -137,16 +137,15 @@ namespace llvm {
 
     void *MachOUniquingMap, *ELFUniquingMap, *COFFUniquingMap;
 
-    /// Do automatic initialization in constructor and finalization in
-    /// destructor
-    bool AutoInitializationFinalization;
+    /// Do automatic reset in destructor
+    bool AutoReset;
 
     MCSymbol *CreateSymbol(StringRef Name);
 
   public:
     explicit MCContext(const MCAsmInfo &MAI, const MCRegisterInfo &MRI,
                        const MCObjectFileInfo *MOFI, const SourceMgr *Mgr = 0,
-                       bool AutoInitializationFinalization = true);
+                       bool DoAutoReset = true);
     ~MCContext();
 
     const SourceMgr *getSourceManager() const { return SrcMgr; }
@@ -162,11 +161,9 @@ namespace llvm {
     /// @name Module Lifetime Management
     /// @{
 
-    /// doInitialization - prepare to process a new module
-    void doInitialization();
-
-    /// doFinalization - clean up state from the current module
-    void doFinalization();
+    /// reset - return object to right after construction state to prepare
+    /// to process a new module
+    void reset();
 
     /// @}
 
