@@ -28,6 +28,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
+#include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -72,9 +73,9 @@ static cl::opt<bool>
 SymbolTable("t", cl::desc("Display the symbol table"));
 
 static cl::opt<bool>
-MachO("macho", cl::desc("Use MachO specific object file parser"));
+MachOOpt("macho", cl::desc("Use MachO specific object file parser"));
 static cl::alias
-MachOm("m", cl::desc("Alias for --macho"), cl::aliasopt(MachO));
+MachOm("m", cl::desc("Alias for --macho"), cl::aliasopt(MachOOpt));
 
 cl::opt<std::string>
 llvm::TripleName("triple", cl::desc("Target triple to disassemble for, "
@@ -567,6 +568,13 @@ static void PrintSymbolTable(const ObjectFile *o) {
       else if (Section == o->end_sections())
         outs() << "*UND*";
       else {
+        if (const MachOObjectFile *MachO = dyn_cast<const MachOObjectFile>(o)) {
+          StringRef SegmentName;
+          DataRefImpl DR = Section->getRawDataRefImpl();
+          if (error(MachO->getSectionFinalSegmentName(DR, SegmentName)))
+            SegmentName = "";
+          outs() << SegmentName << ",";
+        }
         StringRef SectionName;
         if (error(Section->getName(SectionName)))
           SectionName = "";
@@ -640,7 +648,7 @@ static void DumpInput(StringRef file) {
     return;
   }
 
-  if (MachO && Disassemble) {
+  if (MachOOpt && Disassemble) {
     DisassembleInputMachO(file);
     return;
   }

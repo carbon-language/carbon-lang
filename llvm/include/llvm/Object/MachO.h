@@ -44,6 +44,11 @@ public:
   virtual unsigned getArch() const;
   virtual StringRef getLoadName() const;
 
+  // In a MachO file, sections have a segment name. This is used in the .o
+  // files. They have a single segment, but this field specifies which segment
+  // a section should be put in in the final object.
+  error_code getSectionFinalSegmentName(DataRefImpl Sec, StringRef &Res) const;
+
   MachOObject *getObject() { return MachOObj.get(); }
 
   static inline bool classof(const Binary *v) {
