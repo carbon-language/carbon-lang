@@ -161,6 +161,7 @@ void AsanLock::Unlock() {
 }
 
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
+  (void)fast;
   stack->size = 0;
   stack->trace[0] = pc;
   if ((max_s) > 1) {
