@@ -834,8 +834,13 @@ are listed below.
 
    -  ``-fsanitize=alignment``: Use of a misaligned pointer or creation
       of a misaligned reference.
+   -  ``-fsanitize=bool``: Load of a ``bool`` value which is neither
+      ``true`` nor ``false``.
    -  ``-fsanitize=bounds``: Out of bounds array indexing, in cases
       where the array bound can be statically determined.
+   -  ``-fsanitize=enum``: Load of a value of an enumerated type which
+      is not in the range of representable values for that enumerated
+      type.
    -  ``-fsanitize=float-cast-overflow``: Conversion to, from, or
       between floating-point types which would overflow the
       destination.

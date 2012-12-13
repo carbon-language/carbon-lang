@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
+// RUN: %clang_cc1 -fsanitize=alignment,null,object-size,shift,return,signed-integer-overflow,vla-bound,float-cast-overflow,integer-divide-by-zero,bool -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s
 // RUN: %clang_cc1 -fsanitize=null -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-NULL
 // RUN: %clang_cc1 -fsanitize=signed-integer-overflow -emit-llvm %s -o - -triple x86_64-linux-gnu | FileCheck %s --check-prefix=CHECK-OVERFLOW
 
@@ -245,4 +245,12 @@ int int_divide_overflow(int a, int b) {
 
   // CHECK:          }
   // CHECK-OVERFLOW: }
+}
+
+// CHECK: @sour_bool
+_Bool sour_bool(_Bool *p) {
+  // CHECK: %[[OK:.*]] = icmp ule i8 {{.*}}, 1
+  // CHECK: br i1 %[[OK]]
+  // CHECK: call void @__ubsan_handle_load_invalid_value_abort(i8* bitcast ({{.*}}), i64 {{.*}})
+  return *p;
 }

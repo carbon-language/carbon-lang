@@ -56,7 +56,9 @@ SANITIZER("thread", Thread)
 
 // UndefinedBehaviorSanitizer
 SANITIZER("alignment", Alignment)
+SANITIZER("bool", Bool)
 SANITIZER("bounds", Bounds)
+SANITIZER("enum", Enum)
 SANITIZER("float-cast-overflow", FloatCastOverflow)
 SANITIZER("float-divide-by-zero", FloatDivideByZero)
 SANITIZER("integer-divide-by-zero", IntegerDivideByZero)
@@ -76,9 +78,10 @@ SANITIZER("unsigned-integer-overflow", UnsignedIntegerOverflow)
 // include all the sanitizers which have low overhead, no ABI or address space
 // layout implications, and only catch undefined behavior.
 SANITIZER_GROUP("undefined", Undefined,
-                Alignment | Bounds | FloatCastOverflow | FloatDivideByZero |
-                IntegerDivideByZero | Null | ObjectSize | Return | Shift |
-                SignedIntegerOverflow | Unreachable | VLABound | Vptr)
+                Alignment | Bool | Bounds | Enum | FloatCastOverflow |
+                FloatDivideByZero | IntegerDivideByZero | Null | ObjectSize |
+                Return | Shift | SignedIntegerOverflow | Unreachable |
+                VLABound | Vptr)
 
 SANITIZER_GROUP("integer", Integer,
                 SignedIntegerOverflow | UnsignedIntegerOverflow | Shift |
