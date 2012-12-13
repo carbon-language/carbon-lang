@@ -18,4 +18,7 @@ int main() {
 (void *const)s; // ok
 
 (const void *const)s; // ok
+
+// rdar://12859590
+(SEL)sel_registerName("foo");  // ok
 }

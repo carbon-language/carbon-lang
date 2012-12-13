@@ -1479,6 +1479,8 @@ void Sema::CheckCompatibleReinterpretCast(QualType SrcType, QualType DestType,
 static void DiagnoseCastOfObjCSEL(Sema &Self, const ExprResult &SrcExpr,
                                   QualType DestType) {
   QualType SrcType = SrcExpr.get()->getType();
+  if (Self.Context.hasSameType(SrcType, DestType))
+    return;
   if (const PointerType *SrcPtrTy = SrcType->getAs<PointerType>())
     if (SrcPtrTy->isObjCSelType()) {
       QualType DT = DestType;
