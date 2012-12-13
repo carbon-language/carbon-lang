@@ -406,3 +406,20 @@ class LW_FM<bits<6> op> {
   let Inst{20-16} = rt;
   let Inst{15-0}  = addr{15-0};
 }
+
+class MADDS_FM<bits<3> funct, bits<3> fmt> {
+  bits<5> fd;
+  bits<5> fr;
+  bits<5> fs;
+  bits<5> ft;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x13;
+  let Inst{25-21} = fr;
+  let Inst{20-16} = ft;
+  let Inst{15-11} = fs;
+  let Inst{10-6}  = fd;
+  let Inst{5-3}   = funct;
+  let Inst{2-0}   = fmt;
+}
