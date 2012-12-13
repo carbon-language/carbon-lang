@@ -135,13 +135,13 @@ namespace llvm {
       const SDNode *Node;
       unsigned DefIdx;
       unsigned NodeNumDefs;
-      EVT ValueType;
+      MVT ValueType;
     public:
       RegDefIter(const SUnit *SU, const ScheduleDAGSDNodes *SD);
 
       bool IsValid() const { return Node != NULL; }
 
-      EVT GetValue() const {
+      MVT GetValue() const {
         assert(IsValid() && "bad iterator");
         return ValueType;
       }

@@ -243,9 +243,8 @@ public:
   /// legal super-reg register class for the register class of the value type.
   /// For example, on i386 the rep register class for i8, i16, and i32 are GR32;
   /// while the rep register class is GR64 on x86_64.
-  virtual const TargetRegisterClass *getRepRegClassFor(EVT VT) const {
-    assert(VT.isSimple() && "getRepRegClassFor called on illegal type!");
-    const TargetRegisterClass *RC = RepRegClassForVT[VT.getSimpleVT().SimpleTy];
+  virtual const TargetRegisterClass *getRepRegClassFor(MVT VT) const {
+    const TargetRegisterClass *RC = RepRegClassForVT[VT.SimpleTy];
     return RC;
   }
 

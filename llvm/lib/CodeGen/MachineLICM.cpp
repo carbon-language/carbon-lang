@@ -780,7 +780,7 @@ MachineLICM::getRegisterClassIDAndCost(const MachineInstr *MI,
                                        unsigned Reg, unsigned OpIdx,
                                        unsigned &RCId, unsigned &RCCost) const {
   const TargetRegisterClass *RC = MRI->getRegClass(Reg);
-  EVT VT = *RC->vt_begin();
+  MVT VT = *RC->vt_begin();
   if (VT == MVT::Untyped) {
     RCId = RC->getID();
     RCCost = 1;
