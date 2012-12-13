@@ -25,37 +25,6 @@ class CondMovIntInt<RegisterClass CRC, RegisterClass DRC, bits<6> funct,
 }
 
 // cond:int, data:float
-class CondMovIntFP<RegisterClass CRC, RegisterClass DRC, bits<5> fmt,
-                   bits<6> func, string instr_asm> :
-  FFR<0x11, func, fmt, (outs DRC:$fd), (ins DRC:$fs, CRC:$rt, DRC:$F),
-      !strconcat(instr_asm, "\t$fd, $fs, $rt"), []> {
-  bits<5> rt;
-  let ft = rt;
-  let Constraints = "$F = $fd";
-}
-
-// cond:float, data:int
-class CondMovFPInt<RegisterClass RC, SDNode cmov, bits<1> tf,
-                   string instr_asm> :
-  FCMOV<tf, (outs RC:$rd), (ins RC:$rs, RC:$F),
-        !strconcat(instr_asm, "\t$rd, $rs, $$fcc0"),
-        [(set RC:$rd, (cmov RC:$rs, RC:$F))]> {
-  let cc = 0;
-  let Uses = [FCR31];
-  let Constraints = "$F = $rd";
-}
-
-// cond:float, data:float
-class CondMovFPFP<RegisterClass RC, SDNode cmov, bits<5> fmt, bits<1> tf,
-                  string instr_asm> :
-  FFCMOV<fmt, tf, (outs RC:$fd), (ins RC:$fs, RC:$F),
-         !strconcat(instr_asm, "\t$fd, $fs, $$fcc0"),
-         [(set RC:$fd, (cmov RC:$fs, RC:$F))]> {
-  let cc = 0;
-  let Uses = [FCR31];
-  let Constraints = "$F = $fd";
-}
-
 class CMov_I_F_FT<string opstr, RegisterClass CRC, RegisterClass DRC,
                   InstrItinClass Itin> :
   InstSE<(outs DRC:$fd), (ins DRC:$fs, CRC:$rt, DRC:$F),
@@ -63,6 +32,7 @@ class CMov_I_F_FT<string opstr, RegisterClass CRC, RegisterClass DRC,
   let Constraints = "$F = $fd";
 }
 
+// cond:float, data:int
 class CMov_F_I_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
                   SDPatternOperator OpNode = null_frag> :
   InstSE<(outs RC:$rd), (ins RC:$rs, RC:$F),
@@ -72,6 +42,7 @@ class CMov_F_I_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
   let Constraints = "$F = $rd";
 }
 
+// cond:float, data:float
 class CMov_F_F_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
                   SDPatternOperator OpNode = null_frag> :
   InstSE<(outs RC:$fd), (ins RC:$fs, RC:$F),

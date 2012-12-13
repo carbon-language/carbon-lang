@@ -86,102 +86,6 @@ def fpimm0neg : PatLeaf<(fpimm), [{
 // Only S32 and D32 are supported right now.
 //===----------------------------------------------------------------------===//
 
-// FP unary instructions without patterns.
-class FFR1<bits<6> funct, bits<5> fmt, string opstr, RegisterClass DstRC,
-           RegisterClass SrcRC> :
-  FFR<0x11, funct, fmt, (outs DstRC:$fd), (ins SrcRC:$fs),
-      !strconcat(opstr, "\t$fd, $fs"), []> {
-  let ft = 0;
-}
-
-// FP unary instructions with patterns.
-class FFR1P<bits<6> funct, bits<5> fmt, string opstr, RegisterClass DstRC,
-            RegisterClass SrcRC, SDNode OpNode> :
-  FFR<0x11, funct, fmt, (outs DstRC:$fd), (ins SrcRC:$fs),
-      !strconcat(opstr, "\t$fd, $fs"),
-      [(set DstRC:$fd, (OpNode SrcRC:$fs))]> {
-  let ft = 0;
-}
-
-class FFR2P<bits<6> funct, bits<5> fmt, string opstr, RegisterClass RC,
-            SDNode OpNode> :
-  FFR<0x11, funct, fmt, (outs RC:$fd), (ins RC:$fs, RC:$ft),
-      !strconcat(opstr, "\t$fd, $fs, $ft"),
-      [(set RC:$fd, (OpNode RC:$fs, RC:$ft))]>;
-
-// FP load.
-let DecoderMethod = "DecodeFMem" in {
-class FPLoad<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
-  FMem<op, (outs RC:$ft), (ins MemOpnd:$addr),
-      !strconcat(opstr, "\t$ft, $addr"), [(set RC:$ft, (load addr:$addr))],
-      IILoad>;
-
-// FP store.
-class FPStore<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
-  FMem<op, (outs), (ins RC:$ft, MemOpnd:$addr),
-      !strconcat(opstr, "\t$ft, $addr"), [(store RC:$ft, addr:$addr)],
-      IIStore>;
-}
-// FP indexed load.
-class FPIdxLoad<bits<6> funct, string opstr, RegisterClass DRC,
-                RegisterClass PRC, SDPatternOperator FOp = null_frag>:
-  FFMemIdx<funct, (outs DRC:$fd), (ins PRC:$base, PRC:$index),
-           !strconcat(opstr, "\t$fd, ${index}(${base})"),
-           [(set DRC:$fd, (FOp (add PRC:$base, PRC:$index)))]> {
-  let fs = 0;
-}
-
-// FP indexed store.
-class FPIdxStore<bits<6> funct, string opstr, RegisterClass DRC,
-                 RegisterClass PRC, SDPatternOperator FOp= null_frag>:
-  FFMemIdx<funct, (outs), (ins DRC:$fs, PRC:$base, PRC:$index),
-           !strconcat(opstr, "\t$fs, ${index}(${base})"),
-           [(FOp DRC:$fs, (add PRC:$base, PRC:$index))]> {
-  let fd = 0;
-}
-
-// Instructions that convert an FP value to 32-bit fixed point.
-multiclass FFR1_W_M<bits<6> funct, string opstr> {
-  def _D32 : FFR1<funct, 17, opstr, FGR32, AFGR64>,
-             Requires<[NotFP64bit, HasStdEnc]>;
-  def _D64 : FFR1<funct, 17, opstr, FGR32, FGR64>,
-             Requires<[IsFP64bit, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-  }
-}
-
-// FP-to-FP conversion instructions.
-multiclass FFR1P_M<bits<6> funct, string opstr, SDNode OpNode> {
-  def _D32 : FFR1P<funct, 17, opstr, AFGR64, AFGR64, OpNode>,
-             Requires<[NotFP64bit, HasStdEnc]>;
-  def _D64 : FFR1P<funct, 17, opstr, FGR64, FGR64, OpNode>,
-             Requires<[IsFP64bit, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-  }
-}
-
-multiclass FFR2P_M<bits<6> funct, string opstr, SDNode OpNode> {
-  def _D32 : FFR2P<funct, 17, opstr, AFGR64, OpNode>,
-             Requires<[NotFP64bit, HasStdEnc]>;
-  def _D64 : FFR2P<funct, 17, opstr, FGR64, OpNode>,
-             Requires<[IsFP64bit, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-  }
-}
-
-// FP madd/msub/nmadd/nmsub instruction classes.
-class FMADDSUB<bits<3> funct, bits<3> fmt, string opstr,
-               SDNode OpNode, RegisterClass RC> :
-  FFMADDSUB<funct, fmt, (outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
-            !strconcat(opstr, "\t$fd, $fr, $fs, $ft"),
-            [(set RC:$fd, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr))]>;
-
-class FNMADDSUB<bits<3> funct, bits<3> fmt, string opstr,
-                SDNode OpNode, RegisterClass RC> :
-  FFMADDSUB<funct, fmt, (outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
-            !strconcat(opstr, "\t$fd, $fr, $fs, $ft"),
-            [(set RC:$fd, (fsub fpimm0, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr)))]>;
-
 class ADDS_FT<string opstr, RegisterClass RC, InstrItinClass Itin, bit IsComm,
               SDPatternOperator OpNode= null_frag> :
   InstSE<(outs RC:$fd), (ins RC:$fs, RC:$ft),
@@ -360,13 +264,6 @@ defm FSQRT : ABSS_M<"sqrt.d", IIFsqrtDouble, fsqrt>, ABSS_FM<0x4, 17>;
 // When defining instructions, we reference all 32-bit registers,
 // regardless of register aliasing.
 
-class FFRGPR<bits<5> _fmt, dag outs, dag ins, string asmstr, list<dag> pattern>:
-             FFR<0x11, 0x0, _fmt, outs, ins, asmstr, pattern> {
-  bits<5> rt;
-  let ft = rt;
-  let fd = 0;
-}
-
 /// Move Control Registers From/To CPU Registers
 def CFC1 : MFC1_FT<"cfc1", CPURegs, CCR, IIFmove>, MFC1_FM<2>;
 def CTC1 : MTC1_FT<"ctc1", CCR, CPURegs, IIFmove>, MFC1_FM<6>;
@@ -503,16 +400,6 @@ let Predicates = [HasMips32r2, IsFP64bit, NoNaNsFPMath, HasStdEnc],
 def MIPS_BRANCH_F  : PatLeaf<(i32 0)>;
 def MIPS_BRANCH_T  : PatLeaf<(i32 1)>;
 
-/// Floating Point Branch of False/True (Likely)
-let isBranch=1, isTerminator=1, hasDelaySlot=1, base=0x8, Uses=[FCR31] in
-  class FBRANCH<bits<1> nd, bits<1> tf, PatLeaf op, string asmstr> :
-      FFI<0x11, (outs), (ins brtarget:$dst), !strconcat(asmstr, "\t$dst"),
-        [(MipsFPBrcond op, bb:$dst)]> {
-  let Inst{20-18} = 0;
-  let Inst{17} = nd;
-  let Inst{16} = tf;
-}
-
 let DecoderMethod = "DecodeBC1" in {
 def BC1F : BC1F_FT<"bc1f", IIBranch, MIPS_BRANCH_F>, BC1F_FM<0, 0>;
 def BC1T : BC1F_FT<"bc1t", IIBranch, MIPS_BRANCH_T>, BC1F_FM<0, 1>;
@@ -538,11 +425,6 @@ def MIPS_FCOND_LT   : PatLeaf<(i32 12)>;
 def MIPS_FCOND_NGE  : PatLeaf<(i32 13)>;
 def MIPS_FCOND_LE   : PatLeaf<(i32 14)>;
 def MIPS_FCOND_NGT  : PatLeaf<(i32 15)>;
-
-class FCMP<bits<5> fmt, RegisterClass RC, string typestr> :
-  FCC<fmt, (outs), (ins RC:$fs, RC:$ft, condcode:$cc),
-      !strconcat("c.$cc.", typestr, "\t$fs, $ft"),
-      [(MipsFPCmp RC:$fs, RC:$ft, imm:$cc)]>;
 
 /// Floating Point Compare
 def FCMP_S32 : CEQS_FT<"s", FGR32, IIFcmp, MipsFPCmp>, CEQS_FM<16>;
