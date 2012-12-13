@@ -49,10 +49,8 @@ using __sanitizer::uptr;
 
 #if !defined(__APPLE__)
 # define ASAN_INTERCEPT_STRNLEN 1
-# define ASAN_INTERCEPT_PREAD64 1
 #else
 # define ASAN_INTERCEPT_STRNLEN 0
-# define ASAN_INTERCEPT_PREAD64 0
 #endif
 
 #if defined(__linux__) && !defined(ANDROID)
@@ -156,6 +154,7 @@ DECLARE_FUNCTION_AND_WRAPPER(long long, strtoll, const char *nptr, char **endptr
 # endif
 
 // unistd.h
+// FIXME: remove these typedefs once we get rid of mach_override.
 typedef uptr size_t;
 typedef sptr ssize_t;
 typedef u64 off_t;
