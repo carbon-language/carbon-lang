@@ -112,6 +112,12 @@
 /* Installation prefix directory */
 #undef LLVM_PREFIX
 
+/* Define if we have the Intel JIT API runtime support library */
+#undef LLVM_USE_INTEL_JITEVENTS
+
+/* Define if we have the oprofile JIT-support library */
+#undef LLVM_USE_OPROFILE
+
 /* Major version of the LLVM API */
 #undef LLVM_VERSION_MAJOR
 

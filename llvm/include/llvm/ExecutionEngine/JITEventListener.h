@@ -15,7 +15,7 @@
 #ifndef LLVM_EXECUTION_ENGINE_JIT_EVENTLISTENER_H
 #define LLVM_EXECUTION_ENGINE_JIT_EVENTLISTENER_H
 
-#include "llvm/Config/config.h"
+#include "llvm/Config/llvm-config.h"
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/DebugLoc.h"
 #include <vector>

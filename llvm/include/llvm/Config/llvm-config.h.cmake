@@ -112,6 +112,12 @@
 /* Installation prefix directory */
 #cmakedefine LLVM_PREFIX "${LLVM_PREFIX}"
 
+/* Define if we have the Intel JIT API runtime support library */
+#cmakedefine LLVM_USE_INTEL_JITEVENTS 1
+
+/* Define if we have the oprofile JIT-support library */
+#cmakedefine LLVM_USE_OPROFILE 1
+
 /* Major version of the LLVM API */
 #cmakedefine LLVM_VERSION_MAJOR ${LLVM_VERSION_MAJOR}
 
