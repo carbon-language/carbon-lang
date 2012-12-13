@@ -1334,6 +1334,7 @@ Driver::MainLoop ()
             // Now we handle options we got from the command line
             char command_string[PATH_MAX * 2];
             const size_t num_source_command_files = GetNumSourceCommandFiles();
+            const bool dump_stream_only_if_no_immediate = true;
             if (num_source_command_files > 0)
             {
                 for (size_t i=0; i < num_source_command_files; ++i)
@@ -1346,6 +1347,18 @@ Driver::MainLoop ()
                         result.PutError (m_debugger.GetErrorFileHandle());
                         result.PutOutput (m_debugger.GetOutputFileHandle());
                     }
+                    
+                    // if the command sourcing generated an error - dump the result object
+                    const size_t error_size = result.GetErrorSize();
+                    if (error_size > 0)
+                    {
+                        const size_t output_size = result.GetOutputSize();
+                        if (output_size > 0)
+                            m_io_channel_ap->OutWrite (result.GetOutput(dump_stream_only_if_no_immediate), output_size, NO_ASYNC);
+                        m_io_channel_ap->OutWrite (result.GetError(dump_stream_only_if_no_immediate), error_size, NO_ASYNC);
+                    }
+                    
+                    result.Clear();
                 }
             }
 
