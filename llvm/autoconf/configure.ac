@@ -475,6 +475,54 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-cxx11. Use "yes" or "no"]) ;;
 esac
 
+dnl --enable-clang-arcmt: check whether to enable clang arcmt
+clang_arcmt="yes"
+AC_ARG_ENABLE(clang-arcmt,
+              AS_HELP_STRING([--enable-clang-arcmt],
+                             [Enable building of clang ARCMT (default is YES)]),
+                             clang_arcmt="$enableval",
+                             enableval="yes")
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_CLANG_ARCMT,[1]) ;;
+  no)  AC_SUBST(ENABLE_CLANG_ARCMT,[0]) ;;
+  default) AC_SUBST(ENABLE_CLANG_ARCMT,[1]);;
+  *) AC_MSG_ERROR([Invalid setting for --enable-clang-arcmt. Use "yes" or "no"]) ;;
+esac
+
+dnl --enable-clang-static-analyzer: check whether to enable static-analyzer
+clang_static_analyzer="yes"
+AC_ARG_ENABLE(clang-static-analyzer,
+              AS_HELP_STRING([--enable-clang-static-analyzer],
+                             [Enable building of clang Static Analyzer (default is YES)]),
+                             clang_static_analyzer="$enableval",
+                             enableval="yes")
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_CLANG_STATIC_ANALYZER,[1]) ;;
+  no)  AC_SUBST(ENABLE_CLANG_STATIC_ANALYZER,[0]) ;;
+  default) AC_SUBST(ENABLE_CLANG_STATIC_ANALYZER,[1]);;
+  *) AC_MSG_ERROR([Invalid setting for --enable-clang-static-analyzer. Use "yes" or "no"]) ;;
+esac
+
+dnl --enable-clang-rewriter: check whether to enable clang rewriter
+AC_ARG_ENABLE(clang-rewriter,
+              AS_HELP_STRING([--enable-clang-rewriter],
+                             [Enable building of clang rewriter (default is YES)]),,
+                             enableval="yes")
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_CLANG_REWRITER,[1]) ;;
+  no)  
+    if test clang_arcmt != "no" ; then
+      AC_MSG_ERROR([Cannot enable clang ARC Migration Tool while disabling rewriter.])
+    fi
+    if test clang_static_analyzer != "no" ; then
+      AC_MSG_ERROR([Cannot enable clang static analyzer while disabling rewriter.])
+    fi
+    AC_SUBST(ENABLE_CLANG_REWRITER,[0]) 
+    ;;
+  default) AC_SUBST(ENABLE_CLANG_REWRITER,[1]);;
+  *) AC_MSG_ERROR([Invalid setting for --enable-clang-rewriter. Use "yes" or "no"]) ;;
+esac
+
 dnl --enable-optimized : check whether they want to do an optimized build:
 AC_ARG_ENABLE(optimized, AS_HELP_STRING(
  --enable-optimized,[Compile with optimizations enabled (default is NO)]),,enableval=$optimize)

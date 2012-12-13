@@ -685,6 +685,9 @@ BUILD_CXX
 CVSBUILD
 ENABLE_LIBCPP
 ENABLE_CXX11
+ENABLE_CLANG_ARCMT
+ENABLE_CLANG_STATIC_ANALYZER
+ENABLE_CLANG_REWRITER
 ENABLE_OPTIMIZED
 ENABLE_PROFILING
 DISABLE_ASSERTIONS
@@ -1397,6 +1400,11 @@ Optional Features:
   --enable-polly          Use polly if available (default is YES)
   --enable-libcpp         Use libc++ if available (default is NO)
   --enable-cxx11          Use c++11 if available (default is NO)
+  --enable-clang-arcmt    Enable building of clang ARCMT (default is YES)
+  --enable-clang-static-analyzer
+                          Enable building of clang Static Analyzer (default is
+                          YES)
+  --enable-clang-rewriter Enable building of clang rewriter (default is YES)
   --enable-optimized      Compile with optimizations enabled (default is NO)
   --enable-profiling      Compile with profiling enabled (default is NO)
   --enable-assertions     Compile with assertion checks enabled (default is
@@ -5044,6 +5052,77 @@ case "$enableval" in
 ;;
   *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&5
 echo "$as_me: error: Invalid setting for --enable-cxx11. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+clang_arcmt="yes"
+# Check whether --enable-clang-arcmt was given.
+if test "${enable_clang_arcmt+set}" = set; then
+  enableval=$enable_clang_arcmt; clang_arcmt="$enableval"
+else
+  enableval="yes"
+fi
+
+case "$enableval" in
+  yes) ENABLE_CLANG_ARCMT=1
+ ;;
+  no)  ENABLE_CLANG_ARCMT=0
+ ;;
+  default) ENABLE_CLANG_ARCMT=1
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-clang-arcmt. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-clang-arcmt. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+clang_static_analyzer="yes"
+# Check whether --enable-clang-static-analyzer was given.
+if test "${enable_clang_static_analyzer+set}" = set; then
+  enableval=$enable_clang_static_analyzer; clang_static_analyzer="$enableval"
+else
+  enableval="yes"
+fi
+
+case "$enableval" in
+  yes) ENABLE_CLANG_STATIC_ANALYZER=1
+ ;;
+  no)  ENABLE_CLANG_STATIC_ANALYZER=0
+ ;;
+  default) ENABLE_CLANG_STATIC_ANALYZER=1
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-clang-static-analyzer. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-clang-static-analyzer. Use \"yes\" or \"no\"" >&2;}
+   { (exit 1); exit 1; }; } ;;
+esac
+
+# Check whether --enable-clang-rewriter was given.
+if test "${enable_clang_rewriter+set}" = set; then
+  enableval=$enable_clang_rewriter;
+else
+  enableval="yes"
+fi
+
+case "$enableval" in
+  yes) ENABLE_CLANG_REWRITER=1
+ ;;
+  no)
+    if test clang_arcmt != "no" ; then
+      { { echo "$as_me:$LINENO: error: Cannot enable clang ARC Migration Tool while disabling rewriter." >&5
+echo "$as_me: error: Cannot enable clang ARC Migration Tool while disabling rewriter." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+    if test clang_static_analyzer != "no" ; then
+      { { echo "$as_me:$LINENO: error: Cannot enable clang static analyzer while disabling rewriter." >&5
+echo "$as_me: error: Cannot enable clang static analyzer while disabling rewriter." >&2;}
+   { (exit 1); exit 1; }; }
+    fi
+    ENABLE_CLANG_REWRITER=0
+
+    ;;
+  default) ENABLE_CLANG_REWRITER=1
+;;
+  *) { { echo "$as_me:$LINENO: error: Invalid setting for --enable-clang-rewriter. Use \"yes\" or \"no\"" >&5
+echo "$as_me: error: Invalid setting for --enable-clang-rewriter. Use \"yes\" or \"no\"" >&2;}
    { (exit 1); exit 1; }; } ;;
 esac
 
@@ -10314,7 +10393,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10317 "configure"
+#line 10396 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -21910,6 +21989,9 @@ BUILD_CXX!$BUILD_CXX$ac_delim
 CVSBUILD!$CVSBUILD$ac_delim
 ENABLE_LIBCPP!$ENABLE_LIBCPP$ac_delim
 ENABLE_CXX11!$ENABLE_CXX11$ac_delim
+ENABLE_CLANG_ARCMT!$ENABLE_CLANG_ARCMT$ac_delim
+ENABLE_CLANG_STATIC_ANALYZER!$ENABLE_CLANG_STATIC_ANALYZER$ac_delim
+ENABLE_CLANG_REWRITER!$ENABLE_CLANG_REWRITER$ac_delim
 ENABLE_OPTIMIZED!$ENABLE_OPTIMIZED$ac_delim
 ENABLE_PROFILING!$ENABLE_PROFILING$ac_delim
 DISABLE_ASSERTIONS!$DISABLE_ASSERTIONS$ac_delim
@@ -21921,9 +22003,6 @@ DEBUG_SYMBOLS!$DEBUG_SYMBOLS$ac_delim
 KEEP_SYMBOLS!$KEEP_SYMBOLS$ac_delim
 JIT!$JIT$ac_delim
 TARGET_HAS_JIT!$TARGET_HAS_JIT$ac_delim
-ENABLE_DOCS!$ENABLE_DOCS$ac_delim
-ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
-LLVM_ENABLE_THREADS!$LLVM_ENABLE_THREADS$ac_delim
 _ACEOF
 
   if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
@@ -21965,6 +22044,9 @@ _ACEOF
 ac_delim='%!_!# '
 for ac_last_try in false false false false false :; do
   cat >conf$$subs.sed <<_ACEOF
+ENABLE_DOCS!$ENABLE_DOCS$ac_delim
+ENABLE_DOXYGEN!$ENABLE_DOXYGEN$ac_delim
+LLVM_ENABLE_THREADS!$LLVM_ENABLE_THREADS$ac_delim
 ENABLE_PTHREADS!$ENABLE_PTHREADS$ac_delim
 ENABLE_PIC!$ENABLE_PIC$ac_delim
 ENABLE_SHARED!$ENABLE_SHARED$ac_delim
@@ -22059,10 +22141,9 @@ RPATH!$RPATH$ac_delim
 RDYNAMIC!$RDYNAMIC$ac_delim
 program_prefix!$program_prefix$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
-LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 95; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 97; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -22081,6 +22162,48 @@ fi
 
 cat >>$CONFIG_STATUS <<_ACEOF
 cat >"\$tmp/subs-2.sed" <<\CEOF$ac_eof
+/@[a-zA-Z_][a-zA-Z_0-9]*@/!b
+_ACEOF
+sed '
+s/[,\\&]/\\&/g; s/@/@|#_!!_#|/g
+s/^/s,@/; s/!/@,|#_!!_#|/
+:n
+t n
+s/'"$ac_delim"'$/,g/; t
+s/$/\\/; p
+N; s/^.*\n//; s/[,\\&]/\\&/g; s/@/@|#_!!_#|/g; b n
+' >>$CONFIG_STATUS <conf$$subs.sed
+rm -f conf$$subs.sed
+cat >>$CONFIG_STATUS <<_ACEOF
+CEOF$ac_eof
+_ACEOF
+
+
+ac_delim='%!_!# '
+for ac_last_try in false false false false false :; do
+  cat >conf$$subs.sed <<_ACEOF
+LTLIBOBJS!$LTLIBOBJS$ac_delim
+_ACEOF
+
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 1; then
+    break
+  elif $ac_last_try; then
+    { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
+echo "$as_me: error: could not make $CONFIG_STATUS" >&2;}
+   { (exit 1); exit 1; }; }
+  else
+    ac_delim="$ac_delim!$ac_delim _$ac_delim!! "
+  fi
+done
+
+ac_eof=`sed -n '/^CEOF[0-9]*$/s/CEOF/0/p' conf$$subs.sed`
+if test -n "$ac_eof"; then
+  ac_eof=`echo "$ac_eof" | sort -nru | sed 1q`
+  ac_eof=`expr $ac_eof + 1`
+fi
+
+cat >>$CONFIG_STATUS <<_ACEOF
+cat >"\$tmp/subs-3.sed" <<\CEOF$ac_eof
 /@[a-zA-Z_][a-zA-Z_0-9]*@/!b end
 _ACEOF
 sed '
@@ -22343,7 +22466,7 @@ s&@abs_builddir@&$ac_abs_builddir&;t t
 s&@abs_top_builddir@&$ac_abs_top_builddir&;t t
 s&@INSTALL@&$ac_INSTALL&;t t
 $ac_datarootdir_hack
-" $ac_file_inputs | sed -f "$tmp/subs-1.sed" | sed -f "$tmp/subs-2.sed" >$tmp/out
+" $ac_file_inputs | sed -f "$tmp/subs-1.sed" | sed -f "$tmp/subs-2.sed" | sed -f "$tmp/subs-3.sed" >$tmp/out
 
 test -z "$ac_datarootdir_hack$ac_datarootdir_seen" &&
   { ac_out=`sed -n '/\${datarootdir}/p' "$tmp/out"`; test -n "$ac_out"; } &&

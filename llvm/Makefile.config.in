@@ -222,6 +222,15 @@ ENABLE_LIBCPP = @ENABLE_LIBCPP@
 # When ENABLE_CXX11 is enabled, LLVM uses c++11 mode by default to build.
 ENABLE_CXX11 = @ENABLE_CXX11@
 
+# When ENABLE_CLANG_ARCMT is enabled, clang will have ARCMigrationTool.
+ENABLE_CLANG_ARCMT = @ENABLE_CLANG_ARCMT@
+
+# When ENABLE_CLANG_REWRITER is enabled, clang will have Rewriter.
+ENABLE_CLANG_REWRITER = @ENABLE_CLANG_REWRITER@
+
+# When ENABLE_CLANG_STATIC_ANALYZER is enabled, clang will have StaticAnalyzer.
+ENABLE_CLANG_STATIC_ANALYZER = @ENABLE_CLANG_STATIC_ANALYZER@
+
 # When ENABLE_WERROR is enabled, we'll pass -Werror on the command line
 ENABLE_WERROR = @ENABLE_WERROR@
 
