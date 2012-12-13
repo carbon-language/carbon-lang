@@ -799,11 +799,11 @@ void llvm::ComputeSignBit(Value *V, bool &KnownZero, bool &KnownOne,
   KnownZero = ZeroBits[BitWidth - 1];
 }
 
-/// isPowerOfTwo - Return true if the given value is known to have exactly one
+/// isKnownToBeAPowerOfTwo - Return true if the given value is known to have exactly one
 /// bit set when defined. For vectors return true if every element is known to
 /// be a power of two when defined.  Supports values with integer or pointer
 /// types and vectors of integers.
-bool llvm::isPowerOfTwo(Value *V, bool OrZero, unsigned Depth) {
+bool llvm::isKnownToBeAPowerOfTwo(Value *V, bool OrZero, unsigned Depth) {
   if (Constant *C = dyn_cast<Constant>(V)) {
     if (C->isNullValue())
       return OrZero;
@@ -830,19 +830,19 @@ bool llvm::isPowerOfTwo(Value *V, bool OrZero, unsigned Depth) {
   // A shift of a power of two is a power of two or zero.
   if (OrZero && (match(V, m_Shl(m_Value(X), m_Value())) ||
                  match(V, m_Shr(m_Value(X), m_Value()))))
-    return isPowerOfTwo(X, /*OrZero*/true, Depth);
+    return isKnownToBeAPowerOfTwo(X, /*OrZero*/true, Depth);
 
   if (ZExtInst *ZI = dyn_cast<ZExtInst>(V))
-    return isPowerOfTwo(ZI->getOperand(0), OrZero, Depth);
+    return isKnownToBeAPowerOfTwo(ZI->getOperand(0), OrZero, Depth);
 
   if (SelectInst *SI = dyn_cast<SelectInst>(V))
-    return isPowerOfTwo(SI->getTrueValue(), OrZero, Depth) &&
-      isPowerOfTwo(SI->getFalseValue(), OrZero, Depth);
+    return isKnownToBeAPowerOfTwo(SI->getTrueValue(), OrZero, Depth) &&
+      isKnownToBeAPowerOfTwo(SI->getFalseValue(), OrZero, Depth);
 
   if (OrZero && match(V, m_And(m_Value(X), m_Value(Y)))) {
     // A power of two and'd with anything is a power of two or zero.
-    if (isPowerOfTwo(X, /*OrZero*/true, Depth) ||
-        isPowerOfTwo(Y, /*OrZero*/true, Depth))
+    if (isKnownToBeAPowerOfTwo(X, /*OrZero*/true, Depth) ||
+        isKnownToBeAPowerOfTwo(Y, /*OrZero*/true, Depth))
       return true;
     // X & (-X) is always a power of two or zero.
     if (match(X, m_Neg(m_Specific(Y))) || match(Y, m_Neg(m_Specific(X))))
@@ -855,7 +855,7 @@ bool llvm::isPowerOfTwo(Value *V, bool OrZero, unsigned Depth) {
   // copying a sign bit (sdiv int_min, 2).
   if (match(V, m_Exact(m_LShr(m_Value(), m_Value()))) ||
       match(V, m_Exact(m_UDiv(m_Value(), m_Value())))) {
-    return isPowerOfTwo(cast<Operator>(V)->getOperand(0), OrZero, Depth);
+    return isKnownToBeAPowerOfTwo(cast<Operator>(V)->getOperand(0), OrZero, Depth);
   }
 
   return false;
@@ -1027,9 +1027,9 @@ bool llvm::isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth) {
     }
 
     // The sum of a non-negative number and a power of two is not zero.
-    if (XKnownNonNegative && isPowerOfTwo(Y, /*OrZero*/false, Depth))
+    if (XKnownNonNegative && isKnownToBeAPowerOfTwo(Y, /*OrZero*/false, Depth))
       return true;
-    if (YKnownNonNegative && isPowerOfTwo(X, /*OrZero*/false, Depth))
+    if (YKnownNonNegative && isKnownToBeAPowerOfTwo(X, /*OrZero*/false, Depth))
       return true;
   }
   // X * Y.
