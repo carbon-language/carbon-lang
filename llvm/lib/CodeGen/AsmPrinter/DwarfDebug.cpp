@@ -1836,7 +1836,8 @@ void DwarfDebug::emitCompileUnits(const MCSection *Section) {
     Asm->OutStreamer.AddComment("DWARF version number");
     Asm->EmitInt16(dwarf::DWARF_VERSION);
     Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
-    Asm->EmitSectionOffset(Asm->GetTempSymbol("abbrev_begin"),
+    const MCSection *ASec = Asm->getObjFileLowering().getDwarfAbbrevSection();
+    Asm->EmitSectionOffset(Asm->GetTempSymbol(ASec->getLabelBeginName()),
                            DwarfAbbrevSectionSym);
     Asm->OutStreamer.AddComment("Address Size (in bytes)");
     Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
@@ -1860,10 +1861,11 @@ void DwarfDebug::emitAbbreviations() {
   // Check to see if it is worth the effort.
   if (!Abbreviations.empty()) {
     // Start the debug abbrev section.
-    Asm->OutStreamer.SwitchSection(
-                            Asm->getObjFileLowering().getDwarfAbbrevSection());
+    const MCSection *ASec = Asm->getObjFileLowering().getDwarfAbbrevSection();
+    Asm->OutStreamer.SwitchSection(ASec);
 
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("abbrev_begin"));
+    MCSymbol *Begin = Asm->GetTempSymbol(ASec->getLabelBeginName());
+    Asm->OutStreamer.EmitLabel(Begin);
 
     // For each abbrevation.
     for (unsigned i = 0, N = Abbreviations.size(); i < N; ++i) {
@@ -1880,7 +1882,8 @@ void DwarfDebug::emitAbbreviations() {
     // Mark end of abbreviations.
     Asm->EmitULEB128(0, "EOM(3)");
 
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("abbrev_end"));
+    MCSymbol *End = Asm->GetTempSymbol(ASec->getLabelEndName());
+    Asm->OutStreamer.EmitLabel(End);
   }
 }
 
