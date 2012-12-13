@@ -16,6 +16,7 @@
 
 #include "asan_internal.h"
 #include "interception/interception.h"
+#include "sanitizer_common/sanitizer_platform_interceptors.h"
 
 using __sanitizer::uptr;
 

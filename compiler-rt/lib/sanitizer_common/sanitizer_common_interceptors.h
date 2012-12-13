@@ -21,20 +21,7 @@
 #define SANITIZER_COMMON_INTERCEPTORS_H
 
 #include "interception/interception.h"
-
-#if !defined(_WIN32)
-# define SANITIZER_INTERCEPT_READ 1
-# define SANITIZER_INTERCEPT_PREAD 1
-#else
-# define SANITIZER_INTERCEPT_READ 0
-# define SANITIZER_INTERCEPT_PREAD 0
-#endif
-
-#if defined(__linux__) && !defined(ANDROID)
-# define SANITIZER_INTERCEPT_PREAD64 1
-#else
-# define SANITIZER_INTERCEPT_PREAD64 0
-#endif
+#include "sanitizer_platform_interceptors.h"
 
 #if SANITIZER_INTERCEPT_READ
 INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
