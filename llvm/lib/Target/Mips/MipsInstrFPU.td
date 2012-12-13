@@ -137,15 +137,13 @@ multiclass FFR1P_M<bits<6> funct, string opstr, SDNode OpNode> {
   }
 }
 
-multiclass FFR2P_M<bits<6> funct, string opstr, SDNode OpNode, bit isComm = 0> {
-  let isCommutable = isComm in {
+multiclass FFR2P_M<bits<6> funct, string opstr, SDNode OpNode> {
   def _D32 : FFR2P<funct, 17, opstr, AFGR64, OpNode>,
              Requires<[NotFP64bit, HasStdEnc]>;
   def _D64 : FFR2P<funct, 17, opstr, FGR64, OpNode>,
              Requires<[IsFP64bit, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
   }
-}
 }
 
 // FP madd/msub/nmadd/nmsub instruction classes.
@@ -325,11 +323,11 @@ let Predicates = [HasMips64, HasStdEnc],
 
 /// Floating-point Aritmetic
 def FADD_S : FFR2P<0x00, 16, "add.s", FGR32, fadd>, IsCommutable;
-defm FADD : FFR2P_M<0x00, "add.d", fadd, 1>;
+defm FADD : FFR2P_M<0x00, "add.d", fadd>, IsCommutable;
 def FDIV_S : FFR2P<0x03, 16, "div.s", FGR32, fdiv>;
 defm FDIV : FFR2P_M<0x03, "div.d", fdiv>;
 def FMUL_S : FFR2P<0x02, 16, "mul.s", FGR32, fmul>, IsCommutable;
-defm FMUL : FFR2P_M<0x02, "mul.d", fmul, 1>;
+defm FMUL : FFR2P_M<0x02, "mul.d", fmul>, IsCommutable;
 def FSUB_S : FFR2P<0x01, 16, "sub.s", FGR32, fsub>;
 defm FSUB : FFR2P_M<0x01, "sub.d", fsub>;
 
