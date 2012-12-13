@@ -71,7 +71,7 @@ static inline bool RangesOverlap(const char *offset1, uptr length1,
   const char *offset1 = (const char*)_offset1; \
   const char *offset2 = (const char*)_offset2; \
   if (RangesOverlap(offset1, length1, offset2, length2)) { \
-    GET_STACK_TRACE_HERE(kStackTraceMax); \
+    GET_STACK_TRACE_FATAL_HERE; \
     ReportStringFunctionMemoryRangesOverlap(name, offset1, length1, \
                                             offset2, length2, &stack); \
   } \
@@ -112,7 +112,7 @@ static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
 #if ASAN_INTERCEPT_PTHREAD_CREATE
 INTERCEPTOR(int, pthread_create, void *thread,
     void *attr, void *(*start_routine)(void*), void *arg) {
-  GET_STACK_TRACE_HERE(kStackTraceMax);
+  GET_STACK_TRACE_THREAD;
   u32 current_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
   AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
   asanThreadRegistry().RegisterThread(t);
@@ -647,7 +647,7 @@ INTERCEPTOR_WINAPI(DWORD, CreateThread,
                    void* security, uptr stack_size,
                    DWORD (__stdcall *start_routine)(void*), void* arg,
                    DWORD flags, void* tid) {
-  GET_STACK_TRACE_HERE(kStackTraceMax);
+  GET_STACK_TRACE_THREAD;
   u32 current_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
   AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
   asanThreadRegistry().RegisterThread(t);

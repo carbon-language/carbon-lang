@@ -358,7 +358,7 @@ void ReportSIGSEGV(uptr pc, uptr sp, uptr bp, uptr addr) {
              (void*)addr, (void*)pc, (void*)sp, (void*)bp,
              asanThreadRegistry().GetCurrentTidOrInvalid());
   Printf("AddressSanitizer can not provide additional info.\n");
-  GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
+  GET_STACK_TRACE_FATAL(pc, bp);
   PrintStack(&stack);
 }
 
@@ -506,7 +506,7 @@ void __asan_report_error(uptr pc, uptr bp, uptr sp,
              access_size, (void*)addr, curr_tid,
              ThreadNameWithParenthesis(curr_tid, tname, sizeof(tname)));
 
-  GET_STACK_TRACE_WITH_PC_AND_BP(kStackTraceMax, pc, bp);
+  GET_STACK_TRACE_FATAL(pc, bp);
   PrintStack(&stack);
 
   DescribeAddress(addr, access_size);

@@ -36,7 +36,7 @@ struct nothrow_t {};
 }  // namespace std
 
 #define OPERATOR_NEW_BODY \
-  GET_STACK_TRACE_HERE_FOR_MALLOC;\
+  GET_STACK_TRACE_MALLOC;\
   return asan_memalign(0, size, &stack);
 
 INTERCEPTOR_ATTRIBUTE
@@ -49,7 +49,7 @@ INTERCEPTOR_ATTRIBUTE
 void *operator new[](size_t size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
 
 #define OPERATOR_DELETE_BODY \
-  GET_STACK_TRACE_HERE_FOR_FREE(ptr);\
+  GET_STACK_TRACE_FREE;\
   asan_free(ptr, &stack);
 
 INTERCEPTOR_ATTRIBUTE

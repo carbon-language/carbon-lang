@@ -92,7 +92,7 @@ INTERCEPTOR(void, free, void *ptr) {
 #endif
   } else {
     if (!asan_mz_size(ptr)) ptr = get_saved_cfallocator_ref(ptr);
-    GET_STACK_TRACE_HERE_FOR_FREE(ptr);
+    GET_STACK_TRACE_FREE;
     asan_free(ptr, &stack);
   }
 }
@@ -130,7 +130,7 @@ void *mz_malloc(malloc_zone_t *zone, size_t size) {
     CHECK(system_malloc_zone);
     return malloc_zone_malloc(system_malloc_zone, size);
   }
-  GET_STACK_TRACE_HERE_FOR_MALLOC;
+  GET_STACK_TRACE_MALLOC;
   return asan_malloc(size, &stack);
 }
 
@@ -139,7 +139,7 @@ void *cf_malloc(CFIndex size, CFOptionFlags hint, void *info) {
     CHECK(system_malloc_zone);
     return malloc_zone_malloc(system_malloc_zone, size);
   }
-  GET_STACK_TRACE_HERE_FOR_MALLOC;
+  GET_STACK_TRACE_MALLOC;
   return asan_malloc(size, &stack);
 }
 
@@ -155,7 +155,7 @@ void *mz_calloc(malloc_zone_t *zone, size_t nmemb, size_t size) {
     CHECK(allocated < kCallocPoolSize);
     return mem;
   }
-  GET_STACK_TRACE_HERE_FOR_MALLOC;
+  GET_STACK_TRACE_MALLOC;
   return asan_calloc(nmemb, size, &stack);
 }
 
@@ -164,7 +164,7 @@ void *mz_valloc(malloc_zone_t *zone, size_t size) {
     CHECK(system_malloc_zone);
     return malloc_zone_valloc(system_malloc_zone, size);
   }
-  GET_STACK_TRACE_HERE_FOR_MALLOC;
+  GET_STACK_TRACE_MALLOC;
   return asan_memalign(GetPageSizeCached(), size, &stack);
 }
 
@@ -175,7 +175,7 @@ void *mz_valloc(malloc_zone_t *zone, size_t size) {
 void ALWAYS_INLINE free_common(void *context, void *ptr) {
   if (!ptr) return;
   if (asan_mz_size(ptr)) {
-    GET_STACK_TRACE_HERE_FOR_FREE(ptr);
+    GET_STACK_TRACE_FREE;
     asan_free(ptr, &stack);
   } else {
     // If the pointer does not belong to any of the zones, use one of the
@@ -190,7 +190,7 @@ void ALWAYS_INLINE free_common(void *context, void *ptr) {
       // If the memory chunk pointer was moved to store additional
       // CFAllocatorRef, fix it back.
       ptr = get_saved_cfallocator_ref(ptr);
-      GET_STACK_TRACE_HERE_FOR_FREE(ptr);
+      GET_STACK_TRACE_FREE;
       if (!flags()->mac_ignore_invalid_free) {
         asan_free(ptr, &stack);
       } else {
@@ -213,17 +213,17 @@ void cf_free(void *ptr, void *info) {
 
 void *mz_realloc(malloc_zone_t *zone, void *ptr, size_t size) {
   if (!ptr) {
-    GET_STACK_TRACE_HERE_FOR_MALLOC;
+    GET_STACK_TRACE_MALLOC;
     return asan_malloc(size, &stack);
   } else {
     if (asan_mz_size(ptr)) {
-      GET_STACK_TRACE_HERE_FOR_MALLOC;
+      GET_STACK_TRACE_MALLOC;
       return asan_realloc(ptr, size, &stack);
     } else {
       // We can't recover from reallocating an unknown address, because
       // this would require reading at most |size| bytes from
       // potentially unaccessible memory.
-      GET_STACK_TRACE_HERE_FOR_FREE(ptr);
+      GET_STACK_TRACE_FREE;
       GET_ZONE_FOR_PTR(ptr);
       ReportMacMzReallocUnknown((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
     }
@@ -232,17 +232,17 @@ void *mz_realloc(malloc_zone_t *zone, void *ptr, size_t size) {
 
 void *cf_realloc(void *ptr, CFIndex size, CFOptionFlags hint, void *info) {
   if (!ptr) {
-    GET_STACK_TRACE_HERE_FOR_MALLOC;
+    GET_STACK_TRACE_MALLOC;
     return asan_malloc(size, &stack);
   } else {
     if (asan_mz_size(ptr)) {
-      GET_STACK_TRACE_HERE_FOR_MALLOC;
+      GET_STACK_TRACE_MALLOC;
       return asan_realloc(ptr, size, &stack);
     } else {
       // We can't recover from reallocating an unknown address, because
       // this would require reading at most |size| bytes from
       // potentially unaccessible memory.
-      GET_STACK_TRACE_HERE_FOR_FREE(ptr);
+      ET_STACK_TRACE_FREE(ptr);
       GET_ZONE_FOR_PTR(ptr);
       ReportMacCfReallocUnknown((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
     }
@@ -261,7 +261,7 @@ void *mz_memalign(malloc_zone_t *zone, size_t align, size_t size) {
     CHECK(system_malloc_zone);
     return malloc_zone_memalign(system_malloc_zone, align, size);
   }
-  GET_STACK_TRACE_HERE_FOR_MALLOC;
+  GET_STACK_TRACE_MALLOC;
   return asan_memalign(align, size, &stack);
 }
 

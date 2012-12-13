@@ -819,7 +819,7 @@ uptr __asan_get_allocated_size(const void *p) {
   uptr allocated_size = malloc_info.AllocationSize((uptr)p);
   // Die if p is not malloced or if it is already freed.
   if (allocated_size == 0) {
-    GET_STACK_TRACE_HERE(kStackTraceMax);
+    GET_STACK_TRACE_FATAL_HERE;
     ReportAsanGetAllocatedSizeNotOwned((uptr)p, &stack);
   }
   return allocated_size;

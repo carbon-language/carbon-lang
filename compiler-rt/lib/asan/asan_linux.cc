@@ -122,53 +122,21 @@ void AsanLock::Unlock() {
   pthread_mutex_unlock((pthread_mutex_t*)&opaque_storage_);
 }
 
-#ifdef __arm__
-#define UNWIND_STOP _URC_END_OF_STACK
-#define UNWIND_CONTINUE _URC_NO_REASON
-#else
-#define UNWIND_STOP _URC_NORMAL_STOP
-#define UNWIND_CONTINUE _URC_NO_REASON
-#endif
-
-uptr Unwind_GetIP(struct _Unwind_Context *ctx) {
-#ifdef __arm__
-  uptr val;
-  _Unwind_VRS_Result res = _Unwind_VRS_Get(ctx, _UVRSC_CORE,
-      15 /* r15 = PC */, _UVRSD_UINT32, &val);
-  CHECK(res == _UVRSR_OK && "_Unwind_VRS_Get failed");
-  // Clear the Thumb bit.
-  return val & ~(uptr)1;
-#else
-  return _Unwind_GetIP(ctx);
-#endif
-}
-
-_Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx,
-    void *param) {
-  StackTrace *b = (StackTrace*)param;
-  CHECK(b->size < b->max_size);
-  uptr pc = Unwind_GetIP(ctx);
-  b->trace[b->size++] = pc;
-  if (b->size == b->max_size) return UNWIND_STOP;
-  return UNWIND_CONTINUE;
-}
-
-void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
-  stack->size = 0;
-  stack->trace[0] = pc;
-  if ((max_s) > 1) {
-    stack->max_size = max_s;
+void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
 #if defined(__arm__) || \
     defined(__powerpc__) || defined(__powerpc64__) || \
     defined(__sparc__)
-    _Unwind_Backtrace(Unwind_Trace, stack);
-    // Pop off the two ASAN functions from the backtrace.
-    stack->PopStackFrames(2);
-#else
+  fast = false;
+#endif
+  if (!fast)
+    return stack->SlowUnwindStack(pc, max_s, 3);
+  stack->size = 0;
+  stack->trace[0] = pc;
+  if (max_s > 1) {
+    stack->max_size = max_s;
     if (!asan_inited) return;
     if (AsanThread *t = asanThreadRegistry().GetCurrent())
       stack->FastUnwindStack(pc, bp, t->stack_top(), t->stack_bottom());
-#endif
   }
 }
 

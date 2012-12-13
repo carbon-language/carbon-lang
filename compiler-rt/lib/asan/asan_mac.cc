@@ -160,7 +160,7 @@ void AsanLock::Unlock() {
   OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
 }
 
-void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
+void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
   stack->size = 0;
   stack->trace[0] = pc;
   if ((max_s) > 1) {
@@ -308,7 +308,7 @@ void asan_register_worker_thread(int parent_tid, StackTrace *stack) {
 // alloc_asan_context().
 extern "C"
 void asan_dispatch_call_block_and_release(void *block) {
-  GET_STACK_TRACE_HERE(kStackTraceMax);
+  GET_STACK_TRACE_THREAD;
   asan_block_context_t *context = (asan_block_context_t*)block;
   if (flags()->verbosity >= 2) {
     Report("asan_dispatch_call_block_and_release(): "
@@ -343,7 +343,7 @@ asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
 #define INTERCEPT_DISPATCH_X_F_3(dispatch_x_f)                                \
   INTERCEPTOR(void, dispatch_x_f, dispatch_queue_t dq, void *ctxt,            \
                                   dispatch_function_t func) {                 \
-    GET_STACK_TRACE_HERE(kStackTraceMax);                                     \
+    GET_STACK_TRACE_THREAD;                                                   \
     asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack); \
     if (flags()->verbosity >= 2) {                                            \
       Report(#dispatch_x_f "(): context: %p, pthread_self: %p\n",             \
@@ -361,7 +361,7 @@ INTERCEPT_DISPATCH_X_F_3(dispatch_barrier_async_f)
 INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
                                     dispatch_queue_t dq, void *ctxt,
                                     dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax);
+  GET_STACK_TRACE_THREAD;
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (flags()->verbosity >= 2) {
     Report("dispatch_after_f: %p\n", asan_ctxt);
@@ -374,7 +374,7 @@ INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
 INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
                                           dispatch_queue_t dq, void *ctxt,
                                           dispatch_function_t func) {
-  GET_STACK_TRACE_HERE(kStackTraceMax);
+  GET_STACK_TRACE_THREAD;
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (flags()->verbosity >= 2) {
     Report("dispatch_group_async_f(): context: %p, pthread_self: %p\n",
@@ -409,7 +409,7 @@ void dispatch_source_set_event_handler(dispatch_source_t ds, void(^work)(void));
   void (^asan_block)(void);  \
   int parent_tid = asanThreadRegistry().GetCurrentTidOrInvalid(); \
   asan_block = ^(void) { \
-    GET_STACK_TRACE_HERE(kStackTraceMax); \
+    GET_STACK_TRACE_THREAD; \
     asan_register_worker_thread(parent_tid, &stack); \
     work(); \
   }
@@ -459,7 +459,7 @@ void *wrap_workitem_func(void *arg) {
   asan_block_context_t *ctxt = (asan_block_context_t*)arg;
   worker_t fn = (worker_t)(ctxt->func);
   void *result =  fn(ctxt->block);
-  GET_STACK_TRACE_HERE(kStackTraceMax);
+  GET_STACK_TRACE_THREAD;
   asan_free(arg, &stack);
   return result;
 }
@@ -467,7 +467,7 @@ void *wrap_workitem_func(void *arg) {
 INTERCEPTOR(int, pthread_workqueue_additem_np, pthread_workqueue_t workq,
     void *(*workitem_func)(void *), void * workitem_arg,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp) {
-  GET_STACK_TRACE_HERE(kStackTraceMax);
+  GET_STACK_TRACE_THREAD;
   asan_block_context_t *asan_ctxt =
       (asan_block_context_t*) asan_malloc(sizeof(asan_block_context_t), &stack);
   asan_ctxt->block = workitem_arg;

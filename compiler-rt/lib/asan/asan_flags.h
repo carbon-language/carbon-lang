@@ -45,7 +45,7 @@ struct Flags {
   int  report_globals;
   // If set, attempts to catch initialization order issues.
   bool check_initialization_order;
-  // Max number of stack frames kept for each allocation.
+  // Max number of stack frames kept for each allocation/deallocation.
   int  malloc_context_size;
   // If set, uses custom wrappers and replacements for libc string functions
   // to find more errors.
@@ -95,6 +95,10 @@ struct Flags {
   bool print_full_thread_history;
   // ASan will write logs to "log_path.pid" instead of stderr.
   const char *log_path;
+  // Use fast (frame-pointer-based) unwinder on fatal errors (if available).
+  bool fast_unwind_on_fatal;
+  // Use fast (frame-pointer-based) unwinder on malloc/free (if available).
+  bool fast_unwind_on_malloc;
 };
 
 Flags *flags();
