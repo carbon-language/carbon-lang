@@ -613,6 +613,9 @@ public:
     IsPossibleDynamicType ();
 
     virtual bool
+    IsObjCNil ();
+    
+    virtual bool
     IsBaseClass ()
     {
         return false;

@@ -380,7 +380,7 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('frame variable myclass4',
                     substrs = ['(Class) myclass4 = NSMutableArray'])
         self.expect('frame variable myclass5',
-                    substrs = ['(Class) myclass5 = <error: unknown Class>'])
+                    substrs = ['(Class) myclass5 = nil'])
 
 
     def expr_objc_data_formatter_commands(self):

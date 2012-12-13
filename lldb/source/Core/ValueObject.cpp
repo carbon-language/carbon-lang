@@ -1823,6 +1823,15 @@ ValueObject::IsPossibleDynamicType ()
         return ClangASTContext::IsPossibleDynamicType (GetClangAST (), GetClangType(), NULL, true, true);
 }
 
+bool
+ValueObject::IsObjCNil ()
+{
+    bool isObjCpointer = ClangASTContext::IsObjCObjectPointerType(GetClangType(), NULL);
+    bool canReadValue = true;
+    bool isZero = GetValueAsUnsigned(0,&canReadValue) == 0;
+    return canReadValue && isZero && isObjCpointer;
+}
+
 ValueObjectSP
 ValueObject::GetSyntheticArrayMember (int32_t index, bool can_create)
 {
@@ -3308,6 +3317,8 @@ DumpValueObject_Impl (Stream &s,
         if (options.m_omit_summary_depth > 0)
             entry = NULL;
         
+        bool is_nil = valobj->IsObjCNil();
+        
         if (err_cstr == NULL)
         {
             if (options.m_format != eFormatDefault && options.m_format != valobj->GetFormat())
@@ -3333,7 +3344,9 @@ DumpValueObject_Impl (Stream &s,
             const bool is_ref = type_flags.Test (ClangASTContext::eTypeIsReference);
             if (print_valobj)
             {
-                if (options.m_omit_summary_depth == 0)
+                if (is_nil)
+                    sum_cstr = "nil";
+                else if (options.m_omit_summary_depth == 0)
                 {
                     if (options.m_summary_sp)
                     {
@@ -3345,14 +3358,16 @@ DumpValueObject_Impl (Stream &s,
                 }
 
                 // Make sure we have a value and make sure the summary didn't
-                // specify that the value should not be printed
-                if (!value_str.empty() && (entry == NULL || entry->DoesPrintValue() || sum_cstr == NULL))
+                // specify that the value should not be printed - and do not print
+                // the value if this thing is nil
+                if (!is_nil && !value_str.empty() && (entry == NULL || entry->DoesPrintValue() || sum_cstr == NULL))
                     s.Printf(" %s", value_str.c_str());
 
                 if (sum_cstr)
                     s.Printf(" %s", sum_cstr);
                 
-                if (options.m_use_objc)
+                // let's avoid the overly verbose no description error for a nil thing
+                if (options.m_use_objc && !is_nil)
                 {
                     const char *object_desc = valobj->GetObjectDescription();
                     if (object_desc)
