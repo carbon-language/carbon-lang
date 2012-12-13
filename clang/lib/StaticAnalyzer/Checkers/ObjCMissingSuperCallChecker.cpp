@@ -29,15 +29,11 @@
 using namespace clang;
 using namespace ento;
 
-static bool isUIViewControllerSubclass(ASTContext &Ctx, 
-                                       const ObjCImplementationDecl *D) {
-  IdentifierInfo *ViewControllerII = &Ctx.Idents.get("UIViewController");
-  const ObjCInterfaceDecl *ID = D->getClassInterface();
-
-  for ( ; ID; ID = ID->getSuperClass())
-    if (ID->getIdentifier() == ViewControllerII)
-      return true;
-  return false;  
+namespace {
+struct SelectorDescriptor {
+  const char *SelectorName;
+  unsigned ArgumentCount;
+};
 }
 
 //===----------------------------------------------------------------------===//
@@ -71,9 +67,102 @@ namespace {
 class ObjCSuperCallChecker : public Checker<
                                       check::ASTDecl<ObjCImplementationDecl> > {
 public:
+  ObjCSuperCallChecker() : IsInitialized(false) {}
+
   void checkASTDecl(const ObjCImplementationDecl *D, AnalysisManager &Mgr,
                     BugReporter &BR) const;
+private:
+  bool isCheckableClass(const ObjCImplementationDecl *D,
+                        StringRef &SuperclassName) const;
+  void initializeSelectors(ASTContext &Ctx) const;
+  void fillSelectors(ASTContext &Ctx, ArrayRef<SelectorDescriptor> Sel,
+                     StringRef ClassName) const;
+  mutable llvm::StringMap<llvm::SmallSet<Selector, 16> > SelectorsForClass;
+  mutable bool IsInitialized;
 };
+
+}
+
+/// \brief Determine whether the given class has a superclass that we want
+/// to check. The name of the found superclass is stored in SuperclassName.
+///
+/// \param ObjCImplementationDecl The declaration to check for superclasses.
+/// \param[out] SuperclassName On return, the found superclass name.
+bool ObjCSuperCallChecker::isCheckableClass(const ObjCImplementationDecl *D,
+                                            StringRef &SuperclassName) const {
+  const ObjCInterfaceDecl *ID = D->getClassInterface();
+  for ( ; ID ; ID = ID->getSuperClass())
+  {
+    SuperclassName = ID->getIdentifier()->getName();
+    if (SelectorsForClass.count(SuperclassName))
+      return true;
+  }
+  return false;
+}
+
+void ObjCSuperCallChecker::fillSelectors(ASTContext &Ctx,
+                                         ArrayRef<SelectorDescriptor> Sel,
+                                         StringRef ClassName) const {
+  llvm::SmallSet<Selector, 16> &ClassSelectors = SelectorsForClass[ClassName];
+  // Fill the Selectors SmallSet with all selectors we want to check.
+  for (ArrayRef<SelectorDescriptor>::iterator I = Sel.begin(), E = Sel.end();
+       I != E; ++I) {
+    SelectorDescriptor Descriptor = *I;
+    assert(Descriptor.ArgumentCount <= 1); // No multi-argument selectors yet.
+
+    // Get the selector.
+    IdentifierInfo *II = &Ctx.Idents.get(Descriptor.SelectorName);
+
+    Selector Sel = Ctx.Selectors.getSelector(Descriptor.ArgumentCount, &II);
+    ClassSelectors.insert(Sel);
+  }
+}
+
+void ObjCSuperCallChecker::initializeSelectors(ASTContext &Ctx) const {
+
+  { // Initialize selectors for: UIViewController
+    const SelectorDescriptor Selectors[] = {
+      { "addChildViewController", 1 },
+      { "viewDidAppear", 1 },
+      { "viewDidDisappear", 1 },
+      { "viewWillAppear", 1 },
+      { "viewWillDisappear", 1 },
+      { "removeFromParentViewController", 0 },
+      { "didReceiveMemoryWarning", 0 },
+      { "viewDidUnload", 0 },
+      { "viewDidLoad", 0 },
+      { "viewWillUnload", 0 },
+      { "updateViewConstraints", 0 },
+      { "encodeRestorableStateWithCoder", 1 },
+      { "restoreStateWithCoder", 1 }};
+
+    fillSelectors(Ctx, Selectors, "UIViewController");
+  }
+
+  { // Initialize selectors for: UIResponder
+    const SelectorDescriptor Selectors[] = {
+      { "resignFirstResponder", 0 }};
+
+    fillSelectors(Ctx, Selectors, "UIResponder");
+  }
+
+  { // Initialize selectors for: NSResponder
+    const SelectorDescriptor Selectors[] = {
+      { "encodeRestorableStateWithCoder", 1 },
+      { "restoreStateWithCoder", 1 }};
+
+    fillSelectors(Ctx, Selectors, "NSResponder");
+  }
+
+  { // Initialize selectors for: NSDocument
+    const SelectorDescriptor Selectors[] = {
+      { "encodeRestorableStateWithCoder", 1 },
+      { "restoreStateWithCoder", 1 }};
+
+    fillSelectors(Ctx, Selectors, "NSDocument");
+  }
+
+  IsInitialized = true;
 }
 
 void ObjCSuperCallChecker::checkASTDecl(const ObjCImplementationDecl *D,
@@ -81,29 +170,15 @@ void ObjCSuperCallChecker::checkASTDecl(const ObjCImplementationDecl *D,
                                         BugReporter &BR) const {
   ASTContext &Ctx = BR.getContext();
 
-  if (!isUIViewControllerSubclass(Ctx, D))
+  // We need to initialize the selector table once.
+  if (!IsInitialized)
+    initializeSelectors(Ctx);
+
+  // Find out whether this class has a superclass that we are supposed to check.
+  StringRef SuperclassName;
+  if (!isCheckableClass(D, SuperclassName))
     return;
 
-  const char *SelectorNames[] = 
-    {"addChildViewController", "viewDidAppear", "viewDidDisappear", 
-     "viewWillAppear", "viewWillDisappear", "removeFromParentViewController",
-     "didReceiveMemoryWarning", "viewDidUnload", "viewWillUnload",
-     "viewDidLoad"};
-  const unsigned SelectorArgumentCounts[] =
-   {1, 1, 1, 1, 1, 0, 0, 0, 0, 0};
-  const size_t SelectorCount = llvm::array_lengthof(SelectorNames);
-  assert(llvm::array_lengthof(SelectorArgumentCounts) == SelectorCount);
-
-  // Fill the Selectors SmallSet with all selectors we want to check.
-  llvm::SmallSet<Selector, 16> Selectors;
-  for (size_t i = 0; i < SelectorCount; i++) { 
-    unsigned ArgumentCount = SelectorArgumentCounts[i];
-    const char *SelectorCString = SelectorNames[i];
-
-    // Get the selector.
-    IdentifierInfo *II = &Ctx.Idents.get(SelectorCString);
-    Selectors.insert(Ctx.Selectors.getSelector(ArgumentCount, &II));
-  }
 
   // Iterate over all instance methods.
   for (ObjCImplementationDecl::instmeth_iterator I = D->instmeth_begin(),
@@ -111,7 +186,7 @@ void ObjCSuperCallChecker::checkASTDecl(const ObjCImplementationDecl *D,
        I != E; ++I) {
     Selector S = (*I)->getSelector();
     // Find out whether this is a selector that we want to check.
-    if (!Selectors.count(S))
+    if (!SelectorsForClass[SuperclassName].count(S))
       continue;
 
     ObjCMethodDecl *MD = *I;
@@ -130,12 +205,12 @@ void ObjCSuperCallChecker::checkASTDecl(const ObjCImplementationDecl *D,
                                             Mgr.getAnalysisDeclContext(D));
 
         const char *Name = "Missing call to superclass";
-        SmallString<256> Buf;
+        SmallString<320> Buf;
         llvm::raw_svector_ostream os(Buf);
 
         os << "The '" << S.getAsString() 
-           << "' instance method in UIViewController subclass '" << *D
-           << "' is missing a [super " << S.getAsString() << "] call";
+           << "' instance method in " << SuperclassName.str() << " subclass '"
+           << *D << "' is missing a [super " << S.getAsString() << "] call";
 
         BR.EmitBasicReport(MD, Name, categories::CoreFoundationObjectiveC,
                            os.str(), DLoc);
@@ -160,15 +235,6 @@ void ento::registerObjCSuperCallChecker(CheckerManager &Mgr) {
  In addition to be able to check the classes and methods below, architectural
  improvements like being able to allow for the super-call to be done in a called
  method would be good too.
-
-*** trivial cases:
-UIResponder subclasses
-- resignFirstResponder
-
-NSResponder subclasses
-- cursorUpdate
-
-*** more difficult cases:
 
 UIDocument subclasses
 - finishedHandlingError:recovered: (is multi-arg)
