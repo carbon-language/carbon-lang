@@ -44,7 +44,7 @@ struct StackTrace {
   }
 
   void FastUnwindStack(uptr pc, uptr bp, uptr stack_top, uptr stack_bottom);
-  void SlowUnwindStack(uptr pc, uptr max_depth, uptr frames_to_pop);
+  void SlowUnwindStack(uptr pc, uptr max_depth);
 
   void PopStackFrames(uptr count);
 

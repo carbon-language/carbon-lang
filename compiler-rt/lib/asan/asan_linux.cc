@@ -129,7 +129,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
   fast = false;
 #endif
   if (!fast)
-    return stack->SlowUnwindStack(pc, max_s, 3);
+    return stack->SlowUnwindStack(pc, max_s);
   stack->size = 0;
   stack->trace[0] = pc;
   if (max_s > 1) {

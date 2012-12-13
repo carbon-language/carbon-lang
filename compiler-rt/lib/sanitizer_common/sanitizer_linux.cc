@@ -411,14 +411,24 @@ _Unwind_Reason_Code Unwind_Trace(struct _Unwind_Context *ctx, void *param) {
   return UNWIND_CONTINUE;
 }
 
-void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth, uptr frames_to_pop) {
+static bool MatchPc(uptr cur_pc, uptr trace_pc) {
+  return cur_pc - trace_pc <= 8;
+}
+
+void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   this->size = 0;
-  this->trace[0] = pc;
   this->max_size = max_depth;
   if (max_depth > 1) {
     _Unwind_Backtrace(Unwind_Trace, this);
-    this->PopStackFrames(frames_to_pop);
+    // We need to pop a few (up to 3) frames so that pc is on top.
+    // trace[0] belongs to the current function.
+    int to_pop = 1;
+    /**/ if (size >= 2 && MatchPc(pc, trace[1])) to_pop = 2;
+    else if (size >= 3 && MatchPc(pc, trace[2])) to_pop = 3;
+    else if (size >= 4 && MatchPc(pc, trace[3])) to_pop = 4;
+    this->PopStackFrames(to_pop);
   }
+  this->trace[0] = pc;
 }
 
 }  // namespace __sanitizer
