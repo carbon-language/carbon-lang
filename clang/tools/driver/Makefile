@@ -32,12 +32,22 @@ include $(CLANG_LEVEL)/../../Makefile.config
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader bitwriter codegen \
                    instrumentation ipo linker selectiondag
 USEDLIBS = clangFrontendTool.a clangFrontend.a clangDriver.a \
-           clangSerialization.a clangCodeGen.a clangParse.a clangSema.a \
-           clangStaticAnalyzerFrontend.a clangStaticAnalyzerCheckers.a \
-           clangStaticAnalyzerCore.a \
-           clangAnalysis.a clangARCMigrate.a \
-           clangRewriteFrontend.a clangRewriteCore.a \
-           clangEdit.a clangAST.a clangLex.a clangBasic.a
+           clangSerialization.a clangCodeGen.a clangParse.a clangSema.a
+
+ifeq ($(ENABLE_CLANG_STATIC_ANALYZER),1)
+USEDLIBS += clangStaticAnalyzerFrontend.a clangStaticAnalyzerCheckers.a \
+            clangStaticAnalyzerCore.a
+endif
+
+ifeq ($(ENABLE_CLANG_ARCMT),1)
+USEDLIBS += clangARCMigrate.a
+endif
+
+ifeq ($(ENABLE_CLANG_REWRITER),1)
+USEDLIBS += clangRewriteFrontend.a clangRewriteCore.a
+endif
+
+USEDLIBS += clangAnalysis.a clangEdit.a clangAST.a clangBasic.a clangLex.a
 
 include $(CLANG_LEVEL)/Makefile
 
