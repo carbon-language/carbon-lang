@@ -182,6 +182,24 @@ class FNMADDSUB<bits<3> funct, bits<3> fmt, string opstr,
             !strconcat(opstr, "\t$fd, $fr, $fs, $ft"),
             [(set RC:$fd, (fsub fpimm0, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr)))]>;
 
+class ADDS_FT<string opstr, RegisterClass RC, InstrItinClass Itin, bit IsComm,
+              SDPatternOperator OpNode= null_frag> :
+  InstSE<(outs RC:$fd), (ins RC:$fs, RC:$ft),
+         !strconcat(opstr, "\t$fd, $fs, $ft"),
+         [(set RC:$fd, (OpNode RC:$fs, RC:$ft))], Itin, FrmFR> {
+  let isCommutable = IsComm;
+}
+
+multiclass ADDS_M<string opstr, InstrItinClass Itin, bit IsComm,
+                  SDPatternOperator OpNode = null_frag> {
+  def _D32 : ADDS_FT<opstr, AFGR64, Itin, IsComm, OpNode>,
+             Requires<[NotFP64bit, HasStdEnc]>;
+  def _D64 : ADDS_FT<opstr, FGR64, Itin, IsComm, OpNode>,
+             Requires<[IsFP64bit, HasStdEnc]> {
+    string DecoderNamespace = "Mips64";
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
 //===----------------------------------------------------------------------===//
@@ -345,14 +363,14 @@ let Predicates = [HasMips64, HasStdEnc],
 }
 
 /// Floating-point Aritmetic
-def FADD_S : FFR2P<0x00, 16, "add.s", FGR32, fadd>, IsCommutable;
-defm FADD : FFR2P_M<0x00, "add.d", fadd>, IsCommutable;
-def FDIV_S : FFR2P<0x03, 16, "div.s", FGR32, fdiv>;
-defm FDIV : FFR2P_M<0x03, "div.d", fdiv>;
-def FMUL_S : FFR2P<0x02, 16, "mul.s", FGR32, fmul>, IsCommutable;
-defm FMUL : FFR2P_M<0x02, "mul.d", fmul>, IsCommutable;
-def FSUB_S : FFR2P<0x01, 16, "sub.s", FGR32, fsub>;
-defm FSUB : FFR2P_M<0x01, "sub.d", fsub>;
+def FADD_S : ADDS_FT<"add.s", FGR32, IIFadd, 1, fadd>, ADDS_FM<0x00, 16>;
+defm FADD : ADDS_M<"add.d", IIFadd, 1, fadd>, ADDS_FM<0x00, 17>;
+def FDIV_S : ADDS_FT<"div.s", FGR32, IIFdivSingle, 0, fdiv>, ADDS_FM<0x03, 16>;
+defm FDIV : ADDS_M<"div.d", IIFdivDouble, 0, fdiv>, ADDS_FM<0x03, 17>;
+def FMUL_S : ADDS_FT<"mul.s", FGR32, IIFmulSingle, 1, fmul>, ADDS_FM<0x02, 16>;
+defm FMUL : ADDS_M<"mul.d", IIFmulDouble, 1, fmul>, ADDS_FM<0x02, 17>;
+def FSUB_S : ADDS_FT<"sub.s", FGR32, IIFadd, 0, fsub>, ADDS_FM<0x01, 16>;
+defm FSUB : ADDS_M<"sub.d", IIFadd, 0, fsub>, ADDS_FM<0x01, 17>;
 
 let Predicates = [HasMips32r2, HasStdEnc] in {
   def MADD_S : FMADDSUB<0x4, 0, "madd.s", fadd, FGR32>;
