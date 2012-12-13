@@ -1,4 +1,4 @@
-//===-- CommandFlags.h - Register Coalescing Interface ----------*- C++ -*-===//
+//===-- CommandFlags.h - Command Line Flags Interface -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
