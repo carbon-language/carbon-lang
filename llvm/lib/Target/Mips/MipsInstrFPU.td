@@ -86,6 +86,29 @@ def fpimm0neg : PatLeaf<(fpimm), [{
 // Only S32 and D32 are supported right now.
 //===----------------------------------------------------------------------===//
 
+// FP unary instructions without patterns.
+class FFR1<bits<6> funct, bits<5> fmt, string opstr, RegisterClass DstRC,
+           RegisterClass SrcRC> :
+  FFR<0x11, funct, fmt, (outs DstRC:$fd), (ins SrcRC:$fs),
+      !strconcat(opstr, "\t$fd, $fs"), []> {
+  let ft = 0;
+}
+
+// FP unary instructions with patterns.
+class FFR1P<bits<6> funct, bits<5> fmt, string opstr, RegisterClass DstRC,
+            RegisterClass SrcRC, SDNode OpNode> :
+  FFR<0x11, funct, fmt, (outs DstRC:$fd), (ins SrcRC:$fs),
+      !strconcat(opstr, "\t$fd, $fs"),
+      [(set DstRC:$fd, (OpNode SrcRC:$fs))]> {
+  let ft = 0;
+}
+
+class FFR2P<bits<6> funct, bits<5> fmt, string opstr, RegisterClass RC,
+            SDNode OpNode> :
+  FFR<0x11, funct, fmt, (outs RC:$fd), (ins RC:$fs, RC:$ft),
+      !strconcat(opstr, "\t$fd, $fs, $ft"),
+      [(set RC:$fd, (OpNode RC:$fs, RC:$ft))]>;
+
 // FP load.
 let DecoderMethod = "DecodeFMem" in {
 class FPLoad<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
