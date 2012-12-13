@@ -899,7 +899,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
       new StoreInst(ConstantInt::getTrue(Callee->getContext()),
                 UndefValue::get(Type::getInt1PtrTy(Callee->getContext())),
                                   OldCall);
-      // If OldCall dues not return void then replaceAllUsesWith undef.
+      // If OldCall does not return void then replaceAllUsesWith undef.
       // This allows ValueHandlers and custom metadata to adjust itself.
       if (!OldCall->getType()->isVoidTy())
         ReplaceInstUsesWith(*OldCall, UndefValue::get(OldCall->getType()));
