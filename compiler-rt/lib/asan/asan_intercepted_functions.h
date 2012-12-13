@@ -153,23 +153,16 @@ DECLARE_FUNCTION_AND_WRAPPER(long long, atoll, const char *nptr);  // NOLINT
 DECLARE_FUNCTION_AND_WRAPPER(long long, strtoll, const char *nptr, char **endptr, int base);  // NOLINT
 # endif
 
-// unistd.h
-// FIXME: remove these typedefs once we get rid of mach_override.
-typedef uptr size_t;
-typedef sptr ssize_t;
-typedef u64 off_t;
-typedef u64 off64_t;
-
-DECLARE_FUNCTION_AND_WRAPPER(ssize_t, read, int fd, void *buf, size_t count);
-DECLARE_FUNCTION_AND_WRAPPER(ssize_t, pread, int fd, void *buf,
-                             size_t count, off_t offset);
-DECLARE_FUNCTION_AND_WRAPPER(ssize_t, pread64, int fd, void *buf,
-                             size_t count, off64_t offset);
+DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, read, int fd, void *buf, SIZE_T count);
+DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pread, int fd, void *buf,
+                             SIZE_T count, OFF_T offset);
+DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pread64, int fd, void *buf,
+                             SIZE_T count, OFF64_T offset);
 
 # if ASAN_INTERCEPT_MLOCKX
 // mlock/munlock
-DECLARE_FUNCTION_AND_WRAPPER(int, mlock, const void *addr, size_t len);
-DECLARE_FUNCTION_AND_WRAPPER(int, munlock, const void *addr, size_t len);
+DECLARE_FUNCTION_AND_WRAPPER(int, mlock, const void *addr, SIZE_T len);
+DECLARE_FUNCTION_AND_WRAPPER(int, munlock, const void *addr, SIZE_T len);
 DECLARE_FUNCTION_AND_WRAPPER(int, mlockall, int flags);
 DECLARE_FUNCTION_AND_WRAPPER(int, munlockall, void);
 # endif

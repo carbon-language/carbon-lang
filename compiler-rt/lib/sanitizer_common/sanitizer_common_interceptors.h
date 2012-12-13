@@ -20,37 +20,34 @@
 #ifndef SANITIZER_COMMON_INTERCEPTORS_H
 #define SANITIZER_COMMON_INTERCEPTORS_H
 
+#include "interception/interception.h"
+
 #if defined(__linux__) && !defined(ANDROID)
 # define SANITIZER_INTERCEPT_PREAD64 1
 #else
 # define SANITIZER_INTERCEPT_PREAD64 0
 #endif
 
-typedef uptr size_t;
-typedef sptr ssize_t;
-typedef u64  off_t;
-typedef u64  off64_t;
-
-INTERCEPTOR(ssize_t, read, int fd, void *ptr, size_t count) {
+INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
   COMMON_INTERCEPTOR_ENTER(read, fd, ptr, count);
-  ssize_t res = REAL(read)(fd, ptr, count);
+  SSIZE_T res = REAL(read)(fd, ptr, count);
   if (res > 0)
     COMMON_INTERCEPTOR_WRITE_RANGE(ptr, res);
   return res;
 }
 
-INTERCEPTOR(ssize_t, pread, int fd, void *ptr, size_t count, off_t offset) {
+INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
   COMMON_INTERCEPTOR_ENTER(pread, fd, ptr, count, offset);
-  ssize_t res = REAL(pread)(fd, ptr, count, offset);
+  SSIZE_T res = REAL(pread)(fd, ptr, count, offset);
   if (res > 0)
     COMMON_INTERCEPTOR_WRITE_RANGE(ptr, res);
   return res;
 }
 
 #if SANITIZER_INTERCEPT_PREAD64
-INTERCEPTOR(ssize_t, pread64, int fd, void *ptr, size_t count, off64_t offset) {
+INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
   COMMON_INTERCEPTOR_ENTER(pread64, fd, ptr, count, offset);
-  ssize_t res = REAL(pread64)(fd, ptr, count, offset);
+  SSIZE_T res = REAL(pread64)(fd, ptr, count, offset);
   if (res > 0)
     COMMON_INTERCEPTOR_WRITE_RANGE(ptr, res);
   return res;
