@@ -1,4 +1,6 @@
-// RUN: %clangxx_asan -O2 %s -o %t && %t 2>&1 | %symbolize | FileCheck %s
+// RUN: %clangxx_asan -O2 %s -o %t
+// RUN: ASAN_OPTIONS=fast_unwind_on_malloc=1 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-FAST
+// RUN: ASAN_OPTIONS=fast_unwind_on_malloc=0 %t 2>&1 | %symbolize | FileCheck %s --check-prefix=CHECK-SLOW
 
 // Test how well we unwind in presence of qsort in the stack
 // (i.e. if we can unwind through a function compiled w/o frame pointers).
@@ -6,15 +8,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int global_array[10];
-volatile int one = 1;
+int *GlobalPtr;
 
-extern "C"
+extern "C" {
 int QsortCallback(const void *a, const void *b) {
   char *x = (char*)a;
   char *y = (char*)b;
   printf("Calling QsortCallback\n");
-  global_array[one * 10] = 0;  // BOOM
+  GlobalPtr = new int[10];
   return (int)*x - (int)*y;
 }
 
@@ -24,12 +25,16 @@ void MyQsort(char *a, size_t size) {
   qsort(a, size, sizeof(char), QsortCallback);
   printf("Done\n");  // Avoid tail call.
 }
+}  // extern "C"
 
 int main() {
   char a[2] = {1, 2};
   MyQsort(a, 2);
+  return GlobalPtr[10];
 }
 
-// CHECK: ERROR: AddressSanitizer: global-buffer-overflow
-// CHECK: #0{{.*}} in {{_?}}QsortCallback
-// CHECK: is located 0 bytes to the right of global variable 'global_array
+// Fast unwind: can not unwind through qsort.
+// FIXME: this test does not properly work with slow unwind yet.
+
+// CHECK-FAST: ERROR: AddressSanitizer: heap-buffer-overflow
+// CHECK-SLOW: ERROR: AddressSanitizer: heap-buffer-overflow
