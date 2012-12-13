@@ -389,7 +389,7 @@ public:
 
 protected:
     bool
-    Compare (const ArchSpec& rhs, bool exact_match) const;
+    IsEqualTo (const ArchSpec& rhs, bool exact_match) const;
 
     llvm::Triple m_triple;
     Core m_core;
@@ -400,35 +400,6 @@ protected:
     void
     CoreUpdated (bool update_triple);
 };
-
-
-//------------------------------------------------------------------
-/// @fn bool operator== (const ArchSpec& lhs, const ArchSpec& rhs)
-/// @brief Equal to operator.
-///
-/// Tests two ArchSpec objects to see if they are equal.
-///
-/// @param[in] lhs The Left Hand Side ArchSpec object to compare.
-/// @param[in] rhs The Left Hand Side ArchSpec object to compare.
-///
-/// Uses the IsExactMatch() method for comparing the cpu types.
-///
-/// @return true if \a lhs is equal to \a rhs
-//------------------------------------------------------------------
-bool operator==(const ArchSpec& lhs, const ArchSpec& rhs);
-
-//------------------------------------------------------------------
-/// @fn bool operator!= (const ArchSpec& lhs, const ArchSpec& rhs)
-/// @brief Not equal to operator.
-///
-/// Tests two ArchSpec objects to see if they are not equal.
-///
-/// @param[in] lhs The Left Hand Side ArchSpec object to compare.
-/// @param[in] rhs The Left Hand Side ArchSpec object to compare.
-///
-/// @return true if \a lhs is not equal to \a rhs
-//------------------------------------------------------------------
-bool operator!=(const ArchSpec& lhs, const ArchSpec& rhs);
 
 //------------------------------------------------------------------
 /// @fn bool operator< (const ArchSpec& lhs, const ArchSpec& rhs)

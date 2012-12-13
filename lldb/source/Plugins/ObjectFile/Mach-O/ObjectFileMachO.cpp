@@ -564,7 +564,7 @@ ObjectFileMachO::ParseHeader ()
             
             // Check if the module has a required architecture
             const ArchSpec &module_arch = module_sp->GetArchitecture();
-            if (module_arch.IsValid() && !module_arch.IsExactMatch(mach_arch))
+            if (module_arch.IsValid() && !module_arch.IsCompatibleMatch(mach_arch))
                 return false;
 
             if (SetModulesArchitecture (mach_arch))

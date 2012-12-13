@@ -165,7 +165,7 @@ ObjectContainerBSDArchive::Archive::FindCachedArchive (const FileSpec &file, con
     // delete an archive entry...
     while (pos != archive_map.end() && pos->first == file)
     {
-        if (pos->second->GetArchitecture() == arch)
+        if (pos->second->GetArchitecture().IsCompatibleMatch(arch))
         {
             if (pos->second->GetModificationTime() == time)
             {

@@ -301,7 +301,7 @@ TargetList::FindTargetWithExecutableAndArchitecture
             {
                 if (exe_arch_ptr)
                 {
-                    if (*exe_arch_ptr != exe_module->GetArchitecture())
+                    if (!exe_arch_ptr->IsCompatibleMatch(exe_module->GetArchitecture()))
                         continue;
                 }
                 target_sp = *pos;

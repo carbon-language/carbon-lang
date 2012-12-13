@@ -642,7 +642,7 @@ protected:
             {
                 result.AppendMessageWithFormat ("Architecture set to: %s.\n", target->GetArchitecture().GetTriple().getTriple().c_str());
             }
-            else if (old_arch_spec != target->GetArchitecture())
+            else if (!old_arch_spec.IsExactMatch(target->GetArchitecture()))
             {
                 result.AppendWarningWithFormat("Architecture changed from %s to %s.\n", 
                                                old_arch_spec.GetTriple().getTriple().c_str(),

@@ -688,7 +688,7 @@ Platform::IsCompatibleArchitecture (const ArchSpec &arch, ArchSpec *compatible_a
         ArchSpec platform_arch;
         for (uint32_t arch_idx=0; GetSupportedArchitectureAtIndex (arch_idx, platform_arch); ++arch_idx)
         {
-            if (arch == platform_arch)
+            if (arch.IsCompatibleMatch(platform_arch))
             {
                 if (compatible_arch_ptr)
                     *compatible_arch_ptr = platform_arch;

@@ -83,7 +83,7 @@ SkinnyMachOFileContainsArchAndUUID
     {
         ArchSpec file_arch(eArchTypeMachO, cputype, cpusubtype);
 
-        if (file_arch != *arch)
+        if (file_arch.IsCompatibleMatch(*arch))
             return false;
     }
 
@@ -181,7 +181,7 @@ UniversalMachOFileContainsArchAndUUID
         if (arch)
         {
             ArchSpec fat_arch(eArchTypeMachO, arch_cputype, arch_cpusubtype);
-            if (fat_arch != *arch)
+            if (fat_arch.IsCompatibleMatch(*arch))
                 continue;
         }
 
@@ -797,7 +797,7 @@ Symbols::DownloadObjectAndSymbolFile (ModuleSpec &module_spec, bool force_lookup
                                         ModuleSpec curr_module_spec;
                                         if (GetModuleSpecInfoFromUUIDDictionary (values[i], curr_module_spec))
                                         {
-                                            if (module_spec.GetArchitecture() == curr_module_spec.GetArchitecture())
+                                            if (module_spec.GetArchitecture().IsCompatibleMatch(curr_module_spec.GetArchitecture()))
                                             {
                                                 module_spec = curr_module_spec;
                                                 return true;

@@ -1202,7 +1202,7 @@ Module::SetArchitecture (const ArchSpec &new_arch)
         m_arch = new_arch;
         return true;
     }    
-    return m_arch == new_arch;
+    return m_arch.IsExactMatch(new_arch);
 }
 
 bool 
@@ -1268,7 +1268,7 @@ Module::MatchesModuleSpec (const ModuleSpec &module_ref)
     const ArchSpec &arch = module_ref.GetArchitecture();
     if (arch.IsValid())
     {
-        if (m_arch != arch)
+        if (!m_arch.IsCompatibleMatch(arch))
             return false;
     }
     

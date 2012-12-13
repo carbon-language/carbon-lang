@@ -630,7 +630,7 @@ PlatformFreeBSD::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
     {
         ArchSpec platform_arch (Host::GetArchitecture (Host::eSystemDefaultArchitecture));
         ArchSpec platform_arch64 (Host::GetArchitecture (Host::eSystemDefaultArchitecture64));
-        if (platform_arch == platform_arch64)
+        if (platform_arch.IsExactMatch(platform_arch64))
         {
             // This freebsd platform supports both 32 and 64 bit. Since we already
             // returned the 64 bit arch for idx == 0, return the 32 bit arch

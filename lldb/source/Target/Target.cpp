@@ -1054,7 +1054,7 @@ bool
 Target::SetArchitecture (const ArchSpec &arch_spec)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TARGET));
-    if (m_arch == arch_spec || !m_arch.IsValid())
+    if (m_arch.IsCompatibleMatch(arch_spec) || !m_arch.IsValid())
     {
         // If we haven't got a valid arch spec, or the architectures are
         // compatible, so just update the architecture. Architectures can be

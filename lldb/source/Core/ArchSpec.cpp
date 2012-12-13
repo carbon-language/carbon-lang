@@ -717,17 +717,17 @@ ArchSpec::GetMaximumOpcodeByteSize() const
 bool
 ArchSpec::IsExactMatch (const ArchSpec& rhs) const
 {
-    return Compare (rhs, true);
+    return IsEqualTo (rhs, true);
 }
 
 bool
 ArchSpec::IsCompatibleMatch (const ArchSpec& rhs) const
 {
-    return Compare (rhs, false);
+    return IsEqualTo (rhs, false);
 }
 
 bool
-ArchSpec::Compare (const ArchSpec& rhs, bool exact_match) const
+ArchSpec::IsEqualTo (const ArchSpec& rhs, bool exact_match) const
 {
     if (GetByteOrder() != rhs.GetByteOrder())
         return false;
@@ -746,12 +746,15 @@ ArchSpec::Compare (const ArchSpec& rhs, bool exact_match) const
         const llvm::Triple::VendorType rhs_triple_vendor = rhs_triple.getVendor();
         if (lhs_triple_vendor != rhs_triple_vendor)
         {
-            const bool rhs_vendor_specified = rhs.TripleVendorWasSpecified();
-            const bool lhs_vendor_specified = TripleVendorWasSpecified();
-            // Both architectures had the vendor specified, so if they aren't
-            // equal then we return false
-            if (rhs_vendor_specified && lhs_vendor_specified)
-                return false;
+            if (exact_match)
+            {
+                const bool rhs_vendor_specified = rhs.TripleVendorWasSpecified();
+                const bool lhs_vendor_specified = TripleVendorWasSpecified();
+                // Both architectures had the vendor specified, so if they aren't
+                // equal then we return false
+                if (rhs_vendor_specified && lhs_vendor_specified)
+                    return false;
+            }
             
             // Only fail if both vendor types are not unknown
             if (lhs_triple_vendor != llvm::Triple::UnknownVendor &&
@@ -763,12 +766,15 @@ ArchSpec::Compare (const ArchSpec& rhs, bool exact_match) const
         const llvm::Triple::OSType rhs_triple_os = rhs_triple.getOS();
         if (lhs_triple_os != rhs_triple_os)
         {
-            const bool rhs_os_specified = rhs.TripleOSWasSpecified();
-            const bool lhs_os_specified = TripleOSWasSpecified();
-            // Both architectures had the OS specified, so if they aren't
-            // equal then we return false
-            if (rhs_os_specified && lhs_os_specified)
-                return false;
+            if (exact_match)
+            {
+                const bool rhs_os_specified = rhs.TripleOSWasSpecified();
+                const bool lhs_os_specified = TripleOSWasSpecified();
+                // Both architectures had the OS specified, so if they aren't
+                // equal then we return false
+                if (rhs_os_specified && lhs_os_specified)
+                    return false;
+            }
             // Only fail if both os types are not unknown
             if (lhs_triple_os != llvm::Triple::UnknownOS &&
                 rhs_triple_os != llvm::Triple::UnknownOS)
@@ -866,18 +872,6 @@ cores_match (const ArchSpec::Core core1, const ArchSpec::Core core2, bool try_in
     if (try_inverse)
         return cores_match (core2, core1, false, enforce_exact_match);
     return false;
-}
-
-bool
-lldb_private::operator== (const ArchSpec& lhs, const ArchSpec& rhs)
-{
-    return lhs.IsExactMatch (rhs);
-}
-
-bool
-lldb_private::operator!= (const ArchSpec& lhs, const ArchSpec& rhs)
-{
-    return !(lhs == rhs);
 }
 
 bool

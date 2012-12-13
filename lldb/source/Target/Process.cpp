@@ -831,7 +831,7 @@ ProcessInstanceInfoMatch::Matches (const ProcessInstanceInfo &proc_info) const
         return false;
     
     if (m_match_info.GetArchitecture().IsValid() && 
-        m_match_info.GetArchitecture() != proc_info.GetArchitecture())
+        !m_match_info.GetArchitecture().IsCompatibleMatch(proc_info.GetArchitecture()))
         return false;
     return true;
 }
@@ -2971,7 +2971,7 @@ Process::CompleteAttach ()
             ProcessInstanceInfo process_info;
             platform_sp->GetProcessInfo (GetID(), process_info);
             const ArchSpec &process_arch = process_info.GetArchitecture();
-            if (process_arch.IsValid() && m_target.GetArchitecture() != process_arch)
+            if (process_arch.IsValid() && !m_target.GetArchitecture().IsExactMatch(process_arch))
                 m_target.SetArchitecture (process_arch);
         }
     }
