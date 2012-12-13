@@ -56,6 +56,31 @@ class CondMovFPFP<RegisterClass RC, SDNode cmov, bits<5> fmt, bits<1> tf,
   let Constraints = "$F = $fd";
 }
 
+class CMov_I_F_FT<string opstr, RegisterClass CRC, RegisterClass DRC,
+                  InstrItinClass Itin> :
+  InstSE<(outs DRC:$fd), (ins DRC:$fs, CRC:$rt, DRC:$F),
+         !strconcat(opstr, "\t$fd, $fs, $rt"), [], Itin, FrmFR> {
+  let Constraints = "$F = $fd";
+}
+
+class CMov_F_I_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
+                  SDPatternOperator OpNode = null_frag> :
+  InstSE<(outs RC:$rd), (ins RC:$rs, RC:$F),
+         !strconcat(opstr, "\t$rd, $rs, $$fcc0"),
+         [(set RC:$rd, (OpNode RC:$rs, RC:$F))], Itin, FrmFR> {
+  let Uses = [FCR31];
+  let Constraints = "$F = $rd";
+}
+
+class CMov_F_F_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
+                  SDPatternOperator OpNode = null_frag> :
+  InstSE<(outs RC:$fd), (ins RC:$fs, RC:$F),
+         !strconcat(opstr, "\t$fd, $fs, $$fcc0"),
+         [(set RC:$fd, (OpNode RC:$fs, RC:$F))], Itin, FrmFR> {
+  let Uses = [FCR31];
+  let Constraints = "$F = $fd";
+}
+
 // select patterns
 multiclass MovzPats0<RegisterClass CRC, RegisterClass DRC,
                      Instruction MOVZInst, Instruction SLTOp,
@@ -130,57 +155,71 @@ let Predicates = [HasStdEnc],
   }
 }
 
-def MOVZ_I_S   : CondMovIntFP<CPURegs, FGR32, 16, 18, "movz.s">;
-def MOVZ_I64_S : CondMovIntFP<CPU64Regs, FGR32, 16, 18, "movz.s">,
-                 Requires<[HasMips64, HasStdEnc]> {
+def MOVZ_I_S : CMov_I_F_FT<"movz.s", CPURegs, FGR32, IIFmove>,
+               CMov_I_F_FM<18, 16>;
+def MOVZ_I64_S : CMov_I_F_FT<"movz.s", CPU64Regs, FGR32, IIFmove>,
+                 CMov_I_F_FM<18, 16>, Requires<[HasMips64, HasStdEnc]> {
   let DecoderNamespace = "Mips64";
 }
 
-def MOVN_I_S   : CondMovIntFP<CPURegs, FGR32, 16, 19, "movn.s">;
-def MOVN_I64_S : CondMovIntFP<CPU64Regs, FGR32, 16, 19, "movn.s">,
-                 Requires<[HasMips64, HasStdEnc]> {
+def MOVN_I_S : CMov_I_F_FT<"movn.s", CPURegs, FGR32, IIFmove>,
+               CMov_I_F_FM<19, 16>;
+def MOVN_I64_S : CMov_I_F_FT<"movn.s", CPU64Regs, FGR32, IIFmove>,
+                 CMov_I_F_FM<19, 16>, Requires<[HasMips64, HasStdEnc]> {
   let DecoderNamespace = "Mips64";
 }
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
-  def MOVZ_I_D32   : CondMovIntFP<CPURegs, AFGR64, 17, 18, "movz.d">;
-  def MOVN_I_D32   : CondMovIntFP<CPURegs, AFGR64, 17, 19, "movn.d">;
+  def MOVZ_I_D32 : CMov_I_F_FT<"movz.d", CPURegs, AFGR64, IIFmove>,
+                   CMov_I_F_FM<18, 17>;
+  def MOVN_I_D32 : CMov_I_F_FT<"movn.d", CPURegs, AFGR64, IIFmove>,
+                   CMov_I_F_FM<19, 17>;
 }
 let Predicates = [IsFP64bit, HasStdEnc],
                   DecoderNamespace = "Mips64" in {
-  def MOVZ_I_D64   : CondMovIntFP<CPURegs, FGR64, 17, 18, "movz.d">;
-  def MOVZ_I64_D64 : CondMovIntFP<CPU64Regs, FGR64, 17, 18, "movz.d"> {
+  def MOVZ_I_D64 : CMov_I_F_FT<"movz.d", CPURegs, FGR64, IIFmove>,
+                   CMov_I_F_FM<18, 17>;
+  def MOVZ_I64_D64 : CMov_I_F_FT<"movz.d", CPU64Regs, FGR64, IIFmove>,
+                     CMov_I_F_FM<18, 17> {
     let isCodeGenOnly = 1;
   }
-  def MOVN_I_D64   : CondMovIntFP<CPURegs, FGR64, 17, 19, "movn.d">;
-  def MOVN_I64_D64 : CondMovIntFP<CPU64Regs, FGR64, 17, 19, "movn.d"> {
+  def MOVN_I_D64 : CMov_I_F_FT<"movn.d", CPURegs, FGR64, IIFmove>,
+                   CMov_I_F_FM<19, 17>;
+  def MOVN_I64_D64 : CMov_I_F_FT<"movn.d", CPU64Regs, FGR64, IIFmove>,
+                     CMov_I_F_FM<19, 17> {
     let isCodeGenOnly = 1;
   }
 }
 
-def MOVT_I   : CondMovFPInt<CPURegs, MipsCMovFP_T, 1, "movt">;
-def MOVT_I64 : CondMovFPInt<CPU64Regs, MipsCMovFP_T, 1, "movt">,
-               Requires<[HasMips64, HasStdEnc]> {
+def MOVT_I : CMov_F_I_FT<"movt", CPURegs, IIAlu, MipsCMovFP_T>, CMov_F_I_FM<1>;
+def MOVT_I64 : CMov_F_I_FT<"movt", CPU64Regs, IIAlu, MipsCMovFP_T>,
+               CMov_F_I_FM<1>, Requires<[HasMips64, HasStdEnc]> {
   let DecoderNamespace = "Mips64";
 }
 
-def MOVF_I   : CondMovFPInt<CPURegs, MipsCMovFP_F, 0, "movf">;
-def MOVF_I64 : CondMovFPInt<CPU64Regs, MipsCMovFP_F, 0, "movf">,
-               Requires<[HasMips64, HasStdEnc]> {
+def MOVF_I : CMov_F_I_FT<"movf", CPURegs, IIAlu, MipsCMovFP_F>, CMov_F_I_FM<0>;
+def MOVF_I64 : CMov_F_I_FT<"movf", CPU64Regs, IIAlu, MipsCMovFP_F>,
+               CMov_F_I_FM<0>, Requires<[HasMips64, HasStdEnc]> {
   let DecoderNamespace = "Mips64";
 }
 
-def MOVT_S : CondMovFPFP<FGR32, MipsCMovFP_T, 16, 1, "movt.s">;
-def MOVF_S : CondMovFPFP<FGR32, MipsCMovFP_F, 16, 0, "movf.s">;
+def MOVT_S : CMov_F_F_FT<"movt.s", FGR32, IIFmove, MipsCMovFP_T>,
+             CMov_F_F_FM<16, 1>;
+def MOVF_S : CMov_F_F_FT<"movf.s", FGR32, IIFmove, MipsCMovFP_F>,
+             CMov_F_F_FM<16, 0>;
 
 let Predicates = [NotFP64bit, HasStdEnc] in {
-  def MOVT_D32 : CondMovFPFP<AFGR64, MipsCMovFP_T, 17, 1, "movt.d">;
-  def MOVF_D32 : CondMovFPFP<AFGR64, MipsCMovFP_F, 17, 0, "movf.d">;
+  def MOVT_D32 : CMov_F_F_FT<"movt.d", AFGR64, IIFmove, MipsCMovFP_T>,
+                 CMov_F_F_FM<17, 1>;
+  def MOVF_D32 : CMov_F_F_FT<"movf.d", AFGR64, IIFmove, MipsCMovFP_F>,
+                 CMov_F_F_FM<17, 0>;
 }
 let Predicates = [IsFP64bit, HasStdEnc],
     DecoderNamespace = "Mips64" in {
-  def MOVT_D64 : CondMovFPFP<FGR64, MipsCMovFP_T, 17, 1, "movt.d">;
-  def MOVF_D64 : CondMovFPFP<FGR64, MipsCMovFP_F, 17, 0, "movf.d">;
+  def MOVT_D64 : CMov_F_F_FT<"movt.d", FGR64, IIFmove, MipsCMovFP_T>,
+                 CMov_F_F_FM<17, 1>;
+  def MOVF_D64 : CMov_F_F_FT<"movf.d", FGR64, IIFmove, MipsCMovFP_F>,
+                 CMov_F_F_FM<17, 0>;
 }
 
 // Instantiation of conditional move patterns.

@@ -482,3 +482,50 @@ class CEQS_FM<bits<5> fmt> {
   let Inst{7-4} = 0x3;
   let Inst{3-0} = cond;
 }
+
+class CMov_I_F_FM<bits<6> funct, bits<5> fmt> {
+  bits<5> fd;
+  bits<5> fs;
+  bits<5> rt;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x11;
+  let Inst{25-21} = fmt;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = fs;
+  let Inst{10-6} = fd;
+  let Inst{5-0} = funct;
+}
+
+class CMov_F_I_FM<bit tf> {
+  bits<5> rd;
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = rs;
+  let Inst{20-18} = 0; // cc
+  let Inst{17} = 0;
+  let Inst{16} = tf;
+  let Inst{15-11} = rd;
+  let Inst{10-6} = 0;
+  let Inst{5-0} = 1;
+}
+
+class CMov_F_F_FM<bits<5> fmt, bit tf> {
+  bits<5> fd;
+  bits<5> fs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x11;
+  let Inst{25-21} = fmt;
+  let Inst{20-18} = 0; // cc
+  let Inst{17} = 0;
+  let Inst{16} = tf;
+  let Inst{15-11} = fs;
+  let Inst{10-6} = fd;
+  let Inst{5-0} = 0x11;
+}
