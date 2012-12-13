@@ -18,6 +18,17 @@ progress. This page will get filled out with docs soon...
    PCHInternals
    ThreadSanitizer
    Tooling
+   AddressSanitizer
+   AnalyzerRegions
+   ClangPlugins
+   ClangTools
+   HowToSetupToolingForLLVM
+   IntroductionToTheClangAST
+   JSONCompilationDatabase
+   LibASTMatchersTutorial
+   PTHInternals
+   RAVFrontendAction
+   UsersManual
 
 
 Indices and tables
