@@ -54,7 +54,7 @@ static void AsanCheckFailed(const char *file, int line, const char *cond,
              file, line, cond, (uptr)v1, (uptr)v2);
   // FIXME: check for infinite recursion without a thread-local counter here.
   PRINT_CURRENT_STACK();
-  ShowStatsAndAbort();
+  Die();
 }
 
 // -------------------------- Flags ------------------------- {{{1
