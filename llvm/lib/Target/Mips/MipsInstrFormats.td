@@ -367,3 +367,17 @@ class ADDS_FM<bits<6> funct, bits<5> fmt> {
   let Inst{10-6}  = fd;
   let Inst{5-0}   = funct;
 }
+
+class ABSS_FM<bits<6> funct, bits<5> fmt> {
+  bits<5> fd;
+  bits<5> fs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x11;
+  let Inst{25-21} = fmt;
+  let Inst{20-16} = 0;
+  let Inst{15-11} = fs;
+  let Inst{10-6}  = fd;
+  let Inst{5-0}   = funct;
+}
