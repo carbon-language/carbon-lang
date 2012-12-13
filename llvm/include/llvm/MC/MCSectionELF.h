@@ -60,8 +60,6 @@ public:
 
   StringRef getSectionName() const { return SectionName; }
   virtual std::string getLabelBeginName() const {
-    dbgs() << SectionName.data();
-    dbgs() << "_begin" << "\n";
     return SectionName.str() + "_begin"; }
   virtual std::string getLabelEndName() const {
     return SectionName.str() + "_end";
