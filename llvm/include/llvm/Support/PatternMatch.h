@@ -75,6 +75,52 @@ inline class_match<UndefValue> m_Undef() { return class_match<UndefValue>(); }
 
 inline class_match<Constant> m_Constant() { return class_match<Constant>(); }
 
+/// Matching combinators
+template<typename LTy, typename RTy>
+struct match_combine_or {
+  LTy L;
+  RTy R;
+
+  match_combine_or(const LTy &Left, const RTy &Right) : L(Left), R(Right) { }
+
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (L.match(V))
+      return true;
+    if (R.match(V))
+      return true;
+    return false;
+  }
+};
+
+template<typename LTy, typename RTy>
+struct match_combine_and {
+  LTy L;
+  RTy R;
+
+  match_combine_and(const LTy &Left, const RTy &Right) : L(Left), R(Right) { }
+
+  template<typename ITy>
+  bool match(ITy *V) {
+    if (L.match(V))
+      if (R.match(V))
+        return true;
+    return false;
+  }
+};
+
+/// Combine two pattern matchers matching L || R
+template<typename LTy, typename RTy>
+inline match_combine_or<LTy, RTy> m_CombineOr(const LTy &L, const RTy &R) {
+  return match_combine_or<LTy, RTy>(L, R);
+}
+
+/// Combine two pattern matchers matching L && R
+template<typename LTy, typename RTy>
+inline match_combine_and<LTy, RTy> m_CombineAnd(const LTy &L, const RTy &R) {
+  return match_combine_and<LTy, RTy>(L, R);
+}
+
 struct match_zero {
   template<typename ITy>
   bool match(ITy *V) {
@@ -103,19 +149,12 @@ struct match_neg_zero {
 /// zero
 inline match_neg_zero m_NegZero() { return match_neg_zero(); }
 
-struct match_any_zero {
-  template<typename ITy>
-  bool match(ITy *V) {
-    if (const Constant *C = dyn_cast<Constant>(V))
-      return C->isNullValue() || C->isNegativeZeroValue();
-    return false;
-  }
-};
-
 /// m_AnyZero() - Match an arbitrary zero/null constant.  This includes
 /// zero_initializer for vectors and ConstantPointerNull for pointers. For
 /// floating point constants, this will match negative zero and positive zero
-inline match_any_zero m_AnyZero() { return match_any_zero(); }
+inline match_combine_or<match_zero, match_neg_zero> m_AnyZero() {
+  return m_CombineOr(m_Zero(), m_NegZero());
+}
 
 struct apint_match {
   const APInt *&Res;
