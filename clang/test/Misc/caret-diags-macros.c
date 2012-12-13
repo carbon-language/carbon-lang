@@ -181,10 +181,10 @@ void foo_aa()
 }
 // CHECK:         {{.*}}:180:21: warning: expression result unused
 // CHECK-NEXT:      iequals(__LINE__, BARC(4,3,2,6,8), 8);
-// CHECK-NEXT: {{^                    \^~~~~~~~~~~~~~~}}
+// CHECK-NEXT: {{^                    \^          ~}}
 // CHECK-NEXT:    {{.*}}:179:51: note: expanded from macro 'BARC'
 // CHECK-NEXT:    #define /* */ BARC(c, /* */b, a, ...) (a+b+/* */c + __VA_ARGS__ +0)
-// CHECK-NEXT: {{^                                       ~~~~~~~~~~ \^}}
+// CHECK-NEXT: {{^                                                  \^}}
 
 #define APPEND2(NUM, SUFF) -1 != NUM ## SUFF
 #define APPEND(NUM, SUFF) APPEND2(NUM, SUFF)
@@ -205,3 +205,24 @@ void foo_aa()
 // CHECK-NEXT:    {{.*}}:189:31: note: expanded from macro 'APPEND2'
 // CHECK-NEXT:    #define APPEND2(NUM, SUFF) -1 != NUM ## SUFF
 // CHECK-NEXT: {{^                           ~~ \^  ~~~~~~~~~~~}}
+
+
+unsigned long strlen_test(const char *s);
+#define __darwin_obsz(object) __builtin_object_size (object, 1)
+#define sprintf2(str, ...) \
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+#define Cstrlen(a)  strlen_test(a)
+#define Csprintf    sprintf2
+void f(char* pMsgBuf, char* pKeepBuf) {
+Csprintf(pMsgBuf,"\nEnter minimum anagram length (2-%1d): ", Cstrlen(pKeepBuf));
+}
+// CHECK:         {{.*}}:217:62: warning: format specifies type 'int' but the argument has type 'unsigned long'
+// CHECK-NEXT:    Csprintf(pMsgBuf,"\nEnter minimum anagram length (2-%1d): ", Cstrlen(pKeepBuf));
+// CHECK-NEXT: {{^                                                    ~~~      \^~~~~~~~~~~~~~~~~}}
+// CHECK-NEXT: {{^                                                    %1ld}}
+// CHECK-NEXT:    {{.*}}:214:21: note: expanded from macro 'Cstrlen'
+// CHECK-NEXT:    #define Cstrlen(a)  strlen_test(a)
+// CHECK-NEXT: {{^                    \^}}
+// CHECK-NEXT:    {{.*}}:213:56: note: expanded from macro 'sprintf2'
+// CHECK-NEXT:      __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+// CHECK-NEXT: {{^                                                       \^}}

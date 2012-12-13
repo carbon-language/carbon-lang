@@ -306,6 +306,56 @@ void DiagnosticRenderer::emitModuleBuildStack(const SourceManager &SM) {
   }
 }
 
+// Find the common parent for the beginning and end of the range.
+static void findCommonParent(SourceLocation &Begin, SourceLocation &End,
+                             const SourceManager *SM) {
+  if (Begin.isInvalid() || End.isInvalid()) {
+    Begin = End = SourceLocation();
+    return;
+  }
+
+  FileID BeginFileID = SM->getFileID(Begin);
+  FileID EndFileID = SM->getFileID(End);
+
+  // First, crawl the expansion chain for the beginning of the range.
+  llvm::SmallDenseMap<FileID, SourceLocation> BeginLocsMap;
+  BeginLocsMap[BeginFileID] = Begin;
+  while (Begin.isMacroID() && BeginFileID != EndFileID) {
+    if (SM->isMacroArgExpansion(Begin)) {
+      Begin = SM->getImmediateSpellingLoc(Begin);
+      if (Begin.isMacroID())
+        continue;
+      Begin = SourceLocation();
+      BeginFileID = FileID();
+      break;
+    }
+    Begin = SM->getImmediateExpansionRange(Begin).first;
+    BeginFileID = SM->getFileID(Begin);
+    BeginLocsMap[BeginFileID] = Begin;
+  }
+
+  // Then, crawl the expansion chain for the end of the range.
+  if (BeginFileID != EndFileID) {
+    while (End.isMacroID() && !BeginLocsMap.count(EndFileID)) {
+      if (SM->isMacroArgExpansion(End)) {
+        End = SM->getImmediateSpellingLoc(End);
+        if (End.isMacroID())
+          continue;
+        End = SourceLocation();
+        EndFileID = FileID();
+        break;
+      }
+      End = SM->getImmediateExpansionRange(End).second;
+      EndFileID = SM->getFileID(End);
+    }
+    if (End.isMacroID()) {
+      Begin = BeginLocsMap[EndFileID];
+      BeginFileID = EndFileID;
+    }
+  }
+  assert(Begin.isValid() == End.isValid());
+}
+
 // Helper function to fix up source ranges.  It takes in an array of ranges,
 // and outputs an array of ranges where we want to draw the range highlighting
 // around the location specified by CaretLoc.
@@ -329,40 +379,38 @@ static void mapDiagnosticRanges(
     SourceLocation Begin = I->getBegin(), End = I->getEnd();
     bool IsTokenRange = I->isTokenRange();
 
+    // Compute the common parent; we can't highlight a range where
+    // the begin and end have different FileIDs.
+    findCommonParent(Begin, End, SM);
+
     FileID BeginFileID = SM->getFileID(Begin);
-    FileID EndFileID = SM->getFileID(End);
-
-    // Find the common parent for the beginning and end of the range.
-
-    // First, crawl the expansion chain for the beginning of the range.
-    llvm::SmallDenseMap<FileID, SourceLocation> BeginLocsMap;
-    while (Begin.isMacroID() && BeginFileID != EndFileID) {
-      BeginLocsMap[BeginFileID] = Begin;
-      Begin = SM->getImmediateExpansionRange(Begin).first;
-      BeginFileID = SM->getFileID(Begin);
-    }
-
-    // Then, crawl the expansion chain for the end of the range.
-    if (BeginFileID != EndFileID) {
-      while (End.isMacroID() && !BeginLocsMap.count(EndFileID)) {
-        End = SM->getImmediateExpansionRange(End).second;
-        EndFileID = SM->getFileID(End);
-      }
-      if (End.isMacroID()) {
-        Begin = BeginLocsMap[EndFileID];
-        BeginFileID = EndFileID;
-      }
-    }
 
     while (Begin.isMacroID() && BeginFileID != CaretLocFileID) {
       if (SM->isMacroArgExpansion(Begin)) {
+        // We have a macro argument; take the spelling loc, which is
+        // a step closer to where the argument was written.
         Begin = SM->getImmediateSpellingLoc(Begin);
         End = SM->getImmediateSpellingLoc(End);
+        BeginFileID = SM->getFileID(Begin);
+        assert(BeginFileID == SM->getFileID(End));
       } else {
+        // Take the next expansion in the expansion chain.
         Begin = SM->getImmediateExpansionRange(Begin).first;
         End = SM->getImmediateExpansionRange(End).second;
+
+        // Compute the common parent again; the beginning and end might
+        // come out of different macro expansions.
+        findCommonParent(Begin, End, SM);
+        BeginFileID = SM->getFileID(Begin);
       }
-      BeginFileID = SM->getFileID(Begin);
+    }
+
+    // If this is the expansion of a macro argument, point the range at the
+    // use of the argument in the definition of the macro, not the expansion.
+    if (SM->isMacroArgExpansion(Begin)) {
+      assert(SM->isMacroArgExpansion(End));
+      Begin = End = SM->getImmediateExpansionRange(Begin).first;
+      IsTokenRange = true;
     }
 
     // Return the spelling location of the beginning and end of the range.
