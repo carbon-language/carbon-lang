@@ -80,6 +80,15 @@ int g() {
   return [] { return r; } ();
 };
 
+// CHECK: define internal void @"_ZZ1hvEN3$_78__invokeEv"(%struct.A* noalias sret %agg.result)
+// CHECK-NEXT: entry:
+// CHECK-NEXT: call void @"_ZZ1hvENK3$_7clEv"(%struct.A* sret %agg.result,
+// CHECK-NEXT: ret void
+struct A { ~A(); };
+void h() {
+  A (*h)() = [] { return A(); };
+}
+
 // CHECK: define internal i32 @"_ZZ1fvEN3$_58__invokeEii"
 // CHECK: store i32
 // CHECK-NEXT: store i32

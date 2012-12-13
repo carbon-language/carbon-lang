@@ -1787,6 +1787,8 @@ void CodeGenFunction::EmitForwardingCallToLambda(const CXXRecordDecl *lambda,
   // If necessary, copy the returned value into the slot.
   if (!resultType->isVoidType() && returnSlot.isNull())
     EmitReturnOfRValue(RV, resultType);
+  else
+    EmitBranchThroughCleanup(ReturnBlock);
 }
 
 void CodeGenFunction::EmitLambdaBlockInvokeBody() {
