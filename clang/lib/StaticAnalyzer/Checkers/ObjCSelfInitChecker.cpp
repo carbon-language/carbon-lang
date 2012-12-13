@@ -123,9 +123,10 @@ static SelfFlagEnum getSelfFlags(SVal val, CheckerContext &C) {
 static void addSelfFlag(ProgramStateRef state, SVal val,
                         SelfFlagEnum flag, CheckerContext &C) {
   // We tag the symbol that the SVal wraps.
-  if (SymbolRef sym = val.getAsSymbol())
+  if (SymbolRef sym = val.getAsSymbol()) {
     state = state->set<SelfFlag>(sym, getSelfFlags(val, state) | flag);
-  C.addTransition(state);
+    C.addTransition(state);
+  }
 }
 
 static bool hasSelfFlag(SVal val, SelfFlagEnum flag, CheckerContext &C) {
@@ -303,6 +304,10 @@ void ObjCSelfInitChecker::checkPostCall(const CallEvent &CE,
 void ObjCSelfInitChecker::checkLocation(SVal location, bool isLoad,
                                         const Stmt *S,
                                         CheckerContext &C) const {
+  if (!shouldRunOnFunctionOrMethod(dyn_cast<NamedDecl>(
+        C.getCurrentAnalysisDeclContext()->getDecl())))
+    return;
+
   // Tag the result of a load from 'self' so that we can easily know that the
   // value is the object that 'self' points to.
   ProgramStateRef state = C.getState();

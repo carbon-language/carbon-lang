@@ -281,3 +281,28 @@ typedef signed char BOOL;
 }
 @end
 
+// Test for radar://12838705.
+@interface ABCClass : NSObject
+@property (nonatomic, strong) NSString *foo;
+@property (nonatomic, strong) NSString *bar;
+@property (nonatomic, strong) NSString *baz;
+@end
+
+@implementation ABCClass
+@synthesize foo = foo_;
+@synthesize bar = bar_;
+@synthesize baz = baz_;
+
+- (id)initWithABC:(ABCClass *)abc {
+  self = [super init];
+  baz_ = abc->baz_;
+  return self;
+}
+
+- (ABCClass *)abcWithFoo:(NSString *)foo {
+  ABCClass *copy = [[ABCClass alloc] initWithABC:self];
+  return copy;
+}
+
+@end
+
