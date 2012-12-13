@@ -74,3 +74,7 @@ D: Minor fix.
 N: Argyrios Kyrtzidis
 E: kyrtzidis@apple.com
 D: Bug fixes.
+
+N: Zhang Xiongpang
+E: zhangxiongpang@gmail.com
+D: Minor patches and bug fixes.
