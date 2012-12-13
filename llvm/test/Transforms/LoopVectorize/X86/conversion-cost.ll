@@ -4,7 +4,7 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 target triple = "x86_64-apple-macosx10.8.0"
 
 ;CHECK: @conversion_cost1
-;CHECK: store <2 x i8>
+;CHECK: store <8 x i8>
 ;CHECK: ret
 define i32 @conversion_cost1(i32 %n, i8* nocapture %A, float* nocapture %B) nounwind uwtable ssp {
   %1 = icmp sgt i32 %n, 3

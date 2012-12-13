@@ -106,8 +106,7 @@ struct LoopVectorize : public LoopPass {
     }
 
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF << ") in "<<
-          L->getHeader()->getParent()->getParent()->getModuleIdentifier()<<
-          "\n");
+          F->getParent()->getModuleIdentifier()<<"\n");
 
     // If we decided that it is *legal* to vectorizer the loop then do it.
     InnerLoopVectorizer LB(L, SE, LI, DT, DL, VF);
@@ -1849,6 +1848,15 @@ LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
   return NoInduction;
 }
 
+bool LoopVectorizationLegality::isInductionVariable(const Value *V) {
+  Value *In0 = const_cast<Value*>(V);
+  PHINode *PN = dyn_cast_or_null<PHINode>(In0);
+  if (!PN)
+    return false;
+
+  return Inductions.count(PN);
+}
+
 bool LoopVectorizationLegality::blockNeedsPredication(BasicBlock *BB)  {
   assert(TheLoop->contains(BB) && "Unknown block used");
 
@@ -2110,6 +2118,13 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
   case Instruction::Trunc:
   case Instruction::FPTrunc:
   case Instruction::BitCast: {
+    // We optimize the truncation of induction variable.
+    // The cost of these is the same as the scalar operation.
+    if (I->getOpcode() == Instruction::Trunc &&
+        Legal->isInductionVariable(I->getOperand(0)))
+         return VTTI->getCastInstrCost(I->getOpcode(), I->getType(),
+                                       I->getOperand(0)->getType());
+
     Type *SrcVecTy = ToVectorTy(I->getOperand(0)->getType(), VF);
     return VTTI->getCastInstrCost(I->getOpcode(), VectorTy, SrcVecTy);
   }
