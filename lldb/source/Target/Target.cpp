@@ -66,7 +66,20 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     m_platform_sp (platform_sp),
     m_mutex (Mutex::eMutexTypeRecursive), 
     m_arch (target_arch),
+#ifndef LLDB_DISABLE_PYTHON
     m_images (this),
+#else
+    // FIXME: The module added notification needed for python scripting support 
+    // causes a problem with in-memory-only Modules at startup if we have
+    // a breakpoint (the ObjectFile is parsed before we've set the Section load
+    // addresses leading to an invalid __LINKEDIT section addr on Mac OS X and
+    // all the problems that will happen from that).  
+    // As a temporary solution for iOS debugging (where all the modules are in-memory-only), 
+    // disable this notification system there. The problem could still happen on 
+    // an x86 system but it is much less common. 
+    // <rdar://problem/12831670> describes the failure mode for on-iOS debugging.
+    m_images (NULL),
+#endif
     m_section_load_list (),
     m_breakpoint_list (false),
     m_internal_breakpoint_list (true),
