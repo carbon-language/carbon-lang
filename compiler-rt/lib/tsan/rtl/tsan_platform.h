@@ -137,7 +137,6 @@ void FlushShadowMemory();
 
 const char *InitializePlatform();
 void FinalizePlatform();
-void MapThreadTrace(uptr addr, uptr size);
 uptr ALWAYS_INLINE INLINE GetThreadTrace(int tid) {
   uptr p = kTraceMemBegin + (uptr)tid * kTraceSize * sizeof(Event);
   DCHECK_LT(p, kTraceMemBegin + kTraceMemSize);

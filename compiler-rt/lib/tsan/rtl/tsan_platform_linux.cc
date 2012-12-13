@@ -120,16 +120,6 @@ void InitializeShadowMemory() {
 }
 #endif
 
-void MapThreadTrace(uptr addr, uptr size) {
-  DPrintf("Mapping trace at %p-%p(0x%zx)\n", addr, addr + size, size);
-  CHECK_GE(addr, kTraceMemBegin);
-  CHECK_LE(addr + size, kTraceMemBegin + kTraceMemSize);
-  if (addr != (uptr)MmapFixedNoReserve(addr, size)) {
-    Printf("FATAL: ThreadSanitizer can not mmap thread trace\n");
-    Die();
-  }
-}
-
 static uptr g_data_start;
 static uptr g_data_end;
 
