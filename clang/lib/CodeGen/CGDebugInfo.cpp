@@ -1199,7 +1199,7 @@ CollectVTableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
   unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
   llvm::DIType VPTR
     = DBuilder.createMemberType(Unit, getVTableName(RD), Unit,
-                                0, Size, 0, 0, 0, 
+                                0, Size, 0, 0, llvm::DIDescriptor::FlagArtificial,
                                 getOrCreateVTablePtrType(Unit));
   EltTys.push_back(VPTR);
 }
