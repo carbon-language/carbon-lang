@@ -185,7 +185,7 @@ endif( LLVM_USE_INTEL_JITEVENTS )
 option(LLVM_USE_OPROFILE
   "Use opagent JIT interface to inform OProfile about JIT code" OFF)
 
-# If enabled, ierify we are on a platform that supports oprofile.
+# If enabled, verify we are on a platform that supports oprofile.
 if( LLVM_USE_OPROFILE )
   if( NOT CMAKE_SYSTEM_NAME MATCHES "Linux" )
     message(FATAL_ERROR "OProfile support is available on Linux only.") 
@@ -426,7 +426,7 @@ if( LLVM_INCLUDE_TESTS )
   add_subdirectory(utils/unittest)
   add_subdirectory(unittests)
   if (MSVC)
-    # This utility is used to prevent chrashing tests from calling Dr. Watson on
+    # This utility is used to prevent crashing tests from calling Dr. Watson on
     # Windows.
     add_subdirectory(utils/KillTheDoctor)
   endif()
