@@ -114,12 +114,6 @@ static MCOperand GetSymbolRef(const MachineOperand &MO, const MCSymbol *Symbol,
                                break;
     case PPCII::MO_TPREL16_LO: RefKind = MCSymbolRefExpr::VK_PPC_TPREL16_LO;
                                break;
-    case PPCII::MO_GOT_TPREL16_DS:
-      RefKind = MCSymbolRefExpr::VK_PPC_GOT_TPREL16_DS;
-      break;
-    case PPCII::MO_TLS:
-      RefKind = MCSymbolRefExpr::VK_PPC_TLS;
-      break;
    }
 
   // FIXME: This isn't right, but we don't have a good way to express this in

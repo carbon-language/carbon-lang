@@ -1351,15 +1351,11 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
     llvm_unreachable("only local-exec is currently supported for ppc32");
 
   if (Model == TLSModel::InitialExec) {
-    SDValue GOTOffset = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
-                                                   PPCII::MO_GOT_TPREL16_DS);
-    SDValue TPReg = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0,
-                                               PPCII::MO_TLS);
-    SDValue GOTReg = DAG.getRegister(is64bit ? PPC::X2  : PPC::R2,
-                                     is64bit ? MVT::i64 : MVT::i32);
-    SDValue TPOffset = DAG.getNode(PPCISD::LD_GOT_TPREL, dl, PtrVT,
-                                   GOTOffset, GOTReg);
-    return DAG.getNode(PPCISD::ADD_TLS, dl, PtrVT, TPOffset, TPReg);
+    SDValue TGA = DAG.getTargetGlobalAddress(GV, dl, PtrVT, 0, 0);
+    SDValue GOTReg = DAG.getRegister(PPC::X2, MVT::i64);
+    SDValue TPOffset = DAG.getNode(PPCISD::LD_GOT_TPREL, dl,
+                                   PtrVT, TGA, GOTReg);
+    return DAG.getNode(PPCISD::ADD_TLS, dl, PtrVT, TPOffset, TGA);
   }
 
   if (Model == TLSModel::GeneralDynamic) {

@@ -384,7 +384,7 @@ def ADD8  : XOForm_1<31, 266, 0, (outs G8RC:$rT), (ins G8RC:$rA, G8RC:$rB),
 // ADD8 has a special form: reg = ADD8(reg, sym@tls) for use by the
 // initial-exec thread-local storage model.
 def ADD8TLS  : XOForm_1<31, 266, 0, (outs G8RC:$rT), (ins G8RC:$rA, tlsreg:$rB),
-                        "add $rT, $rA, $rB", IntSimple,
+                        "add $rT, $rA, $rB@tls", IntSimple,
                         [(set G8RC:$rT, (add G8RC:$rA, tglobaltlsaddr:$rB))]>;
                      
 let Defs = [CARRY] in {

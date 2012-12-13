@@ -72,9 +72,7 @@ namespace llvm {
     MO_HA16 = 2 << 5,
 
     MO_TPREL16_HA = 3 << 5,
-    MO_TPREL16_LO = 4 << 5,
-    MO_GOT_TPREL16_DS = 5 << 5,
-    MO_TLS = 6 << 5
+    MO_TPREL16_LO = 4 << 5
   };
   } // end namespace PPCII
   
