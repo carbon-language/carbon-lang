@@ -261,6 +261,18 @@ class NMADDS_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
          [(set RC:$fd, (fsub fpimm0, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr)))],
          Itin, FrmFR>;
 
+class LWXC1_FT<string opstr, RegisterClass DRC, RegisterClass PRC,
+               InstrItinClass Itin, SDPatternOperator OpNode = null_frag> :
+  InstSE<(outs DRC:$fd), (ins PRC:$base, PRC:$index),
+         !strconcat(opstr, "\t$fd, ${index}(${base})"),
+         [(set DRC:$fd, (OpNode (add PRC:$base, PRC:$index)))], Itin, FrmFI>;
+
+class SWXC1_FT<string opstr, RegisterClass DRC, RegisterClass PRC,
+               InstrItinClass Itin, SDPatternOperator OpNode = null_frag> :
+  InstSE<(outs), (ins DRC:$fs, PRC:$base, PRC:$index),
+         !strconcat(opstr, "\t$fs, ${index}(${base})"),
+         [(OpNode DRC:$fs, (add PRC:$base, PRC:$index))], Itin, FrmFI>;
+
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
 //===----------------------------------------------------------------------===//
@@ -382,38 +394,41 @@ let Predicates = [NotN64, NotMips64, HasStdEnc] in {
 
 // Indexed loads and stores.
 let Predicates = [HasFPIdx, HasStdEnc] in {
-  def LWXC1 : FPIdxLoad<0x0, "lwxc1", FGR32, CPURegs, load>;
-  def SWXC1 : FPIdxStore<0x8, "swxc1", FGR32, CPURegs, store>;
+  def LWXC1 : LWXC1_FT<"lwxc1", FGR32, CPURegs, IILoad, load>, LWXC1_FM<0>;
+  def SWXC1 : SWXC1_FT<"swxc1", FGR32, CPURegs, IIStore, store>, SWXC1_FM<8>;
 }
 
 let Predicates = [HasMips32r2, NotMips64, HasStdEnc] in {
-  def LDXC1 : FPIdxLoad<0x1, "ldxc1", AFGR64, CPURegs, load>;
-  def SDXC1 : FPIdxStore<0x9, "sdxc1", AFGR64, CPURegs, store>;
+  def LDXC1 : LWXC1_FT<"ldxc1", AFGR64, CPURegs, IILoad, load>, LWXC1_FM<1>;
+  def SDXC1 : SWXC1_FT<"sdxc1", AFGR64, CPURegs, IIStore, store>, SWXC1_FM<9>;
 }
 
 let Predicates = [HasMips64, NotN64, HasStdEnc], DecoderNamespace="Mips64" in {
-  def LDXC164 : FPIdxLoad<0x1, "ldxc1", FGR64, CPURegs, load>;
-  def SDXC164 : FPIdxStore<0x9, "sdxc1", FGR64, CPURegs, store>;
+  def LDXC164 : LWXC1_FT<"ldxc1", FGR64, CPURegs, IILoad, load>, LWXC1_FM<1>;
+  def SDXC164 : SWXC1_FT<"sdxc1", FGR64, CPURegs, IIStore, store>, SWXC1_FM<9>;
 }
 
 // n64
 let Predicates = [IsN64, HasStdEnc], isCodeGenOnly=1 in {
-  def LWXC1_P8   : FPIdxLoad<0x0, "lwxc1", FGR32, CPU64Regs, load>;
-  def LDXC164_P8 : FPIdxLoad<0x1, "ldxc1", FGR64, CPU64Regs, load>;
-  def SWXC1_P8   : FPIdxStore<0x8, "swxc1", FGR32, CPU64Regs, store>;
-  def SDXC164_P8 : FPIdxStore<0x9, "sdxc1", FGR64, CPU64Regs, store>;
+  def LWXC1_P8 : LWXC1_FT<"lwxc1", FGR32, CPU64Regs, IILoad, load>, LWXC1_FM<0>;
+  def LDXC164_P8 : LWXC1_FT<"ldxc1", FGR64, CPU64Regs, IILoad, load>,
+                   LWXC1_FM<1>;
+  def SWXC1_P8 : SWXC1_FT<"swxc1", FGR32, CPU64Regs, IIStore, store>,
+                 SWXC1_FM<8>;
+  def SDXC164_P8 : SWXC1_FT<"sdxc1", FGR64, CPU64Regs, IIStore, store>,
+                   SWXC1_FM<9>;
 }
 
 // Load/store doubleword indexed unaligned.
 let Predicates = [NotMips64, HasStdEnc] in {
-  def LUXC1 : FPIdxLoad<0x5, "luxc1", AFGR64, CPURegs>;
-  def SUXC1 : FPIdxStore<0xd, "suxc1", AFGR64, CPURegs>;
+  def LUXC1 : LWXC1_FT<"luxc1", AFGR64, CPURegs, IILoad>, LWXC1_FM<0x5>;
+  def SUXC1 : SWXC1_FT<"suxc1", AFGR64, CPURegs, IIStore>, SWXC1_FM<0xd>;
 }
 
 let Predicates = [HasMips64, HasStdEnc],
   DecoderNamespace="Mips64" in {
-  def LUXC164 : FPIdxLoad<0x5, "luxc1", FGR64, CPURegs>;
-  def SUXC164 : FPIdxStore<0xd, "suxc1", FGR64, CPURegs>;
+  def LUXC164 : LWXC1_FT<"luxc1", FGR64, CPURegs, IILoad>, LWXC1_FM<0x5>;
+  def SUXC164 : SWXC1_FT<"suxc1", FGR64, CPURegs, IIStore>, SWXC1_FM<0xd>;
 }
 
 /// Floating-point Aritmetic

@@ -423,3 +423,33 @@ class MADDS_FM<bits<3> funct, bits<3> fmt> {
   let Inst{5-3}   = funct;
   let Inst{2-0}   = fmt;
 }
+
+class LWXC1_FM<bits<6> funct> {
+  bits<5> fd;
+  bits<5> base;
+  bits<5> index;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x13;
+  let Inst{25-21} = base;
+  let Inst{20-16} = index;
+  let Inst{15-11} = 0;
+  let Inst{10-6}  = fd;
+  let Inst{5-0}   = funct;
+}
+
+class SWXC1_FM<bits<6> funct> {
+  bits<5> fs;
+  bits<5> base;
+  bits<5> index;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x13;
+  let Inst{25-21} = base;
+  let Inst{20-16} = index;
+  let Inst{15-11} = fs;
+  let Inst{10-6}  = 0;
+  let Inst{5-0}   = funct;
+}
