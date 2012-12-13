@@ -2026,6 +2026,8 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
   if (!Ex.get()->isTypeDependent()) {
     // Perform lvalue-to-rvalue cast, if needed.
     Ex = DefaultLvalueConversion(Ex.take());
+    if (Ex.isInvalid())
+      return ExprError();
 
     QualType Type = Ex.get()->getType();
 
