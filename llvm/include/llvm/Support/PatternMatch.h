@@ -31,7 +31,9 @@
 
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
+#include "llvm/IntrinsicInst.h"
 #include "llvm/Operator.h"
+#include "llvm/Support/CallSite.h"
 
 namespace llvm {
 namespace PatternMatch {
@@ -895,6 +897,102 @@ template<typename LHS, typename RHS>
 inline MaxMin_match<LHS, RHS, umin_pred_ty>
 m_UMin(const LHS &L, const RHS &R) {
   return MaxMin_match<LHS, RHS, umin_pred_ty>(L, R);
+}
+
+template<typename Opnd_t>
+struct Argument_match {
+  unsigned OpI;
+  Opnd_t Val;
+  Argument_match(unsigned OpIdx, const Opnd_t &V) : OpI(OpIdx), Val(V) { }
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    CallSite CS(V);
+    return CS.isCall() && Val.match(CS.getArgument(OpI));
+  }
+};
+
+/// Match an argument
+template<unsigned OpI, typename Opnd_t>
+inline Argument_match<Opnd_t> m_Argument(const Opnd_t &Op) {
+  return Argument_match<Opnd_t>(OpI, Op);
+}
+
+/// Intrinsic matchers.
+struct IntrinsicID_match {
+  unsigned ID;
+  IntrinsicID_match(unsigned IntrID) : ID(IntrID) { }
+
+  template<typename OpTy>
+  bool match(OpTy *V) {
+    IntrinsicInst *II = dyn_cast<IntrinsicInst>(V);
+    return II && II->getIntrinsicID() == ID;
+  }
+};
+
+/// Intrinsic matches are combinations of ID matchers, and argument
+/// matchers. Higher arity matcher are defined recursively in terms of and-ing
+/// them with lower arity matchers. Here's some convenient typedefs for up to
+/// several arguments, and more can be added as needed
+template <typename T0 = void, typename T1 = void, typename T2 = void,
+          typename T3 = void, typename T4 = void, typename T5 = void,
+          typename T6 = void, typename T7 = void, typename T8 = void,
+          typename T9 = void, typename T10 = void> struct m_Intrinsic_Ty;
+template <typename T0>
+struct m_Intrinsic_Ty<T0> {
+  typedef match_combine_and<IntrinsicID_match, Argument_match<T0> > Ty;
+};
+template <typename T0, typename T1>
+struct m_Intrinsic_Ty<T0, T1> {
+  typedef match_combine_and<typename m_Intrinsic_Ty<T0>::Ty,
+                            Argument_match<T1> > Ty;
+};
+template <typename T0, typename T1, typename T2>
+struct m_Intrinsic_Ty<T0, T1, T2> {
+  typedef match_combine_and<typename m_Intrinsic_Ty<T0, T1>::Ty,
+                            Argument_match<T2> > Ty;
+};
+template <typename T0, typename T1, typename T2, typename T3>
+struct m_Intrinsic_Ty<T0, T1, T2, T3> {
+  typedef match_combine_and<typename m_Intrinsic_Ty<T0, T1, T2>::Ty,
+                            Argument_match<T3> > Ty;
+};
+
+/// Match intrinsic calls like this:
+///   m_Intrinsic<Intrinsic::fabs>(m_Value(X))
+template <unsigned IntrID>
+inline IntrinsicID_match
+m_Intrinsic() { return IntrinsicID_match(IntrID); }
+
+template<unsigned IntrID, typename T0>
+inline typename m_Intrinsic_Ty<T0>::Ty
+m_Intrinsic(const T0 &Op0) {
+  return m_CombineAnd(m_Intrinsic<IntrID>(), m_Argument<0>(Op0));
+}
+
+template<unsigned IntrID, typename T0, typename T1>
+inline typename m_Intrinsic_Ty<T0, T1>::Ty
+m_Intrinsic(const T0 &Op0, const T1 &Op1) {
+  return m_CombineAnd(m_Intrinsic<IntrID>(Op0), m_Argument<1>(Op1));
+}
+
+template<unsigned IntrID, typename T0, typename T1, typename T2>
+inline typename m_Intrinsic_Ty<T0, T1, T2>::Ty
+m_Intrinsic(const T0 &Op0, const T1 &Op1, const T2 &Op2) {
+  return m_CombineAnd(m_Intrinsic<IntrID>(Op0, Op1), m_Argument<2>(Op2));
+}
+
+template<unsigned IntrID, typename T0, typename T1, typename T2, typename T3>
+inline typename m_Intrinsic_Ty<T0, T1, T2, T3>::Ty
+m_Intrinsic(const T0 &Op0, const T1 &Op1, const T2 &Op2, const T3 &Op3) {
+  return m_CombineAnd(m_Intrinsic<IntrID>(Op0, Op1, Op2), m_Argument<3>(Op3));
+}
+
+// Helper intrinsic matching specializations
+template<typename Opnd0>
+inline typename m_Intrinsic_Ty<Opnd0>::Ty
+m_BSwap(const Opnd0 &Op0) {
+  return m_Intrinsic<Intrinsic::bswap>(Op0);
 }
 
 } // end namespace PatternMatch

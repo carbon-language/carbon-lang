@@ -16,9 +16,11 @@
 #include "llvm/Analysis/MemoryBuiltins.h"
 #include "llvm/DataLayout.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Support/PatternMatch.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;
+using namespace PatternMatch;
 
 STATISTIC(NumSimplified, "Number of library calls simplified");
 
@@ -276,25 +278,25 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       return ReplaceInstUsesWith(CI, ConstantInt::get(CI.getType(), Size));
     return 0;
   }
-  case Intrinsic::bswap:
+  case Intrinsic::bswap: {
+    Value *IIOperand = II->getArgOperand(0);
+    Value *X = 0;
+
     // bswap(bswap(x)) -> x
-    if (IntrinsicInst *Operand = dyn_cast<IntrinsicInst>(II->getArgOperand(0)))
-      if (Operand->getIntrinsicID() == Intrinsic::bswap)
-        return ReplaceInstUsesWith(CI, Operand->getArgOperand(0));
+    if (match(IIOperand, m_BSwap(m_Value(X))))
+        return ReplaceInstUsesWith(CI, X);
 
     // bswap(trunc(bswap(x))) -> trunc(lshr(x, c))
-    if (TruncInst *TI = dyn_cast<TruncInst>(II->getArgOperand(0))) {
-      if (IntrinsicInst *Operand = dyn_cast<IntrinsicInst>(TI->getOperand(0)))
-        if (Operand->getIntrinsicID() == Intrinsic::bswap) {
-          unsigned C = Operand->getType()->getPrimitiveSizeInBits() -
-                       TI->getType()->getPrimitiveSizeInBits();
-          Value *CV = ConstantInt::get(Operand->getType(), C);
-          Value *V = Builder->CreateLShr(Operand->getArgOperand(0), CV);
-          return new TruncInst(V, TI->getType());
-        }
+    if (match(IIOperand, m_Trunc(m_BSwap(m_Value(X))))) {
+      unsigned C = X->getType()->getPrimitiveSizeInBits() -
+        IIOperand->getType()->getPrimitiveSizeInBits();
+      Value *CV = ConstantInt::get(X->getType(), C);
+      Value *V = Builder->CreateLShr(X, CV);
+      return new TruncInst(V, IIOperand->getType());
     }
-
     break;
+  }
+
   case Intrinsic::powi:
     if (ConstantInt *Power = dyn_cast<ConstantInt>(II->getArgOperand(1))) {
       // powi(x, 0) -> 1.0
@@ -693,7 +695,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         if (Splat->isOne()) {
           if (Zext)
             return CastInst::CreateZExtOrBitCast(Arg0, II->getType());
-          // else    
+          // else
           return CastInst::CreateSExtOrBitCast(Arg0, II->getType());
         }
       }
