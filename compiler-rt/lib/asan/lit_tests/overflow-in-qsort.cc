@@ -31,5 +31,5 @@ int main() {
 }
 
 // CHECK: ERROR: AddressSanitizer: global-buffer-overflow
-// CHECK: #0{{.*}} in QsortCallback
+// CHECK: #0{{.*}} in {{_?}}QsortCallback
 // CHECK: is located 0 bytes to the right of global variable 'global_array
