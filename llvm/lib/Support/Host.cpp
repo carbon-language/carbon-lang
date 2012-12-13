@@ -517,6 +517,64 @@ std::string sys::getHostCPUName() {
 }
 #endif
 
+#if defined(__linux__) && defined(__arm__)
+bool sys::getHostCPUFeatures(StringMap<bool> &Features) {
+  std::string Err;
+  DataStreamer *DS = getDataFileStreamer("/proc/cpuinfo", &Err);
+  if (!DS) {
+    DEBUG(dbgs() << "Unable to open /proc/cpuinfo: " << Err << "\n");
+    return false;
+  }
+
+  // Read 1024 bytes from /proc/cpuinfo, which should contain the Features line
+  // in all cases.
+  char buffer[1024];
+  size_t CPUInfoSize = DS->GetBytes((unsigned char*) buffer, sizeof(buffer));
+  delete DS;
+
+  StringRef Str(buffer, CPUInfoSize);
+
+  SmallVector<StringRef, 32> Lines;
+  Str.split(Lines, "\n");
+
+  // Look for the CPU implementer line.
+  StringRef Implementer;
+  for (unsigned I = 0, E = Lines.size(); I != E; ++I)
+    if (Lines[I].startswith("CPU implementer"))
+      Implementer = Lines[I].substr(15).ltrim("\t :");
+
+  if (Implementer == "0x41") { // ARM Ltd.
+    SmallVector<StringRef, 32> CPUFeatures;
+
+    // Look for the CPU features.
+    for (unsigned I = 0, E = Lines.size(); I != E; ++I)
+      if (Lines[I].startswith("Features")) {
+        Lines[I].split(CPUFeatures, " ");
+        break;
+      }
+
+    for (unsigned I = 0, E = CPUFeatures.size(); I != E; ++I) {
+      StringRef LLVMFeatureStr = StringSwitch<StringRef>(CPUFeatures[I])
+        .Case("half", "fp16")
+        .Case("neon", "neon")
+        .Case("vfpv3", "vfp3")
+        .Case("vfpv3d16", "d16")
+        .Case("vfpv4", "vfp4")
+        .Case("idiva", "hwdiv-arm")
+        .Case("idivt", "hwdiv")
+        .Default("");
+
+      if (LLVMFeatureStr != "")
+        Features.GetOrCreateValue(LLVMFeatureStr).setValue(true);
+    }
+
+    return true;
+  }
+
+  return false;
+}
+#else
 bool sys::getHostCPUFeatures(StringMap<bool> &Features){
   return false;
 }
+#endif
