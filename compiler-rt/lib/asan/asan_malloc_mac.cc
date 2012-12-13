@@ -242,7 +242,7 @@ void *cf_realloc(void *ptr, CFIndex size, CFOptionFlags hint, void *info) {
       // We can't recover from reallocating an unknown address, because
       // this would require reading at most |size| bytes from
       // potentially unaccessible memory.
-      ET_STACK_TRACE_FREE(ptr);
+      GET_STACK_TRACE_FREE;
       GET_ZONE_FOR_PTR(ptr);
       ReportMacCfReallocUnknown((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
     }
