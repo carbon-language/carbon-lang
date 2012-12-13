@@ -149,16 +149,16 @@ multiclass FFR2P_M<bits<6> funct, string opstr, SDNode OpNode, bit isComm = 0> {
 }
 
 // FP madd/msub/nmadd/nmsub instruction classes.
-class FMADDSUB<bits<3> funct, bits<3> fmt, string opstr, string fmtstr,
+class FMADDSUB<bits<3> funct, bits<3> fmt, string opstr,
                SDNode OpNode, RegisterClass RC> :
   FFMADDSUB<funct, fmt, (outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
-            !strconcat(opstr, ".", fmtstr, "\t$fd, $fr, $fs, $ft"),
+            !strconcat(opstr, "\t$fd, $fr, $fs, $ft"),
             [(set RC:$fd, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr))]>;
 
-class FNMADDSUB<bits<3> funct, bits<3> fmt, string opstr, string fmtstr,
+class FNMADDSUB<bits<3> funct, bits<3> fmt, string opstr,
                 SDNode OpNode, RegisterClass RC> :
   FFMADDSUB<funct, fmt, (outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
-            !strconcat(opstr, ".", fmtstr, "\t$fd, $fr, $fs, $ft"),
+            !strconcat(opstr, "\t$fd, $fr, $fs, $ft"),
             [(set RC:$fd, (fsub fpimm0, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr)))]>;
 
 //===----------------------------------------------------------------------===//
@@ -334,34 +334,34 @@ def FSUB_S : FFR2P<0x01, 16, "sub.s", FGR32, fsub>;
 defm FSUB : FFR2P_M<0x01, "sub.d", fsub>;
 
 let Predicates = [HasMips32r2, HasStdEnc] in {
-  def MADD_S : FMADDSUB<0x4, 0, "madd", "s", fadd, FGR32>;
-  def MSUB_S : FMADDSUB<0x5, 0, "msub", "s", fsub, FGR32>;
+  def MADD_S : FMADDSUB<0x4, 0, "madd.s", fadd, FGR32>;
+  def MSUB_S : FMADDSUB<0x5, 0, "msub.s", fsub, FGR32>;
 }
 
 let Predicates = [HasMips32r2, NoNaNsFPMath, HasStdEnc] in {
-  def NMADD_S : FNMADDSUB<0x6, 0, "nmadd", "s", fadd, FGR32>;
-  def NMSUB_S : FNMADDSUB<0x7, 0, "nmsub", "s", fsub, FGR32>;
+  def NMADD_S : FNMADDSUB<0x6, 0, "nmadd.s", fadd, FGR32>;
+  def NMSUB_S : FNMADDSUB<0x7, 0, "nmsub.s", fsub, FGR32>;
 }
 
 let Predicates = [HasMips32r2, NotFP64bit, HasStdEnc] in {
-  def MADD_D32 : FMADDSUB<0x4, 1, "madd", "d", fadd, AFGR64>;
-  def MSUB_D32 : FMADDSUB<0x5, 1, "msub", "d", fsub, AFGR64>;
+  def MADD_D32 : FMADDSUB<0x4, 1, "madd.d", fadd, AFGR64>;
+  def MSUB_D32 : FMADDSUB<0x5, 1, "msub.d", fsub, AFGR64>;
 }
 
 let Predicates = [HasMips32r2, NotFP64bit, NoNaNsFPMath, HasStdEnc] in {
-  def NMADD_D32 : FNMADDSUB<0x6, 1, "nmadd", "d", fadd, AFGR64>;
-  def NMSUB_D32 : FNMADDSUB<0x7, 1, "nmsub", "d", fsub, AFGR64>;
+  def NMADD_D32 : FNMADDSUB<0x6, 1, "nmadd.d", fadd, AFGR64>;
+  def NMSUB_D32 : FNMADDSUB<0x7, 1, "nmsub.d", fsub, AFGR64>;
 }
 
 let Predicates = [HasMips32r2, IsFP64bit, HasStdEnc], isCodeGenOnly=1 in {
-  def MADD_D64 : FMADDSUB<0x4, 1, "madd", "d", fadd, FGR64>;
-  def MSUB_D64 : FMADDSUB<0x5, 1, "msub", "d", fsub, FGR64>;
+  def MADD_D64 : FMADDSUB<0x4, 1, "madd.d", fadd, FGR64>;
+  def MSUB_D64 : FMADDSUB<0x5, 1, "msub.d", fsub, FGR64>;
 }
 
 let Predicates = [HasMips32r2, IsFP64bit, NoNaNsFPMath, HasStdEnc],
     isCodeGenOnly=1 in {
-  def NMADD_D64 : FNMADDSUB<0x6, 1, "nmadd", "d", fadd, FGR64>;
-  def NMSUB_D64 : FNMADDSUB<0x7, 1, "nmsub", "d", fsub, FGR64>;
+  def NMADD_D64 : FNMADDSUB<0x6, 1, "nmadd.d", fadd, FGR64>;
+  def NMSUB_D64 : FNMADDSUB<0x7, 1, "nmsub.d", fsub, FGR64>;
 }
 
 //===----------------------------------------------------------------------===//
