@@ -29,6 +29,7 @@ progress. This page will get filled out with docs soon...
    PTHInternals
    RAVFrontendAction
    UsersManual
+   AutomaticReferenceCounting
 
 
 Indices and tables
