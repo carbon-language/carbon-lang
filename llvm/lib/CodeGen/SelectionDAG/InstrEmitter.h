@@ -81,7 +81,7 @@ class InstrEmitter {
   /// supports SubIdx sub-registers.  Emit a copy if that isn't possible.
   /// Return the virtual register to use.
   unsigned ConstrainForSubReg(unsigned VReg, unsigned SubIdx,
-                              EVT VT, DebugLoc DL);
+                              MVT VT, DebugLoc DL);
 
   /// EmitSubregNode - Generate machine code for subreg nodes.
   ///

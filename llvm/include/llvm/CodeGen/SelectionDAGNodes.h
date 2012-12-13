@@ -130,6 +130,11 @@ public:
   ///
   inline EVT getValueType() const;
 
+  /// Return the simple ValueType of the referenced return value.
+  MVT getSimpleValueType() const {
+    return getValueType().getSimpleVT();
+  }
+
   /// getValueSizeInBits - Returns the size of the value in bits.
   ///
   unsigned getValueSizeInBits() const {
@@ -593,6 +598,12 @@ public:
   EVT getValueType(unsigned ResNo) const {
     assert(ResNo < NumValues && "Illegal result number!");
     return ValueList[ResNo];
+  }
+
+  /// Return the type of a specified result as a simple type.
+  ///
+  MVT getSimpleValueType(unsigned ResNo) const {
+    return getValueType(ResNo).getSimpleVT();
   }
 
   /// getValueSizeInBits - Returns MVT::getSizeInBits(getValueType(ResNo)).

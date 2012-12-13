@@ -208,7 +208,7 @@ void FunctionLoweringInfo::clear() {
 }
 
 /// CreateReg - Allocate a single virtual register for the given type.
-unsigned FunctionLoweringInfo::CreateReg(EVT VT) {
+unsigned FunctionLoweringInfo::CreateReg(MVT VT) {
   return RegInfo->createVirtualRegister(TLI.getRegClassFor(VT));
 }
 
@@ -226,7 +226,7 @@ unsigned FunctionLoweringInfo::CreateRegs(Type *Ty) {
   unsigned FirstReg = 0;
   for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
     EVT ValueVT = ValueVTs[Value];
-    EVT RegisterVT = TLI.getRegisterType(Ty->getContext(), ValueVT);
+    MVT RegisterVT = TLI.getRegisterType(Ty->getContext(), ValueVT).getSimpleVT();
 
     unsigned NumRegs = TLI.getNumRegisters(Ty->getContext(), ValueVT);
     for (unsigned i = 0; i != NumRegs; ++i) {

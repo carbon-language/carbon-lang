@@ -2155,7 +2155,7 @@ SDValue MipsTargetLowering::LowerRETURNADDR(SDValue Op,
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getSimpleValueType();
   unsigned RA = IsN64 ? Mips::RA_64 : Mips::RA;
   MFI->setReturnAddressIsTaken(true);
 
@@ -3661,7 +3661,7 @@ copyByValRegs(SDValue Chain, DebugLoc DL, std::vector<SDValue> &OutChains,
     return;
 
   // Copy arg registers.
-  EVT RegTy = MVT::getIntegerVT(CC.regSize() * 8);
+  MVT RegTy = MVT::getIntegerVT(CC.regSize() * 8);
   const TargetRegisterClass *RC = getRegClassFor(RegTy);
 
   for (unsigned I = 0; I < ByVal.NumRegs; ++I) {
@@ -3783,7 +3783,7 @@ MipsTargetLowering::writeVarArgRegs(std::vector<SDValue> &OutChains,
   const CCState &CCInfo = CC.getCCInfo();
   unsigned Idx = CCInfo.getFirstUnallocated(ArgRegs, NumRegs);
   unsigned RegSize = CC.regSize();
-  EVT RegTy = MVT::getIntegerVT(RegSize * 8);
+  MVT RegTy = MVT::getIntegerVT(RegSize * 8);
   const TargetRegisterClass *RC = getRegClassFor(RegTy);
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
