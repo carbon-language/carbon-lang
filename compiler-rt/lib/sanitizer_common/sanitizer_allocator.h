@@ -132,6 +132,8 @@ struct NoOpMapUnmapCallback {
 // Space: a portion of address space of kSpaceSize bytes starting at
 // a fixed address (kSpaceBeg). Both constants are powers of two and
 // kSpaceBeg is kSpaceSize-aligned.
+// At the beginning the entire space is mprotect-ed, then small parts of it
+// are mapped on demand.
 //
 // Region: a part of Space dedicated to a single size class.
 // There are kNumClasses Regions of equal size.
@@ -147,8 +149,8 @@ template <const uptr kSpaceBeg, const uptr kSpaceSize,
 class SizeClassAllocator64 {
  public:
   void Init() {
-    CHECK_EQ(kSpaceBeg, reinterpret_cast<uptr>(MmapFixedNoReserve(
-             kSpaceBeg, kSpaceSize)));
+    CHECK_EQ(kSpaceBeg,
+             reinterpret_cast<uptr>(Mprotect(kSpaceBeg, kSpaceSize)));
     MapWithCallback(kSpaceEnd, AdditionalSize());
   }
 
@@ -253,15 +255,20 @@ class SizeClassAllocator64 {
   // Populate the free list with at most this number of bytes at once
   // or with one element if its size is greater.
   static const uptr kPopulateSize = 1 << 18;
+  // Call mmap for user memory with this size.
+  static const uptr kUserMapSize = 1 << 22;
+  // Call mmap for metadata memory with this size.
+  static const uptr kMetaMapSize = 1 << 20;
 
   struct RegionInfo {
     SpinMutex mutex;
     AllocatorFreeList free_list;
     uptr allocated_user;  // Bytes allocated for user memory.
     uptr allocated_meta;  // Bytes allocated for metadata.
-    char padding[kCacheLineSize - 3 * sizeof(uptr) - sizeof(AllocatorFreeList)];
+    uptr mapped_user;  // Bytes mapped for user memory.
+    uptr mapped_meta;  // Bytes mapped for metadata.
   };
-  COMPILER_CHECK(sizeof(RegionInfo) == kCacheLineSize);
+  COMPILER_CHECK(sizeof(RegionInfo) >= kCacheLineSize);
 
   static uptr AdditionalSize() {
     uptr PageSize = GetPageSizeCached();
@@ -290,6 +297,12 @@ class SizeClassAllocator64 {
     uptr beg_idx = region->allocated_user;
     uptr end_idx = beg_idx + kPopulateSize;
     uptr region_beg = kSpaceBeg + kRegionSize * class_id;
+    if (end_idx > region->mapped_user) {
+      // Do the mmap for the user memory.
+      CHECK_GT(region->mapped_user + kUserMapSize, end_idx);
+      MapWithCallback(region_beg + region->mapped_user, kUserMapSize);
+      region->mapped_user += kUserMapSize;
+    }
     uptr idx = beg_idx;
     uptr i = 0;
     do {  // do-while loop because we need to put at least one item.
@@ -300,6 +313,13 @@ class SizeClassAllocator64 {
     } while (idx < end_idx);
     region->allocated_user += idx - beg_idx;
     region->allocated_meta += i * kMetadataSize;
+    if (region->allocated_meta > region->mapped_meta) {
+      // Do the mmap for the metadata.
+      CHECK_GT(region->mapped_meta + kMetaMapSize, region->allocated_meta);
+      MapWithCallback(region_beg + kRegionSize -
+                      region->mapped_meta - kMetaMapSize, kMetaMapSize);
+      region->mapped_meta += kMetaMapSize;
+    }
     if (region->allocated_user + region->allocated_meta > kRegionSize) {
       Printf("Out of memory. Dying.\n");
       Printf("The process has exhausted %zuMB for size class %zu.\n",

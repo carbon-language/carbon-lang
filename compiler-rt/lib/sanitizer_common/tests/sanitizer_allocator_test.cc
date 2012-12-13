@@ -197,6 +197,8 @@ TEST(SanitizerCommon, SizeClassAllocator64MapUnmapCallback) {
   Allocator64WithCallBack *a = new Allocator64WithCallBack;
   a->Init();
   EXPECT_EQ(TestMapUnmapCallback::map_count, 1);  // Allocator state.
+  a->Allocate(100, 1);
+  EXPECT_EQ(TestMapUnmapCallback::map_count, 3);  // State + alloc + metadata.
   a->TestOnlyUnmap();
   EXPECT_EQ(TestMapUnmapCallback::unmap_count, 1);  // The whole thing.
   delete a;
