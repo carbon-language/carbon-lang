@@ -30,6 +30,7 @@ ret:
   ret void
 }
 
+; CHECK: #pragma simd
 ; CHECK: #pragma omp parallel for
 ; CHECK: for (int c1 = 0; c1 < n; c1 += 1)
 ; CHECK:   Stmt_loop_body(c1)
