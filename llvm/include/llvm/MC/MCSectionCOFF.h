@@ -50,6 +50,12 @@ namespace llvm {
     bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
 
     StringRef getSectionName() const { return SectionName; }
+    virtual std::string getLabelBeginName() const {
+      return SectionName.str() + "_begin";
+    }
+    virtual std::string getLabelEndName() const {
+      return SectionName.str() + "_end";
+    }
     unsigned getCharacteristics() const { return Characteristics; }
     int getSelection () const { return Selection; }
 

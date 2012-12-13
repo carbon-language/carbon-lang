@@ -145,6 +145,14 @@ public:
     return StringRef(SectionName);
   }
 
+  virtual std::string getLabelBeginName() const {
+    return StringRef(getSegmentName().str() + getSectionName().str() + "_begin");
+  }
+
+  virtual std::string getLabelEndName() const {
+    return StringRef(getSegmentName().str() + getSectionName().str() + "_end");
+  }
+
   unsigned getTypeAndAttributes() const { return TypeAndAttributes; }
   unsigned getStubSize() const { return Reserved2; }
 

@@ -17,6 +17,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCSection.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Debug.h"
 
 namespace llvm {
 
@@ -57,6 +59,13 @@ public:
   bool ShouldOmitSectionDirective(StringRef Name, const MCAsmInfo &MAI) const;
 
   StringRef getSectionName() const { return SectionName; }
+  virtual std::string getLabelBeginName() const {
+    dbgs() << SectionName.data();
+    dbgs() << "_begin" << "\n";
+    return SectionName.str() + "_begin"; }
+  virtual std::string getLabelEndName() const {
+    return SectionName.str() + "_end";
+  }
   unsigned getType() const { return Type; }
   unsigned getFlags() const { return Flags; }
   unsigned getEntrySize() const { return EntrySize; }
