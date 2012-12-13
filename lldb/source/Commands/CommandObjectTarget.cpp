@@ -2644,6 +2644,8 @@ protected:
         }
         else
         {
+            bool flush = false;
+            
             const size_t argc = args.GetArgumentCount();
             if (argc == 0)
             {
@@ -2664,6 +2666,8 @@ protected:
                         }
                         else
                         {
+                            flush = true;
+                            
                             StreamString strm;
                             module_spec.GetUUID().Dump (&strm);
                             if (module_spec.GetFileSpec())
@@ -2737,6 +2741,10 @@ protected:
                                 result.SetStatus (eReturnStatusFailed);
                                 return false;
                             }
+                            else
+                            {
+                                flush = true;
+                            }
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
                         else
@@ -2757,7 +2765,15 @@ protected:
                     }
                 }
             }
+            
+            if (flush)
+            {
+                ProcessSP process = target->GetProcessSP();
+                if (process)
+                    process->Flush();
+            }
         }
+        
         return result.Succeeded();
     }
 
