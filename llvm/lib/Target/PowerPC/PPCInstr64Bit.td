@@ -723,49 +723,50 @@ def ADDItocL: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tocentry:$disp),
 def LDgotTPREL: Pseudo<(outs G8RC:$rD), (ins tlsaddr:$disp, G8RC:$reg),
                        "#LDgotTPREL",
                        [(set G8RC:$rD,
-                         (PPCldGotTprel G8RC:$reg, tglobaltlsaddr:$disp))]>,
+                         (PPCldGotTprel tglobaltlsaddr:$disp, G8RC:$reg))]>,
                       isPPC64;
 def : Pat<(PPCaddTls G8RC:$in, tglobaltlsaddr:$g),
           (ADD8TLS G8RC:$in, tglobaltlsaddr:$g)>;
 def ADDIStlsgdHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
                          "#ADDIStlsgdHA",
                          [(set G8RC:$rD,
-                           (PPCaddisTlsgdHA G8RC:$reg, tglobaladdr:$disp))]>,
+                           (PPCaddisTlsgdHA G8RC:$reg, tglobaltlsaddr:$disp))]>,
                   isPPC64;
 def ADDItlsgdL : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolLo64:$disp),
                        "#ADDItlsgdL",
                        [(set G8RC:$rD,
-                         (PPCaddiTlsgdL G8RC:$reg, tglobaladdr:$disp))]>,
+                         (PPCaddiTlsgdL G8RC:$reg, tglobaltlsaddr:$disp))]>,
                  isPPC64;
 def GETtlsADDR : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tlsgd:$sym),
                         "#GETtlsADDR",
                         [(set G8RC:$rD,
-                          (PPCgetTlsAddr G8RC:$reg, tglobaladdr:$sym))]>,
+                          (PPCgetTlsAddr G8RC:$reg, tglobaltlsaddr:$sym))]>,
                  isPPC64;
 def ADDIStlsldHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
                          "#ADDIStlsldHA",
                          [(set G8RC:$rD,
-                           (PPCaddisTlsldHA G8RC:$reg, tglobaladdr:$disp))]>,
+                           (PPCaddisTlsldHA G8RC:$reg, tglobaltlsaddr:$disp))]>,
                   isPPC64;
 def ADDItlsldL : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolLo64:$disp),
                        "#ADDItlsldL",
                        [(set G8RC:$rD,
-                         (PPCaddiTlsldL G8RC:$reg, tglobaladdr:$disp))]>,
+                         (PPCaddiTlsldL G8RC:$reg, tglobaltlsaddr:$disp))]>,
                  isPPC64;
 def GETtlsldADDR : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tlsgd:$sym),
                           "#GETtlsldADDR",
                           [(set G8RC:$rD,
-                            (PPCgetTlsldAddr G8RC:$reg, tglobaladdr:$sym))]>,
+                            (PPCgetTlsldAddr G8RC:$reg, tglobaltlsaddr:$sym))]>,
                    isPPC64;
 def ADDISdtprelHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
                           "#ADDISdtprelHA",
                           [(set G8RC:$rD,
-                            (PPCaddisDtprelHA G8RC:$reg, tglobaladdr:$disp))]>,
+                            (PPCaddisDtprelHA G8RC:$reg,
+                                              tglobaltlsaddr:$disp))]>,
                    isPPC64;
 def ADDIdtprelL : Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolLo64:$disp),
                          "#ADDIdtprelL",
                          [(set G8RC:$rD,
-                           (PPCaddiDtprelL G8RC:$reg, tglobaladdr:$disp))]>,
+                           (PPCaddiDtprelL G8RC:$reg, tglobaltlsaddr:$disp))]>,
                   isPPC64;
 
 let PPC970_Unit = 2 in {

@@ -1402,7 +1402,7 @@ SDValue PPCTargetLowering::LowerGlobalTLSAddress(SDValue Op,
     // copies dissolve during subsequent transforms.
     Chain = DAG.getCopyToReg(Chain, dl, PPC::X3, TLSAddr);
     SDValue DtvOffsetHi = DAG.getNode(PPCISD::ADDIS_DTPREL_HA, dl, PtrVT,
-                                      ParmReg, TGA, Chain);
+                                      Chain, ParmReg, TGA);
     return DAG.getNode(PPCISD::ADDI_DTPREL_L, dl, PtrVT, DtvOffsetHi, TGA);
   }
 
