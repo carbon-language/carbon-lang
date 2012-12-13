@@ -2037,7 +2037,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       // Turn x&~y == 0 into x&y != 0 if x is a power of 2.
       Value *X = 0, *Y = 0;
       if (match(Op0, m_And(m_Value(X), m_Not(m_Value(Y)))) &&
-          match(Op1, m_Zero()) && isPowerOfTwo(X, TD)) {
+          match(Op1, m_Zero()) && isKnownToBeAPowerOfTwo(X, TD)) {
         return new ICmpInst(ICmpInst::ICMP_NE,
                             Builder->CreateAnd(X, Y),
                             Op1);
@@ -2083,7 +2083,7 @@ Instruction *InstCombiner::visitICmpInst(ICmpInst &I) {
       // Turn x&~y != 0 into x&y == 0 if x is a power of 2.
       Value *X = 0, *Y = 0;
       if (match(Op0, m_And(m_Value(X), m_Not(m_Value(Y)))) &&
-          match(Op1, m_Zero()) && isPowerOfTwo(X, TD)) {
+          match(Op1, m_Zero()) && isKnownToBeAPowerOfTwo(X, TD)) {
         return new ICmpInst(ICmpInst::ICMP_EQ,
                             Builder->CreateAnd(X, Y),
                             Op1);
