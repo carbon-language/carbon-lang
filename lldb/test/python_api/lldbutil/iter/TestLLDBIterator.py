@@ -31,6 +31,7 @@ class LLDBIteratorTestCase(TestBase):
         self.buildDefault()
         self.lldb_iter_breakpoint()
 
+    @expectedFailureLinux # bugzilla 14323
     @python_api_test
     def test_lldb_iter_frame(self):
         """Test iterator works correctly for SBProcess->SBThread->SBFrame."""
