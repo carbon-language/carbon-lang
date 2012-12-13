@@ -224,6 +224,17 @@ multiclass ROUND_M<string opstr, InstrItinClass Itin> {
   }
 }
 
+class MFC1_FT<string opstr, RegisterClass DstRC, RegisterClass SrcRC,
+              InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
+  InstSE<(outs DstRC:$rt), (ins SrcRC:$fs), !strconcat(opstr, "\t$rt, $fs"),
+         [(set DstRC:$rt, (OpNode SrcRC:$fs))], Itin, FrmFR>;
+
+class MTC1_FT<string opstr, RegisterClass DstRC, RegisterClass SrcRC,
+              InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
+  InstSE<(outs DstRC:$fs), (ins SrcRC:$rt), !strconcat(opstr, "\t$rt, $fs"),
+         [(set DstRC:$fs, (OpNode SrcRC:$rt))], Itin, FrmFR>;
+
+
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
 //===----------------------------------------------------------------------===//
@@ -300,27 +311,12 @@ class FFRGPR<bits<5> _fmt, dag outs, dag ins, string asmstr, list<dag> pattern>:
 }
 
 /// Move Control Registers From/To CPU Registers
-def CFC1  : FFRGPR<0x2, (outs CPURegs:$rt), (ins CCR:$fs),
-                  "cfc1\t$rt, $fs", []>;
-
-def CTC1  : FFRGPR<0x6, (outs CCR:$fs), (ins CPURegs:$rt),
-                  "ctc1\t$rt, $fs", []>;
-
-def MFC1  : FFRGPR<0x00, (outs CPURegs:$rt), (ins FGR32:$fs),
-                  "mfc1\t$rt, $fs",
-                  [(set CPURegs:$rt, (bitconvert FGR32:$fs))]>;
-
-def MTC1  : FFRGPR<0x04, (outs FGR32:$fs), (ins CPURegs:$rt),
-                  "mtc1\t$rt, $fs",
-                  [(set FGR32:$fs, (bitconvert CPURegs:$rt))]>;
-
-def DMFC1 : FFRGPR<0x01, (outs CPU64Regs:$rt), (ins FGR64:$fs),
-                  "dmfc1\t$rt, $fs",
-                  [(set CPU64Regs:$rt, (bitconvert FGR64:$fs))]>;
-
-def DMTC1 : FFRGPR<0x05, (outs FGR64:$fs), (ins CPU64Regs:$rt),
-                  "dmtc1\t$rt, $fs",
-                  [(set FGR64:$fs, (bitconvert CPU64Regs:$rt))]>;
+def CFC1 : MFC1_FT<"cfc1", CPURegs, CCR, IIFmove>, MFC1_FM<2>;
+def CTC1 : MTC1_FT<"ctc1", CCR, CPURegs, IIFmove>, MFC1_FM<6>;
+def MFC1 : MFC1_FT<"mfc1", CPURegs, FGR32, IIFmove, bitconvert>, MFC1_FM<0>;
+def MTC1 : MTC1_FT<"mtc1", FGR32, CPURegs, IIFmove, bitconvert>, MFC1_FM<4>;
+def DMFC1 : MFC1_FT<"dmfc1", CPU64Regs, FGR64, IIFmove, bitconvert>, MFC1_FM<1>;
+def DMTC1 : MTC1_FT<"dmtc1", FGR64, CPU64Regs, IIFmove, bitconvert>, MFC1_FM<5>;
 
 def FMOV_S   : ABSS_FT<"mov.s", FGR32, FGR32, IIFmove>, ABSS_FM<0x6, 16>;
 def FMOV_D32 : ABSS_FT<"mov.d", AFGR64, AFGR64, IIFmove>, ABSS_FM<0x6, 17>,

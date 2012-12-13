@@ -381,3 +381,16 @@ class ABSS_FM<bits<6> funct, bits<5> fmt> {
   let Inst{10-6}  = fd;
   let Inst{5-0}   = funct;
 }
+
+class MFC1_FM<bits<5> funct> {
+  bits<5> rt;
+  bits<5> fs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x11;
+  let Inst{25-21} = funct;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = fs;
+  let Inst{10-0}  = 0;
+}
