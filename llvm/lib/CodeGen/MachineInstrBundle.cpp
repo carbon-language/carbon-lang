@@ -47,8 +47,8 @@ bool UnpackMachineBundles::runOnMachineFunction(MachineFunction &MF) {
       // Remove BUNDLE instruction and the InsideBundle flags from bundled
       // instructions.
       if (MI->isBundle()) {
-        while (++MII != MIE && MII->isInsideBundle()) {
-          MII->setIsInsideBundle(false);
+        while (++MII != MIE && MII->isBundledWithPred()) {
+          MII->unbundleFromPred();
           for (unsigned i = 0, e = MII->getNumOperands(); i != e; ++i) {
             MachineOperand &MO = MII->getOperand(i);
             if (MO.isReg() && MO.isInternalRead())
@@ -101,13 +101,15 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
                           MachineBasicBlock::instr_iterator FirstMI,
                           MachineBasicBlock::instr_iterator LastMI) {
   assert(FirstMI != LastMI && "Empty bundle?");
+  MIBundleBuilder Bundle(MBB, FirstMI, LastMI);
 
   const TargetMachine &TM = MBB.getParent()->getTarget();
   const TargetInstrInfo *TII = TM.getInstrInfo();
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
 
-  MachineInstrBuilder MIB = BuildMI(MBB, FirstMI, FirstMI->getDebugLoc(),
+  MachineInstrBuilder MIB = BuildMI(*MBB.getParent(), FirstMI->getDebugLoc(),
                                     TII->get(TargetOpcode::BUNDLE));
+  Bundle.prepend(MIB);
 
   SmallVector<unsigned, 32> LocalDefs;
   SmallSet<unsigned, 32> LocalDefSet;
@@ -177,7 +179,6 @@ void llvm::finalizeBundle(MachineBasicBlock &MBB,
       }
     }
 
-    FirstMI->setIsInsideBundle();
     Defs.clear();
   }
 
