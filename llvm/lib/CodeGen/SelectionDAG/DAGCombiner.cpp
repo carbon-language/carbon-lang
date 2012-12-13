@@ -2984,7 +2984,8 @@ SDValue DAGCombiner::MatchBSwapHWord(SDNode *N, SDValue N0, SDValue N1) {
   SDValue N00 = N0.getOperand(0);
   SDValue N01 = N0.getOperand(1);
 
-  if (N1.getOpcode() == ISD::OR) {
+  if (N1.getOpcode() == ISD::OR &&
+      N00.getNumOperands() == 2 && N01.getNumOperands() == 2) {
     // (or (or (and), (and)), (or (and), (and)))
     SDValue N000 = N00.getOperand(0);
     if (!isBSwapHWordElement(N000, Parts))
