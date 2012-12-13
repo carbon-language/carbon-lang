@@ -107,17 +107,32 @@ You can make blocks of code like this:
      return 0
    }
 
-For a shell session, use a ``console`` code block:
+For a shell session, use a ``console`` code block (some existing docs use
+``bash``):
 
 .. code-block:: console
 
    $ echo "Goodbye cruel world!"
    $ rm -rf /
 
-If you need to show LLVM IR use the ``llvm`` code block.  Code blocks of ``c``,
-``c++``, ``objc``, ``bash``, ``makefile`` kinds are supported.
+If you need to show LLVM IR use the ``llvm`` code block.
 
-You can show preformatted text without any syntax highlighting like this:
+.. code-block:: llvm
+
+   define i32 @test1() {
+   entry:
+     ret i32 0
+   }
+
+Some other common code blocks you might need are ``c``, ``objc``, ``make``,
+and ``cmake``. If you need something beyond that, you can look at the `full
+list`_ of supported code blocks.
+
+.. _`full list`: http://pygments.org/docs/lexers/
+
+However, don't waste time fiddling with syntax highlighting when you could
+be adding meaningful content. When in doubt, show preformatted text
+without any syntax highlighting like this:
 
 ::
 
@@ -136,8 +151,6 @@ You can show preformatted text without any syntax highlighting like this:
                       ...+. .: .
                          .++:..
                           ...
-
-One can also use a ``none`` code block to turn off highlighting.
 
 Hopefully you won't need to be this deep
 """"""""""""""""""""""""""""""""""""""""
