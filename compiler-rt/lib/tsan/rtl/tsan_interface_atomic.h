@@ -28,7 +28,7 @@ typedef long     __tsan_atomic64;  // NOLINT
 
 #if defined(__SIZEOF_INT128__) \
     || (__clang_major__ * 100 + __clang_minor__ >= 302)
-typedef __int128 __tsan_atomic128;
+__extension__ typedef __int128 __tsan_atomic128;
 #define __TSAN_HAS_INT128 1
 #else
 typedef char     __tsan_atomic128;
