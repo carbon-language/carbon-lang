@@ -234,6 +234,19 @@ class MTC1_FT<string opstr, RegisterClass DstRC, RegisterClass SrcRC,
   InstSE<(outs DstRC:$fs), (ins SrcRC:$rt), !strconcat(opstr, "\t$rt, $fs"),
          [(set DstRC:$fs, (OpNode SrcRC:$rt))], Itin, FrmFR>;
 
+class LW_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
+            Operand MemOpnd, SDPatternOperator OpNode= null_frag> :
+  InstSE<(outs RC:$rt), (ins MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
+         [(set RC:$rt, (OpNode addr:$addr))], Itin, FrmFI> {
+  let DecoderMethod = "DecodeFMem";
+}
+
+class SW_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
+            Operand MemOpnd, SDPatternOperator OpNode= null_frag> :
+  InstSE<(outs), (ins RC:$rt, MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
+         [(OpNode RC:$rt, addr:$addr)], Itin, FrmFI> {
+  let DecoderMethod = "DecodeFMem";
+}
 
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
@@ -328,30 +341,30 @@ def FMOV_D64 : ABSS_FT<"mov.d", FGR64, FGR64, IIFmove>, ABSS_FM<0x6, 17>,
 
 /// Floating Point Memory Instructions
 let Predicates = [IsN64, HasStdEnc], DecoderNamespace = "Mips64" in {
-  def LWC1_P8   : FPLoad<0x31, "lwc1", FGR32, mem64>;
-  def SWC1_P8   : FPStore<0x39, "swc1", FGR32, mem64>;
-  def LDC164_P8 : FPLoad<0x35, "ldc1", FGR64, mem64> {
+  def LWC1_P8 : LW_FT<"lwc1", FGR32, IILoad, mem64, load>, LW_FM<0x31>;
+  def SWC1_P8 : SW_FT<"swc1", FGR32, IIStore, mem64, store>, LW_FM<0x39>;
+  def LDC164_P8 : LW_FT<"ldc1", FGR64, IILoad, mem64, load>, LW_FM<0x35> {
     let isCodeGenOnly =1;
   }
-  def SDC164_P8 : FPStore<0x3d, "sdc1", FGR64, mem64> {
+  def SDC164_P8 : SW_FT<"sdc1", FGR64, IIStore, mem64, store>, LW_FM<0x3d> {
     let isCodeGenOnly =1;
   }
 }
 
 let Predicates = [NotN64, HasStdEnc] in {
-  def LWC1   : FPLoad<0x31, "lwc1", FGR32, mem>;
-  def SWC1   : FPStore<0x39, "swc1", FGR32, mem>;
+  def LWC1 : LW_FT<"lwc1", FGR32, IILoad, mem, load>, LW_FM<0x31>;
+  def SWC1 : SW_FT<"swc1", FGR32, IIStore, mem, store>, LW_FM<0x39>;
 }
 
 let Predicates = [NotN64, HasMips64, HasStdEnc],
   DecoderNamespace = "Mips64" in {
-  def LDC164 : FPLoad<0x35, "ldc1", FGR64, mem>;
-  def SDC164 : FPStore<0x3d, "sdc1", FGR64, mem>;
+  def LDC164 : LW_FT<"ldc1", FGR64, IILoad, mem, load>, LW_FM<0x35>;
+  def SDC164 : SW_FT<"sdc1", FGR64, IIStore, mem, store>, LW_FM<0x3d>;
 }
 
 let Predicates = [NotN64, NotMips64, HasStdEnc] in {
-  def LDC1   : FPLoad<0x35, "ldc1", AFGR64, mem>;
-  def SDC1   : FPStore<0x3d, "sdc1", AFGR64, mem>;
+  def LDC1 : LW_FT<"ldc1", AFGR64, IILoad, mem, load>, LW_FM<0x35>;
+  def SDC1 : SW_FT<"sdc1", AFGR64, IIStore, mem, store>, LW_FM<0x3d>;
 }
 
 // Indexed loads and stores.

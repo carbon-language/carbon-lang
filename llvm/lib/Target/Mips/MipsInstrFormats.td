@@ -394,3 +394,15 @@ class MFC1_FM<bits<5> funct> {
   let Inst{15-11} = fs;
   let Inst{10-0}  = 0;
 }
+
+class LW_FM<bits<6> op> {
+  bits<5> rt;
+  bits<21> addr;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = addr{20-16};
+  let Inst{20-16} = rt;
+  let Inst{15-0}  = addr{15-0};
+}
