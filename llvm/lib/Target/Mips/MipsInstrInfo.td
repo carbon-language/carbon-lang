@@ -173,6 +173,10 @@ class MipsPat<dag pattern, dag result> : Pat<pattern, result> {
   let Predicates = [HasStdEnc];
 }
 
+class IsCommutable {
+  bit isCommutable = 1;
+}
+
 class IsBranch {
   bit isBranch = 1;
 }

@@ -75,10 +75,6 @@ def MipsMSUB_DSP : MipsDSPBase<"MSUB_DSP", SDT_MipsDPA>;
 def MipsMSUBU_DSP : MipsDSPBase<"MSUBU_DSP", SDT_MipsDPA>;
 
 // Flags.
-class IsCommutable {
-  bit isCommutable = 1;
-}
-
 class UseAC {
   list<Register> Uses = [AC0];
 }
