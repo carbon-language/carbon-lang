@@ -154,7 +154,9 @@ DECLARE_FUNCTION_AND_WRAPPER(long long, strtoll, const char *nptr, char **endptr
 # endif
 
 // unistd.h
+# if SANITIZER_INTERCEPT_READ
 DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, read, int fd, void *buf, SIZE_T count);
+# endif
 # if SANITIZER_INTERCEPT_PREAD
 DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pread, int fd, void *buf,
                              SIZE_T count, OFF_T offset);

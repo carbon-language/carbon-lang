@@ -23,8 +23,10 @@
 #include "interception/interception.h"
 
 #if !defined(_WIN32)
+# define SANITIZER_INTERCEPT_READ 1
 # define SANITIZER_INTERCEPT_PREAD 1
 #else
+# define SANITIZER_INTERCEPT_READ 0
 # define SANITIZER_INTERCEPT_PREAD 0
 #endif
 
@@ -34,6 +36,7 @@
 # define SANITIZER_INTERCEPT_PREAD64 0
 #endif
 
+#if SANITIZER_INTERCEPT_READ
 INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
   COMMON_INTERCEPTOR_ENTER(read, fd, ptr, count);
   SSIZE_T res = REAL(read)(fd, ptr, count);
@@ -41,6 +44,7 @@ INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ptr, res);
   return res;
 }
+#endif
 
 #if SANITIZER_INTERCEPT_PREAD
 INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
@@ -62,6 +66,12 @@ INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
 }
 #endif
 
+#if SANITIZER_INTERCEPT_READ
+# define INIT_READ CHECK(INTERCEPT_FUNCTION(read))
+#else
+# define INIT_READ
+#endif
+
 #if SANITIZER_INTERCEPT_PREAD
 # define INIT_PREAD CHECK(INTERCEPT_FUNCTION(pread))
 #else
@@ -75,7 +85,7 @@ INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
 #endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
-  CHECK(INTERCEPT_FUNCTION(read));         \
+  INIT_READ;                               \
   INIT_PREAD;                              \
   INIT_PREAD64;                            \
 
