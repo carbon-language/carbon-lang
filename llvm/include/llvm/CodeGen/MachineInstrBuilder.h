@@ -363,6 +363,18 @@ public:
     }
   }
 
+  /// Create an MIBundleBuilder representing an existing instruction or bundle
+  /// that has MI as its head.
+  explicit MIBundleBuilder(MachineInstr *MI)
+    : MBB(*MI->getParent()), Begin(MI) {
+    MachineBasicBlock::iterator I = MI;
+    ++I;
+    End = I.getInstrIterator();
+  }
+
+  /// Return a reference to the basic block containing this bundle.
+  MachineBasicBlock &getMBB() const { return MBB; }
+
   /// Return true if no instructions have been inserted in this bundle yet.
   /// Empty bundles aren't representable in a MachineBasicBlock.
   bool empty() const { return Begin == End; }
@@ -373,25 +385,38 @@ public:
   /// Return an iterator beyond the last bundled instruction.
   MachineBasicBlock::instr_iterator end() const { return End; }
 
+  /// Insert MI into this bundle before I which must point to an instruction in
+  /// the bundle, or end().
+  MIBundleBuilder &insert(MachineBasicBlock::instr_iterator I,
+                          MachineInstr *MI) {
+    MBB.insert(I, MI);
+    if (I == Begin) {
+      if (!empty())
+        MI->bundleWithSucc();
+      Begin = MI;
+      return *this;
+    }
+    if (I == End) {
+      MI->bundleWithPred();
+      return *this;
+    }
+    // MI was inserted in the middle of the bundle, so its neighbors' flags are
+    // already fine. Update MI's bundle flags manually.
+    MI->setFlag(MachineInstr::BundledPred);
+    MI->setFlag(MachineInstr::BundledSucc);
+    return *this;
+  }
+
   /// Insert MI into MBB by prepending it to the instructions in the bundle.
   /// MI will become the first instruction in the bundle.
   MIBundleBuilder &prepend(MachineInstr *MI) {
-    MBB.insert(Begin, MI);
-    if (!empty())
-      MI->bundleWithSucc();
-    Begin = MI;
-    return *this;
+    return insert(begin(), MI);
   }
 
   /// Insert MI into MBB by appending it to the instructions in the bundle.
   /// MI will become the last instruction in the bundle.
   MIBundleBuilder &append(MachineInstr *MI) {
-    MBB.insert(End, MI);
-    if (empty())
-      Begin = MI;
-    else
-      MI->bundleWithPred();
-    return *this;
+    return insert(end(), MI);
   }
 };
 
