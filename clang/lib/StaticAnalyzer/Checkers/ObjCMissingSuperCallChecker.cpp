@@ -86,7 +86,7 @@ private:
 /// \brief Determine whether the given class has a superclass that we want
 /// to check. The name of the found superclass is stored in SuperclassName.
 ///
-/// \param ObjCImplementationDecl The declaration to check for superclasses.
+/// \param D The declaration to check for superclasses.
 /// \param[out] SuperclassName On return, the found superclass name.
 bool ObjCSuperCallChecker::isCheckableClass(const ObjCImplementationDecl *D,
                                             StringRef &SuperclassName) const {
