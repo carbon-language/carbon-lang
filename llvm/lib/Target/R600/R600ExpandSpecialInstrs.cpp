@@ -318,7 +318,8 @@ bool R600ExpandSpecialInstrsPass::runOnMachineFunction(MachineFunction &MF) {
         MachineInstr *NewMI =
           TII->buildDefaultInstruction(MBB, I, Opcode, DstReg, Src0, Src1);
 
-        NewMI->setIsInsideBundle(Chan != 0);
+        if (Chan != 0)
+          NewMI->bundleWithPred();
         if (Mask) {
           TII->addFlag(NewMI, 0, MO_FLAG_MASK);
         }

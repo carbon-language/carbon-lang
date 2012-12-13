@@ -89,15 +89,15 @@ bool SILowerLiteralConstantsPass::runOnMachineFunction(MachineFunction &MF) {
           } else {
             LoadLiteralOpcode = AMDGPU::SI_LOAD_LITERAL_F32;
           }
-          MachineInstr *First =
-            BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(MovOpcode),
-                    MI.getOperand(0).getReg())
-                    .addReg(AMDGPU::SI_LITERAL_CONSTANT);
-          MachineInstr *Last =
-            BuildMI(MBB, I, MBB.findDebugLoc(I), TII->get(LoadLiteralOpcode))
-                    .addOperand(MI.getOperand(1));
-          Last->setIsInsideBundle();
-          llvm::finalizeBundle(MBB, First, Last);
+          MIBundleBuilder Bundle(MBB, I);
+          Bundle
+            .append(BuildMI(MF, MBB.findDebugLoc(I), TII->get(MovOpcode),
+                            MI.getOperand(0).getReg())
+                    .addReg(AMDGPU::SI_LITERAL_CONSTANT))
+            .append(BuildMI(MF, MBB.findDebugLoc(I),
+                            TII->get(LoadLiteralOpcode))
+                    .addOperand(MI.getOperand(1)));
+          llvm::finalizeBundle(MBB, Bundle.begin());
           MI.eraseFromParent();
           break;
         }
