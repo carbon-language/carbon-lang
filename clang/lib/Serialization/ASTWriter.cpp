@@ -3568,6 +3568,12 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
   RecordData Record;
   Stream.EnterSubblock(AST_BLOCK_ID, 5);
 
+  // This is so that older clang versions, before the introduction
+  // of the control block, can read and reject the newer PCH format.
+  Record.clear();
+  Record.push_back(VERSION_MAJOR);
+  Stream.EmitRecord(METADATA_OLD_FORMAT, Record);
+
   // Create a lexical update block containing all of the declarations in the
   // translation unit that do not come from other AST files.
   const TranslationUnitDecl *TU = Context.getTranslationUnitDecl();

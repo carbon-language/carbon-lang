@@ -2866,6 +2866,9 @@ ASTReader::ReadASTCore(StringRef FileName,
     return Failure;
   }
 
+  // This is used for compatibility with older PCH formats.
+  bool HaveReadControlBlock = false;
+
   while (!Stream.AtEndOfStream()) {
     unsigned Code = Stream.ReadCode();
 
@@ -2885,6 +2888,7 @@ ASTReader::ReadASTCore(StringRef FileName,
       }
       break;
     case CONTROL_BLOCK_ID:
+      HaveReadControlBlock = true;
       switch (ReadControlBlock(F, Loaded, ClientLoadCapabilities)) {
       case Success:
         break;
@@ -2897,6 +2901,12 @@ ASTReader::ReadASTCore(StringRef FileName,
       }
       break;
     case AST_BLOCK_ID:
+      if (!HaveReadControlBlock) {
+        if ((ClientLoadCapabilities & ARR_VersionMismatch) == 0)
+          Diag(diag::warn_pch_version_too_old);
+        return VersionMismatch;
+      }
+
       // Record that we've loaded this module.
       Loaded.push_back(ImportedModule(M, ImportedBy, ImportLoc));
       return Success;
