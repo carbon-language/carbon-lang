@@ -1861,6 +1861,19 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA,
   return *T;
 }
 
+bool FreeBSD::UseSjLjExceptions() const {
+  // FreeBSD uses SjLj exceptions on ARM oabi.
+  switch (getTriple().getEnvironment()) {
+  case llvm::Triple::GNUEABI:
+  case llvm::Triple::EABI:
+    return false;
+
+  default:
+    return (getTriple().getArch() == llvm::Triple::arm ||
+            getTriple().getArch() == llvm::Triple::thumb);
+  }
+}
+
 /// NetBSD - NetBSD tool chain which can call as(1) and ld(1) directly.
 
 NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)

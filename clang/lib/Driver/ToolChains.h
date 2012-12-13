@@ -452,6 +452,7 @@ public:
 
   virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
                            const ActionList &Inputs) const;
+  virtual bool UseSjLjExceptions() const;
 };
 
 class LLVM_LIBRARY_VISIBILITY NetBSD : public Generic_ELF {

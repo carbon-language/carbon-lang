@@ -3094,7 +3094,9 @@ public:
     // name.
     if (Name == "apcs-gnu") {
       DoubleAlign = LongLongAlign = LongDoubleAlign = SuitableAlign = 32;
-      SizeType = UnsignedLong;
+      // size_t is unsigned int on FreeBSD.
+      if (getTriple().getOS() != llvm::Triple::FreeBSD)
+        SizeType = UnsignedLong;
 
       // Revert to using SignedInt on apcs-gnu to comply with existing behaviour.
       WCharType = SignedInt;
