@@ -1559,6 +1559,9 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
       MemberDie->addValue(dwarf::DW_AT_APPLE_property, dwarf::DW_FORM_ref4,
                           PropertyDie);
 
+  if (DT.isArtificial())
+    addFlag(MemberDie, dwarf::DW_AT_artificial);
+
   // This is only for backward compatibility.
   StringRef PropertyName = DT.getObjCPropertyName();
   if (!PropertyName.empty()) {

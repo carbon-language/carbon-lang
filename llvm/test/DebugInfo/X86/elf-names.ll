@@ -7,6 +7,7 @@
 ; CHECK: 0x0000003d:     DW_AT_name [DW_FORM_strp]       ( .debug_str[0x0000006d] = "D")
 ; CHECK: 0x00000044:     DW_TAG_member
 ; CHECK: 0x00000045:       DW_AT_name [DW_FORM_strp]     ( .debug_str[0x0000005d] = "c1")
+; CHECK: 0x0000008d:       DW_AT_artificial [DW_FORM_flag_present]       (true)
 
 %class.D = type { i32, i32, i32, i32 }
 
