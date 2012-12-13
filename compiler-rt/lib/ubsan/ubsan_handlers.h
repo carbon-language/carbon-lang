@@ -91,6 +91,14 @@ struct FloatCastOverflowData {
 /// \brief Handle overflow in a conversion to or from a floating-point type.
 RECOVERABLE(float_cast_overflow, FloatCastOverflowData *Data, ValueHandle From)
 
+struct InvalidValueData {
+  // FIXME: SourceLocation Loc;
+  const TypeDescriptor &Type;
+};
+
+/// \brief Handle a load of an invalid value for the type.
+RECOVERABLE(load_invalid_value, InvalidValueData *Data, ValueHandle Val)
+
 }
 
 #endif // UBSAN_HANDLERS_H

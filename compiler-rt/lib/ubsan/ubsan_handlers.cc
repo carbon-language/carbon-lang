@@ -179,3 +179,15 @@ void __ubsan::__ubsan_handle_float_cast_overflow_abort(
   __ubsan_handle_float_cast_overflow(Data, From);
   Die();
 }
+
+void __ubsan::__ubsan_handle_load_invalid_value(InvalidValueData *Data,
+                                                ValueHandle Val) {
+  Diag(SourceLocation(), "load of value %0, which is not a valid value for "
+                         "type %1")
+    << Value(Data->Type, Val) << Data->Type;
+}
+void __ubsan::__ubsan_handle_load_invalid_value_abort(InvalidValueData *Data,
+                                                      ValueHandle Val) {
+  __ubsan_handle_load_invalid_value(Data, Val);
+  Die();
+}
