@@ -987,19 +987,14 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
                                                 "castToVec4");
       // Now load value.
       llvm::Value *LoadVal = Builder.CreateLoad(Cast, Volatile, "loadVec4");
-        
+
       // Shuffle vector to get vec3.
-      llvm::SmallVector<llvm::Constant*, 3> Mask;
-      Mask.push_back(llvm::ConstantInt::get(
-                                    llvm::Type::getInt32Ty(getLLVMContext()),
-                                            0));
-      Mask.push_back(llvm::ConstantInt::get(
-                                    llvm::Type::getInt32Ty(getLLVMContext()),
-                                            1));
-      Mask.push_back(llvm::ConstantInt::get(
-                                     llvm::Type::getInt32Ty(getLLVMContext()),
-                                            2));
-        
+      llvm::Constant *Mask[] = {
+        llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 0),
+        llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 1),
+        llvm::ConstantInt::get(llvm::Type::getInt32Ty(getLLVMContext()), 2)
+      };
+
       llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
       V = Builder.CreateShuffleVector(LoadVal,
                                       llvm::UndefValue::get(vec4Ty),
