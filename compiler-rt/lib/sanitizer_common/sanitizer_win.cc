@@ -86,7 +86,7 @@ void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
 }
 
 void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
-  return MmapFixedOrDie(fixed_addr, size);
+  return MmapFixedNoReserve(fixed_addr, size);
 }
 
 void *Mprotect(uptr fixed_addr, uptr size) {
