@@ -214,11 +214,13 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
       OptSizeThreshold < thres)
     thres = OptSizeThreshold;
 
-  // Listen to the inlinehint attribute when it would increase the threshold.
+  // Listen to the inlinehint attribute when it would increase the threshold
+  // and the caller does not need to minimize its size.
   Function *Callee = CS.getCalledFunction();
   bool InlineHint = Callee && !Callee->isDeclaration() &&
     Callee->getFnAttributes().hasAttribute(Attributes::InlineHint);
-  if (InlineHint && HintThreshold > thres)
+  if (InlineHint && HintThreshold > thres
+      && !Caller->getFnAttributes().hasAttribute(Attributes::MinSize))
     thres = HintThreshold;
 
   return thres;
