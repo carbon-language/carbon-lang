@@ -413,7 +413,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
         Inst = 1;
         break;
       default:
-        assert(0 && "Wrong buffer id for stream outputs !");
+        llvm_unreachable("Wrong buffer id for stream outputs !");
       }
 
       return InsertScalarToRegisterExport(DAG, Op.getDebugLoc(), OutputsMap,

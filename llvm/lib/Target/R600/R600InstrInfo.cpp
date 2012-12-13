@@ -605,6 +605,7 @@ MachineOperand &R600InstrInfo::getFlagOp(MachineInstr *MI, unsigned SrcIdx,
     case MO_FLAG_ABS:
       assert(!IsOP3 && "Cannot set absolute value modifier for OP3 "
                        "instructions.");
+      (void)IsOP3;
       switch (SrcIdx) {
       case 0: FlagIndex = getOperandIdx(*MI, R600Operands::SRC0_ABS); break;
       case 1: FlagIndex = getOperandIdx(*MI, R600Operands::SRC1_ABS); break;

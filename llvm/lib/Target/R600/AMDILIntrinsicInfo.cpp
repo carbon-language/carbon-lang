@@ -75,5 +75,5 @@ Function*
 AMDGPUIntrinsicInfo::getDeclaration(Module *M, unsigned IntrID,
     Type **Tys,
     unsigned numTys) const  {
-  assert(!"Not implemented");
+  llvm_unreachable("Not implemented");
 }
