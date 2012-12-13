@@ -21,6 +21,7 @@ CPPLINT=${SCRIPT_DIR}/cpplint/cpplint.py
 # TODO: remove some of these filters
 ASAN_RTL_LINT_FILTER=-readability/casting,-readability/check,-build/include,-build/header_guard,-build/class,-legal/copyright,-build/namespaces
 ASAN_TEST_LINT_FILTER=-readability/casting,-build/include,-legal/copyright,-whitespace/newline,-runtime/sizeof,-runtime/int,-runtime/printf,-build/header_guard
+ASAN_LIT_TEST_LINT_FILTER=${ASAN_TEST_LINT_FILTER},-whitespace/line_length
 TSAN_RTL_LINT_FILTER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
 TSAN_TEST_LINT_FILTER=${TSAN_RTL_LINT_FILTER},-runtime/threadsafe_fn,-runtime/int
 MSAN_RTL_LINT_FILTER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
@@ -53,7 +54,7 @@ ${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${INTERCEPTION}/*.{cc,h}
 ASAN_RTL=${COMPILER_RT}/lib/asan
 ${CPPLINT} --filter=${ASAN_RTL_LINT_FILTER} ${ASAN_RTL}/*.{cc,h}
 ${CPPLINT} --filter=${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/tests/*.{cc,h}
-${CPPLINT} --filter=${ASAN_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*.cc \
+${CPPLINT} --filter=${ASAN_LIT_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*.cc \
                                              ${ASAN_RTL}/lit_tests/*/*.cc \
 
 # TSan
