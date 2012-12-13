@@ -284,6 +284,14 @@ class BC1F_FT<string opstr, InstrItinClass Itin,
   let Uses = [FCR31];
 }
 
+class CEQS_FT<string typestr, RegisterClass RC, InstrItinClass Itin,
+              SDPatternOperator OpNode = null_frag>  :
+  InstSE<(outs), (ins RC:$fs, RC:$ft, condcode:$cond),
+         !strconcat("c.$cond.", typestr, "\t$fs, $ft"),
+         [(OpNode RC:$fs, RC:$ft, imm:$cond)], Itin, FrmFR> {
+  let Defs = [FCR31];
+}
+
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
 //===----------------------------------------------------------------------===//
@@ -537,15 +545,12 @@ class FCMP<bits<5> fmt, RegisterClass RC, string typestr> :
       [(MipsFPCmp RC:$fs, RC:$ft, imm:$cc)]>;
 
 /// Floating Point Compare
-let Defs=[FCR31] in {
-  def FCMP_S32 : FCMP<0x10, FGR32, "s">;
-  def FCMP_D32 : FCMP<0x11, AFGR64, "d">,
-      Requires<[NotFP64bit, HasStdEnc]>;
-  def FCMP_D64 : FCMP<0x11, FGR64, "d">,
-      Requires<[IsFP64bit, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-  }
-}
+def FCMP_S32 : CEQS_FT<"s", FGR32, IIFcmp, MipsFPCmp>, CEQS_FM<16>;
+def FCMP_D32 : CEQS_FT<"d", AFGR64, IIFcmp, MipsFPCmp>, CEQS_FM<17>,
+               Requires<[NotFP64bit, HasStdEnc]>;
+let DecoderNamespace = "Mips64" in
+def FCMP_D64 : CEQS_FT<"d", FGR64, IIFcmp, MipsFPCmp>, CEQS_FM<17>,
+               Requires<[IsFP64bit, HasStdEnc]>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Pseudo-Instructions

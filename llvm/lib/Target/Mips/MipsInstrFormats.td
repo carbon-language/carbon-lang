@@ -466,3 +466,19 @@ class BC1F_FM<bit nd, bit tf> {
   let Inst{16} = tf;
   let Inst{15-0} = offset;
 }
+
+class CEQS_FM<bits<5> fmt> {
+  bits<5> fs;
+  bits<5> ft;
+  bits<4> cond;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x11;
+  let Inst{25-21} = fmt;
+  let Inst{20-16} = ft;
+  let Inst{15-11} = fs;
+  let Inst{10-8} = 0; // cc
+  let Inst{7-4} = 0x3;
+  let Inst{3-0} = cond;
+}
