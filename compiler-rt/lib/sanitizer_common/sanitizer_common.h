@@ -44,6 +44,7 @@ void GetThreadStackTopAndBottom(bool at_initialization, uptr *stack_top,
 void *MmapOrDie(uptr size, const char *mem_type);
 void UnmapOrDie(void *addr, uptr size);
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size);
+void *MmapFixedOrDie(uptr fixed_addr, uptr size);
 void *Mprotect(uptr fixed_addr, uptr size);
 // Map aligned chunk of address space; size and alignment are powers of two.
 void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type);

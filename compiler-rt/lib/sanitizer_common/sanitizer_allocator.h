@@ -155,7 +155,7 @@ class SizeClassAllocator64 {
   }
 
   void MapWithCallback(uptr beg, uptr size) {
-    CHECK_EQ(beg, reinterpret_cast<uptr>(MmapFixedNoReserve(beg, size)));
+    CHECK_EQ(beg, reinterpret_cast<uptr>(MmapFixedOrDie(beg, size)));
     MapUnmapCallback().OnMap(beg, size);
   }
 

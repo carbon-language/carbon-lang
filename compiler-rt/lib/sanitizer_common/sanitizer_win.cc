@@ -75,12 +75,18 @@ void UnmapOrDie(void *addr, uptr size) {
 }
 
 void *MmapFixedNoReserve(uptr fixed_addr, uptr size) {
+  // FIXME: is this really "NoReserve"? On Win32 this does not matter much,
+  // but on Win64 it does.
   void *p = VirtualAlloc((LPVOID)fixed_addr, size,
       MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
   if (p == 0)
     Report("ERROR: Failed to allocate 0x%zx (%zd) bytes at %p (%d)\n",
            size, size, fixed_addr, GetLastError());
   return p;
+}
+
+void *MmapFixedOrDie(uptr fixed_addr, uptr size) {
+  return MmapFixedOrDie(fixed_addr, size);
 }
 
 void *Mprotect(uptr fixed_addr, uptr size) {
