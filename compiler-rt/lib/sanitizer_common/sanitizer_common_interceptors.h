@@ -22,6 +22,12 @@
 
 #include "interception/interception.h"
 
+#if !defined(_WIN32)
+# define SANITIZER_INTERCEPT_PREAD 1
+#else
+# define SANITIZER_INTERCEPT_PREAD 0
+#endif
+
 #if defined(__linux__) && !defined(ANDROID)
 # define SANITIZER_INTERCEPT_PREAD64 1
 #else
@@ -36,6 +42,7 @@ INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
   return res;
 }
 
+#if SANITIZER_INTERCEPT_PREAD
 INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
   COMMON_INTERCEPTOR_ENTER(pread, fd, ptr, count, offset);
   SSIZE_T res = REAL(pread)(fd, ptr, count, offset);
@@ -43,6 +50,7 @@ INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
     COMMON_INTERCEPTOR_WRITE_RANGE(ptr, res);
   return res;
 }
+#endif
 
 #if SANITIZER_INTERCEPT_PREAD64
 INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
@@ -54,15 +62,21 @@ INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
 }
 #endif
 
-#if SANITIZER_INTERCEPT_PREAD64
-#define INIT_PREAD64 CHECK(INTERCEPT_FUNCTION(pread64))
+#if SANITIZER_INTERCEPT_PREAD
+# define INIT_PREAD CHECK(INTERCEPT_FUNCTION(pread))
 #else
-#define INIT_PREAD64
+# define INIT_PREAD
+#endif
+
+#if SANITIZER_INTERCEPT_PREAD64
+# define INIT_PREAD64 CHECK(INTERCEPT_FUNCTION(pread64))
+#else
+# define INIT_PREAD64
 #endif
 
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   CHECK(INTERCEPT_FUNCTION(read));         \
-  CHECK(INTERCEPT_FUNCTION(pread));        \
+  INIT_PREAD;                              \
   INIT_PREAD64;                            \
 
 #endif  // SANITIZER_COMMON_INTERCEPTORS_H

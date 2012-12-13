@@ -1606,7 +1606,7 @@ TEST(AddressSanitizer, pread) {
   delete x;
 }
 
-#ifndef ANDROID
+# if !defined(ANDROID) && !defined(__ANDROID__)
 TEST(AddressSanitizer, pread64) {
   char *x = new char[10];
   int fd = open("/proc/self/stat", O_RDONLY);
@@ -1618,7 +1618,7 @@ TEST(AddressSanitizer, pread64) {
   close(fd);
   delete x;
 }
-#endif  // ANDROID
+# endif  // !defined(ANDROID) && !defined(__ANDROID__)
 
 TEST(AddressSanitizer, read) {
   char *x = new char[10];

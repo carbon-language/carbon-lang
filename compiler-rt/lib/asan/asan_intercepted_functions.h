@@ -153,11 +153,16 @@ DECLARE_FUNCTION_AND_WRAPPER(long long, atoll, const char *nptr);  // NOLINT
 DECLARE_FUNCTION_AND_WRAPPER(long long, strtoll, const char *nptr, char **endptr, int base);  // NOLINT
 # endif
 
+// unistd.h
 DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, read, int fd, void *buf, SIZE_T count);
+# if SANITIZER_INTERCEPT_PREAD
 DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pread, int fd, void *buf,
                              SIZE_T count, OFF_T offset);
+# endif
+# if SANITIZER_INTERCEPT_PREAD64
 DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pread64, int fd, void *buf,
                              SIZE_T count, OFF64_T offset);
+# endif
 
 # if ASAN_INTERCEPT_MLOCKX
 // mlock/munlock
