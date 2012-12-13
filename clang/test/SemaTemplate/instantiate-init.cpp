@@ -94,7 +94,7 @@ namespace PR7985 {
   const Data<T> Description<T>::data[] = {{ 1 }}; // expected-error{{cannot initialize a member subobject of type 'int *' with an rvalue of type 'int'}}
 
   template<>
-  Data<float*> Description<float*>::data[];
+  const Data<float*> Description<float*>::data[];
 
   void test() {
     integral_c<1> ic1 = array_lengthof(Description<int>::data);

@@ -3842,16 +3842,16 @@ void RewriteModernObjC::RewriteObjCFieldDecl(FieldDecl *fieldDecl,
     Result += " : "; Result += utostr(fieldDecl->getBitWidthValue(*Context));
   }
   else if (EleboratedType && Type->isArrayType()) {
-    CanQualType CType = Context->getCanonicalType(Type);
-    while (isa<ArrayType>(CType)) {
-      if (const ConstantArrayType *CAT = Context->getAsConstantArrayType(CType)) {
+    const ArrayType *AT = Context->getAsArrayType(Type);
+    do {
+      if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
         Result += "[";
         llvm::APInt Dim = CAT->getSize();
         Result += utostr(Dim.getZExtValue());
         Result += "]";
       }
-      CType = CType->getAs<ArrayType>()->getElementType();
-    }
+      AT = Context->getAsArrayType(AT->getElementType());
+    } while (AT);
   }
   
   Result += ";\n";

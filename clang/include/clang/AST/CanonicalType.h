@@ -514,55 +514,13 @@ struct CanProxyAdaptor<MemberPointerType>
   LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(const Type *, getClass)
 };
 
-template<>
-struct CanProxyAdaptor<ArrayType> : public CanProxyBase<ArrayType> {
-  LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getElementType)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(ArrayType::ArraySizeModifier,
-                                      getSizeModifier)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(Qualifiers, getIndexTypeQualifiers)
-};
-
-template<>
-struct CanProxyAdaptor<ConstantArrayType>
-  : public CanProxyBase<ConstantArrayType> {
-  LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getElementType)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(ArrayType::ArraySizeModifier,
-                                      getSizeModifier)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(Qualifiers, getIndexTypeQualifiers)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(const llvm::APInt &, getSize)
-};
-
-template<>
-struct CanProxyAdaptor<IncompleteArrayType>
-  : public CanProxyBase<IncompleteArrayType> {
-  LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getElementType)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(ArrayType::ArraySizeModifier,
-                                      getSizeModifier)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(Qualifiers, getIndexTypeQualifiers)
-};
-
-template<>
-struct CanProxyAdaptor<VariableArrayType>
-  : public CanProxyBase<VariableArrayType> {
-  LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getElementType)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(ArrayType::ArraySizeModifier,
-                                      getSizeModifier)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(Qualifiers, getIndexTypeQualifiers)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(Expr *, getSizeExpr)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(SourceRange, getBracketsRange)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(SourceLocation, getLBracketLoc)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(SourceLocation, getRBracketLoc)
-};
-
-template<>
-struct CanProxyAdaptor<DependentSizedArrayType>
-  : public CanProxyBase<DependentSizedArrayType> {
-  LLVM_CLANG_CANPROXY_TYPE_ACCESSOR(getElementType)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(Expr *, getSizeExpr)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(SourceRange, getBracketsRange)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(SourceLocation, getLBracketLoc)
-  LLVM_CLANG_CANPROXY_SIMPLE_ACCESSOR(SourceLocation, getRBracketLoc)
-};
+// CanProxyAdaptors for arrays are intentionally unimplemented because
+// they are not safe.
+template<> struct CanProxyAdaptor<ArrayType>;
+template<> struct CanProxyAdaptor<ConstantArrayType>;
+template<> struct CanProxyAdaptor<IncompleteArrayType>;
+template<> struct CanProxyAdaptor<VariableArrayType>;
+template<> struct CanProxyAdaptor<DependentSizedArrayType>;
 
 template<>
 struct CanProxyAdaptor<DependentSizedExtVectorType>
@@ -746,6 +704,9 @@ CanQual<T> CanQual<T>::CreateUnsafe(QualType Other) {
 template<typename T>
 template<typename U>
 CanProxy<U> CanQual<T>::getAs() const {
+  ArrayType_cannot_be_used_with_getAs<U> at;
+  (void)at;
+
   if (Stored.isNull())
     return CanProxy<U>();
 
@@ -758,6 +719,9 @@ CanProxy<U> CanQual<T>::getAs() const {
 template<typename T>
 template<typename U>
 CanProxy<U> CanQual<T>::castAs() const {
+  ArrayType_cannot_be_used_with_getAs<U> at;
+  (void)at;
+
   assert(!Stored.isNull() && isa<U>(Stored.getTypePtr()));
   return CanQual<U>::CreateUnsafe(Stored);
 }
