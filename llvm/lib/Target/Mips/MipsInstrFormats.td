@@ -453,3 +453,16 @@ class SWXC1_FM<bits<6> funct> {
   let Inst{10-6}  = 0;
   let Inst{5-0}   = funct;
 }
+
+class BC1F_FM<bit nd, bit tf> {
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x11;
+  let Inst{25-21} = 0x8;
+  let Inst{20-18} = 0; // cc
+  let Inst{17} = nd;
+  let Inst{16} = tf;
+  let Inst{15-0} = offset;
+}
