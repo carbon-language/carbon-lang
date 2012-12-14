@@ -27,7 +27,6 @@
 #include "Plugins/ABI/MacOSX-i386/ABIMacOSX_i386.h"
 #include "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h"
 #include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
-#include "Plugins/Disassembler/llvm/DisassemblerLLVM.h"
 #include "Plugins/Disassembler/llvm/DisassemblerLLVMC.h"
 #include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
 #include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
@@ -98,7 +97,6 @@ lldb_private::Initialize ()
         ABIMacOSX_arm::Initialize();
         ABISysV_x86_64::Initialize();
         DisassemblerLLVMC::Initialize();
-        DisassemblerLLVM::Initialize();
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
         SymbolFileDWARF::Initialize();
@@ -179,7 +177,6 @@ lldb_private::Terminate ()
     ABIMacOSX_arm::Terminate();
     ABISysV_x86_64::Terminate();
     DisassemblerLLVMC::Terminate();
-    DisassemblerLLVM::Terminate();
     ObjectContainerBSDArchive::Terminate();
     ObjectFileELF::Terminate();
     SymbolFileDWARF::Terminate();
