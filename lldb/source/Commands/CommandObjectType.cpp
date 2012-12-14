@@ -828,7 +828,7 @@ public:
         ScriptInterpreter *interpreter = data.reader.GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
         if (!interpreter)
         {
-            out_stream->Printf ("no script interprter.\n");
+            out_stream->Printf ("no script interpreter.\n");
             out_stream->Flush();
             return;
         }
