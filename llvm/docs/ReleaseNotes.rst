@@ -386,14 +386,6 @@ Post <http://blog.llvm.org/2010/04/intro-to-llvm-mc-project.html>`_.
 Target Independent Code Generator Improvements
 ----------------------------------------------
 
-Stack Coloring - We have implemented a new optimization pass to merge stack
-objects which are used in disjoin areas of the code.  This optimization reduces
-the required stack space significantly, in cases where it is clear to the
-optimizer that the stack slot is not shared.  We use the lifetime markers to
-tell the codegen that a certain alloca is used within a region.
-
-We now merge consecutive loads and stores.
-
 We have put a significant amount of work into the code generator
 infrastructure, which allows us to implement more aggressive algorithms and
 make it run faster:
@@ -407,6 +399,14 @@ which can be queried to determine legal groupings of instructions in a bundle.
 
 We have added a new target independent VLIW packetizer based on the DFA
 infrastructure to group machine instructions into bundles.
+
+Stack Coloring - We have implemented a new optimization pass to merge stack
+objects which are used in disjoin areas of the code.  This optimization reduces
+the required stack space significantly, in cases where it is clear to the
+optimizer that the stack slot is not shared.  We use the lifetime markers to
+tell the codegen that a certain alloca is used within a region.
+
+We now merge consecutive loads and stores.
 
 Basic Block Placement
 ^^^^^^^^^^^^^^^^^^^^^
