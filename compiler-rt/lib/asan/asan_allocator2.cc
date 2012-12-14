@@ -18,6 +18,7 @@
 #include "asan_allocator.h"
 #if ASAN_ALLOCATOR_VERSION == 2
 
+#include "asan_mapping.h"
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 #include "sanitizer/asan_interface.h"
@@ -26,19 +27,28 @@
 
 namespace __asan {
 
+struct AsanMapUnmapCallback {
+  void OnMap(uptr p, uptr size) const {
+    PoisonShadow(p, size, kAsanHeapLeftRedzoneMagic);
+  }
+  void OnUnmap(uptr p, uptr size) const {
+    PoisonShadow(p, size, 0);
+  }
+};
+
 #if SANITIZER_WORDSIZE == 64
 const uptr kAllocatorSpace = 0x600000000000ULL;
 const uptr kAllocatorSize  =  0x10000000000ULL;  // 1T.
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0 /*metadata*/,
-    DefaultSizeClassMap> PrimaryAllocator;
+    DefaultSizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
 #elif SANITIZER_WORDSIZE == 32
 static const u64 kAddressSpaceSize = 1ULL << 32;
-typedef SizeClassAllocator32<
-  0, kAddressSpaceSize, 16, CompactSizeClassMap> PrimaryAllocator;
+typedef SizeClassAllocator32<0, kAddressSpaceSize, 16,
+  CompactSizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
 #endif
 
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
-typedef LargeMmapAllocator<> SecondaryAllocator;
+typedef LargeMmapAllocator<AsanMapUnmapCallback> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
     SecondaryAllocator> Allocator;
 
@@ -177,6 +187,16 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
   m->from_memalign = user_beg != beg_plus_redzone;
   m->user_requested_size = size;
 
+  uptr size_rounded_down_to_granularity = RoundDownTo(size, SHADOW_GRANULARITY);
+  // Unpoison the bulk of the memory region.
+  if (size_rounded_down_to_granularity)
+    PoisonShadow(user_beg, size_rounded_down_to_granularity, 0);
+  // Deal with the end of the region if size is not aligned to granularity.
+  if (size != size_rounded_down_to_granularity) {
+    u8 *shadow = (u8*)MemToShadow(user_beg + size_rounded_down_to_granularity);
+    *shadow = size & (SHADOW_GRANULARITY - 1);
+  }
+
   void *res = reinterpret_cast<void *>(user_beg);
   ASAN_MALLOC_HOOK(res, size);
   return res;
@@ -190,6 +210,9 @@ static void Deallocate(void *ptr, StackTrace *stack) {
   uptr alloc_beg = p - ComputeRZSize(m->user_requested_size);
   if (m->from_memalign)
     alloc_beg = reinterpret_cast<uptr>(allocator.GetBlockBegin(ptr));
+  // Poison the region.
+  PoisonShadow(m->Beg(), RoundUpTo(m->user_requested_size, SHADOW_GRANULARITY),
+               kAsanHeapFreeMagic);
   ASAN_FREE_HOOK(ptr);
   allocator.Deallocate(&cache, reinterpret_cast<void *>(alloc_beg));
 }

@@ -161,6 +161,9 @@ INLINE uptr RoundUpTo(uptr size, uptr boundary) {
   CHECK(IsPowerOfTwo(boundary));
   return (size + boundary - 1) & ~(boundary - 1);
 }
+INLINE uptr RoundDownTo(uptr x, uptr boundary) {
+  return x & ~(boundary - 1);
+}
 INLINE bool IsAligned(uptr a, uptr alignment) {
   return (a & (alignment - 1)) == 0;
 }

@@ -168,7 +168,7 @@ static void PoisonAlignedStackMemory(uptr addr, uptr size, bool do_poison) {
     // If possible, mark all the bytes mapping to last shadow byte as
     // unaddressable.
     if (end_value > 0 && end_value <= end_offset)
-      *shadow_end = kAsanStackUseAfterScopeMagic;
+      *shadow_end = (s8)kAsanStackUseAfterScopeMagic;
   } else {
     // If necessary, mark few first bytes mapping to last shadow byte
     // as addressable
