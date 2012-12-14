@@ -1349,13 +1349,14 @@ Driver::MainLoop ()
                     }
                     
                     // if the command sourcing generated an error - dump the result object
-                    const size_t error_size = result.GetErrorSize();
-                    if (error_size > 0)
+                    if (result.Succeeded() == false)
                     {
                         const size_t output_size = result.GetOutputSize();
                         if (output_size > 0)
                             m_io_channel_ap->OutWrite (result.GetOutput(dump_stream_only_if_no_immediate), output_size, NO_ASYNC);
-                        m_io_channel_ap->OutWrite (result.GetError(dump_stream_only_if_no_immediate), error_size, NO_ASYNC);
+                        const size_t error_size = result.GetErrorSize();
+                        if (error_size > 0)
+                            m_io_channel_ap->OutWrite (result.GetError(dump_stream_only_if_no_immediate), error_size, NO_ASYNC);
                     }
                     
                     result.Clear();
