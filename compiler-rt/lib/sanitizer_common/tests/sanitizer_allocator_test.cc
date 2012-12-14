@@ -17,6 +17,7 @@
 #include "gtest/gtest.h"
 
 #include <stdlib.h>
+#include <pthread.h>
 #include <algorithm>
 #include <vector>
 
@@ -429,6 +430,36 @@ TEST(SanitizerCommon, SizeClassAllocator32CompactLocalCache) {
   TestSizeClassAllocatorLocalCache<
       SizeClassAllocatorLocalCache<Allocator32Compact> >();
 }
+
+#if SANITIZER_WORDSIZE == 64
+typedef SizeClassAllocatorLocalCache<Allocator64> AllocatorCache;
+static THREADLOCAL AllocatorCache static_allocator_cache;
+
+void *AllocatorLeakTestWorker(void *arg) {
+  typedef AllocatorCache::Allocator Allocator;
+  Allocator *a = (Allocator*)(arg);
+  static_allocator_cache.Allocate(a, 10);
+  static_allocator_cache.Drain(a);
+  return 0;
+}
+
+TEST(SanitizerCommon, AllocatorLeakTest) {
+  typedef typename AllocatorCache::Allocator Allocator;
+  Allocator a;
+  a.Init();
+  uptr total_used_memory = 0;
+  for (int i = 0; i < 100; i++) {
+    pthread_t t;
+    EXPECT_EQ(0, pthread_create(&t, 0, AllocatorLeakTestWorker, &a));
+    EXPECT_EQ(0, pthread_join(t, 0));
+    if (i == 0)
+      total_used_memory = a.TotalMemoryUsed();
+    EXPECT_EQ(a.TotalMemoryUsed(), total_used_memory);
+  }
+
+  a.TestOnlyUnmap();
+}
+#endif
 
 TEST(Allocator, Basic) {
   char *p = (char*)InternalAlloc(10);
