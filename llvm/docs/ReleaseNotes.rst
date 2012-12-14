@@ -351,7 +351,21 @@ We vectorize under the following loops:
    '``noalias``' and are checked at runtime.
 #. ...
 
-SROA - We've re-written SROA to be significantly more powerful.
+SROA - We've re-written SROA to be significantly more powerful and generate
+code which is much more friendly to the rest of the optimization pipeline.
+Previously this pass had scaling problems that required it to only operate on
+relatively small aggregates, and at times it would mistakenly replace a large
+aggregate with a single very large integer in order to make it a scalar SSA
+value. The result was a large number of i1024 and i2048 values representing any
+small stack buffer. These in turn slowed down many subsequent optimization
+paths.
+
+The new SROA pass uses a different algorithm that allows it to only promote to
+scalars the pieces of the aggregate actively in use. Because of this it doesn't
+require any thresholds. It also always deduces the scalar values from the uses
+of the aggregate rather than the specific LLVM type of the aggregate. These
+features combine to both optimize more code with the pass but to improve the
+compile time of many functions dramatically.
 
 #. Branch weight metadata is preseved through more of the optimizer.
 #. ...
