@@ -133,14 +133,14 @@ namespace {
 /// MemorySanitizer: instrument the code in module to find
 /// uninitialized reads.
 class MemorySanitizer : public FunctionPass {
-public:
+ public:
   MemorySanitizer() : FunctionPass(ID), TD(0), WarningFn(0) { }
   const char *getPassName() const { return "MemorySanitizer"; }
   bool runOnFunction(Function &F);
   bool doInitialization(Module &M);
   static char ID;  // Pass identification, replacement for typeid.
 
-private:
+ private:
   void initializeCallbacks(Module &M);
 
   DataLayout *TD;
@@ -242,8 +242,8 @@ void MemorySanitizer::initializeCallbacks(Module &M) {
   MsanPoisonStackFn = M.getOrInsertFunction(
     "__msan_poison_stack", IRB.getVoidTy(), IRB.getInt8PtrTy(), IntptrTy, NULL);
   MemmoveFn = M.getOrInsertFunction(
-    "__msan_memmove", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
-    IntptrTy, NULL);
+    "__msan_memmove", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
+    IRB.getInt8PtrTy(), IntptrTy, NULL);
   MemcpyFn = M.getOrInsertFunction(
     "__msan_memcpy", IRB.getInt8PtrTy(), IRB.getInt8PtrTy(), IRB.getInt8PtrTy(),
     IntptrTy, NULL);
@@ -378,7 +378,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   // An unfortunate workaround for asymmetric lowering of va_arg stuff.
   // See a comment in visitCallSite for more details.
-  static const unsigned AMD64GpEndOffset = 48; // AMD64 ABI Draft 0.99.6 p3.5.7
+  static const unsigned AMD64GpEndOffset = 48;  // AMD64 ABI Draft 0.99.6 p3.5.7
   static const unsigned AMD64FpEndOffset = 176;
 
   struct ShadowOriginAndInsertPoint {
@@ -410,7 +410,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       Value *Shadow = getShadow(Val);
       Value *ShadowPtr = getShadowPtr(Addr, Shadow->getType(), IRB);
 
-      StoreInst *NewSI = IRB.CreateAlignedStore(Shadow, ShadowPtr, I.getAlignment());
+      StoreInst *NewSI =
+        IRB.CreateAlignedStore(Shadow, ShadowPtr, I.getAlignment());
       DEBUG(dbgs() << "  STORE: " << *NewSI << "\n");
       (void)NewSI;
       // If the store is volatile, add a check.
@@ -769,7 +770,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       ShadowOriginAndInsertPoint(Shadow, Origin, OrigIns));
   }
 
-  //------------------- Visitors.
+  // ------------------- Visitors.
 
   /// \brief Instrument LoadInst
   ///
@@ -940,6 +941,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     Value *Origin;
     IRBuilder<> &IRB;
     MemorySanitizerVisitor *MSV;
+
   public:
     Combiner(MemorySanitizerVisitor *MSV, IRBuilder<> &IRB) :
       Shadow(0), Origin(0), IRB(IRB), MSV(MSV) {}
@@ -1221,7 +1223,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   void visitIntrinsicInst(IntrinsicInst &I) {
     switch (I.getIntrinsicID()) {
     case llvm::Intrinsic::bswap:
-      handleBswap(I); break;
+      handleBswap(I);
+      break;
     default:
       visitInstruction(I); break;
     }
@@ -1476,7 +1479,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 struct VarArgAMD64Helper : public VarArgHelper {
   // An unfortunate workaround for asymmetric lowering of va_arg stuff.
   // See a comment in visitCallSite for more details.
-  static const unsigned AMD64GpEndOffset = 48; // AMD64 ABI Draft 0.99.6 p3.5.7
+  static const unsigned AMD64GpEndOffset = 48;  // AMD64 ABI Draft 0.99.6 p3.5.7
   static const unsigned AMD64FpEndOffset = 176;
 
   Function &F;
