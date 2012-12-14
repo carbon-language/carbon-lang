@@ -31,8 +31,7 @@ cd ${LLVM_CHECKOUT}
 # LLVM Instrumentation
 LLVM_INSTRUMENTATION=lib/Transforms/Instrumentation
 LLVM_LINT_FILTER=-,+whitespace
-${CPPLINT} --filter=${LLVM_LINT_FILTER} ${LLVM_INSTRUMENTATION}/AddressSanitizer.cpp \
-                                        ${LLVM_INSTRUMENTATION}/ThreadSanitizer.cpp \
+${CPPLINT} --filter=${LLVM_LINT_FILTER} ${LLVM_INSTRUMENTATION}/*Sanitizer.cpp \
                                         ${LLVM_INSTRUMENTATION}/BlackList.*
 
 COMPILER_RT=projects/compiler-rt
