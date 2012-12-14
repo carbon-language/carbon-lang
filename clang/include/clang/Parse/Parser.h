@@ -860,7 +860,7 @@ private:
 
     /// \brief Whether this member function had an associated template
     /// scope. When true, D is a template declaration.
-    /// othewise, it is a member function declaration.
+    /// otherwise, it is a member function declaration.
     bool TemplateScope;
 
     explicit LexedMethod(Parser* P, Decl *MD)
