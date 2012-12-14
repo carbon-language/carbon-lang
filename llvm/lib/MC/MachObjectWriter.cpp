@@ -27,6 +27,16 @@
 using namespace llvm;
 using namespace llvm::object;
 
+void MachObjectWriter::reset() {
+  Relocations.clear();
+  IndirectSymBase.clear();
+  StringTable.clear();
+  LocalSymbolData.clear();
+  ExternalSymbolData.clear();
+  UndefinedSymbolData.clear();
+  MCObjectWriter::reset();
+}
+
 bool MachObjectWriter::
 doesSymbolRequireExternRelocation(const MCSymbolData *SD) {
   // Undefined symbols are always extern.

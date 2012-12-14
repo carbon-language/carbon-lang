@@ -51,6 +51,9 @@ protected: // Can only create subclasses.
 public:
   virtual ~MCObjectWriter();
 
+  /// lifetime management
+  virtual void reset() { }
+
   bool isLittleEndian() const { return IsLittleEndian; }
 
   raw_ostream &getStream() { return OS; }

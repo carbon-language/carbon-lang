@@ -29,6 +29,9 @@ protected: // Can only create subclasses.
 public:
   virtual ~MCCodeEmitter();
 
+  /// Lifetime management
+  virtual void reset() { }
+
   /// EncodeInstruction - Encode the given \p Inst to bytes on the output
   /// stream \p OS.
   virtual void EncodeInstruction(const MCInst &Inst, raw_ostream &OS,

@@ -232,6 +232,11 @@ void MCAssembler::reset() {
   RelaxAll = false;
   NoExecStack = false;
   SubsectionsViaSymbols = false;
+
+  // reset objects owned by us
+  getBackend().reset();
+  getEmitter().reset();
+  getWriter().reset();
 }
 
 bool MCAssembler::isSymbolLinkerVisible(const MCSymbol &Symbol) const {

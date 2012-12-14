@@ -41,6 +41,9 @@ protected: // Can only create subclasses.
 public:
   virtual ~MCAsmBackend();
 
+  /// lifetime management
+  virtual void reset() { }
+
   /// createObjectWriter - Create a new MCObjectWriter instance for use by the
   /// assembler backend to emit the final object file.
   virtual MCObjectWriter *createObjectWriter(raw_ostream &OS) const = 0;

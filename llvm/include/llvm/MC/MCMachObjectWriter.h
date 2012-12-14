@@ -45,6 +45,13 @@ protected:
 public:
   virtual ~MCMachObjectTargetWriter();
 
+  /// @name Lifetime Management
+  /// @{
+
+  virtual void reset() {};
+
+  /// @}
+
   /// @name Accessors
   /// @{
 
@@ -110,6 +117,13 @@ public:
                    bool _IsLittleEndian)
     : MCObjectWriter(_OS, _IsLittleEndian), TargetObjectWriter(MOTW) {
   }
+
+  /// @name Lifetime management Methods
+  /// @{
+
+  virtual void reset();
+
+  /// @}
 
   /// @name Utility Methods
   /// @{

@@ -45,7 +45,8 @@ MCObjectStreamer::~MCObjectStreamer() {
 }
 
 void MCObjectStreamer::reset() {
-  Assembler->reset();
+  if (Assembler)
+    Assembler->reset();
   MCStreamer::reset();
 }
 
