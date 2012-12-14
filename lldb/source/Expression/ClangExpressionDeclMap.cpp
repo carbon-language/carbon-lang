@@ -3202,10 +3202,10 @@ ClangExpressionDeclMap::AddOneGenericVariable(NameSearchContext &context,
 
     ASTContext *scratch_ast_context = target->GetScratchClangASTContext()->getASTContext();
     
-    TypeFromUser user_type (ClangASTContext::CreateLValueReferenceType(scratch_ast_context, ClangASTContext::GetVoidPtrType(scratch_ast_context, true)),
+    TypeFromUser user_type (ClangASTContext::CreateLValueReferenceType(scratch_ast_context, ClangASTContext::GetVoidPtrType(scratch_ast_context, false)),
                             scratch_ast_context);
     
-    TypeFromParser parser_type (ClangASTContext::CreateLValueReferenceType(scratch_ast_context, ClangASTContext::GetVoidPtrType(m_ast_context, true)),
+    TypeFromParser parser_type (ClangASTContext::CreateLValueReferenceType(m_ast_context, ClangASTContext::GetVoidPtrType(m_ast_context, false)),
                                 m_ast_context);
     
     NamedDecl *var_decl = context.AddVarDecl(parser_type.GetOpaqueQualType());
