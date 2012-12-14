@@ -7945,7 +7945,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
            diag::err_attribute_can_be_applied_only_to_symbol_declaration)
         << "dllimport";
       FD->setInvalidDecl();
-      return FD;
+      return D;
     }
 
     // Visual C++ appears to not think this is an issue, so only issue
@@ -7962,7 +7962,7 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
   // We want to attach documentation to original Decl (which might be
   // a function template).
   ActOnDocumentableDecl(D);
-  return FD;
+  return D;
 }
 
 /// \brief Given the set of return statements within a function body,

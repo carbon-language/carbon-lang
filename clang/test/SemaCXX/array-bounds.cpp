@@ -74,11 +74,11 @@ void test() {
 }
 
 template <int I> struct S {
-  char arr[I]; // expected-note 2 {{declared here}}
+  char arr[I]; // expected-note 3 {{declared here}}
 };
 template <int I> void f() {
   S<3> s;
-  s.arr[4] = 0; // expected-warning {{array index 4 is past the end of the array (which contains 3 elements)}}
+  s.arr[4] = 0; // expected-warning 2 {{array index 4 is past the end of the array (which contains 3 elements)}}
   s.arr[I] = 0; // expected-warning {{array index 5 is past the end of the array (which contains 3 elements)}}
 }
 
