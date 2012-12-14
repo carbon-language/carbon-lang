@@ -53,6 +53,12 @@
                     <li><a href="http://llvm.org/docs/GettingStarted.html">LLVM</a></li>
                     <li><a href="http://clang.llvm.org/get_started.html">Clang</a></li>
                 </ul>
+                <p>Supported compilers for building LLDB on Linux include:</p>
+                <ul>
+                  <li>Clang 3.2</li>
+                  <li><a href="http://gcc.gnu.org">GCC</a> 4.6.2 (later versions should work as well)</li>
+                </ul>
+                <p>It is recommended to use libstdc++ 4.6 (or higher) to build LLDB on Linux, but using libc++ is also known to work.</p>
                 <p>In addition to any dependencies required by LLVM and Clang, LLDB needs a few
                 development packages that may also need to be installed depending on your
                 system.  The current list of dependencies are:</p>
@@ -65,10 +71,6 @@
                 <code>&gt; yum install swig python-devel libedit-devel</code>
                 <p>On an Ubuntu system one might run:</p>
                 <code>&gt; sudo apt-get install swig python-dev libedit-dev </code>
-                <p>If building using GCC instead of Clang, GCC 4.6.2 or newer is required.</p>
-                <ul>
-                    <li><a href="http://gcc.gnu.org">GCC</a></li>
-                </ul>
                 <h2 >Building LLDB</h2>
                 <p>We first need to checkout the source trees into the appropriate locations.  Both
                 Clang and LLDB build as subprojects of LLVM.  This means we will be checking out
@@ -105,13 +107,19 @@
                 <code>&gt; cd $llvm/..
                   <br>&gt; mkdir build
                   <br>&gt; cd build
-                  <br>&gt; $llvm/configure --enable-cxx11 --enable-libcpp
+                </code>
+                <p>If you are using clang:</p>
+                <code>
+                  <br>&gt; $llvm/configure --enable-cxx11
                   <br>&gt; make </code>
+                <p>If you are using GCC 4.6+:</p>
+                <code>
+                  <br>&gt; $llvm/configure
+                  <br>&gt; make CXXFLAGS=-std=c++0x</code>
                 <p>Note that once both LLVM and Clang have been configured and built it is not
                 necessary to perform a top-level <tt>make</tt> to rebuild changes made only to LLDB.
-                You can run <tt>make</tt> from the <tt>build/tools/lldb</tt> subdirectory as well. If your
-                compiler doesn't support libc++, you may need to tweak or remove the last
-                parameter to the configure script.</p>
+                You can run <tt>make</tt> from the <tt>build/tools/lldb</tt> subdirectory as well. If you
+                wish to build with libc++, you should run configure with the <tt>--enable-libcpp</tt> flag.</p>
                 
                 <h2>Additional Notes</h2>
                 <p>LLDB has a Python scripting capability and supplies its own Python module,
