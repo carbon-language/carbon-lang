@@ -283,7 +283,6 @@
 		2689008713353E2200698AC0 /* ScriptInterpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A82010B10FFB49800182560 /* ScriptInterpreter.cpp */; };
 		2689008813353E2200698AC0 /* ScriptInterpreterNone.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9A2771FC1135A37500E6ADB6 /* ScriptInterpreterNone.cpp */; };
 		2689008913353E2200698AC0 /* ScriptInterpreterPython.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26BC7F0C10F1B8DD00F91463 /* ScriptInterpreterPython.cpp */; };
-		2689008C13353E4200698AC0 /* DisassemblerLLVM.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C897410F57C5600BB2B04 /* DisassemblerLLVM.cpp */; };
 		2689008D13353E4200698AC0 /* DynamicLoaderMacOSXDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260C897A10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.cpp */; };
 		2689008E13353E4200698AC0 /* DynamicLoaderStatic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268A683D1321B53B000E3FB8 /* DynamicLoaderStatic.cpp */; };
 		2689009613353E4200698AC0 /* ObjectContainerBSDArchive.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A3B4AC1181454800381BC2 /* ObjectContainerBSDArchive.cpp */; };
@@ -735,8 +734,6 @@
 		260C848310F50F0A00BB2B04 /* ThreadPlanStepThrough.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanStepThrough.h; path = include/lldb/Target/ThreadPlanStepThrough.h; sourceTree = "<group>"; };
 		260C848410F50F0A00BB2B04 /* ThreadPlanStepRange.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadPlanStepRange.h; path = include/lldb/Target/ThreadPlanStepRange.h; sourceTree = "<group>"; };
 		260C876910F538E700BB2B04 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = /System/Library/Frameworks/Foundation.framework; sourceTree = "<absolute>"; };
-		260C897410F57C5600BB2B04 /* DisassemblerLLVM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DisassemblerLLVM.cpp; sourceTree = "<group>"; };
-		260C897510F57C5600BB2B04 /* DisassemblerLLVM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DisassemblerLLVM.h; sourceTree = "<group>"; };
 		260C897A10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderMacOSXDYLD.cpp; sourceTree = "<group>"; };
 		260C897B10F57C5600BB2B04 /* DynamicLoaderMacOSXDYLD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderMacOSXDYLD.h; sourceTree = "<group>"; };
 		260C898010F57C5600BB2B04 /* ObjectContainerUniversalMachO.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectContainerUniversalMachO.cpp; sourceTree = "<group>"; };
@@ -1846,8 +1843,6 @@
 		260C897310F57C5600BB2B04 /* llvm */ = {
 			isa = PBXGroup;
 			children = (
-				260C897410F57C5600BB2B04 /* DisassemblerLLVM.cpp */,
-				260C897510F57C5600BB2B04 /* DisassemblerLLVM.h */,
 				B299580A14F2FA1400050A04 /* DisassemblerLLVMC.cpp */,
 				B299580C14F2FA1F00050A04 /* DisassemblerLLVMC.h */,
 			);
@@ -3948,7 +3943,6 @@
 				2689008713353E2200698AC0 /* ScriptInterpreter.cpp in Sources */,
 				2689008813353E2200698AC0 /* ScriptInterpreterNone.cpp in Sources */,
 				2689008913353E2200698AC0 /* ScriptInterpreterPython.cpp in Sources */,
-				2689008C13353E4200698AC0 /* DisassemblerLLVM.cpp in Sources */,
 				2689008D13353E4200698AC0 /* DynamicLoaderMacOSXDYLD.cpp in Sources */,
 				2689008E13353E4200698AC0 /* DynamicLoaderStatic.cpp in Sources */,
 				2689009613353E4200698AC0 /* ObjectContainerBSDArchive.cpp in Sources */,
@@ -4340,7 +4334,7 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				SDKROOT = "macosx";
+				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				VALID_ARCHS = "armv4t armv5 armv6 armv7 armv7s i386 ppc ppc64 ppc7400 ppc970 x86_64";
@@ -4399,7 +4393,7 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				SDKROOT = "macosx";
+				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				VALID_ARCHS = "armv4t armv5 armv6 armv7 armv7s i386 ppc ppc64 ppc7400 ppc970 x86_64";
@@ -5250,7 +5244,7 @@
 					"-flimit-debug-info",
 					"-Wparentheses",
 				);
-				SDKROOT = "macosx";
+				SDKROOT = macosx;
 				STRIP_INSTALLED_PRODUCT = NO;
 				STRIP_STYLE = debugging;
 				VALID_ARCHS = "armv4t armv5 armv6 armv7 armv7s i386 ppc ppc64 ppc7400 ppc970 x86_64";
