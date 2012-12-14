@@ -68,7 +68,7 @@ and automatic location of the compilation database using source files paths.
     // CompilationDatabase.  In case of error it will terminate the program.
     CommonOptionsParser OptionsParser(argc, argv);
 
-    // Use OptionsParser.GetCompilations() and OptionsParser.GetSourcePathList()
+    // Use OptionsParser.getCompilations() and OptionsParser.getSourcePathList()
     // to retrieve CompilationDatabase and the list of input file paths.
   }
 
@@ -88,7 +88,7 @@ our ``FrontendAction`` over some code.  For example, to run the
 
   // We hand the CompilationDatabase we created and the sources to run over into
   // the tool constructor.
-  ClangTool Tool(OptionsParser.GetCompilations(), Sources);
+  ClangTool Tool(OptionsParser.getCompilations(), Sources);
 
   // The ClangTool needs a new FrontendAction for each translation unit we run
   // on.  Thus, it takes a FrontendActionFactory as parameter.  To create a
@@ -125,8 +125,8 @@ tool is also checked into the clang tree at
 
   int main(int argc, const char **argv) {
     CommonOptionsParser OptionsParser(argc, argv);
-    ClangTool Tool(OptionsParser.GetCompilations(),
-    OptionsParser.GetSourcePathList());
+    ClangTool Tool(OptionsParser.getCompilations(),
+    OptionsParser.getSourcePathList());
     return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
   }
 

@@ -145,8 +145,8 @@ documentation <LibTooling.html>`_.
 
       int main(int argc, const char **argv) {
         CommonOptionsParser OptionsParser(argc, argv);
-        ClangTool Tool(OptionsParser.GetCompilations(),
-                       OptionsParser.GetSourcePathList());
+        ClangTool Tool(OptionsParser.getCompilations(),
+                       OptionsParser.getSourcePathList());
         return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
       }
 
@@ -279,8 +279,8 @@ And change ``main()`` to:
 
       int main(int argc, const char **argv) {
         CommonOptionsParser OptionsParser(argc, argv);
-        ClangTool Tool(OptionsParser.GetCompilations(),
-                       OptionsParser.GetSourcePathList());
+        ClangTool Tool(OptionsParser.getCompilations(),
+                       OptionsParser.getSourcePathList());
 
         LoopPrinter Printer;
         MatchFinder Finder;

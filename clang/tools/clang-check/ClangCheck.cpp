@@ -143,8 +143,8 @@ public:
 
 int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv);
-  ClangTool Tool(OptionsParser.GetCompilations(),
-                 OptionsParser.GetSourcePathList());
+  ClangTool Tool(OptionsParser.getCompilations(),
+                 OptionsParser.getSourcePathList());
   if (Fixit)
     return Tool.run(newFrontendActionFactory<FixItAction>());
   clang_check::ClangCheckActionFactory Factory;

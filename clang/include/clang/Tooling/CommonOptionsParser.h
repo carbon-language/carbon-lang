@@ -53,8 +53,8 @@ namespace tooling {
 ///
 /// int main(int argc, const char **argv) {
 ///   CommonOptionsParser OptionsParser(argc, argv);
-///   ClangTool Tool(OptionsParser.GetCompilations(),
-///                  OptionsParser.GetSourcePathListi());
+///   ClangTool Tool(OptionsParser.getCompilations(),
+///                  OptionsParser.getSourcePathListi());
 ///   return Tool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>());
 /// }
 /// \endcode
@@ -67,12 +67,12 @@ public:
   CommonOptionsParser(int &argc, const char **argv);
 
   /// Returns a reference to the loaded compilations database.
-  CompilationDatabase &GetCompilations() {
+  CompilationDatabase &getCompilations() {
     return *Compilations;
   }
 
   /// Returns a list of source file paths to process.
-  std::vector<std::string> GetSourcePathList() {
+  std::vector<std::string> getSourcePathList() {
     return SourcePathList;
   }
 
