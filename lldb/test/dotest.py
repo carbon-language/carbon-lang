@@ -377,7 +377,7 @@ def parseOptionsAndInitTestdirs():
     X('+a', "Just do lldb Python API tests. Do not specify along with '+a'", dest='plus_a')
     X('+b', 'Just do benchmark tests', dest='plus_b')
     group.add_argument('-b', metavar='blacklist', help='Read a blacklist file specified after this option')
-    group.add_argument('-f', metavar='filterspec', help='Specify a filter, which consists of the test class name, a dot, followed by the test method, to only admit such test into the test suite')  # FIXME: Example?
+    group.add_argument('-f', metavar='filterspec', action='append', help='Specify a filter, which consists of the test class name, a dot, followed by the test method, to only admit such test into the test suite')  # FIXME: Example?
     X('-g', 'If specified, the filterspec by -f is not exclusive, i.e., if a test module does not match the filterspec (testclass.testmethod), the whole module is still admitted to the test suite')
     X('-l', "Don't skip long running tests")
     group.add_argument('-p', metavar='pattern', help='Specify a regexp filename pattern for inclusion in the test suite')
@@ -510,9 +510,9 @@ def parseOptionsAndInitTestdirs():
         failfast = True
 
     if args.f:
-        if args.f.startswith('-'):
+        if any([x.startswith('-') for x in args.f]):
             usage(parser)
-        filters.append(args.f)
+        filters.extend(args.f)
 
     if args.g:
         fs4all = False
