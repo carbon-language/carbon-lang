@@ -1774,6 +1774,7 @@ SymbolFileDWARF::ParseChildMembers
                     if (is_artificial == false)
                     {
                         Type *member_type = ResolveTypeUID(encoding_uid);
+                        
                         clang::FieldDecl *field_decl = NULL;
                         if (tag == DW_TAG_member)
                         {
@@ -1890,9 +1891,44 @@ SymbolFileDWARF::ParseChildMembers
                                     }
                                 }
                                 
+                                clang_type_t member_clang_type = member_type->GetClangLayoutType();
+                                
+                                {
+                                    // Older versions of clang emit array[0] and array[1] in the same way (<rdar://problem/12566646>).
+                                    // If the current field is at the end of the structure, then there is definitely no room for extra
+                                    // elements and we override the type to array[0].
+                                    
+                                    clang_type_t member_array_element_type;
+                                    uint64_t member_array_size;
+                                    bool member_array_is_incomplete;
+                                    
+                                    if (GetClangASTContext().IsArrayType(member_clang_type,
+                                                                         &member_array_element_type,
+                                                                         &member_array_size,
+                                                                         &member_array_is_incomplete) &&
+                                        !member_array_is_incomplete)
+                                    {
+                                        uint64_t parent_byte_size = parent_die->GetAttributeValueAsUnsigned(this, dwarf_cu, DW_AT_byte_size, UINT64_MAX);
+                                    
+                                        if (member_byte_offset >= parent_byte_size)
+                                        {
+                                            if (member_array_size != 1)
+                                            {
+                                                GetObjectFile()->GetModule()->ReportError ("0x%8.8" PRIx64 ": DW_TAG_member '%s' refers to type 0x%8.8" PRIx64 " which extends beyond the bounds of 0x%8.8" PRIx64,
+                                                                                           MakeUserID(die->GetOffset()),
+                                                                                           name,
+                                                                                           encoding_uid,
+                                                                                           MakeUserID(parent_die->GetOffset()));
+                                            }
+                                            
+                                            member_clang_type = GetClangASTContext().CreateArrayType(member_array_element_type, 0);
+                                        }
+                                    }
+                                }
+                                
                                 field_decl = GetClangASTContext().AddFieldToRecordType (class_clang_type,
                                                                                         name, 
-                                                                                        member_type->GetClangLayoutType(), 
+                                                                                        member_clang_type,
                                                                                         accessibility, 
                                                                                         bit_size);
                                 
