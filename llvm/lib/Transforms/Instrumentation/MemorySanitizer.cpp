@@ -919,67 +919,132 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     setOriginForNaryOp(I);
   }
 
-  /// \brief Propagate origin for an instruction.
+  /// \brief Default propagation of shadow and/or origin.
   ///
-  /// This is a general case of origin propagation. For an Nary operation,
-  /// is set to the origin of an argument that is not entirely initialized.
-  /// If there is more than one such arguments, the rightmost of them is picked.
-  /// It does not matter which one is picked if all arguments are initialized.
-  void setOriginForNaryOp(Instruction &I) {
-    if (!ClTrackOrigins) return;
-    IRBuilder<> IRB(&I);
-    Value *Origin = getOrigin(&I, 0);
-    for (unsigned Op = 1, n = I.getNumOperands(); Op < n; ++Op) {
-      Value *S = convertToShadowTyNoVec(getShadow(&I, Op), IRB);
-      Origin = IRB.CreateSelect(IRB.CreateICmpNE(S, getCleanShadow(S)),
-                                getOrigin(&I, Op), Origin);
-    }
-    setOrigin(&I, Origin);
-  }
-
-  /// \brief Propagate shadow for a binary operation.
-  ///
-  /// Shadow = Shadow0 | Shadow1, all 3 must have the same type.
-  /// Bitwise OR is selected as an operation that will never lose even a bit of
-  /// poison.
-  void handleShadowOrBinary(Instruction &I) {
-    IRBuilder<> IRB(&I);
-    Value *Shadow0 = getShadow(&I, 0);
-    Value *Shadow1 = getShadow(&I, 1);
-    setShadow(&I, IRB.CreateOr(Shadow0, Shadow1, "_msprop"));
-    setOriginForNaryOp(I);
-  }
-
-  /// \brief Propagate shadow for arbitrary operation.
-  ///
-  /// This is a general case of shadow propagation, used in all cases where we
-  /// don't know and/or care about what the operation actually does.
-  /// It converts all input shadow values to a common type (extending or
-  /// truncating as necessary), and bitwise OR's them.
+  /// This class implements the general case of shadow propagation, used in all
+  /// cases where we don't know and/or don't care about what the operation
+  /// actually does. It converts all input shadow values to a common type
+  /// (extending or truncating as necessary), and bitwise OR's them.
   ///
   /// This is much cheaper than inserting checks (i.e. requiring inputs to be
   /// fully initialized), and less prone to false positives.
-  // FIXME: is the casting actually correct?
-  // FIXME: merge this with handleShadowOrBinary.
-  void handleShadowOr(Instruction &I) {
+  ///
+  /// This class also implements the general case of origin propagation. For a
+  /// Nary operation, result origin is set to the origin of an argument that is
+  /// not entirely initialized. If there is more than one such arguments, the
+  /// rightmost of them is picked. It does not matter which one is picked if all
+  /// arguments are initialized.
+  template <bool CombineShadow>
+  class Combiner {
+    Value *Shadow;
+    Value *Origin;
+    IRBuilder<> &IRB;
+    MemorySanitizerVisitor *MSV;
+  public:
+    Combiner(MemorySanitizerVisitor *MSV, IRBuilder<> &IRB) :
+      Shadow(0), Origin(0), IRB(IRB), MSV(MSV) {}
+
+    /// \brief Add a pair of shadow and origin values to the mix.
+    Combiner &Add(Value *OpShadow, Value *OpOrigin) {
+      if (CombineShadow) {
+        assert(OpShadow);
+        if (!Shadow)
+          Shadow = OpShadow;
+        else {
+          OpShadow = MSV->CreateShadowCast(IRB, OpShadow, Shadow->getType());
+          Shadow = IRB.CreateOr(Shadow, OpShadow, "_msprop");
+        }
+      }
+
+      if (ClTrackOrigins) {
+        assert(OpOrigin);
+        if (!Origin) {
+          Origin = OpOrigin;
+        } else {
+          Value *FlatShadow = MSV->convertToShadowTyNoVec(OpShadow, IRB);
+          Value *Cond = IRB.CreateICmpNE(FlatShadow,
+                                         MSV->getCleanShadow(FlatShadow));
+          Origin = IRB.CreateSelect(Cond, OpOrigin, Origin);
+        }
+      }
+      return *this;
+    }
+
+    /// \brief Add an application value to the mix.
+    Combiner &Add(Value *V) {
+      Value *OpShadow = MSV->getShadow(V);
+      Value *OpOrigin = ClTrackOrigins ? MSV->getOrigin(V) : 0;
+      return Add(OpShadow, OpOrigin);
+    }
+
+    /// \brief Set the current combined values as the given instruction's shadow
+    /// and origin.
+    void Done(Instruction *I) {
+      if (CombineShadow) {
+        assert(Shadow);
+        Shadow = MSV->CreateShadowCast(IRB, Shadow, MSV->getShadowTy(I));
+        MSV->setShadow(I, Shadow);
+      }
+      if (ClTrackOrigins) {
+        assert(Origin);
+        MSV->setOrigin(I, Origin);
+      }
+    }
+  };
+
+  typedef Combiner<true> ShadowAndOriginCombiner;
+  typedef Combiner<false> OriginCombiner;
+
+  /// \brief Propagate origin for arbitrary operation.
+  void setOriginForNaryOp(Instruction &I) {
+    if (!ClTrackOrigins) return;
     IRBuilder<> IRB(&I);
-    Value *Shadow = getShadow(&I, 0);
-    for (unsigned Op = 1, n = I.getNumOperands(); Op < n; ++Op)
-      Shadow = IRB.CreateOr(
-        Shadow, IRB.CreateIntCast(getShadow(&I, Op), Shadow->getType(), false),
-        "_msprop");
-    Shadow = IRB.CreateIntCast(Shadow, getShadowTy(&I), false);
-    setShadow(&I, Shadow);
-    setOriginForNaryOp(I);
+    OriginCombiner OC(this, IRB);
+    for (Instruction::op_iterator OI = I.op_begin(); OI != I.op_end(); ++OI)
+      OC.Add(OI->get());
+    OC.Done(&I);
   }
 
-  void visitFAdd(BinaryOperator &I) { handleShadowOrBinary(I); }
-  void visitFSub(BinaryOperator &I) { handleShadowOrBinary(I); }
-  void visitFMul(BinaryOperator &I) { handleShadowOrBinary(I); }
-  void visitAdd(BinaryOperator &I) { handleShadowOrBinary(I); }
-  void visitSub(BinaryOperator &I) { handleShadowOrBinary(I); }
-  void visitXor(BinaryOperator &I) { handleShadowOrBinary(I); }
-  void visitMul(BinaryOperator &I) { handleShadowOrBinary(I); }
+  size_t VectorOrPrimitiveTypeSizeInBits(Type *Ty) {
+    return Ty->isVectorTy() ?
+      Ty->getVectorNumElements() * Ty->getScalarSizeInBits() :
+      Ty->getPrimitiveSizeInBits();
+  }
+
+  /// \brief Cast between two shadow types, extending or truncating as
+  /// necessary.
+  Value *CreateShadowCast(IRBuilder<> &IRB, Value *V, Type *dstTy) {
+    Type *srcTy = V->getType();
+    if (dstTy->isIntegerTy() && srcTy->isIntegerTy())
+      return IRB.CreateIntCast(V, dstTy, false);
+    if (dstTy->isVectorTy() && srcTy->isVectorTy() &&
+        dstTy->getVectorNumElements() == srcTy->getVectorNumElements())
+      return IRB.CreateIntCast(V, dstTy, false);
+    size_t srcSizeInBits = VectorOrPrimitiveTypeSizeInBits(srcTy);
+    size_t dstSizeInBits = VectorOrPrimitiveTypeSizeInBits(dstTy);
+    Value *V1 = IRB.CreateBitCast(V, Type::getIntNTy(*MS.C, srcSizeInBits));
+    Value *V2 =
+      IRB.CreateIntCast(V1, Type::getIntNTy(*MS.C, dstSizeInBits), false);
+    return IRB.CreateBitCast(V2, dstTy);
+    // TODO: handle struct types.
+  }
+
+  /// \brief Propagate shadow for arbitrary operation.
+  void handleShadowOr(Instruction &I) {
+    IRBuilder<> IRB(&I);
+    ShadowAndOriginCombiner SC(this, IRB);
+    for (Instruction::op_iterator OI = I.op_begin(); OI != I.op_end(); ++OI)
+      SC.Add(OI->get());
+    SC.Done(&I);
+  }
+
+  void visitFAdd(BinaryOperator &I) { handleShadowOr(I); }
+  void visitFSub(BinaryOperator &I) { handleShadowOr(I); }
+  void visitFMul(BinaryOperator &I) { handleShadowOr(I); }
+  void visitAdd(BinaryOperator &I) { handleShadowOr(I); }
+  void visitSub(BinaryOperator &I) { handleShadowOr(I); }
+  void visitXor(BinaryOperator &I) { handleShadowOr(I); }
+  void visitMul(BinaryOperator &I) { handleShadowOr(I); }
 
   void handleDiv(Instruction &I) {
     IRBuilder<> IRB(&I);
