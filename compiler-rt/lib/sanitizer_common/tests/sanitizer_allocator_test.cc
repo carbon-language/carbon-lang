@@ -219,9 +219,9 @@ TEST(SanitizerCommon, SizeClassAllocator32MapUnmapCallback) {
   a->TestOnlyUnmap();
   EXPECT_EQ(TestMapUnmapCallback::unmap_count, 2);  // The whole thing + alloc.
   delete a;
-  fprintf(stderr, "Map: %d Unmap: %d\n",
-          TestMapUnmapCallback::map_count,
-          TestMapUnmapCallback::unmap_count);
+  // fprintf(stderr, "Map: %d Unmap: %d\n",
+  //         TestMapUnmapCallback::map_count,
+  //         TestMapUnmapCallback::unmap_count);
 }
 
 TEST(SanitizerCommon, LargeMmapAllocatorMapUnmapCallback) {
