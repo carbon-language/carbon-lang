@@ -20,6 +20,9 @@
 #include <algorithm>
 #include <vector>
 
+// Too slow for debug build
+#if TSAN_DEBUG==0
+
 #if SANITIZER_WORDSIZE == 64
 static const uptr kAllocatorSpace = 0x700000000000ULL;
 static const uptr kAllocatorSize  = 0x010000000000ULL;  // 1T.
@@ -465,3 +468,5 @@ TEST(Allocator, ScopedBuffer) {
     EXPECT_EQ('c', char_buf[i]);
   }
 }
+
+#endif  // #if TSAN_DEBUG==0
