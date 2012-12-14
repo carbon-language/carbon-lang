@@ -380,6 +380,7 @@ bool SanitizerGetThreadName(char *name, int max_len) {
   return true;
 }
 
+#ifndef SANITIZER_GO
 //------------------------- SlowUnwindStack -----------------------------------
 #ifdef __arm__
 #define UNWIND_STOP _URC_END_OF_STACK
@@ -430,6 +431,8 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
   }
   this->trace[0] = pc;
 }
+
+#endif  // #ifndef SANITIZER_GO
 
 }  // namespace __sanitizer
 
