@@ -61,7 +61,9 @@ for Darwin/ARM targets.
 In the LLVM 3.2 time-frame, the Clang team has made many improvements.
 Highlights include:
 
-#. ...
+#. More powerful warnings, especially `-Wuninitialized`
+#. Template type diffing in diagnostic messages
+#. Higher quality and more efficient debug info generation
 
 For more details about the changes to Clang since the 3.1 release, see the
 `Clang release notes. <http://clang.llvm.org/docs/ReleaseNotes.html>`_
