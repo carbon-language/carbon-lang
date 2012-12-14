@@ -1200,12 +1200,8 @@ ParseObjCProtocolReferences(SmallVectorImpl<Decl *> &Protocols,
   }
 
   // Consume the '>'.
-  if (Tok.isNot(tok::greater)) {
-    Diag(Tok, diag::err_expected_greater);
+  if (ParseGreaterThanInTemplateList(EndLoc, /*ConsumeLastToken=*/true))
     return true;
-  }
-
-  EndLoc = ConsumeToken();
 
   // Convert the list of protocols identifiers into a list of protocol decls.
   Actions.FindProtocolDeclaration(WarnOnDeclarations,

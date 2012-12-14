@@ -665,52 +665,17 @@ Parser::ParseNonTypeTemplateParameter(unsigned Depth, unsigned Position) {
                                                DefaultArg.take());
 }
 
-/// \brief Parses a template-id that after the template name has
-/// already been parsed.
+/// \brief Parses a '>' at the end of a template list.
 ///
-/// This routine takes care of parsing the enclosed template argument
-/// list ('<' template-parameter-list [opt] '>') and placing the
-/// results into a form that can be transferred to semantic analysis.
+/// If this function encounters '>>', '>>>', '>=', or '>>=', it tries
+/// to determine if these tokens were supposed to be a '>' followed by
+/// '>', '>>', '>=', or '>='. It emits an appropriate diagnostic if necessary.
 ///
-/// \param Template the template declaration produced by isTemplateName
+/// \param RAngleLoc the location of the consumed '>'.
 ///
-/// \param TemplateNameLoc the source location of the template name
-///
-/// \param SS if non-NULL, the nested-name-specifier preceding the
-/// template name.
-///
-/// \param ConsumeLastToken if true, then we will consume the last
-/// token that forms the template-id. Otherwise, we will leave the
-/// last token in the stream (e.g., so that it can be replaced with an
-/// annotation token).
-bool
-Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
-                                         SourceLocation TemplateNameLoc,
-                                         const CXXScopeSpec &SS,
-                                         bool ConsumeLastToken,
-                                         SourceLocation &LAngleLoc,
-                                         TemplateArgList &TemplateArgs,
-                                         SourceLocation &RAngleLoc) {
-  assert(Tok.is(tok::less) && "Must have already parsed the template-name");
-
-  // Consume the '<'.
-  LAngleLoc = ConsumeToken();
-
-  // Parse the optional template-argument-list.
-  bool Invalid = false;
-  {
-    GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);
-    if (Tok.isNot(tok::greater) && Tok.isNot(tok::greatergreater))
-      Invalid = ParseTemplateArgumentList(TemplateArgs);
-
-    if (Invalid) {
-      // Try to find the closing '>'.
-      SkipUntil(tok::greater, true, !ConsumeLastToken);
-
-      return true;
-    }
-  }
-
+/// \param ConsumeLastToken if true, the '>' is not consumed.
+bool Parser::ParseGreaterThanInTemplateList(SourceLocation &RAngleLoc,
+                                            bool ConsumeLastToken) {
   // What will be left once we've consumed the '>'.
   tok::TokenKind RemainingToken;
   const char *ReplacementStr = "> >";
@@ -809,8 +774,57 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
     Tok.setLength(1);
     Tok.setLocation(RAngleLoc);
   }
-
   return false;
+}
+
+
+/// \brief Parses a template-id that after the template name has
+/// already been parsed.
+///
+/// This routine takes care of parsing the enclosed template argument
+/// list ('<' template-parameter-list [opt] '>') and placing the
+/// results into a form that can be transferred to semantic analysis.
+///
+/// \param Template the template declaration produced by isTemplateName
+///
+/// \param TemplateNameLoc the source location of the template name
+///
+/// \param SS if non-NULL, the nested-name-specifier preceding the
+/// template name.
+///
+/// \param ConsumeLastToken if true, then we will consume the last
+/// token that forms the template-id. Otherwise, we will leave the
+/// last token in the stream (e.g., so that it can be replaced with an
+/// annotation token).
+bool
+Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
+                                         SourceLocation TemplateNameLoc,
+                                         const CXXScopeSpec &SS,
+                                         bool ConsumeLastToken,
+                                         SourceLocation &LAngleLoc,
+                                         TemplateArgList &TemplateArgs,
+                                         SourceLocation &RAngleLoc) {
+  assert(Tok.is(tok::less) && "Must have already parsed the template-name");
+
+  // Consume the '<'.
+  LAngleLoc = ConsumeToken();
+
+  // Parse the optional template-argument-list.
+  bool Invalid = false;
+  {
+    GreaterThanIsOperatorScope G(GreaterThanIsOperator, false);
+    if (Tok.isNot(tok::greater) && Tok.isNot(tok::greatergreater))
+      Invalid = ParseTemplateArgumentList(TemplateArgs);
+
+    if (Invalid) {
+      // Try to find the closing '>'.
+      SkipUntil(tok::greater, true, !ConsumeLastToken);
+
+      return true;
+    }
+  }
+
+  return ParseGreaterThanInTemplateList(RAngleLoc, ConsumeLastToken);
 }
 
 /// \brief Replace the tokens that form a simple-template-id with an
