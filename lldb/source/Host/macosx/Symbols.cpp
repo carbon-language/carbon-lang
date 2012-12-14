@@ -83,7 +83,7 @@ SkinnyMachOFileContainsArchAndUUID
     {
         ArchSpec file_arch(eArchTypeMachO, cputype, cpusubtype);
 
-        if (file_arch.IsCompatibleMatch(*arch))
+        if (!file_arch.IsCompatibleMatch(*arch))
             return false;
     }
 
@@ -181,7 +181,7 @@ UniversalMachOFileContainsArchAndUUID
         if (arch)
         {
             ArchSpec fat_arch(eArchTypeMachO, arch_cputype, arch_cpusubtype);
-            if (fat_arch.IsCompatibleMatch(*arch))
+            if (!fat_arch.IsCompatibleMatch(*arch))
                 continue;
         }
 
