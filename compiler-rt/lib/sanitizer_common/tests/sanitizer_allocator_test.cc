@@ -21,7 +21,7 @@
 #include <vector>
 
 // Too slow for debug build
-#if TSAN_DEBUG==0
+#if TSAN_DEBUG == 0
 
 #if SANITIZER_WORDSIZE == 64
 static const uptr kAllocatorSpace = 0x700000000000ULL;
