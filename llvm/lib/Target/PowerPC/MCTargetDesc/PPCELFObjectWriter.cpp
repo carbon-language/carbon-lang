@@ -9,6 +9,7 @@
 
 #include "MCTargetDesc/PPCMCTargetDesc.h"
 #include "MCTargetDesc/PPCFixupKinds.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/MC/MCELFObjectWriter.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCValue.h"
@@ -33,8 +34,24 @@ namespace {
                                                     const MCFixup &Fixup,
                                                     bool IsPCRel) const;
     virtual void adjustFixupOffset(const MCFixup &Fixup, uint64_t &RelocOffset);
+
+    virtual void sortRelocs(const MCAssembler &Asm,
+                            std::vector<ELFRelocationEntry> &Relocs);
+  };
+
+  class PPCELFRelocationEntry : public ELFRelocationEntry {
+  public:
+    PPCELFRelocationEntry(const ELFRelocationEntry &RE);
+    bool operator<(const PPCELFRelocationEntry &RE) const {
+      return (RE.r_offset < r_offset ||
+              (RE.r_offset == r_offset && RE.Type > Type));
+    }
   };
 }
+
+PPCELFRelocationEntry::PPCELFRelocationEntry(const ELFRelocationEntry &RE)
+  : ELFRelocationEntry(RE.r_offset, RE.Index, RE.Type, RE.Symbol,
+                       RE.r_addend, *RE.Fixup) {}
 
 PPCELFObjectWriter::PPCELFObjectWriter(bool Is64Bit, uint8_t OSABI)
   : MCELFObjectTargetWriter(Is64Bit, OSABI,
@@ -222,6 +239,34 @@ adjustFixupOffset(const MCFixup &Fixup, uint64_t &RelocOffset) {
       break;
   }
 }
+
+// The standard sorter only sorts on the r_offset field, but PowerPC can
+// have multiple relocations at the same offset.  Sort secondarily on the
+// relocation type to avoid nondeterminism.
+void PPCELFObjectWriter::sortRelocs(const MCAssembler &Asm,
+                                    std::vector<ELFRelocationEntry> &Relocs) {
+
+  // Copy to a temporary vector of relocation entries having a different
+  // sort function.
+  std::vector<PPCELFRelocationEntry> TmpRelocs;
+  
+  for (std::vector<ELFRelocationEntry>::iterator R = Relocs.begin();
+       R != Relocs.end(); ++R) {
+    TmpRelocs.push_back(PPCELFRelocationEntry(*R));
+  }
+
+  // Sort in place by ascending r_offset and descending r_type.
+  array_pod_sort(TmpRelocs.begin(), TmpRelocs.end());
+
+  // Copy back to the original vector.
+  unsigned I = 0;
+  for (std::vector<PPCELFRelocationEntry>::iterator R = TmpRelocs.begin();
+       R != TmpRelocs.end(); ++R, ++I) {
+    Relocs[I] = ELFRelocationEntry(R->r_offset, R->Index, R->Type,
+                                   R->Symbol, R->r_addend, *R->Fixup);
+  }
+}
+
 
 MCObjectWriter *llvm::createPPCELFObjectWriter(raw_ostream &OS,
                                                bool Is64Bit,

@@ -4,10 +4,6 @@
 ; Test correct relocation generation for thread-local storage using
 ; the local dynamic model.
 
-; Relocations 2 and 3 seem to come out in unpredictable order on some
-; architectures, so restrict this for now.
-; REQUIRES: ppc64-registered-target
-
 target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128-v128:128:128-n32:64"
 target triple = "powerpc64-unknown-linux-gnu"
 
