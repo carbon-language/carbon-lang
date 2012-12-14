@@ -42,8 +42,8 @@ int main(int argc, const char **argv) {
   CommonOptionsParser OptionsParser(argc, argv);
 
   // TODO: Create transforms requested by command-line.
-  ClangTool SyntaxTool(OptionsParser.GetCompilations(),
-                       OptionsParser.GetSourcePathList());
+  ClangTool SyntaxTool(OptionsParser.getCompilations(),
+                       OptionsParser.getSourcePathList());
 
   // First, let's check to make sure there were no errors.
   if (SyntaxTool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>()) !=
