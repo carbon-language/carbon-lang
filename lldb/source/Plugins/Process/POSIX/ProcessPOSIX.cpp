@@ -353,7 +353,8 @@ ProcessPOSIX::SendMessage(const ProcessMessage &message)
         break;
 
     case ProcessMessage::eCrashMessage:
-        SetPrivateState(eStateCrashed);
+        // FIXME: Update stop reason as per bugzilla 14598
+        SetPrivateState(eStateStopped);
         break;
     }
 
