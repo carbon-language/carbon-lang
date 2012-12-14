@@ -31,6 +31,7 @@ struct FdContext {
   FdDesc globdesc;
   FdDesc filedesc;
   FdDesc sockdesc;
+  u64 connectsync;
 };
 
 static FdContext fdctx;
@@ -165,7 +166,15 @@ void FdSocketCreate(ThreadState *thr, uptr pc, int fd) {
 
 void FdSocketAccept(ThreadState *thr, uptr pc, int fd, int newfd) {
   DPrintf("#%d: FdSocketAccept(%d, %d)\n", thr->tid, fd, newfd);
+  // Synchronize connect->accept.
+  Acquire(thr, pc, (uptr)&fdctx.connectsync);
   init(thr, pc, newfd, &fdctx.sockdesc);
+}
+
+void FdSocketConnecting(ThreadState *thr, uptr pc, int fd) {
+  DPrintf("#%d: FdSocketConnecting(%d)\n", thr->tid, fd);
+  // Synchronize connect->accept.
+  Release(thr, pc, (uptr)&fdctx.connectsync);
 }
 
 void FdSocketConnect(ThreadState *thr, uptr pc, int fd) {

@@ -49,6 +49,7 @@ void FdEventCreate(ThreadState *thr, uptr pc, int fd);
 void FdPollCreate(ThreadState *thr, uptr pc, int fd);
 void FdSocketCreate(ThreadState *thr, uptr pc, int fd);
 void FdSocketAccept(ThreadState *thr, uptr pc, int fd, int newfd);
+void FdSocketConnecting(ThreadState *thr, uptr pc, int fd);
 void FdSocketConnect(ThreadState *thr, uptr pc, int fd);
 
 uptr File2addr(char *path);

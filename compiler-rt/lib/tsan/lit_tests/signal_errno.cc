@@ -10,12 +10,12 @@
 pthread_t mainth;
 volatile int done;
 
-static void handler(int, siginfo_t*, void*) {
+static void handler(int, siginfo_t *s, void *c) {
   errno = 1;
   done = 1;
 }
 
-static void* sendsignal(void*) {
+static void* sendsignal(void *p) {
   pthread_kill(mainth, SIGPROF);
   return 0;
 }

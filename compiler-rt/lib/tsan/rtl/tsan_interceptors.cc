@@ -1146,6 +1146,7 @@ TSAN_INTERCEPTOR(int, socketpair, int domain, int type, int protocol, int *fd) {
 
 TSAN_INTERCEPTOR(int, connect, int fd, void *addr, unsigned addrlen) {
   SCOPED_TSAN_INTERCEPTOR(connect, fd, addr, addrlen);
+  FdSocketConnecting(thr, pc, fd);
   int res = REAL(connect)(fd, addr, addrlen);
   if (res == 0)
     FdSocketConnect(thr, pc, fd);
