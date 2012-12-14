@@ -200,8 +200,6 @@ DoReadMemory(lldb::pid_t pid,
         remainder = remainder > word_size ? word_size : remainder;
 
         // Copy the data into our buffer
-        if (log)
-            memset(dst, 0, sizeof(unsigned char));
         for (unsigned i = 0; i < remainder; ++i)
             dst[i] = ((data >> i*8) & 0xFF);
 
@@ -209,8 +207,14 @@ DoReadMemory(lldb::pid_t pid,
             (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_LONG) ||
              (log->GetMask().Test(POSIX_LOG_MEMORY_DATA_SHORT) &&
               size <= POSIX_LOG_MEMORY_SHORT_BYTES)))
-            log->Printf ("ProcessMonitor::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
-                         (void*)vm_addr, *(unsigned long*)dst, (unsigned long)data);
+            {
+                uintptr_t print_dst = 0;
+                // Format bytes from data by moving into print_dst for log output
+                for (unsigned i = 0; i < remainder; ++i)
+                    print_dst |= (((data >> i*8) & 0xFF) << i*8);
+                log->Printf ("ProcessMonitor::%s() [%p]:0x%lx (0x%lx)", __FUNCTION__,
+                             (void*)vm_addr, print_dst, (unsigned long)data);
+            }
 
         vm_addr += word_size;
         dst += word_size;
