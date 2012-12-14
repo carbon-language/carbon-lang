@@ -5629,13 +5629,7 @@ Decl *Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
   D.setFunctionDefinitionKind(FDK_Definition);
   Decl *DP = HandleDeclarator(ParentScope, D,
                               TemplateParameterLists);
-  if (FunctionTemplateDecl *FunctionTemplate
-        = dyn_cast_or_null<FunctionTemplateDecl>(DP))
-    return ActOnStartOfFunctionDef(FnBodyScope,
-                                   FunctionTemplate->getTemplatedDecl());
-  if (FunctionDecl *Function = dyn_cast_or_null<FunctionDecl>(DP))
-    return ActOnStartOfFunctionDef(FnBodyScope, Function);
-  return 0;
+  return ActOnStartOfFunctionDef(FnBodyScope, DP);
 }
 
 /// \brief Strips various properties off an implicit instantiation
