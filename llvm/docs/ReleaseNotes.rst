@@ -418,21 +418,6 @@ New features of the ARM target include:
 
 .. _armintegratedassembler:
 
-ARM Integrated Assembler
-^^^^^^^^^^^^^^^^^^^^^^^^
-
-The ARM target now includes a full featured macro assembler, including
-direct-to-object module support for clang.  The assembler is currently enabled
-by default for Darwin only pending testing and any additional necessary
-platform specific support for Linux.
-
-Full support is included for Thumb1, Thumb2 and ARM modes, along with subtarget
-and CPU specific extensions for VFP2, VFP3 and NEON.
-
-The assembler is Unified Syntax only (see ARM Architecural Reference Manual for
-details).  While there is some, and growing, support for pre-unfied (divided)
-syntax, there are still significant gaps in that support.
-
 MIPS Target Improvements
 ------------------------
 
