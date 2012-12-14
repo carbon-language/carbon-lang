@@ -270,8 +270,7 @@ public:
   /// \brief Determine which inlining mode should be used when this function is
   /// analyzed. For example, determines if the callees should be inlined.
   ExprEngine::InliningModes
-  getInliningModeForFunction(CallGraphNode *N,
-                             SmallPtrSet<CallGraphNode*,24> Visited);
+  getInliningModeForFunction(const Decl *D, SetOfConstDecls Visited);
 
   /// \brief Build the call graph for all the top level decls of this TU and
   /// use it to define the order in which the functions should be visited.
@@ -364,10 +363,10 @@ void AnalysisConsumer::storeTopLevelDecls(DeclGroupRef DG) {
   }
 }
 
-static bool shouldSkipFunction(CallGraphNode *N,
-                             SmallPtrSet<CallGraphNode*,24> Visited,
-                             SmallPtrSet<CallGraphNode*,24> VisitedAsTopLevel) {
-  if (VisitedAsTopLevel.count(N))
+static bool shouldSkipFunction(const Decl *D,
+                               SetOfConstDecls Visited,
+                               SetOfConstDecls VisitedAsTopLevel) {
+  if (VisitedAsTopLevel.count(D))
     return true;
 
   // We want to re-analyse the functions as top level in the following cases:
@@ -377,16 +376,16 @@ static bool shouldSkipFunction(CallGraphNode *N,
   //   not catch errors within defensive code.
   // - We want to reanalyze all ObjC methods as top level to report Retain
   //   Count naming convention errors more aggressively.
-  if (isa<ObjCMethodDecl>(N->getDecl()))
+  if (isa<ObjCMethodDecl>(D))
     return false;
 
   // Otherwise, if we visited the function before, do not reanalyze it.
-  return Visited.count(N);
+  return Visited.count(D);
 }
 
 ExprEngine::InliningModes
-AnalysisConsumer::getInliningModeForFunction(CallGraphNode *N,
-                                       SmallPtrSet<CallGraphNode*,24> Visited) {
+AnalysisConsumer::getInliningModeForFunction(const Decl *D,
+                                             SetOfConstDecls Visited) {
   ExprEngine::InliningModes HowToInline =
       (Mgr->shouldInlineCall()) ? ExprEngine::Inline_All :
                                   ExprEngine::Inline_None;
@@ -394,10 +393,10 @@ AnalysisConsumer::getInliningModeForFunction(CallGraphNode *N,
   // We want to reanalyze all ObjC methods as top level to report Retain
   // Count naming convention errors more aggressively. But we can turn off
   // inlining when reanalyzing an already inlined function.
-  if (Visited.count(N)) {
-    assert(isa<ObjCMethodDecl>(N->getDecl()) &&
+  if (Visited.count(D)) {
+    assert(isa<ObjCMethodDecl>(D) &&
            "We are only reanalyzing ObjCMethods.");
-    ObjCMethodDecl *ObjCM = cast<ObjCMethodDecl>(N->getDecl());
+    const ObjCMethodDecl *ObjCM = cast<ObjCMethodDecl>(D);
     if (ObjCM->getMethodFamily() != OMF_init)
       HowToInline = ExprEngine::Inline_None;
   }
@@ -446,8 +445,8 @@ void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
   // BFS over all of the functions, while skipping the ones inlined into
   // the previously processed functions. Use external Visited set, which is
   // also modified when we inline a function.
-  SmallPtrSet<CallGraphNode*,24> Visited;
-  SmallPtrSet<CallGraphNode*,24> VisitedAsTopLevel;
+  SetOfConstDecls Visited;
+  SetOfConstDecls VisitedAsTopLevel;
   while(!BFSQueue.empty()) {
     CallGraphNode *N = BFSQueue.front();
     BFSQueue.pop_front();
@@ -455,31 +454,30 @@ void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
     // Push the children into the queue.
     for (CallGraphNode::const_iterator CI = N->begin(),
          CE = N->end(); CI != CE; ++CI) {
-      if (!shouldSkipFunction(*CI, Visited, VisitedAsTopLevel))
+      if (!shouldSkipFunction((*CI)->getDecl(), Visited, VisitedAsTopLevel))
         BFSQueue.push_back(*CI);
     }
 
+    Decl *D = N->getDecl();
+    assert(D);
+
     // Skip the functions which have been processed already or previously
     // inlined.
-    if (shouldSkipFunction(N, Visited, VisitedAsTopLevel))
+    if (shouldSkipFunction(D, Visited, VisitedAsTopLevel))
       continue;
 
     // Analyze the function.
     SetOfConstDecls VisitedCallees;
-    Decl *D = N->getDecl();
-    assert(D);
 
-    HandleCode(D, AM_Path, getInliningModeForFunction(N, Visited),
+    HandleCode(D, AM_Path, getInliningModeForFunction(D, Visited),
                (Mgr->options.InliningMode == All ? 0 : &VisitedCallees));
 
     // Add the visited callees to the global visited set.
     for (SetOfConstDecls::iterator I = VisitedCallees.begin(),
                                    E = VisitedCallees.end(); I != E; ++I) {
-      CallGraphNode *VN = CG.getNode(*I);
-      if (VN)
-        Visited.insert(VN);
+        Visited.insert(*I);
     }
-    VisitedAsTopLevel.insert(N);
+    VisitedAsTopLevel.insert(D);
   }
 }
 
