@@ -517,6 +517,8 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
 
       if (Tok.is(tok::eof) || Tok.is(tok::eod)) { // "#if f(<eof>" & "#if f(\n"
         Diag(MacroName, diag::err_unterm_macro_invoc);
+        Diag(MI->getDefinitionLoc(), diag::note_macro_here)
+          << MacroName.getIdentifierInfo();
         // Do not lose the EOF/EOD.  Return it to the client.
         MacroName = Tok;
         return 0;
@@ -575,6 +577,8 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
       // Emit the diagnostic at the macro name in case there is a missing ).
       // Emitting it at the , could be far away from the macro name.
       Diag(ArgStartLoc, diag::err_too_many_args_in_macro_invoc);
+      Diag(MI->getDefinitionLoc(), diag::note_macro_here)
+        << MacroName.getIdentifierInfo();
       return 0;
     }
 
@@ -638,6 +642,8 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     } else {
       // Otherwise, emit the error.
       Diag(Tok, diag::err_too_few_args_in_macro_invoc);
+      Diag(MI->getDefinitionLoc(), diag::note_macro_here)
+        << MacroName.getIdentifierInfo();
       return 0;
     }
 
@@ -657,6 +663,8 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
     // Emit the diagnostic at the macro name in case there is a missing ).
     // Emitting it at the , could be far away from the macro name.
     Diag(MacroName, diag::err_too_many_args_in_macro_invoc);
+    Diag(MI->getDefinitionLoc(), diag::note_macro_here)
+      << MacroName.getIdentifierInfo();
     return 0;
   }
 

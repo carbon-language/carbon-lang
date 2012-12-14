@@ -1,9 +1,9 @@
 /* RUN: %clang_cc1 %s -Eonly -std=c89 -pedantic -verify
 */
 /* PR3937 */
-#define zero() 0
-#define one(x) 0
-#define two(x, y) 0
+#define zero() 0 /* expected-note 2 {{defined here}} */
+#define one(x) 0 /* expected-note 2 {{defined here}} */
+#define two(x, y) 0 /* expected-note 4 {{defined here}} */
 #define zero_dot(...) 0   /* expected-warning {{variadic macros are a C99 feature}} */
 #define one_dot(x, ...) 0 /* expected-warning {{variadic macros are a C99 feature}} expected-note 2{{macro 'one_dot' defined here}} */
 
