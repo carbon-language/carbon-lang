@@ -294,6 +294,11 @@ else()
   set(ENABLE_PIC 0)
 endif()
 
+find_package(LibXml2)
+if (LIBXML2_FOUND)
+  set(CLANG_HAVE_LIBXML 1)
+endif ()
+
 include(CheckCXXCompilerFlag)
 
 check_cxx_compiler_flag("-Wno-variadic-macros" SUPPORTS_NO_VARIADIC_MACROS_FLAG)

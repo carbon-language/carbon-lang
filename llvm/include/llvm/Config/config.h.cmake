@@ -6,6 +6,9 @@
 /* Bug report URL. */
 #define BUG_REPORT_URL "${BUG_REPORT_URL}"
 
+/* Define if we have libxml2 */
+#cmakedefine CLANG_HAVE_LIBXML ${CLANG_HAVE_LIBXML}
+
 /* Relative directory for resource files */
 #define CLANG_RESOURCE_DIR "${CLANG_RESOURCE_DIR}"
 
