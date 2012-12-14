@@ -37,9 +37,6 @@ def memrs : Operand<iPTR> {   // memri where the immediate is a symbolLo64
   let EncoderMethod = "getMemRIXEncoding";
   let MIOperandInfo = (ops symbolLo64:$off, ptr_rc:$reg);
 }
-def tlsaddr : Operand<i64> {
-  let EncoderMethod = "getTLSOffsetEncoding";
-}
 def tlsreg : Operand<i64> {
   let EncoderMethod = "getTLSRegEncoding";
 }
@@ -720,11 +717,17 @@ def ADDItocL: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, tocentry:$disp),
                        (PPCaddiTocL G8RC:$reg, tglobaladdr:$disp))]>, isPPC64;
 
 // Support for thread-local storage.
-def LDgotTPREL: Pseudo<(outs G8RC:$rD), (ins tlsaddr:$disp, G8RC:$reg),
-                       "#LDgotTPREL",
-                       [(set G8RC:$rD,
-                         (PPCldGotTprel tglobaltlsaddr:$disp, G8RC:$reg))]>,
-                      isPPC64;
+def ADDISgotTprelHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),
+                         "#ADDISgotTprelHA",
+                         [(set G8RC:$rD,
+                           (PPCaddisGotTprelHA G8RC:$reg,
+                                               tglobaltlsaddr:$disp))]>,
+                  isPPC64;
+def LDgotTprelL: Pseudo<(outs G8RC:$rD), (ins symbolLo64:$disp, G8RC:$reg),
+                        "#LDgotTprelL",
+                        [(set G8RC:$rD,
+                          (PPCldGotTprelL tglobaltlsaddr:$disp, G8RC:$reg))]>,
+                 isPPC64;
 def : Pat<(PPCaddTls G8RC:$in, tglobaltlsaddr:$g),
           (ADD8TLS G8RC:$in, tglobaltlsaddr:$g)>;
 def ADDIStlsgdHA: Pseudo<(outs G8RC:$rD), (ins G8RC:$reg, symbolHi64:$disp),

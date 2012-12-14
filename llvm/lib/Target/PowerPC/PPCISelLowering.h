@@ -178,11 +178,16 @@ namespace llvm {
       CR6SET,
       CR6UNSET,
 
-      /// G8RC = LD_GOT_TPREL Symbol, G8RReg - Used by the initial-exec
+      /// G8RC = ADDIS_GOT_TPREL_HA %X2, Symbol - Used by the initial-exec
+      /// TLS model, produces an ADDIS8 instruction that adds the GOT
+      /// base to sym@got@tprel@ha.
+      ADDIS_GOT_TPREL_HA,
+
+      /// G8RC = LD_GOT_TPREL_L Symbol, G8RReg - Used by the initial-exec
       /// TLS model, produces a LD instruction with base register G8RReg
-      /// and offset sym@got@tprel.  The latter identifies the GOT entry
-      /// containing the offset of "sym" relative to the thread pointer.
-      LD_GOT_TPREL,
+      /// and offset sym@got@tprel@l.  This completes the addition that
+      /// finds the offset of "sym" relative to the thread pointer.
+      LD_GOT_TPREL_L,
 
       /// G8RC = ADD_TLS G8RReg, Symbol - Used by the initial-exec TLS
       /// model, produces an ADD instruction that adds the contents of

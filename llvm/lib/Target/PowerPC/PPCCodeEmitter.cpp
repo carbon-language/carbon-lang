@@ -68,7 +68,6 @@ namespace {
     unsigned getLO16Encoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getMemRIXEncoding(const MachineInstr &MI, unsigned OpNo) const;
-    unsigned getTLSOffsetEncoding(const MachineInstr &MI, unsigned OpNo) const;
     unsigned getTLSRegEncoding(const MachineInstr &MI, unsigned OpNo) const;
 
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
@@ -242,13 +241,6 @@ unsigned PPCCodeEmitter::getMemRIXEncoding(const MachineInstr &MI,
   
   MCE.addRelocation(GetRelocation(MO, PPC::reloc_absolute_low_ix));
   return RegBits;
-}
-
-
-unsigned PPCCodeEmitter::getTLSOffsetEncoding(const MachineInstr &MI,
-                                           unsigned OpNo) const {
-  llvm_unreachable("TLS not supported on the old JIT.");
-  return 0;
 }
 
 

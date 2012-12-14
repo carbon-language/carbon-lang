@@ -16,6 +16,7 @@ entry:
   ret i32 %0
 }
 
-; CHECK: ld [[REG:[0-9]+]], a@got@tprel(2)
-; CHECK: add {{[0-9]+}}, [[REG]], a@tls
+; CHECK: addis [[REG1:[0-9]+]], 2, a@got@tprel@ha
+; CHECK: ld [[REG2:[0-9]+]], a@got@tprel@l([[REG1]])
+; CHECK: add {{[0-9]+}}, [[REG2]], a@tls
 

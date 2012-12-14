@@ -484,7 +484,8 @@ enum {
   R_PPC64_GOT_TLSGD16_HA      = 82,
   R_PPC64_GOT_TLSLD16_LO      = 84,
   R_PPC64_GOT_TLSLD16_HA      = 86,
-  R_PPC64_GOT_TPREL16_DS      = 87,
+  R_PPC64_GOT_TPREL16_LO_DS   = 88,
+  R_PPC64_GOT_TPREL16_HA      = 90,
   R_PPC64_TLSGD               = 107,
   R_PPC64_TLSLD               = 108
 };

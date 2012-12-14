@@ -24,8 +24,12 @@ entry:
 ; CHECK:       Relocation 0
 ; CHECK-NEXT:  'r_offset'
 ; CHECK-NEXT:  'r_sym', 0x[[SYM1:[0-9a-f]+]]
-; CHECK-NEXT:  'r_type', 0x00000057
+; CHECK-NEXT:  'r_type', 0x0000005a
 ; CHECK:       Relocation 1
+; CHECK-NEXT:  'r_offset'
+; CHECK-NEXT:  'r_sym', 0x[[SYM1]]
+; CHECK-NEXT:  'r_type', 0x00000058
+; CHECK:       Relocation 2
 ; CHECK-NEXT:  'r_offset'
 ; CHECK-NEXT:  'r_sym', 0x[[SYM1]]
 ; CHECK-NEXT:  'r_type', 0x00000043

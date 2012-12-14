@@ -513,8 +513,24 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     OutStreamer.EmitInstruction(TmpInst);
     return;
   }
-  case PPC::LDgotTPREL: {
-    // Transform %Xd = LDgotTPREL <ga:@sym>, %Xs
+  case PPC::ADDISgotTprelHA: {
+    // Transform: %Xd = ADDISgotTprelHA %X2, <ga:@sym>
+    // Into:      %Xd = ADDIS8 %X2, sym@got@tlsgd@ha
+    assert(Subtarget.isPPC64() && "Not supported for 32-bit PowerPC");
+    const MachineOperand &MO = MI->getOperand(2);
+    const GlobalValue *GValue = MO.getGlobal();
+    MCSymbol *MOSymbol = Mang->getSymbol(GValue);
+    const MCExpr *SymGotTprel =
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_GOT_TPREL16_HA,
+                              OutContext);
+    OutStreamer.EmitInstruction(MCInstBuilder(PPC::ADDIS8)
+                                .addReg(MI->getOperand(0).getReg())
+                                .addReg(PPC::X2)
+                                .addExpr(SymGotTprel));
+    return;
+  }
+  case PPC::LDgotTprelL: {
+    // Transform %Xd = LDgotTprelL <ga:@sym>, %Xs
     LowerPPCMachineInstrToMCInst(MI, TmpInst, *this, Subtarget.isDarwin());
 
     // Change the opcode to LDrs, which is a form of LD with the offset
@@ -524,7 +540,7 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     const GlobalValue *GValue = MO.getGlobal();
     MCSymbol *MOSymbol = Mang->getSymbol(GValue);
     const MCExpr *Exp =
-      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_GOT_TPREL16_DS,
+      MCSymbolRefExpr::Create(MOSymbol, MCSymbolRefExpr::VK_PPC_GOT_TPREL16_LO,
                               OutContext);
     TmpInst.getOperand(1) = MCOperand::CreateExpr(Exp);
     OutStreamer.EmitInstruction(TmpInst);

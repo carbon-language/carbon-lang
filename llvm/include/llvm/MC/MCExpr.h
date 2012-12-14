@@ -183,7 +183,8 @@ public:
     VK_PPC_DTPREL16_LO,  // symbol@dtprel@l
     VK_PPC_TOC16_HA,     // symbol@toc@ha
     VK_PPC_TOC16_LO,     // symbol@toc@l
-    VK_PPC_GOT_TPREL16_DS, // symbol@got@tprel
+    VK_PPC_GOT_TPREL16_HA, // symbol@got@tprel@ha
+    VK_PPC_GOT_TPREL16_LO, // symbol@got@tprel@l
     VK_PPC_TLS,            // symbol@tls
     VK_PPC_GOT_TLSGD16_HA, // symbol@got@tlsgd@ha
     VK_PPC_GOT_TLSGD16_LO, // symbol@got@tlsgd@l

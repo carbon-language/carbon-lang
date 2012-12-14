@@ -217,7 +217,8 @@ StringRef MCSymbolRefExpr::getVariantKindName(VariantKind Kind) {
   case VK_PPC_DTPREL16_LO: return "dtprel@l";
   case VK_PPC_TOC16_HA: return "toc@ha";
   case VK_PPC_TOC16_LO: return "toc@l";
-  case VK_PPC_GOT_TPREL16_DS: return "got@tprel";
+  case VK_PPC_GOT_TPREL16_HA: return "got@tprel@ha";
+  case VK_PPC_GOT_TPREL16_LO: return "got@tprel@l";
   case VK_PPC_TLS: return "tls";
   case VK_PPC_GOT_TLSGD16_HA: return "got@tlsgd@ha";
   case VK_PPC_GOT_TLSGD16_LO: return "got@tlsgd@l";
