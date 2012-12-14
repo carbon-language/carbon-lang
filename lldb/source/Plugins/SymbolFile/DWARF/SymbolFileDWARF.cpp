@@ -5301,8 +5301,6 @@ SymbolFileDWARF::CopyUniqueClassMethodTypes (Type *class_type,
             
             if (dst_die)
             {
-                // Erase this entry from the map
-                const size_t num_removed = dst_name_to_die_artificial.Erase (src_name_artificial);
                 // Both classes have the artificial types, link them
                 clang::DeclContext *src_decl_ctx = m_die_to_decl_ctx[src_die];
                 if (src_decl_ctx)
