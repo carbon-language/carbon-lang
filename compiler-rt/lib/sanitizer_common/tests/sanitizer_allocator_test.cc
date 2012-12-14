@@ -444,7 +444,7 @@ void *AllocatorLeakTestWorker(void *arg) {
 }
 
 TEST(SanitizerCommon, AllocatorLeakTest) {
-  typedef typename AllocatorCache::Allocator Allocator;
+  typedef AllocatorCache::Allocator Allocator;
   Allocator a;
   a.Init();
   uptr total_used_memory = 0;
