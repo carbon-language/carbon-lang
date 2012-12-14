@@ -46,7 +46,8 @@ public:
 
 
     static SymbolVendor*
-    FindPlugin (const lldb::ModuleSP &module_sp);
+    FindPlugin (const lldb::ModuleSP &module_sp,
+                lldb_private::Stream *feedback_strm);
 
     //------------------------------------------------------------------
     // Constructors and Destructors

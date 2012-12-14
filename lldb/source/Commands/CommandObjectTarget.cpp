@@ -4309,7 +4309,7 @@ protected:
                 // when it decides to create it!
                 module_sp->SetSymbolFileFileSpec (symbol_fspec);
                 
-                SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor();
+                SymbolVendor *symbol_vendor = module_sp->GetSymbolVendor(true, &result.GetErrorStream());
                 if (symbol_vendor)
                 {
                     SymbolFile *symbol_file = symbol_vendor->GetSymbolFile();

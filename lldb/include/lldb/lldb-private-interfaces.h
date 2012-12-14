@@ -29,7 +29,7 @@ namespace lldb_private
     typedef Platform* (*PlatformCreateInstance) (bool force, const ArchSpec *arch);
     typedef lldb::ProcessSP (*ProcessCreateInstance) (Target &target, Listener &listener, const FileSpec *crash_file_path);
     typedef SymbolFile* (*SymbolFileCreateInstance) (ObjectFile* obj_file);
-    typedef SymbolVendor* (*SymbolVendorCreateInstance) (const lldb::ModuleSP &module_sp);   // Module can be NULL for default system symbol vendor
+    typedef SymbolVendor* (*SymbolVendorCreateInstance) (const lldb::ModuleSP &module_sp, lldb_private::Stream *feedback_strm);   // Module can be NULL for default system symbol vendor
     typedef bool (*BreakpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
     typedef bool (*WatchpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t watch_id);
     typedef ThreadPlan * (*ThreadPlanShouldStopHereCallback) (ThreadPlan *current_plan, Flags &flags, void *baton);

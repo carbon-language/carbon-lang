@@ -223,7 +223,7 @@ public:
     }
     
     virtual SymbolVendor*
-    GetSymbolVendor(bool can_create = true)
+    GetSymbolVendor(bool can_create = true, lldb_private::Stream *feedback_strm = NULL)
     {
         // Scope for locker
         if (m_symfile_ap.get() || can_create == false)
@@ -237,7 +237,7 @@ public:
             if (oso_objfile)
             {
                 Mutex::Locker locker (m_mutex);
-                SymbolVendor* symbol_vendor = Module::GetSymbolVendor(can_create);
+                SymbolVendor* symbol_vendor = Module::GetSymbolVendor(can_create, feedback_strm);
                 if (symbol_vendor)
                 {
                     // Set a a pointer to this class to set our OSO DWARF file know

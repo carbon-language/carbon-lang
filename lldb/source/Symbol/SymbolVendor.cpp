@@ -32,7 +32,7 @@ using namespace lldb_private;
 // also allow for finding separate debug information files.
 //----------------------------------------------------------------------
 SymbolVendor*
-SymbolVendor::FindPlugin (const lldb::ModuleSP &module_sp)
+SymbolVendor::FindPlugin (const lldb::ModuleSP &module_sp, lldb_private::Stream *feedback_strm)
 {
     std::auto_ptr<SymbolVendor> instance_ap;
     //----------------------------------------------------------------------
@@ -41,7 +41,7 @@ SymbolVendor::FindPlugin (const lldb::ModuleSP &module_sp)
     SymbolVendorCreateInstance create_callback;
     for (uint32_t idx = 0; (create_callback = PluginManager::GetSymbolVendorCreateCallbackAtIndex(idx)) != NULL; ++idx)
     {
-        instance_ap.reset(create_callback(module_sp));
+        instance_ap.reset(create_callback(module_sp, feedback_strm));
 
         if (instance_ap.get())
         {

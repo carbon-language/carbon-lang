@@ -32,7 +32,7 @@ public:
     GetPluginDescriptionStatic();
 
     static lldb_private::SymbolVendor*
-    CreateInstance (const lldb::ModuleSP &module_sp);
+    CreateInstance (const lldb::ModuleSP &module_sp, lldb_private::Stream *feedback_strm);
 
     //------------------------------------------------------------------
     // Constructors and Destructors

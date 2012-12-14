@@ -603,7 +603,8 @@ public:
     ///     object and remains valid as long as the object is around.
     //------------------------------------------------------------------
     virtual SymbolVendor*
-    GetSymbolVendor(bool can_create = true);
+    GetSymbolVendor(bool can_create = true,
+                    lldb_private::Stream *feedback_strm = NULL);
 
     //------------------------------------------------------------------
     /// Get accessor the type list for this module.
