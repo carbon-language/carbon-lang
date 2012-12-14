@@ -81,8 +81,8 @@ int g() {
 };
 
 // CHECK: define internal void @"_ZZ1hvEN3$_78__invokeEv"(%struct.A* noalias sret %agg.result)
-// CHECK-NEXT: entry:
-// CHECK-NEXT: call void @"_ZZ1hvENK3$_7clEv"(%struct.A* sret %agg.result,
+// CHECK-NOT: =
+// CHECK: call void @"_ZZ1hvENK3$_7clEv"(%struct.A* sret %agg.result,
 // CHECK-NEXT: ret void
 struct A { ~A(); };
 void h() {
