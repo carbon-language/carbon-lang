@@ -85,7 +85,10 @@ for Go, Java, Obj-C and Obj-C++.
 
 The 3.2 release has the following notable changes:
 
-#. ...
+#. Able to load LLVM plugins such as Polly.
+#. Supports thread-local storage models.
+#. Passes knowledge of variable lifetimes to the LLVM optimizers.
+#. No longer requires GCC to be built with LTO support.
 
 compiler-rt: Compiler Runtime Library
 -------------------------------------
