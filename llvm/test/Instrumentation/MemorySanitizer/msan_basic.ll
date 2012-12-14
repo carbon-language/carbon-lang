@@ -8,7 +8,9 @@ target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f3
 ; Check the presence and the linkage type of __msan_track_origins
 ; CHECK: @__msan_track_origins = weak_odr constant i32 0
 
+
 ; Check instrumentation of stores
+
 define void @Store(i32* nocapture %p, i32 %x) nounwind uwtable {
 entry:
   store i32 %x, i32* %p, align 4
@@ -30,6 +32,34 @@ entry:
 ; CHECK-ORIGINS: br label
 ; CHECK-ORIGINS: <label>
 ; CHECK-ORIGINS: store
+; CHECK-ORIGINS: ret void
+
+
+; Check instrumentation of aligned stores
+; Shadow store has the same alignment as the original store; origin store
+; does not specify explicit alignment.
+
+define void @AlignedStore(i32* nocapture %p, i32 %x) nounwind uwtable {
+entry:
+  store i32 %x, i32* %p, align 32
+  ret void
+}
+
+; CHECK: @AlignedStore
+; CHECK: load {{.*}} @__msan_param_tls
+; CHECK: store {{.*}} align 32
+; CHECK: store {{.*}} align 32
+; CHECK: ret void
+; CHECK-ORIGINS: @AlignedStore
+; CHECK-ORIGINS: load {{.*}} @__msan_param_tls
+; CHECK-ORIGINS: store {{.*}} align 32
+; CHECK-ORIGINS: icmp
+; CHECK-ORIGINS: br i1
+; CHECK-ORIGINS: <label>
+; CHECK-ORIGINS-NOT: store {{.*}} align
+; CHECK-ORIGINS: br label
+; CHECK-ORIGINS: <label>
+; CHECK-ORIGINS: store {{.*}} align 32
 ; CHECK-ORIGINS: ret void
 
 

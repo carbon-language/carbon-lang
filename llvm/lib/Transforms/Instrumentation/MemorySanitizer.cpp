@@ -421,7 +421,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
       if (ClTrackOrigins) {
         if (ClStoreCleanOrigin || isa<StructType>(Shadow->getType())) {
-          IRB.CreateAlignedStore(getOrigin(Val), getOriginPtr(Addr, IRB), I.getAlignment());
+          IRB.CreateStore(getOrigin(Val), getOriginPtr(Addr, IRB));
         } else {
           Value *ConvertedShadow = convertToShadowTyNoVec(Shadow, IRB);
 
@@ -435,10 +435,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
           Value *Cmp = IRB.CreateICmpNE(ConvertedShadow,
               getCleanShadow(ConvertedShadow), "_mscmp");
           Instruction *CheckTerm =
-            SplitBlockAndInsertIfThen(cast<Instruction>(Cmp), false, MS.OriginStoreWeights);
-          IRBuilder<> IRBNewBlock(CheckTerm);
-          IRBNewBlock.CreateAlignedStore(getOrigin(Val),
-              getOriginPtr(Addr, IRBNewBlock), I.getAlignment());
+            SplitBlockAndInsertIfThen(cast<Instruction>(Cmp), false,
+                                      MS.OriginStoreWeights);
+          IRBuilder<> IRBNew(CheckTerm);
+          IRBNew.CreateStore(getOrigin(Val), getOriginPtr(Addr, IRBNew));
         }
       }
     }
@@ -787,7 +787,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       insertCheck(I.getPointerOperand(), &I);
 
     if (ClTrackOrigins)
-      setOrigin(&I, IRB.CreateAlignedLoad(getOriginPtr(Addr, IRB), I.getAlignment()));
+      setOrigin(&I, IRB.CreateLoad(getOriginPtr(Addr, IRB)));
   }
 
   /// \brief Instrument StoreInst
@@ -1296,9 +1296,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                                        kShadowTLSAlignment);
       }
       if (ClTrackOrigins)
-        IRB.CreateAlignedStore(getOrigin(A),
-                               getOriginPtrForArgument(A, IRB, ArgOffset),
-                               kShadowTLSAlignment);
+        IRB.CreateStore(getOrigin(A),
+                        getOriginPtrForArgument(A, IRB, ArgOffset));
       assert(Size != 0 && Store != 0);
       DEBUG(dbgs() << "  Param:" << *Store << "\n");
       ArgOffset += DataLayout::RoundUpAlignment(Size, 8);
