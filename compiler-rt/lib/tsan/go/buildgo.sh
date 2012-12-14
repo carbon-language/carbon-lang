@@ -1,6 +1,5 @@
 #!/bin/bash
 set -e
-set -x
 
 SRCS="
 	tsan_go.cc
