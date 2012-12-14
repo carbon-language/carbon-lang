@@ -62,7 +62,7 @@ public:
         uint32_t num_instructions;
         bool raw;
         std::string func_name;
-        bool cur_function;
+        bool current_function;
         lldb::addr_t start_addr;
         lldb::addr_t end_addr;
         bool at_pc;

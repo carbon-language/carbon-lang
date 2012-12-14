@@ -40,7 +40,7 @@ CommandObjectDisassemble::CommandOptions::CommandOptions (CommandInterpreter &in
     num_lines_context(0),
     num_instructions (0),
     func_name(),
-    cur_function (false),
+    current_function (false),
     start_addr(),
     end_addr (),
     at_pc (false),
@@ -130,7 +130,7 @@ CommandObjectDisassemble::CommandOptions::SetOptionValue (uint32_t option_idx, c
         break;
 
     case 'f':
-        cur_function = true;
+        current_function = true;
         some_location_specified = true;
         break;
 
@@ -155,7 +155,7 @@ CommandObjectDisassemble::CommandOptions::OptionParsingStarting ()
     num_lines_context = 0;
     num_instructions = 0;
     func_name.clear();
-    cur_function = false;
+    current_function = false;
     at_pc = false;
     frame_line = false;
     start_addr = LLDB_INVALID_ADDRESS;
@@ -170,7 +170,7 @@ Error
 CommandObjectDisassemble::CommandOptions::OptionParsingFinished ()
 {
     if (!some_location_specified)
-        at_pc = true;
+        current_function = true;
     return Error();
     
 }
@@ -184,24 +184,25 @@ CommandObjectDisassemble::CommandOptions::GetDefinitions ()
 OptionDefinition
 CommandObjectDisassemble::CommandOptions::g_option_table[] =
 {
-{ LLDB_OPT_SET_ALL  , false , "bytes",          'b', no_argument        , NULL, 0, eArgTypeNone,        "Show opcode bytes when disassembling."},
-{ LLDB_OPT_SET_ALL  , false , "context",        'C', required_argument  , NULL, 0, eArgTypeNumLines,    "Number of context lines of source to show."},
-{ LLDB_OPT_SET_ALL  , false , "mixed",          'm', no_argument        , NULL, 0, eArgTypeNone,        "Enable mixed source and assembly display."},
-{ LLDB_OPT_SET_ALL  , false , "raw",            'r', no_argument        , NULL, 0, eArgTypeNone,        "Print raw disassembly with no symbol information."},
-{ LLDB_OPT_SET_ALL  , false , "plugin",         'P', required_argument  , NULL, 0, eArgTypePlugin,      "Name of the disassembler plugin you want to use."},
-{ LLDB_OPT_SET_ALL  , false , "arch",           'a', required_argument  , NULL, 0, eArgTypeArchitecture,"Specify the architecture to use from cross disassembly."},
-{ LLDB_OPT_SET_1 |
-  LLDB_OPT_SET_2    , true  , "start-address" , 's', required_argument  , NULL, 0, eArgTypeStartAddress,"Address at which to start disassembling."},
-{ LLDB_OPT_SET_1    , false , "end-address"  ,  'e', required_argument  , NULL, 0, eArgTypeEndAddress,  "Address at which to end disassembling."},
-{ LLDB_OPT_SET_2 |
-  LLDB_OPT_SET_3 |
-  LLDB_OPT_SET_4 |
-  LLDB_OPT_SET_5    , false , "count",          'c', required_argument  , NULL, 0, eArgTypeNumLines,    "Number of instructions to display."},
-{ LLDB_OPT_SET_3    , false  , "name",           'n', required_argument  , NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,             "Disassemble entire contents of the given function name."},
-{ LLDB_OPT_SET_4    , false  , "frame",          'f', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble from the start of the current frame's function."},
-{ LLDB_OPT_SET_5    , false  , "pc",             'p', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble around the current pc."},
-{ LLDB_OPT_SET_6    , false  , "line",           'l', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble the current frame's current source line instructions if there debug line table information, else disasemble around the pc."},
-{ 0                 , false , NULL,             0,   0                  , NULL, 0, eArgTypeNone,        NULL }
+{ LLDB_OPT_SET_ALL, false, "bytes"        , 'b', no_argument        , NULL, 0, eArgTypeNone,        "Show opcode bytes when disassembling."},
+{ LLDB_OPT_SET_ALL, false, "context"      , 'C', required_argument  , NULL, 0, eArgTypeNumLines,    "Number of context lines of source to show."},
+{ LLDB_OPT_SET_ALL, false, "mixed"        , 'm', no_argument        , NULL, 0, eArgTypeNone,        "Enable mixed source and assembly display."},
+{ LLDB_OPT_SET_ALL, false, "raw"          , 'r', no_argument        , NULL, 0, eArgTypeNone,        "Print raw disassembly with no symbol information."},
+{ LLDB_OPT_SET_ALL, false, "plugin"       , 'P', required_argument  , NULL, 0, eArgTypePlugin,      "Name of the disassembler plugin you want to use."},
+{ LLDB_OPT_SET_ALL, false, "arch"         , 'a', required_argument  , NULL, 0, eArgTypeArchitecture,"Specify the architecture to use from cross disassembly."},
+{ LLDB_OPT_SET_1  |
+  LLDB_OPT_SET_2  , true , "start-address", 's', required_argument  , NULL, 0, eArgTypeStartAddress,"Address at which to start disassembling."},
+{ LLDB_OPT_SET_1  , false, "end-address"  , 'e', required_argument  , NULL, 0, eArgTypeEndAddress,  "Address at which to end disassembling."},
+{ LLDB_OPT_SET_2  |
+  LLDB_OPT_SET_3  |
+  LLDB_OPT_SET_4  |
+  LLDB_OPT_SET_5  , false, "count"        , 'c', required_argument  , NULL, 0, eArgTypeNumLines,    "Number of instructions to display."},
+{ LLDB_OPT_SET_3  , false, "name"         , 'n', required_argument  , NULL, CommandCompletions::eSymbolCompletion, eArgTypeFunctionName,
+                                                                                                    "Disassemble entire contents of the given function name."},
+{ LLDB_OPT_SET_4  , false, "frame"        , 'f', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble from the start of the current frame's function."},
+{ LLDB_OPT_SET_5  , false, "pc"           , 'p', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble around the current pc."},
+{ LLDB_OPT_SET_6  , false, "line"         , 'l', no_argument        , NULL, 0, eArgTypeNone,        "Disassemble the current frame's current source line instructions if there debug line table information, else disasemble around the pc."},
+{ 0               , false, NULL           ,   0, 0                  , NULL, 0, eArgTypeNone,        NULL }
 };
 
 
@@ -332,7 +333,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
                 m_options.show_mixed = false;
             }
         }
-        else if (m_options.cur_function)
+        else if (m_options.current_function)
         {
             if (frame == NULL)
             {
