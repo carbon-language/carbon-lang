@@ -953,7 +953,7 @@ bool llvm::isKnownNonZero(Value *V, const DataLayout *TD, unsigned Depth) {
         return true;
   }
 
-  unsigned BitWidth = getBitWidth(V->getType(), TD);
+  unsigned BitWidth = getBitWidth(V->getType()->getScalarType(), TD);
 
   // X | Y != 0 if X != 0 or Y != 0.
   Value *X = 0, *Y = 0;
