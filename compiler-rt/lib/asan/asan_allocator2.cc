@@ -121,9 +121,23 @@ COMPILER_CHECK(sizeof(ChunkBase) == 16);
 static const uptr kChunkHeaderSize = 8;
 #endif
 
+static uptr ComputeRZSize(uptr user_requested_size) {
+  // FIXME: implement adaptive redzones.
+  return flags()->redzone;
+}
+
 struct AsanChunk: ChunkBase {
   uptr Beg() { return reinterpret_cast<uptr>(this) + kChunkHeaderSize; }
   uptr UsedSize() { return user_requested_size; }
+  // We store the alloc/free stack traces in the chunk itself.
+  uptr AllocStackBeg() {
+    return Beg() - ComputeRZSize(user_requested_size);
+  }
+  uptr AllocStackSize() {
+    return ComputeRZSize(user_requested_size) - kChunkHeaderSize;
+  }
+  uptr FreeStackBeg();
+  uptr FreeStackSize();
 };
 
 uptr AsanChunkView::Beg() { return chunk_->Beg(); }
@@ -133,7 +147,8 @@ uptr AsanChunkView::AllocTid() { return chunk_->alloc_tid; }
 uptr AsanChunkView::FreeTid() { return chunk_->free_tid; }
 
 void AsanChunkView::GetAllocStack(StackTrace *stack) {
-  stack->size = 0;
+  StackTrace::UncompressStack(stack, chunk_->AllocStackBeg(),
+                              chunk_->AllocStackSize());
 }
 
 void AsanChunkView::GetFreeStack(StackTrace *stack) {
@@ -141,11 +156,6 @@ void AsanChunkView::GetFreeStack(StackTrace *stack) {
 }
 
 static const uptr kReturnOnZeroMalloc = 0x0123;  // Zero page is protected.
-
-static uptr ComputeRZSize(uptr user_requested_size) {
-  // FIXME: implement adaptive redzones.
-  return flags()->redzone;
-}
 
 static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
   Init();
@@ -184,8 +194,10 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
   u32 alloc_tid = t ? t->tid() : 0;
   m->alloc_tid = alloc_tid;
   CHECK_EQ(alloc_tid, m->alloc_tid);  // Does alloc_tid fit into the bitfield?
+  m->free_tid = kInvalidTid;
   m->from_memalign = user_beg != beg_plus_redzone;
   m->user_requested_size = size;
+  StackTrace::CompressStack(stack, m->AllocStackBeg(), m->AllocStackSize());
 
   uptr size_rounded_down_to_granularity = RoundDownTo(size, SHADOW_GRANULARITY);
   // Unpoison the bulk of the memory region.
@@ -234,7 +246,6 @@ void *asan_memalign(uptr alignment, uptr size, StackTrace *stack) {
 SANITIZER_INTERFACE_ATTRIBUTE
 void asan_free(void *ptr, StackTrace *stack) {
   Deallocate(ptr, stack);
-  return;
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
@@ -243,28 +254,42 @@ void *asan_malloc(uptr size, StackTrace *stack) {
 }
 
 void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
-  UNIMPLEMENTED();
+  void *ptr = Allocate(nmemb * size, 8, stack);
+  if (ptr)
+    REAL(memset)(ptr, 0, nmemb * size);
   return 0;
 }
 
 void *asan_realloc(void *p, uptr size, StackTrace *stack) {
-  UNIMPLEMENTED();
-  return 0;
+  if (p == 0) {
+    return Allocate(size, 8, stack);
+  if (size == 0) {
+    Deallocate(p, stack);
+    return 0;
+  }
+  UNIMPLEMENTED;
+  // return Reallocate((u8*)p, size, stack);
 }
 
 void *asan_valloc(uptr size, StackTrace *stack) {
-  UNIMPLEMENTED();
-  return 0;
+  return Allocate(size, GetPageSizeCached(), stack);
 }
 
 void *asan_pvalloc(uptr size, StackTrace *stack) {
-  UNIMPLEMENTED();
-  return 0;
+  uptr PageSize = GetPageSizeCached();
+  size = RoundUpTo(size, PageSize);
+  if (size == 0) {
+    // pvalloc(0) should allocate one page.
+    size = PageSize;
+  }
+  return Allocate(size, PageSize, stack);
 }
 
 int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
-                          StackTrace *stack) {
-  UNIMPLEMENTED();
+                        StackTrace *stack) {
+  void *ptr = Allocate(size, alignment, stack);
+  CHECK(IsAligned((uptr)ptr, alignment));
+  *memptr = ptr;
   return 0;
 }
 
