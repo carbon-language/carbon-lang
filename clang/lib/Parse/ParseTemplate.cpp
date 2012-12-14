@@ -347,7 +347,7 @@ Parser::ParseTemplateParameterList(unsigned Depth,
       SkipUntil(tok::comma, tok::greater, tok::greatergreater, true, true);
     }
 
-    // Did we find a comma or the end of the template parmeter list?
+    // Did we find a comma or the end of the template parameter list?
     if (Tok.is(tok::comma)) {
       ConsumeToken();
     } else if (Tok.is(tok::greater) || Tok.is(tok::greatergreater)) {
