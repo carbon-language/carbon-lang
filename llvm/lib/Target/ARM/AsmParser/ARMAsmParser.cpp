@@ -5723,7 +5723,12 @@ processInstruction(MCInst &Inst,
   }
   // Aliases for alternate PC+imm syntax of LDR instructions.
   case ARM::t2LDRpcrel:
-    Inst.setOpcode(ARM::t2LDRpci);
+    // Select the narrow version if the immediate will fit.
+    if (Inst.getOperand(1).getImm() > 0 &&
+        Inst.getOperand(1).getImm() <= 0xff)
+      Inst.setOpcode(ARM::tLDRpci);
+    else
+      Inst.setOpcode(ARM::t2LDRpci);
     return true;
   case ARM::t2LDRBpcrel:
     Inst.setOpcode(ARM::t2LDRBpci);

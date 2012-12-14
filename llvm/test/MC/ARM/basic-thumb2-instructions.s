@@ -3509,3 +3509,7 @@ _func:
 @ CHECK: ldrh.w	r11, [pc, #-22]         @ encoding: [0x3f,0xf8,0x16,0xb0]
 @ CHECK: ldrsb.w r11, [pc, #-22]        @ encoding: [0x1f,0xf9,0x16,0xb0]
 @ CHECK: ldrsh.w r11, [pc, #-22]        @ encoding: [0x3f,0xf9,0x16,0xb0]
+
+@ rdar://12596361
+        ldr r1, [pc, #12]
+@ CHECK: ldr.n r1, [pc, #12]        @ encoding: [0x03,0x49]
