@@ -510,7 +510,7 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     POut << ")";
 
     if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
-      const FunctionType *FT = cast<FunctionType>(MD->getType().getTypePtr());
+      const FunctionType *FT = MD->getType()->castAs<FunctionType>();
       if (FT->isConst())
         POut << " const";
       if (FT->isVolatile())

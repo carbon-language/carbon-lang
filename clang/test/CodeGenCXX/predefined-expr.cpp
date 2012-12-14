@@ -142,7 +142,7 @@ public:
     printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
   }
 
-  inline void inlineFunction() {
+  inline void (inlineFunction)() {
     printf("__func__ %s\n", __func__);
     printf("__FUNCTION__ %s\n", __FUNCTION__);
     printf("__PRETTY_FUNCTION__ %s\n\n", __PRETTY_FUNCTION__);
