@@ -432,17 +432,17 @@ public:
   /// either it is legal, needs to be promoted to a larger size, needs to be
   /// expanded to some other code sequence, or the target has a custom expander
   /// for it.
-  LegalizeAction getLoadExtAction(unsigned ExtType, EVT VT) const {
-    assert(ExtType < ISD::LAST_LOADEXT_TYPE &&
-           VT.getSimpleVT() < MVT::LAST_VALUETYPE &&
+  LegalizeAction getLoadExtAction(unsigned ExtType, MVT VT) const {
+    assert(ExtType < ISD::LAST_LOADEXT_TYPE && VT < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
-    return (LegalizeAction)LoadExtActions[VT.getSimpleVT().SimpleTy][ExtType];
+    return (LegalizeAction)LoadExtActions[VT.SimpleTy][ExtType];
   }
 
   /// isLoadExtLegal - Return true if the specified load with extension is legal
   /// on this target.
   bool isLoadExtLegal(unsigned ExtType, EVT VT) const {
-    return VT.isSimple() && getLoadExtAction(ExtType, VT) == Legal;
+    return VT.isSimple() &&
+      getLoadExtAction(ExtType, VT.getSimpleVT()) == Legal;
   }
 
   /// getTruncStoreAction - Return how this store with truncation should be
