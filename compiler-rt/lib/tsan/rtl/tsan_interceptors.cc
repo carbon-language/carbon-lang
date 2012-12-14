@@ -1136,6 +1136,14 @@ TSAN_INTERCEPTOR(int, socket, int domain, int type, int protocol) {
   return fd;
 }
 
+TSAN_INTERCEPTOR(int, socketpair, int domain, int type, int protocol, int *fd) {
+  SCOPED_TSAN_INTERCEPTOR(socketpair, domain, type, protocol, fd);
+  int res = REAL(socketpair)(domain, type, protocol, fd);
+  if (res == 0 && fd[0] >= 0 && fd[1] >= 0)
+    FdPipeCreate(thr, pc, fd[0], fd[1]);
+  return res;
+}
+
 TSAN_INTERCEPTOR(int, connect, int fd, void *addr, unsigned addrlen) {
   SCOPED_TSAN_INTERCEPTOR(connect, fd, addr, addrlen);
   int res = REAL(connect)(fd, addr, addrlen);
@@ -1735,6 +1743,7 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(dup3);
   TSAN_INTERCEPT(eventfd);
   TSAN_INTERCEPT(socket);
+  TSAN_INTERCEPT(socketpair);
   TSAN_INTERCEPT(connect);
   TSAN_INTERCEPT(accept);
   TSAN_INTERCEPT(accept4);

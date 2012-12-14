@@ -190,6 +190,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_dup3]                     = "  dup3                            ";
   name[StatInt_eventfd]                  = "  eventfd                         ";
   name[StatInt_socket]                   = "  socket                          ";
+  name[StatInt_socketpair]               = "  socketpair                      ";
   name[StatInt_connect]                  = "  connect                         ";
   name[StatInt_accept]                   = "  accept                          ";
   name[StatInt_accept4]                  = "  accept4                         ";

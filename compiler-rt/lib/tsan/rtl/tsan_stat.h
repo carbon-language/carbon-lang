@@ -185,6 +185,7 @@ enum StatType {
   StatInt_dup3,
   StatInt_eventfd,
   StatInt_socket,
+  StatInt_socketpair,
   StatInt_connect,
   StatInt_accept,
   StatInt_accept4,
