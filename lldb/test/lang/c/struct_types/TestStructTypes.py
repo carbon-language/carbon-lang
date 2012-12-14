@@ -82,7 +82,7 @@ class StructTypesTestCase(TestBase):
             DATA_TYPES_DISPLAYED_CORRECTLY,
             substrs = ["pt.padding[1] = '"])
         # Test zero length array access and make sure it succeeds with "expression"
-        self.expect("expression -- pt.padding[0]",
+        self.expect("expression -- (pt.padding[0])",
             DATA_TYPES_DISPLAYED_CORRECTLY,
             substrs = ["(char)", " = '"])
 
