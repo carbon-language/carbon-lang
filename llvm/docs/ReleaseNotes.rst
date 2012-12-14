@@ -292,7 +292,6 @@ Major New Features
    strong phi elim
    loop dependence analysis
    CorrelatedValuePropagation
-   lib/Transforms/IPO/MergeFunctions.cpp => consider for 3.2.
    Integrated assembler on by default for arm/thumb?
 
   Near dead:
