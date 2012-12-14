@@ -392,14 +392,6 @@ make it run faster:
 
 #. ...
 
-We added new TableGen infrastructure to support bundling for Very Long
-Instruction Word (VLIW) architectures.  TableGen can now automatically generate
-a deterministic finite automaton from a VLIW target's schedule description
-which can be queried to determine legal groupings of instructions in a bundle.
-
-We have added a new target independent VLIW packetizer based on the DFA
-infrastructure to group machine instructions into bundles.
-
 Stack Coloring - We have implemented a new optimization pass to merge stack
 objects which are used in disjoin areas of the code.  This optimization reduces
 the required stack space significantly, in cases where it is clear to the
@@ -407,14 +399,6 @@ optimizer that the stack slot is not shared.  We use the lifetime markers to
 tell the codegen that a certain alloca is used within a region.
 
 We now merge consecutive loads and stores.
-
-Basic Block Placement
-^^^^^^^^^^^^^^^^^^^^^
-
-A probability based block placement and code layout algorithm was added to
-LLVM's code generator.  This layout pass supports probabilities derived from
-static heuristics as well as source code annotations such as
-``__builtin_expect``.
 
 X86-32 and X86-64 Target Improvements
 -------------------------------------
