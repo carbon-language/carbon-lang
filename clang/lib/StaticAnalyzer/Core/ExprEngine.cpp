@@ -782,16 +782,23 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
 
     case Stmt::CXXNewExprClass: {
       Bldr.takeNodes(Pred);
-      const CXXNewExpr *NE = cast<CXXNewExpr>(S);
-      VisitCXXNewExpr(NE, Pred, Dst);
+      ExplodedNodeSet PostVisit;
+      VisitCXXNewExpr(cast<CXXNewExpr>(S), Pred, PostVisit);
+      getCheckerManager().runCheckersForPostStmt(Dst, PostVisit, S, *this);
       Bldr.addNodes(Dst);
       break;
     }
 
     case Stmt::CXXDeleteExprClass: {
       Bldr.takeNodes(Pred);
+      ExplodedNodeSet PreVisit;
       const CXXDeleteExpr *CDE = cast<CXXDeleteExpr>(S);
-      VisitCXXDeleteExpr(CDE, Pred, Dst);
+      getCheckerManager().runCheckersForPreStmt(PreVisit, Pred, S, *this);
+
+      for (ExplodedNodeSet::iterator i = PreVisit.begin(), 
+                                     e = PreVisit.end(); i != e ; ++i)
+        VisitCXXDeleteExpr(CDE, *i, Dst);
+
       Bldr.addNodes(Dst);
       break;
     }
