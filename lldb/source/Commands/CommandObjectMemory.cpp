@@ -385,7 +385,7 @@ protected:
         if ((argc == 0 && m_next_addr == LLDB_INVALID_ADDRESS) || argc > 2)
         {
             result.AppendErrorWithFormat ("%s takes a start address expression with an optional end address expression.\n", m_cmd_name.c_str());
-            result.AppendRawWarning("Expressions should be quoted if they contain spaces or other special characters.");
+            result.AppendRawWarning("Expressions should be quoted if they contain spaces or other special characters.\n");
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -393,11 +393,11 @@ protected:
         ClangASTType clang_ast_type;        
         Error error;
 
-        Format format = m_format_options.GetFormat();
         const char *view_as_type_cstr = m_memory_options.m_view_as_type.GetCurrentValue();
         if (view_as_type_cstr && view_as_type_cstr[0])
         {
             // We are viewing memory as a type
+            
             SymbolContext sc;
             const bool exact_match = false;
             TypeList type_list;
@@ -578,7 +578,8 @@ protected:
             // if no options have been set
             addr = m_next_addr;
             total_byte_size = m_prev_byte_size;
-            if (!m_format_options.AnyOptionWasSet() && 
+            clang_ast_type = m_prev_clang_ast_type;
+            if (!m_format_options.AnyOptionWasSet() &&
                 !m_memory_options.AnyOptionWasSet() &&
                 !m_outfile_options.AnyOptionWasSet() &&
                 !m_varobj_options.AnyOptionWasSet())
@@ -648,7 +649,15 @@ protected:
         
         DataBufferSP data_sp;
         size_t bytes_read = 0;
-        if (!clang_ast_type.GetOpaqueQualType())
+        if (clang_ast_type.GetOpaqueQualType())
+        {
+            // Make sure we don't display our type as ASCII bytes like the default memory read
+            if (m_format_options.GetFormatValue().OptionWasSet() == false)
+                m_format_options.GetFormatValue().SetCurrentValue(eFormatDefault);
+
+            bytes_read = clang_ast_type.GetTypeByteSize() * m_format_options.GetCountValue().GetCurrentValue();
+        }
+        else
         {
             data_sp.reset (new DataBufferHeap (total_byte_size, '\0'));
             Address address(addr, NULL);
@@ -670,16 +679,15 @@ protected:
             
             if (bytes_read < total_byte_size)
                 result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%" PRIx64 ".", bytes_read, total_byte_size, addr);
-            else
-            {
-                m_next_addr = addr + bytes_read;
-                m_prev_byte_size = bytes_read; 
-                m_prev_format_options = m_format_options;
-                m_prev_memory_options = m_memory_options;
-                m_prev_outfile_options = m_outfile_options;
-                m_prev_varobj_options = m_varobj_options;
-            }
         }
+
+        m_next_addr = addr + bytes_read;
+        m_prev_byte_size = bytes_read;
+        m_prev_format_options = m_format_options;
+        m_prev_memory_options = m_memory_options;
+        m_prev_outfile_options = m_outfile_options;
+        m_prev_varobj_options = m_varobj_options;
+        m_prev_clang_ast_type = clang_ast_type;
 
         StreamFile outfile_stream;
         Stream *output_stream = NULL;
@@ -749,6 +757,7 @@ protected:
                                                                     clang_ast_type));
                 if (valobj_sp)
                 {
+                    Format format = m_format_options.GetFormat();
                     if (format != eFormatDefault)
                         valobj_sp->SetFormat (format);
 
@@ -816,6 +825,7 @@ protected:
     OptionGroupReadMemory m_prev_memory_options;
     OptionGroupOutputFile m_prev_outfile_options;
     OptionGroupValueObjectDisplay m_prev_varobj_options;
+    ClangASTType m_prev_clang_ast_type;
 };
 
 
