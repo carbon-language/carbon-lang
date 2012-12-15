@@ -529,7 +529,7 @@ the `LLVMdev list <http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev>`_.
 
 Known problem areas include:
 
-#. MSP430, and XCore backends are experimental.
+#. The MSP430 and XCore backends are experimental.
 
 #. The integrated assembler, disassembler, and JIT is not supported by several
    targets.  If an integrated assembler is not supported, then a system
