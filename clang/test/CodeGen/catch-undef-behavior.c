@@ -38,7 +38,7 @@ void foo() {
   // CHECK-NEXT: %[[CHECK2:.*]] = icmp eq i64 %[[MISALIGN]], 0
 
   // CHECK:      %[[OK:.*]] = and i1 %[[CHECK01]], %[[CHECK2]]
-  // CHECK-NEXT: br i1 %[[OK]]
+  // CHECK-NEXT: br i1 %[[OK]], {{.*}} !prof ![[WEIGHT_MD:.*]]
 
   // CHECK:      %[[ARG:.*]] = ptrtoint {{.*}} %[[PTR]] to i64
   // CHECK-NEXT: call void @__ubsan_handle_type_mismatch_abort(i8* bitcast ({{.*}} @[[LINE_100]] to i8*), i64 %[[ARG]]) noreturn nounwind
@@ -85,7 +85,7 @@ int lsh_overflow(int a, int b) {
   // CHECK:      %[[SHIFTED_OUT_WIDTH:.*]] = sub nuw nsw i32 31, %[[RHS]]
   // CHECK-NEXT: %[[SHIFTED_OUT:.*]] = lshr i32 %[[LHS:.*]], %[[SHIFTED_OUT_WIDTH]]
   // CHECK-NEXT: %[[NO_OVERFLOW:.*]] = icmp eq i32 %[[SHIFTED_OUT]], 0
-  // CHECK-NEXT: br i1 %[[NO_OVERFLOW]]
+  // CHECK-NEXT: br i1 %[[NO_OVERFLOW]], {{.*}} !prof ![[WEIGHT_MD]]
 
   // CHECK:      %[[ARG1:.*]] = zext
   // CHECK-NEXT: %[[ARG2:.*]] = zext
@@ -254,3 +254,5 @@ _Bool sour_bool(_Bool *p) {
   // CHECK: call void @__ubsan_handle_load_invalid_value_abort(i8* bitcast ({{.*}}), i64 {{.*}})
   return *p;
 }
+
+// CHECK: ![[WEIGHT_MD]] = metadata !{metadata !"branch_weights", i32 1048575, i32 1}
