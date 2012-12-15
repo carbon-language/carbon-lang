@@ -455,8 +455,10 @@ CommandInterpreter::LoadCommandDictionary ()
                                                        "_regexp-attach [<pid>]\n_regexp-attach [<process-name>]", 2));
     if (attach_regex_cmd_ap.get())
     {
-        if (attach_regex_cmd_ap->AddRegexCommand("^([0-9]+)$", "process attach --pid %1") &&
-            attach_regex_cmd_ap->AddRegexCommand("^(.*[^[:space:]])[[:space:]]*$", "process attach --name '%1'"))
+        if (attach_regex_cmd_ap->AddRegexCommand("^([0-9]+)[[:space:]]*$", "process attach --pid %1") &&
+            attach_regex_cmd_ap->AddRegexCommand("^(-.*|.* -.*)$", "process attach %1") && // Any options that are specified get passed to 'process attach'
+            attach_regex_cmd_ap->AddRegexCommand("^(.+)$", "process attach --name '%1'") &&
+            attach_regex_cmd_ap->AddRegexCommand("^$", "process attach"))
         {
             CommandObjectSP attach_regex_cmd_sp(attach_regex_cmd_ap.release());
             m_command_dict[attach_regex_cmd_sp->GetCommandName ()] = attach_regex_cmd_sp;
