@@ -50,6 +50,13 @@ static cl::opt<bool>
 LargeGOT("mxgot", cl::Hidden,
          cl::desc("MIPS: Enable GOT larger than 64k."), cl::init(false));
 
+static cl::opt<bool>
+Mips16HardFloat("mips16-hard-float", cl::NotHidden,
+                cl::desc("MIPS: mips16 hard float enable."),
+                cl::init(false));
+
+
+
 static const uint16_t O32IntRegs[4] = {
   Mips::A0, Mips::A1, Mips::A2, Mips::A3
 };
@@ -198,6 +205,41 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
+void MipsTargetLowering::setMips16HardFloatLibCalls() {
+  setLibcallName(RTLIB::ADD_F32, "__mips16_addsf3");
+  setLibcallName(RTLIB::ADD_F64, "__mips16_adddf3");
+  setLibcallName(RTLIB::SUB_F32, "__mips16_subsf3");
+  setLibcallName(RTLIB::SUB_F64, "__mips16_subdf3");
+  setLibcallName(RTLIB::MUL_F32, "__mips16_mulsf3");
+  setLibcallName(RTLIB::MUL_F64, "__mips16_muldf3");
+  setLibcallName(RTLIB::DIV_F32, "__mips16_divsf3");
+  setLibcallName(RTLIB::DIV_F64, "__mips16_divdf3");
+  setLibcallName(RTLIB::FPEXT_F32_F64, "__mips16_extendsfdf2");
+  setLibcallName(RTLIB::FPROUND_F64_F32, "__mips16_truncdfsf2");
+  setLibcallName(RTLIB::FPTOSINT_F32_I32, "__mips16_fix_truncsfsi");
+  setLibcallName(RTLIB::FPTOSINT_F64_I32, "__mips16_fix_truncdfsi");
+  setLibcallName(RTLIB::SINTTOFP_I32_F32, "__mips16_floatsisf");
+  setLibcallName(RTLIB::SINTTOFP_I32_F64, "__mips16_floatsidf");
+  setLibcallName(RTLIB::UINTTOFP_I32_F32, "__mips16_floatunsisf");
+  setLibcallName(RTLIB::UINTTOFP_I32_F64, "__mips16_floatunsidf");
+  setLibcallName(RTLIB::OEQ_F32, "__mips16_eqsf2");
+  setLibcallName(RTLIB::OEQ_F64, "__mips16_eqdf2");
+  setLibcallName(RTLIB::UNE_F32, "__mips16_nesf2");
+  setLibcallName(RTLIB::UNE_F64, "__mips16_nedf2");
+  setLibcallName(RTLIB::OGE_F32, "__mips16_gesf2");
+  setLibcallName(RTLIB::OGE_F64, "__mips16_gedf2");
+  setLibcallName(RTLIB::OLT_F32, "__mips16_ltsf2");
+  setLibcallName(RTLIB::OLT_F64, "__mips16_ltdf2");
+  setLibcallName(RTLIB::OLE_F32, "__mips16_lesf2");
+  setLibcallName(RTLIB::OLE_F64, "__mips16_ledf2");
+  setLibcallName(RTLIB::OGT_F32, "__mips16_gtsf2");
+  setLibcallName(RTLIB::OGT_F64, "__mips16_gtdf2");
+  setLibcallName(RTLIB::UO_F32, "__mips16_unordsf2");
+  setLibcallName(RTLIB::UO_F64, "__mips16_unorddf2");
+  setLibcallName(RTLIB::O_F32, "__mips16_unordsf2");
+  setLibcallName(RTLIB::O_F64, "__mips16_unorddf2");
+}
+
 MipsTargetLowering::
 MipsTargetLowering(MipsTargetMachine &TM)
   : TargetLowering(TM, new MipsTargetObjectFile()),
@@ -218,6 +260,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   if (Subtarget->inMips16Mode()) {
     addRegisterClass(MVT::i32, &Mips::CPU16RegsRegClass);
+    if (Mips16HardFloat)
+      setMips16HardFloatLibCalls();
   }
 
   if (Subtarget->hasDSP()) {

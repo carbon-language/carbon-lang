@@ -174,6 +174,8 @@ namespace llvm {
     virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
   private:
 
+    void setMips16HardFloatLibCalls();
+
     /// ByValArgInfo - Byval argument information.
     struct ByValArgInfo {
       unsigned FirstIdx; // Index of the first register used.
