@@ -4,8 +4,8 @@ Pretokenized Headers (PTH)
 
 This document first describes the low-level interface for using PTH and
 then briefly elaborates on its design and implementation. If you are
-interested in the end-user view, please see the `User's
-Manual <UsersManual.html#precompiledheaders>`_.
+interested in the end-user view, please see the :ref:`User's Manual
+<usersmanual-precompiled-headers>`.
 
 Using Pretokenized Headers with ``clang`` (Low-level Interface)
 ===============================================================
@@ -13,20 +13,19 @@ Using Pretokenized Headers with ``clang`` (Low-level Interface)
 The Clang compiler frontend, ``clang -cc1``, supports three command line
 options for generating and using PTH files.
 
-To generate PTH files using ``clang -cc1``, use the option
-``-emit-pth``:
+To generate PTH files using ``clang -cc1``, use the option ``-emit-pth``:
 
-::
+.. code-block:: console
 
-     $ clang -cc1 test.h -emit-pth -o test.h.pth
+  $ clang -cc1 test.h -emit-pth -o test.h.pth
 
 This option is transparently used by ``clang`` when generating PTH
 files. Similarly, PTH files can be used as prefix headers using the
 ``-include-pth`` option:
 
-::
+.. code-block:: console
 
-      $ clang -cc1 -include-pth test.h.pth test.c -o test.s
+  $ clang -cc1 -include-pth test.h.pth test.c -o test.s
 
 Alternatively, Clang's PTH files can be used as a raw "token-cache" (or
 "content" cache) of the source included by the original header file.
@@ -34,14 +33,14 @@ This means that the contents of the PTH file are searched as substitutes
 for *any* source files that are used by ``clang -cc1`` to process a
 source file. This is done by specifying the ``-token-cache`` option:
 
-::
+.. code-block:: console
 
-      $ cat test.h
-      #include <stdio.h>
-      $ clang -cc1 -emit-pth test.h -o test.h.pth
-      $ cat test.c
-      #include "test.h"
-      $ clang -cc1 test.c -o test -token-cache test.h.pth
+  $ cat test.h
+  #include <stdio.h>
+  $ clang -cc1 -emit-pth test.h -o test.h.pth
+  $ cat test.c
+  #include "test.h"
+  $ clang -cc1 test.c -o test -token-cache test.h.pth
 
 In this example the contents of ``stdio.h`` (and the files it includes)
 will be retrieved from ``test.h.pth``, as the PTH file is being used in

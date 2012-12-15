@@ -28,14 +28,14 @@ Examining the AST
 
 A good way to familarize yourself with the Clang AST is to actually look
 at it on some simple example code. Clang has a builtin AST-dump modes,
-which can be enabled with the flags -ast-dump and -ast-dump-xml. Note
-that -ast-dump-xml currently only works with debug-builds of clang.
+which can be enabled with the flags ``-ast-dump`` and ``-ast-dump-xml``. Note
+that ``-ast-dump-xml`` currently only works with debug builds of clang.
 
 Let's look at a simple example AST:
 
 ::
 
-    # cat test.cc
+    $ cat test.cc
     int f(int x) {
       int result = (x / 42);
       return result;
@@ -73,13 +73,13 @@ Let's look at a simple example AST:
      </Function>
     </TranslationUnit>
 
-In general, -ast-dump-xml dumps declarations in an XML-style format and
+In general, ``-ast-dump-xml`` dumps declarations in an XML-style format and
 statements in an S-expression-style format. The toplevel declaration in
 a translation unit is always the `translation unit
 declaration <http://clang.llvm.org/doxygen/classclang_1_1TranslationUnitDecl.html>`_.
 In this example, our first user written declaration is the `function
 declaration <http://clang.llvm.org/doxygen/classclang_1_1FunctionDecl.html>`_
-of 'f'. The body of 'f' is a `compound
+of "``f``". The body of "``f``" is a `compound
 statement <http://clang.llvm.org/doxygen/classclang_1_1CompoundStmt.html>`_,
 whose child nodes are a `declaration
 statement <http://clang.llvm.org/doxygen/classclang_1_1DeclStmt.html>`_

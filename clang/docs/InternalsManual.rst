@@ -73,8 +73,8 @@ Getting all of this to happen has several steps and involves many moving
 pieces, this section describes them and talks about best practices when adding
 a new diagnostic.
 
-The Diagnostic*Kinds.td files
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+The ``Diagnostic*Kinds.td`` files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Diagnostics are created by adding an entry to one of the
 ``clang/Basic/Diagnostic*Kinds.td`` files, depending on what library will be

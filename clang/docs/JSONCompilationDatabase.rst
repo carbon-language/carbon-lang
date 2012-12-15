@@ -31,7 +31,7 @@ Supported Systems
 
 Currently `CMake <http://cmake.org>`_ (since 2.8.5) supports generation
 of compilation databases for Unix Makefile builds (Ninja builds in the
-works) with the option CMAKE\_EXPORT\_COMPILE\_COMMANDS.
+works) with the option ``CMAKE_EXPORT_COMPILE_COMMANDS``.
 
 Clang's tooling interface supports reading compilation databases; see
 the `LibTooling documentation <LibTooling.html>`_. libclang and its
@@ -72,8 +72,8 @@ The contracts for each field in the command object are:
 -  **command:** The compile command executed. After JSON unescaping,
    this must be a valid command to rerun the exact compilation step for
    the translation unit in the environment the build system uses.
-   Parameters use shell quoting and shell escaping of quotes, with '"'
-   and '\\' being the only special characters. Shell expansion is not
+   Parameters use shell quoting and shell escaping of quotes, with '``"``'
+   and '``\``' being the only special characters. Shell expansion is not
    supported.
 
 Build System Integration

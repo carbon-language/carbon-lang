@@ -685,6 +685,8 @@ analyzer's `FAQ
 page <http://clang-analyzer.llvm.org/faq.html#exclude_code>`_ for more
 information.
 
+.. _usersmanual-precompiled-headers:
+
 Precompiled Headers
 -------------------
 
