@@ -1177,10 +1177,10 @@ entry:
   ret void
 }
 
-define <3 x i8> @PR14572(i32 %x) {
+define <3 x i8> @PR14572.1(i32 %x) {
 ; Ensure that a split integer store which is wider than the type size of the
 ; alloca (relying on the alloc size padding) doesn't trigger an assert.
-; CHECK: @PR14572
+; CHECK: @PR14572.1
 
 entry:
   %a = alloca <3 x i8>, align 4
@@ -1191,4 +1191,20 @@ entry:
   %y = load <3 x i8>* %a, align 4
   ret <3 x i8> %y
 ; CHECK: ret <3 x i8>
+}
+
+define i32 @PR14572.2(<3 x i8> %x) {
+; Ensure that a split integer load which is wider than the type size of the
+; alloca (relying on the alloc size padding) doesn't trigger an assert.
+; CHECK: @PR14572.2
+
+entry:
+  %a = alloca <3 x i8>, align 4
+; CHECK-NOT: alloca
+
+  store <3 x i8> %x, <3 x i8>* %a, align 1
+  %cast = bitcast <3 x i8>* %a to i32*
+  %y = load i32* %cast, align 4
+  ret i32 %y
+; CHECK: ret i32
 }
