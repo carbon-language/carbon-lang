@@ -109,7 +109,10 @@ public:
 protected:
 
     bool
-    ParserGDBFormatLetter (char format_letter, lldb::Format &format, uint32_t &byte_size);
+    ParserGDBFormatLetter (CommandInterpreter &interpreter,
+                           char format_letter,
+                           lldb::Format &format,
+                           uint32_t &byte_size);
 
     OptionValueFormat m_format;
     OptionValueUInt64 m_byte_size;

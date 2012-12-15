@@ -13,6 +13,10 @@
 // C++ Includes
 // Other libraries and framework includes
 // Project includes
+#include "lldb/Core/ArchSpec.h"
+#include "lldb/Interpreter/CommandInterpreter.h"
+#include "lldb/Target/ExecutionContext.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Utility/Utils.h"
 
 using namespace lldb;
@@ -119,7 +123,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
                 Format format = eFormatDefault;
                 uint32_t byte_size = 0;
                 
-                while (ParserGDBFormatLetter (gdb_format_cstr[0], format, byte_size))
+                while (ParserGDBFormatLetter (interpreter, gdb_format_cstr[0], format, byte_size))
                 {
                     ++gdb_format_cstr;
                 }
@@ -139,7 +143,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
                 // Anything that wasn't set correctly should be set to the
                 // previous default
                 if (format == eFormatInvalid)
-                    ParserGDBFormatLetter (m_prev_gdb_format, format, byte_size);
+                    ParserGDBFormatLetter (interpreter, m_prev_gdb_format, format, byte_size);
                 
                 const bool byte_size_enabled = m_byte_size.GetDefaultValue() < UINT64_MAX;
                 const bool count_enabled = m_count.GetDefaultValue() < UINT64_MAX;
@@ -147,7 +151,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
                 {
                     // Byte size is enabled
                     if (byte_size == 0)
-                        ParserGDBFormatLetter (m_prev_gdb_size, format, byte_size);
+                        ParserGDBFormatLetter (interpreter, m_prev_gdb_size, format, byte_size);
                 }
                 else
                 {
@@ -199,7 +203,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
 }
 
 bool
-OptionGroupFormat::ParserGDBFormatLetter (char format_letter, Format &format, uint32_t &byte_size)
+OptionGroupFormat::ParserGDBFormatLetter (CommandInterpreter &interpreter, char format_letter, Format &format, uint32_t &byte_size)
 {
     switch (format_letter)
     {
@@ -209,7 +213,15 @@ OptionGroupFormat::ParserGDBFormatLetter (char format_letter, Format &format, ui
         case 'u': format = eFormatUnsigned;     m_prev_gdb_format = format_letter; return true;
         case 't': format = eFormatBinary;       m_prev_gdb_format = format_letter; return true;
         case 'f': format = eFormatFloat;        m_prev_gdb_format = format_letter; return true;
-        case 'a': format = eFormatAddressInfo;  m_prev_gdb_format = format_letter; return true;
+        case 'a': format = eFormatAddressInfo;
+        {
+            ExecutionContext exe_ctx(interpreter.GetExecutionContext());
+            Target *target = exe_ctx.GetTargetPtr();
+            if (target)
+                byte_size = target->GetArchitecture().GetAddressByteSize();
+            m_prev_gdb_format = format_letter;
+            return true;
+        }
         case 'i': format = eFormatInstruction;  m_prev_gdb_format = format_letter; return true;
         case 'c': format = eFormatChar;         m_prev_gdb_format = format_letter; return true;
         case 's': format = eFormatCString;      m_prev_gdb_format = format_letter; return true;
