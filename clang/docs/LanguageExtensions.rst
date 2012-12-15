@@ -1030,6 +1030,88 @@ feature, clang provides default synthesis of those properties not declared
 ``__has_feature(objc_default_synthesize_properties)`` checks for availability
 of this feature in version of clang being used.
 
+.. _langext-objc_method_family:
+
+The ``objc_method_family`` attribute
+------------------------------------
+
+Many methods in Objective-C have conventional meanings determined by their
+selectors. It is sometimes useful to be able to mark a method as having a
+particular conventional meaning despite not having the right selector, or as
+not having the conventional meaning that its selector would suggest. For these
+use cases, we provide an attribute to specifically describe the "method family"
+that a method belongs to.
+
+**Usage**: ``__attribute__((objc_method_family(X)))``, where ``X`` is one of
+``none``, ``alloc``, ``copy``, ``init``, ``mutableCopy``, or ``new``.  This
+attribute can only be placed at the end of a method declaration:
+
+.. code-block:: objc
+
+  - (NSString *)initMyStringValue __attribute__((objc_method_family(none)));
+
+Users who do not wish to change the conventional meaning of a method, and who
+merely want to document its non-standard retain and release semantics, should
+use the :ref:`retaining behavior attributes <langext-objc-retain-release>`
+described below.
+
+Query for this feature with ``__has_attribute(objc_method_family)``.
+
+.. _langext-objc-retain-release:
+
+Objective-C retaining behavior attributes
+-----------------------------------------
+
+In Objective-C, functions and methods are generally assumed to follow the
+`Cocoa Memory Management 
+<http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/MemoryMgmt/Articles/mmRules.html>`_
+conventions for ownership of object arguments and
+return values. However, there are exceptions, and so Clang provides attributes
+to allow these exceptions to be documented. This are used by ARC and the
+`static analyzer <http://clang-analyzer.llvm.org>`_ Some exceptions may be
+better described using the :ref:`objc_method_family
+<langext-objc_method_family>` attribute instead.
+
+**Usage**: The ``ns_returns_retained``, ``ns_returns_not_retained``,
+``ns_returns_autoreleased``, ``cf_returns_retained``, and
+``cf_returns_not_retained`` attributes can be placed on methods and functions
+that return Objective-C or CoreFoundation objects. They are commonly placed at
+the end of a function prototype or method declaration:
+
+.. code-block:: objc
+
+  id foo() __attribute__((ns_returns_retained));
+
+  - (NSString *)bar:(int)x __attribute__((ns_returns_retained));
+
+The ``*_returns_retained`` attributes specify that the returned object has a +1
+retain count.  The ``*_returns_not_retained`` attributes specify that the return
+object has a +0 retain count, even if the normal convention for its selector
+would be +1.  ``ns_returns_autoreleased`` specifies that the returned object is
++0, but is guaranteed to live at least as long as the next flush of an
+autorelease pool.
+
+**Usage**: The ``ns_consumed`` and ``cf_consumed`` attributes can be placed on
+an parameter declaration; they specify that the argument is expected to have a
++1 retain count, which will be balanced in some way by the function or method.
+The ``ns_consumes_self`` attribute can only be placed on an Objective-C
+method; it specifies that the method expects its ``self`` parameter to have a
++1 retain count, which it will balance in some way.
+
+.. code-block:: objc
+
+  void foo(__attribute__((ns_consumed)) NSString *string);
+
+  - (void) bar __attribute__((ns_consumes_self));
+  - (void) baz:(id) __attribute__((ns_consumed)) x;
+
+Further examples of these attributes are available in the static analyzer's `list of annotations for analysis
+<http://clang-analyzer.llvm.org/annotations.html#cocoa_mem>`_.
+
+Query for these features with ``__has_attribute(ns_consumed)``,
+``__has_attribute(ns_returns_retained)``, etc.
+
+
 Function Overloading in C
 =========================
 
@@ -1416,121 +1498,17 @@ Which compiles to (on X86-32):
           movl    %gs:(%eax), %eax
           ret
 
-Static Analysis-Specific Extensions
+Extensions for Static Analysis
 ===================================
 
 Clang supports additional attributes that are useful for documenting program
-invariants and rules for static analysis tools.  The extensions documented here
-are used by the `path-sensitive static analyzer engine
-<http://clang.llvm.org/StaticAnalysis.html>`_ that is part of Clang's Analysis
-library.
+invariants and rules for static analysis tools, such as the `Clang Static
+Analyzer <http://clang-analyzer.llvm.org/>`_. These attributes are documented
+in the analyzer's `list of source-level annotations
+<http://clang-analyzer.llvm.org/annotations.html>`_.
 
-The ``analyzer_noreturn`` attribute
------------------------------------
 
-Clang's static analysis engine understands the standard ``noreturn`` attribute.
-This attribute, which is typically affixed to a function prototype, indicates
-that a call to a given function never returns.  Function prototypes for common
-functions like ``exit`` are typically annotated with this attribute, as well as
-a variety of common assertion handlers.  Users can educate the static analyzer
-about their own custom assertion handles (thus cutting down on false positives
-due to false paths) by marking their own "panic" functions with this attribute.
-
-While useful, ``noreturn`` is not applicable in all cases.  Sometimes there are
-special functions that for all intents and purposes should be considered panic
-functions (i.e., they are only called when an internal program error occurs)
-but may actually return so that the program can fail gracefully.  The
-``analyzer_noreturn`` attribute allows one to annotate such functions as being
-interpreted as "no return" functions by the analyzer (thus pruning bogus paths)
-but will not affect compilation (as in the case of ``noreturn``).
-
-**Usage**: The ``analyzer_noreturn`` attribute can be placed in the same places
-where the ``noreturn`` attribute can be placed.  It is commonly placed at the
-end of function prototypes:
-
-.. code-block:: c++
-
-  void foo() __attribute__((analyzer_noreturn));
-
-Query for this feature with ``__has_attribute(analyzer_noreturn)``.
-
-.. _langext-objc_method_family:
-
-The ``objc_method_family`` attribute
-------------------------------------
-
-Many methods in Objective-C have conventional meanings determined by their
-selectors.  For the purposes of static analysis, it is sometimes useful to be
-able to mark a method as having a particular conventional meaning despite not
-having the right selector, or as not having the conventional meaning that its
-selector would suggest.  For these use cases, we provide an attribute to
-specifically describe the "method family" that a method belongs to.
-
-**Usage**: ``__attribute__((objc_method_family(X)))``, where ``X`` is one of
-``none``, ``alloc``, ``copy``, ``init``, ``mutableCopy``, or ``new``.  This
-attribute can only be placed at the end of a method declaration:
-
-.. code-block:: objc
-
-  - (NSString*) initMyStringValue __attribute__((objc_method_family(none)));
-
-Users who do not wish to change the conventional meaning of a method, and who
-merely want to document its non-standard retain and release semantics, should
-use the :ref:`retaining behavior attributes <langext-objc-retain-release>`
-described below.
-
-Query for this feature with ``__has_attribute(objc_method_family)``.
-
-.. _langext-objc-retain-release:
-
-Objective-C retaining behavior attributes
------------------------------------------
-
-In Objective-C, functions and methods are generally assumed to take and return
-objects with +0 retain counts, with some exceptions for special methods like
-``+alloc`` and ``init``.  However, there are exceptions, and so Clang provides
-attributes to allow these exceptions to be documented, which helps the analyzer
-find leaks (and ignore non-leaks).  Some exceptions may be better described
-using the :ref:`objc_method_family <langext-objc_method_family>` attribute
-instead.
-
-**Usage**: The ``ns_returns_retained``, ``ns_returns_not_retained``,
- ``ns_returns_autoreleased``, ``cf_returns_retained``, and
- ``cf_returns_not_retained`` attributes can be placed on methods and functions
- that return Objective-C or CoreFoundation objects.  They are commonly placed
- at the end of a function prototype or method declaration:
-
-.. code-block:: objc
-
-  id foo() __attribute__((ns_returns_retained));
-
-  - (NSString*) bar: (int) x __attribute__((ns_returns_retained));
-
-The ``*_returns_retained`` attributes specify that the returned object has a +1
-retain count.  The ``*_returns_not_retained`` attributes specify that the return
-object has a +0 retain count, even if the normal convention for its selector
-would be +1.  ``ns_returns_autoreleased`` specifies that the returned object is
-+0, but is guaranteed to live at least as long as the next flush of an
-autorelease pool.
-
-**Usage**: The ``ns_consumed`` and ``cf_consumed`` attributes can be placed on
-an parameter declaration; they specify that the argument is expected to have a
-+1 retain count, which will be balanced in some way by the function or method.
-The ``ns_consumes_self`` attribute can only be placed on an Objective-C
-method; it specifies that the method expects its ``self`` parameter to have a
-+1 retain count, which it will balance in some way.
-
-.. code-block:: objc
-
-  void foo(__attribute__((ns_consumed)) NSString *string);
-
-  - (void) bar __attribute__((ns_consumes_self));
-  - (void) baz: (id) __attribute__((ns_consumed)) x;
-
-Query for these features with ``__has_attribute(ns_consumed)``,
-``__has_attribute(ns_returns_retained)``, etc.
-
-Dynamic Analysis-Specific Extensions
+Extensions for Dynamic Analysis
 ====================================
 
 .. _langext-address_sanitizer:
