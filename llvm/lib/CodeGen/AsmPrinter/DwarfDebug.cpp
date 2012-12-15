@@ -1822,7 +1822,7 @@ void DwarfDebug::emitCompileUnits(const MCSection *Section) {
     DIE *Die = TheCU->getCUDie();
 
     // Emit the compile units header.
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("info_begin",
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(Section->getLabelBeginName(),
                                                   TheCU->getUniqueID()));
 
     // Emit size of content not including length itself
@@ -1843,7 +1843,7 @@ void DwarfDebug::emitCompileUnits(const MCSection *Section) {
     Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 
     emitDIE(Die);
-    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("info_end",
+    Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(Section->getLabelEndName(),
                                                   TheCU->getUniqueID()));
   }
 }
@@ -2049,14 +2049,15 @@ void DwarfDebug::emitDebugPubTypes() {
     Asm->EmitInt16(dwarf::DWARF_VERSION);
 
     Asm->OutStreamer.AddComment("Offset of Compilation Unit Info");
-    Asm->EmitSectionOffset(Asm->GetTempSymbol("info_begin",
+    const MCSection *ISec = Asm->getObjFileLowering().getDwarfInfoSection();
+    Asm->EmitSectionOffset(Asm->GetTempSymbol(ISec->getLabelBeginName(),
                                               TheCU->getUniqueID()),
                            DwarfInfoSectionSym);
 
     Asm->OutStreamer.AddComment("Compilation Unit Length");
-    Asm->EmitLabelDifference(Asm->GetTempSymbol("info_end",
+    Asm->EmitLabelDifference(Asm->GetTempSymbol(ISec->getLabelEndName(),
                                                 TheCU->getUniqueID()),
-                             Asm->GetTempSymbol("info_begin",
+                             Asm->GetTempSymbol(ISec->getLabelBeginName(),
                                                 TheCU->getUniqueID()),
                              4);
 
@@ -2361,7 +2362,7 @@ void DwarfDebug::emitSkeletonCU(const MCSection *Section) {
   DIE *Die = SkeletonCU->getCUDie();
 
   // Emit the compile units header.
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("skel_info_begin",
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(Section->getLabelBeginName(),
                                                 SkeletonCU->getUniqueID()));
 
   // Emit size of content not including length itself
@@ -2381,7 +2382,7 @@ void DwarfDebug::emitSkeletonCU(const MCSection *Section) {
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 
   emitDIE(Die);
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("skel_info_end",
+  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(Section->getLabelEndName(),
                                                 SkeletonCU->getUniqueID()));
 
 
