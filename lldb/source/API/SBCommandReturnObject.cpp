@@ -281,7 +281,17 @@ SBCommandReturnObject::PutCString(const char* string, int len)
 {
     if (m_opaque_ap.get())
     {
-        m_opaque_ap->AppendMessage(string, len);
+        if (len == 0)
+        {
+            return;
+        }
+        else if (len > 0)
+        {
+            std::string buffer(string, len);
+            m_opaque_ap->AppendMessage(buffer.c_str());
+        }
+        else
+            m_opaque_ap->AppendMessage(string);
     }
 }
 

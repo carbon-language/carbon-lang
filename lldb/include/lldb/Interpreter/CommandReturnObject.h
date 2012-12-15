@@ -118,7 +118,7 @@ public:
     Clear();
 
     void
-    AppendMessage (const char *in_string, int len = -1);
+    AppendMessage (const char *in_string);
 
     void
     AppendMessageWithFormat (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
@@ -127,13 +127,13 @@ public:
     AppendRawWarning (const char *in_string, int len = -1);
 
     void
-    AppendWarning (const char *in_string, int len = -1);
+    AppendWarning (const char *in_string);
 
     void
     AppendWarningWithFormat (const char *format, ...)  __attribute__ ((format (printf, 2, 3)));
 
     void
-    AppendError (const char *in_string, int len = -1);
+    AppendError (const char *in_string);
 
     void
     AppendRawError (const char *in_string, int len = -1);
