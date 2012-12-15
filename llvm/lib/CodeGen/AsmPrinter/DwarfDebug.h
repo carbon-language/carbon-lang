@@ -219,6 +219,11 @@ public:
 
   /// \brief Add a unit to the list of CUs.
   void addUnit(CompileUnit *CU) { CUs.push_back(CU); }
+
+  /// \brief Emit all of the units to the section listed with the given
+  /// abbreviation section.
+  void emitUnits(DwarfDebug *, const MCSection *, const MCSection *,
+                 const MCSymbol *);
 };
 
 /// \brief Collects and handles dwarf debug information.
@@ -394,9 +399,6 @@ private:
   /// \brief Emit initial Dwarf sections with a label at the start of each one.
   void emitSectionLabels();
 
-  /// \brief Recursively Emits a debug information entry.
-  void emitDIE(DIE *Die);
-
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
 
@@ -416,9 +418,6 @@ private:
   /// \brief Emit labels to close any remaining sections that have been left
   /// open.
   void endSections();
-
-  /// \brief Emit all of the compile units to the target section.
-  void emitCompileUnits(const MCSection *);
 
   /// \brief Emit the debug info section.
   void emitDebugInfo();
@@ -568,6 +567,9 @@ public:
   /// \brief Returns an entry into the string pool with the given
   /// string text.
   MCSymbol *getStringPoolEntry(StringRef Str);
+
+  /// \brief Recursively Emits a debug information entry.
+  void emitDIE(DIE *Die);
 
   /// \brief Returns whether or not to limit some of our debug
   /// output to the limitations of darwin gdb.
