@@ -1499,7 +1499,7 @@ Which compiles to (on X86-32):
           ret
 
 Extensions for Static Analysis
-===================================
+==============================
 
 Clang supports additional attributes that are useful for documenting program
 invariants and rules for static analysis tools, such as the `Clang Static
@@ -1509,7 +1509,7 @@ in the analyzer's `list of source-level annotations
 
 
 Extensions for Dynamic Analysis
-====================================
+===============================
 
 .. _langext-address_sanitizer:
 
@@ -1517,7 +1517,7 @@ AddressSanitizer
 ----------------
 
 Use ``__has_feature(address_sanitizer)`` to check if the code is being built
-with `AddressSanitizer <AddressSanitizer.html>`_.
+with :doc:`AddressSanitizer`.
 
 Use ``__attribute__((no_address_safety_analysis))`` on a function declaration
 to specify that address safety instrumentation (e.g. AddressSanitizer) should
