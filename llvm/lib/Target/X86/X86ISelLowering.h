@@ -182,6 +182,9 @@ namespace llvm {
       /// BLENDI - Blend where the selector is an immediate.
       BLENDI,
 
+      // SUBUS - Integer sub with unsigned saturation.
+      SUBUS,
+
       /// HADD - Integer horizontal add.
       HADD,
 

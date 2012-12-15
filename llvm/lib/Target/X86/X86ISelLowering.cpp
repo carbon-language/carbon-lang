@@ -10097,6 +10097,14 @@ static SDValue LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::PMULUDQ, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
 
+  // SSE2/AVX2 sub with unsigned saturation intrinsics
+  case Intrinsic::x86_sse2_psubus_b:
+  case Intrinsic::x86_sse2_psubus_w:
+  case Intrinsic::x86_avx2_psubus_b:
+  case Intrinsic::x86_avx2_psubus_w:
+    return DAG.getNode(X86ISD::SUBUS, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+
   // SSE3/AVX horizontal add/sub intrinsics
   case Intrinsic::x86_sse3_hadd_ps:
   case Intrinsic::x86_sse3_hadd_pd:
@@ -11961,6 +11969,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::PSIGN:              return "X86ISD::PSIGN";
   case X86ISD::BLENDV:             return "X86ISD::BLENDV";
   case X86ISD::BLENDI:             return "X86ISD::BLENDI";
+  case X86ISD::SUBUS:              return "X86ISD::SUBUS";
   case X86ISD::HADD:               return "X86ISD::HADD";
   case X86ISD::HSUB:               return "X86ISD::HSUB";
   case X86ISD::FHADD:              return "X86ISD::FHADD";
@@ -14910,6 +14919,65 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
                           Cond.getOperand(0), Cond.getOperand(1), NewCC);
       return DAG.getNode(ISD::SELECT, DL, VT, Cond, LHS, RHS);
     }
+    }
+  }
+
+  // Match VSELECTs into subs with unsigned saturation.
+  if (!DCI.isBeforeLegalize() &&
+      N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC &&
+      // psubus is available in SSE2 and AVX2 for i8 and i16 vectors.
+      ((Subtarget->hasSSE2() && (VT == MVT::v16i8 || VT == MVT::v8i16)) ||
+       (Subtarget->hasAVX2() && (VT == MVT::v32i8 || VT == MVT::v16i16)))) {
+    ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
+
+    // Check if one of the arms of the VSELECT is a zero vector. If it's on the
+    // left side invert the predicate to simplify logic below.
+    SDValue Other;
+    if (ISD::isBuildVectorAllZeros(LHS.getNode())) {
+      Other = RHS;
+      CC = ISD::getSetCCInverse(CC, true);
+    } else if (ISD::isBuildVectorAllZeros(RHS.getNode())) {
+      Other = LHS;
+    }
+
+    if (Other.getNode() && Other->getNumOperands() == 2 &&
+        DAG.isEqualTo(Other->getOperand(0), Cond.getOperand(0))) {
+      SDValue OpLHS = Other->getOperand(0), OpRHS = Other->getOperand(1);
+      SDValue CondRHS = Cond->getOperand(1);
+
+      // Look for a general sub with unsigned saturation first.
+      // x >= y ? x-y : 0 --> subus x, y
+      // x >  y ? x-y : 0 --> subus x, y
+      if ((CC == ISD::SETUGE || CC == ISD::SETUGT) &&
+          Other->getOpcode() == ISD::SUB && DAG.isEqualTo(OpRHS, CondRHS))
+        return DAG.getNode(X86ISD::SUBUS, DL, VT, OpLHS, OpRHS);
+
+      // If the RHS is a constant we have to reverse the const canonicalization.
+      // x > C-1 ? x+-C : 0 --> subus x, C
+      if (CC == ISD::SETUGT && Other->getOpcode() == ISD::ADD &&
+          isSplatVector(CondRHS.getNode()) && isSplatVector(OpRHS.getNode())) {
+        APInt A = cast<ConstantSDNode>(OpRHS.getOperand(0))->getAPIntValue();
+        if (CondRHS.getConstantOperandVal(0) == -A-1) {
+          SmallVector<SDValue, 32> V(VT.getVectorNumElements(),
+                                     DAG.getConstant(-A, VT.getScalarType()));
+          return DAG.getNode(X86ISD::SUBUS, DL, VT, OpLHS,
+                             DAG.getNode(ISD::BUILD_VECTOR, DL, VT,
+                                         V.data(), V.size()));
+        }
+      }
+
+      // Another special case: If C was a sign bit, the sub has been
+      // canonicalized into a xor.
+      // FIXME: Would it be better to use ComputeMaskedBits to determine whether
+      //        it's safe to decanonicalize the xor?
+      // x s< 0 ? x^C : 0 --> subus x, C
+      if (CC == ISD::SETLT && Other->getOpcode() == ISD::XOR &&
+          ISD::isBuildVectorAllZeros(CondRHS.getNode()) &&
+          isSplatVector(OpRHS.getNode())) {
+        APInt A = cast<ConstantSDNode>(OpRHS.getOperand(0))->getAPIntValue();
+        if (A.isSignBit())
+          return DAG.getNode(X86ISD::SUBUS, DL, VT, OpLHS, OpRHS);
+      }
     }
   }
 

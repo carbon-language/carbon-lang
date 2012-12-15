@@ -3724,6 +3724,12 @@ defm VPSUBD : PDI_binop_rm<0xFA, "vpsubd", sub, v4i32, VR128, memopv2i64,
                             i128mem, SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
 defm VPSUBQ : PDI_binop_rm<0xFB, "vpsubq", sub, v2i64, VR128, memopv2i64,
                             i128mem, SSE_INTALUQ_ITINS_P, 0, 0>, VEX_4V;
+defm VPSUBUSB : PDI_binop_rm<0xD8, "vpsubusb", X86subus, v16i8, VR128,
+                             memopv2i64, i128mem, SSE_INTALU_ITINS_P, 0, 0>,
+                             VEX_4V;
+defm VPSUBUSW : PDI_binop_rm<0xD9, "vpsubusw", X86subus, v8i16, VR128,
+                             memopv2i64, i128mem, SSE_INTALU_ITINS_P, 0, 0>,
+                             VEX_4V;
 defm VPMULUDQ : PDI_binop_rm2<0xF4, "vpmuludq", X86pmuludq, v2i64, v4i32, VR128,
                               memopv2i64, i128mem, SSE_INTMUL_ITINS_P, 1, 0>,
                               VEX_4V;
@@ -3733,12 +3739,6 @@ defm VPSUBSB  : PDI_binop_rm_int<0xE8, "vpsubsb" , int_x86_sse2_psubs_b,
                                  VR128, memopv2i64, i128mem,
                                  SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
 defm VPSUBSW  : PDI_binop_rm_int<0xE9, "vpsubsw" , int_x86_sse2_psubs_w,
-                                 VR128, memopv2i64, i128mem,
-                                 SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
-defm VPSUBUSB : PDI_binop_rm_int<0xD8, "vpsubusb", int_x86_sse2_psubus_b,
-                                 VR128, memopv2i64, i128mem,
-                                 SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
-defm VPSUBUSW : PDI_binop_rm_int<0xD9, "vpsubusw", int_x86_sse2_psubus_w,
                                  VR128, memopv2i64, i128mem,
                                  SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
 defm VPADDSB  : PDI_binop_rm_int<0xEC, "vpaddsb" , int_x86_sse2_padds_b,
@@ -3804,6 +3804,12 @@ defm VPSUBDY  : PDI_binop_rm<0xFA, "vpsubd", sub, v8i32, VR256, memopv4i64,
                              i256mem, SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
 defm VPSUBQY  : PDI_binop_rm<0xFB, "vpsubq", sub, v4i64, VR256, memopv4i64,
                              i256mem, SSE_INTALUQ_ITINS_P, 0, 0>, VEX_4V, VEX_L;
+defm VPSUBUSBY : PDI_binop_rm<0xD8, "vpsubusb", X86subus, v32i8, VR256,
+                              memopv4i64, i256mem, SSE_INTALU_ITINS_P, 0, 0>,
+                              VEX_4V, VEX_L;
+defm VPSUBUSWY : PDI_binop_rm<0xD9, "vpsubusw", X86subus, v16i16, VR256,
+                              memopv4i64, i256mem, SSE_INTALU_ITINS_P, 0, 0>,
+                              VEX_4V, VEX_L;
 defm VPMULUDQY : PDI_binop_rm2<0xF4, "vpmuludq", X86pmuludq, v4i64, v8i32,
                                VR256, memopv4i64, i256mem,
                                SSE_INTMUL_ITINS_P, 1, 0>, VEX_4V, VEX_L;
@@ -3813,12 +3819,6 @@ defm VPSUBSBY  : PDI_binop_rm_int<0xE8, "vpsubsb" , int_x86_avx2_psubs_b,
                                   VR256, memopv4i64, i256mem,
                                   SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
 defm VPSUBSWY  : PDI_binop_rm_int<0xE9, "vpsubsw" , int_x86_avx2_psubs_w,
-                                  VR256, memopv4i64, i256mem,
-                                  SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
-defm VPSUBUSBY : PDI_binop_rm_int<0xD8, "vpsubusb", int_x86_avx2_psubus_b,
-                                  VR256, memopv4i64, i256mem,
-                                  SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
-defm VPSUBUSWY : PDI_binop_rm_int<0xD9, "vpsubusw", int_x86_avx2_psubus_w,
                                   VR256, memopv4i64, i256mem,
                                   SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
 defm VPADDSBY  : PDI_binop_rm_int<0xEC, "vpaddsb" , int_x86_avx2_padds_b,
@@ -3884,6 +3884,10 @@ defm PSUBD : PDI_binop_rm<0xFA, "psubd", sub, v4i32, VR128, memopv2i64,
                           i128mem, SSE_INTALU_ITINS_P>;
 defm PSUBQ : PDI_binop_rm<0xFB, "psubq", sub, v2i64, VR128, memopv2i64,
                           i128mem, SSE_INTALUQ_ITINS_P>;
+defm PSUBUSB : PDI_binop_rm<0xD8, "psubusb", X86subus, v16i8, VR128, memopv2i64,
+                            i128mem, SSE_INTALU_ITINS_P>;
+defm PSUBUSW : PDI_binop_rm<0xD9, "psubusw", X86subus, v8i16, VR128, memopv2i64,
+                            i128mem, SSE_INTALU_ITINS_P>;
 defm PMULUDQ : PDI_binop_rm2<0xF4, "pmuludq", X86pmuludq, v2i64, v4i32, VR128,
                              memopv2i64, i128mem, SSE_INTMUL_ITINS_P, 1>;
 
@@ -3892,12 +3896,6 @@ defm PSUBSB  : PDI_binop_rm_int<0xE8, "psubsb" , int_x86_sse2_psubs_b,
                                 VR128, memopv2i64, i128mem,
                                 SSE_INTALU_ITINS_P>;
 defm PSUBSW  : PDI_binop_rm_int<0xE9, "psubsw" , int_x86_sse2_psubs_w,
-                                VR128, memopv2i64, i128mem,
-                                SSE_INTALU_ITINS_P>;
-defm PSUBUSB : PDI_binop_rm_int<0xD8, "psubusb", int_x86_sse2_psubus_b,
-                                VR128, memopv2i64, i128mem,
-                                SSE_INTALU_ITINS_P>;
-defm PSUBUSW : PDI_binop_rm_int<0xD9, "psubusw", int_x86_sse2_psubus_w,
                                 VR128, memopv2i64, i128mem,
                                 SSE_INTALU_ITINS_P>;
 defm PADDSB  : PDI_binop_rm_int<0xEC, "paddsb" , int_x86_sse2_padds_b,
