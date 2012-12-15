@@ -194,12 +194,11 @@ Source Manager Block
 ^^^^^^^^^^^^^^^^^^^^
 
 The source manager block contains the serialized representation of Clang's
-`SourceManager <InternalsManual.html#SourceLocation>`_ class, which handles the
-mapping from source locations (as represented in Clang's abstract syntax tree)
-into actual column/line positions within a source file or macro instantiation.
-The AST file's representation of the source manager also includes information
-about all of the headers that were (transitively) included when building the
-AST file.
+:ref:`SourceManager <SourceManager>` class, which handles the mapping from
+source locations (as represented in Clang's abstract syntax tree) into actual
+column/line positions within a source file or macro instantiation.  The AST
+file's representation of the source manager also includes information about all
+of the headers that were (transitively) included when building the AST file.
 
 The bulk of the source manager block is dedicated to information about the
 various files, buffers, and macro instantiations into which a source location
@@ -254,8 +253,7 @@ the types block where the serialized representation of that type resides,
 enabling lazy deserialization of types.  When a type is referenced from within
 the AST file, that reference is encoded using the type ID shifted left by 3
 bits.  The lower three bits are used to represent the ``const``, ``volatile``,
-and ``restrict`` qualifiers, as in Clang's
-`QualType <http://clang.llvm.org/docs/InternalsManual.html#Type>`_ class.
+and ``restrict`` qualifiers, as in Clang's :ref:`QualType <QualType>` class.
 
 .. _pchinternals-decls:
 
@@ -277,13 +275,12 @@ the top of the hierarchy is the translation unit (``TranslationUnitDecl``),
 which contains all of the declarations in the translation unit but is not
 actually written as a specific declaration node.  Its child declarations (such
 as functions or struct types) may also contain other declarations inside them,
-and so on.  Within Clang, each declaration is stored within a `declaration
-context <http://clang.llvm.org/docs/InternalsManual.html#DeclContext>`_, as
-represented by the ``DeclContext`` class.  Declaration contexts provide the
-mechanism to perform name lookup within a given declaration (e.g., find the
-member named ``x`` in a structure) and iterate over the declarations stored
-within a context (e.g., iterate over all of the fields of a structure for
-structure layout).
+and so on.  Within Clang, each declaration is stored within a :ref:`declaration
+context <DeclContext>`, as represented by the ``DeclContext`` class.
+Declaration contexts provide the mechanism to perform name lookup within a
+given declaration (e.g., find the member named ``x`` in a structure) and
+iterate over the declarations stored within a context (e.g., iterate over all
+of the fields of a structure for structure layout).
 
 In Clang's AST file format, deserializing a declaration that is a
 ``DeclContext`` is a separate operation from deserializing all of the

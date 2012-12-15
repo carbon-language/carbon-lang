@@ -29,7 +29,7 @@ progress. This page will get filled out with docs soon...
    RAVFrontendAction
    UsersManual
    AutomaticReferenceCounting
-
+   InternalsManual
 
 Indices and tables
 ==================
