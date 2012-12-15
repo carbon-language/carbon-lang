@@ -96,12 +96,15 @@ void TestSizeClassAllocator() {
       uptr size = sizes[s];
       if (!a->CanAllocate(size, 1)) continue;
       // printf("s = %ld\n", size);
-      uptr n_iter = std::max((uptr)2, 1000000 / size);
+      uptr n_iter = std::max((uptr)6, 1000000 / size);
       for (uptr i = 0; i < n_iter; i++) {
-        void *x = a->Allocate(size, 1);
+        char *x = (char*)a->Allocate(size, 1);
+        x[0] = 0;
+        x[size - 1] = 0;
+        x[size / 2] = 0;
         allocated.push_back(x);
         CHECK_EQ(x, a->GetBlockBegin(x));
-        CHECK_EQ(x, a->GetBlockBegin((char*)x + size - 1));
+        CHECK_EQ(x, a->GetBlockBegin(x + size - 1));
         CHECK(a->PointerIsMine(x));
         CHECK_GE(a->GetActuallyAllocatedSize(x), size);
         uptr class_id = a->GetSizeClass(x);

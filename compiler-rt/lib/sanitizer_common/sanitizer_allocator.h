@@ -297,7 +297,7 @@ class SizeClassAllocator64 {
     uptr beg_idx = region->allocated_user;
     uptr end_idx = beg_idx + kPopulateSize;
     uptr region_beg = kSpaceBeg + kRegionSize * class_id;
-    if (end_idx > region->mapped_user) {
+    if (Max(end_idx, beg_idx + size) > region->mapped_user) {
       // Do the mmap for the user memory.
       CHECK_GT(region->mapped_user + kUserMapSize, end_idx);
       MapWithCallback(region_beg + region->mapped_user, kUserMapSize);
