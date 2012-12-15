@@ -2607,7 +2607,7 @@ private:
              TD.getTypeStoreSizeInBits(V->getType()) &&
              "Non-byte-multiple bit width");
       assert(V->getType()->getIntegerBitWidth() ==
-             TD.getTypeSizeInBits(OldAI.getAllocatedType()) &&
+             TD.getTypeAllocSizeInBits(OldAI.getAllocatedType()) &&
              "Only alloca-wide stores can be split and recomposed");
       IntegerType *NarrowTy = Type::getIntNTy(SI.getContext(), Size * 8);
       V = extractInteger(TD, IRB, V, NarrowTy, BeginOffset,
