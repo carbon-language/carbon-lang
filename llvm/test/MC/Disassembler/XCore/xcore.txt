@@ -1,0 +1,40 @@
+# RUN: llvm-mc --disassemble %s -triple=xcore-xmos-elf | FileCheck %s
+# CHECK: .section        __TEXT,__text,regular,pure_instructions
+
+# 1r instructions
+
+# CHECK: msync res[r0]
+0xf0 0x1f
+
+# CHECK: mjoin res[r1]
+0xf1 0x17
+
+# CHECK: bau r2
+0xf2 0x27
+
+# CHECK: set sp, r3
+0xf3 0x2f
+
+# CHECK: ecallt r4
+0xf4 0x4f
+
+# CHECK: ecallf r5
+0xe5 0x4f
+
+# CHECK: bla r6
+0xe6 0x27
+
+# CHECK: syncr res[r7]
+0xf7 0x87
+
+# CHECK: freer res[r8]
+0xe8 0x17
+
+# CHECK: setv res[r9], r11
+0xf9 0x47
+
+# CHECK: setev res[r10], r11
+0xfa 0x3f
+
+# CHECK: eeu res[r11]
+0xfb 0x07
