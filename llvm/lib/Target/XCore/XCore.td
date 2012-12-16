@@ -41,7 +41,13 @@ def : Proc<"xs1b-generic", []>;
 // Declare the target which we are implementing
 //===----------------------------------------------------------------------===//
 
+def XCoreAsmWriter : AsmWriter {
+  string AsmWriterClassName  = "InstPrinter";
+  bit isMCAsmWriter = 1;
+}
+
 def XCore : Target {
   // Pull in Instruction Info:
   let InstructionSet = XCoreInstrInfo;
+  let AssemblyWriters = [XCoreAsmWriter];
 }

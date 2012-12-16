@@ -15,6 +15,8 @@
 #define DEBUG_TYPE "asm-printer"
 #include "XCore.h"
 #include "XCoreInstrInfo.h"
+#include "XCoreMCInstLower.h"
+#include "InstPrinter/XCoreInstPrinter.h"
 #include "XCoreSubtarget.h"
 #include "XCoreTargetMachine.h"
 #include "llvm/ADT/SmallString.h"
@@ -30,6 +32,7 @@
 #include "llvm/DebugInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Module.h"
@@ -52,16 +55,17 @@ static cl::opt<unsigned> MaxThreads("xcore-max-threads", cl::Optional,
 namespace {
   class XCoreAsmPrinter : public AsmPrinter {
     const XCoreSubtarget &Subtarget;
+    XCoreMCInstLower MCInstLowering;
     void PrintDebugValueComment(const MachineInstr *MI, raw_ostream &OS);
   public:
     explicit XCoreAsmPrinter(TargetMachine &TM, MCStreamer &Streamer)
-      : AsmPrinter(TM, Streamer), Subtarget(TM.getSubtarget<XCoreSubtarget>()){}
+      : AsmPrinter(TM, Streamer), Subtarget(TM.getSubtarget<XCoreSubtarget>()),
+        MCInstLowering(*this) {}
 
     virtual const char *getPassName() const {
       return "XCore Assembly Printer";
     }
 
-    void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &O);
     void printInlineJT(const MachineInstr *MI, int opNum, raw_ostream &O,
                        const std::string &directive = ".jmptable");
     void printInlineJT32(const MachineInstr *MI, int opNum, raw_ostream &O) {
@@ -75,17 +79,13 @@ namespace {
     void emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV);
     virtual void EmitGlobalVariable(const GlobalVariable *GV);
 
-    void printInstruction(const MachineInstr *MI, raw_ostream &O); // autogen'd.
-    static const char *getRegisterName(unsigned RegNo);
-
     void EmitFunctionEntryLabel();
     void EmitInstruction(const MachineInstr *MI);
+    void EmitFunctionBodyStart();
     void EmitFunctionBodyEnd();
     virtual MachineLocation getDebugValueLocation(const MachineInstr *MI) const;
   };
 } // end of anonymous namespace
-
-#include "XCoreGenAsmWriter.inc"
 
 void XCoreAsmPrinter::emitArrayBound(MCSymbol *Sym, const GlobalVariable *GV) {
   assert(((GV->hasExternalLinkage() ||
@@ -177,6 +177,10 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   OutStreamer.EmitRawText("\t.cc_bottom " + Twine(GVSym->getName()) + ".data");
 }
 
+void XCoreAsmPrinter::EmitFunctionBodyStart() {
+  MCInstLowering.Initialize(Mang, &MF->getContext());
+}
+
 /// EmitFunctionBodyEnd - Targets can override this to emit stuff after
 /// the last basic block in the function.
 void XCoreAsmPrinter::EmitFunctionBodyEnd() {
@@ -190,17 +194,6 @@ void XCoreAsmPrinter::EmitFunctionEntryLabel() {
   OutStreamer.EmitRawText("\t.cc_top " + Twine(CurrentFnSym->getName()) +
                           ".function," + CurrentFnSym->getName());
   OutStreamer.EmitLabel(CurrentFnSym);
-}
-
-void XCoreAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
-                                      raw_ostream &O) {
-  printOperand(MI, opNum, O);
-  
-  if (MI->getOperand(opNum+1).isImm() && MI->getOperand(opNum+1).getImm() == 0)
-    return;
-  
-  O << "+";
-  printOperand(MI, opNum+1, O);
 }
 
 void XCoreAsmPrinter::
@@ -225,7 +218,7 @@ void XCoreAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   const MachineOperand &MO = MI->getOperand(opNum);
   switch (MO.getType()) {
   case MachineOperand::MO_Register:
-    O << getRegisterName(MO.getReg());
+    O << XCoreInstPrinter::getRegisterName(MO.getReg());
     break;
   case MachineOperand::MO_Immediate:
     O << MO.getImm();
@@ -270,7 +263,7 @@ bool XCoreAsmPrinter::PrintAsmOperand(const MachineInstr *MI, unsigned OpNo,
       return AsmPrinter::PrintAsmOperand(MI, OpNo, AsmVariant, ExtraCode, O);
     }
 
-printOperand(MI, OpNo, O);
+  printOperand(MI, OpNo, O);
   return false;
 }
 
@@ -317,15 +310,30 @@ void XCoreAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   }
   case XCore::ADD_2rus:
     if (MI->getOperand(2).getImm() == 0) {
-      O << "\tmov " << getRegisterName(MI->getOperand(0).getReg()) << ", "
-        << getRegisterName(MI->getOperand(1).getReg());
+      O << "\tmov "
+        << XCoreInstPrinter::getRegisterName(MI->getOperand(0).getReg()) << ", "
+        << XCoreInstPrinter::getRegisterName(MI->getOperand(1).getReg());
       OutStreamer.EmitRawText(O.str());
       return;
     }
     break;
+  case XCore::BR_JT:
+  case XCore::BR_JT32:
+    O << "\tbru "
+      << XCoreInstPrinter::getRegisterName(MI->getOperand(1).getReg()) << '\n';
+    if (MI->getOpcode() == XCore::BR_JT)
+      printInlineJT(MI, 0, O);
+    else
+      printInlineJT32(MI, 0, O);
+    O << '\n';
+    OutStreamer.EmitRawText(O.str());
+    return;
   }
-  printInstruction(MI, O);
-  OutStreamer.EmitRawText(O.str());
+
+  MCInst TmpInst;
+  MCInstLowering.Lower(MI, TmpInst);
+
+  OutStreamer.EmitInstruction(TmpInst);
 }
 
 // Force static initialization.
