@@ -8,7 +8,7 @@
     .when-revised { font-weight: bold; font-style: normal; }
 
     /*
-     * Automatic numbering is described this article:
+     * Automatic numbering is described in this article:
      * http://dev.opera.com/articles/view/automatic-numbering-with-css-counters/
      */
     /*
