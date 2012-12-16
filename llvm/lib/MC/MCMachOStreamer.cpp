@@ -43,6 +43,7 @@ public:
 
   virtual void InitSections();
   virtual void EmitLabel(MCSymbol *Symbol);
+  virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
                                    MCSymbol *EHSymbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
@@ -130,6 +131,9 @@ void MCMachOStreamer::EmitLabel(MCSymbol *Symbol) {
   SD.setFlags(SD.getFlags() & ~SF_ReferenceTypeMask);
 }
 
+void MCMachOStreamer::EmitDebugLabel(MCSymbol *Symbol) {
+  EmitLabel(Symbol);
+}
 void MCMachOStreamer::EmitDataRegion(DataRegionData::KindTy Kind) {
   if (!getAssembler().getBackend().hasDataInCodeSupport())
     return;

@@ -35,7 +35,9 @@ namespace {
       assert(getCurrentSection() && "Cannot emit before setting section!");
       Symbol->setSection(*getCurrentSection());
     }
-
+    virtual void EmitDebugLabel(MCSymbol *Symbol) {
+      EmitLabel(Symbol);
+    }
     virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}
     virtual void EmitThumbFunc(MCSymbol *Func) {}
 

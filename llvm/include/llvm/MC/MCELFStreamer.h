@@ -47,6 +47,7 @@ public:
   virtual void InitSections();
   virtual void ChangeSection(const MCSection *Section);
   virtual void EmitLabel(MCSymbol *Symbol);
+  virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);

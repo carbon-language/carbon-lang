@@ -34,7 +34,7 @@ MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, StringRef TT) {
   GPRel32Directive            = "\t.gpword\t";
   GPRel64Directive            = "\t.gpdword\t";
   WeakRefDirective            = "\t.weak\t";
-
+  DebugLabelSuffix            = "=.";
   SupportsDebugInformation = true;
   ExceptionsType = ExceptionHandling::DwarfCFI;
   HasLEB128 = true;

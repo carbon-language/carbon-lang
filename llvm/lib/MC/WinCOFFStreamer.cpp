@@ -51,6 +51,7 @@ public:
 
   virtual void InitSections();
   virtual void EmitLabel(MCSymbol *Symbol);
+  virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
   virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
@@ -176,6 +177,9 @@ void WinCOFFStreamer::EmitLabel(MCSymbol *Symbol) {
   MCObjectStreamer::EmitLabel(Symbol);
 }
 
+void WinCOFFStreamer::EmitDebugLabel(MCSymbol *Symbol) {
+  EmitLabel(Symbol);
+}
 void WinCOFFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   llvm_unreachable("not implemented");
 }

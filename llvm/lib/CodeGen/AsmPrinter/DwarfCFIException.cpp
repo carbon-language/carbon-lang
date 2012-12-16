@@ -122,8 +122,9 @@ void DwarfCFIException::BeginFunction(const MachineFunction *MF) {
   const MCSymbol *Sym = TLOF.getCFIPersonalitySymbol(Per, Asm->Mang, MMI);
   Asm->OutStreamer.EmitCFIPersonality(Sym, PerEncoding);
 
-  Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("eh_func_begin",
-                                                Asm->getFunctionNumber()));
+  Asm->OutStreamer.EmitDebugLabel
+    (Asm->GetTempSymbol("eh_func_begin",
+                        Asm->getFunctionNumber()));
 
   // Provide LSDA information.
   if (!shouldEmitLSDA)

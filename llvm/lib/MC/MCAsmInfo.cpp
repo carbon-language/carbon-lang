@@ -37,6 +37,7 @@ MCAsmInfo::MCAsmInfo() {
   CommentColumn = 40;
   CommentString = "#";
   LabelSuffix = ":";
+  DebugLabelSuffix = ":";
   GlobalPrefix = "";
   PrivateGlobalPrefix = ".";
   LinkerPrivateGlobalPrefix = "";

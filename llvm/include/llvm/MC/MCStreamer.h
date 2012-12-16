@@ -244,6 +244,8 @@ namespace llvm {
     /// used in an assignment.
     virtual void EmitLabel(MCSymbol *Symbol);
 
+    virtual void EmitDebugLabel(MCSymbol *Symbol);
+
     virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
                                      MCSymbol *EHSymbol);
 

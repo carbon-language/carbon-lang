@@ -86,6 +86,10 @@ void MCELFStreamer::EmitLabel(MCSymbol *Symbol) {
     MCELF::SetType(SD, ELF::STT_TLS);
 }
 
+void MCELFStreamer::EmitDebugLabel(MCSymbol *Symbol) {
+  EmitLabel(Symbol);
+}
+
 void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   switch (Flag) {
   case MCAF_SyntaxUnified: return; // no-op here.

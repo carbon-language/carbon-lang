@@ -135,6 +135,8 @@ public:
   }
 
   virtual void EmitLabel(MCSymbol *Symbol);
+  virtual void EmitDebugLabel(MCSymbol *Symbol);
+
   virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
                                    MCSymbol *EHSymbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
@@ -342,6 +344,14 @@ void MCAsmStreamer::EmitLabel(MCSymbol *Symbol) {
   MCStreamer::EmitLabel(Symbol);
 
   OS << *Symbol << MAI.getLabelSuffix();
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitDebugLabel(MCSymbol *Symbol) {
+  assert(Symbol->isUndefined() && "Cannot define a symbol twice!");
+  MCStreamer::EmitDebugLabel(Symbol);
+
+  OS << *Symbol << MAI.getDebugLabelSuffix();
   EmitEOL();
 }
 

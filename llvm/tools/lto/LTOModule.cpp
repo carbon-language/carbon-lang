@@ -745,6 +745,9 @@ namespace {
       Symbol->setSection(*getCurrentSection());
       markDefined(*Symbol);
     }
+    virtual void EmitDebugLabel(MCSymbol *Symbol) {
+      EmitLabel(Symbol);
+    }
     virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value) {
       // FIXME: should we handle aliases?
       markDefined(*Symbol);

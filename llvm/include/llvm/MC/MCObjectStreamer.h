@@ -69,6 +69,7 @@ public:
   /// @{
 
   virtual void EmitLabel(MCSymbol *Symbol);
+  virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitAssignment(MCSymbol *Symbol, const MCExpr *Value);
   virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
                              unsigned AddrSpace);
