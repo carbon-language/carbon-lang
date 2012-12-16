@@ -20,14 +20,13 @@
 
 .. _arc.meta:
 
-===================
 About this document
 ===================
 
 .. _arc.meta.purpose:
 
 Purpose
-=======
+-------
 
 The first and primary purpose of this document is to serve as a complete
 technical specification of Automatic Reference Counting.  Given a core
@@ -41,7 +40,7 @@ stray into marketing speculation.
 .. _arc.meta.background:
 
 Background
-==========
+----------
 
 This document assumes a basic familiarity with C.
 
@@ -133,7 +132,7 @@ implements ``retain`` by adjusting the reference count, not by calling
 .. _arc.meta.evolution:
 
 Evolution
-=========
+---------
 
 ARC is under continual evolution, and this document must be updated as the
 language progresses.
@@ -160,7 +159,6 @@ changes are generally to be avoided.
 
 .. _arc.general:
 
-=======
 General
 =======
 
@@ -180,7 +178,6 @@ preprocessor.  For more information about ``__has_feature``, see the
 
 .. _arc.objects:
 
-==========================
 Retainable object pointers
 ==========================
 
@@ -242,7 +239,7 @@ typedef, and do not assume that it will be preserved by language features like
 .. _arc.objects.retains:
 
 Retain count semantics
-======================
+----------------------
 
 A retainable object pointer is either a :arc-term:`null pointer` or a pointer
 to a valid object.  Furthermore, if it has block pointer type and is not
@@ -298,7 +295,7 @@ an exact sequence of operations that a program will be compiled into.
 .. _arc.objects.operands:
 
 Retainable object pointers as operands and arguments
-====================================================
+----------------------------------------------------
 
 In general, ARC does not perform retain or release operations when simply using
 a retainable object pointer as an operand within an expression.  This includes:
@@ -323,7 +320,7 @@ exceptions are detected, and what those exceptions imply semantically.
 .. _arc.objects.operands.consumed:
 
 Consumed parameters
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 A function or method parameter of retainable object pointer type may be marked
 as :arc-term:`consumed`, signifying that the callee expects to take ownership
@@ -378,7 +375,7 @@ function.
 .. _arc.object.operands.retained-return-values:
 
 Retained return values
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 A function or method which returns a retainable object pointer type may be
 marked as returning a retained value, signifying that the caller expects to take
@@ -429,7 +426,7 @@ its result from the implementation of the called block or function.
 .. _arc.objects.operands.unretained-returns:
 
 Unretained return values
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 A method or function which returns a retainable object type but does not return
 a retained value must ensure that the object is still valid across the return
@@ -461,7 +458,7 @@ of such a method; it merely enables optimizations in callers.
 .. _arc.objects.operands.casts:
 
 Bridged casts
--------------
+^^^^^^^^^^^^^
 
 A :arc-term:`bridged cast` is a C-style cast annotated with one of three
 keywords:
@@ -492,12 +489,12 @@ ARC to emit an unbalanced retain or release, respectively, is poor form.
 .. _arc.objects.restrictions:
 
 Restrictions
-============
+------------
 
 .. _arc.objects.restrictions.conversion:
 
 Conversion of retainable object pointers
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In general, a program which attempts to implicitly or explicitly convert a
 value of retainable object pointer type to any non-retainable type, or
@@ -519,7 +516,7 @@ However, the following exceptions apply.
 .. _arc.objects.restrictions.conversion.with.known.semantics:
 
 Conversion to retainable object pointer type of expressions with known semantics
---------------------------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :when-revised:`[beginning Apple 4.0, LLVM 3.1]`
 :revision:`These exceptions have been greatly expanded; they previously applied
@@ -590,7 +587,7 @@ retain-agnostic, the conversion is treated as a ``__bridge`` cast.
 .. _arc.objects.restrictions.conversion-exception-contextual:
 
 Conversion from retainable object pointer type in certain contexts
-------------------------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :when-revised:`[beginning Apple 4.0, LLVM 3.1]`
 
@@ -614,7 +611,6 @@ ill-formed as discussed above unless the result is immediately used:
 
 .. _arc.ownership:
 
-=======================
 Ownership qualification
 =======================
 
@@ -661,7 +657,7 @@ A type is :arc-term:`nontrivially ownership-qualified` if it is qualified with
 .. _arc.ownership.spelling:
 
 Spelling
-========
+--------
 
 The names of the ownership qualifiers are reserved for the implementation.  A
 program may not assume that they are or are not implemented with macros, or
@@ -688,7 +684,7 @@ the type there.
 .. _arc.ownership.spelling.property:
 
 Property declarations
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 A property of retainable object pointer type may have ownership.  If the
 property's type is ownership-qualified, then the property has that ownership.
@@ -748,7 +744,7 @@ deallocation.
 .. _arc.ownership.semantics:
 
 Semantics
-=========
+---------
 
 There are five :arc-term:`managed operations` which may be performed on an
 object of retainable object pointer type.  Each qualifier specifies different
@@ -810,12 +806,12 @@ reading the object.
 .. _arc.ownership.restrictions:
 
 Restrictions
-============
+------------
 
 .. _arc.ownership.restrictions.weak:
 
 Weak-unavailable types
-----------------------
+^^^^^^^^^^^^^^^^^^^^^^
 
 It is explicitly permitted for Objective-C classes to not support ``__weak``
 references.  It is undefined behavior to perform an operation with weak
@@ -845,7 +841,7 @@ assignment operation has a weak-unavailable type.
 .. _arc.ownership.restrictions.autoreleasing:
 
 Storage duration of ``__autoreleasing`` objects
------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A program is ill-formed if it declares an ``__autoreleasing`` object of
 non-automatic storage duration.  A program is ill-formed if it captures an
@@ -866,7 +862,7 @@ object is read after the autorelease pool's scope is left.
 .. _arc.ownership.restrictions.conversion.indirect:
 
 Conversion of pointers to ownership-qualified types
----------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A program is ill-formed if an expression of type ``T*`` is converted,
 explicitly or implicitly, to the type ``U*``, where ``T`` and ``U`` have
@@ -924,7 +920,7 @@ translation units and vice-versa.
 .. _arc.ownership.restrictions.pass_by_writeback:
 
 Passing to an out parameter by writeback
-----------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 If the argument passed to a parameter of type ``T __autoreleasing *`` has type
 ``U oq *``, where ``oq`` is an ownership qualifier, then the argument is a
@@ -984,7 +980,7 @@ A pass-by-writeback is evaluated as follows:
 .. _arc.ownership.restrictions.records:
 
 Ownership-qualified fields of structs and unions
-------------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A program is ill-formed if it declares a member of a C struct or union to have
 a nontrivially ownership-qualified type.
@@ -1016,12 +1012,12 @@ nontrivially ownership-qualified member.
 .. _arc.ownership.inference:
 
 Ownership inference
-===================
+-------------------
 
 .. _arc.ownership.inference.variables:
 
 Objects
--------
+^^^^^^^
 
 If an object is declared with retainable object owner type, but without an
 explicit ownership qualifier, its type is implicitly adjusted to have
@@ -1034,7 +1030,7 @@ qualification instead.
 .. _arc.ownership.inference.indirect_parameters:
 
 Indirect parameters
--------------------
+^^^^^^^^^^^^^^^^^^^
 
 If a function or method parameter has type ``T*``, where ``T`` is an
 ownership-unqualified retainable object pointer type, then:
@@ -1067,7 +1063,7 @@ ill-formed.
 .. _arc.ownership.inference.template.arguments:
 
 Template arguments
-------------------
+^^^^^^^^^^^^^^^^^^
 
 If a template argument for a template type parameter is an retainable object
 owner type that does not have an explicit ownership qualifier, it is adjusted
@@ -1084,7 +1080,6 @@ whether the template argument was deduced or explicitly specified.
 
 .. _arc.method-families:
 
-===============
 Method families
 ===============
 
@@ -1145,7 +1140,7 @@ overrides do not all have the same method family.
 .. _arc.family.attribute:
 
 Explicit method family control
-==============================
+------------------------------
 
 A method may be annotated with the ``objc_method_family`` attribute to
 precisely control which method family it belongs to.  If a method in an
@@ -1179,7 +1174,7 @@ naming convention.
 .. _arc.family.semantics:
 
 Semantics of method families
-============================
+----------------------------
 
 A method's membership in a method family may imply non-standard semantics for
 its parameters and return type.
@@ -1201,7 +1196,7 @@ attribute.
 .. _arc.family.semantics.init:
 
 Semantics of ``init``
----------------------
+^^^^^^^^^^^^^^^^^^^^^
 
 Methods in the ``init`` family implicitly :ref:`consume
 <arc.objects.operands.consumed>` their ``self`` parameter and :ref:`return a
@@ -1227,7 +1222,7 @@ perform at most one delegate init call.
 .. _arc.family.semantics.result_type:
 
 Related result types
---------------------
+^^^^^^^^^^^^^^^^^^^^
 
 Certain methods are candidates to have :arc-term:`related result types`:
 
@@ -1260,7 +1255,6 @@ This is a new rule of the Objective-C language and applies outside of ARC.
 
 .. _arc.optimization:
 
-============
 Optimization
 ============
 
@@ -1289,7 +1283,7 @@ useful to document them here.
 .. _arc.optimization.precise:
 
 Precise lifetime semantics
-==========================
+--------------------------
 
 In general, ARC maintains an invariant that a retainable object pointer held in
 a ``__strong`` object will be retained for the full formal lifetime of the
@@ -1321,19 +1315,18 @@ it should be considered to be an object with precise lifetime semantics.
 
 .. _arc.misc:
 
-=============
 Miscellaneous
 =============
 
 .. _arc.misc.special_methods:
 
 Special methods
-===============
+---------------
 
 .. _arc.misc.special_methods.retain:
 
 Memory management methods
--------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^
 
 A program is ill-formed if it contains a method definition, message send, or
 ``@selector`` expression for any of the following selectors:
@@ -1382,7 +1375,7 @@ A program is ill-formed if it contains a method definition, message send, or
 .. _arc.misc.special_methods.dealloc:
 
 ``dealloc``
------------
+^^^^^^^^^^^
 
 A program is ill-formed if it contains a message send or ``@selector``
 expression for the selector ``dealloc``.
@@ -1442,7 +1435,7 @@ both within a single class and between subclasses and superclasses.
 .. _arc.misc.autoreleasepool:
 
 ``@autoreleasepool``
-====================
+--------------------
 
 To simplify the use of autorelease pools, and to bring them under the control
 of the compiler, a new kind of statement is available in Objective-C.  It is
@@ -1473,7 +1466,7 @@ A program is ill-formed if it refers to the ``NSAutoreleasePool`` class.
 .. _arc.misc.self:
 
 ``self``
-========
+--------
 
 The ``self`` parameter variable of an Objective-C method is never actually
 retained by the implementation.  It is undefined behavior, or at least
@@ -1501,7 +1494,7 @@ To make this safe, for Objective-C instance methods ``self`` is implicitly
 .. _arc.misc.enumeration:
 
 Fast enumeration iteration variables
-====================================
+------------------------------------
 
 If a variable is declared in the condition of an Objective-C fast enumeration
 loop, and the variable has no explicit ownership qualifier, then it is
@@ -1519,7 +1512,7 @@ enumeration are not actually retained.
 .. _arc.misc.blocks:
 
 Blocks
-======
+------
 
 The implicit ``const`` capture variables created when evaluating a block
 literal expression have the same ownership semantics as the local variables
@@ -1543,7 +1536,7 @@ result is used only as an argument to a call.
 .. _arc.misc.exceptions:
 
 Exceptions
-==========
+----------
 
 By default in Objective C, ARC is not exception-safe for normal releases:
 
@@ -1588,7 +1581,7 @@ their scope unless exceptions are disabled in the compiler.
 .. _arc.misc.interior:
 
 Interior pointers
-=================
+-----------------
 
 An Objective-C method returning a non-retainable pointer may be annotated with
 the ``objc_returns_inner_pointer`` attribute to indicate that it returns a
@@ -1636,7 +1629,7 @@ from a ``__strong`` object with :ref:`precise lifetime semantics
 .. _arc.misc.c-retainable:
 
 C retainable pointer types
-==========================
+--------------------------
 
 A type is a :arc-term:`C retainable pointer type`` if it is a pointer to
 (possibly qualified) ``void`` or a pointer to a (possibly qualifier) ``struct``
@@ -1655,7 +1648,7 @@ or ``class`` type.
 .. _arc.misc.c-retainable.audit:
 
 Auditing of C retainable pointer interfaces
--------------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :when-revised:`[beginning Apple 4.0, LLVM 3.1]`
 
@@ -1712,7 +1705,6 @@ It is possible to test for all the features in this section with
 
 .. _arc.runtime:
 
-===============
 Runtime support
 ===============
 
@@ -1754,7 +1746,7 @@ emit, which are described in the remainder of this section.
 .. _arc.runtime.objc_autorelease:
 
 ``id objc_autorelease(id value);``
-==================================
+----------------------------------
 
 *Precondition:* ``value`` is null or a pointer to a valid object.
 
@@ -1767,7 +1759,7 @@ Always returns ``value``.
 .. _arc.runtime.objc_autoreleasePoolPop:
 
 ``void objc_autoreleasePoolPop(void *pool);``
-=============================================
+---------------------------------------------
 
 *Precondition:* ``pool`` is the result of a previous call to
 :ref:`objc_autoreleasePoolPush <arc.runtime.objc_autoreleasePoolPush>` on the
@@ -1781,7 +1773,7 @@ pool directly enclosing ``pool``.
 .. _arc.runtime.objc_autoreleasePoolPush:
 
 ``void *objc_autoreleasePoolPush(void);``
-=========================================
+-----------------------------------------
 
 Creates a new autorelease pool that is enclosed by the current pool, makes that
 the current pool, and returns an opaque "handle" to it.
@@ -1795,7 +1787,7 @@ the current pool, and returns an opaque "handle" to it.
 .. _arc.runtime.objc_autoreleaseReturnValue:
 
 ``id objc_autoreleaseReturnValue(id value);``
-=============================================
+---------------------------------------------
 
 *Precondition:* ``value`` is null or a pointer to a valid object.
 
@@ -1811,7 +1803,7 @@ Always returns ``value``.
 .. _arc.runtime.objc_copyWeak:
 
 ``void objc_copyWeak(id *dest, id *src);``
-==========================================
+------------------------------------------
 
 *Precondition:* ``src`` is a valid pointer which either contains a null pointer
 or has been registered as a ``__weak`` object.  ``dest`` is a valid pointer
@@ -1831,7 +1823,7 @@ Must be atomic with respect to calls to ``objc_storeWeak`` on ``src``.
 .. _arc.runtime.objc_destroyWeak:
 
 ``void objc_destroyWeak(id *object);``
-======================================
+--------------------------------------
 
 *Precondition:* ``object`` is a valid pointer which either contains a null
 pointer or has been registered as a ``__weak`` object.
@@ -1851,7 +1843,7 @@ Does not need to be atomic with respect to calls to ``objc_storeWeak`` on
 .. _arc.runtime.objc_initWeak:
 
 ``id objc_initWeak(id *object, id value);``
-===========================================
+-------------------------------------------
 
 *Precondition:* ``object`` is a valid pointer which has not been registered as
 a ``__weak`` object.  ``value`` is null or a pointer to a valid object.
@@ -1876,7 +1868,7 @@ Does not need to be atomic with respect to calls to ``objc_storeWeak`` on
 .. _arc.runtime.objc_loadWeak:
 
 ``id objc_loadWeak(id *object);``
-=================================
+---------------------------------
 
 *Precondition:* ``object`` is a valid pointer which either contains a null
 pointer or has been registered as a ``__weak`` object.
@@ -1902,7 +1894,7 @@ Must be atomic with respect to calls to ``objc_storeWeak`` on ``object``.
 .. _arc.runtime.objc_loadWeakRetained:
 
 ``id objc_loadWeakRetained(id *object);``
-=========================================
+-----------------------------------------
 
 *Precondition:* ``object`` is a valid pointer which either contains a null
 pointer or has been registered as a ``__weak`` object.
@@ -1916,7 +1908,7 @@ Must be atomic with respect to calls to ``objc_storeWeak`` on ``object``.
 .. _arc.runtime.objc_moveWeak:
 
 ``void objc_moveWeak(id *dest, id *src);``
-==========================================
+------------------------------------------
 
 *Precondition:* ``src`` is a valid pointer which either contains a null pointer
 or has been registered as a ``__weak`` object.  ``dest`` is a valid pointer
@@ -1932,7 +1924,7 @@ Must be atomic with respect to calls to ``objc_storeWeak`` on ``src``.
 .. _arc.runtime.objc_release:
 
 ``void objc_release(id value);``
-================================
+--------------------------------
 
 *Precondition:* ``value`` is null or a pointer to a valid object.
 
@@ -1943,7 +1935,7 @@ message.
 .. _arc.runtime.objc_retain:
 
 ``id objc_retain(id value);``
-=============================
+-----------------------------
 
 *Precondition:* ``value`` is null or a pointer to a valid object.
 
@@ -1955,7 +1947,7 @@ Always returns ``value``.
 .. _arc.runtime.objc_retainAutorelease:
 
 ``id objc_retainAutorelease(id value);``
-========================================
+----------------------------------------
 
 *Precondition:* ``value`` is null or a pointer to a valid object.
 
@@ -1974,7 +1966,7 @@ Always returns ``value``.
 .. _arc.runtime.objc_retainAutoreleaseReturnValue:
 
 ``id objc_retainAutoreleaseReturnValue(id value);``
-===================================================
+---------------------------------------------------
 
 *Precondition:* ``value`` is null or a pointer to a valid object.
 
@@ -1994,7 +1986,7 @@ Always returns ``value``.
 .. _arc.runtime.objc_retainAutoreleasedReturnValue:
 
 ``id objc_retainAutoreleasedReturnValue(id value);``
-====================================================
+----------------------------------------------------
 
 *Precondition:* ``value`` is null or a pointer to a valid object.
 
@@ -2010,7 +2002,7 @@ Always returns ``value``.
 .. _arc.runtime.objc_retainBlock:
 
 ``id objc_retainBlock(id value);``
-==================================
+----------------------------------
 
 *Precondition:* ``value`` is null or a pointer to a valid block object.
 
@@ -2022,7 +2014,7 @@ block exactly as if it had been sent the ``retain`` message.
 .. _arc.runtime.objc_storeStrong:
 
 ``id objc_storeStrong(id *object, id value);``
-==============================================
+----------------------------------------------
 
 *Precondition:* ``object`` is a valid pointer to a ``__strong`` object which is
 adequately aligned for a pointer.  ``value`` is null or a pointer to a valid
@@ -2046,7 +2038,7 @@ Always returns ``value``.
 .. _arc.runtime.objc_storeWeak:
 
 ``id objc_storeWeak(id *object, id value);``
-============================================
+--------------------------------------------
 
 *Precondition:* ``object`` is a valid pointer which either contains a null
 pointer or has been registered as a ``__weak`` object.  ``value`` is null or a
