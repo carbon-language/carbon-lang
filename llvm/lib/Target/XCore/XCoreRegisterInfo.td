@@ -45,10 +45,10 @@ def LR : Ri<15, "lr">, DwarfRegNum<[15]>;
 def GRRegs : RegisterClass<"XCore", [i32], 32,
   // Return values and arguments
   (add R0, R1, R2, R3,
-  // Not preserved across procedure calls
-  R11,
   // Callee save
-  R4, R5, R6, R7, R8, R9, R10)>;
+  R4, R5, R6, R7, R8, R9, R10,
+  // Not preserved across procedure calls
+  R11)>;
 
 // Reserved
 def RRegs : RegisterClass<"XCore", [i32], 32, (add CP, DP, SP, LR)> {

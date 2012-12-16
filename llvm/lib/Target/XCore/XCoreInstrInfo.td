@@ -946,17 +946,17 @@ def ENDIN_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
 // TODO edu, eeu, waitet, waitef, tstart, clrtp
 // setdp, setcp, setev, kcall
 // dgetreg
-def MSYNC_1r : _F1R<(outs), (ins GRRegs:$i),
-                    "msync res[$i]",
-                    [(int_xcore_msync GRRegs:$i)]>;
-def MJOIN_1r : _F1R<(outs), (ins GRRegs:$i),
-                    "mjoin res[$i]",
-                    [(int_xcore_mjoin GRRegs:$i)]>;
+def MSYNC_1r : _F1R<0b000111, (outs), (ins GRRegs:$a),
+                    "msync res[$a]",
+                    [(int_xcore_msync GRRegs:$a)]>;
+def MJOIN_1r : _F1R<0b000101, (outs), (ins GRRegs:$a),
+                    "mjoin res[$a]",
+                    [(int_xcore_mjoin GRRegs:$a)]>;
 
 let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
-def BAU_1r : _F1R<(outs), (ins GRRegs:$addr),
-                 "bau $addr",
-                 [(brind GRRegs:$addr)]>;
+def BAU_1r : _F1R<0b001001, (outs), (ins GRRegs:$a),
+                 "bau $a",
+                 [(brind GRRegs:$a)]>;
 
 let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in
 def BR_JT : PseudoInstXCore<(outs), (ins InlineJT:$t, GRRegs:$i),
@@ -969,49 +969,49 @@ def BR_JT32 : PseudoInstXCore<(outs), (ins InlineJT32:$t, GRRegs:$i),
                               [(XCoreBR_JT32 tjumptable:$t, GRRegs:$i)]>;
 
 let Defs=[SP], neverHasSideEffects=1 in
-def SETSP_1r : _F1R<(outs), (ins GRRegs:$src),
-                 "set sp, $src",
+def SETSP_1r : _F1R<0b001011, (outs), (ins GRRegs:$a),
+                 "set sp, $a",
                  []>;
 
 let hasCtrlDep = 1 in 
-def ECALLT_1r : _F1R<(outs), (ins GRRegs:$src),
-                 "ecallt $src",
+def ECALLT_1r : _F1R<0b010011, (outs), (ins GRRegs:$a),
+                 "ecallt $a",
                  []>;
 
 let hasCtrlDep = 1 in 
-def ECALLF_1r : _F1R<(outs), (ins GRRegs:$src),
-                 "ecallf $src",
+def ECALLF_1r : _F1R<0b010010, (outs), (ins GRRegs:$a),
+                 "ecallf $a",
                  []>;
 
 let isCall=1, 
 // All calls clobber the link register and the non-callee-saved registers:
 Defs = [R0, R1, R2, R3, R11, LR], Uses = [SP] in {
-def BLA_1r : _F1R<(outs), (ins GRRegs:$addr),
-                 "bla $addr",
-                 [(XCoreBranchLink GRRegs:$addr)]>;
+def BLA_1r : _F1R<0b001000, (outs), (ins GRRegs:$a),
+                 "bla $a",
+                 [(XCoreBranchLink GRRegs:$a)]>;
 }
 
-def SYNCR_1r : _F1R<(outs), (ins GRRegs:$r),
-                 "syncr res[$r]",
-                 [(int_xcore_syncr GRRegs:$r)]>;
+def SYNCR_1r : _F1R<0b100001, (outs), (ins GRRegs:$a),
+                 "syncr res[$a]",
+                 [(int_xcore_syncr GRRegs:$a)]>;
 
-def FREER_1r : _F1R<(outs), (ins GRRegs:$r),
-               "freer res[$r]",
-               [(int_xcore_freer GRRegs:$r)]>;
+def FREER_1r : _F1R<0b000100, (outs), (ins GRRegs:$a),
+               "freer res[$a]",
+               [(int_xcore_freer GRRegs:$a)]>;
 
 let Uses=[R11] in {
-def SETV_1r : _F1R<(outs), (ins GRRegs:$r),
-                   "setv res[$r], r11",
-                   [(int_xcore_setv GRRegs:$r, R11)]>;
+def SETV_1r : _F1R<0b010001, (outs), (ins GRRegs:$a),
+                   "setv res[$a], r11",
+                   [(int_xcore_setv GRRegs:$a, R11)]>;
 
-def SETEV_1r : _F1R<(outs), (ins GRRegs:$r),
-                    "setev res[$r], r11",
-                    [(int_xcore_setev GRRegs:$r, R11)]>;
+def SETEV_1r : _F1R<0b001111, (outs), (ins GRRegs:$a),
+                    "setev res[$a], r11",
+                    [(int_xcore_setev GRRegs:$a, R11)]>;
 }
 
-def EEU_1r : _F1R<(outs), (ins GRRegs:$r),
-               "eeu res[$r]",
-               [(int_xcore_eeu GRRegs:$r)]>;
+def EEU_1r : _F1R<0b000001, (outs), (ins GRRegs:$a),
+               "eeu res[$a]",
+               [(int_xcore_eeu GRRegs:$a)]>;
 
 // Zero operand short
 // TODO freet, ldspc, stspc, ldssr, stssr, ldsed, stsed,
