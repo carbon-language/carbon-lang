@@ -24,7 +24,9 @@ class InstXCore<int sz, dag outs, dag ins, string asmstr, list<dag> pattern>
 
 // XCore pseudo instructions format
 class PseudoInstXCore<dag outs, dag ins, string asmstr, list<dag> pattern>
-   : InstXCore<0, outs, ins, asmstr, pattern>;
+   : InstXCore<0, outs, ins, asmstr, pattern> {
+  let isPseudo = 1;
+}
 
 //===----------------------------------------------------------------------===//
 // Instruction formats
