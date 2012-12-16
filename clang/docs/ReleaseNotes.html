@@ -174,6 +174,10 @@ int f(vector&lt;map&lt;int, double&gt;&gt;);
   <tt>-fsanitize=undefined</tt> and has grown the ability to check for several
   new types of undefined behavior. See the Users Manual for more information.
 
+
+  <li><tt>-Wdocumentation</tt> enables warnings about documentation comments.
+  See section "Documentation comment support" for an example.</li>
+
   <!-- Flesh this out prior to release. -->
 
   <!-- Document renaming of -faddress-sanitizer and -fthread-sanitizer. -->
@@ -214,6 +218,35 @@ function call.</p>
 <p>See entries for <code>argument_with_type_tag</code>,
 <code>pointer_with_type_tag</code> and <code>type_tag_for_datatype</code>
 attributes in Clang language extensions documentation.</p>
+
+<h4>Documentation comment support</h4>
+<p>Clang now supports documentation comments written in a Doxygen-like syntax.
+Clang parses the comments and can detect syntactic and semantic errors in
+comments.  These warnings are off by default.  Pass <tt>-Wdocumentation</tt>
+flag to enable warnings about documentation comments.</p>
+
+<p>For example, given:</p>
+
+<pre>/// \param [in] Str the string.
+/// \returns a modified string.
+void do_something(const std::string &amp;str);</pre>
+
+<p><tt>clang -Wdocumentation</tt> will emit two warnings:</p>
+
+<pre><b>doc-test.cc:3:6: <span class="warning">warning:</span></b> '\returns' command used in a comment that is attached to a function returning void [-Wdocumentation]
+/// \returns a modified string.
+    <span class="caret">~^~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<b>doc-test.cc:2:17: <span class="warning">warning:</span></b> parameter 'Str' not found in the function declaration [-Wdocumentation]
+/// \param [in] Str the string.
+                <span class="caret">^~~</span>
+<b>doc-test.cc:2:17: <span class="note">note:</span></b> did you mean 'str'?
+/// \param [in] Str the string.
+                <span class="caret">^~~</span>
+                <span class="caret">str</span></pre>
+
+<p>libclang includes a new API, <tt>clang_FullComment_getAsXML</tt>, to convert
+comments to XML documents.  This API can be used to build documentation
+extraction tools.</p>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="newflags">New Compiler Flags</h3>
