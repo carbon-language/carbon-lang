@@ -357,23 +357,23 @@ class F2R_np<string OpcStr> : _F2R<
 
 let Defs = [SP], Uses = [SP] in {
 def ADJCALLSTACKDOWN : PseudoInstXCore<(outs), (ins i32imm:$amt),
-                               "${:comment} ADJCALLSTACKDOWN $amt",
+                               "# ADJCALLSTACKDOWN $amt",
                                [(callseq_start timm:$amt)]>;
 def ADJCALLSTACKUP : PseudoInstXCore<(outs), (ins i32imm:$amt1, i32imm:$amt2),
-                            "${:comment} ADJCALLSTACKUP $amt1",
+                            "# ADJCALLSTACKUP $amt1",
                             [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
 
 def LDWFI : PseudoInstXCore<(outs GRRegs:$dst), (ins MEMii:$addr),
-                             "${:comment} LDWFI $dst, $addr",
+                             "# LDWFI $dst, $addr",
                              [(set GRRegs:$dst, (load ADDRspii:$addr))]>;
 
 def LDAWFI : PseudoInstXCore<(outs GRRegs:$dst), (ins MEMii:$addr),
-                             "${:comment} LDAWFI $dst, $addr",
+                             "# LDAWFI $dst, $addr",
                              [(set GRRegs:$dst, ADDRspii:$addr)]>;
 
 def STWFI : PseudoInstXCore<(outs), (ins GRRegs:$src, MEMii:$addr),
-                            "${:comment} STWFI $src, $addr",
+                            "# STWFI $src, $addr",
                             [(store GRRegs:$src, ADDRspii:$addr)]>;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded after
@@ -381,7 +381,7 @@ def STWFI : PseudoInstXCore<(outs), (ins GRRegs:$src, MEMii:$addr),
 let usesCustomInserter = 1 in {
   def SELECT_CC : PseudoInstXCore<(outs GRRegs:$dst),
                               (ins GRRegs:$cond, GRRegs:$T, GRRegs:$F),
-                              "${:comment} SELECT_CC PSEUDO!",
+                              "# SELECT_CC PSEUDO!",
                               [(set GRRegs:$dst,
                                  (select GRRegs:$cond, GRRegs:$T, GRRegs:$F))]>;
 }
