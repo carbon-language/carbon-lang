@@ -1,4 +1,4 @@
-;===- ./lib/Target/XCore/LLVMBuild.txt -------------------------*- Conf -*--===;
+;===- ./lib/Target/XCore/Disassembler/LLVMBuild.txt ------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;
@@ -15,19 +15,9 @@
 ;
 ;===------------------------------------------------------------------------===;
 
-[common]
-subdirectories = Disassembler InstPrinter MCTargetDesc TargetInfo
-
 [component_0]
-type = TargetGroup
-name = XCore
-parent = Target
-has_asmprinter = 1
-has_disassembler = 1
-
-[component_1]
 type = Library
-name = XCoreCodeGen
+name = XCoreDisassembler
 parent = XCore
-required_libraries = AsmPrinter CodeGen Core MC SelectionDAG Support Target XCoreDesc XCoreInfo
+required_libraries = MC Support XCoreInfo
 add_to_library_groups = XCore
