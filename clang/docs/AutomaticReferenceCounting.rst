@@ -1,7 +1,3 @@
-.. sectnum::
-.. contents::
-   :local:
-
 .. FIXME: move to the stylesheet or Sphinx plugin
 
 .. raw:: html
@@ -10,13 +6,64 @@
     .arc-term { font-style: italic; font-weight: bold; }
     .revision { font-style: italic; }
     .when-revised { font-weight: bold; font-style: normal; }
+
+    /*
+     * Automatic numbering is described this article:
+     * http://dev.opera.com/articles/view/automatic-numbering-with-css-counters/
+     */
+    /*
+     * Automatic numbering for the TOC.
+     * This is wrong from the semantics point of view, since it is an ordered
+     * list, but uses "ul" tag.
+     */
+    div#contents.contents.local ul {
+      counter-reset: toc-section;
+      list-style-type: none;
+    }
+    div#contents.contents.local ul li {
+      counter-increment: toc-section;
+      background: none; // Remove bullets
+    }
+    div#contents.contents.local ul li a.reference:before {
+      content: counters(toc-section, ".") " ";
+    }
+
+    /* Automatic numbering for the body. */
+    body {
+      counter-reset: section subsection subsubsection;
+    }
+    .section h2 {
+      counter-reset: subsection subsubsection;
+      counter-increment: section;
+    }
+    .section h2 a.toc-backref:before {
+      content: counter(section) " ";
+    }
+    .section h3 {
+      counter-reset: subsubsection;
+      counter-increment: subsection;
+    }
+    .section h3 a.toc-backref:before {
+      content: counter(section) "." counter(subsection) " ";
+    }
+    .section h4 {
+      counter-increment: subsubsection;
+    }
+    .section h4 a.toc-backref:before {
+      content: counter(section) "." counter(subsection) "." counter(subsubsection) " ";
+    }
   </style>
 
 .. role:: arc-term
 .. role:: revision
 .. role:: when-revised
 
-.. title:: Objective-C Automatic Reference Counting (ARC)
+==============================================
+Objective-C Automatic Reference Counting (ARC)
+==============================================
+
+.. contents::
+   :local:
 
 .. _arc.meta:
 
