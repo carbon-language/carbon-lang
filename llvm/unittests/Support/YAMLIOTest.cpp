@@ -14,9 +14,6 @@
 #include "llvm/Support/YAMLTraits.h"
 #include "gtest/gtest.h"
 
-// To keep build bots going, disable tests until I figure out 
-// why gcc complains there is no match for these traits.
-#if 0
 
 using llvm::yaml::Input;
 using llvm::yaml::Output;
@@ -801,9 +798,9 @@ TEST(YAMLIO, TestReadKindAndFlagsSequence) {
   EXPECT_FALSE(yin.error());
   EXPECT_EQ(seq.size(), 2UL);
   EXPECT_EQ(seq[0].kind,  kindA);
-  EXPECT_EQ(seq[0].flags, a2);
+  EXPECT_EQ(seq[0].flags, (uint32_t)a2);
   EXPECT_EQ(seq[1].kind,  kindB);
-  EXPECT_EQ(seq[1].flags, b1);
+  EXPECT_EQ(seq[1].flags, (uint32_t)b1);
 }
 
 //
@@ -831,15 +828,15 @@ TEST(YAMLIO, TestReadWriteKindAndFlagsSequence) {
     EXPECT_FALSE(yin.error());
     EXPECT_EQ(seq2.size(), 5UL);
     EXPECT_EQ(seq2[0].kind,  kindA);
-    EXPECT_EQ(seq2[0].flags, a1);
+    EXPECT_EQ(seq2[0].flags, (uint32_t)a1);
     EXPECT_EQ(seq2[1].kind,  kindB);
-    EXPECT_EQ(seq2[1].flags, b1);
+    EXPECT_EQ(seq2[1].flags, (uint32_t)b1);
     EXPECT_EQ(seq2[2].kind,  kindA);
-    EXPECT_EQ(seq2[2].flags, a2);
+    EXPECT_EQ(seq2[2].flags, (uint32_t)a2);
     EXPECT_EQ(seq2[3].kind,  kindB);
-    EXPECT_EQ(seq2[3].flags, b2);
+    EXPECT_EQ(seq2[3].flags, (uint32_t)b2);
     EXPECT_EQ(seq2[4].kind,  kindA);
-    EXPECT_EQ(seq2[4].flags, a3);
+    EXPECT_EQ(seq2[4].flags, (uint32_t)a3);
   }
 }
 
@@ -1288,5 +1285,3 @@ TEST(YAMLIO, TestReadBuiltInTypesHex64Error) {
   EXPECT_TRUE(yin.error());
 }
 
-
-#endif
