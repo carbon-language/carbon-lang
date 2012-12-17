@@ -2639,6 +2639,33 @@ private:
     return NewSI->getPointerOperand() == &NewAI && !SI.isVolatile();
   }
 
+  /// \brief Compute an integer value from splatting an i8 across the given
+  /// number of bytes.
+  ///
+  /// Note that this routine assumes an i8 is a byte. If that isn't true, don't
+  /// call this routine.
+  /// FIXME: Heed the abvice above.
+  ///
+  /// \param V The i8 value to splat.
+  /// \param Size The number of bytes in the output (assuming i8 is one byte)
+  Value *getIntegerSplat(IRBuilder<> &IRB, Value *V, unsigned Size) {
+    assert(Size > 0 && "Expected a positive number of bytes.");
+    IntegerType *VTy = cast<IntegerType>(V->getType());
+    assert(VTy->getBitWidth() == 8 && "Expected an i8 value for the byte");
+    if (Size == 1)
+      return V;
+
+    Type *SplatIntTy = Type::getIntNTy(VTy->getContext(), Size*8);
+    V = IRB.CreateMul(IRB.CreateZExt(V, SplatIntTy, getName(".zext")),
+                      ConstantExpr::getUDiv(
+                        Constant::getAllOnesValue(SplatIntTy),
+                        ConstantExpr::getZExt(
+                          Constant::getAllOnesValue(V->getType()),
+                          SplatIntTy)),
+                      getName(".isplat"));
+    return V;
+  }
+
   bool visitMemSetInst(MemSetInst &II) {
     DEBUG(dbgs() << "    original: " << II << "\n");
     IRBuilder<> IRB(&II);
@@ -2686,17 +2713,7 @@ private:
     // splatting the byte to a sufficiently wide integer, bitcasting to the
     // desired scalar type, and splatting it across any desired vector type.
     uint64_t Size = EndOffset - BeginOffset;
-    Value *V = II.getValue();
-    IntegerType *VTy = cast<IntegerType>(V->getType());
-    Type *SplatIntTy = Type::getIntNTy(VTy->getContext(), Size*8);
-    if (Size*8 > VTy->getBitWidth())
-      V = IRB.CreateMul(IRB.CreateZExt(V, SplatIntTy, getName(".zext")),
-                        ConstantExpr::getUDiv(
-                          Constant::getAllOnesValue(SplatIntTy),
-                          ConstantExpr::getZExt(
-                            Constant::getAllOnesValue(V->getType()),
-                            SplatIntTy)),
-                        getName(".isplat"));
+    Value *V = getIntegerSplat(IRB, II.getValue(), Size);
 
     // If this is an element-wide memset of a vectorizable alloca, insert it.
     if (VecTy && (BeginOffset > NewAllocaBeginOffset ||
