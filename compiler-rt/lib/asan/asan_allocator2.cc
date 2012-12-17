@@ -69,7 +69,7 @@ static const uptr kMaxAllowedMallocSize =
   FIRST_32_SECOND_64(3UL << 30, 8UL << 30);
 
 static const uptr kMaxThreadLocalQuarantine =
-  FIRST_32_SECOND_64(1 << 18, 1 << 21);
+  FIRST_32_SECOND_64(1 << 18, 1 << 20);
 
 static const uptr kReturnOnZeroMalloc = 0x0123;  // Zero page is protected.
 
@@ -123,17 +123,17 @@ static const uptr kChunkHeader2Size = 8;
 struct ChunkBase {
   // 1-st 8 bytes.
   uptr chunk_state       : 8;  // Must be first.
+  uptr alloc_tid         : 24;
   uptr from_memalign     : 1;
-  uptr alloc_tid         : 23;
+  uptr free_tid          : 24;
+  // 2-nd 8 bytes
   uptr user_requested_size;
-  // Header2 (intersects with user memory).
-  // 2-nd 8 bytes. These overlap with the user memory.
   AsanChunk *next;
-  uptr  free_tid;
+  // Header2 empty.
 };
 
-static const uptr kChunkHeaderSize = 8;
-static const uptr kChunkHeader2Size = 8;
+static const uptr kChunkHeaderSize = 16;
+static const uptr kChunkHeader2Size = 0;
 #endif
 COMPILER_CHECK(sizeof(ChunkBase) == kChunkHeaderSize + kChunkHeader2Size);
 
@@ -318,7 +318,8 @@ static void Deallocate(void *ptr, StackTrace *stack) {
   CHECK(old_chunk_state == CHUNK_ALLOCATED);
 
   CHECK_GE(m->alloc_tid, 0);
-  CHECK_EQ(m->free_tid, kInvalidTid);
+  if (SANITIZER_WORDSIZE == 64)  // On 32-bits this resides in user area.
+    CHECK_EQ(m->free_tid, kInvalidTid);
   AsanThread *t = asanThreadRegistry().GetCurrent();
   m->free_tid = t ? t->tid() : 0;
   StackTrace::CompressStack(stack, m->FreeStackBeg(), m->FreeStackSize());
@@ -360,13 +361,25 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
   return new_ptr;
 }
 
+static AsanChunk *GetAsanChunkByAddr(uptr p) {
+  uptr alloc_beg = reinterpret_cast<uptr>(
+      allocator.GetBlockBegin(reinterpret_cast<void *>(p)));
+  if (!alloc_beg) return 0;
+  // FIXME: this does not take into account memalign.
+  uptr chunk_beg = alloc_beg + ComputeRZSize(0) - kChunkHeaderSize;
+  return reinterpret_cast<AsanChunk *>(chunk_beg);
+}
 
+static uptr AllocationSize(uptr p) {
+  AsanChunk *m = GetAsanChunkByAddr(p);
+  if (!m) return 0;
+  if (m->chunk_state != CHUNK_ALLOCATED) return 0;
+  if (m->Beg() != p) return 0;
+  return m->UsedSize();
+}
 
 AsanChunkView FindHeapChunkByAddress(uptr address) {
-  uptr alloc_beg = (uptr)allocator.GetBlockBegin((void*)address);
-  // FIXME: this does not take into account memalign.
-  return AsanChunkView((AsanChunk *)(alloc_beg + ComputeRZSize(0)
-                                     - kChunkHeaderSize));
+  return AsanChunkView(GetAsanChunkByAddr(address));
 }
 
 void AsanThreadLocalMallocStorage::CommitBack() {
@@ -428,8 +441,12 @@ int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
 }
 
 uptr asan_malloc_usable_size(void *ptr, StackTrace *stack) {
-  UNIMPLEMENTED();
-  return 0;
+  CHECK(stack);
+  if (ptr == 0) return 0;
+  uptr usable_size = AllocationSize(reinterpret_cast<uptr>(ptr));
+  if (flags()->check_malloc_usable_size && (usable_size == 0))
+    ReportMallocUsableSizeNotOwned((uptr)ptr, stack);
+  return usable_size;
 }
 
 uptr asan_mz_size(const void *ptr) {
