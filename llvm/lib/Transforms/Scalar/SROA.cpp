@@ -2388,29 +2388,40 @@ private:
       Pass.DeadInsts.insert(I);
   }
 
-  Value *rewriteVectorizedLoadInst(IRBuilder<> &IRB, LoadInst &LI, Value *OldOp) {
-    Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                     getName(".load"));
-    unsigned BeginIndex = getIndex(BeginOffset);
-    unsigned EndIndex = getIndex(EndOffset);
-    assert(EndIndex > BeginIndex && "Empty vector!");
+  Value *extractVector(IRBuilder<> &IRB,
+                      unsigned BeginIndex, unsigned EndIndex) {
     unsigned NumElements = EndIndex - BeginIndex;
     assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
+
+    Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                     getName(".load"));
+
+    if (NumElements == VecTy->getNumElements())
+      return V;
+
     if (NumElements == 1) {
       V = IRB.CreateExtractElement(V, IRB.getInt32(BeginIndex),
                                    getName(".extract"));
       DEBUG(dbgs() << "     extract: " << *V << "\n");
-    } else if (NumElements < VecTy->getNumElements()) {
-      SmallVector<Constant*, 8> Mask;
-      Mask.reserve(NumElements);
-      for (unsigned i = BeginIndex; i != EndIndex; ++i)
-        Mask.push_back(IRB.getInt32(i));
-      V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
-                                  ConstantVector::get(Mask),
-                                  getName(".extract"));
-      DEBUG(dbgs() << "     shuffle: " << *V << "\n");
+      return V;
     }
+
+    SmallVector<Constant*, 8> Mask;
+    Mask.reserve(NumElements);
+    for (unsigned i = BeginIndex; i != EndIndex; ++i)
+      Mask.push_back(IRB.getInt32(i));
+    V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
+                                ConstantVector::get(Mask),
+                                getName(".extract"));
+    DEBUG(dbgs() << "     shuffle: " << *V << "\n");
     return V;
+  }
+
+  Value *rewriteVectorizedLoadInst(IRBuilder<> &IRB) {
+    unsigned BeginIndex = getIndex(BeginOffset);
+    unsigned EndIndex = getIndex(EndOffset);
+    assert(EndIndex > BeginIndex && "Empty vector!");
+    return extractVector(IRB, BeginIndex, EndIndex);
   }
 
   Value *rewriteIntegerLoad(IRBuilder<> &IRB, LoadInst &LI) {
@@ -2457,7 +2468,7 @@ private:
     bool IsPtrAdjusted = false;
     Value *V;
     if (VecTy) {
-      V = rewriteVectorizedLoadInst(IRB, LI, OldOp);
+      V = rewriteVectorizedLoadInst(IRB);
     } else if (IntTy && LI.getType()->isIntegerTy()) {
       V = rewriteIntegerLoad(IRB, LI);
     } else if (BeginOffset == NewAllocaBeginOffset &&
