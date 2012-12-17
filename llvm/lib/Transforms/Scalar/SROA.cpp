@@ -2506,6 +2506,52 @@ private:
     return !LI.isVolatile() && !IsPtrAdjusted;
   }
 
+  Value *insertVector(IRBuilder<> &IRB, Value *V,
+                      unsigned BeginIndex, unsigned EndIndex) {
+    assert(VecTy && "Can only insert a vector into a vector alloca");
+    unsigned NumElements = EndIndex - BeginIndex;
+    assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
+
+    if (NumElements == VecTy->getNumElements())
+      return convertValue(TD, IRB, V, VecTy);
+
+    LoadInst *LI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                         getName(".load"));
+    if (NumElements == 1) {
+      V = IRB.CreateInsertElement(LI, V, IRB.getInt32(BeginIndex),
+                                  getName(".insert"));
+      DEBUG(dbgs() <<  "     insert: " << *V << "\n");
+      return V;
+    }
+
+    // When inserting a smaller vector into the larger to store, we first
+    // use a shuffle vector to widen it with undef elements, and then
+    // a second shuffle vector to select between the loaded vector and the
+    // incoming vector.
+    SmallVector<Constant*, 8> Mask;
+    Mask.reserve(VecTy->getNumElements());
+    for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
+      if (i >= BeginIndex && i < EndIndex)
+        Mask.push_back(IRB.getInt32(i - BeginIndex));
+      else
+        Mask.push_back(UndefValue::get(IRB.getInt32Ty()));
+    V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
+                                ConstantVector::get(Mask),
+                                getName(".expand"));
+    DEBUG(dbgs() << "    shuffle1: " << *V << "\n");
+
+    Mask.clear();
+    for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
+      if (i >= BeginIndex && i < EndIndex)
+        Mask.push_back(IRB.getInt32(i));
+      else
+        Mask.push_back(IRB.getInt32(i + VecTy->getNumElements()));
+    V = IRB.CreateShuffleVector(V, LI, ConstantVector::get(Mask),
+                                getName("insert"));
+    DEBUG(dbgs() << "    shuffle2: " << *V << "\n");
+    return V;
+  }
+
   bool rewriteVectorizedStoreInst(IRBuilder<> &IRB, Value *V,
                                   StoreInst &SI, Value *OldOp) {
     unsigned BeginIndex = getIndex(BeginOffset);
@@ -2518,44 +2564,10 @@ private:
                            : VectorType::get(ElementTy, NumElements);
     if (V->getType() != PartitionTy)
       V = convertValue(TD, IRB, V, PartitionTy);
-    if (NumElements < VecTy->getNumElements()) {
-      // We need to mix in the existing elements.
-      LoadInst *LI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                           getName(".load"));
-      if (NumElements == 1) {
-        V = IRB.CreateInsertElement(LI, V, IRB.getInt32(BeginIndex),
-                                    getName(".insert"));
-        DEBUG(dbgs() <<  "     insert: " << *V << "\n");
-      } else {
-        // When inserting a smaller vector into the larger to store, we first
-        // use a shuffle vector to widen it with undef elements, and then
-        // a second shuffle vector to select between the loaded vector and the
-        // incoming vector.
-        SmallVector<Constant*, 8> Mask;
-        Mask.reserve(VecTy->getNumElements());
-        for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
-          if (i >= BeginIndex && i < EndIndex)
-            Mask.push_back(IRB.getInt32(i - BeginIndex));
-          else
-            Mask.push_back(UndefValue::get(IRB.getInt32Ty()));
-        V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
-                                    ConstantVector::get(Mask),
-                                    getName(".expand"));
-        DEBUG(dbgs() << "    shuffle1: " << *V << "\n");
 
-        Mask.clear();
-        for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
-          if (i >= BeginIndex && i < EndIndex)
-            Mask.push_back(IRB.getInt32(i));
-          else
-            Mask.push_back(IRB.getInt32(i + VecTy->getNumElements()));
-        V = IRB.CreateShuffleVector(V, LI, ConstantVector::get(Mask),
-                                    getName("insert"));
-        DEBUG(dbgs() << "    shuffle2: " << *V << "\n");
-      }
-    } else {
-      V = convertValue(TD, IRB, V, VecTy);
-    }
+    // Mix in the existing elements.
+    V = insertVector(IRB, V, BeginIndex, EndIndex);
+
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
     Pass.DeadInsts.insert(&SI);
 
