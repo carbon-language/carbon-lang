@@ -292,7 +292,7 @@ private:
 
   // Directive Parsing.
 
- // ".ascii", ".asciiz", ".string"
+  // ".ascii", ".asciiz", ".string"
   bool ParseDirectiveAscii(StringRef IDVal, bool ZeroTerminated);
   bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
   bool ParseDirectiveRealValue(const fltSemantics &); // ".single", ...
