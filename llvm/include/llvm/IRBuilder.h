@@ -1332,7 +1332,7 @@ public:
 
   LandingPadInst *CreateLandingPad(Type *Ty, Value *PersFn, unsigned NumClauses,
                                    const Twine &Name = "") {
-    return Insert(LandingPadInst::Create(Ty, PersFn, NumClauses, Name));
+    return Insert(LandingPadInst::Create(Ty, PersFn, NumClauses), Name);
   }
 
   //===--------------------------------------------------------------------===//
