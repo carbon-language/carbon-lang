@@ -73,8 +73,23 @@ class _FLU10<dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<4, outs, ins, asmstr, pattern> {
 }
 
-class _F2R<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _F2R<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<2, outs, ins, asmstr, pattern> {
+  let Inst{15-11} = opc{5-1};
+  let Inst{4} = opc{0};
+  let DecoderMethod = "Decode2RInstruction";
+}
+
+// 2R with first operand as both a source and a destination.
+class _F2RSrcDst<bits<6> opc, dag outs, dag ins, string asmstr,
+                 list<dag> pattern> : _F2R<opc, outs, ins, asmstr, pattern> {
+  let DecoderMethod = "Decode2RSrcDstInstruction";
+}
+
+// Same as 2R with last two operands swapped
+class _FR2R<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : _F2R<opc, outs, ins, asmstr, pattern> {
+  let DecoderMethod = "DecodeR2RInstruction";
 }
 
 class _FRUS<dag outs, dag ins, string asmstr, list<dag> pattern>

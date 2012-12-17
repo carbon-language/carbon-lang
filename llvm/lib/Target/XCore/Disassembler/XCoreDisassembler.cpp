@@ -67,8 +67,22 @@ static unsigned getReg(const void *D, unsigned RC, unsigned RegNo) {
   return *(Dis->getRegInfo()->getRegClass(RC).begin() + RegNo);
 }
 
-
 static DecodeStatus DecodeGRRegsRegisterClass(MCInst &Inst,
+                                              unsigned RegNo,
+                                              uint64_t Address,
+                                              const void *Decoder);
+
+static DecodeStatus Decode2RInstruction(MCInst &Inst,
+                                        unsigned RegNo,
+                                        uint64_t Address,
+                                        const void *Decoder);
+
+static DecodeStatus DecodeR2RInstruction(MCInst &Inst,
+                                         unsigned RegNo,
+                                         uint64_t Address,
+                                         const void *Decoder);
+
+static DecodeStatus Decode2RSrcDstInstruction(MCInst &Inst,
                                               unsigned RegNo,
                                               uint64_t Address,
                                               const void *Decoder);
@@ -85,6 +99,57 @@ static DecodeStatus DecodeGRRegsRegisterClass(MCInst &Inst,
   unsigned Reg = getReg(Decoder, XCore::GRRegsRegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Reg));
   return MCDisassembler::Success;
+}
+
+static DecodeStatus
+Decode2OpInstruction(unsigned Insn, unsigned &Op1, unsigned &Op2) {
+  unsigned Combined = fieldFromInstruction(Insn, 6, 5) +
+                      fieldFromInstruction(Insn, 5, 1) * 5 - 27;
+  if (Combined >= 9)
+    return MCDisassembler::Fail;
+
+  unsigned Op1High = Combined % 3;
+  unsigned Op2High = Combined / 3;
+  Op1 = (Op1High << 2) | fieldFromInstruction(Insn, 2, 2);
+  Op2 = (Op2High << 2) | fieldFromInstruction(Insn, 0, 2);
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus
+Decode2RInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
+                    const void *Decoder) {
+  unsigned Op1, Op2;
+  DecodeStatus S = Decode2OpInstruction(Insn, Op1, Op2);
+  if (S == MCDisassembler::Success) {
+    DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+    DecodeGRRegsRegisterClass(Inst, Op2, Address, Decoder);
+  }
+  return S;
+}
+
+static DecodeStatus
+DecodeR2RInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
+                     const void *Decoder) {
+  unsigned Op1, Op2;
+  DecodeStatus S = Decode2OpInstruction(Insn, Op2, Op1);
+  if (S == MCDisassembler::Success) {
+    DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+    DecodeGRRegsRegisterClass(Inst, Op2, Address, Decoder);
+  }
+  return S;
+}
+
+static DecodeStatus
+Decode2RSrcDstInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
+                          const void *Decoder) {
+  unsigned Op1, Op2;
+  DecodeStatus S = Decode2OpInstruction(Insn, Op1, Op2);
+  if (S == MCDisassembler::Success) {
+    DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+    DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+    DecodeGRRegsRegisterClass(Inst, Op2, Address, Decoder);
+  }
+  return S;
 }
 
 MCDisassembler::DecodeStatus

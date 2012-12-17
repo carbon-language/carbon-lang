@@ -344,10 +344,9 @@ multiclass FU10_LU10_np<string OpcStr> {
 
 // Two operand short
 
-class F2R_np<string OpcStr> : _F2R<
-                 (outs GRRegs:$dst), (ins GRRegs:$b),
-                 !strconcat(OpcStr, " $dst, $b"),
-                 []>;
+class F2R_np<bits<6> opc, string OpcStr> :
+  _F2R<opc, (outs GRRegs:$dst), (ins GRRegs:$b),
+       !strconcat(OpcStr, " $dst, $b"), []>;
 
 // Two operand long
 
@@ -753,13 +752,11 @@ def BL_lu10 : _FLU10<
 
 // Two operand short
 // TODO eet, eef, tsetmr
-def NOT : _F2R<(outs GRRegs:$dst), (ins GRRegs:$b),
-                 "not $dst, $b",
-                 [(set GRRegs:$dst, (not GRRegs:$b))]>;
+def NOT : _F2R<0b100010, (outs GRRegs:$dst), (ins GRRegs:$b),
+                "not $dst, $b", [(set GRRegs:$dst, (not GRRegs:$b))]>;
 
-def NEG : _F2R<(outs GRRegs:$dst), (ins GRRegs:$b),
-                 "neg $dst, $b",
-                 [(set GRRegs:$dst, (ineg GRRegs:$b))]>;
+def NEG : _F2R<0b100100, (outs GRRegs:$dst), (ins GRRegs:$b),
+                "neg $dst, $b", [(set GRRegs:$dst, (ineg GRRegs:$b))]>;
 
 let Constraints = "$src1 = $dst" in {
 def SEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
@@ -777,14 +774,15 @@ def ZEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
                       [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1,
                                                          immBitp:$src2))]>;
 
-def ZEXT_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
+def ZEXT_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src2, GRRegs:$src1),
                      "zext $dst, $src2",
                      [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1,
                                                         GRRegs:$src2))]>;
 
-def ANDNOT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
-                 "andnot $dst, $src2",
-                 [(set GRRegs:$dst, (and GRRegs:$src1, (not GRRegs:$src2)))]>;
+def ANDNOT_2r :
+  _F2RSrcDst<0b001010, (outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
+             "andnot $dst, $src2",
+             [(set GRRegs:$dst, (and GRRegs:$src1, (not GRRegs:$src2)))]>;
 }
 
 let isReMaterializable = 1, neverHasSideEffects = 1 in
@@ -792,99 +790,103 @@ def MKMSK_rus : _FRUS<(outs GRRegs:$dst), (ins i32imm:$size),
                  "mkmsk $dst, $size",
                  []>;
 
-def MKMSK_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$size),
-                 "mkmsk $dst, $size",
-                 [(set GRRegs:$dst, (add (shl 1, GRRegs:$size), -1))]>;
+def MKMSK_2r : _F2R<0b101000, (outs GRRegs:$dst), (ins GRRegs:$size),
+                    "mkmsk $dst, $size",
+                    [(set GRRegs:$dst, (add (shl 1, GRRegs:$size), -1))]>;
 
 def GETR_rus : _FRUS<(outs GRRegs:$dst), (ins i32imm:$type),
                  "getr $dst, $type",
                  [(set GRRegs:$dst, (int_xcore_getr immUs:$type))]>;
 
-def GETTS_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
-                 "getts $dst, res[$r]",
-                 [(set GRRegs:$dst, (int_xcore_getts GRRegs:$r))]>;
+def GETTS_2r : _F2R<0b001110, (outs GRRegs:$dst), (ins GRRegs:$r),
+                    "getts $dst, res[$r]",
+                    [(set GRRegs:$dst, (int_xcore_getts GRRegs:$r))]>;
 
-def SETPT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
-                 "setpt res[$r], $val",
-                 [(int_xcore_setpt GRRegs:$r, GRRegs:$val)]>;
+def SETPT_2r : _FR2R<0b001111, (outs), (ins GRRegs:$r, GRRegs:$val),
+                     "setpt res[$r], $val",
+                     [(int_xcore_setpt GRRegs:$r, GRRegs:$val)]>;
 
-def OUTCT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
-                 "outct res[$r], $val",
-                 [(int_xcore_outct GRRegs:$r, GRRegs:$val)]>;
+def OUTCT_2r : _F2R<0b010010, (outs), (ins GRRegs:$r, GRRegs:$val),
+                    "outct res[$r], $val",
+                    [(int_xcore_outct GRRegs:$r, GRRegs:$val)]>;
 
-def OUTCT_rus : _F2R<(outs), (ins GRRegs:$r, i32imm:$val),
-                 "outct res[$r], $val",
-                 [(int_xcore_outct GRRegs:$r, immUs:$val)]>;
+def OUTCT_rus : _F2RUS<(outs), (ins GRRegs:$r, i32imm:$val),
+                       "outct res[$r], $val",
+                       [(int_xcore_outct GRRegs:$r, immUs:$val)]>;
 
-def OUTT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
-                 "outt res[$r], $val",
-                 [(int_xcore_outt GRRegs:$r, GRRegs:$val)]>;
+def OUTT_2r : _FR2R<0b000011, (outs), (ins GRRegs:$r, GRRegs:$val),
+                    "outt res[$r], $val",
+                    [(int_xcore_outt GRRegs:$r, GRRegs:$val)]>;
 
-def OUT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
-                 "out res[$r], $val",
-                 [(int_xcore_out GRRegs:$r, GRRegs:$val)]>;
+def OUT_2r : _FR2R<0b101010, (outs), (ins GRRegs:$r, GRRegs:$val),
+                   "out res[$r], $val",
+                   [(int_xcore_out GRRegs:$r, GRRegs:$val)]>;
 
 let Constraints = "$src = $dst" in
-def OUTSHR_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r, GRRegs:$src),
-                 "outshr res[$r], $src",
-                 [(set GRRegs:$dst, (int_xcore_outshr GRRegs:$r,
-                                                      GRRegs:$src))]>;
+def OUTSHR_2r :
+  _F2RSrcDst<0b101011, (outs GRRegs:$dst), (ins GRRegs:$src, GRRegs:$r),
+             "outshr res[$r], $src",
+             [(set GRRegs:$dst, (int_xcore_outshr GRRegs:$r, GRRegs:$src))]>;
 
-def INCT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
-                 "inct $dst, res[$r]",
-                 [(set GRRegs:$dst, (int_xcore_inct GRRegs:$r))]>;
+def INCT_2r : _F2R<0b100001, (outs GRRegs:$dst), (ins GRRegs:$r),
+                   "inct $dst, res[$r]",
+                   [(set GRRegs:$dst, (int_xcore_inct GRRegs:$r))]>;
 
-def INT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
-                 "int $dst, res[$r]",
-                 [(set GRRegs:$dst, (int_xcore_int GRRegs:$r))]>;
+def INT_2r : _F2R<0b100011, (outs GRRegs:$dst), (ins GRRegs:$r),
+                  "int $dst, res[$r]",
+                  [(set GRRegs:$dst, (int_xcore_int GRRegs:$r))]>;
 
-def IN_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
+def IN_2r : _F2R<0b101100, (outs GRRegs:$dst), (ins GRRegs:$r),
                  "in $dst, res[$r]",
                  [(set GRRegs:$dst, (int_xcore_in GRRegs:$r))]>;
 
 let Constraints = "$src = $dst" in
-def INSHR_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r, GRRegs:$src),
-                 "inshr $dst, res[$r]",
-                 [(set GRRegs:$dst, (int_xcore_inshr GRRegs:$r,
-                                                     GRRegs:$src))]>;
+def INSHR_2r :
+  _F2RSrcDst<0b101101, (outs GRRegs:$dst), (ins GRRegs:$src, GRRegs:$r),
+             "inshr $dst, res[$r]",
+             [(set GRRegs:$dst, (int_xcore_inshr GRRegs:$r, GRRegs:$src))]>;
 
-def CHKCT_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
-                 "chkct res[$r], $val",
-                 [(int_xcore_chkct GRRegs:$r, GRRegs:$val)]>;
+def CHKCT_2r : _F2R<0b110010, (outs), (ins GRRegs:$r, GRRegs:$val),
+                    "chkct res[$r], $val",
+                    [(int_xcore_chkct GRRegs:$r, GRRegs:$val)]>;
 
-def CHKCT_rus : _F2R<(outs), (ins GRRegs:$r, i32imm:$val),
+def CHKCT_rus : _F2RUS<(outs), (ins GRRegs:$r, i32imm:$val),
                  "chkct res[$r], $val",
                  [(int_xcore_chkct GRRegs:$r, immUs:$val)]>;
 
-def TESTCT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$src),
+def TESTCT_2r : _F2R<0b101111, (outs GRRegs:$dst), (ins GRRegs:$src),
                      "testct $dst, res[$src]",
                      [(set GRRegs:$dst, (int_xcore_testct GRRegs:$src))]>;
 
-def TESTWCT_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$src),
+def TESTWCT_2r : _F2R<0b110001, (outs GRRegs:$dst), (ins GRRegs:$src),
                       "testwct $dst, res[$src]",
                       [(set GRRegs:$dst, (int_xcore_testwct GRRegs:$src))]>;
 
-def SETD_2r : _F2R<(outs), (ins GRRegs:$r, GRRegs:$val),
-                 "setd res[$r], $val",
-                 [(int_xcore_setd GRRegs:$r, GRRegs:$val)]>;
+def SETD_2r : _FR2R<0b000101, (outs), (ins GRRegs:$r, GRRegs:$val),
+                    "setd res[$r], $val",
+                    [(int_xcore_setd GRRegs:$r, GRRegs:$val)]>;
 
-def GETST_2r : _F2R<(outs GRRegs:$dst), (ins GRRegs:$r),
+def SETPSC_l2r : _FR2R<0b110000, (outs), (ins GRRegs:$src1, GRRegs:$src2),
+                       "setpsc res[$src1], $src2",
+                       [(int_xcore_setpsc GRRegs:$src1, GRRegs:$src2)]>;
+
+def GETST_2r : _F2R<0b000001, (outs GRRegs:$dst), (ins GRRegs:$r),
                     "getst $dst, res[$r]",
                     [(set GRRegs:$dst, (int_xcore_getst GRRegs:$r))]>;
 
-def INITSP_2r : _F2R<(outs), (ins GRRegs:$t, GRRegs:$src),
+def INITSP_2r : _F2R<0b000100, (outs), (ins GRRegs:$src, GRRegs:$t),
                      "init t[$t]:sp, $src",
                      [(int_xcore_initsp GRRegs:$t, GRRegs:$src)]>;
 
-def INITPC_2r : _F2R<(outs), (ins GRRegs:$t, GRRegs:$src),
+def INITPC_2r : _F2R<0b000000, (outs), (ins GRRegs:$src, GRRegs:$t),
                      "init t[$t]:pc, $src",
                      [(int_xcore_initpc GRRegs:$t, GRRegs:$src)]>;
 
-def INITCP_2r : _F2R<(outs), (ins GRRegs:$t, GRRegs:$src),
+def INITCP_2r : _F2R<0b000110, (outs), (ins GRRegs:$src, GRRegs:$t),
                      "init t[$t]:cp, $src",
                      [(int_xcore_initcp GRRegs:$t, GRRegs:$src)]>;
 
-def INITDP_2r : _F2R<(outs), (ins GRRegs:$t, GRRegs:$src),
+def INITDP_2r : _F2R<0b000010, (outs), (ins GRRegs:$src, GRRegs:$t),
                      "init t[$t]:dp, $src",
                      [(int_xcore_initdp GRRegs:$t, GRRegs:$src)]>;
 
@@ -929,10 +931,6 @@ def SETCLK_l2r : _FL2R<(outs), (ins GRRegs:$src1, GRRegs:$src2),
 def SETRDY_l2r : _FL2R<(outs), (ins GRRegs:$src1, GRRegs:$src2),
                        "setrdy res[$src1], $src2",
                        [(int_xcore_setrdy GRRegs:$src1, GRRegs:$src2)]>;
-
-def SETPSC_l2r : _FL2R<(outs), (ins GRRegs:$src1, GRRegs:$src2),
-                       "setpsc res[$src1], $src2",
-                       [(int_xcore_setpsc GRRegs:$src1, GRRegs:$src2)]>;
 
 def PEEK_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
                       "peek $dst, res[$src]",

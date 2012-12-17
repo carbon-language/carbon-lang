@@ -58,3 +58,77 @@
 
 # CHECK: eeu res[r11]
 0xfb 0x07
+
+# 2r instructions
+
+# CHECK: not r1, r8
+0x24 0x8f
+
+# CHECK: neg r7, r6
+0xce 0x97
+
+# CHECK: andnot r10, r11
+0xab 0x2f
+
+# CHECK: mkmsk r11, r0
+0x4c 0xa7
+
+# CHECK: getts r8, res[r1]
+0x41 0x3f
+
+# CHECK: setpt res[r2], r3
+0xde 0x3e
+
+# CHECK: outct res[r1], r2
+0xc6 0x4e
+
+# CHECK: outt res[r5], r4
+0xd1 0x0f
+
+# CHECK: out res[r9], r10
+0xa9 0xaf
+
+# CHECK: outshr res[r0], r2
+0xd8 0xae
+
+# CHECK: inct r7, res[r4]
+0xdc 0x87
+
+# CHECK: int r8, res[r3]
+0x53 0x8f
+
+# CHECK: in r10, res[r0]
+0x48 0xb7
+
+# CHECK: inshr r4, res[r2]
+0x12 0xb7
+
+# CHECK: chkct res[r6], r0
+0x08 0xcf
+
+# CHECK: testct r8, res[r3]
+0x53 0xbf
+
+# CHECK: testwct r2, res[r9]
+0x39 0xc7
+
+# CHECK: setd res[r3], r4
+0x13 0x17
+
+# CHECK: getst r7, res[r1]
+0x1d 0x07
+
+# CHECK: init t[r1]:sp, r2
+0xc9 0x16
+
+# CHECK: init t[r10]:pc, r1
+0x26 0x07
+
+# CHECK: init t[r2]:cp, r10
+0x4a 0x1f
+
+# CHECK: init t[r2]:dp, r3
+0xce 0x0e
+
+# CHECK: setpsc res[r8], r2
+0x28 0xc7
