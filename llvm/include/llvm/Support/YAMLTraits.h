@@ -227,10 +227,9 @@ public:
 };
 
 
-// Test if SequenceTraits<T> is defined on type T
-// and SequenceTraits<T>::flow is *not* defined.
+// Test if SequenceTraits<T> is defined on type T.
 template <class T>
-struct has_SequenceTraits
+struct has_SequenceMethodTraits
 {
   typedef size_t (*Signature_size)(class IO&, T&);
 
@@ -240,41 +239,57 @@ struct has_SequenceTraits
   template <typename U>
   static double test(...);
 
-  template <typename U> static
-  char flowtest( char[sizeof(&U::flow)] ) ;
+public:
+  static bool const value =  (sizeof(test<SequenceTraits<T> >(0)) == 1);
+};
 
-  template <typename U>
-  static double flowtest(...);
+
+// has_FlowTraits<int> will cause an error with some compilers because
+// it subclasses int.  Using this wrapper only instantiates the
+// real has_FlowTraits only if the template type is a class.
+template <typename T, bool Enabled = llvm::is_class<T>::value>
+class has_FlowTraits
+{
+public:
+   static const bool value = false;
+};
+
+// Some older gcc compilers don't support straight forward tests
+// for members, so test for ambiguity cause by the base and derived
+// classes both defining the member.
+template <class T>
+struct has_FlowTraits<T, true>
+{
+  struct Fallback { bool flow; };
+  struct Derived : T, Fallback { };
+
+  template<typename C>
+  static char (&f(SameType<bool Fallback::*, &C::flow>*))[1];
+
+  template<typename C>
+  static char (&f(...))[2];
 
 public:
-  static bool const value =  (sizeof(test<SequenceTraits<T> >(0)) == 1)
-                          && (sizeof(flowtest<T>(0)) != 1);
+  static bool const value = sizeof(f<Derived>(0)) == 2;
 };
+
+
+
+// Test if SequenceTraits<T> is defined on type T
+// and SequenceTraits<T>::flow is *not* defined.
+template<typename T>
+struct has_SequenceTraits : public  llvm::integral_constant<bool,
+                                         has_SequenceMethodTraits<T>::value
+                                      && !has_FlowTraits<T>::value > { };
 
 
 // Test if SequenceTraits<T> is defined on type T
 // and SequenceTraits<T>::flow is defined.
-template <class T>
-struct has_FlowSequenceTraits
-{
-  typedef size_t (*Signature_size)(class IO&, T&);
+template<typename T>
+struct has_FlowSequenceTraits : public llvm::integral_constant<bool,
+                                         has_SequenceMethodTraits<T>::value
+                                      && has_FlowTraits<T>::value > { };
 
-  template <typename U>
-  static char test(SameType<Signature_size, &U::size>*);
-
-  template <typename U>
-  static double test(...);
-
-  template <typename U> static
-  char flowtest( char[sizeof(&U::flow)] ) ;
-
-  template <typename U>
-  static double flowtest(...);
-
-public:
-  static bool const value =  (sizeof(test<SequenceTraits<T> >(0)) == 1)
-                          && (sizeof(flowtest<T>(0)) == 1);
-};
 
 
 // Test if DocumentListTraits<T> is defined on type T
