@@ -245,6 +245,19 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
   EXPECT_EQ("int i  // This is a fancy variable\n    = 5;",
             format("int i  // This is a fancy variable\n= 5;"));
 
+  EXPECT_EQ("enum E {\n"
+            "  // comment\n"
+            "  VAL_A,  // comment\n"
+            "  VAL_B\n"
+            "};",
+            format("enum E{\n// comment\nVAL_A,// comment\nVAL_B};"));
+
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
+      "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;  // Trailing comment");
+}
+
+TEST_F(FormatTest, UnderstandsMultiLineComments) {
   verifyFormat("f(/*test=*/ true);");
 }
 
@@ -317,6 +330,15 @@ TEST_F(FormatTest, FormatsNamespaces) {
                "void f() {\n"
                "  f();\n"
                "}");
+}
+
+TEST_F(FormatTest, StaticInitializers) {
+  verifyFormat("static SomeClass SC = { 1, 'a' };");
+
+  // FIXME: Format like enums if the static initializer does not fit on a line.
+  verifyFormat(
+      "static SomeClass WithALoooooooooooooooooooongName = { 100000000,\n"
+      "    \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" };");
 }
 
 //===----------------------------------------------------------------------===//

@@ -734,15 +734,16 @@ private:
   }
 
   bool canBreakBetween(const FormatToken &Left, const FormatToken &Right) {
-    if (Right.Tok.is(tok::r_paren))
+    if (Right.Tok.is(tok::r_paren) || Right.Tok.is(tok::l_brace) ||
+        Right.Tok.is(tok::comment) || Right.Tok.is(tok::greater))
       return false;
     if (isBinaryOperator(Left))
       return true;
     if (Right.Tok.is(tok::lessless))
       return true;
-    return Right.Tok.is(tok::colon) || Left.Tok.is(tok::comma) ||
-        Left.Tok.is(tok::semi) || Left.Tok.is(tok::equal) ||
-        Left.Tok.is(tok::ampamp) || Left.Tok.is(tok::pipepipe) ||
+    return Right.Tok.is(tok::colon) || Left.Tok.is(tok::comma) || Left.Tok.is(
+        tok::semi) || Left.Tok.is(tok::equal) || Left.Tok.is(tok::ampamp) ||
+        Left.Tok.is(tok::pipepipe) || Left.Tok.is(tok::l_brace) ||
         (Left.Tok.is(tok::l_paren) && !Right.Tok.is(tok::r_paren));
   }
 

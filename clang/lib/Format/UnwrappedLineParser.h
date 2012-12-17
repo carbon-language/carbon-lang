@@ -96,7 +96,7 @@ private:
   bool parseLevel();
   bool parseBlock(unsigned AddLevels = 1);
   void parsePPDirective();
-  void parseComment();
+  void parseComments();
   void parseStatement();
   void parseParens();
   void parseIfThenElse();
