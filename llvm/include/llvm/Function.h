@@ -89,7 +89,7 @@ private:
 
   // HasLazyArguments is stored in Value::SubclassData.
   /*bool HasLazyArguments;*/
-                   
+
   // The Calling Convention is stored in Value::SubclassData.
   /*CallingConv::ID CallingConvention;*/
 
@@ -131,7 +131,7 @@ public:
   Type *getReturnType() const;           // Return the type of the ret val
   FunctionType *getFunctionType() const; // Return the FunctionType for me
 
-  /// getContext - Return a pointer to the LLVMContext associated with this 
+  /// getContext - Return a pointer to the LLVMContext associated with this
   /// function, or NULL if this function is not bound to a context yet.
   LLVMContext &getContext() const;
 
@@ -159,7 +159,7 @@ public:
     setValueSubclassData((getSubclassDataFromValue() & 1) |
                          (static_cast<unsigned>(CC) << 1));
   }
-  
+
   /// getAttributes - Return the attribute list for this Function.
   ///
   const AttributeSet &getAttributes() const { return AttributeList; }
@@ -176,15 +176,15 @@ public:
 
   /// addFnAttr - Add function attributes to this function.
   ///
-  void addFnAttr(Attributes::AttrVal N) { 
-    // Function Attributes are stored at ~0 index 
+  void addFnAttr(Attributes::AttrVal N) {
+    // Function Attributes are stored at ~0 index
     addAttribute(AttributeSet::FunctionIndex, Attributes::get(getContext(), N));
   }
 
   /// removeFnAttr - Remove function attributes from this function.
   ///
   void removeFnAttr(Attributes N) {
-    // Function Attributes are stored at ~0 index 
+    // Function Attributes are stored at ~0 index
     removeAttribute(~0U, N);
   }
 
@@ -208,7 +208,7 @@ public:
 
   /// addAttribute - adds the attribute to the list of attributes.
   void addAttribute(unsigned i, Attributes attr);
-  
+
   /// removeAttribute - removes the attribute from the list of attributes.
   void removeAttribute(unsigned i, Attributes attr);
 
@@ -264,7 +264,7 @@ public:
     return hasUWTable() || !doesNotThrow();
   }
 
-  /// @brief Determine if the function returns a structure through first 
+  /// @brief Determine if the function returns a structure through first
   /// pointer argument.
   bool hasStructRetAttr() const {
     return getParamAttributes(1).hasAttribute(Attributes::StructRet);

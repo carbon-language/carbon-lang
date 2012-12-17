@@ -54,7 +54,7 @@ namespace llvm {
       return isa<CallInst>(V) && classof(cast<CallInst>(V));
     }
   };
-  
+
   /// DbgInfoIntrinsic - This is the common base class for debug info intrinsics
   ///
   class DbgInfoIntrinsic : public IntrinsicInst {
