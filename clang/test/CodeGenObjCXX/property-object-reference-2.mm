@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 %s -triple x86_64-apple-darwin10 -fobjc-runtime=macosx-10.7 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple x86_64-unknown-freebsd -fobjc-runtime=gnustep-1.7 -emit-llvm -o - | FileCheck -check-prefix=CHECK-GNUSTEP %s
 // rdar://6137845
 
 extern int DEFAULT();
@@ -54,3 +55,6 @@ struct TCPPObject
 // CHECK: [[THREE:%.*]] = bitcast %struct.TCPPObject* [[MYPROPERTY:%.*]] to i8*
 // CHECK: call void @objc_copyCppObjectAtomic(i8* [[TWO]], i8* [[THREE]], i8* bitcast (void (%struct.TCPPObject*, %struct.TCPPObject*)* @__assign_helper_atomic_property_ to i8*))
 // CHECK: ret void
+
+// CHECK-GNUSTEP: objc_getCppObjectAtomic
+// CHECK-GNUSTEP: objc_setCppObjectAtomic
