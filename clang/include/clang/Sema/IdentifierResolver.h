@@ -158,8 +158,7 @@ public:
   /// \param ExplicitInstantiationOrSpecialization When true, we are checking
   /// whether the declaration is in scope for the purposes of explicit template
   /// instantiation or specialization. The default is false.
-  bool isDeclInScope(Decl *D, DeclContext *Ctx, ASTContext &Context,
-                     Scope *S = 0,
+  bool isDeclInScope(Decl *D, DeclContext *Ctx, Scope *S = 0,
                      bool ExplicitInstantiationOrSpecialization = false) const;
 
   /// AddDecl - Link the decl to its shadowed decl chain.
