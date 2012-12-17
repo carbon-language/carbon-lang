@@ -66,6 +66,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 using namespace llvm;
@@ -478,6 +479,9 @@ bool PeepholeOptimizer::foldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
 }
 
 bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
+  DEBUG(dbgs() << "********** PEEPHOLE OPTIMIZER **********\n");
+  DEBUG(dbgs() << "********** Function: " << MF.getName() << '\n');
+
   if (DisablePeephole)
     return false;
 
@@ -552,6 +556,8 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
                                                       FoldAsLoadDefReg, DefMI);
         if (FoldMI) {
           // Update LocalMIs since we replaced MI with FoldMI and deleted DefMI.
+          DEBUG(dbgs() << "Replacing: " << *MI);
+          DEBUG(dbgs() << "     With: " << *FoldMI);
           LocalMIs.erase(MI);
           LocalMIs.erase(DefMI);
           LocalMIs.insert(FoldMI);
