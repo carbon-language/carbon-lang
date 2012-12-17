@@ -737,14 +737,15 @@ bool FastISel::SelectBitCast(const User *I) {
   }
 
   // Bitcasts of other values become reg-reg copies or BITCAST operators.
-  MVT SrcVT = TLI.getSimpleValueType(I->getOperand(0)->getType());
-  MVT DstVT = TLI.getSimpleValueType(I->getType());
-
-  if (SrcVT == MVT::Other || DstVT == MVT::Other ||
-      !TLI.isTypeLegal(SrcVT) || !TLI.isTypeLegal(DstVT))
+  EVT SrcEVT = TLI.getValueType(I->getOperand(0)->getType());
+  EVT DstEVT = TLI.getValueType(I->getType());
+  if (SrcEVT == MVT::Other || DstEVT == MVT::Other ||
+      !TLI.isTypeLegal(SrcEVT) || !TLI.isTypeLegal(DstEVT))
     // Unhandled type. Halt "fast" selection and bail.
     return false;
 
+  MVT SrcVT = SrcEVT.getSimpleVT();
+  MVT DstVT = DstEVT.getSimpleVT();
   unsigned Op0 = getRegForValue(I->getOperand(0));
   if (Op0 == 0)
     // Unhandled operand. Halt "fast" selection and bail.

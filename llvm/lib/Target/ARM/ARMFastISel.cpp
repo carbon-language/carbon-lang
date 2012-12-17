@@ -188,7 +188,7 @@ class ARMFastISel : public FastISel {
     bool ARMIsMemCpySmall(uint64_t Len);
     bool ARMTryEmitSmallMemCpy(Address Dest, Address Src, uint64_t Len,
                                unsigned Alignment);
-    unsigned ARMEmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT, bool isZExt);
+    unsigned ARMEmitIntExt(MVT SrcVT, unsigned SrcReg, EVT DestVT, bool isZExt);
     unsigned ARMMaterializeFP(const ConstantFP *CFP, MVT VT);
     unsigned ARMMaterializeInt(const Constant *C, MVT VT);
     unsigned ARMMaterializeGV(const GlobalValue *GV, MVT VT);
@@ -719,7 +719,11 @@ unsigned ARMFastISel::ARMMaterializeGV(const GlobalValue *GV, MVT VT) {
 }
 
 unsigned ARMFastISel::TargetMaterializeConstant(const Constant *C) {
-  MVT VT = TLI.getSimpleValueType(C->getType(), true);
+  EVT CEVT = TLI.getValueType(C->getType(), true);
+
+  // Only handle simple types.
+  if (!CEVT.isSimple()) return 0;
+  MVT VT = CEVT.getSimpleVT();
 
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(C))
     return ARMMaterializeFP(CFP, VT);
@@ -1401,7 +1405,9 @@ bool ARMFastISel::SelectIndirectBr(const Instruction *I) {
 bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
                              bool isZExt) {
   Type *Ty = Src1Value->getType();
-  MVT SrcVT = TLI.getSimpleValueType(Ty, true);
+  EVT SrcEVT = TLI.getValueType(Ty, true);
+  if (!SrcEVT.isSimple()) return false;
+  MVT SrcVT = SrcEVT.getSimpleVT();
 
   bool isFloat = (Ty->isFloatTy() || Ty->isDoubleTy());
   if (isFloat && !Subtarget->hasVFP2())
@@ -1590,7 +1596,10 @@ bool ARMFastISel::SelectIToFP(const Instruction *I, bool isSigned) {
     return false;
 
   Value *Src = I->getOperand(0);
-  MVT SrcVT = TLI.getSimpleValueType(Src->getType(), true);
+  EVT SrcEVT = TLI.getValueType(Src->getType(), true);
+  if (!SrcEVT.isSimple())
+    return false;
+  MVT SrcVT = SrcEVT.getSimpleVT();
   if (SrcVT != MVT::i32 && SrcVT != MVT::i16 && SrcVT != MVT::i8)
     return false;
 
@@ -1806,7 +1815,7 @@ bool ARMFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
 }
 
 bool ARMFastISel::SelectBinaryFPOp(const Instruction *I, unsigned ISDOpcode) {
-  MVT VT  = TLI.getSimpleValueType(I->getType(), true);
+  EVT VT  = TLI.getValueType(I->getType(), true);
 
   // We can get here in the case when we want to use NEON for our fp
   // operations, but can't figure out how to. Just use the vfp instructions
@@ -1837,7 +1846,7 @@ bool ARMFastISel::SelectBinaryFPOp(const Instruction *I, unsigned ISDOpcode) {
   unsigned Op2 = getRegForValue(I->getOperand(1));
   if (Op2 == 0) return false;
 
-  unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT));
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(VT.getSimpleVT()));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(Opc), ResultReg)
                   .addReg(Op1).addReg(Op2));
@@ -2582,7 +2591,7 @@ bool ARMFastISel::SelectTrunc(const Instruction *I) {
   return true;
 }
 
-unsigned ARMFastISel::ARMEmitIntExt(MVT SrcVT, unsigned SrcReg, MVT DestVT,
+unsigned ARMFastISel::ARMEmitIntExt(MVT SrcVT, unsigned SrcReg, EVT DestVT,
                                     bool isZExt) {
   if (DestVT != MVT::i32 && DestVT != MVT::i16 && DestVT != MVT::i8)
     return 0;
@@ -2637,13 +2646,12 @@ bool ARMFastISel::SelectIntExt(const Instruction *I) {
   Value *Src = I->getOperand(0);
   Type *SrcTy = Src->getType();
 
-  MVT SrcVT, DestVT;
-  SrcVT = TLI.getSimpleValueType(SrcTy, true);
-  DestVT = TLI.getSimpleValueType(DestTy, true);
-
   bool isZExt = isa<ZExtInst>(I);
   unsigned SrcReg = getRegForValue(Src);
   if (!SrcReg) return false;
+
+  MVT SrcVT = TLI.getSimpleValueType(SrcTy, true);
+  EVT DestVT = TLI.getValueType(DestTy, true);
 
   unsigned ResultReg = ARMEmitIntExt(SrcVT, SrcReg, DestVT, isZExt);
   if (ResultReg == 0) return false;
