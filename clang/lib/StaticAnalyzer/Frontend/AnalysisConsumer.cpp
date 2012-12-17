@@ -53,9 +53,10 @@ static ExplodedNode::Auditor* CreateUbiViz();
 
 STATISTIC(NumFunctionTopLevel, "The # of functions at top level.");
 STATISTIC(NumFunctionsAnalyzed,
-                     "The # of functions and blocks analyzed (as top level).");
+                      "The # of functions and blocks analyzed (as top level "
+                      "with inlining turned on).");
 STATISTIC(NumBlocksInAnalyzedFunctions,
-                     "The # of basic blocks in the analyzed functions.");
+                      "The # of basic blocks in the analyzed functions.");
 STATISTIC(PercentReachableBlocks, "The % of reachable basic blocks.");
 STATISTIC(MaxCFGSize, "The maximum number of basic blocks in a function.");
 
@@ -617,7 +618,8 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
         checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
       if ((Mode & AM_Path) && checkerMgr->hasPathSensitiveCheckers()) {
         RunPathSensitiveChecks(*WI, IMode, VisitedCallees);
-        NumFunctionsAnalyzed++;
+        if (IMode != ExprEngine::Inline_None)
+          NumFunctionsAnalyzed++;
       }
     }
 }
