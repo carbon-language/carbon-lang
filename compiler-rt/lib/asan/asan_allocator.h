@@ -100,6 +100,9 @@ struct AsanThreadLocalMallocStorage {
 
   AsanChunkFifoList quarantine_;
   AsanChunk *free_lists_[kNumberOfSizeClasses];
+#if ASAN_ALLOCATOR_VERSION == 2
+  uptr allocator2_cache[1024];  // Opaque.
+#endif
   void CommitBack();
 };
 

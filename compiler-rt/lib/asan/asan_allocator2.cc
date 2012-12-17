@@ -54,7 +54,15 @@ typedef LargeMmapAllocator<AsanMapUnmapCallback> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
     SecondaryAllocator> Allocator;
 
-static THREADLOCAL AllocatorCache cache;
+// We can not use THREADLOCAL because it is not supported on some of the
+// platforms we care about (OSX 10.6, Android).
+// static THREADLOCAL AllocatorCache cache;
+AllocatorCache *GetAllocatorCache(AsanThreadLocalMallocStorage *ms) {
+  CHECK(ms);
+  CHECK_LE(sizeof(AllocatorCache), sizeof(ms->allocator2_cache));
+  return reinterpret_cast<AllocatorCache *>(ms->allocator2_cache);
+}
+
 static Allocator allocator;
 
 static const uptr kMaxAllowedMallocSize =
@@ -172,26 +180,25 @@ void AsanChunkView::GetFreeStack(StackTrace *stack) {
 
 class Quarantine: public AsanChunkFifoList {
  public:
-  void SwallowThreadLocalQuarantine(AsanChunkFifoList *q) {
+  void SwallowThreadLocalQuarantine(AsanThreadLocalMallocStorage *ms) {
+    AsanChunkFifoList *q = &ms->quarantine_;
     if (!q->size()) return;
-    // Printf("SwallowThreadLocalQuarantine %zd\n", q->size());
     SpinMutexLock l(&mutex_);
     PushList(q);
-    PopAndDeallocateLoop();
+    PopAndDeallocateLoop(ms);
   }
   void BypassThreadLocalQuarantine(AsanChunk *m) {
     SpinMutexLock l(&mutex_);
     Push(m);
-    PopAndDeallocateLoop();
   }
 
  private:
-  void PopAndDeallocateLoop() {
+  void PopAndDeallocateLoop(AsanThreadLocalMallocStorage *ms) {
     while (size() > (uptr)flags()->quarantine_size) {
-      PopAndDeallocate();
+      PopAndDeallocate(ms);
     }
   }
-  void PopAndDeallocate() {
+  void PopAndDeallocate(AsanThreadLocalMallocStorage *ms) {
     CHECK_GT(size(), 0);
     AsanChunk *m = Pop();
     CHECK(m);
@@ -206,7 +213,7 @@ class Quarantine: public AsanChunkFifoList {
     void *p = reinterpret_cast<void *>(alloc_beg);
     if (m->from_memalign)
       p = allocator.GetBlockBegin(p);
-    allocator.Deallocate(&cache, p);
+    allocator.Deallocate(GetAllocatorCache(ms), p);
   }
   SpinMutex mutex_;
 };
@@ -256,7 +263,10 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
   }
 
   AsanThread *t = asanThreadRegistry().GetCurrent();
-  void *allocated = allocator.Allocate(&cache, needed_size, 8, false);
+  // Printf("t = %p\n", t);
+  CHECK(t);  // FIXME
+  void *allocated = allocator.Allocate(
+      GetAllocatorCache(&t->malloc_storage()), needed_size, 8, false);
   uptr alloc_beg = reinterpret_cast<uptr>(allocated);
   uptr alloc_end = alloc_beg + needed_size;
   uptr beg_plus_redzone = alloc_beg + rz_size;
@@ -324,7 +334,7 @@ static void Deallocate(void *ptr, StackTrace *stack) {
     q.Push(m);
 
     if (q.size() > kMaxThreadLocalQuarantine)
-      quarantine.SwallowThreadLocalQuarantine(&q);
+      quarantine.SwallowThreadLocalQuarantine(&t->malloc_storage());
   } else {
     quarantine.BypassThreadLocalQuarantine(m);
   }
@@ -360,7 +370,7 @@ AsanChunkView FindHeapChunkByAddress(uptr address) {
 }
 
 void AsanThreadLocalMallocStorage::CommitBack() {
-  UNIMPLEMENTED();
+  quarantine.SwallowThreadLocalQuarantine(this);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
@@ -382,7 +392,7 @@ void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
   void *ptr = Allocate(nmemb * size, 8, stack);
   if (ptr)
     REAL(memset)(ptr, 0, nmemb * size);
-  return 0;
+  return ptr;
 }
 
 void *asan_realloc(void *p, uptr size, StackTrace *stack) {
