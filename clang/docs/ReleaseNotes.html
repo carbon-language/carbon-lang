@@ -170,18 +170,14 @@ int f(vector&lt;map&lt;int, double&gt;&gt;);
 
   </li>
 
-  <li>Clang's <tt>-fcatch-undefined-behavior</tt> option has been renamed to
-  <tt>-fsanitize=undefined</tt> and has grown the ability to check for several
-  new types of undefined behavior. See the Users Manual for more information.
-
-
-  <li><tt>-Wdocumentation</tt> enables warnings about documentation comments.
-  See section "Documentation comment support" for an example.</li>
-
-  <!-- Flesh this out prior to release. -->
-
-  <!-- Document renaming of -faddress-sanitizer and -fthread-sanitizer. -->
-
+  <li>The Address Sanitizer feature and Clang's
+  <tt>-fcatch-undefined-behavior</tt> option have been moved to a unified flag
+  set: <tt>-fsanitize</tt>. This flag can be used to enable the different
+  dynamic checking tools when building. For example,
+  <tt>-faddress-sanitizer</tt> is now <tt>-fsanitize=address</tt>, and
+  <tt>-fcatch-undefined-behavior</tt> is now <tt>-fsanitize=undefined</tt>.
+  With this release the set of checks available continues to grow, see the Clang
+  documentaion and specific sanitizer notes below for details.
   </li>
 
 </ul>
