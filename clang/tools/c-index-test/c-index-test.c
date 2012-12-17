@@ -2813,9 +2813,13 @@ static int index_compile_db(int argc, const char **argv) {
         goto cdb_end;
       }
 
-      chdir(buildDir);
-      CCmds = clang_CompilationDatabase_getAllCompileCommands(db);
+      if (chdir(buildDir) != 0) {
+        printf("Could not chdir to %s\n", buildDir);
+        errorCode = -1;
+        goto cdb_end;
+      }
 
+      CCmds = clang_CompilationDatabase_getAllCompileCommands(db);
       if (!CCmds) {
         printf("compilation db is empty\n");
         errorCode = -1;
@@ -2834,7 +2838,11 @@ static int index_compile_db(int argc, const char **argv) {
         CCmd = clang_CompileCommands_getCommand(CCmds, i);
 
         wd = clang_CompileCommand_getDirectory(CCmd);
-        chdir(clang_getCString(wd));
+        if (chdir(clang_getCString(wd)) != 0) {
+          printf("Could not chdir to %s\n", clang_getCString(wd));
+          errorCode = -1;
+          goto cdb_end;
+        }
         clang_disposeString(wd);
 
         numArgs = clang_CompileCommand_getNumArgs(CCmd);
