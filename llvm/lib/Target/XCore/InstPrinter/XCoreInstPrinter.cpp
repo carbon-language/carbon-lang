@@ -53,8 +53,9 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
     const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(BE->getRHS());
     assert(SRE && CE && "Binary expression must be sym+const.");
     Offset = CE->getValue();
-  } else if (!(SRE = dyn_cast<MCSymbolRefExpr>(Expr))) {
-    assert(false && "Unexpected MCExpr type.");
+  } else {
+    SRE = dyn_cast<MCSymbolRefExpr>(Expr);
+    assert(SRE && "Unexpected MCExpr type.");
   }
   assert(SRE->getKind() == MCSymbolRefExpr::VK_None);
 
