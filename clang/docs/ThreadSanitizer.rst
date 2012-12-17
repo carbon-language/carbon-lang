@@ -99,7 +99,7 @@ Current Status
 
 ThreadSanitizer is in beta stage.  It is known to work on large C++ programs
 using pthreads, but we do not promise anything (yet).  C++11 threading is
-supported with llvm libstdc++.  The test suite is integrated into CMake build
+supported with llvm libc++.  The test suite is integrated into CMake build
 and can be run with ``make check-tsan`` command.
 
 We are actively working on enhancing the tool --- stay tuned.  Any help,
