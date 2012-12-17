@@ -47,7 +47,7 @@ public:
   virtual AMDGPUMCObjectWriter *createObjectWriter(raw_ostream &OS) const;
   virtual unsigned getNumFixupKinds() const { return 0; };
   virtual void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
-                          uint64_t Value) const { assert(!"Not implemented"); }
+                          uint64_t Value) const;
   virtual bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
                                     const MCInstFragment *DF,
                                     const MCAsmLayout &Layout) const {
@@ -79,4 +79,12 @@ MCAsmBackend *llvm::createAMDGPUAsmBackend(const Target &T, StringRef TT,
 AMDGPUMCObjectWriter * AMDGPUAsmBackend::createObjectWriter(
                                                         raw_ostream &OS) const {
   return new AMDGPUMCObjectWriter(OS);
+}
+
+void AMDGPUAsmBackend::applyFixup(const MCFixup &Fixup, char *Data,
+                                  unsigned DataSize, uint64_t Value) const {
+
+  uint16_t *Dst = (uint16_t*)(Data + Fixup.getOffset());
+  assert(Fixup.getKind() == FK_PCRel_4);
+  *Dst = (Value - 4) / 4;
 }

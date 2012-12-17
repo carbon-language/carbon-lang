@@ -21,11 +21,14 @@
 #include "llvm/Constants.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
 
-AMDGPUMCInstLower::AMDGPUMCInstLower() { }
+AMDGPUMCInstLower::AMDGPUMCInstLower(MCContext &ctx):
+  Ctx(ctx)
+{ }
 
 void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
@@ -50,13 +53,16 @@ void AMDGPUMCInstLower::lower(const MachineInstr *MI, MCInst &OutMI) const {
     case MachineOperand::MO_Register:
       MCOp = MCOperand::CreateReg(MO.getReg());
       break;
+    case MachineOperand::MO_MachineBasicBlock:
+      MCOp = MCOperand::CreateExpr(MCSymbolRefExpr::Create(
+                                   MO.getMBB()->getSymbol(), Ctx));
     }
     OutMI.addOperand(MCOp);
   }
 }
 
 void AMDGPUAsmPrinter::EmitInstruction(const MachineInstr *MI) {
-  AMDGPUMCInstLower MCInstLowering;
+  AMDGPUMCInstLower MCInstLowering(OutContext);
 
   if (MI->isBundle()) {
     const MachineBasicBlock *MBB = MI->getParent();

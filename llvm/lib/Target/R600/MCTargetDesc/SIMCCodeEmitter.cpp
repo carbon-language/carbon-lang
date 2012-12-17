@@ -21,6 +21,7 @@
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
+#include "llvm/MC/MCFixup.h"
 #include "llvm/Support/raw_ostream.h"
 
 #define VGPR_BIT(src_idx) (1ULL << (9 * src_idx - 1))
@@ -149,6 +150,11 @@ uint64_t SIMCCodeEmitter::getMachineOpValue(const MCInst &MI,
     } Imm;
     Imm.F = MO.getFPImm();
     return Imm.I;
+  } else if (MO.isExpr()) {
+    const MCExpr *Expr = MO.getExpr();
+    MCFixupKind Kind = MCFixupKind(FK_PCRel_4);
+    Fixups.push_back(MCFixup::Create(0, Expr, Kind, MI.getLoc()));
+    return 0;
   } else{
     llvm_unreachable("Encoding of this operand type is not supported yet.");
   }

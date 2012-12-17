@@ -14,12 +14,15 @@
 namespace llvm {
 
 class MCInst;
+class MCContext;
 class MachineInstr;
 
 class AMDGPUMCInstLower {
 
+  MCContext &Ctx;
+
 public:
-  AMDGPUMCInstLower();
+  AMDGPUMCInstLower(MCContext &ctx);
 
   /// \brief Lower a MachineInstr to an MCInst
   void lower(const MachineInstr *MI, MCInst &OutMI) const;
