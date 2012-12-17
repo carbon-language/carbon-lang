@@ -1204,17 +1204,28 @@ multiclass bmi_andn<string mnemonic, RegisterClass RC, X86MemOperand x86memop,
                     PatFrag ld_frag> {
   def rr : I<0xF2, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
             !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-            [(set RC:$dst, EFLAGS, (X86andn_flag RC:$src1, RC:$src2))],
+            [(set RC:$dst, EFLAGS, (X86and_flag (not RC:$src1), RC:$src2))],
             IIC_BIN_NONMEM>;
   def rm : I<0xF2, MRMSrcMem, (outs RC:$dst), (ins RC:$src1, x86memop:$src2),
             !strconcat(mnemonic, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
             [(set RC:$dst, EFLAGS,
-             (X86andn_flag RC:$src1, (ld_frag addr:$src2)))], IIC_BIN_MEM>;
+             (X86and_flag (not RC:$src1), (ld_frag addr:$src2)))], IIC_BIN_MEM>;
 }
 
 let Predicates = [HasBMI], Defs = [EFLAGS] in {
   defm ANDN32 : bmi_andn<"andn{l}", GR32, i32mem, loadi32>, T8, VEX_4V;
   defm ANDN64 : bmi_andn<"andn{q}", GR64, i64mem, loadi64>, T8, VEX_4V, VEX_W;
+}
+
+let Predicates = [HasBMI] in {
+  def : Pat<(and (not GR32:$src1), GR32:$src2),
+            (ANDN32rr GR32:$src1, GR32:$src2)>;
+  def : Pat<(and (not GR64:$src1), GR64:$src2),
+            (ANDN64rr GR64:$src1, GR64:$src2)>;
+  def : Pat<(and (not GR32:$src1), (loadi32 addr:$src2)),
+            (ANDN32rm GR32:$src1, addr:$src2)>;
+  def : Pat<(and (not GR64:$src1), (loadi64 addr:$src2)),
+            (ANDN64rm GR64:$src1, addr:$src2)>;
 }
 
 //===----------------------------------------------------------------------===//

@@ -3201,6 +3201,8 @@ inline static bool isDefConvertible(MachineInstr *MI) {
   case X86::OR8ri:     case X86::OR64rr:   case X86::OR32rr:
   case X86::OR16rr:    case X86::OR8rr:    case X86::OR64rm:
   case X86::OR32rm:    case X86::OR16rm:   case X86::OR8rm:
+  case X86::ANDN32rr:  case X86::ANDN32rm:
+  case X86::ANDN64rr:  case X86::ANDN64rm:
     return true;
   }
 }

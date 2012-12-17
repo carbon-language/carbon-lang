@@ -12026,7 +12026,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::OR:                 return "X86ISD::OR";
   case X86ISD::XOR:                return "X86ISD::XOR";
   case X86ISD::AND:                return "X86ISD::AND";
-  case X86ISD::ANDN:               return "X86ISD::ANDN";
   case X86ISD::BLSI:               return "X86ISD::BLSI";
   case X86ISD::BLSMSK:             return "X86ISD::BLSMSK";
   case X86ISD::BLSR:               return "X86ISD::BLSR";
@@ -15632,20 +15631,13 @@ static SDValue PerformAndCombine(SDNode *N, SelectionDAG &DAG,
 
   EVT VT = N->getValueType(0);
 
-  // Create ANDN, BLSI, and BLSR instructions
+  // Create BLSI, and BLSR instructions
   // BLSI is X & (-X)
   // BLSR is X & (X-1)
   if (Subtarget->hasBMI() && (VT == MVT::i32 || VT == MVT::i64)) {
     SDValue N0 = N->getOperand(0);
     SDValue N1 = N->getOperand(1);
     DebugLoc DL = N->getDebugLoc();
-
-    // Check LHS for not
-    if (N0.getOpcode() == ISD::XOR && isAllOnes(N0.getOperand(1)))
-      return DAG.getNode(X86ISD::ANDN, DL, VT, N0.getOperand(0), N1);
-    // Check RHS for not
-    if (N1.getOpcode() == ISD::XOR && isAllOnes(N1.getOperand(1)))
-      return DAG.getNode(X86ISD::ANDN, DL, VT, N1.getOperand(0), N0);
 
     // Check LHS for neg
     if (N0.getOpcode() == ISD::SUB && N0.getOperand(1) == N1 &&
