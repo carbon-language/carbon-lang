@@ -198,7 +198,9 @@ private:
       else if (Current.Tok.is(tok::lessless) &&
                State.FirstLessLess[ParenLevel] != 0)
         State.Column = State.FirstLessLess[ParenLevel];
-      else if (Previous.Tok.is(tok::equal) && ParenLevel != 0)
+      else if (ParenLevel != 0 &&
+               (Previous.Tok.is(tok::equal) || Current.Tok.is(tok::arrow) ||
+                Current.Tok.is(tok::period)))
         // Indent and extra 4 spaces after '=' as it continues an expression.
         // Don't do that on the top level, as we already indent 4 there.
         State.Column = State.Indent[ParenLevel] + 4;
@@ -271,14 +273,23 @@ private:
     ++State.ConsumedTokens;
   }
 
-  unsigned splitPenalty(const FormatToken &Token) {
-    if (Token.Tok.is(tok::semi))
+  /// \brief Calculate the panelty for splitting after the token at \p Index.
+  unsigned splitPenalty(unsigned Index) {
+    assert(Index < Line.Tokens.size() &&
+           "Tried to calculate penalty for splitting after the last token");
+    const FormatToken &Left = Line.Tokens[Index];
+    const FormatToken &Right = Line.Tokens[Index + 1];
+    if (Left.Tok.is(tok::semi))
       return 0;
-    if (Token.Tok.is(tok::comma))
+    if (Left.Tok.is(tok::comma))
       return 1;
-    if (Token.Tok.is(tok::equal) || Token.Tok.is(tok::l_paren) ||
-        Token.Tok.is(tok::pipepipe) || Token.Tok.is(tok::ampamp))
+    if (Left.Tok.is(tok::equal) || Left.Tok.is(tok::l_paren) ||
+        Left.Tok.is(tok::pipepipe) || Left.Tok.is(tok::ampamp))
       return 2;
+
+    if (Right.Tok.is(tok::arrow) || Right.Tok.is(tok::period))
+      return 200;
+
     return 3;
   }
 
@@ -313,8 +324,7 @@ private:
     unsigned CurrentPenalty = 0;
     if (NewLine) {
       CurrentPenalty += Parameters.PenaltyIndentLevel * State.Indent.size() +
-          Parameters.PenaltyExtraLine +
-          splitPenalty(Line.Tokens[State.ConsumedTokens - 1]);
+          Parameters.PenaltyExtraLine + splitPenalty(State.ConsumedTokens - 1);
     }
 
     addTokenToState(NewLine, true, State);
@@ -335,17 +345,21 @@ private:
       // - are now computing for a smaller or equal StopAt.
       unsigned SavedResult = I->second.first;
       unsigned SavedStopAt = I->second.second;
-      if (SavedResult != UINT_MAX || StopAt <= SavedStopAt)
-        return SavedResult;
+      if (SavedResult != UINT_MAX)
+        return SavedResult + CurrentPenalty;
+      else if (StopAt <= SavedStopAt)
+        return UINT_MAX;
     }
 
     unsigned NoBreak = calcPenalty(State, false, StopAt);
     unsigned WithBreak = calcPenalty(State, true, std::min(StopAt, NoBreak));
     unsigned Result = std::min(NoBreak, WithBreak);
-    if (Result != UINT_MAX)
-      Result += CurrentPenalty;
+
+    // We have to store 'Result' without adding 'CurrentPenalty' as the latter
+    // can depend on 'NewLine'.
     Memory[State] = std::pair<unsigned, unsigned>(Result, StopAt);
-    return Result;
+
+    return Result == UINT_MAX ? UINT_MAX : Result + CurrentPenalty;
   }
 
   /// \brief Replaces the whitespace in front of \p Tok. Only call once for
@@ -737,9 +751,8 @@ private:
     if (Right.Tok.is(tok::r_paren) || Right.Tok.is(tok::l_brace) ||
         Right.Tok.is(tok::comment) || Right.Tok.is(tok::greater))
       return false;
-    if (isBinaryOperator(Left))
-      return true;
-    if (Right.Tok.is(tok::lessless))
+    if (isBinaryOperator(Left) || Right.Tok.is(tok::lessless) ||
+        Right.Tok.is(tok::arrow) || Right.Tok.is(tok::period))
       return true;
     return Right.Tok.is(tok::colon) || Left.Tok.is(tok::comma) || Left.Tok.is(
         tok::semi) || Left.Tok.is(tok::equal) || Left.Tok.is(tok::ampamp) ||

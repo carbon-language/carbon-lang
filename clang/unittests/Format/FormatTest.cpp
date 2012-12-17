@@ -444,6 +444,37 @@ TEST_F(FormatTest, UnderstandsEquals) {
                "        100000000 + 100000000) {\n}");
 }
 
+TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
+  verifyFormat(
+      "LoooooooooooooooooooooooooooooooooooooongObject\n"
+      "    .looooooooooooooooooooooooooooooooooooooongFunction();");
+
+  verifyFormat(
+      "LoooooooooooooooooooooooooooooooooooooongObject\n"
+      "    ->looooooooooooooooooooooooooooooooooooooongFunction();");
+
+  verifyFormat(
+      "LooooooooooooooooooooooooooooooooongObject->shortFunction(Parameter1,\n"
+      "                                                          Parameter2);");
+
+  verifyFormat(
+      "ShortObject->shortFunction(\n"
+      "    LooooooooooooooooooooooooooooooooooooooooooooooongParameter1,\n"
+      "    LooooooooooooooooooooooooooooooooooooooooooooooongParameter2);");
+
+  verifyFormat("loooooooooooooongFunction(\n"
+               "    LoooooooooooooongObject->looooooooooooooooongFunction());");
+
+  verifyFormat(
+      "function(LoooooooooooooooooooooooooooooooooooongObject\n"
+      "             ->loooooooooooooooooooooooooooooooooooooooongFunction());");
+
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaa) ||\n"
+      "    aaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n"
+      "}");
+}
+
 TEST_F(FormatTest, UnderstandsTemplateParameters) {
   verifyFormat("A<int> a;");
   verifyFormat("A<A<A<int> > > a;");
