@@ -1543,13 +1543,15 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   //   is permitted.
   if (TUK == Sema::TUK_Definition &&
       (TemplateInfo.Kind || !isValidAfterTypeSpecifier(false))) {
-    ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
-      DeclSpec::getSpecifierName(TagType));
-    // Push this token back into the preprocessor and change our current token
-    // to ';' so that the rest of the code recovers as though there were an
-    // ';' after the definition.
-    PP.EnterToken(Tok);
-    Tok.setKind(tok::semi);
+    if (Tok.isNot(tok::semi)) {
+      ExpectAndConsume(tok::semi, diag::err_expected_semi_after_tagdecl,
+        DeclSpec::getSpecifierName(TagType));
+      // Push this token back into the preprocessor and change our current token
+      // to ';' so that the rest of the code recovers as though there were an
+      // ';' after the definition.
+      PP.EnterToken(Tok);
+      Tok.setKind(tok::semi);
+    }
   }
 }
 
