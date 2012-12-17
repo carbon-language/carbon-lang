@@ -314,7 +314,7 @@ bool DarwinAsmParser::ParseSectionSwitch(const char *Segment,
   Lex();
 
   // FIXME: Arch specific.
-  bool isText = StringRef(Segment) == "__TEXT";  // FIXME: Hack.
+  bool isText = TAA & MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS;
   getStreamer().SwitchSection(getContext().getMachOSection(
                                 Segment, Section, TAA, StubSize,
                                 isText ? SectionKind::getText()

@@ -237,6 +237,10 @@ namespace macho {
   /// @name Section Data
   /// @{
 
+  enum SectionFlags {
+    SF_PureInstructions = 0x80000000
+  };
+
   struct Section {
     char Name[16];
     char SegmentName[16];

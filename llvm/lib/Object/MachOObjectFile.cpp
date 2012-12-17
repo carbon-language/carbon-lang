@@ -559,11 +559,11 @@ error_code MachOObjectFile::isSectionText(DataRefImpl DRI,
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
     InMemoryStruct<macho::Section64> Sect;
     getSection64(DRI, Sect);
-    Result = !strcmp(Sect->Name, "__text");
+    Result = Sect->Flags & macho::SF_PureInstructions;
   } else {
     InMemoryStruct<macho::Section> Sect;
     getSection(DRI, Sect);
-    Result = !strcmp(Sect->Name, "__text");
+    Result = Sect->Flags & macho::SF_PureInstructions;
   }
   return object_error::success;
 }
