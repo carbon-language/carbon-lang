@@ -764,20 +764,20 @@ def SEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
                       [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1,
                                                          immBitp:$src2))]>;
 
-def SEXT_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
-                     "sext $dst, $src2",
-                     [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1,
-                                                        GRRegs:$src2))]>;
+def SEXT_2r :
+  _F2RSrcDst<0b001100, (outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
+             "sext $dst, $src2",
+             [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1, GRRegs:$src2))]>;
 
 def ZEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
                       "zext $dst, $src2",
                       [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1,
                                                          immBitp:$src2))]>;
 
-def ZEXT_2r : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src2, GRRegs:$src1),
-                     "zext $dst, $src2",
-                     [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1,
-                                                        GRRegs:$src2))]>;
+def ZEXT_2r :
+  _F2RSrcDst<0b010000, (outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
+             "zext $dst, $src2",
+             [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1, GRRegs:$src2))]>;
 
 def ANDNOT_2r :
   _F2RSrcDst<0b001010, (outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),

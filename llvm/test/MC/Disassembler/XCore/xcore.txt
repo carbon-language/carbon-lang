@@ -132,3 +132,9 @@
 
 # CHECK: setpsc res[r8], r2
 0x28 0xc7
+
+# CHECK: zext r3, r8
+0x2c 0x47
+
+# CHECK: sext r9, r1
+0x45 0x37
