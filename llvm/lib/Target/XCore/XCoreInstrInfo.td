@@ -891,6 +891,14 @@ def INITDP_2r : _F2R<0b000010, (outs), (ins GRRegs:$src, GRRegs:$t),
                      "init t[$t]:dp, $src",
                      [(int_xcore_initdp GRRegs:$t, GRRegs:$src)]>;
 
+def PEEK_2r : _F2R<0b101110, (outs GRRegs:$dst), (ins GRRegs:$src),
+                    "peek $dst, res[$src]",
+                    [(set GRRegs:$dst, (int_xcore_peek GRRegs:$src))]>;
+
+def ENDIN_2r : _F2R<0b100101, (outs GRRegs:$dst), (ins GRRegs:$src),
+                     "endin $dst, res[$src]",
+                     [(set GRRegs:$dst, (int_xcore_endin GRRegs:$src))]>;
+
 // Two operand long
 // getd, testlcl
 def BITREV_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
@@ -932,14 +940,6 @@ def SETCLK_l2r : _FL2R<(outs), (ins GRRegs:$src1, GRRegs:$src2),
 def SETRDY_l2r : _FL2R<(outs), (ins GRRegs:$src1, GRRegs:$src2),
                        "setrdy res[$src1], $src2",
                        [(int_xcore_setrdy GRRegs:$src1, GRRegs:$src2)]>;
-
-def PEEK_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
-                      "peek $dst, res[$src]",
-                      [(set GRRegs:$dst, (int_xcore_peek GRRegs:$src))]>;
-
-def ENDIN_l2r : _FL2R<(outs GRRegs:$dst), (ins GRRegs:$src),
-                       "endin $dst, res[$src]",
-                       [(set GRRegs:$dst, (int_xcore_endin GRRegs:$src))]>;
 
 // One operand short
 // TODO edu, eeu, waitet, waitef, tstart, clrtp

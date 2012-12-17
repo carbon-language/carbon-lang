@@ -158,3 +158,9 @@
 
 # CHECK: zext r2, 32
 0xd8 0x46
+
+# CHECK: peek r0, res[r5]
+0x81 0xbf
+
+# CHECK: endin r10, res[r1]
+0x59 0x97
