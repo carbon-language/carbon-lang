@@ -2251,6 +2251,56 @@ static Value *extractVector(IRBuilder<> &IRB, Value *V,
   return V;
 }
 
+static Value *insertVector(IRBuilder<> &IRB, Value *Old, Value *V,
+                           unsigned BeginIndex, const Twine &Name) {
+  VectorType *VecTy = cast<VectorType>(Old->getType());
+  assert(VecTy && "Can only insert a vector into a vector");
+
+  VectorType *Ty = dyn_cast<VectorType>(V->getType());
+  if (!Ty) {
+    // Single element to insert.
+    V = IRB.CreateInsertElement(Old, V, IRB.getInt32(BeginIndex),
+                                Name + ".insert");
+    DEBUG(dbgs() <<  "     insert: " << *V << "\n");
+    return V;
+  }
+
+  assert(Ty->getNumElements() <= VecTy->getNumElements() &&
+         "Too many elements!");
+  if (Ty->getNumElements() == VecTy->getNumElements()) {
+    assert(V->getType() == VecTy && "Vector type mismatch");
+    return V;
+  }
+  unsigned EndIndex = BeginIndex + Ty->getNumElements();
+
+  // When inserting a smaller vector into the larger to store, we first
+  // use a shuffle vector to widen it with undef elements, and then
+  // a second shuffle vector to select between the loaded vector and the
+  // incoming vector.
+  SmallVector<Constant*, 8> Mask;
+  Mask.reserve(VecTy->getNumElements());
+  for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
+    if (i >= BeginIndex && i < EndIndex)
+      Mask.push_back(IRB.getInt32(i - BeginIndex));
+    else
+      Mask.push_back(UndefValue::get(IRB.getInt32Ty()));
+  V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
+                              ConstantVector::get(Mask),
+                              Name + ".expand");
+  DEBUG(dbgs() << "    shuffle1: " << *V << "\n");
+
+  Mask.clear();
+  for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
+    if (i >= BeginIndex && i < EndIndex)
+      Mask.push_back(IRB.getInt32(i));
+    else
+      Mask.push_back(IRB.getInt32(i + VecTy->getNumElements()));
+  V = IRB.CreateShuffleVector(V, Old, ConstantVector::get(Mask),
+                              Name + "insert");
+  DEBUG(dbgs() << "    shuffle2: " << *V << "\n");
+  return V;
+}
+
 namespace {
 /// \brief Visitor to rewrite instructions using a partition of an alloca to
 /// use a new alloca.
@@ -2519,52 +2569,6 @@ private:
     return !LI.isVolatile() && !IsPtrAdjusted;
   }
 
-  Value *insertVector(IRBuilder<> &IRB, Value *V,
-                      unsigned BeginIndex, unsigned EndIndex) {
-    assert(VecTy && "Can only insert a vector into a vector alloca");
-    unsigned NumElements = EndIndex - BeginIndex;
-    assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
-
-    if (NumElements == VecTy->getNumElements())
-      return convertValue(TD, IRB, V, VecTy);
-
-    LoadInst *LI = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                         getName(".load"));
-    if (NumElements == 1) {
-      V = IRB.CreateInsertElement(LI, V, IRB.getInt32(BeginIndex),
-                                  getName(".insert"));
-      DEBUG(dbgs() <<  "     insert: " << *V << "\n");
-      return V;
-    }
-
-    // When inserting a smaller vector into the larger to store, we first
-    // use a shuffle vector to widen it with undef elements, and then
-    // a second shuffle vector to select between the loaded vector and the
-    // incoming vector.
-    SmallVector<Constant*, 8> Mask;
-    Mask.reserve(VecTy->getNumElements());
-    for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
-      if (i >= BeginIndex && i < EndIndex)
-        Mask.push_back(IRB.getInt32(i - BeginIndex));
-      else
-        Mask.push_back(UndefValue::get(IRB.getInt32Ty()));
-    V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
-                                ConstantVector::get(Mask),
-                                getName(".expand"));
-    DEBUG(dbgs() << "    shuffle1: " << *V << "\n");
-
-    Mask.clear();
-    for (unsigned i = 0; i != VecTy->getNumElements(); ++i)
-      if (i >= BeginIndex && i < EndIndex)
-        Mask.push_back(IRB.getInt32(i));
-      else
-        Mask.push_back(IRB.getInt32(i + VecTy->getNumElements()));
-    V = IRB.CreateShuffleVector(V, LI, ConstantVector::get(Mask),
-                                getName("insert"));
-    DEBUG(dbgs() << "    shuffle2: " << *V << "\n");
-    return V;
-  }
-
   bool rewriteVectorizedStoreInst(IRBuilder<> &IRB, Value *V,
                                   StoreInst &SI, Value *OldOp) {
     unsigned BeginIndex = getIndex(BeginOffset);
@@ -2579,7 +2583,9 @@ private:
       V = convertValue(TD, IRB, V, PartitionTy);
 
     // Mix in the existing elements.
-    V = insertVector(IRB, V, BeginIndex, EndIndex);
+    Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                       getName(".load"));
+    V = insertVector(IRB, Old, V, BeginIndex, getName(".vec"));
 
     StoreInst *Store = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment());
     Pass.DeadInsts.insert(&SI);
@@ -2771,10 +2777,17 @@ private:
 
       Value *Splat = getIntegerSplat(IRB, II.getValue(),
                                      TD.getTypeSizeInBits(ElementTy)/8);
-      if (NumElements > 1)
+      if (NumElements > 1) {
         Splat = getVectorSplat(IRB, Splat, NumElements);
 
-      V = insertVector(IRB, Splat, BeginIndex, EndIndex);
+        Type *SplatVecTy = VectorType::get(ElementTy, NumElements);
+        if (Splat->getType() != SplatVecTy)
+          Splat = convertValue(TD, IRB, Splat, SplatVecTy);
+      }
+
+      Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                         getName(".oldload"));
+      V = insertVector(IRB, Old, Splat, BeginIndex, getName(".vec"));
     } else if (IntTy) {
       // If this is a memset on an alloca where we can widen stores, insert the
       // set integer.
