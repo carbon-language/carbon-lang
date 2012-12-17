@@ -92,8 +92,26 @@ class _FR2R<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
   let DecoderMethod = "DecodeR2RInstruction";
 }
 
-class _FRUS<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _FRUS<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<2, outs, ins, asmstr, pattern> {
+  let Inst{15-11} = opc{5-1};
+  let Inst{4} = opc{0};
+  let DecoderMethod = "DecodeRUSInstruction";
+}
+
+// RUS with bitp operand
+class _FRUSBitp<bits<6> opc, dag outs, dag ins, string asmstr,
+                list<dag> pattern>
+    : _FRUS<opc, outs, ins, asmstr, pattern> {
+  let DecoderMethod = "DecodeRUSBitpInstruction";
+}
+
+// RUS with first operand as both a source and a destination and a bitp second
+// operand
+class _FRUSSrcDstBitp<bits<6> opc, dag outs, dag ins, string asmstr,
+                      list<dag> pattern>
+    : _FRUS<opc, outs, ins, asmstr, pattern> {
+  let DecoderMethod = "DecodeRUSSrcDstBitpInstruction";
 }
 
 class _FL2R<dag outs, dag ins, string asmstr, list<dag> pattern>

@@ -759,20 +759,22 @@ def NEG : _F2R<0b100100, (outs GRRegs:$dst), (ins GRRegs:$b),
                 "neg $dst, $b", [(set GRRegs:$dst, (ineg GRRegs:$b))]>;
 
 let Constraints = "$src1 = $dst" in {
-def SEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
-                      "sext $dst, $src2",
-                      [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1,
-                                                         immBitp:$src2))]>;
+def SEXT_rus :
+  _FRUSSrcDstBitp<0b001101, (outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
+                  "sext $dst, $src2",
+                  [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1,
+                                                     immBitp:$src2))]>;
 
 def SEXT_2r :
   _F2RSrcDst<0b001100, (outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
              "sext $dst, $src2",
              [(set GRRegs:$dst, (int_xcore_sext GRRegs:$src1, GRRegs:$src2))]>;
 
-def ZEXT_rus : _FRUS<(outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
-                      "zext $dst, $src2",
-                      [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1,
-                                                         immBitp:$src2))]>;
+def ZEXT_rus :
+  _FRUSSrcDstBitp<0b010001, (outs GRRegs:$dst), (ins GRRegs:$src1, i32imm:$src2),
+                  "zext $dst, $src2",
+                  [(set GRRegs:$dst, (int_xcore_zext GRRegs:$src1,
+                                                     immBitp:$src2))]>;
 
 def ZEXT_2r :
   _F2RSrcDst<0b010000, (outs GRRegs:$dst), (ins GRRegs:$src1, GRRegs:$src2),
@@ -786,17 +788,16 @@ def ANDNOT_2r :
 }
 
 let isReMaterializable = 1, neverHasSideEffects = 1 in
-def MKMSK_rus : _FRUS<(outs GRRegs:$dst), (ins i32imm:$size),
-                 "mkmsk $dst, $size",
-                 []>;
+def MKMSK_rus : _FRUSBitp<0b101001, (outs GRRegs:$dst), (ins i32imm:$size),
+                          "mkmsk $dst, $size", []>;
 
 def MKMSK_2r : _F2R<0b101000, (outs GRRegs:$dst), (ins GRRegs:$size),
                     "mkmsk $dst, $size",
                     [(set GRRegs:$dst, (add (shl 1, GRRegs:$size), -1))]>;
 
-def GETR_rus : _FRUS<(outs GRRegs:$dst), (ins i32imm:$type),
-                 "getr $dst, $type",
-                 [(set GRRegs:$dst, (int_xcore_getr immUs:$type))]>;
+def GETR_rus : _FRUS<0b100000, (outs GRRegs:$dst), (ins i32imm:$type),
+                     "getr $dst, $type",
+                     [(set GRRegs:$dst, (int_xcore_getr immUs:$type))]>;
 
 def GETTS_2r : _F2R<0b001110, (outs GRRegs:$dst), (ins GRRegs:$r),
                     "getts $dst, res[$r]",
@@ -810,7 +811,7 @@ def OUTCT_2r : _F2R<0b010010, (outs), (ins GRRegs:$r, GRRegs:$val),
                     "outct res[$r], $val",
                     [(int_xcore_outct GRRegs:$r, GRRegs:$val)]>;
 
-def OUTCT_rus : _F2RUS<(outs), (ins GRRegs:$r, i32imm:$val),
+def OUTCT_rus : _FRUS<0b010011, (outs), (ins GRRegs:$r, i32imm:$val),
                        "outct res[$r], $val",
                        [(int_xcore_outct GRRegs:$r, immUs:$val)]>;
 
@@ -850,9 +851,9 @@ def CHKCT_2r : _F2R<0b110010, (outs), (ins GRRegs:$r, GRRegs:$val),
                     "chkct res[$r], $val",
                     [(int_xcore_chkct GRRegs:$r, GRRegs:$val)]>;
 
-def CHKCT_rus : _F2RUS<(outs), (ins GRRegs:$r, i32imm:$val),
-                 "chkct res[$r], $val",
-                 [(int_xcore_chkct GRRegs:$r, immUs:$val)]>;
+def CHKCT_rus : _FRUSBitp<0b110011, (outs), (ins GRRegs:$r, i32imm:$val),
+                          "chkct res[$r], $val",
+                          [(int_xcore_chkct GRRegs:$r, immUs:$val)]>;
 
 def TESTCT_2r : _F2R<0b101111, (outs GRRegs:$dst), (ins GRRegs:$src),
                      "testct $dst, res[$src]",

@@ -138,3 +138,23 @@
 
 # CHECK: sext r9, r1
 0x45 0x37
+
+# rus instructions
+
+# CHECK: chkct res[r1], 8
+0x34 0xcf
+
+# CHECK: getr r11, 2
+0x4e 0x87
+
+# CHECK: mkmsk r4, 24
+0x72 0xa7
+
+# CHECK: outct res[r3], r0
+0xcc 0x4e
+
+# CHECK: sext r8, 16
+0xb1 0x37
+
+# CHECK: zext r2, 32
+0xd8 0x46

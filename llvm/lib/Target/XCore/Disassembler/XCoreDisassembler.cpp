@@ -72,6 +72,9 @@ static DecodeStatus DecodeGRRegsRegisterClass(MCInst &Inst,
                                               uint64_t Address,
                                               const void *Decoder);
 
+static DecodeStatus DecodeBitpOperand(MCInst &Inst, unsigned Val,
+                                      uint64_t Address, const void *Decoder);
+
 static DecodeStatus Decode2RInstruction(MCInst &Inst,
                                         unsigned RegNo,
                                         uint64_t Address,
@@ -87,6 +90,21 @@ static DecodeStatus Decode2RSrcDstInstruction(MCInst &Inst,
                                               uint64_t Address,
                                               const void *Decoder);
 
+static DecodeStatus DecodeRUSInstruction(MCInst &Inst,
+                                         unsigned Insn,
+                                         uint64_t Address,
+                                         const void *Decoder);
+
+static DecodeStatus DecodeRUSBitpInstruction(MCInst &Inst,
+                                             unsigned Insn,
+                                             uint64_t Address,
+                                             const void *Decoder);
+
+static DecodeStatus DecodeRUSSrcDstBitpInstruction(MCInst &Inst,
+                                                   unsigned Insn,
+                                                   uint64_t Address,
+                                                   const void *Decoder);
+
 #include "XCoreGenDisassemblerTables.inc"
 
 static DecodeStatus DecodeGRRegsRegisterClass(MCInst &Inst,
@@ -98,6 +116,17 @@ static DecodeStatus DecodeGRRegsRegisterClass(MCInst &Inst,
     return MCDisassembler::Fail;
   unsigned Reg = getReg(Decoder, XCore::GRRegsRegClassID, RegNo);
   Inst.addOperand(MCOperand::CreateReg(Reg));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeBitpOperand(MCInst &Inst, unsigned Val,
+                                      uint64_t Address, const void *Decoder) {
+  if (Val > 11)
+    return MCDisassembler::Fail;
+  static unsigned Values[] = {
+    32 /*bpw*/, 1, 2, 3, 4, 5, 6, 7, 8, 16, 24, 32
+  };
+  Inst.addOperand(MCOperand::CreateImm(Values[Val]));
   return MCDisassembler::Success;
 }
 
@@ -148,6 +177,43 @@ Decode2RSrcDstInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
     DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
     DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
     DecodeGRRegsRegisterClass(Inst, Op2, Address, Decoder);
+  }
+  return S;
+}
+
+static DecodeStatus
+DecodeRUSInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
+                     const void *Decoder) {
+  unsigned Op1, Op2;
+  DecodeStatus S = Decode2OpInstruction(Insn, Op1, Op2);
+  if (S == MCDisassembler::Success) {
+    DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+    Inst.addOperand(MCOperand::CreateImm(Op2));
+  }
+  return S;
+}
+
+static DecodeStatus
+DecodeRUSBitpInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
+                         const void *Decoder) {
+  unsigned Op1, Op2;
+  DecodeStatus S = Decode2OpInstruction(Insn, Op1, Op2);
+  if (S == MCDisassembler::Success) {
+    DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+    DecodeBitpOperand(Inst, Op2, Address, Decoder);
+  }
+  return S;
+}
+
+static DecodeStatus
+DecodeRUSSrcDstBitpInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
+                               const void *Decoder) {
+  unsigned Op1, Op2;
+  DecodeStatus S = Decode2OpInstruction(Insn, Op1, Op2);
+  if (S == MCDisassembler::Success) {
+    DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+    DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+    DecodeBitpOperand(Inst, Op2, Address, Decoder);
   }
   return S;
 }
