@@ -590,13 +590,32 @@ public:
   bool isIdenticalTo(const MachineInstr *Other,
                      MICheckType Check = CheckDefs) const;
 
-  /// removeFromParent - This method unlinks 'this' from the containing basic
-  /// block, and returns it, but does not delete it.
+  /// Unlink 'this' from the containing basic block, and return it without
+  /// deleting it.
+  ///
+  /// This function can not be used on bundled instructions, use
+  /// removeFromBundle() to remove individual instructions from a bundle.
   MachineInstr *removeFromParent();
 
-  /// eraseFromParent - This method unlinks 'this' from the containing basic
-  /// block and deletes it.
+  /// Unlink this instruction from its basic block and return it without
+  /// deleting it.
+  ///
+  /// If the instruction is part of a bundle, the other instructions in the
+  /// bundle remain bundled.
+  MachineInstr *removeFromBundle();
+
+  /// Unlink 'this' from the containing basic block and delete it.
+  ///
+  /// If this instruction is the header of a bundle, the whole bundle is erased.
+  /// This function can not be used for instructions inside a bundle, use
+  /// eraseFromBundle() to erase individual bundled instructions.
   void eraseFromParent();
+
+  /// Unlink 'this' form its basic block and delete it.
+  ///
+  /// If the instruction is part of a bundle, the other instructions in the
+  /// bundle remain bundled.
+  void eraseFromBundle();
 
   /// isLabel - Returns true if the MachineInstr represents a label.
   ///

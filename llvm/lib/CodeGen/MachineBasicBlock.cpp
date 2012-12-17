@@ -788,27 +788,30 @@ MachineBasicBlock::SplitCriticalEdge(MachineBasicBlock *Succ, Pass *P) {
   return NMBB;
 }
 
-MachineBasicBlock::iterator
-MachineBasicBlock::erase(MachineBasicBlock::iterator I) {
-  if (I->isBundle()) {
-    MachineBasicBlock::iterator E = llvm::next(I);
-    return Insts.erase(I.getInstrIterator(), E.getInstrIterator());
-  }
-
-  return Insts.erase(I.getInstrIterator());
+/// Prepare MI to be removed from its bundle. This fixes bundle flags on MI's
+/// neighboring instructions so the bundle won't be broken by removing MI.
+static void unbundleSingleMI(MachineInstr *MI) {
+  // Removing the first instruction in a bundle.
+  if (MI->isBundledWithSucc() && !MI->isBundledWithPred())
+    MI->unbundleFromSucc();
+  // Removing the last instruction in a bundle.
+  if (MI->isBundledWithPred() && !MI->isBundledWithSucc())
+    MI->unbundleFromPred();
+  // If MI is not bundled, or if it is internal to a bundle, the neighbor flags
+  // are already fine.
 }
 
-MachineInstr *MachineBasicBlock::remove(MachineInstr *I) {
-  if (I->isBundle()) {
-    instr_iterator MII = llvm::next(I);
-    iterator E = end();
-    while (MII != E && MII->isInsideBundle()) {
-      MachineInstr *MI = &*MII++;
-      Insts.remove(MI);
-    }
-  }
+MachineBasicBlock::instr_iterator
+MachineBasicBlock::erase(MachineBasicBlock::instr_iterator I) {
+  unbundleSingleMI(I);
+  return Insts.erase(I);
+}
 
-  return Insts.remove(I);
+MachineInstr *MachineBasicBlock::remove_instr(MachineInstr *MI) {
+  unbundleSingleMI(MI);
+  MI->clearFlag(MachineInstr::BundledPred);
+  MI->clearFlag(MachineInstr::BundledSucc);
+  return Insts.remove(MI);
 }
 
 void MachineBasicBlock::splice(MachineBasicBlock::iterator where,

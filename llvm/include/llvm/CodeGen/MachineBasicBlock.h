@@ -463,37 +463,57 @@ public:
     return Insts.insertAfter(I.getInstrIterator(), M);
   }
 
-  /// erase - Remove the specified element or range from the instruction list.
-  /// These functions delete any instructions removed.
+  /// Remove an instruction from the instruction list and delete it.
   ///
-  instr_iterator erase(instr_iterator I) {
-    return Insts.erase(I);
-  }
-  instr_iterator erase(instr_iterator I, instr_iterator E) {
-    return Insts.erase(I, E);
-  }
+  /// If the instruction is part of a bundle, the other instructions in the
+  /// bundle will still be bundled after removing the single instruction.
+  instr_iterator erase(instr_iterator I);
+
+  /// Remove an instruction from the instruction list and delete it.
+  ///
+  /// If the instruction is part of a bundle, the other instructions in the
+  /// bundle will still be bundled after removing the single instruction.
   instr_iterator erase_instr(MachineInstr *I) {
-    instr_iterator MII(I);
-    return erase(MII);
+    return erase(instr_iterator(I));
   }
 
-  iterator erase(iterator I);
+  /// Remove a range of instructions from the instruction list and delete them.
   iterator erase(iterator I, iterator E) {
     return Insts.erase(I.getInstrIterator(), E.getInstrIterator());
   }
-  iterator erase(MachineInstr *I) {
-    iterator MII(I);
-    return erase(MII);
+
+  /// Remove an instruction or bundle from the instruction list and delete it.
+  ///
+  /// If I points to a bundle of instructions, they are all erased.
+  iterator erase(iterator I) {
+    return erase(I, llvm::next(I));
   }
 
-  /// remove - Remove the instruction from the instruction list. This function
-  /// does not delete the instruction. WARNING: Note, if the specified
-  /// instruction is a bundle this function will remove all the bundled
-  /// instructions as well. It is up to the caller to keep a list of the
-  /// bundled instructions and re-insert them if desired. This function is
-  /// *not recommended* for manipulating instructions with bundles. Use
-  /// splice instead.
-  MachineInstr *remove(MachineInstr *I);
+  /// Remove an instruction from the instruction list and delete it.
+  ///
+  /// If I is the head of a bundle of instructions, the whole bundle will be
+  /// erased.
+  iterator erase(MachineInstr *I) {
+    return erase(iterator(I));
+  }
+
+  /// Remove the unbundled instruction from the instruction list without
+  /// deleting it.
+  ///
+  /// This function can not be used to remove bundled instructions, use
+  /// remove_instr to remove individual instructions from a bundle.
+  MachineInstr *remove(MachineInstr *I) {
+    assert(!I->isBundled() && "Cannot remove bundled instructions");
+    return Insts.remove(I);
+  }
+
+  /// Remove the possibly bundled instruction from the instruction list
+  /// without deleting it.
+  ///
+  /// If the instruction is part of a bundle, the other instructions in the
+  /// bundle will still be bundled after removing the single instruction.
+  MachineInstr *remove_instr(MachineInstr *I);
+
   void clear() {
     Insts.clear();
   }

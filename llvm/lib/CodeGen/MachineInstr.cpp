@@ -838,46 +838,25 @@ bool MachineInstr::isIdenticalTo(const MachineInstr *Other,
   return true;
 }
 
-/// removeFromParent - This method unlinks 'this' from the containing basic
-/// block, and returns it, but does not delete it.
 MachineInstr *MachineInstr::removeFromParent() {
   assert(getParent() && "Not embedded in a basic block!");
-
-  // If it's a bundle then remove the MIs inside the bundle as well.
-  if (isBundle()) {
-    MachineBasicBlock *MBB = getParent();
-    MachineBasicBlock::instr_iterator MII = *this; ++MII;
-    MachineBasicBlock::instr_iterator E = MBB->instr_end();
-    while (MII != E && MII->isInsideBundle()) {
-      MachineInstr *MI = &*MII;
-      ++MII;
-      MBB->remove(MI);
-    }
-  }
-  getParent()->remove(this);
-  return this;
+  return getParent()->remove(this);
 }
 
+MachineInstr *MachineInstr::removeFromBundle() {
+  assert(getParent() && "Not embedded in a basic block!");
+  return getParent()->remove_instr(this);
+}
 
-/// eraseFromParent - This method unlinks 'this' from the containing basic
-/// block, and deletes it.
 void MachineInstr::eraseFromParent() {
   assert(getParent() && "Not embedded in a basic block!");
-  // If it's a bundle then remove the MIs inside the bundle as well.
-  if (isBundle()) {
-    MachineBasicBlock *MBB = getParent();
-    MachineBasicBlock::instr_iterator MII = *this; ++MII;
-    MachineBasicBlock::instr_iterator E = MBB->instr_end();
-    while (MII != E && MII->isInsideBundle()) {
-      MachineInstr *MI = &*MII;
-      ++MII;
-      MBB->erase(MI);
-    }
-  }
-  // Erase the individual instruction, which may itself be inside a bundle.
-  getParent()->erase_instr(this);
+  getParent()->erase(this);
 }
 
+void MachineInstr::eraseFromBundle() {
+  assert(getParent() && "Not embedded in a basic block!");
+  getParent()->erase_instr(this);
+}
 
 /// getNumExplicitOperands - Returns the number of non-implicit operands.
 ///
