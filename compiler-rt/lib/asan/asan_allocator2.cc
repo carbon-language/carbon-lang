@@ -96,13 +96,13 @@ struct ChunkBase {
   uptr from_memalign     : 1;
   // 2-nd 8 bytes
   uptr user_requested_size;
-  // End of ChunkHeader.
+  // Header2 (intersects with user memory).
   // 3-rd 8 bytes. These overlap with the user memory.
   AsanChunk *next;
 };
 
 static const uptr kChunkHeaderSize = 16;
-COMPILER_CHECK(sizeof(ChunkBase) == 24);
+static const uptr kChunkHeader2Size = 8;
 
 #elif SANITIZER_WORDSIZE == 32
 struct ChunkBase {
@@ -111,15 +111,16 @@ struct ChunkBase {
   uptr from_memalign     : 1;
   uptr alloc_tid         : 23;
   uptr user_requested_size;
-  // End of ChunkHeader.
+  // Header2 (intersects with user memory).
   // 2-nd 8 bytes. These overlap with the user memory.
   AsanChunk *next;
   uptr  free_tid;
 };
 
-COMPILER_CHECK(sizeof(ChunkBase) == 16);
 static const uptr kChunkHeaderSize = 8;
+static const uptr kChunkHeader2Size = 8;
 #endif
+COMPILER_CHECK(sizeof(ChunkBase) == kChunkHeaderSize + kChunkHeader2Size);
 
 static uptr ComputeRZSize(uptr user_requested_size) {
   // FIXME: implement adaptive redzones.
@@ -130,14 +131,20 @@ struct AsanChunk: ChunkBase {
   uptr Beg() { return reinterpret_cast<uptr>(this) + kChunkHeaderSize; }
   uptr UsedSize() { return user_requested_size; }
   // We store the alloc/free stack traces in the chunk itself.
-  uptr AllocStackBeg() {
-    return Beg() - ComputeRZSize(user_requested_size);
+  u32 *AllocStackBeg() {
+    return (u32*)(Beg() - ComputeRZSize(UsedSize()));
   }
   uptr AllocStackSize() {
-    return ComputeRZSize(user_requested_size) - kChunkHeaderSize;
+    return (ComputeRZSize(UsedSize()) - kChunkHeaderSize) / sizeof(u32);
   }
-  uptr FreeStackBeg();
-  uptr FreeStackSize();
+  u32 *FreeStackBeg() {
+    return (u32*)(Beg() + kChunkHeader2Size);
+  }
+  uptr FreeStackSize() {
+    uptr available = Max(RoundUpTo(UsedSize(), SHADOW_GRANULARITY),
+                         ComputeRZSize(UsedSize()));
+    return (available - kChunkHeader2Size) / sizeof(u32);
+  }
 };
 
 uptr AsanChunkView::Beg() { return chunk_->Beg(); }
@@ -152,7 +159,8 @@ void AsanChunkView::GetAllocStack(StackTrace *stack) {
 }
 
 void AsanChunkView::GetFreeStack(StackTrace *stack) {
-  stack->size = 0;
+  StackTrace::UncompressStack(stack, chunk_->FreeStackBeg(),
+                              chunk_->FreeStackSize());
 }
 
 static const uptr kReturnOnZeroMalloc = 0x0123;  // Zero page is protected.
@@ -219,6 +227,11 @@ static void Deallocate(void *ptr, StackTrace *stack) {
   if (p == 0 || p == kReturnOnZeroMalloc) return;
   uptr chunk_beg = p - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
+  CHECK_GE(m->alloc_tid, 0);
+  CHECK_EQ(m->free_tid, kInvalidTid);
+  AsanThread *t = asanThreadRegistry().GetCurrent();
+  m->free_tid = t ? t->tid() : 0;
+  StackTrace::CompressStack(stack, m->FreeStackBeg(), m->FreeStackSize());
   uptr alloc_beg = p - ComputeRZSize(m->user_requested_size);
   if (m->from_memalign)
     alloc_beg = reinterpret_cast<uptr>(allocator.GetBlockBegin(ptr));
@@ -226,12 +239,14 @@ static void Deallocate(void *ptr, StackTrace *stack) {
   PoisonShadow(m->Beg(), RoundUpTo(m->user_requested_size, SHADOW_GRANULARITY),
                kAsanHeapFreeMagic);
   ASAN_FREE_HOOK(ptr);
+  if (!p)
   allocator.Deallocate(&cache, reinterpret_cast<void *>(alloc_beg));
 }
 
 AsanChunkView FindHeapChunkByAddress(uptr address) {
-  UNIMPLEMENTED();
-  return AsanChunkView(0);
+  uptr alloc_beg = (uptr)allocator.GetBlockBegin((void*)address);
+  return AsanChunkView((AsanChunk *)(alloc_beg + ComputeRZSize(0)
+                                     - kChunkHeaderSize));
 }
 
 void AsanThreadLocalMallocStorage::CommitBack() {
@@ -261,13 +276,13 @@ void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
 }
 
 void *asan_realloc(void *p, uptr size, StackTrace *stack) {
-  if (p == 0) {
+  if (p == 0)
     return Allocate(size, 8, stack);
   if (size == 0) {
     Deallocate(p, stack);
     return 0;
   }
-  UNIMPLEMENTED;
+  UNIMPLEMENTED();
   // return Reallocate((u8*)p, size, stack);
 }
 
