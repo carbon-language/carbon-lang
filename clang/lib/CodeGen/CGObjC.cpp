@@ -772,7 +772,7 @@ static void emitCPPObjectAtomicGetterCall(CodeGenFunction &CGF,
   args.add(RValue::get(AtomicHelperFn), CGF.getContext().VoidPtrTy);
   
   llvm::Value *copyCppAtomicObjectFn = 
-    CGF.CGM.getObjCRuntime().GetCppAtomicObjectGetFunction();
+  CGF.CGM.getObjCRuntime().GetCppAtomicObjectFunction();
   CGF.EmitCall(CGF.getTypes().arrangeFreeFunctionCall(CGF.getContext().VoidTy,
                                                       args,
                                                       FunctionType::ExtInfo(),
@@ -1007,7 +1007,7 @@ static void emitCPPObjectAtomicSetterCall(CodeGenFunction &CGF,
   args.add(RValue::get(AtomicHelperFn), CGF.getContext().VoidPtrTy);
   
   llvm::Value *copyCppAtomicObjectFn = 
-    CGF.CGM.getObjCRuntime().GetCppAtomicObjectSetFunction();
+    CGF.CGM.getObjCRuntime().GetCppAtomicObjectFunction();
   CGF.EmitCall(CGF.getTypes().arrangeFreeFunctionCall(CGF.getContext().VoidTy,
                                                       args,
                                                       FunctionType::ExtInfo(),
@@ -2800,7 +2800,8 @@ void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
 }
 
 static bool hasAtomicCopyHelperAPI(const ObjCRuntime &runtime) {
-  return runtime.hasAtomicCopyHelper();
+  // For now, only NeXT has these APIs.
+  return runtime.isNeXTFamily();
 }
 
 /// GenerateObjCAtomicSetterCopyHelperFunction - Given a c++ object type with

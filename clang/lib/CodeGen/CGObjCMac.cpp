@@ -1223,8 +1223,7 @@ public:
                                                           bool copy);
   virtual llvm::Constant *GetGetStructFunction();
   virtual llvm::Constant *GetSetStructFunction();
-  virtual llvm::Constant *GetCppAtomicObjectGetFunction();
-  virtual llvm::Constant *GetCppAtomicObjectSetFunction();
+  virtual llvm::Constant *GetCppAtomicObjectFunction();
   virtual llvm::Constant *EnumerationMutationFunction();
 
   virtual void EmitTryStmt(CodeGen::CodeGenFunction &CGF,
@@ -1495,10 +1494,7 @@ public:
   virtual llvm::Constant *GetGetStructFunction() {
     return ObjCTypes.getCopyStructFn();
   }
-  virtual llvm::Constant *GetCppAtomicObjectSetFunction() {
-    return ObjCTypes.getCppAtomicObjectFunction();
-  }
-  virtual llvm::Constant *GetCppAtomicObjectGetFunction() {
+  virtual llvm::Constant *GetCppAtomicObjectFunction() {
     return ObjCTypes.getCppAtomicObjectFunction();
   }
   
@@ -3413,10 +3409,7 @@ llvm::Constant *CGObjCMac::GetSetStructFunction() {
   return ObjCTypes.getCopyStructFn();
 }
 
-llvm::Constant *CGObjCMac::GetCppAtomicObjectGetFunction() {
-  return ObjCTypes.getCppAtomicObjectFunction();
-}
-llvm::Constant *CGObjCMac::GetCppAtomicObjectSetFunction() {
+llvm::Constant *CGObjCMac::GetCppAtomicObjectFunction() {
   return ObjCTypes.getCppAtomicObjectFunction();
 }
 
