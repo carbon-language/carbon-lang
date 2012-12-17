@@ -156,6 +156,7 @@ int ThreadCreate(ThreadState *thr, uptr pc, uptr uid, bool detached) {
     thr->clock.release(&tctx->sync);
     StatInc(thr, StatSyncRelease);
     tctx->creation_stack.ObtainCurrent(thr, pc);
+    tctx->creation_tid = thr->tid;
   }
   return tid;
 }

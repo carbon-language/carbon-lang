@@ -180,6 +180,7 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
   rt->pid = tctx->os_id;
   rt->running = (tctx->status == ThreadStatusRunning);
   rt->name = tctx->name ? internal_strdup(tctx->name) : 0;
+  rt->parent_tid = tctx->creation_tid;
   rt->stack = SymbolizeStack(tctx->creation_stack);
 }
 

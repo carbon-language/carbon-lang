@@ -35,6 +35,14 @@ ReportDesc::~ReportDesc() {
 
 #ifndef TSAN_GO
 
+const int kThreadBufSize = 32;
+const char *thread_name(char *buf, int tid) {
+  if (tid == 0)
+    return "main thread";
+  internal_snprintf(buf, kThreadBufSize, "thread T%d", tid);
+  return buf;
+}
+
 static void PrintHeader(ReportType typ) {
   Printf("WARNING: ThreadSanitizer: ");
 
@@ -82,14 +90,12 @@ static void PrintMutexSet(Vector<ReportMopMutex> const& mset) {
 }
 
 static void PrintMop(const ReportMop *mop, bool first) {
-  Printf("  %s of size %d at %p",
+  char thrbuf[kThreadBufSize];
+  Printf("  %s of size %d at %p by %s",
       (first ? (mop->write ? "Write" : "Read")
              : (mop->write ? "Previous write" : "Previous read")),
-      mop->size, (void*)mop->addr);
-  if (mop->tid == 0)
-    Printf(" by main thread");
-  else
-    Printf(" by thread T%d", mop->tid);
+      mop->size, (void*)mop->addr,
+      thread_name(thrbuf, mop->tid));
   PrintMutexSet(mop->mset);
   Printf(":\n");
   PrintStack(mop->stack);
@@ -101,12 +107,9 @@ static void PrintLocation(const ReportLocation *loc) {
                loc->name, loc->size, loc->addr, loc->file, loc->line,
                loc->module, loc->offset);
   } else if (loc->type == ReportLocationHeap) {
-    Printf("  Location is heap block of size %zu at %p allocated",
-        loc->size, loc->addr);
-    if (loc->tid == 0)
-      Printf(" by main thread:\n");
-    else
-      Printf(" by thread T%d:\n", loc->tid);
+    char thrbuf[kThreadBufSize];
+    Printf("  Location is heap block of size %zu at %p allocated by %s:\n",
+        loc->size, loc->addr, thread_name(thrbuf, loc->tid));
     PrintStack(loc->stack);
   } else if (loc->type == ReportLocationStack) {
     Printf("  Location is stack of thread T%d:\n\n", loc->tid);
@@ -128,9 +131,12 @@ static void PrintThread(const ReportThread *rt) {
   Printf("  Thread T%d", rt->id);
   if (rt->name)
     Printf(" '%s'", rt->name);
-  Printf(" (tid=%zu, %s)", rt->pid, rt->running ? "running" : "finished");
+  char thrbuf[kThreadBufSize];
+  Printf(" (tid=%zu, %s) created by %s",
+    rt->pid, rt->running ? "running" : "finished",
+    thread_name(thrbuf, rt->parent_tid));
   if (rt->stack)
-    Printf(" created at:");
+    Printf(" at:");
   Printf("\n");
   PrintStack(rt->stack);
 }

@@ -377,6 +377,7 @@ struct ThreadContext {
   u64 epoch0;
   u64 epoch1;
   StackTrace creation_stack;
+  int creation_tid;
   ThreadDeadInfo *dead_info;
   ThreadContext *dead_next;  // In dead thread list.
   char *name;  // As annotated by user.

@@ -42,6 +42,6 @@ int main() {
 // CHECK:     #1 alloc
 // CHECK:     #2 AllocThread
 // ...
-// CHECK:   Thread T1 (tid={{.*}}, finished) created at:
+// CHECK:   Thread T1 (tid={{.*}}, finished) created by main thread at:
 // CHECK:     #0 pthread_create
 // CHECK:     #1 main

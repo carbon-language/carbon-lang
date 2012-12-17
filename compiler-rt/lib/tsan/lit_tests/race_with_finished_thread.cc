@@ -38,6 +38,6 @@ int main() {
 // CHECK:   Previous write of size 4 at {{.*}} by thread T1:
 // CHECK:     #0 foobar
 // CHECK:     #1 Thread1
-// CHECK:   Thread T1 (tid={{.*}}, finished) created at:
+// CHECK:   Thread T1 (tid={{.*}}, finished) created by main thread at:
 // CHECK:     #0 pthread_create
 // CHECK:     #1 main

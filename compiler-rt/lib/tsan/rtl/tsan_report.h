@@ -78,6 +78,7 @@ struct ReportThread {
   uptr pid;
   bool running;
   char *name;
+  int parent_tid;
   ReportStack *stack;
 };
 

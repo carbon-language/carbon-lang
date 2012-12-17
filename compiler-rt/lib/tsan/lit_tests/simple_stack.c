@@ -56,11 +56,11 @@ int main() {
 // CHECK-NEXT:     #0 foo2{{.*}} {{.*}}simple_stack.c:18{{(:26)?}} ({{.*}})
 // CHECK-NEXT:     #1 bar2{{.*}} {{.*}}simple_stack.c:23{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 Thread2{{.*}} {{.*}}simple_stack.c:33{{(:3)?}} ({{.*}})
-// CHECK:        Thread T1 (tid={{.*}}, running) created at:
+// CHECK:        Thread T1 (tid={{.*}}, running) created by main thread at:
 // CHECK-NEXT:     #0 pthread_create {{.*}} ({{.*}})
 // CHECK-NEXT:     #1 StartThread{{.*}} {{.*}}simple_stack.c:38{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 main{{.*}} {{.*}}simple_stack.c:43{{(:3)?}} ({{.*}})
-// CHECK:        Thread T2 ({{.*}}) created at:
+// CHECK:        Thread T2 ({{.*}}) created by main thread at:
 // CHECK-NEXT:     #0 pthread_create {{.*}} ({{.*}})
 // CHECK-NEXT:     #1 StartThread{{.*}} {{.*}}simple_stack.c:38{{(:3)?}} ({{.*}})
 // CHECK-NEXT:     #2 main{{.*}} {{.*}}simple_stack.c:44{{(:3)?}} ({{.*}})
