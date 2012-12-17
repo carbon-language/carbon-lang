@@ -20,3 +20,5 @@ int PR10013(void) {
   return PR10013_x; // expected-warning{{incompatible pointer to integer conversion}}
 }
 
+static int test1_a[]; // expected-warning {{tentative array definition assumed to have one element}}
+extern int test1_a[];

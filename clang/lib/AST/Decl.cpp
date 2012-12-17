@@ -1220,7 +1220,7 @@ VarDecl::DefinitionKind VarDecl::isThisDeclarationADefinition(
        getStorageClassAsWritten() == SC_PrivateExtern) {
     for (const VarDecl *PrevVar = getPreviousDecl();
          PrevVar; PrevVar = PrevVar->getPreviousDecl()) {
-      if (PrevVar->getLinkage() == InternalLinkage && PrevVar->hasInit())
+      if (PrevVar->getLinkage() == InternalLinkage)
         return DeclarationOnly;
     }
   }
