@@ -76,17 +76,17 @@ static DecodeStatus DecodeBitpOperand(MCInst &Inst, unsigned Val,
                                       uint64_t Address, const void *Decoder);
 
 static DecodeStatus Decode2RInstruction(MCInst &Inst,
-                                        unsigned RegNo,
+                                        unsigned Insn,
                                         uint64_t Address,
                                         const void *Decoder);
 
 static DecodeStatus DecodeR2RInstruction(MCInst &Inst,
-                                         unsigned RegNo,
+                                         unsigned Insn,
                                          uint64_t Address,
                                          const void *Decoder);
 
 static DecodeStatus Decode2RSrcDstInstruction(MCInst &Inst,
-                                              unsigned RegNo,
+                                              unsigned Insn,
                                               uint64_t Address,
                                               const void *Decoder);
 
