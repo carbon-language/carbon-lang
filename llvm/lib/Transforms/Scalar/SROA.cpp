@@ -2807,6 +2807,7 @@ private:
         assert(V->getType() == IntTy &&
                "Wrong type for an alloca wide integer!");
       }
+      V = convertValue(TD, IRB, V, AllocaTy);
     } else {
       // Established these invariants above.
       assert(BeginOffset == NewAllocaBeginOffset);
@@ -2814,13 +2815,13 @@ private:
 
       V = getIntegerSplat(IRB, II.getValue(),
                           TD.getTypeSizeInBits(ScalarTy)/8);
-
       if (VectorType *AllocaVecTy = dyn_cast<VectorType>(AllocaTy))
         V = getVectorSplat(IRB, V, AllocaVecTy->getNumElements());
+
+      V = convertValue(TD, IRB, V, AllocaTy);
     }
 
-    Value *New = IRB.CreateAlignedStore(convertValue(TD, IRB, V, AllocaTy),
-                                        &NewAI, NewAI.getAlignment(),
+    Value *New = IRB.CreateAlignedStore(V, &NewAI, NewAI.getAlignment(),
                                         II.isVolatile());
     (void)New;
     DEBUG(dbgs() << "          to: " << *New << "\n");
