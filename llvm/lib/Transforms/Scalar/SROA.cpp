@@ -2223,6 +2223,34 @@ static Value *insertInteger(const DataLayout &DL, IRBuilder<> &IRB, Value *Old,
   return V;
 }
 
+static Value *extractVector(IRBuilder<> &IRB, Value *V,
+                            unsigned BeginIndex, unsigned EndIndex,
+                            const Twine &Name) {
+  VectorType *VecTy = cast<VectorType>(V->getType());
+  unsigned NumElements = EndIndex - BeginIndex;
+  assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
+
+  if (NumElements == VecTy->getNumElements())
+    return V;
+
+  if (NumElements == 1) {
+    V = IRB.CreateExtractElement(V, IRB.getInt32(BeginIndex),
+                                 Name + ".extract");
+    DEBUG(dbgs() << "     extract: " << *V << "\n");
+    return V;
+  }
+
+  SmallVector<Constant*, 8> Mask;
+  Mask.reserve(NumElements);
+  for (unsigned i = BeginIndex; i != EndIndex; ++i)
+    Mask.push_back(IRB.getInt32(i));
+  V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
+                              ConstantVector::get(Mask),
+                              Name + ".extract");
+  DEBUG(dbgs() << "     shuffle: " << *V << "\n");
+  return V;
+}
+
 namespace {
 /// \brief Visitor to rewrite instructions using a partition of an alloca to
 /// use a new alloca.
@@ -2388,40 +2416,14 @@ private:
       Pass.DeadInsts.insert(I);
   }
 
-  Value *extractVector(IRBuilder<> &IRB,
-                      unsigned BeginIndex, unsigned EndIndex) {
-    unsigned NumElements = EndIndex - BeginIndex;
-    assert(NumElements <= VecTy->getNumElements() && "Too many elements!");
-
-    Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
-                                     getName(".load"));
-
-    if (NumElements == VecTy->getNumElements())
-      return V;
-
-    if (NumElements == 1) {
-      V = IRB.CreateExtractElement(V, IRB.getInt32(BeginIndex),
-                                   getName(".extract"));
-      DEBUG(dbgs() << "     extract: " << *V << "\n");
-      return V;
-    }
-
-    SmallVector<Constant*, 8> Mask;
-    Mask.reserve(NumElements);
-    for (unsigned i = BeginIndex; i != EndIndex; ++i)
-      Mask.push_back(IRB.getInt32(i));
-    V = IRB.CreateShuffleVector(V, UndefValue::get(V->getType()),
-                                ConstantVector::get(Mask),
-                                getName(".extract"));
-    DEBUG(dbgs() << "     shuffle: " << *V << "\n");
-    return V;
-  }
-
   Value *rewriteVectorizedLoadInst(IRBuilder<> &IRB) {
     unsigned BeginIndex = getIndex(BeginOffset);
     unsigned EndIndex = getIndex(EndOffset);
     assert(EndIndex > BeginIndex && "Empty vector!");
-    return extractVector(IRB, BeginIndex, EndIndex);
+
+    Value *V = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                     getName(".load"));
+    return extractVector(IRB, V, BeginIndex, EndIndex, getName(".vec"));
   }
 
   Value *rewriteIntegerLoad(IRBuilder<> &IRB, LoadInst &LI) {
