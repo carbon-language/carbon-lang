@@ -114,8 +114,21 @@ class _FRUSSrcDstBitp<bits<6> opc, dag outs, dag ins, string asmstr,
   let DecoderMethod = "DecodeRUSSrcDstBitpInstruction";
 }
 
-class _FL2R<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _FL2R<bits<10> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<4, outs, ins, asmstr, pattern> {
+  let Inst{31-27} = opc{9-5};
+  let Inst{26-20} = 0b1111110;
+  let Inst{19-16} = opc{4-1};
+
+  let Inst{15-11} = 0b11111;
+  let Inst{4} = opc{0};
+  let DecoderMethod = "DecodeL2RInstruction";
+}
+
+// Same as L2R with last two operands swapped
+class _FLR2R<bits<10> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
+    : _FL2R<opc, outs, ins, asmstr, pattern> {
+  let DecoderMethod = "DecodeLR2RInstruction";
 }
 
 class _F1R<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
