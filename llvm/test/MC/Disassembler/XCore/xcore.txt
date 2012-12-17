@@ -1,6 +1,26 @@
 # RUN: llvm-mc --disassemble %s -triple=xcore-xmos-elf | FileCheck %s
 # CHECK: .section        __TEXT,__text,regular,pure_instructions
 
+# 0r instructions
+
+# CHECK: clre
+0xed 0x07
+
+# CHECK: get r11, id
+0xee 0x17
+
+# CHECK: get r11, ed
+0xfe 0x0f
+
+# CHECK: get r11, et
+0xff 0x0f
+
+# CHECK: ssync
+0xee 0x07
+
+# CHECK: waiteu
+0xec 0x07
+
 # 1r instructions
 
 # CHECK: msync res[r0]

@@ -95,8 +95,11 @@ class _F1R<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{3-0} = a;
 }
 
-class _F0R<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _F0R<bits<10> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<2, outs, ins, asmstr, pattern> {
+  let Inst{15-11} = opc{9-5};
+  let Inst{10-5} = 0b111111;
+  let Inst{4-0} = opc{4-0};
 }
 
 class _L4R<dag outs, dag ins, string asmstr, list<dag> pattern>

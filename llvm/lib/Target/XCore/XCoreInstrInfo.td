@@ -1018,31 +1018,31 @@ def EEU_1r : _F1R<0b000001, (outs), (ins GRRegs:$a),
 // stet, getkep, getksp, setkep, getid, kret, dcall, dret,
 // dentsp, drestsp
 
-def CLRE_0R : _F0R<(outs), (ins), "clre", [(int_xcore_clre)]>;
+def CLRE_0R : _F0R<0b0000001101, (outs), (ins), "clre", [(int_xcore_clre)]>;
 
 let Defs = [R11] in {
-def GETID_0R : _F0R<(outs), (ins),
+def GETID_0R : _F0R<0b0001001110, (outs), (ins),
                     "get r11, id",
                     [(set R11, (int_xcore_getid))]>;
 
-def GETED_0R : _F0R<(outs), (ins),
+def GETED_0R : _F0R<0b0000111110, (outs), (ins),
                     "get r11, ed",
                     [(set R11, (int_xcore_geted))]>;
 
-def GETET_0R : _F0R<(outs), (ins),
+def GETET_0R : _F0R<0b0000111111, (outs), (ins),
                     "get r11, et",
                     [(set R11, (int_xcore_getet))]>;
 }
 
-def SSYNC_0r : _F0R<(outs), (ins),
+def SSYNC_0r : _F0R<0b0000001110, (outs), (ins),
                     "ssync",
                     [(int_xcore_ssync)]>;
 
 let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1,
     hasSideEffects = 1 in
-def WAITEU_0R : _F0R<(outs), (ins),
-                 "waiteu",
-                 [(brind (int_xcore_waitevent))]>;
+def WAITEU_0R : _F0R<0b0000001100, (outs), (ins),
+                     "waiteu",
+                     [(brind (int_xcore_waitevent))]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
