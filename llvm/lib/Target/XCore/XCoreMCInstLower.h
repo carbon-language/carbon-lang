@@ -9,7 +9,6 @@
 
 #ifndef XCOREMCINSTLOWER_H
 #define XCOREMCINSTLOWER_H
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/Support/Compiler.h"
 
