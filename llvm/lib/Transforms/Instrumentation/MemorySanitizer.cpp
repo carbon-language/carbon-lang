@@ -1226,7 +1226,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       handleBswap(I);
       break;
     default:
-      visitInstruction(I); break;
+      visitInstruction(I);
+      break;
     }
   }
 
