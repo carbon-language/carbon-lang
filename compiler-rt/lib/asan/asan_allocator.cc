@@ -188,34 +188,13 @@ static AsanChunk *PtrToChunk(uptr ptr) {
 
 void AsanChunkFifoList::PushList(AsanChunkFifoList *q) {
   CHECK(q->size() > 0);
-  if (last_) {
-    CHECK(first_);
-    CHECK(!last_->next);
-    last_->next = q->first_;
-    last_ = q->last_;
-  } else {
-    CHECK(!first_);
-    last_ = q->last_;
-    first_ = q->first_;
-    CHECK(first_);
-  }
-  CHECK(last_);
-  CHECK(!last_->next);
   size_ += q->size();
+  append_back(q);
   q->clear();
 }
 
 void AsanChunkFifoList::Push(AsanChunk *n) {
-  CHECK(n->next == 0);
-  if (last_) {
-    CHECK(first_);
-    CHECK(!last_->next);
-    last_->next = n;
-    last_ = n;
-  } else {
-    CHECK(!first_);
-    last_ = first_ = n;
-  }
+  push_back(n);
   size_ += n->Size();
 }
 
@@ -224,15 +203,9 @@ void AsanChunkFifoList::Push(AsanChunk *n) {
 // ago. Not sure if we can or want to do anything with this.
 AsanChunk *AsanChunkFifoList::Pop() {
   CHECK(first_);
-  AsanChunk *res = first_;
-  first_ = first_->next;
-  if (first_ == 0)
-    last_ = 0;
-  CHECK(size_ >= res->Size());
+  AsanChunk *res = front();
   size_ -= res->Size();
-  if (last_) {
-    CHECK(!last_->next);
-  }
+  pop_front();
   return res;
 }
 

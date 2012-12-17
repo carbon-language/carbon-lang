@@ -17,6 +17,7 @@
 
 #include "asan_internal.h"
 #include "asan_interceptors.h"
+#include "sanitizer_common/sanitizer_list.h"
 
 // We are in the process of transitioning from the old allocator (version 1)
 // to a new one (version 2). The change is quite intrusive so both allocators
@@ -72,7 +73,8 @@ class AsanChunkView {
 
 AsanChunkView FindHeapChunkByAddress(uptr address);
 
-class AsanChunkFifoList {
+// List of AsanChunks with total size.
+class AsanChunkFifoList: public IntrusiveList<AsanChunk> {
  public:
   explicit AsanChunkFifoList(LinkerInitialized) { }
   AsanChunkFifoList() { clear(); }
@@ -81,12 +83,10 @@ class AsanChunkFifoList {
   AsanChunk *Pop();
   uptr size() { return size_; }
   void clear() {
-    first_ = last_ = 0;
+    IntrusiveList<AsanChunk>::clear();
     size_ = 0;
   }
  private:
-  AsanChunk *first_;
-  AsanChunk *last_;
   uptr size_;
 };
 
