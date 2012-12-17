@@ -184,7 +184,7 @@ class ARMFastISel : public FastISel {
     bool ARMEmitStore(MVT VT, unsigned SrcReg, Address &Addr,
                       unsigned Alignment = 0);
     bool ARMComputeAddress(const Value *Obj, Address &Addr);
-    void ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3);
+    void ARMSimplifyAddress(Address &Addr, MVT VT, bool useAM3);
     bool ARMIsMemCpySmall(uint64_t Len);
     bool ARMTryEmitSmallMemCpy(Address Dest, Address Src, uint64_t Len,
                                unsigned Alignment);
@@ -221,7 +221,7 @@ class ARMFastISel : public FastISel {
     bool isARMNEONPred(const MachineInstr *MI);
     bool DefinesOptionalPredicate(MachineInstr *MI, bool *CPSR);
     const MachineInstrBuilder &AddOptionalDefs(const MachineInstrBuilder &MIB);
-    void AddLoadStoreOperands(EVT VT, Address &Addr,
+    void AddLoadStoreOperands(MVT VT, Address &Addr,
                               const MachineInstrBuilder &MIB,
                               unsigned Flags, bool useAM3);
 };
@@ -899,12 +899,9 @@ bool ARMFastISel::ARMComputeAddress(const Value *Obj, Address &Addr) {
   return Addr.Base.Reg != 0;
 }
 
-void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3) {
-
-  assert(VT.isSimple() && "Non-simple types are invalid here!");
-
+void ARMFastISel::ARMSimplifyAddress(Address &Addr, MVT VT, bool useAM3) {
   bool needsLowering = false;
-  switch (VT.getSimpleVT().SimpleTy) {
+  switch (VT.SimpleTy) {
     default: llvm_unreachable("Unhandled load/store type!");
     case MVT::i1:
     case MVT::i8:
@@ -955,13 +952,12 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3) {
   }
 }
 
-void ARMFastISel::AddLoadStoreOperands(EVT VT, Address &Addr,
+void ARMFastISel::AddLoadStoreOperands(MVT VT, Address &Addr,
                                        const MachineInstrBuilder &MIB,
                                        unsigned Flags, bool useAM3) {
   // addrmode5 output depends on the selection dag addressing dividing the
   // offset by 4 that it then later multiplies. Do this here as well.
-  if (VT.getSimpleVT().SimpleTy == MVT::f32 ||
-      VT.getSimpleVT().SimpleTy == MVT::f64)
+  if (VT.SimpleTy == MVT::f32 || VT.SimpleTy == MVT::f64)
     Addr.Offset /= 4;
 
   // Frame base works a bit differently. Handle it separately.
