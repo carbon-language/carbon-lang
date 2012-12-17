@@ -118,7 +118,8 @@ Driver::Driver () :
     m_editline_reader (),
     m_io_channel_ap (),
     m_option_data (),
-    m_waiting_for_command (false)
+    m_waiting_for_command (false),
+    m_done(false)
 {
     // We want to be able to handle CTRL+D in the terminal to have it terminate
     // certain input
