@@ -12,10 +12,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/StaticAnalyzer/Checkers/CommonBugCategories.h"
-
 #ifndef LLVM_CLANG_SA_LIB_CHECKERS_CLANGSACHECKERS_H
 #define LLVM_CLANG_SA_LIB_CHECKERS_CLANGSACHECKERS_H
+
+#include "clang/StaticAnalyzer/Checkers/CommonBugCategories.h"
 
 namespace clang {
 
