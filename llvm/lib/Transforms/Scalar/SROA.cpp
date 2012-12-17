@@ -2150,7 +2150,7 @@ static bool isIntegerWideningViable(const DataLayout &TD,
           !canConvertValue(TD, ValueTy, AllocaTy))
         return false;
     } else if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(I->U->getUser())) {
-      if (MI->isVolatile())
+      if (MI->isVolatile() || !isa<Constant>(MI->getLength()))
         return false;
       if (MemTransferInst *MTI = dyn_cast<MemTransferInst>(I->U->getUser())) {
         const AllocaPartitioning::MemTransferOffsets &MTO

@@ -1208,3 +1208,18 @@ entry:
   ret i32 %y
 ; CHECK: ret i32
 }
+
+define i32 @PR14601(i32 %x) {
+; Don't try to form a promotable integer alloca when there is a variable length
+; memory intrinsic.
+; CHECK: @PR14601
+
+entry:
+  %a = alloca i32
+; CHECK: alloca
+
+  %a.i8 = bitcast i32* %a to i8*
+  call void @llvm.memset.p0i8.i32(i8* %a.i8, i8 0, i32 %x, i32 1, i1 false)
+  %v = load i32* %a
+  ret i32 %v
+}
