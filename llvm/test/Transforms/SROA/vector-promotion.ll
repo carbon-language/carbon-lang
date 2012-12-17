@@ -281,37 +281,37 @@ entry:
 
 declare void @llvm.memset.p0i32.i32(i32* nocapture, i32, i32, i32, i1) nounwind
 
-define <4 x i32> @test_subvec_memset() {
+define <4 x float> @test_subvec_memset() {
 ; CHECK: @test_subvec_memset
 entry:
-  %a = alloca <4 x i32>
+  %a = alloca <4 x float>
 ; CHECK-NOT: alloca
 
-  %a.gep0 = getelementptr <4 x i32>* %a, i32 0, i32 0
-  %a.cast0 = bitcast i32* %a.gep0 to i8*
+  %a.gep0 = getelementptr <4 x float>* %a, i32 0, i32 0
+  %a.cast0 = bitcast float* %a.gep0 to i8*
   call void @llvm.memset.p0i8.i32(i8* %a.cast0, i8 0, i32 8, i32 0, i1 false)
 ; CHECK-NOT: store
-; CHECK:      %[[insert1:.*]] = shufflevector <4 x i32> <i32 0, i32 0, i32 undef, i32 undef>, <4 x i32> undef, <4 x i32> <i32 0, i32 1, {{.*}}>
+; CHECK:      %[[insert1:.*]] = shufflevector <4 x float> <float 0.000000e+00, float 0.000000e+00, float undef, float undef>, <4 x float> undef, <4 x i32> <i32 0, i32 1, {{.*}}>
 
-  %a.gep1 = getelementptr <4 x i32>* %a, i32 0, i32 1
-  %a.cast1 = bitcast i32* %a.gep1 to i8*
+  %a.gep1 = getelementptr <4 x float>* %a, i32 0, i32 1
+  %a.cast1 = bitcast float* %a.gep1 to i8*
   call void @llvm.memset.p0i8.i32(i8* %a.cast1, i8 1, i32 8, i32 0, i1 false)
-; CHECK-NEXT: %[[insert2:.*]] = shufflevector <4 x i32> <i32 undef, i32 16843009, i32 16843009, i32 undef>, <4 x i32> %[[insert1]], <4 x i32> <i32 4, i32 1, i32 2, {{.*}}>
+; CHECK-NEXT: %[[insert2:.*]] = shufflevector <4 x float> <float undef, float 0x3820202020000000, float 0x3820202020000000, float undef>, <4 x float> %[[insert1]], <4 x i32> <i32 4, i32 1, i32 2, {{.*}}>
 
-  %a.gep2 = getelementptr <4 x i32>* %a, i32 0, i32 2
-  %a.cast2 = bitcast i32* %a.gep2 to i8*
+  %a.gep2 = getelementptr <4 x float>* %a, i32 0, i32 2
+  %a.cast2 = bitcast float* %a.gep2 to i8*
   call void @llvm.memset.p0i8.i32(i8* %a.cast2, i8 3, i32 8, i32 0, i1 false)
-; CHECK-NEXT: %[[insert3:.*]] = shufflevector <4 x i32> <i32 undef, i32 undef, i32 50529027, i32 50529027>, <4 x i32> %[[insert2]], <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+; CHECK-NEXT: %[[insert3:.*]] = shufflevector <4 x float> <float undef, float undef, float 0x3860606060000000, float 0x3860606060000000>, <4 x float> %[[insert2]], <4 x i32> <i32 4, i32 5, i32 2, i32 3>
 
-  %a.gep3 = getelementptr <4 x i32>* %a, i32 0, i32 3
-  %a.cast3 = bitcast i32* %a.gep3 to i8*
+  %a.gep3 = getelementptr <4 x float>* %a, i32 0, i32 3
+  %a.cast3 = bitcast float* %a.gep3 to i8*
   call void @llvm.memset.p0i8.i32(i8* %a.cast3, i8 7, i32 4, i32 0, i1 false)
-; CHECK-NEXT: %[[insert4:.*]] = insertelement <4 x i32> %[[insert3]], i32 117901063, i32 3
+; CHECK-NEXT: %[[insert4:.*]] = insertelement <4 x float> %[[insert3]], float 0x38E0E0E0E0000000, i32 3
 
-  %ret = load <4 x i32>* %a
+  %ret = load <4 x float>* %a
 
-  ret <4 x i32> %ret
-; CHECK-NEXT: ret <4 x i32> %[[insert4]]
+  ret <4 x float> %ret
+; CHECK-NEXT: ret <4 x float> %[[insert4]]
 }
 
 define i32 @PR14212() {

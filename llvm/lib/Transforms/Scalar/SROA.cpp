@@ -2777,13 +2777,9 @@ private:
 
       Value *Splat = getIntegerSplat(IRB, II.getValue(),
                                      TD.getTypeSizeInBits(ElementTy)/8);
-      if (NumElements > 1) {
+      Splat = convertValue(TD, IRB, Splat, ElementTy);
+      if (NumElements > 1)
         Splat = getVectorSplat(IRB, Splat, NumElements);
-
-        Type *SplatVecTy = VectorType::get(ElementTy, NumElements);
-        if (Splat->getType() != SplatVecTy)
-          Splat = convertValue(TD, IRB, Splat, SplatVecTy);
-      }
 
       Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                          getName(".oldload"));
