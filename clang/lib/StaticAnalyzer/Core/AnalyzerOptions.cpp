@@ -133,6 +133,12 @@ unsigned AnalyzerOptions::getGraphTrimInterval() {
   return GraphTrimInterval.getValue();
 }
 
+unsigned AnalyzerOptions::getMaxTimesInlineLarge() {
+  if (!MaxTimesInlineLarge.hasValue())
+    MaxTimesInlineLarge = getOptionAsInteger("max-times-inline-large", 32);
+  return MaxTimesInlineLarge.getValue();
+}
+
 bool AnalyzerOptions::shouldSynthesizeBodies() {
   return getBooleanOption("faux-bodies", true);
 }

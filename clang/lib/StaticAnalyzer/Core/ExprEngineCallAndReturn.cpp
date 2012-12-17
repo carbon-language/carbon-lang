@@ -33,6 +33,9 @@ STATISTIC(NumOfDynamicDispatchPathSplits,
 STATISTIC(NumInlinedCalls,
   "The # of times we inlined a call");
 
+STATISTIC(NumReachedInlineCountMax,
+  "The # of times we reached inline count maximum");
+
 void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Get the entry block in the CFG of the callee.
   const StackFrameContext *calleeCtx = CE.getCalleeContext();
@@ -415,12 +418,12 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   if (getContext().getLangOpts().CPlusPlus) {
     if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
       // Conditionally allow the inlining of template functions.
-      if (!getAnalysisManager().options.mayInlineTemplateFunctions())
+      if (!AMgr.options.mayInlineTemplateFunctions())
         if (FD->getTemplatedKind() != FunctionDecl::TK_NonTemplate)
           return false;
 
       // Conditionally allow the inlining of C++ standard library functions.
-      if (!getAnalysisManager().options.mayInlineCXXStandardLibrary())
+      if (!AMgr.options.mayInlineCXXStandardLibrary())
         if (getContext().getSourceManager().isInSystemHeader(FD->getLocation()))
           if (IsInStdNamespace(FD))
             return false;
@@ -431,6 +434,14 @@ bool ExprEngine::shouldInlineDecl(const Decl *D, ExplodedNode *Pred) {
   // run.  If so, bail out.
   if (!CalleeADC->getAnalysis<RelaxedLiveVariables>())
     return false;
+
+  if (Engine.FunctionSummaries->getNumTimesInlined(D) >
+        AMgr.options.getMaxTimesInlineLarge() &&
+      CalleeCFG->getNumBlockIDs() > 13) {
+    NumReachedInlineCountMax++;
+    return false;
+  }
+  Engine.FunctionSummaries->bumpNumTimesInlined(D);
 
   return true;
 }
