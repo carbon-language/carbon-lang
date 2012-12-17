@@ -23,6 +23,7 @@
 #include <mach/mach_vm.h>
 
 // C++ Includes
+#include <iomanip>
 #include <sstream>
 
 // Other libraries and framework includes
@@ -231,7 +232,7 @@ MachTask::GetMemoryRegionInfo (nub_addr_t addr, DNBRegionInfo *region_info)
 } while (0)
 
 // We should consider moving this into each MacThread.
-static void update_used_time(task_t task, int &num_threads, uint64_t **threads_id, uint64_t **threads_used_usec, struct timeval &current_used_time)
+static void get_threads_profile_data(task_t task, nub_process_t pid, int &num_threads, std::vector<uint64_t> &threads_id, std::vector<const char *> &threads_name, std::vector<uint64_t> &threads_used_usec)
 {
     kern_return_t kr;
     thread_act_array_t threads;
@@ -242,33 +243,40 @@ static void update_used_time(task_t task, int &num_threads, uint64_t **threads_i
         return;
     
     num_threads = tcnt;
-    *threads_id = (uint64_t *)malloc(num_threads * sizeof(uint64_t));
-    *threads_used_usec = (uint64_t *)malloc(num_threads * sizeof(uint64_t));
-
     for (int i = 0; i < tcnt; i++) {
         thread_identifier_info_data_t identifier_info;
         mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
-        kr = thread_info(threads[i], THREAD_IDENTIFIER_INFO, (thread_info_t)&identifier_info, &count);
-        if (kr != KERN_SUCCESS) continue;
-
-        thread_basic_info_data_t basic_info;
-        count = THREAD_BASIC_INFO_COUNT;
-        kr = thread_info(threads[i], THREAD_BASIC_INFO, (thread_info_t)&basic_info, &count);
+        kr = ::thread_info(threads[i], THREAD_IDENTIFIER_INFO, (thread_info_t)&identifier_info, &count);
         if (kr != KERN_SUCCESS) continue;
         
-        if ((basic_info.flags & TH_FLAGS_IDLE) == 0) {
-            (*threads_id)[i] = identifier_info.thread_id;
+        thread_basic_info_data_t basic_info;
+        count = THREAD_BASIC_INFO_COUNT;
+        kr = ::thread_info(threads[i], THREAD_BASIC_INFO, (thread_info_t)&basic_info, &count);
+        if (kr != KERN_SUCCESS) continue;
 
+        if ((basic_info.flags & TH_FLAGS_IDLE) == 0) {
+            threads_id.push_back(identifier_info.thread_id);
+            
+            if (identifier_info.thread_handle != 0) {
+                struct proc_threadinfo proc_threadinfo;
+                int len = ::proc_pidinfo(pid, PROC_PIDTHREADINFO, identifier_info.thread_handle, &proc_threadinfo, PROC_PIDTHREADINFO_SIZE);
+                if (len && proc_threadinfo.pth_name[0]) {
+                    threads_name.push_back(proc_threadinfo.pth_name);
+                }
+                else {
+                    threads_name.push_back("");
+                }
+            }
+            else {
+                threads_name.push_back("");
+            }
             struct timeval tv;
             struct timeval thread_tv;
-            TIME_VALUE_TO_TIMEVAL(&basic_info.user_time, &tv);
             TIME_VALUE_TO_TIMEVAL(&basic_info.user_time, &thread_tv);
-            timeradd(&current_used_time, &tv, &current_used_time);
             TIME_VALUE_TO_TIMEVAL(&basic_info.system_time, &tv);
             timeradd(&thread_tv, &tv, &thread_tv);
-            timeradd(&current_used_time, &tv, &current_used_time);
             uint64_t used_usec = thread_tv.tv_sec * 1000000ULL + thread_tv.tv_usec;
-            (*threads_used_usec)[i] = used_usec;
+            threads_used_usec.push_back(used_usec);
         }
         
         kr = mach_port_deallocate(mach_task_self(), threads[i]);
@@ -276,6 +284,8 @@ static void update_used_time(task_t task, int &num_threads, uint64_t **threads_i
     kr = mach_vm_deallocate(mach_task_self(), (mach_vm_address_t)(uintptr_t)threads, tcnt * sizeof(*threads));
 }
 
+#define RAW_HEXBASE     std::setfill('0') << std::hex << std::right
+#define RAWHEX8(x)      RAW_HEXBASE << std::setw(2) << ((uint32_t)((uint8_t)x))
 std::string
 MachTask::GetProfileData ()
 {
@@ -294,9 +304,10 @@ MachTask::GetProfileData ()
     uint64_t elapsed_usec = 0;
     uint64_t task_used_usec = 0;
     int num_threads = 0;
-    uint64_t *threads_used_usec = NULL;
-    uint64_t *threads_id = NULL;
-
+    std::vector<uint64_t> threads_id;
+    std::vector<const char *> threads_name;
+    std::vector<uint64_t> threads_used_usec;
+    
     // Get current used time.
     struct timeval current_used_time;
     struct timeval tv;
@@ -304,7 +315,7 @@ MachTask::GetProfileData ()
     TIME_VALUE_TO_TIMEVAL(&task_info.system_time, &tv);
     timeradd(&current_used_time, &tv, &current_used_time);
     task_used_usec = current_used_time.tv_sec * 1000000ULL + current_used_time.tv_usec;
-    update_used_time(task, num_threads, &threads_id, &threads_used_usec, current_used_time);
+    get_threads_profile_data(task, m_process->ProcessID(), num_threads, threads_id, threads_name, threads_used_usec);
     
     struct timeval current_elapsed_time;
     int res = gettimeofday(&current_elapsed_time, NULL);
@@ -327,9 +338,20 @@ MachTask::GetProfileData ()
         profile_data_stream << "elapsed_usec:" << elapsed_usec << ';';
         profile_data_stream << "task_used_usec:" << task_used_usec << ';';
         
-        profile_data_stream << "threads_info:" << num_threads;
+        profile_data_stream << "threads_used_usec:" << num_threads;
         for (int i=0; i<num_threads; i++) {
             profile_data_stream << ',' << threads_id[i];
+            
+            profile_data_stream << ',';
+//            // Make sure that thread name doesn't interfere with our delimiter.
+//            const uint8_t *ubuf8 = (const uint8_t *)(threads_name[i].c_str());
+//            int len = threads_name[i].size();
+//            for (int i=0; i<len; i++)
+//            {
+//                profile_data_stream << RAWHEX8(ubuf8[i]);
+//            }
+            profile_data_stream << threads_name[i];
+            
             profile_data_stream << ',' << threads_used_usec[i];
         }
         profile_data_stream << ';';
@@ -351,9 +373,6 @@ MachTask::GetProfileData ()
         
         result = profile_data_stream.str();
     }
-    
-    free(threads_id);
-    free(threads_used_usec);
     
     return result;
 }
