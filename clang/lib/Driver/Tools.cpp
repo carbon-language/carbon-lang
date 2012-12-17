@@ -1611,6 +1611,20 @@ static bool shouldUseFramePointer(const ArgList &Args,
   return true;
 }
 
+/// If the PWD environment variable is set, add a CC1 option to specify the
+/// debug compilation directory.
+static void addDebugCompDirArg(const ArgList &Args, ArgStringList &CmdArgs) {
+  if (const char *pwd = ::getenv("PWD")) {
+    // GCC also verifies that stat(pwd) and stat(".") have the same inode
+    // number. Not doing those because stats are slow, but we could.
+    if (llvm::sys::path::is_absolute(pwd)) {
+      std::string CompDir = pwd;
+      CmdArgs.push_back("-fdebug-compilation-dir");
+      CmdArgs.push_back(Args.MakeArgString(CompDir));
+    }
+  }
+}
+
 void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                          const InputInfo &Output,
                          const InputInfoList &Inputs,
@@ -2362,15 +2376,8 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   if (ShouldDisableDwarfDirectory(Args, getToolChain()))
     CmdArgs.push_back("-fno-dwarf-directory-asm");
 
-  if (const char *pwd = ::getenv("PWD")) {
-    // GCC also verifies that stat(pwd) and stat(".") have the same inode
-    // number. Not doing those because stats are slow, but we could.
-    if (llvm::sys::path::is_absolute(pwd)) {
-      std::string CompDir = pwd;
-      CmdArgs.push_back("-fdebug-compilation-dir");
-      CmdArgs.push_back(Args.MakeArgString(CompDir));
-    }
-  }
+  // Add in -fdebug-compilation-dir if necessary.
+  addDebugCompDirArg(Args, CmdArgs);
 
   if (Arg *A = Args.getLastArg(options::OPT_ftemplate_depth_,
                                options::OPT_ftemplate_depth_EQ)) {
@@ -3295,13 +3302,17 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
     SourceAction = SourceAction->getInputs()[0];
   }
 
-  // Forward -g, assuming we are dealing with an actual assembly file.
+  // Forward -g and handle debug info related flags, assuming we are dealing
+  // with an actual assembly file.
   if (SourceAction->getType() == types::TY_Asm ||
       SourceAction->getType() == types::TY_PP_Asm) {
     Args.ClaimAllArgs(options::OPT_g_Group);
     if (Arg *A = Args.getLastArg(options::OPT_g_Group))
       if (!A->getOption().matches(options::OPT_g0))
         CmdArgs.push_back("-g");
+
+    // Add the -fdebug-compilation-dir flag if needed.
+    addDebugCompDirArg(Args, CmdArgs);
   }
 
   // Optionally embed the -cc1as level arguments into the debug info, for build
