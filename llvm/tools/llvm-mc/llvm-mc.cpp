@@ -157,6 +157,10 @@ static cl::opt<bool>
 GenDwarfForAssembly("g", cl::desc("Generate dwarf debugging info for assembly "
                                   "source files"));
 
+static cl::opt<std::string>
+DebugCompilationDir("fdebug-compilation-dir",
+                    cl::desc("Specifies the debug info's compilation dir"));
+
 enum ActionType {
   AC_AsLex,
   AC_Assemble,
@@ -389,8 +393,10 @@ int main(int argc, char **argv) {
     Ctx.setAllowTemporaryLabels(false);
 
   Ctx.setGenDwarfForAssembly(GenDwarfForAssembly);
-  if (!DwarfDebugFlags.empty()) 
+  if (!DwarfDebugFlags.empty())
     Ctx.setDwarfDebugFlags(StringRef(DwarfDebugFlags));
+  if (!DebugCompilationDir.empty())
+    Ctx.setCompilationDir(DebugCompilationDir);
 
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;

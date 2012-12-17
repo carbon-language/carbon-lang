@@ -35,7 +35,8 @@ MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
                      bool DoAutoReset ) :
   SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi),
   Allocator(), Symbols(Allocator), UsedNames(Allocator),
-  NextUniqueID(0), 
+  NextUniqueID(0),
+  CompilationDir(llvm::sys::Path::GetCurrentDirectory().str()),
   CurrentDwarfLoc(0,0,0,DWARF2_FLAG_IS_STMT,0,0), 
   DwarfLocSeen(false), GenDwarfForAssembly(false), GenDwarfFileNumber(0),
   AllowTemporaryLabels(true), AutoReset(DoAutoReset) {

@@ -627,8 +627,7 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
   // AT_comp_dir, the working directory the assembly was done in.
-  llvm::sys::Path CWD = llvm::sys::Path::GetCurrentDirectory();
-  MCOS->EmitBytes(StringRef(CWD.c_str()), 0);
+  MCOS->EmitBytes(context.getCompilationDir(), 0);
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
   // AT_APPLE_flags, the command line arguments of the assembler tool.
