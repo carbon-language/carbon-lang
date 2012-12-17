@@ -26,6 +26,14 @@ define i32 @t3(i32 %x) nounwind  {
 ; CHECK: tzcntl
 }
 
+define i32 @tzcnt32_load(i32* %x) nounwind  {
+  %x1 = load i32* %x
+  %tmp = tail call i32 @llvm.cttz.i32(i32 %x1, i1 false )
+  ret i32 %tmp
+; CHECK: tzcnt32_load:
+; CHECK: tzcntl ({{.*}})
+}
+
 define i64 @t4(i64 %x) nounwind  {
   %tmp = tail call i64 @llvm.cttz.i64( i64 %x, i1 false )
   ret i64 %tmp
@@ -69,6 +77,15 @@ define i32 @andn32(i32 %x, i32 %y) nounwind readnone {
 ; CHECK: andnl
 }
 
+define i32 @andn32_load(i32 %x, i32* %y) nounwind readnone {
+  %y1 = load i32* %y
+  %tmp1 = xor i32 %x, -1
+  %tmp2 = and i32 %y1, %tmp1
+  ret i32 %tmp2
+; CHECK: andn32_load:
+; CHECK: andnl ({{.*}})
+}
+
 define i64 @andn64(i64 %x, i64 %y) nounwind readnone {
   %tmp1 = xor i64 %x, -1
   %tmp2 = and i64 %tmp1, %y
@@ -82,6 +99,14 @@ define i32 @bextr32(i32 %x, i32 %y) nounwind readnone {
   ret i32 %tmp
 ; CHECK: bextr32:
 ; CHECK: bextrl
+}
+
+define i32 @bextr32_load(i32* %x, i32 %y) nounwind readnone {
+  %x1 = load i32* %x
+  %tmp = tail call i32 @llvm.x86.bmi.bextr.32(i32 %x1, i32 %y)
+  ret i32 %tmp
+; CHECK: bextr32_load:
+; CHECK: bextrl {{.*}}, ({{.*}}), {{.*}}
 }
 
 declare i32 @llvm.x86.bmi.bextr.32(i32, i32) nounwind readnone
@@ -100,6 +125,14 @@ define i32 @bzhi32(i32 %x, i32 %y) nounwind readnone {
   ret i32 %tmp
 ; CHECK: bzhi32:
 ; CHECK: bzhil
+}
+
+define i32 @bzhi32_load(i32* %x, i32 %y) nounwind readnone {
+  %x1 = load i32* %x
+  %tmp = tail call i32 @llvm.x86.bmi.bzhi.32(i32 %x1, i32 %y)
+  ret i32 %tmp
+; CHECK: bzhi32_load:
+; CHECK: bzhil {{.*}}, ({{.*}}), {{.*}}
 }
 
 declare i32 @llvm.x86.bmi.bzhi.32(i32, i32) nounwind readnone
@@ -121,6 +154,15 @@ define i32 @blsi32(i32 %x) nounwind readnone {
 ; CHECK: blsil
 }
 
+define i32 @blsi32_load(i32* %x) nounwind readnone {
+  %x1 = load i32* %x
+  %tmp = sub i32 0, %x1
+  %tmp2 = and i32 %x1, %tmp
+  ret i32 %tmp2
+; CHECK: blsi32_load:
+; CHECK: blsil ({{.*}})
+}
+
 define i64 @blsi64(i64 %x) nounwind readnone {
   %tmp = sub i64 0, %x
   %tmp2 = and i64 %tmp, %x
@@ -135,6 +177,15 @@ define i32 @blsmsk32(i32 %x) nounwind readnone {
   ret i32 %tmp2
 ; CHECK: blsmsk32:
 ; CHECK: blsmskl
+}
+
+define i32 @blsmsk32_load(i32* %x) nounwind readnone {
+  %x1 = load i32* %x
+  %tmp = sub i32 %x1, 1
+  %tmp2 = xor i32 %x1, %tmp
+  ret i32 %tmp2
+; CHECK: blsmsk32_load:
+; CHECK: blsmskl ({{.*}})
 }
 
 define i64 @blsmsk64(i64 %x) nounwind readnone {
@@ -153,6 +204,15 @@ define i32 @blsr32(i32 %x) nounwind readnone {
 ; CHECK: blsrl
 }
 
+define i32 @blsr32_load(i32* %x) nounwind readnone {
+  %x1 = load i32* %x
+  %tmp = sub i32 %x1, 1
+  %tmp2 = and i32 %x1, %tmp
+  ret i32 %tmp2
+; CHECK: blsr32_load:
+; CHECK: blsrl ({{.*}})
+}
+
 define i64 @blsr64(i64 %x) nounwind readnone {
   %tmp = sub i64 %x, 1
   %tmp2 = and i64 %tmp, %x
@@ -166,6 +226,14 @@ define i32 @pdep32(i32 %x, i32 %y) nounwind readnone {
   ret i32 %tmp
 ; CHECK: pdep32:
 ; CHECK: pdepl
+}
+
+define i32 @pdep32_load(i32 %x, i32* %y) nounwind readnone {
+  %y1 = load i32* %y
+  %tmp = tail call i32 @llvm.x86.bmi.pdep.32(i32 %x, i32 %y1)
+  ret i32 %tmp
+; CHECK: pdep32_load:
+; CHECK: pdepl ({{.*}})
 }
 
 declare i32 @llvm.x86.bmi.pdep.32(i32, i32) nounwind readnone
@@ -184,6 +252,14 @@ define i32 @pext32(i32 %x, i32 %y) nounwind readnone {
   ret i32 %tmp
 ; CHECK: pext32:
 ; CHECK: pextl
+}
+
+define i32 @pext32_load(i32 %x, i32* %y) nounwind readnone {
+  %y1 = load i32* %y
+  %tmp = tail call i32 @llvm.x86.bmi.pext.32(i32 %x, i32 %y1)
+  ret i32 %tmp
+; CHECK: pext32_load:
+; CHECK: pextl ({{.*}})
 }
 
 declare i32 @llvm.x86.bmi.pext.32(i32, i32) nounwind readnone
