@@ -202,7 +202,7 @@ TEST(YAMLIO, TestReadBuiltInTypes) {
   EXPECT_FALSE(yin.error());
   EXPECT_TRUE(map.str.equals("hello there"));
   EXPECT_EQ(map.u64, 5000000000ULL);
-  EXPECT_EQ(map.u32, 4000000000);
+  EXPECT_EQ(map.u32, 4000000000U);
   EXPECT_EQ(map.u16, 65000);
   EXPECT_EQ(map.u8,  255);
   EXPECT_EQ(map.b,   false);
@@ -227,12 +227,12 @@ TEST(YAMLIO, TestReadWriteBuiltInTypes) {
   {
     BuiltInTypes map;
     map.str = "one two";
-    map.u64 = 6000000000;
-    map.u32 = 3000000000;
+    map.u64 = 6000000000ULL;
+    map.u32 = 3000000000U;
     map.u16 = 50000;
     map.u8  = 254;
     map.b   = true;
-    map.s64 = -6000000000;
+    map.s64 = -6000000000LL;
     map.s32 = -2000000000;
     map.s16 = -32000;
     map.s8  = -128;
@@ -240,7 +240,7 @@ TEST(YAMLIO, TestReadWriteBuiltInTypes) {
     map.d   = -2.8625;
     map.h8  = 254;
     map.h16 = 50000;
-    map.h32 = 3000000000;
+    map.h32 = 3000000000U;
     map.h64 = 6000000000LL;
 
     llvm::raw_string_ostream ostr(intermediate);
@@ -256,7 +256,7 @@ TEST(YAMLIO, TestReadWriteBuiltInTypes) {
     EXPECT_FALSE(yin.error());
     EXPECT_TRUE(map.str.equals("one two"));
     EXPECT_EQ(map.u64,      6000000000ULL);
-    EXPECT_EQ(map.u32,      3000000000UL);
+    EXPECT_EQ(map.u32,      3000000000U);
     EXPECT_EQ(map.u16,      50000);
     EXPECT_EQ(map.u8,       254);
     EXPECT_EQ(map.b,        true);
@@ -268,7 +268,7 @@ TEST(YAMLIO, TestReadWriteBuiltInTypes) {
     EXPECT_EQ(map.d,        -2.8625);
     EXPECT_EQ(map.h8,       Hex8(254));
     EXPECT_EQ(map.h16,      Hex16(50000));
-    EXPECT_EQ(map.h32,      Hex32(3000000000));
+    EXPECT_EQ(map.h32,      Hex32(3000000000U));
     EXPECT_EQ(map.h64,      Hex64(6000000000LL));
   }
 }
