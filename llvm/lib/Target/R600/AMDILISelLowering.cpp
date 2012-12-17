@@ -217,7 +217,6 @@ void AMDGPUTargetLowering::InitAMDILLowering() {
 
   setSchedulingPreference(Sched::RegPressure);
   setPow2DivIsCheap(false);
-  setPrefLoopAlignment(16);
   setSelectIsExpensive(true);
   setJumpIsExpensive(true);
 
