@@ -232,7 +232,7 @@ MachTask::GetMemoryRegionInfo (nub_addr_t addr, DNBRegionInfo *region_info)
 } while (0)
 
 // We should consider moving this into each MacThread.
-static void get_threads_profile_data(task_t task, nub_process_t pid, int &num_threads, std::vector<uint64_t> &threads_id, std::vector<const char *> &threads_name, std::vector<uint64_t> &threads_used_usec)
+static void get_threads_profile_data(task_t task, nub_process_t pid, int &num_threads, std::vector<uint64_t> &threads_id, std::vector<std::string> &threads_name, std::vector<uint64_t> &threads_used_usec)
 {
     kern_return_t kr;
     thread_act_array_t threads;
@@ -285,7 +285,7 @@ static void get_threads_profile_data(task_t task, nub_process_t pid, int &num_th
 }
 
 #define RAW_HEXBASE     std::setfill('0') << std::hex << std::right
-#define RAWHEX8(x)      RAW_HEXBASE << std::setw(2) << ((uint32_t)((uint8_t)x))
+#define DECIMAL         std::dec << std::setfill(' ')
 std::string
 MachTask::GetProfileData ()
 {
@@ -305,7 +305,7 @@ MachTask::GetProfileData ()
     uint64_t task_used_usec = 0;
     int num_threads = 0;
     std::vector<uint64_t> threads_id;
-    std::vector<const char *> threads_name;
+    std::vector<std::string> threads_name;
     std::vector<uint64_t> threads_used_usec;
     
     // Get current used time.
@@ -343,14 +343,19 @@ MachTask::GetProfileData ()
             profile_data_stream << ',' << threads_id[i];
             
             profile_data_stream << ',';
-//            // Make sure that thread name doesn't interfere with our delimiter.
-//            const uint8_t *ubuf8 = (const uint8_t *)(threads_name[i].c_str());
-//            int len = threads_name[i].size();
-//            for (int i=0; i<len; i++)
-//            {
-//                profile_data_stream << RAWHEX8(ubuf8[i]);
-//            }
-            profile_data_stream << threads_name[i];
+            int len = threads_name[i].size();
+            if (len) {
+                const char *thread_name = threads_name[i].c_str();
+                // Make sure that thread name doesn't interfere with our delimiter.
+                profile_data_stream << RAW_HEXBASE << std::setw(2);
+                const uint8_t *ubuf8 = (const uint8_t *)(thread_name);
+                for (int i=0; i<len; i++)
+                {
+                    profile_data_stream << (uint32_t)(ubuf8[i]);
+                }
+                // Reset back to DECIMAL.
+                profile_data_stream << DECIMAL;
+            }
             
             profile_data_stream << ',' << threads_used_usec[i];
         }
