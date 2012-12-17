@@ -2804,6 +2804,9 @@ PPC64_SVR4_ABIInfo::classifyReturnType(QualType RetTy) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
+  if (RetTy->isAnyComplexType())
+    return ABIArgInfo::getDirect();
+
   if (isAggregateTypeForABI(RetTy))
     return ABIArgInfo::getIndirect(0);
 
