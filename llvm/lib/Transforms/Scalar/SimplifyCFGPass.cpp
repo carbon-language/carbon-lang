@@ -111,12 +111,10 @@ static bool markAliveBlocks(BasicBlock *BB,
 
   SmallVector<BasicBlock*, 128> Worklist;
   Worklist.push_back(BB);
+  Reachable.insert(BB);
   bool Changed = false;
   do {
     BB = Worklist.pop_back_val();
-
-    if (!Reachable.insert(BB))
-      continue;
 
     // Do a quick scan of the basic block, turning any obviously unreachable
     // instructions into LLVM unreachable insts.  The instruction combining pass
@@ -176,7 +174,8 @@ static bool markAliveBlocks(BasicBlock *BB,
 
     Changed |= ConstantFoldTerminator(BB, true);
     for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
-      Worklist.push_back(*SI);
+      if (Reachable.insert(*SI))
+        Worklist.push_back(*SI);
   } while (!Worklist.empty());
   return Changed;
 }
