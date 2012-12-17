@@ -6,9 +6,10 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file is part of the XCore Disassembler.
-//
+///
+/// \file
+/// \brief This file is part of the XCore Disassembler.
+///
 //===----------------------------------------------------------------------===//
 
 #include "XCore.h"
@@ -26,16 +27,14 @@ typedef MCDisassembler::DecodeStatus DecodeStatus;
 
 namespace {
 
-/// XCoreDisassembler - a disasembler class for XCore.
+/// \brief A disassembler class for XCore.
 class XCoreDisassembler : public MCDisassembler {
   const MCRegisterInfo *RegInfo;
 public:
-  /// Constructor     - Initializes the disassembler.
-  ///
   XCoreDisassembler(const MCSubtargetInfo &STI, const MCRegisterInfo *Info) :
     MCDisassembler(STI), RegInfo(Info) {}
 
-  /// getInstruction - See MCDisassembler.
+  /// \brief See MCDisassembler.
   virtual DecodeStatus getInstruction(MCInst &instr,
                                       uint64_t &size,
                                       const MemoryObject &region,

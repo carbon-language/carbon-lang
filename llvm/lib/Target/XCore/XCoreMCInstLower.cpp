@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file contains code to lower XCore MachineInstrs to their corresponding
-// MCInst records.
-//
+///
+/// \file
+/// \brief This file contains code to lower XCore MachineInstrs to their
+/// corresponding MCInst records.
+///
 //===----------------------------------------------------------------------===//
 #include "XCoreMCInstLower.h"
 #include "llvm/CodeGen/AsmPrinter.h"

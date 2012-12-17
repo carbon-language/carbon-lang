@@ -6,9 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This class prints a XCore MCInst to a .s file.
-//
+///
+/// \file
+/// \brief This file contains the declaration of the XCoreInstPrinter class,
+/// which is used to print XCore MCInst to a .s file.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef XCOREINSTPRINTER_H
