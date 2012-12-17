@@ -2900,37 +2900,22 @@ private:
     // Record this instruction for deletion.
     Pass.DeadInsts.insert(&II);
 
-    bool IsWholeAlloca = BeginOffset == NewAllocaBeginOffset &&
-                         EndOffset == NewAllocaEndOffset;
-    bool IsVectorElement = VecTy && !IsWholeAlloca;
-    uint64_t Size = EndOffset - BeginOffset;
-    IntegerType *SubIntTy
-      = IntTy ? Type::getIntNTy(IntTy->getContext(), Size*8) : 0;
-
-    Type *OtherPtrTy = IsDest ? II.getRawSource()->getType()
-                              : II.getRawDest()->getType();
-    if (!EmitMemCpy) {
-      if (IsVectorElement)
-        OtherPtrTy = VecTy->getElementType()->getPointerTo();
-      else if (IntTy && !IsWholeAlloca)
-        OtherPtrTy = SubIntTy->getPointerTo();
-      else
-        OtherPtrTy = NewAI.getType();
-    }
-
-    // Compute the other pointer, folding as much as possible to produce
-    // a single, simple GEP in most cases.
-    Value *OtherPtr = IsDest ? II.getRawSource() : II.getRawDest();
-    OtherPtr = getAdjustedPtr(IRB, TD, OtherPtr, RelOffset, OtherPtrTy,
-                              getName("." + OtherPtr->getName()));
-
     // Strip all inbounds GEPs and pointer casts to try to dig out any root
     // alloca that should be re-examined after rewriting this instruction.
+    Value *OtherPtr = IsDest ? II.getRawSource() : II.getRawDest();
     if (AllocaInst *AI
           = dyn_cast<AllocaInst>(OtherPtr->stripInBoundsOffsets()))
       Pass.Worklist.insert(AI);
 
     if (EmitMemCpy) {
+      Type *OtherPtrTy = IsDest ? II.getRawSource()->getType()
+                                : II.getRawDest()->getType();
+
+      // Compute the other pointer, folding as much as possible to produce
+      // a single, simple GEP in most cases.
+      OtherPtr = getAdjustedPtr(IRB, TD, OtherPtr, RelOffset, OtherPtrTy,
+                                getName("." + OtherPtr->getName()));
+
       Value *OurPtr
         = getAdjustedAllocaPtr(IRB, IsDest ? II.getRawDest()->getType()
                                            : II.getRawSource()->getType());
@@ -2951,18 +2936,38 @@ private:
     if (!Align)
       Align = 1;
 
-    Value *SrcPtr = OtherPtr;
+    bool IsWholeAlloca = BeginOffset == NewAllocaBeginOffset &&
+                         EndOffset == NewAllocaEndOffset;
+    uint64_t Size = EndOffset - BeginOffset;
+    unsigned BeginIndex = VecTy ? getIndex(BeginOffset) : 0;
+    unsigned EndIndex = VecTy ? getIndex(EndOffset) : 0;
+    unsigned NumElements = EndIndex - BeginIndex;
+    IntegerType *SubIntTy
+      = IntTy ? Type::getIntNTy(IntTy->getContext(), Size*8) : 0;
+
+    Type *OtherPtrTy = NewAI.getType();
+    if (VecTy && !IsWholeAlloca) {
+      if (NumElements == 1)
+        OtherPtrTy = VecTy->getElementType();
+      else
+        OtherPtrTy = VectorType::get(VecTy->getElementType(), NumElements);
+
+      OtherPtrTy = OtherPtrTy->getPointerTo();
+    } else if (IntTy && !IsWholeAlloca) {
+      OtherPtrTy = SubIntTy->getPointerTo();
+    }
+
+    Value *SrcPtr = getAdjustedPtr(IRB, TD, OtherPtr, RelOffset, OtherPtrTy,
+                                   getName("." + OtherPtr->getName()));
     Value *DstPtr = &NewAI;
     if (!IsDest)
       std::swap(SrcPtr, DstPtr);
 
     Value *Src;
-    if (IsVectorElement && !IsDest) {
-      // We have to extract rather than load.
-      Src = IRB.CreateExtractElement(
-        IRB.CreateAlignedLoad(SrcPtr, Align, getName(".copyload")),
-        IRB.getInt32(getIndex(BeginOffset)),
-        getName(".copyextract"));
+    if (VecTy && !IsWholeAlloca && !IsDest) {
+      Src = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                  getName(".load"));
+      Src = extractVector(IRB, Src, BeginIndex, EndIndex, getName(".vec"));
     } else if (IntTy && !IsWholeAlloca && !IsDest) {
       Src = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                   getName(".load"));
@@ -2975,7 +2980,11 @@ private:
                                   getName(".copyload"));
     }
 
-    if (IntTy && !IsWholeAlloca && IsDest) {
+    if (VecTy && !IsWholeAlloca && IsDest) {
+      Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
+                                         getName(".oldload"));
+      Src = insertVector(IRB, Old, Src, BeginIndex, getName(".vec"));
+    } else if (IntTy && !IsWholeAlloca && IsDest) {
       Value *Old = IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(),
                                          getName(".oldload"));
       Old = convertValue(TD, IRB, Old, IntTy);
@@ -2983,14 +2992,6 @@ private:
       uint64_t Offset = BeginOffset - NewAllocaBeginOffset;
       Src = insertInteger(TD, IRB, Old, Src, Offset, getName(".insert"));
       Src = convertValue(TD, IRB, Src, NewAllocaTy);
-    }
-
-    if (IsVectorElement && IsDest) {
-      // We have to insert into a loaded copy before storing.
-      Src = IRB.CreateInsertElement(
-        IRB.CreateAlignedLoad(&NewAI, NewAI.getAlignment(), getName(".load")),
-        Src, IRB.getInt32(getIndex(BeginOffset)),
-        getName(".insert"));
     }
 
     StoreInst *Store = cast<StoreInst>(

@@ -314,6 +314,54 @@ entry:
 ; CHECK-NEXT: ret <4 x float> %[[insert4]]
 }
 
+define <4 x float> @test_subvec_memcpy(i8* %x, i8* %y, i8* %z, i8* %f, i8* %out) {
+; CHECK: @test_subvec_memcpy
+entry:
+  %a = alloca <4 x float>
+; CHECK-NOT: alloca
+
+  %a.gep0 = getelementptr <4 x float>* %a, i32 0, i32 0
+  %a.cast0 = bitcast float* %a.gep0 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a.cast0, i8* %x, i32 8, i32 0, i1 false)
+; CHECK:      %[[xptr:.*]] = bitcast i8* %x to <2 x float>*
+; CHECK-NEXT: %[[x:.*]] = load <2 x float>* %[[xptr]]
+; CHECK-NEXT: %[[expand_x:.*]] = shufflevector <2 x float> %[[x]], <2 x float> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
+; CHECK-NEXT: %[[insert_x:.*]] = shufflevector <4 x float> %[[expand_x]], <4 x float> undef, <4 x i32> <i32 0, i32 1, {{.*}}>
+
+  %a.gep1 = getelementptr <4 x float>* %a, i32 0, i32 1
+  %a.cast1 = bitcast float* %a.gep1 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a.cast1, i8* %y, i32 8, i32 0, i1 false)
+; CHECK-NEXT: %[[yptr:.*]] = bitcast i8* %y to <2 x float>*
+; CHECK-NEXT: %[[y:.*]] = load <2 x float>* %[[yptr]]
+; CHECK-NEXT: %[[expand_y:.*]] = shufflevector <2 x float> %[[y]], <2 x float> undef, <4 x i32> <i32 undef, i32 0, i32 1, i32 undef>
+; CHECK-NEXT: %[[insert_y:.*]] = shufflevector <4 x float> %[[expand_y]], <4 x float> %[[insert_x]], <4 x i32> <i32 4, i32 1, i32 2, {{.*}}>
+
+  %a.gep2 = getelementptr <4 x float>* %a, i32 0, i32 2
+  %a.cast2 = bitcast float* %a.gep2 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a.cast2, i8* %z, i32 8, i32 0, i1 false)
+; CHECK-NEXT: %[[zptr:.*]] = bitcast i8* %z to <2 x float>*
+; CHECK-NEXT: %[[z:.*]] = load <2 x float>* %[[zptr]]
+; CHECK-NEXT: %[[expand_z:.*]] = shufflevector <2 x float> %[[z]], <2 x float> undef, <4 x i32> <i32 undef, i32 undef, i32 0, i32 1>
+; CHECK-NEXT: %[[insert_z:.*]] = shufflevector <4 x float> %[[expand_z]], <4 x float> %[[insert_y]], <4 x i32> <i32 4, i32 5, i32 2, i32 3>
+
+  %a.gep3 = getelementptr <4 x float>* %a, i32 0, i32 3
+  %a.cast3 = bitcast float* %a.gep3 to i8*
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %a.cast3, i8* %f, i32 4, i32 0, i1 false)
+; CHECK-NEXT: %[[fptr:.*]] = bitcast i8* %f to float*
+; CHECK-NEXT: %[[f:.*]] = load float* %[[fptr]]
+; CHECK-NEXT: %[[insert_f:.*]] = insertelement <4 x float> %[[insert_z]], float %[[f]], i32 3
+
+  call void @llvm.memcpy.p0i8.p0i8.i32(i8* %out, i8* %a.cast2, i32 8, i32 0, i1 false)
+; CHECK-NEXT: %[[outptr:.*]] = bitcast i8* %out to <2 x float>*
+; CHECK-NEXT: %[[extract_out:.*]] = shufflevector <4 x float> %[[insert_f]], <4 x float> undef, <2 x i32> <i32 2, i32 3>
+; CHECK-NEXT: store <2 x float> %[[extract_out]], <2 x float>* %[[outptr]]
+
+  %ret = load <4 x float>* %a
+
+  ret <4 x float> %ret
+; CHECK-NEXT: ret <4 x float> %[[insert_f]]
+}
+
 define i32 @PR14212() {
 ; CHECK: @PR14212
 ; This caused a crash when "splitting" the load of the i32 in order to promote
