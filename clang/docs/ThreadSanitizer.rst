@@ -68,6 +68,20 @@ Currently, ThreadSanitizer symbolizes its output using an external
       #0 pthread_create tsan_interceptors.cc:705 (exe+0x00000000c790)
       #1 main tiny_race.c:9 (exe+0x00000000a3a4)
 
+``__has_feature(thread_sanitizer)``
+------------------------------------
+
+In some cases one may need to execute different code depending on whether
+ThreadSanitizer is enabled.
+:ref:`\_\_has\_feature <langext-__has_feature-__has_extension>` can be used for
+this purpose.
+
+.. code-block:: c
+
+    #if defined(__has_feature) && __has_feature(thread_sanitizer)
+    // code that builds only under ThreadSanitizer
+    #endif
+
 Limitations
 -----------
 

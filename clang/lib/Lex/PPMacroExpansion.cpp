@@ -780,6 +780,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_exceptions", LangOpts.Exceptions)
            .Case("cxx_rtti", LangOpts.RTTI)
            .Case("enumerator_attributes", true)
+           .Case("thread_sanitizer", LangOpts.SanitizeThread)
            // Objective-C features
            .Case("objc_arr", LangOpts.ObjCAutoRefCount) // FIXME: REMOVE?
            .Case("objc_arc", LangOpts.ObjCAutoRefCount)
