@@ -2616,8 +2616,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
   // specified at the prior declaration.
   // FIXME. revisit this code.
   if (New->hasExternalStorage() &&
-      Old->getLinkage() == InternalLinkage &&
-      New->getDeclContext() == Old->getDeclContext())
+      Old->getLinkage() == InternalLinkage)
     New->setStorageClass(Old->getStorageClass());
 
   // Merge "used" flag.

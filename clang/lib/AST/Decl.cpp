@@ -786,11 +786,15 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, bool OnlyTemplate) {
     }
 
     if (const VarDecl *Var = dyn_cast<VarDecl>(D))
-      if (Var->getStorageClass() == SC_Extern ||
-          Var->getStorageClass() == SC_PrivateExtern) {
+      if (Var->getStorageClassAsWritten() == SC_Extern ||
+          Var->getStorageClassAsWritten() == SC_PrivateExtern) {
         if (Var->isInAnonymousNamespace() &&
             !Var->getDeclContext()->isExternCContext())
           return LinkageInfo::uniqueExternal();
+
+        // This is an "extern int foo;" which got merged with a file static.
+        if (Var->getStorageClass() == SC_Static)
+          return LinkageInfo::internal();
 
         LinkageInfo LV;
         if (Var->getStorageClass() == SC_PrivateExtern)

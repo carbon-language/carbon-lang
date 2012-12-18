@@ -13,6 +13,12 @@ static int wibble(int);
 
 void ena(int (*dio)(int tria));
 
+static int test2;
+void f16(void) {
+  extern int test2;
+}
+
+
 // CHECK: EnumDecl=Baz:3:6 (Definition)linkage=External
 // CHECK: EnumConstantDecl=Qux:3:12 (Definition)linkage=External
 // CHECK: VarDecl=x:4:5linkage=External
@@ -28,3 +34,5 @@ void ena(int (*dio)(int tria));
 // CHECK: FunctionDecl=ena:14:6linkage=External
 // CHECK: ParmDecl=dio:14:16 (Definition)linkage=NoLinkage
 // CHECK: ParmDecl=tria:14:25 (Definition)linkage=NoLinkage
+// CHECK: VarDecl=test2{{.*}}linkage=Internal
+// CHECK: VarDecl=test2{{.*}}linkage=Internal
