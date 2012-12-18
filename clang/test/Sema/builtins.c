@@ -176,3 +176,18 @@ void test17() {
 #undef T
 #undef F
 }
+
+void test18() {
+  char src[1024];
+  char dst[2048];
+  size_t result;
+  void *ptr;
+
+  ptr = __builtin___memccpy_chk(dst, src, '\037', sizeof(src), sizeof(dst));
+  result = __builtin___strlcpy_chk(dst, src, sizeof(src), sizeof(dst));
+  result = __builtin___strlcat_chk(dst, src, sizeof(src), sizeof(dst));
+
+  ptr = __builtin___memccpy_chk(dst, src, '\037', sizeof(src));      // expected-error {{too few arguments to function call}}
+  ptr = __builtin___strlcpy_chk(dst, src, sizeof(src), sizeof(dst)); // expected-warning {{incompatible integer to pointer conversion}}
+  ptr = __builtin___strlcat_chk(dst, src, sizeof(src), sizeof(dst)); // expected-warning {{incompatible integer to pointer conversion}}
+}
