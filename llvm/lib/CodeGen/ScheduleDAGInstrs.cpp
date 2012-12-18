@@ -765,6 +765,7 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
     assert(SU && "No SUnit mapped to this MI");
 
     // Add register-based dependencies (data, anti, and output).
+    bool HasVRegDef = false;
     for (unsigned j = 0, n = MI->getNumOperands(); j != n; ++j) {
       const MachineOperand &MO = MI->getOperand(j);
       if (!MO.isReg()) continue;
@@ -775,11 +776,25 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
         addPhysRegDeps(SU, j);
       else {
         assert(!IsPostRA && "Virtual register encountered!");
-        if (MO.isDef())
+        if (MO.isDef()) {
+          HasVRegDef = true;
           addVRegDefDeps(SU, j);
+        }
         else if (MO.readsReg()) // ignore undef operands
           addVRegUseDeps(SU, j);
       }
+    }
+    // If we haven't seen any uses in this scheduling region, create a
+    // dependence edge to ExitSU to model the live-out latency. This is required
+    // for vreg defs with no in-region use, and prefetches with no vreg def.
+    //
+    // FIXME: NumDataSuccs would be more precise than NumSuccs here. This
+    // check currently relies on being called before adding chain deps.
+    if (SU->NumSuccs == 0 && SU->Latency > 1
+        && (HasVRegDef || MI->mayLoad())) {
+      SDep Dep(SU, SDep::Artificial);
+      Dep.setLatency(SU->Latency - 1);
+      ExitSU.addPred(Dep);
     }
 
     // Add chain dependencies.
