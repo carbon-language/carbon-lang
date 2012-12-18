@@ -543,7 +543,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   //   [For storage which does not refer to an object within its lifetime]
   //   The program has undefined behavior if:
   //    -- the [pointer or glvalue] is used to access a non-static data member
-  //       or call a non-stastic member function
+  //       or call a non-static member function
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
   if (getLangOpts().SanitizeVptr &&
       (TCK == TCK_MemberAccess || TCK == TCK_MemberCall) &&
