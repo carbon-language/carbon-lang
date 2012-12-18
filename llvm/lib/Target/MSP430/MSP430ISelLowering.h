@@ -116,6 +116,7 @@ namespace llvm {
     /// out to 16 bits.
     virtual bool isZExtFree(Type *Ty1, Type *Ty2) const;
     virtual bool isZExtFree(EVT VT1, EVT VT2) const;
+    virtual bool isZExtFree(SDValue Val, EVT VT2) const;
 
     MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
                                                    MachineBasicBlock *BB) const;

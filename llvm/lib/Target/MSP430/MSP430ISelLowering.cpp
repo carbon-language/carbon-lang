@@ -1063,6 +1063,10 @@ bool MSP430TargetLowering::isZExtFree(EVT VT1, EVT VT2) const {
   return 0 && VT1 == MVT::i8 && VT2 == MVT::i16;
 }
 
+bool MSP430TargetLowering::isZExtFree(SDValue Val, EVT VT2) const {
+  return isZExtFree(Val.getValueType(), VT2);
+}
+
 //===----------------------------------------------------------------------===//
 //  Other Lowering Code
 //===----------------------------------------------------------------------===//
