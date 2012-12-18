@@ -1063,7 +1063,7 @@ protected:
             else
             {
                 result.AppendErrorWithFormat ("Unable to find process plug-in for remote URL '%s'.\nPlease specify a process plug-in name with the --plugin option, or specify an object file using the \"file\" command.\n", 
-                                              m_cmd_name.c_str());
+                                              remote_url);
                 result.SetStatus (eReturnStatusFailed);
             }
         }
