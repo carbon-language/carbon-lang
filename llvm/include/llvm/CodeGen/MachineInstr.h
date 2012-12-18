@@ -200,15 +200,6 @@ public:
     return getFlag(BundledPred);
   }
 
-  /// setIsInsideBundle - Set InsideBundle bit.
-  ///
-  void setIsInsideBundle(bool Val = true) {
-    if (Val)
-      setFlag(BundledPred);
-    else
-      clearFlag(BundledPred);
-  }
-
   /// isBundled - Return true if this instruction part of a bundle. This is true
   /// if either itself or its following instruction is marked "InsideBundle".
   bool isBundled() const {
