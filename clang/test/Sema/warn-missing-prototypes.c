@@ -1,4 +1,5 @@
-// RUN: %clang -Wmissing-prototypes -fsyntax-only -Xclang -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wdocumentation -Wmissing-prototypes -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wdocumentation -Wmissing-prototypes -fdiagnostics-parseable-fixits %s 2>&1 | FileCheck %s
 
 int f();
 
@@ -35,3 +36,8 @@ int f2(int x) { return x; }
 
 // rdar://6759522
 int main(void) { return 0; }
+
+void not_a_prototype_test(); // expected-note{{this declaration is not a prototype; add 'void' to make it a prototype for a zero-parameter function}}
+void not_a_prototype_test() { } // expected-warning{{no previous prototype for function 'not_a_prototype_test'}}
+
+// CHECK: fix-it:"{{.*}}":{40:27-40:27}:"void"
