@@ -92,7 +92,15 @@ static void init(ThreadState *thr, uptr pc, int fd, FdSync *s) {
   // See e.g. libc __res_iclose().
   if (d->sync)
     unref(thr, pc, d->sync);
-  d->sync = s;
+  if (flags()->io_sync == 0) {
+    unref(thr, pc, s);
+    d->sync = 0;
+  } else if (flags()->io_sync == 1) {
+    d->sync = s;
+  } else if (flags()->io_sync == 2) {
+    unref(thr, pc, s);
+    d->sync = &fdctx.globsync;
+  }
   d->creation_tid = thr->tid;
   d->creation_stack = CurrentStackId(thr, pc);
   // To catch races between fd usage and open.
@@ -171,8 +179,9 @@ void FdDup(ThreadState *thr, uptr pc, int oldfd, int newfd) {
 void FdPipeCreate(ThreadState *thr, uptr pc, int rfd, int wfd) {
   DPrintf("#%d: FdCreatePipe(%d, %d)\n", thr->tid, rfd, wfd);
   FdSync *s = allocsync();
-  init(thr, pc, rfd, s);
+  init(thr, pc, rfd, ref(s));
   init(thr, pc, wfd, ref(s));
+  unref(thr, pc, s);
 }
 
 void FdEventCreate(ThreadState *thr, uptr pc, int fd) {

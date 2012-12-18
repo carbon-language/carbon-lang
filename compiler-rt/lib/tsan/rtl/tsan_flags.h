@@ -77,6 +77,11 @@ struct Flags {
   // the amount of memory accesses, up to history_size=7 that amounts to
   // 4M memory accesses.  The default value is 2 (128K memory accesses).
   int history_size;
+  // Controls level of synchronization implied by IO operations.
+  // 0 - no synchronization
+  // 1 - reasonable level of synchronization (write->read)
+  // 2 - global synchronization of all IO operations
+  int io_sync;
 };
 
 Flags *flags();
