@@ -1,10 +1,9 @@
 // RUN: %clang -ccc-cxx -fsanitize=vptr %s -O3 -o %t
 // RUN: %t rT && %t mT && %t fT
 // RUN: %t rU && %t mU && %t fU
-// RUN: %t rS 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE
+// RUN: %t rS && %t rV
 // RUN: %t mS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
 // RUN: %t fS 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
-// RUN: %t rV 2>&1 | FileCheck %s --check-prefix=CHECK-REFERENCE
 // RUN: %t mV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMBER
 // RUN: %t fV 2>&1 | FileCheck %s --check-prefix=CHECK-MEMFUN
 
@@ -64,7 +63,7 @@ int main(int, char **argv) {
 
   switch (argv[1][0]) {
   case 'r':
-    // CHECK-REFERENCE: vptr.cpp:[[@LINE+1]]:13: runtime error: reference binding to address 0x{{[0-9a-f]*}} which does not point to an object of type 'T'
+    // Binding a reference to storage of appropriate size and alignment is OK.
     {T &r = *p;}
     break;
   case 'm':
