@@ -80,6 +80,26 @@ public:
 /// an invalid location or a module location for the caller.
 Location getCallerLocation(uptr CallerLoc = GET_CALLER_PC());
 
+/// A diagnostic severity level.
+enum DiagLevel {
+  DL_Error, ///< An error.
+  DL_Note   ///< A note, attached to a prior diagnostic.
+};
+
+/// \brief Annotation for a range of locations in a diagnostic.
+class Range {
+  Location Start, End;
+  const char *Text;
+
+public:
+  Range() : Start(), End(), Text() {}
+  Range(MemoryLocation Start, MemoryLocation End, const char *Text)
+    : Start(Start), End(End), Text(Text) {}
+  Location getStart() const { return Start; }
+  Location getEnd() const { return End; }
+  const char *getText() const { return Text; }
+};
+
 /// \brief Representation of an in-flight diagnostic.
 ///
 /// Temporary \c Diag instances are created by the handler routines to
@@ -89,10 +109,14 @@ class Diag {
   /// The location at which the problem occurred.
   Location Loc;
 
+  /// The diagnostic level.
+  DiagLevel Level;
+
   /// The message which will be emitted, with %0, %1, ... placeholders for
   /// arguments.
   const char *Message;
 
+public:
   /// Kinds of arguments, corresponding to members of \c Arg's union.
   enum ArgKind {
     AK_String, ///< A string argument, displayed as-is.
@@ -121,15 +145,27 @@ class Diag {
     };
   };
 
+private:
   static const unsigned MaxArgs = 5;
+  static const unsigned MaxRanges = 1;
 
   /// The arguments which have been added to this diagnostic so far.
   Arg Args[MaxArgs];
   unsigned NumArgs;
 
+  /// The ranges which have been added to this diagnostic so far.
+  Range Ranges[MaxRanges];
+  unsigned NumRanges;
+
   Diag &AddArg(Arg A) {
     CHECK(NumArgs != MaxArgs);
     Args[NumArgs++] = A;
+    return *this;
+  }
+
+  Diag &AddRange(Range A) {
+    CHECK(NumRanges != MaxRanges);
+    Ranges[NumRanges++] = A;
     return *this;
   }
 
@@ -138,8 +174,8 @@ class Diag {
   Diag &operator=(const Diag &);
 
 public:
-  Diag(Location Loc, const char *Message)
-    : Loc(Loc), Message(Message), NumArgs(0) {}
+  Diag(Location Loc, DiagLevel Level, const char *Message)
+    : Loc(Loc), Level(Level), Message(Message), NumArgs(0), NumRanges(0) {}
   ~Diag();
 
   Diag &operator<<(const char *Str) { return AddArg(Str); }
@@ -147,6 +183,7 @@ public:
   Diag &operator<<(const void *V) { return AddArg(V); }
   Diag &operator<<(const TypeDescriptor &V);
   Diag &operator<<(const Value &V);
+  Diag &operator<<(const Range &R) { return AddRange(R); }
 };
 
 } // namespace __ubsan

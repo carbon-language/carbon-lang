@@ -27,34 +27,42 @@ namespace __ubsan {
 }
 
 static void HandleDynamicTypeCacheMiss(
-  DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash,
-  bool abort) {
+    DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash,
+    bool Abort) {
   if (checkDynamicType((void*)Pointer, Data->TypeInfo, Hash))
     // Just a cache miss. The type matches after all.
     return;
 
-  Diag(Data->Loc, "%0 address %1 which does not point to an object of type %2")
+  Diag(Data->Loc, DL_Error,
+       "%0 address %1 which does not point to an object of type %2")
     << TypeCheckKinds[Data->TypeCheckKind] << (void*)Pointer << Data->Type;
-  // FIXME: If possible, say what type it actually points to. Produce a note
-  //        pointing out the vptr:
-  // lib/VMCore/Instructions.cpp:2020:10: runtime error: member call on address
-  //       0xb7a4440 which does not point to an object of type
-  //       'llvm::OverflowingBinaryOperator'
-  //   return cast<OverflowingBinaryOperator>(this)->hasNoSignedWrap();
-  //                                               ^
-  // 0xb7a4440: note: object is of type 'llvm::BinaryOperator'
-  //   00 00 00 00  e0 f7 c5 09 00 00 00 00  20 00 00 00
-  //                ^~~~~~~~~~~
-  //                vptr for 'llvm::BinaryOperator'
-  if (abort)
+
+  // If possible, say what type it actually points to.
+  // FIXME: Demangle the type names.
+  DynamicTypeInfo DTI = getDynamicTypeInfo((void*)Pointer);
+  if (!DTI.isValid())
+    Diag(Pointer, DL_Note, "object has invalid vptr")
+      << DTI.getMostDerivedTypeName()
+      << Range(Pointer, Pointer + sizeof(uptr), "invalid vptr");
+  else if (!DTI.getOffset())
+    Diag(Pointer, DL_Note, "object is of type %0")
+      << DTI.getMostDerivedTypeName()
+      << Range(Pointer, Pointer + sizeof(uptr), "vptr for %0");
+  else
+    Diag(Pointer - DTI.getOffset(), DL_Note,
+         "object is base class subobject at offset %0 within object of type %1")
+      << DTI.getOffset() << DTI.getMostDerivedTypeName()
+      << Range(Pointer, Pointer + sizeof(uptr), "vptr for %1");
+
+  if (Abort)
     Die();
 }
 
 void __ubsan::__ubsan_handle_dynamic_type_cache_miss(
-  DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
+    DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
   HandleDynamicTypeCacheMiss(Data, Pointer, Hash, false);
 }
 void __ubsan::__ubsan_handle_dynamic_type_cache_miss_abort(
-  DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
+    DynamicTypeCacheMissData *Data, ValueHandle Pointer, ValueHandle Hash) {
   HandleDynamicTypeCacheMiss(Data, Pointer, Hash, true);
 }

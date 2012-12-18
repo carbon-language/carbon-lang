@@ -25,7 +25,7 @@ namespace std {
   class type_info {
   public:
     virtual ~type_info();
-  private:
+
     const char *__type_name;
   };
 }
@@ -160,8 +160,14 @@ struct VtablePrefix {
   std::type_info *TypeInfo;
 };
 VtablePrefix *getVtablePrefix(void *Object) {
-  VtablePrefix **Ptr = reinterpret_cast<VtablePrefix**>(Object);
-  return *Ptr - 1;
+  VtablePrefix **VptrPtr = reinterpret_cast<VtablePrefix**>(Object);
+  if (!*VptrPtr)
+    return 0;
+  VtablePrefix *Prefix = *VptrPtr - 1;
+  if (Prefix->Offset > 0 || !Prefix->TypeInfo)
+    // This can't possibly be a valid vtable.
+    return 0;
+  return Prefix;
 }
 
 }
@@ -178,8 +184,7 @@ bool __ubsan::checkDynamicType(void *Object, void *Type, HashValue Hash) {
   }
 
   VtablePrefix *Vtable = getVtablePrefix(Object);
-  if (Vtable + 1 == 0 || Vtable->Offset > 0)
-    // This can't possibly be a valid vtable.
+  if (!Vtable)
     return false;
 
   // Check that this is actually a type_info object for a class type.
@@ -196,4 +201,11 @@ bool __ubsan::checkDynamicType(void *Object, void *Type, HashValue Hash) {
   __ubsan_vptr_type_cache[Hash % VptrTypeCacheSize] = Hash;
   *Bucket = Hash;
   return true;
+}
+
+__ubsan::DynamicTypeInfo __ubsan::getDynamicTypeInfo(void *Object) {
+  VtablePrefix *Vtable = getVtablePrefix(Object);
+  if (!Vtable)
+    return DynamicTypeInfo(0, 0);
+  return DynamicTypeInfo(Vtable->TypeInfo->__type_name, -Vtable->Offset);
 }
