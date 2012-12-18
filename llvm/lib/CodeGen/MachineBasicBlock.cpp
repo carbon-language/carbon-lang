@@ -814,6 +814,18 @@ MachineInstr *MachineBasicBlock::remove_instr(MachineInstr *MI) {
   return Insts.remove(MI);
 }
 
+MachineBasicBlock::instr_iterator
+MachineBasicBlock::insert(instr_iterator I, MachineInstr *MI) {
+  assert(!MI->isBundledWithPred() && !MI->isBundledWithSucc() &&
+         "Cannot insert instruction with bundle flags");
+  // Set the bundle flags when inserting inside a bundle.
+  if (I != instr_end() && I->isBundledWithPred()) {
+    MI->setFlag(MachineInstr::BundledPred);
+    MI->setFlag(MachineInstr::BundledSucc);
+  }
+  return Insts.insert(I, MI);
+}
+
 void MachineBasicBlock::splice(MachineBasicBlock::iterator where,
                                MachineBasicBlock *Other,
                                MachineBasicBlock::iterator From) {
