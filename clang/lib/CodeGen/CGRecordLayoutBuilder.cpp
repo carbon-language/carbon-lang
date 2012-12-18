@@ -1088,7 +1088,7 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
              "Storage size does not match the element type size");
     }
     assert(Info.Size > 0 && "Empty bitfield!");
-    assert(Info.Offset + Info.Size <= Info.StorageSize &&
+    assert(static_cast<unsigned>(Info.Offset) + Info.Size <= Info.StorageSize &&
            "Bitfield outside of its allocated storage");
   }
 #endif
