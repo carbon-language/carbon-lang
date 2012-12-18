@@ -17,14 +17,77 @@
 
 namespace __ubsan {
 
+/// \brief A location within a loaded module in the program. These are used when
+/// the location can't be resolved to a SourceLocation.
+class ModuleLocation {
+  const char *ModuleName;
+  uptr Offset;
+
+public:
+  ModuleLocation() : ModuleName(0), Offset(0) {}
+  ModuleLocation(const char *ModuleName, uptr Offset)
+    : ModuleName(ModuleName), Offset(Offset) {}
+  const char *getModuleName() const { return ModuleName; }
+  uptr getOffset() const { return Offset; }
+};
+
+/// A location of some data within the program's address space.
+typedef uptr MemoryLocation;
+
+/// \brief Location at which a diagnostic can be emitted. Either a
+/// SourceLocation, a ModuleLocation, or a MemoryLocation.
+class Location {
+public:
+  enum LocationKind { LK_Null, LK_Source, LK_Module, LK_Memory };
+
+private:
+  LocationKind Kind;
+  // FIXME: In C++11, wrap these in an anonymous union.
+  SourceLocation SourceLoc;
+  ModuleLocation ModuleLoc;
+  MemoryLocation MemoryLoc;
+
+public:
+  Location() : Kind(LK_Null) {}
+  Location(SourceLocation Loc) :
+    Kind(LK_Source), SourceLoc(Loc) {}
+  Location(ModuleLocation Loc) :
+    Kind(LK_Module), ModuleLoc(Loc) {}
+  Location(MemoryLocation Loc) :
+    Kind(LK_Memory), MemoryLoc(Loc) {}
+
+  LocationKind getKind() const { return Kind; }
+
+  bool isSourceLocation() const { return Kind == LK_Source; }
+  bool isModuleLocation() const { return Kind == LK_Module; }
+  bool isMemoryLocation() const { return Kind == LK_Memory; }
+
+  SourceLocation getSourceLocation() const {
+    CHECK(isSourceLocation());
+    return SourceLoc;
+  }
+  ModuleLocation getModuleLocation() const {
+    CHECK(isModuleLocation());
+    return ModuleLoc;
+  }
+  MemoryLocation getMemoryLocation() const {
+    CHECK(isMemoryLocation());
+    return MemoryLoc;
+  }
+};
+
+/// Try to obtain a location for the caller. This might fail, and produce either
+/// an invalid location or a module location for the caller.
+Location getCallerLocation(uptr CallerLoc = GET_CALLER_PC());
+
 /// \brief Representation of an in-flight diagnostic.
 ///
 /// Temporary \c Diag instances are created by the handler routines to
 /// accumulate arguments for a diagnostic. The destructor emits the diagnostic
 /// message.
 class Diag {
-  /// The source location at which the problem occurred.
-  const SourceLocation &Loc;
+  /// The location at which the problem occurred.
+  Location Loc;
 
   /// The message which will be emitted, with %0, %1, ... placeholders for
   /// arguments.
@@ -75,7 +138,7 @@ class Diag {
   Diag &operator=(const Diag &);
 
 public:
-  Diag(const SourceLocation &Loc, const char *Message)
+  Diag(Location Loc, const char *Message)
     : Loc(Loc), Message(Message), NumArgs(0) {}
   ~Diag();
 

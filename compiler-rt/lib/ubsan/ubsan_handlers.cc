@@ -26,24 +26,32 @@ namespace __ubsan {
   };
 }
 
-void __ubsan::__ubsan_handle_type_mismatch(TypeMismatchData *Data,
-                                           ValueHandle Pointer) {
+static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
+                                   Location FallbackLoc) {
+  Location Loc = Data->Loc;
+  if (Data->Loc.isInvalid())
+    Loc = FallbackLoc;
+
   if (!Pointer)
-    Diag(Data->Loc, "%0 null pointer of type %1")
+    Diag(Loc, "%0 null pointer of type %1")
       << TypeCheckKinds[Data->TypeCheckKind] << Data->Type;
   else if (Data->Alignment && (Pointer & (Data->Alignment - 1)))
-    Diag(Data->Loc, "%0 misaligned address %1 for type %3, "
-                    "which requires %2 byte alignment")
+    Diag(Loc, "%0 misaligned address %1 for type %3, "
+              "which requires %2 byte alignment")
       << TypeCheckKinds[Data->TypeCheckKind] << (void*)Pointer
       << Data->Alignment << Data->Type;
   else
-    Diag(Data->Loc, "%0 address %1 with insufficient space "
-                    "for an object of type %2")
+    Diag(Loc, "%0 address %1 with insufficient space "
+              "for an object of type %2")
       << TypeCheckKinds[Data->TypeCheckKind] << (void*)Pointer << Data->Type;
 }
+void __ubsan::__ubsan_handle_type_mismatch(TypeMismatchData *Data,
+                                           ValueHandle Pointer) {
+  handleTypeMismatchImpl(Data, Pointer, getCallerLocation());
+}
 void __ubsan::__ubsan_handle_type_mismatch_abort(TypeMismatchData *Data,
-                                                  ValueHandle Pointer) {
-  __ubsan_handle_type_mismatch(Data, Pointer);
+                                                 ValueHandle Pointer) {
+  handleTypeMismatchImpl(Data, Pointer, getCallerLocation());
   Die();
 }
 
@@ -167,27 +175,32 @@ void __ubsan::__ubsan_handle_vla_bound_not_positive_abort(VLABoundData *Data,
   Die();
 }
 
+
 void __ubsan::__ubsan_handle_float_cast_overflow(FloatCastOverflowData *Data,
                                                  ValueHandle From) {
-  Diag(SourceLocation(), "value %0 is outside the range of representable "
-                         "values of type %2")
+  Diag(getCallerLocation(), "value %0 is outside the range of representable "
+                            "values of type %2")
     << Value(Data->FromType, From) << Data->FromType << Data->ToType;
 }
 void __ubsan::__ubsan_handle_float_cast_overflow_abort(
                                                     FloatCastOverflowData *Data,
                                                     ValueHandle From) {
-  __ubsan_handle_float_cast_overflow(Data, From);
+  Diag(getCallerLocation(), "value %0 is outside the range of representable "
+                            "values of type %2")
+    << Value(Data->FromType, From) << Data->FromType << Data->ToType;
   Die();
 }
 
 void __ubsan::__ubsan_handle_load_invalid_value(InvalidValueData *Data,
                                                 ValueHandle Val) {
-  Diag(SourceLocation(), "load of value %0, which is not a valid value for "
-                         "type %1")
+  Diag(getCallerLocation(), "load of value %0, which is not a valid value for "
+                            "type %1")
     << Value(Data->Type, Val) << Data->Type;
 }
 void __ubsan::__ubsan_handle_load_invalid_value_abort(InvalidValueData *Data,
                                                       ValueHandle Val) {
-  __ubsan_handle_load_invalid_value(Data, Val);
+  Diag(getCallerLocation(), "load of value %0, which is not a valid value for "
+                            "type %1")
+    << Value(Data->Type, Val) << Data->Type;
   Die();
 }

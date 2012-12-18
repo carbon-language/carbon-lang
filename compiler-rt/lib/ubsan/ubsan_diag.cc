@@ -14,9 +14,29 @@
 #include "ubsan_diag.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_libc.h"
+#include "sanitizer_common/sanitizer_stacktrace.h"
+#include "sanitizer_common/sanitizer_symbolizer.h"
 #include <stdio.h>
 
 using namespace __ubsan;
+
+Location __ubsan::getCallerLocation(uptr CallerLoc) {
+  if (!CallerLoc)
+    return Location();
+
+  // Adjust to find the call instruction.
+  // FIXME: This is not portable.
+  --CallerLoc;
+
+  AddressInfo Info;
+  if (!SymbolizeCode(CallerLoc, &Info, 1) || !Info.module || !*Info.module)
+    return Location(CallerLoc);
+
+  if (!Info.function)
+    return ModuleLocation(Info.module, Info.module_offset);
+
+  return SourceLocation(Info.file, Info.line, Info.column);
+}
 
 Diag &Diag::operator<<(const TypeDescriptor &V) {
   return AddArg(V.getTypeName());
@@ -47,19 +67,41 @@ static void PrintHex(UIntMax Val) {
 #endif
 }
 
+static void renderLocation(Location Loc) {
+  switch (Loc.getKind()) {
+  case Location::LK_Source: {
+    SourceLocation SLoc = Loc.getSourceLocation();
+    if (SLoc.isInvalid())
+      RawWrite("<unknown>:");
+    else {
+      Printf("%s:%d:", SLoc.getFilename(), SLoc.getLine());
+      if (SLoc.getColumn())
+        Printf("%d:", SLoc.getColumn());
+    }
+    break;
+  }
+  case Location::LK_Module:
+    Printf("%s:0x%zx:", Loc.getModuleLocation().getModuleName(),
+           Loc.getModuleLocation().getOffset());
+    break;
+  case Location::LK_Memory:
+    Printf("0x%zx:", Loc.getMemoryLocation());
+    break;
+  case Location::LK_Null:
+    RawWrite("<unknown>:");
+  }
+}
+
 Diag::~Diag() {
   bool UseAnsiColor = PrintsToTty();
   if (UseAnsiColor)
     RawWrite("\033[1m");
-  if (Loc.isInvalid())
-    RawWrite("<unknown>:");
-  else {
-    Printf("%s:%d:", Loc.getFilename(), Loc.getLine());
-    if (Loc.getColumn())
-      Printf("%d:", Loc.getColumn());
-  }
+
+  renderLocation(Loc);
+
   if (UseAnsiColor)
     RawWrite("\033[31m");
+
   RawWrite(" runtime error: ");
   if (UseAnsiColor)
     RawWrite("\033[0;1m");
