@@ -1898,7 +1898,6 @@ void ConvergingScheduler::pickNodeFromQueue(SchedBoundary &Zone,
       Cand.setBest(TryCand);
       DEBUG(traceCandidate(Cand, Zone));
     }
-    TryCand.SU = *I;
   }
 }
 
