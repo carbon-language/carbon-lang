@@ -33,7 +33,7 @@ typedef StringMap<const MCSectionCOFF*> COFFUniqueMapTy;
 
 MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
                      const MCObjectFileInfo *mofi, const SourceMgr *mgr,
-                     bool DoAutoReset ) :
+                     bool DoAutoReset) :
   SrcMgr(mgr), MAI(mai), MRI(mri), MOFI(mofi),
   Allocator(), Symbols(Allocator), UsedNames(Allocator),
   NextUniqueID(0),
