@@ -2806,7 +2806,6 @@ void CodeGenFunction::EmitExtendGCLifetime(llvm::Value *object) {
 llvm::Constant *
 CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
                                         const ObjCPropertyImplDecl *PID) {
-  // FIXME. This api is for NeXt runtime only for now.
   if (!getLangOpts().CPlusPlus ||
       !getLangOpts().ObjCRuntime.hasAtomicCopyHelper())
     return 0;
@@ -2890,7 +2889,6 @@ CodeGenFunction::GenerateObjCAtomicSetterCopyHelperFunction(
 llvm::Constant *
 CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
                                             const ObjCPropertyImplDecl *PID) {
-  // FIXME. This api is for NeXt runtime only for now.
   if (!getLangOpts().CPlusPlus ||
       !getLangOpts().ObjCRuntime.hasAtomicCopyHelper())
     return 0;
