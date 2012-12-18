@@ -173,6 +173,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (query_vattachorwait_supported, &RNBRemote::HandlePacket_qVAttachOrWaitSupported,NULL, "qVAttachOrWaitSupported", "Replys with OK if the 'vAttachOrWait' packet is supported."));
     t.push_back (Packet (query_sync_thread_state_supported, &RNBRemote::HandlePacket_qSyncThreadStateSupported,NULL, "qSyncThreadStateSupported", "Replys with OK if the 'QSyncThreadState:' packet is supported."));
     t.push_back (Packet (query_host_info,               &RNBRemote::HandlePacket_qHostInfo,     NULL, "qHostInfo", "Replies with multiple 'key:value;' tuples appended to each other."));
+    t.push_back (Packet (query_process_info,            &RNBRemote::HandlePacket_qProcessInfo,     NULL, "qProcessInfo", "Replies with multiple 'key:value;' tuples appended to each other."));
 //  t.push_back (Packet (query_symbol_lookup,           &RNBRemote::HandlePacket_UNIMPLEMENTED, NULL, "qSymbol", "Notify that host debugger is ready to do symbol lookups"));
     t.push_back (Packet (start_noack_mode,              &RNBRemote::HandlePacket_QStartNoAckMode        , NULL, "QStartNoAckMode", "Request that " DEBUGSERVER_PROGRAM_NAME " stop acking remote protocol packets"));
     t.push_back (Packet (prefix_reg_packets_with_tid,   &RNBRemote::HandlePacket_QThreadSuffixSupported , NULL, "QThreadSuffixSupported", "Check if thread specifc packets (register packets 'g', 'G', 'p', and 'P') support having the thread ID appended to the end of the command"));
@@ -3777,3 +3778,81 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
         strm << "ptrsize:" << std::dec << sizeof(void *) << ';';
     return SendPacket (strm.str());
 }
+
+
+// Note that all numeric values returned by qProcessInfo are hex encoded,
+// including the pid and the cpu type, and are fixed with "0x" to indicate
+// this encoding.
+
+rnb_err_t
+RNBRemote::HandlePacket_qProcessInfo (const char *p)
+{
+    nub_process_t pid;
+    std::ostringstream rep;
+
+    // If we haven't run the process yet, return an error.
+    if (!m_ctx.HasValidProcessID())
+        return SendPacket ("E68");
+
+    pid = m_ctx.ProcessID();
+
+    rep << "pid:0x" << std::hex << pid << ";";
+
+    int procpid_mib[4];
+    procpid_mib[0] = CTL_KERN;
+    procpid_mib[1] = KERN_PROC;
+    procpid_mib[2] = KERN_PROC_PID;
+    procpid_mib[3] = pid;
+    struct kinfo_proc proc_kinfo;
+    size_t proc_kinfo_size = sizeof(struct kinfo_proc);
+
+    if (::sysctl (procpid_mib, 4, &proc_kinfo, &proc_kinfo_size, NULL, 0) == 0)
+    {
+        if (proc_kinfo_size > 0)
+        {
+            rep << "parent-pid:0x" << std::hex << proc_kinfo.kp_eproc.e_ppid << ";";
+            rep << "real-uid:0x" << std::hex << proc_kinfo.kp_eproc.e_pcred.p_ruid << ";";
+            rep << "real-gid:0x" << std::hex << proc_kinfo.kp_eproc.e_pcred.p_rgid << ";";
+            rep << "effective-uid:0x" << std::hex << proc_kinfo.kp_eproc.e_ucred.cr_uid << ";";
+            if (proc_kinfo.kp_eproc.e_ucred.cr_ngroups > 0)
+                rep << "effective-gid:0x" << std::hex << proc_kinfo.kp_eproc.e_ucred.cr_groups[0] << ";";
+        }
+    }
+    
+    int cputype_mib[CTL_MAXNAME]={0,};
+    size_t cputype_mib_len = CTL_MAXNAME;
+    if (::sysctlnametomib("sysctl.proc_cputype", cputype_mib, &cputype_mib_len) == 0)
+    {
+        cputype_mib[cputype_mib_len] = pid;
+        cputype_mib_len++;
+        cpu_type_t cpu;
+        size_t len = sizeof(cpu);
+        if (::sysctl (cputype_mib, cputype_mib_len, &cpu, &len, 0, 0) == 0)
+        {
+            rep << "cputype:0x" << std::hex << cpu << ";";
+        }
+    }
+
+    nub_thread_t thread = DNBProcessGetCurrentThread (pid);
+
+    kern_return_t kr;
+
+#if defined (__x86_64__) || defined (__i386__)
+    x86_thread_state_t gp_regs;
+    mach_msg_type_number_t gp_count = x86_THREAD_STATE_COUNT;
+    kr = thread_get_state (thread, x86_THREAD_STATE,
+                           (thread_state_t) &gp_regs, &gp_count);
+    if (kr == KERN_SUCCESS)
+    {
+        if (gp_regs.tsh.flavor == x86_THREAD_STATE64)
+            rep << "ptrsize:0x8;";
+        else
+            rep << "ptrsize:0x4;";
+    }
+#elif defined (__arm__)
+    rep << "ptrsize:0x4;";
+#endif
+
+    return SendPacket (rep.str());
+}
+
