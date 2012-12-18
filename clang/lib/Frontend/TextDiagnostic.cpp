@@ -898,7 +898,7 @@ void TextDiagnostic::emitBuildingModuleLocation(SourceLocation Loc,
                                                 PresumedLoc PLoc,
                                                 StringRef ModuleName,
                                                 const SourceManager &SM) {
-  if (DiagOpts->ShowLocation)
+  if (DiagOpts->ShowLocation && PLoc.getFilename())
     OS << "While building module '" << ModuleName << "' imported from "
       << PLoc.getFilename() << ':' << PLoc.getLine() << ":\n";
   else
