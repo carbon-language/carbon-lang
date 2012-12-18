@@ -524,23 +524,24 @@ public:
     Insts.clear();
   }
 
-  /// splice - Take an instruction from MBB 'Other' at the position From,
-  /// and insert it into this MBB right before 'where'.
-  void splice(instr_iterator where, MachineBasicBlock *Other,
-              instr_iterator From) {
-    Insts.splice(where, Other->Insts, From);
+  /// Take an instruction from MBB 'Other' at the position From, and insert it
+  /// into this MBB right before 'Where'.
+  ///
+  /// If From points to a bundle of instructions, the whole bundle is moved.
+  void splice(iterator Where, MachineBasicBlock *Other, iterator From) {
+    // The range splice() doesn't allow noop moves, but this one does.
+    if (Where != From)
+      splice(Where, Other, From, llvm::next(From));
   }
-  void splice(iterator where, MachineBasicBlock *Other, iterator From);
 
-  /// splice - Take a block of instructions from MBB 'Other' in the range [From,
-  /// To), and insert them into this MBB right before 'where'.
-  void splice(instr_iterator where, MachineBasicBlock *Other, instr_iterator From,
-              instr_iterator To) {
-    Insts.splice(where, Other->Insts, From, To);
-  }
-  void splice(iterator where, MachineBasicBlock *Other, iterator From,
-              iterator To) {
-    Insts.splice(where.getInstrIterator(), Other->Insts,
+  /// Take a block of instructions from MBB 'Other' in the range [From, To),
+  /// and insert them into this MBB right before 'Where'.
+  ///
+  /// The instruction at 'Where' must not be included in the range of
+  /// instructions to move.
+  void splice(iterator Where, MachineBasicBlock *Other,
+              iterator From, iterator To) {
+    Insts.splice(Where.getInstrIterator(), Other->Insts,
                  From.getInstrIterator(), To.getInstrIterator());
   }
 

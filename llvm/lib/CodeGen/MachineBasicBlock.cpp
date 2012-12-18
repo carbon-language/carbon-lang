@@ -826,19 +826,6 @@ MachineBasicBlock::insert(instr_iterator I, MachineInstr *MI) {
   return Insts.insert(I, MI);
 }
 
-void MachineBasicBlock::splice(MachineBasicBlock::iterator where,
-                               MachineBasicBlock *Other,
-                               MachineBasicBlock::iterator From) {
-  if (From->isBundle()) {
-    MachineBasicBlock::iterator To = llvm::next(From);
-    Insts.splice(where.getInstrIterator(), Other->Insts,
-                 From.getInstrIterator(), To.getInstrIterator());
-    return;
-  }
-
-  Insts.splice(where.getInstrIterator(), Other->Insts, From.getInstrIterator());
-}
-
 /// removeFromParent - This method unlinks 'this' from the containing function,
 /// and returns it, but does not delete it.
 MachineBasicBlock *MachineBasicBlock::removeFromParent() {
