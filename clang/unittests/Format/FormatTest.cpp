@@ -374,6 +374,41 @@ TEST_F(FormatTest, FormatsAwesomeMethodCall) {
       "    parameter, parameter, parameter)), SecondLongCall(parameter));");
 }
 
+TEST_F(FormatTest, ConstructorInitializers) {
+  verifyFormat("Constructor() : Initializer(FitsOnTheLine) {\n}");
+
+  verifyFormat(
+      "SomeClass::Constructor()\n"
+      "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaaaa(aaaaaaaaaaaa) {\n"
+      "}");
+
+  verifyFormat(
+      "SomeClass::Constructor()\n"
+      "    : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
+      "      aaaaaaaaaaaaaaa(aaaaaaaaaaaa) {\n"
+      "}");
+
+  verifyFormat("Constructor()\n"
+               "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
+               "      aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+               "                               aaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
+               "      aaaaaaaaaaaaaaaaaaaaaaa() {\n"
+               "}");
+
+  // Here a line could be saved by splitting the second initializer onto two
+  // lines, but that is not desireable.
+  verifyFormat("Constructor()\n"
+               "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaa),\n"
+               "      aaaaaaaaaaa(aaaaaaaaaaa),\n"
+               "      aaaaaaaaaaaaaaaaaaaaat(aaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n"
+               "}");
+
+  verifyGoogleFormat("MyClass::MyClass(int var)\n"
+                     "    : some_var_(var),  // 4 space indent\n"
+                     "      some_other_var_(var + 1) {  // lined up\n"
+                     "}");
+}
+
 TEST_F(FormatTest, BreaksAsHighAsPossible) {
   verifyFormat(
       "if ((aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa && aaaaaaaaaaaaaaaaaaaaaaaaaa) ||\n"
@@ -461,13 +496,11 @@ TEST_F(FormatTest, UnderstandsEquals) {
 }
 
 TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
-  verifyFormat(
-      "LoooooooooooooooooooooooooooooooooooooongObject\n"
-      "    .looooooooooooooooooooooooooooooooooooooongFunction();");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooongObject\n"
+               "    .looooooooooooooooooooooooooooooooooooooongFunction();");
 
-  verifyFormat(
-      "LoooooooooooooooooooooooooooooooooooooongObject\n"
-      "    ->looooooooooooooooooooooooooooooooooooooongFunction();");
+  verifyFormat("LoooooooooooooooooooooooooooooooooooooongObject\n"
+               "    ->looooooooooooooooooooooooooooooooooooooongFunction();");
 
   verifyFormat(
       "LooooooooooooooooooooooooooooooooongObject->shortFunction(Parameter1,\n"
@@ -485,10 +518,9 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
       "function(LoooooooooooooooooooooooooooooooooooongObject\n"
       "             ->loooooooooooooooooooooooooooooooooooooooongFunction());");
 
-  verifyFormat(
-      "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaa) ||\n"
-      "    aaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n"
-      "}");
+  verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaa) ||\n"
+               "    aaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n"
+               "}");
 }
 
 TEST_F(FormatTest, UnderstandsTemplateParameters) {
