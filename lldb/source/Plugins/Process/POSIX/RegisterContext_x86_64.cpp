@@ -511,7 +511,7 @@ RegisterContext_x86_64::ReadRegister(const RegisterInfo *reg_info, RegisterValue
     }
     else {
         ProcessMonitor &monitor = GetMonitor();
-        return monitor.ReadRegisterValue(GetRegOffset(reg),GetRegSize(reg), value);
+        return monitor.ReadRegisterValue(m_thread.GetID(), GetRegOffset(reg),GetRegSize(reg), value);
     }
 
     if (reg_info->encoding == eEncodingVector) {
@@ -585,7 +585,7 @@ RegisterContext_x86_64::WriteRegister(const lldb_private::RegisterInfo *reg_info
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteRegisterValue(GetRegOffset(reg), value);
+    return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg), value);
 }
 
 bool
@@ -788,26 +788,26 @@ bool
 RegisterContext_x86_64::ReadGPR()
 {
      ProcessMonitor &monitor = GetMonitor();
-     return monitor.ReadGPR(&user.regs);
+     return monitor.ReadGPR(m_thread.GetID(), &user.regs);
 }
 
 bool
 RegisterContext_x86_64::ReadFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadFPR(&user.i387);
+    return monitor.ReadFPR(m_thread.GetID(), &user.i387);
 }
 
 bool
 RegisterContext_x86_64::WriteGPR()
 {
      ProcessMonitor &monitor = GetMonitor();
-     return monitor.WriteGPR(&user.regs);
+     return monitor.WriteGPR(m_thread.GetID(), &user.regs);
 }
 
 bool
 RegisterContext_x86_64::WriteFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteFPR(&user.i387);
+    return monitor.WriteFPR(m_thread.GetID(), &user.i387);
 }

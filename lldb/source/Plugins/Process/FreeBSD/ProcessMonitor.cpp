@@ -1410,7 +1410,8 @@ ProcessMonitor::WriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size,
 }
 
 bool
-ProcessMonitor::ReadRegisterValue(unsigned offset, unsigned size, RegisterValue &value)
+ProcessMonitor::ReadRegisterValue(lldb::tid_t tid, unsigned offset,
+                                  unsigned size, RegisterValue &value)
 {
     bool result;
     ReadRegOperation op(offset, size, value, result);
@@ -1419,7 +1420,8 @@ ProcessMonitor::ReadRegisterValue(unsigned offset, unsigned size, RegisterValue 
 }
 
 bool
-ProcessMonitor::WriteRegisterValue(unsigned offset, const RegisterValue &value)
+ProcessMonitor::WriteRegisterValue(lldb::tid_t tid, unsigned offset,
+                                   const RegisterValue &value)
 {
     bool result;
     WriteRegOperation op(offset, value, result);
@@ -1428,7 +1430,7 @@ ProcessMonitor::WriteRegisterValue(unsigned offset, const RegisterValue &value)
 }
 
 bool
-ProcessMonitor::ReadGPR(void *buf)
+ProcessMonitor::ReadGPR(lldb::tid_t tid, void *buf)
 {
     bool result;
     ReadGPROperation op(buf, result);
@@ -1437,7 +1439,7 @@ ProcessMonitor::ReadGPR(void *buf)
 }
 
 bool
-ProcessMonitor::ReadFPR(void *buf)
+ProcessMonitor::ReadFPR(lldb::tid_t tid, void *buf)
 {
     bool result;
     ReadFPROperation op(buf, result);
@@ -1446,7 +1448,7 @@ ProcessMonitor::ReadFPR(void *buf)
 }
 
 bool
-ProcessMonitor::WriteGPR(void *buf)
+ProcessMonitor::WriteGPR(lldb::tid_t tid, void *buf)
 {
     bool result;
     WriteGPROperation op(buf, result);
@@ -1455,7 +1457,7 @@ ProcessMonitor::WriteGPR(void *buf)
 }
 
 bool
-ProcessMonitor::WriteFPR(void *buf)
+ProcessMonitor::WriteFPR(lldb::tid_t tid, void *buf)
 {
     bool result;
     WriteFPROperation op(buf, result);

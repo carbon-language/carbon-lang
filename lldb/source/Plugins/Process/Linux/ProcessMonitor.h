@@ -106,30 +106,32 @@ public:
     ///
     /// This method is provided for use by RegisterContextLinux derivatives.
     bool
-    ReadRegisterValue(unsigned offset, unsigned size, lldb_private::RegisterValue &value);
+    ReadRegisterValue(lldb::tid_t tid, unsigned offset,
+                      unsigned size, lldb_private::RegisterValue &value);
 
     /// Writes the given value to the register identified by the given
     /// (architecture dependent) offset.
     ///
     /// This method is provided for use by RegisterContextLinux derivatives.
     bool
-    WriteRegisterValue(unsigned offset, const lldb_private::RegisterValue &value);
+    WriteRegisterValue(lldb::tid_t tid, unsigned offset,
+                       const lldb_private::RegisterValue &value);
 
     /// Reads all general purpose registers into the specified buffer.
     bool
-    ReadGPR(void *buf);
+    ReadGPR(lldb::tid_t tid, void *buf);
 
     /// Reads all floating point registers into the specified buffer.
     bool
-    ReadFPR(void *buf);
+    ReadFPR(lldb::tid_t tid, void *buf);
 
     /// Writes all general purpose registers into the specified buffer.
     bool
-    WriteGPR(void *buf);
+    WriteGPR(lldb::tid_t tid, void *buf);
 
     /// Writes all floating point registers into the specified buffer.
     bool
-    WriteFPR(void *buf);
+    WriteFPR(lldb::tid_t tid, void *buf);
 
     /// Writes a siginfo_t structure corresponding to the given thread ID to the
     /// memory region pointed to by @p siginfo.

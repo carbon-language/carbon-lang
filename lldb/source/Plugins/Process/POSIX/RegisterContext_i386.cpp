@@ -437,7 +437,7 @@ RegisterContext_i386::ReadRegister(const RegisterInfo *reg_info,
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadRegisterValue(GetRegOffset(reg), GetRegSize(reg), value);
+    return monitor.ReadRegisterValue(m_thread.GetID(), GetRegOffset(reg), GetRegSize(reg), value);
 }
 
 bool
@@ -451,7 +451,7 @@ bool RegisterContext_i386::WriteRegister(const RegisterInfo *reg_info,
 {
     const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.WriteRegisterValue(GetRegOffset(reg), value);
+    return monitor.WriteRegisterValue(m_thread.GetID(), GetRegOffset(reg), value);
 }
 
 bool
@@ -631,7 +631,7 @@ RegisterContext_i386::ReadGPR()
     bool result;
 
     ProcessMonitor &monitor = GetMonitor();
-    result = monitor.ReadGPR(&user.regs);
+    result = monitor.ReadGPR(m_thread.GetID(), &user.regs);
     LogGPR("RegisterContext_i386::ReadGPR()");
     return result;
 }
@@ -640,5 +640,5 @@ bool
 RegisterContext_i386::ReadFPR()
 {
     ProcessMonitor &monitor = GetMonitor();
-    return monitor.ReadFPR(&user.i387);
+    return monitor.ReadFPR(m_thread.GetID(), &user.i387);
 }

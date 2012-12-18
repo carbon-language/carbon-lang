@@ -412,13 +412,16 @@ WriteOperation::Execute(ProcessMonitor *monitor)
 class ReadRegOperation : public Operation
 {
 public:
-    ReadRegOperation(unsigned offset, RegisterValue &value, bool &result)
-        : m_offset(offset), m_value(value), m_result(result)
+    ReadRegOperation(lldb::tid_t tid, unsigned offset,
+                     RegisterValue &value, bool &result)
+        : m_tid(tid), m_offset(offset),
+          m_value(value), m_result(result)
         { }
 
     void Execute(ProcessMonitor *monitor);
 
 private:
+    lldb::tid_t m_tid;
     uintptr_t m_offset;
     RegisterValue &m_value;
     bool &m_result;
@@ -427,12 +430,11 @@ private:
 void
 ReadRegOperation::Execute(ProcessMonitor *monitor)
 {
-    lldb::pid_t pid = monitor->GetPID();
     LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
     // Set errno to zero so that we can detect a failed peek.
     errno = 0;
-    lldb::addr_t data = PTRACE(PTRACE_PEEKUSER, pid, (void*)m_offset, NULL);
+    lldb::addr_t data = PTRACE(PTRACE_PEEKUSER, m_tid, (void*)m_offset, NULL);
     if (data == -1UL && errno)
         m_result = false;
     else
@@ -451,13 +453,16 @@ ReadRegOperation::Execute(ProcessMonitor *monitor)
 class WriteRegOperation : public Operation
 {
 public:
-    WriteRegOperation(unsigned offset, const RegisterValue &value, bool &result)
-        : m_offset(offset), m_value(value), m_result(result)
+    WriteRegOperation(lldb::tid_t tid, unsigned offset,
+                      const RegisterValue &value, bool &result)
+        : m_tid(tid), m_offset(offset),
+          m_value(value), m_result(result)
         { }
 
     void Execute(ProcessMonitor *monitor);
 
 private:
+    lldb::tid_t m_tid;
     uintptr_t m_offset;
     const RegisterValue &m_value;
     bool &m_result;
@@ -467,7 +472,6 @@ void
 WriteRegOperation::Execute(ProcessMonitor *monitor)
 {
     void* buf;
-    lldb::pid_t pid = monitor->GetPID();
     LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_REGISTERS));
 
 #if __WORDSIZE == 32
@@ -479,7 +483,7 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
     if (log)
         log->Printf ("ProcessMonitor::%s() reg %s: %p", __FUNCTION__,
                      POSIXThread::GetRegisterNameFromOffset(m_offset), buf);
-    if (PTRACE(PTRACE_POKEUSER, pid, (void*)m_offset, buf))
+    if (PTRACE(PTRACE_POKEUSER, m_tid, (void*)m_offset, buf))
         m_result = false;
     else
         m_result = true;
@@ -491,13 +495,14 @@ WriteRegOperation::Execute(ProcessMonitor *monitor)
 class ReadGPROperation : public Operation
 {
 public:
-    ReadGPROperation(void *buf, bool &result)
-        : m_buf(buf), m_result(result)
+    ReadGPROperation(lldb::tid_t tid, void *buf, bool &result)
+        : m_tid(tid), m_buf(buf), m_result(result)
         { }
 
     void Execute(ProcessMonitor *monitor);
 
 private:
+    lldb::tid_t m_tid;
     void *m_buf;
     bool &m_result;
 };
@@ -505,7 +510,7 @@ private:
 void
 ReadGPROperation::Execute(ProcessMonitor *monitor)
 {
-    if (PTRACE(PTRACE_GETREGS, monitor->GetPID(), NULL, m_buf) < 0)
+    if (PTRACE(PTRACE_GETREGS, m_tid, NULL, m_buf) < 0)
         m_result = false;
     else
         m_result = true;
@@ -517,13 +522,14 @@ ReadGPROperation::Execute(ProcessMonitor *monitor)
 class ReadFPROperation : public Operation
 {
 public:
-    ReadFPROperation(void *buf, bool &result)
-        : m_buf(buf), m_result(result)
+    ReadFPROperation(lldb::tid_t tid, void *buf, bool &result)
+        : m_tid(tid), m_buf(buf), m_result(result)
         { }
 
     void Execute(ProcessMonitor *monitor);
 
 private:
+    lldb::tid_t m_tid;
     void *m_buf;
     bool &m_result;
 };
@@ -531,7 +537,7 @@ private:
 void
 ReadFPROperation::Execute(ProcessMonitor *monitor)
 {
-    if (PTRACE(PTRACE_GETFPREGS, monitor->GetPID(), NULL, m_buf) < 0)
+    if (PTRACE(PTRACE_GETFPREGS, m_tid, NULL, m_buf) < 0)
         m_result = false;
     else
         m_result = true;
@@ -543,13 +549,14 @@ ReadFPROperation::Execute(ProcessMonitor *monitor)
 class WriteGPROperation : public Operation
 {
 public:
-    WriteGPROperation(void *buf, bool &result)
-        : m_buf(buf), m_result(result)
+    WriteGPROperation(lldb::tid_t tid, void *buf, bool &result)
+        : m_tid(tid), m_buf(buf), m_result(result)
         { }
 
     void Execute(ProcessMonitor *monitor);
 
 private:
+    lldb::tid_t m_tid;
     void *m_buf;
     bool &m_result;
 };
@@ -557,7 +564,7 @@ private:
 void
 WriteGPROperation::Execute(ProcessMonitor *monitor)
 {
-    if (PTRACE(PTRACE_SETREGS, monitor->GetPID(), NULL, m_buf) < 0)
+    if (PTRACE(PTRACE_SETREGS, m_tid, NULL, m_buf) < 0)
         m_result = false;
     else
         m_result = true;
@@ -569,13 +576,14 @@ WriteGPROperation::Execute(ProcessMonitor *monitor)
 class WriteFPROperation : public Operation
 {
 public:
-    WriteFPROperation(void *buf, bool &result)
-        : m_buf(buf), m_result(result)
+    WriteFPROperation(lldb::tid_t tid, void *buf, bool &result)
+        : m_tid(tid), m_buf(buf), m_result(result)
         { }
 
     void Execute(ProcessMonitor *monitor);
 
 private:
+    lldb::tid_t m_tid;
     void *m_buf;
     bool &m_result;
 };
@@ -583,7 +591,7 @@ private:
 void
 WriteFPROperation::Execute(ProcessMonitor *monitor)
 {
-    if (PTRACE(PTRACE_SETFPREGS, monitor->GetPID(), NULL, m_buf) < 0)
+    if (PTRACE(PTRACE_SETFPREGS, m_tid, NULL, m_buf) < 0)
         m_result = false;
     else
         m_result = true;
@@ -1572,55 +1580,55 @@ ProcessMonitor::WriteMemory(lldb::addr_t vm_addr, const void *buf, size_t size,
 }
 
 bool
-ProcessMonitor::ReadRegisterValue(unsigned offset, unsigned size, RegisterValue &value)
+ProcessMonitor::ReadRegisterValue(lldb::tid_t tid, unsigned offset, unsigned size, RegisterValue &value)
 {
     bool result;
-    ReadRegOperation op(offset, value, result);
+    ReadRegOperation op(tid, offset, value, result);
     DoOperation(&op);
     return result;
 }
 
 bool
-ProcessMonitor::WriteRegisterValue(unsigned offset, const RegisterValue &value)
+ProcessMonitor::WriteRegisterValue(lldb::tid_t tid, unsigned offset, const RegisterValue &value)
 {
     bool result;
-    WriteRegOperation op(offset, value, result);
+    WriteRegOperation op(tid, offset, value, result);
     DoOperation(&op);
     return result;
 }
 
 bool
-ProcessMonitor::ReadGPR(void *buf)
+ProcessMonitor::ReadGPR(lldb::tid_t tid, void *buf)
 {
     bool result;
-    ReadGPROperation op(buf, result);
+    ReadGPROperation op(tid, buf, result);
     DoOperation(&op);
     return result;
 }
 
 bool
-ProcessMonitor::ReadFPR(void *buf)
+ProcessMonitor::ReadFPR(lldb::tid_t tid, void *buf)
 {
     bool result;
-    ReadFPROperation op(buf, result);
+    ReadFPROperation op(tid, buf, result);
     DoOperation(&op);
     return result;
 }
 
 bool
-ProcessMonitor::WriteGPR(void *buf)
+ProcessMonitor::WriteGPR(lldb::tid_t tid, void *buf)
 {
     bool result;
-    WriteGPROperation op(buf, result);
+    WriteGPROperation op(tid, buf, result);
     DoOperation(&op);
     return result;
 }
 
 bool
-ProcessMonitor::WriteFPR(void *buf)
+ProcessMonitor::WriteFPR(lldb::tid_t tid, void *buf)
 {
     bool result;
-    WriteFPROperation op(buf, result);
+    WriteFPROperation op(tid, buf, result);
     DoOperation(&op);
     return result;
 }
