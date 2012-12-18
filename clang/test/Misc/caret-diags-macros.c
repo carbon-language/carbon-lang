@@ -205,3 +205,23 @@ void foo_aa()
 // CHECK-NEXT:    {{.*}}:189:31: note: expanded from macro 'APPEND2'
 // CHECK-NEXT:    #define APPEND2(NUM, SUFF) -1 != NUM ## SUFF
 // CHECK-NEXT: {{^                           ~~ \^  ~~~~~~~~~~~}}
+
+unsigned long strlen_test(const char *s);
+#define __darwin_obsz(object) __builtin_object_size (object, 1)
+#define sprintf2(str, ...) \
+  __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+#define Cstrlen(a)  strlen_test(a)
+#define Csprintf    sprintf2
+void f(char* pMsgBuf, char* pKeepBuf) {
+Csprintf(pMsgBuf,"\nEnter minimum anagram length (2-%1d): ", Cstrlen(pKeepBuf));
+}
+// CHECK:         {{.*}}:216:62: warning: format specifies type 'int' but the argument has type 'unsigned long'
+// CHECK-NEXT:    Csprintf(pMsgBuf,"\nEnter minimum anagram length (2-%1d): ", Cstrlen(pKeepBuf));
+// CHECK-NEXT: {{^                                                    ~~~      \^}}
+// CHECK-NEXT: {{^                                                    %1ld}}
+// CHECK-NEXT:    {{.*}}:213:21: note: expanded from macro 'Cstrlen'
+// CHECK-NEXT:    #define Cstrlen(a)  strlen_test(a)
+// CHECK-NEXT: {{^                    \^}}
+// CHECK-NEXT:    {{.*}}:212:56: note: expanded from macro 'sprintf2'
+// CHECK-NEXT:      __builtin___sprintf_chk (str, 0, __darwin_obsz(str), __VA_ARGS__)
+// CHECK-NEXT: {{^                                                       \^}}

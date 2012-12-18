@@ -363,6 +363,13 @@ static void mapDiagnosticRanges(
         End = SM->getImmediateExpansionRange(End).second;
       }
       BeginFileID = SM->getFileID(Begin);
+      if (BeginFileID != SM->getFileID(End)) {
+        // FIXME: Ugly hack to stop a crash; this code is making bad
+        // assumptions and it's too complicated for me to reason
+        // about.
+        Begin = End = SourceLocation();
+        break;
+      }
     }
 
     // Return the spelling location of the beginning and end of the range.
