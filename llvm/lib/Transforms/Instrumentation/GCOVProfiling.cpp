@@ -48,10 +48,11 @@ namespace {
           UseExtraChecksum(false), NoRedZone(false) {
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
-    GCOVProfiler(bool EmitNotes, bool EmitData, bool use402Format = false,
-                 bool useExtraChecksum = false, bool NoRedZone = false)
+    GCOVProfiler(bool EmitNotes, bool EmitData, bool use402Format,
+                 bool useExtraChecksum, bool NoRedZone_)
         : ModulePass(ID), EmitNotes(EmitNotes), EmitData(EmitData),
-          Use402Format(use402Format), UseExtraChecksum(useExtraChecksum) {
+          Use402Format(use402Format), UseExtraChecksum(useExtraChecksum),
+          NoRedZone(NoRedZone_) {
       assert((EmitNotes || EmitData) && "GCOVProfiler asked to do nothing?");
       initializeGCOVProfilerPass(*PassRegistry::getPassRegistry());
     }
