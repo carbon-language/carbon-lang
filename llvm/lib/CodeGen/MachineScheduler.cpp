@@ -953,8 +953,6 @@ public:
     unsigned CritResIdx;
     // Number of micro-ops left to schedule.
     unsigned RemainingMicroOps;
-    // Is the unscheduled zone resource limited.
-    bool IsResourceLimited;
 
     unsigned MaxRemainingCount;
 
@@ -963,7 +961,6 @@ public:
       RemainingCounts.clear();
       CritResIdx = 0;
       RemainingMicroOps = 0;
-      IsResourceLimited = false;
       MaxRemainingCount = 0;
     }
 
