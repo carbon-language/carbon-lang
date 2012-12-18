@@ -332,10 +332,7 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
     if (!reg_ctx)
         return false;
         
-    addr_t sp = reg_ctx->GetSP(0);
-    
-    if (!sp)
-        return false;
+    addr_t sp = 0;
 
     for (uint32_t value_idx = 0; value_idx < num_values; ++value_idx)
     {
@@ -405,6 +402,14 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
                 }
                 else
                 {
+                    if (sp == 0)
+                    {
+                        // Read the stack pointer if it already hasn't been read
+                        sp = reg_ctx->GetSP(0);
+                        if (sp == 0)
+                            return false;
+                    }
+
                     // Arguments 5 on up are on the stack
                     const uint32_t arg_byte_size = (bit_width + (8-1)) / 8;
                     Error error;
@@ -421,7 +426,7 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
 
 ValueObjectSP
 ABIMacOSX_arm::GetReturnValueObjectImpl (Thread &thread,
-                               lldb_private::ClangASTType &ast_type) const
+                                         lldb_private::ClangASTType &ast_type) const
 {
     Value value;
     ValueObjectSP return_valobj_sp;
