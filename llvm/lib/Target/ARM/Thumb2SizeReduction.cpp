@@ -896,13 +896,20 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
 
     LiveCPSR = UpdateCPSRUse(*MI, LiveCPSR);
 
+    // Does NextMII belong to the same bundle as MI?
+    bool NextInSameBundle = NextMII != E && NextMII->isBundledWithPred();
+
     if (ReduceMI(MBB, MI, LiveCPSR, CPSRDef, IsSelfLoop)) {
       Modified = true;
       MachineBasicBlock::instr_iterator I = prior(NextMII);
       MI = &*I;
+      // Removing and reinserting the first instruction in a bundle will break
+      // up the bundle. Fix the bundling if it was broken.
+      if (NextInSameBundle && !NextMII->isBundledWithPred())
+        NextMII->bundleWithPred();
     }
 
-    if (NextMII != E && MI->isInsideBundle() && !NextMII->isInsideBundle()) {
+    if (!NextInSameBundle && MI->isInsideBundle()) {
       // FIXME: Since post-ra scheduler operates on bundles, the CPSR kill
       // marker is only on the BUNDLE instruction. Process the BUNDLE
       // instruction as we finish with the bundled instruction to work around
