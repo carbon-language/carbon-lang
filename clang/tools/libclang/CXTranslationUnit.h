@@ -21,6 +21,8 @@ struct CXTranslationUnitImpl {
   void *StringPool;
   void *Diagnostics;
   void *OverridenCursorsPool;
+  void *FormatContext;
+  unsigned FormatInMemoryUniqueId;
 };
 }
 

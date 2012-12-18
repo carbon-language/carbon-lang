@@ -21,7 +21,8 @@ USEDLIBS = clangARCMigrate.a clangRewriteCore.a clangRewriteFrontend.a \
 	   clangFrontend.a clangDriver.a \
 	   clangSerialization.a \
 	   clangParse.a clangSema.a clangEdit.a clangAnalysis.a \
-	   clangAST.a clangLex.a clangTooling.a clangBasic.a
+	   clangAST.a clangLex.a clangTooling.a clangBasic.a \
+	   clangFormat.a 
 
 include $(CLANG_LEVEL)/Makefile
 

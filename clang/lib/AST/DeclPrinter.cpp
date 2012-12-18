@@ -915,6 +915,8 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
     OMD->getBody()->printPretty(Out, 0, Policy);
     Out << '\n';
   }
+  else
+    Out << ';';
 }
 
 void DeclPrinter::VisitObjCImplementationDecl(ObjCImplementationDecl *OID) {
@@ -1093,7 +1095,7 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     (void) first; // Silence dead store warning due to idiomatic code.
     Out << " )";
   }
-  Out << ' ' << PDecl->getType().getAsString(Policy) << ' ' << *PDecl;
+  Out << ' ' << PDecl->getType().getAsString(Policy) << ' ' << *PDecl << ';';
 }
 
 void DeclPrinter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {

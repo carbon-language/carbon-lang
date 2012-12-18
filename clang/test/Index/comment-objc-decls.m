@@ -31,9 +31,9 @@
 + ClassMethodMyProto;
 @end
 // CHECK: <Declaration>@protocol MyProto\n@end</Declaration>
-// CHECK: <Declaration>- (unsigned int) MethodMyProto:(id)anObject inRange:(unsigned int)range</Declaration>
-// CHECK: <Declaration>@optional\n@property ( readwrite,copy,atomic ) id PropertyMyProto</Declaration>
-// CHECK: <Declaration>+ (id) ClassMethodMyProto</Declaration>
+// CHECK: <Declaration>- (unsigned int) MethodMyProto:(id)anObject inRange:(unsigned int)range;</Declaration>
+// CHECK: <Declaration>@optional\n@property ( readwrite,copy,atomic ) id PropertyMyProto;</Declaration>
+// CHECK: <Declaration>+ (id) ClassMethodMyProto;</Declaration>
 
 /**
  * \brief NSObject is the root class.
@@ -75,9 +75,9 @@
 @end
 // CHECK: <Declaration>@interface MyClass : NSObject&lt;MyProto&gt; {\n    id IvarMyClass;\n}\n@end</Declaration>
 // CHECK: <Declaration>id IvarMyClass</Declaration>
-// CHECK: <Declaration>- (id) MethodMyClass</Declaration>
-// CHECK: <Declaration>+ (id) ClassMethodMyClass</Declaration>
-// CHECK: <Declaration>@property ( readwrite,copy,atomic ) id PropertyMyClass</Declaration
+// CHECK: <Declaration>- (id) MethodMyClass;</Declaration>
+// CHECK: <Declaration>+ (id) ClassMethodMyClass;</Declaration>
+// CHECK: <Declaration>@property ( readwrite,copy,atomic ) id PropertyMyClass;</Declaration
 
 /**
  * \brief - This is class extension of MyClass
@@ -109,10 +109,10 @@
 @property (copy) id PropertyMyClassCategory;
 @end
 // CHECK: <Declaration>@interface MyClass(Category)\n@end</Declaration>
-// CHECK: <Declaration>- (void) MethodMyClassCategory</Declaration>
-// CHECK: <Declaration>@property ( readwrite,copy,atomic ) id PropertyMyClassCategory</Declaration>
-// CHECK: <Declaration>- (id) PropertyMyClassCategory</Declaration>
-// CHECK: <Declaration>- (void) setPropertyMyClassCategory:(id)arg</Declaration>
+// CHECK: <Declaration>- (void) MethodMyClassCategory;</Declaration>
+// CHECK: <Declaration>@property ( readwrite,copy,atomic ) id PropertyMyClassCategory;</Declaration>
+// CHECK: <Declaration>- (id) PropertyMyClassCategory;</Declaration>
+// CHECK: <Declaration>- (void) setPropertyMyClassCategory:(id)arg;</Declaration>
 
 /// @implementation's
 
@@ -141,8 +141,8 @@
 @end
 // CHECK: <Declaration>@implementation MyClass{\n    id IvarPrivateToMyClassImpl;\n    id _PropertyMyClass;\n}\n@end</Declaration>
 // CHECK: <Declaration>id IvarPrivateToMyClassImpl</Declaration>
-// CHECK: <Declaration>- (id) MethodMyClass</Declaration>
-// CHECK: <Declaration>+ (id) ClassMethodMyClass</Declaration>
+// CHECK: <Declaration>- (id) MethodMyClass;</Declaration>
+// CHECK: <Declaration>+ (id) ClassMethodMyClass;</Declaration>
 
 /**
  * \brief MyClass (Category) is implementation of private to MyClass.
@@ -163,9 +163,9 @@
 - (void) setPropertyMyClassCategory : (id) arg {}
 @end
 // CHECK: <Declaration>@implementation MyClass(Category)\n@end</Declaration>
-// CHECK: <Declaration>- (void) MethodMyClassCategory</Declaration>
-// CHECK: <Declaration>- (id) PropertyMyClassCategory</Declaration>
-// CHECK: <Declaration>- (void) setPropertyMyClassCategory:(id)arg</Declaration>
+// CHECK: <Declaration>- (void) MethodMyClassCategory;</Declaration>
+// CHECK: <Declaration>- (id) PropertyMyClassCategory;</Declaration>
+// CHECK: <Declaration>- (void) setPropertyMyClassCategory:(id)arg;</Declaration>
 
 /**
  * \brief NSObject implementation

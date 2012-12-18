@@ -1234,6 +1234,6 @@ TEST(DeclPrinter, TestObjCMethod1) {
     "@end\n",
     namedDecl(hasName("A:inRange:"),
               hasDescendant(namedDecl(hasName("printThis")))).bind("id"),
-    "- (int) A:(id)anObject inRange:(long)range"));
+    "- (int) A:(id)anObject inRange:(long)range;"));
 }
 

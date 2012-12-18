@@ -19,7 +19,7 @@
 - (void)METH:(id)AAA;
 @end
 
-// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>METH:</Name><USR>c:objc(cs)Root(im)METH:</USR><Declaration>- (void) METH:(id)AAA</Declaration><Parameters><Parameter><Name>AAA</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> ZZZ </Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>METH:</Name><USR>c:objc(cs)Root(im)METH:</USR><Declaration>- (void) METH:(id)AAA;</Declaration><Parameters><Parameter><Name>AAA</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> ZZZ </Para></Discussion></Parameter></Parameters></Function>]
 
 @interface Sub : Root
 @end
@@ -28,13 +28,13 @@
 - (void)METH:(id)BBB;
 @end
 
-// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>METH:</Name><USR>c:objc(cs)Root(im)METH:</USR><Declaration>- (void) METH:(id)BBB</Declaration><Parameters><Parameter><Name>BBB</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> ZZZ </Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>METH:</Name><USR>c:objc(cs)Root(im)METH:</USR><Declaration>- (void) METH:(id)BBB;</Declaration><Parameters><Parameter><Name>BBB</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> ZZZ </Para></Discussion></Parameter></Parameters></Function>]
 
 @implementation Sub(CAT)
 - (void)METH:(id)III {}
 @end
 
-// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>METH:</Name><USR>c:objc(cs)Root(im)METH:</USR><Declaration>- (void) METH:(id)III</Declaration><Parameters><Parameter><Name>III</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> ZZZ </Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>METH:</Name><USR>c:objc(cs)Root(im)METH:</USR><Declaration>- (void) METH:(id)III;</Declaration><Parameters><Parameter><Name>III</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> ZZZ </Para></Discussion></Parameter></Parameters></Function>]
 
 @interface Redec : Root
 @end
@@ -48,13 +48,13 @@
 - (void)EXT_METH:(id)AAA : (double)BBB : (int)CCC;
 @end
 
-// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>EXT_METH:::</Name><USR>c:objc(cs)Redec(im)EXT_METH:::</USR><Declaration>- (void) EXT_METH:(id)AAA :(double)BBB :(int)CCC</Declaration><Parameters><Parameter><Name>AAA</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> input value </Para></Discussion></Parameter><Parameter><Name>BBB</Name><Index>1</Index><Direction isExplicit="1">in</Direction><Discussion><Para> 2nd input value is double </Para></Discussion></Parameter><Parameter><Name>CCC</Name><Index>2</Index><Direction isExplicit="1">out</Direction><Discussion><Para> output value is int </Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>EXT_METH:::</Name><USR>c:objc(cs)Redec(im)EXT_METH:::</USR><Declaration>- (void) EXT_METH:(id)AAA :(double)BBB :(int)CCC;</Declaration><Parameters><Parameter><Name>AAA</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> input value </Para></Discussion></Parameter><Parameter><Name>BBB</Name><Index>1</Index><Direction isExplicit="1">in</Direction><Discussion><Para> 2nd input value is double </Para></Discussion></Parameter><Parameter><Name>CCC</Name><Index>2</Index><Direction isExplicit="1">out</Direction><Discussion><Para> output value is int </Para></Discussion></Parameter></Parameters></Function>]
 
 @implementation Redec
 - (void)EXT_METH:(id)PPP : (double)QQQ : (int)RRR {}
 @end
 
-// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>EXT_METH:::</Name><USR>c:objc(cs)Redec(im)EXT_METH:::</USR><Declaration>- (void) EXT_METH:(id)PPP :(double)QQQ :(int)RRR</Declaration><Parameters><Parameter><Name>PPP</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> input value </Para></Discussion></Parameter><Parameter><Name>QQQ</Name><Index>1</Index><Direction isExplicit="1">in</Direction><Discussion><Para> 2nd input value is double </Para></Discussion></Parameter><Parameter><Name>RRR</Name><Index>2</Index><Direction isExplicit="1">out</Direction><Discussion><Para> output value is int </Para></Discussion></Parameter></Parameters></Function>]
+// CHECK: FullCommentAsXML=[<Function isInstanceMethod="1" file="{{[^"]+}}overriding-method-comments.mm" line="[[@LINE-3]]" column="1"><Name>EXT_METH:::</Name><USR>c:objc(cs)Redec(im)EXT_METH:::</USR><Declaration>- (void) EXT_METH:(id)PPP :(double)QQQ :(int)RRR;</Declaration><Parameters><Parameter><Name>PPP</Name><Index>0</Index><Direction isExplicit="1">in</Direction><Discussion><Para> input value </Para></Discussion></Parameter><Parameter><Name>QQQ</Name><Index>1</Index><Direction isExplicit="1">in</Direction><Discussion><Para> 2nd input value is double </Para></Discussion></Parameter><Parameter><Name>RRR</Name><Index>2</Index><Direction isExplicit="1">out</Direction><Discussion><Para> output value is int </Para></Discussion></Parameter></Parameters></Function>]
 
 struct Base {
   /// \brief Does something.
