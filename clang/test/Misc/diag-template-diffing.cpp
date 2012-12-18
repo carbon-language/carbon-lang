@@ -800,6 +800,18 @@ namespace PR14342 {
   // CHECK-ELIDE-NOTREE: error: no viable conversion from 'X<[...], 2>' to 'X<[...], 3UL>'
 }
 
+namespace PR14489 {
+  // The important thing here is that the diagnostic diffs a template specialization
+  // with no arguments against itself.  (We might need a different test if this
+  // diagnostic changes).
+  template<class ...V>
+  struct VariableList   {
+    void ConnectAllToAll(VariableList<>& params = VariableList<>())    {
+    }
+  };
+  // CHECK-ELIDE-NOTREE: non-const lvalue reference to type 'VariableList<>' cannot bind to a temporary of type 'VariableList<>'
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.

@@ -1125,7 +1125,12 @@ class TemplateDiff {
     TemplateDecl *FromTD, *ToTD;
     Tree.GetNode(FromTD, ToTD);
 
-    assert(Tree.HasChildren() && "Template difference not found in diff tree.");
+    if (!Tree.HasChildren()) {
+      // If we're dealing with a template specialization with zero
+      // arguments, there are no children; special-case this.
+      OS << FromTD->getNameAsString() << "<>";
+      return;
+    }
 
     Qualifiers FromQual, ToQual;
     Tree.GetNode(FromQual, ToQual);
