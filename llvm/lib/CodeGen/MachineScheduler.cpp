@@ -1166,6 +1166,16 @@ init(ScheduleDAGMI *DAG, const TargetSchedModel *SchedModel) {
       RemainingCounts[PIdx] += (Factor * PI->Cycles);
     }
   }
+  for (unsigned PIdx = 0, PEnd = SchedModel->getNumProcResourceKinds();
+       PIdx != PEnd; ++PIdx) {
+    if ((int)(RemainingCounts[PIdx] - RemainingCounts[CritResIdx])
+        >= (int)SchedModel->getLatencyFactor()) {
+      CritResIdx = PIdx;
+    }
+  }
+  MaxRemainingCount = std::max(
+    RemainingMicroOps * SchedModel->getMicroOpFactor(),
+    RemainingCounts[CritResIdx]);
 }
 
 void ConvergingScheduler::SchedBoundary::
