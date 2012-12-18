@@ -394,6 +394,19 @@ void ClastStmtCodeGen::codegenSubstitutions(const clast_stmt *Assignment,
   }
 }
 
+// Takes the cloog specific domain and translates it into a map Statement ->
+// PartialSchedule, where the PartialSchedule contains all the dimensions that
+// have been code generated up to this point.
+static __isl_give isl_map *extractPartialSchedule(ScopStmt *Statement,
+                                                  isl_set *Domain) {
+  isl_map *Schedule = Statement->getScattering();
+  int ScheduledDimensions = isl_set_dim(Domain, isl_dim_set);
+  int UnscheduledDimensions = isl_map_dim(Schedule, isl_dim_out) - ScheduledDimensions;
+
+  return isl_map_project_out(Schedule, isl_dim_out, ScheduledDimensions,
+                             UnscheduledDimensions);
+}
+
 void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
                                std::vector<Value*> *IVS , const char *iterator,
                                isl_set *Domain) {
@@ -422,7 +435,9 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
     }
   }
 
-  VectorBlockGenerator::generate(Builder, *Statement, VectorMap, Domain, P);
+  isl_map *Schedule = extractPartialSchedule(Statement, Domain);
+  VectorBlockGenerator::generate(Builder, *Statement, VectorMap, Schedule, P);
+  isl_map_free(Schedule);
 }
 
 void ClastStmtCodeGen::codegen(const clast_block *b) {

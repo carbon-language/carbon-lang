@@ -246,7 +246,7 @@ static int containsLoops(__isl_take isl_ast_node *Node, void *User) {
     isl_ast_node_free(Node);
     return 0;
   case isl_ast_node_block: {
-    isl_ast_node_list *List = isl_ast_node_block_get_children(Node); 
+    isl_ast_node_list *List = isl_ast_node_block_get_children(Node);
     int Res = isl_ast_node_list_foreach(List, &containsLoops, NULL);
     isl_ast_node_list_free(List);
     isl_ast_node_free(Node);

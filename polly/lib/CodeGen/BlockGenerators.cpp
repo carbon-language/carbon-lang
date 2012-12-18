@@ -562,12 +562,14 @@ void BlockGenerator::copyBB(ValueMapT &GlobalMap) {
 }
 
 VectorBlockGenerator::VectorBlockGenerator(IRBuilder<> &B,
-  VectorValueMapT &GlobalMaps, ScopStmt &Stmt, __isl_keep isl_set *Domain,
-  Pass *P) : BlockGenerator(B, Stmt, P), GlobalMaps(GlobalMaps),
-  Domain(Domain) {
-    assert(GlobalMaps.size() > 1 && "Only one vector lane found");
-    assert(Domain && "No statement domain provided");
-  }
+                                           VectorValueMapT &GlobalMaps,
+                                           ScopStmt &Stmt,
+                                           __isl_keep isl_map *Schedule,
+                                           Pass *P)
+  : BlockGenerator(B, Stmt, P), GlobalMaps(GlobalMaps), Schedule(Schedule) {
+  assert(GlobalMaps.size() > 1 && "Only one vector lane found");
+  assert(Schedule && "No statement domain provided");
+}
 
 Value *VectorBlockGenerator::getVectorValue(const Value *Old,
                                             ValueMapT &VectorMap,
@@ -675,9 +677,9 @@ void VectorBlockGenerator::generateLoad(const LoadInst *Load,
   MemoryAccess &Access = Statement.getAccessFor(Load);
 
   Value *NewLoad;
-  if (Access.isStrideZero(isl_set_copy(Domain)))
+  if (Access.isStrideZero(isl_map_copy(Schedule)))
     NewLoad = generateStrideZeroLoad(Load, ScalarMaps[0]);
-  else if (Access.isStrideOne(isl_set_copy(Domain)))
+  else if (Access.isStrideOne(isl_map_copy(Schedule)))
     NewLoad = generateStrideOneLoad(Load, ScalarMaps[0]);
   else
     NewLoad = generateUnknownStrideLoad(Load, ScalarMaps);
@@ -726,7 +728,7 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store,
   Value *Vector = getVectorValue(Store->getValueOperand(), VectorMap,
                                    ScalarMaps);
 
-  if (Access.isStrideOne(isl_set_copy(Domain))) {
+  if (Access.isStrideOne(isl_map_copy(Schedule))) {
     Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
     Value *NewPointer = getNewValue(Pointer, ScalarMaps[0], GlobalMaps[0]);
 

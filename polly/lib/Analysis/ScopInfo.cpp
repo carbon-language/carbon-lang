@@ -389,41 +389,30 @@ static isl_map *getEqualAndLarger(isl_space *setDomain) {
   return Map;
 }
 
-isl_set *MemoryAccess::getStride(__isl_take const isl_set *domainSubset) const {
-  isl_map *accessRelation = getAccessRelation();
-  isl_set *scatteringDomain = const_cast<isl_set*>(domainSubset);
-  isl_map *scattering = getStatement()->getScattering();
+isl_set *MemoryAccess::getStride(__isl_take const isl_map *Schedule) const {
+  isl_map *S = const_cast<isl_map*>(Schedule);
+  isl_map *AccessRelation = getAccessRelation();
+  isl_space *Space = isl_space_range(isl_map_get_space(S));
+  isl_map *NextScatt = getEqualAndLarger(Space);
 
-  scattering = isl_map_reverse(scattering);
-  int difference = isl_map_n_in(scattering) - isl_set_n_dim(scatteringDomain);
-  scattering = isl_map_project_out(scattering, isl_dim_in,
-                                   isl_set_n_dim(scatteringDomain),
-                                   difference);
+  S = isl_map_reverse(S);
+  NextScatt = isl_map_lexmin(NextScatt);
 
-  // Remove all names of the scattering dimensions, as the names may be lost
-  // anyways during the project. This leads to consistent results.
-  scattering = isl_map_set_tuple_name(scattering, isl_dim_in, "");
-  scatteringDomain = isl_set_set_tuple_name(scatteringDomain, "");
+  NextScatt = isl_map_apply_range(NextScatt, isl_map_copy(S));
+  NextScatt = isl_map_apply_range(NextScatt, isl_map_copy(AccessRelation));
+  NextScatt = isl_map_apply_domain(NextScatt, S);
+  NextScatt = isl_map_apply_domain(NextScatt, AccessRelation);
 
-  isl_map *nextScatt = getEqualAndLarger(isl_set_get_space(scatteringDomain));
-  nextScatt = isl_map_lexmin(nextScatt);
-
-  scattering = isl_map_intersect_domain(scattering, scatteringDomain);
-
-  nextScatt = isl_map_apply_range(nextScatt, isl_map_copy(scattering));
-  nextScatt = isl_map_apply_range(nextScatt, isl_map_copy(accessRelation));
-  nextScatt = isl_map_apply_domain(nextScatt, scattering);
-  nextScatt = isl_map_apply_domain(nextScatt, accessRelation);
-
-  return isl_map_deltas(nextScatt);
+  isl_set *Deltas = isl_map_deltas(NextScatt);
+  return Deltas;
 }
 
-bool MemoryAccess::isStrideX(__isl_take const isl_set *DomainSubset,
+bool MemoryAccess::isStrideX(__isl_take const isl_map *Schedule,
                              int StrideWidth) const {
   isl_set *Stride, *StrideX;
   bool IsStrideX;
 
-  Stride = getStride(DomainSubset);
+  Stride = getStride(Schedule);
   StrideX = isl_set_universe(isl_set_get_space(Stride));
   StrideX = isl_set_fix_si(StrideX, isl_dim_set, 0, StrideWidth);
   IsStrideX = isl_set_is_equal(Stride, StrideX);
@@ -434,12 +423,12 @@ bool MemoryAccess::isStrideX(__isl_take const isl_set *DomainSubset,
   return IsStrideX;
 }
 
-bool MemoryAccess::isStrideZero(const isl_set *DomainSubset) const {
-  return isStrideX(DomainSubset, 0);
+bool MemoryAccess::isStrideZero(const isl_map *Schedule) const {
+  return isStrideX(Schedule, 0);
 }
 
-bool MemoryAccess::isStrideOne(const isl_set *DomainSubset) const {
-  return isStrideX(DomainSubset, 1);
+bool MemoryAccess::isStrideOne(const isl_map *Schedule) const {
+  return isStrideX(Schedule, 1);
 }
 
 void MemoryAccess::setNewAccessRelation(isl_map *newAccess) {
