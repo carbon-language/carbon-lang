@@ -14,6 +14,7 @@
 #include "CodeGenTypes.h"
 #include "CGCXXABI.h"
 #include "CGCall.h"
+#include "CGOpenCLRuntime.h"
 #include "CGRecordLayout.h"
 #include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
@@ -365,6 +366,15 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     case BuiltinType::UInt128:
     case BuiltinType::Int128:
       ResultType = llvm::IntegerType::get(getLLVMContext(), 128);
+      break;
+
+    case BuiltinType::OCLImage1d:
+    case BuiltinType::OCLImage1dArray:
+    case BuiltinType::OCLImage1dBuffer:
+    case BuiltinType::OCLImage2d:
+    case BuiltinType::OCLImage2dArray:
+    case BuiltinType::OCLImage3d:
+      ResultType = CGM.getOpenCLRuntime().convertOpenCLSpecificType(Ty);
       break;
     
     case BuiltinType::Dependent:

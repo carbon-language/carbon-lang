@@ -262,6 +262,12 @@ TypeSpecifierType BuiltinTypeLoc::getWrittenTypeSpec() const {
   case BuiltinType::ObjCId:
   case BuiltinType::ObjCClass:
   case BuiltinType::ObjCSel:
+  case BuiltinType::OCLImage1d:
+  case BuiltinType::OCLImage1dArray:
+  case BuiltinType::OCLImage1dBuffer:
+  case BuiltinType::OCLImage2d:
+  case BuiltinType::OCLImage2dArray:
+  case BuiltinType::OCLImage3d:
   case BuiltinType::BuiltinFn:
     return TST_unspecified;
   }

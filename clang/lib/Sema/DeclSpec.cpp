@@ -280,6 +280,12 @@ bool Declarator::isDeclarationOfFunction() const {
     case TST_unspecified:
     case TST_void:
     case TST_wchar:
+    case TST_image1d_t:
+    case TST_image1d_array_t:
+    case TST_image1d_buffer_t:
+    case TST_image2d_t:
+    case TST_image2d_array_t:
+    case TST_image3d_t:
       return false;
 
     case TST_decltype:
@@ -414,6 +420,12 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_underlyingType: return "__underlying_type";
   case DeclSpec::TST_unknown_anytype: return "__unknown_anytype";
   case DeclSpec::TST_atomic: return "_Atomic";
+  case DeclSpec::TST_image1d_t:   return "image1d_t";
+  case DeclSpec::TST_image1d_array_t: return "image1d_array_t";
+  case DeclSpec::TST_image1d_buffer_t: return "image1d_buffer_t";
+  case DeclSpec::TST_image2d_t:   return "image2d_t";
+  case DeclSpec::TST_image2d_array_t: return "image2d_array_t";
+  case DeclSpec::TST_image3d_t:   return "image3d_t";
   case DeclSpec::TST_error:       return "(error)";
   }
   llvm_unreachable("Unknown typespec!");

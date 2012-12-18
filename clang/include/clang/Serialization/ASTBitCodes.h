@@ -701,7 +701,19 @@ namespace clang {
       /// \brief The __va_list_tag placeholder type.
       PREDEF_TYPE_VA_LIST_TAG = 36,
       /// \brief The placeholder type for builtin functions.
-      PREDEF_TYPE_BUILTIN_FN = 37
+      PREDEF_TYPE_BUILTIN_FN = 37,
+      /// \brief OpenCL 1d image type.
+      PREDEF_TYPE_IMAGE1D_ID    = 38,
+      /// \brief OpenCL 1d image array type.
+      PREDEF_TYPE_IMAGE1D_ARR_ID = 39,
+      /// \brief OpenCL 1d image buffer type.
+      PREDEF_TYPE_IMAGE1D_BUFF_ID = 40,
+      /// \brief OpenCL 2d image type.
+      PREDEF_TYPE_IMAGE2D_ID    = 41,
+      /// \brief OpenCL 2d image array type.
+      PREDEF_TYPE_IMAGE2D_ARR_ID = 42,
+      /// \brief OpenCL 3d image type.
+      PREDEF_TYPE_IMAGE3D_ID    = 43
     };
 
     /// \brief The number of predefined type IDs that are reserved for

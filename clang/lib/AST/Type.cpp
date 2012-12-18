@@ -1512,6 +1512,12 @@ StringRef BuiltinType::getName(const PrintingPolicy &Policy) const {
   case ObjCId:            return "id";
   case ObjCClass:         return "Class";
   case ObjCSel:           return "SEL";
+  case OCLImage1d:        return "image1d_t";
+  case OCLImage1dArray:   return "image1d_array_t";
+  case OCLImage1dBuffer:  return "image1d_buffer_t";
+  case OCLImage2d:        return "image2d_t";
+  case OCLImage2dArray:   return "image2d_array_t";
+  case OCLImage3d:        return "image3d_t";
   }
   
   llvm_unreachable("Invalid builtin type.");

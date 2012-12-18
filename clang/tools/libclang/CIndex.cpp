@@ -1367,6 +1367,12 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
   case BuiltinType::Void:
   case BuiltinType::NullPtr:
   case BuiltinType::Dependent:
+  case BuiltinType::OCLImage1d:
+  case BuiltinType::OCLImage1dArray:
+  case BuiltinType::OCLImage1dBuffer:
+  case BuiltinType::OCLImage2d:
+  case BuiltinType::OCLImage2dArray:
+  case BuiltinType::OCLImage3d:
 #define BUILTIN_TYPE(Id, SingletonId)
 #define SIGNED_TYPE(Id, SingletonId) case BuiltinType::Id:
 #define UNSIGNED_TYPE(Id, SingletonId) case BuiltinType::Id:

@@ -4883,6 +4883,12 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_OBJC_ID:       T = Context.ObjCBuiltinIdTy;    break;
     case PREDEF_TYPE_OBJC_CLASS:    T = Context.ObjCBuiltinClassTy; break;
     case PREDEF_TYPE_OBJC_SEL:      T = Context.ObjCBuiltinSelTy;   break;
+    case PREDEF_TYPE_IMAGE1D_ID:    T = Context.OCLImage1dTy;       break;
+    case PREDEF_TYPE_IMAGE1D_ARR_ID: T = Context.OCLImage1dArrayTy; break;
+    case PREDEF_TYPE_IMAGE1D_BUFF_ID: T = Context.OCLImage1dBufferTy; break;
+    case PREDEF_TYPE_IMAGE2D_ID:    T = Context.OCLImage2dTy;       break;
+    case PREDEF_TYPE_IMAGE2D_ARR_ID: T = Context.OCLImage2dArrayTy; break;
+    case PREDEF_TYPE_IMAGE3D_ID:    T = Context.OCLImage3dTy;       break;
     case PREDEF_TYPE_AUTO_DEDUCT:   T = Context.getAutoDeductType(); break;
         
     case PREDEF_TYPE_AUTO_RREF_DEDUCT: 

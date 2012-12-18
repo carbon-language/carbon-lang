@@ -191,6 +191,12 @@ static bool TypeInfoIsInStandardLibrary(const BuiltinType *Ty) {
     case BuiltinType::Char32:
     case BuiltinType::Int128:
     case BuiltinType::UInt128:
+    case BuiltinType::OCLImage1d:
+    case BuiltinType::OCLImage1dArray:
+    case BuiltinType::OCLImage1dBuffer:
+    case BuiltinType::OCLImage2d:
+    case BuiltinType::OCLImage2dArray:
+    case BuiltinType::OCLImage3d:
       return true;
       
     case BuiltinType::Dependent:
