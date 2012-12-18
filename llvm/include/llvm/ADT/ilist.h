@@ -472,6 +472,10 @@ private:
   //
   void transfer(iterator position, iplist &L2, iterator first, iterator last) {
     assert(first != last && "Should be checked by callers");
+    // Position cannot be contained in the range to be transferred.
+    // Check for the most common mistake.
+    assert(position != first &&
+           "Insertion point can't be one of the transferred nodes");
 
     if (position != last) {
       // Note: we have to be careful about the case when we move the first node

@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
+#include "llvm/ADT/STLExtras.h"
 #include "gtest/gtest.h"
 #include <ostream>
 
@@ -39,6 +40,26 @@ TEST(ilistTest, Basic) {
   EXPECT_EQ(2, ConstList.back().Value);
   EXPECT_EQ(2, ConstList.front().getNextNode()->Value);
   EXPECT_EQ(1, ConstList.back().getPrevNode()->Value);
+}
+
+TEST(ilistTest, SpliceOne) {
+  ilist<Node> List;
+  List.push_back(1);
+
+  // The single-element splice operation supports noops.
+  List.splice(List.begin(), List, List.begin());
+  EXPECT_EQ(1u, List.size());
+  EXPECT_EQ(1, List.front().Value);
+  EXPECT_TRUE(llvm::next(List.begin()) == List.end());
+
+  // Altenative noop. Move the first element behind itself.
+  List.push_back(2);
+  List.push_back(3);
+  List.splice(llvm::next(List.begin()), List, List.begin());
+  EXPECT_EQ(3u, List.size());
+  EXPECT_EQ(1, List.front().Value);
+  EXPECT_EQ(2, llvm::next(List.begin())->Value);
+  EXPECT_EQ(3, List.back().Value);
 }
 
 }
