@@ -54,7 +54,7 @@ Diag &Diag::operator<<(const Value &V) {
   return *this;
 }
 
-/// Hexadecimal printing for numbers too large for fprintf to handle directly.
+/// Hexadecimal printing for numbers too large for Printf to handle directly.
 static void PrintHex(UIntMax Val) {
 #if HAVE_INT128_T
   Printf("0x%08x%08x%08x%08x",
@@ -93,6 +93,15 @@ static void renderLocation(Location Loc) {
   }
 }
 
+// C++ demangling function, as required by Itanium C++ ABI. This is weak,
+// because we do not require a C++ ABI library to be linked to a program
+// using UBSan; if it's not present, we'll just print the string mangled.
+namespace __cxxabiv1 {
+  extern "C" char *__cxa_demangle(const char *mangled, char *buffer,
+                                  size_t *length, int *status)
+    __attribute__((weak));
+}
+
 static void renderText(const char *Message, const Diag::Arg *Args) {
   for (const char *Msg = Message; *Msg; ++Msg) {
     if (*Msg != '%') {
@@ -109,6 +118,20 @@ static void renderText(const char *Message, const Diag::Arg *Args) {
       case Diag::AK_String:
         Printf("%s", A.String);
         break;
+      case Diag::AK_Mangled: {
+        const char *String = 0;
+        // FIXME: __cxa_demangle aggressively insists on allocating memory.
+        // There's not much we can do about that, short of providing our
+        // own demangler (libc++abi's implementation could easily be made
+        // to not allocate). For now, we just call it anyway, and we leak
+        // the returned value.
+        if (__cxxabiv1::__cxa_demangle)
+          String = __cxxabiv1::__cxa_demangle(A.String, 0, 0, 0);
+        RawWrite("'");
+        RawWrite(String ? String : A.String);
+        RawWrite("'");
+        break;
+      }
       case Diag::AK_SInt:
         // 'long long' is guaranteed to be at least 64 bits wide.
         if (A.SInt >= INT64_MIN && A.SInt <= INT64_MAX)

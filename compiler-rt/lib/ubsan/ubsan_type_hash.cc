@@ -129,7 +129,7 @@ static bool isDerivedFromAtOffset(const abi::__class_type_info *Derived,
     // No base class subobjects.
     return false;
 
-  // Look for a zero-offset base class which is derived from \p Base.
+  // Look for a base class which is derived from \p Base at the right offset.
   for (unsigned int base = 0; base != VTI->base_count; ++base) {
     // FIXME: Curtail the recursion if this base can't possibly contain the
     //        given offset.
@@ -147,6 +147,39 @@ static bool isDerivedFromAtOffset(const abi::__class_type_info *Derived,
   }
 
   return false;
+}
+
+/// \brief Find the derived-most dynamic base class of \p Derived at offset
+/// \p Offset.
+static const abi::__class_type_info *findBaseAtOffset(
+    const abi::__class_type_info *Derived, sptr Offset) {
+  if (!Offset)
+    return Derived;
+
+  if (const abi::__si_class_type_info *SI =
+        dynamic_cast<const abi::__si_class_type_info*>(Derived))
+    return findBaseAtOffset(SI->__base_type, Offset);
+
+  const abi::__vmi_class_type_info *VTI =
+    dynamic_cast<const abi::__vmi_class_type_info*>(Derived);
+  if (!VTI)
+    // No base class subobjects.
+    return 0;
+
+  for (unsigned int base = 0; base != VTI->base_count; ++base) {
+    sptr OffsetHere = VTI->base_info[base].__offset_flags >>
+                      abi::__base_class_type_info::__offset_shift;
+    if (VTI->base_info[base].__offset_flags &
+          abi::__base_class_type_info::__virtual_mask)
+      // FIXME: Can't handle virtual bases yet.
+      continue;
+    if (const abi::__class_type_info *Base =
+          findBaseAtOffset(VTI->base_info[base].__base_type,
+                           Offset - OffsetHere))
+      return Base;
+  }
+
+  return 0;
 }
 
 namespace {
@@ -206,6 +239,10 @@ bool __ubsan::checkDynamicType(void *Object, void *Type, HashValue Hash) {
 __ubsan::DynamicTypeInfo __ubsan::getDynamicTypeInfo(void *Object) {
   VtablePrefix *Vtable = getVtablePrefix(Object);
   if (!Vtable)
-    return DynamicTypeInfo(0, 0);
-  return DynamicTypeInfo(Vtable->TypeInfo->__type_name, -Vtable->Offset);
+    return DynamicTypeInfo(0, 0, 0);
+  const abi::__class_type_info *ObjectType = findBaseAtOffset(
+    static_cast<const abi::__class_type_info*>(Vtable->TypeInfo),
+    -Vtable->Offset);
+  return DynamicTypeInfo(Vtable->TypeInfo->__type_name, -Vtable->Offset,
+                         ObjectType ? ObjectType->__type_name : "<unknown>");
 }

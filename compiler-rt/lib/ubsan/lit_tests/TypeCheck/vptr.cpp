@@ -75,7 +75,7 @@ int main(int, char **argv) {
 
   case 'm':
     // CHECK-MEMBER: vptr.cpp:[[@LINE+5]]:15: runtime error: member access within address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
-    // CHECK-MEMBER-NEXT: [[PTR]]: note: object is of type [[DYN_TYPE:1S|1U]]
+    // CHECK-MEMBER-NEXT: [[PTR]]: note: object is of type [[DYN_TYPE:'S'|'U']]
     // CHECK-MEMBER-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-MEMBER-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-MEMBER-NEXT: {{^              vptr for}} [[DYN_TYPE]]
@@ -89,7 +89,7 @@ int main(int, char **argv) {
 
   case 'f':
     // CHECK-MEMFUN: vptr.cpp:[[@LINE+5]]:12: runtime error: member call on address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'T'
-    // CHECK-MEMFUN-NEXT: [[PTR]]: note: object is of type [[DYN_TYPE:1S|1U]]
+    // CHECK-MEMFUN-NEXT: [[PTR]]: note: object is of type [[DYN_TYPE:'S'|'U']]
     // CHECK-MEMFUN-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-MEMFUN-NEXT: {{^              \^~~~~~~~~~~(~~~~~~~~~~~~)? *$}}
     // CHECK-MEMFUN-NEXT: {{^              vptr for}} [[DYN_TYPE]]
@@ -97,10 +97,10 @@ int main(int, char **argv) {
 
   case 'o':
     // CHECK-OFFSET: vptr.cpp:[[@LINE+5]]:12: runtime error: member call on address [[PTR:0x[0-9a-f]*]] which does not point to an object of type 'U'
-    // CHECK-OFFSET-NEXT: 0x{{[0-9a-f]*}}: note: object is base class subobject at offset {{8|16}} within object of type [[DYN_TYPE:1U]]
+    // CHECK-OFFSET-NEXT: 0x{{[0-9a-f]*}}: note: object is base class subobject at offset {{8|16}} within object of type [[DYN_TYPE:'U']]
     // CHECK-OFFSET-NEXT: {{^ .. .. .. ..  .. .. .. .. .. .. .. ..  .. .. .. .. .. .. .. ..  .. .. .. .. .. .. .. ..  }}
     // CHECK-OFFSET-NEXT: {{^              \^                        (                         ~~~~~~~~~~~~)~~~~~~~~~~~ *$}}
-    // CHECK-OFFSET-NEXT: {{^                                       (                         )?vptr for}} [[DYN_TYPE]]
+    // CHECK-OFFSET-NEXT: {{^                                       (                         )?vptr for}} 'T' base class of [[DYN_TYPE]]
     return reinterpret_cast<U*>(p)->v() - 2;
   }
 }
