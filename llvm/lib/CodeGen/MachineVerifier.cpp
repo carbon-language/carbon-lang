@@ -307,6 +307,9 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
     visitMachineBasicBlockBefore(MFI);
     // Keep track of the current bundle header.
     const MachineInstr *CurBundle = 0;
+    // Do we expect the next instruction to be part of the same bundle?
+    bool InBundle = false;
+
     for (MachineBasicBlock::const_instr_iterator MBBI = MFI->instr_begin(),
            MBBE = MFI->instr_end(); MBBI != MBBE; ++MBBI) {
       if (MBBI->getParent() != MFI) {
@@ -314,6 +317,15 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
         *OS << "Instruction: " << *MBBI;
         continue;
       }
+
+      // Check for consistent bundle flags.
+      if (InBundle && !MBBI->isBundledWithPred())
+        report("Missing BundledPred flag, "
+               "BundledSucc was set on predecessor", MBBI);
+      if (!InBundle && MBBI->isBundledWithPred())
+        report("BundledPred flag is set, "
+               "but BundledSucc not set on predecessor", MBBI);
+
       // Is this a bundle header?
       if (!MBBI->isInsideBundle()) {
         if (CurBundle)
@@ -326,9 +338,14 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
       for (unsigned I = 0, E = MBBI->getNumOperands(); I != E; ++I)
         visitMachineOperand(&MBBI->getOperand(I), I);
       visitMachineInstrAfter(MBBI);
+
+      // Was this the last bundled instruction?
+      InBundle = MBBI->isBundledWithSucc();
     }
     if (CurBundle)
       visitMachineBundleAfter(CurBundle);
+    if (InBundle)
+      report("BundledSucc flag set on last instruction in block", &MFI->back());
     visitMachineBasicBlockAfter(MFI);
   }
   visitMachineFunctionAfter();
