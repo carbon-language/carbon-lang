@@ -1669,9 +1669,9 @@ static bool accumulateGEPOffsets(const DataLayout &TD, GEPOperator &GEP,
     APInt TypeSize(Offset.getBitWidth(),
                    TD.getTypeAllocSize(GTI.getIndexedType()));
     if (VectorType *VTy = dyn_cast<VectorType>(*GTI)) {
-      assert((VTy->getScalarSizeInBits() % 8) == 0 &&
+      assert((TD.getTypeSizeInBits(VTy->getScalarType()) % 8) == 0 &&
              "vector element size is not a multiple of 8, cannot GEP over it");
-      TypeSize = VTy->getScalarSizeInBits() / 8;
+      TypeSize = TD.getTypeSizeInBits(VTy->getScalarType()) / 8;
     }
 
     GEPOffset += OpC->getValue().sextOrTrunc(Offset.getBitWidth()) * TypeSize;
@@ -1762,7 +1762,7 @@ static Value *getNaturalGEPRecursively(IRBuilder<> &IRB, const DataLayout &TD,
   // extremely poorly defined currently. The long-term goal is to remove GEPing
   // over a vector from the IR completely.
   if (VectorType *VecTy = dyn_cast<VectorType>(Ty)) {
-    unsigned ElementSizeInBits = VecTy->getScalarSizeInBits();
+    unsigned ElementSizeInBits = TD.getTypeSizeInBits(VecTy->getScalarType());
     if (ElementSizeInBits % 8)
       return 0; // GEPs over non-multiple of 8 size vector elements are invalid.
     APInt ElementSize(Offset.getBitWidth(), ElementSizeInBits / 8);
@@ -2010,7 +2010,7 @@ static bool isVectorPromotionViable(const DataLayout &TD,
     return false;
 
   uint64_t VecSize = TD.getTypeSizeInBits(Ty);
-  uint64_t ElementSize = Ty->getScalarSizeInBits();
+  uint64_t ElementSize = TD.getTypeSizeInBits(Ty->getScalarType());
 
   // While the definition of LLVM vectors is bitpacked, we don't support sizes
   // that aren't byte sized.
@@ -2370,9 +2370,9 @@ public:
       ++NumVectorized;
       VecTy = cast<VectorType>(NewAI.getAllocatedType());
       ElementTy = VecTy->getElementType();
-      assert((VecTy->getScalarSizeInBits() % 8) == 0 &&
+      assert((TD.getTypeSizeInBits(VecTy->getScalarType()) % 8) == 0 &&
              "Only multiple-of-8 sized vector elements are viable");
-      ElementSize = VecTy->getScalarSizeInBits() / 8;
+      ElementSize = TD.getTypeSizeInBits(VecTy->getScalarType()) / 8;
     } else if (isIntegerWideningViable(TD, NewAI.getAllocatedType(),
                                        NewAllocaBeginOffset, P, I, E)) {
       IntTy = Type::getIntNTy(NewAI.getContext(),
