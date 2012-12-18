@@ -40,22 +40,35 @@ protected:
     return format(Code, 0, Code.size(), Style);
   }
 
-  void verifyFormat(llvm::StringRef Code) {
-    std::string WithoutFormat(Code.str());
-    for (unsigned i = 0, e = WithoutFormat.size(); i != e; ++i) {
-      if (WithoutFormat[i] == '\n')
-        WithoutFormat[i] = ' ';
+  std::string messUp(llvm::StringRef Code) {
+    std::string MessedUp(Code.str());
+    bool InComment = false;
+    bool JustReplacedNewline = false;
+    for (unsigned i = 0, e = MessedUp.size() - 1; i != e; ++i) {
+      if (MessedUp[i] == '/' && MessedUp[i + 1] == '/') {
+        if (JustReplacedNewline)
+          MessedUp[i - 1] = '\n';
+        InComment = true;
+      } else if (MessedUp[i] != ' ') {
+        JustReplacedNewline = false;
+      } else if (MessedUp[i] == '\n') {
+        if (InComment) {
+          InComment = false;
+        } else {
+          JustReplacedNewline = true;
+          MessedUp[i] = ' ';
+        }
+      }
     }
-    EXPECT_EQ(Code.str(), format(WithoutFormat));
+    return MessedUp;
+  }
+
+  void verifyFormat(llvm::StringRef Code) {
+    EXPECT_EQ(Code.str(), format(messUp(Code)));
   }
 
   void verifyGoogleFormat(llvm::StringRef Code) {
-    std::string WithoutFormat(Code.str());
-    for (unsigned i = 0, e = WithoutFormat.size(); i != e; ++i) {
-      if (WithoutFormat[i] == '\n')
-        WithoutFormat[i] = ' ';
-    }
-    EXPECT_EQ(Code.str(), format(WithoutFormat, getGoogleStyle()));
+    EXPECT_EQ(Code.str(), format(messUp(Code), getGoogleStyle()));
   }
 };
 
@@ -96,7 +109,9 @@ TEST_F(FormatTest, FormatIfWithoutCompountStatement) {
   verifyFormat("if (true)\n  f();\ng();");
   verifyFormat("if (a)\n  if (b)\n    if (c)\n      g();\nh();");
   verifyFormat("if (a)\n  if (b) {\n    f();\n  }\ng();");
-  EXPECT_EQ("if (a)\n  // comment\n  f();", format("if(a)\n// comment\nf();"));
+  verifyFormat("if (a)\n"
+               "  // comment\n"
+               "  f();");
 }
 
 TEST_F(FormatTest, ParseIfElse) {
@@ -236,21 +251,22 @@ TEST_F(FormatTest, FormatsLabels) {
 //===----------------------------------------------------------------------===//
 
 TEST_F(FormatTest, UnderstandsSingleLineComments) {
-  EXPECT_EQ("// line 1\n// line 2\nvoid f() {\n}\n",
-            format("// line 1\n// line 2\nvoid f() {}\n"));
+  verifyFormat("// line 1\n"
+               "// line 2\n"
+               "void f() {\n}\n");
 
-  EXPECT_EQ("void f() {\n  // Doesn't do anything\n}",
-            format("void f() {\n// Doesn't do anything\n}"));
+  verifyFormat("void f() {\n"
+               "  // Doesn't do anything\n"
+               "}");
 
-  EXPECT_EQ("int i  // This is a fancy variable\n    = 5;",
-            format("int i  // This is a fancy variable\n= 5;"));
+  verifyFormat("int i  // This is a fancy variable\n"
+               "    = 5;");
 
-  EXPECT_EQ("enum E {\n"
-            "  // comment\n"
-            "  VAL_A,  // comment\n"
-            "  VAL_B\n"
-            "};",
-            format("enum E{\n// comment\nVAL_A,// comment\nVAL_B};"));
+  verifyFormat("enum E {\n"
+               "  // comment\n"
+               "  VAL_A,  // comment\n"
+               "  VAL_B\n"
+               "};");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
