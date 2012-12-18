@@ -1388,12 +1388,12 @@ static bool ShouldDisableCFI(const ArgList &Args,
     // The native darwin assembler doesn't support cfi directives, so
     // we disable them if we think the .s file will be passed to it.
     Default = Args.hasFlag(options::OPT_integrated_as,
-			   options::OPT_no_integrated_as,
-			   TC.IsIntegratedAssemblerDefault());
+                           options::OPT_no_integrated_as,
+                           TC.IsIntegratedAssemblerDefault());
   }
   return !Args.hasFlag(options::OPT_fdwarf2_cfi_asm,
-		       options::OPT_fno_dwarf2_cfi_asm,
-		       Default);
+                       options::OPT_fno_dwarf2_cfi_asm,
+                       Default);
 }
 
 static bool ShouldDisableDwarfDirectory(const ArgList &Args,
@@ -3278,6 +3278,11 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("-filetype");
   CmdArgs.push_back("obj");
 
+  // Set the main file name, so that debug info works even with
+  // -save-temps or preprocessed assembly.
+  CmdArgs.push_back("-main-file-name");
+  CmdArgs.push_back(Clang::getBaseInputName(Args, Inputs));
+
   if (UseRelaxAll(C, Args))
     CmdArgs.push_back("-relax-all");
 
@@ -4367,10 +4372,10 @@ void darwin::Dsymutil::ConstructJob(Compilation &C, const JobAction &JA,
 }
 
 void darwin::VerifyDebug::ConstructJob(Compilation &C, const JobAction &JA,
-				       const InputInfo &Output,
-				       const InputInfoList &Inputs,
-				       const ArgList &Args,
-				       const char *LinkingOutput) const {
+                                       const InputInfo &Output,
+                                       const InputInfoList &Inputs,
+                                       const ArgList &Args,
+                                       const char *LinkingOutput) const {
   ArgStringList CmdArgs;
   CmdArgs.push_back("--verify");
   CmdArgs.push_back("--debug-info");
@@ -5751,7 +5756,7 @@ void minix::Link::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back("-lCompilerRT-Generic");
     CmdArgs.push_back("-L/usr/pkg/compiler-rt/lib");
     CmdArgs.push_back(
-	 Args.MakeArgString(getToolChain().GetFilePath("crtend.o")));
+         Args.MakeArgString(getToolChain().GetFilePath("crtend.o")));
   }
 
   const char *Exec = Args.MakeArgString(getToolChain().GetProgramPath("ld"));

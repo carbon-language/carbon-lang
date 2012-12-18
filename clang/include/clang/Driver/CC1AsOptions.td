@@ -37,6 +37,8 @@ def L : Flag<["-"], "L">,
   HelpText<"Save temporary labels in the symbol table. "
            "Note this may change .s semantics, it should almost never be used "
            "on compiler generated code!">;
+def main_file_name : Separate<["-"], "main-file-name">,
+  HelpText<"Main file name to use for debug info">;
 
 //===----------------------------------------------------------------------===//
 // Frontend Options

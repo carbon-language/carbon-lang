@@ -30,6 +30,7 @@ namespace tools {
 
   /// \brief Clang compiler tool.
   class LLVM_LIBRARY_VISIBILITY Clang : public Tool {
+  public:
     static const char *getBaseInputName(const ArgList &Args,
                                         const InputInfoList &Inputs);
     static const char *getBaseInputStem(const ArgList &Args,
@@ -37,6 +38,7 @@ namespace tools {
     static const char *getDependencyFileName(const ArgList &Args,
                                              const InputInfoList &Inputs);
 
+  private:
     void AddPreprocessingOptions(Compilation &C,
                                  const Driver &D,
                                  const ArgList &Args,
@@ -286,15 +288,15 @@ namespace darwin {
   class LLVM_LIBRARY_VISIBILITY VerifyDebug : public DarwinTool  {
   public:
     VerifyDebug(const ToolChain &TC) : DarwinTool("darwin::VerifyDebug",
-						  "dwarfdump", TC) {}
+                                                  "dwarfdump", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
 
     virtual void ConstructJob(Compilation &C, const JobAction &JA,
-			      const InputInfo &Output,
-			      const InputInfoList &Inputs,
-			      const ArgList &TCArgs,
-			      const char *LinkingOutput) const;
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
+                              const char *LinkingOutput) const;
   };
 
 }
