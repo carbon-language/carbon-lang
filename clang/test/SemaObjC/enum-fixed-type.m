@@ -1,5 +1,4 @@
 // RUN: %clang_cc1 -fsyntax-only -verify %s
-// expected-no-diagnostics
 
 #if !__has_feature(objc_fixed_enum)
 #  error Enumerations with a fixed underlying type are not supported
@@ -36,3 +35,6 @@ int arr2[(sizeof(typeof(IntegerEnum)) == sizeof(typeof(long))) - 1];
 // <rdar://problem/10760113>
 typedef enum : long long { Bar = -1 } LongLongEnum;
 int arr3[(long long)Bar == (long long)-1 ? 1 : -1];
+
+typedef enum : Integer { BaseElem } BaseEnum;
+typedef enum : BaseEnum { DerivedElem } DerivedEnum; // expected-error {{non-integral type 'BaseEnum' is an invalid underlying type}}
