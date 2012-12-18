@@ -43,7 +43,10 @@ class NSURLKnown_SummaryProvider:
 	# one pointer is the ISA
 	# then there is one more pointer and 8 bytes of plain data
 	# (which are also present on a 32-bit system)
-	# plus another pointer, and then the real data
+	# then there is a pointer to an NSString which is the url text
+	# optionally, the next pointer is another NSURL which is the "base"
+	# of this one when doing NSURLs composition (incidentally, NSURLs can
+	# recurse the base+text mechanism to any desired depth)
 	def offset_text(self):
 		logger = lldb.formatters.Logger.Logger()
 		return 24 if self.sys_params.is_64_bit else 16
