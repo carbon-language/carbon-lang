@@ -817,33 +817,52 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     NewPhi->addIncoming(VectorStart, LoopBypassBlock);
     NewPhi->addIncoming(getVectorValue(RdxDesc.LoopExitInstr), LoopVectorBody);
 
-    // Extract the first scalar.
-    Value *Scalar0 =
-    Builder.CreateExtractElement(NewPhi, Builder.getInt32(0));
-    // Extract and reduce the remaining vector elements.
-    for (unsigned i=1; i < VF; ++i) {
-      Value *Scalar1 =
-      Builder.CreateExtractElement(NewPhi, Builder.getInt32(i));
+    // VF is a power of 2 so we can emit the reduction using log2(VF) shuffles
+    // and vector ops, reducing the set of values being computed by half each
+    // round.
+    assert(isPowerOf2_32(VF) &&
+           "Reduction emission only supported for pow2 vectors!");
+    Value *TmpVec = NewPhi;
+    SmallVector<Constant*, 32> ShuffleMask(VF, 0);
+    for (unsigned i = VF; i != 1; i >>= 1) {
+      // Move the upper half of the vector to the lower half.
+      for (unsigned j = 0; j != i/2; ++j)
+        ShuffleMask[j] = Builder.getInt32(i/2 + j);
+
+      // Fill the rest of the mask with undef.
+      std::fill(&ShuffleMask[i/2], ShuffleMask.end(),
+                UndefValue::get(Builder.getInt32Ty()));
+
+      Value *Shuf =
+        Builder.CreateShuffleVector(TmpVec,
+                                    UndefValue::get(TmpVec->getType()),
+                                    ConstantVector::get(ShuffleMask),
+                                    "rdx.shuf");
+
+      // Emit the operation on the shuffled value.
       switch (RdxDesc.Kind) {
       case LoopVectorizationLegality::IntegerAdd:
-        Scalar0 = Builder.CreateAdd(Scalar0, Scalar1, "add.rdx");
+        TmpVec = Builder.CreateAdd(TmpVec, Shuf, "add.rdx");
         break;
       case LoopVectorizationLegality::IntegerMult:
-        Scalar0 = Builder.CreateMul(Scalar0, Scalar1, "mul.rdx");
+        TmpVec = Builder.CreateMul(TmpVec, Shuf, "mul.rdx");
         break;
       case LoopVectorizationLegality::IntegerOr:
-        Scalar0 = Builder.CreateOr(Scalar0, Scalar1, "or.rdx");
+        TmpVec = Builder.CreateOr(TmpVec, Shuf, "or.rdx");
         break;
       case LoopVectorizationLegality::IntegerAnd:
-        Scalar0 = Builder.CreateAnd(Scalar0, Scalar1, "and.rdx");
+        TmpVec = Builder.CreateAnd(TmpVec, Shuf, "and.rdx");
         break;
       case LoopVectorizationLegality::IntegerXor:
-        Scalar0 = Builder.CreateXor(Scalar0, Scalar1, "xor.rdx");
+        TmpVec = Builder.CreateXor(TmpVec, Shuf, "xor.rdx");
         break;
       default:
         llvm_unreachable("Unknown reduction operation");
       }
     }
+
+    // The result is in the first element of the vector.
+    Value *Scalar0 = Builder.CreateExtractElement(TmpVec, Builder.getInt32(0));
 
     // Now, we need to fix the users of the reduction variable
     // inside and outside of the scalar remainder loop.

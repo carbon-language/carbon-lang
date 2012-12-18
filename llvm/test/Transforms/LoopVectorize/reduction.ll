@@ -7,6 +7,11 @@ target triple = "x86_64-apple-macosx10.8.0"
 ;CHECK: phi <4 x i32>
 ;CHECK: load <4 x i32>
 ;CHECK: add <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+;CHECK: add <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+;CHECK: add <4 x i32>
+;CHECK: extractelement <4 x i32> %{{.*}}, i32 0
 ;CHECK: ret i32
 define i32 @reduction_sum(i32 %n, i32* noalias nocapture %A, i32* noalias nocapture %B) nounwind uwtable readonly noinline ssp {
   %1 = icmp sgt i32 %n, 0
@@ -37,6 +42,11 @@ define i32 @reduction_sum(i32 %n, i32* noalias nocapture %A, i32* noalias nocapt
 ;CHECK: phi <4 x i32>
 ;CHECK: load <4 x i32>
 ;CHECK: mul <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+;CHECK: mul <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+;CHECK: mul <4 x i32>
+;CHECK: extractelement <4 x i32> %{{.*}}, i32 0
 ;CHECK: ret i32
 define i32 @reduction_prod(i32 %n, i32* noalias nocapture %A, i32* noalias nocapture %B) nounwind uwtable readonly noinline ssp {
   %1 = icmp sgt i32 %n, 0
@@ -67,6 +77,11 @@ define i32 @reduction_prod(i32 %n, i32* noalias nocapture %A, i32* noalias nocap
 ;CHECK: phi <4 x i32>
 ;CHECK: load <4 x i32>
 ;CHECK: mul nsw <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+;CHECK: add <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+;CHECK: add <4 x i32>
+;CHECK: extractelement <4 x i32> %{{.*}}, i32 0
 ;CHECK: ret i32
 define i32 @reduction_mix(i32 %n, i32* noalias nocapture %A, i32* noalias nocapture %B) nounwind uwtable readonly noinline ssp {
   %1 = icmp sgt i32 %n, 0
@@ -95,6 +110,11 @@ define i32 @reduction_mix(i32 %n, i32* noalias nocapture %A, i32* noalias nocapt
 
 ;CHECK: @reduction_mul
 ;CHECK: mul <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+;CHECK: mul <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+;CHECK: mul <4 x i32>
+;CHECK: extractelement <4 x i32> %{{.*}}, i32 0
 ;CHECK: ret i32
 define i32 @reduction_mul(i32 %n, i32* noalias nocapture %A, i32* noalias nocapture %B) nounwind uwtable readonly noinline ssp {
   %1 = icmp sgt i32 %n, 0
@@ -124,6 +144,11 @@ define i32 @reduction_mul(i32 %n, i32* noalias nocapture %A, i32* noalias nocapt
 ;CHECK: @start_at_non_zero
 ;CHECK: phi <4 x i32>
 ;CHECK: <i32 120, i32 0, i32 0, i32 0>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+;CHECK: add <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+;CHECK: add <4 x i32>
+;CHECK: extractelement <4 x i32> %{{.*}}, i32 0
 ;CHECK: ret i32
 define i32 @start_at_non_zero(i32* nocapture %in, i32* nocapture %coeff, i32* nocapture %out, i32 %n) nounwind uwtable readonly ssp {
 entry:
@@ -152,6 +177,11 @@ for.end:                                          ; preds = %for.body, %entry
 ;CHECK: @reduction_and
 ;CHECK: and <4 x i32>
 ;CHECK: <i32 -1, i32 -1, i32 -1, i32 -1>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+;CHECK: and <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+;CHECK: and <4 x i32>
+;CHECK: extractelement <4 x i32> %{{.*}}, i32 0
 ;CHECK: ret i32
 define i32 @reduction_and(i32 %n, i32* nocapture %A, i32* nocapture %B) nounwind uwtable readonly {
 entry:
@@ -179,6 +209,11 @@ for.end:                                          ; preds = %for.body, %entry
 
 ;CHECK: @reduction_or
 ;CHECK: or <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+;CHECK: or <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+;CHECK: or <4 x i32>
+;CHECK: extractelement <4 x i32> %{{.*}}, i32 0
 ;CHECK: ret i32
 define i32 @reduction_or(i32 %n, i32* nocapture %A, i32* nocapture %B) nounwind uwtable readonly {
 entry:
@@ -206,6 +241,11 @@ for.end:                                          ; preds = %for.body, %entry
 
 ;CHECK: @reduction_xor
 ;CHECK: xor <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 2, i32 3, i32 undef, i32 undef>
+;CHECK: xor <4 x i32>
+;CHECK: shufflevector <4 x i32> %{{.*}}, <4 x i32> undef, <4 x i32> <i32 1, i32 undef, i32 undef, i32 undef>
+;CHECK: xor <4 x i32>
+;CHECK: extractelement <4 x i32> %{{.*}}, i32 0
 ;CHECK: ret i32
 define i32 @reduction_xor(i32 %n, i32* nocapture %A, i32* nocapture %B) nounwind uwtable readonly {
 entry:
