@@ -189,6 +189,9 @@ void StatOutput(u64 *stat) {
   name[StatInt_dup2]                     = "  dup2                            ";
   name[StatInt_dup3]                     = "  dup3                            ";
   name[StatInt_eventfd]                  = "  eventfd                         ";
+  name[StatInt_signalfd]                 = "  signalfd                        ";
+  name[StatInt_inotify_init]             = "  inotify_init                    ";
+  name[StatInt_inotify_init1]            = "  inotify_init1                   ";
   name[StatInt_socket]                   = "  socket                          ";
   name[StatInt_socketpair]               = "  socketpair                      ";
   name[StatInt_connect]                  = "  connect                         ";

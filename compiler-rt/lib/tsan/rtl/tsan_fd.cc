@@ -90,11 +90,12 @@ static void init(ThreadState *thr, uptr pc, int fd, FdSync *s) {
   FdDesc *d = fddesc(thr, pc, fd);
   // As a matter of fact, we don't intercept all close calls.
   // See e.g. libc __res_iclose().
-  if (d->sync)
+  if (d->sync) {
     unref(thr, pc, d->sync);
+    d->sync = 0;
+  }
   if (flags()->io_sync == 0) {
     unref(thr, pc, s);
-    d->sync = 0;
   } else if (flags()->io_sync == 1) {
     d->sync = s;
   } else if (flags()->io_sync == 2) {
@@ -187,6 +188,16 @@ void FdPipeCreate(ThreadState *thr, uptr pc, int rfd, int wfd) {
 void FdEventCreate(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdEventCreate(%d)\n", thr->tid, fd);
   init(thr, pc, fd, allocsync());
+}
+
+void FdSignalCreate(ThreadState *thr, uptr pc, int fd) {
+  DPrintf("#%d: FdSignalCreate(%d)\n", thr->tid, fd);
+  init(thr, pc, fd, 0);
+}
+
+void FdInotifyCreate(ThreadState *thr, uptr pc, int fd) {
+  DPrintf("#%d: FdInotifyCreate(%d)\n", thr->tid, fd);
+  init(thr, pc, fd, 0);
 }
 
 void FdPollCreate(ThreadState *thr, uptr pc, int fd) {

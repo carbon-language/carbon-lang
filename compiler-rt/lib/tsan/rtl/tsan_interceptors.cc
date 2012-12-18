@@ -1128,6 +1128,31 @@ TSAN_INTERCEPTOR(int, eventfd, unsigned initval, int flags) {
   return fd;
 }
 
+TSAN_INTERCEPTOR(int, signalfd, int fd, void *mask, int flags) {
+  SCOPED_TSAN_INTERCEPTOR(signalfd, fd, mask, flags);
+  FdClose(thr, pc, fd);
+  fd = REAL(signalfd)(fd, mask, flags);
+  if (fd >= 0)
+    FdSignalCreate(thr, pc, fd);
+  return fd;
+}
+
+TSAN_INTERCEPTOR(int, inotify_init) {
+  SCOPED_TSAN_INTERCEPTOR(inotify_init);
+  int fd = REAL(inotify_init)();
+  if (fd >= 0)
+    FdInotifyCreate(thr, pc, fd);
+  return fd;
+}
+
+TSAN_INTERCEPTOR(int, inotify_init1, int flags) {
+  SCOPED_TSAN_INTERCEPTOR(inotify_init1, flags);
+  int fd = REAL(inotify_init1)(flags);
+  if (fd >= 0)
+    FdInotifyCreate(thr, pc, fd);
+  return fd;
+}
+
 TSAN_INTERCEPTOR(int, socket, int domain, int type, int protocol) {
   SCOPED_TSAN_INTERCEPTOR(socket, domain, type, protocol);
   int fd = REAL(socket)(domain, type, protocol);
@@ -1743,6 +1768,9 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(dup2);
   TSAN_INTERCEPT(dup3);
   TSAN_INTERCEPT(eventfd);
+  TSAN_INTERCEPT(signalfd);
+  TSAN_INTERCEPT(inotify_init);
+  TSAN_INTERCEPT(inotify_init1);
   TSAN_INTERCEPT(socket);
   TSAN_INTERCEPT(socketpair);
   TSAN_INTERCEPT(connect);

@@ -46,6 +46,8 @@ void FdFileCreate(ThreadState *thr, uptr pc, int fd);
 void FdDup(ThreadState *thr, uptr pc, int oldfd, int newfd);
 void FdPipeCreate(ThreadState *thr, uptr pc, int rfd, int wfd);
 void FdEventCreate(ThreadState *thr, uptr pc, int fd);
+void FdSignalCreate(ThreadState *thr, uptr pc, int fd);
+void FdInotifyCreate(ThreadState *thr, uptr pc, int fd);
 void FdPollCreate(ThreadState *thr, uptr pc, int fd);
 void FdSocketCreate(ThreadState *thr, uptr pc, int fd);
 void FdSocketAccept(ThreadState *thr, uptr pc, int fd, int newfd);
