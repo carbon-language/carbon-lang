@@ -23,6 +23,7 @@
 #include "tsan_sync.h"
 #include "tsan_mman.h"
 #include "tsan_flags.h"
+#include "tsan_fd.h"
 
 namespace __tsan {
 
@@ -227,6 +228,29 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
   if (addr == 0)
     return;
 #ifndef TSAN_GO
+  int fd = -1;
+  int creat_tid = -1;
+  u32 creat_stack = 0;
+  if (FdLocation(addr, &fd, &creat_tid, &creat_stack)
+      || FdLocation(AlternativeAddress(addr), &fd, &creat_tid, &creat_stack)) {
+    void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
+    ReportLocation *loc = new(mem) ReportLocation();
+    rep_->locs.PushBack(loc);
+    loc->type = ReportLocationFD;
+    loc->fd = fd;
+    loc->tid = creat_tid;
+    uptr ssz = 0;
+    const uptr *stack = StackDepotGet(creat_stack, &ssz);
+    if (stack) {
+      StackTrace trace;
+      trace.Init(stack, ssz);
+      loc->stack = SymbolizeStack(trace);
+    }
+    ThreadContext *tctx = FindThread(creat_tid);
+    if (tctx)
+      AddThread(tctx);
+    return;
+  }
   if (allocator()->PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(0, (void*)addr);
     ThreadContext *tctx = FindThread(b->alloc_tid);

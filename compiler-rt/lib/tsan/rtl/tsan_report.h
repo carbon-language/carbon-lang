@@ -57,7 +57,8 @@ struct ReportMop {
 enum ReportLocationType {
   ReportLocationGlobal,
   ReportLocationHeap,
-  ReportLocationStack
+  ReportLocationStack,
+  ReportLocationFD
 };
 
 struct ReportLocation {
@@ -67,6 +68,7 @@ struct ReportLocation {
   char *module;
   uptr offset;
   int tid;
+  int fd;
   char *name;
   char *file;
   int line;
