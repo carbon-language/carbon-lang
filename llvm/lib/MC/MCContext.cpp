@@ -21,6 +21,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/SourceMgr.h"
 using namespace llvm;
@@ -48,6 +49,11 @@ MCContext::MCContext(const MCAsmInfo &mai, const MCRegisterInfo &mri,
   SecureLogFile = getenv("AS_SECURE_LOG_FILE");
   SecureLog = 0;
   SecureLogUsed = false;
+
+  if (SrcMgr && SrcMgr->getNumBuffers() > 0)
+    MainFileName = SrcMgr->getMemoryBuffer(0)->getBufferIdentifier();
+  else
+    MainFileName = "";
 }
 
 MCContext::~MCContext() {

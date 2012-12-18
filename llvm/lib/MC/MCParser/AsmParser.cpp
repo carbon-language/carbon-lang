@@ -613,7 +613,8 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
     getStreamer().EmitLabel(SectionStartSym);
     getContext().setGenDwarfSectionStartSym(SectionStartSym);
     getStreamer().EmitDwarfFileDirective(getContext().nextGenDwarfFileNumber(),
-      StringRef(), SrcMgr.getMemoryBuffer(CurBuffer)->getBufferIdentifier());
+                                         StringRef(),
+                                         getContext().getMainFileName());
   }
 
   // While we have input, parse each statement.

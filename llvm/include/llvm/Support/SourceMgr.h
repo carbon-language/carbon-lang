@@ -95,6 +95,10 @@ public:
     return Buffers[i].Buffer;
   }
 
+  unsigned getNumBuffers() const {
+    return Buffers.size();
+  }
+
   SMLoc getParentIncludeLoc(unsigned i) const {
     assert(i < Buffers.size() && "Invalid Buffer ID!");
     return Buffers[i].IncludeLoc;

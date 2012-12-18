@@ -97,6 +97,9 @@ namespace llvm {
     /// The compilation directory to use for DW_AT_comp_dir.
     std::string CompilationDir;
 
+    /// The main file name if passed in explicitly.
+    std::string MainFileName;
+
     /// The dwarf file and directory tables from the dwarf .file directive.
     std::vector<MCDwarfFile *> MCDwarfFiles;
     std::vector<StringRef> MCDwarfDirs;
@@ -260,6 +263,14 @@ namespace llvm {
     /// \brief Set the compilation directory for DW_AT_comp_dir
     /// Override the default (CWD) compilation directory.
     void setCompilationDir(StringRef S) { CompilationDir = S.str(); }
+
+    /// \brief Get the main file name for use in error messages and debug
+    /// info. This can be set to ensure we've got the correct file name
+    /// after preprocessing or for -save-temps.
+    const std::string &getMainFileName() const { return MainFileName; }
+
+    /// \brief Set the main file name and override the default.
+    void setMainFileName(StringRef S) { MainFileName = S.str(); }
 
     /// GetDwarfFile - creates an entry in the dwarf file and directory tables.
     unsigned GetDwarfFile(StringRef Directory, StringRef FileName,
