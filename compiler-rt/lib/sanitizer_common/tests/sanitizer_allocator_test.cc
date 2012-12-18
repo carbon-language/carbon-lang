@@ -106,6 +106,8 @@ void TestSizeClassAllocator() {
         CHECK_EQ(x, a->GetBlockBegin(x));
         CHECK_EQ(x, a->GetBlockBegin(x + size - 1));
         CHECK(a->PointerIsMine(x));
+        CHECK(a->PointerIsMine(x + size - 1));
+        CHECK(a->PointerIsMine(x + size / 2));
         CHECK_GE(a->GetActuallyAllocatedSize(x), size);
         uptr class_id = a->GetSizeClass(x);
         CHECK_EQ(class_id, Allocator::SizeClassMapT::ClassID(size));
@@ -265,16 +267,16 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   a.Init();
 
   static const int kNumAllocs = 100;
-  void *allocated[kNumAllocs];
+  char *allocated[kNumAllocs];
   static const uptr size = 1000;
   // Allocate some.
   for (int i = 0; i < kNumAllocs; i++) {
-    allocated[i] = a.Allocate(size, 1);
+    allocated[i] = (char *)a.Allocate(size, 1);
   }
   // Deallocate all.
   CHECK_GT(a.TotalMemoryUsed(), size * kNumAllocs);
   for (int i = 0; i < kNumAllocs; i++) {
-    void *p = allocated[i];
+    char *p = allocated[i];
     CHECK(a.PointerIsMine(p));
     a.Deallocate(p);
   }
@@ -283,7 +285,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
 
   // Allocate some more, also add metadata.
   for (int i = 0; i < kNumAllocs; i++) {
-    void *x = a.Allocate(size, 1);
+    char *x = (char *)a.Allocate(size, 1);
     CHECK_GE(a.GetActuallyAllocatedSize(x), size);
     uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(x));
     *meta = i;
@@ -293,7 +295,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   // Deallocate all in reverse order.
   for (int i = 0; i < kNumAllocs; i++) {
     int idx = kNumAllocs - i - 1;
-    void *p = allocated[idx];
+    char *p = allocated[idx];
     uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(p));
     CHECK_EQ(*meta, idx);
     CHECK(a.PointerIsMine(p));
@@ -304,9 +306,11 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   for (uptr alignment = 8; alignment <= max_alignment; alignment *= 2) {
     for (int i = 0; i < kNumAllocs; i++) {
       uptr size = ((i % 10) + 1) * 4096;
-      allocated[i] = a.Allocate(size, alignment);
+      char *p = allocated[i] = (char *)a.Allocate(size, alignment);
+      CHECK_EQ(p, a.GetBlockBegin(p));
+      CHECK_EQ(p, a.GetBlockBegin(p + size - 1));
+      CHECK_EQ(p, a.GetBlockBegin(p + size / 2));
       CHECK_EQ(0, (uptr)allocated[i] % alignment);
-      char *p = (char*)allocated[i];
       p[0] = p[size - 1] = 0;
     }
     for (int i = 0; i < kNumAllocs; i++) {

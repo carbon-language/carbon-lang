@@ -674,17 +674,11 @@ class LargeMmapAllocator {
   }
 
   bool PointerIsMine(void *p) {
-    // Fast check.
-    if ((reinterpret_cast<uptr>(p) & (page_size_ - 1))) return false;
-    SpinMutexLock l(&mutex_);
-    for (Header *l = list_; l; l = l->next) {
-      if (GetUser(l) == p) return true;
-    }
-    return false;
+    return GetBlockBegin(p) != 0;
   }
 
   uptr GetActuallyAllocatedSize(void *p) {
-    return RoundUpMapSize(GetHeader(p)->size) - page_size_;
+    return RoundUpTo(GetHeader(p)->size, page_size_);
   }
 
   // At least page_size_/2 metadata bytes is available.
@@ -692,12 +686,12 @@ class LargeMmapAllocator {
     return GetHeader(p) + 1;
   }
 
-  void *GetBlockBegin(void *p) {
+  void *GetBlockBegin(void *ptr) {
+    uptr p = reinterpret_cast<uptr>(ptr);
     SpinMutexLock l(&mutex_);
     for (Header *l = list_; l; l = l->next) {
-      void *b = GetUser(l);
-      if (p >= b && p < (u8*)b + l->size)
-        return b;
+      if (p >= l->map_beg && p < l->map_beg + l->map_size)
+        return GetUser(l);
     }
     return 0;
   }
