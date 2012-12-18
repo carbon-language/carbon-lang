@@ -510,6 +510,10 @@ void ReportRace(ThreadState *thr) {
     return;
   ScopedInRtl in_rtl;
 
+  if (thr->in_signal_handler)
+    Printf("ThreadSanitizer: printing report from signal handler."
+           " Can crash or hang.\n");
+
   bool freed = false;
   {
     Shadow s(thr->racy_state[1]);
