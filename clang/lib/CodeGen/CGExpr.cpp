@@ -538,8 +538,15 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
 
   // If possible, check that the vptr indicates that there is a subobject of
   // type Ty at offset zero within this object.
+  //
+  // C++11 [basic.life]p5,6:
+  //   [For storage which does not refer to an object within its lifetime]
+  //   The program has undefined behavior if:
+  //    -- the [pointer or glvalue] is used to access a non-static data member
+  //       or call a non-stastic member function
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
-  if (getLangOpts().SanitizeVptr && TCK != TCK_ConstructorCall &&
+  if (getLangOpts().SanitizeVptr &&
+      (TCK == TCK_MemberAccess || TCK == TCK_MemberCall) &&
       RD && RD->hasDefinition() && RD->isDynamicClass()) {
     // Compute a hash of the mangled name of the type.
     //
