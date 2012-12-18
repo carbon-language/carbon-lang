@@ -22,6 +22,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Function.h"        // To access Function attributes
 using namespace llvm;
 
 STATISTIC(NumNarrows,  "Number of 32-bit instrs reduced to 16-bit ones");
@@ -182,11 +183,14 @@ namespace {
 
     /// ReduceMBB - Reduce width of instructions in the specified basic block.
     bool ReduceMBB(MachineBasicBlock &MBB);
+
+    bool MinimizeSize;
   };
   char Thumb2SizeReduce::ID = 0;
 }
 
 Thumb2SizeReduce::Thumb2SizeReduce() : MachineFunctionPass(ID) {
+  MinimizeSize = false;
   for (unsigned i = 0, e = array_lengthof(ReduceTable); i != e; ++i) {
     unsigned FromOpc = ReduceTable[i].WideOpc;
     if (!ReduceOpcodeMap.insert(std::make_pair(FromOpc, i)).second)
@@ -221,8 +225,8 @@ static bool HasImplicitCPSRDef(const MCInstrDesc &MCID) {
 bool
 Thumb2SizeReduce::canAddPseudoFlagDep(MachineInstr *Def, MachineInstr *Use,
                                       bool FirstInSelfLoop) {
-  // FIXME: Disable check for -Oz (aka OptimizeForSizeHarder).
-  if (!STI->avoidCPSRPartialUpdate())
+  // Disable the check for -Oz (aka OptimizeForSizeHarder).
+  if (MinimizeSize || !STI->avoidCPSRPartialUpdate())
     return false;
 
   if (!Def)
@@ -941,6 +945,10 @@ bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
   const TargetMachine &TM = MF.getTarget();
   TII = static_cast<const Thumb2InstrInfo*>(TM.getInstrInfo());
   STI = &TM.getSubtarget<ARMSubtarget>();
+
+  // When -Oz is set, the function carries MinSize attribute.
+  MinimizeSize =
+    MF.getFunction()->getFnAttributes().hasAttribute(Attributes::MinSize);
 
   bool Modified = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)

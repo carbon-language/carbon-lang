@@ -49,3 +49,37 @@ while.body:
 while.end:
   ret void
 }
+
+; Allow partial CPSR dependency when code size is the priority.
+; rdar://12878928
+define void @t3(i32* nocapture %ptr1, i32* %ptr2, i32 %c) nounwind minsize {
+entry:
+; CHECK: t3:
+  %tobool7 = icmp eq i32* %ptr2, null
+  br i1 %tobool7, label %while.end, label %while.body
+
+while.body:
+; CHECK: while.body
+; CHECK: mul r{{[0-9]+}}
+; CHECK: muls
+  %ptr1.addr.09 = phi i32* [ %add.ptr, %while.body ], [ %ptr1, %entry ]
+  %ptr2.addr.08 = phi i32* [ %incdec.ptr, %while.body ], [ %ptr2, %entry ]
+  %0 = load i32* %ptr1.addr.09, align 4
+  %arrayidx1 = getelementptr inbounds i32* %ptr1.addr.09, i32 1
+  %1 = load i32* %arrayidx1, align 4
+  %arrayidx3 = getelementptr inbounds i32* %ptr1.addr.09, i32 2
+  %2 = load i32* %arrayidx3, align 4
+  %arrayidx4 = getelementptr inbounds i32* %ptr1.addr.09, i32 3
+  %3 = load i32* %arrayidx4, align 4
+  %add.ptr = getelementptr inbounds i32* %ptr1.addr.09, i32 4
+  %mul = mul i32 %1, %0
+  %mul5 = mul i32 %mul, %2
+  %mul6 = mul i32 %mul5, %3
+  store i32 %mul6, i32* %ptr2.addr.08, align 4
+  %incdec.ptr = getelementptr inbounds i32* %ptr2.addr.08, i32 -1
+  %tobool = icmp eq i32* %incdec.ptr, null
+  br i1 %tobool, label %while.end, label %while.body
+
+while.end:
+  ret void
+}
