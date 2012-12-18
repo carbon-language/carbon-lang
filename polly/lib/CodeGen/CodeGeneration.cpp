@@ -770,7 +770,10 @@ bool ClastStmtCodeGen::isInnermostLoop(const clast_for *f) {
 
 int ClastStmtCodeGen::getNumberOfIterations(const clast_for *For) {
   isl_set *LoopDomain = isl_set_copy(isl_set_from_cloog_domain(For->domain));
-  return polly::getNumberOfIterations(LoopDomain) / isl_int_get_si(For->stride) + 1;
+  int NumberOfIterations = polly::getNumberOfIterations(LoopDomain);
+  if (NumberOfIterations == -1)
+    return -1;
+  return NumberOfIterations / isl_int_get_si(For->stride) + 1;
 }
 
 void ClastStmtCodeGen::codegenForVector(const clast_for *F) {

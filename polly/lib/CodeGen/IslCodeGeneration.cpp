@@ -665,7 +665,10 @@ unsigned IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
   isl_union_map *Schedule = isl_ast_build_get_schedule(Info->Context);
   isl_set *LoopDomain = isl_set_from_union_set(isl_union_map_range(Schedule));
   isl_id_free(Annotation);
-  return polly::getNumberOfIterations(LoopDomain) + 1;
+  int NumberOfIterations = polly::getNumberOfIterations(LoopDomain);
+  if (NumberOfIterations == -1)
+    return -1;
+  return NumberOfIterations + 1;
 }
 
 void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
