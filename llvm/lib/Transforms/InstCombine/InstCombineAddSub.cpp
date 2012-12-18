@@ -19,10 +19,715 @@
 using namespace llvm;
 using namespace PatternMatch;
 
+namespace {
+
+  /// Class representing coefficient of floating-point addend.
+  /// This class needs to be highly efficient, which is especially true for
+  /// the constructor. As of I write this comment, the cost of the default
+  /// constructor is merely 4-byte-store-zero (Assuming compiler is able to 
+  /// perform write-merging).
+  /// 
+  class FAddendCoef {
+  public:
+    // The constructor has to initialize a APFloat, which is uncessary for
+    // most addends which have coefficient either 1 or -1. So, the constructor
+    // is expensive. In order to avoid the cost of the constructor, we should
+    // reuse some instances whenever possible. The pre-created instances
+    // FAddCombine::Add[0-5] embodies this idea.
+    //
+    FAddendCoef() : IsFp(false), BufHasFpVal(false), IntVal(0) {}
+    ~FAddendCoef();
+  
+    void set(short C) {
+      assert(!insaneIntVal(C) && "Insane coefficient");
+      IsFp = false; IntVal = C;
+    }
+  
+    void set(const APFloat& C);
+  
+    void negate();
+  
+    bool isZero() const { return isInt() ? !IntVal : getFpVal().isZero(); }
+    Value *getValue(Type *) const;
+  
+    // If possible, don't define operator+/operator- etc because these
+    // operators inevitably call FAddendCoef's constructor which is not cheap.
+    void operator=(const FAddendCoef &A);
+    void operator+=(const FAddendCoef &A);
+    void operator-=(const FAddendCoef &A);
+    void operator*=(const FAddendCoef &S);
+  
+    bool isOne() const { return isInt() && IntVal == 1; }
+    bool isTwo() const { return isInt() && IntVal == 2; }
+    bool isMinusOne() const { return isInt() && IntVal == -1; }
+    bool isMinusTwo() const { return isInt() && IntVal == -2; }
+  
+  private:
+    bool insaneIntVal(int V) { return V > 4 || V < -4; }
+    APFloat *getFpValPtr(void)
+      { return reinterpret_cast<APFloat*>(&FpValBuf[0]); }
+
+    const APFloat &getFpVal(void) const {
+      assert(IsFp && BufHasFpVal && "Incorret state");
+      return *reinterpret_cast<const APFloat*>(&FpValBuf[0]);
+    }
+
+    APFloat &getFpVal(void)
+      { assert(IsFp && BufHasFpVal && "Incorret state"); return *getFpValPtr(); }
+  
+    bool isInt() const { return !IsFp; }
+
+  private:
+    bool IsFp;
+  
+    // True iff FpValBuf contains an instance of APFloat.
+    bool BufHasFpVal;
+  
+    // The integer coefficient of an individual addend is either 1 or -1,
+    // and we try to simplify at most 4 addends from neighboring at most
+    // two instructions. So the range of <IntVal> falls in [-4, 4]. APInt
+    // is overkill of this end.
+    short IntVal;
+  
+    union {
+      char FpValBuf[sizeof(APFloat)];
+      int dummy; // So this structure has at least 4-byte alignment.
+    };
+  };
+  
+  /// FAddend is used to represent floating-point addend. An addend is
+  /// represented as <C, V>, where the V is a symbolic value, and C is a
+  /// constant coefficient. A constant addend is represented as <C, 0>.
+  ///
+  class FAddend {
+  public:
+    FAddend() { Val = 0; }
+  
+    Value *getSymVal (void) const { return Val; }
+    const FAddendCoef &getCoef(void) const { return Coeff; }
+  
+    bool isConstant() const { return Val == 0; }
+    bool isZero() const { return Coeff.isZero(); }
+
+    void set(short Coefficient, Value *V) { Coeff.set(Coefficient), Val = V; }
+    void set(const APFloat& Coefficient, Value *V)
+      { Coeff.set(Coefficient); Val = V; }
+    void set(const ConstantFP* Coefficient, Value *V)
+      { Coeff.set(Coefficient->getValueAPF()); Val = V; }
+  
+    void negate() { Coeff.negate(); }
+  
+    /// Drill down the U-D chain one step to find the definition of V, and
+    /// try to break the definition into one or two addends.
+    static unsigned drillValueDownOneStep(Value* V, FAddend &A0, FAddend &A1);
+  
+    /// Similar to FAddend::drillDownOneStep() except that the value being
+    /// splitted is the addend itself.
+    unsigned drillAddendDownOneStep(FAddend &Addend0, FAddend &Addend1) const;
+  
+    void operator+=(const FAddend &T) {
+      assert((Val == T.Val) && "Symbolic-values disagree");
+      Coeff += T.Coeff;
+    }
+
+  private:
+    void Scale(const FAddendCoef& ScaleAmt) { Coeff *= ScaleAmt; }
+  
+    // This addend has the value of "Coeff * Val".
+    Value *Val;
+    FAddendCoef Coeff;
+  };
+  
+  /// FAddCombine is the class for optimizing an unsafe fadd/fsub along
+  /// with its neighboring at most two instructions.
+  ///
+  class FAddCombine {
+  public:
+    FAddCombine(InstCombiner::BuilderTy *B) : Builder(B), Instr(0) {}
+    Value *simplify(Instruction *FAdd);
+  
+  private:
+    typedef SmallVector<const FAddend*, 4> AddendVect;
+  
+    Value *simplifyFAdd(AddendVect& V, unsigned InstrQuota);
+  
+    /// Convert given addend to a Value
+    Value *createAddendVal(const FAddend &A, bool& NeedNeg);
+    
+    /// Return the number of instructions needed to emit the N-ary addition.
+    unsigned calcInstrNumber(const AddendVect& Vect);
+    Value *createFSub(Value *Opnd0, Value *Opnd1);
+    Value *createFAdd(Value *Opnd0, Value *Opnd1);
+    Value *createFMul(Value *Opnd0, Value *Opnd1);
+    Value *createFNeg(Value *V);
+    Value *createNaryFAdd(const AddendVect& Opnds, unsigned InstrQuota);
+    void createInstPostProc(Instruction *NewInst);
+  
+    InstCombiner::BuilderTy *Builder;
+    Instruction *Instr;
+  
+  private:
+     // Debugging stuff are clustered here.
+    #ifndef NDEBUG
+      unsigned CreateInstrNum;
+      void initCreateInstNum() { CreateInstrNum = 0; }
+      void incCreateInstNum() { CreateInstrNum++; }
+    #else
+      void initCreateInstNum() {}
+      void incCreateInstNum() {}
+    #endif
+  };
+} 
+
+//===----------------------------------------------------------------------===//
+//
+// Implementation of
+//    {FAddendCoef, FAddend, FAddition, FAddCombine}.
+//
+//===----------------------------------------------------------------------===//
+FAddendCoef::~FAddendCoef() {
+  if (BufHasFpVal)
+    getFpValPtr()->~APFloat();
+}
+
+void FAddendCoef::set(const APFloat& C) {
+  APFloat *P = getFpValPtr();
+
+  if (isInt()) {
+    // As the buffer is meanless byte stream, we cannot call
+    // APFloat::operator=().
+    new(P) APFloat(C);
+  } else
+    *P = C;
+
+  IsFp = BufHasFpVal = true; 
+}
+
+void FAddendCoef::operator=(const FAddendCoef& That) {
+  if (That.isInt())
+    set(That.IntVal);
+  else
+    set(That.getFpVal());
+}
+
+void FAddendCoef::operator+=(const FAddendCoef &That) {
+  enum APFloat::roundingMode RndMode = APFloat::rmNearestTiesToEven;
+  if (isInt() == That.isInt()) {
+    if (isInt())
+      IntVal += That.IntVal;
+    else
+      getFpVal().add(That.getFpVal(), RndMode);
+    return;
+  }
+  
+  if (isInt()) {
+    const APFloat &T = That.getFpVal();
+    set(T);
+    getFpVal().add(APFloat(T.getSemantics(), IntVal), RndMode);
+    return;
+  }
+  
+  APFloat &T = getFpVal();
+  T.add(APFloat(T.getSemantics(), That.IntVal), RndMode);
+}
+
+void FAddendCoef::operator-=(const FAddendCoef &That) {
+  enum APFloat::roundingMode RndMode = APFloat::rmNearestTiesToEven;
+  if (isInt() == That.isInt()) {
+    if (isInt())
+      IntVal -= That.IntVal;
+    else
+      getFpVal().subtract(That.getFpVal(), RndMode);
+    return;
+  }
+  
+  if (isInt()) {
+    const APFloat &T = That.getFpVal();
+    set(T);
+    getFpVal().subtract(APFloat(T.getSemantics(), IntVal), RndMode);
+    return;
+  }
+
+  APFloat &T = getFpVal();
+  T.subtract(APFloat(T.getSemantics(), IntVal), RndMode);
+}
+
+void FAddendCoef::operator*=(const FAddendCoef &That) {
+  if (That.isOne())
+    return;
+
+  if (That.isMinusOne()) {
+    negate();
+    return;
+  }
+
+  if (isInt() && That.isInt()) {
+    int Res = IntVal * (int)That.IntVal;
+    assert(!insaneIntVal(Res) && "Insane int value");
+    IntVal = Res;
+    return;
+  }
+
+  const fltSemantics &Semantic = 
+    isInt() ? That.getFpVal().getSemantics() : getFpVal().getSemantics();
+
+  if (isInt())
+    set(APFloat(Semantic, IntVal));
+  APFloat &F0 = getFpVal();
+
+  if (That.isInt())
+    F0.multiply(APFloat(Semantic, That.IntVal), APFloat::rmNearestTiesToEven);
+  else
+    F0.multiply(That.getFpVal(), APFloat::rmNearestTiesToEven);
+
+  return;
+}
+
+void FAddendCoef::negate() {
+  if (isInt())
+    IntVal = 0 - IntVal;
+  else
+    getFpVal().changeSign();
+}
+
+Value *FAddendCoef::getValue(Type *Ty) const {
+  return isInt() ?
+    ConstantFP::get(Ty, float(IntVal)) :
+    ConstantFP::get(Ty->getContext(), getFpVal());
+}
+
+// The definition of <Val>     Addends
+// =========================================
+//  A + B                     <1, A>, <1,B>
+//  A - B                     <1, A>, <1,B>
+//  0 - B                     <-1, B>
+//  C * A,                    <C, A>
+//  A + C                     <1, A> <C, NULL> 
+//  0 +/- 0                   <0, NULL> (corner case)
+//
+// Legend: A and B are not constant, C is constant
+// 
+unsigned FAddend::drillValueDownOneStep
+  (Value *Val, FAddend &Addend0, FAddend &Addend1) {
+  Instruction *I = 0;
+  if (Val == 0 || !(I = dyn_cast<Instruction>(Val)))
+    return 0;
+
+  unsigned Opcode = I->getOpcode();
+
+  if (Opcode == Instruction::FAdd || Opcode == Instruction::FSub) {
+    ConstantFP *C0, *C1;
+    Value *Opnd0 = I->getOperand(0);
+    Value *Opnd1 = I->getOperand(1);
+    if ((C0 = dyn_cast<ConstantFP>(Opnd0)) && C0->isZero())
+      Opnd0 = 0;
+
+    if ((C1 = dyn_cast<ConstantFP>(Opnd1)) && C1->isZero())
+      Opnd1 = 0;
+
+    if (Opnd0) {
+      if (!C0)
+        Addend0.set(1, Opnd0);
+      else
+        Addend0.set(C0, 0);
+    }
+
+    if (Opnd1) {
+      FAddend &Addend = Opnd0 ? Addend1 : Addend0;
+      if (!C1)
+        Addend.set(1, Opnd1);
+      else
+        Addend.set(C1, 0);
+      if (Opcode == Instruction::FSub)
+        Addend.negate();
+    }
+
+    if (Opnd0 || Opnd1)
+      return Opnd0 && Opnd1 ? 2 : 1;
+
+    // Both operands are zero. Weird!
+    Addend0.set(APFloat(C0->getValueAPF().getSemantics()), 0);
+    return 1;
+  }
+
+  if (I->getOpcode() == Instruction::FMul) {
+    Value *V0 = I->getOperand(0);
+    Value *V1 = I->getOperand(1);
+    if (ConstantFP *C = dyn_cast<ConstantFP>(V0)) {
+      Addend0.set(C, V1);
+      return 1;
+    }
+
+    if (ConstantFP *C = dyn_cast<ConstantFP>(V1)) {
+      Addend0.set(C, V0);
+      return 1;
+    }
+  }
+
+  return 0;
+}
+
+// Try to break *this* addend into two addends. e.g. Suppose this addend is
+// <2.3, V>, and V = X + Y, by calling this function, we obtain two addends,
+// i.e. <2.3, X> and <2.3, Y>.
+//
+unsigned FAddend::drillAddendDownOneStep
+  (FAddend &Addend0, FAddend &Addend1) const {
+  if (isConstant())
+    return 0;
+
+  unsigned BreakNum = FAddend::drillValueDownOneStep(Val, Addend0, Addend1);
+  if (!BreakNum || Coeff.isOne()) 
+    return BreakNum;
+
+  Addend0.Scale(Coeff);
+
+  if (BreakNum == 2)
+    Addend1.Scale(Coeff);
+
+  return BreakNum;
+}
+
+Value *FAddCombine::simplify(Instruction *I) {
+  assert(I->hasUnsafeAlgebra() && "Should be in unsafe mode");
+
+  // Currently we are not able to handle vector type.
+  if (I->getType()->isVectorTy())
+    return 0;
+
+  assert((I->getOpcode() == Instruction::FAdd ||
+          I->getOpcode() == Instruction::FSub) && "Expect add/sub");
+
+  // Save the instruction before calling other member-functions. 
+  Instr = I;
+
+  FAddend Opnd0, Opnd1, Opnd0_0, Opnd0_1, Opnd1_0, Opnd1_1;
+
+  unsigned OpndNum = FAddend::drillValueDownOneStep(I, Opnd0, Opnd1);
+
+  // Step 1: Expand the 1st addend into Opnd0_0 and Opnd0_1.
+  unsigned Opnd0_ExpNum = 0;
+  unsigned Opnd1_ExpNum = 0;
+
+  if (!Opnd0.isConstant()) 
+    Opnd0_ExpNum = Opnd0.drillAddendDownOneStep(Opnd0_0, Opnd0_1);
+
+  // Step 2: Expand the 2nd addend into Opnd1_0 and Opnd1_1.
+  if (OpndNum == 2 && !Opnd1.isConstant())
+    Opnd1_ExpNum = Opnd1.drillAddendDownOneStep(Opnd1_0, Opnd1_1);
+
+  // Step 3: Try to optimize Opnd0_0 + Opnd0_1 + Opnd1_0 + Opnd1_1
+  if (Opnd0_ExpNum && Opnd1_ExpNum) {
+    AddendVect AllOpnds;
+    AllOpnds.push_back(&Opnd0_0);
+    AllOpnds.push_back(&Opnd1_0);
+    if (Opnd0_ExpNum == 2)
+      AllOpnds.push_back(&Opnd0_1);
+    if (Opnd1_ExpNum == 2)
+      AllOpnds.push_back(&Opnd1_1);
+
+    // Compute instruction quota. We should save at least one instruction.
+    unsigned InstQuota = 0;
+
+    Value *V0 = I->getOperand(0);
+    Value *V1 = I->getOperand(1);
+    InstQuota = ((!isa<Constant>(V0) && V0->hasOneUse()) &&  
+                 (!isa<Constant>(V1) && V1->hasOneUse())) ? 2 : 1;
+
+    if (Value *R = simplifyFAdd(AllOpnds, InstQuota))
+      return R;
+  }
+
+  if (OpndNum != 2) {
+    // The input instruction is : "I=0.0 +/- V". If the "V" were able to be
+    // splitted into two addends, say "V = X - Y", the instruction would have
+    // been optimized into "I = Y - X" in the previous steps.
+    //
+    const FAddendCoef &CE = Opnd0.getCoef();
+    return CE.isOne() ? Opnd0.getSymVal() : 0;
+  }
+
+  // step 4: Try to optimize Opnd0 + Opnd1_0 [+ Opnd1_1]
+  if (Opnd1_ExpNum) {
+    AddendVect AllOpnds;
+    AllOpnds.push_back(&Opnd0);
+    AllOpnds.push_back(&Opnd1_0);
+    if (Opnd1_ExpNum == 2)
+      AllOpnds.push_back(&Opnd1_1);
+
+    if (Value *R = simplifyFAdd(AllOpnds, 1))
+      return R;
+  }
+
+  // step 5: Try to optimize Opnd1 + Opnd0_0 [+ Opnd0_1]
+  if (Opnd0_ExpNum) {
+    AddendVect AllOpnds;
+    AllOpnds.push_back(&Opnd1);
+    AllOpnds.push_back(&Opnd0_0);
+    if (Opnd0_ExpNum == 2)
+      AllOpnds.push_back(&Opnd0_1);
+
+    if (Value *R = simplifyFAdd(AllOpnds, 1))
+      return R;
+  }
+
+  return 0;
+}
+
+Value *FAddCombine::simplifyFAdd(AddendVect& Addends, unsigned InstrQuota) {
+
+  unsigned AddendNum = Addends.size();
+  assert(AddendNum <= 4 && "Too many addends");
+
+  // For saving intermediate results; 
+  unsigned NextTmpIdx = 0;
+  FAddend TmpResult[3];
+
+  // Points to the constant addend of the resulting simplified expression.
+  // If the resulting expr has constant-addend, this constant-addend is
+  // desirable to reside at the top of the resulting expression tree. Placing
+  // constant close to supper-expr(s) will potentially reveal some optimization
+  // opportunities in super-expr(s).
+  //
+  const FAddend *ConstAdd = 0;
+
+  // Simplified addends are placed <SimpVect>.
+  AddendVect SimpVect;
+
+  // The outer loop works on one symbolic-value at a time. Suppose the input
+  // addends are : <a1, x>, <b1, y>, <a2, x>, <c1, z>, <b2, y>, ... 
+  // The symbolic-values will be processed in this order: x, y, z.
+  //
+  for (unsigned SymIdx = 0; SymIdx < AddendNum; SymIdx++) {
+
+    const FAddend *ThisAddend = Addends[SymIdx];
+    if (!ThisAddend) {
+      // This addend was processed before.
+      continue;
+    }
+
+    Value *Val = ThisAddend->getSymVal();
+    unsigned StartIdx = SimpVect.size();
+    SimpVect.push_back(ThisAddend);
+
+    // The inner loop collects addends sharing same symbolic-value, and these
+    // addends will be later on folded into a single addend. Following above
+    // example, if the symbolic value "y" is being processed, the inner loop
+    // will collect two addends "<b1,y>" and "<b2,Y>". These two addends will
+    // be later on folded into "<b1+b2, y>".
+    //
+    for (unsigned SameSymIdx = SymIdx + 1;
+         SameSymIdx < AddendNum; SameSymIdx++) {
+      const FAddend *T = Addends[SameSymIdx];
+      if (T && T->getSymVal() == Val) {
+        // Set null such that next iteration of the outer loop will not process
+        // this addend again.
+        Addends[SameSymIdx] = 0; 
+        SimpVect.push_back(T);
+      }
+    }
+
+    // If multiple addends share same symbolic value, fold them together.
+    if (StartIdx + 1 != SimpVect.size()) {
+      FAddend &R = TmpResult[NextTmpIdx ++];
+      R = *SimpVect[StartIdx];
+      for (unsigned Idx = StartIdx + 1; Idx < SimpVect.size(); Idx++)
+        R += *SimpVect[Idx];
+
+      // Pop all addends being folded and push the resulting folded addend.
+      SimpVect.resize(StartIdx); 
+      if (Val != 0) {
+        if (!R.isZero()) {
+          SimpVect.push_back(&R);
+        }
+      } else {
+        // Don't push constant addend at this time. It will be the last element
+        // of <SimpVect>.
+        ConstAdd = &R;
+      }
+    }
+  }
+
+  assert((NextTmpIdx <= sizeof(TmpResult)/sizeof(TmpResult[0]) + 1) && 
+         "out-of-bound access");
+
+  if (ConstAdd)
+    SimpVect.push_back(ConstAdd);
+
+  Value *Result;
+  if (!SimpVect.empty())
+    Result = createNaryFAdd(SimpVect, InstrQuota);
+  else {
+    // The addition is folded to 0.0.
+    Result = ConstantFP::get(Instr->getType(), 0.0);
+  }
+
+  return Result;
+}
+
+Value *FAddCombine::createNaryFAdd
+  (const AddendVect &Opnds, unsigned InstrQuota) {
+  assert(!Opnds.empty() && "Expect at least one addend");
+
+  // Step 1: Check if the # of instructions needed exceeds the quota.
+  // 
+  unsigned InstrNeeded = calcInstrNumber(Opnds);
+  if (InstrNeeded > InstrQuota)
+    return 0;
+
+  initCreateInstNum();
+
+  // step 2: Emit the N-ary addition.
+  // Note that at most three instructions are involved in Fadd-InstCombine: the
+  // addition in question, and at most two neighboring instructions.
+  // The resulting optimized addition should have at least one less instruction
+  // than the original addition expression tree. This implies that the resulting
+  // N-ary addition has at most two instructions, and we don't need to worry
+  // about tree-height when constructing the N-ary addition.
+
+  Value *LastVal = 0;
+  bool LastValNeedNeg = false;
+
+  // Iterate the addends, creating fadd/fsub using adjacent two addends.
+  for (AddendVect::const_iterator I = Opnds.begin(), E = Opnds.end();
+       I != E; I++) {
+    bool NeedNeg; 
+    Value *V = createAddendVal(**I, NeedNeg);
+    if (!LastVal) {
+      LastVal = V;
+      LastValNeedNeg = NeedNeg;
+      continue;
+    }
+
+    if (LastValNeedNeg == NeedNeg) {
+      LastVal = createFAdd(LastVal, V);
+      continue;
+    }
+
+    if (LastValNeedNeg)
+      LastVal = createFSub(V, LastVal);
+    else
+      LastVal = createFSub(LastVal, V);
+
+    LastValNeedNeg = false;
+  }
+
+  if (LastValNeedNeg) {
+    LastVal = createFNeg(LastVal);
+  }
+
+  #ifndef NDEBUG
+    assert(CreateInstrNum == InstrNeeded && 
+           "Inconsistent in instruction numbers");
+  #endif
+
+  return LastVal;
+}
+
+Value *FAddCombine::createFSub
+  (Value *Opnd0, Value *Opnd1) {
+  Value *V = Builder->CreateFSub(Opnd0, Opnd1);
+  createInstPostProc(cast<Instruction>(V));
+  return V;
+}
+
+Value *FAddCombine::createFNeg(Value *V) {
+  Value *Zero = cast<Value>(ConstantFP::get(V->getType(), 0.0));
+  return createFSub(Zero, V);
+}
+
+Value *FAddCombine::createFAdd
+  (Value *Opnd0, Value *Opnd1) {
+  Value *V = Builder->CreateFAdd(Opnd0, Opnd1);
+  createInstPostProc(cast<Instruction>(V));
+  return V;
+}
+
+Value *FAddCombine::createFMul(Value *Opnd0, Value *Opnd1) {
+  Value *V = Builder->CreateFMul(Opnd0, Opnd1);
+  createInstPostProc(cast<Instruction>(V));
+  return V;
+}
+
+void FAddCombine::createInstPostProc(Instruction *NewInstr) {
+  NewInstr->setDebugLoc(Instr->getDebugLoc());
+
+  // Keep track of the number of instruction created.
+  incCreateInstNum();
+
+  // Propagate fast-math flags
+  NewInstr->setFastMathFlags(Instr->getFastMathFlags());
+}
+
+// Return the number of instruction needed to emit the N-ary addition.
+// NOTE: Keep this function in sync with createAddendVal().
+unsigned FAddCombine::calcInstrNumber(const AddendVect &Opnds) {
+  unsigned OpndNum = Opnds.size();
+  unsigned InstrNeeded = OpndNum - 1;
+
+  // The number of addends in the form of "(-1)*x". 
+  unsigned NegOpndNum = 0; 
+
+  // Adjust the number of instructions needed to emit the N-ary add.
+  for (AddendVect::const_iterator I = Opnds.begin(), E = Opnds.end();
+       I != E; I++) {
+    const FAddend *Opnd = *I;
+    if (Opnd->isConstant())
+      continue;
+
+    const FAddendCoef &CE = Opnd->getCoef();
+    if (CE.isMinusOne() || CE.isMinusTwo())
+      NegOpndNum++;
+
+    // Let the addend be "c * x". If "c == +/-1", the value of the addend
+    // is immediately available; otherwise, it needs exactly one instruction
+    // to evaluate the value.
+    if (!CE.isMinusOne() && !CE.isOne())
+      InstrNeeded++;
+  }
+  if (NegOpndNum == OpndNum)
+    InstrNeeded++;
+  return InstrNeeded;
+}
+
+// Input Addend        Value           NeedNeg(output)
+// ================================================================
+// Constant C          C               false
+// <+/-1, V>           V               coefficient is -1
+// <2/-2, V>          "fadd V, V"      coefficient is -2
+// <C, V>             "fmul V, C"      false
+//
+// NOTE: Keep this function in sync with FAddCombine::calcInstrNumber.
+Value *FAddCombine::createAddendVal
+  (const FAddend &Opnd, bool &NeedNeg) {
+  const FAddendCoef &Coeff = Opnd.getCoef();
+
+  if (Opnd.isConstant()) {
+    NeedNeg = false;
+    return Coeff.getValue(Instr->getType());
+  }
+
+  Value *OpndVal = Opnd.getSymVal();
+
+  if (Coeff.isMinusOne() || Coeff.isOne()) {
+    NeedNeg = Coeff.isMinusOne();
+    return OpndVal;
+  }
+
+  if (Coeff.isTwo() || Coeff.isMinusTwo()) {
+    NeedNeg = Coeff.isMinusTwo();
+    return createFAdd(OpndVal, OpndVal);
+  }
+
+  NeedNeg = false;
+  return createFMul(OpndVal, Coeff.getValue(Instr->getType()));
+}
+
 /// AddOne - Add one to a ConstantInt.
 static Constant *AddOne(Constant *C) {
   return ConstantExpr::getAdd(C, ConstantInt::get(C->getType(), 1));
 }
+
 /// SubOne - Subtract one from a ConstantInt.
 static Constant *SubOne(ConstantInt *C) {
   return ConstantInt::get(C->getContext(), C->getValue()-1);
@@ -406,6 +1111,11 @@ Instruction *InstCombiner::visitFAdd(BinaryOperator &I) {
     }
   }
 
+  if (I.hasUnsafeAlgebra()) {
+    if (Value *V = FAddCombine(Builder).simplify(&I))
+      return ReplaceInstUsesWith(I, V);
+  }
+
   return Changed ? &I : 0;
 }
 
@@ -648,6 +1358,11 @@ Instruction *InstCombiner::visitFSub(BinaryOperator &I) {
   // If this is a 'B = x-(-A)', change to B = x+A...
   if (Value *V = dyn_castFNegVal(Op1))
     return BinaryOperator::CreateFAdd(Op0, V);
+
+  if (I.hasUnsafeAlgebra()) {
+    if (Value *V = FAddCombine(Builder).simplify(&I))
+      return ReplaceInstUsesWith(I, V);
+  }
 
   return 0;
 }
