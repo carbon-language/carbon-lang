@@ -2829,6 +2829,9 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
   // Remove the braces from around the name.
   StringRef RegName(Constraint.data()+1, Constraint.size()-2);
 
+  std::pair<unsigned, const TargetRegisterClass*> R =
+    std::make_pair(0u, static_cast<const TargetRegisterClass*>(0));
+
   // Figure out which register class contains this reg.
   const TargetRegisterInfo *RI = TM.getRegisterInfo();
   for (TargetRegisterInfo::regclass_iterator RCI = RI->regclass_begin(),
@@ -2842,12 +2845,22 @@ getRegForInlineAsmConstraint(const std::string &Constraint,
 
     for (TargetRegisterClass::iterator I = RC->begin(), E = RC->end();
          I != E; ++I) {
-      if (RegName.equals_lower(RI->getName(*I)))
-        return std::make_pair(*I, RC);
+      if (RegName.equals_lower(RI->getName(*I))) {
+        std::pair<unsigned, const TargetRegisterClass*> S =
+          std::make_pair(*I, RC);
+
+        // If this register class has the requested value type, return it,
+        // otherwise keep searching and return the first class found
+        // if no other is found which explicitly has the requested type.
+        if (RC->hasType(VT))
+          return S;
+        else if (!R.second)
+          R = S;
+      }
     }
   }
 
-  return std::make_pair(0u, static_cast<const TargetRegisterClass*>(0));
+  return R;
 }
 
 //===----------------------------------------------------------------------===//
