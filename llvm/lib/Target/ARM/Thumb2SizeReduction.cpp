@@ -175,6 +175,11 @@ namespace {
                         bool LiveCPSR, MachineInstr *CPSRDef,
                         bool IsSelfLoop);
 
+    /// ReduceMI - Attempt to reduce MI, return true on success.
+    bool ReduceMI(MachineBasicBlock &MBB, MachineInstr *MI,
+                  bool LiveCPSR, MachineInstr *CPSRDef,
+                  bool IsSelfLoop);
+
     /// ReduceMBB - Reduce width of instructions in the specified basic block.
     bool ReduceMBB(MachineBasicBlock &MBB);
   };
@@ -841,6 +846,32 @@ static bool UpdateCPSRUse(MachineInstr &MI, bool LiveCPSR) {
   return LiveCPSR;
 }
 
+bool Thumb2SizeReduce::ReduceMI(MachineBasicBlock &MBB, MachineInstr *MI,
+                                bool LiveCPSR, MachineInstr *CPSRDef,
+                                bool IsSelfLoop) {
+  unsigned Opcode = MI->getOpcode();
+  DenseMap<unsigned, unsigned>::iterator OPI = ReduceOpcodeMap.find(Opcode);
+  if (OPI == ReduceOpcodeMap.end())
+    return false;
+  const ReduceEntry &Entry = ReduceTable[OPI->second];
+
+  // Don't attempt normal reductions on "special" cases for now.
+  if (Entry.Special)
+    return ReduceSpecial(MBB, MI, Entry, LiveCPSR, CPSRDef, IsSelfLoop);
+
+  // Try to transform to a 16-bit two-address instruction.
+  if (Entry.NarrowOpc2 &&
+      ReduceTo2Addr(MBB, MI, Entry, LiveCPSR, CPSRDef, IsSelfLoop))
+    return true;
+
+  // Try to transform to a 16-bit non-two-address instruction.
+  if (Entry.NarrowOpc1 &&
+      ReduceToNarrow(MBB, MI, Entry, LiveCPSR, CPSRDef, IsSelfLoop))
+    return true;
+
+  return false;
+}
+
 bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
   bool Modified = false;
 
@@ -865,39 +896,12 @@ bool Thumb2SizeReduce::ReduceMBB(MachineBasicBlock &MBB) {
 
     LiveCPSR = UpdateCPSRUse(*MI, LiveCPSR);
 
-    unsigned Opcode = MI->getOpcode();
-    DenseMap<unsigned, unsigned>::iterator OPI = ReduceOpcodeMap.find(Opcode);
-    if (OPI != ReduceOpcodeMap.end()) {
-      const ReduceEntry &Entry = ReduceTable[OPI->second];
-      // Ignore "special" cases for now.
-      if (Entry.Special) {
-        if (ReduceSpecial(MBB, MI, Entry, LiveCPSR, CPSRDef, IsSelfLoop)) {
-          Modified = true;
-          MachineBasicBlock::instr_iterator I = prior(NextMII);
-          MI = &*I;
-        }
-        goto ProcessNext;
-      }
-
-      // Try to transform to a 16-bit two-address instruction.
-      if (Entry.NarrowOpc2 &&
-          ReduceTo2Addr(MBB, MI, Entry, LiveCPSR, CPSRDef, IsSelfLoop)) {
-        Modified = true;
-        MachineBasicBlock::instr_iterator I = prior(NextMII);
-        MI = &*I;
-        goto ProcessNext;
-      }
-
-      // Try to transform to a 16-bit non-two-address instruction.
-      if (Entry.NarrowOpc1 &&
-          ReduceToNarrow(MBB, MI, Entry, LiveCPSR, CPSRDef, IsSelfLoop)) {
-        Modified = true;
-        MachineBasicBlock::instr_iterator I = prior(NextMII);
-        MI = &*I;
-      }
+    if (ReduceMI(MBB, MI, LiveCPSR, CPSRDef, IsSelfLoop)) {
+      Modified = true;
+      MachineBasicBlock::instr_iterator I = prior(NextMII);
+      MI = &*I;
     }
 
-  ProcessNext:
     if (NextMII != E && MI->isInsideBundle() && !NextMII->isInsideBundle()) {
       // FIXME: Since post-ra scheduler operates on bundles, the CPSR kill
       // marker is only on the BUNDLE instruction. Process the BUNDLE
