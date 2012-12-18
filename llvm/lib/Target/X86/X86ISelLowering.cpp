@@ -17866,10 +17866,10 @@ unsigned X86VectorTargetTransformInfo::getCmpSelInstrCost(unsigned Opcode,
     { ISD::SETCC,   MVT::v32i8,   1 },
   };
 
-  if (ST.hasSSE42()) {
-    int Idx = FindInTable(SSE42CostTbl, array_lengthof(SSE42CostTbl), ISD, MTy);
+  if (ST.hasAVX2()) {
+    int Idx = FindInTable(AVX2CostTbl, array_lengthof(AVX2CostTbl), ISD, MTy);
     if (Idx != -1)
-      return LT.first * SSE42CostTbl[Idx].Cost;
+      return LT.first * AVX2CostTbl[Idx].Cost;
   }
 
   if (ST.hasAVX()) {
@@ -17878,10 +17878,10 @@ unsigned X86VectorTargetTransformInfo::getCmpSelInstrCost(unsigned Opcode,
       return LT.first * AVX1CostTbl[Idx].Cost;
   }
 
-  if (ST.hasAVX2()) {
-    int Idx = FindInTable(AVX2CostTbl, array_lengthof(AVX2CostTbl), ISD, MTy);
+  if (ST.hasSSE42()) {
+    int Idx = FindInTable(SSE42CostTbl, array_lengthof(SSE42CostTbl), ISD, MTy);
     if (Idx != -1)
-      return LT.first * AVX2CostTbl[Idx].Cost;
+      return LT.first * SSE42CostTbl[Idx].Cost;
   }
 
   return VectorTargetTransformImpl::getCmpSelInstrCost(Opcode, ValTy, CondTy);
