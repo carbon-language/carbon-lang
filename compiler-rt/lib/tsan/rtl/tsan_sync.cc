@@ -60,6 +60,9 @@ SyncVar* SyncTab::GetIfExistsAndLock(uptr addr, bool write_lock) {
 SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
                              uptr addr, bool write_lock, bool create) {
 #ifndef TSAN_GO
+  // Here we ask only PrimaryAllocator, because
+  // SecondaryAllocator::PointerIsMine() is slow and we have fallback on
+  // the hashmap anyway.
   if (PrimaryAllocator::PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(thr, (void*)addr);
     Lock l(&b->mtx);

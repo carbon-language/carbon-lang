@@ -54,6 +54,7 @@ void FdSocketAccept(ThreadState *thr, uptr pc, int fd, int newfd);
 void FdSocketConnecting(ThreadState *thr, uptr pc, int fd);
 void FdSocketConnect(ThreadState *thr, uptr pc, int fd);
 bool FdLocation(uptr addr, int *fd, int *tid, u32 *stack);
+void FdOnFork(ThreadState *thr, uptr pc);
 
 uptr File2addr(char *path);
 uptr Dir2addr(char *path);

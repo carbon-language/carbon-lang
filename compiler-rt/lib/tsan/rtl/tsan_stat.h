@@ -233,6 +233,7 @@ enum StatType {
   StatInt_usleep,
   StatInt_nanosleep,
   StatInt_gettimeofday,
+  StatInt_fork,
 
   // Dynamic annotations.
   StatAnnotation,

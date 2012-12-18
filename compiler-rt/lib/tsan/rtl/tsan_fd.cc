@@ -114,6 +114,21 @@ void FdInit() {
   atomic_store(&fdctx.socksync.rc, (u64)-1, memory_order_relaxed);
 }
 
+void FdOnFork(ThreadState *thr, uptr pc) {
+  // On fork() we need to reset all fd's, because the child is going
+  // close all them, and that will cause races between previous read/write
+  // and the close.
+  for (int l1 = 0; l1 < kTableSizeL1; l1++) {
+    FdDesc *tab = (FdDesc*)atomic_load(&fdctx.tab[l1], memory_order_relaxed);
+    if (tab == 0)
+      break;
+    for (int l2 = 0; l2 < kTableSizeL2; l2++) {
+      FdDesc *d = &tab[l2];
+      MemoryResetRange(thr, pc, (uptr)d, 8);
+    }
+  }
+}
+
 bool FdLocation(uptr addr, int *fd, int *tid, u32 *stack) {
   for (int l1 = 0; l1 < kTableSizeL1; l1++) {
     FdDesc *tab = (FdDesc*)atomic_load(&fdctx.tab[l1], memory_order_relaxed);

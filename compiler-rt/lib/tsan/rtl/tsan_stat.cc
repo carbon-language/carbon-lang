@@ -234,6 +234,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_usleep]                   = "  usleep                          ";
   name[StatInt_nanosleep]                = "  nanosleep                       ";
   name[StatInt_gettimeofday]             = "  gettimeofday                    ";
+  name[StatInt_fork]                     = "  fork                            ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

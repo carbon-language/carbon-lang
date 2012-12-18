@@ -1617,6 +1617,19 @@ TSAN_INTERCEPTOR(int, munlockall, void) {
   return 0;
 }
 
+TSAN_INTERCEPTOR(int, fork) {
+  SCOPED_TSAN_INTERCEPTOR(fork);
+  // It's intercepted merely to process pending signals.
+  int pid = REAL(fork)();
+  if (pid == 0) {
+    // child
+    FdOnFork(thr, pc);
+  } else if (pid > 0) {
+    // parent
+  }
+  return pid;
+}
+
 namespace __tsan {
 
 void ProcessPendingSignals(ThreadState *thr) {
@@ -1825,6 +1838,8 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(munlock);
   TSAN_INTERCEPT(mlockall);
   TSAN_INTERCEPT(munlockall);
+
+  TSAN_INTERCEPT(fork);
 
   // Need to setup it, because interceptors check that the function is resolved.
   // But atexit is emitted directly into the module, so can't be resolved.
