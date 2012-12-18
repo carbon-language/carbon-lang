@@ -878,6 +878,7 @@ void MachineInstr::bundleWithPred() {
   setFlag(BundledPred);
   MachineBasicBlock::instr_iterator Pred = this;
   --Pred;
+  assert(!Pred->isBundledWithSucc() && "Inconsistent bundle flags");
   Pred->setFlag(BundledSucc);
 }
 
@@ -886,6 +887,7 @@ void MachineInstr::bundleWithSucc() {
   setFlag(BundledSucc);
   MachineBasicBlock::instr_iterator Succ = this;
   ++Succ;
+  assert(!Succ->isBundledWithPred() && "Inconsistent bundle flags");
   Succ->setFlag(BundledPred);
 }
 
@@ -894,6 +896,7 @@ void MachineInstr::unbundleFromPred() {
   clearFlag(BundledPred);
   MachineBasicBlock::instr_iterator Pred = this;
   --Pred;
+  assert(Pred->isBundledWithSucc() && "Inconsistent bundle flags");
   Pred->clearFlag(BundledSucc);
 }
 
@@ -902,6 +905,7 @@ void MachineInstr::unbundleFromSucc() {
   clearFlag(BundledSucc);
   MachineBasicBlock::instr_iterator Succ = this;
   --Succ;
+  assert(Succ->isBundledWithPred() && "Inconsistent bundle flags");
   Succ->clearFlag(BundledPred);
 }
 
