@@ -150,7 +150,9 @@ public:
   }
 
   void setFlags(unsigned flags) {
-    Flags = flags;
+    // Filter out the automatically maintained flags.
+    unsigned Mask = BundledPred | BundledSucc;
+    Flags = (Flags & Mask) | (flags & ~Mask);
   }
 
   /// clearFlag - Clear a MI flag.

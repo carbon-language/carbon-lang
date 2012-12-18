@@ -556,8 +556,8 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
   for (unsigned i = 0; i != MI.getNumOperands(); ++i)
     addOperand(MI.getOperand(i));
 
-  // Copy all the flags.
-  Flags = MI.Flags;
+  // Copy all the sensible flags.
+  setFlags(MI.Flags);
 
   // Set parent to null.
   Parent = 0;
