@@ -1053,6 +1053,13 @@ void MicrosoftCXXNameMangler::mangleType(const BuiltinType *T,
   case BuiltinType::ObjCId: Out << "PAUobjc_object@@"; break;
   case BuiltinType::ObjCClass: Out << "PAUobjc_class@@"; break;
   case BuiltinType::ObjCSel: Out << "PAUobjc_selector@@"; break;
+
+  case BuiltinType::OCLImage1d: Out << "PAUocl_image1d@@"; break;
+  case BuiltinType::OCLImage1dArray: Out << "PAUocl_image1darray@@"; break;
+  case BuiltinType::OCLImage1dBuffer: Out << "PAUocl_image1dbuffer@@"; break;
+  case BuiltinType::OCLImage2d: Out << "PAUocl_image2d@@"; break;
+  case BuiltinType::OCLImage2dArray: Out << "PAUocl_image2darray@@"; break;
+  case BuiltinType::OCLImage3d: Out << "PAUocl_image3d@@"; break;
  
   case BuiltinType::NullPtr: Out << "$$T"; break;
 

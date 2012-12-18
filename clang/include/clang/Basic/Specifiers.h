@@ -62,13 +62,19 @@ namespace clang {
     TST_auto,         // C++0x auto
     TST_unknown_anytype, // __unknown_anytype extension
     TST_atomic,       // C11 _Atomic
+    TST_image1d_t,        // OpenCL image1d_t
+    TST_image1d_array_t,  // OpenCL image1d_array_t
+    TST_image1d_buffer_t, // OpenCL image1d_buffer_t
+    TST_image2d_t,        // OpenCL image2d_t
+    TST_image2d_array_t,  // OpenCL image2d_array_t
+    TST_image3d_t,        // OpenCL image3d_t
     TST_error         // erroneous type
   };
   
   /// \brief Structure that packs information about the type specifiers that
   /// were written in a particular type specifier sequence.
   struct WrittenBuiltinSpecs {
-    /*DeclSpec::TST*/ unsigned Type  : 5;
+    /*DeclSpec::TST*/ unsigned Type  : 6;
     /*DeclSpec::TSS*/ unsigned Sign  : 2;
     /*DeclSpec::TSW*/ unsigned Width : 2;
     bool ModeAttr : 1;

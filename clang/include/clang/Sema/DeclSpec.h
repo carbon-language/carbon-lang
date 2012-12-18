@@ -276,6 +276,12 @@ public:
   static const TST TST_auto = clang::TST_auto;
   static const TST TST_unknown_anytype = clang::TST_unknown_anytype;
   static const TST TST_atomic = clang::TST_atomic;
+  static const TST TST_image1d_t = clang::TST_image1d_t;
+  static const TST TST_image1d_array_t = clang::TST_image1d_array_t;
+  static const TST TST_image1d_buffer_t = clang::TST_image1d_buffer_t;
+  static const TST TST_image2d_t = clang::TST_image2d_t;
+  static const TST TST_image2d_array_t = clang::TST_image2d_array_t;
+  static const TST TST_image3d_t = clang::TST_image3d_t;
   static const TST TST_error = clang::TST_error;
 
   // type-qualifiers
@@ -306,7 +312,7 @@ private:
   /*TSW*/unsigned TypeSpecWidth : 2;
   /*TSC*/unsigned TypeSpecComplex : 2;
   /*TSS*/unsigned TypeSpecSign : 2;
-  /*TST*/unsigned TypeSpecType : 5;
+  /*TST*/unsigned TypeSpecType : 6;
   unsigned TypeAltiVecVector : 1;
   unsigned TypeAltiVecPixel : 1;
   unsigned TypeAltiVecBool : 1;

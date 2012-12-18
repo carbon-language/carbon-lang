@@ -874,6 +874,15 @@ void ASTContext::InitBuiltinTypes(const TargetInfo &Target) {
   InitBuiltinType(ObjCBuiltinIdTy, BuiltinType::ObjCId);
   InitBuiltinType(ObjCBuiltinClassTy, BuiltinType::ObjCClass);
   InitBuiltinType(ObjCBuiltinSelTy, BuiltinType::ObjCSel);
+
+  if (LangOpts.OpenCL) { 
+    InitBuiltinType(OCLImage1dTy, BuiltinType::OCLImage1d);
+    InitBuiltinType(OCLImage1dArrayTy, BuiltinType::OCLImage1dArray);
+    InitBuiltinType(OCLImage1dBufferTy, BuiltinType::OCLImage1dBuffer);
+    InitBuiltinType(OCLImage2dTy, BuiltinType::OCLImage2d);
+    InitBuiltinType(OCLImage2dArrayTy, BuiltinType::OCLImage2dArray);
+    InitBuiltinType(OCLImage3dTy, BuiltinType::OCLImage3d);
+  }
   
   // Builtin type for __objc_yes and __objc_no
   ObjCBuiltinBoolTy = (Target.useSignedCharForObjCBool() ?
@@ -1410,6 +1419,16 @@ ASTContext::getTypeInfoImpl(const Type *T) const {
     case BuiltinType::ObjCClass:
     case BuiltinType::ObjCSel:
       Width = Target->getPointerWidth(0); 
+      Align = Target->getPointerAlign(0);
+      break;
+    case BuiltinType::OCLImage1d:
+    case BuiltinType::OCLImage1dArray:
+    case BuiltinType::OCLImage1dBuffer:
+    case BuiltinType::OCLImage2d:
+    case BuiltinType::OCLImage2dArray:
+    case BuiltinType::OCLImage3d:
+      // Currently these types are pointers to opaque types.
+      Width = Target->getPointerWidth(0);
       Align = Target->getPointerAlign(0);
       break;
     }

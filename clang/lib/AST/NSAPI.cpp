@@ -337,6 +337,12 @@ NSAPI::getNSNumberFactoryMethodKind(QualType T) const {
   case BuiltinType::ObjCClass:
   case BuiltinType::ObjCId:
   case BuiltinType::ObjCSel:
+  case BuiltinType::OCLImage1d:
+  case BuiltinType::OCLImage1dArray:
+  case BuiltinType::OCLImage1dBuffer:
+  case BuiltinType::OCLImage2d:
+  case BuiltinType::OCLImage2dArray:
+  case BuiltinType::OCLImage3d:
   case BuiltinType::BoundMember:
   case BuiltinType::Dependent:
   case BuiltinType::Overload:

@@ -1580,6 +1580,17 @@ public:
   bool isNullPtrType() const;                   // C++0x nullptr_t
   bool isAtomicType() const;                    // C11 _Atomic()
 
+  bool isImage1dT() const;                      // OpenCL image1d_t
+  bool isImage1dArrayT() const;                 // OpenCL image1d_array_t
+  bool isImage1dBufferT() const;                // OpenCL image1d_buffer_t
+  bool isImage2dT() const;                      // OpenCL image2d_t
+  bool isImage2dArrayT() const;                 // OpenCL image2d_array_t
+  bool isImage3dT() const;                      // OpenCL image3d_t
+
+  bool isImageType() const;                     // Any OpenCL image type
+
+  bool isOpenCLSpecificType() const;            // Any OpenCL specific type
+
   /// Determines if this type, which must satisfy
   /// isObjCLifetimeType(), is implicitly __unsafe_unretained rather
   /// than implicitly __strong.
@@ -4883,6 +4894,40 @@ inline bool Type::isObjCSelType() const {
 inline bool Type::isObjCBuiltinType() const {
   return isObjCIdType() || isObjCClassType() || isObjCSelType();
 }
+
+inline bool Type::isImage1dT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage1d);
+}
+
+inline bool Type::isImage1dArrayT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage1dArray);
+}
+
+inline bool Type::isImage1dBufferT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage1dBuffer);
+}
+
+inline bool Type::isImage2dT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage2d);
+}
+
+inline bool Type::isImage2dArrayT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage2dArray);
+}
+
+inline bool Type::isImage3dT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLImage3d);
+}
+inline bool Type::isImageType() const {
+  return isImage3dT() ||
+         isImage2dT() || isImage2dArrayT() ||
+         isImage1dT() || isImage1dArrayT() || isImage1dBufferT();
+}
+
+inline bool Type::isOpenCLSpecificType() const {
+  return isImageType();
+}
+
 inline bool Type::isTemplateTypeParmType() const {
   return isa<TemplateTypeParmType>(CanonicalType);
 }

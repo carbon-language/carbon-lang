@@ -154,6 +154,14 @@ BUILTIN_TYPE(ObjCClass, ObjCBuiltinClassTy)
 // type is a typedef of a PointerType to this.
 BUILTIN_TYPE(ObjCSel, ObjCBuiltinSelTy)
 
+// OpenCL image types.
+BUILTIN_TYPE(OCLImage1d, OCLImage1dTy)
+BUILTIN_TYPE(OCLImage1dArray, OCLImage1dArrayTy)
+BUILTIN_TYPE(OCLImage1dBuffer, OCLImage1dBufferTy)
+BUILTIN_TYPE(OCLImage2d, OCLImage2dTy)
+BUILTIN_TYPE(OCLImage2dArray, OCLImage2dArrayTy)
+BUILTIN_TYPE(OCLImage3d, OCLImage3dTy)
+
 // This represents the type of an expression whose type is
 // totally unknown, e.g. 'T::foo'.  It is permitted for this to
 // appear in situations where the structure of the type is
