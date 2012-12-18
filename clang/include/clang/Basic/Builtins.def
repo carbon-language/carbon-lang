@@ -833,6 +833,14 @@ LIBBUILTIN(ceil, "dd", "fc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(ceill, "LdLd", "fc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(ceilf, "ff", "fc", "math.h", ALL_LANGUAGES)
 
+LIBBUILTIN(cimag, "dXd", "fnc", "complex.h", ALL_LANGUAGES)
+LIBBUILTIN(cimagf, "fXf", "fnc", "complex.h", ALL_LANGUAGES)
+LIBBUILTIN(cimagl, "LdXLd", "fnc", "complex.h", ALL_LANGUAGES)
+
+LIBBUILTIN(creal, "dXd", "fnc", "complex.h", ALL_LANGUAGES)
+LIBBUILTIN(crealf, "fXf", "fnc", "complex.h", ALL_LANGUAGES)
+LIBBUILTIN(creall, "LdXLd", "fnc", "complex.h", ALL_LANGUAGES)
+
 LIBBUILTIN(copysign, "ddd", "fc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(copysignl, "LdLdLd", "fc", "math.h", ALL_LANGUAGES)
 LIBBUILTIN(copysignf, "fff", "fc", "math.h", ALL_LANGUAGES)
