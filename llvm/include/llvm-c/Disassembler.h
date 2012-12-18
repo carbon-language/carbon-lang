@@ -168,6 +168,8 @@ int LLVMSetDisasmOptions(LLVMDisasmContextRef DC, uint64_t Options);
 #define LLVMDisassembler_Option_UseMarkup 1
 /* The option to print immediates as hex. */
 #define LLVMDisassembler_Option_PrintImmHex 2
+/* The option use the other assembler printer variant */
+#define LLVMDisassembler_Option_AsmPrinterVariant 4
 
 /**
  * Dispose of a disassembler context.

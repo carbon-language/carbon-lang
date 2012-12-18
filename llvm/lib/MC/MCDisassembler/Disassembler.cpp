@@ -195,5 +195,21 @@ int LLVMSetDisasmOptions(LLVMDisasmContextRef DCR, uint64_t Options){
       IP->setPrintImmHex(1);
       Options &= ~LLVMDisassembler_Option_PrintImmHex;
   }
+  if (Options & LLVMDisassembler_Option_AsmPrinterVariant){
+      LLVMDisasmContext *DC = (LLVMDisasmContext *)DCR;
+      // Try to set up the new instruction printer.
+      const MCAsmInfo *MAI = DC->getAsmInfo();
+      const MCInstrInfo *MII = DC->getInstrInfo();
+      const MCRegisterInfo *MRI = DC->getRegisterInfo();
+      const MCSubtargetInfo *STI = DC->getSubtargetInfo();
+      int AsmPrinterVariant = MAI->getAssemblerDialect();
+      AsmPrinterVariant = AsmPrinterVariant == 0 ? 1 : 0;
+      MCInstPrinter *IP = DC->getTarget()->createMCInstPrinter(
+          AsmPrinterVariant, *MAI, *MII, *MRI, *STI);
+      if (IP) {
+        DC->setIP(IP);
+        Options &= ~LLVMDisassembler_Option_AsmPrinterVariant;
+      }
+  }
   return (Options == 0);
 }
