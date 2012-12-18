@@ -21,7 +21,7 @@ test_file() {
   EXE=$SRC.exe
   $COMPILER $SRC $CFLAGS -c -o $OBJ
   $COMPILER $OBJ $LDFLAGS -o $EXE
-  RES=$(TSAN_OPTIONS="atexit_sleep_ms=0" $EXE 2>&1 || true)
+  RES=$($EXE 2>&1 || true)
   if [ "$3" != "" ]; then
     printf "%s\n" "$RES"
   fi
