@@ -53,7 +53,7 @@ public:
 class StringMapImpl {
 protected:
   // Array of NumBuckets pointers to entries, null pointers are holes.
-  // TheTable[NumBuckets] contains a sentinel value for easy iteration. Follwed
+  // TheTable[NumBuckets] contains a sentinel value for easy iteration. Followed
   // by an array of the actual hash values as unsigned integers.
   StringMapEntryBase **TheTable;
   unsigned NumBuckets;
@@ -171,7 +171,6 @@ public:
     return Create(KeyStart, KeyEnd, Allocator, 0);
   }
 
-
   /// Create - Create a StringMapEntry with normal malloc/free.
   template<typename InitType>
   static StringMapEntry *Create(const char *KeyStart, const char *KeyEnd,
@@ -203,7 +202,6 @@ public:
     char *Ptr = const_cast<char*>(KeyData) - sizeof(StringMapEntry<ValueTy>);
     return *reinterpret_cast<StringMapEntry*>(Ptr);
   }
-
 
   /// Destroy - Destroy this StringMapEntry, releasing memory back to the
   /// specified allocator.
@@ -290,7 +288,7 @@ public:
     return const_iterator(TheTable+Bucket, true);
   }
 
-   /// lookup - Return the entry for the specified key, or a default
+  /// lookup - Return the entry for the specified key, or a default
   /// constructed value if no such entry exists.
   ValueTy lookup(StringRef Key) const {
     const_iterator it = find(Key);
@@ -427,7 +425,7 @@ public:
     return Ptr != RHS.Ptr;
   }
 
-  inline StringMapConstIterator& operator++() {          // Preincrement
+  inline StringMapConstIterator& operator++() {   // Preincrement
     ++Ptr;
     AdvancePastEmptyBuckets();
     return *this;
