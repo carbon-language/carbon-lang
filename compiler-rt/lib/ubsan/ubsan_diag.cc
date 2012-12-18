@@ -24,13 +24,11 @@ Location __ubsan::getCallerLocation(uptr CallerLoc) {
   if (!CallerLoc)
     return Location();
 
-  // Adjust to find the call instruction.
-  // FIXME: This is not portable.
-  --CallerLoc;
+  uptr Loc = StackTrace::GetPreviousInstructionPc(CallerLoc);
 
   AddressInfo Info;
-  if (!SymbolizeCode(CallerLoc, &Info, 1) || !Info.module || !*Info.module)
-    return Location(CallerLoc);
+  if (!SymbolizeCode(Loc, &Info, 1) || !Info.module || !*Info.module)
+    return Location(Loc);
 
   if (!Info.function)
     return ModuleLocation(Info.module, Info.module_offset);

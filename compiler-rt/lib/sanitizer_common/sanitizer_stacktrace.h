@@ -49,6 +49,7 @@ struct StackTrace {
   void PopStackFrames(uptr count);
 
   static uptr GetCurrentPc();
+  static uptr GetPreviousInstructionPc(uptr pc);
 
   static uptr CompressStack(StackTrace *stack,
                             u32 *compressed, uptr size);

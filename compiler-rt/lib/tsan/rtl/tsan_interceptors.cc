@@ -177,8 +177,8 @@ ScopedInterceptor::~ScopedInterceptor() {
     StatInc(thr, StatInt_##func); \
     const uptr caller_pc = GET_CALLER_PC(); \
     ScopedInterceptor si(thr, #func, caller_pc); \
-    /* Subtract one from pc as we need current instruction address */ \
-    const uptr pc = __sanitizer::StackTrace::GetCurrentPc() - 1; \
+    const uptr pc = __sanitizer::StackTrace::GetPreviousInstructionPc( \
+        __sanitizer::StackTrace::GetCurrentPc()); \
     (void)pc; \
 /**/
 
