@@ -310,6 +310,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 _Tp&
 get(array<_Tp, _Size>& __a) _NOEXCEPT
 {
+    static_assert(_Ip < _Size, "Index out of bounds in std::get<> (std::array)");
     return __a[_Ip];
 }
 
@@ -318,6 +319,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 const _Tp&
 get(const array<_Tp, _Size>& __a) _NOEXCEPT
 {
+    static_assert(_Ip < _Size, "Index out of bounds in std::get<> (const std::array)");
     return __a[_Ip];
 }
 
@@ -328,6 +330,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 _Tp&&
 get(array<_Tp, _Size>&& __a) _NOEXCEPT
 {
+    static_assert(_Ip < _Size, "Index out of bounds in std::get<> (std::array &&)");
     return _VSTD::move(__a[_Ip]);
 }
 
