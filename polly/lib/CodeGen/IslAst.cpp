@@ -19,6 +19,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/IslAst.h"
 
 #include "polly/LinkAllPasses.h"
@@ -31,7 +32,6 @@
 
 #include "isl/union_map.h"
 #include "isl/list.h"
-#include "isl/ast.h"
 #include "isl/ast_build.h"
 #include "isl/set.h"
 #include "isl/map.h"
@@ -68,24 +68,6 @@ private:
 };
 } // End namespace polly.
 
-
-static void IslAstUserFree(void *User)
-{
-  struct IslAstUser *UserStruct = (struct IslAstUser *) User;
-  isl_ast_build_free(UserStruct->Context);
-  isl_pw_multi_aff_free(UserStruct->PMA);
-  free(UserStruct);
-}
-
-// Information about an ast node.
-struct AstNodeUserInfo {
-  // The node is the outermost parallel loop.
-  int IsOutermostParallel;
-
-  // The node is the innermost parallel loop.
-  int IsInnermostParallel;
-};
-
 // Temporary information used when building the ast.
 struct AstBuildUserInfo {
   // The dependence information.
@@ -99,7 +81,7 @@ struct AstBuildUserInfo {
 static __isl_give isl_printer *
 printParallelFor(__isl_keep isl_ast_node *Node, __isl_take isl_printer *Printer,
                  __isl_take isl_ast_print_options *PrintOptions,
-                 AstNodeUserInfo *Info) {
+                 IslAstUser *Info) {
   if (Info) {
     if (Info->IsInnermostParallel) {
       Printer = isl_printer_start_line(Printer);
@@ -124,26 +106,29 @@ printFor(__isl_take isl_printer *Printer,
   if (!Id)
     return isl_ast_node_for_print(Node, Printer, PrintOptions);
 
-  struct AstNodeUserInfo *Info = (struct AstNodeUserInfo *) isl_id_get_user(Id);
+  struct IslAstUser *Info = (struct IslAstUser *) isl_id_get_user(Id);
   Printer = printParallelFor(Node, Printer, PrintOptions, Info);
   isl_id_free(Id);
   return Printer;
 }
 
 // Allocate an AstNodeInfo structure and initialize it with default values.
-static struct AstNodeUserInfo *allocateAstNodeUserInfo() {
-  struct AstNodeUserInfo *NodeInfo;
-  NodeInfo = (struct AstNodeUserInfo *) malloc(sizeof(struct AstNodeUserInfo));
+static struct IslAstUser *allocateIslAstUser() {
+  struct IslAstUser *NodeInfo;
+  NodeInfo = (struct IslAstUser *) malloc(sizeof(struct IslAstUser));
+  NodeInfo->PMA = 0;
+  NodeInfo->Context = 0;
   NodeInfo->IsOutermostParallel = 0;
   NodeInfo->IsInnermostParallel = 0;
   return NodeInfo;
 }
 
 // Free the AstNodeInfo structure.
-static void freeAstNodeUserInfo(void *Ptr) {
-  struct AstNodeUserInfo *Info;
-  Info = (struct AstNodeUserInfo *) Ptr;
-  free(Info);
+static void freeIslAstUser(void *Ptr) {
+  struct IslAstUser *UserStruct = (struct IslAstUser *) Ptr;
+  isl_ast_build_free(UserStruct->Context);
+  isl_pw_multi_aff_free(UserStruct->PMA);
+  free(UserStruct);
 }
 
 // Check if the current scheduling dimension is parallel.
@@ -200,7 +185,7 @@ static bool astScheduleDimIsParallel(__isl_keep isl_ast_build *Build,
 // Mark a for node openmp parallel, if it is the outermost parallel for node.
 static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
                                struct AstBuildUserInfo *BuildInfo,
-                               struct AstNodeUserInfo *NodeInfo) {
+                               struct IslAstUser *NodeInfo) {
   if (BuildInfo->InParallelFor)
     return;
 
@@ -219,14 +204,10 @@ static void markOpenmpParallel(__isl_keep isl_ast_build *Build,
 //
 static __isl_give isl_id *astBuildBeforeFor(__isl_keep isl_ast_build *Build,
                                             void *User) {
-  isl_id *Id;
-  struct AstBuildUserInfo *BuildInfo;
-  struct AstNodeUserInfo *NodeInfo;
-
-  BuildInfo = (struct AstBuildUserInfo *) User;
-  NodeInfo = allocateAstNodeUserInfo();
-  Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", NodeInfo);
-  Id = isl_id_set_free_user(Id, freeAstNodeUserInfo);
+  struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *) User;
+  struct IslAstUser *NodeInfo = allocateIslAstUser();
+  isl_id *Id = isl_id_alloc(isl_ast_build_get_ctx(Build), "", NodeInfo);
+  Id = isl_id_set_free_user(Id, freeIslAstUser);
 
   markOpenmpParallel(Build, BuildInfo, NodeInfo);
 
@@ -286,7 +267,7 @@ astBuildAfterFor(__isl_take isl_ast_node *Node,
   isl_id *Id = isl_ast_node_get_annotation(Node);
   if (!Id)
     return Node;
-  struct AstNodeUserInfo *Info = (struct AstNodeUserInfo *) isl_id_get_user(Id);
+  struct IslAstUser *Info = (struct IslAstUser *) isl_id_get_user(Id);
   struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *) User;
   if (Info) {
     if (Info->IsOutermostParallel)
@@ -296,28 +277,36 @@ astBuildAfterFor(__isl_take isl_ast_node *Node,
         Info->IsInnermostParallel = 1;
   }
 
-  isl_id_free(Id);
+  if (!Info->Context)
+    Info->Context = isl_ast_build_copy(Build);
 
+  isl_id_free(Id);
   return Node;
 }
 
 static __isl_give isl_ast_node *
-AtEachDomain(__isl_keep isl_ast_node *Node,
+AtEachDomain(__isl_take isl_ast_node *Node,
              __isl_keep isl_ast_build *Context, void *User)
 {
-  isl_map *Map;
-  struct IslAstUser *UserStruct;
+  struct IslAstUser *Info = NULL;
+  isl_id *Id = isl_ast_node_get_annotation(Node);
 
-  UserStruct = (struct IslAstUser *) malloc(sizeof(struct IslAstUser));
+  if (Id)
+    Info = (struct IslAstUser *) isl_id_get_user(Id);
 
-  Map = isl_map_from_union_map(isl_ast_build_get_schedule(Context));
-  UserStruct->PMA = isl_pw_multi_aff_from_map(isl_map_reverse(Map));
-  UserStruct->Context = isl_ast_build_copy(Context);
+  if (!Info) {
+    // Allocate annotations once: parallel for detection might have already
+    // allocated the annotations for this node.
+    Info = allocateIslAstUser();
+    Id = isl_id_alloc(isl_ast_node_get_ctx(Node), NULL, Info);
+    Id = isl_id_set_free_user(Id, &freeIslAstUser);
+  }
 
-  isl_id *Annotation = isl_id_alloc(isl_ast_node_get_ctx(Node), NULL,
-                                    UserStruct);
-  Annotation = isl_id_set_free_user(Annotation, &IslAstUserFree);
-  return isl_ast_node_set_annotation(Node, Annotation);
+  isl_map *Map = isl_map_from_union_map(isl_ast_build_get_schedule(Context));
+  Info->PMA = isl_pw_multi_aff_from_map(isl_map_reverse(Map));
+  Info->Context = isl_ast_build_copy(Context);
+
+  return isl_ast_node_set_annotation(Node, Id);
 }
 
 IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
@@ -343,7 +332,7 @@ IslAst::IslAst(Scop *Scop, Dependences &D) : S(Scop) {
     isl_union_map_dump(Schedule);
   );
 
-  if (DetectParallel) {
+  if (DetectParallel || PollyVectorizerChoice != VECTORIZER_NONE) {
     BuildInfo.Deps = &D;
     BuildInfo.InParallelFor = 0;
 

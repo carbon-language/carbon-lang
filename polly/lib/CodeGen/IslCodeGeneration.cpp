@@ -26,6 +26,7 @@
 #include "polly/TempScopInfo.h"
 #include "polly/CodeGen/IslAst.h"
 #include "polly/CodeGen/BlockGenerators.h"
+#include "polly/CodeGen/CodeGeneration.h"
 #include "polly/CodeGen/LoopGenerators.h"
 #include "polly/CodeGen/Utils.h"
 #include "polly/Support/GICHelper.h"
@@ -579,8 +580,23 @@ private:
   __isl_give isl_ast_expr *getUpperBound(__isl_keep isl_ast_node *For,
                                          CmpInst::Predicate &Predicate);
 
+  unsigned getNumberOfIterations(__isl_keep isl_ast_node *For);
+
   void createFor(__isl_take isl_ast_node *For);
+  void createForVector(__isl_take isl_ast_node *For, int VectorWidth);
+  void createForSequential(__isl_take isl_ast_node *For);
+  void createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
+                           __isl_take isl_ast_build *Context,
+                           ScopStmt *Stmt, ValueMapT &VMap);
+  void createSubstitutionsVector(__isl_take isl_pw_multi_aff *PMA,
+                                 __isl_take isl_ast_build *Context,
+                                 ScopStmt *Stmt, VectorValueMapT &VMap,
+                                 std::vector<Value*> &IVS,
+                                 __isl_take isl_id *IteratorID);
   void createIf(__isl_take isl_ast_node *If);
+  void createUserVector(__isl_take isl_ast_node *User,
+                        std::vector<Value*> &IVS, __isl_take isl_id *IteratorID,
+                        __isl_take isl_union_map *Schedule);
   void createUser(__isl_take isl_ast_node *User);
   void createBlock(__isl_take isl_ast_node *Block);
 };
@@ -635,7 +651,128 @@ __isl_give isl_ast_expr *IslNodeBuilder::getUpperBound(
   return UB;
 }
 
-void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
+unsigned IslNodeBuilder::getNumberOfIterations(__isl_keep isl_ast_node *For) {
+  isl_id *Annotation = isl_ast_node_get_annotation(For);
+  if (!Annotation)
+    return -1;
+
+  struct IslAstUser *Info = (struct IslAstUser *) isl_id_get_user(Annotation);
+  if (!Info) {
+    isl_id_free(Annotation);
+    return -1;
+  }
+
+  isl_union_map *Schedule = isl_ast_build_get_schedule(Info->Context);
+  isl_set *LoopDomain = isl_set_from_union_set(isl_union_map_range(Schedule));
+  isl_id_free(Annotation);
+  return polly::getNumberOfIterations(LoopDomain) + 1;
+}
+
+void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
+                                      std::vector<Value*> &IVS,
+                                      __isl_take isl_id *IteratorID,
+                                      __isl_take isl_union_map *Schedule) {
+  isl_id *Annotation = isl_ast_node_get_annotation(User);
+  assert(Annotation && "Vector user statement is not annotated");
+
+  struct IslAstUser *Info = (struct IslAstUser *) isl_id_get_user(Annotation);
+  assert(Info && "Vector user statement annotation does not contain info");
+
+  isl_id *Id = isl_pw_multi_aff_get_tuple_id(Info->PMA, isl_dim_out);
+  ScopStmt *Stmt = (ScopStmt *) isl_id_get_user(Id);
+  VectorValueMapT VectorMap(IVS.size());
+
+  isl_union_set *Domain = isl_union_set_from_set(Stmt->getDomain());
+  Schedule = isl_union_map_intersect_domain(Schedule, Domain);
+  isl_map *S = isl_map_from_union_map(Schedule);
+
+  createSubstitutionsVector(isl_pw_multi_aff_copy(Info->PMA),
+                            isl_ast_build_copy(Info->Context),
+                            Stmt, VectorMap, IVS, IteratorID);
+  VectorBlockGenerator::generate(Builder, *Stmt, VectorMap, S, P);
+
+
+  isl_map_free(S);
+  isl_id_free(Annotation);
+  isl_id_free(Id);
+  isl_ast_node_free(User);
+}
+
+void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
+                                     int VectorWidth) {
+  isl_ast_node *Body = isl_ast_node_for_get_body(For);
+  isl_ast_expr *Init = isl_ast_node_for_get_init(For);
+  isl_ast_expr *Inc = isl_ast_node_for_get_inc(For);
+  isl_ast_expr *Iterator = isl_ast_node_for_get_iterator(For);
+  isl_id *IteratorID = isl_ast_expr_get_id(Iterator);
+  CmpInst::Predicate Predicate;
+  isl_ast_expr *UB = getUpperBound(For, Predicate);
+
+  Value *ValueLB = ExprBuilder.create(Init);
+  Value *ValueUB = ExprBuilder.create(UB);
+  Value *ValueInc = ExprBuilder.create(Inc);
+
+  Type *MaxType = ExprBuilder.getType(Iterator);
+  MaxType = ExprBuilder.getWidestType(MaxType, ValueLB->getType());
+  MaxType = ExprBuilder.getWidestType(MaxType, ValueUB->getType());
+  MaxType = ExprBuilder.getWidestType(MaxType, ValueInc->getType());
+
+  if (MaxType != ValueLB->getType())
+    ValueLB = Builder.CreateSExt(ValueLB, MaxType);
+  if (MaxType != ValueUB->getType())
+    ValueUB = Builder.CreateSExt(ValueUB, MaxType);
+  if (MaxType != ValueInc->getType())
+    ValueInc = Builder.CreateSExt(ValueInc, MaxType);
+
+  std::vector<Value*> IVS(VectorWidth);
+  IVS[0] = ValueLB;
+
+  for (int i = 1; i < VectorWidth; i++)
+    IVS[i] = Builder.CreateAdd(IVS[i-1], ValueInc, "p_vector_iv");
+
+  isl_id *Annotation = isl_ast_node_get_annotation(For);
+  assert(Annotation && "For statement is not annotated");
+
+  struct IslAstUser *Info = (struct IslAstUser *) isl_id_get_user(Annotation);
+  assert(Info && "For statement annotation does not contain info");
+
+  isl_union_map *Schedule = isl_ast_build_get_schedule(Info->Context);
+  assert(Schedule && "For statement annotation does not contain its schedule");
+
+  IDToValue[IteratorID] = ValueLB;
+
+  switch (isl_ast_node_get_type(Body)) {
+  case isl_ast_node_user:
+    createUserVector(Body, IVS, isl_id_copy(IteratorID),
+                     isl_union_map_copy(Schedule));
+    break;
+  case isl_ast_node_block: {
+    isl_ast_node_list *List = isl_ast_node_block_get_children(Body);
+
+    for (int i = 0; i < isl_ast_node_list_n_ast_node(List); ++i)
+      createUserVector(isl_ast_node_list_get_ast_node(List, i), IVS,
+                       isl_id_copy(IteratorID),
+                       isl_union_map_copy(Schedule));
+
+    isl_ast_node_free(Body);
+    isl_ast_node_list_free(List);
+    break;
+  }
+  default:
+    isl_ast_node_dump(Body);
+    llvm_unreachable("Unhandled isl_ast_node in vectorizer");
+  }
+
+  IDToValue.erase(IteratorID);
+  isl_id_free(IteratorID);
+  isl_id_free(Annotation);
+  isl_union_map_free(Schedule);
+
+  isl_ast_node_free(For);
+  isl_ast_expr_free(Iterator);
+}
+
+void IslNodeBuilder::createForSequential(__isl_take isl_ast_node *For) {
   isl_ast_node *Body;
   isl_ast_expr *Init, *Inc, *Iterator, *UB;
   isl_id *IteratorID;
@@ -696,6 +833,19 @@ void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
   isl_id_free(IteratorID);
 }
 
+void IslNodeBuilder::createFor(__isl_take isl_ast_node *For) {
+  bool Vector = PollyVectorizerChoice != VECTORIZER_NONE;
+
+  if (Vector && isInnermostParallel(For)) {
+    int VectorWidth = getNumberOfIterations(For);
+    if (1 < VectorWidth && VectorWidth <= 16) {
+      createForVector(For, VectorWidth);
+      return;
+    }
+  }
+  createForSequential(For);
+}
+
 void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   isl_ast_expr *Cond = isl_ast_node_if_get_cond(If);
 
@@ -738,26 +888,18 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
   isl_ast_node_free(If);
 }
 
-void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
-  ValueMapT VMap;
-  struct IslAstUser *UserInfo;
-  isl_id *Annotation, *Id;
-  ScopStmt *Stmt;
-
-  Annotation = isl_ast_node_get_annotation(User);
-  UserInfo = (struct IslAstUser *) isl_id_get_user(Annotation);
-  Id = isl_pw_multi_aff_get_tuple_id(UserInfo->PMA, isl_dim_out);
-  Stmt = (ScopStmt *) isl_id_get_user(Id);
-
-  for (unsigned i = 0; i < isl_pw_multi_aff_dim(UserInfo->PMA, isl_dim_out);
+void IslNodeBuilder::createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
+                         __isl_take isl_ast_build *Context,
+                         ScopStmt *Stmt, ValueMapT &VMap) {
+  for (unsigned i = 0; i < isl_pw_multi_aff_dim(PMA, isl_dim_out);
        ++i) {
     isl_pw_aff *Aff;
     isl_ast_expr *Expr;
     const Value *OldIV;
     Value *V;
 
-    Aff = isl_pw_multi_aff_get_pw_aff(UserInfo->PMA, i);
-    Expr = isl_ast_build_expr_from_pw_aff(UserInfo->Context, Aff);
+    Aff = isl_pw_multi_aff_get_pw_aff(PMA, i);
+    Expr = isl_ast_build_expr_from_pw_aff(Context, Aff);
     OldIV = Stmt->getInductionVariableForDimension(i);
     V = ExprBuilder.create(Expr);
 
@@ -767,6 +909,48 @@ void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
     V = Builder.CreateIntCast(V, OldIV->getType(), true);
     VMap[OldIV] = V;
   }
+
+  isl_pw_multi_aff_free(PMA);
+  isl_ast_build_free(Context);
+}
+
+void IslNodeBuilder::createSubstitutionsVector(__isl_take isl_pw_multi_aff *PMA,
+  __isl_take isl_ast_build *Context, ScopStmt *Stmt, VectorValueMapT &VMap,
+  std::vector<Value*> &IVS, __isl_take isl_id *IteratorID) {
+  int i = 0;
+
+  Value *OldValue = IDToValue[IteratorID];
+  for (std::vector<Value*>::iterator II = IVS.begin(), IE = IVS.end();
+      II != IE; ++II) {
+    IDToValue[IteratorID] = *II;
+    createSubstitutions(isl_pw_multi_aff_copy(PMA),
+                        isl_ast_build_copy(Context), Stmt, VMap[i]);
+    i++;
+  }
+
+  IDToValue[IteratorID] = OldValue;
+  isl_id_free(IteratorID);
+  isl_pw_multi_aff_free(PMA);
+  isl_ast_build_free(Context);
+}
+
+void IslNodeBuilder::createUser(__isl_take isl_ast_node *User) {
+  ValueMapT VMap;
+  struct IslAstUser *Info;
+  isl_id *Annotation, *Id;
+  ScopStmt *Stmt;
+
+  Annotation = isl_ast_node_get_annotation(User);
+  assert(Annotation && "Scalar user statement is not annotated");
+
+  Info = (struct IslAstUser *) isl_id_get_user(Annotation);
+  assert(Info && "Scalar user statement annotation does not contain info");
+
+  Id = isl_pw_multi_aff_get_tuple_id(Info->PMA, isl_dim_out);
+  Stmt = (ScopStmt *) isl_id_get_user(Id);
+
+  createSubstitutions(isl_pw_multi_aff_copy(Info->PMA),
+                      isl_ast_build_copy(Info->Context), Stmt, VMap);
 
   BlockGenerator::generate(Builder, *Stmt, VMap, P);
 

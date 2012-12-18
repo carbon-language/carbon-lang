@@ -768,45 +768,9 @@ bool ClastStmtCodeGen::isInnermostLoop(const clast_for *f) {
   return true;
 }
 
-int ClastStmtCodeGen::getNumberOfIterations(const clast_for *f) {
-  isl_set *loopDomain = isl_set_copy(isl_set_from_cloog_domain(f->domain));
-  isl_set *tmp = isl_set_copy(loopDomain);
-
-  // Calculate a map similar to the identity map, but with the last input
-  // and output dimension not related.
-  //  [i0, i1, i2, i3] -> [i0, i1, i2, o0]
-  isl_space *Space = isl_set_get_space(loopDomain);
-  Space = isl_space_drop_outputs(Space,
-                                 isl_set_dim(loopDomain, isl_dim_set) - 2, 1);
-  Space = isl_space_map_from_set(Space);
-  isl_map *identity = isl_map_identity(Space);
-  identity = isl_map_add_dims(identity, isl_dim_in, 1);
-  identity = isl_map_add_dims(identity, isl_dim_out, 1);
-
-  isl_map *map = isl_map_from_domain_and_range(tmp, loopDomain);
-  map = isl_map_intersect(map, identity);
-
-  isl_map *lexmax = isl_map_lexmax(isl_map_copy(map));
-  isl_map *lexmin = isl_map_lexmin(map);
-  isl_map *sub = isl_map_sum(lexmax, isl_map_neg(lexmin));
-
-  isl_set *elements = isl_map_range(sub);
-
-  if (!isl_set_is_singleton(elements)) {
-    isl_set_free(elements);
-    return -1;
-  }
-
-  isl_point *p = isl_set_sample_point(elements);
-
-  isl_int v;
-  isl_int_init(v);
-  isl_point_get_coordinate(p, isl_dim_set, isl_set_n_dim(loopDomain) - 1, &v);
-  int numberIterations = isl_int_get_si(v);
-  isl_int_clear(v);
-  isl_point_free(p);
-
-  return (numberIterations) / isl_int_get_si(f->stride) + 1;
+int ClastStmtCodeGen::getNumberOfIterations(const clast_for *For) {
+  isl_set *LoopDomain = isl_set_copy(isl_set_from_cloog_domain(For->domain));
+  return polly::getNumberOfIterations(LoopDomain) / isl_int_get_si(For->stride) + 1;
 }
 
 void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
