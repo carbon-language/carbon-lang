@@ -58,7 +58,7 @@ public:
     ///    The ID of the Watchpoint in the list.
     //------------------------------------------------------------------
     lldb::watch_id_t
-    Add (const lldb::WatchpointSP& wp_sp);
+    Add (const lldb::WatchpointSP& wp_sp, bool notify);
 
     //------------------------------------------------------------------
     /// Standard "Dump" method.
@@ -180,7 +180,7 @@ public:
     ///   \b true if the watchpoint \a watchID was in the list.
     //------------------------------------------------------------------
     bool
-    Remove (lldb::watch_id_t watchID);
+    Remove (lldb::watch_id_t watchID, bool notify);
 
     //------------------------------------------------------------------
     /// Returns the number hit count of all watchpoints in this list.
@@ -241,7 +241,7 @@ public:
     SetEnabledAll (bool enabled);
 
     void
-    RemoveAll ();
+    RemoveAll (bool notify);
     
     //------------------------------------------------------------------
     /// Sets the passed in Locker to hold the Watchpoint List mutex.

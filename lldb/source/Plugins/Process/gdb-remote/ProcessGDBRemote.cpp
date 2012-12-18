@@ -2341,7 +2341,7 @@ GetGDBStoppointType (Watchpoint *wp)
 }
 
 Error
-ProcessGDBRemote::EnableWatchpoint (Watchpoint *wp)
+ProcessGDBRemote::EnableWatchpoint (Watchpoint *wp, bool notify)
 {
     Error error;
     if (wp)
@@ -2364,7 +2364,7 @@ ProcessGDBRemote::EnableWatchpoint (Watchpoint *wp)
         {
             if (m_gdb_comm.SendGDBStoppointTypePacket(type, true, addr, wp->GetByteSize()) == 0)
             {
-                wp->SetEnabled(true);
+                wp->SetEnabled(true, notify);
                 return error;
             }
             else
@@ -2383,7 +2383,7 @@ ProcessGDBRemote::EnableWatchpoint (Watchpoint *wp)
 }
 
 Error
-ProcessGDBRemote::DisableWatchpoint (Watchpoint *wp)
+ProcessGDBRemote::DisableWatchpoint (Watchpoint *wp, bool notify)
 {
     Error error;
     if (wp)
@@ -2393,6 +2393,7 @@ ProcessGDBRemote::DisableWatchpoint (Watchpoint *wp)
         LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet(GDBR_LOG_WATCHPOINTS));
 
         addr_t addr = wp->GetLoadAddress();
+
         if (log)
             log->Printf ("ProcessGDBRemote::DisableWatchpoint (watchID = %" PRIu64 ") addr = 0x%8.8" PRIx64, watchID, (uint64_t)addr);
 
@@ -2403,7 +2404,7 @@ ProcessGDBRemote::DisableWatchpoint (Watchpoint *wp)
             // See also 'class WatchpointSentry' within StopInfo.cpp.
             // This disabling attempt might come from the user-supplied actions, we'll route it in order for
             // the watchpoint object to intelligently process this action.
-            wp->SetEnabled(false);
+            wp->SetEnabled(false, notify);
             return error;
         }
         
@@ -2413,7 +2414,7 @@ ProcessGDBRemote::DisableWatchpoint (Watchpoint *wp)
             // Pass down an appropriate z/Z packet...
             if (m_gdb_comm.SendGDBStoppointTypePacket(type, false, addr, wp->GetByteSize()) == 0)
             {
-                wp->SetEnabled(false);
+                wp->SetEnabled(false, notify);
                 return error;
             }
             else

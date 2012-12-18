@@ -84,6 +84,16 @@ public:
     
     bool
     GetDescription (lldb::SBStream &description, DescriptionLevel level);
+
+    static bool
+    EventIsWatchpointEvent (const lldb::SBEvent &event);
+    
+    static lldb::WatchpointEventType
+    GetWatchpointEventTypeFromEvent (const lldb::SBEvent& event);
+
+    static lldb::SBWatchpoint
+    GetWatchpointFromEvent (const lldb::SBEvent& event);
+
 };
 
 } // namespace lldb

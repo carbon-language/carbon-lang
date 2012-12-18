@@ -11,6 +11,7 @@
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBDebugger.h"
+#include "lldb/API/SBEvent.h"
 #include "lldb/API/SBStream.h"
 
 #include "lldb/lldb-types.h"
@@ -270,4 +271,28 @@ void
 SBWatchpoint::SetSP (const lldb::WatchpointSP &sp)
 {
     m_opaque_sp = sp;
+}
+
+bool
+SBWatchpoint::EventIsWatchpointEvent (const lldb::SBEvent &event)
+{
+    return Watchpoint::WatchpointEventData::GetEventDataFromEvent(event.get()) != NULL;
+
+}
+
+WatchpointEventType
+SBWatchpoint::GetWatchpointEventTypeFromEvent (const SBEvent& event)
+{
+    if (event.IsValid())
+        return Watchpoint::WatchpointEventData::GetWatchpointEventTypeFromEvent (event.GetSP());
+    return eWatchpointEventTypeInvalidType;
+}
+
+SBWatchpoint
+SBWatchpoint::GetWatchpointFromEvent (const lldb::SBEvent& event)
+{
+    SBWatchpoint sb_watchpoint;
+    if (event.IsValid())
+        sb_watchpoint.m_opaque_sp = Watchpoint::WatchpointEventData::GetWatchpointFromEvent (event.GetSP());
+    return sb_watchpoint;
 }

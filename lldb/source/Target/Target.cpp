@@ -101,6 +101,7 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
     SetEventName (eBroadcastBitModulesUnloaded, "modules-unloaded");
+    SetEventName (eBroadcastBitWatchpointChanged, "watchpoint-changed");
     
     CheckInWithManager();
 
@@ -575,6 +576,7 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
     // of watchpoints limited by the hardware which the inferior is running on.
 
     // Grab the list mutex while doing operations.
+    const bool notify = false;   // Don't notify about all the state changes we do on creating the watchpoint.
     Mutex::Locker locker;
     this->GetWatchpointList().GetListMutex(locker);
     WatchpointSP matched_sp = m_watchpoint_list.FindByAddress(addr);
@@ -587,28 +589,22 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
         // Return the existing watchpoint if both size and type match.
         if (size == old_size && kind == old_type) {
             wp_sp = matched_sp;
-            wp_sp->SetEnabled(false);
+            wp_sp->SetEnabled(false, notify);
         } else {
             // Nil the matched watchpoint; we will be creating a new one.
-            m_process_sp->DisableWatchpoint(matched_sp.get());
-            m_watchpoint_list.Remove(matched_sp->GetID());
+            m_process_sp->DisableWatchpoint(matched_sp.get(), notify);
+            m_watchpoint_list.Remove(matched_sp->GetID(), true);
         }
     }
 
     if (!wp_sp) 
     {
-        Watchpoint *new_wp = new Watchpoint(*this, addr, size, type);
-        if (!new_wp) 
-        {
-            error.SetErrorString("Watchpoint ctor failed, out of memory?");
-            return wp_sp;
-        }
-        new_wp->SetWatchpointType(kind);
-        wp_sp.reset(new_wp);
-        m_watchpoint_list.Add(wp_sp);
+        wp_sp.reset(new Watchpoint(*this, addr, size, type));
+        wp_sp->SetWatchpointType(kind, notify);
+        m_watchpoint_list.Add (wp_sp, true);
     }
 
-    error = m_process_sp->EnableWatchpoint(wp_sp.get());
+    error = m_process_sp->EnableWatchpoint(wp_sp.get(), notify);
     if (log)
         log->Printf("Target::%s (creation of watchpoint %s with id = %u)\n",
                     __FUNCTION__,
@@ -619,7 +615,7 @@ Target::CreateWatchpoint(lldb::addr_t addr, size_t size, const ClangASTType *typ
     {
         // Enabling the watchpoint on the device side failed.
         // Remove the said watchpoint from the list maintained by the target instance.
-        m_watchpoint_list.Remove(wp_sp->GetID());
+        m_watchpoint_list.Remove (wp_sp->GetID(), true);
         // See if we could provide more helpful error message.
         if (!CheckIfWatchpointsExhausted(this, error))
         {
@@ -755,7 +751,7 @@ Target::RemoveAllWatchpoints (bool end_to_end)
         log->Printf ("Target::%s\n", __FUNCTION__);
 
     if (!end_to_end) {
-        m_watchpoint_list.RemoveAll();
+        m_watchpoint_list.RemoveAll(true);
         return true;
     }
 
@@ -775,7 +771,7 @@ Target::RemoveAllWatchpoints (bool end_to_end)
         if (rc.Fail())
             return false;
     }
-    m_watchpoint_list.RemoveAll ();
+    m_watchpoint_list.RemoveAll (true);
     return true; // Success!
 }
 
@@ -945,7 +941,7 @@ Target::RemoveWatchpointByID (lldb::watch_id_t watch_id)
 
     if (DisableWatchpointByID (watch_id))
     {
-        m_watchpoint_list.Remove(watch_id);
+        m_watchpoint_list.Remove(watch_id, true);
         return true;
     }
     return false;

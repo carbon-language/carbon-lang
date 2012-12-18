@@ -88,9 +88,14 @@ BreakpointList::RemoveAll (bool notify)
     {
         bp_collection::iterator pos, end = m_breakpoints.end();
         for (pos = m_breakpoints.begin(); pos != end; ++pos)
+        {
             if ((*pos)->GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
+            {
                 (*pos)->GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged,
-                                                    new Breakpoint::BreakpointEventData (eBreakpointEventTypeRemoved, *pos));
+                                                    new Breakpoint::BreakpointEventData (eBreakpointEventTypeRemoved,
+                                                                                         *pos));
+            }
+        }
     }
     m_breakpoints.erase (m_breakpoints.begin(), m_breakpoints.end());
 }

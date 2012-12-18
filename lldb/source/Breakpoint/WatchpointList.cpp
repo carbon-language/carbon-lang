@@ -31,11 +31,17 @@ WatchpointList::~WatchpointList()
 
 // Add a watchpoint to the list.
 lldb::watch_id_t
-WatchpointList::Add (const WatchpointSP &wp_sp)
+WatchpointList::Add (const WatchpointSP &wp_sp, bool notify)
 {
     Mutex::Locker locker (m_mutex);
     wp_sp->SetID(++m_next_wp_id);
     m_watchpoints.push_back(wp_sp);
+    if (notify)
+    {
+        if (wp_sp->GetTarget().EventTypeHasListeners(Target::eBroadcastBitWatchpointChanged))
+            wp_sp->GetTarget().BroadcastEvent (Target::eBroadcastBitWatchpointChanged,
+                                               new Watchpoint::WatchpointEventData (eWatchpointEventTypeAdded, wp_sp));
+    }
     return wp_sp->GetID();
 }
 
@@ -200,12 +206,19 @@ WatchpointList::GetWatchpointIDs() const
 }
 
 bool
-WatchpointList::Remove (lldb::watch_id_t watch_id)
+WatchpointList::Remove (lldb::watch_id_t watch_id, bool notify)
 {
     Mutex::Locker locker (m_mutex);
     wp_collection::iterator pos = GetIDIterator(watch_id);
     if (pos != m_watchpoints.end())
     {
+        WatchpointSP wp_sp = *pos;
+        if (notify)
+        {
+            if (wp_sp->GetTarget().EventTypeHasListeners(Target::eBroadcastBitWatchpointChanged))
+                wp_sp->GetTarget().BroadcastEvent (Target::eBroadcastBitWatchpointChanged,
+                                                   new Watchpoint::WatchpointEventData (eWatchpointEventTypeRemoved, wp_sp));
+        }
         m_watchpoints.erase(pos);
         return true;
     }
@@ -264,9 +277,25 @@ WatchpointList::SetEnabledAll (bool enabled)
 }
 
 void
-WatchpointList::RemoveAll ()
+WatchpointList::RemoveAll (bool notify)
 {
     Mutex::Locker locker(m_mutex);
+    if (notify)
+    {
+        
+        {
+            wp_collection::iterator pos, end = m_watchpoints.end();
+            for (pos = m_watchpoints.begin(); pos != end; ++pos)
+            {
+                if ((*pos)->GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
+                {
+                    (*pos)->GetTarget().BroadcastEvent (Target::eBroadcastBitWatchpointChanged,
+                                                        new Watchpoint::WatchpointEventData (eWatchpointEventTypeRemoved,
+                                                                                             *pos));
+                }
+            }
+        }
+    }
     m_watchpoints.clear();
 }
 

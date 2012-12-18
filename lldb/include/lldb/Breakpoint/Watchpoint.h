@@ -28,9 +28,53 @@
 namespace lldb_private {
 
 class Watchpoint :
+    public STD_ENABLE_SHARED_FROM_THIS(Watchpoint),
     public StoppointLocation
 {
 public:
+
+    class WatchpointEventData :
+        public EventData
+    {
+    public:
+
+        static const ConstString &
+        GetFlavorString ();
+
+        virtual const ConstString &
+        GetFlavor () const;
+
+        WatchpointEventData (lldb::WatchpointEventType sub_type,
+                             const lldb::WatchpointSP &new_watchpoint_sp);
+
+        virtual
+        ~WatchpointEventData();
+
+        lldb::WatchpointEventType
+        GetWatchpointEventType () const;
+
+        lldb::WatchpointSP &
+        GetWatchpoint ();
+        
+        virtual void
+        Dump (Stream *s) const;
+
+        static lldb::WatchpointEventType
+        GetWatchpointEventTypeFromEvent (const lldb::EventSP &event_sp);
+
+        static lldb::WatchpointSP
+        GetWatchpointFromEvent (const lldb::EventSP &event_sp);
+
+        static const WatchpointEventData *
+        GetEventDataFromEvent (const Event *event_sp);
+
+    private:
+
+        lldb::WatchpointEventType m_watchpoint_event;
+        lldb::WatchpointSP m_new_watchpoint_sp;
+
+        DISALLOW_COPY_AND_ASSIGN (WatchpointEventData);
+    };
 
     Watchpoint (Target& target, lldb::addr_t addr, size_t size, const ClangASTType *type, bool hardware = true);
     ~Watchpoint ();
@@ -42,7 +86,7 @@ public:
     IsEnabled () const;
 
     void
-    SetEnabled (bool enabled);
+    SetEnabled (bool enabled, bool notify = true);
 
     virtual bool
     IsHardware () const;
@@ -54,7 +98,7 @@ public:
     bool        WatchpointWrite () const;
     uint32_t    GetIgnoreCount () const;
     void        SetIgnoreCount (uint32_t n);
-    void        SetWatchpointType (uint32_t type);
+    void        SetWatchpointType (uint32_t type, bool notify = true);
     void        SetDeclInfo (const std::string &str);
     std::string GetWatchSpec();
     void        SetWatchSpec (const std::string &str);
@@ -188,10 +232,17 @@ private:
     Error       m_error;               // An error object describing errors associated with this watchpoint.
     WatchpointOptions m_options;       // Settable watchpoint options, which is a delegate to handle
                                        // the callback machinery.
+    bool        m_being_created;
 
     std::auto_ptr<ClangUserExpression> m_condition_ap;  // The condition to test.
 
     void SetID(lldb::watch_id_t id) { m_loc_id = id; }
+    
+    void
+    SendWatchpointChangedEvent (lldb::WatchpointEventType eventKind);
+
+    void
+    SendWatchpointChangedEvent (WatchpointEventData *data);
 
     DISALLOW_COPY_AND_ASSIGN (Watchpoint);
 };

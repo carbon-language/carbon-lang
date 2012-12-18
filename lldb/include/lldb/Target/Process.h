@@ -3113,10 +3113,10 @@ public:
     // Process Watchpoints (optional)
     //----------------------------------------------------------------------
     virtual Error
-    EnableWatchpoint (Watchpoint *wp);
+    EnableWatchpoint (Watchpoint *wp, bool notify = true);
 
     virtual Error
-    DisableWatchpoint (Watchpoint *wp);
+    DisableWatchpoint (Watchpoint *wp, bool notify = true);
 
     //------------------------------------------------------------------
     // Thread Queries

@@ -45,7 +45,8 @@ Watchpoint::Watchpoint (Target& target, lldb::addr_t addr, size_t size, const Cl
     m_watch_spec_str(),
     m_type(),
     m_error(),
-    m_options ()
+    m_options (),
+    m_being_created(true)
 {
     if (type && type->IsValid())
         m_type = *type;
@@ -64,6 +65,7 @@ Watchpoint::Watchpoint (Target& target, lldb::addr_t addr, size_t size, const Cl
         m_target.GetProcessSP()->CalculateExecutionContext(exe_ctx);
         CaptureWatchedValue (exe_ctx);
     }
+    m_being_created = false;
 }
 
 Watchpoint::~Watchpoint()
@@ -78,7 +80,7 @@ Watchpoint::SetCallback (WatchpointHitCallback callback, void *baton, bool is_sy
     // or delete it when it goes goes out of scope.
     m_options.SetCallback(callback, BatonSP (new Baton(baton)), is_synchronous);
     
-    //SendWatchpointChangedEvent (eWatchpointEventTypeCommandChanged);
+    SendWatchpointChangedEvent (eWatchpointEventTypeCommandChanged);
 }
 
 // This function is used when a baton needs to be freed and therefore is 
@@ -87,12 +89,14 @@ void
 Watchpoint::SetCallback (WatchpointHitCallback callback, const BatonSP &callback_baton_sp, bool is_synchronous)
 {
     m_options.SetCallback(callback, callback_baton_sp, is_synchronous);
+    SendWatchpointChangedEvent (eWatchpointEventTypeCommandChanged);
 }
 
 void
 Watchpoint::ClearCallback ()
 {
     m_options.ClearCallback ();
+    SendWatchpointChangedEvent (eWatchpointEventTypeCommandChanged);
 }
 
 void
@@ -297,7 +301,7 @@ Watchpoint::IsDisabledDuringEphemeralMode()
 }
 
 void
-Watchpoint::SetEnabled(bool enabled)
+Watchpoint::SetEnabled(bool enabled, bool notify)
 {
     if (!enabled)
     {
@@ -309,14 +313,21 @@ Watchpoint::SetEnabled(bool enabled)
         // Don't clear the snapshots for now.
         // Within StopInfo.cpp, we purposely do disable/enable watchpoint while performing watchpoint actions.
     }
+    bool changed = enabled != m_enabled;
     m_enabled = enabled;
+    if (notify && !m_is_ephemeral && changed)
+        SendWatchpointChangedEvent (enabled ? eWatchpointEventTypeEnabled : eWatchpointEventTypeDisabled);
 }
 
 void
-Watchpoint::SetWatchpointType (uint32_t type)
+Watchpoint::SetWatchpointType (uint32_t type, bool notify)
 {
+    int old_watch_read = m_watch_read;
+    int old_watch_write = m_watch_write;
     m_watch_read = (type & LLDB_WATCH_TYPE_READ) != 0;
     m_watch_write = (type & LLDB_WATCH_TYPE_WRITE) != 0;
+    if (notify && (old_watch_read != m_watch_read || old_watch_write != m_watch_write))
+        SendWatchpointChangedEvent (eWatchpointEventTypeTypeChanged);
 }
 
 bool
@@ -338,7 +349,10 @@ Watchpoint::GetIgnoreCount () const
 void
 Watchpoint::SetIgnoreCount (uint32_t n)
 {
+    bool changed = m_ignore_count != n;
     m_ignore_count = n;
+    if (changed)
+        SendWatchpointChangedEvent (eWatchpointEventTypeIgnoreChanged);
 }
 
 bool
@@ -360,6 +374,7 @@ Watchpoint::SetCondition (const char *condition)
         // Pass NULL for expr_prefix (no translation-unit level definitions).
         m_condition_ap.reset(new ClangUserExpression (condition, NULL, lldb::eLanguageTypeUnknown, ClangUserExpression::eResultTypeAny));
     }
+    SendWatchpointChangedEvent (eWatchpointEventTypeConditionChanged);
 }
 
 const char *
@@ -371,3 +386,105 @@ Watchpoint::GetConditionText () const
         return NULL;
 }
 
+void
+Watchpoint::SendWatchpointChangedEvent (lldb::WatchpointEventType eventKind)
+{
+    if (!m_being_created
+        && GetTarget().EventTypeHasListeners(Target::eBroadcastBitWatchpointChanged))
+    {
+        WatchpointEventData *data = new Watchpoint::WatchpointEventData (eventKind, shared_from_this());
+        GetTarget().BroadcastEvent (Target::eBroadcastBitWatchpointChanged, data);
+    }
+}
+
+void
+Watchpoint::SendWatchpointChangedEvent (WatchpointEventData *data)
+{
+
+    if (data == NULL)
+        return;
+        
+    if (!m_being_created
+        && GetTarget().EventTypeHasListeners(Target::eBroadcastBitWatchpointChanged))
+        GetTarget().BroadcastEvent (Target::eBroadcastBitWatchpointChanged, data);
+    else
+        delete data;
+}
+
+Watchpoint::WatchpointEventData::WatchpointEventData (WatchpointEventType sub_type, 
+                                                      const WatchpointSP &new_watchpoint_sp) :
+    EventData (),
+    m_watchpoint_event (sub_type),
+    m_new_watchpoint_sp (new_watchpoint_sp)
+{
+}
+
+Watchpoint::WatchpointEventData::~WatchpointEventData ()
+{
+}
+
+const ConstString &
+Watchpoint::WatchpointEventData::GetFlavorString ()
+{
+    static ConstString g_flavor ("Watchpoint::WatchpointEventData");
+    return g_flavor;
+}
+
+const ConstString &
+Watchpoint::WatchpointEventData::GetFlavor () const
+{
+    return WatchpointEventData::GetFlavorString ();
+}
+
+
+WatchpointSP &
+Watchpoint::WatchpointEventData::GetWatchpoint ()
+{
+    return m_new_watchpoint_sp;
+}
+
+WatchpointEventType
+Watchpoint::WatchpointEventData::GetWatchpointEventType () const
+{
+    return m_watchpoint_event;
+}
+
+void
+Watchpoint::WatchpointEventData::Dump (Stream *s) const
+{
+}
+
+const Watchpoint::WatchpointEventData *
+Watchpoint::WatchpointEventData::GetEventDataFromEvent (const Event *event)
+{
+    if (event)
+    {
+        const EventData *event_data = event->GetData();
+        if (event_data && event_data->GetFlavor() == WatchpointEventData::GetFlavorString())
+            return static_cast <const WatchpointEventData *> (event->GetData());
+    }
+    return NULL;
+}
+
+WatchpointEventType
+Watchpoint::WatchpointEventData::GetWatchpointEventTypeFromEvent (const EventSP &event_sp)
+{
+    const WatchpointEventData *data = GetEventDataFromEvent (event_sp.get());
+
+    if (data == NULL)
+        return eWatchpointEventTypeInvalidType;
+    else
+        return data->GetWatchpointEventType();
+}
+
+WatchpointSP
+Watchpoint::WatchpointEventData::GetWatchpointFromEvent (const EventSP &event_sp)
+{
+    WatchpointSP wp_sp;
+
+    const WatchpointEventData *data = GetEventDataFromEvent (event_sp.get());
+    if (data)
+        wp_sp = data->m_new_watchpoint_sp;
+
+    return wp_sp;
+}

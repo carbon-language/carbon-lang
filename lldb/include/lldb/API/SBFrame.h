@@ -12,7 +12,6 @@
 
 #include "lldb/API/SBDefines.h"
 #include "lldb/API/SBValueList.h"
-#include "lldb/API/SBWatchpoint.h"
 
 namespace lldb {
 

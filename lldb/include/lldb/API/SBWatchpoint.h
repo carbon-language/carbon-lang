@@ -81,6 +81,15 @@ public:
     void
     SetSP (const lldb::WatchpointSP &sp);
 
+    static bool
+    EventIsWatchpointEvent (const lldb::SBEvent &event);
+    
+    static lldb::WatchpointEventType
+    GetWatchpointEventTypeFromEvent (const lldb::SBEvent& event);
+
+    static lldb::SBWatchpoint
+    GetWatchpointFromEvent (const lldb::SBEvent& event);
+
 private:
     friend class SBTarget;
     friend class SBValue;

@@ -435,8 +435,9 @@ public:
         {
             if (process && watchpoint)
             {
+                const bool notify = false;
                 watchpoint->TurnOnEphemeralMode();
-                process->DisableWatchpoint(watchpoint);
+                process->DisableWatchpoint(watchpoint, notify);
             }
         }
         ~WatchpointSentry()
@@ -444,7 +445,10 @@ public:
             if (process && watchpoint)
             {
                 if (!watchpoint->IsDisabledDuringEphemeralMode())
-                    process->EnableWatchpoint(watchpoint);
+                {
+                    const bool notify = false;
+                    process->EnableWatchpoint(watchpoint, notify);
+                }
                 watchpoint->TurnOffEphemeralMode();
             }
         }

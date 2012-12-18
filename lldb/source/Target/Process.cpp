@@ -2579,7 +2579,7 @@ Process::ReadModuleFromMemory (const FileSpec& file_spec,
 }
 
 Error
-Process::EnableWatchpoint (Watchpoint *watchpoint)
+Process::EnableWatchpoint (Watchpoint *watchpoint, bool notify)
 {
     Error error;
     error.SetErrorString("watchpoints are not supported");
@@ -2587,7 +2587,7 @@ Process::EnableWatchpoint (Watchpoint *watchpoint)
 }
 
 Error
-Process::DisableWatchpoint (Watchpoint *watchpoint)
+Process::DisableWatchpoint (Watchpoint *watchpoint, bool notify)
 {
     Error error;
     error.SetErrorString("watchpoints are not supported");
