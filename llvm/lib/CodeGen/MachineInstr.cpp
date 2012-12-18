@@ -909,16 +909,6 @@ void MachineInstr::unbundleFromSucc() {
   Succ->clearFlag(BundledPred);
 }
 
-/// isBundled - Return true if this instruction part of a bundle. This is true
-/// if either itself or its following instruction is marked "InsideBundle".
-bool MachineInstr::isBundled() const {
-  if (isInsideBundle())
-    return true;
-  MachineBasicBlock::const_instr_iterator nextMI = this;
-  ++nextMI;
-  return nextMI != Parent->instr_end() && nextMI->isInsideBundle();
-}
-
 bool MachineInstr::isStackAligningInlineAsm() const {
   if (isInlineAsm()) {
     unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();

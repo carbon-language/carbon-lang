@@ -146,11 +146,11 @@ public:
     bundle_iterator(IterTy mii) : MII(mii) {}
 
     bundle_iterator(Ty &mi) : MII(mi) {
-      assert(!mi.isInsideBundle() &&
+      assert(!mi.isBundledWithPred() &&
              "It's not legal to initialize bundle_iterator with a bundled MI");
     }
     bundle_iterator(Ty *mi) : MII(mi) {
-      assert((!mi || !mi->isInsideBundle()) &&
+      assert((!mi || !mi->isBundledWithPred()) &&
              "It's not legal to initialize bundle_iterator with a bundled MI");
     }
     // Template allows conversion from const to nonconst.
@@ -174,13 +174,13 @@ public:
     // Increment and decrement operators...
     bundle_iterator &operator--() {      // predecrement - Back up
       do --MII;
-      while (MII->isInsideBundle());
+      while (MII->isBundledWithPred());
       return *this;
     }
     bundle_iterator &operator++() {      // preincrement - Advance
-      IterTy E = MII->getParent()->instr_end();
-      do ++MII;
-      while (MII != E && MII->isInsideBundle());
+      while (MII->isBundledWithSucc())
+        ++MII;
+      ++MII;
       return *this;
     }
     bundle_iterator operator--(int) {    // postdecrement operators...

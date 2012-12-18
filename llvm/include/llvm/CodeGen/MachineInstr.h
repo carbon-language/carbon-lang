@@ -211,7 +211,9 @@ public:
 
   /// isBundled - Return true if this instruction part of a bundle. This is true
   /// if either itself or its following instruction is marked "InsideBundle".
-  bool isBundled() const;
+  bool isBundled() const {
+    return isBundledWithPred() || isBundledWithSucc();
+  }
 
   /// Return true if this instruction is part of a bundle, and it is not the
   /// first instruction in the bundle.
