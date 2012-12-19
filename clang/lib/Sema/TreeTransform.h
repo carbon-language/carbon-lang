@@ -2622,10 +2622,6 @@ ExprResult TreeTransform<Derived>::TransformInitializer(Expr *Init,
                                         Construct->getLocEnd(),
                                         Construct->getType());
 
-  // Treat an empty initializer like none.
-  if (NewArgs.empty())
-    return SemaRef.Owned((Expr*)0);
-
   // Build a ParenListExpr to represent anything else.
   SourceRange Parens = Construct->getParenRange();
   return getDerived().RebuildParenListExpr(Parens.getBegin(), NewArgs,
