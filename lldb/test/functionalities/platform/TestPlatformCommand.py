@@ -18,6 +18,7 @@ class PlatformCommandTestCase(TestBase):
         self.expect("platform list",
             patterns = ['^Available platforms:'])
 
+    @expectedFailureLinux # due to bugzilla 14541
     def test_process_list(self):
         self.expect("platform process list",
             substrs = ['PID', 'ARCH', 'NAME'])

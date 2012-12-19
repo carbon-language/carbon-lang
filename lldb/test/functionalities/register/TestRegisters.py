@@ -20,6 +20,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.register_commands()
 
+    @expectedFailureLinux # due to bugzilla 14600
     def test_convenience_registers(self):
         """Test convenience registers."""
         if not self.getArchitecture() in ['x86_64']:

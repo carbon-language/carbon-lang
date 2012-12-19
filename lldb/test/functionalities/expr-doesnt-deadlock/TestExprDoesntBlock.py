@@ -20,6 +20,7 @@ class ExprDoesntDeadlockTestCase(TestBase):
         self.expr_doesnt_deadlock()
 
     @dwarf_test
+    @expectedFailureLinux # due to bugzilla 14437
     def test_with_dwarf_and_run_command(self):
         """Test that expr will time out and allow other threads to run if it blocks."""
         self.buildDwarf()
