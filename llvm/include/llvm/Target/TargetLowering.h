@@ -1951,7 +1951,7 @@ private:
   /// contains one step of the expand (e.g. i64 -> i32), even if there are
   /// multiple steps required (e.g. i64 -> i16).  For types natively supported
   /// by the system, this holds the same type (e.g. i32 -> i32).
-  EVT TransformToType[MVT::LAST_VALUETYPE];
+  MVT TransformToType[MVT::LAST_VALUETYPE];
 
   /// OpActions - For each operation and each value type, keep a LegalizeAction
   /// that indicates how instruction selection should deal with the operation.
@@ -1992,19 +1992,19 @@ public:
   getTypeConversion(LLVMContext &Context, EVT VT) const {
     // If this is a simple type, use the ComputeRegisterProp mechanism.
     if (VT.isSimple()) {
-      assert((unsigned)VT.getSimpleVT().SimpleTy <
-             array_lengthof(TransformToType));
-      EVT NVT = TransformToType[VT.getSimpleVT().SimpleTy];
-      LegalizeTypeAction LA = ValueTypeActions.getTypeAction(VT.getSimpleVT());
+      MVT SVT = VT.getSimpleVT();
+      assert((unsigned)SVT.SimpleTy < array_lengthof(TransformToType));
+      MVT NVT = TransformToType[SVT.SimpleTy];
+      LegalizeTypeAction LA = ValueTypeActions.getTypeAction(SVT);
 
       assert(
-        (!(NVT.isSimple() && LA != TypeLegal) ||
-         ValueTypeActions.getTypeAction(NVT.getSimpleVT()) != TypePromoteInteger)
+        (LA == TypeLegal ||
+         ValueTypeActions.getTypeAction(NVT) != TypePromoteInteger)
          && "Promote may not follow Expand or Promote");
 
       if (LA == TypeSplitVector)
-        NVT = EVT::getVectorVT(Context, VT.getVectorElementType(),
-                               VT.getVectorNumElements() / 2);
+        NVT = MVT::getVectorVT(SVT.getVectorElementType(),
+                               SVT.getVectorNumElements() / 2);
       return LegalizeKind(LA, NVT);
     }
 

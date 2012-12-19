@@ -823,14 +823,14 @@ void TargetLowering::computeRegisterProperties() {
 
     // Determine if there is a legal wider type.  If so, we should promote to
     // that wider vector type.
-    EVT EltVT = VT.getVectorElementType();
+    MVT EltVT = VT.getVectorElementType();
     unsigned NElts = VT.getVectorNumElements();
     if (NElts != 1 && !shouldSplitVectorElementType(EltVT)) {
       bool IsLegalWiderType = false;
       // First try to promote the elements of integer vectors. If no legal
       // promotion was found, fallback to the widen-vector method.
       for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
-        EVT SVT = (MVT::SimpleValueType)nVT;
+        MVT SVT = (MVT::SimpleValueType)nVT;
         // Promote vectors of integers to vectors with the same number
         // of elements, with a wider element type.
         if (SVT.getVectorElementType().getSizeInBits() > EltVT.getSizeInBits()
@@ -849,7 +849,7 @@ void TargetLowering::computeRegisterProperties() {
 
       // Try to widen the vector.
       for (unsigned nVT = i+1; nVT <= MVT::LAST_VECTOR_VALUETYPE; ++nVT) {
-        EVT SVT = (MVT::SimpleValueType)nVT;
+        MVT SVT = (MVT::SimpleValueType)nVT;
         if (SVT.getVectorElementType() == EltVT &&
             SVT.getVectorNumElements() > NElts &&
             isTypeLegal(SVT)) {
@@ -872,7 +872,7 @@ void TargetLowering::computeRegisterProperties() {
                                 RegisterVT, this);
     RegisterTypeForVT[i] = RegisterVT;
 
-    EVT NVT = VT.getPow2VectorType();
+    MVT NVT = VT.getPow2VectorType();
     if (NVT == VT) {
       // Type is already a power of 2.  The default action is to split.
       TransformToType[i] = MVT::Other;
