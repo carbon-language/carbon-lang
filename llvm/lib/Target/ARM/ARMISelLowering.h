@@ -393,7 +393,7 @@ namespace llvm {
                                     unsigned Intrinsic) const;
   protected:
     std::pair<const TargetRegisterClass*, uint8_t>
-    findRepresentativeClass(EVT VT) const;
+    findRepresentativeClass(MVT VT) const;
 
   private:
     /// Subtarget - Keep a pointer to the ARMSubtarget around so that we can
