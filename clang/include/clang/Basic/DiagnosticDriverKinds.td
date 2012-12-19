@@ -136,6 +136,8 @@ def warn_drv_objc_gc_unsupported : Warning<
   "Objective-C garbage collection is not supported on this platform, ignoring '%0'">;
 def warn_drv_pch_not_first_include : Warning<
   "precompiled header '%0' was ignored because '%1' is not first '-include'">;
+def warn_missing_sysroot : Warning<"no such sysroot directory: '%0'">,
+  InGroup<DiagGroup<"missing-sysroot">>;
 
 def note_drv_command_failed_diag_msg : Note<
   "diagnostic msg: %0">;

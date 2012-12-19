@@ -397,7 +397,12 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
   // Support allowing the SDKROOT environment variable used by xcrun and other
   // Xcode tools to define the default sysroot, by making it the default for
   // isysroot.
-  if (!Args.hasArg(options::OPT_isysroot)) {
+  if (const Arg *A = Args.getLastArg(options::OPT_isysroot)) {
+    // Warn if the path does not exist.
+    bool Exists;
+    if (llvm::sys::fs::exists(A->getValue(), Exists) || !Exists)
+      getDriver().Diag(clang::diag::warn_missing_sysroot) << A->getValue();
+  } else {
     if (char *env = ::getenv("SDKROOT")) {
       // We only use this value as the default if it is an absolute path and
       // exists.
