@@ -89,7 +89,7 @@ static const unsigned MaxParallelChains = 64;
 
 static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
                                       const SDValue *Parts, unsigned NumParts,
-                                      EVT PartVT, EVT ValueVT, const Value *V);
+                                      MVT PartVT, EVT ValueVT, const Value *V);
 
 /// getCopyFromParts - Create a value that contains the specified legal parts
 /// combined into the value they represent.  If the parts combine to a type
@@ -98,7 +98,7 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
 /// (ISD::AssertSext).
 static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
                                 const SDValue *Parts,
-                                unsigned NumParts, EVT PartVT, EVT ValueVT,
+                                unsigned NumParts, MVT PartVT, EVT ValueVT,
                                 const Value *V,
                                 ISD::NodeType AssertOp = ISD::DELETED_NODE) {
   if (ValueVT.isVector())
@@ -161,7 +161,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
       }
     } else if (PartVT.isFloatingPoint()) {
       // FP split into multiple FP parts (for ppcf128)
-      assert(ValueVT == EVT(MVT::ppcf128) && PartVT == EVT(MVT::f64) &&
+      assert(ValueVT == EVT(MVT::ppcf128) && PartVT == MVT::f64 &&
              "Unexpected split");
       SDValue Lo, Hi;
       Lo = DAG.getNode(ISD::BITCAST, DL, EVT(MVT::f64), Parts[0]);
@@ -179,25 +179,25 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
   }
 
   // There is now one part, held in Val.  Correct it to match ValueVT.
-  PartVT = Val.getValueType();
+  EVT PartEVT = Val.getValueType();
 
-  if (PartVT == ValueVT)
+  if (PartEVT == ValueVT)
     return Val;
 
-  if (PartVT.isInteger() && ValueVT.isInteger()) {
-    if (ValueVT.bitsLT(PartVT)) {
+  if (PartEVT.isInteger() && ValueVT.isInteger()) {
+    if (ValueVT.bitsLT(PartEVT)) {
       // For a truncate, see if we have any information to
       // indicate whether the truncated bits will always be
       // zero or sign-extension.
       if (AssertOp != ISD::DELETED_NODE)
-        Val = DAG.getNode(AssertOp, DL, PartVT, Val,
+        Val = DAG.getNode(AssertOp, DL, PartEVT, Val,
                           DAG.getValueType(ValueVT));
       return DAG.getNode(ISD::TRUNCATE, DL, ValueVT, Val);
     }
     return DAG.getNode(ISD::ANY_EXTEND, DL, ValueVT, Val);
   }
 
-  if (PartVT.isFloatingPoint() && ValueVT.isFloatingPoint()) {
+  if (PartEVT.isFloatingPoint() && ValueVT.isFloatingPoint()) {
     // FP_ROUND's are always exact here.
     if (ValueVT.bitsLT(Val.getValueType()))
       return DAG.getNode(ISD::FP_ROUND, DL, ValueVT, Val,
@@ -206,7 +206,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
     return DAG.getNode(ISD::FP_EXTEND, DL, ValueVT, Val);
   }
 
-  if (PartVT.getSizeInBits() == ValueVT.getSizeInBits())
+  if (PartEVT.getSizeInBits() == ValueVT.getSizeInBits())
     return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
 
   llvm_unreachable("Unknown mismatch!");
@@ -219,7 +219,7 @@ static SDValue getCopyFromParts(SelectionDAG &DAG, DebugLoc DL,
 /// ValueVT (ISD::AssertSext).
 static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
                                       const SDValue *Parts, unsigned NumParts,
-                                      EVT PartVT, EVT ValueVT, const Value *V) {
+                                      MVT PartVT, EVT ValueVT, const Value *V) {
   assert(ValueVT.isVector() && "Not a vector value");
   assert(NumParts > 0 && "No parts to assemble!");
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
@@ -235,8 +235,7 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
                                NumIntermediates, RegisterVT);
     assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
     NumParts = NumRegs; // Silence a compiler warning.
-    assert(RegisterVT == PartVT.getSimpleVT() &&
-           "Part type doesn't match vector breakdown!");
+    assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
     assert(RegisterVT == Parts[0].getSimpleValueType() &&
            "Part type doesn't match part!");
 
@@ -267,31 +266,31 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
   }
 
   // There is now one part, held in Val.  Correct it to match ValueVT.
-  PartVT = Val.getValueType();
+  EVT PartEVT = Val.getValueType();
 
-  if (PartVT == ValueVT)
+  if (PartEVT == ValueVT)
     return Val;
 
-  if (PartVT.isVector()) {
+  if (PartEVT.isVector()) {
     // If the element type of the source/dest vectors are the same, but the
     // parts vector has more elements than the value vector, then we have a
     // vector widening case (e.g. <2 x float> -> <4 x float>).  Extract the
     // elements we want.
-    if (PartVT.getVectorElementType() == ValueVT.getVectorElementType()) {
-      assert(PartVT.getVectorNumElements() > ValueVT.getVectorNumElements() &&
+    if (PartEVT.getVectorElementType() == ValueVT.getVectorElementType()) {
+      assert(PartEVT.getVectorNumElements() > ValueVT.getVectorNumElements() &&
              "Cannot narrow, it would be a lossy transformation");
       return DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, ValueVT, Val,
                          DAG.getIntPtrConstant(0));
     }
 
     // Vector/Vector bitcast.
-    if (ValueVT.getSizeInBits() == PartVT.getSizeInBits())
+    if (ValueVT.getSizeInBits() == PartEVT.getSizeInBits())
       return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
 
-    assert(PartVT.getVectorNumElements() == ValueVT.getVectorNumElements() &&
+    assert(PartEVT.getVectorNumElements() == ValueVT.getVectorNumElements() &&
       "Cannot handle this kind of promotion");
     // Promoted vector extract
-    bool Smaller = ValueVT.bitsLE(PartVT);
+    bool Smaller = ValueVT.bitsLE(PartEVT);
     return DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
                        DL, ValueVT, Val);
 
@@ -299,7 +298,7 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
 
   // Trivial bitcast if the types are the same size and the destination
   // vector type is legal.
-  if (PartVT.getSizeInBits() == ValueVT.getSizeInBits() &&
+  if (PartEVT.getSizeInBits() == ValueVT.getSizeInBits() &&
       TLI.isTypeLegal(ValueVT))
     return DAG.getNode(ISD::BITCAST, DL, ValueVT, Val);
 
@@ -319,8 +318,8 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
   }
 
   if (ValueVT.getVectorNumElements() == 1 &&
-      ValueVT.getVectorElementType() != PartVT) {
-    bool Smaller = ValueVT.bitsLE(PartVT);
+      ValueVT.getVectorElementType() != PartEVT) {
+    bool Smaller = ValueVT.bitsLE(PartEVT);
     Val = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
                        DL, ValueVT.getScalarType(), Val);
   }
@@ -330,14 +329,14 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
 
 static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc dl,
                                  SDValue Val, SDValue *Parts, unsigned NumParts,
-                                 EVT PartVT, const Value *V);
+                                 MVT PartVT, const Value *V);
 
 /// getCopyToParts - Create a series of nodes that contain the specified value
 /// split into legal parts.  If the parts contain more bits than Val, then, for
 /// integers, ExtendKind can be used to specify how to generate the extra bits.
 static void getCopyToParts(SelectionDAG &DAG, DebugLoc DL,
                            SDValue Val, SDValue *Parts, unsigned NumParts,
-                           EVT PartVT, const Value *V,
+                           MVT PartVT, const Value *V,
                            ISD::NodeType ExtendKind = ISD::ANY_EXTEND) {
   EVT ValueVT = Val.getValueType();
 
@@ -354,7 +353,8 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc DL,
     return;
 
   assert(!ValueVT.isVector() && "Vector case handled elsewhere");
-  if (PartVT == ValueVT) {
+  EVT PartEVT = PartVT;
+  if (PartEVT == ValueVT) {
     assert(NumParts == 1 && "No-op copy with multiple parts!");
     Parts[0] = Val;
     return;
@@ -376,7 +376,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc DL,
     }
   } else if (PartBits == ValueVT.getSizeInBits()) {
     // Different types of the same size.
-    assert(NumParts == 1 && PartVT != ValueVT);
+    assert(NumParts == 1 && PartEVT != ValueVT);
     Val = DAG.getNode(ISD::BITCAST, DL, PartVT, Val);
   } else if (NumParts * PartBits < ValueVT.getSizeInBits()) {
     // If the parts cover less bits than value has, truncate the value.
@@ -395,7 +395,7 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc DL,
          "Failed to tile the value with PartVT!");
 
   if (NumParts == 1) {
-    if (PartVT != ValueVT) {
+    if (PartEVT != ValueVT) {
       LLVMContext &Ctx = *DAG.getContext();
       Twine ErrMsg("scalar-to-vector conversion failed");
       if (const Instruction *I = dyn_cast_or_null<Instruction>(V)) {
@@ -468,20 +468,21 @@ static void getCopyToParts(SelectionDAG &DAG, DebugLoc DL,
 /// value split into legal parts.
 static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
                                  SDValue Val, SDValue *Parts, unsigned NumParts,
-                                 EVT PartVT, const Value *V) {
+                                 MVT PartVT, const Value *V) {
   EVT ValueVT = Val.getValueType();
   assert(ValueVT.isVector() && "Not a vector");
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
 
   if (NumParts == 1) {
-    if (PartVT == ValueVT) {
+    EVT PartEVT = PartVT;
+    if (PartEVT == ValueVT) {
       // Nothing to do.
     } else if (PartVT.getSizeInBits() == ValueVT.getSizeInBits()) {
       // Bitconvert vector->vector case.
       Val = DAG.getNode(ISD::BITCAST, DL, PartVT, Val);
     } else if (PartVT.isVector() &&
-               PartVT.getVectorElementType() == ValueVT.getVectorElementType() &&
-               PartVT.getVectorNumElements() > ValueVT.getVectorNumElements()) {
+               PartEVT.getVectorElementType() == ValueVT.getVectorElementType() &&
+               PartEVT.getVectorNumElements() > ValueVT.getVectorNumElements()) {
       EVT ElementVT = PartVT.getVectorElementType();
       // Vector widening case, e.g. <2 x float> -> <4 x float>.  Shuffle in
       // undef elements.
@@ -501,12 +502,12 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
       //SDValue UndefElts = DAG.getUNDEF(VectorTy);
       //Val = DAG.getNode(ISD::CONCAT_VECTORS, DL, PartVT, Val, UndefElts);
     } else if (PartVT.isVector() &&
-               PartVT.getVectorElementType().bitsGE(
+               PartEVT.getVectorElementType().bitsGE(
                  ValueVT.getVectorElementType()) &&
-               PartVT.getVectorNumElements() == ValueVT.getVectorNumElements()) {
+               PartEVT.getVectorNumElements() == ValueVT.getVectorNumElements()) {
 
       // Promoted vector extract
-      bool Smaller = PartVT.bitsLE(ValueVT);
+      bool Smaller = PartEVT.bitsLE(ValueVT);
       Val = DAG.getNode((Smaller ? ISD::TRUNCATE : ISD::ANY_EXTEND),
                         DL, PartVT, Val);
     } else{
@@ -536,8 +537,7 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
 
   assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
   NumParts = NumRegs; // Silence a compiler warning.
-  assert(RegisterVT == PartVT.getSimpleVT() &&
-         "Part type doesn't match vector breakdown!");
+  assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
 
   // Split the vector into intermediate operands.
   SmallVector<SDValue, 8> Ops(NumIntermediates);
