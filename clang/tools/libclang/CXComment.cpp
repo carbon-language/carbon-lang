@@ -861,10 +861,10 @@ public:
                            SmallVectorImpl<char> &Str,
                            const CommandTraits &Traits,
                            const SourceManager &SM,
-                           SimpleFormatContext &RTC,
+                           SimpleFormatContext &SFC,
                            unsigned FUID) :
       FC(FC), Result(Str), Traits(Traits), SM(SM),
-      FormatRewriterContext(RTC),
+      FormatRewriterContext(SFC),
       FormatInMemoryUniqueId(FUID) { }
 
   // Inline content.
@@ -886,10 +886,9 @@ public:
 
   // Helpers.
   void appendToResultWithXMLEscaping(StringRef S);
-    
-  unsigned getFormatInMemoryUniqueId() { return FormatInMemoryUniqueId; }
-  SimpleFormatContext &getFormatRewriterContext()
-    { return FormatRewriterContext; }
+      
+  void formatTextOfDeclaration(const DeclInfo *DI,
+                               SmallString<128> &Declaration);
 
 private:
   const FullComment *FC;
@@ -915,41 +914,40 @@ void getSourceTextOfDeclaration(const DeclInfo *ThisDecl,
                                /*Indentation*/0, /*PrintInstantiation*/true);
 }
   
-void formatTextOfDeclaration(CommentASTToXMLConverter *C,
-                             const DeclInfo *DI,
-                             SmallString<128> &Declaration) {
+void CommentASTToXMLConverter::formatTextOfDeclaration(
+                                              const DeclInfo *DI,
+                                              SmallString<128> &Declaration) {
   // FIXME. This conditional is TEMPORARY. We don't want to break multiple
   // large tests each time Format.cpp changes. This condition will
   // go away and formatting will happen for all declarations.
-  if (getenv("LIBCLANG_ACTIVATE_FORMAT")) {
-    SimpleFormatContext &FormatRewriterContext =
-      C->getFormatRewriterContext();
-    // FIXME. formatting API expects null terminated input string.
-    // There might be more efficient way of doing this.
-    std::string StringDecl = Declaration.str();
+  if (!getenv("LIBCLANG_ACTIVATE_FORMAT"))
+    return;
+  
+  // FIXME. formatting API expects null terminated input string.
+  // There might be more efficient way of doing this.
+  std::string StringDecl = Declaration.str();
     
-    // Formatter specific code.
-    // Form a unique in memory buffer name.
-    llvm::SmallString<128> filename;
-    filename += "xmldecl";
-    filename += llvm::utostr(C->getFormatInMemoryUniqueId());
-    filename += ".xd";
-    FileID ID = FormatRewriterContext.createInMemoryFile(filename, StringDecl);
-    SourceLocation Start =
-      FormatRewriterContext.Sources.getLocForStartOfFile(ID).getLocWithOffset(0);
-    unsigned Length = Declaration.size();
+  // Formatter specific code.
+  // Form a unique in memory buffer name.
+  llvm::SmallString<128> filename;
+  filename += "xmldecl";
+  filename += llvm::utostr(FormatInMemoryUniqueId);
+  filename += ".xd";
+  FileID ID = FormatRewriterContext.createInMemoryFile(filename, StringDecl);
+  SourceLocation Start =
+    FormatRewriterContext.Sources.getLocForStartOfFile(ID).getLocWithOffset(0);
+  unsigned Length = Declaration.size();
     
-    std::vector<CharSourceRange>
-      Ranges(1, CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
-    ASTContext &Context = DI->CurrentDecl->getASTContext();
-    const LangOptions &LangOpts = Context.getLangOpts();
-    Lexer Lex(ID, FormatRewriterContext.Sources.getBuffer(ID),
-              FormatRewriterContext.Sources, LangOpts);
-    tooling::Replacements Replace =
-      reformat(format::getLLVMStyle(), Lex, FormatRewriterContext.Sources, Ranges);
-    applyAllReplacements(Replace, FormatRewriterContext.Rewrite);
-    Declaration = FormatRewriterContext.getRewrittenText(ID);
-  }
+  std::vector<CharSourceRange>
+    Ranges(1, CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
+  ASTContext &Context = DI->CurrentDecl->getASTContext();
+  const LangOptions &LangOpts = Context.getLangOpts();
+  Lexer Lex(ID, FormatRewriterContext.Sources.getBuffer(ID),
+            FormatRewriterContext.Sources, LangOpts);
+  tooling::Replacements Replace =
+    reformat(format::getLLVMStyle(), Lex, FormatRewriterContext.Sources, Ranges);
+  applyAllReplacements(Replace, FormatRewriterContext.Rewrite);
+  Declaration = FormatRewriterContext.getRewrittenText(ID);
 }
 
 } // end unnamed namespace
@@ -1216,7 +1214,7 @@ void CommentASTToXMLConverter::visitFullComment(const FullComment *C) {
     Result << "<Declaration>";
     SmallString<128> Declaration;
     getSourceTextOfDeclaration(DI, Declaration);
-    formatTextOfDeclaration(this, DI, Declaration);
+    formatTextOfDeclaration(DI, Declaration);
     appendToResultWithXMLEscaping(Declaration);
     
     Result << "</Declaration>";
@@ -1382,8 +1380,9 @@ CXString clang_FullComment_getAsXML(CXComment CXC) {
   if (!SFC) {
     SFC = new SimpleFormatContext(Context.getLangOpts());
     TU->FormatContext = SFC;
-  }
-  else if ((TU->FormatInMemoryUniqueId % 10) == 0) {
+  } else if ((TU->FormatInMemoryUniqueId % 10) == 0) {
+    // Delete after some number of iterators, so the buffers don't grow
+    // too large.
     delete SFC;
     SFC = new SimpleFormatContext(Context.getLangOpts());
     TU->FormatContext = SFC;

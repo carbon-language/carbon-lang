@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  This file defines a utility class for Rewriter related tests.
+/// \file This file defines a utility class for use of clang-format in libclang
 //
 //===----------------------------------------------------------------------===//
 
@@ -30,7 +30,7 @@ namespace clang {
 /// a declaration string in memory. This object is instantiated once
 /// and used each time a formatting is needed.
 class SimpleFormatContext {
- public:
+public:
   SimpleFormatContext(LangOptions Options)
       : DiagOpts(new DiagnosticOptions()),
         Diagnostics(new DiagnosticsEngine(new DiagnosticIDs, 
