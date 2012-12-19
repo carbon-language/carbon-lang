@@ -226,7 +226,7 @@ unsigned FunctionLoweringInfo::CreateRegs(Type *Ty) {
   unsigned FirstReg = 0;
   for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
     EVT ValueVT = ValueVTs[Value];
-    MVT RegisterVT = TLI.getRegisterType(Ty->getContext(), ValueVT).getSimpleVT();
+    MVT RegisterVT = TLI.getRegisterType(Ty->getContext(), ValueVT);
 
     unsigned NumRegs = TLI.getNumRegisters(Ty->getContext(), ValueVT);
     for (unsigned i = 0; i != NumRegs; ++i) {
