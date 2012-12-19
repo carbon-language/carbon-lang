@@ -12,6 +12,9 @@ original loop to operate on multiple consecutive loop iterations.
 The Loop Vectorizer
 ===================
 
+Usage
+^^^^^^
+
 LLVM’s Loop Vectorizer is now available and will be useful for many people.
 It is not enabled by default, but can be enabled through clang using the
 command line flag:
@@ -208,12 +211,18 @@ The Y-axis shows time in msec. Lower is better.
 The Basic Block Vectorizer
 ==========================
 
+Usage
+^^^^^^
+
 The Basic Block Vectorizer is not enabled by default, but it can be enabled
 through clang using the command line flag:
 
 .. code-block:: console
 
    $ clang -fslp-vectorize file.c 
+
+Details
+^^^^^^^
 
 The goal of basic-block vectorization (a.k.a. superword-level parallelism) is
 to combine similar independent instructions within simple control-flow regions
