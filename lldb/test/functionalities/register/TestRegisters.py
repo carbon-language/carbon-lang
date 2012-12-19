@@ -20,7 +20,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.register_commands()
 
-    @expectedFailureLinux # due to bugzilla 14600
+    @expectedFailureLinux # bugzilla 14600 - Convenience registers not supported on Linux
     def test_convenience_registers(self):
         """Test convenience registers."""
         if not self.getArchitecture() in ['x86_64']:
@@ -28,6 +28,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers()
 
+    @expectedFailureLinux # bugzilla 14600 - Convenience registers not supported on Linux
     def test_convenience_registers_with_process_attach(self):
         """Test convenience registers after a 'process attach'."""
         if not self.getArchitecture() in ['x86_64']:
@@ -35,6 +36,7 @@ class RegisterCommandsTestCase(TestBase):
         self.buildDefault()
         self.convenience_registers_with_process_attach()
 
+    @expectedFailureLinux # bugzilla 14661 - Expressions involving XMM registers fail on Linux
     def register_commands(self):
         """Test commands related to registers, in particular xmm registers."""
         exe = os.path.join(os.getcwd(), "a.out")
