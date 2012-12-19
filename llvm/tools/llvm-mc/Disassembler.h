@@ -35,11 +35,6 @@ public:
                          MemoryBuffer &Buffer,
                          SourceMgr &SM,
                          raw_ostream &Out);
-
-  static int disassembleEnhanced(const std::string &tripleString,
-                                 MemoryBuffer &buffer,
-                                 SourceMgr &SM,
-                                 raw_ostream &Out);
 };
 
 } // namespace llvm

@@ -95,8 +95,6 @@ class MCSubtargetInfo;
 class MemoryObject;
 class raw_ostream;
 
-struct EDInstInfo;
-
 namespace X86Disassembler {
 
 /// X86GenericDisassembler - Generic disassembler for all X86 platforms.
@@ -122,8 +120,6 @@ public:
                               raw_ostream &vStream,
                               raw_ostream &cStream) const;
 
-  /// getEDInfo - See MCDisassembler.
-  const EDInstInfo *getEDInfo() const;
 private:
   DisassemblerMode              fMode;
 };

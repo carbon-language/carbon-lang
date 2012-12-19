@@ -14,7 +14,6 @@
 
 #include "MBlazeDisassembler.h"
 #include "MBlaze.h"
-#include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrDesc.h"
@@ -25,7 +24,6 @@
 
 // #include "MBlazeGenDecoderTables.inc"
 // #include "MBlazeGenRegisterNames.inc"
-#include "MBlazeGenEDInfo.inc"
 
 namespace llvm {
 extern const MCInstrDesc MBlazeInsts[];
@@ -489,10 +487,6 @@ static unsigned getOPCODE(uint32_t insn) {
   case MBlaze::RTSD:    return decodeRTSD(insn);
   default:              return opcode;
   }
-}
-
-const EDInstInfo *MBlazeDisassembler::getEDInfo() const {
-  return instInfoMBlaze;
 }
 
 //

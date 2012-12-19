@@ -68,7 +68,6 @@ void EmitCodeEmitter(RecordKeeper &RK, raw_ostream &OS);
 void EmitDAGISel(RecordKeeper &RK, raw_ostream &OS);
 void EmitDFAPacketizer(RecordKeeper &RK, raw_ostream &OS);
 void EmitDisassembler(RecordKeeper &RK, raw_ostream &OS);
-void EmitEnhancedDisassemblerInfo(RecordKeeper &RK, raw_ostream &OS);
 void EmitFastISel(RecordKeeper &RK, raw_ostream &OS);
 void EmitInstrInfo(RecordKeeper &RK, raw_ostream &OS);
 void EmitPseudoLowering(RecordKeeper &RK, raw_ostream &OS);

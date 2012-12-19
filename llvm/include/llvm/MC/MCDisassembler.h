@@ -20,8 +20,6 @@ class MemoryObject;
 class raw_ostream;
 class MCContext;
 
-struct EDInstInfo;
-
 /// MCDisassembler - Superclass for all disassemblers.  Consumes a memory region
 ///   and provides an array of assembly instructions.
 class MCDisassembler {
@@ -83,14 +81,6 @@ public:
                                        uint64_t address,
                                        raw_ostream &vStream,
                                        raw_ostream &cStream) const = 0;
-
-  /// getEDInfo - Returns the enhanced instruction information corresponding to
-  ///   the disassembler.
-  ///
-  /// @return         - An array of instruction information, with one entry for
-  ///                   each MCInst opcode this disassembler returns.
-  ///                   NULL if there is no info for this target.
-  virtual const EDInstInfo   *getEDInfo() const { return (EDInstInfo*)0; }
 
 private:
   //

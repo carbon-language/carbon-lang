@@ -169,7 +169,6 @@ enum ActionType {
   AC_AsLex,
   AC_Assemble,
   AC_Disassemble,
-  AC_EDisassemble,
   AC_MDisassemble,
   AC_HDisassemble
 };
@@ -183,8 +182,6 @@ Action(cl::desc("Action to perform:"),
                              "Assemble a .s file (default)"),
                   clEnumValN(AC_Disassemble, "disassemble",
                              "Disassemble strings of hex bytes"),
-                  clEnumValN(AC_EDisassemble, "edis",
-                             "Enhanced disassembly of strings of hex bytes"),
                   clEnumValN(AC_MDisassemble, "mdis",
                              "Marked up disassembly of strings of hex bytes"),
                   clEnumValN(AC_HDisassemble, "hdis",
@@ -471,9 +468,6 @@ int main(int argc, char **argv) {
     break;
   case AC_Disassemble:
     disassemble = true;
-    break;
-  case AC_EDisassemble:
-    Res =  Disassembler::disassembleEnhanced(TripleName, *Buffer, SrcMgr, Out->os());
     break;
   }
   if (disassemble)

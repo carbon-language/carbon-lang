@@ -15,8 +15,7 @@ BUILT_SOURCES = MBlazeGenRegisterInfo.inc MBlazeGenInstrInfo.inc \
 		MBlazeGenAsmWriter.inc \
                 MBlazeGenDAGISel.inc MBlazeGenAsmMatcher.inc \
                 MBlazeGenCodeEmitter.inc MBlazeGenCallingConv.inc \
-                MBlazeGenSubtargetInfo.inc MBlazeGenIntrinsics.inc \
-                MBlazeGenEDInfo.inc
+                MBlazeGenSubtargetInfo.inc MBlazeGenIntrinsics.inc
 
 DIRS = InstPrinter AsmParser Disassembler TargetInfo MCTargetDesc
 

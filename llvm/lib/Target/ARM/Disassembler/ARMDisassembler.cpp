@@ -13,7 +13,6 @@
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMMCExpr.h"
-#include "llvm/MC/EDInstInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCFixedLenDisassembler.h"
@@ -105,10 +104,6 @@ public:
                               uint64_t address,
                               raw_ostream &vStream,
                               raw_ostream &cStream) const;
-
-  /// getEDInfo - See MCDisassembler.
-  const EDInstInfo *getEDInfo() const;
-private:
 };
 
 /// ThumbDisassembler - Thumb disassembler for all Thumb platforms.
@@ -131,8 +126,6 @@ public:
                               raw_ostream &vStream,
                               raw_ostream &cStream) const;
 
-  /// getEDInfo - See MCDisassembler.
-  const EDInstInfo *getEDInfo() const;
 private:
   mutable ITStatus ITBlock;
   DecodeStatus AddThumbPredicate(MCInst&) const;
@@ -385,7 +378,6 @@ static DecodeStatus DecodeLDR(MCInst &Inst, unsigned Val,
 static DecodeStatus DecodeMRRC2(llvm::MCInst &Inst, unsigned Val,
                                 uint64_t Address, const void *Decoder);
 #include "ARMGenDisassemblerTables.inc"
-#include "ARMGenEDInfo.inc"
 
 static MCDisassembler *createARMDisassembler(const Target &T, const MCSubtargetInfo &STI) {
   return new ARMDisassembler(STI);
@@ -393,14 +385,6 @@ static MCDisassembler *createARMDisassembler(const Target &T, const MCSubtargetI
 
 static MCDisassembler *createThumbDisassembler(const Target &T, const MCSubtargetInfo &STI) {
   return new ThumbDisassembler(STI);
-}
-
-const EDInstInfo *ARMDisassembler::getEDInfo() const {
-  return instInfoARM;
-}
-
-const EDInstInfo *ThumbDisassembler::getEDInfo() const {
-  return instInfoARM;
 }
 
 DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,

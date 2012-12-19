@@ -38,7 +38,6 @@ enum ActionType {
   GenSubtarget,
   GenIntrinsic,
   GenTgtIntrinsic,
-  GenEDInfo,
   PrintEnums,
   PrintSets,
   GenOptParserDefs
@@ -77,8 +76,6 @@ namespace {
                                "Generate intrinsic information"),
                     clEnumValN(GenTgtIntrinsic, "gen-tgt-intrinsic",
                                "Generate target intrinsic information"),
-                    clEnumValN(GenEDInfo, "gen-enhanced-disassembly-info",
-                               "Generate enhanced disassembly info"),
                     clEnumValN(PrintEnums, "print-enums",
                                "Print enum values for a class"),
                     clEnumValN(PrintSets, "print-sets",
@@ -137,9 +134,6 @@ bool LLVMTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenTgtIntrinsic:
     EmitIntrinsics(Records, OS, true);
-    break;
-  case GenEDInfo:
-    EmitEnhancedDisassemblerInfo(Records, OS);
     break;
   case GenOptParserDefs:
     EmitOptParser(Records, OS);
