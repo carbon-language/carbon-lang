@@ -142,7 +142,7 @@ public:
 
   /// \brief The set of attributes set in Attribute is converted to a string of
   /// equivalent mnemonics. This is, presumably, for writing out the mnemonics
-  /// for the assembly writer.  @brief Convert attribute bits to text
+  /// for the assembly writer.
   std::string getAsString() const;
 };
 
