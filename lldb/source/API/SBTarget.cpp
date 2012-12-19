@@ -2085,6 +2085,29 @@ SBTarget::FindFirstType (const char* typename_cstr)
                     return SBType(type_sp);
             }
         }
+        
+        // Didn't find the type in the symbols; try the Objective-C runtime
+        // if one is installed
+        
+        ProcessSP process_sp(target_sp->GetProcessSP());
+        
+        if (process_sp)
+        {
+            ObjCLanguageRuntime *objc_language_runtime = process_sp->GetObjCLanguageRuntime();
+            
+            if (objc_language_runtime)
+            {
+                TypeVendor *objc_type_vendor = objc_language_runtime->GetTypeVendor();
+                
+                if (objc_type_vendor)
+                {
+                    std::vector <ClangASTType> types;
+                    
+                    if (objc_type_vendor->FindTypes(const_typename, true, 1, types) > 0)
+                        return SBType(types[0]);
+                }
+            }
+        }
 
         // No matches, search for basic typename matches
         ClangASTContext *clang_ast = target_sp->GetScratchClangASTContext();
@@ -2136,7 +2159,35 @@ SBTarget::FindTypes (const char* typename_cstr)
                     sb_type_list.Append(SBType(type_sp));
             }
         }
-        else
+        
+        // Try the Objective-C runtime if one is installed
+        
+        ProcessSP process_sp(target_sp->GetProcessSP());
+        
+        if (process_sp)
+        {
+            ObjCLanguageRuntime *objc_language_runtime = process_sp->GetObjCLanguageRuntime();
+            
+            if (objc_language_runtime)
+            {
+                TypeVendor *objc_type_vendor = objc_language_runtime->GetTypeVendor();
+                
+                if (objc_type_vendor)
+                {
+                    std::vector <ClangASTType> types;
+                    
+                    if (objc_type_vendor->FindTypes(const_typename, true, UINT32_MAX, types))
+                    {
+                        for (ClangASTType &type : types)
+                        {
+                            sb_type_list.Append(SBType(type));
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (sb_type_list.GetSize() == 0)
         {
             // No matches, search for basic typename matches
             ClangASTContext *clang_ast = target_sp->GetScratchClangASTContext();

@@ -381,66 +381,8 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc,
                              uint32_t max_matches, 
                              lldb_private::TypeList& types)
 {
-    if (!append)
-        types.Clear();
-        
-    if (!m_objc_class_name_to_index.IsEmpty())
-    {
-        TypeMap::iterator iter = m_objc_class_types.find(name);
-        
-        if (iter != m_objc_class_types.end())
-        {
-            types.Insert(iter->second);
-            return 1;
-        }
-        
-        const Symtab::NameToIndexMap::Entry *match = m_objc_class_name_to_index.FindFirstValueForName(name.GetCString());
-        
-        if (match == NULL)
-            return 0;
-                    
-        const bool isForwardDecl = false;
-        const bool isInternal = true;
-        
-        ClangASTContext &ast = GetClangASTContext();
-        
-        ClangASTMetadata metadata;
-        metadata.SetUserID(0xffaaffaaffaaffaall);
-        lldb::clang_type_t objc_object_type = ast.CreateObjCClass (name.AsCString(), 
-                                                                   ast.GetTranslationUnitDecl(), 
-                                                                   isForwardDecl, 
-                                                                   isInternal,
-                                                                   &metadata);
-        
-        Declaration decl;
-        
-        lldb::TypeSP type(new Type (match->value,
-                                    this,
-                                    name,
-                                    0,      // byte_size - don't change this from 0, we currently use that to identify these "synthetic" ObjC class types.
-                                    NULL,   // SymbolContextScope*
-                                    0,      // encoding_uid
-                                    Type::eEncodingInvalid,
-                                    decl,
-                                    objc_object_type,
-                                    Type::eResolveStateFull));
-        
-        m_objc_class_types[name] = type;
-        
-        types.Insert(type);
-        
-        return 1;
-    }
-
     return 0;
 }
-//
-//uint32_t
-//SymbolFileSymtab::FindTypes(const SymbolContext& sc, const RegularExpression& regex, bool append, uint32_t max_matches, TypeList& types)
-//{
-//  return 0;
-//}
-
 
 //------------------------------------------------------------------
 // PluginInterface protocol

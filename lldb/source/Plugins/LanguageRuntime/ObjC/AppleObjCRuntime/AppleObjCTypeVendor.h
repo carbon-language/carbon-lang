@@ -38,6 +38,12 @@ public:
                uint32_t max_matches,
                std::vector <ClangASTType> &types);
     
+    virtual clang::ASTContext *
+    GetClangASTContext ()
+    {
+        return m_ast_ctx.getASTContext();
+    }
+    
     friend class AppleObjCExternalASTSource;
 private:
     clang::ObjCInterfaceDecl   *GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa);

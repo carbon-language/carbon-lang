@@ -230,7 +230,7 @@ class FoundationTestCase2(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
-        self.expect("p [NSError errorWithDomain:@\"Hello\" code:35 userInfo:nil]",
+        self.expect("p [NSError thisMethodIsntImplemented:0]",
                     error = True, 
                     patterns = ["no known method", "cast the message send to the method's return type"])
         self.runCmd("process continue")

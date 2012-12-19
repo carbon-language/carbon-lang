@@ -126,6 +126,8 @@ public:
             ASTDumper dumper((clang::Decl*)interface_decl);
             dumper.ToLog(log, "    [CT] ");
         }
+        
+        m_type_vendor.FinishDecl(interface_decl);
                 
         if (log)
         {
@@ -197,6 +199,7 @@ AppleObjCTypeVendor::GetDeclForISA(ObjCLanguageRuntime::ObjCISA isa)
     m_external_source->SetMetadata((uintptr_t)new_iface_decl, meta_data);
     
     new_iface_decl->setHasExternalVisibleStorage();
+    new_iface_decl->setHasExternalLexicalStorage();
     
     ast_ctx->getTranslationUnitDecl()->addDecl(new_iface_decl);
     
@@ -508,6 +511,7 @@ AppleObjCTypeVendor::FinishDecl(clang::ObjCInterfaceDecl *interface_decl)
     interface_decl->startDefinition();
     
     interface_decl->setHasExternalVisibleStorage(false);
+    interface_decl->setHasExternalLexicalStorage(false);
     
     ObjCLanguageRuntime::ClassDescriptorSP descriptor = m_runtime.GetClassDescriptor(objc_isa);
     

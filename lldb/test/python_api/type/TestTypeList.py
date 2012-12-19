@@ -66,7 +66,7 @@ class TypeAndTypeListTestCase(TestBase):
         type_list = target.FindTypes('Task')
         if self.TraceOn():
             print "Size of type_list from target.FindTypes('Task') query: %d" % type_list.GetSize()
-        self.assertTrue(len(type_list) == 1)
+        self.assertTrue(len(type_list) >= 1) # a second Task make be scared up by the Objective-C runtime
         for type in type_list:
             self.assertTrue(type)
             self.DebugSBType(type)

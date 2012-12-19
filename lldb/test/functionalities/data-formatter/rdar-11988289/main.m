@@ -18,11 +18,11 @@ int main (int argc, const char * argv[])
 	NSArray* keys = @[@"foo",@"bar",@"baz"];
 	NSArray* values = @[@"hello",@[@"X",@"Y"],@{@1 : @"one",@2 : @"two"}];
 	NSDictionary* dictionary = [NSDictionary dictionaryWithObjects:values forKeys:keys];
-	NSMutableDictionary* mutable = [NSMutableDictionary dictionaryWithCapacity:5];
-	[mutable setObject:@"123" forKey:@23];
-	[mutable setObject:[NSURL URLWithString:@"http://www.apple.com"] forKey:@"foobar"];
-	[mutable setObject:@[@"a",@12] forKey:@57];
-	[mutable setObject:dictionary forKey:@"puartist"];
+	NSMutableDictionary* mutabledict = [NSMutableDictionary dictionaryWithCapacity:5];
+	[mutabledict setObject:@"123" forKey:@23];
+	[mutabledict setObject:[NSURL URLWithString:@"http://www.apple.com"] forKey:@"foobar"];
+	[mutabledict setObject:@[@"a",@12] forKey:@57];
+	[mutabledict setObject:dictionary forKey:@"puartist"];
 
     [pool drain];// Set break point at this line.
     return 0;

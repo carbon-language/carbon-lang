@@ -105,9 +105,7 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
                                                          types);
         
         if (num_types)
-        {
-            TypeSP incomplete_type_sp;
-            
+        {            
             uint32_t i;
             for (i = 0; i < num_types; ++i)
             {
@@ -120,8 +118,6 @@ ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
                         m_complete_class_cache[name] = type_sp;
                         return type_sp;
                     }
-                    else if (!incomplete_type_sp)
-                        incomplete_type_sp = type_sp;
                 }
             }
         }

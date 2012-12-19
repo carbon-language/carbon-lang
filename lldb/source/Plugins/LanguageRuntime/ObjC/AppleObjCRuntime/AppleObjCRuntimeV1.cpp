@@ -9,6 +9,7 @@
 
 #include "AppleObjCRuntimeV1.h"
 #include "AppleObjCTrampolineHandler.h"
+#include "AppleObjCTypeVendor.h"
 
 #include "llvm/Support/MachO.h"
 #include "clang/AST/Type.h"
@@ -294,6 +295,15 @@ AppleObjCRuntimeV1::ClassDescriptorV1::GetSuperclass ()
     return ObjCLanguageRuntime::ClassDescriptorSP(new AppleObjCRuntimeV1::ClassDescriptorV1(m_parent_isa,process_sp));
 }
 
+bool
+AppleObjCRuntimeV1::ClassDescriptorV1::Describe (std::function <void (ObjCLanguageRuntime::ObjCISA)> const &superclass_func,
+                                                 std::function <bool (const char *, const char *)> const &instance_method_func,
+                                                 std::function <bool (const char *, const char *)> const &class_method_func,
+                                                 std::function <bool (const char *, const char *, lldb::addr_t, uint64_t)> const &ivar_func)
+{
+    return false;
+}
+
 lldb::addr_t
 AppleObjCRuntimeV1::GetISAHashTablePointer ()
 {
@@ -454,3 +464,11 @@ AppleObjCRuntimeV1::UpdateISAToDescriptorMapIfNeeded()
     }
 }
 
+TypeVendor *
+AppleObjCRuntimeV1::GetTypeVendor()
+{
+    if (!m_type_vendor_ap.get())
+        m_type_vendor_ap.reset(new AppleObjCTypeVendor(*this));
+    
+    return m_type_vendor_ap.get();
+}

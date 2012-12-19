@@ -681,13 +681,70 @@ ClangASTSource::FindExternalVisibleDecls (NameSearchContext &context,
             if (!copied_type)
             {                
                 if (log)
-                    log->Printf("  CAS::FEVD[%u] - Couldn't export the type for a constant integer result",
+                    log->Printf("  CAS::FEVD[%u] - Couldn't export a type",
                                 current_id);
                     
                 break;
             }
                 
             context.AddTypeDecl(copied_type);
+        }
+        else
+        {
+            do
+            {
+                // Couldn't find any types elsewhere.  Try the Objective-C runtime if one exists.
+                
+                lldb::ProcessSP process(m_target->GetProcessSP());
+                
+                if (!process)
+                    break;
+                
+                ObjCLanguageRuntime *language_runtime(process->GetObjCLanguageRuntime());
+                
+                if (!language_runtime)
+                    break;
+                
+                TypeVendor *type_vendor = language_runtime->GetTypeVendor();
+                
+                if (!type_vendor)
+                    break;
+                
+                bool append = false;
+                uint32_t max_matches = 1;
+                std::vector <ClangASTType> types;
+                
+                if (!type_vendor->FindTypes(name,
+                                            append,
+                                            max_matches,
+                                            types))
+                    break;
+                
+                if (log)
+                {                    
+                    log->Printf("  CAS::FEVD[%u] Matching type found for \"%s\" in the runtime",
+                                current_id,
+                                name.GetCString());
+                }
+                
+                const clang::Type *runtime_clang_type = QualType::getFromOpaquePtr(types[0].GetOpaqueQualType()).getTypePtr();
+                
+                clang::QualType runtime_qual_type(runtime_clang_type, 0);
+                
+                void *copied_type = GuardedCopyType(m_ast_context, type_vendor->GetClangASTContext(), runtime_qual_type.getAsOpaquePtr());
+                
+                if (!copied_type)
+                {
+                    if (log)
+                        log->Printf("  CAS::FEVD[%u] - Couldn't export a type from the runtime",
+                                    current_id);
+                    
+                    break;
+                }
+                
+                context.AddTypeDecl(copied_type);
+            }
+            while(0);
         }
         
     } while(0);
@@ -1075,6 +1132,9 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
             break;
         
         ObjCLanguageRuntime *language_runtime(process->GetObjCLanguageRuntime());
+        
+        if (!language_runtime)
+            break;
         
         TypeVendor *type_vendor = language_runtime->GetTypeVendor();
         

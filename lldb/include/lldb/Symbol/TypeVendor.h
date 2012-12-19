@@ -10,6 +10,8 @@
 #ifndef liblldb_TypeVendor_h_
 #define liblldb_TypeVendor_h_
 
+#include "lldb/Core/ClangForward.h"
+
 namespace lldb_private {
     
 //----------------------------------------------------------------------
@@ -37,6 +39,9 @@ public:
                bool append,
                uint32_t max_matches,
                std::vector <ClangASTType> &types) = 0;
+    
+    virtual clang::ASTContext *
+    GetClangASTContext () = 0;
 
 protected:
     //------------------------------------------------------------------
