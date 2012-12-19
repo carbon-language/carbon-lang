@@ -175,8 +175,7 @@ public:
     memcpy(TextPtr, WordText.c_str(), Length + 1);
     StringRef Text = StringRef(TextPtr, Length);
 
-    formTokenWithChars(Tok, Loc, WordBegin,
-                       Pos.BufferPtr - WordBegin, Text);
+    formTokenWithChars(Tok, Loc, WordBegin, Length, Text);
     return true;
   }
 
