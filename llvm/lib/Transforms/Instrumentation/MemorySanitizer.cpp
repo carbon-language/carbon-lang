@@ -134,7 +134,11 @@ namespace {
 /// uninitialized reads.
 class MemorySanitizer : public FunctionPass {
  public:
-  MemorySanitizer() : FunctionPass(ID), TD(0), WarningFn(0) { }
+  MemorySanitizer(bool TrackOrigins = false)
+    : FunctionPass(ID),
+      TrackOrigins(TrackOrigins || ClTrackOrigins),
+      TD(0),
+      WarningFn(0) { }
   const char *getPassName() const { return "MemorySanitizer"; }
   bool runOnFunction(Function &F);
   bool doInitialization(Module &M);
@@ -142,6 +146,9 @@ class MemorySanitizer : public FunctionPass {
 
  private:
   void initializeCallbacks(Module &M);
+
+  /// \brief Track origins (allocation points) of uninitialized values.
+  bool TrackOrigins;
 
   DataLayout *TD;
   LLVMContext *C;
@@ -202,8 +209,8 @@ INITIALIZE_PASS(MemorySanitizer, "msan",
                 "MemorySanitizer: detects uninitialized reads.",
                 false, false)
 
-FunctionPass *llvm::createMemorySanitizerPass() {
-  return new MemorySanitizer();
+FunctionPass *llvm::createMemorySanitizerPass(bool TrackOrigins) {
+  return new MemorySanitizer(TrackOrigins);
 }
 
 /// \brief Create a non-const global initialized with the given string.
@@ -322,7 +329,7 @@ bool MemorySanitizer::doInitialization(Module &M) {
                       "__msan_init", IRB.getVoidTy(), NULL)), 0);
 
   new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
-                     IRB.getInt32(ClTrackOrigins), "__msan_track_origins");
+                     IRB.getInt32(TrackOrigins), "__msan_track_origins");
 
   return true;
 }
@@ -420,7 +427,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       if (ClCheckAccessAddress)
         insertCheck(Addr, &I);
 
-      if (ClTrackOrigins) {
+      if (MS.TrackOrigins) {
         if (ClStoreCleanOrigin || isa<StructType>(Shadow->getType())) {
           IRB.CreateStore(getOrigin(Val), getOriginPtr(Addr, IRB));
         } else {
@@ -461,7 +468,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                                   MS.ColdCallWeights);
 
       IRB.SetInsertPoint(CheckTerm);
-      if (ClTrackOrigins) {
+      if (MS.TrackOrigins) {
         Instruction *Origin = InstrumentationList[i].Origin;
         IRB.CreateStore(Origin ? (Value*)Origin : (Value*)IRB.getInt32(0),
                         MS.OriginTLS);
@@ -491,7 +498,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     for (size_t i = 0, n = ShadowPHINodes.size(); i < n; i++) {
       PHINode *PN = ShadowPHINodes[i];
       PHINode *PNS = cast<PHINode>(getShadow(PN));
-      PHINode *PNO = ClTrackOrigins ? cast<PHINode>(getOrigin(PN)) : 0;
+      PHINode *PNO = MS.TrackOrigins ? cast<PHINode>(getOrigin(PN)) : 0;
       size_t NumValues = PN->getNumIncomingValues();
       for (size_t v = 0; v < NumValues; v++) {
         PNS->addIncoming(getShadow(PN, v), PN->getIncomingBlock(v));
@@ -597,7 +604,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   /// \brief Compute the origin address for a given function argument.
   Value *getOriginPtrForArgument(Value *A, IRBuilder<> &IRB,
                                  int ArgOffset) {
-    if (!ClTrackOrigins) return 0;
+    if (!MS.TrackOrigins) return 0;
     Value *Base = IRB.CreatePointerCast(MS.ParamOriginTLS, MS.IntptrTy);
     Base = IRB.CreateAdd(Base, ConstantInt::get(MS.IntptrTy, ArgOffset));
     return IRB.CreateIntToPtr(Base, PointerType::get(MS.OriginTy, 0),
@@ -625,7 +632,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   /// \brief Set Origin to be the origin value for V.
   void setOrigin(Value *V, Value *Origin) {
-    if (!ClTrackOrigins) return;
+    if (!MS.TrackOrigins) return;
     assert(!OriginMap.count(V) && "Values may only have one origin");
     DEBUG(dbgs() << "ORIGIN: " << *V << "  ==> " << *Origin << "\n");
     OriginMap[V] = Origin;
@@ -713,7 +720,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
           }
           DEBUG(dbgs() << "  ARG:    "  << *AI << " ==> " <<
                 **ShadowPtr << "\n");
-          if (ClTrackOrigins) {
+          if (MS.TrackOrigins) {
             Value* OriginPtr = getOriginPtrForArgument(AI, EntryIRB, ArgOffset);
             setOrigin(A, EntryIRB.CreateLoad(OriginPtr));
           }
@@ -734,7 +741,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   /// \brief Get the origin for a value.
   Value *getOrigin(Value *V) {
-    if (!ClTrackOrigins) return 0;
+    if (!MS.TrackOrigins) return 0;
     if (isa<Instruction>(V) || isa<Argument>(V)) {
       Value *Origin = OriginMap[V];
       if (!Origin) {
@@ -787,7 +794,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     if (ClCheckAccessAddress)
       insertCheck(I.getPointerOperand(), &I);
 
-    if (ClTrackOrigins)
+    if (MS.TrackOrigins)
       setOrigin(&I, IRB.CreateLoad(getOriginPtr(Addr, IRB)));
   }
 
@@ -958,7 +965,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         }
       }
 
-      if (ClTrackOrigins) {
+      if (MSV->MS.TrackOrigins) {
         assert(OpOrigin);
         if (!Origin) {
           Origin = OpOrigin;
@@ -975,7 +982,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     /// \brief Add an application value to the mix.
     Combiner &Add(Value *V) {
       Value *OpShadow = MSV->getShadow(V);
-      Value *OpOrigin = ClTrackOrigins ? MSV->getOrigin(V) : 0;
+      Value *OpOrigin = MSV->MS.TrackOrigins ? MSV->getOrigin(V) : 0;
       return Add(OpShadow, OpOrigin);
     }
 
@@ -987,7 +994,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         Shadow = MSV->CreateShadowCast(IRB, Shadow, MSV->getShadowTy(I));
         MSV->setShadow(I, Shadow);
       }
-      if (ClTrackOrigins) {
+      if (MSV->MS.TrackOrigins) {
         assert(Origin);
         MSV->setOrigin(I, Origin);
       }
@@ -999,7 +1006,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
   /// \brief Propagate origin for arbitrary operation.
   void setOriginForNaryOp(Instruction &I) {
-    if (!ClTrackOrigins) return;
+    if (!MS.TrackOrigins) return;
     IRBuilder<> IRB(&I);
     OriginCombiner OC(this, IRB);
     for (Instruction::op_iterator OI = I.op_begin(); OI != I.op_end(); ++OI)
@@ -1248,7 +1255,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
 
     // FIXME: use ClStoreCleanOrigin
     // FIXME: factor out common code from materializeStores
-    if (ClTrackOrigins)
+    if (MS.TrackOrigins)
       IRB.CreateStore(getOrigin(&I, 1), getOriginPtr(Addr, IRB));
     return true;
   }
@@ -1270,7 +1277,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     if (ClCheckAccessAddress)
       insertCheck(Addr, &I);
 
-    if (ClTrackOrigins)
+    if (MS.TrackOrigins)
       setOrigin(&I, IRB.CreateLoad(getOriginPtr(Addr, IRB)));
     return true;
   }
@@ -1441,7 +1448,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         Store = IRB.CreateAlignedStore(ArgShadow, ArgShadowBase,
                                        kShadowTLSAlignment);
       }
-      if (ClTrackOrigins)
+      if (MS.TrackOrigins)
         IRB.CreateStore(getOrigin(A),
                         getOriginPtrForArgument(A, IRB, ArgOffset));
       assert(Size != 0 && Store != 0);
@@ -1484,7 +1491,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       IRBAfter.CreateAlignedLoad(getShadowPtrForRetval(&I, IRBAfter),
                                  kShadowTLSAlignment, "_msret");
     setShadow(&I, RetvalShadow);
-    if (ClTrackOrigins)
+    if (MS.TrackOrigins)
       setOrigin(&I, IRBAfter.CreateLoad(getOriginPtrForRetval(IRBAfter)));
   }
 
@@ -1496,7 +1503,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       Value *ShadowPtr = getShadowPtrForRetval(RetVal, IRB);
       DEBUG(dbgs() << "Return: " << *Shadow << "\n" << *ShadowPtr << "\n");
       IRB.CreateAlignedStore(Shadow, ShadowPtr, kShadowTLSAlignment);
-      if (ClTrackOrigins)
+      if (MS.TrackOrigins)
         IRB.CreateStore(getOrigin(RetVal), getOriginPtrForRetval(IRB));
     }
   }
@@ -1506,7 +1513,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     ShadowPHINodes.push_back(&I);
     setShadow(&I, IRB.CreatePHI(getShadowTy(&I), I.getNumIncomingValues(),
                                 "_msphi_s"));
-    if (ClTrackOrigins)
+    if (MS.TrackOrigins)
       setOrigin(&I, IRB.CreatePHI(MS.OriginTy, I.getNumIncomingValues(),
                                   "_msphi_o"));
   }
@@ -1526,7 +1533,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
                        Size, I.getAlignment());
     }
 
-    if (ClTrackOrigins) {
+    if (MS.TrackOrigins) {
       setOrigin(&I, getCleanOrigin());
       SmallString<2048> StackDescriptionStorage;
       raw_svector_ostream StackDescription(StackDescriptionStorage);
@@ -1551,7 +1558,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     setShadow(&I,  IRB.CreateSelect(I.getCondition(),
               getShadow(I.getTrueValue()), getShadow(I.getFalseValue()),
               "_msprop"));
-    if (ClTrackOrigins)
+    if (MS.TrackOrigins)
       setOrigin(&I, IRB.CreateSelect(I.getCondition(),
                 getOrigin(I.getTrueValue()), getOrigin(I.getFalseValue())));
   }
