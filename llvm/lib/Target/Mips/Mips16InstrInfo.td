@@ -576,7 +576,9 @@ def LwRxRyOffMemX16: FEXT_RRI16_mem_ins<0b10011, "lw", mem16, IILoad>, MayLoad;
 // Purpose: Load Word (SP-Relative, Extended)
 // To load an SP-relative word from memory as a signed value.
 //
-def LwRxSpImmX16: FEXT_RI16_SP_explicit_ins<0b10110, "lw", IILoad>, MayLoad;
+def LwRxSpImmX16: FEXT_RI16_SP_explicit_ins<0b10110, "lw", IILoad>, MayLoad{
+  let Uses = [SP];
+}
 
 //
 // Format: MOVE r32, rz MIPS16e
@@ -688,6 +690,8 @@ def RestoreRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
              "restore\t$$ra,  $$s0, $$s1, $frame_size", [], IILoad >, MayLoad {
   let isCodeGenOnly = 1;
+  let Defs = [S0, S1, RA, SP];
+  let Uses = [SP];
 }
 
 // Use Restore to increment SP since SP is not a Mip 16 register, this
@@ -698,6 +702,8 @@ def RestoreIncSpF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
              "restore\t$frame_size", [], IILoad >, MayLoad {
   let isCodeGenOnly = 1;
+  let Defs = [SP];
+  let Uses = [SP];
 }
 
 //
@@ -712,6 +718,8 @@ def SaveRaF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
              "save\t$$ra, $$s0, $$s1, $frame_size", [], IIStore >, MayStore {
   let isCodeGenOnly = 1;
+  let Uses = [RA, SP, S0, S1];
+  let Defs = [SP];
 }
 
 //
@@ -723,6 +731,8 @@ def SaveDecSpF16:
   FI8_SVRS16<0b1, (outs), (ins uimm16:$frame_size),
              "save\t$frame_size", [], IIStore >, MayStore {
   let isCodeGenOnly = 1;
+  let Uses = [SP];
+  let Defs = [SP];
 }
 //
 // Format: SB ry, offset(rx) MIPS16e
