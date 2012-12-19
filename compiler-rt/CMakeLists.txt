@@ -15,6 +15,14 @@ include(LLVMParseArguments)
 # runtime libraries.
 cmake_minimum_required(VERSION 2.8.8)
 
+# Add path for custom modules
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules"
+  )
+
+set(COMPILER_RT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 # FIXME: Below we assume that the target build of LLVM/Clang is x86, which is
 # not at all valid. Much of this can be fixed just by switching to use
 # a just-built-clang binary for the compiles.
