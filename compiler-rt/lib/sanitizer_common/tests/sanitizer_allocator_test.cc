@@ -85,18 +85,19 @@ void TestSizeClassAllocator() {
   a->Init();
 
   static const uptr sizes[] = {1, 16, 30, 40, 100, 1000, 10000,
-    50000, 60000, 100000, 300000, 500000, 1000000, 2000000};
+    50000, 60000, 100000, 120000, 300000, 500000, 1000000, 2000000};
 
   std::vector<void *> allocated;
 
   uptr last_total_allocated = 0;
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 3; i++) {
     // Allocate a bunch of chunks.
     for (uptr s = 0; s < ARRAY_SIZE(sizes); s++) {
       uptr size = sizes[s];
       if (!a->CanAllocate(size, 1)) continue;
       // printf("s = %ld\n", size);
-      uptr n_iter = std::max((uptr)6, 1000000 / size);
+      uptr n_iter = std::max((uptr)6, 10000000 / size);
+      // fprintf(stderr, "size: %ld iter: %ld\n", size, n_iter);
       for (uptr i = 0; i < n_iter; i++) {
         char *x = (char*)a->Allocate(size, 1);
         x[0] = 0;

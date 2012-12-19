@@ -297,7 +297,7 @@ class SizeClassAllocator64 {
     uptr beg_idx = region->allocated_user;
     uptr end_idx = beg_idx + kPopulateSize;
     uptr region_beg = kSpaceBeg + kRegionSize * class_id;
-    if (Max(end_idx, beg_idx + size) > region->mapped_user) {
+    if (end_idx + size > region->mapped_user) {
       // Do the mmap for the user memory.
       CHECK_GT(region->mapped_user + kUserMapSize, end_idx);
       MapWithCallback(region_beg + region->mapped_user, kUserMapSize);
@@ -312,6 +312,7 @@ class SizeClassAllocator64 {
       i++;
     } while (idx < end_idx);
     region->allocated_user += idx - beg_idx;
+    CHECK_LE(region->allocated_user, region->mapped_user);
     region->allocated_meta += i * kMetadataSize;
     if (region->allocated_meta > region->mapped_meta) {
       // Do the mmap for the metadata.
