@@ -7,7 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 //
-/// \file This file defines a utility class for use of clang-format in libclang
+/// \file SimpleFormatContext.h
+///
+/// \brief This file defines a utility class for use of clang-format in libclang
 //
 //===----------------------------------------------------------------------===//
 
