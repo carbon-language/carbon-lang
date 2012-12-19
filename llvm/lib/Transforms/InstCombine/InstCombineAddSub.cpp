@@ -65,11 +65,11 @@ namespace {
   private:
     bool insaneIntVal(int V) { return V > 4 || V < -4; }
     APFloat *getFpValPtr(void)
-      { return reinterpret_cast<APFloat*>(&FpValBuf[0]); }
+      { return reinterpret_cast<APFloat*>(&FpValBuf.buffer[0]); }
 
     const APFloat &getFpVal(void) const {
       assert(IsFp && BufHasFpVal && "Incorret state");
-      return *reinterpret_cast<const APFloat*>(&FpValBuf[0]);
+      return *reinterpret_cast<const APFloat*>(&FpValBuf.buffer[0]);
     }
 
     APFloat &getFpVal(void)
@@ -78,6 +78,7 @@ namespace {
     bool isInt() const { return !IsFp; }
 
   private:
+
     bool IsFp;
   
     // True iff FpValBuf contains an instance of APFloat.
@@ -88,11 +89,8 @@ namespace {
     // two instructions. So the range of <IntVal> falls in [-4, 4]. APInt
     // is overkill of this end.
     short IntVal;
-  
-    union {
-      char FpValBuf[sizeof(APFloat)];
-      int dummy; // So this structure has at least 4-byte alignment.
-    };
+
+    AlignedCharArrayUnion<APFloat> FpValBuf;
   };
   
   /// FAddend is used to represent floating-point addend. An addend is
