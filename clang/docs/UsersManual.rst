@@ -80,41 +80,64 @@ Command Line Options
 This section is generally an index into other sections. It does not go
 into depth on the ones that are covered by other sections. However, the
 first part introduces the language selection and other high level
-options like -c, -g, etc.
+options like :option:`-c`, :option:`-g`, etc.
 
 Options to Control Error and Warning Messages
 ---------------------------------------------
 
-**-Werror**: Turn warnings into errors.
+.. option:: -Werror
 
-**-Werror=foo**: Turn warning "foo" into an error.
+  Turn warnings into errors.
 
-**-Wno-error=foo**: Turn warning "foo" into an warning even if -Werror
-is specified.
+.. This is in plain monospaced font because it generates the same label as
+.. -Werror, and Sphinx complains.
 
-**-Wfoo**: Enable warning "foo".
+``-Werror=foo``
 
-**-Wno-foo**: Disable warning "foo".
+  Turn warning "foo" into an error.
 
-**-w**: Disable all warnings.
+.. option:: -Wno-error=foo
 
-**-Weverything**: :ref:`Enable **all**
-warnings. <diagnostics_enable_everything>`
+  Turn warning "foo" into an warning even if :option:`-Werror` is specified.
 
-**-pedantic**: Warn on language extensions.
+.. option:: -Wfoo
 
-**-pedantic-errors**: Error on language extensions.
+  Enable warning "foo".
 
-**-Wsystem-headers**: Enable warnings from system headers.
+.. option:: -Wno-foo
 
-**-ferror-limit=123**: Stop emitting diagnostics after 123 errors have
-been produced. The default is 20, and the error limit can be disabled
-with -ferror-limit=0.
+  Disable warning "foo".
 
-**-ftemplate-backtrace-limit=123**: Only emit up to 123 template
-instantiation notes within the template instantiation backtrace for a
-single warning or error. The default is 10, and the limit can be
-disabled with -ftemplate-backtrace-limit=0.
+.. option:: -w
+
+  Disable all warnings.
+
+.. option:: -Weverything
+
+  :ref:`Enable all warnings. <diagnostics_enable_everything>`
+
+.. option:: -pedantic
+
+  Warn on language extensions.
+
+.. option:: -pedantic-errors
+
+  Error on language extensions.
+
+.. option:: -Wsystem-headers
+
+  Enable warnings from system headers.
+
+.. option:: -ferror-limit=123
+
+  Stop emitting diagnostics after 123 errors have been produced. The default is
+  20, and the error limit can be disabled with :option:`-ferror-limit=0`.
+
+.. option:: -ftemplate-backtrace-limit=123
+
+  Only emit up to 123 template instantiation notes within the template
+  instantiation backtrace for a single warning or error. The default is 10, and
+  the limit can be disabled with :option:`-ftemplate-backtrace-limit=0`.
 
 .. _cl_diag_formatting:
 
@@ -212,7 +235,8 @@ output format of the diagnostics that it generates.
                 ^
                 //
 
-**-fdiagnostics-format=clang/msvc/vi**
+.. option:: -fdiagnostics-format=clang/msvc/vi
+
    Changes diagnostic output format to better match IDEs and command line tools.
 
    This option controls the output format of the filename, line number,
@@ -264,7 +288,8 @@ output format of the diagnostics that it generates.
 
 .. _opt_fdiagnostics-show-category:
 
-**-fdiagnostics-show-category=none/id/name**
+.. option:: -fdiagnostics-show-category=none/id/name
+
    Enable printing category information in diagnostic line.
 
    This option, which defaults to "none", controls whether or not Clang
@@ -328,7 +353,8 @@ output format of the diagnostics that it generates.
    The printed column numbers count bytes from the beginning of the
    line; take care if your source contains multibyte characters.
 
-**-fdiagnostics-parseable-fixits**
+.. option:: -fdiagnostics-parseable-fixits
+
    Print Fix-Its in a machine parseable form.
 
    This option makes Clang print available Fix-Its in a machine
@@ -351,7 +377,8 @@ output format of the diagnostics that it generates.
    The printed column numbers count bytes from the beginning of the
    line; take care if your source contains multibyte characters.
 
-**-fno-elide-type**
+.. option:: -fno-elide-type
+
    Turns off elision in template type printing.
 
    The default for template type printing is to elide as many template
@@ -372,7 +399,8 @@ output format of the diagnostics that it generates.
 
        t.cc:4:5: note: candidate function not viable: no known conversion from 'vector<map<int, map<float, int>>>' to 'vector<map<int, map<double, int>>>' for 1st argument;
 
-**-fdiagnostics-show-template-tree**
+.. option:: -fdiagnostics-show-template-tree
+
    Template type diffing prints a text tree.
 
    For diffing large templated types, this option will cause Clang to
@@ -386,7 +414,7 @@ output format of the diagnostics that it generates.
 
        t.cc:4:5: note: candidate function not viable: no known conversion from 'vector<map<[...], map<float, [...]>>>' to 'vector<map<[...], map<double, [...]>>>' for 1st argument;
 
-   -fdiagnostics-show-template-tree
+   With :option:`-fdiagnostics-show-template-tree`:
 
    ::
 
@@ -407,7 +435,8 @@ TODO: Generate this from tblgen. Define one anchor per warning group.
 
 .. _opt_wextra-tokens:
 
-**-Wextra-tokens**
+.. option:: -Wextra-tokens
+
    Warn about excess tokens at the end of a preprocessor directive.
 
    This option, which defaults to on, enables warnings about extra
@@ -422,7 +451,8 @@ TODO: Generate this from tblgen. Define one anchor per warning group.
    These extra tokens are not strictly conforming, and are usually best
    handled by commenting them out.
 
-**-Wambiguous-member-template**
+.. option:: -Wambiguous-member-template
+
    Warn about unqualified uses of a member template whose name resolves to
    another template at the location of the use.
 
@@ -445,7 +475,8 @@ TODO: Generate this from tblgen. Define one anchor per warning group.
    because it's hard to work around, Clang downgrades it to a warning
    as an extension.
 
-**-Wbind-to-temporary-copy**
+.. option:: -Wbind-to-temporary-copy
+
    Warn about an unusable copy constructor when binding a reference to a
    temporary.
 
@@ -492,8 +523,9 @@ a crash. These files should be attached to a bug report to ease
 reproducibility of the failure. Below are the command line options to
 control the crash diagnostics.
 
-**-fno-crash-diagnostics**: Disable auto-generation of preprocessed
-source files during a clang crash.
+.. option:: -fno-crash-diagnostics
+
+  Disable auto-generation of preprocessed source files during a clang crash.
 
 The -fno-crash-diagnostics flag can be helpful for speeding the process
 of generating a delta reduced test case.
@@ -590,27 +622,27 @@ line. Warnings may be set to ignored, warning, error, or fatal. The
 following example code will tell Clang or GCC to ignore the -Wall
 warnings:
 
-::
+.. code-block:: c
 
-    #pragma GCC diagnostic ignored "-Wall"
+  #pragma GCC diagnostic ignored "-Wall"
 
 In addition to all of the functionality provided by GCC's pragma, Clang
 also allows you to push and pop the current warning state. This is
 particularly useful when writing a header file that will be compiled by
 other people, because you don't know what warning flags they build with.
 
-In the below example -Wmultichar is ignored for only a single line of
-code, after which the diagnostics return to whatever state had
-previously existed.
+In the below example :option:`-Wmultichar` is ignored for only a single line of
+code, after which the diagnostics return to whatever state had previously
+existed.
 
-::
+.. code-block:: c
 
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wmultichar"
+  #pragma clang diagnostic push
+  #pragma clang diagnostic ignored "-Wmultichar"
 
-    char b = 'df'; // no warning.
+  char b = 'df'; // no warning.
 
-    #pragma clang diagnostic pop
+  #pragma clang diagnostic pop
 
 The push and pop pragmas will save and restore the full diagnostic state
 of the compiler, regardless of how it was set. That means that it is
@@ -633,15 +665,15 @@ The ``system_header`` pragma can be used to mark the current file as
 being a system header. No warnings will be produced from the location of
 the pragma onwards within the same file.
 
-::
+.. code-block:: c
 
-    char a = 'xy'; // warning
+  char a = 'xy'; // warning
 
-    #pragma clang system_header
+  #pragma clang system_header
 
-    char b = 'ab'; // no warning
+  char b = 'ab'; // no warning
 
-The ``-isystem-prefix`` and ``-ino-system-prefix`` command-line
+The :option:`-isystem-prefix` and :option:`-ino-system-prefix` command-line
 arguments can be used to override whether subsets of an include path are
 treated as system headers. When the name in a ``#include`` directive is
 found within a header search path and starts with a system prefix, the
@@ -649,9 +681,9 @@ header is treated as a system header. The last prefix on the
 command-line which matches the specified header name takes precedence.
 For instance:
 
-::
+.. code-block:: console
 
-    clang -Ifoo -isystem bar -isystem-prefix x/ -ino-system-prefix x/y/
+  $ clang -Ifoo -isystem bar -isystem-prefix x/ -ino-system-prefix x/y/
 
 Here, ``#include "x/a.h"`` is treated as including a system header, even
 if the header is found in ``foo``, and ``#include "x/y/b.h"`` is treated
@@ -668,10 +700,10 @@ Enabling All Warnings
 ^^^^^^^^^^^^^^^^^^^^^
 
 In addition to the traditional ``-W`` flags, one can enable **all**
-warnings by passing ``-Weverything``. This works as expected with
-``-Werror``, and also includes the warnings from ``-pedantic``.
+warnings by passing :option:`-Weverything`. This works as expected with
+:option:`-Werror`, and also includes the warnings from :option:`-pedantic`.
 
-Note that when combined with ``-w`` (which disables all warnings), that
+Note that when combined with :option:`-w` (which disables all warnings), that
 flag wins.
 
 Controlling Static Analyzer Diagnostics
@@ -708,23 +740,23 @@ Generating a PCH File
 ^^^^^^^^^^^^^^^^^^^^^
 
 To generate a PCH file using Clang, one invokes Clang with the
-**``-x <language>-header``** option. This mirrors the interface in GCC
+:option:`-x <language>-header` option. This mirrors the interface in GCC
 for generating PCH files:
 
-::
+.. code-block:: console
 
-      $ gcc -x c-header test.h -o test.h.gch
-      $ clang -x c-header test.h -o test.h.pch
+  $ gcc -x c-header test.h -o test.h.gch
+  $ clang -x c-header test.h -o test.h.pch
 
 Using a PCH File
 ^^^^^^^^^^^^^^^^
 
-A PCH file can then be used as a prefix header when a **``-include``**
+A PCH file can then be used as a prefix header when a :option:`-include`
 option is passed to ``clang``:
 
-::
+.. code-block:: console
 
-      $ clang -include test.h test.c -o test
+  $ clang -include test.h test.c -o test
 
 The ``clang`` driver will first check if a PCH file for ``test.h`` is
 available; if so, the contents of ``test.h`` (and the files it includes)
@@ -733,19 +765,20 @@ directly processing the content of ``test.h``. This mirrors the behavior
 of GCC.
 
 .. note::
-   Clang does *not* automatically use PCH files for headers that are
-   directly included within a source file. For example:
 
-::
+  Clang does *not* automatically use PCH files for headers that are directly
+  included within a source file. For example:
 
-      $ clang -x c-header test.h -o test.h.pch
-      $ cat test.c
-      #include "test.h"
-      $ clang test.c -o test
+  .. code-block:: console
 
-In this example, ``clang`` will not automatically use the PCH file for
-``test.h`` since ``test.h`` was included directly in the source file and
-not specified on the command line using ``-include``.
+    $ clang -x c-header test.h -o test.h.pch
+    $ cat test.c
+    #include "test.h"
+    $ clang test.c -o test
+
+  In this example, ``clang`` will not automatically use the PCH file for
+  ``test.h`` since ``test.h`` was included directly in the source file and not
+  specified on the command line using :option:`-include`.
 
 Relocatable PCH Files
 ^^^^^^^^^^^^^^^^^^^^^
@@ -770,19 +803,19 @@ location.
 Building a relocatable precompiled header requires two additional
 arguments. First, pass the ``--relocatable-pch`` flag to indicate that
 the resulting PCH file should be relocatable. Second, pass
-``-isysroot /path/to/build``, which makes all includes for your library
+:option:`-isysroot /path/to/build`, which makes all includes for your library
 relative to the build directory. For example:
 
-::
+.. code-block:: console
 
-      # clang -x c-header --relocatable-pch -isysroot /path/to/build /path/to/build/mylib.h mylib.h.pch
+  # clang -x c-header --relocatable-pch -isysroot /path/to/build /path/to/build/mylib.h mylib.h.pch
 
 When loading the relocatable PCH file, the various headers used in the
 PCH file are found from the system header root. For example, ``mylib.h``
 can be found in ``/usr/include/mylib.h``. If the headers are installed
-in some other system root, the ``-isysroot`` option can be used provide
+in some other system root, the :option:`-isysroot` option can be used provide
 a different system root from which the headers will be based. For
-example, ``-isysroot /Developer/SDKs/MacOSX10.4u.sdk`` will look for
+example, :option:`-isysroot /Developer/SDKs/MacOSX10.4u.sdk` will look for
 ``mylib.h`` in ``/Developer/SDKs/MacOSX10.4u.sdk/usr/include/mylib.h``.
 
 Relocatable precompiled headers are intended to be used in a limited
@@ -896,17 +929,22 @@ are listed below.
 **-f[no-]thread-sanitizer**
    Deprecated synonym for :ref:`-f[no-]sanitize=thread
    <opt_fsanitize_thread>`.
-**-fcatch-undefined-behavior**
+
+.. option:: -fcatch-undefined-behavior
+
    Deprecated synonym for :ref:`-fsanitize=undefined
    <opt_fsanitize_undefined>`.
-**-fno-assume-sane-operator-new**
+
+.. option:: -fno-assume-sane-operator-new
+
    Don't assume that the C++'s new operator is sane.
 
    This option tells the compiler to do not assume that C++'s global
    new operator will always return a pointer that does not alias any
    other pointer when the function returns.
 
-**-ftrap-function=[name]**
+.. option:: -ftrap-function=[name]
+
    Instruct code generator to emit a function call to the specified
    function name for ``__builtin_trap()``.
 
@@ -919,7 +957,8 @@ are listed below.
    deeply embedded) where a trap cannot be properly handled, or when
    some custom behavior is desired.
 
-**-ftls-model=[model]**
+.. option:: -ftls-model=[model]
+
    Select which TLS model to use.
 
    Valid values are: ``global-dynamic``, ``local-dynamic``,
@@ -935,16 +974,22 @@ Controlling Size of Debug Information
 Debug info kind generated by Clang can be set by one of the flags listed
 below. If multiple flags are present, the last one is used.
 
-**-g0**: Don't generate any debug info (default).
+.. option:: -g0
 
-**-gline-tables-only**: Generate line number tables only.
+  Don't generate any debug info (default).
 
-This kind of debug info allows to obtain stack traces with function
-names, file names and line numbers (by such tools as gdb or addr2line).
-It doesn't contain any other data (e.g. description of local variables
-or function parameters).
+.. option:: -gline-tables-only
 
-**-g**: Generate complete debug info.
+  Generate line number tables only.
+
+  This kind of debug info allows to obtain stack traces with function names,
+  file names and line numbers (by such tools as ``gdb`` or ``addr2line``).  It
+  doesn't contain any other data (e.g. description of local variables or
+  function parameters).
+
+.. option:: -g
+
+  Generate complete debug info.
 
 .. _c:
 
@@ -957,7 +1002,7 @@ C99 floating-point pragmas.
 Extensions supported by clang
 -----------------------------
 
-See `clang language extensions <LanguageExtensions.html>`_.
+See :doc:`LanguageExtensions`.
 
 Differences between various standard modes
 ------------------------------------------
@@ -1025,13 +1070,13 @@ extensions are not implemented yet:
    anytime soon. In C++11 it can be emulated by assigning lambda
    functions to local variables, e.g:
 
-   ::
+   .. code-block:: cpp
 
-         auto const local_function = [&](int parameter) {
-           // Do something
-         };
-         ...
-         local_function(1);
+     auto const local_function = [&](int parameter) {
+       // Do something
+     };
+     ...
+     local_function(1);
 
 -  clang does not support global register variables; this is unlikely to
    be implemented soon because it requires additional LLVM backend
@@ -1119,11 +1164,15 @@ features <http://clang.llvm.org/cxx_status.html>`_ are also implemented.
 Controlling implementation limits
 ---------------------------------
 
-**-fconstexpr-depth=N**: Sets the limit for recursive constexpr function
-invocations to N. The default is 512.
+.. option:: -fconstexpr-depth=N
 
-**-ftemplate-depth=N**: Sets the limit for recursively nested template
-instantiations to N. The default is 1024.
+  Sets the limit for recursive constexpr function invocations to N.  The
+  default is 512.
+
+.. option:: -ftemplate-depth=N
+
+  Sets the limit for recursively nested template instantiations to N.  The
+  default is 1024.
 
 .. _objc:
 
@@ -1178,10 +1227,10 @@ experimental.
 
 Other platforms are completely unsupported at the moment. Adding the
 minimal support needed for parsing and semantic analysis on a new
-platform is quite easy; see lib/Basic/Targets.cpp in the clang source
+platform is quite easy; see ``lib/Basic/Targets.cpp`` in the clang source
 tree. This level of support is also sufficient for conversion to LLVM IR
 for simple programs. Proper support for conversion to LLVM IR requires
-adding code to lib/CodeGen/CGCall.cpp at the moment; this is likely to
+adding code to ``lib/CodeGen/CGCall.cpp`` at the moment; this is likely to
 change soon, though. Generating assembly requires a suitable LLVM
 backend.
 
