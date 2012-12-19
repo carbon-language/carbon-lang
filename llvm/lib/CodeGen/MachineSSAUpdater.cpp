@@ -109,7 +109,7 @@ unsigned LookForIdenticalPHI(MachineBasicBlock *BB,
 /// a value of the given register class at the start of the specified basic
 /// block. It returns the virtual register defined by the instruction.
 static
-MachineInstr *InsertNewDef(unsigned Opcode,
+MachineInstrBuilder InsertNewDef(unsigned Opcode,
                            MachineBasicBlock *BB, MachineBasicBlock::iterator I,
                            const TargetRegisterClass *RC,
                            MachineRegisterInfo *MRI,
@@ -183,13 +183,12 @@ unsigned MachineSSAUpdater::GetValueInMiddleOfBlock(MachineBasicBlock *BB) {
 
   // Otherwise, we do need a PHI: insert one now.
   MachineBasicBlock::iterator Loc = BB->empty() ? BB->end() : BB->begin();
-  MachineInstr *InsertedPHI = InsertNewDef(TargetOpcode::PHI, BB,
-                                           Loc, VRC, MRI, TII);
+  MachineInstrBuilder InsertedPHI = InsertNewDef(TargetOpcode::PHI, BB,
+                                                 Loc, VRC, MRI, TII);
 
   // Fill in all the predecessors of the PHI.
-  MachineInstrBuilder MIB(InsertedPHI);
   for (unsigned i = 0, e = PredValues.size(); i != e; ++i)
-    MIB.addReg(PredValues[i].second).addMBB(PredValues[i].first);
+    InsertedPHI.addReg(PredValues[i].second).addMBB(PredValues[i].first);
 
   // See if the PHI node can be merged to a single value.  This can happen in
   // loop cases when we get a PHI of itself and one other value.

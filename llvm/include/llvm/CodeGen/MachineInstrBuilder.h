@@ -46,7 +46,6 @@ class MachineInstrBuilder {
   MachineInstr *MI;
 public:
   MachineInstrBuilder() : MF(0), MI(0) {}
-  explicit MachineInstrBuilder(MachineInstr *mi) : MF(0), MI(mi) {}
 
   /// Create a MachineInstrBuilder for manipulating an existing instruction.
   /// F must be the machine function  that was used to allocate I.

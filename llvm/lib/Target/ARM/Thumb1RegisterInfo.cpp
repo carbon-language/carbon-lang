@@ -390,6 +390,7 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc dl = MI.getDebugLoc();
+  MachineInstrBuilder MIB(*MBB.getParent(), &MI);
   unsigned Opcode = MI.getOpcode();
   const MCInstrDesc &Desc = MI.getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
@@ -417,7 +418,6 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
       MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
       // Remove offset
       MI.RemoveOperand(FrameRegIdx+1);
-      MachineInstrBuilder MIB(&MI);
       return true;
     }
 
@@ -428,7 +428,6 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
       if (Opcode == ARM::tADDi3) {
         MI.setDesc(TII.get(Opcode));
         removeOperands(MI, FrameRegIdx);
-        MachineInstrBuilder MIB(&MI);
         AddDefaultPred(AddDefaultT1CC(MIB).addReg(FrameReg)
                        .addImm(Offset / Scale));
       } else {
@@ -457,7 +456,6 @@ rewriteFrameIndex(MachineBasicBlock::iterator II, unsigned FrameRegIdx,
       if (Opcode == ARM::tADDi3) {
         MI.setDesc(TII.get(Opcode));
         removeOperands(MI, FrameRegIdx);
-        MachineInstrBuilder MIB(&MI);
         AddDefaultPred(AddDefaultT1CC(MIB).addReg(FrameReg).addImm(Mask));
       } else {
         MI.getOperand(FrameRegIdx).ChangeToRegister(FrameReg, false);
@@ -603,6 +601,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   MachineFunction &MF = *MBB.getParent();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
   DebugLoc dl = MI.getDebugLoc();
+  MachineInstrBuilder MIB(*MBB.getParent(), &MI);
 
   while (!MI.getOperand(i).isFI()) {
     ++i;
@@ -719,8 +718,6 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
 
   // Add predicate back if it's needed.
-  if (MI.isPredicable()) {
-    MachineInstrBuilder MIB(&MI);
+  if (MI.isPredicable())
     AddDefaultPred(MIB);
-  }
 }

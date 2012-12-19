@@ -3525,43 +3525,44 @@ optimizeLoadInstr(MachineInstr *MI, const MachineRegisterInfo *MRI,
 /// to:
 ///   %xmm4 = PXORrr %xmm4<undef>, %xmm4<undef>
 ///
-static bool Expand2AddrUndef(MachineInstr *MI, const MCInstrDesc &Desc) {
+static bool Expand2AddrUndef(MachineInstrBuilder &MIB,
+                             const MCInstrDesc &Desc) {
   assert(Desc.getNumOperands() == 3 && "Expected two-addr instruction.");
-  unsigned Reg = MI->getOperand(0).getReg();
-  MI->setDesc(Desc);
+  unsigned Reg = MIB->getOperand(0).getReg();
+  MIB->setDesc(Desc);
 
   // MachineInstr::addOperand() will insert explicit operands before any
   // implicit operands.
-  MachineInstrBuilder(MI).addReg(Reg, RegState::Undef)
-                         .addReg(Reg, RegState::Undef);
+  MIB.addReg(Reg, RegState::Undef).addReg(Reg, RegState::Undef);
   // But we don't trust that.
-  assert(MI->getOperand(1).getReg() == Reg &&
-         MI->getOperand(2).getReg() == Reg && "Misplaced operand");
+  assert(MIB->getOperand(1).getReg() == Reg &&
+         MIB->getOperand(2).getReg() == Reg && "Misplaced operand");
   return true;
 }
 
 bool X86InstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const {
   bool HasAVX = TM.getSubtarget<X86Subtarget>().hasAVX();
+  MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
   switch (MI->getOpcode()) {
   case X86::SETB_C8r:
-    return Expand2AddrUndef(MI, get(X86::SBB8rr));
+    return Expand2AddrUndef(MIB, get(X86::SBB8rr));
   case X86::SETB_C16r:
-    return Expand2AddrUndef(MI, get(X86::SBB16rr));
+    return Expand2AddrUndef(MIB, get(X86::SBB16rr));
   case X86::SETB_C32r:
-    return Expand2AddrUndef(MI, get(X86::SBB32rr));
+    return Expand2AddrUndef(MIB, get(X86::SBB32rr));
   case X86::SETB_C64r:
-    return Expand2AddrUndef(MI, get(X86::SBB64rr));
+    return Expand2AddrUndef(MIB, get(X86::SBB64rr));
   case X86::V_SET0:
   case X86::FsFLD0SS:
   case X86::FsFLD0SD:
-    return Expand2AddrUndef(MI, get(HasAVX ? X86::VXORPSrr : X86::XORPSrr));
+    return Expand2AddrUndef(MIB, get(HasAVX ? X86::VXORPSrr : X86::XORPSrr));
   case X86::AVX_SET0:
     assert(HasAVX && "AVX not supported");
-    return Expand2AddrUndef(MI, get(X86::VXORPSYrr));
+    return Expand2AddrUndef(MIB, get(X86::VXORPSYrr));
   case X86::V_SETALLONES:
-    return Expand2AddrUndef(MI, get(HasAVX ? X86::VPCMPEQDrr : X86::PCMPEQDrr));
+    return Expand2AddrUndef(MIB, get(HasAVX ? X86::VPCMPEQDrr : X86::PCMPEQDrr));
   case X86::AVX2_SETALLONES:
-    return Expand2AddrUndef(MI, get(X86::VPCMPEQDYrr));
+    return Expand2AddrUndef(MIB, get(X86::VPCMPEQDYrr));
   case X86::TEST8ri_NOREX:
     MI->setDesc(get(X86::TEST8ri));
     return true;
@@ -3587,9 +3588,10 @@ static MachineInstr *FuseTwoAddrInst(MachineFunction &MF, unsigned Opcode,
                                      MachineInstr *MI,
                                      const TargetInstrInfo &TII) {
   // Create the base instruction with the memory operand as the first part.
+  // Omit the implicit operands, something BuildMI can't do.
   MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode),
                                               MI->getDebugLoc(), true);
-  MachineInstrBuilder MIB(NewMI);
+  MachineInstrBuilder MIB(MF, NewMI);
   unsigned NumAddrOps = MOs.size();
   for (unsigned i = 0; i != NumAddrOps; ++i)
     MIB.addOperand(MOs[i]);
@@ -3613,9 +3615,10 @@ static MachineInstr *FuseInst(MachineFunction &MF,
                               unsigned Opcode, unsigned OpNo,
                               const SmallVectorImpl<MachineOperand> &MOs,
                               MachineInstr *MI, const TargetInstrInfo &TII) {
+  // Omit the implicit operands, something BuildMI can't do.
   MachineInstr *NewMI = MF.CreateMachineInstr(TII.get(Opcode),
                                               MI->getDebugLoc(), true);
-  MachineInstrBuilder MIB(NewMI);
+  MachineInstrBuilder MIB(MF, NewMI);
 
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = MI->getOperand(i);
@@ -4155,7 +4158,7 @@ bool X86InstrInfo::unfoldMemoryOperand(MachineFunction &MF, MachineInstr *MI,
 
   // Emit the data processing instruction.
   MachineInstr *DataMI = MF.CreateMachineInstr(MCID, MI->getDebugLoc(), true);
-  MachineInstrBuilder MIB(DataMI);
+  MachineInstrBuilder MIB(MF, DataMI);
 
   if (FoldedStore)
     MIB.addReg(Reg, RegState::Define);

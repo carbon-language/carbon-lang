@@ -408,7 +408,7 @@ bool llvm::rewriteT2FrameIndex(MachineInstr &MI, unsigned FrameRegIdx,
       // Remove offset and remaining explicit predicate operands.
       do MI.RemoveOperand(FrameRegIdx+1);
       while (MI.getNumOperands() > FrameRegIdx+1);
-      MachineInstrBuilder MIB(&MI);
+      MachineInstrBuilder MIB(*MI.getParent()->getParent(), &MI);
       AddDefaultPred(MIB);
       return true;
     }

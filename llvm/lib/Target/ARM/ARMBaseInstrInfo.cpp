@@ -1154,6 +1154,7 @@ bool ARMBaseInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const{
 
   // All clear, widen the COPY.
   DEBUG(dbgs() << "widening:    " << *MI);
+  MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
 
   // Get rid of the old <imp-def> of DstRegD.  Leave it if it defines a Q-reg
   // or some other super-register.
@@ -1165,14 +1166,14 @@ bool ARMBaseInstrInfo::expandPostRAPseudo(MachineBasicBlock::iterator MI) const{
   MI->setDesc(get(ARM::VMOVD));
   MI->getOperand(0).setReg(DstRegD);
   MI->getOperand(1).setReg(SrcRegD);
-  AddDefaultPred(MachineInstrBuilder(MI));
+  AddDefaultPred(MIB);
 
   // We are now reading SrcRegD instead of SrcRegS.  This may upset the
   // register scavenger and machine verifier, so we need to indicate that we
   // are reading an undefined value from SrcRegD, but a proper value from
   // SrcRegS.
   MI->getOperand(1).setIsUndef();
-  MachineInstrBuilder(MI).addReg(SrcRegS, RegState::Implicit);
+  MIB.addReg(SrcRegS, RegState::Implicit);
 
   // SrcRegD may actually contain an unrelated value in the ssub_1
   // sub-register.  Don't kill it.  Only kill the ssub_0 sub-register.
@@ -3819,7 +3820,7 @@ void
 ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
   unsigned DstReg, SrcReg, DReg;
   unsigned Lane;
-  MachineInstrBuilder MIB(MI);
+  MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
   const TargetRegisterInfo *TRI = &getRegisterInfo();
   switch (MI->getOpcode()) {
     default:
