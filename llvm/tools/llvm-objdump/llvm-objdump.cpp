@@ -28,7 +28,6 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
-#include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -73,9 +72,9 @@ static cl::opt<bool>
 SymbolTable("t", cl::desc("Display the symbol table"));
 
 static cl::opt<bool>
-MachOOpt("macho", cl::desc("Use MachO specific object file parser"));
+MachO("macho", cl::desc("Use MachO specific object file parser"));
 static cl::alias
-MachOm("m", cl::desc("Alias for --macho"), cl::aliasopt(MachOOpt));
+MachOm("m", cl::desc("Alias for --macho"), cl::aliasopt(MachO));
 
 cl::opt<std::string>
 llvm::TripleName("triple", cl::desc("Target triple to disassemble for, "
@@ -242,18 +241,9 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
     // Sort relocations by address.
     std::sort(Rels.begin(), Rels.end(), RelocAddressLess);
 
-    StringRef SegmentName = "";
-    if (const MachOObjectFile *MachO = dyn_cast<const MachOObjectFile>(Obj)) {
-      DataRefImpl DR = i->getRawDataRefImpl();
-      if (error(MachO->getSectionFinalSegmentName(DR, SegmentName)))
-        break;
-    }
     StringRef name;
     if (error(i->getName(name))) break;
-    outs() << "Disassembly of section ";
-    if (!SegmentName.empty())
-      outs() << SegmentName << ",";
-    outs() << name << ':';
+    outs() << "Disassembly of section " << name << ':';
 
     // If the section has no symbols just insert a dummy one and disassemble
     // the whole section.
@@ -577,13 +567,6 @@ static void PrintSymbolTable(const ObjectFile *o) {
       else if (Section == o->end_sections())
         outs() << "*UND*";
       else {
-        if (const MachOObjectFile *MachO = dyn_cast<const MachOObjectFile>(o)) {
-          StringRef SegmentName;
-          DataRefImpl DR = Section->getRawDataRefImpl();
-          if (error(MachO->getSectionFinalSegmentName(DR, SegmentName)))
-            SegmentName = "";
-          outs() << SegmentName << ",";
-        }
         StringRef SectionName;
         if (error(Section->getName(SectionName)))
           SectionName = "";
@@ -657,7 +640,7 @@ static void DumpInput(StringRef file) {
     return;
   }
 
-  if (MachOOpt && Disassemble) {
+  if (MachO && Disassemble) {
     DisassembleInputMachO(file);
     return;
   }

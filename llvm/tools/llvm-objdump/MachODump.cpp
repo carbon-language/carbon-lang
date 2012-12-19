@@ -334,14 +334,8 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   for (unsigned SectIdx = 0; SectIdx != Sections.size(); SectIdx++) {
     StringRef SectName;
     if (Sections[SectIdx].getName(SectName) ||
-        SectName != "__text")
+        SectName.compare("__TEXT,__text"))
       continue; // Skip non-text sections
-
-    StringRef SegmentName;
-    DataRefImpl DR = Sections[SectIdx].getRawDataRefImpl();
-    if (MachOOF->getSectionFinalSegmentName(DR, SegmentName) ||
-        SegmentName != "__TEXT")
-      continue;
 
     // Insert the functions from the function starts segment into our map.
     uint64_t VMAddr;

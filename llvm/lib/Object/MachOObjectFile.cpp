@@ -473,43 +473,28 @@ static bool is64BitLoadCommand(const MachOObject *MachOObj, DataRefImpl DRI) {
   return false;
 }
 
-static StringRef parseSegmentOrSectionName(const char *P) {
-  if (P[15] == 0)
-    // Null terminated.
-    return P;
-  // Not null terminated, so this is a 16 char string.
-  return StringRef(P, 16);
-}
-
 error_code MachOObjectFile::getSectionName(DataRefImpl DRI,
                                            StringRef &Result) const {
+  // FIXME: thread safety.
+  static char result[34];
   if (is64BitLoadCommand(MachOObj.get(), DRI)) {
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
     InMemoryStruct<macho::Section64> Sect;
     MachOObj->ReadSection64(LCI, DRI.d.b, Sect);
-    Result = parseSegmentOrSectionName(Sect->Name);
+
+    strcpy(result, Sect->SegmentName);
+    strcat(result, ",");
+    strcat(result, Sect->Name);
   } else {
     LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(DRI.d.a);
     InMemoryStruct<macho::Section> Sect;
     MachOObj->ReadSection(LCI, DRI.d.b, Sect);
-    Result = parseSegmentOrSectionName(Sect->Name);
-  }
-  return object_error::success;
-}
 
-error_code MachOObjectFile::getSectionFinalSegmentName(DataRefImpl Sec,
-                                                       StringRef &Res) const {
-  if (is64BitLoadCommand(MachOObj.get(), Sec)) {
-    LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(Sec.d.a);
-    InMemoryStruct<macho::Section64> Sect;
-    MachOObj->ReadSection64(LCI, Sec.d.b, Sect);
-    Res = parseSegmentOrSectionName(Sect->SegmentName);
-  } else {
-    LoadCommandInfo LCI = MachOObj->getLoadCommandInfo(Sec.d.a);
-    InMemoryStruct<macho::Section> Sect;
-    MachOObj->ReadSection(LCI, Sec.d.b, Sect);
-    Res = parseSegmentOrSectionName(Sect->SegmentName);
+    strcpy(result, Sect->SegmentName);
+    strcat(result, ",");
+    strcat(result, Sect->Name);
   }
+  Result = StringRef(result);
   return object_error::success;
 }
 
