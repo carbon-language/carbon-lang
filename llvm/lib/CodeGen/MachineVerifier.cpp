@@ -597,7 +597,7 @@ MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
       ++MBBI;
       if (MBBI == MF->end()) {
         report("MBB conditionally falls through out of function!", MBB);
-      } if (MBB->succ_size() == 1) {
+      } else if (MBB->succ_size() == 1) {
         // A conditional branch with only one successor is weird, but allowed.
         if (&*MBBI != TBB)
           report("MBB exits via conditional branch/fall-through but only has "
