@@ -2414,36 +2414,36 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
 
     // If the condition is not legal, see if we can find an equivalent one
     // which is legal.
-    if (!isCondCodeLegal(Cond, N0.getValueType())) {
+    if (!isCondCodeLegal(Cond, N0.getSimpleValueType())) {
       // If the comparison was an awkward floating-point == or != and one of
       // the comparison operands is infinity or negative infinity, convert the
       // condition to a less-awkward <= or >=.
       if (CFP->getValueAPF().isInfinity()) {
         if (CFP->getValueAPF().isNegative()) {
           if (Cond == ISD::SETOEQ &&
-              isCondCodeLegal(ISD::SETOLE, N0.getValueType()))
+              isCondCodeLegal(ISD::SETOLE, N0.getSimpleValueType()))
             return DAG.getSetCC(dl, VT, N0, N1, ISD::SETOLE);
           if (Cond == ISD::SETUEQ &&
-              isCondCodeLegal(ISD::SETOLE, N0.getValueType()))
+              isCondCodeLegal(ISD::SETOLE, N0.getSimpleValueType()))
             return DAG.getSetCC(dl, VT, N0, N1, ISD::SETULE);
           if (Cond == ISD::SETUNE &&
-              isCondCodeLegal(ISD::SETUGT, N0.getValueType()))
+              isCondCodeLegal(ISD::SETUGT, N0.getSimpleValueType()))
             return DAG.getSetCC(dl, VT, N0, N1, ISD::SETUGT);
           if (Cond == ISD::SETONE &&
-              isCondCodeLegal(ISD::SETUGT, N0.getValueType()))
+              isCondCodeLegal(ISD::SETUGT, N0.getSimpleValueType()))
             return DAG.getSetCC(dl, VT, N0, N1, ISD::SETOGT);
         } else {
           if (Cond == ISD::SETOEQ &&
-              isCondCodeLegal(ISD::SETOGE, N0.getValueType()))
+              isCondCodeLegal(ISD::SETOGE, N0.getSimpleValueType()))
             return DAG.getSetCC(dl, VT, N0, N1, ISD::SETOGE);
           if (Cond == ISD::SETUEQ &&
-              isCondCodeLegal(ISD::SETOGE, N0.getValueType()))
+              isCondCodeLegal(ISD::SETOGE, N0.getSimpleValueType()))
             return DAG.getSetCC(dl, VT, N0, N1, ISD::SETUGE);
           if (Cond == ISD::SETUNE &&
-              isCondCodeLegal(ISD::SETULT, N0.getValueType()))
+              isCondCodeLegal(ISD::SETULT, N0.getSimpleValueType()))
             return DAG.getSetCC(dl, VT, N0, N1, ISD::SETULT);
           if (Cond == ISD::SETONE &&
-              isCondCodeLegal(ISD::SETULT, N0.getValueType()))
+              isCondCodeLegal(ISD::SETULT, N0.getSimpleValueType()))
             return DAG.getSetCC(dl, VT, N0, N1, ISD::SETOLT);
         }
       }
