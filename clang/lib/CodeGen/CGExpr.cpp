@@ -2020,10 +2020,10 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
     llvm::FunctionType::get(CGM.VoidTy, ArgTypes, false);
   llvm::AttrBuilder B;
   if (!Recover) {
-    B.addAttribute(llvm::Attributes::NoReturn)
-     .addAttribute(llvm::Attributes::NoUnwind);
+    B.addAttribute(llvm::Attribute::NoReturn)
+     .addAttribute(llvm::Attribute::NoUnwind);
   }
-  B.addAttribute(llvm::Attributes::UWTable);
+  B.addAttribute(llvm::Attribute::UWTable);
 
   // Checks that have two variants use a suffix to differentiate them
   bool NeedsAbortSuffix = (RecoverKind != CRK_Unrecoverable) &&
@@ -2032,7 +2032,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
                               (NeedsAbortSuffix? "_abort" : "")).str();
   llvm::Value *Fn =
     CGM.CreateRuntimeFunction(FnType, FunctionName,
-                              llvm::Attributes::get(getLLVMContext(), B));
+                              llvm::Attribute::get(getLLVMContext(), B));
   llvm::CallInst *HandlerCall = Builder.CreateCall(Fn, Args);
   if (Recover) {
     Builder.CreateBr(Cont);

@@ -1506,7 +1506,7 @@ private:
   /// \brief Is this Declarator a redeclaration?
   bool Redeclaration : 1;
 
-  /// Attrs - Attributes.
+  /// Attrs - Attribute.
   ParsedAttributes Attrs;
 
   /// \brief The asm label, if specified.

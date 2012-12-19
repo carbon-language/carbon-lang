@@ -1052,7 +1052,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
                                  const ParsedTemplateInfo &TemplateInfo,
                                  AccessSpecifier AS, 
                                  bool EnteringContext, DeclSpecContext DSC, 
-                                 ParsedAttributesWithRange &Attributes) {
+                                 ParsedAttributesWithRange &Attribute) {
   DeclSpec::TST TagType;
   if (TagTokKind == tok::kw_struct)
     TagType = DeclSpec::TST_struct;
@@ -1250,7 +1250,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // For these, DSC is DSC_type_specifier.
 
   // If there are attributes after class name, parse them.
-  MaybeParseCXX0XAttributes(Attributes);
+  MaybeParseCXX0XAttributes(Attribute);
 
   Sema::TagUseKind TUK;
   if (DSC == DSC_trailing)
@@ -1324,7 +1324,7 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // to caller to handle.
   // FIXME: provide fix-it hints if we can.
   if (TUK != Sema::TUK_Reference)
-    ProhibitAttributes(Attributes);
+    ProhibitAttributes(Attribute);
 
   // If this is an elaborated type specifier, and we delayed
   // diagnostics before, just merge them into the current pool.
@@ -2258,7 +2258,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     HasInitializer = false;
     DeclaratorInfo.setCommaLoc(CommaLoc);
 
-    // Attributes are only allowed on the second declarator.
+    // Attribute are only allowed on the second declarator.
     MaybeParseGNUAttributes(DeclaratorInfo);
 
     if (Tok.isNot(tok::colon))

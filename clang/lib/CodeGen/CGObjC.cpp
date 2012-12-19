@@ -1713,7 +1713,7 @@ static llvm::Constant *createARCRuntimeFunction(CodeGenModule &CGM,
       f->setLinkage(llvm::Function::ExternalWeakLinkage);
     // set nonlazybind attribute for these APIs for performance.
     if (fnName == "objc_retain" || fnName  == "objc_release")
-      f->addFnAttr(llvm::Attributes::NonLazyBind);
+      f->addFnAttr(llvm::Attribute::NonLazyBind);
   }
 
   return fn;

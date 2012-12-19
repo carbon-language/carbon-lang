@@ -894,10 +894,10 @@ void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
 
   if (!OID)
     return;
-  unsigned Attributes = PD->getPropertyAttributes();
+  unsigned Attribute = PD->getPropertyAttributes();
   if (mustSynthesizeSetterGetterMethod(IMD, PD, true /*getter*/)) {
-    bool GenGetProperty = !(Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) &&
-                          (Attributes & (ObjCPropertyDecl::OBJC_PR_retain | 
+    bool GenGetProperty = !(Attribute & ObjCPropertyDecl::OBJC_PR_nonatomic) &&
+                          (Attribute & (ObjCPropertyDecl::OBJC_PR_retain | 
                                          ObjCPropertyDecl::OBJC_PR_copy));
     std::string Getr;
     if (GenGetProperty && !objcGetPropertyDefined) {
@@ -956,7 +956,7 @@ void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
 
   // Generate the 'setter' function.
   std::string Setr;
-  bool GenSetProperty = Attributes & (ObjCPropertyDecl::OBJC_PR_retain | 
+  bool GenSetProperty = Attribute & (ObjCPropertyDecl::OBJC_PR_retain | 
                                       ObjCPropertyDecl::OBJC_PR_copy);
   if (GenSetProperty && !objcSetPropertyDefined) {
     objcSetPropertyDefined = true;
@@ -976,11 +976,11 @@ void RewriteModernObjC::RewritePropertyImplDecl(ObjCPropertyImplDecl *PID,
     Setr += ", (id)";
     Setr += PD->getName();
     Setr += ", ";
-    if (Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic)
+    if (Attribute & ObjCPropertyDecl::OBJC_PR_nonatomic)
       Setr += "0, ";
     else
       Setr += "1, ";
-    if (Attributes & ObjCPropertyDecl::OBJC_PR_copy)
+    if (Attribute & ObjCPropertyDecl::OBJC_PR_copy)
       Setr += "1)";
     else
       Setr += "0)";

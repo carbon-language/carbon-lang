@@ -121,23 +121,23 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                           bool *isOverridingProperty,
                           tok::ObjCKeywordKind MethodImplKind,
                           DeclContext *lexicalDC) {
-  unsigned Attributes = ODS.getPropertyAttributes();
+  unsigned Attribute = ODS.getPropertyAttributes();
   TypeSourceInfo *TSI = GetTypeForDeclarator(FD.D, S);
   QualType T = TSI->getType();
-  Attributes |= deduceWeakPropertyFromType(*this, T);
+  Attribute |= deduceWeakPropertyFromType(*this, T);
   
-  bool isReadWrite = ((Attributes & ObjCDeclSpec::DQ_PR_readwrite) ||
+  bool isReadWrite = ((Attribute & ObjCDeclSpec::DQ_PR_readwrite) ||
                       // default is readwrite!
-                      !(Attributes & ObjCDeclSpec::DQ_PR_readonly));
+                      !(Attribute & ObjCDeclSpec::DQ_PR_readonly));
   // property is defaulted to 'assign' if it is readwrite and is
   // not retain or copy
-  bool isAssign = ((Attributes & ObjCDeclSpec::DQ_PR_assign) ||
+  bool isAssign = ((Attribute & ObjCDeclSpec::DQ_PR_assign) ||
                    (isReadWrite &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_retain) &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_strong) &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_copy) &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained) &&
-                    !(Attributes & ObjCDeclSpec::DQ_PR_weak)));
+                    !(Attribute & ObjCDeclSpec::DQ_PR_retain) &&
+                    !(Attribute & ObjCDeclSpec::DQ_PR_strong) &&
+                    !(Attribute & ObjCDeclSpec::DQ_PR_copy) &&
+                    !(Attribute & ObjCDeclSpec::DQ_PR_unsafe_unretained) &&
+                    !(Attribute & ObjCDeclSpec::DQ_PR_weak)));
 
   // Proceed with constructing the ObjCPropertDecls.
   ObjCContainerDecl *ClassDecl = cast<ObjCContainerDecl>(CurContext);
@@ -146,12 +146,12 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       Decl *Res = HandlePropertyInClassExtension(S, AtLoc, LParenLoc,
                                            FD, GetterSel, SetterSel,
                                            isAssign, isReadWrite,
-                                           Attributes,
+                                           Attribute,
                                            ODS.getPropertyAttributes(),
                                            isOverridingProperty, TSI,
                                            MethodImplKind);
       if (Res) {
-        CheckObjCPropertyAttributes(Res, AtLoc, Attributes, false);
+        CheckObjCPropertyAttributes(Res, AtLoc, Attribute, false);
         if (getLangOpts().ObjCAutoRefCount)
           checkARCPropertyDecl(*this, cast<ObjCPropertyDecl>(Res));
       }
@@ -162,14 +162,14 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   ObjCPropertyDecl *Res = CreatePropertyDecl(S, ClassDecl, AtLoc, LParenLoc, FD,
                                              GetterSel, SetterSel,
                                              isAssign, isReadWrite,
-                                             Attributes,
+                                             Attribute,
                                              ODS.getPropertyAttributes(),
                                              TSI, MethodImplKind);
   if (lexicalDC)
     Res->setLexicalDeclContext(lexicalDC);
 
   // Validate the attributes on the @property.
-  CheckObjCPropertyAttributes(Res, AtLoc, Attributes, 
+  CheckObjCPropertyAttributes(Res, AtLoc, Attribute, 
                               (isa<ObjCInterfaceDecl>(ClassDecl) ||
                                isa<ObjCProtocolDecl>(ClassDecl)));
 
@@ -181,31 +181,31 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
 }
 
 static ObjCPropertyDecl::PropertyAttributeKind
-makePropertyAttributesAsWritten(unsigned Attributes) {
+makePropertyAttributesAsWritten(unsigned Attribute) {
   unsigned attributesAsWritten = 0;
-  if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
+  if (Attribute & ObjCDeclSpec::DQ_PR_readonly)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_readonly;
-  if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
+  if (Attribute & ObjCDeclSpec::DQ_PR_readwrite)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_readwrite;
-  if (Attributes & ObjCDeclSpec::DQ_PR_getter)
+  if (Attribute & ObjCDeclSpec::DQ_PR_getter)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_getter;
-  if (Attributes & ObjCDeclSpec::DQ_PR_setter)
+  if (Attribute & ObjCDeclSpec::DQ_PR_setter)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_setter;
-  if (Attributes & ObjCDeclSpec::DQ_PR_assign)
+  if (Attribute & ObjCDeclSpec::DQ_PR_assign)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_assign;
-  if (Attributes & ObjCDeclSpec::DQ_PR_retain)
+  if (Attribute & ObjCDeclSpec::DQ_PR_retain)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_retain;
-  if (Attributes & ObjCDeclSpec::DQ_PR_strong)
+  if (Attribute & ObjCDeclSpec::DQ_PR_strong)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_strong;
-  if (Attributes & ObjCDeclSpec::DQ_PR_weak)
+  if (Attribute & ObjCDeclSpec::DQ_PR_weak)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_weak;
-  if (Attributes & ObjCDeclSpec::DQ_PR_copy)
+  if (Attribute & ObjCDeclSpec::DQ_PR_copy)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_copy;
-  if (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained)
+  if (Attribute & ObjCDeclSpec::DQ_PR_unsafe_unretained)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_unsafe_unretained;
-  if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
+  if (Attribute & ObjCDeclSpec::DQ_PR_nonatomic)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_nonatomic;
-  if (Attributes & ObjCDeclSpec::DQ_PR_atomic)
+  if (Attribute & ObjCDeclSpec::DQ_PR_atomic)
     attributesAsWritten |= ObjCPropertyDecl::OBJC_PR_atomic;
   
   return (ObjCPropertyDecl::PropertyAttributeKind)attributesAsWritten;
@@ -259,7 +259,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
                                      Selector GetterSel, Selector SetterSel,
                                      const bool isAssign,
                                      const bool isReadWrite,
-                                     const unsigned Attributes,
+                                     const unsigned Attribute,
                                      const unsigned AttributesAsWritten,
                                      bool *isOverridingProperty,
                                      TypeSourceInfo *T,
@@ -292,9 +292,9 @@ Sema::HandlePropertyInClassExtension(Scope *S,
                              PropertyId, AtLoc, LParenLoc, T);
   PDecl->setPropertyAttributesAsWritten(
                           makePropertyAttributesAsWritten(AttributesAsWritten));
-  if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
+  if (Attribute & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
-  if (Attributes & ObjCDeclSpec::DQ_PR_readwrite)
+  if (Attribute & ObjCDeclSpec::DQ_PR_readwrite)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
   // Set setter/getter selector name. Needed later.
   PDecl->setGetterName(GetterSel);
@@ -320,7 +320,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
     ObjCPropertyDecl *PrimaryPDecl =
       CreatePropertyDecl(S, CCPrimary, AtLoc, LParenLoc,
                          FD, GetterSel, SetterSel, isAssign, isReadWrite,
-                         Attributes,AttributesAsWritten, T, MethodImplKind, DC);
+                         Attribute,AttributesAsWritten, T, MethodImplKind, DC);
 
     // A case of continuation class adding a new property in the class. This
     // is not what it was meant for. However, gcc supports it and so should we.
@@ -359,7 +359,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   unsigned PIkind = PIDecl->getPropertyAttributesAsWritten();
   if (isReadWrite && (PIkind & ObjCPropertyDecl::OBJC_PR_readonly)) {
     PIkind |= deduceWeakPropertyFromType(*this, PIDecl->getType());
-    unsigned ClassExtensionMemoryModel = getOwnershipRule(Attributes);
+    unsigned ClassExtensionMemoryModel = getOwnershipRule(Attribute);
     unsigned PrimaryClassMemoryModel = getOwnershipRule(PIkind);
     if (PrimaryClassMemoryModel && ClassExtensionMemoryModel &&
         (PrimaryClassMemoryModel != ClassExtensionMemoryModel)) {
@@ -391,11 +391,11 @@ Sema::HandlePropertyInClassExtension(Scope *S,
       PIDecl = cast<ObjCPropertyDecl>(ProtocolPtrTy);
     }
     PIDecl->makeitReadWriteAttribute();
-    if (Attributes & ObjCDeclSpec::DQ_PR_retain)
+    if (Attribute & ObjCDeclSpec::DQ_PR_retain)
       PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
-    if (Attributes & ObjCDeclSpec::DQ_PR_strong)
+    if (Attribute & ObjCDeclSpec::DQ_PR_strong)
       PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
-    if (Attributes & ObjCDeclSpec::DQ_PR_copy)
+    if (Attribute & ObjCDeclSpec::DQ_PR_copy)
       PIDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
     PIDecl->setSetterName(SetterSel);
   } else {
@@ -404,7 +404,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
     // This is a common error where the user often intended the original
     // declaration to be readonly.
     unsigned diag =
-      (Attributes & ObjCDeclSpec::DQ_PR_readwrite) &&
+      (Attribute & ObjCDeclSpec::DQ_PR_readwrite) &&
       (PIkind & ObjCPropertyDecl::OBJC_PR_readwrite)
       ? diag::err_use_continuation_class_redeclaration_readwrite
       : diag::err_use_continuation_class;
@@ -432,7 +432,7 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
                                            Selector SetterSel,
                                            const bool isAssign,
                                            const bool isReadWrite,
-                                           const unsigned Attributes,
+                                           const unsigned Attribute,
                                            const unsigned AttributesAsWritten,
                                            TypeSourceInfo *TInfo,
                                            tok::ObjCKeywordKind MethodImplKind,
@@ -443,7 +443,7 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
   // Issue a warning if property is 'assign' as default and its object, which is
   // gc'able conforms to NSCopying protocol
   if (getLangOpts().getGC() != LangOptions::NonGC &&
-      isAssign && !(Attributes & ObjCDeclSpec::DQ_PR_assign))
+      isAssign && !(Attribute & ObjCDeclSpec::DQ_PR_assign))
     if (const ObjCObjectPointerType *ObjPtrTy =
           T->getAs<ObjCObjectPointerType>()) {
       ObjCInterfaceDecl *IDecl = ObjPtrTy->getObjectType()->getInterface();
@@ -487,44 +487,44 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
   PDecl->setPropertyAttributesAsWritten(
                           makePropertyAttributesAsWritten(AttributesAsWritten));
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
+  if (Attribute & ObjCDeclSpec::DQ_PR_readonly)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readonly);
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_getter)
+  if (Attribute & ObjCDeclSpec::DQ_PR_getter)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_getter);
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_setter)
+  if (Attribute & ObjCDeclSpec::DQ_PR_setter)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_setter);
 
   if (isReadWrite)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_readwrite);
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_retain)
+  if (Attribute & ObjCDeclSpec::DQ_PR_retain)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_retain);
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_strong)
+  if (Attribute & ObjCDeclSpec::DQ_PR_strong)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_weak)
+  if (Attribute & ObjCDeclSpec::DQ_PR_weak)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_weak);
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_copy)
+  if (Attribute & ObjCDeclSpec::DQ_PR_copy)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_copy);
 
-  if (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained)
+  if (Attribute & ObjCDeclSpec::DQ_PR_unsafe_unretained)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
 
   if (isAssign)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
 
   // In the semantic attributes, one of nonatomic or atomic is always set.
-  if (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)
+  if (Attribute & ObjCDeclSpec::DQ_PR_nonatomic)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_nonatomic);
   else
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_atomic);
 
   // 'unsafe_unretained' is alias for 'assign'.
-  if (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained)
+  if (Attribute & ObjCDeclSpec::DQ_PR_unsafe_unretained)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_assign);
   if (isAssign)
     PDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_unsafe_unretained);
@@ -644,8 +644,8 @@ static void setImpliedPropertyAttributeForReadOnlyProperty(
 static void
 DiagnoseClassAndClassExtPropertyMismatch(Sema &S, ObjCInterfaceDecl *ClassDecl, 
                                          ObjCPropertyDecl *property) {
-  unsigned Attributes = property->getPropertyAttributesAsWritten();
-  bool warn = (Attributes & ObjCDeclSpec::DQ_PR_readonly);
+  unsigned Attribute = property->getPropertyAttributesAsWritten();
+  bool warn = (Attribute & ObjCDeclSpec::DQ_PR_readonly);
   for (const ObjCCategoryDecl *CDecl = ClassDecl->getFirstClassExtension();
        CDecl; CDecl = CDecl->getNextClassExtension()) {
     ObjCPropertyDecl *ClassExtProperty = 0;
@@ -664,7 +664,7 @@ DiagnoseClassAndClassExtPropertyMismatch(Sema &S, ObjCInterfaceDecl *ClassDecl,
       // can override readonly->readwrite and 'setter' attributes originally
       // placed on class's property declaration now make sense in the overridden
       // property.
-      if (Attributes & ObjCDeclSpec::DQ_PR_readonly) {
+      if (Attribute & ObjCDeclSpec::DQ_PR_readonly) {
         if (!classExtPropertyAttr ||
             (classExtPropertyAttr & 
               (ObjCDeclSpec::DQ_PR_readwrite|
@@ -685,15 +685,15 @@ DiagnoseClassAndClassExtPropertyMismatch(Sema &S, ObjCInterfaceDecl *ClassDecl,
                             ObjCDeclSpec::DQ_PR_copy |
                             ObjCDeclSpec::DQ_PR_retain |
                             ObjCDeclSpec::DQ_PR_strong);
-    if (Attributes & setterAttrs) {
+    if (Attribute & setterAttrs) {
       const char * which =     
-      (Attributes & ObjCDeclSpec::DQ_PR_assign) ?
+      (Attribute & ObjCDeclSpec::DQ_PR_assign) ?
       "assign" :
-      (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained) ?
+      (Attribute & ObjCDeclSpec::DQ_PR_unsafe_unretained) ?
       "unsafe_unretained" :
-      (Attributes & ObjCDeclSpec::DQ_PR_copy) ?
+      (Attribute & ObjCDeclSpec::DQ_PR_copy) ?
       "copy" : 
-      (Attributes & ObjCDeclSpec::DQ_PR_retain) ?
+      (Attribute & ObjCDeclSpec::DQ_PR_retain) ?
       "retain" : "strong";
       
       S.Diag(property->getLocation(), 
@@ -1641,7 +1641,7 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
     ObjCMethodDecl *SetterMethod = 0;
     bool LookedUpGetterSetter = false;
 
-    unsigned Attributes = Property->getPropertyAttributes();
+    unsigned Attribute = Property->getPropertyAttributes();
     unsigned AttributesAsWritten = Property->getPropertyAttributesAsWritten();
 
     if (!(AttributesAsWritten & ObjCPropertyDecl::OBJC_PR_atomic) &&
@@ -1664,8 +1664,8 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
     }
 
     // We only care about readwrite atomic property.
-    if ((Attributes & ObjCPropertyDecl::OBJC_PR_nonatomic) ||
-        !(Attributes & ObjCPropertyDecl::OBJC_PR_readwrite))
+    if ((Attribute & ObjCPropertyDecl::OBJC_PR_nonatomic) ||
+        !(Attribute & ObjCPropertyDecl::OBJC_PR_readwrite))
       continue;
     if (const ObjCPropertyImplDecl *PIDecl
          = IMPDecl->FindPropertyImplDecl(Property->getIdentifier())) {
@@ -1918,7 +1918,7 @@ void Sema::ProcessPropertyDecl(ObjCPropertyDecl *property,
 
 void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
                                        SourceLocation Loc,
-                                       unsigned &Attributes,
+                                       unsigned &Attribute,
                                        bool propertyInPrimaryClass) {
   // FIXME: Improve the reported location.
   if (!PDecl || PDecl->isInvalidDecl())
@@ -1928,7 +1928,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
   QualType PropertyTy = PropertyDecl->getType(); 
 
   if (getLangOpts().ObjCAutoRefCount &&
-      (Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
+      (Attribute & ObjCDeclSpec::DQ_PR_readonly) &&
       PropertyTy->isObjCRetainableType()) {
     // 'readonly' property with no obvious lifetime.
     // its life time will be determined by its backing ivar.
@@ -1938,7 +1938,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
                     ObjCDeclSpec::DQ_PR_strong |
                     ObjCDeclSpec::DQ_PR_weak |
                     ObjCDeclSpec::DQ_PR_assign);
-    if ((Attributes & rel) == 0)
+    if ((Attribute & rel) == 0)
       return;
   }
   
@@ -1946,132 +1946,132 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
     // we postpone most property diagnosis until class's implementation
     // because, its readonly attribute may be overridden in its class 
     // extensions making other attributes, which make no sense, to make sense.
-    if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
-        (Attributes & ObjCDeclSpec::DQ_PR_readwrite))
+    if ((Attribute & ObjCDeclSpec::DQ_PR_readonly) &&
+        (Attribute & ObjCDeclSpec::DQ_PR_readwrite))
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive) 
         << "readonly" << "readwrite";
   }
   // readonly and readwrite/assign/retain/copy conflict.
-  else if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
-           (Attributes & (ObjCDeclSpec::DQ_PR_readwrite |
+  else if ((Attribute & ObjCDeclSpec::DQ_PR_readonly) &&
+           (Attribute & (ObjCDeclSpec::DQ_PR_readwrite |
                      ObjCDeclSpec::DQ_PR_assign |
                      ObjCDeclSpec::DQ_PR_unsafe_unretained |
                      ObjCDeclSpec::DQ_PR_copy |
                      ObjCDeclSpec::DQ_PR_retain |
                      ObjCDeclSpec::DQ_PR_strong))) {
-    const char * which = (Attributes & ObjCDeclSpec::DQ_PR_readwrite) ?
+    const char * which = (Attribute & ObjCDeclSpec::DQ_PR_readwrite) ?
                           "readwrite" :
-                         (Attributes & ObjCDeclSpec::DQ_PR_assign) ?
+                         (Attribute & ObjCDeclSpec::DQ_PR_assign) ?
                           "assign" :
-                         (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained) ?
+                         (Attribute & ObjCDeclSpec::DQ_PR_unsafe_unretained) ?
                           "unsafe_unretained" :
-                         (Attributes & ObjCDeclSpec::DQ_PR_copy) ?
+                         (Attribute & ObjCDeclSpec::DQ_PR_copy) ?
                           "copy" : "retain";
 
-    Diag(Loc, (Attributes & (ObjCDeclSpec::DQ_PR_readwrite)) ?
+    Diag(Loc, (Attribute & (ObjCDeclSpec::DQ_PR_readwrite)) ?
                  diag::err_objc_property_attr_mutually_exclusive :
                  diag::warn_objc_property_attr_mutually_exclusive)
       << "readonly" << which;
   }
 
   // Check for copy or retain on non-object types.
-  if ((Attributes & (ObjCDeclSpec::DQ_PR_weak | ObjCDeclSpec::DQ_PR_copy |
+  if ((Attribute & (ObjCDeclSpec::DQ_PR_weak | ObjCDeclSpec::DQ_PR_copy |
                     ObjCDeclSpec::DQ_PR_retain | ObjCDeclSpec::DQ_PR_strong)) &&
       !PropertyTy->isObjCRetainableType() &&
       !PropertyDecl->getAttr<ObjCNSObjectAttr>()) {
     Diag(Loc, diag::err_objc_property_requires_object)
-      << (Attributes & ObjCDeclSpec::DQ_PR_weak ? "weak" :
-          Attributes & ObjCDeclSpec::DQ_PR_copy ? "copy" : "retain (or strong)");
-    Attributes &= ~(ObjCDeclSpec::DQ_PR_weak   | ObjCDeclSpec::DQ_PR_copy |
+      << (Attribute & ObjCDeclSpec::DQ_PR_weak ? "weak" :
+          Attribute & ObjCDeclSpec::DQ_PR_copy ? "copy" : "retain (or strong)");
+    Attribute &= ~(ObjCDeclSpec::DQ_PR_weak   | ObjCDeclSpec::DQ_PR_copy |
                     ObjCDeclSpec::DQ_PR_retain | ObjCDeclSpec::DQ_PR_strong);
     PropertyDecl->setInvalidDecl();
   }
 
   // Check for more than one of { assign, copy, retain }.
-  if (Attributes & ObjCDeclSpec::DQ_PR_assign) {
-    if (Attributes & ObjCDeclSpec::DQ_PR_copy) {
+  if (Attribute & ObjCDeclSpec::DQ_PR_assign) {
+    if (Attribute & ObjCDeclSpec::DQ_PR_copy) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "assign" << "copy";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_copy;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_copy;
     }
-    if (Attributes & ObjCDeclSpec::DQ_PR_retain) {
+    if (Attribute & ObjCDeclSpec::DQ_PR_retain) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "assign" << "retain";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_retain;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_retain;
     }
-    if (Attributes & ObjCDeclSpec::DQ_PR_strong) {
+    if (Attribute & ObjCDeclSpec::DQ_PR_strong) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "assign" << "strong";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_strong;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_strong;
     }
     if (getLangOpts().ObjCAutoRefCount  &&
-        (Attributes & ObjCDeclSpec::DQ_PR_weak)) {
+        (Attribute & ObjCDeclSpec::DQ_PR_weak)) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "assign" << "weak";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_weak;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_weak;
     }
-  } else if (Attributes & ObjCDeclSpec::DQ_PR_unsafe_unretained) {
-    if (Attributes & ObjCDeclSpec::DQ_PR_copy) {
+  } else if (Attribute & ObjCDeclSpec::DQ_PR_unsafe_unretained) {
+    if (Attribute & ObjCDeclSpec::DQ_PR_copy) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "unsafe_unretained" << "copy";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_copy;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_copy;
     }
-    if (Attributes & ObjCDeclSpec::DQ_PR_retain) {
+    if (Attribute & ObjCDeclSpec::DQ_PR_retain) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "unsafe_unretained" << "retain";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_retain;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_retain;
     }
-    if (Attributes & ObjCDeclSpec::DQ_PR_strong) {
+    if (Attribute & ObjCDeclSpec::DQ_PR_strong) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "unsafe_unretained" << "strong";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_strong;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_strong;
     }
     if (getLangOpts().ObjCAutoRefCount  &&
-        (Attributes & ObjCDeclSpec::DQ_PR_weak)) {
+        (Attribute & ObjCDeclSpec::DQ_PR_weak)) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "unsafe_unretained" << "weak";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_weak;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_weak;
     }
-  } else if (Attributes & ObjCDeclSpec::DQ_PR_copy) {
-    if (Attributes & ObjCDeclSpec::DQ_PR_retain) {
+  } else if (Attribute & ObjCDeclSpec::DQ_PR_copy) {
+    if (Attribute & ObjCDeclSpec::DQ_PR_retain) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "copy" << "retain";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_retain;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_retain;
     }
-    if (Attributes & ObjCDeclSpec::DQ_PR_strong) {
+    if (Attribute & ObjCDeclSpec::DQ_PR_strong) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "copy" << "strong";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_strong;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_strong;
     }
-    if (Attributes & ObjCDeclSpec::DQ_PR_weak) {
+    if (Attribute & ObjCDeclSpec::DQ_PR_weak) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "copy" << "weak";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_weak;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_weak;
     }
   }
-  else if ((Attributes & ObjCDeclSpec::DQ_PR_retain) &&
-           (Attributes & ObjCDeclSpec::DQ_PR_weak)) {
+  else if ((Attribute & ObjCDeclSpec::DQ_PR_retain) &&
+           (Attribute & ObjCDeclSpec::DQ_PR_weak)) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "retain" << "weak";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_retain;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_retain;
   }
-  else if ((Attributes & ObjCDeclSpec::DQ_PR_strong) &&
-           (Attributes & ObjCDeclSpec::DQ_PR_weak)) {
+  else if ((Attribute & ObjCDeclSpec::DQ_PR_strong) &&
+           (Attribute & ObjCDeclSpec::DQ_PR_weak)) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "strong" << "weak";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_weak;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_weak;
   }
 
-  if ((Attributes & ObjCDeclSpec::DQ_PR_atomic) &&
-      (Attributes & ObjCDeclSpec::DQ_PR_nonatomic)) {
+  if ((Attribute & ObjCDeclSpec::DQ_PR_atomic) &&
+      (Attribute & ObjCDeclSpec::DQ_PR_nonatomic)) {
       Diag(Loc, diag::err_objc_property_attr_mutually_exclusive)
         << "atomic" << "nonatomic";
-      Attributes &= ~ObjCDeclSpec::DQ_PR_atomic;
+      Attribute &= ~ObjCDeclSpec::DQ_PR_atomic;
   }
 
   // Warn if user supplied no assignment attribute, property is
   // readwrite, and this is an object type.
-  if (!(Attributes & (ObjCDeclSpec::DQ_PR_assign | ObjCDeclSpec::DQ_PR_copy |
+  if (!(Attribute & (ObjCDeclSpec::DQ_PR_assign | ObjCDeclSpec::DQ_PR_copy |
                       ObjCDeclSpec::DQ_PR_unsafe_unretained |
                       ObjCDeclSpec::DQ_PR_retain | ObjCDeclSpec::DQ_PR_strong |
                       ObjCDeclSpec::DQ_PR_weak)) &&
@@ -2080,7 +2080,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
         // With arc,  @property definitions should default to (strong) when 
         // not specified; including when property is 'readonly'.
         PropertyDecl->setPropertyAttributes(ObjCPropertyDecl::OBJC_PR_strong);
-      else if (!(Attributes & ObjCDeclSpec::DQ_PR_readonly)) {
+      else if (!(Attribute & ObjCDeclSpec::DQ_PR_readonly)) {
         bool isAnyClassTy = 
           (PropertyTy->isObjCClassType() || 
            PropertyTy->isObjCQualifiedClassType());
@@ -2107,19 +2107,19 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
     // (please trim this list while you are at it).
   }
 
-  if (!(Attributes & ObjCDeclSpec::DQ_PR_copy)
-      &&!(Attributes & ObjCDeclSpec::DQ_PR_readonly)
+  if (!(Attribute & ObjCDeclSpec::DQ_PR_copy)
+      &&!(Attribute & ObjCDeclSpec::DQ_PR_readonly)
       && getLangOpts().getGC() == LangOptions::GCOnly
       && PropertyTy->isBlockPointerType())
     Diag(Loc, diag::warn_objc_property_copy_missing_on_block);
-  else if ((Attributes & ObjCDeclSpec::DQ_PR_retain) &&
-           !(Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
-           !(Attributes & ObjCDeclSpec::DQ_PR_strong) &&
+  else if ((Attribute & ObjCDeclSpec::DQ_PR_retain) &&
+           !(Attribute & ObjCDeclSpec::DQ_PR_readonly) &&
+           !(Attribute & ObjCDeclSpec::DQ_PR_strong) &&
            PropertyTy->isBlockPointerType())
       Diag(Loc, diag::warn_objc_property_retain_of_block);
   
-  if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
-      (Attributes & ObjCDeclSpec::DQ_PR_setter))
+  if ((Attribute & ObjCDeclSpec::DQ_PR_readonly) &&
+      (Attribute & ObjCDeclSpec::DQ_PR_setter))
     Diag(Loc, diag::warn_objc_readonly_property_has_setter);
       
 }

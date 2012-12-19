@@ -1,4 +1,4 @@
-//===--- SemaAttr.cpp - Semantic Analysis for Attributes ------------------===//
+//===--- SemaAttr.cpp - Semantic Analysis for Attribute ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1641,8 +1641,8 @@ void CodeGenFunction::EmitAsmStmt(const AsmStmt &S) {
                          /* IsAlignStack */ false, AsmDialect);
   llvm::CallInst *Result = Builder.CreateCall(IA, Args);
   Result->addAttribute(llvm::AttributeSet::FunctionIndex,
-                       llvm::Attributes::get(getLLVMContext(),
-                                             llvm::Attributes::NoUnwind));
+                       llvm::Attribute::get(getLLVMContext(),
+                                             llvm::Attribute::NoUnwind));
 
   // Slap the source location of the inline asm into a !srcloc metadata on the
   // call.  FIXME: Handle metadata for MS-style inline asms.

@@ -51,7 +51,7 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
                                           const LangOptions& LangOpts) {
   // Step #1: mark all target-independent builtins with their ID's.
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
-    if (!LangOpts.NoBuiltin || !strchr(BuiltinInfo[i].Attributes, 'f')) {
+    if (!LangOpts.NoBuiltin || !strchr(BuiltinInfo[i].Attribute, 'f')) {
       if (LangOpts.ObjC1 || 
           BuiltinInfo[i].builtin_lang != clang::OBJC_LANG)
         Table.get(BuiltinInfo[i].Name).setBuiltinID(i);
@@ -59,7 +59,7 @@ void Builtin::Context::InitializeBuiltins(IdentifierTable &Table,
 
   // Step #2: Register target-specific builtins.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
-    if (!LangOpts.NoBuiltin || !strchr(TSRecords[i].Attributes, 'f'))
+    if (!LangOpts.NoBuiltin || !strchr(TSRecords[i].Attribute, 'f'))
       Table.get(TSRecords[i].Name).setBuiltinID(i+Builtin::FirstTSBuiltin);
 }
 
@@ -68,12 +68,12 @@ Builtin::Context::GetBuiltinNames(SmallVectorImpl<const char *> &Names,
                                   bool NoBuiltins) {
   // Final all target-independent names
   for (unsigned i = Builtin::NotBuiltin+1; i != Builtin::FirstTSBuiltin; ++i)
-    if (!NoBuiltins || !strchr(BuiltinInfo[i].Attributes, 'f'))
+    if (!NoBuiltins || !strchr(BuiltinInfo[i].Attribute, 'f'))
       Names.push_back(BuiltinInfo[i].Name);
 
   // Find target-specific names.
   for (unsigned i = 0, e = NumTSRecords; i != e; ++i)
-    if (!NoBuiltins || !strchr(TSRecords[i].Attributes, 'f'))
+    if (!NoBuiltins || !strchr(TSRecords[i].Attribute, 'f'))
       Names.push_back(TSRecords[i].Name);
 }
 
@@ -84,7 +84,7 @@ void Builtin::Context::ForgetBuiltin(unsigned ID, IdentifierTable &Table) {
 bool
 Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx,
                                bool &HasVAListArg) {
-  const char *Printf = strpbrk(GetRecord(ID).Attributes, "pP");
+  const char *Printf = strpbrk(GetRecord(ID).Attribute, "pP");
   if (!Printf)
     return false;
 
@@ -103,7 +103,7 @@ Builtin::Context::isPrintfLike(unsigned ID, unsigned &FormatIdx,
 bool
 Builtin::Context::isScanfLike(unsigned ID, unsigned &FormatIdx,
                               bool &HasVAListArg) {
-  const char *Scanf = strpbrk(GetRecord(ID).Attributes, "sS");
+  const char *Scanf = strpbrk(GetRecord(ID).Attribute, "sS");
   if (!Scanf)
     return false;
 

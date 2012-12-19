@@ -1,4 +1,4 @@
-//===--- TargetAttributesSema.h - Semantic Analysis For Target Attributes -===//
+//===--- TargetAttributesSema.h - Semantic Analysis For Target Attribute -===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -233,7 +233,7 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
     Fn->setDoesNotThrow();
 
   if (CGM.getLangOpts().SanitizeAddress)
-    Fn->addFnAttr(llvm::Attributes::AddressSafety);
+    Fn->addFnAttr(llvm::Attribute::AddressSafety);
 
   return Fn;
 }

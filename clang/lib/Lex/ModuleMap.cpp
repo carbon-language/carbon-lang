@@ -655,8 +655,8 @@ namespace clang {
   };
 
   /// \brief The set of attributes that can be attached to a module.
-  struct Attributes {
-    Attributes() : IsSystem() { }
+  struct Attribute {
+    Attribute() : IsSystem() { }
 
     /// \brief Whether this is a system module.
     unsigned IsSystem : 1;
@@ -709,7 +709,7 @@ namespace clang {
     void parseUmbrellaDirDecl(SourceLocation UmbrellaLoc);
     void parseExportDecl();
     void parseInferredModuleDecl(bool Framework, bool Explicit);
-    bool parseOptionalAttributes(Attributes &Attrs);
+    bool parseOptionalAttributes(Attribute &Attrs);
 
     const DirectoryEntry *getOverriddenHeaderSearchDir();
     
@@ -1007,7 +1007,7 @@ void ModuleMapParser::parseModuleDecl() {
   SourceLocation ModuleNameLoc = Id.back().second;
   
   // Parse the optional attribute list.
-  Attributes Attrs;
+  Attribute Attrs;
   parseOptionalAttributes(Attrs);
   
   // Parse the opening brace.
@@ -1475,7 +1475,7 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
   }
 
   // Parse optional attributes.
-  Attributes Attrs;
+  Attribute Attrs;
   parseOptionalAttributes(Attrs);
 
   if (ActiveModule) {
@@ -1576,7 +1576,7 @@ void ModuleMapParser::parseInferredModuleDecl(bool Framework, bool Explicit) {
 /// \param Attrs Will be filled in with the parsed attributes.
 ///
 /// \returns true if an error occurred, false otherwise.
-bool ModuleMapParser::parseOptionalAttributes(Attributes &Attrs) {
+bool ModuleMapParser::parseOptionalAttributes(Attribute &Attrs) {
   bool HadError = false;
   
   while (Tok.is(MMToken::LSquare)) {

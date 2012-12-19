@@ -2403,7 +2403,7 @@ void Parser::ParseDirectNewDeclarator(Declarator &D) {
 
     T.consumeClose();
 
-    // Attributes here appertain to the array type. C++11 [expr.new]p5.
+    // Attribute here appertain to the array type. C++11 [expr.new]p5.
     ParsedAttributes Attrs(AttrFactory);
     MaybeParseCXX0XAttributes(Attrs);
 

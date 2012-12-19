@@ -5806,8 +5806,8 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
     if (!PD)
       return;
     
-    unsigned Attributes = PD->getPropertyAttributes();
-    if (Attributes & ObjCPropertyDecl::OBJC_PR_assign) {
+    unsigned Attribute = PD->getPropertyAttributes();
+    if (Attribute & ObjCPropertyDecl::OBJC_PR_assign) {
       // when 'assign' attribute was not explicitly specified
       // by user, ignore it and rely on property type itself
       // for lifetime info.
@@ -5825,7 +5825,7 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
         RHS = cast->getSubExpr();
       }
     }
-    else if (Attributes & ObjCPropertyDecl::OBJC_PR_weak) {
+    else if (Attribute & ObjCPropertyDecl::OBJC_PR_weak) {
       while (ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(RHS)) {
         if (cast->getCastKind() == CK_ARCConsumeObject) {
           Diag(Loc, diag::warn_arc_retained_assign)

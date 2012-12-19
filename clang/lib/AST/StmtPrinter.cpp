@@ -1399,7 +1399,7 @@ void StmtPrinter::VisitLambdaExpr(LambdaExpr *Node) {
       OS << ExceptionSpec;
     }
 
-    // FIXME: Attributes
+    // FIXME: Attribute
 
     // Print the trailing return type if it was specified in the source.
     if (Node->hasExplicitResultType())

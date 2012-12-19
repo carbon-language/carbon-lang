@@ -563,28 +563,28 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
     F->setHasUWTable();
 
   if (!hasUnwindExceptions(LangOpts))
-    F->addFnAttr(llvm::Attributes::NoUnwind);
+    F->addFnAttr(llvm::Attribute::NoUnwind);
 
   if (D->hasAttr<NakedAttr>()) {
     // Naked implies noinline: we should not be inlining such functions.
-    F->addFnAttr(llvm::Attributes::Naked);
-    F->addFnAttr(llvm::Attributes::NoInline);
+    F->addFnAttr(llvm::Attribute::Naked);
+    F->addFnAttr(llvm::Attribute::NoInline);
   }
 
   if (D->hasAttr<NoInlineAttr>())
-    F->addFnAttr(llvm::Attributes::NoInline);
+    F->addFnAttr(llvm::Attribute::NoInline);
 
   // (noinline wins over always_inline, and we can't specify both in IR)
   if ((D->hasAttr<AlwaysInlineAttr>() || D->hasAttr<ForceInlineAttr>()) &&
-      !F->getFnAttributes().hasAttribute(llvm::Attributes::NoInline))
-    F->addFnAttr(llvm::Attributes::AlwaysInline);
+      !F->getFnAttributes().hasAttribute(llvm::Attribute::NoInline))
+    F->addFnAttr(llvm::Attribute::AlwaysInline);
 
   // FIXME: Communicate hot and cold attributes to LLVM more directly.
   if (D->hasAttr<ColdAttr>())
-    F->addFnAttr(llvm::Attributes::OptimizeForSize);
+    F->addFnAttr(llvm::Attribute::OptimizeForSize);
 
   if (D->hasAttr<MinSizeAttr>())
-    F->addFnAttr(llvm::Attributes::MinSize);
+    F->addFnAttr(llvm::Attribute::MinSize);
 
   if (isa<CXXConstructorDecl>(D) || isa<CXXDestructorDecl>(D))
     F->setUnnamedAddr(true);
@@ -594,15 +594,15 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
       F->setUnnamedAddr(true);
 
   if (LangOpts.getStackProtector() == LangOptions::SSPOn)
-    F->addFnAttr(llvm::Attributes::StackProtect);
+    F->addFnAttr(llvm::Attribute::StackProtect);
   else if (LangOpts.getStackProtector() == LangOptions::SSPReq)
-    F->addFnAttr(llvm::Attributes::StackProtectReq);
+    F->addFnAttr(llvm::Attribute::StackProtectReq);
   
   if (LangOpts.SanitizeAddress) {
     // When AddressSanitizer is enabled, set AddressSafety attribute
     // unless __attribute__((no_address_safety_analysis)) is used.
     if (!D->hasAttr<NoAddressSafetyAnalysisAttr>())
-      F->addFnAttr(llvm::Attributes::AddressSafety);
+      F->addFnAttr(llvm::Attribute::AddressSafety);
   }
 
   unsigned alignment = D->getMaxAlignment() / Context.getCharWidth();
@@ -1106,7 +1106,7 @@ llvm::Constant *
 CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
                                        llvm::Type *Ty,
                                        GlobalDecl D, bool ForVTable,
-                                       llvm::Attributes ExtraAttrs) {
+                                       llvm::Attribute ExtraAttrs) {
   // Lookup the entry, lazily creating it if necessary.
   llvm::GlobalValue *Entry = GetGlobalValue(MangledName);
   if (Entry) {
@@ -1214,7 +1214,7 @@ llvm::Constant *CodeGenModule::GetAddrOfFunction(GlobalDecl GD,
 llvm::Constant *
 CodeGenModule::CreateRuntimeFunction(llvm::FunctionType *FTy,
                                      StringRef Name,
-                                     llvm::Attributes ExtraAttrs) {
+                                     llvm::Attribute ExtraAttrs) {
   return GetOrCreateLLVMFunction(Name, FTy, GlobalDecl(), /*ForVTable=*/false,
                                  ExtraAttrs);
 }
@@ -1823,7 +1823,7 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
     llvm::AttributeSet oldAttrs = callSite.getAttributes();
 
     // Collect any return attributes from the call.
-    llvm::Attributes returnAttrs = oldAttrs.getRetAttributes();
+    llvm::Attribute returnAttrs = oldAttrs.getRetAttributes();
     if (returnAttrs.hasAttributes())
       newAttrs.push_back(llvm::AttributeWithIndex::get(
                                 llvm::AttributeSet::ReturnIndex, returnAttrs));
@@ -1844,14 +1844,14 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
       }
 
       // Add any parameter attributes.
-      llvm::Attributes pAttrs = oldAttrs.getParamAttributes(argNo + 1);
+      llvm::Attribute pAttrs = oldAttrs.getParamAttributes(argNo + 1);
       if (pAttrs.hasAttributes())
         newAttrs.push_back(llvm::AttributeWithIndex::get(argNo + 1, pAttrs));
     }
     if (dontTransform)
       continue;
 
-    llvm::Attributes fnAttrs = oldAttrs.getFnAttributes();
+    llvm::Attribute fnAttrs = oldAttrs.getFnAttributes();
     if (fnAttrs.hasAttributes())
       newAttrs.push_back(llvm::
                        AttributeWithIndex::get(llvm::AttributeSet::FunctionIndex,
