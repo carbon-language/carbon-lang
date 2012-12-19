@@ -81,7 +81,7 @@ operator.
 .. code-block:: c
 
     Block_literal_expression ::=   ^ block_decl compound_statement_body
-    block_decl ::= 
+    block_decl ::=
     block_decl ::= parameter_list
     block_decl ::= type_expression
 
@@ -359,4 +359,3 @@ normal variable of C pointer type.
 
 Member variables that are Blocks may not be overloaded by the types of
 their arguments.
-
