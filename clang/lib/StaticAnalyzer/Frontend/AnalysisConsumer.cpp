@@ -64,11 +64,13 @@ STATISTIC(MaxCFGSize, "The maximum number of basic blocks in a function.");
 // Special PathDiagnosticConsumers.
 //===----------------------------------------------------------------------===//
 
-static void createPlistHTMLDiagnosticConsumer(PathDiagnosticConsumers &C,
+static void createPlistHTMLDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
+                                              PathDiagnosticConsumers &C,
                                               const std::string &prefix,
                                               const Preprocessor &PP) {
-  createHTMLDiagnosticConsumer(C, llvm::sys::path::parent_path(prefix), PP);
-  createPlistDiagnosticConsumer(C, prefix, PP);
+  createHTMLDiagnosticConsumer(AnalyzerOpts, C,
+                               llvm::sys::path::parent_path(prefix), PP);
+  createPlistDiagnosticConsumer(AnalyzerOpts, C, prefix, PP);
 }
 
 namespace {
@@ -188,13 +190,14 @@ public:
       switch (Opts->AnalysisDiagOpt) {
       default:
 #define ANALYSIS_DIAGNOSTICS(NAME, CMDFLAG, DESC, CREATEFN, AUTOCREATE) \
-        case PD_##NAME: CREATEFN(PathConsumers, OutDir, PP); break;
+        case PD_##NAME: CREATEFN(*Opts.getPtr(), PathConsumers, OutDir, PP);\
+        break;
 #include "clang/StaticAnalyzer/Core/Analyses.def"
       }
     } else if (Opts->AnalysisDiagOpt == PD_TEXT) {
       // Create the text client even without a specified output file since
       // it just uses diagnostic notes.
-      createTextPathDiagnosticConsumer(PathConsumers, "", PP);
+      createTextPathDiagnosticConsumer(*Opts.getPtr(), PathConsumers, "", PP);
     }
 
     // Create the analyzer component creators.

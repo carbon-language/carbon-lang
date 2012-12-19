@@ -76,7 +76,8 @@ HTMLDiagnostics::HTMLDiagnostics(const std::string& prefix,
   FilePrefix.appendComponent("report");
 }
 
-void ento::createHTMLDiagnosticConsumer(PathDiagnosticConsumers &C,
+void ento::createHTMLDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
+                                        PathDiagnosticConsumers &C,
                                         const std::string& prefix,
                                         const Preprocessor &PP) {
   C.push_back(new HTMLDiagnostics(prefix, PP));

@@ -19,6 +19,7 @@
 
 namespace clang {
 
+class AnalyzerOptions;
 class Preprocessor;
 
 namespace ento {
@@ -26,21 +27,18 @@ namespace ento {
 class PathDiagnosticConsumer;
 typedef std::vector<PathDiagnosticConsumer*> PathDiagnosticConsumers;
 
-void createHTMLDiagnosticConsumer(PathDiagnosticConsumers &C,
-                                  const std::string& prefix,
-                                  const Preprocessor &PP);
+#define CREATE_CONSUMER(NAME)\
+void create ## NAME ## DiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,\
+                                          PathDiagnosticConsumers &C,\
+                                          const std::string& prefix,\
+                                          const Preprocessor &PP);
 
-void createPlistDiagnosticConsumer(PathDiagnosticConsumers &C,
-                                   const std::string& prefix,
-                                   const Preprocessor &PP);
+CREATE_CONSUMER(HTML)
+CREATE_CONSUMER(Plist)
+CREATE_CONSUMER(PlistMultiFile)
+CREATE_CONSUMER(TextPath)
 
-void createPlistMultiFileDiagnosticConsumer(PathDiagnosticConsumers &C,
-                                            const std::string& prefix,
-                                            const Preprocessor &PP);
-
-void createTextPathDiagnosticConsumer(PathDiagnosticConsumers &C,
-                                      const std::string& prefix,
-                                      const Preprocessor &PP);
+#undef CREATE_CONSUMER
 
 } // end 'ento' namespace
 } // end 'clang' namespace

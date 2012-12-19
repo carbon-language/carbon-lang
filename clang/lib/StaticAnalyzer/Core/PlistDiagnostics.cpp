@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/StaticAnalyzer/Core/AnalyzerOptions.h"
 #include "clang/StaticAnalyzer/Core/PathDiagnosticConsumers.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
@@ -33,7 +34,9 @@ namespace {
     const LangOptions &LangOpts;
     const bool SupportsCrossFileDiagnostics;
   public:
-    PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts,
+    PlistDiagnostics(AnalyzerOptions &AnalyzerOpts,
+                     const std::string& prefix,
+                     const LangOptions &LangOpts,
                      bool supportsMultipleFiles);
 
     virtual ~PlistDiagnostics() {}
@@ -54,22 +57,28 @@ namespace {
   };
 } // end anonymous namespace
 
-PlistDiagnostics::PlistDiagnostics(const std::string& output,
+PlistDiagnostics::PlistDiagnostics(AnalyzerOptions &AnalyzerOpts,
+                                   const std::string& output,
                                    const LangOptions &LO,
                                    bool supportsMultipleFiles)
-  : OutputFile(output), LangOpts(LO),
+  : OutputFile(output),
+    LangOpts(LO),
     SupportsCrossFileDiagnostics(supportsMultipleFiles) {}
 
-void ento::createPlistDiagnosticConsumer(PathDiagnosticConsumers &C,
+void ento::createPlistDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
+                                         PathDiagnosticConsumers &C,
                                          const std::string& s,
                                          const Preprocessor &PP) {
-  C.push_back(new PlistDiagnostics(s, PP.getLangOpts(), false));
+  C.push_back(new PlistDiagnostics(AnalyzerOpts, s,
+                                   PP.getLangOpts(), false));
 }
 
-void ento::createPlistMultiFileDiagnosticConsumer(PathDiagnosticConsumers &C,
+void ento::createPlistMultiFileDiagnosticConsumer(AnalyzerOptions &AnalyzerOpts,
+                                                  PathDiagnosticConsumers &C,
                                                   const std::string &s,
                                                   const Preprocessor &PP) {
-  C.push_back(new PlistDiagnostics(s, PP.getLangOpts(), true));
+  C.push_back(new PlistDiagnostics(AnalyzerOpts, s,
+                                   PP.getLangOpts(), true));
 }
 
 static void AddFID(FIDMap &FIDs, SmallVectorImpl<FileID> &V,
