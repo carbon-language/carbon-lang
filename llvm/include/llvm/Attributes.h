@@ -117,30 +117,6 @@ public:
   /// alignment value.
   unsigned getStackAlignment() const;
 
-  /// \brief Attribute that may be applied to the function itself.  These cannot
-  /// be used on return values or function parameters.
-  bool hasFunctionOnlyAttrs() const {
-    return hasAttribute(Attribute::NoReturn) ||
-      hasAttribute(Attribute::NoUnwind) ||
-      hasAttribute(Attribute::ReadNone) ||
-      hasAttribute(Attribute::ReadOnly) ||
-      hasAttribute(Attribute::NoInline) ||
-      hasAttribute(Attribute::AlwaysInline) ||
-      hasAttribute(Attribute::OptimizeForSize) ||
-      hasAttribute(Attribute::StackProtect) ||
-      hasAttribute(Attribute::StackProtectReq) ||
-      hasAttribute(Attribute::NoRedZone) ||
-      hasAttribute(Attribute::NoImplicitFloat) ||
-      hasAttribute(Attribute::Naked) ||
-      hasAttribute(Attribute::InlineHint) ||
-      hasAttribute(Attribute::StackAlignment) ||
-      hasAttribute(Attribute::UWTable) ||
-      hasAttribute(Attribute::NonLazyBind) ||
-      hasAttribute(Attribute::ReturnsTwice) ||
-      hasAttribute(Attribute::AddressSafety) ||
-      hasAttribute(Attribute::MinSize);
-  }
-
   bool operator==(const Attribute &A) const {
     return Attrs == A.Attrs;
   }

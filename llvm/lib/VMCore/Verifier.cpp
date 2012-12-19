@@ -529,7 +529,25 @@ void Verifier::VerifyParameterAttrs(Attribute Attrs, Type *Ty,
   if (!Attrs.hasAttributes())
     return;
 
-  Assert1(!Attrs.hasFunctionOnlyAttrs(),
+  Assert1(!Attrs.hasAttribute(Attribute::NoReturn) &&
+          !Attrs.hasAttribute(Attribute::NoUnwind) &&
+          !Attrs.hasAttribute(Attribute::ReadNone) &&
+          !Attrs.hasAttribute(Attribute::ReadOnly) &&
+          !Attrs.hasAttribute(Attribute::NoInline) &&
+          !Attrs.hasAttribute(Attribute::AlwaysInline) &&
+          !Attrs.hasAttribute(Attribute::OptimizeForSize) &&
+          !Attrs.hasAttribute(Attribute::StackProtect) &&
+          !Attrs.hasAttribute(Attribute::StackProtectReq) &&
+          !Attrs.hasAttribute(Attribute::NoRedZone) &&
+          !Attrs.hasAttribute(Attribute::NoImplicitFloat) &&
+          !Attrs.hasAttribute(Attribute::Naked) &&
+          !Attrs.hasAttribute(Attribute::InlineHint) &&
+          !Attrs.hasAttribute(Attribute::StackAlignment) &&
+          !Attrs.hasAttribute(Attribute::UWTable) &&
+          !Attrs.hasAttribute(Attribute::NonLazyBind) &&
+          !Attrs.hasAttribute(Attribute::ReturnsTwice) &&
+          !Attrs.hasAttribute(Attribute::AddressSafety) &&
+          !Attrs.hasAttribute(Attribute::MinSize),
           "Some attributes in '" + Attrs.getAsString() +
           "' only apply to functions!", V);
 
