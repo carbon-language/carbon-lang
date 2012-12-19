@@ -192,9 +192,9 @@ Performance
 ^^^^^^^^^^^
 
 This section shows the the execution time of Clang on a simple benchmark: 
-`gcc-loops <http://llvm.org/viewvc/llvm-project/test-suite/trunk/SingleSource/UnitTests/Vectorizer/>`._
+`gcc-loops <http://llvm.org/viewvc/llvm-project/test-suite/trunk/SingleSource/UnitTests/Vectorizer/>`_.
 This benchmarks is a collection of loops from the GCC autovectorization 
-`page <http://gcc.gnu.org/projects/tree-ssa/vectorization.html>` by Dorit Nuzman._
+`page <http://gcc.gnu.org/projects/tree-ssa/vectorization.html>`_ by Dorit Nuzman._
 
 The chart below compares GCC-4.7, ICC-13, and Clang-SVN at -O3, running on a Sandybridge.
 The Y-axis shows time in msec. Lower is better.
