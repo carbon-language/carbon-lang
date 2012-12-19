@@ -1161,7 +1161,8 @@ TargetLowering::TargetLoweringOpt::ShrinkDemandedOp(SDValue Op,
   // Search for the smallest integer type with free casts to and from
   // Op's type. For expedience, just check power-of-2 integer types.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
-  unsigned SmallVTBits = BitWidth - Demanded.countLeadingZeros();
+  unsigned DemandedSize = BitWidth - Demanded.countLeadingZeros();
+  unsigned SmallVTBits = DemandedSize;
   if (!isPowerOf2_32(SmallVTBits))
     SmallVTBits = NextPowerOf2(SmallVTBits);
   for (; SmallVTBits < BitWidth; SmallVTBits = NextPowerOf2(SmallVTBits)) {
@@ -1174,7 +1175,9 @@ TargetLowering::TargetLoweringOpt::ShrinkDemandedOp(SDValue Op,
                                           Op.getNode()->getOperand(0)),
                               DAG.getNode(ISD::TRUNCATE, dl, SmallVT,
                                           Op.getNode()->getOperand(1)));
-      SDValue Z = DAG.getNode(ISD::ZERO_EXTEND, dl, Op.getValueType(), X);
+      bool NeedZext = DemandedSize > SmallVTBits;
+      SDValue Z = DAG.getNode(NeedZext ? ISD::ZERO_EXTEND : ISD::ANY_EXTEND,
+                              dl, Op.getValueType(), X);
       return CombineTo(Op, Z);
     }
   }
