@@ -14,6 +14,6 @@
 // ARCABI-NOT: unknown warning option '-Warc-abi'
 // ARCABI-NOT: unknown warning option '-Wno-arc-abi'
 
-// Check that -isysroot warns on non-existant paths.
+// Check that -isysroot warns on nonexistent paths.
 // RUN: %clang -### -c -target i386-apple-darwin10 -isysroot /FOO %s 2>&1 | FileCheck --check-prefix=CHECK-ISYSROOT %s
 // CHECK-ISYSROOT: warning: no such sysroot directory: '/FOO'
