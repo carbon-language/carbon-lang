@@ -1380,7 +1380,7 @@ CXString clang_FullComment_getAsXML(CXComment CXC) {
   if (!SFC) {
     SFC = new SimpleFormatContext(Context.getLangOpts());
     TU->FormatContext = SFC;
-  } else if ((TU->FormatInMemoryUniqueId % 10) == 0) {
+  } else if ((TU->FormatInMemoryUniqueId % 1000) == 0) {
     // Delete after some number of iterators, so the buffers don't grow
     // too large.
     delete SFC;
