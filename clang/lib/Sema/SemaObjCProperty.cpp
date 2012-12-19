@@ -1573,12 +1573,23 @@ void Sema::DefaultSynthesizeProperties(Scope *S, Decl *D) {
 void Sema::DiagnoseUnimplementedProperties(Scope *S, ObjCImplDecl* IMPDecl,
                                       ObjCContainerDecl *CDecl,
                                       const SelectorSet &InsMap) {
-  ObjCContainerDecl::PropertyMap SuperPropMap;
-  if (ObjCInterfaceDecl *IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl))
-    CollectSuperClassPropertyImplementations(IDecl, SuperPropMap);
+  ObjCContainerDecl::PropertyMap NoNeedToImplPropMap;
+  ObjCInterfaceDecl *IDecl;
+  // Gather properties which need not be implemented in this class
+  // or category.
+  if (!(IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl)))
+    if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl)) {
+      // For categories, no need to implement properties declared in
+      // its primary class (and its super classes) if property is
+      // declared in one of those containers.
+      if ((IDecl = C->getClassInterface()))
+        IDecl->collectPropertiesToImplement(NoNeedToImplPropMap);
+    }
+  if (IDecl)
+    CollectSuperClassPropertyImplementations(IDecl, NoNeedToImplPropMap);
   
   ObjCContainerDecl::PropertyMap PropMap;
-  CollectImmediateProperties(CDecl, PropMap, SuperPropMap);
+  CollectImmediateProperties(CDecl, PropMap, NoNeedToImplPropMap);
   if (PropMap.empty())
     return;
 
