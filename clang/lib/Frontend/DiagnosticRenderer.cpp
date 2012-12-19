@@ -153,10 +153,8 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
 
     SourceLocation UnexpandedLoc = Loc;
 
-    // Perform the same walk as emitMacroExpansions, to find the ultimate
-    // expansion location for the diagnostic.
-    while (Loc.isMacroID())
-      Loc = SM->getImmediateMacroCallerLoc(Loc);
+    // Find the ultimate expansion location for the diagnostic.
+    Loc = SM->getFileLoc(Loc);
 
     PresumedLoc PLoc = SM->getPresumedLoc(Loc, DiagOpts->ShowPresumedLoc);
 

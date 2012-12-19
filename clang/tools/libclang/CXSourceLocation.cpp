@@ -294,14 +294,7 @@ void clang_getSpellingLocation(CXSourceLocation location,
   
   const SourceManager &SM =
   *static_cast<const SourceManager*>(location.ptr_data[0]);
-  SourceLocation SpellLoc = Loc;
-
-  // Unravel the macro instantiation stack.  This logic mirrors that
-  // in DiagnosticRenderer.
-  while (SpellLoc.isMacroID()) {
-    SpellLoc = SM.getImmediateMacroCallerLoc(SpellLoc);
-  }
-
+  SourceLocation SpellLoc = SM.getFileLoc(Loc);
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(SpellLoc);
   FileID FID = LocInfo.first;
   unsigned FileOffset = LocInfo.second;
