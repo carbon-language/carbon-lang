@@ -1545,9 +1545,9 @@ static unsigned computeBytesPoppedByCallee(const X86Subtarget &Subtarget,
   CallingConv::ID CC = CS.getCallingConv();
   if (CC == CallingConv::Fast || CC == CallingConv::GHC)
     return 0;
-  if (!CS.paramHasAttr(1, Attributes::StructRet))
+  if (!CS.paramHasAttr(1, Attribute::StructRet))
     return 0;
-  if (CS.paramHasAttr(1, Attributes::InReg))
+  if (CS.paramHasAttr(1, Attribute::InReg))
     return 0;
   return 4;
 }
@@ -1626,12 +1626,12 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
     Value *ArgVal = *i;
     ISD::ArgFlagsTy Flags;
     unsigned AttrInd = i - CS.arg_begin() + 1;
-    if (CS.paramHasAttr(AttrInd, Attributes::SExt))
+    if (CS.paramHasAttr(AttrInd, Attribute::SExt))
       Flags.setSExt();
-    if (CS.paramHasAttr(AttrInd, Attributes::ZExt))
+    if (CS.paramHasAttr(AttrInd, Attribute::ZExt))
       Flags.setZExt();
 
-    if (CS.paramHasAttr(AttrInd, Attributes::ByVal)) {
+    if (CS.paramHasAttr(AttrInd, Attribute::ByVal)) {
       PointerType *Ty = cast<PointerType>(ArgVal->getType());
       Type *ElementTy = Ty->getElementType();
       unsigned FrameSize = TD.getTypeAllocSize(ElementTy);
@@ -1645,9 +1645,9 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
         return false;
     }
 
-    if (CS.paramHasAttr(AttrInd, Attributes::InReg))
+    if (CS.paramHasAttr(AttrInd, Attribute::InReg))
       Flags.setInReg();
-    if (CS.paramHasAttr(AttrInd, Attributes::Nest))
+    if (CS.paramHasAttr(AttrInd, Attribute::Nest))
       Flags.setNest();
 
     // If this is an i1/i8/i16 argument, promote to i32 to avoid an extra
@@ -1915,11 +1915,11 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
       ISD::InputArg MyFlags;
       MyFlags.VT = RegisterVT.getSimpleVT();
       MyFlags.Used = !CS.getInstruction()->use_empty();
-      if (CS.paramHasAttr(0, Attributes::SExt))
+      if (CS.paramHasAttr(0, Attribute::SExt))
         MyFlags.Flags.setSExt();
-      if (CS.paramHasAttr(0, Attributes::ZExt))
+      if (CS.paramHasAttr(0, Attribute::ZExt))
         MyFlags.Flags.setZExt();
-      if (CS.paramHasAttr(0, Attributes::InReg))
+      if (CS.paramHasAttr(0, Attribute::InReg))
         MyFlags.Flags.setInReg();
       Ins.push_back(MyFlags);
     }

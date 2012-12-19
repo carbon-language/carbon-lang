@@ -276,7 +276,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
       SmallVector<AttributeWithIndex, 8> AttributesVec;
       for (unsigned i = 0; PAL.getSlot(i).Index <= NumArgs; ++i)
         AttributesVec.push_back(PAL.getSlot(i));
-      Attributes FnAttrs = PAL.getFnAttributes();
+      Attribute FnAttrs = PAL.getFnAttributes();
       if (FnAttrs.hasAttributes())
         AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                         FnAttrs));
@@ -701,8 +701,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   const AttributeSet &PAL = F->getAttributes();
 
   // The existing function return attributes.
-  Attributes RAttrs = PAL.getRetAttributes();
-  Attributes FnAttrs = PAL.getFnAttributes();
+  Attribute RAttrs = PAL.getRetAttributes();
+  Attribute FnAttrs = PAL.getFnAttributes();
 
   // Find out the new return value.
 
@@ -765,11 +765,11 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   // required when new return value attributes are added.
   if (NRetTy->isVoidTy())
     RAttrs =
-      Attributes::get(NRetTy->getContext(), AttrBuilder(RAttrs).
-                      removeAttributes(Attributes::typeIncompatible(NRetTy)));
+      Attribute::get(NRetTy->getContext(), AttrBuilder(RAttrs).
+                      removeAttributes(Attribute::typeIncompatible(NRetTy)));
   else
     assert(!AttrBuilder(RAttrs).
-             hasAttributes(Attributes::typeIncompatible(NRetTy)) &&
+             hasAttributes(Attribute::typeIncompatible(NRetTy)) &&
            "Return attributes no longer compatible?");
 
   if (RAttrs.hasAttributes())
@@ -791,7 +791,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
       // Get the original parameter attributes (skipping the first one, that is
       // for the return value.
-      Attributes Attrs = PAL.getParamAttributes(i + 1);
+      Attribute Attrs = PAL.getParamAttributes(i + 1);
       if (Attrs.hasAttributes())
         AttributesVec.push_back(AttributeWithIndex::get(Params.size(), Attrs));
     } else {
@@ -836,12 +836,12 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     const AttributeSet &CallPAL = CS.getAttributes();
 
     // The call return attributes.
-    Attributes RAttrs = CallPAL.getRetAttributes();
-    Attributes FnAttrs = CallPAL.getFnAttributes();
+    Attribute RAttrs = CallPAL.getRetAttributes();
+    Attribute FnAttrs = CallPAL.getFnAttributes();
     // Adjust in case the function was changed to return void.
     RAttrs =
-      Attributes::get(NF->getContext(), AttrBuilder(RAttrs).
-           removeAttributes(Attributes::typeIncompatible(NF->getReturnType())));
+      Attribute::get(NF->getContext(), AttrBuilder(RAttrs).
+           removeAttributes(Attribute::typeIncompatible(NF->getReturnType())));
     if (RAttrs.hasAttributes())
       AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
                                                       RAttrs));
@@ -856,7 +856,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       if (ArgAlive[i]) {
         Args.push_back(*I);
         // Get original parameter attributes, but skip return attributes.
-        Attributes Attrs = CallPAL.getParamAttributes(i + 1);
+        Attribute Attrs = CallPAL.getParamAttributes(i + 1);
         if (Attrs.hasAttributes())
           AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
       }
@@ -864,7 +864,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     // Push any varargs arguments on the list. Don't forget their attributes.
     for (CallSite::arg_iterator E = CS.arg_end(); I != E; ++I, ++i) {
       Args.push_back(*I);
-      Attributes Attrs = CallPAL.getParamAttributes(i + 1);
+      Attribute Attrs = CallPAL.getParamAttributes(i + 1);
       if (Attrs.hasAttributes())
         AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
     }

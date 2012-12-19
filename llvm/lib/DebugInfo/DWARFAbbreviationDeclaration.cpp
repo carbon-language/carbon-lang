@@ -23,7 +23,7 @@ bool
 DWARFAbbreviationDeclaration::extract(DataExtractor data, uint32_t* offset_ptr,
                                       uint32_t code) {
   Code = code;
-  Attributes.clear();
+  Attribute.clear();
   if (Code) {
     Tag = data.getULEB128(offset_ptr);
     HasChildren = data.getU8(offset_ptr);
@@ -33,7 +33,7 @@ DWARFAbbreviationDeclaration::extract(DataExtractor data, uint32_t* offset_ptr,
       uint16_t form = data.getULEB128(offset_ptr);
 
       if (attr && form)
-        Attributes.push_back(DWARFAttribute(attr, form));
+        Attribute.push_back(DWARFAttribute(attr, form));
       else
         break;
     }
@@ -55,19 +55,19 @@ void DWARFAbbreviationDeclaration::dump(raw_ostream &OS) const {
   else
     OS << format("DW_TAG_Unknown_%x", getTag());
   OS << "\tDW_CHILDREN_" << (hasChildren() ? "yes" : "no") << '\n';
-  for (unsigned i = 0, e = Attributes.size(); i != e; ++i) {
+  for (unsigned i = 0, e = Attribute.size(); i != e; ++i) {
     OS << '\t';
-    const char *attrString = AttributeString(Attributes[i].getAttribute());
+    const char *attrString = AttributeString(Attribute[i].getAttribute());
     if (attrString)
       OS << attrString;
     else
-      OS << format("DW_AT_Unknown_%x", Attributes[i].getAttribute());
+      OS << format("DW_AT_Unknown_%x", Attribute[i].getAttribute());
     OS << '\t';
-    const char *formString = FormEncodingString(Attributes[i].getForm());
+    const char *formString = FormEncodingString(Attribute[i].getForm());
     if (formString)
       OS << formString;
     else
-      OS << format("DW_FORM_Unknown_%x", Attributes[i].getForm());
+      OS << format("DW_FORM_Unknown_%x", Attribute[i].getForm());
     OS << '\n';
   }
   OS << '\n';
@@ -75,8 +75,8 @@ void DWARFAbbreviationDeclaration::dump(raw_ostream &OS) const {
 
 uint32_t
 DWARFAbbreviationDeclaration::findAttributeIndex(uint16_t attr) const {
-  for (uint32_t i = 0, e = Attributes.size(); i != e; ++i) {
-    if (Attributes[i].getAttribute() == attr)
+  for (uint32_t i = 0, e = Attribute.size(); i != e; ++i) {
+    if (Attribute[i].getAttribute() == attr)
       return i;
   }
   return -1U;

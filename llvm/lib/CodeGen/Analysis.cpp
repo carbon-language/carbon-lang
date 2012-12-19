@@ -266,7 +266,7 @@ static const Value *getNoopInput(const Value *V, const TargetLowering &TLI) {
 /// between it and the return.
 ///
 /// This function only tests target-independent requirements.
-bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
+bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attribute CalleeRetAttr,
                                 const TargetLowering &TLI) {
   const Instruction *I = CS.getInstruction();
   const BasicBlock *ExitBB = I->getParent();
@@ -313,14 +313,14 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attributes CalleeRetAttr,
   // Conservatively require the attributes of the call to match those of
   // the return. Ignore noalias because it doesn't affect the call sequence.
   const Function *F = ExitBB->getParent();
-  Attributes CallerRetAttr = F->getAttributes().getRetAttributes();
-  if (AttrBuilder(CalleeRetAttr).removeAttribute(Attributes::NoAlias) !=
-      AttrBuilder(CallerRetAttr).removeAttribute(Attributes::NoAlias))
+  Attribute CallerRetAttr = F->getAttributes().getRetAttributes();
+  if (AttrBuilder(CalleeRetAttr).removeAttribute(Attribute::NoAlias) !=
+      AttrBuilder(CallerRetAttr).removeAttribute(Attribute::NoAlias))
     return false;
 
   // It's not safe to eliminate the sign / zero extension of the return value.
-  if (CallerRetAttr.hasAttribute(Attributes::ZExt) ||
-      CallerRetAttr.hasAttribute(Attributes::SExt))
+  if (CallerRetAttr.hasAttribute(Attribute::ZExt) ||
+      CallerRetAttr.hasAttribute(Attribute::SExt))
     return false;
 
   // Otherwise, make sure the unmodified return value of I is the return value.
@@ -355,14 +355,14 @@ bool llvm::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
 
   // Conservatively require the attributes of the call to match those of
   // the return. Ignore noalias because it doesn't affect the call sequence.
-  Attributes CallerRetAttr = F->getAttributes().getRetAttributes();
+  Attribute CallerRetAttr = F->getAttributes().getRetAttributes();
   if (AttrBuilder(CallerRetAttr)
-      .removeAttribute(Attributes::NoAlias).hasAttributes())
+      .removeAttribute(Attribute::NoAlias).hasAttributes())
     return false;
 
   // It's not safe to eliminate the sign / zero extension of the return value.
-  if (CallerRetAttr.hasAttribute(Attributes::ZExt) ||
-      CallerRetAttr.hasAttribute(Attributes::SExt))
+  if (CallerRetAttr.hasAttribute(Attribute::ZExt) ||
+      CallerRetAttr.hasAttribute(Attribute::SExt))
     return false;
 
   // Check if the only use is a function return node.

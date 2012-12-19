@@ -185,12 +185,12 @@ public:
   }
 
   /// \brief Return true if this function has the given attribute.
-  bool hasFnAttr(Attributes::AttrVal A) const {
+  bool hasFnAttr(Attribute::AttrVal A) const {
     CALLSITE_DELEGATE_GETTER(hasFnAttr(A));
   }
 
   /// \brief Return true if the call or the callee has the given attribute.
-  bool paramHasAttr(unsigned i, Attributes::AttrVal A) const {
+  bool paramHasAttr(unsigned i, Attribute::AttrVal A) const {
     CALLSITE_DELEGATE_GETTER(paramHasAttr(i, A));
   }
 
@@ -244,12 +244,12 @@ public:
 
   /// @brief Determine whether this argument is not captured.
   bool doesNotCapture(unsigned ArgNo) const {
-    return paramHasAttr(ArgNo + 1, Attributes::NoCapture);
+    return paramHasAttr(ArgNo + 1, Attribute::NoCapture);
   }
 
   /// @brief Determine whether this argument is passed by value.
   bool isByValArgument(unsigned ArgNo) const {
-    return paramHasAttr(ArgNo + 1, Attributes::ByVal);
+    return paramHasAttr(ArgNo + 1, Attribute::ByVal);
   }
 
   /// hasArgument - Returns true if this CallSite passes the given Value* as an

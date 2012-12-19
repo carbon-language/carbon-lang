@@ -1197,7 +1197,7 @@ public:
   void printModule(const Module *M);
 
   void writeOperand(const Value *Op, bool PrintType);
-  void writeParamOperand(const Value *Operand, Attributes Attrs);
+  void writeParamOperand(const Value *Operand, Attribute Attrs);
   void writeAtomic(AtomicOrdering Ordering, SynchronizationScope SynchScope);
 
   void writeAllMDNodes();
@@ -1206,7 +1206,7 @@ public:
   void printGlobal(const GlobalVariable *GV);
   void printAlias(const GlobalAlias *GV);
   void printFunction(const Function *F);
-  void printArgument(const Argument *FA, Attributes Attrs);
+  void printArgument(const Argument *FA, Attribute Attrs);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction &I);
 
@@ -1251,7 +1251,7 @@ void AssemblyWriter::writeAtomic(AtomicOrdering Ordering,
 }
 
 void AssemblyWriter::writeParamOperand(const Value *Operand,
-                                       Attributes Attrs) {
+                                       Attribute Attrs) {
   if (Operand == 0) {
     Out << "<null operand!>";
     return;
@@ -1557,7 +1557,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 
   FunctionType *FT = F->getFunctionType();
   const AttributeSet &Attrs = F->getAttributes();
-  Attributes RetAttrs = Attrs.getRetAttributes();
+  Attribute RetAttrs = Attrs.getRetAttributes();
   if (RetAttrs.hasAttributes())
     Out <<  Attrs.getRetAttributes().getAsString() << ' ';
   TypePrinter.print(F->getReturnType(), Out);
@@ -1587,7 +1587,7 @@ void AssemblyWriter::printFunction(const Function *F) {
       // Output type...
       TypePrinter.print(FT->getParamType(i), Out);
 
-      Attributes ArgAttrs = Attrs.getParamAttributes(i+1);
+      Attribute ArgAttrs = Attrs.getParamAttributes(i+1);
       if (ArgAttrs.hasAttributes())
         Out << ' ' << ArgAttrs.getAsString();
     }
@@ -1601,7 +1601,7 @@ void AssemblyWriter::printFunction(const Function *F) {
   Out << ')';
   if (F->hasUnnamedAddr())
     Out << " unnamed_addr";
-  Attributes FnAttrs = Attrs.getFnAttributes();
+  Attribute FnAttrs = Attrs.getFnAttributes();
   if (FnAttrs.hasAttributes())
     Out << ' ' << Attrs.getFnAttributes().getAsString();
   if (F->hasSection()) {
@@ -1631,7 +1631,7 @@ void AssemblyWriter::printFunction(const Function *F) {
 /// the function.  Simply print it out
 ///
 void AssemblyWriter::printArgument(const Argument *Arg,
-                                   Attributes Attrs) {
+                                   Attribute Attrs) {
   // Output type...
   TypePrinter.print(Arg->getType(), Out);
 

@@ -792,8 +792,8 @@ struct StrToOpt : public LibCallOptimization {
     if (isa<ConstantPointerNull>(EndPtr)) {
       // With a null EndPtr, this function won't capture the main argument.
       // It would be readonly too, except that it still may write to errno.
-      CI->addAttribute(1, Attributes::get(Callee->getContext(),
-                                          Attributes::NoCapture));
+      CI->addAttribute(1, Attribute::get(Callee->getContext(),
+                                          Attribute::NoCapture));
     }
 
     return 0;

@@ -148,7 +148,7 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
   TLInfo = &getAnalysis<TargetLibraryInfo>();
   DT = getAnalysisIfAvailable<DominatorTree>();
   PFI = getAnalysisIfAvailable<ProfileInfo>();
-  OptSize = F.getFnAttributes().hasAttribute(Attributes::OptimizeForSize);
+  OptSize = F.getFnAttributes().hasAttribute(Attribute::OptimizeForSize);
 
   /// This optimization identifies DIV instructions that can be
   /// profitably bypassed and carried out with a shorter, faster divide.
@@ -727,9 +727,9 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(BasicBlock *BB) {
   // It's not safe to eliminate the sign / zero extension of the return value.
   // See llvm::isInTailCallPosition().
   const Function *F = BB->getParent();
-  Attributes CallerRetAttr = F->getAttributes().getRetAttributes();
-  if (CallerRetAttr.hasAttribute(Attributes::ZExt) ||
-      CallerRetAttr.hasAttribute(Attributes::SExt))
+  Attribute CallerRetAttr = F->getAttributes().getRetAttributes();
+  if (CallerRetAttr.hasAttribute(Attribute::ZExt) ||
+      CallerRetAttr.hasAttribute(Attribute::SExt))
     return false;
 
   // Make sure there are no instructions between the PHI and return, or that the
@@ -786,11 +786,11 @@ bool CodeGenPrepare::DupRetToEnableTailCallOpts(BasicBlock *BB) {
 
     // Conservatively require the attributes of the call to match those of the
     // return. Ignore noalias because it doesn't affect the call sequence.
-    Attributes CalleeRetAttr = CS.getAttributes().getRetAttributes();
+    Attribute CalleeRetAttr = CS.getAttributes().getRetAttributes();
     if (AttrBuilder(CalleeRetAttr).
-          removeAttribute(Attributes::NoAlias) !=
+          removeAttribute(Attribute::NoAlias) !=
         AttrBuilder(CallerRetAttr).
-          removeAttribute(Attributes::NoAlias))
+          removeAttribute(Attribute::NoAlias))
       continue;
 
     // Make sure the call instruction is followed by an unconditional branch to

@@ -905,7 +905,7 @@ bool AddressSanitizer::runOnFunction(Function &F) {
   // If needed, insert __asan_init before checking for AddressSafety attr.
   maybeInsertAsanInitAtFunctionEntry(F);
 
-  if (!F.getFnAttributes().hasAttribute(Attributes::AddressSafety))
+  if (!F.getFnAttributes().hasAttribute(Attribute::AddressSafety))
     return false;
 
   if (!ClDebugFunc.empty() && ClDebugFunc != F.getName())

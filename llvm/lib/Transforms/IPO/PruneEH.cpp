@@ -140,14 +140,14 @@ bool PruneEH::runOnSCC(CallGraphSCC &SCC) {
       AttrBuilder NewAttributes;
 
       if (!SCCMightUnwind)
-        NewAttributes.addAttribute(Attributes::NoUnwind);
+        NewAttributes.addAttribute(Attribute::NoUnwind);
       if (!SCCMightReturn)
-        NewAttributes.addAttribute(Attributes::NoReturn);
+        NewAttributes.addAttribute(Attribute::NoReturn);
 
       Function *F = (*I)->getFunction();
       const AttributeSet &PAL = F->getAttributes();
       const AttributeSet &NPAL = PAL.addAttr(F->getContext(), ~0,
-                                            Attributes::get(F->getContext(),
+                                            Attribute::get(F->getContext(),
                                                             NewAttributes));
       if (PAL != NPAL) {
         MadeChange = true;

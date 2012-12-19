@@ -1,4 +1,4 @@
-//===-- AttributesImpl.h - Attributes Internals -----------------*- C++ -*-===//
+//===-- AttributesImpl.h - Attribute Internals -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -28,7 +28,7 @@ public:
   bool hasAttribute(uint64_t A) const;
 
   bool hasAttributes() const;
-  bool hasAttributes(const Attributes &A) const;
+  bool hasAttributes(const Attribute &A) const;
 
   uint64_t getAlignment() const;
   uint64_t getStackAlignment() const;

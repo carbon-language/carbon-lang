@@ -479,9 +479,9 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
       Out << " {\n    AttrBuilder B;\n";
 
 #define HANDLE_ATTR(X)                                     \
-      if (attrs.hasAttribute(Attributes::X))               \
-        Out << "    B.addAttribute(Attributes::" #X ");\n"; \
-      attrs.removeAttribute(Attributes::X);
+      if (attrs.hasAttribute(Attribute::X))               \
+        Out << "    B.addAttribute(Attribute::" #X ");\n"; \
+      attrs.removeAttribute(Attribute::X);
 
       HANDLE_ATTR(SExt);
       HANDLE_ATTR(ZExt);
@@ -509,11 +509,11 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
       HANDLE_ATTR(NonLazyBind);
       HANDLE_ATTR(MinSize);
 #undef HANDLE_ATTR
-      if (attrs.hasAttribute(Attributes::StackAlignment))
+      if (attrs.hasAttribute(Attribute::StackAlignment))
         Out << "    B.addStackAlignmentAttr(" << attrs.getStackAlignment() << ")\n";
-      attrs.removeAttribute(Attributes::StackAlignment);
+      attrs.removeAttribute(Attribute::StackAlignment);
       assert(!attrs.hasAttributes() && "Unhandled attribute!");
-      Out << "    PAWI.Attrs = Attributes::get(mod->getContext(), B);\n }";
+      Out << "    PAWI.Attrs = Attribute::get(mod->getContext(), B);\n }";
       nl(Out);
       Out << "Attrs.push_back(PAWI);";
       nl(Out);

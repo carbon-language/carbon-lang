@@ -548,7 +548,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   OS << "  AttributeWithIndex AWI[" << maxArgAttrs+1 << "];\n";
   OS << "  unsigned NumAttrs = 0;\n";
   OS << "  if (id != 0) {\n";
-  OS << "    SmallVector<Attributes::AttrVal, 8> AttrVec;\n";
+  OS << "    SmallVector<Attribute::AttrVal, 8> AttrVec;\n";
   OS << "    switch(IntrinsicsToAttributesMap[id - ";
   if (TargetOnly)
     OS << "Intrinsic::num_intrinsics";
@@ -576,7 +576,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
         do {
           switch (intrinsic.ArgumentAttributes[ai].second) {
           case CodeGenIntrinsic::NoCapture:
-            OS << "      AttrVec.push_back(Attributes::NoCapture);\n";
+            OS << "      AttrVec.push_back(Attribute::NoCapture);\n";
             break;
           }
 
@@ -594,17 +594,17 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
       OS << "      AttrVec.clear();\n";
 
       if (!intrinsic.canThrow)
-        OS << "      AttrVec.push_back(Attributes::NoUnwind);\n";
+        OS << "      AttrVec.push_back(Attribute::NoUnwind);\n";
       if (intrinsic.isNoReturn)
-        OS << "      AttrVec.push_back(Attributes::NoReturn);\n";
+        OS << "      AttrVec.push_back(Attribute::NoReturn);\n";
 
       switch (modRef) {
       case MRK_none: break;
       case MRK_readonly:
-        OS << "      AttrVec.push_back(Attributes::ReadOnly);\n";
+        OS << "      AttrVec.push_back(Attribute::ReadOnly);\n";
         break;
       case MRK_readnone:
-        OS << "      AttrVec.push_back(Attributes::ReadNone);\n"; 
+        OS << "      AttrVec.push_back(Attribute::ReadNone);\n"; 
         break;
       }
       OS << "      AWI[" << numAttrs++ << "] = AttributeWithIndex::get(C, "

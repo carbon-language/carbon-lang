@@ -2067,12 +2067,12 @@ static void ChangeCalleesToFastCall(Function *F) {
 
 static AttributeSet StripNest(LLVMContext &C, const AttributeSet &Attrs) {
   for (unsigned i = 0, e = Attrs.getNumSlots(); i != e; ++i) {
-    if (!Attrs.getSlot(i).Attrs.hasAttribute(Attributes::Nest))
+    if (!Attrs.getSlot(i).Attrs.hasAttribute(Attribute::Nest))
       continue;
 
     // There can be only one.
     return Attrs.removeAttr(C, Attrs.getSlot(i).Index,
-                            Attributes::get(C, Attributes::Nest));
+                            Attribute::get(C, Attribute::Nest));
   }
 
   return Attrs;
@@ -2113,7 +2113,7 @@ bool GlobalOpt::OptimizeFunctions(Module &M) {
         Changed = true;
       }
 
-      if (F->getAttributes().hasAttrSomewhere(Attributes::Nest) &&
+      if (F->getAttributes().hasAttrSomewhere(Attribute::Nest) &&
           !F->hasAddressTaken()) {
         // The function is not used by a trampoline intrinsic, so it is safe
         // to remove the 'nest' attribute.

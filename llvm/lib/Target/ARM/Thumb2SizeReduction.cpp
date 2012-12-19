@@ -948,7 +948,7 @@ bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
 
   // When -Oz is set, the function carries MinSize attribute.
   MinimizeSize =
-    MF.getFunction()->getFnAttributes().hasAttribute(Attributes::MinSize);
+    MF.getFunction()->getFnAttributes().hasAttribute(Attribute::MinSize);
 
   bool Modified = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)

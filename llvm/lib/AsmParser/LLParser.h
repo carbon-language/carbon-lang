@@ -326,8 +326,8 @@ namespace llvm {
     struct ParamInfo {
       LocTy Loc;
       Value *V;
-      Attributes Attrs;
-      ParamInfo(LocTy loc, Value *v, Attributes attrs)
+      Attribute Attrs;
+      ParamInfo(LocTy loc, Value *v, Attribute attrs)
         : Loc(loc), V(v), Attrs(attrs) {}
     };
     bool ParseParameterList(SmallVectorImpl<ParamInfo> &ArgList,
@@ -347,9 +347,9 @@ namespace llvm {
     struct ArgInfo {
       LocTy Loc;
       Type *Ty;
-      Attributes Attrs;
+      Attribute Attrs;
       std::string Name;
-      ArgInfo(LocTy L, Type *ty, Attributes Attr, const std::string &N)
+      ArgInfo(LocTy L, Type *ty, Attribute Attr, const std::string &N)
         : Loc(L), Ty(ty), Attrs(Attr), Name(N) {}
     };
     bool ParseArgumentList(SmallVectorImpl<ArgInfo> &ArgList, bool &isVarArg);

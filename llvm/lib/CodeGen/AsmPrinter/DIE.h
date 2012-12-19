@@ -131,7 +131,7 @@ namespace llvm {
 
     DIE *Parent;
 
-    /// Attributes values.
+    /// Attribute values.
     ///
     SmallVector<DIEValue*, 32> Values;
 

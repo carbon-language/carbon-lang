@@ -1014,7 +1014,7 @@ void MachineBlockPlacement::buildCFGChains(MachineFunction &F) {
   // unnatural CFGs and backedges that were introduced purely because of the
   // loop rotations done during this layout pass.
   if (F.getFunction()->getFnAttributes().
-        hasAttribute(Attributes::OptimizeForSize))
+        hasAttribute(Attribute::OptimizeForSize))
     return;
   unsigned Align = TLI->getPrefLoopAlignment();
   if (!Align)

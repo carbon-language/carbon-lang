@@ -1260,10 +1260,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       if (Function *Func = Call->getCalledFunction()) {
         // Clear out readonly/readnone attributes.
         AttrBuilder B;
-        B.addAttribute(Attributes::ReadOnly)
-          .addAttribute(Attributes::ReadNone);
+        B.addAttribute(Attribute::ReadOnly)
+          .addAttribute(Attribute::ReadNone);
         Func->removeAttribute(AttributeSet::FunctionIndex,
-                              Attributes::get(Func->getContext(), B));
+                              Attribute::get(Func->getContext(), B));
       }
     }
     IRBuilder<> IRB(&I);
@@ -1286,7 +1286,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       Value *ArgShadowBase = getShadowPtrForArgument(A, IRB, ArgOffset);
       DEBUG(dbgs() << "  Arg#" << i << ": " << *A <<
             " Shadow: " << *ArgShadow << "\n");
-      if (CS.paramHasAttr(i + 1, Attributes::ByVal)) {
+      if (CS.paramHasAttr(i + 1, Attribute::ByVal)) {
         assert(A->getType()->isPointerTy() &&
                "ByVal argument is not a pointer!");
         Size = MS.TD->getTypeAllocSize(A->getType()->getPointerElementType());
@@ -1643,10 +1643,10 @@ bool MemorySanitizer::runOnFunction(Function &F) {
 
   // Clear out readonly/readnone attributes.
   AttrBuilder B;
-  B.addAttribute(Attributes::ReadOnly)
-    .addAttribute(Attributes::ReadNone);
+  B.addAttribute(Attribute::ReadOnly)
+    .addAttribute(Attribute::ReadNone);
   F.removeAttribute(AttributeSet::FunctionIndex,
-                    Attributes::get(F.getContext(), B));
+                    Attribute::get(F.getContext(), B));
 
   return Visitor.runOnFunction();
 }

@@ -326,7 +326,7 @@ needsStackRealignment(const MachineFunction &MF) const {
   unsigned StackAlign = MF.getTarget().getFrameLowering()->getStackAlignment();
   bool requiresRealignment =
     ((MFI->getMaxAlignment() > StackAlign) ||
-     F->getFnAttributes().hasAttribute(Attributes::StackAlignment));
+     F->getFnAttributes().hasAttribute(Attribute::StackAlignment));
 
   return requiresRealignment && canRealignStack(MF);
 }

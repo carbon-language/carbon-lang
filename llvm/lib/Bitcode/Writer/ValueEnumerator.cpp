@@ -424,8 +424,8 @@ void ValueEnumerator::EnumerateAttributes(const AttributeSet &PAL) {
   unsigned &Entry = AttributeMap[PAL.getRawPointer()];
   if (Entry == 0) {
     // Never saw this before, add it.
-    Attributes.push_back(PAL);
-    Entry = Attributes.size();
+    Attribute.push_back(PAL);
+    Entry = Attribute.size();
   }
 }
 

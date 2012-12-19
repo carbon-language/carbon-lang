@@ -154,7 +154,7 @@ CallGraphNode *ArgPromotion::PromoteArguments(CallGraphNode *CGN) {
   SmallPtrSet<Argument*, 8> ByValArgsToTransform;
   for (unsigned i = 0; i != PointerArgs.size(); ++i) {
     bool isByVal=F->getParamAttributes(PointerArgs[i].second+1).
-      hasAttribute(Attributes::ByVal);
+      hasAttribute(Attribute::ByVal);
     Argument *PtrArg = PointerArgs[i].first;
     Type *AgTy = cast<PointerType>(PtrArg->getType())->getElementType();
 
@@ -511,14 +511,14 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
   // what the new GEP/Load instructions we are inserting look like.
   std::map<IndicesVector, LoadInst*> OriginalLoads;
 
-  // Attributes - Keep track of the parameter attributes for the arguments
+  // Attribute - Keep track of the parameter attributes for the arguments
   // that we are *not* promoting. For the ones that we do promote, the parameter
   // attributes are lost
   SmallVector<AttributeWithIndex, 8> AttributesVec;
   const AttributeSet &PAL = F->getAttributes();
 
   // Add any return attributes.
-  Attributes attrs = PAL.getRetAttributes();
+  Attribute attrs = PAL.getRetAttributes();
   if (attrs.hasAttributes())
     AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
                                                     attrs));
@@ -537,7 +537,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     } else if (!ArgsToPromote.count(I)) {
       // Unchanged argument
       Params.push_back(I->getType());
-      Attributes attrs = PAL.getParamAttributes(ArgIndex);
+      Attribute attrs = PAL.getParamAttributes(ArgIndex);
       if (attrs.hasAttributes())
         AttributesVec.push_back(AttributeWithIndex::get(Params.size(), attrs));
     } else if (I->use_empty()) {
@@ -639,7 +639,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     const AttributeSet &CallPAL = CS.getAttributes();
 
     // Add any return attributes.
-    Attributes attrs = CallPAL.getRetAttributes();
+    Attribute attrs = CallPAL.getRetAttributes();
     if (attrs.hasAttributes())
       AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
                                                       attrs));
@@ -653,7 +653,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
 
-        Attributes Attrs = CallPAL.getParamAttributes(ArgIndex);
+        Attribute Attrs = CallPAL.getParamAttributes(ArgIndex);
         if (Attrs.hasAttributes())
           AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
 
@@ -715,7 +715,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     // Push any varargs arguments on the list.
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
-      Attributes Attrs = CallPAL.getParamAttributes(ArgIndex);
+      Attribute Attrs = CallPAL.getParamAttributes(ArgIndex);
       if (Attrs.hasAttributes())
         AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
     }

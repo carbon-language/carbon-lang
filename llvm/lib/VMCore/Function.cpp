@@ -80,7 +80,7 @@ unsigned Argument::getArgNo() const {
 bool Argument::hasByValAttr() const {
   if (!getType()->isPointerTy()) return false;
   return getParent()->getParamAttributes(getArgNo()+1).
-    hasAttribute(Attributes::ByVal);
+    hasAttribute(Attribute::ByVal);
 }
 
 unsigned Argument::getParamAlignment() const {
@@ -94,7 +94,7 @@ unsigned Argument::getParamAlignment() const {
 bool Argument::hasNestAttr() const {
   if (!getType()->isPointerTy()) return false;
   return getParent()->getParamAttributes(getArgNo()+1).
-    hasAttribute(Attributes::Nest);
+    hasAttribute(Attribute::Nest);
 }
 
 /// hasNoAliasAttr - Return true if this argument has the noalias attribute on
@@ -102,7 +102,7 @@ bool Argument::hasNestAttr() const {
 bool Argument::hasNoAliasAttr() const {
   if (!getType()->isPointerTy()) return false;
   return getParent()->getParamAttributes(getArgNo()+1).
-    hasAttribute(Attributes::NoAlias);
+    hasAttribute(Attribute::NoAlias);
 }
 
 /// hasNoCaptureAttr - Return true if this argument has the nocapture attribute
@@ -110,7 +110,7 @@ bool Argument::hasNoAliasAttr() const {
 bool Argument::hasNoCaptureAttr() const {
   if (!getType()->isPointerTy()) return false;
   return getParent()->getParamAttributes(getArgNo()+1).
-    hasAttribute(Attributes::NoCapture);
+    hasAttribute(Attribute::NoCapture);
 }
 
 /// hasSRetAttr - Return true if this argument has the sret attribute on
@@ -120,16 +120,16 @@ bool Argument::hasStructRetAttr() const {
   if (this != getParent()->arg_begin())
     return false; // StructRet param must be first param
   return getParent()->getParamAttributes(1).
-    hasAttribute(Attributes::StructRet);
+    hasAttribute(Attribute::StructRet);
 }
 
 /// addAttr - Add a Attribute to an argument
-void Argument::addAttr(Attributes attr) {
+void Argument::addAttr(Attribute attr) {
   getParent()->addAttribute(getArgNo() + 1, attr);
 }
 
 /// removeAttr - Remove a Attribute from an argument
-void Argument::removeAttr(Attributes attr) {
+void Argument::removeAttr(Attribute attr) {
   getParent()->removeAttribute(getArgNo() + 1, attr);
 }
 
@@ -248,13 +248,13 @@ void Function::dropAllReferences() {
     BasicBlocks.begin()->eraseFromParent();
 }
 
-void Function::addAttribute(unsigned i, Attributes attr) {
+void Function::addAttribute(unsigned i, Attribute attr) {
   AttributeSet PAL = getAttributes();
   PAL = PAL.addAttr(getContext(), i, attr);
   setAttributes(PAL);
 }
 
-void Function::removeAttribute(unsigned i, Attributes attr) {
+void Function::removeAttribute(unsigned i, Attribute attr) {
   AttributeSet PAL = getAttributes();
   PAL = PAL.removeAttr(getContext(), i, attr);
   setAttributes(PAL);

@@ -199,7 +199,7 @@ void PPCFrameLowering::determineFrameLayout(MachineFunction &MF) const {
   // SVR4, we also require a stack frame if we need to spill the CR,
   // since this spill area is addressed relative to the stack pointer.
   bool DisableRedZone = MF.getFunction()->getFnAttributes().
-    hasAttribute(Attributes::NoRedZone);
+    hasAttribute(Attribute::NoRedZone);
   // FIXME SVR4 The 32-bit SVR4 ABI has no red zone.  However, it can
   // still generate stackless code if all local vars are reg-allocated.
   // Try: (FrameSize <= 224
@@ -261,7 +261,7 @@ bool PPCFrameLowering::needsFP(const MachineFunction &MF) const {
 
   // Naked functions have no stack frame pushed, so we don't have a frame
   // pointer.
-  if (MF.getFunction()->getFnAttributes().hasAttribute(Attributes::Naked))
+  if (MF.getFunction()->getFnAttributes().hasAttribute(Attribute::Naked))
     return false;
 
   return MF.getTarget().Options.DisableFramePointerElim(MF) ||

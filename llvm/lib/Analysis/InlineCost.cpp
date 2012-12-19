@@ -610,7 +610,7 @@ bool CallAnalyzer::visitStore(StoreInst &I) {
 
 bool CallAnalyzer::visitCallSite(CallSite CS) {
   if (CS.isCall() && cast<CallInst>(CS.getInstruction())->canReturnTwice() &&
-      !F.getFnAttributes().hasAttribute(Attributes::ReturnsTwice)) {
+      !F.getFnAttributes().hasAttribute(Attribute::ReturnsTwice)) {
     // This aborts the entire analysis.
     ExposesReturnsTwice = true;
     return false;
@@ -1041,7 +1041,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
 
   // Calls to functions with always-inline attributes should be inlined
   // whenever possible.
-  if (Callee->getFnAttributes().hasAttribute(Attributes::AlwaysInline)) {
+  if (Callee->getFnAttributes().hasAttribute(Attribute::AlwaysInline)) {
     if (isInlineViable(*Callee))
       return llvm::InlineCost::getAlways();
     return llvm::InlineCost::getNever();
@@ -1051,7 +1051,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
   // something else.  Don't inline functions marked noinline or call sites
   // marked noinline.
   if (Callee->mayBeOverridden() ||
-      Callee->getFnAttributes().hasAttribute(Attributes::NoInline) ||
+      Callee->getFnAttributes().hasAttribute(Attribute::NoInline) ||
       CS.isNoInline())
     return llvm::InlineCost::getNever();
 
@@ -1073,7 +1073,7 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
 }
 
 bool InlineCostAnalyzer::isInlineViable(Function &F) {
-  bool ReturnsTwice =F.getFnAttributes().hasAttribute(Attributes::ReturnsTwice);
+  bool ReturnsTwice =F.getFnAttributes().hasAttribute(Attribute::ReturnsTwice);
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
     // Disallow inlining of functions which contain an indirect branch.
     if (isa<IndirectBrInst>(BI->getTerminator()))

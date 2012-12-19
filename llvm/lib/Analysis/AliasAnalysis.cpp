@@ -503,7 +503,7 @@ bool AliasAnalysis::canInstructionRangeModify(const Instruction &I1,
 bool llvm::isNoAliasCall(const Value *V) {
   if (isa<CallInst>(V) || isa<InvokeInst>(V))
     return ImmutableCallSite(cast<Instruction>(V))
-      .paramHasAttr(0, Attributes::NoAlias);
+      .paramHasAttr(0, Attribute::NoAlias);
   return false;
 }
 

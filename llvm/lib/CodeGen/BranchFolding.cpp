@@ -571,7 +571,7 @@ static bool ProfitableToMerge(MachineBasicBlock *MBB1,
   MachineFunction *MF = MBB1->getParent();
   if (EffectiveTailLen >= 2 &&
       MF->getFunction()->getFnAttributes().
-        hasAttribute(Attributes::OptimizeForSize) &&
+        hasAttribute(Attribute::OptimizeForSize) &&
       (I1 == MBB1->begin() || I2 == MBB2->begin()))
     return true;
 

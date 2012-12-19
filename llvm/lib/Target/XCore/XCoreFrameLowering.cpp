@@ -101,7 +101,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   const AttributeSet &PAL = MF.getFunction()->getAttributes();
 
   for (unsigned I = 0, E = PAL.getNumAttrs(); I != E; ++I)
-    if (PAL.getAttributesAtIndex(I).hasAttribute(Attributes::Nest)) {
+    if (PAL.getAttributesAtIndex(I).hasAttribute(Attribute::Nest)) {
       loadFromStack(MBB, MBBI, XCore::R11, 0, dl, TII);
       break;
     }

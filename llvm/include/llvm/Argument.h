@@ -73,10 +73,10 @@ public:
   bool hasStructRetAttr() const;
 
   /// addAttr - Add a Attribute to an argument
-  void addAttr(Attributes);
+  void addAttr(Attribute);
   
   /// removeAttr - Remove a Attribute from an argument
-  void removeAttr(Attributes);
+  void removeAttr(Attribute);
 
   /// classof - Methods for support type inquiry through isa, cast, and
   /// dyn_cast:

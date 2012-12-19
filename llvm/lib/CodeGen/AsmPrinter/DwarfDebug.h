@@ -239,7 +239,7 @@ class DwarfDebug {
   BumpPtrAllocator DIEValueAllocator;
 
   //===--------------------------------------------------------------------===//
-  // Attributes used to construct specific Dwarf sections.
+  // Attribute used to construct specific Dwarf sections.
   //
 
   CompileUnit *FirstCU;

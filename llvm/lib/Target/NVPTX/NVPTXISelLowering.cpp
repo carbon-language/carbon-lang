@@ -1022,7 +1022,7 @@ NVPTXTargetLowering::LowerFormalArguments(SDValue Chain,
     // to newly created nodes. The SDNOdes for params have to
     // appear in the same order as their order of appearance
     // in the original function. "idx+1" holds that order.
-    if (PAL.getParamAttributes(i+1).hasAttribute(Attributes::ByVal) == false) {
+    if (PAL.getParamAttributes(i+1).hasAttribute(Attribute::ByVal) == false) {
       // A plain scalar.
       if (isABI || isKernel) {
         // If ABI, load from the param symbol

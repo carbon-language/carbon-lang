@@ -1229,9 +1229,9 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
         ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
 
         const Function *F = I.getParent()->getParent();
-        if (F->getRetAttributes().hasAttribute(Attributes::SExt))
+        if (F->getRetAttributes().hasAttribute(Attribute::SExt))
           ExtendKind = ISD::SIGN_EXTEND;
-        else if (F->getRetAttributes().hasAttribute(Attributes::ZExt))
+        else if (F->getRetAttributes().hasAttribute(Attribute::ZExt))
           ExtendKind = ISD::ZERO_EXTEND;
 
         if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger())
@@ -1246,7 +1246,7 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
 
         // 'inreg' on function refers to return value
         ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
-        if (F->getRetAttributes().hasAttribute(Attributes::InReg))
+        if (F->getRetAttributes().hasAttribute(Attribute::InReg))
           Flags.setInReg();
 
         // Propagate extension type if any
@@ -4292,7 +4292,7 @@ static SDValue ExpandPowI(DebugLoc DL, SDValue LHS, SDValue RHS,
       return DAG.getConstantFP(1.0, LHS.getValueType());
 
     const Function *F = DAG.getMachineFunction().getFunction();
-    if (!F->getFnAttributes().hasAttribute(Attributes::OptimizeForSize) ||
+    if (!F->getFnAttributes().hasAttribute(Attribute::OptimizeForSize) ||
         // If optimizing for size, don't insert too many multiplies.  This
         // inserts up to 5 multiplies.
         CountPopulation_32(Val)+Log2_32(Val) < 7) {
@@ -5235,12 +5235,12 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
     Entry.Node = ArgNode; Entry.Ty = V->getType();
 
     unsigned attrInd = i - CS.arg_begin() + 1;
-    Entry.isSExt  = CS.paramHasAttr(attrInd, Attributes::SExt);
-    Entry.isZExt  = CS.paramHasAttr(attrInd, Attributes::ZExt);
-    Entry.isInReg = CS.paramHasAttr(attrInd, Attributes::InReg);
-    Entry.isSRet  = CS.paramHasAttr(attrInd, Attributes::StructRet);
-    Entry.isNest  = CS.paramHasAttr(attrInd, Attributes::Nest);
-    Entry.isByVal = CS.paramHasAttr(attrInd, Attributes::ByVal);
+    Entry.isSExt  = CS.paramHasAttr(attrInd, Attribute::SExt);
+    Entry.isZExt  = CS.paramHasAttr(attrInd, Attribute::ZExt);
+    Entry.isInReg = CS.paramHasAttr(attrInd, Attribute::InReg);
+    Entry.isSRet  = CS.paramHasAttr(attrInd, Attribute::StructRet);
+    Entry.isNest  = CS.paramHasAttr(attrInd, Attribute::Nest);
+    Entry.isByVal = CS.paramHasAttr(attrInd, Attribute::ByVal);
     Entry.Alignment = CS.getParamAlignment(attrInd);
     Args.push_back(Entry);
   }
@@ -6611,15 +6611,15 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
       unsigned OriginalAlignment =
         TD->getABITypeAlignment(ArgTy);
 
-      if (F.getParamAttributes(Idx).hasAttribute(Attributes::ZExt))
+      if (F.getParamAttributes(Idx).hasAttribute(Attribute::ZExt))
         Flags.setZExt();
-      if (F.getParamAttributes(Idx).hasAttribute(Attributes::SExt))
+      if (F.getParamAttributes(Idx).hasAttribute(Attribute::SExt))
         Flags.setSExt();
-      if (F.getParamAttributes(Idx).hasAttribute(Attributes::InReg))
+      if (F.getParamAttributes(Idx).hasAttribute(Attribute::InReg))
         Flags.setInReg();
-      if (F.getParamAttributes(Idx).hasAttribute(Attributes::StructRet))
+      if (F.getParamAttributes(Idx).hasAttribute(Attribute::StructRet))
         Flags.setSRet();
-      if (F.getParamAttributes(Idx).hasAttribute(Attributes::ByVal)) {
+      if (F.getParamAttributes(Idx).hasAttribute(Attribute::ByVal)) {
         Flags.setByVal();
         PointerType *Ty = cast<PointerType>(I->getType());
         Type *ElementTy = Ty->getElementType();
@@ -6633,7 +6633,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
           FrameAlign = TLI.getByValTypeAlignment(ElementTy);
         Flags.setByValAlign(FrameAlign);
       }
-      if (F.getParamAttributes(Idx).hasAttribute(Attributes::Nest))
+      if (F.getParamAttributes(Idx).hasAttribute(Attribute::Nest))
         Flags.setNest();
       Flags.setOrigAlign(OriginalAlignment);
 
@@ -6721,9 +6721,9 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
       if (!I->use_empty()) {
         ISD::NodeType AssertOp = ISD::DELETED_NODE;
-        if (F.getParamAttributes(Idx).hasAttribute(Attributes::SExt))
+        if (F.getParamAttributes(Idx).hasAttribute(Attribute::SExt))
           AssertOp = ISD::AssertSext;
-        else if (F.getParamAttributes(Idx).hasAttribute(Attributes::ZExt))
+        else if (F.getParamAttributes(Idx).hasAttribute(Attribute::ZExt))
           AssertOp = ISD::AssertZext;
 
         ArgValues.push_back(getCopyFromParts(DAG, dl, &InVals[i],
