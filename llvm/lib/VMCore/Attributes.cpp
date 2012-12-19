@@ -382,7 +382,7 @@ AttributeSet AttributeSet::get(LLVMContext &C,
   // If we didn't find any existing attributes of the same shape then
   // create a new one and insert it.
   if (!PA) {
-    PA = new AttributeSetImpl(Attrs);
+    PA = new AttributeSetImpl(C, Attrs);
     pImpl->AttrsLists.InsertNode(PA, InsertPoint);
   }
 

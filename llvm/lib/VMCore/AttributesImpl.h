@@ -20,6 +20,8 @@
 
 namespace llvm {
 
+class LLVMContext;
+
 class AttributesImpl : public FoldingSetNode {
   uint64_t Bits;                // FIXME: We will be expanding this.
 public:
@@ -50,10 +52,11 @@ class AttributeSetImpl : public FoldingSetNode {
   void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
   AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
 public:
+  LLVMContext &Context;
   SmallVector<AttributeWithIndex, 4> Attrs;
 
-  AttributeSetImpl(ArrayRef<AttributeWithIndex> attrs)
-    : Attrs(attrs.begin(), attrs.end()) {}
+  AttributeSetImpl(LLVMContext &C, ArrayRef<AttributeWithIndex> attrs)
+    : Context(C), Attrs(attrs.begin(), attrs.end()) {}
 
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, Attrs);
