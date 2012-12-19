@@ -79,6 +79,11 @@ public:
     return Vector[I].second;
   }
 
+  ValueT lookup(const KeyT &Key) const {
+    typename MapType::const_iterator Pos = Map.find(Key);
+    return Pos == Map.end()? ValueT() : Vector[Pos->second].second;
+  }
+
   unsigned count(const KeyT &Key) const {
     typename MapType::const_iterator Pos = Map.find(Key);
     return Pos == Map.end()? 0 : 1;
