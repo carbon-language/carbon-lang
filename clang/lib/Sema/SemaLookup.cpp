@@ -451,9 +451,9 @@ void LookupResult::resolveKind() {
 
 void LookupResult::addDeclsFromBasePaths(const CXXBasePaths &P) {
   CXXBasePaths::const_paths_iterator I, E;
-  DeclContext::lookup_iterator DI, DE;
   for (I = P.begin(), E = P.end(); I != E; ++I)
-    for (llvm::tie(DI,DE) = I->Decls; DI != DE; ++DI)
+    for (DeclContext::lookup_iterator DI = I->Decls.begin(),
+         DE = I->Decls.end(); DI != DE; ++DI)
       addDecl(*DI);
 }
 
@@ -647,8 +647,9 @@ static bool LookupDirect(Sema &S, LookupResult &R, const DeclContext *DC) {
     DeclareImplicitMemberFunctionsWithName(S, R.getLookupName(), DC);
 
   // Perform lookup into this declaration context.
-  DeclContext::lookup_const_iterator I, E;
-  for (llvm::tie(I, E) = DC->lookup(R.getLookupName()); I != E; ++I) {
+  DeclContext::lookup_const_result DR = DC->lookup(R.getLookupName());
+  for (DeclContext::lookup_const_iterator I = DR.begin(), E = DR.end(); I != E;
+       ++I) {
     NamedDecl *D = *I;
     if ((D = R.getAcceptableDecl(D))) {
       R.addDecl(D);
@@ -1336,7 +1337,7 @@ static bool LookupAnyMember(const CXXBaseSpecifier *Specifier,
 
   DeclarationName N = DeclarationName::getFromOpaquePtr(Name);
   Path.Decls = BaseRecord->lookup(N);
-  return Path.Decls.first != Path.Decls.second;
+  return !Path.Decls.empty();
 }
 
 /// \brief Determine whether the given set of member declarations contains only
@@ -1522,13 +1523,13 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
       // We found members of the given name in two subobjects of
       // different types. If the declaration sets aren't the same, this
       // this lookup is ambiguous.
-      if (HasOnlyStaticMembers(Path->Decls.first, Path->Decls.second)) {
+      if (HasOnlyStaticMembers(Path->Decls.begin(), Path->Decls.end())) {
         CXXBasePaths::paths_iterator FirstPath = Paths.begin();
-        DeclContext::lookup_iterator FirstD = FirstPath->Decls.first;
-        DeclContext::lookup_iterator CurrentD = Path->Decls.first;
+        DeclContext::lookup_iterator FirstD = FirstPath->Decls.begin();
+        DeclContext::lookup_iterator CurrentD = Path->Decls.begin();
 
-        while (FirstD != FirstPath->Decls.second &&
-               CurrentD != Path->Decls.second) {
+        while (FirstD != FirstPath->Decls.end() &&
+               CurrentD != Path->Decls.end()) {
          if ((*FirstD)->getUnderlyingDecl()->getCanonicalDecl() !=
              (*CurrentD)->getUnderlyingDecl()->getCanonicalDecl())
            break;
@@ -1537,8 +1538,8 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
           ++CurrentD;
         }
 
-        if (FirstD == FirstPath->Decls.second &&
-            CurrentD == Path->Decls.second)
+        if (FirstD == FirstPath->Decls.end() &&
+            CurrentD == Path->Decls.end())
           continue;
       }
 
@@ -1553,7 +1554,7 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
       //   A static member, a nested type or an enumerator defined in
       //   a base class T can unambiguously be found even if an object
       //   has more than one base class subobject of type T.
-      if (HasOnlyStaticMembers(Path->Decls.first, Path->Decls.second))
+      if (HasOnlyStaticMembers(Path->Decls.begin(), Path->Decls.end()))
         continue;
 
       // We have found a nonstatic member name in multiple, distinct
@@ -1565,8 +1566,8 @@ bool Sema::LookupQualifiedName(LookupResult &R, DeclContext *LookupCtx,
 
   // Lookup in a base class succeeded; return these results.
 
-  DeclContext::lookup_iterator I, E;
-  for (llvm::tie(I,E) = Paths.front().Decls; I != E; ++I) {
+  DeclContext::lookup_result DR = Paths.front().Decls;
+  for (DeclContext::lookup_iterator I = DR.begin(), E = DR.end(); I != E; ++I) {
     NamedDecl *D = *I;
     AccessSpecifier AS = CXXRecordDecl::MergeAccess(SubobjectAccess,
                                                     D->getAccess());
@@ -1647,7 +1648,7 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
       << Name << SubobjectType << getAmbiguousPathsDisplayString(*Paths)
       << LookupRange;
 
-    DeclContext::lookup_iterator Found = Paths->front().Decls.first;
+    DeclContext::lookup_iterator Found = Paths->front().Decls.begin();
     while (isa<CXXMethodDecl>(*Found) &&
            cast<CXXMethodDecl>(*Found)->isStatic())
       ++Found;
@@ -1666,7 +1667,7 @@ bool Sema::DiagnoseAmbiguousLookup(LookupResult &Result) {
     for (CXXBasePaths::paths_iterator Path = Paths->begin(),
                                       PathEnd = Paths->end();
          Path != PathEnd; ++Path) {
-      Decl *D = *Path->Decls.first;
+      Decl *D = Path->Decls.front();
       if (DeclsPrinted.insert(D).second)
         Diag(D->getLocation(), diag::note_ambiguous_member_found);
     }
@@ -2337,12 +2338,11 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
   // resolution. Lookup is only performed directly into the class since there
   // will always be a (possibly implicit) declaration to shadow any others.
   OverloadCandidateSet OCS((SourceLocation()));
-  DeclContext::lookup_iterator I, E;
+  DeclContext::lookup_result R = RD->lookup(Name);
 
-  llvm::tie(I, E) = RD->lookup(Name);
-  assert((I != E) &&
+  assert(!R.empty() &&
          "lookup for a constructor or assignment operator was empty");
-  for ( ; I != E; ++I) {
+  for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E; ++I) {
     Decl *Cand = *I;
 
     if (Cand->isInvalidDecl())
@@ -2682,8 +2682,9 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
     //        associated classes are visible within their respective
     //        namespaces even if they are not visible during an ordinary
     //        lookup (11.4).
-    DeclContext::lookup_iterator I, E;
-    for (llvm::tie(I, E) = (*NS)->lookup(Name); I != E; ++I) {
+    DeclContext::lookup_result R = (*NS)->lookup(Name);
+    for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E;
+         ++I) {
       NamedDecl *D = *I;
       // If the only declaration here is an ordinary friend, consider
       // it only if it was declared in an associated classes.
@@ -2842,8 +2843,10 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
   for (DeclContext::all_lookups_iterator L = Ctx->lookups_begin(),
                                       LEnd = Ctx->lookups_end();
        L != LEnd; ++L) {
-    for (DeclContext::lookup_result R = *L; R.first != R.second; ++R.first) {
-      if (NamedDecl *ND = dyn_cast<NamedDecl>(*R.first)) {
+    DeclContext::lookup_result R = *L;
+    for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E;
+         ++I) {
+      if (NamedDecl *ND = dyn_cast<NamedDecl>(*I)) {
         if ((ND = Result.getAcceptableDecl(ND))) {
           Consumer.FoundDecl(ND, Visited.checkHidden(ND), Ctx, InBaseClass);
           Visited.add(ND);

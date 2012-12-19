@@ -84,13 +84,13 @@ CXXBaseSpecifier *MultiplexExternalSemaSource::GetExternalCXXBaseSpecifiers(
 DeclContextLookupResult MultiplexExternalSemaSource::
 FindExternalVisibleDeclsByName(const DeclContext *DC, DeclarationName Name) {
   StoredDeclsList DeclsFound;
-  DeclContextLookupResult lookup;
   for(size_t i = 0; i < Sources.size(); ++i) {
-    lookup = Sources[i]->FindExternalVisibleDeclsByName(DC, Name);
-    while(lookup.first != lookup.second) {
-      if (!DeclsFound.HandleRedeclaration(*lookup.first))
-        DeclsFound.AddSubsequentDecl(*lookup.first);
-      lookup.first++;
+    DeclContext::lookup_result R =
+      Sources[i]->FindExternalVisibleDeclsByName(DC, Name);
+    for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E;
+      ++I) {
+      if (!DeclsFound.HandleRedeclaration(*I))
+        DeclsFound.AddSubsequentDecl(*I);
     }
   }
   return DeclsFound.getLookupResult(); 

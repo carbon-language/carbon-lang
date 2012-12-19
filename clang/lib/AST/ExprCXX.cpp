@@ -964,9 +964,9 @@ CXXMethodDecl *LambdaExpr::getCallOperator() const {
   DeclarationName Name
     = Record->getASTContext().DeclarationNames.getCXXOperatorName(OO_Call);
   DeclContext::lookup_result Calls = Record->lookup(Name);
-  assert(Calls.first != Calls.second && "Missing lambda call operator!");
-  CXXMethodDecl *Result = cast<CXXMethodDecl>(*Calls.first++);
-  assert(Calls.first == Calls.second && "More than lambda one call operator?");
+  assert(!Calls.empty() && "Missing lambda call operator!");
+  assert(Calls.size() == 1 && "More than one lambda call operator!");
+  CXXMethodDecl *Result = cast<CXXMethodDecl>(Calls.front());
   return Result;
 }
 

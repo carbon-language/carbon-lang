@@ -2416,10 +2416,10 @@ public:
       = SemaRef.Context.Idents.get("__builtin_shufflevector");
     TranslationUnitDecl *TUDecl = SemaRef.Context.getTranslationUnitDecl();
     DeclContext::lookup_result Lookup = TUDecl->lookup(DeclarationName(&Name));
-    assert(Lookup.first != Lookup.second && "No __builtin_shufflevector?");
+    assert(!Lookup.empty() && "No __builtin_shufflevector?");
 
     // Build a reference to the __builtin_shufflevector builtin
-    FunctionDecl *Builtin = cast<FunctionDecl>(*Lookup.first);
+    FunctionDecl *Builtin = cast<FunctionDecl>(Lookup.front());
     Expr *Callee = new (SemaRef.Context) DeclRefExpr(Builtin, false,
                                                   SemaRef.Context.BuiltinFnTy,
                                                   VK_RValue, BuiltinLoc);

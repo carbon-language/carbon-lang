@@ -2119,10 +2119,10 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
     // Look for a member, first.
     DeclContext::lookup_result Result
       = ClassDecl->lookup(MemberOrBase);
-    if (Result.first != Result.second) {
+    if (!Result.empty()) {
       ValueDecl *Member;
-      if ((Member = dyn_cast<FieldDecl>(*Result.first)) ||
-          (Member = dyn_cast<IndirectFieldDecl>(*Result.first))) {
+      if ((Member = dyn_cast<FieldDecl>(Result.front())) ||
+          (Member = dyn_cast<IndirectFieldDecl>(Result.front()))) {
         if (EllipsisLoc.isValid())
           Diag(EllipsisLoc, diag::err_pack_expansion_member_init)
             << MemberOrBase
@@ -3956,9 +3956,10 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
     // C++ [class.mem]p14:
     //   In addition, if class T has a user-declared constructor (12.1), every 
     //   non-static data member of class T shall have a name different from T.
-    for (DeclContext::lookup_result R = Record->lookup(Record->getDeclName());
-         R.first != R.second; ++R.first) {
-      NamedDecl *D = *R.first;
+    DeclContext::lookup_result R = Record->lookup(Record->getDeclName());
+    for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E;
+         ++I) {
+      NamedDecl *D = *I;
       if ((isa<FieldDecl>(D) && Record->hasUserDeclaredConstructor()) ||
           isa<IndirectFieldDecl>(D)) {
         Diag(D->getLocation(), diag::err_member_name_of_class)
@@ -5283,9 +5284,9 @@ static bool FindHiddenVirtualMethod(const CXXBaseSpecifier *Specifier,
   bool foundSameNameMethod = false;
   SmallVector<CXXMethodDecl *, 8> overloadedMethods;
   for (Path.Decls = BaseRecord->lookup(Name);
-       Path.Decls.first != Path.Decls.second;
-       ++Path.Decls.first) {
-    NamedDecl *D = *Path.Decls.first;
+       !Path.Decls.empty();
+       Path.Decls = Path.Decls.slice(1)) {
+    NamedDecl *D = Path.Decls.front();
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
       MD = MD->getCanonicalDecl();
       foundSameNameMethod = true;
@@ -5337,10 +5338,10 @@ void Sema::DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD) {
 
   // Keep the base methods that were overriden or introduced in the subclass
   // by 'using' in a set. A base method not in this set is hidden.
-  for (DeclContext::lookup_result res = DC->lookup(MD->getDeclName());
-       res.first != res.second; ++res.first) {
-    NamedDecl *ND = *res.first;
-    if (UsingShadowDecl *shad = dyn_cast<UsingShadowDecl>(*res.first))
+  DeclContext::lookup_result R = DC->lookup(MD->getDeclName());
+  for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E; ++I) {
+    NamedDecl *ND = *I;
+    if (UsingShadowDecl *shad = dyn_cast<UsingShadowDecl>(*I))
       ND = shad->getTargetDecl();
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND))
       AddMostOverridenMethods(MD, Data.OverridenAndUsingBaseMethods);
@@ -6025,11 +6026,11 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
     Decl::IDNS_Type | Decl::IDNS_Using | Decl::IDNS_Tag | 
     Decl::IDNS_Namespace;
     NamedDecl *PrevDecl = 0;
-    for (DeclContext::lookup_result R 
-         = CurContext->getRedeclContext()->lookup(II);
-         R.first != R.second; ++R.first) {
-      if ((*R.first)->getIdentifierNamespace() & IDNS) {
-        PrevDecl = *R.first;
+    DeclContext::lookup_result R = CurContext->getRedeclContext()->lookup(II);
+    for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E;
+         ++I) {
+      if ((*I)->getIdentifierNamespace() & IDNS) {
+        PrevDecl = *I;
         break;
       }
     }
@@ -9393,8 +9394,8 @@ bool Sema::isImplicitlyDeleted(FunctionDecl *FD) {
 static void markLambdaCallOperatorUsed(Sema &S, CXXRecordDecl *Lambda) {
   CXXMethodDecl *CallOperator 
     = cast<CXXMethodDecl>(
-        *Lambda->lookup(
-          S.Context.DeclarationNames.getCXXOperatorName(OO_Call)).first);
+        Lambda->lookup(
+          S.Context.DeclarationNames.getCXXOperatorName(OO_Call)).front());
   CallOperator->setReferenced();
   CallOperator->setUsed();
 }
@@ -9416,7 +9417,7 @@ void Sema::DefineImplicitLambdaToFunctionPointerConversion(
   // Return the address of the __invoke function.
   DeclarationName InvokeName = &Context.Idents.get("__invoke");
   CXXMethodDecl *Invoke 
-    = cast<CXXMethodDecl>(*Lambda->lookup(InvokeName).first);
+    = cast<CXXMethodDecl>(Lambda->lookup(InvokeName).front());
   Expr *FunctionRef = BuildDeclRefExpr(Invoke, Invoke->getType(),
                                        VK_LValue, Conv->getLocation()).take();
   assert(FunctionRef && "Can't refer to __invoke function?");

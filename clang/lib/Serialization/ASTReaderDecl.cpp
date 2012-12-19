@@ -1819,10 +1819,11 @@ ASTDeclReader::FindExistingResult ASTDeclReader::findExisting(NamedDecl *D) {
   }
 
   if (DC->isNamespace()) {
-    for (DeclContext::lookup_result R = DC->lookup(Name);
-         R.first != R.second; ++R.first) {
-      if (isSameEntity(*R.first, D))
-        return FindExistingResult(Reader, D, *R.first);
+    DeclContext::lookup_result R = DC->lookup(Name);
+    for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E; 
+         ++I) {
+      if (isSameEntity(*I, D))
+        return FindExistingResult(Reader, D, *I);
     }
   }
   

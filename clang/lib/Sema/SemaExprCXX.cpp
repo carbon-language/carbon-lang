@@ -1853,8 +1853,8 @@ void Sema::DeclareGlobalAllocationFunction(DeclarationName Name,
 
   // Check if this function is already declared.
   {
-    DeclContext::lookup_iterator Alloc, AllocEnd;
-    for (llvm::tie(Alloc, AllocEnd) = GlobalCtx->lookup(Name);
+    DeclContext::lookup_result R = GlobalCtx->lookup(Name);
+    for (DeclContext::lookup_iterator Alloc = R.begin(), AllocEnd = R.end();
          Alloc != AllocEnd; ++Alloc) {
       // Only look at non-template functions, as it is the predefined,
       // non-templated allocation function we are trying to declare here.
@@ -3191,9 +3191,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
 
       bool FoundConstructor = false;
       unsigned FoundTQs;
-      DeclContext::lookup_const_iterator Con, ConEnd;
-      for (llvm::tie(Con, ConEnd) = Self.LookupConstructors(RD);
-           Con != ConEnd; ++Con) {
+      DeclContext::lookup_const_result R = Self.LookupConstructors(RD);
+      for (DeclContext::lookup_const_iterator Con = R.begin(),
+           ConEnd = R.end(); Con != ConEnd; ++Con) {
         // A template constructor is never a copy constructor.
         // FIXME: However, it may actually be selected at the actual overload
         // resolution point.
@@ -3230,9 +3230,9 @@ static bool EvaluateUnaryTypeTrait(Sema &Self, UnaryTypeTrait UTT,
           !RD->hasNonTrivialDefaultConstructor())
         return true;
 
-      DeclContext::lookup_const_iterator Con, ConEnd;
-      for (llvm::tie(Con, ConEnd) = Self.LookupConstructors(RD);
-           Con != ConEnd; ++Con) {
+      DeclContext::lookup_const_result R = Self.LookupConstructors(RD);
+      for (DeclContext::lookup_const_iterator Con = R.begin(),
+           ConEnd = R.end(); Con != ConEnd; ++Con) {
         // FIXME: In C++0x, a constructor template can be a default constructor.
         if (isa<FunctionTemplateDecl>(*Con))
           continue;

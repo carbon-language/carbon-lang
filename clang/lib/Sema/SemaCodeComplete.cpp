@@ -757,9 +757,10 @@ void ResultBuilder::MaybeAddConstructorResults(Result R) {
   DeclarationName ConstructorName
     = Context.DeclarationNames.getCXXConstructorName(
                                            Context.getCanonicalType(RecordTy));
-  for (DeclContext::lookup_result Ctors = Record->lookup(ConstructorName);
-       Ctors.first != Ctors.second; ++Ctors.first) {
-    R.Declaration = *Ctors.first;
+  DeclContext::lookup_result Ctors = Record->lookup(ConstructorName);
+  for (DeclContext::lookup_iterator I = Ctors.begin(), E = Ctors.end(); I != E;
+       ++I) {
+    R.Declaration = *I;
     R.CursorKind = getCursorKindForDecl(R.Declaration);
     Results.push_back(R);
   }

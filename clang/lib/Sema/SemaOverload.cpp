@@ -2881,8 +2881,8 @@ IsInitializerListConstructorConversion(Sema &S, Expr *From, QualType ToType,
                                        UserDefinedConversionSequence &User,
                                        OverloadCandidateSet &CandidateSet,
                                        bool AllowExplicit) {
-  DeclContext::lookup_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(To);
+  DeclContext::lookup_result R = S.LookupConstructors(To);
+  for (DeclContext::lookup_iterator Con = R.begin(), ConEnd = R.end();
        Con != ConEnd; ++Con) {
     NamedDecl *D = *Con;
     DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
@@ -3009,8 +3009,8 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
         ListInitializing = true;
       }
 
-      DeclContext::lookup_iterator Con, ConEnd;
-      for (llvm::tie(Con, ConEnd) = S.LookupConstructors(ToRecordDecl);
+      DeclContext::lookup_result R = S.LookupConstructors(ToRecordDecl);
+      for (DeclContext::lookup_iterator Con = R.begin(), ConEnd = R.end();
            Con != ConEnd; ++Con) {
         NamedDecl *D = *Con;
         DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());

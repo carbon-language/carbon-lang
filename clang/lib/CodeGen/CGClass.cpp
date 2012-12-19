@@ -1757,7 +1757,7 @@ void CodeGenFunction::EmitForwardingCallToLambda(const CXXRecordDecl *lambda,
   DeclarationName operatorName
     = getContext().DeclarationNames.getCXXOperatorName(OO_Call);
   CXXMethodDecl *callOperator =
-    cast<CXXMethodDecl>(*lambda->lookup(operatorName).first);
+    cast<CXXMethodDecl>(lambda->lookup(operatorName).front());
 
   // Get the address of the call operator.
   const CGFunctionInfo &calleeFnInfo =

@@ -841,11 +841,10 @@ void ASTDeclWriter::VisitNamespaceDecl(NamespaceDecl *D) {
     if (StoredDeclsMap *Map = NS->buildLookup()) {
       for (StoredDeclsMap::iterator D = Map->begin(), DEnd = Map->end();
            D != DEnd; ++D) {
-        DeclContext::lookup_result Result = D->second.getLookupResult();
-        while (Result.first != Result.second) {
-          Writer.GetDeclRef(*Result.first);
-          ++Result.first;
-        }
+        DeclContext::lookup_result R = D->second.getLookupResult();
+        for (DeclContext::lookup_iterator I = R.begin(), E = R.end(); I != E;
+             ++I)
+          Writer.GetDeclRef(*I);
       }
     }
   }

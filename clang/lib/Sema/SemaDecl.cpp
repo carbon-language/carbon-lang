@@ -4789,9 +4789,9 @@ static bool FindOverriddenMethod(const CXXBaseSpecifier *Specifier,
   }    
   
   for (Path.Decls = BaseRecord->lookup(Name);
-       Path.Decls.first != Path.Decls.second;
-       ++Path.Decls.first) {
-    NamedDecl *D = *Path.Decls.first;
+       !Path.Decls.empty();
+       Path.Decls = Path.Decls.slice(1)) {
+    NamedDecl *D = Path.Decls.front();
     if (CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
       if (MD->isVirtual() && !Data->S->IsOverload(Data->Method, MD, false))
         return true;

@@ -295,12 +295,12 @@ static bool isIntOrBool(Expr *Exp) {
 static bool threadSafetyCheckIsSmartPointer(Sema &S, const RecordType* RT) {
   DeclContextLookupConstResult Res1 = RT->getDecl()->lookup(
     S.Context.DeclarationNames.getCXXOperatorName(OO_Star));
-  if (Res1.first == Res1.second)
+  if (Res1.empty())
     return false;
 
   DeclContextLookupConstResult Res2 = RT->getDecl()->lookup(
     S.Context.DeclarationNames.getCXXOperatorName(OO_Arrow));
-  if (Res2.first == Res2.second)
+  if (Res2.empty())
     return false;
 
   return true;

@@ -2947,7 +2947,7 @@ public:
     clang::io::Emit16(Out, KeyLen);
 
     // 2 bytes for num of decls and 4 for each DeclID.
-    unsigned DataLen = 2 + 4 * (Lookup.second - Lookup.first);
+    unsigned DataLen = 2 + 4 * Lookup.size();
     clang::io::Emit16(Out, DataLen);
 
     return std::make_pair(KeyLen, DataLen);
@@ -2987,9 +2987,10 @@ public:
   void EmitData(raw_ostream& Out, key_type_ref,
                 data_type Lookup, unsigned DataLen) {
     uint64_t Start = Out.tell(); (void)Start;
-    clang::io::Emit16(Out, Lookup.second - Lookup.first);
-    for (; Lookup.first != Lookup.second; ++Lookup.first)
-      clang::io::Emit32(Out, Writer.GetDeclRef(*Lookup.first));
+    clang::io::Emit16(Out, Lookup.size());
+    for (DeclContext::lookup_iterator I = Lookup.begin(), E = Lookup.end();
+         I != E; ++I)
+      clang::io::Emit32(Out, Writer.GetDeclRef(*I));
 
     assert(Out.tell() - Start == DataLen && "Data length is wrong");
   }
@@ -3038,7 +3039,7 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
        D != DEnd; ++D) {
     DeclarationName Name = D->first;
     DeclContext::lookup_result Result = D->second.getLookupResult();
-    if (Result.first != Result.second) {
+    if (!Result.empty()) {
       if (Name.getNameKind() == DeclarationName::CXXConversionFunctionName) {
         // Hash all conversion function names to the same name. The actual
         // type information in conversion function name is not used in the
@@ -3047,7 +3048,7 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
         // functions under a single key.
         if (!ConversionName)
           ConversionName = Name;
-        ConversionDecls.append(Result.first, Result.second);
+        ConversionDecls.append(Result.begin(), Result.end());
         continue;
       }
       
@@ -3106,7 +3107,7 @@ void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
     DeclContext::lookup_result Result = D->second.getLookupResult();
     // For any name that appears in this table, the results are complete, i.e.
     // they overwrite results from previous PCHs. Merging is always a mess.
-    if (Result.first != Result.second)
+    if (!Result.empty())
       Generator.insert(Name, Result, Trait);
   }
 

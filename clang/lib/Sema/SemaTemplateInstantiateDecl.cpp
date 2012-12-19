@@ -245,8 +245,8 @@ TemplateDeclInstantiator::VisitTypeAliasTemplateDecl(TypeAliasTemplateDecl *D) {
   TypeAliasTemplateDecl *PrevAliasTemplate = 0;
   if (Pattern->getPreviousDecl()) {
     DeclContext::lookup_result Found = Owner->lookup(Pattern->getDeclName());
-    if (Found.first != Found.second) {
-      PrevAliasTemplate = dyn_cast<TypeAliasTemplateDecl>(*Found.first);
+    if (!Found.empty()) {
+      PrevAliasTemplate = dyn_cast<TypeAliasTemplateDecl>(Found.front());
     }
   }
 
@@ -745,8 +745,8 @@ Decl *TemplateDeclInstantiator::VisitClassTemplateDecl(ClassTemplateDecl *D) {
 
   if (!isFriend && Pattern->getPreviousDecl()) {
     DeclContext::lookup_result Found = Owner->lookup(Pattern->getDeclName());
-    if (Found.first != Found.second) {
-      PrevClassTemplate = dyn_cast<ClassTemplateDecl>(*Found.first);
+    if (!Found.empty()) {
+      PrevClassTemplate = dyn_cast<ClassTemplateDecl>(Found.front());
       if (PrevClassTemplate)
         PrevDecl = PrevClassTemplate->getTemplatedDecl();
     }
@@ -911,11 +911,11 @@ TemplateDeclInstantiator::VisitClassTemplatePartialSpecializationDecl(
   // of the class template and return that.
   DeclContext::lookup_result Found
     = Owner->lookup(ClassTemplate->getDeclName());
-  if (Found.first == Found.second)
+  if (Found.empty())
     return 0;
 
   ClassTemplateDecl *InstClassTemplate
-    = dyn_cast<ClassTemplateDecl>(*Found.first);
+    = dyn_cast<ClassTemplateDecl>(Found.front());
   if (!InstClassTemplate)
     return 0;
 
@@ -3531,7 +3531,7 @@ NamedDecl *Sema::FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
     NamedDecl *Result = 0;
     if (D->getDeclName()) {
       DeclContext::lookup_result Found = ParentDC->lookup(D->getDeclName());
-      Result = findInstantiationOf(Context, D, Found.first, Found.second);
+      Result = findInstantiationOf(Context, D, Found.begin(), Found.end());
     } else {
       // Since we don't have a name for the entity we're looking for,
       // our only option is to walk through all of the declarations to
