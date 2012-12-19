@@ -105,15 +105,15 @@ def VGPR_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
 
 // VGPR 64-bit registers
 def VGPR_64 : RegisterTuples<[low, high],
-                             [(add (decimate VGPR_32, 2)),
-                              (add (decimate (rotl VGPR_32, 1), 2))]>;
+                             [(add VGPR_32),
+                              (add (rotl VGPR_32, 1))]>;
 
 // VGPR 128-bit registers
 def VGPR_128 : RegisterTuples<[sel_x, sel_y, sel_z, sel_w],
-                              [(add (decimate VGPR_32, 4)),
-                               (add (decimate (rotl VGPR_32, 1), 4)),
-                               (add (decimate (rotl VGPR_32, 2), 4)),
-                               (add (decimate (rotl VGPR_32, 3), 4))]>;
+                              [(add VGPR_32),
+                               (add (rotl VGPR_32, 1)),
+                               (add (rotl VGPR_32, 2)),
+                               (add (rotl VGPR_32, 3))]>;
 
 // Register class for all scalar registers (SGPRs + Special Registers)
 def SReg_32 : RegisterClass<"AMDGPU", [f32, i32], 32,
