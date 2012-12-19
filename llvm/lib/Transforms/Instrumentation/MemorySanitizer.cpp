@@ -1210,6 +1210,147 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     VAHelper->visitVACopyInst(I);
   }
 
+  enum IntrinsicKind {
+    IK_DoesNotAccessMemory,
+    IK_OnlyReadsMemory,
+    IK_WritesMemory
+  };
+
+  static IntrinsicKind getIntrinsicKind(Intrinsic::ID iid) {
+    const int DoesNotAccessMemory = IK_DoesNotAccessMemory;
+    const int OnlyReadsArgumentPointees = IK_OnlyReadsMemory;
+    const int OnlyReadsMemory = IK_OnlyReadsMemory;
+    const int OnlyAccessesArgumentPointees = IK_WritesMemory;
+    const int UnknownModRefBehavior = IK_WritesMemory;
+#define GET_INTRINSIC_MODREF_BEHAVIOR
+#define ModRefBehavior IntrinsicKind
+#include "llvm/Intrinsics.gen"
+#undef ModRefBehavior
+#undef GET_INTRINSIC_MODREF_BEHAVIOR
+  }
+
+  /// \brief Handle vector store-like intrinsics.
+  ///
+  /// Instrument intrinsics that look like a simple SIMD store: writes memory,
+  /// has 1 pointer argument and 1 vector argument, returns void.
+  bool handleVectorStoreIntrinsic(IntrinsicInst &I) {
+    IRBuilder<> IRB(&I);
+    Value* Addr = I.getArgOperand(0);
+    Value *Shadow = getShadow(&I, 1);
+    Value *ShadowPtr = getShadowPtr(Addr, Shadow->getType(), IRB);
+
+    // We don't know the pointer alignment (could be unaligned SSE store!).
+    // Have to assume to worst case.
+    IRB.CreateAlignedStore(Shadow, ShadowPtr, 1);
+
+    if (ClCheckAccessAddress)
+      insertCheck(Addr, &I);
+
+    // FIXME: use ClStoreCleanOrigin
+    // FIXME: factor out common code from materializeStores
+    if (ClTrackOrigins)
+      IRB.CreateStore(getOrigin(&I, 1), getOriginPtr(Addr, IRB));
+    return true;
+  }
+
+  /// \brief Handle vector load-like intrinsics.
+  ///
+  /// Instrument intrinsics that look like a simple SIMD load: reads memory,
+  /// has 1 pointer argument, returns a vector.
+  bool handleVectorLoadIntrinsic(IntrinsicInst &I) {
+    IRBuilder<> IRB(&I);
+    Value *Addr = I.getArgOperand(0);
+
+    Type *ShadowTy = getShadowTy(&I);
+    Value *ShadowPtr = getShadowPtr(Addr, ShadowTy, IRB);
+    // We don't know the pointer alignment (could be unaligned SSE load!).
+    // Have to assume to worst case.
+    setShadow(&I, IRB.CreateAlignedLoad(ShadowPtr, 1, "_msld"));
+
+    if (ClCheckAccessAddress)
+      insertCheck(Addr, &I);
+
+    if (ClTrackOrigins)
+      setOrigin(&I, IRB.CreateLoad(getOriginPtr(Addr, IRB)));
+    return true;
+  }
+
+  /// \brief Handle (SIMD arithmetic)-like intrinsics.
+  ///
+  /// Instrument intrinsics with any number of arguments of the same type,
+  /// equal to the return type. The type should be simple (no aggregates or
+  /// pointers; vectors are fine).
+  /// Caller guarantees that this intrinsic does not access memory.
+  bool maybeHandleSimpleNomemIntrinsic(IntrinsicInst &I) {
+    Type *RetTy = I.getType();
+    if (!(RetTy->isIntOrIntVectorTy() ||
+          RetTy->isFPOrFPVectorTy() ||
+          RetTy->isX86_MMXTy()))
+      return false;
+
+    unsigned NumArgOperands = I.getNumArgOperands();
+
+    for (unsigned i = 0; i < NumArgOperands; ++i) {
+      Type *Ty = I.getArgOperand(i)->getType();
+      if (Ty != RetTy)
+        return false;
+    }
+
+    IRBuilder<> IRB(&I);
+    ShadowAndOriginCombiner SC(this, IRB);
+    for (unsigned i = 0; i < NumArgOperands; ++i)
+      SC.Add(I.getArgOperand(i));
+    SC.Done(&I);
+
+    return true;
+  }
+
+  /// \brief Heuristically instrument unknown intrinsics.
+  ///
+  /// The main purpose of this code is to do something reasonable with all
+  /// random intrinsics we might encounter, most importantly - SIMD intrinsics.
+  /// We recognize several classes of intrinsics by their argument types and
+  /// ModRefBehaviour and apply special intrumentation when we are reasonably
+  /// sure that we know what the intrinsic does.
+  ///
+  /// We special-case intrinsics where this approach fails. See llvm.bswap
+  /// handling as an example of that.
+  bool handleUnknownIntrinsic(IntrinsicInst &I) {
+    unsigned NumArgOperands = I.getNumArgOperands();
+    if (NumArgOperands == 0)
+      return false;
+
+    Intrinsic::ID iid = I.getIntrinsicID();
+    IntrinsicKind IK = getIntrinsicKind(iid);
+    bool OnlyReadsMemory = IK == IK_OnlyReadsMemory;
+    bool WritesMemory = IK == IK_WritesMemory;
+    assert(!(OnlyReadsMemory && WritesMemory));
+
+    if (NumArgOperands == 2 &&
+        I.getArgOperand(0)->getType()->isPointerTy() &&
+        I.getArgOperand(1)->getType()->isVectorTy() &&
+        I.getType()->isVoidTy() &&
+        WritesMemory) {
+      // This looks like a vector store.
+      return handleVectorStoreIntrinsic(I);
+    }
+
+    if (NumArgOperands == 1 &&
+        I.getArgOperand(0)->getType()->isPointerTy() &&
+        I.getType()->isVectorTy() &&
+        OnlyReadsMemory) {
+      // This looks like a vector load.
+      return handleVectorLoadIntrinsic(I);
+    }
+
+    if (!OnlyReadsMemory && !WritesMemory)
+      if (maybeHandleSimpleNomemIntrinsic(I))
+        return true;
+
+    // FIXME: detect and handle SSE maskstore/maskload
+    return false;
+  }
+
   void handleBswap(IntrinsicInst &I) {
     IRBuilder<> IRB(&I);
     Value *Op = I.getArgOperand(0);
@@ -1226,7 +1367,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       handleBswap(I);
       break;
     default:
-      visitInstruction(I);
+      if (!handleUnknownIntrinsic(I))
+        visitInstruction(I);
       break;
     }
   }
