@@ -43,9 +43,18 @@ void AppendToErrorMessageBuffer(const char *buffer) {
 }
 
 // ---------------------- Decorator ------------------------------ {{{1
+bool PrintsToTtyCached() {
+  static int cached = 0;
+  static bool prints_to_tty;
+  if (!cached) {  // Ok wrt threads since we are printing only from one thread.
+    prints_to_tty = PrintsToTty();
+    cached = 1;
+  }
+  return prints_to_tty;
+}
 class Decorator: private __sanitizer::AnsiColorDecorator {
  public:
-  Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTty()) { }
+  Decorator() : __sanitizer::AnsiColorDecorator(PrintsToTtyCached()) { }
   const char *Warning()    { return Red(); }
   const char *EndWarning() { return Default(); }
   const char *Access()     { return Blue(); }
@@ -54,16 +63,58 @@ class Decorator: private __sanitizer::AnsiColorDecorator {
   const char *EndLocation() { return Default(); }
   const char *Allocation()  { return Magenta(); }
   const char *EndAllocation()  { return Default(); }
+
+  const char *ShadowByte(u8 byte) {
+    switch (byte) {
+      case kAsanHeapLeftRedzoneMagic:
+      case kAsanHeapRightRedzoneMagic:
+        return Red();
+      case kAsanHeapFreeMagic:
+        return Magenta();
+      case kAsanStackLeftRedzoneMagic:
+      case kAsanStackMidRedzoneMagic:
+      case kAsanStackRightRedzoneMagic:
+      case kAsanStackPartialRedzoneMagic:
+        return Red();
+      case kAsanStackAfterReturnMagic:
+        return Magenta();
+      case kAsanInitializationOrderMagic:
+        return Cyan();
+      case kAsanUserPoisonedMemoryMagic:
+        return Blue();
+      case kAsanStackUseAfterScopeMagic:
+        return Magenta();
+      case kAsanGlobalRedzoneMagic:
+        return Red();
+      case kAsanInternalHeapMagic:
+        return Yellow();
+      default:
+        return Default();
+    }
+  }
+  const char *EndShadowByte() { return Default(); }
 };
 
 // ---------------------- Helper functions ----------------------- {{{1
 
-static void PrintBytes(const char *before, uptr *a) {
-  u8 *bytes = (u8*)a;
-  uptr byte_num = (SANITIZER_WORDSIZE) / 8;
-  Printf("%s%p:", before, (void*)a);
-  for (uptr i = 0; i < byte_num; i++) {
-    Printf(" %x%x", bytes[i] >> 4, bytes[i] & 15);
+static void PrintShadowByte(const char *before, u8 byte,
+                            const char *after = "\n") {
+  Decorator d;
+  Printf("%s%s%x%x%s%s", before,
+         d.ShadowByte(byte), byte >> 4, byte & 15, d.EndShadowByte(), after);
+}
+
+static void PrintShadowBytes(const char *before, u8 *bytes,
+                             u8 *guilty, uptr n) {
+  Decorator d;
+  if (before)
+    Printf("%s%p:", before, bytes);
+  for (uptr i = 0; i < n; i++) {
+    u8 *p = bytes + i;
+    const char *before = p == guilty ? "[" :
+        p - 1 == guilty ? "" : " ";
+    const char *after = p == guilty ? "]" : "";
+    PrintShadowByte(before, *p, after);
   }
   Printf("\n");
 }
@@ -72,15 +123,36 @@ static void PrintShadowMemoryForAddress(uptr addr) {
   if (!AddrIsInMem(addr))
     return;
   uptr shadow_addr = MemToShadow(addr);
-  Printf("Shadow byte and word:\n");
-  Printf("  %p: %x\n", (void*)shadow_addr, *(unsigned char*)shadow_addr);
-  uptr aligned_shadow = shadow_addr & ~(kWordSize - 1);
-  PrintBytes("  ", (uptr*)(aligned_shadow));
-  Printf("More shadow bytes:\n");
-  for (int i = -4; i <= 4; i++) {
+  const uptr n_bytes_per_row = 16;
+  uptr aligned_shadow = shadow_addr & ~(n_bytes_per_row - 1);
+  Printf("Shadow bytes around the buggy address:\n");
+  for (int i = -5; i <= 5; i++) {
     const char *prefix = (i == 0) ? "=>" : "  ";
-    PrintBytes(prefix, (uptr*)(aligned_shadow + i * kWordSize));
+    PrintShadowBytes(prefix,
+                     (u8*)(aligned_shadow + i * n_bytes_per_row),
+                     (u8*)shadow_addr, n_bytes_per_row);
   }
+  Printf("Shadow byte legend (one shadow byte represents %d "
+         "application bytes):\n", (int)SHADOW_GRANULARITY);
+  PrintShadowByte("  Addressable:           ", 0);
+  Printf("  Partially addressable: ");
+  for (uptr i = 1; i < SHADOW_GRANULARITY; i++)
+    PrintShadowByte("", i, " ");
+  Printf("\n");
+  PrintShadowByte("  Heap left redzone:     ", kAsanHeapLeftRedzoneMagic);
+  PrintShadowByte("  Heap righ redzone:     ", kAsanHeapRightRedzoneMagic);
+  PrintShadowByte("  Freed Heap region:     ", kAsanHeapFreeMagic);
+  PrintShadowByte("  Stack left redzone:    ", kAsanStackLeftRedzoneMagic);
+  PrintShadowByte("  Stack mid redzone:     ", kAsanStackMidRedzoneMagic);
+  PrintShadowByte("  Stack right redzone:   ", kAsanStackRightRedzoneMagic);
+  PrintShadowByte("  Stack partial redzone: ", kAsanStackPartialRedzoneMagic);
+  PrintShadowByte("  Stack right redzone:   ", kAsanStackRightRedzoneMagic);
+  PrintShadowByte("  Stack after return:    ", kAsanStackAfterReturnMagic);
+  PrintShadowByte("  Stack use after scope: ", kAsanStackUseAfterScopeMagic);
+  PrintShadowByte("  Global redzone:        ", kAsanGlobalRedzoneMagic);
+  PrintShadowByte("  Global init order:     ", kAsanInitializationOrderMagic);
+  PrintShadowByte("  Poisoned by user:      ", kAsanUserPoisonedMemoryMagic);
+  PrintShadowByte("  ASan internal:         ", kAsanInternalHeapMagic);
 }
 
 static void PrintZoneForPointer(uptr ptr, uptr zone_ptr,
