@@ -151,3 +151,18 @@ entry:
   %conv = zext i1 %cmp to i32
   ret i32 %conv
 }
+
+define i32 @test12() uwtable ssp {
+; CHECK: test12:
+; CHECK: testb
+  %1 = call zeroext i1 @test12b()
+  br i1 %1, label %2, label %3
+
+; <label>:2                                       ; preds = %0
+  ret i32 1
+
+; <label>:3                                       ; preds = %0
+  ret i32 2
+}
+
+declare zeroext i1 @test12b()

@@ -2206,9 +2206,10 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
           Cond = (Cond == ISD::SETEQ) ? ISD::SETNE : ISD::SETEQ;
           return DAG.getSetCC(dl, VT, Op0.getOperand(0), Op0.getOperand(1),
                               Cond);
-        } else if (Op0.getOpcode() == ISD::AND &&
-                isa<ConstantSDNode>(Op0.getOperand(1)) &&
-                cast<ConstantSDNode>(Op0.getOperand(1))->getAPIntValue() == 1) {
+        }
+        if (Op0.getOpcode() == ISD::AND &&
+            isa<ConstantSDNode>(Op0.getOperand(1)) &&
+            cast<ConstantSDNode>(Op0.getOperand(1))->getAPIntValue() == 1) {
           // If this is (X&1) == / != 1, normalize it to (X&1) != / == 0.
           if (Op0.getValueType().bitsGT(VT))
             Op0 = DAG.getNode(ISD::AND, dl, VT,
@@ -2223,6 +2224,11 @@ TargetLowering::SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
                               DAG.getConstant(0, Op0.getValueType()),
                               Cond == ISD::SETEQ ? ISD::SETNE : ISD::SETEQ);
         }
+        if (Op0.getOpcode() == ISD::AssertZext &&
+            cast<VTSDNode>(Op0.getOperand(1))->getVT() == MVT::i1)
+          return DAG.getSetCC(dl, VT, Op0,
+                              DAG.getConstant(0, Op0.getValueType()),
+                              Cond == ISD::SETEQ ? ISD::SETNE : ISD::SETEQ);
       }
     }
 
