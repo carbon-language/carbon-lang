@@ -831,9 +831,9 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ")" [87:38 - 87:39] CXXConstructor=StringSwitch<T, R>:87:12 (Definition)
 // CHECK-tokens: Punctuation: ":" [87:40 - 87:41] CXXConstructor=StringSwitch<T, R>:87:12 (Definition)
 // CHECK-tokens: Identifier: "Str" [87:42 - 87:45] MemberRef=Str:84:13
-// CHECK-tokens: Punctuation: "(" [87:45 - 87:46] UnexposedExpr=
+// CHECK-tokens: Punctuation: "(" [87:45 - 87:46] CallExpr=StringRef:38:7
 // CHECK-tokens: Identifier: "Str" [87:46 - 87:49] DeclRefExpr=Str:87:35
-// CHECK-tokens: Punctuation: ")" [87:49 - 87:50] UnexposedExpr=
+// CHECK-tokens: Punctuation: ")" [87:49 - 87:50] CallExpr=StringRef:38:7
 // CHECK-tokens: Punctuation: "," [87:50 - 87:51] CXXConstructor=StringSwitch<T, R>:87:12 (Definition)
 // CHECK-tokens: Identifier: "Result" [87:52 - 87:58] MemberRef=Result:85:12
 // CHECK-tokens: Punctuation: "(" [87:58 - 87:59] UnexposedExpr=
@@ -1843,7 +1843,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK: 87:35: ParmDecl=Str:87:35 (Definition) Extent=[87:25 - 87:38]
 // CHECK: 87:25: TypeRef=class llvm::StringRef:38:7 Extent=[87:25 - 87:34]
 // CHECK: 87:42: MemberRef=Str:84:13 Extent=[87:42 - 87:45]
-// CHECK: 87:45: UnexposedExpr= Extent=[87:45 - 87:50]
+// CHECK: 87:42: CallExpr=StringRef:38:7 Extent=[87:42 - 87:50]
 // CHECK: 87:46: DeclRefExpr=Str:87:35 Extent=[87:46 - 87:49]
 // CHECK: 87:52: MemberRef=Result:85:12 Extent=[87:52 - 87:58]
 // CHECK: 87:58: UnexposedExpr= Extent=[87:58 - 87:61]

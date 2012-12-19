@@ -3138,45 +3138,6 @@ Sema::InstantiateMemInitializers(CXXConstructorDecl *New,
                        AnyErrors);
 }
 
-ExprResult Sema::SubstInitializer(Expr *Init,
-                          const MultiLevelTemplateArgumentList &TemplateArgs,
-                          bool CXXDirectInit) {
-  // Initializers are instantiated like expressions, except that various outer
-  // layers are stripped.
-  if (!Init)
-    return Owned(Init);
-
-  if (ExprWithCleanups *ExprTemp = dyn_cast<ExprWithCleanups>(Init))
-    Init = ExprTemp->getSubExpr();
-
-  while (CXXBindTemporaryExpr *Binder = dyn_cast<CXXBindTemporaryExpr>(Init))
-    Init = Binder->getSubExpr();
-
-  if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Init))
-    Init = ICE->getSubExprAsWritten();
-
-  // If this is a direct-initializer, we take apart CXXConstructExprs.
-  // Everything else is passed through.
-  CXXConstructExpr *Construct;
-  if (!CXXDirectInit || !(Construct = dyn_cast<CXXConstructExpr>(Init)) ||
-      isa<CXXTemporaryObjectExpr>(Construct))
-    return SubstExpr(Init, TemplateArgs);
-
-  SmallVector<Expr*, 8> NewArgs;
-  if (SubstExprs(Construct->getArgs(), Construct->getNumArgs(), true,
-                 TemplateArgs, NewArgs))
-    return ExprError();
-
-  // Treat an empty initializer like none.
-  if (NewArgs.empty())
-    return Owned((Expr*)0);
-
-  // Build a ParenListExpr to represent anything else.
-  // FIXME: Fake locations!
-  SourceLocation Loc = PP.getLocForEndOfToken(Init->getLocStart());
-  return ActOnParenListExpr(Loc, Loc, NewArgs);
-}
-
 // TODO: this could be templated if the various decl types used the
 // same method name.
 static bool isInstantiationOf(ClassTemplateDecl *Pattern,

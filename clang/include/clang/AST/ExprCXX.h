@@ -1092,7 +1092,8 @@ public:
                          ArrayRef<Expr *> Args,
                          SourceRange parenRange,
                          bool HadMultipleCandidates,
-                         bool ZeroInitialization = false);
+                         bool ListInitialization,
+                         bool ZeroInitialization);
   explicit CXXTemporaryObjectExpr(EmptyShell Empty)
     : CXXConstructExpr(CXXTemporaryObjectExprClass, Empty), Type() { }
 

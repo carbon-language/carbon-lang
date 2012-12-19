@@ -306,17 +306,63 @@ namespace init_list_default {
 }
 
 
-// <rdar://problem/11974632>
-namespace rdar11974632 {
+// PR13470, <rdar://problem/11974632>
+namespace PR13470 {
+  struct W {
+    explicit W(int); // expected-note {{here}}
+  };
+
   struct X {
-    X(const X&) = delete;
+    X(const X&) = delete; // expected-note 3 {{here}}
     X(int);
   };
 
+  template<typename T, typename Fn> void call(Fn f) {
+    f({1}); // expected-error {{constructor is explicit}}
+    f(T{1}); // expected-error {{call to deleted constructor}}
+  }
+
+  void ref_w(const W &); // expected-note 2 {{not viable}}
+  void call_ref_w() {
+    ref_w({1}); // expected-error {{no matching function}}
+    ref_w(W{1});
+    call<W>(ref_w); // expected-note {{instantiation of}}
+  }
+
+  void ref_x(const X &);
+  void call_ref_x() {
+    ref_x({1});
+    ref_x(X{1});
+    call<X>(ref_x); // ok
+  }
+
+  void val_x(X); // expected-note 2 {{parameter}}
+  void call_val_x() {
+    val_x({1});
+    val_x(X{1}); // expected-error {{call to deleted constructor}}
+    call<X>(val_x); // expected-note {{instantiation of}}
+  }
+
   template<typename T>
-  struct Y { 
+  struct Y {
     X x{1};
+    void f() { X x{1}; }
+    void h() {
+      ref_w({1}); // expected-error {{no matching function}}
+      ref_w(W{1});
+      ref_x({1});
+      ref_x(X{1});
+      val_x({1});
+      val_x(X{1}); // expected-error {{call to deleted constructor}}
+    }
+    Y() {}
+    Y(int) : x{1} {}
   };
 
   Y<int> yi;
+  Y<int> yi2(0);
+  void g() {
+    yi.f();
+    yi.h(); // ok, all diagnostics produced in template definition
+  }
 }

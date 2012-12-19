@@ -2323,11 +2323,11 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     S.CheckConstructorAccess(CastLoc, Constructor,
                              InitializedEntity::InitializeTemporary(Ty),
                              Constructor->getAccess());
-    
+
     ExprResult Result
       = S.BuildCXXConstructExpr(CastLoc, Ty, cast<CXXConstructorDecl>(Method),
-                                ConstructorArgs, 
-                                HadMultipleCandidates, /*ZeroInit*/ false, 
+                                ConstructorArgs, HadMultipleCandidates,
+                                /*ListInit*/ false, /*ZeroInit*/ false,
                                 CXXConstructExpr::CK_Complete, SourceRange());
     if (Result.isInvalid())
       return ExprError();
@@ -2479,14 +2479,14 @@ Sema::PerformImplicitConversion(Expr *From, QualType ToType,
                                    ToType, SCS.CopyConstructor,
                                    ConstructorArgs,
                                    /*HadMultipleCandidates*/ false,
-                                   /*ZeroInit*/ false,
+                                   /*ListInit*/ false, /*ZeroInit*/ false,
                                    CXXConstructExpr::CK_Complete,
                                    SourceRange());
     }
     return BuildCXXConstructExpr(/*FIXME:ConstructLoc*/SourceLocation(),
                                  ToType, SCS.CopyConstructor,
                                  From, /*HadMultipleCandidates*/ false,
-                                 /*ZeroInit*/ false,
+                                 /*ListInit*/ false, /*ZeroInit*/ false,
                                  CXXConstructExpr::CK_Complete,
                                  SourceRange());
   }

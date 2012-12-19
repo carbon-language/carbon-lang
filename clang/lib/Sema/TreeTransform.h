@@ -323,6 +323,15 @@ public:
   /// \returns the transformed expression.
   ExprResult TransformExpr(Expr *E);
 
+  /// \brief Transform the given initializer.
+  ///
+  /// By default, this routine transforms an initializer by stripping off the
+  /// semantic nodes added by initialization, then passing the result to
+  /// TransformExpr or TransformExprs.
+  ///
+  /// \returns the transformed initializer.
+  ExprResult TransformInitializer(Expr *Init, bool CXXDirectInit);
+
   /// \brief Transform the given list of expressions.
   ///
   /// This routine transforms a list of expressions by invoking
@@ -2113,6 +2122,7 @@ public:
                                      bool IsElidable,
                                      MultiExprArg Args,
                                      bool HadMultipleCandidates,
+                                     bool ListInitialization,
                                      bool RequiresZeroInit,
                              CXXConstructExpr::ConstructionKind ConstructKind,
                                      SourceRange ParenRange) {
@@ -2124,6 +2134,7 @@ public:
     return getSema().BuildCXXConstructExpr(Loc, T, Constructor, IsElidable,
                                            ConvertedArgs,
                                            HadMultipleCandidates,
+                                           ListInitialization,
                                            RequiresZeroInit, ConstructKind,
                                            ParenRange);
   }
@@ -2575,6 +2586,53 @@ ExprResult TreeTransform<Derived>::TransformExpr(Expr *E) {
 }
 
 template<typename Derived>
+ExprResult TreeTransform<Derived>::TransformInitializer(Expr *Init,
+                                                        bool CXXDirectInit) {
+  // Initializers are instantiated like expressions, except that various outer
+  // layers are stripped.
+  if (!Init)
+    return SemaRef.Owned(Init);
+
+  if (ExprWithCleanups *ExprTemp = dyn_cast<ExprWithCleanups>(Init))
+    Init = ExprTemp->getSubExpr();
+
+  while (CXXBindTemporaryExpr *Binder = dyn_cast<CXXBindTemporaryExpr>(Init))
+    Init = Binder->getSubExpr();
+
+  if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Init))
+    Init = ICE->getSubExprAsWritten();
+
+  // If this is a direct-initializer, we take apart CXXConstructExprs.
+  // Everything else is passed through.
+  CXXConstructExpr *Construct;
+  if (!(Construct = dyn_cast<CXXConstructExpr>(Init)) ||
+      isa<CXXTemporaryObjectExpr>(Construct) ||
+      (!CXXDirectInit && !Construct->isListInitialization()))
+    return getDerived().TransformExpr(Init);
+
+  SmallVector<Expr*, 8> NewArgs;
+  bool ArgChanged = false;
+  if (getDerived().TransformExprs(Construct->getArgs(), Construct->getNumArgs(),
+                     /*IsCall*/true, NewArgs, &ArgChanged))
+    return ExprError();
+
+  // If this was list initialization, revert to list form.
+  if (Construct->isListInitialization())
+    return getDerived().RebuildInitList(Construct->getLocStart(), NewArgs,
+                                        Construct->getLocEnd(),
+                                        Construct->getType());
+
+  // Treat an empty initializer like none.
+  if (NewArgs.empty())
+    return SemaRef.Owned((Expr*)0);
+
+  // Build a ParenListExpr to represent anything else.
+  SourceRange Parens = Construct->getParenRange();
+  return getDerived().RebuildParenListExpr(Parens.getBegin(), NewArgs,
+                                           Parens.getEnd());
+}
+
+template<typename Derived>
 bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
                                             unsigned NumInputs,
                                             bool IsCall,
@@ -2656,7 +2714,9 @@ bool TreeTransform<Derived>::TransformExprs(Expr **Inputs,
       continue;
     }
 
-    ExprResult Result = getDerived().TransformExpr(Inputs[I]);
+    ExprResult Result =
+      IsCall ? getDerived().TransformInitializer(Inputs[I], /*DirectInit*/false)
+             : getDerived().TransformExpr(Inputs[I]);
     if (Result.isInvalid())
       return true;
 
@@ -7747,11 +7807,13 @@ TreeTransform<Derived>::TransformDependentScopeDeclRefExpr(
 template<typename Derived>
 ExprResult
 TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
-  // CXXConstructExprs are always implicit, so when we have a
-  // 1-argument construction we just transform that argument.
+  // CXXConstructExprs other than for list-initialization and
+  // CXXTemporaryObjectExpr are always implicit, so when we have
+  // a 1-argument construction we just transform that argument.
   if ((E->getNumArgs() == 1 ||
        (E->getNumArgs() > 1 && getDerived().DropCallArgument(E->getArg(1)))) &&
-      (!getDerived().DropCallArgument(E->getArg(0))))
+      (!getDerived().DropCallArgument(E->getArg(0))) &&
+      !E->isListInitialization())
     return getDerived().TransformExpr(E->getArg(0));
 
   TemporaryBase Rebase(*this, /*FIXME*/E->getLocStart(), DeclarationName());
@@ -7787,6 +7849,7 @@ TreeTransform<Derived>::TransformCXXConstructExpr(CXXConstructExpr *E) {
                                               Constructor, E->isElidable(),
                                               Args,
                                               E->hadMultipleCandidates(),
+                                              E->isListInitialization(),
                                               E->requiresZeroInitialization(),
                                               E->getConstructionKind(),
                                               E->getParenRange());
@@ -7844,6 +7907,7 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
     return SemaRef.MaybeBindToTemporary(E);
   }
 
+  // FIXME: Pass in E->isListInitialization().
   return getDerived().RebuildCXXTemporaryObjectExpr(T,
                                           /*FIXME:*/T->getTypeLoc().getEndLoc(),
                                                     Args,

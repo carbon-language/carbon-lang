@@ -1102,6 +1102,7 @@ void ASTStmtReader::VisitCXXConstructExpr(CXXConstructExpr *E) {
   E->setLocation(ReadSourceLocation(Record, Idx));
   E->setElidable(Record[Idx++]);
   E->setHadMultipleCandidates(Record[Idx++]);
+  E->setListInitialization(Record[Idx++]);
   E->setRequiresZeroInitialization(Record[Idx++]);
   E->setConstructionKind((CXXConstructExpr::ConstructionKind)Record[Idx++]);
   E->ParenRange = ReadSourceRange(Record, Idx);

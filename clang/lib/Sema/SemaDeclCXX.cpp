@@ -1932,11 +1932,7 @@ Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation InitLoc,
   }
 
   ExprResult Init = InitExpr;
-  if (!FD->getType()->isDependentType() && !InitExpr->isTypeDependent() &&
-      !FD->getDeclContext()->isDependentContext()) {
-    // Note: We don't type-check when we're in a dependent context, because
-    // the initialization-substitution code does not properly handle direct
-    // list initialization. We have the same hackaround for ctor-initializers.
+  if (!FD->getType()->isDependentType() && !InitExpr->isTypeDependent()) {
     if (isa<InitListExpr>(InitExpr) && isStdInitializerList(FD->getType(), 0)) {
       Diag(FD->getLocation(), diag::warn_dangling_std_initializer_list)
         << /*at end of ctor*/1 << InitExpr->getSourceRange();
@@ -2318,10 +2314,13 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
   if (ParenListExpr *ParenList = dyn_cast<ParenListExpr>(Init)) {
     Args = ParenList->getExprs();
     NumArgs = ParenList->getNumExprs();
-  } else {
-    InitListExpr *InitList = cast<InitListExpr>(Init);
+  } else if (InitListExpr *InitList = dyn_cast<InitListExpr>(Init)) {
     Args = InitList->getInits();
     NumArgs = InitList->getNumInits();
+  } else {
+    // Template instantiation doesn't reconstruct ParenListExprs for us.
+    Args = &Init;
+    NumArgs = 1;
   }
 
   if (getDiagnostics().getDiagnosticLevel(diag::warn_field_is_uninit, IdLoc)
@@ -2382,19 +2381,8 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
     if (MemberInit.isInvalid())
       return true;
 
-    // If we are in a dependent context, template instantiation will
-    // perform this type-checking again. Just save the arguments that we
-    // received.
-    // FIXME: This isn't quite ideal, since our ASTs don't capture all
-    // of the information that we have about the member
-    // initializer. However, deconstructing the ASTs is a dicey process,
-    // and this approach is far more likely to get the corner cases right.
-    if (CurContext->isDependentContext()) {
-      // The existing Init will do fine.
-    } else {
-      Init = MemberInit.get();
-      CheckForDanglingReferenceOrPointer(*this, Member, Init, IdLoc);
-    }
+    Init = MemberInit.get();
+    CheckForDanglingReferenceOrPointer(*this, Member, Init, IdLoc);
   }
 
   if (DirectMember) {
@@ -9515,6 +9503,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor,
                             MultiExprArg ExprArgs,
                             bool HadMultipleCandidates,
+                            bool IsListInitialization,
                             bool RequiresZeroInit,
                             unsigned ConstructKind,
                             SourceRange ParenRange) {
@@ -9538,7 +9527,8 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
 
   return BuildCXXConstructExpr(ConstructLoc, DeclInitType, Constructor,
                                Elidable, ExprArgs, HadMultipleCandidates,
-                               RequiresZeroInit, ConstructKind, ParenRange);
+                               IsListInitialization, RequiresZeroInit,
+                               ConstructKind, ParenRange);
 }
 
 /// BuildCXXConstructExpr - Creates a complete call to a constructor,
@@ -9548,37 +9538,17 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor, bool Elidable,
                             MultiExprArg ExprArgs,
                             bool HadMultipleCandidates,
+                            bool IsListInitialization,
                             bool RequiresZeroInit,
                             unsigned ConstructKind,
                             SourceRange ParenRange) {
   MarkFunctionReferenced(ConstructLoc, Constructor);
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
                                         Constructor, Elidable, ExprArgs,
-                                        HadMultipleCandidates, /*FIXME*/false,
-                                        RequiresZeroInit,
+                                        HadMultipleCandidates,
+                                        IsListInitialization, RequiresZeroInit,
               static_cast<CXXConstructExpr::ConstructionKind>(ConstructKind),
                                         ParenRange));
-}
-
-bool Sema::InitializeVarWithConstructor(VarDecl *VD,
-                                        CXXConstructorDecl *Constructor,
-                                        MultiExprArg Exprs,
-                                        bool HadMultipleCandidates) {
-  // FIXME: Provide the correct paren SourceRange when available.
-  ExprResult TempResult =
-    BuildCXXConstructExpr(VD->getLocation(), VD->getType(), Constructor,
-                          Exprs, HadMultipleCandidates, false,
-                          CXXConstructExpr::CK_Complete, SourceRange());
-  if (TempResult.isInvalid())
-    return true;
-
-  Expr *Temp = TempResult.takeAs<Expr>();
-  CheckImplicitConversions(Temp, VD->getLocation());
-  MarkFunctionReferenced(VD->getLocation(), Constructor);
-  Temp = MaybeCreateExprWithCleanups(Temp);
-  VD->setInit(Temp);
-
-  return false;
 }
 
 void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {

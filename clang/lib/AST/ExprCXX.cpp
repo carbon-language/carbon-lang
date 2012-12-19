@@ -717,12 +717,14 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
                                                ArrayRef<Expr*> Args,
                                                SourceRange parenRange,
                                                bool HadMultipleCandidates,
+                                               bool ListInitialization,
                                                bool ZeroInitialization)
   : CXXConstructExpr(C, CXXTemporaryObjectExprClass, 
                      Type->getType().getNonReferenceType(), 
                      Type->getTypeLoc().getBeginLoc(),
                      Cons, false, Args,
-                     HadMultipleCandidates, /*FIXME*/false, ZeroInitialization,
+                     HadMultipleCandidates,
+                     ListInitialization, ZeroInitialization,
                      CXXConstructExpr::CK_Complete, parenRange),
     Type(Type) {
 }
