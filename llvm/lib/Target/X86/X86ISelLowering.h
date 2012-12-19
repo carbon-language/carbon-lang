@@ -867,9 +867,8 @@ namespace llvm {
 
     virtual bool mayBeEmittedAsTailCall(CallInst *CI) const;
 
-    virtual EVT
-    getTypeForExtArgOrReturn(LLVMContext &Context, EVT VT,
-                             ISD::NodeType ExtendKind) const;
+    virtual MVT
+    getTypeForExtArgOrReturn(MVT VT, ISD::NodeType ExtendKind) const;
 
     virtual bool
     CanLowerReturn(CallingConv::ID CallConv, MachineFunction &MF,
