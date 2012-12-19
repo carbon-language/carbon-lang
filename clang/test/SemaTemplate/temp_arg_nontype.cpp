@@ -3,7 +3,7 @@ template<int N> struct A; // expected-note 5{{template parameter is declared her
 
 A<0> *a0;
 
-A<int()> *a1; // expected-error{{template argument for non-type template parameter is treated as type 'int ()'}}
+A<int()> *a1; // expected-error{{template argument for non-type template parameter is treated as function type 'int ()'}}
 
 A<int> *a2; // expected-error{{template argument for non-type template parameter must be an expression}}
 
