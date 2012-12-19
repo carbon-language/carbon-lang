@@ -117,14 +117,6 @@ public:
   /// alignment value.
   unsigned getStackAlignment() const;
 
-  /// \brief Attribute that only apply to function parameters.
-  bool hasParameterOnlyAttrs() const {
-    return hasAttribute(Attribute::ByVal) ||
-      hasAttribute(Attribute::Nest) ||
-      hasAttribute(Attribute::StructRet) ||
-      hasAttribute(Attribute::NoCapture);
-  }
-
   /// \brief Attribute that may be applied to the function itself.  These cannot
   /// be used on return values or function parameters.
   bool hasFunctionOnlyAttrs() const {

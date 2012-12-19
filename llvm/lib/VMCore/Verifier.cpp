@@ -534,7 +534,10 @@ void Verifier::VerifyParameterAttrs(Attribute Attrs, Type *Ty,
           "' only apply to functions!", V);
 
   if (isReturnValue)
-    Assert1(!Attrs.hasParameterOnlyAttrs(),
+    Assert1(!Attrs.hasAttribute(Attribute::ByVal) &&
+            !Attrs.hasAttribute(Attribute::Nest) &&
+            !Attrs.hasAttribute(Attribute::StructRet) &&
+            !Attrs.hasAttribute(Attribute::NoCapture),
             "Attribute 'byval', 'nest', 'sret', and 'nocapture' "
             "do not apply to return values!", V);
 
