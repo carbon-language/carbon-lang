@@ -63,8 +63,12 @@ namespace {
 class SILowerControlFlowPass : public MachineFunctionPass {
 
 private:
+  static const unsigned SkipThreshold = 12;
+
   static char ID;
   const TargetInstrInfo *TII;
+
+  void Skip(MachineInstr &MI, MachineOperand &To);
 
   void If(MachineInstr &MI);
   void Else(MachineInstr &MI);
@@ -73,6 +77,8 @@ private:
   void ElseBreak(MachineInstr &MI);
   void Loop(MachineInstr &MI);
   void EndCf(MachineInstr &MI);
+
+  void Branch(MachineInstr &MI);
 
 public:
   SILowerControlFlowPass(TargetMachine &tm) :
@@ -94,6 +100,31 @@ FunctionPass *llvm::createSILowerControlFlowPass(TargetMachine &tm) {
   return new SILowerControlFlowPass(tm);
 }
 
+void SILowerControlFlowPass::Skip(MachineInstr &From, MachineOperand &To) {
+
+  unsigned NumInstr = 0;
+
+  for (MachineBasicBlock *MBB = *From.getParent()->succ_begin();
+       NumInstr < SkipThreshold && MBB != To.getMBB() && !MBB->succ_empty();
+       MBB = *MBB->succ_begin()) {
+
+    for (MachineBasicBlock::iterator I = MBB->begin(), E = MBB->end();
+         NumInstr < SkipThreshold && I != E; ++I) {
+
+      if (I->isBundle() || !I->isBundled())
+        ++NumInstr;
+    }
+  }
+
+  if (NumInstr < SkipThreshold)
+    return;
+
+  DebugLoc DL = From.getDebugLoc();
+  BuildMI(*From.getParent(), &From, DL, TII->get(AMDGPU::S_CBRANCH_EXECZ))
+          .addOperand(To)
+          .addReg(AMDGPU::EXEC);
+}
+
 void SILowerControlFlowPass::If(MachineInstr &MI) {
 
   MachineBasicBlock &MBB = *MI.getParent();
@@ -107,6 +138,8 @@ void SILowerControlFlowPass::If(MachineInstr &MI) {
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_XOR_B64), Reg)
           .addReg(AMDGPU::EXEC)
           .addReg(Reg);
+
+  Skip(MI, MI.getOperand(2));
 
   MI.eraseFromParent();
 }
@@ -124,6 +157,8 @@ void SILowerControlFlowPass::Else(MachineInstr &MI) {
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::S_XOR_B64), AMDGPU::EXEC)
           .addReg(AMDGPU::EXEC)
           .addReg(Dst);
+
+  Skip(MI, MI.getOperand(2));
 
   MI.eraseFromParent();
 }
@@ -206,6 +241,16 @@ void SILowerControlFlowPass::EndCf(MachineInstr &MI) {
   MI.eraseFromParent();
 }
 
+void SILowerControlFlowPass::Branch(MachineInstr &MI) {
+
+  MachineBasicBlock *Next = MI.getParent()->getNextNode();
+  MachineBasicBlock *Target = MI.getOperand(0).getMBB();
+  if (Target == Next)
+    MI.eraseFromParent();
+  else
+    assert(0);
+}
+
 bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
 
   bool HaveCf = false;
@@ -248,6 +293,10 @@ bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
         case AMDGPU::SI_END_CF:
           HaveCf = true;
           EndCf(MI);
+          break;
+
+        case AMDGPU::S_BRANCH:
+          Branch(MI);
           break;
       }
     }
