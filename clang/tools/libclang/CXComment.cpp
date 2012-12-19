@@ -908,7 +908,7 @@ void getSourceTextOfDeclaration(const DeclInfo *ThisDecl,
   const LangOptions &LangOpts = Context.getLangOpts();
   llvm::raw_svector_ostream OS(Str);
   PrintingPolicy PPolicy(LangOpts);
-  PPolicy.SuppressAttributes = true;
+  PPolicy.PolishForDeclaration = true;
   PPolicy.TerseOutput = true;
   ThisDecl->CurrentDecl->print(OS, PPolicy,
                                /*Indentation*/0, /*PrintInstantiation*/true);

@@ -193,7 +193,7 @@ raw_ostream& DeclPrinter::Indent(unsigned Indentation) {
 }
 
 void DeclPrinter::prettyPrintAttributes(Decl *D) {
-  if (Policy.SuppressAttributes)
+  if (Policy.PolishForDeclaration)
     return;
   
   if (D->hasAttrs()) {
@@ -915,7 +915,7 @@ void DeclPrinter::VisitObjCMethodDecl(ObjCMethodDecl *OMD) {
     OMD->getBody()->printPretty(Out, 0, Policy);
     Out << '\n';
   }
-  else
+  else if (Policy.PolishForDeclaration)
     Out << ';';
 }
 
@@ -950,7 +950,7 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Out << "@class " << I << ";";
     return;
   }
-  
+  bool eolnOut = false;
   if (SID)
     Out << "@interface " << I << " : " << *SID;
   else
@@ -962,13 +962,12 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
          E = Protocols.end(); I != E; ++I)
       Out << (I == Protocols.begin() ? '<' : ',') << **I;
-  }
-
-  if (!Protocols.empty())
     Out << "> ";
+  }
 
   if (OID->ivar_size() > 0) {
     Out << "{\n";
+    eolnOut = true;
     Indentation += Policy.Indentation;
     for (ObjCInterfaceDecl::ivar_iterator I = OID->ivar_begin(),
          E = OID->ivar_end(); I != E; ++I) {
@@ -977,19 +976,33 @@ void DeclPrinter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *OID) {
     Indentation -= Policy.Indentation;
     Out << "}\n";
   }
+  else if (SID) {
+    Out << "\n";
+    eolnOut = true;
+  }
 
   VisitDeclContext(OID, false);
+  if (!eolnOut)
+    Out << ' ';
   Out << "@end";
   // FIXME: implement the rest...
 }
 
 void DeclPrinter::VisitObjCProtocolDecl(ObjCProtocolDecl *PID) {
   if (!PID->isThisDeclarationADefinition()) {
-    Out << "@protocol " << PID->getIdentifier() << ";\n";
+    Out << "@protocol " << *PID << ";\n";
     return;
   }
-  
-  Out << "@protocol " << *PID << '\n';
+  // Protocols?
+  const ObjCList<ObjCProtocolDecl> &Protocols = PID->getReferencedProtocols();
+  if (!Protocols.empty()) {
+    Out << "@protocol " << *PID;
+    for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+         E = Protocols.end(); I != E; ++I)
+      Out << (I == Protocols.begin() ? '<' : ',') << **I;
+    Out << ">\n";
+  } else
+    Out << "@protocol " << *PID << '\n';
   VisitDeclContext(PID, false);
   Out << "@end";
 }
@@ -1095,7 +1108,9 @@ void DeclPrinter::VisitObjCPropertyDecl(ObjCPropertyDecl *PDecl) {
     (void) first; // Silence dead store warning due to idiomatic code.
     Out << " )";
   }
-  Out << ' ' << PDecl->getType().getAsString(Policy) << ' ' << *PDecl << ';';
+  Out << ' ' << PDecl->getType().getAsString(Policy) << ' ' << *PDecl;
+  if (Policy.PolishForDeclaration)
+    Out << ';';
 }
 
 void DeclPrinter::VisitObjCPropertyImplDecl(ObjCPropertyImplDecl *PID) {

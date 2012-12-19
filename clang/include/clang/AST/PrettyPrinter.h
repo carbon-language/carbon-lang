@@ -40,7 +40,7 @@ struct PrintingPolicy {
       SuppressUnwrittenScope(false), SuppressInitializers(false),
       ConstantArraySizeAsWritten(false), AnonymousTagLocations(true),
       SuppressStrongLifetime(false), Bool(LO.Bool),
-      TerseOutput(false), SuppressAttributes(false),
+      TerseOutput(false), PolishForDeclaration(false),
       DumpSourceManager(0) { }
 
   /// \brief What language we're printing.
@@ -143,9 +143,10 @@ struct PrintingPolicy {
   /// only the requested declaration.
   unsigned TerseOutput : 1;
   
-  /// \brief When true, do not print attributes attached to the declaration.
+  /// \brief When true, do certain refinement needed for producing proper
+  /// declaration tag; such as, do not print attributes attached to the declaration.
   ///
-  unsigned SuppressAttributes : 1;
+  unsigned PolishForDeclaration : 1;
 
   /// \brief If we are "dumping" rather than "pretty-printing", this points to
   /// a SourceManager which will be used to dump SourceLocations. Dumping
