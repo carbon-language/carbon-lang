@@ -21,7 +21,7 @@ LLVM Design & Overview
 
   Book chapter providing a compiler hacker's introduction to LLVM.
 
-* `LLVM: A Compilation Framework forLifelong Program Analysis & Transformation
+* `LLVM: A Compilation Framework for Lifelong Program Analysis & Transformation
   <http://llvm.org/pubs/2004-01-30-CGO-LLVM.html>`_
 
   Design overview.
