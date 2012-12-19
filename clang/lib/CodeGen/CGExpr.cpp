@@ -1401,7 +1401,7 @@ void CodeGenFunction::EmitStoreThroughBitfieldLValue(RValue Src, LValue Dst,
 
     ResultVal = Builder.CreateIntCast(ResultVal, ResLTy, Info.IsSigned,
                                       "bf.result.cast");
-    *Result = ResultVal;
+    *Result = EmitFromMemory(ResultVal, Dst.getType());
   }
 }
 
