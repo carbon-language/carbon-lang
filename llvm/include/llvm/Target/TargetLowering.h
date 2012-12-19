@@ -449,19 +449,18 @@ public:
   /// treated: either it is legal, needs to be promoted to a larger size, needs
   /// to be expanded to some other code sequence, or the target has a custom
   /// expander for it.
-  LegalizeAction getTruncStoreAction(EVT ValVT, EVT MemVT) const {
-    assert(ValVT.getSimpleVT() < MVT::LAST_VALUETYPE &&
-           MemVT.getSimpleVT() < MVT::LAST_VALUETYPE &&
+  LegalizeAction getTruncStoreAction(MVT ValVT, MVT MemVT) const {
+    assert(ValVT < MVT::LAST_VALUETYPE && MemVT < MVT::LAST_VALUETYPE &&
            "Table isn't big enough!");
-    return (LegalizeAction)TruncStoreActions[ValVT.getSimpleVT().SimpleTy]
-                                            [MemVT.getSimpleVT().SimpleTy];
+    return (LegalizeAction)TruncStoreActions[ValVT.SimpleTy]
+                                            [MemVT.SimpleTy];
   }
 
   /// isTruncStoreLegal - Return true if the specified store with truncation is
   /// legal on this target.
   bool isTruncStoreLegal(EVT ValVT, EVT MemVT) const {
     return isTypeLegal(ValVT) && MemVT.isSimple() &&
-           getTruncStoreAction(ValVT, MemVT) == Legal;
+      getTruncStoreAction(ValVT.getSimpleVT(), MemVT.getSimpleVT()) == Legal;
   }
 
   /// getIndexedLoadAction - Return how the indexed load should be treated:
