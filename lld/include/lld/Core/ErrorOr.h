@@ -21,12 +21,123 @@
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/system_error.h"
 
+#include <atomic>
 #include <cassert>
 #include <type_traits>
 
 namespace lld {
+struct ErrorHolderBase {
+  llvm::error_code Error;
+  std::atomic<uint16_t> RefCount;
+  bool HasUserData;
+
+  ErrorHolderBase() : RefCount(1) {}
+
+  void aquire() {
+    ++RefCount;
+  }
+
+  void release() {
+    if (RefCount.fetch_sub(1) == 1)
+      delete this;
+  }
+
+protected:
+  virtual ~ErrorHolderBase() {}
+};
+
 template<class T>
-class ErrorOrBase {
+struct ErrorHolder : ErrorHolderBase {
+  ErrorHolder(T &&UD) : UserData(UD) {}
+  T UserData;
+};
+
+template<class Tp> struct ErrorOrUserDataTraits : std::false_type {};
+
+template<class T, class V>
+typename std::enable_if< std::is_constructible<T, V>::value
+                       , typename std::remove_reference<V>::type>::type &&
+ moveIfMoveConstructible(V &t) {
+  return std::move(t);
+}
+
+template<class T, class V>
+typename std::enable_if< !std::is_constructible<T, V>::value
+                       , typename std::remove_reference<V>::type>::type &
+moveIfMoveConstructible(V &t) {
+  return t;
+}
+
+/// \brief Represents either an error or a value T.
+///
+/// ErrorOr<T> is a pointer-like class that represents the result of an
+/// operation. The result is either an error, or a value of type T. This is
+/// designed to emulate the usage of returning a pointer where nullptr indicates
+/// failure. However instead of just knowing that the operation failed, we also
+/// have an error_code and optional user data that describes why it failed.
+///
+/// It is used like the following.
+/// \code
+///   ErrorOr<Buffer> getBuffer();
+///   void handleError(error_code ec);
+///
+///   auto buffer = getBuffer();
+///   if (!buffer)
+///     handleError(buffer);
+///   buffer->write("adena");
+/// \endcode
+///
+/// ErrorOr<T> also supports user defined data for specific error_codes. To use
+/// this feature you must first add a template specialization of
+/// ErrorOrUserDataTraits derived from std::true_type for your type in the lld
+/// namespace. This specialization must have a static error_code error()
+/// function that returns the error_code this data is used with.
+///
+/// getError<UserData>() may be called to get either the stored user data, or
+/// a default constructed UserData if none was stored.
+///
+/// Example:
+/// \code
+///   struct InvalidArgError {
+///     InvalidArgError() {}
+///     InvalidArgError(std::string S) : ArgName(S) {}
+///     std::string ArgName;
+///   };
+///
+///  namespace lld {
+///  template<>
+///   struct ErrorOrUserDataTraits<InvalidArgError> : std::true_type {
+///     static error_code error() {
+///       return make_error_code(errc::invalid_argument);
+///     }
+///   };
+///   } // end namespace lld
+///
+///   using namespace lld;
+///
+///   ErrorOr<int> foo() {
+///     return InvalidArgError("adena");
+///   }
+///
+///   int main() {
+///     auto a = foo();
+///     if (!a && error_code(a) == errc::invalid_argument)
+///       llvm::errs() << a.getError<InvalidArgError>().ArgName << "\n";
+///   }
+/// \endcode
+///
+/// An implicit conversion to bool provides a way to check if there was an
+/// error. The unary * and -> operators provide pointer like access to the
+/// value. Accessing the value when there is an error has undefined behavior.
+///
+/// When T is a reference type the behaivor is slightly different. The reference
+/// is held in a std::reference_wrapper<std::remove_reference<T>::type>, and
+/// there is special handling to make operator -> work as if T was not a
+/// reference.
+///
+/// T cannot be a rvalue reference.
+template<class T>
+class ErrorOr {
   static const bool isRef = std::is_reference<T>::value;
   typedef std::reference_wrapper<typename std::remove_reference<T>::type> wrap;
 
@@ -41,40 +152,119 @@ private:
   typedef T &reference;
   typedef typename std::remove_reference<T>::type *pointer;
 
-  ErrorOrBase(const ErrorOrBase&) LLVM_DELETED_FUNCTION;
-  ErrorOrBase &operator =(const ErrorOrBase&) LLVM_DELETED_FUNCTION;
-  ErrorOrBase(ErrorOrBase &&other) LLVM_DELETED_FUNCTION;
-  ErrorOrBase &operator =(ErrorOrBase &&other) LLVM_DELETED_FUNCTION;
-
 public:
-  ErrorOrBase() : _error(llvm::make_error_code(llvm::errc::invalid_argument)) {}
+  ErrorOr() : IsValid(false) {}
 
-  ErrorOrBase(llvm::error_code ec) {
-    if (!_error)
+  ErrorOr(llvm::error_code ec) : HasError(true), IsValid(true) {
+    Error = new ErrorHolderBase;
+    Error->Error = ec;
+    Error->HasUserData = false;
+  }
+
+  template<class UserDataT>
+  ErrorOr(UserDataT UD, typename
+          std::enable_if<ErrorOrUserDataTraits<UserDataT>::value>::type* = 0)
+    : HasError(true), IsValid(true) {
+    Error = new ErrorHolder<UserDataT>(std::move(UD));
+    Error->Error = ErrorOrUserDataTraits<UserDataT>::error();
+    Error->HasUserData = true;
+  }
+
+  ErrorOr(T t) : HasError(false), IsValid(true) {
+    new (get()) storage_type(moveIfMoveConstructible<storage_type>(t));
+  }
+
+  ErrorOr(const ErrorOr &other) : IsValid(false) {
+    // Construct an invalid ErrorOr if other is invalid.
+    if (!other.IsValid)
+      return;
+    if (!other.HasError) {
+      // Get the other value.
+      new (get()) storage_type(*other.get());
+      HasError = false;
+    } else {
+      // Get other's error.
+      Error = other.Error;
+      HasError = true;
+      Error->aquire();
+    }
+
+    IsValid = true;
+  }
+
+  ErrorOr &operator =(const ErrorOr &other) {
+    if (this == &other)
+      return;
+
+    this->~ErrorOr();
+    new (this) ErrorOr(other);
+
+    return *this;
+  }
+
+  ErrorOr(ErrorOr &&other) : IsValid(false) {
+    // Construct an invalid ErrorOr if other is invalid.
+    if (!other.IsValid)
+      return;
+    if (!other.HasError) {
+      // Get the other value.
+      new (get()) storage_type(std::move(*other.get()));
+      HasError = false;
+      // Tell other not to do any destruction.
+      other.IsValid = false;
+    } else {
+      // Get other's error.
+      Error = other.Error;
+      HasError = true;
+      // Tell other not to do any destruction.
+      other.IsValid = false;
+    }
+
+    IsValid = true;
+  }
+
+  ErrorOr &operator =(ErrorOr &&other) {
+    if (this == &other)
+      return *this;
+
+    this->~ErrorOr();
+    new (this) ErrorOr(other);
+
+    return *this;
+  }
+
+  ~ErrorOr() {
+    if (!IsValid)
+      return;
+    if (HasError)
+      Error->release();
+    else
       get()->~storage_type();
-    _error = ec;
   }
 
-  ErrorOrBase(T t) : _error(llvm::error_code::success()) {
-    new (get()) storage_type(t);
+  template<class ET>
+  ET getError() const {
+    assert(IsValid && "Cannot get the error of a default constructed ErrorOr!");
+    assert(HasError && "Cannot get an error if none exists!");
+    assert(ErrorOrUserDataTraits<ET>::error() == Error->Error &&
+           "Incorrect user error data type for error!");
+    if (!Error->HasUserData)
+      return ET();
+    return reinterpret_cast<const ErrorHolder<ET>*>(Error)->UserData;
   }
 
-  ~ErrorOrBase() {
-    if (!_error)
-      get()->~storage_type();
-  }
+  typedef void (*unspecified_bool_type)();
+  static void unspecified_bool_true() {}
 
   /// \brief Return false if there is an error.
-  operator bool() {
-    return !_error;
+  operator unspecified_bool_type() const {
+    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
+    return HasError ? 0 : unspecified_bool_true;
   }
 
-  operator llvm::error_code() {
-    return _error;
-  }
-
-  operator reference() {
-    return *get();
+  operator llvm::error_code() const {
+    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
+    return HasError ? Error->Error : llvm::error_code::success();
   }
 
   pointer operator ->() {
@@ -96,118 +286,31 @@ private:
 
 protected:
   storage_type *get() {
-    assert(!_error && "T not valid!");
+    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
+    assert(!HasError && "Cannot get value when an error exists!");
     return reinterpret_cast<storage_type*>(_t.buffer);
   }
 
-  llvm::error_code _error;
-  llvm::AlignedCharArrayUnion<storage_type> _t;
+  const storage_type *get() const {
+    assert(IsValid && "Can't do anything on a default constructed ErrorOr!");
+    assert(!HasError && "Cannot get value when an error exists!");
+    return reinterpret_cast<const storage_type*>(_t.buffer);
+  }
+
+  union {
+    llvm::AlignedCharArrayUnion<storage_type> _t;
+    ErrorHolderBase *Error;
+  };
+  bool HasError : 1;
+  bool IsValid : 1;
 };
 
-/// \brief Represents either an error or a value T.
-///
-/// ErrorOr<T> is a pointer-like class that represents the result of an
-/// operation. The result is either an error, or a value of type T. This is
-/// designed to emulate the usage of returning a pointer where nullptr indicates
-/// failure. However instead of just knowing that the operation failed, we also
-/// have an error_code that describes why it failed.
-///
-/// It is used like the following.
-/// \code
-///   ErrorOr<Buffer> getBuffer();
-///   void handleError(error_code ec);
-///
-///   auto buffer = getBuffer();
-///   if (!buffer)
-///     handleError(buffer);
-///   buffer->write("adena");
-/// \endcode
-///
-/// An implicit conversion to bool provides a way to check if there was an
-/// error. The unary * and -> operators provide pointer like access to the
-/// value. Accessing the value when there is an error has undefined behavior.
-///
-/// When T is a reference type the behaivor is slightly different. The reference
-/// is held in a std::reference_wrapper<std::remove_reference<T>::type>, and
-/// there is special handling to make operator -> work as if T was not a
-/// reference.
-///
-/// T cannot be a rvalue reference.
-template<class T,
-  bool isMoveable =
-    std::is_move_constructible<typename ErrorOrBase<T>::storage_type>::value>
-class ErrorOr;
-
-template<class T>
-class ErrorOr<T, true> : public ErrorOrBase<T> {
-  ErrorOr(const ErrorOr &other) LLVM_DELETED_FUNCTION;
-  ErrorOr &operator =(const ErrorOr &other) LLVM_DELETED_FUNCTION;
-public:
-  ErrorOr(llvm::error_code ec) : ErrorOrBase<T>(ec) {}
-  ErrorOr(T t) : ErrorOrBase<T>(t) {}
-  ErrorOr(ErrorOr &&other) : ErrorOrBase<T>() {
-    // Get the other value.
-    if (!other._error)
-      new (this->get())
-        typename ErrorOrBase<T>::storage_type(std::move(*other.get()));
-
-    // Get the other error.
-    this->_error = other._error;
-
-    // Make sure other doesn't try to delete its storage.
-    other._error = llvm::make_error_code(llvm::errc::invalid_argument);
-  }
-
-  ErrorOr &operator =(ErrorOr &&other) {
-    // Delete any existing value.
-    if (!this->_error)
-      this->get()->~storage_type();
-
-    // Get the other value.
-    if (!other._error)
-      new (this->get())
-        typename ErrorOrBase<T>::storage_type(std::move(*other.get()));
-
-    // Get the other error.
-    this->_error = other._error;
-
-    // Make sure other doesn't try to delete its storage.
-    other._error = llvm::make_error_code(llvm::errc::invalid_argument);
-  }
-};
-
-template<class T>
-class ErrorOr<T, false> : public ErrorOrBase<T> {
-  static_assert(std::is_copy_constructible<T>::value,
-                "T must be copy or move constructible!");
-
-  ErrorOr(ErrorOr &&other) LLVM_DELETED_FUNCTION;
-  ErrorOr &operator =(ErrorOr &&other) LLVM_DELETED_FUNCTION;
-public:
-  ErrorOr(llvm::error_code ec) : ErrorOrBase<T>(ec) {}
-  ErrorOr(T t) : ErrorOrBase<T>(t) {}
-  ErrorOr(const ErrorOr &other) : ErrorOrBase<T>() {
-    // Get the other value.
-    if (!other._error)
-      new (this->get()) typename ErrorOrBase<T>::storage_type(*other.get());
-
-    // Get the other error.
-    this->_error = other._error;
-  }
-
-  ErrorOr &operator =(const ErrorOr &other) {
-    // Delete any existing value.
-    if (!this->_error)
-      this->get()->~storage_type();
-
-    // Get the other value.
-    if (!other._error)
-      new (this->get()) typename ErrorOrBase<T>::storage_type(*other.get());
-
-    // Get the other error.
-    this->_error = other._error;
-  }
-};
+template<class T, class E>
+typename std::enable_if<llvm::is_error_code_enum<E>::value ||
+                        llvm::is_error_condition_enum<E>::value, bool>::type
+operator ==(ErrorOr<T> &Err, E Code) {
+  return error_code(Err) == Code;
 }
+} // end namespace lld
 
 #endif

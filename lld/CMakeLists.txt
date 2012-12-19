@@ -144,3 +144,7 @@ add_subdirectory(lib)
 add_subdirectory(tools)
 
 add_subdirectory(test)
+
+if (LLVM_INCLUDE_TESTS AND NOT LLD_BUILT_STANDALONE)
+  add_subdirectory(unittests)
+endif()
