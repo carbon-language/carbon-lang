@@ -343,6 +343,7 @@ class DwarfDebug {
   MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
   MCSymbol *DwarfDebugLocSectionSym;
   MCSymbol *FunctionBeginSym, *FunctionEndSym;
+  MCSymbol *DwarfAbbrevDWOSectionSym;
 
   // As an optimization, there is no need to emit an entry in the directory
   // table for the same directory as DW_at_comp_dir.
@@ -371,6 +372,13 @@ class DwarfDebug {
 
   // The CU left in the original object file for separated debug info.
   CompileUnit *SkeletonCU;
+
+    // Used to uniquely define abbreviations for the skeleton emission.
+  FoldingSet<DIEAbbrev> SkeletonAbbrevSet;
+
+  // A list of all the unique abbreviations in use.
+  std::vector<DIEAbbrev *> SkeletonAbbrevs;
+
   DwarfUnits SkeletonHolder;
 
 private:
@@ -419,6 +427,9 @@ private:
   /// \brief Emit labels to close any remaining sections that have been left
   /// open.
   void endSections();
+
+  /// \brief Emit a set of abbreviations to the specific section.
+  void emitAbbrevs(const MCSection *, std::vector<DIEAbbrev*> *);
 
   /// \brief Emit the debug info section.
   void emitDebugInfo();
@@ -473,8 +484,14 @@ private:
   /// \brief Emit the local split debug info section.
   void emitSkeletonCU(const MCSection *);
 
+  /// \brief Emit the local split abbreviations.
+  void emitSkeletonAbbrevs(const MCSection *);
+
   /// \brief Emit the debug info dwo section.
   void emitDebugInfoDWO();
+
+  /// \brief Emit the debug abbrev dwo section.
+  void emitDebugAbbrevDWO();
 
   /// \brief Create new CompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
@@ -570,7 +587,7 @@ public:
   MCSymbol *getStringPoolEntry(StringRef Str);
 
   /// \brief Recursively Emits a debug information entry.
-  void emitDIE(DIE *Die);
+  void emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs);
 
   /// \brief Returns whether or not to limit some of our debug
   /// output to the limitations of darwin gdb.

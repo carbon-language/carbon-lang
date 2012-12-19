@@ -158,12 +158,15 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     SourceIdMap(DIEValueAllocator), StringPool(DIEValueAllocator),
     PrevLabel(NULL), GlobalCUIndexCount(0),
     InfoHolder(A, &AbbreviationsSet, &Abbreviations),
-    SkeletonCU(0), SkeletonHolder(A, &AbbreviationsSet, &Abbreviations) {
+    SkeletonCU(0),
+    SkeletonAbbrevSet(InitAbbreviationsSetSize),
+    SkeletonHolder(A, &SkeletonAbbrevSet, &SkeletonAbbrevs) {
   NextStringPoolNumber = 0;
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = 0;
+  DwarfAbbrevDWOSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
 
   // Turn on accelerator tables and older gdb compatibility
@@ -944,6 +947,7 @@ void DwarfDebug::endModule() {
 
     // Corresponding abbreviations into a abbrev section.
     emitAbbreviations();
+    emitDebugAbbrevDWO();
 
     // Emit info into a debug loc section.
     emitDebugLoc();
@@ -1705,6 +1709,10 @@ void DwarfDebug::emitSectionLabels() {
     emitSectionSym(Asm, TLOF.getDwarfInfoSection(), "section_info");
   DwarfAbbrevSectionSym =
     emitSectionSym(Asm, TLOF.getDwarfAbbrevSection(), "section_abbrev");
+  if (useSplitDwarf())
+    DwarfAbbrevDWOSectionSym =
+      emitSectionSym(Asm, TLOF.getDwarfAbbrevDWOSection(),
+                     "section_abbrev_dwo");
   emitSectionSym(Asm, TLOF.getDwarfARangesSection());
 
   if (const MCSection *MacroInfo = TLOF.getDwarfMacroInfoSection())
@@ -1726,10 +1734,10 @@ void DwarfDebug::emitSectionLabels() {
 }
 
 // Recursively emits a debug information entry.
-void DwarfDebug::emitDIE(DIE *Die) {
+void DwarfDebug::emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs) {
   // Get the abbreviation for this DIE.
   unsigned AbbrevNumber = Die->getAbbrevNumber();
-  const DIEAbbrev *Abbrev = Abbreviations[AbbrevNumber - 1];
+  const DIEAbbrev *Abbrev = Abbrevs->at(AbbrevNumber - 1);
 
   // Emit the code (index) for the abbreviation.
   if (Asm->isVerbose())
@@ -1806,7 +1814,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
     const std::vector<DIE *> &Children = Die->getChildren();
 
     for (unsigned j = 0, M = Children.size(); j < M; ++j)
-      emitDIE(Children[j]);
+      emitDIE(Children[j], Abbrevs);
 
     if (Asm->isVerbose())
       Asm->OutStreamer.AddComment("End Of Children Mark");
@@ -1847,7 +1855,7 @@ void DwarfUnits::emitUnits(DwarfDebug *DD,
     Asm->OutStreamer.AddComment("Address Size (in bytes)");
     Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 
-    DD->emitDIE(Die);
+    DD->emitDIE(Die, Abbreviations);
     Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(USection->getLabelEndName(),
                                                   TheCU->getUniqueID()));
   }
@@ -1864,19 +1872,27 @@ void DwarfDebug::emitDebugInfo() {
 
 // Emit the abbreviation section.
 void DwarfDebug::emitAbbreviations() {
-  // Check to see if it is worth the effort.
-  if (!Abbreviations.empty()) {
-    // Start the debug abbrev section.
-    const MCSection *ASec = Asm->getObjFileLowering().getDwarfAbbrevSection();
-    Asm->OutStreamer.SwitchSection(ASec);
+  if (!useSplitDwarf())
+    emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevSection(),
+                &Abbreviations);
+  else
+    emitSkeletonAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevSection());
+}
 
-    MCSymbol *Begin = Asm->GetTempSymbol(ASec->getLabelBeginName());
+void DwarfDebug::emitAbbrevs(const MCSection *Section,
+                             std::vector<DIEAbbrev *> *Abbrevs) {
+  // Check to see if it is worth the effort.
+  if (!Abbrevs->empty()) {
+    // Start the debug abbrev section.
+    Asm->OutStreamer.SwitchSection(Section);
+
+    MCSymbol *Begin = Asm->GetTempSymbol(Section->getLabelBeginName());
     Asm->OutStreamer.EmitLabel(Begin);
 
     // For each abbrevation.
-    for (unsigned i = 0, N = Abbreviations.size(); i < N; ++i) {
+    for (unsigned i = 0, N = Abbrevs->size(); i < N; ++i) {
       // Get abbreviation data
-      const DIEAbbrev *Abbrev = Abbreviations[i];
+      const DIEAbbrev *Abbrev = Abbrevs->at(i);
 
       // Emit the abbrevations code (base 1 index.)
       Asm->EmitULEB128(Abbrev->getNumber(), "Abbreviation Code");
@@ -1888,7 +1904,7 @@ void DwarfDebug::emitAbbreviations() {
     // Mark end of abbreviations.
     Asm->EmitULEB128(0, "EOM(3)");
 
-    MCSymbol *End = Asm->GetTempSymbol(ASec->getLabelEndName());
+    MCSymbol *End = Asm->GetTempSymbol(Section->getLabelEndName());
     Asm->OutStreamer.EmitLabel(End);
   }
 }
@@ -2382,24 +2398,35 @@ void DwarfDebug::emitSkeletonCU(const MCSection *Section) {
   Asm->OutStreamer.AddComment("DWARF version number");
   Asm->EmitInt16(dwarf::DWARF_VERSION);
   Asm->OutStreamer.AddComment("Offset Into Abbrev. Section");
-  Asm->EmitSectionOffset(Asm->GetTempSymbol("abbrev_begin"),
+
+  const MCSection *ASec = Asm->getObjFileLowering().getDwarfAbbrevSection();
+  Asm->EmitSectionOffset(Asm->GetTempSymbol(ASec->getLabelBeginName()),
                          DwarfAbbrevSectionSym);
   Asm->OutStreamer.AddComment("Address Size (in bytes)");
   Asm->EmitInt8(Asm->getDataLayout().getPointerSize());
 
-  emitDIE(Die);
+  emitDIE(Die, &SkeletonAbbrevs);
   Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol(Section->getLabelEndName(),
                                                 SkeletonCU->getUniqueID()));
+}
 
-
+void DwarfDebug::emitSkeletonAbbrevs(const MCSection *Section) {
+  assert(useSplitDwarf() && "No split dwarf debug info?");
+  emitAbbrevs(Section, &SkeletonAbbrevs);
 }
 
 // Emit the .debug_info.dwo section for separated dwarf. This contains the
 // compile units that would normally be in debug_info.
 void DwarfDebug::emitDebugInfoDWO() {
   assert(useSplitDwarf() && "No split dwarf debug info?");
-  // FIXME for Abbrev DWO.
   InfoHolder.emitUnits(this, Asm->getObjFileLowering().getDwarfInfoDWOSection(),
-                       Asm->getObjFileLowering().getDwarfAbbrevSection(),
-                       DwarfAbbrevSectionSym);
+                       Asm->getObjFileLowering().getDwarfAbbrevDWOSection(),
+                       DwarfAbbrevDWOSectionSym);
+}
+
+// Emit the .debug_abbrev.dwo section for separated dwarf. This contains the
+// abbreviations for the .debug_info.dwo section.
+void DwarfDebug::emitDebugAbbrevDWO() {
+  assert(useSplitDwarf() && "No split dwarf?");
+  emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevDWOSection(), &Abbreviations);
 }
