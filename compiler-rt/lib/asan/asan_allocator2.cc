@@ -32,9 +32,18 @@ namespace __asan {
 struct AsanMapUnmapCallback {
   void OnMap(uptr p, uptr size) const {
     PoisonShadow(p, size, kAsanHeapLeftRedzoneMagic);
+    // Statistics.
+    AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
+    thread_stats.mmaps++;
+    thread_stats.mmaped += size;
+    // thread_stats.mmaped_by_size[size_class] += n_chunks;
   }
   void OnUnmap(uptr p, uptr size) const {
     PoisonShadow(p, size, 0);
+    // Statistics.
+    AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
+    thread_stats.munmaps++;
+    thread_stats.munmaped += size;
   }
 };
 
@@ -186,6 +195,9 @@ class Quarantine: public AsanChunkFifoList {
     SpinMutexLock l(&mutex_);
     PushList(q);
     PopAndDeallocateLoop(ms);
+  }
+  void SwallowThreadLocalCache(AllocatorCache *cache) {
+    // FIXME.
   }
   void BypassThreadLocalQuarantine(AsanChunk *m) {
     SpinMutexLock l(&mutex_);
@@ -420,6 +432,7 @@ AsanChunkView FindHeapChunkByAddress(uptr addr) {
 
 void AsanThreadLocalMallocStorage::CommitBack() {
   quarantine.SwallowThreadLocalQuarantine(this);
+  quarantine.SwallowThreadLocalCache(GetAllocatorCache(this));
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE

@@ -37,6 +37,8 @@ struct AsanStats {
   uptr realloced;
   uptr mmaps;
   uptr mmaped;
+  uptr munmaps;
+  uptr munmaped;
   uptr mmaped_by_size[kNumberOfSizeClasses];
   uptr malloced_by_size[kNumberOfSizeClasses];
   uptr freed_by_size[kNumberOfSizeClasses];

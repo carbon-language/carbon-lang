@@ -123,7 +123,7 @@ uptr AsanThreadRegistry::GetCurrentAllocatedBytes() {
 uptr AsanThreadRegistry::GetHeapSize() {
   ScopedLock lock(&mu_);
   UpdateAccumulatedStatsUnlocked();
-  return accumulated_stats_.mmaped;
+  return accumulated_stats_.mmaped - accumulated_stats_.munmaped;
 }
 
 uptr AsanThreadRegistry::GetFreeBytes() {
