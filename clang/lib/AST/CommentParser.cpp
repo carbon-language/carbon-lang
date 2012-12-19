@@ -318,7 +318,7 @@ BlockCommandComment *Parser::parseBlockCommand() {
     PC = S.actOnParamCommandStart(Tok.getLocation(),
                                   Tok.getEndLocation(),
                                   Tok.getCommandID());
-  } if (Info->IsTParamCommand) {
+  } else if (Info->IsTParamCommand) {
     IsTParam = true;
     TPC = S.actOnTParamCommandStart(Tok.getLocation(),
                                     Tok.getEndLocation(),
