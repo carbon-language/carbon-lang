@@ -63,6 +63,47 @@ define <8 x i32> @zext_8i8_8i32(<8 x i8> %A) nounwind {
   ret <8 x i32>%B
 }
 
+; CHECK: load_sext_test1
+; CHECK: vpmovsxdq (%r{{[^,]*}}), %ymm{{.*}}
+; CHECK: ret 
+define <4 x i64> @load_sext_test1(<4 x i32> *%ptr) {
+ %X = load <4 x i32>* %ptr
+ %Y = sext <4 x i32> %X to <4 x i64>
+ ret <4 x i64>%Y
+}
 
+; CHECK: load_sext_test2
+; CHECK: vpmovsxbq (%r{{[^,]*}}), %ymm{{.*}}
+; CHECK: ret 
+define <4 x i64> @load_sext_test2(<4 x i8> *%ptr) {
+ %X = load <4 x i8>* %ptr
+ %Y = sext <4 x i8> %X to <4 x i64>
+ ret <4 x i64>%Y
+}
 
+; CHECK: load_sext_test3
+; CHECK: vpmovsxwq (%r{{[^,]*}}), %ymm{{.*}}
+; CHECK: ret 
+define <4 x i64> @load_sext_test3(<4 x i16> *%ptr) {
+ %X = load <4 x i16>* %ptr
+ %Y = sext <4 x i16> %X to <4 x i64>
+ ret <4 x i64>%Y
+}
 
+; CHECK: load_sext_test4
+; CHECK: vpmovsxwd (%r{{[^,]*}}), %ymm{{.*}}
+; CHECK: ret 
+define <8 x i32> @load_sext_test4(<8 x i16> *%ptr) {
+ %X = load <8 x i16>* %ptr
+ %Y = sext <8 x i16> %X to <8 x i32>
+ ret <8 x i32>%Y
+}
+
+; CHECK: load_sext_test5
+; CHECK: vpmovsxbd (%r{{[^,]*}}), %ymm{{.*}}
+; CHECK: ret 
+define <8 x i32> @load_sext_test5(<8 x i8> *%ptr) {
+ %X = load <8 x i8>* %ptr
+ %Y = sext <8 x i8> %X to <8 x i32>
+ ret <8 x i32>%Y
+}

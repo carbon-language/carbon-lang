@@ -15929,10 +15929,13 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
 
   // If this is a vector EXT Load then attempt to optimize it using a
   // shuffle. We need SSSE3 shuffles.
+  // SEXT loads are suppoted starting SSE41.
+  // We generate X86ISD::VSEXT for them.
   // TODO: It is possible to support ZExt by zeroing the undef values
   // during the shuffle phase or after the shuffle.
   if (RegVT.isVector() && RegVT.isInteger() &&
-      Ext == ISD::EXTLOAD && Subtarget->hasSSSE3()) {
+      (Ext == ISD::EXTLOAD && Subtarget->hasSSSE3() ||
+       Ext == ISD::SEXTLOAD && Subtarget->hasSSE41())){
     assert(MemVT != RegVT && "Cannot extend to the same type");
     assert(MemVT.isVector() && "Must load a vector from memory");
 
@@ -15940,6 +15943,9 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     unsigned RegSz = RegVT.getSizeInBits();
     unsigned MemSz = MemVT.getSizeInBits();
     assert(RegSz > MemSz && "Register size must be greater than the mem size");
+
+    if (Ext == ISD::SEXTLOAD && RegSz == 256 && !Subtarget->hasInt256())
+      return SDValue();
 
     // All sizes must be a power of two.
     if (!isPowerOf2_32(RegSz * MemSz * NumElems))
@@ -15964,16 +15970,23 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     // Calculate the number of scalar loads that we need to perform
     // in order to load our vector from memory.
     unsigned NumLoads = MemSz / SclrLoadTy.getSizeInBits();
+    if (Ext == ISD::SEXTLOAD && NumLoads > 1)
+      return SDValue();
+
+    unsigned loadRegZize = RegSz;
+    if (Ext == ISD::SEXTLOAD && RegSz == 256)
+      loadRegZize /= 2;
 
     // Represent our vector as a sequence of elements which are the
     // largest scalar that we can load.
     EVT LoadUnitVecVT = EVT::getVectorVT(*DAG.getContext(), SclrLoadTy,
-      RegSz/SclrLoadTy.getSizeInBits());
+      loadRegZize/SclrLoadTy.getSizeInBits());
 
     // Represent the data using the same element type that is stored in
     // memory. In practice, we ''widen'' MemVT.
-    EVT WideVecVT = EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
-                                  RegSz/MemVT.getScalarType().getSizeInBits());
+    EVT WideVecVT = 
+	  EVT::getVectorVT(*DAG.getContext(), MemVT.getScalarType(),
+                       loadRegZize/MemVT.getScalarType().getSizeInBits());
 
     assert(WideVecVT.getSizeInBits() == LoadUnitVecVT.getSizeInBits() &&
       "Invalid vector type");
@@ -16014,6 +16027,10 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
     SDValue SlicedVec = DAG.getNode(ISD::BITCAST, dl, WideVecVT, Res);
     unsigned SizeRatio = RegSz/MemSz;
 
+    if (Ext == ISD::SEXTLOAD) {
+      SDValue Sext = DAG.getNode(X86ISD::VSEXT, dl, RegVT, SlicedVec);
+      return DCI.CombineTo(N, Sext, TF, true);
+    }
     // Redistribute the loaded elements into the different locations.
     SmallVector<int, 8> ShuffleVec(NumElems * SizeRatio, -1);
     for (unsigned i = 0; i != NumElems; ++i)

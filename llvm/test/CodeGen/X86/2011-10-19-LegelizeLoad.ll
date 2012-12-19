@@ -16,8 +16,8 @@ target triple = "x86_64-unknown-linux-gnu"
 ; CHECK: main
 define i32 @main() nounwind uwtable {
 entry:
-; CHECK: movsbq  j(%rip), %
-; CHECK: movsbq  i(%rip), %
+; CHECK: pmovsxbq  j(%rip), %
+; CHECK: pmovsxbq  i(%rip), %
   %0 = load <2 x i8>* @i, align 8
   %1 = load <2 x i8>* @j, align 8
   %div = sdiv <2 x i8> %1, %0

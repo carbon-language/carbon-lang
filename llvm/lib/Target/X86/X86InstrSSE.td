@@ -5842,6 +5842,31 @@ defm VPMOVZXBQ : SS41I_binop_rm_int4_y<0x32, "vpmovzxbq",
 defm PMOVSXBQ   : SS41I_binop_rm_int2<0x22, "pmovsxbq", int_x86_sse41_pmovsxbq>;
 defm PMOVZXBQ   : SS41I_binop_rm_int2<0x32, "pmovzxbq", int_x86_sse41_pmovzxbq>;
 
+let Predicates = [HasAVX2] in {
+  def : Pat<(v8i32 (X86vsmovl (v8i16 (bitconvert (v2i64 (load addr:$src)))))),
+            (VPMOVSXWDYrm addr:$src)>;
+  def : Pat<(v4i64 (X86vsmovl (v4i32 (bitconvert (v2i64 (load addr:$src)))))),
+            (VPMOVSXDQYrm addr:$src)>;
+
+  def : Pat<(v8i32 (X86vsext (v16i8 (bitconvert (v2i64 
+                    (scalar_to_vector (loadi64 addr:$src))))))),
+            (VPMOVSXBDYrm addr:$src)>;
+  def : Pat<(v8i32 (X86vsext (v16i8 (bitconvert (v2f64 
+                    (scalar_to_vector (loadf64 addr:$src))))))),
+            (VPMOVSXBDYrm addr:$src)>;
+
+  def : Pat<(v4i64 (X86vsext (v8i16 (bitconvert (v2i64 
+                    (scalar_to_vector (loadi64 addr:$src))))))),
+            (VPMOVSXWQYrm addr:$src)>;
+  def : Pat<(v4i64 (X86vsext (v8i16 (bitconvert (v2f64 
+                    (scalar_to_vector (loadf64 addr:$src))))))),
+            (VPMOVSXWQYrm addr:$src)>;
+
+  def : Pat<(v4i64 (X86vsext (v16i8 (bitconvert (v4i32 
+                    (scalar_to_vector (loadi32 addr:$src))))))),
+            (VPMOVSXBQYrm addr:$src)>;
+}
+
 let Predicates = [HasAVX] in {
   // Common patterns involving scalar load
   def : Pat<(int_x86_sse41_pmovsxbq
@@ -5866,6 +5891,34 @@ let Predicates = [UseSSE41] in {
               (bitconvert (v4i32 (X86vzmovl
                             (v4i32 (scalar_to_vector (loadi32 addr:$src))))))),
             (PMOVZXBQrm addr:$src)>;
+
+  def : Pat<(v4i32 (X86vsext (v8i16 (bitconvert (v2i64
+                    (scalar_to_vector (loadi64 addr:$src))))))),
+            (PMOVSXWDrm addr:$src)>;
+  def : Pat<(v4i32 (X86vsext (v8i16 (bitconvert (v2f64
+                    (scalar_to_vector (loadf64 addr:$src))))))),
+            (PMOVSXWDrm addr:$src)>;
+  def : Pat<(v4i32 (X86vsext (v16i8 (bitconvert (v4i32
+                    (scalar_to_vector (loadi32 addr:$src))))))),
+            (PMOVSXBDrm addr:$src)>;
+  def : Pat<(v2i64 (X86vsext (v8i16 (bitconvert (v4i32
+                    (scalar_to_vector (loadi32 addr:$src))))))),
+            (PMOVSXWQrm addr:$src)>;
+  def : Pat<(v2i64 (X86vsext (v16i8 (bitconvert (v4i32
+                    (scalar_to_vector (extloadi32i16 addr:$src))))))),
+            (PMOVSXBQrm addr:$src)>;
+  def : Pat<(v2i64 (X86vsext (v4i32 (bitconvert (v2i64
+                    (scalar_to_vector (loadi64 addr:$src))))))),
+            (PMOVSXDQrm addr:$src)>;
+  def : Pat<(v2i64 (X86vsext (v4i32 (bitconvert (v2f64
+                    (scalar_to_vector (loadf64 addr:$src))))))),
+            (PMOVSXDQrm addr:$src)>;
+  def : Pat<(v8i16 (X86vsext (v16i8 (bitconvert (v2i64
+                    (scalar_to_vector (loadi64 addr:$src))))))),
+            (PMOVSXBWrm addr:$src)>;
+  def : Pat<(v8i16 (X86vsext (v16i8 (bitconvert (v2f64
+                    (scalar_to_vector (loadf64 addr:$src))))))),
+            (PMOVSXBWrm addr:$src)>;
 }
 
 let Predicates = [HasAVX2] in {
@@ -5926,6 +5979,35 @@ let Predicates = [HasAVX] in {
             (VPMOVZXDQrm addr:$src)>;
   def : Pat<(v2i64 (X86vzext (v4i32 (bitconvert (v2i64 (X86vzload addr:$src)))))),
             (VPMOVZXDQrm addr:$src)>;
+
+  def : Pat<(v4i32 (X86vsext (v8i16 (bitconvert (v2i64
+                    (scalar_to_vector (loadi64 addr:$src))))))),
+            (VPMOVSXWDrm addr:$src)>;
+  def : Pat<(v2i64 (X86vsext (v4i32 (bitconvert (v2i64
+                    (scalar_to_vector (loadi64 addr:$src))))))),
+            (VPMOVSXDQrm addr:$src)>;
+  def : Pat<(v4i32 (X86vsext (v8i16 (bitconvert (v2f64
+                    (scalar_to_vector (loadf64 addr:$src))))))),
+            (VPMOVSXWDrm addr:$src)>;
+  def : Pat<(v2i64 (X86vsext (v4i32 (bitconvert (v2f64
+                    (scalar_to_vector (loadf64 addr:$src))))))),
+            (VPMOVSXDQrm addr:$src)>;
+  def : Pat<(v8i16 (X86vsext (v16i8 (bitconvert (v2i64
+                    (scalar_to_vector (loadi64 addr:$src))))))),
+            (VPMOVSXBWrm addr:$src)>;
+  def : Pat<(v8i16 (X86vsext (v16i8 (bitconvert (v2f64
+                    (scalar_to_vector (loadf64 addr:$src))))))),
+            (VPMOVSXBWrm addr:$src)>;
+
+  def : Pat<(v4i32 (X86vsext (v16i8 (bitconvert (v4i32
+                    (scalar_to_vector (loadi32 addr:$src))))))),
+            (VPMOVSXBDrm addr:$src)>;
+  def : Pat<(v2i64 (X86vsext (v8i16 (bitconvert (v4i32
+                    (scalar_to_vector (loadi32 addr:$src))))))),
+            (VPMOVSXWQrm addr:$src)>;
+  def : Pat<(v2i64 (X86vsext (v16i8 (bitconvert (v4i32
+                    (scalar_to_vector (extloadi32i16 addr:$src))))))),
+            (VPMOVSXBQrm addr:$src)>;
 }
 
 let Predicates = [UseSSE41] in {
