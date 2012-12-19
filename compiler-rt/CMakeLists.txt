@@ -40,6 +40,16 @@ else()
   set(TARGET_I386_CFLAGS "-m32")
 endif()
 
+function(get_target_flags_for_arch arch out_var)
+  if(${arch} STREQUAL "x86_64")
+    set(${out_var} ${TARGET_X86_64_CFLAGS} PARENT_SCOPE)
+  elseif(${arch} STREQUAL "i386")
+    set(${out_var} ${TARGET_I386_CFLAGS} PARENT_SCOPE)
+  else()
+    message(FATAL_ERROR "Unsupported architecture: ${arch}")
+  endif()
+endfunction()
+
 # Try to compile a very simple source file to ensure we can target the given
 # platform. We use the results of these tests to build only the various target
 # runtime libraries supported by our current compilers cross-compiling

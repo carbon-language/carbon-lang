@@ -61,15 +61,6 @@ endif()
 # Unit tests require libstdc++.
 list(APPEND ASAN_LINK_FLAGS -lstdc++)
 
-# Support 64-bit and 32-bit builds.
-if(LLVM_BUILD_32_BITS)
-  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -m32)
-  list(APPEND ASAN_LINK_FLAGS -m32)
-else()
-  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -m64)
-  list(APPEND ASAN_LINK_FLAGS -m64)
-endif()
-
 set(ASAN_BLACKLIST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore")
 
 set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
@@ -83,25 +74,28 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   -mllvm -asan-use-after-return=0
 )
 
-# Compile source and add it to the object list using compiler
-# options in ${ARGN}.
-macro(asan_compile obj_list source)
+# Compile source for the given architecture, using compiler
+# options in ${ARGN}, and add it to the object list.
+macro(asan_compile obj_list source arch)
   get_filename_component(basename ${source} NAME)
-  set(output_obj "${basename}.o")
+  set(output_obj "${basename}.${arch}.o")
+  get_target_flags_for_arch(${arch} TARGET_CFLAGS)
   clang_compile(${output_obj} ${source}
-                CFLAGS ${ARGN}
+                CFLAGS ${ARGN} ${TARGET_CFLAGS}
                 DEPS gtest ${ASAN_RUNTIME_LIBRARIES}
                            ${ASAN_BLACKLIST_FILE})
   list(APPEND ${obj_list} ${output_obj})
 endmacro()
 
-# Link ASan unit test from a set of objects in ${ARGN}.
-macro(add_asan_test test_suite test_name)
-  message(STATUS "Link flags: ${ASAN_LINK_FLAGS}")
+# Link ASan unit test for a given architecture from a set
+# of objects in ${ARGN}.
+macro(add_asan_test test_suite test_name arch)
+  get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
   add_compiler_rt_test(${test_suite} ${test_name}
                        OBJECTS ${ARGN}
                        DEPS ${ASAN_RUNTIME_LIBRARIES}
-                       LINK_FLAGS ${ASAN_LINK_FLAGS})
+                       LINK_FLAGS ${ASAN_LINK_FLAGS}
+                                  ${TARGET_LINK_FLAGS})
 endmacro()
 
 # Main AddressSanitizer unit tests.
@@ -111,43 +105,53 @@ set_target_properties(AsanUnitTests PROPERTIES FOLDER "ASan unit tests")
 add_custom_target(AsanBenchmarks)
 set_target_properties(AsanBenchmarks PROPERTIES FOLDER "Asan benchmarks")
 
+# Adds ASan unit tests and benchmarks for architecture.
+macro(add_asan_tests_for_arch arch)
+  # Build gtest instrumented with ASan.
+  set(ASAN_INST_GTEST)
+  asan_compile(ASAN_INST_GTEST ${COMPILER_RT_GTEST_SOURCE} ${arch} 
+                               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+  # Instrumented tests.
+  set(ASAN_INST_TEST_OBJECTS)
+  asan_compile(ASAN_INST_TEST_OBJECTS asan_globals_test.cc ${arch}
+               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+  asan_compile(ASAN_INST_TEST_OBJECTS asan_test.cc ${arch}
+               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+  if (APPLE)
+    asan_compile(ASAN_INST_TEST_OBJECTS asan_mac_test.mm ${arch}
+                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -ObjC)
+  endif()
+  # Uninstrumented tests.
+  set(ASAN_NOINST_TEST_OBJECTS)
+  asan_compile(ASAN_NOINST_TEST_OBJECTS asan_noinst_test.cc ${arch}
+               ${ASAN_UNITTEST_COMMON_CFLAGS})
+  asan_compile(ASAN_NOINST_TEST_OBJECTS asan_test_main.cc ${arch}
+               ${ASAN_UNITTEST_COMMON_CFLAGS})
+  # Link everything together.
+  add_asan_test(AsanUnitTests "Asan-${arch}-Test" ${arch}
+                ${ASAN_NOINST_TEST_OBJECTS}
+                ${ASAN_INST_TEST_OBJECTS} ${ASAN_INST_GTEST})
+
+  # Instrumented benchmarks.
+  set(ASAN_BENCHMARKS_OBJECTS)
+  asan_compile(ASAN_BENCHMARKS_OBJECTS asan_benchmarks_test.cc ${arch}
+               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+  # Link benchmarks.
+  add_asan_test(AsanBenchmarks "Asan-${arch}-Benchmark" ${arch}
+                ${ASAN_BENCHMARKS_OBJECTS} ${ASAN_INST_GTEST})
+endmacro()
+
 # We only support building instrumented tests when we're not cross compiling
 # and targeting a unix-like system where we can predict viable compilation and
 # linking strategies.
 # We use a different approach to build these tests for Android. See below.
 if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
-  # Build gtest instrumented with ASan.
-  set(ASAN_INST_GTEST)
-  asan_compile(ASAN_INST_GTEST ${COMPILER_RT_GTEST_SOURCE}  
-               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
-  # Instrumented tests.
-  set(ASAN_INST_TEST_OBJECTS)
-  asan_compile(ASAN_INST_TEST_OBJECTS asan_globals_test.cc
-               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
-  asan_compile(ASAN_INST_TEST_OBJECTS asan_test.cc
-               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
-  if (APPLE)
-    asan_compile(ASAN_INST_TEST_OBJECTS asan_mac_test.mm
-                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -ObjC)
+  if(CAN_TARGET_X86_64)
+    add_asan_tests_for_arch(x86_64)
   endif()
-  # Uninstrumented tests.
-  set(ASAN_NOINST_TEST_OBJECTS)
-  asan_compile(ASAN_NOINST_TEST_OBJECTS asan_noinst_test.cc
-               ${ASAN_UNITTEST_COMMON_CFLAGS})
-  asan_compile(ASAN_NOINST_TEST_OBJECTS asan_test_main.cc
-               ${ASAN_UNITTEST_COMMON_CFLAGS})
-
-  # Link everything together.
-  add_asan_test(AsanUnitTests AsanTest ${ASAN_NOINST_TEST_OBJECTS}
-                ${ASAN_INST_TEST_OBJECTS} ${ASAN_INST_GTEST})
-
-  # Instrumented benchmarks.
-  set(ASAN_BENCHMARKS_OBJECTS)
-  asan_compile(ASAN_BENCHMARKS_OBJECTS asan_benchmarks_test.cc
-               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
-  # Link benchmarks.
-  add_asan_test(AsanBenchmarks AsanBenchmark ${ASAN_BENCHMARKS_OBJECTS}
-                ${ASAN_INST_GTEST})
+  if(CAN_TARGET_I386)
+    add_asan_tests_for_arch(i386)
+  endif()
 endif()
 
 if(ANDROID)
