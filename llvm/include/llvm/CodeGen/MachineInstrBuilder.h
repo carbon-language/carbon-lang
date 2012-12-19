@@ -42,10 +42,15 @@ namespace RegState {
 }
 
 class MachineInstrBuilder {
+  MachineFunction *MF;
   MachineInstr *MI;
 public:
-  MachineInstrBuilder() : MI(0) {}
-  explicit MachineInstrBuilder(MachineInstr *mi) : MI(mi) {}
+  MachineInstrBuilder() : MF(0), MI(0) {}
+  explicit MachineInstrBuilder(MachineInstr *mi) : MF(0), MI(mi) {}
+
+  /// Create a MachineInstrBuilder for manipulating an existing instruction.
+  /// F must be the machine function  that was used to allocate I.
+  MachineInstrBuilder(MachineFunction &F, MachineInstr *I) : MF(&F), MI(I) {}
 
   /// Allow automatic conversion to the machine instruction we are working on.
   ///
@@ -204,7 +209,7 @@ public:
 inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID) {
-  return MachineInstrBuilder(MF.CreateMachineInstr(MCID, DL));
+  return MachineInstrBuilder(MF, MF.CreateMachineInstr(MCID, DL));
 }
 
 /// BuildMI - This version of the builder sets up the first operand as a
@@ -214,7 +219,7 @@ inline MachineInstrBuilder BuildMI(MachineFunction &MF,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID,
                                    unsigned DestReg) {
-  return MachineInstrBuilder(MF.CreateMachineInstr(MCID, DL))
+  return MachineInstrBuilder(MF, MF.CreateMachineInstr(MCID, DL))
            .addReg(DestReg, RegState::Define);
 }
 
@@ -227,9 +232,10 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID,
                                    unsigned DestReg) {
-  MachineInstr *MI = BB.getParent()->CreateMachineInstr(MCID, DL);
+  MachineFunction &MF = *BB.getParent();
+  MachineInstr *MI = MF.CreateMachineInstr(MCID, DL);
   BB.insert(I, MI);
-  return MachineInstrBuilder(MI).addReg(DestReg, RegState::Define);
+  return MachineInstrBuilder(MF, MI).addReg(DestReg, RegState::Define);
 }
 
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
@@ -237,9 +243,10 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID,
                                    unsigned DestReg) {
-  MachineInstr *MI = BB.getParent()->CreateMachineInstr(MCID, DL);
+  MachineFunction &MF = *BB.getParent();
+  MachineInstr *MI = MF.CreateMachineInstr(MCID, DL);
   BB.insert(I, MI);
-  return MachineInstrBuilder(MI).addReg(DestReg, RegState::Define);
+  return MachineInstrBuilder(MF, MI).addReg(DestReg, RegState::Define);
 }
 
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
@@ -264,18 +271,20 @@ inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::iterator I,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID) {
-  MachineInstr *MI = BB.getParent()->CreateMachineInstr(MCID, DL);
+  MachineFunction &MF = *BB.getParent();
+  MachineInstr *MI = MF.CreateMachineInstr(MCID, DL);
   BB.insert(I, MI);
-  return MachineInstrBuilder(MI);
+  return MachineInstrBuilder(MF, MI);
 }
 
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,
                                    MachineBasicBlock::instr_iterator I,
                                    DebugLoc DL,
                                    const MCInstrDesc &MCID) {
-  MachineInstr *MI = BB.getParent()->CreateMachineInstr(MCID, DL);
+  MachineFunction &MF = *BB.getParent();
+  MachineInstr *MI = MF.CreateMachineInstr(MCID, DL);
   BB.insert(I, MI);
-  return MachineInstrBuilder(MI);
+  return MachineInstrBuilder(MF, MI);
 }
 
 inline MachineInstrBuilder BuildMI(MachineBasicBlock &BB,

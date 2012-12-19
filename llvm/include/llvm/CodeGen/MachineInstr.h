@@ -952,6 +952,14 @@ public:
   /// (before the first implicit operand).
   void addOperand(const MachineOperand &Op);
 
+  // Add an operand while providing a context pointer. This will replace the
+  // single-argument function shortly.
+  //
+  // MF must be the machine function that was used to allocate this instruction.
+  void addOperand(MachineFunction &MF, const MachineOperand &Op) {
+    addOperand(Op);
+  }
+
   /// setDesc - Replace the instruction descriptor (thus opcode) of
   /// the current instruction with a new one.
   ///
