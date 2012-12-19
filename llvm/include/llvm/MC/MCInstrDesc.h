@@ -258,9 +258,9 @@ public:
     return isBranch() & isBarrier() & !isIndirectBranch();
   }
 
-  // isPredicable - Return true if this instruction has a predicate operand that
-  // controls execution.  It may be set to 'always', or may be set to other
-  /// values.   There are various methods in TargetInstrInfo that can be used to
+  /// isPredicable - Return true if this instruction has a predicate operand
+  /// that controls execution. It may be set to 'always', or may be set to other
+  /// values. There are various methods in TargetInstrInfo that can be used to
   /// control and modify the predicate in this instruction.
   bool isPredicable() const {
     return Flags & (1 << MCID::Predicable);
