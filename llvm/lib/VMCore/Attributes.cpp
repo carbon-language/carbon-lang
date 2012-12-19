@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Attribute, AttributeImpl, AttrBuilder,
-// AttributeListImpl, and AttributeSet classes.
+// AttributeSetImpl, and AttributeSet classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -352,7 +352,7 @@ uint64_t AttributesImpl::getStackAlignment() const {
 }
 
 //===----------------------------------------------------------------------===//
-// AttributeListImpl Definition
+// AttributeSetImpl Definition
 //===----------------------------------------------------------------------===//
 
 AttributeSet AttributeSet::get(LLVMContext &C,
@@ -373,16 +373,16 @@ AttributeSet AttributeSet::get(LLVMContext &C,
   // Otherwise, build a key to look up the existing attributes.
   LLVMContextImpl *pImpl = C.pImpl;
   FoldingSetNodeID ID;
-  AttributeListImpl::Profile(ID, Attrs);
+  AttributeSetImpl::Profile(ID, Attrs);
 
   void *InsertPoint;
-  AttributeListImpl *PA = pImpl->AttrsLists.FindNodeOrInsertPos(ID,
+  AttributeSetImpl *PA = pImpl->AttrsLists.FindNodeOrInsertPos(ID,
                                                                 InsertPoint);
 
   // If we didn't find any existing attributes of the same shape then
   // create a new one and insert it.
   if (!PA) {
-    PA = new AttributeListImpl(Attrs);
+    PA = new AttributeSetImpl(Attrs);
     pImpl->AttrsLists.InsertNode(PA, InsertPoint);
   }
 

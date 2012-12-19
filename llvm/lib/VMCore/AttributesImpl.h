@@ -45,14 +45,14 @@ public:
   }
 };
 
-class AttributeListImpl : public FoldingSetNode {
+class AttributeSetImpl : public FoldingSetNode {
   // AttributesList is uniqued, these should not be publicly available.
-  void operator=(const AttributeListImpl &) LLVM_DELETED_FUNCTION;
-  AttributeListImpl(const AttributeListImpl &) LLVM_DELETED_FUNCTION;
+  void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
+  AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
 public:
   SmallVector<AttributeWithIndex, 4> Attrs;
 
-  AttributeListImpl(ArrayRef<AttributeWithIndex> attrs)
+  AttributeSetImpl(ArrayRef<AttributeWithIndex> attrs)
     : Attrs(attrs.begin(), attrs.end()) {}
 
   void Profile(FoldingSetNodeID &ID) const {

@@ -237,16 +237,13 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// AttributeWithIndex
-//===----------------------------------------------------------------------===//
-
-/// AttributeWithIndex - This is just a pair of values to associate a set of
-/// attributes with an index.
+/// \class This is just a pair of values to associate a set of attributes with
+/// an index.
 struct AttributeWithIndex {
   Attribute Attrs;  ///< The attributes that are set, or'd together.
-  unsigned Index;    ///< Index of the parameter for which the attributes apply.
-                     ///< Index 0 is used for return value attributes.
-                     ///< Index ~0U is used for function attributes.
+  unsigned Index;   ///< Index of the parameter for which the attributes apply.
+                    ///< Index 0 is used for return value attributes.
+                    ///< Index ~0U is used for function attributes.
 
   static AttributeWithIndex get(LLVMContext &C, unsigned Idx,
                                 ArrayRef<Attribute::AttrVal> Attrs) {
@@ -264,10 +261,11 @@ struct AttributeWithIndex {
 // AttributeSet Smart Pointer
 //===----------------------------------------------------------------------===//
 
-class AttributeListImpl;
+class AttributeSetImpl;
 
-/// AttributeSet - This class manages the ref count for the opaque
-/// AttributeListImpl object and provides accessors for it.
+//===----------------------------------------------------------------------===//
+/// \class This class manages the ref count for the opaque AttributeSetImpl
+/// object and provides accessors for it.
 class AttributeSet {
 public:
   enum AttrIndex {
@@ -275,15 +273,15 @@ public:
     FunctionIndex = ~0U
   };
 private:
-  /// @brief The attributes that we are managing.  This can be null to represent
+  /// \brief The attributes that we are managing.  This can be null to represent
   /// the empty attributes list.
-  AttributeListImpl *AttrList;
+  AttributeSetImpl *AttrList;
 
-  /// @brief The attributes for the specified index are returned.  Attributes
+  /// \brief The attributes for the specified index are returned.  Attributes
   /// for the result are denoted with Idx = 0.
   Attribute getAttributes(unsigned Idx) const;
 
-  explicit AttributeSet(AttributeListImpl *LI) : AttrList(LI) {}
+  explicit AttributeSet(AttributeSetImpl *LI) : AttrList(LI) {}
 public:
   AttributeSet() : AttrList(0) {}
   AttributeSet(const AttributeSet &P) : AttrList(P.AttrList) {}
@@ -293,70 +291,69 @@ public:
   // Attribute List Construction and Mutation
   //===--------------------------------------------------------------------===//
 
-  /// get - Return an AttributeSet with the specified parameters in it.
+  /// \brief Return an AttributeSet with the specified parameters in it.
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
 
-  /// addAttr - Add the specified attribute at the specified index to this
-  /// attribute list.  Since attribute lists are immutable, this
-  /// returns the new list.
+  /// \brief Add the specified attribute at the specified index to this
+  /// attribute list.  Since attribute lists are immutable, this returns the new
+  /// list.
   AttributeSet addAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
 
-  /// removeAttr - Remove the specified attribute at the specified index from
-  /// this attribute list.  Since attribute lists are immutable, this
-  /// returns the new list.
+  /// \brief Remove the specified attribute at the specified index from this
+  /// attribute list.  Since attribute lists are immutable, this returns the new
+  /// list.
   AttributeSet removeAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
 
   //===--------------------------------------------------------------------===//
   // Attribute List Accessors
   //===--------------------------------------------------------------------===//
-  /// getParamAttributes - The attributes for the specified index are
-  /// returned.
+
+  /// \brief The attributes for the specified index are returned.
   Attribute getParamAttributes(unsigned Idx) const {
     return getAttributes(Idx);
   }
 
-  /// getRetAttributes - The attributes for the ret value are
-  /// returned.
+  /// \brief The attributes for the ret value are returned.
   Attribute getRetAttributes() const {
     return getAttributes(ReturnIndex);
   }
 
-  /// getFnAttributes - The function attributes are returned.
+  /// \brief The function attributes are returned.
   Attribute getFnAttributes() const {
     return getAttributes(FunctionIndex);
   }
 
-  /// paramHasAttr - Return true if the specified parameter index has the
-  /// specified attribute set.
+  /// \brief Return true if the specified parameter index has the specified
+  /// attribute set.
   bool paramHasAttr(unsigned Idx, Attribute Attr) const {
     return getAttributes(Idx).hasAttributes(Attr);
   }
 
-  /// getParamAlignment - Return the alignment for the specified function
-  /// parameter.
+  /// \brief Return the alignment for the specified function parameter.
   unsigned getParamAlignment(unsigned Idx) const {
     return getAttributes(Idx).getAlignment();
   }
 
-  /// hasAttrSomewhere - Return true if the specified attribute is set for at
-  /// least one parameter or for the return value.
+  /// \brief Return true if the specified attribute is set for at least one
+  /// parameter or for the return value.
   bool hasAttrSomewhere(Attribute::AttrVal Attr) const;
 
   unsigned getNumAttrs() const;
   Attribute &getAttributesAtIndex(unsigned i) const;
 
   /// operator==/!= - Provide equality predicates.
-  bool operator==(const AttributeSet &RHS) const
-  { return AttrList == RHS.AttrList; }
-  bool operator!=(const AttributeSet &RHS) const
-  { return AttrList != RHS.AttrList; }
+  bool operator==(const AttributeSet &RHS) const {
+    return AttrList == RHS.AttrList;
+  }
+  bool operator!=(const AttributeSet &RHS) const {
+    return AttrList != RHS.AttrList;
+  }
 
   //===--------------------------------------------------------------------===//
   // Attribute List Introspection
   //===--------------------------------------------------------------------===//
 
-  /// getRawPointer - Return a raw pointer that uniquely identifies this
-  /// attribute list.
+  /// \brief Return a raw pointer that uniquely identifies this attribute list.
   void *getRawPointer() const {
     return AttrList;
   }
@@ -365,19 +362,18 @@ public:
   // each argument that has an attribute.  This allows walking over the dense
   // set instead of walking the sparse list of attributes.
 
-  /// isEmpty - Return true if there are no attributes.
-  ///
+  /// \brief Return true if there are no attributes.
   bool isEmpty() const {
     return AttrList == 0;
   }
 
-  /// getNumSlots - Return the number of slots used in this attribute list.
-  /// This is the number of arguments that have an attribute set on them
-  /// (including the function itself).
+  /// \brief Return the number of slots used in this attribute list.  This is
+  /// the number of arguments that have an attribute set on them (including the
+  /// function itself).
   unsigned getNumSlots() const;
 
-  /// getSlot - Return the AttributeWithIndex at the specified slot.  This
-  /// holds a index number plus a set of attributes.
+  /// \brief Return the AttributeWithIndex at the specified slot.  This holds a
+  /// index number plus a set of attributes.
   const AttributeWithIndex &getSlot(unsigned Slot) const;
 
   void dump() const;
