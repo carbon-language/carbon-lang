@@ -109,6 +109,11 @@ N: Duncan Sands
 E: baldrick@free.fr
 D: DragonEgg
 
+N: Tom Stellard
+E: thomas.stellard@amd.com
+E: mesa-dev@lists.freedesktop.org
+D: R600 Backend
+
 N: Andrew Trick
 E: atrick@apple.com
 D: IndVar Simplify, Loop Strength Reduction, Instruction Scheduling
