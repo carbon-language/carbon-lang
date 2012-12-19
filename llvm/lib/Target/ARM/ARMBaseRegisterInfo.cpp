@@ -45,7 +45,7 @@ using namespace llvm;
 
 ARMBaseRegisterInfo::ARMBaseRegisterInfo(const ARMBaseInstrInfo &tii,
                                          const ARMSubtarget &sti)
-  : ARMGenRegisterInfo(ARM::LR), TII(tii), STI(sti),
+  : ARMGenRegisterInfo(ARM::LR, 0, 0, ARM::PC), TII(tii), STI(sti),
     FramePtr((STI.isTargetDarwin() || STI.isThumb()) ? ARM::R7 : ARM::R11),
     BasePtr(ARM::R6) {
 }

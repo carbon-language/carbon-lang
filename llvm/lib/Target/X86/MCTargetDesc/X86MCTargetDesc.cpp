@@ -257,7 +257,8 @@ static MCRegisterInfo *createX86MCRegisterInfo(StringRef TT) {
   MCRegisterInfo *X = new MCRegisterInfo();
   InitX86MCRegisterInfo(X, RA,
                         X86_MC::getDwarfRegFlavour(TT, false),
-                        X86_MC::getDwarfRegFlavour(TT, true));
+                        X86_MC::getDwarfRegFlavour(TT, true),
+                        RA);
   X86_MC::InitLLVM2SEHRegisterMapping(X);
   return X;
 }

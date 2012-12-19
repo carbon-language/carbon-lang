@@ -146,7 +146,7 @@ static MCInstrInfo *createARMMCInstrInfo() {
 
 static MCRegisterInfo *createARMMCRegisterInfo(StringRef Triple) {
   MCRegisterInfo *X = new MCRegisterInfo();
-  InitARMMCRegisterInfo(X, ARM::LR);
+  InitARMMCRegisterInfo(X, ARM::LR, 0, 0, ARM::PC);
   return X;
 }
 

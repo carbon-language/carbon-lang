@@ -16,6 +16,8 @@
 #define LLVM_MC_MCINSTRDESC_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/MC/MCInst.h"
 
 namespace llvm {
 
@@ -256,6 +258,17 @@ public:
   /// about this branch.
   bool isUnconditionalBranch() const {
     return isBranch() & isBarrier() & !isIndirectBranch();
+  }
+
+  /// Return true if this is a branch or an instruction which directly
+  /// writes to the program counter. Considered 'may' affect rather than
+  /// 'does' affect as things like predication are not taken into account.
+  bool mayAffectControlFlow(const MCInst &MI, const MCRegisterInfo &RI) const {
+    if (isBranch() || isCall() || isReturn() || isIndirectBranch())
+      return true;
+    unsigned PC = RI.getProgramCounter();
+    if (PC == 0) return false;
+    return hasDefOfPhysReg(MI, PC, RI);
   }
 
   /// isPredicable - Return true if this instruction has a predicate operand
@@ -502,11 +515,24 @@ public:
 
   /// hasImplicitDefOfPhysReg - Return true if this instruction implicitly
   /// defines the specified physical register.
-  bool hasImplicitDefOfPhysReg(unsigned Reg) const {
+  bool hasImplicitDefOfPhysReg(unsigned Reg,
+                               const MCRegisterInfo *MRI = 0) const {
     if (const uint16_t *ImpDefs = ImplicitDefs)
       for (; *ImpDefs; ++ImpDefs)
-        if (*ImpDefs == Reg) return true;
+        if (*ImpDefs == Reg || (MRI && MRI->isSubRegister(Reg, *ImpDefs)))
+            return true;
     return false;
+  }
+
+  /// Return true if this instruction defines the specified physical
+  /// register, either explicitly or implicitly.
+  bool hasDefOfPhysReg(const MCInst &MI, unsigned Reg,
+                       const MCRegisterInfo &RI) const {
+    for (int i = 0, e = NumDefs; i != e; ++i)
+      if (MI.getOperand(i).isReg() &&
+          RI.isSubRegisterEq(Reg, MI.getOperand(i).getReg()))
+        return true;
+    return hasImplicitDefOfPhysReg(Reg, &RI);
   }
 
   /// getSchedClass - Return the scheduling class for this instruction.  The

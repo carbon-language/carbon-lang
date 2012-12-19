@@ -152,6 +152,7 @@ private:
   const MCRegisterDesc *Desc;                 // Pointer to the descriptor array
   unsigned NumRegs;                           // Number of entries in the array
   unsigned RAReg;                             // Return address register
+  unsigned PCReg;                             // Program counter register
   const MCRegisterClass *Classes;             // Pointer to the regclass array
   unsigned NumClasses;                        // Number of entries in the array
   unsigned NumRegUnits;                       // Number of regunits.
@@ -232,6 +233,7 @@ public:
   /// InitMCRegisterInfo - Initialize MCRegisterInfo, called by TableGen
   /// auto-generated routines. *DO NOT USE*.
   void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA,
+                          unsigned PC,
                           const MCRegisterClass *C, unsigned NC,
                           const uint16_t (*RURoots)[2],
                           unsigned NRU,
@@ -243,6 +245,7 @@ public:
     Desc = D;
     NumRegs = NR;
     RAReg = RA;
+    PCReg = PC;
     Classes = C;
     DiffLists = DL;
     RegStrings = Strings;
@@ -295,6 +298,11 @@ public:
   /// address can be found.
   unsigned getRARegister() const {
     return RAReg;
+  }
+
+  /// Return the register which is the program counter.
+  unsigned getProgramCounter() const {
+    return PCReg;
   }
 
   const MCRegisterDesc &operator[](unsigned RegNo) const {
