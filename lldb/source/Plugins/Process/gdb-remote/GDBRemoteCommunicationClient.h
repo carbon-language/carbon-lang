@@ -217,7 +217,10 @@ public:
 
     const lldb_private::ArchSpec &
     GetHostArchitecture ();
-    
+
+    const lldb_private::ArchSpec &
+    GetProcessArchitecture ();
+
     bool
     GetVContSupported (char flavor);
 
@@ -353,6 +356,9 @@ public:
     }
 protected:
 
+    bool
+    GetCurrentProcessInfo ();
+
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteCommunicationClient can see and modify these
     //------------------------------------------------------------------
@@ -366,6 +372,7 @@ protected:
     lldb_private::LazyBool m_supports_vCont_s;
     lldb_private::LazyBool m_supports_vCont_S;
     lldb_private::LazyBool m_qHostInfo_is_valid;
+    lldb_private::LazyBool m_qProcessInfo_is_valid;
     lldb_private::LazyBool m_supports_alloc_dealloc_memory;
     lldb_private::LazyBool m_supports_memory_region_info;
     lldb_private::LazyBool m_supports_watchpoint_support_info;
@@ -402,6 +409,7 @@ protected:
     bool m_interrupt_sent;
     
     lldb_private::ArchSpec m_host_arch;
+    lldb_private::ArchSpec m_process_arch;
     uint32_t m_os_version_major;
     uint32_t m_os_version_minor;
     uint32_t m_os_version_update;

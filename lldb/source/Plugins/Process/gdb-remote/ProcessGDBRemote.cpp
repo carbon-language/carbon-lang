@@ -393,7 +393,16 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
     bool from_scratch = (reg_num == 0);
 
     const ArchSpec &target_arch = GetTarget().GetArchitecture();
-    const ArchSpec &remote_arch = m_gdb_comm.GetHostArchitecture();
+    const ArchSpec &remote_host_arch = m_gdb_comm.GetHostArchitecture();
+    const ArchSpec &remote_process_arch = m_gdb_comm.GetProcessArchitecture();
+
+    // Use the process' architecture instead of the host arch, if available
+    ArchSpec remote_arch;
+    if (remote_process_arch.IsValid ())
+        remote_arch = remote_process_arch;
+    else
+        remote_arch = remote_host_arch;
+
     if (!target_arch.IsValid())
     {
         if (remote_arch.IsValid()
@@ -480,7 +489,11 @@ ProcessGDBRemote::DoConnectRemote (Stream *strm, const char *remote_url)
         && !GetTarget().GetArchitecture().IsValid()
         && m_gdb_comm.GetHostArchitecture().IsValid())
     {
-        GetTarget().SetArchitecture(m_gdb_comm.GetHostArchitecture());
+        // Prefer the *process'* architecture over that of the *host*, if available.
+        if (m_gdb_comm.GetProcessArchitecture().IsValid())
+            GetTarget().SetArchitecture(m_gdb_comm.GetProcessArchitecture());
+        else
+            GetTarget().SetArchitecture(m_gdb_comm.GetHostArchitecture());
     }
 
     return error;
@@ -866,7 +879,15 @@ ProcessGDBRemote::DidLaunchOrAttach ()
 
         // See if the GDB server supports the qHostInfo information
 
-        const ArchSpec &gdb_remote_arch = m_gdb_comm.GetHostArchitecture();
+        ArchSpec gdb_remote_arch = m_gdb_comm.GetHostArchitecture();
+
+        // See if the GDB server supports the qProcessInfo packet, if so
+        // prefer that over the Host information as it will be more specific
+        // to our process.
+
+        if (m_gdb_comm.GetProcessArchitecture().IsValid())
+            gdb_remote_arch = m_gdb_comm.GetProcessArchitecture();
+
         if (gdb_remote_arch.IsValid())
         {
             ArchSpec &target_arch = GetTarget().GetArchitecture();

@@ -407,14 +407,23 @@ ptrsize: is a number that represents how big pointers are in bytes on the debug 
 //  Medium.  On systems which can launch multiple different architecture processes,
 //  the qHostInfo may not disambiguate sufficiently to know what kind of 
 //  process is being debugged.
-//  e.g. on a 64-bit x86 Mc system both 32-bit and 64-bit user processes are possible,
+//  e.g. on a 64-bit x86 Mac system both 32-bit and 64-bit user processes are possible,
 //  and with Mach-O univeral files, the executable file may contain both 32- and 
 //  64-bit slices so it may be impossible to know until you're attached to a real
 //  process to know what you're working with.
+//
+//  All numeric fields return base-16 numbers without any "0x" prefix.
 //----------------------------------------------------------------------
 
+An i386 process:
+
 send packet: $qProcessInfo#00
-$pid:0x9517;parent-pid:0x9519;real-uid:0xecf;real-gid:0xb;effective-uid:0xecf;effective-gid:0xb;cputype:0x7;ptrsize:0x4;#00
+read packet: $pid:42a8;parent-pid:42bf;real-uid:ecf;real-gid:b;effective-uid:ecf;effective-gid:b;cputype:7;cpusubtype:3;ostype:macosx;vendor:apple;endian:little;ptrsize:4;#00
+
+An x86_64 process:
+
+send packet: $qProcessInfo#00
+read packet: $pid:d22c;parent-pid:d34d;real-uid:ecf;real-gid:b;effective-uid:ecf;effective-gid:b;cputype:1000007;cpusubtype:3;ostype:macosx;vendor:apple;endian:little;ptrsize:8;#00
 
 Key value pairs include:
 
@@ -425,6 +434,10 @@ real-gid: the real group id of the process
 effective-uid: the effective user id of the process
 effective-gid: the effective group id of the process
 cputype: the Mach-O CPU type of the process
+cpusubtype: the Mach-O CPU subtype of the process
+ostype: is a string the represents the OS being debugged (darwin, lunix, freebsd)
+vendor: is a string that represents the vendor (apple)
+endian: is one of "little", "big", or "pdp"
 ptrsize: is a number that represents how big pointers are in bytes
 
 

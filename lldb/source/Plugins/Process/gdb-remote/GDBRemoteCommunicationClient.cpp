@@ -46,6 +46,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_supports_vCont_s (eLazyBoolCalculate),
     m_supports_vCont_S (eLazyBoolCalculate),
     m_qHostInfo_is_valid (eLazyBoolCalculate),
+    m_qProcessInfo_is_valid (eLazyBoolCalculate),
     m_supports_alloc_dealloc_memory (eLazyBoolCalculate),
     m_supports_memory_region_info  (eLazyBoolCalculate),
     m_supports_watchpoint_support_info  (eLazyBoolCalculate),
@@ -71,6 +72,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_async_response (),
     m_async_signal (-1),
     m_host_arch(),
+    m_process_arch(),
     m_os_version_major (UINT32_MAX),
     m_os_version_minor (UINT32_MAX),
     m_os_version_update (UINT32_MAX)
@@ -187,6 +189,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_vCont_s = eLazyBoolCalculate;
     m_supports_vCont_S = eLazyBoolCalculate;
     m_qHostInfo_is_valid = eLazyBoolCalculate;
+    m_qProcessInfo_is_valid = eLazyBoolCalculate;
     m_supports_alloc_dealloc_memory = eLazyBoolCalculate;
     m_supports_memory_region_info = eLazyBoolCalculate;
     m_prepare_for_reg_writing_reply = eLazyBoolCalculate;
@@ -203,6 +206,7 @@ GDBRemoteCommunicationClient::ResetDiscoverableSettings()
     m_supports_z3 = true;
     m_supports_z4 = true;
     m_host_arch.Clear();
+    m_process_arch.Clear();
 }
 
 
@@ -963,6 +967,14 @@ GDBRemoteCommunicationClient::GetSystemArchitecture ()
     return ArchSpec();
 }
 
+const lldb_private::ArchSpec &
+GDBRemoteCommunicationClient::GetProcessArchitecture ()
+{
+    if (m_qProcessInfo_is_valid == eLazyBoolCalculate)
+        GetCurrentProcessInfo ();
+    return m_process_arch;
+}
+
 
 bool
 GDBRemoteCommunicationClient::GetHostInfo (bool force)
@@ -1633,6 +1645,100 @@ GDBRemoteCommunicationClient::GetProcessInfo (lldb::pid_t pid, ProcessInstanceIn
     }
     return false;
 }
+
+bool
+GDBRemoteCommunicationClient::GetCurrentProcessInfo ()
+{
+    if (m_qProcessInfo_is_valid == eLazyBoolYes)
+        return true;
+    if (m_qProcessInfo_is_valid == eLazyBoolNo)
+        return false;
+
+    GetHostInfo ();
+
+    StringExtractorGDBRemote response;
+    if (SendPacketAndWaitForResponse ("qProcessInfo", response, false))
+    {
+        if (response.IsNormalResponse())
+        {
+            std::string name;
+            std::string value;
+            uint32_t cpu = LLDB_INVALID_CPUTYPE;
+            uint32_t sub = 0;
+            std::string arch_name;
+            std::string os_name;
+            std::string vendor_name;
+            std::string triple;
+            uint32_t pointer_byte_size = 0;
+            StringExtractor extractor;
+            ByteOrder byte_order = eByteOrderInvalid;
+            uint32_t num_keys_decoded = 0;
+            while (response.GetNameColonValue(name, value))
+            {
+                if (name.compare("cputype") == 0)
+                {
+                    cpu = Args::StringToUInt32 (value.c_str(), LLDB_INVALID_CPUTYPE, 16);
+                    if (cpu != LLDB_INVALID_CPUTYPE)
+                        ++num_keys_decoded;
+                }
+                else if (name.compare("cpusubtype") == 0)
+                {
+                    sub = Args::StringToUInt32 (value.c_str(), 0, 16);
+                    if (sub != 0)
+                        ++num_keys_decoded;
+                }
+                else if (name.compare("ostype") == 0)
+                {
+                    os_name.swap (value);
+                    ++num_keys_decoded;
+                }
+                else if (name.compare("vendor") == 0)
+                {
+                    vendor_name.swap(value);
+                    ++num_keys_decoded;
+                }
+                else if (name.compare("endian") == 0)
+                {
+                    ++num_keys_decoded;
+                    if (value.compare("little") == 0)
+                        byte_order = eByteOrderLittle;
+                    else if (value.compare("big") == 0)
+                        byte_order = eByteOrderBig;
+                    else if (value.compare("pdp") == 0)
+                        byte_order = eByteOrderPDP;
+                    else
+                        --num_keys_decoded;
+                }
+                else if (name.compare("ptrsize") == 0)
+                {
+                    pointer_byte_size = Args::StringToUInt32 (value.c_str(), 0, 16);
+                    if (pointer_byte_size != 0)
+                        ++num_keys_decoded;
+                }
+            }
+            if (num_keys_decoded > 0)
+                m_qProcessInfo_is_valid = eLazyBoolYes;
+            if (cpu != LLDB_INVALID_CPUTYPE && !os_name.empty() && !vendor_name.empty())
+            {
+                m_process_arch.SetArchitecture (eArchTypeMachO, cpu, sub);
+                if (pointer_byte_size)
+                {
+                    assert (pointer_byte_size == m_process_arch.GetAddressByteSize());
+                }
+                m_host_arch.GetTriple().setVendorName (llvm::StringRef (vendor_name));
+                m_host_arch.GetTriple().setOSName (llvm::StringRef (os_name));
+                return true;
+            }
+        }
+    }
+    else
+    {
+        m_qProcessInfo_is_valid = eLazyBoolNo;
+    }
+
+    return false;
+}
+
 
 uint32_t
 GDBRemoteCommunicationClient::FindProcesses (const ProcessInstanceInfoMatch &match_info,

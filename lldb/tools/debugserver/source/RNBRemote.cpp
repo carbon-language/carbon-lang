@@ -3781,8 +3781,7 @@ RNBRemote::HandlePacket_qHostInfo (const char *p)
 
 
 // Note that all numeric values returned by qProcessInfo are hex encoded,
-// including the pid and the cpu type, and are fixed with "0x" to indicate
-// this encoding.
+// including the pid and the cpu type.
 
 rnb_err_t
 RNBRemote::HandlePacket_qProcessInfo (const char *p)
@@ -3796,7 +3795,7 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
 
     pid = m_ctx.ProcessID();
 
-    rep << "pid:0x" << std::hex << pid << ";";
+    rep << "pid:" << std::hex << pid << ";";
 
     int procpid_mib[4];
     procpid_mib[0] = CTL_KERN;
@@ -3810,34 +3809,63 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     {
         if (proc_kinfo_size > 0)
         {
-            rep << "parent-pid:0x" << std::hex << proc_kinfo.kp_eproc.e_ppid << ";";
-            rep << "real-uid:0x" << std::hex << proc_kinfo.kp_eproc.e_pcred.p_ruid << ";";
-            rep << "real-gid:0x" << std::hex << proc_kinfo.kp_eproc.e_pcred.p_rgid << ";";
-            rep << "effective-uid:0x" << std::hex << proc_kinfo.kp_eproc.e_ucred.cr_uid << ";";
+            rep << "parent-pid:" << std::hex << proc_kinfo.kp_eproc.e_ppid << ";";
+            rep << "real-uid:" << std::hex << proc_kinfo.kp_eproc.e_pcred.p_ruid << ";";
+            rep << "real-gid:" << std::hex << proc_kinfo.kp_eproc.e_pcred.p_rgid << ";";
+            rep << "effective-uid:" << std::hex << proc_kinfo.kp_eproc.e_ucred.cr_uid << ";";
             if (proc_kinfo.kp_eproc.e_ucred.cr_ngroups > 0)
-                rep << "effective-gid:0x" << std::hex << proc_kinfo.kp_eproc.e_ucred.cr_groups[0] << ";";
+                rep << "effective-gid:" << std::hex << proc_kinfo.kp_eproc.e_ucred.cr_groups[0] << ";";
         }
     }
     
     int cputype_mib[CTL_MAXNAME]={0,};
     size_t cputype_mib_len = CTL_MAXNAME;
+    cpu_type_t cputype = -1;
     if (::sysctlnametomib("sysctl.proc_cputype", cputype_mib, &cputype_mib_len) == 0)
     {
         cputype_mib[cputype_mib_len] = pid;
         cputype_mib_len++;
-        cpu_type_t cpu;
-        size_t len = sizeof(cpu);
-        if (::sysctl (cputype_mib, cputype_mib_len, &cpu, &len, 0, 0) == 0)
+        size_t len = sizeof(cputype);
+        if (::sysctl (cputype_mib, cputype_mib_len, &cputype, &len, 0, 0) == 0)
         {
-            rep << "cputype:0x" << std::hex << cpu << ";";
+            rep << "cputype:" << std::hex << cputype << ";";
         }
     }
 
-    nub_thread_t thread = DNBProcessGetCurrentThread (pid);
+    uint32_t cpusubtype;
+    size_t cpusubtype_len = sizeof(cpusubtype);
+    if (::sysctlbyname("hw.cpusubtype", &cpusubtype, &cpusubtype_len, NULL, 0) == 0)
+    {
+        if (cputype == CPU_TYPE_X86_64 && cpusubtype == CPU_SUBTYPE_486)
+        {
+            cpusubtype = CPU_SUBTYPE_X86_64_ALL;
+        }
 
+        rep << "cpusubtype:" << std::hex << cpusubtype << ';';
+    }
+
+    // The OS in the triple should be "ios" or "macosx" which doesn't match our
+    // "Darwin" which gets returned from "kern.ostype", so we need to hardcode
+    // this for now.
+    if (cputype == CPU_TYPE_ARM)
+        rep << "ostype:ios;";
+    else
+        rep << "ostype:macosx;";
+
+    rep << "vendor:apple;";
+
+#if defined (__LITTLE_ENDIAN__)
+    rep << "endian:little;";
+#elif defined (__BIG_ENDIAN__)
+    rep << "endian:big;";
+#elif defined (__PDP_ENDIAN__)
+    rep << "endian:pdp;";
+#endif
+
+    nub_thread_t thread = DNBProcessGetCurrentThread (pid);
     kern_return_t kr;
 
-#if defined (__x86_64__) || defined (__i386__)
+#if (defined (__x86_64__) || defined (__i386__)) && defined (x86_THREAD_STATE)
     x86_thread_state_t gp_regs;
     mach_msg_type_number_t gp_count = x86_THREAD_STATE_COUNT;
     kr = thread_get_state (thread, x86_THREAD_STATE,
@@ -3845,12 +3873,12 @@ RNBRemote::HandlePacket_qProcessInfo (const char *p)
     if (kr == KERN_SUCCESS)
     {
         if (gp_regs.tsh.flavor == x86_THREAD_STATE64)
-            rep << "ptrsize:0x8;";
+            rep << "ptrsize:8;";
         else
-            rep << "ptrsize:0x4;";
+            rep << "ptrsize:4;";
     }
 #elif defined (__arm__)
-    rep << "ptrsize:0x4;";
+    rep << "ptrsize:4;";
 #endif
 
     return SendPacket (rep.str());
