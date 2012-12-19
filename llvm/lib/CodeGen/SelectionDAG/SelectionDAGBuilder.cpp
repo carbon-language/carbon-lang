@@ -5842,7 +5842,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     ConstraintOperands.push_back(SDISelAsmOperandInfo(TargetConstraints[i]));
     SDISelAsmOperandInfo &OpInfo = ConstraintOperands.back();
 
-    EVT OpVT = MVT::Other;
+    MVT OpVT = MVT::Other;
 
     // Compute the value type for each operand.
     switch (OpInfo.Type) {
@@ -5857,10 +5857,10 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       // corresponding argument.
       assert(!CS.getType()->isVoidTy() && "Bad inline asm!");
       if (StructType *STy = dyn_cast<StructType>(CS.getType())) {
-        OpVT = TLI.getValueType(STy->getElementType(ResNo));
+        OpVT = TLI.getSimpleValueType(STy->getElementType(ResNo));
       } else {
         assert(ResNo == 0 && "Asm only has one result!");
-        OpVT = TLI.getValueType(CS.getType());
+        OpVT = TLI.getSimpleValueType(CS.getType());
       }
       ++ResNo;
       break;
@@ -5881,7 +5881,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         OpInfo.CallOperand = getValue(OpInfo.CallOperandVal);
       }
 
-      OpVT = OpInfo.getCallOperandValEVT(*DAG.getContext(), TLI, TD);
+      OpVT = OpInfo.getCallOperandValEVT(*DAG.getContext(), TLI, TD).
+        getSimpleVT();
     }
 
     OpInfo.ConstraintVT = OpVT;

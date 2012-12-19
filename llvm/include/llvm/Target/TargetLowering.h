@@ -1555,7 +1555,7 @@ public:
     Value *CallOperandVal;
 
     /// ConstraintVT - The ValueType for the operand value.
-    EVT ConstraintVT;
+    MVT ConstraintVT;
 
     /// isMatchingInputConstraint - Return true of this is an input operand that
     /// is a matching constraint like "4".

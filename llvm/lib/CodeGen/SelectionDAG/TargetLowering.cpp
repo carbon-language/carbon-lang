@@ -2935,10 +2935,10 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
       assert(!CS.getType()->isVoidTy() &&
              "Bad inline asm!");
       if (StructType *STy = dyn_cast<StructType>(CS.getType())) {
-        OpInfo.ConstraintVT = getValueType(STy->getElementType(ResNo));
+        OpInfo.ConstraintVT = getSimpleValueType(STy->getElementType(ResNo));
       } else {
         assert(ResNo == 0 && "Asm only has one result!");
-        OpInfo.ConstraintVT = getValueType(CS.getType());
+        OpInfo.ConstraintVT = getSimpleValueType(CS.getType());
       }
       ++ResNo;
       break;
@@ -2977,14 +2977,14 @@ TargetLowering::AsmOperandInfoVector TargetLowering::ParseConstraints(
         case 64:
         case 128:
           OpInfo.ConstraintVT =
-              EVT::getEVT(IntegerType::get(OpTy->getContext(), BitSize), true);
+            MVT::getVT(IntegerType::get(OpTy->getContext(), BitSize), true);
           break;
         }
       } else if (PointerType *PT = dyn_cast<PointerType>(OpTy)) {
         OpInfo.ConstraintVT = MVT::getIntegerVT(
             8*TD->getPointerSize(PT->getAddressSpace()));
       } else {
-        OpInfo.ConstraintVT = EVT::getEVT(OpTy, true);
+        OpInfo.ConstraintVT = MVT::getVT(OpTy, true);
       }
     }
   }

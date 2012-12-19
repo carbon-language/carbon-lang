@@ -219,10 +219,10 @@ Type *EVT::getTypeForEVT(LLVMContext &Context) const {
  }
 }
 
-/// getEVT - Return the value type corresponding to the specified type.  This
-/// returns all pointers as MVT::iPTR.  If HandleUnknown is true, unknown types
-/// are returned as Other, otherwise they are invalid.
-EVT EVT::getEVT(Type *Ty, bool HandleUnknown){
+/// Return the value type corresponding to the specified type.  This returns all
+/// pointers as MVT::iPTR.  If HandleUnknown is true, unknown types are returned
+/// as Other, otherwise they are invalid.
+MVT MVT::getVT(Type *Ty, bool HandleUnknown){
   switch (Ty->getTypeID()) {
   default:
     if (HandleUnknown) return MVT(MVT::Other);
@@ -230,7 +230,7 @@ EVT EVT::getEVT(Type *Ty, bool HandleUnknown){
   case Type::VoidTyID:
     return MVT::isVoid;
   case Type::IntegerTyID:
-    return getIntegerVT(Ty->getContext(), cast<IntegerType>(Ty)->getBitWidth());
+    return getIntegerVT(cast<IntegerType>(Ty)->getBitWidth());
   case Type::HalfTyID:      return MVT(MVT::f16);
   case Type::FloatTyID:     return MVT(MVT::f32);
   case Type::DoubleTyID:    return MVT(MVT::f64);
@@ -239,6 +239,23 @@ EVT EVT::getEVT(Type *Ty, bool HandleUnknown){
   case Type::FP128TyID:     return MVT(MVT::f128);
   case Type::PPC_FP128TyID: return MVT(MVT::ppcf128);
   case Type::PointerTyID:   return MVT(MVT::iPTR);
+  case Type::VectorTyID: {
+    VectorType *VTy = cast<VectorType>(Ty);
+    return getVectorVT(
+      getVT(VTy->getElementType(), false), VTy->getNumElements());
+  }
+  }
+}
+
+/// getEVT - Return the value type corresponding to the specified type.  This
+/// returns all pointers as MVT::iPTR.  If HandleUnknown is true, unknown types
+/// are returned as Other, otherwise they are invalid.
+EVT EVT::getEVT(Type *Ty, bool HandleUnknown){
+  switch (Ty->getTypeID()) {
+  default:
+    return MVT::getVT(Ty, HandleUnknown);
+  case Type::IntegerTyID:
+    return getIntegerVT(Ty->getContext(), cast<IntegerType>(Ty)->getBitWidth());
   case Type::VectorTyID: {
     VectorType *VTy = cast<VectorType>(Ty);
     return getVectorVT(Ty->getContext(), getEVT(VTy->getElementType(), false),
