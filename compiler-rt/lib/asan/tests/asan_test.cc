@@ -2134,53 +2134,56 @@ TEST(AddressSanitizerMac, DISABLED_CFAllocatorMallocZoneDoubleFree) {
   EXPECT_DEATH(CFAllocatorMallocZoneDoubleFree(), "attempting double-free");
 }
 
+// For libdispatch tests below we check that ASan got to the shadow byte
+// legend, i.e. managed to print the thread stacks (this almost certainly
+// means that the libdispatch task creation has been intercepted correctly).
 TEST(AddressSanitizerMac, GCDDispatchAsync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
-  EXPECT_DEATH(TestGCDDispatchAsync(), "Shadow byte and word");
+  EXPECT_DEATH(TestGCDDispatchAsync(), "Shadow byte legend");
 }
 
 TEST(AddressSanitizerMac, GCDDispatchSync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
-  EXPECT_DEATH(TestGCDDispatchSync(), "Shadow byte and word");
+  EXPECT_DEATH(TestGCDDispatchSync(), "Shadow byte legend");
 }
 
 
 TEST(AddressSanitizerMac, GCDReuseWqthreadsAsync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
-  EXPECT_DEATH(TestGCDReuseWqthreadsAsync(), "Shadow byte and word");
+  EXPECT_DEATH(TestGCDReuseWqthreadsAsync(), "Shadow byte legend");
 }
 
 TEST(AddressSanitizerMac, GCDReuseWqthreadsSync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
-  EXPECT_DEATH(TestGCDReuseWqthreadsSync(), "Shadow byte and word");
+  EXPECT_DEATH(TestGCDReuseWqthreadsSync(), "Shadow byte legend");
 }
 
 TEST(AddressSanitizerMac, GCDDispatchAfter) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
-  EXPECT_DEATH(TestGCDDispatchAfter(), "Shadow byte and word");
+  EXPECT_DEATH(TestGCDDispatchAfter(), "Shadow byte legend");
 }
 
 TEST(AddressSanitizerMac, GCDSourceEvent) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
-  EXPECT_DEATH(TestGCDSourceEvent(), "Shadow byte and word");
+  EXPECT_DEATH(TestGCDSourceEvent(), "Shadow byte legend");
 }
 
 TEST(AddressSanitizerMac, GCDSourceCancel) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
-  EXPECT_DEATH(TestGCDSourceCancel(), "Shadow byte and word");
+  EXPECT_DEATH(TestGCDSourceCancel(), "Shadow byte legend");
 }
 
 TEST(AddressSanitizerMac, GCDGroupAsync) {
   // Make sure the whole ASan report is printed, i.e. that we don't die
   // on a CHECK.
-  EXPECT_DEATH(TestGCDGroupAsync(), "Shadow byte and word");
+  EXPECT_DEATH(TestGCDGroupAsync(), "Shadow byte legend");
 }
 
 void *MallocIntrospectionLockWorker(void *_) {
