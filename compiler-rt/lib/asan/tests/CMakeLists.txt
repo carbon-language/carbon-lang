@@ -173,7 +173,7 @@ if(ANDROID)
   set_target_properties(AsanTest PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
   set_target_link_flags(AsanTest ${ASAN_LINK_FLAGS})
-  add_dependencies(AsanTest ${ASAN_RUNTIME_LIBRARIES})
+  target_link_libraries(AsanTest clang_rt.asan-arm-android)
   # Add unit test to test suite.
   add_dependencies(AsanUnitTests AsanTest)
 endif()
