@@ -386,13 +386,23 @@ public:
     return RegEncodingTable[RegNo];
   }
 
-  /// Returns true if regB is a sub-register of regA.
-  bool isSubRegister(unsigned regA, unsigned regB) const {
-    return isSuperRegister(regB, regA);
+  /// Returns true if RegB is a sub-register of RegA.
+  bool isSubRegister(unsigned RegA, unsigned RegB) const {
+    return isSuperRegister(RegB, RegA);
   }
 
-  /// Returns true if regB is a super-register of regA.
+  /// Returns true if RegB is a super-register of RegA.
   bool isSuperRegister(unsigned RegA, unsigned RegB) const;
+
+  /// Returns true if RegB is a sub-register of RegA or if RegB == RegA.
+  bool isSubRegisterEq(unsigned RegA, unsigned RegB) const {
+    return isSuperRegisterEq(RegB, RegA);
+  }
+
+  /// Returns true if RegB is a super-register of RegA or if RegB == RegA.
+  bool isSuperRegisterEq(unsigned RegA, unsigned RegB) const {
+    return RegA == RegB || isSuperRegister(RegA, RegB);
+  }
 
 };
 
