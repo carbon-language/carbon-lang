@@ -118,7 +118,7 @@ nesting of IFs, ELSEs and even GOTOs.
   }
 
 Pointer Induction Variables
---------------------------
+---------------------------
 
 This example uses the "accumulate" function of the standard c++ library. This
 loop uses C++ iterators, which are pointers, and not integer indices.
@@ -144,10 +144,10 @@ The Loop Vectorizer can vectorize loops that count backwards.
   }
 
 Scatter / Gather
---------------------------
+----------------
 
-The Loop Vectorizer can generate code diverging memory indices that result in
-scatter/gather memory accesses.
+The Loop Vectorizer can vectorize code that becomes scatter/gather 
+memory accesses. 
 
 .. code-block:: c++
 
@@ -156,7 +156,7 @@ scatter/gather memory accesses.
       A[i*7] += B[i*k];
   }
 
-Vectorization of programs with Mixed Types
+Vectorization of Mixed Types
 --------------------------
 
 The Loop Vectorizer can vectorize programs with mixed types. The Vectorizer
