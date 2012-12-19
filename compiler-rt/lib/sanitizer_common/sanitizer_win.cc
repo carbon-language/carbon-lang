@@ -15,6 +15,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define NOGDI
 #include <stdlib.h>
+#include <io.h>
 #include <windows.h>
 
 #include "sanitizer_common.h"
