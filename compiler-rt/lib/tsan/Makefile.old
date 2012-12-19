@@ -15,7 +15,8 @@ LIBTSAN=rtl/libtsan.a
 GTEST_ROOT=third_party/googletest
 GTEST_INCLUDE=-I$(GTEST_ROOT)/include
 GTEST_BUILD_DIR=$(GTEST_ROOT)/build
-GTEST_LIB=$(GTEST_BUILD_DIR)/gtest-all.o
+GTEST_LIB_NAME=gtest-all.o
+GTEST_LIB=$(GTEST_BUILD_DIR)/$(GTEST_LIB_NAME)
 
 SANITIZER_COMMON_TESTS_SRC=$(wildcard ../sanitizer_common/tests/*_test.cc)
 SANITIZER_COMMON_TESTS_OBJ=$(patsubst %.cc,%.o,$(SANITIZER_COMMON_TESTS_SRC))
@@ -84,7 +85,7 @@ install_deps:
 $(GTEST_LIB):
 	mkdir -p $(GTEST_BUILD_DIR) && \
 	cd $(GTEST_BUILD_DIR) && \
-	$(MAKE) -f ../make/Makefile CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" CC=$(CC) CXX=$(CXX)
+	$(MAKE) -f ../make/Makefile CXXFLAGS="$(CXXFLAGS)" CFLAGS="$(CFLAGS)" CC=$(CC) CXX=$(CXX) $(GTEST_LIB_NAME)
 
 clean:
 	rm -f asm_*.s libtsan.nm libtsan.objdump */*.o tsan_test
