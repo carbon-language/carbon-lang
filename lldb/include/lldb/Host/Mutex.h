@@ -193,6 +193,9 @@ public:
     /// @return
     ///     The error code from \c pthread_mutex_lock().
     //------------------------------------------------------------------
+#ifdef LLDB_CONFIGURATION_DEBUG
+    virtual
+#endif
     int
     Lock();
 
@@ -279,6 +282,27 @@ public:
 protected:
     pthread_t m_thread_that_tried;
     std::string m_failure_message;
+};
+
+class LoggingMutex : public Mutex
+{
+public:
+    LoggingMutex() : Mutex(),m_locked(false)  {}
+    LoggingMutex(Mutex::Type type) : Mutex (type),m_locked(false) {}
+    
+    virtual
+    ~LoggingMutex() {}
+    
+    virtual int
+    Lock ();
+    
+    virtual int
+    Unlock ();
+    
+    virtual int
+    TryLock (const char *failure_message = NULL);
+protected:
+    bool m_locked;
 };
 #endif
 

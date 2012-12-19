@@ -371,7 +371,22 @@ ScriptInterpreterPython::PythonInputReaderManager::InputReaderCallback
             break;
             
         case eInputReaderInterrupt:
-            reader.SetIsDone(true);
+        {
+            PyThreadState* state = _PyThreadState_Current;
+            if (!state)
+                state = script_interpreter->m_command_thread_state;
+            if (state)
+            {
+                long tid = state->thread_id;
+                _PyThreadState_Current = state;
+                int num_threads = PyThreadState_SetAsyncExc(tid, PyExc_KeyboardInterrupt);
+                if (log)
+                    log->Printf("ScriptInterpreterPython::NonInteractiveInputReaderCallback, eInputReaderInterrupt, tid = %ld, num_threads = %d, state = %p",
+                                tid,num_threads,state);
+            }
+            else if (log)
+                log->Printf("ScriptInterpreterPython::NonInteractiveInputReaderCallback, eInputReaderInterrupt, state = NULL");
+        }
             break;
             
         case eInputReaderEndOfFile:
@@ -446,7 +461,8 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_dictionary_name (interpreter.GetDebugger().GetInstanceName().AsCString()),
     m_terminal_state (),
     m_session_is_active (false),
-    m_valid_session (true)
+    m_valid_session (true),
+    m_command_thread_state (NULL)
 {
 
     static int g_initialized = false;
@@ -2643,8 +2659,16 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
         Locker py_lock(this,
                        Locker::AcquireLock | Locker::InitSession | Locker::InitGlobals,
                        Locker::FreeLock | Locker::TearDownSession);
+
         SynchronicityHandler synch_handler(debugger_sp,
                                            synchronicity);
+
+        // we need to save the thread state when we first start the command
+        // because we might decide to interrupt it while some action is taking
+        // place outside of Python (e.g. printing to screen, waiting for the network, ...)
+        // in that case, _PyThreadState_Current will be NULL - and we would be unable
+        // to set the asynchronous exception - not a desirable situation
+        m_command_thread_state = _PyThreadState_Current;
         
         PythonInputReaderManager py_input(this);
         

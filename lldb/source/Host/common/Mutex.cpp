@@ -27,6 +27,7 @@
 // Enable extra mutex error checking
 #ifdef LLDB_CONFIGURATION_DEBUG
 #define ENABLE_MUTEX_ERROR_CHECKING 1
+#include <inttypes.h>
 #endif
 
 #if ENABLE_MUTEX_ERROR_CHECKING
@@ -352,6 +353,38 @@ TrackingMutex::Unlock ()
     assert (m_failure_message.empty());
     return Mutex::Unlock();
 }
+
+int
+LoggingMutex::Lock ()
+{
+    printf("locking mutex %p by [%4.4" PRIx64 "/%4.4" PRIx64 "]...", this, Host::GetCurrentProcessID(), Host::GetCurrentThreadID());
+    int x = Mutex::Lock();
+    m_locked = true;
+    printf("%d\n",x);
+    return x;
+}
+
+int
+LoggingMutex::Unlock ()
+{
+    printf("unlocking mutex %p by [%4.4" PRIx64 "/%4.4" PRIx64 "]...", this, Host::GetCurrentProcessID(), Host::GetCurrentThreadID());
+    int x = Mutex::Unlock();
+    m_locked = false;
+    printf("%d\n",x);
+    return x;
+}
+
+int
+LoggingMutex::TryLock (const char *failure_message)
+{
+    printf("trylocking mutex %p by [%4.4" PRIx64 "/%4.4" PRIx64 "]...", this, Host::GetCurrentProcessID(), Host::GetCurrentThreadID());
+    int x = Mutex::TryLock(failure_message);
+    if (x == 0)
+        m_locked = true;
+    printf("%d\n",x);
+    return x;
+}
+
 #endif
-    
+
 

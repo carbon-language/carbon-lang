@@ -366,6 +366,7 @@ private:
     bool m_session_is_active;
     bool m_pty_slave_is_open;
     bool m_valid_session;
+    PyThreadState *m_command_thread_state;
 };
 } // namespace lldb_private
 
