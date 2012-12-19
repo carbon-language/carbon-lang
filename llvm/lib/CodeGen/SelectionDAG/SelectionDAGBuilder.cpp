@@ -227,15 +227,17 @@ static SDValue getCopyFromPartsVector(SelectionDAG &DAG, DebugLoc DL,
 
   // Handle a multi-element vector.
   if (NumParts > 1) {
-    EVT IntermediateVT, RegisterVT;
+    EVT IntermediateVT;
+    MVT RegisterVT;
     unsigned NumIntermediates;
     unsigned NumRegs =
     TLI.getVectorTypeBreakdown(*DAG.getContext(), ValueVT, IntermediateVT,
                                NumIntermediates, RegisterVT);
     assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
     NumParts = NumRegs; // Silence a compiler warning.
-    assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
-    assert(RegisterVT == Parts[0].getValueType() &&
+    assert(RegisterVT == PartVT.getSimpleVT() &&
+           "Part type doesn't match vector breakdown!");
+    assert(RegisterVT == Parts[0].getSimpleValueType() &&
            "Part type doesn't match part!");
 
     // Assemble the parts into intermediate operands.
@@ -524,7 +526,8 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
   }
 
   // Handle a multi-element vector.
-  EVT IntermediateVT, RegisterVT;
+  EVT IntermediateVT;
+  MVT RegisterVT;
   unsigned NumIntermediates;
   unsigned NumRegs = TLI.getVectorTypeBreakdown(*DAG.getContext(), ValueVT,
                                                 IntermediateVT,
@@ -533,7 +536,8 @@ static void getCopyToPartsVector(SelectionDAG &DAG, DebugLoc DL,
 
   assert(NumRegs == NumParts && "Part count doesn't match vector breakdown!");
   NumParts = NumRegs; // Silence a compiler warning.
-  assert(RegisterVT == PartVT && "Part type doesn't match vector breakdown!");
+  assert(RegisterVT == PartVT.getSimpleVT() &&
+         "Part type doesn't match vector breakdown!");
 
   // Split the vector into intermediate operands.
   SmallVector<SDValue, 8> Ops(NumIntermediates);
