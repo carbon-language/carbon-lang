@@ -64,86 +64,87 @@ public:
                               unsigned SubReg = 0) const {
     assert((flags & 0x1) == 0 &&
            "Passing in 'true' to addReg is forbidden! Use enums instead.");
-    MI->addOperand(MachineOperand::CreateReg(RegNo,
-                                             flags & RegState::Define,
-                                             flags & RegState::Implicit,
-                                             flags & RegState::Kill,
-                                             flags & RegState::Dead,
-                                             flags & RegState::Undef,
-                                             flags & RegState::EarlyClobber,
-                                             SubReg,
-                                             flags & RegState::Debug,
-                                             flags & RegState::InternalRead));
+    MI->addOperand(*MF, MachineOperand::CreateReg(RegNo,
+                                               flags & RegState::Define,
+                                               flags & RegState::Implicit,
+                                               flags & RegState::Kill,
+                                               flags & RegState::Dead,
+                                               flags & RegState::Undef,
+                                               flags & RegState::EarlyClobber,
+                                               SubReg,
+                                               flags & RegState::Debug,
+                                               flags & RegState::InternalRead));
     return *this;
   }
 
   /// addImm - Add a new immediate operand.
   ///
   const MachineInstrBuilder &addImm(int64_t Val) const {
-    MI->addOperand(MachineOperand::CreateImm(Val));
+    MI->addOperand(*MF, MachineOperand::CreateImm(Val));
     return *this;
   }
 
   const MachineInstrBuilder &addCImm(const ConstantInt *Val) const {
-    MI->addOperand(MachineOperand::CreateCImm(Val));
+    MI->addOperand(*MF, MachineOperand::CreateCImm(Val));
     return *this;
   }
 
   const MachineInstrBuilder &addFPImm(const ConstantFP *Val) const {
-    MI->addOperand(MachineOperand::CreateFPImm(Val));
+    MI->addOperand(*MF, MachineOperand::CreateFPImm(Val));
     return *this;
   }
 
   const MachineInstrBuilder &addMBB(MachineBasicBlock *MBB,
                                     unsigned char TargetFlags = 0) const {
-    MI->addOperand(MachineOperand::CreateMBB(MBB, TargetFlags));
+    MI->addOperand(*MF, MachineOperand::CreateMBB(MBB, TargetFlags));
     return *this;
   }
 
   const MachineInstrBuilder &addFrameIndex(int Idx) const {
-    MI->addOperand(MachineOperand::CreateFI(Idx));
+    MI->addOperand(*MF, MachineOperand::CreateFI(Idx));
     return *this;
   }
 
   const MachineInstrBuilder &addConstantPoolIndex(unsigned Idx,
                                                   int Offset = 0,
                                           unsigned char TargetFlags = 0) const {
-    MI->addOperand(MachineOperand::CreateCPI(Idx, Offset, TargetFlags));
+    MI->addOperand(*MF, MachineOperand::CreateCPI(Idx, Offset, TargetFlags));
     return *this;
   }
 
   const MachineInstrBuilder &addTargetIndex(unsigned Idx, int64_t Offset = 0,
                                           unsigned char TargetFlags = 0) const {
-    MI->addOperand(MachineOperand::CreateTargetIndex(Idx, Offset, TargetFlags));
+    MI->addOperand(*MF, MachineOperand::CreateTargetIndex(Idx, Offset,
+                                                          TargetFlags));
     return *this;
   }
 
   const MachineInstrBuilder &addJumpTableIndex(unsigned Idx,
                                           unsigned char TargetFlags = 0) const {
-    MI->addOperand(MachineOperand::CreateJTI(Idx, TargetFlags));
+    MI->addOperand(*MF, MachineOperand::CreateJTI(Idx, TargetFlags));
     return *this;
   }
 
   const MachineInstrBuilder &addGlobalAddress(const GlobalValue *GV,
                                               int64_t Offset = 0,
                                           unsigned char TargetFlags = 0) const {
-    MI->addOperand(MachineOperand::CreateGA(GV, Offset, TargetFlags));
+    MI->addOperand(*MF, MachineOperand::CreateGA(GV, Offset, TargetFlags));
     return *this;
   }
 
   const MachineInstrBuilder &addExternalSymbol(const char *FnName,
                                           unsigned char TargetFlags = 0) const {
-    MI->addOperand(MachineOperand::CreateES(FnName, TargetFlags));
+    MI->addOperand(*MF, MachineOperand::CreateES(FnName, TargetFlags));
     return *this;
   }
 
   const MachineInstrBuilder &addRegMask(const uint32_t *Mask) const {
-    MI->addOperand(MachineOperand::CreateRegMask(Mask));
+    MI->addOperand(*MF, MachineOperand::CreateRegMask(Mask));
     return *this;
   }
 
   const MachineInstrBuilder &addMemOperand(MachineMemOperand *MMO) const {
-    MI->addMemOperand(*MI->getParent()->getParent(), MMO);
+    MI->addMemOperand(*MF, MMO);
     return *this;
   }
 
@@ -155,17 +156,17 @@ public:
 
 
   const MachineInstrBuilder &addOperand(const MachineOperand &MO) const {
-    MI->addOperand(MO);
+    MI->addOperand(*MF, MO);
     return *this;
   }
 
   const MachineInstrBuilder &addMetadata(const MDNode *MD) const {
-    MI->addOperand(MachineOperand::CreateMetadata(MD));
+    MI->addOperand(*MF, MachineOperand::CreateMetadata(MD));
     return *this;
   }
   
   const MachineInstrBuilder &addSym(MCSymbol *Sym) const {
-    MI->addOperand(MachineOperand::CreateMCSymbol(Sym));
+    MI->addOperand(*MF, MachineOperand::CreateMCSymbol(Sym));
     return *this;
   }
 
