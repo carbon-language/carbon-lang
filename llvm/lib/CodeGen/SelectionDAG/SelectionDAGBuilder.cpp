@@ -593,7 +593,7 @@ namespace {
     /// getRegisterType member function, however when with physical registers
     /// it is necessary to have a separate record of the types.
     ///
-    SmallVector<EVT, 4> RegVTs;
+    SmallVector<MVT, 4> RegVTs;
 
     /// Regs - This list holds the registers assigned to the values.
     /// Each legal or promoted value requires one register, and each
@@ -604,7 +604,7 @@ namespace {
     RegsForValue() {}
 
     RegsForValue(const SmallVector<unsigned, 4> &regs,
-                 EVT regvt, EVT valuevt)
+                 MVT regvt, EVT valuevt)
       : ValueVTs(1, valuevt), RegVTs(1, regvt), Regs(regs) {}
 
     RegsForValue(LLVMContext &Context, const TargetLowering &tli,
@@ -625,7 +625,7 @@ namespace {
     /// areValueTypesLegal - Return true if types of all the values are legal.
     bool areValueTypesLegal(const TargetLowering &TLI) {
       for (unsigned Value = 0, e = ValueVTs.size(); Value != e; ++Value) {
-        EVT RegisterVT = RegVTs[Value];
+        MVT RegisterVT = RegVTs[Value];
         if (!TLI.isTypeLegal(RegisterVT))
           return false;
       }
@@ -687,7 +687,7 @@ SDValue RegsForValue::getCopyFromRegs(SelectionDAG &DAG,
     // Copy the legal parts from the registers.
     EVT ValueVT = ValueVTs[Value];
     unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
-    EVT RegisterVT = RegVTs[Value];
+    MVT RegisterVT = RegVTs[Value];
 
     Parts.resize(NumRegs);
     for (unsigned i = 0; i != NumRegs; ++i) {
@@ -772,7 +772,7 @@ void RegsForValue::getCopyToRegs(SDValue Val, SelectionDAG &DAG, DebugLoc dl,
   for (unsigned Value = 0, Part = 0, e = ValueVTs.size(); Value != e; ++Value) {
     EVT ValueVT = ValueVTs[Value];
     unsigned NumParts = TLI.getNumRegisters(*DAG.getContext(), ValueVT);
-    EVT RegisterVT = RegVTs[Value];
+    MVT RegisterVT = RegVTs[Value];
     ISD::NodeType ExtendKind =
       TLI.isZExtFree(Val, RegisterVT)? ISD::ZERO_EXTEND: ISD::ANY_EXTEND;
 
@@ -840,7 +840,7 @@ void RegsForValue::AddInlineAsmOperands(unsigned Code, bool HasMatching,
 
   for (unsigned Value = 0, Reg = 0, e = ValueVTs.size(); Value != e; ++Value) {
     unsigned NumRegs = TLI.getNumRegisters(*DAG.getContext(), ValueVTs[Value]);
-    EVT RegisterVT = RegVTs[Value];
+    MVT RegisterVT = RegVTs[Value];
     for (unsigned i = 0; i != NumRegs; ++i) {
       assert(Reg < Regs.size() && "Mismatch in # registers expected");
       Ops.push_back(DAG.getRegister(Regs[Reg++], RegisterVT));
@@ -1765,7 +1765,7 @@ void SelectionDAGBuilder::visitBitTestHeader(BitTestBlock &B,
   }
 
   B.RegVT = VT.getSimpleVT();
-  B.Reg = FuncInfo.CreateReg(B.RegVT.getSimpleVT());
+  B.Reg = FuncInfo.CreateReg(B.RegVT);
   SDValue CopyTo = DAG.getCopyToReg(getControlRoot(), getCurDebugLoc(),
                                     B.Reg, Sub);
 
@@ -1799,7 +1799,7 @@ void SelectionDAGBuilder::visitBitTestCase(BitTestBlock &BB,
                                            unsigned Reg,
                                            BitTestCase &B,
                                            MachineBasicBlock *SwitchBB) {
-  EVT VT = BB.RegVT;
+  MVT VT = BB.RegVT;
   SDValue ShiftOp = DAG.getCopyFromReg(getControlRoot(), getCurDebugLoc(),
                                        Reg, VT);
   SDValue Cmp;
@@ -5748,7 +5748,7 @@ static void GetRegistersForValue(SelectionDAG &DAG,
       // Try to convert to the first EVT that the reg class contains.  If the
       // types are identical size, use a bitcast to convert (e.g. two differing
       // vector types).
-      EVT RegVT = *PhysReg.second->vt_begin();
+      MVT RegVT = *PhysReg.second->vt_begin();
       if (RegVT.getSizeInBits() == OpInfo.ConstraintVT.getSizeInBits()) {
         OpInfo.CallOperand = DAG.getNode(ISD::BITCAST, DL,
                                          RegVT, OpInfo.CallOperand);
@@ -5758,8 +5758,7 @@ static void GetRegistersForValue(SelectionDAG &DAG,
         // bitcast to the corresponding integer type.  This turns an f64 value
         // into i64, which can be passed with two i32 values on a 32-bit
         // machine.
-        RegVT = EVT::getIntegerVT(Context,
-                                  OpInfo.ConstraintVT.getSizeInBits());
+        RegVT = MVT::getIntegerVT(OpInfo.ConstraintVT.getSizeInBits());
         OpInfo.CallOperand = DAG.getNode(ISD::BITCAST, DL,
                                          RegVT, OpInfo.CallOperand);
         OpInfo.ConstraintVT = RegVT;
@@ -5769,7 +5768,7 @@ static void GetRegistersForValue(SelectionDAG &DAG,
     NumRegs = TLI.getNumRegisters(Context, OpInfo.ConstraintVT);
   }
 
-  EVT RegVT;
+  MVT RegVT;
   EVT ValueVT = OpInfo.ConstraintVT;
 
   // If this is a constraint for a specific physical register, like {r17},
