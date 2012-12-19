@@ -1215,7 +1215,7 @@ void Verifier::VerifyCallSite(CallSite CS) {
 
       VerifyParameterAttrs(Attr, CS.getArgument(Idx-1)->getType(), false, I);
 
-      Assert1(!Attr.hasIncompatibleWithVarArgsAttrs(),
+      Assert1(!Attr.hasAttribute(Attribute::StructRet),
               "Attribute 'sret' cannot be used for vararg call arguments!", I);
     }
 

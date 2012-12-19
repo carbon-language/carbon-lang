@@ -1103,7 +1103,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
       if (CallerPAL.getSlot(i - 1).Index <= FT->getNumParams())
         break;
       Attribute PAttrs = CallerPAL.getSlot(i - 1).Attrs;
-      if (PAttrs.hasIncompatibleWithVarArgsAttrs())
+      // Check if it has an attribute that's incompatible with varargs.
+      if (PAttrs.hasAttribute(Attribute::StructRet))
         return false;
     }
 

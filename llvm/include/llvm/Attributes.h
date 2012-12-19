@@ -27,15 +27,17 @@ class AttributesImpl;
 class LLVMContext;
 class Type;
 
-/// Attribute - A bitset of attributes.
+//===----------------------------------------------------------------------===//
+/// \class Functions, function parameters, and return types can have attributes
+/// to indicate how they should be treated by optimizations and code
+/// generation. This class represents one of those attributes. It's light-weight
+/// and should be passed around by-value.
 class Attribute {
 public:
-  /// Function parameters and results can have attributes to indicate how they
-  /// should be treated by optimizations and code generation. This enumeration
-  /// lists the attributes that can be associated with parameters, function
-  /// results or the function itself.
+  /// This enumeration lists the attributes that can be associated with
+  /// parameters, function results or the function itself.
   ///
-  /// Note that uwtable is about the ABI or the user mandating an entry in the
+  /// Note: uwtable is about the ABI or the user mandating an entry in the
   /// unwind table. The nounwind attribute is about an exception passing by the
   /// function.
   ///
@@ -93,34 +95,29 @@ private:
 public:
   Attribute() : Attrs(0) {}
 
-  /// get - Return a uniquified Attribute object. This takes the uniquified
+  /// \brief Return a uniquified Attribute object. This takes the uniquified
   /// value from the Builder and wraps it in the Attribute class.
   static Attribute get(LLVMContext &Context, ArrayRef<AttrVal> Vals);
   static Attribute get(LLVMContext &Context, AttrBuilder &B);
 
-  /// @brief Return true if the attribute is present.
+  /// \brief Return true if the attribute is present.
   bool hasAttribute(AttrVal Val) const;
 
-  /// @brief Return true if attributes exist
+  /// \brief Return true if attributes exist
   bool hasAttributes() const;
 
-  /// @brief Return true if the attributes are a non-null intersection.
+  /// \brief Return true if the attributes are a non-null intersection.
   bool hasAttributes(const Attribute &A) const;
 
-  /// @brief Returns the alignment field of an attribute as a byte alignment
+  /// \brief Returns the alignment field of an attribute as a byte alignment
   /// value.
   unsigned getAlignment() const;
 
-  /// @brief Returns the stack alignment field of an attribute as a byte
+  /// \brief Returns the stack alignment field of an attribute as a byte
   /// alignment value.
   unsigned getStackAlignment() const;
 
-  /// @brief Parameter attributes that do not apply to vararg call arguments.
-  bool hasIncompatibleWithVarArgsAttrs() const {
-    return hasAttribute(Attribute::StructRet);
-  }
-
-  /// @brief Attribute that only apply to function parameters.
+  /// \brief Attribute that only apply to function parameters.
   bool hasParameterOnlyAttrs() const {
     return hasAttribute(Attribute::ByVal) ||
       hasAttribute(Attribute::Nest) ||
@@ -128,7 +125,7 @@ public:
       hasAttribute(Attribute::NoCapture);
   }
 
-  /// @brief Attribute that may be applied to the function itself.  These cannot
+  /// \brief Attribute that may be applied to the function itself.  These cannot
   /// be used on return values or function parameters.
   bool hasFunctionOnlyAttrs() const {
     return hasAttribute(Attribute::NoReturn) ||
@@ -161,25 +158,23 @@ public:
 
   uint64_t Raw() const;
 
-  /// @brief Which attributes cannot be applied to a type.
+  /// \brief Which attributes cannot be applied to a type.
   static Attribute typeIncompatible(Type *Ty);
 
-  /// encodeLLVMAttributesForBitcode - This returns an integer containing an
-  /// encoding of all the LLVM attributes found in the given attribute bitset.
-  /// Any change to this encoding is a breaking change to bitcode compatibility.
+  /// \brief This returns an integer containing an encoding of all the LLVM
+  /// attributes found in the given attribute bitset.  Any change to this
+  /// encoding is a breaking change to bitcode compatibility.
   static uint64_t encodeLLVMAttributesForBitcode(Attribute Attrs);
 
-  /// decodeLLVMAttributesForBitcode - This returns an attribute bitset
-  /// containing the LLVM attributes that have been decoded from the given
-  /// integer.  This function must stay in sync with
-  /// 'encodeLLVMAttributesForBitcode'.
+  /// \brief This returns an attribute bitset containing the LLVM attributes
+  /// that have been decoded from the given integer.  This function must stay in
+  /// sync with 'encodeLLVMAttributesForBitcode'.
   static Attribute decodeLLVMAttributesForBitcode(LLVMContext &C,
                                                    uint64_t EncodedAttrs);
 
-  /// getAsString - The set of attributes set in Attribute is converted to a
-  /// string of equivalent mnemonics. This is, presumably, for writing out the
-  /// mnemonics for the assembly writer.
-  /// @brief Convert attribute bits to text
+  /// \brief The set of attributes set in Attribute is converted to a string of
+  /// equivalent mnemonics. This is, presumably, for writing out the mnemonics
+  /// for the assembly writer.  @brief Convert attribute bits to text
   std::string getAsString() const;
 };
 
