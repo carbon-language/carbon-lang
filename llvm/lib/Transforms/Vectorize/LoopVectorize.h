@@ -47,12 +47,12 @@
 #define LV_NAME "loop-vectorize"
 #define DEBUG_TYPE LV_NAME
 
-#include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/MapVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IRBuilder.h" 
-
 #include <algorithm>
 using namespace llvm;
 
@@ -304,7 +304,7 @@ public:
 
   /// InductionList saves induction variables and maps them to the
   /// induction descriptor.
-  typedef DenseMap<PHINode*, InductionInfo> InductionList;
+  typedef MapVector<PHINode*, InductionInfo> InductionList;
 
   /// Returns true if it is legal to vectorize this loop.
   /// This does not mean that it is profitable to vectorize this
