@@ -13,3 +13,5 @@ int main() { }
 // CHECK: preamble_macro_template.h:5:25: IntegerLiteral= Extent=[5:25 - 5:26]
 // CHECK: preamble_macro_template.cpp:3:5: FunctionDecl=main:3:5 (Definition) Extent=[3:1 - 3:15]
 // CHECK: preamble_macro_template.cpp:3:12: CompoundStmt= Extent=[3:12 - 3:15]
+
+// REQUIRES: shell
