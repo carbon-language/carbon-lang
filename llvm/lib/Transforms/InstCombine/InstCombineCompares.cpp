@@ -1226,6 +1226,16 @@ Instruction *InstCombiner::visitICmpInstWithInstAndIntCst(ICmpInst &ICI,
         ICI.setOperand(0, NewAnd);
         return &ICI;
       }
+
+      // Replace ((X & AndCST) > RHSV) with ((X & AndCST) != 0), if any
+      // bit set in (X & AndCST) will produce a result greater than RHSV.
+      if (ICI.getPredicate() == ICmpInst::ICMP_UGT) {
+        unsigned NTZ = AndCST->getValue().countTrailingZeros();
+        if ((NTZ < AndCST->getBitWidth()) &&
+            APInt::getOneBitSet(AndCST->getBitWidth(), NTZ).ugt(RHSV))
+          return new ICmpInst(ICmpInst::ICMP_NE, LHSI,
+                              Constant::getNullValue(RHS->getType()));
+      }
     }
 
     // Try to optimize things like "A[i]&42 == 0" to index computations.

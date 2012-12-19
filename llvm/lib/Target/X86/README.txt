@@ -1568,43 +1568,6 @@ The second one is done for: Atom, Pentium Pro, all AMDs, Pentium 4, Nocona,
   Core 2, and "Generic"
 
 //===---------------------------------------------------------------------===//
-
-Testcase:
-int a(int x) { return (x & 127) > 31; }
-
-Current output:
-	movl	4(%esp), %eax
-	andl	$127, %eax
-	cmpl	$31, %eax
-	seta	%al
-	movzbl	%al, %eax
-	ret
-
-Ideal output:
-	xorl	%eax, %eax
-	testl	$96, 4(%esp)
-	setne	%al
-	ret
-
-This should definitely be done in instcombine, canonicalizing the range
-condition into a != condition.  We get this IR:
-
-define i32 @a(i32 %x) nounwind readnone {
-entry:
-	%0 = and i32 %x, 127		; <i32> [#uses=1]
-	%1 = icmp ugt i32 %0, 31		; <i1> [#uses=1]
-	%2 = zext i1 %1 to i32		; <i32> [#uses=1]
-	ret i32 %2
-}
-
-Instcombine prefers to strength reduce relational comparisons to equality
-comparisons when possible, this should be another case of that.  This could
-be handled pretty easily in InstCombiner::visitICmpInstWithInstAndIntCst, but it
-looks like InstCombiner::visitICmpInstWithInstAndIntCst should really already
-be redesigned to use ComputeMaskedBits and friends.
-
-
-//===---------------------------------------------------------------------===//
 Testcase:
 int x(int a) { return (a&0xf0)>>4; }
 

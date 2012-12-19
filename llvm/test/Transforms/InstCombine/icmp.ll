@@ -677,3 +677,20 @@ define i1 @test66(i64 %A, i64 %B) {
 ; CHECK-NEXT: ret i1 true
   ret i1 %cmp
 }
+
+; CHECK: @test67
+; CHECK: %and = and i32 %x, 96
+; CHECK: %cmp = icmp ne i32 %and, 0
+define i1 @test67(i32 %x) nounwind uwtable {
+  %and = and i32 %x, 127
+  %cmp = icmp sgt i32 %and, 31
+  ret i1 %cmp
+}
+
+; CHECK: @test68
+; CHECK: %cmp = icmp ugt i32 %and, 30
+define i1 @test68(i32 %x) nounwind uwtable {
+  %and = and i32 %x, 127
+  %cmp = icmp sgt i32 %and, 30
+  ret i1 %cmp
+}
