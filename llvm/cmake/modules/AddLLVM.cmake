@@ -155,14 +155,20 @@ macro(add_llvm_external_project name)
   endif()
 endmacro(add_llvm_external_project)
 
+# Returns directory where unittest should reside.
+function(get_unittest_directory dir)
+  if (CMAKE_BUILD_TYPE)
+   set(result ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+  else()
+   set(result ${CMAKE_CURRENT_BINARY_DIR})
+  endif()
+  set(${dir} ${result} PARENT_SCOPE)
+endfunction()
+
 # Generic support for adding a unittest.
 function(add_unittest test_suite test_name)
-  if (CMAKE_BUILD_TYPE)
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
-      ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_BUILD_TYPE})
-  else()
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  endif()
+  get_unittest_directory(OUTPUT_DIR)
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
   if( NOT LLVM_BUILD_TESTS )
     set(EXCLUDE_FROM_ALL ON)
   endif()
