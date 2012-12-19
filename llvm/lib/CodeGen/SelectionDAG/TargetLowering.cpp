@@ -428,29 +428,29 @@ RTLIB::Libcall RTLIB::getSINTTOFP(EVT OpVT, EVT RetVT) {
   if (OpVT == MVT::i32) {
     if (RetVT == MVT::f32)
       return SINTTOFP_I32_F32;
-    else if (RetVT == MVT::f64)
+    if (RetVT == MVT::f64)
       return SINTTOFP_I32_F64;
-    else if (RetVT == MVT::f80)
+    if (RetVT == MVT::f80)
       return SINTTOFP_I32_F80;
-    else if (RetVT == MVT::ppcf128)
+    if (RetVT == MVT::ppcf128)
       return SINTTOFP_I32_PPCF128;
   } else if (OpVT == MVT::i64) {
     if (RetVT == MVT::f32)
       return SINTTOFP_I64_F32;
-    else if (RetVT == MVT::f64)
+    if (RetVT == MVT::f64)
       return SINTTOFP_I64_F64;
-    else if (RetVT == MVT::f80)
+    if (RetVT == MVT::f80)
       return SINTTOFP_I64_F80;
-    else if (RetVT == MVT::ppcf128)
+    if (RetVT == MVT::ppcf128)
       return SINTTOFP_I64_PPCF128;
   } else if (OpVT == MVT::i128) {
     if (RetVT == MVT::f32)
       return SINTTOFP_I128_F32;
-    else if (RetVT == MVT::f64)
+    if (RetVT == MVT::f64)
       return SINTTOFP_I128_F64;
-    else if (RetVT == MVT::f80)
+    if (RetVT == MVT::f80)
       return SINTTOFP_I128_F80;
-    else if (RetVT == MVT::ppcf128)
+    if (RetVT == MVT::ppcf128)
       return SINTTOFP_I128_PPCF128;
   }
   return UNKNOWN_LIBCALL;
@@ -462,29 +462,29 @@ RTLIB::Libcall RTLIB::getUINTTOFP(EVT OpVT, EVT RetVT) {
   if (OpVT == MVT::i32) {
     if (RetVT == MVT::f32)
       return UINTTOFP_I32_F32;
-    else if (RetVT == MVT::f64)
+    if (RetVT == MVT::f64)
       return UINTTOFP_I32_F64;
-    else if (RetVT == MVT::f80)
+    if (RetVT == MVT::f80)
       return UINTTOFP_I32_F80;
-    else if (RetVT == MVT::ppcf128)
+    if (RetVT == MVT::ppcf128)
       return UINTTOFP_I32_PPCF128;
   } else if (OpVT == MVT::i64) {
     if (RetVT == MVT::f32)
       return UINTTOFP_I64_F32;
-    else if (RetVT == MVT::f64)
+    if (RetVT == MVT::f64)
       return UINTTOFP_I64_F64;
-    else if (RetVT == MVT::f80)
+    if (RetVT == MVT::f80)
       return UINTTOFP_I64_F80;
-    else if (RetVT == MVT::ppcf128)
+    if (RetVT == MVT::ppcf128)
       return UINTTOFP_I64_PPCF128;
   } else if (OpVT == MVT::i128) {
     if (RetVT == MVT::f32)
       return UINTTOFP_I128_F32;
-    else if (RetVT == MVT::f64)
+    if (RetVT == MVT::f64)
       return UINTTOFP_I128_F64;
-    else if (RetVT == MVT::f80)
+    if (RetVT == MVT::f80)
       return UINTTOFP_I128_F80;
-    else if (RetVT == MVT::ppcf128)
+    if (RetVT == MVT::ppcf128)
       return UINTTOFP_I128_PPCF128;
   }
   return UNKNOWN_LIBCALL;
