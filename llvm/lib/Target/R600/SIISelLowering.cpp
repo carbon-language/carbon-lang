@@ -44,8 +44,6 @@ SITargetLowering::SITargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::ADD, MVT::i64, Legal);
   setOperationAction(ISD::ADD, MVT::i32, Legal);
 
-  setOperationAction(ISD::BR_CC, MVT::i32, Custom);
-
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
 
   // We need to custom lower loads from the USER_SGPR address space, so we can
@@ -254,7 +252,7 @@ EVT SITargetLowering::getSetCCResultType(EVT VT) const {
 SDValue SITargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   switch (Op.getOpcode()) {
   default: return AMDGPUTargetLowering::LowerOperation(Op, DAG);
-  case ISD::BR_CC: return LowerBR_CC(Op, DAG);
+  case ISD::BRCOND: return LowerBRCOND(Op, DAG);
   case ISD::LOAD: return LowerLOAD(Op, DAG);
   case ISD::SELECT_CC: return LowerSELECT_CC(Op, DAG);
   case ISD::AND: return Loweri1ContextSwitch(Op, DAG, ISD::AND);
@@ -298,27 +296,99 @@ SDValue SITargetLowering::Loweri1ContextSwitch(SDValue Op,
   return DAG.getNode(SIISD::VCC_BITCAST, DL, MVT::i1, OpNode);
 }
 
-SDValue SITargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) const {
-  SDValue Chain = Op.getOperand(0);
-  SDValue CC = Op.getOperand(1);
-  SDValue LHS   = Op.getOperand(2);
-  SDValue RHS   = Op.getOperand(3);
-  SDValue JumpT  = Op.getOperand(4);
-  SDValue CmpValue;
-  SDValue Result;
-  CmpValue = DAG.getNode(
-      ISD::SETCC,
-      Op.getDebugLoc(),
-      MVT::i1,
-      LHS, RHS,
-      CC);
+/// \brief Helper function for LowerBRCOND
+static SDNode *findUser(SDValue Value, unsigned Opcode) {
 
-  Result = DAG.getNode(
-      AMDGPUISD::BRANCH_COND,
-      CmpValue.getDebugLoc(),
-      MVT::Other, Chain,
-      JumpT, CmpValue);
-  return Result;
+  SDNode *Parent = Value.getNode();
+  for (SDNode::use_iterator I = Parent->use_begin(), E = Parent->use_end();
+       I != E; ++I) {
+
+    if (I.getUse().get() != Value)
+      continue;
+
+    if (I->getOpcode() == Opcode)
+      return *I;
+  }
+  return 0;
+}
+
+/// This transforms the control flow intrinsics to get the branch destination as
+/// last parameter, also switches branch target with BR if the need arise
+SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
+                                      SelectionDAG &DAG) const {
+
+  DebugLoc DL = BRCOND.getDebugLoc();
+
+  SDNode *Intr = BRCOND.getOperand(1).getNode();
+  SDValue Target = BRCOND.getOperand(2);
+  SDNode *BR = 0;
+
+  if (Intr->getOpcode() == ISD::SETCC) {
+    // As long as we negate the condition everything is fine
+    SDNode *SetCC = Intr;
+    assert(SetCC->getConstantOperandVal(1) == 1);
+
+    CondCodeSDNode *CC = cast<CondCodeSDNode>(SetCC->getOperand(2).getNode());
+    assert(CC->get() == ISD::SETNE);
+    Intr = SetCC->getOperand(0).getNode();
+
+  } else {
+    // Get the target from BR if we don't negate the condition
+    BR = findUser(BRCOND, ISD::BR);
+    Target = BR->getOperand(1);
+  }
+
+  assert(Intr->getOpcode() == ISD::INTRINSIC_W_CHAIN);
+
+  // Build the result and
+  SmallVector<EVT, 4> Res;
+  for (unsigned i = 1, e = Intr->getNumValues(); i != e; ++i)
+    Res.push_back(Intr->getValueType(i));
+
+  // operands of the new intrinsic call
+  SmallVector<SDValue, 4> Ops;
+  Ops.push_back(BRCOND.getOperand(0));
+  for (unsigned i = 1, e = Intr->getNumOperands(); i != e; ++i)
+    Ops.push_back(Intr->getOperand(i));
+  Ops.push_back(Target);
+
+  // build the new intrinsic call
+  SDNode *Result = DAG.getNode(
+    Res.size() > 1 ? ISD::INTRINSIC_W_CHAIN : ISD::INTRINSIC_VOID, DL,
+    DAG.getVTList(Res.data(), Res.size()), Ops.data(), Ops.size()).getNode();
+
+  if (BR) {
+    // Give the branch instruction our target
+    SDValue Ops[] = {
+      BR->getOperand(0),
+      BRCOND.getOperand(2)
+    };
+    DAG.MorphNodeTo(BR, ISD::BR, BR->getVTList(), Ops, 2);
+  }
+
+  SDValue Chain = SDValue(Result, Result->getNumValues() - 1);
+
+  // Copy the intrinsic results to registers
+  for (unsigned i = 1, e = Intr->getNumValues() - 1; i != e; ++i) {
+    SDNode *CopyToReg = findUser(SDValue(Intr, i), ISD::CopyToReg);
+    if (!CopyToReg)
+      continue;
+
+    Chain = DAG.getCopyToReg(
+      Chain, DL,
+      CopyToReg->getOperand(1),
+      SDValue(Result, i - 1),
+      SDValue());
+
+    DAG.ReplaceAllUsesWith(SDValue(CopyToReg, 0), CopyToReg->getOperand(0));
+  }
+
+  // Remove the old intrinsic from the chain
+  DAG.ReplaceAllUsesOfValueWith(
+    SDValue(Intr, Intr->getNumValues() - 1),
+    Intr->getOperand(0));
+
+  return Chain;
 }
 
 SDValue SITargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const {

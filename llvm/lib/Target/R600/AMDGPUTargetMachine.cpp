@@ -91,6 +91,11 @@ TargetPassConfig *AMDGPUTargetMachine::createPassConfig(PassManagerBase &PM) {
 
 bool
 AMDGPUPassConfig::addPreISel() {
+  const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
+  if (ST.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
+    addPass(createAMDGPUStructurizeCFGPass());
+    addPass(createSIAnnotateControlFlowPass());
+  }
   return false;
 }
 
@@ -107,9 +112,6 @@ bool AMDGPUPassConfig::addPreRegAlloc() {
     addPass(createSIAssignInterpRegsPass(*TM));
   }
   addPass(createAMDGPUConvertToISAPass(*TM));
-  if (ST.device()->getGeneration() > AMDGPUDeviceInfo::HD6XXX) {
-    addPass(createSIFixSGPRLivenessPass(*TM));
-  }
   return false;
 }
 
@@ -124,11 +126,10 @@ bool AMDGPUPassConfig::addPreSched2() {
 }
 
 bool AMDGPUPassConfig::addPreEmitPass() {
-  addPass(createAMDGPUCFGPreparationPass(*TM));
-  addPass(createAMDGPUCFGStructurizerPass(*TM));
-
   const AMDGPUSubtarget &ST = TM->getSubtarget<AMDGPUSubtarget>();
   if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+    addPass(createAMDGPUCFGPreparationPass(*TM));
+    addPass(createAMDGPUCFGStructurizerPass(*TM));
     addPass(createR600ExpandSpecialInstrsPass(*TM));
     addPass(&FinalizeMachineBundlesID);
   } else {

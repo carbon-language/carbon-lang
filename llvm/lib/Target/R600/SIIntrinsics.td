@@ -39,4 +39,14 @@ let TargetPrefix = "SI", isTarget = 1 in {
 
   def int_SI_fs_read_face : Intrinsic <[llvm_float_ty], [], [IntrNoMem]>;
   def int_SI_fs_read_pos : Intrinsic <[llvm_float_ty], [llvm_i32_ty], [IntrNoMem]>;
+
+  /* Control flow Intrinsics */
+
+  def int_SI_if : Intrinsic<[llvm_i64_ty], [llvm_i1_ty, llvm_empty_ty], []>;
+  def int_SI_else : Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_empty_ty], []>;
+  def int_SI_break : Intrinsic<[llvm_i64_ty], [llvm_i64_ty], []>;
+  def int_SI_if_break : Intrinsic<[llvm_i64_ty], [llvm_i1_ty, llvm_i64_ty], []>;
+  def int_SI_else_break : Intrinsic<[llvm_i64_ty], [llvm_i64_ty, llvm_i64_ty], []>;
+  def int_SI_loop : Intrinsic<[], [llvm_i64_ty, llvm_empty_ty], []>;
+  def int_SI_end_cf : Intrinsic<[], [llvm_i64_ty], []>;
 }

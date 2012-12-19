@@ -2596,7 +2596,6 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
     case AMDGPU::JUMP: return AMDGPU::IF_PREDICATE_SET;
     case AMDGPU::BRANCH_COND_i32:
     case AMDGPU::BRANCH_COND_f32: return AMDGPU::IF_LOGICALNZ_f32;
-    case AMDGPU::SI_IF_NZ: return AMDGPU::SI_IF_NZ;
     default:
       assert(0 && "internal error");
     }
@@ -2608,7 +2607,6 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
     case AMDGPU::JUMP: return AMDGPU::IF_PREDICATE_SET;
     case AMDGPU::BRANCH_COND_i32:
     case AMDGPU::BRANCH_COND_f32: return AMDGPU::IF_LOGICALZ_f32;
-    case AMDGPU::SI_IF_Z: return AMDGPU::SI_IF_Z;
     default:
       assert(0 && "internal error");
     }
@@ -2658,8 +2656,6 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
         return instr->getOperand(instr->findFirstPredOperandIdx()).getReg() != 0;
       case AMDGPU::BRANCH_COND_i32:
       case AMDGPU::BRANCH_COND_f32:
-      case AMDGPU::SI_IF_NZ:
-      case AMDGPU::SI_IF_Z:
       break;
     default:
       return false;

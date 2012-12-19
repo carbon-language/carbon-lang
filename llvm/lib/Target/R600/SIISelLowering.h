@@ -43,9 +43,9 @@ class SITargetLowering : public AMDGPUTargetLowering {
 
   SDValue Loweri1ContextSwitch(SDValue Op, SelectionDAG &DAG,
                                            unsigned VCCNode) const;
-  SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
 
 public:
   SITargetLowering(TargetMachine &tm);

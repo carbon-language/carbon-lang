@@ -27,6 +27,7 @@ add_llvm_target(R600CodeGen
   AMDGPUAsmPrinter.cpp
   AMDGPUMCInstLower.cpp
   AMDGPUSubtarget.cpp
+  AMDGPUStructurizeCFG.cpp
   AMDGPUTargetMachine.cpp
   AMDGPUISelLowering.cpp
   AMDGPUConvertToISA.cpp
@@ -37,6 +38,7 @@ add_llvm_target(R600CodeGen
   R600ISelLowering.cpp
   R600MachineFunctionInfo.cpp
   R600RegisterInfo.cpp
+  SIAnnotateControlFlow.cpp
   SIAssignInterpRegs.cpp
   SIInstrInfo.cpp
   SIISelLowering.cpp
@@ -44,7 +46,6 @@ add_llvm_target(R600CodeGen
   SILowerControlFlow.cpp
   SIMachineFunctionInfo.cpp
   SIRegisterInfo.cpp
-  SIFixSGPRLiveness.cpp
   )
 
 add_dependencies(LLVMR600CodeGen intrinsics_gen)

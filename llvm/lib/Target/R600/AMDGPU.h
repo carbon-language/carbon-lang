@@ -25,13 +25,14 @@ FunctionPass* createR600KernelParametersPass(const DataLayout *TD);
 FunctionPass *createR600ExpandSpecialInstrsPass(TargetMachine &tm);
 
 // SI Passes
+FunctionPass *createSIAnnotateControlFlowPass();
 FunctionPass *createSIAssignInterpRegsPass(TargetMachine &tm);
 FunctionPass *createSILowerControlFlowPass(TargetMachine &tm);
 FunctionPass *createSICodeEmitterPass(formatted_raw_ostream &OS);
 FunctionPass *createSILowerLiteralConstantsPass(TargetMachine &tm);
-FunctionPass *createSIFixSGPRLivenessPass(TargetMachine &tm);
 
 // Passes common to R600 and SI
+Pass *createAMDGPUStructurizeCFGPass();
 FunctionPass *createAMDGPUConvertToISAPass(TargetMachine &tm);
 
 } // End namespace llvm
