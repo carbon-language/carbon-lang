@@ -56,6 +56,7 @@ run: all
 	./lit_tests/test_output.sh
 
 presubmit:
+	../sanitizer_common/scripts/check_lint.sh
 	# Debug build with clang.
 	$(MAKE) -f Makefile.old clean
 	$(MAKE) -f Makefile.old run DEBUG=1 -j 16 CC=clang CXX=clang++
