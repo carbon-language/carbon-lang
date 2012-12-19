@@ -164,7 +164,7 @@ memory accesses.
   }
 
 Vectorization of Mixed Types
---------------------------
+----------------------------
 
 The Loop Vectorizer can vectorize programs with mixed types. The Vectorizer
 cost model can estimate the cost of the type conversion and decide if
@@ -178,7 +178,7 @@ vectorization is profitable.
   }
 
 Vectorization of function calls
---------------------------
+-------------------------------
 
 The Loop Vectorize can vectorize intrinsic math functions.
 See the table below for a list of these functions.
