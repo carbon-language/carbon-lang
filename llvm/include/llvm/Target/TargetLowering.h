@@ -2005,8 +2005,11 @@ public:
          && "Promote may not follow Expand or Promote");
 
       if (LA == TypeSplitVector)
-        NVT = MVT::getVectorVT(SVT.getVectorElementType(),
-                               SVT.getVectorNumElements() / 2);
+        return LegalizeKind(LA, EVT::getVectorVT(Context,
+                                                 SVT.getVectorElementType(),
+                                                 SVT.getVectorNumElements()/2));
+      if (LA == TypeScalarizeVector)
+        return LegalizeKind(LA, SVT.getVectorElementType());
       return LegalizeKind(LA, NVT);
     }
 
