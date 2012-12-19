@@ -18,7 +18,11 @@ command line flag:
 
 .. code-block:: console
 
-   $ clang -fvectorize file.c
+   $ clang -fvectorize -O3 file.c
+
+If the ``-fvectorize`` flag is used then the loop vectorizer will be enabled
+when running with ``-O3``, ``-O2``. When ``-Os`` is used, the loop vectorizer
+will only vectorize loops that do not require a major increase in code size.
 
 We plan to enable the Loop Vectorizer by default as part of the LLVM 3.3 release.
 
@@ -194,7 +198,7 @@ Performance
 This section shows the the execution time of Clang on a simple benchmark: 
 `gcc-loops <http://llvm.org/viewvc/llvm-project/test-suite/trunk/SingleSource/UnitTests/Vectorizer/>`_.
 This benchmarks is a collection of loops from the GCC autovectorization 
-`page <http://gcc.gnu.org/projects/tree-ssa/vectorization.html>`_ by Dorit Nuzman._
+`page <http://gcc.gnu.org/projects/tree-ssa/vectorization.html>`_ by Dorit Nuzman.
 
 The chart below compares GCC-4.7, ICC-13, and Clang-SVN at -O3, running on a Sandybridge.
 The Y-axis shows time in msec. Lower is better.
