@@ -15934,8 +15934,8 @@ static SDValue PerformLOADCombine(SDNode *N, SelectionDAG &DAG,
   // TODO: It is possible to support ZExt by zeroing the undef values
   // during the shuffle phase or after the shuffle.
   if (RegVT.isVector() && RegVT.isInteger() &&
-      (Ext == ISD::EXTLOAD && Subtarget->hasSSSE3() ||
-       Ext == ISD::SEXTLOAD && Subtarget->hasSSE41())){
+      ((Ext == ISD::EXTLOAD && Subtarget->hasSSSE3()) ||
+       (Ext == ISD::SEXTLOAD && Subtarget->hasSSE41()))){
     assert(MemVT != RegVT && "Cannot extend to the same type");
     assert(MemVT.isVector() && "Must load a vector from memory");
 
