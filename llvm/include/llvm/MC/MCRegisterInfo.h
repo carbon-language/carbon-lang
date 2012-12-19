@@ -386,6 +386,14 @@ public:
     return RegEncodingTable[RegNo];
   }
 
+  /// Returns true if regB is a sub-register of regA.
+  bool isSubRegister(unsigned regA, unsigned regB) const {
+    return isSuperRegister(regB, regA);
+  }
+
+  /// Returns true if regB is a super-register of regA.
+  bool isSuperRegister(unsigned RegA, unsigned RegB) const;
+
 };
 
 //===----------------------------------------------------------------------===//
@@ -425,6 +433,15 @@ public:
       ++*this;
   }
 };
+
+// Definition for isSuperRegister. Put it down here since it needs the
+// iterator defined above in addition to the MCRegisterInfo class itself.
+inline bool MCRegisterInfo::isSuperRegister(unsigned RegA, unsigned RegB) const{
+  for (MCSuperRegIterator I(RegA, this); I.isValid(); ++I)
+    if (*I == RegB)
+      return true;
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 //                               Register Units
