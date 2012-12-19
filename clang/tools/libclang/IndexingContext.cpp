@@ -827,7 +827,7 @@ IndexingContext::getEntityContainer(const Decl *D) const {
 
   if (const ClassTemplateDecl *ClassTempl = dyn_cast<ClassTemplateDecl>(D)) {
     DC = ClassTempl->getTemplatedDecl();
-  } if (const FunctionTemplateDecl *
+  } else if (const FunctionTemplateDecl *
           FuncTempl = dyn_cast<FunctionTemplateDecl>(D)) {
     DC = FuncTempl->getTemplatedDecl();
   }
