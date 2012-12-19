@@ -147,7 +147,7 @@ public:
   /// defined in llvm/Intrinsics.h.
   ///
   unsigned getIntrinsicID() const LLVM_READONLY;
-  bool isIntrinsic() const { return getIntrinsicID() != 0; }
+  bool isIntrinsic() const { return getName().startswith("llvm."); }
 
   /// getCallingConv()/setCallingConv(CC) - These method get and set the
   /// calling convention of this function.  The enum values for the known

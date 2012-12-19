@@ -326,14 +326,10 @@ void Function::copyAttributesFrom(const GlobalValue *Src) {
 ///
 unsigned Function::getIntrinsicID() const {
   const ValueName *ValName = this->getValueName();
-  if (!ValName)
+  if (!ValName || !isIntrinsic())
     return 0;
   unsigned Len = ValName->getKeyLength();
   const char *Name = ValName->getKeyData();
-
-  if (Len < 5 || Name[4] != '.' || Name[0] != 'l' || Name[1] != 'l'
-      || Name[2] != 'v' || Name[3] != 'm')
-    return 0;  // All intrinsics start with 'llvm.'
 
 #define GET_FUNCTION_RECOGNIZER
 #include "llvm/Intrinsics.gen"

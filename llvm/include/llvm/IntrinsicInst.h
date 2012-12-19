@@ -47,7 +47,7 @@ namespace llvm {
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const CallInst *I) {
       if (const Function *CF = I->getCalledFunction())
-        return CF->getIntrinsicID() != 0;
+        return CF->isIntrinsic();
       return false;
     }
     static inline bool classof(const Value *V) {
