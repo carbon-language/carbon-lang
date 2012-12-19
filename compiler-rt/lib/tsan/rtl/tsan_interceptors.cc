@@ -1137,9 +1137,9 @@ TSAN_INTERCEPTOR(int, signalfd, int fd, void *mask, int flags) {
   return fd;
 }
 
-TSAN_INTERCEPTOR(int, inotify_init) {
-  SCOPED_TSAN_INTERCEPTOR(inotify_init);
-  int fd = REAL(inotify_init)();
+TSAN_INTERCEPTOR(int, inotify_init, int fake) {
+  SCOPED_TSAN_INTERCEPTOR(inotify_init, fake);
+  int fd = REAL(inotify_init)(fake);
   if (fd >= 0)
     FdInotifyCreate(thr, pc, fd);
   return fd;
@@ -1617,10 +1617,10 @@ TSAN_INTERCEPTOR(int, munlockall, void) {
   return 0;
 }
 
-TSAN_INTERCEPTOR(int, fork) {
-  SCOPED_TSAN_INTERCEPTOR(fork);
+TSAN_INTERCEPTOR(int, fork, int fake) {
+  SCOPED_TSAN_INTERCEPTOR(fork, fake);
   // It's intercepted merely to process pending signals.
-  int pid = REAL(fork)();
+  int pid = REAL(fork)(fake);
   if (pid == 0) {
     // child
     FdOnFork(thr, pc);

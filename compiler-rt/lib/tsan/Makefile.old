@@ -8,7 +8,7 @@ ifeq ($(DEBUG), 0)
 	CXXFLAGS += -O3
 endif
 ifeq ($(CXX), clang++)
-  CXXFLAGS+= -Wno-unused-private-field -Wno-static-in-inline
+  CXXFLAGS+= -Wno-unused-private-field -Wno-static-in-inline -Wgnu
 endif
 
 LIBTSAN=rtl/libtsan.a
@@ -35,7 +35,7 @@ help:
 	@ echo "  make install_deps  # Install third-party dependencies required for building"
 	@ echo "  make presubmit     # Run it every time before committing"
 	@ echo
-	@ echo "For more info, see http://code.google.com/p/data-race-test/wiki/ThreadSanitizer2"
+	@ echo "For more info, see http://code.google.com/p/thread-sanitizer/wiki/Development"
 
 $(LIBTSAN): libtsan
 
