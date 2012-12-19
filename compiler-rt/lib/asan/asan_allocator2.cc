@@ -378,8 +378,44 @@ static uptr AllocationSize(uptr p) {
   return m->UsedSize();
 }
 
-AsanChunkView FindHeapChunkByAddress(uptr address) {
-  return AsanChunkView(GetAsanChunkByAddr(address));
+// We have an address between two chunks, and we want to report just one.
+AsanChunk *ChooseChunk(uptr addr,
+                       AsanChunk *left_chunk, AsanChunk *right_chunk) {
+  // Prefer an allocated chunk or a chunk from quarantine.
+  if (left_chunk->chunk_state == CHUNK_AVAILABLE &&
+      right_chunk->chunk_state != CHUNK_AVAILABLE)
+    return right_chunk;
+  if (right_chunk->chunk_state == CHUNK_AVAILABLE &&
+      left_chunk->chunk_state != CHUNK_AVAILABLE)
+    return left_chunk;
+  // Choose based on offset.
+  uptr l_offset = 0, r_offset = 0;
+  CHECK(AsanChunkView(left_chunk).AddrIsAtRight(addr, 1, &l_offset));
+  CHECK(AsanChunkView(right_chunk).AddrIsAtLeft(addr, 1, &r_offset));
+  if (l_offset < r_offset)
+    return left_chunk;
+  return right_chunk;
+}
+
+AsanChunkView FindHeapChunkByAddress(uptr addr) {
+  AsanChunk *m1 = GetAsanChunkByAddr(addr);
+  if (!m1) return AsanChunkView(m1);
+  uptr offset = 0;
+  if (AsanChunkView(m1).AddrIsAtLeft(addr, 1, &offset)) {
+    // The address is in the chunk's left redzone, so maybe it is actually
+    // a right buffer overflow from the other chunk to the left.
+    // Search a bit to the left to see if there is another chunk.
+    AsanChunk *m2 = 0;
+    for (uptr l = 1; l < GetPageSizeCached(); l++) {
+      m2 = GetAsanChunkByAddr(addr - l);
+      if (m2 == m1) continue;  // Still the same chunk.
+      Printf("m1 %p m2 %p l %zd\n", m1, m2, l);
+      break;
+    }
+    if (m2 && AsanChunkView(m2).AddrIsAtRight(addr, 1, &offset))
+      m1 = ChooseChunk(addr, m2, m1);
+  }
+  return AsanChunkView(m1);
 }
 
 void AsanThreadLocalMallocStorage::CommitBack() {

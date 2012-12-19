@@ -207,13 +207,16 @@ class SizeClassAllocator64 {
     return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClasses;
   }
 
-  static void *GetBlockBegin(void *p) {
+  void *GetBlockBegin(void *p) {
     uptr class_id = GetSizeClass(p);
     uptr size = SizeClassMap::Size(class_id);
     uptr chunk_idx = GetChunkIdx((uptr)p, size);
     uptr reg_beg = (uptr)p & ~(kRegionSize - 1);
     uptr begin = reg_beg + chunk_idx * size;
-    return reinterpret_cast<void*>(begin);
+    RegionInfo *region = GetRegionInfo(class_id);
+    if (region->allocated_user >= (chunk_idx + 1) * size)
+      return reinterpret_cast<void*>(begin);
+    return 0;
   }
 
   static uptr GetActuallyAllocatedSize(void *p) {
