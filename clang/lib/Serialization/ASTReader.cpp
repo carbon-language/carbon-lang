@@ -5429,13 +5429,15 @@ namespace {
     ASTReader &Reader;
     llvm::SmallVectorImpl<const DeclContext *> &Contexts;
     llvm::DenseMap<DeclarationName, SmallVector<NamedDecl *, 8> > &Decls;
+    bool VisitAll;
 
   public:
     DeclContextAllNamesVisitor(ASTReader &Reader,
                                SmallVectorImpl<const DeclContext *> &Contexts,
                                llvm::DenseMap<DeclarationName,
-                                           SmallVector<NamedDecl *, 8> > &Decls)
-      : Reader(Reader), Contexts(Contexts), Decls(Decls) { }
+                                           SmallVector<NamedDecl *, 8> > &Decls,
+                                bool VisitAll)
+      : Reader(Reader), Contexts(Contexts), Decls(Decls), VisitAll(VisitAll) { }
 
     static bool visit(ModuleFile &M, void *UserData) {
       DeclContextAllNamesVisitor *This
@@ -5476,7 +5478,7 @@ namespace {
         }
       }
 
-      return FoundAnything;
+      return FoundAnything && !This->VisitAll;
     }
   };
 }
@@ -5502,7 +5504,8 @@ void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
     }
   }
 
-  DeclContextAllNamesVisitor Visitor(*this, Contexts, Decls);
+  DeclContextAllNamesVisitor Visitor(*this, Contexts, Decls,
+                                     /*VisitAll=*/DC->isFileContext());
   ModuleMgr.visit(&DeclContextAllNamesVisitor::visit, &Visitor);
   ++NumVisibleDeclContextsRead;
 
