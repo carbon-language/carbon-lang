@@ -118,8 +118,7 @@ LayoutAlignElem::operator==(const LayoutAlignElem &rhs) const {
 }
 
 const LayoutAlignElem
-DataLayout::InvalidAlignmentElem =
-            LayoutAlignElem::get((AlignTypeEnum) -1, 0, 0, 0);
+DataLayout::InvalidAlignmentElem = LayoutAlignElem::get(INVALID_ALIGN, 0, 0, 0);
 
 //===----------------------------------------------------------------------===//
 // PointerAlignElem, PointerAlign support

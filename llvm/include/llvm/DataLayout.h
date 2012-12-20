@@ -39,6 +39,7 @@ class ArrayRef;
 
 /// Enum used to categorize the alignment types stored by LayoutAlignElem
 enum AlignTypeEnum {
+  INVALID_ALIGN = 0,                 ///< An invalid alignment
   INTEGER_ALIGN = 'i',               ///< Integer type alignment
   VECTOR_ALIGN = 'v',                ///< Vector type alignment
   FLOAT_ALIGN = 'f',                 ///< Floating point type alignment
