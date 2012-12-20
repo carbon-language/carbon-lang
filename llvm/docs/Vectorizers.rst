@@ -166,7 +166,7 @@ memory accesses.
 
   int foo(int *A, int *B, int n, int k) {
     for (int i = 0; i < n; ++i)
-        A[i*7] += B[i*k];
+      A[i*7] += B[i*k];
   }
 
 Vectorization of Mixed Types
@@ -180,7 +180,7 @@ vectorization is profitable.
 
   int foo(int *A, char *B, int n, int k) {
     for (int i = 0; i < n; ++i)
-        A[i] += 4 * B[i];
+      A[i] += 4 * B[i];
   }
 
 Vectorization of function calls
