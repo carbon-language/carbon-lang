@@ -37,10 +37,8 @@ def immZExt6 : ImmLeaf<i32, [{return Imm == (Imm & 0x3f);}]>;
 // Shifts
 // 64-bit shift instructions.
 let DecoderNamespace = "Mips64" in {
-class shift_rotate_imm64<bits<6> func, bits<5> isRotate, string instr_asm,
-                         SDNode OpNode>:
-  shift_rotate_imm<func, isRotate, instr_asm, OpNode, immZExt6, shamt,
-                   CPU64Regs>;
+class shift_rotate_imm64<string opstr, SDPatternOperator OpNode = null_frag>:
+  shift_rotate_imm<opstr, immZExt6, shamt, CPU64Regs, OpNode>;
 
 // Mul, Div
 class Mult64<bits<6> func, string instr_asm, InstrItinClass itin>:
@@ -109,23 +107,21 @@ def XOR64  : ArithLogicR<"xor", IIAlu, CPU64Regs, 1, xor>, ADD_FM<0, 0x26>;
 def NOR64  : LogicNOR<0x00, 0x27, "nor", CPU64Regs>;
 
 /// Shift Instructions
-def DSLL     : shift_rotate_imm64<0x38, 0x00, "dsll", shl>;
-def DSRL     : shift_rotate_imm64<0x3a, 0x00, "dsrl", srl>;
-def DSRA     : shift_rotate_imm64<0x3b, 0x00, "dsra", sra>;
-def DSLLV    : shift_rotate_reg<0x14, 0x00, "dsllv", shl, CPU64Regs>;
-def DSRLV    : shift_rotate_reg<0x16, 0x00, "dsrlv", srl, CPU64Regs>;
-def DSRAV    : shift_rotate_reg<0x17, 0x00, "dsrav", sra, CPU64Regs>;
-let Pattern = []<dag> in {
-  def DSLL32   : shift_rotate_imm64<0x3c, 0x00, "dsll32", shl>;
-  def DSRL32   : shift_rotate_imm64<0x3e, 0x00, "dsrl32", srl>;
-  def DSRA32   : shift_rotate_imm64<0x3f, 0x00, "dsra32", sra>;
-}
+def DSLL   : shift_rotate_imm64<"dsll", shl>, SRA_FM<0x38, 0>;
+def DSRL   : shift_rotate_imm64<"dsrl", srl>, SRA_FM<0x3a, 0>;
+def DSRA   : shift_rotate_imm64<"dsra", sra>, SRA_FM<0x3b, 0>;
+def DSLLV  : shift_rotate_reg<0x14, 0x00, "dsllv", shl, CPU64Regs>;
+def DSRLV  : shift_rotate_reg<0x16, 0x00, "dsrlv", srl, CPU64Regs>;
+def DSRAV  : shift_rotate_reg<0x17, 0x00, "dsrav", sra, CPU64Regs>;
+def DSLL32 : shift_rotate_imm64<"dsll32">, SRA_FM<0x3c, 0>;
+def DSRL32 : shift_rotate_imm64<"dsrl32">, SRA_FM<0x3e, 0>;
+def DSRA32 : shift_rotate_imm64<"dsra32">, SRA_FM<0x3f, 0>;
 }
 // Rotate Instructions
 let Predicates = [HasMips64r2, HasStdEnc],
     DecoderNamespace = "Mips64" in {
-  def DROTR    : shift_rotate_imm64<0x3a, 0x01, "drotr", rotr>;
-  def DROTRV   : shift_rotate_reg<0x16, 0x01, "drotrv", rotr, CPU64Regs>;
+  def DROTR  : shift_rotate_imm64<"drotr", rotr>, SRA_FM<0x3a, 1>;
+  def DROTRV : shift_rotate_reg<0x16, 0x01, "drotrv", rotr, CPU64Regs>;
 }
 
 let DecoderNamespace = "Mips64" in {

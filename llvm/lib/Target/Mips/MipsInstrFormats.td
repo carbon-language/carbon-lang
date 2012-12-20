@@ -220,6 +220,22 @@ class ADDI_FM<bits<6> op> {
   let Inst{15-0}  = imm16;
 }
 
+class SRA_FM<bits<6> funct, bit rotate> {
+  bits<5> rd;
+  bits<5> rt;
+  bits<5> shamt;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-22} = 0;
+  let Inst{21}    = rotate;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = shamt;
+  let Inst{5-0}   = funct;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS
