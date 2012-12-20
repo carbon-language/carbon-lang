@@ -24,6 +24,6 @@ int main(int argc, char *argv[]) {
   // CHECK:   #0 0x{{.*}} in {{_?}}main
   // CHECK:      {{.*}}use-after-scope-inlined.cc:[[@LINE-4]]
   // CHECK: Address 0x{{.*}} is located at offset
-  // CHECK:      [[OFFSET:[^ ]*]] in frame <main> of T0's stack:
+  // CHECK:      [[OFFSET:[^ ]*]] in frame <main> of T0{{.*}}:
   // CHECK:   {{\[}}[[OFFSET]], {{.*}}) 'x.i'
 }
