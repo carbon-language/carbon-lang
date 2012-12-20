@@ -70,7 +70,7 @@ pointers are disjointed, but in our example, the Loop Vectorizer has no way of
 knowing that the pointers A and B are unique. The Loop Vectorizer handles this
 loop by placing code that checks, at runtime, if the arrays A and B point to
 disjointed memory locations. If arrays A and B overlap, then the scalar version
-of the loop is executed. 
+of the loop is executed.
 
 .. code-block:: c++
 
@@ -83,11 +83,11 @@ of the loop is executed.
 Reductions
 ^^^^^^^^^^
 
-In this example the ``sum`` variable is used by consecutive iterations of 
+In this example the ``sum`` variable is used by consecutive iterations of
 the loop. Normally, this would prevent vectorization, but the vectorizer can
 detect that 'sum' is a reduction variable. The variable 'sum' becomes a vector
 of integers, and at the end of the loop the elements of the array are added
-together to create the correct result. We support a number of different 
+together to create the correct result. We support a number of different
 reduction operations, such as addition, multiplication, XOR, AND and OR.
 
 .. code-block:: c++
@@ -95,7 +95,7 @@ reduction operations, such as addition, multiplication, XOR, AND and OR.
   int foo(int *A, int *B, int n) {
     unsigned sum = 0;
     for (int i = 0; i < n; ++i)
-        sum += A[i] + 5;
+      sum += A[i] + 5;
     return sum;
   }
 
@@ -159,8 +159,8 @@ The Loop Vectorizer can vectorize loops that count backwards.
 Scatter / Gather
 ^^^^^^^^^^^^^^^^
 
-The Loop Vectorizer can vectorize code that becomes scatter/gather 
-memory accesses. 
+The Loop Vectorizer can vectorize code that becomes scatter/gather
+memory accesses.
 
 .. code-block:: c++
 
@@ -204,13 +204,13 @@ See the table below for a list of these functions.
 Performance
 -----------
 
-This section shows the the execution time of Clang on a simple benchmark: 
+This section shows the the execution time of Clang on a simple benchmark:
 `gcc-loops <http://llvm.org/viewvc/llvm-project/test-suite/trunk/SingleSource/UnitTests/Vectorizer/>`_.
-This benchmarks is a collection of loops from the GCC autovectorization 
+This benchmarks is a collection of loops from the GCC autovectorization
 `page <http://gcc.gnu.org/projects/tree-ssa/vectorization.html>`_ by Dorit Nuzman.
 
 The chart below compares GCC-4.7, ICC-13, and Clang-SVN with and without loop vectorization at -O3, tuned for "corei7-avx", running on a Sandybridge iMac.
-The Y-axis shows the time in msec. Lower is better. The last column shows the geomean of all the kernels. 
+The Y-axis shows the time in msec. Lower is better. The last column shows the geomean of all the kernels.
 
 .. image:: gcc-loops.png
    :width: 100%
@@ -228,7 +228,7 @@ through clang using the command line flag:
 
 .. code-block:: console
 
-   $ clang -fslp-vectorize file.c 
+   $ clang -fslp-vectorize file.c
 
 Details
 -------
@@ -237,7 +237,7 @@ The goal of basic-block vectorization (a.k.a. superword-level parallelism) is
 to combine similar independent instructions within simple control-flow regions
 into vector instructions. Memory accesses, arithemetic operations, comparison
 operations and some math functions can all be vectorized using this technique
-(subject to the capabilities of the target architecture). 
+(subject to the capabilities of the target architecture).
 
 For example, the following function performs very similar operations on its
 inputs (a1, b1) and (a2, b2). The basic-block vectorizer may combine these
