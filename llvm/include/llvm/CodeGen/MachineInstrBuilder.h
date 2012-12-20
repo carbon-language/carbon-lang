@@ -138,6 +138,13 @@ public:
     return *this;
   }
 
+  const MachineInstrBuilder &addBlockAddress(const BlockAddress *BA,
+                                             int64_t Offset = 0,
+                                          unsigned char TargetFlags = 0) const {
+    MI->addOperand(*MF, MachineOperand::CreateBA(BA, Offset, TargetFlags));
+    return *this;
+  }
+
   const MachineInstrBuilder &addRegMask(const uint32_t *Mask) const {
     MI->addOperand(*MF, MachineOperand::CreateRegMask(Mask));
     return *this;
@@ -338,6 +345,9 @@ inline unsigned getUndefRegState(bool B) {
 }
 inline unsigned getInternalReadRegState(bool B) {
   return B ? RegState::InternalRead : 0;
+}
+inline unsigned getDebugRegState(bool B) {
+  return B ? RegState::Debug : 0;
 }
 
 
