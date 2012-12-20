@@ -465,6 +465,25 @@ TEST(AddressSanitizer, HugeMallocTest) {
 }
 #endif
 
+#ifndef __APPLE__
+void MemalignRun(size_t align, size_t size, int idx) {
+  fprintf(stderr, "align %ld\n", align);
+  char *p = (char *)memalign(align, size);
+  Ident(p)[idx] = 0;
+  free(p);
+}
+
+TEST(AddressSanitizer, memalign) {
+  for (int align = 16; align <= (1 << 23); align *= 2) {
+    size_t size = align * 5;
+    EXPECT_DEATH(MemalignRun(align, size, -1),
+                 "is located 1 bytes to the left");
+    EXPECT_DEATH(MemalignRun(align, size, size + 1),
+                 "is located 1 bytes to the right");
+  }
+}
+#endif
+
 TEST(AddressSanitizer, ThreadedMallocStressTest) {
   const int kNumThreads = 4;
   const int kNumIterations = (ASAN_LOW_MEMORY) ? 10000 : 100000;
@@ -1593,7 +1612,7 @@ TEST(AddressSanitizer, DISABLED_MemIntrinsicCallByPointerTest) {
   CallMemTransferByPointer(&memmove);
 }
 
-#ifdef __linux__
+#if defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
 TEST(AddressSanitizer, pread) {
   char *x = new char[10];
   int fd = open("/proc/self/stat", O_RDONLY);
@@ -1606,7 +1625,6 @@ TEST(AddressSanitizer, pread) {
   delete x;
 }
 
-# if !defined(ANDROID) && !defined(__ANDROID__)
 TEST(AddressSanitizer, pread64) {
   char *x = new char[10];
   int fd = open("/proc/self/stat", O_RDONLY);
@@ -1618,7 +1636,6 @@ TEST(AddressSanitizer, pread64) {
   close(fd);
   delete x;
 }
-# endif  // !defined(ANDROID) && !defined(__ANDROID__)
 
 TEST(AddressSanitizer, read) {
   char *x = new char[10];
@@ -1632,7 +1649,7 @@ TEST(AddressSanitizer, read) {
   delete x;
 }
 
-#endif  // __linux__
+#endif  // defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
 
 // This test case fails
 // Clang optimizes memcpy/memset calls which lead to unaligned access
