@@ -355,11 +355,11 @@ class ArithLogicR<string opstr, InstrItinClass Itin, RegisterClass RC,
 }
 
 // Arithmetic and logical instructions with 2 register operands.
-class ArithLogicI<bits<6> op, string instr_asm, Operand Od, PatLeaf imm_type,
+class ArithLogicI<string opstr, Operand Od, PatLeaf imm_type,
                   RegisterClass RC, SDPatternOperator OpNode = null_frag> :
-  FI<op, (outs RC:$rt), (ins RC:$rs, Od:$imm16),
-     !strconcat(instr_asm, "\t$rt, $rs, $imm16"),
-     [(set RC:$rt, (OpNode RC:$rs, imm_type:$imm16))], IIAlu> {
+  InstSE<(outs RC:$rt), (ins RC:$rs, Od:$imm16),
+         !strconcat(opstr, "\t$rt, $rs, $imm16"),
+         [(set RC:$rt, (OpNode RC:$rs, imm_type:$imm16))], IIAlu, FrmI> {
   let isReMaterializable = 1;
 }
 
@@ -917,15 +917,15 @@ def LoadAddr32Imm : LoadAddressImm<"la", shamt,CPURegs>;
 //===----------------------------------------------------------------------===//
 
 /// Arithmetic Instructions (ALU Immediate)
-def ADDiu   : ArithLogicI<0x09, "addiu", simm16, immSExt16, CPURegs, add>,
-              IsAsCheapAsAMove;
-def ADDi    : ArithLogicI<0x08, "addi", simm16, immSExt16, CPURegs>;
-def SLTi    : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16, CPURegs>;
-def SLTiu   : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16, CPURegs>;
-def ANDi    : ArithLogicI<0x0c, "andi", uimm16, immZExt16, CPURegs, and>;
-def ORi     : ArithLogicI<0x0d, "ori", uimm16, immZExt16, CPURegs, or>;
-def XORi    : ArithLogicI<0x0e, "xori", uimm16, immZExt16, CPURegs, xor>;
-def LUi     : LoadUpper<0x0f, "lui", CPURegs, uimm16>;
+def ADDiu : ArithLogicI<"addiu", simm16, immSExt16, CPURegs, add>,
+            ADDI_FM<0x9>, IsAsCheapAsAMove;
+def ADDi  : ArithLogicI<"addi", simm16, immSExt16, CPURegs>, ADDI_FM<0x8>;
+def SLTi  : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16, CPURegs>;
+def SLTiu : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16, CPURegs>;
+def ANDi  : ArithLogicI<"andi", uimm16, immZExt16, CPURegs, and>, ADDI_FM<0xc>;
+def ORi   : ArithLogicI<"ori", uimm16, immZExt16, CPURegs, or>, ADDI_FM<0xd>;
+def XORi  : ArithLogicI<"xori", uimm16, immZExt16, CPURegs, xor>, ADDI_FM<0xe>;
+def LUi   : LoadUpper<0x0f, "lui", CPURegs, uimm16>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def ADDu : ArithLogicR<"addu", IIAlu, CPURegs, 1, add>, ADD_FM<0, 0x21>;

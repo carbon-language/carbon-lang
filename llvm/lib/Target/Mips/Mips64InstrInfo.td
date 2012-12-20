@@ -83,15 +83,19 @@ let usesCustomInserter = 1, Predicates = [HasStdEnc],
 //===----------------------------------------------------------------------===//
 let DecoderNamespace = "Mips64" in {
 /// Arithmetic Instructions (ALU Immediate)
-def DADDi    : ArithLogicI<0x18, "daddi", simm16_64, immSExt16, CPU64Regs>;
-def DADDiu   : ArithLogicI<0x19, "daddiu", simm16_64, immSExt16, CPU64Regs,
-                           add>, IsAsCheapAsAMove;
-def DANDi    : ArithLogicI<0x0c, "andi", uimm16_64, immZExt16, CPU64Regs, and>;
-def SLTi64   : SetCC_I<0x0a, "slti", setlt, simm16_64, immSExt16, CPU64Regs>;
-def SLTiu64  : SetCC_I<0x0b, "sltiu", setult, simm16_64, immSExt16, CPU64Regs>;
-def ORi64    : ArithLogicI<0x0d, "ori", uimm16_64, immZExt16, CPU64Regs, or>;
-def XORi64   : ArithLogicI<0x0e, "xori", uimm16_64, immZExt16, CPU64Regs, xor>;
-def LUi64    : LoadUpper<0x0f, "lui", CPU64Regs, uimm16_64>;
+def DADDi   : ArithLogicI<"daddi", simm16_64, immSExt16, CPU64Regs>,
+              ADDI_FM<0x18>;
+def DADDiu  : ArithLogicI<"daddiu", simm16_64, immSExt16, CPU64Regs, add>,
+              ADDI_FM<0x19>, IsAsCheapAsAMove;
+def DANDi   : ArithLogicI<"andi", uimm16_64, immZExt16, CPU64Regs, and>,
+              ADDI_FM<0xc>;
+def SLTi64  : SetCC_I<0x0a, "slti", setlt, simm16_64, immSExt16, CPU64Regs>;
+def SLTiu64 : SetCC_I<0x0b, "sltiu", setult, simm16_64, immSExt16, CPU64Regs>;
+def ORi64   : ArithLogicI<"ori", uimm16_64, immZExt16, CPU64Regs, or>,
+              ADDI_FM<0xd>;
+def XORi64  : ArithLogicI<"xori", uimm16_64, immZExt16, CPU64Regs, xor>,
+              ADDI_FM<0xe>;
+def LUi64   : LoadUpper<0x0f, "lui", CPU64Regs, uimm16_64>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def DADD   : ArithLogicR<"dadd", IIAlu, CPU64Regs, 1>, ADD_FM<0, 0x2c>;
