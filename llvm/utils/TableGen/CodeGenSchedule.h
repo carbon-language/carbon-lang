@@ -55,10 +55,11 @@ struct CodeGenSchedRW {
   IdxVec Sequence;
   RecVec Aliases;
 
-  CodeGenSchedRW(): Index(0), TheDef(0), IsAlias(false), HasVariants(false),
-                    IsVariadic(false), IsSequence(false) {}
-  CodeGenSchedRW(unsigned Idx, Record *Def): Index(Idx), TheDef(Def),
-                                             IsAlias(false), IsVariadic(false) {
+  CodeGenSchedRW()
+    : Index(0), TheDef(0), IsRead(false), IsAlias(false),
+      HasVariants(false), IsVariadic(false), IsSequence(false) {}
+  CodeGenSchedRW(unsigned Idx, Record *Def)
+    : Index(Idx), TheDef(Def), IsAlias(false), IsVariadic(false) {
     Name = Def->getName();
     IsRead = Def->isSubClassOf("SchedRead");
     HasVariants = Def->isSubClassOf("SchedVariant");
@@ -72,9 +73,9 @@ struct CodeGenSchedRW {
   }
 
   CodeGenSchedRW(unsigned Idx, bool Read, const IdxVec &Seq,
-                 const std::string &Name):
-    Index(Idx), Name(Name), TheDef(0), IsRead(Read), IsAlias(false),
-    HasVariants(false), IsVariadic(false), IsSequence(true), Sequence(Seq) {
+                 const std::string &Name)
+    : Index(Idx), Name(Name), TheDef(0), IsRead(Read), IsAlias(false),
+      HasVariants(false), IsVariadic(false), IsSequence(true), Sequence(Seq) {
     assert(Sequence.size() > 1 && "implied sequence needs >1 RWs");
   }
 
