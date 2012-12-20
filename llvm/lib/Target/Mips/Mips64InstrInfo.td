@@ -94,15 +94,15 @@ def XORi64   : ArithLogicI<0x0e, "xori", uimm16_64, immZExt16, CPU64Regs, xor>;
 def LUi64    : LoadUpper<0x0f, "lui", CPU64Regs, uimm16_64>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
-def DADD     : ArithLogicR<0x00, 0x2C, "dadd", IIAlu, CPU64Regs, 1>;
-def DADDu    : ArithLogicR<0x00, 0x2d, "daddu", IIAlu, CPU64Regs, 1, add>;
-def DSUBu    : ArithLogicR<0x00, 0x2f, "dsubu", IIAlu, CPU64Regs, 0, sub>;
-def SLT64    : SetCC_R<0x00, 0x2a, "slt", setlt, CPU64Regs>;
-def SLTu64   : SetCC_R<0x00, 0x2b, "sltu", setult, CPU64Regs>;
-def AND64    : ArithLogicR<0x00, 0x24, "and", IIAlu, CPU64Regs, 1, and>;
-def OR64     : ArithLogicR<0x00, 0x25, "or", IIAlu, CPU64Regs, 1, or>;
-def XOR64    : ArithLogicR<0x00, 0x26, "xor", IIAlu, CPU64Regs, 1, xor>;
-def NOR64    : LogicNOR<0x00, 0x27, "nor", CPU64Regs>;
+def DADD   : ArithLogicR<"dadd", IIAlu, CPU64Regs, 1>, ADD_FM<0, 0x2c>;
+def DADDu  : ArithLogicR<"daddu", IIAlu, CPU64Regs, 1, add>, ADD_FM<0, 0x2d>;
+def DSUBu  : ArithLogicR<"dsubu", IIAlu, CPU64Regs, 0, sub>, ADD_FM<0, 0x2f>;
+def SLT64  : SetCC_R<0x00, 0x2a, "slt", setlt, CPU64Regs>;
+def SLTu64 : SetCC_R<0x00, 0x2b, "sltu", setult, CPU64Regs>;
+def AND64  : ArithLogicR<"and", IIAlu, CPU64Regs, 1, and>, ADD_FM<0, 0x24>;
+def OR64   : ArithLogicR<"or", IIAlu, CPU64Regs, 1, or>, ADD_FM<0, 0x25>;
+def XOR64  : ArithLogicR<"xor", IIAlu, CPU64Regs, 1, xor>, ADD_FM<0, 0x26>;
+def NOR64  : LogicNOR<0x00, 0x27, "nor", CPU64Regs>;
 
 /// Shift Instructions
 def DSLL     : shift_rotate_imm64<0x38, 0x00, "dsll", shl>;
