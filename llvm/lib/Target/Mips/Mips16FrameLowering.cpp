@@ -39,8 +39,35 @@ void Mips16FrameLowering::emitPrologue(MachineFunction &MF) const {
   // No need to allocate space on the stack.
   if (StackSize == 0 && !MFI->adjustsStack()) return;
 
+  MachineModuleInfo &MMI = MF.getMMI();
+  std::vector<MachineMove> &Moves = MMI.getFrameMoves();
+  MachineLocation DstML, SrcML;
+
   // Adjust stack.
   TII.makeFrame(Mips::SP, StackSize, MBB, MBBI);
+
+  // emit ".cfi_def_cfa_offset StackSize"
+  MCSymbol *AdjustSPLabel = MMI.getContext().CreateTempSymbol();
+  BuildMI(MBB, MBBI, dl,
+          TII.get(TargetOpcode::PROLOG_LABEL)).addSym(AdjustSPLabel);
+  DstML = MachineLocation(MachineLocation::VirtualFP);
+  SrcML = MachineLocation(MachineLocation::VirtualFP, -StackSize);
+  Moves.push_back(MachineMove(AdjustSPLabel, DstML, SrcML));
+
+  MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
+  BuildMI(MBB, MBBI, dl,
+          TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
+  DstML = MachineLocation(MachineLocation::VirtualFP, -8);
+  SrcML = MachineLocation(Mips::S1);
+  Moves.push_back(MachineMove(CSLabel, DstML, SrcML));
+
+  DstML = MachineLocation(MachineLocation::VirtualFP, -12);
+  SrcML = MachineLocation(Mips::S0);
+  Moves.push_back(MachineMove(CSLabel, DstML, SrcML));
+
+  DstML = MachineLocation(MachineLocation::VirtualFP, -4);
+  SrcML = MachineLocation(Mips::RA);
+  Moves.push_back(MachineMove(CSLabel, DstML, SrcML));
 
   if (hasFP(MF))
     BuildMI(MBB, MBBI, dl, TII.get(Mips::MoveR3216), Mips::S0)
