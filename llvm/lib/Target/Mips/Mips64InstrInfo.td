@@ -166,8 +166,8 @@ def SCD_P8 : SCBase<0x3c, "scd", CPU64Regs, mem64>,
 
 /// Jump and Branch Instructions
 def JR64   : IndirectBranch<CPU64Regs>;
-def BEQ64  : CBranch<0x04, "beq", seteq, CPU64Regs>;
-def BNE64  : CBranch<0x05, "bne", setne, CPU64Regs>;
+def BEQ64  : CBranch<"beq", seteq, CPU64Regs>, BEQ_FM<4>;
+def BNE64  : CBranch<"bne", setne, CPU64Regs>, BEQ_FM<5>;
 def BGEZ64 : CBranchZero<0x01, 1, "bgez", setge, CPU64Regs>;
 def BGTZ64 : CBranchZero<0x07, 0, "bgtz", setgt, CPU64Regs>;
 def BLEZ64 : CBranchZero<0x06, 0, "blez", setle, CPU64Regs>;

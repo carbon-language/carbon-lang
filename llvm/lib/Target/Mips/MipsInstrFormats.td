@@ -252,6 +252,19 @@ class SRLV_FM<bits<6> funct, bit rotate> {
   let Inst{5-0}   = funct;
 }
 
+class BEQ_FM<bits<6> op> {
+  bits<5>  rs;
+  bits<5>  rt;
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-0}  = offset;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS

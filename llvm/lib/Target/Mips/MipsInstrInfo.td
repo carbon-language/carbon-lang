@@ -545,10 +545,11 @@ multiclass StoreLeftRightM64<bits<6> op, string instr_asm, SDNode OpNode> {
 }
 
 // Conditional Branch
-class CBranch<bits<6> op, string instr_asm, PatFrag cond_op, RegisterClass RC>:
-  BranchBase<op, (outs), (ins RC:$rs, RC:$rt, brtarget:$imm16),
-             !strconcat(instr_asm, "\t$rs, $rt, $imm16"),
-             [(brcond (i32 (cond_op RC:$rs, RC:$rt)), bb:$imm16)], IIBranch> {
+class CBranch<string opstr, PatFrag cond_op, RegisterClass RC> :
+  InstSE<(outs), (ins RC:$rs, RC:$rt, brtarget:$offset),
+         !strconcat(opstr, "\t$rs, $rt, $offset"),
+         [(brcond (i32 (cond_op RC:$rs, RC:$rt)), bb:$offset)], IIBranch,
+         FrmI> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
@@ -996,8 +997,8 @@ def J       : JumpFJ<0x02, jmptarget, "j", br, bb>,
               Requires<[RelocStatic, HasStdEnc]>, IsBranch;
 def JR      : IndirectBranch<CPURegs>;
 def B       : UncondBranch<0x04, "b">;
-def BEQ     : CBranch<0x04, "beq", seteq, CPURegs>;
-def BNE     : CBranch<0x05, "bne", setne, CPURegs>;
+def BEQ     : CBranch<"beq", seteq, CPURegs>, BEQ_FM<4>;
+def BNE     : CBranch<"bne", setne, CPURegs>, BEQ_FM<5>;
 def BGEZ    : CBranchZero<0x01, 1, "bgez", setge, CPURegs>;
 def BGTZ    : CBranchZero<0x07, 0, "bgtz", setgt, CPURegs>;
 def BLEZ    : CBranchZero<0x06, 0, "blez", setle, CPURegs>;
