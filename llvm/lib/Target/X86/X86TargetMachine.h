@@ -78,8 +78,8 @@ class X86_32TargetMachine : public X86TargetMachine {
   virtual void anchor();
   const DataLayout  DL; // Calculates type size & alignment
   X86InstrInfo      InstrInfo;
-  X86SelectionDAGInfo TSInfo;
   X86TargetLowering TLInfo;
+  X86SelectionDAGInfo TSInfo;
   X86JITInfo        JITInfo;
   ScalarTargetTransformImpl STTI;
   X86VectorTargetTransformInfo VTTI;
@@ -115,8 +115,8 @@ class X86_64TargetMachine : public X86TargetMachine {
   virtual void anchor();
   const DataLayout  DL; // Calculates type size & alignment
   X86InstrInfo      InstrInfo;
-  X86SelectionDAGInfo TSInfo;
   X86TargetLowering TLInfo;
+  X86SelectionDAGInfo TSInfo;
   X86JITInfo        JITInfo;
   X86ScalarTargetTransformImpl STTI;
   X86VectorTargetTransformInfo VTTI;
