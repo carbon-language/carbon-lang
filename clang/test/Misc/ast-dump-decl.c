@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -ast-dump -ast-dump-filter Test %s | FileCheck -check-prefix CHECK -strict-whitespace %s
-// RUN: %clang_cc1 -ast-dump %s | FileCheck -check-prefix CHECK-TU -strict-whitespace %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -ast-dump -ast-dump-filter Test %s | FileCheck -check-prefix CHECK -strict-whitespace %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -ast-dump %s | FileCheck -check-prefix CHECK-TU -strict-whitespace %s
 
 int TestLocation;
 // CHECK: VarDecl 0x{{[^ ]*}} <{{.*}}:4:1, col:5> TestLocation
