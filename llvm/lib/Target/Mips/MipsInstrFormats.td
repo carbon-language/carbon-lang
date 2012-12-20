@@ -236,6 +236,22 @@ class SRA_FM<bits<6> funct, bit rotate> {
   let Inst{5-0}   = funct;
 }
 
+class SRLV_FM<bits<6> funct, bit rotate> {
+  bits<5> rd;
+  bits<5> rt;
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-7}  = 0;
+  let Inst{6}     = rotate;
+  let Inst{5-0}   = funct;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS

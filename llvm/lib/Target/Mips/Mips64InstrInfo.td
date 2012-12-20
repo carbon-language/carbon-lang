@@ -110,9 +110,9 @@ def NOR64  : LogicNOR<0x00, 0x27, "nor", CPU64Regs>;
 def DSLL   : shift_rotate_imm64<"dsll", shl>, SRA_FM<0x38, 0>;
 def DSRL   : shift_rotate_imm64<"dsrl", srl>, SRA_FM<0x3a, 0>;
 def DSRA   : shift_rotate_imm64<"dsra", sra>, SRA_FM<0x3b, 0>;
-def DSLLV  : shift_rotate_reg<0x14, 0x00, "dsllv", shl, CPU64Regs>;
-def DSRLV  : shift_rotate_reg<0x16, 0x00, "dsrlv", srl, CPU64Regs>;
-def DSRAV  : shift_rotate_reg<0x17, 0x00, "dsrav", sra, CPU64Regs>;
+def DSLLV  : shift_rotate_reg<"dsllv", shl, CPU64Regs>, SRLV_FM<0x14, 0>;
+def DSRLV  : shift_rotate_reg<"dsrlv", srl, CPU64Regs>, SRLV_FM<0x16, 0>;
+def DSRAV  : shift_rotate_reg<"dsrav", sra, CPU64Regs>, SRLV_FM<0x17, 0>;
 def DSLL32 : shift_rotate_imm64<"dsll32">, SRA_FM<0x3c, 0>;
 def DSRL32 : shift_rotate_imm64<"dsrl32">, SRA_FM<0x3e, 0>;
 def DSRA32 : shift_rotate_imm64<"dsra32">, SRA_FM<0x3f, 0>;
@@ -121,7 +121,7 @@ def DSRA32 : shift_rotate_imm64<"dsra32">, SRA_FM<0x3f, 0>;
 let Predicates = [HasMips64r2, HasStdEnc],
     DecoderNamespace = "Mips64" in {
   def DROTR  : shift_rotate_imm64<"drotr", rotr>, SRA_FM<0x3a, 1>;
-  def DROTRV : shift_rotate_reg<0x16, 0x01, "drotrv", rotr, CPU64Regs>;
+  def DROTRV : shift_rotate_reg<"drotrv", rotr, CPU64Regs>, SRLV_FM<0x16, 1>;
 }
 
 let DecoderNamespace = "Mips64" in {

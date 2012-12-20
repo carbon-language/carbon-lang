@@ -394,13 +394,10 @@ class shift_rotate_imm<string opstr, PatFrag PF, Operand ImmOpnd,
 class shift_rotate_imm32<string opstr, SDPatternOperator OpNode = null_frag> :
   shift_rotate_imm<opstr, immZExt5, shamt, CPURegs, OpNode>;
 
-class shift_rotate_reg<bits<6> func, bits<5> isRotate, string instr_asm,
-                       SDNode OpNode, RegisterClass RC>:
-  FR<0x00, func, (outs RC:$rd), (ins CPURegs:$rs, RC:$rt),
-     !strconcat(instr_asm, "\t$rd, $rt, $rs"),
-     [(set RC:$rd, (OpNode RC:$rt, CPURegs:$rs))], IIAlu> {
-  let shamt = isRotate;
-}
+class shift_rotate_reg<string opstr, SDNode OpNode, RegisterClass RC>:
+  InstSE<(outs RC:$rd), (ins CPURegs:$rs, RC:$rt),
+         !strconcat(opstr, "\t$rd, $rt, $rs"),
+         [(set RC:$rd, (OpNode RC:$rt, CPURegs:$rs))], IIAlu, FrmR>;
 
 // Load Upper Imediate
 class LoadUpper<bits<6> op, string instr_asm, RegisterClass RC, Operand Imm>:
@@ -939,14 +936,14 @@ def NOR  : LogicNOR<0x00, 0x27, "nor", CPURegs>;
 def SLL  : shift_rotate_imm32<"sll", shl>, SRA_FM<0, 0>;
 def SRL  : shift_rotate_imm32<"srl", srl>, SRA_FM<2, 0>;
 def SRA  : shift_rotate_imm32<"sra", sra>, SRA_FM<3, 0>;
-def SLLV : shift_rotate_reg<0x04, 0x00, "sllv", shl, CPURegs>;
-def SRLV : shift_rotate_reg<0x06, 0x00, "srlv", srl, CPURegs>;
-def SRAV : shift_rotate_reg<0x07, 0x00, "srav", sra, CPURegs>;
+def SLLV : shift_rotate_reg<"sllv", shl, CPURegs>, SRLV_FM<4, 0>;
+def SRLV : shift_rotate_reg<"srlv", srl, CPURegs>, SRLV_FM<6, 0>;
+def SRAV : shift_rotate_reg<"srav", sra, CPURegs>, SRLV_FM<7, 0>;
 
 // Rotate Instructions
 let Predicates = [HasMips32r2, HasStdEnc] in {
   def ROTR  : shift_rotate_imm32<"rotr", rotr>, SRA_FM<2, 1>;
-  def ROTRV : shift_rotate_reg<0x06, 0x01, "rotrv", rotr, CPURegs>;
+  def ROTRV : shift_rotate_reg<"rotrv", rotr, CPURegs>, SRLV_FM<6, 1>;
 }
 
 /// Load and Store Instructions
