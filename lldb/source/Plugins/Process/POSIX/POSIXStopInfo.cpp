@@ -21,7 +21,7 @@ POSIXLimboStopInfo::~POSIXLimboStopInfo() { }
 lldb::StopReason
 POSIXLimboStopInfo::GetStopReason() const
 {
-    return lldb::eStopReasonTrace;
+    return lldb::eStopReasonThreadExiting;
 }
 
 const char *
@@ -33,13 +33,13 @@ POSIXLimboStopInfo::GetDescription()
 bool
 POSIXLimboStopInfo::ShouldStop(Event *event_ptr)
 {
-    return true;
+    return false;
 }
 
 bool
 POSIXLimboStopInfo::ShouldNotify(Event *event_ptr)
 {
-    return true;
+    return false;
 }
 
 //===----------------------------------------------------------------------===//

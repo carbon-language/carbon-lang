@@ -146,7 +146,8 @@ ThreadPlanBase::ShouldStop (Event *event_ptr)
                 log->Printf("Base plan discarding thread plans for thread tid = 0x%4.4" PRIx64 " (exec.)", m_thread.GetID());
             m_thread.DiscardThreadPlans(false);
             return true;
-            
+
+        case eStopReasonThreadExiting:
         case eStopReasonSignal:
             if (stop_info_sp->ShouldStop(event_ptr))
             {

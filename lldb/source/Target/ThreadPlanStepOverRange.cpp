@@ -320,6 +320,7 @@ ThreadPlanStepOverRange::PlanExplainsStop ()
         case eStopReasonSignal:
         case eStopReasonException:
         case eStopReasonExec:
+        case eStopReasonThreadExiting:
         default:
             if (log)
                 log->PutCString ("ThreadPlanStepInRange got asked if it explains the stop for some reason other than step.");

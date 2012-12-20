@@ -292,6 +292,7 @@ ThreadPlanStepUntil::AnalyzeStop()
             case eStopReasonSignal:
             case eStopReasonException:
             case eStopReasonExec:
+            case eStopReasonThreadExiting:
                 m_explains_stop = false;
                 break;
             default:

@@ -151,6 +151,7 @@ SBThread::GetStopReasonDataCount ()
                 case eStopReasonTrace:
                 case eStopReasonExec:
                 case eStopReasonPlanComplete:
+                case eStopReasonThreadExiting:
                     // There is no data for these stop reasons.
                     return 0;
 
@@ -209,6 +210,7 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
                 case eStopReasonTrace:
                 case eStopReasonExec:
                 case eStopReasonPlanComplete:
+                case eStopReasonThreadExiting:
                     // There is no data for these stop reasons.
                     return 0;
 
@@ -348,6 +350,13 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
                         }
                         break;
 
+                    case eStopReasonThreadExiting:
+                        {
+                            char limbo_desc[] = "thread exiting";
+                            stop_desc = limbo_desc;
+                            stop_desc_len = sizeof(limbo_desc);
+                        }
+                        break;
                     default:
                         break;
                     }

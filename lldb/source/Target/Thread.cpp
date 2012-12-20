@@ -1582,15 +1582,16 @@ Thread::StopReasonAsCString (lldb::StopReason reason)
 {
     switch (reason)
     {
-    case eStopReasonInvalid:      return "invalid";
-    case eStopReasonNone:         return "none";
-    case eStopReasonTrace:        return "trace";
-    case eStopReasonBreakpoint:   return "breakpoint";
-    case eStopReasonWatchpoint:   return "watchpoint";
-    case eStopReasonSignal:       return "signal";
-    case eStopReasonException:    return "exception";
-    case eStopReasonExec:         return "exec";
-    case eStopReasonPlanComplete: return "plan complete";
+    case eStopReasonInvalid:       return "invalid";
+    case eStopReasonNone:          return "none";
+    case eStopReasonTrace:         return "trace";
+    case eStopReasonBreakpoint:    return "breakpoint";
+    case eStopReasonWatchpoint:    return "watchpoint";
+    case eStopReasonSignal:        return "signal";
+    case eStopReasonException:     return "exception";
+    case eStopReasonExec:          return "exec";
+    case eStopReasonPlanComplete:  return "plan complete";
+    case eStopReasonThreadExiting: return "thread exiting";
     }
 
 
