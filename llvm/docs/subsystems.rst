@@ -21,7 +21,7 @@ Subsystem Documentation
    HowToUseInstrMappings
    SystemLibrary
    SourceLevelDebugging
-   Vectorizers 
+   AutoVectorization
    WritingAnLLVMBackend
    GarbageCollection
    WritingAnLLVMPass
@@ -63,7 +63,7 @@ Subsystem Documentation
    This document describes the design and philosophy behind the LLVM
    source-level debugger.
 
-* :doc:`Vectorization in LLVM <Vectorizers>`
+* :doc:`AutoVectorization`
     
    This document describes the current status of vectorization in LLVM.
     
