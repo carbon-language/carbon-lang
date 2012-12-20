@@ -437,14 +437,13 @@ def FCMP_D64 : CEQS_FT<"d", FGR64, IIFcmp, MipsFPCmp>, CEQS_FM<17>,
 //===----------------------------------------------------------------------===//
 // Floating Point Pseudo-Instructions
 //===----------------------------------------------------------------------===//
-def MOVCCRToCCR : PseudoSE<(outs CCR:$dst), (ins CCR:$src),
-                           "# MOVCCRToCCR", []>;
+def MOVCCRToCCR : PseudoSE<(outs CCR:$dst), (ins CCR:$src), []>;
 
 // This pseudo instr gets expanded into 2 mtc1 instrs after register
 // allocation.
 def BuildPairF64 :
   PseudoSE<(outs AFGR64:$dst),
-           (ins CPURegs:$lo, CPURegs:$hi), "",
+           (ins CPURegs:$lo, CPURegs:$hi),
            [(set AFGR64:$dst, (MipsBuildPairF64 CPURegs:$lo, CPURegs:$hi))]>;
 
 // This pseudo instr gets expanded into 2 mfc1 instrs after register
@@ -452,7 +451,7 @@ def BuildPairF64 :
 // if n is 0, lower part of src is extracted.
 // if n is 1, higher part of src is extracted.
 def ExtractElementF64 :
-  PseudoSE<(outs CPURegs:$dst), (ins AFGR64:$src, i32imm:$n), "",
+  PseudoSE<(outs CPURegs:$dst), (ins AFGR64:$src, i32imm:$n),
            [(set CPURegs:$dst, (MipsExtractElementF64 AFGR64:$src, imm:$n))]>;
 
 //===----------------------------------------------------------------------===//

@@ -789,32 +789,27 @@ class InsBase<bits<6> _funct, string instr_asm, RegisterClass RC>:
 }
 
 // Atomic instructions with 2 source operands (ATOMIC_SWAP & ATOMIC_LOAD_*).
-class Atomic2Ops<PatFrag Op, string Opstr, RegisterClass DRC,
-                 RegisterClass PRC> :
+class Atomic2Ops<PatFrag Op, RegisterClass DRC, RegisterClass PRC> :
   PseudoSE<(outs DRC:$dst), (ins PRC:$ptr, DRC:$incr),
-           !strconcat("atomic_", Opstr, "\t$dst, $ptr, $incr"),
            [(set DRC:$dst, (Op PRC:$ptr, DRC:$incr))]>;
 
-multiclass Atomic2Ops32<PatFrag Op, string Opstr> {
-  def #NAME# : Atomic2Ops<Op, Opstr, CPURegs, CPURegs>,
-                          Requires<[NotN64, HasStdEnc]>;
-  def _P8    : Atomic2Ops<Op, Opstr, CPURegs, CPU64Regs>,
-                          Requires<[IsN64, HasStdEnc]> {
+multiclass Atomic2Ops32<PatFrag Op> {
+  def #NAME# : Atomic2Ops<Op, CPURegs, CPURegs>, Requires<[NotN64, HasStdEnc]>;
+  def _P8    : Atomic2Ops<Op, CPURegs, CPU64Regs>,
+               Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
   }
 }
 
 // Atomic Compare & Swap.
-class AtomicCmpSwap<PatFrag Op, string Width, RegisterClass DRC,
-                    RegisterClass PRC> :
+class AtomicCmpSwap<PatFrag Op, RegisterClass DRC, RegisterClass PRC> :
   PseudoSE<(outs DRC:$dst), (ins PRC:$ptr, DRC:$cmp, DRC:$swap),
-           !strconcat("atomic_cmp_swap_", Width, "\t$dst, $ptr, $cmp, $swap"),
            [(set DRC:$dst, (Op PRC:$ptr, DRC:$cmp, DRC:$swap))]>;
 
-multiclass AtomicCmpSwap32<PatFrag Op, string Width>  {
-  def #NAME# : AtomicCmpSwap<Op, Width, CPURegs, CPURegs>,
-                             Requires<[NotN64, HasStdEnc]>;
-  def _P8    : AtomicCmpSwap<Op, Width, CPURegs, CPU64Regs>,
+multiclass AtomicCmpSwap32<PatFrag Op>  {
+  def #NAME# : AtomicCmpSwap<Op, CPURegs, CPURegs>,
+               Requires<[NotN64, HasStdEnc]>;
+  def _P8    : AtomicCmpSwap<Op, CPURegs, CPU64Regs>,
                              Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
   }
@@ -839,44 +834,42 @@ class SCBase<bits<6> Opc, string opstring, RegisterClass RC, Operand Mem> :
 
 // Return RA.
 let isReturn=1, isTerminator=1, hasDelaySlot=1, isBarrier=1, hasCtrlDep=1 in
-def RetRA : PseudoSE<(outs), (ins), "", [(MipsRet)]>;
+def RetRA : PseudoSE<(outs), (ins), [(MipsRet)]>;
 
 let Defs = [SP], Uses = [SP], hasSideEffects = 1 in {
 def ADJCALLSTACKDOWN : MipsPseudo<(outs), (ins i32imm:$amt),
-                                  "!ADJCALLSTACKDOWN $amt",
                                   [(callseq_start timm:$amt)]>;
 def ADJCALLSTACKUP   : MipsPseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
-                                  "!ADJCALLSTACKUP $amt1",
                                   [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
 
 let usesCustomInserter = 1 in {
-  defm ATOMIC_LOAD_ADD_I8   : Atomic2Ops32<atomic_load_add_8, "load_add_8">;
-  defm ATOMIC_LOAD_ADD_I16  : Atomic2Ops32<atomic_load_add_16, "load_add_16">;
-  defm ATOMIC_LOAD_ADD_I32  : Atomic2Ops32<atomic_load_add_32, "load_add_32">;
-  defm ATOMIC_LOAD_SUB_I8   : Atomic2Ops32<atomic_load_sub_8, "load_sub_8">;
-  defm ATOMIC_LOAD_SUB_I16  : Atomic2Ops32<atomic_load_sub_16, "load_sub_16">;
-  defm ATOMIC_LOAD_SUB_I32  : Atomic2Ops32<atomic_load_sub_32, "load_sub_32">;
-  defm ATOMIC_LOAD_AND_I8   : Atomic2Ops32<atomic_load_and_8, "load_and_8">;
-  defm ATOMIC_LOAD_AND_I16  : Atomic2Ops32<atomic_load_and_16, "load_and_16">;
-  defm ATOMIC_LOAD_AND_I32  : Atomic2Ops32<atomic_load_and_32, "load_and_32">;
-  defm ATOMIC_LOAD_OR_I8    : Atomic2Ops32<atomic_load_or_8, "load_or_8">;
-  defm ATOMIC_LOAD_OR_I16   : Atomic2Ops32<atomic_load_or_16, "load_or_16">;
-  defm ATOMIC_LOAD_OR_I32   : Atomic2Ops32<atomic_load_or_32, "load_or_32">;
-  defm ATOMIC_LOAD_XOR_I8   : Atomic2Ops32<atomic_load_xor_8, "load_xor_8">;
-  defm ATOMIC_LOAD_XOR_I16  : Atomic2Ops32<atomic_load_xor_16, "load_xor_16">;
-  defm ATOMIC_LOAD_XOR_I32  : Atomic2Ops32<atomic_load_xor_32, "load_xor_32">;
-  defm ATOMIC_LOAD_NAND_I8  : Atomic2Ops32<atomic_load_nand_8, "load_nand_8">;
-  defm ATOMIC_LOAD_NAND_I16 : Atomic2Ops32<atomic_load_nand_16, "load_nand_16">;
-  defm ATOMIC_LOAD_NAND_I32 : Atomic2Ops32<atomic_load_nand_32, "load_nand_32">;
+  defm ATOMIC_LOAD_ADD_I8   : Atomic2Ops32<atomic_load_add_8>;
+  defm ATOMIC_LOAD_ADD_I16  : Atomic2Ops32<atomic_load_add_16>;
+  defm ATOMIC_LOAD_ADD_I32  : Atomic2Ops32<atomic_load_add_32>;
+  defm ATOMIC_LOAD_SUB_I8   : Atomic2Ops32<atomic_load_sub_8>;
+  defm ATOMIC_LOAD_SUB_I16  : Atomic2Ops32<atomic_load_sub_16>;
+  defm ATOMIC_LOAD_SUB_I32  : Atomic2Ops32<atomic_load_sub_32>;
+  defm ATOMIC_LOAD_AND_I8   : Atomic2Ops32<atomic_load_and_8>;
+  defm ATOMIC_LOAD_AND_I16  : Atomic2Ops32<atomic_load_and_16>;
+  defm ATOMIC_LOAD_AND_I32  : Atomic2Ops32<atomic_load_and_32>;
+  defm ATOMIC_LOAD_OR_I8    : Atomic2Ops32<atomic_load_or_8>;
+  defm ATOMIC_LOAD_OR_I16   : Atomic2Ops32<atomic_load_or_16>;
+  defm ATOMIC_LOAD_OR_I32   : Atomic2Ops32<atomic_load_or_32>;
+  defm ATOMIC_LOAD_XOR_I8   : Atomic2Ops32<atomic_load_xor_8>;
+  defm ATOMIC_LOAD_XOR_I16  : Atomic2Ops32<atomic_load_xor_16>;
+  defm ATOMIC_LOAD_XOR_I32  : Atomic2Ops32<atomic_load_xor_32>;
+  defm ATOMIC_LOAD_NAND_I8  : Atomic2Ops32<atomic_load_nand_8>;
+  defm ATOMIC_LOAD_NAND_I16 : Atomic2Ops32<atomic_load_nand_16>;
+  defm ATOMIC_LOAD_NAND_I32 : Atomic2Ops32<atomic_load_nand_32>;
 
-  defm ATOMIC_SWAP_I8       : Atomic2Ops32<atomic_swap_8, "swap_8">;
-  defm ATOMIC_SWAP_I16      : Atomic2Ops32<atomic_swap_16, "swap_16">;
-  defm ATOMIC_SWAP_I32      : Atomic2Ops32<atomic_swap_32, "swap_32">;
+  defm ATOMIC_SWAP_I8       : Atomic2Ops32<atomic_swap_8>;
+  defm ATOMIC_SWAP_I16      : Atomic2Ops32<atomic_swap_16>;
+  defm ATOMIC_SWAP_I32      : Atomic2Ops32<atomic_swap_32>;
 
-  defm ATOMIC_CMP_SWAP_I8   : AtomicCmpSwap32<atomic_cmp_swap_8, "8">;
-  defm ATOMIC_CMP_SWAP_I16  : AtomicCmpSwap32<atomic_cmp_swap_16, "16">;
-  defm ATOMIC_CMP_SWAP_I32  : AtomicCmpSwap32<atomic_cmp_swap_32, "32">;
+  defm ATOMIC_CMP_SWAP_I8   : AtomicCmpSwap32<atomic_cmp_swap_8>;
+  defm ATOMIC_CMP_SWAP_I16  : AtomicCmpSwap32<atomic_cmp_swap_16>;
+  defm ATOMIC_CMP_SWAP_I32  : AtomicCmpSwap32<atomic_cmp_swap_32>;
 }
 
 //===----------------------------------------------------------------------===//

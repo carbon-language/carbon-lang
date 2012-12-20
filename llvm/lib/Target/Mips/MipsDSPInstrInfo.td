@@ -486,7 +486,7 @@ class MULT_DESC_BASE<string instr_asm> {
 }
 
 class BPOSGE32_PSEUDO_DESC_BASE<SDPatternOperator OpNode, InstrItinClass itin> :
-  MipsPseudo<(outs CPURegs:$dst), (ins), "", [(set CPURegs:$dst, (OpNode))]> {
+  MipsPseudo<(outs CPURegs:$dst), (ins), [(set CPURegs:$dst, (OpNode))]> {
   list<Register> Uses = [DSPCtrl];
   bit usesCustomInserter = 1;
 }

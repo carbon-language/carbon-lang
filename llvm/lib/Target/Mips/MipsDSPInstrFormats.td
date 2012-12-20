@@ -24,8 +24,9 @@ class DSPInst : MipsInst<(outs), (ins), "", [], NoItinerary, FrmOther> {
   let Predicates = [HasDSP];
 }
 
-class PseudoDSP<dag outs, dag ins, list<dag> pattern>:
-  MipsPseudo<outs, ins, "", pattern> {
+class PseudoDSP<dag outs, dag ins, list<dag> pattern,
+                InstrItinClass itin = IIPseudo>:
+  MipsPseudo<outs, ins, pattern, itin> {
   let Predicates = [HasDSP];
 }
 

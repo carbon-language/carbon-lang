@@ -80,15 +80,17 @@ class InstSE<dag outs, dag ins, string asmstr, list<dag> pattern,
 }
 
 // Mips Pseudo Instructions Format
-class MipsPseudo<dag outs, dag ins, string asmstr, list<dag> pattern>:
-  MipsInst<outs, ins, asmstr, pattern, IIPseudo, Pseudo> {
+class MipsPseudo<dag outs, dag ins, list<dag> pattern,
+                 InstrItinClass itin = IIPseudo> :
+  MipsInst<outs, ins, "", pattern, itin, Pseudo> {
   let isCodeGenOnly = 1;
   let isPseudo = 1;
 }
 
 // Mips32/64 Pseudo Instruction Format
-class PseudoSE<dag outs, dag ins, string asmstr, list<dag> pattern>:
-  MipsPseudo<outs, ins, asmstr, pattern> {
+class PseudoSE<dag outs, dag ins, list<dag> pattern,
+               InstrItinClass itin = IIPseudo>:
+  MipsPseudo<outs, ins, pattern, itin> {
   let Predicates = [HasStdEnc];
 }
 
