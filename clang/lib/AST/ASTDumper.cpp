@@ -71,7 +71,7 @@ namespace  {
     void dumpBareType(QualType T);
     void dumpType(QualType T);
     void dumpBareDeclRef(const Decl *Node);
-    void dumpDeclRef(const Decl *Node, const char *Label = NULL);
+    void dumpDeclRef(const Decl *Node, const char *Label = 0);
     void dumpName(const NamedDecl *D);
     void dumpDeclContext(const DeclContext *DC);
 
