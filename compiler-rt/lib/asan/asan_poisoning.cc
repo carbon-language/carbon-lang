@@ -20,6 +20,7 @@
 namespace __asan {
 
 void PoisonShadow(uptr addr, uptr size, u8 value) {
+  if (!flags()->poison_heap) return;
   CHECK(AddrIsAlignedByGranularity(addr));
   CHECK(AddrIsAlignedByGranularity(addr + size));
   uptr shadow_beg = MemToShadow(addr);
@@ -32,6 +33,7 @@ void PoisonShadowPartialRightRedzone(uptr addr,
                                      uptr size,
                                      uptr redzone_size,
                                      u8 value) {
+  if (!flags()->poison_heap) return;
   CHECK(AddrIsAlignedByGranularity(addr));
   u8 *shadow = (u8*)MemToShadow(addr);
   for (uptr i = 0; i < redzone_size;

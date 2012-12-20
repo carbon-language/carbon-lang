@@ -19,6 +19,7 @@
 #include "asan_interceptors.h"
 #include "asan_internal.h"
 #include "asan_stack.h"
+#include "asan_thread_registry.h"
 
 #if ASAN_ANDROID
 DECLARE_REAL_AND_INTERCEPTOR(void*, malloc, uptr size)
@@ -139,6 +140,12 @@ INTERCEPTOR(void*, valloc, uptr size) {
 INTERCEPTOR(void*, pvalloc, uptr size) {
   GET_STACK_TRACE_MALLOC;
   return asan_pvalloc(size, &stack);
+}
+
+INTERCEPTOR(void, malloc_stats, void) {
+  Printf("AddressSanitizer malloc_stats()\n");
+  Printf("  total mmapped: %zdM\n",
+         asanThreadRegistry().GetHeapSize() >> 20);
 }
 
 #endif  // __linux__

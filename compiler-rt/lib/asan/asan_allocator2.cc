@@ -307,7 +307,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
   if (size_rounded_down_to_granularity)
     PoisonShadow(user_beg, size_rounded_down_to_granularity, 0);
   // Deal with the end of the region if size is not aligned to granularity.
-  if (size != size_rounded_down_to_granularity) {
+  if (size != size_rounded_down_to_granularity && flags()->poison_heap) {
     u8 *shadow = (u8*)MemToShadow(user_beg + size_rounded_down_to_granularity);
     *shadow = size & (SHADOW_GRANULARITY - 1);
   }

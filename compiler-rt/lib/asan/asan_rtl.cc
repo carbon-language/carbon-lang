@@ -106,6 +106,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->log_path, "log_path");
   ParseFlag(str, &f->fast_unwind_on_fatal, "fast_unwind_on_fatal");
   ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc");
+  ParseFlag(str, &f->poison_heap, "poison_heap");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
@@ -141,6 +142,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->log_path = 0;
   f->fast_unwind_on_fatal = true;
   f->fast_unwind_on_malloc = true;
+  f->poison_heap = true;
 
   // Override from user-specified string.
   ParseFlagsFromString(f, MaybeCallAsanDefaultOptions());
