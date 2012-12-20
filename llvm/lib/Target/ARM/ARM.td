@@ -89,6 +89,10 @@ def FeatureAvoidPartialCPSR : SubtargetFeature<"avoid-partial-cpsr",
                                                "AvoidCPSRPartialUpdate", "true",
                                  "Avoid CPSR partial update for OOO execution">;
 
+def FeatureAvoidMOVsShOp : SubtargetFeature<"avoid-movs-shop",
+                                            "AvoidMOVsShifterOperand", "true",
+                                "Avoid movs instructions with shifter operand">;
+
 // Some processors perform return stack prediction. CodeGen should avoid issue
 // "normal" call instructions to callees which do not return.
 def FeatureHasRAS : SubtargetFeature<"ras", "HasRAS", "true",
@@ -152,6 +156,7 @@ def ProcSwift   : SubtargetFeature<"swift", "ARMProcFamily", "Swift",
                                    [FeatureNEONForFP, FeatureT2XtPk,
                                     FeatureVFP4, FeatureMP, FeatureHWDiv,
                                     FeatureHWDivARM, FeatureAvoidPartialCPSR,
+                                    FeatureAvoidMOVsShOp,
                                     FeatureHasSlowFPVMLx]>;
 
 // FIXME: It has not been determined if A15 has these features.

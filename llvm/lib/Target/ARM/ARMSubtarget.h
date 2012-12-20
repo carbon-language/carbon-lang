@@ -131,6 +131,10 @@ protected:
   /// CPSR setting instruction.
   bool AvoidCPSRPartialUpdate;
 
+  /// AvoidMOVsShifterOperand - If true, codegen should avoid using flag setting
+  /// movs with shifter operand (i.e. asr, lsl, lsr).
+  bool AvoidMOVsShifterOperand;
+
   /// HasRAS - Some processors perform return stack prediction. CodeGen should
   /// avoid issue "normal" call instructions to callees which do not return.
   bool HasRAS;
@@ -232,6 +236,7 @@ protected:
   bool isFPOnlySP() const { return FPOnlySP; }
   bool prefers32BitThumb() const { return Pref32BitThumb; }
   bool avoidCPSRPartialUpdate() const { return AvoidCPSRPartialUpdate; }
+  bool avoidMOVsShifterOperand() const { return AvoidMOVsShifterOperand; }
   bool hasRAS() const { return HasRAS; }
   bool hasMPExtension() const { return HasMPExtension; }
   bool hasThumb2DSP() const { return Thumb2DSP; }

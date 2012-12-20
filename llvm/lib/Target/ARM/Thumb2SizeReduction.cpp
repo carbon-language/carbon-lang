@@ -53,81 +53,82 @@ namespace {
     unsigned PredCC2  : 2;
     unsigned PartFlag : 1; // 16-bit instruction does partial flag update
     unsigned Special  : 1; // Needs to be dealt with specially
+    unsigned AvoidMovs: 1; // Avoid movs with shifter operand (for Swift)
   };
 
   static const ReduceEntry ReduceTable[] = {
-    // Wide,        Narrow1,      Narrow2,     imm1,imm2,  lo1, lo2, P/C, PF, S
-    { ARM::t2ADCrr, 0,            ARM::tADC,     0,   0,    0,   1,  0,0, 0,0 },
-    { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  0,0, 0,1 },
-    { ARM::t2ADDrr, ARM::tADDrr,  ARM::tADDhirr, 0,   0,    1,   0,  0,1, 0,0 },
-    { ARM::t2ADDSri,ARM::tADDi3,  ARM::tADDi8,   3,   8,    1,   1,  2,2, 0,1 },
-    { ARM::t2ADDSrr,ARM::tADDrr,  0,             0,   0,    1,   0,  2,0, 0,1 },
-    { ARM::t2ANDrr, 0,            ARM::tAND,     0,   0,    0,   1,  0,0, 1,0 },
-    { ARM::t2ASRri, ARM::tASRri,  0,             5,   0,    1,   0,  0,0, 1,0 },
-    { ARM::t2ASRrr, 0,            ARM::tASRrr,   0,   0,    0,   1,  0,0, 1,0 },
-    { ARM::t2BICrr, 0,            ARM::tBIC,     0,   0,    0,   1,  0,0, 1,0 },
-    //FIXME: Disable CMN, as CCodes are backwards from compare expectations
-    //{ ARM::t2CMNrr, ARM::tCMN,  0,             0,   0,    1,   0,  2,0, 0,0 },
-    { ARM::t2CMNzrr, ARM::tCMNz,  0,             0,   0,    1,   0,  2,0, 0,0 },
-    { ARM::t2CMPri, ARM::tCMPi8,  0,             8,   0,    1,   0,  2,0, 0,0 },
-    { ARM::t2CMPrr, ARM::tCMPhir, 0,             0,   0,    0,   0,  2,0, 0,1 },
-    { ARM::t2EORrr, 0,            ARM::tEOR,     0,   0,    0,   1,  0,0, 1,0 },
-    // FIXME: adr.n immediate offset must be multiple of 4.
-    //{ ARM::t2LEApcrelJT,ARM::tLEApcrelJT, 0,   0,   0,    1,   0,  1,0, 0,0 },
-    { ARM::t2LSLri, ARM::tLSLri,  0,             5,   0,    1,   0,  0,0, 1,0 },
-    { ARM::t2LSLrr, 0,            ARM::tLSLrr,   0,   0,    0,   1,  0,0, 1,0 },
-    { ARM::t2LSRri, ARM::tLSRri,  0,             5,   0,    1,   0,  0,0, 1,0 },
-    { ARM::t2LSRrr, 0,            ARM::tLSRrr,   0,   0,    0,   1,  0,0, 1,0 },
-    // FIXME: tMOVi8 and tMVN also partially update CPSR but they are less
-    // likely to cause issue in the loop. As a size / performance workaround,
-    // they are not marked as such.
-    { ARM::t2MOVi,  ARM::tMOVi8,  0,             8,   0,    1,   0,  0,0, 0,0 },
-    { ARM::t2MOVi16,ARM::tMOVi8,  0,             8,   0,    1,   0,  0,0, 0,1 },
-    // FIXME: Do we need the 16-bit 'S' variant?
-    { ARM::t2MOVr,ARM::tMOVr,     0,             0,   0,    0,   0,  1,0, 0,0 },
-    { ARM::t2MUL,   0,            ARM::tMUL,     0,   0,    0,   1,  0,0, 1,0 },
-    { ARM::t2MVNr,  ARM::tMVN,    0,             0,   0,    1,   0,  0,0, 0,0 },
-    { ARM::t2ORRrr, 0,            ARM::tORR,     0,   0,    0,   1,  0,0, 1,0 },
-    { ARM::t2REV,   ARM::tREV,    0,             0,   0,    1,   0,  1,0, 0,0 },
-    { ARM::t2REV16, ARM::tREV16,  0,             0,   0,    1,   0,  1,0, 0,0 },
-    { ARM::t2REVSH, ARM::tREVSH,  0,             0,   0,    1,   0,  1,0, 0,0 },
-    { ARM::t2RORrr, 0,            ARM::tROR,     0,   0,    0,   1,  0,0, 1,0 },
-    { ARM::t2RSBri, ARM::tRSB,    0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2RSBSri,ARM::tRSB,    0,             0,   0,    1,   0,  2,0, 0,1 },
-    { ARM::t2SBCrr, 0,            ARM::tSBC,     0,   0,    0,   1,  0,0, 0,0 },
-    { ARM::t2SUBri, ARM::tSUBi3,  ARM::tSUBi8,   3,   8,    1,   1,  0,0, 0,0 },
-    { ARM::t2SUBrr, ARM::tSUBrr,  0,             0,   0,    1,   0,  0,0, 0,0 },
-    { ARM::t2SUBSri,ARM::tSUBi3,  ARM::tSUBi8,   3,   8,    1,   1,  2,2, 0,0 },
-    { ARM::t2SUBSrr,ARM::tSUBrr,  0,             0,   0,    1,   0,  2,0, 0,0 },
-    { ARM::t2SXTB,  ARM::tSXTB,   0,             0,   0,    1,   0,  1,0, 0,1 },
-    { ARM::t2SXTH,  ARM::tSXTH,   0,             0,   0,    1,   0,  1,0, 0,1 },
-    { ARM::t2TSTrr, ARM::tTST,    0,             0,   0,    1,   0,  2,0, 0,0 },
-    { ARM::t2UXTB,  ARM::tUXTB,   0,             0,   0,    1,   0,  1,0, 0,1 },
-    { ARM::t2UXTH,  ARM::tUXTH,   0,             0,   0,    1,   0,  1,0, 0,1 },
+  // Wide,        Narrow1,      Narrow2,     imm1,imm2, lo1, lo2, P/C,PF,S,AM
+  { ARM::t2ADCrr, 0,            ARM::tADC,     0,   0,   0,   1,  0,0, 0,0,0 },
+  { ARM::t2ADDri, ARM::tADDi3,  ARM::tADDi8,   3,   8,   1,   1,  0,0, 0,1,0 },
+  { ARM::t2ADDrr, ARM::tADDrr,  ARM::tADDhirr, 0,   0,   1,   0,  0,1, 0,0,0 },
+  { ARM::t2ADDSri,ARM::tADDi3,  ARM::tADDi8,   3,   8,   1,   1,  2,2, 0,1,0 },
+  { ARM::t2ADDSrr,ARM::tADDrr,  0,             0,   0,   1,   0,  2,0, 0,1,0 },
+  { ARM::t2ANDrr, 0,            ARM::tAND,     0,   0,   0,   1,  0,0, 1,0,0 },
+  { ARM::t2ASRri, ARM::tASRri,  0,             5,   0,   1,   0,  0,0, 1,0,1 },
+  { ARM::t2ASRrr, 0,            ARM::tASRrr,   0,   0,   0,   1,  0,0, 1,0,1 },
+  { ARM::t2BICrr, 0,            ARM::tBIC,     0,   0,   0,   1,  0,0, 1,0,0 },
+  //FIXME: Disable CMN, as CCodes are backwards from compare expectations
+  //{ ARM::t2CMNrr, ARM::tCMN,  0,             0,   0,   1,   0,  2,0, 0,0,0 },
+  { ARM::t2CMNzrr, ARM::tCMNz,  0,             0,   0,   1,   0,  2,0, 0,0,0 },
+  { ARM::t2CMPri, ARM::tCMPi8,  0,             8,   0,   1,   0,  2,0, 0,0,0 },
+  { ARM::t2CMPrr, ARM::tCMPhir, 0,             0,   0,   0,   0,  2,0, 0,1,0 },
+  { ARM::t2EORrr, 0,            ARM::tEOR,     0,   0,   0,   1,  0,0, 1,0,0 },
+  // FIXME: adr.n immediate offset must be multiple of 4.
+  //{ ARM::t2LEApcrelJT,ARM::tLEApcrelJT, 0,   0,   0,   1,   0,  1,0, 0,0,0 },
+  { ARM::t2LSLri, ARM::tLSLri,  0,             5,   0,   1,   0,  0,0, 1,0,1 },
+  { ARM::t2LSLrr, 0,            ARM::tLSLrr,   0,   0,   0,   1,  0,0, 1,0,1 },
+  { ARM::t2LSRri, ARM::tLSRri,  0,             5,   0,   1,   0,  0,0, 1,0,1 },
+  { ARM::t2LSRrr, 0,            ARM::tLSRrr,   0,   0,   0,   1,  0,0, 1,0,1 },
+  // FIXME: tMOVi8 and tMVN also partially update CPSR but they are less
+  // likely to cause issue in the loop. As a size / performance workaround,
+  // they are not marked as such.
+  { ARM::t2MOVi,  ARM::tMOVi8,  0,             8,   0,   1,   0,  0,0, 0,0,0 },
+  { ARM::t2MOVi16,ARM::tMOVi8,  0,             8,   0,   1,   0,  0,0, 0,1,0 },
+  // FIXME: Do we need the 16-bit 'S' variant?
+  { ARM::t2MOVr,ARM::tMOVr,     0,             0,   0,   0,   0,  1,0, 0,0,0 },
+  { ARM::t2MUL,   0,            ARM::tMUL,     0,   0,   0,   1,  0,0, 1,0,0 },
+  { ARM::t2MVNr,  ARM::tMVN,    0,             0,   0,   1,   0,  0,0, 0,0,0 },
+  { ARM::t2ORRrr, 0,            ARM::tORR,     0,   0,   0,   1,  0,0, 1,0,0 },
+  { ARM::t2REV,   ARM::tREV,    0,             0,   0,   1,   0,  1,0, 0,0,0 },
+  { ARM::t2REV16, ARM::tREV16,  0,             0,   0,   1,   0,  1,0, 0,0,0 },
+  { ARM::t2REVSH, ARM::tREVSH,  0,             0,   0,   1,   0,  1,0, 0,0,0 },
+  { ARM::t2RORrr, 0,            ARM::tROR,     0,   0,   0,   1,  0,0, 1,0,0 },
+  { ARM::t2RSBri, ARM::tRSB,    0,             0,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2RSBSri,ARM::tRSB,    0,             0,   0,   1,   0,  2,0, 0,1,0 },
+  { ARM::t2SBCrr, 0,            ARM::tSBC,     0,   0,   0,   1,  0,0, 0,0,0 },
+  { ARM::t2SUBri, ARM::tSUBi3,  ARM::tSUBi8,   3,   8,   1,   1,  0,0, 0,0,0 },
+  { ARM::t2SUBrr, ARM::tSUBrr,  0,             0,   0,   1,   0,  0,0, 0,0,0 },
+  { ARM::t2SUBSri,ARM::tSUBi3,  ARM::tSUBi8,   3,   8,   1,   1,  2,2, 0,0,0 },
+  { ARM::t2SUBSrr,ARM::tSUBrr,  0,             0,   0,   1,   0,  2,0, 0,0,0 },
+  { ARM::t2SXTB,  ARM::tSXTB,   0,             0,   0,   1,   0,  1,0, 0,1,0 },
+  { ARM::t2SXTH,  ARM::tSXTH,   0,             0,   0,   1,   0,  1,0, 0,1,0 },
+  { ARM::t2TSTrr, ARM::tTST,    0,             0,   0,   1,   0,  2,0, 0,0,0 },
+  { ARM::t2UXTB,  ARM::tUXTB,   0,             0,   0,   1,   0,  1,0, 0,1,0 },
+  { ARM::t2UXTH,  ARM::tUXTH,   0,             0,   0,   1,   0,  1,0, 0,1,0 },
 
-    // FIXME: Clean this up after splitting each Thumb load / store opcode
-    // into multiple ones.
-    { ARM::t2LDRi12,ARM::tLDRi,   ARM::tLDRspi,  5,   8,    1,   0,  0,0, 0,1 },
-    { ARM::t2LDRs,  ARM::tLDRr,   0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2LDRBi12,ARM::tLDRBi, 0,             5,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2LDRBs, ARM::tLDRBr,  0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2LDRHi12,ARM::tLDRHi, 0,             5,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2LDRHs, ARM::tLDRHr,  0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2LDRSBs,ARM::tLDRSB,  0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2LDRSHs,ARM::tLDRSH,  0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2STRi12,ARM::tSTRi,   ARM::tSTRspi,  5,   8,    1,   0,  0,0, 0,1 },
-    { ARM::t2STRs,  ARM::tSTRr,   0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2STRBi12,ARM::tSTRBi, 0,             5,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2STRBs, ARM::tSTRBr,  0,             0,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2STRHi12,ARM::tSTRHi, 0,             5,   0,    1,   0,  0,0, 0,1 },
-    { ARM::t2STRHs, ARM::tSTRHr,  0,             0,   0,    1,   0,  0,0, 0,1 },
+  // FIXME: Clean this up after splitting each Thumb load / store opcode
+  // into multiple ones.
+  { ARM::t2LDRi12,ARM::tLDRi,   ARM::tLDRspi,  5,   8,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2LDRs,  ARM::tLDRr,   0,             0,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2LDRBi12,ARM::tLDRBi, 0,             5,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2LDRBs, ARM::tLDRBr,  0,             0,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2LDRHi12,ARM::tLDRHi, 0,             5,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2LDRHs, ARM::tLDRHr,  0,             0,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2LDRSBs,ARM::tLDRSB,  0,             0,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2LDRSHs,ARM::tLDRSH,  0,             0,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2STRi12,ARM::tSTRi,   ARM::tSTRspi,  5,   8,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2STRs,  ARM::tSTRr,   0,             0,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2STRBi12,ARM::tSTRBi, 0,             5,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2STRBs, ARM::tSTRBr,  0,             0,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2STRHi12,ARM::tSTRHi, 0,             5,   0,   1,   0,  0,0, 0,1,0 },
+  { ARM::t2STRHs, ARM::tSTRHr,  0,             0,   0,   1,   0,  0,0, 0,1,0 },
 
-    { ARM::t2LDMIA, ARM::tLDMIA,  0,             0,   0,    1,   1,  1,1, 0,1 },
-    { ARM::t2LDMIA_RET,0,         ARM::tPOP_RET, 0,   0,    1,   1,  1,1, 0,1 },
-    { ARM::t2LDMIA_UPD,ARM::tLDMIA_UPD,ARM::tPOP,0,   0,    1,   1,  1,1, 0,1 },
-    // ARM::t2STM (with no basereg writeback) has no Thumb1 equivalent
-    { ARM::t2STMIA_UPD,ARM::tSTMIA_UPD, 0,       0,   0,    1,   1,  1,1, 0,1 },
-    { ARM::t2STMDB_UPD, 0,        ARM::tPUSH,    0,   0,    1,   1,  1,1, 0,1 },
+  { ARM::t2LDMIA, ARM::tLDMIA,  0,             0,   0,   1,   1,  1,1, 0,1,0 },
+  { ARM::t2LDMIA_RET,0,         ARM::tPOP_RET, 0,   0,   1,   1,  1,1, 0,1,0 },
+  { ARM::t2LDMIA_UPD,ARM::tLDMIA_UPD,ARM::tPOP,0,   0,   1,   1,  1,1, 0,1,0 },
+  // ARM::t2STM (with no basereg writeback) has no Thumb1 equivalent
+  { ARM::t2STMIA_UPD,ARM::tSTMIA_UPD, 0,       0,   0,   1,   1,  1,1, 0,1,0 },
+  { ARM::t2STMDB_UPD, 0,        ARM::tPUSH,    0,   0,   1,   1,  1,1, 0,1,0 }
   };
 
   class Thumb2SizeReduce : public MachineFunctionPass {
@@ -184,13 +185,14 @@ namespace {
     /// ReduceMBB - Reduce width of instructions in the specified basic block.
     bool ReduceMBB(MachineBasicBlock &MBB);
 
+    bool OptimizeSize;
     bool MinimizeSize;
   };
   char Thumb2SizeReduce::ID = 0;
 }
 
 Thumb2SizeReduce::Thumb2SizeReduce() : MachineFunctionPass(ID) {
-  MinimizeSize = false;
+  OptimizeSize = MinimizeSize = false;
   for (unsigned i = 0, e = array_lengthof(ReduceTable); i != e; ++i) {
     unsigned FromOpc = ReduceTable[i].WideOpc;
     if (!ReduceOpcodeMap.insert(std::make_pair(FromOpc, i)).second)
@@ -587,7 +589,7 @@ Thumb2SizeReduce::ReduceSpecial(MachineBasicBlock &MBB, MachineInstr *MI,
     // are prioritized, but the table assumes a unique entry for each
     // source insn opcode. So for now, we hack a local entry record to use.
     static const ReduceEntry NarrowEntry =
-      { ARM::t2CMPrr,ARM::tCMPr, 0, 0, 0, 1, 1,2, 0, 0,1 };
+      { ARM::t2CMPrr,ARM::tCMPr, 0, 0, 0, 1, 1,2, 0, 0,1,0 };
     if (ReduceToNarrow(MBB, MI, NarrowEntry, LiveCPSR, CPSRDef, IsSelfLoop))
       return true;
     return ReduceToNarrow(MBB, MI, Entry, LiveCPSR, CPSRDef, IsSelfLoop);
@@ -603,6 +605,12 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
                                 bool IsSelfLoop) {
 
   if (ReduceLimit2Addr != -1 && ((int)Num2Addrs >= ReduceLimit2Addr))
+    return false;
+
+  if (!MinimizeSize && !OptimizeSize && Entry.AvoidMovs &&
+      STI->avoidMOVsShifterOperand())
+    // Don't issue movs with shifter operand for some CPUs unless we
+    // are optimizing / minimizing for size.
     return false;
 
   unsigned Reg0 = MI->getOperand(0).getReg();
@@ -715,6 +723,12 @@ Thumb2SizeReduce::ReduceToNarrow(MachineBasicBlock &MBB, MachineInstr *MI,
                                  bool LiveCPSR, MachineInstr *CPSRDef,
                                  bool IsSelfLoop) {
   if (ReduceLimit != -1 && ((int)NumNarrows >= ReduceLimit))
+    return false;
+
+  if (!MinimizeSize && !OptimizeSize && Entry.AvoidMovs &&
+      STI->avoidMOVsShifterOperand())
+    // Don't issue movs with shifter operand for some CPUs unless we
+    // are optimizing / minimizing for size.
     return false;
 
   unsigned Limit = ~0U;
@@ -946,9 +960,10 @@ bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
   TII = static_cast<const Thumb2InstrInfo*>(TM.getInstrInfo());
   STI = &TM.getSubtarget<ARMSubtarget>();
 
-  // When -Oz is set, the function carries MinSize attribute.
-  MinimizeSize =
-    MF.getFunction()->getFnAttributes().hasAttribute(Attribute::MinSize);
+  // Optimizing / minimizing size?
+  Attribute FnAttrs = MF.getFunction()->getFnAttributes();
+  OptimizeSize = FnAttrs.hasAttribute(Attribute::OptimizeForSize);
+  MinimizeSize = FnAttrs.hasAttribute(Attribute::MinSize);
 
   bool Modified = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
