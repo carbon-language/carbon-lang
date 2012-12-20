@@ -21,6 +21,7 @@ class ChangedInferiorTestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.inferior_not_crashing()
 
+    @expectedFailureLinux # bugzilla 14662 - POSIX dynamic loader asserts on re-launch
     def test_inferior_crashing_dwarf(self):
         """Test lldb reloads the inferior after it was changed during the session."""
         self.buildDwarf()
@@ -45,11 +46,13 @@ class ChangedInferiorTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
+        # FIXME: This expected stop reason is Darwin-specific
         # The stop reason of the thread should be a bad access exception.
         self.expect("thread list", STOPPED_DUE_TO_EXC_BAD_ACCESS,
             substrs = ['stopped',
                        'stop reason = EXC_BAD_ACCESS'])
 
+        # FIXME: This expected stop reason is Darwin-specific
         # And it should report the correct line number.
         self.expect("thread backtrace all",
             substrs = ['stop reason = EXC_BAD_ACCESS',
@@ -61,6 +64,7 @@ class ChangedInferiorTestCase(TestBase):
         self.runCmd("run", RUN_SUCCEEDED)
         self.runCmd("process status")
 
+        # FIXME: This unexpected stop reason is Darwin-specific
         if 'EXC_BAD_ACCESS' in self.res.GetOutput():
             self.fail("Inferior changed, but lldb did not perform a reload")
 
