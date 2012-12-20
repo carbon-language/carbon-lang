@@ -842,9 +842,8 @@ Blocks
 ======
 
 The syntax and high level language feature description is in
-`BlockLanguageSpec.rst <BlockLanguageSpec.rst>`_.  Implementation and ABI
-details for the clang implementation are in `Block-ABI-Apple.txt
-<Block-ABI-Apple.txt>`_.
+:doc:`BlockLanguageSpec`.  Implementation and ABI details for the clang
+implementation are in `Block-ABI-Apple.txt <Block-ABI-Apple.txt>`_.
 
 Query for this feature with ``__has_extension(blocks)``.
 

@@ -12,12 +12,12 @@ Revisions
 =========
 
 - 2008/2/25 --- created
-- 2008/7/28 --- revised, __block syntax
+- 2008/7/28 --- revised, ``__block`` syntax
 - 2008/8/13 --- revised, Block globals
 - 2008/8/21 --- revised, C++ elaboration
-- 2008/11/1 --- revised, __weak support
+- 2008/11/1 --- revised, ``__weak`` support
 - 2009/1/12 --- revised, explicit return types
-- 2009/2/10 --- revised, __block objects need retain
+- 2009/2/10 --- revised, ``__block`` objects need retain
 
 Overview
 ========
@@ -283,7 +283,7 @@ variables of automatic storage referenced within the Block expression
 Object variables of ``__block`` storage type are assumed to hold
 normal pointers with no provision for retain and release messages.
 
-Foundation defines (and supplies) -copy and -release methods for
+Foundation defines (and supplies) ``-copy`` and ``-release`` methods for
 Blocks.
 
 In the Objective-C and Objective-C++ languages, we allow the
