@@ -72,10 +72,11 @@ R600InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 MachineInstr * R600InstrInfo::getMovImmInstr(MachineFunction *MF,
                                              unsigned DstReg, int64_t Imm) const {
   MachineInstr * MI = MF->CreateMachineInstr(get(AMDGPU::MOV), DebugLoc());
-  MachineInstrBuilder(MI).addReg(DstReg, RegState::Define);
-  MachineInstrBuilder(MI).addReg(AMDGPU::ALU_LITERAL_X);
-  MachineInstrBuilder(MI).addImm(Imm);
-  MachineInstrBuilder(MI).addReg(0); // PREDICATE_BIT
+  MachineInstrBuilder MIB(*MF, MI);
+  MIB.addReg(DstReg, RegState::Define);
+  MIB.addReg(AMDGPU::ALU_LITERAL_X);
+  MIB.addImm(Imm);
+  MIB.addReg(0); // PREDICATE_BIT
 
   return MI;
 }
@@ -449,7 +450,8 @@ R600InstrInfo::PredicateInstruction(MachineInstr *MI,
   if (PIdx != -1) {
     MachineOperand &PMO = MI->getOperand(PIdx);
     PMO.setReg(Pred[2].getReg());
-    MachineInstrBuilder(MI).addReg(AMDGPU::PREDICATE_BIT, RegState::Implicit);
+    MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
+    MIB.addReg(AMDGPU::PREDICATE_BIT, RegState::Implicit);
     return true;
   }
 

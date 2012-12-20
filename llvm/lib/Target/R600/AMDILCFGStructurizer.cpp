@@ -2022,7 +2022,9 @@ CFGStructurizer<PassT>::normalizeInfiniteLoopExit(LoopT* LoopRep) {
       CFGTraits::insertAssignInstrBefore(insertPos, passRep, immReg, 1);
       InstrT *newInstr = 
         CFGTraits::insertInstrBefore(insertPos, AMDGPU::BRANCH_COND_i32, passRep);
-      MachineInstrBuilder(newInstr).addMBB(loopHeader).addReg(immReg, false);
+      MachineInstrBuilder MIB(*funcRep, newInstr);
+      MIB.addMBB(loopHeader);
+      MIB.addReg(immReg, false);
 
       SHOWNEWINSTR(newInstr);
 
@@ -2844,13 +2846,12 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
     MachineInstr *oldInstr = &(*instrPos);
     const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
     MachineBasicBlock *blk = oldInstr->getParent();
-    MachineInstr *newInstr =
-      blk->getParent()->CreateMachineInstr(tii->get(newOpcode),
-                                           DL);
+    MachineFunction *MF = blk->getParent();
+    MachineInstr *newInstr = MF->CreateMachineInstr(tii->get(newOpcode), DL);
 
     blk->insert(instrPos, newInstr);
-    MachineInstrBuilder(newInstr).addReg(oldInstr->getOperand(1).getReg(),
-                                         false);
+    MachineInstrBuilder MIB(*MF, newInstr);
+    MIB.addReg(oldInstr->getOperand(1).getReg(), false);
 
     SHOWNEWINSTR(newInstr);
     //erase later oldInstr->eraseFromParent();
@@ -2863,13 +2864,13 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
                                      RegiT regNum,
                                      DebugLoc DL) {
     const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
+    MachineFunction *MF = blk->getParent();
 
-    MachineInstr *newInstr =
-      blk->getParent()->CreateMachineInstr(tii->get(newOpcode), DL);
+    MachineInstr *newInstr = MF->CreateMachineInstr(tii->get(newOpcode), DL);
 
     //insert before
     blk->insert(insertPos, newInstr);
-    MachineInstrBuilder(newInstr).addReg(regNum, false);
+    MachineInstrBuilder(*MF, newInstr).addReg(regNum, false);
 
     SHOWNEWINSTR(newInstr);
   } //insertCondBranchBefore
@@ -2879,11 +2880,12 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
                                   AMDGPUCFGStructurizer *passRep,
                                   RegiT regNum) {
     const TargetInstrInfo *tii = passRep->getTargetInstrInfo();
+    MachineFunction *MF = blk->getParent();
     MachineInstr *newInstr =
-      blk->getParent()->CreateMachineInstr(tii->get(newOpcode), DebugLoc());
+      MF->CreateMachineInstr(tii->get(newOpcode), DebugLoc());
 
     blk->push_back(newInstr);
-    MachineInstrBuilder(newInstr).addReg(regNum, false);
+    MachineInstrBuilder(*MF, newInstr).addReg(regNum, false);
 
     SHOWNEWINSTR(newInstr);
   } //insertCondBranchEnd
@@ -2928,12 +2930,14 @@ struct CFGStructTraits<AMDGPUCFGStructurizer> {
                                        RegiT src2Reg) {
     const AMDGPUInstrInfo *tii =
              static_cast<const AMDGPUInstrInfo *>(passRep->getTargetInstrInfo());
+    MachineFunction *MF = blk->getParent();
     MachineInstr *newInstr =
-      blk->getParent()->CreateMachineInstr(tii->get(tii->getIEQOpcode()), DebugLoc());
+      MF->CreateMachineInstr(tii->get(tii->getIEQOpcode()), DebugLoc());
 
-    MachineInstrBuilder(newInstr).addReg(dstReg, RegState::Define); //set target
-    MachineInstrBuilder(newInstr).addReg(src1Reg); //set src value
-    MachineInstrBuilder(newInstr).addReg(src2Reg); //set src value
+    MachineInstrBuilder MIB(*MF, newInstr);
+    MIB.addReg(dstReg, RegState::Define); //set target
+    MIB.addReg(src1Reg); //set src value
+    MIB.addReg(src2Reg); //set src value
 
     blk->insert(instrPos, newInstr);
     SHOWNEWINSTR(newInstr);

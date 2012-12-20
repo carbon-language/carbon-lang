@@ -62,8 +62,9 @@ SIInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 MachineInstr * SIInstrInfo::getMovImmInstr(MachineFunction *MF, unsigned DstReg,
                                            int64_t Imm) const {
   MachineInstr * MI = MF->CreateMachineInstr(get(AMDGPU::V_MOV_IMM_I32), DebugLoc());
-  MachineInstrBuilder(MI).addReg(DstReg, RegState::Define);
-  MachineInstrBuilder(MI).addImm(Imm);
+  MachineInstrBuilder MIB(*MF, MI);
+  MIB.addReg(DstReg, RegState::Define);
+  MIB.addImm(Imm);
 
   return MI;
 
