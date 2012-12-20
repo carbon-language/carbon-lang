@@ -471,7 +471,7 @@ public:
     return ImplicitUses;
   }
 
-  /// \brief Return the number of implicit uses this instruction
+  /// \brief Return the number of implicit uses this instruction has.
   unsigned getNumImplicitUses() const {
     if (ImplicitUses == 0) return 0;
     unsigned i = 0;
