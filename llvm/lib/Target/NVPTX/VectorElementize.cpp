@@ -243,7 +243,7 @@ void VectorElementize::createLoadCopy(MachineFunction& F, MachineInstr *Instr,
                                       std::vector<MachineInstr *>& copies) {
   copies.push_back(F.CloneMachineInstr(Instr));
 
-  MachineInstr *copy=copies[0];
+  MachineInstrBuilder copy(F, copies[0]);
   copy->setDesc(InstrInfo->get(getScalarVersion(copy)));
 
   // Remove the dest, that should be a vector operand.
@@ -260,12 +260,11 @@ void VectorElementize::createLoadCopy(MachineFunction& F, MachineInstr *Instr,
   for (unsigned i=0, e=copy->getNumOperands(); i!=e; ++i)
     copy->RemoveOperand(0);
 
-  for (unsigned i=0, e=scalarRegs.size(); i!=e; ++i) {
-    copy->addOperand(MachineOperand::CreateReg(scalarRegs[i], true));
-  }
+  for (unsigned i=0, e=scalarRegs.size(); i!=e; ++i)
+    copy.addReg(scalarRegs[i], RegState::Define);
 
   for (unsigned i=0, e=otherOperands.size(); i!=e; ++i)
-    copy->addOperand(otherOperands[i]);
+    copy.addOperand(otherOperands[i]);
 
 }
 
@@ -280,7 +279,7 @@ void VectorElementize::createStoreCopy(MachineFunction& F, MachineInstr *Instr,
                                        std::vector<MachineInstr *>& copies) {
   copies.push_back(F.CloneMachineInstr(Instr));
 
-  MachineInstr *copy=copies[0];
+  MachineInstrBuilder copy(F, copies[0]);
   copy->setDesc(InstrInfo->get(getScalarVersion(copy)));
 
   MachineOperand src = copy->getOperand(0);
@@ -297,10 +296,10 @@ void VectorElementize::createStoreCopy(MachineFunction& F, MachineInstr *Instr,
     copy->RemoveOperand(0);
 
   for (unsigned i=0, e=scalarRegs.size(); i!=e; ++i)
-    copy->addOperand(MachineOperand::CreateReg(scalarRegs[i], false));
+    copy.addReg(scalarRegs[i]);
 
   for (unsigned i=0, e=otherOperands.size(); i!=e; ++i)
-    copy->addOperand(otherOperands[i]);
+    copy.addOperand(otherOperands[i]);
 }
 
 ///=============================================================================
@@ -327,8 +326,8 @@ void VectorElementize::createVecShuffle(MachineFunction& F, MachineInstr *Instr,
   DebugLoc DL = Instr->getDebugLoc();
 
   for (unsigned i=0; i<numcopies; i++) {
-    MachineInstr *copy = BuildMI(F, DL,
-                              InstrInfo->get(getScalarVersion(Instr)), dest[i]);
+    MachineInstrBuilder copy =
+      BuildMI(F, DL, InstrInfo->get(getScalarVersion(Instr)), dest[i]);
     MachineOperand which=Instr->getOperand(3+i);
     assert(which.isImm() && "Shuffle operand not a constant");
 
@@ -336,9 +335,9 @@ void VectorElementize::createVecShuffle(MachineFunction& F, MachineInstr *Instr,
     int elem=src%numcopies;
 
     if (which.getImm() < numcopies)
-      copy->addOperand(MachineOperand::CreateReg(src1[elem], false));
+      copy.addReg(src1[elem]);
     else
-      copy->addOperand(MachineOperand::CreateReg(src2[elem], false));
+      copy.addReg(src2[elem]);
     copies.push_back(copy);
   }
 }
@@ -358,12 +357,9 @@ void VectorElementize::createVecExtract(MachineFunction& F, MachineInstr *Instr,
   assert(which.isImm() && "Extract operand not a constant");
 
   DebugLoc DL = Instr->getDebugLoc();
-
-  MachineInstr *copy = BuildMI(F, DL, InstrInfo->get(getScalarVersion(Instr)),
-                               Instr->getOperand(0).getReg());
-  copy->addOperand(MachineOperand::CreateReg(src[which.getImm()], false));
-
-  copies.push_back(copy);
+  copies.push_back(BuildMI(F, DL, InstrInfo->get(getScalarVersion(Instr)),
+                           Instr->getOperand(0).getReg())
+                   .addReg(src[which.getImm()]));
 }
 
 ///=============================================================================
@@ -389,13 +385,13 @@ void VectorElementize::createVecInsert(MachineFunction& F, MachineInstr *Instr,
   DebugLoc DL = Instr->getDebugLoc();
 
   for (unsigned i=0; i<numcopies; i++) {
-    MachineInstr *copy = BuildMI(F, DL,
-                              InstrInfo->get(getScalarVersion(Instr)), dest[i]);
+    MachineInstrBuilder copy =
+      BuildMI(F, DL, InstrInfo->get(getScalarVersion(Instr)), dest[i]);
 
     if (i != elem)
-      copy->addOperand(MachineOperand::CreateReg(src[i], false));
+      copy.addReg(src[i]);
     else
-      copy->addOperand(Instr->getOperand(2));
+      copy.addOperand(Instr->getOperand(2));
 
     copies.push_back(copy);
   }
@@ -418,15 +414,10 @@ void VectorElementize::createVecBuild(MachineFunction& F, MachineInstr *Instr,
 
   DebugLoc DL = Instr->getDebugLoc();
 
-  for (unsigned i=0; i<numcopies; i++) {
-    MachineInstr *copy = BuildMI(F, DL,
-                              InstrInfo->get(getScalarVersion(Instr)), dest[i]);
-
-    copy->addOperand(Instr->getOperand(1+i));
-
-    copies.push_back(copy);
-  }
-
+  for (unsigned i=0; i<numcopies; i++)
+    copies.push_back(BuildMI(F, DL, InstrInfo->get(getScalarVersion(Instr)),
+                             dest[i])
+                     .addOperand(Instr->getOperand(1+i)));
 }
 
 ///=============================================================================
@@ -439,7 +430,7 @@ void VectorElementize::createVecDest(MachineFunction& F, MachineInstr *Instr,
                                      std::vector<MachineInstr *>& copies) {
   copies.push_back(F.CloneMachineInstr(Instr));
 
-  MachineInstr *copy=copies[0];
+  MachineInstrBuilder copy(F, copies[0]);
   copy->setDesc(InstrInfo->get(getScalarVersion(copy)));
 
   // Remove the dest, that should be a vector operand.
@@ -457,10 +448,10 @@ void VectorElementize::createVecDest(MachineFunction& F, MachineInstr *Instr,
     copy->RemoveOperand(0);
 
   for (unsigned i=0, e=scalarRegs.size(); i!=e; ++i)
-    copy->addOperand(MachineOperand::CreateReg(scalarRegs[i], true));
+    copy.addReg(scalarRegs[i], RegState::Define);
 
   for (unsigned i=0, e=otherOperands.size(); i!=e; ++i)
-    copy->addOperand(otherOperands[i]);
+    copy.addOperand(otherOperands[i]);
 }
 
 ///=============================================================================
@@ -504,7 +495,7 @@ void VectorElementize::createCopies(MachineFunction& F, MachineInstr *Instr,
     copies.push_back(F.CloneMachineInstr(Instr));
 
   for (unsigned i=0; i<numcopies; ++i) {
-    MachineInstr *copy = copies[i];
+    MachineInstrBuilder copy(F, copies[i]);
 
     std::vector<MachineOperand> allOperands;
     std::vector<bool> isDef;
@@ -530,13 +521,13 @@ void VectorElementize::createCopies(MachineFunction& F, MachineInstr *Instr,
         if (isVectorRegister(regnum)) {
 
           SmallVector<unsigned, 4> scalarRegs = getScalarRegisters(regnum);
-          copy->addOperand(MachineOperand::CreateReg(scalarRegs[i], isDef[j]));
+          copy.addReg(scalarRegs[i], getDefRegState(isDef[j]));
         }
         else
-          copy->addOperand(oper);
+          copy.addOperand(oper);
       }
       else
-        copy->addOperand(oper);
+        copy.addOperand(oper);
     }
   }
 }
@@ -659,7 +650,7 @@ unsigned VectorElementize::copyProp(MachineFunction &F) {
       for (unsigned i=0, e=Instr->getNumOperands(); i!=e; ++i)
         Instr->RemoveOperand(0);
       for (unsigned i=0, e=operands.size(); i!=e; ++i)
-        Instr->addOperand(operands[i]);
+        Instr->addOperand(F, operands[i]);
 
     }
   }
