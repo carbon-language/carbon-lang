@@ -281,6 +281,7 @@ enum StatType {
   StatMtxAnnotations,
   StatMtxAtExit,
   StatMtxMBlock,
+  StatMtxJava,
 
   // This must be the last.
   StatCnt

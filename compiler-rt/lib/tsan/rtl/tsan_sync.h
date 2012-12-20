@@ -96,6 +96,8 @@ class SyncTab {
   // If the SyncVar does not exist, returns 0.
   SyncVar* GetAndRemove(ThreadState *thr, uptr pc, uptr addr);
 
+  SyncVar* Create(ThreadState *thr, uptr pc, uptr addr);
+
   uptr GetMemoryConsumption(uptr *nsync);
 
  private:

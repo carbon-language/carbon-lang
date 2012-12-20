@@ -57,9 +57,26 @@ SyncVar* SyncTab::GetIfExistsAndLock(uptr addr, bool write_lock) {
   return GetAndLock(0, 0, addr, write_lock, false);
 }
 
+SyncVar* SyncTab::Create(ThreadState *thr, uptr pc, uptr addr) {
+  StatInc(thr, StatSyncCreated);
+  void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
+  const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
+  SyncVar *res = new(mem) SyncVar(addr, uid);
+#ifndef TSAN_GO
+  res->creation_stack.ObtainCurrent(thr, pc);
+#endif
+  return res;
+}
+
 SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
                              uptr addr, bool write_lock, bool create) {
 #ifndef TSAN_GO
+  {  // NOLINT
+    SyncVar *res = GetJavaSync(thr, pc, addr, write_lock, create);
+    if (res)
+      return res;
+  }
+
   // Here we ask only PrimaryAllocator, because
   // SecondaryAllocator::PointerIsMine() is slow and we have fallback on
   // the hashmap anyway.
@@ -74,11 +91,7 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
     if (res == 0) {
       if (!create)
         return 0;
-      StatInc(thr, StatSyncCreated);
-      void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
-      const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
-      res = new(mem) SyncVar(addr, uid);
-      res->creation_stack.ObtainCurrent(thr, pc);
+      res = Create(thr, pc, addr);
       res->next = b->head;
       b->head = res;
     }
@@ -113,13 +126,7 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
         break;
     }
     if (res == 0) {
-      StatInc(thr, StatSyncCreated);
-      void *mem = internal_alloc(MBlockSync, sizeof(SyncVar));
-      const u64 uid = atomic_fetch_add(&uid_gen_, 1, memory_order_relaxed);
-      res = new(mem) SyncVar(addr, uid);
-#ifndef TSAN_GO
-      res->creation_stack.ObtainCurrent(thr, pc);
-#endif
+      res = Create(thr, pc, addr);
       res->next = p->val;
       p->val = res;
     }
@@ -133,6 +140,11 @@ SyncVar* SyncTab::GetAndLock(ThreadState *thr, uptr pc,
 
 SyncVar* SyncTab::GetAndRemove(ThreadState *thr, uptr pc, uptr addr) {
 #ifndef TSAN_GO
+  {  // NOLINT
+    SyncVar *res = GetAndRemoveJavaSync(thr, pc, addr);
+    if (res)
+      return res;
+  }
   if (PrimaryAllocator::PointerIsMine((void*)addr)) {
     MBlock *b = user_mblock(thr, (void*)addr);
     SyncVar *res = 0;

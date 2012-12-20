@@ -515,6 +515,10 @@ void PrintCurrentStack(ThreadState *thr, uptr pc);
 void Initialize(ThreadState *thr);
 int Finalize(ThreadState *thr);
 
+SyncVar* GetJavaSync(ThreadState *thr, uptr pc, uptr addr,
+                     bool write_lock, bool create);
+SyncVar* GetAndRemoveJavaSync(ThreadState *thr, uptr pc, uptr addr);
+
 void MemoryAccess(ThreadState *thr, uptr pc, uptr addr,
     int kAccessSizeLog, bool kAccessIsWrite);
 void MemoryAccessImpl(ThreadState *thr, uptr addr,
