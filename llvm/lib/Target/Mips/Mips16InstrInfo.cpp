@@ -19,10 +19,18 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
 using namespace llvm;
+
+static cl::opt<bool> NeverUseSaveRestore(
+  "mips16-never-use-save-restore",
+  cl::init(false),
+  cl::desc("For testing ability to adjust stack pointer without save/restore instruction"),
+  cl::Hidden);
+
 
 Mips16InstrInfo::Mips16InstrInfo(MipsTargetMachine &tm)
   : MipsInstrInfo(tm, Mips::BimmX16),
@@ -160,20 +168,135 @@ unsigned Mips16InstrInfo::GetOppositeBranchOpc(unsigned Opc) const {
   return 0;
 }
 
+// Adjust SP by FrameSize bytes. Save RA, S0, S1
+void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize, MachineBasicBlock &MBB,
+                    MachineBasicBlock::iterator I) const {
+  DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
+  if (!NeverUseSaveRestore) {
+    if (isUInt<11>(FrameSize))
+      BuildMI(MBB, I, DL, get(Mips::SaveRaF16)).addImm(FrameSize);
+    else {
+      int Base = 2040; // should create template function like isUInt that returns largest
+                       // possible n bit unsigned integer
+      int64_t Remainder = FrameSize - Base;
+      BuildMI(MBB, I, DL, get(Mips::SaveRaF16)). addImm(Base);
+      if (isInt<16>(-Remainder))
+        BuildMI(MBB, I, DL, get(Mips::AddiuSpImmX16)). addImm(-Remainder);
+      else
+        adjustStackPtrBig(SP, -Remainder, MBB, I, Mips::V0, Mips::V1);
+    }
+
+  }
+  else {
+    //
+    // sw ra, -4[sp]
+    // sw s1, -8[sp]
+    // sw s0, -12[sp]
+
+    MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16), Mips::RA);
+    MIB1.addReg(Mips::SP);
+    MIB1.addImm(-4);
+    MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16), Mips::S1);
+    MIB2.addReg(Mips::SP);
+    MIB2.addImm(-8);
+    MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16), Mips::S0);
+    MIB3.addReg(Mips::SP);
+    MIB3.addImm(-12);
+    adjustStackPtrBig(SP, -FrameSize, MBB, I, Mips::V0, Mips::V1);
+  }
+}
+
+// Adjust SP by FrameSize bytes. Restore RA, S0, S1
+void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize, MachineBasicBlock &MBB,
+                    MachineBasicBlock::iterator I) const {
+  DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
+  if (!NeverUseSaveRestore) {
+    if (isUInt<11>(FrameSize))
+      BuildMI(MBB, I, DL, get(Mips::RestoreRaF16)).addImm(FrameSize);
+    else {
+      int Base = 2040; // should create template function like isUInt that returns largest
+                       // possible n bit unsigned integer
+      int64_t Remainder = FrameSize - Base;
+      if (isInt<16>(Remainder))
+        BuildMI(MBB, I, DL, get(Mips::AddiuSpImmX16)). addImm(Remainder);
+      else
+        adjustStackPtrBig(SP, Remainder, MBB, I, Mips::A0, Mips::A1);
+      BuildMI(MBB, I, DL, get(Mips::RestoreRaF16)). addImm(Base);
+    }
+  }
+  else {
+    adjustStackPtrBig(SP, FrameSize, MBB, I, Mips::A0, Mips::A1);
+    // lw ra, -4[sp]
+    // lw s1, -8[sp]
+    // lw s0, -12[sp]
+    MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16), Mips::A0);
+    MIB1.addReg(Mips::SP);
+    MIB1.addImm(-4);
+    MachineInstrBuilder MIB0 = BuildMI(MBB, I, DL, get(Mips::Move32R16), Mips::RA);
+     MIB0.addReg(Mips::A0);
+    MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16), Mips::S1);
+    MIB2.addReg(Mips::SP);
+    MIB2.addImm(-8);
+    MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16), Mips::S0);
+    MIB3.addReg(Mips::SP);
+    MIB3.addImm(-12);
+  }
+
+}
+
+// Adjust SP by Amount bytes where bytes can be up to 32bit number.
+// This can only be called at times that we know that there is at least one free register.
+// This is clearly safe at prologue and epilogue.
+//
+void Mips16InstrInfo::adjustStackPtrBig(unsigned SP, int64_t Amount, MachineBasicBlock &MBB,
+                                        MachineBasicBlock::iterator I,
+                                        unsigned Reg1, unsigned Reg2) const {
+  DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
+//  MachineRegisterInfo &RegInfo = MBB.getParent()->getRegInfo();
+//  unsigned Reg1 = RegInfo.createVirtualRegister(&Mips::CPU16RegsRegClass);
+//  unsigned Reg2 = RegInfo.createVirtualRegister(&Mips::CPU16RegsRegClass);
+  //
+  // li reg1, constant
+  // move reg2, sp
+  // add reg1, reg1, reg2
+  // move sp, reg1
+  //
+  //
+  MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::LwConstant32), Reg1);
+  MIB1.addImm(Amount);
+  MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::MoveR3216), Reg2);
+  MIB2.addReg(Mips::SP, RegState::Kill);
+  MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::AdduRxRyRz16), Reg1);
+  MIB3.addReg(Reg1);
+  MIB3.addReg(Reg2, RegState::Kill);
+  MachineInstrBuilder MIB4 = BuildMI(MBB, I, DL, get(Mips::Move32R16), Mips::SP);
+  MIB4.addReg(Reg1, RegState::Kill);
+}
+
+void Mips16InstrInfo::adjustStackPtrBigUnrestricted(unsigned SP, int64_t Amount, MachineBasicBlock &MBB,
+                    MachineBasicBlock::iterator I) const {
+   assert(false && "adjust stack pointer amount exceeded");
+}
+
 /// Adjust SP by Amount bytes.
 void Mips16InstrInfo::adjustStackPtr(unsigned SP, int64_t Amount,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
-  if (isInt<16>(Amount)) {
-    if (Amount < 0)
-      BuildMI(MBB, I, DL, get(Mips::SaveDecSpF16)). addImm(-Amount);
-    else if (Amount > 0)
-      BuildMI(MBB, I, DL, get(Mips::RestoreIncSpF16)).addImm(Amount);
-  }
+  if (isInt<16>(Amount))  // need to change to addiu sp, ....and isInt<16>
+    BuildMI(MBB, I, DL, get(Mips::AddiuSpImmX16)). addImm(Amount);
   else
-    // not implemented for large values yet
-    assert(false && "adjust stack pointer amount exceeded");
+    adjustStackPtrBigUnrestricted(SP, Amount, MBB, I);
+}
+
+/// This function generates the sequence of instructions needed to get the
+/// result of adding register REG and immediate IMM.
+unsigned
+Mips16InstrInfo::loadImmediate(int64_t Imm, MachineBasicBlock &MBB,
+                               MachineBasicBlock::iterator II, DebugLoc DL,
+                               unsigned *NewImm) const {
+
+  return 0;
 }
 
 unsigned Mips16InstrInfo::GetAnalyzableBrOpc(unsigned Opc) const {

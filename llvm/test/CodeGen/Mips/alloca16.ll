@@ -68,8 +68,8 @@ entry:
   %21 = load i32** %ip, align 4
   %arrayidx6 = getelementptr inbounds i32* %21, i32 %20
   %22 = load i32* %arrayidx6, align 4
-; 16: 	save	16
+; 16: 	addiu $sp, -16
   call void @temp(i32 %22)
-; 16: 	restore	16
+; 16: 	addiu $sp, 16
   ret void
 }
