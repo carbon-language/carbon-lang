@@ -11,13 +11,13 @@ Language Specification for Blocks
 Revisions
 =========
 
-- 2008/2/25 — created
-- 2008/7/28 — revised, __block syntax
-- 2008/8/13 — revised, Block globals
-- 2008/8/21 — revised, C++ elaboration
-- 2008/11/1 — revised, __weak support
-- 2009/1/12 — revised, explicit return types
-- 2009/2/10 — revised, __block objects need retain
+- 2008/2/25 --- created
+- 2008/7/28 --- revised, __block syntax
+- 2008/8/13 --- revised, Block globals
+- 2008/8/21 --- revised, C++ elaboration
+- 2008/11/1 --- revised, __weak support
+- 2009/1/12 --- revised, explicit return types
+- 2009/2/10 --- revised, __block objects need retain
 
 Overview
 ========
