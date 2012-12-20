@@ -104,12 +104,20 @@ enum {
 // The memory chunk allocated from the underlying allocator looks like this:
 // L L L L L L H H U U U U U U R R
 //   L -- left redzone words (0 or more bytes)
-//   H -- ChunkHeader (16 bytes on 64-bit arch, 8 bytes on 32-bit arch).
-//     ChunkHeader is also a part of the left redzone.
+//   H -- ChunkHeader (16 bytes), which is also a part of the left redzone.
 //   U -- user memory.
 //   R -- right redzone (0 or more bytes)
 // ChunkBase consists of ChunkHeader and other bytes that overlap with user
 // memory.
+
+// If a memory chunk is allocated by memalign and we had to increase the
+// allocation size to achieve the proper alignment, then we store this magic
+// value in the first uptr word of the memory block and store the address of
+// ChunkBase in the next uptr.
+// M B ? ? ? L L L L L L  H H U U U U U U
+//   M -- magic value kMemalignMagic
+//   B -- address of ChunkHeader pointing to the first 'H'
+static const uptr kMemalignMagic = 0xCC6E96B9;
 
 #if SANITIZER_WORDSIZE == 64
 struct ChunkBase {
@@ -221,8 +229,12 @@ class Quarantine: public AsanChunkFifoList {
                  kAsanHeapLeftRedzoneMagic);
     uptr alloc_beg = m->Beg() - ComputeRZSize(m->user_requested_size);
     void *p = reinterpret_cast<void *>(alloc_beg);
-    if (m->from_memalign)
+    if (m->from_memalign) {
       p = allocator.GetBlockBegin(p);
+      uptr *memalign_magic = reinterpret_cast<uptr *>(p);
+      CHECK_EQ(memalign_magic[0], kMemalignMagic);
+      CHECK_EQ(memalign_magic[1], reinterpret_cast<uptr>(m));
+    }
 
     // Statistics.
     AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
@@ -299,6 +311,12 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
   CHECK_EQ(alloc_tid, m->alloc_tid);  // Does alloc_tid fit into the bitfield?
   m->free_tid = kInvalidTid;
   m->from_memalign = user_beg != beg_plus_redzone;
+  if (m->from_memalign) {
+    CHECK_LE(beg_plus_redzone + 2 * sizeof(uptr), user_beg);
+    uptr *memalign_magic = reinterpret_cast<uptr *>(alloc_beg);
+    memalign_magic[0] = kMemalignMagic;
+    memalign_magic[1] = chunk_beg;
+  }
   m->user_requested_size = size;
   StackTrace::CompressStack(stack, m->AllocStackBeg(), m->AllocStackSize());
 
@@ -389,7 +407,12 @@ static AsanChunk *GetAsanChunkByAddr(uptr p) {
   uptr alloc_beg = reinterpret_cast<uptr>(
       allocator.GetBlockBegin(reinterpret_cast<void *>(p)));
   if (!alloc_beg) return 0;
-  // FIXME: this does not take into account memalign.
+  uptr *memalign_magic = reinterpret_cast<uptr *>(alloc_beg);
+  if (memalign_magic[0] == kMemalignMagic) {
+      AsanChunk *m = reinterpret_cast<AsanChunk *>(memalign_magic[1]);
+      CHECK(m->from_memalign);
+      return m;
+  }
   uptr chunk_beg = alloc_beg + ComputeRZSize(0) - kChunkHeaderSize;
   return reinterpret_cast<AsanChunk *>(chunk_beg);
 }
