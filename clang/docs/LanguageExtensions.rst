@@ -842,7 +842,7 @@ Blocks
 ======
 
 The syntax and high level language feature description is in
-`BlockLanguageSpec.txt <BlockLanguageSpec.txt>`_.  Implementation and ABI
+`BlockLanguageSpec.rst <BlockLanguageSpec.rst>`_.  Implementation and ABI
 details for the clang implementation are in `Block-ABI-Apple.txt
 <Block-ABI-Apple.txt>`_.
 
