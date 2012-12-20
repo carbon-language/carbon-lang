@@ -667,5 +667,24 @@ TEST_F(FormatTest, IncorrectCodeErrorDetection) {
 
 }
 
+TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
+  verifyFormat("- (void)sendAction:(SEL)aSelector to:(BOOL)anObject;");
+  EXPECT_EQ("- (NSUInteger)indexOfObject:(id)anObject;",
+            format("-(NSUInteger)indexOfObject:(id)anObject;"));
+  EXPECT_EQ("- (NSInteger)Mthod1;",
+            format("-(NSInteger)Mthod1;"));
+  EXPECT_EQ("+ (id)Mthod2;", format("+(id)Mthod2;"));
+  EXPECT_EQ("- (NSInteger)Method3:(id)anObject;",
+            format("-(NSInteger)Method3:(id)anObject;"));
+  EXPECT_EQ("- (NSInteger)Method4:(id)anObject;",
+            format("-(NSInteger)Method4:(id)anObject;"));
+  EXPECT_EQ("- (NSInteger)Method5:(id)anObject:(id)AnotherObject;",
+            format("-(NSInteger)Method5:(id)anObject:(id)AnotherObject;"));
+  EXPECT_EQ("- (id)Method6:(id)A:(id)B:(id)C:(id)D;",
+            format("- (id)Method6:(id)A:(id)B:(id)C:(id)D;"));
+  EXPECT_EQ("- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;",
+            format("- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;"));
+}
+
 }  // end namespace tooling
 }  // end namespace clang

@@ -917,12 +917,6 @@ void getSourceTextOfDeclaration(const DeclInfo *ThisDecl,
 void CommentASTToXMLConverter::formatTextOfDeclaration(
                                               const DeclInfo *DI,
                                               SmallString<128> &Declaration) {
-  // FIXME. This conditional is TEMPORARY. We don't want to break multiple
-  // large tests each time Format.cpp changes. This condition will
-  // go away and formatting will happen for all declarations.
-  if (!getenv("LIBCLANG_ACTIVATE_FORMAT"))
-    return;
-  
   // FIXME. formatting API expects null terminated input string.
   // There might be more efficient way of doing this.
   std::string StringDecl = Declaration.str();

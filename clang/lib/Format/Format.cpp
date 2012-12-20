@@ -39,7 +39,8 @@ struct TokenAnnotation {
     TT_ConditionalExpr,
     TT_CtorInitializerColon,
     TT_LineComment,
-    TT_BlockComment
+    TT_BlockComment,
+    TT_ObjCMethodSpecifier
   };
 
   TokenType Type;
@@ -225,7 +226,8 @@ private:
 
       State.LastSpace[ParenLevel] = State.Indent[ParenLevel];
       if (Current.Tok.is(tok::colon) &&
-          Annotations[Index].Type != TokenAnnotation::TT_ConditionalExpr)
+          Annotations[Index].Type != TokenAnnotation::TT_ConditionalExpr &&
+          Annotations[0].Type != TokenAnnotation::TT_ObjCMethodSpecifier)
         State.Indent[ParenLevel] += 2;
     } else {
       unsigned Spaces = Annotations[Index].SpaceRequiredBefore ? 1 : 0;
@@ -547,7 +549,9 @@ public:
     Parser.parseLine();
 
     determineTokenTypes();
-
+    bool IsObjCMethodDecl =
+      (Line.Tokens.size() > 0 &&
+        (Annotations[0].Type == TokenAnnotation::TT_ObjCMethodSpecifier));
     for (int i = 1, e = Line.Tokens.size(); i != e; ++i) {
       TokenAnnotation &Annotation = Annotations[i];
 
@@ -557,10 +561,37 @@ public:
       if (Annotation.Type == TokenAnnotation::TT_CtorInitializerColon) {
         Annotation.MustBreakBefore = true;
         Annotation.SpaceRequiredBefore = true;
+      } else if (IsObjCMethodDecl &&
+                 Line.Tokens[i].Tok.is(tok::identifier) &&
+                 (i != e-1) && Line.Tokens[i+1].Tok.is(tok::colon) &&
+                 Line.Tokens[i-1].Tok.is(tok::identifier)) {
+        Annotation.CanBreakBefore = true;
+        Annotation.SpaceRequiredBefore = true;
+      } else if (IsObjCMethodDecl &&
+                 Line.Tokens[i].Tok.is(tok::identifier) &&
+                 Line.Tokens[i-1].Tok.is(tok::l_paren) &&
+                 Line.Tokens[i-2].Tok.is(tok::colon)) {
+        // Don't break this identifier as ':' or identifier
+        // before it will break.
+        Annotation.CanBreakBefore = false;
+      } else if (Line.Tokens[i].Tok.is(tok::at) &&
+                 Line.Tokens[i-2].Tok.is(tok::at)) {
+        // Don't put two objc's '@' on the same line. This could happen,
+        // as in, @optinal @property ...
+        Annotation.MustBreakBefore = true;
       } else if (Line.Tokens[i].Tok.is(tok::colon)) {
         Annotation.SpaceRequiredBefore =
-            Line.Tokens[0].Tok.isNot(tok::kw_case) && i != e - 1;
-      } else if (Annotations[i - 1].Type == TokenAnnotation::TT_UnaryOperator) {
+          Line.Tokens[0].Tok.isNot(tok::kw_case) && !IsObjCMethodDecl &&
+          (i != e - 1);
+        // Don't break at ':' if identifier before it can beak.
+        if (IsObjCMethodDecl &&
+            Line.Tokens[i-1].Tok.is(tok::identifier) &&
+            Annotations[i-1].CanBreakBefore)
+          Annotation.CanBreakBefore = false;
+      } else if (Annotations[i - 1].Type ==
+                 TokenAnnotation::TT_ObjCMethodSpecifier)
+        Annotation.SpaceRequiredBefore = true;
+      else if (Annotations[i - 1].Type == TokenAnnotation::TT_UnaryOperator) {
         Annotation.SpaceRequiredBefore = false;
       } else if (Annotation.Type == TokenAnnotation::TT_UnaryOperator) {
         Annotation.SpaceRequiredBefore =
@@ -584,7 +615,17 @@ public:
       } else if (Line.Tokens[i].Tok.is(tok::less) &&
                  Line.Tokens[0].Tok.is(tok::hash)) {
         Annotation.SpaceRequiredBefore = true;
-      } else {
+      } else if (IsObjCMethodDecl &&
+                 Line.Tokens[i - 1].Tok.is(tok::r_paren) &&
+                 Line.Tokens[i].Tok.is(tok::identifier))
+        // Don't space between ')' and <id>
+        Annotation.SpaceRequiredBefore = false;
+      else if (IsObjCMethodDecl &&
+               Line.Tokens[i - 1].Tok.is(tok::colon) &&
+               Line.Tokens[i].Tok.is(tok::l_paren))
+        // Don't space between ':' and '('
+        Annotation.SpaceRequiredBefore = false;
+      else {
         Annotation.SpaceRequiredBefore =
             spaceRequiredBetween(Line.Tokens[i - 1].Tok, Line.Tokens[i].Tok);
       }
@@ -618,6 +659,9 @@ private:
 
       if (Tok.Tok.is(tok::star) || Tok.Tok.is(tok::amp))
         Annotation.Type = determineStarAmpUsage(i, AssignmentEncountered);
+      else if ((Tok.Tok.is(tok::minus) || Tok.Tok.is(tok::plus)) &&
+               Tok.Tok.isAtStartOfLine())
+        Annotation.Type = TokenAnnotation::TT_ObjCMethodSpecifier;
       else if (isUnaryOperator(i))
         Annotation.Type = TokenAnnotation::TT_UnaryOperator;
       else if (isBinaryOperator(Line.Tokens[i]))
@@ -710,6 +754,8 @@ private:
     if (Left.is(tok::arrow) || Right.is(tok::arrow))
       return false;
     if (Left.is(tok::exclaim) || Left.is(tok::tilde))
+      return false;
+    if (Left.is(tok::at) && Right.is(tok::identifier))
       return false;
     if (Left.is(tok::less) || Right.is(tok::greater) || Right.is(tok::less))
       return false;

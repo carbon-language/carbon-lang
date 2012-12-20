@@ -1,6 +1,5 @@
 // RUN: rm -rf %t
 // RUN: mkdir %t
-// RUN: env LIBCLANG_ACTIVATE_FORMAT=1 \
 // RUN: c-index-test -test-load-source all -comments-xml-schema=%S/../../bindings/xml/comment-xml-schema.rng -target x86_64-apple-darwin10 %s \ 
 // RUN: | FileCheck %s 
 
