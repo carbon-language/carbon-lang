@@ -315,8 +315,7 @@ public:
   /// the specified predecessor block.
   static void AddPHIOperand(MachineInstr *PHI, unsigned Val,
                             MachineBasicBlock *Pred) {
-    PHI->addOperand(MachineOperand::CreateReg(Val, false));
-    PHI->addOperand(MachineOperand::CreateMBB(Pred));
+    MachineInstrBuilder(*Pred->getParent(), PHI).addReg(Val).addMBB(Pred);
   }
 
   /// InstrIsPHI - Check if an instruction is a PHI.

@@ -19,6 +19,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/MachineBranchProbabilityInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
@@ -994,14 +995,13 @@ static void UpdatePredRedefs(MachineInstr *MI, SmallSet<unsigned,4> &Redefs,
         Redefs.erase(*SubRegs);
     }
   }
+  MachineInstrBuilder MIB(*MI->getParent()->getParent(), MI);
   for (unsigned i = 0, e = Defs.size(); i != e; ++i) {
     unsigned Reg = Defs[i];
     if (!Redefs.insert(Reg)) {
       if (AddImpUse)
         // Treat predicated update as read + write.
-        MI->addOperand(MachineOperand::CreateReg(Reg, false/*IsDef*/,
-                                              true/*IsImp*/,false/*IsKill*/,
-                                              false/*IsDead*/,true/*IsUndef*/));
+        MIB.addReg(Reg, RegState::Implicit | RegState::Undef);
     } else {
       for (MCSubRegIterator SubRegs(Reg, TRI); SubRegs.isValid(); ++SubRegs)
         Redefs.insert(*SubRegs);

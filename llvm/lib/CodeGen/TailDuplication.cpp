@@ -461,6 +461,7 @@ TailDuplicatePass::UpdateSuccessorsPHIs(MachineBasicBlock *FromBB, bool isDead,
          II != EE; ++II) {
       if (!II->isPHI())
         break;
+      MachineInstrBuilder MIB(*FromBB->getParent(), II);
       unsigned Idx = 0;
       for (unsigned i = 1, e = II->getNumOperands(); i != e; i += 2) {
         MachineOperand &MO = II->getOperand(i+1);
@@ -508,8 +509,7 @@ TailDuplicatePass::UpdateSuccessorsPHIs(MachineBasicBlock *FromBB, bool isDead,
             II->getOperand(Idx+1).setMBB(SrcBB);
             Idx = 0;
           } else {
-            II->addOperand(MachineOperand::CreateReg(SrcReg, false));
-            II->addOperand(MachineOperand::CreateMBB(SrcBB));
+            MIB.addReg(SrcReg).addMBB(SrcBB);
           }
         }
       } else {
@@ -521,8 +521,7 @@ TailDuplicatePass::UpdateSuccessorsPHIs(MachineBasicBlock *FromBB, bool isDead,
             II->getOperand(Idx+1).setMBB(SrcBB);
             Idx = 0;
           } else {
-            II->addOperand(MachineOperand::CreateReg(Reg, false));
-            II->addOperand(MachineOperand::CreateMBB(SrcBB));
+            MIB.addReg(Reg).addMBB(SrcBB);
           }
         }
       }

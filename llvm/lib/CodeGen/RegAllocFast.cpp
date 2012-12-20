@@ -822,10 +822,8 @@ void RAFast::addRetOperands(MachineBasicBlock *MBB) {
       }
     }
     if (!Found)
-      MI->addOperand(MachineOperand::CreateReg(Reg,
-                                               false /*IsDef*/,
-                                               true  /*IsImp*/,
-                                               hasDef/*IsKill*/));
+      MachineInstrBuilder(*MF, MI)
+        .addReg(Reg, llvm::RegState::Implicit | getKillRegState(hasDef));
   }
 }
 
