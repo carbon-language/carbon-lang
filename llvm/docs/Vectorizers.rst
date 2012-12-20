@@ -15,7 +15,7 @@ The Loop Vectorizer
 Usage
 ^^^^^^
 
-LLVM’s Loop Vectorizer is now available and will be useful for many people.
+LLVM's Loop Vectorizer is now available and will be useful for many people.
 It is not enabled by default, but can be enabled through clang using the
 command line flag:
 
@@ -41,7 +41,7 @@ Loops with unknown trip count
 The Loop Vectorizer supports loops with an unknown trip count.
 In the loop below, the iteration ``start`` and ``finish`` points are unknown,
 and the Loop Vectorizer has a mechanism to vectorize loops that do not start
-at zero. In this example, ‘n’ may not be a multiple of the vector width, and
+at zero. In this example, 'n' may not be a multiple of the vector width, and
 the vectorizer has to execute the last few iterations as scalar code. Keeping
 a scalar copy of the loop increases the code size.
 
@@ -79,7 +79,7 @@ Reductions
 
 In this example the ``sum`` variable is used by consecutive iterations of 
 the loop. Normally, this would prevent vectorization, but the vectorizer can
-detect that ‘sum’ is a reduction variable. The variable ‘sum’ becomes a vector
+detect that 'sum' is a reduction variable. The variable 'sum' becomes a vector
 of integers, and at the end of the loop the elements of the array are added
 together to create the correct result. We support a number of different 
 reduction operations, such as addition, multiplication, XOR, AND and OR.
