@@ -18,6 +18,7 @@ set(COMPILER_RT_GTEST_INCLUDE_CFLAGS
 macro(add_compiler_rt_test test_suite test_name)
   parse_arguments(TEST "OBJECTS;DEPS;LINK_FLAGS" "" ${ARGN})
   get_unittest_directory(OUTPUT_DIR)
+  file(MAKE_DIRECTORY ${OUTPUT_DIR})
   set(output_bin "${OUTPUT_DIR}/${test_name}")
   add_custom_command(
     OUTPUT ${output_bin}
