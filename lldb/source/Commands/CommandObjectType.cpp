@@ -1054,7 +1054,9 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
         ScriptInterpreter *interpreter = m_interpreter.GetScriptInterpreter();
         
         if (interpreter && interpreter->CheckObjectExists(funct_name) == false)
-            result.AppendWarning("The provided function does not exist - please define it before attempting to use this summary");
+            result.AppendWarningWithFormat("The provided function \"%s\" does not exist - "
+                                           "please define it before attempting to use this summary.\n",
+                                           funct_name);
     }
     else if (!m_options.m_python_script.empty()) // we have a quick 1-line script, just use it
     {
