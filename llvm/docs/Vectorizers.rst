@@ -13,7 +13,7 @@ The Loop Vectorizer
 ===================
 
 Usage
-^^^^^^
+-----
 
 LLVM's Loop Vectorizer is now available and will be useful for many people.
 It is not enabled by default, but can be enabled through clang using the
@@ -30,13 +30,13 @@ will only vectorize loops that do not require a major increase in code size.
 We plan to enable the Loop Vectorizer by default as part of the LLVM 3.3 release.
 
 Features
-^^^^^^^^^
+--------
 
 The LLVM Loop Vectorizer has a number of features that allow it to vectorize
 complex loops.
 
 Loops with unknown trip count
-------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Loop Vectorizer supports loops with an unknown trip count.
 In the loop below, the iteration ``start`` and ``finish`` points are unknown,
@@ -53,7 +53,7 @@ a scalar copy of the loop increases the code size.
   }
 
 Runtime Checks of Pointers
---------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 In the example below, if the pointers A and B point to consecutive addresses,
 then it is illegal to vectorize the code because some elements of A will be
@@ -75,7 +75,7 @@ of the loop is executed.
 
 
 Reductions
---------------------------
+^^^^^^^^^^
 
 In this example the ``sum`` variable is used by consecutive iterations of 
 the loop. Normally, this would prevent vectorization, but the vectorizer can
@@ -94,7 +94,7 @@ reduction operations, such as addition, multiplication, XOR, AND and OR.
   }
 
 Inductions
---------------------------
+^^^^^^^^^^
 
 In this example the value of the induction variable ``i`` is saved into an
 array. The Loop Vectorizer knows to vectorize induction variables.
@@ -107,7 +107,7 @@ array. The Loop Vectorizer knows to vectorize induction variables.
   }
 
 If Conversion
---------------------------
+^^^^^^^^^^^^^
 
 The Loop Vectorizer is able to "flatten" the IF statement in the code and
 generate a single stream of instructions. The Loop Vectorizer supports any
@@ -125,7 +125,7 @@ nesting of IFs, ELSEs and even GOTOs.
   }
 
 Pointer Induction Variables
----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 This example uses the "accumulate" function of the standard c++ library. This
 loop uses C++ iterators, which are pointers, and not integer indices.
@@ -139,7 +139,7 @@ this loop. This feature is important because many C++ programs use iterators.
   }
 
 Reverse Iterators
---------------------------
+^^^^^^^^^^^^^^^^^
 
 The Loop Vectorizer can vectorize loops that count backwards.
 
@@ -151,7 +151,7 @@ The Loop Vectorizer can vectorize loops that count backwards.
   }
 
 Scatter / Gather
-----------------
+^^^^^^^^^^^^^^^^
 
 The Loop Vectorizer can vectorize code that becomes scatter/gather 
 memory accesses. 
@@ -164,7 +164,7 @@ memory accesses.
   }
 
 Vectorization of Mixed Types
-----------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Loop Vectorizer can vectorize programs with mixed types. The Vectorizer
 cost model can estimate the cost of the type conversion and decide if
@@ -178,7 +178,7 @@ vectorization is profitable.
   }
 
 Vectorization of function calls
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The Loop Vectorize can vectorize intrinsic math functions.
 See the table below for a list of these functions.
@@ -196,7 +196,7 @@ See the table below for a list of these functions.
 +-----+-----+---------+
 
 Performance
-^^^^^^^^^^^
+-----------
 
 This section shows the the execution time of Clang on a simple benchmark: 
 `gcc-loops <http://llvm.org/viewvc/llvm-project/test-suite/trunk/SingleSource/UnitTests/Vectorizer/>`_.
@@ -212,7 +212,7 @@ The Basic Block Vectorizer
 ==========================
 
 Usage
-^^^^^^
+------
 
 The Basic Block Vectorizer is not enabled by default, but it can be enabled
 through clang using the command line flag:
@@ -222,7 +222,7 @@ through clang using the command line flag:
    $ clang -fslp-vectorize file.c 
 
 Details
-^^^^^^^
+-------
 
 The goal of basic-block vectorization (a.k.a. superword-level parallelism) is
 to combine similar independent instructions within simple control-flow regions
