@@ -18,7 +18,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (148):
+CHECK: Warnings without flags (147):
 CHECK-NEXT:   ext_delete_void_ptr_operand
 CHECK-NEXT:   ext_enum_friend
 CHECK-NEXT:   ext_expected_semi_decl_list
@@ -106,7 +106,6 @@ CHECK-NEXT:   warn_not_compound_assign
 CHECK-NEXT:   warn_objc_property_copy_missing_on_block
 CHECK-NEXT:   warn_objc_protocol_qualifier_missing_id
 CHECK-NEXT:   warn_octal_escape_too_large
-CHECK-NEXT:   warn_odr_tag_type_inconsistent
 CHECK-NEXT:   warn_on_superclass_use
 CHECK-NEXT:   warn_param_default_argument_redefinition
 CHECK-NEXT:   warn_partial_specs_not_deducible

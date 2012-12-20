@@ -366,9 +366,12 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
     C.PrintDiagnosticJob(OS, C.getJobs());
   OS.flush();
 
-  // Clear stale state and suppress tool output.
+  // Keep track of whether we produce any errors while trying to produce
+  // preprocessed sources.
+  DiagnosticErrorTrap Trap(Diags);
+
+  // Suppress tool output.
   C.initCompilationForDiagnostics();
-  Diags.Reset();
 
   // Construct the list of inputs.
   InputList Inputs;
@@ -430,7 +433,7 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
   BuildJobs(C);
 
   // If there were errors building the compilation, quit now.
-  if (Diags.hasErrorOccurred()) {
+  if (Trap.hasErrorOccurred()) {
     Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "Error generating preprocessed source(s).";
     return;

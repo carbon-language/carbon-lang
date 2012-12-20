@@ -206,12 +206,16 @@ namespace {
     /// \brief Whether to complain about failures.
     bool Complain;
 
+    /// \brief \c true if the last diagnostic came from C2.
+    bool LastDiagFromC2;
+
     StructuralEquivalenceContext(ASTContext &C1, ASTContext &C2,
                llvm::DenseSet<std::pair<Decl *, Decl *> > &NonEquivalentDecls,
                                  bool StrictTypeSpelling = false,
                                  bool Complain = true)
       : C1(C1), C2(C2), NonEquivalentDecls(NonEquivalentDecls),
-        StrictTypeSpelling(StrictTypeSpelling), Complain(Complain) { }
+        StrictTypeSpelling(StrictTypeSpelling), Complain(Complain),
+        LastDiagFromC2(false) {}
 
     /// \brief Determine whether the two declarations are structurally
     /// equivalent.
@@ -229,11 +233,17 @@ namespace {
   public:
     DiagnosticBuilder Diag1(SourceLocation Loc, unsigned DiagID) {
       assert(Complain && "Not allowed to complain");
+      if (LastDiagFromC2)
+        C1.getDiagnostics().notePriorDiagnosticFrom(C2.getDiagnostics());
+      LastDiagFromC2 = false;
       return C1.getDiagnostics().Report(Loc, DiagID);
     }
 
     DiagnosticBuilder Diag2(SourceLocation Loc, unsigned DiagID) {
       assert(Complain && "Not allowed to complain");
+      if (!LastDiagFromC2)
+        C2.getDiagnostics().notePriorDiagnosticFrom(C1.getDiagnostics());
+      LastDiagFromC2 = true;
       return C2.getDiagnostics().Report(Loc, DiagID);
     }
   };
@@ -4319,7 +4329,7 @@ ASTImporter::ASTImporter(ASTContext &ToContext, FileManager &ToFileManager,
                          bool MinimalImport)
   : ToContext(ToContext), FromContext(FromContext),
     ToFileManager(ToFileManager), FromFileManager(FromFileManager),
-    Minimal(MinimalImport) 
+    Minimal(MinimalImport), LastDiagFromFrom(false)
 {
   ImportedDecls[FromContext.getTranslationUnitDecl()]
     = ToContext.getTranslationUnitDecl();
@@ -4822,10 +4832,18 @@ DeclarationName ASTImporter::HandleNameConflict(DeclarationName Name,
 }
 
 DiagnosticBuilder ASTImporter::ToDiag(SourceLocation Loc, unsigned DiagID) {
+  if (LastDiagFromFrom)
+    ToContext.getDiagnostics().notePriorDiagnosticFrom(
+      FromContext.getDiagnostics());
+  LastDiagFromFrom = false;
   return ToContext.getDiagnostics().Report(Loc, DiagID);
 }
 
 DiagnosticBuilder ASTImporter::FromDiag(SourceLocation Loc, unsigned DiagID) {
+  if (!LastDiagFromFrom)
+    FromContext.getDiagnostics().notePriorDiagnosticFrom(
+      ToContext.getDiagnostics());
+  LastDiagFromFrom = true;
   return FromContext.getDiagnostics().Report(Loc, DiagID);
 }
 

@@ -108,11 +108,7 @@ void DiagnosticsEngine::Reset() {
   TrapNumUnrecoverableErrorsOccurred = 0;
   
   CurDiagID = ~0U;
-  // Set LastDiagLevel to an "unset" state. If we set it to 'Ignored', notes
-  // using a DiagnosticsEngine associated to a translation unit that follow
-  // diagnostics from a DiagnosticsEngine associated to anoter t.u. will not be
-  // displayed.
-  LastDiagLevel = (DiagnosticIDs::Level)-1;
+  LastDiagLevel = DiagnosticIDs::Ignored;
   DelayedDiagID = 0;
 
   // Clear state related to #pragma diagnostic.
