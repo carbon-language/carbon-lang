@@ -6,6 +6,7 @@ set(TSAN_SOURCES
   tsan_interface_ann.cc
   tsan_interface_atomic.cc
   tsan_interface.cc
+  tsan_interface_java.cc
   tsan_md5.cc
   tsan_mman.cc
   tsan_mutex.cc
