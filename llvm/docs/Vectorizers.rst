@@ -54,8 +54,8 @@ a scalar copy of the loop increases the code size.
 .. code-block:: c++
 
   void bar(float *A, float* B, float K, int start, int end) {
-   for (int i = start; i < end; ++i)
-     A[i] *= B[i] + K;
+    for (int i = start; i < end; ++i)
+      A[i] *= B[i] + K;
   }
 
 Runtime Checks of Pointers
@@ -75,8 +75,8 @@ of the loop is executed.
 .. code-block:: c++
 
   void bar(float *A, float* B, float K, int n) {
-   for (int i = 0; i < n; ++i)
-     A[i] *= B[i] + K;
+    for (int i = 0; i < n; ++i)
+      A[i] *= B[i] + K;
   }
 
 
@@ -108,8 +108,8 @@ array. The Loop Vectorizer knows to vectorize induction variables.
 .. code-block:: c++
 
   void bar(float *A, float* B, float K, int n) {
-   for (int i = 0; i < n; ++i)
-     A[i] = i;
+    for (int i = 0; i < n; ++i)
+      A[i] = i;
   }
 
 If Conversion
@@ -165,8 +165,8 @@ memory accesses.
 .. code-block:: c++
 
   int foo(int *A, int *B, int n, int k) {
-  for (int i = 0; i < n; ++i)
-      A[i*7] += B[i*k];
+    for (int i = 0; i < n; ++i)
+        A[i*7] += B[i*k];
   }
 
 Vectorization of Mixed Types
@@ -179,8 +179,8 @@ vectorization is profitable.
 .. code-block:: c++
 
   int foo(int *A, char *B, int n, int k) {
-  for (int i = 0; i < n; ++i)
-      A[i] += 4 * B[i];
+    for (int i = 0; i < n; ++i)
+        A[i] += 4 * B[i];
   }
 
 Vectorization of function calls
