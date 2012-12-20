@@ -44,7 +44,7 @@ VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
                     cl::desc("Sets the SIMD width. Zero is autoselect."));
 
 static cl::opt<bool>
-EnableIfConversion("enable-if-conversion", cl::init(false), cl::Hidden,
+EnableIfConversion("enable-if-conversion", cl::init(true), cl::Hidden,
                    cl::desc("Enable if-conversion during vectorization."));
 
 namespace {
