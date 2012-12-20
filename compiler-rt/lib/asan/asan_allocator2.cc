@@ -196,9 +196,7 @@ class Quarantine: public AsanChunkFifoList {
     PushList(q);
     PopAndDeallocateLoop(ms);
   }
-  void SwallowThreadLocalCache(AllocatorCache *cache) {
-    // FIXME.
-  }
+
   void BypassThreadLocalQuarantine(AsanChunk *m) {
     SpinMutexLock l(&mutex_);
     Push(m);
@@ -225,6 +223,12 @@ class Quarantine: public AsanChunkFifoList {
     void *p = reinterpret_cast<void *>(alloc_beg);
     if (m->from_memalign)
       p = allocator.GetBlockBegin(p);
+
+    // Statistics.
+    AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
+    thread_stats.real_frees++;
+    thread_stats.really_freed += m->UsedSize();
+
     allocator.Deallocate(GetAllocatorCache(ms), p);
   }
   SpinMutex mutex_;
@@ -308,6 +312,10 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
     *shadow = size & (SHADOW_GRANULARITY - 1);
   }
 
+  AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
+  thread_stats.mallocs++;
+  thread_stats.malloced += size;
+
   void *res = reinterpret_cast<void *>(user_beg);
   ASAN_MALLOC_HOOK(res, size);
   return res;
@@ -340,6 +348,10 @@ static void Deallocate(void *ptr, StackTrace *stack) {
   PoisonShadow(m->Beg(),
                RoundUpTo(m->user_requested_size, SHADOW_GRANULARITY),
                kAsanHeapFreeMagic);
+
+  AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
+  thread_stats.frees++;
+  thread_stats.freed += m->UsedSize();
 
   // Push into quarantine.
   if (t) {
@@ -432,7 +444,7 @@ AsanChunkView FindHeapChunkByAddress(uptr addr) {
 
 void AsanThreadLocalMallocStorage::CommitBack() {
   quarantine.SwallowThreadLocalQuarantine(this);
-  quarantine.SwallowThreadLocalCache(GetAllocatorCache(this));
+  allocator.SwallowCache(GetAllocatorCache(this));
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
@@ -517,20 +529,24 @@ void asan_mz_force_unlock() {
 using namespace __asan;  // NOLINT
 
 // ASan allocator doesn't reserve extra bytes, so normally we would
-// just return "size".
+// just return "size". We don't want to expose our redzone sizes, etc here.
 uptr __asan_get_estimated_allocated_size(uptr size) {
-  UNIMPLEMENTED();
-  return 0;
+  return size;
 }
 
 bool __asan_get_ownership(const void *p) {
-  UNIMPLEMENTED();
-  return false;
+  return AllocationSize(reinterpret_cast<uptr>(p)) > 0;
 }
 
 uptr __asan_get_allocated_size(const void *p) {
-  UNIMPLEMENTED();
-  return 0;
+  if (p == 0) return 0;
+  uptr allocated_size = AllocationSize(reinterpret_cast<uptr>(p));
+  // Die if p is not malloced or if it is already freed.
+  if (allocated_size == 0) {
+    GET_STACK_TRACE_FATAL_HERE;
+    ReportAsanGetAllocatedSizeNotOwned(reinterpret_cast<uptr>(p), &stack);
+  }
+  return allocated_size;
 }
 
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS

@@ -345,7 +345,11 @@ TEST(AddressSanitizer, MemsetWildAddressTest) {
 }
 
 TEST(AddressSanitizerInterface, GetEstimatedAllocatedSize) {
+#if ASAN_ALLOCATOR_VERSION == 1
   EXPECT_EQ(1U, __asan_get_estimated_allocated_size(0));
+#elif ASAN_ALLOCATOR_VERSION == 2
+  EXPECT_EQ(0U, __asan_get_estimated_allocated_size(0));
+#endif
   const size_t sizes[] = { 1, 30, 1<<30 };
   for (size_t i = 0; i < 3; i++) {
     EXPECT_EQ(sizes[i], __asan_get_estimated_allocated_size(sizes[i]));
@@ -410,6 +414,7 @@ static void DoDoubleFree() {
   delete Ident(x);
 }
 
+#if ASAN_ALLOCATOR_VERSION == 1
 // This test is run in a separate process, so that large malloced
 // chunk won't remain in the free lists after the test.
 // Note: use ASSERT_* instead of EXPECT_* here.
@@ -441,9 +446,26 @@ static void RunGetHeapSizeTestAndDie() {
 TEST(AddressSanitizerInterface, GetHeapSizeTest) {
   EXPECT_DEATH(RunGetHeapSizeTestAndDie(), "double-free");
 }
+#elif ASAN_ALLOCATOR_VERSION == 2
+TEST(AddressSanitizerInterface, GetHeapSizeTest) {
+  // asan_allocator2 does not keep huge chunks in free list, but unmaps them.
+  // The chunk should be greater than the quarantine size,
+  // otherwise it will be stuck in quarantine instead of being unmaped.
+  static const size_t kLargeMallocSize = 1 << 28;  // 256M
+  uptr old_heap_size = __asan_get_heap_size();
+  for (int i = 0; i < 3; i++) {
+    // fprintf(stderr, "allocating %zu bytes:\n", kLargeMallocSize);
+    free(Ident(malloc(kLargeMallocSize)));
+    EXPECT_EQ(old_heap_size, __asan_get_heap_size());
+  }
+}
+#endif
 
 // Note: use ASSERT_* instead of EXPECT_* here.
 static void DoLargeMallocForGetFreeBytesTestAndDie() {
+#if ASAN_ALLOCATOR_VERSION == 1
+  // asan_allocator2 does not keep large chunks in free_lists, so this test
+  // will not work.
   size_t old_free_bytes, new_free_bytes;
   static const size_t kLargeMallocSize = 1 << 29;  // 512M
   // If we malloc and free a large memory chunk, it will not fall
@@ -455,6 +477,7 @@ static void DoLargeMallocForGetFreeBytesTestAndDie() {
   new_free_bytes = __asan_get_free_bytes();
   fprintf(stderr, "free bytes after malloc and free: %zu\n", new_free_bytes);
   ASSERT_GE(new_free_bytes, old_free_bytes + kLargeMallocSize);
+#endif  // ASAN_ALLOCATOR_VERSION
   // Test passed.
   DoDoubleFree();
 }
