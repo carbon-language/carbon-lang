@@ -15,8 +15,8 @@
 
 namespace clang {
 
-prec::Level clang::getBinOpPrecedence(
-    tok::TokenKind Kind, bool GreaterThanIsOperator, bool CPlusPlus0x) {
+prec::Level getBinOpPrecedence(tok::TokenKind Kind, bool GreaterThanIsOperator,
+                               bool CPlusPlus0x) {
   switch (Kind) {
   case tok::greater:
     // C++ [temp.names]p3:
