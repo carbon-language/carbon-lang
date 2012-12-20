@@ -58,9 +58,11 @@ PlatformDarwin::LocateExecutableScriptingResource (const ModuleSpec &module_spec
     const UUID *uuid = module_spec.GetUUIDPtr();
     
     const char* module_directory = exec_fspec->GetDirectory().GetCString();
-    // XXX some extensions might be meaningful and should not be stripped - if this ever bites us
-    // we should be ready to deal with it accordingly (i.e. by having a per-platform list of those
-    // magic special extensions that actually mean something)
+
+    // NB some extensions might be meaningful and should not be stripped - "this.binary.file"
+    // should not lose ".file" but GetFileNameStrippingExtension() will do precisely that.
+    // Ideally, we should have a per-platform list of extensions (".exe", ".app", ".dSYM", ".framework")
+    // which should be stripped while leaving "this.binary.file" as-is.
     const char* module_basename = exec_fspec->GetFileNameStrippingExtension().GetCString();
     
     if (!module_directory || !module_basename)
@@ -72,10 +74,10 @@ PlatformDarwin::LocateExecutableScriptingResource (const ModuleSpec &module_spec
                         arch ? arch->GetArchitectureName() : "<NULL>",
                         uuid);
     
-    // FIXME: for Python, we cannot allow dots in the middle of the filenames we import
-    // theoretically, different scripting languages will have different sets of
-    // forbidden tokens in filenames, and that should be dealt with by each ScriptInterpreter
-    // for now, we just replace dots with underscores, but if we ever support anything
+    // FIXME: for Python, we cannot allow dots in the middle of the filenames we import.
+    // Theoretically, different scripting languages may have different sets of
+    // forbidden tokens in filenames, and that should be dealt with by each ScriptInterpreter.
+    // For now, we just replace dots with underscores, but if we ever support anything
     // other than Python we will need to rework this
     std::auto_ptr<char> module_basename_fixed_ap(new char[strlen(module_basename)+1]);
     char* module_basename_fixed = module_basename_fixed_ap.get();
