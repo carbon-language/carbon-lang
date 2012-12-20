@@ -850,14 +850,6 @@ def ADJCALLSTACKUP   : MipsPseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
                                   [(callseq_end timm:$amt1, timm:$amt2)]>;
 }
 
-// When handling PIC code the assembler needs .cpload and .cprestore
-// directives. If the real instructions corresponding these directives
-// are used, we have the same behavior, but get also a bunch of warnings
-// from the assembler.
-let neverHasSideEffects = 1 in
-def CPRESTORE : PseudoSE<(outs), (ins i32imm:$loc, CPURegs:$gp),
-                         ".cprestore\t$loc", []>;
-
 let usesCustomInserter = 1 in {
   defm ATOMIC_LOAD_ADD_I8   : Atomic2Ops32<atomic_load_add_8, "load_add_8">;
   defm ATOMIC_LOAD_ADD_I16  : Atomic2Ops32<atomic_load_add_16, "load_add_16">;
