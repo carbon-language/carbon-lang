@@ -59,9 +59,6 @@ class MEMInst_V4<dag outs, dag ins, string asmstr, list<dag> pattern>
   bits<6> imm6;
 }
 
-class Immext<dag outs, dag ins, string asmstr, list<dag> pattern>
-  : InstHexagon<outs, ins, asmstr, pattern, "", PREFIX, TypePREFIX> {
-  let isCodeGenOnly = 1;
-
-  bits<26> imm26;
-}
+let isCodeGenOnly = 1 in
+class EXTENDERInst<dag outs, dag ins, string asmstr, list<dag> pattern = []>
+  : InstHexagon<outs, ins, asmstr, pattern, "", PREFIX, TypePREFIX>;

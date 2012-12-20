@@ -12,10 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 let neverHasSideEffects = 1 in
-def IMMEXT : Immext<(outs), (ins),
-                    "/* immext #... */",
-                    []>,
-             Requires<[HasV4T]>;
+class T_Immext<dag ins> :
+  EXTENDERInst<(outs), ins, "immext(#$imm)", []>,
+  Requires<[HasV4T]>;
+
+def IMMEXT_b : T_Immext<(ins brtarget:$imm)>;
+def IMMEXT_c : T_Immext<(ins calltarget:$imm)>;
+def IMMEXT_g : T_Immext<(ins globaladdress:$imm)>;
+def IMMEXT_i : T_Immext<(ins u26_6Imm:$imm)>;
 
 // Hexagon V4 Architecture spec defines 8 instruction classes:
 // LD ST ALU32 XTYPE J JR MEMOP NV CR SYSTEM(system is not implemented in the
@@ -83,86 +87,77 @@ def IMMEXT : Immext<(outs), (ins),
 
 // Shift halfword.
 
-let isPredicated = 1 in
+let isPredicated = 1, neverHasSideEffects = 1, validSubTargets = HasV4SubT in {
 def ASLH_cPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1) $dst = aslh($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def ASLH_cNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1) $dst = aslh($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def ASLH_cdnPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1.new) $dst = aslh($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def ASLH_cdnNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1.new) $dst = aslh($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def ASRH_cPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1) $dst = asrh($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def ASRH_cNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1) $dst = asrh($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def ASRH_cdnPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1.new) $dst = asrh($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def ASRH_cdnNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1.new) $dst = asrh($src2)",
             []>,
             Requires<[HasV4T]>;
+}
 
 // Sign extend.
 
-let isPredicated = 1 in
+let isPredicated = 1, neverHasSideEffects = 1, validSubTargets = HasV4SubT in {
 def SXTB_cPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1) $dst = sxtb($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def SXTB_cNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1) $dst = sxtb($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def SXTB_cdnPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1.new) $dst = sxtb($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def SXTB_cdnNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1.new) $dst = sxtb($src2)",
@@ -170,94 +165,86 @@ def SXTB_cdnNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             Requires<[HasV4T]>;
 
 
-let isPredicated = 1 in
 def SXTH_cPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1) $dst = sxth($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def SXTH_cNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1) $dst = sxth($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def SXTH_cdnPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1.new) $dst = sxth($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let isPredicated = 1 in
 def SXTH_cdnNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1.new) $dst = sxth($src2)",
             []>,
             Requires<[HasV4T]>;
+}
 
 // Zero exten.
 
-let neverHasSideEffects = 1, isPredicated = 1 in
+let neverHasSideEffects = 1, isPredicated = 1, validSubTargets = HasV4SubT in {
 def ZXTB_cPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1) $dst = zxtb($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
 def ZXTB_cNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1) $dst = zxtb($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
 def ZXTB_cdnPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1.new) $dst = zxtb($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
 def ZXTB_cdnNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1.new) $dst = zxtb($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
 def ZXTH_cPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1) $dst = zxth($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
 def ZXTH_cNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1) $dst = zxth($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
 def ZXTH_cdnPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if ($src1.new) $dst = zxth($src2)",
             []>,
             Requires<[HasV4T]>;
 
-let neverHasSideEffects = 1, isPredicated = 1 in
 def ZXTH_cdnNotPt_V4 : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2),
             "if (!$src1.new) $dst = zxth($src2)",
             []>,
             Requires<[HasV4T]>;
+}
 
 // Generate frame index addresses.
-let neverHasSideEffects = 1, isReMaterializable = 1 in
+let neverHasSideEffects = 1, isReMaterializable = 1,
+isExtended = 1, opExtendable = 2, validSubTargets = HasV4SubT in
 def TFR_FI_immext_V4 : ALU32_ri<(outs IntRegs:$dst),
             (ins IntRegs:$src1, s32Imm:$offset),
             "$dst = add($src1, ##$offset)",
