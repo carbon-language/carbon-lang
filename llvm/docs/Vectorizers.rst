@@ -203,8 +203,8 @@ This section shows the the execution time of Clang on a simple benchmark:
 This benchmarks is a collection of loops from the GCC autovectorization 
 `page <http://gcc.gnu.org/projects/tree-ssa/vectorization.html>`_ by Dorit Nuzman.
 
-The chart below compares GCC-4.7, ICC-13, and Clang-SVN at -O3, running on a Sandybridge.
-The Y-axis shows time in msec. Lower is better.
+The chart below compares GCC-4.7, ICC-13, and Clang-SVN with and without loop vectorization at -O3, tuned for "corei7-avx", running on a Sandybridge iMac.
+The Y-axis shows the time in msec. Lower is better. The last column shows the geomean of all the kernels. 
 
 .. image:: gcc-loops.png
 
