@@ -28,6 +28,10 @@ uptr GetListOfModules(LoadedModule *modules, uptr max_modules) {
   UNIMPLEMENTED();
 };
 
+const char *Demangle(const char *MangledName) {
+  return MangledName;
+}
+
 }  // namespace __sanitizer
 
 #endif  // _WIN32
