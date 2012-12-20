@@ -1209,41 +1209,6 @@ void MachineInstr::clearKillInfo() {
   }
 }
 
-/// copyKillDeadInfo - Copies kill / dead operand properties from MI.
-///
-void MachineInstr::copyKillDeadInfo(const MachineInstr *MI) {
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    const MachineOperand &MO = MI->getOperand(i);
-    if (!MO.isReg() || (!MO.isKill() && !MO.isDead()))
-      continue;
-    for (unsigned j = 0, ee = getNumOperands(); j != ee; ++j) {
-      MachineOperand &MOp = getOperand(j);
-      if (!MOp.isIdenticalTo(MO))
-        continue;
-      if (MO.isKill())
-        MOp.setIsKill();
-      else
-        MOp.setIsDead();
-      break;
-    }
-  }
-}
-
-/// copyPredicates - Copies predicate operand(s) from MI.
-void MachineInstr::copyPredicates(const MachineInstr *MI) {
-  assert(!isBundle() && "MachineInstr::copyPredicates() can't handle bundles");
-
-  const MCInstrDesc &MCID = MI->getDesc();
-  if (!MCID.isPredicable())
-    return;
-  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
-    if (MCID.OpInfo[i].isPredicate()) {
-      // Predicated operands must be last operands.
-      addOperand(MI->getOperand(i));
-    }
-  }
-}
-
 void MachineInstr::substituteRegister(unsigned FromReg,
                                       unsigned ToReg,
                                       unsigned SubIdx,

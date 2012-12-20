@@ -847,13 +847,6 @@ public:
   ///
   void clearKillInfo();
 
-  /// copyKillDeadInfo - Copies kill / dead operand properties from MI.
-  ///
-  void copyKillDeadInfo(const MachineInstr *MI);
-
-  /// copyPredicates - Copies predicate operand(s) from MI.
-  void copyPredicates(const MachineInstr *MI);
-
   /// substituteRegister - Replace all occurrences of FromReg with ToReg:SubIdx,
   /// properly composing subreg indices where necessary.
   void substituteRegister(unsigned FromReg, unsigned ToReg, unsigned SubIdx,
