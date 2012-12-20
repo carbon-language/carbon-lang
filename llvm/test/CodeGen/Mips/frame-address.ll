@@ -8,5 +8,5 @@ entry:
   ret i8* %0
 
 ; CHECK:   addu    $fp, $sp, $zero
-; CHECK:   addu    $2, $zero, $fp
+; CHECK:   or      $2, $fp, $zero
 }

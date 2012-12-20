@@ -90,7 +90,7 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 
   if (Mips::CPURegsRegClass.contains(DestReg)) { // Copy to CPU Reg.
     if (Mips::CPURegsRegClass.contains(SrcReg))
-      Opc = Mips::ADDu, ZeroReg = Mips::ZERO;
+      Opc = Mips::OR, ZeroReg = Mips::ZERO;
     else if (Mips::CCRRegClass.contains(SrcReg))
       Opc = Mips::CFC1;
     else if (Mips::FGR32RegClass.contains(SrcReg))
@@ -120,7 +120,7 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
     Opc = Mips::MOVCCRToCCR;
   else if (Mips::CPU64RegsRegClass.contains(DestReg)) { // Copy to CPU64 Reg.
     if (Mips::CPU64RegsRegClass.contains(SrcReg))
-      Opc = Mips::DADDu, ZeroReg = Mips::ZERO_64;
+      Opc = Mips::OR64, ZeroReg = Mips::ZERO_64;
     else if (SrcReg == Mips::HI64)
       Opc = Mips::MFHI64, SrcReg = 0;
     else if (SrcReg == Mips::LO64)
@@ -144,11 +144,11 @@ void MipsSEInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   if (DestReg)
     MIB.addReg(DestReg, RegState::Define);
 
-  if (ZeroReg)
-    MIB.addReg(ZeroReg);
-
   if (SrcReg)
     MIB.addReg(SrcReg, getKillRegState(KillSrc));
+
+  if (ZeroReg)
+    MIB.addReg(ZeroReg);
 }
 
 void MipsSEInstrInfo::

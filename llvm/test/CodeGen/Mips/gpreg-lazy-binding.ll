@@ -2,10 +2,10 @@
 
 @g = external global i32
 
-; CHECK:     addu  $gp
+; CHECK:     or    $gp
 ; CHECK:     jalr  $25
 ; CHECK:     nop
-; CHECK-NOT: addu  $gp
+; CHECK-NOT: or    $gp
 ; CHECK:     jalr  $25
 
 define void @f0() nounwind {
