@@ -174,14 +174,6 @@ namespace llvm {
       VMULLs,       // ...signed
       VMULLu,       // ...unsigned
 
-      // Vector add long:
-      VADDLs,       // ...signed
-      VADDLu,       // ...unsigned
-
-      // Vector subtract long:
-      VSUBLs,       // ...signed
-      VSUBLu,       // ...unsigned
-
       UMLAL,        // 64bit Unsigned Accumulate Multiply
       SMLAL,        // 64bit Signed Accumulate Multiply
 

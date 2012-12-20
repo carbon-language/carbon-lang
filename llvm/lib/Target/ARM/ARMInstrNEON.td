@@ -534,16 +534,10 @@ def NEONzip       : SDNode<"ARMISD::VZIP", SDTARMVSHUF2>;
 def NEONuzp       : SDNode<"ARMISD::VUZP", SDTARMVSHUF2>;
 def NEONtrn       : SDNode<"ARMISD::VTRN", SDTARMVSHUF2>;
 
-def SDTARMVLONG2: SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisInt<1>,
-                                       SDTCisSameAs<1, 2>]>;
-def NEONvmulls    : SDNode<"ARMISD::VMULLs", SDTARMVLONG2>;
-def NEONvmullu    : SDNode<"ARMISD::VMULLu", SDTARMVLONG2>;
-
-def NEONvaddls    : SDNode<"ARMISD::VADDLs", SDTARMVLONG2>;
-def NEONvaddlu    : SDNode<"ARMISD::VADDLu", SDTARMVLONG2>;
-
-def NEONvsubls    : SDNode<"ARMISD::VSUBLs", SDTARMVLONG2>;
-def NEONvsublu    : SDNode<"ARMISD::VSUBLu", SDTARMVLONG2>;
+def SDTARMVMULL   : SDTypeProfile<1, 2, [SDTCisInt<0>, SDTCisInt<1>,
+                                         SDTCisSameAs<1, 2>]>;
+def NEONvmulls    : SDNode<"ARMISD::VMULLs", SDTARMVMULL>;
+def NEONvmullu    : SDNode<"ARMISD::VMULLu", SDTARMVMULL>;
 
 def SDTARMFMAX    : SDTypeProfile<1, 2, [SDTCisVT<0, f32>, SDTCisSameAs<0, 1>,
                                          SDTCisSameAs<0, 2>]>;
@@ -3946,21 +3940,6 @@ defm VADDLs   : N3VLExt_QHS<0,1,0b0000,0, IIC_VSHLiD, IIC_VSHLiD,
                             "vaddl", "s", add, sext, 1>;
 defm VADDLu   : N3VLExt_QHS<1,1,0b0000,0, IIC_VSHLiD, IIC_VSHLiD,
                             "vaddl", "u", add, zext, 1>;
-
-def : Pat<(v4i32 (NEONvaddlu (v4i16 DPR:$src1), (v4i16 DPR:$src2))),
-          (v4i32 (VADDLuv4i32 DPR:$src1, DPR:$src2))>;
-def : Pat<(v8i16 (NEONvaddlu (v8i8 DPR:$src1), (v8i8 DPR:$src2))),
-          (v8i16 (VADDLuv8i16 DPR:$src1, DPR:$src2))>;
-def : Pat<(v2i64 (NEONvaddlu (v2i32 DPR:$src1), (v2i32 DPR:$src2))),
-          (v2i64 (VADDLuv2i64 DPR:$src1, DPR:$src2))>;
-
-def : Pat<(v4i32 (NEONvaddls (v4i16 DPR:$src1), (v4i16 DPR:$src2))),
-          (v4i32 (VADDLsv4i32 DPR:$src1, DPR:$src2))>;
-def : Pat<(v8i16 (NEONvaddls (v8i8 DPR:$src1), (v8i8 DPR:$src2))),
-          (v8i16 (VADDLsv8i16 DPR:$src1, DPR:$src2))>;
-def : Pat<(v2i64 (NEONvaddls (v2i32 DPR:$src1), (v2i32 DPR:$src2))),
-          (v2i64 (VADDLsv2i64 DPR:$src1, DPR:$src2))>;
-
 //   VADDW    : Vector Add Wide (Q = Q + D)
 defm VADDWs   : N3VW_QHS<0,1,0b0001,0, "vaddw", "s", add, sext, 0>;
 defm VADDWu   : N3VW_QHS<1,1,0b0001,0, "vaddw", "u", add, zext, 0>;
@@ -4251,21 +4230,6 @@ defm VSUBLs   : N3VLExt_QHS<0,1,0b0010,0, IIC_VSHLiD, IIC_VSHLiD,
                             "vsubl", "s", sub, sext, 0>;
 defm VSUBLu   : N3VLExt_QHS<1,1,0b0010,0, IIC_VSHLiD, IIC_VSHLiD,
                             "vsubl", "u", sub, zext, 0>;
-
-def : Pat<(v4i32 (NEONvsublu (v4i16 DPR:$src1), (v4i16 DPR:$src2))),
-          (v4i32 (VSUBLuv4i32 DPR:$src1, DPR:$src2))>;
-def : Pat<(v8i16 (NEONvsublu (v8i8 DPR:$src1), (v8i8 DPR:$src2))),
-          (v8i16 (VSUBLuv8i16 DPR:$src1, DPR:$src2))>;
-def : Pat<(v2i64 (NEONvsublu (v2i32 DPR:$src1), (v2i32 DPR:$src2))),
-          (v2i64 (VSUBLuv2i64 DPR:$src1, DPR:$src2))>;
-
-def : Pat<(v4i32 (NEONvsubls (v4i16 DPR:$src1), (v4i16 DPR:$src2))),
-          (v4i32 (VSUBLsv4i32 DPR:$src1, DPR:$src2))>;
-def : Pat<(v8i16 (NEONvsubls (v8i8 DPR:$src1), (v8i8 DPR:$src2))),
-          (v8i16 (VSUBLsv8i16 DPR:$src1, DPR:$src2))>;
-def : Pat<(v2i64 (NEONvsubls (v2i32 DPR:$src1), (v2i32 DPR:$src2))),
-          (v2i64 (VSUBLsv2i64 DPR:$src1, DPR:$src2))>;
-
 //   VSUBW    : Vector Subtract Wide (Q = Q - D)
 defm VSUBWs   : N3VW_QHS<0,1,0b0011,0, "vsubw", "s", sub, sext, 0>;
 defm VSUBWu   : N3VW_QHS<1,1,0b0011,0, "vsubw", "u", sub, zext, 0>;

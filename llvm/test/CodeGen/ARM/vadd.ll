@@ -185,38 +185,6 @@ define <2 x i64> @vaddls32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 	ret <2 x i64> %tmp5
 }
 
-define <8 x i16> @vaddls8_intrinsic(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vaddls8_intrinsic:
-;CHECK: vaddl.s8
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
-	%tmp3 = call <8 x i16> @llvm.arm.neon.vaddls.v8i16(<8 x i8> %tmp1, <8 x i8> %tmp2)
-	ret <8 x i16> %tmp3
-}
-
-define <4 x i32> @vaddls16_intrinsic(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vaddls16_intrinsic:
-;CHECK: vaddl.s16
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
-	%tmp3 = call <4 x i32> @llvm.arm.neon.vaddls.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
-	ret <4 x i32> %tmp3
-}
-
-define <2 x i64> @vaddls32_intrinsic(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vaddls32_intrinsic:
-;CHECK: vaddl.s32
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
-	%tmp3 = call <2 x i64> @llvm.arm.neon.vaddls.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
-	ret <2 x i64> %tmp3
-}
-
-declare <8 x i16> @llvm.arm.neon.vaddls.v8i16(<8 x i8>, <8 x i8>) nounwind readnone
-declare <4 x i32> @llvm.arm.neon.vaddls.v4i32(<4 x i16>, <4 x i16>) nounwind readnone
-declare <2 x i64> @llvm.arm.neon.vaddls.v2i64(<2 x i32>, <2 x i32>) nounwind readnone
-
-
 define <8 x i16> @vaddlu8(<8 x i8>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vaddlu8:
 ;CHECK: vaddl.u8
@@ -249,38 +217,6 @@ define <2 x i64> @vaddlu32(<2 x i32>* %A, <2 x i32>* %B) nounwind {
 	%tmp5 = add <2 x i64> %tmp3, %tmp4
 	ret <2 x i64> %tmp5
 }
-
-define <8 x i16> @vaddlu8_intrinsic(<8 x i8>* %A, <8 x i8>* %B) nounwind {
-;CHECK: vaddlu8_intrinsic:
-;CHECK: vaddl.u8
-	%tmp1 = load <8 x i8>* %A
-	%tmp2 = load <8 x i8>* %B
-	%tmp3 = call <8 x i16> @llvm.arm.neon.vaddlu.v8i16(<8 x i8> %tmp1, <8 x i8> %tmp2)
-	ret <8 x i16> %tmp3
-}
-
-define <4 x i32> @vaddlu16_intrinsic(<4 x i16>* %A, <4 x i16>* %B) nounwind {
-;CHECK: vaddlu16_intrinsic:
-;CHECK: vaddl.u16
-	%tmp1 = load <4 x i16>* %A
-	%tmp2 = load <4 x i16>* %B
-	%tmp3 = call <4 x i32> @llvm.arm.neon.vaddlu.v4i32(<4 x i16> %tmp1, <4 x i16> %tmp2)
-	ret <4 x i32> %tmp3
-}
-
-define <2 x i64> @vaddlu32_intrinsic(<2 x i32>* %A, <2 x i32>* %B) nounwind {
-;CHECK: vaddlu32_intrinsic:
-;CHECK: vaddl.u32
-	%tmp1 = load <2 x i32>* %A
-	%tmp2 = load <2 x i32>* %B
-	%tmp3 = call <2 x i64> @llvm.arm.neon.vaddlu.v2i64(<2 x i32> %tmp1, <2 x i32> %tmp2)
-	ret <2 x i64> %tmp3
-}
-
-declare <8 x i16> @llvm.arm.neon.vaddlu.v8i16(<8 x i8>, <8 x i8>) nounwind readnone
-declare <4 x i32> @llvm.arm.neon.vaddlu.v4i32(<4 x i16>, <4 x i16>) nounwind readnone
-declare <2 x i64> @llvm.arm.neon.vaddlu.v2i64(<2 x i32>, <2 x i32>) nounwind readnone
-
 
 define <8 x i16> @vaddws8(<8 x i16>* %A, <8 x i8>* %B) nounwind {
 ;CHECK: vaddws8:

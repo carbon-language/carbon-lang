@@ -160,8 +160,6 @@ let Properties = [IntrNoMem, Commutative] in {
   def int_arm_neon_vqaddu : Neon_2Arg_Intrinsic;
   def int_arm_neon_vaddhn : Neon_2Arg_Narrow_Intrinsic;
   def int_arm_neon_vraddhn : Neon_2Arg_Narrow_Intrinsic;
-  def int_arm_neon_vaddls : Neon_2Arg_Long_Intrinsic;
-  def int_arm_neon_vaddlu : Neon_2Arg_Long_Intrinsic;
 
   // Vector Multiply.
   def int_arm_neon_vmulp : Neon_2Arg_Intrinsic;
@@ -198,8 +196,6 @@ def int_arm_neon_vqsubs : Neon_2Arg_Intrinsic;
 def int_arm_neon_vqsubu : Neon_2Arg_Intrinsic;
 def int_arm_neon_vsubhn : Neon_2Arg_Narrow_Intrinsic;
 def int_arm_neon_vrsubhn : Neon_2Arg_Narrow_Intrinsic;
-def int_arm_neon_vsubls : Neon_2Arg_Long_Intrinsic;
-def int_arm_neon_vsublu : Neon_2Arg_Long_Intrinsic;
 
 // Vector Absolute Compare.
 def int_arm_neon_vacged : Intrinsic<[llvm_v2i32_ty],

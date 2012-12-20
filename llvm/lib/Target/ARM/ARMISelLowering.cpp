@@ -1007,10 +1007,6 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::VTBL2:         return "ARMISD::VTBL2";
   case ARMISD::VMULLs:        return "ARMISD::VMULLs";
   case ARMISD::VMULLu:        return "ARMISD::VMULLu";
-  case ARMISD::VADDLs:        return "ARMISD::VADDLs";
-  case ARMISD::VADDLu:        return "ARMISD::VADDLu";
-  case ARMISD::VSUBLs:        return "ARMISD::VSUBLs";
-  case ARMISD::VSUBLu:        return "ARMISD::VSUBLu";
   case ARMISD::UMLAL:         return "ARMISD::UMLAL";
   case ARMISD::SMLAL:         return "ARMISD::SMLAL";
   case ARMISD::BUILD_VECTOR:  return "ARMISD::BUILD_VECTOR";
@@ -2430,20 +2426,6 @@ ARMTargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG,
   case Intrinsic::arm_neon_vmullu: {
     unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vmulls)
       ? ARMISD::VMULLs : ARMISD::VMULLu;
-    return DAG.getNode(NewOpc, Op.getDebugLoc(), Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
-  }
-  case Intrinsic::arm_neon_vaddls:
-  case Intrinsic::arm_neon_vaddlu: {
-    unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vaddls)
-      ? ARMISD::VADDLs : ARMISD::VADDLu;
-    return DAG.getNode(NewOpc, Op.getDebugLoc(), Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
-  }
-  case Intrinsic::arm_neon_vsubls:
-  case Intrinsic::arm_neon_vsublu: {
-    unsigned NewOpc = (IntNo == Intrinsic::arm_neon_vsubls)
-      ? ARMISD::VSUBLs: ARMISD::VSUBLu;
     return DAG.getNode(NewOpc, Op.getDebugLoc(), Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
   }
