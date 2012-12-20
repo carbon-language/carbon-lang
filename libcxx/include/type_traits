@@ -617,7 +617,28 @@ struct _LIBCPP_VISIBLE is_base_of
 
 #else  // __has_feature(is_base_of)
 
-#error is_base_of not implemented.
+namespace __is_base_of_imp
+{
+template <class _Tp>
+struct _Dst
+{
+    _Dst(const volatile _Tp &);
+};
+template <class _Tp>
+struct _Src
+{
+    operator const volatile _Tp &();
+    template <class _Up> operator const _Dst<_Up> &();
+};
+template <size_t> struct __one { typedef char type; };
+template <class _Bp, class _Dp> typename __one<sizeof(_Dst<_Bp>(declval<_Src<_Dp> >()))>::type __test(int);
+template <class _Bp, class _Dp> __two __test(...);
+}
+
+template <class _Bp, class _Dp>
+struct _LIBCPP_VISIBLE is_base_of
+    : public integral_constant<bool, is_class<_Bp>::value &&
+                                     sizeof(__is_base_of_imp::__test<_Bp, _Dp>(0)) == 2> {};
 
 #endif  // __has_feature(is_base_of)
 
