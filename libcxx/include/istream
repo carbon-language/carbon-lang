@@ -1243,6 +1243,7 @@ template<class _CharT, class _Traits>
 streamsize
 basic_istream<_CharT, _Traits>::readsome(char_type* __s, streamsize __n)
 {
+    __gc_ = 0;
     streamsize __c = this->rdbuf()->in_avail();
     switch (__c)
     {
