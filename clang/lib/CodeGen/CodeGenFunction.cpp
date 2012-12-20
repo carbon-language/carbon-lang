@@ -354,7 +354,7 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
       for (FunctionDecl::redecl_iterator RI = FD->redecls_begin(),
              RE = FD->redecls_end(); RI != RE; ++RI)
         if (RI->isInlineSpecified()) {
-          Fn->addFnAttr(llvm::Attributes::InlineHint);
+          Fn->addFnAttr(llvm::Attribute::InlineHint);
           break;
         }
 

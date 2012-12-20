@@ -64,8 +64,8 @@ private:
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(ObjectPtrTy,
                                                              params, true),
                                      "objc_msgSend",
-                                     llvm::Attributes::get(CGM.getLLVMContext(),
-                                                llvm::Attributes::NonLazyBind));
+                                     llvm::Attribute::get(CGM.getLLVMContext(),
+                                                llvm::Attribute::NonLazyBind));
   }
 
   /// void objc_msgSend_stret (id, SEL, ...)
@@ -582,8 +582,8 @@ public:
     return CGM.CreateRuntimeFunction(llvm::FunctionType::get(CGM.Int32Ty,
                                                              params, false),
                                      "_setjmp",
-                                     llvm::Attributes::get(CGM.getLLVMContext(),
-                                                llvm::Attributes::NonLazyBind));
+                                     llvm::Attribute::get(CGM.getLLVMContext(),
+                                                llvm::Attribute::NonLazyBind));
   }
 
 public:
