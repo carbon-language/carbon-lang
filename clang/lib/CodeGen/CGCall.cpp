@@ -971,46 +971,46 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   CallingConv = FI.getEffectiveCallingConvention();
 
   if (FI.isNoReturn())
-    FuncAttrs.addAttribute(llvm::Attribute::NoReturn);
+    FuncAttrs.addAttribute(llvm::Attributes::NoReturn);
 
   // FIXME: handle sseregparm someday...
   if (TargetDecl) {
     if (TargetDecl->hasAttr<ReturnsTwiceAttr>())
-      FuncAttrs.addAttribute(llvm::Attribute::ReturnsTwice);
+      FuncAttrs.addAttribute(llvm::Attributes::ReturnsTwice);
     if (TargetDecl->hasAttr<NoThrowAttr>())
-      FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
+      FuncAttrs.addAttribute(llvm::Attributes::NoUnwind);
     else if (const FunctionDecl *Fn = dyn_cast<FunctionDecl>(TargetDecl)) {
       const FunctionProtoType *FPT = Fn->getType()->getAs<FunctionProtoType>();
       if (FPT && FPT->isNothrow(getContext()))
-        FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
+        FuncAttrs.addAttribute(llvm::Attributes::NoUnwind);
     }
 
     if (TargetDecl->hasAttr<NoReturnAttr>())
-      FuncAttrs.addAttribute(llvm::Attribute::NoReturn);
+      FuncAttrs.addAttribute(llvm::Attributes::NoReturn);
 
     if (TargetDecl->hasAttr<ReturnsTwiceAttr>())
-      FuncAttrs.addAttribute(llvm::Attribute::ReturnsTwice);
+      FuncAttrs.addAttribute(llvm::Attributes::ReturnsTwice);
 
     // 'const' and 'pure' attribute functions are also nounwind.
     if (TargetDecl->hasAttr<ConstAttr>()) {
-      FuncAttrs.addAttribute(llvm::Attribute::ReadNone);
-      FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
+      FuncAttrs.addAttribute(llvm::Attributes::ReadNone);
+      FuncAttrs.addAttribute(llvm::Attributes::NoUnwind);
     } else if (TargetDecl->hasAttr<PureAttr>()) {
-      FuncAttrs.addAttribute(llvm::Attribute::ReadOnly);
-      FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
+      FuncAttrs.addAttribute(llvm::Attributes::ReadOnly);
+      FuncAttrs.addAttribute(llvm::Attributes::NoUnwind);
     }
     if (TargetDecl->hasAttr<MallocAttr>())
-      RetAttrs.addAttribute(llvm::Attribute::NoAlias);
+      RetAttrs.addAttribute(llvm::Attributes::NoAlias);
   }
 
   if (CodeGenOpts.OptimizeSize)
-    FuncAttrs.addAttribute(llvm::Attribute::OptimizeForSize);
+    FuncAttrs.addAttribute(llvm::Attributes::OptimizeForSize);
   if (CodeGenOpts.OptimizeSize == 2)
-    FuncAttrs.addAttribute(llvm::Attribute::MinSize);
+    FuncAttrs.addAttribute(llvm::Attributes::MinSize);
   if (CodeGenOpts.DisableRedZone)
-    FuncAttrs.addAttribute(llvm::Attribute::NoRedZone);
+    FuncAttrs.addAttribute(llvm::Attributes::NoRedZone);
   if (CodeGenOpts.NoImplicitFloat)
-    FuncAttrs.addAttribute(llvm::Attribute::NoImplicitFloat);
+    FuncAttrs.addAttribute(llvm::Attributes::NoImplicitFloat);
 
   QualType RetTy = FI.getReturnType();
   unsigned Index = 1;
@@ -1018,9 +1018,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   switch (RetAI.getKind()) {
   case ABIArgInfo::Extend:
    if (RetTy->hasSignedIntegerRepresentation())
-     RetAttrs.addAttribute(llvm::Attribute::SExt);
+     RetAttrs.addAttribute(llvm::Attributes::SExt);
    else if (RetTy->hasUnsignedIntegerRepresentation())
-     RetAttrs.addAttribute(llvm::Attribute::ZExt);
+     RetAttrs.addAttribute(llvm::Attributes::ZExt);
     break;
   case ABIArgInfo::Direct:
   case ABIArgInfo::Ignore:
@@ -1028,18 +1028,18 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
   case ABIArgInfo::Indirect: {
     llvm::AttrBuilder SRETAttrs;
-    SRETAttrs.addAttribute(llvm::Attribute::StructRet);
+    SRETAttrs.addAttribute(llvm::Attributes::StructRet);
     if (RetAI.getInReg())
-      SRETAttrs.addAttribute(llvm::Attribute::InReg);
+      SRETAttrs.addAttribute(llvm::Attributes::InReg);
     PAL.push_back(llvm::
                   AttributeWithIndex::get(Index,
-                                         llvm::Attribute::get(getLLVMContext(),
+                                         llvm::Attributes::get(getLLVMContext(),
                                                                SRETAttrs)));
 
     ++Index;
     // sret disables readnone and readonly
-    FuncAttrs.removeAttribute(llvm::Attribute::ReadOnly)
-      .removeAttribute(llvm::Attribute::ReadNone);
+    FuncAttrs.removeAttribute(llvm::Attributes::ReadOnly)
+      .removeAttribute(llvm::Attributes::ReadNone);
     break;
   }
 
@@ -1050,7 +1050,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
   if (RetAttrs.hasAttributes())
     PAL.push_back(llvm::
                   AttributeWithIndex::get(llvm::AttributeSet::ReturnIndex,
-                                         llvm::Attribute::get(getLLVMContext(),
+                                         llvm::Attributes::get(getLLVMContext(),
                                                                RetAttrs)));
 
   for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
@@ -1062,9 +1062,9 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     if (AI.getPaddingType()) {
       if (AI.getPaddingInReg()) {
         llvm::AttrBuilder PadAttrs;
-        PadAttrs.addAttribute(llvm::Attribute::InReg);
+        PadAttrs.addAttribute(llvm::Attributes::InReg);
 
-        llvm::Attribute A =llvm::Attribute::get(getLLVMContext(), PadAttrs);
+        llvm::Attributes A =llvm::Attributes::get(getLLVMContext(), PadAttrs);
         PAL.push_back(llvm::AttributeWithIndex::get(Index, A));
       }
       // Increment Index if there is padding.
@@ -1077,13 +1077,13 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
     switch (AI.getKind()) {
     case ABIArgInfo::Extend:
       if (ParamType->isSignedIntegerOrEnumerationType())
-        Attrs.addAttribute(llvm::Attribute::SExt);
+        Attrs.addAttribute(llvm::Attributes::SExt);
       else if (ParamType->isUnsignedIntegerOrEnumerationType())
-        Attrs.addAttribute(llvm::Attribute::ZExt);
+        Attrs.addAttribute(llvm::Attributes::ZExt);
       // FALL THROUGH
     case ABIArgInfo::Direct:
       if (AI.getInReg())
-        Attrs.addAttribute(llvm::Attribute::InReg);
+        Attrs.addAttribute(llvm::Attributes::InReg);
 
       // FIXME: handle sseregparm someday...
 
@@ -1093,7 +1093,7 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         if (Attrs.hasAttributes())
           for (unsigned I = 0; I < Extra; ++I)
             PAL.push_back(llvm::AttributeWithIndex::get(Index + I,
-                                         llvm::Attribute::get(getLLVMContext(),
+                                         llvm::Attributes::get(getLLVMContext(),
                                                                Attrs)));
         Index += Extra;
       }
@@ -1101,16 +1101,16 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     case ABIArgInfo::Indirect:
       if (AI.getInReg())
-        Attrs.addAttribute(llvm::Attribute::InReg);
+        Attrs.addAttribute(llvm::Attributes::InReg);
 
       if (AI.getIndirectByVal())
-        Attrs.addAttribute(llvm::Attribute::ByVal);
+        Attrs.addAttribute(llvm::Attributes::ByVal);
 
       Attrs.addAlignmentAttr(AI.getIndirectAlign());
 
       // byval disables readnone and readonly.
-      FuncAttrs.removeAttribute(llvm::Attribute::ReadOnly)
-        .removeAttribute(llvm::Attribute::ReadNone);
+      FuncAttrs.removeAttribute(llvm::Attributes::ReadOnly)
+        .removeAttribute(llvm::Attributes::ReadNone);
       break;
 
     case ABIArgInfo::Ignore:
@@ -1130,14 +1130,14 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
 
     if (Attrs.hasAttributes())
       PAL.push_back(llvm::AttributeWithIndex::get(Index,
-                                         llvm::Attribute::get(getLLVMContext(),
+                                         llvm::Attributes::get(getLLVMContext(),
                                                                Attrs)));
     ++Index;
   }
   if (FuncAttrs.hasAttributes())
     PAL.push_back(llvm::
                   AttributeWithIndex::get(llvm::AttributeSet::FunctionIndex,
-                                         llvm::Attribute::get(getLLVMContext(),
+                                         llvm::Attributes::get(getLLVMContext(),
                                                                FuncAttrs)));
 }
 
@@ -1186,8 +1186,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // Name the struct return argument.
   if (CGM.ReturnTypeUsesSRet(FI)) {
     AI->setName("agg.result");
-    AI->addAttr(llvm::Attribute::get(getLLVMContext(),
-                                      llvm::Attribute::NoAlias));
+    AI->addAttr(llvm::Attributes::get(getLLVMContext(),
+                                      llvm::Attributes::NoAlias));
     ++AI;
   }
 
@@ -1258,8 +1258,8 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         llvm::Value *V = AI;
 
         if (Arg->getType().isRestrictQualified())
-          AI->addAttr(llvm::Attribute::get(getLLVMContext(),
-                                            llvm::Attribute::NoAlias));
+          AI->addAttr(llvm::Attributes::get(getLLVMContext(),
+                                            llvm::Attributes::NoAlias));
 
         // Ensure the argument is the correct type.
         if (V->getType() != ArgI.getCoerceToType())
@@ -2234,7 +2234,7 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
                                                    AttributeList);
 
   llvm::BasicBlock *InvokeDest = 0;
-  if (!Attrs.getFnAttributes().hasAttribute(llvm::Attribute::NoUnwind))
+  if (!Attrs.getFnAttributes().hasAttribute(llvm::Attributes::NoUnwind))
     InvokeDest = getInvokeDest();
 
   llvm::CallSite CS;

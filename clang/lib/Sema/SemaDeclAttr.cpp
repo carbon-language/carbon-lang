@@ -2722,7 +2722,7 @@ static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 }
 
 /// Handle __attribute__((format_arg((idx)))) attribute based on
-/// http://gcc.gnu.org/onlinedocs/gcc/Function-Attribute.html
+/// http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 static void handleFormatArgAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   if (!checkAttributeNumArgs(S, Attr, 1))
     return;
@@ -2824,7 +2824,7 @@ static FormatAttrKind getFormatAttrKind(StringRef Format) {
 }
 
 /// Handle __attribute__((init_priority(priority))) attributes based on
-/// http://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Attribute.html
+/// http://gcc.gnu.org/onlinedocs/gcc/C_002b_002b-Attributes.html
 static void handleInitPriorityAttr(Sema &S, Decl *D,
                                    const AttributeList &Attr) {
   if (!S.getLangOpts().CPlusPlus) {
@@ -2896,7 +2896,7 @@ FormatAttr *Sema::mergeFormatAttr(Decl *D, SourceRange Range, StringRef Format,
 }
 
 /// Handle __attribute__((format(type,idx,firstarg))) attributes based on
-/// http://gcc.gnu.org/onlinedocs/gcc/Function-Attribute.html
+/// http://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
 static void handleFormatAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   if (!Attr.getParameterName()) {

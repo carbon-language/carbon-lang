@@ -2804,7 +2804,7 @@ Decl *Sema::ParsedFreeStandingDeclSpec(Scope *S, AccessSpecifier AS,
 
   // Warn about ignored type attributes, for example:
   // __attribute__((aligned)) struct A;
-  // Attribute should be placed after tag to apply to type declaration.
+  // Attributes should be placed after tag to apply to type declaration.
   if (!DS.getAttributes().empty()) {
     DeclSpec::TST TypeSpecType = DS.getTypeSpecType();
     if (TypeSpecType == DeclSpec::TST_class ||

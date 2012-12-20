@@ -711,8 +711,8 @@ public:
   /// type and name.
   llvm::Constant *CreateRuntimeFunction(llvm::FunctionType *Ty,
                                         StringRef Name,
-                                        llvm::Attribute ExtraAttrs =
-                                          llvm::Attribute());
+                                        llvm::Attributes ExtraAttrs =
+                                          llvm::Attributes());
   /// CreateRuntimeVariable - Create a new runtime global variable with the
   /// specified type and name.
   llvm::Constant *CreateRuntimeVariable(llvm::Type *Ty,
@@ -890,8 +890,8 @@ private:
                                           llvm::Type *Ty,
                                           GlobalDecl D,
                                           bool ForVTable,
-                                          llvm::Attribute ExtraAttrs =
-                                            llvm::Attribute());
+                                          llvm::Attributes ExtraAttrs =
+                                            llvm::Attributes());
   llvm::Constant *GetOrCreateLLVMGlobal(StringRef MangledName,
                                         llvm::PointerType *PTy,
                                         const VarDecl *D,

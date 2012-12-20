@@ -434,7 +434,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   if (ExplicitParams)
     CheckCXXDefaultArguments(Method);
   
-  // Attribute on the lambda apply to the method.  
+  // Attributes on the lambda apply to the method.  
   ProcessDeclAttributes(CurScope, Method, ParamInfo);
   
   // Introduce the function call operator as the current declaration context.

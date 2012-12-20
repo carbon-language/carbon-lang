@@ -2016,7 +2016,7 @@ enum CXCursorKind {
    */
   CXCursor_TranslationUnit               = 300,
 
-  /* Attribute */
+  /* Attributes */
   CXCursor_FirstAttr                     = 400,
   /**
    * \brief An attribute whose specific kind is not exposed via this

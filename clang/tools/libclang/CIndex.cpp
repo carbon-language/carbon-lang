@@ -752,7 +752,7 @@ bool CursorVisitor::VisitFunctionDecl(FunctionDecl *ND) {
     if (FTL && VisitFunctionTypeLoc(*FTL, true))
       return true;
     
-    // FIXME: Attribute?
+    // FIXME: Attributes?
   }
   
   if (ND->doesThisDeclarationHaveABody() && !ND->isLateTemplateParsed()) {

@@ -4591,20 +4591,20 @@ void Sema::CodeCompleteObjCAtExpression(Scope *S) {
 
 /// \brief Determine whether the addition of the given flag to an Objective-C
 /// property's attributes will cause a conflict.
-static bool ObjCPropertyFlagConflicts(unsigned Attribute, unsigned NewFlag) {
+static bool ObjCPropertyFlagConflicts(unsigned Attributes, unsigned NewFlag) {
   // Check if we've already added this flag.
-  if (Attribute & NewFlag)
+  if (Attributes & NewFlag)
     return true;
   
-  Attribute |= NewFlag;
+  Attributes |= NewFlag;
   
   // Check for collisions with "readonly".
-  if ((Attribute & ObjCDeclSpec::DQ_PR_readonly) &&
-      (Attribute & ObjCDeclSpec::DQ_PR_readwrite))
+  if ((Attributes & ObjCDeclSpec::DQ_PR_readonly) &&
+      (Attributes & ObjCDeclSpec::DQ_PR_readwrite))
     return true;
   
   // Check for more than one of { assign, copy, retain, strong, weak }.
-  unsigned AssignCopyRetMask = Attribute & (ObjCDeclSpec::DQ_PR_assign |
+  unsigned AssignCopyRetMask = Attributes & (ObjCDeclSpec::DQ_PR_assign |
                                          ObjCDeclSpec::DQ_PR_unsafe_unretained |
                                              ObjCDeclSpec::DQ_PR_copy |
                                              ObjCDeclSpec::DQ_PR_retain |
@@ -4626,38 +4626,38 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
   if (!CodeCompleter)
     return;
   
-  unsigned Attribute = ODS.getPropertyAttributes();
+  unsigned Attributes = ODS.getPropertyAttributes();
   
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompleter->getCodeCompletionTUInfo(),
                         CodeCompletionContext::CCC_Other);
   Results.EnterNewScope();
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_readonly))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_readonly))
     Results.AddResult(CodeCompletionResult("readonly"));
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_assign))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_assign))
     Results.AddResult(CodeCompletionResult("assign"));
-  if (!ObjCPropertyFlagConflicts(Attribute,
+  if (!ObjCPropertyFlagConflicts(Attributes,
                                  ObjCDeclSpec::DQ_PR_unsafe_unretained))
     Results.AddResult(CodeCompletionResult("unsafe_unretained"));
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_readwrite))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_readwrite))
     Results.AddResult(CodeCompletionResult("readwrite"));
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_retain))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_retain))
     Results.AddResult(CodeCompletionResult("retain"));
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_strong))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_strong))
     Results.AddResult(CodeCompletionResult("strong"));
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_copy))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_copy))
     Results.AddResult(CodeCompletionResult("copy"));
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_nonatomic))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_nonatomic))
     Results.AddResult(CodeCompletionResult("nonatomic"));
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_atomic))
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_atomic))
     Results.AddResult(CodeCompletionResult("atomic"));
 
   // Only suggest "weak" if we're compiling for ARC-with-weak-references or GC.
   if (getLangOpts().ObjCARCWeak || getLangOpts().getGC() != LangOptions::NonGC)
-    if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_weak))
+    if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_weak))
       Results.AddResult(CodeCompletionResult("weak"));
 
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_setter)) {
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_setter)) {
     CodeCompletionBuilder Setter(Results.getAllocator(),
                                  Results.getCodeCompletionTUInfo());
     Setter.AddTypedTextChunk("setter");
@@ -4665,7 +4665,7 @@ void Sema::CodeCompleteObjCPropertyFlags(Scope *S, ObjCDeclSpec &ODS) {
     Setter.AddPlaceholderChunk("method");
     Results.AddResult(CodeCompletionResult(Setter.TakeString()));
   }
-  if (!ObjCPropertyFlagConflicts(Attribute, ObjCDeclSpec::DQ_PR_getter)) {
+  if (!ObjCPropertyFlagConflicts(Attributes, ObjCDeclSpec::DQ_PR_getter)) {
     CodeCompletionBuilder Getter(Results.getAllocator(),
                                  Results.getCodeCompletionTUInfo());
     Getter.AddTypedTextChunk("getter");
