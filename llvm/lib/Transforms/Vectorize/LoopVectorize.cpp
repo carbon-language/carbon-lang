@@ -284,7 +284,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
 
     // If the src is an instruction that appeared earlier in the basic block
     // then it should already be vectorized.
-    if (SrcInst && SrcInst->getParent() == Instr->getParent()) {
+    if (SrcInst && OrigLoop->contains(SrcInst)) {
       assert(WidenMap.count(SrcInst) && "Source operand is unavailable");
       // The parameter is a vector value from earlier.
       Params.push_back(WidenMap[SrcInst]);
