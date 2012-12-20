@@ -181,7 +181,7 @@ void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
 // Walk through the buckets and emit the full data for each element in
 // the bucket. For the string case emit the dies and the various offsets.
 // Terminate each HashData bucket with 0.
-void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D) {
+void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfUnits *D) {
   uint64_t PrevHash = UINT64_MAX;
   for (size_t i = 0, e = Buckets.size(); i < e; ++i) {
     for (HashList::const_iterator HI = Buckets[i].begin(),
@@ -190,7 +190,7 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D) {
       Asm->OutStreamer.EmitLabel((*HI)->Sym);
       Asm->OutStreamer.AddComment((*HI)->Str);
       Asm->EmitSectionOffset(D->getStringPoolEntry((*HI)->Str),
-                             D->getStringPool());
+                             D->getStringPoolSym());
       Asm->OutStreamer.AddComment("Num DIEs");
       Asm->EmitInt32((*HI)->Data.size());
       for (ArrayRef<HashDataContents*>::const_iterator
@@ -215,7 +215,7 @@ void DwarfAccelTable::EmitData(AsmPrinter *Asm, DwarfDebug *D) {
 
 // Emit the entire data structure to the output file.
 void DwarfAccelTable::Emit(AsmPrinter *Asm, MCSymbol *SecBegin,
-                           DwarfDebug *D) {
+                           DwarfUnits *D) {
   // Emit the header.
   EmitHeader(Asm);
 

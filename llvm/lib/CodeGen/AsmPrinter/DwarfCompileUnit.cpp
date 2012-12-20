@@ -33,8 +33,9 @@ using namespace llvm;
 
 /// CompileUnit - Compile unit constructor.
 CompileUnit::CompileUnit(unsigned UID, unsigned L, DIE *D, AsmPrinter *A,
-                         DwarfDebug *DW)
-  : UniqueID(UID), Language(L), CUDie(D), Asm(A), DD(DW), IndexTyDie(0) {
+                         DwarfDebug *DW, DwarfUnits *DWU)
+  : UniqueID(UID), Language(L), CUDie(D), Asm(A), DD(DW), DU(DWU),
+    IndexTyDie(0) {
   DIEIntegerOne = new (DIEValueAllocator) DIEInteger(1);
 }
 
@@ -127,12 +128,12 @@ void CompileUnit::addSInt(DIE *Die, unsigned Attribute,
 /// reference to the string pool instead of immediate strings so that DIEs have
 /// more predictable sizes.
 void CompileUnit::addString(DIE *Die, unsigned Attribute, StringRef String) {
-  MCSymbol *Symb = DD->getStringPoolEntry(String);
+  MCSymbol *Symb = DU->getStringPoolEntry(String);
   DIEValue *Value;
   if (Asm->needsRelocationsForDwarfStringPool())
     Value = new (DIEValueAllocator) DIELabel(Symb);
   else {
-    MCSymbol *StringPool = DD->getStringPool();
+    MCSymbol *StringPool = DU->getStringPoolSym();
     Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
   }
   Die->addValue(Attribute, dwarf::DW_FORM_strp, Value);

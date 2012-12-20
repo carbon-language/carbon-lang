@@ -189,6 +189,12 @@ public:
   DIType getType() const;
 };
 
+
+// A String->Symbol mapping of strings used by indirect
+// references.
+typedef StringMap<std::pair<MCSymbol*, unsigned>,
+                  BumpPtrAllocator&> StrPool;
+
 /// \brief Collects and handles information specific to a particular
 /// collection of units.
 class DwarfUnits {
@@ -204,10 +210,15 @@ class DwarfUnits {
   // A pointer to all units in the section.
   SmallVector<CompileUnit *, 1> CUs;
 
+  // Collection of strings for this unit.
+  StrPool *StringPool;
+  unsigned NextStringPoolNumber;
+
 public:
   DwarfUnits(AsmPrinter *AP, FoldingSet<DIEAbbrev> *AS,
-             std::vector<DIEAbbrev *> *A) :
-    Asm(AP), AbbreviationsSet(AS), Abbreviations(A) {}
+             std::vector<DIEAbbrev *> *A, StrPool *SP) :
+    Asm(AP), AbbreviationsSet(AS), Abbreviations(A),
+    StringPool(SP), NextStringPoolNumber(0) {}
 
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
@@ -225,6 +236,16 @@ public:
   /// abbreviation section.
   void emitUnits(DwarfDebug *, const MCSection *, const MCSection *,
                  const MCSymbol *);
+
+  /// \brief Returns the entry into the start of the pool.
+  MCSymbol *getStringPoolSym();
+
+  /// \brief Returns an entry into the string pool with the given
+  /// string text.
+  MCSymbol *getStringPoolEntry(StringRef Str);
+
+  /// \brief Returns the string pool.
+  StrPool *getStringPool() { return StringPool; }
 };
 
 /// \brief Collects and handles dwarf debug information.
@@ -262,8 +283,7 @@ class DwarfDebug {
 
   // A String->Symbol mapping of strings used by indirect
   // references.
-  StringMap<std::pair<MCSymbol*, unsigned>, BumpPtrAllocator&> StringPool;
-  unsigned NextStringPoolNumber;
+  StrPool InfoStringPool;
 
   // Provides a unique id per text section.
   SetVector<const MCSection*> SectionMap;
@@ -578,13 +598,6 @@ public:
   /// names. If none currently exists, create a new id and insert it in the
   /// SourceIds map.
   unsigned getOrCreateSourceID(StringRef DirName, StringRef FullName);
-
-  /// \brief Returns the entry into the start of the pool.
-  MCSymbol *getStringPool();
-
-  /// \brief Returns an entry into the string pool with the given
-  /// string text.
-  MCSymbol *getStringPoolEntry(StringRef Str);
 
   /// \brief Recursively Emits a debug information entry.
   void emitDIE(DIE *Die, std::vector<DIEAbbrev *> *Abbrevs);

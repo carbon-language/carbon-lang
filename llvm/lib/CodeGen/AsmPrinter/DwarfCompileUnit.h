@@ -23,6 +23,7 @@
 namespace llvm {
 
 class DwarfDebug;
+class DwarfUnits;
 class MachineLocation;
 class MachineOperand;
 class ConstantInt;
@@ -47,7 +48,9 @@ class CompileUnit {
   /// Asm - Target of Dwarf emission.
   AsmPrinter *Asm;
 
+  // Holders for some common dwarf information.
   DwarfDebug *DD;
+  DwarfUnits *DU;
 
   /// IndexTyDie - An anonymous type for index type.  Owned by CUDie.
   DIE *IndexTyDie;
@@ -84,7 +87,8 @@ class CompileUnit {
   int64_t getDefaultLowerBound() const;
 
 public:
-  CompileUnit(unsigned UID, unsigned L, DIE *D, AsmPrinter *A, DwarfDebug *DW);
+  CompileUnit(unsigned UID, unsigned L, DIE *D, AsmPrinter *A, DwarfDebug *DW,
+              DwarfUnits *);
   ~CompileUnit();
 
   // Accessors.

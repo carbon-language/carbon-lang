@@ -155,13 +155,12 @@ DIType DbgVariable::getType() const {
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   : Asm(A), MMI(Asm->MMI), FirstCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize),
-    SourceIdMap(DIEValueAllocator), StringPool(DIEValueAllocator),
+    SourceIdMap(DIEValueAllocator), InfoStringPool(DIEValueAllocator),
     PrevLabel(NULL), GlobalCUIndexCount(0),
-    InfoHolder(A, &AbbreviationsSet, &Abbreviations),
+    InfoHolder(A, &AbbreviationsSet, &Abbreviations, &InfoStringPool),
     SkeletonCU(0),
     SkeletonAbbrevSet(InitAbbreviationsSetSize),
-    SkeletonHolder(A, &SkeletonAbbrevSet, &SkeletonAbbrevs) {
-  NextStringPoolNumber = 0;
+    SkeletonHolder(A, &SkeletonAbbrevSet, &SkeletonAbbrevs, &InfoStringPool) {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
@@ -213,12 +212,13 @@ static MCSymbol *emitSectionSym(AsmPrinter *Asm, const MCSection *Section,
   return TmpSym;
 }
 
-MCSymbol *DwarfDebug::getStringPool() {
+MCSymbol *DwarfUnits::getStringPoolSym() {
   return Asm->GetTempSymbol("section_str");
 }
 
-MCSymbol *DwarfDebug::getStringPoolEntry(StringRef Str) {
-  std::pair<MCSymbol*, unsigned> &Entry = StringPool[Str];
+MCSymbol *DwarfUnits::getStringPoolEntry(StringRef Str) {
+  std::pair<MCSymbol*, unsigned> &Entry =
+    StringPool->GetOrCreateValue(Str).getValue();
   if (Entry.first) return Entry.first;
 
   Entry.second = NextStringPoolNumber++;
@@ -626,7 +626,8 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(GlobalCUIndexCount++,
-                                       DIUnit.getLanguage(), Die, Asm, this);
+                                       DIUnit.getLanguage(), Die, Asm,
+                                       this, &InfoHolder);
   NewCU->addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                  DIUnit.getLanguage());
@@ -1958,7 +1959,7 @@ void DwarfDebug::emitAccelNames() {
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  AT.Emit(Asm, SectionBegin, this);
+  AT.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
 // Emit objective C classes and categories into a hashed accelerator table section.
@@ -1986,7 +1987,7 @@ void DwarfDebug::emitAccelObjC() {
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  AT.Emit(Asm, SectionBegin, this);
+  AT.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
 // Emit namespace dies into a hashed accelerator table.
@@ -2014,7 +2015,7 @@ void DwarfDebug::emitAccelNamespaces() {
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  AT.Emit(Asm, SectionBegin, this);
+  AT.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
 // Emit type dies into a hashed accelerator table.
@@ -2049,7 +2050,7 @@ void DwarfDebug::emitAccelTypes() {
   Asm->OutStreamer.EmitLabel(SectionBegin);
 
   // Emit the full data.
-  AT.Emit(Asm, SectionBegin, this);
+  AT.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
 void DwarfDebug::emitDebugPubTypes() {
@@ -2107,7 +2108,7 @@ void DwarfDebug::emitDebugPubTypes() {
 // Emit visible names into a debug str section.
 void DwarfDebug::emitDebugStr() {
   // Check to see if it is worth the effort.
-  if (StringPool.empty()) return;
+  if (InfoHolder.getStringPool()->empty()) return;
 
   // Start the dwarf str section.
   Asm->OutStreamer.SwitchSection(
@@ -2119,7 +2120,7 @@ void DwarfDebug::emitDebugStr() {
       StringMapEntry<std::pair<MCSymbol*, unsigned> >*>, 64> Entries;
 
   for (StringMap<std::pair<MCSymbol*, unsigned> >::iterator
-       I = StringPool.begin(), E = StringPool.end(); I != E; ++I)
+       I = InfoHolder.getStringPool()->begin(), E = InfoHolder.getStringPool()->end(); I != E; ++I)
     Entries.push_back(std::make_pair(I->second.second, &*I));
 
   array_pod_sort(Entries.begin(), Entries.end());
@@ -2318,13 +2319,16 @@ void DwarfDebug::emitDebugInlineInfo() {
 
     Asm->OutStreamer.AddComment("MIPS linkage name");
     if (LName.empty())
-      Asm->EmitSectionOffset(getStringPoolEntry(Name), DwarfStrSectionSym);
+      Asm->EmitSectionOffset(InfoHolder.getStringPoolEntry(Name),
+                             DwarfStrSectionSym);
     else
-      Asm->EmitSectionOffset(getStringPoolEntry(getRealLinkageName(LName)),
+      Asm->EmitSectionOffset(InfoHolder
+                             .getStringPoolEntry(getRealLinkageName(LName)),
                              DwarfStrSectionSym);
 
     Asm->OutStreamer.AddComment("Function name");
-    Asm->EmitSectionOffset(getStringPoolEntry(Name), DwarfStrSectionSym);
+    Asm->EmitSectionOffset(InfoHolder.getStringPoolEntry(Name),
+                           DwarfStrSectionSym);
     Asm->EmitULEB128(Labels.size(), "Inline count");
 
     for (SmallVector<InlineInfoLabels, 4>::iterator LI = Labels.begin(),
@@ -2354,7 +2358,8 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(GlobalCUIndexCount++,
-                                       DIUnit.getLanguage(), Die, Asm, this);
+                                       DIUnit.getLanguage(), Die, Asm,
+                                       this, &InfoHolder);
   // FIXME: This should be the .dwo file.
   NewCU->addString(Die, dwarf::DW_AT_GNU_dwo_name, FN);
 
