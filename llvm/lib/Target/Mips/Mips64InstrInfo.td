@@ -86,8 +86,10 @@ def DADDiu  : ArithLogicI<"daddiu", simm16_64, CPU64Regs, immSExt16, add>,
               ADDI_FM<0x19>, IsAsCheapAsAMove;
 def DANDi   : ArithLogicI<"andi", uimm16_64, CPU64Regs, immZExt16, and>,
               ADDI_FM<0xc>;
-def SLTi64  : SetCC_I<0x0a, "slti", setlt, simm16_64, immSExt16, CPU64Regs>;
-def SLTiu64 : SetCC_I<0x0b, "sltiu", setult, simm16_64, immSExt16, CPU64Regs>;
+def SLTi64  : SetCC_I<"slti", setlt, simm16_64, immSExt16, CPU64Regs>,
+              SLTI_FM<0xa>;
+def SLTiu64 : SetCC_I<"sltiu", setult, simm16_64, immSExt16, CPU64Regs>,
+              SLTI_FM<0xb>;
 def ORi64   : ArithLogicI<"ori", uimm16_64, CPU64Regs, immZExt16, or>,
               ADDI_FM<0xd>;
 def XORi64  : ArithLogicI<"xori", uimm16_64, CPU64Regs, immZExt16, xor>,
@@ -98,8 +100,8 @@ def LUi64   : LoadUpper<0x0f, "lui", CPU64Regs, uimm16_64>;
 def DADD   : ArithLogicR<"dadd", CPU64Regs>, ADD_FM<0, 0x2c>;
 def DADDu  : ArithLogicR<"daddu", CPU64Regs, 1, IIAlu, add>, ADD_FM<0, 0x2d>;
 def DSUBu  : ArithLogicR<"dsubu", CPU64Regs, 0, IIAlu, sub>, ADD_FM<0, 0x2f>;
-def SLT64  : SetCC_R<0x00, 0x2a, "slt", setlt, CPU64Regs>;
-def SLTu64 : SetCC_R<0x00, 0x2b, "sltu", setult, CPU64Regs>;
+def SLT64  : SetCC_R<"slt", setlt, CPU64Regs>, ADD_FM<0, 0x2a>;
+def SLTu64 : SetCC_R<"sltu", setult, CPU64Regs>, ADD_FM<0, 0x2b>;
 def AND64  : ArithLogicR<"and", CPU64Regs, 1, IIAlu, and>, ADD_FM<0, 0x24>;
 def OR64   : ArithLogicR<"or", CPU64Regs, 1, IIAlu, or>, ADD_FM<0, 0x25>;
 def XOR64  : ArithLogicR<"xor", CPU64Regs, 1, IIAlu, xor>, ADD_FM<0, 0x26>;

@@ -567,21 +567,16 @@ class CBranchZero<string opstr, PatFrag cond_op, RegisterClass RC> :
 }
 
 // SetCC
-class SetCC_R<bits<6> op, bits<6> func, string instr_asm, PatFrag cond_op,
-              RegisterClass RC>:
-  FR<op, func, (outs CPURegs:$rd), (ins RC:$rs, RC:$rt),
-     !strconcat(instr_asm, "\t$rd, $rs, $rt"),
-     [(set CPURegs:$rd, (cond_op RC:$rs, RC:$rt))],
-     IIAlu> {
-  let shamt = 0;
-}
+class SetCC_R<string opstr, PatFrag cond_op, RegisterClass RC> :
+  InstSE<(outs CPURegs:$rd), (ins RC:$rs, RC:$rt),
+         !strconcat(opstr, "\t$rd, $rs, $rt"),
+         [(set CPURegs:$rd, (cond_op RC:$rs, RC:$rt))], IIAlu, FrmR>;
 
-class SetCC_I<bits<6> op, string instr_asm, PatFrag cond_op, Operand Od,
-              PatLeaf imm_type, RegisterClass RC>:
-  FI<op, (outs CPURegs:$rt), (ins RC:$rs, Od:$imm16),
-     !strconcat(instr_asm, "\t$rt, $rs, $imm16"),
-     [(set CPURegs:$rt, (cond_op RC:$rs, imm_type:$imm16))],
-     IIAlu>;
+class SetCC_I<string opstr, PatFrag cond_op, Operand Od, PatLeaf imm_type,
+              RegisterClass RC>:
+  InstSE<(outs CPURegs:$rt), (ins RC:$rs, Od:$imm16),
+         !strconcat(opstr, "\t$rt, $rs, $imm16"),
+         [(set CPURegs:$rt, (cond_op RC:$rs, imm_type:$imm16))], IIAlu, FrmI>;
 
 // Jump
 class JumpFJ<bits<6> op, DAGOperand opnd, string instr_asm,
@@ -897,8 +892,8 @@ def LoadAddr32Imm : LoadAddressImm<"la", shamt,CPURegs>;
 def ADDiu : ArithLogicI<"addiu", simm16, CPURegs, immSExt16, add>,
             ADDI_FM<0x9>, IsAsCheapAsAMove;
 def ADDi  : ArithLogicI<"addi", simm16, CPURegs>, ADDI_FM<0x8>;
-def SLTi  : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16, CPURegs>;
-def SLTiu : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16, CPURegs>;
+def SLTi  : SetCC_I<"slti", setlt, simm16, immSExt16, CPURegs>, SLTI_FM<0xa>;
+def SLTiu : SetCC_I<"sltiu", setult, simm16, immSExt16, CPURegs>, SLTI_FM<0xb>;
 def ANDi  : ArithLogicI<"andi", uimm16, CPURegs, immZExt16, and>, ADDI_FM<0xc>;
 def ORi   : ArithLogicI<"ori", uimm16, CPURegs, immZExt16, or>, ADDI_FM<0xd>;
 def XORi  : ArithLogicI<"xori", uimm16, CPURegs, immZExt16, xor>, ADDI_FM<0xe>;
@@ -909,8 +904,8 @@ def ADDu : ArithLogicR<"addu", CPURegs, 1, IIAlu, add>, ADD_FM<0, 0x21>;
 def SUBu : ArithLogicR<"subu", CPURegs, 0, IIAlu, sub>, ADD_FM<0, 0x23>;
 def ADD  : ArithLogicR<"add", CPURegs>, ADD_FM<0, 0x20>;
 def SUB  : ArithLogicR<"sub", CPURegs>, ADD_FM<0, 0x22>;
-def SLT  : SetCC_R<0x00, 0x2a, "slt", setlt, CPURegs>;
-def SLTu : SetCC_R<0x00, 0x2b, "sltu", setult, CPURegs>;
+def SLT  : SetCC_R<"slt", setlt, CPURegs>, ADD_FM<0, 0x2a>;
+def SLTu : SetCC_R<"sltu", setult, CPURegs>, ADD_FM<0, 0x2b>;
 def AND  : ArithLogicR<"and", CPURegs, 1, IIAlu, and>, ADD_FM<0, 0x24>;
 def OR   : ArithLogicR<"or", CPURegs, 1, IIAlu, or>, ADD_FM<0, 0x25>;
 def XOR  : ArithLogicR<"xor", CPURegs, 1, IIAlu, xor>, ADD_FM<0, 0x26>;

@@ -290,6 +290,19 @@ class B_FM {
   let Inst{15-0}  = offset;
 }
 
+class SLTI_FM<bits<6> op> {
+  bits<5> rt;
+  bits<5> rs;
+  bits<16> imm16;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-0}  = imm16;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS
