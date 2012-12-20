@@ -796,7 +796,7 @@ TEST(AddressSanitizer, Store128Test) {
 static string RightOOBErrorMessage(int oob_distance, bool is_write) {
   assert(oob_distance >= 0);
   char expected_str[100];
-  sprintf(expected_str, "%s.*located %d bytes to the right",
+  sprintf(expected_str, ASAN_PCRE_DOTALL "%s.*located %d bytes to the right",
           is_write ? "WRITE" : "READ", oob_distance);
   return string(expected_str);
 }
@@ -812,7 +812,7 @@ static string RightOOBReadMessage(int oob_distance) {
 static string LeftOOBErrorMessage(int oob_distance, bool is_write) {
   assert(oob_distance > 0);
   char expected_str[100];
-  sprintf(expected_str, "%s.*located %d bytes to the left",
+  sprintf(expected_str, ASAN_PCRE_DOTALL "%s.*located %d bytes to the left",
           is_write ? "WRITE" : "READ", oob_distance);
   return string(expected_str);
 }
