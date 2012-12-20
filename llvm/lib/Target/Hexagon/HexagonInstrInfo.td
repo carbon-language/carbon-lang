@@ -990,7 +990,7 @@ def LDrid_GP : LDInst2<(outs DoubleRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def LDd_GP : LDInst2<(outs DoubleRegs:$dst),
             (ins globaladdress:$global),
             "$dst = memd(#$global)",
@@ -1057,6 +1057,9 @@ let hasCtrlDep = 1, neverHasSideEffects = 1 in {
                     PredNewRel;
 }
 
+def : Pat< (i32 (extloadi1 ADDRriS11_0:$addr)),
+           (i32 (LDrib ADDRriS11_0:$addr)) >;
+
 // Load byte any-extend.
 def : Pat < (i32 (extloadi8 ADDRriS11_0:$addr)),
             (i32 (LDrib ADDRriS11_0:$addr)) >;
@@ -1073,14 +1076,14 @@ def LDrib_GP : LDInst2<(outs IntRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def LDb_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst = memb(#$global)",
             []>,
             Requires<[NoV4T]>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def LDub_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst = memub(#$global)",
@@ -1101,20 +1104,21 @@ def LDrih_GP : LDInst2<(outs IntRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def LDh_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst = memh(#$global)",
             []>,
             Requires<[NoV4T]>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def LDuh_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst = memuh(#$global)",
             []>,
             Requires<[NoV4T]>;
 
+let AddedComplexity = 10 in
 def : Pat < (i32 (zextloadi1 ADDRriS11_0:$addr)),
             (i32 (LDriub ADDRriS11_0:$addr))>;
 
@@ -1138,8 +1142,9 @@ def LDriuh_GP : LDInst2<(outs IntRegs:$dst),
             Requires<[NoV4T]>;
 
 // Load predicate.
-let Defs = [R10,R11,D5], neverHasSideEffects = 1 in
-def LDriw_pred : LDInst<(outs PredRegs:$dst),
+let isExtendable = 1, opExtendable = 2, isExtentSigned = 1, opExtentBits = 13,
+isPseudo = 1, Defs = [R10,R11,D5], neverHasSideEffects = 1 in
+def LDriw_pred : LDInst2<(outs PredRegs:$dst),
             (ins MEMri:$addr),
             "Error; should not emit",
             []>;
@@ -1152,7 +1157,7 @@ def LDriw_GP : LDInst2<(outs IntRegs:$dst),
             []>,
             Requires<[NoV4T]>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def LDw_GP : LDInst2<(outs IntRegs:$dst),
             (ins globaladdress:$global),
             "$dst = memw(#$global)",
@@ -1161,7 +1166,7 @@ def LDw_GP : LDInst2<(outs IntRegs:$dst),
 
 // Deallocate stack frame.
 let Defs = [R29, R30, R31], Uses = [R29], neverHasSideEffects = 1 in {
-  def DEALLOCFRAME : LDInst2<(outs), (ins i32imm:$amt1),
+  def DEALLOCFRAME : LDInst2<(outs), (ins),
                      "deallocframe",
                      []>;
 }
@@ -1393,7 +1398,7 @@ def STrid_GP : STInst2<(outs),
             []>,
             Requires<[NoV4T]>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def STd_GP : STInst2<(outs),
             (ins globaladdress:$global, DoubleRegs:$src),
             "memd(#$global) = $src",
@@ -1583,7 +1588,7 @@ def STrib_GP : STInst2<(outs),
             Requires<[NoV4T]>;
 
 // memb(#global)=Rt
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def STb_GP : STInst2<(outs),
             (ins globaladdress:$global, IntRegs:$src),
             "memb(#$global) = $src",
@@ -1623,7 +1628,7 @@ def STrih_GP : STInst2<(outs),
             []>,
             Requires<[NoV4T]>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def STh_GP   : STInst2<(outs),
             (ins globaladdress:$global, IntRegs:$src),
             "memh(#$global) = $src",
@@ -1672,7 +1677,7 @@ def STriw_GP : STInst2<(outs),
             []>,
             Requires<[NoV4T]>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, validSubTargets = NoV4SubT in
 def STw_GP : STInst2<(outs),
             (ins globaladdress:$global, IntRegs:$src),
             "memw(#$global) = $src",
