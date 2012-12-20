@@ -23,7 +23,6 @@ extern "C" {
 
 typedef unsigned long jptr;  // NOLINT
 
-
 // Must be called before any other callback from Java.
 void __tsan_java_init(jptr heap_begin, jptr heap_size) INTERFACE_ATTRIBUTE;
 // Must be called when the application exits.
