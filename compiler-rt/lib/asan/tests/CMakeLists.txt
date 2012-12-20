@@ -51,11 +51,17 @@ else()
   )
 endif()
 
-set(ASAN_LINK_FLAGS -fsanitize=address)
+set(ASAN_LINK_FLAGS)
 if(ANDROID)
+  # On Android, we link with ASan runtime manually
   list(APPEND ASAN_LINK_FLAGS -pie)
-elseif(APPLE)
-  # Unit tests on Mac depend on Foundation.
+else()
+  # On other platforms, we depend on Clang driver behavior,
+  # passing -fsanitize=address flag.
+  list(APPEND ASAN_LINK_FLAGS -fsanitize=address)
+endif()
+# Unit tests on Mac depend on Foundation.
+if(APPLE)
   list(APPEND ASAN_LINK_FLAGS -framework Foundation)
 endif()
 # Unit tests require libstdc++.
