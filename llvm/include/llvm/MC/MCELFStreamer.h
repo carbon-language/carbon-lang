@@ -76,12 +76,18 @@ public:
 
   virtual void EmitTCEntry(const MCSymbol &S);
 
+  virtual void EmitValueToAlignment(unsigned, int64_t, unsigned, unsigned);
+
   virtual void FinishImpl();
   /// @}
 
 private:
   virtual void EmitInstToFragment(const MCInst &Inst);
   virtual void EmitInstToData(const MCInst &Inst);
+
+  virtual void EmitBundleAlignMode(unsigned AlignPow2);
+  virtual void EmitBundleLock();
+  virtual void EmitBundleUnlock();
 
   void fixSymbolsInTLSFixups(const MCExpr *expr);
 

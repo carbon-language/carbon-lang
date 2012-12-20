@@ -765,6 +765,10 @@ namespace {
       markDefined(*Symbol);
     }
 
+    virtual void EmitBundleAlignMode(unsigned AlignPow2) {}
+    virtual void EmitBundleLock() {}
+    virtual void EmitBundleUnlock() {}
+
     // Noop calls.
     virtual void ChangeSection(const MCSection *Section) {}
     virtual void InitSections() {}

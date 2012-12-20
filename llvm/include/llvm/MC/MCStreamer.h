@@ -437,7 +437,6 @@ namespace llvm {
       EmitFill(NumBytes, 0, AddrSpace);
     }
 
-
     /// EmitValueToAlignment - Emit some number of copies of @p Value until
     /// the byte alignment @p ByteAlignment is reached.
     ///
@@ -556,6 +555,17 @@ namespace llvm {
     /// EmitInstruction - Emit the given @p Instruction into the current
     /// section.
     virtual void EmitInstruction(const MCInst &Inst) = 0;
+
+    /// \brief Set the bundle alignment mode from now on in the section.
+    /// The argument is the power of 2 to which the alignment is set. The
+    /// value 0 means turn the bundle alignment off.
+    virtual void EmitBundleAlignMode(unsigned AlignPow2) = 0;
+
+    /// \brief The following instructions are a bundle-locked group.
+    virtual void EmitBundleLock() = 0;
+
+    /// \brief Ends a bundle-locked group.
+    virtual void EmitBundleUnlock() = 0;
 
     /// EmitRawText - If this file is backed by a assembly streamer, this dumps
     /// the specified string in the output .s file.  This capability is

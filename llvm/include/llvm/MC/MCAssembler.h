@@ -99,14 +99,35 @@ public:
   unsigned getLayoutOrder() const { return LayoutOrder; }
   void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
+  /// \brief Does this fragment have instructions emitted into it? By default
+  ///  this is false, but specific fragment types may set it to true.
+  virtual bool hasInstructions() const { return false; }
+
+  /// \brief Get the padding size that must be inserted before this fragment.
+  /// Used for bundling. By default, no padding is inserted.
+  /// Note that padding size is restricted to 8 bits. This is an optimization
+  /// to reduce the amount of space used for each fragment. In practice, larger
+  /// padding should never be required.
+  virtual uint8_t getBundlePadding() const {
+    return 0;
+  }
+
+  /// \brief Set the padding size for this fragment. By default it's a no-op,
+  /// and only some fragments have a meaningful implementation.
+  virtual void setBundlePadding(uint8_t N) {
+  }
+
   void dump();
 };
 
 class MCEncodedFragment : public MCFragment {
   virtual void anchor();
+
+  uint8_t BundlePadding;
 public:
   MCEncodedFragment(MCFragment::FragmentType FType, MCSectionData *SD = 0)
-    : MCFragment(FType, SD) {
+    : MCFragment(FType, SD), BundlePadding(0)
+  {
   }
   virtual ~MCEncodedFragment();
 
@@ -124,6 +145,14 @@ public:
   virtual fixup_iterator fixup_end() = 0;
   virtual const_fixup_iterator fixup_end() const = 0;
 
+  virtual uint8_t getBundlePadding() const {
+    return BundlePadding;
+  }
+
+  virtual void setBundlePadding(uint8_t N) {
+    BundlePadding = N;
+  }
+
   static bool classof(const MCFragment *F) {
     MCFragment::FragmentType Kind = F->getKind();
     return Kind == MCFragment::FT_Inst || Kind == MCFragment::FT_Data;
@@ -132,14 +161,19 @@ public:
 
 class MCDataFragment : public MCEncodedFragment {
   virtual void anchor();
+
+  /// \brief Does this fragment contain encoded instructions anywhere in it?
+  bool HasInstructions;
+
   SmallVector<char, 32> Contents;
 
   /// Fixups - The list of fixups in this fragment.
   SmallVector<MCFixup, 4> Fixups;
-
 public:
   MCDataFragment(MCSectionData *SD = 0)
-    : MCEncodedFragment(FT_Data, SD) {
+    : MCEncodedFragment(FT_Data, SD),
+      HasInstructions(false)
+  {
   }
 
   virtual SmallVectorImpl<char> &getContents() { return Contents; }
@@ -152,6 +186,9 @@ public:
   const SmallVectorImpl<MCFixup> &getFixups() const {
     return Fixups;
   }
+
+  virtual bool hasInstructions() const { return HasInstructions; }
+  virtual void setHasInstructions(bool V) { HasInstructions = V; }
 
   fixup_iterator fixup_begin() { return Fixups.begin(); }
   const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
@@ -195,6 +232,8 @@ public:
   const SmallVectorImpl<MCFixup> &getFixups() const {
     return Fixups;
   }
+
+  virtual bool hasInstructions() const { return true; }
 
   fixup_iterator fixup_begin() { return Fixups.begin(); }
   const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
@@ -450,6 +489,13 @@ private:
   /// Alignment - The maximum alignment seen in this section.
   unsigned Alignment;
 
+  /// \brief We're currently inside a bundle-locked group.
+  bool BundleLocked;
+
+  /// \brief We've seen a bundle_lock directive but not its first instruction
+  /// yet.
+  bool BundleGroupBeforeFirstInst;
+
   /// @name Assembler Backend Data
   /// @{
   //
@@ -501,6 +547,22 @@ public:
   size_t size() const { return Fragments.size(); }
 
   bool empty() const { return Fragments.empty(); }
+
+  bool isBundleLocked() const {
+    return BundleLocked;
+  }
+
+  void setBundleLocked(bool IsLocked) {
+    BundleLocked = IsLocked;
+  }
+
+  bool isBundleGroupBeforeFirstInst() const {
+    return BundleGroupBeforeFirstInst;
+  }
+
+  void setBundleGroupBeforeFirstInst(bool IsFirst) {
+    BundleGroupBeforeFirstInst = IsFirst;
+  }
 
   void dump();
 
@@ -707,6 +769,11 @@ private:
   // refactoring too.
   SmallPtrSet<const MCSymbol*, 64> ThumbFuncs;
 
+  /// \brief The bundle alignment size currently set in the assembler.
+  ///
+  /// By default it's 0, which means bundling is disabled.
+  unsigned BundleAlignSize;
+
   unsigned RelaxAll : 1;
   unsigned NoExecStack : 1;
   unsigned SubsectionsViaSymbols : 1;
@@ -832,6 +899,20 @@ public:
 
   bool getNoExecStack() const { return NoExecStack; }
   void setNoExecStack(bool Value) { NoExecStack = Value; }
+
+  bool isBundlingEnabled() const {
+    return BundleAlignSize != 0;
+  }
+
+  unsigned getBundleAlignSize() const {
+    return BundleAlignSize;
+  }
+
+  void setBundleAlignSize(unsigned Size) {
+    assert((Size == 0 || !(Size & (Size - 1))) && 
+           "Expect a power-of-two bundle align size");
+    BundleAlignSize = Size;
+  }
 
   /// @name Section List Access
   /// @{

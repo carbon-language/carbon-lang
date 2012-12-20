@@ -78,7 +78,14 @@ public:
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
   virtual void ChangeSection(const MCSection *Section);
   virtual void EmitInstruction(const MCInst &Inst);
+
+  /// \brief Emit an instruction to a special fragment, because this instruction
+  /// can change its size during relaxation.
   virtual void EmitInstToFragment(const MCInst &Inst);
+
+  virtual void EmitBundleAlignMode(unsigned AlignPow2);
+  virtual void EmitBundleLock();
+  virtual void EmitBundleUnlock();
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
   virtual void EmitValueToAlignment(unsigned ByteAlignment,
                                     int64_t Value = 0,

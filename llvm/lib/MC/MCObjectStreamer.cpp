@@ -180,21 +180,27 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
     if (Inst.getOperand(i).isExpr())
       AddValueSymbols(Inst.getOperand(i).getExpr());
 
-  getCurrentSectionData()->setHasInstructions(true);
+  MCSectionData *SD = getCurrentSectionData();
+  SD->setHasInstructions(true);
 
   // Now that a machine instruction has been assembled into this section, make
   // a line entry for any .loc directive that has been seen.
   MCLineEntry::Make(this, getCurrentSection());
 
   // If this instruction doesn't need relaxation, just emit it as data.
-  if (!getAssembler().getBackend().mayNeedRelaxation(Inst)) {
+  MCAssembler &Assembler = getAssembler();
+  if (!Assembler.getBackend().mayNeedRelaxation(Inst)) {
     EmitInstToData(Inst);
     return;
   }
 
-  // Otherwise, if we are relaxing everything, relax the instruction as much as
-  // possible and emit it as data.
-  if (getAssembler().getRelaxAll()) {
+  // Otherwise, relax and emit it as data if either:
+  // - The RelaxAll flag was passed
+  // - Bundling is enabled and this instruction is inside a bundle-locked
+  //   group. We want to emit all such instructions into the same data
+  //   fragment.
+  if (Assembler.getRelaxAll() ||
+      (Assembler.isBundlingEnabled() && SD->isBundleLocked())) {
     MCInst Relaxed;
     getAssembler().getBackend().relaxInstruction(Inst, Relaxed);
     while (getAssembler().getBackend().mayNeedRelaxation(Relaxed))
@@ -208,6 +214,8 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
 }
 
 void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
+  // Always create a new, separate fragment here, because its size can change
+  // during relaxation.
   MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
 
   SmallString<128> Code;
@@ -215,6 +223,21 @@ void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
   getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, IF->getFixups());
   VecOS.flush();
   IF->getContents().append(Code.begin(), Code.end());
+}
+
+const char *BundlingNotImplementedMsg =
+  "Aligned bundling is not implemented for this object format";
+
+void MCObjectStreamer::EmitBundleAlignMode(unsigned AlignPow2) {
+  llvm_unreachable(BundlingNotImplementedMsg);
+}
+
+void MCObjectStreamer::EmitBundleLock() {
+  llvm_unreachable(BundlingNotImplementedMsg);
+}
+
+void MCObjectStreamer::EmitBundleUnlock() {
+  llvm_unreachable(BundlingNotImplementedMsg);
 }
 
 void MCObjectStreamer::EmitDwarfAdvanceLineAddr(int64_t LineDelta,

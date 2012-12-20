@@ -305,6 +305,13 @@ private:
   // ".align{,32}", ".p2align{,w,l}"
   bool ParseDirectiveAlign(bool IsPow2, unsigned ValueSize);
 
+  // ".bundle_align_mode"
+  bool ParseDirectiveBundleAlignMode();
+  // ".bundle_lock"
+  bool ParseDirectiveBundleLock();
+  // ".bundle_unlock"
+  bool ParseDirectiveBundleUnlock();
+
   /// ParseDirectiveSymbolAttribute - Parse a directive like ".globl" which
   /// accepts a single symbol (which should be a label or an external).
   bool ParseDirectiveSymbolAttribute(MCSymbolAttr Attr);
@@ -1303,6 +1310,13 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
       return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/2);
     if (IDVal == ".p2alignl")
       return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/4);
+
+    if (IDVal == ".bundle_align_mode")
+      return ParseDirectiveBundleAlignMode();
+    if (IDVal == ".bundle_lock")
+      return ParseDirectiveBundleLock();
+    if (IDVal == ".bundle_unlock")
+      return ParseDirectiveBundleUnlock();
 
     if (IDVal == ".org")
       return ParseDirectiveOrg();
@@ -2426,6 +2440,59 @@ bool AsmParser::ParseDirectiveAlign(bool IsPow2, unsigned ValueSize) {
                                        MaxBytesToFill);
   }
 
+  return false;
+}
+
+
+/// ParseDirectiveBundleAlignMode
+/// ::= {.bundle_align_mode} expression
+bool AsmParser::ParseDirectiveBundleAlignMode() {
+  CheckForValidSection();
+
+  // Expect a single argument: an expression that evaluates to a constant
+  // in the inclusive range 0-30.
+  SMLoc ExprLoc = getLexer().getLoc();
+  int64_t AlignSizePow2;
+  if (ParseAbsoluteExpression(AlignSizePow2))
+    return true;
+  else if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token after expression in"
+                    " '.bundle_align_mode' directive");
+  else if (AlignSizePow2 < 0 || AlignSizePow2 > 30)
+    return Error(ExprLoc,
+                 "invalid bundle alignment size (expected between 0 and 30)");
+
+  Lex();
+
+  // Because of AlignSizePow2's verified range we can safely truncate it to
+  // unsigned.
+  getStreamer().EmitBundleAlignMode(static_cast<unsigned>(AlignSizePow2));
+  return false;
+}
+
+/// ParseDirectiveBundleLock
+/// ::= {.bundle_lock}
+bool AsmParser::ParseDirectiveBundleLock() {
+  CheckForValidSection();
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.bundle_lock' directive");
+  Lex();
+
+  getStreamer().EmitBundleLock();
+  return false;
+}
+
+/// ParseDirectiveBundleLock
+/// ::= {.bundle_lock}
+bool AsmParser::ParseDirectiveBundleUnlock() {
+  CheckForValidSection();
+
+  if (getLexer().isNot(AsmToken::EndOfStatement))
+    return TokError("unexpected token in '.bundle_unlock' directive");
+  Lex();
+
+  getStreamer().EmitBundleUnlock();
   return false;
 }
 

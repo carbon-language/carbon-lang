@@ -105,6 +105,9 @@ void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
 }
 
 void MCELFStreamer::ChangeSection(const MCSection *Section) {
+  MCSectionData *CurSection = getCurrentSectionData();
+  if (CurSection && CurSection->isBundleLocked())
+    report_fatal_error("Unterminated .bundle_lock when changing a section");
   const MCSymbol *Grp = static_cast<const MCSectionELF *>(Section)->getGroup();
   if (Grp)
     getAssembler().getOrCreateSymbolData(*Grp);
@@ -262,8 +265,20 @@ void MCELFStreamer::EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 
 void MCELFStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
                                   unsigned AddrSpace) {
+  if (getCurrentSectionData()->isBundleLocked())
+    report_fatal_error("Emitting values inside a locked bundle is forbidden");
   fixSymbolsInTLSFixups(Value);
   MCObjectStreamer::EmitValueImpl(Value, Size, AddrSpace);
+}
+
+void MCELFStreamer::EmitValueToAlignment(unsigned ByteAlignment,
+                                         int64_t Value,
+                                         unsigned ValueSize,
+                                         unsigned MaxBytesToEmit) {
+  if (getCurrentSectionData()->isBundleLocked())
+    report_fatal_error("Emitting values inside a locked bundle is forbidden");
+  MCObjectStreamer::EmitValueToAlignment(ByteAlignment, Value,
+                                         ValueSize, MaxBytesToEmit);
 }
 
 
@@ -335,23 +350,89 @@ void MCELFStreamer::EmitInstToFragment(const MCInst &Inst) {
 }
 
 void MCELFStreamer::EmitInstToData(const MCInst &Inst) {
-  MCDataFragment *DF = getOrCreateDataFragment();
-
+  MCAssembler &Assembler = getAssembler();
   SmallVector<MCFixup, 4> Fixups;
   SmallString<256> Code;
   raw_svector_ostream VecOS(Code);
-  getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+  Assembler.getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
   VecOS.flush();
 
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i)
     fixSymbolsInTLSFixups(Fixups[i].getValue());
+
+  // There are several possibilities here:
+  //
+  // If bundling is disabled, append the encoded instruction to the current data
+  // fragment (or create a new such fragment if the current fragment is not a
+  // data fragment).
+  //
+  // If bundling is enabled:
+  // - If we're not in a bundle-locked group, emit the instruction into a data
+  //   fragment of its own.
+  // - If we're in a bundle-locked group, append the instruction to the current
+  //   data fragment because we want all the instructions in a group to get into
+  //   the same fragment. Be careful not to do that for the first instruction in
+  //   the group, though.
+  MCDataFragment *DF;
+
+  if (Assembler.isBundlingEnabled()) {
+    MCSectionData *SD = getCurrentSectionData();
+    if (SD->isBundleLocked() && !SD->isBundleGroupBeforeFirstInst())
+      DF = getOrCreateDataFragment();
+    else
+      DF = new MCDataFragment(SD);
+
+    // We're now emitting an instruction in a bundle group, so this flag has
+    // to be turned off.
+    SD->setBundleGroupBeforeFirstInst(false);
+  } else {
+    DF = getOrCreateDataFragment();
+  }
 
   // Add the fixups and data.
   for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
     Fixups[i].setOffset(Fixups[i].getOffset() + DF->getContents().size());
     DF->getFixups().push_back(Fixups[i]);
   }
+  DF->setHasInstructions(true);
   DF->getContents().append(Code.begin(), Code.end());
+}
+
+void MCELFStreamer::EmitBundleAlignMode(unsigned AlignPow2) {
+  assert(AlignPow2 <= 30 && "Invalid bundle alignment");
+  MCAssembler &Assembler = getAssembler();
+  if (Assembler.getBundleAlignSize() == 0 && AlignPow2 > 0)
+    Assembler.setBundleAlignSize(1 << AlignPow2);
+  else
+    report_fatal_error(".bundle_align_mode should be only set once per file");
+}
+
+void MCELFStreamer::EmitBundleLock() {
+  MCSectionData *SD = getCurrentSectionData();
+
+  // Sanity checks
+  //
+  if (!getAssembler().isBundlingEnabled())
+    report_fatal_error(".bundle_lock forbidden when bundling is disabled");
+  else if (SD->isBundleLocked())
+    report_fatal_error("Nesting of .bundle_lock is forbidden");
+
+  SD->setBundleLocked(true);
+  SD->setBundleGroupBeforeFirstInst(true);
+}
+
+void MCELFStreamer::EmitBundleUnlock() {
+  MCSectionData *SD = getCurrentSectionData();
+
+  // Sanity checks
+  if (!getAssembler().isBundlingEnabled())
+    report_fatal_error(".bundle_unlock forbidden when bundling is disabled");
+  else if (!SD->isBundleLocked())
+    report_fatal_error(".bundle_unlock without matching lock");
+  else if (SD->isBundleGroupBeforeFirstInst())
+    report_fatal_error("Empty bundle-locked group is forbidden");
+
+  SD->setBundleLocked(false);
 }
 
 void MCELFStreamer::FinishImpl() {

@@ -95,6 +95,10 @@ namespace {
                                        StringRef FileName) {}
     virtual void EmitInstruction(const MCInst &Inst) {}
 
+    virtual void EmitBundleAlignMode(unsigned AlignPow2) {}
+    virtual void EmitBundleLock() {}
+    virtual void EmitBundleUnlock() {}
+
     virtual void FinishImpl() {}
 
     virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {

@@ -160,6 +160,22 @@ uint64_t MCAsmLayout::getSectionFileSize(const MCSectionData *SD) const {
   return getSectionAddressSize(SD);
 }
 
+uint64_t MCAsmLayout::computeBundlePadding(const MCFragment *F,
+                                           uint64_t FOffset, uint64_t FSize) {
+  uint64_t BundleSize = Assembler.getBundleAlignSize();
+  assert(BundleSize > 0 && 
+         "computeBundlePadding should only be called if bundling is enabled");
+  uint64_t BundleMask = BundleSize - 1;
+  uint64_t OffsetInBundle = FOffset & BundleMask;
+
+  // If the fragment would cross a bundle boundary, add enough padding until
+  // the end of the current bundle.
+  if (OffsetInBundle + FSize > BundleSize)
+    return BundleSize - OffsetInBundle;
+  else
+    return 0;
+}
+
 /* *** */
 
 MCFragment::MCFragment() : Kind(FragmentType(~0)) {
@@ -188,6 +204,7 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
   : Section(&_Section),
     Ordinal(~UINT32_C(0)),
     Alignment(1),
+    BundleLocked(false), BundleGroupBeforeFirstInst(false),
     HasInstructions(false)
 {
   if (A)
@@ -406,12 +423,42 @@ void MCAsmLayout::layoutFragment(MCFragment *F) {
   ++stats::FragmentLayouts;
 
   // Compute fragment offset and size.
-  uint64_t Offset = 0;
   if (Prev)
-    Offset += Prev->Offset + getAssembler().computeFragmentSize(*this, *Prev);
-
-  F->Offset = Offset;
+    F->Offset = Prev->Offset + getAssembler().computeFragmentSize(*this, *Prev);
+  else
+    F->Offset = 0;
   LastValidFragment[F->getParent()] = F;
+
+  // If bundling is enabled and this fragment has instructions in it, it has to
+  // obey the bundling restrictions. With padding, we'll have:
+  //
+  //
+  //        BundlePadding
+  //             ||| 
+  // -------------------------------------
+  //   Prev  |##########|       F        |
+  // -------------------------------------
+  //                    ^
+  //                    |
+  //                    F->Offset
+  //
+  // The fragment's offset will point to after the padding, and its computed
+  // size won't include the padding.
+  //
+  if (Assembler.isBundlingEnabled() && F->hasInstructions()) {
+    assert(isa<MCEncodedFragment>(F) &&
+           "Only MCEncodedFragment implementations have instructions");
+    uint64_t FSize = Assembler.computeFragmentSize(*this, *F);
+
+    if (FSize > Assembler.getBundleAlignSize())
+      report_fatal_error("Fragment can't be larger than a bundle size");
+
+    uint64_t RequiredBundlePadding = computeBundlePadding(F, F->Offset, FSize);
+    if (RequiredBundlePadding > UINT8_MAX)
+      report_fatal_error("Padding cannot exceed 255 bytes");
+    F->setBundlePadding(static_cast<uint8_t>(RequiredBundlePadding));
+    F->Offset += RequiredBundlePadding;
+  }
 }
 
 /// \brief Write the contents of a fragment to the given object writer. Expects
@@ -425,6 +472,22 @@ static void writeFragmentContents(const MCFragment &F, MCObjectWriter *OW) {
 static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
                           const MCFragment &F) {
   MCObjectWriter *OW = &Asm.getWriter();
+
+  // Should NOP padding be written out before this fragment?
+  unsigned BundlePadding = F.getBundlePadding();
+  if (BundlePadding > 0) {
+    assert(Asm.isBundlingEnabled() &&
+           "Writing bundle padding with disabled bundling");
+    assert(F.hasInstructions() &&
+           "Writing bundle padding for a fragment without instructions");
+
+    if (!Asm.getBackend().writeNopData(BundlePadding, OW))
+      report_fatal_error("unable to write NOP sequence of " +
+                         Twine(BundlePadding) + " bytes");
+  }
+
+  // This variable (and its dummy usage) is to participate in the assert at
+  // the end of the function.
   uint64_t Start = OW->getStream().tell();
   (void) Start;
 
@@ -529,7 +592,8 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
   }
   }
 
-  assert(OW->getStream().tell() - Start == FragmentSize);
+  assert(OW->getStream().tell() - Start == FragmentSize &&
+         "The stream should advance by fragment size");
 }
 
 void MCAssembler::writeSectionData(const MCSectionData *SD,
@@ -875,7 +939,9 @@ void MCFragment::dump() {
   }
 
   OS << "<MCFragment " << (void*) this << " LayoutOrder:" << LayoutOrder
-     << " Offset:" << Offset << ">";
+     << " Offset:" << Offset
+     << " HasInstructions:" << hasInstructions() 
+     << " BundlePadding:" << getBundlePadding() << ">";
 
   switch (getKind()) {
   case MCFragment::FT_Align: {
@@ -957,7 +1023,8 @@ void MCSectionData::dump() {
   raw_ostream &OS = llvm::errs();
 
   OS << "<MCSectionData";
-  OS << " Alignment:" << getAlignment() << " Fragments:[\n      ";
+  OS << " Alignment:" << getAlignment()
+     << " Fragments:[\n      ";
   for (iterator it = begin(), ie = end(); it != ie; ++it) {
     if (it != begin()) OS << ",\n      ";
     it->dump();
