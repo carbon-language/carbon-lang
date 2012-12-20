@@ -6780,29 +6780,12 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     // we do not warn to warn spuriously when 'x' and 'y' are on separate
     // paths through the function. This should be revisited if
     // -Wrepeated-use-of-weak is made flow-sensitive.
-    Qualifiers::ObjCLifetime Lifetime = VDecl->getType().getObjCLifetime();
-    if (Lifetime == Qualifiers::OCL_Strong) {
+    if (VDecl->getType().getObjCLifetime() == Qualifiers::OCL_Strong) {
       DiagnosticsEngine::Level Level =
         Diags.getDiagnosticLevel(diag::warn_arc_repeated_use_of_weak,
                                  Init->getLocStart());
       if (Level != DiagnosticsEngine::Ignored)
         getCurFunction()->markSafeWeakUse(Init);
-    }
-    else if (Lifetime == Qualifiers::OCL_Weak) {
-      // Check if we are initializing a __weak variable with an Objective-C
-      // object literal.  Since there is no other strong reference, the
-      // __weak variable may immediately become nil.
-      Expr *InitSansParen = Init->IgnoreParenImpCasts();
-      switch (InitSansParen->getStmtClass()) {
-        default: break;
-        case Stmt::BlockExprClass:
-        case Stmt::ObjCArrayLiteralClass:
-        case Stmt::ObjCDictionaryLiteralClass:
-        case Stmt::ObjCStringLiteralClass:
-          Diag(VDecl->getLocation(), diag::warn_attribute_weak_objc_literal)
-            << Init->getSourceRange();
-          break;
-      }
     }
   }
 

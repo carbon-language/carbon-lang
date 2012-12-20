@@ -1788,10 +1788,6 @@ def warn_attribute_weak_on_local : Warning<
   "__weak attribute cannot be specified on an automatic variable when ARC "
   "is not enabled">,
   InGroup<IgnoredAttributes>;
-def warn_attribute_weak_objc_literal : Warning<
-  "__weak variable initialized with an object literal may "
-  "immediately become nil">,
-  InGroup<DiagGroup<"objc-weak-assigned-literal">>;
 def warn_weak_identifier_undeclared : Warning<
   "weak identifier %0 never declared">;
 def err_attribute_weak_static : Error<
