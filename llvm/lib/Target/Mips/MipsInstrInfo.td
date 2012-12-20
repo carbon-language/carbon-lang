@@ -298,6 +298,10 @@ def HI16 : SDNodeXForm<imm, [{
 // e.g. addi, andi
 def immSExt16  : PatLeaf<(imm), [{ return isInt<16>(N->getSExtValue()); }]>;
 
+// Node immediate fits as 15-bit sign extended on target immediate.
+// e.g. addi, andi
+def immSExt15  : PatLeaf<(imm), [{ return isInt<15>(N->getSExtValue()); }]>;
+
 // Node immediate fits as 16-bit zero extended on target immediate.
 // The LO16 param means that only the lower 16 bits of the node
 // immediate are caught.

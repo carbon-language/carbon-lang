@@ -146,6 +146,10 @@ void Mips16RegisterInfo::eliminateFI(MachineBasicBlock::iterator II,
 
   DEBUG(errs() << "Offset     : " << Offset << "\n" << "<--------->\n");
 
+  if (!MI.isDebugValue() && ( ((FrameReg != Mips::SP) && !isInt<16>(Offset)) ||
+      ((FrameReg == Mips::SP) && !isInt<15>(Offset)) )) {
+    assert(false && "frame offset does not fit in instruction");
+  }
   MI.getOperand(OpNo).ChangeToRegister(FrameReg, false);
   MI.getOperand(OpNo + 1).ChangeToImmediate(Offset);
 
