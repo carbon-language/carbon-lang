@@ -165,6 +165,14 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
     if (isa<ExtractElementInst>(II) || II->getType()->isVectorTy())
       ++NumVectorInsts;
 
+    if (const CallInst *CI = dyn_cast<CallInst>(II))
+      if (CI->hasFnAttr(Attribute::NoDuplicate))
+        notDuplicatable = true;
+
+    if (const InvokeInst *InvI = dyn_cast<InvokeInst>(II))
+      if (InvI->hasFnAttr(Attribute::NoDuplicate))
+        notDuplicatable = true;
+
     ++NumInsts;
   }
 
@@ -182,8 +190,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
   // if someone is using a blockaddress without an indirectbr, and that
   // reference somehow ends up in another function or global, we probably
   // don't want to inline this function.
-  if (isa<IndirectBrInst>(BB->getTerminator()))
-    containsIndirectBr = true;
+  notDuplicatable |= isa<IndirectBrInst>(BB->getTerminator());
 
   // Remember NumInsts for this BB.
   NumBBInsts[BB] = NumInsts - NumInstsBeforeThisBB;

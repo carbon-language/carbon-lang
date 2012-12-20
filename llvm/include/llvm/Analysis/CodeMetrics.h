@@ -46,8 +46,11 @@ namespace llvm {
     /// \brief True if this function calls itself.
     bool isRecursive;
 
-    /// \brief True if this function contains one or more indirect branches.
-    bool containsIndirectBr;
+    /// \brief True if this function cannot be duplicated.
+    ///
+    /// True if this function contains one or more indirect branches, or it contains
+    /// one or more 'noduplicate' instructions.
+    bool notDuplicatable;
 
     /// \brief True if this function calls alloca (in the C sense).
     bool usesDynamicAlloca;
@@ -79,7 +82,7 @@ namespace llvm {
     unsigned NumRets;
 
     CodeMetrics() : exposesReturnsTwice(false), isRecursive(false),
-                    containsIndirectBr(false), usesDynamicAlloca(false),
+                    notDuplicatable(false), usesDynamicAlloca(false),
                     NumInsts(0), NumBlocks(0), NumCalls(0),
                     NumInlineCandidates(0), NumVectorInsts(0),
                     NumRets(0) {}

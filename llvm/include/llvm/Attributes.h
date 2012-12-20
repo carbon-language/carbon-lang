@@ -67,6 +67,7 @@ public:
     Nest,                  ///< Nested function static chain
     NoAlias,               ///< Considered to not alias after call
     NoCapture,             ///< Function creates no aliases of pointer
+    NoDuplicate,           ///< Call cannot be duplicated
     NoImplicitFloat,       ///< Disable implicit floating point insts
     NoInline,              ///< inline=never
     NonLazyBind,           ///< Function is called early and/or
@@ -223,7 +224,8 @@ public:
       .removeAttribute(Attribute::NonLazyBind)
       .removeAttribute(Attribute::ReturnsTwice)
       .removeAttribute(Attribute::AddressSafety)
-      .removeAttribute(Attribute::MinSize);
+      .removeAttribute(Attribute::MinSize)
+      .removeAttribute(Attribute::NoDuplicate);
   }
 
   uint64_t Raw() const { return Bits; }

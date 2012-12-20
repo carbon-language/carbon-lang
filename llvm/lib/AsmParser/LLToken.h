@@ -116,6 +116,7 @@ namespace lltok {
     kw_nonlazybind,
     kw_address_safety,
     kw_minsize,
+    kw_noduplicate,
 
     kw_type,
     kw_opaque,

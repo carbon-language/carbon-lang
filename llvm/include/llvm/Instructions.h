@@ -1336,6 +1336,13 @@ public:
                  Attribute::get(getContext(), Attribute::NoUnwind));
   }
 
+  /// \brief Determine if the call cannot be duplicated.
+  bool cannotDuplicate() const {return hasFnAttr(Attribute::NoDuplicate); }
+  void setCannotDuplicate() {
+    addAttribute(AttributeSet::FunctionIndex,
+                 Attribute::get(getContext(), Attribute::NoDuplicate));
+  }
+
   /// \brief Determine if the call returns a structure through first
   /// pointer argument.
   bool hasStructRetAttr() const {

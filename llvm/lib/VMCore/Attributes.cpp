@@ -213,6 +213,8 @@ std::string Attribute::getAsString() const {
     Result += utostr(getAlignment());
     Result += " ";
   }
+  if (hasAttribute(Attribute::NoDuplicate))
+    Result += "noduplicate ";
   // Trim the trailing space.
   assert(!Result.empty() && "Unknown attribute!");
   Result.erase(Result.end()-1);
@@ -327,6 +329,7 @@ uint64_t AttributeImpl::getAttrMask(uint64_t Val) {
   case Attribute::NonLazyBind:     return 1U << 31;
   case Attribute::AddressSafety:   return 1ULL << 32;
   case Attribute::MinSize:         return 1ULL << 33;
+  case Attribute::NoDuplicate:     return 1ULL << 34;
   }
   llvm_unreachable("Unsupported attribute type");
 }

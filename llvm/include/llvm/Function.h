@@ -250,6 +250,14 @@ public:
     addFnAttr(Attribute::NoUnwind);
   }
 
+  /// @brief Determine if the call cannot be duplicated.
+  bool cannotDuplicate() const {
+    return getFnAttributes().hasAttribute(Attribute::NoDuplicate);
+  }
+  void setCannotDuplicate() {
+    addFnAttr(Attribute::NoDuplicate);
+  }
+
   /// @brief True if the ABI mandates (or the user requested) that this
   /// function be in a unwind table.
   bool hasUWTable() const {

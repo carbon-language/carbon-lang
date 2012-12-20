@@ -33,3 +33,29 @@ for.end:                                          ; preds = %for.cond
 
 declare void @g(i32*)
 
+; CHECK: @test2
+define void @test2() nounwind ssp {
+entry:
+  %array = alloca [20 x i32], align 16
+  br label %for.cond
+
+for.cond:                                         ; preds = %for.body, %entry
+  %i.0 = phi i32 [ 0, %entry ], [ %inc, %for.body ]
+  %cmp = icmp slt i32 %i.0, 100
+; CHECK: call void @f
+; CHECK-NOT: call void @f
+  call void @f() noduplicate 
+  br i1 %cmp, label %for.body, label %for.end
+
+for.body:                                         ; preds = %for.cond
+  %inc = add nsw i32 %i.0, 1
+  call void @h()
+  br label %for.cond
+
+for.end:                                          ; preds = %for.cond
+  ret void
+; CHECK: }
+}
+
+declare void @f() noduplicate
+declare void @h()

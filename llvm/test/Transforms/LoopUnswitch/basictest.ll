@@ -1,4 +1,4 @@
-; RUN: opt < %s -loop-unswitch -disable-output
+; RUN: opt < %s -loop-unswitch -verify-loop-info -S < %s 2>&1 | FileCheck %s
 
 define i32 @test(i32* %A, i1 %C) {
 entry:
@@ -29,3 +29,40 @@ return:		; preds = %endif, %then
 	ret i32 %tmp.13
 }
 
+; This simple test would normally unswitch, but should be inhibited by the presence of
+; the noduplicate call.
+
+; CHECK: @test2
+define i32 @test2(i32* %var) {
+  %mem = alloca i32
+  store i32 2, i32* %mem
+  %c = load i32* %mem
+
+  br label %loop_begin
+
+loop_begin:
+
+  %var_val = load i32* %var
+
+  switch i32 %c, label %default [
+      i32 1, label %inc
+      i32 2, label %dec
+  ]
+
+inc:
+  call void @incf() noreturn nounwind
+  br label %loop_begin
+dec:
+; CHECK: call void @decf()
+; CHECK-NOT: call void @decf()
+  call void @decf() noreturn nounwind noduplicate
+  br label %loop_begin
+default:
+  br label %loop_exit
+loop_exit:
+  ret i32 0
+; CHECK: }
+}
+
+declare void @incf() noreturn
+declare void @decf() noreturn

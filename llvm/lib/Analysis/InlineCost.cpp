@@ -54,6 +54,8 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   bool IsRecursiveCall;
   bool ExposesReturnsTwice;
   bool HasDynamicAlloca;
+  bool ContainsNoDuplicateCall;
+
   /// Number of bytes allocated statically by the callee.
   uint64_t AllocatedSize;
   unsigned NumInstructions, NumVectorInstructions;
@@ -128,8 +130,8 @@ public:
   CallAnalyzer(const DataLayout *TD, Function &Callee, int Threshold)
     : TD(TD), F(Callee), Threshold(Threshold), Cost(0),
       IsCallerRecursive(false), IsRecursiveCall(false),
-      ExposesReturnsTwice(false), HasDynamicAlloca(false), AllocatedSize(0),
-      NumInstructions(0), NumVectorInstructions(0),
+      ExposesReturnsTwice(false), HasDynamicAlloca(false), ContainsNoDuplicateCall(false),
+      AllocatedSize(0), NumInstructions(0), NumVectorInstructions(0),
       FiftyPercentVectorBonus(0), TenPercentVectorBonus(0), VectorBonus(0),
       NumConstantArgs(0), NumConstantOffsetPtrArgs(0), NumAllocaArgs(0),
       NumConstantPtrCmps(0), NumConstantPtrDiffs(0),
@@ -615,6 +617,9 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
     ExposesReturnsTwice = true;
     return false;
   }
+  if (CS.isCall() &&
+      cast<CallInst>(CS.getInstruction())->hasFnAttr(Attribute::NoDuplicate))
+    ContainsNoDuplicateCall = true;
 
   if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
     switch (II->getIntrinsicID()) {
@@ -842,7 +847,9 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
 
   // If there is only one call of the function, and it has internal linkage,
   // the cost of inlining it drops dramatically.
-  if (F.hasLocalLinkage() && F.hasOneUse() && &F == CS.getCalledFunction())
+  bool OnlyOneCallAndLocalLinkage = F.hasLocalLinkage() && F.hasOneUse() &&
+    &F == CS.getCalledFunction();
+  if (OnlyOneCallAndLocalLinkage)
     Cost += InlineConstants::LastCallToStaticBonus;
 
   // If the instruction after the call, or if the normal destination of the
@@ -1008,6 +1015,12 @@ bool CallAnalyzer::analyzeCall(CallSite CS) {
     }
   }
 
+  // If this is a noduplicate call, we can still inline as long as 
+  // inlining this would cause the removal of the caller (so the instruction
+  // is not actually duplicated, just moved).
+  if (!OnlyOneCallAndLocalLinkage && ContainsNoDuplicateCall)
+    return false;
+
   Threshold += VectorBonus;
 
   return Cost < Threshold;
@@ -1025,6 +1038,7 @@ void CallAnalyzer::dump() {
   DEBUG_PRINT_STAT(NumInstructionsSimplified);
   DEBUG_PRINT_STAT(SROACostSavings);
   DEBUG_PRINT_STAT(SROACostSavingsLost);
+  DEBUG_PRINT_STAT(ContainsNoDuplicateCall);
 #undef DEBUG_PRINT_STAT
 }
 #endif

@@ -248,6 +248,13 @@ bool LUAnalysisCache::countLoop(const Loop* L) {
     Props.SizeEstimation = std::min(Metrics.NumInsts, Metrics.NumBlocks * 5);
     Props.CanBeUnswitchedCount = MaxSize / (Props.SizeEstimation);
     MaxSize -= Props.SizeEstimation * Props.CanBeUnswitchedCount;
+
+    if (Metrics.notDuplicatable) {
+      DEBUG(dbgs() << "NOT unswitching loop %"
+            << L->getHeader()->getName() << ", contents cannot be "
+            << "duplicated!\n");
+      return false;
+    }
   }
 
   if (!Props.CanBeUnswitchedCount) {

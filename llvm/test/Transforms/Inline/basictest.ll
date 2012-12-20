@@ -45,3 +45,48 @@ define i32 @test2(i1 %cond) {
 ; CHECK-NOT: = alloca
 ; CHECK: ret i32
 }
+
+declare void @barrier() noduplicate
+
+define internal i32 @f() {
+  call void @barrier() noduplicate
+  ret i32 1
+}
+
+define i32 @g() {
+  call void @barrier() noduplicate
+  ret i32 2
+}
+
+define internal i32 @h() {
+  call void @barrier() noduplicate
+  ret i32 3
+}
+
+define i32 @test3() {
+  %b = call i32 @f()
+  ret i32 %b
+}
+
+; The call to @f cannot be inlined as there is another callsite
+; calling @f, and @f contains a noduplicate call.
+;
+; The call to @g cannot be inlined as it has external linkage.
+;
+; The call to @h *can* be inlined.
+
+; CHECK: @test
+define i32 @test() {
+; CHECK: call i32 @f()
+  %a = call i32 @f()
+; CHECK: call i32 @g()
+  %b = call i32 @g()
+; CHECK-NOT: call i32 @h()
+  %c = call i32 @h()
+
+  %d = add i32 %a, %b
+  %e = add i32 %d, %c
+
+  ret i32 %e
+; CHECK: }
+}

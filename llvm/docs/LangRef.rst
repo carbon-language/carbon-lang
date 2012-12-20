@@ -845,6 +845,17 @@ example:
     show that no exceptions passes by it. This is normally the case for
     the ELF x86-64 abi, but it can be disabled for some compilation
     units.
+``noduplicate``
+    This attribute indicates that calls to the function cannot be
+    duplicated. A call to a ``noduplicate`` function may be moved
+    within its parent function, but may not be duplicated within
+    its parent function.
+
+    A function containing a ``noduplicate`` call may still
+    be an inlining candidate, provided that the call is not
+    duplicated by inlining. That implies that the function has
+    internal linkage and only has one call site, so the original
+    call is dead after inlining.
 
 .. _moduleasm:
 
