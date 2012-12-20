@@ -345,8 +345,9 @@ def MTC2_3OP  : MFC3OP<0x12, 4, (outs CPURegs:$rd, uimm16:$sel),
 def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
 
 // Arithmetic and logical instructions with 3 register operands.
-class ArithLogicR<string opstr, InstrItinClass Itin, RegisterClass RC,
-                  bit isComm = 0, SDPatternOperator OpNode = null_frag>:
+class ArithLogicR<string opstr, RegisterClass RC, bit isComm = 0,
+                  InstrItinClass Itin = NoItinerary,
+                  SDPatternOperator OpNode = null_frag>:
   InstSE<(outs RC:$rd), (ins RC:$rs, RC:$rt),
          !strconcat(opstr, "\t$rd, $rs, $rt"),
          [(set RC:$rd, (OpNode RC:$rs, RC:$rt))], Itin, FrmR> {
@@ -355,8 +356,9 @@ class ArithLogicR<string opstr, InstrItinClass Itin, RegisterClass RC,
 }
 
 // Arithmetic and logical instructions with 2 register operands.
-class ArithLogicI<string opstr, Operand Od, PatLeaf imm_type,
-                  RegisterClass RC, SDPatternOperator OpNode = null_frag> :
+class ArithLogicI<string opstr, Operand Od, RegisterClass RC,
+                  SDPatternOperator imm_type = null_frag,
+                  SDPatternOperator OpNode = null_frag> :
   InstSE<(outs RC:$rt), (ins RC:$rs, Od:$imm16),
          !strconcat(opstr, "\t$rt, $rs, $imm16"),
          [(set RC:$rt, (OpNode RC:$rs, imm_type:$imm16))], IIAlu, FrmI> {
@@ -910,26 +912,26 @@ def LoadAddr32Imm : LoadAddressImm<"la", shamt,CPURegs>;
 //===----------------------------------------------------------------------===//
 
 /// Arithmetic Instructions (ALU Immediate)
-def ADDiu : ArithLogicI<"addiu", simm16, immSExt16, CPURegs, add>,
+def ADDiu : ArithLogicI<"addiu", simm16, CPURegs, immSExt16, add>,
             ADDI_FM<0x9>, IsAsCheapAsAMove;
-def ADDi  : ArithLogicI<"addi", simm16, immSExt16, CPURegs>, ADDI_FM<0x8>;
+def ADDi  : ArithLogicI<"addi", simm16, CPURegs>, ADDI_FM<0x8>;
 def SLTi  : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16, CPURegs>;
 def SLTiu : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16, CPURegs>;
-def ANDi  : ArithLogicI<"andi", uimm16, immZExt16, CPURegs, and>, ADDI_FM<0xc>;
-def ORi   : ArithLogicI<"ori", uimm16, immZExt16, CPURegs, or>, ADDI_FM<0xd>;
-def XORi  : ArithLogicI<"xori", uimm16, immZExt16, CPURegs, xor>, ADDI_FM<0xe>;
+def ANDi  : ArithLogicI<"andi", uimm16, CPURegs, immZExt16, and>, ADDI_FM<0xc>;
+def ORi   : ArithLogicI<"ori", uimm16, CPURegs, immZExt16, or>, ADDI_FM<0xd>;
+def XORi  : ArithLogicI<"xori", uimm16, CPURegs, immZExt16, xor>, ADDI_FM<0xe>;
 def LUi   : LoadUpper<0x0f, "lui", CPURegs, uimm16>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
-def ADDu : ArithLogicR<"addu", IIAlu, CPURegs, 1, add>, ADD_FM<0, 0x21>;
-def SUBu : ArithLogicR<"subu", IIAlu, CPURegs, 0, sub>, ADD_FM<0, 0x23>;
-def ADD  : ArithLogicR<"add", IIAlu, CPURegs, 1>, ADD_FM<0, 0x20>;
-def SUB  : ArithLogicR<"sub", IIAlu, CPURegs, 0>, ADD_FM<0, 0x22>;
+def ADDu : ArithLogicR<"addu", CPURegs, 1, IIAlu, add>, ADD_FM<0, 0x21>;
+def SUBu : ArithLogicR<"subu", CPURegs, 0, IIAlu, sub>, ADD_FM<0, 0x23>;
+def ADD  : ArithLogicR<"add", CPURegs>, ADD_FM<0, 0x20>;
+def SUB  : ArithLogicR<"sub", CPURegs>, ADD_FM<0, 0x22>;
 def SLT  : SetCC_R<0x00, 0x2a, "slt", setlt, CPURegs>;
 def SLTu : SetCC_R<0x00, 0x2b, "sltu", setult, CPURegs>;
-def AND  : ArithLogicR<"and", IIAlu, CPURegs, 1, and>, ADD_FM<0, 0x24>;
-def OR   : ArithLogicR<"or", IIAlu, CPURegs, 1, or>, ADD_FM<0, 0x25>;
-def XOR  : ArithLogicR<"xor", IIAlu, CPURegs, 1, xor>, ADD_FM<0, 0x26>;
+def AND  : ArithLogicR<"and", CPURegs, 1, IIAlu, and>, ADD_FM<0, 0x24>;
+def OR   : ArithLogicR<"or", CPURegs, 1, IIAlu, or>, ADD_FM<0, 0x25>;
+def XOR  : ArithLogicR<"xor", CPURegs, 1, IIAlu, xor>, ADD_FM<0, 0x26>;
 def NOR  : LogicNOR<0x00, 0x27, "nor", CPURegs>;
 
 /// Shift Instructions
@@ -1054,7 +1056,7 @@ def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 
 // MUL is a assembly macro in the current used ISAs. In recent ISA's
 // it is a real instruction.
-def MUL   : ArithLogicR<"mul", IIImul, CPURegs, 1, mul>, ADD_FM<0x1c, 0x02>;
+def MUL   : ArithLogicR<"mul", CPURegs, 1, IIImul, mul>, ADD_FM<0x1c, 0x02>;
 
 def RDHWR : ReadHardware<CPURegs, HWRegs>;
 
