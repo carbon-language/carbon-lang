@@ -4952,8 +4952,7 @@ void Parser::ParseParameterDeclarationClause(
     MaybeParseCXX0XAttributes(DS.getAttributes());
 
     // Skip any Microsoft attributes before a param.
-    if (getLangOpts().MicrosoftExt && Tok.is(tok::l_square))
-      ParseMicrosoftAttributes(DS.getAttributes());
+    MaybeParseMicrosoftAttributes(DS.getAttributes());
 
     SourceLocation DSStart = Tok.getLocation();
 
