@@ -55,13 +55,5 @@ endif()
 
 # Unit tests for common sanitizer runtime.
 if(LLVM_INCLUDE_TESTS)
-  # Build stand-alone static sanitizer runtime for use in unit tests.
-  add_library(RTSanitizerCommon.test STATIC ${SANITIZER_SOURCES})
-  # Build test library with debug info.
-  set_target_compile_flags(RTSanitizerCommon.test
-    ${SANITIZER_CFLAGS} -g)
-  set_target_properties(RTSanitizerCommon.test PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-
   add_subdirectory(tests)
 endif()
