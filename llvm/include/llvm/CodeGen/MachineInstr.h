@@ -97,7 +97,8 @@ private:
   /// MachineInstr ctor - This constructor create a MachineInstr and add the
   /// implicit operands.  It reserves space for number of operands specified by
   /// MCInstrDesc.  An explicit DebugLoc is supplied.
-  MachineInstr(const MCInstrDesc &MCID, const DebugLoc dl, bool NoImp = false);
+  MachineInstr(MachineFunction&, const MCInstrDesc &MCID,
+               const DebugLoc dl, bool NoImp = false);
 
   ~MachineInstr();
 
@@ -997,7 +998,7 @@ private:
 
   /// addImplicitDefUseOperands - Add all implicit def and use operands to
   /// this instruction.
-  void addImplicitDefUseOperands();
+  void addImplicitDefUseOperands(MachineFunction &MF);
 
   /// RemoveRegOperandsFromUseLists - Unlink all of the register operands in
   /// this instruction from their respective use lists.  This requires that the

@@ -518,20 +518,20 @@ raw_ostream &llvm::operator<<(raw_ostream &OS, const MachineMemOperand &MMO) {
 // MachineInstr Implementation
 //===----------------------------------------------------------------------===//
 
-void MachineInstr::addImplicitDefUseOperands() {
+void MachineInstr::addImplicitDefUseOperands(MachineFunction &MF) {
   if (MCID->ImplicitDefs)
     for (const uint16_t *ImpDefs = MCID->getImplicitDefs(); *ImpDefs; ++ImpDefs)
-      addOperand(MachineOperand::CreateReg(*ImpDefs, true, true));
+      addOperand(MF, MachineOperand::CreateReg(*ImpDefs, true, true));
   if (MCID->ImplicitUses)
     for (const uint16_t *ImpUses = MCID->getImplicitUses(); *ImpUses; ++ImpUses)
-      addOperand(MachineOperand::CreateReg(*ImpUses, false, true));
+      addOperand(MF, MachineOperand::CreateReg(*ImpUses, false, true));
 }
 
 /// MachineInstr ctor - This constructor creates a MachineInstr and adds the
 /// implicit operands. It reserves space for the number of operands specified by
 /// the MCInstrDesc.
-MachineInstr::MachineInstr(const MCInstrDesc &tid, const DebugLoc dl,
-                           bool NoImp)
+MachineInstr::MachineInstr(MachineFunction &MF, const MCInstrDesc &tid,
+                           const DebugLoc dl, bool NoImp)
   : MCID(&tid), Flags(0), AsmPrinterFlags(0),
     NumMemRefs(0), MemRefs(0), Parent(0), debugLoc(dl) {
   unsigned NumImplicitOps = 0;
@@ -539,7 +539,7 @@ MachineInstr::MachineInstr(const MCInstrDesc &tid, const DebugLoc dl,
     NumImplicitOps = MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
   Operands.reserve(NumImplicitOps + MCID->getNumOperands());
   if (!NoImp)
-    addImplicitDefUseOperands();
+    addImplicitDefUseOperands(MF);
   // Make sure that we get added to a machine basicblock
   LeakDetector::addGarbageObject(this);
 }
@@ -554,7 +554,7 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
 
   // Add operands
   for (unsigned i = 0; i != MI.getNumOperands(); ++i)
-    addOperand(MI.getOperand(i));
+    addOperand(MF, MI.getOperand(i));
 
   // Copy all the sensible flags.
   setFlags(MI.Flags);
