@@ -239,13 +239,82 @@ bool EditedSource::commit(const Commit &commit) {
   return true;
 }
 
+static inline bool isIdentifierChar(char c, const LangOptions &LangOpts) {
+  return std::isalnum(c) || c == '_' || (c == '$' && LangOpts.DollarIdents);
+}
+
+// \brief Returns true if it is ok to make the two given characters adjacent.
+static bool canBeJoined(char left, char right, const LangOptions &LangOpts) {
+  // FIXME: Should use the Lexer to make sure we don't allow stuff like
+  // making two '<' adjacent.
+  return !(isIdentifierChar(left, LangOpts) &&
+           isIdentifierChar(right, LangOpts));
+}
+
+/// \brief Returns true if it is ok to eliminate the trailing whitespace between
+/// the given characters.
+static bool canRemoveWhitespace(char left, char beforeWSpace, char right,
+                                const LangOptions &LangOpts) {
+  if (!canBeJoined(left, right, LangOpts))
+    return false;
+  if (std::isspace(left) || std::isspace(right))
+    return true;
+  if (canBeJoined(beforeWSpace, right, LangOpts))
+    return false; // the whitespace was intentional, keep it.
+  return true;
+}
+
+/// \brief Check the range that we are going to remove and:
+/// -Remove any trailing whitespace if possible.
+/// -Insert a space if removing the range is going to mess up the source tokens.
+static void adjustRemoval(const SourceManager &SM, const LangOptions &LangOpts,
+                          SourceLocation Loc, FileOffset offs,
+                          unsigned &len, StringRef &text) {
+  assert(len && text.empty());
+  SourceLocation BeginTokLoc = Lexer::GetBeginningOfToken(Loc, SM, LangOpts);
+  if (BeginTokLoc != Loc)
+    return; // the range is not at the beginning of a token, keep the range.
+
+  bool Invalid = false;
+  StringRef buffer = SM.getBufferData(offs.getFID(), &Invalid);
+  if (Invalid)
+    return;
+
+  unsigned begin = offs.getOffset();
+  unsigned end = begin + len;
+
+  // FIXME: Remove newline.
+
+  if (begin == 0) {
+    if (buffer[end] == ' ')
+      ++len;
+    return;
+  }
+
+  if (buffer[end] == ' ') {
+    if (canRemoveWhitespace(/*left=*/buffer[begin-1],
+                            /*beforeWSpace=*/buffer[end-1],
+                            /*right=*/buffer[end+1],
+                            LangOpts))
+      ++len;
+    return;
+  }
+
+  if (!canBeJoined(buffer[begin-1], buffer[end], LangOpts))
+    text = " ";
+}
+
 static void applyRewrite(EditsReceiver &receiver,
                          StringRef text, FileOffset offs, unsigned len,
-                         const SourceManager &SM) {
+                         const SourceManager &SM, const LangOptions &LangOpts) {
   assert(!offs.getFID().isInvalid());
   SourceLocation Loc = SM.getLocForStartOfFile(offs.getFID());
   Loc = Loc.getLocWithOffset(offs.getOffset());
   assert(Loc.isFileID());
+
+  if (text.empty())
+    adjustRemoval(SM, LangOpts, Loc, offs, len, text);
+
   CharSourceRange range = CharSourceRange::getCharRange(Loc,
                                                      Loc.getLocWithOffset(len));
 
@@ -288,14 +357,14 @@ void EditedSource::applyRewrites(EditsReceiver &receiver) {
       continue;
     }
 
-    applyRewrite(receiver, StrVec.str(), CurOffs, CurLen, SourceMgr);
+    applyRewrite(receiver, StrVec.str(), CurOffs, CurLen, SourceMgr, LangOpts);
     CurOffs = offs;
     StrVec = act.Text;
     CurLen = act.RemoveLen;
     CurEnd = CurOffs.getWithOffset(CurLen);
   }
 
-  applyRewrite(receiver, StrVec.str(), CurOffs, CurLen, SourceMgr);
+  applyRewrite(receiver, StrVec.str(), CurOffs, CurLen, SourceMgr, LangOpts);
 }
 
 void EditedSource::clearRewrites() {

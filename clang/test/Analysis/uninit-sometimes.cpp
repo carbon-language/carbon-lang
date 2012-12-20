@@ -192,7 +192,7 @@ int test_logical_and_false(int k) {
   return x; // expected-note {{uninitialized use}}
 }
 
-// CHECK: fix-it:"{{.*}}":{189:3-191:9}:""
+// CHECK: fix-it:"{{.*}}":{189:3-191:10}:""
 // CHECK: fix-it:"{{.*}}":{188:8-188:8}:" = 0"
 
 
@@ -232,7 +232,7 @@ int test_logical_or_true(int k) {
   return x; // expected-note {{uninitialized use}}
 }
 
-// CHECK: fix-it:"{{.*}}":{229:3-231:9}:""
+// CHECK: fix-it:"{{.*}}":{229:3-231:10}:""
 // CHECK: fix-it:"{{.*}}":{228:8-228:8}:" = 0"
 
 
