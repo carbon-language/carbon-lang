@@ -43,6 +43,32 @@ Mips16RegisterInfo::Mips16RegisterInfo(const MipsSubtarget &ST,
     const Mips16InstrInfo &I)
   : MipsRegisterInfo(ST), TII(I) {}
 
+bool Mips16RegisterInfo::requiresRegisterScavenging
+  (const MachineFunction &MF) const {
+  return true;
+}
+bool Mips16RegisterInfo::requiresFrameIndexScavenging
+  (const MachineFunction &MF) const {
+  return true;
+}
+
+bool Mips16RegisterInfo::useFPForScavengingIndex
+  (const MachineFunction &MF) const {
+  return false;
+}
+
+bool Mips16RegisterInfo::saveScavengerRegister
+  (MachineBasicBlock &MBB,
+   MachineBasicBlock::iterator I,
+   MachineBasicBlock::iterator &UseMI,
+   const TargetRegisterClass *RC,
+   unsigned Reg) const {
+  DebugLoc DL;
+  TII.copyPhysReg(MBB, I, DL, Mips::T0, Reg, true);
+  TII.copyPhysReg(MBB, UseMI, DL, Reg, Mips::T0, true);
+  return true;
+}
+
 // This function eliminate ADJCALLSTACKDOWN,
 // ADJCALLSTACKUP pseudo instructions
 void Mips16RegisterInfo::

@@ -27,6 +27,19 @@ public:
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator I) const;
+
+  bool requiresRegisterScavenging(const MachineFunction &MF) const;
+
+  bool requiresFrameIndexScavenging(const MachineFunction &MF) const;
+
+  bool useFPForScavengingIndex(const MachineFunction &MF) const;
+
+  bool saveScavengerRegister(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I,
+                                     MachineBasicBlock::iterator &UseMI,
+                                     const TargetRegisterClass *RC,
+                                     unsigned Reg) const;
+
 private:
   virtual void eliminateFI(MachineBasicBlock::iterator II, unsigned OpNo,
                            int FrameIndex, uint64_t StackSize,
