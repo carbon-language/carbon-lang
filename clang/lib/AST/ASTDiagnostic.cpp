@@ -447,6 +447,7 @@ class TemplateDiff {
       DiffNode(unsigned ParentNode = 0)
         : NextNode(0), ChildNode(0), ParentNode(ParentNode),
           FromType(), ToType(), FromExpr(0), ToExpr(0), FromTD(0), ToTD(0),
+          IsValidFromInt(false), IsValidToInt(false),
           FromDefault(false), ToDefault(false), Same(false) { }
     };
 
