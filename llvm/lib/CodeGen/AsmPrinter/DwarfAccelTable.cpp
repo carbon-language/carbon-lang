@@ -32,7 +32,7 @@ const char *DwarfAccelTable::Atom::AtomTypeString(enum AtomType AT) {
   case eAtomTypeTag: return "eAtomTypeTag";
   case eAtomTypeNameFlags: return "eAtomTypeNameFlags";
   case eAtomTypeTypeFlags: return "eAtomTypeTypeFlags";
-  } 
+  }
   llvm_unreachable("invalid AtomType!");
 }
 
@@ -155,7 +155,7 @@ void DwarfAccelTable::EmitHashes(AsmPrinter *Asm) {
            HE = Buckets[i].end(); HI != HE; ++HI) {
       Asm->OutStreamer.AddComment("Hash in Bucket " + Twine(i));
       Asm->EmitInt32((*HI)->HashValue);
-    } 
+    }
   }
 }
 
@@ -258,7 +258,7 @@ void DwarfAccelTable::print(raw_ostream &O) {
     for (std::vector<HashData*>::const_iterator
            DI = Data.begin(), DE = Data.end(); DI != DE; ++DI)
       (*DI)->print(O);
-  
+
 
 }
 #endif

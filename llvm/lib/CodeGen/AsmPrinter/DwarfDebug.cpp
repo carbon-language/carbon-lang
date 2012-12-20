@@ -615,7 +615,8 @@ unsigned DwarfDebug::getOrCreateSourceID(StringRef FileName,
   return SrcId;
 }
 
-// Create new CompileUnit for the given metadata node with tag DW_TAG_compile_unit.
+// Create new CompileUnit for the given metadata node with tag
+// DW_TAG_compile_unit.
 CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   DICompileUnit DIUnit(N);
   StringRef FN = DIUnit.getFilename();
@@ -1962,7 +1963,8 @@ void DwarfDebug::emitAccelNames() {
   AT.Emit(Asm, SectionBegin, &InfoHolder);
 }
 
-// Emit objective C classes and categories into a hashed accelerator table section.
+// Emit objective C classes and categories into a hashed accelerator table
+// section.
 void DwarfDebug::emitAccelObjC() {
   DwarfAccelTable AT(DwarfAccelTable::Atom(DwarfAccelTable::eAtomTypeDIEOffset,
                                            dwarf::DW_FORM_data4));
@@ -2120,7 +2122,9 @@ void DwarfDebug::emitDebugStr() {
       StringMapEntry<std::pair<MCSymbol*, unsigned> >*>, 64> Entries;
 
   for (StringMap<std::pair<MCSymbol*, unsigned> >::iterator
-       I = InfoHolder.getStringPool()->begin(), E = InfoHolder.getStringPool()->end(); I != E; ++I)
+       I = InfoHolder.getStringPool()->begin(),
+         E = InfoHolder.getStringPool()->end();
+       I != E; ++I)
     Entries.push_back(std::make_pair(I->second.second, &*I));
 
   array_pod_sort(Entries.begin(), Entries.end());
@@ -2433,5 +2437,6 @@ void DwarfDebug::emitDebugInfoDWO() {
 // abbreviations for the .debug_info.dwo section.
 void DwarfDebug::emitDebugAbbrevDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
-  emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevDWOSection(), &Abbreviations);
+  emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevDWOSection(),
+              &Abbreviations);
 }
