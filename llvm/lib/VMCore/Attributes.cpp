@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Attributes.h"
-#include "AttributesImpl.h"
+#include "AttributeImpl.h"
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringExtras.h"
@@ -48,12 +48,12 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   ID.AddInteger(B.Raw());
 
   void *InsertPoint;
-  AttributesImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
+  AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
 
   if (!PA) {
     // If we didn't find any existing attributes of the same shape then create a
     // new one and insert it.
-    PA = new AttributesImpl(B.Raw());
+    PA = new AttributeImpl(B.Raw());
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
@@ -224,7 +224,7 @@ std::string Attribute::getAsString() const {
 //===----------------------------------------------------------------------===//
 
 AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrVal Val){
-  Bits |= AttributesImpl::getAttrMask(Val);
+  Bits |= AttributeImpl::getAttrMask(Val);
   return *this;
 }
 
@@ -250,7 +250,7 @@ AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align){
 }
 
 AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrVal Val) {
-  Bits &= ~AttributesImpl::getAttrMask(Val);
+  Bits &= ~AttributeImpl::getAttrMask(Val);
   return *this;
 }
 
@@ -265,7 +265,7 @@ AttrBuilder &AttrBuilder::removeAttributes(const Attribute &A){
 }
 
 bool AttrBuilder::hasAttribute(Attribute::AttrVal A) const {
-  return Bits & AttributesImpl::getAttrMask(A);
+  return Bits & AttributeImpl::getAttrMask(A);
 }
 
 bool AttrBuilder::hasAttributes() const {
@@ -275,28 +275,28 @@ bool AttrBuilder::hasAttributes(const Attribute &A) const {
   return Bits & A.Raw();
 }
 bool AttrBuilder::hasAlignmentAttr() const {
-  return Bits & AttributesImpl::getAttrMask(Attribute::Alignment);
+  return Bits & AttributeImpl::getAttrMask(Attribute::Alignment);
 }
 
 uint64_t AttrBuilder::getAlignment() const {
   if (!hasAlignmentAttr())
     return 0;
   return 1ULL <<
-    (((Bits & AttributesImpl::getAttrMask(Attribute::Alignment)) >> 16) - 1);
+    (((Bits & AttributeImpl::getAttrMask(Attribute::Alignment)) >> 16) - 1);
 }
 
 uint64_t AttrBuilder::getStackAlignment() const {
   if (!hasAlignmentAttr())
     return 0;
   return 1ULL <<
-    (((Bits & AttributesImpl::getAttrMask(Attribute::StackAlignment))>>26)-1);
+    (((Bits & AttributeImpl::getAttrMask(Attribute::StackAlignment))>>26)-1);
 }
 
 //===----------------------------------------------------------------------===//
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
-uint64_t AttributesImpl::getAttrMask(uint64_t Val) {
+uint64_t AttributeImpl::getAttrMask(uint64_t Val) {
   switch (Val) {
   case Attribute::None:            return 0;
   case Attribute::ZExt:            return 1 << 0;
@@ -331,23 +331,23 @@ uint64_t AttributesImpl::getAttrMask(uint64_t Val) {
   llvm_unreachable("Unsupported attribute type");
 }
 
-bool AttributesImpl::hasAttribute(uint64_t A) const {
+bool AttributeImpl::hasAttribute(uint64_t A) const {
   return (Bits & getAttrMask(A)) != 0;
 }
 
-bool AttributesImpl::hasAttributes() const {
+bool AttributeImpl::hasAttributes() const {
   return Bits != 0;
 }
 
-bool AttributesImpl::hasAttributes(const Attribute &A) const {
+bool AttributeImpl::hasAttributes(const Attribute &A) const {
   return Bits & A.Raw();        // FIXME: Raw() won't work here in the future.
 }
 
-uint64_t AttributesImpl::getAlignment() const {
+uint64_t AttributeImpl::getAlignment() const {
   return Bits & getAttrMask(Attribute::Alignment);
 }
 
-uint64_t AttributesImpl::getStackAlignment() const {
+uint64_t AttributeImpl::getStackAlignment() const {
   return Bits & getAttrMask(Attribute::StackAlignment);
 }
 

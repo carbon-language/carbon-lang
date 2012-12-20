@@ -15,7 +15,7 @@
 #ifndef LLVM_LLVMCONTEXT_IMPL_H
 #define LLVM_LLVMCONTEXT_IMPL_H
 
-#include "AttributesImpl.h"
+#include "AttributeImpl.h"
 #include "ConstantsContext.h"
 #include "LeaksContext.h"
 #include "llvm/ADT/APFloat.h"
@@ -247,7 +247,7 @@ public:
                          DenseMapAPFloatKeyInfo> FPMapTy;
   FPMapTy FPConstants;
 
-  FoldingSet<AttributesImpl> AttrsSet;
+  FoldingSet<AttributeImpl> AttrsSet;
   FoldingSet<AttributeSetImpl> AttrsLists;
 
   StringMap<Value*> MDStringCache;

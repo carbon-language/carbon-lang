@@ -23,7 +23,7 @@
 namespace llvm {
 
 class AttrBuilder;
-class AttributesImpl;
+class AttributeImpl;
 class LLVMContext;
 class Type;
 
@@ -57,7 +57,7 @@ public:
     AddressSafety,         ///< Address safety checking is on.
     Alignment,             ///< Alignment of parameter (5 bits)
                            ///< stored as log2 of alignment with +1 bias
-                           ///< 0 means unaligned different from align 1
+                           ///< 0 means unaligned (different from align(1))
     AlwaysInline,          ///< inline=always
     ByVal,                 ///< Pass structure by value
     InlineHint,            ///< Source said inlining was desirable
@@ -82,7 +82,7 @@ public:
     StackAlignment,        ///< Alignment of stack for function (3 bits)
                            ///< stored as log2 of alignment with +1 bias 0
                            ///< means unaligned (different from
-                           ///< alignstack={1))
+                           ///< alignstack=(1))
     StackProtect,          ///< Stack protection.
     StackProtectReq,       ///< Stack protection required.
     StructRet,             ///< Hidden pointer to structure to return
@@ -90,8 +90,8 @@ public:
     ZExt                   ///< Zero extended before/after call
   };
 private:
-  AttributesImpl *Attrs;
-  Attribute(AttributesImpl *A) : Attrs(A) {}
+  AttributeImpl *Attrs;
+  Attribute(AttributeImpl *A) : Attrs(A) {}
 public:
   Attribute() : Attrs(0) {}
 

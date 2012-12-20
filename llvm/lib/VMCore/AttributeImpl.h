@@ -1,4 +1,4 @@
-//===-- AttributesImpl.h - Attribute Internals -----------------*- C++ -*-===//
+//===-- AttributeImpl.h - Attribute Internals -------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -22,10 +22,10 @@ namespace llvm {
 
 class LLVMContext;
 
-class AttributesImpl : public FoldingSetNode {
+class AttributeImpl : public FoldingSetNode {
   uint64_t Bits;                // FIXME: We will be expanding this.
 public:
-  AttributesImpl(uint64_t bits) : Bits(bits) {}
+  AttributeImpl(uint64_t bits) : Bits(bits) {}
 
   bool hasAttribute(uint64_t A) const;
 
