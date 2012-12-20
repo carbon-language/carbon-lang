@@ -73,6 +73,8 @@ presubmit:
 	./check_analyze.sh
 	# Sanity check for Go runtime
 	(cd go && ./buildgo.sh)
+	# Check cmake build
+	./check_cmake.sh
 	@ echo PRESUBMIT PASSED
 
 install_deps:
