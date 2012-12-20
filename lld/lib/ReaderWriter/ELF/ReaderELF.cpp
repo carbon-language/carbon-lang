@@ -278,7 +278,7 @@ public:
     switch (_section->sh_type) {
     case llvm::ELF::SHT_PROGBITS:
     case llvm::ELF::SHT_DYNAMIC:
-      switch (_section->sh_flags) {
+      switch (_section->sh_flags & ~llvm::ELF::SHF_GROUP) {
       case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR
             | llvm::ELF::SHF_WRITE):
         ret = typeCode;
@@ -347,7 +347,7 @@ public:
 
     case llvm::ELF::SHT_DYNAMIC:
     case llvm::ELF::SHT_PROGBITS:
-      switch (_section->sh_flags) {
+      switch (_section->sh_flags & ~llvm::ELF::SHF_GROUP) {
       case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR):
         return permR_X;
 
