@@ -23,7 +23,7 @@ class APSInt : public APInt {
   bool IsUnsigned;
 public:
   /// Default constructor that creates an uninitialized APInt.
-  explicit APSInt() {}
+  explicit APSInt() : IsUnsigned(false) {}
 
   /// APSInt ctor - Create an APSInt with the specified width, default to
   /// unsigned.
