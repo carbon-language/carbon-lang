@@ -23,7 +23,8 @@ TOOL_NO_EXPORTS = 1
 include $(CLANG_LEVEL)/../../Makefile.config
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser support mc
-USEDLIBS = clang.a clangFrontend.a clangDriver.a \
+USEDLIBS = clang.a \
+	   clangFrontend.a clangDriver.a \
 	   clangTooling.a \
 	   clangSerialization.a clangParse.a clangSema.a \
 	   clangAnalysis.a clangEdit.a clangAST.a clangLex.a \
