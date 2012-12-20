@@ -70,15 +70,15 @@ namespace  {
     void dumpLocation(SourceLocation Loc);
     void dumpBareType(QualType T);
     void dumpType(QualType T);
-    void dumpBareDeclRef(Decl *node);
-    void dumpDeclRef(Decl *node, const char *Label = NULL);
-    void dumpName(NamedDecl *D);
-    void dumpDeclContext(DeclContext *DC);
+    void dumpBareDeclRef(const Decl *Node);
+    void dumpDeclRef(const Decl *Node, const char *Label = NULL);
+    void dumpName(const NamedDecl *D);
+    void dumpDeclContext(const DeclContext *DC);
 
     // C++ Utilities
     void dumpAccessSpecifier(AccessSpecifier AS);
-    void dumpCXXCtorInitializer(CXXCtorInitializer *Init);
-    void dumpTemplateParameters(TemplateParameterList *TPL);
+    void dumpCXXCtorInitializer(const CXXCtorInitializer *Init);
+    void dumpTemplateParameters(const TemplateParameterList *TPL);
     void dumpTemplateArgumentListInfo(const TemplateArgumentListInfo &TALI);
     void dumpTemplateArgumentLoc(const TemplateArgumentLoc &A);
     void dumpTemplateArgumentList(const TemplateArgumentList &TAL);
@@ -271,21 +271,21 @@ void ASTDumper::dumpType(QualType T) {
   dumpBareType(T);
 }
 
-void ASTDumper::dumpBareDeclRef(Decl *D) {
+void ASTDumper::dumpBareDeclRef(const Decl *D) {
   OS << D->getDeclKindName();
   dumpPointer(D);
 
-  if (NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
+  if (const NamedDecl *ND = dyn_cast<NamedDecl>(D)) {
     OS << " '";
     ND->getDeclName().printName(OS);
     OS << "'";
   }
 
-  if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+  if (const ValueDecl *VD = dyn_cast<ValueDecl>(D))
     dumpType(VD->getType());
 }
 
-void ASTDumper::dumpDeclRef(Decl *D, const char *Label) {
+void ASTDumper::dumpDeclRef(const Decl *D, const char *Label) {
   if (!D)
     return;
 
@@ -295,12 +295,12 @@ void ASTDumper::dumpDeclRef(Decl *D, const char *Label) {
   dumpBareDeclRef(D);
 }
 
-void ASTDumper::dumpName(NamedDecl *ND) {
+void ASTDumper::dumpName(const NamedDecl *ND) {
   if (ND->getDeclName())
     OS << ' ' << ND->getNameAsString();
 }
 
-void ASTDumper::dumpDeclContext(DeclContext *DC) {
+void ASTDumper::dumpDeclContext(const DeclContext *DC) {
   if (!DC)
     return;
   for (DeclContext::decl_iterator I = DC->decls_begin(), E = DC->decls_end();
@@ -328,7 +328,7 @@ void ASTDumper::dumpAccessSpecifier(AccessSpecifier AS) {
   }
 }
 
-void ASTDumper::dumpCXXCtorInitializer(CXXCtorInitializer *Init) {
+void ASTDumper::dumpCXXCtorInitializer(const CXXCtorInitializer *Init) {
   IndentScope Indent(*this);
   OS << "CXXCtorInitializer";
   if (Init->isAnyMemberInitializer()) {
@@ -340,11 +340,11 @@ void ASTDumper::dumpCXXCtorInitializer(CXXCtorInitializer *Init) {
   dumpStmt(Init->getInit());
 }
 
-void ASTDumper::dumpTemplateParameters(TemplateParameterList *TPL) {
+void ASTDumper::dumpTemplateParameters(const TemplateParameterList *TPL) {
   if (!TPL)
     return;
 
-  for (TemplateParameterList::iterator I = TPL->begin(), E = TPL->end();
+  for (TemplateParameterList::const_iterator I = TPL->begin(), E = TPL->end();
        I != E; ++I)
     dumpDecl(*I);
 }
@@ -386,8 +386,7 @@ void ASTDumper::dumpTemplateArgument(const TemplateArgument &A, SourceRange R) {
     OS << " nullptr";
     break;
   case TemplateArgument::Integral:
-    OS << " integral";
-    OS << ' ' << A.getAsIntegral();
+    OS << " integral " << A.getAsIntegral();
     break;
   case TemplateArgument::Template:
     OS << " template ";
