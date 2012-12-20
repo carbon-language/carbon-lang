@@ -182,7 +182,9 @@ class LLVMProjectInfo(object):
         # out easily. If we don't, we should special case the check.
 
         self.ordered_component_infos = []
-        components_to_visit = set(self.component_infos)
+        components_to_visit = sorted(
+            set(self.component_infos),
+            key = lambda c: c.name)
         while components_to_visit:
             visit_component_info(iter(components_to_visit).next(), [], set())
 
