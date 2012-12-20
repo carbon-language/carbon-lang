@@ -1306,13 +1306,14 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
     else if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Template->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
-    else if (FD->getAttr<NSReturnsNotRetainedAttr>()) {
+    else if (FD->getAttr<NSReturnsNotRetainedAttr>() ||
+             FD->getAttr<NSReturnsAutoreleasedAttr>()) {
       Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
     }
-    else if (FD->getAttr<CFReturnsNotRetainedAttr>()) {
+    else if (FD->getAttr<CFReturnsNotRetainedAttr>())
       Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::CF));
     }
-  } else if (RetTy->getAs<PointerType>()) {
+    else if (RetTy->getAs<PointerType>()) {
     if (FD->getAttr<CFReturnsRetainedAttr>()) {
       Template->setRetEffect(RetEffect::MakeOwned(RetEffect::CF, true));
     }
@@ -1359,7 +1360,8 @@ RetainSummaryManager::updateSummaryFromAnnotations(const RetainSummary *&Summ,
       Template->setRetEffect(ObjCAllocRetE);
       return;
     }
-    if (MD->getAttr<NSReturnsNotRetainedAttr>()) {
+    if (MD->getAttr<NSReturnsNotRetainedAttr>() ||
+        MD->getAttr<NSReturnsAutoreleasedAttr>()) {
       Template->setRetEffect(RetEffect::MakeNotOwned(RetEffect::ObjC));
       return;
     }

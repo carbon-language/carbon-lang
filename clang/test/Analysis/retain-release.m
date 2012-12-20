@@ -25,6 +25,9 @@
 #if __has_feature(attribute_cf_consumed)
 #define CF_CONSUMED __attribute__((cf_consumed))
 #endif
+#if __has_attribute(ns_returns_autoreleased)
+#define NS_RETURNS_AUTORELEASED __attribute__((ns_returns_autoreleased))
+#endif
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from Mac OS X headers:
@@ -1300,6 +1303,7 @@ typedef NSString* MyStringTy;
 - (NSString*) returnsAnOwnedCFString  CF_RETURNS_RETAINED; // no-warning
 - (MyStringTy) returnsAnOwnedTypedString NS_RETURNS_RETAINED; // no-warning
 - (NSString*) newString NS_RETURNS_NOT_RETAINED; // no-warning
+- (NSString*) newString_auto NS_RETURNS_AUTORELEASED; // no-warning
 - (NSString*) newStringNoAttr;
 - (int) returnsAnOwnedInt NS_RETURNS_RETAINED; // expected-warning{{'ns_returns_retained' attribute only applies to methods that return an Objective-C object}}
 - (id) pseudoInit NS_CONSUMES_SELF NS_RETURNS_RETAINED;
@@ -1320,6 +1324,8 @@ void test_attr_1b(TestOwnershipAttr *X) {
 void test_attr1c(TestOwnershipAttr *X) {
   NSString *str = [X newString]; // no-warning
   NSString *str2 = [X newStringNoAttr]; // expected-warning{{leak}}
+  NSString *str3 = [X newString_auto]; // no-warning
+  NSString *str4 = [[X newString_auto] retain]; // expected-warning {{leak}}
 }
 
 void testattr2_a() {
