@@ -199,7 +199,7 @@ bool ExprEngine::wantsRegionChangeUpdate(ProgramStateRef state) {
 
 ProgramStateRef 
 ExprEngine::processRegionChanges(ProgramStateRef state,
-                            const StoreManager::InvalidatedSymbols *invalidated,
+                                 const InvalidatedSymbols *invalidated,
                                  ArrayRef<const MemRegion *> Explicits,
                                  ArrayRef<const MemRegion *> Regions,
                                  const CallEvent *Call) {
@@ -1588,6 +1588,111 @@ void ExprEngine::VisitMemberExpr(const MemberExpr *M, ExplodedNode *Pred,
   }
 }
 
+namespace {
+class CollectReachableSymbolsCallback : public SymbolVisitor {
+  InvalidatedSymbols Symbols;
+public:
+  CollectReachableSymbolsCallback(ProgramStateRef State) {}
+  const InvalidatedSymbols &getSymbols() const { return Symbols; }
+
+  bool VisitSymbol(SymbolRef Sym) {
+    Symbols.insert(Sym);
+    return true;
+  }
+};
+} // end anonymous namespace
+
+/// Call PointerEscape callback when a value escapes as a result of bind.
+/// A value escapes in three possible cases:
+/// (1) we are binding to something that is not a memory region.
+/// (2) we are binding to a memregion that does not have stack storage
+/// (3) we are binding to a memregion with stack storage that the store
+///     does not understand.
+ProgramStateRef ExprEngine::processPointerEscapedOnBind(ProgramStateRef State,
+                                                       SVal Loc, SVal Val) {
+  // Are we storing to something that causes the value to "escape"?
+  bool escapes = true;
+
+  // TODO: Move to StoreManager.
+  if (loc::MemRegionVal *regionLoc = dyn_cast<loc::MemRegionVal>(&Loc)) {
+    escapes = !regionLoc->getRegion()->hasStackStorage();
+
+    if (!escapes) {
+      // To test (3), generate a new state with the binding added.  If it is
+      // the same state, then it escapes (since the store cannot represent
+      // the binding).
+      // Do this only if we know that the store is not supposed to generate the
+      // same state.
+      SVal StoredVal = State->getSVal(regionLoc->getRegion());
+      if (StoredVal != Val)
+        escapes = (State == (State->bindLoc(*regionLoc, Val)));
+    }
+  }
+
+  // If our store can represent the binding and we aren't storing to something
+  // that doesn't have local storage then just return and have the simulation
+  // state continue as is.
+  if (!escapes)
+    return State;
+
+  // Otherwise, find all symbols referenced by 'val' that we are tracking
+  // and stop tracking them.
+  CollectReachableSymbolsCallback Scanner =
+      State->scanReachableSymbols<CollectReachableSymbolsCallback>(Val);
+  const InvalidatedSymbols &EscapedSymbols = Scanner.getSymbols();
+  State = getCheckerManager().runCheckersForPointerEscape(State,
+                                                          EscapedSymbols,
+                                                          /*CallEvent*/ 0);
+
+  return State;
+}
+
+/// Call PointerEscape callback when a value escapes as a result of
+/// region invalidation.
+ProgramStateRef 
+ExprEngine::processPointerEscapedOnInvalidateRegions(ProgramStateRef State,
+    const InvalidatedSymbols *Invalidated,
+    ArrayRef<const MemRegion *> ExplicitRegions,
+    ArrayRef<const MemRegion *> Regions,
+    const CallEvent *Call) {
+  
+  if (!Invalidated || Invalidated->empty())
+    return State;
+
+  if (!Call)
+    return getCheckerManager().runCheckersForPointerEscape(State,
+                                                           *Invalidated, 0);
+    
+  // If the symbols were invalidated by a call, we want to find out which ones 
+  // were invalidated directly due to being arguments to the call.
+  InvalidatedSymbols SymbolsDirectlyInvalidated;
+  for (ArrayRef<const MemRegion *>::iterator I = ExplicitRegions.begin(),
+      E = ExplicitRegions.end(); I != E; ++I) {
+    if (const SymbolicRegion *R = (*I)->StripCasts()->getAs<SymbolicRegion>())
+      SymbolsDirectlyInvalidated.insert(R->getSymbol());
+  }
+
+  InvalidatedSymbols SymbolsIndirectlyInvalidated;
+  for (InvalidatedSymbols::const_iterator I=Invalidated->begin(),
+      E = Invalidated->end(); I!=E; ++I) {
+    SymbolRef sym = *I;
+    if (SymbolsDirectlyInvalidated.count(sym))
+      continue;
+    SymbolsIndirectlyInvalidated.insert(sym);
+  }
+
+  if (!SymbolsDirectlyInvalidated.empty())
+    State = getCheckerManager().runCheckersForPointerEscape(State,
+        SymbolsDirectlyInvalidated, Call);
+
+  // Notify about the symbols that get indirectly invalidated by the call.
+  if (!SymbolsIndirectlyInvalidated.empty())
+    State = getCheckerManager().runCheckersForPointerEscape(State,
+        SymbolsIndirectlyInvalidated, /*CallEvent*/ 0);
+
+  return State;
+}
+
 /// evalBind - Handle the semantics of binding a value to a specific location.
 ///  This method is used by evalStore and (soon) VisitDeclStmt, and others.
 void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
@@ -1605,27 +1710,33 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
   getCheckerManager().runCheckersForBind(CheckedSet, Pred, location, Val,
                                          StoreE, *this, *PP);
 
+
+  StmtNodeBuilder Bldr(CheckedSet, Dst, *currBldrCtx);
+
   // If the location is not a 'Loc', it will already be handled by
   // the checkers.  There is nothing left to do.
   if (!isa<Loc>(location)) {
-    Dst = CheckedSet;
+    const ProgramPoint L = PostStore(StoreE, LC, /*Loc*/0, /*tag*/0);
+    ProgramStateRef state = Pred->getState();
+    state = processPointerEscapedOnBind(state, location, Val);
+    Bldr.generateNode(L, state, Pred);
     return;
   }
   
-  ExplodedNodeSet TmpDst;
-  StmtNodeBuilder Bldr(CheckedSet, TmpDst, *currBldrCtx);
 
   for (ExplodedNodeSet::iterator I = CheckedSet.begin(), E = CheckedSet.end();
        I!=E; ++I) {
     ExplodedNode *PredI = *I;
     ProgramStateRef state = PredI->getState();
     
+    state = processPointerEscapedOnBind(state, location, Val);
+
     // When binding the value, pass on the hint that this is a initialization.
     // For initializations, we do not need to inform clients of region
     // changes.
     state = state->bindLoc(cast<Loc>(location),
                            Val, /* notifyChanges = */ !atDeclInit);
-    
+
     const MemRegion *LocReg = 0;
     if (loc::MemRegionVal *LocRegVal = dyn_cast<loc::MemRegionVal>(&location)) {
       LocReg = LocRegVal->getRegion();
@@ -1634,7 +1745,6 @@ void ExprEngine::evalBind(ExplodedNodeSet &Dst, const Stmt *StoreE,
     const ProgramPoint L = PostStore(StoreE, LC, LocReg, 0);
     Bldr.generateNode(L, state, PredI);
   }
-  Dst.insert(TmpDst);
 }
 
 /// evalStore - Handle the semantics of a store via an assignment.

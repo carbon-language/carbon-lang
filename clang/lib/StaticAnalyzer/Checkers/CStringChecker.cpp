@@ -64,7 +64,7 @@ public:
 
   ProgramStateRef 
     checkRegionChanges(ProgramStateRef state,
-                       const StoreManager::InvalidatedSymbols *,
+                       const InvalidatedSymbols *,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions,
                        const CallEvent *Call) const;
@@ -816,7 +816,8 @@ ProgramStateRef CStringChecker::InvalidateBuffer(CheckerContext &C,
 
     // Invalidate this region.
     const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
-    return state->invalidateRegions(R, E, C.blockCount(), LCtx);
+    return state->invalidateRegions(R, E, C.blockCount(), LCtx,
+                                    /*ResultsInPointerEscape*/ false);
   }
 
   // If we have a non-region value by chance, just remove the binding.
@@ -1873,7 +1874,7 @@ bool CStringChecker::wantsRegionChangeUpdate(ProgramStateRef state) const {
 
 ProgramStateRef 
 CStringChecker::checkRegionChanges(ProgramStateRef state,
-                                   const StoreManager::InvalidatedSymbols *,
+                                   const InvalidatedSymbols *,
                                    ArrayRef<const MemRegion *> ExplicitRegions,
                                    ArrayRef<const MemRegion *> Regions,
                                    const CallEvent *Call) const {

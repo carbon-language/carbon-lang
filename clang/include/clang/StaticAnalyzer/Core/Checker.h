@@ -293,7 +293,7 @@ class RegionChanges {
   static ProgramStateRef 
   _checkRegionChanges(void *checker,
                       ProgramStateRef state,
-                      const StoreManager::InvalidatedSymbols *invalidated,
+                      const InvalidatedSymbols *invalidated,
                       ArrayRef<const MemRegion *> Explicits,
                       ArrayRef<const MemRegion *> Regions,
                       const CallEvent *Call) {
@@ -314,6 +314,27 @@ public:
                                                  _checkRegionChanges<CHECKER>),
           CheckerManager::WantsRegionChangeUpdateFunc(checker,
                                             _wantsRegionChangeUpdate<CHECKER>));
+  }
+};
+
+class PointerEscape {
+  template <typename CHECKER>
+  static ProgramStateRef
+  _checkPointerEscape(void *checker,
+                     ProgramStateRef State,
+                     const InvalidatedSymbols &Escaped,
+                     const CallEvent *Call) {
+    return ((const CHECKER *)checker)->checkPointerEscape(State, 
+                                                          Escaped, 
+                                                          Call);
+  }
+
+public:
+  template <typename CHECKER>
+  static void _register(CHECKER *checker, CheckerManager &mgr) {
+    mgr._registerForPointerEscape(
+          CheckerManager::CheckPointerEscapeFunc(checker,
+                                                _checkPointerEscape<CHECKER>));
   }
 };
 

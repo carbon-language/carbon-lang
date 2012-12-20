@@ -469,10 +469,10 @@ bool CheckerManager::wantsRegionChangeUpdate(ProgramStateRef state) {
 /// \brief Run checkers for region changes.
 ProgramStateRef 
 CheckerManager::runCheckersForRegionChanges(ProgramStateRef state,
-                            const StoreManager::InvalidatedSymbols *invalidated,
+                                    const InvalidatedSymbols *invalidated,
                                     ArrayRef<const MemRegion *> ExplicitRegions,
-                                          ArrayRef<const MemRegion *> Regions,
-                                          const CallEvent *Call) {
+                                    ArrayRef<const MemRegion *> Regions,
+                                    const CallEvent *Call) {
   for (unsigned i = 0, e = RegionChangesCheckers.size(); i != e; ++i) {
     // If any checker declares the state infeasible (or if it starts that way),
     // bail out.
@@ -482,6 +482,21 @@ CheckerManager::runCheckersForRegionChanges(ProgramStateRef state,
                                              ExplicitRegions, Regions, Call);
   }
   return state;
+}
+
+/// \brief Run checkers to process symbol escape event.
+ProgramStateRef
+CheckerManager::runCheckersForPointerEscape(ProgramStateRef State,
+                                           const InvalidatedSymbols &Escaped,
+                                           const CallEvent *Call) {
+  for (unsigned i = 0, e = PointerEscapeCheckers.size(); i != e; ++i) {
+    // If any checker declares the state infeasible (or if it starts that way),
+    // bail out.
+    if (!State)
+      return NULL;
+    State = PointerEscapeCheckers[i](State, Escaped, Call);
+  }
+  return State;
 }
 
 /// \brief Run checkers for handling assumptions on symbolic values.
@@ -639,6 +654,10 @@ void CheckerManager::_registerForRegionChanges(CheckRegionChangesFunc checkfn,
                                      WantsRegionChangeUpdateFunc wantUpdateFn) {
   RegionChangesCheckerInfo info = {checkfn, wantUpdateFn};
   RegionChangesCheckers.push_back(info);
+}
+
+void CheckerManager::_registerForPointerEscape(CheckPointerEscapeFunc checkfn){
+  PointerEscapeCheckers.push_back(checkfn);
 }
 
 void CheckerManager::_registerForEvalAssume(EvalAssumeFunc checkfn) {

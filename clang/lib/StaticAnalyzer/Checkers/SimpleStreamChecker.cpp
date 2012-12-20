@@ -87,7 +87,7 @@ public:
   /// Deal with symbol escape as a byproduct of a region change.
   ProgramStateRef
   checkRegionChanges(ProgramStateRef state,
-                     const StoreManager::InvalidatedSymbols *invalidated,
+                     const InvalidatedSymbols *invalidated,
                      ArrayRef<const MemRegion *> ExplicitRegions,
                      ArrayRef<const MemRegion *> Regions,
                      const CallEvent *Call) const;
@@ -304,7 +304,7 @@ bool SimpleStreamChecker::guaranteedNotToCloseFile(const CallEvent &Call) const{
 // we cannot reason about it anymore.
 ProgramStateRef
 SimpleStreamChecker::checkRegionChanges(ProgramStateRef State,
-    const StoreManager::InvalidatedSymbols *invalidated,
+    const InvalidatedSymbols *invalidated,
     ArrayRef<const MemRegion *> ExplicitRegions,
     ArrayRef<const MemRegion *> Regions,
     const CallEvent *Call) const {
@@ -324,7 +324,7 @@ SimpleStreamChecker::checkRegionChanges(ProgramStateRef State,
     }
   }
 
-  for (StoreManager::InvalidatedSymbols::const_iterator I=invalidated->begin(),
+  for (InvalidatedSymbols::const_iterator I=invalidated->begin(),
        E = invalidated->end(); I!=E; ++I) {
     SymbolRef sym = *I;
     if (WhitelistedSymbols.count(sym))

@@ -811,7 +811,7 @@ class invalidateRegionsWorker : public ClusterAnalysis<invalidateRegionsWorker>
   const Expr *Ex;
   unsigned Count;
   const LocationContext *LCtx;
-  StoreManager::InvalidatedSymbols &IS;
+  InvalidatedSymbols &IS;
   StoreManager::InvalidatedRegions *Regions;
 public:
   invalidateRegionsWorker(RegionStoreManager &rm,
@@ -819,7 +819,7 @@ public:
                           RegionBindingsRef b,
                           const Expr *ex, unsigned count,
                           const LocationContext *lctx,
-                          StoreManager::InvalidatedSymbols &is,
+                          InvalidatedSymbols &is,
                           StoreManager::InvalidatedRegions *r,
                           bool includeGlobals)
     : ClusterAnalysis<invalidateRegionsWorker>(rm, stateMgr, b, includeGlobals),

@@ -144,31 +144,41 @@ ProgramStateRef
 ProgramState::invalidateRegions(ArrayRef<const MemRegion *> Regions,
                                 const Expr *E, unsigned Count,
                                 const LocationContext *LCtx,
-                                StoreManager::InvalidatedSymbols *IS,
+                                bool ResultsInPointerEscape,
+                                InvalidatedSymbols *IS,
                                 const CallEvent *Call) const {
   if (!IS) {
-    StoreManager::InvalidatedSymbols invalidated;
+    InvalidatedSymbols invalidated;
     return invalidateRegionsImpl(Regions, E, Count, LCtx,
+                                 ResultsInPointerEscape,
                                  invalidated, Call);
   }
-  return invalidateRegionsImpl(Regions, E, Count, LCtx, *IS, Call);
+  return invalidateRegionsImpl(Regions, E, Count, LCtx, ResultsInPointerEscape,
+                               *IS, Call);
 }
 
 ProgramStateRef 
 ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
                                     const Expr *E, unsigned Count,
                                     const LocationContext *LCtx,
-                                    StoreManager::InvalidatedSymbols &IS,
+                                    bool ResultsInPointerEscape,
+                                    InvalidatedSymbols &IS,
                                     const CallEvent *Call) const {
   ProgramStateManager &Mgr = getStateManager();
   SubEngine* Eng = Mgr.getOwningEngine();
  
-  if (Eng && Eng->wantsRegionChangeUpdate(this)) {
+  if (Eng) {
     StoreManager::InvalidatedRegions Invalidated;
     const StoreRef &newStore
       = Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, LCtx, IS,
                                         Call, &Invalidated);
+
     ProgramStateRef newState = makeWithStore(newStore);
+
+    if (ResultsInPointerEscape)
+      newState = Eng->processPointerEscapedOnInvalidateRegions(newState,
+                                               &IS, Regions, Invalidated, Call);
+
     return Eng->processRegionChanges(newState, &IS, Regions, Invalidated, Call);
   }
 

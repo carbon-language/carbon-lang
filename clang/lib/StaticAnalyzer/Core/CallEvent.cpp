@@ -199,6 +199,7 @@ ProgramStateRef CallEvent::invalidateRegions(unsigned BlockCount,
   //  global variables.
   return Result->invalidateRegions(RegionsToInvalidate, getOriginExpr(),
                                    BlockCount, getLocationContext(),
+                                   /*ResultsInPointerEscape*/ true,
                                    /*Symbols=*/0, this);
 }
 

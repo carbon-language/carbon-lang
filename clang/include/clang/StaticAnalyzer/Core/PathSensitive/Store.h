@@ -35,6 +35,8 @@ class ProgramState;
 class ProgramStateManager;
 class ScanReachableSymbols;
 
+typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
+
 class StoreManager {
 protected:
   SValBuilder &svalBuilder;
@@ -168,7 +170,6 @@ public:
   /// associated with the object is recycled.
   virtual void decrementReferenceCount(Store store) {}
 
-  typedef llvm::DenseSet<SymbolRef> InvalidatedSymbols;
   typedef SmallVector<const MemRegion *, 8> InvalidatedRegions;
 
   /// invalidateRegions - Clears out the specified regions from the store,

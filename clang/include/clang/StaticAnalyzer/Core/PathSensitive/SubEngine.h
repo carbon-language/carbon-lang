@@ -104,7 +104,7 @@ public:
   /// made to the store. Used to update checkers that track region values.
   virtual ProgramStateRef 
   processRegionChanges(ProgramStateRef state,
-                       const StoreManager::InvalidatedSymbols *invalidated,
+                       const InvalidatedSymbols *invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions,
                        const CallEvent *Call) = 0;
@@ -115,6 +115,16 @@ public:
                       const MemRegion* MR) {
     return processRegionChanges(state, 0, MR, MR, 0);
   }
+
+  virtual ProgramStateRef
+  processPointerEscapedOnBind(ProgramStateRef State, SVal Loc, SVal Val) = 0;
+
+  virtual ProgramStateRef
+  processPointerEscapedOnInvalidateRegions(ProgramStateRef State,
+                           const InvalidatedSymbols *Invalidated,
+                           ArrayRef<const MemRegion *> ExplicitRegions,
+                           ArrayRef<const MemRegion *> Regions,
+                           const CallEvent *Call) = 0;
 
   /// printState - Called by ProgramStateManager to print checker-specific data.
   virtual void printState(raw_ostream &Out, ProgramStateRef State,
