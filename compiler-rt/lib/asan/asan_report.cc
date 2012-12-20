@@ -146,7 +146,6 @@ static void PrintShadowMemoryForAddress(uptr addr) {
   PrintShadowByte("  Stack mid redzone:     ", kAsanStackMidRedzoneMagic);
   PrintShadowByte("  Stack right redzone:   ", kAsanStackRightRedzoneMagic);
   PrintShadowByte("  Stack partial redzone: ", kAsanStackPartialRedzoneMagic);
-  PrintShadowByte("  Stack right redzone:   ", kAsanStackRightRedzoneMagic);
   PrintShadowByte("  Stack after return:    ", kAsanStackAfterReturnMagic);
   PrintShadowByte("  Stack use after scope: ", kAsanStackUseAfterScopeMagic);
   PrintShadowByte("  Global redzone:        ", kAsanGlobalRedzoneMagic);
