@@ -14,7 +14,6 @@ add_dependencies(PrintFunctionNames
   )
 
 target_link_libraries(PrintFunctionNames
-  clangFrontend
   clangAST
   )
 
