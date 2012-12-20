@@ -1,4 +1,4 @@
-//===- lib/ReaderWriter/ELF/ReaderELF.cpp --------------------------------===//
+//===- lib/ReaderWriter/ELF/ReaderELF.cpp ---------------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -6,15 +6,18 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file contains the ELF Reader and all helper sub classes
-// to consume an ELF file and produces atoms out of it.
-//
+///
+/// \file
+/// \brief Defines the ELF Reader and all helper sub classes to consume an ELF
+/// file and produces atoms out of it.
+///
 //===----------------------------------------------------------------------===//
+
 #include "lld/ReaderWriter/ReaderELF.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
+
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
@@ -28,26 +31,22 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Memory.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Path.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Support/Path.h"
-
 
 #include <map>
 #include <vector>
 
-using llvm::object::Elf_Sym_Impl;
 using namespace lld;
+using llvm::object::Elf_Sym_Impl;
+using llvm::support::endianness;
 
-namespace { // anonymous
-
-
-/// \brief Relocation References: Defined Atoms may contain 
-/// references that will need to be patched before
-/// the executable is written.
-template <llvm::support::endianness target_endianness, bool is64Bits>
+namespace {
+/// \brief Relocation References: Defined Atoms may contain references that will
+/// need to be patched before the executable is written.
+template <endianness target_endianness, bool is64Bits>
 class ELFReference final : public Reference {
-
   typedef llvm::object::Elf_Rel_Impl
                         <target_endianness, is64Bits, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl
@@ -68,7 +67,6 @@ public:
     , _addend(0)
     , _kind(rel->getType()) {}
 
-
   virtual uint64_t offsetInAtom() const {
     return _offsetInAtom;
   }
@@ -85,8 +83,7 @@ public:
     return _target;
   }
 
-/// \brief targetSymbolIndex: This is the symbol table index that contains
-/// the target reference.
+  /// \brief The symbol table index that contains the target reference.
   uint64_t targetSymbolIndex() const {
     return _targetSymbolIndex;
   }
@@ -110,13 +107,11 @@ private:
   Kind         _kind;
 };
 
-
-/// \brief ELFAbsoluteAtom: These atoms store symbols that are fixed to a
-/// particular address.  This atom has no content its address will be used by
-/// the writer to fixup references that point to it.
-template<llvm::support::endianness target_endianness, bool is64Bits>
+/// \brief These atoms store symbols that are fixed to a particular address.
+/// This atom has no content its address will be used by the writer to fixup
+/// references that point to it.
+template<endianness target_endianness, bool is64Bits>
 class ELFAbsoluteAtom final : public AbsoluteAtom {
-
   typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
 
 public:
@@ -158,13 +153,10 @@ private:
   uint64_t _value;
 };
 
-
-/// \brief ELFUndefinedAtom: These atoms store undefined symbols and are
-/// place holders that will be replaced by defined atoms later in the
-/// linking process.
-template<llvm::support::endianness target_endianness, bool is64Bits>
+/// \brief ELFUndefinedAtom: These atoms store undefined symbols and are place
+/// holders that will be replaced by defined atoms later in the linking process.
+template<endianness target_endianness, bool is64Bits>
 class ELFUndefinedAtom final: public UndefinedAtom {
-
   typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
 
 public:
@@ -184,13 +176,10 @@ public:
     return _name;
   }
 
-  //   FIXME What distinguishes a symbol in ELF that can help
-  //   decide if the symbol is undefined only during build and not
-  //   runtime? This will make us choose canBeNullAtBuildtime and
-  //   canBeNullAtRuntime
-  //
+  // FIXME: What distinguishes a symbol in ELF that can help decide if the
+  // symbol is undefined only during build and not runtime? This will make us
+  // choose canBeNullAtBuildtime and canBeNullAtRuntime.
   virtual CanBeNull canBeNull() const {
-
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return CanBeNull::canBeNullAtBuildtime;
     else
@@ -203,12 +192,10 @@ private:
   const Elf_Sym *_symbol;
 };
 
-
-/// \brief ELFDefinedAtom: This atom stores defined symbols and will contain
-/// either data or code.
-template<llvm::support::endianness target_endianness, bool is64Bits>
+/// \brief This atom stores defined symbols and will contain either data or
+/// code.
+template<endianness target_endianness, bool is64Bits>
 class ELFDefinedAtom final: public DefinedAtom {
-
   typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
 
@@ -229,7 +216,7 @@ public:
     , _sectionName(sectionName)
     , _symbol(symbol)
     , _section(section)
-    , _contentData(contentData) 
+    , _contentData(contentData)
     , _referenceStartIndex(referenceStart)
     , _referenceEndIndex(referenceEnd)
     , _referenceList(referenceList) {
@@ -250,7 +237,6 @@ public:
   }
 
   virtual uint64_t size() const {
-
     // Common symbols are not allocated in object files,
     // so use st_size to tell how many bytes are required.
     if ((_symbol->getType() == llvm::ELF::STT_COMMON)
@@ -258,7 +244,6 @@ public:
       return (uint64_t)_symbol->st_size;
 
     return _contentData.size();
-
   }
 
   virtual Scope scope() const {
@@ -270,16 +255,13 @@ public:
       return scopeTranslationUnit;
   }
 
-  //   FIXME   Need to revisit this in future.
-
+  // FIXME: Need to revisit this in future.
   virtual Interposable interposable() const {
     return interposeNo;
   }
 
-  //  FIXME What ways can we determine this in ELF?
-
+  // FIXME: What ways can we determine this in ELF?
   virtual Merge merge() const {
-
     if (_symbol->getBinding() == llvm::ELF::STB_WEAK)
       return mergeAsWeak;
 
@@ -291,7 +273,6 @@ public:
   }
 
   virtual ContentType contentType() const {
-
     ContentType ret = typeUnknown;
 
     switch (_section->sh_type) {
@@ -330,9 +311,8 @@ public:
   }
 
   virtual Alignment alignment() const {
-
-    // Unallocated common symbols specify their alignment
-    // constraints in st_value.
+    // Unallocated common symbols specify their alignment constraints in
+    // st_value.
     if ((_symbol->getType() == llvm::ELF::STT_COMMON)
         || _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
       return Alignment(llvm::Log2_64(_symbol->st_value));
@@ -340,8 +320,7 @@ public:
     return Alignment(llvm::Log2_64(_section->sh_addralign));
   }
 
-  // Do we have a choice for ELF?  All symbols
-  // live in explicit sections.
+  // Do we have a choice for ELF?  All symbols live in explicit sections.
   virtual SectionChoice sectionChoice() const {
     if (_symbol->st_shndx > llvm::ELF::SHN_LORESERVE)
       return sectionBasedOnContent;
@@ -353,17 +332,15 @@ public:
     return _sectionName;
   }
 
-  // It isn't clear that __attribute__((used)) is transmitted to
-  // the ELF object file.
+  // It isn't clear that __attribute__((used)) is transmitted to the ELF object
+  // file.
   virtual DeadStripKind deadStrip() const {
     return deadStripNormal;
   }
 
   virtual ContentPermissions permissions() const {
-
     switch (_section->sh_type) {
-    // permRW_L is for sections modified by the runtime
-    // loader.
+    // permRW_L is for sections modified by the runtime loader.
     case llvm::ELF::SHT_REL:
     case llvm::ELF::SHT_RELA:
       return permRW_L;
@@ -371,7 +348,6 @@ public:
     case llvm::ELF::SHT_DYNAMIC:
     case llvm::ELF::SHT_PROGBITS:
       switch (_section->sh_flags) {
-
       case (llvm::ELF::SHF_ALLOC | llvm::ELF::SHF_EXECINSTR):
         return permR_X;
 
@@ -389,16 +365,13 @@ public:
     }
   }
 
-  //   Many non ARM architectures use ELF file format
-  //   This not really a place to put a architecture
-  //   specific method in an atom. A better approach is
-  //   needed.
-  //
+  // Many non ARM architectures use ELF file format This not really a place to
+  // put a architecture specific method in an atom. A better approach is needed.
   virtual bool isThumb() const {
     return false;
   }
 
-  //  FIXME Not Sure if ELF supports alias atoms. Find out more.
+  // FIXME: Not Sure if ELF supports alias atoms. Find out more.
   virtual bool isAlias() const {
     return false;
   }
@@ -439,7 +412,7 @@ private:
   llvm::StringRef _sectionName;
   const Elf_Sym *_symbol;
   const Elf_Shdr *_section;
-  // _contentData will hold the bits that make up the atom.
+  /// \brief Holds the bits that make up the atom.
   llvm::ArrayRef<uint8_t> _contentData;
 
   uint64_t _ordinal;
@@ -448,13 +421,10 @@ private:
   std::vector<ELFReference<target_endianness, is64Bits> *> &_referenceList;
 };
 
-
-//   FileELF will read a binary, find out based on the symbol table contents
-//   what kind of symbol it is and create corresponding atoms for it
-
-template<llvm::support::endianness target_endianness, bool is64Bits>
+// \brief Read a binary, find out based on the symbol table contents what kind
+// of symbol it is and create corresponding atoms for it
+template<endianness target_endianness, bool is64Bits>
 class FileELF: public File {
-
   typedef llvm::object::Elf_Sym_Impl
                         <target_endianness, is64Bits> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl
@@ -465,9 +435,8 @@ class FileELF: public File {
                         <target_endianness, is64Bits, true> Elf_Rela;
 
 public:
-  FileELF(std::unique_ptr<llvm::MemoryBuffer> MB, llvm::error_code &EC) :
-          File(MB->getBufferIdentifier()) {
-
+  FileELF(std::unique_ptr<llvm::MemoryBuffer> MB, llvm::error_code &EC)
+    :  File(MB->getBufferIdentifier()) {
     llvm::OwningPtr<llvm::object::Binary> binaryFile;
     EC = llvm::object::createBinary(MB.release(), binaryFile);
     if (EC)
@@ -486,10 +455,9 @@ public:
 
     std::map< const Elf_Shdr *, std::vector<const Elf_Sym *>> sectionSymbols;
 
-//  Handle: SHT_REL and SHT_RELA sections:
-//  Increment over the sections, when REL/RELA section types are
-//  found add the contents to the RelocationReferences map.
-
+    // Handle: SHT_REL and SHT_RELA sections:
+    // Increment over the sections, when REL/RELA section types are found add
+    // the contents to the RelocationReferences map.
     llvm::object::section_iterator sit(_objFile->begin_sections());
     llvm::object::section_iterator sie(_objFile->end_sections());
     for (; sit != sie; sit.increment(EC)) {
@@ -533,10 +501,8 @@ public:
       }
     }
 
-
-//  Increment over all the symbols collecting atoms and symbol
-//  names for later use.
-
+    // Increment over all the symbols collecting atoms and symbol names for
+    // later use.
     llvm::object::symbol_iterator it(_objFile->begin_symbols());
     llvm::object::symbol_iterator ie(_objFile->end_symbols());
 
@@ -557,23 +523,21 @@ public:
       if (symbol->st_shndx == llvm::ELF::SHN_ABS) {
         // Create an absolute atom.
         auto *newAtom = new (_readerStorage.Allocate
-                       <ELFAbsoluteAtom<target_endianness, is64Bits> > ()) 
+                       <ELFAbsoluteAtom<target_endianness, is64Bits> > ())
                         ELFAbsoluteAtom<target_endianness, is64Bits>
                           (*this, symbolName, symbol, symbol->st_value);
 
         _absoluteAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair(symbol, newAtom));
-
       } else if (symbol->st_shndx == llvm::ELF::SHN_UNDEF) {
         // Create an undefined atom.
         auto *newAtom = new (_readerStorage.Allocate
-                       <ELFUndefinedAtom<target_endianness, is64Bits> > ()) 
+                       <ELFUndefinedAtom<target_endianness, is64Bits> > ())
                         ELFUndefinedAtom<target_endianness, is64Bits>
                           (*this, symbolName, symbol);
 
         _undefinedAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair(symbol, newAtom));
-
       } else {
         // This is actually a defined symbol. Add it to its section's list of
         // symbols.
@@ -586,8 +550,7 @@ public:
             || symbol->getType() == llvm::ELF::STT_COMMON
             || symbol->st_shndx == llvm::ELF::SHN_COMMON) {
           sectionSymbols[section].push_back(symbol);
-        }
-        else {
+        } else {
           llvm::errs() << "Unable to create atom for: " << symbolName << "\n";
           EC = llvm::object::object_error::parse_failed;
           return;
@@ -601,18 +564,12 @@ public:
       llvm::StringRef sectionName;
       // Sort symbols by position.
       std::stable_sort(symbols.begin(), symbols.end(),
-        // From ReaderCOFF.cpp:
-        // For some reason MSVC fails to allow the lambda in this context with
-        // a "illegal use of local type in type instantiation". MSVC is clearly
-        // wrong here. Force a conversion to function pointer to work around.
-        static_cast<bool(*)(const Elf_Sym*, const Elf_Sym*)>(
-          [](const Elf_Sym *A, const Elf_Sym *B) -> bool {
+      [](const Elf_Sym *A, const Elf_Sym *B) {
         return A->st_value < B->st_value;
-      }));
+      });
 
       // i.first is the section the symbol lives in
       for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
-
         StringRef symbolContents;
         if ((EC = _objFile->getSectionContents(i.first, symbolContents)))
           return;
@@ -633,28 +590,25 @@ public:
         uint64_t contentSize;
         if (si + 1 == se) {
           // if this is the last symbol, take up the remaining data.
-          contentSize = (isCommon) ? 0 
+          contentSize = (isCommon) ? 0
                                    : ((i.first)->sh_size - (*si)->st_value);
         }
         else {
-          contentSize = (isCommon) ? 0 
+          contentSize = (isCommon) ? 0
                                    : (*(si + 1))->st_value - (*si)->st_value;
         }
 
         symbolData = llvm::ArrayRef<uint8_t>((uint8_t *)symbolContents.data()
                                     + (*si)->st_value, contentSize);
 
-
         unsigned int referenceStart = _references.size();
 
-        // Only relocations that are inside the domain of the atom are 
-        // added.
+        // Only relocations that are inside the domain of the atom are added.
 
         // Add Rela (those with r_addend) references:
         for (auto &rai : _relocationAddendRefences[sectionName]) {
           if ((rai->r_offset >= (*si)->st_value) &&
               (rai->r_offset < (*si)->st_value+contentSize)) {
-
             auto *ERef = new (_readerStorage.Allocate
                          <ELFReference<target_endianness, is64Bits> > ())
                           ELFReference<target_endianness, is64Bits> (
@@ -664,11 +618,10 @@ public:
           }
         }
 
-        // Add Rel references:
+        // Add Rel references.
         for (auto &ri : _relocationReferences[sectionName]) {
           if (((ri)->r_offset >= (*si)->st_value) &&
               ((ri)->r_offset < (*si)->st_value+contentSize)) {
-
             auto *ERef = new (_readerStorage.Allocate
                          <ELFReference<target_endianness, is64Bits> > ())
                           ELFReference<target_endianness, is64Bits> (
@@ -680,7 +633,7 @@ public:
 
         // Create the DefinedAtom and add it to the list of DefinedAtoms.
         auto *newAtom = new (_readerStorage.Allocate
-                       <ELFDefinedAtom<target_endianness, is64Bits> > ()) 
+                       <ELFDefinedAtom<target_endianness, is64Bits> > ())
                         ELFDefinedAtom<target_endianness, is64Bits>
                            (*this, symbolName, sectionName,
                              *si, i.first, symbolData,
@@ -688,12 +641,11 @@ public:
 
         _definedAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair((*si), newAtom));
-
       }
     }
 
-// All the Atoms and References are created.  Now update each Reference's
-// target with the Atom pointer it refers to.
+    // All the Atoms and References are created.  Now update each Reference's
+    // target with the Atom pointer it refers to.
     for (auto &ri : _references) {
       const Elf_Sym  *Symbol  = _objFile->getElfSymbol(ri->targetSymbolIndex());
       ri->setTarget(findAtom (Symbol));
@@ -724,7 +676,6 @@ public:
     return (_symbolToAtomMapping.lookup(symbol));
   }
 
-
 private:
   std::unique_ptr<llvm::object::ELFObjectFile<target_endianness, is64Bits> >
       _objFile;
@@ -733,12 +684,11 @@ private:
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
   atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
 
-/// \brief _relocationAddendRefences and _relocationReferences contain the list
-/// of relocations references.  In ELF, if a section named, ".text" has
-/// relocations will also have a section named ".rel.text" or ".rela.text"
-/// which will hold the entries. -- .rel or .rela is prepended to create
-/// the SHT_REL(A) section name.
-///
+  /// \brief _relocationAddendRefences and _relocationReferences contain the
+  /// list of relocations references.  In ELF, if a section named, ".text" has
+  /// relocations will also have a section named ".rel.text" or ".rela.text"
+  /// which will hold the entries. -- .rel or .rela is prepended to create
+  /// the SHT_REL(A) section name.
   std::map<llvm::StringRef, std::vector<const Elf_Rela *> >
            _relocationAddendRefences;
   std::map<llvm::StringRef, std::vector<const Elf_Rel *> >
@@ -750,47 +700,41 @@ private:
   llvm::BumpPtrAllocator _readerStorage;
 };
 
-//  ReaderELF is reader object that will instantiate correct FileELF
-//  by examining the memory buffer for ELF class and bitwidth
-
+// \brief A reader object that will instantiate correct FileELF by examining the
+// memory buffer for ELF class and bitwidth
 class ReaderELF: public Reader {
 public:
   ReaderELF(const ReaderOptionsELF &,
             ReaderOptionsArchive &readerOptionsArchive)
     : _readerOptionsArchive(readerOptionsArchive)
-    , _readerArchive(_readerOptionsArchive) { 
+    , _readerArchive(_readerOptionsArchive) {
     _readerOptionsArchive.setReader(this);
   }
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb, std::vector<
                        std::unique_ptr<File> > &result) {
-    llvm::error_code ec; 
+    llvm::error_code ec;
     std::unique_ptr<File> f;
     std::pair<unsigned char, unsigned char> Ident;
 
-    llvm::sys::LLVMFileType fileType = 
+    llvm::sys::LLVMFileType fileType =
           llvm::sys::IdentifyFileType(mb->getBufferStart(),
                                 static_cast<unsigned>(mb->getBufferSize()));
     switch (fileType) {
     case llvm::sys::ELF_Relocatable_FileType:
       Ident = llvm::object::getElfArchType(&*mb);
-      //    Instantiate the correct FileELF template instance
-      //    based on the Ident pair. Once the File is created
-      //     we push the file to the vector of files already
-      //     created during parser's life.
-
+      // Instantiate the correct FileELF template instance based on the Ident
+      // pair. Once the File is created we push the file to the vector of files
+      // already created during parser's life.
       if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
           == llvm::ELF::ELFDATA2LSB) {
         f.reset(new FileELF<llvm::support::little, false>(std::move(mb), ec));
-
       } else if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
           == llvm::ELF::ELFDATA2MSB) {
         f.reset(new FileELF<llvm::support::big, false> (std::move(mb), ec));
-
       } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
           == llvm::ELF::ELFDATA2MSB) {
         f.reset(new FileELF<llvm::support::big, true> (std::move(mb), ec));
-
       } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
           == llvm::ELF::ELFDATA2LSB) {
         f.reset(new FileELF<llvm::support::little, true> (std::move(mb), ec));
@@ -818,11 +762,9 @@ private:
   ReaderOptionsArchive &_readerOptionsArchive;
   ReaderArchive _readerArchive;
 };
-
-} // namespace anonymous
+} // end anon namespace.
 
 namespace lld {
-
 ReaderOptionsELF::ReaderOptionsELF() {
 }
 
@@ -833,5 +775,4 @@ Reader *createReaderELF(const ReaderOptionsELF &options,
                         ReaderOptionsArchive &optionsArchive) {
   return new ReaderELF(options, optionsArchive);
 }
-
-} // namespace LLD
+} // end namespace lld
