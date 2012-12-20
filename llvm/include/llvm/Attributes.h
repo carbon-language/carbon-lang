@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file contains the simple types necessary to represent the
-// attributes associated with functions and their calls.
-//
+///
+/// \file
+/// \brief This file contains the simple types necessary to represent the
+/// attributes associated with functions and their calls.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ATTRIBUTES_H
@@ -28,7 +29,8 @@ class LLVMContext;
 class Type;
 
 //===----------------------------------------------------------------------===//
-/// \class Functions, function parameters, and return types can have attributes
+/// \class
+/// \brief Functions, function parameters, and return types can have attributes
 /// to indicate how they should be treated by optimizations and code
 /// generation. This class represents one of those attributes. It's light-weight
 /// and should be passed around by-value.
@@ -91,10 +93,10 @@ public:
     ZExt                   ///< Zero extended before/after call
   };
 private:
-  AttributeImpl *Attrs;
-  Attribute(AttributeImpl *A) : Attrs(A) {}
+  AttributeImpl *pImpl;
+  Attribute(AttributeImpl *A) : pImpl(A) {}
 public:
-  Attribute() : Attrs(0) {}
+  Attribute() : pImpl(0) {}
 
   /// \brief Return a uniquified Attribute object. This takes the uniquified
   /// value from the Builder and wraps it in the Attribute class.
@@ -119,10 +121,10 @@ public:
   unsigned getStackAlignment() const;
 
   bool operator==(const Attribute &A) const {
-    return Attrs == A.Attrs;
+    return pImpl == A.pImpl;
   }
   bool operator!=(const Attribute &A) const {
-    return Attrs != A.Attrs;
+    return pImpl != A.pImpl;
   }
 
   uint64_t Raw() const;
@@ -148,10 +150,11 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// AttrBuilder - This class is used in conjunction with the Attribute::get
-/// method to create an Attribute object. The object itself is uniquified. The
-/// Builder's value, however, is not. So this can be used as a quick way to test
-/// for equality, presence of attributes, etc.
+/// \class
+/// \brief This class is used in conjunction with the Attribute::get method to
+/// create an Attribute object. The object itself is uniquified. The Builder's
+/// value, however, is not. So this can be used as a quick way to test for
+/// equality, presence of attributes, etc.
 class AttrBuilder {
   uint64_t Bits;
 public:
@@ -173,7 +176,7 @@ public:
   /// removeAttribute - Remove the attributes from A from the builder.
   AttrBuilder &removeAttributes(const Attribute &A);
 
-  /// hasAttribute - Return true if the builder has the specified attribute.
+  /// contains - Return true if the builder has the specified attribute.
   bool hasAttribute(Attribute::AttrVal A) const;
 
   /// hasAttributes - Return true if the builder has IR-level attributes.
@@ -239,7 +242,8 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-/// \class This is just a pair of values to associate a set of attributes with
+/// \class
+/// \brief This is just a pair of values to associate a set of attributes with
 /// an index.
 struct AttributeWithIndex {
   Attribute Attrs;  ///< The attributes that are set, or'd together.
@@ -266,7 +270,8 @@ struct AttributeWithIndex {
 class AttributeSetImpl;
 
 //===----------------------------------------------------------------------===//
-/// \class This class manages the ref count for the opaque AttributeSetImpl
+/// \class
+/// \brief This class manages the ref count for the opaque AttributeSetImpl
 /// object and provides accessors for it.
 class AttributeSet {
 public:
@@ -381,6 +386,6 @@ public:
   void dump() const;
 };
 
-} // End llvm namespace
+} // end llvm namespace
 
 #endif

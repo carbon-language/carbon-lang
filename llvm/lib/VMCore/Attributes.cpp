@@ -62,22 +62,22 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
 }
 
 bool Attribute::hasAttribute(AttrVal Val) const {
-  return Attrs && Attrs->hasAttribute(Val);
+  return pImpl && pImpl->hasAttribute(Val);
 }
 
 bool Attribute::hasAttributes() const {
-  return Attrs && Attrs->hasAttributes();
+  return pImpl && pImpl->hasAttributes();
 }
 
 bool Attribute::hasAttributes(const Attribute &A) const {
-  return Attrs && Attrs->hasAttributes(A);
+  return pImpl && pImpl->hasAttributes(A);
 }
 
 /// This returns the alignment field of an attribute as a byte alignment value.
 unsigned Attribute::getAlignment() const {
   if (!hasAttribute(Attribute::Alignment))
     return 0;
-  return 1U << ((Attrs->getAlignment() >> 16) - 1);
+  return 1U << ((pImpl->getAlignment() >> 16) - 1);
 }
 
 /// This returns the stack alignment field of an attribute as a byte alignment
@@ -85,11 +85,11 @@ unsigned Attribute::getAlignment() const {
 unsigned Attribute::getStackAlignment() const {
   if (!hasAttribute(Attribute::StackAlignment))
     return 0;
-  return 1U << ((Attrs->getStackAlignment() >> 26) - 1);
+  return 1U << ((pImpl->getStackAlignment() >> 26) - 1);
 }
 
 uint64_t Attribute::Raw() const {
-  return Attrs ? Attrs->Raw() : 0;
+  return pImpl ? pImpl->Raw() : 0;
 }
 
 Attribute Attribute::typeIncompatible(Type *Ty) {
@@ -398,8 +398,6 @@ AttributeSet AttributeSet::get(LLVMContext &C,
 //===----------------------------------------------------------------------===//
 
 const AttributeSet &AttributeSet::operator=(const AttributeSet &RHS) {
-  if (AttrList == RHS.AttrList) return *this;
-
   AttrList = RHS.AttrList;
   return *this;
 }

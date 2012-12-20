@@ -6,10 +6,11 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file defines various helper methods and classes used by LLVMContextImpl
-// for creating and managing attributes.
-//
+///
+/// \file
+/// \brief This file defines various helper methods and classes used by
+/// LLVMContextImpl for creating and managing attributes.
+///
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ATTRIBUTESIMPL_H
@@ -22,6 +23,11 @@ namespace llvm {
 
 class LLVMContext;
 
+//===----------------------------------------------------------------------===//
+/// \class
+/// \brief This class represents a single, uniqued attribute. That attribute
+/// could be a single enum, a tuple, or a string. It uses a discriminated union
+/// to distinguish them.
 class AttributeImpl : public FoldingSetNode {
   uint64_t Bits;                // FIXME: We will be expanding this.
 public:
@@ -47,6 +53,9 @@ public:
   }
 };
 
+//===----------------------------------------------------------------------===//
+/// \class
+/// \brief This class represents a set of attributes.
 class AttributeSetImpl : public FoldingSetNode {
   // AttributesList is uniqued, these should not be publicly available.
   void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
