@@ -83,26 +83,25 @@ let usesCustomInserter = 1, Predicates = [HasStdEnc],
 //===----------------------------------------------------------------------===//
 let DecoderNamespace = "Mips64" in {
 /// Arithmetic Instructions (ALU Immediate)
-def DADDi    : ArithOverflowI<0x18, "daddi", add, simm16_64, immSExt16,
-                           CPU64Regs>;
-def DADDiu   : ArithLogicI<0x19, "daddiu", add, simm16_64, immSExt16,
-                           CPU64Regs>, IsAsCheapAsAMove;
-def DANDi    : ArithLogicI<0x0c, "andi", and, uimm16_64, immZExt16, CPU64Regs>;
+def DADDi    : ArithLogicI<0x18, "daddi", simm16_64, immSExt16, CPU64Regs>;
+def DADDiu   : ArithLogicI<0x19, "daddiu", simm16_64, immSExt16, CPU64Regs,
+                           add>, IsAsCheapAsAMove;
+def DANDi    : ArithLogicI<0x0c, "andi", uimm16_64, immZExt16, CPU64Regs, and>;
 def SLTi64   : SetCC_I<0x0a, "slti", setlt, simm16_64, immSExt16, CPU64Regs>;
 def SLTiu64  : SetCC_I<0x0b, "sltiu", setult, simm16_64, immSExt16, CPU64Regs>;
-def ORi64    : ArithLogicI<0x0d, "ori", or, uimm16_64, immZExt16, CPU64Regs>;
-def XORi64   : ArithLogicI<0x0e, "xori", xor, uimm16_64, immZExt16, CPU64Regs>;
+def ORi64    : ArithLogicI<0x0d, "ori", uimm16_64, immZExt16, CPU64Regs, or>;
+def XORi64   : ArithLogicI<0x0e, "xori", uimm16_64, immZExt16, CPU64Regs, xor>;
 def LUi64    : LoadUpper<0x0f, "lui", CPU64Regs, uimm16_64>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
-def DADD     : ArithOverflowR<0x00, 0x2C, "dadd", IIAlu, CPU64Regs, 1>;
-def DADDu    : ArithLogicR<0x00, 0x2d, "daddu", add, IIAlu, CPU64Regs, 1>;
-def DSUBu    : ArithLogicR<0x00, 0x2f, "dsubu", sub, IIAlu, CPU64Regs>;
+def DADD     : ArithLogicR<0x00, 0x2C, "dadd", IIAlu, CPU64Regs, 1>;
+def DADDu    : ArithLogicR<0x00, 0x2d, "daddu", IIAlu, CPU64Regs, 1, add>;
+def DSUBu    : ArithLogicR<0x00, 0x2f, "dsubu", IIAlu, CPU64Regs, 0, sub>;
 def SLT64    : SetCC_R<0x00, 0x2a, "slt", setlt, CPU64Regs>;
 def SLTu64   : SetCC_R<0x00, 0x2b, "sltu", setult, CPU64Regs>;
-def AND64    : ArithLogicR<0x00, 0x24, "and", and, IIAlu, CPU64Regs, 1>;
-def OR64     : ArithLogicR<0x00, 0x25, "or", or, IIAlu, CPU64Regs, 1>;
-def XOR64    : ArithLogicR<0x00, 0x26, "xor", xor, IIAlu, CPU64Regs, 1>;
+def AND64    : ArithLogicR<0x00, 0x24, "and", IIAlu, CPU64Regs, 1, and>;
+def OR64     : ArithLogicR<0x00, 0x25, "or", IIAlu, CPU64Regs, 1, or>;
+def XOR64    : ArithLogicR<0x00, 0x26, "xor", IIAlu, CPU64Regs, 1, xor>;
 def NOR64    : LogicNOR<0x00, 0x27, "nor", CPU64Regs>;
 
 /// Shift Instructions

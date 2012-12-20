@@ -345,8 +345,9 @@ def MTC2_3OP  : MFC3OP<0x12, 4, (outs CPURegs:$rd, uimm16:$sel),
 def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
 
 // Arithmetic and logical instructions with 3 register operands.
-class ArithLogicR<bits<6> op, bits<6> func, string instr_asm, SDNode OpNode,
-                  InstrItinClass itin, RegisterClass RC, bit isComm = 0>:
+class ArithLogicR<bits<6> op, bits<6> func, string instr_asm,
+                  InstrItinClass itin, RegisterClass RC, bit isComm = 0,
+                  SDPatternOperator OpNode = null_frag>:
   FR<op, func, (outs RC:$rd), (ins RC:$rs, RC:$rt),
      !strconcat(instr_asm, "\t$rd, $rs, $rt"),
      [(set RC:$rd, (OpNode RC:$rs, RC:$rt))], itin> {
@@ -355,27 +356,14 @@ class ArithLogicR<bits<6> op, bits<6> func, string instr_asm, SDNode OpNode,
   let isReMaterializable = 1;
 }
 
-class ArithOverflowR<bits<6> op, bits<6> func, string instr_asm,
-                    InstrItinClass itin, RegisterClass RC, bit isComm = 0>:
-  FR<op, func, (outs RC:$rd), (ins RC:$rs, RC:$rt),
-     !strconcat(instr_asm, "\t$rd, $rs, $rt"), [], itin> {
-  let shamt = 0;
-  let isCommutable = isComm;
-}
-
 // Arithmetic and logical instructions with 2 register operands.
-class ArithLogicI<bits<6> op, string instr_asm, SDNode OpNode,
-                  Operand Od, PatLeaf imm_type, RegisterClass RC> :
+class ArithLogicI<bits<6> op, string instr_asm, Operand Od, PatLeaf imm_type,
+                  RegisterClass RC, SDPatternOperator OpNode = null_frag> :
   FI<op, (outs RC:$rt), (ins RC:$rs, Od:$imm16),
      !strconcat(instr_asm, "\t$rt, $rs, $imm16"),
      [(set RC:$rt, (OpNode RC:$rs, imm_type:$imm16))], IIAlu> {
   let isReMaterializable = 1;
 }
-
-class ArithOverflowI<bits<6> op, string instr_asm, SDNode OpNode,
-                     Operand Od, PatLeaf imm_type, RegisterClass RC> :
-  FI<op, (outs RC:$rt), (ins RC:$rs, Od:$imm16),
-     !strconcat(instr_asm, "\t$rt, $rs, $imm16"), [], IIAlu>;
 
 // Arithmetic Multiply ADD/SUB
 let rd = 0, shamt = 0, Defs = [HI, LO], Uses = [HI, LO] in
@@ -931,26 +919,26 @@ def LoadAddr32Imm : LoadAddressImm<"la", shamt,CPURegs>;
 //===----------------------------------------------------------------------===//
 
 /// Arithmetic Instructions (ALU Immediate)
-def ADDiu   : ArithLogicI<0x09, "addiu", add, simm16, immSExt16, CPURegs>,
+def ADDiu   : ArithLogicI<0x09, "addiu", simm16, immSExt16, CPURegs, add>,
               IsAsCheapAsAMove;
-def ADDi    : ArithOverflowI<0x08, "addi", add, simm16, immSExt16, CPURegs>;
+def ADDi    : ArithLogicI<0x08, "addi", simm16, immSExt16, CPURegs>;
 def SLTi    : SetCC_I<0x0a, "slti", setlt, simm16, immSExt16, CPURegs>;
 def SLTiu   : SetCC_I<0x0b, "sltiu", setult, simm16, immSExt16, CPURegs>;
-def ANDi    : ArithLogicI<0x0c, "andi", and, uimm16, immZExt16, CPURegs>;
-def ORi     : ArithLogicI<0x0d, "ori", or, uimm16, immZExt16, CPURegs>;
-def XORi    : ArithLogicI<0x0e, "xori", xor, uimm16, immZExt16, CPURegs>;
+def ANDi    : ArithLogicI<0x0c, "andi", uimm16, immZExt16, CPURegs, and>;
+def ORi     : ArithLogicI<0x0d, "ori", uimm16, immZExt16, CPURegs, or>;
+def XORi    : ArithLogicI<0x0e, "xori", uimm16, immZExt16, CPURegs, xor>;
 def LUi     : LoadUpper<0x0f, "lui", CPURegs, uimm16>;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
-def ADDu    : ArithLogicR<0x00, 0x21, "addu", add, IIAlu, CPURegs, 1>;
-def SUBu    : ArithLogicR<0x00, 0x23, "subu", sub, IIAlu, CPURegs>;
-def ADD     : ArithOverflowR<0x00, 0x20, "add", IIAlu, CPURegs, 1>;
-def SUB     : ArithOverflowR<0x00, 0x22, "sub", IIAlu, CPURegs>;
+def ADDu    : ArithLogicR<0x00, 0x21, "addu", IIAlu, CPURegs, 1, add>;
+def SUBu    : ArithLogicR<0x00, 0x23, "subu", IIAlu, CPURegs, 0, sub>;
+def ADD     : ArithLogicR<0x00, 0x20, "add", IIAlu, CPURegs, 1>;
+def SUB     : ArithLogicR<0x00, 0x22, "sub", IIAlu, CPURegs, 0>;
 def SLT     : SetCC_R<0x00, 0x2a, "slt", setlt, CPURegs>;
 def SLTu    : SetCC_R<0x00, 0x2b, "sltu", setult, CPURegs>;
-def AND     : ArithLogicR<0x00, 0x24, "and", and, IIAlu, CPURegs, 1>;
-def OR      : ArithLogicR<0x00, 0x25, "or",  or, IIAlu, CPURegs, 1>;
-def XOR     : ArithLogicR<0x00, 0x26, "xor", xor, IIAlu, CPURegs, 1>;
+def AND     : ArithLogicR<0x00, 0x24, "and", IIAlu, CPURegs, 1, and>;
+def OR      : ArithLogicR<0x00, 0x25, "or", IIAlu, CPURegs, 1, or>;
+def XOR     : ArithLogicR<0x00, 0x26, "xor", IIAlu, CPURegs, 1, xor>;
 def NOR     : LogicNOR<0x00, 0x27, "nor", CPURegs>;
 
 /// Shift Instructions
@@ -1075,7 +1063,7 @@ def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 
 // MUL is a assembly macro in the current used ISAs. In recent ISA's
 // it is a real instruction.
-def MUL   : ArithLogicR<0x1c, 0x02, "mul", mul, IIImul, CPURegs, 1>,
+def MUL   : ArithLogicR<0x1c, 0x02, "mul", IIImul, CPURegs, 1, mul>,
             Requires<[HasStdEnc]>;
 
 def RDHWR : ReadHardware<CPURegs, HWRegs>;
