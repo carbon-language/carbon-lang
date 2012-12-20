@@ -603,11 +603,19 @@ void MachineInstr::AddRegOperandsToUseLists(MachineRegisterInfo &MRI) {
       MRI.addRegOperandToUseList(&Operands[i]);
 }
 
+void MachineInstr::addOperand(const MachineOperand &Op) {
+  MachineBasicBlock *MBB = getParent();
+  assert(MBB && "Use MachineInstrBuilder to add operands to dangling instrs");
+  MachineFunction *MF = MBB->getParent();
+  assert(MF && "Use MachineInstrBuilder to add operands to dangling instrs");
+  addOperand(*MF, Op);
+}
+
 /// addOperand - Add the specified operand to the instruction.  If it is an
 /// implicit operand, it is added to the end of the operand list.  If it is
 /// an explicit operand it is added at the end of the explicit operand list
 /// (before the first implicit operand).
-void MachineInstr::addOperand(const MachineOperand &Op) {
+void MachineInstr::addOperand(MachineFunction &MF, const MachineOperand &Op) {
   assert(MCID && "Cannot add operands before providing an instr descriptor");
   bool isImpReg = Op.isReg() && Op.isImplicit();
   MachineRegisterInfo *RegInfo = getRegInfo();

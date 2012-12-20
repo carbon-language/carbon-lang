@@ -940,19 +940,24 @@ public:
   //===--------------------------------------------------------------------===//
   // Accessors used to build up machine instructions.
 
-  /// addOperand - Add the specified operand to the instruction.  If it is an
-  /// implicit operand, it is added to the end of the operand list.  If it is
-  /// an explicit operand it is added at the end of the explicit operand list
+  /// Add the specified operand to the instruction.  If it is an implicit
+  /// operand, it is added to the end of the operand list.  If it is an
+  /// explicit operand it is added at the end of the explicit operand list
   /// (before the first implicit operand).
-  void addOperand(const MachineOperand &Op);
+  ///
+  /// MF must be the machine function that was used to allocate this
+  /// instruction.
+  ///
+  /// MachineInstrBuilder provides a more convenient interface for creating
+  /// instructions and adding operands.
+  void addOperand(MachineFunction &MF, const MachineOperand &Op);
 
-  // Add an operand while providing a context pointer. This will replace the
-  // single-argument function shortly.
-  //
-  // MF must be the machine function that was used to allocate this instruction.
-  void addOperand(MachineFunction &MF, const MachineOperand &Op) {
-    addOperand(Op);
-  }
+  /// Add an operand without providing an MF reference. This only works for
+  /// instructions that are inserted in a basic block.
+  ///
+  /// MachineInstrBuilder and the two-argument addOperand(MF, MO) should be
+  /// preferred.
+  void addOperand(const MachineOperand &Op);
 
   /// setDesc - Replace the instruction descriptor (thus opcode) of
   /// the current instruction with a new one.
