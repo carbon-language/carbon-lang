@@ -266,7 +266,7 @@ public:
   Value *VisitInitListExpr(InitListExpr *E);
 
   Value *VisitImplicitValueInitExpr(const ImplicitValueInitExpr *E) {
-    return CGF.CGM.EmitNullConstant(E->getType());
+    return EmitNullValue(E->getType());
   }
   Value *VisitExplicitCastExpr(ExplicitCastExpr *E) {
     if (E->getType()->isVariablyModifiedType())
@@ -800,10 +800,7 @@ EmitComplexToScalarConversion(CodeGenFunction::ComplexPairTy Src,
 }
 
 Value *ScalarExprEmitter::EmitNullValue(QualType Ty) {
-  if (const MemberPointerType *MPT = Ty->getAs<MemberPointerType>())
-    return CGF.CGM.getCXXABI().EmitNullMemberPointer(MPT);
-
-  return llvm::Constant::getNullValue(ConvertType(Ty));
+  return CGF.CGM.EmitNullConstant(Ty);
 }
 
 /// \brief Emit a sanitization check for the given "binary" operation (which
