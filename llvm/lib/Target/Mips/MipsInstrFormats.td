@@ -279,6 +279,17 @@ class BGEZ_FM<bits<6> op, bits<5> funct> {
   let Inst{15-0}  = offset;
 }
 
+class B_FM {
+  bits<16> offset;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 4;
+  let Inst{25-21} = 0;
+  let Inst{20-16} = 0;
+  let Inst{15-0}  = offset;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS

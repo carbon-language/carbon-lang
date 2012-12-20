@@ -596,11 +596,9 @@ class JumpFJ<bits<6> op, DAGOperand opnd, string instr_asm,
 }
 
 // Unconditional branch
-class UncondBranch<bits<6> op, string instr_asm>:
-  BranchBase<op, (outs), (ins brtarget:$imm16),
-             !strconcat(instr_asm, "\t$imm16"), [(br bb:$imm16)], IIBranch> {
-  let rs = 0;
-  let rt = 0;
+class UncondBranch<string opstr> :
+  InstSE<(outs), (ins brtarget:$offset), !strconcat(opstr, "\t$offset"),
+         [(br bb:$offset)], IIBranch, FrmI> {
   let isBranch = 1;
   let isTerminator = 1;
   let isBarrier = 1;
@@ -979,7 +977,7 @@ def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>,
 def J       : JumpFJ<0x02, jmptarget, "j", br, bb>,
               Requires<[RelocStatic, HasStdEnc]>, IsBranch;
 def JR      : IndirectBranch<CPURegs>;
-def B       : UncondBranch<0x04, "b">;
+def B       : UncondBranch<"b">, B_FM;
 def BEQ     : CBranch<"beq", seteq, CPURegs>, BEQ_FM<4>;
 def BNE     : CBranch<"bne", setne, CPURegs>, BEQ_FM<5>;
 def BGEZ    : CBranchZero<"bgez", setge, CPURegs>, BGEZ_FM<1, 1>;
