@@ -14,6 +14,9 @@
 #ifndef PPCMCTARGETDESC_H
 #define PPCMCTARGETDESC_H
 
+// GCC #defines PPC on Linux but we use it as our namespace name
+#undef PPC
+
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {

@@ -14,6 +14,9 @@
 #ifndef LLVM_TARGET_POWERPC_PPCPREDICATES_H
 #define LLVM_TARGET_POWERPC_PPCPREDICATES_H
 
+// GCC #defines PPC on Linux but we use it as our namespace name
+#undef PPC
+
 namespace llvm {
 namespace PPC {
   /// Predicate - These are "(BI << 5) | BO"  for various predicates.
