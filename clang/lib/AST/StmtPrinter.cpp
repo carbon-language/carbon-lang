@@ -1875,11 +1875,6 @@ void Stmt::printPretty(raw_ostream &OS,
     return;
   }
 
-  if (Policy.DumpSourceManager) {
-    dump(OS, *Policy.DumpSourceManager);
-    return;
-  }
-
   StmtPrinter P(OS, Helper, Policy, Indentation);
   P.Visit(const_cast<Stmt*>(this));
 }

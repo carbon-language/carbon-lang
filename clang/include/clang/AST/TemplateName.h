@@ -308,6 +308,9 @@ public:
   void print(raw_ostream &OS, const PrintingPolicy &Policy,
              bool SuppressNNS = false) const;
 
+  /// \brief Debugging aid that dumps the template name.
+  void dump(raw_ostream &OS) const;
+
   /// \brief Debugging aid that dumps the template name to standard
   /// error.
   void dump() const;

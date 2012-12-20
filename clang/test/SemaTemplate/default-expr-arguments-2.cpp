@@ -10,9 +10,9 @@ namespace PR6733 {
     bar(int x = kSomeConst) {}
   };
   
-  // CHECK: void f()
+  // CHECK: FunctionDecl{{.*}}f 'void (void)'
   void f() {
-    // CHECK: bar<int> tmp =
+    // CHECK: VarDecl{{.*}}tmp 'bar<int>'
     // CHECK: CXXDefaultArgExpr{{.*}}'int'
     bar<int> tmp;
   }

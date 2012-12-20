@@ -9,7 +9,7 @@
 // PR6176
 
 // CHECK-RECORD: *** Dumping IRgen Record Layout
-// CHECK-RECORD: Record: struct s0
+// CHECK-RECORD: Record: (RecordDecl{{.*}}s0
 // CHECK-RECORD: Layout: <CGRecordLayout
 // CHECK-RECORD:   LLVMType:%struct.s0 = type <{ [3 x i8] }>
 // CHECK-RECORD:   IsZeroInitializable:1
@@ -49,7 +49,7 @@ unsigned long long test_0() {
 // PR5591
 
 // CHECK-RECORD: *** Dumping IRgen Record Layout
-// CHECK-RECORD: Record: struct s1
+// CHECK-RECORD: Record: (RecordDecl{{.*}}s1
 // CHECK-RECORD: Layout: <CGRecordLayout
 // CHECK-RECORD:   LLVMType:%struct.s1 = type <{ [3 x i8] }>
 // CHECK-RECORD:   IsZeroInitializable:1
@@ -97,7 +97,7 @@ unsigned long long test_1() {
 // PR5567
 
 // CHECK-RECORD: *** Dumping IRgen Record Layout
-// CHECK-RECORD: Record: union u2
+// CHECK-RECORD: Record: (RecordDecl{{.*}}u2
 // CHECK-RECORD: Layout: <CGRecordLayout
 // CHECK-RECORD:   LLVMType:%union.u2 = type <{ i8 }>
 // CHECK-RECORD:   IsZeroInitializable:1
@@ -269,7 +269,7 @@ _Bool test_6() {
 // Check that we compute the best alignment possible for each access.
 //
 // CHECK-RECORD: *** Dumping IRgen Record Layout
-// CHECK-RECORD: Record: struct s7
+// CHECK-RECORD: Record: (RecordDecl{{.*}}s7
 // CHECK-RECORD: Layout: <CGRecordLayout
 // CHECK-RECORD:   LLVMType:%struct.s7 = type { i32, i32, i32, i8, [3 x i8], [4 x i8], [12 x i8] }
 // CHECK-RECORD:   IsZeroInitializable:1

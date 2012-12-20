@@ -168,9 +168,13 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
   return DB << NameStr;
 }
 
-void TemplateName::dump() const {
+void TemplateName::dump(raw_ostream &OS) const {
   LangOptions LO;  // FIXME!
   LO.CPlusPlus = true;
   LO.Bool = true;
-  print(llvm::errs(), PrintingPolicy(LO));
+  print(OS, PrintingPolicy(LO));
+}
+
+void TemplateName::dump() const {
+  dump(llvm::errs());
 }

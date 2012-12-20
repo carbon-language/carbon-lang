@@ -3,15 +3,14 @@
 void TestBlockExpr(int x) {
   ^{ x; };
 }
-// CHECK:      Dumping TestBlockExpr
-// CHECK:      BlockExpr{{.*}} decl=
-// CHECK-NEXT:   capture ParmVar
-// CHECK-NEXT:   CompoundStmt
+// CHECK:      FunctionDecl{{.*}}TestBlockExpr
+// CHECK:      BlockExpr{{.*}} 'void (^)(void)'
+// CHECK-NEXT:   BlockDecl
 
 void TestExprWithCleanup(int x) {
   ^{ x; };
 }
-// CHECK:      Dumping TestExprWithCleanup
+// CHECK:      FunctionDecl{{.*}}TestExprWithCleanup
 // CHECK:      ExprWithCleanups
 // CHECK-NEXT:   cleanup Block
 // CHECK-NEXT:   BlockExpr
@@ -26,10 +25,11 @@ void TestObjCAtCatchStmt() {
   } @finally {
   }
 }
-// CHECK:      Dumping TestObjCAtCatchStmt
+// CHECK:      FunctionDecl{{.*}}TestObjCAtCatchStmt
 // CHECK:      ObjCAtTryStmt
 // CHECK-NEXT:   CompoundStmt
-// CHECK-NEXT:   ObjCAtCatchStmt{{.*}} catch parm = "A *a"
+// CHECK-NEXT:   ObjCAtCatchStmt{{.*}}
+// CHECK-NEXT:     VarDecl{{.*}}a
 // CHECK-NEXT:     CompoundStmt
 // CHECK-NEXT:   ObjCAtCatchStmt{{.*}} catch all
 // CHECK-NEXT:     CompoundStmt

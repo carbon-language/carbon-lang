@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -ast-dump %s > %t
+// RUN: %clang_cc1 -ast-print %s > %t
 // RUN: FileCheck < %t %s -check-prefix=CHECK1
 // RUN: FileCheck < %t %s -check-prefix=CHECK2
 
@@ -27,8 +27,8 @@ void baz() {
 // CHECK2: template <int X = 2, typename Y = double, int Z = 3> struct foo {
 
 // Template definition - foo
-// CHECK1: template <int X, typename Y, int Z = (IntegerLiteral {{.*}} 'int' 5)
-// CHECK2: template <int X, typename Y, int Z = (IntegerLiteral {{.*}} 'int' 5)
+// CHECK1: template <int X, typename Y, int Z = 5> struct foo {
+// CHECK2: template <int X, typename Y, int Z = 5> struct foo {
 
 // Template instantiation - bar
 // CHECK1: template <int A = 5, typename B = int> int bar()

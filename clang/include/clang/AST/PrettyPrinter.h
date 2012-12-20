@@ -40,8 +40,7 @@ struct PrintingPolicy {
       SuppressUnwrittenScope(false), SuppressInitializers(false),
       ConstantArraySizeAsWritten(false), AnonymousTagLocations(true),
       SuppressStrongLifetime(false), Bool(LO.Bool),
-      TerseOutput(false), PolishForDeclaration(false),
-      DumpSourceManager(0) { }
+      TerseOutput(false), PolishForDeclaration(false) { }
 
   /// \brief What language we're printing.
   LangOptions LangOpts;
@@ -147,12 +146,6 @@ struct PrintingPolicy {
   /// declaration tag; such as, do not print attributes attached to the declaration.
   ///
   unsigned PolishForDeclaration : 1;
-
-  /// \brief If we are "dumping" rather than "pretty-printing", this points to
-  /// a SourceManager which will be used to dump SourceLocations. Dumping
-  /// involves printing the internal details of the AST and pretty-printing
-  /// involves printing something similar to source code.
-  SourceManager *DumpSourceManager;
 };
 
 } // end namespace clang
