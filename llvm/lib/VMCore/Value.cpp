@@ -46,10 +46,13 @@ Value::Value(Type *ty, unsigned scid)
     SubclassOptionalData(0), SubclassData(0), VTy((Type*)checkType(ty)),
     UseList(0), Name(0) {
   // FIXME: Why isn't this in the subclass gunk??
-  if (isa<CallInst>(this) || isa<InvokeInst>(this))
+  // Note, we cannot call isa<CallInst> before the CallInst has been
+  // constructed.
+  if (SubclassID == Instruction::Call || SubclassID == Instruction::Invoke)
     assert((VTy->isFirstClassType() || VTy->isVoidTy() || VTy->isStructTy()) &&
            "invalid CallInst type!");
-  else if (!isa<Constant>(this) && !isa<BasicBlock>(this))
+  else if (SubclassID != BasicBlockVal &&
+           (SubclassID < ConstantFirstVal || SubclassID > ConstantLastVal))
     assert((VTy->isFirstClassType() || VTy->isVoidTy()) &&
            "Cannot create non-first-class values except for constants!");
 }
