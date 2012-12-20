@@ -973,7 +973,8 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
   // hard-coding a patch version. Thus if the RHS has no patch, it always
   // wins, and the LHS only wins if it has no patch and the RHS does have
   // a patch.
-  if (RHS.Patch == -1) return true;   if (Patch == -1) return false;
+  if (RHS.Patch == -1 && Patch != -1) return true;
+  if (RHS.Patch != -1 && Patch == -1) return false;
   if (Patch < RHS.Patch) return true; if (Patch > RHS.Patch) return false;
   if (PatchSuffix == RHS.PatchSuffix) return false;
 
