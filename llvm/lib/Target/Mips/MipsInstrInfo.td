@@ -556,12 +556,10 @@ class CBranch<string opstr, PatFrag cond_op, RegisterClass RC> :
   let Defs = [AT];
 }
 
-class CBranchZero<bits<6> op, bits<5> _rt, string instr_asm, PatFrag cond_op,
-                  RegisterClass RC>:
-  BranchBase<op, (outs), (ins RC:$rs, brtarget:$imm16),
-             !strconcat(instr_asm, "\t$rs, $imm16"),
-             [(brcond (i32 (cond_op RC:$rs, 0)), bb:$imm16)], IIBranch> {
-  let rt = _rt;
+class CBranchZero<string opstr, PatFrag cond_op, RegisterClass RC> :
+  InstSE<(outs), (ins RC:$rs, brtarget:$offset),
+         !strconcat(opstr, "\t$rs, $offset"),
+         [(brcond (i32 (cond_op RC:$rs, 0)), bb:$offset)], IIBranch, FrmI> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
@@ -999,10 +997,10 @@ def JR      : IndirectBranch<CPURegs>;
 def B       : UncondBranch<0x04, "b">;
 def BEQ     : CBranch<"beq", seteq, CPURegs>, BEQ_FM<4>;
 def BNE     : CBranch<"bne", setne, CPURegs>, BEQ_FM<5>;
-def BGEZ    : CBranchZero<0x01, 1, "bgez", setge, CPURegs>;
-def BGTZ    : CBranchZero<0x07, 0, "bgtz", setgt, CPURegs>;
-def BLEZ    : CBranchZero<0x06, 0, "blez", setle, CPURegs>;
-def BLTZ    : CBranchZero<0x01, 0, "bltz", setlt, CPURegs>;
+def BGEZ    : CBranchZero<"bgez", setge, CPURegs>, BGEZ_FM<1, 1>;
+def BGTZ    : CBranchZero<"bgtz", setgt, CPURegs>, BGEZ_FM<7, 0>;
+def BLEZ    : CBranchZero<"blez", setle, CPURegs>, BGEZ_FM<6, 0>;
+def BLTZ    : CBranchZero<"bltz", setlt, CPURegs>, BGEZ_FM<1, 0>;
 
 let rt = 0, rs = 0, isBranch = 1, isTerminator = 1, isBarrier = 1,
     hasDelaySlot = 1, Defs = [RA] in

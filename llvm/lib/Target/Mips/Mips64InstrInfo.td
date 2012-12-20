@@ -168,10 +168,10 @@ def SCD_P8 : SCBase<0x3c, "scd", CPU64Regs, mem64>,
 def JR64   : IndirectBranch<CPU64Regs>;
 def BEQ64  : CBranch<"beq", seteq, CPU64Regs>, BEQ_FM<4>;
 def BNE64  : CBranch<"bne", setne, CPU64Regs>, BEQ_FM<5>;
-def BGEZ64 : CBranchZero<0x01, 1, "bgez", setge, CPU64Regs>;
-def BGTZ64 : CBranchZero<0x07, 0, "bgtz", setgt, CPU64Regs>;
-def BLEZ64 : CBranchZero<0x06, 0, "blez", setle, CPU64Regs>;
-def BLTZ64 : CBranchZero<0x01, 0, "bltz", setlt, CPU64Regs>;
+def BGEZ64 : CBranchZero<"bgez", setge, CPU64Regs>, BGEZ_FM<1, 1>;
+def BGTZ64 : CBranchZero<"bgtz", setgt, CPU64Regs>, BGEZ_FM<7, 0>;
+def BLEZ64 : CBranchZero<"blez", setle, CPU64Regs>, BGEZ_FM<6, 0>;
+def BLTZ64 : CBranchZero<"bltz", setlt, CPU64Regs>, BGEZ_FM<1, 0>;
 }
 let DecoderNamespace = "Mips64" in
 def JALR64 : JumpLinkReg<0x00, 0x09, "jalr", CPU64Regs>;
