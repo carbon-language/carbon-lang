@@ -165,3 +165,7 @@ const char g10[] = @encode(struct f);
 // rdar://9622422
 // CHECK: @g11 = constant [2 x i8] c"v\00"
 const char g11[] = @encode(void);
+
+// PR14628
+// CHECK: @g12 = constant [3 x i8] c"Ai\00"
+const char g12[] = @encode(_Atomic(int));
