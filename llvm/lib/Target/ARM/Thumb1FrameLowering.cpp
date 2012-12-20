@@ -281,7 +281,7 @@ void Thumb1FrameLowering::emitEpilogue(MachineFunction &MF,
       BuildMI(MBB, MBBI, dl, TII.get(ARM::tBX_RET_vararg))
       .addReg(ARM::R3, RegState::Kill);
     AddDefaultPred(MIB);
-    MIB->copyImplicitOps(&*MBBI);
+    MIB.copyImplicitOps(&*MBBI);
     // erase the old tBX_RET instruction
     MBB.erase(MBBI);
   }
@@ -352,7 +352,7 @@ restoreCalleeSavedRegisters(MachineBasicBlock &MBB,
         continue;
       Reg = ARM::PC;
       (*MIB).setDesc(TII.get(ARM::tPOP_RET));
-      MIB->copyImplicitOps(&*MI);
+      MIB.copyImplicitOps(&*MI);
       MI = MBB.erase(MI);
     }
     MIB.addReg(Reg, getDefRegState(true));

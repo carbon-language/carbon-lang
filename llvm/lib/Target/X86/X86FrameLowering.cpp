@@ -1138,7 +1138,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     }
 
     MachineInstr *NewMI = prior(MBBI);
-    NewMI->copyImplicitOps(MBBI);
+    NewMI->copyImplicitOps(MF, MBBI);
 
     // Delete the pseudo instruction TCRETURN.
     MBB.erase(MBBI);

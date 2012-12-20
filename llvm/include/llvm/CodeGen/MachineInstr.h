@@ -929,7 +929,7 @@ public:
 
   /// copyImplicitOps - Copy implicit register operands from specified
   /// instruction to this instruction.
-  void copyImplicitOps(const MachineInstr *MI);
+  void copyImplicitOps(MachineFunction &MF, const MachineInstr *MI);
 
   //
   // Debugging support

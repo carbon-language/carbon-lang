@@ -1403,12 +1403,13 @@ bool MachineInstr::allDefsAreDead() const {
 
 /// copyImplicitOps - Copy implicit register operands from specified
 /// instruction to this instruction.
-void MachineInstr::copyImplicitOps(const MachineInstr *MI) {
+void MachineInstr::copyImplicitOps(MachineFunction &MF,
+                                   const MachineInstr *MI) {
   for (unsigned i = MI->getDesc().getNumOperands(), e = MI->getNumOperands();
        i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     if (MO.isReg() && MO.isImplicit())
-      addOperand(MO);
+      addOperand(MF, MO);
   }
 }
 

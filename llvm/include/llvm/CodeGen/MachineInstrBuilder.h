@@ -208,6 +208,12 @@ public:
       }
     }
   }
+
+  /// Copy all the implicit operands from OtherMI onto this one.
+  const MachineInstrBuilder &copyImplicitOps(const MachineInstr *OtherMI) {
+    MI->copyImplicitOps(*MF, OtherMI);
+    return *this;
+  }
 };
 
 /// BuildMI - Builder interface.  Specify how to create the initial instruction

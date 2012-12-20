@@ -1408,7 +1408,7 @@ bool ARMLoadStoreOpt::MergeReturnIntoLDM(MachineBasicBlock &MBB) {
               Opcode == ARM::LDMIA_UPD) && "Unsupported multiple load-return!");
       PrevMI->setDesc(TII->get(NewOpc));
       MO.setReg(ARM::PC);
-      PrevMI->copyImplicitOps(&*MBBI);
+      PrevMI->copyImplicitOps(*MBB.getParent(), &*MBBI);
       MBB.erase(MBBI);
       return true;
     }
