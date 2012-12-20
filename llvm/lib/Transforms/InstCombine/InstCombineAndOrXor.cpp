@@ -469,14 +469,12 @@ static unsigned getTypeOfMaskedICmp(Value* A, Value* B, Value* C,
                             FoldMskICmp_AMask_NotMixed)
                          : (FoldMskICmp_Mask_AllZeroes |
                             FoldMskICmp_AMask_Mixed));
-  }
-  else if (ACst != 0 && CCst != 0 &&
-        ConstantExpr::getAnd(ACst, CCst) == CCst) {
+  } else if (ACst != 0 && CCst != 0 &&
+             ConstantExpr::getAnd(ACst, CCst) == CCst) {
     result |= (icmp_eq ? FoldMskICmp_AMask_Mixed
                        : FoldMskICmp_AMask_NotMixed);
   }
-  if (B == C)
-  {
+  if (B == C) {
     result |= (icmp_eq ? (FoldMskICmp_BMask_AllOnes |
                           FoldMskICmp_BMask_Mixed)
                        : (FoldMskICmp_BMask_NotAllOnes |
@@ -486,9 +484,8 @@ static unsigned getTypeOfMaskedICmp(Value* A, Value* B, Value* C,
                             FoldMskICmp_BMask_NotMixed)
                          : (FoldMskICmp_Mask_AllZeroes |
                             FoldMskICmp_BMask_Mixed));
-  }
-  else if (BCst != 0 && CCst != 0 &&
-        ConstantExpr::getAnd(BCst, CCst) == CCst) {
+  } else if (BCst != 0 && CCst != 0 &&
+             ConstantExpr::getAnd(BCst, CCst) == CCst) {
     result |= (icmp_eq ? FoldMskICmp_BMask_Mixed
                        : FoldMskICmp_BMask_NotMixed);
   }
@@ -610,14 +607,11 @@ static unsigned foldLogOpOfMaskedICmpsHelper(Value*& A,
 
   if (L11 == A) {
     B = L12; C = L2;
-  }
-  else if (L12 == A) {
+  } else if (L12 == A) {
     B = L11; C = L2;
-  }
-  else if (L21 == A) {
+  } else if (L21 == A) {
     B = L22; C = L1;
-  }
-  else if (L22 == A) {
+  } else if (L22 == A) {
     B = L21; C = L1;
   }
 
@@ -653,21 +647,21 @@ static Value* foldLogOpOfMaskedICmps(ICmpInst *LHS, ICmpInst *RHS,
     Value* zero = Constant::getNullValue(A->getType());
     return Builder->CreateICmp(NEWCC, newAnd, zero);
   }
-  else if (mask & FoldMskICmp_BMask_AllOnes) {
+  if (mask & FoldMskICmp_BMask_AllOnes) {
     // (icmp eq (A & B), B) & (icmp eq (A & D), D)
     // -> (icmp eq (A & (B|D)), (B|D))
     Value* newOr = Builder->CreateOr(B, D);
     Value* newAnd = Builder->CreateAnd(A, newOr);
     return Builder->CreateICmp(NEWCC, newAnd, newOr);
   }
-  else if (mask & FoldMskICmp_AMask_AllOnes) {
+  if (mask & FoldMskICmp_AMask_AllOnes) {
     // (icmp eq (A & B), A) & (icmp eq (A & D), A)
     // -> (icmp eq (A & (B&D)), A)
     Value* newAnd1 = Builder->CreateAnd(B, D);
     Value* newAnd = Builder->CreateAnd(A, newAnd1);
     return Builder->CreateICmp(NEWCC, newAnd, A);
   }
-  else if (mask & FoldMskICmp_BMask_Mixed) {
+  if (mask & FoldMskICmp_BMask_Mixed) {
     // (icmp eq (A & B), C) & (icmp eq (A & D), E)
     // We already know that B & C == C && D & E == E.
     // If we can prove that (B & D) & (C ^ E) == 0, that is, the bits of
@@ -759,14 +753,13 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
     ConstantInt *AndCst, *SmallCst = 0, *BigCst = 0;
 
     // (trunc x) == C1 & (and x, CA) == C2
+    // (and x, CA) == C2 & (trunc x) == C1
     if (match(Val2, m_Trunc(m_Value(V))) &&
         match(Val, m_And(m_Specific(V), m_ConstantInt(AndCst)))) {
       SmallCst = RHSCst;
       BigCst = LHSCst;
-    }
-    // (and x, CA) == C2 & (trunc x) == C1
-    else if (match(Val, m_Trunc(m_Value(V))) &&
-             match(Val2, m_And(m_Specific(V), m_ConstantInt(AndCst)))) {
+    } else if (match(Val, m_Trunc(m_Value(V))) &&
+               match(Val2, m_And(m_Specific(V), m_ConstantInt(AndCst)))) {
       SmallCst = LHSCst;
       BigCst = RHSCst;
     }
