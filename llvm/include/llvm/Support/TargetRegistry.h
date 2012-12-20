@@ -41,7 +41,6 @@ namespace llvm {
   class MCRegisterInfo;
   class MCStreamer;
   class MCSubtargetInfo;
-  class MCTargetAsmLexer;
   class MCTargetAsmParser;
   class TargetMachine;
   class TargetOptions;
@@ -96,9 +95,6 @@ namespace llvm {
     typedef MCAsmBackend *(*MCAsmBackendCtorTy)(const Target &T,
                                                 StringRef TT,
                                                 StringRef CPU);
-    typedef MCTargetAsmLexer *(*MCAsmLexerCtorTy)(const Target &T,
-                                                  const MCRegisterInfo &MRI,
-                                                  const MCAsmInfo &MAI);
     typedef MCTargetAsmParser *(*MCAsmParserCtorTy)(MCSubtargetInfo &STI,
                                                     MCAsmParser &P);
     typedef MCDisassembler *(*MCDisassemblerCtorTy)(const Target &T,
@@ -182,10 +178,6 @@ namespace llvm {
     /// MCAsmBackend, if registered.
     MCAsmBackendCtorTy MCAsmBackendCtorFn;
 
-    /// MCAsmLexerCtorFn - Construction function for this target's
-    /// MCTargetAsmLexer, if registered.
-    MCAsmLexerCtorTy MCAsmLexerCtorFn;
-
     /// MCAsmParserCtorFn - Construction function for this target's
     /// MCTargetAsmParser, if registered.
     MCAsmParserCtorTy MCAsmParserCtorFn;
@@ -241,9 +233,6 @@ namespace llvm {
 
     /// hasMCAsmBackend - Check if this target supports .o generation.
     bool hasMCAsmBackend() const { return MCAsmBackendCtorFn != 0; }
-
-    /// hasMCAsmLexer - Check if this target supports .s lexing.
-    bool hasMCAsmLexer() const { return MCAsmLexerCtorFn != 0; }
 
     /// hasAsmParser - Check if this target supports .s parsing.
     bool hasMCAsmParser() const { return MCAsmParserCtorFn != 0; }
@@ -358,15 +347,6 @@ namespace llvm {
       if (!MCAsmBackendCtorFn)
         return 0;
       return MCAsmBackendCtorFn(*this, Triple, CPU);
-    }
-
-    /// createMCAsmLexer - Create a target specific assembly lexer.
-    ///
-    MCTargetAsmLexer *createMCAsmLexer(const MCRegisterInfo &MRI,
-                                       const MCAsmInfo &MAI) const {
-      if (!MCAsmLexerCtorFn)
-        return 0;
-      return MCAsmLexerCtorFn(*this, MRI, MAI);
     }
 
     /// createMCAsmParser - Create a target specific assembly parser.
@@ -674,20 +654,6 @@ namespace llvm {
     static void RegisterMCAsmBackend(Target &T, Target::MCAsmBackendCtorTy Fn) {
       if (!T.MCAsmBackendCtorFn)
         T.MCAsmBackendCtorFn = Fn;
-    }
-
-    /// RegisterMCAsmLexer - Register a MCTargetAsmLexer implementation for the
-    /// given target.
-    ///
-    /// Clients are responsible for ensuring that registration doesn't occur
-    /// while another thread is attempting to access the registry. Typically
-    /// this is done by initializing all targets at program startup.
-    ///
-    /// @param T - The target being registered.
-    /// @param Fn - A function to construct an MCAsmLexer for the target.
-    static void RegisterMCAsmLexer(Target &T, Target::MCAsmLexerCtorTy Fn) {
-      if (!T.MCAsmLexerCtorFn)
-        T.MCAsmLexerCtorFn = Fn;
     }
 
     /// RegisterMCAsmParser - Register a MCTargetAsmParser implementation for
@@ -1067,28 +1033,6 @@ namespace llvm {
     static MCAsmBackend *Allocator(const Target &T, StringRef Triple,
                                    StringRef CPU) {
       return new MCAsmBackendImpl(T, Triple, CPU);
-    }
-  };
-
-  /// RegisterMCAsmLexer - Helper template for registering a target specific
-  /// assembly lexer, for use in the target machine initialization
-  /// function. Usage:
-  ///
-  /// extern "C" void LLVMInitializeFooMCAsmLexer() {
-  ///   extern Target TheFooTarget;
-  ///   RegisterMCAsmLexer<FooMCAsmLexer> X(TheFooTarget);
-  /// }
-  template<class MCAsmLexerImpl>
-  struct RegisterMCAsmLexer {
-    RegisterMCAsmLexer(Target &T) {
-      TargetRegistry::RegisterMCAsmLexer(T, &Allocator);
-    }
-
-  private:
-    static MCTargetAsmLexer *Allocator(const Target &T,
-                                       const MCRegisterInfo &MRI,
-                                       const MCAsmInfo &MAI) {
-      return new MCAsmLexerImpl(T, MRI, MAI);
     }
   };
 

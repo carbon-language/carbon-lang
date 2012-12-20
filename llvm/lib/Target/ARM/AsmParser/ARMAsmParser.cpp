@@ -7829,13 +7829,10 @@ bool ARMAsmParser::parseDirectiveEabiAttr(SMLoc L) {
   return true;
 }
 
-extern "C" void LLVMInitializeARMAsmLexer();
-
 /// Force static initialization.
 extern "C" void LLVMInitializeARMAsmParser() {
   RegisterMCAsmParser<ARMAsmParser> X(TheARMTarget);
   RegisterMCAsmParser<ARMAsmParser> Y(TheThumbTarget);
-  LLVMInitializeARMAsmLexer();
 }
 
 #define GET_REGISTER_MATCHER

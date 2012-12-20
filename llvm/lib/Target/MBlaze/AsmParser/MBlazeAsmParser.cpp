@@ -548,12 +548,9 @@ bool MBlazeAsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
   return false;
 }
 
-extern "C" void LLVMInitializeMBlazeAsmLexer();
-
 /// Force static initialization.
 extern "C" void LLVMInitializeMBlazeAsmParser() {
   RegisterMCAsmParser<MBlazeAsmParser> X(TheMBlazeTarget);
-  LLVMInitializeMBlazeAsmLexer();
 }
 
 #define GET_REGISTER_MATCHER

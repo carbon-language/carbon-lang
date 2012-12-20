@@ -263,9 +263,6 @@ static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI, tool_output_file *Out) 
     case AsmToken::Real:
       Out->os() << "real: " << Lexer.getTok().getString();
       break;
-    case AsmToken::Register:
-      Out->os() << "register: " << Lexer.getTok().getRegVal();
-      break;
     case AsmToken::String:
       Out->os() << "string: " << Lexer.getTok().getString();
       break;
