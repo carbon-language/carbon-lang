@@ -15,6 +15,24 @@ set(SANITIZER_UNITTESTS
 include_directories(..)
 include_directories(../..)
 
+# Adds static library which contains sanitizer_common object file
+# (universal binary on Mac and arch-specific object files on Linux).
+macro(add_sanitizer_common_lib library)
+  add_library(${library} STATIC ${ARGN})
+  set_target_properties(${library} PROPERTIES
+    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+  set(lib_name "lib${library}.a")
+  add_custom_target(${lib_name} DEPENDS ${library})
+endmacro()
+
+function(get_sanitizer_common_lib_for_arch arch lib_name)
+  if(APPLE)
+    set(${lib_name} "libRTSanitizerCommon.test.osx.a" PARENT_SCOPE)
+  else()
+    set(${lib_name} "libRTSanitizerCommon.test.${arch}.a" PARENT_SCOPE)
+  endif()
+endfunction()
+
 # Sanitizer_common unit tests testsuite.
 add_custom_target(SanitizerUnitTests)
 set_target_properties(SanitizerUnitTests PROPERTIES
@@ -40,16 +58,7 @@ macro(add_sanitizer_tests_for_arch arch)
                   DEPS gtest ${SANITIZER_RUNTIME_LIBRARIES})
     list(APPEND SANITIZER_TEST_OBJECTS ${output_obj})
   endforeach()
-  # Add static library which contains sanitizer_common
-  # object files for given arch.
-  set(SANITIZER_COMMON_LIB "RTSanitizerCommon.test.${arch}")
-  add_library(${SANITIZER_COMMON_LIB} STATIC
-              $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>)
-  set_target_properties(${SANITIZER_COMMON_LIB} PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set(SANITIZER_COMMON_LIB_NAME "lib${SANITIZER_COMMON_LIB}.a")
-  add_custom_target(${SANITIZER_COMMON_LIB_NAME}
-    DEPENDS ${SANITIZER_COMMON_LIB})
+  get_sanitizer_common_lib_for_arch(${arch} SANITIZER_COMMON_LIB_NAME)
   # Add unittest target.
   set(SANITIZER_TEST_NAME "Sanitizer-${arch}-Test")
   add_compiler_rt_test(SanitizerUnitTests ${SANITIZER_TEST_NAME}
@@ -59,6 +68,19 @@ macro(add_sanitizer_tests_for_arch arch)
 endmacro()
 
 if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
+  if(APPLE)
+    add_sanitizer_common_lib("RTSanitizerCommon.test.osx"
+                             $<TARGET_OBJECTS:RTSanitizerCommon.osx>)
+  else()
+    if(CAN_TARGET_X86_64)
+      add_sanitizer_common_lib("RTSanitizerCommon.test.x86_64"
+                               $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>)
+    endif()
+    if(CAN_TARGET_I386)
+      add_sanitizer_common_lib("RTSanitizerCommon.test.i386"
+                               $<TARGET_OBJECTS:RTSanitizerCommon.i386>)
+    endif()
+  endif()
   if(CAN_TARGET_X86_64)
     add_sanitizer_tests_for_arch(x86_64)
   endif()
