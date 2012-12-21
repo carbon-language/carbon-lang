@@ -39,7 +39,6 @@
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ScopeInfo.h"
-#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaFixItUtils.h"
 #include "clang/Sema/Template.h"
 using namespace clang;

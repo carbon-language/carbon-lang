@@ -20,7 +20,6 @@
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/PTHManager.h"
 #include "clang/Lex/Preprocessor.h"
-#include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/Token.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringExtras.h"

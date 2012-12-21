@@ -9,7 +9,6 @@
 //  This file implements semantic analysis for C++ templates.
 //===----------------------------------------------------------------------===/
 
-#include "clang/Sema/Template.h"
 #include "TreeTransform.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclFriend.h"

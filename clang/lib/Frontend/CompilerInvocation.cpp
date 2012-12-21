@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/Version.h"
