@@ -2293,7 +2293,7 @@ TEST(AddressSanitizerMac, NSURLDeallocation) {
 TEST(AddressSanitizerMac, Mstats) {
   malloc_statistics_t stats1, stats2;
   malloc_zone_statistics(/*all zones*/NULL, &stats1);
-  const int kMallocSize = 100000;
+  const size_t kMallocSize = 100000;
   void *alloc = Ident(malloc(kMallocSize));
   malloc_zone_statistics(/*all zones*/NULL, &stats2);
   EXPECT_GT(stats2.blocks_in_use, stats1.blocks_in_use);

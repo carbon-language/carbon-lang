@@ -57,7 +57,7 @@ char kStartupStr[] =
 @implementation LoadSomething
 
 +(void) load {
-  for (int i = 0; i < strlen(kStartupStr); i++) {
+  for (size_t i = 0; i < strlen(kStartupStr); i++) {
     access_memory(&kStartupStr[i]);  // make sure no optimizations occur.
   }
   // Don't print anything here not to interfere with the death tests.
@@ -66,13 +66,13 @@ char kStartupStr[] =
 @end
 
 void worker_do_alloc(int size) {
-  char * volatile mem = malloc(size);
+  char * volatile mem = (char * volatile)malloc(size);
   mem[0] = 0; // Ok
   free(mem);
 }
 
 void worker_do_crash(int size) {
-  char * volatile mem = malloc(size);
+  char * volatile mem = (char * volatile)malloc(size);
   access_memory(&mem[size]);  // BOOM
   free(mem);
 }
@@ -167,7 +167,7 @@ void TestGCDSourceEvent() {
       dispatch_time(DISPATCH_TIME_NOW, 1LL * NSEC_PER_SEC);
 
   dispatch_source_set_timer(timer, milestone, DISPATCH_TIME_FOREVER, 0);
-  char * volatile mem = malloc(10);
+  char * volatile mem = (char * volatile)malloc(10);
   dispatch_source_set_event_handler(timer, ^{
     access_memory(&mem[10]);
   });
@@ -184,7 +184,7 @@ void TestGCDSourceCancel() {
       dispatch_time(DISPATCH_TIME_NOW, 1LL * NSEC_PER_SEC);
 
   dispatch_source_set_timer(timer, milestone, DISPATCH_TIME_FOREVER, 0);
-  char * volatile mem = malloc(10);
+  char * volatile mem = (char * volatile)malloc(10);
   // Both dispatch_source_set_cancel_handler() and
   // dispatch_source_set_event_handler() use dispatch_barrier_async_f().
   // It's tricky to test dispatch_source_set_cancel_handler() separately,
@@ -202,7 +202,7 @@ void TestGCDSourceCancel() {
 void TestGCDGroupAsync() {
   dispatch_queue_t queue = dispatch_get_global_queue(0, 0);
   dispatch_group_t group = dispatch_group_create(); 
-  char * volatile mem = malloc(10);
+  char * volatile mem = (char * volatile)malloc(10);
   dispatch_group_async(group, queue, ^{
     access_memory(&mem[10]);
   });
