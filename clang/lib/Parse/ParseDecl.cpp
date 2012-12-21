@@ -4566,13 +4566,10 @@ void Parser::ParseParenDeclarator(Declarator &D) {
     // present even if the attribute list was empty.
     RequiresArg = true;
   }
+
   // Eat any Microsoft extensions.
-  if  (Tok.is(tok::kw___cdecl) || Tok.is(tok::kw___stdcall) ||
-       Tok.is(tok::kw___thiscall) || Tok.is(tok::kw___fastcall) ||
-       Tok.is(tok::kw___w64) || Tok.is(tok::kw___ptr64) ||
-       Tok.is(tok::kw___ptr32) || Tok.is(tok::kw___unaligned)) {
-    ParseMicrosoftTypeAttributes(attrs);
-  }
+  ParseMicrosoftTypeAttributes(attrs);
+
   // Eat any Borland extensions.
   if  (Tok.is(tok::kw___pascal))
     ParseBorlandTypeAttributes(attrs);
