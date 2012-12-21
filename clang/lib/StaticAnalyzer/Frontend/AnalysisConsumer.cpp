@@ -330,6 +330,14 @@ public:
     }
     return true;
   }
+  
+  bool VisitBlockDecl(BlockDecl *BD) {
+    if (BD->hasBody()) {
+      assert(RecVisitorMode == AM_Syntax || Mgr->shouldInlineCall() == false);
+      HandleCode(BD, RecVisitorMode);
+    }
+    return true;
+  }
 
 private:
   void storeTopLevelDecls(DeclGroupRef DG);
@@ -544,16 +552,6 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
 
 }
 
-static void FindBlocks(DeclContext *D, SmallVectorImpl<Decl*> &WL) {
-  if (BlockDecl *BD = dyn_cast<BlockDecl>(D))
-    WL.push_back(BD);
-
-  for (DeclContext::decl_iterator I = D->decls_begin(), E = D->decls_end();
-       I!=E; ++I)
-    if (DeclContext *DC = dyn_cast<DeclContext>(*I))
-      FindBlocks(DC, WL);
-}
-
 static std::string getFunctionName(const Decl *D) {
   if (const ObjCMethodDecl *ID = dyn_cast<ObjCMethodDecl>(D)) {
     return ID->getSelector().getAsString();
@@ -591,6 +589,8 @@ AnalysisConsumer::getModeForDecl(Decl *D, AnalysisMode Mode) {
 void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
                                   ExprEngine::InliningModes IMode,
                                   SetOfConstDecls *VisitedCallees) {
+  if (!D->hasBody())
+    return;
   Mode = getModeForDecl(D, Mode);
   if (Mode == AM_None)
     return;
@@ -602,29 +602,17 @@ void AnalysisConsumer::HandleCode(Decl *D, AnalysisMode Mode,
     MaxCFGSize = MaxCFGSize < CFGSize ? CFGSize : MaxCFGSize;
   }
 
-
   // Clear the AnalysisManager of old AnalysisDeclContexts.
   Mgr->ClearContexts();
-
-  // Dispatch on the actions.
-  SmallVector<Decl*, 10> WL;
-  WL.push_back(D);
-
-  if (D->hasBody() && Opts->AnalyzeNestedBlocks)
-    FindBlocks(cast<DeclContext>(D), WL);
-
   BugReporter BR(*Mgr);
-  for (SmallVectorImpl<Decl*>::iterator WI=WL.begin(), WE=WL.end();
-       WI != WE; ++WI)
-    if ((*WI)->hasBody()) {
-      if (Mode & AM_Syntax)
-        checkerMgr->runCheckersOnASTBody(*WI, *Mgr, BR);
-      if ((Mode & AM_Path) && checkerMgr->hasPathSensitiveCheckers()) {
-        RunPathSensitiveChecks(*WI, IMode, VisitedCallees);
-        if (IMode != ExprEngine::Inline_None)
-          NumFunctionsAnalyzed++;
-      }
-    }
+
+  if (Mode & AM_Syntax)
+    checkerMgr->runCheckersOnASTBody(D, *Mgr, BR);
+  if ((Mode & AM_Path) && checkerMgr->hasPathSensitiveCheckers()) {
+    RunPathSensitiveChecks(D, IMode, VisitedCallees);
+    if (IMode != ExprEngine::Inline_None)
+      NumFunctionsAnalyzed++;
+  }
 }
 
 //===----------------------------------------------------------------------===//

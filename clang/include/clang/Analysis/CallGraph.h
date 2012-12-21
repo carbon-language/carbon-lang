@@ -102,23 +102,30 @@ public:
   void dump() const;
   void viewGraph() const;
 
+  void addNodesForBlocks(DeclContext *D);
+
   /// Part of recursive declaration visitation. We recursively visit all the
-  /// Declarations to collect the root functions.
+  /// declarations to collect the root functions.
   bool VisitFunctionDecl(FunctionDecl *FD) {
     // We skip function template definitions, as their semantics is
     // only determined when they are instantiated.
-    if (includeInGraph(FD))
+    if (includeInGraph(FD)) {
+      // Add all blocks declared inside this function to the graph.
+      addNodesForBlocks(FD);
       // If this function has external linkage, anything could call it.
       // Note, we are not precise here. For example, the function could have
       // its address taken.
       addNodeForDecl(FD, FD->isGlobal());
+    }
     return true;
   }
 
   /// Part of recursive declaration visitation.
   bool VisitObjCMethodDecl(ObjCMethodDecl *MD) {
-    if (includeInGraph(MD))
+    if (includeInGraph(MD)) {
+      addNodesForBlocks(MD);
       addNodeForDecl(MD, true);
+    }
     return true;
   }
 
@@ -144,8 +151,6 @@ private:
   Decl *FD;
 
   /// \brief The list of functions called from this node.
-  // Small vector might be more efficient since we are only tracking functions
-  // whose definition is in the current TU.
   llvm::SmallVector<CallRecord, 5> CalledFunctions;
 
 public:
@@ -169,8 +174,6 @@ public:
   }
 
   Decl *getDecl() const { return FD; }
-
-  StringRef getName() const;
 
   void print(raw_ostream &os) const;
   void dump() const;
