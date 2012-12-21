@@ -580,10 +580,8 @@ void DeclPrinter::VisitFunctionDecl(FunctionDecl *D) {
 
 void DeclPrinter::VisitFriendDecl(FriendDecl *D) {
   if (TypeSourceInfo *TSI = D->getFriendType()) {
-    if (CXXRecordDecl *FriendD = TSI->getType()->getAsCXXRecordDecl()) {
-      Out << "friend ";
-      VisitCXXRecordDecl(FriendD);
-    }
+    Out << "friend ";
+    Out << " " << TSI->getType().getAsString(Policy);
   }
   else if (FunctionDecl *FD =
       dyn_cast<FunctionDecl>(D->getFriendDecl())) {
@@ -598,7 +596,7 @@ void DeclPrinter::VisitFriendDecl(FriendDecl *D) {
   else if (ClassTemplateDecl *CTD =
            dyn_cast<ClassTemplateDecl>(D->getFriendDecl())) {
     Out << "friend ";
-    VisitClassTemplateDecl(CTD);
+    VisitRedeclarableTemplateDecl(CTD);
   }
 }
 

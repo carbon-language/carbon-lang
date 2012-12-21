@@ -77,7 +77,7 @@ template <typename T> friend void TemplateFriend();
   template <typename T> friend class TemplateFriendClass;
 
 };
-// CHECK: <Declaration>friend class Test {\n}</Declaration>
+// CHECK: <Declaration>friend class Test</Declaration>
 // CHECK: <Declaration>friend void foo()</Declaration>
 // CHECK: <Declaration>friend int int_func()</Declaration>
 // CHECK: <Declaration>friend bool operator==(const Test &amp;, const Test &amp;)</Declaration>
@@ -144,3 +144,28 @@ namespace test3 {
 }
 // CHECK: <Declaration>void f(const T &amp;t = T())</Declaration>
 // CHECK: <Declaration>friend void f(const test3::A &amp;)</Declaration>
+
+class MyClass
+{
+/**
+ * \brief plain friend test.
+*/
+  friend class MyClass;
+};
+// CHECK: <Declaration>friend  class MyClass</Declaration>
+
+template<class _Tp> class valarray
+{
+private:
+/**
+ * \brief template friend test.
+*/
+    template <class T> friend class valarray;
+};
+// CHECK: <Declaration>template &lt;class T = unsigned int&gt; class valarray {\n}\ntemplate &lt;class T&gt; class valarray</Declaration>
+// CHECK: <Declaration>friend template &lt;class T&gt; class valarray</Declaration>
+
+class gslice
+{
+  valarray<unsigned> __size_;
+};
