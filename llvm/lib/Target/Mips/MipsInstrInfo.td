@@ -406,27 +406,22 @@ class FMem<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 // Memory Load/Store
 let canFoldAsLoad = 1 in
 class LoadM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
-            Operand MemOpnd, bit Pseudo>:
+            Operand MemOpnd>:
   FMem<op, (outs RC:$rt), (ins MemOpnd:$addr),
      !strconcat(instr_asm, "\t$rt, $addr"),
-     [(set RC:$rt, (OpNode addr:$addr))], IILoad> {
-  let isPseudo = Pseudo;
-}
+     [(set RC:$rt, (OpNode addr:$addr))], IILoad>;
 
 class StoreM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
-             Operand MemOpnd, bit Pseudo>:
+             Operand MemOpnd>:
   FMem<op, (outs), (ins RC:$rt, MemOpnd:$addr),
      !strconcat(instr_asm, "\t$rt, $addr"),
-     [(OpNode RC:$rt, addr:$addr)], IIStore> {
-  let isPseudo = Pseudo;
-}
+     [(OpNode RC:$rt, addr:$addr)], IIStore>;
 
 // 32-bit load.
-multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
-                   bit Pseudo = 0> {
-  def #NAME# : LoadM<op, instr_asm, OpNode, CPURegs, mem, Pseudo>,
+multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode> {
+  def #NAME# : LoadM<op, instr_asm, OpNode, CPURegs, mem>,
                Requires<[NotN64, HasStdEnc]>;
-  def _P8    : LoadM<op, instr_asm, OpNode, CPURegs, mem64, Pseudo>,
+  def _P8    : LoadM<op, instr_asm, OpNode, CPURegs, mem64>,
                Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
@@ -434,11 +429,10 @@ multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
 }
 
 // 64-bit load.
-multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
-                   bit Pseudo = 0> {
-  def #NAME# : LoadM<op, instr_asm, OpNode, CPU64Regs, mem, Pseudo>,
+multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode> {
+  def #NAME# : LoadM<op, instr_asm, OpNode, CPU64Regs, mem>,
                Requires<[NotN64, HasStdEnc]>;
-  def _P8    : LoadM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
+  def _P8    : LoadM<op, instr_asm, OpNode, CPU64Regs, mem64>,
                Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
@@ -446,11 +440,10 @@ multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
 }
 
 // 32-bit store.
-multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode,
-                    bit Pseudo = 0> {
-  def #NAME# : StoreM<op, instr_asm, OpNode, CPURegs, mem, Pseudo>,
+multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode> {
+  def #NAME# : StoreM<op, instr_asm, OpNode, CPURegs, mem>,
                Requires<[NotN64, HasStdEnc]>;
-  def _P8    : StoreM<op, instr_asm, OpNode, CPURegs, mem64, Pseudo>,
+  def _P8    : StoreM<op, instr_asm, OpNode, CPURegs, mem64>,
                Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
@@ -458,11 +451,10 @@ multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode,
 }
 
 // 64-bit store.
-multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode,
-                    bit Pseudo = 0> {
-  def #NAME# : StoreM<op, instr_asm, OpNode, CPU64Regs, mem, Pseudo>,
+multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode> {
+  def #NAME# : StoreM<op, instr_asm, OpNode, CPU64Regs, mem>,
                Requires<[NotN64, HasStdEnc]>;
-  def _P8    : StoreM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
+  def _P8    : StoreM<op, instr_asm, OpNode, CPU64Regs, mem64>,
                Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
