@@ -269,16 +269,16 @@ astBuildAfterFor(__isl_take isl_ast_node *Node,
     return Node;
   struct IslAstUser *Info = (struct IslAstUser *) isl_id_get_user(Id);
   struct AstBuildUserInfo *BuildInfo = (struct AstBuildUserInfo *) User;
+
   if (Info) {
     if (Info->IsOutermostParallel)
       BuildInfo->InParallelFor = 0;
     if (!containsLoops(isl_ast_node_for_get_body(Node)))
       if (astScheduleDimIsParallel(Build, BuildInfo->Deps))
         Info->IsInnermostParallel = 1;
+    if (!Info->Context)
+      Info->Context = isl_ast_build_copy(Build);
   }
-
-  if (!Info->Context)
-    Info->Context = isl_ast_build_copy(Build);
 
   isl_id_free(Id);
   return Node;
