@@ -39,8 +39,14 @@ class CallGraph : public RecursiveASTVisitor<CallGraph> {
   /// FunctionMap owns all CallGraphNodes.
   FunctionMapTy FunctionMap;
 
-  /// This is a virtual root node that has edges to all the functions.
+  /// This is a virtual root node that has edges to all the global functions -
+  /// 'main' or functions accessible from other translation units.
   CallGraphNode *Root;
+
+  /// The list of nodes that have no parent. These are unreachable from Root.
+  /// Declarations can get to this list due to impressions in the graph, for
+  /// example, we do not track functions whose addresses were taken.
+  llvm::SetVector<CallGraphNode *> ParentlessNodes;
 
 public:
   CallGraph();
@@ -85,6 +91,12 @@ public:
   /// failing to add a call edge due to the analysis imprecision.
   typedef llvm::SetVector<CallGraphNode *>::iterator nodes_iterator;
   typedef llvm::SetVector<CallGraphNode *>::const_iterator const_nodes_iterator;
+  nodes_iterator parentless_begin() { return ParentlessNodes.begin(); }
+  nodes_iterator parentless_end() { return ParentlessNodes.end(); }
+  const_nodes_iterator
+    parentless_begin() const { return ParentlessNodes.begin(); }
+  const_nodes_iterator
+    parentless_end() const { return ParentlessNodes.end(); }
 
   void print(raw_ostream &os) const;
   void dump() const;
@@ -158,6 +170,7 @@ public:
 
   void addCallee(CallGraphNode *N, CallGraph *CG) {
     CalledFunctions.push_back(N);
+    CG->ParentlessNodes.remove(N);
   }
 
   Decl *getDecl() const { return FD; }

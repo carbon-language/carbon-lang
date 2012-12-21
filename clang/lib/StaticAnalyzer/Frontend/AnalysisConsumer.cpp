@@ -39,7 +39,6 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
 #include "llvm/Support/Timer.h"
@@ -418,34 +417,61 @@ AnalysisConsumer::getInliningModeForFunction(const Decl *D,
 }
 
 void AnalysisConsumer::HandleDeclsCallGraph(const unsigned LocalTUDeclsSize) {
-  // Build the Call Graph by adding all the top level declarations to the graph.
+  // Otherwise, use the Callgraph to derive the order.
+  // Build the Call Graph.
+  CallGraph CG;
+
+  // Add all the top level declarations to the graph.
   // Note: CallGraph can trigger deserialization of more items from a pch
   // (though HandleInterestingDecl); triggering additions to LocalTUDecls.
   // We rely on random access to add the initially processed Decls to CG.
-  CallGraph CG;
   for (unsigned i = 0 ; i < LocalTUDeclsSize ; ++i) {
     CG.addToCallGraph(LocalTUDecls[i]);
   }
 
-  // Walk over all of the call graph nodes in topological order, so that we
-  // analyze parents before the children. Skip the functions inlined into
-  // the previously processed functions. Use external Visited set to identify
-  // inlined functions. The topological order allows the "do not reanalyze
-  // previously inlined function" performance heuristic to be triggered more
-  // often.
+  // Find the top level nodes - children of root + the unreachable (parentless)
+  // nodes.
+  llvm::SmallVector<CallGraphNode*, 24> TopLevelFunctions;
+  for (CallGraph::nodes_iterator TI = CG.parentless_begin(),
+                                 TE = CG.parentless_end(); TI != TE; ++TI) {
+    TopLevelFunctions.push_back(*TI);
+    NumFunctionTopLevel++;
+  }
+  CallGraphNode *Entry = CG.getRoot();
+  for (CallGraphNode::iterator I = Entry->begin(),
+                               E = Entry->end(); I != E; ++I) {
+    TopLevelFunctions.push_back(*I);
+    NumFunctionTopLevel++;
+  }
+
+  // Make sure the nodes are sorted in order reverse of their definition in the 
+  // translation unit. This step is very important for performance. It ensures 
+  // that we analyze the root functions before the externally available 
+  // subroutines.
+  std::deque<CallGraphNode*> BFSQueue;
+  for (llvm::SmallVector<CallGraphNode*, 24>::reverse_iterator
+         TI = TopLevelFunctions.rbegin(), TE = TopLevelFunctions.rend();
+         TI != TE; ++TI)
+    BFSQueue.push_back(*TI);
+
+  // BFS over all of the functions, while skipping the ones inlined into
+  // the previously processed functions. Use external Visited set, which is
+  // also modified when we inline a function.
   SetOfConstDecls Visited;
   SetOfConstDecls VisitedAsTopLevel;
-  llvm::ReversePostOrderTraversal<clang::CallGraph*> RPOT(&CG);
-  for (llvm::ReversePostOrderTraversal<clang::CallGraph*>::rpo_iterator
-         I = RPOT.begin(); I != RPOT.end(); ++I) {
-    NumFunctionTopLevel++;
+  while(!BFSQueue.empty()) {
+    CallGraphNode *N = BFSQueue.front();
+    BFSQueue.pop_front();
 
-    CallGraphNode *N = *I;
+    // Push the children into the queue.
+    for (CallGraphNode::const_iterator CI = N->begin(),
+         CE = N->end(); CI != CE; ++CI) {
+      if (!shouldSkipFunction((*CI)->getDecl(), Visited, VisitedAsTopLevel))
+        BFSQueue.push_back(*CI);
+    }
+
     Decl *D = N->getDecl();
-    
-    // Skip the abstract root node.
-    if (!D)
-      continue;
+    assert(D);
 
     // Skip the functions which have been processed already or previously
     // inlined.
