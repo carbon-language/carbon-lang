@@ -128,17 +128,17 @@ let Predicates = [HasMips64r2, HasStdEnc],
 let DecoderNamespace = "Mips64" in {
 /// Load and Store Instructions
 ///  aligned
-defm LB64    : LoadM64<0x20, "lb",  sextloadi8>;
-defm LBu64   : LoadM64<0x24, "lbu", zextloadi8>;
-defm LH64    : LoadM64<0x21, "lh",  sextloadi16>;
-defm LHu64   : LoadM64<0x25, "lhu", zextloadi16>;
-defm LW64    : LoadM64<0x23, "lw",  sextloadi32>;
-defm LWu64   : LoadM64<0x27, "lwu", zextloadi32>;
-defm SB64    : StoreM64<0x28, "sb", truncstorei8>;
-defm SH64    : StoreM64<0x29, "sh", truncstorei16>;
-defm SW64    : StoreM64<0x2b, "sw", truncstorei32>;
-defm LD      : LoadM64<0x37, "ld",  load>;
-defm SD      : StoreM64<0x3f, "sd", store>;
+defm LB64  : LoadM<"lb", sextloadi8, CPU64Regs>, LW_FM<0x20>;
+defm LBu64 : LoadM<"lbu", zextloadi8, CPU64Regs>, LW_FM<0x24>;
+defm LH64  : LoadM<"lh", sextloadi16, CPU64Regs>, LW_FM<0x21>;
+defm LHu64 : LoadM<"lhu", zextloadi16, CPU64Regs>, LW_FM<0x25>;
+defm LW64  : LoadM<"lw", sextloadi32, CPU64Regs>, LW_FM<0x23>;
+defm LWu64 : LoadM<"lwu", zextloadi32, CPU64Regs>, LW_FM<0x27>;
+defm SB64  : StoreM<"sb", truncstorei8, CPU64Regs>, LW_FM<0x28>;
+defm SH64  : StoreM<"sh", truncstorei16, CPU64Regs>, LW_FM<0x29>;
+defm SW64  : StoreM<"sw", truncstorei32, CPU64Regs>, LW_FM<0x2b>;
+defm LD    : LoadM<"ld", load, CPU64Regs>, LW_FM<0x37>;
+defm SD    : StoreM<"sd", store, CPU64Regs>, LW_FM<0x3f>;
 
 /// load/store left/right
 let isCodeGenOnly = 1 in {

@@ -404,58 +404,30 @@ class FMem<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
 }
 
 // Memory Load/Store
-let canFoldAsLoad = 1 in
-class LoadM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
-            Operand MemOpnd>:
-  FMem<op, (outs RC:$rt), (ins MemOpnd:$addr),
-     !strconcat(instr_asm, "\t$rt, $addr"),
-     [(set RC:$rt, (OpNode addr:$addr))], IILoad>;
+class Load<string opstr, PatFrag OpNode, RegisterClass RC, Operand MemOpnd> :
+  InstSE<(outs RC:$rt), (ins MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
+         [(set RC:$rt, (OpNode addr:$addr))], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
+  let canFoldAsLoad = 1;
+}
 
-class StoreM<bits<6> op, string instr_asm, PatFrag OpNode, RegisterClass RC,
-             Operand MemOpnd>:
-  FMem<op, (outs), (ins RC:$rt, MemOpnd:$addr),
-     !strconcat(instr_asm, "\t$rt, $addr"),
-     [(OpNode RC:$rt, addr:$addr)], IIStore>;
+class Store<string opstr, PatFrag OpNode, RegisterClass RC, Operand MemOpnd> :
+  InstSE<(outs), (ins RC:$rt, MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
+         [(OpNode RC:$rt, addr:$addr)], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
+}
 
-// 32-bit load.
-multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode> {
-  def #NAME# : LoadM<op, instr_asm, OpNode, CPURegs, mem>,
-               Requires<[NotN64, HasStdEnc]>;
-  def _P8    : LoadM<op, instr_asm, OpNode, CPURegs, mem64>,
-               Requires<[IsN64, HasStdEnc]> {
+multiclass LoadM<string opstr, PatFrag OpNode, RegisterClass RC> {
+  def #NAME# : Load<opstr, OpNode, RC, mem>, Requires<[NotN64, HasStdEnc]>;
+  def _P8    : Load<opstr, OpNode, RC, mem64>, Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
 }
 
-// 64-bit load.
-multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode> {
-  def #NAME# : LoadM<op, instr_asm, OpNode, CPU64Regs, mem>,
-               Requires<[NotN64, HasStdEnc]>;
-  def _P8    : LoadM<op, instr_asm, OpNode, CPU64Regs, mem64>,
-               Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-    let isCodeGenOnly = 1;
-  }
-}
-
-// 32-bit store.
-multiclass StoreM32<bits<6> op, string instr_asm, PatFrag OpNode> {
-  def #NAME# : StoreM<op, instr_asm, OpNode, CPURegs, mem>,
-               Requires<[NotN64, HasStdEnc]>;
-  def _P8    : StoreM<op, instr_asm, OpNode, CPURegs, mem64>,
-               Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-    let isCodeGenOnly = 1;
-  }
-}
-
-// 64-bit store.
-multiclass StoreM64<bits<6> op, string instr_asm, PatFrag OpNode> {
-  def #NAME# : StoreM<op, instr_asm, OpNode, CPU64Regs, mem>,
-               Requires<[NotN64, HasStdEnc]>;
-  def _P8    : StoreM<op, instr_asm, OpNode, CPU64Regs, mem64>,
-               Requires<[IsN64, HasStdEnc]> {
+multiclass StoreM<string opstr, PatFrag OpNode, RegisterClass RC> {
+  def #NAME# : Store<opstr, OpNode, RC, mem>, Requires<[NotN64, HasStdEnc]>;
+  def _P8    : Store<opstr, OpNode, RC, mem64>, Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -868,14 +840,14 @@ let Predicates = [HasMips32r2, HasStdEnc] in {
 
 /// Load and Store Instructions
 ///  aligned
-defm LB      : LoadM32<0x20, "lb",  sextloadi8>;
-defm LBu     : LoadM32<0x24, "lbu", zextloadi8>;
-defm LH      : LoadM32<0x21, "lh",  sextloadi16>;
-defm LHu     : LoadM32<0x25, "lhu", zextloadi16>;
-defm LW      : LoadM32<0x23, "lw",  load>;
-defm SB      : StoreM32<0x28, "sb", truncstorei8>;
-defm SH      : StoreM32<0x29, "sh", truncstorei16>;
-defm SW      : StoreM32<0x2b, "sw", store>;
+defm LB  : LoadM<"lb", sextloadi8, CPURegs>, LW_FM<0x20>;
+defm LBu : LoadM<"lbu", zextloadi8, CPURegs>, LW_FM<0x24>;
+defm LH  : LoadM<"lh", sextloadi16, CPURegs>, LW_FM<0x21>;
+defm LHu : LoadM<"lhu", zextloadi16, CPURegs>, LW_FM<0x25>;
+defm LW  : LoadM<"lw", load, CPURegs>, LW_FM<0x23>;
+defm SB  : StoreM<"sb", truncstorei8, CPURegs>, LW_FM<0x28>;
+defm SH  : StoreM<"sh", truncstorei16, CPURegs>, LW_FM<0x29>;
+defm SW  : StoreM<"sw", store, CPURegs>, LW_FM<0x2b>;
 
 /// load/store left/right
 defm LWL : LoadLeftRightM32<0x22, "lwl", MipsLWL>;
