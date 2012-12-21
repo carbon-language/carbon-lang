@@ -4,6 +4,21 @@ typedef unsigned long NSUInteger;
 typedef const void * CFTypeRef;
 CFTypeRef CFBridgingRetain(id X);
 id CFBridgingRelease(CFTypeRef);
+@protocol NSCopying @end
+@interface NSDictionary
++ (id)dictionaryWithObjects:(const id [])objects forKeys:(const id <NSCopying> [])keys count:(NSUInteger)cnt;
+- (void)setObject:(id)object forKeyedSubscript:(id)key;
+@end
+@class NSFastEnumerationState;
+@protocol NSFastEnumeration
+- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id [])buffer count:(NSUInteger)len;
+@end
+@interface NSNumber 
++ (NSNumber *)numberWithInt:(int)value;
+@end
+@interface NSArray <NSFastEnumeration>
++ (id)arrayWithObjects:(const id [])objects count:(NSUInteger)cnt;
+@end
 
 void test0(void (*fn)(int), int val) {
   fn(val);
@@ -717,3 +732,19 @@ void _NSCalcBeze(NSColor* color, NSColor* bezelColors[]); // expected-error {{mu
 - init { return 0; }
 @end
 
+// <rdar://problem/12569201>.  Warn on cases of initializing a weak variable
+// with an Objective-C object literal.
+void rdar12569201(id key, id value) {
+    // Declarations.
+    __weak id x = @"foo"; // no-warning
+    __weak id y = @{ key : value }; // expected-warning {{assigning dictionary literal to a weak variable; object will be released after assignment}}
+    __weak id z = @[ value ]; // expected-warning {{assigning array literal to a weak variable; object will be released after assignment}}
+    __weak id b = ^() {}; // expected-warning {{assigning block literal to a weak variable; object will be released after assignment}}
+    __weak id e = @(42); // expected-warning {{assigning boxed expression to a weak variable; object will be released after assignment}}
+    
+    // Assignments.
+    y = @{ key : value }; // expected-warning {{assigning dictionary literal to a weak variable; object will be released after assignment}}
+    z = @[ value ]; // expected-warning {{assigning array literal to a weak variable; object will be released after assignment}}
+    b = ^() {}; // expected-warning {{assigning block literal to a weak variable; object will be released after assignment}}
+    e = @(42); // expected-warning {{assigning boxed expression to a weak variable; object will be released after assignment}}
+}

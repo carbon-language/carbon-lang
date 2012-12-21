@@ -3689,6 +3689,11 @@ def warn_arc_retained_property_assign : Warning<
   "assigning retained object to unsafe property"
   "; object will be released after assignment">,
   InGroup<ARCUnsafeRetainedAssign>;
+def warn_arc_literal_assign : Warning<
+  "assigning %select{dictionary literal|array literal|block literal|boxed expression}0"
+  " to a weak %select{property|variable}1"
+  "; object will be released after assignment">,
+  InGroup<ARCUnsafeRetainedAssign>;
 def err_arc_new_array_without_ownership : Error<
   "'new' cannot allocate an array of %0 with no explicit ownership">;
 def err_arc_autoreleasing_var : Error<

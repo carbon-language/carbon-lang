@@ -5766,6 +5766,39 @@ static bool checkUnsafeAssignObject(Sema &S, SourceLocation Loc,
   return false;
 }
 
+static bool checkUnsafeAssignLiteral(Sema &S, SourceLocation Loc,
+                                     Expr *RHS, bool isProperty) {
+  // Check if RHS is an Objective-C object literal, which also can get
+  // immediately zapped in a weak reference.  Note that we explicitly
+  // allow ObjCStringLiterals, since those are designed to never really die.
+  RHS = RHS->IgnoreParenImpCasts();
+  unsigned kind = 4;
+  switch (RHS->getStmtClass()) {
+    default:
+      break;
+    case Stmt::ObjCDictionaryLiteralClass:
+      kind = 0;
+      break;
+    case Stmt::ObjCArrayLiteralClass:
+      kind = 1;
+      break;
+    case Stmt::BlockExprClass:
+      kind = 2;
+      break;
+    case Stmt::ObjCBoxedExprClass:
+      kind = 3;
+      break;
+  }
+  if (kind < 4) {
+    S.Diag(Loc, diag::warn_arc_literal_assign)
+    << kind
+    << (isProperty ? 0 : 1)
+    << RHS->getSourceRange();
+    return true;
+  }
+  return false;
+}
+
 bool Sema::checkUnsafeAssigns(SourceLocation Loc,
                               QualType LHS, Expr *RHS) {
   Qualifiers::ObjCLifetime LT = LHS.getObjCLifetime();
@@ -5774,6 +5807,10 @@ bool Sema::checkUnsafeAssigns(SourceLocation Loc,
     return false;
 
   if (checkUnsafeAssignObject(*this, Loc, LT, RHS, false))
+    return true;
+
+  if (LT == Qualifiers::OCL_Weak &&
+      checkUnsafeAssignLiteral(*this, Loc, RHS, false))
     return true;
 
   return false;
@@ -5839,6 +5876,8 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
     }
     else if (Attributes & ObjCPropertyDecl::OBJC_PR_weak) {
       if (checkUnsafeAssignObject(*this, Loc, Qualifiers::OCL_Weak, RHS, true))
+        return;
+      if (checkUnsafeAssignLiteral(*this, Loc, RHS, true))
         return;
     }
   }
