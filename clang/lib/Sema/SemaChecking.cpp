@@ -5754,19 +5754,14 @@ static bool checkUnsafeAssignLiteral(Sema &S, SourceLocation Loc,
   // allow ObjCStringLiterals, since those are designed to never really die.
   RHS = RHS->IgnoreParenImpCasts();
 
-  // Classification for diagnostic.
-  unsigned SelectVal = /* block literal */ 0;
-  if (!isa<BlockExpr>(RHS)) {
-    // This enum needs to match with the 'select' in
-    // warn_objc_arc_literal_assign (off-by-1).
-    Sema::ObjCLiteralKind Kind = S.CheckLiteralKind(RHS);
-    if (Kind == Sema::LK_String || Kind == Sema::LK_None)
-      return false;
-    SelectVal = (unsigned) Kind + 1;
-  }
+  // This enum needs to match with the 'select' in
+  // warn_objc_arc_literal_assign (off-by-1).
+  Sema::ObjCLiteralKind Kind = S.CheckLiteralKind(RHS);
+  if (Kind == Sema::LK_String || Kind == Sema::LK_None)
+    return false;
 
   S.Diag(Loc, diag::warn_arc_literal_assign)
-    << SelectVal
+    << (unsigned) Kind
     << (isProperty ? 0 : 1)
     << RHS->getSourceRange();
 

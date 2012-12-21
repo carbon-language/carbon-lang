@@ -3690,7 +3690,7 @@ def warn_arc_retained_property_assign : Warning<
   "; object will be released after assignment">,
   InGroup<ARCUnsafeRetainedAssign>;
 def warn_arc_literal_assign : Warning<
-  "assigning %select{block literal|array literal|dictionary literal|numeric literal|boxed expression}0"
+  "assigning %select{array literal|dictionary literal|numeric literal|boxed expression|<should not happen>|block literal}0"
   " to a weak %select{property|variable}1"
   "; object will be released after assignment">,
   InGroup<ARCUnsafeRetainedAssign>;

@@ -6874,6 +6874,8 @@ Sema::ObjCLiteralKind Sema::CheckLiteralKind(Expr *FromE) {
     case Stmt::ObjCDictionaryLiteralClass:
       // "dictionary literal"
       return LK_Dictionary;
+    case Stmt::BlockExprClass:
+      return LK_Block;
     case Stmt::ObjCBoxedExprClass: {
       Expr *Inner = cast<ObjCBoxedExpr>(FromE)->getSubExpr()->IgnoreParens();
       switch (Inner->getStmtClass()) {
@@ -6923,6 +6925,7 @@ static void diagnoseObjCLiteralComparison(Sema &S, SourceLocation Loc,
   // LK_String should always be after the other literals, since it has its own
   // warning flag.
   Sema::ObjCLiteralKind LiteralKind = S.CheckLiteralKind(Literal);
+  assert(LiteralKind != Sema::LK_Block);
   if (LiteralKind == Sema::LK_None) {
     llvm_unreachable("Unknown Objective-C object literal kind");
   }
