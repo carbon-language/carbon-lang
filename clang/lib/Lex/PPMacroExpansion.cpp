@@ -619,6 +619,17 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
   // See MacroArgs instance var for description of this.
   bool isVarargsElided = false;
 
+  if (ContainsCodeCompletionTok) {
+    // Recover from not-fully-formed macro invocation during code-completion.
+    Token EOFTok;
+    EOFTok.startToken();
+    EOFTok.setKind(tok::eof);
+    EOFTok.setLocation(Tok.getLocation());
+    EOFTok.setLength(0);
+    for (; NumActuals < MinArgsExpected; ++NumActuals)
+      ArgTokens.push_back(EOFTok);
+  }
+
   if (NumActuals < MinArgsExpected) {
     // There are several cases where too few arguments is ok, handle them now.
     if (NumActuals == 0 && MinArgsExpected == 1) {

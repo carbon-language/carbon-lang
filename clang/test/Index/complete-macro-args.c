@@ -12,7 +12,7 @@ void test(struct Point *p) {
   MACRO(p->x);
 }
 
-#define MACRO3(x,y,z) x
+#define MACRO3(x,y,z) x;y;z
 
 void test(struct Point *p) {
   MACRO3(p->x);
