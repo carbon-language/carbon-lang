@@ -124,8 +124,10 @@ struct ChunkBase {
   // 1-st 8 bytes.
   uptr chunk_state       : 8;  // Must be first.
   uptr alloc_tid         : 24;
+
   uptr free_tid          : 24;
   uptr from_memalign     : 1;
+  uptr alloc_type        : 2;
   // 2-nd 8 bytes
   uptr user_requested_size;
   // Header2 (intersects with user memory).
@@ -141,7 +143,9 @@ struct ChunkBase {
   // 1-st 8 bytes.
   uptr chunk_state       : 8;  // Must be first.
   uptr alloc_tid         : 24;
+
   uptr from_memalign     : 1;
+  uptr alloc_type        : 2;
   uptr free_tid          : 24;
   // 2-nd 8 bytes
   uptr user_requested_size;
@@ -271,7 +275,8 @@ AsanChunk *AsanChunkFifoList::Pop() {
   return res;
 }
 
-static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
+static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
+                      AllocType alloc_type) {
   Init();
   CHECK(stack);
   if (alignment < 8) alignment = 8;
@@ -306,6 +311,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
   uptr chunk_beg = user_beg - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
   m->chunk_state = CHUNK_ALLOCATED;
+  m->alloc_type = alloc_type;
   u32 alloc_tid = t ? t->tid() : 0;
   m->alloc_tid = alloc_tid;
   CHECK_EQ(alloc_tid, m->alloc_tid);  // Does alloc_tid fit into the bitfield?
@@ -339,7 +345,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack) {
   return res;
 }
 
-static void Deallocate(void *ptr, StackTrace *stack) {
+static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
   uptr p = reinterpret_cast<uptr>(ptr);
   if (p == 0 || p == kReturnOnZeroMalloc) return;
   uptr chunk_beg = p - kChunkHeaderSize;
@@ -354,6 +360,9 @@ static void Deallocate(void *ptr, StackTrace *stack) {
   else if (old_chunk_state != CHUNK_ALLOCATED)
     ReportFreeNotMalloced((uptr)ptr, stack);
   CHECK(old_chunk_state == CHUNK_ALLOCATED);
+  if (m->alloc_type != alloc_type && flags()->alloc_dealloc_mismatch)
+    ReportAllocTypeMismatch((uptr)ptr, stack,
+                            (AllocType)m->alloc_type, (AllocType)alloc_type);
 
   CHECK_GE(m->alloc_tid, 0);
   if (SANITIZER_WORDSIZE == 64)  // On 32-bits this resides in user area.
@@ -394,11 +403,11 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
   CHECK(m->chunk_state == CHUNK_ALLOCATED);
   uptr old_size = m->UsedSize();
   uptr memcpy_size = Min(new_size, old_size);
-  void *new_ptr = Allocate(new_size, 8, stack);
+  void *new_ptr = Allocate(new_size, 8, stack, FROM_MALLOC);
   if (new_ptr) {
     CHECK(REAL(memcpy) != 0);
     REAL(memcpy)(new_ptr, old_ptr, memcpy_size);
-    Deallocate(old_ptr, stack);
+    Deallocate(old_ptr, stack, FROM_MALLOC);
   }
   return new_ptr;
 }
@@ -471,22 +480,23 @@ void AsanThreadLocalMallocStorage::CommitBack() {
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void *asan_memalign(uptr alignment, uptr size, StackTrace *stack) {
-  return Allocate(size, alignment, stack);
+void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
+                    AllocType alloc_type) {
+  return Allocate(size, alignment, stack, alloc_type);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
-void asan_free(void *ptr, StackTrace *stack) {
-  Deallocate(ptr, stack);
+void asan_free(void *ptr, StackTrace *stack, AllocType alloc_type) {
+  Deallocate(ptr, stack, alloc_type);
 }
 
 SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_malloc(uptr size, StackTrace *stack) {
-  return Allocate(size, 8, stack);
+  return Allocate(size, 8, stack, FROM_MALLOC);
 }
 
 void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
-  void *ptr = Allocate(nmemb * size, 8, stack);
+  void *ptr = Allocate(nmemb * size, 8, stack, FROM_MALLOC);
   if (ptr)
     REAL(memset)(ptr, 0, nmemb * size);
   return ptr;
@@ -494,16 +504,16 @@ void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack) {
 
 void *asan_realloc(void *p, uptr size, StackTrace *stack) {
   if (p == 0)
-    return Allocate(size, 8, stack);
+    return Allocate(size, 8, stack, FROM_MALLOC);
   if (size == 0) {
-    Deallocate(p, stack);
+    Deallocate(p, stack, FROM_MALLOC);
     return 0;
   }
   return Reallocate(p, size, stack);
 }
 
 void *asan_valloc(uptr size, StackTrace *stack) {
-  return Allocate(size, GetPageSizeCached(), stack);
+  return Allocate(size, GetPageSizeCached(), stack, FROM_MALLOC);
 }
 
 void *asan_pvalloc(uptr size, StackTrace *stack) {
@@ -513,12 +523,12 @@ void *asan_pvalloc(uptr size, StackTrace *stack) {
     // pvalloc(0) should allocate one page.
     size = PageSize;
   }
-  return Allocate(size, PageSize, stack);
+  return Allocate(size, PageSize, stack, FROM_MALLOC);
 }
 
 int asan_posix_memalign(void **memptr, uptr alignment, uptr size,
                         StackTrace *stack) {
-  void *ptr = Allocate(size, alignment, stack);
+  void *ptr = Allocate(size, alignment, stack, FROM_MALLOC);
   CHECK(IsAligned((uptr)ptr, alignment));
   *memptr = ptr;
   return 0;

@@ -102,6 +102,8 @@ struct Flags {
   // Poison (or not) the heap memory on [de]allocation. Zero value is useful
   // for benchmarking the allocator or instrumentator.
   bool poison_heap;
+  // Report errors on malloc/delete, new/free, new/delete[], etc.
+  bool alloc_dealloc_mismatch;
 };
 
 Flags *flags();

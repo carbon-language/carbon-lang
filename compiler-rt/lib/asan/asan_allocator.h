@@ -27,6 +27,12 @@
 
 namespace __asan {
 
+enum AllocType {
+  FROM_MALLOC = 1,  // Memory block came from malloc, calloc, realloc, etc.
+  FROM_NEW = 2,     // Memory block came from operator new.
+  FROM_NEW_BR = 3   // Memory block came from operator new [ ]
+};
+
 static const uptr kNumberOfSizeClasses = 255;
 struct AsanChunk;
 
@@ -190,8 +196,9 @@ class FakeStack {
   FakeFrameLifo call_stack_;
 };
 
-void *asan_memalign(uptr alignment, uptr size, StackTrace *stack);
-void asan_free(void *ptr, StackTrace *stack);
+void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
+                    AllocType alloc_type);
+void asan_free(void *ptr, StackTrace *stack, AllocType alloc_type);
 
 void *asan_malloc(uptr size, StackTrace *stack);
 void *asan_calloc(uptr nmemb, uptr size, StackTrace *stack);

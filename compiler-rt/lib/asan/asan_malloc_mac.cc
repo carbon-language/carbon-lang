@@ -93,7 +93,7 @@ INTERCEPTOR(void, free, void *ptr) {
   } else {
     if (!asan_mz_size(ptr)) ptr = get_saved_cfallocator_ref(ptr);
     GET_STACK_TRACE_FREE;
-    asan_free(ptr, &stack);
+    asan_free(ptr, &stack, FROM_MALLOC);
   }
 }
 
@@ -165,7 +165,7 @@ void *mz_valloc(malloc_zone_t *zone, size_t size) {
     return malloc_zone_valloc(system_malloc_zone, size);
   }
   GET_STACK_TRACE_MALLOC;
-  return asan_memalign(GetPageSizeCached(), size, &stack);
+  return asan_memalign(GetPageSizeCached(), size, &stack, FROM_MALLOC);
 }
 
 #define GET_ZONE_FOR_PTR(ptr) \
@@ -176,7 +176,7 @@ void ALWAYS_INLINE free_common(void *context, void *ptr) {
   if (!ptr) return;
   if (asan_mz_size(ptr)) {
     GET_STACK_TRACE_FREE;
-    asan_free(ptr, &stack);
+    asan_free(ptr, &stack, FROM_MALLOC);
   } else {
     // If the pointer does not belong to any of the zones, use one of the
     // fallback methods to free memory.
@@ -192,7 +192,7 @@ void ALWAYS_INLINE free_common(void *context, void *ptr) {
       ptr = get_saved_cfallocator_ref(ptr);
       GET_STACK_TRACE_FREE;
       if (!flags()->mac_ignore_invalid_free) {
-        asan_free(ptr, &stack);
+        asan_free(ptr, &stack, FROM_MALLOC);
       } else {
         GET_ZONE_FOR_PTR(ptr);
         WarnMacFreeUnallocated((uptr)ptr, (uptr)zone_ptr, zone_name, &stack);
@@ -262,7 +262,7 @@ void *mz_memalign(malloc_zone_t *zone, size_t align, size_t size) {
     return malloc_zone_memalign(system_malloc_zone, align, size);
   }
   GET_STACK_TRACE_MALLOC;
-  return asan_memalign(align, size, &stack);
+  return asan_memalign(align, size, &stack, FROM_MALLOC);
 }
 
 // This function is currently unused, and we build with -Werror.

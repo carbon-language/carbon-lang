@@ -319,7 +319,7 @@ void asan_dispatch_call_block_and_release(void *block) {
   asan_register_worker_thread(context->parent_tid, &stack);
   // Call the original dispatcher for the block.
   context->func(context->block);
-  asan_free(context, &stack);
+  asan_free(context, &stack, FROM_MALLOC);
 }
 
 }  // namespace __asan
@@ -461,7 +461,7 @@ void *wrap_workitem_func(void *arg) {
   worker_t fn = (worker_t)(ctxt->func);
   void *result =  fn(ctxt->block);
   GET_STACK_TRACE_THREAD;
-  asan_free(arg, &stack);
+  asan_free(arg, &stack, FROM_MALLOC);
   return result;
 }
 

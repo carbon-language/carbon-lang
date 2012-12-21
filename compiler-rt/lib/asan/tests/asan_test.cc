@@ -1520,7 +1520,7 @@ void RunAtoiOOBTest(PointerToCallAtoi Atoi) {
   EXPECT_DEATH(Atoi(array + 9), RightOOBReadMessage(0));
   array[8] = '-';
   Atoi(array);
-  delete array;
+  free(array);
 }
 
 TEST(AddressSanitizer, AtoiAndFriendsOOBTest) {
@@ -1574,7 +1574,7 @@ void RunStrtolOOBTest(PointerToCallStrtol Strtol) {
   EXPECT_EQ(array, endptr);
   Strtol(array + 2, NULL, 0);
   EXPECT_EQ(array, endptr);
-  delete array;
+  free(array);
 }
 
 TEST(AddressSanitizer, StrtollOOBTest) {
@@ -1622,7 +1622,7 @@ TEST(AddressSanitizer, pread) {
                "AddressSanitizer: heap-buffer-overflow"
                ".* is located 4 bytes to the right of 10-byte region");
   close(fd);
-  delete x;
+  delete [] x;
 }
 
 TEST(AddressSanitizer, pread64) {
@@ -1634,7 +1634,7 @@ TEST(AddressSanitizer, pread64) {
                "AddressSanitizer: heap-buffer-overflow"
                ".* is located 4 bytes to the right of 10-byte region");
   close(fd);
-  delete x;
+  delete [] x;
 }
 
 TEST(AddressSanitizer, read) {
@@ -1646,7 +1646,7 @@ TEST(AddressSanitizer, read) {
                "AddressSanitizer: heap-buffer-overflow"
                ".* is located 4 bytes to the right of 10-byte region");
   close(fd);
-  delete x;
+  delete [] x;
 }
 
 #endif  // defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
@@ -1984,6 +1984,27 @@ static void NoAddressSafety() {
 
 TEST(AddressSanitizer, AttributeNoAddressSafetyTest) {
   Ident(NoAddressSafety)();
+}
+
+static string MismatchStr(const string &str) {
+  return string("AddressSanitizer: alloc-dealloc-mismatch \\(") + str;
+}
+
+// This test is disabled until we enable alloc_dealloc_mismatch by default.
+// The feature is also tested by lit tests.
+TEST(AddressSanitizer, DISABLED_AllocDeallocMismatch) {
+  EXPECT_DEATH(free(Ident(new int)),
+               MismatchStr("operator new vs free"));
+  EXPECT_DEATH(free(Ident(new int[2])),
+               MismatchStr("operator new \\[\\] vs free"));
+  EXPECT_DEATH(delete (Ident(new int[2])),
+               MismatchStr("operator new \\[\\] vs operator delete"));
+  EXPECT_DEATH(delete (Ident((int*)malloc(2 * sizeof(int)))),
+               MismatchStr("malloc vs operator delete"));
+  EXPECT_DEATH(delete [] (Ident(new int)),
+               MismatchStr("operator new vs operator delete \\[\\]"));
+  EXPECT_DEATH(delete [] (Ident((int*)malloc(2 * sizeof(int)))),
+               MismatchStr("malloc vs operator delete \\[\\]"));
 }
 
 // ------------------ demo tests; run each one-by-one -------------

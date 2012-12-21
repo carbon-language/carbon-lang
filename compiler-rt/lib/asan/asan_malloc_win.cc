@@ -32,7 +32,7 @@ using namespace __asan;  // NOLINT
 extern "C" {
 void free(void *ptr) {
   GET_STACK_TRACE_FREE;
-  return asan_free(ptr, &stack);
+  return asan_free(ptr, &stack, FROM_MALLOC);
 }
 
 void _free_dbg(void* ptr, int) {

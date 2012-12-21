@@ -25,7 +25,7 @@ struct DeepFree<0> {
 };
 
 int main() {
-  char *x = new char[10];
+  char *x = (char*)malloc(10);
   // deep_free(x);
   DeepFree<200>::free(x);
   return x[5];

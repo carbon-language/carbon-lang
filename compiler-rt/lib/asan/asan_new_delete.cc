@@ -35,32 +35,34 @@ namespace std {
 struct nothrow_t {};
 }  // namespace std
 
-#define OPERATOR_NEW_BODY \
+#define OPERATOR_NEW_BODY(type) \
   GET_STACK_TRACE_MALLOC;\
-  return asan_memalign(0, size, &stack);
+  return asan_memalign(0, size, &stack, type);
 
 INTERCEPTOR_ATTRIBUTE
-void *operator new(size_t size) { OPERATOR_NEW_BODY; }
+void *operator new(size_t size) { OPERATOR_NEW_BODY(FROM_NEW); }
 INTERCEPTOR_ATTRIBUTE
-void *operator new[](size_t size) { OPERATOR_NEW_BODY; }
+void *operator new[](size_t size) { OPERATOR_NEW_BODY(FROM_NEW_BR); }
 INTERCEPTOR_ATTRIBUTE
-void *operator new(size_t size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
+void *operator new(size_t size, std::nothrow_t const&)
+{ OPERATOR_NEW_BODY(FROM_NEW); }
 INTERCEPTOR_ATTRIBUTE
-void *operator new[](size_t size, std::nothrow_t const&) { OPERATOR_NEW_BODY; }
+void *operator new[](size_t size, std::nothrow_t const&)
+{ OPERATOR_NEW_BODY(FROM_NEW_BR); }
 
-#define OPERATOR_DELETE_BODY \
+#define OPERATOR_DELETE_BODY(type) \
   GET_STACK_TRACE_FREE;\
-  asan_free(ptr, &stack);
+  asan_free(ptr, &stack, type);
 
 INTERCEPTOR_ATTRIBUTE
-void operator delete(void *ptr) { OPERATOR_DELETE_BODY; }
+void operator delete(void *ptr) { OPERATOR_DELETE_BODY(FROM_NEW); }
 INTERCEPTOR_ATTRIBUTE
-void operator delete[](void *ptr) { OPERATOR_DELETE_BODY; }
+void operator delete[](void *ptr) { OPERATOR_DELETE_BODY(FROM_NEW_BR); }
 INTERCEPTOR_ATTRIBUTE
 void operator delete(void *ptr, std::nothrow_t const&)
-{ OPERATOR_DELETE_BODY; }
+{ OPERATOR_DELETE_BODY(FROM_NEW); }
 INTERCEPTOR_ATTRIBUTE
 void operator delete[](void *ptr, std::nothrow_t const&)
-{ OPERATOR_DELETE_BODY; }
+{ OPERATOR_DELETE_BODY(FROM_NEW_BR); }
 
 #endif

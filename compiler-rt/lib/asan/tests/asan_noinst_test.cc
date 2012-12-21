@@ -64,7 +64,7 @@ static void MallocStress(size_t n) {
       void *ptr = vec[idx];
       vec[idx] = vec.back();
       vec.pop_back();
-      __asan::asan_free(ptr, &stack1);
+      __asan::asan_free(ptr, &stack1, __asan::FROM_MALLOC);
     } else {
       size_t size = my_rand(&seed) % 1000 + 1;
       switch ((my_rand(&seed) % 128)) {
@@ -73,7 +73,8 @@ static void MallocStress(size_t n) {
         case 2: size += 4096; break;
       }
       size_t alignment = 1 << (my_rand(&seed) % 10 + 1);
-      char *ptr = (char*)__asan::asan_memalign(alignment, size, &stack2);
+      char *ptr = (char*)__asan::asan_memalign(alignment, size,
+                                               &stack2, __asan::FROM_MALLOC);
       vec.push_back(ptr);
       ptr[0] = 0;
       ptr[size-1] = 0;
@@ -81,7 +82,7 @@ static void MallocStress(size_t n) {
     }
   }
   for (size_t i = 0; i < vec.size(); i++)
-    __asan::asan_free(vec[i], &stack3);
+    __asan::asan_free(vec[i], &stack3, __asan::FROM_MALLOC);
 }
 
 
@@ -262,12 +263,12 @@ TEST(AddressSanitizer, QuarantineTest) {
 
   const int size = 32;
   void *p = __asan::asan_malloc(size, &stack);
-  __asan::asan_free(p, &stack);
+  __asan::asan_free(p, &stack, __asan::FROM_MALLOC);
   size_t i;
   size_t max_i = 1 << 30;
   for (i = 0; i < max_i; i++) {
     void *p1 = __asan::asan_malloc(size, &stack);
-    __asan::asan_free(p1, &stack);
+    __asan::asan_free(p1, &stack, __asan::FROM_MALLOC);
     if (p1 == p) break;
   }
   // fprintf(stderr, "i=%ld\n", i);
@@ -284,7 +285,7 @@ void *ThreadedQuarantineTestWorker(void *unused) {
 
   for (size_t i = 0; i < 1000; i++) {
     void *p = __asan::asan_malloc(1 + (my_rand(&seed) % 4000), &stack);
-    __asan::asan_free(p, &stack);
+    __asan::asan_free(p, &stack, __asan::FROM_MALLOC);
   }
   return NULL;
 }
@@ -315,7 +316,7 @@ void *ThreadedOneSizeMallocStress(void *unused) {
       p[i] = __asan::asan_malloc(32, &stack);
     }
     for (size_t i = 0; i < kNumMallocs; i++) {
-      __asan::asan_free(p[i], &stack);
+      __asan::asan_free(p[i], &stack, __asan::FROM_MALLOC);
     }
   }
   return NULL;

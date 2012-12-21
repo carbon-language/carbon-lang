@@ -488,6 +488,26 @@ void ReportFreeNotMalloced(uptr addr, StackTrace *stack) {
   DescribeHeapAddress(addr, 1);
 }
 
+void ReportAllocTypeMismatch(uptr addr, StackTrace *stack,
+                             AllocType alloc_type,
+                             AllocType dealloc_type) {
+  static const char *alloc_names[] =
+    {"INVALID", "malloc", "operator new", "operator new []"};
+  static const char *dealloc_names[] =
+    {"INVALID", "free", "operator delete", "operator delete []"};
+  CHECK_NE(alloc_type, dealloc_type);
+  ScopedInErrorReport in_report;
+  Decorator d;
+  Printf("%s", d.Warning());
+  Report("ERROR: AddressSanitizer: alloc-dealloc-mismatch (%s vs %s) on %p\n",
+        alloc_names[alloc_type], dealloc_names[dealloc_type], addr);
+  Printf("%s", d.EndWarning());
+  PrintStack(stack);
+  DescribeHeapAddress(addr, 1);
+  Report("HINT: if you don't care about these warnings you may set "
+         "ASAN_OPTIONS=alloc_dealloc_mismatch=0\n");
+}
+
 void ReportMallocUsableSizeNotOwned(uptr addr, StackTrace *stack) {
   ScopedInErrorReport in_report;
   Decorator d;
