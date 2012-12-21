@@ -2892,6 +2892,8 @@ void X86InstrInfo::copyPhysReg(MachineBasicBlock &MBB,
   }
 
   // Moving EFLAGS to / from another register requires a push and a pop.
+  // Notice that we have to adjust the stack if we don't want to clobber the
+  // first frame index. See X86FrameLowering.cpp - colobbersTheStack.
   if (SrcReg == X86::EFLAGS) {
     if (X86::GR64RegClass.contains(DestReg)) {
       BuildMI(MBB, MI, DL, get(X86::PUSHF64));

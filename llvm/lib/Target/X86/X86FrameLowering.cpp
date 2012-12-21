@@ -625,6 +625,22 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
   return CompactUnwindEncoding;
 }
 
+/// colobbersTheStack - This function checks if any of the users of EFLAGS
+/// copies the EFLAGS. We know that the code that lowers COPY of EFLAGS has
+/// to use the stack, and if we don't adjust the stack we clobber the first
+/// frame index.
+/// See  X86InstrInfo::copyPhysReg.
+static bool colobbersTheStack(MachineFunction &MF) {
+  MachineRegisterInfo &MRI = MF.getRegInfo();
+
+  for (MachineRegisterInfo::reg_iterator ri = MRI.reg_begin(X86::EFLAGS),
+       re = MRI.reg_end(); ri != re; ++ri)
+    if (ri->isCopy())
+      return true;
+
+  return false;
+}
+
 /// emitPrologue - Push callee-saved registers onto the stack, which
 /// automatically adjust the stack pointer. Adjust the stack pointer to allocate
 /// space for local variables. Also emit labels used by the exception handler to
@@ -673,12 +689,14 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   // If this is x86-64 and the Red Zone is not disabled, if we are a leaf
   // function, and use up to 128 bytes of stack space, don't have a frame
   // pointer, calls, or dynamic alloca then we do not need to adjust the
-  // stack pointer (we fit in the Red Zone).
+  // stack pointer (we fit in the Red Zone). We also check that we don't
+  // push and pop from the stack.
   if (Is64Bit && !Fn->getFnAttributes().hasAttribute(Attribute::NoRedZone) &&
       !RegInfo->needsStackRealignment(MF) &&
       !MFI->hasVarSizedObjects() &&                     // No dynamic alloca.
       !MFI->adjustsStack() &&                           // No calls.
       !IsWin64 &&                                       // Win64 has no Red Zone
+      !colobbersTheStack(MF) &&                         // Don't push and pop.
       !MF.getTarget().Options.EnableSegmentedStacks) {  // Regular stack
     uint64_t MinSize = X86FI->getCalleeSavedFrameSize();
     if (HasFP) MinSize += SlotSize;
