@@ -9,6 +9,17 @@
 //
 // This file is a part of ThreadSanitizer (TSan), a race detector.
 //
+// Interface for verification of Java or mixed Java/C++ programs.
+// The interface is intended to be used from within a JVM and notify TSan
+// about such events like Java locks and GC memory compaction.
+//
+// For plain memory accesses and function entry/exit a JVM is intended to use
+// C++ interfaces: __tsan_readN/writeN and __tsan_func_enter/exit.
+//
+// For volatile memory accesses and atomic operations JVM is intended to use
+// standard atomics API: __tsan_atomicN_load/store/etc.
+//
+// For usage examples see lit_tests/java_*.cc
 //===----------------------------------------------------------------------===//
 #ifndef TSAN_INTERFACE_JAVA_H
 #define TSAN_INTERFACE_JAVA_H
