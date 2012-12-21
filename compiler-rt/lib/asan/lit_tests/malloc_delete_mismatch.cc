@@ -23,4 +23,4 @@ int main() {
 // CHECK-NEXT: allocated by thread T0 here:
 // CHECK-NEXT: #0{{.*}}malloc
 // CHECK-NEXT: #1{{.*}}main
-// CHECK: HINT: if you don't care about these warnings you may set ASAN_OPTIONS=alloc_dealloc_mismatch=0
+// CHECK: HINT: {{.*}} you may set ASAN_OPTIONS=alloc_dealloc_mismatch=0
