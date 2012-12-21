@@ -141,14 +141,8 @@ bool CallGraph::includeInGraph(const Decl *D) {
 void CallGraph::addNodeForDecl(Decl* D, bool IsGlobal) {
   assert(D);
 
-  // Do nothing if the node already exists.
-  if (FunctionMap.find(D) != FunctionMap.end())
-    return;
-
   // Allocate a new node, mark it as root, and process it's calls.
   CallGraphNode *Node = getOrInsertNode(D);
-  if (IsGlobal)
-    Root->addCallee(Node, this);
 
   // Process all the calls by this function as well.
   CGBuilder builder(this, Node);
@@ -168,9 +162,9 @@ CallGraphNode *CallGraph::getOrInsertNode(Decl *F) {
     return Node;
 
   Node = new CallGraphNode(F);
-  // If not root, add to the parentless list.
+  // Make Root node a parent of all functions to make sure all are reachable.
   if (F != 0)
-    ParentlessNodes.insert(Node);
+    Root->addCallee(Node, this);
   return Node;
 }
 
