@@ -303,6 +303,29 @@ class SLTI_FM<bits<6> op> {
   let Inst{15-0}  = imm16;
 }
 
+class MFLO_FM<bits<6> funct> {
+  bits<5> rd;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-16} = 0;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = 0;
+  let Inst{5-0}   = funct;
+}
+
+class MTLO_FM<bits<6> funct> {
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = rs;
+  let Inst{20-6}  = 0;
+  let Inst{5-0}   = funct;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS

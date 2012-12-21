@@ -186,10 +186,10 @@ def DMULTu   : Mult64<0x1d, "dmultu", IIImul>;
 def DSDIV    : Div64<MipsDivRem, 0x1e, "ddiv", IIIdiv>;
 def DUDIV    : Div64<MipsDivRemU, 0x1f, "ddivu", IIIdiv>;
 
-def MTHI64 : MoveToLOHI<0x11, "mthi", CPU64Regs, [HI64]>;
-def MTLO64 : MoveToLOHI<0x13, "mtlo", CPU64Regs, [LO64]>;
-def MFHI64 : MoveFromLOHI<0x10, "mfhi", CPU64Regs, [HI64]>;
-def MFLO64 : MoveFromLOHI<0x12, "mflo", CPU64Regs, [LO64]>;
+def MTHI64 : MoveToLOHI<"mthi", CPU64Regs, [HI64]>, MTLO_FM<0x11>;
+def MTLO64 : MoveToLOHI<"mtlo", CPU64Regs, [LO64]>, MTLO_FM<0x13>;
+def MFHI64 : MoveFromLOHI<"mfhi", CPU64Regs, [HI64]>, MFLO_FM<0x10>;
+def MFLO64 : MoveFromLOHI<"mflo", CPU64Regs, [LO64]>, MFLO_FM<0x12>;
 
 /// Sign Ext In Register Instructions.
 def SEB64 : SignExtInReg<0x10, "seb", i8, CPU64Regs>;

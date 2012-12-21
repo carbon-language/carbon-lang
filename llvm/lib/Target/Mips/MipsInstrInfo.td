@@ -665,24 +665,14 @@ class Div32<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
   Div<op, func, instr_asm, itin, CPURegs, [HI, LO]>;
 
 // Move from Hi/Lo
-class MoveFromLOHI<bits<6> func, string instr_asm, RegisterClass RC,
-                   list<Register> UseRegs>:
-  FR<0x00, func, (outs RC:$rd), (ins),
-     !strconcat(instr_asm, "\t$rd"), [], IIHiLo> {
-  let rs = 0;
-  let rt = 0;
-  let shamt = 0;
+class MoveFromLOHI<string opstr, RegisterClass RC, list<Register> UseRegs>:
+  InstSE<(outs RC:$rd), (ins), !strconcat(opstr, "\t$rd"), [], IIHiLo, FrmR> {
   let Uses = UseRegs;
   let neverHasSideEffects = 1;
 }
 
-class MoveToLOHI<bits<6> func, string instr_asm, RegisterClass RC,
-                 list<Register> DefRegs>:
-  FR<0x00, func, (outs), (ins RC:$rs),
-     !strconcat(instr_asm, "\t$rs"), [], IIHiLo> {
-  let rt = 0;
-  let rd = 0;
-  let shamt = 0;
+class MoveToLOHI<string opstr, RegisterClass RC, list<Register> DefRegs>:
+  InstSE<(outs), (ins RC:$rs), !strconcat(opstr, "\t$rs"), [], IIHiLo, FrmR> {
   let Defs = DefRegs;
   let neverHasSideEffects = 1;
 }
@@ -970,10 +960,10 @@ def MULTu   : Mult32<0x19, "multu", IIImul>;
 def SDIV    : Div32<MipsDivRem, 0x1a, "div", IIIdiv>;
 def UDIV    : Div32<MipsDivRemU, 0x1b, "divu", IIIdiv>;
 
-def MTHI : MoveToLOHI<0x11, "mthi", CPURegs, [HI]>;
-def MTLO : MoveToLOHI<0x13, "mtlo", CPURegs, [LO]>;
-def MFHI : MoveFromLOHI<0x10, "mfhi", CPURegs, [HI]>;
-def MFLO : MoveFromLOHI<0x12, "mflo", CPURegs, [LO]>;
+def MTHI : MoveToLOHI<"mthi", CPURegs, [HI]>, MTLO_FM<0x11>;
+def MTLO : MoveToLOHI<"mtlo", CPURegs, [LO]>, MTLO_FM<0x13>;
+def MFHI : MoveFromLOHI<"mfhi", CPURegs, [HI]>, MFLO_FM<0x10>;
+def MFLO : MoveFromLOHI<"mflo", CPURegs, [LO]>, MFLO_FM<0x12>;
 
 /// Sign Ext In Register Instructions.
 def SEB : SignExtInReg<0x10, "seb", i8, CPURegs>;
