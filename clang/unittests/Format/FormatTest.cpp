@@ -617,6 +617,12 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
   EXPECT_EQ("#include \"a/b/string\"\n", format("#include \"a/b/string\"\n"));
   EXPECT_EQ("#include \"string.h\"\n", format("#include \"string.h\"\n"));
   EXPECT_EQ("#include \"string.h\"\n", format("#include \"string.h\"\n"));
+
+  EXPECT_EQ("#import <string>\n", format("#import <string>\n"));
+  EXPECT_EQ("#import <a/b/c.h>\n", format("#import <a/b/c.h>\n"));
+  EXPECT_EQ("#import \"a/b/string\"\n", format("#import \"a/b/string\"\n"));
+  EXPECT_EQ("#import \"string.h\"\n", format("#import \"string.h\"\n"));
+  EXPECT_EQ("#import \"string.h\"\n", format("#import \"string.h\"\n"));
 }
 
 

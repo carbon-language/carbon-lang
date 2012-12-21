@@ -579,6 +579,7 @@ public:
         return;
       switch (Tokens[Index].Tok.getIdentifierInfo()->getPPKeywordID()) {
       case tok::pp_include:
+      case tok::pp_import:
         parseIncludeDirective();
         break;
       default:
