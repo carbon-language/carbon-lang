@@ -42,6 +42,7 @@ struct TokenAnnotation {
     TT_CtorInitializerColon,
     TT_LineComment,
     TT_BlockComment,
+    TT_DirectorySeparator,
     TT_ObjCMethodSpecifier
   };
 
@@ -560,7 +561,36 @@ public:
       }
     }
 
+    void parseIncludeDirective() {
+      while (Index < Tokens.size()) {
+        if (Tokens[Index].Tok.is(tok::slash))
+          Annotations[Index].Type = TokenAnnotation::TT_DirectorySeparator;
+        else if (Tokens[Index].Tok.is(tok::less))
+          Annotations[Index].Type = TokenAnnotation::TT_TemplateOpener;
+        else if (Tokens[Index].Tok.is(tok::greater))
+          Annotations[Index].Type = TokenAnnotation::TT_TemplateCloser;
+        next();
+      }
+    }
+
+    void parsePreprocessorDirective() {
+      next();
+      if (Index >= Tokens.size())
+        return;
+      switch (Tokens[Index].Tok.getIdentifierInfo()->getPPKeywordID()) {
+      case tok::pp_include:
+        parseIncludeDirective();
+        break;
+      default:
+        break;
+      }
+    }
+
     void parseLine() {
+      if (Tokens[Index].Tok.is(tok::hash)) {
+        parsePreprocessorDirective();
+        return;
+      }
       while (Index < Tokens.size()) {
         consumeToken();
       }
@@ -639,6 +669,10 @@ public:
         else
           Annotation.SpaceRequiredBefore = false;
       } else if (
+          Annotation.Type == TokenAnnotation::TT_DirectorySeparator ||
+          Annotations[i - 1].Type == TokenAnnotation::TT_DirectorySeparator) {
+        Annotation.SpaceRequiredBefore = false;
+      } else if (
           Annotation.Type == TokenAnnotation::TT_BinaryOperator ||
           Annotations[i - 1].Type == TokenAnnotation::TT_BinaryOperator) {
         Annotation.SpaceRequiredBefore = true;
@@ -714,7 +748,7 @@ private:
   }
 
   bool isBinaryOperator(const FormatToken &Tok) {
-    // Comma is a binary operator, but does not behave a such wrt. formatting.
+    // Comma is a binary operator, but does not behave as such wrt. formatting.
     return getBinOpPrecedence(Tok.Tok.getKind(), true, true) > prec::Comma;
   }
 
@@ -865,7 +899,8 @@ public:
     }
 
     if (FormatTok.Tok.is(tok::raw_identifier)) {
-      const IdentifierInfo &Info = IdentTable.get(tokenText(FormatTok.Tok));
+      IdentifierInfo &Info = IdentTable.get(tokenText(FormatTok.Tok));
+      FormatTok.Tok.setIdentifierInfo(&Info);
       FormatTok.Tok.setKind(Info.getTokenID());
     }
 

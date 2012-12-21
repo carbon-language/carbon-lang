@@ -613,6 +613,7 @@ TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
 
 TEST_F(FormatTest, HandlesIncludeDirectives) {
   EXPECT_EQ("#include <string>\n", format("#include <string>\n"));
+  EXPECT_EQ("#include <a/b/c.h>\n", format("#include <a/b/c.h>\n"));
   EXPECT_EQ("#include \"a/b/string\"\n", format("#include \"a/b/string\"\n"));
   EXPECT_EQ("#include \"string.h\"\n", format("#include \"string.h\"\n"));
   EXPECT_EQ("#include \"string.h\"\n", format("#include \"string.h\"\n"));
