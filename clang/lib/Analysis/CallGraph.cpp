@@ -16,6 +16,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/StmtVisitor.h"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/GraphWriter.h"
 
@@ -141,14 +142,8 @@ bool CallGraph::includeInGraph(const Decl *D) {
 void CallGraph::addNodeForDecl(Decl* D, bool IsGlobal) {
   assert(D);
 
-  // Do nothing if the node already exists.
-  if (FunctionMap.find(D) != FunctionMap.end())
-    return;
-
   // Allocate a new node, mark it as root, and process it's calls.
   CallGraphNode *Node = getOrInsertNode(D);
-  if (IsGlobal)
-    Root->addCallee(Node, this);
 
   // Process all the calls by this function as well.
   CGBuilder builder(this, Node);
@@ -168,23 +163,31 @@ CallGraphNode *CallGraph::getOrInsertNode(Decl *F) {
     return Node;
 
   Node = new CallGraphNode(F);
-  // If not root, add to the parentless list.
+  // Make Root node a parent of all functions to make sure all are reachable.
   if (F != 0)
-    ParentlessNodes.insert(Node);
+    Root->addCallee(Node, this);
   return Node;
 }
 
 void CallGraph::print(raw_ostream &OS) const {
   OS << " --- Call graph Dump --- \n";
-  for (const_iterator I = begin(), E = end(); I != E; ++I) {
+
+  // We are going to print the graph in reverse post order, partially, to make
+  // sure the output is deterministic.
+  llvm::ReversePostOrderTraversal<const clang::CallGraph*> RPOT(this);
+  for (llvm::ReversePostOrderTraversal<const clang::CallGraph*>::rpo_iterator
+         I = RPOT.begin(), E = RPOT.end(); I != E; ++I) {
+    const CallGraphNode *N = *I;
+
     OS << "  Function: ";
-    if (I->second == Root)
+    if (N == Root)
       OS << "< root >";
     else
-      I->second->print(OS);
+      N->print(OS);
+
     OS << " calls: ";
-    for (CallGraphNode::iterator CI = I->second->begin(),
-        CE = I->second->end(); CI != CE; ++CI) {
+    for (CallGraphNode::const_iterator CI = N->begin(),
+                                       CE = N->end(); CI != CE; ++CI) {
       assert(*CI != Root && "No one can call the root node.");
       (*CI)->print(OS);
       OS << " ";
