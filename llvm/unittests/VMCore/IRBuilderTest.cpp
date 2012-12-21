@@ -99,6 +99,13 @@ TEST_F(IRBuilderTest, CreateCondBr) {
   EXPECT_EQ(Weights, TI->getMetadata(LLVMContext::MD_prof));
 }
 
+TEST_F(IRBuilderTest, LandingPadName) {
+  IRBuilder<> Builder(BB);
+  LandingPadInst *LP = Builder.CreateLandingPad(Builder.getInt32Ty(),
+                                                Builder.getInt32(0), 0, "LP");
+  EXPECT_EQ(LP->getName(), "LP");
+}
+
 TEST_F(IRBuilderTest, GetIntTy) {
   IRBuilder<> Builder(BB);
   IntegerType *Ty1 = Builder.getInt1Ty();
