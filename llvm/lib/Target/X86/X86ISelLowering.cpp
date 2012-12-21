@@ -14679,6 +14679,76 @@ static SDValue PerformEXTRACT_VECTOR_ELTCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
+/// \brief Matches a VSELECT onto min/max or return 0 if the node doesn't match.
+static unsigned matchIntegerMINMAX(SDValue Cond, EVT VT, SDValue LHS,
+                                   SDValue RHS, SelectionDAG &DAG,
+                                   const X86Subtarget *Subtarget) {
+  if (!VT.isVector())
+    return 0;
+
+  switch (VT.getSimpleVT().SimpleTy) {
+  default: return 0;
+  case MVT::v32i8:
+  case MVT::v16i16:
+  case MVT::v8i32:
+    if (!Subtarget->hasAVX2())
+      return 0;
+  case MVT::v16i8:
+  case MVT::v8i16:
+  case MVT::v4i32:
+    if (!Subtarget->hasSSE2())
+      return 0;
+  }
+
+  // SSE2 has only a small subset of the operations.
+  bool hasUnsigned = Subtarget->hasSSE41() ||
+                     (Subtarget->hasSSE2() && VT == MVT::v16i8);
+  bool hasSigned = Subtarget->hasSSE41() ||
+                   (Subtarget->hasSSE2() && VT == MVT::v8i16);
+
+  ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
+
+  // Check for x CC y ? x : y.
+  if (DAG.isEqualTo(LHS, Cond.getOperand(0)) &&
+      DAG.isEqualTo(RHS, Cond.getOperand(1))) {
+    switch (CC) {
+    default: break;
+    case ISD::SETULT:
+    case ISD::SETULE:
+      return hasUnsigned ? X86ISD::UMIN : 0;
+    case ISD::SETUGT:
+    case ISD::SETUGE:
+      return hasUnsigned ? X86ISD::UMAX : 0;
+    case ISD::SETLT:
+    case ISD::SETLE:
+      return hasSigned ? X86ISD::SMIN : 0;
+    case ISD::SETGT:
+    case ISD::SETGE:
+      return hasSigned ? X86ISD::SMAX : 0;
+    }
+  // Check for x CC y ? y : x -- a min/max with reversed arms.
+  } else if (DAG.isEqualTo(LHS, Cond.getOperand(1)) &&
+             DAG.isEqualTo(RHS, Cond.getOperand(0))) {
+    switch (CC) {
+    default: break;
+    case ISD::SETULT:
+    case ISD::SETULE:
+      return hasUnsigned ? X86ISD::UMAX : 0;
+    case ISD::SETUGT:
+    case ISD::SETUGE:
+      return hasUnsigned ? X86ISD::UMIN : 0;
+    case ISD::SETLT:
+    case ISD::SETLE:
+      return hasSigned ? X86ISD::SMAX : 0;
+    case ISD::SETGT:
+    case ISD::SETGE:
+      return hasSigned ? X86ISD::SMIN : 0;
+    }
+  }
+
+  return 0;
+}
+
 /// PerformSELECTCombine - Do target-specific dag combines on SELECT and VSELECT
 /// nodes.
 static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
@@ -15017,6 +15087,13 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
       }
     }
   }
+
+  // Try to match a min/max vector operation.
+  if (!DCI.isBeforeLegalize() &&
+      N->getOpcode() == ISD::VSELECT && Cond.getOpcode() == ISD::SETCC)
+    if (unsigned Op = matchIntegerMINMAX(Cond, VT, LHS, RHS, DAG, Subtarget))
+      return DAG.getNode(Op, DL, N->getValueType(0), LHS, RHS);
+
 
   // If we know that this node is legal then we know that it is going to be
   // matched by one of the SSE/AVX BLEND instructions. These instructions only

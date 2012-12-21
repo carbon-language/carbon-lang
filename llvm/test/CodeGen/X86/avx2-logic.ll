@@ -48,9 +48,8 @@ entry:
 ; CHECK: vpblendvb
 ; CHECK: vpblendvb %ymm
 ; CHECK: ret
-define <32 x i8> @vpblendvb(<32 x i8> %x, <32 x i8> %y) {
-  %min_is_x = icmp ult <32 x i8> %x, %y
-  %min = select <32 x i1> %min_is_x, <32 x i8> %x, <32 x i8> %y
+define <32 x i8> @vpblendvb(<32 x i1> %cond, <32 x i8> %x, <32 x i8> %y) {
+  %min = select <32 x i1> %cond, <32 x i8> %x, <32 x i8> %y
   ret <32 x i8> %min
 }
 
