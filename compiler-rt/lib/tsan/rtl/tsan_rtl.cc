@@ -167,7 +167,7 @@ void MapShadow(uptr addr, uptr size) {
 }
 
 void MapThreadTrace(uptr addr, uptr size) {
-  DPrintf("Mapping trace at %p-%p(0x%zx)\n", addr, addr + size, size);
+  DPrintf("#0: Mapping trace at %p-%p(0x%zx)\n", addr, addr + size, size);
   CHECK_GE(addr, kTraceMemBegin);
   CHECK_LE(addr + size, kTraceMemBegin + kTraceMemSize);
   if (addr != (uptr)MmapFixedNoReserve(addr, size)) {

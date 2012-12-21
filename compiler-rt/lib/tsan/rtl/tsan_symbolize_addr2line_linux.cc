@@ -104,11 +104,11 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
   m->base = (uptr)info->dlpi_addr;
   m->inp_fd = -1;
   m->out_fd = -1;
-  DPrintf("Module %s %zx\n", m->name, m->base);
+  DPrintf2("Module %s %zx\n", m->name, m->base);
   for (int i = 0; i < info->dlpi_phnum; i++) {
     const Elf64_Phdr *s = &info->dlpi_phdr[i];
-    DPrintf("  Section p_type=%zx p_offset=%zx p_vaddr=%zx p_paddr=%zx"
-            " p_filesz=%zx p_memsz=%zx p_flags=%zx p_align=%zx\n",
+    DPrintf2("  Section p_type=%zx p_offset=%zx p_vaddr=%zx p_paddr=%zx"
+        " p_filesz=%zx p_memsz=%zx p_flags=%zx p_align=%zx\n",
             (uptr)s->p_type, (uptr)s->p_offset, (uptr)s->p_vaddr,
             (uptr)s->p_paddr, (uptr)s->p_filesz, (uptr)s->p_memsz,
             (uptr)s->p_flags, (uptr)s->p_align);
@@ -121,7 +121,7 @@ static int dl_iterate_phdr_cb(dl_phdr_info *info, size_t size, void *arg) {
     sec->end = sec->base + s->p_memsz;
     sec->next = ctx->sections;
     ctx->sections = sec;
-    DPrintf("  Section %zx-%zx\n", sec->base, sec->end);
+    DPrintf2("  Section %zx-%zx\n", sec->base, sec->end);
   }
   return 0;
 }
