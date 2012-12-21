@@ -970,9 +970,8 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
   if (Minor < RHS.Minor) return true; if (Minor > RHS.Minor) return false;
 
   // Note that we rank versions with *no* patch specified is better than ones
-  // hard-coding a patch version. Thus if the RHS has no patch, it always
-  // wins, and the LHS only wins if it has no patch and the RHS does have
-  // a patch.
+  // hard-coding a patch version. Thus if only the RHS or LHS has no patch,
+  // it wins.
   if (RHS.Patch == -1 && Patch != -1) return true;
   if (RHS.Patch != -1 && Patch == -1) return false;
   if (Patch < RHS.Patch) return true; if (Patch > RHS.Patch) return false;
