@@ -256,6 +256,12 @@ namespace PR11124 {
   // CHECK-NEXT: call void @_ZN7PR111242B2C2Ev
 }
 
+// Ensure we produce an i1 here, and don't assert.
+// CHECK: define void @_Z9r170806_bv(
+// CHECK: call void @_Z9r170806_ab(i1 zeroext false)
+void r170806_a(bool b = bool());
+void r170806_b() { r170806_a(); }
+
 // CHECK: define linkonce_odr void @_ZN8zeroinit2X3IiEC2Ev(%"struct.zeroinit::X3"* %this) unnamed_addr
 // CHECK: call void @llvm.memset.p0i8.i64
 // CHECK-NEXT: call void @_ZN8zeroinit2X2IiEC2Ev
