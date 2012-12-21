@@ -435,58 +435,36 @@ multiclass StoreM<string opstr, PatFrag OpNode, RegisterClass RC> {
 
 // Load/Store Left/Right
 let canFoldAsLoad = 1 in
-class LoadLeftRight<bits<6> op, string instr_asm, SDNode OpNode,
-                    RegisterClass RC, Operand MemOpnd> :
-  FMem<op, (outs RC:$rt), (ins MemOpnd:$addr, RC:$src),
-       !strconcat(instr_asm, "\t$rt, $addr"),
-       [(set RC:$rt, (OpNode addr:$addr, RC:$src))], IILoad> {
+class LoadLeftRight<string opstr, SDNode OpNode, RegisterClass RC,
+                    Operand MemOpnd> :
+  InstSE<(outs RC:$rt), (ins MemOpnd:$addr, RC:$src),
+         !strconcat(opstr, "\t$rt, $addr"),
+         [(set RC:$rt, (OpNode addr:$addr, RC:$src))], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
   string Constraints = "$src = $rt";
 }
 
-class StoreLeftRight<bits<6> op, string instr_asm, SDNode OpNode,
-                     RegisterClass RC, Operand MemOpnd>:
-  FMem<op, (outs), (ins RC:$rt, MemOpnd:$addr),
-       !strconcat(instr_asm, "\t$rt, $addr"), [(OpNode RC:$rt, addr:$addr)],
-       IIStore>;
+class StoreLeftRight<string opstr, SDNode OpNode, RegisterClass RC,
+                     Operand MemOpnd>:
+  InstSE<(outs), (ins RC:$rt, MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
+         [(OpNode RC:$rt, addr:$addr)], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
+}
 
-// 32-bit load left/right.
-multiclass LoadLeftRightM32<bits<6> op, string instr_asm, SDNode OpNode> {
-  def #NAME# : LoadLeftRight<op, instr_asm, OpNode, CPURegs, mem>,
+multiclass LoadLeftRightM<string opstr, SDNode OpNode, RegisterClass RC> {
+  def #NAME# : LoadLeftRight<opstr, OpNode, RC, mem>,
                Requires<[NotN64, HasStdEnc]>;
-  def _P8    : LoadLeftRight<op, instr_asm, OpNode, CPURegs, mem64>,
+  def _P8    : LoadLeftRight<opstr, OpNode, RC, mem64>,
                Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
 }
 
-// 64-bit load left/right.
-multiclass LoadLeftRightM64<bits<6> op, string instr_asm, SDNode OpNode> {
-  def #NAME# : LoadLeftRight<op, instr_asm, OpNode, CPU64Regs, mem>,
+multiclass StoreLeftRightM<string opstr, SDNode OpNode, RegisterClass RC> {
+  def #NAME# : StoreLeftRight<opstr, OpNode, RC, mem>,
                Requires<[NotN64, HasStdEnc]>;
-  def _P8    : LoadLeftRight<op, instr_asm, OpNode, CPU64Regs, mem64>,
-               Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-    let isCodeGenOnly = 1;
-  }
-}
-
-// 32-bit store left/right.
-multiclass StoreLeftRightM32<bits<6> op, string instr_asm, SDNode OpNode> {
-  def #NAME# : StoreLeftRight<op, instr_asm, OpNode, CPURegs, mem>,
-               Requires<[NotN64, HasStdEnc]>;
-  def _P8    : StoreLeftRight<op, instr_asm, OpNode, CPURegs, mem64>,
-               Requires<[IsN64, HasStdEnc]> {
-    let DecoderNamespace = "Mips64";
-    let isCodeGenOnly = 1;
-  }
-}
-
-// 64-bit store left/right.
-multiclass StoreLeftRightM64<bits<6> op, string instr_asm, SDNode OpNode> {
-  def #NAME# : StoreLeftRight<op, instr_asm, OpNode, CPU64Regs, mem>,
-               Requires<[NotN64, HasStdEnc]>;
-  def _P8    : StoreLeftRight<op, instr_asm, OpNode, CPU64Regs, mem64>,
+  def _P8    : StoreLeftRight<opstr, OpNode, RC, mem64>,
                Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
@@ -736,15 +714,17 @@ multiclass AtomicCmpSwap32<PatFrag Op>  {
   }
 }
 
-class LLBase<bits<6> Opc, string opstring, RegisterClass RC, Operand Mem> :
-  FMem<Opc, (outs RC:$rt), (ins Mem:$addr),
-       !strconcat(opstring, "\t$rt, $addr"), [], IILoad> {
+class LLBase<string opstr, RegisterClass RC, Operand Mem> :
+  InstSE<(outs RC:$rt), (ins Mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
+         [], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
   let mayLoad = 1;
 }
 
-class SCBase<bits<6> Opc, string opstring, RegisterClass RC, Operand Mem> :
-  FMem<Opc, (outs RC:$dst), (ins RC:$rt, Mem:$addr),
-       !strconcat(opstring, "\t$rt, $addr"), [], IIStore> {
+class SCBase<string opstr, RegisterClass RC, Operand Mem> :
+  InstSE<(outs RC:$dst), (ins RC:$rt, Mem:$addr),
+         !strconcat(opstr, "\t$rt, $addr"), [], NoItinerary, FrmI> {
+  let DecoderMethod = "DecodeMem";
   let mayStore = 1;
   let Constraints = "$rt = $dst";
 }
@@ -850,10 +830,10 @@ defm SH  : StoreM<"sh", truncstorei16, CPURegs>, LW_FM<0x29>;
 defm SW  : StoreM<"sw", store, CPURegs>, LW_FM<0x2b>;
 
 /// load/store left/right
-defm LWL : LoadLeftRightM32<0x22, "lwl", MipsLWL>;
-defm LWR : LoadLeftRightM32<0x26, "lwr", MipsLWR>;
-defm SWL : StoreLeftRightM32<0x2a, "swl", MipsSWL>;
-defm SWR : StoreLeftRightM32<0x2e, "swr", MipsSWR>;
+defm LWL : LoadLeftRightM<"lwl", MipsLWL, CPURegs>, LW_FM<0x22>;
+defm LWR : LoadLeftRightM<"lwr", MipsLWR, CPURegs>, LW_FM<0x26>;
+defm SWL : StoreLeftRightM<"swl", MipsSWL, CPURegs>, LW_FM<0x2a>;
+defm SWR : StoreLeftRightM<"swr", MipsSWR, CPURegs>, LW_FM<0x2e>;
 
 let hasSideEffects = 1 in
 def SYNC : InstSE<(outs), (ins i32imm:$stype), "sync $stype",
@@ -867,18 +847,14 @@ def SYNC : InstSE<(outs), (ins i32imm:$stype), "sync $stype",
 }
 
 /// Load-linked, Store-conditional
-def LL    : LLBase<0x30, "ll", CPURegs, mem>,
-            Requires<[NotN64, HasStdEnc]>;
-def LL_P8 : LLBase<0x30, "ll", CPURegs, mem64>,
-            Requires<[IsN64, HasStdEnc]> {
-  let DecoderNamespace = "Mips64";
+let Predicates = [NotN64, HasStdEnc] in {
+  def LL : LLBase<"ll", CPURegs, mem>, LW_FM<0x30>;
+  def SC : SCBase<"sc", CPURegs, mem>, LW_FM<0x38>;
 }
 
-def SC    : SCBase<0x38, "sc", CPURegs, mem>,
-            Requires<[NotN64, HasStdEnc]>;
-def SC_P8 : SCBase<0x38, "sc", CPURegs, mem64>,
-            Requires<[IsN64, HasStdEnc]> {
-  let DecoderNamespace = "Mips64";
+let Predicates = [IsN64, HasStdEnc], DecoderNamespace = "Mips64" in {
+  def LL_P8 : LLBase<"ll", CPURegs, mem64>, LW_FM<0x30>;
+  def SC_P8 : SCBase<"sc", CPURegs, mem64>, LW_FM<0x38>;
 }
 
 /// Jump and Branch Instructions

@@ -142,28 +142,25 @@ defm SD    : StoreM<"sd", store, CPU64Regs>, LW_FM<0x3f>;
 
 /// load/store left/right
 let isCodeGenOnly = 1 in {
-  defm LWL64 : LoadLeftRightM64<0x22, "lwl", MipsLWL>;
-  defm LWR64 : LoadLeftRightM64<0x26, "lwr", MipsLWR>;
-  defm SWL64 : StoreLeftRightM64<0x2a, "swl", MipsSWL>;
-  defm SWR64 : StoreLeftRightM64<0x2e, "swr", MipsSWR>;
+  defm LWL64 : LoadLeftRightM<"lwl", MipsLWL, CPU64Regs>, LW_FM<0x22>;
+  defm LWR64 : LoadLeftRightM<"lwr", MipsLWR, CPU64Regs>, LW_FM<0x26>;
+  defm SWL64 : StoreLeftRightM<"swl", MipsSWL, CPU64Regs>, LW_FM<0x2a>;
+  defm SWR64 : StoreLeftRightM<"swr", MipsSWR, CPU64Regs>, LW_FM<0x2e>;
 }
-defm LDL   : LoadLeftRightM64<0x1a, "ldl", MipsLDL>;
-defm LDR   : LoadLeftRightM64<0x1b, "ldr", MipsLDR>;
-defm SDL   : StoreLeftRightM64<0x2c, "sdl", MipsSDL>;
-defm SDR   : StoreLeftRightM64<0x2d, "sdr", MipsSDR>;
+defm LDL   : LoadLeftRightM<"ldl", MipsLDL, CPU64Regs>, LW_FM<0x1a>;
+defm LDR   : LoadLeftRightM<"ldr", MipsLDR, CPU64Regs>, LW_FM<0x1b>;
+defm SDL   : StoreLeftRightM<"sdl", MipsSDL, CPU64Regs>, LW_FM<0x2c>;
+defm SDR   : StoreLeftRightM<"sdr", MipsSDR, CPU64Regs>, LW_FM<0x2d>;
 
 /// Load-linked, Store-conditional
-def LLD    : LLBase<0x34, "lld", CPU64Regs, mem>,
-             Requires<[NotN64, HasStdEnc]>;
-def LLD_P8 : LLBase<0x34, "lld", CPU64Regs, mem64>,
-             Requires<[IsN64, HasStdEnc]> {
-  let isCodeGenOnly = 1;
+let Predicates = [NotN64, HasStdEnc] in {
+  def LLD : LLBase<"lld", CPU64Regs, mem>, LW_FM<0x34>;
+  def SCD : SCBase<"scd", CPU64Regs, mem>, LW_FM<0x3c>;
 }
-def SCD    : SCBase<0x3c, "scd", CPU64Regs, mem>,
-             Requires<[NotN64, HasStdEnc]>;
-def SCD_P8 : SCBase<0x3c, "scd", CPU64Regs, mem64>,
-             Requires<[IsN64, HasStdEnc]> {
-  let isCodeGenOnly = 1;
+
+let Predicates = [IsN64, HasStdEnc], isCodeGenOnly = 1 in {
+  def LLD_P8 : LLBase<"lld", CPU64Regs, mem64>, LW_FM<0x34>;
+  def SCD_P8 : SCBase<"scd", CPU64Regs, mem64>, LW_FM<0x3c>;
 }
 
 /// Jump and Branch Instructions
