@@ -854,13 +854,13 @@ FindObjCMethodDeclsWithOrigin (unsigned int current_id,
     
     ObjCInterfaceDecl::lookup_result result = original_interface_decl->lookup(original_decl_name);
     
-    if (result.first == result.second)
+    if (result.empty())
         return false;
     
-    if (!*result.first)
+    if (!result[0])
         return false;
     
-    ObjCMethodDecl *result_method = dyn_cast<ObjCMethodDecl>(*result.first);
+    ObjCMethodDecl *result_method = dyn_cast<ObjCMethodDecl>(result[0]);
     
     if (!result_method)
         return false;
@@ -1806,10 +1806,8 @@ NameSearchContext::AddTypeDecl(void *type)
 void 
 NameSearchContext::AddLookupResult (clang::DeclContextLookupConstResult result)
 {
-    for (clang::NamedDecl * const *decl_iterator = result.first;
-         decl_iterator != result.second;
-         ++decl_iterator)
-        m_decls.push_back (*decl_iterator);
+    for (clang::NamedDecl *decl : result)
+        m_decls.push_back (decl);
 }
 
 void

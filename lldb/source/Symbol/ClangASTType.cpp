@@ -1283,7 +1283,6 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
                     if (class_interface_decl)
                     {
                         clang::PrintingPolicy policy = ast_context->getPrintingPolicy();
-                        policy.DumpSourceManager = &ast_context->getSourceManager();
                         class_interface_decl->print(llvm_ostrm, policy, s->GetIndentLevel());
                     }
                 }

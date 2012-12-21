@@ -1277,9 +1277,10 @@ ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
     DeclarationName decl_name (&identifier_info);
 
     clang::DeclContext::lookup_result result = decl_ctx->lookup(decl_name);
-    for (clang::DeclContext::lookup_iterator pos = result.first, end = result.second; pos != end; ++pos) 
+    
+    for (NamedDecl *decl : result)
     {
-        class_template_decl = dyn_cast<clang::ClassTemplateDecl>(*pos);
+        class_template_decl = dyn_cast<clang::ClassTemplateDecl>(decl);
         if (class_template_decl)
             return class_template_decl;
     }
@@ -4564,12 +4565,9 @@ ClangASTContext::GetIndexOfChildMemberWithName
                                     parent_record_decl = cast<RecordDecl>(elem.Base->getType()->getAs<RecordType>()->getDecl());
                                 }
                             }
-                            DeclContext::lookup_iterator named_decl_pos;
-                            for (named_decl_pos = path->Decls.first;
-                                 named_decl_pos != path->Decls.second && parent_record_decl;
-                                 ++named_decl_pos)
+                            for (NamedDecl *path_decl : path->Decls)
                             {
-                                child_idx = GetIndexForRecordChild (parent_record_decl, *named_decl_pos, omit_empty_base_classes);
+                                child_idx = GetIndexForRecordChild (parent_record_decl, path_decl, omit_empty_base_classes);
                                 if (child_idx == UINT32_MAX)
                                 {
                                     child_indexes.clear();
@@ -5073,9 +5071,9 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
         IdentifierInfo &identifier_info = ast->Idents.get(name);
         DeclarationName decl_name (&identifier_info);
         clang::DeclContext::lookup_result result = decl_ctx->lookup(decl_name);
-        for (clang::DeclContext::lookup_iterator pos = result.first, end = result.second; pos != end; ++pos) 
+        for (NamedDecl *decl : result)
         {
-            namespace_decl = dyn_cast<clang::NamespaceDecl>(*pos);
+            namespace_decl = dyn_cast<clang::NamespaceDecl>(decl);
             if (namespace_decl)
                 return namespace_decl;
         }

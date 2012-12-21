@@ -616,9 +616,9 @@ AppleObjCTypeVendor::FindTypes (const ConstString &name,
         
         clang::DeclContext::lookup_const_result lookup_result = ast_ctx->getTranslationUnitDecl()->lookup(decl_name);
         
-        if (lookup_result.first != lookup_result.second)
+        if (!lookup_result.empty())
         {
-            if (const clang::ObjCInterfaceDecl *result_iface_decl = llvm::dyn_cast<clang::ObjCInterfaceDecl>(*lookup_result.first))
+            if (const clang::ObjCInterfaceDecl *result_iface_decl = llvm::dyn_cast<clang::ObjCInterfaceDecl>(lookup_result[0]))
             {
                 clang::QualType result_iface_type = ast_ctx->getObjCInterfaceType(result_iface_decl);
                 

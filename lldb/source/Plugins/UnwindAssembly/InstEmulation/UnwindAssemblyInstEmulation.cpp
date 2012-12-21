@@ -9,8 +9,6 @@
 
 #include "UnwindAssemblyInstEmulation.h"
 
-#include "llvm-c/EnhancedDisassembly.h"
-
 #include "lldb/Core/Address.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBufferHeap.h"
