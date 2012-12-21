@@ -5753,26 +5753,28 @@ static bool checkUnsafeAssignLiteral(Sema &S, SourceLocation Loc,
   // immediately zapped in a weak reference.  Note that we explicitly
   // allow ObjCStringLiterals, since those are designed to never really die.
   RHS = RHS->IgnoreParenImpCasts();
-  unsigned kind = 4;
+  // This enum needs to match with the 'select' in warn_arc_literal_assign.
+  enum Kind { Dictionary = 0, Array, Block, BoxedE, None };
+  unsigned kind = None;
   switch (RHS->getStmtClass()) {
     default:
       break;
     case Stmt::ObjCDictionaryLiteralClass:
-      kind = 0;
+      kind = Dictionary;
       break;
     case Stmt::ObjCArrayLiteralClass:
-      kind = 1;
+      kind = Array;
       break;
     case Stmt::BlockExprClass:
-      kind = 2;
+      kind = Block;
       break;
     case Stmt::ObjCBoxedExprClass:
-      kind = 3;
+      kind = BoxedE;
       break;
   }
-  if (kind < 4) {
+  if (kind != None) {
     S.Diag(Loc, diag::warn_arc_literal_assign)
-    << kind
+    << (unsigned) kind
     << (isProperty ? 0 : 1)
     << RHS->getSourceRange();
     return true;
