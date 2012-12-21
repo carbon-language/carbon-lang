@@ -31,6 +31,7 @@ progress. This page will get filled out with docs soon...
    AutomaticReferenceCounting
    InternalsManual
    DriverInternals
+   BlockLanguageSpec
 
 Indices and tables
 ==================
