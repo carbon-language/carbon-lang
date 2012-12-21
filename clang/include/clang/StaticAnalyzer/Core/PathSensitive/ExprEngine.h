@@ -459,9 +459,11 @@ protected:
                 SVal location, SVal Val, bool atDeclInit = false,
                 const ProgramPoint *PP = 0);
 
+  /// Call PointerEscape callback when a value escapes as a result of bind.
   ProgramStateRef processPointerEscapedOnBind(ProgramStateRef State,
                                               SVal Loc, SVal Val);
-
+  /// Call PointerEscape callback when a value escapes as a result of
+  /// region invalidation.
   ProgramStateRef processPointerEscapedOnInvalidateRegions(
                             ProgramStateRef State,
                             const InvalidatedSymbols *Invalidated,

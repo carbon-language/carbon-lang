@@ -220,19 +220,21 @@ public:
   ///
   /// \param Regions the set of regions to be invalidated.
   /// \param E the expression that caused the invalidation.
-  /// \param BlockCount the current basic block count.
-  /// \param ResultsInPointerEscape the flag is set to true when
-  /// the invalidation is due to escape of a symbol (representing a pointer).
-  /// For example, due to it being passed as an argument in a call.
+  /// \param BlockCount The number of times the current basic block has been
+  //         visited.
+  /// \param CausedByPointerEscape the flag is set to true when
+  ///        the invalidation is due to escape of a symbol (representing a
+  ///        pointer). For example, due to it being passed as an argument in a
+  ///        call.
   /// \param IS the set of invalidated symbols.
-  /// \param If Call is non-null, the invalidated regions were directly
-  /// invalidated by the call - as parameters.
+  /// \param Call if non-null, the invalidated regions represent parameters to
+  ///        the call and should be considered directly invalidated.
   ProgramStateRef invalidateRegions(ArrayRef<const MemRegion *> Regions,
-                               const Expr *E, unsigned BlockCount,
-                               const LocationContext *LCtx,
-                               bool ResultsInPointerEscape,
-                               InvalidatedSymbols *IS = 0,
-                               const CallEvent *Call = 0) const;
+                                    const Expr *E, unsigned BlockCount,
+                                    const LocationContext *LCtx,
+                                    bool CausedByPointerEscape,
+                                    InvalidatedSymbols *IS = 0,
+                                    const CallEvent *Call = 0) const;
 
   /// enterStackFrame - Returns the state for entry to the given stack frame,
   ///  preserving the current state.

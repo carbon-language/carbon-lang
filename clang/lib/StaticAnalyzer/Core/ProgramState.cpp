@@ -144,16 +144,16 @@ ProgramStateRef
 ProgramState::invalidateRegions(ArrayRef<const MemRegion *> Regions,
                                 const Expr *E, unsigned Count,
                                 const LocationContext *LCtx,
-                                bool ResultsInPointerEscape,
+                                bool CausedByPointerEscape,
                                 InvalidatedSymbols *IS,
                                 const CallEvent *Call) const {
   if (!IS) {
     InvalidatedSymbols invalidated;
     return invalidateRegionsImpl(Regions, E, Count, LCtx,
-                                 ResultsInPointerEscape,
+                                 CausedByPointerEscape,
                                  invalidated, Call);
   }
-  return invalidateRegionsImpl(Regions, E, Count, LCtx, ResultsInPointerEscape,
+  return invalidateRegionsImpl(Regions, E, Count, LCtx, CausedByPointerEscape,
                                *IS, Call);
 }
 
@@ -161,7 +161,7 @@ ProgramStateRef
 ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
                                     const Expr *E, unsigned Count,
                                     const LocationContext *LCtx,
-                                    bool ResultsInPointerEscape,
+                                    bool CausedByPointerEscape,
                                     InvalidatedSymbols &IS,
                                     const CallEvent *Call) const {
   ProgramStateManager &Mgr = getStateManager();
@@ -175,7 +175,7 @@ ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
 
     ProgramStateRef newState = makeWithStore(newStore);
 
-    if (ResultsInPointerEscape)
+    if (CausedByPointerEscape)
       newState = Eng->processPointerEscapedOnInvalidateRegions(newState,
                                                &IS, Regions, Invalidated, Call);
 

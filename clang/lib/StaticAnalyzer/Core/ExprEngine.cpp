@@ -1602,14 +1602,13 @@ public:
 };
 } // end anonymous namespace
 
-/// Call PointerEscape callback when a value escapes as a result of bind.
-/// A value escapes in three possible cases:
-/// (1) we are binding to something that is not a memory region.
-/// (2) we are binding to a memregion that does not have stack storage
-/// (3) we are binding to a memregion with stack storage that the store
-///     does not understand.
+// A value escapes in three possible cases:
+// (1) We are binding to something that is not a memory region.
+// (2) We are binding to a MemrRegion that does not have stack storage.
+// (3) We are binding to a MemRegion with stack storage that the store
+//     does not understand.
 ProgramStateRef ExprEngine::processPointerEscapedOnBind(ProgramStateRef State,
-                                                       SVal Loc, SVal Val) {
+                                                        SVal Loc, SVal Val) {
   // Are we storing to something that causes the value to "escape"?
   bool escapes = true;
 
@@ -1647,8 +1646,6 @@ ProgramStateRef ExprEngine::processPointerEscapedOnBind(ProgramStateRef State,
   return State;
 }
 
-/// Call PointerEscape callback when a value escapes as a result of
-/// region invalidation.
 ProgramStateRef 
 ExprEngine::processPointerEscapedOnInvalidateRegions(ProgramStateRef State,
     const InvalidatedSymbols *Invalidated,

@@ -257,7 +257,7 @@ public:
   /// \brief Called when pointers escape.
   ///
   /// This notifies the checkers about pointer escape, which occurs whenever
-  /// the analzyer cannot track the symbol any more. For example, as a
+  /// the analyzer cannot track the symbol any more. For example, as a
   /// result of assigning a pointer into a global or when it's passed to a 
   /// function call the analyzer cannot model.
   /// 

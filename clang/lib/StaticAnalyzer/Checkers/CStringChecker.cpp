@@ -817,7 +817,7 @@ ProgramStateRef CStringChecker::InvalidateBuffer(CheckerContext &C,
     // Invalidate this region.
     const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
     return state->invalidateRegions(R, E, C.blockCount(), LCtx,
-                                    /*ResultsInPointerEscape*/ false);
+                                    /*CausedByPointerEscape*/ false);
   }
 
   // If we have a non-region value by chance, just remove the binding.
