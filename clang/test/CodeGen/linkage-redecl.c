@@ -1,4 +1,11 @@
-// RUN: %clang_cc1 -emit-llvm %s -o - |grep internal
+// RUN: %clang_cc1 -emit-llvm %s -o - | FileCheck %s
+
+// CHECK: @test2_i = internal global i32 99
+static int test2_i = 99;
+int test2_f() {
+  extern int test2_i;
+  return test2_i;
+}
 
 // C99 6.2.2p3
 // PR3425
@@ -9,3 +16,4 @@ void g0() {
 }
 
 extern void f(int x) { } // still has internal linkage
+// CHECK: define internal void @f
