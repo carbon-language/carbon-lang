@@ -21,16 +21,16 @@ macro(add_sanitizer_common_lib library)
   add_library(${library} STATIC ${ARGN})
   set_target_properties(${library} PROPERTIES
     ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-  set(lib_name "lib${library}.a")
-  add_custom_target(${lib_name} DEPENDS ${library})
 endmacro()
 
-function(get_sanitizer_common_lib_for_arch arch lib_name)
+function(get_sanitizer_common_lib_for_arch arch lib lib_name)
   if(APPLE)
-    set(${lib_name} "libRTSanitizerCommon.test.osx.a" PARENT_SCOPE)
+    set(tgt_name "RTSanitizerCommon.test.osx")
   else()
-    set(${lib_name} "libRTSanitizerCommon.test.${arch}.a" PARENT_SCOPE)
+    set(tgt_name "RTSanitizerCommon.test.${arch}")
   endif()
+  set(${lib} "${tgt_name}" PARENT_SCOPE)
+  set(${lib_name} "lib${tgt_name}.a" PARENT_SCOPE)
 endfunction()
 
 # Sanitizer_common unit tests testsuite.
@@ -58,12 +58,14 @@ macro(add_sanitizer_tests_for_arch arch)
                   DEPS gtest ${SANITIZER_RUNTIME_LIBRARIES})
     list(APPEND SANITIZER_TEST_OBJECTS ${output_obj})
   endforeach()
-  get_sanitizer_common_lib_for_arch(${arch} SANITIZER_COMMON_LIB_NAME)
+  get_sanitizer_common_lib_for_arch(${arch} SANITIZER_COMMON_LIB
+                                    SANITIZER_COMMON_LIB_NAME)
   # Add unittest target.
   set(SANITIZER_TEST_NAME "Sanitizer-${arch}-Test")
   add_compiler_rt_test(SanitizerUnitTests ${SANITIZER_TEST_NAME}
                        OBJECTS ${SANITIZER_TEST_OBJECTS}
                                ${SANITIZER_COMMON_LIB_NAME}
+                       DEPS ${SANITIZER_TEST_OBJECTS} ${SANITIZER_COMMON_LIB}
                        LINK_FLAGS ${SANITIZER_TEST_LINK_FLAGS})
 endmacro()
 

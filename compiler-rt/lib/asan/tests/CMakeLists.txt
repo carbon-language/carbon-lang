@@ -99,7 +99,7 @@ macro(add_asan_test test_suite test_name arch)
   get_target_flags_for_arch(${arch} TARGET_LINK_FLAGS)
   add_compiler_rt_test(${test_suite} ${test_name}
                        OBJECTS ${ARGN}
-                       DEPS ${ASAN_RUNTIME_LIBRARIES}
+                       DEPS ${ASAN_RUNTIME_LIBRARIES} ${ARGN}
                        LINK_FLAGS ${ASAN_LINK_FLAGS}
                                   ${TARGET_LINK_FLAGS})
 endmacro()

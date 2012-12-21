@@ -24,7 +24,7 @@ macro(add_compiler_rt_test test_suite test_name)
     OUTPUT ${output_bin}
     COMMAND clang ${TEST_OBJECTS} -o "${output_bin}"
             ${TEST_LINK_FLAGS}
-    DEPENDS clang ${TEST_DEPS} ${TEST_OBJECTS})
+    DEPENDS clang ${TEST_DEPS})
   add_custom_target(${test_name} DEPENDS ${output_bin})
   # Make the test suite depend on the binary.
   add_dependencies(${test_suite} ${test_name})
