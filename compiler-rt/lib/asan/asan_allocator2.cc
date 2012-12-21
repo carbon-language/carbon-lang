@@ -50,12 +50,14 @@ struct AsanMapUnmapCallback {
 #if SANITIZER_WORDSIZE == 64
 const uptr kAllocatorSpace = 0x600000000000ULL;
 const uptr kAllocatorSize  =  0x10000000000ULL;  // 1T.
+typedef DefaultSizeClassMap SizeClassMap;
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0 /*metadata*/,
-    DefaultSizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
+    SizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
 #elif SANITIZER_WORDSIZE == 32
 static const u64 kAddressSpaceSize = 1ULL << 32;
+typedef CompactSizeClassMap SizeClassMap;
 typedef SizeClassAllocator32<0, kAddressSpaceSize, 16,
-  CompactSizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
+  SizeClassMap, AsanMapUnmapCallback> PrimaryAllocator;
 #endif
 
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
@@ -339,6 +341,11 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
   thread_stats.mallocs++;
   thread_stats.malloced += size;
+  thread_stats.malloced_redzones += needed_size - size;
+  uptr class_id = Min(kNumberOfSizeClasses, SizeClassMap::ClassID(needed_size));
+  thread_stats.malloced_by_size[class_id]++;
+  if (needed_size > SizeClassMap::kMaxSize)
+    thread_stats.malloc_large++;
 
   void *res = reinterpret_cast<void *>(user_beg);
   ASAN_MALLOC_HOOK(res, size);
@@ -399,6 +406,10 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
   uptr p = reinterpret_cast<uptr>(old_ptr);
   uptr chunk_beg = p - kChunkHeaderSize;
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
+
+  AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
+  thread_stats.reallocs++;
+  thread_stats.realloced += new_size;
 
   CHECK(m->chunk_state == CHUNK_ALLOCATED);
   uptr old_size = m->UsedSize();
