@@ -22,7 +22,7 @@
 
 using namespace clang;
 
-STATISTIC(NumObjCCallEdges, "Number of objective C call edges");
+STATISTIC(NumObjCCallEdges, "Number of Objective-C method call edges");
 STATISTIC(NumBlockCallEdges, "Number of block call edges");
 
 namespace {
@@ -69,7 +69,7 @@ public:
     if (ObjCInterfaceDecl *IDecl = ME->getReceiverInterface()) {
       Selector Sel = ME->getSelector();
       
-      // Fild the callee definition within the same translation unit.
+      // Find the callee definition within the same translation unit.
       Decl *D = 0;
       if (ME->isInstanceMessage())
         D = IDecl->lookupPrivateMethod(Sel);
