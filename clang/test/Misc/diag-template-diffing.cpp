@@ -812,6 +812,24 @@ namespace PR14489 {
   // CHECK-ELIDE-NOTREE: non-const lvalue reference to type 'VariableList<>' cannot bind to a temporary of type 'VariableList<>'
 }
 
+namespace rdar12456626 {
+  struct IntWrapper {
+    typedef int type;
+  };
+  
+  template<typename T, typename T::type V>
+  struct X { };
+  
+  struct A {
+    virtual X<IntWrapper, 1> foo();
+  };
+  
+  struct B : A {
+    // CHECK-ELIDE-NOTREE: virtual function 'foo' has a different return type
+    virtual X<IntWrapper, 2> foo();
+  };
+}
+
 // CHECK-ELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-NOELIDE-NOTREE: {{[0-9]*}} errors generated.
 // CHECK-ELIDE-TREE: {{[0-9]*}} errors generated.

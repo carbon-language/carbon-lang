@@ -848,7 +848,7 @@ class TemplateDiff {
               dyn_cast<NonTypeTemplateParmDecl>(ParamND)) {
         Expr *FromExpr, *ToExpr;
         llvm::APSInt FromInt, ToInt;
-        unsigned ParamWidth = 0;
+        unsigned ParamWidth = 128; // Safe default
         if (DefaultNTTPD->getType()->isIntegralOrEnumerationType())
           ParamWidth = Context.getIntWidth(DefaultNTTPD->getType());
         bool HasFromInt = !FromIter.isEnd() &&
