@@ -311,8 +311,6 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
     StringRef data;
     i->getContents(data);
 
-    if (name.startswith("__DWARF,"))
-      name = name.substr(8); // Skip "__DWARF," prefix.
     name = name.substr(name.find_first_not_of("._")); // Skip . and _ prefixes.
     if (name == "debug_info")
       InfoSection = data;
