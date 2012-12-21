@@ -105,7 +105,7 @@ def SLTu64 : SetCC_R<"sltu", setult, CPU64Regs>, ADD_FM<0, 0x2b>;
 def AND64  : ArithLogicR<"and", CPU64Regs, 1, IIAlu, and>, ADD_FM<0, 0x24>;
 def OR64   : ArithLogicR<"or", CPU64Regs, 1, IIAlu, or>, ADD_FM<0, 0x25>;
 def XOR64  : ArithLogicR<"xor", CPU64Regs, 1, IIAlu, xor>, ADD_FM<0, 0x26>;
-def NOR64  : LogicNOR<0x00, 0x27, "nor", CPU64Regs>;
+def NOR64  : LogicNOR<"nor", CPU64Regs>, ADD_FM<0, 0x27>;
 
 /// Shift Instructions
 def DSLL   : shift_rotate_imm64<"dsll", shl>, SRA_FM<0x38, 0>;

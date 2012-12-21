@@ -364,11 +364,10 @@ class MArithR<bits<6> func, string instr_asm, SDNode op, bit isComm = 0> :
 }
 
 //  Logical
-class LogicNOR<bits<6> op, bits<6> func, string instr_asm, RegisterClass RC>:
-  FR<op, func, (outs RC:$rd), (ins RC:$rs, RC:$rt),
-     !strconcat(instr_asm, "\t$rd, $rs, $rt"),
-     [(set RC:$rd, (not (or RC:$rs, RC:$rt)))], IIAlu> {
-  let shamt = 0;
+class LogicNOR<string opstr, RegisterClass RC>:
+  InstSE<(outs RC:$rd), (ins RC:$rs, RC:$rt),
+         !strconcat(opstr, "\t$rd, $rs, $rt"),
+         [(set RC:$rd, (not (or RC:$rs, RC:$rt)))], IIAlu, FrmR> {
   let isCommutable = 1;
 }
 
@@ -881,7 +880,7 @@ def SLTu : SetCC_R<"sltu", setult, CPURegs>, ADD_FM<0, 0x2b>;
 def AND  : ArithLogicR<"and", CPURegs, 1, IIAlu, and>, ADD_FM<0, 0x24>;
 def OR   : ArithLogicR<"or", CPURegs, 1, IIAlu, or>, ADD_FM<0, 0x25>;
 def XOR  : ArithLogicR<"xor", CPURegs, 1, IIAlu, xor>, ADD_FM<0, 0x26>;
-def NOR  : LogicNOR<0x00, 0x27, "nor", CPURegs>;
+def NOR  : LogicNOR<"nor", CPURegs>, ADD_FM<0, 0x27>;
 
 /// Shift Instructions
 def SLL  : shift_rotate_imm32<"sll", shl>, SRA_FM<0, 0>;
