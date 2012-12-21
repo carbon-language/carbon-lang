@@ -612,7 +612,7 @@ public:
       } else if (Line.Tokens[i].Tok.is(tok::at) &&
                  Line.Tokens[i - 2].Tok.is(tok::at)) {
         // Don't put two objc's '@' on the same line. This could happen,
-        // as in, @optinal @property ...
+        // as in, @optional @property ...
         Annotation.MustBreakBefore = true;
       } else if (Line.Tokens[i].Tok.is(tok::colon)) {
         Annotation.SpaceRequiredBefore =
