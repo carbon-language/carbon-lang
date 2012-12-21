@@ -931,7 +931,7 @@ AggExprEmitter::EmitInitializationToLValue(Expr* E, LValue LV) {
   // FIXME: Are initializers affected by volatile?
   if (Dest.isZeroed() && isSimpleZero(E, CGF)) {
     // Storing "i32 0" to a zero'd memory location is a noop.
-  } else if (isa<ImplicitValueInitExpr>(E) || isa<CXXScalarValueInitExpr>(E)) {
+  } else if (isa<ImplicitValueInitExpr>(E)) {
     EmitNullInitializationToLValue(LV);
   } else if (type->isReferenceType()) {
     RValue RV = CGF.EmitReferenceBindingToExpr(E, /*InitializedDecl=*/0);
@@ -960,8 +960,8 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue lv) {
     return;
   
   if (!CGF.hasAggregateLLVMType(type)) {
-    // For non-aggregates, we can store the appropriate null constant.
-    llvm::Value *null = CGF.CGM.EmitNullConstant(type);
+    // For non-aggregates, we can store zero.
+    llvm::Value *null = llvm::Constant::getNullValue(CGF.ConvertType(type));
     // Note that the following is not equivalent to
     // EmitStoreThroughBitfieldLValue for ARC types.
     if (lv.isBitField()) {
