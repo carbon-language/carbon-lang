@@ -209,7 +209,7 @@ ARMConstantPoolSymbol::ARMConstantPoolSymbol(LLVMContext &C, const char *s,
     S(strdup(s)) {}
 
 ARMConstantPoolSymbol::~ARMConstantPoolSymbol() {
-  free((void*)S);
+  free(const_cast<void*>(reinterpret_cast<const void *>(S)));
 }
 
 ARMConstantPoolSymbol *

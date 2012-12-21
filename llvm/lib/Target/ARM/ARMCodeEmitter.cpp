@@ -371,12 +371,16 @@ FunctionPass *llvm::createARMJITCodeEmitterPass(ARMBaseTargetMachine &TM,
 }
 
 bool ARMCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
-  assert((MF.getTarget().getRelocationModel() != Reloc::Default ||
-          MF.getTarget().getRelocationModel() != Reloc::Static) &&
+  TargetMachine &Target = const_cast<TargetMachine&>(MF.getTarget());
+
+  assert((Target.getRelocationModel() != Reloc::Default ||
+          Target.getRelocationModel() != Reloc::Static) &&
          "JIT relocation model must be set to static or default!");
-  JTI = ((ARMBaseTargetMachine &)MF.getTarget()).getJITInfo();
-  II = (const ARMBaseInstrInfo *)MF.getTarget().getInstrInfo();
-  TD = MF.getTarget().getDataLayout();
+
+  JTI = static_cast<ARMJITInfo*>(Target.getJITInfo());
+  II = static_cast<const ARMBaseInstrInfo*>(Target.getInstrInfo());
+  TD = Target.getDataLayout();
+
   Subtarget = &TM.getSubtarget<ARMSubtarget>();
   MCPEs = &MF.getConstantPool()->getConstants();
   MJTEs = 0;
