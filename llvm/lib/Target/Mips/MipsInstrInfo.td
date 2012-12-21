@@ -353,13 +353,12 @@ class ArithLogicI<string opstr, Operand Od, RegisterClass RC,
 }
 
 // Arithmetic Multiply ADD/SUB
-let rd = 0, shamt = 0, Defs = [HI, LO], Uses = [HI, LO] in
-class MArithR<bits<6> func, string instr_asm, SDNode op, bit isComm = 0> :
-  FR<0x1c, func, (outs), (ins CPURegs:$rs, CPURegs:$rt),
-     !strconcat(instr_asm, "\t$rs, $rt"),
-     [(op CPURegs:$rs, CPURegs:$rt, LO, HI)], IIImul> {
-  let rd = 0;
-  let shamt = 0;
+class MArithR<string opstr, SDNode op, bit isComm = 0> :
+  InstSE<(outs), (ins CPURegs:$rs, CPURegs:$rt),
+         !strconcat(opstr, "\t$rs, $rt"),
+         [(op CPURegs:$rs, CPURegs:$rt, LO, HI)], IIImul, FrmR> {
+  let Defs = [HI, LO];
+  let Uses = [HI, LO];
   let isCommutable = isComm;
 }
 
@@ -575,34 +574,29 @@ class BAL_FT :
   let Defs = [RA];
 }
 
+// Sync
+let hasSideEffects = 1 in
+class SYNC_FT :
+  InstSE<(outs), (ins i32imm:$stype), "sync $stype", [(MipsSync imm:$stype)],
+         NoItinerary, FrmOther>;
 
 // Mul, Div
-class Mult<bits<6> func, string instr_asm, InstrItinClass itin,
-           RegisterClass RC, list<Register> DefRegs>:
-  FR<0x00, func, (outs), (ins RC:$rs, RC:$rt),
-     !strconcat(instr_asm, "\t$rs, $rt"), [], itin> {
-  let rd = 0;
-  let shamt = 0;
+class Mult<string opstr, InstrItinClass itin, RegisterClass RC,
+           list<Register> DefRegs> :
+  InstSE<(outs), (ins RC:$rs, RC:$rt), !strconcat(opstr, "\t$rs, $rt"), [],
+         itin, FrmR> {
   let isCommutable = 1;
   let Defs = DefRegs;
   let neverHasSideEffects = 1;
 }
 
-class Mult32<bits<6> func, string instr_asm, InstrItinClass itin>:
-  Mult<func, instr_asm, itin, CPURegs, [HI, LO]>;
-
-class Div<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin,
-          RegisterClass RC, list<Register> DefRegs>:
-  FR<0x00, func, (outs), (ins RC:$rs, RC:$rt),
-     !strconcat(instr_asm, "\t$$zero, $rs, $rt"),
-     [(op RC:$rs, RC:$rt)], itin> {
-  let rd = 0;
-  let shamt = 0;
+class Div<SDNode op, string opstr, InstrItinClass itin, RegisterClass RC,
+          list<Register> DefRegs> :
+  InstSE<(outs), (ins RC:$rs, RC:$rt),
+         !strconcat(opstr, "\t$$zero, $rs, $rt"), [(op RC:$rs, RC:$rt)], itin,
+         FrmR> {
   let Defs = DefRegs;
 }
-
-class Div32<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
-  Div<op, func, instr_asm, itin, CPURegs, [HI, LO]>;
 
 // Move from Hi/Lo
 class MoveFromLOHI<string opstr, RegisterClass RC, list<Register> UseRegs>:
@@ -834,16 +828,7 @@ defm LWR : LoadLeftRightM<"lwr", MipsLWR, CPURegs>, LW_FM<0x26>;
 defm SWL : StoreLeftRightM<"swl", MipsSWL, CPURegs>, LW_FM<0x2a>;
 defm SWR : StoreLeftRightM<"swr", MipsSWR, CPURegs>, LW_FM<0x2e>;
 
-let hasSideEffects = 1 in
-def SYNC : InstSE<(outs), (ins i32imm:$stype), "sync $stype",
-                  [(MipsSync imm:$stype)], NoItinerary, FrmOther>
-{
-  bits<5> stype;
-  let Opcode = 0;
-  let Inst{25-11} = 0;
-  let Inst{10-6} = stype;
-  let Inst{5-0} = 15;
-}
+def SYNC : SYNC_FT, SYNC_FM;
 
 /// Load-linked, Store-conditional
 let Predicates = [NotN64, HasStdEnc] in {
@@ -880,10 +865,11 @@ def TAILCALL_R : JumpFR<CPURegs, MipsTailCall>, MTLO_FM<8>, IsTailCall;
 def RET : RetBase<CPURegs>, MTLO_FM<8>;
 
 /// Multiply and Divide Instructions.
-def MULT    : Mult32<0x18, "mult", IIImul>;
-def MULTu   : Mult32<0x19, "multu", IIImul>;
-def SDIV    : Div32<MipsDivRem, 0x1a, "div", IIIdiv>;
-def UDIV    : Div32<MipsDivRemU, 0x1b, "divu", IIIdiv>;
+def MULT  : Mult<"mult", IIImul, CPURegs, [HI, LO]>, MULT_FM<0, 0x18>;
+def MULTu : Mult<"multu", IIImul, CPURegs, [HI, LO]>, MULT_FM<0, 0x19>;
+def SDIV  : Div<MipsDivRem, "div", IIIdiv, CPURegs, [HI, LO]>, MULT_FM<0, 0x1a>;
+def UDIV  : Div<MipsDivRemU, "divu", IIIdiv, CPURegs, [HI, LO]>,
+            MULT_FM<0, 0x1b>;
 
 def MTHI : MoveToLOHI<"mthi", CPURegs, [HI]>, MTLO_FM<0x11>;
 def MTLO : MoveToLOHI<"mtlo", CPURegs, [LO]>, MTLO_FM<0x13>;
@@ -912,10 +898,10 @@ def NOP : InstSE<(outs), (ins), "nop", [], IIAlu, FrmJ>, NOP_FM;
 def LEA_ADDiu : EffectiveAddress<0x09,"addiu\t$rt, $addr", CPURegs, mem_ea>;
 
 // MADD*/MSUB*
-def MADD  : MArithR<0, "madd", MipsMAdd, 1>;
-def MADDU : MArithR<1, "maddu", MipsMAddu, 1>;
-def MSUB  : MArithR<4, "msub", MipsMSub>;
-def MSUBU : MArithR<5, "msubu", MipsMSubu>;
+def MADD  : MArithR<"madd", MipsMAdd, 1>, MULT_FM<0x1c, 0>;
+def MADDU : MArithR<"maddu", MipsMAddu, 1>, MULT_FM<0x1c, 1>;
+def MSUB  : MArithR<"msub", MipsMSub>, MULT_FM<0x1c, 4>;
+def MSUBU : MArithR<"msubu", MipsMSubu>, MULT_FM<0x1c, 5>;
 
 def RDHWR : ReadHardware<CPURegs, HWRegs>;
 

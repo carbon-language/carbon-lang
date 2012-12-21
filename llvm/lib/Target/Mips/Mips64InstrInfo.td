@@ -40,12 +40,6 @@ let DecoderNamespace = "Mips64" in {
 class shift_rotate_imm64<string opstr, SDPatternOperator OpNode = null_frag>:
   shift_rotate_imm<opstr, immZExt6, shamt, CPU64Regs, OpNode>;
 
-// Mul, Div
-class Mult64<bits<6> func, string instr_asm, InstrItinClass itin>:
-  Mult<func, instr_asm, itin, CPU64Regs, [HI64, LO64]>;
-class Div64<SDNode op, bits<6> func, string instr_asm, InstrItinClass itin>:
-  Div<op, func, instr_asm, itin, CPU64Regs, [HI64, LO64]>;
-
 multiclass Atomic2Ops64<PatFrag Op> {
   def #NAME# : Atomic2Ops<Op, CPU64Regs, CPURegs>,
                Requires<[NotN64, HasStdEnc]>;
@@ -178,10 +172,12 @@ def TAILCALL64_R : JumpFR<CPU64Regs, MipsTailCall>, MTLO_FM<8>, IsTailCall;
 
 let DecoderNamespace = "Mips64" in {
 /// Multiply and Divide Instructions.
-def DMULT    : Mult64<0x1c, "dmult", IIImul>;
-def DMULTu   : Mult64<0x1d, "dmultu", IIImul>;
-def DSDIV    : Div64<MipsDivRem, 0x1e, "ddiv", IIIdiv>;
-def DUDIV    : Div64<MipsDivRemU, 0x1f, "ddivu", IIIdiv>;
+def DMULT  : Mult<"dmult", IIImul, CPU64Regs, [HI64, LO64]>, MULT_FM<0, 0x1c>;
+def DMULTu : Mult<"dmultu", IIImul, CPU64Regs, [HI64, LO64]>, MULT_FM<0, 0x1d>;
+def DSDIV  : Div<MipsDivRem, "ddiv", IIIdiv, CPU64Regs, [HI64, LO64]>,
+             MULT_FM<0, 0x1e>;
+def DUDIV  : Div<MipsDivRemU, "ddivu", IIIdiv, CPU64Regs, [HI64, LO64]>,
+             MULT_FM<0, 0x1f>;
 
 def MTHI64 : MoveToLOHI<"mthi", CPU64Regs, [HI64]>, MTLO_FM<0x11>;
 def MTLO64 : MoveToLOHI<"mtlo", CPU64Regs, [LO64]>, MTLO_FM<0x13>;

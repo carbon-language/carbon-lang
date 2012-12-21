@@ -410,6 +410,29 @@ class BGEZAL_FM<bits<5> funct> {
   let Inst{15-0}  = offset;
 }
 
+class SYNC_FM {
+  bits<5> stype;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{10-6}  = stype;
+  let Inst{5-0}   = 0xf;
+}
+
+class MULT_FM<bits<6> op, bits<6> funct> {
+  bits<5>  rs;
+  bits<5>  rt;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = op;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-6}  = 0;
+  let Inst{5-0}   = funct;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS
