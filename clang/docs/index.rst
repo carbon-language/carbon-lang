@@ -32,6 +32,7 @@ progress. This page will get filled out with docs soon...
    InternalsManual
    DriverInternals
    BlockLanguageSpec
+   ObjectiveCLiterals
 
 Indices and tables
 ==================
