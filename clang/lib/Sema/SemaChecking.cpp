@@ -5749,21 +5749,33 @@ void Sema::checkRetainCycles(VarDecl *Var, Expr *Init) {
     diagnoseRetainCycle(*this, Capturer, Owner);
 }
 
-bool Sema::checkUnsafeAssigns(SourceLocation Loc,
-                              QualType LHS, Expr *RHS) {
-  Qualifiers::ObjCLifetime LT = LHS.getObjCLifetime();
-  if (LT != Qualifiers::OCL_Weak && LT != Qualifiers::OCL_ExplicitNone)
-    return false;
-  // strip off any implicit cast added to get to the one arc-specific
+static bool checkUnsafeAssignObject(Sema &S, SourceLocation Loc,
+                                    Qualifiers::ObjCLifetime LT,
+                                    Expr *RHS, bool isProperty) {
+  // Strip off any implicit cast added to get to the one ARC-specific.
   while (ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(RHS)) {
     if (cast->getCastKind() == CK_ARCConsumeObject) {
-      Diag(Loc, diag::warn_arc_retained_assign)
-        << (LT == Qualifiers::OCL_ExplicitNone) << 1
+      S.Diag(Loc, diag::warn_arc_retained_assign)
+        << (LT == Qualifiers::OCL_ExplicitNone)
+        << (isProperty ? 0 : 1)
         << RHS->getSourceRange();
       return true;
     }
     RHS = cast->getSubExpr();
   }
+  return false;
+}
+
+bool Sema::checkUnsafeAssigns(SourceLocation Loc,
+                              QualType LHS, Expr *RHS) {
+  Qualifiers::ObjCLifetime LT = LHS.getObjCLifetime();
+
+  if (LT != Qualifiers::OCL_Weak && LT != Qualifiers::OCL_ExplicitNone)
+    return false;
+
+  if (checkUnsafeAssignObject(*this, Loc, LT, RHS, false))
+    return true;
+
   return false;
 }
 
@@ -5826,14 +5838,8 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
       }
     }
     else if (Attributes & ObjCPropertyDecl::OBJC_PR_weak) {
-      while (ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(RHS)) {
-        if (cast->getCastKind() == CK_ARCConsumeObject) {
-          Diag(Loc, diag::warn_arc_retained_assign)
-          << 0 << 0<< RHS->getSourceRange();
-          return;
-        }
-        RHS = cast->getSubExpr();
-      }
+      if (checkUnsafeAssignObject(*this, Loc, Qualifiers::OCL_Weak, RHS, true))
+        return;
     }
   }
 }
