@@ -112,7 +112,7 @@ static const char *getARMTargetCPU(const ArgList &Args,
     .Cases("armv7", "armv7a", "armv7-a", "cortex-a8")
     .Cases("armv7f", "armv7-f", "cortex-a9-mp")
     .Cases("armv7s", "armv7-s", "swift")
-    .Cases("armv7r", "armv7-r", "cortex-r4")
+    .Cases("armv7r", "armv7-r", "cortex-r4", "cortex-r5")
     .Cases("armv7m", "armv7-m", "cortex-m3")
     .Case("ep9312", "ep9312")
     .Case("iwmmxt", "iwmmxt")
