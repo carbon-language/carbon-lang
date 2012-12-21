@@ -762,10 +762,14 @@ class CombinedAllocator {
     if (alignment > 8)
       size = RoundUpTo(size, alignment);
     void *res;
-    if (primary_.CanAllocate(size, alignment))
-      res = cache->Allocate(&primary_, primary_.ClassID(size));
-    else
+    if (primary_.CanAllocate(size, alignment)) {
+      if (cache)  // Allocate from cache.
+        res = cache->Allocate(&primary_, primary_.ClassID(size));
+      else  // No thread-local cache, allocate directly from primary allocator.
+        res = primary_.Allocate(size, alignment);
+    } else {  // Secondary allocator does not use cache.
       res = secondary_.Allocate(size, alignment);
+    }
     if (alignment > 8)
       CHECK_EQ(reinterpret_cast<uptr>(res) & (alignment - 1), 0);
     if (cleared && res)

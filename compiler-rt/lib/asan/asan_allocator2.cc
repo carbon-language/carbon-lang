@@ -82,7 +82,7 @@ static const uptr kMaxAllowedMallocSize =
 static const uptr kMaxThreadLocalQuarantine =
   FIRST_32_SECOND_64(1 << 18, 1 << 20);
 
-static const uptr kReturnOnZeroMalloc = 0x0123;  // Zero page is protected.
+static const uptr kReturnOnZeroMalloc = 2048;  // Zero page is protected.
 
 static int inited = 0;
 
@@ -282,8 +282,12 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   Init();
   CHECK(stack);
   if (alignment < 8) alignment = 8;
-  if (size == 0)
-    return reinterpret_cast<void *>(kReturnOnZeroMalloc);
+  if (size == 0) {
+    if (alignment <= kReturnOnZeroMalloc)
+      return reinterpret_cast<void *>(kReturnOnZeroMalloc);
+    else
+      return 0;  // 0 bytes with large alignment requested. Just return 0.
+  }
   CHECK(IsPowerOfTwo(alignment));
   uptr rz_size = ComputeRZSize(size);
   uptr rounded_size = RoundUpTo(size, rz_size);
@@ -298,10 +302,8 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   }
 
   AsanThread *t = asanThreadRegistry().GetCurrent();
-  // Printf("t = %p\n", t);
-  CHECK(t);  // FIXME
-  void *allocated = allocator.Allocate(
-      GetAllocatorCache(&t->malloc_storage()), needed_size, 8, false);
+  AllocatorCache *cache = t ? GetAllocatorCache(&t->malloc_storage()) : 0;
+  void *allocated = allocator.Allocate(cache, needed_size, 8, false);
   uptr alloc_beg = reinterpret_cast<uptr>(allocated);
   uptr alloc_end = alloc_beg + needed_size;
   uptr beg_plus_redzone = alloc_beg + rz_size;
