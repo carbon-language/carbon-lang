@@ -479,6 +479,7 @@ public:
   /// MCRegUnitIterator - Create an iterator that traverses the register units
   /// in Reg.
   MCRegUnitIterator(unsigned Reg, const MCRegisterInfo *MCRI) {
+    assert(Reg && "Null register has no regunits");
     // Decode the RegUnits MCRegisterDesc field.
     unsigned RU = MCRI->get(Reg).RegUnits;
     unsigned Scale = RU & 15;
