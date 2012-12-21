@@ -855,6 +855,11 @@ are listed below.
    -  .. _opt_fsanitize_thread:
 
       ``-fsanitize=thread``: :doc:`ThreadSanitizer`, a data race detector.
+   -  .. _opt_fsanitize_memory:
+
+      ``-fsanitize=memory``: :doc:`MemorySanitizer`,
+      an *experimental* detector of uninitialized reads. Not ready for
+      widespread use.
    -  .. _opt_fsanitize_undefined:
 
       ``-fsanitize=undefined``: Fast and compatible undefined behavior
@@ -916,6 +921,14 @@ are listed below.
       errors (accessing local variable after the function exit).
    -  ``-fsanitize=use-after-scope``: Check for use-after-scope errors
       (accesing local variable after it went out of scope).
+
+   Extra features of MemorySanitizer (require explicit
+   ``-fsanitize=memory``):
+
+   -  ``-fsanitize-memory-track-origins``: Enables origin tracking in
+      MemorySanitizer. Adds a second stack trace to MemorySanitizer
+      reports pointing to the allocation the uninitialized bits came
+      from. Slows down execution by additional 1.5x-2x.
 
    The ``-fsanitize=`` argument must also be provided when linking, in
    order to link to the appropriate runtime library. It is not possible
