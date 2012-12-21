@@ -37,14 +37,6 @@ struct BlockDesc {
     begin = true;
   }
 
-  explicit BlockDesc(BlockDesc *b)
-      : mtx(MutexTypeJavaMBlock, StatMtxJavaMBlock)
-      , head(b->head) {
-    CHECK_EQ(begin, false);
-    begin = true;
-    b->head = 0;
-  }
-
   ~BlockDesc() {
     CHECK_EQ(begin, true);
     begin = false;
@@ -108,6 +100,14 @@ static BlockDesc *getblock(uptr addr) {
   return &jctx->heap_shadow[i];
 }
 
+static uptr USED getmem(BlockDesc *b) {
+  uptr i = b - jctx->heap_shadow;
+  uptr p = jctx->heap_begin + i * kHeapAlignment;
+  CHECK_GE(p, jctx->heap_begin);
+  CHECK_LT(p, jctx->heap_begin + jctx->heap_size);
+  return p;
+}
+
 static BlockDesc *getblockbegin(uptr addr) {
   for (BlockDesc *b = getblock(addr);; b--) {
     CHECK_GE(b, jctx->heap_shadow);
@@ -123,13 +123,17 @@ SyncVar* GetJavaSync(ThreadState *thr, uptr pc, uptr addr,
       || addr >= jctx->heap_begin + jctx->heap_size)
     return 0;
   BlockDesc *b = getblockbegin(addr);
+  DPrintf("#%d: GetJavaSync %p->%p\n", thr->tid, addr, b);
   Lock l(&b->mtx);
   SyncVar *s = b->head;
   for (; s; s = s->next) {
-    if (s->addr == addr)
+    if (s->addr == addr) {
+      DPrintf("#%d: found existing sync for %p\n", thr->tid, addr);
       break;
+    }
   }
   if (s == 0 && create) {
+    DPrintf("#%d: creating new sync for %p\n", thr->tid, addr);
     s = CTX()->synctab.Create(thr, pc, addr);
     s->next = b->head;
     b->head = s;
@@ -233,8 +237,17 @@ void __tsan_java_move(jptr src, jptr dst, jptr size) {
     BlockDesc *d = getblock(dst);
     BlockDesc *send = getblock(src + size);
     for (; s != send; s++, d++) {
+      CHECK_EQ(d->begin, false);
       if (s->begin) {
-        new(d) BlockDesc(s);
+        DPrintf("#%d: moving block %p->%p\n", thr->tid, getmem(s), getmem(d));
+        new(d) BlockDesc;
+        d->head = s->head;
+        for (SyncVar *sync = d->head; sync; sync = sync->next) {
+          uptr newaddr = sync->addr - src + dst;
+          DPrintf("#%d: moving sync %p->%p\n", thr->tid, sync->addr, newaddr);
+          sync->addr = newaddr;
+        }
+        s->head = 0;
         s->~BlockDesc();
       }
     }

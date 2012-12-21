@@ -55,7 +55,7 @@ struct SyncVar {
   static const int kInvalidTid = -1;
 
   Mutex mtx;
-  const uptr addr;
+  uptr addr;
   const u64 uid;  // Globally unique id.
   SyncClock clock;
   SyncClock read_clock;  // Used for rw mutexes only.
