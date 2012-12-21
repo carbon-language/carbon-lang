@@ -213,7 +213,8 @@ The chart below compares GCC-4.7, ICC-13, and Clang-SVN with and without loop ve
 The Y-axis shows the time in msec. Lower is better. The last column shows the geomean of all the kernels.
 
 .. image:: gcc-loops.png
-   :width: 100%
+   :width: 886
+   :height: 331
 
 .. _bb-vectorizer:
 
