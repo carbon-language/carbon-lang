@@ -854,9 +854,7 @@ are listed below.
       suspicious integer behavior.
    -  .. _opt_fsanitize_thread:
 
-      ``-fsanitize=thread``: :doc:`ThreadSanitizer`,
-      an *experimental* data race detector. Not ready for widespread
-      use.
+      ``-fsanitize=thread``: :doc:`ThreadSanitizer`, a data race detector.
    -  .. _opt_fsanitize_undefined:
 
       ``-fsanitize=undefined``: Fast and compatible undefined behavior
