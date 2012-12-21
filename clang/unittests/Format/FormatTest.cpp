@@ -545,7 +545,7 @@ TEST_F(FormatTest, UnderstandsTemplateParameters) {
   verifyFormat("template <typename T> void f() {\n}");
 }
 
-TEST_F(FormatTest, UndestandsUnaryOperators) {
+TEST_F(FormatTest, UnderstandsUnaryOperators) {
   verifyFormat("int a = -2;");
   verifyFormat("f(-1, -2, -3);");
   verifyFormat("a[-1] = 5;");
@@ -557,6 +557,11 @@ TEST_F(FormatTest, UndestandsUnaryOperators) {
   verifyFormat("++(a->f());");
   verifyFormat("--(a->f());");
   verifyFormat("if (!(a->f())) {\n}");
+
+  verifyFormat("a-- > b;");
+  verifyFormat("b ? -a : c;");
+  verifyFormat("n * sizeof char16;");
+  verifyFormat("sizeof(char);");
 }
 
 TEST_F(FormatTest, UndestandsOverloadedOperators) {
