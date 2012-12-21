@@ -12,6 +12,11 @@ set(SANITIZER_UNITTESTS
   sanitizer_test_main.cc
   )
 
+set(SANITIZER_TEST_HEADERS)
+foreach(header ${SANITIZER_HEADERS})
+  list(APPEND SANITIZER_TEST_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/../${header})
+endforeach()
+
 include_directories(..)
 include_directories(../..)
 
@@ -55,7 +60,8 @@ macro(add_sanitizer_tests_for_arch arch)
     set(output_obj "${basename}.${arch}.o")
     clang_compile(${output_obj} ${source}
                   CFLAGS ${SANITIZER_TEST_CFLAGS}
-                  DEPS gtest ${SANITIZER_RUNTIME_LIBRARIES})
+                  DEPS gtest ${SANITIZER_RUNTIME_LIBRARIES}
+                       ${SANITIZER_TEST_HEADERS})
     list(APPEND SANITIZER_TEST_OBJECTS ${output_obj})
   endforeach()
   get_sanitizer_common_lib_for_arch(${arch} SANITIZER_COMMON_LIB

@@ -20,6 +20,30 @@ set(SANITIZER_SOURCES
   sanitizer_win.cc
   )
 
+# Explicitly list all sanitizer_common headers. Not all of these are
+# included in sanitizer_common source files, but we need to depend on
+# headers when building our custom unit tests.
+set(SANITIZER_HEADERS
+  sanitizer_allocator.h
+  sanitizer_atomic_clang.h
+  sanitizer_atomic_msvc.h
+  sanitizer_atomic.h
+  sanitizer_common.h
+  sanitizer_common_interceptors.h
+  sanitizer_flags.h
+  sanitizer_internal_defs.h
+  sanitizer_libc.h
+  sanitizer_list.h
+  sanitizer_mutex.h
+  sanitizer_placement_new.h
+  sanitizer_platform_interceptors.h
+  sanitizer_procmaps.h
+  sanitizer_report_decorator.h
+  sanitizer_stackdepot.h
+  sanitizer_stacktrace.h
+  sanitizer_symbolizer.h
+  )
+
 set(SANITIZER_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 
 set(SANITIZER_RUNTIME_LIBRARIES)

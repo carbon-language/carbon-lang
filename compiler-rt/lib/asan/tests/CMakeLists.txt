@@ -16,6 +16,11 @@ include(CompilerRTUnittests)
 include_directories(..)
 include_directories(../..)
 
+set(ASAN_UNITTEST_HEADERS
+  asan_mac_test.h
+  asan_test_config.h
+  asan_test_utils.h)
+
 set(ASAN_UNITTEST_COMMON_CFLAGS
   ${COMPILER_RT_GTEST_INCLUDE_CFLAGS}
   -I${COMPILER_RT_SOURCE_DIR}/include
@@ -89,6 +94,7 @@ macro(asan_compile obj_list source arch)
   clang_compile(${output_obj} ${source}
                 CFLAGS ${ARGN} ${TARGET_CFLAGS}
                 DEPS gtest ${ASAN_RUNTIME_LIBRARIES}
+                           ${ASAN_UNITTEST_HEADERS}
                            ${ASAN_BLACKLIST_FILE})
   list(APPEND ${obj_list} ${output_obj})
 endmacro()
