@@ -212,29 +212,34 @@ const char *InitializePlatform() {
     // Disable core dumps, dumping of 16TB usually takes a bit long.
     setlim(RLIMIT_CORE, 0);
   }
-  bool reexec = false;
-  // TSan doesn't play well with unlimited stack size (as stack
-  // overlaps with shadow memory). If we detect unlimited stack size,
-  // we re-exec the program with limited stack size as a best effort.
-  if (getlim(RLIMIT_STACK) == (rlim_t)-1) {
-    const uptr kMaxStackSize = 32 * 1024 * 1024;
-    Report("WARNING: Program is run with unlimited stack size, which "
-           "wouldn't work with ThreadSanitizer.\n");
-    Report("Re-execing with stack size limited to %zd bytes.\n", kMaxStackSize);
-    SetStackSizeLimitInBytes(kMaxStackSize);
-    reexec = true;
-  }
 
-  if (getlim(RLIMIT_AS) != (rlim_t)-1) {
-    Report("WARNING: Program is run with limited virtual address space, which "
-           "wouldn't work with ThreadSanitizer.\n");
-    Report("Re-execing with unlimited virtual address space.\n");
-    setlim(RLIMIT_AS, -1);
-    reexec = true;
-  }
+  // Go maps shadow memory lazily and works fine with limited address space.
+  // Unlimited stack is not a problem as well, because the executable
+  // is not compiled with -pie.
+  if (kCppMode) {
+    bool reexec = false;
+    // TSan doesn't play well with unlimited stack size (as stack
+    // overlaps with shadow memory). If we detect unlimited stack size,
+    // we re-exec the program with limited stack size as a best effort.
+    if (getlim(RLIMIT_STACK) == (rlim_t)-1) {
+      const uptr kMaxStackSize = 32 * 1024 * 1024;
+      Report("WARNING: Program is run with unlimited stack size, which "
+             "wouldn't work with ThreadSanitizer.\n");
+      Report("Re-execing with stack size limited to %zd bytes.\n", kMaxStackSize);
+      SetStackSizeLimitInBytes(kMaxStackSize);
+      reexec = true;
+    }
 
-  if (reexec)
-    ReExec();
+    if (getlim(RLIMIT_AS) != (rlim_t)-1) {
+      Report("WARNING: Program is run with limited virtual address space, which "
+             "wouldn't work with ThreadSanitizer.\n");
+      Report("Re-execing with unlimited virtual address space.\n");
+      setlim(RLIMIT_AS, -1);
+      reexec = true;
+    }
+    if (reexec)
+      ReExec();
+  }
 
 #ifndef TSAN_GO
   CheckPIE();
