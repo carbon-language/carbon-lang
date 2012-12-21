@@ -5747,23 +5747,6 @@ void Sema::checkRetainCycles(VarDecl *Var, Expr *Init) {
     diagnoseRetainCycle(*this, Capturer, Owner);
 }
 
-static bool checkUnsafeAssignObject(Sema &S, SourceLocation Loc,
-                                    Qualifiers::ObjCLifetime LT,
-                                    Expr *RHS, bool isProperty) {
-  // Strip off any implicit cast added to get to the one ARC-specific.
-  while (ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(RHS)) {
-    if (cast->getCastKind() == CK_ARCConsumeObject) {
-      S.Diag(Loc, diag::warn_arc_retained_assign)
-        << (LT == Qualifiers::OCL_ExplicitNone)
-        << (isProperty ? 0 : 1)
-        << RHS->getSourceRange();
-      return true;
-    }
-    RHS = cast->getSubExpr();
-  }
-  return false;
-}
-
 static bool checkUnsafeAssignLiteral(Sema &S, SourceLocation Loc,
                                      Expr *RHS, bool isProperty) {
   // Check if RHS is an Objective-C object literal, which also can get
@@ -5797,6 +5780,28 @@ static bool checkUnsafeAssignLiteral(Sema &S, SourceLocation Loc,
   return false;
 }
 
+static bool checkUnsafeAssignObject(Sema &S, SourceLocation Loc,
+                                    Qualifiers::ObjCLifetime LT,
+                                    Expr *RHS, bool isProperty) {
+  // Strip off any implicit cast added to get to the one ARC-specific.
+  while (ImplicitCastExpr *cast = dyn_cast<ImplicitCastExpr>(RHS)) {
+    if (cast->getCastKind() == CK_ARCConsumeObject) {
+      S.Diag(Loc, diag::warn_arc_retained_assign)
+        << (LT == Qualifiers::OCL_ExplicitNone)
+        << (isProperty ? 0 : 1)
+        << RHS->getSourceRange();
+      return true;
+    }
+    RHS = cast->getSubExpr();
+  }
+
+  if (LT == Qualifiers::OCL_Weak &&
+      checkUnsafeAssignLiteral(S, Loc, RHS, isProperty))
+    return true;
+
+  return false;
+}
+
 bool Sema::checkUnsafeAssigns(SourceLocation Loc,
                               QualType LHS, Expr *RHS) {
   Qualifiers::ObjCLifetime LT = LHS.getObjCLifetime();
@@ -5805,10 +5810,6 @@ bool Sema::checkUnsafeAssigns(SourceLocation Loc,
     return false;
 
   if (checkUnsafeAssignObject(*this, Loc, LT, RHS, false))
-    return true;
-
-  if (LT == Qualifiers::OCL_Weak &&
-      checkUnsafeAssignLiteral(*this, Loc, RHS, false))
     return true;
 
   return false;
@@ -5874,8 +5875,6 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
     }
     else if (Attributes & ObjCPropertyDecl::OBJC_PR_weak) {
       if (checkUnsafeAssignObject(*this, Loc, Qualifiers::OCL_Weak, RHS, true))
-        return;
-      if (checkUnsafeAssignLiteral(*this, Loc, RHS, true))
         return;
     }
   }
