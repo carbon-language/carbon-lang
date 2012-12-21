@@ -1048,9 +1048,11 @@ IRInterpreter::supportsFunction (Function &llvm_function,
             case Instruction::Mul:
             case Instruction::Ret:
             case Instruction::SDiv:
+            case Instruction::SRem:
             case Instruction::Store:
             case Instruction::Sub:
             case Instruction::UDiv:
+            case Instruction::URem:
             case Instruction::ZExt:
                 break;
             }
@@ -1135,6 +1137,8 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
         case Instruction::Mul:
         case Instruction::SDiv:
         case Instruction::UDiv:
+        case Instruction::SRem:
+        case Instruction::URem:
             {
                 const BinaryOperator *bin_op = dyn_cast<BinaryOperator>(inst);
                 
@@ -1191,6 +1195,12 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     break;
                 case Instruction::UDiv:
                     result = L.GetRawBits64(0) / R.GetRawBits64(1);
+                    break;
+                case Instruction::SRem:
+                    result = L % R;
+                    break;
+                case Instruction::URem:
+                    result = L.GetRawBits64(0) % R.GetRawBits64(1);
                     break;
                 }
                                 
