@@ -713,24 +713,19 @@ bool DeclSpec::SetTypeQual(TQ T, SourceLocation Loc, const char *&PrevSpec,
   return false;
 }
 
-bool DeclSpec::SetFunctionSpecInline(SourceLocation Loc, const char *&PrevSpec,
-                                     unsigned &DiagID) {
-  // 'inline inline' is ok.
+bool DeclSpec::setFunctionSpecInline(SourceLocation Loc) {
   FS_inline_specified = true;
   FS_inlineLoc = Loc;
   return false;
 }
 
-bool DeclSpec::SetFunctionSpecVirtual(SourceLocation Loc, const char *&PrevSpec,
-                                      unsigned &DiagID) {
-  // 'virtual virtual' is ok.
+bool DeclSpec::setFunctionSpecVirtual(SourceLocation Loc) {
   FS_virtual_specified = true;
   FS_virtualLoc = Loc;
   return false;
 }
 
-bool DeclSpec::SetFunctionSpecExplicit(SourceLocation Loc, const char *&PrevSpec,
-                                       unsigned &DiagID) {
+bool DeclSpec::setFunctionSpecExplicit(SourceLocation Loc) {
   // 'explicit explicit' is ok.
   FS_explicit_specified = true;
   FS_explicitLoc = Loc;
