@@ -78,9 +78,13 @@ public:
     // If StTrue is infeasible, asserting the falseness of Cond is unnecessary
     // because the existing constraints already establish this.
     if (!StTrue) {
-      // FIXME: This is fairly expensive and should be disabled even in
-      // Release+Asserts builds.
+#ifndef __OPTIMIZE__
+      // This check is expensive and should be disabled even in Release+Asserts
+      // builds.
+      // FIXME: __OPTIMIZE__ is a GNU extension that Clang implements but MSVC
+      // does not. Is there a good equivalent there?
       assert(assume(State, Cond, false) && "System is over constrained.");
+#endif
       return ProgramStatePair((ProgramStateRef)NULL, State);
     }
 
