@@ -105,6 +105,8 @@ static OptionDefinition g_options[] =
         "Tells the debugger to open source files using the host's \"external editor\" mechanism." },
     { LLDB_3_TO_5,       false, "no-lldbinit"    , 'x', no_argument      , 0,  eArgTypeNone,
         "Do not automatically parse any '.lldbinit' files." },
+    { LLDB_OPT_SET_6,    true , "python-path"        , 'P', no_argument      , 0,  eArgTypeNone,
+        "Prints out the path to the lldb.py file for this version of lldb." },
     { 0,                 false, NULL             , 0  , 0                , 0,  eArgTypeNone,         NULL }
 };
 
@@ -388,6 +390,7 @@ Driver::OptionData::OptionData () :
     m_source_command_files (),
     m_debug_mode (false),
     m_print_version (false),
+    m_print_python_path (false),
     m_print_help (false),
     m_wait_for(false),
     m_process_name(),
@@ -410,6 +413,7 @@ Driver::OptionData::Clear ()
     m_debug_mode = false;
     m_print_help = false;
     m_print_version = false;
+    m_print_python_path = false;
     m_use_external_editor = false;
     m_wait_for = false;
     m_process_name.erase();
@@ -591,6 +595,10 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
                         m_option_data.m_print_version = true;
                         break;
 
+                    case 'P':
+                        m_option_data.m_print_python_path = true;
+                        break;
+
                     case 'c':
                         {
                             SBFileSpec file(optarg);
@@ -702,6 +710,24 @@ Driver::ParseArgs (int argc, const char *argv[], FILE *out_fh, bool &exit)
     else if (m_option_data.m_print_version)
     {
         ::fprintf (out_fh, "%s\n", m_debugger.GetVersionString());
+        exit = true;
+    }
+    else if (m_option_data.m_print_python_path)
+    {
+        SBFileSpec python_file_spec = SBHostOS::GetLLDBPythonPath();
+        if (python_file_spec.IsValid())
+        {
+            char python_path[PATH_MAX];
+            size_t num_chars = python_file_spec.GetPath(python_path, PATH_MAX);
+            if (num_chars < PATH_MAX)
+            {
+                ::fprintf (out_fh, "%s\n", python_path);
+            }
+            else
+                ::fprintf (out_fh, "<PATH TOO LONG>\n");
+        }
+        else
+            ::fprintf (out_fh, "<COULD NOT FIND PATH>\n");
         exit = true;
     }
     else if (m_option_data.m_process_name.empty() && m_option_data.m_process_pid == LLDB_INVALID_PROCESS_ID)

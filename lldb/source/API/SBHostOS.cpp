@@ -26,6 +26,18 @@ SBHostOS::GetProgramFileSpec ()
     return sb_filespec;
 }
 
+SBFileSpec
+SBHostOS::GetLLDBPythonPath ()
+{
+    SBFileSpec sb_lldb_python_filespec;
+    FileSpec lldb_python_spec;
+    if (Host::GetLLDBPath (ePathTypePythonDir, lldb_python_spec))
+    {
+        sb_lldb_python_filespec.SetFileSpec (lldb_python_spec);
+    }
+    return sb_lldb_python_filespec;
+}
+
 lldb::thread_t
 SBHostOS::ThreadCreate
 (

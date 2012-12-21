@@ -111,6 +111,7 @@ public:
         std::vector<std::string> m_source_command_files;
         bool m_debug_mode;
         bool m_print_version;
+        bool m_print_python_path;
         bool m_print_help;
         bool m_wait_for;
         std::string m_process_name;
