@@ -178,7 +178,6 @@ char AMDGPUStructurizeCFG::ID = 0;
 
 /// \brief Initialize the types and constants used in the pass
 bool AMDGPUStructurizeCFG::doInitialization(Region *R, RGPassManager &RGM) {
-
   LLVMContext &Context = R->getEntry()->getContext();
 
   Boolean = Type::getInt1Ty(Context);
@@ -191,7 +190,6 @@ bool AMDGPUStructurizeCFG::doInitialization(Region *R, RGPassManager &RGM) {
 
 /// \brief Build up the general order of nodes
 void AMDGPUStructurizeCFG::orderNodes() {
-
   scc_iterator<Region *> I = scc_begin(ParentRegion),
                          E = scc_end(ParentRegion);
   for (Order.clear(); I != E; ++I) {
@@ -203,7 +201,6 @@ void AMDGPUStructurizeCFG::orderNodes() {
 /// \brief Build blocks and loop predicates
 void AMDGPUStructurizeCFG::buildPredicate(BranchInst *Term, unsigned Idx,
                                           BBPredicates &Pred, bool Invert) {
-
   Value *True = Invert ? BoolFalse : BoolTrue;
   Value *False = Invert ? BoolTrue : BoolFalse;
 
@@ -251,7 +248,6 @@ void AMDGPUStructurizeCFG::buildPredicate(BranchInst *Term, unsigned Idx,
 
 /// \brief Analyze the successors of each block and build up predicates
 void AMDGPUStructurizeCFG::analyzeBlock(BasicBlock *BB) {
-
   pred_iterator PI = pred_begin(BB), PE = pred_end(BB);
   BBPredicates &Pred = Predicates[BB];
 
@@ -269,7 +265,6 @@ void AMDGPUStructurizeCFG::analyzeBlock(BasicBlock *BB) {
 
 /// \brief Analyze the conditions leading to loop to a previous block
 void AMDGPUStructurizeCFG::analyzeLoop(BasicBlock *BB, unsigned &LoopIdx) {
-
   BranchInst *Term = cast<BranchInst>(BB->getTerminator());
 
   for (unsigned i = 0, e = Term->getNumSuccessors(); i != e; ++i) {
@@ -291,7 +286,6 @@ void AMDGPUStructurizeCFG::analyzeLoop(BasicBlock *BB, unsigned &LoopIdx) {
 
 /// \brief Collect various loop and predicate infos
 void AMDGPUStructurizeCFG::collectInfos() {
-
   unsigned Number = 0, LoopIdx = ~0;
 
   // Reset predicate
@@ -317,7 +311,6 @@ void AMDGPUStructurizeCFG::collectInfos() {
 
 /// \brief Does A dominate all the predicates of B ?
 bool AMDGPUStructurizeCFG::dominatesPredicates(BasicBlock *A, BasicBlock *B) {
-
   BBPredicates &Preds = Predicates[B];
   for (BBPredicates::iterator PI = Preds.begin(), PE = Preds.end();
        PI != PE; ++PI) {
@@ -330,7 +323,6 @@ bool AMDGPUStructurizeCFG::dominatesPredicates(BasicBlock *A, BasicBlock *B) {
 
 /// \brief Remove phi values from all successors and the remove the terminator.
 void AMDGPUStructurizeCFG::killTerminator(BasicBlock *BB) {
-
   TerminatorInst *Term = BB->getTerminator();
   if (!Term)
     return;
@@ -350,7 +342,6 @@ void AMDGPUStructurizeCFG::killTerminator(BasicBlock *BB) {
 /// Second: Handle the first successor directly if the resulting nodes successor
 /// predicates are still dominated by the original entry
 RegionNode *AMDGPUStructurizeCFG::skipChained(RegionNode *Node) {
-
   BasicBlock *Entry = Node->getEntry();
 
   // Skip forward as long as it is just a linear flow
@@ -418,7 +409,6 @@ RegionNode *AMDGPUStructurizeCFG::skipChained(RegionNode *Node) {
 /// \brief Remove all PHI values coming from "From" into "To" and remember
 /// them in DeletedPhis
 void AMDGPUStructurizeCFG::delPhiValues(BasicBlock *From, BasicBlock *To) {
-
   PhiMap &Map = DeletedPhis[To];
   for (BasicBlock::iterator I = To->begin(), E = To->end();
        I != E && isa<PHINode>(*I);) {
@@ -433,7 +423,6 @@ void AMDGPUStructurizeCFG::delPhiValues(BasicBlock *From, BasicBlock *To) {
 
 /// \brief Add the PHI values back once we knew the new predecessor
 void AMDGPUStructurizeCFG::addPhiValues(BasicBlock *From, BasicBlock *To) {
-
   if (!DeletedPhis.count(To))
     return;
 
@@ -470,7 +459,6 @@ void AMDGPUStructurizeCFG::addPhiValues(BasicBlock *From, BasicBlock *To) {
 
 /// \brief Create a new flow node and update dominator tree and region info
 BasicBlock *AMDGPUStructurizeCFG::getNextFlow(BasicBlock *Prev) {
-
   LLVMContext &Context = Func->getContext();
   BasicBlock *Insert = Order.empty() ? ParentRegion->getExit() :
                        Order.back()->getEntry();
@@ -485,7 +473,6 @@ BasicBlock *AMDGPUStructurizeCFG::getNextFlow(BasicBlock *Prev) {
 /// \brief Can we predict that this node will always be called?
 bool AMDGPUStructurizeCFG::isPredictableTrue(BasicBlock *Prev,
                                              BasicBlock *Node) {
-
   BBPredicates &Preds = Predicates[Node];
   bool Dominated = false;
 
@@ -505,7 +492,6 @@ bool AMDGPUStructurizeCFG::isPredictableTrue(BasicBlock *Prev,
 /// instructions at node exits
 BasicBlock *AMDGPUStructurizeCFG::wireFlowBlock(BasicBlock *Prev,
                                                 RegionNode *Node) {
-
   BasicBlock *Entry = Node->getEntry();
 
   if (LoopStart == Entry) {
@@ -567,7 +553,6 @@ BasicBlock *AMDGPUStructurizeCFG::wireFlowBlock(BasicBlock *Prev,
 /// After this function control flow looks like it should be, but
 /// branches only have undefined conditions.
 void AMDGPUStructurizeCFG::createFlow() {
-
   DeletedPhis.clear();
 
   BasicBlock *Prev = Order.pop_back_val()->getEntry();
@@ -632,7 +617,6 @@ void AMDGPUStructurizeCFG::createFlow() {
 
 /// \brief Insert the missing branch conditions
 void AMDGPUStructurizeCFG::insertConditions() {
-
   SSAUpdater PhiInserter;
 
   for (BBVector::iterator FI = FlowsInserted.begin(), FE = FlowsInserted.end();
@@ -660,7 +644,6 @@ void AMDGPUStructurizeCFG::insertConditions() {
 /// Handle a rare case where the disintegrated nodes instructions
 /// no longer dominate all their uses. Not sure if this is really nessasary
 void AMDGPUStructurizeCFG::rebuildSSA() {
-
   SSAUpdater Updater;
   for (Region::block_iterator I = ParentRegion->block_begin(),
                               E = ParentRegion->block_end();
@@ -702,7 +685,6 @@ void AMDGPUStructurizeCFG::rebuildSSA() {
 
 /// \brief Run the transformation for each region found
 bool AMDGPUStructurizeCFG::runOnRegion(Region *R, RGPassManager &RGM) {
-
   if (R->isTopLevelRegion())
     return false;
 

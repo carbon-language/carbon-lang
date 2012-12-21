@@ -101,7 +101,6 @@ FunctionPass *llvm::createSILowerControlFlowPass(TargetMachine &tm) {
 }
 
 void SILowerControlFlowPass::Skip(MachineInstr &From, MachineOperand &To) {
-
   unsigned NumInstr = 0;
 
   for (MachineBasicBlock *MBB = *From.getParent()->succ_begin();
@@ -126,7 +125,6 @@ void SILowerControlFlowPass::Skip(MachineInstr &From, MachineOperand &To) {
 }
 
 void SILowerControlFlowPass::If(MachineInstr &MI) {
-
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
   unsigned Reg = MI.getOperand(0).getReg();
@@ -145,7 +143,6 @@ void SILowerControlFlowPass::If(MachineInstr &MI) {
 }
 
 void SILowerControlFlowPass::Else(MachineInstr &MI) {
-
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
   unsigned Dst = MI.getOperand(0).getReg();
@@ -164,7 +161,6 @@ void SILowerControlFlowPass::Else(MachineInstr &MI) {
 }
 
 void SILowerControlFlowPass::Break(MachineInstr &MI) {
-
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
 
@@ -179,7 +175,6 @@ void SILowerControlFlowPass::Break(MachineInstr &MI) {
 }
 
 void SILowerControlFlowPass::IfBreak(MachineInstr &MI) {
-
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
 
@@ -195,7 +190,6 @@ void SILowerControlFlowPass::IfBreak(MachineInstr &MI) {
 }
 
 void SILowerControlFlowPass::ElseBreak(MachineInstr &MI) {
-
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
 
@@ -211,7 +205,6 @@ void SILowerControlFlowPass::ElseBreak(MachineInstr &MI) {
 }
 
 void SILowerControlFlowPass::Loop(MachineInstr &MI) {
-
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
   unsigned Src = MI.getOperand(0).getReg();
@@ -228,7 +221,6 @@ void SILowerControlFlowPass::Loop(MachineInstr &MI) {
 }
 
 void SILowerControlFlowPass::EndCf(MachineInstr &MI) {
-
   MachineBasicBlock &MBB = *MI.getParent();
   DebugLoc DL = MI.getDebugLoc();
   unsigned Reg = MI.getOperand(0).getReg();
@@ -242,7 +234,6 @@ void SILowerControlFlowPass::EndCf(MachineInstr &MI) {
 }
 
 void SILowerControlFlowPass::Branch(MachineInstr &MI) {
-
   MachineBasicBlock *Next = MI.getParent()->getNextNode();
   MachineBasicBlock *Target = MI.getOperand(0).getMBB();
   if (Target == Next)
@@ -252,7 +243,6 @@ void SILowerControlFlowPass::Branch(MachineInstr &MI) {
 }
 
 bool SILowerControlFlowPass::runOnMachineFunction(MachineFunction &MF) {
-
   bool HaveCf = false;
 
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();

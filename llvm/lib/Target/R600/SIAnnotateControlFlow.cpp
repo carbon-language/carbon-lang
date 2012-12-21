@@ -97,7 +97,6 @@ public:
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-
     AU.addRequired<DominatorTree>();
     AU.addPreserved<DominatorTree>();
     FunctionPass::getAnalysisUsage(AU);
@@ -111,7 +110,6 @@ char SIAnnotateControlFlow::ID = 0;
 
 /// \brief Initialize all the types and constants used in the pass
 bool SIAnnotateControlFlow::doInitialization(Module &M) {
-
   LLVMContext &Context = M.getContext();
 
   Void = Type::getVoidTy(Context);
@@ -166,7 +164,6 @@ void SIAnnotateControlFlow::push(BasicBlock *BB, Value *Saved) {
 /// \brief Can the condition represented by this PHI node treated like
 /// an "Else" block?
 bool SIAnnotateControlFlow::isElse(PHINode *Phi) {
-
   BasicBlock *IDom = DT->getNode(Phi->getParent())->getIDom()->getBlock();
   for (unsigned i = 0, e = Phi->getNumIncomingValues(); i != e; ++i) {
     if (Phi->getIncomingBlock(i) == IDom) {
@@ -205,7 +202,6 @@ void SIAnnotateControlFlow::insertElse(BranchInst *Term) {
 
 /// \brief Recursively handle the condition leading to a loop
 void SIAnnotateControlFlow::handleLoopCondition(Value *Cond) {
-
   if (PHINode *Phi = dyn_cast<PHINode>(Cond)) {
 
     // Handle all non constant incoming values first
@@ -262,7 +258,6 @@ void SIAnnotateControlFlow::handleLoopCondition(Value *Cond) {
 
 /// \brief Handle a back edge (loop)
 void SIAnnotateControlFlow::handleLoop(BranchInst *Term) {
-
   BasicBlock *Target = Term->getSuccessor(1);
   PHINode *Broken = PHINode::Create(Int64, 0, "", &Target->front());
 
@@ -293,7 +288,6 @@ void SIAnnotateControlFlow::closeControlFlow(BasicBlock *BB) {
 /// \brief Annotate the control flow with intrinsics so the backend can
 /// recognize if/then/else and loops.
 bool SIAnnotateControlFlow::runOnFunction(Function &F) {
-
   DT = &getAnalysis<DominatorTree>();
 
   for (df_iterator<BasicBlock *> I = df_begin(&F.getEntryBlock()),
@@ -332,6 +326,5 @@ bool SIAnnotateControlFlow::runOnFunction(Function &F) {
 
 /// \brief Create the annotation pass
 FunctionPass *llvm::createSIAnnotateControlFlowPass() {
-
   return new SIAnnotateControlFlow();
 }
