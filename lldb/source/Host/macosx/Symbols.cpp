@@ -181,7 +181,7 @@ UniversalMachOFileContainsArchAndUUID
         if (arch)
         {
             ArchSpec fat_arch(eArchTypeMachO, arch_cputype, arch_cpusubtype);
-            if (!fat_arch.IsCompatibleMatch(*arch))
+            if (!fat_arch.IsExactMatch(*arch))
                 continue;
         }
 
