@@ -560,12 +560,21 @@ let isCall=1, hasDelaySlot=1, Defs = [RA] in {
     InstSE<(outs), (ins RC:$rs), !strconcat(opstr, "\t$rs"),
            [(MipsJmpLink RC:$rs)], IIBranch, FrmR>;
 
-  class BranchLink<string instr_asm, bits<5> _rt, RegisterClass RC>:
-    FI<0x1, (outs), (ins RC:$rs, brtarget:$imm16),
-       !strconcat(instr_asm, "\t$rs, $imm16"), [], IIBranch> {
-    let rt = _rt;
-  }
+  class BGEZAL_FT<string opstr, RegisterClass RC> :
+    InstSE<(outs), (ins RC:$rs, brtarget:$offset),
+           !strconcat(opstr, "\t$rs, $offset"), [], IIBranch, FrmI>;
+
 }
+
+class BAL_FT :
+  InstSE<(outs), (ins brtarget:$offset), "bal\t$offset", [], IIBranch, FrmI> {
+  let isBranch = 1;
+  let isTerminator = 1;
+  let isBarrier = 1;
+  let hasDelaySlot = 1;
+  let Defs = [RA];
+}
+
 
 // Mul, Div
 class Mult<bits<6> func, string instr_asm, InstrItinClass itin,
@@ -859,14 +868,12 @@ def BGTZ    : CBranchZero<"bgtz", setgt, CPURegs>, BGEZ_FM<7, 0>;
 def BLEZ    : CBranchZero<"blez", setle, CPURegs>, BGEZ_FM<6, 0>;
 def BLTZ    : CBranchZero<"bltz", setlt, CPURegs>, BGEZ_FM<1, 0>;
 
-let rt = 0x11, rs = 0, isBranch = 1, isTerminator = 1, isBarrier = 1,
-    hasDelaySlot = 1, Defs = [RA] in
-def BAL_BR: FI<0x1, (outs), (ins brtarget:$imm16), "bal\t$imm16", [], IIBranch>;
+def BAL_BR: BAL_FT, BAL_FM;
 
 def JAL  : JumpLink<"jal">, FJ<3>;
 def JALR : JumpLinkReg<"jalr", CPURegs>, JALR_FM;
-def BGEZAL  : BranchLink<"bgezal", 0x11, CPURegs>;
-def BLTZAL  : BranchLink<"bltzal", 0x10, CPURegs>;
+def BGEZAL : BGEZAL_FT<"bgezal", CPURegs>, BGEZAL_FM<0x11>;
+def BLTZAL : BGEZAL_FT<"bltzal", CPURegs>, BGEZAL_FM<0x10>;
 def TAILCALL : JumpFJ<calltarget, "j", MipsTailCall, imm>, FJ<2>, IsTailCall;
 def TAILCALL_R : JumpFR<CPURegs, MipsTailCall>, MTLO_FM<8>, IsTailCall;
 
