@@ -212,10 +212,11 @@ class SizeClassAllocator64 {
     uptr size = SizeClassMap::Size(class_id);
     uptr chunk_idx = GetChunkIdx((uptr)p, size);
     uptr reg_beg = (uptr)p & ~(kRegionSize - 1);
-    uptr begin = reg_beg + chunk_idx * size;
+    uptr beg = chunk_idx * size;
+    uptr next_beg = beg + size;
     RegionInfo *region = GetRegionInfo(class_id);
-    if (region->allocated_user >= (chunk_idx + 1) * size)
-      return reinterpret_cast<void*>(begin);
+    if (region->mapped_user >= next_beg)
+      return reinterpret_cast<void*>(reg_beg + beg);
     return 0;
   }
 
@@ -258,10 +259,10 @@ class SizeClassAllocator64 {
   // Populate the free list with at most this number of bytes at once
   // or with one element if its size is greater.
   static const uptr kPopulateSize = 1 << 18;
-  // Call mmap for user memory with this size.
-  static const uptr kUserMapSize = 1 << 22;
-  // Call mmap for metadata memory with this size.
-  static const uptr kMetaMapSize = 1 << 20;
+  // Call mmap for user memory with at least this size.
+  static const uptr kUserMapSize = 1 << 18;
+  // Call mmap for metadata memory with at least this size.
+  static const uptr kMetaMapSize = 1 << 16;
 
   struct RegionInfo {
     SpinMutex mutex;
@@ -302,9 +303,12 @@ class SizeClassAllocator64 {
     uptr region_beg = kSpaceBeg + kRegionSize * class_id;
     if (end_idx + size > region->mapped_user) {
       // Do the mmap for the user memory.
-      CHECK_GT(region->mapped_user + kUserMapSize, end_idx);
-      MapWithCallback(region_beg + region->mapped_user, kUserMapSize);
-      region->mapped_user += kUserMapSize;
+      uptr map_size = kUserMapSize;
+      while (end_idx + size > region->mapped_user + map_size)
+        map_size += kUserMapSize;
+      CHECK_GT(region->mapped_user + map_size, end_idx);
+      MapWithCallback(region_beg + region->mapped_user, map_size);
+      region->mapped_user += map_size;
     }
     uptr idx = beg_idx;
     uptr i = 0;
@@ -318,12 +322,16 @@ class SizeClassAllocator64 {
     CHECK_LE(region->allocated_user, region->mapped_user);
     region->allocated_meta += i * kMetadataSize;
     if (region->allocated_meta > region->mapped_meta) {
+      uptr map_size = kMetaMapSize;
+      while (region->allocated_meta > region->mapped_meta + map_size)
+        map_size += kMetaMapSize;
       // Do the mmap for the metadata.
-      CHECK_GT(region->mapped_meta + kMetaMapSize, region->allocated_meta);
+      CHECK_GE(region->mapped_meta + map_size, region->allocated_meta);
       MapWithCallback(region_beg + kRegionSize -
-                      region->mapped_meta - kMetaMapSize, kMetaMapSize);
-      region->mapped_meta += kMetaMapSize;
+                      region->mapped_meta - map_size, map_size);
+      region->mapped_meta += map_size;
     }
+    CHECK_LE(region->allocated_meta, region->mapped_meta);
     if (region->allocated_user + region->allocated_meta > kRegionSize) {
       Printf("Out of memory. Dying.\n");
       Printf("The process has exhausted %zuMB for size class %zu.\n",
