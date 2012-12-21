@@ -103,6 +103,8 @@ public:
     State.Indent.push_back(Indent + 4);
     State.LastSpace.push_back(Indent);
     State.FirstLessLess.push_back(0);
+    State.ForLoopVariablePos = 0;
+    State.LineContainsContinuedForLoopSection = false;
 
     // The first token has already been indented and thus consumed.
     moveStateToNextToken(State);
@@ -165,6 +167,14 @@ private:
     /// on a level.
     std::vector<unsigned> FirstLessLess;
 
+    /// \brief The column of the first variable in a for-loop declaration.
+    ///
+    /// Used to align the second variable if necessary.
+    unsigned ForLoopVariablePos;
+
+    /// \brief \c true if this line contains a continued for-loop section.
+    bool LineContainsContinuedForLoopSection;
+
     /// \brief Comparison operator to be able to used \c IndentState in \c map.
     bool operator<(const IndentState &Other) const {
       if (Other.ConsumedTokens != ConsumedTokens)
@@ -189,6 +199,11 @@ private:
         if (Other.FirstLessLess[i] != FirstLessLess[i])
           return Other.FirstLessLess[i] > FirstLessLess[i];
       }
+      if (Other.ForLoopVariablePos != ForLoopVariablePos)
+        return Other.ForLoopVariablePos < ForLoopVariablePos;
+      if (Other.LineContainsContinuedForLoopSection !=
+          LineContainsContinuedForLoopSection)
+        return LineContainsContinuedForLoopSection;
       return false;
     }
   };
@@ -209,19 +224,27 @@ private:
 
     if (Newline) {
       if (Current.Tok.is(tok::string_literal) &&
-          Previous.Tok.is(tok::string_literal))
+          Previous.Tok.is(tok::string_literal)) {
         State.Column = State.Column - Previous.Tok.getLength();
-      else if (Current.Tok.is(tok::lessless) &&
-               State.FirstLessLess[ParenLevel] != 0)
+      } else if (Current.Tok.is(tok::lessless) &&
+                 State.FirstLessLess[ParenLevel] != 0) {
         State.Column = State.FirstLessLess[ParenLevel];
-      else if (ParenLevel != 0 &&
-               (Previous.Tok.is(tok::equal) || Current.Tok.is(tok::arrow) ||
-                Current.Tok.is(tok::period)))
+      } else if (ParenLevel != 0 &&
+                 (Previous.Tok.is(tok::equal) || Current.Tok.is(tok::arrow) ||
+                  Current.Tok.is(tok::period))) {
         // Indent and extra 4 spaces after '=' as it continues an expression.
         // Don't do that on the top level, as we already indent 4 there.
         State.Column = State.Indent[ParenLevel] + 4;
-      else
+      } else if (Line.Tokens[0].Tok.is(tok::kw_for) &&
+                 Previous.Tok.is(tok::comma)) {
+        State.Column = State.ForLoopVariablePos;
+      } else {
         State.Column = State.Indent[ParenLevel];
+      }
+
+      if (Line.Tokens[0].Tok.is(tok::kw_for))
+        State.LineContainsContinuedForLoopSection =
+            Previous.Tok.isNot(tok::semi);
 
       if (!DryRun)
         replaceWhitespace(Current, 1, State.Column);
@@ -232,6 +255,9 @@ private:
           Annotations[0].Type != TokenAnnotation::TT_ObjCMethodSpecifier)
         State.Indent[ParenLevel] += 2;
     } else {
+      if (Current.Tok.is(tok::equal) && Line.Tokens[0].Tok.is(tok::kw_for))
+        State.ForLoopVariablePos = State.Column - Previous.Tok.getLength();
+
       unsigned Spaces = Annotations[Index].SpaceRequiredBefore ? 1 : 0;
       if (Annotations[Index].Type == TokenAnnotation::TT_LineComment)
         Spaces = 2;
@@ -290,6 +316,12 @@ private:
            "Tried to calculate penalty for splitting after the last token");
     const FormatToken &Left = Line.Tokens[Index];
     const FormatToken &Right = Line.Tokens[Index + 1];
+
+    // In for-loops, prefer breaking at ',' and ';'.
+    if (Line.Tokens[0].Tok.is(tok::kw_for) &&
+        (Left.Tok.isNot(tok::comma) && Left.Tok.isNot(tok::semi)))
+      return 20;
+
     if (Left.Tok.is(tok::semi) || Left.Tok.is(tok::comma))
       return 0;
     if (Left.Tok.is(tok::equal) || Left.Tok.is(tok::l_paren) ||
@@ -320,6 +352,9 @@ private:
     if (!NewLine && Annotations[State.ConsumedTokens].MustBreakBefore)
       return UINT_MAX;
     if (NewLine && !Annotations[State.ConsumedTokens].CanBreakBefore)
+      return UINT_MAX;
+    if (!NewLine && Line.Tokens[State.ConsumedTokens - 1].Tok.is(tok::semi) &&
+        State.LineContainsContinuedForLoopSection)
       return UINT_MAX;
 
     unsigned CurrentPenalty = 0;

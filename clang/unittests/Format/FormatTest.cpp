@@ -164,6 +164,15 @@ TEST_F(FormatTest, FormatsForLoop) {
   verifyFormat("for (;;) {\n"
                "  f();\n"
                "}");
+
+  verifyFormat(
+      "for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),\n"
+      "                                          E = UnwrappedLines.end();\n"
+      "     I != E; ++I) {\n}");
+
+  verifyFormat(
+      "for (MachineFun::iterator IIII = PrevIt, EEEE = F.end(); IIII != EEEE;\n"
+      "     ++IIIII) {\n}");
 }
 
 TEST_F(FormatTest, FormatsWhileLoop) {
