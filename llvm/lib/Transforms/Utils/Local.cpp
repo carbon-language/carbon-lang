@@ -15,6 +15,7 @@
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
@@ -961,5 +962,45 @@ bool llvm::replaceDbgDeclareForAlloca(AllocaInst *AI, Value *NewAllocaAddress,
   BasicBlock *BB = AI->getParent();
   Builder.insertDeclare(NewAllocaAddress, NewDIVar, BB);
   DDI->eraseFromParent();
+  return true;
+}
+
+bool llvm::removeUnreachableBlocks(Function &F) {
+  SmallPtrSet<BasicBlock*, 16> Reachable;
+  SmallVector<BasicBlock*, 128> Worklist;
+  Worklist.push_back(&F.getEntryBlock());
+  Reachable.insert(&F.getEntryBlock());
+  do {
+    BasicBlock *BB = Worklist.pop_back_val();
+    for (succ_iterator SI = succ_begin(BB), SE = succ_end(BB); SI != SE; ++SI)
+      if (Reachable.insert(*SI))
+        Worklist.push_back(*SI);
+  } while (!Worklist.empty());
+
+  if (Reachable.size() == F.size())
+    return false;
+
+  assert(Reachable.size() < F.size());
+  for (Function::iterator I = llvm::next(F.begin()), E = F.end(); I != E; ++I) {
+    if (Reachable.count(I))
+      continue;
+
+    // Remove the block as predecessor of all its reachable successors.
+    // Unreachable successors don't matter as they'll soon be removed, too.
+    for (succ_iterator SI = succ_begin(I), SE = succ_end(I); SI != SE; ++SI)
+      if (Reachable.count(*SI))
+        (*SI)->removePredecessor(I);
+
+    // Zap all instructions in this basic block.
+    while (!I->empty()) {
+      Instruction &Inst = I->back();
+      if (!Inst.use_empty())
+        Inst.replaceAllUsesWith(UndefValue::get(Inst.getType()));
+      I->getInstList().pop_back();
+    }
+
+    --I;
+    llvm::next(I)->eraseFromParent();
+  }
   return true;
 }
