@@ -148,11 +148,9 @@ class AbbreviationsTestCase(TestBase):
         if self.getArchitecture() in ["", 'x86_64', 'i386']:
             self.expect("dis -f",
                         startstr = "a.out`sum(int, int)",
-                        substrs = [' push',
-                                   ' mov',
+                        substrs = [' mov',
                                    ' addl ',
-                                   'ret'],
-                        patterns = ['(leave|popq|popl)'])
+                                   'ret'])
 
         self.expect("i d l main.cpp",
                     patterns = ["Line table for .*main.cpp in `a.out"])
