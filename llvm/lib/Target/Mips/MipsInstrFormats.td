@@ -326,6 +326,20 @@ class MTLO_FM<bits<6> funct> {
   let Inst{5-0}   = funct;
 }
 
+class SEB_FM<bits<5> funct> {
+  bits<5> rd;
+  bits<5> rt;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x1f;
+  let Inst{25-21} = 0;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = funct;
+  let Inst{5-0}   = 0x20;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS

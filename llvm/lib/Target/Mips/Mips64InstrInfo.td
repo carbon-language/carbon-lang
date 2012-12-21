@@ -192,8 +192,8 @@ def MFHI64 : MoveFromLOHI<"mfhi", CPU64Regs, [HI64]>, MFLO_FM<0x10>;
 def MFLO64 : MoveFromLOHI<"mflo", CPU64Regs, [LO64]>, MFLO_FM<0x12>;
 
 /// Sign Ext In Register Instructions.
-def SEB64 : SignExtInReg<0x10, "seb", i8, CPU64Regs>;
-def SEH64 : SignExtInReg<0x18, "seh", i16, CPU64Regs>;
+def SEB64 : SignExtInReg<"seb", i8, CPU64Regs>, SEB_FM<0x10>;
+def SEH64 : SignExtInReg<"seh", i16, CPU64Regs>, SEB_FM<0x18>;
 
 /// Count Leading
 def DCLZ : CountLeading0<0x24, "dclz", CPU64Regs>;
