@@ -106,6 +106,8 @@ namespace {
       }
     bool runOnFunction(Function &F);
 
+    const char *getPassName() const { return "CodeGen Prepare"; }
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<ProfileInfo>();
