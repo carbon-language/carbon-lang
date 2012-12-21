@@ -968,9 +968,9 @@ namespace {
         }
 
         if (VTTI) {
-          unsigned ICost = VTTI->getMemoryOpCost(I->getOpcode(), I->getType(),
+          unsigned ICost = VTTI->getMemoryOpCost(I->getOpcode(), aTypeI,
                                                  IAlignment, IAddressSpace);
-          unsigned JCost = VTTI->getMemoryOpCost(J->getOpcode(), J->getType(),
+          unsigned JCost = VTTI->getMemoryOpCost(J->getOpcode(), aTypeJ,
                                                  JAlignment, JAddressSpace);
           unsigned VCost = VTTI->getMemoryOpCost(I->getOpcode(), VType,
                                                  BottomAlignment,

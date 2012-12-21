@@ -340,6 +340,7 @@ unsigned
 VectorTargetTransformImpl::getMemoryOpCost(unsigned Opcode, Type *Src,
                                            unsigned Alignment,
                                            unsigned AddressSpace) const {
+  assert(!Src->isVoidTy() && "Invalid type");
   std::pair<unsigned, MVT> LT = getTypeLegalizationCost(Src);
 
   // Assume that all loads of legal types cost 1.
