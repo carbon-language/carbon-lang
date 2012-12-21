@@ -19,6 +19,7 @@
 #include "clang/Format/Format.h"
 #include "UnwrappedLineParser.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/OperatorPrecedence.h"
 #include "clang/Lex/Lexer.h"
 
 #include <string>
@@ -650,10 +651,11 @@ private:
       TokenAnnotation &Annotation = Annotations[i];
       const FormatToken &Tok = Line.Tokens[i];
 
-      if (Tok.Tok.is(tok::equal) || Tok.Tok.is(tok::plusequal) ||
-          Tok.Tok.is(tok::minusequal) || Tok.Tok.is(tok::starequal) ||
-          Tok.Tok.is(tok::slashequal))
+      if (getBinOpPrecedence(Tok.Tok.getKind(), true, true) == prec::Assignment)
         AssignmentEncountered = true;
+
+      if (Annotation.Type != TokenAnnotation::TT_Unknown)
+        continue;
 
       if (Tok.Tok.is(tok::star) || Tok.Tok.is(tok::amp)) {
         Annotation.Type = determineStarAmpUsage(i, AssignmentEncountered);
@@ -663,9 +665,9 @@ private:
         Annotation.Type = determineIncrementUsage(i);
       } else if (Tok.Tok.is(tok::exclaim)) {
         Annotation.Type = TokenAnnotation::TT_UnaryOperator;
-      } else if (isBinaryOperator(Line.Tokens[i]))
+      } else if (isBinaryOperator(Line.Tokens[i])) {
         Annotation.Type = TokenAnnotation::TT_BinaryOperator;
-      else if (Tok.Tok.is(tok::comment)) {
+      } else if (Tok.Tok.is(tok::comment)) {
         StringRef Data(SourceMgr.getCharacterData(Tok.Tok.getLocation()),
                        Tok.Tok.getLength());
         if (Data.startswith("//"))
@@ -677,23 +679,8 @@ private:
   }
 
   bool isBinaryOperator(const FormatToken &Tok) {
-    switch (Tok.Tok.getKind()) {
-    case tok::equal:
-    case tok::equalequal:
-    case tok::exclaimequal:
-    case tok::star:
-      //case tok::amp:
-    case tok::plus:
-    case tok::slash:
-    case tok::minus:
-    case tok::ampamp:
-    case tok::pipe:
-    case tok::pipepipe:
-    case tok::percent:
-      return true;
-    default:
-      return false;
-    }
+    // Comma is a binary operator, but does not behave a such wrt. formatting.
+    return getBinOpPrecedence(Tok.Tok.getKind(), true, true) > prec::Comma;
   }
 
   TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index,
@@ -796,12 +783,11 @@ private:
     if (Right.Tok.is(tok::r_paren) || Right.Tok.is(tok::l_brace) ||
         Right.Tok.is(tok::comment) || Right.Tok.is(tok::greater))
       return false;
-    if (isBinaryOperator(Left) || Right.Tok.is(tok::lessless) ||
-        Right.Tok.is(tok::arrow) || Right.Tok.is(tok::period))
-      return true;
-    return Right.Tok.is(tok::colon) || Left.Tok.is(tok::comma) || Left.Tok.is(
-        tok::semi) || Left.Tok.is(tok::equal) || Left.Tok.is(tok::ampamp) ||
-        Left.Tok.is(tok::pipepipe) || Left.Tok.is(tok::l_brace) ||
+    return (isBinaryOperator(Left) && Left.Tok.isNot(tok::lessless)) ||
+        Left.Tok.is(tok::comma) || Right.Tok.is(tok::lessless) ||
+        Right.Tok.is(tok::arrow) || Right.Tok.is(tok::period) ||
+        Right.Tok.is(tok::colon) || Left.Tok.is(tok::semi) ||
+        Left.Tok.is(tok::l_brace) ||
         (Left.Tok.is(tok::l_paren) && !Right.Tok.is(tok::r_paren));
   }
 
