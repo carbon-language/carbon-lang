@@ -705,6 +705,21 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
             format("- (id)Method6:(id)A:(id)B:(id)C:(id)D;"));
   EXPECT_EQ("- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;",
             format("- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;"));
+
+  // Very long objectiveC method declaration.
+  EXPECT_EQ("- (NSUInteger)indexOfObject:(id)anObject inRange:(NSRange)range\n    "
+            "outRange:(NSRange)out_range outRange1:(NSRange)out_range1\n    "
+            "outRange2:(NSRange)out_range2 outRange3:(NSRange)out_range3\n    "
+            "outRange4:(NSRange)out_range4 outRange5:(NSRange)out_range5\n    "
+            "outRange6:(NSRange)out_range6 outRange7:(NSRange)out_range7\n    "
+            "outRange8:(NSRange)out_range8 outRange9:(NSRange)out_range9;",
+
+            format("- (NSUInteger)indexOfObject:(id)anObject inRange:(NSRange)range "
+                   "outRange:(NSRange) out_range outRange1:(NSRange) out_range1 "
+                   "outRange2:(NSRange) out_range2  outRange3:(NSRange) out_range3  "
+                   "outRange4:(NSRange) out_range4  outRange5:(NSRange) out_range5 "
+                   "outRange6:(NSRange) out_range6  outRange7:(NSRange) out_range7  "
+                   "outRange8:(NSRange) out_range8  outRange9:(NSRange) out_range9;"));
 }
 
 }  // end namespace tooling
