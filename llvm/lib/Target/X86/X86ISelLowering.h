@@ -960,8 +960,8 @@ namespace llvm {
     virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
                                         unsigned Index) const;
 
-    unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                Type *CondTy) const;
+    virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
+                                        Type *CondTy) const;
 
     virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
                                       Type *Src) const;
