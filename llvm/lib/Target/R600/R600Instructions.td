@@ -674,7 +674,7 @@ def ADD_INT : R600_2OP_Helper <0x34, "ADD_INT", add>;
 def SUB_INT : R600_2OP_Helper <0x35, "SUB_INT", sub>;
 def MAX_INT : R600_2OP_Helper <0x36, "MAX_INT", AMDGPUsmax>;
 def MIN_INT : R600_2OP_Helper <0x37, "MIN_INT", AMDGPUsmin>;
-def MAX_UINT : R600_2OP_Helper <0x38, "MAX_UINT", AMDGPUsmax>;
+def MAX_UINT : R600_2OP_Helper <0x38, "MAX_UINT", AMDGPUumax>;
 def MIN_UINT : R600_2OP_Helper <0x39, "MIN_UINT", AMDGPUumin>;
 
 def SETE_INT : R600_2OP <
