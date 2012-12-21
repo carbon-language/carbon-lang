@@ -129,7 +129,7 @@ void clang::ParseAST(Sema &S, bool PrintStats, bool SkipFunctionBodies) {
       // is due to a top-level semicolon, an action override, or a parse error
       // skipping something.
       if (ADecl && !Consumer->HandleTopLevelDecl(ADecl.get()))
-	return;
+        return;
     } while (!P.ParseTopLevelDecl(ADecl));
   }
 
