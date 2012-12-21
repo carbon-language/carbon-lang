@@ -196,8 +196,8 @@ def SEB64 : SignExtInReg<"seb", i8, CPU64Regs>, SEB_FM<0x10>;
 def SEH64 : SignExtInReg<"seh", i16, CPU64Regs>, SEB_FM<0x18>;
 
 /// Count Leading
-def DCLZ : CountLeading0<0x24, "dclz", CPU64Regs>;
-def DCLO : CountLeading1<0x25, "dclo", CPU64Regs>;
+def DCLZ : CountLeading0<"dclz", CPU64Regs>, CLO_FM<0x24>;
+def DCLO : CountLeading1<"dclo", CPU64Regs>, CLO_FM<0x25>;
 
 /// Double Word Swap Bytes/HalfWords
 def DSBH : SubwordSwap<0x24, 0x2, "dsbh", CPU64Regs>;

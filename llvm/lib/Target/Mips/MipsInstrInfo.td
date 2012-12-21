@@ -684,23 +684,16 @@ class EffectiveAddress<bits<6> opc, string instr_asm, RegisterClass RC, Operand 
 }
 
 // Count Leading Ones/Zeros in Word
-class CountLeading0<bits<6> func, string instr_asm, RegisterClass RC>:
-  FR<0x1c, func, (outs RC:$rd), (ins RC:$rs),
-     !strconcat(instr_asm, "\t$rd, $rs"),
-     [(set RC:$rd, (ctlz RC:$rs))], IIAlu>,
-     Requires<[HasBitCount, HasStdEnc]> {
-  let shamt = 0;
-  let rt = rd;
-}
+class CountLeading0<string opstr, RegisterClass RC>:
+  InstSE<(outs RC:$rd), (ins RC:$rs), !strconcat(opstr, "\t$rd, $rs"),
+         [(set RC:$rd, (ctlz RC:$rs))], IIAlu, FrmR>,
+  Requires<[HasBitCount, HasStdEnc]>;
 
-class CountLeading1<bits<6> func, string instr_asm, RegisterClass RC>:
-  FR<0x1c, func, (outs RC:$rd), (ins RC:$rs),
-     !strconcat(instr_asm, "\t$rd, $rs"),
-     [(set RC:$rd, (ctlz (not RC:$rs)))], IIAlu>,
-     Requires<[HasBitCount, HasStdEnc]> {
-  let shamt = 0;
-  let rt = rd;
-}
+class CountLeading1<string opstr, RegisterClass RC>:
+  InstSE<(outs RC:$rd), (ins RC:$rs), !strconcat(opstr, "\t$rd, $rs"),
+         [(set RC:$rd, (ctlz (not RC:$rs)))], IIAlu, FrmR>,
+  Requires<[HasBitCount, HasStdEnc]>;
+
 
 // Sign Extend in Register.
 class SignExtInReg<string opstr, ValueType vt, RegisterClass RC> :
@@ -966,8 +959,8 @@ def SEB : SignExtInReg<"seb", i8, CPURegs>, SEB_FM<0x10>;
 def SEH : SignExtInReg<"seh", i16, CPURegs>, SEB_FM<0x18>;
 
 /// Count Leading
-def CLZ : CountLeading0<0x20, "clz", CPURegs>;
-def CLO : CountLeading1<0x21, "clo", CPURegs>;
+def CLZ : CountLeading0<"clz", CPURegs>, CLO_FM<0x20>;
+def CLO : CountLeading1<"clo", CPURegs>, CLO_FM<0x21>;
 
 /// Word Swap Bytes Within Halfwords
 def WSBH : SubwordSwap<0x20, 0x2, "wsbh", CPURegs>;
