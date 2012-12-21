@@ -740,11 +740,15 @@ void rdar12569201(id key, id value) {
     __weak id y = @{ key : value }; // expected-warning {{assigning dictionary literal to a weak variable; object will be released after assignment}}
     __weak id z = @[ value ]; // expected-warning {{assigning array literal to a weak variable; object will be released after assignment}}
     __weak id b = ^() {}; // expected-warning {{assigning block literal to a weak variable; object will be released after assignment}}
-    __weak id e = @(42); // expected-warning {{assigning boxed expression to a weak variable; object will be released after assignment}}
+    __weak id n = @42; // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
+    __weak id e = @(42); // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
+    __weak id m = @(41 + 1); // expected-warning {{assigning boxed expression to a weak variable; object will be released after assignment}}
     
     // Assignments.
     y = @{ key : value }; // expected-warning {{assigning dictionary literal to a weak variable; object will be released after assignment}}
     z = @[ value ]; // expected-warning {{assigning array literal to a weak variable; object will be released after assignment}}
     b = ^() {}; // expected-warning {{assigning block literal to a weak variable; object will be released after assignment}}
-    e = @(42); // expected-warning {{assigning boxed expression to a weak variable; object will be released after assignment}}
+    n = @42; // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
+    e = @(42); // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
+    m = @(41 + 1); // expected-warning {{assigning boxed expression to a weak variable; object will be released after assignment}}
 }

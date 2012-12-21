@@ -6875,7 +6875,7 @@ Sema::ObjCLiteralKind Sema::CheckLiteralKind(Expr *FromE) {
       // "dictionary literal"
       return LK_Dictionary;
     case Stmt::ObjCBoxedExprClass: {
-      Expr *Inner = cast<ObjCBoxedExpr>(FromE)->getSubExpr();
+      Expr *Inner = cast<ObjCBoxedExpr>(FromE)->getSubExpr()->IgnoreParens();
       switch (Inner->getStmtClass()) {
         case Stmt::IntegerLiteralClass:
         case Stmt::FloatingLiteralClass:
