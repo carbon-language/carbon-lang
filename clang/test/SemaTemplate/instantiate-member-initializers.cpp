@@ -35,3 +35,9 @@ struct Y {
   X x;
 };
 Y<int> y;
+
+template<typename T> struct Array {
+  int a[3];
+  Array() : a() {}
+};
+Array<int> s;

@@ -2602,12 +2602,28 @@ ExprResult TreeTransform<Derived>::TransformInitializer(Expr *Init,
   if (ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Init))
     Init = ICE->getSubExprAsWritten();
 
-  // If this is a direct-initializer, we take apart CXXConstructExprs.
-  // Everything else is passed through.
-  CXXConstructExpr *Construct;
-  if (!(Construct = dyn_cast<CXXConstructExpr>(Init)) ||
-      isa<CXXTemporaryObjectExpr>(Construct) ||
-      (!CXXDirectInit && !Construct->isListInitialization()))
+  // If this is not a direct-initializer, we only need to reconstruct
+  // InitListExprs. Other forms of copy-initialization will be a no-op if
+  // the initializer is already the right type.
+  CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(Init);
+  if (!CXXDirectInit && !(Construct && Construct->isListInitialization()))
+    return getDerived().TransformExpr(Init);
+
+  // Revert value-initialization back to empty parens.
+  if (CXXScalarValueInitExpr *VIE = dyn_cast<CXXScalarValueInitExpr>(Init)) {
+    SourceRange Parens = VIE->getSourceRange();
+    return getDerived().RebuildParenListExpr(Parens.getBegin(), MultiExprArg(),
+                                             Parens.getEnd());
+  }
+
+  // FIXME: We shouldn't build ImplicitValueInitExprs for direct-initialization.
+  if (isa<ImplicitValueInitExpr>(Init))
+    return getDerived().RebuildParenListExpr(SourceLocation(), MultiExprArg(),
+                                             SourceLocation());
+
+  // Revert initialization by constructor back to a parenthesized or braced list
+  // of expressions. Any other form of initializer can just be reused directly.
+  if (!Construct || isa<CXXTemporaryObjectExpr>(Construct))
     return getDerived().TransformExpr(Init);
 
   SmallVector<Expr*, 8> NewArgs;
