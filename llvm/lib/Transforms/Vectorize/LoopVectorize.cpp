@@ -1593,8 +1593,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
 
   ValueVector::iterator I, IE;
   for (I = Stores.begin(), IE = Stores.end(); I != IE; ++I) {
-    StoreInst *ST = dyn_cast<StoreInst>(*I);
-    assert(ST && "Bad StoreInst");
+    StoreInst *ST = cast<StoreInst>(*I);
     Value* Ptr = ST->getPointerOperand();
 
     if (isUniform(Ptr)) {
@@ -1609,8 +1608,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
   }
 
   for (I = Loads.begin(), IE = Loads.end(); I != IE; ++I) {
-    LoadInst *LD = dyn_cast<LoadInst>(*I);
-    assert(LD && "Bad LoadInst");
+    LoadInst *LD = cast<LoadInst>(*I);
     Value* Ptr = LD->getPointerOperand();
     // If we did *not* see this pointer before, insert it to the
     // read list. If we *did* see it before, then it is already in
@@ -1633,13 +1631,13 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
 
   // Find pointers with computable bounds. We are going to use this information
   // to place a runtime bound check.
-  bool RT = true;
+  bool CanDoRT = true;
   for (I = ReadWrites.begin(), IE = ReadWrites.end(); I != IE; ++I)
     if (hasComputableBounds(*I)) {
       PtrRtCheck.insert(SE, TheLoop, *I);
       DEBUG(dbgs() << "LV: Found a runtime check ptr:" << **I <<"\n");
     } else {
-      RT = false;
+      CanDoRT = false;
       break;
     }
   for (I = Reads.begin(), IE = Reads.end(); I != IE; ++I)
@@ -1647,22 +1645,22 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       PtrRtCheck.insert(SE, TheLoop, *I);
       DEBUG(dbgs() << "LV: Found a runtime check ptr:" << **I <<"\n");
     } else {
-      RT = false;
+      CanDoRT = false;
       break;
     }
 
   // Check that we did not collect too many pointers or found a
   // unsizeable pointer.
-  if (!RT || PtrRtCheck.Pointers.size() > RuntimeMemoryCheckThreshold) {
+  if (!CanDoRT || PtrRtCheck.Pointers.size() > RuntimeMemoryCheckThreshold) {
     PtrRtCheck.reset();
-    RT = false;
+    CanDoRT = false;
   }
 
-  PtrRtCheck.Need = RT;
-
-  if (RT) {
+  if (CanDoRT) {
     DEBUG(dbgs() << "LV: We can perform a memory runtime check if needed.\n");
   }
+
+  bool NeedRTCheck = false;
 
   // Now that the pointers are in two lists (Reads and ReadWrites), we
   // can check that there are no conflicts between each of the writes and
@@ -1678,12 +1676,12 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
          it != e; ++it) {
       if (!isIdentifiedObject(*it)) {
         DEBUG(dbgs() << "LV: Found an unidentified write ptr:"<< **it <<"\n");
-        return RT;
+        NeedRTCheck = true;
       }
       if (!WriteObjects.insert(*it)) {
         DEBUG(dbgs() << "LV: Found a possible write-write reorder:"
               << **it <<"\n");
-        return RT;
+        return false;
       }
     }
     TempObjects.clear();
@@ -1696,20 +1694,27 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
          it != e; ++it) {
       if (!isIdentifiedObject(*it)) {
         DEBUG(dbgs() << "LV: Found an unidentified read ptr:"<< **it <<"\n");
-        return RT;
+        NeedRTCheck = true;
       }
       if (WriteObjects.count(*it)) {
         DEBUG(dbgs() << "LV: Found a possible read/write reorder:"
               << **it <<"\n");
-        return RT;
+        return false;
       }
     }
     TempObjects.clear();
   }
 
-  // It is safe to vectorize and we don't need any runtime checks.
-  DEBUG(dbgs() << "LV: We don't need a runtime memory check.\n");
-  PtrRtCheck.reset();
+  PtrRtCheck.Need = NeedRTCheck;
+  if (NeedRTCheck && !CanDoRT) {
+    DEBUG(dbgs() << "LV: We can't vectorize because we can't find " <<
+          "the array bounds.\n");
+    PtrRtCheck.reset();
+    return false;
+  }
+
+  DEBUG(dbgs() << "LV: We "<< (NeedRTCheck ? "" : "don't") <<
+        " need a runtime memory check.\n");
   return true;
 }
 
