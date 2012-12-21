@@ -12,8 +12,17 @@ void test(struct Point *p) {
   MACRO(p->x);
 }
 
+#define MACRO3(x,y,z) x
+
+void test(struct Point *p) {
+  MACRO3(p->x);
+  MACRO3(p->x
+}
+
 // RUN: c-index-test -code-completion-at=%s:11:12 %s | FileCheck %s
 // RUN: c-index-test -code-completion-at=%s:12:12 %s | FileCheck %s
+// RUN: c-index-test -code-completion-at=%s:18:13 %s | FileCheck %s
+// RUN: c-index-test -code-completion-at=%s:19:13 %s | FileCheck %s
 // CHECK:      FieldDecl:{ResultType float}{TypedText x} (35)
 // CHECK-NEXT: FieldDecl:{ResultType float}{TypedText y} (35)
 // CHECK-NEXT: FieldDecl:{ResultType float}{TypedText z} (35)
