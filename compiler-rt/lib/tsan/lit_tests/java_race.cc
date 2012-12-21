@@ -1,19 +1,5 @@
 // RUN: %clangxx_tsan -O1 %s -o %t && %t 2>&1 | FileCheck %s
-#include <pthread.h>
-#include <stdlib.h>
-
-extern "C" {
-typedef unsigned long jptr;  // NOLINT
-void __tsan_java_init(jptr heap_begin, jptr heap_size);
-int  __tsan_java_fini();
-void __tsan_java_alloc(jptr ptr, jptr size);
-void __tsan_java_free(jptr ptr, jptr size);
-void __tsan_java_move(jptr src, jptr dst, jptr size);
-void __tsan_java_mutex_lock(jptr addr);
-void __tsan_java_mutex_unlock(jptr addr);
-void __tsan_java_mutex_read_lock(jptr addr);
-void __tsan_java_mutex_read_unlock(jptr addr);
-}
+#include "java.h"
 
 void *Thread(void *p) {
   *(int*)p = 42;
