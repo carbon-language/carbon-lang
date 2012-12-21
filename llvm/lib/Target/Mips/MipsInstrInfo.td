@@ -859,7 +859,7 @@ def BGTZ    : CBranchZero<"bgtz", setgt, CPURegs>, BGEZ_FM<7, 0>;
 def BLEZ    : CBranchZero<"blez", setle, CPURegs>, BGEZ_FM<6, 0>;
 def BLTZ    : CBranchZero<"bltz", setlt, CPURegs>, BGEZ_FM<1, 0>;
 
-let rt = 0, rs = 0, isBranch = 1, isTerminator = 1, isBarrier = 1,
+let rt = 0x11, rs = 0, isBranch = 1, isTerminator = 1, isBarrier = 1,
     hasDelaySlot = 1, Defs = [RA] in
 def BAL_BR: FI<0x1, (outs), (ins brtarget:$imm16), "bal\t$imm16", [], IIBranch>;
 
