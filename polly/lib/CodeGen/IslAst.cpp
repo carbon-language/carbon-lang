@@ -302,9 +302,12 @@ AtEachDomain(__isl_take isl_ast_node *Node,
     Id = isl_id_set_free_user(Id, &freeIslAstUser);
   }
 
-  isl_map *Map = isl_map_from_union_map(isl_ast_build_get_schedule(Context));
-  Info->PMA = isl_pw_multi_aff_from_map(isl_map_reverse(Map));
-  Info->Context = isl_ast_build_copy(Context);
+  if (!Info->PMA) {
+    isl_map *Map = isl_map_from_union_map(isl_ast_build_get_schedule(Context));
+    Info->PMA = isl_pw_multi_aff_from_map(isl_map_reverse(Map));
+  }
+  if (!Info->Context)
+    Info->Context = isl_ast_build_copy(Context);
 
   return isl_ast_node_set_annotation(Node, Id);
 }
