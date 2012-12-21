@@ -30,7 +30,7 @@ enum MutexType {
   MutexTypeAnnotations,
   MutexTypeAtExit,
   MutexTypeMBlock,
-  MutexTypeJava,
+  MutexTypeJavaMBlock,
 
   // This must be the last.
   MutexTypeCount

@@ -31,14 +31,14 @@ struct BlockDesc {
   SyncVar *head;
 
   BlockDesc()
-      : mtx(MutexTypeJava, StatMtxJava)
+      : mtx(MutexTypeJavaMBlock, StatMtxJavaMBlock)
       , head() {
     CHECK_EQ(begin, false);
     begin = true;
   }
 
   explicit BlockDesc(BlockDesc *b)
-      : mtx(MutexTypeJava, StatMtxJava)
+      : mtx(MutexTypeJavaMBlock, StatMtxJavaMBlock)
       , head(b->head) {
     CHECK_EQ(begin, false);
     begin = true;
@@ -63,14 +63,12 @@ struct BlockDesc {
 };
 
 struct JavaContext {
-  Mutex mtx;
   const uptr heap_begin;
   const uptr heap_size;
   BlockDesc *heap_shadow;
 
   JavaContext(jptr heap_begin, jptr heap_size)
-      : mtx(MutexTypeJava, StatMtxJava)
-      , heap_begin(heap_begin)
+      : heap_begin(heap_begin)
       , heap_size(heap_size) {
     uptr size = heap_size / kHeapAlignment * sizeof(BlockDesc);
     heap_shadow = (BlockDesc*)MmapFixedNoReserve(kHeapShadow, size);

@@ -28,16 +28,18 @@ namespace __tsan {
 #if TSAN_DEBUG && !TSAN_GO
 const MutexType MutexTypeLeaf = (MutexType)-1;
 static MutexType CanLockTab[MutexTypeCount][MutexTypeCount] = {
-  /*0 MutexTypeInvalid*/     {},
-  /*1 MutexTypeTrace*/       {MutexTypeLeaf},
-  /*2 MutexTypeThreads*/     {MutexTypeReport},
-  /*3 MutexTypeReport*/      {MutexTypeSyncTab, MutexTypeMBlock},
-  /*4 MutexTypeSyncVar*/     {},
-  /*5 MutexTypeSyncTab*/     {MutexTypeSyncVar},
-  /*6 MutexTypeSlab*/        {MutexTypeLeaf},
-  /*7 MutexTypeAnnotations*/ {},
-  /*8 MutexTypeAtExit*/      {MutexTypeSyncTab},
-  /*9 MutexTypeMBlock*/      {MutexTypeSyncVar},
+  /*0  MutexTypeInvalid*/     {},
+  /*1  MutexTypeTrace*/       {MutexTypeLeaf},
+  /*2  MutexTypeThreads*/     {MutexTypeReport},
+  /*3  MutexTypeReport*/      {MutexTypeSyncTab, MutexTypeMBlock,
+                               MutexTypeJavaMBlock},
+  /*4  MutexTypeSyncVar*/     {},
+  /*5  MutexTypeSyncTab*/     {MutexTypeSyncVar},
+  /*6  MutexTypeSlab*/        {MutexTypeLeaf},
+  /*7  MutexTypeAnnotations*/ {},
+  /*8  MutexTypeAtExit*/      {MutexTypeSyncTab},
+  /*9  MutexTypeMBlock*/      {MutexTypeSyncVar},
+  /*10 MutexTypeJavaMBlock*/  {MutexTypeSyncVar},
 };
 
 static bool CanLockAdj[MutexTypeCount][MutexTypeCount];

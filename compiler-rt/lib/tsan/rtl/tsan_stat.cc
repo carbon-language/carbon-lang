@@ -279,6 +279,7 @@ void StatOutput(u64 *stat) {
   name[StatMtxAtExit]                    = "  Atexit                          ";
   name[StatMtxAnnotations]               = "  Annotations                     ";
   name[StatMtxMBlock]                    = "  MBlock                          ";
+  name[StatMtxJavaMBlock]                = "  JavaMBlock                      ";
 
   Printf("Statistics:\n");
   for (int i = 0; i < StatCnt; i++)
