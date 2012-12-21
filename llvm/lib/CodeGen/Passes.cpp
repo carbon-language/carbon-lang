@@ -513,9 +513,10 @@ void TargetPassConfig::addMachinePasses() {
   }
 
   // GC
-  addPass(&GCMachineCodeAnalysisID);
-  if (PrintGCInfo)
-    addPass(createGCInfoPrinter(dbgs()));
+  if (addGCPasses()) {
+    if (PrintGCInfo)
+      addPass(createGCInfoPrinter(dbgs()));
+  }
 
   // Basic block placement.
   if (getOptLevel() != CodeGenOpt::None)
@@ -730,6 +731,12 @@ void TargetPassConfig::addMachineLateOptimization() {
   // Copy propagation.
   if (addPass(&MachineCopyPropagationID))
     printAndVerify("After copy propagation pass");
+}
+
+/// Add standard GC passes.
+bool TargetPassConfig::addGCPasses() {
+  addPass(&GCMachineCodeAnalysisID);
+  return true;
 }
 
 /// Add standard basic block placement passes.

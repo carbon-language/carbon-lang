@@ -241,6 +241,11 @@ protected:
     return false;
   }
 
+  /// addGCPasses - Add late codegen passes that analyze code for garbage
+  /// collection. This should return true if GC info should be printed after
+  /// these passes.
+  virtual bool addGCPasses();
+
   /// Add standard basic block placement passes.
   virtual void addBlockPlacement();
 
