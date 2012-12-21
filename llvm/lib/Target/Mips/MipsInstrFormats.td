@@ -356,6 +356,18 @@ class CLO_FM<bits<6> funct> {
   let rt = rd;
 }
 
+class LUI_FM {
+  bits<5> rt;
+  bits<16> imm16;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0xf;
+  let Inst{25-21} = 0;
+  let Inst{20-16} = rt;
+  let Inst{15-0}  = imm16;
+}
+
 //===----------------------------------------------------------------------===//
 //
 //  FLOATING POINT INSTRUCTION FORMATS

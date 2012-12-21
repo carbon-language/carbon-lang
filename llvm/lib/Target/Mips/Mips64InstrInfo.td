@@ -94,7 +94,7 @@ def ORi64   : ArithLogicI<"ori", uimm16_64, CPU64Regs, immZExt16, or>,
               ADDI_FM<0xd>;
 def XORi64  : ArithLogicI<"xori", uimm16_64, CPU64Regs, immZExt16, xor>,
               ADDI_FM<0xe>;
-def LUi64   : LoadUpper<0x0f, "lui", CPU64Regs, uimm16_64>;
+def LUi64   : LoadUpper<"lui", CPU64Regs, uimm16_64>, LUI_FM;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
 def DADD   : ArithLogicR<"dadd", CPU64Regs>, ADD_FM<0, 0x2c>;
