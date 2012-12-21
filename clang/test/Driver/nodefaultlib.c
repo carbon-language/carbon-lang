@@ -2,7 +2,7 @@
 // RUN: FileCheck < %t %s
 //
 // CHECK-NOT: start-group
-// CHECK-NOT: -lgcc
-// CHECK-NOT: -lc
+// CHECK-NOT: "-lgcc"
+// CHECK-NOT: "-lc"
 // CHECK: crtbegin
 // CHECK: crtend
