@@ -1,7 +1,7 @@
-; RUN: llc -mcpu=core2 < %s | FileCheck %s -check-prefix=SSE2
-; RUN: llc -mcpu=corei7 < %s | FileCheck %s -check-prefix=SSE4
-; RUN: llc -mcpu=corei7-avx < %s | FileCheck %s -check-prefix=AVX1
-; RUN: llc -mcpu=core-avx2 -mattr=+avx2 < %s | FileCheck %s -check-prefix=AVX2
+; RUN: llc -march=x86-64 -mcpu=core2 < %s | FileCheck %s -check-prefix=SSE2
+; RUN: llc -march=x86-64 -mcpu=corei7 < %s | FileCheck %s -check-prefix=SSE4
+; RUN: llc -march=x86-64 -mcpu=corei7-avx < %s | FileCheck %s -check-prefix=AVX1
+; RUN: llc -march=x86-64 -mcpu=core-avx2 -mattr=+avx2 < %s | FileCheck %s -check-prefix=AVX2
 
 define void @test1(i8* nocapture %a, i8* nocapture %b) nounwind {
 vector.ph:
