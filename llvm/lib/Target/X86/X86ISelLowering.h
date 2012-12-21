@@ -953,6 +953,10 @@ namespace llvm {
 
     virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
 
+    virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
+                                     unsigned Alignment,
+                                     unsigned AddressSpace) const;
+
     virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
                                         unsigned Index) const;
 

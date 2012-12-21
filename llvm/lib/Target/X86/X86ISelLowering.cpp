@@ -17818,6 +17818,30 @@ X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
   return VectorTargetTransformImpl::getArithmeticInstrCost(Opcode, Ty);
 }
 
+
+unsigned
+X86VectorTargetTransformInfo::getMemoryOpCost(unsigned Opcode, Type *Src,
+                                              unsigned Alignment,
+                                              unsigned AddressSpace) const {
+  // Legalize the type.
+  std::pair<unsigned, MVT> LT = getTypeLegalizationCost(Src);
+  assert(Opcode == Instruction::Load || Opcode == Instruction::Store &&
+         "Invalid Opcode");
+
+  const X86Subtarget &ST =
+  TLI->getTargetMachine().getSubtarget<X86Subtarget>();
+
+  // Each load/store unit costs 1.
+  unsigned Cost = LT.first * 1;
+
+  // On Sandybridge 256bit load/stores are double pumped
+  // (but not on Haswell).
+  if (LT.second.getSizeInBits() > 128 && !ST.hasAVX2())
+    Cost*=2;
+
+  return Cost;
+}
+
 unsigned
 X86VectorTargetTransformInfo::getVectorInstrCost(unsigned Opcode, Type *Val,
                                                  unsigned Index) const {
