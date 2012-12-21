@@ -926,9 +926,10 @@ are listed below.
    ``-fsanitize=memory``):
 
    -  ``-fsanitize-memory-track-origins``: Enables origin tracking in
-      MemorySanitizer. Adds a second stack trace to MemorySanitizer
-      reports pointing to the allocation the uninitialized bits came
-      from. Slows down execution by additional 1.5x-2x.
+      MemorySanitizer. Adds a second section to MemorySanitizer
+      reports pointing to the heap or stack allocation the
+      uninitialized bits came from. Slows down execution by additional
+      1.5x-2x.
 
    The ``-fsanitize=`` argument must also be provided when linking, in
    order to link to the appropriate runtime library. It is not possible
