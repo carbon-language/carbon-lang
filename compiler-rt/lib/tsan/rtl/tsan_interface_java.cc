@@ -166,6 +166,8 @@ void __tsan_java_init(jptr heap_begin, jptr heap_size) {
   CHECK_EQ(jctx, 0);
   CHECK_GT(heap_begin, 0);
   CHECK_GT(heap_size, 0);
+  CHECK_EQ(heap_begin % kHeapAlignment, 0);
+  CHECK_EQ(heap_size % kHeapAlignment, 0);
   CHECK_LT(heap_begin, heap_begin + heap_size);
   jctx = new(jctx_buf) JavaContext(heap_begin, heap_size);
 }
@@ -185,6 +187,8 @@ void __tsan_java_alloc(jptr ptr, jptr size) {
   DPrintf("#%d: java_alloc(%p, %p)\n", thr->tid, ptr, size);
   CHECK_NE(jctx, 0);
   CHECK_NE(size, 0);
+  CHECK_EQ(ptr % kHeapAlignment, 0);
+  CHECK_EQ(size % kHeapAlignment, 0);
   CHECK_GE(ptr, jctx->heap_begin);
   CHECK_LE(ptr + size, jctx->heap_begin + jctx->heap_size);
 
@@ -197,6 +201,8 @@ void __tsan_java_free(jptr ptr, jptr size) {
   DPrintf("#%d: java_free(%p, %p)\n", thr->tid, ptr, size);
   CHECK_NE(jctx, 0);
   CHECK_NE(size, 0);
+  CHECK_EQ(ptr % kHeapAlignment, 0);
+  CHECK_EQ(size % kHeapAlignment, 0);
   CHECK_GE(ptr, jctx->heap_begin);
   CHECK_LE(ptr + size, jctx->heap_begin + jctx->heap_size);
 
@@ -213,6 +219,9 @@ void __tsan_java_move(jptr src, jptr dst, jptr size) {
   DPrintf("#%d: java_move(%p, %p, %p)\n", thr->tid, src, dst, size);
   CHECK_NE(jctx, 0);
   CHECK_NE(size, 0);
+  CHECK_EQ(src % kHeapAlignment, 0);
+  CHECK_EQ(dst % kHeapAlignment, 0);
+  CHECK_EQ(size % kHeapAlignment, 0);
   CHECK_GE(src, jctx->heap_begin);
   CHECK_LE(src + size, jctx->heap_begin + jctx->heap_size);
   CHECK_GE(dst, jctx->heap_begin);
@@ -221,13 +230,25 @@ void __tsan_java_move(jptr src, jptr dst, jptr size) {
 
   // Assuming it's not running concurrently with threads that do
   // memory accesses and mutex operations (stop-the-world phase).
-  BlockDesc *srcbeg = getblock(src);
-  BlockDesc *dstbeg = getblock(dst);
-  BlockDesc *srcend = getblock(src + size);
-  for (BlockDesc *s = srcbeg, *d = dstbeg; s != srcend; s++, d++) {
-    if (s->begin) {
-      new(d) BlockDesc(s);
-      s->~BlockDesc();
+  {  // NOLINT
+    BlockDesc *s = getblock(src);
+    BlockDesc *d = getblock(dst);
+    BlockDesc *send = getblock(src + size);
+    for (; s != send; s++, d++) {
+      if (s->begin) {
+        new(d) BlockDesc(s);
+        s->~BlockDesc();
+      }
+    }
+  }
+
+  {  // NOLINT
+    u64 *s = (u64*)MemToShadow(src);
+    u64 *d = (u64*)MemToShadow(dst);
+    u64 *send = (u64*)MemToShadow(src + size);
+    for (; s != send; s++, d++) {
+      *d = *s;
+      *s = 0;
     }
   }
 }
