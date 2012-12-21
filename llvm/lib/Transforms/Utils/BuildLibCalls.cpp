@@ -18,8 +18,6 @@
 #include "llvm/Function.h"
 #include "llvm/IRBuilder.h"
 #include "llvm/Intrinsics.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/LLVMContext.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetLibraryInfo.h"

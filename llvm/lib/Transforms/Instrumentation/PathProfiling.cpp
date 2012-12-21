@@ -50,7 +50,6 @@
 #include "llvm/Analysis/PathNumbering.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/LLVMContext.h"
