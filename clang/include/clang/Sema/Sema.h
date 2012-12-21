@@ -1879,7 +1879,7 @@ public:
     LK_Numeric,
     LK_Boxed,
     LK_String,
-    LK_None,
+    LK_None
   };
   ObjCLiteralKind CheckLiteralKind(Expr *FromE);
 
