@@ -64,9 +64,9 @@ def sort_includes(f):
   if not found_headers:
     return
 
-  local_headers.sort()
-  project_headers.sort()
-  system_headers.sort()
+  local_headers = sorted(set(local_headers))
+  project_headers = sorted(set(project_headers))
+  system_headers = sorted(set(system_headers))
   headers = api_headers + local_headers + project_headers + system_headers
   header_lines = ['#include ' + h for h in headers]
   lines = lines[:headers_begin] + header_lines + lines[headers_end + 1:]
