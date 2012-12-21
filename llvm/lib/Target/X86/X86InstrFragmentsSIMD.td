@@ -27,6 +27,11 @@ def SDTX86FPShiftOp : SDTypeProfile<1, 2, [ SDTCisSameAs<0, 1>,
 def SDTX86VFCMP : SDTypeProfile<1, 3, [SDTCisInt<0>, SDTCisSameAs<1, 2>,
                                        SDTCisFP<1>, SDTCisVT<3, i8>]>;
 
+def X86umin    : SDNode<"X86ISD::UMIN",      SDTIntBinOp>;
+def X86umax    : SDNode<"X86ISD::UMAX",      SDTIntBinOp>;
+def X86smin    : SDNode<"X86ISD::SMIN",      SDTIntBinOp>;
+def X86smax    : SDNode<"X86ISD::SMAX",      SDTIntBinOp>;
+
 def X86fmin    : SDNode<"X86ISD::FMIN",      SDTFPBinOp>;
 def X86fmax    : SDNode<"X86ISD::FMAX",      SDTFPBinOp>;
 

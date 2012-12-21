@@ -197,6 +197,12 @@ namespace llvm {
       /// FHSUB - Floating point horizontal sub.
       FHSUB,
 
+      /// UMAX, UMIN - Unsigned integer max and min.
+      UMAX, UMIN,
+
+      /// SMAX, SMIN - Signed integer max and min.
+      SMAX, SMIN,
+
       /// FMAX, FMIN - Floating point max and min.
       ///
       FMAX, FMIN,
