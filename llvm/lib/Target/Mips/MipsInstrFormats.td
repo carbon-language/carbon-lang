@@ -326,7 +326,7 @@ class MTLO_FM<bits<6> funct> {
   let Inst{5-0}   = funct;
 }
 
-class SEB_FM<bits<5> funct> {
+class SEB_FM<bits<5> funct, bits<6> funct2> {
   bits<5> rd;
   bits<5> rt;
 
@@ -337,7 +337,7 @@ class SEB_FM<bits<5> funct> {
   let Inst{20-16} = rt;
   let Inst{15-11} = rd;
   let Inst{10-6}  = funct;
-  let Inst{5-0}   = 0x20;
+  let Inst{5-0}   = funct2;
 }
 
 class CLO_FM<bits<6> funct> {
@@ -431,6 +431,36 @@ class MULT_FM<bits<6> op, bits<6> funct> {
   let Inst{20-16} = rt;
   let Inst{15-6}  = 0;
   let Inst{5-0}   = funct;
+}
+
+class EXT_FM<bits<6> funct> {
+  bits<5> rt;
+  bits<5> rs;
+  bits<5> pos;
+  bits<5> size;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x1f;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = size;
+  let Inst{10-6}  = pos;
+  let Inst{5-0}   = funct;
+}
+
+class RDHWR_FM {
+  bits<5> rt;
+  bits<5> rd;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0x1f;
+  let Inst{25-21} = 0;
+  let Inst{20-16} = rt;
+  let Inst{15-11} = rd;
+  let Inst{10-6}  = 0;
+  let Inst{5-0}   = 0x3b;
 }
 
 //===----------------------------------------------------------------------===//

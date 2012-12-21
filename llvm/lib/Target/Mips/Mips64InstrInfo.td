@@ -185,31 +185,32 @@ def MFHI64 : MoveFromLOHI<"mfhi", CPU64Regs, [HI64]>, MFLO_FM<0x10>;
 def MFLO64 : MoveFromLOHI<"mflo", CPU64Regs, [LO64]>, MFLO_FM<0x12>;
 
 /// Sign Ext In Register Instructions.
-def SEB64 : SignExtInReg<"seb", i8, CPU64Regs>, SEB_FM<0x10>;
-def SEH64 : SignExtInReg<"seh", i16, CPU64Regs>, SEB_FM<0x18>;
+def SEB64 : SignExtInReg<"seb", i8, CPU64Regs>, SEB_FM<0x10, 0x20>;
+def SEH64 : SignExtInReg<"seh", i16, CPU64Regs>, SEB_FM<0x18, 0x20>;
 
 /// Count Leading
 def DCLZ : CountLeading0<"dclz", CPU64Regs>, CLO_FM<0x24>;
 def DCLO : CountLeading1<"dclo", CPU64Regs>, CLO_FM<0x25>;
 
 /// Double Word Swap Bytes/HalfWords
-def DSBH : SubwordSwap<0x24, 0x2, "dsbh", CPU64Regs>;
-def DSHD : SubwordSwap<0x24, 0x5, "dshd", CPU64Regs>;
+def DSBH : SubwordSwap<"dsbh", CPU64Regs>, SEB_FM<2, 0x24>;
+def DSHD : SubwordSwap<"dshd", CPU64Regs>, SEB_FM<5, 0x24>;
 
-def LEA_ADDiu64 : EffectiveAddress<0x19,"daddiu\t$rt, $addr", CPU64Regs, mem_ea_64>;
+def LEA_ADDiu64 : EffectiveAddress<"daddiu", CPU64Regs, mem_ea_64>, LW_FM<0x19>;
+
 }
 let DecoderNamespace = "Mips64" in {
-def RDHWR64 : ReadHardware<CPU64Regs, HWRegs64>;
+def RDHWR64 : ReadHardware<CPU64Regs, HWRegs64>, RDHWR_FM;
 
-def DEXT : ExtBase<3, "dext", CPU64Regs>;
+def DEXT : ExtBase<"dext", CPU64Regs>, EXT_FM<3>;
 let Pattern = []<dag> in {
-  def DEXTU : ExtBase<2, "dextu", CPU64Regs>;
-  def DEXTM : ExtBase<1, "dextm", CPU64Regs>;
+  def DEXTU : ExtBase<"dextu", CPU64Regs>, EXT_FM<2>;
+  def DEXTM : ExtBase<"dextm", CPU64Regs>, EXT_FM<1>;
 }
-def DINS : InsBase<7, "dins", CPU64Regs>;
+def DINS : InsBase<"dins", CPU64Regs>, EXT_FM<7>;
 let Pattern = []<dag> in {
-  def DINSU : InsBase<6, "dinsu", CPU64Regs>;
-  def DINSM : InsBase<5, "dinsm", CPU64Regs>;
+  def DINSU : InsBase<"dinsu", CPU64Regs>, EXT_FM<6>;
+  def DINSM : InsBase<"dinsm", CPU64Regs>, EXT_FM<5>;
 }
 
 let isCodeGenOnly = 1, rs = 0, shamt = 0 in {

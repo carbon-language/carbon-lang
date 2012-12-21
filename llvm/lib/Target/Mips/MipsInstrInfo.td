@@ -611,10 +611,11 @@ class MoveToLOHI<string opstr, RegisterClass RC, list<Register> DefRegs>:
   let neverHasSideEffects = 1;
 }
 
-class EffectiveAddress<bits<6> opc, string instr_asm, RegisterClass RC, Operand Mem> :
-  FMem<opc, (outs RC:$rt), (ins Mem:$addr),
-     instr_asm, [(set RC:$rt, addr:$addr)], IIAlu> {
- let isCodeGenOnly = 1;
+class EffectiveAddress<string opstr, RegisterClass RC, Operand Mem> :
+  InstSE<(outs RC:$rt), (ins Mem:$addr), !strconcat(opstr, "\t$rt, $addr"),
+         [(set RC:$rt, addr:$addr)], NoItinerary, FrmI> {
+  let isCodeGenOnly = 1;
+  let DecoderMethod = "DecodeMem";
 }
 
 // Count Leading Ones/Zeros in Word
@@ -637,45 +638,32 @@ class SignExtInReg<string opstr, ValueType vt, RegisterClass RC> :
 }
 
 // Subword Swap
-class SubwordSwap<bits<6> func, bits<5> sa, string instr_asm, RegisterClass RC>:
-  FR<0x1f, func, (outs RC:$rd), (ins RC:$rt),
-     !strconcat(instr_asm, "\t$rd, $rt"), [], NoItinerary> {
-  let rs = 0;
-  let shamt = sa;
+class SubwordSwap<string opstr, RegisterClass RC>:
+  InstSE<(outs RC:$rd), (ins RC:$rt), !strconcat(opstr, "\t$rd, $rt"), [],
+         NoItinerary, FrmR> {
   let Predicates = [HasSwap, HasStdEnc];
   let neverHasSideEffects = 1;
 }
 
 // Read Hardware
-class ReadHardware<RegisterClass CPURegClass, RegisterClass HWRegClass>
-  : FR<0x1f, 0x3b, (outs CPURegClass:$rt), (ins HWRegClass:$rd),
-       "rdhwr\t$rt, $rd", [], IIAlu> {
-  let rs = 0;
-  let shamt = 0;
-}
+class ReadHardware<RegisterClass CPURegClass, RegisterClass HWRegClass> :
+  InstSE<(outs CPURegClass:$rt), (ins HWRegClass:$rd), "rdhwr\t$rt, $rd", [],
+         IIAlu, FrmR>;
 
 // Ext and Ins
-class ExtBase<bits<6> _funct, string instr_asm, RegisterClass RC>:
-  FR<0x1f, _funct, (outs RC:$rt), (ins RC:$rs, uimm16:$pos, size_ext:$sz),
-     !strconcat(instr_asm, " $rt, $rs, $pos, $sz"),
-     [(set RC:$rt, (MipsExt RC:$rs, imm:$pos, imm:$sz))], NoItinerary> {
-  bits<5> pos;
-  bits<5> sz;
-  let rd = sz;
-  let shamt = pos;
+class ExtBase<string opstr, RegisterClass RC>:
+  InstSE<(outs RC:$rt), (ins RC:$rs, uimm16:$pos, size_ext:$size),
+         !strconcat(opstr, " $rt, $rs, $pos, $size"),
+         [(set RC:$rt, (MipsExt RC:$rs, imm:$pos, imm:$size))], NoItinerary,
+         FrmR> {
   let Predicates = [HasMips32r2, HasStdEnc];
 }
 
-class InsBase<bits<6> _funct, string instr_asm, RegisterClass RC>:
-  FR<0x1f, _funct, (outs RC:$rt),
-     (ins RC:$rs, uimm16:$pos, size_ins:$sz, RC:$src),
-     !strconcat(instr_asm, " $rt, $rs, $pos, $sz"),
-     [(set RC:$rt, (MipsIns RC:$rs, imm:$pos, imm:$sz, RC:$src))],
-     NoItinerary> {
-  bits<5> pos;
-  bits<5> sz;
-  let rd = sz;
-  let shamt = pos;
+class InsBase<string opstr, RegisterClass RC>:
+  InstSE<(outs RC:$rt), (ins RC:$rs, uimm16:$pos, size_ins:$size, RC:$src),
+         !strconcat(opstr, " $rt, $rs, $pos, $size"),
+         [(set RC:$rt, (MipsIns RC:$rs, imm:$pos, imm:$size, RC:$src))],
+         NoItinerary, FrmR> {
   let Predicates = [HasMips32r2, HasStdEnc];
   let Constraints = "$src = $rt";
 }
@@ -877,15 +865,15 @@ def MFHI : MoveFromLOHI<"mfhi", CPURegs, [HI]>, MFLO_FM<0x10>;
 def MFLO : MoveFromLOHI<"mflo", CPURegs, [LO]>, MFLO_FM<0x12>;
 
 /// Sign Ext In Register Instructions.
-def SEB : SignExtInReg<"seb", i8, CPURegs>, SEB_FM<0x10>;
-def SEH : SignExtInReg<"seh", i16, CPURegs>, SEB_FM<0x18>;
+def SEB : SignExtInReg<"seb", i8, CPURegs>, SEB_FM<0x10, 0x20>;
+def SEH : SignExtInReg<"seh", i16, CPURegs>, SEB_FM<0x18, 0x20>;
 
 /// Count Leading
 def CLZ : CountLeading0<"clz", CPURegs>, CLO_FM<0x20>;
 def CLO : CountLeading1<"clo", CPURegs>, CLO_FM<0x21>;
 
 /// Word Swap Bytes Within Halfwords
-def WSBH : SubwordSwap<0x20, 0x2, "wsbh", CPURegs>;
+def WSBH : SubwordSwap<"wsbh", CPURegs>, SEB_FM<2, 0x20>;
 
 /// No operation.
 /// FIXME: NOP should be an alias of "sll $0, $0, 0".
@@ -895,7 +883,7 @@ def NOP : InstSE<(outs), (ins), "nop", [], IIAlu, FrmJ>, NOP_FM;
 // instructions. The same not happens for stack address copies, so an
 // add op with mem ComplexPattern is used and the stack address copy
 // can be matched. It's similar to Sparc LEA_ADDRi
-def LEA_ADDiu : EffectiveAddress<0x09,"addiu\t$rt, $addr", CPURegs, mem_ea>;
+def LEA_ADDiu : EffectiveAddress<"addiu", CPURegs, mem_ea>, LW_FM<9>;
 
 // MADD*/MSUB*
 def MADD  : MArithR<"madd", MipsMAdd, 1>, MULT_FM<0x1c, 0>;
@@ -903,10 +891,10 @@ def MADDU : MArithR<"maddu", MipsMAddu, 1>, MULT_FM<0x1c, 1>;
 def MSUB  : MArithR<"msub", MipsMSub>, MULT_FM<0x1c, 4>;
 def MSUBU : MArithR<"msubu", MipsMSubu>, MULT_FM<0x1c, 5>;
 
-def RDHWR : ReadHardware<CPURegs, HWRegs>;
+def RDHWR : ReadHardware<CPURegs, HWRegs>, RDHWR_FM;
 
-def EXT : ExtBase<0, "ext", CPURegs>;
-def INS : InsBase<4, "ins", CPURegs>;
+def EXT : ExtBase<"ext", CPURegs>, EXT_FM<0>;
+def INS : InsBase<"ins", CPURegs>, EXT_FM<4>;
 
 /// Move Control Registers From/To CPU Registers
 def MFC0_3OP  : MFC3OP<0x10, 0, (outs CPURegs:$rt),
