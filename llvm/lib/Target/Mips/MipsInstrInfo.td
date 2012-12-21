@@ -331,23 +331,6 @@ def addr :
 // Instructions specific format
 //===----------------------------------------------------------------------===//
 
-/// Move Control Registers From/To CPU Registers
-def MFC0_3OP  : MFC3OP<0x10, 0, (outs CPURegs:$rt),
-                       (ins CPURegs:$rd, uimm16:$sel),"mfc0\t$rt, $rd, $sel">;
-def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
-
-def MTC0_3OP  : MFC3OP<0x10, 4, (outs CPURegs:$rd, uimm16:$sel),
-                       (ins CPURegs:$rt),"mtc0\t$rt, $rd, $sel">;
-def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
-
-def MFC2_3OP  : MFC3OP<0x12, 0, (outs CPURegs:$rt),
-                       (ins CPURegs:$rd, uimm16:$sel),"mfc2\t$rt, $rd, $sel">;
-def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
-
-def MTC2_3OP  : MFC3OP<0x12, 4, (outs CPURegs:$rd, uimm16:$sel),
-                       (ins CPURegs:$rt),"mtc2\t$rt, $rd, $sel">;
-def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
-
 // Arithmetic and logical instructions with 3 register operands.
 class ArithLogicR<string opstr, RegisterClass RC, bit isComm = 0,
                   InstrItinClass Itin = NoItinerary,
@@ -872,22 +855,6 @@ let usesCustomInserter = 1 in {
 //===----------------------------------------------------------------------===//
 // Instruction definition
 //===----------------------------------------------------------------------===//
-
-class LoadImm32< string instr_asm, Operand Od, RegisterClass RC> :
-  MipsAsmPseudoInst<(outs RC:$rt), (ins Od:$imm32),
-                     !strconcat(instr_asm, "\t$rt, $imm32")> ;
-def LoadImm32Reg : LoadImm32<"li", shamt,CPURegs>;
-
-class LoadAddress<string instr_asm, Operand MemOpnd, RegisterClass RC> :
-  MipsAsmPseudoInst<(outs RC:$rt), (ins MemOpnd:$addr),
-                     !strconcat(instr_asm, "\t$rt, $addr")> ;
-def LoadAddr32Reg : LoadAddress<"la", mem, CPURegs>;
-
-class LoadAddressImm<string instr_asm, Operand Od, RegisterClass RC> :
-  MipsAsmPseudoInst<(outs RC:$rt), (ins Od:$imm32),
-                     !strconcat(instr_asm, "\t$rt, $imm32")> ;
-def LoadAddr32Imm : LoadAddressImm<"la", shamt,CPURegs>;
-
 //===----------------------------------------------------------------------===//
 // MipsI Instructions
 //===----------------------------------------------------------------------===//
@@ -906,6 +873,7 @@ def LUi   : LoadUpper<0x0f, "lui", CPURegs, uimm16>;
 /// Arithmetic Instructions (3-Operand, R-Type)
 def ADDu : ArithLogicR<"addu", CPURegs, 1, IIAlu, add>, ADD_FM<0, 0x21>;
 def SUBu : ArithLogicR<"subu", CPURegs, 0, IIAlu, sub>, ADD_FM<0, 0x23>;
+def MUL  : ArithLogicR<"mul", CPURegs, 1, IIImul, mul>, ADD_FM<0x1c, 2>;
 def ADD  : ArithLogicR<"add", CPURegs>, ADD_FM<0, 0x20>;
 def SUB  : ArithLogicR<"sub", CPURegs>, ADD_FM<0, 0x22>;
 def SLT  : SetCC_R<"slt", setlt, CPURegs>, ADD_FM<0, 0x2a>;
@@ -1035,14 +1003,27 @@ def MADDU : MArithR<1, "maddu", MipsMAddu, 1>;
 def MSUB  : MArithR<4, "msub", MipsMSub>;
 def MSUBU : MArithR<5, "msubu", MipsMSubu>;
 
-// MUL is a assembly macro in the current used ISAs. In recent ISA's
-// it is a real instruction.
-def MUL   : ArithLogicR<"mul", CPURegs, 1, IIImul, mul>, ADD_FM<0x1c, 0x02>;
-
 def RDHWR : ReadHardware<CPURegs, HWRegs>;
 
 def EXT : ExtBase<0, "ext", CPURegs>;
 def INS : InsBase<4, "ins", CPURegs>;
+
+/// Move Control Registers From/To CPU Registers
+def MFC0_3OP  : MFC3OP<0x10, 0, (outs CPURegs:$rt),
+                       (ins CPURegs:$rd, uimm16:$sel),"mfc0\t$rt, $rd, $sel">;
+def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
+
+def MTC0_3OP  : MFC3OP<0x10, 4, (outs CPURegs:$rd, uimm16:$sel),
+                       (ins CPURegs:$rt),"mtc0\t$rt, $rd, $sel">;
+def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
+
+def MFC2_3OP  : MFC3OP<0x12, 0, (outs CPURegs:$rt),
+                       (ins CPURegs:$rd, uimm16:$sel),"mfc2\t$rt, $rd, $sel">;
+def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
+
+def MTC2_3OP  : MFC3OP<0x12, 4, (outs CPURegs:$rd, uimm16:$sel),
+                       (ins CPURegs:$rt),"mtc2\t$rt, $rd, $sel">;
+def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
 
 //===----------------------------------------------------------------------===//
 // Instruction aliases
@@ -1063,6 +1044,27 @@ def : InstAlias<"slt $rs,$rt,$imm",
                 (SLTi CPURegs:$rs,CPURegs:$rt,simm16:$imm)>;
 def : InstAlias<"xor $rs,$rt,$imm",
                 (XORi CPURegs:$rs,CPURegs:$rt,simm16:$imm)>;
+
+//===----------------------------------------------------------------------===//
+// Assembler Pseudo Instructions
+//===----------------------------------------------------------------------===//
+
+class LoadImm32< string instr_asm, Operand Od, RegisterClass RC> :
+  MipsAsmPseudoInst<(outs RC:$rt), (ins Od:$imm32),
+                     !strconcat(instr_asm, "\t$rt, $imm32")> ;
+def LoadImm32Reg : LoadImm32<"li", shamt,CPURegs>;
+
+class LoadAddress<string instr_asm, Operand MemOpnd, RegisterClass RC> :
+  MipsAsmPseudoInst<(outs RC:$rt), (ins MemOpnd:$addr),
+                     !strconcat(instr_asm, "\t$rt, $addr")> ;
+def LoadAddr32Reg : LoadAddress<"la", mem, CPURegs>;
+
+class LoadAddressImm<string instr_asm, Operand Od, RegisterClass RC> :
+  MipsAsmPseudoInst<(outs RC:$rt), (ins Od:$imm32),
+                     !strconcat(instr_asm, "\t$rt, $imm32")> ;
+def LoadAddr32Imm : LoadAddressImm<"la", shamt,CPURegs>;
+
+
 
 //===----------------------------------------------------------------------===//
 //  Arbitrary patterns that map to one or more instructions
