@@ -225,14 +225,15 @@ const char *InitializePlatform() {
       const uptr kMaxStackSize = 32 * 1024 * 1024;
       Report("WARNING: Program is run with unlimited stack size, which "
              "wouldn't work with ThreadSanitizer.\n");
-      Report("Re-execing with stack size limited to %zd bytes.\n", kMaxStackSize);
+      Report("Re-execing with stack size limited to %zd bytes.\n",
+             kMaxStackSize);
       SetStackSizeLimitInBytes(kMaxStackSize);
       reexec = true;
     }
 
     if (getlim(RLIMIT_AS) != (rlim_t)-1) {
-      Report("WARNING: Program is run with limited virtual address space, which "
-             "wouldn't work with ThreadSanitizer.\n");
+      Report("WARNING: Program is run with limited virtual address space,"
+             " which wouldn't work with ThreadSanitizer.\n");
       Report("Re-execing with unlimited virtual address space.\n");
       setlim(RLIMIT_AS, -1);
       reexec = true;
