@@ -6860,6 +6860,46 @@ static bool hasIsEqualMethod(Sema &S, const Expr *LHS, const Expr *RHS) {
   return true;
 }
 
+Sema::ObjCLiteralKind Sema::CheckLiteralKind(Expr *FromE) {
+  FromE = FromE->IgnoreParenImpCasts();
+  switch (FromE->getStmtClass()) {
+    default:
+      break;
+    case Stmt::ObjCStringLiteralClass:
+      // "string literal"
+      return LK_String;
+    case Stmt::ObjCArrayLiteralClass:
+      // "array literal"
+      return LK_Array;
+    case Stmt::ObjCDictionaryLiteralClass:
+      // "dictionary literal"
+      return LK_Dictionary;
+    case Stmt::ObjCBoxedExprClass: {
+      Expr *Inner = cast<ObjCBoxedExpr>(FromE)->getSubExpr();
+      switch (Inner->getStmtClass()) {
+        case Stmt::IntegerLiteralClass:
+        case Stmt::FloatingLiteralClass:
+        case Stmt::CharacterLiteralClass:
+        case Stmt::ObjCBoolLiteralExprClass:
+        case Stmt::CXXBoolLiteralExprClass:
+          // "numeric literal"
+          return LK_Numeric;
+        case Stmt::ImplicitCastExprClass: {
+          CastKind CK = cast<CastExpr>(Inner)->getCastKind();
+          // Boolean literals can be represented by implicit casts.
+          if (CK == CK_IntegralToBoolean || CK == CK_IntegralCast)
+            return LK_Numeric;
+          break;
+        }
+        default:
+          break;
+      }
+      return LK_Boxed;
+    }
+  }
+  return LK_None;
+}
+
 static void diagnoseObjCLiteralComparison(Sema &S, SourceLocation Loc,
                                           ExprResult &LHS, ExprResult &RHS,
                                           BinaryOperator::Opcode Opc){
@@ -6880,61 +6920,14 @@ static void diagnoseObjCLiteralComparison(Sema &S, SourceLocation Loc,
     return;
 
   // This should be kept in sync with warn_objc_literal_comparison.
-  // LK_String should always be last, since it has its own warning flag.
-  enum {
-    LK_Array,
-    LK_Dictionary,
-    LK_Numeric,
-    LK_Boxed,
-    LK_String
-  } LiteralKind;
-
-  Literal = Literal->IgnoreParenImpCasts();
-  switch (Literal->getStmtClass()) {
-  case Stmt::ObjCStringLiteralClass:
-    // "string literal"
-    LiteralKind = LK_String;
-    break;
-  case Stmt::ObjCArrayLiteralClass:
-    // "array literal"
-    LiteralKind = LK_Array;
-    break;
-  case Stmt::ObjCDictionaryLiteralClass:
-    // "dictionary literal"
-    LiteralKind = LK_Dictionary;
-    break;
-  case Stmt::ObjCBoxedExprClass: {
-    Expr *Inner = cast<ObjCBoxedExpr>(Literal)->getSubExpr();
-    switch (Inner->getStmtClass()) {
-    case Stmt::IntegerLiteralClass:
-    case Stmt::FloatingLiteralClass:
-    case Stmt::CharacterLiteralClass:
-    case Stmt::ObjCBoolLiteralExprClass:
-    case Stmt::CXXBoolLiteralExprClass:
-      // "numeric literal"
-      LiteralKind = LK_Numeric;
-      break;
-    case Stmt::ImplicitCastExprClass: {
-      CastKind CK = cast<CastExpr>(Inner)->getCastKind();
-      // Boolean literals can be represented by implicit casts.
-      if (CK == CK_IntegralToBoolean || CK == CK_IntegralCast) {
-        LiteralKind = LK_Numeric;
-        break;
-      }
-      // FALLTHROUGH
-    }
-    default:
-      // "boxed expression"
-      LiteralKind = LK_Boxed;
-      break;
-    }
-    break;
-  }
-  default:
+  // LK_String should always be after the other literals, since it has its own
+  // warning flag.
+  Sema::ObjCLiteralKind LiteralKind = S.CheckLiteralKind(Literal);
+  if (LiteralKind == Sema::LK_None) {
     llvm_unreachable("Unknown Objective-C object literal kind");
   }
 
-  if (LiteralKind == LK_String)
+  if (LiteralKind == Sema::LK_String)
     S.Diag(Loc, diag::warn_objc_string_literal_comparison)
       << Literal->getSourceRange();
   else
