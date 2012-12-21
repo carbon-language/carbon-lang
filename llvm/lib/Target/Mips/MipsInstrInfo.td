@@ -506,10 +506,10 @@ class SetCC_I<string opstr, PatFrag cond_op, Operand Od, PatLeaf imm_type,
          [(set CPURegs:$rt, (cond_op RC:$rs, imm_type:$imm16))], IIAlu, FrmI>;
 
 // Jump
-class JumpFJ<bits<6> op, DAGOperand opnd, string instr_asm,
-             SDPatternOperator operator, SDPatternOperator targetoperator>:
-  FJ<op, (outs), (ins opnd:$target), !strconcat(instr_asm, "\t$target"),
-     [(operator targetoperator:$target)], IIBranch> {
+class JumpFJ<DAGOperand opnd, string opstr, SDPatternOperator operator,
+             SDPatternOperator targetoperator> :
+  InstSE<(outs), (ins opnd:$target), !strconcat(opstr, "\t$target"),
+         [(operator targetoperator:$target)], IIBranch, FrmJ> {
   let isTerminator=1;
   let isBarrier=1;
   let hasDelaySlot = 1;
@@ -532,11 +532,7 @@ class UncondBranch<string opstr> :
 // Base class for indirect branch and return instruction classes.
 let isTerminator=1, isBarrier=1, hasDelaySlot = 1 in
 class JumpFR<RegisterClass RC, SDPatternOperator operator = null_frag>:
-  FR<0, 0x8, (outs), (ins RC:$rs), "jr\t$rs", [(operator RC:$rs)], IIBranch> {
-  let rt = 0;
-  let rd = 0;
-  let shamt = 0;
-}
+  InstSE<(outs), (ins RC:$rs), "jr\t$rs", [(operator RC:$rs)], IIBranch, FrmR>;
 
 // Indirect branch
 class IndirectBranch<RegisterClass RC>: JumpFR<RC, brind> {
@@ -554,21 +550,15 @@ class RetBase<RegisterClass RC>: JumpFR<RC> {
 
 // Jump and Link (Call)
 let isCall=1, hasDelaySlot=1, Defs = [RA] in {
-  class JumpLink<bits<6> op, string instr_asm>:
-    FJ<op, (outs), (ins calltarget:$target),
-       !strconcat(instr_asm, "\t$target"), [(MipsJmpLink imm:$target)],
-       IIBranch> {
-       let DecoderMethod = "DecodeJumpTarget";
-       }
-
-  class JumpLinkReg<bits<6> op, bits<6> func, string instr_asm,
-                    RegisterClass RC>:
-    FR<op, func, (outs), (ins RC:$rs),
-       !strconcat(instr_asm, "\t$rs"), [(MipsJmpLink RC:$rs)], IIBranch> {
-    let rt = 0;
-    let rd = 31;
-    let shamt = 0;
+  class JumpLink<string opstr> :
+    InstSE<(outs), (ins calltarget:$target), !strconcat(opstr, "\t$target"),
+           [(MipsJmpLink imm:$target)], IIBranch, FrmJ> {
+    let DecoderMethod = "DecodeJumpTarget";
   }
+
+  class JumpLinkReg<string opstr, RegisterClass RC>:
+    InstSE<(outs), (ins RC:$rs), !strconcat(opstr, "\t$rs"),
+           [(MipsJmpLink RC:$rs)], IIBranch, FrmR>;
 
   class BranchLink<string instr_asm, bits<5> _rt, RegisterClass RC>:
     FI<0x1, (outs), (ins RC:$rs, brtarget:$imm16),
@@ -858,9 +848,9 @@ let Predicates = [IsN64, HasStdEnc], DecoderNamespace = "Mips64" in {
 }
 
 /// Jump and Branch Instructions
-def J       : JumpFJ<0x02, jmptarget, "j", br, bb>,
+def J       : JumpFJ<jmptarget, "j", br, bb>, FJ<2>,
               Requires<[RelocStatic, HasStdEnc]>, IsBranch;
-def JR      : IndirectBranch<CPURegs>;
+def JR      : IndirectBranch<CPURegs>, MTLO_FM<8>;
 def B       : UncondBranch<"b">, B_FM;
 def BEQ     : CBranch<"beq", seteq, CPURegs>, BEQ_FM<4>;
 def BNE     : CBranch<"bne", setne, CPURegs>, BEQ_FM<5>;
@@ -873,14 +863,14 @@ let rt = 0, rs = 0, isBranch = 1, isTerminator = 1, isBarrier = 1,
     hasDelaySlot = 1, Defs = [RA] in
 def BAL_BR: FI<0x1, (outs), (ins brtarget:$imm16), "bal\t$imm16", [], IIBranch>;
 
-def JAL  : JumpLink<0x03, "jal">;
-def JALR : JumpLinkReg<0x00, 0x09, "jalr", CPURegs>;
+def JAL  : JumpLink<"jal">, FJ<3>;
+def JALR : JumpLinkReg<"jalr", CPURegs>, JALR_FM;
 def BGEZAL  : BranchLink<"bgezal", 0x11, CPURegs>;
 def BLTZAL  : BranchLink<"bltzal", 0x10, CPURegs>;
-def TAILCALL : JumpFJ<0x02, calltarget, "j", MipsTailCall, imm>, IsTailCall;
-def TAILCALL_R : JumpFR<CPURegs, MipsTailCall>, IsTailCall;
+def TAILCALL : JumpFJ<calltarget, "j", MipsTailCall, imm>, FJ<2>, IsTailCall;
+def TAILCALL_R : JumpFR<CPURegs, MipsTailCall>, MTLO_FM<8>, IsTailCall;
 
-def RET : RetBase<CPURegs>;
+def RET : RetBase<CPURegs>, MTLO_FM<8>;
 
 /// Multiply and Divide Instructions.
 def MULT    : Mult32<0x18, "mult", IIImul>;
@@ -904,9 +894,9 @@ def CLO : CountLeading1<"clo", CPURegs>, CLO_FM<0x21>;
 /// Word Swap Bytes Within Halfwords
 def WSBH : SubwordSwap<0x20, 0x2, "wsbh", CPURegs>;
 
-/// No operation
-let addr=0 in
-  def NOP   : FJ<0, (outs), (ins), "nop", [], IIAlu>;
+/// No operation.
+/// FIXME: NOP should be an alias of "sll $0, $0, 0".
+def NOP : InstSE<(outs), (ins), "nop", [], IIAlu, FrmJ>, NOP_FM;
 
 // FrameIndexes are legalized when they are operands from load/store
 // instructions. The same not happens for stack address copies, so an

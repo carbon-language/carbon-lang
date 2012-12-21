@@ -164,7 +164,7 @@ let Predicates = [IsN64, HasStdEnc], isCodeGenOnly = 1 in {
 }
 
 /// Jump and Branch Instructions
-def JR64   : IndirectBranch<CPU64Regs>;
+def JR64   : IndirectBranch<CPU64Regs>, MTLO_FM<8>;
 def BEQ64  : CBranch<"beq", seteq, CPU64Regs>, BEQ_FM<4>;
 def BNE64  : CBranch<"bne", setne, CPU64Regs>, BEQ_FM<5>;
 def BGEZ64 : CBranchZero<"bgez", setge, CPU64Regs>, BGEZ_FM<1, 1>;
@@ -173,8 +173,8 @@ def BLEZ64 : CBranchZero<"blez", setle, CPU64Regs>, BGEZ_FM<6, 0>;
 def BLTZ64 : CBranchZero<"bltz", setlt, CPU64Regs>, BGEZ_FM<1, 0>;
 }
 let DecoderNamespace = "Mips64" in
-def JALR64 : JumpLinkReg<0x00, 0x09, "jalr", CPU64Regs>;
-def TAILCALL64_R : JumpFR<CPU64Regs, MipsTailCall>, IsTailCall;
+def JALR64 : JumpLinkReg<"jalr", CPU64Regs>, JALR_FM;
+def TAILCALL64_R : JumpFR<CPU64Regs, MipsTailCall>, MTLO_FM<8>, IsTailCall;
 
 let DecoderNamespace = "Mips64" in {
 /// Multiply and Divide Instructions.

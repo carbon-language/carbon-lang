@@ -163,14 +163,14 @@ class BranchBase<bits<6> op, dag outs, dag ins, string asmstr,
 // Format J instruction class in Mips : <|opcode|address|>
 //===----------------------------------------------------------------------===//
 
-class FJ<bits<6> op, dag outs, dag ins, string asmstr, list<dag> pattern,
-         InstrItinClass itin>: InstSE<outs, ins, asmstr, pattern, itin, FrmJ>
+class FJ<bits<6> op>
 {
-  bits<26> addr;
+  bits<26> target;
 
-  let Opcode = op;
+  bits<32> Inst;
 
-  let Inst{25-0} = addr;
+  let Inst{31-26} = op;
+  let Inst{25-0}  = target;
 }
 
  //===----------------------------------------------------------------------===//
@@ -366,6 +366,25 @@ class LUI_FM {
   let Inst{25-21} = 0;
   let Inst{20-16} = rt;
   let Inst{15-0}  = imm16;
+}
+
+class NOP_FM {
+  bits<32> Inst;
+
+  let Inst{31-0} = 0;
+}
+
+class JALR_FM {
+  bits<5> rs;
+
+  bits<32> Inst;
+
+  let Inst{31-26} = 0;
+  let Inst{25-21} = rs;
+  let Inst{20-16} = 0;
+  let Inst{15-11} = 31;
+  let Inst{10-6}  = 0;
+  let Inst{5-0}   = 9;
 }
 
 //===----------------------------------------------------------------------===//
