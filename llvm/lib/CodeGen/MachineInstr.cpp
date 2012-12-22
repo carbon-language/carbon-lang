@@ -568,7 +568,7 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
 MachineInstr::~MachineInstr() {
   LeakDetector::removeGarbageObject(this);
 #ifndef NDEBUG
-  for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     assert(Operands[i].ParentMI == this && "ParentMI mismatch!");
     assert((!Operands[i].isReg() || !Operands[i].isOnRegUseList()) &&
            "Reg operand def/use list corrupted");
@@ -589,7 +589,7 @@ MachineRegisterInfo *MachineInstr::getRegInfo() {
 /// this instruction from their respective use lists.  This requires that the
 /// operands already be on their use lists.
 void MachineInstr::RemoveRegOperandsFromUseLists(MachineRegisterInfo &MRI) {
-  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     if (Operands[i].isReg())
       MRI.removeRegOperandFromUseList(&Operands[i]);
 }
@@ -598,7 +598,7 @@ void MachineInstr::RemoveRegOperandsFromUseLists(MachineRegisterInfo &MRI) {
 /// this instruction from their respective use lists.  This requires that the
 /// operands not be on their use lists yet.
 void MachineInstr::AddRegOperandsToUseLists(MachineRegisterInfo &MRI) {
-  for (unsigned i = 0, e = Operands.size(); i != e; ++i)
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
     if (Operands[i].isReg())
       MRI.addRegOperandToUseList(&Operands[i]);
 }
@@ -623,11 +623,11 @@ void MachineInstr::addOperand(MachineFunction &MF, const MachineOperand &Op) {
   // If the Operands backing store is reallocated, all register operands must
   // be removed and re-added to RegInfo.  It is storing pointers to operands.
   bool Reallocate = RegInfo &&
-    !Operands.empty() && Operands.size() == Operands.capacity();
+    !Operands.empty() && getNumOperands() == Operands.capacity();
 
   // Find the insert location for the new operand.  Implicit registers go at
   // the end, everything goes before the implicit regs.
-  unsigned OpNo = Operands.size();
+  unsigned OpNo = getNumOperands();
 
   // Remove all the implicit operands from RegInfo if they need to be shifted.
   // FIXME: Allow mixed explicit and implicit operands on inline asm.
@@ -696,7 +696,7 @@ void MachineInstr::addOperand(MachineFunction &MF, const MachineOperand &Op) {
 
   // Re-add all the implicit ops.
   if (RegInfo) {
-    for (unsigned i = OpNo + 1, e = Operands.size(); i != e; ++i) {
+    for (unsigned i = OpNo + 1, e = getNumOperands(); i != e; ++i) {
       assert(Operands[i].isReg() && "Should only be an implicit reg!");
       RegInfo->addRegOperandToUseList(&Operands[i]);
     }
@@ -707,12 +707,12 @@ void MachineInstr::addOperand(MachineFunction &MF, const MachineOperand &Op) {
 /// fewer operand than it started with.
 ///
 void MachineInstr::RemoveOperand(unsigned OpNo) {
-  assert(OpNo < Operands.size() && "Invalid operand number");
+  assert(OpNo < getNumOperands() && "Invalid operand number");
   untieRegOperand(OpNo);
   MachineRegisterInfo *RegInfo = getRegInfo();
 
   // Special case removing the last one.
-  if (OpNo == Operands.size()-1) {
+  if (OpNo == getNumOperands()-1) {
     // If needed, remove from the reg def/use list.
     if (RegInfo && Operands.back().isReg() && Operands.back().isOnRegUseList())
       RegInfo->removeRegOperandFromUseList(&Operands.back());
@@ -725,7 +725,7 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
   // update, remove all operands that will be shifted down from their reg lists,
   // move everything down, then re-add them.
   if (RegInfo) {
-    for (unsigned i = OpNo, e = Operands.size(); i != e; ++i) {
+    for (unsigned i = OpNo, e = getNumOperands(); i != e; ++i) {
       if (Operands[i].isReg())
         RegInfo->removeRegOperandFromUseList(&Operands[i]);
     }
@@ -733,7 +733,7 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
 
 #ifndef NDEBUG
   // Moving tied operands would break the ties.
-  for (unsigned i = OpNo + 1, e = Operands.size(); i != e; ++i)
+  for (unsigned i = OpNo + 1, e = getNumOperands(); i != e; ++i)
     if (Operands[i].isReg())
       assert(!Operands[i].isTied() && "Cannot move tied operands");
 #endif
@@ -741,7 +741,7 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
   Operands.erase(Operands.begin()+OpNo);
 
   if (RegInfo) {
-    for (unsigned i = OpNo, e = Operands.size(); i != e; ++i) {
+    for (unsigned i = OpNo, e = getNumOperands(); i != e; ++i) {
       if (Operands[i].isReg())
         RegInfo->addRegOperandToUseList(&Operands[i]);
     }
