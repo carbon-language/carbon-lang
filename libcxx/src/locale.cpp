@@ -2641,7 +2641,6 @@ utf16be_to_ucs4_length(const uint8_t* frm, const uint8_t* frm_end,
                        codecvt_mode mode = codecvt_mode(0))
 {
     const uint8_t* frm_nxt = frm;
-    frm_nxt = frm;
     if (mode & consume_header)
     {
         if (frm_end-frm_nxt >= 2 && frm_nxt[0] == 0xFE && frm_nxt[1] == 0xFF)
@@ -2774,7 +2773,6 @@ utf16le_to_ucs4_length(const uint8_t* frm, const uint8_t* frm_end,
                        codecvt_mode mode = codecvt_mode(0))
 {
     const uint8_t* frm_nxt = frm;
-    frm_nxt = frm;
     if (mode & consume_header)
     {
         if (frm_end-frm_nxt >= 2 && frm_nxt[0] == 0xFF && frm_nxt[1] == 0xFE)
@@ -2869,7 +2867,6 @@ utf16be_to_ucs2_length(const uint8_t* frm, const uint8_t* frm_end,
                        codecvt_mode mode = codecvt_mode(0))
 {
     const uint8_t* frm_nxt = frm;
-    frm_nxt = frm;
     if (mode & consume_header)
     {
         if (frm_end-frm_nxt >= 2 && frm_nxt[0] == 0xFE && frm_nxt[1] == 0xFF)
