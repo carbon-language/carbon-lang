@@ -870,6 +870,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setOperationAction(ISD::ADD,                MVT::v8i16, Legal);
     setOperationAction(ISD::ADD,                MVT::v4i32, Legal);
     setOperationAction(ISD::ADD,                MVT::v2i64, Legal);
+    setOperationAction(ISD::MUL,                MVT::v4i32, Custom);
     setOperationAction(ISD::MUL,                MVT::v2i64, Custom);
     setOperationAction(ISD::SUB,                MVT::v16i8, Legal);
     setOperationAction(ISD::SUB,                MVT::v8i16, Legal);
@@ -11027,16 +11028,42 @@ static SDValue LowerSUB(SDValue Op, SelectionDAG &DAG) {
 
 static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
                         SelectionDAG &DAG) {
+  DebugLoc dl = Op.getDebugLoc();
   EVT VT = Op.getValueType();
 
   // Decompose 256-bit ops into smaller 128-bit ops.
   if (VT.is256BitVector() && !Subtarget->hasInt256())
     return Lower256IntArith(Op, DAG);
 
+  SDValue A = Op.getOperand(0);
+  SDValue B = Op.getOperand(1);
+
+  // Lower v4i32 mul as 2x shuffle, 2x pmuludq, 2x shuffle.
+  if (VT == MVT::v4i32) {
+    assert(Subtarget->hasSSE2() && !Subtarget->hasSSE41() &&
+           "Should not custom lower when pmuldq is available!");
+
+    // Extract the odd parts.
+    const int UnpackMask[] = { 1, -1, 3, -1 };
+    SDValue Aodds = DAG.getVectorShuffle(VT, dl, A, A, UnpackMask);
+    SDValue Bodds = DAG.getVectorShuffle(VT, dl, B, B, UnpackMask);
+
+    // Multiply the even parts.
+    SDValue Evens = DAG.getNode(X86ISD::PMULUDQ, dl, MVT::v2i64, A, B);
+    // Now multiply odd parts.
+    SDValue Odds = DAG.getNode(X86ISD::PMULUDQ, dl, MVT::v2i64, Aodds, Bodds);
+
+    Evens = DAG.getNode(ISD::BITCAST, dl, VT, Evens);
+    Odds = DAG.getNode(ISD::BITCAST, dl, VT, Odds);
+
+    // Merge the two vectors back together with a shuffle. This expands into 2
+    // shuffles.
+    const int ShufMask[] = { 0, 4, 2, 6 };
+    return DAG.getVectorShuffle(VT, dl, Evens, Odds, ShufMask);
+  }
+
   assert((VT == MVT::v2i64 || VT == MVT::v4i64) &&
          "Only know how to lower V2I64/V4I64 multiply");
-
-  DebugLoc dl = Op.getDebugLoc();
 
   //  Ahi = psrlqi(a, 32);
   //  Bhi = psrlqi(b, 32);
@@ -11048,9 +11075,6 @@ static SDValue LowerMUL(SDValue Op, const X86Subtarget *Subtarget,
   //  AloBhi = psllqi(AloBhi, 32);
   //  AhiBlo = psllqi(AhiBlo, 32);
   //  return AloBlo + AloBhi + AhiBlo;
-
-  SDValue A = Op.getOperand(0);
-  SDValue B = Op.getOperand(1);
 
   SDValue ShAmt = DAG.getConstant(32, MVT::i32);
 
