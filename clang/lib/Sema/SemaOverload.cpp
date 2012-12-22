@@ -9541,16 +9541,23 @@ DiagnoseTwoPhaseLookup(Sema &SemaRef, SourceLocation FnLoc,
       SemaRef.FindAssociatedClassesAndNamespaces(FnLoc, Args,
                                                  AssociatedNamespaces,
                                                  AssociatedClasses);
-      // Never suggest declaring a function within namespace 'std'.
       Sema::AssociatedNamespaceSet SuggestedNamespaces;
       DeclContext *Std = SemaRef.getStdNamespace();
       for (Sema::AssociatedNamespaceSet::iterator
              it = AssociatedNamespaces.begin(),
              end = AssociatedNamespaces.end(); it != end; ++it) {
-        NamespaceDecl *Assoc = cast<NamespaceDecl>(*it);
-        if ((!Std || !Std->Encloses(Assoc)) &&
-            Assoc->getQualifiedNameAsString().find("__") == std::string::npos)
-          SuggestedNamespaces.insert(Assoc);
+        // Never suggest declaring a function within namespace 'std'.
+        if (Std && Std->Encloses(*it))
+          continue;
+        
+        // Never suggest declaring a function within a namespace with a reserved
+        // name, like __gnu_cxx.
+        NamespaceDecl *NS = dyn_cast<NamespaceDecl>(*it);
+        if (NS &&
+            NS->getQualifiedNameAsString().find("__") != std::string::npos)
+          continue;
+
+        SuggestedNamespaces.insert(*it);
       }
 
       SemaRef.Diag(R.getNameLoc(), diag::err_not_found_by_two_phase_lookup)
