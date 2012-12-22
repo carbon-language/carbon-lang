@@ -2,7 +2,7 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-<title>Clang 3.2 Release Notes</title>
+<title>Clang 3.3 Release Notes</title>
 <link type="text/css" rel="stylesheet" href="../menu.css">
 <link type="text/css" rel="stylesheet" href="../content.css">
 <style type="text/css">
@@ -17,14 +17,14 @@ td {
 
 <div id="content">
 
-<h1>Clang 3.2 Release Notes</h1>
+<h1>Clang 3.3 Release Notes</h1>
 
 <img style="float:right" src="http://llvm.org/img/DragonSmall.png"
      width="136" height="136" alt="LLVM Dragon Logo">
 
 <ul>
   <li><a href="#intro">Introduction</a></li>
-  <li><a href="#whatsnew">What's New in Clang 3.2?</a>
+  <li><a href="#whatsnew">What's New in Clang 3.3?</a>
     <ul>
       <li><a href="#majorfeatures">Major New Features</a></li>
       <li><a href="#newflags">New Compiler Flags</a></li>
@@ -43,10 +43,10 @@ td {
   <p>Written by the <a href="http://llvm.org/">LLVM Team</a></p>
 </div>
 
-<h1 style="color:red">These are in-progress notes for the upcoming Clang 3.2
+<h1 style="color:red">These are in-progress notes for the upcoming Clang 3.3
 release.<br>
 You may prefer the
-<a href="http://llvm.org/releases/3.1/docs/ClangReleaseNotes.html">Clang 3.1
+<a href="http://llvm.org/releases/3.2/docs/ClangReleaseNotes.html">Clang 3.2
 Release Notes</a>.</h1>
 
 <!-- ======================================================================= -->
@@ -54,7 +54,7 @@ Release Notes</a>.</h1>
 <!-- ======================================================================= -->
 
 <p>This document contains the release notes for the Clang C/C++/Objective-C
-   frontend, part of the LLVM Compiler Infrastructure, release 3.2.  Here we
+   frontend, part of the LLVM Compiler Infrastructure, release 3.3.  Here we
    describe the status of Clang in some detail, including major improvements
    from the previous release and new feature work. For the general LLVM release
    notes, see <a href="http://llvm.org/docs/ReleaseNotes.html">the LLVM
@@ -72,7 +72,7 @@ Release Notes</a>.</h1>
    <a href="http://llvm.org/releases/">releases page</a>.</p>
 
 <!-- ======================================================================= -->
-<h2 id="whatsnew">What's New in Clang 3.2?</h2>
+<h2 id="whatsnew">What's New in Clang 3.3?</h2>
 <!-- ======================================================================= -->
 
 <p>Some of the major new features and improvements to Clang are listed here.
@@ -88,178 +88,17 @@ Release Notes</a>.</h1>
 
 <p>Clang's diagnostics are constantly being improved to catch more issues,
 explain them more clearly, and provide more accurate source information about
-them. The improvements since the 3.1 release include:</p>
+them. The improvements since the 3.2 release include:</p>
 
 <ul>
-  <li><tt>-Wuninitialized</tt> has been taught to recognise uninitialized uses
-  which always occur when an explicitly-written non-constant condition is either
-  <tt>true</tt> or <tt>false</tt>. For example:
-
-<pre>
-int f(bool b) {
-  int n;
-  if (b)
-    n = 1;
-  return n;
-}
-
-<b>sometimes-uninit.cpp:3:7: <span class="warning">warning:</span> variable 'n' is used uninitialized whenever 'if' condition is false [-Wsometimes-uninitialized]</b>
-  if (b)
-      <span class="caret">^</span>
-<b>sometimes-uninit.cpp:5:10: <span class="note">note:</span></b> uninitialized use occurs here
-  return n;
-         <span class="caret">^</span>
-<b>sometimes-uninit.cpp:3:3: <span class="note">note:</span></b> remove the 'if' if its condition is always true
-  if (b)
-  <span class="caret">^~~~~~</span>
-<b>sometimes-uninit.cpp:2:8: <span class="note">note:</span></b> initialize the variable 'n' to silence this warning
-  int n;
-       <span class="caret">^</span>
-       <span class="caret"> = 0</span>
-</pre>
-
-  This functionality can be enabled or disabled separately from
-  <tt>-Wuninitialized</tt> with the <tt>-Wsometimes-uninitialized</tt> warning
-  flag.</li>
-
-  <li>Template type diffing improves the display of diagnostics with templated
-  types in them.
-
-<pre>
-int f(vector&lt;map&lt;int, double&gt;&gt;);
-int x = f(vector&lt;map&lt;int, float&gt;&gt;());
-</pre>
-  The error message is the same, but the note is different based on the options selected.
-<pre>
-<b>template-diff.cpp:5:9: <span class="error">error:</span> no matching function for call to 'f'</b>
-int x = f(vector&lt;map&lt;int, float&gt;&gt;());
-        <span class="caret">^</span>
-</pre>
-  Templated type diffing with type elision (default):
-<pre>
-<b>template-diff.cpp:4:5: <span class="note">note:</span></b> candidate function not viable: no known conversion from 'vector&lt;map&lt;[...], <span class="template-highlight">float</span>&gt;&gt;' to 'vector&lt;map&lt;[...], <span class="template-highlight">double</span>&gt;&gt;' for 1st argument;
-int f(vector&lt;map&lt;int, double&gt;&gt;);
-    <span class="caret">^</span>
-</pre>
-  Templated type diffing without type elision (-fno-elide-type):
-<pre>
-<b>template-diff.cpp:4:5: <span class="note">note:</span></b> candidate function not viable: no known conversion from 'vector&lt;map&lt;int, <span class="template-highlight">float</span>&gt;&gt;' to 'vector&lt;map&lt;int, <span class="template-highlight">double</span>&gt;&gt;' for 1st argument;
-int f(vector&lt;map&lt;int, double&gt;&gt;);
-    <span class="caret">^</span>
-</pre>
-  Templated tree printing with type elision (-fdiagnostics-show-template-tree):
-<pre>
-<b>template-diff.cpp:4:5: <span class="note">note:</span></b> candidate function not viable: no known conversion for 1st argument;
-  vector&lt;
-    map&lt;
-      [...],
-      [<span class="template-highlight">float</span> != <span class="template-highlight">double</span>]&gt;&gt;
-int f(vector&lt;map&lt;int, double&gt;&gt;);
-    <span class="caret">^</span>
-</pre>
-  Templated tree printing without type elision (-fdiagnostics-show-template-tree -fno-elide-type):
-<pre>
-<b>template-diff.cpp:4:5: <span class="note">note:</span></b> candidate function not viable: no known conversion for 1st argument;
-  vector&lt;
-    map&lt;
-      int,
-      [<span class="template-highlight">float</span> != <span class="template-highlight">double</span>]&gt;&gt;
-int f(vector&lt;map&lt;int, double&gt;&gt;);
-    <span class="caret">^</span>
-</pre>
-
-  </li>
-
-  <li>The Address Sanitizer feature and Clang's
-  <tt>-fcatch-undefined-behavior</tt> option have been moved to a unified flag
-  set: <tt>-fsanitize</tt>. This flag can be used to enable the different
-  dynamic checking tools when building. For example,
-  <tt>-faddress-sanitizer</tt> is now <tt>-fsanitize=address</tt>, and
-  <tt>-fcatch-undefined-behavior</tt> is now <tt>-fsanitize=undefined</tt>.
-  With this release the set of checks available continues to grow, see the Clang
-  documentaion and specific sanitizer notes below for details.
-  </li>
-
+  <li>...</li>
 </ul>
-
-<h4 id="tlsmodel">Support for <code>tls_model</code> attribute</h4>
-
-<p>Clang now supports the <code>tls_model</code> attribute, allowing code that
-uses thread-local storage to explicitly select which model to use. The available
-models are <code>"global-dynamic"</code>, <code>"local-dynamic"</code>,
-<code>"initial-exec"</code> and <code>"local-exec"</code>. See
-<a href="http://www.akkadia.org/drepper/tls.pdf">ELF Handling For Thread-Local
- Storage</a> for more information.</p>
-
-<p>The compiler is free to choose a different model if the specified model is not
-supported by the target, or if the compiler determines that a more specific
-model can be used.
-</p>
-
-<h4>Type safety attributes</h4>
-<p>Clang now supports type safety attributes that allow checking during compile
-time that 'void *' function arguments and arguments for variadic functions are
-of a particular type which is determined by some other argument to the same
-function call.</p>
-
-<p>Usecases include:</p>
-<ul>
-<li>MPI library implementations, where these attributes enable checking that
-  buffer type matches the passed <code>MPI_Datatype</code>;</li>
-<li> HDF5 library -- similar usecase as for MPI;</li>
-<li> checking types of variadic functions' arguments for functions like
-<code>fcntl()</code> and <code>ioctl()</code>.</li>
-</ul>
-
-<p>See entries for <code>argument_with_type_tag</code>,
-<code>pointer_with_type_tag</code> and <code>type_tag_for_datatype</code>
-attributes in Clang language extensions documentation.</p>
-
-<h4>Documentation comment support</h4>
-<p>Clang now supports documentation comments written in a Doxygen-like syntax.
-Clang parses the comments and can detect syntactic and semantic errors in
-comments.  These warnings are off by default.  Pass <tt>-Wdocumentation</tt>
-flag to enable warnings about documentation comments.</p>
-
-<p>For example, given:</p>
-
-<pre>/// \param [in] Str the string.
-/// \returns a modified string.
-void do_something(const std::string &amp;str);</pre>
-
-<p><tt>clang -Wdocumentation</tt> will emit two warnings:</p>
-
-<pre><b>doc-test.cc:3:6: <span class="warning">warning:</span></b> '\returns' command used in a comment that is attached to a function returning void [-Wdocumentation]
-/// \returns a modified string.
-    <span class="caret">~^~~~~~~~~~~~~~~~~~~~~~~~~~</span>
-<b>doc-test.cc:2:17: <span class="warning">warning:</span></b> parameter 'Str' not found in the function declaration [-Wdocumentation]
-/// \param [in] Str the string.
-                <span class="caret">^~~</span>
-<b>doc-test.cc:2:17: <span class="note">note:</span></b> did you mean 'str'?
-/// \param [in] Str the string.
-                <span class="caret">^~~</span>
-                <span class="caret">str</span></pre>
-
-<p>libclang includes a new API, <tt>clang_FullComment_getAsXML</tt>, to convert
-comments to XML documents.  This API can be used to build documentation
-extraction tools.</p>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="newflags">New Compiler Flags</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <ul>
-  <li><tt>-gline-tables-only</tt> controls the
-  <a href="http://clang.llvm.org/docs/UsersManual.html#debuginfosize">size of debug information</a>.
-  This flag tells Clang to emit debug info which is just enough to obtain stack traces with
-  function names, file names and line numbers (by such tools as gdb or addr2line).
-  Debug info for variables or function parameters is not produced, which reduces
-  the size of the resulting binary.
-
-  <li><tt>-ftls-model</tt> controls which TLS model to use for thread-local
-  variables. This can be overridden per variable using the
-  <a href="#tlsmodel"><tt>tls_model</tt> attribute</a> mentioned above.
-  For more details, see the <a href="UsersManual.html#opt_ftls-model">User's
-  Manual</a>.</li>
+  <li>...</li>
 </ul>
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
@@ -288,7 +127,7 @@ extraction tools.</p>
 <h3 id="apichanges">Internal API Changes</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 
-<p>These are major API changes that have happened since the 3.1 release of
+<p>These are major API changes that have happened since the 3.2 release of
    Clang. If upgrading an external codebase that uses Clang as a library, this
    section should help get you past the largest hurdles of upgrading.</p>
 
@@ -326,11 +165,11 @@ The following methods have been added:
    list</a>.</p>
 
 <!-- ======================================================================= -->
-<!-- Likely 3.1 release notes -->
+<!-- Likely 3.2 release notes -->
 <!-- ======================================================================= -->
 <!--
 This is just a section to hold things that have already gotten started and
-should likely pick up proper release notes in 3.1.
+should likely pick up proper release notes in 3.2.
 
 - C1X and C++11 atomics infrastructure and support
 - CUDA support?
