@@ -421,7 +421,7 @@ def DirectIvarAssignment : Checker<"DirectIvarAssignment">,
   DescFile<"DirectIvarAssignment.cpp">;
 
 def DirectIvarAssignmentForAnnotatedFunctions : Checker<"DirectIvarAssignmentForAnnotatedFunctions">,
-  HelpText<"Check for direct assignments to instance variables in the methods annotated with objc_no_direct_instance_variable_assignmemt">,
+  HelpText<"Check for direct assignments to instance variables in the methods annotated with objc_no_direct_instance_variable_assignment">,
   DescFile<"DirectIvarAssignment.cpp">;
 
 def ObjCSuperCallChecker : Checker<"MissingSuperCall">,

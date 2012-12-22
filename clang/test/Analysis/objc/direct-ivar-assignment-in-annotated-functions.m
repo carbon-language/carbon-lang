@@ -15,7 +15,7 @@ typedef signed char BOOL;
 
 @interface AnnotatedClass :NSObject {
 }
-  - (void) someMethod: (MyClass*)In __attribute__((annotate("objc_no_direct_instance_variable_assignmemt")));
+  - (void) someMethod: (MyClass*)In __attribute__((annotate("objc_no_direct_instance_variable_assignment")));
   - (void) someMethodNotAnnaotated: (MyClass*)In;
 @end
 

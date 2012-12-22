@@ -201,7 +201,7 @@ void ento::registerDirectIvarAssignment(CheckerManager &mgr) {
 }
 
 // Register the checker that checks for direct accesses in functions annotated
-// with __attribute__((annotate("objc_no_direct_instance_variable_assignmemt"))).
+// with __attribute__((annotate("objc_no_direct_instance_variable_assignment"))).
 namespace {
 struct InvalidatorMethodFilter : MethodFilter {
   virtual ~InvalidatorMethodFilter() {}
@@ -210,7 +210,7 @@ struct InvalidatorMethodFilter : MethodFilter {
          AI = M->specific_attr_begin<AnnotateAttr>(),
          AE = M->specific_attr_end<AnnotateAttr>(); AI != AE; ++AI) {
       const AnnotateAttr *Ann = *AI;
-      if (Ann->getAnnotation() == "objc_no_direct_instance_variable_assignmemt")
+      if (Ann->getAnnotation() == "objc_no_direct_instance_variable_assignment")
         return false;
     }
     return true;
