@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import os
 import plistlib
 
 def main():
@@ -59,20 +60,37 @@ Utility for dumping Clang-style logged diagnostics.\
 </array>
 </plist>""" % data
 
-    # Load the diagnostics.
+    # Get the list of files and diagnostics to report.
+    to_report = []
     diags = plistlib.readPlistFromString(data)
+    for file_diags in diags:
+        file = file_diags.get('main-file')
 
-    # Print out the diagnostics.
+        # Ignore diagnostics for 'conftest.c', which is the file autoconf uses
+        # for its tests (which frequently will have warnings).
+        if os.path.basename(file) == 'conftest.c':
+            continue
+
+        # Get the diagnostics for the selected levels.
+        selected_diags = [d
+                          for d in file_diags.get('diagnostics', ())
+                          if levels[d.get('level')] or opts.all]
+        if selected_diags:
+            to_report.append((file, selected_diags))
+
+    # If there are no diagnostics to report, show nothing.
+    if not to_report:
+        return
+
+    # Otherwise, print out the diagnostics.
     print
     print "**** BUILD DIAGNOSTICS ****"
-    for i, file_diags in enumerate(diags):
-        file = file_diags.get('main-file')
+    for file,selected_diags in to_report:
         print "*** %s ***" % file
-        for d in file_diags.get('diagnostics', ()):
-            if levels[d.get('level')] or opts.all:
-                print " %s:%s:%s: %s: %s" % (
-                    d.get('filename'), d.get('line'), d.get('column'),
-                    d.get('level'), d.get('message'))
+        for d in selected_diags:
+            print " %s:%s:%s: %s: %s" % (
+                d.get('filename'), d.get('line'), d.get('column'),
+                d.get('level'), d.get('message'))
 
 if __name__ == "__main__":
     main()
