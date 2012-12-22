@@ -48,7 +48,7 @@ public:
   virtual ~Driver();
 
   virtual std::unique_ptr<llvm::opt::DerivedArgList>
-    transform(llvm::ArrayRef<const char *const> args) = 0;
+    transform(llvm::ArrayRef<const char *> args) = 0;
 
   /// \param flavor driver flavor to create.
   /// \param defaultTargetTriple target triple as determined by the program name

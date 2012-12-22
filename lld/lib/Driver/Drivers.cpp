@@ -89,7 +89,7 @@ public:
   LDDriver(StringRef defaultTargetTriple) : Driver(defaultTargetTriple) {}
 
   virtual std::unique_ptr<llvm::opt::DerivedArgList>
-  transform(llvm::ArrayRef<const char *const> args) {
+  transform(llvm::ArrayRef<const char *> args) {
     assert(!_inputArgs && "transform may only be called once!");
 
     unsigned missingIndex, missingCount;

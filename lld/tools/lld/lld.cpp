@@ -123,7 +123,7 @@ int main(int argc, char **argv) {
     // Transform to core arguments.
     driver = Driver::create(iHazAFlavor, getDefaultTarget(argc, argv));
     coreArgs = driver->transform(
-      llvm::ArrayRef<const char *const>(argv + 1, argv + argc));
+      llvm::ArrayRef<const char *>(argv + 1, argv + argc));
   }
 
   if (!coreArgs)
