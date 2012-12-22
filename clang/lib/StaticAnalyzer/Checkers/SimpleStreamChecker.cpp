@@ -50,8 +50,7 @@ public:
 class SimpleStreamChecker : public Checker<check::PostCall,
                                            check::PreCall,
                                            check::DeadSymbols,
-                                           check::Bind,
-                                           check::RegionChanges> {
+                                           check::PointerEscape> {
 
   mutable IdentifierInfo *IIfopen, *IIfclose;
 
@@ -80,20 +79,10 @@ public:
 
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
 
-  /// Deal with symbol escape as a byproduct of a bind.
-  void checkBind(SVal location, SVal val, const Stmt*S,
-                 CheckerContext &C) const;
-
-  /// Deal with symbol escape as a byproduct of a region change.
-  ProgramStateRef
-  checkRegionChanges(ProgramStateRef state,
-                     const InvalidatedSymbols *invalidated,
-                     ArrayRef<const MemRegion *> ExplicitRegions,
-                     ArrayRef<const MemRegion *> Regions,
-                     const CallEvent *Call) const;
-  bool wantsRegionChangeUpdate(ProgramStateRef state) const {
-    return true;
-  }
+  /// Stop tracking addresses which escape.
+  ProgramStateRef checkPointerEscape(ProgramStateRef State,
+                                    const InvalidatedSymbols &Escaped,
+                                    const CallEvent *Call) const;
 };
 
 } // end anonymous namespace
@@ -246,45 +235,6 @@ void SimpleStreamChecker::reportLeaks(SymbolVector LeakedStreams,
   }
 }
 
-// Check various ways a symbol can be invalidated.
-// Stop tracking symbols when a value escapes as a result of checkBind.
-// A value escapes in three possible cases:
-// (1) We are binding to something that is not a memory region.
-// (2) We are binding to a MemRegion that does not have stack storage
-// (3) We are binding to a MemRegion with stack storage that the store
-//     does not understand.
-void SimpleStreamChecker::checkBind(SVal loc, SVal val, const Stmt *S,
-                                    CheckerContext &C) const {
-  // Are we storing to something that causes the value to "escape"?
-  bool escapes = true;
-  ProgramStateRef state = C.getState();
-
-  if (loc::MemRegionVal *regionLoc = dyn_cast<loc::MemRegionVal>(&loc)) {
-    escapes = !regionLoc->getRegion()->hasStackStorage();
-
-    if (!escapes) {
-      // To test (3), generate a new state with the binding added.  If it is
-      // the same state, then it escapes (since the store cannot represent
-      // the binding). Do this only if we know that the store is not supposed
-      // to generate the same state.
-      SVal StoredVal = state->getSVal(regionLoc->getRegion());
-      if (StoredVal != val)
-        escapes = (state == (state->bindLoc(*regionLoc, val)));
-    }
-  }
-
-  // If our store can represent the binding and we aren't storing to something
-  // that doesn't have local storage then just return the state and
-  // continue as is.
-  if (!escapes)
-    return;
-
-  // Otherwise, find all symbols referenced by 'val' that we are tracking
-  // and stop tracking them.
-  state = state->scanReachableSymbols<StopTrackingCallback>(val).getState();
-  C.addTransition(state);
-}
-
 bool SimpleStreamChecker::guaranteedNotToCloseFile(const CallEvent &Call) const{
   // If it's not in a system header, assume it might close a file.
   if (!Call.isInSystemHeader())
@@ -300,38 +250,24 @@ bool SimpleStreamChecker::guaranteedNotToCloseFile(const CallEvent &Call) const{
   return true;
 }
 
-// If the symbol we are tracking is invalidated, do not track the symbol as
+// If the pointer we are tracking escaped, do not track the symbol as
 // we cannot reason about it anymore.
 ProgramStateRef
-SimpleStreamChecker::checkRegionChanges(ProgramStateRef State,
-    const InvalidatedSymbols *invalidated,
-    ArrayRef<const MemRegion *> ExplicitRegions,
-    ArrayRef<const MemRegion *> Regions,
-    const CallEvent *Call) const {
-
-  if (!invalidated || invalidated->empty())
+SimpleStreamChecker::checkPointerEscape(ProgramStateRef State,
+                                        const InvalidatedSymbols &Escaped,
+                                        const CallEvent *Call) const {
+  // If we know that the call cannot close a file, there is nothing to do.
+  if (Call && guaranteedNotToCloseFile(*Call))
     return State;
 
-  // If it's a call which might close the file, we assume that all regions
-  // (explicit and implicit) escaped. Otherwise, whitelist explicit pointers
-  // (the parameters to the call); we still can track them.
-  llvm::SmallPtrSet<SymbolRef, 8> WhitelistedSymbols;
-  if (!Call || guaranteedNotToCloseFile(*Call)) {
-    for (ArrayRef<const MemRegion *>::iterator I = ExplicitRegions.begin(),
-        E = ExplicitRegions.end(); I != E; ++I) {
-      if (const SymbolicRegion *R = (*I)->StripCasts()->getAs<SymbolicRegion>())
-        WhitelistedSymbols.insert(R->getSymbol());
-    }
-  }
+  for (InvalidatedSymbols::const_iterator I = Escaped.begin(),
+                                          E = Escaped.end();
+                                          I != E; ++I) {
+    SymbolRef Sym = *I;
 
-  for (InvalidatedSymbols::const_iterator I=invalidated->begin(),
-       E = invalidated->end(); I!=E; ++I) {
-    SymbolRef sym = *I;
-    if (WhitelistedSymbols.count(sym))
-      continue;
     // The symbol escaped. Optimistically, assume that the corresponding file
     // handle will be closed somewhere else.
-    State = State->remove<StreamMap>(sym);
+    State = State->remove<StreamMap>(Sym);
   }
   return State;
 }
