@@ -35,7 +35,7 @@ namespace llvm {
     enum SimpleValueType {
       // INVALID_SIMPLE_VALUE_TYPE - Simple value types less than zero are
       // considered extended value types.
-      INVALID_SIMPLE_VALUE_TYPE = -1
+      INVALID_SIMPLE_VALUE_TYPE = -1,
 
       // If you change this numbering, you must change the values in
       // ValueTypes.td as well!
@@ -141,7 +141,7 @@ namespace llvm {
 
       // iPTR - An int value the size of the pointer of the current
       // target.  This should only be used internal to tblgen!
-      iPTR           = 255,
+      iPTR           = 255
     };
 
     SimpleValueType SimpleTy;
