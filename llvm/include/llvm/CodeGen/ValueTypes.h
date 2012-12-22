@@ -33,6 +33,10 @@ namespace llvm {
   class MVT {
   public:
     enum SimpleValueType {
+      // INVALID_SIMPLE_VALUE_TYPE - Simple value types less than zero are
+      // considered extended value types.
+      INVALID_SIMPLE_VALUE_TYPE = -1
+
       // If you change this numbering, you must change the values in
       // ValueTypes.td as well!
       Other          =   0,   // This is a non-standard value
@@ -138,13 +142,6 @@ namespace llvm {
       // iPTR - An int value the size of the pointer of the current
       // target.  This should only be used internal to tblgen!
       iPTR           = 255,
-
-      // LastSimpleValueType - The greatest valid SimpleValueType value.
-      LastSimpleValueType = 255,
-
-      // INVALID_SIMPLE_VALUE_TYPE - Simple value types greater than or equal
-      // to this are considered extended value types.
-      INVALID_SIMPLE_VALUE_TYPE = LastSimpleValueType + 1
     };
 
     SimpleValueType SimpleTy;
@@ -531,7 +528,7 @@ namespace llvm {
     bool operator!=(EVT VT) const {
       if (V.SimpleTy != VT.V.SimpleTy)
         return true;
-      if (V.SimpleTy == MVT::INVALID_SIMPLE_VALUE_TYPE)
+      if (V.SimpleTy < 0)
         return LLVMTy != VT.LLVMTy;
       return false;
     }
@@ -547,7 +544,7 @@ namespace llvm {
     /// number of bits.
     static EVT getIntegerVT(LLVMContext &Context, unsigned BitWidth) {
       MVT M = MVT::getIntegerVT(BitWidth);
-      if (M.SimpleTy != MVT::INVALID_SIMPLE_VALUE_TYPE)
+      if (M.SimpleTy >= 0)
         return M;
       return getExtendedIntegerVT(Context, BitWidth);
     }
@@ -556,7 +553,7 @@ namespace llvm {
     /// length, where each element is of type VT.
     static EVT getVectorVT(LLVMContext &Context, EVT VT, unsigned NumElements) {
       MVT M = MVT::getVectorVT(VT.V, NumElements);
-      if (M.SimpleTy != MVT::INVALID_SIMPLE_VALUE_TYPE)
+      if (M.SimpleTy >= 0)
         return M;
       return getExtendedVectorVT(Context, VT, NumElements);
     }
@@ -571,7 +568,7 @@ namespace llvm {
       unsigned BitWidth = EltTy.getSizeInBits();
       MVT IntTy = MVT::getIntegerVT(BitWidth);
       MVT VecTy = MVT::getVectorVT(IntTy, getVectorNumElements());
-      assert(VecTy != MVT::INVALID_SIMPLE_VALUE_TYPE &&
+      assert(VecTy.SimpleTy >= 0 &&
              "Simple vector VT not representable by simple integer vector VT!");
       return VecTy;
     }
@@ -579,7 +576,7 @@ namespace llvm {
     /// isSimple - Test if the given EVT is simple (as opposed to being
     /// extended).
     bool isSimple() const {
-      return V.SimpleTy <= MVT::LastSimpleValueType;
+      return V.SimpleTy >= 0;
     }
 
     /// isExtended - Test if the given EVT is extended (as opposed to
