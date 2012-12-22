@@ -516,7 +516,7 @@ void Output::output(StringRef s) {
 
 void Output::outputUpToEndOfLine(StringRef s) {
   this->output(s);
-  if (StateStack.back() != inFlowSeq)
+  if (StateStack.empty() || StateStack.back() != inFlowSeq)
     NeedsNewLine = true;
 }
 
