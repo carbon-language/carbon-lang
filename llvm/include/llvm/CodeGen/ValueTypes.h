@@ -328,7 +328,10 @@ namespace llvm {
       case iPTRAny:
       case iAny:
       case fAny:
+      case vAny:
         llvm_unreachable("Value type is overloaded.");
+      case Metadata:
+        llvm_unreachable("Value type is metadata.");
       default:
         llvm_unreachable("getSizeInBits called on extended MVT.");
       case i1  :  return 1;
@@ -345,7 +348,7 @@ namespace llvm {
       case i32 :
       case v4i8:
       case v2i16:
-      case v2f16: 
+      case v2f16:
       case v1i32: return 32;
       case x86mmx:
       case f64 :
