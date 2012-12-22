@@ -415,9 +415,16 @@ DynamicLoaderMacOSXDYLD::ReadDYLDInfoFromMemoryAndSetNotificationCallback(lldb::
             // it again (since Target::SetExecutableModule() will clear the
             // images). So append the dyld module back to the list if it is
             /// unique!
-            if (dyld_module_sp && m_process->GetTarget().GetImages().AppendIfNeeded (dyld_module_sp))
-                UpdateImageLoadAddress(dyld_module_sp.get(), m_dyld);
+            if (dyld_module_sp)
+            {
+                if (m_process->GetTarget().GetImages().AppendIfNeeded (dyld_module_sp))
+                    UpdateImageLoadAddress(dyld_module_sp.get(), m_dyld);
 
+                // At this point we should have read in dyld's module, and so we should set breakpoints in it:
+                ModuleList modules;
+                modules.Append(dyld_module_sp);
+                m_process->GetTarget().ModulesDidLoad(modules);
+            }
             return true;
         }
     }
