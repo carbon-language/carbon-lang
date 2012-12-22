@@ -158,15 +158,17 @@ void Preprocessor::EnterSourceFileWithPTH(PTHLexer *PL,
 /// tokens from it instead of the current buffer.
 void Preprocessor::EnterMacro(Token &Tok, SourceLocation ILEnd,
                               MacroInfo *Macro, MacroArgs *Args) {
+  TokenLexer *TokLexer;
+  if (NumCachedTokenLexers == 0) {
+    TokLexer = new TokenLexer(Tok, ILEnd, Macro, Args, *this);
+  } else {
+    TokLexer = TokenLexerCache[--NumCachedTokenLexers];
+    TokLexer->Init(Tok, ILEnd, Macro, Args);
+  }
+
   PushIncludeMacroStack();
   CurDirLookup = 0;
-
-  if (NumCachedTokenLexers == 0) {
-    CurTokenLexer.reset(new TokenLexer(Tok, ILEnd, Macro, Args, *this));
-  } else {
-    CurTokenLexer.reset(TokenLexerCache[--NumCachedTokenLexers]);
-    CurTokenLexer->Init(Tok, ILEnd, Macro, Args);
-  }
+  CurTokenLexer.reset(TokLexer);
   if (CurLexerKind != CLK_LexAfterModuleImport)
     CurLexerKind = CLK_TokenLexer;
 }
@@ -186,18 +188,20 @@ void Preprocessor::EnterMacro(Token &Tok, SourceLocation ILEnd,
 void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks,
                                     bool DisableMacroExpansion,
                                     bool OwnsTokens) {
+  // Create a macro expander to expand from the specified token stream.
+  TokenLexer *TokLexer;
+  if (NumCachedTokenLexers == 0) {
+    TokLexer = new TokenLexer(Toks, NumToks, DisableMacroExpansion,
+                              OwnsTokens, *this);
+  } else {
+    TokLexer = TokenLexerCache[--NumCachedTokenLexers];
+    TokLexer->Init(Toks, NumToks, DisableMacroExpansion, OwnsTokens);
+  }
+
   // Save our current state.
   PushIncludeMacroStack();
   CurDirLookup = 0;
-
-  // Create a macro expander to expand from the specified token stream.
-  if (NumCachedTokenLexers == 0) {
-    CurTokenLexer.reset(new TokenLexer(Toks, NumToks, DisableMacroExpansion,
-                                       OwnsTokens, *this));
-  } else {
-    CurTokenLexer.reset(TokenLexerCache[--NumCachedTokenLexers]);
-    CurTokenLexer->Init(Toks, NumToks, DisableMacroExpansion, OwnsTokens);
-  }
+  CurTokenLexer.reset(TokLexer);
   if (CurLexerKind != CLK_LexAfterModuleImport)
     CurLexerKind = CLK_TokenLexer;
 }
@@ -327,6 +331,17 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
     Result.startToken();
     CurLexer->BufferPtr = EndPos;
     CurLexer->FormTokenWithChars(Result, EndPos, tok::eof);
+
+    if (isCodeCompletionEnabled()) {
+      // Inserting the code-completion point increases the source buffer by 1,
+      // but the main FileID was created before inserting the point.
+      // Compensate by reducing the EOF location by 1, otherwise the location
+      // will point to the next FileID.
+      // FIXME: This is hacky, the code-completion point should probably be
+      // inserted before the main FileID is created.
+      if (CurLexer->getFileLoc() == CodeCompletionFileLoc)
+        Result.setLocation(Result.getLocation().getLocWithOffset(-1));
+    }
 
     if (!isIncrementalProcessingEnabled())
       // We're done with lexing.

@@ -14,10 +14,24 @@ void test(struct Point *p) {
 
 #define MACRO3(x,y,z) x;y;z
 
-void test(struct Point *p) {
+void test2(struct Point *p) {
   MACRO3(p->x);
   MACRO3(p->x
 }
+
+#define VGM(...) 0
+#define VGM2(...) __VA_ARGS__
+
+// These need to be last, to test proper handling of EOF.
+#ifdef EOF_TEST1
+void test3(struct Point *p) {
+  VGM(1,2, p->x
+
+#elif EOF_TEST2
+void test3(struct Point *p) {
+  VGM2(VGM(1,2, p->x
+
+#endif
 
 // RUN: c-index-test -code-completion-at=%s:11:12 %s | FileCheck %s
 // RUN: c-index-test -code-completion-at=%s:12:12 %s | FileCheck %s
@@ -29,3 +43,10 @@ void test(struct Point *p) {
 // CHECK-NEXT: Completion contexts:
 // CHECK-NEXT: Arrow member access
 // CHECK-NEXT: Container Kind: StructDecl
+
+// With these, code-completion is unknown because the macro argument (and the
+// completion point) is not expanded by the macro definition.
+// RUN: c-index-test -code-completion-at=%s:28:15 %s -DEOF_TEST1 | FileCheck %s -check-prefix=CHECK-EOF
+// RUN: c-index-test -code-completion-at=%s:32:20 %s -DEOF_TEST2 | FileCheck %s -check-prefix=CHECK-EOF
+// CHECK-EOF: Completion contexts:
+// CHECK-EOF: Unknown

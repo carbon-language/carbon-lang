@@ -528,6 +528,10 @@ MacroArgs *Preprocessor::ReadFunctionLikeMacroArgs(Token &MacroName,
           MacroName = Tok;
           return 0;
         } else {
+          // Do not lose the EOF/EOD.
+          Token *Toks = new Token[1];
+          Toks[0] = Tok;
+          EnterTokenStream(Toks, 1, true, true);
           break;
         }
       } else if (Tok.is(tok::r_paren)) {
