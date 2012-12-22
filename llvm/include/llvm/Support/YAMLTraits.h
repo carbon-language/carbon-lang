@@ -360,7 +360,7 @@ public:
 
   template <typename T>
   void enumCase(T &Val, const char* Str, const T ConstVal) {
-    if ( matchEnumScalar(Str, (Val == ConstVal)) ) {
+    if ( matchEnumScalar(Str, outputting() && Val == ConstVal) ) {
       Val = ConstVal;
     }
   }
@@ -368,14 +368,14 @@ public:
   // allow anonymous enum values to be used with LLVM_YAML_STRONG_TYPEDEF
   template <typename T>
   void enumCase(T &Val, const char* Str, const uint32_t ConstVal) {
-    if ( matchEnumScalar(Str, (Val == static_cast<T>(ConstVal))) ) {
+    if ( matchEnumScalar(Str, outputting() && Val == static_cast<T>(ConstVal)) ) {
       Val = ConstVal;
     }
   }
 
   template <typename T>
   void bitSetCase(T &Val, const char* Str, const T ConstVal) {
-    if ( bitSetMatch(Str, ((Val & ConstVal) == ConstVal)) ) {
+    if ( bitSetMatch(Str, outputting() && (Val & ConstVal) == ConstVal) ) {
       Val = Val | ConstVal;
     }
   }
@@ -383,7 +383,7 @@ public:
   // allow anonymous enum values to be used with LLVM_YAML_STRONG_TYPEDEF
   template <typename T>
   void bitSetCase(T &Val, const char* Str, const uint32_t ConstVal) {
-    if ( bitSetMatch(Str, ((Val & ConstVal) == ConstVal)) ) {
+    if ( bitSetMatch(Str, outputting() && (Val & ConstVal) == ConstVal) ) {
       Val = Val | ConstVal;
     }
   }
@@ -423,7 +423,7 @@ private:
                                                                 bool Required) {
     void *SaveInfo;
     bool UseDefault;
-    const bool sameAsDefault = (Val == DefaultValue);
+    const bool sameAsDefault = outputting() && Val == DefaultValue;
     if ( this->preflightKey(Key, Required, sameAsDefault, UseDefault,
                                                                   SaveInfo) ) {
       yamlize(*this, Val, Required);
