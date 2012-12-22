@@ -1278,10 +1278,10 @@ public:
   void removeAttribute(unsigned i, Attribute attr);
 
   /// \brief Determine whether this call has the given attribute.
-  bool hasFnAttr(Attribute::AttrVal A) const;
+  bool hasFnAttr(Attribute::AttrKind A) const;
 
   /// \brief Determine whether the call or the callee has the given attributes.
-  bool paramHasAttr(unsigned i, Attribute::AttrVal A) const;
+  bool paramHasAttr(unsigned i, Attribute::AttrKind A) const;
 
   /// \brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {
@@ -3034,10 +3034,10 @@ public:
   void removeAttribute(unsigned i, Attribute attr);
 
   /// \brief Determine whether this call has the NoAlias attribute.
-  bool hasFnAttr(Attribute::AttrVal A) const;
+  bool hasFnAttr(Attribute::AttrKind A) const;
 
   /// \brief Determine whether the call or the callee has the given attributes.
-  bool paramHasAttr(unsigned i, Attribute::AttrVal A) const;
+  bool paramHasAttr(unsigned i, Attribute::AttrKind A) const;
 
   /// \brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {

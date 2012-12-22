@@ -53,7 +53,7 @@ public:
   ///                      an exception might pass by.
   /// uwtable + nounwind = Needs an entry because the ABI says so.
 
-  enum AttrVal {
+  enum AttrKind {
     // IR-Level Attributes
     None,                  ///< No attributes have been set
     AddressSafety,         ///< Address safety checking is on.
@@ -100,11 +100,11 @@ public:
 
   /// \brief Return a uniquified Attribute object. This takes the uniquified
   /// value from the Builder and wraps it in the Attribute class.
-  static Attribute get(LLVMContext &Context, ArrayRef<AttrVal> Vals);
+  static Attribute get(LLVMContext &Context, ArrayRef<AttrKind> Vals);
   static Attribute get(LLVMContext &Context, AttrBuilder &B);
 
   /// \brief Return true if the attribute is present.
-  bool hasAttribute(AttrVal Val) const;
+  bool hasAttribute(AttrKind Val) const;
 
   /// \brief Return true if attributes exist
   bool hasAttributes() const;
@@ -165,10 +165,10 @@ public:
   void clear() { Bits = 0; }
 
   /// addAttribute - Add an attribute to the builder.
-  AttrBuilder &addAttribute(Attribute::AttrVal Val);
+  AttrBuilder &addAttribute(Attribute::AttrKind Val);
 
   /// removeAttribute - Remove an attribute from the builder.
-  AttrBuilder &removeAttribute(Attribute::AttrVal Val);
+  AttrBuilder &removeAttribute(Attribute::AttrKind Val);
 
   /// addAttribute - Add the attributes from A to the builder.
   AttrBuilder &addAttributes(const Attribute &A);
@@ -177,7 +177,7 @@ public:
   AttrBuilder &removeAttributes(const Attribute &A);
 
   /// contains - Return true if the builder has the specified attribute.
-  bool hasAttribute(Attribute::AttrVal A) const;
+  bool hasAttribute(Attribute::AttrKind A) const;
 
   /// hasAttributes - Return true if the builder has IR-level attributes.
   bool hasAttributes() const;
@@ -252,7 +252,7 @@ struct AttributeWithIndex {
                     ///< Index ~0U is used for function attributes.
 
   static AttributeWithIndex get(LLVMContext &C, unsigned Idx,
-                                ArrayRef<Attribute::AttrVal> Attrs) {
+                                ArrayRef<Attribute::AttrKind> Attrs) {
     return get(Idx, Attribute::get(C, Attrs));
   }
   static AttributeWithIndex get(unsigned Idx, Attribute Attrs) {
@@ -343,7 +343,7 @@ public:
 
   /// \brief Return true if the specified attribute is set for at least one
   /// parameter or for the return value.
-  bool hasAttrSomewhere(Attribute::AttrVal Attr) const;
+  bool hasAttrSomewhere(Attribute::AttrKind Attr) const;
 
   unsigned getNumAttrs() const;
   Attribute &getAttributesAtIndex(unsigned i) const;

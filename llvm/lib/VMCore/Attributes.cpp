@@ -29,9 +29,9 @@ using namespace llvm;
 // Attribute Implementation
 //===----------------------------------------------------------------------===//
 
-Attribute Attribute::get(LLVMContext &Context, ArrayRef<AttrVal> Vals) {
+Attribute Attribute::get(LLVMContext &Context, ArrayRef<AttrKind> Vals) {
   AttrBuilder B;
-  for (ArrayRef<AttrVal>::iterator I = Vals.begin(), E = Vals.end();
+  for (ArrayRef<AttrKind>::iterator I = Vals.begin(), E = Vals.end();
        I != E; ++I)
     B.addAttribute(*I);
   return Attribute::get(Context, B);
@@ -61,7 +61,7 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   return Attribute(PA);
 }
 
-bool Attribute::hasAttribute(AttrVal Val) const {
+bool Attribute::hasAttribute(AttrKind Val) const {
   return pImpl && pImpl->hasAttribute(Val);
 }
 
@@ -225,7 +225,7 @@ std::string Attribute::getAsString() const {
 // AttrBuilder Implementation
 //===----------------------------------------------------------------------===//
 
-AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrVal Val){
+AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val){
   Bits |= AttributeImpl::getAttrMask(Val);
   return *this;
 }
@@ -251,7 +251,7 @@ AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align){
   return *this;
 }
 
-AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrVal Val) {
+AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
   Bits &= ~AttributeImpl::getAttrMask(Val);
   return *this;
 }
@@ -266,7 +266,7 @@ AttrBuilder &AttrBuilder::removeAttributes(const Attribute &A){
   return *this;
 }
 
-bool AttrBuilder::hasAttribute(Attribute::AttrVal A) const {
+bool AttrBuilder::hasAttribute(Attribute::AttrKind A) const {
   return Bits & AttributeImpl::getAttrMask(A);
 }
 
@@ -432,7 +432,7 @@ Attribute AttributeSet::getAttributes(unsigned Idx) const {
 
 /// hasAttrSomewhere - Return true if the specified attribute is set for at
 /// least one parameter or for the return value.
-bool AttributeSet::hasAttrSomewhere(Attribute::AttrVal Attr) const {
+bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   if (AttrList == 0) return false;
 
   const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;

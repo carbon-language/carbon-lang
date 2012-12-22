@@ -176,7 +176,7 @@ public:
 
   /// addFnAttr - Add function attributes to this function.
   ///
-  void addFnAttr(Attribute::AttrVal N) {
+  void addFnAttr(Attribute::AttrKind N) {
     // Function Attribute are stored at ~0 index
     addAttribute(AttributeSet::FunctionIndex, Attribute::get(getContext(), N));
   }
