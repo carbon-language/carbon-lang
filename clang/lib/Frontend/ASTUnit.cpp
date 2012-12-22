@@ -2435,9 +2435,6 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
 
   // If the main file has been overridden due to the use of a preamble,
   // make that override happen and introduce the preamble.
-  StoredDiagnostics.insert(StoredDiagnostics.end(),
-                           stored_diag_begin(),
-                           stored_diag_afterDriver_begin());
   if (OverrideMainBuffer) {
     PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
     PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
@@ -2459,17 +2456,9 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   OwningPtr<SyntaxOnlyAction> Act;
   Act.reset(new SyntaxOnlyAction);
   if (Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0])) {
-    if (OverrideMainBuffer) {
-      std::string ModName = getPreambleFile(this);
-      TranslateStoredDiagnostics(Clang->getModuleManager(), ModName,
-                                 getSourceManager(), PreambleDiagnostics,
-                                 StoredDiagnostics);
-    }
     Act->Execute();
     Act->EndSourceFile();
   }
-
-  checkAndSanitizeDiags(StoredDiagnostics, getSourceManager());
 }
 
 bool ASTUnit::Save(StringRef File) {
