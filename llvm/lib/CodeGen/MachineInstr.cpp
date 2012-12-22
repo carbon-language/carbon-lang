@@ -711,19 +711,8 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
   untieRegOperand(OpNo);
   MachineRegisterInfo *RegInfo = getRegInfo();
 
-  // Special case removing the last one.
-  if (OpNo == getNumOperands()-1) {
-    // If needed, remove from the reg def/use list.
-    if (RegInfo && Operands.back().isReg() && Operands.back().isOnRegUseList())
-      RegInfo->removeRegOperandFromUseList(&Operands.back());
-
-    Operands.pop_back();
-    return;
-  }
-
-  // Otherwise, we are removing an interior operand.  If we have reginfo to
-  // update, remove all operands that will be shifted down from their reg lists,
-  // move everything down, then re-add them.
+  // If we have reginfo to update, remove all operands that will be shifted
+  // down from their reg lists, move everything down, then re-add them.
   if (RegInfo) {
     for (unsigned i = OpNo, e = getNumOperands(); i != e; ++i) {
       if (Operands[i].isReg())
