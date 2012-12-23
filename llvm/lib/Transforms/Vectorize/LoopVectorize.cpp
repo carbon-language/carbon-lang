@@ -2181,18 +2181,16 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     // elements, times the vector width.
     unsigned Cost = 0;
 
-    bool IsVoid = RetTy->isVoidTy();
+    if (RetTy->isVoidTy() || VF != 1) {
+      unsigned InsCost = VTTI->getVectorInstrCost(Instruction::InsertElement,
+                                                  VectorTy);
+      unsigned ExtCost = VTTI->getVectorInstrCost(Instruction::ExtractElement,
+                                                  VectorTy);
 
-    unsigned InsCost = (IsVoid ? 0 :
-                        VTTI->getVectorInstrCost(Instruction::InsertElement,
-                                           VectorTy));
-
-    unsigned ExtCost = VTTI->getVectorInstrCost(Instruction::ExtractElement,
-                                          VectorTy);
-
-    // The cost of inserting the results plus extracting each one of the
-    // operands.
-    Cost += VF * (InsCost + ExtCost * I->getNumOperands());
+      // The cost of inserting the results plus extracting each one of the
+      // operands.
+      Cost += VF * (InsCost + ExtCost * I->getNumOperands());
+    }
 
     // The cost of executing VF copies of the scalar instruction. This opcode
     // is unknown. Assume that it is the same as 'mul'.
