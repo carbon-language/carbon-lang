@@ -34,6 +34,7 @@ to disable inlining (just use ``-O1``) and tail call elimination
 (``-fno-optimize-sibling-calls``).
 
 .. code-block:: console
+
     % cat umr.cc
     #include <stdio.h>
 
