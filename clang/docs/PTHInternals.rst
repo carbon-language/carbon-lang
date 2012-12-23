@@ -60,7 +60,7 @@ lexing and preprocessing of a source file, while parsing and
 type-checking must be completely redone every time a PTH file is used.
 
 Basic Design Tradeoffs
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
 
 In the long term there are plans to provide an alternate PCH
 implementation for Clang that also caches the work for parsing and type
@@ -89,7 +89,7 @@ features:
 **Architecture independence**
    In contrast to GCC's PCH files (and
    those of several other compilers), Clang's PTH files are architecture
-   independent, requiring only a single PTH file when building an
+   independent, requiring only a single PTH file when building a
    program for multiple architectures.
 
    For example, on Mac OS X one may wish to compile a "universal binary"
@@ -142,7 +142,7 @@ advantages just mentioned but would also retain some of the strengths of
 PTH such as reduced memory pressure (ideal for multi-core builds).
 
 Internal PTH Optimizations
-~~~~~~~~~~~~~~~~~~~~~~~~~~
+--------------------------
 
 While the main optimization employed by PTH is to reduce lexing time of
 header files by caching pre-lexed tokens, PTH also employs several other
@@ -154,7 +154,7 @@ optimizations to speed up the processing of header files:
    involved in context-switching to the kernel to resolve included
    files.
 
--  Fasting skipping of ``#ifdef``... ``#endif`` chains: PTH files
+-  Fast skipping of ``#ifdef`` ... ``#endif`` chains: PTH files
    record the basic structure of nested preprocessor blocks. When the
    condition of the preprocessor block is false, all of its tokens are
    immediately skipped instead of requiring them to be handled by
