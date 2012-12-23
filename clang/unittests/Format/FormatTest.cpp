@@ -592,6 +592,9 @@ TEST_F(FormatTest, UnderstandsUsesOfStar) {
   verifyFormat("int a = *b * c;");
   verifyFormat("int a = b * *c;");
   verifyFormat("int main(int argc, char **argv) {\n}");
+  verifyFormat("return 10 * b;");
+  verifyFormat("return *b * *c;");
+  verifyFormat("return a & ~b;");
 
   // FIXME: Is this desired for LLVM? Fix if not.
   verifyFormat("A<int *> a;");

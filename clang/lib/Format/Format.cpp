@@ -716,19 +716,21 @@ public:
 
 private:
   void determineTokenTypes() {
-    bool AssignmentEncountered = false;
+    bool IsRHS = false;
     for (int i = 0, e = Line.Tokens.size(); i != e; ++i) {
       TokenAnnotation &Annotation = Annotations[i];
       const FormatToken &Tok = Line.Tokens[i];
 
       if (getBinOpPrecedence(Tok.Tok.getKind(), true, true) == prec::Assignment)
-        AssignmentEncountered = true;
+        IsRHS = true;
+      else if (Tok.Tok.is(tok::kw_return))
+        IsRHS = true;
 
       if (Annotation.Type != TokenAnnotation::TT_Unknown)
         continue;
 
       if (Tok.Tok.is(tok::star) || Tok.Tok.is(tok::amp)) {
-        Annotation.Type = determineStarAmpUsage(i, AssignmentEncountered);
+        Annotation.Type = determineStarAmpUsage(i, IsRHS);
       } else if (Tok.Tok.is(tok::minus) || Tok.Tok.is(tok::plus)) {
         Annotation.Type = determinePlusMinusUsage(i);
       } else if (Tok.Tok.is(tok::minusminus) || Tok.Tok.is(tok::plusplus)) {
@@ -754,12 +756,13 @@ private:
   }
 
   TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index,
-                                                   bool AssignmentEncountered) {
+                                                   bool IsRHS) {
     if (Index == Annotations.size())
       return TokenAnnotation::TT_Unknown;
 
     if (Index == 0 || Line.Tokens[Index - 1].Tok.is(tok::l_paren) ||
         Line.Tokens[Index - 1].Tok.is(tok::comma) ||
+        Line.Tokens[Index - 1].Tok.is(tok::kw_return) ||
         Annotations[Index - 1].Type == TokenAnnotation::TT_BinaryOperator)
       return TokenAnnotation::TT_UnaryOperator;
 
@@ -770,7 +773,7 @@ private:
 
     // It is very unlikely that we are going to find a pointer or reference type
     // definition on the RHS of an assignment.
-    if (AssignmentEncountered)
+    if (IsRHS)
       return TokenAnnotation::TT_BinaryOperator;
 
     return TokenAnnotation::TT_PointerOrReference;
