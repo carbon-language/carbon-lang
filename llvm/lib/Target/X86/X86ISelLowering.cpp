@@ -1239,7 +1239,6 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setOperationAction(ISD::INTRINSIC_WO_CHAIN, MVT::Other, Custom);
   setOperationAction(ISD::INTRINSIC_W_CHAIN, MVT::Other, Custom);
 
-
   // Only custom-lower 64-bit SADDO and friends on 64-bit because we don't
   // handle type legalization for these operations here.
   //
@@ -1314,12 +1313,10 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setPrefFunctionAlignment(4); // 2^4 bytes.
 }
 
-
 EVT X86TargetLowering::getSetCCResultType(EVT VT) const {
   if (!VT.isVector()) return MVT::i8;
   return VT.changeVectorElementTypeToInteger();
 }
-
 
 /// getMaxByValAlign - Helper for getByValTypeAlignment to determine
 /// the desired ByVal argument alignment.
@@ -1524,7 +1521,6 @@ bool X86TargetLowering::getStackCookieLocation(unsigned &AddressSpace,
   }
   return true;
 }
-
 
 //===----------------------------------------------------------------------===//
 //               Return Value Calling Convention Implementation
@@ -1772,7 +1768,6 @@ X86TargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 
   return Chain;
 }
-
 
 //===----------------------------------------------------------------------===//
 //                C & StdCall & Fast Calling Convention implementation
@@ -2664,7 +2659,6 @@ X86TargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                          Ins, dl, DAG, InVals);
 }
 
-
 //===----------------------------------------------------------------------===//
 //                Fast Calling Convention (tail call) implementation
 //===----------------------------------------------------------------------===//
@@ -2973,7 +2967,6 @@ X86TargetLowering::createFastISel(FunctionLoweringInfo &funcInfo,
   return X86::createFastISel(funcInfo, libInfo);
 }
 
-
 //===----------------------------------------------------------------------===//
 //                           Other Lowering Hooks
 //===----------------------------------------------------------------------===//
@@ -3083,7 +3076,6 @@ SDValue X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) const {
 
   return DAG.getFrameIndex(ReturnAddrIndex, getPointerTy());
 }
-
 
 bool X86::isOffsetSuitableForCodeModel(int64_t Offset, CodeModel::Model M,
                                        bool hasSymbolicDisplacement) {
@@ -6997,7 +6989,6 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(X86ISD::VPERMI, dl, VT, V1,
                                 getShuffleCLImmediate(SVOp), DAG);
 
-
   //===--------------------------------------------------------------------===//
   // Since no target specific shuffle was selected for this generic one,
   // lower it into other known shuffles. FIXME: this isn't true yet, but
@@ -7098,7 +7089,6 @@ X86TargetLowering::LowerEXTRACT_VECTOR_ELT_SSE4(SDValue Op,
   }
   return SDValue();
 }
-
 
 SDValue
 X86TargetLowering::LowerEXTRACT_VECTOR_ELT(SDValue Op,
@@ -7463,7 +7453,6 @@ X86TargetLowering::LowerExternalSymbol(SDValue Op, SelectionDAG &DAG) const {
 
   DebugLoc DL = Op.getDebugLoc();
   Result = DAG.getNode(WrapperKind, DL, getPointerTy(), Result);
-
 
   // With PIC, the address is actually $g + Offset.
   if (getTargetMachine().getRelocationModel() == Reloc::PIC_ &&
@@ -7850,7 +7839,6 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
 
   llvm_unreachable("TLS not implemented for this target.");
 }
-
 
 /// LowerShiftParts - Lower SRA_PARTS and friends, which return two i32 values
 /// and take a 2 x i32 value to shift plus a shift amount.
@@ -9076,7 +9064,6 @@ static SDValue Lower256IntVSETCC(SDValue Op, SelectionDAG &DAG) {
                      DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, RHS2, CC));
 }
 
-
 SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   SDValue Cond;
   SDValue Op0 = Op.getOperand(0);
@@ -9728,7 +9715,6 @@ SDValue X86TargetLowering::LowerBRCOND(SDValue Op, SelectionDAG &DAG) const {
   return DAG.getNode(X86ISD::BRCOND, dl, Op.getValueType(),
                      Chain, Dest, CC, Cond);
 }
-
 
 // Lower dynamic stack allocation to _alloca call for Cygwin/Mingw targets.
 // Calls to _alloca is needed to probe the stack when allocating more than 4k
@@ -10866,7 +10852,6 @@ SDValue X86TargetLowering::LowerFLT_ROUNDS_(SDValue Op,
   int SSFI = MF.getFrameInfo()->CreateStackObject(2, StackAlignment, false);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
 
-
   MachineMemOperand *MMO =
    MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
                            MachineMemOperand::MOStore, 2, 2);
@@ -10898,7 +10883,6 @@ SDValue X86TargetLowering::LowerFLT_ROUNDS_(SDValue Op,
                             DAG.getNode(ISD::OR, DL, MVT::i16, CWD1, CWD2),
                             DAG.getConstant(1, MVT::i16)),
                 DAG.getConstant(3, MVT::i16));
-
 
   return DAG.getNode((VT.getSizeInBits() < 16 ?
                       ISD::TRUNCATE : ISD::ZERO_EXTEND), DL, VT, RetVal);
@@ -11452,7 +11436,6 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND_INREG(SDValue Op,
   }
 }
 
-
 static SDValue LowerMEMBARRIER(SDValue Op, const X86Subtarget *Subtarget,
                               SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
@@ -11536,7 +11519,6 @@ static SDValue LowerATOMIC_FENCE(SDValue Op, const X86Subtarget *Subtarget,
   // MEMBARRIER is a compiler barrier; it codegens to a no-op.
   return DAG.getNode(X86ISD::MEMBARRIER, dl, MVT::Other, Op.getOperand(0));
 }
-
 
 static SDValue LowerCMP_SWAP(SDValue Op, const X86Subtarget *Subtarget,
                              SelectionDAG &DAG) {
@@ -12189,7 +12171,6 @@ bool X86TargetLowering::isLegalAddressingMode(const AddrMode &AM,
 
   return true;
 }
-
 
 bool X86TargetLowering::isTruncateFree(Type *Ty1, Type *Ty2) const {
   if (!Ty1->isIntegerTy() || !Ty2->isIntegerTy())
@@ -14388,7 +14369,6 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   return EltsFromConsecutiveLoads(VT, Elts, dl, DAG);
 }
 
-
 /// PerformTruncateCombine - Converts truncate operation to
 /// a sequence of vector shuffle operations.
 /// It is possible when we truncate 256-bit vector to 128-bit vector
@@ -15118,7 +15098,6 @@ static SDValue PerformSELECTCombine(SDNode *N, SelectionDAG &DAG,
     if (unsigned Op = matchIntegerMINMAX(Cond, VT, LHS, RHS, DAG, Subtarget))
       return DAG.getNode(Op, DL, N->getValueType(0), LHS, RHS);
 
-
   // If we know that this node is legal then we know that it is going to be
   // matched by one of the SSE/AVX BLEND instructions. These instructions only
   // depend on the highest bit in each word. Try to use SimplifyDemandedBits
@@ -15416,7 +15395,6 @@ static SDValue PerformCMOVCombine(SDNode *N, SelectionDAG &DAG,
   return SDValue();
 }
 
-
 /// PerformMulCombine - Optimize a single multiply with constant into two
 /// in order to implement it with two cheaper instructions, e.g.
 /// LEA + SHL, LEA + LEA.
@@ -15504,7 +15482,6 @@ static SDValue PerformSHLCombine(SDNode *N, SelectionDAG &DAG) {
                            N00, DAG.getConstant(Mask, VT));
     }
   }
-
 
   // Hardware support for vector shifts is sparse which makes us scalarize the
   // vector operations in many cases. Also, on sandybridge ADD is faster than
@@ -15648,7 +15625,6 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
     }
   }
 }
-
 
 // CMPEQCombine - Recognize the distinctive  (AND (setcc ...) (setcc ..))
 // where both setccs reference the same FP CMP, and rewrite for CMPEQSS
@@ -16334,7 +16310,6 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
                                Chains.size());
   }
 
-
   // Turn load->store of MMX types into GPR load/stores.  This avoids clobbering
   // the FP state in cases where an emms may be missing.
   // A preferable solution to the general problem is to figure out the right
@@ -16639,7 +16614,6 @@ static SDValue PerformFMinFMaxCombine(SDNode *N, SelectionDAG &DAG) {
   return DAG.getNode(NewOp, N->getDebugLoc(), N->getValueType(0),
                      N->getOperand(0), N->getOperand(1));
 }
-
 
 /// PerformFANDCombine - Do target-specific dag combines on X86ISD::FAND nodes.
 static SDValue PerformFANDCombine(SDNode *N, SelectionDAG &DAG) {
@@ -17377,8 +17351,6 @@ bool X86TargetLowering::ExpandInlineAsm(CallInst *CI) const {
   }
   return false;
 }
-
-
 
 /// getConstraintType - Given a constraint letter, return the type of
 /// constraint it is for this target.
