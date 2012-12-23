@@ -179,10 +179,20 @@ unsigned VectorTargetTransformImpl::getArithmeticInstrCost(unsigned Opcode,
 
   std::pair<unsigned, MVT> LT = getTypeLegalizationCost(Ty);
 
-  if (!TLI->isOperationExpand(ISD, LT.second)) {
-    // The operation is legal. Assume it costs 1. Multiply
-    // by the type-legalization overhead.
+  if (TLI->isOperationLegalOrPromote(ISD, LT.second)) {
+    // The operation is legal. Assume it costs 1.
+    // If the type is split to multiple registers, assume that thre is some
+    // overhead to this.
+    // TODO: Once we have extract/insert subvector cost we need to use them.
+    if (LT.first > 1)
+      return LT.first * 2;
     return LT.first * 1;
+  }
+
+  if (!TLI->isOperationExpand(ISD, LT.second)) {
+    // If the operation is custom lowered then assume
+    // thare the code is twice as expensive.
+    return LT.first * 2;
   }
 
   // Else, assume that we need to scalarize this op.

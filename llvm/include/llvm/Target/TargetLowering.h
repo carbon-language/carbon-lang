@@ -413,6 +413,15 @@ public:
        getOperationAction(Op, VT) == Custom);
   }
 
+  /// isOperationLegalOrPromote - Return true if the specified operation is
+  /// legal on this target or can be made legal using promotion. This
+  /// is used to help guide high-level lowering decisions.
+  bool isOperationLegalOrPromote(unsigned Op, EVT VT) const {
+    return (VT == MVT::Other || isTypeLegal(VT)) &&
+      (getOperationAction(Op, VT) == Legal ||
+       getOperationAction(Op, VT) == Promote);
+  }
+
   /// isOperationExpand - Return true if the specified operation is illegal on
   /// this target or unlikely to be made legal with custom lowering. This is
   /// used to help guide high-level lowering decisions.
