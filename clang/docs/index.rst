@@ -16,9 +16,10 @@ progress. This page will get filled out with docs soon...
    LibASTMatchers
    LibTooling
    PCHInternals
-   ThreadSanitizer
    Tooling
    AddressSanitizer
+   ThreadSanitizer
+   MemorySanitizer
    ClangPlugins
    ClangTools
    HowToSetupToolingForLLVM
