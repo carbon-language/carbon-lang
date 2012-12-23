@@ -33,6 +33,7 @@ progress. This page will get filled out with docs soon...
    DriverInternals
    BlockLanguageSpec
    ObjectiveCLiterals
+   ReleaseNotes
 
 Indices and tables
 ==================
