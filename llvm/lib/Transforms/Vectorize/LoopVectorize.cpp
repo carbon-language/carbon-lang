@@ -2181,7 +2181,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     // elements, times the vector width.
     unsigned Cost = 0;
 
-    if (RetTy->isVoidTy() || VF != 1) {
+    if (!RetTy->isVoidTy() && VF != 1) {
       unsigned InsCost = VTTI->getVectorInstrCost(Instruction::InsertElement,
                                                   VectorTy);
       unsigned ExtCost = VTTI->getVectorInstrCost(Instruction::ExtractElement,
