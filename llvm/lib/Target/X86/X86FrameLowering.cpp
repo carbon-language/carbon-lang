@@ -625,12 +625,12 @@ uint32_t X86FrameLowering::getCompactUnwindEncoding(MachineFunction &MF) const {
   return CompactUnwindEncoding;
 }
 
-/// colobbersTheStack - This function checks if any of the users of EFLAGS
+/// usesTheStack - This function checks if any of the users of EFLAGS
 /// copies the EFLAGS. We know that the code that lowers COPY of EFLAGS has
 /// to use the stack, and if we don't adjust the stack we clobber the first
 /// frame index.
-/// See  X86InstrInfo::copyPhysReg.
-static bool colobbersTheStack(MachineFunction &MF) {
+/// See X86InstrInfo::copyPhysReg.
+static bool usesTheStack(MachineFunction &MF) {
   MachineRegisterInfo &MRI = MF.getRegInfo();
 
   for (MachineRegisterInfo::reg_iterator ri = MRI.reg_begin(X86::EFLAGS),
@@ -696,7 +696,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
       !MFI->hasVarSizedObjects() &&                     // No dynamic alloca.
       !MFI->adjustsStack() &&                           // No calls.
       !IsWin64 &&                                       // Win64 has no Red Zone
-      !colobbersTheStack(MF) &&                         // Don't push and pop.
+      !usesTheStack(MF) &&                              // Don't push and pop.
       !MF.getTarget().Options.EnableSegmentedStacks) {  // Regular stack
     uint64_t MinSize = X86FI->getCalleeSavedFrameSize();
     if (HasFP) MinSize += SlotSize;
