@@ -132,7 +132,6 @@ int VectorTargetTransformImpl::InstructionOpcodeToISD(unsigned Opcode) const {
 
 std::pair<unsigned, MVT>
 VectorTargetTransformImpl::getTypeLegalizationCost(Type *Ty) const {
-
   LLVMContext &C = Ty->getContext();
   EVT MTy = TLI->getValueType(Ty);
 
@@ -271,7 +270,7 @@ unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
     return getScalarizationOverhead(Dst, true, true) + Num * Cost;
   }
 
-  // We already handled vector-to-vector and scalar-to-scalar conversions. This 
+  // We already handled vector-to-vector and scalar-to-scalar conversions. This
   // is where we handle bitcast between vectors and scalars. We need to assume
   //  that the conversion is scalarized in one way or another.
   if (Opcode == Instruction::BitCast)
@@ -283,6 +282,7 @@ unsigned VectorTargetTransformImpl::getCastInstrCost(unsigned Opcode, Type *Dst,
  }
 
 unsigned VectorTargetTransformImpl::getCFInstrCost(unsigned Opcode) const {
+  // Branches are assumed to be predicted.
   return 0;
 }
 
@@ -327,12 +327,6 @@ unsigned VectorTargetTransformImpl::getCmpSelInstrCost(unsigned Opcode,
 unsigned VectorTargetTransformImpl::getVectorInstrCost(unsigned Opcode,
                                                        Type *Val,
                                                        unsigned Index) const {
-  return 1;
-}
-
-unsigned
-VectorTargetTransformImpl::getInstrCost(unsigned Opcode, Type *Ty1,
-                                        Type *Ty2) const {
   return 1;
 }
 

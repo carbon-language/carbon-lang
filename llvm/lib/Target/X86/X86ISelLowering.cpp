@@ -17988,7 +17988,6 @@ X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
   return VectorTargetTransformImpl::getArithmeticInstrCost(Opcode, Ty);
 }
 
-
 unsigned
 X86VectorTargetTransformInfo::getMemoryOpCost(unsigned Opcode, Type *Src,
                                               unsigned Alignment,

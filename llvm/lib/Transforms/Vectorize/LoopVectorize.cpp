@@ -2080,17 +2080,23 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     VectorTy = ToVectorTy(ValTy, VF);
 
     if (VF == 1)
-      return VTTI->getMemoryOpCost(I->getOpcode(), ValTy,
+      return VTTI->getMemoryOpCost(I->getOpcode(), VectorTy,
                                    SI->getAlignment(),
                                    SI->getPointerAddressSpace());
 
     // Scalarized stores.
     if (!Legal->isConsecutivePtr(SI->getPointerOperand())) {
       unsigned Cost = 0;
-      unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement,
-                                            ValTy);
-      // The cost of extracting from the value vector.
-      Cost += VF * (ExtCost);
+
+      // The cost of extracting from the value vector and pointer vector.
+      Type *PtrTy = ToVectorTy(I->getOperand(0)->getType(), VF);
+      for (unsigned i = 0; i < VF; ++i) {
+        Cost += VTTI->getVectorInstrCost(Instruction::ExtractElement,
+                                         VectorTy, i);
+        Cost += VTTI->getVectorInstrCost(Instruction::ExtractElement,
+                                         PtrTy, i);
+      }
+
       // The cost of the scalar stores.
       Cost += VF * VTTI->getMemoryOpCost(I->getOpcode(),
                                          ValTy->getScalarType(),
@@ -2107,16 +2113,25 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     LoadInst *LI = cast<LoadInst>(I);
 
     if (VF == 1)
-      return VTTI->getMemoryOpCost(I->getOpcode(), RetTy,
+      return VTTI->getMemoryOpCost(I->getOpcode(), VectorTy,
                                    LI->getAlignment(),
                                    LI->getPointerAddressSpace());
 
     // Scalarized loads.
     if (!Legal->isConsecutivePtr(LI->getPointerOperand())) {
       unsigned Cost = 0;
-      unsigned InCost = VTTI->getInstrCost(Instruction::InsertElement, RetTy);
-      // The cost of inserting the loaded value into the result vector.
-      Cost += VF * (InCost);
+      Type *PtrTy = ToVectorTy(I->getOperand(0)->getType(), VF);
+
+      // The cost of extracting from the pointer vector.
+      for (unsigned i = 0; i < VF; ++i)
+        Cost += VTTI->getVectorInstrCost(Instruction::ExtractElement,
+                                         PtrTy, i);
+
+      // The cost of inserting data to the result vector.
+      for (unsigned i = 0; i < VF; ++i)
+        Cost += VTTI->getVectorInstrCost(Instruction::InsertElement,
+                                         VectorTy, i);
+
       // The cost of the scalar stores.
       Cost += VF * VTTI->getMemoryOpCost(I->getOpcode(),
                                          RetTy->getScalarType(),
@@ -2169,18 +2184,19 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     bool IsVoid = RetTy->isVoidTy();
 
     unsigned InsCost = (IsVoid ? 0 :
-                        VTTI->getInstrCost(Instruction::InsertElement,
+                        VTTI->getVectorInstrCost(Instruction::InsertElement,
                                            VectorTy));
 
-    unsigned ExtCost = VTTI->getInstrCost(Instruction::ExtractElement,
+    unsigned ExtCost = VTTI->getVectorInstrCost(Instruction::ExtractElement,
                                           VectorTy);
 
     // The cost of inserting the results plus extracting each one of the
     // operands.
     Cost += VF * (InsCost + ExtCost * I->getNumOperands());
 
-    // The cost of executing VF copies of the scalar instruction.
-    Cost += VF * VTTI->getInstrCost(I->getOpcode(), RetTy);
+    // The cost of executing VF copies of the scalar instruction. This opcode
+    // is unknown. Assume that it is the same as 'mul'.
+    Cost += VF * VTTI->getArithmeticInstrCost(Instruction::Mul, VectorTy);
     return Cost;
   }
   }// end of switch.
