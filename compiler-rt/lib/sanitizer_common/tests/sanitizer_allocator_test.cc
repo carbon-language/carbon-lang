@@ -44,31 +44,8 @@ typedef SizeClassAllocator32<
 template <class SizeClassMap>
 void TestSizeClassMap() {
   typedef SizeClassMap SCMap;
-#if 0
-  for (uptr i = 0; i < SCMap::kNumClasses; i++) {
-    printf("c%ld => %ld (%lx) cached=%ld(%ld)\n",
-        i, SCMap::Size(i), SCMap::Size(i), SCMap::MaxCached(i) * SCMap::Size(i),
-        SCMap::MaxCached(i));
-  }
-#endif
-  for (uptr c = 0; c < SCMap::kNumClasses; c++) {
-    uptr s = SCMap::Size(c);
-    CHECK_EQ(SCMap::ClassID(s), c);
-    if (c != SCMap::kNumClasses - 1)
-      CHECK_EQ(SCMap::ClassID(s + 1), c + 1);
-    CHECK_EQ(SCMap::ClassID(s - 1), c);
-    if (c)
-      CHECK_GT(SCMap::Size(c), SCMap::Size(c-1));
-  }
-  CHECK_EQ(SCMap::ClassID(SCMap::kMaxSize + 1), 0);
-
-  for (uptr s = 1; s <= SCMap::kMaxSize; s++) {
-    uptr c = SCMap::ClassID(s);
-    CHECK_LT(c, SCMap::kNumClasses);
-    CHECK_GE(SCMap::Size(c), s);
-    if (c > 0)
-      CHECK_LT(SCMap::Size(c-1), s);
-  }
+  SCMap::Print();
+  SCMap::Validate();
 }
 
 TEST(SanitizerCommon, DefaultSizeClassMap) {
@@ -249,7 +226,7 @@ template<class Allocator>
 void FailInAssertionOnOOM() {
   Allocator a;
   a.Init();
-  const uptr size = 1 << 20;
+  const uptr size = 1 << 15;
   for (int i = 0; i < 1000000; i++) {
     a.Allocate(size, 1);
   }
@@ -403,19 +380,21 @@ void TestSizeClassAllocatorLocalCache() {
   const uptr kNumAllocs = 10000;
   const int kNumIter = 100;
   uptr saved_total = 0;
-  for (int i = 0; i < kNumIter; i++) {
-    void *allocated[kNumAllocs];
-    for (uptr i = 0; i < kNumAllocs; i++) {
-      allocated[i] = cache.Allocate(a, 0);
+  for (int class_id = 1; class_id <= 5; class_id++) {
+    for (int i = 0; i < kNumIter; i++) {
+      void *allocated[kNumAllocs];
+      for (uptr i = 0; i < kNumAllocs; i++) {
+        allocated[i] = cache.Allocate(a, class_id);
+      }
+      for (uptr i = 0; i < kNumAllocs; i++) {
+        cache.Deallocate(a, class_id, allocated[i]);
+      }
+      cache.Drain(a);
+      uptr total_allocated = a->TotalMemoryUsed();
+      if (i)
+        CHECK_EQ(saved_total, total_allocated);
+      saved_total = total_allocated;
     }
-    for (uptr i = 0; i < kNumAllocs; i++) {
-      cache.Deallocate(a, 0, allocated[i]);
-    }
-    cache.Drain(a);
-    uptr total_allocated = a->TotalMemoryUsed();
-    if (saved_total)
-      CHECK_EQ(saved_total, total_allocated);
-    saved_total = total_allocated;
   }
 
   a->TestOnlyUnmap();

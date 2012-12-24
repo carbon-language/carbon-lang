@@ -22,76 +22,140 @@
 
 namespace __sanitizer {
 
-// Maps size class id to size and back.
-template <uptr l0, uptr l1, uptr l2, uptr l3, uptr l4, uptr l5,
-          uptr s0, uptr s1, uptr s2, uptr s3, uptr s4,
-          uptr c0, uptr c1, uptr c2, uptr c3, uptr c4>
-class SplineSizeClassMap {
- private:
-  // Here we use a spline composed of 5 polynomials of oder 1.
-  // The first size class is l0, then the classes go with step s0
-  // untill they reach l1, after which they go with step s1 and so on.
-  // Steps should be powers of two for cheap division.
-  // The size of the last size class should be a power of two.
-  // There should be at most 256 size classes.
-  static const uptr u0 = 0  + (l1 - l0) / s0;
-  static const uptr u1 = u0 + (l2 - l1) / s1;
-  static const uptr u2 = u1 + (l3 - l2) / s2;
-  static const uptr u3 = u2 + (l4 - l3) / s3;
-  static const uptr u4 = u3 + (l5 - l4) / s4;
+// SizeClassMap maps allocation sizes into size classes and back.
+// Class 0 corresponds to size 0.
+// Classes 1 - 16 correspond to sizes 8 - 128 (size = class_id * 8).
+// Next 8 classes: 128 + i * 16 (i = 1 to 8).
+// Next 8 classes: 256 + i * 32 (i = 1 to 8).
+// ...
+// Next 8 classes: 2^k + i * 2^(k-3) (i = 1 to 8).
+// Last class corresponds to kMaxSize = 1 << kMaxSizeLog.
+//
+// This structure of the size class map gives us:
+//   - Efficient table-free class-to-size and size-to-class functions.
+//   - Difference between two consequent size classes is betweed 12% and 6%
+//
+// This class also gives a hint to a thread-caching allocator about the amount
+// of chunks that need to be cached per-thread:
+//  - kMaxNumCached is the maximal number of chunks per size class.
+//  - (1 << kMaxBytesCachedLog) is the maximal number of bytes per size class.
+//
+// Part of output of SizeClassMap::Print():
+//    c00 => s: 0 diff: +0 00% l 0 cached: 0 0; id 0
+//    c01 => s: 8 diff: +8 00% l 3 cached: 256 2048; id 1
+//    c02 => s: 16 diff: +8 100% l 4 cached: 256 4096; id 2
+//    ...
+//    c07 => s: 56 diff: +8 16% l 5 cached: 256 14336; id 7
+//
+//    c08 => s: 64 diff: +8 14% l 6 cached: 256 16384; id 8
+//    ...
+//    c15 => s: 120 diff: +8 07% l 6 cached: 256 30720; id 15
+//
+//    c16 => s: 128 diff: +8 06% l 7 cached: 256 32768; id 16
+//    c17 => s: 144 diff: +16 12% l 7 cached: 227 32688; id 17
+//    ...
+//    c23 => s: 240 diff: +16 07% l 7 cached: 136 32640; id 23
+//
+//    c24 => s: 256 diff: +16 06% l 8 cached: 128 32768; id 24
+//    c25 => s: 288 diff: +32 12% l 8 cached: 113 32544; id 25
+//    ...
+//    c31 => s: 480 diff: +32 07% l 8 cached: 68 32640; id 31
+//
+//    c32 => s: 512 diff: +32 06% l 9 cached: 64 32768; id 32
+
+
+template <uptr kMaxSizeLog, uptr kMaxNumCached, uptr kMaxBytesCachedLog>
+class SizeClassMap {
+  static const uptr kMinSizeLog = 3;
+  static const uptr kMidSizeLog = kMinSizeLog + 4;
+  static const uptr kMinSize = 1 << kMinSizeLog;
+  static const uptr kMidSize = 1 << kMidSizeLog;
+  static const uptr kMidClass = kMidSize / kMinSize;
+  static const uptr S = 3;
+  static const uptr M = (1 << S) - 1;
 
  public:
-  // The number of size classes should be a power of two for fast division.
-  static const uptr kNumClasses = u4 + 1;
-  static const uptr kMaxSize = l5;
-  static const uptr kMinSize = l0;
-
-  COMPILER_CHECK(kNumClasses <= 256);
-  COMPILER_CHECK((kNumClasses & (kNumClasses - 1)) == 0);
-  COMPILER_CHECK((kMaxSize & (kMaxSize - 1)) == 0);
+  static const uptr kMaxSize = 1 << kMaxSizeLog;
+  static const uptr kNumClasses =
+      kMidClass + ((kMaxSizeLog - kMidSizeLog) << S) + 1;
+  COMPILER_CHECK(kNumClasses >= 32 && kNumClasses <= 256);
+  static const uptr kNumClassesRounded =
+      kNumClasses == 32  ? 32 :
+      kNumClasses <= 64  ? 64 :
+      kNumClasses <= 128 ? 128 : 256;
 
   static uptr Size(uptr class_id) {
-    if (class_id <= u0) return l0 + s0 * (class_id - 0);
-    if (class_id <= u1) return l1 + s1 * (class_id - u0);
-    if (class_id <= u2) return l2 + s2 * (class_id - u1);
-    if (class_id <= u3) return l3 + s3 * (class_id - u2);
-    if (class_id <= u4) return l4 + s4 * (class_id - u3);
-    return 0;
+    if (class_id <= kMidClass)
+      return kMinSize * class_id;
+    class_id -= kMidClass;
+    uptr t = kMidSize << (class_id >> S);
+    return t + (t >> S) * (class_id & M);
   }
+
   static uptr ClassID(uptr size) {
-    if (size <= l1) return 0  + (size - l0 + s0 - 1) / s0;
-    if (size <= l2) return u0 + (size - l1 + s1 - 1) / s1;
-    if (size <= l3) return u1 + (size - l2 + s2 - 1) / s2;
-    if (size <= l4) return u2 + (size - l3 + s3 - 1) / s3;
-    if (size <= l5) return u3 + (size - l4 + s4 - 1) / s4;
-    return 0;
+    if (size <= kMidSize)
+      return (size + kMinSize - 1) >> kMinSizeLog;
+    if (size > kMaxSize) return 0;
+    uptr l = SANITIZER_WORDSIZE - 1 - __builtin_clzl(size);
+    uptr hbits = (size >> (l - S)) & M;
+    uptr lbits = size & ((1 << (l - S)) - 1);
+    uptr l1 = l - kMidSizeLog;
+    return kMidClass + (l1 << S) + hbits + (lbits > 0);
   }
 
   static uptr MaxCached(uptr class_id) {
-    if (class_id <= u0) return c0;
-    if (class_id <= u1) return c1;
-    if (class_id <= u2) return c2;
-    if (class_id <= u3) return c3;
-    if (class_id <= u4) return c4;
-    return 0;
+    if (class_id == 0) return 0;
+    uptr n = (1UL << kMaxBytesCachedLog) / Size(class_id);
+    return Max(1UL, Min(kMaxNumCached, n));
+  }
+
+  static void Print() {
+    uptr prev_s = 0;
+    uptr total_cached = 0;
+    for (uptr i = 0; i < kNumClasses; i++) {
+      uptr s = Size(i);
+      if (s >= kMidSize / 2 && (s & (s - 1)) == 0)
+        Printf("\n");
+      uptr d = s - prev_s;
+      uptr p = prev_s ? (d * 100 / prev_s) : 0;
+      uptr l = SANITIZER_WORDSIZE - 1 - __builtin_clzl(s);
+      uptr cached = MaxCached(i) * s;
+      Printf("c%02zd => s: %zd diff: +%zd %02zd%% l %zd "
+             "cached: %zd %zd; id %zd\n",
+             i, Size(i), d, p, l, MaxCached(i), cached, ClassID(s));
+      total_cached += cached;
+      prev_s = s;
+    }
+    Printf("Total cached: %zd\n", total_cached);
+  }
+
+  static void Validate() {
+    for (uptr c = 1; c < kNumClasses; c++) {
+      // Printf("Validate: c%zd\n", c);
+      uptr s = Size(c);
+      CHECK_EQ(ClassID(s), c);
+      if (c != kNumClasses - 1)
+        CHECK_EQ(ClassID(s + 1), c + 1);
+      CHECK_EQ(ClassID(s - 1), c);
+      if (c)
+        CHECK_GT(Size(c), Size(c-1));
+    }
+    CHECK_EQ(ClassID(kMaxSize + 1), 0);
+
+    for (uptr s = 1; s <= kMaxSize; s++) {
+      uptr c = ClassID(s);
+      // Printf("s%zd => c%zd\n", s, c);
+      CHECK_LT(c, kNumClasses);
+      CHECK_GE(Size(c), s);
+      if (c > 0)
+        CHECK_LT(Size(c-1), s);
+    }
   }
 };
 
-class DefaultSizeClassMap: public SplineSizeClassMap<
-  /* l: */1 << 4, 1 << 9,  1 << 12, 1 << 15, 1 << 18, 1 << 21,
-  /* s: */1 << 4, 1 << 6,  1 << 9,  1 << 12, 1 << 15,
-  /* c: */256,    64,      16,      4,       1> {
- private:
-  COMPILER_CHECK(kNumClasses == 256);
-};
+typedef SizeClassMap<21, 256, 16> DefaultSizeClassMap;
+typedef SizeClassMap<15, 64, 14> CompactSizeClassMap;
 
-class CompactSizeClassMap: public SplineSizeClassMap<
-  /* l: */1 << 3, 1 << 4,  1 << 7, 1 << 8, 1 << 12, 1 << 15,
-  /* s: */1 << 3, 1 << 4,  1 << 7, 1 << 8, 1 << 12,
-  /* c: */256,    64,      16,      4,       1> {
- private:
-  COMPILER_CHECK(kNumClasses <= 32);
-};
 
 struct AllocatorListNode {
   AllocatorListNode *next;
@@ -204,7 +268,7 @@ class SizeClassAllocator64 {
   }
 
   static uptr GetSizeClass(void *p) {
-    return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClasses;
+    return (reinterpret_cast<uptr>(p) / kRegionSize) % kNumClassesRounded;
   }
 
   void *GetBlockBegin(void *p) {
@@ -248,10 +312,11 @@ class SizeClassAllocator64 {
   }
 
   typedef SizeClassMap SizeClassMapT;
-  static const uptr kNumClasses = SizeClassMap::kNumClasses;  // 2^k <= 256
+  static const uptr kNumClasses = SizeClassMap::kNumClasses;
+  static const uptr kNumClassesRounded = SizeClassMap::kNumClassesRounded;
 
  private:
-  static const uptr kRegionSize = kSpaceSize / kNumClasses;
+  static const uptr kRegionSize = kSpaceSize / kNumClassesRounded;
   static const uptr kSpaceEnd = kSpaceBeg + kSpaceSize;
   COMPILER_CHECK(kSpaceBeg % kSpaceSize == 0);
   // kRegionSize must be >= 2^32.
@@ -276,7 +341,7 @@ class SizeClassAllocator64 {
 
   static uptr AdditionalSize() {
     uptr PageSize = GetPageSizeCached();
-    uptr res = Max(sizeof(RegionInfo) * kNumClasses, PageSize);
+    uptr res = Max(sizeof(RegionInfo) * kNumClassesRounded, PageSize);
     CHECK_EQ(res % PageSize, 0);
     return res;
   }
@@ -306,7 +371,7 @@ class SizeClassAllocator64 {
       uptr map_size = kUserMapSize;
       while (end_idx + size > region->mapped_user + map_size)
         map_size += kUserMapSize;
-      CHECK_GT(region->mapped_user + map_size, end_idx);
+      CHECK_GE(region->mapped_user + map_size, end_idx);
       MapWithCallback(region_beg + region->mapped_user, map_size);
       region->mapped_user += map_size;
     }
@@ -444,13 +509,11 @@ class SizeClassAllocator32 {
   }
 
   bool PointerIsMine(void *p) {
-    return
-      state_->possible_regions[ComputeRegionId(reinterpret_cast<uptr>(p))] != 0;
+    return GetSizeClass(p) != 0;
   }
 
   uptr GetSizeClass(void *p) {
-    return
-      state_->possible_regions[ComputeRegionId(reinterpret_cast<uptr>(p))] - 1;
+    return state_->possible_regions[ComputeRegionId(reinterpret_cast<uptr>(p))];
   }
 
   void *GetBlockBegin(void *p) {
@@ -488,13 +551,12 @@ class SizeClassAllocator32 {
   }
 
   typedef SizeClassMap SizeClassMapT;
-  static const uptr kNumClasses = SizeClassMap::kNumClasses;  // 2^k <= 128
+  static const uptr kNumClasses = SizeClassMap::kNumClasses;
 
  private:
   static const uptr kRegionSizeLog = SANITIZER_WORDSIZE == 64 ? 24 : 20;
   static const uptr kRegionSize = 1 << kRegionSizeLog;
   static const uptr kNumPossibleRegions = kSpaceSize / kRegionSize;
-  COMPILER_CHECK(kNumClasses <= 128);
 
   struct SizeClassInfo {
     SpinMutex mutex;
@@ -520,7 +582,7 @@ class SizeClassAllocator32 {
     MapUnmapCallback().OnMap(res, kRegionSize);
     CHECK_EQ(0U, (res & (kRegionSize - 1)));
     CHECK_EQ(0U, state_->possible_regions[ComputeRegionId(res)]);
-    state_->possible_regions[ComputeRegionId(res)] = class_id + 1;
+    state_->possible_regions[ComputeRegionId(res)] = class_id;
     return res;
   }
 
@@ -576,6 +638,7 @@ struct SizeClassAllocatorLocalCache {
   }
 
   void *Allocate(SizeClassAllocator *allocator, uptr class_id) {
+    CHECK_NE(class_id, 0UL);
     CHECK_LT(class_id, kNumClasses);
     AllocatorFreeList *free_list = &free_lists_[class_id];
     if (free_list->empty())
@@ -587,6 +650,7 @@ struct SizeClassAllocatorLocalCache {
   }
 
   void Deallocate(SizeClassAllocator *allocator, uptr class_id, void *p) {
+    CHECK_NE(class_id, 0UL);
     CHECK_LT(class_id, kNumClasses);
     AllocatorFreeList *free_list = &free_lists_[class_id];
     free_list->push_front(reinterpret_cast<AllocatorListNode*>(p));
