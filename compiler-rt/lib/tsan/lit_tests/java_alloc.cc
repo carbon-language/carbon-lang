@@ -22,8 +22,7 @@ int main() {
   jptr jheap = (jptr)malloc(kHeapSize);
   __tsan_java_init(jheap, kHeapSize);
   pthread_t th;
-  pthread_create(&th, 0, Thread, (void*)(jheap + kHeapSize / 4)
-  );
+  pthread_create(&th, 0, Thread, (void*)(jheap + kHeapSize / 4));
   stress(jheap);
   pthread_join(th, 0);
   return __tsan_java_fini();
