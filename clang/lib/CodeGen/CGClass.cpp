@@ -1089,8 +1089,6 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
 /// constructor for each of several members of an array.
 ///
 /// \param ctor the constructor to call for each element
-/// \param argBegin,argEnd the arguments to evaluate and pass to the
-///   constructor
 /// \param arrayType the type of the array to initialize
 /// \param arrayBegin an arrayType*
 /// \param zeroInitialize true if each element should be
@@ -1116,8 +1114,6 @@ CodeGenFunction::EmitCXXAggrConstructorCall(const CXXConstructorDecl *ctor,
 /// \param ctor the constructor to call for each element
 /// \param numElements the number of elements in the array;
 ///   may be zero
-/// \param argBegin,argEnd the arguments to evaluate and pass to the
-///   constructor
 /// \param arrayBegin a T*, where T is the type constructed by ctor
 /// \param zeroInitialize true if each element should be
 ///   zero-initialized before it is constructed
