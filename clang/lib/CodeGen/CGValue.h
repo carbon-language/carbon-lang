@@ -290,7 +290,7 @@ public:
 
   /// \brief Create a new object to represent a bit-field access.
   ///
-  /// \param BaseValue - The base address of the bit-field sequence this
+  /// \param Addr - The base address of the bit-field sequence this
   /// bit-field refers to.
   /// \param Info - The information describing how to perform the bit-field
   /// access.
