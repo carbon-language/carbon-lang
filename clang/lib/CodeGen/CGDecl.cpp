@@ -1434,10 +1434,6 @@ namespace {
 ///
 /// \param elementType - the immediate element type of the array;
 ///   possibly still an array type
-/// \param array - a value of type elementType*
-/// \param destructionKind - the kind of destruction required
-/// \param initializedElementCount - a value of type size_t* holding
-///   the number of successfully-constructed elements
 void CodeGenFunction::pushIrregularPartialArrayCleanup(llvm::Value *arrayBegin,
                                                  llvm::Value *arrayEndPointer,
                                                        QualType elementType,
@@ -1453,10 +1449,6 @@ void CodeGenFunction::pushIrregularPartialArrayCleanup(llvm::Value *arrayBegin,
 ///
 /// \param elementType - the immediate element type of the array;
 ///   possibly still an array type
-/// \param array - a value of type elementType*
-/// \param destructionKind - the kind of destruction required
-/// \param initializedElementCount - a value of type size_t* holding
-///   the number of successfully-constructed elements
 void CodeGenFunction::pushRegularPartialArrayCleanup(llvm::Value *arrayBegin,
                                                      llvm::Value *arrayEnd,
                                                      QualType elementType,
