@@ -237,8 +237,6 @@ public:
   /// ComputeSymbolTable - Compute the symbol table data
   ///
   /// \param StringTable [out] - The string table data.
-  /// \param StringIndexMap [out] - Map from symbol names to offsets in the
-  /// string table.
   void ComputeSymbolTable(MCAssembler &Asm, SmallString<256> &StringTable,
                           std::vector<MachSymbolData> &LocalSymbolData,
                           std::vector<MachSymbolData> &ExternalSymbolData,
