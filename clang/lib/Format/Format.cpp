@@ -124,7 +124,7 @@ public:
     bool FitsOnALine = true;
     for (unsigned i = 1, n = Line.Tokens.size(); i != n; ++i) {
       Columns += (Annotations[i].SpaceRequiredBefore ? 1 : 0) +
-          Line.Tokens[i].Tok.getLength();
+                 Line.Tokens[i].Tok.getLength();
       // A special case for the colon of a constructor initializer as this only
       // needs to be put on a new line if the line needs to be split.
       if (Columns > Style.ColumnLimit ||
@@ -248,8 +248,8 @@ private:
         // Indent and extra 4 spaces after '=' as it continues an expression.
         // Don't do that on the top level, as we already indent 4 there.
         State.Column = State.Indent[ParenLevel] + 4;
-      } else if (Line.Tokens[0].Tok.is(tok::kw_for) &&
-                 Previous.Tok.is(tok::comma)) {
+      } else if (
+          Line.Tokens[0].Tok.is(tok::kw_for) && Previous.Tok.is(tok::comma)) {
         State.Column = State.ForLoopVariablePos;
       } else {
         State.Column = State.Indent[ParenLevel];
@@ -384,7 +384,7 @@ private:
     unsigned CurrentPenalty = 0;
     if (NewLine) {
       CurrentPenalty += Parameters.PenaltyIndentLevel * State.Indent.size() +
-          splitPenalty(State.ConsumedTokens - 1);
+                        splitPenalty(State.ConsumedTokens - 1);
     } else {
       if (State.Indent.size() < State.StartOfLineLevel)
         CurrentPenalty += Parameters.PenaltyLevelDecrease *
@@ -668,8 +668,9 @@ public:
         Annotation.SpaceRequiredBefore = true;
       } else if (Annotation.Type == TokenAnnotation::TT_OverloadedOperator) {
         Annotation.SpaceRequiredBefore =
-            Line.Tokens[i].Tok.is(tok::identifier) || Line.Tokens[i].Tok.is(
-                tok::kw_new) || Line.Tokens[i].Tok.is(tok::kw_delete);
+            Line.Tokens[i].Tok.is(tok::identifier) ||
+            Line.Tokens[i].Tok.is(tok::kw_new) ||
+            Line.Tokens[i].Tok.is(tok::kw_delete);
       } else if (
           Annotations[i - 1].Type == TokenAnnotation::TT_OverloadedOperator) {
         Annotation.SpaceRequiredBefore = false;
@@ -691,8 +692,8 @@ public:
         Annotation.MustBreakBefore = true;
       } else if (Line.Tokens[i].Tok.is(tok::colon)) {
         Annotation.SpaceRequiredBefore =
-          Line.Tokens[0].Tok.isNot(tok::kw_case) && !IsObjCMethodDecl &&
-          (i != e - 1);
+            Line.Tokens[0].Tok.isNot(tok::kw_case) && !IsObjCMethodDecl &&
+            (i != e - 1);
         // Don't break at ':' if identifier before it can beak.
         if (IsObjCMethodDecl && Line.Tokens[i - 1].Tok.is(tok::identifier) &&
             Annotations[i - 1].CanBreakBefore)
@@ -799,8 +800,7 @@ private:
     return getPrecedence(Tok) > prec::Comma;
   }
 
-  TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index,
-                                                   bool IsRHS) {
+  TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index, bool IsRHS) {
     if (Index == Annotations.size())
       return TokenAnnotation::TT_Unknown;
 
@@ -866,8 +866,8 @@ private:
       return false;
     if (Right.is(tok::amp) || Right.is(tok::star))
       return Left.isLiteral() ||
-          (Left.isNot(tok::star) && Left.isNot(tok::amp) &&
-           !Style.PointerAndReferenceBindToType);
+             (Left.isNot(tok::star) && Left.isNot(tok::amp) &&
+              !Style.PointerAndReferenceBindToType);
     if (Left.is(tok::amp) || Left.is(tok::star))
       return Right.isLiteral() || Style.PointerAndReferenceBindToType;
     if (Right.is(tok::star) && Left.is(tok::l_paren))
@@ -889,9 +889,9 @@ private:
       return false;
     if (Right.is(tok::l_paren)) {
       return Left.is(tok::kw_if) || Left.is(tok::kw_for) ||
-          Left.is(tok::kw_while) || Left.is(tok::kw_switch) ||
-          (Left.isNot(tok::identifier) && Left.isNot(tok::kw_sizeof) &&
-           Left.isNot(tok::kw_typeof));
+             Left.is(tok::kw_while) || Left.is(tok::kw_switch) ||
+             (Left.isNot(tok::identifier) && Left.isNot(tok::kw_sizeof) &&
+              Left.isNot(tok::kw_typeof));
     }
     return true;
   }
@@ -901,11 +901,11 @@ private:
         Right.Tok.is(tok::comment) || Right.Tok.is(tok::greater))
       return false;
     return (isBinaryOperator(Left) && Left.Tok.isNot(tok::lessless)) ||
-        Left.Tok.is(tok::comma) || Right.Tok.is(tok::lessless) ||
-        Right.Tok.is(tok::arrow) || Right.Tok.is(tok::period) ||
-        Right.Tok.is(tok::colon) || Left.Tok.is(tok::semi) ||
-        Left.Tok.is(tok::l_brace) ||
-        (Left.Tok.is(tok::l_paren) && !Right.Tok.is(tok::r_paren));
+           Left.Tok.is(tok::comma) || Right.Tok.is(tok::lessless) ||
+           Right.Tok.is(tok::arrow) || Right.Tok.is(tok::period) ||
+           Right.Tok.is(tok::colon) || Left.Tok.is(tok::semi) ||
+           Left.Tok.is(tok::l_brace) ||
+           (Left.Tok.is(tok::l_paren) && !Right.Tok.is(tok::r_paren));
   }
 
   const UnwrappedLine &Line;

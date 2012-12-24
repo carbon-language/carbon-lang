@@ -78,4 +78,4 @@ tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
 }  // end namespace format
 }  // end namespace clang
 
-#endif // LLVM_CLANG_FORMAT_FORMAT_H
+#endif  // LLVM_CLANG_FORMAT_FORMAT_H

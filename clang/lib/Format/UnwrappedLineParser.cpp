@@ -25,9 +25,7 @@ namespace format {
 UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          FormatTokenSource &Tokens,
                                          UnwrappedLineConsumer &Callback)
-    : Style(Style),
-      Tokens(Tokens),
-      Callback(Callback) {
+    : Style(Style), Tokens(Tokens), Callback(Callback) {
 }
 
 bool UnwrappedLineParser::parse() {
