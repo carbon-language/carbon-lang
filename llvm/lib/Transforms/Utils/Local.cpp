@@ -605,7 +605,7 @@ bool llvm::TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB) {
   // possible to handle such cases, but difficult: it requires checking whether
   // BB dominates Succ, which is non-trivial to calculate in the case where
   // Succ has multiple predecessors.  Also, it requires checking whether
-  // constructing the necessary self-referential PHI node doesn't intoduce any
+  // constructing the necessary self-referential PHI node doesn't introduce any
   // conflicts; this isn't too difficult, but the previous code for doing this
   // was incorrect.
   //
