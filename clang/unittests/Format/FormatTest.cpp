@@ -589,7 +589,22 @@ TEST_F(FormatTest, UnderstandsUnaryOperators) {
 }
 
 TEST_F(FormatTest, UndestandsOverloadedOperators) {
-  verifyFormat("bool operator<() {\n}");
+  verifyFormat("bool operator<();");
+  verifyFormat("bool operator>();");
+  verifyFormat("bool operator=();");
+  verifyFormat("bool operator==();");
+  verifyFormat("bool operator!=();");
+  verifyFormat("int operator+();");
+  verifyFormat("int operator++();");
+  verifyFormat("bool operator();");
+  verifyFormat("bool operator()();");
+  verifyFormat("bool operator[]();");
+  verifyFormat("operator bool();");
+  verifyFormat("operator SomeType<int>();");
+  verifyFormat("void *operator new(std::size_t size);");
+  verifyFormat("void *operator new[](std::size_t size);");
+  verifyFormat("void operator delete(void *ptr);");
+  verifyFormat("void operator delete[](void *ptr);");
 }
 
 TEST_F(FormatTest, UnderstandsUsesOfStar) {

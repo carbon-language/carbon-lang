@@ -553,9 +553,19 @@ public:
         Annotations[CurrentIndex].Type = TokenAnnotation::TT_BinaryOperator;
         break;
       case tok::kw_operator:
-        if (!Tokens[Index].Tok.is(tok::l_paren))
+        if (Tokens[Index].Tok.is(tok::l_paren)) {
           Annotations[Index].Type = TokenAnnotation::TT_OverloadedOperator;
-        next();
+          next();
+          if (Index < Tokens.size() && Tokens[Index].Tok.is(tok::r_paren)) {
+            Annotations[Index].Type = TokenAnnotation::TT_OverloadedOperator;
+            next();
+          }
+        } else {
+          while (Index < Tokens.size() && !Tokens[Index].Tok.is(tok::l_paren)) {
+            Annotations[Index].Type = TokenAnnotation::TT_OverloadedOperator;
+            next();
+          }
+        }
         break;
       case tok::question:
         parseConditional();
@@ -633,6 +643,13 @@ public:
       if (Annotation.Type == TokenAnnotation::TT_CtorInitializerColon) {
         Annotation.MustBreakBefore = true;
         Annotation.SpaceRequiredBefore = true;
+      } else if (Annotation.Type == TokenAnnotation::TT_OverloadedOperator) {
+        Annotation.SpaceRequiredBefore =
+            Line.Tokens[i].Tok.is(tok::identifier) || Line.Tokens[i].Tok.is(
+                tok::kw_new) || Line.Tokens[i].Tok.is(tok::kw_delete);
+      } else if (
+          Annotations[i - 1].Type == TokenAnnotation::TT_OverloadedOperator) {
+        Annotation.SpaceRequiredBefore = false;
       } else if (IsObjCMethodDecl && Line.Tokens[i].Tok.is(tok::identifier) &&
                  (i != e - 1) && Line.Tokens[i + 1].Tok.is(tok::colon) &&
                  Line.Tokens[i - 1].Tok.is(tok::identifier)) {
