@@ -279,11 +279,17 @@ function(add_lit_target target comment)
   foreach(param ${ARG_PARAMS})
     list(APPEND LIT_COMMAND --param ${param})
   endforeach()
-  add_custom_target(${target}
-    COMMAND ${LIT_COMMAND} ${ARG_DEFAULT_ARGS}
-    COMMENT "${comment}"
-    )
-  add_dependencies(${target} ${ARG_DEPENDS})
+  if( ARG_DEPENDS )
+    add_custom_target(${target}
+      COMMAND ${LIT_COMMAND} ${ARG_DEFAULT_ARGS}
+      COMMENT "${comment}"
+      )
+    add_dependencies(${target} ${ARG_DEPENDS})
+  else()
+    add_custom_target(${target}
+      COMMAND cmake -E echo "${target} does nothing, no tools built.")
+    message(STATUS "${target} does nothing.")
+  endif()
 endfunction()
 
 # A function to add a set of lit test suites to be driven through 'check-*' targets.
