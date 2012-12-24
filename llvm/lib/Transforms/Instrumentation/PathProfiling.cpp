@@ -1345,8 +1345,8 @@ bool PathProfiler::runOnModule(Module &M) {
     Main = M.getFunction("MAIN__");
 
   if (!Main) {
-    errs() << "WARNING: cannot insert path profiling into a module"
-           << " with no main function!\n";
+    Context->emitWarning("cannot insert edge profiling into a module"
+                         " with no main function");
     return false;
   }
 

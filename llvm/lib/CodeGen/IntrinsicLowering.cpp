@@ -413,22 +413,30 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   }
 
   case Intrinsic::stacksave:
-  case Intrinsic::stackrestore: {
     if (!Warned)
-      errs() << "WARNING: this target does not support the llvm.stack"
-             << (Callee->getIntrinsicID() == Intrinsic::stacksave ?
-               "save" : "restore") << " intrinsic.\n";
+      Context.emitWarning("this target does not support the "
+                          "llvm.stacksave intrinsic");
     Warned = true;
-    if (Callee->getIntrinsicID() == Intrinsic::stacksave)
-      CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+    CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
     break;
-  }
+
+  case Intrinsic::stackrestore:
+    if (!Warned)
+      Context.emitWarning("this target does not support the "
+                          "llvm.stackrestore intrinsic");
+    Warned = true;
+    break;
     
   case Intrinsic::returnaddress:
+    Context.emitWarning("this target does not support the "
+                        "llvm.returnaddress intrinsic");
+    CI->replaceAllUsesWith(ConstantPointerNull::get(
+                                            cast<PointerType>(CI->getType())));
+    break;
+
   case Intrinsic::frameaddress:
-    errs() << "WARNING: this target does not support the llvm."
-           << (Callee->getIntrinsicID() == Intrinsic::returnaddress ?
-             "return" : "frame") << "address intrinsic.\n";
+    Context.emitWarning("this target does not support the "
+                        "llvm.frameaddress intrinsic");
     CI->replaceAllUsesWith(ConstantPointerNull::get(
                                             cast<PointerType>(CI->getType())));
     break;
@@ -438,12 +446,12 @@ void IntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::pcmarker:
     break;    // Simply strip out pcmarker on unsupported architectures
-  case Intrinsic::readcyclecounter: {
-    errs() << "WARNING: this target does not support the llvm.readcyclecoun"
-           << "ter intrinsic.  It is being lowered to a constant 0\n";
+  case Intrinsic::readcyclecounter:
+    Context.emitWarning("this target does not support the "
+                        "llvm.readcyclecounter intrinsic; "
+                        "it is being lowered to a constant 0");
     CI->replaceAllUsesWith(ConstantInt::get(Type::getInt64Ty(Context), 0));
     break;
-  }
 
   case Intrinsic::dbg_declare:
     break;    // Simply strip out debugging intrinsics

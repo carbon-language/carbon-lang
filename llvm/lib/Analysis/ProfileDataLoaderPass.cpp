@@ -177,8 +177,8 @@ bool ProfileMetadataLoaderPass::runOnModule(Module &M) {
   unsigned ReadCount = matchEdges(M, PB, Counters);
 
   if (ReadCount != Counters.size()) {
-    errs() << "WARNING: profile information is inconsistent with "
-           << "the current program!\n";
+    M.getContext().emitWarning("profile information is inconsistent "
+                               "with the current program");
   }
   NumEdgesRead = ReadCount;
 
