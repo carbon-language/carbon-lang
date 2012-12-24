@@ -379,8 +379,9 @@ TEST_F(FormatTest, FormatsFunctionDefinition) {
 
 TEST_F(FormatTest, FormatsAwesomeMethodCall) {
   verifyFormat(
-      "SomeLongMethodName(SomeReallyLongMethod(CallOtherReallyLongMethod(\n"
-      "    parameter, parameter, parameter)), SecondLongCall(parameter));");
+      "SomeLongMethodName(SomeReallyLongMethod(\n"
+      "    CallOtherReallyLongMethod(parameter, parameter, parameter)),\n"
+      "                   SecondLongCall(parameter));");
 }
 
 TEST_F(FormatTest, ConstructorInitializers) {
@@ -454,6 +455,13 @@ TEST_F(FormatTest, BreaksDesireably) {
       "       aaaaaaaaaaa(aaaaaaaaa) || aaaaaaaaaaaaaaaaaaaaaaa ||\n"
       "       aaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaa ||\n"
       "       (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+
+  verifyFormat(
+      "{\n  {\n    {\n"
+      "      Annotation.SpaceRequiredBefore =\n"
+      "          Line.Tokens[i - 1].Tok.isNot(tok::l_paren) &&\n"
+      "          Line.Tokens[i - 1].Tok.isNot(tok::l_square);\n"
+      "    }\n  }\n}");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {

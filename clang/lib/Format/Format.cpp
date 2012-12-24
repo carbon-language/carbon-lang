@@ -83,6 +83,7 @@ FormatStyle getGoogleStyle() {
 
 struct OptimizationParameters {
   unsigned PenaltyIndentLevel;
+  unsigned PenaltyLevelDecrease;
 };
 
 class UnwrappedLineFormatter {
@@ -95,6 +96,7 @@ public:
         Annotations(Annotations), Replaces(Replaces),
         StructuralError(StructuralError) {
     Parameters.PenaltyIndentLevel = 15;
+    Parameters.PenaltyLevelDecrease = 10;
   }
 
   void format() {
@@ -110,6 +112,7 @@ public:
     State.FirstLessLess.push_back(0);
     State.ForLoopVariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
+    State.StartOfLineLevel = 1;
 
     // The first token has already been indented and thus consumed.
     moveStateToNextToken(State);
@@ -155,6 +158,9 @@ private:
     /// \brief The number of tokens already consumed.
     unsigned ConsumedTokens;
 
+    /// \brief The parenthesis level of the first token on the current line.
+    unsigned StartOfLineLevel;
+
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
     std::vector<unsigned> Indent;
@@ -186,6 +192,8 @@ private:
         return Other.ConsumedTokens > ConsumedTokens;
       if (Other.Column != Column)
         return Other.Column > Column;
+      if (Other.StartOfLineLevel != StartOfLineLevel)
+        return Other.StartOfLineLevel > StartOfLineLevel;
       if (Other.Indent.size() != Indent.size())
         return Other.Indent.size() > Indent.size();
       for (int i = 0, e = Indent.size(); i != e; ++i) {
@@ -246,6 +254,8 @@ private:
       } else {
         State.Column = State.Indent[ParenLevel];
       }
+
+      State.StartOfLineLevel = ParenLevel + 1;
 
       if (Line.Tokens[0].Tok.is(tok::kw_for))
         State.LineContainsContinuedForLoopSection =
@@ -343,7 +353,7 @@ private:
       return Level;
 
     if (Right.Tok.is(tok::arrow) || Right.Tok.is(tok::period))
-      return 200;
+      return 50;
 
     return 3;
   }
@@ -375,6 +385,10 @@ private:
     if (NewLine) {
       CurrentPenalty += Parameters.PenaltyIndentLevel * State.Indent.size() +
           splitPenalty(State.ConsumedTokens - 1);
+    } else {
+      if (State.Indent.size() < State.StartOfLineLevel)
+        CurrentPenalty += Parameters.PenaltyLevelDecrease *
+                          (State.StartOfLineLevel - State.Indent.size());
     }
 
     addTokenToState(NewLine, true, State);
