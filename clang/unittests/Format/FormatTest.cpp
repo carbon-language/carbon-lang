@@ -456,6 +456,21 @@ TEST_F(FormatTest, BreaksDesireably) {
       "    (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 }
 
+TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
+      "    bbbbbbbbbbbbbbbbbbbbbbbbb && ccccccccccccccccccccccccc) {\n}");
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaa && bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
+      "    ccccccccccccccccccccccccc) {\n}");
+  verifyFormat(
+      "if (aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
+      "    ccccccccccccccccccccccccc) {\n}");
+  verifyFormat(
+      "if ((aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb) &&\n"
+      "    ccccccccccccccccccccccccc) {\n}");
+}
+
 TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("loooooooooooooooooooooooooongFunction(\"short literal \"\n"
                "                                      \"short literal\");");

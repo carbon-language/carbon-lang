@@ -90,7 +90,7 @@ public:
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
         Annotations(Annotations), Replaces(Replaces),
         StructuralError(StructuralError) {
-    Parameters.PenaltyIndentLevel = 5;
+    Parameters.PenaltyIndentLevel = 15;
   }
 
   void format() {
@@ -325,9 +325,13 @@ private:
 
     if (Left.Tok.is(tok::semi) || Left.Tok.is(tok::comma))
       return 0;
-    if (Left.Tok.is(tok::equal) || Left.Tok.is(tok::l_paren) ||
-        Left.Tok.is(tok::pipepipe) || Left.Tok.is(tok::ampamp))
+    if (Left.Tok.is(tok::l_paren))
       return 2;
+
+    prec::Level Level =
+        getBinOpPrecedence(Line.Tokens[Index].Tok.getKind(), true, true);
+    if (Level != prec::Unknown)
+      return Level;
 
     if (Right.Tok.is(tok::arrow) || Right.Tok.is(tok::period))
       return 200;
