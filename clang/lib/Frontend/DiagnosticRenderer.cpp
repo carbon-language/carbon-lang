@@ -399,7 +399,6 @@ void DiagnosticRenderer::emitCaret(SourceLocation Loc,
 /// \param Level The diagnostic level currently being emitted.
 /// \param Ranges The underlined ranges for this code snippet.
 /// \param Hints The FixIt hints active for this diagnostic.
-/// \param MacroSkipEnd The depth to stop skipping macro expansions.
 /// \param OnMacroInst The current depth of the macro expansion stack.
 void DiagnosticRenderer::emitMacroExpansions(SourceLocation Loc,
                                              DiagnosticsEngine::Level Level,
