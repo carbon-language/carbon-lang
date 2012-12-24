@@ -8,9 +8,12 @@
 //===----------------------------------------------------------------------===//
 //
 // This file defines the cost model analysis. It provides a very basic cost
-// estimation for LLVM-IR. The cost result can be thought of as cycles, but it
-// is really unit-less. The estimated cost is ment to be used for comparing
-// alternatives.
+// estimation for LLVM-IR. This analysis uses the services of the codegen
+// to approximate the cost of any IR instruction when lowered to machine
+// instructions. The cost results are unit-less and the cost number represents
+// the throughput of the machine assuming that all loads hit the cache, all
+// branches are predicted, etc. The cost numbers can be added in order to
+// compare two or more transformation alternatives.
 //
 //===----------------------------------------------------------------------===//
 
