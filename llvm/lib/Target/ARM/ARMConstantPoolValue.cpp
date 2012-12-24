@@ -206,24 +206,12 @@ ARMConstantPoolSymbol::ARMConstantPoolSymbol(LLVMContext &C, const char *s,
                                              bool AddCurrentAddress)
   : ARMConstantPoolValue(C, id, ARMCP::CPExtSymbol, PCAdj, Modifier,
                          AddCurrentAddress),
-    S(strdup(s)) {}
-
-ARMConstantPoolSymbol::~ARMConstantPoolSymbol() {
-  free(const_cast<void*>(reinterpret_cast<const void *>(S)));
-}
+    S(s) {}
 
 ARMConstantPoolSymbol *
 ARMConstantPoolSymbol::Create(LLVMContext &C, const char *s,
                               unsigned ID, unsigned char PCAdj) {
   return new ARMConstantPoolSymbol(C, s, ID, PCAdj, ARMCP::no_modifier, false);
-}
-
-static bool CPV_streq(const char *S1, const char *S2) {
-  if (S1 == S2)
-    return true;
-  if (S1 && S2 && strcmp(S1, S2) == 0)
-    return true;
-  return false;
 }
 
 int ARMConstantPoolSymbol::getExistingMachineCPValue(MachineConstantPool *CP,
@@ -238,7 +226,7 @@ int ARMConstantPoolSymbol::getExistingMachineCPValue(MachineConstantPool *CP,
       ARMConstantPoolSymbol *APS = dyn_cast<ARMConstantPoolSymbol>(CPV);
       if (!APS) continue;
 
-      if (CPV_streq(APS->S, S) && equals(APS))
+      if (APS->S == S && equals(APS))
         return i;
     }
   }
@@ -248,12 +236,11 @@ int ARMConstantPoolSymbol::getExistingMachineCPValue(MachineConstantPool *CP,
 
 bool ARMConstantPoolSymbol::hasSameValue(ARMConstantPoolValue *ACPV) {
   const ARMConstantPoolSymbol *ACPS = dyn_cast<ARMConstantPoolSymbol>(ACPV);
-  return ACPS && CPV_streq(ACPS->S, S) &&
-    ARMConstantPoolValue::hasSameValue(ACPV);
+  return ACPS && ACPS->S == S && ARMConstantPoolValue::hasSameValue(ACPV);
 }
 
 void ARMConstantPoolSymbol::addSelectionDAGCSEId(FoldingSetNodeID &ID) {
-  ID.AddPointer(S);
+  ID.AddString(S);
   ARMConstantPoolValue::addSelectionDAGCSEId(ID);
 }
 

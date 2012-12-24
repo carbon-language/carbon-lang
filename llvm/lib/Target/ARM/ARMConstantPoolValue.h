@@ -161,19 +161,17 @@ public:
 /// ARMConstantPoolSymbol - ARM-specific constantpool values for external
 /// symbols.
 class ARMConstantPoolSymbol : public ARMConstantPoolValue {
-  const char *S;                // ExtSymbol being loaded.
+  const std::string S;          // ExtSymbol being loaded.
 
   ARMConstantPoolSymbol(LLVMContext &C, const char *s, unsigned id,
                         unsigned char PCAdj, ARMCP::ARMCPModifier Modifier,
                         bool AddCurrentAddress);
 
 public:
-  ~ARMConstantPoolSymbol();
-
   static ARMConstantPoolSymbol *Create(LLVMContext &C, const char *s,
                                        unsigned ID, unsigned char PCAdj);
 
-  const char *getSymbol() const { return S; }
+  const char *getSymbol() const { return S.c_str(); }
 
   virtual int getExistingMachineCPValue(MachineConstantPool *CP,
                                         unsigned Alignment);
