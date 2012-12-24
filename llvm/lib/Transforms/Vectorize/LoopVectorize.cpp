@@ -1737,10 +1737,9 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
   Instruction *ExitInstruction = 0;
 
   // Iter is our iterator. We start with the PHI node and scan for all of the
-  // users of this instruction. All users must be instructions which can be
+  // users of this instruction. All users must be instructions that can be
   // used as reduction variables (such as ADD). We may have a single
-  // out-of-block user. They cycle must end with the original PHI.
-  // Also, we can't have multiple block-local users.
+  // out-of-block user. The cycle must end with the original PHI.
   Instruction *Iter = Phi;
   while (true) {
     // If the instruction has no users then this is a broken
@@ -1752,9 +1751,9 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
     if (!isReductionInstr(Iter, Kind))
       return false;
 
-    // Did we find a user inside this block ?
+    // Did we find a user inside this loop already ?
     bool FoundInBlockUser = false;
-    // Did we reach the initial PHI node ?
+    // Did we reach the initial PHI node already ?
     bool FoundStartPHI = false;
 
     // For each of the *users* of iter.
@@ -1779,8 +1778,10 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
       // We allow in-loop PHINodes which are not the original reduction PHI
       // node. If this PHI is the only user of Iter (happens in IF w/ no ELSE
       // structure) then don't skip this PHI.
-      if (isa<PHINode>(U) && U->getParent() != TheLoop->getHeader() &&
-          TheLoop->contains(U) && Iter->getNumUses() > 1)
+      if (isa<PHINode>(Iter) && isa<PHINode>(U) &&
+          U->getParent() != TheLoop->getHeader() &&
+          TheLoop->contains(U) &&
+          Iter->getNumUses() > 1)
         continue;
 
       // We can't have multiple inside users.
