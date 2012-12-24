@@ -71,7 +71,7 @@ public:
 
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
 
-  virtual unsigned getBroadcastCost(Type *Tp) const;
+  virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp) const;
 
   virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
                                     Type *Src) const;

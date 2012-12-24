@@ -208,7 +208,8 @@ unsigned VectorTargetTransformImpl::getArithmeticInstrCost(unsigned Opcode,
   return 1;
 }
 
-unsigned VectorTargetTransformImpl::getBroadcastCost(Type *Tp) const {
+unsigned VectorTargetTransformImpl::getShuffleCost(ShuffleKind Kind,
+                                                   Type *Tp) const {
   return 1;
 }
 

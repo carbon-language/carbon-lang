@@ -157,14 +157,18 @@ class VectorTargetTransformInfo {
 public:
   virtual ~VectorTargetTransformInfo() {}
 
+  enum ShuffleKind {
+    Broadcast, // Broadcast element 0 to all other elements.
+    Reverse    // Reverse the order of the vector.
+  };
+
   /// Returns the expected cost of arithmetic ops, such as mul, xor, fsub, etc.
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
     return 1;
   }
 
-  /// Returns the cost of a vector broadcast of a scalar at place zero to a
-  /// vector of type 'Tp'.
-  virtual unsigned getBroadcastCost(Type *Tp) const {
+  /// Returns the cost of a shuffle instruction of kind Kind and of type Tp.
+  virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp) const {
     return 1;
   }
 
