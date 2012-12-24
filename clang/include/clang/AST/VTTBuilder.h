@@ -102,9 +102,6 @@ class VTTBuilder {
   bool GenerateDefinition;
 
   /// AddVTablePointer - Add a vtable pointer to the VTT currently being built.
-  ///
-  /// \param AddressPoints - If the vtable is a construction vtable, this has
-  /// the address points for it.
   void AddVTablePointer(BaseSubobject Base, uint64_t VTableIndex,
                         const CXXRecordDecl *VTableClass);
                         
@@ -117,9 +114,6 @@ class VTTBuilder {
   ///
   /// \param BaseIsMorallyVirtual whether the base subobject is a virtual base
   /// or a direct or indirect base of a virtual base.
-  ///
-  /// \param AddressPoints - If the vtable is a construction vtable, this has
-  /// the address points for it.
   void LayoutSecondaryVirtualPointers(BaseSubobject Base, 
                                       bool BaseIsMorallyVirtual,
                                       uint64_t VTableIndex,
@@ -128,9 +122,6 @@ class VTTBuilder {
   
   /// LayoutSecondaryVirtualPointers - Lay out the secondary virtual pointers
   /// for the given base subobject.
-  ///
-  /// \param AddressPoints - If the vtable is a construction vtable, this has
-  /// the address points for it.
   void LayoutSecondaryVirtualPointers(BaseSubobject Base, 
                                       uint64_t VTableIndex);
 
