@@ -1492,6 +1492,13 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args) {
         D.Diag(diag::err_drv_no_such_file) << BLPath;
     }
   }
+
+  // Parse -f(no-)sanitize-memory-track-origins options.
+  if (Kind & Memory)
+    MsanTrackOrigins =
+      Args.hasFlag(options::OPT_fsanitize_memory_track_origins,
+                   options::OPT_fno_sanitize_memory_track_origins,
+                   /* Default */false);
 }
 
 /// If AddressSanitizer is enabled, add appropriate linker flags (Linux).

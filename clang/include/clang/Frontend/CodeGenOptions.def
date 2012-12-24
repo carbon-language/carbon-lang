@@ -61,6 +61,8 @@ CODEGENOPT(InstrumentFunctions , 1, 0) ///< Set when -finstrument-functions is
 CODEGENOPT(InstrumentForProfiling , 1, 0) ///< Set when -pg is enabled.
 CODEGENOPT(LessPreciseFPMAD  , 1, 0) ///< Enable less precise MAD instructions to
                                      ///< be generated.
+CODEGENOPT(MemorySanitizerTrackOrigins , 1, 0) ///< Enable tracking origins in
+                                               ///< MemorySanitizer
 CODEGENOPT(MergeAllConstants , 1, 1) ///< Merge identical constants.
 CODEGENOPT(NoCommon          , 1, 0) ///< Set when -fno-common or C++ is enabled.
 CODEGENOPT(NoDwarf2CFIAsm    , 1, 0) ///< Set when -fno-dwarf2-cfi-asm is enabled.

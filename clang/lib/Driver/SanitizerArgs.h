@@ -40,9 +40,10 @@ class SanitizerArgs {
   };
   unsigned Kind;
   std::string BlacklistFile;
+  bool MsanTrackOrigins;
 
  public:
-  SanitizerArgs() : Kind(0), BlacklistFile("") {}
+  SanitizerArgs() : Kind(0), BlacklistFile(""), MsanTrackOrigins(false) {}
   /// Parses the sanitizer arguments from an argument list.
   SanitizerArgs(const Driver &D, const ArgList &Args);
 
@@ -68,6 +69,9 @@ class SanitizerArgs {
       BlacklistOpt += BlacklistFile;
       CmdArgs.push_back(Args.MakeArgString(BlacklistOpt));
     }
+
+    if (MsanTrackOrigins)
+      CmdArgs.push_back(Args.MakeArgString("-fsanitize-memory-track-origins"));
   }
 
  private:

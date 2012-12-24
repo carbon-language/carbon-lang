@@ -18,13 +18,13 @@
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address,thread -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANA-SANT
 // CHECK-SANA-SANT: '-fsanitize=address' not allowed with '-fsanitize=thread'
 
-// RUN: %clang -target x86_64-linux-gnu -fsanitize=address,memory -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANA-SANM
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=address,memory -pie -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANA-SANM
 // CHECK-SANA-SANM: '-fsanitize=address' not allowed with '-fsanitize=memory'
 
-// RUN: %clang -target x86_64-linux-gnu -fsanitize=thread,memory -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANT-SANM
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=thread,memory -pie -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANT-SANM
 // CHECK-SANT-SANM: '-fsanitize=thread' not allowed with '-fsanitize=memory'
 
-// RUN: %clang -target x86_64-linux-gnu -fsanitize=memory,thread -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANM-SANT
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=memory,thread -pie -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-SANM-SANT
 // CHECK-SANM-SANT: '-fsanitize=thread' not allowed with '-fsanitize=memory'
 
 // RUN: %clang -target x86_64-linux-gnu -faddress-sanitizer -fthread-sanitizer -fno-rtti %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ASAN-TSAN
@@ -33,7 +33,16 @@
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=init-order %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ONLY-EXTRA-ASAN
 // CHECK-ONLY-EXTRA-ASAN: argument '-fsanitize=init-order' only allowed with '-fsanitize=address'
 
+// RUN: %clang -target x86_64-linux-gnu -fsanitize-memory-track-origins -pie %s -### 2>&1 | FileCheck %s --check-prefix=CHECK-ONLY-TRACK-ORIGINS
+// CHECK-ONLY-TRACK-ORIGINS: warning: argument unused during compilation: '-fsanitize-memory-track-origins'
+
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=address -fsanitize=alignment -fsanitize=vptr -fno-sanitize=vptr %s -### 2>&1
+// OK
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=memory -pie %s -### 2>&1
+// OK
+
+// RUN: %clang -target x86_64-linux-gnu -fsanitize=memory -fsanitize-memory-track-origins -pie %s -### 2>&1
 // OK
 
 // RUN: %clang -target x86_64-linux-gnu -fsanitize=vptr -fno-sanitize=vptr -fsanitize=undefined,address %s -### 2>&1

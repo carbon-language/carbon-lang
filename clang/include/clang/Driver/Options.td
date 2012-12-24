@@ -398,6 +398,12 @@ def fsanitize_blacklist : Joined<["-"], "fsanitize-blacklist=">,
 def fno_sanitize_blacklist : Flag<["-"], "fno-sanitize-blacklist">,
                              Group<f_clang_Group>,
                              HelpText<"Don't use blacklist file for sanitizers">;
+def fsanitize_memory_track_origins : Flag<["-"], "fsanitize-memory-track-origins">,
+                                     Group<f_clang_Group>, Flags<[CC1Option]>,
+                                     HelpText<"Enable origins tracking in MemorySanitizer">;
+def fno_sanitize_memory_track_origins : Flag<["-"], "fno-sanitize-memory-track-origins">,
+                                        Group<f_clang_Group>,
+                                        HelpText<"Disable origins tracking in MemorySanitizer">;
 def funsafe_math_optimizations : Flag<["-"], "funsafe-math-optimizations">,
   Group<f_Group>;
 def fno_unsafe_math_optimizations : Flag<["-"], "fno-unsafe-math-optimizations">,

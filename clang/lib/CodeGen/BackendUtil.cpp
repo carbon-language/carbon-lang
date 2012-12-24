@@ -188,7 +188,10 @@ static void addAddressSanitizerPasses(const PassManagerBuilder &Builder,
 
 static void addMemorySanitizerPass(const PassManagerBuilder &Builder,
                                    PassManagerBase &PM) {
-  PM.add(createMemorySanitizerPass());
+  const PassManagerBuilderWrapper &BuilderWrapper =
+      static_cast<const PassManagerBuilderWrapper&>(Builder);
+  const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
+  PM.add(createMemorySanitizerPass(CGOpts.MemorySanitizerTrackOrigins));
 }
 
 static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
