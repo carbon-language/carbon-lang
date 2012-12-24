@@ -291,7 +291,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   uptr max_alignment = SANITIZER_WORDSIZE == 64 ? (1 << 28) : (1 << 24);
   for (uptr alignment = 8; alignment <= max_alignment; alignment *= 2) {
     const uptr kNumAlignedAllocs = 100;
-    for (int i = 0; i < kNumAlignedAllocs; i++) {
+    for (uptr i = 0; i < kNumAlignedAllocs; i++) {
       uptr size = ((i % 10) + 1) * 4096;
       char *p = allocated[i] = (char *)a.Allocate(size, alignment);
       CHECK_EQ(p, a.GetBlockBegin(p));
@@ -300,7 +300,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
       CHECK_EQ(0, (uptr)allocated[i] % alignment);
       p[0] = p[size - 1] = 0;
     }
-    for (int i = 0; i < kNumAlignedAllocs; i++) {
+    for (uptr i = 0; i < kNumAlignedAllocs; i++) {
       a.Deallocate(allocated[i]);
     }
   }

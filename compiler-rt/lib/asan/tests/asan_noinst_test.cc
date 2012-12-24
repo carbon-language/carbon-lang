@@ -717,8 +717,6 @@ TEST(AddressSanitizerInterface, SetErrorReportCallbackTest) {
 TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   std::vector<char *> pointers;
   std::vector<size_t> sizes;
-  if (ASAN_ALLOCATOR_VERSION == 2 && SANITIZER_WORDSIZE == 32)
-    return;  // FIXME: this is too slow.
   const size_t kNumMallocs =
       (SANITIZER_WORDSIZE <= 32 || ASAN_LOW_MEMORY) ? 1 << 10 : 1 << 14;
   for (size_t i = 0; i < kNumMallocs; i++) {
