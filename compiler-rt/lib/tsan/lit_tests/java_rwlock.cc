@@ -26,6 +26,7 @@ int main() {
   __tsan_java_mutex_unlock(lockaddr);
   pthread_join(th, 0);
   __tsan_java_free((jptr)jheap, kBlockSize);
+  printf("OK\n");
   return __tsan_java_fini();
 }
 

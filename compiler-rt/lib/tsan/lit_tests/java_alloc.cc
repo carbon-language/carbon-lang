@@ -25,6 +25,7 @@ int main() {
   pthread_create(&th, 0, Thread, (void*)(jheap + kHeapSize / 4));
   stress(jheap);
   pthread_join(th, 0);
+  printf("OK\n");
   return __tsan_java_fini();
 }
 

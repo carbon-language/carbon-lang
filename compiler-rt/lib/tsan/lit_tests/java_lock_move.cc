@@ -33,6 +33,7 @@ int main() {
   __tsan_java_move(varaddr, varaddr2, kBlockSize);
   pthread_join(th, 0);
   __tsan_java_free(varaddr2, kBlockSize);
+  printf("OK\n");
   return __tsan_java_fini();
 }
 

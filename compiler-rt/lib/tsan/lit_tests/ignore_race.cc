@@ -25,7 +25,7 @@ int main() {
   sleep(1);
   Global = 43;
   pthread_join(t, 0);
-  return 0;
+  printf("OK\n");
 }
 
 // CHECK-NOT: WARNING: ThreadSanitizer: data race

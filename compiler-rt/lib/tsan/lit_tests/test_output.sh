@@ -22,9 +22,6 @@ test_file() {
   $COMPILER $SRC $CFLAGS -c -o $OBJ
   $COMPILER $OBJ $LDFLAGS -o $EXE
   RES=$($EXE 2>&1 || true)
-  if [ "$3" != "" ]; then
-    printf "%s\n" "$RES"
-  fi
   printf "%s\n" "$RES" | FileCheck $SRC
   if [ "$3" == "" ]; then
     rm -f $EXE $OBJ
