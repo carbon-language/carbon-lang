@@ -1464,11 +1464,18 @@ bool LoopVectorizationLegality::canVectorizeInstrs() {
         return false;
       }
 
-      // We do not re-vectorize vectors.
+      // Check that the instruction return type is vectorizable.
       if (!VectorType::isValidElementType(it->getType()) &&
           !it->getType()->isVoidTy()) {
         DEBUG(dbgs() << "LV: Found unvectorizable type." << "\n");
         return false;
+      }
+
+      // Check that the stored type is vectorizable.
+      if (StoreInst *ST = dyn_cast<StoreInst>(it)) {
+        Type *T = ST->getValueOperand()->getType();
+        if (!VectorType::isValidElementType(T))
+          return false;
       }
 
       // Reduction instructions are allowed to have exit users.
