@@ -714,11 +714,9 @@ class LargeMmapAllocator {
     h->map_size = map_size;
     {
       SpinMutexLock l(&mutex_);
-      h->next = list_;
-      h->prev = 0;
-      if (list_)
-        list_->prev = h;
-      list_ = h;
+      uptr idx = n_chunks_++;
+      h->chunk_idx = idx;
+      chunks_[idx] = h;
     }
     return reinterpret_cast<void*>(res);
   }
@@ -727,14 +725,12 @@ class LargeMmapAllocator {
     Header *h = GetHeader(p);
     {
       SpinMutexLock l(&mutex_);
-      Header *prev = h->prev;
-      Header *next = h->next;
-      if (prev)
-        prev->next = next;
-      if (next)
-        next->prev = prev;
-      if (h == list_)
-        list_ = next;
+      uptr idx = h->chunk_idx;
+      CHECK_EQ(chunks_[idx], h);
+      CHECK_LT(idx, n_chunks_);
+      chunks_[idx] = chunks_[n_chunks_ - 1];
+      chunks_[idx]->chunk_idx = idx;
+      n_chunks_--;
     }
     MapUnmapCallback().OnUnmap(h->map_beg, h->map_size);
     UnmapOrDie(reinterpret_cast<void*>(h->map_beg), h->map_size);
@@ -743,8 +739,10 @@ class LargeMmapAllocator {
   uptr TotalMemoryUsed() {
     SpinMutexLock l(&mutex_);
     uptr res = 0;
-    for (Header *l = list_; l; l = l->next) {
-      res += RoundUpMapSize(l->size);
+    for (uptr i = 0; i < n_chunks_; i++) {
+      Header *h = chunks_[i];
+      CHECK_EQ(h->chunk_idx, i);
+      res += RoundUpMapSize(h->size);
     }
     return res;
   }
@@ -765,20 +763,32 @@ class LargeMmapAllocator {
   void *GetBlockBegin(void *ptr) {
     uptr p = reinterpret_cast<uptr>(ptr);
     SpinMutexLock l(&mutex_);
-    for (Header *l = list_; l; l = l->next) {
-      if (p >= l->map_beg && p < l->map_beg + l->map_size)
-        return GetUser(l);
+    uptr nearest_chunk = 0;
+    // Cache-friendly linear search.
+    for (uptr i = 0; i < n_chunks_; i++) {
+      uptr ch = reinterpret_cast<uptr>(chunks_[i]);
+      if (p < ch) continue;  // p is at left to this chunk, skip it.
+      if (p - ch < p - nearest_chunk)
+        nearest_chunk = ch;
     }
-    return 0;
+    if (!nearest_chunk)
+      return 0;
+    Header *h = reinterpret_cast<Header *>(nearest_chunk);
+    CHECK_GE(nearest_chunk, h->map_beg);
+    CHECK_LT(nearest_chunk, h->map_beg + h->map_size);
+    CHECK_LE(nearest_chunk, p);
+    if (h->map_beg + h->map_size < p)
+      return 0;
+    return GetUser(h);
   }
 
  private:
+  static const int kMaxNumChunks = 1 << FIRST_32_SECOND_64(15, 18);
   struct Header {
     uptr map_beg;
     uptr map_size;
     uptr size;
-    Header *next;
-    Header *prev;
+    uptr chunk_idx;
   };
 
   Header *GetHeader(uptr p) {
@@ -797,7 +807,8 @@ class LargeMmapAllocator {
   }
 
   uptr page_size_;
-  Header *list_;
+  Header *chunks_[kMaxNumChunks];
+  uptr n_chunks_;
   SpinMutex mutex_;
 };
 

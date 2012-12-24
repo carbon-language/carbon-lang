@@ -244,12 +244,13 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   LargeMmapAllocator<> a;
   a.Init();
 
-  static const int kNumAllocs = 100;
+  static const int kNumAllocs = 1000;
   char *allocated[kNumAllocs];
-  static const uptr size = 1000;
+  static const uptr size = 4000;
   // Allocate some.
   for (int i = 0; i < kNumAllocs; i++) {
     allocated[i] = (char *)a.Allocate(size, 1);
+    CHECK(a.PointerIsMine(allocated[i]));
   }
   // Deallocate all.
   CHECK_GT(a.TotalMemoryUsed(), size * kNumAllocs);
@@ -269,6 +270,11 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
     *meta = i;
     allocated[i] = x;
   }
+  for (int i = 0; i < kNumAllocs * kNumAllocs; i++) {
+    char *p = allocated[i % kNumAllocs];
+    CHECK(a.PointerIsMine(p));
+    CHECK(a.PointerIsMine(p + 2000));
+  }
   CHECK_GT(a.TotalMemoryUsed(), size * kNumAllocs);
   // Deallocate all in reverse order.
   for (int i = 0; i < kNumAllocs; i++) {
@@ -280,9 +286,12 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
     a.Deallocate(p);
   }
   CHECK_EQ(a.TotalMemoryUsed(), 0);
+
+  // Test alignments.
   uptr max_alignment = SANITIZER_WORDSIZE == 64 ? (1 << 28) : (1 << 24);
   for (uptr alignment = 8; alignment <= max_alignment; alignment *= 2) {
-    for (int i = 0; i < kNumAllocs; i++) {
+    const uptr kNumAlignedAllocs = 100;
+    for (int i = 0; i < kNumAlignedAllocs; i++) {
       uptr size = ((i % 10) + 1) * 4096;
       char *p = allocated[i] = (char *)a.Allocate(size, alignment);
       CHECK_EQ(p, a.GetBlockBegin(p));
@@ -291,7 +300,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
       CHECK_EQ(0, (uptr)allocated[i] % alignment);
       p[0] = p[size - 1] = 0;
     }
-    for (int i = 0; i < kNumAllocs; i++) {
+    for (int i = 0; i < kNumAlignedAllocs; i++) {
       a.Deallocate(allocated[i]);
     }
   }
@@ -381,7 +390,7 @@ void TestSizeClassAllocatorLocalCache() {
   const int kNumIter = 100;
   uptr saved_total = 0;
   for (int class_id = 1; class_id <= 5; class_id++) {
-    for (int i = 0; i < kNumIter; i++) {
+    for (int it = 0; it < kNumIter; it++) {
       void *allocated[kNumAllocs];
       for (uptr i = 0; i < kNumAllocs; i++) {
         allocated[i] = cache.Allocate(a, class_id);
@@ -391,7 +400,7 @@ void TestSizeClassAllocatorLocalCache() {
       }
       cache.Drain(a);
       uptr total_allocated = a->TotalMemoryUsed();
-      if (i)
+      if (it)
         CHECK_EQ(saved_total, total_allocated);
       saved_total = total_allocated;
     }
