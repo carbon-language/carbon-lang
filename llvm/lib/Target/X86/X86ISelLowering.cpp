@@ -17966,7 +17966,7 @@ X86VectorTargetTransformInfo::getMemoryOpCost(unsigned Opcode, Type *Src,
                                               unsigned AddressSpace) const {
   // Legalize the type.
   std::pair<unsigned, MVT> LT = getTypeLegalizationCost(Src);
-  assert(Opcode == Instruction::Load || Opcode == Instruction::Store &&
+  assert((Opcode == Instruction::Load || Opcode == Instruction::Store) &&
          "Invalid Opcode");
 
   const X86Subtarget &ST =
