@@ -53,6 +53,10 @@ struct TokenAnnotation {
   bool MustBreakBefore;
 };
 
+static prec::Level getPrecedence(const FormatToken &Tok) {
+  return getBinOpPrecedence(Tok.Tok.getKind(), true, true);
+}
+
 using llvm::MutableArrayRef;
 
 FormatStyle getLLVMStyle() {
@@ -266,6 +270,10 @@ private:
       if (!DryRun)
         replaceWhitespace(Current, 0, Spaces);
 
+      // FIXME: Look into using this alignment at other ParenLevels.
+      if (ParenLevel == 0 && (getPrecedence(Previous) == prec::Assignment ||
+                              Previous.Tok.is(tok::kw_return)))
+        State.Indent[ParenLevel] = State.Column + Spaces;
       if (Previous.Tok.is(tok::l_paren) ||
           Annotations[Index - 1].Type == TokenAnnotation::TT_TemplateOpener)
         State.Indent[ParenLevel] = State.Column;
@@ -290,18 +298,20 @@ private:
 
     State.Column += Current.Tok.getLength();
 
-    // If we encounter an opening (, [ or <, we add a level to our stacks to
+    // If we encounter an opening (, [, { or <, we add a level to our stacks to
     // prepare for the following tokens.
     if (Current.Tok.is(tok::l_paren) || Current.Tok.is(tok::l_square) ||
+        Current.Tok.is(tok::l_brace) ||
         Annotations[Index].Type == TokenAnnotation::TT_TemplateOpener) {
       State.Indent.push_back(4 + State.LastSpace.back());
       State.LastSpace.push_back(State.LastSpace.back());
       State.FirstLessLess.push_back(0);
     }
 
-    // If we encounter a closing ), ] or >, we can remove a level from our
+    // If we encounter a closing ), ], } or >, we can remove a level from our
     // stacks.
     if (Current.Tok.is(tok::r_paren) || Current.Tok.is(tok::r_square) ||
+        (Current.Tok.is(tok::r_brace) && State.ConsumedTokens > 0) ||
         Annotations[Index].Type == TokenAnnotation::TT_TemplateCloser) {
       State.Indent.pop_back();
       State.LastSpace.pop_back();
@@ -328,8 +338,7 @@ private:
     if (Left.Tok.is(tok::l_paren))
       return 2;
 
-    prec::Level Level =
-        getBinOpPrecedence(Line.Tokens[Index].Tok.getKind(), true, true);
+    prec::Level Level = getPrecedence(Line.Tokens[Index]);
     if (Level != prec::Unknown)
       return Level;
 
@@ -742,7 +751,7 @@ private:
       TokenAnnotation &Annotation = Annotations[i];
       const FormatToken &Tok = Line.Tokens[i];
 
-      if (getBinOpPrecedence(Tok.Tok.getKind(), true, true) == prec::Assignment)
+      if (getPrecedence(Tok) == prec::Assignment)
         IsRHS = true;
       else if (Tok.Tok.is(tok::kw_return))
         IsRHS = true;
@@ -773,7 +782,7 @@ private:
 
   bool isBinaryOperator(const FormatToken &Tok) {
     // Comma is a binary operator, but does not behave as such wrt. formatting.
-    return getBinOpPrecedence(Tok.Tok.getKind(), true, true) > prec::Comma;
+    return getPrecedence(Tok) > prec::Comma;
   }
 
   TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index,
