@@ -158,8 +158,10 @@ public:
   virtual ~VectorTargetTransformInfo() {}
 
   enum ShuffleKind {
-    Broadcast, // Broadcast element 0 to all other elements.
-    Reverse    // Reverse the order of the vector.
+    Broadcast,       // Broadcast element 0 to all other elements.
+    Reverse,         // Reverse the order of the vector.
+    InsertSubvector, // InsertSubvector. Index indicates start offset.
+    ExtractSubvector // ExtractSubvector Index indicates start offset.
   };
 
   /// Returns the expected cost of arithmetic ops, such as mul, xor, fsub, etc.
@@ -168,7 +170,10 @@ public:
   }
 
   /// Returns the cost of a shuffle instruction of kind Kind and of type Tp.
-  virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp) const {
+  /// The index parameter is used by some of the shuffle kinds to add
+  /// additional information.
+  virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
+                                  int Index) const {
     return 1;
   }
 

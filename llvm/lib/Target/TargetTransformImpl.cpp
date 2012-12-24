@@ -209,7 +209,8 @@ unsigned VectorTargetTransformImpl::getArithmeticInstrCost(unsigned Opcode,
 }
 
 unsigned VectorTargetTransformImpl::getShuffleCost(ShuffleKind Kind,
-                                                   Type *Tp) const {
+                                                   Type *Tp,
+                                                   int Index) const {
   return 1;
 }
 
