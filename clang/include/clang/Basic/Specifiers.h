@@ -192,7 +192,8 @@ namespace clang {
     CC_X86Pascal,   // __attribute__((pascal))
     CC_AAPCS,       // __attribute__((pcs("aapcs")))
     CC_AAPCS_VFP,   // __attribute__((pcs("aapcs-vfp")))
-    CC_PnaclCall    // __attribute__((pnaclcall))
+    CC_PnaclCall,   // __attribute__((pnaclcall))
+    CC_IntelOclBicc // __attribute__((intel_ocl_bicc))
   };
 
 } // end namespace clang

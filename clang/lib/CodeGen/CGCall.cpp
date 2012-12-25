@@ -41,6 +41,7 @@ static unsigned ClangCallConvToLLVMCallConv(CallingConv CC) {
   case CC_X86ThisCall: return llvm::CallingConv::X86_ThisCall;
   case CC_AAPCS: return llvm::CallingConv::ARM_AAPCS;
   case CC_AAPCS_VFP: return llvm::CallingConv::ARM_AAPCS_VFP;
+  case CC_IntelOclBicc: return llvm::CallingConv::Intel_OCL_BI;
   // TODO: add support for CC_X86Pascal to llvm
   }
 }
@@ -150,6 +151,9 @@ static CallingConv getCallingConventionForDecl(const Decl *D) {
 
   if (D->hasAttr<PnaclCallAttr>())
     return CC_PnaclCall;
+
+  if (D->hasAttr<IntelOclBiccAttr>())
+    return CC_IntelOclBicc;
 
   return CC_C;
 }

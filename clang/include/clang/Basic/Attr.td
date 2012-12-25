@@ -565,6 +565,10 @@ def PnaclCall : InheritableAttr {
   let Spellings = [GNU<"pnaclcall">];
 }
 
+def IntelOclBicc : InheritableAttr {
+  let Spellings = [GNU<"intel_ocl_bicc">];
+}
+
 def Pcs : InheritableAttr {
   let Spellings = [GNU<"pcs">];
   let Args = [EnumArgument<"PCS", "PCSType",

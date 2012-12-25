@@ -647,6 +647,9 @@ void TypePrinter::printFunctionProtoAfter(const FunctionProtoType *T,
   case CC_PnaclCall:
     OS << " __attribute__((pnaclcall))";
     break;
+  case CC_IntelOclBicc:
+    OS << " __attribute__((intel_ocl_bicc))";
+    break;
   }
   if (Info.getNoReturn())
     OS << " __attribute__((noreturn))";
@@ -1168,6 +1171,7 @@ void TypePrinter::printAttributedAfter(const AttributedType *T,
    break;
   }
   case AttributedType::attr_pnaclcall: OS << "pnaclcall"; break;
+  case AttributedType::attr_inteloclbicc: OS << "inteloclbicc"; break;
   }
   OS << "))";
 }

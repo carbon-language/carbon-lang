@@ -3330,7 +3330,8 @@ public:
     attr_stdcall,
     attr_thiscall,
     attr_pascal,
-    attr_pnaclcall
+    attr_pnaclcall,
+    attr_inteloclbicc
   };
 
 private:

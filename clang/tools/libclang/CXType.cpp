@@ -480,6 +480,7 @@ CXCallingConv clang_getFunctionTypeCallingConv(CXType X) {
       TCALLINGCONV(AAPCS);
       TCALLINGCONV(AAPCS_VFP);
       TCALLINGCONV(PnaclCall);
+      TCALLINGCONV(IntelOclBicc);
     }
 #undef TCALLINGCONV
   }
