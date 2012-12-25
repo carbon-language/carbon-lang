@@ -73,24 +73,22 @@ void LLVMContext::removeModule(Module *M) {
 // Recoverable Backend Errors
 //===----------------------------------------------------------------------===//
 
-void LLVMContext::
-setInlineAsmDiagnosticHandler(InlineAsmDiagHandlerTy DiagHandler,
-                              void *DiagContext) {
-  pImpl->InlineAsmDiagHandler = DiagHandler;
-  pImpl->InlineAsmDiagContext = DiagContext;
+void LLVMContext::setDiagnosticHandler(DiagHandlerTy DiagHandler,
+                                       void *DiagContext) {
+  pImpl->DiagHandler = DiagHandler;
+  pImpl->DiagContext = DiagContext;
 }
 
-/// getInlineAsmDiagnosticHandler - Return the diagnostic handler set by
-/// setInlineAsmDiagnosticHandler.
-LLVMContext::InlineAsmDiagHandlerTy
-LLVMContext::getInlineAsmDiagnosticHandler() const {
-  return pImpl->InlineAsmDiagHandler;
+/// getDiagnosticHandler - Return the diagnostic handler set by
+/// setDiagnosticHandler.
+LLVMContext::DiagHandlerTy LLVMContext::getDiagnosticHandler() const {
+  return pImpl->DiagHandler;
 }
 
-/// getInlineAsmDiagnosticContext - Return the diagnostic context set by
-/// setInlineAsmDiagnosticHandler.
-void *LLVMContext::getInlineAsmDiagnosticContext() const {
-  return pImpl->InlineAsmDiagContext;
+/// getDiagnosticContext - Return the diagnostic context set by
+/// setDiagnosticHandler.
+void *LLVMContext::getDiagnosticContext() const {
+  return pImpl->DiagContext;
 }
 
 void LLVMContext::emitError(const Twine &ErrorStr) {
@@ -123,7 +121,7 @@ void LLVMContext::emitWarning(const Instruction *I, const Twine &ErrorStr) {
 
 void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {
   // If there is no error handler installed, just print the error and exit.
-  if (pImpl->InlineAsmDiagHandler == 0) {
+  if (pImpl->DiagHandler == 0) {
     errs() << "error: " << ErrorStr << "\n";
     exit(1);
   }
@@ -131,12 +129,12 @@ void LLVMContext::emitError(unsigned LocCookie, const Twine &ErrorStr) {
   // If we do have an error handler, we can report the error and keep going.
   SMDiagnostic Diag("", SourceMgr::DK_Error, ErrorStr.str());
 
-  pImpl->InlineAsmDiagHandler(Diag, pImpl->InlineAsmDiagContext, LocCookie);
+  pImpl->DiagHandler(Diag, pImpl->DiagContext, LocCookie);
 }
 
 void LLVMContext::emitWarning(unsigned LocCookie, const Twine &ErrorStr) {
   // If there is no handler installed, just print the warning.
-  if (pImpl->InlineAsmDiagHandler == 0) {
+  if (pImpl->DiagHandler == 0) {
     errs() << "warning: " << ErrorStr << "\n";
     return;
   }
@@ -144,7 +142,7 @@ void LLVMContext::emitWarning(unsigned LocCookie, const Twine &ErrorStr) {
   // If we do have a handler, we can report the warning.
   SMDiagnostic Diag("", SourceMgr::DK_Warning, ErrorStr.str());
 
-  pImpl->InlineAsmDiagHandler(Diag, pImpl->InlineAsmDiagContext, LocCookie);
+  pImpl->DiagHandler(Diag, pImpl->DiagContext, LocCookie);
 }
 
 //===----------------------------------------------------------------------===//
