@@ -73,11 +73,8 @@ UuidAttr *CXXUuidofExpr::GetUuidAttrOfType(QualType QT) {
 }
 
 // CXXScalarValueInitExpr
-SourceRange CXXScalarValueInitExpr::getSourceRange() const {
-  SourceLocation Start = RParenLoc;
-  if (TypeInfo)
-    Start = TypeInfo->getTypeLoc().getBeginLoc();
-  return SourceRange(Start, RParenLoc);
+SourceLocation CXXScalarValueInitExpr::getLocStart() const {
+  return TypeInfo ? TypeInfo->getTypeLoc().getBeginLoc() : RParenLoc;
 }
 
 // CXXNewExpr
@@ -218,11 +215,11 @@ QualType CXXPseudoDestructorExpr::getDestroyedType() const {
   return QualType();
 }
 
-SourceRange CXXPseudoDestructorExpr::getSourceRange() const {
+SourceLocation CXXPseudoDestructorExpr::getLocEnd() const {
   SourceLocation End = DestroyedType.getLocation();
   if (TypeSourceInfo *TInfo = DestroyedType.getTypeSourceInfo())
     End = TInfo->getTypeLoc().getLocalSourceRange().getEnd();
-  return SourceRange(Base->getLocStart(), End);
+  return End;
 }
 
 // UnresolvedLookupExpr
@@ -420,12 +417,18 @@ DependentScopeDeclRefExpr::CreateEmpty(ASTContext &C,
   return E;
 }
 
-SourceRange CXXConstructExpr::getSourceRange() const {
+SourceLocation CXXConstructExpr::getLocStart() const {
   if (isa<CXXTemporaryObjectExpr>(this))
-    return cast<CXXTemporaryObjectExpr>(this)->getSourceRange();
+    return cast<CXXTemporaryObjectExpr>(this)->getLocStart();
+  return Loc;
+}
+
+SourceLocation CXXConstructExpr::getLocEnd() const {
+  if (isa<CXXTemporaryObjectExpr>(this))
+    return cast<CXXTemporaryObjectExpr>(this)->getLocEnd();
 
   if (ParenRange.isValid())
-    return SourceRange(Loc, ParenRange.getEnd());
+    return ParenRange.getEnd();
 
   SourceLocation End = Loc;
   for (unsigned I = getNumArgs(); I > 0; --I) {
@@ -439,7 +442,7 @@ SourceRange CXXConstructExpr::getSourceRange() const {
     }
   }
 
-  return SourceRange(Loc, End);
+  return End;
 }
 
 SourceRange CXXOperatorCallExpr::getSourceRangeImpl() const {
@@ -729,9 +732,12 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
     Type(Type) {
 }
 
-SourceRange CXXTemporaryObjectExpr::getSourceRange() const {
-  return SourceRange(Type->getTypeLoc().getBeginLoc(),
-                     getParenRange().getEnd());
+SourceLocation CXXTemporaryObjectExpr::getLocStart() const {
+  return Type->getTypeLoc().getBeginLoc();
+}
+
+SourceLocation CXXTemporaryObjectExpr::getLocEnd() const {
+  return getParenRange().getEnd();
 }
 
 CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T,
@@ -1060,8 +1066,8 @@ CXXUnresolvedConstructExpr::CreateEmpty(ASTContext &C, unsigned NumArgs) {
   return new (Mem) CXXUnresolvedConstructExpr(Empty, NumArgs);
 }
 
-SourceRange CXXUnresolvedConstructExpr::getSourceRange() const {
-  return SourceRange(Type->getTypeLoc().getBeginLoc(), RParenLoc);
+SourceLocation CXXUnresolvedConstructExpr::getLocStart() const {
+  return Type->getTypeLoc().getBeginLoc();
 }
 
 CXXDependentScopeMemberExpr::CXXDependentScopeMemberExpr(ASTContext &C,

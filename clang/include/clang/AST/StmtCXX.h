@@ -38,8 +38,9 @@ public:
   CXXCatchStmt(EmptyShell Empty)
   : Stmt(CXXCatchStmtClass), ExceptionDecl(0), HandlerBlock(0) {}
 
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(CatchLoc, HandlerBlock->getLocEnd());
+  SourceLocation getLocStart() const LLVM_READONLY { return CatchLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    return HandlerBlock->getLocEnd();
   }
 
   SourceLocation getCatchLoc() const { return CatchLoc; }
@@ -83,9 +84,8 @@ public:
   static CXXTryStmt *Create(ASTContext &C, EmptyShell Empty,
                             unsigned numHandlers);
 
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(getTryLoc(), getEndLoc());
-  }
+  SourceLocation getLocStart() const LLVM_READONLY { return getTryLoc(); }
+  SourceLocation getLocEnd() const LLVM_READONLY { return getEndLoc(); }
 
   SourceLocation getTryLoc() const { return TryLoc; }
   SourceLocation getEndLoc() const {
@@ -188,9 +188,11 @@ public:
   SourceLocation getRParenLoc() const { return RParenLoc; }
   void setRParenLoc(SourceLocation Loc) { RParenLoc = Loc; }
 
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(ForLoc, SubExprs[BODY]->getLocEnd());
+  SourceLocation getLocStart() const LLVM_READONLY { return ForLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY {
+    return SubExprs[BODY]->getLocEnd();
   }
+
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CXXForRangeStmtClass;
   }
@@ -272,9 +274,8 @@ public:
     return reinterpret_cast<CompoundStmt *>(SubStmt);
   }
 
-  SourceRange getSourceRange() const LLVM_READONLY {
-    return SourceRange(KeywordLoc, SubStmt->getLocEnd());
-  }
+  SourceLocation getLocStart() const LLVM_READONLY { return KeywordLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY { return SubStmt->getLocEnd();}
 
   child_range children() {
     return child_range(&SubStmt, &SubStmt+1);

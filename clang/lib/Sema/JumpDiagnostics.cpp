@@ -511,8 +511,14 @@ void JumpScopeChecker::VerifyJumps() {
     for (SwitchCase *SC = SS->getSwitchCaseList(); SC;
          SC = SC->getNextSwitchCase()) {
       assert(LabelAndGotoScopes.count(SC) && "Case not visited?");
-      CheckJump(SS, SC, SC->getLocStart(),
-                diag::err_switch_into_protected_scope, 0,
+      SourceLocation Loc;
+      if (CaseStmt *CS = dyn_cast<CaseStmt>(SC))
+        Loc = CS->getLocStart();
+      else if (DefaultStmt *DS = dyn_cast<DefaultStmt>(SC))
+        Loc = DS->getLocStart();
+      else
+        Loc = SC->getLocStart();
+      CheckJump(SS, SC, Loc, diag::err_switch_into_protected_scope, 0,
                 diag::warn_cxx98_compat_switch_into_protected_scope);
     }
   }

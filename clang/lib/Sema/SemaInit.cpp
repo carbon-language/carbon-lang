@@ -1632,8 +1632,8 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
     StructuredList = IsFirstDesignator? SyntacticToSemantic.lookup(IList)
       : getStructuredSubobjectInit(IList, Index, CurrentObjectType,
                                    StructuredList, StructuredIndex,
-                                   SourceRange(D->getStartLocation(),
-                                               DIE->getSourceRange().getEnd()));
+                                   SourceRange(D->getLocStart(),
+                                               DIE->getLocEnd()));
     assert(StructuredList && "Expected a structured initializer list");
   }
 
@@ -1801,10 +1801,10 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         if (!VerifyOnly) {
           DesignatedInitExpr::Designator *NextD
             = DIE->getDesignator(DesigIdx + 1);
-          SemaRef.Diag(NextD->getStartLocation(),
+          SemaRef.Diag(NextD->getLocStart(),
                         diag::err_designator_into_flexible_array_member)
-            << SourceRange(NextD->getStartLocation(),
-                           DIE->getSourceRange().getEnd());
+            << SourceRange(NextD->getLocStart(),
+                           DIE->getLocEnd());
           SemaRef.Diag(Field->getLocation(), diag::note_flexible_array_member)
             << *Field;
         }
