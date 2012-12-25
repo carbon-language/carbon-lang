@@ -1775,13 +1775,9 @@ bool Sema::mergeDeclAttribute(Decl *D, InheritableAttr *Attr) {
                                     AA->getIntroduced(), AA->getDeprecated(),
                                     AA->getObsoleted(), AA->getUnavailable(),
                                     AA->getMessage());
-  else if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr)) {
+  else if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr))
     NewAttr = mergeVisibilityAttr(D, VA->getRange(), VA->getVisibility());
-    if (NewAttr) {
-      NamedDecl *ND = cast<NamedDecl>(D);
-      ND->ClearLVCache();
-    }
-  } else if (DLLImportAttr *ImportA = dyn_cast<DLLImportAttr>(Attr))
+  else if (DLLImportAttr *ImportA = dyn_cast<DLLImportAttr>(Attr))
     NewAttr = mergeDLLImportAttr(D, ImportA->getRange());
   else if (DLLExportAttr *ExportA = dyn_cast<DLLExportAttr>(Attr))
     NewAttr = mergeDLLExportAttr(D, ExportA->getRange());
@@ -6615,7 +6611,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     }
     VDecl->setTypeSourceInfo(DeducedType);
     VDecl->setType(DeducedType->getType());
-    VDecl->ClearLVCache();
+    VDecl->ClearLinkageCache();
     
     // In ARC, infer lifetime.
     if (getLangOpts().ObjCAutoRefCount && inferObjCARCLifetime(VDecl))

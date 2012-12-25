@@ -309,8 +309,7 @@ void Sema::AddPushedVisibilityAttribute(Decl *D) {
   if (!VisContext)
     return;
 
-  NamedDecl *ND = dyn_cast<NamedDecl>(D);
-  if (ND && ND->getExplicitVisibility())
+  if (isa<NamedDecl>(D) && cast<NamedDecl>(D)->getExplicitVisibility())
     return;
 
   VisStack *Stack = static_cast<VisStack*>(VisContext);
@@ -321,7 +320,6 @@ void Sema::AddPushedVisibilityAttribute(Decl *D) {
     = (VisibilityAttr::VisibilityType) rawType;
   SourceLocation loc = Stack->back().second;
 
-  ND->ClearLVCache();
   D->addAttr(::new (Context) VisibilityAttr(loc, Context, type));
 }
 
