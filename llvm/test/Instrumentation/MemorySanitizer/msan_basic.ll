@@ -251,6 +251,23 @@ entry:
 ; CHECK: ret i32
 
 
+; Check that we propagate origin for "select" with vector condition.
+; Select condition is flattened to i1, which is then used to select one of the
+; argument origins.
+
+define <8 x i16> @SelectVector(<8 x i16> %a, <8 x i16> %b, <8 x i1> %c) nounwind uwtable readnone {
+entry:
+  %cond = select <8 x i1> %c, <8 x i16> %a, <8 x i16> %b
+  ret <8 x i16> %cond
+}
+
+; CHECK-ORIGINS: @SelectVector
+; CHECK-ORIGINS: bitcast <8 x i1> {{.*}} to i8
+; CHECK-ORIGINS: icmp ne i8
+; CHECK-ORIGINS: select i1
+; CHECK-ORIGINS: ret <8 x i16>
+
+
 define i8* @IntToPtr(i64 %x) nounwind uwtable readnone {
 entry:
   %0 = inttoptr i64 %x to i8*

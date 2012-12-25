@@ -1566,9 +1566,18 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     setShadow(&I,  IRB.CreateSelect(I.getCondition(),
               getShadow(I.getTrueValue()), getShadow(I.getFalseValue()),
               "_msprop"));
-    if (MS.TrackOrigins)
-      setOrigin(&I, IRB.CreateSelect(I.getCondition(),
+    if (MS.TrackOrigins) {
+      // Origins are always i32, so any vector conditions must be flattened.
+      // FIXME: consider tracking vector origins for app vectors?
+      Value *Cond = I.getCondition();
+      if (Cond->getType()->isVectorTy()) {
+        Value *ConvertedShadow = convertToShadowTyNoVec(Cond, IRB);
+        Cond = IRB.CreateICmpNE(ConvertedShadow,
+                                getCleanShadow(ConvertedShadow), "_mso_select");
+      }
+      setOrigin(&I, IRB.CreateSelect(Cond,
                 getOrigin(I.getTrueValue()), getOrigin(I.getFalseValue())));
+    }
   }
 
   void visitLandingPadInst(LandingPadInst &I) {
