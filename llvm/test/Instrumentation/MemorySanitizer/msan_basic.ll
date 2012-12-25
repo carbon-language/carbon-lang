@@ -512,3 +512,18 @@ declare <8 x i16> @llvm.x86.sse2.padds.w(<8 x i16> %a, <8 x i16> %b) nounwind
 ; CHECK-ORIGINS: call <8 x i16> @llvm.x86.sse2.padds.w
 ; CHECK-ORIGINS: store i32 {{.*}} @__msan_retval_origin_tls
 ; CHECK-ORIGINS: ret <8 x i16>
+
+
+; Test handling of vectors of pointers.
+; Check that shadow of such vector is a vector of integers.
+
+define <8 x i8*> @VectorOfPointers(<8 x i8*>* %p) nounwind uwtable {
+  %x = load <8 x i8*>* %p
+  ret <8 x i8*> %x
+}
+
+; CHECK: @VectorOfPointers
+; CHECK: load <8 x i64>*
+; CHECK: load <8 x i8*>*
+; CHECK: store <8 x i64> {{.*}} @__msan_retval_tls
+; CHECK: ret <8 x i8*>

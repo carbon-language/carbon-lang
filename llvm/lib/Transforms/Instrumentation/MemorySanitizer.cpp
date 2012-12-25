@@ -541,8 +541,11 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     // This may return weird-sized types like i1.
     if (IntegerType *IT = dyn_cast<IntegerType>(OrigTy))
       return IT;
-    if (VectorType *VT = dyn_cast<VectorType>(OrigTy))
-      return VectorType::getInteger(VT);
+    if (VectorType *VT = dyn_cast<VectorType>(OrigTy)) {
+      uint32_t EltSize = MS.TD->getTypeStoreSizeInBits(VT->getElementType());
+      return VectorType::get(IntegerType::get(*MS.C, EltSize),
+                             VT->getNumElements());
+    }
     if (StructType *ST = dyn_cast<StructType>(OrigTy)) {
       SmallVector<Type*, 4> Elements;
       for (unsigned i = 0, n = ST->getNumElements(); i < n; i++)
@@ -1023,6 +1026,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   }
 
   size_t VectorOrPrimitiveTypeSizeInBits(Type *Ty) {
+    assert(!(Ty->isVectorTy() && Ty->getScalarType()->isPointerTy()) &&
+           "Vector of pointers is not a valid shadow type");
     return Ty->isVectorTy() ?
       Ty->getVectorNumElements() * Ty->getScalarSizeInBits() :
       Ty->getPrimitiveSizeInBits();
