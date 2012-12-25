@@ -9173,7 +9173,7 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
       return SDValue();
     if (Opc == X86ISD::PCMPEQ && !Subtarget->hasSSE41()) {
       // If pcmpeqq is missing but pcmpeqd is available synthesize pcmpeqq with
-      // pcmpeqd + 2 shuffles + pand.
+      // pcmpeqd + pshufd + pand.
       assert(Subtarget->hasSSE2() && !FlipSigns && "Don't know how to lower!");
 
       // First cast everything to the right type,
@@ -9184,11 +9184,9 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
       SDValue Result = DAG.getNode(Opc, dl, MVT::v4i32, Op0, Op1);
 
       // Make sure the lower and upper halves are both all-ones.
-      const int Mask1[] = { 0, 0, 2, 2 };
-      SDValue S1 = DAG.getVectorShuffle(MVT::v4i32, dl, Result, Result, Mask1);
-      const int Mask2[] = { 1, 1, 3, 3 };
-      SDValue S2 = DAG.getVectorShuffle(MVT::v4i32, dl, Result, Result, Mask2);
-      Result = DAG.getNode(ISD::AND, dl, MVT::v4i32, S1, S2);
+      const int Mask[] = { 1, 0, 3, 2 };
+      SDValue Shuf = DAG.getVectorShuffle(MVT::v4i32, dl, Result, Result, Mask);
+      Result = DAG.getNode(ISD::AND, dl, MVT::v4i32, Result, Shuf);
 
       if (Invert)
         Result = DAG.getNOT(dl, Result, MVT::v4i32);

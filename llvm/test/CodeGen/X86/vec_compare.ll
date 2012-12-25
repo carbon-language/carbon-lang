@@ -45,8 +45,7 @@ define <4 x i32> @test4(<4 x i32> %A, <4 x i32> %B) nounwind {
 define <2 x i64> @test5(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: test5:
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
-; CHECK: pshufd $-96
+; CHECK: pshufd $-79
 ; CHECK: pand
 ; CHECK: ret
 	%C = icmp eq <2 x i64> %A, %B
@@ -57,8 +56,7 @@ define <2 x i64> @test5(<2 x i64> %A, <2 x i64> %B) nounwind {
 define <2 x i64> @test6(<2 x i64> %A, <2 x i64> %B) nounwind {
 ; CHECK: test6:
 ; CHECK: pcmpeqd
-; CHECK: pshufd $-11
-; CHECK: pshufd $-96
+; CHECK: pshufd $-79
 ; CHECK: pand
 ; CHECK: pcmpeqd
 ; CHECK: pxor
