@@ -148,7 +148,7 @@ unsigned FoldingSetNodeID::ComputeHash() const {
 
 /// operator== - Used to compare two nodes to each other.
 ///
-bool FoldingSetNodeID::operator==(const FoldingSetNodeID &RHS)const{
+bool FoldingSetNodeID::operator==(const FoldingSetNodeID &RHS) const {
   return *this == FoldingSetNodeIDRef(RHS.Bits.data(), RHS.Bits.size());
 }
 
@@ -160,7 +160,7 @@ bool FoldingSetNodeID::operator==(FoldingSetNodeIDRef RHS) const {
 
 /// Used to compare the "ordering" of two nodes as defined by the
 /// profiled bits and their ordering defined by memcmp().
-bool FoldingSetNodeID::operator<(const FoldingSetNodeID &RHS)const{
+bool FoldingSetNodeID::operator<(const FoldingSetNodeID &RHS) const {
   return *this < FoldingSetNodeIDRef(RHS.Bits.data(), RHS.Bits.size());
 }
 
