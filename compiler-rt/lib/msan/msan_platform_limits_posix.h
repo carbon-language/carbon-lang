@@ -1,4 +1,4 @@
-//===-- msan_platform_limits.h --------------------------------------------===//
+//===-- msan_platform_limits.h ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
