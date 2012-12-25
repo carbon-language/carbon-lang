@@ -119,9 +119,9 @@ void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
 }
 
 MBlock *user_mblock(ThreadState *thr, void *p) {
-  // CHECK_GT(thr->in_rtl, 0);
   CHECK_NE(p, (void*)0);
-  return (MBlock*)allocator()->GetMetaData(p);
+  Allocator *a = allocator();
+  return (MBlock*)a->GetMetaData(a->GetBlockBegin(p));
 }
 
 void invoke_malloc_hook(void *ptr, uptr size) {
