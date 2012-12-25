@@ -48,6 +48,10 @@ namespace __msan {
   uptr __msan_get_msghdr_iovlen(void* msg) {
     return ((struct msghdr *)msg)->msg_iovlen;
   }
+
+  uptr __msan_get_socklen_t(void* socklen_ptr) {
+    return *(socklen_t*)socklen_ptr;
+  }
 }
 
 #endif  // __linux__

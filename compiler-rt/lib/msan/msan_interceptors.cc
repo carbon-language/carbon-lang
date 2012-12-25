@@ -634,9 +634,17 @@ INTERCEPTOR(SSIZE_T, recv, int fd, void *buf, SIZE_T len, int flags) {
 INTERCEPTOR(SSIZE_T, recvfrom, int fd, void *buf, SIZE_T len, int flags,
     void *srcaddr, void *addrlen) {
   ENSURE_MSAN_INITED();
+  SIZE_T srcaddr_sz;
+  if (srcaddr)
+    srcaddr_sz = __msan_get_socklen_t(addrlen);
   SSIZE_T res = REAL(recvfrom)(fd, buf, len, flags, srcaddr, addrlen);
-  if (res > 0)
+  if (res > 0) {
     __msan_unpoison(buf, res);
+    if (srcaddr) {
+      SIZE_T sz = __msan_get_socklen_t(addrlen);
+      __msan_unpoison(srcaddr, (sz < srcaddr_sz) ? sz : srcaddr_sz);
+    }
+  }
   return res;
 }
 
