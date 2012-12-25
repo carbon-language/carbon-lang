@@ -16,6 +16,7 @@
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
 #include "clang/Driver/Driver.h"
+#include "clang/Driver/DriverDiagnostic.h"
 #include "clang/Driver/OptTable.h"
 #include "clang/Driver/Option.h"
 #include "clang/Driver/Options.h"
@@ -470,8 +471,10 @@ int main(int argc_, const char **argv_) {
     Res = TheDriver.ExecuteCompilation(*C, FailingCommand);
 
   // Force a crash to test the diagnostics.
-  if(::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH"))
-     Res = -1;
+  if (::getenv("FORCE_CLANG_DIAGNOSTICS_CRASH")) {
+    Diags.Report(diag::err_drv_force_crash) << "FORCE_CLANG_DIAGNOSTICS_CRASH";
+    Res = -1;
+  }
 
   // If result status is < 0, then the driver command signalled an error.
   // If result status is 70, then the driver command reported a fatal error.
