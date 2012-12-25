@@ -72,7 +72,7 @@ TEST(SanitizerCommon, MmapAlignedOrDie) {
         uptr res = (uptr)MmapAlignedOrDie(
             size * PageSize, alignment * PageSize, "MmapAlignedOrDieTest");
         EXPECT_EQ(0U, res % (alignment * PageSize));
-        memset((void*)res, 1, size * PageSize);
+        internal_memset((void*)res, 1, size * PageSize);
         UnmapOrDie((void*)res, size * PageSize);
       }
     }

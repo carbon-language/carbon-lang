@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
+#include "sanitizer_common/sanitizer_libc.h"
 #include "gtest/gtest.h"
 
 #include <string.h>
@@ -31,7 +32,7 @@ static void TestStrFlag(const char *start_value, const char *env,
                         const char *final_value) {
   const char *flag = start_value;
   ParseFlag(env, &flag, kFlagName);
-  EXPECT_STREQ(final_value, flag);
+  EXPECT_EQ(internal_strcmp(final_value, flag), 0);
 }
 
 TEST(SanitizerCommon, BooleanFlags) {
