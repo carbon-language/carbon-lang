@@ -2186,7 +2186,7 @@ std::pair<Linkage,Visibility> Type::getLinkageAndVisibility() const {
   return std::make_pair(TypeBits.getLinkage(), TypeBits.getVisibility());
 }
 
-void Type::ClearLinkageCache() {
+void Type::ClearLVCache() {
   TypeBits.CacheValidAndVisibility = 0;
   if (QualType(this, 0) != CanonicalType)
     CanonicalType->TypeBits.CacheValidAndVisibility = 0;

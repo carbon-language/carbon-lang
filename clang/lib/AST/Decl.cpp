@@ -104,8 +104,14 @@ getLVForTemplateParameterList(const TemplateParameterList *Params) {
   return LV;
 }
 
-/// getLVForDecl - Get the linkage and visibility for the given declaration.
-static LinkageInfo getLVForDecl(const NamedDecl *D, bool OnlyTemplate);
+/// Compute the linkage and visibility for the given declaration.
+static LinkageInfo computeLVForDecl(const NamedDecl *D, bool OnlyTemplate);
+
+static LinkageInfo getLVForDecl(const NamedDecl *D, bool OnlyTemplate) {
+  if (!OnlyTemplate)
+    return D->getLinkageAndVisibility();
+  return computeLVForDecl(D, OnlyTemplate);
+}
 
 /// \brief Get the most restrictive linkage for the types and
 /// declarations in the given template argument list.
@@ -569,18 +575,18 @@ static void clearLinkageForClass(const CXXRecordDecl *record) {
          i = record->decls_begin(), e = record->decls_end(); i != e; ++i) {
     Decl *child = *i;
     if (isa<NamedDecl>(child))
-      cast<NamedDecl>(child)->ClearLinkageCache();
+      cast<NamedDecl>(child)->ClearLVCache();
   }
 }
 
 void NamedDecl::anchor() { }
 
-void NamedDecl::ClearLinkageCache() {
+void NamedDecl::ClearLVCache() {
   // Note that we can't skip clearing the linkage of children just
   // because the parent doesn't have cached linkage:  we don't cache
   // when computing linkage for parent contexts.
 
-  HasCachedLinkage = 0;
+  CacheValidAndVisibility = 0;
 
   // If we're changing the linkage of a class, we need to reset the
   // linkage of child declarations, too.
@@ -591,44 +597,44 @@ void NamedDecl::ClearLinkageCache() {
         dyn_cast<ClassTemplateDecl>(const_cast<NamedDecl*>(this))) {
     // Clear linkage for the template pattern.
     CXXRecordDecl *record = temp->getTemplatedDecl();
-    record->HasCachedLinkage = 0;
+    record->CacheValidAndVisibility = 0;
     clearLinkageForClass(record);
 
     // We need to clear linkage for specializations, too.
     for (ClassTemplateDecl::spec_iterator
            i = temp->spec_begin(), e = temp->spec_end(); i != e; ++i)
-      i->ClearLinkageCache();
+      i->ClearLVCache();
   }
 
   // Clear cached linkage for function template decls, too.
   if (FunctionTemplateDecl *temp =
         dyn_cast<FunctionTemplateDecl>(const_cast<NamedDecl*>(this))) {
-    temp->getTemplatedDecl()->ClearLinkageCache();
+    temp->getTemplatedDecl()->ClearLVCache();
     for (FunctionTemplateDecl::spec_iterator
            i = temp->spec_begin(), e = temp->spec_end(); i != e; ++i)
-      i->ClearLinkageCache();
+      i->ClearLVCache();
   }
     
 }
 
 Linkage NamedDecl::getLinkage() const {
-  if (HasCachedLinkage) {
-    assert(Linkage(CachedLinkage) ==
-             getLVForDecl(this, true).linkage());
-    return Linkage(CachedLinkage);
-  }
-
-  CachedLinkage = getLVForDecl(this, true).linkage();
-  HasCachedLinkage = 1;
-  return Linkage(CachedLinkage);
+  return getLinkageAndVisibility().linkage();
 }
 
 LinkageInfo NamedDecl::getLinkageAndVisibility() const {
-  LinkageInfo LI = getLVForDecl(this, false);
-  assert(!HasCachedLinkage || Linkage(CachedLinkage) == LI.linkage());
-  HasCachedLinkage = 1;
-  CachedLinkage = LI.linkage();
-  return LI;
+  if (CacheValidAndVisibility) {
+    Linkage L = static_cast<Linkage>(CachedLinkage);
+    Visibility V = static_cast<Visibility>(CacheValidAndVisibility - 1);
+    bool Explicit = CachedVisibilityExplicit;
+    LinkageInfo LV(L, V, Explicit);
+    assert(LV == computeLVForDecl(this, false));
+    return LV;
+  }
+  LinkageInfo LV = computeLVForDecl(this, false);
+  CachedLinkage = LV.linkage();
+  CacheValidAndVisibility = LV.visibility() + 1;
+  CachedVisibilityExplicit = LV.visibilityExplicit();
+  return LV;
 }
 
 llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
@@ -692,7 +698,7 @@ llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
   return llvm::Optional<Visibility>();
 }
 
-static LinkageInfo getLVForDecl(const NamedDecl *D, bool OnlyTemplate) {
+static LinkageInfo computeLVForDecl(const NamedDecl *D, bool OnlyTemplate) {
   // Objective-C: treat all Objective-C declarations as having external
   // linkage.
   switch (D->getKind()) {
@@ -1157,7 +1163,7 @@ VarDecl *VarDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
 void VarDecl::setStorageClass(StorageClass SC) {
   assert(isLegalForVariable(SC));
   if (getStorageClass() != SC)
-    ClearLinkageCache();
+    ClearLVCache();
   
   VarDeclBits.SClass = SC;
 }
@@ -1653,6 +1659,9 @@ void FunctionDecl::setBody(Stmt *B) {
   Body = B;
   if (B)
     EndRangeLoc = B->getLocEnd();
+  for (redecl_iterator R = redecls_begin(), REnd = redecls_end(); R != REnd;
+       ++R)
+    R->ClearLVCache();
 }
 
 void FunctionDecl::setPure(bool P) {
@@ -1757,7 +1766,7 @@ FunctionDecl *FunctionDecl::getCanonicalDecl() {
 void FunctionDecl::setStorageClass(StorageClass SC) {
   assert(isLegalForFunction(SC));
   if (getStorageClass() != SC)
-    ClearLinkageCache();
+    ClearLVCache();
   
   SClass = SC;
 }
@@ -2527,8 +2536,8 @@ TagDecl* TagDecl::getCanonicalDecl() {
 void TagDecl::setTypedefNameForAnonDecl(TypedefNameDecl *TDD) { 
   TypedefNameDeclOrQualifier = TDD; 
   if (TypeForDecl)
-    const_cast<Type*>(TypeForDecl)->ClearLinkageCache();
-  ClearLinkageCache();
+    const_cast<Type*>(TypeForDecl)->ClearLVCache();
+  ClearLVCache();
 }
 
 void TagDecl::startDefinition() {

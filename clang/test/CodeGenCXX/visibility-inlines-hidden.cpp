@@ -135,3 +135,15 @@ namespace test4 {
   }
   // CHECK: define available_externally void @_ZN5test43fooE
 }
+
+namespace test5 {
+  // just don't crash.
+  template <int> inline void Op();
+  class UnaryInstruction {
+    UnaryInstruction() {
+      Op<0>();
+    }
+  };
+  template <int Idx_nocapture> void Op() {
+  }
+}
