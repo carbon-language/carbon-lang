@@ -508,7 +508,7 @@ TEST(AddressSanitizerInterface, GetFreeBytesTest) {
   EXPECT_DEATH(DoLargeMallocForGetFreeBytesTestAndDie(), "double-free");
 }
 
-static const size_t kManyThreadsMallocSizes[] = {5, 1UL<<10, 1UL<<20, 357};
+static const size_t kManyThreadsMallocSizes[] = {5, 1UL<<10, 1UL<<14, 357};
 static const size_t kManyThreadsIterations = 250;
 static const size_t kManyThreadsNumThreads =
   (SANITIZER_WORDSIZE == 32) ? 40 : 200;
@@ -520,6 +520,8 @@ void *ManyThreadsWithStatsWorker(void *arg) {
       free(Ident(malloc(kManyThreadsMallocSizes[size_index])));
     }
   }
+  // Just one large allocation.
+  free(Ident(malloc(1 << 20)));
   return 0;
 }
 
