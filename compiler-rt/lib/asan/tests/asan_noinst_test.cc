@@ -452,7 +452,7 @@ TEST(AddressSanitizerInterface, GetHeapSizeTest) {
   // asan_allocator2 does not keep huge chunks in free list, but unmaps them.
   // The chunk should be greater than the quarantine size,
   // otherwise it will be stuck in quarantine instead of being unmaped.
-  static const size_t kLargeMallocSize = 1 << 28;  // 256M
+  static const size_t kLargeMallocSize = 1 << 29;  // 512M
   uptr old_heap_size = __asan_get_heap_size();
   for (int i = 0; i < 3; i++) {
     // fprintf(stderr, "allocating %zu bytes:\n", kLargeMallocSize);
@@ -484,6 +484,7 @@ static void DoLargeMallocForGetFreeBytesTestAndDie() {
 }
 
 TEST(AddressSanitizerInterface, GetFreeBytesTest) {
+#if ASAN_ALLOCATOR_VERSION == 1
   // Allocate a small chunk. Now allocator probably has a lot of these
   // chunks to fulfill future requests. So, future requests will decrease
   // the number of free bytes. Do this only on systems where there
@@ -505,6 +506,7 @@ TEST(AddressSanitizerInterface, GetFreeBytesTest) {
     for (i = 0; i < kNumOfChunks; i++)
       free(chunks[i]);
   }
+#endif
   EXPECT_DEATH(DoLargeMallocForGetFreeBytesTestAndDie(), "double-free");
 }
 
@@ -719,8 +721,12 @@ TEST(AddressSanitizerInterface, SetErrorReportCallbackTest) {
 TEST(AddressSanitizerInterface, GetOwnershipStressTest) {
   std::vector<char *> pointers;
   std::vector<size_t> sizes;
+#if ASAN_ALLOCATOR_VERSION == 1
   const size_t kNumMallocs =
       (SANITIZER_WORDSIZE <= 32 || ASAN_LOW_MEMORY) ? 1 << 10 : 1 << 14;
+#elif ASAN_ALLOCATOR_VERSION == 2  // too slow with asan_allocator2. :(
+  const size_t kNumMallocs = 1 << 9;
+#endif
   for (size_t i = 0; i < kNumMallocs; i++) {
     size_t size = i * 100 + 1;
     pointers.push_back((char*)malloc(size));

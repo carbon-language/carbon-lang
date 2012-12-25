@@ -307,6 +307,18 @@ TEST(AddressSanitizer, OOBRightTest) {
   }
 }
 
+#if ASAN_ALLOCATOR_VERSION == 2  // Broken with the asan_allocator1
+TEST(AddressSanitizer, LargeOOBRightTest) {
+  size_t large_power_of_two = 1 << 19;
+  for (size_t i = 16; i <= 256; i *= 2) {
+    size_t size = large_power_of_two - i;
+    char *p = Ident(new char[size]);
+    EXPECT_DEATH(p[size] = 0, "is located 0 bytes to the right");
+    delete [] p;
+  }
+}
+#endif  // ASAN_ALLOCATOR_VERSION == 2
+
 TEST(AddressSanitizer, UAF_char) {
   const char *uaf_string = "AddressSanitizer:.*heap-use-after-free";
   EXPECT_DEATH(uaf_test<U1>(1, 0), uaf_string);

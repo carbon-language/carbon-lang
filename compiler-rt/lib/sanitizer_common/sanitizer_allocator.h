@@ -228,7 +228,7 @@ class SizeClassAllocator64 {
     UnmapOrDie(reinterpret_cast<void *>(beg), size);
   }
 
-  bool CanAllocate(uptr size, uptr alignment) {
+  static bool CanAllocate(uptr size, uptr alignment) {
     return size <= SizeClassMap::kMaxSize &&
       alignment <= SizeClassMap::kMaxSize;
   }
@@ -465,7 +465,7 @@ class SizeClassAllocator32 {
     UnmapOrDie(reinterpret_cast<void *>(beg), size);
   }
 
-  bool CanAllocate(uptr size, uptr alignment) {
+  static bool CanAllocate(uptr size, uptr alignment) {
     return size <= SizeClassMap::kMaxSize &&
       alignment <= SizeClassMap::kMaxSize;
   }

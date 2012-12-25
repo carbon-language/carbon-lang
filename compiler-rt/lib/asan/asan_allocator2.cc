@@ -294,6 +294,10 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   uptr needed_size = rounded_size + rz_size;
   if (alignment > rz_size)
     needed_size += alignment;
+  // If we are allocating from the secondary allocator, there will be no
+  // automatic right redzone, so add the right redzone manually.
+  if (!PrimaryAllocator::CanAllocate(needed_size, alignment))
+    needed_size += rz_size;
   CHECK(IsAligned(needed_size, rz_size));
   if (size > kMaxAllowedMallocSize || needed_size > kMaxAllowedMallocSize) {
     Report("WARNING: AddressSanitizer failed to allocate %p bytes\n",
