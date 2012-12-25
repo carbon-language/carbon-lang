@@ -44,7 +44,7 @@ typedef SizeClassAllocator32<
 template <class SizeClassMap>
 void TestSizeClassMap() {
   typedef SizeClassMap SCMap;
-  SCMap::Print();
+  // SCMap::Print();
   SCMap::Validate();
 }
 

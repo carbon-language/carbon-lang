@@ -153,7 +153,7 @@ class SizeClassMap {
   }
 };
 
-typedef SizeClassMap<21, 256, 16> DefaultSizeClassMap;
+typedef SizeClassMap<15, 256, 16> DefaultSizeClassMap;
 typedef SizeClassMap<15, 64, 14> CompactSizeClassMap;
 
 
@@ -323,9 +323,9 @@ class SizeClassAllocator64 {
   COMPILER_CHECK((kRegionSize) >= (1ULL << (SANITIZER_WORDSIZE / 2)));
   // Populate the free list with at most this number of bytes at once
   // or with one element if its size is greater.
-  static const uptr kPopulateSize = 1 << 18;
+  static const uptr kPopulateSize = 1 << 15;
   // Call mmap for user memory with at least this size.
-  static const uptr kUserMapSize = 1 << 18;
+  static const uptr kUserMapSize = 1 << 15;
   // Call mmap for metadata memory with at least this size.
   static const uptr kMetaMapSize = 1 << 16;
 
@@ -715,6 +715,7 @@ class LargeMmapAllocator {
     {
       SpinMutexLock l(&mutex_);
       uptr idx = n_chunks_++;
+      CHECK_LT(idx, kMaxNumChunks);
       h->chunk_idx = idx;
       chunks_[idx] = h;
     }
@@ -757,6 +758,8 @@ class LargeMmapAllocator {
 
   // At least page_size_/2 metadata bytes is available.
   void *GetMetaData(void *p) {
+    // Too slow: CHECK_EQ(p, GetBlockBegin(p));
+    CHECK(IsAligned(reinterpret_cast<uptr>(p), page_size_));
     return GetHeader(p) + 1;
   }
 
