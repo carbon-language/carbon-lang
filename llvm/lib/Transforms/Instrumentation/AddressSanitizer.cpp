@@ -272,6 +272,8 @@ class AddressSanitizerModule : public ModulePass {
   }
 
  private:
+  void initializeCallbacks(Module &M);
+
   bool ShouldInstrumentGlobal(GlobalVariable *G);
   void createInitializerPoisonCalls(Module &M, Value *FirstAddr,
                                     Value *LastAddr);
@@ -283,6 +285,10 @@ class AddressSanitizerModule : public ModulePass {
   Type *IntptrTy;
   LLVMContext *C;
   DataLayout *TD;
+  Function *AsanPoisonGlobals;
+  Function *AsanUnpoisonGlobals;
+  Function *AsanRegisterGlobals;
+  Function *AsanUnregisterGlobals;
 };
 
 // Stack poisoning does not play well with exception handling.
@@ -635,14 +641,6 @@ void AddressSanitizerModule::createInitializerPoisonCalls(
   // Set up the arguments to our poison/unpoison functions.
   IRBuilder<> IRB(GlobalInit->begin()->getFirstInsertionPt());
 
-  // Declare our poisoning and unpoisoning functions.
-  Function *AsanPoisonGlobals = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanPoisonGlobalsName, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
-  AsanPoisonGlobals->setLinkage(Function::ExternalLinkage);
-  Function *AsanUnpoisonGlobals = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanUnpoisonGlobalsName, IRB.getVoidTy(), NULL));
-  AsanUnpoisonGlobals->setLinkage(Function::ExternalLinkage);
-
   // Add a call to poison all external globals before the given function starts.
   IRB.CreateCall2(AsanPoisonGlobals, FirstAddr, LastAddr);
 
@@ -714,6 +712,26 @@ bool AddressSanitizerModule::ShouldInstrumentGlobal(GlobalVariable *G) {
   return true;
 }
 
+void AddressSanitizerModule::initializeCallbacks(Module &M) {
+  IRBuilder<> IRB(*C);
+  // Declare our poisoning and unpoisoning functions.
+  AsanPoisonGlobals = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanPoisonGlobalsName, IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+  AsanPoisonGlobals->setLinkage(Function::ExternalLinkage);
+  AsanUnpoisonGlobals = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanUnpoisonGlobalsName, IRB.getVoidTy(), NULL));
+  AsanUnpoisonGlobals->setLinkage(Function::ExternalLinkage);
+  // Declare functions that register/unregister globals.
+  AsanRegisterGlobals = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanRegisterGlobalsName, IRB.getVoidTy(),
+      IntptrTy, IntptrTy, NULL));
+  AsanRegisterGlobals->setLinkage(Function::ExternalLinkage);
+  AsanUnregisterGlobals = checkInterfaceFunction(M.getOrInsertFunction(
+      kAsanUnregisterGlobalsName,
+      IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
+  AsanUnregisterGlobals->setLinkage(Function::ExternalLinkage);
+}
+
 // This function replaces all global variables with new variables that have
 // trailing redzones. It also creates a function that poisons
 // redzones and inserts this function into llvm.global_ctors.
@@ -724,9 +742,10 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
     return false;
   BL.reset(new BlackList(BlacklistFile));
   if (BL->isIn(M)) return false;
-  DynamicallyInitializedGlobals.Init(M);
   C = &(M.getContext());
   IntptrTy = Type::getIntNTy(*C, TD->getPointerSizeInBits());
+  initializeCallbacks(M);
+  DynamicallyInitializedGlobals.Init(M);
 
   SmallVector<GlobalVariable *, 16> GlobalsToChange;
 
@@ -828,12 +847,6 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   // Create calls for poisoning before initializers run and unpoisoning after.
   if (CheckInitOrder && FirstDynamic && LastDynamic)
     createInitializerPoisonCalls(M, FirstDynamic, LastDynamic);
-
-  Function *AsanRegisterGlobals = checkInterfaceFunction(M.getOrInsertFunction(
-      kAsanRegisterGlobalsName, IRB.getVoidTy(),
-      IntptrTy, IntptrTy, NULL));
-  AsanRegisterGlobals->setLinkage(Function::ExternalLinkage);
-
   IRB.CreateCall2(AsanRegisterGlobals,
                   IRB.CreatePointerCast(AllGlobals, IntptrTy),
                   ConstantInt::get(IntptrTy, n));
@@ -845,12 +858,6 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
       GlobalValue::InternalLinkage, kAsanModuleDtorName, &M);
   BasicBlock *AsanDtorBB = BasicBlock::Create(*C, "", AsanDtorFunction);
   IRBuilder<> IRB_Dtor(ReturnInst::Create(*C, AsanDtorBB));
-  Function *AsanUnregisterGlobals =
-      checkInterfaceFunction(M.getOrInsertFunction(
-          kAsanUnregisterGlobalsName,
-          IRB.getVoidTy(), IntptrTy, IntptrTy, NULL));
-  AsanUnregisterGlobals->setLinkage(Function::ExternalLinkage);
-
   IRB_Dtor.CreateCall2(AsanUnregisterGlobals,
                        IRB.CreatePointerCast(AllGlobals, IntptrTy),
                        ConstantInt::get(IntptrTy, n));
