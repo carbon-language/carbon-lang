@@ -660,6 +660,7 @@ namespace {
       case Intrinsic::pow:
         return Config.VectorizeMath;
       case Intrinsic::fma:
+      case Intrinsic::fmuladd:
         return Config.VectorizeFMA;
       }
     }
