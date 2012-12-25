@@ -7,7 +7,6 @@ include_directories(..)
 include_directories(../..)
 
 # Instrumented libcxx sources and build flags.
-# FIXME: only do this if libcxx is checked out.
 set(MSAN_LIBCXX_PATH ${LLVM_MAIN_SRC_DIR}/projects/libcxx)
 file(GLOB MSAN_LIBCXX_SOURCES ${MSAN_LIBCXX_PATH}/src/*.cpp)
 set(MSAN_LIBCXX_CFLAGS
@@ -146,8 +145,21 @@ macro(add_msan_tests_for_arch arch)
                 ${MSAN_INST_LIBCXX} ${MSANDR_TEST_SO})
 endmacro()
 
-if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
+if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID
+   AND EXISTS ${MSAN_LIBCXX_PATH}/)
   if(CAN_TARGET_X86_64)
     add_msan_tests_for_arch(x86_64)
   endif()
 endif()
+
+# Run unittests as a part of lit testsuite.
+configure_lit_site_cfg(
+  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+  )
+
+add_lit_testsuite(check-msan "Running MemorySanitizer unittests"
+  ${CMAKE_CURRENT_BINARY_DIR}
+  DEPENDS MsanUnitTests
+  )
+set_target_properties(check-msan PROPERTIES FOLDER "MemorySanitizer unittests")
