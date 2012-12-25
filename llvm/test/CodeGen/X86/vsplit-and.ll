@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux |  FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-linux -mcpu=penryn |  FileCheck %s
 
 define void @t0(<2 x i64>* %dst, <2 x i64> %src1, <2 x i64> %src2) nounwind readonly {
 ; CHECK: t0
