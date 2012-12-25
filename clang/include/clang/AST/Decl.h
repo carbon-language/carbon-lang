@@ -228,6 +228,12 @@ public:
              "Enum truncated!");
     }
 
+    bool operator==(const LinkageInfo &Other) {
+      return linkage_ == Other.linkage_ &&
+	visibility_ == Other.visibility_ &&
+	explicit_ == Other.explicit_;
+    }
+
     static LinkageInfo external() {
       return LinkageInfo();
     }
@@ -323,7 +329,7 @@ public:
 
   /// \brief Clear the linkage cache in response to a change
   /// to the declaration.
-  void ClearLinkageCache();
+  void ClearLVCache();
 
   /// \brief Looks through UsingDecls and ObjCCompatibleAliasDecls for
   /// the underlying named decl.
@@ -3319,7 +3325,7 @@ void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {
   // First one will point to this one as latest.
   First->RedeclLink = LatestDeclLink(static_cast<decl_type*>(this));
   if (NamedDecl *ND = dyn_cast<NamedDecl>(static_cast<decl_type*>(this)))
-    ND->ClearLinkageCache();
+    ND->ClearLVCache();
 }
 
 // Inline function definitions.
