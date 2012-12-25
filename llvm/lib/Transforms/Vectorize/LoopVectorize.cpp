@@ -711,6 +711,7 @@ isTriviallyVectorizableIntrinsic(Instruction *Inst) {
   case Intrinsic::nearbyint:
   case Intrinsic::pow:
   case Intrinsic::fma:
+  case Intrinsic::fmuladd:
     return true;
   default:
     return false;
