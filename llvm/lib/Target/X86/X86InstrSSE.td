@@ -3710,7 +3710,7 @@ defm MINSW  : PDI_binop_all<0xEA, "pminsw", X86smin, v8i16, v16i16,
                             SSE_INTALU_ITINS_P, 1>;
 defm MAXUB  : PDI_binop_all<0xDE, "pmaxub", X86umax, v16i8, v32i8,
                             SSE_INTALU_ITINS_P, 1>;
-defm MAXSW  : PDI_binop_all<0xEE, "vpmaxsw", X86smax, v8i16, v16i16,
+defm MAXSW  : PDI_binop_all<0xEE, "pmaxsw", X86smax, v8i16, v16i16,
                             SSE_INTALU_ITINS_P, 1>;
 
 // 128-bit Integer Arithmetic
