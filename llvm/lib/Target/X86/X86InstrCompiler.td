@@ -559,7 +559,7 @@ defm : PSEUDO_ATOMIC_LOAD_BINOP_PATS<"ATOMUMAX", "atomic_load_umax">;
 defm : PSEUDO_ATOMIC_LOAD_BINOP_PATS<"ATOMUMIN", "atomic_load_umin">;
 
 multiclass PSEUDO_ATOMIC_LOAD_BINOP6432<string mnemonic> {
-  let usesCustomInserter = 1, mayLoad = 1, mayStore = 1 in
+  let usesCustomInserter = 1, mayLoad = 1, mayStore = 1, hasSideEffects = 0 in
     def #NAME#6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
                        (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
                        !strconcat(mnemonic, "6432 PSEUDO!"), []>;
