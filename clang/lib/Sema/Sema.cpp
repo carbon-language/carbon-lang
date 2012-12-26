@@ -328,7 +328,11 @@ CastKind Sema::ScalarTypeToBooleanCastKind(QualType ScalarTy) {
 
 /// \brief Used to prune the decls of Sema's UnusedFileScopedDecls vector.
 static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
-  if (D->getMostRecentDecl()->isUsed())
+  // Template instantiation can happen at the end of the translation unit
+  // and it sets the canonical (first) decl to used. Normal uses set the last
+  // decl at the time to used and subsequent decl inherit the flag. The net
+  // result is that we need to check both ends of the decl chain.
+  if (D->isUsed() || D->getMostRecentDecl()->isUsed())
     return true;
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {

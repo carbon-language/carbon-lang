@@ -15,3 +15,16 @@ namespace test2 {
   static void g() { f(); }
   void h() { g(); }
 }
+
+namespace test3 {
+  static void f();
+  template<typename T>
+  static void g() {
+    f();
+  }
+  static void f() {
+  }
+  void h() {
+    g<int>();
+  }
+}
