@@ -104,6 +104,8 @@ struct Flags {
   bool poison_heap;
   // Report errors on malloc/delete, new/free, new/delete[], etc.
   bool alloc_dealloc_mismatch;
+  // Use stack depot instead of storing stacks in the redzones.
+  bool use_stack_depot;
 };
 
 Flags *flags();

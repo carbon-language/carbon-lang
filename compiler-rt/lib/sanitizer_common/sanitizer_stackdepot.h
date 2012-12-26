@@ -24,6 +24,13 @@ u32 StackDepotPut(const uptr *stack, uptr size);
 // Retrieves a stored stack trace by the id.
 const uptr *StackDepotGet(u32 id, uptr *size);
 
+struct StackDepotStats {
+  uptr n_uniq_ids;
+  uptr mapped;
+};
+
+StackDepotStats *StackDepotGetStats();
+
 }  // namespace __sanitizer
 
 #endif  // SANITIZER_STACKDEPOT_H

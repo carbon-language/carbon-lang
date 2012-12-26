@@ -17,6 +17,7 @@
 #include "asan_stats.h"
 #include "asan_thread_registry.h"
 #include "sanitizer/asan_interface.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 
 namespace __asan {
 
@@ -62,6 +63,9 @@ static void PrintAccumulatedStats() {
   // Use lock to keep reports from mixing up.
   ScopedLock lock(&print_lock);
   stats.Print();
+  StackDepotStats *stack_depot_stats = StackDepotGetStats();
+  Printf("Stats: StackDepot: %zd ids; %zdM mapped\n",
+         stack_depot_stats->n_uniq_ids, stack_depot_stats->mapped >> 20);
 }
 
 }  // namespace __asan

@@ -26,6 +26,7 @@
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_list.h"
+#include "sanitizer_common/sanitizer_stackdepot.h"
 
 namespace __asan {
 
@@ -162,9 +163,8 @@ struct AsanChunk: ChunkBase {
   }
   void *AllocBeg() {
     if (from_memalign)
-      return reinterpret_cast<uptr>(
-          allocator.GetBlockBegin(reinterpret_cast<void *>(this)));
-    return Beg() - ComputeRZSize(0);
+      return allocator.GetBlockBegin(reinterpret_cast<void *>(this));
+    return reinterpret_cast<void*>(Beg() - ComputeRZSize(0));
   }
   // We store the alloc/free stack traces in the chunk itself.
   u32 *AllocStackBeg() {
@@ -189,14 +189,29 @@ uptr AsanChunkView::UsedSize() { return chunk_->UsedSize(); }
 uptr AsanChunkView::AllocTid() { return chunk_->alloc_tid; }
 uptr AsanChunkView::FreeTid() { return chunk_->free_tid; }
 
+static void GetStackTraceFromId(u32 id, StackTrace *stack) {
+  CHECK(id);
+  uptr size = 0;
+  const uptr *trace = StackDepotGet(id, &size);
+  CHECK_LT(size, kStackTraceMax);
+  internal_memcpy(stack->trace, trace, sizeof(uptr) * size);
+  stack->size = size;
+}
+
 void AsanChunkView::GetAllocStack(StackTrace *stack) {
-  StackTrace::UncompressStack(stack, chunk_->AllocStackBeg(),
-                              chunk_->AllocStackSize());
+  if (flags()->use_stack_depot)
+    GetStackTraceFromId(chunk_->alloc_context_id, stack);
+  else
+    StackTrace::UncompressStack(stack, chunk_->AllocStackBeg(),
+                                chunk_->AllocStackSize());
 }
 
 void AsanChunkView::GetFreeStack(StackTrace *stack) {
-  StackTrace::UncompressStack(stack, chunk_->FreeStackBeg(),
-                              chunk_->FreeStackSize());
+  if (flags()->use_stack_depot)
+    GetStackTraceFromId(chunk_->free_context_id, stack);
+  else
+    StackTrace::UncompressStack(stack, chunk_->FreeStackBeg(),
+                                chunk_->FreeStackSize());
 }
 
 class Quarantine: public AsanChunkFifoList {
@@ -341,7 +356,13 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     m->user_requested_size = SizeClassMap::kMaxSize;
     *reinterpret_cast<uptr *>(allocator.GetMetaData(allocated)) = size;
   }
-  StackTrace::CompressStack(stack, m->AllocStackBeg(), m->AllocStackSize());
+
+  if (flags()->use_stack_depot) {
+    m->alloc_context_id = StackDepotPut(stack->trace, stack->size);
+  } else {
+    m->alloc_context_id = 0;
+    StackTrace::CompressStack(stack, m->AllocStackBeg(), m->AllocStackSize());
+  }
 
   uptr size_rounded_down_to_granularity = RoundDownTo(size, SHADOW_GRANULARITY);
   // Unpoison the bulk of the memory region.
@@ -391,7 +412,12 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
     CHECK_EQ(m->free_tid, kInvalidTid);
   AsanThread *t = asanThreadRegistry().GetCurrent();
   m->free_tid = t ? t->tid() : 0;
-  StackTrace::CompressStack(stack, m->FreeStackBeg(), m->FreeStackSize());
+  if (flags()->use_stack_depot) {
+    m->free_context_id = StackDepotPut(stack->trace, stack->size);
+  } else {
+    m->free_context_id = 0;
+    StackTrace::CompressStack(stack, m->FreeStackBeg(), m->FreeStackSize());
+  }
   CHECK(m->chunk_state == CHUNK_QUARANTINE);
   // Poison the region.
   PoisonShadow(m->Beg(),

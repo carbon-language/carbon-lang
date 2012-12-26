@@ -108,6 +108,7 @@ static void ParseFlagsFromString(Flags *f, const char *str) {
   ParseFlag(str, &f->fast_unwind_on_malloc, "fast_unwind_on_malloc");
   ParseFlag(str, &f->poison_heap, "poison_heap");
   ParseFlag(str, &f->alloc_dealloc_mismatch, "alloc_dealloc_mismatch");
+  ParseFlag(str, &f->use_stack_depot, "use_stack_depot");
 }
 
 void InitializeFlags(Flags *f, const char *env) {
@@ -145,6 +146,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->fast_unwind_on_malloc = true;
   f->poison_heap = true;
   f->alloc_dealloc_mismatch = false;
+  f->use_stack_depot = true;  // Only affects allocator2.
 
   // Override from user-specified string.
   ParseFlagsFromString(f, MaybeCallAsanDefaultOptions());
