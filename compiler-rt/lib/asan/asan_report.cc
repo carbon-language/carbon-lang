@@ -20,6 +20,7 @@
 #include "asan_thread_registry.h"
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_report_decorator.h"
+#include "sanitizer_common/sanitizer_symbolizer.h"
 
 namespace __asan {
 
@@ -247,7 +248,7 @@ bool DescribeAddressIfStack(uptr addr, uptr access_size) {
   Printf("%s", d.Location());
   Printf("Address %p is located at offset %zu "
              "in frame <%s> of T%d's stack:\n",
-             (void*)addr, offset, buf, t->tid());
+             (void*)addr, offset, Demangle(buf), t->tid());
   Printf("%s", d.EndLocation());
   // Report the number of stack objects.
   char *p;
