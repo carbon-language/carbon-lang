@@ -2679,40 +2679,28 @@ multiclass PDI_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
 }
 } // ExeDomain = SSEPackedInt
 
+multiclass PDI_binop_all<bits<8> opc, string OpcodeStr, SDNode Opcode,
+                         OpndItins itins, bit IsCommutable = 0> {
+let Predicates = [HasAVX] in
+  defm VP#NAME# : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode, v2i64,
+                    VR128, memopv2i64, i128mem, itins, IsCommutable, 0>, VEX_4V;
+
+let Constraints = "$src1 = $dst" in
+  defm P#NAME# : PDI_binop_rm<opc, OpcodeStr, Opcode, v2i64, VR128, memopv2i64,
+                              i128mem, itins, IsCommutable>;
+
+let Predicates = [HasAVX2] in
+  defm VP#NAME#Y : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode, v4i64,
+                               VR256, memopv4i64, i256mem, itins, IsCommutable,
+                               0>, VEX_4V, VEX_L;
+}
+
 // These are ordered here for pattern ordering requirements with the fp versions
 
-let Predicates = [HasAVX] in {
-defm VPAND : PDI_binop_rm<0xDB, "vpand", and, v2i64, VR128, memopv2i64,
-                          i128mem, SSE_BIT_ITINS_P, 1, 0>, VEX_4V;
-defm VPOR  : PDI_binop_rm<0xEB, "vpor" , or, v2i64, VR128, memopv2i64,
-                          i128mem, SSE_BIT_ITINS_P, 1, 0>, VEX_4V;
-defm VPXOR : PDI_binop_rm<0xEF, "vpxor", xor, v2i64, VR128, memopv2i64,
-                          i128mem, SSE_BIT_ITINS_P, 1, 0>, VEX_4V;
-defm VPANDN : PDI_binop_rm<0xDF, "vpandn", X86andnp, v2i64, VR128, memopv2i64,
-                          i128mem, SSE_BIT_ITINS_P, 0, 0>, VEX_4V;
-}
-
-let Constraints = "$src1 = $dst" in {
-defm PAND : PDI_binop_rm<0xDB, "pand", and, v2i64, VR128, memopv2i64,
-                         i128mem, SSE_BIT_ITINS_P, 1>;
-defm POR  : PDI_binop_rm<0xEB, "por" , or, v2i64, VR128, memopv2i64,
-                         i128mem, SSE_BIT_ITINS_P, 1>;
-defm PXOR : PDI_binop_rm<0xEF, "pxor", xor, v2i64, VR128, memopv2i64,
-                         i128mem, SSE_BIT_ITINS_P, 1>;
-defm PANDN : PDI_binop_rm<0xDF, "pandn", X86andnp, v2i64, VR128, memopv2i64,
-                          i128mem, SSE_BIT_ITINS_P, 0>;
-} // Constraints = "$src1 = $dst"
-
-let Predicates = [HasAVX2] in {
-defm VPANDY : PDI_binop_rm<0xDB, "vpand", and, v4i64, VR256, memopv4i64,
-                           i256mem, SSE_BIT_ITINS_P, 1, 0>, VEX_4V, VEX_L;
-defm VPORY  : PDI_binop_rm<0xEB, "vpor", or, v4i64, VR256, memopv4i64,
-                           i256mem, SSE_BIT_ITINS_P, 1, 0>, VEX_4V, VEX_L;
-defm VPXORY : PDI_binop_rm<0xEF, "vpxor", xor, v4i64, VR256, memopv4i64,
-                           i256mem, SSE_BIT_ITINS_P, 1, 0>, VEX_4V, VEX_L;
-defm VPANDNY : PDI_binop_rm<0xDF, "vpandn", X86andnp, v4i64, VR256, memopv4i64,
-                            i256mem, SSE_BIT_ITINS_P, 0, 0>, VEX_4V, VEX_L;
-}
+defm AND  : PDI_binop_all<0xDB, "pand", and, SSE_BIT_ITINS_P, 1>;
+defm OR   : PDI_binop_all<0xEB, "por", or, SSE_BIT_ITINS_P, 1>;
+defm XOR  : PDI_binop_all<0xEF, "pxor", xor, SSE_BIT_ITINS_P, 1>;
+defm ANDN : PDI_binop_all<0xDF, "pandn", X86andnp, SSE_BIT_ITINS_P, 0>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Logical Instructions
