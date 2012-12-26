@@ -77,7 +77,7 @@ def executeShCmd(cmd, cfg, cwd, results):
     # output. This is null until we have seen some output using
     # stderr.
     for i,j in enumerate(cmd.commands):
-        # Apply the redirections, we use (N,) as a sentinal to indicate stdin,
+        # Apply the redirections, we use (N,) as a sentinel to indicate stdin,
         # stdout, stderr for N equal to 0, 1, or 2 respectively. Redirects to or
         # from a file are represented with a list [file, mode, file-object]
         # where file-object is initially None.
