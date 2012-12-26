@@ -1866,7 +1866,7 @@ static void emitFieldFromInstruction(formatted_raw_ostream &OS) {
      << "    if (numBits == sizeof(InsnType)*8)\n"
      << "      fieldMask = (InsnType)(-1LL);\n"
      << "    else\n"
-     << "      fieldMask = ((1 << numBits) - 1) << startBit;\n"
+     << "      fieldMask = (((InsnType)1 << numBits) - 1) << startBit;\n"
      << "    return (insn & fieldMask) >> startBit;\n"
      << "}\n\n";
 }
