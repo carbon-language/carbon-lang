@@ -887,6 +887,10 @@ class CombinedAllocator {
     return secondary_.PointerIsMine(p);
   }
 
+  bool FromPrimary(void *p) {
+    return primary_.PointerIsMine(p);
+  }
+
   void *GetMetaData(void *p) {
     if (primary_.PointerIsMine(p))
       return primary_.GetMetaData(p);

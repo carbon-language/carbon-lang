@@ -121,44 +121,32 @@ enum {
 //   B -- address of ChunkHeader pointing to the first 'H'
 static const uptr kMemalignMagic = 0xCC6E96B9;
 
-#if SANITIZER_WORDSIZE == 64
-struct ChunkBase {
+struct ChunkHeader {
   // 1-st 8 bytes.
-  uptr chunk_state       : 8;  // Must be first.
-  uptr alloc_tid         : 24;
+  u32 chunk_state       : 8;  // Must be first.
+  u32 alloc_tid         : 24;
 
-  uptr free_tid          : 24;
-  uptr from_memalign     : 1;
-  uptr alloc_type        : 2;
+  u32 free_tid          : 24;
+  u32 from_memalign     : 1;
+  u32 alloc_type        : 2;
   // 2-nd 8 bytes
-  uptr user_requested_size;
-  // Header2 (intersects with user memory).
-  // 3-rd 8 bytes. These overlap with the user memory.
-  AsanChunk *next;
+  // This field is used for small sizes. For large sizes it is equal to
+  // SizeClassMap::kMaxSize and the actual size is stored in the
+  // SecondaryAllocator's metadata.
+  u32 user_requested_size;
+  u32 alloc_context_id;
 };
 
-static const uptr kChunkHeaderSize = 16;
-static const uptr kChunkHeader2Size = 8;
-
-#elif SANITIZER_WORDSIZE == 32
-struct ChunkBase {
-  // 1-st 8 bytes.
-  uptr chunk_state       : 8;  // Must be first.
-  uptr alloc_tid         : 24;
-
-  uptr from_memalign     : 1;
-  uptr alloc_type        : 2;
-  uptr free_tid          : 24;
-  // 2-nd 8 bytes
-  uptr user_requested_size;
+struct ChunkBase : ChunkHeader {
+  // Header2, intersects with user memory.
   AsanChunk *next;
-  // Header2 empty.
+  u32 free_context_id;
 };
 
-static const uptr kChunkHeaderSize = 16;
-static const uptr kChunkHeader2Size = 0;
-#endif
-COMPILER_CHECK(sizeof(ChunkBase) == kChunkHeaderSize + kChunkHeader2Size);
+static const uptr kChunkHeaderSize = sizeof(ChunkHeader);
+static const uptr kChunkHeader2Size = sizeof(ChunkBase) - kChunkHeaderSize;
+COMPILER_CHECK(kChunkHeaderSize == 16);
+COMPILER_CHECK(kChunkHeader2Size <= 16);
 
 static uptr ComputeRZSize(uptr user_requested_size) {
   // FIXME: implement adaptive redzones.
@@ -167,7 +155,17 @@ static uptr ComputeRZSize(uptr user_requested_size) {
 
 struct AsanChunk: ChunkBase {
   uptr Beg() { return reinterpret_cast<uptr>(this) + kChunkHeaderSize; }
-  uptr UsedSize() { return user_requested_size; }
+  uptr UsedSize() {
+    if (user_requested_size != SizeClassMap::kMaxSize)
+      return user_requested_size;
+    return *reinterpret_cast<uptr *>(allocator.GetMetaData(AllocBeg()));
+  }
+  void *AllocBeg() {
+    if (from_memalign)
+      return reinterpret_cast<uptr>(
+          allocator.GetBlockBegin(reinterpret_cast<void *>(this)));
+    return Beg() - ComputeRZSize(0);
+  }
   // We store the alloc/free stack traces in the chunk itself.
   u32 *AllocStackBeg() {
     return (u32*)(Beg() - ComputeRZSize(UsedSize()));
@@ -231,9 +229,9 @@ class Quarantine: public AsanChunkFifoList {
     CHECK_NE(m->alloc_tid, kInvalidTid);
     CHECK_NE(m->free_tid, kInvalidTid);
     PoisonShadow(m->Beg(),
-                 RoundUpTo(m->user_requested_size, SHADOW_GRANULARITY),
+                 RoundUpTo(m->UsedSize(), SHADOW_GRANULARITY),
                  kAsanHeapLeftRedzoneMagic);
-    uptr alloc_beg = m->Beg() - ComputeRZSize(m->user_requested_size);
+    uptr alloc_beg = m->Beg() - ComputeRZSize(m->UsedSize());
     void *p = reinterpret_cast<void *>(alloc_beg);
     if (m->from_memalign) {
       p = allocator.GetBlockBegin(p);
@@ -294,10 +292,13 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   uptr needed_size = rounded_size + rz_size;
   if (alignment > rz_size)
     needed_size += alignment;
+  bool using_primary_allocator = true;
   // If we are allocating from the secondary allocator, there will be no
   // automatic right redzone, so add the right redzone manually.
-  if (!PrimaryAllocator::CanAllocate(needed_size, alignment))
+  if (!PrimaryAllocator::CanAllocate(needed_size, alignment)) {
     needed_size += rz_size;
+    using_primary_allocator = false;
+  }
   CHECK(IsAligned(needed_size, rz_size));
   if (size > kMaxAllowedMallocSize || needed_size > kMaxAllowedMallocSize) {
     Report("WARNING: AddressSanitizer failed to allocate %p bytes\n",
@@ -331,7 +332,15 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     memalign_magic[0] = kMemalignMagic;
     memalign_magic[1] = chunk_beg;
   }
-  m->user_requested_size = size;
+  if (using_primary_allocator) {
+    CHECK(size);
+    m->user_requested_size = size;
+    CHECK(allocator.FromPrimary(allocated));
+  } else {
+    CHECK(!allocator.FromPrimary(allocated));
+    m->user_requested_size = SizeClassMap::kMaxSize;
+    *reinterpret_cast<uptr *>(allocator.GetMetaData(allocated)) = size;
+  }
   StackTrace::CompressStack(stack, m->AllocStackBeg(), m->AllocStackSize());
 
   uptr size_rounded_down_to_granularity = RoundDownTo(size, SHADOW_GRANULARITY);
@@ -386,7 +395,7 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
   CHECK(m->chunk_state == CHUNK_QUARANTINE);
   // Poison the region.
   PoisonShadow(m->Beg(),
-               RoundUpTo(m->user_requested_size, SHADOW_GRANULARITY),
+               RoundUpTo(m->UsedSize(), SHADOW_GRANULARITY),
                kAsanHeapFreeMagic);
 
   AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
@@ -482,7 +491,6 @@ AsanChunkView FindHeapChunkByAddress(uptr addr) {
     for (uptr l = 1; l < GetPageSizeCached(); l++) {
       m2 = GetAsanChunkByAddr(addr - l);
       if (m2 == m1) continue;  // Still the same chunk.
-      Printf("m1 %p m2 %p l %zd\n", m1, m2, l);
       break;
     }
     if (m2 && AsanChunkView(m2).AddrIsAtRight(addr, 1, &offset))
