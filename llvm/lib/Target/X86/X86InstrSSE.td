@@ -2757,6 +2757,20 @@ let neverHasSideEffects = 1, Pattern = []<dag>, isCommutable = 0 in
 ///
 multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
                                    SDNode OpNode> {
+  defm V#NAME#PSY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedSingle,
+        !strconcat(OpcodeStr, "ps"), f256mem,
+        [(set VR256:$dst, (v4i64 (OpNode VR256:$src1, VR256:$src2)))],
+        [(set VR256:$dst, (OpNode (bc_v4i64 (v8f32 VR256:$src1)),
+                           (memopv4i64 addr:$src2)))], 0>, TB, VEX_4V, VEX_L;
+
+  defm V#NAME#PDY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedDouble,
+        !strconcat(OpcodeStr, "pd"), f256mem,
+        [(set VR256:$dst, (OpNode (bc_v4i64 (v4f64 VR256:$src1)),
+                                  (bc_v4i64 (v4f64 VR256:$src2))))],
+        [(set VR256:$dst, (OpNode (bc_v4i64 (v4f64 VR256:$src1)),
+                                  (memopv4i64 addr:$src2)))], 0>,
+                                  TB, OpSize, VEX_4V, VEX_L;
+
   // In AVX no need to add a pattern for 128-bit logical rr ps, because they
   // are all promoted to v2i64, and the patterns are covered by the int
   // version. This is needed in SSE only, because v2i64 isn't supported on
@@ -2773,6 +2787,7 @@ multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
        [(set VR128:$dst, (OpNode (bc_v2i64 (v2f64 VR128:$src1)),
                                  (memopv2i64 addr:$src2)))], 0>,
                                                  TB, OpSize, VEX_4V;
+
   let Constraints = "$src1 = $dst" in {
     defm PS : sse12_fp_packed_logical_rm<opc, VR128, SSEPackedSingle,
          !strconcat(OpcodeStr, "ps"), f128mem,
@@ -2788,32 +2803,6 @@ multiclass sse12_fp_packed_logical<bits<8> opc, string OpcodeStr,
                                    (memopv2i64 addr:$src2)))]>, TB, OpSize;
   }
 }
-
-/// sse12_fp_packed_logical_y - AVX 256-bit SSE 1 & 2 logical ops forms
-///
-multiclass sse12_fp_packed_logical_y<bits<8> opc, string OpcodeStr,
-                                     SDNode OpNode> {
-    defm PSY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedSingle,
-          !strconcat(OpcodeStr, "ps"), f256mem,
-          [(set VR256:$dst, (v4i64 (OpNode VR256:$src1, VR256:$src2)))],
-          [(set VR256:$dst, (OpNode (bc_v4i64 (v8f32 VR256:$src1)),
-                             (memopv4i64 addr:$src2)))], 0>, TB, VEX_4V, VEX_L;
-
-    defm PDY : sse12_fp_packed_logical_rm<opc, VR256, SSEPackedDouble,
-          !strconcat(OpcodeStr, "pd"), f256mem,
-          [(set VR256:$dst, (OpNode (bc_v4i64 (v4f64 VR256:$src1)),
-                                    (bc_v4i64 (v4f64 VR256:$src2))))],
-          [(set VR256:$dst, (OpNode (bc_v4i64 (v4f64 VR256:$src1)),
-                                    (memopv4i64 addr:$src2)))], 0>,
-                                    TB, OpSize, VEX_4V, VEX_L;
-}
-
-// AVX 256-bit packed logical ops forms
-defm VAND  : sse12_fp_packed_logical_y<0x54, "and", and>;
-defm VOR   : sse12_fp_packed_logical_y<0x56, "or", or>;
-defm VXOR  : sse12_fp_packed_logical_y<0x57, "xor", xor>;
-let isCommutable = 0 in
-  defm VANDN : sse12_fp_packed_logical_y<0x55, "andn", X86andnp>;
 
 defm AND  : sse12_fp_packed_logical<0x54, "and", and>;
 defm OR   : sse12_fp_packed_logical<0x56, "or", or>;
