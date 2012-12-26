@@ -2812,7 +2812,8 @@ multiclass sse12_fp_packed_logical_y<bits<8> opc, string OpcodeStr,
 defm VAND  : sse12_fp_packed_logical_y<0x54, "and", and>;
 defm VOR   : sse12_fp_packed_logical_y<0x56, "or", or>;
 defm VXOR  : sse12_fp_packed_logical_y<0x57, "xor", xor>;
-defm VANDN : sse12_fp_packed_logical_y<0x55, "andn", X86andnp>;
+let isCommutable = 0 in
+  defm VANDN : sse12_fp_packed_logical_y<0x55, "andn", X86andnp>;
 
 defm AND  : sse12_fp_packed_logical<0x54, "and", and>;
 defm OR   : sse12_fp_packed_logical<0x56, "or", or>;
