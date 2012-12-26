@@ -642,7 +642,7 @@ namespace {
       Function *F = I->getCalledFunction();
       if (!F) return false;
 
-      unsigned IID = F->getIntrinsicID();
+      Intrinsic::ID IID = (Intrinsic::ID) F->getIntrinsicID();
       if (!IID) return false;
 
       switch(IID) {
@@ -1020,14 +1020,67 @@ namespace {
     // vectorized, the second arguments must be equal.
     CallInst *CI = dyn_cast<CallInst>(I);
     Function *FI;
-    if (CI && (FI = CI->getCalledFunction()) &&
-        FI->getIntrinsicID() == Intrinsic::powi) {
+    if (CI && (FI = CI->getCalledFunction())) {
+      Intrinsic::ID IID = (Intrinsic::ID) FI->getIntrinsicID();
+      if (IID == Intrinsic::powi) {
+        Value *A1I = CI->getArgOperand(1),
+              *A1J = cast<CallInst>(J)->getArgOperand(1);
+        const SCEV *A1ISCEV = SE->getSCEV(A1I),
+                   *A1JSCEV = SE->getSCEV(A1J);
+        return (A1ISCEV == A1JSCEV);
+      }
 
-      Value *A1I = CI->getArgOperand(1),
-            *A1J = cast<CallInst>(J)->getArgOperand(1);
-      const SCEV *A1ISCEV = SE->getSCEV(A1I),
-                 *A1JSCEV = SE->getSCEV(A1J);
-      return (A1ISCEV == A1JSCEV);
+      if (IID && VTTI) {
+        SmallVector<Type*, 4> Tys;
+        for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i)
+          Tys.push_back(CI->getArgOperand(i)->getType());
+        unsigned ICost = VTTI->getIntrinsicInstrCost(IID, IT1, Tys);
+
+        Tys.clear();
+        CallInst *CJ = cast<CallInst>(J);
+        for (unsigned i = 0, ie = CJ->getNumArgOperands(); i != ie; ++i)
+          Tys.push_back(CJ->getArgOperand(i)->getType());
+        unsigned JCost = VTTI->getIntrinsicInstrCost(IID, JT1, Tys);
+
+        Tys.clear();
+        assert(CI->getNumArgOperands() == CJ->getNumArgOperands() &&
+               "Intrinsic argument counts differ");
+        for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i) {
+          if (IID == Intrinsic::powi && i == 1)
+            Tys.push_back(CI->getArgOperand(i)->getType());
+          else
+            Tys.push_back(getVecTypeForPair(CI->getArgOperand(i)->getType(),
+                                            CJ->getArgOperand(i)->getType()));
+        }
+
+        Type *RetTy = getVecTypeForPair(IT1, JT1);
+        unsigned VCost = VTTI->getIntrinsicInstrCost(IID, RetTy, Tys);
+
+        if (VCost > ICost + JCost)
+          return false;
+
+        // We don't want to fuse to a type that will be split, even
+        // if the two input types will also be split and there is no other
+        // associated cost.
+        unsigned RetParts = VTTI->getNumberOfParts(RetTy);
+        if (RetParts > 1)
+          return false;
+        else if (!RetParts && VCost == ICost + JCost)
+          return false;
+
+        for (unsigned i = 0, ie = CI->getNumArgOperands(); i != ie; ++i) {
+          if (!Tys[i]->isVectorTy())
+            continue;
+
+          unsigned NumParts = VTTI->getNumberOfParts(Tys[i]);
+          if (NumParts > 1)
+            return false;
+          else if (!NumParts && VCost == ICost + JCost)
+            return false;
+        }
+
+        CostSavings = ICost + JCost - VCost;
+      }
     }
 
     return true;
@@ -2551,7 +2604,7 @@ namespace {
         continue;
       } else if (isa<CallInst>(I)) {
         Function *F = cast<CallInst>(I)->getCalledFunction();
-        unsigned IID = F->getIntrinsicID();
+        Intrinsic::ID IID = (Intrinsic::ID) F->getIntrinsicID();
         if (o == NumOperands-1) {
           BasicBlock &BB = *I->getParent();
 
@@ -2560,8 +2613,7 @@ namespace {
           Type *ArgTypeJ = J->getType();
           Type *VArgType = getVecTypeForPair(ArgTypeI, ArgTypeJ);
 
-          ReplacedOperands[o] = Intrinsic::getDeclaration(M,
-            (Intrinsic::ID) IID, VArgType);
+          ReplacedOperands[o] = Intrinsic::getDeclaration(M, IID, VArgType);
           continue;
         } else if (IID == Intrinsic::powi && o == 1) {
           // The second argument of powi is a single integer and we've already
