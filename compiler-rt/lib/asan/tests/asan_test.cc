@@ -479,7 +479,6 @@ TEST(AddressSanitizer, HugeMallocTest) {
 
 #ifndef __APPLE__
 void MemalignRun(size_t align, size_t size, int idx) {
-  fprintf(stderr, "align %ld\n", align);
   char *p = (char *)memalign(align, size);
   Ident(p)[idx] = 0;
   free(p);
@@ -899,8 +898,11 @@ void MemSetOOBTestTemplate(size_t length) {
                LeftOOBWriteMessage(1));
   EXPECT_DEATH(memset((char*)array - 5, 0, 6),
                LeftOOBWriteMessage(5));
-  EXPECT_DEATH(memset(array - 5, element, size + 5 * sizeof(T)),
-               LeftOOBWriteMessage(5 * sizeof(T)));
+  if (length >= 100) {
+    // Large OOB, we find it only if the redzone is large enough.
+    EXPECT_DEATH(memset(array - 5, element, size + 5 * sizeof(T)),
+                 LeftOOBWriteMessage(5 * sizeof(T)));
+  }
   // whole interval is to the left
   EXPECT_DEATH(memset(array - 2, 0, sizeof(T)),
                LeftOOBWriteMessage(2 * sizeof(T)));

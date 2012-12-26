@@ -99,10 +99,38 @@ static void Init() {
 // CHUNK_ALLOCATED: the chunk is allocated and not yet freed.
 // CHUNK_QUARANTINE: the chunk was freed and put into quarantine zone.
 enum {
-  CHUNK_AVAILABLE  = 1,
+  CHUNK_AVAILABLE  = 0,  // 0 is the default value even if we didn't set it.
   CHUNK_ALLOCATED  = 2,
   CHUNK_QUARANTINE = 3
 };
+
+// Valid redzone sizes are 16, 32, 64, ... 2048, so we encode them in 3 bits.
+// We use adaptive redzones: for larger allocation larger redzones are used.
+static u32 RZLog2Size(u32 rz_log) {
+  CHECK_LT(rz_log, 8);
+  return 16 << rz_log;
+}
+
+static u32 RZSize2Log(u32 rz_size) {
+  CHECK_GE(rz_size, 16);
+  CHECK_LE(rz_size, 2048);
+  CHECK(IsPowerOfTwo(rz_size));
+  u32 res = __builtin_ctz(rz_size) - 4;
+  CHECK_EQ(rz_size, RZLog2Size(res));
+  return res;
+}
+
+static uptr ComputeRZLog(uptr user_requested_size) {
+  u32 rz_log =
+    user_requested_size <= 64        - 16   ? 0 :
+    user_requested_size <= 128       - 32   ? 1 :
+    user_requested_size <= 512       - 64   ? 2 :
+    user_requested_size <= 4096      - 128  ? 3 :
+    user_requested_size <= (1 << 14) - 256  ? 4 :
+    user_requested_size <= (1 << 15) - 512  ? 5 :
+    user_requested_size <= (1 << 16) - 1024 ? 6 : 7;
+  return Max(rz_log, RZSize2Log(flags()->redzone));
+}
 
 // The memory chunk allocated from the underlying allocator looks like this:
 // L L L L L L H H U U U U U U R R
@@ -130,6 +158,7 @@ struct ChunkHeader {
   u32 free_tid          : 24;
   u32 from_memalign     : 1;
   u32 alloc_type        : 2;
+  u32 rz_log            : 3;
   // 2-nd 8 bytes
   // This field is used for small sizes. For large sizes it is equal to
   // SizeClassMap::kMaxSize and the actual size is stored in the
@@ -149,11 +178,6 @@ static const uptr kChunkHeader2Size = sizeof(ChunkBase) - kChunkHeaderSize;
 COMPILER_CHECK(kChunkHeaderSize == 16);
 COMPILER_CHECK(kChunkHeader2Size <= 16);
 
-static uptr ComputeRZSize(uptr user_requested_size) {
-  // FIXME: implement adaptive redzones.
-  return flags()->redzone;
-}
-
 struct AsanChunk: ChunkBase {
   uptr Beg() { return reinterpret_cast<uptr>(this) + kChunkHeaderSize; }
   uptr UsedSize() {
@@ -164,21 +188,22 @@ struct AsanChunk: ChunkBase {
   void *AllocBeg() {
     if (from_memalign)
       return allocator.GetBlockBegin(reinterpret_cast<void *>(this));
-    return reinterpret_cast<void*>(Beg() - ComputeRZSize(0));
+    return reinterpret_cast<void*>(Beg() - RZLog2Size(rz_log));
   }
   // We store the alloc/free stack traces in the chunk itself.
   u32 *AllocStackBeg() {
-    return (u32*)(Beg() - ComputeRZSize(UsedSize()));
+    return (u32*)(Beg() - RZLog2Size(rz_log));
   }
   uptr AllocStackSize() {
-    return (ComputeRZSize(UsedSize()) - kChunkHeaderSize) / sizeof(u32);
+    CHECK_LE(RZLog2Size(rz_log), kChunkHeaderSize);
+    return (RZLog2Size(rz_log) - kChunkHeaderSize) / sizeof(u32);
   }
   u32 *FreeStackBeg() {
     return (u32*)(Beg() + kChunkHeader2Size);
   }
   uptr FreeStackSize() {
     uptr available = Max(RoundUpTo(UsedSize(), SHADOW_GRANULARITY),
-                         ComputeRZSize(UsedSize()));
+                         (uptr)RZLog2Size(rz_log));
     return (available - kChunkHeader2Size) / sizeof(u32);
   }
 };
@@ -246,10 +271,8 @@ class Quarantine: public AsanChunkFifoList {
     PoisonShadow(m->Beg(),
                  RoundUpTo(m->UsedSize(), SHADOW_GRANULARITY),
                  kAsanHeapLeftRedzoneMagic);
-    uptr alloc_beg = m->Beg() - ComputeRZSize(m->UsedSize());
-    void *p = reinterpret_cast<void *>(alloc_beg);
+    void *p = reinterpret_cast<void *>(m->AllocBeg());
     if (m->from_memalign) {
-      p = allocator.GetBlockBegin(p);
       uptr *memalign_magic = reinterpret_cast<uptr *>(p);
       CHECK_EQ(memalign_magic[0], kMemalignMagic);
       CHECK_EQ(memalign_magic[1], reinterpret_cast<uptr>(m));
@@ -302,7 +325,8 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
       return 0;  // 0 bytes with large alignment requested. Just return 0.
   }
   CHECK(IsPowerOfTwo(alignment));
-  uptr rz_size = ComputeRZSize(size);
+  uptr rz_log = ComputeRZLog(size);
+  uptr rz_size = RZLog2Size(rz_log);
   uptr rounded_size = RoundUpTo(size, rz_size);
   uptr needed_size = rounded_size + rz_size;
   if (alignment > rz_size)
@@ -336,6 +360,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   AsanChunk *m = reinterpret_cast<AsanChunk *>(chunk_beg);
   m->chunk_state = CHUNK_ALLOCATED;
   m->alloc_type = alloc_type;
+  m->rz_log = rz_log;
   u32 alloc_tid = t ? t->tid() : 0;
   m->alloc_tid = alloc_tid;
   CHECK_EQ(alloc_tid, m->alloc_tid);  // Does alloc_tid fit into the bitfield?
@@ -354,7 +379,9 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   } else {
     CHECK(!allocator.FromPrimary(allocated));
     m->user_requested_size = SizeClassMap::kMaxSize;
-    *reinterpret_cast<uptr *>(allocator.GetMetaData(allocated)) = size;
+    uptr *meta = reinterpret_cast<uptr *>(allocator.GetMetaData(allocated));
+    meta[0] = size;
+    meta[1] = chunk_beg;
   }
 
   if (flags()->use_stack_depot) {
@@ -465,17 +492,34 @@ static void *Reallocate(void *old_ptr, uptr new_size, StackTrace *stack) {
 }
 
 static AsanChunk *GetAsanChunkByAddr(uptr p) {
-  uptr alloc_beg = reinterpret_cast<uptr>(
-      allocator.GetBlockBegin(reinterpret_cast<void *>(p)));
+  void *ptr = reinterpret_cast<void *>(p);
+  uptr alloc_beg = reinterpret_cast<uptr>(allocator.GetBlockBegin(ptr));
   if (!alloc_beg) return 0;
   uptr *memalign_magic = reinterpret_cast<uptr *>(alloc_beg);
   if (memalign_magic[0] == kMemalignMagic) {
-      AsanChunk *m = reinterpret_cast<AsanChunk *>(memalign_magic[1]);
-      CHECK(m->from_memalign);
-      return m;
+    AsanChunk *m = reinterpret_cast<AsanChunk *>(memalign_magic[1]);
+    CHECK(m->from_memalign);
+    return m;
   }
-  uptr chunk_beg = alloc_beg + ComputeRZSize(0) - kChunkHeaderSize;
-  return reinterpret_cast<AsanChunk *>(chunk_beg);
+  if (!allocator.FromPrimary(ptr)) {
+    uptr *meta = reinterpret_cast<uptr *>(
+        allocator.GetMetaData(reinterpret_cast<void *>(alloc_beg)));
+    AsanChunk *m = reinterpret_cast<AsanChunk *>(meta[1]);
+    return m;
+  }
+  uptr actual_size = allocator.GetActuallyAllocatedSize(ptr);
+  CHECK_LE(actual_size, SizeClassMap::kMaxSize);
+  // We know the actually allocted size, but we don't know the redzone size.
+  // Just try all possible redzone sizes.
+  for (u32 rz_log = 0; rz_log < 8; rz_log++) {
+    u32 rz_size = RZLog2Size(rz_log);
+    uptr max_possible_size = actual_size - rz_size;
+    if (ComputeRZLog(max_possible_size) != rz_log)
+      continue;
+    return reinterpret_cast<AsanChunk *>(
+        alloc_beg + rz_size - kChunkHeaderSize);
+  }
+  return 0;
 }
 
 static uptr AllocationSize(uptr p) {
@@ -489,14 +533,19 @@ static uptr AllocationSize(uptr p) {
 // We have an address between two chunks, and we want to report just one.
 AsanChunk *ChooseChunk(uptr addr,
                        AsanChunk *left_chunk, AsanChunk *right_chunk) {
-  // Prefer an allocated chunk or a chunk from quarantine.
-  if (left_chunk->chunk_state == CHUNK_AVAILABLE &&
-      right_chunk->chunk_state != CHUNK_AVAILABLE)
-    return right_chunk;
-  if (right_chunk->chunk_state == CHUNK_AVAILABLE &&
-      left_chunk->chunk_state != CHUNK_AVAILABLE)
-    return left_chunk;
-  // Choose based on offset.
+  // Prefer an allocated chunk over freed chunk and freed chunk
+  // over available chunk.
+  if (left_chunk->chunk_state != right_chunk->chunk_state) {
+    if (left_chunk->chunk_state == CHUNK_ALLOCATED)
+      return left_chunk;
+    if (right_chunk->chunk_state == CHUNK_ALLOCATED)
+      return right_chunk;
+    if (left_chunk->chunk_state == CHUNK_QUARANTINE)
+      return left_chunk;
+    if (right_chunk->chunk_state == CHUNK_QUARANTINE)
+      return right_chunk;
+  }
+  // Same chunk_state: choose based on offset.
   uptr l_offset = 0, r_offset = 0;
   CHECK(AsanChunkView(left_chunk).AddrIsAtRight(addr, 1, &l_offset));
   CHECK(AsanChunkView(right_chunk).AddrIsAtLeft(addr, 1, &r_offset));
