@@ -1486,10 +1486,10 @@ def BOUNDS32rm : I<0x62, MRMSrcMem, (outs GR32:$dst), (ins i32mem:$src),
                    Requires<[In32BitMode]>;
 
 // Adjust RPL Field of Segment Selector
-def ARPL16rr : I<0x63, MRMDestReg, (outs GR16:$src), (ins GR16:$dst),
+def ARPL16rr : I<0x63, MRMDestReg, (outs GR16:$dst), (ins GR16:$src),
                  "arpl\t{$src, $dst|$dst, $src}", [], IIC_ARPL_REG>,
                  Requires<[In32BitMode]>;
-def ARPL16mr : I<0x63, MRMSrcMem, (outs GR16:$src), (ins i16mem:$dst),
+def ARPL16mr : I<0x63, MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src),
                  "arpl\t{$src, $dst|$dst, $src}", [], IIC_ARPL_MEM>,
                  Requires<[In32BitMode]>;
 
