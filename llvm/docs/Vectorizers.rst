@@ -183,6 +183,18 @@ vectorization is profitable.
       A[i] += 4 * B[i];
   }
 
+
+Vectorization of Special Idioms
+-------------------------------
+
+The Loop Vectorizer can detect and vectorize  
+
+.. code-block:: c++
+
+  for ( k=1 ; k<n ; k++ ) {
+    x[k] = x[k-1] + y[k];
+  }
+
 Vectorization of function calls
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -199,6 +211,8 @@ See the table below for a list of these functions.
 |fabs |floor|  ceil   |
 +-----+-----+---------+
 |fma  |trunc|nearbyint|
++-----+-----+---------+
+|     |     | fmuladd |
 +-----+-----+---------+
 
 Performance
