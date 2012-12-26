@@ -4028,68 +4028,18 @@ let Predicates = [UseSSE2] in {
 // SSE2 - Packed Integer Comparison Instructions
 //===---------------------------------------------------------------------===//
 
-let Predicates = [HasAVX] in {
-  defm VPCMPEQB  : PDI_binop_rm<0x74, "vpcmpeqb", X86pcmpeq, v16i8,
-                                VR128, memopv2i64, i128mem,
-                                SSE_INTALU_ITINS_P, 1, 0>, VEX_4V;
-  defm VPCMPEQW  : PDI_binop_rm<0x75, "vpcmpeqw", X86pcmpeq, v8i16,
-                                VR128, memopv2i64, i128mem,
-                                SSE_INTALU_ITINS_P, 1, 0>, VEX_4V;
-  defm VPCMPEQD  : PDI_binop_rm<0x76, "vpcmpeqd", X86pcmpeq, v4i32,
-                                VR128, memopv2i64, i128mem,
-                                SSE_INTALU_ITINS_P, 1, 0>, VEX_4V;
-  defm VPCMPGTB  : PDI_binop_rm<0x64, "vpcmpgtb", X86pcmpgt, v16i8,
-                                VR128, memopv2i64, i128mem,
-                                SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
-  defm VPCMPGTW  : PDI_binop_rm<0x65, "vpcmpgtw", X86pcmpgt, v8i16,
-                                VR128, memopv2i64, i128mem,
-                                SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
-  defm VPCMPGTD  : PDI_binop_rm<0x66, "vpcmpgtd", X86pcmpgt, v4i32,
-                                VR128, memopv2i64, i128mem,
-                                SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
-}
-
-let Predicates = [HasAVX2] in {
-  defm VPCMPEQBY : PDI_binop_rm<0x74, "vpcmpeqb", X86pcmpeq, v32i8,
-                                VR256, memopv4i64, i256mem,
-                                SSE_INTALU_ITINS_P, 1, 0>, VEX_4V, VEX_L;
-  defm VPCMPEQWY : PDI_binop_rm<0x75, "vpcmpeqw", X86pcmpeq, v16i16,
-                                VR256, memopv4i64, i256mem,
-                                SSE_INTALU_ITINS_P, 1, 0>, VEX_4V, VEX_L;
-  defm VPCMPEQDY : PDI_binop_rm<0x76, "vpcmpeqd", X86pcmpeq, v8i32,
-                                VR256, memopv4i64, i256mem,
-                                SSE_INTALU_ITINS_P, 1, 0>, VEX_4V, VEX_L;
-  defm VPCMPGTBY : PDI_binop_rm<0x64, "vpcmpgtb", X86pcmpgt, v32i8,
-                                VR256, memopv4i64, i256mem,
-                                SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
-  defm VPCMPGTWY : PDI_binop_rm<0x65, "vpcmpgtw", X86pcmpgt, v16i16,
-                                VR256, memopv4i64, i256mem,
-                                SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
-  defm VPCMPGTDY : PDI_binop_rm<0x66, "vpcmpgtd", X86pcmpgt, v8i32,
-                                VR256, memopv4i64, i256mem,
-                                SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
-}
-
-let Constraints = "$src1 = $dst" in {
-  defm PCMPEQB  : PDI_binop_rm<0x74, "pcmpeqb", X86pcmpeq, v16i8,
-                               VR128, memopv2i64, i128mem,
-                               SSE_INTALU_ITINS_P, 1>;
-  defm PCMPEQW  : PDI_binop_rm<0x75, "pcmpeqw", X86pcmpeq, v8i16,
-                               VR128, memopv2i64, i128mem,
-                               SSE_INTALU_ITINS_P, 1>;
-  defm PCMPEQD  : PDI_binop_rm<0x76, "pcmpeqd", X86pcmpeq, v4i32,
-                               VR128, memopv2i64, i128mem,
-                               SSE_INTALU_ITINS_P, 1>;
-  defm PCMPGTB  : PDI_binop_rm<0x64, "pcmpgtb", X86pcmpgt, v16i8,
-                               VR128, memopv2i64, i128mem,
-                               SSE_INTALU_ITINS_P>;
-  defm PCMPGTW  : PDI_binop_rm<0x65, "pcmpgtw", X86pcmpgt, v8i16,
-                               VR128, memopv2i64, i128mem,
-                               SSE_INTALU_ITINS_P>;
-  defm PCMPGTD  : PDI_binop_rm<0x66, "pcmpgtd", X86pcmpgt, v4i32,
-                               VR128, memopv2i64, i128mem,
-                               SSE_INTALU_ITINS_P>;
-} // Constraints = "$src1 = $dst"
+defm CMPEQB : PDI_binop_all<0x74, "pcmpeqb", X86pcmpeq, v16i8, v32i8,
+                            SSE_INTALU_ITINS_P, 1>;
+defm CMPEQW : PDI_binop_all<0x75, "pcmpeqw", X86pcmpeq, v8i16, v16i16,
+                            SSE_INTALU_ITINS_P, 1>;
+defm CMPEQD : PDI_binop_all<0x76, "pcmpeqd", X86pcmpeq, v4i32, v8i32,
+                            SSE_INTALU_ITINS_P, 1>;
+defm CMPGTB : PDI_binop_all<0x64, "pcmpgtb", X86pcmpgt, v16i8, v32i8,
+                            SSE_INTALU_ITINS_P, 0>;
+defm CMPGTW : PDI_binop_all<0x65, "pcmpgtw", X86pcmpgt, v8i16, v16i16,
+                            SSE_INTALU_ITINS_P, 0>;
+defm CMPGTD : PDI_binop_all<0x66, "pcmpgtd", X86pcmpgt, v4i32, v8i32,
+                            SSE_INTALU_ITINS_P, 0>;
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Pack Instructions
