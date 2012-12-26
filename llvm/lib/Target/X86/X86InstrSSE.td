@@ -3659,7 +3659,7 @@ multiclass PDI_binop_rmi<bits<8> opc, bits<8> opc2, Format ImmForm,
        [(set RC:$dst, (DstVT (OpNode2 RC:$src1, (i32 imm:$src2))))], itins.ri>;
 }
 
-/// PDI_binop_rm - Simple SSE2 binary operator with different src and dst types
+/// PDI_binop_rm2 - Simple SSE2 binary operator with different src and dst types
 multiclass PDI_binop_rm2<bits<8> opc, string OpcodeStr, SDNode OpNode,
                          ValueType DstVT, ValueType SrcVT, RegisterClass RC,
                          PatFrag memop_frag, X86MemOperand x86memop,
