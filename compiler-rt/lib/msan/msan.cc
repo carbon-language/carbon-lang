@@ -17,9 +17,7 @@
 #include "sanitizer_common/sanitizer_common.h"
 #include "sanitizer_common/sanitizer_flags.h"
 #include "sanitizer_common/sanitizer_libc.h"
-#include "sanitizer_common/sanitizer_mutex.h"
 #include "sanitizer_common/sanitizer_procmaps.h"
-#include "sanitizer_common/sanitizer_stackdepot.h"
 #include "sanitizer_common/sanitizer_stacktrace.h"
 #include "sanitizer_common/sanitizer_symbolizer.h"
 
@@ -59,8 +57,6 @@ THREADLOCAL u32 __msan_origin_tls;
 static THREADLOCAL struct {
   uptr stack_top, stack_bottom;
 } __msan_stack_bounds;
-
-static StaticSpinMutex report_mu;
 
 extern const int __msan_track_origins;
 int __msan_get_track_origins() {
@@ -151,18 +147,15 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp) {
   stack->FastUnwindStack(pc, bp, stack_top, stack_bottom);
 }
 
-static void PrintCurrentStackTrace(uptr pc, uptr bp) {
-  StackTrace stack;
-  GetStackTrace(&stack, kStackTraceMax, pc, bp);
-  StackTrace::PrintStack(stack.trace, stack.size, true, "", 0);
-}
-
 void PrintWarning(uptr pc, uptr bp) {
   PrintWarningWithOrigin(pc, bp, __msan_origin_tls);
 }
 
+bool OriginIsValid(u32 origin) {
+  return origin != 0 && origin != (u32)-1;
+}
+
 void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin) {
-  if (!__msan::flags()->report_umrs) return;
   if (msan_expect_umr) {
     // Printf("Expected UMR\n");
     __msan_origin_tls = origin;
@@ -170,26 +163,20 @@ void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin) {
     return;
   }
 
-  GenericScopedLock<StaticSpinMutex> lock(&report_mu);
+  StackTrace stack;
+  GetStackTrace(&stack, kStackTraceMax, pc, bp);
 
-  Report(" WARNING: MemorySanitizer: UMR (uninitialized-memory-read)\n");
-  PrintCurrentStackTrace(pc, bp);
-  if (__msan_track_origins) {
-    Printf("  raw origin id: %d\n", origin);
-    if (origin == 0 || origin == (u32)-1) {
-      Printf("  ORIGIN: invalid (%x). Might be a bug in MemorySanitizer, "
-             "please report to MemorySanitizer developers.\n",
-             origin);
-    } else if (const char *so = __msan_get_origin_descr_if_stack(origin)) {
-      Printf("  ORIGIN: stack allocation: %s\n", so);
-    } else if (origin != 0) {
-      uptr size = 0;
-      const uptr *trace = StackDepotGet(origin, &size);
-      Printf("  ORIGIN: heap allocation:\n");
-      StackTrace::PrintStack(trace, size, true, "", 0);
-    }
+  u32 report_origin =
+    (__msan_track_origins && OriginIsValid(origin)) ? origin : 0;
+  ReportUMR(&stack, report_origin);
+
+  if (__msan_track_origins && !OriginIsValid(origin)) {
+    Printf("  ORIGIN: invalid (%x). Might be a bug in MemorySanitizer, "
+           "please report to MemorySanitizer developers.\n",
+           origin);
   }
 }
+
 
 }  // namespace __msan
 
@@ -214,8 +201,6 @@ void __msan_warning_noreturn() {
 void __msan_init() {
   if (msan_inited) return;
   msan_init_is_running = 1;
-
-  report_mu.Init();
 
   SetDieCallback(MsanDie);
   InitializeInterceptors();
@@ -272,10 +257,11 @@ void __msan_set_expect_umr(int expect_umr) {
   if (expect_umr) {
     msan_expected_umr_found = 0;
   } else if (!msan_expected_umr_found) {
-    Printf("Expected UMR not found\n");
     GET_CALLER_PC_BP_SP;
     (void)sp;
-    PrintCurrentStackTrace(pc, bp);
+    StackTrace stack;
+    GetStackTrace(&stack, kStackTraceMax, pc, bp);
+    ReportExpectedUMRNotFound(&stack);
     Die();
   }
   msan_expect_umr = expect_umr;

@@ -8,6 +8,7 @@ set(MSAN_RTL_SOURCES
   msan_linux.cc
   msan_new_delete.cc
   msan_platform_limits_posix.cc
+  msan_report.cc
   )
 set(MSAN_RTL_CFLAGS
   ${SANITIZER_COMMON_CFLAGS}

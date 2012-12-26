@@ -50,6 +50,9 @@ void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin);
 
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp);
 
+void ReportUMR(StackTrace *stack, u32 origin);
+void ReportExpectedUMRNotFound(StackTrace *stack);
+
 #define GET_MALLOC_STACK_TRACE                                     \
   StackTrace stack;                                                \
   stack.size = 0;                                                  \
