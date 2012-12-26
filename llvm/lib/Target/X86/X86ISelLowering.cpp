@@ -14408,51 +14408,42 @@ static SDValue PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
 
   if ((VT == MVT::v4i32) && (OpVT == MVT::v4i64)) {
 
+    // On AVX2, v4i64 -> v4i32 becomes VPERMD.
     if (Subtarget->hasInt256()) {
-      // AVX2: v4i64 -> v4i32
-
-      // VPERMD
       static const int ShufMask[] = {0, 2, 4, 6, -1, -1, -1, -1};
-
       Op = DAG.getNode(ISD::BITCAST, dl, MVT::v8i32, Op);
       Op = DAG.getVectorShuffle(MVT::v8i32, dl, Op, DAG.getUNDEF(MVT::v8i32),
                                 ShufMask);
-
       return DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, VT, Op,
                          DAG.getIntPtrConstant(0));
     }
 
-    // AVX: v4i64 -> v4i32
+    // On AVX, v4i64 -> v4i32 becomes a sequence that uses PSHUFD and MOVLHPS.
     SDValue OpLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
                                DAG.getIntPtrConstant(0));
-
     SDValue OpHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
                                DAG.getIntPtrConstant(2));
 
     OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpLo);
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpHi);
 
-    // PSHUFD
+    // The PSHUFD mask:
     static const int ShufMask1[] = {0, 2, 0, 0};
-
     SDValue Undef = DAG.getUNDEF(VT);
     OpLo = DAG.getVectorShuffle(VT, dl, OpLo, Undef, ShufMask1);
     OpHi = DAG.getVectorShuffle(VT, dl, OpHi, Undef, ShufMask1);
 
-    // MOVLHPS
+    // The MOVLHPS mask:
     static const int ShufMask2[] = {0, 1, 4, 5};
-
     return DAG.getVectorShuffle(VT, dl, OpLo, OpHi, ShufMask2);
   }
 
   if ((VT == MVT::v8i16) && (OpVT == MVT::v8i32)) {
 
+    // On AVX2, v8i32 -> v8i16 becomed PSHUFB.
     if (Subtarget->hasInt256()) {
-      // AVX2: v8i32 -> v8i16
-
       Op = DAG.getNode(ISD::BITCAST, dl, MVT::v32i8, Op);
 
-      // PSHUFB
       SmallVector<SDValue,32> pshufbMask;
       for (unsigned i = 0; i < 2; ++i) {
         pshufbMask.push_back(DAG.getConstant(0x0, MVT::i8));
@@ -14469,16 +14460,13 @@ static SDValue PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
       SDValue BV = DAG.getNode(ISD::BUILD_VECTOR, dl, MVT::v32i8,
                                &pshufbMask[0], 32);
       Op = DAG.getNode(X86ISD::PSHUFB, dl, MVT::v32i8, Op, BV);
-
       Op = DAG.getNode(ISD::BITCAST, dl, MVT::v4i64, Op);
 
       static const int ShufMask[] = {0,  2,  -1,  -1};
       Op = DAG.getVectorShuffle(MVT::v4i64, dl,  Op, DAG.getUNDEF(MVT::v4i64),
                                 &ShufMask[0]);
-
       Op = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
                        DAG.getIntPtrConstant(0));
-
       return DAG.getNode(ISD::BITCAST, dl, VT, Op);
     }
 
@@ -14491,7 +14479,7 @@ static SDValue PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, OpLo);
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, OpHi);
 
-    // PSHUFB
+    // The PSHUFB mask:
     static const int ShufMask1[] = {0,  1,  4,  5,  8,  9, 12, 13,
                                    -1, -1, -1, -1, -1, -1, -1, -1};
 
@@ -14502,9 +14490,8 @@ static SDValue PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpLo);
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpHi);
 
-    // MOVLHPS
+    // The MOVLHPS Mask:
     static const int ShufMask2[] = {0, 1, 4, 5};
-
     SDValue res = DAG.getVectorShuffle(MVT::v4i32, dl, OpLo, OpHi, ShufMask2);
     return DAG.getNode(ISD::BITCAST, dl, MVT::v8i16, res);
   }
