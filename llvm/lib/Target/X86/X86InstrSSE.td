@@ -2687,8 +2687,8 @@ let Predicates = [HasAVX] in
                     VR128, memopv2i64, i128mem, itins, IsCommutable, 0>, VEX_4V;
 
 let Constraints = "$src1 = $dst" in
-  defm P#NAME# : PDI_binop_rm<opc, OpcodeStr, Opcode, OpVT128, VR128, memopv2i64,
-                              i128mem, itins, IsCommutable>;
+  defm P#NAME# : PDI_binop_rm<opc, OpcodeStr, Opcode, OpVT128, VR128,
+                              memopv2i64, i128mem, itins, IsCommutable>;
 
 let Predicates = [HasAVX2] in
   defm VP#NAME#Y : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode,
