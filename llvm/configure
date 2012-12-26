@@ -5106,12 +5106,12 @@ case "$enableval" in
   yes) ENABLE_CLANG_REWRITER=1
  ;;
   no)
-    if test clang_arcmt != "no" ; then
+    if test ${clang_arcmt} != "no" ; then
       { { echo "$as_me:$LINENO: error: Cannot enable clang ARC Migration Tool while disabling rewriter." >&5
 echo "$as_me: error: Cannot enable clang ARC Migration Tool while disabling rewriter." >&2;}
    { (exit 1); exit 1; }; }
     fi
-    if test clang_static_analyzer != "no" ; then
+    if test ${clang_static_analyzer} != "no" ; then
       { { echo "$as_me:$LINENO: error: Cannot enable clang static analyzer while disabling rewriter." >&5
 echo "$as_me: error: Cannot enable clang static analyzer while disabling rewriter." >&2;}
    { (exit 1); exit 1; }; }

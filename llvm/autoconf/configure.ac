@@ -511,10 +511,10 @@ AC_ARG_ENABLE(clang-rewriter,
 case "$enableval" in
   yes) AC_SUBST(ENABLE_CLANG_REWRITER,[1]) ;;
   no)  
-    if test clang_arcmt != "no" ; then
+    if test ${clang_arcmt} != "no" ; then
       AC_MSG_ERROR([Cannot enable clang ARC Migration Tool while disabling rewriter.])
     fi
-    if test clang_static_analyzer != "no" ; then
+    if test ${clang_static_analyzer} != "no" ; then
       AC_MSG_ERROR([Cannot enable clang static analyzer while disabling rewriter.])
     fi
     AC_SUBST(ENABLE_CLANG_REWRITER,[0]) 
