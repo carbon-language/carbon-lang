@@ -1704,6 +1704,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
 
   // Check that the read-writes do not conflict with other read-write
   // pointers.
+  bool AllWritesIdentified = true;
   for (I = ReadWrites.begin(), IE = ReadWrites.end(); I != IE; ++I) {
     GetUnderlyingObjects(*I, TempObjects, DL);
     for (ValueVector::iterator it=TempObjects.begin(), e=TempObjects.end();
@@ -1711,6 +1712,7 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
       if (!isIdentifiedObject(*it)) {
         DEBUG(dbgs() << "LV: Found an unidentified write ptr:"<< **it <<"\n");
         NeedRTCheck = true;
+        AllWritesIdentified = false;
       }
       if (!WriteObjects.insert(*it)) {
         DEBUG(dbgs() << "LV: Found a possible write-write reorder:"
@@ -1726,7 +1728,9 @@ bool LoopVectorizationLegality::canVectorizeMemory() {
     GetUnderlyingObjects(*I, TempObjects, DL);
     for (ValueVector::iterator it=TempObjects.begin(), e=TempObjects.end();
          it != e; ++it) {
-      if (!isIdentifiedObject(*it)) {
+      // If all of the writes are identified then we don't care if the read
+      // pointer is identified or not.
+      if (!AllWritesIdentified && !isIdentifiedObject(*it)) {
         DEBUG(dbgs() << "LV: Found an unidentified read ptr:"<< **it <<"\n");
         NeedRTCheck = true;
       }
