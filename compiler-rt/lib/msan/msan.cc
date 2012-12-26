@@ -240,8 +240,10 @@ void __msan_init() {
   if (!InitShadow(/* prot1 */false, /* prot2 */true, /* map_shadow */true,
                   __msan_track_origins)) {
     // FIXME: prot1 = false is only required when running under DR.
-    Printf("FATAL: MemorySanitizer can not mmap the shadow memory\n");
+    Printf("FATAL: MemorySanitizer can not mmap the shadow memory.\n");
     Printf("FATAL: Make sure to compile with -fPIE and to link with -pie.\n");
+    Printf("FATAL: Disabling ASLR is known to cause this error.\n");
+    Printf("FATAL: If running under GDB, try 'set disable-randomization off'.\n");
     DumpProcessMap();
     Die();
   }

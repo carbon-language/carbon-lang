@@ -51,6 +51,12 @@ bool InitShadow(bool prot1, bool prot2, bool map_shadow, bool init_origins) {
     Printf("Bad1     : %p %p\n", kBad1Beg, kBad1End);
   }
 
+  if (!MemoryRangeIsAvailable(kShadowBeg,
+                              init_origins ? kOriginsEnd : kShadowEnd)) {
+    Printf("FATAL: Shadow memory range is not available.\n");
+    return false;
+  }
+
   if (prot1 && !Mprotect(kBad1Beg, kBad1End - kBad1Beg))
     return false;
   if (prot2 && !Mprotect(kBad2Beg, kBad2End - kBad2Beg))
