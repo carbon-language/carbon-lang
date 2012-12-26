@@ -68,7 +68,6 @@ namespace llvm {
     };
   }
 
-
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to
 /// legal SelectionDAG operators that the target instruction selector can accept
