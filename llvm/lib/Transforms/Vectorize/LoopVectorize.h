@@ -161,6 +161,9 @@ private:
   /// vectors of ones and zeros for the reduction code.
   Constant* getUniformVector(unsigned Val, Type* ScalarTy);
 
+  /// Generate a shuffle sequence that will reverse the vector Vec.
+  Value *reverseVector(Value *Vec);
+
   typedef DenseMap<Value*, Value*> ValueMap;
 
   /// The original loop.
@@ -331,7 +334,11 @@ public:
   /// when the last index of the GEP is the induction variable, or that the
   /// pointer itself is an induction variable.
   /// This check allows us to vectorize A[idx] into a wide load/store.
-  bool isConsecutivePtr(Value *Ptr);
+  /// Returns:
+  /// 0 - Stride is unknown or non consecutive.
+  /// 1 - Address is consecutive.
+  /// -1 - Address is consecutive, and decreasing.
+  int isConsecutivePtr(Value *Ptr);
 
   /// Returns true if the value V is uniform within the loop.
   bool isUniform(Value *V);

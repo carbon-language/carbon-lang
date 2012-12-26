@@ -537,7 +537,8 @@ define void @example14(i32** nocapture %in, i32** nocapture %coeff, i32* nocaptu
 }
 
 ;CHECK: @example21
-;CHECK: <4 x i32>
+;CHECK: load <4 x i32>
+;CHECK: shufflevector {{.*}} <i32 3, i32 2, i32 1, i32 0>
 ;CHECK: ret i32
 define i32 @example21(i32* nocapture %b, i32 %n) nounwind uwtable readonly ssp {
   %1 = icmp sgt i32 %n, 0
