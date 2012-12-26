@@ -57,7 +57,7 @@ def MUL8r  : I<0xF6, MRM4r, (outs),  (ins GR8:$src), "mul{b}\t$src",
 
 let Defs = [AX,DX,EFLAGS], Uses = [AX], neverHasSideEffects = 1 in
 def MUL16r : I<0xF7, MRM4r, (outs),  (ins GR16:$src),
-               "mul{w}\t$src", 
+               "mul{w}\t$src",
                [], IIC_MUL16_REG>, OpSize;    // AX,DX = AX*GR16
 
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX], neverHasSideEffects = 1 in
@@ -158,7 +158,7 @@ def IMUL16rm : I<0xAF, MRMSrcMem, (outs GR16:$dst),
                        (X86smul_flag GR16:$src1, (load addr:$src2)))],
                        IIC_IMUL16_RM>,
                TB, OpSize;
-def IMUL32rm : I<0xAF, MRMSrcMem, (outs GR32:$dst), 
+def IMUL32rm : I<0xAF, MRMSrcMem, (outs GR32:$dst),
                  (ins GR32:$src1, i32mem:$src2),
                  "imul{l}\t{$src2, $dst|$dst, $src2}",
                  [(set GR32:$dst, EFLAGS,
@@ -182,8 +182,8 @@ let Defs = [EFLAGS] in {
 def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // GR16 = GR16*I16
                       (outs GR16:$dst), (ins GR16:$src1, i16imm:$src2),
                       "imul{w}\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set GR16:$dst, EFLAGS, 
-                            (X86smul_flag GR16:$src1, imm:$src2))], 
+                      [(set GR16:$dst, EFLAGS,
+                            (X86smul_flag GR16:$src1, imm:$src2))],
                             IIC_IMUL16_RRI>, OpSize;
 def IMUL16rri8 : Ii8<0x6B, MRMSrcReg,                       // GR16 = GR16*I8
                      (outs GR16:$dst), (ins GR16:$src1, i16i8imm:$src2),
@@ -319,7 +319,7 @@ let Defs = [AX,DX,EFLAGS], Uses = [AX,DX] in
 def IDIV16m: I<0xF7, MRM7m, (outs), (ins i16mem:$src),  // DX:AX/[mem16] = AX,DX
                "idiv{w}\t$src", [], IIC_IDIV16>, OpSize;
 let Defs = [EAX,EDX,EFLAGS], Uses = [EAX,EDX] in    // EDX:EAX/[mem32] = EAX,EDX
-def IDIV32m: I<0xF7, MRM7m, (outs), (ins i32mem:$src), 
+def IDIV32m: I<0xF7, MRM7m, (outs), (ins i32mem:$src),
                "idiv{l}\t$src", [], IIC_IDIV32>;
 let Defs = [RAX,RDX,EFLAGS], Uses = [RAX,RDX] in // RDX:RAX/[mem64] = RAX,RDX
 def IDIV64m: RI<0xF7, MRM7m, (outs), (ins i64mem:$src),
@@ -412,11 +412,11 @@ def INC8r  : I<0xFE, MRM0r, (outs GR8 :$dst), (ins GR8 :$src1),
                IIC_UNARY_REG>;
 
 let isConvertibleToThreeAddress = 1, CodeSize = 1 in {  // Can xform into LEA.
-def INC16r : I<0x40, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1), 
+def INC16r : I<0x40, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1),
                "inc{w}\t$dst",
                [(set GR16:$dst, EFLAGS, (X86inc_flag GR16:$src1))], IIC_UNARY_REG>,
              OpSize, Requires<[In32BitMode]>;
-def INC32r : I<0x40, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1), 
+def INC32r : I<0x40, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
                "inc{l}\t$dst",
                [(set GR32:$dst, EFLAGS, (X86inc_flag GR32:$src1))],
                IIC_UNARY_REG>,
@@ -430,22 +430,22 @@ def INC64r : RI<0xFF, MRM0r, (outs GR64:$dst), (ins GR64:$src1), "inc{q}\t$dst",
 // In 64-bit mode, single byte INC and DEC cannot be encoded.
 let isConvertibleToThreeAddress = 1, CodeSize = 2 in {
 // Can transform into LEA.
-def INC64_16r : I<0xFF, MRM0r, (outs GR16:$dst), (ins GR16:$src1), 
+def INC64_16r : I<0xFF, MRM0r, (outs GR16:$dst), (ins GR16:$src1),
                   "inc{w}\t$dst",
                   [(set GR16:$dst, EFLAGS, (X86inc_flag GR16:$src1))],
                   IIC_UNARY_REG>,
                 OpSize, Requires<[In64BitMode]>;
-def INC64_32r : I<0xFF, MRM0r, (outs GR32:$dst), (ins GR32:$src1), 
+def INC64_32r : I<0xFF, MRM0r, (outs GR32:$dst), (ins GR32:$src1),
                   "inc{l}\t$dst",
                   [(set GR32:$dst, EFLAGS, (X86inc_flag GR32:$src1))],
                   IIC_UNARY_REG>,
                 Requires<[In64BitMode]>;
-def DEC64_16r : I<0xFF, MRM1r, (outs GR16:$dst), (ins GR16:$src1), 
+def DEC64_16r : I<0xFF, MRM1r, (outs GR16:$dst), (ins GR16:$src1),
                   "dec{w}\t$dst",
                   [(set GR16:$dst, EFLAGS, (X86dec_flag GR16:$src1))],
                   IIC_UNARY_REG>,
                 OpSize, Requires<[In64BitMode]>;
-def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1), 
+def DEC64_32r : I<0xFF, MRM1r, (outs GR32:$dst), (ins GR32:$src1),
                   "dec{l}\t$dst",
                   [(set GR32:$dst, EFLAGS, (X86dec_flag GR32:$src1))],
                   IIC_UNARY_REG>,
@@ -469,7 +469,7 @@ let CodeSize = 2 in {
   def INC64m : RI<0xFF, MRM0m, (outs), (ins i64mem:$dst), "inc{q}\t$dst",
                   [(store (add (loadi64 addr:$dst), 1), addr:$dst),
                    (implicit EFLAGS)], IIC_UNARY_MEM>;
-                   
+
 // These are duplicates of their 32-bit counterparts. Only needed so X86 knows
 // how to unfold them.
 // FIXME: What is this for??
@@ -498,12 +498,12 @@ def DEC8r  : I<0xFE, MRM1r, (outs GR8 :$dst), (ins GR8 :$src1),
                [(set GR8:$dst, EFLAGS, (X86dec_flag GR8:$src1))],
                IIC_UNARY_REG>;
 let isConvertibleToThreeAddress = 1, CodeSize = 1 in {   // Can xform into LEA.
-def DEC16r : I<0x48, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1), 
+def DEC16r : I<0x48, AddRegFrm, (outs GR16:$dst), (ins GR16:$src1),
                "dec{w}\t$dst",
                [(set GR16:$dst, EFLAGS, (X86dec_flag GR16:$src1))],
                IIC_UNARY_REG>,
              OpSize, Requires<[In32BitMode]>;
-def DEC32r : I<0x48, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1), 
+def DEC32r : I<0x48, AddRegFrm, (outs GR32:$dst), (ins GR32:$src1),
                "dec{l}\t$dst",
                [(set GR32:$dst, EFLAGS, (X86dec_flag GR32:$src1))],
                IIC_UNARY_REG>,
@@ -544,57 +544,57 @@ class X86TypeInfo<ValueType vt, string instrsuffix, RegisterClass regclass,
                   bit hasOddOpcode, bit hasOpSizePrefix, bit hasREX_WPrefix> {
   /// VT - This is the value type itself.
   ValueType VT = vt;
-  
+
   /// InstrSuffix - This is the suffix used on instructions with this type.  For
   /// example, i8 -> "b", i16 -> "w", i32 -> "l", i64 -> "q".
   string InstrSuffix = instrsuffix;
-  
+
   /// RegClass - This is the register class associated with this type.  For
   /// example, i8 -> GR8, i16 -> GR16, i32 -> GR32, i64 -> GR64.
   RegisterClass RegClass = regclass;
-  
+
   /// LoadNode - This is the load node associated with this type.  For
   /// example, i8 -> loadi8, i16 -> loadi16, i32 -> loadi32, i64 -> loadi64.
   PatFrag LoadNode = loadnode;
-  
+
   /// MemOperand - This is the memory operand associated with this type.  For
   /// example, i8 -> i8mem, i16 -> i16mem, i32 -> i32mem, i64 -> i64mem.
   X86MemOperand MemOperand = memoperand;
-  
+
   /// ImmEncoding - This is the encoding of an immediate of this type.  For
   /// example, i8 -> Imm8, i16 -> Imm16, i32 -> Imm32.  Note that i64 -> Imm32
   /// since the immediate fields of i64 instructions is a 32-bit sign extended
   /// value.
   ImmType ImmEncoding = immkind;
-  
+
   /// ImmOperand - This is the operand kind of an immediate of this type.  For
   /// example, i8 -> i8imm, i16 -> i16imm, i32 -> i32imm.  Note that i64 ->
   /// i64i32imm since the immediate fields of i64 instructions is a 32-bit sign
   /// extended value.
   Operand ImmOperand = immoperand;
-  
+
   /// ImmOperator - This is the operator that should be used to match an
   /// immediate of this kind in a pattern (e.g. imm, or i64immSExt32).
   SDPatternOperator ImmOperator = immoperator;
-  
+
   /// Imm8Operand - This is the operand kind to use for an imm8 of this type.
   /// For example, i8 -> <invalid>, i16 -> i16i8imm, i32 -> i32i8imm.  This is
   /// only used for instructions that have a sign-extended imm8 field form.
   Operand Imm8Operand = imm8operand;
-  
+
   /// Imm8Operator - This is the operator that should be used to match an 8-bit
   /// sign extended immediate of this kind in a pattern (e.g. imm16immSExt8).
   SDPatternOperator Imm8Operator = imm8operator;
-  
+
   /// HasOddOpcode - This bit is true if the instruction should have an odd (as
   /// opposed to even) opcode.  Operations on i8 are usually even, operations on
   /// other datatypes are odd.
   bit HasOddOpcode = hasOddOpcode;
-  
+
   /// HasOpSizePrefix - This bit is set to true if the instruction should have
   /// the 0x66 operand size prefix.  This is set for i16 types.
   bit HasOpSizePrefix = hasOpSizePrefix;
-  
+
   /// HasREX_WPrefix - This bit is set to true if the instruction should have
   /// the 0x40 REX prefix.  This is set for i64 types.
   bit HasREX_WPrefix = hasREX_WPrefix;
@@ -624,12 +624,12 @@ def Xi64 : X86TypeInfo<i64, "q", GR64, loadi64, i64mem,
 /// 3. Infers whether the instruction should have a 0x40 REX_W prefix.
 /// 4. Infers whether the low bit of the opcode should be 0 (for i8 operations)
 ///    or 1 (for i16,i32,i64 operations).
-class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins, 
+class ITy<bits<8> opcode, Format f, X86TypeInfo typeinfo, dag outs, dag ins,
           string mnemonic, string args, list<dag> pattern,
           InstrItinClass itin = IIC_BIN_NONMEM>
   : I<{opcode{7}, opcode{6}, opcode{5}, opcode{4},
        opcode{3}, opcode{2}, opcode{1}, typeinfo.HasOddOpcode },
-      f, outs, ins, 
+      f, outs, ins,
       !strconcat(mnemonic, "{", typeinfo.InstrSuffix, "}\t", args), pattern,
       itin> {
 
@@ -765,13 +765,13 @@ class BinOpRI_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
 class BinOpRI_RF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode, Format f>
   : BinOpRI<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
-            [(set typeinfo.RegClass:$dst, EFLAGS, 
+            [(set typeinfo.RegClass:$dst, EFLAGS,
                 (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2))]>;
 // BinOpRI_RFF - Instructions like "adc reg, reg, imm".
 class BinOpRI_RFF<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                  SDNode opnode, Format f>
   : BinOpRI<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
-            [(set typeinfo.RegClass:$dst, EFLAGS, 
+            [(set typeinfo.RegClass:$dst, EFLAGS,
                 (opnode typeinfo.RegClass:$src1, typeinfo.ImmOperator:$src2,
                         EFLAGS))]>;
 
@@ -790,7 +790,7 @@ class BinOpRI8_R<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   : BinOpRI8<opcode, mnemonic, typeinfo, f, (outs typeinfo.RegClass:$dst),
              [(set typeinfo.RegClass:$dst,
                (opnode typeinfo.RegClass:$src1, typeinfo.Imm8Operator:$src2))]>;
-               
+
 // BinOpRI8_F - Instructions like "cmp reg, imm8".
 class BinOpRI8_F<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode, Format f>
@@ -853,14 +853,14 @@ class BinOpMI<string mnemonic, X86TypeInfo typeinfo,
 // BinOpMI_RMW - Instructions like "add [mem], imm".
 class BinOpMI_RMW<string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode, Format f>
-  : BinOpMI<mnemonic, typeinfo, f, 
+  : BinOpMI<mnemonic, typeinfo, f,
             [(store (opnode (typeinfo.VT (load addr:$dst)),
                             typeinfo.ImmOperator:$src), addr:$dst),
              (implicit EFLAGS)]>;
 // BinOpMI_RMW_FF - Instructions like "adc [mem], imm".
 class BinOpMI_RMW_FF<string mnemonic, X86TypeInfo typeinfo,
                   SDNode opnode, Format f>
-  : BinOpMI<mnemonic, typeinfo, f, 
+  : BinOpMI<mnemonic, typeinfo, f,
             [(store (opnode (typeinfo.VT (load addr:$dst)),
                             typeinfo.ImmOperator:$src, EFLAGS), addr:$dst),
              (implicit EFLAGS)]>;
@@ -868,7 +868,7 @@ class BinOpMI_RMW_FF<string mnemonic, X86TypeInfo typeinfo,
 // BinOpMI_F - Instructions like "cmp [mem], imm".
 class BinOpMI_F<string mnemonic, X86TypeInfo typeinfo,
                 SDPatternOperator opnode, Format f, bits<8> opcode = 0x80>
-  : BinOpMI<mnemonic, typeinfo, f, 
+  : BinOpMI<mnemonic, typeinfo, f,
             [(set EFLAGS, (opnode (typeinfo.VT (load addr:$dst)),
                                                typeinfo.ImmOperator:$src))],
             opcode>;
@@ -914,6 +914,7 @@ class BinOpAI<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo,
   let ImmT = typeinfo.ImmEncoding;
   let Uses = [areg];
   let Defs = [areg];
+  let hasSideEffects = 0;
 }
 
 /// ArithBinOp_RF - This is an arithmetic binary operator where the pattern is
@@ -969,7 +970,7 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def #NAME#16mi8  : BinOpMI8_RMW<mnemonic, Xi16, opnode, MemMRM>;
     def #NAME#32mi8  : BinOpMI8_RMW<mnemonic, Xi32, opnode, MemMRM>;
     def #NAME#64mi8  : BinOpMI8_RMW<mnemonic, Xi64, opnode, MemMRM>;
-                       
+
     def #NAME#8mi    : BinOpMI_RMW<mnemonic, Xi8 , opnode, MemMRM>;
     def #NAME#16mi   : BinOpMI_RMW<mnemonic, Xi16, opnode, MemMRM>;
     def #NAME#32mi   : BinOpMI_RMW<mnemonic, Xi32, opnode, MemMRM>;
@@ -983,7 +984,7 @@ multiclass ArithBinOp_RF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
                               "{$src, %eax|EAX, $src}">;
     def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX,
                               "{$src, %rax|RAX, $src}">;
-  }                          
+  }
 }
 
 /// ArithBinOp_RFF - This is an arithmetic binary operator where the pattern is
@@ -1040,7 +1041,7 @@ multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def #NAME#16mi8  : BinOpMI8_RMW_FF<mnemonic, Xi16, opnode, MemMRM>;
     def #NAME#32mi8  : BinOpMI8_RMW_FF<mnemonic, Xi32, opnode, MemMRM>;
     def #NAME#64mi8  : BinOpMI8_RMW_FF<mnemonic, Xi64, opnode, MemMRM>;
-                       
+
     def #NAME#8mi    : BinOpMI_RMW_FF<mnemonic, Xi8 , opnode, MemMRM>;
     def #NAME#16mi   : BinOpMI_RMW_FF<mnemonic, Xi16, opnode, MemMRM>;
     def #NAME#32mi   : BinOpMI_RMW_FF<mnemonic, Xi32, opnode, MemMRM>;
@@ -1052,9 +1053,9 @@ multiclass ArithBinOp_RFF<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
                               "{$src, %ax|AX, $src}">;
     def #NAME#32i32 : BinOpAI<BaseOpc4, mnemonic, Xi32, EAX,
                               "{$src, %eax|EAX, $src}">;
-    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX, 
+    def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX,
                               "{$src, %rax|RAX, $src}">;
-  }                          
+  }
 }
 
 /// ArithBinOp_F - This is an arithmetic binary operator where the pattern is
@@ -1090,7 +1091,7 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
       def #NAME#16ri8 : BinOpRI8_F<0x82, mnemonic, Xi16, opnode, RegMRM>;
       def #NAME#32ri8 : BinOpRI8_F<0x82, mnemonic, Xi32, opnode, RegMRM>;
       def #NAME#64ri8 : BinOpRI8_F<0x82, mnemonic, Xi64, opnode, RegMRM>;
-      
+
       def #NAME#8ri   : BinOpRI_F<0x80, mnemonic, Xi8 , opnode, RegMRM>;
       def #NAME#16ri  : BinOpRI_F<0x80, mnemonic, Xi16, opnode, RegMRM>;
       def #NAME#32ri  : BinOpRI_F<0x80, mnemonic, Xi32, opnode, RegMRM>;
@@ -1107,7 +1108,7 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
     def #NAME#16mi8  : BinOpMI8_F<mnemonic, Xi16, opnode, MemMRM>;
     def #NAME#32mi8  : BinOpMI8_F<mnemonic, Xi32, opnode, MemMRM>;
     def #NAME#64mi8  : BinOpMI8_F<mnemonic, Xi64, opnode, MemMRM>;
-                       
+
     def #NAME#8mi    : BinOpMI_F<mnemonic, Xi8 , opnode, MemMRM>;
     def #NAME#16mi   : BinOpMI_F<mnemonic, Xi16, opnode, MemMRM>;
     def #NAME#32mi   : BinOpMI_F<mnemonic, Xi32, opnode, MemMRM>;
@@ -1121,7 +1122,7 @@ multiclass ArithBinOp_F<bits<8> BaseOpc, bits<8> BaseOpc2, bits<8> BaseOpc4,
                               "{$src, %eax|EAX, $src}">;
     def #NAME#64i32 : BinOpAI<BaseOpc4, mnemonic, Xi64, RAX,
                               "{$src, %rax|RAX, $src}">;
-  }                          
+  }
 }
 
 
@@ -1181,7 +1182,7 @@ let isCompare = 1, Defs = [EFLAGS] in {
   def TEST16mi   : BinOpMI_F<"test", Xi16, X86testpat, MRM0m, 0xF6>;
   def TEST32mi   : BinOpMI_F<"test", Xi32, X86testpat, MRM0m, 0xF6>;
   def TEST64mi32 : BinOpMI_F<"test", Xi64, X86testpat, MRM0m, 0xF6>;
-                     
+
   def TEST8i8    : BinOpAI<0xA8, "test", Xi8 , AL,
                            "{$src, %al|AL, $src}">;
   def TEST16i16  : BinOpAI<0xA8, "test", Xi16, AX,
