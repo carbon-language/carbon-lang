@@ -251,7 +251,7 @@ void OOBTest() {
     for (int i = 0; i < (int)(size - sizeof(T) + 1); i++)
       oob_test<T>(size, i);
 
-    for (int i = size - sizeof(T) + 1; i <= (int)(size + 3 * sizeof(T)); i++) {
+    for (int i = size - sizeof(T) + 1; i <= (int)(size + 2 * sizeof(T)); i++) {
       const char *str =
           "is located.*%d byte.*to the right";
       int off = i >= size ? (i - size) : 0;

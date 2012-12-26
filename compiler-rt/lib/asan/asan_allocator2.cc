@@ -202,8 +202,8 @@ struct AsanChunk: ChunkBase {
     return (u32*)(Beg() + kChunkHeader2Size);
   }
   uptr FreeStackSize() {
-    uptr available = Max(RoundUpTo(UsedSize(), SHADOW_GRANULARITY),
-                         (uptr)RZLog2Size(rz_log));
+    if (user_requested_size < kChunkHeader2Size) return 0;
+    uptr available = RoundUpTo(user_requested_size, SHADOW_GRANULARITY);
     return (available - kChunkHeader2Size) / sizeof(u32);
   }
 };
@@ -317,7 +317,9 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
                       AllocType alloc_type) {
   Init();
   CHECK(stack);
-  if (alignment < 8) alignment = 8;
+  const uptr min_alignment = SHADOW_GRANULARITY;
+  if (alignment < min_alignment)
+    alignment = min_alignment;
   if (size == 0) {
     if (alignment <= kReturnOnZeroMalloc)
       return reinterpret_cast<void *>(kReturnOnZeroMalloc);
@@ -327,9 +329,11 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   CHECK(IsPowerOfTwo(alignment));
   uptr rz_log = ComputeRZLog(size);
   uptr rz_size = RZLog2Size(rz_log);
-  uptr rounded_size = RoundUpTo(size, rz_size);
+  uptr rounded_size = RoundUpTo(size, alignment);
+  if (rounded_size < kChunkHeader2Size)
+    rounded_size = kChunkHeader2Size;
   uptr needed_size = rounded_size + rz_size;
-  if (alignment > rz_size)
+  if (alignment > min_alignment)
     needed_size += alignment;
   bool using_primary_allocator = true;
   // If we are allocating from the secondary allocator, there will be no
@@ -338,7 +342,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     needed_size += rz_size;
     using_primary_allocator = false;
   }
-  CHECK(IsAligned(needed_size, rz_size));
+  CHECK(IsAligned(needed_size, min_alignment));
   if (size > kMaxAllowedMallocSize || needed_size > kMaxAllowedMallocSize) {
     Report("WARNING: AddressSanitizer failed to allocate %p bytes\n",
            (void*)size);
