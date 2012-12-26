@@ -510,7 +510,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VMOVDQArr,       X86::VMOVDQArm,           TB_ALIGN_16 },
     { X86::VMOVSLDUPrr,     X86::VMOVSLDUPrm,         TB_ALIGN_16 },
     { X86::VMOVSHDUPrr,     X86::VMOVSHDUPrm,         TB_ALIGN_16 },
-    { X86::VMOVUPDrr,       X86::VMOVUPDrm,           TB_ALIGN_16 },
+    { X86::VMOVUPDrr,       X86::VMOVUPDrm,           0 },
     { X86::VMOVUPSrr,       X86::VMOVUPSrm,           0 },
     { X86::VMOVZDI2PDIrr,   X86::VMOVZDI2PDIrm,       0 },
     { X86::VMOVZQI2PQIrr,   X86::VMOVZQI2PQIrm,       0 },
