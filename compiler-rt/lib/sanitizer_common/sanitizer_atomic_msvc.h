@@ -24,9 +24,10 @@ extern "C" void _mm_pause();
 extern "C" long _InterlockedExchangeAdd(  // NOLINT
     long volatile * Addend, long Value);  // NOLINT
 #pragma intrinsic(_InterlockedExchangeAdd)
-extern "C" void *InterlockedCompareExchangePointer(
+extern "C" void *_InterlockedCompareExchangePointer(
     void *volatile *Destination,
     void *Exchange, void *Comparand);
+#pragma intrinsic(_InterlockedCompareExchangePointer)
 
 namespace __sanitizer {
 
@@ -115,7 +116,7 @@ INLINE bool atomic_compare_exchange_strong(volatile atomic_uintptr_t *a,
                                            uptr xchg,
                                            memory_order mo) {
   uptr cmpv = *cmp;
-  uptr prev = (uptr)InterlockedCompareExchangePointer(
+  uptr prev = (uptr)_InterlockedCompareExchangePointer(
       (void*volatile*)&a->val_dont_use, (void*)xchg, (void*)cmpv);
   if (prev == cmpv)
     return true;
