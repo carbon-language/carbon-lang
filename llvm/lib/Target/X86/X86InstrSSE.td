@@ -2681,12 +2681,12 @@ multiclass PDI_binop_all<bits<8> opc, string OpcodeStr, SDNode Opcode,
                          ValueType OpVT128, ValueType OpVT256,
                          OpndItins itins, bit IsCommutable = 0> {
 let Predicates = [HasAVX] in
-  defm VP#NAME# : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode, OpVT128,
+  defm VP#NAME : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode, OpVT128,
                     VR128, memopv2i64, i128mem, itins, IsCommutable, 0>, VEX_4V;
 
 let Constraints = "$src1 = $dst" in
-  defm P#NAME# : PDI_binop_rm<opc, OpcodeStr, Opcode, OpVT128, VR128,
-                              memopv2i64, i128mem, itins, IsCommutable, 1>;
+  defm P#NAME : PDI_binop_rm<opc, OpcodeStr, Opcode, OpVT128, VR128,
+                             memopv2i64, i128mem, itins, IsCommutable, 1>;
 
 let Predicates = [HasAVX2] in
   defm VP#NAME#Y : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode,
@@ -3632,13 +3632,13 @@ multiclass PDI_binop_all_int<bits<8> opc, string OpcodeStr, Intrinsic IntId128,
                              Intrinsic IntId256, OpndItins itins,
                              bit IsCommutable = 0> {
 let Predicates = [HasAVX] in
-  defm VP#NAME# : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId128,
-                                   VR128, memopv2i64, i128mem, itins,
-                                   IsCommutable, 0>, VEX_4V;
+  defm VP#NAME : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId128,
+                                  VR128, memopv2i64, i128mem, itins,
+                                  IsCommutable, 0>, VEX_4V;
 
 let Constraints = "$src1 = $dst" in
-  defm P#NAME# : PDI_binop_rm_int<opc, OpcodeStr, IntId128, VR128, memopv2i64,
-                                  i128mem, itins, IsCommutable, 1>;
+  defm P#NAME : PDI_binop_rm_int<opc, OpcodeStr, IntId128, VR128, memopv2i64,
+                                 i128mem, itins, IsCommutable, 1>;
 
 let Predicates = [HasAVX2] in
   defm VP#NAME#Y : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId256,
@@ -3965,41 +3965,13 @@ defm CMPGTD : PDI_binop_all<0x66, "pcmpgtd", X86pcmpgt, v4i32, v8i32,
 // SSE2 - Packed Integer Pack Instructions
 //===---------------------------------------------------------------------===//
 
-let Predicates = [HasAVX] in {
-defm VPACKSSWB : PDI_binop_rm_int<0x63, "vpacksswb", int_x86_sse2_packsswb_128,
-                                  VR128, memopv2i64, i128mem,
-                                  SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
-defm VPACKSSDW : PDI_binop_rm_int<0x6B, "vpackssdw", int_x86_sse2_packssdw_128,
-                                  VR128, memopv2i64, i128mem,
-                                  SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
-defm VPACKUSWB : PDI_binop_rm_int<0x67, "vpackuswb", int_x86_sse2_packuswb_128,
-                                  VR128, memopv2i64, i128mem,
-                                  SSE_INTALU_ITINS_P, 0, 0>, VEX_4V;
-}
-
-let Predicates = [HasAVX2] in {
-defm VPACKSSWBY : PDI_binop_rm_int<0x63, "vpacksswb", int_x86_avx2_packsswb,
-                                   VR256, memopv4i64, i256mem,
-                                   SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
-defm VPACKSSDWY : PDI_binop_rm_int<0x6B, "vpackssdw", int_x86_avx2_packssdw,
-                                   VR256, memopv4i64, i256mem,
-                                   SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
-defm VPACKUSWBY : PDI_binop_rm_int<0x67, "vpackuswb", int_x86_avx2_packuswb,
-                                   VR256, memopv4i64, i256mem,
-                                   SSE_INTALU_ITINS_P, 0, 0>, VEX_4V, VEX_L;
-}
-
-let Constraints = "$src1 = $dst" in {
-defm PACKSSWB : PDI_binop_rm_int<0x63, "packsswb", int_x86_sse2_packsswb_128,
-                                 VR128, memopv2i64, i128mem,
-                                 SSE_INTALU_ITINS_P>;
-defm PACKSSDW : PDI_binop_rm_int<0x6B, "packssdw", int_x86_sse2_packssdw_128,
-                                 VR128, memopv2i64, i128mem,
-                                 SSE_INTALU_ITINS_P>;
-defm PACKUSWB : PDI_binop_rm_int<0x67, "packuswb", int_x86_sse2_packuswb_128,
-                                 VR128, memopv2i64, i128mem,
-                                 SSE_INTALU_ITINS_P>;
-} // Constraints = "$src1 = $dst"
+// FIXME: Names are bad due to the need to have a 'P' prefix in the multiclass.
+defm ACKSSWB : PDI_binop_all_int<0x63, "packsswb", int_x86_sse2_packsswb_128,
+                                 int_x86_avx2_packsswb, SSE_INTALU_ITINS_P, 0>;
+defm ACKSSDW : PDI_binop_all_int<0x6B, "packssdw", int_x86_sse2_packssdw_128,
+                                 int_x86_avx2_packssdw, SSE_INTALU_ITINS_P, 0>;
+defm ACKUSWB : PDI_binop_all_int<0x67, "packuswb", int_x86_sse2_packuswb_128,
+                                 int_x86_avx2_packuswb, SSE_INTALU_ITINS_P, 0>;
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Shuffle Instructions
