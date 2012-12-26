@@ -480,7 +480,7 @@ def VMOVSDrr : sse12_move_rr<FR64, X86Movsd, v2f64,
                 VEX_LIG;
 
 // For the disassembler
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1, hasSideEffects = 0 in {
   def VMOVSSrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
                         (ins VR128:$src1, FR32:$src2),
                         "movss\t{$src2, $src1, $dst|$dst, $src1, $src2}", [],
@@ -518,7 +518,7 @@ let Constraints = "$src1 = $dst" in {
                           "movsd\t{$src2, $dst|$dst, $src2}">, XD;
 
   // For the disassembler
-  let isCodeGenOnly = 1 in {
+  let isCodeGenOnly = 1, hasSideEffects = 0 in {
     def MOVSSrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
                          (ins VR128:$src1, FR32:$src2),
                          "movss\t{$src2, $dst|$dst, $src2}", [],
@@ -869,7 +869,7 @@ def VMOVUPDYmr : VPDI<0x11, MRMDestMem, (outs), (ins f256mem:$dst, VR256:$src),
                    IIC_SSE_MOVU_P_MR>, VEX, VEX_L;
 
 // For disassembler
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1, hasSideEffects = 0 in {
   def VMOVAPSrr_REV : VPSI<0x29, MRMDestReg, (outs VR128:$dst),
                           (ins VR128:$src),
                           "movaps\t{$src, $dst|$dst, $src}", [],
@@ -943,7 +943,7 @@ def MOVUPDmr : PDI<0x11, MRMDestMem, (outs), (ins f128mem:$dst, VR128:$src),
                    IIC_SSE_MOVU_P_MR>;
 
 // For disassembler
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1, hasSideEffects = 0 in {
   def MOVAPSrr_REV : PSI<0x29, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
                          "movaps\t{$src, $dst|$dst, $src}", [],
                          IIC_SSE_MOVA_P_RR>;
@@ -3485,7 +3485,7 @@ def VMOVDQUYrr : VSSI<0x6F, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
 }
 
 // For Disassembler
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1, hasSideEffects = 0 in {
 def VMOVDQArr_REV  : VPDI<0x7F, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
                         "movdqa\t{$src, $dst|$dst, $src}", [],
                         IIC_SSE_MOVA_P_RR>,
@@ -3548,7 +3548,7 @@ def MOVDQUrr :   I<0x6F, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                    [], IIC_SSE_MOVU_P_RR>, XS, Requires<[UseSSE2]>;
 
 // For Disassembler
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1, hasSideEffects = 0 in {
 def MOVDQArr_REV : PDI<0x7F, MRMDestReg, (outs VR128:$dst), (ins VR128:$src),
                        "movdqa\t{$src, $dst|$dst, $src}", [],
                        IIC_SSE_MOVA_P_RR>;

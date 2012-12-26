@@ -690,6 +690,7 @@ class BinOpRR_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
         mnemonic, "{$src2, $dst|$dst, $src2}", [], IIC_BIN_NONMEM> {
   // The disassembler should know about this, but not the asmparser.
   let isCodeGenOnly = 1;
+  let hasSideEffects = 0;
 }
 
 // BinOpRR_F_Rev - Instructions like "cmp reg, reg" (reversed encoding).

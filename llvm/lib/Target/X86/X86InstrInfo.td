@@ -1043,7 +1043,7 @@ def MOV64ao64 : RIi32<0xA3, RawFrm, (outs offset64:$dst), (ins),
 */
 
 
-let isCodeGenOnly = 1 in {
+let isCodeGenOnly = 1, hasSideEffects = 0 in {
 def MOV8rr_REV : I<0x8A, MRMSrcReg, (outs GR8:$dst), (ins GR8:$src),
                    "mov{b}\t{$src, $dst|$dst, $src}", [], IIC_MOV>;
 def MOV16rr_REV : I<0x8B, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src),
