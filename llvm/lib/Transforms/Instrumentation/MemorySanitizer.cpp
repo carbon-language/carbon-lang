@@ -43,6 +43,29 @@
 /// parameters and return values may be passed via registers, we have a
 /// specialized thread-local shadow for return values
 /// (__msan_retval_tls) and parameters (__msan_param_tls).
+///
+///                           Origin tracking.
+///
+/// MemorySanitizer can track origins (allocation points) of all uninitialized
+/// values. This behavior is controlled with a flag (msan-track-origins) and is
+/// disabled by default.
+///
+/// Origins are 4-byte values created and interpreted by the runtime library.
+/// They are stored in a second shadow mapping, one 4-byte value for 4 bytes
+/// of application memory. Propagation of origins is basically a bunch of
+/// "select" instructions that pick the origin of a dirty argument, if an
+/// instruction has one.
+///
+/// Every 4 aligned, consecutive bytes of application memory have one origin
+/// value associated with them. If these bytes contain uninitialized data
+/// coming from 2 different allocations, the last store wins. Because of this,
+/// MemorySanitizer reports can show unrelated origins, but this is unlikely in
+/// practice. 
+///
+/// Origins are meaningless for fully initialized values, so MemorySanitizer
+/// avoids storing origin to memory when a fully initialized value is stored.
+/// This way it avoids needless overwritting origin of the 4-byte region on
+/// a short (i.e. 1 byte) clean store, and it is also good for performance.
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "msan"
@@ -79,11 +102,10 @@ static const uint64_t kOriginOffset32 = 1ULL << 30;
 static const uint64_t kOriginOffset64 = 1ULL << 45;
 static const uint64_t kShadowTLSAlignment = 8;
 
-// This is an important flag that makes the reports much more
-// informative at the cost of greater slowdown. Not fully implemented
-// yet.
-// FIXME: this should be a top-level clang flag, e.g.
-// -fmemory-sanitizer-full.
+/// \brief Track origins of uninitialized values.
+/// 
+/// Adds a section to MemorySanitizer report that points to the allocation
+/// (stack or heap) the uninitialized bits came from originally.
 static cl::opt<bool> ClTrackOrigins("msan-track-origins",
        cl::desc("Track origins (allocation sites) of poisoned memory"),
        cl::Hidden, cl::init(false));
