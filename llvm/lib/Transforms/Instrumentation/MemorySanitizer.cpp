@@ -100,7 +100,8 @@ static const uint64_t kShadowMask32 = 1ULL << 31;
 static const uint64_t kShadowMask64 = 1ULL << 46;
 static const uint64_t kOriginOffset32 = 1ULL << 30;
 static const uint64_t kOriginOffset64 = 1ULL << 45;
-static const uint64_t kShadowTLSAlignment = 8;
+static const unsigned kMinOriginAlignment = 4;
+static const unsigned kShadowTLSAlignment = 8;
 
 /// \brief Track origins of uninitialized values.
 /// 
@@ -451,8 +452,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         insertCheck(Addr, &I);
 
       if (MS.TrackOrigins) {
+        unsigned Alignment = std::max(kMinOriginAlignment, I.getAlignment());
         if (ClStoreCleanOrigin || isa<StructType>(Shadow->getType())) {
-          IRB.CreateStore(getOrigin(Val), getOriginPtr(Addr, IRB));
+          IRB.CreateAlignedStore(getOrigin(Val), getOriginPtr(Addr, IRB),
+                                 Alignment);
         } else {
           Value *ConvertedShadow = convertToShadowTyNoVec(Shadow, IRB);
 
@@ -469,7 +472,8 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
             SplitBlockAndInsertIfThen(cast<Instruction>(Cmp), false,
                                       MS.OriginStoreWeights);
           IRBuilder<> IRBNew(CheckTerm);
-          IRBNew.CreateStore(getOrigin(Val), getOriginPtr(Addr, IRBNew));
+          IRBNew.CreateAlignedStore(getOrigin(Val), getOriginPtr(Addr, IRBNew),
+                                    Alignment);
         }
       }
     }
@@ -827,8 +831,10 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     if (ClCheckAccessAddress)
       insertCheck(I.getPointerOperand(), &I);
 
-    if (MS.TrackOrigins)
-      setOrigin(&I, IRB.CreateLoad(getOriginPtr(Addr, IRB)));
+    if (MS.TrackOrigins) {
+      unsigned Alignment = std::max(kMinOriginAlignment, I.getAlignment());
+      setOrigin(&I, IRB.CreateAlignedLoad(getOriginPtr(Addr, IRB), Alignment));
+    }
   }
 
   /// \brief Instrument StoreInst

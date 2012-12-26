@@ -56,7 +56,7 @@ entry:
 ; CHECK-ORIGINS: icmp
 ; CHECK-ORIGINS: br i1
 ; CHECK-ORIGINS: <label>
-; CHECK-ORIGINS-NOT: store {{.*}} align
+; CHECK-ORIGINS: store {{.*}} align 32
 ; CHECK-ORIGINS: br label
 ; CHECK-ORIGINS: <label>
 ; CHECK-ORIGINS: store {{.*}} align 32
@@ -362,7 +362,8 @@ define zeroext i1 @ICmpSLE(i32 %x) nounwind uwtable readnone {
 ; CHECK: ret i1
 
 
-; Check that loads from shadow have the same aligment as the original loads.
+; Check that loads of shadow have the same aligment as the original loads.
+; Check that loads of origin have the aligment of max(4, original alignment).
 
 define i32 @ShadowLoadAlignmentLarge() nounwind uwtable {
   %y = alloca i32, align 64
@@ -385,6 +386,12 @@ define i32 @ShadowLoadAlignmentSmall() nounwind uwtable {
 ; CHECK: load i32* {{.*}} align 2
 ; CHECK: load volatile i32* {{.*}} align 2
 ; CHECK: ret i32
+
+; CHECK-ORIGINS: @ShadowLoadAlignmentSmall
+; CHECK-ORIGINS: load i32* {{.*}} align 2
+; CHECK-ORIGINS: load i32* {{.*}} align 4
+; CHECK-ORIGINS: load volatile i32* {{.*}} align 2
+; CHECK-ORIGINS: ret i32
 
 
 ; Test vector manipulation instructions.
