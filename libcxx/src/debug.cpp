@@ -23,7 +23,7 @@ __get_db()
 {
     static __libcpp_db db;
     return &db;
-};
+}
 
 _LIBCPP_VISIBLE
 const __libcpp_db*

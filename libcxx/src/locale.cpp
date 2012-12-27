@@ -865,7 +865,7 @@ ctype<char>::do_toupper(char_type c) const
     return isascii(c) ?
       static_cast<char>(_DefaultRuneLocale.__mapupper[static_cast<ptrdiff_t>(c)]) : c;
 #elif defined(__GLIBC__)
-    return isascii(c) ? __classic_upper_table()[c] : c;
+    return isascii(c) ? __classic_upper_table()[static_cast<size_t>(c)] : c;
 #else
     return (isascii(c) && islower_l(c, __cloc())) ? c-'a'+'A' : c;
 #endif
@@ -879,7 +879,7 @@ ctype<char>::do_toupper(char_type* low, const char_type* high) const
         *low = isascii(*low) ?
           static_cast<char>(_DefaultRuneLocale.__mapupper[static_cast<ptrdiff_t>(*low)]) : *low;
 #elif defined(__GLIBC__)
-        *low = isascii(*low) ? __classic_upper_table()[*low] : *low;
+        *low = isascii(*low) ? __classic_upper_table()[static_cast<size_t>(*low)] : *low;
 #else
         *low = (isascii(*low) && islower_l(*low, __cloc())) ? *low-'a'+'A' : *low;
 #endif
@@ -893,7 +893,7 @@ ctype<char>::do_tolower(char_type c) const
     return isascii(c) ?
       static_cast<char>(_DefaultRuneLocale.__maplower[static_cast<ptrdiff_t>(c)]) : c;
 #elif defined(__GLIBC__)
-    return isascii(c) ? __classic_lower_table()[c] : c;
+    return isascii(c) ? __classic_lower_table()[static_cast<size_t>(c)] : c;
 #else
     return (isascii(c) && isupper_l(c, __cloc())) ? c-'A'+'a' : c;
 #endif
@@ -906,7 +906,7 @@ ctype<char>::do_tolower(char_type* low, const char_type* high) const
 #ifdef _LIBCPP_HAS_DEFAULTRUNELOCALE
         *low = isascii(*low) ? static_cast<char>(_DefaultRuneLocale.__maplower[static_cast<ptrdiff_t>(*low)]) : *low;
 #elif defined(__GLIBC__)
-        *low = isascii(*low) ? __classic_lower_table()[*low] : *low;
+        *low = isascii(*low) ? __classic_lower_table()[static_cast<size_t>(*low)] : *low;
 #else
         *low = (isascii(*low) && isupper_l(*low, __cloc())) ? *low-'A'+'a' : *low;
 #endif
@@ -1229,7 +1229,7 @@ ctype_byname<wchar_t>::do_narrow(char_type c, char dfault) const
 #else
     int r = __wctob_l(c, __l);
 #endif
-    return r != WEOF ? static_cast<char>(r) : dfault;
+    return r != static_cast<int>(WEOF) ? static_cast<char>(r) : dfault;
 }
 
 const wchar_t*
@@ -1242,7 +1242,7 @@ ctype_byname<wchar_t>::do_narrow(const char_type* low, const char_type* high, ch
 #else
         int r = __wctob_l(*low, __l);
 #endif
-        *dest = r != WEOF ? static_cast<char>(r) : dfault;
+        *dest = r != static_cast<int>(WEOF) ? static_cast<char>(r) : dfault;
     }
     return low;
 }
@@ -4922,7 +4922,6 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
 {
     tm t = {0};
     char buf[100];
-    size_t be;
     wchar_t wbuf[100];
     wchar_t* wbe;
     mbstate_t mb = {0};
@@ -4930,7 +4929,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
     for (int i = 0; i < 7; ++i)
     {
         t.tm_wday = i;
-        be = strftime_l(buf, 100, "%A", &t, __loc_);
+        strftime_l(buf, 100, "%A", &t, __loc_);
         mb = mbstate_t();
         const char* bb = buf;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -4942,7 +4941,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
             __throw_runtime_error("locale not supported");
         wbe = wbuf + j;
         __weeks_[i].assign(wbuf, wbe);
-        be = strftime_l(buf, 100, "%a", &t, __loc_);
+        strftime_l(buf, 100, "%a", &t, __loc_);
         mb = mbstate_t();
         bb = buf;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -4959,7 +4958,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
     for (int i = 0; i < 12; ++i)
     {
         t.tm_mon = i;
-        be = strftime_l(buf, 100, "%B", &t, __loc_);
+        strftime_l(buf, 100, "%B", &t, __loc_);
         mb = mbstate_t();
         const char* bb = buf;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -4971,7 +4970,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
             __throw_runtime_error("locale not supported");
         wbe = wbuf + j;
         __months_[i].assign(wbuf, wbe);
-        be = strftime_l(buf, 100, "%b", &t, __loc_);
+        strftime_l(buf, 100, "%b", &t, __loc_);
         mb = mbstate_t();
         bb = buf;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -4986,7 +4985,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
     }
     // __am_pm_
     t.tm_hour = 1;
-    be = strftime_l(buf, 100, "%p", &t, __loc_);
+    strftime_l(buf, 100, "%p", &t, __loc_);
     mb = mbstate_t();
     const char* bb = buf;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
@@ -4999,7 +4998,7 @@ __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
     wbe = wbuf + j;
     __am_pm_[0].assign(wbuf, wbe);
     t.tm_hour = 13;
-    be = strftime_l(buf, 100, "%p", &t, __loc_);
+    strftime_l(buf, 100, "%p", &t, __loc_);
     mb = mbstate_t();
     bb = buf;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
