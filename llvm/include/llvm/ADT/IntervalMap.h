@@ -151,6 +151,26 @@ struct IntervalMapInfo {
 
 };
 
+template <typename T>
+struct IntervalMapHalfOpenInfo {
+
+  /// startLess - Return true if x is not in [a;b).
+  static inline bool startLess(const T &x, const T &a) {
+    return x < a;
+  }
+
+  /// stopLess - Return true if x is not in [a;b).
+  static inline bool stopLess(const T &b, const T &x) {
+    return b <= x;
+  }
+
+  /// adjacent - Return true when the intervals [x;a) and [b;y) can coalesce.
+  static inline bool adjacent(const T &a, const T &b) {
+    return a == b;
+  }
+
+};
+
 /// IntervalMapImpl - Namespace used for IntervalMap implementation details.
 /// It should be considered private to the implementation.
 namespace IntervalMapImpl {
