@@ -3289,6 +3289,7 @@ multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
                       (ins VR128:$src1, VR128:$src2),
                       !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
                       [], itins.rr>;
+    let mayLoad = 1, hasSideEffects = 0 in
     def SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
                       (ins VR128:$src1, ssmem:$src2),
                       !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
@@ -6091,6 +6092,7 @@ multiclass sse41_fp_binop_rm<bits<8> opcss, bits<8> opcsd,
                             Intrinsic F64Int, bit Is2Addr = 1> {
 let ExeDomain = GenericDomain in {
   // Operation, reg.
+  let hasSideEffects = 0 in
   def SSr : SS4AIi8<opcss, MRMSrcReg,
       (outs FR32:$dst), (ins FR32:$src1, FR32:$src2, i32i8imm:$src3),
       !if(Is2Addr,
@@ -6124,6 +6126,7 @@ let ExeDomain = GenericDomain in {
         OpSize;
 
   // Operation, reg.
+  let hasSideEffects = 0 in
   def SDr : SS4AIi8<opcsd, MRMSrcReg,
         (outs FR64:$dst), (ins FR64:$src1, FR64:$src2, i32i8imm:$src3),
         !if(Is2Addr,
