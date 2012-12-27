@@ -51,6 +51,7 @@ def SHL64ri  : RIi8<0xC1, MRM4r, (outs GR64:$dst),
 
 // NOTE: We don't include patterns for shifts of a register by one, because
 // 'add reg,reg' is cheaper (and we have a Pat pattern for shift-by-one).
+let hasSideEffects = 0 in {
 def SHL8r1   : I<0xD0, MRM4r, (outs GR8:$dst), (ins GR8:$src1),
                  "shl{b}\t$dst", [], IIC_SR>;
 def SHL16r1  : I<0xD1, MRM4r, (outs GR16:$dst), (ins GR16:$src1),
@@ -59,8 +60,9 @@ def SHL32r1  : I<0xD1, MRM4r, (outs GR32:$dst), (ins GR32:$src1),
                  "shl{l}\t$dst", [], IIC_SR>;
 def SHL64r1  : RI<0xD1, MRM4r, (outs GR64:$dst), (ins GR64:$src1),
                  "shl{q}\t$dst", [], IIC_SR>;
+} // hasSideEffects = 0
 } // isConvertibleToThreeAddress = 1
-} // Constraints = "$src = $dst" 
+} // Constraints = "$src = $dst"
 
 
 // FIXME: Why do we need an explicit "Uses = [CL]" when the instr has a pattern
@@ -333,6 +335,7 @@ def SAR64m1 : RI<0xD1, MRM7m, (outs), (ins i64mem:$dst),
 // Rotate instructions
 //===----------------------------------------------------------------------===//
 
+let hasSideEffects = 0 in {
 let Constraints = "$src1 = $dst" in {
 def RCL8r1 : I<0xD0, MRM2r, (outs GR8:$dst), (ins GR8:$src1),
                "rcl{b}\t$dst", [], IIC_SR>;
@@ -455,6 +458,7 @@ def RCR32mCL : I<0xD3, MRM3m, (outs), (ins i32mem:$dst),
 def RCR64mCL : RI<0xD3, MRM3m, (outs), (ins i64mem:$dst),
                   "rcr{q}\t{%cl, $dst|$dst, CL}", [], IIC_SR>;
 }
+} // hasSideEffects = 0
 
 let Constraints = "$src1 = $dst" in {
 // FIXME: provide shorter instructions when imm8 == 1
