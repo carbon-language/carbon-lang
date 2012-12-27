@@ -157,15 +157,18 @@ DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
     AbbreviationsSet(InitAbbreviationsSetSize),
     SourceIdMap(DIEValueAllocator), InfoStringPool(DIEValueAllocator),
     PrevLabel(NULL), GlobalCUIndexCount(0),
-    InfoHolder(A, &AbbreviationsSet, &Abbreviations, &InfoStringPool),
+    InfoHolder(A, &AbbreviationsSet, &Abbreviations,
+               &InfoStringPool, "info_string"),
     SkeletonCU(0),
     SkeletonAbbrevSet(InitAbbreviationsSetSize),
-    SkeletonHolder(A, &SkeletonAbbrevSet, &SkeletonAbbrevs, &InfoStringPool) {
+    SkeletonStringPool(DIEValueAllocator),
+    SkeletonHolder(A, &SkeletonAbbrevSet, &SkeletonAbbrevs,
+                   &SkeletonStringPool, "skel_string") {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
   DwarfDebugRangeSectionSym = DwarfDebugLocSectionSym = 0;
-  DwarfAbbrevDWOSectionSym = 0;
+  DwarfAbbrevDWOSectionSym = DwarfStrDWOSectionSym = 0;
   FunctionBeginSym = FunctionEndSym = 0;
 
   // Turn on accelerator tables and older gdb compatibility
@@ -213,7 +216,7 @@ static MCSymbol *emitSectionSym(AsmPrinter *Asm, const MCSection *Section,
 }
 
 MCSymbol *DwarfUnits::getStringPoolSym() {
-  return Asm->GetTempSymbol("section_str");
+  return Asm->GetTempSymbol(StringPref);
 }
 
 MCSymbol *DwarfUnits::getStringPoolEntry(StringRef Str) {
@@ -222,7 +225,7 @@ MCSymbol *DwarfUnits::getStringPoolEntry(StringRef Str) {
   if (Entry.first) return Entry.first;
 
   Entry.second = NextStringPoolNumber++;
-  return Entry.first = Asm->GetTempSymbol("string", Entry.second);
+  return Entry.first = Asm->GetTempSymbol(StringPref, Entry.second);
 }
 
 // Define a unique number for the abbreviation.
@@ -987,6 +990,8 @@ void DwarfDebug::endModule() {
 
   // Finally emit string information into a string table.
   emitDebugStr();
+  if (useSplitDwarf())
+    emitDebugStrDWO();
 
   // clean up.
   SPMap.clear();
@@ -1724,7 +1729,10 @@ void DwarfDebug::emitSectionLabels() {
   emitSectionSym(Asm, TLOF.getDwarfLocSection());
   emitSectionSym(Asm, TLOF.getDwarfPubTypesSection());
   DwarfStrSectionSym =
-    emitSectionSym(Asm, TLOF.getDwarfStrSection(), "section_str");
+    emitSectionSym(Asm, TLOF.getDwarfStrSection(), "info_string");
+  if (useSplitDwarf())
+    DwarfStrDWOSectionSym =
+      emitSectionSym(Asm, TLOF.getDwarfStrDWOSection(), "skel_string");
   DwarfDebugRangeSectionSym = emitSectionSym(Asm, TLOF.getDwarfRangesSection(),
                                              "debug_range");
 
@@ -2107,23 +2115,21 @@ void DwarfDebug::emitDebugPubTypes() {
   }
 }
 
-// Emit visible names into a debug str section.
-void DwarfDebug::emitDebugStr() {
-  // Check to see if it is worth the effort.
-  if (InfoHolder.getStringPool()->empty()) return;
+// Emit strings into a string section.
+void DwarfUnits::emitStrings(const MCSection *Section) {
+
+  if (StringPool->empty()) return;
 
   // Start the dwarf str section.
-  Asm->OutStreamer.SwitchSection(
-                                Asm->getObjFileLowering().getDwarfStrSection());
+  Asm->OutStreamer.SwitchSection(Section);
 
   // Get all of the string pool entries and put them in an array by their ID so
   // we can sort them.
   SmallVector<std::pair<unsigned,
-      StringMapEntry<std::pair<MCSymbol*, unsigned> >*>, 64> Entries;
+                        StringMapEntry<std::pair<MCSymbol*, unsigned> >*>, 64> Entries;
 
   for (StringMap<std::pair<MCSymbol*, unsigned> >::iterator
-       I = InfoHolder.getStringPool()->begin(),
-         E = InfoHolder.getStringPool()->end();
+         I = StringPool->begin(), E = StringPool->end();
        I != E; ++I)
     Entries.push_back(std::make_pair(I->second.second, &*I));
 
@@ -2138,6 +2144,12 @@ void DwarfDebug::emitDebugStr() {
                                          Entries[i].second->getKeyLength()+1),
                                0/*addrspace*/);
   }
+}
+
+// Emit visible names into a debug str section.
+void DwarfDebug::emitDebugStr() {
+  DwarfUnits &Holder = useSplitDwarf() ? SkeletonHolder : InfoHolder;
+  Holder.emitStrings(Asm->getObjFileLowering().getDwarfStrSection());
 }
 
 // Emit visible names into a debug loc section.
@@ -2363,7 +2375,7 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(GlobalCUIndexCount++,
                                        DIUnit.getLanguage(), Die, Asm,
-                                       this, &InfoHolder);
+                                       this, &SkeletonHolder);
   // FIXME: This should be the .dwo file.
   NewCU->addString(Die, dwarf::DW_AT_GNU_dwo_name, FN);
 
@@ -2439,4 +2451,12 @@ void DwarfDebug::emitDebugAbbrevDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
   emitAbbrevs(Asm->getObjFileLowering().getDwarfAbbrevDWOSection(),
               &Abbreviations);
+}
+
+// Emit the .debug_str.dwo section for separated dwarf. This contains the
+// string section and is identical in format to traditional .debug_str
+// sections.
+void DwarfDebug::emitDebugStrDWO() {
+  assert(useSplitDwarf() && "No split dwarf?");
+  InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection());
 }

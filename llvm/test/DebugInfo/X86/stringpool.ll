@@ -15,7 +15,7 @@
 !7 = metadata !{i32 720932, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 
 ; Verify that we refer to 'yyyy' with a relocation.
-; LINUX:      .long   .Lstring3               # DW_AT_name
+; LINUX:      .long   .Linfo_string3          # DW_AT_name
 ; LINUX-NEXT: .long   38                      # DW_AT_type
 ; LINUX-NEXT:                                 # DW_AT_external
 ; LINUX-NEXT: .byte   1                       # DW_AT_decl_file
@@ -25,7 +25,7 @@
 ; LINUX-NEXT: .quad   yyyy
 
 ; Verify that we refer to 'yyyy' without a relocation.
-; DARWIN: Lset5 = Lstring3-Lsection_str               ## DW_AT_name
+; DARWIN: Lset5 = Linfo_string3-Linfo_string          ## DW_AT_name
 ; DARWIN-NEXT:        .long   Lset5
 ; DARWIN-NEXT:        .long   39                      ## DW_AT_type
 ; DARWIN-NEXT:        .byte   1                       ## DW_AT_external

@@ -20,10 +20,10 @@
 ; DW_AT_ranges_base, DW_AT_addr_base.
 
 ; CHECK: DW_TAG_compile_unit
-; CHECK: DW_AT_GNU_dwo_name [DW_FORM_strp] ( .debug_str[0x00000035] = "baz.c")
+; CHECK: DW_AT_GNU_dwo_name [DW_FORM_strp] ( .debug_str[0x00000000] = "baz.c")
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
 ; CHECK: DW_AT_stmt_list [DW_FORM_data4]   (0x00000000)
-; CHECK: DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x0000003b] = "/usr/local/google/home/echristo/tmp")
+; CHECK: DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000006] = "/usr/local/google/home/echristo/tmp")
 
 ; Make sure there's only one compile unit for now.
 ; CHECK-NOT: DW_TAG_compile_unit

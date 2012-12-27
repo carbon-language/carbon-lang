@@ -210,15 +210,17 @@ class DwarfUnits {
   // A pointer to all units in the section.
   SmallVector<CompileUnit *, 1> CUs;
 
-  // Collection of strings for this unit.
+  // Collection of strings for this unit and assorted symbols.
   StrPool *StringPool;
   unsigned NextStringPoolNumber;
+  std::string StringPref;
 
 public:
   DwarfUnits(AsmPrinter *AP, FoldingSet<DIEAbbrev> *AS,
-             std::vector<DIEAbbrev *> *A, StrPool *SP) :
+             std::vector<DIEAbbrev *> *A,
+             StrPool *SP, const char *Pref) :
     Asm(AP), AbbreviationsSet(AS), Abbreviations(A),
-    StringPool(SP), NextStringPoolNumber(0) {}
+    StringPool(SP), NextStringPoolNumber(0), StringPref(Pref) {}
 
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
@@ -236,6 +238,9 @@ public:
   /// abbreviation section.
   void emitUnits(DwarfDebug *, const MCSection *, const MCSection *,
                  const MCSymbol *);
+
+  /// \brief Emit all of the strings to the section given.
+  void emitStrings(const MCSection *);
 
   /// \brief Returns the entry into the start of the pool.
   MCSymbol *getStringPoolSym();
@@ -364,7 +369,7 @@ class DwarfDebug {
   MCSymbol *DwarfStrSectionSym, *TextSectionSym, *DwarfDebugRangeSectionSym;
   MCSymbol *DwarfDebugLocSectionSym;
   MCSymbol *FunctionBeginSym, *FunctionEndSym;
-  MCSymbol *DwarfAbbrevDWOSectionSym;
+  MCSymbol *DwarfAbbrevDWOSectionSym, *DwarfStrDWOSectionSym;
 
   // As an optimization, there is no need to emit an entry in the directory
   // table for the same directory as DW_at_comp_dir.
@@ -394,12 +399,16 @@ class DwarfDebug {
   // The CU left in the original object file for separated debug info.
   CompileUnit *SkeletonCU;
 
-    // Used to uniquely define abbreviations for the skeleton emission.
+  // Used to uniquely define abbreviations for the skeleton emission.
   FoldingSet<DIEAbbrev> SkeletonAbbrevSet;
 
   // A list of all the unique abbreviations in use.
   std::vector<DIEAbbrev *> SkeletonAbbrevs;
 
+  // List of strings used in the skeleton.
+  StrPool SkeletonStringPool;
+
+  // Holder for the skeleton information.
   DwarfUnits SkeletonHolder;
 
 private:
@@ -513,6 +522,9 @@ private:
 
   /// \brief Emit the debug abbrev dwo section.
   void emitDebugAbbrevDWO();
+
+  /// \brief Emit the debug str dwo section.
+  void emitDebugStrDWO();
 
   /// \brief Create new CompileUnit for the given metadata node with tag
   /// DW_TAG_compile_unit.
