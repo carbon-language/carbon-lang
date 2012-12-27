@@ -60,13 +60,8 @@ public:
   }
   
   void VisitCXXTypeidExpr(CXXTypeidExpr *E) {
-    // typeid(expression) is potentially evaluated when the argument is
-    // a glvalue of polymorphic type. (C++ 5.2.8p2-3)
-    if (!E->isTypeOperand() && E->Classify(Context).isGLValue())
-      if (const RecordType *Record 
-                 = E->getExprOperand()->getType()->template getAs<RecordType>())
-        if (cast<CXXRecordDecl>(Record->getDecl())->isPolymorphic())
-          return this->Visit(E->getExprOperand());
+    if (E->isPotentiallyEvaluated())
+      return this->Visit(E->getExprOperand());
   }
   
   /// \brief The basis case walks all of the children of the statement or
