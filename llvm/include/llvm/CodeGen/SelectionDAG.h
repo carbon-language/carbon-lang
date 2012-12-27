@@ -18,6 +18,7 @@
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/ilist.h"
+#include "llvm/CodeGen/DAGCombine.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/Target/TargetMachine.h"
@@ -109,13 +110,6 @@ public:
   DbgIterator DbgEnd()   { return DbgValues.end(); }
   DbgIterator ByvalParmDbgBegin() { return ByvalParmDbgValues.begin(); }
   DbgIterator ByvalParmDbgEnd()   { return ByvalParmDbgValues.end(); }
-};
-
-enum CombineLevel {
-  BeforeLegalizeTypes,
-  AfterLegalizeTypes,
-  AfterLegalizeVectorOps,
-  AfterLegalizeDAG
 };
 
 class SelectionDAG;

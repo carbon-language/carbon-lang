@@ -26,6 +26,7 @@
 #include "llvm/AddressingMode.h"
 #include "llvm/Attributes.h"
 #include "llvm/CallingConv.h"
+#include "llvm/CodeGen/DAGCombine.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/InlineAsm.h"
@@ -963,18 +964,19 @@ public:
 
   struct DAGCombinerInfo {
     void *DC;  // The DAG Combiner object.
-    bool BeforeLegalize;
-    bool BeforeLegalizeOps;
+    CombineLevel Level;
     bool CalledByLegalizer;
   public:
     SelectionDAG &DAG;
 
-    DAGCombinerInfo(SelectionDAG &dag, bool bl, bool blo, bool cl, void *dc)
-      : DC(dc), BeforeLegalize(bl), BeforeLegalizeOps(blo),
-        CalledByLegalizer(cl), DAG(dag) {}
+    DAGCombinerInfo(SelectionDAG &dag, CombineLevel level,  bool cl, void *dc)
+      : DC(dc), Level(level), CalledByLegalizer(cl), DAG(dag) {}
 
-    bool isBeforeLegalize() const { return BeforeLegalize; }
-    bool isBeforeLegalizeOps() const { return BeforeLegalizeOps; }
+    bool isBeforeLegalize() const { return Level == BeforeLegalizeTypes; }
+    bool isBeforeLegalizeOps() const { return Level < AfterLegalizeVectorOps; }
+    bool isAfterLegalizeVectorOps() const {
+      return Level == AfterLegalizeDAG;
+    }
     bool isCalledByLegalizer() const { return CalledByLegalizer; }
 
     void AddToWorklist(SDNode *N);
