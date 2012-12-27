@@ -12,7 +12,6 @@
 #include "stdexcept"
 #include "type_traits"
 
-#pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtautological-constant-out-of-range-compare"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
