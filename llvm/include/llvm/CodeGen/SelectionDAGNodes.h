@@ -49,7 +49,7 @@ template <typename T> struct simplify_type;
 template <typename T> struct ilist_traits;
 
 void checkForCycles(const SDNode *N);
-  
+
 /// SDVTList - This represents a list of ValueType's that has been intern'd by
 /// a SelectionDAG.  Instances of this simple value class are returned by
 /// SelectionDAG::getVTList(...).
@@ -108,7 +108,7 @@ public:
   void setNode(SDNode *N) { Node = N; }
 
   inline SDNode *operator->() const { return Node; }
-  
+
   bool operator==(const SDValue &O) const {
     return Node == O.Node && ResNo == O.ResNo;
   }
@@ -530,7 +530,7 @@ public:
   /// NOTE: This is still very expensive. Use carefully.
   bool hasPredecessorHelper(const SDNode *N,
                             SmallPtrSet<const SDNode *, 32> &Visited,
-                            SmallVector<const SDNode *, 16> &Worklist) const; 
+                            SmallVector<const SDNode *, 16> &Worklist) const;
 
   /// getNumOperands - Return the number of values used by this operation.
   ///
