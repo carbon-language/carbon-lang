@@ -2680,26 +2680,26 @@ multiclass PDI_binop_all<bits<8> opc, string OpcodeStr, SDNode Opcode,
                          ValueType OpVT128, ValueType OpVT256,
                          OpndItins itins, bit IsCommutable = 0> {
 let Predicates = [HasAVX] in
-  defm VP#NAME : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode, OpVT128,
+  defm V#NAME# : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode, OpVT128,
                     VR128, memopv2i64, i128mem, itins, IsCommutable, 0>, VEX_4V;
 
 let Constraints = "$src1 = $dst" in
-  defm P#NAME : PDI_binop_rm<opc, OpcodeStr, Opcode, OpVT128, VR128,
+  defm #NAME# : PDI_binop_rm<opc, OpcodeStr, Opcode, OpVT128, VR128,
                              memopv2i64, i128mem, itins, IsCommutable, 1>;
 
 let Predicates = [HasAVX2] in
-  defm VP#NAME#Y : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode,
+  defm V#NAME#Y : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode,
                                 OpVT256, VR256, memopv4i64, i256mem, itins,
                                 IsCommutable, 0>, VEX_4V, VEX_L;
 }
 
 // These are ordered here for pattern ordering requirements with the fp versions
 
-defm AND  : PDI_binop_all<0xDB, "pand", and, v2i64, v4i64, SSE_BIT_ITINS_P, 1>;
-defm OR   : PDI_binop_all<0xEB, "por", or, v2i64, v4i64, SSE_BIT_ITINS_P, 1>;
-defm XOR  : PDI_binop_all<0xEF, "pxor", xor, v2i64, v4i64, SSE_BIT_ITINS_P, 1>;
-defm ANDN : PDI_binop_all<0xDF, "pandn", X86andnp, v2i64, v4i64,
-                          SSE_BIT_ITINS_P, 0>;
+defm PAND  : PDI_binop_all<0xDB, "pand", and, v2i64, v4i64, SSE_BIT_ITINS_P, 1>;
+defm POR   : PDI_binop_all<0xEB, "por", or, v2i64, v4i64, SSE_BIT_ITINS_P, 1>;
+defm PXOR  : PDI_binop_all<0xEF, "pxor", xor, v2i64, v4i64, SSE_BIT_ITINS_P, 1>;
+defm PANDN : PDI_binop_all<0xDF, "pandn", X86andnp, v2i64, v4i64,
+                           SSE_BIT_ITINS_P, 0>;
 
 //===----------------------------------------------------------------------===//
 // SSE 1 & 2 - Logical Instructions
@@ -3631,18 +3631,18 @@ multiclass PDI_binop_all_int<bits<8> opc, string OpcodeStr, Intrinsic IntId128,
                              Intrinsic IntId256, OpndItins itins,
                              bit IsCommutable = 0> {
 let Predicates = [HasAVX] in
-  defm VP#NAME : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId128,
+  defm V#NAME# : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId128,
                                   VR128, memopv2i64, i128mem, itins,
                                   IsCommutable, 0>, VEX_4V;
 
 let Constraints = "$src1 = $dst" in
-  defm P#NAME : PDI_binop_rm_int<opc, OpcodeStr, IntId128, VR128, memopv2i64,
+  defm #NAME# : PDI_binop_rm_int<opc, OpcodeStr, IntId128, VR128, memopv2i64,
                                  i128mem, itins, IsCommutable, 1>;
 
 let Predicates = [HasAVX2] in
-  defm VP#NAME#Y : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId256,
-                                    VR256, memopv4i64, i256mem, itins,
-                                    IsCommutable, 0>, VEX_4V, VEX_L;
+  defm V#NAME#Y : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId256,
+                                   VR256, memopv4i64, i256mem, itins,
+                                   IsCommutable, 0>, VEX_4V, VEX_L;
 }
 
 multiclass PDI_binop_rmi<bits<8> opc, bits<8> opc2, Format ImmForm,
@@ -3697,62 +3697,62 @@ multiclass PDI_binop_rm2<bits<8> opc, string OpcodeStr, SDNode OpNode,
 }
 } // ExeDomain = SSEPackedInt
 
-defm ADDB   : PDI_binop_all<0xFC, "paddb", add, v16i8, v32i8,
-                            SSE_INTALU_ITINS_P, 1>;
-defm ADDW   : PDI_binop_all<0xFD, "paddw", add, v8i16, v16i16,
-                            SSE_INTALU_ITINS_P, 1>;
-defm ADDD   : PDI_binop_all<0xFE, "paddd", add, v4i32, v8i32,
-                            SSE_INTALU_ITINS_P, 1>;
-defm ADDQ   : PDI_binop_all<0xD4, "paddq", add, v2i64, v4i64,
-                            SSE_INTALUQ_ITINS_P, 1>;
-defm MULLW  : PDI_binop_all<0xD5, "pmullw", mul, v8i16, v16i16,
-                            SSE_INTMUL_ITINS_P, 1>;
-defm SUBB   : PDI_binop_all<0xF8, "psubb", sub, v16i8, v32i8,
-                            SSE_INTALU_ITINS_P, 0>;
-defm SUBW   : PDI_binop_all<0xF9, "psubw", sub, v8i16, v16i16,
-                            SSE_INTALU_ITINS_P, 0>;
-defm SUBD   : PDI_binop_all<0xFA, "psubd", sub, v4i32, v8i32,
-                            SSE_INTALU_ITINS_P, 0>;
-defm SUBQ   : PDI_binop_all<0xFB, "psubq", sub, v2i64, v4i64,
-                            SSE_INTALUQ_ITINS_P, 0>;
-defm SUBUSB : PDI_binop_all<0xD8, "psubusb", X86subus, v16i8, v32i8,
-                            SSE_INTALU_ITINS_P, 0>;
-defm SUBUSW : PDI_binop_all<0xD9, "psubusw", X86subus, v8i16, v16i16,
-                            SSE_INTALU_ITINS_P, 0>;
-defm MINUB  : PDI_binop_all<0xDA, "pminub", X86umin, v16i8, v32i8,
-                            SSE_INTALU_ITINS_P, 1>;
-defm MINSW  : PDI_binop_all<0xEA, "pminsw", X86smin, v8i16, v16i16,
-                            SSE_INTALU_ITINS_P, 1>;
-defm MAXUB  : PDI_binop_all<0xDE, "pmaxub", X86umax, v16i8, v32i8,
-                            SSE_INTALU_ITINS_P, 1>;
-defm MAXSW  : PDI_binop_all<0xEE, "pmaxsw", X86smax, v8i16, v16i16,
-                            SSE_INTALU_ITINS_P, 1>;
+defm PADDB   : PDI_binop_all<0xFC, "paddb", add, v16i8, v32i8,
+                             SSE_INTALU_ITINS_P, 1>;
+defm PADDW   : PDI_binop_all<0xFD, "paddw", add, v8i16, v16i16,
+                             SSE_INTALU_ITINS_P, 1>;
+defm PADDD   : PDI_binop_all<0xFE, "paddd", add, v4i32, v8i32,
+                             SSE_INTALU_ITINS_P, 1>;
+defm PADDQ   : PDI_binop_all<0xD4, "paddq", add, v2i64, v4i64,
+                             SSE_INTALUQ_ITINS_P, 1>;
+defm PMULLW  : PDI_binop_all<0xD5, "pmullw", mul, v8i16, v16i16,
+                             SSE_INTMUL_ITINS_P, 1>;
+defm PSUBB   : PDI_binop_all<0xF8, "psubb", sub, v16i8, v32i8,
+                             SSE_INTALU_ITINS_P, 0>;
+defm PSUBW   : PDI_binop_all<0xF9, "psubw", sub, v8i16, v16i16,
+                             SSE_INTALU_ITINS_P, 0>;
+defm PSUBD   : PDI_binop_all<0xFA, "psubd", sub, v4i32, v8i32,
+                             SSE_INTALU_ITINS_P, 0>;
+defm PSUBQ   : PDI_binop_all<0xFB, "psubq", sub, v2i64, v4i64,
+                             SSE_INTALUQ_ITINS_P, 0>;
+defm PSUBUSB : PDI_binop_all<0xD8, "psubusb", X86subus, v16i8, v32i8,
+                             SSE_INTALU_ITINS_P, 0>;
+defm PSUBUSW : PDI_binop_all<0xD9, "psubusw", X86subus, v8i16, v16i16,
+                             SSE_INTALU_ITINS_P, 0>;
+defm PMINUB  : PDI_binop_all<0xDA, "pminub", X86umin, v16i8, v32i8,
+                             SSE_INTALU_ITINS_P, 1>;
+defm PMINSW  : PDI_binop_all<0xEA, "pminsw", X86smin, v8i16, v16i16,
+                             SSE_INTALU_ITINS_P, 1>;
+defm PMAXUB  : PDI_binop_all<0xDE, "pmaxub", X86umax, v16i8, v32i8,
+                             SSE_INTALU_ITINS_P, 1>;
+defm PMAXSW  : PDI_binop_all<0xEE, "pmaxsw", X86smax, v8i16, v16i16,
+                             SSE_INTALU_ITINS_P, 1>;
 
 // Intrinsic forms
-defm SUBSB  : PDI_binop_all_int<0xE8, "psubsb", int_x86_sse2_psubs_b,
-                                int_x86_avx2_psubs_b, SSE_INTALU_ITINS_P, 0>;
-defm SUBSW  : PDI_binop_all_int<0xE9, "psubsw" , int_x86_sse2_psubs_w,
-                                int_x86_avx2_psubs_w, SSE_INTALU_ITINS_P, 0>;
-defm ADDSB  : PDI_binop_all_int<0xEC, "paddsb" , int_x86_sse2_padds_b,
-                                int_x86_avx2_padds_b, SSE_INTALU_ITINS_P, 1>;
-defm ADDSW  : PDI_binop_all_int<0xED, "paddsw" , int_x86_sse2_padds_w,
-                                int_x86_avx2_padds_w, SSE_INTALU_ITINS_P, 1>;
-defm ADDUSB : PDI_binop_all_int<0xDC, "paddusb", int_x86_sse2_paddus_b,
-                                int_x86_avx2_paddus_b, SSE_INTALU_ITINS_P, 1>;
-defm ADDUSW : PDI_binop_all_int<0xDD, "paddusw", int_x86_sse2_paddus_w,
-                                int_x86_avx2_paddus_w, SSE_INTALU_ITINS_P, 1>;
-defm MULHUW : PDI_binop_all_int<0xE4, "pmulhuw", int_x86_sse2_pmulhu_w,
-                                int_x86_avx2_pmulhu_w, SSE_INTMUL_ITINS_P, 1>;
-defm MULHW  : PDI_binop_all_int<0xE5, "pmulhw" , int_x86_sse2_pmulh_w,
-                                int_x86_avx2_pmulh_w, SSE_INTMUL_ITINS_P, 1>;
-defm MADDWD : PDI_binop_all_int<0xF5, "pmaddwd", int_x86_sse2_pmadd_wd,
-                                int_x86_avx2_pmadd_wd, SSE_PMADD, 1>;
-defm AVGB   : PDI_binop_all_int<0xE0, "pavgb", int_x86_sse2_pavg_b,
-                                int_x86_avx2_pavg_b, SSE_INTALU_ITINS_P, 1>;
-defm AVGW   : PDI_binop_all_int<0xE3, "pavgw", int_x86_sse2_pavg_w,
-                                int_x86_avx2_pavg_w, SSE_INTALU_ITINS_P, 1>;
-defm SADBW  : PDI_binop_all_int<0xF6, "psadbw", int_x86_sse2_psad_bw,
-                                int_x86_avx2_psad_bw, SSE_INTALU_ITINS_P, 1>;
+defm PSUBSB  : PDI_binop_all_int<0xE8, "psubsb", int_x86_sse2_psubs_b,
+                                 int_x86_avx2_psubs_b, SSE_INTALU_ITINS_P, 0>;
+defm PSUBSW  : PDI_binop_all_int<0xE9, "psubsw" , int_x86_sse2_psubs_w,
+                                 int_x86_avx2_psubs_w, SSE_INTALU_ITINS_P, 0>;
+defm PADDSB  : PDI_binop_all_int<0xEC, "paddsb" , int_x86_sse2_padds_b,
+                                 int_x86_avx2_padds_b, SSE_INTALU_ITINS_P, 1>;
+defm PADDSW  : PDI_binop_all_int<0xED, "paddsw" , int_x86_sse2_padds_w,
+                                 int_x86_avx2_padds_w, SSE_INTALU_ITINS_P, 1>;
+defm PADDUSB : PDI_binop_all_int<0xDC, "paddusb", int_x86_sse2_paddus_b,
+                                 int_x86_avx2_paddus_b, SSE_INTALU_ITINS_P, 1>;
+defm PADDUSW : PDI_binop_all_int<0xDD, "paddusw", int_x86_sse2_paddus_w,
+                                 int_x86_avx2_paddus_w, SSE_INTALU_ITINS_P, 1>;
+defm PMULHUW : PDI_binop_all_int<0xE4, "pmulhuw", int_x86_sse2_pmulhu_w,
+                                 int_x86_avx2_pmulhu_w, SSE_INTMUL_ITINS_P, 1>;
+defm PMULHW  : PDI_binop_all_int<0xE5, "pmulhw" , int_x86_sse2_pmulh_w,
+                                 int_x86_avx2_pmulh_w, SSE_INTMUL_ITINS_P, 1>;
+defm PMADDWD : PDI_binop_all_int<0xF5, "pmaddwd", int_x86_sse2_pmadd_wd,
+                                 int_x86_avx2_pmadd_wd, SSE_PMADD, 1>;
+defm PAVGB   : PDI_binop_all_int<0xE0, "pavgb", int_x86_sse2_pavg_b,
+                                 int_x86_avx2_pavg_b, SSE_INTALU_ITINS_P, 1>;
+defm PAVGW   : PDI_binop_all_int<0xE3, "pavgw", int_x86_sse2_pavg_w,
+                                 int_x86_avx2_pavg_w, SSE_INTALU_ITINS_P, 1>;
+defm PSADBW  : PDI_binop_all_int<0xF6, "psadbw", int_x86_sse2_psad_bw,
+                                 int_x86_avx2_psad_bw, SSE_INTALU_ITINS_P, 1>;
 
 let Predicates = [HasAVX] in
 defm VPMULUDQ : PDI_binop_rm2<0xF4, "vpmuludq", X86pmuludq, v2i64, v4i32, VR128,
@@ -3947,30 +3947,29 @@ let Predicates = [UseSSE2] in {
 // SSE2 - Packed Integer Comparison Instructions
 //===---------------------------------------------------------------------===//
 
-defm CMPEQB : PDI_binop_all<0x74, "pcmpeqb", X86pcmpeq, v16i8, v32i8,
-                            SSE_INTALU_ITINS_P, 1>;
-defm CMPEQW : PDI_binop_all<0x75, "pcmpeqw", X86pcmpeq, v8i16, v16i16,
-                            SSE_INTALU_ITINS_P, 1>;
-defm CMPEQD : PDI_binop_all<0x76, "pcmpeqd", X86pcmpeq, v4i32, v8i32,
-                            SSE_INTALU_ITINS_P, 1>;
-defm CMPGTB : PDI_binop_all<0x64, "pcmpgtb", X86pcmpgt, v16i8, v32i8,
-                            SSE_INTALU_ITINS_P, 0>;
-defm CMPGTW : PDI_binop_all<0x65, "pcmpgtw", X86pcmpgt, v8i16, v16i16,
-                            SSE_INTALU_ITINS_P, 0>;
-defm CMPGTD : PDI_binop_all<0x66, "pcmpgtd", X86pcmpgt, v4i32, v8i32,
-                            SSE_INTALU_ITINS_P, 0>;
+defm PCMPEQB : PDI_binop_all<0x74, "pcmpeqb", X86pcmpeq, v16i8, v32i8,
+                             SSE_INTALU_ITINS_P, 1>;
+defm PCMPEQW : PDI_binop_all<0x75, "pcmpeqw", X86pcmpeq, v8i16, v16i16,
+                             SSE_INTALU_ITINS_P, 1>;
+defm PCMPEQD : PDI_binop_all<0x76, "pcmpeqd", X86pcmpeq, v4i32, v8i32,
+                             SSE_INTALU_ITINS_P, 1>;
+defm PCMPGTB : PDI_binop_all<0x64, "pcmpgtb", X86pcmpgt, v16i8, v32i8,
+                             SSE_INTALU_ITINS_P, 0>;
+defm PCMPGTW : PDI_binop_all<0x65, "pcmpgtw", X86pcmpgt, v8i16, v16i16,
+                             SSE_INTALU_ITINS_P, 0>;
+defm PCMPGTD : PDI_binop_all<0x66, "pcmpgtd", X86pcmpgt, v4i32, v8i32,
+                             SSE_INTALU_ITINS_P, 0>;
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Pack Instructions
 //===---------------------------------------------------------------------===//
 
-// FIXME: Names are bad due to the need to have a 'P' prefix in the multiclass.
-defm ACKSSWB : PDI_binop_all_int<0x63, "packsswb", int_x86_sse2_packsswb_128,
-                                 int_x86_avx2_packsswb, SSE_INTALU_ITINS_P, 0>;
-defm ACKSSDW : PDI_binop_all_int<0x6B, "packssdw", int_x86_sse2_packssdw_128,
-                                 int_x86_avx2_packssdw, SSE_INTALU_ITINS_P, 0>;
-defm ACKUSWB : PDI_binop_all_int<0x67, "packuswb", int_x86_sse2_packuswb_128,
-                                 int_x86_avx2_packuswb, SSE_INTALU_ITINS_P, 0>;
+defm PACKSSWB : PDI_binop_all_int<0x63, "packsswb", int_x86_sse2_packsswb_128,
+                                  int_x86_avx2_packsswb, SSE_INTALU_ITINS_P, 0>;
+defm PACKSSDW : PDI_binop_all_int<0x6B, "packssdw", int_x86_sse2_packssdw_128,
+                                  int_x86_avx2_packssdw, SSE_INTALU_ITINS_P, 0>;
+defm PACKUSWB : PDI_binop_all_int<0x67, "packuswb", int_x86_sse2_packuswb_128,
+                                  int_x86_avx2_packuswb, SSE_INTALU_ITINS_P, 0>;
 
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Shuffle Instructions
