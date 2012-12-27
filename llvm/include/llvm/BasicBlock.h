@@ -93,8 +93,10 @@ public:
   LLVMContext &getContext() const;
 
   /// Instruction iterators...
-  typedef InstListType::iterator                              iterator;
-  typedef InstListType::const_iterator                  const_iterator;
+  typedef InstListType::iterator iterator;
+  typedef InstListType::const_iterator const_iterator;
+  typedef InstListType::reverse_iterator reverse_iterator;
+  typedef InstListType::const_reverse_iterator const_reverse_iterator;
 
   /// Create - Creates a new BasicBlock. If the Parent parameter is specified,
   /// the basic block is automatically inserted at either the end of the
@@ -190,6 +192,11 @@ public:
   inline const_iterator          begin() const { return InstList.begin(); }
   inline iterator                end  ()       { return InstList.end();   }
   inline const_iterator          end  () const { return InstList.end();   }
+
+  inline reverse_iterator        rbegin()       { return InstList.rbegin(); }
+  inline const_reverse_iterator  rbegin() const { return InstList.rbegin(); }
+  inline reverse_iterator        rend  ()       { return InstList.rend();   }
+  inline const_reverse_iterator  rend  () const { return InstList.rend();   }
 
   inline size_t                   size() const { return InstList.size();  }
   inline bool                    empty() const { return InstList.empty(); }
