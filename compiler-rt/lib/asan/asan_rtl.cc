@@ -145,7 +145,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->fast_unwind_on_fatal = true;
   f->fast_unwind_on_malloc = true;
   f->poison_heap = true;
-  f->alloc_dealloc_mismatch = false;
+  f->alloc_dealloc_mismatch = true;
   f->use_stack_depot = true;  // Only affects allocator2.
 
   // Override from user-specified string.
