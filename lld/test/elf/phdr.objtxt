@@ -2,15 +2,15 @@ RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/phdr.i386 | elf-dump %t1 
 
 ED: # Program Header 0
 ED: 'p_flags', 0x00000005
-ED: 'p_filesz', 0x0000002a
+ED: 'p_filesz', 0x00000025
 ED: # Program Header 1
 ED: 'p_flags', 0x00000004
-ED: 'p_vaddr', 0x004010e0
-ED: 'p_memsz', 0x00000078
+ED: 'p_vaddr', 0x004010d9
+ED: 'p_memsz', 0x0000008b
 ED: # Program Header 2
 ED: 'p_flags', 0x00000006
-ED: 'p_vaddr', 0x00402158
-ED: 'p_memsz', 0x000000ac
+ED: 'p_vaddr', 0x00402164
+ED: 'p_memsz', 0x000000a0
 ED: # Program Header 3
 ED: 'p_flags', 0x00000006
 ED: 'p_vaddr', 0x00404000

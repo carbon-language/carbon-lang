@@ -147,8 +147,9 @@ public:
   enum ContentPermissions {
     perm___  = 0,           // mapped as unaccessible
     permR__  = 8,           // mapped read-only
-    permR_X  = 8 + 2,       // mapped readable and executable
-    permRW_  = 8 + 4,       // mapped readable and writable
+    permRW_  = 8 + 2,       // mapped readable and writable
+    permR_X  = 8 + 4,       // mapped readable and executable
+    permRWX  = 8 + 4 + 2,   // mapped readable and writable and executable
     permRW_L = 8 + 4 + 1,   // initially mapped r/w, then made read-only
                             // loader writable
   };

@@ -44,19 +44,19 @@ ELF-i386:        kind:              call32
 ELF-i386:        target:            puts
 
 ELF-i386:    - name:              .comment
-ELF-i386:      type:              unknown
+ELF-i386:      type:              constant
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .comment
 ELF-i386:      content:           [ 00, 47, 43, 43, 3A, 20, 28, 47, 4E, 55, 29, 20, 
 ELF-i386:                           34, 2E, 37, 2E, 30, 00 ]
 
 ELF-i386:    - name:              .note.GNU-stack
-ELF-i386:      type:              unknown
+ELF-i386:      type:              code
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .note.GNU-stack
 
 ELF-i386:    - name:              .eh_frame
-ELF-i386:      type:              constant
+ELF-i386:      type:              code
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .eh_frame
 ELF-i386:      content:           [ 14, 00, 00, 00, 00, 00, 00, 00, 01, 7A, 52, 00, 
