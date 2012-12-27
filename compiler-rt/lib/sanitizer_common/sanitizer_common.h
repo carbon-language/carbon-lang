@@ -50,6 +50,7 @@ void *Mprotect(uptr fixed_addr, uptr size);
 void *MmapAlignedOrDie(uptr size, uptr alignment, const char *mem_type);
 // Used to check if we can map shadow memory to a fixed location.
 bool MemoryRangeIsAvailable(uptr range_start, uptr range_end);
+void FlushUnneededShadowMemory(uptr addr, uptr size);
 
 // Internal allocator
 void *InternalAlloc(uptr size);

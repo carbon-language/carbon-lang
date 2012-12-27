@@ -71,9 +71,7 @@ uptr GetShadowMemoryConsumption() {
 }
 
 void FlushShadowMemory() {
-  madvise((void*)kLinuxShadowBeg,
-          kLinuxShadowEnd - kLinuxShadowBeg,
-          MADV_DONTNEED);
+  FlushUnneededShadowMemory(kLinuxShadowBeg, kLinuxShadowEnd - kLinuxShadowBeg);
 }
 
 #ifndef TSAN_GO

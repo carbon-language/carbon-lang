@@ -37,10 +37,17 @@ struct AsanMapUnmapCallback {
     AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
     thread_stats.mmaps++;
     thread_stats.mmaped += size;
-    // thread_stats.mmaped_by_size[size_class] += n_chunks;
   }
   void OnUnmap(uptr p, uptr size) const {
     PoisonShadow(p, size, 0);
+    // We are about to unmap a chunk of user memory.
+    // Mark the corresponding shadow memory as not needed.
+    // Since asan's mapping is compacting, the shadow chunk may be
+    // not page-aligned, so we only flush the page-aligned portion.
+    uptr page_size = GetPageSizeCached();
+    uptr shadow_beg = RoundUpTo(MemToShadow(p), page_size);
+    uptr shadow_end = RoundDownTo(MemToShadow(p + size), page_size);
+    FlushUnneededShadowMemory(shadow_beg, shadow_end - shadow_beg);
     // Statistics.
     AsanStats &thread_stats = asanThreadRegistry().GetCurrentThreadStats();
     thread_stats.munmaps++;

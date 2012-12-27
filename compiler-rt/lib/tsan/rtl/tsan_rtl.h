@@ -65,10 +65,22 @@ const uptr kAllocatorSpace = 0x7d0000000000ULL;
 #endif
 const uptr kAllocatorSize  =  0x10000000000ULL;  // 1T.
 
+struct TsanMapUnmapCallback {
+  void OnMap(uptr p, uptr size) const { }
+  void OnUnmap(uptr p, uptr size) const {
+    // We are about to unmap a chunk of user memory.
+    // Mark the corresponding shadow memory as not needed.
+    uptr shadow_beg = MemToShadow(p);
+    uptr shadow_end = MemToShadow(p + size);
+    CHECK(IsAligned(shadow_end|shadow_beg, GetPageSizeCached()));
+    FlushUnneededShadowMemory(shadow_beg, shadow_end - shadow_beg);
+  }
+};
+
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, sizeof(MBlock),
     DefaultSizeClassMap> PrimaryAllocator;
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
-typedef LargeMmapAllocator<> SecondaryAllocator;
+typedef LargeMmapAllocator<TsanMapUnmapCallback> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
     SecondaryAllocator> Allocator;
 Allocator *allocator();

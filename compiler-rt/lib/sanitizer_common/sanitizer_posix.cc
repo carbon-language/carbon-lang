@@ -115,6 +115,10 @@ void *Mprotect(uptr fixed_addr, uptr size) {
                        -1, 0);
 }
 
+void FlushUnneededShadowMemory(uptr addr, uptr size) {
+  madvise((void*)addr, size, MADV_DONTNEED);
+}
+
 void *MapFileToMemory(const char *file_name, uptr *buff_size) {
   fd_t fd = internal_open(file_name, false);
   CHECK_NE(fd, kInvalidFd);
