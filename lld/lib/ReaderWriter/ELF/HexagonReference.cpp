@@ -67,7 +67,7 @@ int relocB15PCREL(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 /// \brief Word32_LO: 0x00c03fff : (S + A) : Truncate
 int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)(S + A);
-  result = ((result & 0x3fff) | ((result << 2) & 0x00c00000));
+  result = ((result & 0x3fff) | ((result << 8) & 0x00c00000));
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return HexagonKindHandler::NoError;
@@ -76,7 +76,7 @@ int relocLO16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 /// \brief Word32_LO: 0x00c03fff : (S + A) >> 16 : Truncate
 int relocHI16(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)((S + A)>>16);
-  result = ((result & 0x3fff) | ((result << 2) & 0x00c00000));
+  result = ((result & 0x3fff) | ((result << 8) & 0x00c00000));
   *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return HexagonKindHandler::NoError;
