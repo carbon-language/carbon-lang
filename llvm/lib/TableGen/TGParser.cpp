@@ -2406,7 +2406,11 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
 
   Init *DefmPrefix = 0;
 
-  if (Lex.Lex() == tgtok::Id) {  // eat the defm.
+  Lex.Lex(); // eat the defm.
+
+  // Note that tgtok::paste is here to allow starting with #NAME.
+  if (Lex.getCode() == tgtok::Id ||
+      Lex.getCode() == tgtok::paste) {
     DefmPrefix = ParseObjectName(CurMultiClass);
   }
 
