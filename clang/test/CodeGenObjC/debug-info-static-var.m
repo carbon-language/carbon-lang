@@ -3,7 +3,7 @@
 // Radar 8801045
 // Do not emit AT_MIPS_linkage_name for static variable i
 
-// CHECK: Lset6 = Lstring3-Lsection_str           ## DW_AT_name
+// CHECK: Lset6 = Linfo_string3-Linfo_string           ## DW_AT_name
 // CHECK-NEXT: .long   Lset6
 // CHECK-NEXT:        DW_AT_type
 // CHECK-NEXT:        DW_AT_decl_file
