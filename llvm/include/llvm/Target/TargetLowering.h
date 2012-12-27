@@ -977,6 +977,7 @@ public:
     bool isAfterLegalizeVectorOps() const {
       return Level == AfterLegalizeDAG;
     }
+    CombineLevel getDAGCombineLevel() { return Level; }
     bool isCalledByLegalizer() const { return CalledByLegalizer; }
 
     void AddToWorklist(SDNode *N);
