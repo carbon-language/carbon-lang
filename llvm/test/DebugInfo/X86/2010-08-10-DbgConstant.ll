@@ -1,6 +1,7 @@
-; RUN: llc  -mtriple=i686-linux -O0 < %s | FileCheck %s
-; CHECK: DW_TAG_constant
-; CHECK-NEXT: .long .Lstring3 #{{#?}} DW_AT_name
+; RUN: llc  -mtriple=i686-linux -O0 -filetype=obj -o %t %s
+; RUN: llvm-dwarfdump %t | FileCheck %s
+; CHECK: DW_TAG_constant [4]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp] ( .debug_str[0x0000002c] = "ro")
 
 define void @foo() nounwind ssp {
 entry:

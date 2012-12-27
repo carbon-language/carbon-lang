@@ -108,8 +108,8 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
         = cu->getContext().relocMap().find(*offset_ptr);
       if (AI != cu->getContext().relocMap().end()) {
         const std::pair<uint8_t, int64_t> &R = AI->second;
-        Value.uval = R.second;
-        *offset_ptr += R.first;
+        Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize()) +
+                     R.second;
       } else
         Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize());
       break;
@@ -156,8 +156,7 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
         = cu->getContext().relocMap().find(*offset_ptr);
       if (AI != cu->getContext().relocMap().end()) {
         const std::pair<uint8_t, int64_t> &R = AI->second;
-        Value.uval = R.second;
-        *offset_ptr += R.first;
+        Value.uval = data.getU32(offset_ptr) + R.second;
       } else
         Value.uval = data.getU32(offset_ptr);
       break;

@@ -64,6 +64,18 @@ public:
           HasError = true;
           return RelocToApply();
       }
+    } else if (FileFormat == "ELF32-i386") {
+      switch (RelocType) {
+      case llvm::ELF::R_386_NONE:
+        return visitELF_386_NONE(R);
+      case llvm::ELF::R_386_32:
+        return visitELF_386_32(R, Value);
+      case llvm::ELF::R_386_PC32:
+        return visitELF_386_PC32(R, Value, SecAddr);
+      default:
+        HasError = true;
+        return RelocToApply();
+      }
     }
     return RelocToApply();
   }
@@ -75,6 +87,28 @@ private:
   bool HasError;
 
   /// Operations
+
+  /// 386-ELF
+  RelocToApply visitELF_386_NONE(RelocationRef R) {
+    return RelocToApply(0, 0);
+  }
+
+  // Ideally the Addend here will be the addend in the data for
+  // the relocation. It's not actually the case for Rel relocations.
+  RelocToApply visitELF_386_32(RelocationRef R, uint64_t Value) {
+    int64_t Addend;
+    R.getAdditionalInfo(Addend);
+    return RelocToApply(Value + Addend, 4);
+  }
+
+  RelocToApply visitELF_386_PC32(RelocationRef R, uint64_t Value,
+                                 uint64_t SecAddr) {
+    int64_t Addend;
+    R.getAdditionalInfo(Addend);
+    uint64_t Address;
+    R.getAddress(Address);
+    return RelocToApply(Value + Addend - Address, 4);
+  }
 
   /// X86-64 ELF
   RelocToApply visitELF_X86_64_NONE(RelocationRef R) {
