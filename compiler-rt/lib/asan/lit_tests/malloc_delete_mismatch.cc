@@ -18,9 +18,9 @@ int main() {
 }
 // CHECK: ERROR: AddressSanitizer: alloc-dealloc-mismatch (malloc vs operator delete) on 0x
 // CHECK-NEXT: #0{{.*}}operator delete
-// CHECK-NEXT: #1{{.*}}main
+// CHECK: #{{.*}}main
 // CHECK: is located 0 bytes inside of 10-byte region
 // CHECK-NEXT: allocated by thread T0 here:
 // CHECK-NEXT: #0{{.*}}malloc
-// CHECK-NEXT: #1{{.*}}main
+// CHECK: #{{.*}}main
 // CHECK: HINT: {{.*}} you may set ASAN_OPTIONS=alloc_dealloc_mismatch=0
