@@ -1,4 +1,5 @@
-; RUN: llc -mtriple=x86_64-pc-linux-gnu -asm-verbose %s -o - | FileCheck %s
+; RUN: llc -mtriple=x86_64-pc-linux-gnu %s -o %t -filetype=obj
+; RUN: llvm-dwarfdump %t | FileCheck %s
 
 ; ModuleID = 'test.c'
 
@@ -38,10 +39,13 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 !18 = metadata !{i32 4, i32 23, metadata !16, null}
 !19 = metadata !{i32 5, i32 5, metadata !16, null}
 
-; CHECK: .long .Lstring3
-; CHECK: .byte	1
-; CHECK: .byte	1
+; CHECK: DW_TAG_variable [3]
+; CHECK: DW_AT_name [DW_FORM_strp]       ( .debug_str[0x00000043] = "GLB")
+; CHECK: DW_AT_decl_file [DW_FORM_data1] (0x01)
+; CHECK: DW_AT_decl_line [DW_FORM_data1] (0x01)
 
-; CHECK: .long .Lstring6
-; CHECK: .byte	1
-; CHECK: .byte	4
+; CHECK: DW_TAG_variable [6]
+; CHECK: DW_AT_name [DW_FORM_strp]   ( .debug_str[0x0000004d] = "LOC")
+; CHECK: DW_AT_decl_file [DW_FORM_data1]     (0x01)
+; CHECK: DW_AT_decl_line [DW_FORM_data1]     (0x04)
+
