@@ -129,7 +129,4 @@ if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
 endif()
 
-# ASan output tests.
-# FIXME: move all output tests from output_tests/ to lit_tests/ and get rid
-# of the first directory.
 add_subdirectory(lit_tests)

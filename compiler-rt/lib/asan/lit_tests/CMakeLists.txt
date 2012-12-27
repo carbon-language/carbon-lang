@@ -11,9 +11,8 @@ configure_lit_site_cfg(
   ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
   )
 
-if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
-  # Run ASan output tests only if we're not cross-compiling,
-  # and can be sure that clang would produce working binaries.
+if(COMPILER_RT_CAN_EXECUTE_TESTS)
+  # Run ASan tests only if we're sure we may produce working binaries.
   set(ASAN_TEST_DEPS
     clang clang-headers FileCheck count not llvm-nm llvm-symbolizer
     ${ASAN_RUNTIME_LIBRARIES}
@@ -30,11 +29,4 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
     DEPENDS ${ASAN_TEST_DEPS}
     )
   set_target_properties(check-asan PROPERTIES FOLDER "ASan tests")
-elseif(LLVM_INCLUDE_TESTS)
-  # Otherwise run only ASan unit tests.
-  add_lit_testsuite(check-asan "Running the AddressSanitizer unit tests"
-    ${CMAKE_CURRENT_BINARY_DIR}/Unit
-    DEPENDS AsanUnitTests
-    )
-  set_target_properties(check-asan PROPERTIES FOLDER "ASan unit tests")
 endif()

@@ -66,6 +66,15 @@ try_compile(CAN_TARGET_I386 ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE32}
             COMPILE_DEFINITIONS "${TARGET_I386_CFLAGS}"
             CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_I386_CFLAGS}")
 
+# We only support running instrumented tests when we're not cross compiling
+# and target a unix-like system. On Android we define the rules for building
+# unit tests, but don't execute them.
+if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
+  set(COMPILER_RT_CAN_EXECUTE_TESTS TRUE)
+else()
+  set(COMPILER_RT_CAN_EXECUTE_TESTS FALSE)
+endif()
+    
 function(filter_available_targets out_var)
   set(archs)
   foreach(arch ${ARGN})

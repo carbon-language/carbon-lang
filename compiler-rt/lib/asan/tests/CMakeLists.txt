@@ -153,11 +153,7 @@ macro(add_asan_tests_for_arch arch)
                 ${ASAN_BENCHMARKS_OBJECTS} ${ASAN_INST_GTEST})
 endmacro()
 
-# We only support building instrumented tests when we're not cross compiling
-# and targeting a unix-like system where we can predict viable compilation and
-# linking strategies.
-# We use a different approach to build these tests for Android. See below.
-if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
+if(COMPILER_RT_CAN_EXECUTE_TESTS)
   if(CAN_TARGET_X86_64)
     add_asan_tests_for_arch(x86_64)
   endif()

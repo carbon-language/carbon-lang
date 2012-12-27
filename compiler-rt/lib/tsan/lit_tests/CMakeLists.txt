@@ -8,9 +8,8 @@ configure_lit_site_cfg(
   ${CMAKE_CURRENT_BINARY_DIR}/Unit/lit.site.cfg
   )
 
-if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
-  # Run TSan output tests only if we're not cross-compiling,
-  # and can be sure that clang would produce working binaries.
+if(COMPILER_RT_CAN_EXECUTE_TESTS)
+  # Run TSan output tests only if we're sure we can produce working binaries.
   set(TSAN_TEST_DEPS
     clang clang-headers FileCheck count not llvm-symbolizer
     ${TSAN_RUNTIME_LIBRARIES}
@@ -28,7 +27,8 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}")
     )
   set_target_properties(check-tsan PROPERTIES FOLDER "TSan unittests")
 elseif(LLVM_INCLUDE_TESTS)
-  # Otherwise run only TSan unit tests.
+  # Otherwise run only TSan unit tests (they are linked using the
+  # host compiler).
   add_lit_testsuite(check-tsan "Running ThreadSanitizer tests"
     ${CMAKE_CURRENT_BINARY_DIR}/Unit
     DEPENDS TsanUnitTests llvm-symbolizer)

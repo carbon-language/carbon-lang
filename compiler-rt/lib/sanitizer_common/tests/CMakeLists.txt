@@ -75,7 +75,9 @@ macro(add_sanitizer_tests_for_arch arch)
                        LINK_FLAGS ${SANITIZER_TEST_LINK_FLAGS})
 endmacro()
 
-if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
+if(COMPILER_RT_CAN_EXECUTE_TESTS)
+  # We use just-built clang to build sanitizer_common unittests, so we must
+  # be sure that produced binaries would work.
   if(APPLE)
     add_sanitizer_common_lib("RTSanitizerCommon.test.osx"
                              $<TARGET_OBJECTS:RTSanitizerCommon.osx>)
@@ -95,16 +97,16 @@ if("${CMAKE_HOST_SYSTEM}" STREQUAL "${CMAKE_SYSTEM}" AND UNIX AND NOT ANDROID)
   if(CAN_TARGET_I386)
     add_sanitizer_tests_for_arch(i386)
   endif()
+
+  # Run unittests as a part of lit testsuite.
+  configure_lit_site_cfg(
+    ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
+    ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
+    )
+
+  add_lit_testsuite(check-sanitizer "Running sanitizer library unittests"
+    ${CMAKE_CURRENT_BINARY_DIR}
+    DEPENDS SanitizerUnitTests
+    )
+  set_target_properties(check-sanitizer PROPERTIES FOLDER "Sanitizer unittests")
 endif()
-
-# Run unittests as a part of lit testsuite.
-configure_lit_site_cfg(
-  ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
-  ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
-  )
-
-add_lit_testsuite(check-sanitizer "Running sanitizer library unittests"
-  ${CMAKE_CURRENT_BINARY_DIR}
-  DEPENDS SanitizerUnitTests
-  )
-set_target_properties(check-sanitizer PROPERTIES FOLDER "Sanitizer unittests")
