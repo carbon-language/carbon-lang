@@ -700,6 +700,7 @@ class BinOpRR_F_Rev<bits<8> opcode, string mnemonic, X86TypeInfo typeinfo>
         mnemonic, "{$src2, $src1|$src1, $src2}", [], IIC_BIN_NONMEM> {
   // The disassembler should know about this, but not the asmparser.
   let isCodeGenOnly = 1;
+  let hasSideEffects = 0;
 }
 
 // BinOpRM - Instructions like "add reg, reg, [mem]".
