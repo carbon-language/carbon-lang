@@ -66,6 +66,7 @@ static void PrintAccumulatedStats() {
   StackDepotStats *stack_depot_stats = StackDepotGetStats();
   Printf("Stats: StackDepot: %zd ids; %zdM mapped\n",
          stack_depot_stats->n_uniq_ids, stack_depot_stats->mapped >> 20);
+  PrintInternalAllocatorStats();
 }
 
 }  // namespace __asan

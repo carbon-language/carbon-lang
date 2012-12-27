@@ -687,6 +687,9 @@ void __asan_free_hook(void *ptr) {
 
 namespace __asan {
 
+void PrintInternalAllocatorStats() {
+}
+
 SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
                     AllocType alloc_type) {

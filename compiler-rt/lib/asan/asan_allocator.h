@@ -105,8 +105,9 @@ struct AsanThreadLocalMallocStorage {
   }
 
   AsanChunkFifoList quarantine_;
+#if ASAN_ALLOCATOR_VERSION == 1
   AsanChunk *free_lists_[kNumberOfSizeClasses];
-#if ASAN_ALLOCATOR_VERSION == 2
+#else
   uptr allocator2_cache[1024];  // Opaque.
 #endif
   void CommitBack();
@@ -213,6 +214,8 @@ uptr asan_malloc_usable_size(void *ptr, StackTrace *stack);
 uptr asan_mz_size(const void *ptr);
 void asan_mz_force_lock();
 void asan_mz_force_unlock();
+
+void PrintInternalAllocatorStats();
 
 // Log2 and RoundUpToPowerOfTwo should be inlined for performance.
 #if defined(_WIN32) && !defined(__clang__)

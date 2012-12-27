@@ -166,12 +166,14 @@ typedef IntrusiveList<AllocatorListNode> AllocatorFreeList;
 // Move at most max_count chunks from allocate_from to allocate_to.
 // This function is better be a method of AllocatorFreeList, but we can't
 // inherit it from IntrusiveList as the ancient gcc complains about non-PODness.
-static inline void BulkMove(uptr max_count,
+static inline uptr BulkMove(uptr max_count,
                             AllocatorFreeList *allocate_from,
                             AllocatorFreeList *allocate_to) {
   CHECK(!allocate_from->empty());
   CHECK(allocate_to->empty());
+  uptr res = 0;
   if (allocate_from->size() <= max_count) {
+    res = allocate_from->size();
     allocate_to->append_front(allocate_from);
     CHECK(allocate_from->empty());
   } else {
@@ -180,9 +182,11 @@ static inline void BulkMove(uptr max_count,
       allocate_from->pop_front();
       allocate_to->push_front(node);
     }
+    res = max_count;
     CHECK(!allocate_from->empty());
   }
   CHECK(!allocate_to->empty());
+  return res;
 }
 
 // Allocators call these callbacks on mmap/munmap.
@@ -252,7 +256,8 @@ class SizeClassAllocator64 {
     if (region->free_list.empty()) {
       PopulateFreeList(class_id, region);
     }
-    BulkMove(SizeClassMap::MaxCached(class_id), &region->free_list, free_list);
+    region->n_allocated += BulkMove(SizeClassMap::MaxCached(class_id),
+                                    &region->free_list, free_list);
   }
 
   // Swallow the entire free_list for the given class_id.
@@ -260,6 +265,7 @@ class SizeClassAllocator64 {
     CHECK_LT(class_id, kNumClasses);
     RegionInfo *region = GetRegionInfo(class_id);
     SpinMutexLock l(&region->mutex);
+    region->n_freed += free_list->size();
     region->free_list.append_front(free_list);
   }
 
@@ -311,6 +317,31 @@ class SizeClassAllocator64 {
     UnmapWithCallback(kSpaceBeg, kSpaceSize + AdditionalSize());
   }
 
+  void PrintStats() {
+    uptr total_mapped = 0;
+    uptr n_allocated = 0;
+    uptr n_freed = 0;
+    for (uptr class_id = 1; class_id < kNumClasses; class_id++) {
+      RegionInfo *region = GetRegionInfo(class_id);
+      total_mapped += region->mapped_user;
+      n_allocated += region->n_allocated;
+      n_freed += region->n_freed;
+    }
+    Printf("Stats: SizeClassAllocator64: %zdM mapped in %zd allocations; "
+           "remains %zd\n",
+           total_mapped >> 20, n_allocated, n_allocated - n_freed);
+    for (uptr class_id = 1; class_id < kNumClasses; class_id++) {
+      RegionInfo *region = GetRegionInfo(class_id);
+      if (region->mapped_user == 0) continue;
+      Printf("  %02zd (%zd): total: %zd K allocs: %zd remains: %zd\n",
+             class_id,
+             SizeClassMap::Size(class_id),
+             region->mapped_user >> 10,
+             region->n_allocated,
+             region->n_allocated - region->n_freed);
+    }
+  }
+
   typedef SizeClassMap SizeClassMapT;
   static const uptr kNumClasses = SizeClassMap::kNumClasses;
   static const uptr kNumClassesRounded = SizeClassMap::kNumClassesRounded;
@@ -336,14 +367,13 @@ class SizeClassAllocator64 {
     uptr allocated_meta;  // Bytes allocated for metadata.
     uptr mapped_user;  // Bytes mapped for user memory.
     uptr mapped_meta;  // Bytes mapped for metadata.
+    uptr n_allocated, n_freed;  // Just stats.
   };
   COMPILER_CHECK(sizeof(RegionInfo) >= kCacheLineSize);
 
   static uptr AdditionalSize() {
-    uptr PageSize = GetPageSizeCached();
-    uptr res = Max(sizeof(RegionInfo) * kNumClassesRounded, PageSize);
-    CHECK_EQ(res % PageSize, 0);
-    return res;
+    return RoundUpTo(sizeof(RegionInfo) * kNumClassesRounded,
+                     GetPageSizeCached());
   }
 
   RegionInfo *GetRegionInfo(uptr class_id) {
@@ -415,6 +445,7 @@ class SizeClassAllocator64 {
     CHECK(!region->free_list.empty());
     AllocatorListNode *node = region->free_list.front();
     region->free_list.pop_front();
+    region->n_allocated++;
     return reinterpret_cast<void*>(node);
   }
 
@@ -422,6 +453,7 @@ class SizeClassAllocator64 {
     RegionInfo *region = GetRegionInfo(class_id);
     SpinMutexLock l(&region->mutex);
     region->free_list.push_front(reinterpret_cast<AllocatorListNode*>(p));
+    region->n_freed++;
   }
 };
 
@@ -548,6 +580,9 @@ class SizeClassAllocator32 {
       if (state_->possible_regions[i])
         UnmapWithCallback((i * kRegionSize), kRegionSize);
     UnmapWithCallback(reinterpret_cast<uptr>(state_), sizeof(State));
+  }
+
+  void PrintStats() {
   }
 
   typedef SizeClassMap SizeClassMapT;
@@ -718,6 +753,9 @@ class LargeMmapAllocator {
       CHECK_LT(idx, kMaxNumChunks);
       h->chunk_idx = idx;
       chunks_[idx] = h;
+      stats.n_allocs++;
+      stats.currently_allocated += map_size;
+      stats.max_allocated = Max(stats.max_allocated, stats.currently_allocated);
     }
     return reinterpret_cast<void*>(res);
   }
@@ -732,6 +770,8 @@ class LargeMmapAllocator {
       chunks_[idx] = chunks_[n_chunks_ - 1];
       chunks_[idx]->chunk_idx = idx;
       n_chunks_--;
+      stats.n_frees++;
+      stats.currently_allocated -= h->map_size;
     }
     MapUnmapCallback().OnUnmap(h->map_beg, h->map_size);
     UnmapOrDie(reinterpret_cast<void*>(h->map_beg), h->map_size);
@@ -785,6 +825,13 @@ class LargeMmapAllocator {
     return GetUser(h);
   }
 
+  void PrintStats() {
+    Printf("Stats: LargeMmapAllocator: allocated %zd times, "
+           "remains %zd (%zd K) max %zd M\n",
+           stats.n_allocs, stats.n_allocs - stats.n_frees,
+           stats.currently_allocated >> 10, stats.max_allocated >> 20);
+  }
+
  private:
   static const int kMaxNumChunks = 1 << FIRST_32_SECOND_64(15, 18);
   struct Header {
@@ -812,6 +859,9 @@ class LargeMmapAllocator {
   uptr page_size_;
   Header *chunks_[kMaxNumChunks];
   uptr n_chunks_;
+  struct Stats {
+    uptr n_allocs, n_frees, currently_allocated, max_allocated;
+  } stats;
   SpinMutex mutex_;
 };
 
@@ -917,6 +967,11 @@ class CombinedAllocator {
 
   void SwallowCache(AllocatorCache *cache) {
     cache->Drain(&primary_);
+  }
+
+  void PrintStats() {
+    primary_.PrintStats();
+    secondary_.PrintStats();
   }
 
  private:

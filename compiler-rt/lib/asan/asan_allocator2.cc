@@ -590,6 +590,10 @@ void AsanThreadLocalMallocStorage::CommitBack() {
   allocator.SwallowCache(GetAllocatorCache(this));
 }
 
+void PrintInternalAllocatorStats() {
+  allocator.PrintStats();
+}
+
 SANITIZER_INTERFACE_ATTRIBUTE
 void *asan_memalign(uptr alignment, uptr size, StackTrace *stack,
                     AllocType alloc_type) {
