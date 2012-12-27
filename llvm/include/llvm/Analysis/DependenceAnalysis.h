@@ -188,7 +188,7 @@ namespace llvm {
                    bool LoopIndependent,
                    unsigned Levels);
     ~FullDependence() {
-      delete DV;
+      delete[] DV;
     }
 
     /// isLoopIndependent - Returns true if this is a loop-independent
