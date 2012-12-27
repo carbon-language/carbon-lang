@@ -31,7 +31,7 @@ define void @lifetime() address_safety {
   %i.ptr = bitcast i32* %i to i8*
   call void @llvm.lifetime.start(i64 3, i8* %i.ptr)
   ; Memory is unpoisoned at llvm.lifetime.start
-  ; CHECK: %[[VAR:[^ ]*]] = ptrtoint i8* %i.ptr to i64
+  ; CHECK: %[[VAR:[^ ]*]] = ptrtoint i32* %{{[^ ]+}} to i64
   ; CHECK-NEXT: call void @__asan_unpoison_stack_memory(i64 %[[VAR]], i64 3)
   call void @llvm.lifetime.end(i64 4, i8* %i.ptr)
   call void @llvm.lifetime.end(i64 2, i8* %i.ptr)
@@ -56,6 +56,29 @@ define void @lifetime() address_safety {
   ; Memory is unpoisoned at function exit (only once).
   ; CHECK: call void @__asan_unpoison_stack_memory(i64 %{{[^ ]+}}, i64 {{.*}})
   ; CHECK-NOT: @__asan_unpoison_stack_memory
+  ; CHECK: ret void
+  ret void
+}
+
+; Check that arguments of lifetime may come from phi nodes.
+define void @phi_args(i1 %x) address_safety {
+  ; CHECK: @phi_args
+
+entry:
+  %i = alloca i64, align 4
+  %i.ptr = bitcast i64* %i to i8*
+  call void @llvm.lifetime.start(i64 8, i8* %i.ptr)
+  ; CHECK: __asan_unpoison_stack_memory
+  br i1 %x, label %bb0, label %bb1
+
+bb0:
+  %i.ptr2 = bitcast i64* %i to i8*
+  br label %bb1
+
+bb1:
+  %i.phi = phi i8* [ %i.ptr, %entry ], [ %i.ptr2, %bb0 ]
+  call void @llvm.lifetime.end(i64 8, i8* %i.phi)
+  ; CHECK: __asan_poison_stack_memory
   ; CHECK: ret void
   ret void
 }
