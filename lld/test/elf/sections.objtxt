@@ -2,22 +2,22 @@ RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/section-test.i386 | llvm-
 RUN: llvm-readobj  %t1 |  FileCheck -check-prefix=READOBJ %s 
 RUN: elf-dump  --dump-section %t1 |  FileCheck -check-prefix=ED %s 
 
-OBJDUMP:  0 000000000 00000000000000000
-OBJDUMP:  1 .text         00000000a 00000000000400074 TEXT DATA
-OBJDUMP:  2 .data         000000004 00000000000401080 DATA
-OBJDUMP:  3 .special      000000004 00000000000401084 DATA
-OBJDUMP:  4 .anotherspecial 000000004 00000000000401088 DATA
-OBJDUMP:  5 .bss          000000001 0000000000040108c BSS
-OBJDUMP:  6 .shstrtab     000000045 0000000000040108d
-OBJDUMP:  7 .strtab       00000003b 000000000004010d2
-OBJDUMP:  8 .symtab       000000140 00000000000401110
+OBJDUMP:  0               000000000 00000000000000000
+OBJDUMP:  1 .text         00000000a 00000000000000000 TEXT DATA
+OBJDUMP:  2 .data         000000004 00000000000001000 DATA
+OBJDUMP:  3 .special      000000004 00000000000001004 DATA
+OBJDUMP:  4 .anotherspecial 000000004 00000000000001008 DATA
+OBJDUMP:  5 .bss          000000001 0000000000000100c BSS
+OBJDUMP:  6 .shstrtab     000000045 00000000000000000
+OBJDUMP:  7 .symtab       0000000c0 00000000000000000
+OBJDUMP:  8 .strtab       00000003b 00000000000000000
 
 READOBJ: File Format : ELF32-i386
 READOBJ: Arch        : i386
 READOBJ: Address Size: 32 bits
 READOBJ: Symbols
-READOBJ: baz                               FUNC                 400074                 a                4000e8  global
-READOBJ: y                                 DATA                 401084                 4                401108  global
+READOBJ: baz                               FUNC                 0                 a              1000  global
+READOBJ: y                                 DATA              1004                 4              3008  global
 
 ED: 'e_indent[EI_DATA]', 0x01
 ED: 'e_machine', 0x0003
@@ -27,8 +27,8 @@ ED: Section 2
 ED: 'sh_addralign', 0x00000004
 ED: Section 6
 ED: 'sh_link', 0x00000000
-ED: 'sh_addralign', 0x00000000
-ED: Section 8
-ED: 'sh_link', 0x00000007
-ED: 'sh_addralign', 0x00000004
+ED: 'sh_addralign', 0x00000001
+ED: Section 7
+ED: 'sh_link', 0x00000008
+ED: 'sh_addralign', 0x00000008
 ED: 'sh_entsize', 0x00000010

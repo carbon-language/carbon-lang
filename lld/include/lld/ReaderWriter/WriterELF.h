@@ -48,7 +48,7 @@ public:
                    const uint16_t Type,
                    const uint16_t Machine,
                    uint64_t pointerWidth = 4,
-                   uint64_t baseAddress = 0x400000,
+                   uint64_t baseAddress = 0,
                    uint64_t pageSize = 0x1000)
   : _is64Bit(Is64Bit)
   , _endianness(endian)

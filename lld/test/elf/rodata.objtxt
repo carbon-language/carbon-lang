@@ -3,5 +3,5 @@ RUN: lld-core -arch hexagon -reader ELF -writer ELF -o %t2 %p/Inputs/rodata-test
 
   i386: 2 .rodata       000000004
 
-  hexagon: 2 .rodata       000000004
+  hexagon: 3 .rodata       000000004
 
