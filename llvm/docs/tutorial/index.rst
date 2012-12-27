@@ -30,6 +30,11 @@ External Tutorials
    active development at `<https://github.com/Jonathan2251/lbd>`_ (please
    contribute!).
 
+`Howto: Implementing LLVM Integrated Assembler`_
+   A simple guide for how to implement an LLVM integrated assembler for an
+   architecture.
+
+.. _`Howto: Implementing LLVM Integrated Assembler`: http://www.embecosm.com/download/ean10.html
 
 Advanced Topics
 ===============
