@@ -64,8 +64,8 @@ Inliner::Inliner(char &ID, int Threshold, bool InsertLifetime)
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should
 /// always explicitly call the implementation here.
-void Inliner::getAnalysisUsage(AnalysisUsage &Info) const {
-  CallGraphSCCPass::getAnalysisUsage(Info);
+void Inliner::getAnalysisUsage(AnalysisUsage &AU) const {
+  CallGraphSCCPass::getAnalysisUsage(AU);
 }
 
 
