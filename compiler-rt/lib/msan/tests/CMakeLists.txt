@@ -59,6 +59,8 @@ set(MSAN_UNITTEST_INSTRUMENTED_CFLAGS
 set(MSAN_UNITTEST_LINK_FLAGS
   -fsanitize=memory
   -pie
+  # FIXME: we build libcxx without cxxabi and need libstdc++ to provide it.
+  -lstdc++
 )
 
 # Compile source for the given architecture, using compiler
