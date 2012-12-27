@@ -224,6 +224,11 @@ locale::__imp::__imp(const string& name, size_t refs)
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
 
+// NOTE(saleem) avoid the `base class should be explicitly initialized in the
+// copy constructor` warning emitted by GCC
+#pragma GCC diagnostic ignored "-Wextra"
+#pragma GCC diagnostic push
+
 locale::__imp::__imp(const __imp& other)
     : facets_(max<size_t>(N, other.facets_.size())),
       name_(other.name_)
@@ -233,6 +238,8 @@ locale::__imp::__imp(const __imp& other)
         if (facets_[i])
             facets_[i]->__add_shared();
 }
+
+#pragma GCC diagnostic pop
 
 locale::__imp::__imp(const __imp& other, const string& name, locale::category c)
     : facets_(N),
@@ -4601,7 +4608,10 @@ template <>
 string
 __time_get_storage<char>::__analyze(char fmt, const ctype<char>& ct)
 {
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic push
     tm t = {0};
+#pragma GCC diagnostic pop
     t.tm_sec = 59;
     t.tm_min = 55;
     t.tm_hour = 23;
@@ -4747,7 +4757,10 @@ template <>
 wstring
 __time_get_storage<wchar_t>::__analyze(char fmt, const ctype<wchar_t>& ct)
 {
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic push
     tm t = {0};
+#pragma GCC diagnositc pop
     t.tm_sec = 59;
     t.tm_min = 55;
     t.tm_hour = 23;
@@ -4901,7 +4914,10 @@ template <>
 void
 __time_get_storage<char>::init(const ctype<char>& ct)
 {
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic push
     tm t = {0};
+#pragma GCC diagnostic pop
     char buf[100];
     // __weeks_
     for (int i = 0; i < 7; ++i)
@@ -4938,11 +4954,17 @@ template <>
 void
 __time_get_storage<wchar_t>::init(const ctype<wchar_t>& ct)
 {
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic push
     tm t = {0};
+#pragma GCC diagnostic pop
     char buf[100];
     wchar_t wbuf[100];
     wchar_t* wbe;
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic push
     mbstate_t mb = {0};
+#pragma GCC diagnostic pop
     // __weeks_
     for (int i = 0; i < 7; ++i)
     {
@@ -5296,7 +5318,10 @@ __time_put::__do_put(wchar_t* __wb, wchar_t*& __we, const tm* __tm,
     char __nar[100];
     char* __ne = __nar + 100;
     __do_put(__nar, __ne, __tm, __fmt, __mod);
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic push
     mbstate_t mb = {0};
+#pragma GCC diagnostic pop
     const char* __nb = __nar;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     size_t j = mbsrtowcs_l(__wb, &__nb, countof(__wb, __we), &mb, __loc_);
@@ -5821,7 +5846,10 @@ moneypunct_byname<wchar_t, false>::init(const char* nm)
         __thousands_sep_ = base::do_thousands_sep();
     __grouping_ = lc->mon_grouping;
     wchar_t wbuf[100];
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic push
     mbstate_t mb = {0};
+#pragma GCC diagnostic pop
     const char* bb = lc->currency_symbol;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     size_t j = mbsrtowcs_l(wbuf, &bb, countof(wbuf), &mb, loc.get());
@@ -5904,7 +5932,10 @@ moneypunct_byname<wchar_t, true>::init(const char* nm)
         __thousands_sep_ = base::do_thousands_sep();
     __grouping_ = lc->mon_grouping;
     wchar_t wbuf[100];
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic push
     mbstate_t mb = {0};
+#pragma GCC diagnostic pop
     const char* bb = lc->int_curr_symbol;
 #ifdef _LIBCPP_LOCALE__L_EXTENSIONS
     size_t j = mbsrtowcs_l(wbuf, &bb, countof(wbuf), &mb, loc.get());
