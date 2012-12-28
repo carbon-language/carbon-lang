@@ -28,6 +28,17 @@ void *Thread2(void *x) {
 }
 
 int main() {
+  // CHECK: WARNING: ThreadSanitizer: data race
+  // CHECK:   Write of size 4 at {{.*}} by thread T1
+  // CHECK:                          (mutexes: write [[M1:M[0-9]+]]):
+  // CHECK:   Previous write of size 4 at {{.*}} by thread T2
+  // CHECK:               (mutexes: write [[M2:M[0-9]+]], read [[M3:M[0-9]+]]):
+  // CHECK:   Mutex [[M1]] created at:
+  // CHECK:     #1 main {{.*}}/mutexset6.cc:[[@LINE+5]]
+  // CHECK:   Mutex [[M2]] created at:
+  // CHECK:     #1 main {{.*}}/mutexset6.cc:[[@LINE+4]]
+  // CHECK:   Mutex [[M3]] created at:
+  // CHECK:     #1 main {{.*}}/mutexset6.cc:[[@LINE+3]]
   pthread_mutex_init(&mtx1, 0);
   pthread_spin_init(&mtx2, 0);
   pthread_rwlock_init(&mtx3, 0);
@@ -40,16 +51,3 @@ int main() {
   pthread_spin_destroy(&mtx2);
   pthread_rwlock_destroy(&mtx3);
 }
-
-// CHECK: WARNING: ThreadSanitizer: data race
-// CHECK:   Write of size 4 at {{.*}} by thread T1
-// CHECK:                          (mutexes: write [[M1:M[0-9]+]]):
-// CHECK:   Previous write of size 4 at {{.*}} by thread T2
-// CHECK:               (mutexes: write [[M2:M[0-9]+]], read [[M3:M[0-9]+]]):
-// CHECK:   Mutex [[M1]] created at:
-// CHECK:     #1 main {{.*}}/mutexset6.cc:31
-// CHECK:   Mutex [[M2]] created at:
-// CHECK:     #1 main {{.*}}/mutexset6.cc:32
-// CHECK:   Mutex [[M3]] created at:
-// CHECK:     #1 main {{.*}}/mutexset6.cc:33
-

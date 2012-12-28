@@ -13,7 +13,7 @@ int main() {
   return x[5];
   // CHECK: heap-use-after-free
   // CHECK: free
-  // CHECK: main{{.*}}sanity_check_pure_c.c:12
+  // CHECK: main{{.*}}sanity_check_pure_c.c:[[@LINE-4]]
   // CHECK: malloc
-  // CHECK: main{{.*}}sanity_check_pure_c.c:11
+  // CHECK: main{{.*}}sanity_check_pure_c.c:[[@LINE-7]]
 }
