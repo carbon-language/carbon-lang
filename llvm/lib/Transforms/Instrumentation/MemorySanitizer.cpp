@@ -60,7 +60,7 @@
 /// value associated with them. If these bytes contain uninitialized data
 /// coming from 2 different allocations, the last store wins. Because of this,
 /// MemorySanitizer reports can show unrelated origins, but this is unlikely in
-/// practice. 
+/// practice.
 ///
 /// Origins are meaningless for fully initialized values, so MemorySanitizer
 /// avoids storing origin to memory when a fully initialized value is stored.
@@ -104,7 +104,7 @@ static const unsigned kMinOriginAlignment = 4;
 static const unsigned kShadowTLSAlignment = 8;
 
 /// \brief Track origins of uninitialized values.
-/// 
+///
 /// Adds a section to MemorySanitizer report that points to the allocation
 /// (stack or heap) the uninitialized bits came from originally.
 static cl::opt<bool> ClTrackOrigins("msan-track-origins",
@@ -145,7 +145,7 @@ static cl::opt<bool> ClDumpStrictInstructions("msan-dump-strict-instructions",
        cl::desc("print out instructions with default strict semantics"),
        cl::Hidden, cl::init(false));
 
-static cl::opt<std::string>  ClBlackListFile("msan-blacklist",
+static cl::opt<std::string>  ClBlacklistFile("msan-blacklist",
        cl::desc("File containing the list of functions where MemorySanitizer "
                 "should not report bugs"), cl::Hidden);
 
@@ -158,11 +158,14 @@ namespace {
 /// uninitialized reads.
 class MemorySanitizer : public FunctionPass {
  public:
-  MemorySanitizer(bool TrackOrigins = false)
+  MemorySanitizer(bool TrackOrigins = false,
+                  StringRef BlacklistFile = StringRef())
     : FunctionPass(ID),
       TrackOrigins(TrackOrigins || ClTrackOrigins),
       TD(0),
-      WarningFn(0) { }
+      WarningFn(0),
+      BlacklistFile(BlacklistFile.empty() ? ClBlacklistFile
+                                          : BlacklistFile) { }
   const char *getPassName() const { return "MemorySanitizer"; }
   bool runOnFunction(Function &F);
   bool doInitialization(Module &M);
@@ -218,6 +221,8 @@ class MemorySanitizer : public FunctionPass {
   MDNode *ColdCallWeights;
   /// \brief Branch weights for origin store.
   MDNode *OriginStoreWeights;
+  /// \bried Path to blacklist file.
+  SmallString<64> BlacklistFile;
   /// \brief The blacklist.
   OwningPtr<BlackList> BL;
   /// \brief An empty volatile inline asm that prevents callback merge.
@@ -233,8 +238,9 @@ INITIALIZE_PASS(MemorySanitizer, "msan",
                 "MemorySanitizer: detects uninitialized reads.",
                 false, false)
 
-FunctionPass *llvm::createMemorySanitizerPass(bool TrackOrigins) {
-  return new MemorySanitizer(TrackOrigins);
+FunctionPass *llvm::createMemorySanitizerPass(bool TrackOrigins,
+                                              StringRef BlacklistFile) {
+  return new MemorySanitizer(TrackOrigins, BlacklistFile);
 }
 
 /// \brief Create a non-const global initialized with the given string.
@@ -324,7 +330,7 @@ bool MemorySanitizer::doInitialization(Module &M) {
   TD = getAnalysisIfAvailable<DataLayout>();
   if (!TD)
     return false;
-  BL.reset(new BlackList(ClBlackListFile));
+  BL.reset(new BlackList(BlacklistFile));
   C = &(M.getContext());
   unsigned PtrSize = TD->getPointerSizeInBits(/* AddressSpace */0);
   switch (PtrSize) {
