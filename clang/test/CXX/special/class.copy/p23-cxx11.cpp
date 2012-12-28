@@ -143,6 +143,6 @@ namespace PR13381 {
   };
   void g() {
     T t;
-    t = T(); // expected-error{{implicitly-deleted copy assignment}}
+    t = T(); // expected-error{{object of type 'PR13381::T' cannot be assigned because its copy assignment operator is implicitly deleted}}
   }
 }

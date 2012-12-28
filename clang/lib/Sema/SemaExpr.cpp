@@ -287,12 +287,6 @@ bool Sema::DiagnoseUseOfDecl(NamedDecl *D, SourceLocation Loc,
 /// diagnostic complaining about the given function being deleted or
 /// unavailable.
 std::string Sema::getDeletedOrUnavailableSuffix(const FunctionDecl *FD) {
-  // FIXME: C++0x implicitly-deleted special member functions could be
-  // detected here so that we could improve diagnostics to say, e.g.,
-  // "base class 'A' had a deleted copy constructor".
-  if (FD->isDeleted())
-    return std::string();
-
   std::string Message;
   if (FD->getAvailability(&Message))
     return ": " + Message;

@@ -13,7 +13,7 @@ void test_special_member_functions(MoveOnly mo, int i) {
   decltype(lambda1) lambda2; // expected-error{{call to implicitly-deleted default constructor of 'decltype(lambda1)' (aka '<lambda}}
 
   // Copy assignment operator
-  lambda1 = lambda1; // expected-error{{overload resolution selected implicitly-deleted copy assignment operator}}
+  lambda1 = lambda1; // expected-error{{copy assignment operator is implicitly deleted}}
 
   // Move assignment operator
   lambda1 = move(lambda1);

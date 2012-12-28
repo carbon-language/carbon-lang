@@ -54,7 +54,7 @@ void test_basic_exclusion() {
 
   static_assert(noexcept(HasMoveConstructor((HasMoveConstructor()))), "");
   HasMoveConstructor hmc;
-  hmc = HasMoveConstructor(); // expected-error {{selected implicitly-deleted copy assignment}}
+  hmc = HasMoveConstructor(); // expected-error {{object of type 'HasMoveConstructor' cannot be assigned because its copy assignment operator is implicitly deleted}}
 
   (HasMoveAssignment(HasMoveAssignment())); // expected-error {{uses deleted function}}
   HasMoveAssignment hma;

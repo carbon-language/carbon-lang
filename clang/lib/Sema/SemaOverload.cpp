@@ -10386,16 +10386,13 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       if (isImplicitlyDeleted(Best->Function)) {
         CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
         Diag(OpLoc, diag::err_ovl_deleted_special_oper)
-          << getSpecialMember(Method)
-          << BinaryOperator::getOpcodeStr(Opc)
-          << getDeletedOrUnavailableSuffix(Best->Function);
+          << Context.getRecordType(Method->getParent())
+          << getSpecialMember(Method);
 
-        if (getSpecialMember(Method) != CXXInvalid) {
-          // The user probably meant to call this special member. Just
-          // explain why it's deleted.
-          NoteDeletedFunction(Method);
-          return ExprError();
-        }
+        // The user probably meant to call this special member. Just
+        // explain why it's deleted.
+        NoteDeletedFunction(Method);
+        return ExprError();
       } else {
         Diag(OpLoc, diag::err_ovl_deleted_oper)
           << Best->Function->isDeleted()
