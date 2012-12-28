@@ -27,38 +27,20 @@
 
 namespace __asan {
 
-// Instruments read/write access to a single byte in memory.
-// On error calls __asan_report_error, which aborts the program.
-#define ACCESS_ADDRESS(address, isWrite)   do {         \
-  if (!AddrIsInMem(address) || AddressIsPoisoned(address)) {                \
-    GET_CURRENT_PC_BP_SP;                               \
-    __asan_report_error(pc, bp, sp, address, isWrite, /* access_size */ 1); \
-  } \
-} while (0)
-
 // We implement ACCESS_MEMORY_RANGE, ASAN_READ_RANGE,
 // and ASAN_WRITE_RANGE as macro instead of function so
 // that no extra frames are created, and stack trace contains
 // relevant information only.
-
-// Instruments read/write access to a memory range.
-// More complex implementation is possible, for now just
-// checking the first and the last byte of a range.
-#define ACCESS_MEMORY_RANGE(offset, size, isWrite) do { \
-  if (size > 0) { \
-    uptr _ptr = (uptr)(offset); \
-    ACCESS_ADDRESS(_ptr, isWrite); \
-    ACCESS_ADDRESS(_ptr + (size) - 1, isWrite); \
-  } \
+// We check all shadow bytes.
+#define ACCESS_MEMORY_RANGE(offset, size, isWrite) do {                  \
+  if (uptr __ptr = __asan_region_is_poisoned((uptr)(offset), size)) {    \
+    GET_CURRENT_PC_BP_SP;                                                \
+    __asan_report_error(pc, bp, sp, __ptr, isWrite, /* access_size */1); \
+  }                                                                      \
 } while (0)
 
-#define ASAN_READ_RANGE(offset, size) do { \
-  ACCESS_MEMORY_RANGE(offset, size, false); \
-} while (0)
-
-#define ASAN_WRITE_RANGE(offset, size) do { \
-  ACCESS_MEMORY_RANGE(offset, size, true); \
-} while (0)
+#define ASAN_READ_RANGE(offset, size) ACCESS_MEMORY_RANGE(offset, size, false)
+#define ASAN_WRITE_RANGE(offset, size) ACCESS_MEMORY_RANGE(offset, size, true);
 
 // Behavior of functions like "memcpy" or "strcpy" is undefined
 // if memory intervals overlap. We report error in this case.

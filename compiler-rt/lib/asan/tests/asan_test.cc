@@ -19,6 +19,7 @@
 #include <stdint.h>
 #include <setjmp.h>
 #include <assert.h>
+#include <algorithm>
 
 #ifdef __linux__
 # include <sys/prctl.h>
@@ -921,6 +922,50 @@ TEST(AddressSanitizer, MemSetOOBTest) {
   // We can test arrays of structres/classes here, but what for?
 }
 
+// Try to allocate two arrays of 'size' bytes that are near each other.
+// Strictly speaking we are not guaranteed to find such two pointers,
+// but given the structure of asan's allocator we will.
+static bool AllocateTwoAjacentArrays(char **x1, char **x2, size_t size) {
+  vector<char *> v;
+  bool res = false;
+  for (size_t i = 0; i < 1000U && !res; i++) {
+    v.push_back(new char[size]);
+    if (i == 0) continue;
+    sort(v.begin(), v.end());
+    for (size_t j = 1; j < v.size(); j++) {
+      assert(v[j] > v[j-1]);
+      if (v[j] - v[j-1] < size * 2) {
+        *x2 = v[j];
+        *x1 = v[j-1];
+        res = true;
+        break;
+      }
+    }
+  }
+
+  for (size_t i = 0; i < v.size(); i++) {
+    if (res && v[i] == *x1) continue;
+    if (res && v[i] == *x2) continue;
+    delete [] v[i];
+  }
+  return res;
+}
+
+TEST(AddressSanitizer, LargeOOBInMemset) {
+  for (size_t size = 200; size < 100000; size += size / 2) {
+    char *x1, *x2;
+    if (!AllocateTwoAjacentArrays(&x1, &x2, size))
+      continue;
+    // fprintf(stderr, "  large oob memset: %p %p %zd\n", x1, x2, size);
+    // Do a memset on x1 with huge out-of-bound access that will end up in x2.
+    EXPECT_DEATH(memset(x1, 0, size * 2), "is located 0 bytes to the right");
+    delete [] x1;
+    delete [] x2;
+    return;
+  }
+  assert(0 && "Did not find two adjacent malloc-ed pointers");
+}
+
 // Same test for memcpy and memmove functions
 template <typename T, class M>
 void MemTransferOOBTestTemplate(size_t length) {
@@ -1634,7 +1679,7 @@ TEST(AddressSanitizer, pread) {
   EXPECT_DEATH(pread(fd, x, 15, 0),
                ASAN_PCRE_DOTALL
                "AddressSanitizer: heap-buffer-overflow"
-               ".* is located 4 bytes to the right of 10-byte region");
+               ".* is located 0 bytes to the right of 10-byte region");
   close(fd);
   delete [] x;
 }
@@ -1646,7 +1691,7 @@ TEST(AddressSanitizer, pread64) {
   EXPECT_DEATH(pread64(fd, x, 15, 0),
                ASAN_PCRE_DOTALL
                "AddressSanitizer: heap-buffer-overflow"
-               ".* is located 4 bytes to the right of 10-byte region");
+               ".* is located 0 bytes to the right of 10-byte region");
   close(fd);
   delete [] x;
 }
@@ -1658,7 +1703,7 @@ TEST(AddressSanitizer, read) {
   EXPECT_DEATH(read(fd, x, 15),
                ASAN_PCRE_DOTALL
                "AddressSanitizer: heap-buffer-overflow"
-               ".* is located 4 bytes to the right of 10-byte region");
+               ".* is located 0 bytes to the right of 10-byte region");
   close(fd);
   delete [] x;
 }

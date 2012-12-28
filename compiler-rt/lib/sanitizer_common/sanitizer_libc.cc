@@ -205,4 +205,23 @@ s64 internal_simple_strtoll(const char *nptr, char **endptr, int base) {
   }
 }
 
+bool mem_is_zero(const char *beg, uptr size) {
+  CHECK_LE(size, 1UL << FIRST_32_SECOND_64(30, 40));  // Sanity check.
+  const char *end = beg + size;
+  uptr *aligned_beg = (uptr *)RoundUpTo((uptr)beg, sizeof(uptr));
+  uptr *aligned_end = (uptr *)RoundDownTo((uptr)end, sizeof(uptr));
+  uptr all = 0;
+  // Prologue.
+  for (const char *mem = beg; mem < (char*)aligned_beg && mem < end; mem++)
+    all |= *mem;
+  // Aligned loop.
+  for (; aligned_beg < aligned_end; aligned_beg++)
+    all |= *aligned_beg;
+  // Epilogue.
+  if ((char*)aligned_end >= beg)
+    for (const char *mem = (char*)aligned_end; mem < end; mem++)
+      all |= *mem;
+  return all == 0;
+}
+
 }  // namespace __sanitizer

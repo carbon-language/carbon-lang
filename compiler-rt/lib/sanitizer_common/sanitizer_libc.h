@@ -47,6 +47,11 @@ char *internal_strstr(const char *haystack, const char *needle);
 // Works only for base=10 and doesn't set errno.
 s64 internal_simple_strtoll(const char *nptr, char **endptr, int base);
 
+// Return true if all bytes in [mem, mem+size) are zero.
+// Optimized for the case when the result is true.
+bool mem_is_zero(const char *mem, uptr size);
+
+
 // Memory
 void *internal_mmap(void *addr, uptr length, int prot, int flags,
                     int fd, u64 offset);

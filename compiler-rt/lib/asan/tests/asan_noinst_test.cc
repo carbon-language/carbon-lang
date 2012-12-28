@@ -683,6 +683,45 @@ TEST(AddressSanitizerInterface, PoisoningStressTest) {
   }
 }
 
+TEST(AddressSanitizerInterface, PoisonedRegion) {
+  size_t rz = 16;
+  for (size_t size = 1; size <= 64; size++) {
+    char *p = new char[size];
+    uptr x = reinterpret_cast<uptr>(p);
+    for (size_t beg = 0; beg < size + rz; beg++) {
+      for (size_t end = beg; end < size + rz; end++) {
+        uptr first_poisoned = __asan_region_is_poisoned(x + beg, end - beg);
+        if (beg == end) {
+          EXPECT_FALSE(first_poisoned);
+        } else if (beg < size && end <= size) {
+          EXPECT_FALSE(first_poisoned);
+        } else if (beg >= size) {
+          EXPECT_EQ(x + beg, first_poisoned);
+        } else {
+          EXPECT_GT(end, size);
+          EXPECT_EQ(x + size, first_poisoned);
+        }
+      }
+    }
+    delete [] p;
+  }
+}
+
+// This is a performance benchmark for manual runs.
+// asan's memset interceptor calls mem_is_zero for the entire shadow region.
+// the profile should look like this:
+//     89.10%   [.] __memset_sse2
+//     10.50%   [.] __sanitizer::mem_is_zero
+// I.e. mem_is_zero should consume ~ SHADOW_GRANULARITY less CPU cycles
+// than memset itself.
+TEST(AddressSanitizerInterface, DISABLED_Stress_memset) {
+  size_t size = 1 << 20;
+  char *x = new char[size];
+  for (int i = 0; i < 100000; i++)
+    Ident(memset)(x, 0, size);
+  delete [] x;
+}
+
 static const char *kInvalidPoisonMessage = "invalid-poison-memory-range";
 static const char *kInvalidUnpoisonMessage = "invalid-unpoison-memory-range";
 

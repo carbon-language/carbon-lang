@@ -253,6 +253,7 @@ static NOINLINE void force_interface_symbols() {
     case 31: __asan_after_dynamic_init(); break;
     case 32: __asan_poison_stack_memory(0, 0); break;
     case 33: __asan_unpoison_stack_memory(0, 0); break;
+    case 34: __asan_region_is_poisoned(0, 0); break;
   }
 }
 
