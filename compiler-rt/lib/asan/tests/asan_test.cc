@@ -934,7 +934,7 @@ static bool AllocateTwoAjacentArrays(char **x1, char **x2, size_t size) {
     sort(v.begin(), v.end());
     for (size_t j = 1; j < v.size(); j++) {
       assert(v[j] > v[j-1]);
-      if (v[j] - v[j-1] < size * 2) {
+      if ((size_t)(v[j] - v[j-1]) < size * 2) {
         *x2 = v[j];
         *x1 = v[j-1];
         res = true;
