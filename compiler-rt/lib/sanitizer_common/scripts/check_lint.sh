@@ -24,6 +24,7 @@ ASAN_TEST_LINT_FILTER=-readability/casting,-build/include,-legal/copyright,-whit
 ASAN_LIT_TEST_LINT_FILTER=${ASAN_TEST_LINT_FILTER},-whitespace/line_length
 TSAN_RTL_LINT_FILTER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
 TSAN_TEST_LINT_FILTER=${TSAN_RTL_LINT_FILTER},-runtime/threadsafe_fn,-runtime/int
+TSAN_LIT_TEST_LINT_FILTER=${TSAN_TEST_LINT_FILTER},-whitespace/line_length
 MSAN_RTL_LINT_FILTER=-legal/copyright,-build/include,-readability/casting,-build/header_guard,-build/namespaces
 
 cd ${LLVM_CHECKOUT}
@@ -60,8 +61,8 @@ ${CPPLINT} --filter=${ASAN_LIT_TEST_LINT_FILTER} ${ASAN_RTL}/lit_tests/*.cc \
 TSAN_RTL=${COMPILER_RT}/lib/tsan
 ${CPPLINT} --filter=${TSAN_RTL_LINT_FILTER} ${TSAN_RTL}/rtl/*.{cc,h}
 ${CPPLINT} --filter=${TSAN_TEST_LINT_FILTER} ${TSAN_RTL}/tests/rtl/*.{cc,h} \
-                                             ${TSAN_RTL}/tests/unit/*.cc \
-                                             ${TSAN_RTL}/lit_tests/*.cc
+                                             ${TSAN_RTL}/tests/unit/*.cc
+${CPPLINT} --filter=${TSAN_LIT_TEST_LINT_FILTER} ${TSAN_RTL}/lit_tests/*.cc
 # MSan
 MSAN_RTL=${COMPILER_RT}/lib/msan
 ${CPPLINT} --filter=${MSAN_RTL_LINT_FILTER} ${MSAN_RTL}/*.{cc,h}

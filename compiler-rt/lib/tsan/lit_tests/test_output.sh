@@ -4,13 +4,14 @@ ulimit -s 8192
 set -e # fail on any error
 
 ROOTDIR=$(dirname $0)/..
+BLACKLIST=$ROOTDIR/lit_tests/Helpers/blacklist.txt
 
 # Assuming clang is in path.
 CC=clang
 CXX=clang++
 
 # TODO: add testing for all of -O0...-O3
-CFLAGS="-fsanitize=thread -fPIE -O1 -g -fno-builtin -Wall"
+CFLAGS="-fsanitize=thread -fsanitize-blacklist=$BLACKLIST -fPIE -O1 -g -fno-builtin -Wall"
 LDFLAGS="-pie -lpthread -ldl $ROOTDIR/rtl/libtsan.a"
 
 test_file() {
