@@ -73,3 +73,5 @@ int illegaldiv4[0 / (1 / 0)]; // expected-error {{variable length array declarat
 int chooseexpr[__builtin_choose_expr(1, 1, expr)];
 int realop[(__real__ 4) == 4 ? 1 : -1];
 int imagop[(__imag__ 4) == 0 ? 1 : -1];
+
+int *PR14729 = 0 ?: 1/0; // expected-error {{not a compile-time constant}} expected-warning 3{{}}

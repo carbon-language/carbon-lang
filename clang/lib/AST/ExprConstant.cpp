@@ -6734,7 +6734,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
     if (FalseResult.Val == 2) return FalseResult;
     if (CommonResult.Val == 1) return CommonResult;
     if (FalseResult.Val == 1 &&
-        Exp->getCommon()->EvaluateKnownConstInt(Ctx) == 0) return NoDiag();
+        Exp->getCommon()->EvaluateKnownConstInt(Ctx) != 0) return NoDiag();
     return FalseResult;
   }
   case Expr::ConditionalOperatorClass: {
