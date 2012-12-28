@@ -149,6 +149,44 @@ bb.false:
   ret i8 %z8
 }
 
+define i64 @caller5(i64 %y) {
+; Check that we can round trip constants through various kinds of casts etc w/o
+; losing track of the constant prop in the inline cost analysis.
+;
+; CHECK: @caller5
+; CHECK-NOT: call
+; CHECK: ret i64 -1
+
+entry:
+  %x = call i64 @callee5(i64 42, i64 %y)
+  ret i64 %x
+}
+
+define i64 @callee5(i64 %x, i64 %y) {
+  %inttoptr = inttoptr i64 %x to i8*
+  %bitcast = bitcast i8* %inttoptr to i32*
+  %ptrtoint = ptrtoint i32* %bitcast to i64
+  %trunc = trunc i64 %ptrtoint to i32
+  %zext = zext i32 %trunc to i64
+  %cmp = icmp eq i64 %zext, 42
+  br i1 %cmp, label %bb.true, label %bb.false
+
+bb.true:
+  ret i64 -1
+
+bb.false:
+  ; This block musn't be counted in the inline cost.
+  %y1 = add i64 %y, 1
+  %y2 = add i64 %y1, 1
+  %y3 = add i64 %y2, 1
+  %y4 = add i64 %y3, 1
+  %y5 = add i64 %y4, 1
+  %y6 = add i64 %y5, 1
+  %y7 = add i64 %y6, 1
+  %y8 = add i64 %y7, 1
+  ret i64 %y8
+}
+
 
 define i32 @PR13412.main() {
 ; This is a somewhat complicated three layer subprogram that was reported to

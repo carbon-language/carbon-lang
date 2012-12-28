@@ -358,7 +358,10 @@ bool CallAnalyzer::visitGetElementPtr(GetElementPtrInst &I) {
 
 bool CallAnalyzer::visitBitCast(BitCastInst &I) {
   // Propagate constants through bitcasts.
-  if (Constant *COp = dyn_cast<Constant>(I.getOperand(0)))
+  Constant *COp = dyn_cast<Constant>(I.getOperand(0));
+  if (!COp)
+    COp = SimplifiedValues.lookup(I.getOperand(0));
+  if (COp)
     if (Constant *C = ConstantExpr::getBitCast(COp, I.getType())) {
       SimplifiedValues[&I] = C;
       return true;
@@ -383,7 +386,10 @@ bool CallAnalyzer::visitBitCast(BitCastInst &I) {
 
 bool CallAnalyzer::visitPtrToInt(PtrToIntInst &I) {
   // Propagate constants through ptrtoint.
-  if (Constant *COp = dyn_cast<Constant>(I.getOperand(0)))
+  Constant *COp = dyn_cast<Constant>(I.getOperand(0));
+  if (!COp)
+    COp = SimplifiedValues.lookup(I.getOperand(0));
+  if (COp)
     if (Constant *C = ConstantExpr::getPtrToInt(COp, I.getType())) {
       SimplifiedValues[&I] = C;
       return true;
@@ -416,7 +422,10 @@ bool CallAnalyzer::visitPtrToInt(PtrToIntInst &I) {
 
 bool CallAnalyzer::visitIntToPtr(IntToPtrInst &I) {
   // Propagate constants through ptrtoint.
-  if (Constant *COp = dyn_cast<Constant>(I.getOperand(0)))
+  Constant *COp = dyn_cast<Constant>(I.getOperand(0));
+  if (!COp)
+    COp = SimplifiedValues.lookup(I.getOperand(0));
+  if (COp)
     if (Constant *C = ConstantExpr::getIntToPtr(COp, I.getType())) {
       SimplifiedValues[&I] = C;
       return true;
@@ -443,7 +452,10 @@ bool CallAnalyzer::visitIntToPtr(IntToPtrInst &I) {
 
 bool CallAnalyzer::visitCastInst(CastInst &I) {
   // Propagate constants through ptrtoint.
-  if (Constant *COp = dyn_cast<Constant>(I.getOperand(0)))
+  Constant *COp = dyn_cast<Constant>(I.getOperand(0));
+  if (!COp)
+    COp = SimplifiedValues.lookup(I.getOperand(0));
+  if (COp)
     if (Constant *C = ConstantExpr::getCast(I.getOpcode(), COp, I.getType())) {
       SimplifiedValues[&I] = C;
       return true;
