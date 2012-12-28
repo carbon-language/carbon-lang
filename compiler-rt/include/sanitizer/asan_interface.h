@@ -117,6 +117,11 @@ extern "C" {
   bool __asan_address_is_poisoned(void const volatile *addr)
       SANITIZER_INTERFACE_ATTRIBUTE;
 
+  // If at least on byte in [beg, beg+size) is poisoned, return the address
+  // of the first such byte. Otherwise return 0.
+  uptr __asan_region_is_poisoned(uptr beg, uptr size)
+      SANITIZER_INTERFACE_ATTRIBUTE;
+
   // This is an internal function that is called to report an error.
   // However it is still a part of the interface because users may want to
   // set a breakpoint on this function in a debugger.
