@@ -18,11 +18,10 @@ define <4 x i64> @zext_4i32_to_4i64(<4 x i32> %A) nounwind uwtable readnone ssp 
   ret <4 x i64>%B
 }
 
-
 define <8 x i32> @zext_8i8_to_8i32(<8 x i8> %z) {
 ;CHECK: zext_8i8_to_8i32
 ;CHECK: vpunpckhwd
-;CHECK: vpunpcklwd
+;CHECK: vpmovzxwd
 ;CHECK: vinsertf128
 ;CHECK: ret
   %t = zext <8 x i8> %z to <8 x i32>
