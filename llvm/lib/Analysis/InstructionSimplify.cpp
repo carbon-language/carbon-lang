@@ -2870,32 +2870,53 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 }
 
 template <typename IterTy>
-static Value *SimplifyCall(Value *F, IterTy ArgBegin, IterTy ArgEnd,
+static Value *SimplifyIntrinsic(Intrinsic::ID IID, IterTy ArgBegin, IterTy ArgEnd,
+                                const Query &Q, unsigned MaxRecurse) {
+}
+
+template <typename IterTy>
+static Value *SimplifyCall(Value *V, IterTy ArgBegin, IterTy ArgEnd,
                            const Query &Q, unsigned MaxRecurse) {
-  Type *Ty = F->getType();
+  Type *Ty = V->getType();
   if (PointerType *PTy = dyn_cast<PointerType>(Ty))
     Ty = PTy->getElementType();
   FunctionType *FTy = cast<FunctionType>(Ty);
 
   // call undef -> undef
-  if (isa<UndefValue>(F))
+  if (isa<UndefValue>(V))
     return UndefValue::get(FTy->getReturnType());
 
-  return 0;
+  Function *F = dyn_cast<Function>(V);
+  if (!F)
+    return 0;
+
+  if (!canConstantFoldCallTo(F))
+    return 0;
+
+  SmallVector<Constant *, 4> ConstantArgs;
+  ConstantArgs.reserve(ArgEnd - ArgBegin);
+  for (IterTy I = ArgBegin, E = ArgEnd; I != E; ++I) {
+    Constant *C = dyn_cast<Constant>(*I);
+    if (!C)
+      return 0;
+    ConstantArgs.push_back(C);
+  }
+
+  return ConstantFoldCall(F, ConstantArgs, Q.TLI);
 }
 
-Value *llvm::SimplifyCall(Value *F, User::op_iterator ArgBegin,
+Value *llvm::SimplifyCall(Value *V, User::op_iterator ArgBegin,
                           User::op_iterator ArgEnd, const DataLayout *TD,
                           const TargetLibraryInfo *TLI,
                           const DominatorTree *DT) {
-  return ::SimplifyCall(F, ArgBegin, ArgEnd, Query(TD, TLI, DT),
+  return ::SimplifyCall(V, ArgBegin, ArgEnd, Query(TD, TLI, DT),
                         RecursionLimit);
 }
 
-Value *llvm::SimplifyCall(Value *F, ArrayRef<Value *> Args,
+Value *llvm::SimplifyCall(Value *V, ArrayRef<Value *> Args,
                           const DataLayout *TD, const TargetLibraryInfo *TLI,
                           const DominatorTree *DT) {
-  return ::SimplifyCall(F, Args.begin(), Args.end(), Query(TD, TLI, DT),
+  return ::SimplifyCall(V, Args.begin(), Args.end(), Query(TD, TLI, DT),
                         RecursionLimit);
 }
 

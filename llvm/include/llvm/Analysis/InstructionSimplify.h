@@ -211,7 +211,7 @@ namespace llvm {
   /// the result.
   ///
   /// If this call could not be simplified returns null.
-  Value *SimplifyCall(Value *F, User::op_iterator ArgBegin,
+  Value *SimplifyCall(Value *V, User::op_iterator ArgBegin,
                       User::op_iterator ArgEnd, const DataLayout *TD = 0,
                       const TargetLibraryInfo *TLI = 0,
                       const DominatorTree *DT = 0);
@@ -220,7 +220,7 @@ namespace llvm {
   /// result.
   ///
   /// If this call could not be simplified returns null.
-  Value *SimplifyCall(Value *F, ArrayRef<Value *> Args,
+  Value *SimplifyCall(Value *V, ArrayRef<Value *> Args,
                       const DataLayout *TD = 0,
                       const TargetLibraryInfo *TLI = 0,
                       const DominatorTree *DT = 0);
