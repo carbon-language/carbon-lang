@@ -18237,3 +18237,19 @@ unsigned X86VectorTargetTransformInfo::getCastInstrCost(unsigned Opcode,
   return VectorTargetTransformImpl::getCastInstrCost(Opcode, Dst, Src);
 }
 
+
+unsigned X86VectorTargetTransformInfo::getShuffleCost(ShuffleKind Kind, Type *Tp,
+                                                      int Index) const {
+  // We only estimate the cost of reverse shuffles.
+  if (Kind != Reverse)
+    return VectorTargetTransformImpl::getShuffleCost(Kind, Tp, Index);
+
+  std::pair<unsigned, MVT> LT = getTypeLegalizationCost(Tp);
+  unsigned Cost = 1;
+  if (LT.second.getSizeInBits() > 128)
+    Cost = 3; // Extract + insert + copy.
+
+  // Multiple by the number of parts.
+  return Cost * LT.first;
+}
+
