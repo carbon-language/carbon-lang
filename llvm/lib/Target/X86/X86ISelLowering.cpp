@@ -8348,7 +8348,8 @@ SDValue X86TargetLowering::LowerANY_EXTEND(SDValue Op,
 
   return SDValue();
 }
-SDValue X86TargetLowering::LowerZERO_EXTEND(SDValue Op, SelectionDAG &DAG) const {
+SDValue X86TargetLowering::LowerZERO_EXTEND(SDValue Op,
+                                            SelectionDAG &DAG) const {
   DebugLoc DL = Op.getDebugLoc();
   EVT VT = Op.getValueType();
   SDValue In = Op.getOperand(0);
@@ -8373,7 +8374,9 @@ SDValue X86TargetLowering::LowerZERO_EXTEND(SDValue Op, SelectionDAG &DAG) const
   SDValue Lo = DAG.getNode(X86ISD::VZEXT, DL, MVT::v4i32, In);
   static const int Mask[] = {4, 5, 6, 7, -1, -1, -1, -1};
   SDValue Hi = DAG.getNode(X86ISD::VZEXT, DL, MVT::v4i32,
-                           DAG.getVectorShuffle(MVT::v8i16, DL, In, DAG.getUNDEF(MVT::v8i16), &Mask[0]));
+                           DAG.getVectorShuffle(MVT::v8i16, DL, In,
+                                                DAG.getUNDEF(MVT::v8i16),
+                                                &Mask[0]));
 
   return DAG.getNode(ISD::CONCAT_VECTORS, DL, MVT::v8i32, Lo, Hi);
 }
