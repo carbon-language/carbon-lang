@@ -136,8 +136,8 @@ public:
   void EmitAssembly(BackendAction Action, raw_ostream *OS);
 };
 
-// We need this wrapper to access LangOpts from extension functions that
-// we add to the PassManagerBuilder.
+// We need this wrapper to access LangOpts and CGOpts from extension functions
+// that we add to the PassManagerBuilder.
 class PassManagerBuilderWrapper : public PassManagerBuilder {
 public:
   PassManagerBuilderWrapper(const CodeGenOptions &CGOpts,
@@ -191,12 +191,16 @@ static void addMemorySanitizerPass(const PassManagerBuilder &Builder,
   const PassManagerBuilderWrapper &BuilderWrapper =
       static_cast<const PassManagerBuilderWrapper&>(Builder);
   const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
-  PM.add(createMemorySanitizerPass(CGOpts.MemorySanitizerTrackOrigins));
+  PM.add(createMemorySanitizerPass(CGOpts.MemorySanitizerTrackOrigins,
+                                   CGOpts.SanitizerBlacklistFile));
 }
 
 static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
                                    PassManagerBase &PM) {
-  PM.add(createThreadSanitizerPass());
+  const PassManagerBuilderWrapper &BuilderWrapper =
+      static_cast<const PassManagerBuilderWrapper&>(Builder);
+  const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
+  PM.add(createThreadSanitizerPass(CGOpts.SanitizerBlacklistFile));
 }
 
 void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
