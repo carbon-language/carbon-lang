@@ -1969,32 +1969,6 @@ static bool isABIDefaultCC(Sema &S, CallingConv CC, FunctionDecl *D) {
   return ABIDefaultCC == CC;
 }
 
-/// Check if the given decl has C language linkage. Note that this is not
-/// the same as D.isExternC() since decls with non external linkage can have C
-/// language linkage. They can also have C language linkage when they are
-/// not declared in an extern C context, but a previous decl is.
-template<typename T>
-bool hasCLanguageLinkage(const T &D) {
-  // Language linkage is a C++ concept, but saying that everything in C has
-  // C language linkage fits the implementation nicelly.
-  ASTContext &Context = D.getASTContext();
-  if (!Context.getLangOpts().CPlusPlus)
-    return true;
-
-  // dcl.link 4: A C language linkage is ignored in determining the language
-  // linkage of the names of class members and the function type of class member
-  // functions.
-  const DeclContext *DC = D.getDeclContext();
-  if (DC->isRecord())
-    return false;
-
-  // If the first decl is in an extern "C" context, any other redeclaration
-  // will have C language linkage. If the first one is not in an extern "C"
-  // context, we would have reported an error for any other decl being in one.
-  const T *First = D.getFirstDeclaration();
-  return First->getDeclContext()->isExternCContext();
-}
-
 /// MergeFunctionDecl - We just parsed a function 'New' from
 /// declarator D which has the same name and scope as a previous
 /// declaration 'Old'.  Figure out how to resolve this situation,
@@ -2255,7 +2229,7 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
       assert(OldQTypeForComparison.isCanonical());
     }
 
-    if (!hasCLanguageLinkage(*Old) && hasCLanguageLinkage(*New)) {
+    if (!Old->hasCLanguageLinkage() && New->hasCLanguageLinkage()) {
       Diag(New->getLocation(), diag::err_different_language_linkage) << New;
       Diag(Old->getLocation(), PrevDiag);
       return true;
@@ -2645,7 +2619,7 @@ void Sema::MergeVarDecl(VarDecl *New, LookupResult &Previous) {
     return;
   }
 
-  if (!hasCLanguageLinkage(*Old) && hasCLanguageLinkage(*New)) {
+  if (!Old->hasCLanguageLinkage() && New->hasCLanguageLinkage()) {
     Diag(New->getLocation(), diag::err_different_language_linkage) << New;
     Diag(Old->getLocation(), diag::note_previous_definition);
     New->setInvalidDecl();

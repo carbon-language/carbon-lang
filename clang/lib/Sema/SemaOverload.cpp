@@ -930,11 +930,19 @@ Sema::CheckOverload(Scope *S, FunctionDecl *New, const LookupResult &Old,
   return Ovl_Overload;
 }
 
+static bool canBeOverloaded(const FunctionDecl &D) {
+  if (D.getAttr<OverloadableAttr>())
+    return true;
+  if (D.hasCLanguageLinkage())
+    return false;
+  return true;
+}
+
 bool Sema::IsOverload(FunctionDecl *New, FunctionDecl *Old,
                       bool UseUsingDeclRules) {
   // If both of the functions are extern "C", then they are not
   // overloads.
-  if (Old->isExternC() && New->isExternC())
+  if (!canBeOverloaded(*Old) && !canBeOverloaded(*New))
     return false;
 
   FunctionTemplateDecl *OldTemplate = Old->getDescribedFunctionTemplate();

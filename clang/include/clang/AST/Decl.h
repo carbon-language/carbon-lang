@@ -903,6 +903,12 @@ public:
   /// external, C linkage.
   bool isExternC() const;
 
+  /// Checks if this variable has C language linkage. Note that this is not the
+  /// same as isExternC since decls with non external linkage can have C
+  /// language linkage. They can also have C language linkage when they are not
+  /// declared in an extern C context, but a previous decl is.
+  bool hasCLanguageLinkage() const;
+
   /// isLocalVarDecl - Returns true for local variable declarations
   /// other than parameters.  Note that this includes static variables
   /// inside of functions. It also includes variables inside blocks.
@@ -1789,6 +1795,12 @@ public:
   /// \brief Determines whether this function is a function with
   /// external, C linkage.
   bool isExternC() const;
+
+  /// Checks if this function has C language linkage. Note that this is not the
+  /// same as isExternC since decls with non external linkage can have C
+  /// language linkage. They can also have C language linkage when they are not
+  /// declared in an extern C context, but a previous decl is.
+  bool hasCLanguageLinkage() const;
 
   /// \brief Determines whether this is a global function.
   bool isGlobal() const;

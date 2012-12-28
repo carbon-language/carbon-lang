@@ -11,3 +11,10 @@ namespace test1 {
     void f(); // expected-error {{declaration of 'f' has a different language linkage}}
   }
 }
+
+extern "C" {
+  static void test2_f() { // expected-note {{previous definition is here}}
+  }
+  static void test2_f(int x) { // expected-error {{conflicting types for 'test2_f'}}
+  }
+}

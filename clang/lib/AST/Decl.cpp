@@ -1177,6 +1177,32 @@ SourceRange VarDecl::getSourceRange() const {
   return DeclaratorDecl::getSourceRange();
 }
 
+template<typename decl_type>
+static bool hasCLanguageLinkageTemplate(const decl_type &D) {
+  // Language linkage is a C++ concept, but saying that everything in C has
+  // C language linkage fits the implementation nicelly.
+  ASTContext &Context = D.getASTContext();
+  if (!Context.getLangOpts().CPlusPlus)
+    return true;
+
+  // dcl.link 4: A C language linkage is ignored in determining the language
+  // linkage of the names of class members and the function type of class member
+  // functions.
+  const DeclContext *DC = D.getDeclContext();
+  if (DC->isRecord())
+    return false;
+
+  // If the first decl is in an extern "C" context, any other redeclaration
+  // will have C language linkage. If the first one is not in an extern "C"
+  // context, we would have reported an error for any other decl being in one.
+  const decl_type *First = D.getFirstDeclaration();
+  return First->getDeclContext()->isExternCContext();
+}
+
+bool VarDecl::hasCLanguageLinkage() const {
+  return hasCLanguageLinkageTemplate(*this);
+}
+
 bool VarDecl::isExternC() const {
   if (getLinkage() != ExternalLinkage)
     return false;
@@ -1700,6 +1726,10 @@ bool FunctionDecl::isReservedGlobalPlacementOperator() const {
   // The result type and first argument type are constant across all
   // these operators.  The second argument must be exactly void*.
   return (proto->getArgType(1).getCanonicalType() == Context.VoidPtrTy);
+}
+
+bool FunctionDecl::hasCLanguageLinkage() const {
+  return hasCLanguageLinkageTemplate(*this);
 }
 
 bool FunctionDecl::isExternC() const {
