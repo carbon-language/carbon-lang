@@ -19,6 +19,8 @@
 #ifndef LLVM_ANALYSIS_INSTRUCTIONSIMPLIFY_H
 #define LLVM_ANALYSIS_INSTRUCTIONSIMPLIFY_H
 
+#include "llvm/User.h"
+
 namespace llvm {
   template<typename T>
   class ArrayRef;
@@ -204,6 +206,24 @@ namespace llvm {
                        const DataLayout *TD = 0,
                        const TargetLibraryInfo *TLI = 0,
                        const DominatorTree *DT = 0);
+
+  /// \brief Given a function and iterators over arguments, see if we can fold
+  /// the result.
+  ///
+  /// If this call could not be simplified returns null.
+  Value *SimplifyCall(Value *F, User::op_iterator ArgBegin,
+                      User::op_iterator ArgEnd, const DataLayout *TD = 0,
+                      const TargetLibraryInfo *TLI = 0,
+                      const DominatorTree *DT = 0);
+
+  /// \brief Given a function and set of arguments, see if we can fold the
+  /// result.
+  ///
+  /// If this call could not be simplified returns null.
+  Value *SimplifyCall(Value *F, ArrayRef<Value *> Args,
+                      const DataLayout *TD = 0,
+                      const TargetLibraryInfo *TLI = 0,
+                      const DominatorTree *DT = 0);
 
   /// SimplifyInstruction - See if we can compute a simplified version of this
   /// instruction.  If not, this returns null.

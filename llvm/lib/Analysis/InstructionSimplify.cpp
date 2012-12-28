@@ -2869,12 +2869,34 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
                            RecursionLimit);
 }
 
-static Value *SimplifyCallInst(CallInst *CI, const Query &) {
+template <typename IterTy>
+static Value *SimplifyCall(Value *F, IterTy ArgBegin, IterTy ArgEnd,
+                           const Query &Q, unsigned MaxRecurse) {
+  Type *Ty = F->getType();
+  if (PointerType *PTy = dyn_cast<PointerType>(Ty))
+    Ty = PTy->getElementType();
+  FunctionType *FTy = cast<FunctionType>(Ty);
+
   // call undef -> undef
-  if (isa<UndefValue>(CI->getCalledValue()))
-    return UndefValue::get(CI->getType());
+  if (isa<UndefValue>(F))
+    return UndefValue::get(FTy->getReturnType());
 
   return 0;
+}
+
+Value *llvm::SimplifyCall(Value *F, User::op_iterator ArgBegin,
+                          User::op_iterator ArgEnd, const DataLayout *TD,
+                          const TargetLibraryInfo *TLI,
+                          const DominatorTree *DT) {
+  return ::SimplifyCall(F, ArgBegin, ArgEnd, Query(TD, TLI, DT),
+                        RecursionLimit);
+}
+
+Value *llvm::SimplifyCall(Value *F, ArrayRef<Value *> Args,
+                          const DataLayout *TD, const TargetLibraryInfo *TLI,
+                          const DominatorTree *DT) {
+  return ::SimplifyCall(F, Args.begin(), Args.end(), Query(TD, TLI, DT),
+                        RecursionLimit);
 }
 
 /// SimplifyInstruction - See if we can compute a simplified version of this
@@ -2985,9 +3007,12 @@ Value *llvm::SimplifyInstruction(Instruction *I, const DataLayout *TD,
   case Instruction::PHI:
     Result = SimplifyPHINode(cast<PHINode>(I), Query (TD, TLI, DT));
     break;
-  case Instruction::Call:
-    Result = SimplifyCallInst(cast<CallInst>(I), Query (TD, TLI, DT));
+  case Instruction::Call: {
+    CallSite CS(cast<CallInst>(I));
+    Result = SimplifyCall(CS.getCalledValue(), CS.arg_begin(), CS.arg_end(),
+                          TD, TLI, DT);
     break;
+  }
   case Instruction::Trunc:
     Result = SimplifyTruncInst(I->getOperand(0), I->getType(), TD, TLI, DT);
     break;
