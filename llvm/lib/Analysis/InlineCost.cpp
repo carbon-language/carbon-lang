@@ -96,6 +96,7 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
                            int InstructionCost);
   bool isGEPOffsetConstant(GetElementPtrInst &GEP);
   bool accumulateGEPOffset(GEPOperator &GEP, APInt &Offset);
+  bool simplifyCallSite(Function *F, CallSite CS);
   ConstantInt *stripAndComputeInBoundsConstantOffsets(Value *&V);
 
   // Custom analysis routines.
@@ -124,6 +125,8 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   bool visitBinaryOperator(BinaryOperator &I);
   bool visitLoad(LoadInst &I);
   bool visitStore(StoreInst &I);
+  bool visitExtractValue(ExtractValueInst &I);
+  bool visitInsertValue(InsertValueInst &I);
   bool visitCallSite(CallSite CS);
 
 public:
@@ -610,6 +613,73 @@ bool CallAnalyzer::visitStore(StoreInst &I) {
   return false;
 }
 
+bool CallAnalyzer::visitExtractValue(ExtractValueInst &I) {
+  // Constant folding for extract value is trivial.
+  Constant *C = dyn_cast<Constant>(I.getAggregateOperand());
+  if (!C)
+    C = SimplifiedValues.lookup(I.getAggregateOperand());
+  if (C) {
+    SimplifiedValues[&I] = ConstantExpr::getExtractValue(C, I.getIndices());
+    return true;
+  }
+
+  // SROA can look through these but give them a cost.
+  return false;
+}
+
+bool CallAnalyzer::visitInsertValue(InsertValueInst &I) {
+  // Constant folding for insert value is trivial.
+  Constant *AggC = dyn_cast<Constant>(I.getAggregateOperand());
+  if (!AggC)
+    AggC = SimplifiedValues.lookup(I.getAggregateOperand());
+  Constant *InsertedC = dyn_cast<Constant>(I.getInsertedValueOperand());
+  if (!InsertedC)
+    InsertedC = SimplifiedValues.lookup(I.getInsertedValueOperand());
+  if (AggC && InsertedC) {
+    SimplifiedValues[&I] = ConstantExpr::getInsertValue(AggC, InsertedC,
+                                                        I.getIndices());
+    return true;
+  }
+
+  // SROA can look through these but give them a cost.
+  return false;
+}
+
+/// \brief Try to simplify a call site.
+///
+/// Takes a concrete function and callsite and tries to actually simplify it by
+/// analyzing the arguments and call itself with instsimplify. Returns true if
+/// it has simplified the callsite to some other entity (a constant), making it
+/// free.
+bool CallAnalyzer::simplifyCallSite(Function *F, CallSite CS) {
+  // FIXME: Using the instsimplify logic directly for this is inefficient
+  // because we have to continually rebuild the argument list even when no
+  // simplifications can be performed. Until that is fixed with remapping
+  // inside of instsimplify, directly constant fold calls here.
+  if (!canConstantFoldCallTo(F))
+    return false;
+
+  // Try to re-map the arguments to constants.
+  SmallVector<Constant *, 4> ConstantArgs;
+  ConstantArgs.reserve(CS.arg_size());
+  for (CallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
+       I != E; ++I) {
+    Constant *C = dyn_cast<Constant>(*I);
+    if (!C)
+      C = dyn_cast_or_null<Constant>(SimplifiedValues.lookup(*I));
+    if (!C)
+      return false; // This argument doesn't map to a constant.
+
+    ConstantArgs.push_back(C);
+  }
+  if (Constant *C = ConstantFoldCall(F, ConstantArgs)) {
+    SimplifiedValues[CS.getInstruction()] = C;
+    return true;
+  }
+
+  return false;
+}
+
 bool CallAnalyzer::visitCallSite(CallSite CS) {
   if (CS.isCall() && cast<CallInst>(CS.getInstruction())->canReturnTwice() &&
       !F.getFnAttributes().hasAttribute(Attribute::ReturnsTwice)) {
@@ -621,20 +691,26 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
       cast<CallInst>(CS.getInstruction())->hasFnAttr(Attribute::NoDuplicate))
     ContainsNoDuplicateCall = true;
 
-  if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
-    switch (II->getIntrinsicID()) {
-    default:
-      return Base::visitCallSite(CS);
-
-    case Intrinsic::memset:
-    case Intrinsic::memcpy:
-    case Intrinsic::memmove:
-      // SROA can usually chew through these intrinsics, but they aren't free.
-      return false;
-    }
-  }
-
   if (Function *F = CS.getCalledFunction()) {
+    // When we have a concrete function, first try to simplify it directly.
+    if (simplifyCallSite(F, CS))
+      return true;
+
+    // Next check if it is an intrinsic we know about.
+    // FIXME: Lift this into part of the InstVisitor.
+    if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
+      switch (II->getIntrinsicID()) {
+      default:
+        return Base::visitCallSite(CS);
+
+      case Intrinsic::memset:
+      case Intrinsic::memcpy:
+      case Intrinsic::memmove:
+        // SROA can usually chew through these intrinsics, but they aren't free.
+        return false;
+      }
+    }
+
     if (F == CS.getInstruction()->getParent()->getParent()) {
       // This flag will fully abort the analysis, so don't bother with anything
       // else.

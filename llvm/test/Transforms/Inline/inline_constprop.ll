@@ -111,6 +111,44 @@ bb.false:
   ret i32 %sub
 }
 
+declare {i8, i1} @llvm.uadd.with.overflow.i8(i8 %a, i8 %b)
+
+define i8 @caller4(i8 %z) {
+; Check that we can constant fold through intrinsics such as the
+; overflow-detecting arithmetic instrinsics. These are particularly important
+; as they are used heavily in standard library code and generic C++ code where
+; the arguments are oftent constant but complete generality is required.
+;
+; CHECK: @caller4
+; CHECK-NOT: call
+; CHECK: ret i8 -1
+
+entry:
+  %x = call i8 @callee4(i8 254, i8 14, i8 %z)
+  ret i8 %x
+}
+
+define i8 @callee4(i8 %x, i8 %y, i8 %z) {
+  %uadd = call {i8, i1} @llvm.uadd.with.overflow.i8(i8 %x, i8 %y)
+  %o = extractvalue {i8, i1} %uadd, 1
+  br i1 %o, label %bb.true, label %bb.false
+
+bb.true:
+  ret i8 -1
+
+bb.false:
+  ; This block musn't be counted in the inline cost.
+  %z1 = add i8 %z, 1
+  %z2 = add i8 %z1, 1
+  %z3 = add i8 %z2, 1
+  %z4 = add i8 %z3, 1
+  %z5 = add i8 %z4, 1
+  %z6 = add i8 %z5, 1
+  %z7 = add i8 %z6, 1
+  %z8 = add i8 %z7, 1
+  ret i8 %z8
+}
+
 
 define i32 @PR13412.main() {
 ; This is a somewhat complicated three layer subprogram that was reported to
