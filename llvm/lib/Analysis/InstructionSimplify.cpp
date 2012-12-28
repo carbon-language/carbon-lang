@@ -2870,11 +2870,6 @@ Value *llvm::SimplifyCmpInst(unsigned Predicate, Value *LHS, Value *RHS,
 }
 
 template <typename IterTy>
-static Value *SimplifyIntrinsic(Intrinsic::ID IID, IterTy ArgBegin, IterTy ArgEnd,
-                                const Query &Q, unsigned MaxRecurse) {
-}
-
-template <typename IterTy>
 static Value *SimplifyCall(Value *V, IterTy ArgBegin, IterTy ArgEnd,
                            const Query &Q, unsigned MaxRecurse) {
   Type *Ty = V->getType();
