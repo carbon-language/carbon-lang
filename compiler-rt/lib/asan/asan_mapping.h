@@ -20,8 +20,8 @@
 // http://code.google.com/p/address-sanitizer/wiki/AddressSanitizerAlgorithm
 
 #if ASAN_FLEXIBLE_MAPPING_AND_OFFSET == 1
-extern __attribute__((visibility("default"))) uptr __asan_mapping_scale;
-extern __attribute__((visibility("default"))) uptr __asan_mapping_offset;
+extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_scale;
+extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_offset;
 # define SHADOW_SCALE (__asan_mapping_scale)
 # define SHADOW_OFFSET (__asan_mapping_offset)
 #else
