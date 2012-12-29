@@ -394,6 +394,9 @@ static void checkUndefinedInternals(Sema &S) {
     // Ignore attributes that have become invalid.
     if (decl->isInvalidDecl()) continue;
 
+    // If we found out that the decl is external, don't warn.
+    if (decl->getLinkage() == ExternalLinkage) continue;
+
     // __attribute__((weakref)) is basically a definition.
     if (decl->hasAttr<WeakRefAttr>()) continue;
 

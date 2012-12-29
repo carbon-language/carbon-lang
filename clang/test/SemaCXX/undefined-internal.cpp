@@ -181,3 +181,21 @@ namespace OverloadUse {
   template<void x(int)> void t(long*) { x(10); } // expected-note {{used here}}
   void g() { long a; t<f>(&a); }
 }
+
+namespace test7 {
+  typedef struct {
+    void bar();
+    void foo() {
+      bar();
+    }
+  } A;
+}
+
+namespace test8 {
+  typedef struct {
+    void bar(); // expected-warning {{function 'test8::<anonymous struct>::bar' has internal linkage but is not defined}}
+    void foo() {
+      bar(); // expected-note {{used here}}
+    }
+  } *A;
+}
