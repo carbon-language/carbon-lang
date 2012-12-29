@@ -251,20 +251,20 @@ SourceLocation Stmt::getLocEnd() const {
   llvm_unreachable("unknown statement kind");
 }
 
-CompoundStmt::CompoundStmt(ASTContext &C, Stmt **StmtStart, unsigned NumStmts,
+CompoundStmt::CompoundStmt(ASTContext &C, ArrayRef<Stmt*> Stmts,
                            SourceLocation LB, SourceLocation RB)
   : Stmt(CompoundStmtClass), LBracLoc(LB), RBracLoc(RB) {
-  CompoundStmtBits.NumStmts = NumStmts;
-  assert(CompoundStmtBits.NumStmts == NumStmts &&
+  CompoundStmtBits.NumStmts = Stmts.size();
+  assert(CompoundStmtBits.NumStmts == Stmts.size() &&
          "NumStmts doesn't fit in bits of CompoundStmtBits.NumStmts!");
 
-  if (NumStmts == 0) {
+  if (Stmts.size() == 0) {
     Body = 0;
     return;
   }
 
-  Body = new (C) Stmt*[NumStmts];
-  memcpy(Body, StmtStart, NumStmts * sizeof(*Body));
+  Body = new (C) Stmt*[Stmts.size()];
+  std::copy(Stmts.begin(), Stmts.end(), Body);
 }
 
 void CompoundStmt::setStmts(ASTContext &C, Stmt **Stmts, unsigned NumStmts) {

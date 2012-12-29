@@ -537,7 +537,7 @@ class CompoundStmt : public Stmt {
   Stmt** Body;
   SourceLocation LBracLoc, RBracLoc;
 public:
-  CompoundStmt(ASTContext &C, Stmt **StmtStart, unsigned NumStmts,
+  CompoundStmt(ASTContext &C, ArrayRef<Stmt*> Stmts,
                SourceLocation LB, SourceLocation RB);
 
   // \brief Build an empty compound statment with a location.
