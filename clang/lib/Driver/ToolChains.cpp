@@ -966,20 +966,33 @@ Generic_GCC::GCCVersion Linux::GCCVersion::Parse(StringRef VersionText) {
 
 /// \brief Less-than for GCCVersion, implementing a Strict Weak Ordering.
 bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
-  if (Major < RHS.Major) return true; if (Major > RHS.Major) return false;
-  if (Minor < RHS.Minor) return true; if (Minor > RHS.Minor) return false;
+  if (Major != RHS.Major)
+    return Major < RHS.Major;
+  if (Minor != RHS.Minor)
+    return Minor < RHS.Minor;
+  if (Patch != RHS.Patch) {
+    // Note that versions without a specified patch sort higher than those with
+    // a patch.
+    if (RHS.Patch == -1)
+      return true;
+    if (Patch == -1)
+      return false;
 
-  // Note that we rank versions with *no* patch specified is better than ones
-  // hard-coding a patch version. Thus if only the RHS or LHS has no patch,
-  // it wins.
-  if (RHS.Patch == -1 && Patch != -1) return true;
-  if (RHS.Patch != -1 && Patch == -1) return false;
-  if (Patch < RHS.Patch) return true; if (Patch > RHS.Patch) return false;
-  if (PatchSuffix == RHS.PatchSuffix) return false;
+    // Otherwise just sort on the patch itself.
+    return Patch < RHS.Patch;
+  }
+  if (PatchSuffix != RHS.PatchSuffix) {
+    // Sort empty suffixes higher.
+    if (RHS.PatchSuffix.empty())
+      return true;
+    if (PatchSuffix.empty())
+      return true;
 
-  // Finally, between completely tied version numbers, the version with the
-  // suffix loses as we prefer full releases.
-  if (RHS.PatchSuffix.empty()) return true;
+    // Provide a lexicographic sort to make this a total ordering.
+    return PatchSuffix < RHS.PatchSuffix;
+  }
+
+  // The versions are equal.
   return false;
 }
 
