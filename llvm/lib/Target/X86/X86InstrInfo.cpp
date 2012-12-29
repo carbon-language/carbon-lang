@@ -467,9 +467,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::RSQRTSSr,        X86::RSQRTSSm,            0 },
     { X86::RSQRTSSr_Int,    X86::RSQRTSSm_Int,        0 },
     { X86::SQRTPDr,         X86::SQRTPDm,             TB_ALIGN_16 },
-    { X86::SQRTPDr_Int,     X86::SQRTPDm_Int,         TB_ALIGN_16 },
     { X86::SQRTPSr,         X86::SQRTPSm,             TB_ALIGN_16 },
-    { X86::SQRTPSr_Int,     X86::SQRTPSm_Int,         TB_ALIGN_16 },
     { X86::SQRTSDr,         X86::SQRTSDm,             0 },
     { X86::SQRTSDr_Int,     X86::SQRTSDm_Int,         0 },
     { X86::SQRTSSr,         X86::SQRTSSm,             0 },
@@ -528,9 +526,7 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VRSQRTPSr,       X86::VRSQRTPSm,           0 },
     { X86::VRSQRTPSr_Int,   X86::VRSQRTPSm_Int,       0 },
     { X86::VSQRTPDr,        X86::VSQRTPDm,            0 },
-    { X86::VSQRTPDr_Int,    X86::VSQRTPDm_Int,        0 },
     { X86::VSQRTPSr,        X86::VSQRTPSm,            0 },
-    { X86::VSQRTPSr_Int,    X86::VSQRTPSm_Int,        0 },
     { X86::VUCOMISDrr,      X86::VUCOMISDrm,          0 },
     { X86::VUCOMISSrr,      X86::VUCOMISSrm,          0 },
     { X86::VBROADCASTSSrr,  X86::VBROADCASTSSrm,      TB_NO_REVERSE },
@@ -554,11 +550,8 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::VRCPPSYr,        X86::VRCPPSYm,            0 },
     { X86::VRCPPSYr_Int,    X86::VRCPPSYm_Int,        0 },
     { X86::VRSQRTPSYr,      X86::VRSQRTPSYm,          0 },
-    { X86::VRSQRTPSYr_Int,  X86::VRSQRTPSYm_Int,      0 },
     { X86::VSQRTPDYr,       X86::VSQRTPDYm,           0 },
-    { X86::VSQRTPDYr_Int,   X86::VSQRTPDYm_Int,       0 },
     { X86::VSQRTPSYr,       X86::VSQRTPSYm,           0 },
-    { X86::VSQRTPSYr_Int,   X86::VSQRTPSYm_Int,       0 },
     { X86::VBROADCASTSSYrr, X86::VBROADCASTSSYrm,     TB_NO_REVERSE },
     { X86::VBROADCASTSDYrr, X86::VBROADCASTSDYrm,     TB_NO_REVERSE },
 
@@ -4670,13 +4663,9 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::DIVSSrr:
   case X86::DIVSSrr_Int:
   case X86::SQRTPDm:
-  case X86::SQRTPDm_Int:
   case X86::SQRTPDr:
-  case X86::SQRTPDr_Int:
   case X86::SQRTPSm:
-  case X86::SQRTPSm_Int:
   case X86::SQRTPSr:
-  case X86::SQRTPSr_Int:
   case X86::SQRTSDm:
   case X86::SQRTSDm_Int:
   case X86::SQRTSDr:
@@ -4695,13 +4684,9 @@ bool X86InstrInfo::isHighLatencyDef(int opc) const {
   case X86::VDIVSSrr:
   case X86::VDIVSSrr_Int:
   case X86::VSQRTPDm:
-  case X86::VSQRTPDm_Int:
   case X86::VSQRTPDr:
-  case X86::VSQRTPDr_Int:
   case X86::VSQRTPSm:
-  case X86::VSQRTPSm_Int:
   case X86::VSQRTPSr:
-  case X86::VSQRTPSr_Int:
   case X86::VSQRTSDm:
   case X86::VSQRTSDm_Int:
   case X86::VSQRTSDr:

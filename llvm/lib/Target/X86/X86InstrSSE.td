@@ -3116,14 +3116,6 @@ let Predicates = [HasAVX] in {
                 sse2_fp_unop_p<0x51, "vsqrt", fsqrt, SSE_SQRTP>,
                 sse1_fp_unop_p_y<0x51, "vsqrt", fsqrt, SSE_SQRTP>,
                 sse2_fp_unop_p_y<0x51, "vsqrt", fsqrt, SSE_SQRTP>,
-                sse1_fp_unop_p_int<0x51, "vsqrt", int_x86_sse_sqrt_ps,
-                                   SSE_SQRTP>,
-                sse2_fp_unop_p_int<0x51, "vsqrt", int_x86_sse2_sqrt_pd,
-                                    SSE_SQRTP>,
-                sse1_fp_unop_p_y_int<0x51, "vsqrt", int_x86_avx_sqrt_ps_256,
-                                    SSE_SQRTP>,
-                sse2_fp_unop_p_y_int<0x51, "vsqrt", int_x86_avx_sqrt_pd_256,
-                                    SSE_SQRTP>,
                 VEX;
 
   // Reciprocal approximations. Note that these typically require refinement
@@ -3202,11 +3194,9 @@ let Predicates = [HasAVX] in {
 defm SQRT  : sse1_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse_sqrt_ss,
                             SSE_SQRTS>,
              sse1_fp_unop_p<0x51, "sqrt",  fsqrt, SSE_SQRTS>,
-             sse1_fp_unop_p_int<0x51, "sqrt",  int_x86_sse_sqrt_ps, SSE_SQRTS>,
              sse2_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse2_sqrt_sd,
                             SSE_SQRTS>,
-             sse2_fp_unop_p<0x51, "sqrt",  fsqrt, SSE_SQRTS>,
-             sse2_fp_unop_p_int<0x51, "sqrt", int_x86_sse2_sqrt_pd, SSE_SQRTS>;
+             sse2_fp_unop_p<0x51, "sqrt",  fsqrt, SSE_SQRTS>;
 
 /// sse1_fp_unop_s_rw - SSE1 unops where vector form has a read-write operand.
 multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
