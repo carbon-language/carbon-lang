@@ -217,27 +217,6 @@ multiclass sse12_fp_packed_logical_rm<bits<8> opc, RegisterClass RC, Domain d,
        pat_rm, IIC_DEFAULT, d>;
 }
 
-/// sse12_fp_packed_int - SSE 1 & 2 packed instructions intrinsics class
-multiclass sse12_fp_packed_int<bits<8> opc, string OpcodeStr, RegisterClass RC,
-                           string asm, string SSEVer, string FPSizeStr,
-                           X86MemOperand x86memop, PatFrag mem_frag,
-                           Domain d, OpndItins itins, bit Is2Addr = 1> {
-  def rr_Int : PI<opc, MRMSrcReg, (outs RC:$dst), (ins RC:$src1, RC:$src2),
-       !if(Is2Addr,
-           !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-           [(set RC:$dst, (!cast<Intrinsic>(
-                     !strconcat("int_x86_", SSEVer, "_", OpcodeStr, FPSizeStr))
-                 RC:$src1, RC:$src2))], IIC_DEFAULT, d>;
-  def rm_Int : PI<opc, MRMSrcMem, (outs RC:$dst), (ins RC:$src1,x86memop:$src2),
-       !if(Is2Addr,
-           !strconcat(asm, "\t{$src2, $dst|$dst, $src2}"),
-           !strconcat(asm, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
-       [(set RC:$dst, (!cast<Intrinsic>(
-                     !strconcat("int_x86_", SSEVer, "_", OpcodeStr, FPSizeStr))
-             RC:$src1, (mem_frag addr:$src2)))], IIC_DEFAULT, d>;
-}
-
 //===----------------------------------------------------------------------===//
 //  Non-instruction patterns
 //===----------------------------------------------------------------------===//
@@ -2864,37 +2843,6 @@ multiclass basic_sse12_fp_binop_s_int<bits<8> opc, string OpcodeStr,
      itins.d, Is2Addr>, XD;
 }
 
-multiclass basic_sse12_fp_binop_p_int<bits<8> opc, string OpcodeStr,
-                                      SizeItins itins> {
-let Predicates = [HasAVX] in {
-  defm V#NAME#PS : sse12_fp_packed_int<opc, OpcodeStr, VR128,
-            !strconcat(OpcodeStr, "ps"), "sse", "_ps", f128mem, memopv4f32,
-            SSEPackedSingle, itins.s, 0>, TB, VEX_4V;
-
-  defm V#NAME#PD : sse12_fp_packed_int<opc, OpcodeStr, VR128,
-            !strconcat(OpcodeStr, "pd"), "sse2", "_pd", f128mem,
-            memopv2f64, SSEPackedDouble, itins.d, 0>, TB, OpSize, VEX_4V;
-
-  defm V#NAME#PSY : sse12_fp_packed_int<opc, OpcodeStr, VR256,
-            !strconcat(OpcodeStr, "ps"), "avx", "_ps_256", f256mem,
-            memopv8f32, SSEPackedSingle, itins.s, 0>, TB, VEX_4V, VEX_L;
-
-  defm V#NAME#PDY : sse12_fp_packed_int<opc, OpcodeStr, VR256,
-            !strconcat(OpcodeStr, "pd"), "avx", "_pd_256", f256mem,
-            memopv4f64, SSEPackedDouble, itins.d, 0>, TB, OpSize, VEX_4V, VEX_L;
-}
-
-let Constraints = "$src1 = $dst" in {
-  defm PS : sse12_fp_packed_int<opc, OpcodeStr, VR128,
-                            !strconcat(OpcodeStr, "ps"), "sse", "_ps", f128mem,
-                            memopv4f32, SSEPackedSingle, itins.s, 1>, TB;
-
-  defm PD : sse12_fp_packed_int<opc, OpcodeStr, VR128,
-                           !strconcat(OpcodeStr, "pd"), "sse2", "_pd", f128mem,
-                           memopv2f64, SSEPackedDouble, itins.d, 1>, TB, OpSize;
-}
-}
-
 // Binary Arithmetic instructions
 defm ADD : basic_sse12_fp_binop_p<0x58, "add", fadd, SSE_ALU_ITINS_P>;
 defm MUL : basic_sse12_fp_binop_p<0x59, "mul", fmul, SSE_MUL_ITINS_P>;
@@ -2902,9 +2850,7 @@ let isCommutable = 0 in {
   defm SUB : basic_sse12_fp_binop_p<0x5C, "sub", fsub, SSE_ALU_ITINS_P>;
   defm DIV : basic_sse12_fp_binop_p<0x5E, "div", fdiv, SSE_DIV_ITINS_P>;
   defm MAX : basic_sse12_fp_binop_p<0x5F, "max", X86fmax, SSE_ALU_ITINS_P>;
-  defm MAX : basic_sse12_fp_binop_p_int<0x5F, "max", SSE_ALU_ITINS_P>;
   defm MIN : basic_sse12_fp_binop_p<0x5D, "min", X86fmin, SSE_ALU_ITINS_P>;
-  defm MIN : basic_sse12_fp_binop_p_int<0x5D, "min", SSE_ALU_ITINS_P>;
 }
 
 let isCodeGenOnly = 1 in {
