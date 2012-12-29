@@ -171,8 +171,8 @@ Type *IslExprBuilder::getWidestType(Type *T1, Type *T2) {
 }
 
 Value *IslExprBuilder::createOpUnary(__isl_take isl_ast_expr *Expr) {
-  assert (isl_ast_expr_get_op_type(Expr) == isl_ast_op_minus
-          && "Unsupported unary operation");
+  assert(isl_ast_expr_get_op_type(Expr) == isl_ast_op_minus &&
+         "Unsupported unary operation");
 
   Value *V;
   Type *MaxType = getType(Expr);
@@ -188,10 +188,10 @@ Value *IslExprBuilder::createOpUnary(__isl_take isl_ast_expr *Expr) {
 }
 
 Value *IslExprBuilder::createOpNAry(__isl_take isl_ast_expr *Expr) {
-  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op
-         && "isl ast expression not of type isl_ast_op");
-  assert(isl_ast_expr_get_op_n_arg(Expr) >= 2
-         && "We need at least two operands in an n-ary operation");
+  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
+         "isl ast expression not of type isl_ast_op");
+  assert(isl_ast_expr_get_op_n_arg(Expr) >= 2 &&
+         "We need at least two operands in an n-ary operation");
 
   Value *V;
 
@@ -241,10 +241,10 @@ Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
   Type *MaxType;
   isl_ast_op_type OpType;
 
-  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op
-         && "isl ast expression not of type isl_ast_op");
-  assert(isl_ast_expr_get_op_n_arg(Expr) == 2
-         && "not a binary isl ast expression");
+  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
+         "isl ast expression not of type isl_ast_op");
+  assert(isl_ast_expr_get_op_n_arg(Expr) == 2 &&
+         "not a binary isl ast expression");
 
   OpType = isl_ast_expr_get_op_type(Expr);
 
@@ -328,8 +328,8 @@ Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
 }
 
 Value *IslExprBuilder::createOpSelect(__isl_take isl_ast_expr *Expr) {
-  assert (isl_ast_expr_get_op_type(Expr) == isl_ast_op_select
-          && "Unsupported unary isl ast expression");
+  assert(isl_ast_expr_get_op_type(Expr) == isl_ast_op_select &&
+         "Unsupported unary isl ast expression");
   Value *LHS, *RHS, *Cond;
   Type *MaxType = getType(Expr);
 
@@ -440,8 +440,8 @@ Value *IslExprBuilder::createOpBoolean(__isl_take isl_ast_expr *Expr) {
 }
 
 Value *IslExprBuilder::createOp(__isl_take isl_ast_expr *Expr) {
-  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op
-         && "Expression not of type isl_ast_expr_op");
+  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_op &&
+         "Expression not of type isl_ast_expr_op");
   switch (isl_ast_expr_get_op_type(Expr)) {
   case isl_ast_op_error:
   case isl_ast_op_cond:
@@ -479,8 +479,8 @@ Value *IslExprBuilder::createOp(__isl_take isl_ast_expr *Expr) {
 }
 
 Value *IslExprBuilder::createId(__isl_take isl_ast_expr *Expr) {
-  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_id
-         && "Expression not of type isl_ast_expr_ident");
+  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_id &&
+         "Expression not of type isl_ast_expr_ident");
 
   isl_id *Id;
   Value *V;
@@ -506,8 +506,8 @@ IntegerType *IslExprBuilder::getType(__isl_keep isl_ast_expr *Expr) {
 }
 
 Value *IslExprBuilder::createInt(__isl_take isl_ast_expr *Expr) {
-  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_int
-         && "Expression not of type isl_ast_expr_int");
+  assert(isl_ast_expr_get_type(Expr) == isl_ast_expr_int &&
+         "Expression not of type isl_ast_expr_int");
   isl_int Int;
   Value *V;
   APInt APValue;
@@ -611,8 +611,8 @@ __isl_give isl_ast_expr *IslNodeBuilder::getUpperBound(
   Iterator = isl_ast_node_for_get_iterator(For);
   Type = isl_ast_expr_get_op_type(Cond);
 
-  assert(isl_ast_expr_get_type(Cond) == isl_ast_expr_op
-         && "conditional expression is not an atomic upper bound");
+  assert(isl_ast_expr_get_type(Cond) == isl_ast_expr_op &&
+         "conditional expression is not an atomic upper bound");
 
   switch (Type) {
     case isl_ast_op_le:
@@ -627,18 +627,18 @@ __isl_give isl_ast_expr *IslNodeBuilder::getUpperBound(
 
   Arg0 = isl_ast_expr_get_op_arg(Cond, 0);
 
-  assert(isl_ast_expr_get_type(Arg0) == isl_ast_expr_id
-         && "conditional expression is not an atomic upper bound");
+  assert(isl_ast_expr_get_type(Arg0) == isl_ast_expr_id &&
+         "conditional expression is not an atomic upper bound");
 
   UBID = isl_ast_expr_get_id(Arg0);
 
-  assert(isl_ast_expr_get_type(Iterator) == isl_ast_expr_id
-         && "Could not get the iterator");
+  assert(isl_ast_expr_get_type(Iterator) == isl_ast_expr_id &&
+         "Could not get the iterator");
 
   IteratorID = isl_ast_expr_get_id(Iterator);
 
-  assert(UBID == IteratorID
-         && "conditional expression is not an atomic upper bound");
+  assert(UBID == IteratorID &&
+         "conditional expression is not an atomic upper bound");
 
   UB = isl_ast_expr_get_op_arg(Cond, 1);
 

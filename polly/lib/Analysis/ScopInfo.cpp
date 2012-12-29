@@ -185,8 +185,8 @@ public:
 
   __isl_give isl_pw_aff *visitAddRecExpr(const SCEVAddRecExpr *Expr) {
     assert(Expr->isAffine() && "Only affine AddRecurrences allowed");
-    assert(S->getRegion().contains(Expr->getLoop())
-           && "Scop does not contain the loop referenced in this AddRec");
+    assert(S->getRegion().contains(Expr->getLoop()) &&
+           "Scop does not contain the loop referenced in this AddRec");
 
     isl_pw_aff *Start = visit(Expr->getStart());
     isl_pw_aff *Step = visit(Expr->getOperand(1));

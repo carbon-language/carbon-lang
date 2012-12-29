@@ -186,8 +186,8 @@ public:
     if (!IV)
       return Expr;
 
-    assert(Expr->getNumOperands() == 2
-          && "An AddRecExpr with more than two operands can not be rewritten.");
+    assert(Expr->getNumOperands() == 2 &&
+           "An AddRecExpr with more than two operands can not be rewritten.");
 
     const SCEV *Base, *Step, *IVExpr, *Product;
 
@@ -439,8 +439,8 @@ std::vector<Value*> BlockGenerator::getMemoryAccessIndex(
   __isl_keep isl_map *AccessRelation, Value *BaseAddress,
   ValueMapT &BBMap, ValueMapT &GlobalMap) {
 
-  assert((isl_map_dim(AccessRelation, isl_dim_out) == 1)
-         && "Only single dimensional access functions supported");
+  assert((isl_map_dim(AccessRelation, isl_dim_out) == 1) &&
+         "Only single dimensional access functions supported");
 
   std::vector<Value *> IVS;
   for (unsigned i = 0; i < Statement.getNumIterators(); ++i) {
@@ -482,8 +482,8 @@ Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
   isl_map *CurrentAccessRelation = Access.getAccessRelation();
   isl_map *NewAccessRelation = Access.getNewAccessRelation();
 
-  assert(isl_map_has_equal_space(CurrentAccessRelation, NewAccessRelation)
-         && "Current and new access function use different spaces");
+  assert(isl_map_has_equal_space(CurrentAccessRelation, NewAccessRelation) &&
+         "Current and new access function use different spaces");
 
   Value *NewPointer;
 

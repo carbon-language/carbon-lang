@@ -42,8 +42,8 @@ Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
   Builder.SetInsertPoint(HeaderBB);
 
   // Use the type of upper and lower bound.
-  assert(LB->getType() == UB->getType()
-         && "Different types for upper and lower bound.");
+  assert(LB->getType() == UB->getType() &&
+         "Different types for upper and lower bound.");
 
   IntegerType *LoopIVType = dyn_cast<IntegerType>(UB->getType());
   assert(LoopIVType && "UB is not integer?");

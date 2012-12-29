@@ -385,9 +385,9 @@ void ClastStmtCodeGen::codegenSubstitutions(const clast_stmt *Assignment,
   int Dimension = 0;
 
   while (Assignment) {
-    assert(CLAST_STMT_IS_A(Assignment, stmt_ass)
-           && "Substitions are expected to be assignments");
-    codegen((const clast_assignment *)Assignment, Statement, Dimension,
+    assert(CLAST_STMT_IS_A(Assignment, stmt_ass) &&
+           "Substitions are expected to be assignments");
+    codegen((const clast_assignment *) Assignment, Statement, Dimension,
             vectorDim, VectorVMap);
     Assignment = Assignment->next;
     Dimension++;
@@ -684,8 +684,8 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
   std::vector<int> NumIterations;
   PTXGenerator::ValueToValueMapTy VMap;
 
-  assert(!GPUTriple.empty()
-         && "Target triple should be set properly for GPGPU code generation.");
+  assert(!GPUTriple.empty() &&
+         "Target triple should be set properly for GPGPU code generation.");
   PTXGenerator PTXGen(Builder, P, GPUTriple);
 
   // Get original IVS and ScopStmt
@@ -823,8 +823,8 @@ bool ClastStmtCodeGen::isParallelFor(const clast_for *f) {
 void ClastStmtCodeGen::codegen(const clast_for *f) {
   bool Vector = PollyVectorizerChoice != VECTORIZER_NONE;
   if ((Vector || OpenMP) && isParallelFor(f)) {
-    if (Vector && isInnermostLoop(f) && (-1 != getNumberOfIterations(f))
-        && (getNumberOfIterations(f) <= 16)) {
+    if (Vector && isInnermostLoop(f) && (-1 != getNumberOfIterations(f)) &&
+        (getNumberOfIterations(f) <= 16)) {
       codegenForVector(f);
       return;
     }
