@@ -335,23 +335,23 @@ uint64_t AttributeImpl::getAttrMask(uint64_t Val) {
 }
 
 bool AttributeImpl::hasAttribute(uint64_t A) const {
-  return (Bits & getAttrMask(A)) != 0;
+  return (Raw() & getAttrMask(A)) != 0;
 }
 
 bool AttributeImpl::hasAttributes() const {
-  return Bits != 0;
+  return Raw() != 0;
 }
 
 bool AttributeImpl::hasAttributes(const Attribute &A) const {
-  return Bits & A.Raw();        // FIXME: Raw() won't work here in the future.
+  return Raw() & A.Raw();       // FIXME: Raw() won't work here in the future.
 }
 
 uint64_t AttributeImpl::getAlignment() const {
-  return Bits & getAttrMask(Attribute::Alignment);
+  return Raw() & getAttrMask(Attribute::Alignment);
 }
 
 uint64_t AttributeImpl::getStackAlignment() const {
-  return Bits & getAttrMask(Attribute::StackAlignment);
+  return Raw() & getAttrMask(Attribute::StackAlignment);
 }
 
 //===----------------------------------------------------------------------===//
