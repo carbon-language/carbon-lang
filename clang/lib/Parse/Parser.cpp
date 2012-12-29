@@ -760,11 +760,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
   default:
   dont_know:
     // We can't tell whether this is a function-definition or declaration yet.
-    if (DS) {
-      return ParseDeclarationOrFunctionDefinition(attrs, DS);
-    } else {
-      return ParseDeclarationOrFunctionDefinition(attrs);
-    }
+    return ParseDeclarationOrFunctionDefinition(attrs, DS);
   }
 
   // This routine returns a DeclGroup, if the thing we parsed only contains a
