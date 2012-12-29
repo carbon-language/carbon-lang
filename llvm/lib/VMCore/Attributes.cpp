@@ -53,7 +53,7 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   if (!PA) {
     // If we didn't find any existing attributes of the same shape then create a
     // new one and insert it.
-    PA = new AttributeImpl(B.Raw());
+    PA = new AttributeImpl(Context, B.Raw());
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
@@ -298,6 +298,14 @@ uint64_t AttrBuilder::getStackAlignment() const {
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
+AttributeImpl::AttributeImpl(LLVMContext &C, uint64_t data) {
+  Data = ConstantInt::get(Type::getInt64Ty(C), data);
+}
+
+uint64_t AttributeImpl::Raw() const {
+  return cast<ConstantInt>(Data)->getZExtValue();
+}
+
 uint64_t AttributeImpl::getAttrMask(uint64_t Val) {
   switch (Val) {
   case Attribute::None:            return 0;
@@ -352,6 +360,10 @@ uint64_t AttributeImpl::getAlignment() const {
 
 uint64_t AttributeImpl::getStackAlignment() const {
   return Raw() & getAttrMask(Attribute::StackAlignment);
+}
+
+void AttributeImpl::Profile(FoldingSetNodeID &ID, Constant *Data) {
+  ID.AddInteger(cast<ConstantInt>(Data)->getZExtValue());
 }
 
 //===----------------------------------------------------------------------===//

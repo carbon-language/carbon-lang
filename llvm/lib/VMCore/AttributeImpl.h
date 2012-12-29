@@ -21,6 +21,7 @@
 
 namespace llvm {
 
+class Constant;
 class LLVMContext;
 
 //===----------------------------------------------------------------------===//
@@ -29,9 +30,9 @@ class LLVMContext;
 /// could be a single enum, a tuple, or a string. It uses a discriminated union
 /// to distinguish them.
 class AttributeImpl : public FoldingSetNode {
-  uint64_t Bits;                // FIXME: We will be expanding this.
+  Constant *Data;
 public:
-  AttributeImpl(uint64_t bits) : Bits(bits) {}
+  AttributeImpl(LLVMContext &C, uint64_t data);
 
   bool hasAttribute(uint64_t A) const;
 
@@ -41,16 +42,14 @@ public:
   uint64_t getAlignment() const;
   uint64_t getStackAlignment() const;
 
-  uint64_t Raw() const { return Bits; } // FIXME: Remove.
+  uint64_t Raw() const;         // FIXME: Remove.
 
   static uint64_t getAttrMask(uint64_t Val);
 
   void Profile(FoldingSetNodeID &ID) const {
-    Profile(ID, Bits);
+    Profile(ID, Data);
   }
-  static void Profile(FoldingSetNodeID &ID, uint64_t Bits) {
-    ID.AddInteger(Bits);
-  }
+  static void Profile(FoldingSetNodeID &ID, Constant *Data);
 };
 
 //===----------------------------------------------------------------------===//
