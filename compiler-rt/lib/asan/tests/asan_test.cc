@@ -925,7 +925,7 @@ TEST(AddressSanitizer, MemSetOOBTest) {
 // Try to allocate two arrays of 'size' bytes that are near each other.
 // Strictly speaking we are not guaranteed to find such two pointers,
 // but given the structure of asan's allocator we will.
-static bool AllocateTwoAjacentArrays(char **x1, char **x2, size_t size) {
+static bool AllocateTwoAdjacentArrays(char **x1, char **x2, size_t size) {
   vector<char *> v;
   bool res = false;
   for (size_t i = 0; i < 1000U && !res; i++) {
@@ -954,11 +954,12 @@ static bool AllocateTwoAjacentArrays(char **x1, char **x2, size_t size) {
 TEST(AddressSanitizer, LargeOOBInMemset) {
   for (size_t size = 200; size < 100000; size += size / 2) {
     char *x1, *x2;
-    if (!AllocateTwoAjacentArrays(&x1, &x2, size))
+    if (!Ident(AllocateTwoAdjacentArrays)(&x1, &x2, size))
       continue;
     // fprintf(stderr, "  large oob memset: %p %p %zd\n", x1, x2, size);
     // Do a memset on x1 with huge out-of-bound access that will end up in x2.
-    EXPECT_DEATH(memset(x1, 0, size * 2), "is located 0 bytes to the right");
+    EXPECT_DEATH(Ident(memset)(x1, 0, size * 2),
+                 "is located 0 bytes to the right");
     delete [] x1;
     delete [] x2;
     return;
