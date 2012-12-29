@@ -87,7 +87,6 @@ class FileToString {
 
   char buf[BUFFERSIZE + 1];
 
-
 public:
   FileToString() {
     pipe(FD);
@@ -119,7 +118,6 @@ public:
 
       output += std::string(buf, readSize);
     }
-
 
     return output;
   }
@@ -173,7 +171,7 @@ CloogUnionDomain *Cloog::buildCloogUnionDomain() {
     CloogDomain *Domain;
 
     Scattering = cloog_scattering_from_isl_map(Stmt->getScattering());
-    Domain  = cloog_domain_from_isl_set(Stmt->getDomain());
+    Domain = cloog_domain_from_isl_set(Stmt->getDomain());
 
     std::string entryName = Stmt->getBaseName();
 
@@ -354,7 +352,7 @@ bool CloogInfo::runOnScop(Scop &S) {
   Function *F = S.getRegion().getEntry()->getParent();
 
   DEBUG(dbgs() << ":: " << F->getName());
-  DEBUG(dbgs() << " : " << S.getRegion().getNameStr() << "\n");;
+  DEBUG(dbgs() << " : " << S.getRegion().getNameStr() << "\n");
   DEBUG(C->pprint(dbgs()));
 
   return false;

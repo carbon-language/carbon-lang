@@ -84,7 +84,7 @@ SCEVCodegen("polly-codegen-scev",
 struct SCEVRewriter : public SCEVVisitor<SCEVRewriter, const SCEV*> {
 public:
   static const SCEV *rewrite(const SCEV *scev, Scop &S, ScalarEvolution &SE,
-                             ValueMapT &GlobalMap,  ValueMapT &BBMap) {
+                             ValueMapT &GlobalMap, ValueMapT &BBMap) {
     SCEVRewriter Rewriter(S, SE, GlobalMap, BBMap);
     return Rewriter.visit(scev);
   }
@@ -257,11 +257,10 @@ private:
 
   IRBuilder<> &Builder;
   std::vector<Value *> &IVS;
-  static int mergeIslAffValues(__isl_take isl_set *Set,
-                               __isl_take isl_aff *Aff, void *User);
+  static int mergeIslAffValues(__isl_take isl_set *Set, __isl_take isl_aff *Aff,
+                               void *User);
 };
 }
-
 
 Value *IslGenerator::generateIslInt(isl_int Int) {
   mpz_t IntMPZ;
@@ -523,8 +522,8 @@ Value *BlockGenerator::generateScalarStore(const StoreInst *Store,
   return Builder.CreateStore(ValueOperand, NewPointer);
 }
 
-void BlockGenerator::copyInstruction(const Instruction *Inst,
-                                     ValueMapT &BBMap, ValueMapT &GlobalMap) {
+void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
+                                     ValueMapT &GlobalMap) {
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())
@@ -545,7 +544,6 @@ void BlockGenerator::copyInstruction(const Instruction *Inst,
 
   copyInstScalar(Inst, BBMap, GlobalMap);
 }
-
 
 void BlockGenerator::copyBB(ValueMapT &GlobalMap) {
   BasicBlock *BB = Statement.getBasicBlock();
@@ -711,8 +709,7 @@ void VectorBlockGenerator::copyBinaryInst(const BinaryOperator *Inst,
   NewOpZero = getVectorValue(OpZero, VectorMap, ScalarMaps);
   NewOpOne = getVectorValue(OpOne, VectorMap, ScalarMaps);
 
-  Value *NewInst = Builder.CreateBinOp(Inst->getOpcode(), NewOpZero,
-                                       NewOpOne,
+  Value *NewInst = Builder.CreateBinOp(Inst->getOpcode(), NewOpZero, NewOpOne,
                                        Inst->getName() + "p_vec");
   VectorMap[Inst] = NewInst;
 }
@@ -740,8 +737,7 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store,
       Store->setAlignment(8);
   } else {
     for (unsigned i = 0; i < ScalarMaps.size(); i++) {
-      Value *Scalar = Builder.CreateExtractElement(Vector,
-                                                   Builder.getInt32(i));
+      Value *Scalar = Builder.CreateExtractElement(Vector, Builder.getInt32(i));
       Value *NewPointer = getNewValue(Pointer, ScalarMaps[i], GlobalMaps[i]);
       Builder.CreateStore(Scalar, NewPointer);
     }

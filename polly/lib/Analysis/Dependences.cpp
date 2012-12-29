@@ -53,9 +53,8 @@ Dependences::Dependences() : ScopPass(ID) {
   RAW = WAR = WAW = NULL;
 }
 
-void Dependences::collectInfo(Scop &S,
-                              isl_union_map **Read, isl_union_map **Write,
-                              isl_union_map **MayWrite,
+void Dependences::collectInfo(Scop &S, isl_union_map **Read,
+                              isl_union_map **Write, isl_union_map **MayWrite,
                               isl_union_map **Schedule) {
   isl_space *Space = S.getParamSpace();
   *Read = isl_union_map_empty(isl_space_copy(Space));
@@ -268,7 +267,7 @@ void Dependences::releaseMemory() {
   isl_union_map_free(WAR);
   isl_union_map_free(WAW);
 
-  RAW = WAR = WAW  = NULL;
+  RAW = WAR = WAW = NULL;
 }
 
 isl_union_map *Dependences::getDependences(int Kinds) {

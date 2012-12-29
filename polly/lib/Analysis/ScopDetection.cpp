@@ -153,8 +153,8 @@ std::string ScopDetection::regionIsInvalidBecause(const Region *R) const {
   return InvalidRegions.find(R)->second;
 }
 
-bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
-{
+bool ScopDetection::isValidCFG(BasicBlock &BB,
+                               DetectionContext &Context) const {
   Region &RefRegion = Context.CurRegion;
   TerminatorInst *TI = BB.getTerminator();
 
@@ -173,8 +173,7 @@ bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
 
   // UndefValue is not allowed as condition.
   if (isa<UndefValue>(Condition))
-    INVALID(AffFunc, "Condition based on 'undef' value in BB: "
-                     + BB.getName());
+    INVALID(AffFunc, "Condition based on 'undef' value in BB: " + BB.getName());
 
   // Only Constant and ICmpInst are allowed as condition.
   if (!(isa<Constant>(Condition) || isa<ICmpInst>(Condition)))
@@ -190,7 +189,7 @@ bool ScopDetection::isValidCFG(BasicBlock &BB, DetectionContext &Context) const
     //
     // TODO: This is not sufficient and just hides bugs. However it does pretty
     // well.
-    if(ICmp->isUnsigned())
+    if (ICmp->isUnsigned())
       return false;
 
     // Are both operands of the ICmp affine?
@@ -256,7 +255,8 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   AccessFunction = SE->getMinusSCEV(AccessFunction, BasePointer);
 
-  if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue) && !AllowNonAffine)
+  if (!isAffineExpr(&Context.CurRegion, AccessFunction, *SE, BaseValue) &&
+      !AllowNonAffine)
     INVALID(AffFunc, "Non affine access function: " << *AccessFunction);
 
   // FIXME: Alias Analysis thinks IntToPtrInst aliases with alloca instructions
@@ -284,7 +284,6 @@ bool ScopDetection::isValidMemoryAccess(Instruction &Inst,
 
   return true;
 }
-
 
 bool ScopDetection::hasScalarDependency(Instruction &Inst,
                                         Region &RefRegion) const {
@@ -380,7 +379,7 @@ bool ScopDetection::isValidLoop(Loop *L, DetectionContext &Context) const {
 Region *ScopDetection::expandRegion(Region &R) {
   // Initial no valid region was found (greater than R)
   Region *LastValidRegion = NULL;
-  Region *ExpandedRegion  = R.getExpandedRegion();
+  Region *ExpandedRegion = R.getExpandedRegion();
 
   DEBUG(dbgs() << "\tExpanding " << R.getNameStr() << "\n");
 
@@ -426,7 +425,6 @@ Region *ScopDetection::expandRegion(Region &R) {
 
   return LastValidRegion;
 }
-
 
 void ScopDetection::findScops(Region &R) {
   DetectionContext Context(R, *AA, false /*verifying*/);
@@ -496,7 +494,7 @@ bool ScopDetection::isValidExit(DetectionContext &Context) const {
   // PHI nodes are not allowed in the exit basic block.
   if (BasicBlock *Exit = R.getExit()) {
     BasicBlock::iterator I = Exit->begin();
-    if (I != Exit->end() && isa<PHINode> (*I))
+    if (I != Exit->end() && isa<PHINode>(*I))
       INVALID(Other, "PHI node in exit BB");
   }
 
@@ -561,7 +559,7 @@ void ScopDetection::getDebugLocation(const Region *R, unsigned &LineBegin,
       LineBegin = std::min(LineBegin, NewLine);
       LineEnd = std::max(LineEnd, NewLine);
       break;
-  }
+    }
 }
 
 void ScopDetection::printLocations() {
@@ -594,7 +592,7 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
   if (OnlyFunction != "" && F.getName() != OnlyFunction)
     return false;
 
-  if(!isValidFunction(F))
+  if (!isValidFunction(F))
     return false;
 
   findScops(*TopRegion);
@@ -604,7 +602,6 @@ bool ScopDetection::runOnFunction(llvm::Function &F) {
 
   return false;
 }
-
 
 void polly::ScopDetection::verifyRegion(const Region &R) const {
   assert(isMaxRegionInScop(R) && "Expect R is a valid region.");

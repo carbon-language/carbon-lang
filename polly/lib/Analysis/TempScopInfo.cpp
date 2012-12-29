@@ -146,7 +146,7 @@ void TempScopInfo::buildLoopBounds(TempScop &Scop) {
 }
 
 void TempScopInfo::buildAffineCondition(Value &V, bool inverted,
-                                         Comparison **Comp) const {
+                                        Comparison **Comp) const {
   if (ConstantInt *C = dyn_cast<ConstantInt>(&V)) {
     // If this is always true condition, we will create 1 >= 0,
     // otherwise we will create 1 == 0.

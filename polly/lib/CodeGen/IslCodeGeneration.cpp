@@ -261,7 +261,7 @@ Value *IslExprBuilder::createOpBin(__isl_take isl_ast_expr *Expr) {
   // result type cannot be larger than the type of the individual operand. isl
   // does not calculate correct types for these operations and we consequently
   // exclude those operations here.
-  switch(OpType) {
+  switch (OpType) {
   case isl_ast_op_pdiv_q:
   case isl_ast_op_pdiv_r:
   case isl_ast_op_div:
@@ -690,10 +690,9 @@ void IslNodeBuilder::createUserVector(__isl_take isl_ast_node *User,
   isl_map *S = isl_map_from_union_map(Schedule);
 
   createSubstitutionsVector(isl_pw_multi_aff_copy(Info->PMA),
-                            isl_ast_build_copy(Info->Context),
-                            Stmt, VectorMap, IVS, IteratorID);
+                            isl_ast_build_copy(Info->Context), Stmt, VectorMap,
+                            IVS, IteratorID);
   VectorBlockGenerator::generate(Builder, *Stmt, VectorMap, S, P);
-
 
   isl_map_free(S);
   isl_id_free(Annotation);
@@ -754,8 +753,7 @@ void IslNodeBuilder::createForVector(__isl_take isl_ast_node *For,
 
     for (int i = 0; i < isl_ast_node_list_n_ast_node(List); ++i)
       createUserVector(isl_ast_node_list_get_ast_node(List, i), IVS,
-                       isl_id_copy(IteratorID),
-                       isl_union_map_copy(Schedule));
+                       isl_id_copy(IteratorID), isl_union_map_copy(Schedule));
 
     isl_ast_node_free(Body);
     isl_ast_node_list_free(List);
@@ -892,10 +890,9 @@ void IslNodeBuilder::createIf(__isl_take isl_ast_node *If) {
 }
 
 void IslNodeBuilder::createSubstitutions(__isl_take isl_pw_multi_aff *PMA,
-                         __isl_take isl_ast_build *Context,
-                         ScopStmt *Stmt, ValueMapT &VMap) {
-  for (unsigned i = 0; i < isl_pw_multi_aff_dim(PMA, isl_dim_out);
-       ++i) {
+                                         __isl_take isl_ast_build *Context,
+                                         ScopStmt *Stmt, ValueMapT &VMap) {
+  for (unsigned i = 0; i < isl_pw_multi_aff_dim(PMA, isl_dim_out); ++i) {
     isl_pw_aff *Aff;
     isl_ast_expr *Expr;
     const Value *OldIV;
@@ -926,8 +923,8 @@ void IslNodeBuilder::createSubstitutionsVector(__isl_take isl_pw_multi_aff *PMA,
   for (std::vector<Value*>::iterator II = IVS.begin(), IE = IVS.end();
       II != IE; ++II) {
     IDToValue[IteratorID] = *II;
-    createSubstitutions(isl_pw_multi_aff_copy(PMA),
-                        isl_ast_build_copy(Context), Stmt, VMap[i]);
+    createSubstitutions(isl_pw_multi_aff_copy(PMA), isl_ast_build_copy(Context),
+                        Stmt, VMap[i]);
     i++;
   }
 
@@ -1017,7 +1014,7 @@ void IslNodeBuilder::addParameters(__isl_take isl_set *Context) {
 
 namespace {
 class IslCodeGeneration : public ScopPass {
-  public:
+public:
   static char ID;
 
   IslCodeGeneration() : ScopPass(ID) {}

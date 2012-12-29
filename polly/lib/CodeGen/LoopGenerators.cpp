@@ -24,8 +24,7 @@ using namespace llvm;
 using namespace polly;
 
 Value *polly::createLoop(Value *LB, Value *UB, Value *Stride,
-                         IRBuilder<> &Builder, Pass *P,
-                         BasicBlock *&AfterBlock,
+                         IRBuilder<> &Builder, Pass *P, BasicBlock *&AfterBlock,
                          ICmpInst::Predicate Predicate) {
   DominatorTree &DT = P->getAnalysis<DominatorTree>();
   Function *F = Builder.GetInsertBlock()->getParent();

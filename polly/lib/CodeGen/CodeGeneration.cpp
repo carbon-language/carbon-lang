@@ -176,7 +176,7 @@ Value *ClastExpCodeGen::codegen(const clast_reduction *r, Type *Ty) {
          && "Clast reduction type not supported");
   Value *old = codegen(r->elts[0], Ty);
 
-  for (int i=1; i < r->n; ++i) {
+  for (int i = 1; i < r->n; ++i) {
     Value *exprValue = codegen(r->elts[i], Ty);
 
     switch (r->type) {
@@ -341,7 +341,7 @@ private:
 
   IntegerType *getIntPtrTy();
 
-  public:
+public:
   void codegen(const clast_root *r);
 
   ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P);
@@ -357,7 +357,7 @@ const std::vector<std::string> &ClastStmtCodeGen::getParallelLoops() {
 }
 
 void ClastStmtCodeGen::codegen(const clast_assignment *a) {
-  Value *V= ExpGen.codegen(a->RHS, getIntPtrTy());
+  Value *V = ExpGen.codegen(a->RHS, getIntPtrTy());
   ClastVars[a->LHS] = V;
 }
 
@@ -425,7 +425,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
   VectorValueMapT VectorMap(VectorDimensions);
 
   if (IVS) {
-    assert (u->substitutions && "Substitutions expected!");
+    assert(u->substitutions && "Substitutions expected!");
     int i = 0;
     for (std::vector<Value*>::iterator II = IVS->begin(), IE = IVS->end();
          II != IE; ++II) {
@@ -703,7 +703,7 @@ void ClastStmtCodeGen::codegenForGPGPU(const clast_for *F) {
   U = (const clast_user_stmt *) TmpStmt;
   ScopStmt *Statement = (ScopStmt *) U->statement->usr;
   for (unsigned i = 0; i < Statement->getNumIterators() - NonPLoopDepth; i++) {
-    const Value* IV = Statement->getInductionVariableForDimension(i);
+    const Value *IV = Statement->getInductionVariableForDimension(i);
     IVS.insert(const_cast<Value *>(IV));
   }
 
@@ -784,7 +784,7 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
 
   APInt Stride = APInt_from_MPZ(F->stride);
   IntegerType *LoopIVType = dyn_cast<IntegerType>(LB->getType());
-  Stride =  Stride.zext(LoopIVType->getBitWidth());
+  Stride = Stride.zext(LoopIVType->getBitWidth());
   Value *StrideValue = ConstantInt::get(LoopIVType, Stride);
 
   std::vector<Value*> IVS(VectorWidth);
@@ -810,7 +810,6 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *F) {
   isl_set_free(Domain);
   ClastVars.erase(F->iterator);
 }
-
 
 bool ClastStmtCodeGen::isParallelFor(const clast_for *f) {
   isl_set *Domain = isl_set_from_cloog_domain(f->domain);
@@ -952,14 +951,15 @@ void ClastStmtCodeGen::codegen(const clast_root *r) {
     codegen(stmt->next);
 }
 
-ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P) :
-    S(scop), P(P), Builder(B), ExpGen(Builder, ClastVars) {}
+ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, IRBuilder<> &B, Pass *P)
+    : S(scop), P(P), Builder(B), ExpGen(Builder, ClastVars) {
+}
 
 namespace {
 class CodeGeneration : public ScopPass {
   std::vector<std::string> ParallelLoops;
 
-  public:
+public:
   static char ID;
 
   CodeGeneration() : ScopPass(ID) {}

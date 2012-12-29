@@ -230,17 +230,16 @@ MemoryAccess::~MemoryAccess() {
   isl_map_free(newAccessRelation);
 }
 
-static void replace(std::string& str, const std::string& find,
-                    const std::string& replace) {
+static void replace(std::string &str, const std::string &find,
+                    const std::string &replace) {
   size_t pos = 0;
-  while((pos = str.find(find, pos)) != std::string::npos)
-  {
+  while ((pos = str.find(find, pos)) != std::string::npos) {
     str.replace(pos, find.length(), replace);
     pos += replace.length();
   }
 }
 
-static void makeIslCompatible(std::string& str) {
+static void makeIslCompatible(std::string &str) {
   str.erase(0, 1);
   replace(str, ".", "_");
   replace(str, "\"", "_");
@@ -691,7 +690,7 @@ void ScopStmt::print(raw_ostream &OS) const {
     OS.indent(16) << "n/a\n";
 
   for (MemoryAccessVec::const_iterator I = MemAccs.begin(), E = MemAccs.end();
-      I != E; ++I)
+       I != E; ++I)
     (*I)->print(OS);
 }
 
@@ -742,7 +741,7 @@ __isl_give isl_id *Scop::getIdForParam(const SCEV *Parameter) const {
 
 void Scop::buildContext() {
   isl_space *Space = isl_space_params_alloc(IslCtx, 0);
-  Context = isl_set_universe (Space);
+  Context = isl_set_universe(Space);
 }
 
 void Scop::addParameterBounds() {
@@ -775,7 +774,6 @@ void Scop::addParameterBounds() {
     isl_int_clear(V);
   }
 }
-
 
 void Scop::realignParams() {
   // Add all parameters into a common model.
@@ -826,7 +824,7 @@ Scop::~Scop() {
 }
 
 std::string Scop::getContextStr() const {
-    return stringFromIslObj(Context);
+  return stringFromIslObj(Context);
 }
 
 std::string Scop::getNameStr() const {
@@ -875,12 +873,11 @@ void Scop::printContext(raw_ostream &OS) const {
 void Scop::printStatements(raw_ostream &OS) const {
   OS << "Statements {\n";
 
-  for (const_iterator SI = begin(), SE = end();SI != SE; ++SI)
+  for (const_iterator SI = begin(), SE = end(); SI != SE; ++SI)
     OS.indent(4) << (**SI);
 
   OS.indent(4) << "}\n";
 }
-
 
 void Scop::print(raw_ostream &OS) const {
   printContext(OS.indent(4));
@@ -963,8 +960,6 @@ ScopInfo::~ScopInfo() {
   clear();
   isl_ctx_free(ctx);
 }
-
-
 
 void ScopInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
