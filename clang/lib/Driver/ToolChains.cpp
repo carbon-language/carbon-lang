@@ -986,7 +986,7 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
     if (RHS.PatchSuffix.empty())
       return true;
     if (PatchSuffix.empty())
-      return true;
+      return false;
 
     // Provide a lexicographic sort to make this a total ordering.
     return PatchSuffix < RHS.PatchSuffix;
