@@ -521,9 +521,7 @@ public:
   SourceLocation getEndLoc() const;
   /// getSourceRange - The range of the declaration name.
   SourceRange getSourceRange() const LLVM_READONLY {
-    SourceLocation BeginLoc = getBeginLoc();
-    SourceLocation EndLoc = getEndLoc();
-    return SourceRange(BeginLoc, EndLoc.isValid() ? EndLoc : BeginLoc);
+    return SourceRange(getLocStart(), getLocEnd());
   }
   SourceLocation getLocStart() const LLVM_READONLY {
     return getBeginLoc();
