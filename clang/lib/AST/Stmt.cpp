@@ -769,13 +769,12 @@ SourceLocation ObjCAtTryStmt::getLocEnd() const {
 }
 
 CXXTryStmt *CXXTryStmt::Create(ASTContext &C, SourceLocation tryLoc,
-                               Stmt *tryBlock, Stmt **handlers,
-                               unsigned numHandlers) {
+                               Stmt *tryBlock, ArrayRef<Stmt*> handlers) {
   std::size_t Size = sizeof(CXXTryStmt);
-  Size += ((numHandlers + 1) * sizeof(Stmt));
+  Size += ((handlers.size() + 1) * sizeof(Stmt));
 
   void *Mem = C.Allocate(Size, llvm::alignOf<CXXTryStmt>());
-  return new (Mem) CXXTryStmt(tryLoc, tryBlock, handlers, numHandlers);
+  return new (Mem) CXXTryStmt(tryLoc, tryBlock, handlers);
 }
 
 CXXTryStmt *CXXTryStmt::Create(ASTContext &C, EmptyShell Empty,
@@ -788,11 +787,11 @@ CXXTryStmt *CXXTryStmt::Create(ASTContext &C, EmptyShell Empty,
 }
 
 CXXTryStmt::CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock,
-                       Stmt **handlers, unsigned numHandlers)
-  : Stmt(CXXTryStmtClass), TryLoc(tryLoc), NumHandlers(numHandlers) {
+                       ArrayRef<Stmt*> handlers)
+  : Stmt(CXXTryStmtClass), TryLoc(tryLoc), NumHandlers(handlers.size()) {
   Stmt **Stmts = reinterpret_cast<Stmt **>(this + 1);
   Stmts[0] = tryBlock;
-  std::copy(handlers, handlers + NumHandlers, Stmts + 1);
+  std::copy(handlers.begin(), handlers.end(), Stmts + 1);
 }
 
 CXXForRangeStmt::CXXForRangeStmt(DeclStmt *Range, DeclStmt *BeginEndStmt,

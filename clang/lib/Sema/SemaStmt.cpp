@@ -2757,7 +2757,7 @@ Sema::ActOnCXXTryBlock(SourceLocation TryLoc, Stmt *TryBlock,
   // and warns.
 
   return Owned(CXXTryStmt::Create(Context, TryLoc, TryBlock,
-                                  Handlers, NumHandlers));
+                                  llvm::makeArrayRef(Handlers, NumHandlers)));
 }
 
 StmtResult

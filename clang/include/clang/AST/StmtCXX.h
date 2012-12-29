@@ -63,8 +63,7 @@ class CXXTryStmt : public Stmt {
   SourceLocation TryLoc;
   unsigned NumHandlers;
 
-  CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock, Stmt **handlers,
-             unsigned numHandlers);
+  CXXTryStmt(SourceLocation tryLoc, Stmt *tryBlock, ArrayRef<Stmt*> handlers);
 
   CXXTryStmt(EmptyShell Empty, unsigned numHandlers)
     : Stmt(CXXTryStmtClass), NumHandlers(numHandlers) { }
@@ -78,8 +77,7 @@ class CXXTryStmt : public Stmt {
 
 public:
   static CXXTryStmt *Create(ASTContext &C, SourceLocation tryLoc,
-                            Stmt *tryBlock, Stmt **handlers,
-                            unsigned numHandlers);
+                            Stmt *tryBlock, ArrayRef<Stmt*> handlers);
 
   static CXXTryStmt *Create(ASTContext &C, EmptyShell Empty,
                             unsigned numHandlers);
