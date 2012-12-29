@@ -669,6 +669,10 @@ void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
   }
 }
 
+void __asan_describe_address(uptr addr) {
+  DescribeAddress(addr, 1);
+}
+
 #if !SANITIZER_SUPPORTS_WEAK_HOOKS
 // Provide default implementation of __asan_on_error that does nothing
 // and may be overriden by user.

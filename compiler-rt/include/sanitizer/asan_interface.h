@@ -122,6 +122,10 @@ extern "C" {
   uptr __asan_region_is_poisoned(uptr beg, uptr size)
       SANITIZER_INTERFACE_ATTRIBUTE;
 
+  // Print the description of addr (useful when debugging in gdb).
+  void __asan_describe_address(uptr addr)
+      SANITIZER_INTERFACE_ATTRIBUTE;
+
   // This is an internal function that is called to report an error.
   // However it is still a part of the interface because users may want to
   // set a breakpoint on this function in a debugger.
