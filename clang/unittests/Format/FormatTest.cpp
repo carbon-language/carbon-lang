@@ -349,6 +349,13 @@ TEST_F(FormatTest, FormatsNamespaces) {
                "  f();\n"
                "}\n"
                "}");
+  verifyFormat("inline namespace X {\n"
+               "class A {\n"
+               "};\n"
+               "void f() {\n"
+               "  f();\n"
+               "}\n"
+               "}");
   verifyFormat("using namespace some_namespace;\n"
                "class A {\n"
                "};\n"

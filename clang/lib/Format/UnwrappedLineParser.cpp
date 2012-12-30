@@ -100,10 +100,19 @@ void UnwrappedLineParser::parseComments() {
 void UnwrappedLineParser::parseStatement() {
   parseComments();
 
+  int TokenNumber = 0;
   switch (FormatTok.Tok.getKind()) {
   case tok::kw_namespace:
     parseNamespace();
     return;
+  case tok::kw_inline:
+    nextToken();
+    TokenNumber++;
+    if (FormatTok.Tok.is(tok::kw_namespace)) {
+      parseNamespace();
+      return;
+    }
+    break;
   case tok::kw_public:
   case tok::kw_protected:
   case tok::kw_private:
@@ -132,7 +141,6 @@ void UnwrappedLineParser::parseStatement() {
   default:
     break;
   }
-  int TokenNumber = 0;
   do {
     ++TokenNumber;
     switch (FormatTok.Tok.getKind()) {
