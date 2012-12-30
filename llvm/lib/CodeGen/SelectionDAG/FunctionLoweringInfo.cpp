@@ -66,8 +66,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
 
   // Check whether the function can return without sret-demotion.
   SmallVector<ISD::OutputArg, 4> Outs;
-  GetReturnInfo(Fn->getReturnType(),
-                Fn->getAttributes().getRetAttributes(), Outs, TLI);
+  GetReturnInfo(Fn->getReturnType(), Fn->getAttributes(), Outs, TLI);
   CanLowerReturn = TLI.CanLowerReturn(Fn->getCallingConv(), *MF,
                                       Fn->isVarArg(),
                                       Outs, Fn->getContext());

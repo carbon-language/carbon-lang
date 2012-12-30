@@ -990,7 +990,7 @@ unsigned TargetLowering::getVectorTypeBreakdown(LLVMContext &Context, EVT VT,
 /// type of the given function.  This does not require a DAG or a return value,
 /// and is suitable for use before any DAGs for the function are constructed.
 /// TODO: Move this out of TargetLowering.cpp.
-void llvm::GetReturnInfo(Type* ReturnType, Attribute attr,
+void llvm::GetReturnInfo(Type* ReturnType, AttributeSet attr,
                          SmallVectorImpl<ISD::OutputArg> &Outs,
                          const TargetLowering &TLI) {
   SmallVector<EVT, 4> ValueVTs;
@@ -1002,9 +1002,9 @@ void llvm::GetReturnInfo(Type* ReturnType, Attribute attr,
     EVT VT = ValueVTs[j];
     ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
 
-    if (attr.hasAttribute(Attribute::SExt))
+    if (attr.hasAttribute(AttributeSet::ReturnIndex, Attribute::SExt))
       ExtendKind = ISD::SIGN_EXTEND;
-    else if (attr.hasAttribute(Attribute::ZExt))
+    else if (attr.hasAttribute(AttributeSet::ReturnIndex, Attribute::ZExt))
       ExtendKind = ISD::ZERO_EXTEND;
 
     // FIXME: C calling convention requires the return type to be promoted to
@@ -1022,13 +1022,13 @@ void llvm::GetReturnInfo(Type* ReturnType, Attribute attr,
 
     // 'inreg' on function refers to return value
     ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
-    if (attr.hasAttribute(Attribute::InReg))
+    if (attr.hasAttribute(AttributeSet::ReturnIndex, Attribute::InReg))
       Flags.setInReg();
 
     // Propagate extension type if any
-    if (attr.hasAttribute(Attribute::SExt))
+    if (attr.hasAttribute(AttributeSet::ReturnIndex, Attribute::SExt))
       Flags.setSExt();
-    else if (attr.hasAttribute(Attribute::ZExt))
+    else if (attr.hasAttribute(AttributeSet::ReturnIndex, Attribute::ZExt))
       Flags.setZExt();
 
     for (unsigned i = 0; i < NumParts; ++i)

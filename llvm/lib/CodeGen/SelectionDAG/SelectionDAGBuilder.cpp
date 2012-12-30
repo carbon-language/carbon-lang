@@ -1233,9 +1233,11 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
         ISD::NodeType ExtendKind = ISD::ANY_EXTEND;
 
         const Function *F = I.getParent()->getParent();
-        if (F->getRetAttributes().hasAttribute(Attribute::SExt))
+        if (F->getAttributes().hasAttribute(AttributeSet::ReturnIndex,
+                                            Attribute::SExt))
           ExtendKind = ISD::SIGN_EXTEND;
-        else if (F->getRetAttributes().hasAttribute(Attribute::ZExt))
+        else if (F->getAttributes().hasAttribute(AttributeSet::ReturnIndex,
+                                                 Attribute::ZExt))
           ExtendKind = ISD::ZERO_EXTEND;
 
         if (ExtendKind != ISD::ANY_EXTEND && VT.isInteger())
@@ -1250,7 +1252,8 @@ void SelectionDAGBuilder::visitRet(const ReturnInst &I) {
 
         // 'inreg' on function refers to return value
         ISD::ArgFlagsTy Flags = ISD::ArgFlagsTy();
-        if (F->getRetAttributes().hasAttribute(Attribute::InReg))
+        if (F->getAttributes().hasAttribute(AttributeSet::ReturnIndex,
+                                            Attribute::InReg))
           Flags.setInReg();
 
         // Propagate extension type if any
@@ -5194,8 +5197,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
 
   // Check whether the function can return without sret-demotion.
   SmallVector<ISD::OutputArg, 4> Outs;
-  GetReturnInfo(RetTy, CS.getAttributes().getRetAttributes(),
-                Outs, TLI);
+  GetReturnInfo(RetTy, CS.getAttributes(), Outs, TLI);
 
   bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(),
                                            DAG.getMachineFunction(),
@@ -6584,8 +6586,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
   // Check whether the function can return without sret-demotion.
   SmallVector<ISD::OutputArg, 4> Outs;
-  GetReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(),
-                Outs, TLI);
+  GetReturnInfo(F.getReturnType(), F.getAttributes(), Outs, TLI);
 
   if (!FuncInfo->CanLowerReturn) {
     // Put in an sret pointer parameter before all the other parameters.

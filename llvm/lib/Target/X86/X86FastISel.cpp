@@ -740,8 +740,7 @@ bool X86FastISel::X86SelectRet(const Instruction *I) {
 
   if (Ret->getNumOperands() > 0) {
     SmallVector<ISD::OutputArg, 4> Outs;
-    GetReturnInfo(F.getReturnType(), F.getAttributes().getRetAttributes(),
-                  Outs, TLI);
+    GetReturnInfo(F.getReturnType(), F.getAttributes(), Outs, TLI);
 
     // Analyze operands of the call, assigning locations to each operand.
     SmallVector<CCValAssign, 16> ValLocs;
@@ -1585,8 +1584,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
 
   // Check whether the function can return without sret-demotion.
   SmallVector<ISD::OutputArg, 4> Outs;
-  GetReturnInfo(I->getType(), CS.getAttributes().getRetAttributes(),
-                Outs, TLI);
+  GetReturnInfo(I->getType(), CS.getAttributes(), Outs, TLI);
   bool CanLowerReturn = TLI.CanLowerReturn(CS.getCallingConv(),
                                            *FuncInfo.MF, FTy->isVarArg(),
                                            Outs, FTy->getContext());

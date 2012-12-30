@@ -2217,7 +2217,7 @@ private:
 /// GetReturnInfo - Given an LLVM IR type and return type attributes,
 /// compute the return value EVTs and flags, and optionally also
 /// the offsets, if the return value is being lowered to memory.
-void GetReturnInfo(Type* ReturnType, Attribute attr,
+void GetReturnInfo(Type* ReturnType, AttributeSet attr,
                    SmallVectorImpl<ISD::OutputArg> &Outs,
                    const TargetLowering &TLI);
 

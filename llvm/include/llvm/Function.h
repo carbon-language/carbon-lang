@@ -189,11 +189,6 @@ public:
   void setGC(const char *Str);
   void clearGC();
 
-  /// getRetAttributes - Return the return attributes for querying.
-  Attribute getRetAttributes() const {
-    return AttributeList.getRetAttributes();
-  }
-
   /// addAttribute - adds the attribute to the list of attributes.
   void addAttribute(unsigned i, Attribute attr);
 
