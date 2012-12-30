@@ -363,10 +363,6 @@ uint64_t AttributeImpl::getStackAlignment() const {
   return getBitMask() & getAttrMask(Attribute::StackAlignment);
 }
 
-void AttributeImpl::Profile(FoldingSetNodeID &ID, Constant *Data) {
-  ID.AddInteger(cast<ConstantInt>(Data)->getZExtValue());
-}
-
 //===----------------------------------------------------------------------===//
 // AttributeSetImpl Definition
 //===----------------------------------------------------------------------===//

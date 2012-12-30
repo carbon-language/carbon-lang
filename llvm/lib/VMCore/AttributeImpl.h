@@ -49,7 +49,9 @@ public:
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, Data);
   }
-  static void Profile(FoldingSetNodeID &ID, Constant *Data);
+  static void Profile(FoldingSetNodeID &ID, Constant *Data) {
+    ID.AddPointer(Data);
+  }
 };
 
 //===----------------------------------------------------------------------===//
