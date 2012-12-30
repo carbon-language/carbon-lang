@@ -262,6 +262,43 @@ recommended way to examine output to figure out if the test passes it using the
 :doc:`FileCheck tool <CommandGuide/FileCheck>`. The usage of ``grep`` in RUN
 lines is discouraged.
 
+Fragile tests
+-------------
+
+It is easy to write a fragile test that would fail spuriously if the tool being
+tested outputs a full path to the input file.  For example, :program:`opt` by
+default outputs a ``ModuleID``:
+
+.. code-block:: console
+
+  $ cat example.ll
+  define i32 @main() nounwind {
+      ret i32 0
+  }
+
+  $ opt -S /path/to/example.ll
+  ; ModuleID = '/path/to/example.ll'
+
+  define i32 @main() nounwind {
+      ret i32 0
+  }
+
+``ModuleID`` can unexpetedly match against ``CHECK`` lines.  For example:
+
+.. code-block:: llvm
+
+  ; RUN: opt -S %s | FileCheck
+
+  define i32 @main() nounwind {
+      ; CHECK-NOT: load
+      ret i32 0
+  }
+
+This test will fail if placed into a ``download`` directory.
+
+To make your tests robust, always use ``opt ... < %s`` in the RUN line.
+:program:`opt` does not output a ``ModuleID`` when input comes from stdin.
+
 The FileCheck utility
 ---------------------
 
