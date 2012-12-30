@@ -5,6 +5,11 @@ extern "C" void *memmove(void *s1, const void *s2, unsigned n);
 extern "C" void *memcpy(void *s1, const void *s2, unsigned n);
 extern "C" void *memcmp(void *s1, const void *s2, unsigned n);
 
+
+// Redeclare without the extern "C" to test that we still figure out that this
+// is the "real" memset.
+void *memset(void *, int, unsigned);
+
 // Several types that should not warn.
 struct S1 {} s1;
 struct S2 { int x; } s2;

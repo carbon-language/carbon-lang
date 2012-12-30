@@ -2440,7 +2440,7 @@ unsigned FunctionDecl::getMemoryFunctionKind() const {
     return Builtin::BIstrlen;
 
   default:
-    if (isExternC()) {
+    if (hasCLanguageLinkage()) {
       if (FnInfo->isStr("memset"))
         return Builtin::BImemset;
       else if (FnInfo->isStr("memcpy"))
