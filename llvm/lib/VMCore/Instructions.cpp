@@ -348,7 +348,7 @@ bool CallInst::hasFnAttr(Attribute::AttrKind A) const {
       .hasAttribute(A))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(AttributeSet::FunctionIndex).hasAttribute(A);
+    return F->getAttributes().hasAttribute(AttributeSet::FunctionIndex, A);
   return false;
 }
 
@@ -356,7 +356,7 @@ bool CallInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
   if (AttributeList.getParamAttributes(i).hasAttribute(A))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(A);
+    return F->getAttributes().hasAttribute(i, A);
   return false;
 }
 
@@ -577,7 +577,7 @@ bool InvokeInst::hasFnAttr(Attribute::AttrKind A) const {
       hasAttribute(A))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(AttributeSet::FunctionIndex).hasAttribute(A);
+    return F->getAttributes().hasAttribute(AttributeSet::FunctionIndex, A);
   return false;
 }
 
@@ -585,7 +585,7 @@ bool InvokeInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
   if (AttributeList.getParamAttributes(i).hasAttribute(A))
     return true;
   if (const Function *F = getCalledFunction())
-    return F->getParamAttributes(i).hasAttribute(A);
+    return F->getAttributes().hasAttribute(i, A);
   return false;
 }
 

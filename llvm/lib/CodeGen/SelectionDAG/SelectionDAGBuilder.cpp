@@ -6616,15 +6616,15 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
       unsigned OriginalAlignment =
         TD->getABITypeAlignment(ArgTy);
 
-      if (F.getParamAttributes(Idx).hasAttribute(Attribute::ZExt))
+      if (F.getAttributes().hasAttribute(Idx, Attribute::ZExt))
         Flags.setZExt();
-      if (F.getParamAttributes(Idx).hasAttribute(Attribute::SExt))
+      if (F.getAttributes().hasAttribute(Idx, Attribute::SExt))
         Flags.setSExt();
-      if (F.getParamAttributes(Idx).hasAttribute(Attribute::InReg))
+      if (F.getAttributes().hasAttribute(Idx, Attribute::InReg))
         Flags.setInReg();
-      if (F.getParamAttributes(Idx).hasAttribute(Attribute::StructRet))
+      if (F.getAttributes().hasAttribute(Idx, Attribute::StructRet))
         Flags.setSRet();
-      if (F.getParamAttributes(Idx).hasAttribute(Attribute::ByVal)) {
+      if (F.getAttributes().hasAttribute(Idx, Attribute::ByVal)) {
         Flags.setByVal();
         PointerType *Ty = cast<PointerType>(I->getType());
         Type *ElementTy = Ty->getElementType();
@@ -6638,7 +6638,7 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
           FrameAlign = TLI.getByValTypeAlignment(ElementTy);
         Flags.setByValAlign(FrameAlign);
       }
-      if (F.getParamAttributes(Idx).hasAttribute(Attribute::Nest))
+      if (F.getAttributes().hasAttribute(Idx, Attribute::Nest))
         Flags.setNest();
       Flags.setOrigAlign(OriginalAlignment);
 
@@ -6726,9 +6726,9 @@ void SelectionDAGISel::LowerArguments(const BasicBlock *LLVMBB) {
 
       if (!I->use_empty()) {
         ISD::NodeType AssertOp = ISD::DELETED_NODE;
-        if (F.getParamAttributes(Idx).hasAttribute(Attribute::SExt))
+        if (F.getAttributes().hasAttribute(Idx, Attribute::SExt))
           AssertOp = ISD::AssertSext;
-        else if (F.getParamAttributes(Idx).hasAttribute(Attribute::ZExt))
+        else if (F.getAttributes().hasAttribute(Idx, Attribute::ZExt))
           AssertOp = ISD::AssertZext;
 
         ArgValues.push_back(getCopyFromParts(DAG, dl, &InVals[i],
