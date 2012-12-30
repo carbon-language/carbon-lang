@@ -479,7 +479,7 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
       Out << " {\n    AttrBuilder B;\n";
 
 #define HANDLE_ATTR(X)                                     \
-      if (attrs.hasAttribute(Attribute::X))               \
+      if (attrs.contains(Attribute::X))                    \
         Out << "    B.addAttribute(Attribute::" #X ");\n"; \
       attrs.removeAttribute(Attribute::X);
 
@@ -509,7 +509,7 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
       HANDLE_ATTR(NonLazyBind);
       HANDLE_ATTR(MinSize);
 #undef HANDLE_ATTR
-      if (attrs.hasAttribute(Attribute::StackAlignment))
+      if (attrs.contains(Attribute::StackAlignment))
         Out << "    B.addStackAlignmentAttr(" << attrs.getStackAlignment() << ")\n";
       attrs.removeAttribute(Attribute::StackAlignment);
       assert(!attrs.hasAttributes() && "Unhandled attribute!");

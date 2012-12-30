@@ -266,7 +266,7 @@ AttrBuilder &AttrBuilder::removeAttributes(const Attribute &A){
   return *this;
 }
 
-bool AttrBuilder::hasAttribute(Attribute::AttrKind A) const {
+bool AttrBuilder::contains(Attribute::AttrKind A) const {
   return Bits & AttributeImpl::getAttrMask(A);
 }
 

@@ -176,8 +176,8 @@ public:
   /// removeAttribute - Remove the attributes from A from the builder.
   AttrBuilder &removeAttributes(const Attribute &A);
 
-  /// contains - Return true if the builder has the specified attribute.
-  bool hasAttribute(Attribute::AttrKind A) const;
+  /// \brief Return true if the builder has the specified attribute.
+  bool contains(Attribute::AttrKind A) const;
 
   /// hasAttributes - Return true if the builder has IR-level attributes.
   bool hasAttributes() const;
