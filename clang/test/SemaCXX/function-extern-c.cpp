@@ -38,3 +38,16 @@ extern "C" long long f11( void );
 extern "C" A *f10( void );
 
 extern "C" struct mypodstruct f12(); // expected-warning {{'f12' has C-linkage specified, but returns incomplete type 'struct mypodstruct' which could be incompatible with C}}
+
+namespace test2 {
+  // FIXME: we should probably suppress the first warning as the second one
+  // is more precise.
+  // For now this tests that a second 'extern "C"' is not necessary to trigger
+  // the warning.
+  struct A;
+  extern "C" A f(void); // expected-warning {{'f' has C-linkage specified, but returns incomplete type 'test2::A' which could be incompatible with C}}
+  struct A {
+    A(const A&);
+  };
+  A f(void);  // expected-warning {{'f' has C-linkage specified, but returns user-defined type 'test2::A' which is incompatible with C}}
+}
