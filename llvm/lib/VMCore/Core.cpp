@@ -1402,7 +1402,7 @@ LLVMAttribute LLVMGetFunctionAttr(LLVMValueRef Fn) {
   Function *Func = unwrap<Function>(Fn);
   const AttributeSet PAL = Func->getAttributes();
   Attribute attr = PAL.getFnAttributes();
-  return (LLVMAttribute)attr.Raw();
+  return (LLVMAttribute)attr.getBitMask();
 }
 
 /*--.. Operations on parameters ............................................--*/
@@ -1479,7 +1479,7 @@ LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
   Argument *A = unwrap<Argument>(Arg);
   Attribute attr = A->getParent()->getAttributes().getParamAttributes(
     A->getArgNo()+1);
-  return (LLVMAttribute)attr.Raw();
+  return (LLVMAttribute)attr.getBitMask();
 }
   
 

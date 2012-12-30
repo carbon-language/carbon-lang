@@ -42,7 +42,7 @@ public:
   uint64_t getAlignment() const;
   uint64_t getStackAlignment() const;
 
-  uint64_t Raw() const;         // FIXME: Remove.
+  uint64_t getBitMask() const;         // FIXME: Remove.
 
   static uint64_t getAttrMask(uint64_t Val);
 
@@ -71,7 +71,7 @@ public:
   }
   static void Profile(FoldingSetNodeID &ID, ArrayRef<AttributeWithIndex> Attrs){
     for (unsigned i = 0, e = Attrs.size(); i != e; ++i) {
-      ID.AddInteger(Attrs[i].Attrs.Raw());
+      ID.AddInteger(Attrs[i].Attrs.getBitMask());
       ID.AddInteger(Attrs[i].Index);
     }
   }

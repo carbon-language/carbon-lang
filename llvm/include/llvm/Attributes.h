@@ -127,7 +127,7 @@ public:
     return pImpl != A.pImpl;
   }
 
-  uint64_t Raw() const;
+  uint64_t getBitMask() const;
 
   /// \brief Which attributes cannot be applied to a type.
   static Attribute typeIncompatible(Type *Ty);
@@ -160,7 +160,7 @@ class AttrBuilder {
 public:
   AttrBuilder() : Bits(0) {}
   explicit AttrBuilder(uint64_t B) : Bits(B) {}
-  AttrBuilder(const Attribute &A) : Bits(A.Raw()) {}
+  AttrBuilder(const Attribute &A) : Bits(A.getBitMask()) {}
 
   void clear() { Bits = 0; }
 
@@ -231,7 +231,7 @@ public:
       .removeAttribute(Attribute::NoDuplicate);
   }
 
-  uint64_t Raw() const { return Bits; }
+  uint64_t getBitMask() const { return Bits; }
 
   bool operator==(const AttrBuilder &B) {
     return Bits == B.Bits;

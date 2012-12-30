@@ -45,7 +45,7 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   // Otherwise, build a key to look up the existing attributes.
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
-  ID.AddInteger(B.Raw());
+  ID.AddInteger(B.getBitMask());
 
   void *InsertPoint;
   AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
@@ -53,7 +53,7 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   if (!PA) {
     // If we didn't find any existing attributes of the same shape then create a
     // new one and insert it.
-    PA = new AttributeImpl(Context, B.Raw());
+    PA = new AttributeImpl(Context, B.getBitMask());
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
@@ -88,8 +88,8 @@ unsigned Attribute::getStackAlignment() const {
   return 1U << ((pImpl->getStackAlignment() >> 26) - 1);
 }
 
-uint64_t Attribute::Raw() const {
-  return pImpl ? pImpl->Raw() : 0;
+uint64_t Attribute::getBitMask() const {
+  return pImpl ? pImpl->getBitMask() : 0;
 }
 
 Attribute Attribute::typeIncompatible(Type *Ty) {
@@ -124,10 +124,10 @@ uint64_t Attribute::encodeLLVMAttributesForBitcode(Attribute Attrs) {
 
   // Store the alignment in the bitcode as a 16-bit raw value instead of a 5-bit
   // log2 encoded value. Shift the bits above the alignment up by 11 bits.
-  uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
+  uint64_t EncodedAttrs = Attrs.getBitMask() & 0xffff;
   if (Attrs.hasAttribute(Attribute::Alignment))
     EncodedAttrs |= Attrs.getAlignment() << 16;
-  EncodedAttrs |= (Attrs.Raw() & (0xffffULL << 21)) << 11;
+  EncodedAttrs |= (Attrs.getBitMask() & (0xffffULL << 21)) << 11;
   return EncodedAttrs;
 }
 
@@ -257,12 +257,12 @@ AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
 }
 
 AttrBuilder &AttrBuilder::addAttributes(const Attribute &A) {
-  Bits |= A.Raw();
+  Bits |= A.getBitMask();
   return *this;
 }
 
 AttrBuilder &AttrBuilder::removeAttributes(const Attribute &A){
-  Bits &= ~A.Raw();
+  Bits &= ~A.getBitMask();
   return *this;
 }
 
@@ -274,7 +274,7 @@ bool AttrBuilder::hasAttributes() const {
   return Bits != 0;
 }
 bool AttrBuilder::hasAttributes(const Attribute &A) const {
-  return Bits & A.Raw();
+  return Bits & A.getBitMask();
 }
 bool AttrBuilder::hasAlignmentAttr() const {
   return Bits & AttributeImpl::getAttrMask(Attribute::Alignment);
@@ -302,7 +302,7 @@ AttributeImpl::AttributeImpl(LLVMContext &C, uint64_t data) {
   Data = ConstantInt::get(Type::getInt64Ty(C), data);
 }
 
-uint64_t AttributeImpl::Raw() const {
+uint64_t AttributeImpl::getBitMask() const {
   return cast<ConstantInt>(Data)->getZExtValue();
 }
 
@@ -343,23 +343,24 @@ uint64_t AttributeImpl::getAttrMask(uint64_t Val) {
 }
 
 bool AttributeImpl::hasAttribute(uint64_t A) const {
-  return (Raw() & getAttrMask(A)) != 0;
+  return (getBitMask() & getAttrMask(A)) != 0;
 }
 
 bool AttributeImpl::hasAttributes() const {
-  return Raw() != 0;
+  return getBitMask() != 0;
 }
 
 bool AttributeImpl::hasAttributes(const Attribute &A) const {
-  return Raw() & A.Raw();       // FIXME: Raw() won't work here in the future.
+  // FIXME: getBitMask() won't work here in the future.
+  return getBitMask() & A.getBitMask();
 }
 
 uint64_t AttributeImpl::getAlignment() const {
-  return Raw() & getAttrMask(Attribute::Alignment);
+  return getBitMask() & getAttrMask(Attribute::Alignment);
 }
 
 uint64_t AttributeImpl::getStackAlignment() const {
-  return Raw() & getAttrMask(Attribute::StackAlignment);
+  return getBitMask() & getAttrMask(Attribute::StackAlignment);
 }
 
 void AttributeImpl::Profile(FoldingSetNodeID &ID, Constant *Data) {
