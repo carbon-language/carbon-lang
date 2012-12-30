@@ -143,9 +143,8 @@ public:
   static Attribute decodeLLVMAttributesForBitcode(LLVMContext &C,
                                                    uint64_t EncodedAttrs);
 
-  /// \brief The set of attributes set in Attribute is converted to a string of
-  /// equivalent mnemonics. This is, presumably, for writing out the mnemonics
-  /// for the assembly writer.
+  /// \brief The Attribute is converted to a string of equivalent mnemonic. This
+  /// is, presumably, for writing out the mnemonics for the assembly writer.
   std::string getAsString() const;
 };
 

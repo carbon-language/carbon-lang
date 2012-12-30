@@ -1197,7 +1197,7 @@ public:
   void printModule(const Module *M);
 
   void writeOperand(const Value *Op, bool PrintType);
-  void writeParamOperand(const Value *Operand, Attribute Attrs);
+  void writeParamOperand(const Value *Operand, AttributeSet Attrs,unsigned Idx);
   void writeAtomic(AtomicOrdering Ordering, SynchronizationScope SynchScope);
 
   void writeAllMDNodes();
@@ -1206,7 +1206,7 @@ public:
   void printGlobal(const GlobalVariable *GV);
   void printAlias(const GlobalAlias *GV);
   void printFunction(const Function *F);
-  void printArgument(const Argument *FA, Attribute Attrs);
+  void printArgument(const Argument *FA, AttributeSet Attrs, unsigned Idx);
   void printBasicBlock(const BasicBlock *BB);
   void printInstruction(const Instruction &I);
 
@@ -1251,7 +1251,7 @@ void AssemblyWriter::writeAtomic(AtomicOrdering Ordering,
 }
 
 void AssemblyWriter::writeParamOperand(const Value *Operand,
-                                       Attribute Attrs) {
+                                       AttributeSet Attrs, unsigned Idx) {
   if (Operand == 0) {
     Out << "<null operand!>";
     return;
@@ -1260,8 +1260,8 @@ void AssemblyWriter::writeParamOperand(const Value *Operand,
   // Print the type
   TypePrinter.print(Operand->getType(), Out);
   // Print parameter attributes list
-  if (Attrs.hasAttributes())
-    Out << ' ' << Attrs.getAsString();
+  if (Attrs.hasAttributes(Idx))
+    Out << ' ' << Attrs.getAsString(Idx);
   Out << ' ';
   // Print the operand
   WriteAsOperandInternal(Out, Operand, &TypePrinter, &Machine, TheModule);
@@ -1575,7 +1575,7 @@ void AssemblyWriter::printFunction(const Function *F) {
          I != E; ++I) {
       // Insert commas as we go... the first arg doesn't get a comma
       if (I != F->arg_begin()) Out << ", ";
-      printArgument(I, Attrs.getParamAttributes(Idx));
+      printArgument(I, Attrs, Idx);
       Idx++;
     }
   } else {
@@ -1587,9 +1587,8 @@ void AssemblyWriter::printFunction(const Function *F) {
       // Output type...
       TypePrinter.print(FT->getParamType(i), Out);
 
-      Attribute ArgAttrs = Attrs.getParamAttributes(i+1);
-      if (ArgAttrs.hasAttributes())
-        Out << ' ' << ArgAttrs.getAsString();
+      if (Attrs.hasAttributes(i+1))
+        Out << ' ' << Attrs.getAsString(i+1);
     }
   }
 
@@ -1630,13 +1629,13 @@ void AssemblyWriter::printFunction(const Function *F) {
 /// the function.  Simply print it out
 ///
 void AssemblyWriter::printArgument(const Argument *Arg,
-                                   Attribute Attrs) {
+                                   AttributeSet Attrs, unsigned Idx) {
   // Output type...
   TypePrinter.print(Arg->getType(), Out);
 
   // Output parameter attributes list
-  if (Attrs.hasAttributes())
-    Out << ' ' << Attrs.getAsString();
+  if (Attrs.hasAttributes(Idx))
+    Out << ' ' << Attrs.getAsString(Idx);
 
   // Output name, if available...
   if (Arg->hasName()) {
@@ -1871,7 +1870,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 0, Eop = CI->getNumArgOperands(); op < Eop; ++op) {
       if (op > 0)
         Out << ", ";
-      writeParamOperand(CI->getArgOperand(op), PAL.getParamAttributes(op + 1));
+      writeParamOperand(CI->getArgOperand(op), PAL, op + 1);
     }
     Out << ')';
     if (PAL.hasAttributes(AttributeSet::FunctionIndex))
@@ -1910,7 +1909,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     for (unsigned op = 0, Eop = II->getNumArgOperands(); op < Eop; ++op) {
       if (op)
         Out << ", ";
-      writeParamOperand(II->getArgOperand(op), PAL.getParamAttributes(op + 1));
+      writeParamOperand(II->getArgOperand(op), PAL, op + 1);
     }
 
     Out << ')';

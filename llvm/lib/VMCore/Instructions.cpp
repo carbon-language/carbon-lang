@@ -344,8 +344,7 @@ void CallInst::removeAttribute(unsigned i, Attribute attr) {
 }
 
 bool CallInst::hasFnAttr(Attribute::AttrKind A) const {
-  if (AttributeList.getParamAttributes(AttributeSet::FunctionIndex)
-      .hasAttribute(A))
+  if (AttributeList.hasAttribute(AttributeSet::FunctionIndex, A))
     return true;
   if (const Function *F = getCalledFunction())
     return F->getAttributes().hasAttribute(AttributeSet::FunctionIndex, A);
@@ -353,7 +352,7 @@ bool CallInst::hasFnAttr(Attribute::AttrKind A) const {
 }
 
 bool CallInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(A))
+  if (AttributeList.hasAttribute(i, A))
     return true;
   if (const Function *F = getCalledFunction())
     return F->getAttributes().hasAttribute(i, A);
@@ -573,8 +572,7 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 }
 
 bool InvokeInst::hasFnAttr(Attribute::AttrKind A) const {
-  if (AttributeList.getParamAttributes(AttributeSet::FunctionIndex).
-      hasAttribute(A))
+  if (AttributeList.hasAttribute(AttributeSet::FunctionIndex, A))
     return true;
   if (const Function *F = getCalledFunction())
     return F->getAttributes().hasAttribute(AttributeSet::FunctionIndex, A);
@@ -582,7 +580,7 @@ bool InvokeInst::hasFnAttr(Attribute::AttrKind A) const {
 }
 
 bool InvokeInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
-  if (AttributeList.getParamAttributes(i).hasAttribute(A))
+  if (AttributeList.hasAttribute(i, A))
     return true;
   if (const Function *F = getCalledFunction())
     return F->getAttributes().hasAttribute(i, A);

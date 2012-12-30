@@ -264,15 +264,13 @@ public:
   /// @brief Determine if the function returns a structure through first
   /// pointer argument.
   bool hasStructRetAttr() const {
-    return AttributeList.getParamAttributes(1).
-      hasAttribute(Attribute::StructRet);
+    return AttributeList.hasAttribute(1, Attribute::StructRet);
   }
 
   /// @brief Determine if the parameter does not alias other parameters.
   /// @param n The parameter to check. 1 is the first parameter, 0 is the return
   bool doesNotAlias(unsigned n) const {
-    return AttributeList.getParamAttributes(n).
-      hasAttribute(Attribute::NoAlias);
+    return AttributeList.hasAttribute(n, Attribute::NoAlias);
   }
   void setDoesNotAlias(unsigned n) {
     addAttribute(n, Attribute::get(getContext(), Attribute::NoAlias));
@@ -281,8 +279,7 @@ public:
   /// @brief Determine if the parameter can be captured.
   /// @param n The parameter to check. 1 is the first parameter, 0 is the return
   bool doesNotCapture(unsigned n) const {
-    return AttributeList.getParamAttributes(n).
-      hasAttribute(Attribute::NoCapture);
+    return AttributeList.hasAttribute(n, Attribute::NoCapture);
   }
   void setDoesNotCapture(unsigned n) {
     addAttribute(n, Attribute::get(getContext(), Attribute::NoCapture));

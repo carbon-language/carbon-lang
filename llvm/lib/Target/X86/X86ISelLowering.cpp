@@ -11056,7 +11056,7 @@ SDValue X86TargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
 
         for (FunctionType::param_iterator I = FTy->param_begin(),
              E = FTy->param_end(); I != E; ++I, ++Idx)
-          if (Attrs.getParamAttributes(Idx).hasAttribute(Attribute::InReg))
+          if (Attrs.hasAttribute(Idx, Attribute::InReg))
             // FIXME: should only count parameters that are lowered to integers.
             InRegCount += (TD->getTypeSizeInBits(*I) + 31) / 32;
 

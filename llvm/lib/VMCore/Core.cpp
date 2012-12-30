@@ -1476,9 +1476,8 @@ void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
 
 LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
   Argument *A = unwrap<Argument>(Arg);
-  Attribute attr = A->getParent()->getAttributes().getParamAttributes(
-    A->getArgNo()+1);
-  return (LLVMAttribute)attr.getBitMask();
+  return (LLVMAttribute)A->getParent()->getAttributes().
+    getBitMask(A->getArgNo()+1);
 }
   
 
