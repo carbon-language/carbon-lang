@@ -392,7 +392,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
 
   Opts.MainFileName = Args.getLastArgValue(OPT_main_file_name);
   Opts.VerifyModule = !Args.hasArg(OPT_disable_llvm_verifier);
-  Opts.SanitizeRecover = Args.hasArg(OPT_fsanitize_recover);
+  Opts.SanitizeRecover = !Args.hasArg(OPT_fno_sanitize_recover);
 
   Opts.InstrumentFunctions = Args.hasArg(OPT_finstrument_functions);
   Opts.InstrumentForProfiling = Args.hasArg(OPT_pg);

@@ -2480,6 +2480,11 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   SanitizerArgs Sanitize(D, Args);
   Sanitize.addArgs(Args, CmdArgs);
 
+  if (!Args.hasFlag(options::OPT_fsanitize_recover,
+                    options::OPT_fno_sanitize_recover,
+                    true))
+    CmdArgs.push_back("-fno-sanitize-recover");
+
   // Report and error for -faltivec on anything other then PowerPC.
   if (const Arg *A = Args.getLastArg(options::OPT_faltivec))
     if (!(getToolChain().getTriple().getArch() == llvm::Triple::ppc ||

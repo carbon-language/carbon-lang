@@ -73,7 +73,7 @@ void member_access(S *p) {
   // CHECK-NEXT: icmp eq i64 %[[CACHEVAL]], %[[HASH]]
   // CHECK-NEXT: br i1
 
-  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss_abort({{.*}}, i64 %{{.*}}, i64 %[[HASH]])
+  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss({{.*}}, i64 %{{.*}}, i64 %[[HASH]])
   // CHECK-NOT: unreachable
   // CHECK: {{.*}}:
 
@@ -108,7 +108,7 @@ void member_access(S *p) {
   // [...]
   // CHECK: getelementptr inbounds [128 x i64]* @__ubsan_vptr_type_cache, i32 0, i64 %
   // CHECK: br i1
-  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss_abort({{.*}}, i64 %{{.*}}, i64 %{{.*}})
+  // CHECK: call void @__ubsan_handle_dynamic_type_cache_miss({{.*}}, i64 %{{.*}}, i64 %{{.*}})
   // CHECK-NOT: unreachable
   // CHECK: {{.*}}:
 
@@ -145,7 +145,7 @@ int no_return() {
 bool sour_bool(bool *p) {
   // CHECK: %[[OK:.*]] = icmp ule i8 {{.*}}, 1
   // CHECK: br i1 %[[OK]]
-  // CHECK: call void @__ubsan_handle_load_invalid_value_abort(i8* bitcast ({{.*}}), i64 {{.*}})
+  // CHECK: call void @__ubsan_handle_load_invalid_value(i8* bitcast ({{.*}}), i64 {{.*}})
   return *p;
 }
 
@@ -157,19 +157,19 @@ enum E3 { e3a = (1u << 31) - 1 } e3;
 int bad_enum_value() {
   // CHECK: %[[E1:.*]] = icmp ule i32 {{.*}}, 127
   // CHECK: br i1 %[[E1]]
-  // CHECK: call void @__ubsan_handle_load_invalid_value_abort(
+  // CHECK: call void @__ubsan_handle_load_invalid_value(
   int a = e1;
 
   // CHECK: %[[E2HI:.*]] = icmp sle i32 {{.*}}, 127
   // CHECK: %[[E2LO:.*]] = icmp sge i32 {{.*}}, -128
   // CHECK: %[[E2:.*]] = and i1 %[[E2HI]], %[[E2LO]]
   // CHECK: br i1 %[[E2]]
-  // CHECK: call void @__ubsan_handle_load_invalid_value_abort(
+  // CHECK: call void @__ubsan_handle_load_invalid_value(
   int b = e2;
 
   // CHECK: %[[E3:.*]] = icmp ule i32 {{.*}}, 2147483647
   // CHECK: br i1 %[[E3]]
-  // CHECK: call void @__ubsan_handle_load_invalid_value_abort(
+  // CHECK: call void @__ubsan_handle_load_invalid_value(
   int c = e3;
   return a + b + c;
 }
