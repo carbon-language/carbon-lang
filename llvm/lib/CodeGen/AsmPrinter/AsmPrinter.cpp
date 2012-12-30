@@ -36,6 +36,7 @@
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Module.h"
+#include "llvm/Operator.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MathExtras.h"
@@ -1477,19 +1478,14 @@ static const MCExpr *lowerConstant(const Constant *CV, AsmPrinter &AP) {
   case Instruction::GetElementPtr: {
     const DataLayout &TD = *AP.TM.getDataLayout();
     // Generate a symbolic expression for the byte address
-    const Constant *PtrVal = CE->getOperand(0);
-    SmallVector<Value*, 8> IdxVec(CE->op_begin()+1, CE->op_end());
-    int64_t Offset = TD.getIndexedOffset(PtrVal->getType(), IdxVec);
+    APInt OffsetAI(TD.getPointerSizeInBits(), 0);
+    cast<GEPOperator>(CE)->accumulateConstantOffset(TD, OffsetAI);
 
     const MCExpr *Base = lowerConstant(CE->getOperand(0), AP);
-    if (Offset == 0)
+    if (!OffsetAI)
       return Base;
 
-    // Truncate/sext the offset to the pointer size.
-    unsigned Width = TD.getPointerSizeInBits();
-    if (Width < 64)
-      Offset = SignExtend64(Offset, Width);
-
+    int64_t Offset = OffsetAI.getSExtValue();
     return MCBinaryExpr::CreateAdd(Base, MCConstantExpr::Create(Offset, Ctx),
                                    Ctx);
   }

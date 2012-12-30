@@ -346,13 +346,11 @@ bool FunctionComparator::isEquivalentGEP(const GEPOperator *GEP1,
                                          const GEPOperator *GEP2) {
   // When we have target data, we can reduce the GEP down to the value in bytes
   // added to the address.
-  if (TD && GEP1->hasAllConstantIndices() && GEP2->hasAllConstantIndices()) {
-    SmallVector<Value *, 8> Indices1(GEP1->idx_begin(), GEP1->idx_end());
-    SmallVector<Value *, 8> Indices2(GEP2->idx_begin(), GEP2->idx_end());
-    uint64_t Offset1 = TD->getIndexedOffset(GEP1->getPointerOperandType(),
-                                            Indices1);
-    uint64_t Offset2 = TD->getIndexedOffset(GEP2->getPointerOperandType(),
-                                            Indices2);
+  unsigned BitWidth = TD ? TD->getPointerSizeInBits() : 1;
+  APInt Offset1(BitWidth, 0), Offset2(BitWidth, 0);
+  if (TD &&
+      GEP1->accumulateConstantOffset(*TD, Offset1) &&
+      GEP2->accumulateConstantOffset(*TD, Offset2)) {
     return Offset1 == Offset2;
   }
 

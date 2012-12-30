@@ -1337,17 +1337,15 @@ Instruction *InstCombiner::commonPointerCastTransforms(CastInst &CI) {
     // GEP computes a constant offset, see if we can convert these three
     // instructions into fewer.  This typically happens with unions and other
     // non-type-safe code.
+    APInt Offset(TD ? TD->getPointerSizeInBits() : 1, 0);
     if (TD && GEP->hasOneUse() && isa<BitCastInst>(GEP->getOperand(0)) &&
-        GEP->hasAllConstantIndices()) {
-      SmallVector<Value*, 8> Ops(GEP->idx_begin(), GEP->idx_end());
-      int64_t Offset = TD->getIndexedOffset(GEP->getPointerOperandType(), Ops);
-
+        GEP->accumulateConstantOffset(*TD, Offset)) {
       // Get the base pointer input of the bitcast, and the type it points to.
       Value *OrigBase = cast<BitCastInst>(GEP->getOperand(0))->getOperand(0);
       Type *GEPIdxTy =
       cast<PointerType>(OrigBase->getType())->getElementType();
       SmallVector<Value*, 8> NewIndices;
-      if (FindElementAtOffset(GEPIdxTy, Offset, NewIndices)) {
+      if (FindElementAtOffset(GEPIdxTy, Offset.getSExtValue(), NewIndices)) {
         // If we were able to index down into an element, create the GEP
         // and bitcast the result.  This eliminates one bitcast, potentially
         // two.
