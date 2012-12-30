@@ -118,3 +118,17 @@ namespace unused {
     }
   } x; // expected-warning {{unused variable}}
 }
+
+namespace test6 {
+  typedef struct {
+    void bar();
+  } A;
+
+  typedef struct {
+    void bar();  // expected-warning {{unused member function 'bar'}}
+  } *B;
+
+  struct C {
+    void bar();
+  };
+}

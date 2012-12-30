@@ -363,6 +363,9 @@ static bool ShouldRemoveFromUnused(Sema *SemaRef, const DeclaratorDecl *D) {
       return !SemaRef->ShouldWarnIfUnusedFileScopedDecl(DeclToCheck);
   }
 
+  if (D->getLinkage() == ExternalLinkage)
+    return true;
+
   return false;
 }
 
