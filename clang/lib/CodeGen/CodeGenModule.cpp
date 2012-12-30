@@ -576,7 +576,8 @@ void CodeGenModule::SetLLVMFunctionAttributesForDefinition(const Decl *D,
 
   // (noinline wins over always_inline, and we can't specify both in IR)
   if ((D->hasAttr<AlwaysInlineAttr>() || D->hasAttr<ForceInlineAttr>()) &&
-      !F->getFnAttributes().hasAttribute(llvm::Attribute::NoInline))
+      !F->getAttributes().hasAttribute(llvm::AttributeSet::FunctionIndex,
+                                       llvm::Attribute::NoInline))
     F->addFnAttr(llvm::Attribute::AlwaysInline);
 
   // FIXME: Communicate hot and cold attributes to LLVM more directly.
