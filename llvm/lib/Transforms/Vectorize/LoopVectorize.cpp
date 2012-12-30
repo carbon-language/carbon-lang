@@ -909,6 +909,19 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     (RdxPhi)->setIncomingValue(SelfEdgeBlockIdx, Scalar0);
     (RdxPhi)->setIncomingValue(IncomingEdgeBlockIdx, RdxDesc.LoopExitInstr);
   }// end of for each redux variable.
+
+  // The Loop exit block may have single value PHI nodes where the incoming
+  // value is 'undef'. While vectorizing we only handled real values that
+  // were defined inside the loop. Here we handle the 'undef case'.
+  // See PR14725.
+  for (BasicBlock::iterator LEI = LoopExitBlock->begin(),
+       LEE = LoopExitBlock->end(); LEI != LEE; ++LEI) {
+    PHINode *LCSSAPhi = dyn_cast<PHINode>(LEI);
+    if (!LCSSAPhi) continue;
+    if (LCSSAPhi->getNumIncomingValues() == 1)
+      LCSSAPhi->addIncoming(UndefValue::get(LCSSAPhi->getType()),
+                            LoopMiddleBlock);
+  }
 }
 
 Value *InnerLoopVectorizer::createEdgeMask(BasicBlock *Src, BasicBlock *Dst) {
