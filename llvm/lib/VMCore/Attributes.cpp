@@ -301,6 +301,18 @@ uint64_t AttrBuilder::getStackAlignment() const {
 AttributeImpl::AttributeImpl(LLVMContext &C, uint64_t data) {
   Data = ConstantInt::get(Type::getInt64Ty(C), data);
 }
+AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind data) {
+  Data = ConstantInt::get(Type::getInt64Ty(C), data);
+}
+AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind data,
+                             ArrayRef<Constant*> values) {
+  Data = ConstantInt::get(Type::getInt64Ty(C), data);
+  Vals.reserve(values.size());
+  Vals.append(values.begin(), values.end());
+}
+AttributeImpl::AttributeImpl(LLVMContext &C, StringRef data) {
+  Data = ConstantDataArray::getString(C, data);
+}
 
 bool AttributeImpl::contains(Attribute::AttrKind Kind) const {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Data))

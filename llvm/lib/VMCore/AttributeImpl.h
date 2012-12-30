@@ -27,12 +27,20 @@ class LLVMContext;
 //===----------------------------------------------------------------------===//
 /// \class
 /// \brief This class represents a single, uniqued attribute. That attribute
-/// could be a single enum, a tuple, or a string. It uses a discriminated union
-/// to distinguish them.
+/// could be a single enum, a tuple, or a string.
 class AttributeImpl : public FoldingSetNode {
   Constant *Data;
+  SmallVector<Constant*, 0> Vals;
 public:
-  AttributeImpl(LLVMContext &C, uint64_t data);
+  explicit AttributeImpl(LLVMContext &C, uint64_t data);
+  explicit AttributeImpl(LLVMContext &C, Attribute::AttrKind data);
+  AttributeImpl(LLVMContext &C, Attribute::AttrKind data,
+                ArrayRef<Constant*> values);
+  AttributeImpl(LLVMContext &C, StringRef data);
+
+  ArrayRef<Constant*> getValues() const {
+    return Vals;
+  }
 
   bool contains(Attribute::AttrKind Kind) const;
   bool contains(StringRef Kind) const;
@@ -64,10 +72,14 @@ public:
   static uint64_t getAttrMask(uint64_t Val);
 
   void Profile(FoldingSetNodeID &ID) const {
-    Profile(ID, Data);
+    Profile(ID, Data, Vals);
   }
-  static void Profile(FoldingSetNodeID &ID, Constant *Data) {
+  static void Profile(FoldingSetNodeID &ID, Constant *Data,
+                      ArrayRef<Constant*> Vals) {
     ID.AddPointer(Data);
+    for (ArrayRef<Constant*>::iterator I = Vals.begin(), E = Vals.end();
+         I != E; ++I)
+      ID.AddPointer(*I);
   }
 };
 
