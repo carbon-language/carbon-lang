@@ -341,6 +341,20 @@ public:
     return getAttributes(Idx).getAlignment();
   }
 
+  /// \brief Return true if the attribute exists at the given index.
+  bool hasAttribute(unsigned Index, Attribute::AttrKind Kind) const;
+
+  /// \brief Return true if attribute exists at the given index.
+  bool hasAttributes(unsigned Index) const;
+
+  /// \brief Get the stack alignment.
+  unsigned getStackAlignment(unsigned Index) const;
+
+  /// \brief Return the attributes at the index as a string.
+  std::string getAsString(unsigned Index) const;
+
+  uint64_t getBitMask(unsigned Index) const;
+
   /// \brief Return true if the specified attribute is set for at least one
   /// parameter or for the return value.
   bool hasAttrSomewhere(Attribute::AttrKind Attr) const;

@@ -1401,8 +1401,7 @@ void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
 LLVMAttribute LLVMGetFunctionAttr(LLVMValueRef Fn) {
   Function *Func = unwrap<Function>(Fn);
   const AttributeSet PAL = Func->getAttributes();
-  Attribute attr = PAL.getFnAttributes();
-  return (LLVMAttribute)attr.getBitMask();
+  return (LLVMAttribute)PAL.getBitMask(AttributeSet::FunctionIndex);
 }
 
 /*--.. Operations on parameters ............................................--*/

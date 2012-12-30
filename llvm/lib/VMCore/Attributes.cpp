@@ -451,6 +451,27 @@ const AttributeWithIndex &AttributeSet::getSlot(unsigned Slot) const {
   return AttrList->Attrs[Slot];
 }
 
+bool AttributeSet::hasAttribute(unsigned Index, Attribute::AttrKind Kind) const{
+  return getAttributes(Index).hasAttribute(Kind);
+}
+
+bool AttributeSet::hasAttributes(unsigned Index) const {
+  return getAttributes(Index).hasAttributes();
+}
+
+std::string AttributeSet::getAsString(unsigned Index) const {
+  return getAttributes(Index).getAsString();
+}
+
+unsigned AttributeSet::getStackAlignment(unsigned Index) const {
+  return getAttributes(Index).getStackAlignment();
+}
+
+uint64_t AttributeSet::getBitMask(unsigned Index) const {
+  // FIXME: Remove this.
+  return getAttributes(Index).getBitMask();
+}
+
 /// getAttributes - The attributes for the specified index are returned.
 /// Attribute for the result are denoted with Idx = 0.  Function notes are
 /// denoted with idx = ~0.

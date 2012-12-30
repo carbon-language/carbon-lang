@@ -87,7 +87,8 @@ InlineCost AlwaysInliner::getInlineCost(CallSite CS) {
   // that are viable for inlining. FIXME: We shouldn't even get here for
   // declarations.
   if (Callee && !Callee->isDeclaration() &&
-      Callee->getFnAttributes().hasAttribute(Attribute::AlwaysInline) &&
+      Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                           Attribute::AlwaysInline) &&
       CA.isInlineViable(*Callee))
     return InlineCost::getAlways();
 

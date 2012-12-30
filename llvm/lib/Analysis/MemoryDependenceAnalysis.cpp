@@ -327,8 +327,8 @@ getLoadLoadClobberFullWidthSize(const Value *MemLocBase, int64_t MemLocOffs,
       return 0;
 
     if (LIOffs+NewLoadByteSize > MemLocEnd &&
-        LI->getParent()->getParent()->getFnAttributes().
-          hasAttribute(Attribute::AddressSafety))
+        LI->getParent()->getParent()->getAttributes().
+          hasAttribute(AttributeSet::FunctionIndex, Attribute::AddressSafety))
       // We will be reading past the location accessed by the original program.
       // While this is safe in a regular build, Address Safety analysis tools
       // may start reporting false warnings. So, don't do widening.

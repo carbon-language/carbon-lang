@@ -7751,8 +7751,9 @@ bool DAGCombiner::MergeConsecutiveStores(StoreSDNode* St) {
 
     // We only use vectors if the constant is known to be zero and the
     // function is not marked with the noimplicitfloat attribute.
-    if (NonZero || (DAG.getMachineFunction().getFunction()->getFnAttributes().
-                    hasAttribute(Attribute::NoImplicitFloat)))
+    if (NonZero || (DAG.getMachineFunction().getFunction()->getAttributes().
+                    hasAttribute(AttributeSet::FunctionIndex,
+                                 Attribute::NoImplicitFloat)))
       LastLegalVectorType = 0;
 
     // Check if we found a legal integer type to store.

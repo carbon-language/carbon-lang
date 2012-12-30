@@ -87,7 +87,7 @@ public:
 /// \class
 /// \brief This class represents a set of attributes.
 class AttributeSetImpl : public FoldingSetNode {
-  // AttributesList is uniqued, these should not be publicly available.
+  // AttributesSet is uniqued, these should not be publicly available.
   void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
   AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
 public:

@@ -96,7 +96,8 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   placeCSRSpillsAndRestores(Fn);
 
   // Add the code to save and restore the callee saved registers
-  if (!F->getFnAttributes().hasAttribute(Attribute::Naked))
+  if (!F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                       Attribute::Naked))
     insertCSRSpillsAndRestores(Fn);
 
   // Allow the target machine to make final modifications to the function
@@ -111,7 +112,8 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   // called functions.  Because of this, calculateCalleeSavedRegisters()
   // must be called before this function in order to set the AdjustsStack
   // and MaxCallFrameSize variables.
-  if (!F->getFnAttributes().hasAttribute(Attribute::Naked))
+  if (!F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                       Attribute::Naked))
     insertPrologEpilogCode(Fn);
 
   // Replace all MO_FrameIndex operands with physical register references
@@ -191,13 +193,13 @@ void PEI::calculateCallsInformation(MachineFunction &Fn) {
 
 /// calculateCalleeSavedRegisters - Scan the function for modified callee saved
 /// registers.
-void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
-  const TargetRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
-  const TargetFrameLowering *TFI = Fn.getTarget().getFrameLowering();
-  MachineFrameInfo *MFI = Fn.getFrameInfo();
+void PEI::calculateCalleeSavedRegisters(MachineFunction &F) {
+  const TargetRegisterInfo *RegInfo = F.getTarget().getRegisterInfo();
+  const TargetFrameLowering *TFI = F.getTarget().getFrameLowering();
+  MachineFrameInfo *MFI = F.getFrameInfo();
 
   // Get the callee saved register list...
-  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs(&Fn);
+  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs(&F);
 
   // These are used to keep track the callee-save area. Initialize them.
   MinCSFrameIndex = INT_MAX;
@@ -208,13 +210,14 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
     return;
 
   // In Naked functions we aren't going to save any registers.
-  if (Fn.getFunction()->getFnAttributes().hasAttribute(Attribute::Naked))
+  if (F.getFunction()->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                                    Attribute::Naked))
     return;
 
   std::vector<CalleeSavedInfo> CSI;
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
-    if (Fn.getRegInfo().isPhysRegUsed(Reg)) {
+    if (F.getRegInfo().isPhysRegUsed(Reg)) {
       // If the reg is modified, save it!
       CSI.push_back(CalleeSavedInfo(Reg));
     }
@@ -235,7 +238,7 @@ void PEI::calculateCalleeSavedRegisters(MachineFunction &Fn) {
     const TargetRegisterClass *RC = RegInfo->getMinimalPhysRegClass(Reg);
 
     int FrameIdx;
-    if (RegInfo->hasReservedSpillSlot(Fn, Reg, FrameIdx)) {
+    if (RegInfo->hasReservedSpillSlot(F, Reg, FrameIdx)) {
       I->setFrameIdx(FrameIdx);
       continue;
     }

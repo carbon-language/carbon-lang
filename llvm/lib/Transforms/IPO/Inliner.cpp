@@ -93,10 +93,13 @@ static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
 
   // If the inlined function had a higher stack protection level than the
   // calling function, then bump up the caller's stack protection level.
-  if (Callee->getFnAttributes().hasAttribute(Attribute::StackProtectReq))
+  if (Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                           Attribute::StackProtectReq))
     Caller->addFnAttr(Attribute::StackProtectReq);
-  else if (Callee->getFnAttributes().hasAttribute(Attribute::StackProtect) &&
-           !Caller->getFnAttributes().hasAttribute(Attribute::StackProtectReq))
+  else if (Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                                Attribute::StackProtect) &&
+           !Caller->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                                 Attribute::StackProtectReq))
     Caller->addFnAttr(Attribute::StackProtect);
 
   // Look at all of the allocas that we inlined through this call site.  If we
@@ -209,7 +212,8 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
   // would decrease the threshold.
   Function *Caller = CS.getCaller();
   bool OptSize = Caller && !Caller->isDeclaration() &&
-    Caller->getFnAttributes().hasAttribute(Attribute::OptimizeForSize);
+    Caller->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                         Attribute::OptimizeForSize);
   if (!(InlineLimit.getNumOccurrences() > 0) && OptSize &&
       OptSizeThreshold < thres)
     thres = OptSizeThreshold;
@@ -218,9 +222,11 @@ unsigned Inliner::getInlineThreshold(CallSite CS) const {
   // and the caller does not need to minimize its size.
   Function *Callee = CS.getCalledFunction();
   bool InlineHint = Callee && !Callee->isDeclaration() &&
-    Callee->getFnAttributes().hasAttribute(Attribute::InlineHint);
+    Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                         Attribute::InlineHint);
   if (InlineHint && HintThreshold > thres
-      && !Caller->getFnAttributes().hasAttribute(Attribute::MinSize))
+      && !Caller->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                               Attribute::MinSize))
     thres = HintThreshold;
 
   return thres;
@@ -536,7 +542,8 @@ bool Inliner::removeDeadFunctions(CallGraph &CG, bool AlwaysInlineOnly) {
     // about always-inline functions. This is a bit of a hack to share code
     // between here and the InlineAlways pass.
     if (AlwaysInlineOnly &&
-        !F->getFnAttributes().hasAttribute(Attribute::AlwaysInline))
+        !F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                         Attribute::AlwaysInline))
       continue;
 
     // If the only remaining users of the function are dead constants, remove

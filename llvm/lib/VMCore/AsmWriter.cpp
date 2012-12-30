@@ -1601,9 +1601,8 @@ void AssemblyWriter::printFunction(const Function *F) {
   Out << ')';
   if (F->hasUnnamedAddr())
     Out << " unnamed_addr";
-  Attribute FnAttrs = Attrs.getFnAttributes();
-  if (FnAttrs.hasAttributes())
-    Out << ' ' << Attrs.getFnAttributes().getAsString();
+  if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
+    Out << ' ' << Attrs.getAsString(AttributeSet::FunctionIndex);
   if (F->hasSection()) {
     Out << " section \"";
     PrintEscapedString(F->getSection(), Out);
@@ -1875,8 +1874,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeParamOperand(CI->getArgOperand(op), PAL.getParamAttributes(op + 1));
     }
     Out << ')';
-    if (PAL.getFnAttributes().hasAttributes())
-      Out << ' ' << PAL.getFnAttributes().getAsString();
+    if (PAL.hasAttributes(AttributeSet::FunctionIndex))
+      Out << ' ' << PAL.getAsString(AttributeSet::FunctionIndex);
   } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
     Operand = II->getCalledValue();
     PointerType *PTy = cast<PointerType>(Operand->getType());
@@ -1915,8 +1914,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
 
     Out << ')';
-    if (PAL.getFnAttributes().hasAttributes())
-      Out << ' ' << PAL.getFnAttributes().getAsString();
+    if (PAL.hasAttributes(AttributeSet::FunctionIndex))
+      Out << ' ' << PAL.getAsString(AttributeSet::FunctionIndex);
 
     Out << "\n          to ";
     writeOperand(II->getNormalDest(), true);

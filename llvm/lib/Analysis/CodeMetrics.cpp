@@ -203,7 +203,8 @@ void CodeMetrics::analyzeFunction(Function *F, const DataLayout *TD) {
   // as volatile if they are live across a setjmp call, and they probably
   // won't do this in callers.
   exposesReturnsTwice = F->callsFunctionThatReturnsTwice() &&
-    !F->getFnAttributes().hasAttribute(Attribute::ReturnsTwice);
+    !F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                     Attribute::ReturnsTwice);
 
   // Look at the size of the callee.
   for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)

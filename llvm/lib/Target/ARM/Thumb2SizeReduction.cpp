@@ -961,9 +961,11 @@ bool Thumb2SizeReduce::runOnMachineFunction(MachineFunction &MF) {
   STI = &TM.getSubtarget<ARMSubtarget>();
 
   // Optimizing / minimizing size?
-  Attribute FnAttrs = MF.getFunction()->getFnAttributes();
-  OptimizeSize = FnAttrs.hasAttribute(Attribute::OptimizeForSize);
-  MinimizeSize = FnAttrs.hasAttribute(Attribute::MinSize);
+  AttributeSet FnAttrs = MF.getFunction()->getAttributes();
+  OptimizeSize = FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
+                                      Attribute::OptimizeForSize);
+  MinimizeSize = FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
+                                      Attribute::MinSize);
 
   bool Modified = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)

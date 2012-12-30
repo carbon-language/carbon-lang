@@ -168,12 +168,6 @@ public:
   ///
   void setAttributes(const AttributeSet &attrs) { AttributeList = attrs; }
 
-  /// getFnAttributes - Return the function attributes for querying.
-  ///
-  Attribute getFnAttributes() const {
-    return AttributeList.getFnAttributes();
-  }
-
   /// addFnAttr - Add function attributes to this function.
   ///
   void addFnAttr(Attribute::AttrKind N) {
@@ -219,7 +213,8 @@ public:
 
   /// @brief Determine if the function does not access memory.
   bool doesNotAccessMemory() const {
-    return getFnAttributes().hasAttribute(Attribute::ReadNone);
+    return AttributeList.hasAttribute(AttributeSet::FunctionIndex,
+                                      Attribute::ReadNone);
   }
   void setDoesNotAccessMemory() {
     addFnAttr(Attribute::ReadNone);
@@ -228,7 +223,8 @@ public:
   /// @brief Determine if the function does not access or only reads memory.
   bool onlyReadsMemory() const {
     return doesNotAccessMemory() ||
-      getFnAttributes().hasAttribute(Attribute::ReadOnly);
+      AttributeList.hasAttribute(AttributeSet::FunctionIndex,
+                                 Attribute::ReadOnly);
   }
   void setOnlyReadsMemory() {
     addFnAttr(Attribute::ReadOnly);
@@ -236,7 +232,8 @@ public:
 
   /// @brief Determine if the function cannot return.
   bool doesNotReturn() const {
-    return getFnAttributes().hasAttribute(Attribute::NoReturn);
+    return AttributeList.hasAttribute(AttributeSet::FunctionIndex,
+                                      Attribute::NoReturn);
   }
   void setDoesNotReturn() {
     addFnAttr(Attribute::NoReturn);
@@ -244,7 +241,8 @@ public:
 
   /// @brief Determine if the function cannot unwind.
   bool doesNotThrow() const {
-    return getFnAttributes().hasAttribute(Attribute::NoUnwind);
+    return AttributeList.hasAttribute(AttributeSet::FunctionIndex,
+                                      Attribute::NoUnwind);
   }
   void setDoesNotThrow() {
     addFnAttr(Attribute::NoUnwind);
@@ -252,7 +250,8 @@ public:
 
   /// @brief Determine if the call cannot be duplicated.
   bool cannotDuplicate() const {
-    return getFnAttributes().hasAttribute(Attribute::NoDuplicate);
+    return AttributeList.hasAttribute(AttributeSet::FunctionIndex,
+                                      Attribute::NoDuplicate);
   }
   void setCannotDuplicate() {
     addFnAttr(Attribute::NoDuplicate);
@@ -261,7 +260,8 @@ public:
   /// @brief True if the ABI mandates (or the user requested) that this
   /// function be in a unwind table.
   bool hasUWTable() const {
-    return getFnAttributes().hasAttribute(Attribute::UWTable);
+    return AttributeList.hasAttribute(AttributeSet::FunctionIndex,
+                                      Attribute::UWTable);
   }
   void setHasUWTable() {
     addFnAttr(Attribute::UWTable);
