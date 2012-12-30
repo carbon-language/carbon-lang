@@ -1,4 +1,4 @@
-; RUN: opt -constmerge %s -S -o - | FileCheck %s
+; RUN: opt -constmerge -S < %s | FileCheck %s
 ; PR8978
 
 declare i32 @zed(%struct.foobar*, %struct.foobar*)

@@ -1,4 +1,4 @@
-; RUN: opt -S -gvn -enable-load-pre %s | FileCheck %s
+; RUN: opt -S -gvn -enable-load-pre < %s | FileCheck %s
 ;
 ; Make sure the load in bb3.backedge is removed and moved into bb1 after the 
 ; call.  This makes the non-call case faster. 

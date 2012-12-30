@@ -1,4 +1,4 @@
-; RUN: opt -instcombine %s -S | FileCheck %s
+; RUN: opt -instcombine -S < %s | FileCheck %s
 
 ;; This tests that the instructions in the entry blocks are sunk into each
 ;; arm of the 'if'.

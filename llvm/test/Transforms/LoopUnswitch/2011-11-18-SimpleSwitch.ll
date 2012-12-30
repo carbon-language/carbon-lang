@@ -1,5 +1,5 @@
 ; RUN: opt -loop-unswitch -disable-output -stats -info-output-file - < %s | FileCheck --check-prefix=STATS %s
-; RUN: opt -S -loop-unswitch -verify-loop-info -verify-dom-info %s | FileCheck %s
+; RUN: opt -S -loop-unswitch -verify-loop-info -verify-dom-info < %s | FileCheck %s
 
 ; STATS: 1 loop-simplify - Number of pre-header or exit blocks inserted
 ; STATS: 2 loop-unswitch - Number of switches unswitched

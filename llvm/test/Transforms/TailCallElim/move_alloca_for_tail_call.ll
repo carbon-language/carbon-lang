@@ -1,4 +1,4 @@
-; RUN: opt -tailcallelim %s -S | FileCheck %s
+; RUN: opt -tailcallelim -S < %s | FileCheck %s
 ; PR615
 
 declare void @bar(i32*)

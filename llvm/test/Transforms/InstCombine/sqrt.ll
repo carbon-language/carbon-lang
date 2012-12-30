@@ -1,4 +1,4 @@
-; RUN: opt -S -instcombine %s | FileCheck %s
+; RUN: opt -S -instcombine < %s | FileCheck %s
 
 define float @test1(float %x) nounwind readnone ssp {
 entry:

@@ -1,4 +1,4 @@
-; RUN: opt -analyze -scalar-evolution %s -S | FileCheck %s
+; RUN: opt -analyze -scalar-evolution -S < %s | FileCheck %s
 
 define i16 @test1(i8 %x) {
   %A = zext i8 %x to i12

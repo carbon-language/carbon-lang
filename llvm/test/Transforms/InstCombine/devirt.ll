@@ -1,4 +1,4 @@
-; RUN: opt -instcombine -S -o - %s | FileCheck %s
+; RUN: opt -instcombine -S < %s | FileCheck %s
 
 ; CHECK-NOT: getelementptr
 ; CHECK-NOT: ptrtoint

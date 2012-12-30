@@ -2,7 +2,7 @@
 ; having overlapping live ranges that result in copies.  We want the setcc 
 ; instruction immediately before the conditional branch.
 ;
-; RUN: opt -S -loop-reduce %s | FileCheck %s
+; RUN: opt -S -loop-reduce < %s | FileCheck %s
 
 define void @foo(float* %D, i32 %E) {
 entry:

@@ -1,4 +1,4 @@
-; RUN: opt -instcombine %s -S | FileCheck %s
+; RUN: opt -instcombine -S < %s | FileCheck %s
 
 ; Check that code corresponding to the following C function is
 ; simplified into a single ASR operation:

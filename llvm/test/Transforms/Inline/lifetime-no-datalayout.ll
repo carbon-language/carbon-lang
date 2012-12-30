@@ -1,4 +1,4 @@
-; RUN: opt -inline %s -S -o - | FileCheck %s
+; RUN: opt -inline -S < %s | FileCheck %s
 
 declare void @use(i8* %a)
 

@@ -1,4 +1,4 @@
-; RUN: opt -globalopt %s -S -o - | FileCheck %s
+; RUN: opt -globalopt -S < %s | FileCheck %s
 ; PR10047
 
 %0 = type { i32, void ()* }

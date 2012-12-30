@@ -1,4 +1,4 @@
-; RUN: opt -O2 -S %s | FileCheck %s
+; RUN: opt -O2 -S < %s | FileCheck %s
 
 ; Run global DCE to eliminate unused ctor and dtor.
 ; rdar://9142819

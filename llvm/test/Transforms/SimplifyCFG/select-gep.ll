@@ -1,4 +1,4 @@
-; RUN: opt -S -simplifycfg %s | FileCheck %s
+; RUN: opt -S -simplifycfg < %s | FileCheck %s
 
 define i8* @test1(i8* %x, i64 %y) nounwind {
 entry:

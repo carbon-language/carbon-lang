@@ -1,5 +1,5 @@
-; RUN: opt -S -Oz %s | FileCheck %s -check-prefix=OZ
-; RUN: opt -S -O2 %s | FileCheck %s -check-prefix=O2
+; RUN: opt -S -Oz < %s | FileCheck %s -check-prefix=OZ
+; RUN: opt -S -O2 < %s | FileCheck %s -check-prefix=O2
 
 ; The inline threshold for a function with the optsize attribute is currently
 ; the same as the global inline threshold for -Os. Check that the optsize

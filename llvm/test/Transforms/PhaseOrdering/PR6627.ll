@@ -1,4 +1,4 @@
-; RUN: opt -O3 -S %s | FileCheck %s
+; RUN: opt -O3 -S < %s | FileCheck %s
 ; XFAIL: *
 
 declare i32 @doo(...)
