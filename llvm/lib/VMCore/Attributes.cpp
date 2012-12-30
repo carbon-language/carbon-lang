@@ -302,7 +302,21 @@ AttributeImpl::AttributeImpl(LLVMContext &C, uint64_t data) {
   Data = ConstantInt::get(Type::getInt64Ty(C), data);
 }
 
+bool AttributeImpl::contains(Attribute::AttrKind Kind) const {
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(Data))
+    return CI->getZExtValue() == Kind;
+  return false;
+}
+
+bool AttributeImpl::contains(StringRef Kind) const {
+  if (ConstantDataArray *CDA = dyn_cast<ConstantDataArray>(Data))
+    if (CDA->isString())
+      return CDA->getAsString() == Kind;
+  return false;
+}
+
 uint64_t AttributeImpl::getBitMask() const {
+  // FIXME: Remove this.
   return cast<ConstantInt>(Data)->getZExtValue();
 }
 
