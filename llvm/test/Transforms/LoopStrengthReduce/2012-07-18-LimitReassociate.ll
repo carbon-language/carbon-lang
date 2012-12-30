@@ -1,4 +1,4 @@
-; RUN: opt -loop-reduce -disable-output -debug-only=loop-reduce %s 2> %t
+; RUN: opt -loop-reduce -disable-output -debug-only=loop-reduce < %s 2> %t
 ; RUN: FileCheck %s < %t
 ; REQUIRES: asserts
 ;

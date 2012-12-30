@@ -1,4 +1,4 @@
-; RUN: opt -loop-unswitch -verify-loop-info -verify-dom-info %s -disable-output
+; RUN: opt -loop-unswitch -verify-loop-info -verify-dom-info -disable-output < %s
 
 ; Loop unswitch should be able to unswitch these loops and
 ; preserve LCSSA and LoopSimplify forms.

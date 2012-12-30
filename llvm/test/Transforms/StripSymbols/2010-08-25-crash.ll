@@ -1,4 +1,4 @@
-; RUN: opt -strip-dead-debug-info -disable-output %s
+; RUN: opt -strip-dead-debug-info -disable-output < %s
 define i32 @foo() nounwind ssp {
 entry:
   ret i32 0, !dbg !8

@@ -1,4 +1,4 @@
-; RUN: opt -regions %s
+; RUN: opt -regions < %s
 define i32 @main() nounwind {
 entry:
   br label %for.cond

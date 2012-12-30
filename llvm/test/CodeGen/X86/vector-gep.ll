@@ -1,5 +1,5 @@
 ; RUN: llc < %s -march=x86 -mcpu=corei7-avx | FileCheck %s
-; RUN: opt -instsimplify %s -disable-output
+; RUN: opt -instsimplify -disable-output < %s
 
 ;CHECK: AGEP0:
 define <4 x i32*> @AGEP0(i32* %ptr) nounwind {

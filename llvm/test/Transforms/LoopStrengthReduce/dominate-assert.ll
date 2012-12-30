@@ -1,4 +1,4 @@
-; RUN: opt -loop-reduce %s
+; RUN: opt -loop-reduce < %s
 ; we used to crash on this one
 
 declare i8* @_Znwm()
