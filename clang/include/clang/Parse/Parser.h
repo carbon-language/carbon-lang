@@ -223,15 +223,6 @@ public:
   typedef llvm::MutableArrayRef<Stmt*> MultiStmtArg;
   typedef Sema::FullExprArg FullExprArg;
 
-  /// Adorns a ExprResult with Actions to make it an ExprResult
-  ExprResult Owned(ExprResult res) {
-    return ExprResult(res);
-  }
-  /// Adorns a StmtResult with Actions to make it an StmtResult
-  StmtResult Owned(StmtResult res) {
-    return StmtResult(res);
-  }
-
   ExprResult ExprError() { return ExprResult(true); }
   StmtResult StmtError() { return StmtResult(true); }
 
