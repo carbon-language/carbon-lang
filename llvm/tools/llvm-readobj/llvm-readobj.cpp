@@ -43,6 +43,15 @@ static void dumpSymbolHeader() {
          << "\n";
 }
 
+static void dumpSectionHeader() {
+  outs() << format("  %-24s", (const char*)"Name")
+         << format("  %-16s", (const char*)"Address")
+         << format("  %-16s", (const char*)"Size")
+         << format("  %-8s", (const char*)"Align")
+         << format("  %-26s", (const char*)"Flags")
+         << "\n";
+}
+
 static const char *getTypeStr(SymbolRef::Type Type) {
   switch (Type) {
   case SymbolRef::ST_Unknown: return "?";
@@ -82,6 +91,36 @@ static std::string getSymbolFlagStr(uint32_t Flags) {
 static void checkError(error_code ec, const char *msg) {
   if (ec)
     report_fatal_error(std::string(msg) + ": " + ec.message());
+}
+
+static std::string getSectionFlagStr(const SectionRef &Section) {
+  const struct {
+    error_code (SectionRef::*MemF)(bool &) const;
+    const char *FlagStr, *ErrorStr;
+  } Work[] =
+      {{ &SectionRef::isText, "text,", "Section.isText() failed" },
+       { &SectionRef::isData, "data,", "Section.isData() failed" },
+       { &SectionRef::isBSS, "bss,", "Section.isBSS() failed"  },
+       { &SectionRef::isRequiredForExecution, "required,",
+         "Section.isRequiredForExecution() failed" },
+       { &SectionRef::isVirtual, "virtual,", "Section.isVirtual() failed" },
+       { &SectionRef::isZeroInit, "zeroinit,", "Section.isZeroInit() failed" },
+       { &SectionRef::isReadOnlyData, "rodata,",
+         "Section.isReadOnlyData() failed" }};
+
+  std::string result;
+  for (uint32_t I = 0; I < sizeof(Work)/sizeof(*Work); ++I) {
+    bool B;
+    checkError((Section.*Work[I].MemF)(B), Work[I].ErrorStr);
+    if (B)
+      result += Work[I].FlagStr;
+  }
+
+  // Remove trailing comma
+  if (result.size() > 0) {
+    result.erase(result.size() - 1);
+  }
+  return result;
 }
 
 static void
@@ -159,10 +198,41 @@ static void dumpDynamicSymbols(const ObjectFile *obj) {
   outs() << "  Total: " << count << "\n\n";
 }
 
+static void dumpSection(const SectionRef &Section, const ObjectFile *obj) {
+  StringRef Name;
+  checkError(Section.getName(Name), "SectionRef::getName() failed");
+  uint64_t Addr, Size, Align;
+  checkError(Section.getAddress(Addr), "SectionRef::getAddress() failed");
+  checkError(Section.getSize(Size), "SectionRef::getSize() failed");
+  checkError(Section.getAlignment(Align), "SectionRef::getAlignment() failed");
+  outs() << format("  %-24s", std::string(Name).c_str())
+         << format("  %16" PRIx64, Addr)
+         << format("  %16" PRIx64, Size)
+         << format("  %8" PRIx64, Align)
+         << "  " << getSectionFlagStr(Section)
+         << "\n";
+}
+
 static void dumpLibrary(const LibraryRef &lib) {
   StringRef path;
   lib.getPath(path);
   outs() << "  " << path << "\n";
+}
+
+template<typename Iterator, typename Func>
+static void dump(const ObjectFile *obj, Func f, Iterator begin, Iterator end,
+                 const char *errStr) {
+  error_code ec;
+  uint32_t count = 0;
+  Iterator it = begin, ie = end;
+  while (it != ie) {
+    f(*it, obj);
+    it.increment(ec);
+    if (ec)
+      report_fatal_error(errStr);
+    ++count;
+  }
+  outs() << "  Total: " << count << "\n\n";
 }
 
 // Iterate through needed libraries
@@ -220,6 +290,12 @@ int main(int argc, char** argv) {
   dumpHeaders(obj);
   dumpSymbols(obj);
   dumpDynamicSymbols(obj);
+
+  outs() << "Sections:\n";
+  dumpSectionHeader();
+  dump(obj, &dumpSection, obj->begin_sections(), obj->end_sections(),
+       "Section iteration failed");
+
   dumpLibrariesNeeded(obj);
   return 0;
 }

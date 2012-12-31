@@ -53,6 +53,24 @@ ELF:  global_func            FUNC            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-
 ELF:  _edata                 ?               {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,absolute
 ELF:  Total: {{[0-9a-f]+}}
 
+ELF:Sections:
+ELF:  Name                        Address        Size           Align          Flags
+ELF:                              {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  rodata
+ELF:  .hash                       {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  required,rodata
+ELF:  .dynsym                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  required,rodata
+ELF:  .dynstr                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  required,rodata
+ELF:  .text                       {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  text,{{(data,)?}}required
+ELF:  .eh_frame                   {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  data,required,rodata
+ELF:  .tdata                      {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  data,required
+ELF:  .dynamic                    {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  required
+ELF:  .got.plt                    {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  data,required
+ELF:  .data                       {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  data,required
+ELF:  .bss                        {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[a-z,]*}}
+ELF:  .shstrtab                   {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  rodata
+ELF:  .symtab                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  rodata
+ELF:  .strtab                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  rodata
+ELF:  Total: 14
+
 ELF:Libraries needed:
 ELF:  libc.so.6
 ELF:  libm.so.6
