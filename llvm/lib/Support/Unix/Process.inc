@@ -49,10 +49,7 @@ process::id_type self_process::get_id() {
   return getpid();
 }
 
-
-unsigned
-Process::GetPageSize()
-{
+static unsigned getPageSize() {
 #if defined(__CYGWIN__)
   // On Cygwin, getpagesize() returns 64k but the page size for the purposes of
   // memory protection and mmap() is 4k.
@@ -67,6 +64,12 @@ Process::GetPageSize()
 #endif
   return static_cast<unsigned>(page_size);
 }
+
+// This constructor guaranteed to be run exactly once on a single thread, and
+// sets up various process invariants that can be queried cheaply from then on.
+self_process::self_process() : PageSize(getPageSize()) {
+}
+
 
 size_t Process::GetMallocUsage() {
 #if defined(HAVE_MALLINFO)

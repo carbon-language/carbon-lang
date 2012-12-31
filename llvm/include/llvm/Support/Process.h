@@ -89,7 +89,27 @@ class self_process : public process {
 public:
   virtual id_type get_id();
 
+  /// \name Process configuration (sysconf on POSIX)
+  /// @{
+
+  /// \brief Get the virtual memory page size.
+  ///
+  /// Query the operating system for this process's page size.
+  size_t page_size() const { return PageSize; };
+
+  /// @}
+
 private:
+  /// \name Cached process state.
+  /// @{
+
+  /// \brief Cached page size, this cannot vary during the life of the process.
+  size_t PageSize;
+
+  /// @}
+
+  /// \brief Constructor, used by \c process::get_self() only.
+  self_process();
 };
 
 

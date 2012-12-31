@@ -55,6 +55,14 @@ self_process::~self_process() {
 #endif
 
 
+//===----------------------------------------------------------------------===//
+// Implementations of legacy functions in terms of the new self_process object.
+
+unsigned Process::GetPageSize() {
+  return process::get_self()->page_size();
+}
+
+
 // Include the platform-specific parts of this class.
 #ifdef LLVM_ON_UNIX
 #include "Unix/Process.inc"

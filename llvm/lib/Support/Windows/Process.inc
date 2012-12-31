@@ -43,11 +43,9 @@ process::id_type self_process::get_id() {
   return GetCurrentProcess();
 }
 
-
 // This function retrieves the page size using GetSystemInfo and is present
-// solely so it can be called once in Process::GetPageSize to initialize the
-// static variable PageSize.
-inline unsigned GetPageSizeOnce() {
+// solely so it can be called once to initialize the self_process member below.
+static unsigned getPageSize() {
   // NOTE: A 32-bit application running under WOW64 is supposed to use
   // GetNativeSystemInfo.  However, this interface is not present prior
   // to Windows XP so to use it requires dynamic linking.  It is not clear
@@ -58,11 +56,11 @@ inline unsigned GetPageSizeOnce() {
   return static_cast<unsigned>(info.dwPageSize);
 }
 
-unsigned
-Process::GetPageSize() {
-  static const unsigned PageSize = GetPageSizeOnce();
-  return PageSize;
+// This constructor guaranteed to be run exactly once on a single thread, and
+// sets up various process invariants that can be queried cheaply from then on.
+self_process::self_process() : PageSize(getPageSize()) {
 }
+
 
 size_t
 Process::GetMallocUsage()
