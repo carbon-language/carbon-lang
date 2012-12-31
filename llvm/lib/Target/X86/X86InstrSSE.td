@@ -3193,10 +3193,10 @@ let Predicates = [HasAVX] in {
 // Square root.
 defm SQRT  : sse1_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse_sqrt_ss,
                             SSE_SQRTS>,
-             sse1_fp_unop_p<0x51, "sqrt",  fsqrt, SSE_SQRTS>,
+             sse1_fp_unop_p<0x51, "sqrt",  fsqrt, SSE_SQRTP>,
              sse2_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse2_sqrt_sd,
                             SSE_SQRTS>,
-             sse2_fp_unop_p<0x51, "sqrt",  fsqrt, SSE_SQRTS>;
+             sse2_fp_unop_p<0x51, "sqrt",  fsqrt, SSE_SQRTP>;
 
 /// sse1_fp_unop_s_rw - SSE1 unops where vector form has a read-write operand.
 multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
@@ -3229,9 +3229,9 @@ multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
 // in order to obtain suitable precision.
 defm RSQRT : sse1_fp_unop_rw<0x52, "rsqrt", X86frsqrt, int_x86_sse_rsqrt_ss,
                              SSE_SQRTS>,
-             sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_SQRTS>,
+             sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_SQRTP>,
              sse1_fp_unop_p_int<0x52, "rsqrt", int_x86_sse_rsqrt_ps,
-                            SSE_SQRTS>;
+                            SSE_SQRTP>;
 let Predicates = [UseSSE1] in {
   def : Pat<(int_x86_sse_rsqrt_ss VR128:$src),
             (RSQRTSSr_Int VR128:$src, VR128:$src)>;
@@ -3239,8 +3239,8 @@ let Predicates = [UseSSE1] in {
 
 defm RCP   : sse1_fp_unop_rw<0x53, "rcp", X86frcp, int_x86_sse_rcp_ss,
                              SSE_RCPS>,
-             sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPS>,
-             sse1_fp_unop_p_int<0x53, "rcp", int_x86_sse_rcp_ps, SSE_RCPS>;
+             sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>,
+             sse1_fp_unop_p_int<0x53, "rcp", int_x86_sse_rcp_ps, SSE_RCPP>;
 let Predicates = [UseSSE1] in {
   def : Pat<(int_x86_sse_rcp_ss VR128:$src),
             (RCPSSr_Int VR128:$src, VR128:$src)>;
