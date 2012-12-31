@@ -1306,10 +1306,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
   // For ELF, all zero-init sections are virtual (that is, they occupy no space
   //   in the object image) and vice versa.
-  if (sec->sh_flags & ELF::SHT_NOBITS)
-    Result = true;
-  else
-    Result = false;
+  Result = sec->sh_type == ELF::SHT_NOBITS;
   return object_error::success;
 }
 

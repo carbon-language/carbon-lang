@@ -65,7 +65,7 @@ ELF:  .tdata                      {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  d
 ELF:  .dynamic                    {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  required
 ELF:  .got.plt                    {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  data,required
 ELF:  .data                       {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  data,required
-ELF:  .bss                        {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[a-z,]*}}
+ELF:  .bss                        {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  bss,required,virtual,zeroinit
 ELF:  .shstrtab                   {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  rodata
 ELF:  .symtab                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  rodata
 ELF:  .strtab                     {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  rodata
