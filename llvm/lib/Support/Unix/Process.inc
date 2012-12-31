@@ -92,26 +92,6 @@ size_t Process::GetMallocUsage() {
 #endif
 }
 
-size_t
-Process::GetTotalMemoryUsage()
-{
-#if defined(HAVE_MALLINFO)
-  struct mallinfo mi = ::mallinfo();
-  return mi.uordblks + mi.hblkhd;
-#elif defined(HAVE_MALLOC_ZONE_STATISTICS) && defined(HAVE_MALLOC_MALLOC_H)
-  malloc_statistics_t Stats;
-  malloc_zone_statistics(malloc_default_zone(), &Stats);
-  return Stats.size_allocated;   // darwin
-#elif defined(HAVE_GETRUSAGE) && !defined(__HAIKU__)
-  struct rusage usage;
-  ::getrusage(RUSAGE_SELF, &usage);
-  return usage.ru_maxrss;
-#else
-#warning Cannot get total memory size on this platform
-  return 0;
-#endif
-}
-
 void
 Process::GetTimeUsage(TimeValue& elapsed, TimeValue& user_time,
                       TimeValue& sys_time)

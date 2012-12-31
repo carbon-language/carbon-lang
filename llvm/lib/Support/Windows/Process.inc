@@ -78,14 +78,6 @@ Process::GetMallocUsage()
   return size;
 }
 
-size_t
-Process::GetTotalMemoryUsage()
-{
-  PROCESS_MEMORY_COUNTERS pmc;
-  GetProcessMemoryInfo(GetCurrentProcess(), &pmc, sizeof(pmc));
-  return pmc.PagefileUsage;
-}
-
 void
 Process::GetTimeUsage(
   TimeValue& elapsed, TimeValue& user_time, TimeValue& sys_time)
