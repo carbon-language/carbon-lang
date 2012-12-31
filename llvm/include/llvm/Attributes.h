@@ -333,12 +333,6 @@ public:
     return getAttributes(FunctionIndex);
   }
 
-  /// \brief Return true if the specified parameter index has the specified
-  /// attribute set.
-  bool paramHasAttr(unsigned Idx, Attribute Attr) const {
-    return getAttributes(Idx).hasAttributes(Attr);
-  }
-
   /// \brief Return the alignment for the specified function parameter.
   unsigned getParamAlignment(unsigned Idx) const {
     return getAttributes(Idx).getAlignment();
