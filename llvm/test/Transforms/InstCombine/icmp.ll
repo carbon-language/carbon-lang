@@ -694,3 +694,14 @@ define i1 @test68(i32 %x) nounwind uwtable {
   %cmp = icmp sgt i32 %and, 30
   ret i1 %cmp
 }
+
+; PR14708
+; CHECK: @test69
+; CHECK: %1 = and i32 %c, -33
+; CHECK: %2 = icmp eq i32 %1, 65
+define i1 @test69(i32 %c) nounwind uwtable {
+  %1 = icmp eq i32 %c, 97
+  %2 = icmp eq i32 %c, 65
+  %3 = or i1 %1, %2
+  ret i1 %3
+}

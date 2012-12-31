@@ -1524,6 +1524,18 @@ Value *InstCombiner::FoldOrOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
         AddCST = ConstantExpr::getSub(AddOne(RHSCst), LHSCst);
         return Builder->CreateICmpULT(Add, AddCST);
       }
+
+      if (LHS->getOperand(0) == RHS->getOperand(0)) {
+        // if LHSCst and RHSCst differ with only one bit:
+        // (A == C1 || A == C2) -> (A & ~(C1 ^ C2)) == C1
+        APInt Xor = LHSCst->getValue() ^ RHSCst->getValue();
+        if (Xor.isPowerOf2()) {
+          Value *NegCst = Builder->getInt(~Xor);
+          Value *And = Builder->CreateAnd(LHS->getOperand(0), NegCst);
+          return Builder->CreateICmp(ICmpInst::ICMP_EQ, And, LHSCst);
+        }
+      }
+
       break;                         // (X == 13 | X == 15) -> no change
     case ICmpInst::ICMP_UGT:         // (X == 13 | X u> 14) -> no change
     case ICmpInst::ICMP_SGT:         // (X == 13 | X s> 14) -> no change
