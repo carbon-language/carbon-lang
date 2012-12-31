@@ -13,6 +13,7 @@
 
 #include "llvm/Analysis/Loads.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/DataLayout.h"
 #include "llvm/GlobalAlias.h"
 #include "llvm/GlobalVariable.h"
@@ -48,48 +49,19 @@ static bool AreEquivalentAddressValues(const Value *A, const Value *B) {
   return false;
 }
 
-/// getUnderlyingObjectWithOffset - Strip off up to MaxLookup GEPs and
-/// bitcasts to get back to the underlying object being addressed, keeping
-/// track of the offset in bytes from the GEPs relative to the result.
-/// This is closely related to GetUnderlyingObject but is located
-/// here to avoid making VMCore depend on DataLayout.
-static Value *getUnderlyingObjectWithOffset(Value *V, const DataLayout *TD,
-                                            uint64_t &ByteOffset,
-                                            unsigned MaxLookup = 6) {
-  if (!V->getType()->isPointerTy())
-    return V;
-  for (unsigned Count = 0; MaxLookup == 0 || Count < MaxLookup; ++Count) {
-    if (GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
-      if (!GEP->hasAllConstantIndices())
-        return V;
-      SmallVector<Value*, 8> Indices(GEP->op_begin() + 1, GEP->op_end());
-      ByteOffset += TD->getIndexedOffset(GEP->getPointerOperandType(),
-                                         Indices);
-      V = GEP->getPointerOperand();
-    } else if (Operator::getOpcode(V) == Instruction::BitCast) {
-      V = cast<Operator>(V)->getOperand(0);
-    } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(V)) {
-      if (GA->mayBeOverridden())
-        return V;
-      V = GA->getAliasee();
-    } else {
-      return V;
-    }
-    assert(V->getType()->isPointerTy() && "Unexpected operand type!");
-  }
-  return V;
-}
-
 /// isSafeToLoadUnconditionally - Return true if we know that executing a load
 /// from this value cannot trap.  If it is not obviously safe to load from the
 /// specified pointer, we do a quick local scan of the basic block containing
 /// ScanFrom, to determine if the address is already accessed.
 bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
                                        unsigned Align, const DataLayout *TD) {
-  uint64_t ByteOffset = 0;
+  int64_t ByteOffset = 0;
   Value *Base = V;
   if (TD)
-    Base = getUnderlyingObjectWithOffset(V, TD, ByteOffset);
+    Base = GetPointerBaseWithConstantOffset(V, ByteOffset, *TD);
+
+  if (ByteOffset < 0) // out of bounds
+    return false;
 
   Type *BaseType = 0;
   unsigned BaseAlign = 0;
@@ -97,10 +69,10 @@ bool llvm::isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom,
     // An alloca is safe to load from as load as it is suitably aligned.
     BaseType = AI->getAllocatedType();
     BaseAlign = AI->getAlignment();
-  } else if (const GlobalValue *GV = dyn_cast<GlobalValue>(Base)) {
+  } else if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(Base)) {
     // Global variables are safe to load from but their size cannot be
     // guaranteed if they are overridden.
-    if (!isa<GlobalAlias>(GV) && !GV->mayBeOverridden()) {
+    if (!GV->mayBeOverridden()) {
       BaseType = GV->getType()->getElementType();
       BaseAlign = GV->getAlignment();
     }
