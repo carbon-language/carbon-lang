@@ -358,9 +358,6 @@ public:
   /// parameter or for the return value.
   bool hasAttrSomewhere(Attribute::AttrKind Attr) const;
 
-  unsigned getNumAttrs() const;
-  Attribute &getAttributesAtIndex(unsigned i) const;
-
   /// operator==/!= - Provide equality predicates.
   bool operator==(const AttributeSet &RHS) const {
     return AttrList == RHS.AttrList;

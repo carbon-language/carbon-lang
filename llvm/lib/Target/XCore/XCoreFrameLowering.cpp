@@ -100,11 +100,8 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   bool FP = hasFP(MF);
   const AttributeSet &PAL = MF.getFunction()->getAttributes();
 
-  for (unsigned I = 0, E = PAL.getNumAttrs(); I != E; ++I)
-    if (PAL.getAttributesAtIndex(I).hasAttribute(Attribute::Nest)) {
-      loadFromStack(MBB, MBBI, XCore::R11, 0, dl, TII);
-      break;
-    }
+  if (PAL.hasAttrSomewhere(Attribute::Nest))
+    loadFromStack(MBB, MBBI, XCore::R11, 0, dl, TII);
 
   // Work out frame sizes.
   int FrameSize = MFI->getStackSize();

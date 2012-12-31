@@ -478,7 +478,7 @@ uint64_t AttributeSet::getBitMask(unsigned Index) const {
 Attribute AttributeSet::getAttributes(unsigned Idx) const {
   if (AttrList == 0) return Attribute();
 
-  const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;
+  const SmallVectorImpl<AttributeWithIndex> &Attrs = AttrList->Attrs;
   for (unsigned i = 0, e = Attrs.size(); i != e && Attrs[i].Index <= Idx; ++i)
     if (Attrs[i].Index == Idx)
       return Attrs[i].Attrs;
@@ -499,18 +499,8 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   return false;
 }
 
-unsigned AttributeSet::getNumAttrs() const {
-  return AttrList ? AttrList->Attrs.size() : 0;
-}
-
-Attribute &AttributeSet::getAttributesAtIndex(unsigned i) const {
-  assert(AttrList && "Trying to get an attribute from an empty list!");
-  assert(i < AttrList->Attrs.size() && "Index out of range!");
-  return AttrList->Attrs[i].Attrs;
-}
-
 AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
-                                 Attribute Attrs) const {
+                                   Attribute Attrs) const {
   Attribute OldAttrs = getAttributes(Idx);
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
@@ -555,7 +545,7 @@ AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
 }
 
 AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
-                                    Attribute Attrs) const {
+                                      Attribute Attrs) const {
 #ifndef NDEBUG
   // FIXME it is not obvious how this should work for alignment.
   // For now, say we can't pass in alignment, which no current use does.
