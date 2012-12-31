@@ -1672,40 +1672,30 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
 /// base and offset to the caller.
 Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
                                               const DataLayout &TD) {
-  Operator *PtrOp = dyn_cast<Operator>(Ptr);
-  if (PtrOp == 0 || Ptr->getType()->isVectorTy())
-    return Ptr;
+  unsigned BitWidth = TD.getPointerSizeInBits();
+  APInt ByteOffset(BitWidth, 0);
+  while (1) {
+    if (Ptr->getType()->isVectorTy())
+      break;
 
-  // Just look through bitcasts.
-  if (PtrOp->getOpcode() == Instruction::BitCast)
-    return GetPointerBaseWithConstantOffset(PtrOp->getOperand(0), Offset, TD);
-
-  // If this is a GEP with constant indices, we can look through it.
-  GEPOperator *GEP = dyn_cast<GEPOperator>(PtrOp);
-  if (GEP == 0 || !GEP->hasAllConstantIndices()) return Ptr;
-
-  gep_type_iterator GTI = gep_type_begin(GEP);
-  for (User::op_iterator I = GEP->idx_begin(), E = GEP->idx_end(); I != E;
-       ++I, ++GTI) {
-    ConstantInt *OpC = cast<ConstantInt>(*I);
-    if (OpC->isZero()) continue;
-
-    // Handle a struct and array indices which add their offset to the pointer.
-    if (StructType *STy = dyn_cast<StructType>(*GTI)) {
-      Offset += TD.getStructLayout(STy)->getElementOffset(OpC->getZExtValue());
+    if (GEPOperator *GEP = dyn_cast<GEPOperator>(Ptr)) {
+      APInt GEPOffset(BitWidth, 0);
+      if (!GEP->accumulateConstantOffset(TD, GEPOffset))
+        break;
+      ByteOffset += GEPOffset;
+      Ptr = GEP->getPointerOperand();
+    } else if (Operator::getOpcode(Ptr) == Instruction::BitCast) {
+      Ptr = cast<Operator>(Ptr)->getOperand(0);
+    } else if (GlobalAlias *GA = dyn_cast<GlobalAlias>(Ptr)) {
+      if (GA->mayBeOverridden())
+        break;
+      Ptr = GA->getAliasee();
     } else {
-      uint64_t Size = TD.getTypeAllocSize(GTI.getIndexedType());
-      Offset += OpC->getSExtValue()*Size;
+      break;
     }
   }
-
-  // Re-sign extend from the pointer size if needed to get overflow edge cases
-  // right.
-  unsigned PtrSize = TD.getPointerSizeInBits();
-  if (PtrSize < 64)
-    Offset = SignExtend64(Offset, PtrSize);
-
-  return GetPointerBaseWithConstantOffset(GEP->getPointerOperand(), Offset, TD);
+  Offset = ByteOffset.getSExtValue();
+  return Ptr;
 }
 
 
