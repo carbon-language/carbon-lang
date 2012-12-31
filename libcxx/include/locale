@@ -354,7 +354,7 @@ size_t __mbsrtowcs_l(wchar_t *__dest, const char **__src, size_t __len,
 #endif
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline
 int __sprintf_l(char *__s, locale_t __l, const char *__format, ...) {
   va_list __va;
   va_start(__va, __format);
@@ -368,7 +368,7 @@ int __sprintf_l(char *__s, locale_t __l, const char *__format, ...) {
   return __res;
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline
 int __snprintf_l(char *__s, size_t __n, locale_t __l, const char *__format, ...) {
   va_list __va;
   va_start(__va, __format);
@@ -382,7 +382,7 @@ int __snprintf_l(char *__s, size_t __n, locale_t __l, const char *__format, ...)
   return __res;
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline
 int __asprintf_l(char **__s, locale_t __l, const char *__format, ...) {
   va_list __va;
   va_start(__va, __format);
@@ -396,7 +396,7 @@ int __asprintf_l(char **__s, locale_t __l, const char *__format, ...) {
   return __res;
 }
 
-_LIBCPP_ALWAYS_INLINE inline
+inline
 int __sscanf_l(const char *__s, locale_t __l, const char *__format, ...) {
   va_list __va;
   va_start(__va, __format);
