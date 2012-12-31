@@ -111,13 +111,16 @@ struct AlignedCharArray;
 // We provide special variations of this template for the most common
 // alignments because __declspec(align(...)) doesn't actually work when it is
 // a member of a by-value function argument in MSVC, even if the alignment
-// request is something reasonably like 8-byte or 16-byte.
+// request is something reasonably like 8-byte or 16-byte. Note that we can't
+// even include the declspec with the union that forces the alignment because
+// MSVC warns on the existence of the declspec despite the union member forcing
+// proper alignment.
 
 template<std::size_t Size>
 struct AlignedCharArray<1, Size> {
   union {
     char aligned;
-    __declspec(align(1)) char buffer[Size];
+    char buffer[Size];
   };
 };
 
@@ -125,7 +128,7 @@ template<std::size_t Size>
 struct AlignedCharArray<2, Size> {
   union {
     short aligned;
-    __declspec(align(2)) char buffer[Size];
+    char buffer[Size];
   };
 };
 
@@ -133,7 +136,7 @@ template<std::size_t Size>
 struct AlignedCharArray<4, Size> {
   union {
     int aligned;
-    __declspec(align(4)) char buffer[Size];
+    char buffer[Size];
   };
 };
 
@@ -141,9 +144,13 @@ template<std::size_t Size>
 struct AlignedCharArray<8, Size> {
   union {
     double aligned;
-    __declspec(align(8)) char buffer[Size];
+    char buffer[Size];
   };
 };
+
+
+// The rest of these are provided with a __declspec(align(...)) and we simply
+// can't pass them by-value as function arguments on MSVC.
 
 #define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
   template<std::size_t Size> \
