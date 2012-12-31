@@ -120,6 +120,10 @@ public:
   /// alignment value.
   unsigned getStackAlignment() const;
 
+  bool operator==(AttrKind K) const;
+  bool operator!=(AttrKind K) const;
+
+  // FIXME: Remove these 'operator' methods.
   bool operator==(const Attribute &A) const {
     return pImpl == A.pImpl;
   }
@@ -141,7 +145,7 @@ public:
   /// that have been decoded from the given integer.  This function must stay in
   /// sync with 'encodeLLVMAttributesForBitcode'.
   static Attribute decodeLLVMAttributesForBitcode(LLVMContext &C,
-                                                   uint64_t EncodedAttrs);
+                                                  uint64_t EncodedAttrs);
 
   /// \brief The Attribute is converted to a string of equivalent mnemonic. This
   /// is, presumably, for writing out the mnemonics for the assembly writer.

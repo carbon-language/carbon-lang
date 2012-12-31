@@ -88,6 +88,14 @@ unsigned Attribute::getStackAlignment() const {
   return 1U << ((pImpl->getStackAlignment() >> 26) - 1);
 }
 
+bool Attribute::operator==(AttrKind K) const {
+  return pImpl && pImpl->contains(K);
+}
+
+bool Attribute::operator!=(AttrKind K) const {
+  return !(pImpl && pImpl->contains(K));
+}
+
 uint64_t Attribute::getBitMask() const {
   return pImpl ? pImpl->getBitMask() : 0;
 }
@@ -473,8 +481,8 @@ uint64_t AttributeSet::getBitMask(unsigned Index) const {
 }
 
 /// getAttributes - The attributes for the specified index are returned.
-/// Attribute for the result are denoted with Idx = 0.  Function notes are
-/// denoted with idx = ~0.
+/// Attributes for the result are denoted with Idx = 0.  Function attributes are
+/// denoted with Idx = ~0.
 Attribute AttributeSet::getAttributes(unsigned Idx) const {
   if (AttrList == 0) return Attribute();
 
