@@ -59,6 +59,8 @@ int main()
     test(S("oselktgbcapndfjihrmq"), 'q', 21, S::npos);
 
     test(S(""), 'q', S::npos);
+    test(S("q"), 'q', S::npos);
+    test(S("qqq"), 'q', S::npos);
     test(S("csope"), 'q', 0);
     test(S("gfsmthlkon"), 'q', 0);
     test(S("laenfsbridchgotmkqpj"), 'q', 0);
