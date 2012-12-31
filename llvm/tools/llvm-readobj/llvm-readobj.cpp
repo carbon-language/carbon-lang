@@ -69,6 +69,11 @@ static std::string getSymbolFlagStr(uint32_t Flags) {
   return result;
 }
 
+static void checkError(error_code ec, const char *msg) {
+  if (ec)
+    report_fatal_error(std::string(msg) + ": " + ec.message());
+}
+
 static void
 dumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
   StringRef Name;
@@ -77,12 +82,13 @@ dumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
   uint64_t Address;
   uint64_t Size;
   uint64_t FileOffset;
-  Sym.getName(Name);
-  Sym.getAddress(Address);
-  Sym.getSize(Size);
-  Sym.getFileOffset(FileOffset);
-  Sym.getType(Type);
-  Sym.getFlags(Flags);
+  checkError(Sym.getName(Name), "SymbolRef.getName() failed");
+  checkError(Sym.getAddress(Address), "SymbolRef.getAddress() failed");
+  checkError(Sym.getSize(Size), "SymbolRef.getSize() failed");
+  checkError(Sym.getFileOffset(FileOffset),
+             "SymbolRef.getFileOffset() failed");
+  checkError(Sym.getType(Type), "SymbolRef.getType() failed");
+  checkError(Sym.getFlags(Flags), "SymbolRef.getFlags() failed");
   std::string FullName = Name;
 
   // If this is a dynamic symbol from an ELF object, append
