@@ -35,7 +35,7 @@
 #  define _HEAPOK (-2)
 #endif
 
-namespace llvm {
+using namespace llvm;
 using namespace sys;
 
 
@@ -260,6 +260,4 @@ const char *Process::OutputReverse() {
 const char *Process::ResetColor() {
   SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), defaultColors());
   return 0;
-}
-
 }

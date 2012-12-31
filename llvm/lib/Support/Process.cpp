@@ -15,7 +15,7 @@
 #include "llvm/Support/Process.h"
 #include "llvm/Support/ErrorHandling.h"
 
-namespace llvm {
+using namespace llvm;
 using namespace sys;
 
 //===----------------------------------------------------------------------===//
@@ -54,7 +54,6 @@ self_process::~self_process() {
 #pragma warning(pop)
 #endif
 
-}
 
 // Include the platform-specific parts of this class.
 #ifdef LLVM_ON_UNIX
