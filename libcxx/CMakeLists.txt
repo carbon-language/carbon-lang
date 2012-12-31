@@ -40,6 +40,9 @@ option(LIBCXX_ENABLE_CXX0X "Enable -std=c++0x and use of c++0x language features
 option(LIBCXX_ENABLE_SHARED "Build libc++ as a shared library." ON)
 
 set(CXXABIS none libcxxabi libcxxrt libsupc++)
+if (NOT DEFINED LIBCXX_CXX_ABI)
+  set(LIBCXX_CXX_ABI "none")
+endif()
 set(LIBCXX_CXX_ABI "${LIBCXX_CXX_ABI}" CACHE STRING
     "Specify C++ ABI library to use." FORCE)
 set_property(CACHE LIBCXX_CXX_ABI PROPERTY STRINGS "";${CXXABIS})
@@ -63,9 +66,10 @@ get_target_triple(LIBCXX_TARGET_TRIPLE
   )
 set(LIBCXX_TARGET_TRIPLE ${LIBCXX_TARGET_TRIPLE} CACHE STRING "Target triple.")
 
-if (${LIBCXX_CXX_ABI} STREQUAL "libsupc++")
-  set(LIBCXX_LIBSUPCXX_INCLUDE_PATHS "" CACHE STRINGS
-      "Paths to libsupc++ include directories. Separate by system separator")
+if ("${LIBCXX_CXX_ABI}" STREQUAL "libsupc++")
+  set(LIBCXX_LIBSUPCXX_INCLUDE_PATHS "${LIBCXX_LIBSUPCXX_INCLUDE_PATHS}"
+      CACHE STRINGS
+      "Paths to libsupc++ include directories separate by ';'.")
   set(LIBCXX_CXX_ABI_LIBRARIES stdc++)
   set(LIBCXX_LIBSUPCXX_FILES
       cxxabi.h
@@ -75,6 +79,9 @@ if (${LIBCXX_CXX_ABI} STREQUAL "libsupc++")
       bits/cxxabi_tweaks.h
       bits/cxxabi_forced.h
       )
+  # Create include directories.
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include")
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/include/bits")
   set(LIBCXX_LIBSUPCXX_FILE_PATHS)
   foreach(path ${LIBCXX_LIBSUPCXX_FILES})
     set(found FALSE)
@@ -106,7 +113,7 @@ if (${LIBCXX_CXX_ABI} STREQUAL "libsupc++")
     FILES_MATCHING
     PATTERN "*"
     )
-elseif (${LIBCXX_CXX_ABI} NOT STREQUAL "none")
+elseif (NOT "${LIBCXX_CXX_ABI}" STREQUAL "none")
   message(FATAL_ERROR
           "Currently only none and libsupc++ are supported for c++ abi.")
 endif ()

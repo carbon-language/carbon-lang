@@ -116,6 +116,7 @@
   <!--=====================================================================-->
 
    <p>libc++ is a 100% complete C++11 implementation on Apple's OS X. </p>
+   <p>LLVM and Clang can self host in C++ and C++11 mode with libc++ on Linux.</p>
 
    <p>
    Ports to other platforms are underway. Here are recent test
@@ -203,6 +204,60 @@ against it with <code>-fno-rtti</code> is supported.
 
   <p>Send discussions to the
   (<a href="http://lists.cs.uiuc.edu/mailman/listinfo/cfe-dev">clang mailing list</a>).</p>
+
+  <!--=====================================================================-->
+  <h2>Build on Linux using CMake and libsupc++.</h2>
+  <!--=====================================================================-->
+
+  <p>
+     You will need libstdc++ in order to provide libsupc++.
+  </p>
+  
+  <p>
+     Figure out where the libsupc++ headers are on your system. On Ubuntu this
+     is <code>/usr/include/c++/&lt;version&gt;</code> and
+     <code>/usr/include/c++/&lt;version&gt;/&lt;target-triple&gt;</code>
+  </p>
+  
+  <p>
+     You can also figure this out by running
+     <pre>
+$ echo | g++ -Wp,-v -x c++ - -fsyntax-only
+ignoring nonexistent directory "/usr/local/include/x86_64-linux-gnu"
+ignoring nonexistent directory "/usr/lib/gcc/x86_64-linux-gnu/4.7/../../../../x86_64-linux-gnu/include"
+#include "..." search starts here:
+#include &lt;...&gt; search starts here:
+ /usr/include/c++/4.7
+ /usr/include/c++/4.7/x86_64-linux-gnu
+ /usr/include/c++/4.7/backward
+ /usr/lib/gcc/x86_64-linux-gnu/4.7/include
+ /usr/local/include
+ /usr/lib/gcc/x86_64-linux-gnu/4.7/include-fixed
+ /usr/include/x86_64-linux-gnu
+ /usr/include
+End of search list.
+     </pre>
+
+      Note the first two entries happen to be what we are looking for. This
+      may not be correct on other platforms.
+  </p>
+  
+  <p>
+     We can now run CMake:
+     <ul>
+       <li><code>CC=clang CXX=clang++ cmake -G "Unix Makefiles"
+                -DLIBCXX_CXX_ABI=libsupc++
+                -DLIBCXX_LIBSUPCXX_INCLUDE_PATHS="/usr/include/c++/4.7/;/usr/include/c++/4.7/x86_64-linux-gnu/"
+                -DCMAKE_BUILD_TYPE=Release
+                -DCMAKE_INSTALL_PREFIX=/usr
+                &lt;libc++-source-dir&gt;</code></li>
+       <li><code>make</code></li>
+       <li><code>sudo make install</code></li>
+     </ul>
+     <p>
+        You can now run clang with -stdlib=libc++.
+     </p>
+  </p>
 
   <!--=====================================================================-->
   <h2>Design Documents</h2>
