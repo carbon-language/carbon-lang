@@ -543,20 +543,9 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitLoadInst(LoadInst&) {
   return unknown();
 }
 
-SizeOffsetType ObjectSizeOffsetVisitor::visitPHINode(PHINode &PHI) {
-  if (PHI.getNumIncomingValues() == 0)
-    return unknown();
-
-  SizeOffsetType Ret = compute(PHI.getIncomingValue(0));
-  if (!bothKnown(Ret))
-    return unknown();
-
-  // verify that all PHI incoming pointers have the same size and offset
-  for (unsigned i = 1, e = PHI.getNumIncomingValues(); i != e; ++i) {
-    if (compute(PHI.getIncomingValue(i)) != Ret)
-      return unknown();
-  }
-  return Ret;
+SizeOffsetType ObjectSizeOffsetVisitor::visitPHINode(PHINode&) {
+  // too complex to analyze statically.
+  return unknown();
 }
 
 SizeOffsetType ObjectSizeOffsetVisitor::visitSelectInst(SelectInst &I) {
