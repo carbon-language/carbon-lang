@@ -162,40 +162,12 @@ dumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
          << "\n";
 }
 
-// Iterate through the normal symbols in the ObjectFile
-static void dumpSymbols(const ObjectFile *obj) {
-  error_code ec;
-  uint32_t count = 0;
-  outs() << "Symbols:\n";
-  dumpSymbolHeader();
-  symbol_iterator it = obj->begin_symbols();
-  symbol_iterator ie = obj->end_symbols();
-  while (it != ie) {
-    dumpSymbol(*it, obj, false);
-    it.increment(ec);
-    if (ec)
-      report_fatal_error("Symbol iteration failed");
-    ++count;
-  }
-  outs() << "  Total: " << count << "\n\n";
+static void dumpStaticSymbol(const SymbolRef &Sym, const ObjectFile *obj) {
+  return dumpSymbol(Sym, obj, false);
 }
 
-// Iterate through the dynamic symbols in the ObjectFile.
-static void dumpDynamicSymbols(const ObjectFile *obj) {
-  error_code ec;
-  uint32_t count = 0;
-  outs() << "Dynamic Symbols:\n";
-  dumpSymbolHeader();
-  symbol_iterator it = obj->begin_dynamic_symbols();
-  symbol_iterator ie = obj->end_dynamic_symbols();
-  while (it != ie) {
-    dumpSymbol(*it, obj, true);
-    it.increment(ec);
-    if (ec)
-      report_fatal_error("Symbol iteration failed");
-    ++count;
-  }
-  outs() << "  Total: " << count << "\n\n";
+static void dumpDynamicSymbol(const SymbolRef &Sym, const ObjectFile *obj) {
+  return dumpSymbol(Sym, obj, true);
 }
 
 static void dumpSection(const SectionRef &Section, const ObjectFile *obj) {
@@ -213,7 +185,7 @@ static void dumpSection(const SectionRef &Section, const ObjectFile *obj) {
          << "\n";
 }
 
-static void dumpLibrary(const LibraryRef &lib) {
+static void dumpLibrary(const LibraryRef &lib, const ObjectFile *obj) {
   StringRef path;
   lib.getPath(path);
   outs() << "  " << path << "\n";
@@ -230,23 +202,6 @@ static void dump(const ObjectFile *obj, Func f, Iterator begin, Iterator end,
     it.increment(ec);
     if (ec)
       report_fatal_error(errStr);
-    ++count;
-  }
-  outs() << "  Total: " << count << "\n\n";
-}
-
-// Iterate through needed libraries
-static void dumpLibrariesNeeded(const ObjectFile *obj) {
-  error_code ec;
-  uint32_t count = 0;
-  library_iterator it = obj->begin_libraries_needed();
-  library_iterator ie = obj->end_libraries_needed();
-  outs() << "Libraries needed:\n";
-  while (it != ie) {
-    dumpLibrary(*it);
-    it.increment(ec);
-    if (ec)
-      report_fatal_error("Needed libraries iteration failed");
     ++count;
   }
   outs() << "  Total: " << count << "\n\n";
@@ -288,15 +243,26 @@ int main(int argc, char** argv) {
   }
 
   dumpHeaders(obj);
-  dumpSymbols(obj);
-  dumpDynamicSymbols(obj);
+
+  outs() << "Symbols:\n";
+  dumpSymbolHeader();
+  dump(obj, dumpStaticSymbol, obj->begin_symbols(), obj->end_symbols(),
+       "Symbol iteration failed");
+
+  outs() << "Dynamic Symbols:\n";
+  dumpSymbolHeader();
+  dump(obj, dumpDynamicSymbol, obj->begin_dynamic_symbols(),
+       obj->end_dynamic_symbols(), "Symbol iteration failed");
 
   outs() << "Sections:\n";
   dumpSectionHeader();
   dump(obj, &dumpSection, obj->begin_sections(), obj->end_sections(),
        "Section iteration failed");
 
-  dumpLibrariesNeeded(obj);
+  outs() << "Libraries needed:\n";
+  dump(obj, &dumpLibrary, obj->begin_libraries_needed(),
+       obj->end_libraries_needed(), "Needed libraries iteration failed");
+
   return 0;
 }
 
