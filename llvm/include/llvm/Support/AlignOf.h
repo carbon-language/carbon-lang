@@ -19,7 +19,6 @@
 #include <cstddef>
 
 namespace llvm {
-
 template <typename T>
 struct AlignmentCalcImpl {
   char x;
@@ -49,7 +48,6 @@ struct AlignOf {
   enum { Alignment_LessEqual_4Bytes = Alignment <= 4 ? 1 : 0 };
   enum { Alignment_LessEqual_8Bytes = Alignment <= 8 ? 1 : 0 };
   enum { Alignment_LessEqual_16Bytes = Alignment <= 16 ? 1 : 0 };
-
 };
 
 /// alignOf - A templated function that returns the minimum alignment of
@@ -59,112 +57,138 @@ struct AlignOf {
 template <typename T>
 inline unsigned alignOf() { return AlignOf<T>::Alignment; }
 
-
+/// \struct AlignedCharArray
 /// \brief Helper for building an aligned character array type.
 ///
 /// This template is used to explicitly build up a collection of aligned
-/// character types. We have to build these up using a macro and explicit
+/// character array types. We have to build these up using a macro and explicit
 /// specialization to cope with old versions of MSVC and GCC where only an
 /// integer literal can be used to specify an alignment constraint. Once built
 /// up here, we can then begin to indirect between these using normal C++
 /// template parameters.
-template <size_t Alignment> struct AlignedCharArrayImpl;
 
 // MSVC requires special handling here.
 #ifndef _MSC_VER
 
 #if __has_feature(cxx_alignas)
-#define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
-  template <> struct AlignedCharArrayImpl<x> { \
-    char alignas(x) aligned; \
-  }
+template<std::size_t Alignment, std::size_t Size>
+struct AlignedCharArray {
+  alignas(Alignment) char buffer[Size];
+};
+
 #elif defined(__GNUC__) || defined(__IBM_ATTRIBUTES)
+/// \brief Create a type with an aligned char buffer.
+template<std::size_t Alignment, std::size_t Size>
+struct AlignedCharArray;
+
 #define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
-  template <> struct AlignedCharArrayImpl<x> { \
-    char aligned __attribute__((aligned(x))); \
-  }
+  template<std::size_t Size> \
+  struct AlignedCharArray<x, Size> { \
+    __attribute__((aligned(x))) char buffer[Size]; \
+  };
+
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(1)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(2)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(4)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(8)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(16)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(32)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(64)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(128)
+
+#undef LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT
+
 #else
 # error No supported align as directive.
 #endif
 
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(1);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(2);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(4);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(8);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(16);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(32);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(64);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(128);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(512);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(1024);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(2048);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(4096);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(8192);
-
-#undef LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT
-
 #else // _MSC_VER
+
+/// \brief Create a type with an aligned char buffer.
+template<std::size_t Alignment, std::size_t Size>
+struct AlignedCharArray;
 
 // We provide special variations of this template for the most common
 // alignments because __declspec(align(...)) doesn't actually work when it is
 // a member of a by-value function argument in MSVC, even if the alignment
 // request is something reasonably like 8-byte or 16-byte.
-template <> struct AlignedCharArrayImpl<1> { char aligned; };
-template <> struct AlignedCharArrayImpl<2> { short aligned; };
-template <> struct AlignedCharArrayImpl<4> { int aligned; };
-template <> struct AlignedCharArrayImpl<8> { double aligned; };
+
+template<std::size_t Size>
+struct AlignedCharArray<1, Size> {
+  union {
+    char aligned;
+    __declspec(align(1)) char buffer[Size];
+  };
+};
+
+template<std::size_t Size>
+struct AlignedCharArray<2, Size> {
+  union {
+    short aligned;
+    __declspec(align(2)) char buffer[Size];
+  };
+};
+
+template<std::size_t Size>
+struct AlignedCharArray<4, Size> {
+  union {
+    int aligned;
+    __declspec(align(4)) char buffer[Size];
+  };
+};
+
+template<std::size_t Size>
+struct AlignedCharArray<8, Size> {
+  union {
+    double aligned;
+    __declspec(align(8)) char buffer[Size];
+  };
+};
 
 #define LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(x) \
-  template <> struct AlignedCharArrayImpl<x> { \
-    __declspec(align(x)) char aligned; \
-  }
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(16);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(32);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(64);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(128);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(512);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(1024);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(2048);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(4096);
-LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(8192);
-// Any larger and MSVC complains.
+  template<std::size_t Size> \
+  struct AlignedCharArray<x, Size> { \
+    __declspec(align(x)) char buffer[Size]; \
+  };
+
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(16)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(32)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(64)
+LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(128)
+
 #undef LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT
 
 #endif // _MSC_VER
+
+namespace detail {
+template <typename T1,
+          typename T2 = char, typename T3 = char, typename T4 = char>
+class AlignerImpl {
+  T1 t1; T2 t2; T3 t3; T4 t4;
+
+  AlignerImpl(); // Never defined or instantiated.
+};
+
+template <typename T1,
+          typename T2 = char, typename T3 = char, typename T4 = char>
+union SizerImpl {
+  char arr1[sizeof(T1)], arr2[sizeof(T2)], arr3[sizeof(T3)], arr4[sizeof(T4)];
+};
+} // end namespace detail
 
 /// \brief This union template exposes a suitably aligned and sized character
 /// array member which can hold elements of any of up to four types.
 ///
 /// These types may be arrays, structs, or any other types. The goal is to
-/// produce a union type containing a character array which, when used, forms
-/// storage suitable to placement new any of these types over. Support for more
-/// than four types can be added at the cost of more boiler plate.
+/// expose a char array buffer member which can be used as suitable storage for
+/// a placement new of any of these types. Support for more than four types can
+/// be added at the cost of more boiler plate.
 template <typename T1,
           typename T2 = char, typename T3 = char, typename T4 = char>
-union AlignedCharArrayUnion {
-private:
-  class AlignerImpl {
-    T1 t1; T2 t2; T3 t3; T4 t4;
-
-    AlignerImpl(); // Never defined or instantiated.
-  };
-  union SizerImpl {
-    char arr1[sizeof(T1)], arr2[sizeof(T2)], arr3[sizeof(T3)], arr4[sizeof(T4)];
-  };
-
-public:
-  /// \brief The character array buffer for use by clients.
-  ///
-  /// No other member of this union should be referenced. The exist purely to
-  /// constrain the layout of this character array.
-  char buffer[sizeof(SizerImpl)];
-
-private:
-  // Tests seem to indicate that both Clang and GCC will properly register the
-  // alignment of a struct containing an aligned member, and this alignment
-  // should carry over to the character array in the union.
-  llvm::AlignedCharArrayImpl<AlignOf<AlignerImpl>::Alignment> nonce_member;
+struct AlignedCharArrayUnion :
+  llvm::AlignedCharArray<AlignOf<detail::AlignerImpl<T1, T2, T3, T4> >
+                                            ::Alignment,
+                                 sizeof(detail::SizerImpl<T1, T2, T3, T4>)> {
 };
-
 } // end namespace llvm
 #endif

@@ -14,7 +14,6 @@
 using namespace llvm;
 
 namespace {
-
 // Disable warnings about questionable type definitions.
 // We're testing that even questionable types work with the alignment utilities.
 #ifdef _MSC_VER
@@ -321,6 +320,16 @@ TEST(AlignOfTest, BasicAlignedArray) {
 #ifndef _MSC_VER
   EXPECT_EQ(sizeof(V8), sizeof(AlignedCharArrayUnion<V8>));
 #endif
-}
 
+  EXPECT_EQ(1u, (alignOf<AlignedCharArray<1, 1> >()));
+  EXPECT_EQ(2u, (alignOf<AlignedCharArray<2, 1> >()));
+  EXPECT_EQ(4u, (alignOf<AlignedCharArray<4, 1> >()));
+  EXPECT_EQ(8u, (alignOf<AlignedCharArray<8, 1> >()));
+  EXPECT_EQ(16u, (alignOf<AlignedCharArray<16, 1> >()));
+
+  EXPECT_EQ(1u, sizeof(AlignedCharArray<1, 1>));
+  EXPECT_EQ(7u, sizeof(AlignedCharArray<1, 7>));
+  EXPECT_EQ(2u, sizeof(AlignedCharArray<2, 2>));
+  EXPECT_EQ(16u, sizeof(AlignedCharArray<2, 16>));
+}
 }
