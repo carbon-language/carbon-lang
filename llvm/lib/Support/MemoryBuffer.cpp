@@ -187,7 +187,7 @@ public:
     : MemoryBufferMem(Buffer, RequiresNullTerminator) { }
 
   ~MemoryBufferMMapFile() {
-    static int PageSize = sys::Process::GetPageSize();
+    static int PageSize = sys::process::get_self()->page_size();
 
     uintptr_t Start = reinterpret_cast<uintptr_t>(getBufferStart());
     size_t Size = getBufferSize();
@@ -309,7 +309,7 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                      uint64_t FileSize, uint64_t MapSize,
                                      int64_t Offset,
                                      bool RequiresNullTerminator) {
-  static int PageSize = sys::Process::GetPageSize();
+  static int PageSize = sys::process::get_self()->page_size();
 
   // Default is to map the full file.
   if (MapSize == uint64_t(-1)) {

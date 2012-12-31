@@ -117,12 +117,6 @@ private:
 /// current executing process.
 class Process {
 public:
-  /// \brief Get the virtual memory page size
-  /// This static function will return the operating system's virtual memory
-  /// page size.
-  /// \returns The number of bytes in a virtual memory page.
-  static unsigned GetPageSize();
-
   /// \brief Return process memory usage.
   /// This static function will return the total amount of memory allocated
   /// by the process. This only counts the memory allocated via the malloc,

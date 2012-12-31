@@ -575,7 +575,7 @@ const char *mapped_file_region::const_data() const {
 }
 
 int mapped_file_region::alignment() {
-  return Process::GetPageSize();
+  return process::get_self()->page_size();
 }
 
 error_code detail::directory_iterator_construct(detail::DirIterState &it,
