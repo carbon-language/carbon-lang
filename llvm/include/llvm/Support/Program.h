@@ -39,7 +39,6 @@ namespace sys {
 
     /// @name Methods
     /// @{
-  public:
 
     Program();
     ~Program();
@@ -100,6 +99,7 @@ namespace sys {
       ///< is non-empty upon return an error occurred while waiting.
       );
 
+  public:
     /// This static constructor (factory) will attempt to locate a program in
     /// the operating system's file system using some pre-determined set of
     /// locations to search (e.g. the PATH on Unix). Paths with slashes are
