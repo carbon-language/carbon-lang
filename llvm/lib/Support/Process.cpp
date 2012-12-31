@@ -47,7 +47,6 @@ self_process *process::get_self() {
 // instance should live until the process terminates to avoid the potential for
 // racy accesses during shutdown.
 self_process::~self_process() {
-    assert(TempDirectory->exists() && "Who has removed TempDirectory?");
   llvm_unreachable("This destructor must never be executed!");
 }
 
