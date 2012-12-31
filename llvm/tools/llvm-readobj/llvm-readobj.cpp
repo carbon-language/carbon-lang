@@ -33,17 +33,7 @@ using namespace llvm::object;
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input object>"), cl::init(""));
 
-void DumpSymbolHeader() {
-  outs() << format("  %-32s", (const char*)"Name")
-         << format("  %-4s", (const char*)"Type")
-         << format("  %-16s", (const char*)"Address")
-         << format("  %-16s", (const char*)"Size")
-         << format("  %-16s", (const char*)"FileOffset")
-         << format("  %-26s", (const char*)"Flags")
-         << "\n";
-}
-
-const char *GetTypeStr(SymbolRef::Type Type) {
+static const char *getTypeStr(SymbolRef::Type Type) {
   switch (Type) {
   case SymbolRef::ST_Unknown: return "?";
   case SymbolRef::ST_Data: return "DATA";
@@ -55,7 +45,7 @@ const char *GetTypeStr(SymbolRef::Type Type) {
   return "INV";
 }
 
-std::string GetFlagStr(uint32_t Flags) {
+static std::string getSymbolFlagStr(uint32_t Flags) {
   std::string result;
   if (Flags & SymbolRef::SF_Undefined)
     result += "undef,";
@@ -79,7 +69,8 @@ std::string GetFlagStr(uint32_t Flags) {
   return result;
 }
 
-void DumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
+static void
+dumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
     StringRef Name;
     SymbolRef::Type Type;
     uint32_t Flags;
@@ -108,24 +99,23 @@ void DumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
 
     // format() can't handle StringRefs
     outs() << format("  %-32s", FullName.c_str())
-           << format("  %-4s", GetTypeStr(Type))
+           << format("  %-4s", getTypeStr(Type))
            << format("  %16" PRIx64, Address)
            << format("  %16" PRIx64, Size)
            << format("  %16" PRIx64, FileOffset)
-           << "  " << GetFlagStr(Flags)
+           << "  " << getSymbolFlagStr(Flags)
            << "\n";
 }
 
-
 // Iterate through the normal symbols in the ObjectFile
-void DumpSymbols(const ObjectFile *obj) {
+static void dumpSymbols(const ObjectFile *obj) {
   error_code ec;
   uint32_t count = 0;
   outs() << "Symbols:\n";
   symbol_iterator it = obj->begin_symbols();
   symbol_iterator ie = obj->end_symbols();
   while (it != ie) {
-    DumpSymbol(*it, obj, false);
+    dumpSymbol(*it, obj, false);
     it.increment(ec);
     if (ec)
       report_fatal_error("Symbol iteration failed");
@@ -135,14 +125,14 @@ void DumpSymbols(const ObjectFile *obj) {
 }
 
 // Iterate through the dynamic symbols in the ObjectFile.
-void DumpDynamicSymbols(const ObjectFile *obj) {
+static void dumpDynamicSymbols(const ObjectFile *obj) {
   error_code ec;
   uint32_t count = 0;
   outs() << "Dynamic Symbols:\n";
   symbol_iterator it = obj->begin_dynamic_symbols();
   symbol_iterator ie = obj->end_dynamic_symbols();
   while (it != ie) {
-    DumpSymbol(*it, obj, true);
+    dumpSymbol(*it, obj, true);
     it.increment(ec);
     if (ec)
       report_fatal_error("Symbol iteration failed");
@@ -151,21 +141,21 @@ void DumpDynamicSymbols(const ObjectFile *obj) {
   outs() << "  Total: " << count << "\n\n";
 }
 
-void DumpLibrary(const LibraryRef &lib) {
+static void dumpLibrary(const LibraryRef &lib) {
   StringRef path;
   lib.getPath(path);
   outs() << "  " << path << "\n";
 }
 
 // Iterate through needed libraries
-void DumpLibrariesNeeded(const ObjectFile *obj) {
+static void dumpLibrariesNeeded(const ObjectFile *obj) {
   error_code ec;
   uint32_t count = 0;
   library_iterator it = obj->begin_libraries_needed();
   library_iterator ie = obj->end_libraries_needed();
   outs() << "Libraries needed:\n";
   while (it != ie) {
-    DumpLibrary(*it);
+    dumpLibrary(*it);
     it.increment(ec);
     if (ec)
       report_fatal_error("Needed libraries iteration failed");
@@ -174,7 +164,7 @@ void DumpLibrariesNeeded(const ObjectFile *obj) {
   outs() << "  Total: " << count << "\n\n";
 }
 
-void DumpHeaders(const ObjectFile *obj) {
+static void dumpHeaders(const ObjectFile *obj) {
   outs() << "File Format : " << obj->getFileFormatName() << "\n";
   outs() << "Arch        : "
          << Triple::getArchTypeName((llvm::Triple::ArchType)obj->getArch())
@@ -209,10 +199,10 @@ int main(int argc, char** argv) {
     errs() << InputFilename << ": Object type not recognized\n";
   }
 
-  DumpHeaders(obj);
-  DumpSymbols(obj);
-  DumpDynamicSymbols(obj);
-  DumpLibrariesNeeded(obj);
+  dumpHeaders(obj);
+  dumpSymbols(obj);
+  dumpDynamicSymbols(obj);
+  dumpLibrariesNeeded(obj);
   return 0;
 }
 
