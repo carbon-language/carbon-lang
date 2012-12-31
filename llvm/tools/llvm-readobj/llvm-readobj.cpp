@@ -33,6 +33,16 @@ using namespace llvm::object;
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input object>"), cl::init(""));
 
+static void dumpSymbolHeader() {
+  outs() << format("  %-32s", (const char*)"Name")
+         << format("  %-4s", (const char*)"Type")
+         << format("  %-16s", (const char*)"Address")
+         << format("  %-16s", (const char*)"Size")
+         << format("  %-16s", (const char*)"FileOffset")
+         << format("  %-26s", (const char*)"Flags")
+         << "\n";
+}
+
 static const char *getTypeStr(SymbolRef::Type Type) {
   switch (Type) {
   case SymbolRef::ST_Unknown: return "?";
@@ -118,6 +128,7 @@ static void dumpSymbols(const ObjectFile *obj) {
   error_code ec;
   uint32_t count = 0;
   outs() << "Symbols:\n";
+  dumpSymbolHeader();
   symbol_iterator it = obj->begin_symbols();
   symbol_iterator ie = obj->end_symbols();
   while (it != ie) {
@@ -135,6 +146,7 @@ static void dumpDynamicSymbols(const ObjectFile *obj) {
   error_code ec;
   uint32_t count = 0;
   outs() << "Dynamic Symbols:\n";
+  dumpSymbolHeader();
   symbol_iterator it = obj->begin_dynamic_symbols();
   symbol_iterator ie = obj->end_dynamic_symbols();
   while (it != ie) {

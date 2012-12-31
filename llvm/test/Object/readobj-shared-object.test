@@ -19,6 +19,7 @@ ELF32:Address Size: 32 bits
 ELF32:Load Name   : libfoo.so
 
 ELF:Symbols:
+ELF:  Name                   Type            Address        Size           FileOffset     Flags
 ELF:  .dynsym                DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
 ELF:  .dynstr                DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
 ELF:  .text                  DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific
@@ -42,6 +43,7 @@ ELF:  _edata                 ?               {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-
 ELF:  Total: 21
 
 ELF:Dynamic Symbols:
+ELF:  Name                   Type            Address        Size           FileOffset     Flags
 ELF:  common_sym             DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
 ELF:  tls_sym                DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global,threadlocal
 ELF:  defined_sym            DATA            {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  global
