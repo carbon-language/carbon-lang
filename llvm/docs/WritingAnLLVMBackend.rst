@@ -2,6 +2,11 @@
 Writing an LLVM Compiler Backend
 ================================
 
+.. toctree::
+   :hidden:
+
+   HowToUseInstrMappings
+
 .. sectionauthor:: Mason Woo <http://www.woo.com> and Misha Brukman <http://misha.brukman.net>
 
 .. contents::

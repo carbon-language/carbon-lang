@@ -18,16 +18,12 @@ Subsystem Documentation
    DebuggingJITedCode
    GoldPlugin
    MarkedUpDisassembly
-   HowToUseInstrMappings
    SystemLibrary
    SourceLevelDebugging
    Vectorizers
    WritingAnLLVMBackend
    GarbageCollection
    WritingAnLLVMPass
-
-.. FIXME: once LangRef is Sphinxified, HowToUseInstrMappings should be put
-   under LangRef's toctree instead of this page's toctree.
 
 * :doc:`WritingAnLLVMPass`
 
