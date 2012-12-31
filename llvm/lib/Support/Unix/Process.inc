@@ -44,6 +44,12 @@
 using namespace llvm;
 using namespace sys;
 
+
+process::id_type self_process::get_id() {
+  return getpid();
+}
+
+
 unsigned
 Process::GetPageSize()
 {

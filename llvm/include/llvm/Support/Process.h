@@ -25,10 +25,73 @@
 #ifndef LLVM_SYSTEM_PROCESS_H
 #define LLVM_SYSTEM_PROCESS_H
 
+#include "llvm/Config/llvm-config.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/Support/TimeValue.h"
 
 namespace llvm {
 namespace sys {
+
+class self_process;
+
+/// \brief Generic base class which exposes information about an operating
+/// system process.
+///
+/// This base class is the core interface behind any OS process. It exposes
+/// methods to query for generic information about a particular process.
+///
+/// Subclasses implement this interface based on the mechanisms available, and
+/// can optionally expose more interfaces unique to certain process kinds.
+class process {
+protected:
+  /// \brief Only specific subclasses of process objects can be destroyed.
+  virtual ~process();
+
+public:
+  /// \brief Operating system specific type to identify a process.
+  ///
+  /// Note that the windows one is defined to 'void *' as this is the
+  /// documented type for HANDLE on windows, and we don't want to pull in the
+  /// Windows headers here.
+#if defined(LLVM_ON_UNIX)
+  typedef pid_t id_type;
+#elif defined(LLVM_ON_WIN32)
+  typedef void *id_type; // Must match the type of HANDLE.
+#else
+#error Unsupported operating system.
+#endif
+
+  /// \brief Get the operating system specific identifier for this process.
+  virtual id_type get_id() = 0;
+
+
+  /// \name Static factory routines for processes.
+  /// @{
+
+  /// \brief Get the process object for the current process.
+  static self_process *get_self();
+
+  /// @}
+
+};
+
+/// \brief The specific class representing the current process.
+///
+/// The current process can both specialize the implementation of the routines
+/// and can expose certain information not available for other OS processes.
+class self_process : public process {
+  friend class process;
+
+  /// \brief Private destructor, as users shouldn't create objects of this
+  /// type.
+  virtual ~self_process();
+
+public:
+  virtual id_type get_id();
+
+private:
+};
+
 
 /// \brief A collection of legacy interfaces for querying information about the
 /// current executing process.
