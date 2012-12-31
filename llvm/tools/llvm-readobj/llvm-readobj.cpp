@@ -71,40 +71,40 @@ static std::string getSymbolFlagStr(uint32_t Flags) {
 
 static void
 dumpSymbol(const SymbolRef &Sym, const ObjectFile *obj, bool IsDynamic) {
-    StringRef Name;
-    SymbolRef::Type Type;
-    uint32_t Flags;
-    uint64_t Address;
-    uint64_t Size;
-    uint64_t FileOffset;
-    Sym.getName(Name);
-    Sym.getAddress(Address);
-    Sym.getSize(Size);
-    Sym.getFileOffset(FileOffset);
-    Sym.getType(Type);
-    Sym.getFlags(Flags);
-    std::string FullName = Name;
+  StringRef Name;
+  SymbolRef::Type Type;
+  uint32_t Flags;
+  uint64_t Address;
+  uint64_t Size;
+  uint64_t FileOffset;
+  Sym.getName(Name);
+  Sym.getAddress(Address);
+  Sym.getSize(Size);
+  Sym.getFileOffset(FileOffset);
+  Sym.getType(Type);
+  Sym.getFlags(Flags);
+  std::string FullName = Name;
 
-    // If this is a dynamic symbol from an ELF object, append
-    // the symbol's version to the name.
-    if (IsDynamic && obj->isELF()) {
-      StringRef Version;
-      bool IsDefault;
-      GetELFSymbolVersion(obj, Sym, Version, IsDefault);
-      if (!Version.empty()) {
-        FullName += (IsDefault ? "@@" : "@");
-        FullName += Version;
-      }
+  // If this is a dynamic symbol from an ELF object, append
+  // the symbol's version to the name.
+  if (IsDynamic && obj->isELF()) {
+    StringRef Version;
+    bool IsDefault;
+    GetELFSymbolVersion(obj, Sym, Version, IsDefault);
+    if (!Version.empty()) {
+      FullName += (IsDefault ? "@@" : "@");
+      FullName += Version;
     }
+  }
 
-    // format() can't handle StringRefs
-    outs() << format("  %-32s", FullName.c_str())
-           << format("  %-4s", getTypeStr(Type))
-           << format("  %16" PRIx64, Address)
-           << format("  %16" PRIx64, Size)
-           << format("  %16" PRIx64, FileOffset)
-           << "  " << getSymbolFlagStr(Flags)
-           << "\n";
+  // format() can't handle StringRefs
+  outs() << format("  %-32s", FullName.c_str())
+         << format("  %-4s", getTypeStr(Type))
+         << format("  %16" PRIx64, Address)
+         << format("  %16" PRIx64, Size)
+         << format("  %16" PRIx64, FileOffset)
+         << "  " << getSymbolFlagStr(Flags)
+         << "\n";
 }
 
 // Iterate through the normal symbols in the ObjectFile
