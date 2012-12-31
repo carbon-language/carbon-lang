@@ -100,17 +100,6 @@ namespace sys {
       ///< is non-empty upon return an error occurred while waiting.
       );
 
-    /// This function terminates the program.
-    /// @returns true if an error occurred.
-    /// @see Execute
-    /// @brief Terminates the program.
-    bool Kill
-    ( std::string* ErrMsg = 0 ///< If non-zero, provides a pointer to a string
-      ///< instance in which error messages will be returned. If the string
-      ///< is non-empty upon return an error occurred while killing the
-      ///< program.
-      );
-
     /// This static constructor (factory) will attempt to locate a program in
     /// the operating system's file system using some pre-determined set of
     /// locations to search (e.g. the PATH on Unix). Paths with slashes are
