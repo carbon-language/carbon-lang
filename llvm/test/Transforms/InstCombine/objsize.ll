@@ -256,3 +256,57 @@ xpto:
 return:
   ret i32 7
 }
+
+declare noalias i8* @valloc(i32) nounwind
+
+; CHECK: @test14
+; CHECK: ret i32 6
+define i32 @test14(i32 %a) nounwind {
+  switch i32 %a, label %sw.default [
+    i32 1, label %sw.bb
+    i32 2, label %sw.bb1
+  ]
+
+sw.bb:
+  %call = tail call noalias i8* @malloc(i32 6) nounwind
+  br label %sw.epilog
+
+sw.bb1:
+  %call2 = tail call noalias i8* @calloc(i32 3, i32 2) nounwind
+  br label %sw.epilog
+
+sw.default:
+  %call3 = tail call noalias i8* @valloc(i32 6) nounwind
+  br label %sw.epilog
+
+sw.epilog:
+  %b.0 = phi i8* [ %call3, %sw.default ], [ %call2, %sw.bb1 ], [ %call, %sw.bb ]
+  %1 = tail call i32 @llvm.objectsize.i32(i8* %b.0, i1 false)
+  ret i32 %1
+}
+
+; CHECK: @test15
+; CHECK: llvm.objectsize
+define i32 @test15(i32 %a) nounwind {
+  switch i32 %a, label %sw.default [
+    i32 1, label %sw.bb
+    i32 2, label %sw.bb1
+  ]
+
+sw.bb:
+  %call = tail call noalias i8* @malloc(i32 3) nounwind
+  br label %sw.epilog
+
+sw.bb1:
+  %call2 = tail call noalias i8* @calloc(i32 2, i32 1) nounwind
+  br label %sw.epilog
+
+sw.default:
+  %call3 = tail call noalias i8* @valloc(i32 3) nounwind
+  br label %sw.epilog
+
+sw.epilog:
+  %b.0 = phi i8* [ %call3, %sw.default ], [ %call2, %sw.bb1 ], [ %call, %sw.bb ]
+  %1 = tail call i32 @llvm.objectsize.i32(i8* %b.0, i1 false)
+  ret i32 %1
+}
