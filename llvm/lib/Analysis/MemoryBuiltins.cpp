@@ -562,7 +562,7 @@ SizeOffsetType ObjectSizeOffsetVisitor::visitPHINode(PHINode &PHI) {
 SizeOffsetType ObjectSizeOffsetVisitor::visitSelectInst(SelectInst &I) {
   SizeOffsetType TrueSide  = compute(I.getTrueValue());
   SizeOffsetType FalseSide = compute(I.getFalseValue());
-  if (bothKnown(TrueSide) && bothKnown(FalseSide) && TrueSide == FalseSide)
+  if (TrueSide == FalseSide)
     return TrueSide;
   return unknown();
 }
