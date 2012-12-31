@@ -1,4 +1,4 @@
-; RUN: opt < %s -basicaa -licm -S | FileCheck %s
+; RUN: opt < %s -basicaa -tbaa -licm -S | FileCheck %s
 target datalayout = "E-p:64:64:64-a0:0:8-f32:32:32-f64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-v64:64:64-v128:128:128"
 
 @X = global i32 7		; <i32*> [#uses=4]
@@ -134,7 +134,7 @@ Loop:		; preds = %Loop, %0
 	store i32 %x2, i32* @X
         
         store volatile i32* @X, i32** %P2
-        
+
 	%Next = add i32 %j, 1		; <i32> [#uses=2]
 	%cond = icmp eq i32 %Next, 0		; <i1> [#uses=1]
 	br i1 %cond, label %Out, label %Loop
@@ -147,4 +147,42 @@ Out:
 
 }
 
+
+; PR14753 - Preserve TBAA tags when promoting values in a loop.
+define void @test6(i32 %n, float* nocapture %a, i32* %gi) {
+entry:
+  store i32 0, i32* %gi, align 4, !tbaa !0
+  %cmp1 = icmp slt i32 0, %n
+  br i1 %cmp1, label %for.body.lr.ph, label %for.end
+
+for.body.lr.ph:                                   ; preds = %entry
+  br label %for.body
+
+for.body:                                         ; preds = %for.body.lr.ph, %for.body
+  %storemerge2 = phi i32 [ 0, %for.body.lr.ph ], [ %inc, %for.body ]
+  %idxprom = sext i32 %storemerge2 to i64
+  %arrayidx = getelementptr inbounds float* %a, i64 %idxprom
+  store float 0.000000e+00, float* %arrayidx, align 4, !tbaa !3
+  %0 = load i32* %gi, align 4, !tbaa !0
+  %inc = add nsw i32 %0, 1
+  store i32 %inc, i32* %gi, align 4, !tbaa !0
+  %cmp = icmp slt i32 %inc, %n
+  br i1 %cmp, label %for.body, label %for.cond.for.end_crit_edge
+
+for.cond.for.end_crit_edge:                       ; preds = %for.body
+  br label %for.end
+
+for.end:                                          ; preds = %for.cond.for.end_crit_edge, %entry
+  ret void
+  
+; CHECK: for.body.lr.ph:
+; CHECK-NEXT:  %gi.promoted = load i32* %gi, align 4, !tbaa !0
+; CHECK: for.cond.for.end_crit_edge:
+; CHECK-NEXT:  store i32 %inc, i32* %gi, align 4, !tbaa !0
+}
+
+!0 = metadata !{metadata !"int", metadata !1}
+!1 = metadata !{metadata !"omnipotent char", metadata !2}
+!2 = metadata !{metadata !"Simple C/C++ TBAA"}
+!3 = metadata !{metadata !"float", metadata !1}
 
