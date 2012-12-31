@@ -103,10 +103,15 @@ void __ubsan::__ubsan_handle_mul_overflow_abort(OverflowData *Data,
 
 void __ubsan::__ubsan_handle_negate_overflow(OverflowData *Data,
                                              ValueHandle OldVal) {
-  Diag(Data->Loc, DL_Error,
-       "negation of %0 cannot be represented in type %1; "
-       "cast to an unsigned type to negate this value to itself")
-    << Value(Data->Type, OldVal) << Data->Type;
+  if (Data->Type.isSignedIntegerTy())
+    Diag(Loc, DL_Error,
+         "negation of %0 cannot be represented in type %1; "
+         "cast to an unsigned type to negate this value to itself")
+      << Value(Data->Type, OldVal) << Data->Type;
+  else
+    Diag(Loc, DL_Error,
+         "negation of %0 cannot be represented in type %1")
+      << Value(Data->Type, OldVal) << Data->Type;
 }
 void __ubsan::__ubsan_handle_negate_overflow_abort(OverflowData *Data,
                                                     ValueHandle OldVal) {
