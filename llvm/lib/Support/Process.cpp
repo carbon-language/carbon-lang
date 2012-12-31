@@ -34,13 +34,26 @@ self_process *process::get_self() {
   return SP;
 }
 
+#if defined(_MSC_VER)
+// Visual Studio complains that the self_process destructor never exits. This
+// doesn't make much sense, as that's the whole point of calling abort... Just
+// silence this warning.
+#pragma warning(push)
+#pragma warning(disable:4722)
+#endif
+
 // The destructor for the self_process subclass must never actually be
 // executed. There should be at most one instance of this class, and that
 // instance should live until the process terminates to avoid the potential for
 // racy accesses during shutdown.
 self_process::~self_process() {
+    assert(TempDirectory->exists() && "Who has removed TempDirectory?");
   llvm_unreachable("This destructor must never be executed!");
 }
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 }
 
