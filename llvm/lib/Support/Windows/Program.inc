@@ -43,11 +43,6 @@ Program::~Program() {
   }
 }
 
-unsigned Program::GetPid() const {
-  Win32ProcessInfo* wpi = reinterpret_cast<Win32ProcessInfo*>(Data_);
-  return wpi->dwProcessId;
-}
-
 // This function just uses the PATH environment variable to find the program.
 Path
 Program::FindProgramByName(const std::string& progName) {

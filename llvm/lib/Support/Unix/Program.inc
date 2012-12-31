@@ -47,11 +47,6 @@ Program::Program() : Data_(0) {}
 
 Program::~Program() {}
 
-unsigned Program::GetPid() const {
-  uint64_t pid = reinterpret_cast<uint64_t>(Data_);
-  return static_cast<unsigned>(pid);
-}
-
 // This function just uses the PATH environment variable to find the program.
 Path
 Program::FindProgramByName(const std::string& progName) {
