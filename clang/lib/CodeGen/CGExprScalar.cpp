@@ -712,17 +712,9 @@ Value *ScalarExprEmitter::EmitScalarConversion(Value *Src, QualType SrcType,
     QualType EltTy = DstType->getAs<ExtVectorType>()->getElementType();
     llvm::Value *Elt = EmitScalarConversion(Src, SrcType, EltTy);
 
-    // Insert the element in element zero of an undef vector
-    llvm::Value *UnV = llvm::UndefValue::get(DstTy);
-    llvm::Value *Idx = Builder.getInt32(0);
-    UnV = Builder.CreateInsertElement(UnV, Elt, Idx);
-
     // Splat the element across to all elements
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
-    llvm::Constant *Mask = llvm::ConstantVector::getSplat(NumElements,
-                                                          Builder.getInt32(0));
-    llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
-    return Yay;
+    return Builder.CreateVectorSplat(NumElements, Elt, "splat");
   }
 
   // Allow bitcast from vector to integer/fp of the same size.
@@ -1355,17 +1347,9 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     Elt = EmitScalarConversion(Elt, E->getType(),
                                DestTy->getAs<VectorType>()->getElementType());
 
-    // Insert the element in element zero of an undef vector
-    llvm::Value *UnV = llvm::UndefValue::get(DstTy);
-    llvm::Value *Idx = Builder.getInt32(0);
-    UnV = Builder.CreateInsertElement(UnV, Elt, Idx);
-
     // Splat the element across to all elements
     unsigned NumElements = cast<llvm::VectorType>(DstTy)->getNumElements();
-    llvm::Constant *Zero = Builder.getInt32(0);
-    llvm::Constant *Mask = llvm::ConstantVector::getSplat(NumElements, Zero);
-    llvm::Value *Yay = Builder.CreateShuffleVector(UnV, UnV, Mask, "splat");
-    return Yay;
+    return Builder.CreateVectorSplat(NumElements, Elt, "splat");;
   }
 
   case CK_IntegralCast:
