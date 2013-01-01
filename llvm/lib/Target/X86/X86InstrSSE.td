@@ -3101,32 +3101,6 @@ let Predicates = [HasAVX] in {
                 [(set VR128:$dst, (OpNode (memopv2f64 addr:$src)))], itins.rm>;
 }
 
-/// sse2_fp_unop_p_int - SSE2 intrinsic unops in vector forms.
-multiclass sse2_fp_unop_p_int<bits<8> opc, string OpcodeStr,
-                              Intrinsic V2F64Int, OpndItins itins> {
-  def PDr_Int : PDI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                    !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
-                    [(set VR128:$dst, (V2F64Int VR128:$src))],
-                    itins.rr>;
-  def PDm_Int : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                    !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
-                    [(set VR128:$dst, (V2F64Int (memopv2f64 addr:$src)))],
-                    itins.rm>;
-}
-
-/// sse2_fp_unop_p_y_int - AVX 256-bit intrinsic unops in vector forms.
-multiclass sse2_fp_unop_p_y_int<bits<8> opc, string OpcodeStr,
-                                Intrinsic V2F64Int, OpndItins itins> {
-  def PDYr_Int : PDI<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-                    !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
-                    [(set VR256:$dst, (V2F64Int VR256:$src))],
-                    itins.rr>, VEX_L;
-  def PDYm_Int : PDI<opc, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
-                    !strconcat(OpcodeStr, "pd\t{$src, $dst|$dst, $src}"),
-                    [(set VR256:$dst, (V2F64Int (memopv4f64 addr:$src)))],
-                    itins.rm>, VEX_L;
-}
-
 defm SQRT  : sse1_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTP>,
              sse2_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTP>;
 defm RSQRT : sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_SQRTP>;
