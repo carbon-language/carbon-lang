@@ -30,6 +30,7 @@
 
 #define DEBUG_TYPE "objc-arc"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -885,7 +886,9 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
 
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
     Instruction *Inst = &*I;
-
+    
+    DEBUG(dbgs() << "ObjCARCExpand: Visiting: " << *Inst << "\n");
+    
     switch (GetBasicInstructionClass(Inst)) {
     case IC_Retain:
     case IC_RetainRV:
@@ -904,7 +907,9 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
       break;
     }
   }
-
+  
+  DEBUG(dbgs() << "ObjCARCExpand: Finished Queue.\n\n");
+  
   return Changed;
 }
 
@@ -2273,6 +2278,10 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
   // Visit all objc_* calls in F.
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
+
+    DEBUG(dbgs() << "ObjCARCOpt: OptimizeIndividualCalls: Visiting: " <<
+          *Inst << "\n");
+
     InstructionClass Class = GetBasicInstructionClass(Inst);
 
     switch (Class) {
@@ -2486,6 +2495,9 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         }
       }
     } while (!Worklist.empty());
+
+    DEBUG(dbgs() << "ObjCARCOpt: Finished Individual Call Queue.\n\n");
+
   }
 }
 
@@ -3389,6 +3401,10 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
   // queries instead.
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
+
+    DEBUG(dbgs() << "ObjCARCOpt: OptimizeWeakCalls: Visiting: " << *Inst <<
+          "\n");
+
     InstructionClass Class = GetBasicInstructionClass(Inst);
     if (Class != IC_LoadWeak && Class != IC_LoadWeakRetained)
       continue;
@@ -3534,6 +3550,9 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
     done:;
     }
   }
+  
+  DEBUG(dbgs() << "ObjCARCOpt: Finished visiting weak calls.\n\n");
+  
 }
 
 /// OptimizeSequences - Identify program paths which execute sequences of
@@ -3582,6 +3601,9 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
   for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI) {
     BasicBlock *BB = FI;
     ReturnInst *Ret = dyn_cast<ReturnInst>(&BB->back());
+
+    DEBUG(dbgs() << "ObjCARCOpt: OptimizeReturns: Visiting: " << *Ret << "\n");
+
     if (!Ret) continue;
 
     const Value *Arg = StripPointerCastsAndObjCCalls(Ret->getOperand(0));
@@ -3665,6 +3687,9 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
     DependingInstructions.clear();
     Visited.clear();
   }
+  
+  DEBUG(dbgs() << "ObjCARCOpt: OptimizeReturns: Finished visiting returns.\n\n");
+  
 }
 
 bool ObjCARCOpt::doInitialization(Module &M) {
@@ -4078,7 +4103,9 @@ bool ObjCARCContract::runOnFunction(Function &F) {
   SmallPtrSet<const BasicBlock *, 4> Visited;
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
-
+    
+    DEBUG(dbgs() << "ObjCARCContract: Visiting: " << *Inst << "\n");
+    
     // Only these library routines return their argument. In particular,
     // objc_retainBlock does not necessarily return its argument.
     InstructionClass Class = GetBasicInstructionClass(Inst);
@@ -4153,6 +4180,8 @@ bool ObjCARCContract::runOnFunction(Function &F) {
     default:
       continue;
     }
+
+    DEBUG(dbgs() << "ObjCARCContract: Finished Queue.\n\n");
 
     // Don't use GetObjCArg because we don't want to look through bitcasts
     // and such; to do the replacement, the argument must have type i8*.
