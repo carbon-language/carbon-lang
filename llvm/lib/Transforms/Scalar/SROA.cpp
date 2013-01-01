@@ -1971,15 +1971,14 @@ static bool isVectorPromotionViable(const DataLayout &TD,
   if (!Ty)
     return false;
 
-  uint64_t VecSize = TD.getTypeSizeInBits(Ty);
   uint64_t ElementSize = TD.getTypeSizeInBits(Ty->getScalarType());
 
   // While the definition of LLVM vectors is bitpacked, we don't support sizes
   // that aren't byte sized.
   if (ElementSize % 8)
     return false;
-  assert((VecSize % 8) == 0 && "vector size not a multiple of element size?");
-  VecSize /= 8;
+  assert((TD.getTypeSizeInBits(Ty) % 8) == 0 &&
+         "vector size not a multiple of element size?");
   ElementSize /= 8;
 
   for (; I != E; ++I) {
@@ -2724,8 +2723,7 @@ private:
     // a sensible representation for the alloca type. This is essentially
     // splatting the byte to a sufficiently wide integer, splatting it across
     // any desired vector width, and bitcasting to the final type.
-    uint64_t Size = EndOffset - BeginOffset;
-    Value *V = getIntegerSplat(IRB, II.getValue(), Size);
+    Value *V;
 
     if (VecTy) {
       // If this is a memset of a vectorized alloca, insert it.
@@ -2751,6 +2749,7 @@ private:
       // set integer.
       assert(!II.isVolatile());
 
+      uint64_t Size = EndOffset - BeginOffset;
       V = getIntegerSplat(IRB, II.getValue(), Size);
 
       if (IntTy && (BeginOffset != NewAllocaBeginOffset ||
