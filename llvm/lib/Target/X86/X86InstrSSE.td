@@ -3194,7 +3194,7 @@ defm SQRT  : sse1_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse_sqrt_ss,
 
 /// sse1_fp_unop_s_rw - SSE1 unops where vector form has a read-write operand.
 multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                               Intrinsic F32Int, OpndItins itins> {
+                           OpndItins itins> {
   def SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                 !strconcat(OpcodeStr, "ss\t{$src, $dst|$dst, $src}"),
                 [(set FR32:$dst, (OpNode FR32:$src))]>;
@@ -3221,15 +3221,13 @@ multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
 
 // Reciprocal approximations. Note that these typically require refinement
 // in order to obtain suitable precision.
-defm RSQRT : sse1_fp_unop_rw<0x52, "rsqrt", X86frsqrt, int_x86_sse_rsqrt_ss,
-                             SSE_SQRTS>;
+defm RSQRT : sse1_fp_unop_rw<0x52, "rsqrt", X86frsqrt, SSE_SQRTS>;
 let Predicates = [UseSSE1] in {
   def : Pat<(int_x86_sse_rsqrt_ss VR128:$src),
             (RSQRTSSr_Int VR128:$src, VR128:$src)>;
 }
 
-defm RCP   : sse1_fp_unop_rw<0x53, "rcp", X86frcp, int_x86_sse_rcp_ss,
-                             SSE_RCPS>;
+defm RCP   : sse1_fp_unop_rw<0x53, "rcp", X86frcp, SSE_RCPS>;
 let Predicates = [UseSSE1] in {
   def : Pat<(int_x86_sse_rcp_ss VR128:$src),
             (RCPSSr_Int VR128:$src, VR128:$src)>;
