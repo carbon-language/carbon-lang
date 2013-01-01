@@ -2660,18 +2660,7 @@ private:
 
   /// \brief Compute a vector splat for a given element value.
   Value *getVectorSplat(IRBuilder<> &IRB, Value *V, unsigned NumElements) {
-    assert(NumElements > 0 && "Cannot splat to an empty vector.");
-
-    // First insert it into a one-element vector so we can shuffle it. It is
-    // really silly that LLVM's IR requires this in order to form a splat.
-    Value *Undef = UndefValue::get(VectorType::get(V->getType(), 1));
-    V = IRB.CreateInsertElement(Undef, V, IRB.getInt32(0),
-                                getName(".splatinsert"));
-
-    // Shuffle the value across the desired number of elements.
-    SmallVector<Constant*, 8> Mask(NumElements, IRB.getInt32(0));
-    V = IRB.CreateShuffleVector(V, Undef, ConstantVector::get(Mask),
-                                getName(".splat"));
+    V = IRB.CreateVectorSplat(NumElements, V, NamePrefix);
     DEBUG(dbgs() << "       splat: " << *V << "\n");
     return V;
   }

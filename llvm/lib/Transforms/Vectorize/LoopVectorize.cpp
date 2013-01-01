@@ -150,11 +150,6 @@ LoopVectorizationLegality::RuntimePointerCheck::insert(ScalarEvolution *SE,
 }
 
 Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
-  // Create the types.
-  LLVMContext &C = V->getContext();
-  Type *VTy = VectorType::get(V->getType(), VF);
-  Type *I32 = IntegerType::getInt32Ty(C);
-
   // Save the current insertion location.
   Instruction *Loc = Builder.GetInsertPoint();
 
@@ -167,14 +162,8 @@ Value *InnerLoopVectorizer::getBroadcastInstrs(Value *V) {
   if (Invariant)
     Builder.SetInsertPoint(LoopVectorPreHeader->getTerminator());
 
-  Constant *Zero = ConstantInt::get(I32, 0);
-  Value *Zeros = ConstantAggregateZero::get(VectorType::get(I32, VF));
-  Value *UndefVal = UndefValue::get(VTy);
-  // Insert the value into a new vector.
-  Value *SingleElem = Builder.CreateInsertElement(UndefVal, V, Zero);
   // Broadcast the scalar into all locations in the vector.
-  Value *Shuf = Builder.CreateShuffleVector(SingleElem, UndefVal, Zeros,
-                                            "broadcast");
+  Value *Shuf = Builder.CreateVectorSplat(VF, V, "broadcast");
 
   // Restore the builder insertion point.
   if (Invariant)

@@ -1367,6 +1367,22 @@ public:
                            ConstantExpr::getSizeOf(ArgType->getElementType()),
                            Name);
   }
+
+  /// CreateVectorSplat - Return a vector value that contains \arg V broadcasted
+  /// to \p NumElts elements.
+  Value *CreateVectorSplat(unsigned NumElts, Value *V, const Twine &Name = "") {
+    assert(NumElts > 0 && "Cannot splat to an empty vector!");
+
+    // First insert it into an undef vector so we can shuffle it.
+    Type *I32Ty = getInt32Ty();
+    Value *Undef = UndefValue::get(VectorType::get(V->getType(), NumElts));
+    V = CreateInsertElement(Undef, V, ConstantInt::get(I32Ty, 0),
+                            Name + ".splatinsert");
+
+    // Shuffle the value across the desired number of elements.
+    Value *Zeros = ConstantAggregateZero::get(VectorType::get(I32Ty, NumElts));
+    return CreateShuffleVector(V, Undef, Zeros, Name + ".splat");
+  }
 };
 
 }
