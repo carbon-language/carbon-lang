@@ -895,14 +895,18 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
     case IC_Autorelease:
     case IC_AutoreleaseRV:
     case IC_FusedRetainAutorelease:
-    case IC_FusedRetainAutoreleaseRV:
+    case IC_FusedRetainAutoreleaseRV: {
       // These calls return their argument verbatim, as a low-level
       // optimization. However, this makes high-level optimizations
       // harder. Undo any uses of this optimization that the front-end
       // emitted here. We'll redo them in the contract pass.
       Changed = true;
-      Inst->replaceAllUsesWith(cast<CallInst>(Inst)->getArgOperand(0));
+      Value *Value = cast<CallInst>(Inst)->getArgOperand(0);
+      DEBUG(dbgs() << "ObjCARCExpand: Old = " << *Inst << "\n"
+                      "               New = " << *Value << "\n");
+      Inst->replaceAllUsesWith(Value);
       break;
+    }
     default:
       break;
     }
