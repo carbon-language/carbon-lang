@@ -2936,6 +2936,26 @@ def SSE_RCPS : OpndItins<
 /// sse1_fp_unop_s - SSE1 unops in scalar form.
 multiclass sse1_fp_unop_s<bits<8> opc, string OpcodeStr,
                           SDNode OpNode, Intrinsic F32Int, OpndItins itins> {
+let Predicates = [HasAVX], hasSideEffects = 0 in {
+  def V#NAME#SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst),
+                      (ins FR32:$src1, FR32:$src2),
+                      !strconcat(!strconcat("v", OpcodeStr),
+                                 "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      []>, VEX_4V, VEX_LIG;
+  let mayLoad = 1 in {
+  def V#NAME#SSm : SSI<opc, MRMSrcMem, (outs FR32:$dst),
+                      (ins FR32:$src1,f32mem:$src2),
+                      !strconcat(OpcodeStr,
+                                 "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      []>, VEX_4V, VEX_LIG;
+  def V#NAME#SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins VR128:$src1, ssmem:$src2),
+                      !strconcat(!strconcat("v", OpcodeStr),
+                                 "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      []>, VEX_4V, VEX_LIG;
+  }
+}
+
   def SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
                 !strconcat(OpcodeStr, "ss\t{$src, $dst|$dst, $src}"),
                 [(set FR32:$dst, (OpNode FR32:$src))]>;
@@ -2955,19 +2975,50 @@ multiclass sse1_fp_unop_s<bits<8> opc, string OpcodeStr,
                     [(set VR128:$dst, (F32Int sse_load_f32:$src))], itins.rm>;
 }
 
-/// sse1_fp_unop_s_avx - AVX SSE1 unops in scalar form.
-multiclass sse1_fp_unop_s_avx<bits<8> opc, string OpcodeStr> {
-  def SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src1, FR32:$src2),
-                !strconcat(OpcodeStr,
-                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+/// sse1_fp_unop_s_rw - SSE1 unops where vector form has a read-write operand.
+multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                           OpndItins itins> {
+let Predicates = [HasAVX], hasSideEffects = 0 in {
+  def V#NAME#SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst),
+                       (ins FR32:$src1, FR32:$src2),
+                       !strconcat(!strconcat("v", OpcodeStr),
+                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                []>, VEX_4V, VEX_LIG;
   let mayLoad = 1 in {
-  def SSm : SSI<opc, MRMSrcMem, (outs FR32:$dst), (ins FR32:$src1,f32mem:$src2),
-                !strconcat(OpcodeStr,
-                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
-  def SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
-                (ins VR128:$src1, ssmem:$src2),
-                !strconcat(OpcodeStr,
-                           "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
+  def V#NAME#SSm : SSI<opc, MRMSrcMem, (outs FR32:$dst),
+                      (ins FR32:$src1,f32mem:$src2),
+                      !strconcat(!strconcat("v", OpcodeStr),
+                                 "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      []>, VEX_4V, VEX_LIG;
+  def V#NAME#SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins VR128:$src1, ssmem:$src2),
+                      !strconcat(!strconcat("v", OpcodeStr),
+                                 "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      []>, VEX_4V, VEX_LIG;
+  }
+}
+
+  def SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
+                !strconcat(OpcodeStr, "ss\t{$src, $dst|$dst, $src}"),
+                [(set FR32:$dst, (OpNode FR32:$src))]>;
+  // For scalar unary operations, fold a load into the operation
+  // only in OptForSize mode. It eliminates an instruction, but it also
+  // eliminates a whole-register clobber (the load), so it introduces a
+  // partial register update condition.
+  def SSm : I<opc, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
+                !strconcat(OpcodeStr, "ss\t{$src, $dst|$dst, $src}"),
+                [(set FR32:$dst, (OpNode (load addr:$src)))], itins.rm>, XS,
+            Requires<[UseSSE1, OptForSize]>;
+  let Constraints = "$src1 = $dst" in {
+    def SSr_Int : SSI<opc, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src1, VR128:$src2),
+                      !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
+                      [], itins.rr>;
+    let mayLoad = 1, hasSideEffects = 0 in
+    def SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins VR128:$src1, ssmem:$src2),
+                      !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
+                      [], itins.rm>;
   }
 }
 
@@ -3046,6 +3097,26 @@ let Predicates = [HasAVX] in {
 /// sse2_fp_unop_s - SSE2 unops in scalar form.
 multiclass sse2_fp_unop_s<bits<8> opc, string OpcodeStr,
                           SDNode OpNode, Intrinsic F64Int, OpndItins itins> {
+let Predicates = [HasAVX], hasSideEffects = 0 in {
+  def V#NAME#SDr : SDI<opc, MRMSrcReg, (outs FR64:$dst),
+                      (ins FR64:$src1, FR64:$src2),
+                      !strconcat(!strconcat("v", OpcodeStr),
+                                 "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      []>, VEX_4V, VEX_LIG;
+  let mayLoad = 1 in {
+  def V#NAME#SDm : SDI<opc, MRMSrcMem, (outs FR64:$dst),
+                      (ins FR64:$src1,f64mem:$src2),
+                      !strconcat(OpcodeStr,
+                                 "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      []>, VEX_4V, VEX_LIG;
+  def V#NAME#SDm_Int : SDI<opc, MRMSrcMem, (outs VR128:$dst),
+                      (ins VR128:$src1, sdmem:$src2),
+                      !strconcat(!strconcat("v", OpcodeStr),
+                                 "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      []>, VEX_4V, VEX_LIG;
+  }
+}
+
   def SDr : SDI<opc, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src),
                 !strconcat(OpcodeStr, "sd\t{$src, $dst|$dst, $src}"),
                 [(set FR64:$dst, (OpNode FR64:$src))], itins.rr>;
@@ -3062,24 +3133,7 @@ multiclass sse2_fp_unop_s<bits<8> opc, string OpcodeStr,
                     [(set VR128:$dst, (F64Int sse_load_f64:$src))], itins.rm>;
 }
 
-/// sse2_fp_unop_s_avx - AVX SSE2 unops in scalar form.
-let hasSideEffects = 0 in
-multiclass sse2_fp_unop_s_avx<bits<8> opc, string OpcodeStr> {
-  def SDr : SDI<opc, MRMSrcReg, (outs FR64:$dst), (ins FR64:$src1, FR64:$src2),
-               !strconcat(OpcodeStr,
-                         "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
-  let mayLoad = 1 in {
-  def SDm : SDI<opc, MRMSrcMem, (outs FR64:$dst), (ins FR64:$src1,f64mem:$src2),
-               !strconcat(OpcodeStr,
-                          "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
-  def SDm_Int : SDI<opc, MRMSrcMem, (outs VR128:$dst),
-               (ins VR128:$src1, sdmem:$src2),
-               !strconcat(OpcodeStr,
-                          "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"), []>;
-  }
-}
-
-/// sse2_fp_unop_p_new - SSE2 unops in vector forms.
+/// sse2_fp_unop_p - SSE2 unops in vector forms.
 multiclass sse2_fp_unop_p<bits<8> opc, string OpcodeStr,
                           SDNode OpNode, OpndItins itins> {
 let Predicates = [HasAVX] in {
@@ -3113,25 +3167,24 @@ let Predicates = [HasAVX] in {
                 [(set VR128:$dst, (OpNode (memopv2f64 addr:$src)))], itins.rm>;
 }
 
-defm SQRT  : sse1_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTP>,
+// Square root.
+defm SQRT  : sse1_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse_sqrt_ss,
+                            SSE_SQRTS>,
+             sse1_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTP>,
+             sse2_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse2_sqrt_sd,
+                            SSE_SQRTS>,
              sse2_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTP>;
-defm RSQRT : sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_SQRTP>,
+
+// Reciprocal approximations. Note that these typically require refinement
+// in order to obtain suitable precision.
+defm RSQRT : sse1_fp_unop_rw<0x52, "rsqrt", X86frsqrt, SSE_SQRTS>,
+             sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_SQRTP>,
              sse1_fp_unop_p_int<0x52, "rsqrt", int_x86_sse_rsqrt_ps,
                                 int_x86_avx_rsqrt_ps_256, SSE_SQRTP>;
-defm RCP   : sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>,
+defm RCP   : sse1_fp_unop_rw<0x53, "rcp", X86frcp, SSE_RCPS>,
+             sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>,
              sse1_fp_unop_p_int<0x53, "rcp", int_x86_sse_rcp_ps,
                                 int_x86_avx_rcp_ps_256, SSE_RCPP>;
-
-let Predicates = [HasAVX] in {
-  // Square root.
-  defm VSQRT  : sse1_fp_unop_s_avx<0x51, "vsqrt">,
-                sse2_fp_unop_s_avx<0x51, "vsqrt">, VEX_4V, VEX_LIG;
-
-  // Reciprocal approximations. Note that these typically require refinement
-  // in order to obtain suitable precision.
-  defm VRSQRT : sse1_fp_unop_s_avx<0x52, "vrsqrt">, VEX_4V, VEX_LIG;
-  defm VRCP   : sse1_fp_unop_s_avx<0x53, "vrcp">, VEX_4V, VEX_LIG;
-}
 
 def : Pat<(f32 (fsqrt FR32:$src)),
           (VSQRTSSr (f32 (IMPLICIT_DEF)), FR32:$src)>, Requires<[HasAVX]>;
@@ -3186,49 +3239,11 @@ let Predicates = [HasAVX] in {
             (VRCPSSm_Int (v4f32 (IMPLICIT_DEF)), sse_load_f32:$src)>;
 }
 
-// Square root.
-defm SQRT  : sse1_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse_sqrt_ss,
-                            SSE_SQRTS>,
-             sse2_fp_unop_s<0x51, "sqrt",  fsqrt, int_x86_sse2_sqrt_sd,
-                            SSE_SQRTS>;
-
-/// sse1_fp_unop_s_rw - SSE1 unops where vector form has a read-write operand.
-multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
-                           OpndItins itins> {
-  def SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst), (ins FR32:$src),
-                !strconcat(OpcodeStr, "ss\t{$src, $dst|$dst, $src}"),
-                [(set FR32:$dst, (OpNode FR32:$src))]>;
-  // For scalar unary operations, fold a load into the operation
-  // only in OptForSize mode. It eliminates an instruction, but it also
-  // eliminates a whole-register clobber (the load), so it introduces a
-  // partial register update condition.
-  def SSm : I<opc, MRMSrcMem, (outs FR32:$dst), (ins f32mem:$src),
-                !strconcat(OpcodeStr, "ss\t{$src, $dst|$dst, $src}"),
-                [(set FR32:$dst, (OpNode (load addr:$src)))], itins.rm>, XS,
-            Requires<[UseSSE1, OptForSize]>;
-  let Constraints = "$src1 = $dst" in {
-    def SSr_Int : SSI<opc, MRMSrcReg, (outs VR128:$dst),
-                      (ins VR128:$src1, VR128:$src2),
-                      !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                      [], itins.rr>;
-    let mayLoad = 1, hasSideEffects = 0 in
-    def SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
-                      (ins VR128:$src1, ssmem:$src2),
-                      !strconcat(OpcodeStr, "ss\t{$src2, $dst|$dst, $src2}"),
-                      [], itins.rm>;
-  }
-}
-
 // Reciprocal approximations. Note that these typically require refinement
 // in order to obtain suitable precision.
-defm RSQRT : sse1_fp_unop_rw<0x52, "rsqrt", X86frsqrt, SSE_SQRTS>;
 let Predicates = [UseSSE1] in {
   def : Pat<(int_x86_sse_rsqrt_ss VR128:$src),
             (RSQRTSSr_Int VR128:$src, VR128:$src)>;
-}
-
-defm RCP   : sse1_fp_unop_rw<0x53, "rcp", X86frcp, SSE_RCPS>;
-let Predicates = [UseSSE1] in {
   def : Pat<(int_x86_sse_rcp_ss VR128:$src),
             (RCPSSr_Int VR128:$src, VR128:$src)>;
 }
