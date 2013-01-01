@@ -74,6 +74,10 @@ D: Implemented Cityhash as the string hash function on 64-bit machines
 N: Richard Smith
 D: Minor patches.
 
+N: Klaas de Vries
+E: klaas at klaasgaaf dot nl
+D: Minor bug fix.
+
 N: Zhang Xiongpang
 E: zhangxiongpang@gmail.com
 D: Minor patches and bug fixes.
