@@ -1,4 +1,4 @@
-; RUN: opt %s -deadargelim -S | FileCheck %s
+; RUN: opt -deadargelim -S < %s | FileCheck %s
 ; PR14016
 
 ; Check that debug info metadata for subprograms stores pointers to

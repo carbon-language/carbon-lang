@@ -1,4 +1,4 @@
-; RUN: opt %s -basicaa -gvn -S -o - | FileCheck %s
+; RUN: opt -basicaa -gvn -S < %s | FileCheck %s
 
 define i32 @test1(i8* %p, i8* %q) {
 ; CHECK: @test1(i8* %p, i8* %q)

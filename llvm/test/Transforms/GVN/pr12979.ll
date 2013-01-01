@@ -1,4 +1,4 @@
-; RUN: opt %s -gvn -S -o - | FileCheck %s
+; RUN: opt -gvn -S < %s | FileCheck %s
 
 define i32 @test1(i32 %x, i32 %y) {
 ; CHECK: @test1(i32 %x, i32 %y)

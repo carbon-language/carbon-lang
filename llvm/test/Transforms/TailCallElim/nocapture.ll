@@ -1,4 +1,4 @@
-; RUN: opt %s -tailcallelim -S | FileCheck %s
+; RUN: opt -tailcallelim -S < %s | FileCheck %s
 ; XFAIL: *
 
 declare void @use(i8* nocapture, i8* nocapture)

@@ -1,4 +1,4 @@
-; RUN: opt %s -sccp -S | FileCheck %s
+; RUN: opt -sccp -S < %s | FileCheck %s
 
 
 ; PR6940

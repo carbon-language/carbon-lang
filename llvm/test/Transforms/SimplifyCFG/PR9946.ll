@@ -1,4 +1,4 @@
-; RUN: opt  %s -simplifycfg -disable-output
+; RUN: opt -simplifycfg -disable-output < %s
 
 @foo = external constant i32
 

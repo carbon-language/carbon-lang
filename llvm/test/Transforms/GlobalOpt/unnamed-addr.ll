@@ -1,4 +1,4 @@
-; RUN: opt %s -globalopt -S | FileCheck %s
+; RUN: opt -globalopt -S < %s | FileCheck %s
 
 @a = internal global i32 0, align 4
 @b = internal global i32 0, align 4

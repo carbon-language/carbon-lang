@@ -1,4 +1,4 @@
-; RUN: opt %s -inline -mergefunc -disable-output
+; RUN: opt -inline -mergefunc -disable-output < %s
 
 ; This tests for a bug where the inliner kept the functions in a ValueMap after
 ; it had completed and a ModulePass started to run. LLVM would crash deleting

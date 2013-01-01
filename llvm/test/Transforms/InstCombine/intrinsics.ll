@@ -1,4 +1,4 @@
-; RUN: opt %s -instcombine -S | FileCheck %s
+; RUN: opt -instcombine -S < %s | FileCheck %s
 
 %overflow.result = type {i8, i1}
 

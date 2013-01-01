@@ -1,4 +1,4 @@
-; RUN: opt %s -O2 -S -o - | FileCheck %s
+; RUN: opt -O2 -S < %s | FileCheck %s
 
 @data = common global i32* null, align 8
 

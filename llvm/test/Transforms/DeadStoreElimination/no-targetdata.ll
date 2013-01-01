@@ -1,4 +1,4 @@
-; RUN: opt %s -basicaa -dse -S | FileCheck %s
+; RUN: opt -basicaa -dse -S < %s | FileCheck %s
 
 declare void @test1f()
 
