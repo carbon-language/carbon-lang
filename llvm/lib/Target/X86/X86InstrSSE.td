@@ -3007,7 +3007,32 @@ let Predicates = [HasAVX] in {
 
 /// sse1_fp_unop_p_int - SSE1 intrinsics unops in packed forms.
 multiclass sse1_fp_unop_p_int<bits<8> opc, string OpcodeStr,
-                              Intrinsic V4F32Int, OpndItins itins> {
+                              Intrinsic V4F32Int, Intrinsic V8F32Int,
+                              OpndItins itins> {
+let Predicates = [HasAVX] in {
+  def V#NAME#PSr_Int : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
+                           !strconcat(!strconcat("v", OpcodeStr),
+                                      "ps\t{$src, $dst|$dst, $src}"),
+                           [(set VR128:$dst, (V4F32Int VR128:$src))],
+                           itins.rr>, VEX;
+  def V#NAME#PSm_Int : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
+                          !strconcat(!strconcat("v", OpcodeStr),
+                          "ps\t{$src, $dst|$dst, $src}"),
+                          [(set VR128:$dst, (V4F32Int (memopv4f32 addr:$src)))],
+                          itins.rm>, VEX;
+  def V#NAME#PSYr_Int : PSI<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
+                            !strconcat(!strconcat("v", OpcodeStr),
+                                       "ps\t{$src, $dst|$dst, $src}"),
+                            [(set VR256:$dst, (V8F32Int VR256:$src))],
+                            itins.rr>, VEX, VEX_L;
+  def V#NAME#PSYm_Int : PSI<opc, MRMSrcMem, (outs VR256:$dst),
+                          (ins f256mem:$src),
+                          !strconcat(!strconcat("v", OpcodeStr),
+                                    "ps\t{$src, $dst|$dst, $src}"),
+                          [(set VR256:$dst, (V8F32Int (memopv8f32 addr:$src)))],
+                          itins.rm>, VEX, VEX_L;
+}
+
   def PSr_Int : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst, (V4F32Int VR128:$src))],
@@ -3016,19 +3041,6 @@ multiclass sse1_fp_unop_p_int<bits<8> opc, string OpcodeStr,
                     !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst, (V4F32Int (memopv4f32 addr:$src)))],
                     itins.rm>;
-}
-
-/// sse1_fp_unop_p_y_int - AVX 256-bit intrinsics unops in packed forms.
-multiclass sse1_fp_unop_p_y_int<bits<8> opc, string OpcodeStr,
-                                Intrinsic V4F32Int, OpndItins itins> {
-  def PSYr_Int : PSI<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-                    !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
-                    [(set VR256:$dst, (V4F32Int VR256:$src))],
-                    itins.rr>, VEX_L;
-  def PSYm_Int : PSI<opc, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
-                    !strconcat(OpcodeStr, "ps\t{$src, $dst|$dst, $src}"),
-                    [(set VR256:$dst, (V4F32Int (memopv8f32 addr:$src)))],
-                    itins.rm>, VEX_L;
 }
 
 /// sse2_fp_unop_s - SSE2 unops in scalar form.
@@ -3103,8 +3115,12 @@ let Predicates = [HasAVX] in {
 
 defm SQRT  : sse1_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTP>,
              sse2_fp_unop_p<0x51, "sqrt", fsqrt, SSE_SQRTP>;
-defm RSQRT : sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_SQRTP>;
-defm RCP   : sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>;
+defm RSQRT : sse1_fp_unop_p<0x52, "rsqrt", X86frsqrt, SSE_SQRTP>,
+             sse1_fp_unop_p_int<0x52, "rsqrt", int_x86_sse_rsqrt_ps,
+                                int_x86_avx_rsqrt_ps_256, SSE_SQRTP>;
+defm RCP   : sse1_fp_unop_p<0x53, "rcp", X86frcp, SSE_RCPP>,
+             sse1_fp_unop_p_int<0x53, "rcp", int_x86_sse_rcp_ps,
+                                int_x86_avx_rcp_ps_256, SSE_RCPP>;
 
 let Predicates = [HasAVX] in {
   // Square root.
@@ -3114,16 +3130,7 @@ let Predicates = [HasAVX] in {
   // Reciprocal approximations. Note that these typically require refinement
   // in order to obtain suitable precision.
   defm VRSQRT : sse1_fp_unop_s_avx<0x52, "vrsqrt">, VEX_4V, VEX_LIG;
-  defm VRSQRT : sse1_fp_unop_p_y_int<0x52, "vrsqrt", int_x86_avx_rsqrt_ps_256,
-                                    SSE_SQRTP>,
-                sse1_fp_unop_p_int<0x52, "vrsqrt", int_x86_sse_rsqrt_ps,
-                                    SSE_SQRTP>, VEX;
-
   defm VRCP   : sse1_fp_unop_s_avx<0x53, "vrcp">, VEX_4V, VEX_LIG;
-  defm VRCP   : sse1_fp_unop_p_y_int<0x53, "vrcp", int_x86_avx_rcp_ps_256,
-                                    SSE_RCPP>,
-                sse1_fp_unop_p_int<0x53, "vrcp", int_x86_sse_rcp_ps,
-                                    SSE_RCPP>, VEX;
 }
 
 def : Pat<(f32 (fsqrt FR32:$src)),
@@ -3215,17 +3222,14 @@ multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
 // Reciprocal approximations. Note that these typically require refinement
 // in order to obtain suitable precision.
 defm RSQRT : sse1_fp_unop_rw<0x52, "rsqrt", X86frsqrt, int_x86_sse_rsqrt_ss,
-                             SSE_SQRTS>,
-             sse1_fp_unop_p_int<0x52, "rsqrt", int_x86_sse_rsqrt_ps,
-                            SSE_SQRTP>;
+                             SSE_SQRTS>;
 let Predicates = [UseSSE1] in {
   def : Pat<(int_x86_sse_rsqrt_ss VR128:$src),
             (RSQRTSSr_Int VR128:$src, VR128:$src)>;
 }
 
 defm RCP   : sse1_fp_unop_rw<0x53, "rcp", X86frcp, int_x86_sse_rcp_ss,
-                             SSE_RCPS>,
-             sse1_fp_unop_p_int<0x53, "rcp", int_x86_sse_rcp_ps, SSE_RCPP>;
+                             SSE_RCPS>;
 let Predicates = [UseSSE1] in {
   def : Pat<(int_x86_sse_rcp_ss VR128:$src),
             (RCPSSr_Int VR128:$src, VR128:$src)>;
