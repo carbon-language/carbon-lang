@@ -524,16 +524,11 @@ CodeGenOpt::Level GetCodeGenOptLevel() {
 }
 
 // Returns the TargetMachine instance or zero if no triple is provided.
-static TargetMachine* GetTargetMachine(std::string TripleStr) {
-  if (TripleStr.empty())
-    return 0;
-
-  // Get the target specific parser.
+static TargetMachine* GetTargetMachine(Triple TheTriple) {
   std::string Error;
-  Triple TheTriple(Triple::normalize(TargetTriple));
-
   const Target *TheTarget = TargetRegistry::lookupTarget(MArch, TheTriple,
                                                          Error);
+  // Some modules don't specify a triple, and this is okay.
   if (!TheTarget) {
     return 0;
   }
@@ -656,7 +651,12 @@ int main(int argc, char **argv) {
   if (TD)
     Passes.add(TD);
 
-  std::auto_ptr<TargetMachine> TM(GetTargetMachine(TargetTriple));
+  Triple ModuleTriple(M->getTargetTriple());
+  TargetMachine *Machine = 0;
+  if (ModuleTriple.getArch())
+    Machine = GetTargetMachine(Triple(ModuleTriple));
+  std::auto_ptr<TargetMachine> TM(Machine);
+
   if (TM.get()) {
     Passes.add(new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
                                        TM->getVectorTargetTransformInfo()));
