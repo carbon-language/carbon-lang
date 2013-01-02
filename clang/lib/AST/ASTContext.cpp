@@ -7451,9 +7451,8 @@ GVALinkage ASTContext::GetGVALinkageForVariable(const VarDecl *VD) {
     TSK = VD->getTemplateSpecializationKind();
 
   Linkage L = VD->getLinkage();
-  if (L == ExternalLinkage && getLangOpts().CPlusPlus &&
-      VD->getType()->getLinkage() == UniqueExternalLinkage)
-    L = UniqueExternalLinkage;
+  assert (!(L == ExternalLinkage && getLangOpts().CPlusPlus &&
+            VD->getType()->getLinkage() == UniqueExternalLinkage));
 
   switch (L) {
   case NoLinkage:
