@@ -30,9 +30,9 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
+#include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
-#include "clang/Tooling/CommonOptionsParser.h"
 
 namespace cl = llvm::cl;
 using namespace clang::tooling;
