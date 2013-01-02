@@ -9,29 +9,59 @@ Welcome to Clang's documentation!
 .. toctree::
    :maxdepth: 1
 
-   LanguageExtensions
-   LibASTMatchers
-   LibTooling
-   PCHInternals
-   Tooling
+   ReleaseNotes
+
+Using Clang as a Compiler
+-------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   UsersManual
    AddressSanitizer
    ThreadSanitizer
    MemorySanitizer
+
+Using Clang as a Library
+------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   Tooling
+   IntroductionToTheClangAST
+   LibTooling
    ClangPlugins
+   RAVFrontendAction
+   LibASTMatchersTutorial
+   LibASTMatchers
    ClangTools
    HowToSetupToolingForLLVM
-   IntroductionToTheClangAST
    JSONCompilationDatabase
-   LibASTMatchersTutorial
-   PTHInternals
-   RAVFrontendAction
-   UsersManual
-   AutomaticReferenceCounting
+
+Design Documents
+----------------
+
+.. toctree::
+   :maxdepth: 1
+
    InternalsManual
    DriverInternals
-   BlockLanguageSpec
+   PTHInternals
+   PCHInternals
+
+
+Language Extensions and Specs
+-----------------------------
+
+.. toctree::
+   :maxdepth: 1
+
+   LanguageExtensions
    ObjectiveCLiterals
-   ReleaseNotes
+   BlockLanguageSpec
+   AutomaticReferenceCounting
+
 
 Indices and tables
 ==================
