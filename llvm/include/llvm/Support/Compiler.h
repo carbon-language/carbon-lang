@@ -151,7 +151,6 @@
 #define LLVM_UNLIKELY(EXPR) (EXPR)
 #endif
 
-
 // C++ doesn't support 'extern template' of template specializations.  GCC does,
 // but requires __extension__ before it.  In the header, use this:
 //   EXTERN_TEMPLATE_INSTANTIATION(class foo<bar>);
@@ -186,7 +185,6 @@
 #else
 #define LLVM_ATTRIBUTE_ALWAYS_INLINE
 #endif
-
 
 #ifdef __GNUC__
 #define LLVM_ATTRIBUTE_NORETURN __attribute__((noreturn))
@@ -225,6 +223,10 @@
 #if defined(__clang__) || (__GNUC__ > 4) \
  || (__GNUC__ == 4 && __GNUC_MINOR__ >= 5)
 # define LLVM_BUILTIN_UNREACHABLE __builtin_unreachable()
+#elif defined(_MSC_VER)
+# define LLVM_BUILTIN_UNREACHABLE __assume(false)
+#else
+# define LLVM_BUILTIN_UNREACHABLE 0
 #endif
 
 /// LLVM_BUILTIN_TRAP - On compilers which support it, expands to an expression
@@ -234,6 +236,16 @@
 # define LLVM_BUILTIN_TRAP __builtin_trap()
 #else
 # define LLVM_BUILTIN_TRAP *(volatile int*)0x11 = 0
+#endif
+
+/// \macro LLVM_ASSUME_ALIGNED
+/// \brief Returns a pointer with an assumed alignment.
+#if defined(__GNUC__) && !defined(__clang__)
+// FIXME: Enable on clang when it supports it.
+# define LLVM_ASSUME_ALIGNED(p, a) __builtin_assume_aligned(p, a)
+#else
+# define LLVM_ASSUME_ALIGNED(p, a) \
+           (((uintptr_t(p) % (a)) == 0) ? (p) : (LLVM_BUILTIN_UNREACHABLE, (p)))
 #endif
 
 #endif

@@ -790,7 +790,8 @@ template <typename value_type>
 raw_ostream &operator <<( raw_ostream &OS
                         , const binary_le_impl<value_type> &BLE) {
   char Buffer[sizeof(BLE.Value)];
-  support::endian::write_le<value_type, support::unaligned>(Buffer, BLE.Value);
+  support::endian::write<value_type, support::little, support::unaligned>(
+    Buffer, BLE.Value);
   OS.write(Buffer, sizeof(BLE.Value));
   return OS;
 }

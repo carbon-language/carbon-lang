@@ -14,136 +14,78 @@
 #ifndef LLVM_SUPPORT_ENDIAN_H
 #define LLVM_SUPPORT_ENDIAN_H
 
+#include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/SwapByteOrder.h"
 #include "llvm/Support/type_traits.h"
 
 namespace llvm {
 namespace support {
+enum endianness {big, little, native};
 
-enum endianness {big, little};
-enum alignment {unaligned, aligned};
+// These are named values for common alignments.
+enum {aligned = 0, unaligned = 1};
 
 namespace detail {
-
-template<typename value_type, alignment align>
-struct alignment_access_helper;
-
-template<typename value_type>
-struct alignment_access_helper<value_type, aligned>
-{
-  value_type val;
-};
-
-// Provides unaligned loads and stores.
-#pragma pack(push)
-#pragma pack(1)
-template<typename value_type>
-struct alignment_access_helper<value_type, unaligned>
-{
-  value_type val;
-};
-#pragma pack(pop)
-
+  /// \brief ::value is either alignment, or alignof(T) if alignment is 0.
+  template<class T, int alignment>
+  struct PickAlignment {
+    enum {value = alignment == 0 ? AlignOf<T>::Alignment : alignment};
+  };
 } // end namespace detail
 
 namespace endian {
-  template<typename value_type, alignment align>
-  inline value_type read_le(const void *memory) {
-    value_type t =
-      reinterpret_cast<const detail::alignment_access_helper
-        <value_type, align> *>(memory)->val;
-    if (sys::isBigEndianHost())
-      return sys::SwapByteOrder(t);
-    return t;
-  }
-
-  template<typename value_type, alignment align>
-  inline void write_le(void *memory, value_type value) {
-    if (sys::isBigEndianHost())
-      value = sys::SwapByteOrder(value);
-    reinterpret_cast<detail::alignment_access_helper<value_type, align> *>
-      (memory)->val = value;
-  }
-
-  template<typename value_type, alignment align>
-  inline value_type read_be(const void *memory) {
-    value_type t =
-      reinterpret_cast<const detail::alignment_access_helper
-        <value_type, align> *>(memory)->val;
-    if (sys::isLittleEndianHost())
-      return sys::SwapByteOrder(t);
-    return t;
-  }
-
-  template<typename value_type, alignment align>
-  inline void write_be(void *memory, value_type value) {
-    if (sys::isLittleEndianHost())
-      value = sys::SwapByteOrder(value);
-    reinterpret_cast<detail::alignment_access_helper<value_type, align> *>
-      (memory)->val = value;
-  }
+template<typename value_type, endianness endian>
+inline value_type byte_swap(value_type value) {
+  if (endian != native && sys::isBigEndianHost() != (endian == big))
+    return sys::SwapByteOrder(value);
+  return value;
 }
-
-namespace detail {
 
 template<typename value_type,
          endianness endian,
-         alignment  align>
-class packed_endian_specific_integral;
+         std::size_t alignment>
+inline value_type read(const void *memory) {
+  value_type ret;
 
-template<typename value_type>
-class packed_endian_specific_integral<value_type, little, unaligned> {
-public:
+  memcpy(&ret,
+         LLVM_ASSUME_ALIGNED(memory,
+           (detail::PickAlignment<value_type, alignment>::value)),
+         sizeof(value_type));
+  return byte_swap<value_type, endian>(ret);
+}
+
+template<typename value_type,
+         endianness endian,
+         std::size_t alignment>
+inline void write(void *memory, value_type value) {
+  value = byte_swap<value_type, endian>(value);
+  memcpy(LLVM_ASSUME_ALIGNED(memory,
+           (detail::PickAlignment<value_type, alignment>::value)),
+         &value,
+         sizeof(value_type));
+}
+} // end namespace endian
+
+namespace detail {
+template<typename value_type,
+         endianness endian,
+         std::size_t alignment>
+struct packed_endian_specific_integral {
   operator value_type() const {
-    return endian::read_le<value_type, unaligned>(Value);
+    return endian::read<value_type, endian, alignment>(
+      (const void*)Value.buffer);
   }
-  void operator=(value_type newValue) {
-    endian::write_le<value_type, unaligned>((void *)&Value, newValue);
-  }
-private:
-  uint8_t Value[sizeof(value_type)];
-};
 
-template<typename value_type>
-class packed_endian_specific_integral<value_type, big, unaligned> {
-public:
-  operator value_type() const {
-    return endian::read_be<value_type, unaligned>(Value);
-  }
   void operator=(value_type newValue) {
-    endian::write_be<value_type, unaligned>((void *)&Value, newValue);
+    endian::write<value_type, endian, alignment>(
+      (void*)Value.buffer, newValue);
   }
-private:
-  uint8_t Value[sizeof(value_type)];
-};
 
-template<typename value_type>
-class packed_endian_specific_integral<value_type, little, aligned> {
-public:
-  operator value_type() const {
-    return endian::read_le<value_type, aligned>(&Value);
-  }
-  void operator=(value_type newValue) {
-    endian::write_le<value_type, aligned>((void *)&Value, newValue);
-  }
 private:
-  value_type Value;
+  AlignedCharArray<PickAlignment<value_type, alignment>::value,
+                   sizeof(value_type)> Value;
 };
-
-template<typename value_type>
-class packed_endian_specific_integral<value_type, big, aligned> {
-public:
-  operator value_type() const {
-    return endian::read_be<value_type, aligned>(&Value);
-  }
-  void operator=(value_type newValue) {
-    endian::write_be<value_type, aligned>((void *)&Value, newValue);
-  }
-private:
-  value_type Value;
-};
-
 } // end namespace detail
 
 typedef detail::packed_endian_specific_integral
@@ -218,6 +160,19 @@ typedef detail::packed_endian_specific_integral
 typedef detail::packed_endian_specific_integral
                      <int64_t, big, aligned>    aligned_big64_t;
 
+typedef detail::packed_endian_specific_integral
+                  <uint16_t, native, unaligned> unaligned_uint16_t;
+typedef detail::packed_endian_specific_integral
+                  <uint32_t, native, unaligned> unaligned_uint32_t;
+typedef detail::packed_endian_specific_integral
+                  <uint64_t, native, unaligned> unaligned_uint64_t;
+
+typedef detail::packed_endian_specific_integral
+                   <int16_t, native, unaligned> unaligned_int16_t;
+typedef detail::packed_endian_specific_integral
+                   <int32_t, native, unaligned> unaligned_int32_t;
+typedef detail::packed_endian_specific_integral
+                   <int64_t, native, unaligned> unaligned_int64_t;
 } // end namespace llvm
 } // end namespace support
 
