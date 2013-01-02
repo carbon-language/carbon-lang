@@ -30,7 +30,8 @@ namespace format {
 /// \brief A wrapper around a \c Token storing information about the
 /// whitespace characters preceeding it.
 struct FormatToken {
-  FormatToken() : NewlinesBefore(0), WhiteSpaceLength(0) {
+  FormatToken()
+      : NewlinesBefore(0), HasUnescapedNewline(false), WhiteSpaceLength(0) {
   }
 
   /// \brief The \c Token.
@@ -41,6 +42,10 @@ struct FormatToken {
   /// This can be used to determine what the user wrote in the original code
   /// and thereby e.g. leave an empty line between two function definitions.
   unsigned NewlinesBefore;
+
+  /// \brief Whether there is at least one unescaped newline before the \c
+  /// Token.
+  bool HasUnescapedNewline;
 
   /// \brief The location of the start of the whitespace immediately preceeding
   /// the \c Token.
@@ -60,7 +65,7 @@ struct FormatToken {
 /// \c UnwrappedLineFormatter. The key property is that changing the formatting
 /// within an unwrapped line does not affect any other unwrapped lines.
 struct UnwrappedLine {
-  UnwrappedLine() : Level(0) {
+  UnwrappedLine() : Level(0), InPPDirective(false) {
   }
 
   /// \brief The \c Token comprising this \c UnwrappedLine.
@@ -68,6 +73,9 @@ struct UnwrappedLine {
 
   /// \brief The indent level of the \c UnwrappedLine.
   unsigned Level;
+
+  /// \brief Whether this \c UnwrappedLine is part of a preprocessor directive.
+  bool InPPDirective;
 };
 
 class UnwrappedLineConsumer {

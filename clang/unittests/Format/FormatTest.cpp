@@ -373,6 +373,37 @@ TEST_F(FormatTest, StaticInitializers) {
       "    \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" };");
 }
 
+TEST_F(FormatTest, FormatsSmallMacroDefinitionsInSingleLine) {
+  verifyFormat("#define ALooooooooooooooooooooooooooooooooooooooongMacro("
+               "                      \\\n"
+               "    aLoooooooooooooooooooooooongFuuuuuuuuuuuuuunctiooooooooo)");
+}
+
+TEST_F(FormatTest, BreaksOnHashWhenDirectiveIsInvalid) {
+  EXPECT_EQ("#\n;", format("#;"));
+}
+
+TEST_F(FormatTest, UnescapedEndOfLineEndsPPDirective) {
+  EXPECT_EQ("#line 42 \"test\"\n",
+            format("#  \\\n  line  \\\n  42  \\\n  \"test\"\n"));
+  EXPECT_EQ("#define A B\n", format("#  \\\n define  \\\n    A  \\\n    B\n"));
+}
+
+TEST_F(FormatTest, EndOfFileEndsPPDirective) {
+  EXPECT_EQ("#line 42 \"test\"",
+            format("#  \\\n  line  \\\n  42  \\\n  \"test\""));
+  EXPECT_EQ("#define A B", format("#  \\\n define  \\\n    A  \\\n    B"));
+}
+
+TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
+  verifyFormat("#define ALooooooooooooooooooooooooooooooooooooooongMacro("
+               "                      \\\n"
+               "    aLoooooooooooooooooooooooongFuuuuuuuuuuuuuunctiooooooooo)\n"
+               "\n"
+               "AlooooooooooooooooooooooooooooooooooooooongCaaaaaaaaaal(\n"
+               "    aLooooooooooooooooooooooonPaaaaaaaaaaaaaaaaaaaaarmmmm);\n");
+}
+
 //===----------------------------------------------------------------------===//
 // Line break tests.
 //===----------------------------------------------------------------------===//

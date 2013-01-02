@@ -80,13 +80,25 @@ bool UnwrappedLineParser::parseBlock(unsigned AddLevels) {
 }
 
 void UnwrappedLineParser::parsePPDirective() {
-  while (!eof()) {
-    nextToken();
-    if (FormatTok.NewlinesBefore > 0) {
-      addUnwrappedLine();
-      return;
-    }
+  assert(FormatTok.Tok.is(tok::hash) && "'#' expected");
+  nextToken();
+
+  Line.InPPDirective = true;
+  if (FormatTok.Tok.getIdentifierInfo() == NULL) {
+    addUnwrappedLine();
+    Line.InPPDirective = false;
+    return;
   }
+
+  do {
+    if (FormatTok.NewlinesBefore > 0 &&
+        FormatTok.HasUnescapedNewline) {
+      break;
+    }
+    nextToken();
+  } while (!eof());
+  addUnwrappedLine();
+  Line.InPPDirective = false;
 }
 
 void UnwrappedLineParser::parseComments() {

@@ -434,9 +434,21 @@ private:
   /// each \c FormatToken.
   void replaceWhitespace(const FormatToken &Tok, unsigned NewLines,
                          unsigned Spaces) {
+    std::string NewLineText;
+    if (!Line.InPPDirective) {
+      NewLineText = std::string(NewLines, '\n');
+    } else if (NewLines > 0) {
+      unsigned Offset =
+          SourceMgr.getSpellingColumnNumber(Tok.WhiteSpaceStart) - 1;
+      for (unsigned i = 0; i < NewLines; ++i) {
+        NewLineText += std::string(Style.ColumnLimit - Offset - 1, ' ');
+        NewLineText += "\\\n";
+        Offset = 0;
+      }
+    }
     Replaces.insert(tooling::Replacement(
         SourceMgr, Tok.WhiteSpaceStart, Tok.WhiteSpaceLength,
-        std::string(NewLines, '\n') + std::string(Spaces, ' ')));
+        NewLineText + std::string(Spaces, ' ')));
   }
 
   /// \brief Add a new line and the required indent before the first Token
@@ -634,6 +646,9 @@ public:
       next();
       if (Index >= Tokens.size())
         return;
+      // It is the responsibility of the UnwrappedLineParser to make sure
+      // this sequence is not produced inside an unwrapped line.
+      assert(Tokens[Index].Tok.getIdentifierInfo() != NULL);
       switch (Tokens[Index].Tok.getIdentifierInfo()->getPPKeywordID()) {
       case tok::pp_include:
       case tok::pp_import:
@@ -969,7 +984,10 @@ public:
 
     // Consume and record whitespace until we find a significant token.
     while (FormatTok.Tok.is(tok::unknown)) {
-      FormatTok.NewlinesBefore += tokenText(FormatTok.Tok).count('\n');
+      StringRef Text = tokenText(FormatTok.Tok);
+      FormatTok.NewlinesBefore += Text.count('\n');
+      FormatTok.HasUnescapedNewline =
+          Text.count("\\\n") != FormatTok.NewlinesBefore;
       FormatTok.WhiteSpaceLength += FormatTok.Tok.getLength();
 
       if (FormatTok.Tok.is(tok::eof))
