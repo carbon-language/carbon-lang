@@ -1,12 +1,24 @@
 LLVM Documentation
 ==================
 
-The LLVM documentation is currently written in two formats:
+LLVM's documentation is written in reStructuredText, a lightweight
+plaintext markup language (file extension `.rst`). While the
+reStructuredText documentation should be quite readable in source form, it
+is meant to be processed by the Sphinx documentation generation system to
+create HTML pages which are hosted on <http://llvm.org/docs/> and updated
+after every commit.
 
-  * Plain HTML documentation.
+If you instead would like to generate and view the HTML locally, install
+Sphinx <http://sphinx-doc.org/> and then do:
 
-  * reStructured Text documentation using the Sphinx documentation generator. It
-    is currently tested with Sphinx 1.1.3. 
+    cd docs/
+    make -f Makefile.sphinx
+    $BROWSER _build/html/index.html
 
-    For more information, see the "Sphinx Introduction for LLVM Developers"
-    document.
+The mapping between reStructuredText files and generated documentation is
+`docs/Foo.rst` <-> `_build/html/Foo.html` <-> `http://llvm.org/docs/Foo.html`.
+
+If you are interested in writing new documentation, you will want to read
+`SphinxQuickstartTemplate.rst` which will get you writing documentation
+very fast and includes examples of the most important reStructuredText
+markup syntax.
