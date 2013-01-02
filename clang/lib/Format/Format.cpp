@@ -237,6 +237,7 @@ private:
     unsigned ParenLevel = State.Indent.size() - 1;
 
     if (Newline) {
+      unsigned WhitespaceStartColumn = State.Column;
       if (Current.Tok.is(tok::string_literal) &&
           Previous.Tok.is(tok::string_literal)) {
         State.Column = State.Column - Previous.Tok.getLength();
@@ -264,8 +265,12 @@ private:
         State.LineContainsContinuedForLoopSection =
             Previous.Tok.isNot(tok::semi);
 
-      if (!DryRun)
-        replaceWhitespace(Current, 1, State.Column);
+      if (!DryRun) {
+        if (!Line.InPPDirective)
+          replaceWhitespace(Current, 1, State.Column);
+        else
+          replacePPWhitespace(Current, 1, State.Column, WhitespaceStartColumn);
+      }
 
       State.LastSpace[ParenLevel] = State.Indent[ParenLevel];
       if (Current.Tok.is(tok::colon) &&
@@ -398,7 +403,7 @@ private:
     addTokenToState(NewLine, true, State);
 
     // Exceeding column limit is bad.
-    if (State.Column > Style.ColumnLimit)
+    if (State.Column > Style.ColumnLimit - (Line.InPPDirective ? 1 : 0))
       return UINT_MAX;
 
     if (StopAt <= CurrentPenalty)
@@ -434,12 +439,22 @@ private:
   /// each \c FormatToken.
   void replaceWhitespace(const FormatToken &Tok, unsigned NewLines,
                          unsigned Spaces) {
+    Replaces.insert(tooling::Replacement(
+        SourceMgr, Tok.WhiteSpaceStart, Tok.WhiteSpaceLength,
+        std::string(NewLines, '\n') + std::string(Spaces, ' ')));
+  }
+
+  /// \brief Like \c replaceWhitespace, but additionally adds right-aligned
+  /// backslashes to escape newlines inside a preprocessor directive.
+  ///
+  /// This function and \c replaceWhitespace have the same behavior if
+  /// \c Newlines == 0.
+  void replacePPWhitespace(const FormatToken &Tok, unsigned NewLines,
+                           unsigned Spaces, unsigned WhitespaceStartColumn) {
     std::string NewLineText;
-    if (!Line.InPPDirective) {
-      NewLineText = std::string(NewLines, '\n');
-    } else if (NewLines > 0) {
+    if (NewLines > 0) {
       unsigned Offset =
-          SourceMgr.getSpellingColumnNumber(Tok.WhiteSpaceStart) - 1;
+          std::min<int>(Style.ColumnLimit - 1, WhitespaceStartColumn);
       for (unsigned i = 0; i < NewLines; ++i) {
         NewLineText += std::string(Style.ColumnLimit - Offset - 1, ' ');
         NewLineText += "\\\n";
@@ -469,7 +484,11 @@ private:
          Token.Tok.is(tok::kw_private)) &&
         static_cast<int>(Indent) + Style.AccessModifierOffset >= 0)
       Indent += Style.AccessModifierOffset;
-    replaceWhitespace(Token, Newlines, Indent);
+    if (!Line.InPPDirective || Token.HasUnescapedNewline)
+      replaceWhitespace(Token, Newlines, Indent);
+    else
+      // FIXME: Figure out how to get the previous end-of-line column.
+      replacePPWhitespace(Token, Newlines, Indent, 0);
     return Indent;
   }
 

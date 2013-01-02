@@ -64,12 +64,19 @@ protected:
     return MessedUp;
   }
 
-  void verifyFormat(llvm::StringRef Code) {
-    EXPECT_EQ(Code.str(), format(messUp(Code)));
+  FormatStyle getLLVMStyleWithColumns(unsigned ColumnLimit) {
+    FormatStyle Style = getLLVMStyle();
+    Style.ColumnLimit = ColumnLimit;
+    return Style;
+  }
+
+  void verifyFormat(llvm::StringRef Code,
+                    const FormatStyle &Style = getLLVMStyle()) {
+    EXPECT_EQ(Code.str(), format(messUp(Code), Style));
   }
 
   void verifyGoogleFormat(llvm::StringRef Code) {
-    EXPECT_EQ(Code.str(), format(messUp(Code), getGoogleStyle()));
+    verifyFormat(Code, getGoogleStyle());
   }
 };
 
@@ -394,6 +401,27 @@ TEST_F(FormatTest, EndOfFileEndsPPDirective) {
   EXPECT_EQ("#line 42 \"test\"",
             format("#  \\\n  line  \\\n  42  \\\n  \"test\""));
   EXPECT_EQ("#define A B", format("#  \\\n define  \\\n    A  \\\n    B"));
+}
+
+TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
+  // If the macro fits in one line, we have the full width.
+  verifyFormat("#define A(B)", getLLVMStyleWithColumns(12));
+
+  verifyFormat("#define A(\\\n    B)", getLLVMStyleWithColumns(11));
+  verifyFormat("#define AA(\\\n    B)", getLLVMStyleWithColumns(11));
+  verifyFormat("#define A( \\\n    A, B)", getLLVMStyleWithColumns(12));
+}
+
+TEST_F(FormatTest, HandlePreprocessorDirectiveContext) {
+  verifyFormat(
+      "// some comment\n"
+      "\n"
+      "#include \"a.h\"\n"
+      "#define A(A,\\\n"
+      "          B)\n"
+      "#include \"b.h\"\n"
+      "\n"
+      "// some comment\n", getLLVMStyleWithColumns(13));
 }
 
 TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
