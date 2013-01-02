@@ -4,6 +4,7 @@ Clang Language Extensions
 
 .. contents::
    :local:
+   :depth: 1
 
 .. toctree::
    :hidden:
