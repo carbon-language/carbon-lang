@@ -201,10 +201,14 @@ MPI_Datatype my_s1_datatype __attribute__(( type_tag_for_datatype(mpi,struct S1)
 struct S2 { int a; int b; };
 MPI_Datatype my_s2_datatype __attribute__(( type_tag_for_datatype(mpi,struct S2) ));
 
+enum E1 { Foo };
+MPI_Datatype my_e1_datatype __attribute__(( type_tag_for_datatype(mpi,enum E1) ));
+
 void test_user_types(int *int_buf,
                      long *long_buf,
                      struct S1 *s1_buf,
-                     struct S2 *s2_buf)
+                     struct S2 *s2_buf,
+                     enum E1 *e1_buf)
 {
   MPI_Send(int_buf,  1, my_int_datatype); // no-warning
   MPI_Send(long_buf, 1, my_int_datatype); // expected-warning {{argument type 'long *' doesn't match specified 'mpi' type tag that requires 'int *'}}
@@ -214,6 +218,10 @@ void test_user_types(int *int_buf,
 
   MPI_Send(long_buf, 1, my_s1_datatype); // expected-warning {{argument type 'long *' doesn't match specified 'mpi' type tag that requires 'struct S1 *'}}
   MPI_Send(s1_buf, 1, MPI_INT); // expected-warning {{argument type 'struct S1 *' doesn't match specified 'mpi' type tag that requires 'int *'}}
+
+  MPI_Send(e1_buf, 1, my_e1_datatype); // no-warning
+  MPI_Send(e1_buf, 1, MPI_INT); // expected-warning {{argument type 'enum E1 *' doesn't match specified 'mpi' type tag that requires 'int *'}}
+  MPI_Send(int_buf, 1, my_e1_datatype); // expected-warning {{argument type 'int *' doesn't match specified 'mpi' type tag that requires 'enum E1 *'}}
 }
 
 MPI_Datatype my_unknown_datatype;
