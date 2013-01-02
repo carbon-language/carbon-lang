@@ -3,8 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Clang's documentation!
-=================================
+.. title:: Welcome to Clang's documentation!
 
 .. toctree::
    :maxdepth: 1
@@ -12,7 +11,7 @@ Welcome to Clang's documentation!
    ReleaseNotes
 
 Using Clang as a Compiler
--------------------------
+=========================
 
 .. toctree::
    :maxdepth: 1
@@ -24,7 +23,7 @@ Using Clang as a Compiler
    MemorySanitizer
 
 Using Clang as a Library
-------------------------
+========================
 
 .. toctree::
    :maxdepth: 1
@@ -41,7 +40,7 @@ Using Clang as a Library
    JSONCompilationDatabase
 
 Design Documents
-----------------
+================
 
 .. toctree::
    :maxdepth: 1
