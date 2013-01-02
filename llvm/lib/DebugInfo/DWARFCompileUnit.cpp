@@ -17,8 +17,7 @@ using namespace llvm;
 using namespace dwarf;
 
 DataExtractor DWARFCompileUnit::getDebugInfoExtractor() const {
-  return DataExtractor(Context.getInfoSection(),
-                       Context.isLittleEndian(), getAddressByteSize());
+  return DataExtractor(InfoSection, isLittleEndian, AddrSize);
 }
 
 bool DWARFCompileUnit::extract(DataExtractor debug_info, uint32_t *offset_ptr) {
@@ -28,7 +27,6 @@ bool DWARFCompileUnit::extract(DataExtractor debug_info, uint32_t *offset_ptr) {
 
   if (debug_info.isValidOffset(*offset_ptr)) {
     uint64_t abbrOffset;
-    const DWARFDebugAbbrev *abbr = Context.getDebugAbbrev();
     Length = debug_info.getU32(offset_ptr);
     Version = debug_info.getU16(offset_ptr);
     abbrOffset = debug_info.getU32(offset_ptr);
@@ -36,11 +34,11 @@ bool DWARFCompileUnit::extract(DataExtractor debug_info, uint32_t *offset_ptr) {
 
     bool lengthOK = debug_info.isValidOffset(getNextCompileUnitOffset()-1);
     bool versionOK = DWARFContext::isSupportedVersion(Version);
-    bool abbrOffsetOK = Context.getAbbrevSection().size() > abbrOffset;
+    bool abbrOffsetOK = AbbrevSection.size() > abbrOffset;
     bool addrSizeOK = AddrSize == 4 || AddrSize == 8;
 
-    if (lengthOK && versionOK && addrSizeOK && abbrOffsetOK && abbr != NULL) {
-      Abbrevs = abbr->getAbbreviationDeclarationSet(abbrOffset);
+    if (lengthOK && versionOK && addrSizeOK && abbrOffsetOK && Abbrev != NULL) {
+      Abbrevs = Abbrev->getAbbreviationDeclarationSet(abbrOffset);
       return true;
     }
 
@@ -79,8 +77,7 @@ bool DWARFCompileUnit::extractRangeList(uint32_t RangeListOffset,
                                         DWARFDebugRangeList &RangeList) const {
   // Require that compile unit is extracted.
   assert(DieArray.size() > 0);
-  DataExtractor RangesData(Context.getRangeSection(),
-                           Context.isLittleEndian(), AddrSize);
+  DataExtractor RangesData(RangeSection, isLittleEndian, AddrSize);
   return RangeList.extract(RangesData, &RangeListOffset);
 }
 

@@ -105,8 +105,8 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
     case DW_FORM_addr:
     case DW_FORM_ref_addr: {
       RelocAddrMap::const_iterator AI
-        = cu->getContext().relocMap().find(*offset_ptr);
-      if (AI != cu->getContext().relocMap().end()) {
+        = cu->getRelocMap()->find(*offset_ptr);
+      if (AI != cu->getRelocMap()->end()) {
         const std::pair<uint8_t, int64_t> &R = AI->second;
         Value.uval = data.getUnsigned(offset_ptr, cu->getAddressByteSize()) +
                      R.second;
@@ -153,8 +153,8 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
       break;
     case DW_FORM_strp: {
       RelocAddrMap::const_iterator AI
-        = cu->getContext().relocMap().find(*offset_ptr);
-      if (AI != cu->getContext().relocMap().end()) {
+        = cu->getRelocMap()->find(*offset_ptr);
+      if (AI != cu->getRelocMap()->end()) {
         const std::pair<uint8_t, int64_t> &R = AI->second;
         Value.uval = data.getU32(offset_ptr) + R.second;
       } else
@@ -320,7 +320,7 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
 
 void
 DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
-  DataExtractor debug_str_data(cu->getContext().getStringSection(), true, 0);
+  DataExtractor debug_str_data(cu->getStringSection(), true, 0);
   uint64_t uvalue = getUnsigned();
   bool cu_relative_offset = false;
 

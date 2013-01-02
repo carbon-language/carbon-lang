@@ -417,8 +417,7 @@ DWARFDebugInfoEntryMinimal::getAttributeValueAsString(
                                                      const {
   DWARFFormValue form_value;
   if (getAttributeValue(cu, attr, form_value)) {
-    DataExtractor stringExtractor(cu->getContext().getStringSection(),
-        false, 0);
+    DataExtractor stringExtractor(cu->getStringSection(), false, 0);
     return form_value.getAsCString(&stringExtractor);
   }
   return fail_value;

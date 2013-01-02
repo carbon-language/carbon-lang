@@ -17,11 +17,19 @@
 
 namespace llvm {
 
-class DWARFContext;
+class DWARFDebugAbbrev;
+class StringRef;
 class raw_ostream;
+typedef DenseMap<uint64_t, std::pair<uint8_t, int64_t> > RelocAddrMap;
 
 class DWARFCompileUnit {
-  DWARFContext &Context;
+  const DWARFDebugAbbrev *Abbrev;
+  StringRef InfoSection;
+  StringRef AbbrevSection;
+  StringRef RangeSection;
+  StringRef StringSection;
+  const RelocAddrMap *RelocMap;
+  bool isLittleEndian;
 
   uint32_t Offset;
   uint32_t Length;
@@ -32,11 +40,16 @@ class DWARFCompileUnit {
   // The compile unit debug information entry item.
   std::vector<DWARFDebugInfoEntryMinimal> DieArray;
 public:
-  DWARFCompileUnit(DWARFContext &context) : Context(context) {
+
+  DWARFCompileUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef AS,
+                   StringRef RS, StringRef SS, const RelocAddrMap *M, bool LE) :
+    Abbrev(DA), InfoSection(IS), AbbrevSection(AS),
+    RangeSection(RS), StringSection(SS), RelocMap(M), isLittleEndian(LE) {
     clear();
   }
 
-  DWARFContext &getContext() const { return Context; }
+  StringRef getStringSection() const { return StringSection; }
+  const RelocAddrMap *getRelocMap() const { return RelocMap; }
   DataExtractor getDebugInfoExtractor() const;
 
   bool extract(DataExtractor debug_info, uint32_t* offset_ptr);

@@ -53,10 +53,10 @@ void DWARFContext::dump(raw_ostream &OS) {
   OS << "\n.debug_str contents:\n";
   DataExtractor strData(getStringSection(), isLittleEndian(), 0);
   offset = 0;
-  uint32_t lastOffset = 0;
+  uint32_t strOffset = 0;
   while (const char *s = strData.getCStr(&offset)) {
-    OS << format("0x%8.8x: \"%s\"\n", lastOffset, s);
-    lastOffset = offset;
+    OS << format("0x%8.8x: \"%s\"\n", strOffset, s);
+    strOffset = offset;
   }
 
   OS << "\n.debug_ranges contents:\n";
@@ -70,6 +70,22 @@ void DWARFContext::dump(raw_ostream &OS) {
   DWARFDebugRangeList rangeList;
   while (rangeList.extract(rangesData, &offset))
     rangeList.dump(OS);
+
+  OS << "\n.debug_abbrev.dwo contents:\n";
+  getDebugAbbrevDWO()->dump(OS);
+
+  OS << "\n.debug_info.dwo contents:\n";
+  for (unsigned i = 0, e = getNumDWOCompileUnits(); i != e; ++i)
+    getDWOCompileUnitAtIndex(i)->dump(OS);
+
+  OS << "\n.debug_str.dwo contents:\n";
+  DataExtractor strDWOData(getStringDWOSection(), isLittleEndian(), 0);
+  offset = 0;
+  uint32_t strDWOOffset = 0;
+  while (const char *s = strDWOData.getCStr(&offset)) {
+    OS << format("0x%8.8x: \"%s\"\n", strDWOOffset, s);
+    strDWOOffset = offset;
+  }
 }
 
 const DWARFDebugAbbrev *DWARFContext::getDebugAbbrev() {
@@ -81,6 +97,16 @@ const DWARFDebugAbbrev *DWARFContext::getDebugAbbrev() {
   Abbrev.reset(new DWARFDebugAbbrev());
   Abbrev->parse(abbrData);
   return Abbrev.get();
+}
+
+const DWARFDebugAbbrev *DWARFContext::getDebugAbbrevDWO() {
+  if (AbbrevDWO)
+    return AbbrevDWO.get();
+
+  DataExtractor abbrData(getAbbrevDWOSection(), isLittleEndian(), 0);
+  AbbrevDWO.reset(new DWARFDebugAbbrev());
+  AbbrevDWO->parse(abbrData);
+  return AbbrevDWO.get();
 }
 
 const DWARFDebugAranges *DWARFContext::getDebugAranges() {
@@ -124,13 +150,36 @@ void DWARFContext::parseCompileUnits() {
   const DataExtractor &DIData = DataExtractor(getInfoSection(),
                                               isLittleEndian(), 0);
   while (DIData.isValidOffset(offset)) {
-    CUs.push_back(DWARFCompileUnit(*this));
+    CUs.push_back(DWARFCompileUnit(getDebugAbbrev(), getInfoSection(),
+                                   getAbbrevSection(), getRangeSection(),
+                                   getStringSection(), &infoRelocMap(),
+                                   isLittleEndian()));
     if (!CUs.back().extract(DIData, &offset)) {
       CUs.pop_back();
       break;
     }
 
     offset = CUs.back().getNextCompileUnitOffset();
+  }
+}
+
+void DWARFContext::parseDWOCompileUnits() {
+  uint32_t offset = 0;
+  const DataExtractor &DIData = DataExtractor(getInfoDWOSection(),
+                                              isLittleEndian(), 0);
+  while (DIData.isValidOffset(offset)) {
+    DWOCUs.push_back(DWARFCompileUnit(getDebugAbbrevDWO(), getInfoDWOSection(),
+                                      getAbbrevDWOSection(),
+                                      getRangeDWOSection(),
+                                      getStringDWOSection(),
+                                      &infoDWORelocMap(),
+                                      isLittleEndian()));
+    if (!DWOCUs.back().extract(DIData, &offset)) {
+      DWOCUs.pop_back();
+      break;
+    }
+
+    offset = DWOCUs.back().getNextCompileUnitOffset();
   }
 }
 
@@ -322,14 +371,28 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       ARangeSection = data;
     else if (name == "debug_str")
       StringSection = data;
-    else if (name == "debug_ranges")
+    else if (name == "debug_ranges") {
+      // FIXME: Use the other dwo range section when we emit it.
+      RangeDWOSection = data;
       RangeSection = data;
+    }
+    else if (name == "debug_info.dwo")
+      InfoDWOSection = data;
+    else if (name == "debug_abbrev.dwo")
+      AbbrevDWOSection = data;
+    else if (name == "debug_str.dwo")
+      StringDWOSection = data;
     // Any more debug info sections go here.
     else
       continue;
 
     // TODO: For now only handle relocations for the debug_info section.
-    if (name != "debug_info")
+    RelocAddrMap *Map;
+    if (name == "debug_info")
+      Map = &InfoRelocMap;
+    else if (name == "debug_info.dwo")
+      Map = &InfoDWORelocMap;
+    else
       continue;
 
     if (i->begin_relocations() != i->end_relocations()) {
@@ -372,7 +435,7 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
                      << " at " << format("%p", Address)
                      << " with width " << format("%d", R.Width)
                      << "\n");
-        RelocMap[Address] = std::make_pair(R.Width, R.Value);
+        Map->insert(std::make_pair(Address, std::make_pair(R.Width, R.Value)));
       }
     }
   }
