@@ -631,7 +631,7 @@ BasicAliasAnalysis::getModRefBehavior(const Function *F) {
   // For intrinsics, we can check the table.
   if (unsigned iid = F->getIntrinsicID()) {
 #define GET_INTRINSIC_MODREF_BEHAVIOR
-#include "llvm/Intrinsics.gen"
+#include "llvm/IR/Intrinsics.gen"
 #undef GET_INTRINSIC_MODREF_BEHAVIOR
   }
 

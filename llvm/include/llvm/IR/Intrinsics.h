@@ -38,7 +38,7 @@ namespace Intrinsic {
 
     // Get the intrinsic enums generated from Intrinsics.td
 #define GET_INTRINSIC_ENUM_VALUES
-#include "llvm/Intrinsics.gen"    
+#include "llvm/IR/Intrinsics.gen"
 #undef GET_INTRINSIC_ENUM_VALUES
     , num_intrinsics
   };

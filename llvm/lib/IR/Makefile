@@ -23,7 +23,7 @@ $(ObjDir)/Intrinsics.gen.tmp: $(ObjDir)/.dir $(INTRINSICTDS) $(LLVM_TBLGEN)
 	$(Echo) Building Intrinsics.gen.tmp from Intrinsics.td
 	$(Verb) $(LLVMTableGen) $(call SYSPATH, $(INTRINSICTD)) -o $(call SYSPATH, $@) -gen-intrinsic
 
-$(GENFILE): $(PROJ_OBJ_ROOT)/include/llvm/IR/.dir $(ObjDir)/Intrinsics.gen.tmp
+$(GENFILE): $(ObjDir)/Intrinsics.gen.tmp $(PROJ_OBJ_ROOT)/include/llvm/IR/.dir
 	$(Verb) $(CMP) -s $@ $< || ( $(CP) $< $@ && \
 	  $(EchoCmd) Updated Intrinsics.gen because Intrinsics.gen.tmp \
 	    changed significantly. )

@@ -1278,7 +1278,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     const int UnknownModRefBehavior = IK_WritesMemory;
 #define GET_INTRINSIC_MODREF_BEHAVIOR
 #define ModRefBehavior IntrinsicKind
-#include "llvm/Intrinsics.gen"
+#include "llvm/IR/Intrinsics.gen"
 #undef ModRefBehavior
 #undef GET_INTRINSIC_MODREF_BEHAVIOR
   }
