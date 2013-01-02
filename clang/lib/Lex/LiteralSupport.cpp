@@ -267,7 +267,7 @@ static bool ProcessUCNEscape(const char *ThisTokBegin, const char *&ThisTokBuf,
   // characters inside character and string literals
   if (UcnVal < 0xa0 &&
       (UcnVal != 0x24 && UcnVal != 0x40 && UcnVal != 0x60)) {  // $, @, `
-    bool IsError = (!Features.CPlusPlus0x || !in_char_string_literal);
+    bool IsError = (!Features.CPlusPlus11 || !in_char_string_literal);
     if (Diags) {
       char BasicSCSChar = UcnVal;
       if (UcnVal >= 0x20 && UcnVal < 0x7f)
@@ -616,7 +616,7 @@ NumericLiteralParser::NumericLiteralParser(StringRef TokSpelling,
   }
 
   if (s != ThisTokEnd) {
-    if (PP.getLangOpts().CPlusPlus0x && s == SuffixBegin && *s == '_') {
+    if (PP.getLangOpts().CPlusPlus11 && s == SuffixBegin && *s == '_') {
       // We have a ud-suffix! By C++11 [lex.ext]p10, ud-suffixes not starting
       // with an '_' are ill-formed.
       saw_ud_suffix = true;

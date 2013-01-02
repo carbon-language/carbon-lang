@@ -278,7 +278,7 @@ static void computeDeclRefDependence(ASTContext &Ctx, NamedDecl *D, QualType T,
   //       -  an entity with reference type and is initialized with an
   //          expression that is value-dependent [C++11]
   if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    if ((Ctx.getLangOpts().CPlusPlus0x ?
+    if ((Ctx.getLangOpts().CPlusPlus11 ?
            Var->getType()->isLiteralType() :
            Var->getType()->isIntegralOrEnumerationType()) &&
         (Var->getType().isConstQualified() ||
@@ -3030,7 +3030,7 @@ Expr::isNullPointerConstant(ASTContext &Ctx,
   // test for the value 0. Don't use the C++11 constant expression semantics
   // for this, for now; once the dust settles on core issue 903, we might only
   // allow a literal 0 here in C++11 mode.
-  if (Ctx.getLangOpts().CPlusPlus0x) {
+  if (Ctx.getLangOpts().CPlusPlus11) {
     if (!isCXX98IntegralConstantExpr(Ctx))
       return NPCK_NotNull;
   } else {

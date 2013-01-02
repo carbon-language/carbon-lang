@@ -295,7 +295,7 @@ bool Parser::isCXXConditionDeclaration() {
     if (Tok.is(tok::equal)  ||
         Tok.is(tok::kw_asm) || Tok.is(tok::kw___attribute))
       TPR = TPResult::True();
-    else if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace))
+    else if (getLangOpts().CPlusPlus11 && Tok.is(tok::l_brace))
       TPR = TPResult::True();
     else
       TPR = TPResult::False();
@@ -379,7 +379,7 @@ bool Parser::isCXXTypeId(TentativeCXXTypeIdContext Context, bool &isAmbiguous) {
     // ',', this is a type-id. Otherwise, it's an expression.
     } else if (Context == TypeIdAsTemplateArgument &&
                (Tok.is(tok::greater) || Tok.is(tok::comma) ||
-                (getLangOpts().CPlusPlus0x && Tok.is(tok::greatergreater)))) {
+                (getLangOpts().CPlusPlus11 && Tok.is(tok::greatergreater)))) {
       TPR = TPResult::True();
       isAmbiguous = true;
 
@@ -1222,7 +1222,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
       if (isFollowedByParen)
         return TPResult::Ambiguous();
 
-      if (getLangOpts().CPlusPlus0x && isFollowedByBrace)
+      if (getLangOpts().CPlusPlus11 && isFollowedByBrace)
         return BracedCastResult;
       
       return TPResult::True();
@@ -1254,7 +1254,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
     //     enum E : int { a = 4 }; // enum
     //     enum E : int { 4 };     // bit-field
     //   };
-    if (getLangOpts().CPlusPlus0x && NextToken().is(tok::l_brace))
+    if (getLangOpts().CPlusPlus11 && NextToken().is(tok::l_brace))
       return BracedCastResult;
 
     if (isStartOfObjCClassMessageMissingOpenBracket())
@@ -1281,7 +1281,7 @@ Parser::isCXXDeclarationSpecifier(Parser::TPResult BracedCastResult,
     if (isFollowedByParen)
       return TPResult::Ambiguous();
 
-    if (getLangOpts().CPlusPlus0x && isFollowedByBrace)
+    if (getLangOpts().CPlusPlus11 && isFollowedByBrace)
       return BracedCastResult;
 
     return TPResult::True();

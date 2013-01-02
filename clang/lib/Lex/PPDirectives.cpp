@@ -834,11 +834,11 @@ void Preprocessor::HandleLineDirective(Token &Tok) {
   // Enforce C99 6.10.4p3: "The digit sequence shall not specify ... a
   // number greater than 2147483647".  C90 requires that the line # be <= 32767.
   unsigned LineLimit = 32768U;
-  if (LangOpts.C99 || LangOpts.CPlusPlus0x)
+  if (LangOpts.C99 || LangOpts.CPlusPlus11)
     LineLimit = 2147483648U;
   if (LineNo >= LineLimit)
     Diag(DigitTok, diag::ext_pp_line_too_big) << LineLimit;
-  else if (LangOpts.CPlusPlus0x && LineNo >= 32768U)
+  else if (LangOpts.CPlusPlus11 && LineNo >= 32768U)
     Diag(DigitTok, diag::warn_cxx98_compat_pp_line_too_big);
 
   int FilenameID = -1;
@@ -1644,7 +1644,7 @@ bool Preprocessor::ReadMacroDefinitionArgList(MacroInfo *MI, Token &Tok) {
       return true;
     case tok::ellipsis:  // #define X(... -> C99 varargs
       if (!LangOpts.C99)
-        Diag(Tok, LangOpts.CPlusPlus0x ? 
+        Diag(Tok, LangOpts.CPlusPlus11 ? 
              diag::warn_cxx98_compat_variadic_macro :
              diag::ext_variadic_macro);
 
@@ -1770,7 +1770,7 @@ void Preprocessor::HandleDefineDirective(Token &DefineTok) {
 
     // Read the first token after the arg list for down below.
     LexUnexpandedToken(Tok);
-  } else if (LangOpts.C99 || LangOpts.CPlusPlus0x) {
+  } else if (LangOpts.C99 || LangOpts.CPlusPlus11) {
     // C99 requires whitespace between the macro definition and the body.  Emit
     // a diagnostic for something like "#define X+".
     Diag(Tok, diag::ext_c99_whitespace_required_after_macro_name);

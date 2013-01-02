@@ -121,7 +121,7 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
     return IMA_Static;
 
   bool IsCXX11UnevaluatedField = false;
-  if (SemaRef.getLangOpts().CPlusPlus0x && isField) {
+  if (SemaRef.getLangOpts().CPlusPlus11 && isField) {
     // C++11 [expr.prim.general]p12:
     //   An id-expression that denotes a non-static data member or non-static
     //   member function of a class can only be used:

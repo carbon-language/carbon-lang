@@ -575,7 +575,7 @@ protected:
     if (Opts.MicrosoftExt) {
       Builder.defineMacro("_MSC_EXTENSIONS");
 
-      if (Opts.CPlusPlus0x) {
+      if (Opts.CPlusPlus11) {
         Builder.defineMacro("_RVALUE_REFERENCES_V2_SUPPORTED");
         Builder.defineMacro("_RVALUE_REFERENCES_SUPPORTED");
         Builder.defineMacro("_NATIVE_NULLPTR_SUPPORTED");

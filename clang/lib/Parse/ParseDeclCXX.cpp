@@ -157,7 +157,7 @@ Decl *Parser::ParseNamespace(unsigned Context,
 
   // If we're still good, complain about inline namespaces in non-C++0x now.
   if (InlineLoc.isValid())
-    Diag(InlineLoc, getLangOpts().CPlusPlus0x ?
+    Diag(InlineLoc, getLangOpts().CPlusPlus11 ?
          diag::warn_cxx98_compat_inline_namespace : diag::ext_inline_namespace);
 
   // Enter a scope for the namespace.
@@ -504,7 +504,7 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
     // Where can GNU attributes appear?
     ConsumeToken();
 
-    Diag(Tok.getLocation(), getLangOpts().CPlusPlus0x ?
+    Diag(Tok.getLocation(), getLangOpts().CPlusPlus11 ?
          diag::warn_cxx98_compat_alias_declaration :
          diag::ext_alias_declaration);
 
@@ -1761,7 +1761,7 @@ void Parser::ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS,
       Diag(Tok.getLocation(), diag::err_override_control_interface)
         << VirtSpecifiers::getSpecifierName(Specifier);
     } else {
-      Diag(Tok.getLocation(), getLangOpts().CPlusPlus0x ?
+      Diag(Tok.getLocation(), getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_override_control_keyword :
            diag::ext_override_control_keyword)
         << VirtSpecifiers::getSpecifierName(Specifier);
@@ -2020,7 +2020,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // In C++11, a non-function declarator followed by an open brace is a
     // braced-init-list for an in-class member initialization, not an
     // erroneous function definition.
-    if (Tok.is(tok::l_brace) && !getLangOpts().CPlusPlus0x) {
+    if (Tok.is(tok::l_brace) && !getLangOpts().CPlusPlus11) {
       DefinitionKind = FDK_Definition;
     } else if (DeclaratorInfo.isFunctionDeclarator()) {
       if (Tok.is(tok::l_brace) || Tok.is(tok::colon) || Tok.is(tok::kw_try)) {
@@ -2184,7 +2184,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // Handle the initializer.
     if (HasInClassInit != ICIS_NoInit) {
       // The initializer was deferred; parse it and cache the tokens.
-      Diag(Tok, getLangOpts().CPlusPlus0x ?
+      Diag(Tok, getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_nonstatic_member_init :
            diag::ext_nonstatic_member_init);
 
@@ -2409,7 +2409,7 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
       Diag(FinalLoc, diag::err_override_control_interface)
         << "final";
     } else {
-      Diag(FinalLoc, getLangOpts().CPlusPlus0x ?
+      Diag(FinalLoc, getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_override_control_keyword :
            diag::ext_override_control_keyword) << "final";
     }
@@ -2693,7 +2693,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
 
 
   // Parse the '('.
-  if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace)) {
+  if (getLangOpts().CPlusPlus11 && Tok.is(tok::l_brace)) {
     Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
 
     ExprResult InitList = ParseBraceInitializer();
@@ -2732,7 +2732,7 @@ Parser::MemInitResult Parser::ParseMemInitializer(Decl *ConstructorDecl) {
                                        EllipsisLoc);
   }
 
-  Diag(Tok, getLangOpts().CPlusPlus0x ? diag::err_expected_lparen_or_lbrace
+  Diag(Tok, getLangOpts().CPlusPlus11 ? diag::err_expected_lparen_or_lbrace
                                   : diag::err_expected_lparen);
   return true;
 }

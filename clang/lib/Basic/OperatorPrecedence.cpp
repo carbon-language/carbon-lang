@@ -16,7 +16,7 @@
 namespace clang {
 
 prec::Level getBinOpPrecedence(tok::TokenKind Kind, bool GreaterThanIsOperator,
-                               bool CPlusPlus0x) {
+                               bool CPlusPlus11) {
   switch (Kind) {
   case tok::greater:
     // C++ [temp.names]p3:
@@ -34,7 +34,7 @@ prec::Level getBinOpPrecedence(tok::TokenKind Kind, bool GreaterThanIsOperator,
     //   consecutive but distinct > tokens, the first of which is
     //   taken as the end of the template-argument-list and completes
     //   the template-id. [...]
-    if (GreaterThanIsOperator || !CPlusPlus0x)
+    if (GreaterThanIsOperator || !CPlusPlus11)
       return prec::Shift;
     return prec::Unknown;
 

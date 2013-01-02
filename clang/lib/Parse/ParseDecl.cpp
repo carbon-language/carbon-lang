@@ -1284,7 +1284,7 @@ bool Parser::MightBeDeclarator(unsigned Context) {
     return getLangOpts().CPlusPlus;
 
   case tok::l_square: // Might be an attribute on an unnamed bit-field.
-    return Context == Declarator::MemberContext && getLangOpts().CPlusPlus0x &&
+    return Context == Declarator::MemberContext && getLangOpts().CPlusPlus11 &&
            NextToken().is(tok::l_square);
 
   case tok::colon: // Might be a typo for '::' or an unnamed bit-field.
@@ -1318,7 +1318,7 @@ bool Parser::MightBeDeclarator(unsigned Context) {
              (getLangOpts().CPlusPlus && Context == Declarator::FileContext);
 
     case tok::identifier: // Possible virt-specifier.
-      return getLangOpts().CPlusPlus0x && isCXX0XVirtSpecifier(NextToken());
+      return getLangOpts().CPlusPlus11 && isCXX0XVirtSpecifier(NextToken());
 
     default:
       return false;
@@ -1721,7 +1721,7 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
       Actions.AddInitializerToDecl(ThisDecl, Initializer.take(),
                                    /*DirectInit=*/true, TypeContainsAuto);
     }
-  } else if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace) &&
+  } else if (getLangOpts().CPlusPlus11 && Tok.is(tok::l_brace) &&
              (!CurParsedObjCImpl || !D.isFunctionDeclarator())) {
     // Parse C++0x braced-init-list.
     Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
@@ -2058,7 +2058,7 @@ ExprResult Parser::ParseAlignArgument(SourceLocation Start,
   } else
     ER = ParseConstantExpression();
 
-  if (getLangOpts().CPlusPlus0x && Tok.is(tok::ellipsis))
+  if (getLangOpts().CPlusPlus11 && Tok.is(tok::ellipsis))
     EllipsisLoc = ConsumeToken();
 
   return ER;
@@ -2581,7 +2581,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                          PrevSpec, DiagID);
       break;
     case tok::kw_auto:
-      if (getLangOpts().CPlusPlus0x) {
+      if (getLangOpts().CPlusPlus11) {
         if (isKnownToBeTypeSpecifier(GetLookAheadToken(1))) {
           isInvalid = DS.SetStorageClassSpec(Actions, DeclSpec::SCS_auto, Loc,
                                              PrevSpec, DiagID);
@@ -3155,7 +3155,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   bool IsScopedUsingClassTag = false;
 
   // In C++11, recognize 'enum class' and 'enum struct'.
-  if (getLangOpts().CPlusPlus0x &&
+  if (getLangOpts().CPlusPlus11 &&
       (Tok.is(tok::kw_class) || Tok.is(tok::kw_struct))) {
     Diag(Tok, diag::warn_cxx98_compat_scoped_enum);
     IsScopedUsingClassTag = Tok.is(tok::kw_class);
@@ -3187,7 +3187,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   bool AllowDeclaration = DSC != DSC_trailing;
 
   bool AllowFixedUnderlyingType = AllowDeclaration &&
-    (getLangOpts().CPlusPlus0x || getLangOpts().MicrosoftExt ||
+    (getLangOpts().CPlusPlus11 || getLangOpts().MicrosoftExt ||
      getLangOpts().ObjC2);
 
   CXXScopeSpec &SS = DS.getTypeSpecScope();
@@ -3306,7 +3306,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
       SourceRange Range;
       BaseType = ParseTypeName(&Range);
 
-      if (getLangOpts().CPlusPlus0x) {
+      if (getLangOpts().CPlusPlus11) {
         Diag(StartLoc, diag::warn_cxx98_compat_enum_fixed_underlying_type);
       } else if (!getLangOpts().ObjC2) {
         if (getLangOpts().CPlusPlus)
@@ -3365,7 +3365,7 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   MultiTemplateParamsArg TParams;
   if (TemplateInfo.Kind != ParsedTemplateInfo::NonTemplate &&
       TUK != Sema::TUK_Reference) {
-    if (!getLangOpts().CPlusPlus0x || !SS.isSet()) {
+    if (!getLangOpts().CPlusPlus11 || !SS.isSet()) {
       // Skip the rest of this declarator, up until the comma or semicolon.
       Diag(Tok, diag::err_enum_template);
       SkipUntil(tok::comma, true);
@@ -3523,12 +3523,12 @@ void Parser::ParseEnumBody(SourceLocation StartLoc, Decl *EnumDecl) {
     SourceLocation CommaLoc = ConsumeToken();
 
     if (Tok.isNot(tok::identifier)) {
-      if (!getLangOpts().C99 && !getLangOpts().CPlusPlus0x)
+      if (!getLangOpts().C99 && !getLangOpts().CPlusPlus11)
         Diag(CommaLoc, getLangOpts().CPlusPlus ?
                diag::ext_enumerator_list_comma_cxx :
                diag::ext_enumerator_list_comma_c)
           << FixItHint::CreateRemoval(CommaLoc);
-      else if (getLangOpts().CPlusPlus0x)
+      else if (getLangOpts().CPlusPlus11)
         Diag(CommaLoc, diag::warn_cxx98_compat_enumerator_list_comma)
           << FixItHint::CreateRemoval(CommaLoc);
     }
@@ -4034,7 +4034,7 @@ bool Parser::isConstructorDeclarator() {
 void Parser::ParseTypeQualifierListOpt(DeclSpec &DS,
                                        bool VendorAttributesAllowed,
                                        bool CXX11AttributesAllowed) {
-  if (getLangOpts().CPlusPlus0x && CXX11AttributesAllowed &&
+  if (getLangOpts().CPlusPlus11 && CXX11AttributesAllowed &&
       isCXX11AttributeSpecifier()) {
     ParsedAttributesWithRange attrs(AttrFactory);
     ParseCXX11Attributes(attrs);
@@ -4258,7 +4258,7 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
     // Complain about rvalue references in C++03, but then go on and build
     // the declarator.
     if (Kind == tok::ampamp)
-      Diag(Loc, getLangOpts().CPlusPlus0x ?
+      Diag(Loc, getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_rvalue_reference :
            diag::ext_rvalue_reference);
 
@@ -4734,7 +4734,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
       // Parse ref-qualifier[opt].
       if (Tok.is(tok::amp) || Tok.is(tok::ampamp)) {
-        Diag(Tok, getLangOpts().CPlusPlus0x ?
+        Diag(Tok, getLangOpts().CPlusPlus11 ?
              diag::warn_cxx98_compat_ref_qualifier :
              diag::ext_ref_qualifier);
 
@@ -4750,7 +4750,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
       //   and the end of the function-definition, member-declarator, or
       //   declarator.
       bool IsCXX11MemberFunction =
-        getLangOpts().CPlusPlus0x &&
+        getLangOpts().CPlusPlus11 &&
         (D.getContext() == Declarator::MemberContext ||
          (D.getContext() == Declarator::FileContext &&
           D.getCXXScopeSpec().isValid() &&
@@ -4774,7 +4774,7 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
 
       // Parse trailing-return-type[opt].
       LocalEndLoc = EndLoc;
-      if (getLangOpts().CPlusPlus0x && Tok.is(tok::arrow)) {
+      if (getLangOpts().CPlusPlus11 && Tok.is(tok::arrow)) {
         Diag(Tok, diag::warn_cxx98_compat_trailing_return_type);
         if (D.getDeclSpec().getTypeSpecType() == TST_auto)
           StartLoc = D.getDeclSpec().getTypeSpecTypeLoc();
@@ -5033,7 +5033,7 @@ void Parser::ParseParameterDeclarationClause(
                                                 Param);
 
           ExprResult DefArgResult;
-          if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace)) {
+          if (getLangOpts().CPlusPlus11 && Tok.is(tok::l_brace)) {
             Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
             DefArgResult = ParseBraceInitializer();
           } else

@@ -281,11 +281,11 @@ bool Sema::isAcceptableNestedNameSpecifier(NamedDecl *SD) {
     return true;
   else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
     if (TD->getUnderlyingType()->isRecordType() ||
-        (Context.getLangOpts().CPlusPlus0x &&
+        (Context.getLangOpts().CPlusPlus11 &&
          TD->getUnderlyingType()->isEnumeralType()))
       return true;
   } else if (isa<RecordDecl>(SD) ||
-             (Context.getLangOpts().CPlusPlus0x && isa<EnumDecl>(SD)))
+             (Context.getLangOpts().CPlusPlus11 && isa<EnumDecl>(SD)))
     return true;
 
   return false;
@@ -534,7 +534,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
   NamedDecl *SD = Found.getAsSingle<NamedDecl>();
   if (isAcceptableNestedNameSpecifier(SD)) {
     if (!ObjectType.isNull() && !ObjectTypeSearchedInScope &&
-        !getLangOpts().CPlusPlus0x) {
+        !getLangOpts().CPlusPlus11) {
       // C++03 [basic.lookup.classref]p4:
       //   [...] If the name is found in both contexts, the
       //   class-name-or-namespace-name shall refer to the same entity.

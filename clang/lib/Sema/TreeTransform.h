@@ -2804,7 +2804,7 @@ TreeTransform<Derived>::TransformNestedNameSpecifierLoc(
         return NestedNameSpecifierLoc();
 
       if (TL.getType()->isDependentType() || TL.getType()->isRecordType() ||
-          (SemaRef.getLangOpts().CPlusPlus0x &&
+          (SemaRef.getLangOpts().CPlusPlus11 &&
            TL.getType()->isEnumeralType())) {
         assert(!TL.getType().hasLocalQualifiers() &&
                "Can't get cv-qualifiers here");

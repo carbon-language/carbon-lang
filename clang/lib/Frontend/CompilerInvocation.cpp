@@ -959,7 +959,7 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
   Opts.C99 = Std.isC99();
   Opts.C11 = Std.isC11();
   Opts.CPlusPlus = Std.isCPlusPlus();
-  Opts.CPlusPlus0x = Std.isCPlusPlus0x();
+  Opts.CPlusPlus11 = Std.isCPlusPlus11();
   Opts.CPlusPlus1y = Std.isCPlusPlus1y();
   Opts.Digraphs = Std.hasDigraphs();
   Opts.GNUMode = Std.isGNUMode();

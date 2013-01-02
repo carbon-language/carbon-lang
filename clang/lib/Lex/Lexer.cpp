@@ -1630,7 +1630,7 @@ const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr) {
   unsigned Size;
   char C = getCharAndSize(CurPtr, Size);
   if (isIdentifierHead(C)) {
-    if (!getLangOpts().CPlusPlus0x) {
+    if (!getLangOpts().CPlusPlus11) {
       if (!isLexingRawMode())
         Diag(CurPtr,
              C == '_' ? diag::warn_cxx11_compat_user_defined_literal
@@ -2425,7 +2425,7 @@ bool Lexer::LexEndOfFile(Token &Result, const char *CurPtr) {
   // C99 5.1.1.2p2: If the file is non-empty and didn't end in a newline, issue
   // a pedwarn.
   if (CurPtr != BufferStart && (CurPtr[-1] != '\n' && CurPtr[-1] != '\r'))
-    Diag(BufferEnd, LangOpts.CPlusPlus0x ? // C++11 [lex.phases] 2.2 p2
+    Diag(BufferEnd, LangOpts.CPlusPlus11 ? // C++11 [lex.phases] 2.2 p2
          diag::warn_cxx98_compat_no_newline_eof : diag::ext_no_newline_eof)
     << FixItHint::CreateInsertion(getSourceLocation(BufferEnd), "\n");
 
@@ -2731,7 +2731,7 @@ LexNextToken:
     // Notify MIOpt that we read a non-whitespace/non-comment token.
     MIOpt.ReadToken();
 
-    if (LangOpts.CPlusPlus0x) {
+    if (LangOpts.CPlusPlus11) {
       Char = getCharAndSize(CurPtr, SizeTmp);
 
       // UTF-16 string literal
@@ -2783,7 +2783,7 @@ LexNextToken:
     // Notify MIOpt that we read a non-whitespace/non-comment token.
     MIOpt.ReadToken();
 
-    if (LangOpts.CPlusPlus0x) {
+    if (LangOpts.CPlusPlus11) {
       Char = getCharAndSize(CurPtr, SizeTmp);
 
       // UTF-32 string literal
@@ -2811,7 +2811,7 @@ LexNextToken:
     // Notify MIOpt that we read a non-whitespace/non-comment token.
     MIOpt.ReadToken();
 
-    if (LangOpts.CPlusPlus0x) {
+    if (LangOpts.CPlusPlus11) {
       Char = getCharAndSize(CurPtr, SizeTmp);
 
       if (Char == '"')
@@ -2834,7 +2834,7 @@ LexNextToken:
                               tok::wide_string_literal);
 
     // Wide raw string literal.
-    if (LangOpts.CPlusPlus0x && Char == 'R' &&
+    if (LangOpts.CPlusPlus11 && Char == 'R' &&
         getCharAndSize(CurPtr + SizeTmp, SizeTmp2) == '"')
       return LexRawStringLiteral(Result,
                                ConsumeChar(ConsumeChar(CurPtr, SizeTmp, Result),
@@ -3091,7 +3091,7 @@ LexNextToken:
       CurPtr = ConsumeChar(CurPtr, SizeTmp, Result);
       Kind = tok::lessequal;
     } else if (LangOpts.Digraphs && Char == ':') {     // '<:' -> '['
-      if (LangOpts.CPlusPlus0x &&
+      if (LangOpts.CPlusPlus11 &&
           getCharAndSize(CurPtr + SizeTmp, SizeTmp2) == ':') {
         // C++0x [lex.pptoken]p3:
         //  Otherwise, if the next three characters are <:: and the subsequent

@@ -3433,7 +3433,7 @@ public:
   public:
     explicit ImplicitExceptionSpecification(Sema &Self)
       : Self(&Self), ComputedEST(EST_BasicNoexcept) {
-      if (!Self.getLangOpts().CPlusPlus0x)
+      if (!Self.getLangOpts().CPlusPlus11)
         ComputedEST = EST_DynamicNone;
     }
 

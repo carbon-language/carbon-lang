@@ -1812,7 +1812,7 @@ private:
   // an attribute is not allowed.
   bool CheckProhibitedCXX11Attribute() {
     assert(Tok.is(tok::l_square));
-    if (!getLangOpts().CPlusPlus0x || NextToken().isNot(tok::l_square))
+    if (!getLangOpts().CPlusPlus11 || NextToken().isNot(tok::l_square))
       return false;
     return DiagnoseProhibitedCXX11Attribute();
   }
@@ -1857,7 +1857,7 @@ private:
                              AttributeList::Syntax Syntax);
 
   void MaybeParseCXX0XAttributes(Declarator &D) {
-    if (getLangOpts().CPlusPlus0x && isCXX11AttributeSpecifier()) {
+    if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
       ParsedAttributesWithRange attrs(AttrFactory);
       SourceLocation endLoc;
       ParseCXX11Attributes(attrs, &endLoc);
@@ -1866,7 +1866,7 @@ private:
   }
   void MaybeParseCXX0XAttributes(ParsedAttributes &attrs,
                                  SourceLocation *endLoc = 0) {
-    if (getLangOpts().CPlusPlus0x && isCXX11AttributeSpecifier()) {
+    if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
       ParsedAttributesWithRange attrsWithRange(AttrFactory);
       ParseCXX11Attributes(attrsWithRange, endLoc);
       attrs.takeAllFrom(attrsWithRange);
@@ -1875,7 +1875,7 @@ private:
   void MaybeParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
                                  SourceLocation *endLoc = 0,
                                  bool OuterMightBeMessageSend = false) {
-    if (getLangOpts().CPlusPlus0x &&
+    if (getLangOpts().CPlusPlus11 &&
         isCXX11AttributeSpecifier(false, OuterMightBeMessageSend))
       ParseCXX11Attributes(attrs, endLoc);
   }

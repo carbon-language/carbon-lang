@@ -1775,7 +1775,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     // FIXME: Conditionally-supported behavior should be configurable in the
     // TargetInfo or similar.
     Self.Diag(OpRange.getBegin(),
-              Self.getLangOpts().CPlusPlus0x ?
+              Self.getLangOpts().CPlusPlus11 ?
                 diag::warn_cxx98_compat_cast_fn_obj : diag::ext_cast_fn_obj)
       << OpRange;
     return TC_Success;
@@ -1784,7 +1784,7 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
   if (DestType->isFunctionPointerType()) {
     // See above.
     Self.Diag(OpRange.getBegin(),
-              Self.getLangOpts().CPlusPlus0x ?
+              Self.getLangOpts().CPlusPlus11 ?
                 diag::warn_cxx98_compat_cast_fn_obj : diag::ext_cast_fn_obj)
       << OpRange;
     return TC_Success;

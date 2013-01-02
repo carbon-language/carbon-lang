@@ -827,7 +827,7 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
   //
   // NOTE: This an intermediate solution.  There are on-going discussions on
   // how to properly support this warning outside of C++11 with an annotation.
-  if (!AC.getASTContext().getLangOpts().CPlusPlus0x)
+  if (!AC.getASTContext().getLangOpts().CPlusPlus11)
     return;
 
   FallthroughMapper FM(S);
@@ -864,7 +864,7 @@ static void DiagnoseSwitchLabelsFallthrough(Sema &S, AnalysisDeclContext &AC,
       SourceLocation L = Label->getLocStart();
       if (L.isMacroID())
         continue;
-      if (S.getLangOpts().CPlusPlus0x) {
+      if (S.getLangOpts().CPlusPlus11) {
         const Stmt *Term = B.getTerminator();
         if (!(B.empty() && Term && isa<BreakStmt>(Term))) {
           Preprocessor &PP = S.getPreprocessor();

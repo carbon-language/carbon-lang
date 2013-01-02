@@ -2391,7 +2391,7 @@ Sema::SubstituteExplicitTemplateArguments(
     }
       
     CXXThisScopeRAII ThisScope(*this, ThisContext, ThisTypeQuals,
-                               getLangOpts().CPlusPlus0x);
+                               getLangOpts().CPlusPlus11);
     
     ResultType = SubstType(Proto->getResultType(),
                    MultiLevelTemplateArgumentList(*ExplicitArgumentList),
@@ -3758,15 +3758,15 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
     // first argument of the free function, which seems to match
     // existing practice.
     SmallVector<QualType, 4> Args1;
-    unsigned Skip1 = !S.getLangOpts().CPlusPlus0x && IsNonStatic2 && !Method1;
-    if (S.getLangOpts().CPlusPlus0x && IsNonStatic1 && !Method2)
+    unsigned Skip1 = !S.getLangOpts().CPlusPlus11 && IsNonStatic2 && !Method1;
+    if (S.getLangOpts().CPlusPlus11 && IsNonStatic1 && !Method2)
       AddImplicitObjectParameterType(S.Context, Method1, Args1);
     Args1.insert(Args1.end(),
                  Proto1->arg_type_begin() + Skip1, Proto1->arg_type_end());
 
     SmallVector<QualType, 4> Args2;
-    Skip2 = !S.getLangOpts().CPlusPlus0x && IsNonStatic1 && !Method2;
-    if (S.getLangOpts().CPlusPlus0x && IsNonStatic2 && !Method1)
+    Skip2 = !S.getLangOpts().CPlusPlus11 && IsNonStatic1 && !Method2;
+    if (S.getLangOpts().CPlusPlus11 && IsNonStatic2 && !Method1)
       AddImplicitObjectParameterType(S.Context, Method2, Args2);
     Args2.insert(Args2.end(),
                  Proto2->arg_type_begin() + Skip2, Proto2->arg_type_end());
@@ -3835,7 +3835,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
     unsigned NumParams = std::min(NumCallArguments,
                                   std::min(Proto1->getNumArgs(),
                                            Proto2->getNumArgs()));
-    if (S.getLangOpts().CPlusPlus0x && IsNonStatic2 && !IsNonStatic1)
+    if (S.getLangOpts().CPlusPlus11 && IsNonStatic2 && !IsNonStatic1)
       ::MarkUsedTemplateParameters(S.Context, Method2->getThisType(S.Context),
                                    false,
                                    TemplateParams->getDepth(), UsedParameters);

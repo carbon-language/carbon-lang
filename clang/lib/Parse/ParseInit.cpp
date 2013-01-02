@@ -33,7 +33,7 @@ bool Parser::MayBeDesignationStart() {
     return true;
       
   case tok::l_square: {  // designator: array-designator
-    if (!PP.getLangOpts().CPlusPlus0x)
+    if (!PP.getLangOpts().CPlusPlus11)
       return true;
     
     // C++11 lambda expressions and C99 designators can be ambiguous all the

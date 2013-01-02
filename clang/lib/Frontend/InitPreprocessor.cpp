@@ -307,7 +307,7 @@ static void InitializeStandardPredefinedMacros(const TargetInfo &TI,
     // C++11 [cpp.predefined]p1:
     //   The name __cplusplus is defined to the value 201103L when compiling a
     //   C++ translation unit.
-    if (LangOpts.CPlusPlus0x)
+    if (LangOpts.CPlusPlus11)
       Builder.defineMacro("__cplusplus", "201103L");
     // C++03 [cpp.predefined]p1:
     //   The name __cplusplus is defined to the value 199711L when compiling a
@@ -377,7 +377,7 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   if (!LangOpts.GNUMode)
     Builder.defineMacro("__STRICT_ANSI__");
 
-  if (LangOpts.CPlusPlus0x)
+  if (LangOpts.CPlusPlus11)
     Builder.defineMacro("__GXX_EXPERIMENTAL_CXX0X__");
 
   if (LangOpts.ObjC1) {

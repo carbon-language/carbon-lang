@@ -4338,7 +4338,7 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         // the program is ill-formed. C++11 drops this restriction.
         if (RD->isUnion())
           Diag(D.getIdentifierLoc(),
-               getLangOpts().CPlusPlus0x
+               getLangOpts().CPlusPlus11
                  ? diag::warn_cxx98_compat_static_data_member_in_union
                  : diag::ext_static_data_member_in_union) << Name;
         // We conservatively disallow static data members in anonymous structs.
@@ -5199,7 +5199,7 @@ static FunctionDecl* CreateNewFunctionDecl(Sema &SemaRef, Declarator &D,
       // If the class is complete, then we now create the implicit exception
       // specification. If the class is incomplete or dependent, we can't do
       // it yet.
-      if (SemaRef.getLangOpts().CPlusPlus0x && !Record->isDependentType() &&
+      if (SemaRef.getLangOpts().CPlusPlus11 && !Record->isDependentType() &&
           Record->getDefinition() && !Record->isBeingDefined() &&
           R->getAs<FunctionProtoType>()->getExceptionSpecType() == EST_None) {
         SemaRef.AdjustDestructorExceptionSpec(Record, NewDD);
@@ -5618,7 +5618,7 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     const FunctionProtoType *FPT = R->getAs<FunctionProtoType>();
     if ((Name.getCXXOverloadedOperator() == OO_Delete ||
          Name.getCXXOverloadedOperator() == OO_Array_Delete) &&
-        getLangOpts().CPlusPlus0x && FPT && !FPT->hasExceptionSpec()) {
+        getLangOpts().CPlusPlus11 && FPT && !FPT->hasExceptionSpec()) {
       FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
       EPI.ExceptionSpecType = EST_BasicNoexcept;
       NewFD->setType(Context.getFunctionType(FPT->getResultType(),
@@ -6864,7 +6864,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     } else if (DclT->isIntegralOrEnumerationType()) {
       // Check whether the expression is a constant expression.
       SourceLocation Loc;
-      if (getLangOpts().CPlusPlus0x && DclT.isVolatileQualified())
+      if (getLangOpts().CPlusPlus11 && DclT.isVolatileQualified())
         // In C++11, a non-constexpr const static data member with an
         // in-class initializer cannot be volatile.
         Diag(VDecl->getLocation(), diag::err_in_class_initializer_volatile);
@@ -6889,7 +6889,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     } else if (DclT->isFloatingType()) { // also permits complex, which is ok
       Diag(VDecl->getLocation(), diag::ext_in_class_initializer_float_type)
         << DclT << Init->getSourceRange();
-      if (getLangOpts().CPlusPlus0x)
+      if (getLangOpts().CPlusPlus11)
         Diag(VDecl->getLocation(),
              diag::note_in_class_initializer_float_type_constexpr)
           << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
@@ -6901,7 +6901,7 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
       }
 
     // Suggest adding 'constexpr' in C++11 for literal types.
-    } else if (getLangOpts().CPlusPlus0x && DclT->isLiteralType()) {
+    } else if (getLangOpts().CPlusPlus11 && DclT->isLiteralType()) {
       Diag(VDecl->getLocation(), diag::err_in_class_initializer_literal_type)
         << DclT << Init->getSourceRange()
         << FixItHint::CreateInsertion(VDecl->getLocStart(), "constexpr ");
@@ -9174,7 +9174,7 @@ CreateNewDecl:
     // If this is an undefined enum, warn.
     if (TUK != TUK_Definition && !Invalid) {
       TagDecl *Def;
-      if (getLangOpts().CPlusPlus0x && cast<EnumDecl>(New)->isFixed()) {
+      if (getLangOpts().CPlusPlus11 && cast<EnumDecl>(New)->isFixed()) {
         // C++0x: 7.2p2: opaque-enum-declaration.
         // Conflicts are diagnosed above. Do nothing.
       }
@@ -9839,7 +9839,7 @@ bool Sema::CheckNontrivialField(FieldDecl *FD) {
         member = CXXDestructor;
 
       if (member != CXXInvalid) {
-        if (!getLangOpts().CPlusPlus0x &&
+        if (!getLangOpts().CPlusPlus11 &&
             getLangOpts().ObjCAutoRefCount && RDecl->hasObjectMember()) {
           // Objective-C++ ARC: it is an error to have a non-trivial field of
           // a union. However, system headers in Objective-C programs 
@@ -9855,12 +9855,12 @@ bool Sema::CheckNontrivialField(FieldDecl *FD) {
           }
         }
 
-        Diag(FD->getLocation(), getLangOpts().CPlusPlus0x ?
+        Diag(FD->getLocation(), getLangOpts().CPlusPlus11 ?
                diag::warn_cxx98_compat_nontrivial_union_or_anon_struct_member :
                diag::err_illegal_union_or_anon_struct_member)
           << (int)FD->getParent()->isUnion() << FD->getDeclName() << member;
         DiagnoseNontrivial(RDecl, member);
-        return !getLangOpts().CPlusPlus0x;
+        return !getLangOpts().CPlusPlus11;
       }
     }
   }
@@ -10259,7 +10259,7 @@ void Sema::ActOnFields(Scope* S,
         
         if (!CXXRecord->isDependentType()) {
           // Adjust user-defined destructor exception spec.
-          if (getLangOpts().CPlusPlus0x &&
+          if (getLangOpts().CPlusPlus11 &&
               CXXRecord->hasUserDeclaredDestructor())
             AdjustDestructorExceptionSpec(CXXRecord,CXXRecord->getDestructor());
 
@@ -10439,7 +10439,7 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
       EltTy = Context.DependentTy;
     else {
       SourceLocation ExpLoc;
-      if (getLangOpts().CPlusPlus0x && Enum->isFixed() &&
+      if (getLangOpts().CPlusPlus11 && Enum->isFixed() &&
           !getLangOpts().MicrosoftMode) {
         // C++11 [dcl.enum]p5: If the underlying type is fixed, [...] the
         // constant-expression in the enumerator-definition shall be a converted

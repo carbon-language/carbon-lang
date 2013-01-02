@@ -2400,7 +2400,7 @@ MemInitResult
 Sema::BuildDelegatingInitializer(TypeSourceInfo *TInfo, Expr *Init,
                                  CXXRecordDecl *ClassDecl) {
   SourceLocation NameLoc = TInfo->getTypeLoc().getLocalSourceRange().getBegin();
-  if (!LangOpts.CPlusPlus0x)
+  if (!LangOpts.CPlusPlus11)
     return Diag(NameLoc, diag::err_delegating_ctor)
       << TInfo->getTypeLoc().getLocalSourceRange();
   Diag(NameLoc, diag::warn_cxx98_compat_delegating_ctor);
@@ -4008,7 +4008,7 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   //
   // We delay this until we know whether an explicitly-defaulted (or deleted)
   // destructor for the class is trivial.
-  if (LangOpts.CPlusPlus0x && !Record->isDependentType() &&
+  if (LangOpts.CPlusPlus11 && !Record->isDependentType() &&
       !Record->isLiteral() && !Record->getNumVBases()) {
     for (CXXRecordDecl::method_iterator M = Record->method_begin(),
                                      MEnd = Record->method_end();
@@ -4066,7 +4066,7 @@ static bool specialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
 static bool defaultedSpecialMemberIsConstexpr(Sema &S, CXXRecordDecl *ClassDecl,
                                               Sema::CXXSpecialMember CSM,
                                               bool ConstArg) {
-  if (!S.getLangOpts().CPlusPlus0x)
+  if (!S.getLangOpts().CPlusPlus11)
     return false;
 
   // C++11 [dcl.constexpr]p4:
@@ -4706,7 +4706,7 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM,
     return false;
   CXXRecordDecl *RD = MD->getParent();
   assert(!RD->isDependentType() && "do deletion after instantiation");
-  if (!LangOpts.CPlusPlus0x || RD->isInvalidDecl())
+  if (!LangOpts.CPlusPlus11 || RD->isInvalidDecl())
     return false;
 
   // C++11 [expr.lambda.prim]p19:
@@ -5394,7 +5394,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       DeclareImplicitCopyConstructor(ClassDecl);
   }
 
-  if (getLangOpts().CPlusPlus0x && ClassDecl->needsImplicitMoveConstructor()) {
+  if (getLangOpts().CPlusPlus11 && ClassDecl->needsImplicitMoveConstructor()) {
     ++ASTContext::NumImplicitMoveConstructors;
 
     if (ClassDecl->needsOverloadResolutionForMoveConstructor())
@@ -5413,7 +5413,7 @@ void Sema::AddImplicitlyDeclaredMembersToClass(CXXRecordDecl *ClassDecl) {
       DeclareImplicitCopyAssignment(ClassDecl);
   }
 
-  if (getLangOpts().CPlusPlus0x && ClassDecl->needsImplicitMoveAssignment()) {
+  if (getLangOpts().CPlusPlus11 && ClassDecl->needsImplicitMoveAssignment()) {
     ++ASTContext::NumImplicitMoveAssignmentOperators;
 
     // Likewise for the move assignment operator.
@@ -5880,7 +5880,7 @@ void Sema::CheckConversionDeclarator(Declarator &D, QualType &R,
   // C++0x explicit conversion operators.
   if (D.getDeclSpec().isExplicitSpecified())
     Diag(D.getDeclSpec().getExplicitSpecLoc(),
-         getLangOpts().CPlusPlus0x ?
+         getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_explicit_conversion_functions :
            diag::ext_explicit_conversion_functions)
       << SourceRange(D.getDeclSpec().getExplicitSpecLoc());
@@ -6482,14 +6482,14 @@ Decl *Sema::ActOnUsingDeclaration(Scope *S,
   case UnqualifiedId::IK_ConstructorTemplateId:
     // C++11 inheriting constructors.
     Diag(Name.getLocStart(),
-         getLangOpts().CPlusPlus0x ?
+         getLangOpts().CPlusPlus11 ?
            // FIXME: Produce warn_cxx98_compat_using_decl_constructor
            //        instead once inheriting constructors work.
            diag::err_using_decl_constructor_unsupported :
            diag::err_using_decl_constructor)
       << SS.getRange();
 
-    if (getLangOpts().CPlusPlus0x) break;
+    if (getLangOpts().CPlusPlus11) break;
 
     return 0;
       
@@ -6579,7 +6579,7 @@ bool Sema::CheckUsingShadowDecl(UsingDecl *Using, NamedDecl *Orig,
   // specialization.  The UsingShadowDecl in D<T> then points directly
   // to A::foo, which will look well-formed when we instantiate.
   // The right solution is to not collapse the shadow-decl chain.
-  if (!getLangOpts().CPlusPlus0x && CurContext->isRecord()) {
+  if (!getLangOpts().CPlusPlus11 && CurContext->isRecord()) {
     DeclContext *OrigDC = Orig->getDeclContext();
 
     // Handle enums and anonymous structs.
@@ -7068,7 +7068,7 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
       RequireCompleteDeclContext(const_cast<CXXScopeSpec&>(SS), NamedContext))
     return true;
 
-  if (getLangOpts().CPlusPlus0x) {
+  if (getLangOpts().CPlusPlus11) {
     // C++0x [namespace.udecl]p3:
     //   In a using-declaration used as a member-declaration, the
     //   nested-name-specifier shall name a base class of the class
@@ -7889,7 +7889,7 @@ void Sema::ActOnFinishCXXMemberDecls() {
 
 void Sema::AdjustDestructorExceptionSpec(CXXRecordDecl *ClassDecl,
                                          CXXDestructorDecl *Destructor) {
-  assert(getLangOpts().CPlusPlus0x &&
+  assert(getLangOpts().CPlusPlus11 &&
          "adjusting dtor exception specs was introduced in c++11");
 
   // C++11 [class.dtor]p3:
@@ -8027,7 +8027,7 @@ buildSingleCopyAssignRecursively(Sema &S, SourceLocation Loc, QualType T,
 
     // Prior to C++11, filter out any result that isn't a copy/move-assignment
     // operator.
-    if (!S.getLangOpts().CPlusPlus0x) {
+    if (!S.getLangOpts().CPlusPlus11) {
       LookupResult::Filter F = OpLookup.makeFilter();
       while (F.hasNext()) {
         NamedDecl *D = F.next();
@@ -10303,7 +10303,7 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation LocStart,
       std::string InsertionText = std::string(" ") + RD->getKindName();
       
       Diag(TypeRange.getBegin(),
-           getLangOpts().CPlusPlus0x ?
+           getLangOpts().CPlusPlus11 ?
              diag::warn_cxx98_compat_unelaborated_friend_type :
              diag::ext_unelaborated_friend_type)
         << (unsigned) RD->getTagKind()
@@ -10312,7 +10312,7 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation LocStart,
                                       InsertionText);
     } else {
       Diag(FriendLoc,
-           getLangOpts().CPlusPlus0x ?
+           getLangOpts().CPlusPlus11 ?
              diag::warn_cxx98_compat_nonclass_type_friend :
              diag::ext_nonclass_type_friend)
         << T
@@ -10320,7 +10320,7 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation LocStart,
     }
   } else if (T->getAs<EnumType>()) {
     Diag(FriendLoc,
-         getLangOpts().CPlusPlus0x ?
+         getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_enum_friend :
            diag::ext_enum_friend)
       << T
@@ -10333,7 +10333,7 @@ FriendDecl *Sema::CheckFriendTypeDecl(SourceLocation LocStart,
   //     friend elaborated-type-specifier ;
   //     friend simple-type-specifier ;
   //     friend typename-specifier ;
-  if (getLangOpts().CPlusPlus0x && LocStart != FriendLoc)
+  if (getLangOpts().CPlusPlus11 && LocStart != FriendLoc)
     Diag(FriendLoc, diag::err_friend_not_first_in_declaration) << T;
 
   //   If the type specifier in a friend declaration designates a (possibly
@@ -10666,7 +10666,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
     // we do, too.
     if (!Previous.empty() && DC->Equals(CurContext))
       Diag(DS.getFriendSpecLoc(),
-           getLangOpts().CPlusPlus0x ?
+           getLangOpts().CPlusPlus11 ?
              diag::warn_cxx98_compat_friend_is_member :
              diag::err_friend_is_member);
 
@@ -10714,7 +10714,7 @@ Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
     //   class that is not a member of the class . . .
     if (DC->Equals(CurContext))
       Diag(DS.getFriendSpecLoc(),
-           getLangOpts().CPlusPlus0x ?
+           getLangOpts().CPlusPlus11 ?
              diag::warn_cxx98_compat_friend_is_member :
              diag::err_friend_is_member);
     

@@ -940,7 +940,7 @@ bool Type::isIncompleteType(NamedDecl **Def) const {
 
 bool QualType::isPODType(ASTContext &Context) const {
   // C++11 has a more relaxed definition of POD.
-  if (Context.getLangOpts().CPlusPlus0x)
+  if (Context.getLangOpts().CPlusPlus11)
     return isCXX11PODType(Context);
 
   return isCXX98PODType(Context);

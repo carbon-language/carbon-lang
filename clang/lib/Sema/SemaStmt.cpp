@@ -314,7 +314,7 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
     return StmtError();
   }
 
-  if (!getLangOpts().CPlusPlus0x) {
+  if (!getLangOpts().CPlusPlus11) {
     // C99 6.8.4.2p3: The expression shall be an integer constant.
     // However, GCC allows any evaluatable integer expression.
     if (!LHSVal->isTypeDependent() && !LHSVal->isValueDependent()) {
@@ -712,7 +712,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
 
       llvm::APSInt LoVal;
 
-      if (getLangOpts().CPlusPlus0x) {
+      if (getLangOpts().CPlusPlus11) {
         // C++11 [stmt.switch]p2: the constant-expression shall be a converted
         // constant expression of the promoted type of the switch condition.
         ExprResult ConvLo =
@@ -832,7 +832,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         Expr *Hi = CR->getRHS();
         llvm::APSInt HiVal;
 
-        if (getLangOpts().CPlusPlus0x) {
+        if (getLangOpts().CPlusPlus11) {
           // C++11 [stmt.switch]p2: the constant-expression shall be a converted
           // constant expression of the promoted type of the switch condition.
           ExprResult ConvHi =

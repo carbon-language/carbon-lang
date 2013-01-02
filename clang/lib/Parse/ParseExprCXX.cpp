@@ -620,7 +620,7 @@ ExprResult Parser::ParseLambdaExpression() {
 ///
 /// If we are not looking at a lambda expression, returns ExprError().
 ExprResult Parser::TryParseLambdaExpression() {
-  assert(getLangOpts().CPlusPlus0x
+  assert(getLangOpts().CPlusPlus11
          && Tok.is(tok::l_square)
          && "Not at the start of a possible lambda expression.");
 
@@ -1288,7 +1288,7 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
   ParsedType TypeRep = Actions.ActOnTypeName(getCurScope(), DeclaratorInfo).get();
 
   assert((Tok.is(tok::l_paren) ||
-          (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace)))
+          (getLangOpts().CPlusPlus11 && Tok.is(tok::l_brace)))
          && "Expected '(' or '{'!");
 
   if (Tok.is(tok::l_brace)) {
@@ -1416,7 +1416,7 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
     ConsumeToken();
 
   ExprResult InitExpr = ExprError();
-  if (getLangOpts().CPlusPlus0x && Tok.is(tok::l_brace)) {
+  if (getLangOpts().CPlusPlus11 && Tok.is(tok::l_brace)) {
     Diag(Tok.getLocation(),
          diag::warn_cxx98_compat_generalized_initializer_lists);
     InitExpr = ParseBraceInitializer();
@@ -1851,7 +1851,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
       SymbolLocations[SymbolIdx++] = ConsumeToken();
       // Check for array new/delete.
       if (Tok.is(tok::l_square) &&
-          (!getLangOpts().CPlusPlus0x || NextToken().isNot(tok::l_square))) {
+          (!getLangOpts().CPlusPlus11 || NextToken().isNot(tok::l_square))) {
         // Consume the '[' and ']'.
         BalancedDelimiterTracker T(*this, tok::l_square);
         T.consumeOpen();
@@ -1928,7 +1928,7 @@ bool Parser::ParseUnqualifiedIdOperator(CXXScopeSpec &SS, bool EnteringContext,
   //     operator string-literal identifier
   //     operator user-defined-string-literal
 
-  if (getLangOpts().CPlusPlus0x && isTokenStringLiteral()) {
+  if (getLangOpts().CPlusPlus11 && isTokenStringLiteral()) {
     Diag(Tok.getLocation(), diag::warn_cxx98_compat_literal_operator);
 
     SourceLocation DiagLoc;
@@ -2361,7 +2361,7 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
     Initializer = Actions.ActOnParenListExpr(ConstructorLParen,
                                              ConstructorRParen,
                                              ConstructorArgs);
-  } else if (Tok.is(tok::l_brace) && getLangOpts().CPlusPlus0x) {
+  } else if (Tok.is(tok::l_brace) && getLangOpts().CPlusPlus11) {
     Diag(Tok.getLocation(),
          diag::warn_cxx98_compat_generalized_initializer_lists);
     Initializer = ParseBraceInitializer();

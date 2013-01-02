@@ -3208,7 +3208,7 @@ static ImplicitConversionSequence::CompareKind
 compareConversionFunctions(Sema &S,
                            FunctionDecl *Function1,
                            FunctionDecl *Function2) {
-  if (!S.getLangOpts().ObjC1 || !S.getLangOpts().CPlusPlus0x)
+  if (!S.getLangOpts().ObjC1 || !S.getLangOpts().CPlusPlus11)
     return ImplicitConversionSequence::Indistinguishable;
   
   // Objective-C++:
@@ -4224,7 +4224,7 @@ TryReferenceInit(Sema &S, Expr *Init, QualType DeclType,
     // allow the use of rvalue references in C++98/03 for the benefit of
     // standard library implementors; therefore, we need the xvalue check here.
     ICS.Standard.DirectBinding =
-      S.getLangOpts().CPlusPlus0x ||
+      S.getLangOpts().CPlusPlus11 ||
       (InitCategory.isPRValue() && !T2->isRecordType());
     ICS.Standard.IsLvalueReference = !isRValRef;
     ICS.Standard.BindsToFunctionLvalue = T2->isFunctionType();
@@ -4868,7 +4868,7 @@ static bool CheckConvertedConstantConversions(Sema &S,
 ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
                                                   llvm::APSInt &Value,
                                                   CCEKind CCE) {
-  assert(LangOpts.CPlusPlus0x && "converted constant expression outside C++11");
+  assert(LangOpts.CPlusPlus11 && "converted constant expression outside C++11");
   assert(T->isIntegralOrEnumerationType() && "unexpected converted const type");
 
   if (checkPlaceholderForOverload(*this, From))
@@ -7462,7 +7462,7 @@ public:
         S.AddBuiltinCandidate(*MemPtr, ParamTypes, Args, 2, CandidateSet);
       }
 
-      if (S.getLangOpts().CPlusPlus0x) {
+      if (S.getLangOpts().CPlusPlus11) {
         for (BuiltinCandidateTypeSet::iterator
                   Enum = CandidateTypes[ArgIdx].enumeration_begin(),
                EnumEnd = CandidateTypes[ArgIdx].enumeration_end();

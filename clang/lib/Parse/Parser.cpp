@@ -218,7 +218,7 @@ void Parser::ConsumeExtraSemi(ExtraSemiKind Kind, unsigned TST) {
   // C++11 allows extra semicolons at namespace scope, but not in any of the
   // other contexts.
   if (Kind == OutsideFunction && getLangOpts().CPlusPlus) {
-    if (getLangOpts().CPlusPlus0x)
+    if (getLangOpts().CPlusPlus11)
       Diag(StartLoc, diag::warn_cxx98_compat_top_level_semi)
           << FixItHint::CreateRemoval(SourceRange(StartLoc, EndLoc));
     else
@@ -741,7 +741,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
       // Extern templates
       SourceLocation ExternLoc = ConsumeToken();
       SourceLocation TemplateLoc = ConsumeToken();
-      Diag(ExternLoc, getLangOpts().CPlusPlus0x ?
+      Diag(ExternLoc, getLangOpts().CPlusPlus11 ?
              diag::warn_cxx98_compat_extern_template :
              diag::ext_extern_template) << SourceRange(ExternLoc, TemplateLoc);
       SourceLocation DeclEnd;
@@ -1049,7 +1049,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
     bool Delete = false;
     SourceLocation KWLoc;
     if (Tok.is(tok::kw_delete)) {
-      Diag(Tok, getLangOpts().CPlusPlus0x ?
+      Diag(Tok, getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_deleted_function :
            diag::ext_deleted_function);
 
@@ -1057,7 +1057,7 @@ Decl *Parser::ParseFunctionDefinition(ParsingDeclarator &D,
       Actions.SetDeclDeleted(Res, KWLoc);
       Delete = true;
     } else if (Tok.is(tok::kw_default)) {
-      Diag(Tok, getLangOpts().CPlusPlus0x ?
+      Diag(Tok, getLangOpts().CPlusPlus11 ?
            diag::warn_cxx98_compat_defaulted_function :
            diag::ext_defaulted_function);
 

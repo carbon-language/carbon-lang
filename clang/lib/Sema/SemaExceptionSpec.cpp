@@ -171,7 +171,7 @@ bool Sema::CheckEquivalentExceptionSpec(FunctionDecl *Old, FunctionDecl *New) {
     //   If a declaration of a function has an implicit
     //   exception-specification, other declarations of the function shall
     //   not specify an exception-specification.
-    if (getLangOpts().CPlusPlus0x &&
+    if (getLangOpts().CPlusPlus11 &&
         hasImplicitExceptionSpec(Old) != hasImplicitExceptionSpec(New)) {
       Diag(New->getLocation(), diag::ext_implicit_exception_spec_mismatch)
         << hasImplicitExceptionSpec(Old);
@@ -454,7 +454,7 @@ bool Sema::CheckEquivalentExceptionSpec(const PartialDiagnostic &DiagID,
   // As a special compatibility feature, under C++0x we accept no spec and
   // throw(std::bad_alloc) as equivalent for operator new and operator new[].
   // This is because the implicit declaration changed, but old code would break.
-  if (getLangOpts().CPlusPlus0x && IsOperatorNew) {
+  if (getLangOpts().CPlusPlus11 && IsOperatorNew) {
     const FunctionProtoType *WithExceptions = 0;
     if (OldEST == EST_None && NewEST == EST_Dynamic)
       WithExceptions = New;
@@ -785,7 +785,7 @@ bool Sema::CheckExceptionSpecCompatibility(Expr *From, QualType ToType)
 
 bool Sema::CheckOverridingFunctionExceptionSpec(const CXXMethodDecl *New,
                                                 const CXXMethodDecl *Old) {
-  if (getLangOpts().CPlusPlus0x && isa<CXXDestructorDecl>(New)) {
+  if (getLangOpts().CPlusPlus11 && isa<CXXDestructorDecl>(New)) {
     // Don't check uninstantiated template destructors at all. We can only
     // synthesize correct specs after the template is instantiated.
     if (New->getParent()->isDependentType())

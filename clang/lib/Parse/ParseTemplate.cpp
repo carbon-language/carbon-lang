@@ -481,7 +481,7 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
     EllipsisLoc = ConsumeToken();
 
     Diag(EllipsisLoc,
-         getLangOpts().CPlusPlus0x
+         getLangOpts().CPlusPlus11
            ? diag::warn_cxx98_compat_variadic_templates
            : diag::ext_variadic_templates);
   }
@@ -568,7 +568,7 @@ Parser::ParseTemplateTemplateParameter(unsigned Depth, unsigned Position) {
     EllipsisLoc = ConsumeToken();
     
     Diag(EllipsisLoc,
-         getLangOpts().CPlusPlus0x
+         getLangOpts().CPlusPlus11
            ? diag::warn_cxx98_compat_variadic_templates
            : diag::ext_variadic_templates);
   }
@@ -743,7 +743,7 @@ bool Parser::ParseGreaterThanInTemplateList(SourceLocation &RAngleLoc,
     Hint2 = FixItHint::CreateInsertion(Next.getLocation(), " ");
 
   unsigned DiagId = diag::err_two_right_angle_brackets_need_space;
-  if (getLangOpts().CPlusPlus0x && Tok.is(tok::greatergreater))
+  if (getLangOpts().CPlusPlus11 && Tok.is(tok::greatergreater))
     DiagId = diag::warn_cxx98_compat_two_right_angle_brackets;
   else if (Tok.is(tok::greaterequal))
     DiagId = diag::err_right_angle_bracket_equal_needs_space;
