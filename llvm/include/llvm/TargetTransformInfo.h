@@ -78,7 +78,7 @@ class ScalarTargetTransformInfo {
 public:
   /// PopcntHwSupport - Hardware support for population count. Compared to the
   /// SW implementation, HW support is supposed to significantly boost the
-  /// performance when the population is dense, and it may or not may degrade
+  /// performance when the population is dense, and it may or may not degrade
   /// performance if the population is sparse. A HW support is considered as
   /// "Fast" if it can outperform, or is on a par with, SW implementaion when
   /// the population is sparse; otherwise, it is considered as "Slow".

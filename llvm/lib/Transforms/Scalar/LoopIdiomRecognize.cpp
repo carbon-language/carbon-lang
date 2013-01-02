@@ -669,12 +669,14 @@ bool LoopIdiomRecognize::runOnCountableLoop() {
   if (!getDataLayout())
     return false;
 
-  getDominatorTree();
+  // set DT 
+  (void)getDominatorTree();
 
   LoopInfo &LI = getAnalysis<LoopInfo>();
   TLI = &getAnalysis<TargetLibraryInfo>();
 
-  getTargetLibraryInfo();
+  // set TLI 
+  (void)getTargetLibraryInfo();
 
   SmallVector<BasicBlock*, 8> ExitBlocks;
   CurLoop->getUniqueExitBlocks(ExitBlocks);
