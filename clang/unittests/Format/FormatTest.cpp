@@ -28,6 +28,7 @@ protected:
         CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
     LangOptions LangOpts;
     LangOpts.CPlusPlus = 1;
+    LangOpts.CPlusPlus11 = 1;
     Lexer Lex(ID, Context.Sources.getBuffer(ID), Context.Sources, LangOpts);
     tooling::Replacements Replace =
         reformat(Style, Lex, Context.Sources, Ranges);
@@ -676,7 +677,9 @@ TEST_F(FormatTest, UnderstandsUnaryOperators) {
   verifyFormat("a-- > b;");
   verifyFormat("b ? -a : c;");
   verifyFormat("n * sizeof char16;");
+  verifyFormat("n * alignof char16;");
   verifyFormat("sizeof(char);");
+  verifyFormat("alignof(char);");
 
   verifyFormat("return -1;");
   verifyFormat("switch (a) {\n"
@@ -724,6 +727,13 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("return a & ~b;");
   verifyFormat("f(b ? *c : *d);");
   verifyFormat("int a = b ? *c : *d;");
+  verifyFormat("*b = a;");
+  verifyFormat("a * ~b;");
+  verifyFormat("a * !b;");
+  verifyFormat("a * +b;");
+  verifyFormat("a * -b;");
+  verifyFormat("a * ++b;");
+  verifyFormat("a * --b;");
 
   // FIXME: Is this desired for LLVM? Fix if not.
   verifyFormat("A<int *> a;");

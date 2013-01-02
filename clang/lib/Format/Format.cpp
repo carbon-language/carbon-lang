@@ -835,19 +835,23 @@ private:
   }
 
   TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index, bool IsRHS) {
+    if (Index == 0)
+      return TokenAnnotation::TT_UnaryOperator;
     if (Index == Annotations.size())
       return TokenAnnotation::TT_Unknown;
     const FormatToken &PrevToken = Line.Tokens[Index - 1];
     const FormatToken &NextToken = Line.Tokens[Index + 1];
 
-    if (Index == 0 || PrevToken.Tok.is(tok::l_paren) ||
-        PrevToken.Tok.is(tok::comma) || PrevToken.Tok.is(tok::kw_return) ||
-        PrevToken.Tok.is(tok::colon) ||
+    if (PrevToken.Tok.is(tok::l_paren) || PrevToken.Tok.is(tok::comma) ||
+        PrevToken.Tok.is(tok::kw_return) || PrevToken.Tok.is(tok::colon) ||
         Annotations[Index - 1].Type == TokenAnnotation::TT_BinaryOperator)
       return TokenAnnotation::TT_UnaryOperator;
 
     if (PrevToken.Tok.isLiteral() || NextToken.Tok.isLiteral() ||
-        NextToken.Tok.is(tok::kw_sizeof))
+        NextToken.Tok.is(tok::plus) || NextToken.Tok.is(tok::minus) ||
+        NextToken.Tok.is(tok::plusplus) || NextToken.Tok.is(tok::minusminus) ||
+        NextToken.Tok.is(tok::tilde) || NextToken.Tok.is(tok::exclaim) ||
+        NextToken.Tok.is(tok::kw_alignof) || NextToken.Tok.is(tok::kw_sizeof))
       return TokenAnnotation::TT_BinaryOperator;
 
     if (NextToken.Tok.is(tok::comma) || NextToken.Tok.is(tok::r_paren) ||
@@ -931,7 +935,7 @@ private:
       return Left.is(tok::kw_if) || Left.is(tok::kw_for) ||
              Left.is(tok::kw_while) || Left.is(tok::kw_switch) ||
              (Left.isNot(tok::identifier) && Left.isNot(tok::kw_sizeof) &&
-              Left.isNot(tok::kw_typeof));
+              Left.isNot(tok::kw_typeof) && Left.isNot(tok::kw_alignof));
     }
     return true;
   }
