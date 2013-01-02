@@ -20,7 +20,7 @@
 #include "polly/ScopDetection.h"
 
 #include "llvm/Analysis/RegionPass.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 
 namespace llvm {
   class DataLayout;

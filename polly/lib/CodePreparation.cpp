@@ -15,7 +15,7 @@
 #include "polly/LinkAllPasses.h"
 #include "polly/Support/ScopHelper.h"
 
-#include "llvm/Instruction.h"
+#include "llvm/IR/Instruction.h"
 #include "llvm/Pass.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Analysis/LoopInfo.h"

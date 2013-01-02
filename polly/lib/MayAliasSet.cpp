@@ -14,7 +14,7 @@
 #include "polly/TempScopInfo.h"
 #include "polly/MayAliasSet.h"
 
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/AliasAnalysis.h"

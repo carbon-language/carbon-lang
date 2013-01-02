@@ -31,13 +31,13 @@
 #include "polly/CodeGen/Utils.h"
 #include "polly/Support/GICHelper.h"
 
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #define DEBUG_TYPE "polly-codegen-isl"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #include "isl/union_map.h"

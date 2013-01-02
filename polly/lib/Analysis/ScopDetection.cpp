@@ -50,7 +50,7 @@
 #include "polly/Support/ScopHelper.h"
 #include "polly/Support/SCEVValidator.h"
 
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/LoopInfo.h"

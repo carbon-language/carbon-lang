@@ -16,7 +16,7 @@
 #include "polly/Config/config.h"
 
 #ifdef GPU_CODEGEN
-#include "llvm/IRBuilder.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/ADT/SetVector.h"
 
 #include <map>
