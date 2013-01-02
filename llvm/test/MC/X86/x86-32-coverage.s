@@ -3948,6 +3948,10 @@
 // CHECK:  encoding: [0xd9,0xca]
         	fxch	%st(2)
 
+// CHECK: fcom
+// CHECK:  encoding: [0xd8,0xd1]
+        	fcom
+
 // CHECK: fcom	%st(2)
 // CHECK:  encoding: [0xd8,0xd2]
         	fcom	%st(2)
@@ -3967,6 +3971,10 @@
 // CHECK: ficoml	305419896
 // CHECK:  encoding: [0xda,0x15,0x78,0x56,0x34,0x12]
         	ficoml	0x12345678
+
+// CHECK: fcomp
+// CHECK:  encoding: [0xd8,0xd9]
+        	fcomp
 
 // CHECK: fcomp	%st(2)
 // CHECK:  encoding: [0xd8,0xda]

@@ -1910,6 +1910,8 @@ def : InstAlias<"fmulp",        (MUL_FPrST0  ST1)>;
 def : InstAlias<"fdivp",        (DIVR_FPrST0 ST1)>;
 def : InstAlias<"fdivrp",       (DIV_FPrST0  ST1)>;
 def : InstAlias<"fxch",         (XCH_F       ST1)>;
+def : InstAlias<"fcom",         (COM_FST0r   ST1)>;
+def : InstAlias<"fcomp",        (COMP_FST0r  ST1)>;
 def : InstAlias<"fcomi",        (COM_FIr     ST1)>;
 def : InstAlias<"fcompi",       (COM_FIPr    ST1)>;
 def : InstAlias<"fucom",        (UCOM_Fr     ST1)>;
