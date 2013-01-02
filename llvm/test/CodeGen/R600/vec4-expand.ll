@@ -1,6 +1,3 @@
-; There are bugs in the DAGCombiner that prevent this test from passing.
-; XFAIL: *
-
 ; RUN: llc < %s -march=r600 -mcpu=redwood | FileCheck %s
 
 ; CHECK: FLT_TO_INT T{{[0-9]+\.[XYZW], T[0-9]+\.[XYZW]}}
