@@ -15974,7 +15974,7 @@ static SDValue WidenMaskArithmetic(SDNode *N, SelectionDAG &DAG,
   }
 
   // Generate the wide operation.
-  SDValue Op = DAG.getNode(N->getOpcode(), DL, WideVT, N0, N1);
+  SDValue Op = DAG.getNode(Narrow->getOpcode(), DL, WideVT, N0, N1);
   unsigned Opcode = N->getOpcode();
   switch (Opcode) {
   case ISD::ANY_EXTEND:
