@@ -11,11 +11,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/DataTypes.h"
-#include <string>
-
 #ifndef LLVM_SYSTEM_TIMEVALUE_H
 #define LLVM_SYSTEM_TIMEVALUE_H
+
+#include "llvm/Support/DataTypes.h"
+#include <string>
 
 namespace llvm {
 namespace sys {
