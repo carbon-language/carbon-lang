@@ -699,6 +699,9 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("A<int **> a;");
   verifyFormat("A<int *, int *> a;");
   verifyFormat("A<int **, int **> a;");
+  verifyFormat("Type *A = static_cast<Type *>(P);");
+  verifyFormat("Type *A = (Type *) P;");
+  verifyFormat("Type *A = (vector<Type *, int *>) P;");
 
   verifyGoogleFormat("int main(int argc, char** argv) {\n}");
   verifyGoogleFormat("A<int*> a;");

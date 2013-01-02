@@ -822,18 +822,22 @@ private:
   TokenAnnotation::TokenType determineStarAmpUsage(unsigned Index, bool IsRHS) {
     if (Index == Annotations.size())
       return TokenAnnotation::TT_Unknown;
+    const FormatToken &PrevToken = Line.Tokens[Index - 1];
+    const FormatToken &NextToken = Line.Tokens[Index + 1];
 
-    if (Index == 0 || Line.Tokens[Index - 1].Tok.is(tok::l_paren) ||
-        Line.Tokens[Index - 1].Tok.is(tok::comma) ||
-        Line.Tokens[Index - 1].Tok.is(tok::kw_return) ||
-        Line.Tokens[Index - 1].Tok.is(tok::colon) ||
+    if (Index == 0 || PrevToken.Tok.is(tok::l_paren) ||
+        PrevToken.Tok.is(tok::comma) || PrevToken.Tok.is(tok::kw_return) ||
+        PrevToken.Tok.is(tok::colon) ||
         Annotations[Index - 1].Type == TokenAnnotation::TT_BinaryOperator)
       return TokenAnnotation::TT_UnaryOperator;
 
-    if (Line.Tokens[Index - 1].Tok.isLiteral() ||
-        Line.Tokens[Index + 1].Tok.isLiteral() ||
-        Line.Tokens[Index + 1].Tok.is(tok::kw_sizeof))
+    if (PrevToken.Tok.isLiteral() || NextToken.Tok.isLiteral() ||
+        NextToken.Tok.is(tok::kw_sizeof))
       return TokenAnnotation::TT_BinaryOperator;
+
+    if (NextToken.Tok.is(tok::comma) || NextToken.Tok.is(tok::r_paren) ||
+        NextToken.Tok.is(tok::greater))
+      return TokenAnnotation::TT_PointerOrReference;
 
     // It is very unlikely that we are going to find a pointer or reference type
     // definition on the RHS of an assignment.
