@@ -164,9 +164,7 @@ value:
 
 The expression ``@(AVAudioQualityMax)`` converts ``AVAudioQualityMax``
 to an integer type, and boxes the value accordingly. If the enum has a
-`fixed underlying
-type <http://clang.llvm.org/docs/LanguageExtensions.html#objc_fixed_enum>`_
-as in:
+:ref:`fixed underlying type <objc-fixed-enum>` as in:
 
 .. code-block:: objc
 
@@ -178,8 +176,7 @@ then the fixed underlying type will be used to select the correct
 
 Boxing a value of enum type will result in a ``NSNumber`` pointer with a
 creation method according to the underlying type of the enum, which can
-be a `fixed underlying
-type <http://clang.llvm.org/docs/LanguageExtensions.html#objc_fixed_enum>`_
+be a :ref:`fixed underlying type <objc-fixed-enum>`
 or a compiler-defined integer type capable of representing the values of
 all the members of the enumeration:
 

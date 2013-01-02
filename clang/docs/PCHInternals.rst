@@ -7,7 +7,7 @@ Precompiled Header and Modules Internals
 
 This document describes the design and implementation of Clang's precompiled
 headers (PCH) and modules.  If you are interested in the end-user view, please
-see the `User's Manual <UsersManual.html#precompiledheaders>`_.
+see the :ref:`User's Manual <usersmanual-precompiled-headers>`.
 
 Using Precompiled Headers with ``clang``
 ----------------------------------------

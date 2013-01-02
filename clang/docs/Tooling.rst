@@ -33,7 +33,7 @@ Do not use LibClang when you...:
 Clang Plugins
 -------------
 
-`Clang Plugins <ClangPlugins.html>`_ allow you to run additional actions on the
+:doc:`Clang Plugins <ClangPlugins>` allow you to run additional actions on the
 AST as part of a compilation.  Plugins are dynamic libraries that are loaded at
 runtime by the compiler, and they're easy to integrate into your build
 environment.
@@ -60,7 +60,7 @@ Do not use Clang Plugins when you...:
 LibTooling
 ----------
 
-`LibTooling <LibTooling.html>`_ is a C++ interface aimed at writing standalone
+:doc:`LibTooling <LibTooling>` is a C++ interface aimed at writing standalone
 tools, as well as integrating into services that run clang tools.  Canonical
 examples of when to use LibTooling:
 
@@ -85,7 +85,7 @@ Do not use LibTooling when you...:
 Clang Tools
 -----------
 
-`Clang tools <ClangTools.html>`_ are a collection of specific developer tools
+:doc:`Clang tools <ClangTools>` are a collection of specific developer tools
 built on top of the LibTooling infrastructure as part of the Clang project.
 They are targeted at automating and improving core development activities of
 C/C++ developers.

@@ -525,7 +525,7 @@ the ``CharSourceRange`` class.
 The Driver Library
 ==================
 
-The clang Driver and library are documented `here <DriverInternals.html>`_.
+The clang Driver and library are documented :doc:`here <DriverInternals>`.
 
 Precompiled Headers
 ===================
@@ -534,7 +534,7 @@ Clang supports two implementations of precompiled headers.  The default
 implementation, precompiled headers (:doc:`PCH <PCHInternals>`) uses a
 serialized representation of Clang's internal data structures, encoded with the
 `LLVM bitstream format <http://llvm.org/docs/BitCodeFormat.html>`_.
-Pretokenized headers (`PTH <PTHInternals.html>`_), on the other hand, contain a
+Pretokenized headers (:doc:`PTH <PTHInternals>`), on the other hand, contain a
 serialized representation of the tokens encountered when preprocessing a header
 (and anything that header includes).
 

@@ -7,7 +7,7 @@ This document will provide a basic walkthrough of how to write a tool using
 LibTooling.
 
 For the information on how to setup Clang Tooling for LLVM see
-`HowToSetupToolingForLLVM.html <HowToSetupToolingForLLVM.html>`_
+:doc:`HowToSetupToolingForLLVM`
 
 Introduction
 ------------

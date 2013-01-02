@@ -34,7 +34,7 @@ of compilation databases for Unix Makefile builds (Ninja builds in the
 works) with the option ``CMAKE_EXPORT_COMPILE_COMMANDS``.
 
 Clang's tooling interface supports reading compilation databases; see
-the `LibTooling documentation <LibTooling.html>`_. libclang and its
+the :doc:`LibTooling documentation <LibTooling>`. libclang and its
 python bindings also support this (since clang 3.2); see
 `CXCompilationDatabase.h </doxygen/group__COMPILATIONDB.html>`_.
 

@@ -7,9 +7,9 @@ nodes of the AST and execute code that uses the matched nodes.  Combined with
 :doc:`LibTooling`, LibASTMatchers helps to write code-to-code transformation
 tools or query tools.
 
-We assume basic knowledge about the Clang AST.  See the `Introduction to the
-Clang AST <IntroductionToTheClangAST.html>`_ if you want to learn more about
-how the AST is structured.
+We assume basic knowledge about the Clang AST.  See the :doc:`Introduction
+to the Clang AST <IntroductionToTheClangAST>` if you want to learn more
+about how the AST is structured.
 
 ..  FIXME: create tutorial and link to the tutorial
 
@@ -52,7 +52,7 @@ AST matchers <astmatchers-writing>` later in this document.
 
 The precondition to using the matchers is to understand how the AST for what you
 want to match looks like.  The
-`Introduction to the Clang AST <IntroductionToTheClangAST.html>`_ teaches you
+:doc:`Introduction to the Clang AST <IntroductionToTheClangAST>` teaches you
 how to dump a translation unit's AST into a human readable format.
 
 ..  FIXME: Introduce link to ASTMatchersTutorial.html

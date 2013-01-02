@@ -87,8 +87,8 @@ for support for non-standardized features, i.e. features not prefixed ``c_``,
 ``cxx_`` or ``objc_``.
 
 Another use of ``__has_feature`` is to check for compiler features not related
-to the language standard, such as e.g. `AddressSanitizer
-<AddressSanitizer.html>`_.
+to the language standard, such as e.g. :doc:`AddressSanitizer
+<AddressSanitizer>`.
 
 If the ``-pedantic-errors`` option is given, ``__has_extension`` is equivalent
 to ``__has_feature``.
@@ -925,14 +925,16 @@ Use ``__has_feature(objc_instancetype)`` to determine whether the
 Automatic reference counting
 ----------------------------
 
-Clang provides support for `automated reference counting
-<AutomaticReferenceCounting.html>`_ in Objective-C, which eliminates the need
+Clang provides support for :doc:`automated reference counting
+<AutomaticReferenceCounting>` in Objective-C, which eliminates the need
 for manual ``retain``/``release``/``autorelease`` message sends.  There are two
 feature macros associated with automatic reference counting:
 ``__has_feature(objc_arc)`` indicates the availability of automated reference
 counting in general, while ``__has_feature(objc_arc_weak)`` indicates that
 automated reference counting also includes support for ``__weak`` pointers to
 Objective-C objects.
+
+.. _objc-fixed-enum:
 
 Enumerations with a fixed underlying type
 -----------------------------------------
@@ -1010,8 +1012,8 @@ management (autorelease).
 Object Literals and Subscripting
 --------------------------------
 
-Clang provides support for `Object Literals and Subscripting
-<ObjectiveCLiterals.html>`_ in Objective-C, which simplifies common Objective-C
+Clang provides support for :doc:`Object Literals and Subscripting
+<ObjectiveCLiterals>` in Objective-C, which simplifies common Objective-C
 programming patterns, makes programs more concise, and improves the safety of
 container creation.  There are several feature macros associated with object
 literals and subscripting: ``__has_feature(objc_array_literals)`` tests the
