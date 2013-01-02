@@ -11,8 +11,8 @@ LEVEL := .
 
 # Top-Level LLVM Build Stages:
 #   1. Build lib/Support and lib/TableGen, which are used by utils (tblgen).
-#   2. Build utils, which is used by VMCore.
-#   3. Build VMCore, which builds the Intrinsics.inc file used by libs.
+#   2. Build utils, which is used by IR.
+#   3. Build IR, which builds the Intrinsics.inc file used by libs.
 #   4. Build libs, which are needed by llvm-config.
 #   5. Build llvm-config, which determines inter-lib dependencies for tools.
 #   6. Build tools, runtime, docs.
@@ -30,7 +30,7 @@ ifeq ($(BUILD_DIRS_ONLY),1)
   DIRS := lib/Support lib/TableGen utils tools/llvm-config
   OPTIONAL_DIRS := tools/clang/utils/TableGen
 else
-  DIRS := lib/Support lib/TableGen utils lib/VMCore lib tools/llvm-shlib \
+  DIRS := lib/Support lib/TableGen utils lib/IR lib tools/llvm-shlib \
           tools/llvm-config tools runtime docs unittests
   OPTIONAL_DIRS := projects bindings
 endif
