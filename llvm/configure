@@ -565,7 +565,7 @@ PACKAGE_VERSION='3.3svn'
 PACKAGE_STRING='LLVM 3.3svn'
 PACKAGE_BUGREPORT='http://llvm.org/bugs/'
 
-ac_unique_file="lib/VMCore/Module.cpp"
+ac_unique_file="lib/IR/Module.cpp"
 # Factoring default headers for most tests.
 ac_includes_default="\
 #include <stdio.h>

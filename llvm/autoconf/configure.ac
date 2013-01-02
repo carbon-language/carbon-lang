@@ -45,7 +45,7 @@ AC_PREREQ(2.60)
 
 dnl Verify that the source directory is valid. This makes sure that we are
 dnl configuring LLVM and not some other package (it validates --srcdir argument)
-AC_CONFIG_SRCDIR([lib/VMCore/Module.cpp])
+AC_CONFIG_SRCDIR([lib/IR/Module.cpp])
 
 dnl Place all of the extra autoconf files into the config subdirectory. Tell
 dnl various tools where the m4 autoconf macros are.
