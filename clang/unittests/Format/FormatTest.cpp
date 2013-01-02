@@ -455,6 +455,10 @@ TEST_F(FormatTest, BreaksDesireably) {
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
                "    (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&\n"
+      "                                 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+
   // This test case breaks on an incorrect memoization, i.e. an optimization not
   // taking into account the StopAt value.
   verifyFormat(

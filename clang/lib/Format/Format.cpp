@@ -345,7 +345,7 @@ private:
     if (Left.Tok.is(tok::semi) || Left.Tok.is(tok::comma))
       return 0;
     if (Left.Tok.is(tok::l_paren))
-      return 2;
+      return 20;
 
     prec::Level Level = getPrecedence(Line.Tokens[Index]);
     if (Level != prec::Unknown)
