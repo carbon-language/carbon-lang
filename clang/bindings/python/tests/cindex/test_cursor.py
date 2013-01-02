@@ -250,3 +250,12 @@ def test_get_arguments():
     assert len(arguments) == 2
     assert arguments[0].spelling == "i"
     assert arguments[1].spelling == "j"
+
+def test_referenced():
+    tu = get_tu('void foo(); void bar() { foo(); }')
+    foo = get_cursor(tu, 'foo')
+    bar = get_cursor(tu, 'bar')
+    for c in bar.get_children():
+        if c.kind == CursorKind.CALL_EXPR:
+            assert c.referenced.spelling == foo.spelling
+            break
