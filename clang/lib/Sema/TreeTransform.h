@@ -4633,7 +4633,6 @@ QualType TreeTransform<Derived>::TransformAtomicType(TypeLocBuilder &TLB,
   return Result;
 }
 
-namespace {
   /// \brief Simple iterator that traverses the template arguments in a
   /// container that provides a \c getArgLoc() member function.
   ///
@@ -4697,7 +4696,6 @@ namespace {
       return !(X == Y);
     }
   };
-}
 
 
 template <typename Derived>
