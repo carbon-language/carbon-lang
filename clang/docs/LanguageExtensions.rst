@@ -5,6 +5,13 @@ Clang Language Extensions
 .. contents::
    :local:
 
+.. toctree::
+   :hidden:
+
+   ObjectiveCLiterals
+   BlockLanguageSpec
+   AutomaticReferenceCounting
+
 Introduction
 ============
 

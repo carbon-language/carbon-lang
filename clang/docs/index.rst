@@ -18,6 +18,7 @@ Using Clang as a Compiler
    :maxdepth: 1
 
    UsersManual
+   LanguageExtensions
    AddressSanitizer
    ThreadSanitizer
    MemorySanitizer
@@ -49,18 +50,6 @@ Design Documents
    DriverInternals
    PTHInternals
    PCHInternals
-
-
-Language Extensions and Specs
------------------------------
-
-.. toctree::
-   :maxdepth: 1
-
-   LanguageExtensions
-   ObjectiveCLiterals
-   BlockLanguageSpec
-   AutomaticReferenceCounting
 
 
 Indices and tables
