@@ -19,7 +19,7 @@ LLVM/Clang checkout:
 -  With Subversion:
 
    -  ``cd llvm/tools/clang/tools``
-   -  ``svn co http://llvm.org/svn/llvm-project/clang-tools-extra/trunk       extra``
+   -  ``svn co http://llvm.org/svn/llvm-project/clang-tools-extra/trunk extra``
 
 -  Or with Git:
 
