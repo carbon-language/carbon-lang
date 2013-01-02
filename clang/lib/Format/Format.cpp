@@ -806,6 +806,7 @@ private:
     if (Index == 0 || Line.Tokens[Index - 1].Tok.is(tok::l_paren) ||
         Line.Tokens[Index - 1].Tok.is(tok::comma) ||
         Line.Tokens[Index - 1].Tok.is(tok::kw_return) ||
+        Line.Tokens[Index - 1].Tok.is(tok::colon) ||
         Annotations[Index - 1].Type == TokenAnnotation::TT_BinaryOperator)
       return TokenAnnotation::TT_UnaryOperator;
 

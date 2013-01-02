@@ -650,7 +650,7 @@ TEST_F(FormatTest, UndestandsOverloadedOperators) {
   verifyFormat("void operator delete[](void *ptr);");
 }
 
-TEST_F(FormatTest, UnderstandsUsesOfStar) {
+TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("int *f(int *a) {\n}");
   verifyFormat("f(a, *a);");
   verifyFormat("f(*a);");
@@ -668,6 +668,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStar) {
   verifyFormat("return 10 * b;");
   verifyFormat("return *b * *c;");
   verifyFormat("return a & ~b;");
+  verifyFormat("f(b ? *c : *d);");
+  verifyFormat("int a = b ? *c : *d;");
 
   // FIXME: Is this desired for LLVM? Fix if not.
   verifyFormat("A<int *> a;");
@@ -680,6 +682,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStar) {
   verifyGoogleFormat("A<int**> a;");
   verifyGoogleFormat("A<int*, int*> a;");
   verifyGoogleFormat("A<int**, int**> a;");
+  verifyGoogleFormat("f(b ? *c : *d);");
+  verifyGoogleFormat("int a = b ? *c : *d;");
 }
 
 TEST_F(FormatTest, DoesNotBreakBeforePointerOrReference) {
