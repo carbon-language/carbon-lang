@@ -2,9 +2,11 @@
 
 ;CHECK: and_masks
 ;CHECK: vmovups
-;CHECK-NEXT: vcmpltp
-;CHECK-NEXT: vandps
-;CHECK-NEXT: vmovups
+;CHECK: vcmpltp
+;CHECK: vcmpltp
+;CHECK: vandps
+;CHECK: vandps
+;CHECK: vmovups
 ;CHECK: ret
 
 define void @and_masks(<8 x float>* %a, <8 x float>* %b, <8 x float>* %c) nounwind uwtable noinline ssp {
@@ -20,12 +22,11 @@ define void @and_masks(<8 x float>* %a, <8 x float>* %b, <8 x float>* %c) nounwi
 }
 
 ;CHECK: neg_mask
-;CHECK:  vmovups
-;CHECK-NEXT: vcmpltps
-;CHECK-NEXT: vandps
-;CHECK-NEXT: vmovups
+;CHECK: vcmpltps
+;CHECK: vxorps
+;CHECK: vandps
+;CHECK: vmovups
 ;CHECK: ret
-
 define void @neg_masks(<8 x float>* %a, <8 x float>* %b, <8 x float>* %c) nounwind uwtable noinline ssp {
   %v0 = load <8 x float>* %a, align 16
   %v1 = load <8 x float>* %b, align 16
