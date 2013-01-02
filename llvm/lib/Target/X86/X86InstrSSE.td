@@ -3892,78 +3892,77 @@ defm PACKUSWB : PDI_binop_all_int<0x67, "packuswb", int_x86_sse2_packuswb_128,
 //===---------------------------------------------------------------------===//
 
 let ExeDomain = SSEPackedInt in {
-multiclass sse2_pshuffle<string OpcodeStr, ValueType vt, SDNode OpNode> {
-def ri : Ii8<0x70, MRMSrcReg,
-             (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
-             !strconcat(OpcodeStr,
-                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-              [(set VR128:$dst, (vt (OpNode VR128:$src1, (i8 imm:$src2))))],
-              IIC_SSE_PSHUF>;
-def mi : Ii8<0x70, MRMSrcMem,
-             (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
-             !strconcat(OpcodeStr,
-                        "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-              [(set VR128:$dst,
-                (vt (OpNode (bitconvert (memopv2i64 addr:$src1)),
-                             (i8 imm:$src2))))],
-                             IIC_SSE_PSHUF>;
-}
-
-multiclass sse2_pshuffle_y<string OpcodeStr, ValueType vt, SDNode OpNode> {
-def Yri : Ii8<0x70, MRMSrcReg,
-              (outs VR256:$dst), (ins VR256:$src1, i8imm:$src2),
-              !strconcat(OpcodeStr,
-                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-              [(set VR256:$dst, (vt (OpNode VR256:$src1, (i8 imm:$src2))))]>;
-def Ymi : Ii8<0x70, MRMSrcMem,
-              (outs VR256:$dst), (ins i256mem:$src1, i8imm:$src2),
-              !strconcat(OpcodeStr,
-                         "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-              [(set VR256:$dst,
-                (vt (OpNode (bitconvert (memopv4i64 addr:$src1)),
-                             (i8 imm:$src2))))]>;
-}
-} // ExeDomain = SSEPackedInt
-
+multiclass sse2_pshuffle<string OpcodeStr, ValueType vt128, ValueType vt256,
+                         SDNode OpNode> {
 let Predicates = [HasAVX] in {
- let AddedComplexity = 5 in
-  defm VPSHUFD : sse2_pshuffle<"vpshufd", v4i32, X86PShufd>, TB, OpSize, VEX;
-
- // SSE2 with ImmT == Imm8 and XS prefix.
-  defm VPSHUFHW : sse2_pshuffle<"vpshufhw", v8i16, X86PShufhw>, XS, VEX;
-
- // SSE2 with ImmT == Imm8 and XD prefix.
-  defm VPSHUFLW : sse2_pshuffle<"vpshuflw", v8i16, X86PShuflw>, XD, VEX;
-
- def : Pat<(v4f32 (X86PShufd (memopv4f32 addr:$src1), (i8 imm:$imm))),
-           (VPSHUFDmi addr:$src1, imm:$imm)>;
- def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
-           (VPSHUFDri VR128:$src1, imm:$imm)>;
+  def V#NAME#ri : Ii8<0x70, MRMSrcReg, (outs VR128:$dst),
+                      (ins VR128:$src1, i8imm:$src2),
+                      !strconcat(!strconcat("v", OpcodeStr),
+                                 "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      [(set VR128:$dst,
+                        (vt128 (OpNode VR128:$src1, (i8 imm:$src2))))],
+                      IIC_SSE_PSHUF>, VEX;
+  def V#NAME#mi : Ii8<0x70, MRMSrcMem, (outs VR128:$dst),
+                      (ins i128mem:$src1, i8imm:$src2),
+                      !strconcat(!strconcat("v", OpcodeStr),
+                                 "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                     [(set VR128:$dst,
+                       (vt128 (OpNode (bitconvert (memopv2i64 addr:$src1)),
+                        (i8 imm:$src2))))], IIC_SSE_PSHUF>, VEX;
 }
 
 let Predicates = [HasAVX2] in {
-  defm VPSHUFD : sse2_pshuffle_y<"vpshufd", v8i32, X86PShufd>,
-                                TB, OpSize, VEX,VEX_L;
-  defm VPSHUFHW : sse2_pshuffle_y<"vpshufhw", v16i16, X86PShufhw>,
-                                  XS, VEX, VEX_L;
-  defm VPSHUFLW : sse2_pshuffle_y<"vpshuflw", v16i16, X86PShuflw>,
-                                  XD, VEX, VEX_L;
+  def V#NAME#Yri : Ii8<0x70, MRMSrcReg, (outs VR256:$dst),
+                       (ins VR256:$src1, i8imm:$src2),
+                       !strconcat(!strconcat("v", OpcodeStr),
+                                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                       [(set VR256:$dst,
+                         (vt256 (OpNode VR256:$src1, (i8 imm:$src2))))],
+                       IIC_SSE_PSHUF>, VEX, VEX_L;
+  def V#NAME#Ymi : Ii8<0x70, MRMSrcMem, (outs VR256:$dst),
+                       (ins i256mem:$src1, i8imm:$src2),
+                       !strconcat(!strconcat("v", OpcodeStr),
+                                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                      [(set VR256:$dst,
+                        (vt256 (OpNode (bitconvert (memopv4i64 addr:$src1)),
+                         (i8 imm:$src2))))], IIC_SSE_PSHUF>, VEX, VEX_L;
 }
 
 let Predicates = [UseSSE2] in {
- let AddedComplexity = 5 in
-  defm PSHUFD : sse2_pshuffle<"pshufd", v4i32, X86PShufd>, TB, OpSize;
+  def ri : Ii8<0x70, MRMSrcReg,
+               (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
+               !strconcat(OpcodeStr,
+                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                [(set VR128:$dst,
+                  (vt128 (OpNode VR128:$src1, (i8 imm:$src2))))],
+                IIC_SSE_PSHUF>;
+  def mi : Ii8<0x70, MRMSrcMem,
+               (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
+               !strconcat(OpcodeStr,
+                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+                [(set VR128:$dst,
+                  (vt128 (OpNode (bitconvert (memopv2i64 addr:$src1)),
+                          (i8 imm:$src2))))], IIC_SSE_PSHUF>;
+}
+}
+} // ExeDomain = SSEPackedInt
 
- // SSE2 with ImmT == Imm8 and XS prefix.
-  defm PSHUFHW : sse2_pshuffle<"pshufhw", v8i16, X86PShufhw>, XS;
+defm PSHUFD  : sse2_pshuffle<"pshufd", v4i32, v8i32, X86PShufd>, TB, OpSize;
+defm PSHUFHW : sse2_pshuffle<"pshufhw", v8i16, v16i16, X86PShufhw>, XS;
+defm PSHUFLW : sse2_pshuffle<"pshuflw", v8i16, v16i16, X86PShuflw>, XD;
 
- // SSE2 with ImmT == Imm8 and XD prefix.
-  defm PSHUFLW : sse2_pshuffle<"pshuflw", v8i16, X86PShuflw>, XD;
+let Predicates = [HasAVX] in {
+  def : Pat<(v4f32 (X86PShufd (memopv4f32 addr:$src1), (i8 imm:$imm))),
+            (VPSHUFDmi addr:$src1, imm:$imm)>;
+  def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
+            (VPSHUFDri VR128:$src1, imm:$imm)>;
+}
 
- def : Pat<(v4f32 (X86PShufd (memopv4f32 addr:$src1), (i8 imm:$imm))),
-           (PSHUFDmi addr:$src1, imm:$imm)>;
- def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
-           (PSHUFDri VR128:$src1, imm:$imm)>;
+let Predicates = [UseSSE2] in {
+  def : Pat<(v4f32 (X86PShufd (memopv4f32 addr:$src1), (i8 imm:$imm))),
+            (PSHUFDmi addr:$src1, imm:$imm)>;
+  def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
+            (PSHUFDri VR128:$src1, imm:$imm)>;
 }
 
 //===---------------------------------------------------------------------===//
