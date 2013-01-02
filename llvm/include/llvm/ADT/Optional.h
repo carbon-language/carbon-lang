@@ -28,7 +28,7 @@ namespace llvm {
 template<typename T>
 class Optional {
   T x;
-  unsigned hasVal : 1;
+  bool hasVal;
 public:
   explicit Optional() : x(), hasVal(false) {}
   Optional(const T &y) : x(y), hasVal(true) {}
