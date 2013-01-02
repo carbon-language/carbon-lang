@@ -72,7 +72,7 @@ Use LibTooling when you...:
 * want to run tools over a single file, or a specific subset of files,
   independently of the build system
 * want full control over the Clang AST
-* want to share code with Clang Plgins
+* want to share code with Clang Plugins
 
 Do not use LibTooling when you...:
 
