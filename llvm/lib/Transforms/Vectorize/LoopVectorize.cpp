@@ -94,9 +94,17 @@ struct LoopVectorize : public LoopPass {
     // Check the function attribues to find out if this function should be
     // optimized for size.
     Function *F = L->getHeader()->getParent();
-    Attribute::AttrKind SzAttr= Attribute::OptimizeForSize;
-    bool OptForSize =
-      F->getAttributes().hasAttribute(AttributeSet::FunctionIndex, SzAttr);
+    Attribute::AttrKind SzAttr = Attribute::OptimizeForSize;
+    Attribute::AttrKind FlAttr = Attribute::NoImplicitFloat;
+    unsigned FnIndex = AttributeSet::FunctionIndex;
+    bool OptForSize = F->getAttributes().hasAttribute(FnIndex, SzAttr);
+    bool NoFloat = F->getAttributes().hasAttribute(FnIndex, FlAttr);
+
+    if (NoFloat) {
+      DEBUG(dbgs() << "LV: Can't vectorize when the NoImplicitFloat"
+            "attribute is used.\n");
+      return false;
+    }
 
     unsigned VF = CM.selectVectorizationFactor(OptForSize, VectorizationFactor);
 
