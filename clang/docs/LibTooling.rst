@@ -184,23 +184,6 @@ with ``-v`` and look at the search paths it looks through.
 Linking
 ^^^^^^^
 
-Please note that this presents the linking requirements at the time of this
-writing.  For the most up-to-date information, look at one of the tools'
-Makefiles (for example `clang-check/Makefile
+For a list of libraries to link, look at one of the tools' Makefiles (for
+example `clang-check/Makefile
 <http://llvm.org/viewvc/llvm-project/cfe/trunk/tools/clang-check/Makefile?view=markup>`_).
-
-To link a binary using the tooling infrastructure, link in the following
-libraries:
-
-* Tooling
-* Frontend
-* Driver
-* Serialization
-* Parse
-* Sema
-* Analysis
-* Edit
-* AST
-* Lex
-* Basic
-
