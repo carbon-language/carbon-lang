@@ -20,9 +20,9 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/Win64EH.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Support/Win64EH.h"
 #include <algorithm>
 #include <cstring>
 

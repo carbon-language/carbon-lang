@@ -10,7 +10,6 @@
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
-
 #include "gtest/gtest.h"
 
 using namespace llvm;
