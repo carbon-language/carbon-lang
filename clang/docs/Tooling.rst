@@ -94,7 +94,7 @@ Examples of tools we are building or planning as part of the Clang project:
 
 * Syntax checking (:program:`clang-check`)
 * Automatic fixing of compile errors (:program:`clang-fixit`)
-* Automatic code formatting
+* Automatic code formatting (:program:`clang-format`)
 * Migration tools for new features in new language standards
 * Core refactoring tools
 
