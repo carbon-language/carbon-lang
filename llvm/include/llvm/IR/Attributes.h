@@ -17,8 +17,7 @@
 #define LLVM_ATTRIBUTES_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/Support/MathExtras.h"
-#include <cassert>
+#include "llvm/ADT/DenseSet.h"
 #include <string>
 
 namespace llvm {
@@ -154,63 +153,88 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// \class
+/// \brief Provide DenseMapInfo for Attribute::AttrKind.
+template<> struct DenseMapInfo<Attribute::AttrKind> {
+  static inline Attribute::AttrKind getEmptyKey() {
+    return Attribute::AttrKind(-1);
+  }
+  static inline Attribute::AttrKind getTombstoneKey() {
+    return Attribute::AttrKind(~0UL - 1L);
+  }
+  static unsigned getHashValue(const Attribute::AttrKind &Val) {
+    return (unsigned)(Val * 37UL);
+  }
+  static bool isEqual(const Attribute::AttrKind &LHS,
+                      const Attribute::AttrKind &RHS) {
+    return LHS == RHS;
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// \class
 /// \brief This class is used in conjunction with the Attribute::get method to
 /// create an Attribute object. The object itself is uniquified. The Builder's
 /// value, however, is not. So this can be used as a quick way to test for
 /// equality, presence of attributes, etc.
 class AttrBuilder {
-  uint64_t Bits;
+  DenseSet<Attribute::AttrKind> AttrSet;
+  uint64_t Alignment;
+  uint64_t StackAlignment;
+
+  uint64_t Bits;  // FIXME: Remove after encoding the attr list in the bc file.
 public:
-  AttrBuilder() : Bits(0) {}
+  AttrBuilder() : Alignment(0), StackAlignment(0), Bits(0) {}
   explicit AttrBuilder(uint64_t B) : Bits(B) {}
   AttrBuilder(const Attribute &A) : Bits(A.getBitMask()) {}
 
-  void clear() { Bits = 0; }
+  /// \brief Clear out the builder's internals.
+  void clear();
 
-  /// addAttribute - Add an attribute to the builder.
+  /// \brief Add an attribute to the builder.
   AttrBuilder &addAttribute(Attribute::AttrKind Val);
 
-  /// removeAttribute - Remove an attribute from the builder.
+  /// \brief Remove an attribute from the builder.
   AttrBuilder &removeAttribute(Attribute::AttrKind Val);
 
-  /// addAttribute - Add the attributes from A to the builder.
+  /// \brief Add the attributes from A to the builder.
   AttrBuilder &addAttributes(const Attribute &A);
 
-  /// removeAttribute - Remove the attributes from A from the builder.
+  /// \brief Remove the attributes from A from the builder.
   AttrBuilder &removeAttributes(const Attribute &A);
 
   /// \brief Return true if the builder has the specified attribute.
   bool contains(Attribute::AttrKind A) const;
 
-  /// hasAttributes - Return true if the builder has IR-level attributes.
+  /// \brief Return true if the builder has IR-level attributes.
   bool hasAttributes() const;
 
-  /// hasAttributes - Return true if the builder has any attribute that's in the
+  /// \brief Return true if the builder has any attribute that's in the
   /// specified attribute.
   bool hasAttributes(const Attribute &A) const;
 
-  /// hasAlignmentAttr - Return true if the builder has an alignment attribute.
+  /// \brief Return true if the builder has an alignment attribute.
   bool hasAlignmentAttr() const;
 
-  /// getAlignment - Retrieve the alignment attribute, if it exists.
+  /// \brief Retrieve the alignment attribute, if it exists.
   uint64_t getAlignment() const;
 
-  /// getStackAlignment - Retrieve the stack alignment attribute, if it exists.
+  /// \brief Retrieve the stack alignment attribute, if it exists.
   uint64_t getStackAlignment() const;
 
-  /// addAlignmentAttr - This turns an int alignment (which must be a power of
-  /// 2) into the form used internally in Attribute.
+  /// \brief This turns an int alignment (which must be a power of 2) into the
+  /// form used internally in Attribute.
   AttrBuilder &addAlignmentAttr(unsigned Align);
 
-  /// addStackAlignmentAttr - This turns an int stack alignment (which must be a
-  /// power of 2) into the form used internally in Attribute.
+  /// \brief This turns an int stack alignment (which must be a power of 2) into
+  /// the form used internally in Attribute.
   AttrBuilder &addStackAlignmentAttr(unsigned Align);
 
-  /// addRawValue - Add the raw value to the internal representation.
+  /// \brief Add the raw value to the internal representation.
+  /// 
   /// N.B. This should be used ONLY for decoding LLVM bitcode!
   AttrBuilder &addRawValue(uint64_t Val);
 
-  /// @brief Remove attributes that are used on functions only.
+  /// \brief Remove attributes that are used on functions only.
   void removeFunctionOnlyAttrs() {
     removeAttribute(Attribute::NoReturn)
       .removeAttribute(Attribute::NoUnwind)
@@ -236,10 +260,10 @@ public:
 
   uint64_t getBitMask() const { return Bits; }
 
-  bool operator==(const AttrBuilder &B) {
+  bool operator==(const AttrBuilder &B) const {
     return Bits == B.Bits;
   }
-  bool operator!=(const AttrBuilder &B) {
+  bool operator!=(const AttrBuilder &B) const {
     return Bits != B.Bits;
   }
 };

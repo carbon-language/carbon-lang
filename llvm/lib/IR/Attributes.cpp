@@ -233,8 +233,15 @@ std::string Attribute::getAsString() const {
 // AttrBuilder Implementation
 //===----------------------------------------------------------------------===//
 
+void AttrBuilder::clear() {
+  AttrSet.clear();
+  Alignment = StackAlignment = Bits = 0;
+}
+
 AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val){
   Bits |= AttributeImpl::getAttrMask(Val);
+
+  AttrSet.insert(Val);
   return *this;
 }
 
@@ -248,19 +255,31 @@ AttrBuilder &AttrBuilder::addAlignmentAttr(unsigned Align) {
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x40000000 && "Alignment too large.");
   Bits |= (Log2_32(Align) + 1) << 16;
+
+  AttrSet.insert(Attribute::Alignment);
+  Alignment = Align;
   return *this;
 }
-AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align){
+AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align) {
   // Default alignment, allow the target to define how to align it.
   if (Align == 0) return *this;
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x100 && "Alignment too large.");
   Bits |= (Log2_32(Align) + 1) << 26;
+
+  AttrSet.insert(Attribute::StackAlignment);
+  StackAlignment = Align;
   return *this;
 }
 
 AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
   Bits &= ~AttributeImpl::getAttrMask(Val);
+
+  AttrSet.erase(Val);
+  if (Val == Attribute::Alignment)
+    Alignment = 0;
+  else if (Val == Attribute::StackAlignment)
+    StackAlignment = 0;
   return *this;
 }
 
