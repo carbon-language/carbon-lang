@@ -636,6 +636,11 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
       "template <typename T>\n"
       "void looooooooooooooooooooongFunction(int Paaaaaaaaaaaaaaaaaaaaram1,\n"
       "                                      int Paaaaaaaaaaaaaaaaaaaaram2);");
+  verifyFormat(
+      "template <typename T>\n"
+      "aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaa,\n"
+      "                    aaaaaaaaaaaaaaaaaaaaaaaaaa<T>::aaaaaaaaaa,\n"
+      "                    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
 }
 

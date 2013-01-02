@@ -941,7 +941,10 @@ private:
   }
 
   bool canBreakBefore(unsigned i) {
+    if (Annotations[i - 1].ClosesTemplateDeclaration)
+      return true;
     if (Annotations[i - 1].Type == TokenAnnotation::TT_PointerOrReference ||
+        Annotations[i - 1].Type == TokenAnnotation::TT_TemplateCloser ||
         Annotations[i].Type == TokenAnnotation::TT_ConditionalExpr) {
       return false;
     }
