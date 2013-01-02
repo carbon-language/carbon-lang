@@ -1,4 +1,4 @@
-;===- ./lib/VMCore/LLVMBuild.txt -------------------------------*- Conf -*--===;
+;===- ./lib/IR/LLVMBuild.txt -----------------------------------*- Conf -*--===;
 ;
 ;                     The LLVM Compiler Infrastructure
 ;

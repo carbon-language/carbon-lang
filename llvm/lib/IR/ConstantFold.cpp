@@ -13,7 +13,7 @@
 //
 // The current constant folding implementation is implemented in two pieces: the
 // pieces that don't need DataLayout, and the pieces that do. This is to avoid
-// a dependence in VMCore on Target.
+// a dependence in IR on Target.
 //
 //===----------------------------------------------------------------------===//
 

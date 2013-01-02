@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the BasicBlock class for the VMCore library.
+// This file implements the BasicBlock class for the IR library.
 //
 //===----------------------------------------------------------------------===//
 

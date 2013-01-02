@@ -1,4 +1,4 @@
-##===- lib/VMCore/Makefile ---------------------------------*- Makefile -*-===##
+##===- lib/IR/Makefile -------------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

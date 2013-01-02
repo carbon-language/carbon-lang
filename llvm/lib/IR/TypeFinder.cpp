@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the TypeFinder class for the VMCore library.
+// This file implements the TypeFinder class for the IR library.
 //
 //===----------------------------------------------------------------------===//
 

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Instruction class for the VMCore library.
+// This file implements the Instruction class for the IR library.
 //
 //===----------------------------------------------------------------------===//
 

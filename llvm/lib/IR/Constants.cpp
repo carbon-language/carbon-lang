@@ -301,7 +301,7 @@ bool Constant::isConstantUsed() const {
 ///     linker will never see them.
 ///  GlobalRelocations: This entry may have arbitrary relocations.
 ///
-/// FIXME: This really should not be in VMCore.
+/// FIXME: This really should not be in IR.
 Constant::PossibleRelocationsTy Constant::getRelocationInfo() const {
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(this)) {
     if (GV->hasLocalLinkage() || GV->hasHiddenVisibility())

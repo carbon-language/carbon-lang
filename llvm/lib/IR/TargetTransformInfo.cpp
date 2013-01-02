@@ -1,4 +1,4 @@
-//===- llvm/VMCore/TargetTransformInfo.cpp ----------------------*- C++ -*-===//
+//===- llvm/IR/TargetTransformInfo.cpp --------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

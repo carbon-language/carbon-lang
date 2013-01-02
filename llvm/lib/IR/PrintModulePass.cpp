@@ -1,4 +1,4 @@
-//===--- VMCore/PrintModulePass.cpp - Module/Function Printer -------------===//
+//===--- IR/PrintModulePass.cpp - Module/Function Printer -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

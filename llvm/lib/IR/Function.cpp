@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Function class for the VMCore library.
+// This file implements the Function class for the IR library.
 //
 //===----------------------------------------------------------------------===//
 

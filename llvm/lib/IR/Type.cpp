@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Type class for the VMCore library.
+// This file implements the Type class for the IR library.
 //
 //===----------------------------------------------------------------------===//
 

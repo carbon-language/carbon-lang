@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the ValueSymbolTable class for the VMCore library.
+// This file implements the ValueSymbolTable class for the IR library.
 //
 //===----------------------------------------------------------------------===//
 

@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the GlobalValue & GlobalVariable classes for the VMCore
+// This file implements the GlobalValue & GlobalVariable classes for the IR
 // library.
 //
 //===----------------------------------------------------------------------===//
