@@ -32,3 +32,4 @@ cscope.out
 tools/extra
 # Sphinx build products
 docs/_build
+docs/analyzer/_build
