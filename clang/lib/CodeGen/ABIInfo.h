@@ -11,7 +11,7 @@
 #define CLANG_CODEGEN_ABIINFO_H
 
 #include "clang/AST/Type.h"
-#include "llvm/Type.h"
+#include "llvm/IR/Type.h"
 
 namespace llvm {
   class Value;

@@ -15,8 +15,8 @@
 
 #include "CGOpenCLRuntime.h"
 #include "CodeGenFunction.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/GlobalValue.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/GlobalValue.h"
 #include <assert.h>
 
 using namespace clang;

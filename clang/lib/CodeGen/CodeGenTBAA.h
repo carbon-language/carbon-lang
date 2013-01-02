@@ -17,7 +17,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/MDBuilder.h"
+#include "llvm/IR/MDBuilder.h"
 
 namespace llvm {
   class LLVMContext;

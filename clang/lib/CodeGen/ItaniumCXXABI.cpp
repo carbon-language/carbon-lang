@@ -25,9 +25,9 @@
 #include "CodeGenModule.h"
 #include "clang/AST/Mangle.h"
 #include "clang/AST/Type.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/Value.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Value.h"
 
 using namespace clang;
 using namespace CodeGen;

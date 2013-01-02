@@ -18,9 +18,9 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "llvm/ADT/Triple.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Type.h"
 using namespace clang;
 using namespace CodeGen;
 

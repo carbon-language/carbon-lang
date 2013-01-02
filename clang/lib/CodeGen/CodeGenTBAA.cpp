@@ -21,10 +21,10 @@
 #include "clang/AST/Mangle.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "llvm/Constants.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Metadata.h"
-#include "llvm/Type.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Type.h"
 using namespace clang;
 using namespace CodeGen;
 

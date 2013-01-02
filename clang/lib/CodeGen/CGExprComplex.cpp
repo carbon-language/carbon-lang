@@ -16,8 +16,8 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Constants.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
 using namespace clang;
 using namespace CodeGen;
 

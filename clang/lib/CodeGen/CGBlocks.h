@@ -25,7 +25,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/Type.h"
 #include "clang/Basic/TargetInfo.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 
 namespace llvm {
   class Module;

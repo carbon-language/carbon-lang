@@ -17,7 +17,7 @@
 #include "CGDebugInfo.h"
 #include "CGObjCRuntime.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/CallSite.h"
 
 using namespace clang;

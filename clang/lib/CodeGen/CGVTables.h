@@ -20,7 +20,7 @@
 #include "clang/AST/VTableBuilder.h"
 #include "clang/Basic/ABI.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/GlobalVariable.h"
+#include "llvm/IR/GlobalVariable.h"
 
 namespace clang {
   class CXXRecordDecl;

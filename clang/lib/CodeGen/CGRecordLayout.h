@@ -14,7 +14,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/DerivedTypes.h"
+#include "llvm/IR/DerivedTypes.h"
 
 namespace llvm {
   class StructType;

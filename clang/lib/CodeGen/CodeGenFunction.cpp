@@ -22,10 +22,10 @@
 #include "clang/AST/StmtCXX.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/MDBuilder.h"
-#include "llvm/Operator.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/MDBuilder.h"
+#include "llvm/IR/Operator.h"
 using namespace clang;
 using namespace CodeGen;
 

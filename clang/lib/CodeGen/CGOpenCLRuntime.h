@@ -17,8 +17,8 @@
 #define CLANG_CODEGEN_OPENCLRUNTIME_H
 
 #include "clang/AST/Type.h"
-#include "llvm/Type.h"
-#include "llvm/Value.h"
+#include "llvm/IR/Type.h"
+#include "llvm/IR/Value.h"
 
 namespace clang {
 

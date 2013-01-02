@@ -16,7 +16,7 @@
 #include "CGObjCRuntime.h"
 #include "TargetInfo.h"
 #include "clang/AST/StmtCXX.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/CallSite.h"
 
 using namespace clang;

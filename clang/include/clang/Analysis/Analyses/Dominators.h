@@ -19,7 +19,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 
 namespace clang {
 
