@@ -10,15 +10,15 @@
 #include "lldb/Expression/IRForTarget.h"
 
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Constants.h"
-#include "llvm/DataLayout.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Transforms/IPO.h"
-#include "llvm/ValueSymbolTable.h"
+#include "llvm/IR/ValueSymbolTable.h"
 
 #include "clang/AST/ASTContext.h"
 

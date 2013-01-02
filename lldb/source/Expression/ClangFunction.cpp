@@ -19,7 +19,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 
 // Project includes
 #include "lldb/Expression/ASTStructExtractor.h"
