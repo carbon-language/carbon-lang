@@ -50,6 +50,8 @@ struct TokenAnnotation {
   bool SpaceRequiredBefore;
   bool CanBreakBefore;
   bool MustBreakBefore;
+
+  bool ClosesTemplateDeclaration;
 };
 
 static prec::Level getPrecedence(const FormatToken &Tok) {
@@ -250,6 +252,8 @@ private:
       } else if (
           Line.Tokens[0].Tok.is(tok::kw_for) && Previous.Tok.is(tok::comma)) {
         State.Column = State.ForLoopVariablePos;
+      } else if (Annotations[Index - 1].ClosesTemplateDeclaration) {
+        State.Column = State.Indent[ParenLevel] - 4;
       } else {
         State.Column = State.Indent[ParenLevel];
       }
@@ -342,7 +346,8 @@ private:
         (Left.Tok.isNot(tok::comma) && Left.Tok.isNot(tok::semi)))
       return 20;
 
-    if (Left.Tok.is(tok::semi) || Left.Tok.is(tok::comma))
+    if (Left.Tok.is(tok::semi) || Left.Tok.is(tok::comma) ||
+        Annotations[Index].ClosesTemplateDeclaration)
       return 0;
     if (Left.Tok.is(tok::l_paren))
       return 20;
@@ -549,6 +554,19 @@ public:
       return false;
     }
 
+    bool parseTemplateDeclaration() {
+      if (Index < Tokens.size() && Tokens[Index].Tok.is(tok::less)) {
+        Annotations[Index].Type = TokenAnnotation::TT_TemplateOpener;
+        next();
+        if (!parseAngle())
+          return false;
+        Annotations[Index - 1].ClosesTemplateDeclaration = true;
+        parseLine();
+        return true;
+      }
+      return false;
+    }
+
     void consumeToken() {
       unsigned CurrentIndex = Index;
       next();
@@ -591,6 +609,9 @@ public:
         break;
       case tok::question:
         parseConditional();
+        break;
+      case tok::kw_template:
+        parseTemplateDeclaration();
         break;
       default:
         break;

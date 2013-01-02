@@ -594,6 +594,19 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
                "}");
 }
 
+TEST_F(FormatTest, WrapsTemplateDeclarations) {
+  verifyFormat("template <typename T>\n"
+               "virtual void loooooooooooongFunction(int Param1, int Param2);");
+  verifyFormat(
+      "template <typename T> void f(int Paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaram1,\n"
+      "                             int Paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaram2);");
+  verifyFormat(
+      "template <typename T>\n"
+      "void looooooooooooooooooooongFunction(int Paaaaaaaaaaaaaaaaaaaaram1,\n"
+      "                                      int Paaaaaaaaaaaaaaaaaaaaram2);");
+
+}
+
 TEST_F(FormatTest, UnderstandsTemplateParameters) {
   verifyFormat("A<int> a;");
   verifyFormat("A<A<A<int> > > a;");
