@@ -240,7 +240,8 @@
 
 /// \macro LLVM_ASSUME_ALIGNED
 /// \brief Returns a pointer with an assumed alignment.
-#if defined(__GNUC__) && !defined(__clang__)
+#if !defined(__clang__) && ((__GNUC__ > 4) \
+ || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7))
 // FIXME: Enable on clang when it supports it.
 # define LLVM_ASSUME_ALIGNED(p, a) __builtin_assume_aligned(p, a)
 #else
