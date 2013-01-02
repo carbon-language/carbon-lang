@@ -1905,7 +1905,7 @@ public:
   void getCXX11AttributeRanges(SmallVector<SourceRange, 4> &Ranges) {
     AttributeList *AttrList = Attrs.getList();
     while (AttrList) {
-      if (AttrList->isCXX0XAttribute())
+      if (AttrList->isCXX11Attribute())
         Ranges.push_back(AttrList->getRange());
       AttrList = AttrList->getNext();
     }

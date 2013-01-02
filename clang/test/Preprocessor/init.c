@@ -9,14 +9,14 @@
 // BLOCKS:#define __block __attribute__((__blocks__(byref)))
 //
 // 
-// RUN: %clang_cc1 -x c++ -std=c++11 -E -dM < /dev/null | FileCheck -check-prefix CXX0X %s
+// RUN: %clang_cc1 -x c++ -std=c++11 -E -dM < /dev/null | FileCheck -check-prefix CXX11 %s
 //
-// CXX0X:#define __GNUG__
-// CXX0X:#define __GXX_EXPERIMENTAL_CXX0X__ 1
-// CXX0X:#define __GXX_RTTI 1
-// CXX0X:#define __GXX_WEAK__ 1
-// CXX0X:#define __cplusplus 201103L
-// CXX0X:#define __private_extern__ extern
+// CXX11:#define __GNUG__
+// CXX11:#define __GXX_EXPERIMENTAL_CXX0X__ 1
+// CXX11:#define __GXX_RTTI 1
+// CXX11:#define __GXX_WEAK__ 1
+// CXX11:#define __cplusplus 201103L
+// CXX11:#define __private_extern__ extern
 //
 // 
 // RUN: %clang_cc1 -x c++ -std=c++98 -E -dM < /dev/null | FileCheck -check-prefix CXX98 %s

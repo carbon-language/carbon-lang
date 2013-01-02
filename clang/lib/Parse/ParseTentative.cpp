@@ -1396,7 +1396,7 @@ bool Parser::isCXXFunctionDeclarator(bool *IsAmbiguous) {
       if (Next.is(tok::amp) || Next.is(tok::ampamp) ||
           Next.is(tok::kw_const) || Next.is(tok::kw_volatile) ||
           Next.is(tok::kw_throw) || Next.is(tok::kw_noexcept) ||
-          Next.is(tok::l_square) || isCXX0XVirtSpecifier(Next) ||
+          Next.is(tok::l_square) || isCXX11VirtSpecifier(Next) ||
           Next.is(tok::l_brace) || Next.is(tok::kw_try) ||
           Next.is(tok::equal) || Next.is(tok::arrow))
         // The next token cannot appear after a constructor-style initializer,

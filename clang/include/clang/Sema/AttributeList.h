@@ -231,7 +231,7 @@ public:
   /// declspec representing a type specification (like __w64 or __ptr32).
   bool isDeclspecAttribute() const { return SyntaxUsed == AS_Declspec ||
                                             SyntaxUsed == AS_MSTypespec; }
-  bool isCXX0XAttribute() const { return SyntaxUsed == AS_CXX11; }
+  bool isCXX11Attribute() const { return SyntaxUsed == AS_CXX11; }
   bool isMSTypespecAttribute() const { return SyntaxUsed == AS_MSTypespec; }
 
   bool isInvalid() const { return Invalid; }
@@ -511,18 +511,18 @@ inline AttributeList *addAttributeLists(AttributeList *Left,
   return Left;
 }
 
-/// CXX0XAttributeList - A wrapper around a C++0x attribute list.
+/// CXX11AttributeList - A wrapper around a C++11 attribute list.
 /// Stores, in addition to the list proper, whether or not an actual list was
 /// (as opposed to an empty list, which may be ill-formed in some places) and
 /// the source range of the list.
-struct CXX0XAttributeList { 
+struct CXX11AttributeList { 
   AttributeList *AttrList;
   SourceRange Range;
   bool HasAttr;
-  CXX0XAttributeList (AttributeList *attrList, SourceRange range, bool hasAttr)
+  CXX11AttributeList (AttributeList *attrList, SourceRange range, bool hasAttr)
     : AttrList(attrList), Range(range), HasAttr (hasAttr) {
   }
-  CXX0XAttributeList ()
+  CXX11AttributeList ()
     : AttrList(0), Range(), HasAttr(false) {
   }
 };

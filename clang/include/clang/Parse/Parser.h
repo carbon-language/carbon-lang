@@ -1856,7 +1856,7 @@ private:
                              SourceLocation ScopeLoc,
                              AttributeList::Syntax Syntax);
 
-  void MaybeParseCXX0XAttributes(Declarator &D) {
+  void MaybeParseCXX11Attributes(Declarator &D) {
     if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
       ParsedAttributesWithRange attrs(AttrFactory);
       SourceLocation endLoc;
@@ -1864,7 +1864,7 @@ private:
       D.takeAttributes(attrs, endLoc);
     }
   }
-  void MaybeParseCXX0XAttributes(ParsedAttributes &attrs,
+  void MaybeParseCXX11Attributes(ParsedAttributes &attrs,
                                  SourceLocation *endLoc = 0) {
     if (getLangOpts().CPlusPlus11 && isCXX11AttributeSpecifier()) {
       ParsedAttributesWithRange attrsWithRange(AttrFactory);
@@ -1872,7 +1872,7 @@ private:
       attrs.takeAllFrom(attrsWithRange);
     }
   }
-  void MaybeParseCXX0XAttributes(ParsedAttributesWithRange &attrs,
+  void MaybeParseCXX11Attributes(ParsedAttributesWithRange &attrs,
                                  SourceLocation *endLoc = 0,
                                  bool OuterMightBeMessageSend = false) {
     if (getLangOpts().CPlusPlus11 &&
@@ -1938,13 +1938,13 @@ private:
   void ParseAlignmentSpecifier(ParsedAttributes &Attrs,
                                SourceLocation *endLoc = 0);
 
-  VirtSpecifiers::Specifier isCXX0XVirtSpecifier(const Token &Tok) const;
-  VirtSpecifiers::Specifier isCXX0XVirtSpecifier() const {
-    return isCXX0XVirtSpecifier(Tok);
+  VirtSpecifiers::Specifier isCXX11VirtSpecifier(const Token &Tok) const;
+  VirtSpecifiers::Specifier isCXX11VirtSpecifier() const {
+    return isCXX11VirtSpecifier(Tok);
   }
-  void ParseOptionalCXX0XVirtSpecifierSeq(VirtSpecifiers &VS, bool IsInterface);
+  void ParseOptionalCXX11VirtSpecifierSeq(VirtSpecifiers &VS, bool IsInterface);
 
-  bool isCXX0XFinalKeyword() const;
+  bool isCXX11FinalKeyword() const;
 
   /// DeclaratorScopeObj - RAII object used in Parser::ParseDirectDeclarator to
   /// enter a new C++ declarator scope and exit it when the function is
@@ -1987,7 +1987,7 @@ private:
                                DirectDeclParseFunction DirectDeclParser);
 
   void ParseTypeQualifierListOpt(DeclSpec &DS, bool GNUAttributesAllowed = true,
-                                 bool CXX0XAttributesAllowed = true);
+                                 bool CXX11AttributesAllowed = true);
   void ParseDirectDeclarator(Declarator &D);
   void ParseParenDeclarator(Declarator &D);
   void ParseFunctionDeclarator(Declarator &D,
