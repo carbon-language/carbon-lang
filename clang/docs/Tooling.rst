@@ -1,6 +1,6 @@
-===================
-Writing Clang Tools
-===================
+=================================================
+Choosing the Right Interface for Your Application
+=================================================
 
 Clang provides infrastructure to write tools that need syntactic and semantic
 information about a program.  This document will give a short introduction of
