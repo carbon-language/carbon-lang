@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "LLVMContextImpl.h"
-#include "llvm/Constants.h"
-#include "llvm/Instruction.h"
-#include "llvm/Metadata.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/SourceMgr.h"
 #include <cctype>

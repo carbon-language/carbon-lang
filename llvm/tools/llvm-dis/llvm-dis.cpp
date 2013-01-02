@@ -16,12 +16,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/DebugInfo.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Module.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/FormattedStream.h"
@@ -31,7 +32,6 @@
 #include "llvm/Support/Signals.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Support/system_error.h"
-#include "llvm/Type.h"
 using namespace llvm;
 
 static cl::opt<std::string>

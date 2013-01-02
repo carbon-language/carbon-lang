@@ -7,12 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Argument.h"
-#include "llvm/Constant.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/Constant.h"
+#include "llvm/IR/LLVMContext.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

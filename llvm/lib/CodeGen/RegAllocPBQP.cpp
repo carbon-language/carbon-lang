@@ -48,7 +48,7 @@
 #include "llvm/CodeGen/PBQP/Heuristics/Briggs.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/VirtRegMap.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"

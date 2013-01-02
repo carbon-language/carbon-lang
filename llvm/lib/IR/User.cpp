@@ -7,10 +7,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/User.h"
-#include "llvm/Constant.h"
-#include "llvm/GlobalValue.h"
-#include "llvm/Operator.h"
+#include "llvm/IR/User.h"
+#include "llvm/IR/Constant.h"
+#include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/Operator.h"
 
 namespace llvm {
 

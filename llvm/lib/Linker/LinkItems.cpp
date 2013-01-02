@@ -14,7 +14,7 @@
 
 #include "llvm/Linker.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"

@@ -16,10 +16,10 @@
 #define LLVM_TARGET_NVPTX_H
 
 #include "MCTargetDesc/NVPTXBaseInfo.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Value.h"
 #include <cassert>
 #include <iosfwd>
 

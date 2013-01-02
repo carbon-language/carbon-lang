@@ -25,8 +25,8 @@
 #include "llvm/CodeGen/ISDOpcodes.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/InlineAsm.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include <vector>

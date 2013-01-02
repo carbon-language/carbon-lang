@@ -15,7 +15,7 @@
 #ifndef LLVM_OPERAND_TRAITS_H
 #define LLVM_OPERAND_TRAITS_H
 
-#include "llvm/User.h"
+#include "llvm/IR/User.h"
 
 namespace llvm {
 

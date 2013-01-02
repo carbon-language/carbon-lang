@@ -24,8 +24,8 @@
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/Constant.h"
-#include "llvm/OperandTraits.h"
+#include "llvm/IR/Constant.h"
+#include "llvm/IR/OperandTraits.h"
 
 namespace llvm {
 

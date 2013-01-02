@@ -22,8 +22,8 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/GlobalValue.h"
-#include "llvm/OperandTraits.h"
+#include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/OperandTraits.h"
 
 namespace llvm {
 

@@ -16,8 +16,8 @@
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/Attributes.h"
-#include "llvm/Value.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/Value.h"
 
 namespace llvm {
 

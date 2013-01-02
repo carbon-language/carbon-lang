@@ -16,7 +16,7 @@
 #ifndef LLVM_CODEGEN_INTRINSICLOWERING_H
 #define LLVM_CODEGEN_INTRINSICLOWERING_H
 
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Intrinsics.h"
 
 namespace llvm {
   class CallInst;

@@ -15,9 +15,9 @@
 #ifndef LLVM_CODEGEN_SELECTIONDAG_ISEL_H
 #define LLVM_CODEGEN_SELECTIONDAG_ISEL_H
 
-#include "llvm/BasicBlock.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/Pass.h"
 
 namespace llvm {

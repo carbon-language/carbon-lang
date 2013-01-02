@@ -16,7 +16,7 @@
 
 #include "llvm/ADT/DenseMapInfo.h"
 #include "llvm/ADT/PointerIntPair.h"
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 namespace llvm {
 class ValueHandleBase;

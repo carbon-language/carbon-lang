@@ -15,12 +15,12 @@
 #ifndef LLVM_OPERATOR_H
 #define LLVM_OPERATOR_H
 
-#include "llvm/Constants.h"
-#include "llvm/DataLayout.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Instruction.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Type.h"
 
 namespace llvm {
 

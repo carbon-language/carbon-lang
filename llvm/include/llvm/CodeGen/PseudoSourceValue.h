@@ -14,7 +14,7 @@
 #ifndef LLVM_CODEGEN_PSEUDOSOURCEVALUE_H
 #define LLVM_CODEGEN_PSEUDOSOURCEVALUE_H
 
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 namespace llvm {
   class MachineFrameInfo;

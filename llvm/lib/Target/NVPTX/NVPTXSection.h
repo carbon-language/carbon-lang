@@ -14,7 +14,7 @@
 #ifndef LLVM_NVPTXSECTION_H
 #define LLVM_NVPTXSECTION_H
 
-#include "llvm/GlobalVariable.h"
+#include "llvm/IR/GlobalVariable.h"
 #include "llvm/MC/MCSection.h"
 #include <vector>
 

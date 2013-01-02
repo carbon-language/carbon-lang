@@ -16,8 +16,8 @@
 #define LLVM_SUPPORT_CFG_H
 
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/Function.h"
-#include "llvm/InstrTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/InstrTypes.h"
 
 namespace llvm {
 

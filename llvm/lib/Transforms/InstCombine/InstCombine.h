@@ -12,10 +12,10 @@
 
 #include "InstCombineWorklist.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/IRBuilder.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Operator.h"
 #include "llvm/InstVisitor.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Operator.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/TargetFolder.h"
 #include "llvm/Transforms/Utils/SimplifyLibCalls.h"

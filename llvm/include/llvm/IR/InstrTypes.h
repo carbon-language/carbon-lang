@@ -17,9 +17,9 @@
 #define LLVM_INSTRUCTION_TYPES_H
 
 #include "llvm/ADT/Twine.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Instruction.h"
-#include "llvm/OperandTraits.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/OperandTraits.h"
 
 namespace llvm {
 
@@ -177,19 +177,19 @@ public:
                                      const Twine &Name = "") {\
     return Create(Instruction::OPC, V1, V2, Name);\
   }
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
 #define HANDLE_BINARY_INST(N, OPC, CLASS) \
   static BinaryOperator *Create##OPC(Value *V1, Value *V2, \
                                      const Twine &Name, BasicBlock *BB) {\
     return Create(Instruction::OPC, V1, V2, Name, BB);\
   }
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
 #define HANDLE_BINARY_INST(N, OPC, CLASS) \
   static BinaryOperator *Create##OPC(Value *V1, Value *V2, \
                                      const Twine &Name, Instruction *I) {\
     return Create(Instruction::OPC, V1, V2, Name, I);\
   }
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
 
   static BinaryOperator *CreateNSW(BinaryOps Opc, Value *V1, Value *V2,
                                    const Twine &Name = "") {

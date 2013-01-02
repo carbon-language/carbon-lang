@@ -15,7 +15,7 @@
 
 #include "llvm/Analysis/LibCallSemantics.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 using namespace llvm;
 
 /// getMap - This impl pointer in ~LibCallInfo is actually a StringMap.  This

@@ -11,17 +11,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 #include "SymbolTableListTraitsImpl.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
 #include "llvm/GVMaterializer.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/LeakDetector.h"
 #include <algorithm>
 #include <cstdarg>

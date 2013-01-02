@@ -28,9 +28,9 @@
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/CallGraphSCCPass.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/InstIterator.h"
 using namespace llvm;
 

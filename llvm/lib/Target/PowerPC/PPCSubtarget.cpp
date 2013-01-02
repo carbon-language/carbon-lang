@@ -14,7 +14,7 @@
 #include "PPCSubtarget.h"
 #include "PPC.h"
 #include "PPCRegisterInfo.h"
-#include "llvm/GlobalValue.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Target/TargetMachine.h"

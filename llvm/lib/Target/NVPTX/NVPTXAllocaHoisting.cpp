@@ -12,9 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "NVPTXAllocaHoisting.h"
-#include "llvm/Constants.h"
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 
 namespace llvm {
 

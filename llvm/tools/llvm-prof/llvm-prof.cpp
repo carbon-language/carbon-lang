@@ -13,14 +13,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/ProfileInfo.h"
 #include "llvm/Analysis/ProfileInfoLoader.h"
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Module.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Format.h"

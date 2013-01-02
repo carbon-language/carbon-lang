@@ -13,10 +13,10 @@
 
 #include "NVPTXSplitBBatBar.h"
 #include "NVPTXUtilities.h"
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/InstIterator.h"
 
 using namespace llvm;

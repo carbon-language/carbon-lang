@@ -16,12 +16,12 @@
 #include "llvm/DebugInfo.h"
 #include "llvm/ExecutionEngine/JIT.h"
 #include "llvm/ExecutionEngine/JITEventListener.h"
-#include "llvm/IRBuilder.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/TypeBuilder.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/TypeBuilder.h"
 #include "gtest/gtest.h"
 #include <string>
 #include <utility>

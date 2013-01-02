@@ -19,7 +19,7 @@
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Target/TargetInstrInfo.h"
 using namespace llvm;
 

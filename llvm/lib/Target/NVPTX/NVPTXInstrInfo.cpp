@@ -16,7 +16,7 @@
 #include "NVPTXTargetMachine.h"
 #define GET_INSTRINFO_CTOR
 #include "NVPTXGenInstrInfo.inc"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

@@ -29,9 +29,9 @@
 #include "llvm/CodeGen/GCs.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/CodeGen/GCStrategy.h"
-#include "llvm/IRBuilder.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Module.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/CallSite.h"
 
 using namespace llvm;

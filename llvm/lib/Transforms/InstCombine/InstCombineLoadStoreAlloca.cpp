@@ -14,8 +14,8 @@
 #include "InstCombine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Loads.h"
-#include "llvm/DataLayout.h"
-#include "llvm/IntrinsicInst.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 using namespace llvm;

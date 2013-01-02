@@ -11,13 +11,13 @@
 // different components in LLVM.
 //
 //===----------------------------------------------------------------------===//
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CallGraphSCCPass.h"
-#include "llvm/Constants.h"
-#include "llvm/Instruction.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"

@@ -16,8 +16,8 @@
 #define Hexagon_ISELLOWERING_H
 
 #include "Hexagon.h"
-#include "llvm/CallingConv.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/Target/TargetLowering.h"
 
 namespace llvm {

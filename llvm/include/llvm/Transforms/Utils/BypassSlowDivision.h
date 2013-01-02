@@ -19,7 +19,7 @@
 #define TRANSFORMS_UTILS_BYPASSSLOWDIVISION_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 
 namespace llvm {
 

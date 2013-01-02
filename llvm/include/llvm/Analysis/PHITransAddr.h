@@ -15,7 +15,7 @@
 #define LLVM_ANALYSIS_PHITRANSADDR_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Instruction.h"
+#include "llvm/IR/Instruction.h"
 
 namespace llvm {
   class DominatorTree;

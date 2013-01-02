@@ -19,7 +19,7 @@
 #ifndef LLVM_ANALYSIS_INSTRUCTIONSIMPLIFY_H
 #define LLVM_ANALYSIS_INSTRUCTIONSIMPLIFY_H
 
-#include "llvm/User.h"
+#include "llvm/IR/User.h"
 
 namespace llvm {
   template<typename T>

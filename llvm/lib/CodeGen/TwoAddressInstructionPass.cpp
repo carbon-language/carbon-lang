@@ -41,7 +41,7 @@
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"

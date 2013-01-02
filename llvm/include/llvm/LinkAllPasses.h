@@ -27,7 +27,7 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/CodeGen/Passes.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Transforms/Instrumentation.h"
 #include "llvm/Transforms/Scalar.h"

@@ -12,12 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/BasicBlock.h"
-#include "llvm/Constant.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Constant.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Type.h"
 #include "llvm/InstVisitor.h"
-#include "llvm/Instructions.h"
 #include "llvm/Pass.h"
-#include "llvm/Type.h"
 
 using namespace llvm;
 

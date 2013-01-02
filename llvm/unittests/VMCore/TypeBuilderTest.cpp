@@ -7,9 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/TypeBuilder.h"
+#include "llvm/IR/TypeBuilder.h"
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

@@ -17,11 +17,11 @@
 #define LLVM_LINKALLVMCORE_H
 
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/InlineAsm.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
+#include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/MathExtras.h"

@@ -19,7 +19,7 @@
 #include "XCoreInstrInfo.h"
 #include "XCoreSelectionDAGInfo.h"
 #include "XCoreSubtarget.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"
 

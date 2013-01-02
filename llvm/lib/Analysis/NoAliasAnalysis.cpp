@@ -14,7 +14,7 @@
 
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Pass.h"
 using namespace llvm;
 

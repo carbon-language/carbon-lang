@@ -17,7 +17,7 @@
 #define LLVM_ATTRIBUTESIMPL_H
 
 #include "llvm/ADT/FoldingSet.h"
-#include "llvm/Attributes.h"
+#include "llvm/IR/Attributes.h"
 
 namespace llvm {
 

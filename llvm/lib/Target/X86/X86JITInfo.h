@@ -15,7 +15,7 @@
 #define X86JITINFO_H
 
 #include "llvm/CodeGen/JITCodeEmitter.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Target/TargetJITInfo.h"
 
 namespace llvm {

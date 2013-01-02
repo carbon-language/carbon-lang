@@ -14,7 +14,7 @@
 #define DEBUG_TYPE "subtarget"
 #include "X86Subtarget.h"
 #include "X86InstrInfo.h"
-#include "llvm/GlobalValue.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Host.h"

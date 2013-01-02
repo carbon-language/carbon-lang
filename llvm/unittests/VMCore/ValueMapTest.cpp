@@ -10,9 +10,9 @@
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Config/llvm-config.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
 #include "gtest/gtest.h"
 
 using namespace llvm;

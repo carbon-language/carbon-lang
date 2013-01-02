@@ -52,7 +52,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Analysis/ScalarEvolution.h"
-#include "llvm/IRBuilder.h"
+#include "llvm/IR/IRBuilder.h"
 #include <algorithm>
 using namespace llvm;
 

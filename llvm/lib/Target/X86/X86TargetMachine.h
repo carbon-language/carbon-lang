@@ -21,7 +21,7 @@
 #include "X86JITInfo.h"
 #include "X86SelectionDAGInfo.h"
 #include "X86Subtarget.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"

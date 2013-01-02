@@ -15,7 +15,7 @@
 #include "llvm/PassManagers.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"

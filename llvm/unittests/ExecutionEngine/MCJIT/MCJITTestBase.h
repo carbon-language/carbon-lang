@@ -22,14 +22,14 @@
 #include "llvm/Config/config.h"
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
-#include "llvm/Function.h"
-#include "llvm/IRBuilder.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/TypeBuilder.h"
 #include "llvm/Support/CodeGen.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/TypeBuilder.h"
 
 // Used to skip tests on unsupported architectures and operating systems.
 // To skip a test, add this macro at the top of a test-case in a suite that

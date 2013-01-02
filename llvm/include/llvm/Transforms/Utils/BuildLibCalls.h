@@ -15,7 +15,7 @@
 #ifndef TRANSFORMS_UTILS_BUILDLIBCALLS_H
 #define TRANSFORMS_UTILS_BUILDLIBCALLS_H
 
-#include "llvm/IRBuilder.h"
+#include "llvm/IR/IRBuilder.h"
 
 namespace llvm {
   class Value;

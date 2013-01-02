@@ -16,7 +16,7 @@
 #include "HexagonISelLowering.h"
 #include "HexagonTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Debug.h"
 

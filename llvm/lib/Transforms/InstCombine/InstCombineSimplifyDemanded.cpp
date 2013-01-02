@@ -14,8 +14,8 @@
 
 
 #include "InstCombine.h"
-#include "llvm/DataLayout.h"
-#include "llvm/IntrinsicInst.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/PatternMatch.h"
 
 using namespace llvm;

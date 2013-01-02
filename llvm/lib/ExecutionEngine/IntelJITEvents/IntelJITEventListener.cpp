@@ -17,8 +17,8 @@
 
 #define DEBUG_TYPE "amplifier-jit-event-listener"
 #include "llvm/DebugInfo.h"
-#include "llvm/Function.h"
-#include "llvm/Metadata.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineFunction.h"

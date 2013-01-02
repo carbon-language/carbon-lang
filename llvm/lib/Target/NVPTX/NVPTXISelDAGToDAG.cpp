@@ -13,8 +13,8 @@
 
 
 #include "NVPTXISelDAGToDAG.h"
-#include "llvm/GlobalValue.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"

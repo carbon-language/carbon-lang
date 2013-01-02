@@ -53,7 +53,7 @@
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/IncludeFile.h"

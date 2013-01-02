@@ -21,7 +21,7 @@
 #include "MSP430RegisterInfo.h"
 #include "MSP430SelectionDAGInfo.h"
 #include "MSP430Subtarget.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"

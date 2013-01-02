@@ -20,7 +20,7 @@
 #include "MBlazeIntrinsicInfo.h"
 #include "MBlazeSelectionDAGInfo.h"
 #include "MBlazeSubtarget.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"

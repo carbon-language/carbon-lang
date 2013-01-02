@@ -14,7 +14,7 @@
 #define DEBUG_TYPE "instcount"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/InstVisitor.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
@@ -30,7 +30,7 @@ STATISTIC(TotalMemInst, "Number of memory instructions");
 #define HANDLE_INST(N, OPCODE, CLASS) \
   STATISTIC(Num ## OPCODE ## Inst, "Number of " #OPCODE " insts");
 
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
 
 
 namespace {
@@ -43,7 +43,7 @@ namespace {
 #define HANDLE_INST(N, OPCODE, CLASS) \
     void visit##OPCODE(CLASS &) { ++Num##OPCODE##Inst; ++TotalInsts; }
 
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
 
     void visitInstruction(Instruction &I) {
       errs() << "Instruction Count does not know about " << I;

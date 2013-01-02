@@ -13,8 +13,8 @@
 
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Attributes.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/Module.h"
 #include <algorithm>
 using namespace llvm;
 

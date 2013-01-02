@@ -18,7 +18,7 @@
 #include "llvm-c/Transforms/Scalar.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
 

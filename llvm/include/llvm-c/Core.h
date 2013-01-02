@@ -21,8 +21,8 @@
 
 /* Need these includes to support the LLVM 'cast' template for the C++ 'wrap' 
    and 'unwrap' conversion functions. */
-#include "llvm/IRBuilder.h"
-#include "llvm/Module.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Module.h"
 #include "llvm/PassRegistry.h"
 
 extern "C" {

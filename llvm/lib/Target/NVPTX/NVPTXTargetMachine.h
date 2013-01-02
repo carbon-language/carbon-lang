@@ -21,7 +21,7 @@
 #include "NVPTXInstrInfo.h"
 #include "NVPTXRegisterInfo.h"
 #include "NVPTXSubtarget.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSelectionDAGInfo.h"

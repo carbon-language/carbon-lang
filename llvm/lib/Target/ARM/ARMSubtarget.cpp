@@ -14,7 +14,7 @@
 #include "ARMSubtarget.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMBaseRegisterInfo.h"
-#include "llvm/GlobalValue.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 

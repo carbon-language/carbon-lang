@@ -23,10 +23,10 @@
 #define LLVM_TRANSFORMS_TARGET_TRANSFORM_INTERFACE
 
 #include "llvm/AddressingMode.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Type.h"
 
 namespace llvm {
 

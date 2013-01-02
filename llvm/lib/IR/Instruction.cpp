@@ -11,14 +11,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Instruction.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/Operator.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/LeakDetector.h"
-#include "llvm/Type.h"
 using namespace llvm;
 
 Instruction::Instruction(Type *ty, unsigned it, Use *Ops, unsigned NumOps,

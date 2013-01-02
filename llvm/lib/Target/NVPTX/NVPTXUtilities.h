@@ -14,10 +14,10 @@
 #ifndef NVPTXUTILITIES_H
 #define NVPTXUTILITIES_H
 
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Value.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Value.h"
 #include <cstdarg>
 #include <set>
 #include <string>

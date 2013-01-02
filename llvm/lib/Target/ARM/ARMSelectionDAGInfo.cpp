@@ -14,7 +14,7 @@
 #define DEBUG_TYPE "arm-selectiondag-info"
 #include "ARMTargetMachine.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/DerivedTypes.h"
+#include "llvm/IR/DerivedTypes.h"
 using namespace llvm;
 
 ARMSelectionDAGInfo::ARMSelectionDAGInfo(const TargetMachine &TM)

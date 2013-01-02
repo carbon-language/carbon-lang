@@ -27,10 +27,10 @@
 #define LLVM_SUPPORT_CALLSITE_H
 
 #include "llvm/ADT/PointerIntPair.h"
-#include "llvm/Attributes.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/CallingConv.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/CallingConv.h"
+#include "llvm/IR/Instructions.h"
 
 namespace llvm {
 

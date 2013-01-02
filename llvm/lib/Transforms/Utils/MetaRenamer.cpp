@@ -16,11 +16,11 @@
 #include "llvm/Transforms/IPO.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/Module.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
-#include "llvm/Type.h"
 #include "llvm/TypeFinder.h"
 
 using namespace llvm;

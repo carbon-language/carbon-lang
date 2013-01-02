@@ -15,7 +15,7 @@
 #include "DiffConsumer.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 
 using namespace llvm;
 

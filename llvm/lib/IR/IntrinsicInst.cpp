@@ -21,10 +21,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Constants.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Metadata.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/Metadata.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

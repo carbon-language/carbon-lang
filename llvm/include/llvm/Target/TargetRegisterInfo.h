@@ -17,9 +17,9 @@
 #define LLVM_TARGET_TARGETREGISTERINFO_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/CallingConv.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include <cassert>
 #include <functional>

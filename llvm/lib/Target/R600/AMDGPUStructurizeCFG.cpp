@@ -20,7 +20,7 @@
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/RegionPass.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 
 using namespace llvm;

@@ -15,7 +15,7 @@
 #define LLVM_PATHPROFILEINFO_H
 
 #include "llvm/Analysis/PathNumbering.h"
-#include "llvm/BasicBlock.h"
+#include "llvm/IR/BasicBlock.h"
 
 namespace llvm {
 

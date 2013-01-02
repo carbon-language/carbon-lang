@@ -15,7 +15,7 @@
 
 #include "HexagonCallingConvLower.h"
 #include "Hexagon.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"

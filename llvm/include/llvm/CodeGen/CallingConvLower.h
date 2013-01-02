@@ -16,10 +16,10 @@
 #define LLVM_CODEGEN_CALLINGCONVLOWER_H
 
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/CallingConv.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/Target/TargetCallingConv.h"
 
 namespace llvm {

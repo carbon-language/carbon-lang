@@ -19,7 +19,7 @@
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ilist_node.h"
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 namespace llvm {
 class Constant;

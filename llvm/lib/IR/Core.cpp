@@ -13,15 +13,15 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-c/Core.h"
-#include "llvm/Attributes.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/GlobalAlias.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/InlineAsm.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/GlobalAlias.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
@@ -713,7 +713,7 @@ static LLVMOpcode map_to_llvmopcode(int opcode)
     switch (opcode) {
       default: llvm_unreachable("Unhandled Opcode.");
 #define HANDLE_INST(num, opc, clas) case num: return LLVM##opc;
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
 #undef HANDLE_INST
     }
 }
@@ -722,7 +722,7 @@ static int map_from_llvmopcode(LLVMOpcode code)
 {
     switch (code) {
 #define HANDLE_INST(num, opc, clas) case LLVM##opc: return num;
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
 #undef HANDLE_INST
     }
     llvm_unreachable("Unhandled Opcode.");

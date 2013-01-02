@@ -15,7 +15,7 @@
 
 #include "BugDriver.h"
 #include "ToolRunner.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
 #include "llvm/PassManager.h"

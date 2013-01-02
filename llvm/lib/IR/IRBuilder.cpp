@@ -12,11 +12,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/IRBuilder.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/LLVMContext.h"
 using namespace llvm;
 
 /// CreateGlobalString - Make a new global variable with an initializer that

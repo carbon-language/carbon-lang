@@ -14,11 +14,11 @@
 #include "llvm/Support/LeakDetector.h"
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/Threading.h"
-#include "llvm/Value.h"
 using namespace llvm;
 
 static ManagedStatic<sys::SmartMutex<true> > ObjectsLock;

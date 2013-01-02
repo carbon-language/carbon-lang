@@ -19,9 +19,9 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Type.h"
 
 #define GET_REGINFO_TARGET_DESC
 #include "SparcGenRegisterInfo.inc"

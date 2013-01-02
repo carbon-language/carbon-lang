@@ -9,9 +9,9 @@
 
 // we perform white-box tests
 //
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
 #include "gtest/gtest.h"
 #include <algorithm>
 

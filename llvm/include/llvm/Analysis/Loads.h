@@ -14,7 +14,7 @@
 #ifndef LLVM_ANALYSIS_LOADS_H
 #define LLVM_ANALYSIS_LOADS_H
 
-#include "llvm/BasicBlock.h"
+#include "llvm/IR/BasicBlock.h"
 
 namespace llvm {
 

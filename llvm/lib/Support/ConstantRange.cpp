@@ -21,7 +21,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/InstrTypes.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"

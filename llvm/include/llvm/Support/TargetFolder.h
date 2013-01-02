@@ -21,8 +21,8 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/Constants.h"
-#include "llvm/InstrTypes.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/InstrTypes.h"
 
 namespace llvm {
 

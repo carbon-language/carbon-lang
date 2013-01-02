@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/InlineAsm.h"
+#include "llvm/IR/InlineAsm.h"
 #include "ConstantsContext.h"
 #include "LLVMContextImpl.h"
-#include "llvm/DerivedTypes.h"
+#include "llvm/IR/DerivedTypes.h"
 #include <algorithm>
 #include <cctype>
 using namespace llvm;

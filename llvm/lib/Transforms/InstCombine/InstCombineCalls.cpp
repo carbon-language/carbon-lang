@@ -14,7 +14,7 @@
 #include "InstCombine.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/MemoryBuiltins.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Transforms/Utils/BuildLibCalls.h"

@@ -16,7 +16,7 @@
 #define NVPTX_LOWER_AGGR_COPIES_H
 
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Pass.h"
 
 namespace llvm {

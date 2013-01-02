@@ -23,8 +23,8 @@
 #define LLVM_SUPPORT_NOFOLDER_H
 
 #include "llvm/ADT/ArrayRef.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
 
 namespace llvm {
 

@@ -24,7 +24,7 @@
 #include "Thumb1InstrInfo.h"
 #include "Thumb2InstrInfo.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"

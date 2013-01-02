@@ -14,7 +14,7 @@
 #include "llvm/Assembly/Parser.h"
 #include "LLParser.h"
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/raw_ostream.h"

@@ -30,7 +30,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ProfileInfo.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CFG.h"
 #include <set>

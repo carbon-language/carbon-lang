@@ -1814,7 +1814,7 @@ TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) \
            $(LLVM_SRC_ROOT)/include/llvm/Target/TargetSchedule.td \
            $(LLVM_SRC_ROOT)/include/llvm/Target/TargetSelectionDAG.td \
            $(LLVM_SRC_ROOT)/include/llvm/CodeGen/ValueTypes.td) \
-           $(wildcard $(LLVM_SRC_ROOT)/include/llvm/Intrinsics*.td)
+           $(wildcard $(LLVM_SRC_ROOT)/include/llvm/IR/Intrinsics*.td)
 
 # All .inc.tmp files depend on the .td files.
 $(INCTMPFiles) : $(TDFiles)

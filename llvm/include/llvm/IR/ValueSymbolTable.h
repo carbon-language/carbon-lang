@@ -15,8 +15,8 @@
 #define LLVM_VALUE_SYMBOL_TABLE_H
 
 #include "llvm/ADT/StringMap.h"
+#include "llvm/IR/Value.h"
 #include "llvm/Support/DataTypes.h"
-#include "llvm/Value.h"
 
 namespace llvm {
   template<typename ValueSubClass, typename ItemParentClass>

@@ -13,10 +13,10 @@
 
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Type.h"
 using namespace llvm;
 
 EVT EVT::changeExtendedVectorElementTypeToInteger() const {

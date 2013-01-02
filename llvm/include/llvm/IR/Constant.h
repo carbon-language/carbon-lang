@@ -14,7 +14,7 @@
 #ifndef LLVM_CONSTANT_H
 #define LLVM_CONSTANT_H
 
-#include "llvm/User.h"
+#include "llvm/IR/User.h"
 
 namespace llvm {
   class APInt;

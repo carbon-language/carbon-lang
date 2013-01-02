@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/ADT/StringSet.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Analysis/CallGraph.h"
@@ -23,12 +23,12 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/CallGraphSCCPass.h"
 #include "llvm/CodeGen/CommandFlags.h"
-#include "llvm/DataLayout.h"
 #include "llvm/DebugInfo.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Module.h"
 #include "llvm/LinkAllPasses.h"
 #include "llvm/LinkAllVMCore.h"
 #include "llvm/MC/SubtargetFeature.h"
-#include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRReader.h"

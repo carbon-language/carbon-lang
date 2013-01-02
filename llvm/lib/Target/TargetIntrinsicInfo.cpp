@@ -13,7 +13,7 @@
 
 #include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 using namespace llvm;
 
 TargetIntrinsicInfo::TargetIntrinsicInfo() {

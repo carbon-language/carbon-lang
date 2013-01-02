@@ -21,12 +21,12 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Function.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/Type.h"
 using namespace llvm;
 
 STATISTIC(NumSimplified, "Number of redundant instructions removed");

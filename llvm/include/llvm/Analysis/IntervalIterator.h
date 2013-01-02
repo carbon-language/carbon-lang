@@ -34,7 +34,7 @@
 #define LLVM_INTERVAL_ITERATOR_H
 
 #include "llvm/Analysis/IntervalPartition.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Support/CFG.h"
 #include <algorithm>
 #include <set>

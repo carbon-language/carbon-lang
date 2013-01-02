@@ -28,15 +28,15 @@
 #include "llvm/Analysis/CaptureTracking.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Target/TargetLibraryInfo.h"
-#include "llvm/Type.h"
 using namespace llvm;
 
 // Register the AliasAnalysis interface, providing a nice name to refer to.

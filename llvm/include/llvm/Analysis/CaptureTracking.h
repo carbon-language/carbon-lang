@@ -15,8 +15,8 @@
 #define LLVM_ANALYSIS_CAPTURETRACKING_H
 
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/CallSite.h"
 
 namespace llvm {

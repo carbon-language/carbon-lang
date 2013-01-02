@@ -12,11 +12,11 @@
 
 #include "NVPTXUtilities.h"
 #include "NVPTX.h"
-#include "llvm/Constants.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Module.h"
-#include "llvm/Operator.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Operator.h"
 #include <algorithm>
 #include <cstring>
 #include <map>

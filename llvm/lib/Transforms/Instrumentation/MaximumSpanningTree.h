@@ -16,7 +16,7 @@
 #define LLVM_ANALYSIS_MAXIMUMSPANNINGTREE_H
 
 #include "llvm/ADT/EquivalenceClasses.h"
-#include "llvm/BasicBlock.h"
+#include "llvm/IR/BasicBlock.h"
 #include <algorithm>
 #include <vector>
 

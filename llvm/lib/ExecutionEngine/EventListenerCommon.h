@@ -16,7 +16,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/DebugInfo.h"
-#include "llvm/Metadata.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/ValueHandle.h"
 

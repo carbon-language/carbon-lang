@@ -7,14 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Metadata.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Metadata.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Type.h"
 #include "gtest/gtest.h"
 using namespace llvm;
 

@@ -13,7 +13,7 @@
 
 #include "InstCombine.h"
 #include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 using namespace llvm;

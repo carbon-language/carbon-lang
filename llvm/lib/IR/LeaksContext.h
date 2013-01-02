@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/Value.h"
+#include "llvm/IR/Value.h"
 
 namespace llvm {
 

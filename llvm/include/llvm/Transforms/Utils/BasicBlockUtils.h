@@ -17,7 +17,7 @@
 
 // FIXME: Move to this file: BasicBlock::removePredecessor, BB::splitBasicBlock
 
-#include "llvm/BasicBlock.h"
+#include "llvm/IR/BasicBlock.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/DebugLoc.h"
 

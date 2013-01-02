@@ -18,7 +18,7 @@
 #ifndef LLVM_GLOBALVALUE_H
 #define LLVM_GLOBALVALUE_H
 
-#include "llvm/Constant.h"
+#include "llvm/IR/Constant.h"
 
 namespace llvm {
 

@@ -18,11 +18,11 @@
 #ifndef LLVM_FUNCTION_H
 #define LLVM_FUNCTION_H
 
-#include "llvm/Argument.h"
-#include "llvm/Attributes.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/CallingConv.h"
-#include "llvm/GlobalValue.h"
+#include "llvm/IR/Argument.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/CallingConv.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/Support/Compiler.h"
 
 namespace llvm {

@@ -16,7 +16,7 @@
 #include "X86Relocations.h"
 #include "X86Subtarget.h"
 #include "X86TargetMachine.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Valgrind.h"

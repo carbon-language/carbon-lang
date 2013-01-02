@@ -16,8 +16,8 @@
 #ifndef LLVM_SYMBOLTABLELISTTRAITS_IMPL_H
 #define LLVM_SYMBOLTABLELISTTRAITS_IMPL_H
 
-#include "llvm/SymbolTableListTraits.h"
-#include "llvm/ValueSymbolTable.h"
+#include "llvm/IR/SymbolTableListTraits.h"
+#include "llvm/IR/ValueSymbolTable.h"
 
 namespace llvm {
 

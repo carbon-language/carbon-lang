@@ -24,10 +24,10 @@
 #ifndef LLVM_INTRINSICINST_H
 #define LLVM_INTRINSICINST_H
 
-#include "llvm/Constants.h"
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 
 namespace llvm {
   /// IntrinsicInst - A useful wrapper class for inspecting calls to intrinsic

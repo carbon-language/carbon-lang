@@ -17,7 +17,7 @@
 #include "MipsRelocations.h"
 #include "MipsSubtarget.h"
 #include "llvm/CodeGen/JITCodeEmitter.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Memory.h"

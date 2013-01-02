@@ -14,7 +14,7 @@
 #ifndef AMDIL_INTRINSICS_H
 #define AMDIL_INTRINSICS_H
 
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
 
 namespace llvm {

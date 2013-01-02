@@ -11,11 +11,11 @@
 #ifndef LLVM_INSTVISITOR_H
 #define LLVM_INSTVISITOR_H
 
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-#include "llvm/IntrinsicInst.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -25,7 +25,7 @@ namespace llvm {
 // types now...
 //
 #define HANDLE_INST(NUM, OPCODE, CLASS)   class CLASS;
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
 
 #define DELEGATE(CLASS_TO_VISIT) \
   return static_cast<SubClass*>(this)-> \
@@ -123,7 +123,7 @@ public:
     case Instruction::OPCODE: return \
            static_cast<SubClass*>(this)-> \
                       visit##OPCODE(static_cast<CLASS&>(I));
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
     }
   }
 
@@ -158,7 +158,7 @@ public:
       else \
         DELEGATE(CLASS); \
     }
-#include "llvm/Instruction.def"
+#include "llvm/IR/Instruction.def"
 
   // Specific Instruction type classes... note that all of the casts are
   // necessary because we use the instruction classes as opaque types...

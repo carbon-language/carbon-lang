@@ -16,10 +16,10 @@
 #define LLVM_MODULE_H
 
 #include "llvm/ADT/OwningPtr.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalAlias.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Metadata.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/GlobalAlias.h"
+#include "llvm/IR/GlobalVariable.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {

@@ -16,10 +16,11 @@
 #include "ToolRunner.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/Verifier.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Pass.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CFG.h"
@@ -27,7 +28,6 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/ValueSymbolTable.h"
 #include <set>
 using namespace llvm;
 

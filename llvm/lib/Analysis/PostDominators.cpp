@@ -18,7 +18,7 @@
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/Instructions.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 using namespace llvm;

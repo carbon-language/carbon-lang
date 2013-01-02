@@ -19,8 +19,8 @@
 #ifndef LLVM_USER_H
 #define LLVM_USER_H
 
+#include "llvm/IR/Value.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Value.h"
 
 namespace llvm {
 

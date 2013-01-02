@@ -17,12 +17,12 @@
 #include "LLLexer.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/StringMap.h"
-#include "llvm/Attributes.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/Operator.h"
+#include "llvm/IR/Attributes.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/ValueHandle.h"
-#include "llvm/Type.h"
 #include <map>
 
 namespace llvm {

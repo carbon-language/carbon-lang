@@ -11,11 +11,11 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/CodeGen/MachineCodeInfo.h"
 #include "llvm/ExecutionEngine/JIT.h"
-#include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/TypeBuilder.h"
 #include "llvm/Support/TargetSelect.h"
-#include "llvm/TypeBuilder.h"
 #include "gtest/gtest.h"
 #include <vector>
 

@@ -14,7 +14,7 @@
 #ifndef CPPTARGETMACHINE_H
 #define CPPTARGETMACHINE_H
 
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 
 namespace llvm {

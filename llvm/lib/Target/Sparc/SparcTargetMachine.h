@@ -19,7 +19,7 @@
 #include "SparcInstrInfo.h"
 #include "SparcSelectionDAGInfo.h"
 #include "SparcSubtarget.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"

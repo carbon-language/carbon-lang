@@ -17,8 +17,8 @@
 #include "llvm-c/lto.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/MCContext.h"
-#include "llvm/Module.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetMachine.h"
 #include <string>

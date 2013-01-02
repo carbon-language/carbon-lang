@@ -11,10 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Type.h"
+#include "llvm/IR/Type.h"
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Module.h"
 #include <algorithm>
 #include <cstdarg>
 using namespace llvm;

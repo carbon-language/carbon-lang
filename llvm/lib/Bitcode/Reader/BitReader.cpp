@@ -9,7 +9,7 @@
 
 #include "llvm-c/BitReader.h"
 #include "llvm/Bitcode/ReaderWriter.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include <cstring>
 #include <string>

@@ -18,8 +18,8 @@
 #include "ARM.h"
 #include "ARMBaseInstrInfo.h"
 #include "ARMSubtarget.h"
-#include "llvm/CallingConv.h"
 #include "llvm/CodeGen/CallingConvLower.h"
+#include "llvm/IR/CallingConv.h"
 #include "llvm/Target/TargetInstrInfo.h"
 
 namespace llvm {

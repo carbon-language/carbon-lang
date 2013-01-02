@@ -16,9 +16,9 @@
 #define LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/IR/Module.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/SectionKind.h"
-#include "llvm/Module.h"
 
 namespace llvm {
   class MachineModuleInfo;

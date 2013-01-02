@@ -18,7 +18,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/ValueMap.h"
 #include "llvm/Analysis/CodeMetrics.h"
-#include "llvm/Function.h"
+#include "llvm/IR/Function.h"
 #include <cassert>
 #include <climits>
 #include <vector>

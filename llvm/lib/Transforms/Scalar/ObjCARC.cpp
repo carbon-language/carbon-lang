@@ -135,8 +135,8 @@ namespace {
 
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Analysis/ValueTracking.h"
-#include "llvm/Intrinsics.h"
-#include "llvm/Module.h"
+#include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/Module.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Transforms/Utils/Local.h"
 
@@ -922,7 +922,7 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
 //===----------------------------------------------------------------------===//
 
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Constants.h"
+#include "llvm/IR/Constants.h"
 
 namespace {
   /// ObjCARCAPElim - Autorelease pool elimination.
@@ -1104,7 +1104,7 @@ bool ObjCARCAPElim::runOnModule(Module &M) {
 
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/CFG.h"
 
 STATISTIC(NumNoops,       "Number of no-op objc calls eliminated");
@@ -3786,8 +3786,8 @@ void ObjCARCOpt::releaseMemory() {
 // dominated by single calls.
 
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/InlineAsm.h"
-#include "llvm/Operator.h"
+#include "llvm/IR/InlineAsm.h"
+#include "llvm/IR/Operator.h"
 
 STATISTIC(NumStoreStrongs, "Number objc_storeStrong calls formed");
 

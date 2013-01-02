@@ -12,17 +12,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Attributes.h"
+#include "llvm/IR/Attributes.h"
 #include "AttributeImpl.h"
 #include "LLVMContextImpl.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/IR/Type.h"
 #include "llvm/Support/Atomic.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Type.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

@@ -15,7 +15,7 @@
 #ifndef LLVM_TRANSFORMS_UTILS_CMPINSTANALYSIS_H
 #define LLVM_TRANSFORMS_UTILS_CMPINSTANALYSIS_H
 
-#include "llvm/InstrTypes.h"
+#include "llvm/IR/InstrTypes.h"
 
 namespace llvm {
   class ICmpInst;

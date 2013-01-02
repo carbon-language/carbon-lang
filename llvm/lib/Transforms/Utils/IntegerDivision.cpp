@@ -16,10 +16,10 @@
 
 #define DEBUG_TYPE "integer-division"
 #include "llvm/Transforms/Utils/IntegerDivision.h"
-#include "llvm/Function.h"
-#include "llvm/IRBuilder.h"
-#include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 
 using namespace llvm;
 

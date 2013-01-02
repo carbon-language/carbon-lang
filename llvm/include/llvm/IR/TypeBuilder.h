@@ -15,8 +15,8 @@
 #ifndef LLVM_TYPEBUILDER_H
 #define LLVM_TYPEBUILDER_H
 
-#include "llvm/DerivedTypes.h"
-#include "llvm/LLVMContext.h"
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/LLVMContext.h"
 #include <limits.h>
 
 namespace llvm {

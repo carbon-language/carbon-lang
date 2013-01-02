@@ -23,7 +23,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/CodeGen/MachineOperand.h"
-#include "llvm/InlineAsm.h"
+#include "llvm/IR/InlineAsm.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetOpcodes.h"

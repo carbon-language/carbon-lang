@@ -19,8 +19,8 @@
 #ifndef LLVM_SUPPORT_INSTITERATOR_H
 #define LLVM_SUPPORT_INSTITERATOR_H
 
-#include "llvm/BasicBlock.h"
-#include "llvm/Function.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/Function.h"
 
 namespace llvm {
 

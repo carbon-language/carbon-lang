@@ -20,7 +20,7 @@
 #include "PPCJITInfo.h"
 #include "PPCSelectionDAGInfo.h"
 #include "PPCSubtarget.h"
-#include "llvm/DataLayout.h"
+#include "llvm/IR/DataLayout.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetTransformImpl.h"
 

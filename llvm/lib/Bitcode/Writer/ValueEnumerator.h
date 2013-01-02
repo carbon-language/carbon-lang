@@ -16,7 +16,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/Attributes.h"
+#include "llvm/IR/Attributes.h"
 #include <vector>
 
 namespace llvm {
