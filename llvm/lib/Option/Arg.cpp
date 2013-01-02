@@ -8,7 +8,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Option/Arg.h"
-
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Option/ArgList.h"

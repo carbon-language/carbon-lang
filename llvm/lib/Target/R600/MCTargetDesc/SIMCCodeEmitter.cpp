@@ -17,11 +17,11 @@
 #include "MCTargetDesc/AMDGPUMCCodeEmitter.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/MC/MCFixup.h"
 #include "llvm/Support/raw_ostream.h"
 
 #define VGPR_BIT(src_idx) (1ULL << (9 * src_idx - 1))

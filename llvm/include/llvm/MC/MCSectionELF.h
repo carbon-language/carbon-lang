@@ -16,9 +16,9 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCSection.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/Debug.h"
 
 namespace llvm {
 

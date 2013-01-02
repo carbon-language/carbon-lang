@@ -12,9 +12,8 @@
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/Option/Option.h"
 #include "llvm/Option/OptSpecifier.h"
-
+#include "llvm/Option/Option.h"
 #include <list>
 #include <string>
 #include <vector>

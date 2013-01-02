@@ -16,8 +16,8 @@
 //===----------------------------------------------------------------------===//
 #ifndef AMDILEVERGREENDEVICE_H
 #define AMDILEVERGREENDEVICE_H
-#include "AMDILDevice.h"
 #include "AMDGPUSubtarget.h"
+#include "AMDILDevice.h"
 
 namespace llvm {
   class AMDGPUSubtarget;

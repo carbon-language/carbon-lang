@@ -14,8 +14,8 @@
 
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/MemoryBuiltins.h"

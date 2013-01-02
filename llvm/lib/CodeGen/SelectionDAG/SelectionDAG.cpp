@@ -41,7 +41,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/TargetTransformInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetIntrinsicInfo.h"
 #include "llvm/Target/TargetLowering.h"
@@ -49,6 +48,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Target/TargetSelectionDAGInfo.h"
+#include "llvm/TargetTransformInfo.h"
 #include <algorithm>
 #include <cmath>
 using namespace llvm;

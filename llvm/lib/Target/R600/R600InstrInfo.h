@@ -15,11 +15,10 @@
 #ifndef R600INSTRUCTIONINFO_H_
 #define R600INSTRUCTIONINFO_H_
 
-#include "AMDIL.h"
 #include "AMDGPUInstrInfo.h"
+#include "AMDIL.h"
 #include "R600Defines.h"
 #include "R600RegisterInfo.h"
-
 #include <map>
 
 namespace llvm {

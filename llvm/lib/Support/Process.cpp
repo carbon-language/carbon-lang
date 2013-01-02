@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
-#include "llvm/Support/Process.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/Process.h"
 
 using namespace llvm;
 using namespace sys;

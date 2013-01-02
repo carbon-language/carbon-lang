@@ -19,8 +19,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "R600Defines.h"
-#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "MCTargetDesc/AMDGPUMCCodeEmitter.h"
+#include "MCTargetDesc/AMDGPUMCTargetDesc.h"
 #include "llvm/MC/MCCodeEmitter.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInst.h"
@@ -28,7 +28,6 @@
 #include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/raw_ostream.h"
-
 #include <stdio.h>
 
 #define SRC_BYTE_COUNT 11

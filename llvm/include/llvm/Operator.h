@@ -19,8 +19,8 @@
 #include "llvm/DataLayout.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
-#include "llvm/Type.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Type.h"
 
 namespace llvm {
 

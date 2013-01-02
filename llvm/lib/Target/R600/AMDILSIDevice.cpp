@@ -8,9 +8,9 @@
 /// \file
 //==-----------------------------------------------------------------------===//
 #include "AMDILSIDevice.h"
+#include "AMDGPUSubtarget.h"
 #include "AMDILEvergreenDevice.h"
 #include "AMDILNIDevice.h"
-#include "AMDGPUSubtarget.h"
 
 using namespace llvm;
 

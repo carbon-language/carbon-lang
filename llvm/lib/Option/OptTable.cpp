@@ -8,12 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Option/OptTable.h"
-
 #include "llvm/Option/Arg.h"
 #include "llvm/Option/ArgList.h"
 #include "llvm/Option/Option.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 #include <algorithm>
 #include <map>
 

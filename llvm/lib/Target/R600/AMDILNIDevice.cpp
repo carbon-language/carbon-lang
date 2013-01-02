@@ -8,8 +8,8 @@
 /// \file
 //==-----------------------------------------------------------------------===//
 #include "AMDILNIDevice.h"
-#include "AMDILEvergreenDevice.h"
 #include "AMDGPUSubtarget.h"
+#include "AMDILEvergreenDevice.h"
 
 using namespace llvm;
 

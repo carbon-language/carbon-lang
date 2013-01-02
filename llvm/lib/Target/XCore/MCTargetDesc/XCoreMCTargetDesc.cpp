@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "XCoreMCTargetDesc.h"
-#include "XCoreMCAsmInfo.h"
 #include "InstPrinter/XCoreInstPrinter.h"
+#include "XCoreMCAsmInfo.h"
 #include "llvm/MC/MCCodeGenInfo.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCRegisterInfo.h"

@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "R600InstrInfo.h"
-#include "AMDGPUTargetMachine.h"
 #include "AMDGPUSubtarget.h"
+#include "AMDGPUTargetMachine.h"
 #include "R600Defines.h"
 #include "R600RegisterInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

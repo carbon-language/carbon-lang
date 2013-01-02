@@ -16,11 +16,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "AMDGPU.h"
-#include "llvm/Module.h"
 #include "llvm/ADT/SCCIterator.h"
-#include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/RegionInfo.h"
+#include "llvm/Analysis/RegionIterator.h"
 #include "llvm/Analysis/RegionPass.h"
+#include "llvm/Module.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 
 using namespace llvm;

@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "Mips16FrameLowering.h"
-#include "Mips16InstrInfo.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
+#include "Mips16InstrInfo.h"
 #include "MipsInstrInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"

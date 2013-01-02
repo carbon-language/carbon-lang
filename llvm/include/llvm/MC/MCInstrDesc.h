@@ -15,9 +15,9 @@
 #ifndef LLVM_MC_MCINSTRDESC_H
 #define LLVM_MC_MCINSTRDESC_H
 
-#include "llvm/Support/DataTypes.h"
-#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCRegisterInfo.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 

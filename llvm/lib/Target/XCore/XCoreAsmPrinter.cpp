@@ -14,9 +14,9 @@
 
 #define DEBUG_TYPE "asm-printer"
 #include "XCore.h"
+#include "InstPrinter/XCoreInstPrinter.h"
 #include "XCoreInstrInfo.h"
 #include "XCoreMCInstLower.h"
-#include "InstPrinter/XCoreInstPrinter.h"
 #include "XCoreSubtarget.h"
 #include "XCoreTargetMachine.h"
 #include "llvm/ADT/SmallString.h"

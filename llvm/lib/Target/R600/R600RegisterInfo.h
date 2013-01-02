@@ -15,8 +15,8 @@
 #ifndef R600REGISTERINFO_H_
 #define R600REGISTERINFO_H_
 
-#include "AMDGPUTargetMachine.h"
 #include "AMDGPURegisterInfo.h"
+#include "AMDGPUTargetMachine.h"
 
 namespace llvm {
 

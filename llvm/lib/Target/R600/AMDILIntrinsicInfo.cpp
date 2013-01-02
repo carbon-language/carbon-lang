@@ -13,8 +13,8 @@
 //===-----------------------------------------------------------------------===//
 
 #include "AMDILIntrinsicInfo.h"
-#include "AMDIL.h"
 #include "AMDGPUSubtarget.h"
+#include "AMDIL.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/Module.h"

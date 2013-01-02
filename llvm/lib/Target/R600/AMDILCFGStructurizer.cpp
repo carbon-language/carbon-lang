@@ -18,7 +18,6 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/DominatorInternals.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/CodeGen/MachinePostDominators.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
@@ -26,6 +25,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
+#include "llvm/CodeGen/MachinePostDominators.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 

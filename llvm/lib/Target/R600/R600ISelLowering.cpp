@@ -17,10 +17,10 @@
 #include "R600InstrInfo.h"
 #include "R600MachineFunctionInfo.h"
 #include "llvm/Argument.h"
-#include "llvm/Function.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Function.h"
 
 using namespace llvm;
 

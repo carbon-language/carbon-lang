@@ -22,8 +22,8 @@
 #include "SIMachineFunctionInfo.h"
 #include "SIRegisterInfo.h"
 #include "llvm/MC/MCStreamer.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Support/TargetRegistry.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
 
 using namespace llvm;
 

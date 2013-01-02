@@ -15,8 +15,8 @@
 //===---------------------------------------------------------------------===//
 #ifndef AMDILNIDEVICE_H
 #define AMDILNIDEVICE_H
-#include "AMDILEvergreenDevice.h"
 #include "AMDGPUSubtarget.h"
+#include "AMDILEvergreenDevice.h"
 
 namespace llvm {
 
