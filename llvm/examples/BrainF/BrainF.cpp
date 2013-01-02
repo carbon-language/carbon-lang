@@ -25,9 +25,9 @@
 
 #include "BrainF.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Intrinsics.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Intrinsics.h"
 #include <iostream>
 using namespace llvm;
 
