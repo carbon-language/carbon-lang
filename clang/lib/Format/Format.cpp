@@ -18,10 +18,9 @@
 
 #include "clang/Format/Format.h"
 #include "UnwrappedLineParser.h"
-#include "clang/Basic/SourceManager.h"
 #include "clang/Basic/OperatorPrecedence.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Lex/Lexer.h"
-
 #include <string>
 
 namespace clang {

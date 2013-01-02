@@ -16,7 +16,6 @@
 #include "CIndexDiagnostic.h"
 #include "CXCursor.h"
 #include "CXString.h"
-#include "CXString.h"
 #include "CXTranslationUnit.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"

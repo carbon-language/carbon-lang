@@ -20,12 +20,12 @@
 #include "clang/AST/CommentVisitor.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/PrettyPrinter.h"
+#include "clang/Format/Format.h"
+#include "clang/Lex/Lexer.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
-#include "clang/Format/Format.h"
-#include "clang/Lex/Lexer.h"
 #include <climits>
 
 using namespace clang;
