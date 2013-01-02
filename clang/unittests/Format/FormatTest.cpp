@@ -646,6 +646,12 @@ TEST_F(FormatTest, UnderstandsUnaryOperators) {
   verifyFormat("b ? -a : c;");
   verifyFormat("n * sizeof char16;");
   verifyFormat("sizeof(char);");
+
+  verifyFormat("return -1;");
+  verifyFormat("switch (a) {\n"
+               "case -1:\n"
+               "  break;\n"
+               "}");
 }
 
 TEST_F(FormatTest, UndestandsOverloadedOperators) {

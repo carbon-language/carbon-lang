@@ -852,7 +852,8 @@ private:
     const Token &PreviousTok = Line.Tokens[Index - 1].Tok;
     if (PreviousTok.is(tok::equal) || PreviousTok.is(tok::l_paren) ||
         PreviousTok.is(tok::comma) || PreviousTok.is(tok::l_square) ||
-        PreviousTok.is(tok::question) || PreviousTok.is(tok::colon))
+        PreviousTok.is(tok::question) || PreviousTok.is(tok::colon) ||
+        PreviousTok.is(tok::kw_return) || PreviousTok.is(tok::kw_case))
       return TokenAnnotation::TT_UnaryOperator;
 
     // There can't be to consecutive binary operators.
