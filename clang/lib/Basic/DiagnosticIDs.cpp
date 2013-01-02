@@ -125,8 +125,8 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 #define DIAG_START_COMMON 0 // Sentinel value.
 #define CATEGORY(NAME, PREV) \
   if (DiagID > DIAG_START_##NAME) { \
-    Offset += NUM_BUILTIN_##PREV##_DIAGNOSTICS - DIAG_START_##PREV; \
-    ID -= DIAG_START_##NAME - DIAG_START_##PREV + 1; \
+    Offset += NUM_BUILTIN_##PREV##_DIAGNOSTICS - DIAG_START_##PREV - 1; \
+    ID -= DIAG_START_##NAME - DIAG_START_##PREV; \
   }
 CATEGORY(DRIVER, COMMON)
 CATEGORY(FRONTEND, DRIVER)
@@ -143,6 +143,8 @@ CATEGORY(ANALYSIS, SEMA)
   // Avoid out of bounds reads.
   if (ID + Offset >= StaticDiagInfoSize)
     return 0;
+
+  assert(ID < StaticDiagInfoSize && Offset < StaticDiagInfoSize);
 
   const StaticDiagInfoRec *Found = &StaticDiagInfo[ID + Offset];
   // If the diag id doesn't match we found a different diag, abort. This can
