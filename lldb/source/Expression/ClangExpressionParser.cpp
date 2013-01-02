@@ -265,14 +265,14 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         break;
     case lldb::eLanguageTypeC_plus_plus:
         m_compiler->getLangOpts().CPlusPlus = true;
-        m_compiler->getLangOpts().CPlusPlus0x = true;
+        m_compiler->getLangOpts().CPlusPlus11 = true;
         break;
     case lldb::eLanguageTypeObjC_plus_plus:
     default:
         m_compiler->getLangOpts().ObjC1 = true;
         m_compiler->getLangOpts().ObjC2 = true;
         m_compiler->getLangOpts().CPlusPlus = true;
-        m_compiler->getLangOpts().CPlusPlus0x = true;
+        m_compiler->getLangOpts().CPlusPlus11 = true;
         break;
     }
     

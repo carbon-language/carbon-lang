@@ -260,7 +260,7 @@ ParseLangArgs
     Opts.LineComment = Std.hasLineComments();
     Opts.C99 = Std.isC99();
     Opts.CPlusPlus = Std.isCPlusPlus();
-    Opts.CPlusPlus0x = Std.isCPlusPlus0x();
+    Opts.CPlusPlus11 = Std.isCPlusPlus11();
     Opts.Digraphs = Std.hasDigraphs();
     Opts.GNUMode = Std.isGNUMode();
     Opts.GNUInline = !Std.isC99();
