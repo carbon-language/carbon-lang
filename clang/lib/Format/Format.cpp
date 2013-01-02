@@ -660,8 +660,7 @@ public:
     for (int i = 1, e = Line.Tokens.size(); i != e; ++i) {
       TokenAnnotation &Annotation = Annotations[i];
 
-      Annotation.CanBreakBefore =
-          canBreakBetween(Line.Tokens[i - 1], Line.Tokens[i]);
+      Annotation.CanBreakBefore = canBreakBefore(i);
 
       if (Annotation.Type == TokenAnnotation::TT_CtorInitializerColon) {
         Annotation.MustBreakBefore = true;
@@ -896,7 +895,13 @@ private:
     return true;
   }
 
-  bool canBreakBetween(const FormatToken &Left, const FormatToken &Right) {
+  bool canBreakBefore(unsigned i) {
+    if (Annotations[i - 1].Type == TokenAnnotation::TT_PointerOrReference ||
+        Annotations[i].Type == TokenAnnotation::TT_ConditionalExpr) {
+      return false;
+    }
+    const FormatToken &Left = Line.Tokens[i - 1];
+    const FormatToken &Right = Line.Tokens[i];
     if (Right.Tok.is(tok::r_paren) || Right.Tok.is(tok::l_brace) ||
         Right.Tok.is(tok::comment) || Right.Tok.is(tok::greater))
       return false;

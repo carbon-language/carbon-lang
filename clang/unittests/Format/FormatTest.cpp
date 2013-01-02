@@ -682,6 +682,16 @@ TEST_F(FormatTest, UnderstandsUsesOfStar) {
   verifyGoogleFormat("A<int**, int**> a;");
 }
 
+TEST_F(FormatTest, DoesNotBreakBeforePointerOrReference) {
+  verifyFormat(
+      "int *someFunction(int LoooooooooooooooongParam1,\n"
+      "                  int LoooooooooooooooongParam2) {\n}");
+  verifyFormat(
+      "TypeSpecDecl *TypeSpecDecl::Create(ASTContext &C, DeclContext *DC,\n"
+      "                                   SourceLocation L, IdentifierIn *II,\n"
+      "                                   Type *T) {\n}");
+}
+
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
   verifyFormat("(a)->b();");
   verifyFormat("--a;");
