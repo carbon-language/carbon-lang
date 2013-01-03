@@ -18,8 +18,8 @@ static void func() {
   id x;
 
   // rdar://8290002
-  [(*x).isa self]; // expected-warning {{direct access to objective-c's isa is deprecated in favor of object_setClass() and object_getClass()}}
-  [x->isa self]; // expected-warning {{direct access to objective-c's isa is deprecated in favor of object_setClass() and object_getClass()}}
+  [(*x).isa self]; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_setClass() and object_getClass()}}
+  [x->isa self]; // expected-warning {{direct access to Objective-C's isa is deprecated in favor of object_setClass() and object_getClass()}}
   
   Whatever *y;
 
@@ -72,10 +72,10 @@ static void func() {
     Subclass *x;
     SiblingClass *y;
     OtherClass *z;
-    (void)v->isa; // expected-warning {{direct access to objective-c's isa is deprecated}}
-    (void)w->isa; // expected-warning {{direct access to objective-c's isa is deprecated}}
-    (void)x->isa; // expected-warning {{direct access to objective-c's isa is deprecated}}
-    (void)y->isa; // expected-warning {{direct access to objective-c's isa is deprecated}}
+    (void)v->isa; // expected-warning {{direct access to Objective-C's isa is deprecated}}
+    (void)w->isa; // expected-warning {{direct access to Objective-C's isa is deprecated}}
+    (void)x->isa; // expected-warning {{direct access to Objective-C's isa is deprecated}}
+    (void)y->isa; // expected-warning {{direct access to Objective-C's isa is deprecated}}
     (void)z->isa;
     (void)u->isa;
 }
