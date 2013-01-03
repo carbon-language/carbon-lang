@@ -70,6 +70,19 @@ public:
     ID.AddInteger(K);
     ID.AddPointer(S);
   }
+
+  void dump(llvm::raw_ostream &OS) const {
+    static const char *Table[] = {
+      "Allocated",
+      "Released",
+      "Relinquished"
+    };
+    OS << Table[(unsigned) K];
+  }
+
+  LLVM_ATTRIBUTE_USED void dump() const {
+    dump(llvm::errs());
+  }
 };
 
 enum ReallocPairKind {
@@ -1561,8 +1574,15 @@ void MallocChecker::printState(raw_ostream &Out, ProgramStateRef State,
 
   RegionStateTy RS = State->get<RegionState>();
 
-  if (!RS.isEmpty())
-    Out << "Has Malloc data" << NL;
+  if (!RS.isEmpty()) {
+    Out << Sep << "MallocChecker:" << NL;
+    for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
+      I.getKey()->dumpToStream(Out);
+      Out << " : ";
+      I.getData().dump(Out);
+      Out << NL;
+    }
+  }
 }
 
 #define REGISTER_CHECKER(name) \
