@@ -208,15 +208,14 @@ Partial unrolling during vectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Modern processors feature multiple execution units, and only programs that contain a
-high degree of parallelism can fully utilize the entire width of the machine.
-
+high degree of parallelism can fully utilize the entire width of the machine. 
 The Loop Vectorizer increases the instruction level parallelism (ILP) by 
 performing partial-unrolling of loops.
 
 In the example below the entire array is accumulated into the variable 'sum'.
-This is inefficient because only a single 'adder' can be used by the processor.
+This is inefficient because only a single execution port can be used by the processor.
 By unrolling the code the Loop Vectorizer allows two or more execution ports
-to be used.
+to be used simultaneously.
 
 .. code-block:: c++
 
