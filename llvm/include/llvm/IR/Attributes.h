@@ -179,9 +179,6 @@ public:
   /// removeAttribute - Remove the attributes from A from the builder.
   AttrBuilder &removeAttributes(const Attribute &A);
 
-  /// \brief Return true if the builder has the specified attribute.
-  bool contains(Attribute::AttrKind A) const;
-
   /// hasAttributes - Return true if the builder has IR-level attributes.
   bool hasAttributes() const;
 
@@ -242,6 +239,9 @@ public:
   bool operator!=(const AttrBuilder &B) {
     return Bits != B.Bits;
   }
+
+  bool operator==(Attribute::AttrKind A) const;
+  bool operator!=(Attribute::AttrKind A) const;
 };
 
 //===----------------------------------------------------------------------===//
