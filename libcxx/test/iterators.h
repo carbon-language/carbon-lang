@@ -18,6 +18,7 @@ public:
 
     It base() const {return it_;}
 
+    output_iterator () {}
     explicit output_iterator(It it) : it_(it) {}
     template <class U>
         output_iterator(const output_iterator<U>& u) :it_(u.it_) {}
