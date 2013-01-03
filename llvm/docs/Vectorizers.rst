@@ -159,8 +159,8 @@ The Loop Vectorizer can vectorize loops that count backwards.
 Scatter / Gather
 ^^^^^^^^^^^^^^^^
 
-The Loop Vectorizer can vectorize code that becomes scatter/gather
-memory accesses.
+The Loop Vectorizer can vectorize code that becomes a sequence of scalar instructions 
+that scatter/gathers memory.
 
 .. code-block:: c++
 
@@ -202,6 +202,38 @@ See the table below for a list of these functions.
 +-----+-----+---------+
 |     |     | fmuladd |
 +-----+-----+---------+
+
+
+Partial unrolling during vectorization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Modern processors feature multiple execution units, and only programs that contain a
+high degree of parallelism can fully utilize the entire width of the machine.
+
+The Loop Vectorizer increases the instruction level parallelism (ILP) by 
+performing partial-unrolling of loops.
+
+In the example below the entire array is accumulated into the variable 'sum'.
+This is inefficient because only a single 'adder' can be used by the processor.
+By unrolling the code the Loop Vectorizer allows two or more execution ports
+to be used.
+
+.. code-block:: c++
+
+  int foo(int *A, int *B, int n) {
+    unsigned sum = 0;
+    for (int i = 0; i < n; ++i)
+        sum += A[i];
+    return sum;
+  }
+
+At the moment the unrolling feature is not enabled by default and needs to be enabled
+in opt or clang using the following flag:
+
+.. code-block:: console
+
+  -force-vector-unroll=2 
+
 
 Performance
 -----------
