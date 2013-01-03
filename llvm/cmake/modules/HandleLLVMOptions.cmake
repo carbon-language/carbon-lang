@@ -176,7 +176,6 @@ if( MSVC )
 
     # Promoted warnings to errors.
     -we4238 # Promote 'nonstandard extension used : class rvalue used as lvalue' to error.
-    -we4239 # Promote 'nonstandard extension used : 'token' : conversion from 'type' to 'type'' to error.
     )
 
   # Enable warnings
