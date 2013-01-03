@@ -44,7 +44,7 @@ class CheckerDocumentation : public Checker< check::PreStmt<ReturnStmt>,
                                        check::Location,
                                        check::Bind,
                                        check::DeadSymbols,
-                                       check::EndPath,
+                                       check::EndFunction,
                                        check::EndAnalysis,
                                        check::EndOfTranslationUnit,
                                        eval::Call,
@@ -153,11 +153,11 @@ public:
   /// check::DeadSymbols
   void checkDeadSymbols(SymbolReaper &SR, CheckerContext &C) const {}
 
-  /// \brief Called when the analyzer core reaches the end of the top-level
+  /// \brief Called when the analyzer core reaches the end of a
   /// function being analyzed.
   ///
-  /// check::EndPath
-  void checkEndPath(CheckerContext &Ctx) const {}
+  /// check::EndFunction
+  void checkEndFunction(CheckerContext &Ctx) const {}
 
   /// \brief Called after all the paths in the ExplodedGraph reach end of path
   /// - the symbolic execution graph is fully explored.

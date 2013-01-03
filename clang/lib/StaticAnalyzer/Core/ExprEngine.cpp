@@ -1337,10 +1337,10 @@ void ExprEngine::processEndOfFunction(NodeBuilderContext& BC,
     // Notify checkers.
     for (ExplodedNodeSet::iterator I = AfterRemovedDead.begin(),
         E = AfterRemovedDead.end(); I != E; ++I) {
-      getCheckerManager().runCheckersForEndPath(BC, Dst, *I, *this);
+      getCheckerManager().runCheckersForEndFunction(BC, Dst, *I, *this);
     }
   } else {
-    getCheckerManager().runCheckersForEndPath(BC, Dst, Pred, *this);
+    getCheckerManager().runCheckersForEndFunction(BC, Dst, Pred, *this);
   }
 
   Engine.enqueueEndOfFunction(Dst);

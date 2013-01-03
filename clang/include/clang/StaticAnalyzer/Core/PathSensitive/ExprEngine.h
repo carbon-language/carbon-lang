@@ -230,8 +230,8 @@ public:
   ///  nodes by processing the 'effects' of a switch statement.
   void processSwitch(SwitchNodeBuilder& builder);
 
-  /// ProcessEndPath - Called by CoreEngine.  Used to generate end-of-path
-  ///  nodes when the control reaches the end of a function.
+  /// Called by CoreEngine.  Used to generate end-of-path
+  /// nodes when the control reaches the end of a function.
   void processEndOfFunction(NodeBuilderContext& BC,
                             ExplodedNode *Pred);
 

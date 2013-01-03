@@ -24,5 +24,5 @@ void testRemoveDeadBindings() {
   c();
 }
 
-// CHECK: --END PATH--
-// CHECK-NOT: --END PATH--
+// CHECK: --END FUNCTION--
+// CHECK-NOT: --END FUNCTION--

@@ -227,18 +227,18 @@ public:
   }
 };
 
-class EndPath {
+class EndFunction {
   template <typename CHECKER>
-  static void _checkEndPath(void *checker,
-                            CheckerContext &C) {
-    ((const CHECKER *)checker)->checkEndPath(C);
+  static void _checkEndFunction(void *checker,
+                                CheckerContext &C) {
+    ((const CHECKER *)checker)->checkEndFunction(C);
   }
 
 public:
   template <typename CHECKER>
   static void _register(CHECKER *checker, CheckerManager &mgr) {
-    mgr._registerForEndPath(
-     CheckerManager::CheckEndPathFunc(checker, _checkEndPath<CHECKER>));
+    mgr._registerForEndFunction(
+     CheckerManager::CheckEndFunctionFunc(checker, _checkEndFunction<CHECKER>));
   }
 };
 

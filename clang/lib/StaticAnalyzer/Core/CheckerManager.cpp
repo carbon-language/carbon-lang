@@ -30,7 +30,7 @@ bool CheckerManager::hasPathSensitiveCheckers() const {
          !LocationCheckers.empty()          ||
          !BindCheckers.empty()              ||
          !EndAnalysisCheckers.empty()       ||
-         !EndPathCheckers.empty()           ||
+         !EndFunctionCheckers.empty()           ||
          !BranchConditionCheckers.empty()   ||
          !LiveSymbolsCheckers.empty()       ||
          !DeadSymbolsCheckers.empty()       ||
@@ -353,17 +353,17 @@ void CheckerManager::runCheckersForEndAnalysis(ExplodedGraph &G,
 /// \brief Run checkers for end of path.
 // Note, We do not chain the checker output (like in expandGraphWithCheckers)
 // for this callback since end of path nodes are expected to be final.
-void CheckerManager::runCheckersForEndPath(NodeBuilderContext &BC,
-                                           ExplodedNodeSet &Dst,
-                                           ExplodedNode *Pred,
-                                           ExprEngine &Eng) {
+void CheckerManager::runCheckersForEndFunction(NodeBuilderContext &BC,
+                                               ExplodedNodeSet &Dst,
+                                               ExplodedNode *Pred,
+                                               ExprEngine &Eng) {
   
   // We define the builder outside of the loop bacause if at least one checkers
   // creates a sucsessor for Pred, we do not need to generate an 
   // autotransition for it.
   NodeBuilder Bldr(Pred, Dst, BC);
-  for (unsigned i = 0, e = EndPathCheckers.size(); i != e; ++i) {
-    CheckEndPathFunc checkFn = EndPathCheckers[i];
+  for (unsigned i = 0, e = EndFunctionCheckers.size(); i != e; ++i) {
+    CheckEndFunctionFunc checkFn = EndFunctionCheckers[i];
 
     const ProgramPoint &L = BlockEntrance(BC.Block,
                                           Pred->getLocationContext(),
@@ -633,8 +633,8 @@ void CheckerManager::_registerForEndAnalysis(CheckEndAnalysisFunc checkfn) {
   EndAnalysisCheckers.push_back(checkfn);
 }
 
-void CheckerManager::_registerForEndPath(CheckEndPathFunc checkfn) {
-  EndPathCheckers.push_back(checkfn);
+void CheckerManager::_registerForEndFunction(CheckEndFunctionFunc checkfn) {
+  EndFunctionCheckers.push_back(checkfn);
 }
 
 void CheckerManager::_registerForBranchCondition(
