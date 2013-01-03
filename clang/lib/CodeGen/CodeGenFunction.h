@@ -1687,11 +1687,6 @@ public:
   /// then reuse it.
   void StartBlock(const char *N);
 
-  /// GetAddrOfStaticLocalVar - Return the address of a static local variable.
-  llvm::Constant *GetAddrOfStaticLocalVar(const VarDecl *BVD) {
-    return cast<llvm::Constant>(GetAddrOfLocalVar(BVD));
-  }
-
   /// GetAddrOfLocalVar - Return the address of a local variable.
   llvm::Value *GetAddrOfLocalVar(const VarDecl *VD) {
     llvm::Value *Res = LocalDeclMap[VD];
