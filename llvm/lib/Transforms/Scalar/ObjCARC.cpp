@@ -4168,6 +4168,10 @@ bool ObjCARCContract::runOnFunction(Function &F) {
           ConstantPointerNull::get(cast<PointerType>(CI->getType()));
         Changed = true;
         new StoreInst(Null, CI->getArgOperand(0), CI);
+        
+        DEBUG(dbgs() << "OBJCARCContract: Old = " << *CI << "\n"
+                     << "                 New = " << *Null << "\n");
+        
         CI->replaceAllUsesWith(Null);
         CI->eraseFromParent();
       }
