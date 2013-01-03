@@ -72,16 +72,25 @@ public:
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                               uint64_t Size, unsigned ByteAlignment);
   virtual void EmitFileDirective(StringRef Filename);
-  virtual void EmitInstruction(const MCInst &Instruction);
   virtual void EmitWin64EHHandlerData();
   virtual void FinishImpl();
 
 private:
-  virtual void EmitInstToFragment(const MCInst &Inst) {
-    llvm_unreachable("Not used by WinCOFF.");
-  }
   virtual void EmitInstToData(const MCInst &Inst) {
-    llvm_unreachable("Not used by WinCOFF.");
+    MCDataFragment *DF = getOrCreateDataFragment();
+
+    SmallVector<MCFixup, 4> Fixups;
+    SmallString<256> Code;
+    raw_svector_ostream VecOS(Code);
+    getAssembler().getEmitter().EncodeInstruction(Inst, VecOS, Fixups);
+    VecOS.flush();
+
+    // Add the fixups and data.
+    for (unsigned i = 0, e = Fixups.size(); i != e; ++i) {
+      Fixups[i].setOffset(Fixups[i].getOffset() + DF->getContents().size());
+      DF->getFixups().push_back(Fixups[i]);
+    }
+    DF->getContents().append(Code.begin(), Code.end());
   }
 
   void SetSection(StringRef Section,
@@ -116,7 +125,6 @@ private:
                SectionKind::getBSS());
     EmitCodeAlignment(4, 0);
   }
-
 };
 } // end anonymous namespace.
 
@@ -332,22 +340,6 @@ void WinCOFFStreamer::EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
 void WinCOFFStreamer::EmitFileDirective(StringRef Filename) {
   // Ignore for now, linkers don't care, and proper debug
   // info will be a much large effort.
-}
-
-void WinCOFFStreamer::EmitInstruction(const MCInst &Instruction) {
-  for (unsigned i = 0, e = Instruction.getNumOperands(); i != e; ++i)
-    if (Instruction.getOperand(i).isExpr())
-      AddValueSymbols(Instruction.getOperand(i).getExpr());
-
-  getCurrentSectionData()->setHasInstructions(true);
-
-  MCInstFragment *Fragment =
-    new MCInstFragment(Instruction, getCurrentSectionData());
-
-  raw_svector_ostream VecOS(Fragment->getContents());
-
-  getAssembler().getEmitter().EncodeInstruction(Instruction, VecOS,
-                                                Fragment->getFixups());
 }
 
 void WinCOFFStreamer::EmitWin64EHHandlerData() {
