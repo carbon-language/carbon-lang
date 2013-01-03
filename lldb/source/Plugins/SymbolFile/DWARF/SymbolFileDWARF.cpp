@@ -5511,51 +5511,80 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     case DW_TAG_volatile_type:          encoding_data_type = Type::eEncodingIsVolatileUID;          break;
                     }
 
-                    if (clang_type == NULL && (encoding_data_type == Type::eEncodingIsPointerUID || encoding_data_type == Type::eEncodingIsTypedefUID))
+                    if (clang_type == NULL && (encoding_data_type == Type::eEncodingIsPointerUID || encoding_data_type == Type::eEncodingIsTypedefUID) && sc.comp_unit != NULL)
                     {
-                        if (type_name_cstr != NULL && sc.comp_unit != NULL && 
-                            (sc.comp_unit->GetLanguage() == eLanguageTypeObjC || sc.comp_unit->GetLanguage() == eLanguageTypeObjC_plus_plus))
+                        bool translation_unit_is_objc = (sc.comp_unit->GetLanguage() == eLanguageTypeObjC || sc.comp_unit->GetLanguage() == eLanguageTypeObjC_plus_plus);
+                        
+                        if (translation_unit_is_objc)
                         {
-                            static ConstString g_objc_type_name_id("id");
-                            static ConstString g_objc_type_name_Class("Class");
-                            static ConstString g_objc_type_name_selector("SEL");
-                            
-                            if (type_name_const_str == g_objc_type_name_id)
+                            if (type_name_cstr != NULL)
                             {
-                                if (log)
-                                    GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is Objective C 'id' built-in type.", 
-                                                                              die->GetOffset(), 
-                                                                              DW_TAG_value_to_name(die->Tag()), 
-                                                                              die->GetName(this, dwarf_cu));
-                                clang_type = ast.GetBuiltInType_objc_id();
-                                encoding_data_type = Type::eEncodingIsUID;
-                                encoding_uid = LLDB_INVALID_UID;
-                                resolve_state = Type::eResolveStateFull;
+                                static ConstString g_objc_type_name_id("id");
+                                static ConstString g_objc_type_name_Class("Class");
+                                static ConstString g_objc_type_name_selector("SEL");
+                                
+                                if (type_name_const_str == g_objc_type_name_id)
+                                {
+                                    if (log)
+                                        GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is Objective C 'id' built-in type.", 
+                                                                                  die->GetOffset(), 
+                                                                                  DW_TAG_value_to_name(die->Tag()), 
+                                                                                  die->GetName(this, dwarf_cu));
+                                    clang_type = ast.GetBuiltInType_objc_id();
+                                    encoding_data_type = Type::eEncodingIsUID;
+                                    encoding_uid = LLDB_INVALID_UID;
+                                    resolve_state = Type::eResolveStateFull;
 
+                                }
+                                else if (type_name_const_str == g_objc_type_name_Class)
+                                {
+                                    if (log)
+                                        GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is Objective C 'Class' built-in type.", 
+                                                                                  die->GetOffset(), 
+                                                                                  DW_TAG_value_to_name(die->Tag()), 
+                                                                                  die->GetName(this, dwarf_cu));
+                                    clang_type = ast.GetBuiltInType_objc_Class();
+                                    encoding_data_type = Type::eEncodingIsUID;
+                                    encoding_uid = LLDB_INVALID_UID;
+                                    resolve_state = Type::eResolveStateFull;
+                                }
+                                else if (type_name_const_str == g_objc_type_name_selector)
+                                {
+                                    if (log)
+                                        GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is Objective C 'selector' built-in type.", 
+                                                                                  die->GetOffset(), 
+                                                                                  DW_TAG_value_to_name(die->Tag()), 
+                                                                                  die->GetName(this, dwarf_cu));
+                                    clang_type = ast.GetBuiltInType_objc_selector();
+                                    encoding_data_type = Type::eEncodingIsUID;
+                                    encoding_uid = LLDB_INVALID_UID;
+                                    resolve_state = Type::eResolveStateFull;
+                                }
                             }
-                            else if (type_name_const_str == g_objc_type_name_Class)
+                            else if (encoding_data_type == Type::eEncodingIsPointerUID && encoding_uid != LLDB_INVALID_UID)
                             {
-                                if (log)
-                                    GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is Objective C 'Class' built-in type.", 
-                                                                              die->GetOffset(), 
-                                                                              DW_TAG_value_to_name(die->Tag()), 
-                                                                              die->GetName(this, dwarf_cu));
-                                clang_type = ast.GetBuiltInType_objc_Class();
-                                encoding_data_type = Type::eEncodingIsUID;
-                                encoding_uid = LLDB_INVALID_UID;
-                                resolve_state = Type::eResolveStateFull;
-                            }
-                            else if (type_name_const_str == g_objc_type_name_selector)
-                            {
-                                if (log)
-                                    GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is Objective C 'selector' built-in type.", 
-                                                                              die->GetOffset(), 
-                                                                              DW_TAG_value_to_name(die->Tag()), 
-                                                                              die->GetName(this, dwarf_cu));
-                                clang_type = ast.GetBuiltInType_objc_selector();
-                                encoding_data_type = Type::eEncodingIsUID;
-                                encoding_uid = LLDB_INVALID_UID;
-                                resolve_state = Type::eResolveStateFull;
+                                // Clang sometimes erroneously emits id as objc_object*.  In that case we fix up the type to "id".
+                            
+                                DWARFDebugInfoEntry* encoding_die = dwarf_cu->GetDIEPtr(encoding_uid);
+                                
+                                if (encoding_die && encoding_die->Tag() == DW_TAG_structure_type)
+                                {                                    
+                                    if (const char *struct_name = encoding_die->GetAttributeValueAsString(this, dwarf_cu, DW_AT_name, NULL))
+                                    {
+                                        if (!strcmp(struct_name, "objc_object"))
+                                        {
+                                            if (log)
+                                                GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s' is 'objc_object*', which we overrode to 'id'.",
+                                                                                          die->GetOffset(),
+                                                                                          DW_TAG_value_to_name(die->Tag()),
+                                                                                          die->GetName(this, dwarf_cu));
+                                            clang_type = ast.GetBuiltInType_objc_id();
+                                            encoding_data_type = Type::eEncodingIsUID;
+                                            encoding_uid = LLDB_INVALID_UID;
+                                            resolve_state = Type::eResolveStateFull;
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

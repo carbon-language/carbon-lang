@@ -1,5 +1,11 @@
 #import <Foundation/Foundation.h>
 
+@protocol MyProtocol
+
+-(const char *)hello;
+
+@end
+
 @interface BaseClass : NSObject
 {
   int _backedInt;
@@ -18,6 +24,7 @@
 
 @property(getter=myGetUnbackedInt,setter=mySetUnbackedInt:) int unbackedInt;
 @property int backedInt;
+@property (nonatomic, assign) id <MyProtocol> idWithProtocol;
 @end
 
 @implementation BaseClass
@@ -78,6 +85,8 @@ main ()
   int backedInt = mine.backedInt;
 
   int unbackedInt = mine.unbackedInt;
+
+  id idWithProtocol = mine.idWithProtocol;
 
   NSLog (@"Results for %p: nonexistant: %d backed: %d unbacked: %d accessCount: %d.",
          mine,
