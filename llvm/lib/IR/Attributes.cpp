@@ -89,11 +89,11 @@ unsigned Attribute::getStackAlignment() const {
 }
 
 bool Attribute::operator==(AttrKind K) const {
-  return pImpl && *pImpl == K;
+  return pImpl && pImpl->contains(K);
 }
 
 bool Attribute::operator!=(AttrKind K) const {
-  return !(pImpl && *pImpl == K);
+  return !(pImpl && pImpl->contains(K));
 }
 
 uint64_t Attribute::getBitMask() const {
@@ -293,12 +293,8 @@ AttrBuilder &AttrBuilder::removeAttributes(const Attribute &A){
   return *this;
 }
 
-bool AttrBuilder::operator==(Attribute::AttrKind A) const {
+bool AttrBuilder::contains(Attribute::AttrKind A) const {
   return Bits & AttributeImpl::getAttrMask(A);
-}
-
-bool AttrBuilder::operator!=(Attribute::AttrKind A) const {
-  return !(*this == A);
 }
 
 bool AttrBuilder::hasAttributes() const {
@@ -345,23 +341,17 @@ AttributeImpl::AttributeImpl(LLVMContext &C, StringRef data) {
   Data = ConstantDataArray::getString(C, data);
 }
 
-bool AttributeImpl::operator==(Attribute::AttrKind Kind) const {
+bool AttributeImpl::contains(Attribute::AttrKind Kind) const {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Data))
     return CI->getZExtValue() == Kind;
   return false;
 }
-bool AttributeImpl::operator!=(Attribute::AttrKind Kind) const {
-  return !(*this == Kind);
-}
 
-bool AttributeImpl::operator==(StringRef Kind) const {
+bool AttributeImpl::contains(StringRef Kind) const {
   if (ConstantDataArray *CDA = dyn_cast<ConstantDataArray>(Data))
     if (CDA->isString())
       return CDA->getAsString() == Kind;
   return false;
-}
-bool AttributeImpl::operator!=(StringRef Kind) const {
-  return !(*this == Kind);
 }
 
 uint64_t AttributeImpl::getBitMask() const {

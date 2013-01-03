@@ -42,6 +42,9 @@ public:
     return Vals;
   }
 
+  bool contains(Attribute::AttrKind Kind) const;
+  bool contains(StringRef Kind) const;
+
   bool hasAttribute(Attribute::AttrKind A) const;
 
   bool hasAttributes() const;
@@ -50,11 +53,19 @@ public:
   uint64_t getAlignment() const;
   uint64_t getStackAlignment() const;
 
-  bool operator==(Attribute::AttrKind Kind) const;
-  bool operator!=(Attribute::AttrKind Kind) const;
+  bool operator==(Attribute::AttrKind Kind) const {
+    return contains(Kind);
+  }
+  bool operator!=(Attribute::AttrKind Kind) const {
+    return !contains(Kind);
+  }
 
-  bool operator==(StringRef Kind) const;
-  bool operator!=(StringRef Kind) const;
+  bool operator==(StringRef Kind) const {
+    return contains(Kind);
+  }
+  bool operator!=(StringRef Kind) const {
+    return !contains(Kind);
+  }
 
   uint64_t getBitMask() const;         // FIXME: Remove.
 
