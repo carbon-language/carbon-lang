@@ -1282,8 +1282,18 @@ class JoinVals {
     // Value in the other live range that overlaps this def, if any.
     VNInfo *OtherVNI;
 
-    // Is this value an IMPLICIT_DEF?
-    bool IsImplicitDef;
+    // Is this value an IMPLICIT_DEF that can be erased?
+    //
+    // IMPLICIT_DEF values should only exist at the end of a basic block that
+    // is a predecessor to a phi-value. These IMPLICIT_DEF instructions can be
+    // safely erased if they are overlapping a live value in the other live
+    // interval.
+    //
+    // Weird control flow graphs and incomplete PHI handling in
+    // ProcessImplicitDefs can very rarely create IMPLICIT_DEF values with
+    // longer live ranges. Such IMPLICIT_DEF values should be treated like
+    // normal values.
+    bool ErasableImplicitDef;
 
     // True when the live range of this value will be pruned because of an
     // overlapping CR_Replace value in the other live range.
@@ -1293,8 +1303,8 @@ class JoinVals {
     bool PrunedComputed;
 
     Val() : Resolution(CR_Keep), WriteLanes(0), ValidLanes(0),
-            RedefVNI(0), OtherVNI(0), IsImplicitDef(false), Pruned(false),
-            PrunedComputed(false) {}
+            RedefVNI(0), OtherVNI(0), ErasableImplicitDef(false),
+            Pruned(false), PrunedComputed(false) {}
 
     bool isAnalyzed() const { return WriteLanes != 0; }
   };
@@ -1432,7 +1442,10 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
 
     // An IMPLICIT_DEF writes undef values.
     if (DefMI->isImplicitDef()) {
-      V.IsImplicitDef = true;
+      // We normally expect IMPLICIT_DEF values to be live only until the end
+      // of their block. If the value is really live longer and gets pruned in
+      // another block, this flag is cleared again.
+      V.ErasableImplicitDef = true;
       V.ValidLanes &= ~V.WriteLanes;
     }
   }
@@ -1485,7 +1498,22 @@ JoinVals::analyzeValue(unsigned ValNo, JoinVals &Other) {
   // We have overlapping values, or possibly a kill of Other.
   // Recursively compute assignments up the dominator tree.
   Other.computeAssignment(V.OtherVNI->id, *this);
-  const Val &OtherV = Other.Vals[V.OtherVNI->id];
+  Val &OtherV = Other.Vals[V.OtherVNI->id];
+
+  // Check if OtherV is an IMPLICIT_DEF that extends beyond its basic block.
+  // This shouldn't normally happen, but ProcessImplicitDefs can leave such
+  // IMPLICIT_DEF instructions behind, and there is nothing wrong with it
+  // technically.
+  //
+  // WHen it happens, treat that IMPLICIT_DEF as a normal value, and don't try
+  // to erase the IMPLICIT_DEF instruction.
+  if (OtherV.ErasableImplicitDef && DefMI &&
+      DefMI->getParent() != Indexes->getMBBFromIndex(V.OtherVNI->def)) {
+    DEBUG(dbgs() << "IMPLICIT_DEF defined at " << V.OtherVNI->def
+                 << " extends into BB#" << DefMI->getParent()->getNumber()
+                 << ", keeping it.\n");
+    OtherV.ErasableImplicitDef = false;
+  }
 
   // Allow overlapping PHI values. Any real interference would show up in a
   // predecessor, the PHI itself can't introduce any conflicts.
@@ -1794,7 +1822,8 @@ void JoinVals::pruneValues(JoinVals &Other,
       // predecessors, so the instruction should simply go away once its value
       // has been replaced.
       Val &OtherV = Other.Vals[Vals[i].OtherVNI->id];
-      bool EraseImpDef = OtherV.IsImplicitDef && OtherV.Resolution == CR_Keep;
+      bool EraseImpDef = OtherV.ErasableImplicitDef &&
+                         OtherV.Resolution == CR_Keep;
       if (!Def.isBlock()) {
         // Remove <def,read-undef> flags. This def is now a partial redef.
         // Also remove <def,dead> flags since the joined live range will
@@ -1843,7 +1872,7 @@ void JoinVals::eraseInstrs(SmallPtrSet<MachineInstr*, 8> &ErasedInstrs,
       // If an IMPLICIT_DEF value is pruned, it doesn't serve a purpose any
       // longer. The IMPLICIT_DEF instructions are only inserted by
       // PHIElimination to guarantee that all PHI predecessors have a value.
-      if (!Vals[i].IsImplicitDef || !Vals[i].Pruned)
+      if (!Vals[i].ErasableImplicitDef || !Vals[i].Pruned)
         break;
       // Remove value number i from LI. Note that this VNInfo is still present
       // in NewVNInfo, so it will appear as an unused value number in the final
