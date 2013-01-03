@@ -995,6 +995,9 @@ bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
       // zap the pair.
       if (Push && cast<CallInst>(Inst)->getArgOperand(0) == Push) {
         Changed = true;
+        DEBUG(dbgs() << "ObjCARCAPElim: OptimizeBB: Zapping push pop autorelease pair:\n"
+                     << "                           Pop: " << *Inst << "\n"
+                     << "                           Push: " << *Push << "\n");
         Inst->eraseFromParent();
         Push->eraseFromParent();
       }
