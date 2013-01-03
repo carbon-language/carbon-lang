@@ -54,6 +54,8 @@
 #include "llvm/Analysis/ScalarEvolution.h"
 #include "llvm/IR/IRBuilder.h"
 #include <algorithm>
+#include <map>
+
 using namespace llvm;
 
 /// We don't vectorize loops with a known constant trip count below this number.
@@ -91,9 +93,11 @@ class InnerLoopVectorizer {
 public:
   /// Ctor.
   InnerLoopVectorizer(Loop *Orig, ScalarEvolution *Se, LoopInfo *Li,
-                      DominatorTree *Dt, DataLayout *Dl, unsigned VecWidth):
+                      DominatorTree *Dt, DataLayout *Dl,
+                      unsigned VecWidth, unsigned UnrollFactor):
   OrigLoop(Orig), SE(Se), LI(Li), DT(Dt), DL(Dl), VF(VecWidth),
-  Builder(Se->getContext()), Induction(0), OldInduction(0) { }
+  UF(UnrollFactor), Builder(Se->getContext()), Induction(0), OldInduction(0),
+  WidenMap(UnrollFactor) { }
 
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *Legal) {
@@ -109,6 +113,10 @@ public:
 private:
   /// A small list of PHINodes.
   typedef SmallVector<PHINode*, 4> PhiVector;
+  /// When we unroll loops we have multiple vector values for each scalar.
+  /// This data structure holds the unrolled and vectorized values that
+  /// originated from one scalar instruction.
+  typedef SmallVector<Value*, 2> VectorParts;
 
   /// Add code that checks at runtime if the accessed arrays overlap.
   /// Returns the comparator value or NULL if no check is needed.
@@ -122,10 +130,10 @@ private:
   /// A helper function that computes the predicate of the block BB, assuming
   /// that the header block of the loop is set to True. It returns the *entry*
   /// mask for the block BB.
-  Value *createBlockInMask(BasicBlock *BB);
+  VectorParts createBlockInMask(BasicBlock *BB);
   /// A helper function that computes the predicate of the edge between SRC
   /// and DST.
-  Value *createEdgeMask(BasicBlock *Src, BasicBlock *Dst);
+  VectorParts createEdgeMask(BasicBlock *Src, BasicBlock *Dst);
 
   /// A helper function to vectorize a single BB within the innermost loop.
   void vectorizeBlockInLoop(LoopVectorizationLegality *Legal, BasicBlock *BB,
@@ -148,14 +156,15 @@ private:
 
   /// This function adds 0, 1, 2 ... to each vector element, starting at zero.
   /// If Negate is set then negative numbers are added e.g. (0, -1, -2, ...).
-  Value *getConsecutiveVector(Value* Val, bool Negate = false);
+  /// The sequence starts at StartIndex.
+  Value *getConsecutiveVector(Value* Val, unsigned StartIdx, bool Negate);
 
   /// When we go over instructions in the basic block we rely on previous
   /// values within the current basic block or on loop invariant values.
   /// When we widen (vectorize) values we place them in the map. If the values
   /// are not within the map, they have to be loop invariant, so we simply
   /// broadcast them into a vector.
-  Value *getVectorValue(Value *V);
+  VectorParts &getVectorValue(Value *V);
 
   /// Get a uniform vector of constant integers. We use this to get
   /// vectors of ones and zeros for the reduction code.
@@ -164,22 +173,61 @@ private:
   /// Generate a shuffle sequence that will reverse the vector Vec.
   Value *reverseVector(Value *Vec);
 
-  typedef DenseMap<Value*, Value*> ValueMap;
+  /// This is a helper class that holds the vectorizer state. It maps scalar
+  /// instructions to vector instructions. When the code is 'unrolled' then
+  /// then a single scalar value is mapped to multiple vector parts. The parts
+  /// are stored in the VectorPart type.
+  struct ValueMap {
+    /// C'tor.  UnrollFactor controls the number of vectors ('parts') that
+    /// are mapped.
+    ValueMap(unsigned UnrollFactor) : UF(UnrollFactor) {}
+
+    /// \return True if 'Key' is saved in the Value Map.
+    bool has(Value *Key) { return MapStoreage.count(Key); }
+
+    /// Initializes a new entry in the map. Sets all of the vector parts to the
+    /// save value in 'Val'.
+    /// \return A reference to a vector with splat values.
+    VectorParts &splat(Value *Key, Value *Val) {
+        MapStoreage[Key].clear();
+        MapStoreage[Key].append(UF, Val);
+        return MapStoreage[Key];
+    }
+
+    ///\return A reference to the value that is stored at 'Key'.
+    VectorParts &get(Value *Key) {
+      if (!has(Key))
+        MapStoreage[Key].resize(UF);
+      return MapStoreage[Key];
+    }
+
+    /// The unroll factor. Each entry in the map stores this number of vector
+    /// elements.
+    unsigned UF;
+
+    /// Map storage. We use std::map and not DenseMap because insertions to a
+    /// dense map invalidates its iterators.
+    std::map<Value*, VectorParts> MapStoreage;
+  };
 
   /// The original loop.
   Loop *OrigLoop;
-  // Scev analysis to use.
+  /// Scev analysis to use.
   ScalarEvolution *SE;
-  // Loop Info.
+  /// Loop Info.
   LoopInfo *LI;
-  // Dominator Tree.
+  /// Dominator Tree.
   DominatorTree *DT;
-  // Data Layout.
+  /// Data Layout.
   DataLayout *DL;
-  // The vectorization factor to use.
+  /// The vectorization SIMD factor to use. Each vector will have this many
+  /// vector elements.
   unsigned VF;
+  /// The vectorization unroll factor to use. Each scalar is vectorized to this
+  /// many different vector instructions.
+  unsigned UF;
 
-  // The builder that we use
+  /// The builder that we use
   IRBuilder<> Builder;
 
   // --- Vectorization state ---
@@ -203,7 +251,7 @@ private:
   PHINode *Induction;
   /// The induction variable of the old basic block.
   PHINode *OldInduction;
-  // Maps scalars to widened vectors.
+  /// Maps scalars to widened vectors.
   ValueMap WidenMap;
 };
 
