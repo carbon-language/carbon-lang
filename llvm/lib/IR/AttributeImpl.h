@@ -45,7 +45,7 @@ public:
   bool contains(Attribute::AttrKind Kind) const;
   bool contains(StringRef Kind) const;
 
-  bool hasAttribute(uint64_t A) const;
+  bool hasAttribute(Attribute::AttrKind A) const;
 
   bool hasAttributes() const;
   bool hasAttributes(const Attribute &A) const;
@@ -69,7 +69,7 @@ public:
 
   uint64_t getBitMask() const;         // FIXME: Remove.
 
-  static uint64_t getAttrMask(uint64_t Val);
+  static uint64_t getAttrMask(Attribute::AttrKind Val);
 
   void Profile(FoldingSetNodeID &ID) const {
     Profile(ID, Data, Vals);

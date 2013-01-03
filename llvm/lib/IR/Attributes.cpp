@@ -359,7 +359,7 @@ uint64_t AttributeImpl::getBitMask() const {
   return cast<ConstantInt>(Data)->getZExtValue();
 }
 
-uint64_t AttributeImpl::getAttrMask(uint64_t Val) {
+uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   switch (Val) {
   case Attribute::None:            return 0;
   case Attribute::ZExt:            return 1 << 0;
@@ -395,7 +395,7 @@ uint64_t AttributeImpl::getAttrMask(uint64_t Val) {
   llvm_unreachable("Unsupported attribute type");
 }
 
-bool AttributeImpl::hasAttribute(uint64_t A) const {
+bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
   return (getBitMask() & getAttrMask(A)) != 0;
 }
 
