@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wunused -Wunused-member-function -std=c++98 %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wunused -Wunused-member-function -Wno-c++11-extensions -std=c++98 %s
 // RUN: %clang_cc1 -fsyntax-only -verify -Wunused -Wunused-member-function -std=c++11 %s
 
 static void f1(); // expected-warning{{unused}}
@@ -131,4 +131,12 @@ namespace test6 {
   struct C {
     void bar();
   };
+}
+
+namespace pr14776 {
+  namespace {
+    struct X {};
+  }
+  X a = X(); // expected-warning {{unused variable 'a'}}
+  auto b = X(); // expected-warning {{unused variable 'b'}}
 }

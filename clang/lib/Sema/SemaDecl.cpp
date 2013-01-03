@@ -4537,8 +4537,6 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
   // member, set the visibility of this variable.
   if (NewVD->getLinkage() == ExternalLinkage && !DC->isRecord())
     AddPushedVisibilityAttribute(NewVD);
-  
-  MarkUnusedFileScopedDecl(NewVD);
 
   return NewVD;
 }
@@ -7347,6 +7345,9 @@ Sema::FinalizeDeclaration(Decl *ThisDecl) {
   const VarDecl *VD = dyn_cast_or_null<VarDecl>(ThisDecl);
   if (!VD)
     return;
+
+  if (VD->isFileVarDecl())
+    MarkUnusedFileScopedDecl(VD);
 
   // Now we have parsed the initializer and can update the table of magic
   // tag values.
