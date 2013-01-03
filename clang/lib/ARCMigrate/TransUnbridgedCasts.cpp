@@ -30,6 +30,14 @@
 // ---->
 //  CFStringRef str = (__bridge CFStringRef)self;
 //
+// Uses of Block_copy/Block_release macros are rewritten:
+//
+//  c = Block_copy(b);
+//  Block_release(c);
+// ---->
+//  c = [b copy];
+//  <removed>
+//
 //===----------------------------------------------------------------------===//
 
 #include "Transforms.h"
@@ -54,32 +62,32 @@ class UnbridgedCastRewriter : public RecursiveASTVisitor<UnbridgedCastRewriter>{
   IdentifierInfo *SelfII;
   OwningPtr<ParentMap> StmtMap;
   Decl *ParentD;
+  Stmt *Body;
+  mutable OwningPtr<ExprSet> Removables;
 
 public:
-  UnbridgedCastRewriter(MigrationPass &pass) : Pass(pass), ParentD(0) {
+  UnbridgedCastRewriter(MigrationPass &pass) : Pass(pass), ParentD(0), Body(0) {
     SelfII = &Pass.Ctx.Idents.get("self");
   }
 
   void transformBody(Stmt *body, Decl *ParentD) {
     this->ParentD = ParentD;
+    Body = body;
     StmtMap.reset(new ParentMap(body));
     TraverseStmt(body);
   }
 
   bool VisitCastExpr(CastExpr *E) {
-    if (E->getCastKind() != CK_CPointerToObjCPointerCast
-        && E->getCastKind() != CK_BitCast)
+    if (E->getCastKind() != CK_CPointerToObjCPointerCast &&
+        E->getCastKind() != CK_BitCast &&
+        E->getCastKind() != CK_AnyPointerToBlockPointerCast)
       return true;
 
     QualType castType = E->getType();
     Expr *castExpr = E->getSubExpr();
     QualType castExprType = castExpr->getType();
 
-    if (castType->isObjCObjectPointerType() &&
-        castExprType->isObjCObjectPointerType())
-      return true;
-    if (!castType->isObjCObjectPointerType() &&
-        !castExprType->isObjCObjectPointerType())
+    if (castType->isObjCRetainableType() == castExprType->isObjCRetainableType())
       return true;
     
     bool exprRetainable = castExprType->isObjCIndirectLifetimeType();
@@ -94,7 +102,7 @@ public:
     if (loc.isValid() && Pass.Ctx.getSourceManager().isInSystemHeader(loc))
       return true;
 
-    if (castType->isObjCObjectPointerType())
+    if (castType->isObjCRetainableType())
       transformNonObjCToObjCCast(E);
     else
       transformObjCToNonObjCCast(E);
@@ -263,7 +271,78 @@ private:
     rewriteToBridgedCast(castE, OBC_BridgeRetained, Trans);
   }
 
+  void getBlockMacroRanges(CastExpr *E, SourceRange &Outer, SourceRange &Inner) {
+    SourceManager &SM = Pass.Ctx.getSourceManager();
+    SourceLocation Loc = E->getExprLoc();
+    assert(Loc.isMacroID());
+    SourceLocation MacroBegin, MacroEnd;
+    llvm::tie(MacroBegin, MacroEnd) = SM.getImmediateExpansionRange(Loc);
+    SourceRange SubRange = E->getSubExpr()->IgnoreParenImpCasts()->getSourceRange();
+    SourceLocation InnerBegin = SM.getImmediateMacroCallerLoc(SubRange.getBegin());
+    SourceLocation InnerEnd = SM.getImmediateMacroCallerLoc(SubRange.getEnd());
+
+    Outer = SourceRange(MacroBegin, MacroEnd);
+    Inner = SourceRange(InnerBegin, InnerEnd);
+  }
+
+  void rewriteBlockCopyMacro(CastExpr *E) {
+    SourceRange OuterRange, InnerRange;
+    getBlockMacroRanges(E, OuterRange, InnerRange);
+
+    Transaction Trans(Pass.TA);
+    Pass.TA.replace(OuterRange, InnerRange);
+    Pass.TA.insert(InnerRange.getBegin(), "[");
+    Pass.TA.insertAfterToken(InnerRange.getEnd(), " copy]");
+    Pass.TA.clearDiagnostic(diag::err_arc_mismatched_cast,
+                            diag::err_arc_cast_requires_bridge,
+                            OuterRange);
+  }
+
+  void removeBlockReleaseMacro(CastExpr *E) {
+    SourceRange OuterRange, InnerRange;
+    getBlockMacroRanges(E, OuterRange, InnerRange);
+
+    Transaction Trans(Pass.TA);
+    Pass.TA.clearDiagnostic(diag::err_arc_mismatched_cast,
+                            diag::err_arc_cast_requires_bridge,
+                            OuterRange);
+    if (!hasSideEffects(E, Pass.Ctx)) {
+      if (tryRemoving(cast<Expr>(StmtMap->getParentIgnoreParenCasts(E))))
+        return;
+    }
+    Pass.TA.replace(OuterRange, InnerRange);
+  }
+
+  bool tryRemoving(Expr *E) const {
+    if (!Removables) {
+      Removables.reset(new ExprSet);
+      collectRemovables(Body, *Removables);
+    }
+
+    if (Removables->count(E)) {
+      Pass.TA.removeStmt(E);
+      return true;
+    }
+
+    return false;
+  }
+
   void transformObjCToNonObjCCast(CastExpr *E) {
+    SourceLocation CastLoc = E->getExprLoc();
+    if (CastLoc.isMacroID()) {
+      StringRef MacroName = Lexer::getImmediateMacroName(CastLoc,
+                                                    Pass.Ctx.getSourceManager(),
+                                                    Pass.Ctx.getLangOpts());
+      if (MacroName == "Block_copy") {
+        rewriteBlockCopyMacro(E);
+        return;
+      }
+      if (MacroName == "Block_release") {
+        removeBlockReleaseMacro(E);
+        return;
+      }
+    }
+
     if (isSelf(E->getSubExpr()))
       return rewriteToBridgedCast(E, OBC_Bridge);
 
