@@ -912,7 +912,7 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
     }
   }
   
-  DEBUG(dbgs() << "ObjCARCExpand: Finished Queue.\n\n");
+  DEBUG(dbgs() << "ObjCARCExpand: Finished List.\n\n");
   
   return Changed;
 }
@@ -4194,7 +4194,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
       continue;
     }
 
-    DEBUG(dbgs() << "ObjCARCContract: Finished Queue.\n\n");
+    DEBUG(dbgs() << "ObjCARCContract: Finished List.\n\n");
 
     // Don't use GetObjCArg because we don't want to look through bitcasts
     // and such; to do the replacement, the argument must have type i8*.
