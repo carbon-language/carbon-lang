@@ -14661,12 +14661,29 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   return EltsFromConsecutiveLoads(VT, Elts, dl, DAG);
 }
 
-/// PerformTruncateCombine - Converts truncate operation to
-/// a sequence of vector shuffle operations.
-/// It is possible when we truncate 256-bit vector to 128-bit vector
+/// PerformTruncateCombine - In some cases a sequence with "truncate"
+/// operation may be simplified.
 static SDValue PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
                                       TargetLowering::DAGCombinerInfo &DCI,
                                       const X86Subtarget *Subtarget)  {
+  EVT VT = N->getValueType(0);
+  if (DCI.isBeforeLegalize() || !VT.isVector())
+    return SDValue();
+
+  SDValue In = N->getOperand(0);
+  // Optimize the sequence setcc -> truncate
+  if (In.getOpcode() == ISD::SETCC) {
+    DebugLoc DL = N->getDebugLoc();
+    EVT InVT = In.getValueType();
+
+    // The vector element is all ones or all zero. Just take a half of it.
+    EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), InVT.getScalarType(),
+                                  InVT.getVectorNumElements()/2);
+    SDValue HalfVec = DAG.getNode(ISD::EXTRACT_SUBVECTOR, DL, HalfVT, In,
+                                  DAG.getIntPtrConstant(0));
+    assert(HalfVT.getSizeInBits() == VT.getSizeInBits());
+    return DAG.getNode(ISD::BITCAST, DL, VT, HalfVec);
+  }
   return SDValue();
 }
 

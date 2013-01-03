@@ -13,3 +13,18 @@ define <8 x i16> @trunc_32_16(<8 x i32> %A) nounwind uwtable readnone ssp{
   ret <8 x i16>%B
 }
 
+define <8 x i16> @trunc_after_setcc(<8 x float> %a, <8 x float> %b, <8 x float> %c, <8 x float> %d) {
+; CHECK: trunc_after_setcc
+; CHECK: vcmpltps
+; CHECK-NOT: vextract
+; CHECK: vcmpltps
+; CHECK-NEXT: vandps
+; CHECK-NEXT: vandps
+; CHECK: ret
+  %res1 = fcmp olt <8 x float> %a, %b
+  %res2 = fcmp olt <8 x float> %c, %d
+  %andr = and <8 x i1>%res1, %res2
+  %ex = zext <8 x i1> %andr to <8 x i16>
+  ret <8 x i16>%ex
+}
+
