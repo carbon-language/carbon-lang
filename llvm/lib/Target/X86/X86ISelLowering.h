@@ -974,7 +974,8 @@ namespace llvm {
     virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
                                       Type *Src) const;
 
-    unsigned getShuffleCost(ShuffleKind Kind, Type *Tp, int Index) const;
+    unsigned getShuffleCost(ShuffleKind Kind,
+                            Type *Tp, int Index, Type *SubTp) const;
   };
 }
 

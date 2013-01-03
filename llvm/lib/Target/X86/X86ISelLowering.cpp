@@ -18303,10 +18303,11 @@ unsigned X86VectorTargetTransformInfo::getCastInstrCost(unsigned Opcode,
 
 
 unsigned X86VectorTargetTransformInfo::getShuffleCost(ShuffleKind Kind, Type *Tp,
-                                                      int Index) const {
+                                                      int Index,
+                                                      Type *SubTp) const {
   // We only estimate the cost of reverse shuffles.
   if (Kind != Reverse)
-    return VectorTargetTransformImpl::getShuffleCost(Kind, Tp, Index);
+    return VectorTargetTransformImpl::getShuffleCost(Kind, Tp, Index, SubTp);
 
   std::pair<unsigned, MVT> LT = getTypeLegalizationCost(Tp);
   unsigned Cost = 1;

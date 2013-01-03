@@ -170,10 +170,10 @@ public:
   }
 
   /// Returns the cost of a shuffle instruction of kind Kind and of type Tp.
-  /// The index parameter is used by some of the shuffle kinds to add
-  /// additional information.
+  /// The index and subtype parameters are used by some of the shuffle kinds
+  /// to add additional information.
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
-                                  int Index = 0) const {
+                                  int Index = 0, Type *SubTp = 0) const {
     return 1;
   }
 
