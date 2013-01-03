@@ -173,7 +173,7 @@ public:
   /// The index parameter is used by some of the shuffle kinds to add
   /// additional information.
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
-                                  int Index) const {
+                                  int Index = 0) const {
     return 1;
   }
 
