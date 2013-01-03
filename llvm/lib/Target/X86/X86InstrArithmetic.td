@@ -266,7 +266,7 @@ def IMUL64rmi8 : RIi8<0x6B, MRMSrcMem,                      // GR64 = [mem64]*I8
 
 
 // unsigned division/remainder
-let hasSideEffects = 1 in { // so that we don't speculatively execute
+let hasSideEffects = 0 in {
 let Defs = [AL,EFLAGS,AX], Uses = [AX] in
 def DIV8r  : I<0xF6, MRM6r, (outs),  (ins GR8:$src),    // AX/r8 = AL,AH
                "div{b}\t$src", [], IIC_DIV8_REG>;
