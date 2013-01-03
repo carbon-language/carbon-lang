@@ -4147,6 +4147,8 @@ bool ObjCARCContract::runOnFunction(Function &F) {
       } while (isNoopInstruction(BBI));
 
       if (&*BBI == GetObjCArg(Inst)) {
+        DEBUG(dbgs() << "ObjCARCContract: Adding inline asm marker for "
+              "retainAutoreleasedReturnValue optimization.\n");
         Changed = true;
         InlineAsm *IA =
           InlineAsm::get(FunctionType::get(Type::getVoidTy(Inst->getContext()),
