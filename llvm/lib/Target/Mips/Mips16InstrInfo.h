@@ -96,8 +96,9 @@ private:
                          unsigned Reg1, unsigned Reg2) const;
 
   // Adjust SP by Amount bytes where bytes can be up to 32bit number.
-  void adjustStackPtrBigUnrestricted(unsigned SP, int64_t Amount, MachineBasicBlock &MBB,
-                      MachineBasicBlock::iterator I) const;
+  void adjustStackPtrBigUnrestricted(unsigned SP, int64_t Amount,
+                                     MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator I) const;
 
 
 };

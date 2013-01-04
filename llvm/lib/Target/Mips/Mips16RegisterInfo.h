@@ -22,7 +22,8 @@ class Mips16InstrInfo;
 class Mips16RegisterInfo : public MipsRegisterInfo {
   const Mips16InstrInfo &TII;
 public:
-  Mips16RegisterInfo(const MipsSubtarget &Subtarget, const Mips16InstrInfo &TII);
+  Mips16RegisterInfo(const MipsSubtarget &Subtarget,
+                     const Mips16InstrInfo &TII);
 
   void eliminateCallFramePseudoInstr(MachineFunction &MF,
                                      MachineBasicBlock &MBB,
