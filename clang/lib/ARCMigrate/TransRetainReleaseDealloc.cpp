@@ -174,7 +174,7 @@ private:
   ///   return var;
   ///
   bool isCommonUnusedAutorelease(ObjCMessageExpr *E) {
-    if (isPlusOneAssignAfterAutorelease(E))
+    if (isPlusOneAssignBeforeOrAfterAutorelease(E))
       return true;
     if (isReturnedAfterAutorelease(E))
       return true;
@@ -202,7 +202,7 @@ private:
     return false;
   }
 
-  bool isPlusOneAssignAfterAutorelease(ObjCMessageExpr *E) {
+  bool isPlusOneAssignBeforeOrAfterAutorelease(ObjCMessageExpr *E) {
     Expr *Rec = E->getInstanceReceiver();
     if (!Rec)
       return false;
@@ -211,24 +211,46 @@ private:
     if (!RefD)
       return false;
 
-    Stmt *nextStmt = getNextStmt(E);
-    if (!nextStmt)
+    Stmt *prevStmt, *nextStmt;
+    llvm::tie(prevStmt, nextStmt) = getPreviousAndNextStmt(E);
+
+    return isPlusOneAssignToVar(prevStmt, RefD) ||
+           isPlusOneAssignToVar(nextStmt, RefD);
+  }
+
+  bool isPlusOneAssignToVar(Stmt *S, Decl *RefD) {
+    if (!S)
       return false;
 
     // Check for "RefD = [+1 retained object];".
 
-    if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(nextStmt)) {
+    if (BinaryOperator *Bop = dyn_cast<BinaryOperator>(S)) {
       if (RefD != getReferencedDecl(Bop->getLHS()))
         return false;
       if (isPlusOneAssign(Bop))
         return true;
+      return false;
     }
+
+    if (DeclStmt *DS = dyn_cast<DeclStmt>(S)) {
+      if (DS->isSingleDecl() && DS->getSingleDecl() == RefD) {
+        if (VarDecl *VD = dyn_cast<VarDecl>(RefD))
+          return isPlusOne(VD->getInit());
+      }
+      return false;
+    }
+
     return false;
   }
 
   Stmt *getNextStmt(Expr *E) {
+    return getPreviousAndNextStmt(E).second;
+  }
+
+  std::pair<Stmt *, Stmt *> getPreviousAndNextStmt(Expr *E) {
+    Stmt *prevStmt = 0, *nextStmt = 0;
     if (!E)
-      return 0;
+      return std::make_pair(prevStmt, nextStmt);
 
     Stmt *OuterS = E, *InnerS;
     do {
@@ -240,24 +262,34 @@ private:
                       isa<ExprWithCleanups>(OuterS)));
     
     if (!OuterS)
-      return 0;
+      return std::make_pair(prevStmt, nextStmt);
 
     Stmt::child_iterator currChildS = OuterS->child_begin();
     Stmt::child_iterator childE = OuterS->child_end();
+    Stmt::child_iterator prevChildS = childE;
     for (; currChildS != childE; ++currChildS) {
       if (*currChildS == InnerS)
         break;
+      prevChildS = currChildS;
     }
+
+    if (prevChildS != childE) {
+      prevStmt = *prevChildS;
+      if (prevStmt)
+        prevStmt = prevStmt->IgnoreImplicit();
+    }
+
     if (currChildS == childE)
-      return 0;
+      return std::make_pair(prevStmt, nextStmt);
     ++currChildS;
     if (currChildS == childE)
-      return 0;
+      return std::make_pair(prevStmt, nextStmt);
 
-    Stmt *nextStmt = *currChildS;
-    if (!nextStmt)
-      return 0;
-    return nextStmt->IgnoreImplicit();
+    nextStmt = *currChildS;
+    if (nextStmt)
+      nextStmt = nextStmt->IgnoreImplicit();
+
+    return std::make_pair(prevStmt, nextStmt);
   }
 
   Decl *getReferencedDecl(Expr *E) {

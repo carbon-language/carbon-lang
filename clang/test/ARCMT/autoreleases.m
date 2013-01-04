@@ -69,3 +69,8 @@ id test2(A* val) {
   [[val retain] autorelease];
   return val;
 }
+
+id test3() {
+  id a = [[A alloc] init];
+  [a autorelease];
+}
