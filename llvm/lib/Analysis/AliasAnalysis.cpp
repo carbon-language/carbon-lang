@@ -361,8 +361,28 @@ AliasAnalysis::getModRefInfo(const AtomicRMWInst *RMW, const Location &Loc) {
 }
 
 namespace {
+  // Conservatively return true. Return false, if there is a single path
+  // starting from "From" and the path does not reach "To".
+  static bool hasPath(const BasicBlock *From, const BasicBlock *To) {
+    const unsigned MaxCheck = 5;
+    const BasicBlock *Current = From;
+    for (unsigned I = 0; I < MaxCheck; I++) {
+      unsigned NumSuccs = Current->getTerminator()->getNumSuccessors();
+      if (NumSuccs > 1)
+        return true;
+      if (NumSuccs == 0)
+        return false;
+      Current = Current->getTerminator()->getSuccessor(0);
+      if (Current == To)
+        return true;
+    }
+    return true;
+  }
+
   /// Only find pointer captures which happen before the given instruction. Uses
   /// the dominator tree to determine whether one instruction is before another.
+  /// Only support the case where the Value is defined in the same basic block
+  /// as the given instruction and the use.
   struct CapturesBefore : public CaptureTracker {
     CapturesBefore(const Instruction *I, DominatorTree *DT)
       : BeforeHere(I), DT(DT), Captured(false) {}
@@ -372,8 +392,15 @@ namespace {
     bool shouldExplore(Use *U) {
       Instruction *I = cast<Instruction>(U->getUser());
       BasicBlock *BB = I->getParent();
-      if (BeforeHere != I &&
-          (!DT->isReachableFromEntry(BB) || DT->dominates(BeforeHere, I)))
+      // We explore this usage only if the usage can reach "BeforeHere".
+      // If use is not reachable from entry, there is no need to explore.
+      if (BeforeHere != I && !DT->isReachableFromEntry(BB))
+        return false;
+      // If the value is defined in the same basic block as use and BeforeHere,
+      // there is no need to explore the use if BeforeHere dominates use.
+      // Check whether there is a path from I to BeforeHere.
+      if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
+          !hasPath(BB, BeforeHere->getParent()))
         return false;
       return true;
     }
@@ -381,8 +408,11 @@ namespace {
     bool captured(Use *U) {
       Instruction *I = cast<Instruction>(U->getUser());
       BasicBlock *BB = I->getParent();
-      if (BeforeHere != I &&
-          (!DT->isReachableFromEntry(BB) || DT->dominates(BeforeHere, I)))
+      // Same logic as in shouldExplore.
+      if (BeforeHere != I && !DT->isReachableFromEntry(BB))
+        return false;
+      if (BeforeHere != I && DT->dominates(BeforeHere, I) &&
+          !hasPath(BB, BeforeHere->getParent()))
         return false;
       Captured = true;
       return true;
