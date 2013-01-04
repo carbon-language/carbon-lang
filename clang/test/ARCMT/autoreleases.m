@@ -64,3 +64,8 @@ void test(A *prevVal, A *newVal) {
   [prevVal autorelease];
   prevVal = [newVal retain];
 }
+
+id test2(A* val) {
+  [[val retain] autorelease];
+  return val;
+}

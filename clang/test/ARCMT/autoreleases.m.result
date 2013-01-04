@@ -60,3 +60,7 @@ int main (int argc, const char * argv[]) {
 void test(A *prevVal, A *newVal) {
   prevVal = newVal;
 }
+
+id test2(A* val) {
+  return val;
+}
