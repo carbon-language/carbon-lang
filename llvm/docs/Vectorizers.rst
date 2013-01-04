@@ -263,6 +263,10 @@ The Y-axis shows the time in msec. Lower is better. The last column shows the ge
 
 .. image:: gcc-loops.png
 
+And Linpack-pc with the same configuration. Result is Mflops, higher is better.
+
+.. image:: linpack-pc.png
+
 .. _bb-vectorizer:
 
 The Basic Block Vectorizer
