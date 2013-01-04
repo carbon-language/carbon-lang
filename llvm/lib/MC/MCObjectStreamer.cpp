@@ -47,6 +47,7 @@ MCObjectStreamer::~MCObjectStreamer() {
 void MCObjectStreamer::reset() {
   if (Assembler)
     Assembler->reset();
+  CurSectionData = 0;
   MCStreamer::reset();
 }
 

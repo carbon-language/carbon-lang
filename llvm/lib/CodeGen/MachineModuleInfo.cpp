@@ -266,7 +266,6 @@ MachineModuleInfo::MachineModuleInfo()
 }
 
 MachineModuleInfo::~MachineModuleInfo() {
-  delete ObjFileMMI;
 }
 
 bool MachineModuleInfo::doInitialization(Module &M) {
@@ -293,6 +292,9 @@ bool MachineModuleInfo::doFinalization(Module &M) {
   AddrLabelSymbols = 0;
 
   Context.reset();
+
+  delete ObjFileMMI;
+  ObjFileMMI = 0;
 
   return false;
 }

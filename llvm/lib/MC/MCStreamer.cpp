@@ -41,7 +41,6 @@ void MCStreamer::reset() {
   EmitDebugFrame = false;
   CurrentW64UnwindInfo = 0;
   LastSymbol = 0;
-  AutoInitSections = false;
   const MCSection *section = NULL;
   SectionStack.clear();
   SectionStack.push_back(std::make_pair(section, section));  
