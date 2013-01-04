@@ -176,17 +176,15 @@ class FJ<bits<6> op>
  //===----------------------------------------------------------------------===//
 // MFC instruction class in Mips : <|op|mf|rt|rd|0000000|sel|>
 //===----------------------------------------------------------------------===//
-class MFC3OP<bits<6> op, bits<5> _mfmt, dag outs, dag ins, string asmstr>:
-  InstSE<outs, ins, asmstr, [], NoItinerary, FrmFR>
+class MFC3OP_FM<bits<6> op, bits<5> mfmt>
 {
-  bits<5> mfmt;
   bits<5> rt;
   bits<5> rd;
   bits<3> sel;
 
-  let Opcode = op;
-  let mfmt = _mfmt;
+  bits<32> Inst;
 
+  let Inst{31-26} = op;
   let Inst{25-21} = mfmt;
   let Inst{20-16} = rt;
   let Inst{15-11} = rd;

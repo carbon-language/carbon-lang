@@ -710,6 +710,9 @@ class SCBase<string opstr, RegisterClass RC, Operand Mem> :
   let Constraints = "$rt = $dst";
 }
 
+class MFC3OP<dag outs, dag ins, string asmstr> :
+  InstSE<outs, ins, asmstr, [], NoItinerary, FrmFR>;
+
 //===----------------------------------------------------------------------===//
 // Pseudo instructions
 //===----------------------------------------------------------------------===//
@@ -897,21 +900,17 @@ def EXT : ExtBase<"ext", CPURegs>, EXT_FM<0>;
 def INS : InsBase<"ins", CPURegs>, EXT_FM<4>;
 
 /// Move Control Registers From/To CPU Registers
-def MFC0_3OP  : MFC3OP<0x10, 0, (outs CPURegs:$rt),
-                       (ins CPURegs:$rd, uimm16:$sel),"mfc0\t$rt, $rd, $sel">;
-def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
+def MFC0_3OP : MFC3OP<(outs CPURegs:$rt), (ins CPURegs:$rd, uimm16:$sel),
+                      "mfc0\t$rt, $rd, $sel">, MFC3OP_FM<0x10, 0>;
 
-def MTC0_3OP  : MFC3OP<0x10, 4, (outs CPURegs:$rd, uimm16:$sel),
-                       (ins CPURegs:$rt),"mtc0\t$rt, $rd, $sel">;
-def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
+def MTC0_3OP : MFC3OP<(outs CPURegs:$rd, uimm16:$sel), (ins CPURegs:$rt),
+                      "mtc0\t$rt, $rd, $sel">, MFC3OP_FM<0x10, 4>;
 
-def MFC2_3OP  : MFC3OP<0x12, 0, (outs CPURegs:$rt),
-                       (ins CPURegs:$rd, uimm16:$sel),"mfc2\t$rt, $rd, $sel">;
-def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
+def MFC2_3OP : MFC3OP<(outs CPURegs:$rt), (ins CPURegs:$rd, uimm16:$sel),
+                      "mfc2\t$rt, $rd, $sel">, MFC3OP_FM<0x12, 0>;
 
-def MTC2_3OP  : MFC3OP<0x12, 4, (outs CPURegs:$rd, uimm16:$sel),
-                       (ins CPURegs:$rt),"mtc2\t$rt, $rd, $sel">;
-def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
+def MTC2_3OP : MFC3OP<(outs CPURegs:$rd, uimm16:$sel), (ins CPURegs:$rt),
+                      "mtc2\t$rt, $rd, $sel">, MFC3OP_FM<0x12, 4>;
 
 //===----------------------------------------------------------------------===//
 // Instruction aliases
@@ -932,6 +931,10 @@ def : InstAlias<"slt $rs,$rt,$imm",
                 (SLTi CPURegs:$rs,CPURegs:$rt,simm16:$imm)>;
 def : InstAlias<"xor $rs,$rt,$imm",
                 (XORi CPURegs:$rs,CPURegs:$rt,simm16:$imm)>;
+def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
+def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
+def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
+def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
 
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
