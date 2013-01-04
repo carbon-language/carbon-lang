@@ -16,11 +16,10 @@
 // MipsISelLowering::EmitInstrWithCustomInserter if target does not have
 // conditional move instructions.
 // cond:int, data:int
-class CondMovIntInt<RegisterClass CRC, RegisterClass DRC, bits<6> funct,
-                    string instr_asm> :
-  FR<0, funct, (outs DRC:$rd), (ins DRC:$rs, CRC:$rt, DRC:$F),
-     !strconcat(instr_asm, "\t$rd, $rs, $rt"), [], NoItinerary> {
-  let shamt = 0;
+class CMov_I_I_FT<string opstr, RegisterClass CRC, RegisterClass DRC,
+                  InstrItinClass Itin> :
+  InstSE<(outs DRC:$rd), (ins DRC:$rs, CRC:$rt, DRC:$F),
+         !strconcat(opstr, "\t$rd, $rs, $rt"), [], Itin, FrmFR> {
   let Constraints = "$F = $rd";
 }
 
@@ -102,26 +101,34 @@ multiclass MovnPats<RegisterClass CRC, RegisterClass DRC, Instruction MOVNInst,
 }
 
 // Instantiation of instructions.
-def MOVZ_I_I     : CondMovIntInt<CPURegs, CPURegs, 0x0a, "movz">;
+def MOVZ_I_I : CMov_I_I_FT<"movz", CPURegs, CPURegs, NoItinerary>,
+               ADD_FM<0, 0xa>;
 let Predicates = [HasStdEnc],
                   DecoderNamespace = "Mips64" in {
-  def MOVZ_I_I64   : CondMovIntInt<CPURegs, CPU64Regs, 0x0a, "movz">;
-  def MOVZ_I64_I   : CondMovIntInt<CPU64Regs, CPURegs, 0x0a, "movz"> {
+  def MOVZ_I_I64   : CMov_I_I_FT<"movz", CPURegs, CPU64Regs, NoItinerary>,
+                     ADD_FM<0, 0xa>;
+  def MOVZ_I64_I   : CMov_I_I_FT<"movz", CPU64Regs, CPURegs, NoItinerary>,
+                     ADD_FM<0, 0xa> {
     let isCodeGenOnly = 1;
   }
-  def MOVZ_I64_I64 : CondMovIntInt<CPU64Regs, CPU64Regs, 0x0a, "movz"> {
+  def MOVZ_I64_I64 : CMov_I_I_FT<"movz", CPU64Regs, CPU64Regs, NoItinerary>,
+                     ADD_FM<0, 0xa> {
     let isCodeGenOnly = 1;
   }
 }
 
-def MOVN_I_I     : CondMovIntInt<CPURegs, CPURegs, 0x0b, "movn">;
+def MOVN_I_I       : CMov_I_I_FT<"movn", CPURegs, CPURegs, NoItinerary>,
+                     ADD_FM<0, 0xb>;
 let Predicates = [HasStdEnc],
                   DecoderNamespace = "Mips64" in {
-  def MOVN_I_I64   : CondMovIntInt<CPURegs, CPU64Regs, 0x0b, "movn">;
-  def MOVN_I64_I   : CondMovIntInt<CPU64Regs, CPURegs, 0x0b, "movn"> {
+  def MOVN_I_I64   : CMov_I_I_FT<"movn", CPURegs, CPU64Regs, NoItinerary>,
+                     ADD_FM<0, 0xb>;
+  def MOVN_I64_I   : CMov_I_I_FT<"movn", CPU64Regs, CPURegs, NoItinerary>,
+                     ADD_FM<0, 0xb> {
     let isCodeGenOnly = 1;
   }
-  def MOVN_I64_I64 : CondMovIntInt<CPU64Regs, CPU64Regs, 0x0b, "movn"> {
+  def MOVN_I64_I64 : CMov_I_I_FT<"movn", CPU64Regs, CPU64Regs, NoItinerary>,
+                     ADD_FM<0, 0xb> {
     let isCodeGenOnly = 1;
   }
 }
