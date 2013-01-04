@@ -17,6 +17,7 @@
         <li><a href="tutorial.html">Tutorial</a></li>
         <li><a href="lldb-gdb.html">GDB and LLDB command examples</a></li>
         <li><a href="formats.html">Frame and Thread Formatting</a></li>
+        <li><a href="symbolication.html">Symbolication</a></li>
         <li><a href="varformats.html">Variable Formatting</a></li>
         <li><a href="python-reference.html">Python Reference</a></li>
         <li><a href="scripting.html">Python Example</a></li>
