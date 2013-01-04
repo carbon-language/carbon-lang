@@ -78,6 +78,8 @@ void ASTStmtWriter::VisitCompoundStmt(CompoundStmt *S) {
 void ASTStmtWriter::VisitSwitchCase(SwitchCase *S) {
   VisitStmt(S);
   Record.push_back(Writer.getSwitchCaseID(S));
+  Writer.AddSourceLocation(S->getKeywordLoc(), Record);
+  Writer.AddSourceLocation(S->getColonLoc(), Record);
 }
 
 void ASTStmtWriter::VisitCaseStmt(CaseStmt *S) {
@@ -85,17 +87,13 @@ void ASTStmtWriter::VisitCaseStmt(CaseStmt *S) {
   Writer.AddStmt(S->getLHS());
   Writer.AddStmt(S->getRHS());
   Writer.AddStmt(S->getSubStmt());
-  Writer.AddSourceLocation(S->getCaseLoc(), Record);
   Writer.AddSourceLocation(S->getEllipsisLoc(), Record);
-  Writer.AddSourceLocation(S->getColonLoc(), Record);
   Code = serialization::STMT_CASE;
 }
 
 void ASTStmtWriter::VisitDefaultStmt(DefaultStmt *S) {
   VisitSwitchCase(S);
   Writer.AddStmt(S->getSubStmt());
-  Writer.AddSourceLocation(S->getDefaultLoc(), Record);
-  Writer.AddSourceLocation(S->getColonLoc(), Record);
   Code = serialization::STMT_DEFAULT;
 }
 

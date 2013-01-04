@@ -132,6 +132,8 @@ void ASTStmtReader::VisitCompoundStmt(CompoundStmt *S) {
 void ASTStmtReader::VisitSwitchCase(SwitchCase *S) {
   VisitStmt(S);
   Reader.RecordSwitchCaseID(S, Record[Idx++]);
+  S->setKeywordLoc(ReadSourceLocation(Record, Idx));
+  S->setColonLoc(ReadSourceLocation(Record, Idx));
 }
 
 void ASTStmtReader::VisitCaseStmt(CaseStmt *S) {
@@ -139,16 +141,12 @@ void ASTStmtReader::VisitCaseStmt(CaseStmt *S) {
   S->setLHS(Reader.ReadSubExpr());
   S->setRHS(Reader.ReadSubExpr());
   S->setSubStmt(Reader.ReadSubStmt());
-  S->setCaseLoc(ReadSourceLocation(Record, Idx));
   S->setEllipsisLoc(ReadSourceLocation(Record, Idx));
-  S->setColonLoc(ReadSourceLocation(Record, Idx));
 }
 
 void ASTStmtReader::VisitDefaultStmt(DefaultStmt *S) {
   VisitSwitchCase(S);
   S->setSubStmt(Reader.ReadSubStmt());
-  S->setDefaultLoc(ReadSourceLocation(Record, Idx));
-  S->setColonLoc(ReadSourceLocation(Record, Idx));
 }
 
 void ASTStmtReader::VisitLabelStmt(LabelStmt *S) {

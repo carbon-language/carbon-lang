@@ -619,8 +619,14 @@ protected:
   // A pointer to the following CaseStmt or DefaultStmt class,
   // used by SwitchStmt.
   SwitchCase *NextSwitchCase;
+  SourceLocation KeywordLoc;
+  SourceLocation ColonLoc;
 
-  SwitchCase(StmtClass SC) : Stmt(SC), NextSwitchCase(0) {}
+  SwitchCase(StmtClass SC, SourceLocation KWLoc, SourceLocation ColonLoc)
+    : Stmt(SC), NextSwitchCase(0), KeywordLoc(KWLoc), ColonLoc(ColonLoc) {}
+
+  SwitchCase(StmtClass SC, EmptyShell)
+    : Stmt(SC), NextSwitchCase(0) {}
 
 public:
   const SwitchCase *getNextSwitchCase() const { return NextSwitchCase; }
@@ -629,13 +635,18 @@ public:
 
   void setNextSwitchCase(SwitchCase *SC) { NextSwitchCase = SC; }
 
+  SourceLocation getKeywordLoc() const { return KeywordLoc; }
+  void setKeywordLoc(SourceLocation L) { KeywordLoc = L; }
+  SourceLocation getColonLoc() const { return ColonLoc; }
+  void setColonLoc(SourceLocation L) { ColonLoc = L; }
+
   Stmt *getSubStmt();
   const Stmt *getSubStmt() const {
     return const_cast<SwitchCase*>(this)->getSubStmt();
   }
 
-  SourceLocation getLocStart() const LLVM_READONLY { return SourceLocation(); }
-  SourceLocation getLocEnd() const LLVM_READONLY { return SourceLocation(); }
+  SourceLocation getLocStart() const LLVM_READONLY { return KeywordLoc; }
+  SourceLocation getLocEnd() const LLVM_READONLY;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == CaseStmtClass ||
@@ -647,26 +658,22 @@ class CaseStmt : public SwitchCase {
   enum { LHS, RHS, SUBSTMT, END_EXPR };
   Stmt* SubExprs[END_EXPR];  // The expression for the RHS is Non-null for
                              // GNU "case 1 ... 4" extension
-  SourceLocation CaseLoc;
   SourceLocation EllipsisLoc;
-  SourceLocation ColonLoc;
 public:
   CaseStmt(Expr *lhs, Expr *rhs, SourceLocation caseLoc,
            SourceLocation ellipsisLoc, SourceLocation colonLoc)
-    : SwitchCase(CaseStmtClass) {
+    : SwitchCase(CaseStmtClass, caseLoc, colonLoc) {
     SubExprs[SUBSTMT] = 0;
     SubExprs[LHS] = reinterpret_cast<Stmt*>(lhs);
     SubExprs[RHS] = reinterpret_cast<Stmt*>(rhs);
-    CaseLoc = caseLoc;
     EllipsisLoc = ellipsisLoc;
-    ColonLoc = colonLoc;
   }
 
   /// \brief Build an empty switch case statement.
-  explicit CaseStmt(EmptyShell Empty) : SwitchCase(CaseStmtClass) { }
+  explicit CaseStmt(EmptyShell Empty) : SwitchCase(CaseStmtClass, Empty) { }
 
-  SourceLocation getCaseLoc() const { return CaseLoc; }
-  void setCaseLoc(SourceLocation L) { CaseLoc = L; }
+  SourceLocation getCaseLoc() const { return KeywordLoc; }
+  void setCaseLoc(SourceLocation L) { KeywordLoc = L; }
   SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
   void setEllipsisLoc(SourceLocation L) { EllipsisLoc = L; }
   SourceLocation getColonLoc() const { return ColonLoc; }
@@ -688,7 +695,7 @@ public:
   void setLHS(Expr *Val) { SubExprs[LHS] = reinterpret_cast<Stmt*>(Val); }
   void setRHS(Expr *Val) { SubExprs[RHS] = reinterpret_cast<Stmt*>(Val); }
 
-  SourceLocation getLocStart() const LLVM_READONLY { return CaseLoc; }
+  SourceLocation getLocStart() const LLVM_READONLY { return KeywordLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY {
     // Handle deeply nested case statements with iteration instead of recursion.
     const CaseStmt *CS = this;
@@ -710,26 +717,24 @@ public:
 
 class DefaultStmt : public SwitchCase {
   Stmt* SubStmt;
-  SourceLocation DefaultLoc;
-  SourceLocation ColonLoc;
 public:
   DefaultStmt(SourceLocation DL, SourceLocation CL, Stmt *substmt) :
-    SwitchCase(DefaultStmtClass), SubStmt(substmt), DefaultLoc(DL),
-    ColonLoc(CL) {}
+    SwitchCase(DefaultStmtClass, DL, CL), SubStmt(substmt) {}
 
   /// \brief Build an empty default statement.
-  explicit DefaultStmt(EmptyShell) : SwitchCase(DefaultStmtClass) { }
+  explicit DefaultStmt(EmptyShell Empty)
+    : SwitchCase(DefaultStmtClass, Empty) { }
 
   Stmt *getSubStmt() { return SubStmt; }
   const Stmt *getSubStmt() const { return SubStmt; }
   void setSubStmt(Stmt *S) { SubStmt = S; }
 
-  SourceLocation getDefaultLoc() const { return DefaultLoc; }
-  void setDefaultLoc(SourceLocation L) { DefaultLoc = L; }
+  SourceLocation getDefaultLoc() const { return KeywordLoc; }
+  void setDefaultLoc(SourceLocation L) { KeywordLoc = L; }
   SourceLocation getColonLoc() const { return ColonLoc; }
   void setColonLoc(SourceLocation L) { ColonLoc = L; }
 
-  SourceLocation getLocStart() const LLVM_READONLY { return DefaultLoc; }
+  SourceLocation getLocStart() const LLVM_READONLY { return KeywordLoc; }
   SourceLocation getLocEnd() const LLVM_READONLY { return SubStmt->getLocEnd();}
 
   static bool classof(const Stmt *T) {
@@ -740,6 +745,11 @@ public:
   child_range children() { return child_range(&SubStmt, &SubStmt+1); }
 };
 
+inline SourceLocation SwitchCase::getLocEnd() const {
+  if (const CaseStmt *CS = dyn_cast<CaseStmt>(this))
+    return CS->getLocEnd();
+  return cast<DefaultStmt>(this)->getLocEnd();
+}
 
 /// LabelStmt - Represents a label, which has a substatement.  For example:
 ///    foo: return;
