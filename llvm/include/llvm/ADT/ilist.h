@@ -465,6 +465,17 @@ public:
     return where;
   }
 
+  /// Remove all nodes from the list like clear(), but do not call
+  /// removeNodeFromList() or deleteNode().
+  ///
+  /// This should only be used immediately before freeing nodes in bulk to
+  /// avoid traversing the list and bringing all the nodes into cache.
+  void clearAndLeakNodesUnsafely() {
+    if (Head) {
+      Head = getTail();
+      this->setPrev(Head, Head);
+    }
+  }
 
 private:
   // transfer - The heart of the splice function.  Move linked list nodes from
