@@ -849,6 +849,8 @@ def setupSysPath():
             lines = lldb_dash_p_result.splitlines()
             if len(lines) == 1 and os.path.isfile(os.path.join(lines[0], init_in_python_dir)):
                 lldbPath = lines[0]
+                if "linux" in sys.platform:
+                    os.environ['LLDB_BUILD_DIR'] = os.path.join(lldbPath, 'lldb')
         
         if not lldbPath: 
             dbgPath  = os.path.join(base, *(xcode3_build_dir + dbg + python_resource_dir))

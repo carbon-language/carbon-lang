@@ -26,6 +26,7 @@
 
 #include "llvm/Support/Host.h"
 #include "llvm/Support/MachO.h"
+#include "llvm/ADT/Twine.h"
 
 #include <dlfcn.h>
 #include <errno.h>
@@ -997,13 +998,6 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
 
     case ePathTypePythonDir:                
         {
-            // TODO: Anyone know how we can determine this for linux? Other systems?
-            // For linux and FreeBSD we are currently assuming the
-            // location of the lldb binary that contains this function is
-            // the directory that will contain a python directory which
-            // has our lldb module. This is how files get placed when
-            // compiling with Makefiles.
-
             static ConstString g_lldb_python_dir;
             if (!g_lldb_python_dir)
             {
@@ -1022,9 +1016,19 @@ Host::GetLLDBPath (PathType path_type, FileSpec &file_spec)
                         ::strncpy (framework_pos, "/Resources/Python", PATH_MAX - (framework_pos - raw_path));
                     }
 #else
+                    llvm::Twine python_version_dir;
+                    python_version_dir = "/python"
+                                       + llvm::Twine(PY_MAJOR_VERSION)
+                                       + "."
+                                       + llvm::Twine(PY_MINOR_VERSION)
+                                       + "/site-packages";
+
                     // We may get our string truncated. Should we protect
                     // this with an assert?
-                    ::strncat(raw_path, "/python", sizeof(raw_path) - strlen(raw_path) - 1);
+
+                    ::strncat(raw_path, python_version_dir.str().c_str(),
+                              sizeof(raw_path) - strlen(raw_path) - 1);
+
 #endif
                     FileSpec::Resolve (raw_path, resolved_path, sizeof(resolved_path));
                     g_lldb_python_dir.SetCString(resolved_path);
