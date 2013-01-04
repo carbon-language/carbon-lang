@@ -294,6 +294,7 @@ void clang_getSpellingLocation(CXSourceLocation location,
   
   const SourceManager &SM =
   *static_cast<const SourceManager*>(location.ptr_data[0]);
+  // FIXME: This should call SourceManager::getSpellingLoc().
   SourceLocation SpellLoc = SM.getFileLoc(Loc);
   std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(SpellLoc);
   FileID FID = LocInfo.first;
@@ -312,5 +313,41 @@ void clang_getSpellingLocation(CXSourceLocation location,
     *offset = FileOffset;
 }
 
-} // end extern "C"
+void clang_getFileLocation(CXSourceLocation location,
+                           CXFile *file,
+                           unsigned *line,
+                           unsigned *column,
+                           unsigned *offset) {
 
+  if (!isASTUnitSourceLocation(location)) {
+    CXLoadedDiagnostic::decodeLocation(location, file, line,
+                                           column, offset);
+    return;
+  }
+
+  SourceLocation Loc = SourceLocation::getFromRawEncoding(location.int_data);
+
+  if (!location.ptr_data[0] || Loc.isInvalid())
+    return createNullLocation(file, line, column, offset);
+
+  const SourceManager &SM =
+  *static_cast<const SourceManager*>(location.ptr_data[0]);
+  SourceLocation FileLoc = SM.getFileLoc(Loc);
+  std::pair<FileID, unsigned> LocInfo = SM.getDecomposedLoc(FileLoc);
+  FileID FID = LocInfo.first;
+  unsigned FileOffset = LocInfo.second;
+
+  if (FID.isInvalid())
+    return createNullLocation(file, line, column, offset);
+
+  if (file)
+    *file = (void *)SM.getFileEntryForID(FID);
+  if (line)
+    *line = SM.getLineNumber(FID, FileOffset);
+  if (column)
+    *column = SM.getColumnNumber(FID, FileOffset);
+  if (offset)
+    *offset = FileOffset;
+}
+
+} // end extern "C"
