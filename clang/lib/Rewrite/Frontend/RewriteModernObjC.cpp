@@ -2309,11 +2309,10 @@ void RewriteModernObjC::SynthSelGetUidFunctionDecl() {
   QualType getFuncType =
     getSimpleFunctionType(Context->getObjCSelType(), &ArgTys[0], ArgTys.size());
   SelGetUidFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
-                                           SourceLocation(),
-                                           SourceLocation(),
-                                           SelGetUidIdent, getFuncType, 0,
-                                           SC_Extern,
-                                           SC_None, false);
+                                               SourceLocation(),
+                                               SourceLocation(),
+                                               SelGetUidIdent, getFuncType, 0,
+                                               SC_Extern, SC_None);
 }
 
 void RewriteModernObjC::RewriteFunctionDecl(FunctionDecl *FD) {
@@ -2408,11 +2407,10 @@ void RewriteModernObjC::SynthSuperContructorFunctionDecl() {
   QualType msgSendType = getSimpleFunctionType(Context->getObjCIdType(),
                                                &ArgTys[0], ArgTys.size());
   SuperContructorFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
-                                         SourceLocation(),
-                                         SourceLocation(),
-                                         msgSendIdent, msgSendType, 0,
-                                         SC_Extern,
-                                         SC_None, false);
+                                                     SourceLocation(),
+                                                     SourceLocation(),
+                                                     msgSendIdent, msgSendType,
+                                                     0, SC_Extern, SC_None);
 }
 
 // SynthMsgSendFunctionDecl - id objc_msgSend(id self, SEL op, ...);
@@ -2429,11 +2427,10 @@ void RewriteModernObjC::SynthMsgSendFunctionDecl() {
                                                &ArgTys[0], ArgTys.size(),
                                                true /*isVariadic*/);
   MsgSendFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
-                                         SourceLocation(),
-                                         SourceLocation(),
-                                         msgSendIdent, msgSendType, 0,
-                                         SC_Extern,
-                                         SC_None, false);
+                                             SourceLocation(),
+                                             SourceLocation(),
+                                             msgSendIdent, msgSendType, 0,
+                                             SC_Extern, SC_None);
 }
 
 // SynthMsgSendSuperFunctionDecl - id objc_msgSendSuper(void);
@@ -2445,11 +2442,10 @@ void RewriteModernObjC::SynthMsgSendSuperFunctionDecl() {
                                                &ArgTys[0], 1,
                                                true /*isVariadic*/);
   MsgSendSuperFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
-                                              SourceLocation(),
-                                              SourceLocation(),
-                                              msgSendIdent, msgSendType, 0,
-                                              SC_Extern,
-                                              SC_None, false);
+                                                  SourceLocation(),
+                                                  SourceLocation(),
+                                                  msgSendIdent, msgSendType, 0,
+                                                  SC_Extern, SC_None);
 }
 
 // SynthMsgSendStretFunctionDecl - id objc_msgSend_stret(id self, SEL op, ...);
@@ -2466,11 +2462,10 @@ void RewriteModernObjC::SynthMsgSendStretFunctionDecl() {
                                                &ArgTys[0], ArgTys.size(),
                                                true /*isVariadic*/);
   MsgSendStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
-                                         SourceLocation(),
-                                         SourceLocation(),
-                                         msgSendIdent, msgSendType, 0,
-                                         SC_Extern,
-                                         SC_None, false);
+                                                  SourceLocation(),
+                                                  SourceLocation(),
+                                                  msgSendIdent, msgSendType, 0,
+                                                  SC_Extern, SC_None);
 }
 
 // SynthMsgSendSuperStretFunctionDecl -
@@ -2486,9 +2481,9 @@ void RewriteModernObjC::SynthMsgSendSuperStretFunctionDecl() {
   MsgSendSuperStretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
                                                        SourceLocation(),
                                                        SourceLocation(),
-                                              msgSendIdent, msgSendType, 0,
-                                              SC_Extern,
-                                              SC_None, false);
+                                                       msgSendIdent,
+                                                       msgSendType, 0,
+                                                       SC_Extern, SC_None);
 }
 
 // SynthMsgSendFpretFunctionDecl - double objc_msgSend_fpret(id self, SEL op, ...);
@@ -2505,11 +2500,10 @@ void RewriteModernObjC::SynthMsgSendFpretFunctionDecl() {
                                                &ArgTys[0], ArgTys.size(),
                                                true /*isVariadic*/);
   MsgSendFpretFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
-                                              SourceLocation(),
-                                              SourceLocation(),
-                                              msgSendIdent, msgSendType, 0,
-                                              SC_Extern,
-                                              SC_None, false);
+                                                  SourceLocation(),
+                                                  SourceLocation(),
+                                                  msgSendIdent, msgSendType, 0,
+                                                  SC_Extern, SC_None);
 }
 
 // SynthGetClassFunctionDecl - Class objc_getClass(const char *name);
@@ -2520,11 +2514,10 @@ void RewriteModernObjC::SynthGetClassFunctionDecl() {
   QualType getClassType = getSimpleFunctionType(Context->getObjCClassType(),
                                                 &ArgTys[0], ArgTys.size());
   GetClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
-                                          SourceLocation(),
-                                          SourceLocation(),
-                                          getClassIdent, getClassType, 0,
-                                          SC_Extern,
-                                          SC_None, false);
+                                              SourceLocation(),
+                                              SourceLocation(),
+                                              getClassIdent, getClassType, 0,
+                                              SC_Extern, SC_None);
 }
 
 // SynthGetSuperClassFunctionDecl - Class class_getSuperclass(Class cls);
@@ -2540,9 +2533,7 @@ void RewriteModernObjC::SynthGetSuperClassFunctionDecl() {
                                                    SourceLocation(),
                                                    getSuperClassIdent,
                                                    getClassType, 0,
-                                                   SC_Extern,
-                                                   SC_None,
-                                                   false);
+                                                   SC_Extern, SC_None);
 }
 
 // SynthGetMetaClassFunctionDecl - Class objc_getMetaClass(const char *name);
@@ -2553,11 +2544,10 @@ void RewriteModernObjC::SynthGetMetaClassFunctionDecl() {
   QualType getClassType = getSimpleFunctionType(Context->getObjCClassType(),
                                                 &ArgTys[0], ArgTys.size());
   GetMetaClassFunctionDecl = FunctionDecl::Create(*Context, TUDecl,
-                                              SourceLocation(),
-                                              SourceLocation(),
-                                              getClassIdent, getClassType, 0,
-                                              SC_Extern,
-                                              SC_None, false);
+                                                  SourceLocation(),
+                                                  SourceLocation(),
+                                                  getClassIdent, getClassType,
+                                                  0, SC_Extern, SC_None);
 }
 
 Stmt *RewriteModernObjC::RewriteObjCStringLiteral(ObjCStringLiteral *Exp) {
@@ -3213,8 +3203,8 @@ Expr *RewriteModernObjC::SynthMsgSendStretCallExpr(FunctionDecl *MsgSendStretFla
   // AST for __Stretn(receiver, args).s;
   IdentifierInfo *ID = &Context->Idents.get(name);
   FunctionDecl *FD = FunctionDecl::Create(*Context, TUDecl, SourceLocation(),
-                                          SourceLocation(), ID, castType, 0, SC_Extern,
-                                          SC_None, false, false);
+                                          SourceLocation(), ID, castType, 0,
+                                          SC_Extern, SC_None, false, false);
   DeclRefExpr *DRE = new (Context) DeclRefExpr(FD, false, castType, VK_RValue,
                                                SourceLocation());
   CallExpr *STCE = new (Context) CallExpr(*Context, DRE, MsgExprs,
