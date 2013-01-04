@@ -43,7 +43,9 @@ stdout, stderr = p.communicate(input=text)
 if stderr:
   print stderr
 else:
-  if stdout != text:
+  if not stdout:
+    print 'Segfault occurred. Please report to bugs.llvm.org.'
+  elif stdout != text:
     lines = stdout.split('\n')
     for i in range(min(len(buf), len(lines))):
       buf[i] = lines[i]
