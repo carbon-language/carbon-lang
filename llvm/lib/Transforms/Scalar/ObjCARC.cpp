@@ -2199,7 +2199,17 @@ ObjCARCOpt::OptimizeRetainCall(Function &F, Instruction *Retain) {
   // Turn it to an objc_retainAutoreleasedReturnValue..
   Changed = true;
   ++NumPeeps;
+  
+  DEBUG(dbgs() << "ObjCARCOpt::OptimizeRetainCall: Transforming "
+                  "objc_retainAutoreleasedReturnValue => "
+                  "objc_retain since the operand is not a return value.\n"
+                  "                                Old: "
+               << *Retain << "\n");
+  
   cast<CallInst>(Retain)->setCalledFunction(getRetainRVCallee(F.getParent()));
+
+  DEBUG(dbgs() << "                                New: "
+               << *Retain << "\n");
 }
 
 /// OptimizeRetainRVCall - Turn objc_retainAutoreleasedReturnValue into
