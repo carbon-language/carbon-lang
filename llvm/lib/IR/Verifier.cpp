@@ -53,7 +53,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
