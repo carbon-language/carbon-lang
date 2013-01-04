@@ -1180,7 +1180,7 @@ SourceRange VarDecl::getSourceRange() const {
 template<typename decl_type>
 static bool hasCLanguageLinkageTemplate(const decl_type &D) {
   // Language linkage is a C++ concept, but saying that everything in C has
-  // C language linkage fits the implementation nicelly.
+  // C language linkage fits the implementation nicely.
   ASTContext &Context = D.getASTContext();
   if (!Context.getLangOpts().CPlusPlus)
     return true;
