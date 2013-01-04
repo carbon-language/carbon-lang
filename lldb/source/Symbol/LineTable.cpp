@@ -34,34 +34,6 @@ LineTable::~LineTable()
 {
 }
 
-//void
-//LineTable::AddLineEntry(const LineEntry& entry)
-//{
-//  // Do a binary search for the correct entry and insert it
-//  m_line_entries.insert(std::upper_bound(m_line_entries.begin(), m_line_entries.end(), entry), entry);
-//}
-
-void
-LineTable::AppendLineEntry
-(
-    const lldb::SectionSP& section_sp,
-    lldb::addr_t section_offset,
-    uint32_t line,
-    uint16_t column,
-    uint16_t file_idx,
-    bool is_start_of_statement,
-    bool is_start_of_basic_block,
-    bool is_prologue_end,
-    bool is_epilogue_begin,
-    bool is_terminal_entry
-)
-{
-    uint32_t sect_idx = m_section_list.AddUniqueSection (section_sp);
-    Entry entry(sect_idx, section_offset, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
-    m_entries.push_back (entry);
-}
-
-
 void
 LineTable::InsertLineEntry
 (
@@ -104,6 +76,80 @@ LineTable::InsertLineEntry
     m_entries.insert(pos, entry);
 //  s << "After:\n";
 //  Dump (&s, Address::DumpStyleFileAddress);
+}
+
+LineSequence::LineSequence()
+{
+}
+
+void
+LineTable::LineSequenceImpl::Clear()
+{ 
+    m_seq_entries.clear();
+}
+
+LineSequence* LineTable::CreateLineSequenceContainer ()
+{
+    return new LineTable::LineSequenceImpl();
+}
+
+void
+LineTable::AppendLineEntryToSequence
+(
+    LineSequence* sequence,
+    const SectionSP& section_sp,
+    lldb::addr_t section_offset,
+    uint32_t line,
+    uint16_t column,
+    uint16_t file_idx,
+    bool is_start_of_statement,
+    bool is_start_of_basic_block,
+    bool is_prologue_end,
+    bool is_epilogue_begin,
+    bool is_terminal_entry
+)
+{
+    assert(sequence != NULL);
+    LineSequenceImpl* seq = reinterpret_cast<LineSequenceImpl*>(sequence);
+    uint32_t sect_idx = m_section_list.AddUniqueSection (section_sp);
+    Entry entry(sect_idx, section_offset, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
+    seq->m_seq_entries.push_back (entry);
+}
+
+void
+LineTable::InsertSequence (LineSequence* sequence)
+{
+    assert(sequence != NULL);
+    LineSequenceImpl* seq = reinterpret_cast<LineSequenceImpl*>(sequence);
+    if (seq->m_seq_entries.empty())
+        return;
+    Entry& entry = seq->m_seq_entries.front();
+
+    // If the first entry address in this sequence is greater than or equal to
+    // the address of the last item in our entry collection, just append.
+    if (m_entries.empty() || !Entry::EntryAddressLessThan(entry, m_entries.back()))
+    {
+        m_entries.insert(m_entries.end(),
+                         seq->m_seq_entries.begin(),
+                         seq->m_seq_entries.end());
+        return;
+    }
+
+    // Otherwise, find where this belongs in the collection
+    entry_collection::iterator begin_pos = m_entries.begin();
+    entry_collection::iterator end_pos = m_entries.end();
+    LineTable::Entry::LessThanBinaryPredicate less_than_bp(this);
+    entry_collection::iterator pos = upper_bound(begin_pos, end_pos, entry, less_than_bp);
+#ifdef LLDB_CONFIGURATION_DEBUG
+    // If we aren't inserting at the beginning, the previous entry should
+    // terminate a sequence.
+    if (pos != begin_pos)
+    {
+        entry_collection::iterator prev_pos = pos - 1;
+        assert(prev_pos->is_terminal_entry);
+    }
+#endif
+    m_entries.insert(pos, seq->m_seq_entries.begin(), seq->m_seq_entries.end());
 }
 
 //----------------------------------------------------------------------

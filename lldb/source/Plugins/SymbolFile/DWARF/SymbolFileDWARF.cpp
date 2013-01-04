@@ -991,6 +991,7 @@ struct ParseDWARFLineTableCallbackInfo
     DWARFDebugLine::Row prev_row;
     SectionSP prev_section_sp;
     SectionSP curr_section_sp;
+    llvm::OwningPtr<LineSequence> curr_sequence_ap;
 };
 
 //----------------------------------------------------------------------
@@ -1137,20 +1138,36 @@ ParseDWARFLineTableCallback(dw_offset_t offset, const DWARFDebugLine::State& sta
                 // We are not in an object file that contains DWARF for an
                 // N_OSO, this is just a normal DWARF file. The DWARF spec
                 // guarantees that the addresses will be in increasing order
-                // so, since we store line tables in file address order, we
-                // can always just append the line entry without needing to
-                // search for the correct insertion point (we don't need to
-                // use LineEntry::InsertLineEntry()).
-                line_table->AppendLineEntry (info->curr_section_sp,
-                                             curr_line_section_offset,
-                                             state.line,
-                                             state.column,
-                                             state.file,
-                                             state.is_stmt,
-                                             state.basic_block,
-                                             state.prologue_end,
-                                             state.epilogue_begin,
-                                             state.end_sequence);
+                // for a sequence, but the line table for a single compile unit
+                // may contain multiple sequences so we append entries to the
+                // current sequence until we find its end, then we merge the
+                // sequence into the main line table collection.
+
+                // If this is our first time here, we need to create a 
+                // sequence container.
+                if (!info->curr_sequence_ap)
+                {
+                    info->curr_sequence_ap.reset(line_table->CreateLineSequenceContainer());
+                    assert(info->curr_sequence_ap);
+                }
+                line_table->AppendLineEntryToSequence(info->curr_sequence_ap.get(),
+                                                      info->curr_section_sp,
+                                                      curr_line_section_offset,
+                                                      state.line,
+                                                      state.column,
+                                                      state.file,
+                                                      state.is_stmt,
+                                                      state.basic_block,
+                                                      state.prologue_end,
+                                                      state.epilogue_begin,
+                                                      state.end_sequence);
+                if (state.end_sequence)
+                {
+                    // First, put the current sequence into the line table.
+                    line_table->InsertSequence(info->curr_sequence_ap.get());
+                    // Then, empty it to prepare for the next sequence.
+                    info->curr_sequence_ap->Clear();
+                }
             }
         }
 
@@ -1186,7 +1203,8 @@ SymbolFileDWARF::ParseCompileUnitLineTable (const SymbolContext &sc)
                         false, 
                         DWARFDebugLine::Row(), 
                         SectionSP(), 
-                        SectionSP()
+                        SectionSP(),
+                        llvm::OwningPtr<LineSequence>()
                     };
                     uint32_t offset = cu_line_offset;
                     DWARFDebugLine::ParseStatementTable(get_debug_line_data(), &offset, ParseDWARFLineTableCallback, &info);

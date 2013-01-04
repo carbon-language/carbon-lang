@@ -21,6 +21,25 @@
 namespace lldb_private {
 
 //----------------------------------------------------------------------
+/// @class LineSequence LineTable.h "lldb/Symbol/LineTable.h"
+/// @brief An abstract base class used during symbol table creation.
+//----------------------------------------------------------------------
+class LineSequence
+{
+public:
+    LineSequence ();
+
+    virtual
+    ~LineSequence() {}
+
+    virtual void
+    Clear() = 0;
+
+private:
+    DISALLOW_COPY_AND_ASSIGN (LineSequence);
+};
+
+//----------------------------------------------------------------------
 /// @class LineTable LineTable.h "lldb/Symbol/LineTable.h"
 /// @brief A line table class.
 //----------------------------------------------------------------------
@@ -54,19 +73,6 @@ public:
 //  void
 //  AddLineEntry (const LineEntry& line_entry);
 
-    // Called when you can guarantee the addresses are in increasing order
-    void
-    AppendLineEntry (const lldb::SectionSP& section_sp,
-                     lldb::addr_t section_offset,
-                     uint32_t line,
-                     uint16_t column,
-                     uint16_t file_idx,
-                     bool is_start_of_statement,
-                     bool is_start_of_basic_block,
-                     bool is_prologue_end,
-                     bool is_epilogue_begin,
-                     bool is_terminal_entry);
-
     // Called when you can't guarantee the addresses are in increasing order
     void
     InsertLineEntry (const lldb::SectionSP& section_sp,
@@ -79,6 +85,29 @@ public:
                      bool is_prologue_end,
                      bool is_epilogue_begin,
                      bool is_terminal_entry);
+
+    // Used to instantiate the LineSequence helper classw
+    LineSequence*
+    CreateLineSequenceContainer ();
+
+    // Append an entry to a caller-provided collection that will later be
+    // inserted in this line table.
+    void
+    AppendLineEntryToSequence (LineSequence* sequence,
+                               const lldb::SectionSP& section_sp,
+                               lldb::addr_t section_offset,
+                               uint32_t line,
+                               uint16_t column,
+                               uint16_t file_idx,
+                               bool is_start_of_statement,
+                               bool is_start_of_basic_block,
+                               bool is_prologue_end,
+                               bool is_epilogue_begin,
+                               bool is_terminal_entry);
+
+    // Insert a sequence of entries into this line table.
+    void
+    InsertSequence (LineSequence* sequence);
 
     //------------------------------------------------------------------
     /// Dump all line entries in this line table to the stream \a s.
@@ -351,14 +380,34 @@ protected:
     //------------------------------------------------------------------
     // Types
     //------------------------------------------------------------------
-    typedef std::vector<lldb_private::Section*> section_collection; ///< The collection type for the line entries.
-    typedef std::vector<Entry> entry_collection;    ///< The collection type for the line entries.
+    typedef std::vector<lldb_private::Section*> section_collection; ///< The collection type for the sections.
+    typedef std::vector<Entry>                  entry_collection;   ///< The collection type for the line entries.
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------
-    CompileUnit* m_comp_unit;       ///< The compile unit that this line table belongs to.
+    CompileUnit* m_comp_unit;   ///< The compile unit that this line table belongs to.
     SectionList m_section_list; ///< The list of sections that at least one of the line entries exists in.
     entry_collection m_entries; ///< The collection of line entries in this line table.
+
+    //------------------------------------------------------------------
+    // Helper class
+    //------------------------------------------------------------------
+    class LineSequenceImpl : public LineSequence
+    {
+    public:
+        LineSequenceImpl() :
+            LineSequence()
+        {}
+
+        virtual
+        ~LineSequenceImpl()
+        {}
+
+        virtual void
+        Clear();
+
+        entry_collection m_seq_entries; ///< The collection of line entries in this sequence.
+    };
 
     bool
     ConvertEntryAtIndexToLineEntry (uint32_t idx, LineEntry &line_entry);
