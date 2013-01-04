@@ -27,21 +27,44 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "clang/Basic/FileManager.h"
-#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
+#include "Transforms.h"
+#include "Transform.h"
 
 namespace cl = llvm::cl;
 using namespace clang::tooling;
 
+static cl::opt<RiskLevel>
+MaxRiskLevel("risk", cl::desc("Select a maximum risk level:"),
+             cl::values(
+               clEnumValN(RL_Safe, "safe", "Only safe transformations"),
+                 clEnumValN(RL_Reasonable, "reasonable",
+                           "Enable transformations that might change "
+                           "semantics (default)"),
+                 clEnumValN(RL_Risky, "risky",
+                           "Enable transformations that are likely to "
+                           "change semantics"),
+               clEnumValEnd),
+             cl::init(RL_Reasonable));
 
 int main(int argc, const char **argv) {
+  Transforms TransformManager;
+
+  TransformManager.createTransformOpts();
+
+  // This causes options to be parsed.
   CommonOptionsParser OptionsParser(argc, argv);
 
-  // TODO: Create transforms requested by command-line.
+  TransformManager.createSelectedTransforms();
+
+  if (TransformManager.begin() == TransformManager.end()) {
+    llvm::errs() << "No selected transforms\n";
+    return 1;
+  }
+
+  // Initial syntax check.
   ClangTool SyntaxTool(OptionsParser.getCompilations(),
                        OptionsParser.getSourcePathList());
 
@@ -51,7 +74,23 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
-  // TODO: Apply transforms
+  // Apply transforms.
+  for (Transforms::const_iterator I = TransformManager.begin(),
+       E = TransformManager.end(); I != E; ++I) {
+    if ((*I)->apply(MaxRiskLevel, OptionsParser.getCompilations(),
+                    OptionsParser.getSourcePathList()) != 0) {
+      return 1;
+    }
+  }
+
+  // Final Syntax check.
+  ClangTool EndSyntaxTool(OptionsParser.getCompilations(),
+                          OptionsParser.getSourcePathList());
+  if (EndSyntaxTool.run(
+        newFrontendActionFactory<clang::SyntaxOnlyAction>()) != 0) {
+    // FIXME: Revert changes made to files that fail the syntax test.
+    return 1;
+  }
 
   return 0;
 }
