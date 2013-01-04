@@ -14,7 +14,7 @@ long double f3(id self, SEL op) { return objc_msgSend_fpret(self, op); } // expe
     // expected-note {{please include the header <objc/message.h> or explicitly provide a declaration for 'objc_msgSend_fpret'}}
 
 id f4(struct objc_super *super, SEL op) { // expected-warning {{declaration of 'struct objc_super' will not be visible outside of this function}}
-  return objc_msgSendSuper(super, op); // expected-warning {{implicitly declaring library function 'objc_msgSendSuper' with type 'id (void *, SEL, ...)'}} \
+  return objc_msgSendSuper(super, op); // expected-warning {{implicitly declaring library function 'objc_msgSendSuper' with type 'id (struct objc_super *, SEL, ...)'}} \
 					// expected-note {{please include the header <objc/message.h> or explicitly provide a declaration for 'objc_msgSendSuper'}}
 }
 

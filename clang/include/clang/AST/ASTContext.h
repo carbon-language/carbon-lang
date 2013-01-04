@@ -233,6 +233,8 @@ class ASTContext : public RefCountedBase<ASTContext> {
   QualType ObjCConstantStringType;
   mutable RecordDecl *CFConstantStringTypeDecl;
   
+  mutable QualType ObjCSuperType;
+  
   QualType ObjCNSStringType;
 
   /// \brief The typedef declaration for the Objective-C "instancetype" type.
@@ -1115,7 +1117,11 @@ public:
 
   /// \brief Return the C structure type used to represent constant CFStrings.
   QualType getCFConstantStringType() const;
-
+  
+  /// \brief Returns the C struct type for objc_super
+  QualType getObjCSuperType() const;
+  void setObjCSuperType(QualType ST) { ObjCSuperType = ST; }
+  
   /// Get the structure type used to representation CFStrings, or NULL
   /// if it hasn't yet been built.
   QualType getRawCFConstantStringType() const {

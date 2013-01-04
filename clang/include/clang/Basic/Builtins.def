@@ -31,6 +31,7 @@
 //  F -> constant CFString
 //  G -> id
 //  H -> SEL
+//  M -> struct objc_super
 //  a -> __builtin_va_list
 //  A -> "reference" to __builtin_va_list
 //  V -> Vector, followed by the number of elements and the base type.
@@ -760,17 +761,16 @@ LIBBUILTIN(strlcpy, "zc*cC*z",    "f",     "string.h", ALL_LANGUAGES)
 LIBBUILTIN(strlcat, "zc*cC*z",    "f",     "string.h", ALL_LANGUAGES)
 //   id objc_msgSend(id, SEL, ...)
 LIBBUILTIN(objc_msgSend, "GGH.",   "f",     "objc/message.h", OBJC_LANG)
-
 // long double objc_msgSend_fpret(id self, SEL op, ...) 
 LIBBUILTIN(objc_msgSend_fpret, "LdGH.", "f", "objc/message.h", OBJC_LANG)
 // _Complex long double objc_msgSend_fp2ret(id self, SEL op, ...)
 LIBBUILTIN(objc_msgSend_fp2ret, "XLdGH.", "f", "objc/message.h", OBJC_LANG)
-// id objc_msgSend_stret (id, SEL, ...)
-LIBBUILTIN(objc_msgSend_stret, "GGH.", "f", "objc/message.h", OBJC_LANG)
+// void objc_msgSend_stret (id, SEL, ...)
+LIBBUILTIN(objc_msgSend_stret, "vGH.", "f", "objc/message.h", OBJC_LANG)
 // id objc_msgSendSuper(struct objc_super *super, SEL op, ...)
-LIBBUILTIN(objc_msgSendSuper, "Gv*H.", "f", "objc/message.h", OBJC_LANG)
+LIBBUILTIN(objc_msgSendSuper, "GM*H.", "f", "objc/message.h", OBJC_LANG)
 // void objc_msgSendSuper_stret(struct objc_super *super, SEL op, ...)
-LIBBUILTIN(objc_msgSendSuper_stret, "vv*H.", "f", "objc/message.h", OBJC_LANG)
+LIBBUILTIN(objc_msgSendSuper_stret, "vM*H.", "f", "objc/message.h", OBJC_LANG)
 //   id objc_getClass(const char *name)
 LIBBUILTIN(objc_getClass, "GcC*",   "f",     "objc/runtime.h", OBJC_LANG)
 //   id objc_getMetaClass(const char *name)
