@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_CORE_DEFINED_ATOM_H_
-#define LLD_CORE_DEFINED_ATOM_H_
+#ifndef LLD_CORE_DEFINED_ATOM_H
+#define LLD_CORE_DEFINED_ATOM_H
 
 #include "lld/Core/Atom.h"
 #include "lld/Core/Reference.h"
@@ -16,18 +16,18 @@
 namespace llvm {
   template <typename T>
   class ArrayRef;
-
   class StringRef;
 }
 
 namespace lld {
-
 class File;
 
-/// An atom is the fundamental unit of linking.  A C function or global variable
-/// is an atom.  An atom has content and attributes. The content of a function
-/// atom is the instructions that implement the function.  The content of a
-/// global variable atom is its initial bytes.
+/// \brief The fundamental unit of linking.
+///
+/// A C function or global variable is an atom.  An atom has content and
+/// attributes. The content of a function atom is the instructions that
+/// implement the function.  The content of a global variable atom is its
+/// initial bytes.
 ///
 /// Here are some example attribute sets for common atoms. If a particular
 /// attribute is not listed, the default values are:  definition=regular,
@@ -175,69 +175,72 @@ public:
     uint16_t modulus;
   };
 
-  /// ordinal - returns a value for the order of this Atom within its file.
-  /// This is used by the linker to order the layout of Atoms so that
-  /// the resulting image is stable and reproducible.
+  /// \brief returns a value for the order of this Atom within its file.
+  ///
+  /// This is used by the linker to order the layout of Atoms so that the
+  /// resulting image is stable and reproducible.
   virtual uint64_t ordinal() const = 0;
 
-  /// size - the number of bytes of space this atom's content will occupy
-  /// in the final linked image.  For a function atom, it is the number
-  /// of bytes of code in the function.
+  /// \brief the number of bytes of space this atom's content will occupy in the
+  /// final linked image.
+  ///
+  /// For a function atom, it is the number of bytes of code in the function.
   virtual uint64_t size() const = 0;
 
-  /// scope - The visibility of this atom to other atoms.  C static functions
-  /// have scope scopeTranslationUnit.  Regular C functions have scope
-  /// scopeGlobal.  Functions compiled with visibility=hidden have scope
-  /// scopeLinkageUnit so they can be see by other atoms being linked but not
-  /// by the OS loader.
+  /// \brief The visibility of this atom to other atoms.
+  ///
+  /// C static functions have scope scopeTranslationUnit.  Regular C functions
+  /// have scope scopeGlobal.  Functions compiled with visibility=hidden have
+  /// scope scopeLinkageUnit so they can be see by other atoms being linked but
+  /// not by the OS loader.
   virtual Scope scope() const = 0;
 
-  /// interposable - Whether the linker should use direct or indirect
-  /// access to this atom.
+  /// \brief Whether the linker should use direct or indirect access to this
+  /// atom.
   virtual Interposable interposable() const = 0;
 
-  /// merge - how the linker should handle if multiple atoms have
-  /// the same name.
+  /// \brief how the linker should handle if multiple atoms have the same name.
   virtual Merge merge() const = 0;
 
-  /// contentType - The type of this atom, such as code or data.
+  /// \brief The type of this atom, such as code or data.
   virtual ContentType contentType() const = 0;
 
-  /// alignment - The alignment constraints on how this atom must be laid out
-  /// in the final linked image (e.g. 16-byte aligned).
+  /// \brief The alignment constraints on how this atom must be laid out in the
+  /// final linked image (e.g. 16-byte aligned).
   virtual Alignment alignment() const = 0;
 
-  /// sectionChoice - Whether this atom must be in a specially named section
-  /// in the final linked image, or if the linker can infer the section
-  /// based on the contentType().
+  /// \brief Whether this atom must be in a specially named section in the final
+  /// linked image, or if the linker can infer the section based on the
+  /// contentType().
   virtual SectionChoice sectionChoice() const = 0;
 
-  /// customSectionName - If sectionChoice() != sectionBasedOnContent, then
-  /// this return the name of the section the atom should be placed into.
+  /// \brief If sectionChoice() != sectionBasedOnContent, then this return the
+  /// name of the section the atom should be placed into.
   virtual StringRef customSectionName() const = 0;
 
-  /// deadStrip - constraints on whether the linker may dead strip away
-  /// this atom.
+  /// \brief constraints on whether the linker may dead strip away this atom.
   virtual DeadStripKind deadStrip() const = 0;
 
-  /// permissions - Returns the OS memory protections required for this atom's
-  /// content at runtime.  A function atom is R_X, a global variable is RW_,
-  /// and a read-only constant is R__.
+  /// \brief Returns the OS memory protections required for this atom's content
+  /// at runtime.
+  ///
+  /// A function atom is R_X, a global variable is RW_, and a read-only constant
+  /// is R__.
   virtual ContentPermissions permissions() const = 0;
 
-  /// isThumb - only applicable to ARM code. Tells the linker if the code
-  /// uses thumb or arm instructions.  The linker needs to know this to
-  /// set the low bit of pointers to thumb functions.
+  /// \brief only applicable to ARM code. Tells the linker if the code uses
+  /// thumb or arm instructions.  The linker needs to know this to set the low
+  /// bit of pointers to thumb functions.
   virtual bool isThumb() const = 0;
 
-  /// isAlias - means this is a zero size atom that exists to provide an
-  /// alternate name for another atom.  Alias atoms must have a special
-  /// Reference to the atom they alias which the layout engine recognizes
-  /// and forces the alias atom to layout right before the target atom.
+  /// \brief means this is a zero size atom that exists to provide an alternate
+  /// name for another atom.  Alias atoms must have a special Reference to the
+  /// atom they alias which the layout engine recognizes and forces the alias
+  /// atom to layout right before the target atom.
   virtual bool isAlias() const = 0;
 
-  /// rawContent - returns a reference to the raw (unrelocated) bytes of
-  /// this Atom's content.
+  /// \brief returns a reference to the raw (unrelocated) bytes of this Atom's
+  /// content.
   virtual ArrayRef<uint8_t> rawContent() const = 0;
 
   /// This class abstracts iterating over the sequence of References
@@ -245,62 +248,59 @@ public:
   /// the derefIterator() and incrementIterator() methods.
   class reference_iterator {
   public:
-    reference_iterator(const DefinedAtom& a, const void* it)
-              : _atom(a), _it(it) { }
+    reference_iterator(const DefinedAtom &a, const void *it)
+      : _atom(a), _it(it) { }
 
-    const Reference* operator*() const {
+    const Reference *operator*() const {
       return _atom.derefIterator(_it);
     }
 
-    const Reference* operator->() const {
+    const Reference *operator->() const {
       return _atom.derefIterator(_it);
     }
 
-    bool operator!=(const reference_iterator& other) const {
-      return (this->_it != other._it);
+    bool operator!=(const reference_iterator &other) const {
+      return _it != other._it;
     }
 
-    reference_iterator& operator++() {
+    reference_iterator &operator++() {
       _atom.incrementIterator(_it);
       return *this;
     }
   private:
-    const DefinedAtom&   _atom;
-    const void*          _it;
+    const DefinedAtom &_atom;
+    const void *_it;
   };
 
-  /// Returns an iterator to the beginning of this Atom's References
+  /// \brief Returns an iterator to the beginning of this Atom's References.
   virtual reference_iterator begin() const = 0;
 
-  /// Returns an iterator to the end of this Atom's References
+  /// \brief Returns an iterator to the end of this Atom's References.
   virtual reference_iterator end() const = 0;
 
   static inline bool classof(const Atom *a) {
     return a->definition() == definitionRegular;
   }
-  static inline bool classof(const DefinedAtom *) { return true; }
 
 protected:
-  /// DefinedAtom is an abstract base class.
-  /// Only subclasses can access constructor.
+  // DefinedAtom is an abstract base class. Only subclasses can access
+  // constructor.
   DefinedAtom() : Atom(definitionRegular) { }
 
-  /// The memory for DefinedAtom objects is always managed by the owning File
-  /// object.  Therefore, no one but the owning File object should call
-  /// delete on an Atom.  In fact, some File objects may bulk allocate
-  /// an array of Atoms, so they cannot be individually deleted by anyone.
+  // The memory for DefinedAtom objects is always managed by the owning File
+  // object.  Therefore, no one but the owning File object should call delete on
+  // an Atom.  In fact, some File objects may bulk allocate an array of Atoms,
+  // so they cannot be individually deleted by anyone.
   virtual ~DefinedAtom() {}
 
-  /// Returns a pointer to the Reference object that the abstract
+  /// \brief Returns a pointer to the Reference object that the abstract
   /// iterator "points" to.
-  virtual const Reference* derefIterator(const void* iter) const = 0;
+  virtual const Reference *derefIterator(const void *iter) const = 0;
 
-  /// Adjusts the abstract iterator to "point" to the next Reference object
-  /// for this Atom.
-  virtual void incrementIterator(const void*& iter) const = 0;
-
+  /// \brief Adjusts the abstract iterator to "point" to the next Reference
+  /// object for this Atom.
+  virtual void incrementIterator(const void *&iter) const = 0;
 };
+} // end namespace lld
 
-} // namespace lld
-
-#endif // LLD_CORE_DEFINED_ATOM_H_
+#endif

@@ -29,7 +29,6 @@
 #include <vector>
 
 namespace lld {
-
 SymbolTable::SymbolTable(ResolverOptions &opts)
   : _options(opts) {
 }
@@ -90,7 +89,6 @@ static NameCollisionResolution collide(Atom::Definition first,
   return cases[first][second];
 }
 
-
 enum MergeResolution {
   MCR_First,
   MCR_Second,
@@ -122,7 +120,6 @@ static MergeResolution mergeSelect(DefinedAtom::Merge first,
                                    DefinedAtom::Merge second) {
   return mergeCases[first][second];
 }
-
 
 void SymbolTable::addByName(const Atom & newAtom) {
   StringRef name = newAtom.name();
@@ -249,7 +246,6 @@ void SymbolTable::addByName(const Atom & newAtom) {
   }
 }
 
-
 unsigned SymbolTable::AtomMappingInfo::getHashValue(const DefinedAtom * const atom) {
   unsigned hash = atom->size();
   if ( atom->contentType() != DefinedAtom::typeZeroFill ) {
@@ -263,7 +259,6 @@ unsigned SymbolTable::AtomMappingInfo::getHashValue(const DefinedAtom * const at
   //fprintf(stderr, "atom=%p, hash=0x%08X\n", atom, hash);
   return hash;
 }
-
 
 bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
                                          const DefinedAtom * const r) {
@@ -287,7 +282,6 @@ bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
   return lc.equals(rc);
 }
 
-
 void SymbolTable::addByContent(const DefinedAtom & newAtom) {
   AtomContentSet::iterator pos = _contentTable.find(&newAtom);
   if ( pos == _contentTable.end() ) {
@@ -298,8 +292,6 @@ void SymbolTable::addByContent(const DefinedAtom & newAtom) {
     // New atom is not being used.  Add it to replacement table.
     _replacedAtoms[&newAtom] = existing;
 }
-
-
 
 const Atom *SymbolTable::findByName(StringRef sym) {
   NameToAtom::iterator pos = _nameTable.find(sym);
@@ -350,5 +342,4 @@ void SymbolTable::tentativeDefinitions(std::vector<StringRef> &names) {
     }
   }
 }
-
 } // namespace lld
