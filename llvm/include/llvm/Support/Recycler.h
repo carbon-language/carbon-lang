@@ -22,6 +22,8 @@
 
 namespace llvm {
 
+class BumpPtrAllocator;
+
 /// PrintRecyclingAllocatorStats - Helper for RecyclingAllocator for
 /// printing statistics.
 ///
@@ -85,6 +87,15 @@ public:
       T *t = reinterpret_cast<T *>(FreeList.remove(FreeList.begin()));
       Allocator.Deallocate(t);
     }
+  }
+
+  /// Special case for BumpPtrAllocator which has an empty Deallocate()
+  /// function.
+  ///
+  /// There is no need to traverse the free list, pulling all the objects into
+  /// cache.
+  void clear(BumpPtrAllocator&) {
+    FreeList.clearAndLeakNodesUnsafely();
   }
 
   template<class SubClass, class AllocatorType>
