@@ -564,6 +564,7 @@ static void traverseAST(MigrationPass &pass) {
   }
   MigrateCtx.addTraverser(new PropertyRewriteTraverser());
   MigrateCtx.addTraverser(new BlockObjCVariableTraverser());
+  MigrateCtx.addTraverser(new ProtectedScopeTraverser());
 
   MigrateCtx.traverse(pass.Ctx.getTranslationUnitDecl());
 }

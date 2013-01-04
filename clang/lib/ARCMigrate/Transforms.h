@@ -135,6 +135,11 @@ public:
   virtual void traverseBody(BodyContext &BodyCtx);
 };
 
+class ProtectedScopeTraverser : public ASTTraverser {
+public:
+  virtual void traverseBody(BodyContext &BodyCtx);
+};
+
 // GC transformations
 
 class GCAttrsTraverser : public ASTTraverser {
