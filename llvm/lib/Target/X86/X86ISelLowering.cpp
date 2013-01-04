@@ -18115,6 +18115,13 @@ X86ScalarTargetTransformImpl::getPopcntHwSupport(unsigned TyWidth) const {
   return ST.hasSSE41() ? Fast : None;
 }
 
+unsigned X86VectorTargetTransformInfo::getNumberOfRegisters(bool Vector) const {
+  const X86Subtarget &ST = TLI->getTargetMachine().getSubtarget<X86Subtarget>();
+  if (ST.is64Bit())
+    return 16;
+  return 8;
+}
+
 unsigned
 X86VectorTargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
                                                      Type *Ty) const {

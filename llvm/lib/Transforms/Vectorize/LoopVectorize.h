@@ -68,6 +68,9 @@ const unsigned RuntimeMemoryCheckThreshold = 4;
 /// This is the highest vector width that we try to generate.
 const unsigned MaxVectorSize = 8;
 
+/// This is the highest Unroll Factor.
+const unsigned MaxUnrollSize = 4;
+
 namespace llvm {
 
 // Forward declarations.
@@ -473,16 +476,36 @@ private:
 class LoopVectorizationCostModel {
 public:
   /// C'tor.
-  LoopVectorizationCostModel(Loop *Lp, ScalarEvolution *Se,
+  LoopVectorizationCostModel(Loop *Lp, ScalarEvolution *Se, LoopInfo *Li,
                              LoopVectorizationLegality *Leg,
                              const VectorTargetTransformInfo *Vtti):
-  TheLoop(Lp), SE(Se), Legal(Leg), VTTI(Vtti) { }
+  TheLoop(Lp), SE(Se), LI(Li), Legal(Leg), VTTI(Vtti) { }
 
-  /// Returns the most profitable vectorization factor in powers of two.
+  /// \return The most profitable vectorization factor.
   /// This method checks every power of two up to VF. If UserVF is not ZERO
   /// then this vectorization factor will be selected if vectorization is
   /// possible.
   unsigned selectVectorizationFactor(bool OptForSize, unsigned UserVF);
+
+
+  /// \return The most profitable unroll factor.
+  /// If UserUF is non-zero then this method finds the best unroll-factor
+  /// based on register pressure and other parameters.
+  unsigned selectUnrollFactor(bool OptForSize, unsigned UserUF);
+
+  /// \brief A struct that represents some properties of the register usage
+  /// of a loop.
+  struct RegisterUsage {
+    /// Holds the number of loop invariant values that are used in the loop.
+    unsigned LoopInvariantRegs;
+    /// Holds the maximum number of concurrent live intervals in the loop.
+    unsigned MaxLocalUsers;
+    /// Holds the number of instructions in the loop.
+    unsigned NumInstructions;
+  };
+
+  /// \return  information about the register usage of the loop.
+  RegisterUsage calculateRegisterUsage();
 
 private:
   /// Returns the expected execution cost. The unit of the cost does
@@ -504,7 +527,8 @@ private:
   Loop *TheLoop;
   /// Scev analysis.
   ScalarEvolution *SE;
-
+  /// Loop Info analysis.
+  LoopInfo *LI;
   /// Vectorization legality.
   LoopVectorizationLegality *Legal;
   /// Vector target information.

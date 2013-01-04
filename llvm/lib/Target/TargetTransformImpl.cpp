@@ -171,6 +171,10 @@ VectorTargetTransformImpl::getScalarizationOverhead(Type *Ty,
   return Cost;
 }
 
+unsigned VectorTargetTransformImpl::getNumberOfRegisters(bool Vector) const {
+  return 8;
+}
+
 unsigned VectorTargetTransformImpl::getArithmeticInstrCost(unsigned Opcode,
                                                            Type *Ty) const {
   // Check if any of the operands are vector operands.

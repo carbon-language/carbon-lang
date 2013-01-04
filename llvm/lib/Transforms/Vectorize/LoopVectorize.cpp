@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include "LoopVectorize.h"
+#include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/AliasSetTracker.h"
@@ -43,7 +44,7 @@ VectorizationFactor("force-vector-width", cl::init(0), cl::Hidden,
                     cl::desc("Sets the SIMD width. Zero is autoselect."));
 
 static cl::opt<unsigned>
-VectorizationUnroll("force-vector-unroll", cl::init(1), cl::Hidden,
+VectorizationUnroll("force-vector-unroll", cl::init(0), cl::Hidden,
                     cl::desc("Sets the vectorization unroll count. "
                              "Zero is autoselect."));
 
@@ -94,7 +95,7 @@ struct LoopVectorize : public LoopPass {
     if (TTI)
       VTTI = TTI->getVectorTargetTransformInfo();
     // Use the cost model.
-    LoopVectorizationCostModel CM(L, SE, &LVL, VTTI);
+    LoopVectorizationCostModel CM(L, SE, LI, &LVL, VTTI);
 
     // Check the function attribues to find out if this function should be
     // optimized for size.
@@ -112,6 +113,7 @@ struct LoopVectorize : public LoopPass {
     }
 
     unsigned VF = CM.selectVectorizationFactor(OptForSize, VectorizationFactor);
+    unsigned UF = CM.selectUnrollFactor(OptForSize, VectorizationUnroll);
 
     if (VF == 1) {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
@@ -120,9 +122,10 @@ struct LoopVectorize : public LoopPass {
 
     DEBUG(dbgs() << "LV: Found a vectorizable loop ("<< VF << ") in "<<
           F->getParent()->getModuleIdentifier()<<"\n");
+    DEBUG(dbgs() << "LV: Unroll Factor is " << UF << "\n");
 
     // If we decided that it is *legal* to vectorizer the loop then do it.
-    InnerLoopVectorizer LB(L, SE, LI, DT, DL, VF, VectorizationUnroll);
+    InnerLoopVectorizer LB(L, SE, LI, DT, DL, VF, UF);
     LB.vectorize(&LVL);
 
     DEBUG(verifyFunction(*L->getHeader()->getParent()));
@@ -2082,7 +2085,7 @@ bool LoopVectorizationLegality::hasComputableBounds(Value *Ptr) {
 
 unsigned
 LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
-                                                        unsigned UserVF) {
+                                                      unsigned UserVF) {
   if (OptForSize && Legal->getRuntimePointerCheck()->Need) {
     DEBUG(dbgs() << "LV: Aborting. Runtime ptr check is required in Os.\n");
     return 1;
@@ -2146,6 +2149,161 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
 
   DEBUG(dbgs() << "LV: Selecting VF = : "<< Width << ".\n");
   return Width;
+}
+
+unsigned
+LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
+                                               unsigned UserUF) {
+  // Use the user preference, unless 'auto' is selected.
+  if (UserUF != 0)
+    return UserUF;
+
+  // When we optimize for size we don't unroll.
+  if (OptForSize)
+    return 1;
+
+  unsigned TargetVectorRegisters = VTTI->getNumberOfRegisters(true);
+  DEBUG(dbgs() << "LV: The target has " << TargetVectorRegisters <<
+        " vector registers\n");
+
+  LoopVectorizationCostModel::RegisterUsage R = calculateRegisterUsage();
+  // We divide by these constants so assume that we have at least one
+  // instruction that uses at least one register.
+  R.MaxLocalUsers = std::max(R.MaxLocalUsers, 1U);
+  R.NumInstructions = std::max(R.NumInstructions, 1U);
+
+  // We calculate the unroll factor using the following formula.
+  // Subtract the number of loop invariants from the number of available
+  // registers. These registers are used by all of the unrolled instances.
+  // Next, divide the remaining registers by the number of registers that is
+  // required by the loop, in order to estimate how many parallel instances
+  // fit without causing spills.
+  unsigned UF = (TargetVectorRegisters - R.LoopInvariantRegs) / R.MaxLocalUsers;
+
+  // We don't want to unroll the loops to the point where they do not fit into
+  // the decoded cache. Assume that we only allow 32 IR instructions.
+  UF = std::min(UF, (32 / R.NumInstructions));
+
+  // Clamp the unroll factor ranges to reasonable factors.
+  if (UF > MaxUnrollSize)
+    UF = MaxUnrollSize;
+  else if (UF < 1)
+    UF = 1;
+
+  return UF;
+}
+
+LoopVectorizationCostModel::RegisterUsage
+LoopVectorizationCostModel::calculateRegisterUsage() {
+  // This function calculates the register usage by measuring the highest number
+  // of values that are alive at a single location. Obviously, this is a very
+  // rough estimation. We scan the loop in a topological order in order and
+  // assign a number to each instruction. We use RPO to ensure that defs are
+  // met before their users. We assume that each instruction that has in-loop
+  // users starts an interval. We record every time that an in-loop value is
+  // used, so we have a list of the first and last occurrences of each
+  // instruction. Next, we transpose this data structure into a multi map that
+  // holds the list of intervals that *end* at a specific location. This multi
+  // map allows us to perform a linear search. We scan the instructions linearly
+  // and record each time that a new interval starts, by placing it in a set.
+  // If we find this value in the multi-map then we remove it from the set.
+  // The max register usage is the maximum size of the set.
+  // We also search for instructions that are defined outside the loop, but are
+  // used inside the loop. We need this number separately from the max-interval
+  // usage number because when we unroll, loop-invariant values do not take
+  // more register.
+  LoopBlocksDFS DFS(TheLoop);
+  DFS.perform(LI);
+
+  RegisterUsage R;
+  R.NumInstructions = 0;
+
+  // Each 'key' in the map opens a new interval. The values
+  // of the map are the index of the 'last seen' usage of the
+  // instruction that is the key.
+  typedef DenseMap<Instruction*, unsigned> IntervalMap;
+  // Maps instruction to its index.
+  DenseMap<unsigned, Instruction*> IdxToInstr;
+  // Marks the end of each interval.
+  IntervalMap EndPoint;
+  // Saves the list of instruction indices that are used in the loop.
+  SmallSet<Instruction*, 8> Ends;
+  // Saves the list of values that are used in the loop but are
+  // defined outside the loop, such as arguments and constants.
+  SmallPtrSet<Value*, 8> LoopInvariants;
+
+  unsigned Index = 0;
+  for (LoopBlocksDFS::RPOIterator bb = DFS.beginRPO(),
+       be = DFS.endRPO(); bb != be; ++bb) {
+    R.NumInstructions += (*bb)->size();
+    for (BasicBlock::iterator it = (*bb)->begin(), e = (*bb)->end(); it != e;
+         ++it) {
+      Instruction *I = it;
+      IdxToInstr[Index++] = I;
+
+      // Save the end location of each USE.
+      for (unsigned i = 0; i < I->getNumOperands(); ++i) {
+        Value *U = I->getOperand(i);
+        Instruction *Instr = dyn_cast<Instruction>(U);
+
+        // Ignore non-instruction values such as arguments, constants, etc.
+        if (!Instr) continue;
+
+        // If this instruction is outside the loop then record it and continue.
+        if (!TheLoop->contains(Instr)) {
+          LoopInvariants.insert(Instr);
+          continue;
+        }
+
+        // Overwrite previous end points.
+        EndPoint[Instr] = Index;
+        Ends.insert(Instr);
+      }
+    }
+  }
+
+  // Saves the list of intervals that end with the index in 'key'.
+  typedef SmallVector<Instruction*, 2> InstrList;
+  DenseMap<unsigned, InstrList> TransposeEnds;
+
+  // Transpose the EndPoints to a list of values that end at each index.
+  for (IntervalMap::iterator it = EndPoint.begin(), e = EndPoint.end();
+       it != e; ++it)
+    TransposeEnds[it->second].push_back(it->first);
+
+  SmallSet<Instruction*, 8> OpenIntervals;
+  unsigned MaxUsage = 0;
+
+
+  DEBUG(dbgs() << "LV(REG): Calculating max register usage:\n");
+  for (unsigned int i = 0; i < Index; ++i) {
+    Instruction *I = IdxToInstr[i];
+    // Ignore instructions that are never used within the loop.
+    if (!Ends.count(I)) continue;
+
+    // Remove all of the instructions that end at this location.
+    InstrList &List = TransposeEnds[i];
+    for (unsigned int i=0, e = List.size(); i < e; ++i)
+      OpenIntervals.erase(List[i]);
+
+    // Count the number of live interals.
+    MaxUsage = std::max(MaxUsage, OpenIntervals.size());
+
+    DEBUG(dbgs() << "LV(REG): At #" << i << " Interval # " <<
+          OpenIntervals.size() <<"\n");
+
+    // Add the current instruction to the list of open intervals.
+    OpenIntervals.insert(I);
+  }
+
+  unsigned Invariant = LoopInvariants.size();
+  DEBUG(dbgs() << "LV(REG): Found max usage: " << MaxUsage << " \n");
+  DEBUG(dbgs() << "LV(REG): Found invariant usage: " << Invariant << " \n");
+  DEBUG(dbgs() << "LV(REG): LoopSize: " << R.NumInstructions << " \n");
+
+  R.LoopInvariantRegs = Invariant;
+  R.MaxLocalUsers = MaxUsage;
+  return R;
 }
 
 unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {

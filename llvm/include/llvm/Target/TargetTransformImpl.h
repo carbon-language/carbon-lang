@@ -69,6 +69,8 @@ public:
 
   virtual ~VectorTargetTransformImpl() {}
 
+  virtual unsigned getNumberOfRegisters(bool Vector) const;
+
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
 
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,

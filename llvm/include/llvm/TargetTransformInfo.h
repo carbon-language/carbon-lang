@@ -164,12 +164,19 @@ public:
     ExtractSubvector // ExtractSubvector Index indicates start offset.
   };
 
-  /// Returns the expected cost of arithmetic ops, such as mul, xor, fsub, etc.
+  /// \return The number of scalar or vector registers that the target has.
+  /// If 'Vectors' is true, it returns the number of vector registers. If it is
+  /// set to false, it returns the number of scalar registers.
+  virtual unsigned getNumberOfRegisters(bool Vector) const {
+    return 8;
+  }
+
+  /// \return The expected cost of arithmetic ops, such as mul, xor, fsub, etc.
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
     return 1;
   }
 
-  /// Returns the cost of a shuffle instruction of kind Kind and of type Tp.
+  /// \return The cost of a shuffle instruction of kind Kind and of type Tp.
   /// The index and subtype parameters are used by the subvector insertion and
   /// extraction shuffle kinds.
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
@@ -177,47 +184,47 @@ public:
     return 1;
   }
 
-  /// Returns the expected cost of cast instructions, such as bitcast, trunc,
+  /// \return The expected cost of cast instructions, such as bitcast, trunc,
   /// zext, etc.
   virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
                                     Type *Src) const {
     return 1;
   }
 
-  /// Returns the expected cost of control-flow related instrutctions such as
+  /// \return The expected cost of control-flow related instrutctions such as
   /// Phi, Ret, Br.
   virtual unsigned getCFInstrCost(unsigned Opcode) const {
     return 1;
   }
 
-  /// Returns the expected cost of compare and select instructions.
+  /// \returns The expected cost of compare and select instructions.
   virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
                                       Type *CondTy = 0) const {
     return 1;
   }
 
-  /// Returns the expected cost of vector Insert and Extract.
+  /// \return The expected cost of vector Insert and Extract.
   /// Use -1 to indicate that there is no information on the index value.
   virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
                                       unsigned Index = -1) const {
     return 1;
   }
 
-  /// Returns the cost of Load and Store instructions.
+  /// \return The cost of Load and Store instructions.
   virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                                    unsigned Alignment,
                                    unsigned AddressSpace) const {
     return 1;
   }
 
-  /// Returns the cost of Intrinsic instructions.
+  /// \returns The cost of Intrinsic instructions.
   virtual unsigned getIntrinsicInstrCost(Intrinsic::ID,
                                          Type *RetTy,
                                          ArrayRef<Type*> Tys) const {
     return 1;
   }
 
-  /// Returns the number of pieces into which the provided type must be
+  /// \returns The number of pieces into which the provided type must be
   /// split during legalization. Zero is returned when the answer is unknown.
   virtual unsigned getNumberOfParts(Type *Tp) const {
     return 0;

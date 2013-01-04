@@ -959,6 +959,8 @@ namespace llvm {
     explicit X86VectorTargetTransformInfo(const TargetLowering *TL) :
     VectorTargetTransformImpl(TL) {}
 
+    virtual unsigned getNumberOfRegisters(bool Vector) const;
+
     virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
 
     virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
