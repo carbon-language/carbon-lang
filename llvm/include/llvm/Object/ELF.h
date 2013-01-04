@@ -33,6 +33,14 @@
 namespace llvm {
 namespace object {
 
+using support::endianness;
+
+template<typename T, std::size_t max_align>
+struct MaximumAlignment {
+  enum {value = AlignOf<T>::Alignment > max_align ? max_align
+                                                  : AlignOf<T>::Alignment};
+};
+
 // Subclasses of ELFObjectFile may need this for template instantiation
 inline std::pair<unsigned char, unsigned char>
 getElfArchType(MemoryBuffer *Object) {
@@ -43,69 +51,78 @@ getElfArchType(MemoryBuffer *Object) {
 }
 
 // Templates to choose Elf_Addr and Elf_Off depending on is64Bits.
-template<support::endianness target_endianness>
+template<endianness target_endianness, std::size_t max_alignment>
 struct ELFDataTypeTypedefHelperCommon {
   typedef support::detail::packed_endian_specific_integral
-    <uint16_t, target_endianness, support::aligned> Elf_Half;
+    <uint16_t, target_endianness,
+     MaximumAlignment<uint16_t, max_alignment>::value> Elf_Half;
   typedef support::detail::packed_endian_specific_integral
-    <uint32_t, target_endianness, support::aligned> Elf_Word;
+    <uint32_t, target_endianness,
+     MaximumAlignment<uint32_t, max_alignment>::value> Elf_Word;
   typedef support::detail::packed_endian_specific_integral
-    <int32_t, target_endianness, support::aligned> Elf_Sword;
+    <int32_t, target_endianness,
+     MaximumAlignment<int32_t, max_alignment>::value> Elf_Sword;
   typedef support::detail::packed_endian_specific_integral
-    <uint64_t, target_endianness, support::aligned> Elf_Xword;
+    <uint64_t, target_endianness,
+     MaximumAlignment<uint64_t, max_alignment>::value> Elf_Xword;
   typedef support::detail::packed_endian_specific_integral
-    <int64_t, target_endianness, support::aligned> Elf_Sxword;
+    <int64_t, target_endianness,
+     MaximumAlignment<int64_t, max_alignment>::value> Elf_Sxword;
 };
 
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct ELFDataTypeTypedefHelper;
 
 /// ELF 32bit types.
-template<support::endianness target_endianness>
-struct ELFDataTypeTypedefHelper<target_endianness, false>
-  : ELFDataTypeTypedefHelperCommon<target_endianness> {
+template<endianness target_endianness, std::size_t max_alignment>
+struct ELFDataTypeTypedefHelper<target_endianness, max_alignment, false>
+  : ELFDataTypeTypedefHelperCommon<target_endianness, max_alignment> {
   typedef uint32_t value_type;
   typedef support::detail::packed_endian_specific_integral
-    <value_type, target_endianness, support::aligned> Elf_Addr;
+    <value_type, target_endianness,
+     MaximumAlignment<value_type, max_alignment>::value> Elf_Addr;
   typedef support::detail::packed_endian_specific_integral
-    <value_type, target_endianness, support::aligned> Elf_Off;
+    <value_type, target_endianness,
+     MaximumAlignment<value_type, max_alignment>::value> Elf_Off;
 };
 
 /// ELF 64bit types.
-template<support::endianness target_endianness>
-struct ELFDataTypeTypedefHelper<target_endianness, true>
-  : ELFDataTypeTypedefHelperCommon<target_endianness>{
+template<endianness target_endianness, std::size_t max_alignment>
+struct ELFDataTypeTypedefHelper<target_endianness, max_alignment, true>
+  : ELFDataTypeTypedefHelperCommon<target_endianness, max_alignment>{
   typedef uint64_t value_type;
   typedef support::detail::packed_endian_specific_integral
-    <value_type, target_endianness, support::aligned> Elf_Addr;
+    <value_type, target_endianness,
+     MaximumAlignment<value_type, max_alignment>::value> Elf_Addr;
   typedef support::detail::packed_endian_specific_integral
-    <value_type, target_endianness, support::aligned> Elf_Off;
+    <value_type, target_endianness,
+     MaximumAlignment<value_type, max_alignment>::value> Elf_Off;
 };
 
 // I really don't like doing this, but the alternative is copypasta.
-#define LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits) \
-typedef typename \
-  ELFDataTypeTypedefHelper<target_endianness, is64Bits>::Elf_Addr Elf_Addr; \
-typedef typename \
-  ELFDataTypeTypedefHelper<target_endianness, is64Bits>::Elf_Off Elf_Off; \
-typedef typename \
-  ELFDataTypeTypedefHelper<target_endianness, is64Bits>::Elf_Half Elf_Half; \
-typedef typename \
-  ELFDataTypeTypedefHelper<target_endianness, is64Bits>::Elf_Word Elf_Word; \
-typedef typename \
-  ELFDataTypeTypedefHelper<target_endianness, is64Bits>::Elf_Sword Elf_Sword; \
-typedef typename \
-  ELFDataTypeTypedefHelper<target_endianness, is64Bits>::Elf_Xword Elf_Xword; \
-typedef typename \
-  ELFDataTypeTypedefHelper<target_endianness, is64Bits>::Elf_Sxword Elf_Sxword;
+#define LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, is64Bits) \
+typedef typename ELFDataTypeTypedefHelper \
+  <target_endianness, max_alignment, is64Bits>::Elf_Addr Elf_Addr; \
+typedef typename ELFDataTypeTypedefHelper \
+  <target_endianness, max_alignment, is64Bits>::Elf_Off Elf_Off; \
+typedef typename ELFDataTypeTypedefHelper \
+  <target_endianness, max_alignment, is64Bits>::Elf_Half Elf_Half; \
+typedef typename ELFDataTypeTypedefHelper \
+  <target_endianness, max_alignment, is64Bits>::Elf_Word Elf_Word; \
+typedef typename ELFDataTypeTypedefHelper \
+  <target_endianness, max_alignment, is64Bits>::Elf_Sword Elf_Sword; \
+typedef typename ELFDataTypeTypedefHelper \
+  <target_endianness, max_alignment, is64Bits>::Elf_Xword Elf_Xword; \
+typedef typename ELFDataTypeTypedefHelper \
+  <target_endianness, max_alignment, is64Bits>::Elf_Sxword Elf_Sxword;
 
   // Section header.
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Shdr_Base;
 
-template<support::endianness target_endianness>
-struct Elf_Shdr_Base<target_endianness, false> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, false)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Shdr_Base<target_endianness, max_alignment, false> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, false)
   Elf_Word sh_name;     // Section name (index into string table)
   Elf_Word sh_type;     // Section type (SHT_*)
   Elf_Word sh_flags;    // Section flags (SHF_*)
@@ -118,9 +135,9 @@ struct Elf_Shdr_Base<target_endianness, false> {
   Elf_Word sh_entsize;  // Size of records contained within the section
 };
 
-template<support::endianness target_endianness>
-struct Elf_Shdr_Base<target_endianness, true> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, true)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Shdr_Base<target_endianness, max_alignment, true> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, true)
   Elf_Word  sh_name;     // Section name (index into string table)
   Elf_Word  sh_type;     // Section type (SHT_*)
   Elf_Xword sh_flags;    // Section flags (SHF_*)
@@ -133,10 +150,11 @@ struct Elf_Shdr_Base<target_endianness, true> {
   Elf_Xword sh_entsize;  // Size of records contained within the section
 };
 
-template<support::endianness target_endianness, bool is64Bits>
-struct Elf_Shdr_Impl : Elf_Shdr_Base<target_endianness, is64Bits> {
-  using Elf_Shdr_Base<target_endianness, is64Bits>::sh_entsize;
-  using Elf_Shdr_Base<target_endianness, is64Bits>::sh_size;
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+struct Elf_Shdr_Impl
+  : Elf_Shdr_Base<target_endianness, max_alignment, is64Bits> {
+  using Elf_Shdr_Base<target_endianness, max_alignment, is64Bits>::sh_entsize;
+  using Elf_Shdr_Base<target_endianness, max_alignment, is64Bits>::sh_size;
 
   /// @brief Get the number of entities this section contains if it has any.
   unsigned getEntityCount() const {
@@ -146,12 +164,14 @@ struct Elf_Shdr_Impl : Elf_Shdr_Base<target_endianness, is64Bits> {
   }
 };
 
-template<support::endianness target_endianness, bool is64Bits>
+template< endianness target_endianness
+        , std::size_t max_alignment
+        , bool is64Bits>
 struct Elf_Sym_Base;
 
-template<support::endianness target_endianness>
-struct Elf_Sym_Base<target_endianness, false> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, false)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Sym_Base<target_endianness, max_alignment, false> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, false)
   Elf_Word      st_name;  // Symbol name (index into string table)
   Elf_Addr      st_value; // Value or address associated with the symbol
   Elf_Word      st_size;  // Size of the symbol
@@ -160,9 +180,9 @@ struct Elf_Sym_Base<target_endianness, false> {
   Elf_Half      st_shndx; // Which section (header table index) it's defined in
 };
 
-template<support::endianness target_endianness>
-struct Elf_Sym_Base<target_endianness, true> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, true)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Sym_Base<target_endianness, max_alignment, true> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, true)
   Elf_Word      st_name;  // Symbol name (index into string table)
   unsigned char st_info;  // Symbol's type and binding attributes
   unsigned char st_other; // Must be zero; reserved
@@ -171,9 +191,10 @@ struct Elf_Sym_Base<target_endianness, true> {
   Elf_Xword     st_size;  // Size of the symbol
 };
 
-template<support::endianness target_endianness, bool is64Bits>
-struct Elf_Sym_Impl : Elf_Sym_Base<target_endianness, is64Bits> {
-  using Elf_Sym_Base<target_endianness, is64Bits>::st_info;
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+struct Elf_Sym_Impl
+  : Elf_Sym_Base<target_endianness, max_alignment, is64Bits> {
+  using Elf_Sym_Base<target_endianness, max_alignment, is64Bits>::st_info;
 
   // These accessors and mutators correspond to the ELF32_ST_BIND,
   // ELF32_ST_TYPE, and ELF32_ST_INFO macros defined in the ELF specification:
@@ -188,21 +209,22 @@ struct Elf_Sym_Impl : Elf_Sym_Base<target_endianness, is64Bits> {
 
 /// Elf_Versym: This is the structure of entries in the SHT_GNU_versym section
 /// (.gnu.version). This structure is identical for ELF32 and ELF64.
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Versym_Impl {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, is64Bits)
   Elf_Half vs_index;   // Version index with flags (e.g. VERSYM_HIDDEN)
 };
 
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Verdaux_Impl;
 
 /// Elf_Verdef: This is the structure of entries in the SHT_GNU_verdef section
 /// (.gnu.version_d). This structure is identical for ELF32 and ELF64.
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Verdef_Impl {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
-  typedef Elf_Verdaux_Impl<target_endianness, is64Bits> Elf_Verdaux;
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, is64Bits)
+  typedef
+    Elf_Verdaux_Impl<target_endianness, max_alignment, is64Bits> Elf_Verdaux;
   Elf_Half vd_version; // Version of this structure (e.g. VER_DEF_CURRENT)
   Elf_Half vd_flags;   // Bitwise flags (VER_DEF_*)
   Elf_Half vd_ndx;     // Version index, used in .gnu.version entries
@@ -219,18 +241,18 @@ struct Elf_Verdef_Impl {
 
 /// Elf_Verdaux: This is the structure of auxiliary data in the SHT_GNU_verdef
 /// section (.gnu.version_d). This structure is identical for ELF32 and ELF64.
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Verdaux_Impl {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, is64Bits)
   Elf_Word vda_name; // Version name (offset in string table)
   Elf_Word vda_next; // Offset to next Verdaux entry (in bytes)
 };
 
 /// Elf_Verneed: This is the structure of entries in the SHT_GNU_verneed
 /// section (.gnu.version_r). This structure is identical for ELF32 and ELF64.
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Verneed_Impl {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, is64Bits)
   Elf_Half vn_version; // Version of this structure (e.g. VER_NEED_CURRENT)
   Elf_Half vn_cnt;     // Number of associated Vernaux entries
   Elf_Word vn_file;    // Library name (string table offset)
@@ -240,9 +262,9 @@ struct Elf_Verneed_Impl {
 
 /// Elf_Vernaux: This is the structure of auxiliary data in SHT_GNU_verneed
 /// section (.gnu.version_r). This structure is identical for ELF32 and ELF64.
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Vernaux_Impl {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, is64Bits)
   Elf_Word vna_hash;  // Hash of dependency name
   Elf_Half vna_flags; // Bitwise Flags (VER_FLAG_*)
   Elf_Half vna_other; // Version index, used in .gnu.version entries
@@ -252,12 +274,12 @@ struct Elf_Vernaux_Impl {
 
 /// Elf_Dyn_Base: This structure matches the form of entries in the dynamic
 ///               table section (.dynamic) look like.
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Dyn_Base;
 
-template<support::endianness target_endianness>
-struct Elf_Dyn_Base<target_endianness, false> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, false)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Dyn_Base<target_endianness, max_alignment, false> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, false)
   Elf_Sword d_tag;
   union {
     Elf_Word d_val;
@@ -265,9 +287,9 @@ struct Elf_Dyn_Base<target_endianness, false> {
   } d_un;
 };
 
-template<support::endianness target_endianness>
-struct Elf_Dyn_Base<target_endianness, true> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, true)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Dyn_Base<target_endianness, max_alignment, true> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, true)
   Elf_Sxword d_tag;
   union {
     Elf_Xword d_val;
@@ -276,24 +298,24 @@ struct Elf_Dyn_Base<target_endianness, true> {
 };
 
 /// Elf_Dyn_Impl: This inherits from Elf_Dyn_Base, adding getters and setters.
-template<support::endianness target_endianness, bool is64Bits>
-struct Elf_Dyn_Impl : Elf_Dyn_Base<target_endianness, is64Bits> {
-  using Elf_Dyn_Base<target_endianness, is64Bits>::d_tag;
-  using Elf_Dyn_Base<target_endianness, is64Bits>::d_un;
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+struct Elf_Dyn_Impl : Elf_Dyn_Base<target_endianness, max_alignment, is64Bits> {
+  using Elf_Dyn_Base<target_endianness, max_alignment, is64Bits>::d_tag;
+  using Elf_Dyn_Base<target_endianness, max_alignment, is64Bits>::d_un;
   int64_t getTag() const { return d_tag; }
   uint64_t getVal() const { return d_un.d_val; }
   uint64_t getPtr() const { return d_un.ptr; }
 };
 
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 class ELFObjectFile;
 
 // DynRefImpl: Reference to an entry in the dynamic table
 // This is an ELF-specific interface.
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 class DynRefImpl {
-  typedef Elf_Dyn_Impl<target_endianness, is64Bits> Elf_Dyn;
-  typedef ELFObjectFile<target_endianness, is64Bits> OwningType;
+  typedef Elf_Dyn_Impl<target_endianness, max_alignment, is64Bits> Elf_Dyn;
+  typedef ELFObjectFile<target_endianness, max_alignment, is64Bits> OwningType;
 
   DataRefImpl DynPimpl;
   const OwningType *OwningObject;
@@ -315,47 +337,53 @@ public:
 };
 
 // Elf_Rel: Elf Relocation
-template<support::endianness target_endianness, bool is64Bits, bool isRela>
+template< endianness target_endianness
+        , std::size_t max_alignment
+        , bool is64Bits
+        , bool isRela>
 struct Elf_Rel_Base;
 
-template<support::endianness target_endianness>
-struct Elf_Rel_Base<target_endianness, false, false> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, false)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Rel_Base<target_endianness, max_alignment, false, false> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, false)
   Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Word      r_info;  // Symbol table index and type of relocation to apply
 };
 
-template<support::endianness target_endianness>
-struct Elf_Rel_Base<target_endianness, true, false> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, true)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Rel_Base<target_endianness, max_alignment, true, false> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, true)
   Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Xword     r_info;   // Symbol table index and type of relocation to apply
 };
 
-template<support::endianness target_endianness>
-struct Elf_Rel_Base<target_endianness, false, true> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, false)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Rel_Base<target_endianness, max_alignment, false, true> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, false)
   Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Word      r_info;   // Symbol table index and type of relocation to apply
   Elf_Sword     r_addend; // Compute value for relocatable field by adding this
 };
 
-template<support::endianness target_endianness>
-struct Elf_Rel_Base<target_endianness, true, true> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, true)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Rel_Base<target_endianness, max_alignment, true, true> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, true)
   Elf_Addr      r_offset; // Location (file byte offset, or program virtual addr)
   Elf_Xword     r_info;   // Symbol table index and type of relocation to apply
   Elf_Sxword    r_addend; // Compute value for relocatable field by adding this.
 };
 
-template<support::endianness target_endianness, bool is64Bits, bool isRela>
+template< endianness target_endianness
+        , std::size_t max_alignment
+        , bool is64Bits
+        , bool isRela>
 struct Elf_Rel_Impl;
 
-template<support::endianness target_endianness, bool isRela>
-struct Elf_Rel_Impl<target_endianness, true, isRela>
-       : Elf_Rel_Base<target_endianness, true, isRela> {
-  using Elf_Rel_Base<target_endianness, true, isRela>::r_info;
-  LLVM_ELF_IMPORT_TYPES(target_endianness, true)
+template<endianness target_endianness, std::size_t max_alignment, bool isRela>
+struct Elf_Rel_Impl<target_endianness, max_alignment, true, isRela>
+       : Elf_Rel_Base<target_endianness, max_alignment, true, isRela> {
+  using Elf_Rel_Base<target_endianness, max_alignment, true, isRela>::r_info;
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, true)
 
   // These accessors and mutators correspond to the ELF64_R_SYM, ELF64_R_TYPE,
   // and ELF64_R_INFO macros defined in the ELF specification:
@@ -370,11 +398,11 @@ struct Elf_Rel_Impl<target_endianness, true, isRela>
   }
 };
 
-template<support::endianness target_endianness, bool isRela>
-struct Elf_Rel_Impl<target_endianness, false, isRela>
-       : Elf_Rel_Base<target_endianness, false, isRela> {
-  using Elf_Rel_Base<target_endianness, false, isRela>::r_info;
-  LLVM_ELF_IMPORT_TYPES(target_endianness, false)
+template<endianness target_endianness, std::size_t max_alignment, bool isRela>
+struct Elf_Rel_Impl<target_endianness, max_alignment, false, isRela>
+       : Elf_Rel_Base<target_endianness, max_alignment, false, isRela> {
+  using Elf_Rel_Base<target_endianness, max_alignment, false, isRela>::r_info;
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, false)
 
   // These accessors and mutators correspond to the ELF32_R_SYM, ELF32_R_TYPE,
   // and ELF32_R_INFO macros defined in the ELF specification:
@@ -387,9 +415,9 @@ struct Elf_Rel_Impl<target_endianness, false, isRela>
   }
 };
 
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Ehdr_Impl {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, is64Bits)
   unsigned char e_ident[ELF::EI_NIDENT]; // ELF Identification bytes
   Elf_Half e_type;     // Type of file (see ET_*)
   Elf_Half e_machine;  // Required architecture for this file (see EM_*)
@@ -412,15 +440,15 @@ struct Elf_Ehdr_Impl {
    unsigned char getDataEncoding() const { return e_ident[ELF::EI_DATA]; }
 };
 
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct Elf_Phdr;
 
-template<support::endianness target_endianness>
-struct Elf_Phdr<target_endianness, false> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, false)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Phdr<target_endianness, max_alignment, false> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, false)
   Elf_Word p_type;   // Type of segment
   Elf_Off  p_offset; // FileOffset where segment is located, in bytes
-  Elf_Addr p_vaddr;  // Virtual Address of beginning of segment 
+  Elf_Addr p_vaddr;  // Virtual Address of beginning of segment
   Elf_Addr p_paddr;  // Physical address of beginning of segment (OS-specific)
   Elf_Word p_filesz; // Num. of bytes in file image of segment (may be zero)
   Elf_Word p_memsz;  // Num. of bytes in mem image of segment (may be zero)
@@ -428,35 +456,42 @@ struct Elf_Phdr<target_endianness, false> {
   Elf_Word p_align;  // Segment alignment constraint
 };
 
-template<support::endianness target_endianness>
-struct Elf_Phdr<target_endianness, true> {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, true)
+template<endianness target_endianness, std::size_t max_alignment>
+struct Elf_Phdr<target_endianness, max_alignment, true> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, true)
   Elf_Word p_type;   // Type of segment
   Elf_Word p_flags;  // Segment flags
   Elf_Off  p_offset; // FileOffset where segment is located, in bytes
-  Elf_Addr p_vaddr;  // Virtual Address of beginning of segment 
+  Elf_Addr p_vaddr;  // Virtual Address of beginning of segment
   Elf_Addr p_paddr;  // Physical address of beginning of segment (OS-specific)
   Elf_Word p_filesz; // Num. of bytes in file image of segment (may be zero)
   Elf_Word p_memsz;  // Num. of bytes in mem image of segment (may be zero)
   Elf_Word p_align;  // Segment alignment constraint
 };
 
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 class ELFObjectFile : public ObjectFile {
-  LLVM_ELF_IMPORT_TYPES(target_endianness, is64Bits)
+  LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, is64Bits)
 
-  typedef Elf_Ehdr_Impl<target_endianness, is64Bits> Elf_Ehdr;
-  typedef Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
-  typedef Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
-  typedef Elf_Dyn_Impl<target_endianness, is64Bits> Elf_Dyn;
-  typedef Elf_Rel_Impl<target_endianness, is64Bits, false> Elf_Rel;
-  typedef Elf_Rel_Impl<target_endianness, is64Bits, true> Elf_Rela;
-  typedef Elf_Verdef_Impl<target_endianness, is64Bits> Elf_Verdef;
-  typedef Elf_Verdaux_Impl<target_endianness, is64Bits> Elf_Verdaux;
-  typedef Elf_Verneed_Impl<target_endianness, is64Bits> Elf_Verneed;
-  typedef Elf_Vernaux_Impl<target_endianness, is64Bits> Elf_Vernaux;
-  typedef Elf_Versym_Impl<target_endianness, is64Bits> Elf_Versym;
-  typedef DynRefImpl<target_endianness, is64Bits> DynRef;
+  typedef Elf_Ehdr_Impl<target_endianness, max_alignment, is64Bits> Elf_Ehdr;
+  typedef Elf_Shdr_Impl<target_endianness, max_alignment, is64Bits> Elf_Shdr;
+  typedef Elf_Sym_Impl<target_endianness, max_alignment, is64Bits> Elf_Sym;
+  typedef Elf_Dyn_Impl<target_endianness, max_alignment, is64Bits> Elf_Dyn;
+  typedef
+    Elf_Rel_Impl<target_endianness, max_alignment, is64Bits, false> Elf_Rel;
+  typedef
+    Elf_Rel_Impl<target_endianness, max_alignment, is64Bits, true> Elf_Rela;
+  typedef
+    Elf_Verdef_Impl<target_endianness, max_alignment, is64Bits> Elf_Verdef;
+  typedef
+    Elf_Verdaux_Impl<target_endianness, max_alignment, is64Bits> Elf_Verdaux;
+  typedef
+    Elf_Verneed_Impl<target_endianness, max_alignment, is64Bits> Elf_Verneed;
+  typedef
+    Elf_Vernaux_Impl<target_endianness, max_alignment, is64Bits> Elf_Vernaux;
+  typedef
+    Elf_Versym_Impl<target_endianness, max_alignment, is64Bits> Elf_Versym;
+  typedef DynRefImpl<target_endianness, max_alignment, is64Bits> DynRef;
   typedef content_iterator<DynRef> dyn_iterator;
 
 protected:
@@ -623,7 +658,7 @@ protected:
                                       section_iterator &Res) const;
   virtual error_code getSymbolValue(DataRefImpl Symb, uint64_t &Val) const;
 
-  friend class DynRefImpl<target_endianness, is64Bits>;
+  friend class DynRefImpl<target_endianness, max_alignment, is64Bits>;
   virtual error_code getDynNext(DataRefImpl DynData, DynRef &Result) const;
 
   virtual error_code getLibraryNext(DataRefImpl Data, LibraryRef &Result) const;
@@ -729,8 +764,8 @@ public:
 
 // Iterate through the version definitions, and place each Elf_Verdef
 // in the VersionMap according to its index.
-template<support::endianness target_endianness, bool is64Bits>
-void ELFObjectFile<target_endianness, is64Bits>::
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+void ELFObjectFile<target_endianness, max_alignment, is64Bits>::
                   LoadVersionDefs(const Elf_Shdr *sec) const {
   unsigned vd_size = sec->sh_size; // Size of section in bytes
   unsigned vd_count = sec->sh_info; // Number of Verdef entries
@@ -755,8 +790,8 @@ void ELFObjectFile<target_endianness, is64Bits>::
 
 // Iterate through the versions needed section, and place each Elf_Vernaux
 // in the VersionMap according to its index.
-template<support::endianness target_endianness, bool is64Bits>
-void ELFObjectFile<target_endianness, is64Bits>::
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+void ELFObjectFile<target_endianness, max_alignment, is64Bits>::
                   LoadVersionNeeds(const Elf_Shdr *sec) const {
   unsigned vn_size = sec->sh_size; // Size of section in bytes
   unsigned vn_count = sec->sh_info; // Number of Verneed entries
@@ -788,8 +823,9 @@ void ELFObjectFile<target_endianness, is64Bits>::
   }
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-void ELFObjectFile<target_endianness, is64Bits>::LoadVersionMap() const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+void ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                  ::LoadVersionMap() const {
   // If there is no dynamic symtab or version table, there is nothing to do.
   if (SymbolTableSections[0] == NULL || dot_gnu_version_sec == NULL)
     return;
@@ -810,8 +846,8 @@ void ELFObjectFile<target_endianness, is64Bits>::LoadVersionMap() const {
     LoadVersionNeeds(dot_gnu_version_r_sec);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-void ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+void ELFObjectFile<target_endianness, max_alignment, is64Bits>
                   ::validateSymbol(DataRefImpl Symb) const {
   const Elf_Sym  *symb = getSymbol(Symb);
   const Elf_Shdr *SymbolTableSection = SymbolTableSections[Symb.d.b];
@@ -829,8 +865,8 @@ void ELFObjectFile<target_endianness, is64Bits>
     report_fatal_error("Symb must point to a valid symbol!");
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolNext(DataRefImpl Symb,
                                         SymbolRef &Result) const {
   validateSymbol(Symb);
@@ -857,8 +893,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolName(DataRefImpl Symb,
                                         StringRef &Result) const {
   validateSymbol(Symb);
@@ -866,8 +902,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return getSymbolName(SymbolTableSections[Symb.d.b], symb, Result);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolVersion(SymbolRef SymRef,
                                            StringRef &Version,
                                            bool &IsDefault) const {
@@ -878,17 +914,18 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                           Version, IsDefault);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-ELF::Elf64_Word ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+ELF::Elf64_Word ELFObjectFile<target_endianness, max_alignment, is64Bits>
                       ::getSymbolTableIndex(const Elf_Sym *symb) const {
   if (symb->st_shndx == ELF::SHN_XINDEX)
     return ExtendedSymbolTable.lookup(symb);
   return symb->st_shndx;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
-ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Shdr *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::getSection(const Elf_Sym *symb) const {
   if (symb->st_shndx == ELF::SHN_XINDEX)
     return getSection(ExtendedSymbolTable.lookup(symb));
@@ -897,24 +934,27 @@ ELFObjectFile<target_endianness, is64Bits>
   return getSection(symb->st_shndx);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
-ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Shdr *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::getElfSection(section_iterator &It) const {
   llvm::object::DataRefImpl ShdrRef = It->getRawDataRefImpl();
   return reinterpret_cast<const Elf_Shdr *>(ShdrRef.p);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Sym *
-ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Sym *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::getElfSymbol(symbol_iterator &It) const {
   return getSymbol(It->getRawDataRefImpl());
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Sym *
-ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Sym *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::getElfSymbol(uint32_t index) const {
   DataRefImpl SymbolData;
   SymbolData.d.a = index;
@@ -922,8 +962,8 @@ ELFObjectFile<target_endianness, is64Bits>
   return getSymbol(SymbolData);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolFileOffset(DataRefImpl Symb,
                                           uint64_t &Result) const {
   validateSymbol(Symb);
@@ -957,8 +997,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   }
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolAddress(DataRefImpl Symb,
                                            uint64_t &Result) const {
   validateSymbol(Symb);
@@ -1001,8 +1041,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   }
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolSize(DataRefImpl Symb,
                                         uint64_t &Result) const {
   validateSymbol(Symb);
@@ -1013,8 +1053,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolNMTypeChar(DataRefImpl Symb,
                                               char &Result) const {
   validateSymbol(Symb);
@@ -1078,8 +1118,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolType(DataRefImpl Symb,
                                         SymbolRef::Type &Result) const {
   validateSymbol(Symb);
@@ -1110,8 +1150,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolFlags(DataRefImpl Symb,
                                          uint32_t &Result) const {
   validateSymbol(Symb);
@@ -1145,8 +1185,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolSection(DataRefImpl Symb,
                                            section_iterator &Res) const {
   validateSymbol(Symb);
@@ -1162,8 +1202,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolValue(DataRefImpl Symb,
                                          uint64_t &Val) const {
   validateSymbol(Symb);
@@ -1172,8 +1212,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSectionNext(DataRefImpl Sec, SectionRef &Result) const {
   const uint8_t *sec = reinterpret_cast<const uint8_t *>(Sec.p);
   sec += Header->e_shentsize;
@@ -1182,8 +1222,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSectionName(DataRefImpl Sec,
                                          StringRef &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1191,8 +1231,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSectionAddress(DataRefImpl Sec,
                                             uint64_t &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1200,8 +1240,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSectionSize(DataRefImpl Sec,
                                          uint64_t &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1209,8 +1249,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSectionContents(DataRefImpl Sec,
                                              StringRef &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1219,8 +1259,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSectionContents(const Elf_Shdr *Sec,
                                              StringRef &Result) const {
   const char *start = (const char*)base() + Sec->sh_offset;
@@ -1228,8 +1268,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSectionAlignment(DataRefImpl Sec,
                                               uint64_t &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1237,8 +1277,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::isSectionText(DataRefImpl Sec,
                                         bool &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1249,8 +1289,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::isSectionData(DataRefImpl Sec,
                                         bool &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1262,8 +1302,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::isSectionBSS(DataRefImpl Sec,
                                        bool &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1275,8 +1315,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::isSectionRequiredForExecution(DataRefImpl Sec,
                                                         bool &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1287,8 +1327,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::isSectionVirtual(DataRefImpl Sec,
                                            bool &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1299,8 +1339,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::isSectionZeroInit(DataRefImpl Sec,
                                             bool &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1310,8 +1350,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                        ::isSectionReadOnlyData(DataRefImpl Sec,
                                                bool &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1322,8 +1362,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                           ::sectionContainsSymbol(DataRefImpl Sec,
                                                   DataRefImpl Symb,
                                                   bool &Result) const {
@@ -1332,8 +1372,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-relocation_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+relocation_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                                  ::getSectionRelBegin(DataRefImpl Sec) const {
   DataRefImpl RelData;
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1346,8 +1386,8 @@ relocation_iterator ELFObjectFile<target_endianness, is64Bits>
   return relocation_iterator(RelocationRef(RelData, this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-relocation_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+relocation_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                                  ::getSectionRelEnd(DataRefImpl Sec) const {
   DataRefImpl RelData;
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
@@ -1364,8 +1404,8 @@ relocation_iterator ELFObjectFile<target_endianness, is64Bits>
 }
 
 // Relocations
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getRelocationNext(DataRefImpl Rel,
                                             RelocationRef &Result) const {
   ++Rel.w.c;
@@ -1393,8 +1433,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getRelocationSymbol(DataRefImpl Rel,
                                               SymbolRef &Result) const {
   uint32_t symbolIdx;
@@ -1421,8 +1461,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getRelocationAddress(DataRefImpl Rel,
                                                uint64_t &Result) const {
   uint64_t offset;
@@ -1444,8 +1484,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getRelocationOffset(DataRefImpl Rel,
                                               uint64_t &Result) const {
   uint64_t offset;
@@ -1467,8 +1507,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getRelocationType(DataRefImpl Rel,
                                             uint64_t &Result) const {
   const Elf_Shdr *sec = getSection(Rel.w.b);
@@ -1490,8 +1530,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
 #define LLVM_ELF_SWITCH_RELOC_TYPE_NAME(enum) \
   case ELF::enum: res = #enum; break;
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getRelocationTypeName(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
   const Elf_Shdr *sec = getSection(Rel.w.b);
@@ -1832,8 +1872,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
 
 #undef LLVM_ELF_SWITCH_RELOC_TYPE_NAME
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getRelocationAdditionalInfo(DataRefImpl Rel,
                                                       int64_t &Result) const {
   const Elf_Shdr *sec = getSection(Rel.w.b);
@@ -1851,8 +1891,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   }
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getRelocationValueString(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
   const Elf_Shdr *sec = getSection(Rel.w.b);
@@ -1922,8 +1962,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
 }
 
 // Verify that the last byte in the string table in a null.
-template<support::endianness target_endianness, bool is64Bits>
-void ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+void ELFObjectFile<target_endianness, max_alignment, is64Bits>
                   ::VerifyStrTab(const Elf_Shdr *sh) const {
   const char *strtab = (const char*)base() + sh->sh_offset;
   if (strtab[sh->sh_size - 1] != 0)
@@ -1931,9 +1971,9 @@ void ELFObjectFile<target_endianness, is64Bits>
     report_fatal_error("String table must end with a null terminator!");
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
-                                                          , error_code &ec)
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
   : ObjectFile(getELFType(target_endianness == support::little, is64Bits),
                Object, ec)
   , isDyldELFObject(false)
@@ -2093,8 +2133,8 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
 }
 
 // Get the symbol table index in the symtab section given a symbol
-template<support::endianness target_endianness, bool is64Bits>
-uint64_t ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+uint64_t ELFObjectFile<target_endianness, max_alignment, is64Bits>
                       ::getSymbolIndex(const Elf_Sym *Sym) const {
   assert(SymbolTableSections.size() == 1 && "Only one symbol table supported!");
   const Elf_Shdr *SymTab = *SymbolTableSections.begin();
@@ -2107,8 +2147,8 @@ uint64_t ELFObjectFile<target_endianness, is64Bits>
   return SymOffset / SymTab->sh_entsize;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-symbol_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+symbol_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::begin_symbols() const {
   DataRefImpl SymbolData;
   if (SymbolTableSections.size() <= 1) {
@@ -2121,8 +2161,8 @@ symbol_iterator ELFObjectFile<target_endianness, is64Bits>
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-symbol_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+symbol_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::end_symbols() const {
   DataRefImpl SymbolData;
   SymbolData.d.a = std::numeric_limits<uint32_t>::max();
@@ -2130,8 +2170,8 @@ symbol_iterator ELFObjectFile<target_endianness, is64Bits>
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-symbol_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+symbol_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::begin_dynamic_symbols() const {
   DataRefImpl SymbolData;
   if (SymbolTableSections[0] == NULL) {
@@ -2144,8 +2184,8 @@ symbol_iterator ELFObjectFile<target_endianness, is64Bits>
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-symbol_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+symbol_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::end_dynamic_symbols() const {
   DataRefImpl SymbolData;
   SymbolData.d.a = std::numeric_limits<uint32_t>::max();
@@ -2153,16 +2193,16 @@ symbol_iterator ELFObjectFile<target_endianness, is64Bits>
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-section_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+section_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                               ::begin_sections() const {
   DataRefImpl ret;
   ret.p = reinterpret_cast<intptr_t>(base() + Header->e_shoff);
   return section_iterator(SectionRef(ret, this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-section_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+section_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                               ::end_sections() const {
   DataRefImpl ret;
   ret.p = reinterpret_cast<intptr_t>(base()
@@ -2171,9 +2211,10 @@ section_iterator ELFObjectFile<target_endianness, is64Bits>
   return section_iterator(SectionRef(ret, this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-typename ELFObjectFile<target_endianness, is64Bits>::dyn_iterator
-ELFObjectFile<target_endianness, is64Bits>::begin_dynamic_table() const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+typename ELFObjectFile<target_endianness, max_alignment, is64Bits>::dyn_iterator
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::begin_dynamic_table() const {
   DataRefImpl DynData;
   if (dot_dynamic_sec == NULL || dot_dynamic_sec->sh_size == 0) {
     DynData.d.a = std::numeric_limits<uint32_t>::max();
@@ -2183,17 +2224,17 @@ ELFObjectFile<target_endianness, is64Bits>::begin_dynamic_table() const {
   return dyn_iterator(DynRef(DynData, this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-typename ELFObjectFile<target_endianness, is64Bits>::dyn_iterator
-ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+typename ELFObjectFile<target_endianness, max_alignment, is64Bits>::dyn_iterator
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
                           ::end_dynamic_table() const {
   DataRefImpl DynData;
   DynData.d.a = std::numeric_limits<uint32_t>::max();
   return dyn_iterator(DynRef(DynData, this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getDynNext(DataRefImpl DynData,
                                      DynRef &Result) const {
   ++DynData.d.a;
@@ -2208,9 +2249,9 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 StringRef
-ELFObjectFile<target_endianness, is64Bits>::getLoadName() const {
+ELFObjectFile<target_endianness, max_alignment, is64Bits>::getLoadName() const {
   if (!dt_soname) {
     // Find the DT_SONAME entry
     dyn_iterator it = begin_dynamic_table();
@@ -2234,8 +2275,8 @@ ELFObjectFile<target_endianness, is64Bits>::getLoadName() const {
   return dt_soname;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-library_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+library_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::begin_libraries_needed() const {
   // Find the first DT_NEEDED entry
   dyn_iterator i = begin_dynamic_table();
@@ -2252,8 +2293,8 @@ library_iterator ELFObjectFile<target_endianness, is64Bits>
   return library_iterator(LibraryRef(i->getRawDataRefImpl(), this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getLibraryNext(DataRefImpl Data,
                                          LibraryRef &Result) const {
   // Use the same DataRefImpl format as DynRef.
@@ -2281,8 +2322,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
          ::getLibraryPath(DataRefImpl Data, StringRef &Res) const {
   dyn_iterator i = dyn_iterator(DynRef(Data, this));
   if (i == end_dynamic_table())
@@ -2302,21 +2343,22 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-library_iterator ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+library_iterator ELFObjectFile<target_endianness, max_alignment, is64Bits>
                              ::end_libraries_needed() const {
   dyn_iterator e = end_dynamic_table();
   // Use the same DataRefImpl format as DynRef.
   return library_iterator(LibraryRef(e->getRawDataRefImpl(), this));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-uint8_t ELFObjectFile<target_endianness, is64Bits>::getBytesInAddress() const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+uint8_t ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                     ::getBytesInAddress() const {
   return is64Bits ? 8 : 4;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-StringRef ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+StringRef ELFObjectFile<target_endianness, max_alignment, is64Bits>
                        ::getFileFormatName() const {
   switch(Header->e_ident[ELF::EI_CLASS]) {
   case ELF::ELFCLASS32:
@@ -2349,8 +2391,9 @@ StringRef ELFObjectFile<target_endianness, is64Bits>
   }
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-unsigned ELFObjectFile<target_endianness, is64Bits>::getArch() const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+unsigned ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                      ::getArch() const {
   switch(Header->e_machine) {
   case ELF::EM_386:
     return Triple::x86;
@@ -2370,8 +2413,9 @@ unsigned ELFObjectFile<target_endianness, is64Bits>::getArch() const {
   }
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-uint64_t ELFObjectFile<target_endianness, is64Bits>::getNumSections() const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+uint64_t ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                      ::getNumSections() const {
   assert(Header && "Header not initialized!");
   if (Header->e_shnum == ELF::SHN_UNDEF) {
     assert(SectionHeaderTable && "SectionHeaderTable not initialized!");
@@ -2380,9 +2424,10 @@ uint64_t ELFObjectFile<target_endianness, is64Bits>::getNumSections() const {
   return Header->e_shnum;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 uint64_t
-ELFObjectFile<target_endianness, is64Bits>::getStringTableIndex() const {
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::getStringTableIndex() const {
   if (Header->e_shnum == ELF::SHN_UNDEF) {
     if (Header->e_shstrndx == ELF::SHN_HIRESERVE)
       return SectionHeaderTable->sh_link;
@@ -2392,53 +2437,62 @@ ELFObjectFile<target_endianness, is64Bits>::getStringTableIndex() const {
   return Header->e_shstrndx;
 }
 
-
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 template<typename T>
 inline const T *
-ELFObjectFile<target_endianness, is64Bits>::getEntry(uint16_t Section,
-                                                     uint32_t Entry) const {
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::getEntry(uint16_t Section, uint32_t Entry) const {
   return getEntry<T>(getSection(Section), Entry);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 template<typename T>
 inline const T *
-ELFObjectFile<target_endianness, is64Bits>::getEntry(const Elf_Shdr * Section,
-                                                     uint32_t Entry) const {
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::getEntry(const Elf_Shdr * Section, uint32_t Entry) const {
   return reinterpret_cast<const T *>(
            base()
            + Section->sh_offset
            + (Entry * Section->sh_entsize));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Sym *
-ELFObjectFile<target_endianness, is64Bits>::getSymbol(DataRefImpl Symb) const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Sym *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::getSymbol(DataRefImpl Symb) const {
   return getEntry<Elf_Sym>(SymbolTableSections[Symb.d.b], Symb.d.a);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Dyn *
-ELFObjectFile<target_endianness, is64Bits>::getDyn(DataRefImpl DynData) const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Dyn *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::getDyn(DataRefImpl DynData) const {
   return getEntry<Elf_Dyn>(dot_dynamic_sec, DynData.d.a);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Rel *
-ELFObjectFile<target_endianness, is64Bits>::getRel(DataRefImpl Rel) const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Rel *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::getRel(DataRefImpl Rel) const {
   return getEntry<Elf_Rel>(Rel.w.b, Rel.w.c);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Rela *
-ELFObjectFile<target_endianness, is64Bits>::getRela(DataRefImpl Rela) const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Rela *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::getRela(DataRefImpl Rela) const {
   return getEntry<Elf_Rela>(Rela.w.b, Rela.w.c);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
-ELFObjectFile<target_endianness, is64Bits>::getSection(DataRefImpl Symb) const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Shdr *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::getSection(DataRefImpl Symb) const {
   const Elf_Shdr *sec = getSection(Symb.d.b);
   if (sec->sh_type != ELF::SHT_SYMTAB || sec->sh_type != ELF::SHT_DYNSYM)
     // FIXME: Proper error handling.
@@ -2446,9 +2500,11 @@ ELFObjectFile<target_endianness, is64Bits>::getSection(DataRefImpl Symb) const {
   return sec;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Shdr *
-ELFObjectFile<target_endianness, is64Bits>::getSection(uint32_t index) const {
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const typename ELFObjectFile<target_endianness, max_alignment, is64Bits>
+                            ::Elf_Shdr *
+ELFObjectFile<target_endianness, max_alignment, is64Bits>
+             ::getSection(uint32_t index) const {
   if (index == 0)
     return 0;
   if (!SectionHeaderTable || index >= getNumSections())
@@ -2460,15 +2516,15 @@ ELFObjectFile<target_endianness, is64Bits>::getSection(uint32_t index) const {
          + (index * Header->e_shentsize));
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const char *ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const char *ELFObjectFile<target_endianness, max_alignment, is64Bits>
                          ::getString(uint32_t section,
                                      ELF::Elf32_Word offset) const {
   return getString(getSection(section), offset);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-const char *ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+const char *ELFObjectFile<target_endianness, max_alignment, is64Bits>
                          ::getString(const Elf_Shdr *section,
                                      ELF::Elf32_Word offset) const {
   assert(section && section->sh_type == ELF::SHT_STRTAB && "Invalid section!");
@@ -2478,8 +2534,8 @@ const char *ELFObjectFile<target_endianness, is64Bits>
   return (const char *)base() + section->sh_offset + offset;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolName(const Elf_Shdr *section,
                                         const Elf_Sym *symb,
                                         StringRef &Result) const {
@@ -2502,16 +2558,16 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSectionName(const Elf_Shdr *section,
                                         StringRef &Result) const {
   Result = StringRef(getString(dot_shstrtab_sec, section->sh_name));
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getSymbolVersion(const Elf_Shdr *section,
                                            const Elf_Sym *symb,
                                            StringRef &Version,
@@ -2593,50 +2649,50 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-inline DynRefImpl<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+inline DynRefImpl<target_endianness, max_alignment, is64Bits>
                  ::DynRefImpl(DataRefImpl DynP, const OwningType *Owner)
   : DynPimpl(DynP)
   , OwningObject(Owner) {}
 
-template<support::endianness target_endianness, bool is64Bits>
-inline bool DynRefImpl<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+inline bool DynRefImpl<target_endianness, max_alignment, is64Bits>
                       ::operator==(const DynRefImpl &Other) const {
   return DynPimpl == Other.DynPimpl;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-inline bool DynRefImpl<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+inline bool DynRefImpl<target_endianness, max_alignment, is64Bits>
                       ::operator <(const DynRefImpl &Other) const {
   return DynPimpl < Other.DynPimpl;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-inline error_code DynRefImpl<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+inline error_code DynRefImpl<target_endianness, max_alignment, is64Bits>
                             ::getNext(DynRefImpl &Result) const {
   return OwningObject->getDynNext(DynPimpl, Result);
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-inline int64_t DynRefImpl<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+inline int64_t DynRefImpl<target_endianness, max_alignment, is64Bits>
                             ::getTag() const {
   return OwningObject->getDyn(DynPimpl)->d_tag;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-inline uint64_t DynRefImpl<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+inline uint64_t DynRefImpl<target_endianness, max_alignment, is64Bits>
                             ::getVal() const {
   return OwningObject->getDyn(DynPimpl)->d_un.d_val;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-inline uint64_t DynRefImpl<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+inline uint64_t DynRefImpl<target_endianness, max_alignment, is64Bits>
                             ::getPtr() const {
   return OwningObject->getDyn(DynPimpl)->d_un.d_ptr;
 }
 
-template<support::endianness target_endianness, bool is64Bits>
-inline DataRefImpl DynRefImpl<target_endianness, is64Bits>
+template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
+inline DataRefImpl DynRefImpl<target_endianness, max_alignment, is64Bits>
                              ::getRawDataRefImpl() const {
   return DynPimpl;
 }
@@ -2648,23 +2704,23 @@ static inline error_code GetELFSymbolVersion(const ObjectFile *Obj,
                                              StringRef &Version,
                                              bool &IsDefault) {
   // Little-endian 32-bit
-  if (const ELFObjectFile<support::little, false> *ELFObj =
-          dyn_cast<ELFObjectFile<support::little, false> >(Obj))
+  if (const ELFObjectFile<support::little, 4, false> *ELFObj =
+          dyn_cast<ELFObjectFile<support::little, 4, false> >(Obj))
     return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
 
   // Big-endian 32-bit
-  if (const ELFObjectFile<support::big, false> *ELFObj =
-          dyn_cast<ELFObjectFile<support::big, false> >(Obj))
+  if (const ELFObjectFile<support::big, 4, false> *ELFObj =
+          dyn_cast<ELFObjectFile<support::big, 4, false> >(Obj))
     return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
 
   // Little-endian 64-bit
-  if (const ELFObjectFile<support::little, true> *ELFObj =
-          dyn_cast<ELFObjectFile<support::little, true> >(Obj))
+  if (const ELFObjectFile<support::little, 8, true> *ELFObj =
+          dyn_cast<ELFObjectFile<support::little, 8, true> >(Obj))
     return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
 
   // Big-endian 64-bit
-  if (const ELFObjectFile<support::big, true> *ELFObj =
-          dyn_cast<ELFObjectFile<support::big, true> >(Obj))
+  if (const ELFObjectFile<support::big, 8, true> *ELFObj =
+          dyn_cast<ELFObjectFile<support::big, 8, true> >(Obj))
     return ELFObj->getSymbolVersion(Sym, Version, IsDefault);
 
   llvm_unreachable("Object passed to GetELFSymbolVersion() is not ELF");
