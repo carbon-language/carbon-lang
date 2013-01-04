@@ -35,6 +35,27 @@ will only vectorize loops that do not require a major increase in code size.
 
 We plan to enable the Loop Vectorizer by default as part of the LLVM 3.3 release.
 
+Command line flags
+^^^^^^^^^^^^^^^^^^
+
+The loop vectorizer uses a cost model to decide on the optimal vectorization factor
+and unroll factor. However, users of the vectorizer can force the vectorizer to use
+specific values. Both 'clang' and 'opt' support the flags below.
+
+Users can control the vectorization SIMD width using the command line flag "-force-vector-width".
+
+.. code-block:: console
+
+  $ clang  -mllvm -force-vector-width=8 ...
+  $ opt -loop-vectorize -force-vector-width=8 ...
+
+Users can control the unroll factor using the command line flag "-force-vector-unroll"
+
+.. code-block:: console
+
+  $ clang  -mllvm -force-vector-unroll=2 ...
+  $ opt -loop-vectorize -force-vector-unroll=2 ...
+
 Features
 --------
 
@@ -226,13 +247,8 @@ to be used simultaneously.
     return sum;
   }
 
-At the moment the unrolling feature is not enabled by default and needs to be enabled
-in opt or clang using the following flag:
-
-.. code-block:: console
-
-  -force-vector-unroll=2 
-
+The Loop Vectorizer uses a cost model to decide when it is profitable to unroll loops.
+The decision to unroll the loop depends on the register pressure and the generated code size. 
 
 Performance
 -----------
