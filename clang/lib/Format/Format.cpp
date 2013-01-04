@@ -91,16 +91,22 @@ class UnwrappedLineFormatter {
 public:
   UnwrappedLineFormatter(const FormatStyle &Style, SourceManager &SourceMgr,
                          const UnwrappedLine &Line,
+                         unsigned PreviousEndOfLineColumn,
                          const std::vector<TokenAnnotation> &Annotations,
                          tooling::Replacements &Replaces, bool StructuralError)
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
+        PreviousEndOfLineColumn(PreviousEndOfLineColumn),
         Annotations(Annotations), Replaces(Replaces),
         StructuralError(StructuralError) {
     Parameters.PenaltyIndentLevel = 15;
     Parameters.PenaltyLevelDecrease = 10;
   }
 
-  void format() {
+  /// \brief Formats an \c UnwrappedLine.
+  ///
+  /// \returns The column after the last token in the last line of the
+  /// \c UnwrappedLine.
+  unsigned format() {
     // Format first token and initialize indent.
     unsigned Indent = formatFirstToken();
 
@@ -146,6 +152,7 @@ public:
         addTokenToState(Break < NoBreak, false, State);
       }
     }
+    return State.Column;
   }
 
 private:
@@ -487,14 +494,14 @@ private:
     if (!Line.InPPDirective || Token.HasUnescapedNewline)
       replaceWhitespace(Token, Newlines, Indent);
     else
-      // FIXME: Figure out how to get the previous end-of-line column.
-      replacePPWhitespace(Token, Newlines, Indent, 0);
+      replacePPWhitespace(Token, Newlines, Indent, PreviousEndOfLineColumn);
     return Indent;
   }
 
   FormatStyle Style;
   SourceManager &SourceMgr;
   const UnwrappedLine &Line;
+  const unsigned PreviousEndOfLineColumn;
   const std::vector<TokenAnnotation> &Annotations;
   tooling::Replacements &Replaces;
   bool StructuralError;
@@ -1024,11 +1031,11 @@ public:
 
     FormatTok = FormatToken();
     Lex.LexFromRawLexer(FormatTok.Tok);
+    StringRef Text = tokenText(FormatTok.Tok);
     FormatTok.WhiteSpaceStart = FormatTok.Tok.getLocation();
 
     // Consume and record whitespace until we find a significant token.
     while (FormatTok.Tok.is(tok::unknown)) {
-      StringRef Text = tokenText(FormatTok.Tok);
       FormatTok.NewlinesBefore += Text.count('\n');
       FormatTok.HasUnescapedNewline =
           Text.count("\\\n") != FormatTok.NewlinesBefore;
@@ -1037,10 +1044,22 @@ public:
       if (FormatTok.Tok.is(tok::eof))
         return FormatTok;
       Lex.LexFromRawLexer(FormatTok.Tok);
+      Text = tokenText(FormatTok.Tok);
+    }
+    // In case the token starts with escaped newlines, we want to
+    // take them into account as whitespace - this pattern is quite frequent
+    // in macro definitions.
+    // FIXME: What do we want to do with other escaped spaces, and escaped
+    // spaces or newlines in the middle of tokens?
+    // FIXME: Add a more explicit test.
+    unsigned i = 0;
+    while (i + 1 < Text.size() && Text[i] == '\\' && Text[i+1] == '\n') {
+      FormatTok.WhiteSpaceLength += 2;
+      i += 2;
     }
 
     if (FormatTok.Tok.is(tok::raw_identifier)) {
-      IdentifierInfo &Info = IdentTable.get(tokenText(FormatTok.Tok));
+      IdentifierInfo &Info = IdentTable.get(Text);
       FormatTok.Tok.setIdentifierInfo(&Info);
       FormatTok.Tok.setKind(Info.getTokenID());
     }
@@ -1082,10 +1101,12 @@ public:
     LexerBasedFormatTokenSource Tokens(Lex, SourceMgr);
     UnwrappedLineParser Parser(Style, Tokens, *this);
     StructuralError = Parser.parse();
+    unsigned PreviousEndOfLineColumn = 0;
     for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),
                                               E = UnwrappedLines.end();
          I != E; ++I)
-      formatUnwrappedLine(*I);
+      PreviousEndOfLineColumn =
+          formatUnwrappedLine(*I, PreviousEndOfLineColumn);
     return Replaces;
   }
 
@@ -1094,9 +1115,10 @@ private:
     UnwrappedLines.push_back(TheLine);
   }
 
-  void formatUnwrappedLine(const UnwrappedLine &TheLine) {
-    if (TheLine.Tokens.size() == 0)
-      return;
+  unsigned formatUnwrappedLine(const UnwrappedLine &TheLine,
+                               unsigned PreviousEndOfLineColumn) {
+    if (TheLine.Tokens.empty())
+      return 0;  // FIXME: Find out how this can ever happen.
 
     CharSourceRange LineRange =
         CharSourceRange::getTokenRange(TheLine.Tokens.front().Tok.getLocation(),
@@ -1111,13 +1133,20 @@ private:
 
       TokenAnnotator Annotator(TheLine, Style, SourceMgr);
       if (!Annotator.annotate())
-        return;
-      UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine,
-                                       Annotator.getAnnotations(), Replaces,
-                                       StructuralError);
-      Formatter.format();
-      return;
+        break;
+      UnwrappedLineFormatter Formatter(
+          Style, SourceMgr, TheLine, PreviousEndOfLineColumn,
+          Annotator.getAnnotations(), Replaces, StructuralError);
+      return Formatter.format();
     }
+    // If we did not reformat this unwrapped line, the column at the end of the
+    // last token is unchanged - thus, we can calculate the end of the last
+    // token, and return the result.
+    const FormatToken &Token = TheLine.Tokens.back();
+    return SourceMgr.getSpellingColumnNumber(Token.Tok.getLocation()) +
+           Lex.MeasureTokenLength(Token.Tok.getLocation(), SourceMgr,
+                                  Lex.getLangOpts()) -
+           1;
   }
 
   FormatStyle Style;

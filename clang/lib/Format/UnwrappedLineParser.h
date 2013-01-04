@@ -101,9 +101,12 @@ public:
   bool parse();
 
 private:
+  bool parseFile();
   bool parseLevel();
   bool parseBlock(unsigned AddLevels = 1);
   void parsePPDirective();
+  void parsePPDefine();
+  void parsePPUnknown();
   void parseComments();
   void parseStatement();
   void parseParens();
@@ -119,12 +122,13 @@ private:
   void addUnwrappedLine();
   bool eof() const;
   void nextToken();
+  void readToken();
 
   UnwrappedLine Line;
   FormatToken FormatTok;
 
   const FormatStyle &Style;
-  FormatTokenSource &Tokens;
+  FormatTokenSource *Tokens;
   UnwrappedLineConsumer &Callback;
 };
 

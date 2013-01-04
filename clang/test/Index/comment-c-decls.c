@@ -95,7 +95,7 @@ enum e {
  *\brief block declaration
 */
 int (^Block) (int i, int j);
-// CHECK: <Declaration>int (^Block)(int, int)</Declaration>
+// CHECK: <Declaration>int ( ^ Block) (int, int)</Declaration>
 
 /**
  *\brief block declaration

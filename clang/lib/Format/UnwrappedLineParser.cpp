@@ -22,24 +22,77 @@
 namespace clang {
 namespace format {
 
+class ScopedMacroState : public FormatTokenSource {
+public:
+  ScopedMacroState(UnwrappedLine &Line, FormatTokenSource *&TokenSource,
+                   FormatToken &ResetToken)
+      : Line(Line), TokenSource(TokenSource), ResetToken(ResetToken),
+        PreviousTokenSource(TokenSource) {
+    TokenSource = this;
+    // FIXME: Back up all other state (errors, line indent, etc) and reset after
+    // parsing the macro.
+    Line.InPPDirective = true;
+  }
+
+  ~ScopedMacroState() {
+    TokenSource = PreviousTokenSource;
+    ResetToken = Token;
+    Line.InPPDirective = false;
+    Line.Level = 0;  // FIXME: Test + this is obviously incorrect
+  }
+
+  virtual FormatToken getNextToken() {
+    // FIXME: Write test that breaks due to a missing
+    // if (eof()) return createEOF();
+    Token = PreviousTokenSource->getNextToken();
+    if (eof())
+      return createEOF();
+    return Token;
+  }
+
+private:
+  bool eof() {
+    return Token.NewlinesBefore > 0 && Token.HasUnescapedNewline;
+  }
+
+  FormatToken createEOF() {
+    FormatToken FormatTok;
+    FormatTok.Tok.startToken();
+    FormatTok.Tok.setKind(tok::eof);
+    return FormatTok;
+  }
+
+  UnwrappedLine &Line;
+  FormatTokenSource *&TokenSource;
+  FormatToken &ResetToken;
+
+  FormatTokenSource *PreviousTokenSource;
+
+  FormatToken Token;
+};
+
 UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          FormatTokenSource &Tokens,
                                          UnwrappedLineConsumer &Callback)
-    : Style(Style), Tokens(Tokens), Callback(Callback) {
+    : Style(Style), Tokens(&Tokens), Callback(Callback) {
 }
 
 bool UnwrappedLineParser::parse() {
-  FormatTok = Tokens.getNextToken();
-  return parseLevel();
+  readToken();
+  return parseFile();
+}
+
+bool UnwrappedLineParser::parseFile() {
+  bool Error = parseLevel();
+  // Make sure to format the remaining tokens.
+  addUnwrappedLine();
+  return Error;
 }
 
 bool UnwrappedLineParser::parseLevel() {
   bool Error = false;
   do {
     switch (FormatTok.Tok.getKind()) {
-    case tok::hash:
-      parsePPDirective();
-      break;
     case tok::comment:
       nextToken();
       addUnwrappedLine();
@@ -81,24 +134,45 @@ bool UnwrappedLineParser::parseBlock(unsigned AddLevels) {
 
 void UnwrappedLineParser::parsePPDirective() {
   assert(FormatTok.Tok.is(tok::hash) && "'#' expected");
+  ScopedMacroState MacroState(Line, Tokens, FormatTok);
   nextToken();
 
-  Line.InPPDirective = true;
   if (FormatTok.Tok.getIdentifierInfo() == NULL) {
     addUnwrappedLine();
-    Line.InPPDirective = false;
     return;
   }
 
+  switch (FormatTok.Tok.getIdentifierInfo()->getPPKeywordID()) {
+  case tok::pp_define:
+    parsePPDefine();
+    break;
+  default:
+    parsePPUnknown();
+    break;
+  }
+}
+
+void UnwrappedLineParser::parsePPDefine() {
+  nextToken();
+
+  if (FormatTok.Tok.getKind() != tok::identifier) {
+    parsePPUnknown();
+    return;
+  }
+  nextToken();
+  if (FormatTok.Tok.getKind() == tok::l_paren) {
+    parseParens();
+  }
+  addUnwrappedLine();
+  Line.Level = 1;
+  parseFile();
+}
+
+void UnwrappedLineParser::parsePPUnknown() {
   do {
-    if (FormatTok.NewlinesBefore > 0 &&
-        FormatTok.HasUnescapedNewline) {
-      break;
-    }
     nextToken();
   } while (!eof());
   addUnwrappedLine();
-  Line.InPPDirective = false;
 }
 
 void UnwrappedLineParser::parseComments() {
@@ -390,7 +464,18 @@ void UnwrappedLineParser::nextToken() {
   if (eof())
     return;
   Line.Tokens.push_back(FormatTok);
-  FormatTok = Tokens.getNextToken();
+  readToken();
+}
+
+void UnwrappedLineParser::readToken() {
+  FormatTok = Tokens->getNextToken();
+  while (FormatTok.Tok.is(tok::hash)) {
+    // FIXME: This is incorrect - the correct way is to create a
+    // data structure that will construct the parts around the preprocessor
+    // directive as a structured \c UnwrappedLine.
+    addUnwrappedLine();
+    parsePPDirective();
+  }
 }
 
 }  // end namespace format

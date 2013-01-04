@@ -50,8 +50,8 @@ protected:
         if (JustReplacedNewline)
           MessedUp[i - 1] = '\n';
         InComment = true;
-      } else if (MessedUp[i] != ' ') {
-        JustReplacedNewline = false;
+      } else if (MessedUp[i] == '\\' && MessedUp[i + 1] == '\n') {
+        MessedUp[i] = ' ';
       } else if (MessedUp[i] == '\n') {
         if (InComment) {
           InComment = false;
@@ -59,6 +59,8 @@ protected:
           JustReplacedNewline = true;
           MessedUp[i] = ' ';
         }
+      } else if (MessedUp[i] != ' ') {
+        JustReplacedNewline = false;
       }
     }
     return MessedUp;
@@ -394,13 +396,17 @@ TEST_F(FormatTest, BreaksOnHashWhenDirectiveIsInvalid) {
 TEST_F(FormatTest, UnescapedEndOfLineEndsPPDirective) {
   EXPECT_EQ("#line 42 \"test\"\n",
             format("#  \\\n  line  \\\n  42  \\\n  \"test\"\n"));
-  EXPECT_EQ("#define A B\n", format("#  \\\n define  \\\n    A  \\\n    B\n"));
+  EXPECT_EQ("#define A  \\\n  B\n",
+            format("#  \\\n define  \\\n    A  \\\n       B\n",
+                   getLLVMStyleWithColumns(12)));
 }
 
 TEST_F(FormatTest, EndOfFileEndsPPDirective) {
   EXPECT_EQ("#line 42 \"test\"",
             format("#  \\\n  line  \\\n  42  \\\n  \"test\""));
-  EXPECT_EQ("#define A B", format("#  \\\n define  \\\n    A  \\\n    B"));
+  EXPECT_EQ("#define A  \\\n  B",
+            format("#  \\\n define  \\\n    A  \\\n       B",
+                   getLLVMStyleWithColumns(12)));
 }
 
 TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
@@ -413,24 +419,63 @@ TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
 }
 
 TEST_F(FormatTest, HandlePreprocessorDirectiveContext) {
-  verifyFormat(
-      "// some comment\n"
-      "\n"
-      "#include \"a.h\"\n"
-      "#define A(A,\\\n"
-      "          B)\n"
-      "#include \"b.h\"\n"
-      "\n"
-      "// some comment\n", getLLVMStyleWithColumns(13));
+  EXPECT_EQ("// some comment\n"
+            "#include \"a.h\"\n"
+            "#define A(A,\\\n"
+            "          B)\n"
+            "#include \"b.h\"\n"
+            "// some comment\n",
+            format("  // some comment\n"
+                   "  #include \"a.h\"\n"
+                   "#define A(A,\\\n"
+                   "    B)\n"
+                   "    #include \"b.h\"\n"
+                   " // some comment\n", getLLVMStyleWithColumns(13)));
 }
 
+TEST_F(FormatTest, LayoutSingleHash) {
+  EXPECT_EQ("#\na;", format("#\na;"));
+}
+
+TEST_F(FormatTest, LayoutCodeInMacroDefinitions) {
+  EXPECT_EQ("#define A    \\\n"
+            "  c;         \\\n"
+            "  e;\n"
+            "f;", format("#define A c; e;\n"
+                         "f;", getLLVMStyleWithColumns(14)));
+}
+
+TEST_F(FormatTest, LayoutRemainingTokens) {
+  EXPECT_EQ("{\n}", format("{}"));
+}
+
+TEST_F(FormatTest, LayoutSingleUnwrappedLineInMacro) {
+  EXPECT_EQ("#define A \\\n  b;",
+            format("#define A b;", 10, 2, getLLVMStyleWithColumns(11)));
+}
+
+TEST_F(FormatTest, MacroDefinitionInsideStatement) {
+  EXPECT_EQ("int x,\n#define A\ny;", format("int x,\n#define A\ny;"));
+}
+
+// FIXME: write test for unbalanced braces in macros...
+// FIXME: test { { #include "a.h" } }
+// FIXME: test # in the middle of a statement without \n before it
+
 TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
-  verifyFormat("#define ALooooooooooooooooooooooooooooooooooooooongMacro("
-               "                      \\\n"
-               "    aLoooooooooooooooooooooooongFuuuuuuuuuuuuuunctiooooooooo)\n"
-               "\n"
-               "AlooooooooooooooooooooooooooooooooooooooongCaaaaaaaaaal(\n"
-               "    aLooooooooooooooooooooooonPaaaaaaaaaaaaaaaaaaaaarmmmm);\n");
+  EXPECT_EQ(
+      "#define ALooooooooooooooooooooooooooooooooooooooongMacro("
+      "                      \\\n"
+      "    aLoooooooooooooooooooooooongFuuuuuuuuuuuuuunctiooooooooo)\n"
+      "\n"
+      "AlooooooooooooooooooooooooooooooooooooooongCaaaaaaaaaal(\n"
+      "    aLooooooooooooooooooooooonPaaaaaaaaaaaaaaaaaaaaarmmmm);\n",
+      format("  #define   ALooooooooooooooooooooooooooooooooooooooongMacro("
+             "\\\n"
+             "aLoooooooooooooooooooooooongFuuuuuuuuuuuuuunctiooooooooo)\n"
+             "  \n"
+             "   AlooooooooooooooooooooooooooooooooooooooongCaaaaaaaaaal(\n"
+             "  aLooooooooooooooooooooooonPaaaaaaaaaaaaaaaaaaaaarmmmm);\n"));
 }
 
 //===----------------------------------------------------------------------===//
@@ -863,9 +908,7 @@ TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
 
 TEST_F(FormatTest, DoesNotTouchUnwrappedLinesWithErrors) {
   verifyFormat("namespace {\n"
-               "class Foo {\n"
-               "  Foo  ( };\n"
-               "}  // comment");
+               "class Foo {  Foo  ( }; }  // comment");
 }
 
 TEST_F(FormatTest, IncorrectCodeErrorDetection) {
