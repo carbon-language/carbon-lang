@@ -813,7 +813,6 @@ void CGDebugInfo::
 CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
                     SmallVectorImpl<llvm::Value *> &elements,
                     llvm::DIType RecordTy) {
-  unsigned fieldNo = 0;
   const ASTRecordLayout &layout = CGM.getContext().getASTRecordLayout(record);
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(record);
 
@@ -851,12 +850,13 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
         QualType type = f->getType();
         llvm::DIType fieldType
           = createFieldType("this", type, 0, f->getLocation(), f->getAccess(),
-                            layout.getFieldOffset(fieldNo), VUnit, RecordTy);
+                            layout.getFieldOffset(fieldno), VUnit, RecordTy);
 
         elements.push_back(fieldType);
       }
     }
   } else {
+    unsigned fieldNo = 0;
     bool IsMsStruct = record->isMsStruct(CGM.getContext());
     const FieldDecl *LastFD = 0;
     for (RecordDecl::field_iterator I = record->field_begin(),
