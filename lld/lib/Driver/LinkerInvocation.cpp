@@ -54,7 +54,12 @@ void LinkerInvocation::operator()() {
       inputs.appendFiles(files);
     }
 
-    ResolverOptions ro;
+    struct Blah : ResolverOptions {
+      Blah()
+        : ResolverOptions() {
+        _undefinesAreErrors = true;
+      }
+    } ro;
     Resolver resolver(ro, inputs);
     resolver.resolve();
     File &merged = resolver.resultFile();
