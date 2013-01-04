@@ -172,7 +172,7 @@ VectorTargetTransformImpl::getScalarizationOverhead(Type *Ty,
 }
 
 unsigned VectorTargetTransformImpl::getNumberOfRegisters(bool Vector) const {
-  return 8;
+  return 1;
 }
 
 unsigned VectorTargetTransformImpl::getArithmeticInstrCost(unsigned Opcode,
