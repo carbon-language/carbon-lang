@@ -20,9 +20,6 @@ namespace lldb {
 
 class SBExpressionOptions
 {
-friend class SBFrame;
-friend class SBValue;
-
 public:
     SBExpressionOptions();
 
@@ -72,6 +69,10 @@ protected:
 
     lldb_private::EvaluateExpressionOptions &
     ref () const;
+
+    friend class SBFrame;
+    friend class SBValue;
+    friend class SBTarget;
 
 private:
     // This auto_pointer is made in the constructor and is always valid.

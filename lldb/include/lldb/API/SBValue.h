@@ -419,6 +419,7 @@ public:
 protected:
     friend class SBBlock;
     friend class SBFrame;
+    friend class SBTarget;
     friend class SBThread;
     friend class SBValueList;
 

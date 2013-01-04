@@ -250,7 +250,9 @@ ClangASTType::GetTypeClass (clang::ASTContext *ast_context, lldb::clang_type_t c
         case clang::Type::Typedef:                  return lldb::eTypeClassTypedef;
         case clang::Type::UnresolvedUsing:          break;
         case clang::Type::Paren:                    break;
-        case clang::Type::Elaborated:               break;
+        case clang::Type::Elaborated:
+            return ClangASTType::GetTypeClass (ast_context, llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+
         case clang::Type::Attributed:               break;
         case clang::Type::TemplateTypeParm:         break;
         case clang::Type::SubstTemplateTypeParm:    break;
@@ -455,14 +457,15 @@ ClangASTType::GetEncoding (clang_type_t clang_type, uint32_t &count)
     case clang::Type::Record:                   break;
     case clang::Type::Enum:                     return lldb::eEncodingSint;
     case clang::Type::Typedef:
-            return GetEncoding(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), count);
-        break;
+        return GetEncoding(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), count);
+
+    case clang::Type::Elaborated:
+        return ClangASTType::GetEncoding (llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(), count);
 
     case clang::Type::DependentSizedArray:
     case clang::Type::DependentSizedExtVector:
     case clang::Type::UnresolvedUsing:
     case clang::Type::Paren:
-    case clang::Type::Elaborated:
     case clang::Type::Attributed:
     case clang::Type::TemplateTypeParm:
     case clang::Type::SubstTemplateTypeParm:
@@ -581,15 +584,15 @@ ClangASTType::GetFormat (clang_type_t clang_type)
     case clang::Type::Record:                   break;
     case clang::Type::Enum:                     return lldb::eFormatEnum;
     case clang::Type::Typedef:
-            return ClangASTType::GetFormat(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
-
+        return ClangASTType::GetFormat(llvm::cast<clang::TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
     case clang::Type::Auto:
-            return ClangASTType::GetFormat(llvm::cast<clang::AutoType>(qual_type)->desugar().getAsOpaquePtr());
+        return ClangASTType::GetFormat(llvm::cast<clang::AutoType>(qual_type)->desugar().getAsOpaquePtr());
+    case clang::Type::Elaborated:
+        return ClangASTType::GetFormat(llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
     case clang::Type::DependentSizedArray:
     case clang::Type::DependentSizedExtVector:
     case clang::Type::UnresolvedUsing:
     case clang::Type::Paren:
-    case clang::Type::Elaborated:
     case clang::Type::Attributed:
     case clang::Type::TemplateTypeParm:
     case clang::Type::SubstTemplateTypeParm:
@@ -914,6 +917,29 @@ ClangASTType::DumpValue
         }
         break;
 
+    case clang::Type::Elaborated:
+        {
+            clang::QualType elaborated_qual_type = llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType();
+            lldb::Format elaborated_format = ClangASTType::GetFormat(elaborated_qual_type.getAsOpaquePtr());
+            std::pair<uint64_t, unsigned> elaborated_type_info = ast_context->getTypeInfo(elaborated_qual_type);
+            uint64_t elaborated_byte_size = elaborated_type_info.first / 8;
+
+            return DumpValue (ast_context,        // The clang AST context for this type
+                              elaborated_qual_type.getAsOpaquePtr(),    // The clang type we want to dump
+                              exe_ctx,
+                              s,                  // Stream to dump to
+                              elaborated_format,  // The format with which to display the element
+                              data,               // Data buffer containing all bytes for this type
+                              data_byte_offset,   // Offset into "data" where to grab value from
+                              elaborated_byte_size,  // Size of this type in bytes
+                              bitfield_bit_size,  // Bitfield bit size
+                              bitfield_bit_offset,// Bitfield bit offset
+                              show_types,         // Boolean indicating if we should show the variable types
+                              show_summary,       // Boolean indicating if we should show a summary for the current type
+                              verbose,            // Verbose output?
+                              depth);             // Scope depth for any types that have children
+        }
+        break;
     default:
         // We are down the a scalar type that we just need to display.
         data.Dump(s, data_byte_offset, format, data_byte_size, 1, UINT32_MAX, LLDB_INVALID_ADDRESS, bitfield_bit_size, bitfield_bit_offset);
@@ -1304,6 +1330,12 @@ ClangASTType::DumpTypeDescription (clang::ASTContext *ast_context, clang_type_t 
                 }
             }
             break;
+
+        case clang::Type::Elaborated:
+            DumpTypeDescription (ast_context,
+                                 llvm::cast<clang::ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                 s);
+            return;
 
         case clang::Type::Record:
             if (ClangASTContext::GetCompleteType (ast_context, clang_type))

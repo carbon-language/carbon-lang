@@ -2793,6 +2793,10 @@ ClangASTContext::GetNumTemplateArguments (clang::ASTContext *ast, clang_type_t c
                 
             case clang::Type::Typedef:                         
                 return ClangASTContext::GetNumTemplateArguments (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+                
+            case clang::Type::Elaborated:
+                return ClangASTContext::GetNumTemplateArguments (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr());
+
             default:
                 break;
         }
@@ -2866,6 +2870,10 @@ ClangASTContext::GetTemplateArgument (clang::ASTContext *ast, clang_type_t clang
                 
             case clang::Type::Typedef:                         
                 return ClangASTContext::GetTemplateArgument (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), arg_idx, kind);
+
+            case clang::Type::Elaborated:
+                return ClangASTContext::GetTemplateArgument (ast, cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(), arg_idx, kind);
+                
             default:
                 break;
         }
@@ -4750,6 +4758,13 @@ ClangASTContext::GetIndexOfChildMemberWithName
                                                   omit_empty_base_classes,
                                                   child_indexes);
 
+        case clang::Type::Elaborated:
+            return GetIndexOfChildMemberWithName (ast,
+                                                  cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                                  name,
+                                                  omit_empty_base_classes,
+                                                  child_indexes);
+
         default:
             break;
         }
@@ -4956,6 +4971,12 @@ ClangASTContext::GetIndexOfChildWithName
                 }
             }
             break;
+
+        case clang::Type::Elaborated:
+            return GetIndexOfChildWithName (ast,
+                                            cast<ElaboratedType>(qual_type)->getNamedType().getAsOpaquePtr(),
+                                            name,
+                                            omit_empty_base_classes);
 
         case clang::Type::Typedef:
             return GetIndexOfChildWithName (ast,

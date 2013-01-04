@@ -17,6 +17,7 @@
 #include "lldb/API/SBFileSpecList.h"
 #include "lldb/API/SBSymbolContextList.h"
 #include "lldb/API/SBType.h"
+#include "lldb/API/SBValue.h"
 #include "lldb/API/SBWatchpoint.h"
 
 namespace lldb {
@@ -747,6 +748,9 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
+
+    lldb::SBValue
+    EvaluateExpression (const char *expr, const SBExpressionOptions &options);
 
 protected:
     friend class SBAddress;

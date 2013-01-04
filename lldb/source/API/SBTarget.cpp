@@ -15,6 +15,7 @@
 
 #include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBBreakpoint.h"
+#include "lldb/API/SBExpressionOptions.h"
 #include "lldb/API/SBFileSpec.h"
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBModule.h"
@@ -2463,4 +2464,74 @@ SBTarget::FindSymbols (const char *name, lldb::SymbolType symbol_type)
     
 }
 
+
+lldb::SBValue
+SBTarget::EvaluateExpression (const char *expr, const SBExpressionOptions &options)
+{
+    LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    LogSP expr_log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+    SBValue expr_result;
+    ExecutionResults exe_results = eExecutionSetupError;
+    ValueObjectSP expr_value_sp;
+    TargetSP target_sp(GetSP());
+    StackFrame *frame = NULL;
+    if (target_sp)
+    {
+        if (expr == NULL || expr[0] == '\0')
+        {
+            if (log)
+                log->Printf ("SBTarget::EvaluateExpression called with an empty expression");
+            return expr_result;
+        }
+        
+        Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        ExecutionContext exe_ctx (m_opaque_sp.get());
+        
+        if (log)
+            log->Printf ("SBTarget()::EvaluateExpression (expr=\"%s\")...", expr);
+        
+        frame = exe_ctx.GetFramePtr();
+        Target *target = exe_ctx.GetTargetPtr();
+        
+        if (target)
+        {
+#ifdef LLDB_CONFIGURATION_DEBUG
+            StreamString frame_description;
+            if (frame)
+                frame->DumpUsingSettingsFormat (&frame_description);
+            Host::SetCrashDescriptionWithFormat ("SBTarget::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
+                                                 expr, options.GetFetchDynamicValue(), frame_description.GetString().c_str());
+#endif
+            exe_results = target->EvaluateExpression (expr,
+                                                      frame,
+                                                      expr_value_sp,
+                                                      options.ref());
+
+            expr_result.SetSP(expr_value_sp, options.GetFetchDynamicValue());
+#ifdef LLDB_CONFIGURATION_DEBUG
+            Host::SetCrashDescription (NULL);
+#endif
+        }
+        else
+        {
+            if (log)
+                log->Printf ("SBTarget::EvaluateExpression () => error: could not reconstruct frame object for this SBTarget.");
+        }
+    }
+#ifndef LLDB_DISABLE_PYTHON
+    if (expr_log)
+        expr_log->Printf("** [SBTarget::EvaluateExpression] Expression result is %s, summary %s **",
+                         expr_result.GetValue(),
+                         expr_result.GetSummary());
+    
+    if (log)
+        log->Printf ("SBTarget(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p) (execution result=%d)",
+                     frame,
+                     expr,
+                     expr_value_sp.get(),
+                     exe_results);
+#endif
+    
+    return expr_result;
+}
 
