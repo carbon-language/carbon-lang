@@ -256,6 +256,17 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
       TTypeEncoding = (CMModel == CodeModel::Small)
         ? dwarf::DW_EH_PE_udata4 : dwarf::DW_EH_PE_absptr;
     }
+  } else if (T.getArch() == Triple::ppc64) {
+    PersonalityEncoding = dwarf::DW_EH_PE_udata8;
+    PersonalityEncoding |= (RelocM == Reloc::PIC_)
+     ? dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel
+     : dwarf::DW_EH_PE_absptr;
+    unsigned PICFlag = (RelocM == Reloc::PIC_) ? dwarf::DW_EH_PE_pcrel
+     : dwarf::DW_EH_PE_absptr;
+    FDECFIEncoding = PICFlag | dwarf::DW_EH_PE_sdata4;
+    LSDAEncoding = PICFlag | dwarf::DW_EH_PE_udata8;
+    FDEEncoding = PICFlag | dwarf::DW_EH_PE_sdata4;
+    TTypeEncoding = PICFlag | dwarf::DW_EH_PE_sdata4;
   }
 
   // Solaris requires different flags for .eh_frame to seemingly every other

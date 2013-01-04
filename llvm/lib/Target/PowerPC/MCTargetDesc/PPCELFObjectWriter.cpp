@@ -77,8 +77,13 @@ unsigned PPCELFObjectWriter::getRelocTypeInner(const MCValue &Target,
     case PPC::fixup_ppc_br24:
       Type = ELF::R_PPC_REL24;
       break;
+    case FK_Data_4:
     case FK_PCRel_4:
       Type = ELF::R_PPC_REL32;
+      break;
+    case FK_Data_8:
+    case FK_PCRel_8:
+      Type = ELF::R_PPC64_REL64;
       break;
     }
   } else {
