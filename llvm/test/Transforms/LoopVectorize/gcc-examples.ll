@@ -241,7 +241,7 @@ define void @example8(i32 %x) nounwind uwtable ssp {
 }
 
 ;CHECK: @example9
-;CHECK: phi <4 x i32>
+;CHECK-NOT: phi <4 x i32>
 ;CHECK: ret i32
 define i32 @example9() nounwind uwtable readonly ssp {
   br label %1

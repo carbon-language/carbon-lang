@@ -1986,7 +1986,6 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
     // possibly.
     return true;
   case Instruction::Add:
-  case Instruction::Sub:
     return Kind == IntegerAdd;
   case Instruction::Mul:
     return Kind == IntegerMult;
