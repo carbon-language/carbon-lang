@@ -25,7 +25,7 @@ extern int Module;
 // CHECK-SDIAG: build-fail-notes.m:4:9: note: while building module 'DependsOnModule' imported from
 // CHECK-SDIAG: DependsOnModule.h:1:10: note: while building module 'Module' imported from
 // CHECK-SDIAG: note: expanded from here
-// CHECK-SDIAG: warning: umbrella header does not include header 'NotInModule.h' [-Wincomplete-umbrella]
+// CHECK-SDIAG: warning: umbrella header for module 'Module' does not include header 'NotInModule.h' [-Wincomplete-umbrella]
 // CHECK-SDIAG: DependsOnModule.h:1:10: fatal: could not build module 'Module'
 // CHECK-SDIAG: build-fail-notes.m:4:9: note: while building module 'DependsOnModule' imported from
 

@@ -395,7 +395,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
                 SmallString<128> RelativePath;
                 computeRelativePath(FileMgr, Dir, Header, RelativePath);              
                 Diag(StartLoc, diag::warn_uncovered_module_header)
-                  << RelativePath;
+                  << Mod->getFullModuleName() << RelativePath;
               }
             }
         }
