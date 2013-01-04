@@ -1176,6 +1176,9 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
                                               Builder, blockInfo);
       }
     }
+    // Recover location if it was changed in the above loop.
+    DI->EmitLocation(Builder,
+        cast<CompoundStmt>(blockDecl->getBody())->getRBracLoc());
   }
 
   // And resume where we left off.
