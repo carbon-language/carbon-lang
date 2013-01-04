@@ -541,7 +541,7 @@ Instruction::Dump (lldb_private::Stream *s,
                    bool show_bytes,
                    const ExecutionContext* exe_ctx)
 {
-    const size_t opcode_column_width = 7;
+    size_t opcode_column_width = 7;
     const size_t operand_column_width = 25;
     
     CalculateMnemonicOperandsAndCommentIfNeeded (exe_ctx);
@@ -584,6 +584,14 @@ Instruction::Dump (lldb_private::Stream *s,
     
     const size_t opcode_pos = ss.GetSize();
     
+    // The default opcode size of 7 characters is plenty for most architectures
+    // but some like arm can pull out the occasional vqrshrun.s16.  We won't get
+    // consistent column spacing in these cases, unfortunately.
+    if (m_opcode_name.length() >= opcode_column_width)
+    {
+        opcode_column_width = m_opcode_name.length() + 1;
+    }
+
     ss.PutCString (m_opcode_name.c_str());
     ss.FillLastLineToColumn (opcode_pos + opcode_column_width, ' ');
     ss.PutCString (m_mnemocics.c_str());
