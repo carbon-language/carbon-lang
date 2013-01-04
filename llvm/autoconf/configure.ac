@@ -1250,6 +1250,10 @@ AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],
                [Define if dlopen() is available on this platform.]),
                AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
+dnl clock_gettime() is required for modern timing support.
+AC_SEARCH_LIBS(clock_gettime,rt,[],
+               AC_MSG_ERROR([clock_gettime not found and is required for modern POSIX timing uspport]))
+
 dnl libffi is optional; used to call external functions from the interpreter
 if test "$llvm_cv_enable_libffi" = "yes" ; then
   AC_SEARCH_LIBS(ffi_call,ffi,AC_DEFINE([HAVE_FFI_CALL],[1],

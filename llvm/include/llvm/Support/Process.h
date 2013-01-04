@@ -64,6 +64,23 @@ public:
   /// \brief Get the operating system specific identifier for this process.
   virtual id_type get_id() = 0;
 
+  /// \brief Get the user time consumed by this process.
+  ///
+  /// Note that this is often an approximation and may be zero on platforms
+  /// where we don't have good support for the functionality.
+  virtual TimeValue get_user_time() const = 0;
+
+  /// \brief Get the system time consumed by this process.
+  ///
+  /// Note that this is often an approximation and may be zero on platforms
+  /// where we don't have good support for the functionality.
+  virtual TimeValue get_system_time() const = 0;
+
+  /// \brief Get the wall time consumed by this process.
+  ///
+  /// Note that this is often an approximation and may be zero on platforms
+  /// where we don't have good support for the functionality.
+  virtual TimeValue get_wall_time() const = 0;
 
   /// \name Static factory routines for processes.
   /// @{
@@ -88,6 +105,9 @@ class self_process : public process {
 
 public:
   virtual id_type get_id();
+  virtual TimeValue get_user_time() const;
+  virtual TimeValue get_system_time() const;
+  virtual TimeValue get_wall_time() const;
 
   /// \name Process configuration (sysconf on POSIX)
   /// @{

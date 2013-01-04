@@ -49,6 +49,43 @@ process::id_type self_process::get_id() {
   return getpid();
 }
 
+static std::pair<TimeValue, TimeValue> getRUsageTimes() {
+#if defined(HAVE_GETRUSAGE)
+  struct rusage RU;
+  ::getrusage(RUSAGE_SELF, &RU);
+  return std::make_pair(
+      TimeValue(
+          static_cast<TimeValue::SecondsType>(RU.ru_utime.tv_sec),
+          static_cast<TimeValue::NanoSecondsType>(
+              RU.ru_utime.tv_usec * TimeValue::NANOSECONDS_PER_MICROSECOND)),
+      TimeValue(
+          static_cast<TimeValue::SecondsType>(RU.ru_stime.tv_sec),
+          static_cast<TimeValue::NanoSecondsType>(
+              RU.ru_stime.tv_usec * TimeValue::NANOSECONDS_PER_MICROSECOND)));
+#else
+#warning Cannot get usage times on this platform
+  return std::make_pair(TimeValue(), TimeValue());
+#endif
+}
+
+TimeValue self_process::get_user_time() const {
+#ifdef _POSIX_CPUTIME
+  // Try to get a high resolution CPU timer.
+  struct timespec TS;
+  if (::clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &TS) == 0)
+    return TimeValue(static_cast<TimeValue::SecondsType>(TS.tv_sec),
+                     static_cast<TimeValue::NanoSecondsType>(TS.tv_nsec));
+#endif
+
+  // Otherwise fall back to rusage based timing.
+  return getRUsageTimes().first;
+}
+
+TimeValue self_process::get_system_time() const {
+  // We can only collect system time by inspecting the results of getrusage.
+  return getRUsageTimes().second;
+}
+
 static unsigned getPageSize() {
 #if defined(__CYGWIN__)
   // On Cygwin, getpagesize() returns 64k but the page size for the purposes of
@@ -95,29 +132,10 @@ size_t Process::GetMallocUsage() {
 #endif
 }
 
-void
-Process::GetTimeUsage(TimeValue& elapsed, TimeValue& user_time,
-                      TimeValue& sys_time)
-{
+void Process::GetTimeUsage(TimeValue &elapsed, TimeValue &user_time,
+                           TimeValue &sys_time) {
   elapsed = TimeValue::now();
-#if defined(HAVE_GETRUSAGE)
-  struct rusage usage;
-  ::getrusage(RUSAGE_SELF, &usage);
-  user_time = TimeValue(
-    static_cast<TimeValue::SecondsType>( usage.ru_utime.tv_sec ),
-    static_cast<TimeValue::NanoSecondsType>( usage.ru_utime.tv_usec *
-      TimeValue::NANOSECONDS_PER_MICROSECOND ) );
-  sys_time = TimeValue(
-    static_cast<TimeValue::SecondsType>( usage.ru_stime.tv_sec ),
-    static_cast<TimeValue::NanoSecondsType>( usage.ru_stime.tv_usec *
-      TimeValue::NANOSECONDS_PER_MICROSECOND ) );
-#else
-#warning Cannot get usage times on this platform
-  user_time.seconds(0);
-  user_time.microseconds(0);
-  sys_time.seconds(0);
-  sys_time.microseconds(0);
-#endif
+  llvm::tie(user_time, sys_time) = getRUsageTimes();
 }
 
 int Process::GetCurrentUserId() {

@@ -43,6 +43,36 @@ process::id_type self_process::get_id() {
   return GetCurrentProcess();
 }
 
+static TimeValue getTimeValueFromFILETIME(FILETIME Time) {
+  ULARGE_INTEGER TimeInteger;
+  TimeInteger.LowPart = Time.dwLowDateTime;
+  TimeInteger.HighPart = Time.dwHighDateTime;
+
+  // FILETIME's are # of 100 nanosecond ticks (1/10th of a microsecond)
+  return TimeValue(
+      static_cast<TimeValue::SecondsType>(TimeInteger.QuadPart / 10000000),
+      static_cast<TimeValue::NanoSecondsType>(
+          (TimeInteger.QuadPart % 10000000) * 100));
+}
+
+TimeValue self_process::get_user_time() const {
+  FILETIME ProcCreate, ProcExit, KernelTime, UserTime;
+  if (GetProcessTimes(GetCurrentProcess(), &ProcCreate, &ProcExit, &KernelTime,
+                      &UserTime) == 0)
+    return TimeValue();
+
+  return getTimeValueFromFILETIME(UserTime);
+}
+
+TimeValue self_process::get_system_time() const {
+  FILETIME ProcCreate, ProcExit, KernelTime, UserTime;
+  if (GetProcessTimes(GetCurrentProcess(), &ProcCreate, &ProcExit, &KernelTime,
+                      &UserTime) == 0)
+    return TimeValue();
+
+  return getTimeValueFromFILETIME(KernelTime);
+}
+
 // This function retrieves the page size using GetSystemInfo and is present
 // solely so it can be called once to initialize the self_process member below.
 static unsigned getPageSize() {
@@ -76,22 +106,17 @@ Process::GetMallocUsage()
   return size;
 }
 
-void
-Process::GetTimeUsage(
-  TimeValue& elapsed, TimeValue& user_time, TimeValue& sys_time)
-{
+void Process::GetTimeUsage(TimeValue &elapsed, TimeValue &user_time,
+                           TimeValue &sys_time) {
   elapsed = TimeValue::now();
 
-  uint64_t ProcCreate, ProcExit, KernelTime, UserTime;
-  GetProcessTimes(GetCurrentProcess(), (FILETIME*)&ProcCreate,
-                  (FILETIME*)&ProcExit, (FILETIME*)&KernelTime,
-                  (FILETIME*)&UserTime);
+  FILETIME ProcCreate, ProcExit, KernelTime, UserTime;
+  if (GetProcessTimes(GetCurrentProcess(), &ProcCreate, &ProcExit, &KernelTime,
+                      &UserTime) == 0)
+    return;
 
-  // FILETIME's are # of 100 nanosecond ticks (1/10th of a microsecond)
-  user_time.seconds( UserTime / 10000000 );
-  user_time.nanoseconds( unsigned(UserTime % 10000000) * 100 );
-  sys_time.seconds( KernelTime / 10000000 );
-  sys_time.nanoseconds( unsigned(KernelTime % 10000000) * 100 );
+  user_time = getTimeValueFromFILETIME(UserTime);
+  sys_time = getTimeValueFromFILETIME(SystemTime);
 }
 
 int Process::GetCurrentUserId()
