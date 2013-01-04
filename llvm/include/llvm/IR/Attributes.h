@@ -109,9 +109,6 @@ public:
   /// \brief Return true if attributes exist
   bool hasAttributes() const;
 
-  /// \brief Return true if the attributes are a non-null intersection.
-  bool hasAttributes(const Attribute &A) const;
-
   /// \brief Returns the alignment field of an attribute as a byte alignment
   /// value.
   unsigned getAlignment() const;
@@ -120,6 +117,7 @@ public:
   /// alignment value.
   unsigned getStackAlignment() const;
 
+  /// \brief Equality and non-equality query methods.
   bool operator==(AttrKind K) const;
   bool operator!=(AttrKind K) const;
 
@@ -167,50 +165,51 @@ public:
 
   void clear() { Bits = 0; }
 
-  /// addAttribute - Add an attribute to the builder.
+  /// \brief Add an attribute to the builder.
   AttrBuilder &addAttribute(Attribute::AttrKind Val);
 
-  /// removeAttribute - Remove an attribute from the builder.
+  /// \brief Remove an attribute from the builder.
   AttrBuilder &removeAttribute(Attribute::AttrKind Val);
 
-  /// addAttribute - Add the attributes from A to the builder.
+  /// \brief Add the attributes from A to the builder.
   AttrBuilder &addAttributes(const Attribute &A);
 
-  /// removeAttribute - Remove the attributes from A from the builder.
+  /// \brief Remove the attributes from A from the builder.
   AttrBuilder &removeAttributes(const Attribute &A);
 
   /// \brief Return true if the builder has the specified attribute.
   bool contains(Attribute::AttrKind A) const;
 
-  /// hasAttributes - Return true if the builder has IR-level attributes.
+  /// \brief Return true if the builder has IR-level attributes.
   bool hasAttributes() const;
 
-  /// hasAttributes - Return true if the builder has any attribute that's in the
+  /// \brief Return true if the builder has any attribute that's in the
   /// specified attribute.
   bool hasAttributes(const Attribute &A) const;
 
-  /// hasAlignmentAttr - Return true if the builder has an alignment attribute.
+  /// \brief Return true if the builder has an alignment attribute.
   bool hasAlignmentAttr() const;
 
-  /// getAlignment - Retrieve the alignment attribute, if it exists.
+  /// \brief Retrieve the alignment attribute, if it exists.
   uint64_t getAlignment() const;
 
-  /// getStackAlignment - Retrieve the stack alignment attribute, if it exists.
+  /// \brief Retrieve the stack alignment attribute, if it exists.
   uint64_t getStackAlignment() const;
 
-  /// addAlignmentAttr - This turns an int alignment (which must be a power of
-  /// 2) into the form used internally in Attribute.
+  /// \brief This turns an int alignment (which must be a power of 2) into the
+  /// form used internally in Attribute.
   AttrBuilder &addAlignmentAttr(unsigned Align);
 
-  /// addStackAlignmentAttr - This turns an int stack alignment (which must be a
-  /// power of 2) into the form used internally in Attribute.
+  /// \brief This turns an int stack alignment (which must be a power of 2) into
+  /// the form used internally in Attribute.
   AttrBuilder &addStackAlignmentAttr(unsigned Align);
 
-  /// addRawValue - Add the raw value to the internal representation.
+  /// \brief Add the raw value to the internal representation.
+  /// 
   /// N.B. This should be used ONLY for decoding LLVM bitcode!
   AttrBuilder &addRawValue(uint64_t Val);
 
-  /// @brief Remove attributes that are used on functions only.
+  /// \brief Remove attributes that are used on functions only.
   void removeFunctionOnlyAttrs() {
     removeAttribute(Attribute::NoReturn)
       .removeAttribute(Attribute::NoUnwind)

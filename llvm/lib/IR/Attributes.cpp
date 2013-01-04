@@ -69,10 +69,6 @@ bool Attribute::hasAttributes() const {
   return pImpl && pImpl->hasAttributes();
 }
 
-bool Attribute::hasAttributes(const Attribute &A) const {
-  return pImpl && pImpl->hasAttributes(A);
-}
-
 /// This returns the alignment field of an attribute as a byte alignment value.
 unsigned Attribute::getAlignment() const {
   if (!hasAttribute(Attribute::Alignment))
@@ -89,11 +85,10 @@ unsigned Attribute::getStackAlignment() const {
 }
 
 bool Attribute::operator==(AttrKind K) const {
-  return pImpl && pImpl->contains(K);
+  return pImpl && *pImpl == K;
 }
-
 bool Attribute::operator!=(AttrKind K) const {
-  return !(pImpl && pImpl->contains(K));
+  return !(*this == K);
 }
 
 uint64_t Attribute::getBitMask() const {
@@ -281,9 +276,11 @@ bool AttrBuilder::contains(Attribute::AttrKind A) const {
 bool AttrBuilder::hasAttributes() const {
   return Bits != 0;
 }
+
 bool AttrBuilder::hasAttributes(const Attribute &A) const {
   return Bits & A.getBitMask();
 }
+
 bool AttrBuilder::hasAlignmentAttr() const {
   return Bits & AttributeImpl::getAttrMask(Attribute::Alignment);
 }
@@ -322,17 +319,23 @@ AttributeImpl::AttributeImpl(LLVMContext &C, StringRef data) {
   Data = ConstantDataArray::getString(C, data);
 }
 
-bool AttributeImpl::contains(Attribute::AttrKind Kind) const {
+bool AttributeImpl::operator==(Attribute::AttrKind Kind) const {
   if (ConstantInt *CI = dyn_cast<ConstantInt>(Data))
     return CI->getZExtValue() == Kind;
   return false;
 }
+bool AttributeImpl::operator!=(Attribute::AttrKind Kind) const {
+  return !(*this == Kind);
+}
 
-bool AttributeImpl::contains(StringRef Kind) const {
+bool AttributeImpl::operator==(StringRef Kind) const {
   if (ConstantDataArray *CDA = dyn_cast<ConstantDataArray>(Data))
     if (CDA->isString())
       return CDA->getAsString() == Kind;
   return false;
+}
+bool AttributeImpl::operator!=(StringRef Kind) const {
+  return !(*this == Kind);
 }
 
 uint64_t AttributeImpl::getBitMask() const {
@@ -340,7 +343,7 @@ uint64_t AttributeImpl::getBitMask() const {
   return cast<ConstantInt>(Data)->getZExtValue();
 }
 
-uint64_t AttributeImpl::getAttrMask(uint64_t Val) {
+uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   switch (Val) {
   case Attribute::None:            return 0;
   case Attribute::ZExt:            return 1 << 0;
@@ -376,17 +379,12 @@ uint64_t AttributeImpl::getAttrMask(uint64_t Val) {
   llvm_unreachable("Unsupported attribute type");
 }
 
-bool AttributeImpl::hasAttribute(uint64_t A) const {
+bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
   return (getBitMask() & getAttrMask(A)) != 0;
 }
 
 bool AttributeImpl::hasAttributes() const {
   return getBitMask() != 0;
-}
-
-bool AttributeImpl::hasAttributes(const Attribute &A) const {
-  // FIXME: getBitMask() won't work here in the future.
-  return getBitMask() & A.getBitMask();
 }
 
 uint64_t AttributeImpl::getAlignment() const {
@@ -449,14 +447,15 @@ const AttributeSet &AttributeSet::operator=(const AttributeSet &RHS) {
 /// This is the number of arguments that have an attribute set on them
 /// (including the function itself).
 unsigned AttributeSet::getNumSlots() const {
-  return AttrList ? AttrList->Attrs.size() : 0;
+  return AttrList ? AttrList->getNumAttributes() : 0;
 }
 
 /// getSlot - Return the AttributeWithIndex at the specified slot.  This
 /// holds a number plus a set of attributes.
 const AttributeWithIndex &AttributeSet::getSlot(unsigned Slot) const {
-  assert(AttrList && Slot < AttrList->Attrs.size() && "Slot # out of range!");
-  return AttrList->Attrs[Slot];
+  assert(AttrList && Slot < AttrList->getNumAttributes() &&
+         "Slot # out of range!");
+  return AttrList->getAttributes()[Slot];
 }
 
 bool AttributeSet::hasAttribute(unsigned Index, Attribute::AttrKind Kind) const{
@@ -486,7 +485,7 @@ uint64_t AttributeSet::getBitMask(unsigned Index) const {
 Attribute AttributeSet::getAttributes(unsigned Idx) const {
   if (AttrList == 0) return Attribute();
 
-  const SmallVectorImpl<AttributeWithIndex> &Attrs = AttrList->Attrs;
+  ArrayRef<AttributeWithIndex> Attrs = AttrList->getAttributes();
   for (unsigned i = 0, e = Attrs.size(); i != e && Attrs[i].Index <= Idx; ++i)
     if (Attrs[i].Index == Idx)
       return Attrs[i].Attrs;
@@ -499,7 +498,7 @@ Attribute AttributeSet::getAttributes(unsigned Idx) const {
 bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   if (AttrList == 0) return false;
 
-  const SmallVector<AttributeWithIndex, 4> &Attrs = AttrList->Attrs;
+  ArrayRef<AttributeWithIndex> Attrs = AttrList->getAttributes();
   for (unsigned i = 0, e = Attrs.size(); i != e; ++i)
     if (Attrs[i].Attrs.hasAttribute(Attr))
       return true;
@@ -528,7 +527,7 @@ AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
   if (AttrList == 0)
     NewAttrList.push_back(AttributeWithIndex::get(Idx, Attrs));
   else {
-    const SmallVector<AttributeWithIndex, 4> &OldAttrList = AttrList->Attrs;
+    ArrayRef<AttributeWithIndex> OldAttrList = AttrList->getAttributes();
     unsigned i = 0, e = OldAttrList.size();
     // Copy attributes for arguments before this one.
     for (; i != e && OldAttrList[i].Index < Idx; ++i)
@@ -569,7 +568,7 @@ AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
     return *this;
 
   SmallVector<AttributeWithIndex, 8> NewAttrList;
-  const SmallVector<AttributeWithIndex, 4> &OldAttrList = AttrList->Attrs;
+  ArrayRef<AttributeWithIndex> OldAttrList = AttrList->getAttributes();
   unsigned i = 0, e = OldAttrList.size();
 
   // Copy attributes for arguments before this one.
@@ -595,7 +594,7 @@ void AttributeSet::dump() const {
   dbgs() << "PAL[ ";
   for (unsigned i = 0; i < getNumSlots(); ++i) {
     const AttributeWithIndex &PAWI = getSlot(i);
-    dbgs() << "{" << PAWI.Index << "," << PAWI.Attrs.getAsString() << "} ";
+    dbgs() << "{ " << PAWI.Index << ", " << PAWI.Attrs.getAsString() << " } ";
   }
 
   dbgs() << "]\n";
