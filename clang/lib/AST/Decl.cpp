@@ -1177,8 +1177,8 @@ SourceRange VarDecl::getSourceRange() const {
   return DeclaratorDecl::getSourceRange();
 }
 
-template<typename decl_type>
-static bool hasCLanguageLinkageTemplate(const decl_type &D) {
+template<typename T>
+static bool hasCLanguageLinkageTemplate(const T &D) {
   // Language linkage is a C++ concept, but saying that everything in C has
   // C language linkage fits the implementation nicely.
   ASTContext &Context = D.getASTContext();
@@ -1195,7 +1195,7 @@ static bool hasCLanguageLinkageTemplate(const decl_type &D) {
   // If the first decl is in an extern "C" context, any other redeclaration
   // will have C language linkage. If the first one is not in an extern "C"
   // context, we would have reported an error for any other decl being in one.
-  const decl_type *First = D.getFirstDeclaration();
+  const T *First = D.getFirstDeclaration();
   return First->getDeclContext()->isExternCContext();
 }
 
