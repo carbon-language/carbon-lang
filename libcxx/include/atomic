@@ -472,6 +472,7 @@ template <class T>
 
 // Atomics for standard typedef types
 
+typedef atomic<bool>               atomic_bool;
 typedef atomic<char>               atomic_char;
 typedef atomic<signed char>        atomic_schar;
 typedef atomic<unsigned char>      atomic_uchar;
@@ -1454,6 +1455,7 @@ atomic_signal_fence(memory_order __m) _NOEXCEPT
 
 // Atomics for standard typedef types
 
+typedef atomic<bool>               atomic_bool;
 typedef atomic<char>               atomic_char;
 typedef atomic<signed char>        atomic_schar;
 typedef atomic<unsigned char>      atomic_uchar;
