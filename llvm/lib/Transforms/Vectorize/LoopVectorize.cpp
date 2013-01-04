@@ -2283,8 +2283,8 @@ LoopVectorizationCostModel::calculateRegisterUsage() {
 
     // Remove all of the instructions that end at this location.
     InstrList &List = TransposeEnds[i];
-    for (unsigned int i=0, e = List.size(); i < e; ++i)
-      OpenIntervals.erase(List[i]);
+    for (unsigned int j=0, e = List.size(); j < e; ++j)
+      OpenIntervals.erase(List[j]);
 
     // Count the number of live interals.
     MaxUsage = std::max(MaxUsage, OpenIntervals.size());
