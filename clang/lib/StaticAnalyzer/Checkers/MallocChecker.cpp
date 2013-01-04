@@ -1500,16 +1500,16 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
 
   // Retrieve the associated statement.
   ProgramPoint ProgLoc = N->getLocation();
-  if (StmtPoint *SP = dyn_cast<StmtPoint>(&ProgLoc))
+  if (StmtPoint *SP = dyn_cast<StmtPoint>(&ProgLoc)) {
     S = SP->getStmt();
-  else if (CallExitEnd *Exit = dyn_cast<CallExitEnd>(&ProgLoc))
+  } else if (CallExitEnd *Exit = dyn_cast<CallExitEnd>(&ProgLoc)) {
     S = Exit->getCalleeContext()->getCallSite();
-  // If an assumption was made on a branch, it should be caught
-  // here by looking at the state transition.
-  else if (BlockEdge *Edge = dyn_cast<BlockEdge>(&ProgLoc)) {
-    const CFGBlock *srcBlk = Edge->getSrc();
-    S = srcBlk->getTerminator();
+  } else if (BlockEdge *Edge = dyn_cast<BlockEdge>(&ProgLoc)) {
+    // If an assumption was made on a branch, it should be caught
+    // here by looking at the state transition.
+    S = Edge->getSrc()->getTerminator();
   }
+
   if (!S)
     return 0;
 
