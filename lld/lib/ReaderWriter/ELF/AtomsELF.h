@@ -8,12 +8,14 @@
 namespace lld {
 /// \brief Relocation References: Defined Atoms may contain references that will
 /// need to be patched before the executable is written.
-template <llvm::support::endianness target_endianness, bool is64Bits>
+template<llvm::support::endianness target_endianness,
+         std::size_t max_align,
+         bool is64Bits>
 class ELFReference final : public Reference {
   typedef llvm::object::Elf_Rel_Impl
-                        <target_endianness, is64Bits, false> Elf_Rel;
+                        <target_endianness, max_align, is64Bits, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl
-                        <target_endianness, is64Bits, true> Elf_Rela;
+                        <target_endianness, max_align, is64Bits, true> Elf_Rela;
 public:
 
   ELFReference(const Elf_Rela *rela, uint64_t offset, const Atom *target)
@@ -73,9 +75,12 @@ private:
 /// \brief These atoms store symbols that are fixed to a particular address.
 /// This atom has no content its address will be used by the writer to fixup
 /// references that point to it.
-template<llvm::support::endianness target_endianness, bool is64Bits>
+template<llvm::support::endianness target_endianness,
+         std::size_t max_align,
+         bool is64Bits>
 class ELFAbsoluteAtom final : public AbsoluteAtom {
-  typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
+  typedef llvm::object::Elf_Sym_Impl<target_endianness, max_align, is64Bits>
+    Elf_Sym;
 
 public:
   ELFAbsoluteAtom(const File &file,
@@ -118,9 +123,12 @@ private:
 
 /// \brief ELFUndefinedAtom: These atoms store undefined symbols and are place
 /// holders that will be replaced by defined atoms later in the linking process.
-template<llvm::support::endianness target_endianness, bool is64Bits>
+template<llvm::support::endianness target_endianness,
+         std::size_t max_align,
+         bool is64Bits>
 class ELFUndefinedAtom final: public UndefinedAtom {
-  typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
+  typedef llvm::object::Elf_Sym_Impl<target_endianness, max_align, is64Bits>
+    Elf_Sym;
 
 public:
   ELFUndefinedAtom(const File &file,
@@ -157,10 +165,14 @@ private:
 
 /// \brief This atom stores defined symbols and will contain either data or
 /// code.
-template<llvm::support::endianness target_endianness, bool is64Bits>
+template<llvm::support::endianness target_endianness,
+         std::size_t max_align,
+         bool is64Bits>
 class ELFDefinedAtom final: public DefinedAtom {
-  typedef llvm::object::Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
-  typedef llvm::object::Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
+  typedef llvm::object::Elf_Sym_Impl<target_endianness, max_align, is64Bits>
+    Elf_Sym;
+  typedef llvm::object::Elf_Shdr_Impl<target_endianness, max_align, is64Bits>
+    Elf_Shdr;
 
 public:
   ELFDefinedAtom(const File &file,
@@ -171,8 +183,8 @@ public:
                  llvm::ArrayRef<uint8_t> contentData,
                  unsigned int referenceStart,
                  unsigned int referenceEnd,
-                 std::vector<ELFReference
-                             <target_endianness, is64Bits> *> &referenceList)
+                 std::vector<ELFReference<target_endianness,
+                                          max_align, is64Bits>*> &referenceList)
 
     : _owningFile(file)
     , _symbolName(symbolName)
@@ -236,7 +248,6 @@ public:
   }
 
   virtual ContentType contentType() const {
-
     ContentType ret = typeUnknown;
     uint64_t flags = _section->sh_flags;
 
@@ -284,7 +295,7 @@ public:
         || _symbol->st_shndx == llvm::ELF::SHN_COMMON) {
       return Alignment(llvm::Log2_64(_symbol->st_value));
     }
-    return Alignment(llvm::Log2_64(_section->sh_addralign), 
+    return Alignment(llvm::Log2_64(_section->sh_addralign),
                      _symbol->st_value % _section->sh_addralign);
   }
 
@@ -298,7 +309,7 @@ public:
 
   virtual llvm::StringRef customSectionName() const {
     if ((contentType() == typeZeroFill) ||
-        (_symbol->st_shndx == llvm::ELF::SHN_COMMON)) 
+        (_symbol->st_shndx == llvm::ELF::SHN_COMMON))
       return ".bss";
     return _sectionName;
   }
@@ -337,7 +348,7 @@ public:
         return permR__;
 
       default:
-        if (flags & llvm::ELF::SHF_WRITE) 
+        if (flags & llvm::ELF::SHF_WRITE)
           return permRW_;
         return permR__;
       }
@@ -403,7 +414,8 @@ private:
   uint64_t _ordinal;
   unsigned int _referenceStartIndex;
   unsigned int _referenceEndIndex;
-  std::vector<ELFReference<target_endianness, is64Bits> *> &_referenceList;
+  std::vector<ELFReference<target_endianness, max_align, is64Bits>*> &
+    _referenceList;
 };
 } // namespace lld
 #endif
