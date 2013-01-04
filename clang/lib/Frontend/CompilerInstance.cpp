@@ -978,8 +978,6 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
         return ModuleLoadResult();
       }
 
-      getDiagnostics().Report(ModuleNameLoc, diag::warn_module_build)
-        << ModuleName;
       BuildingModule = true;
       compileModule(*this, ModuleNameLoc, Module, ModuleFileName);
       ModuleFile = FileMgr->getFile(ModuleFileName);
