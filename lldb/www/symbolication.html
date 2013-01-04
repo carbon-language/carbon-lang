@@ -250,22 +250,60 @@ if target:
 	<div class="post">
     			<h1 class="postheader">Use Builtin Python module to Symbolicate</h1>
     			<div class="postcontent">
-    			    <p>LLDB includes a module in the "lldb" package named "lldb.utils.symbolication". 
-								This module contains a lot of helper functions that simplify symbolication
-								by allowing you to create objects that represent symbolication class objects such as:
+    			    <p>LLDB includes a module in the <b>lldb</b> package named <b>lldb.utils.symbolication</b>. 
+								This module contains a lot of symbolication functions that simplify the symbolication
+								process by allowing you to create objects that represent symbolication class objects such as:
 								<ul>
 									<li>lldb.utils.symbolication.Address</li>
 									<li>lldb.utils.symbolication.Section</li>
 									<li>lldb.utils.symbolication.Image</li>
 									<li>lldb.utils.symbolication.Symbolicator</li>
 								</ul>
-							<p>Another package that is distributed on MacOSX builds on LLDB is the "lldb.macosx.crashlog"
-								module. This packages subclasses many of the above symbolication class objects. The module
-								installs a new "crashlog" command into the lldb command interpreter so that you can use
+								<h2>lldb.utils.symbolication.Address</h2>
+								<p>This class represents an address that will be symbolicated. It will cache any information
+									that has been looked up: module, compile unit, function, block, line entry, symbol. 
+									It does this by having a lldb.SBSymbolContext as a member variable.
+								</p>
+								<h2>lldb.utils.symbolication.Section</h2>
+								<p>This class represents a section that might get loaded in a <b>lldb.utils.symbolication.Image</b>.
+									It has helper functions that allow you to set it from text that might have been extracted from
+									a crash log file.
+								</p>
+								<h2>lldb.utils.symbolication.Image</h2>
+								<p>This class represents a module that might get loaded into the target we use for symbolication.
+									This class contains the executable path, optional symbol file path, the triple, and the list of sections that will need to be loaded
+									if we choose the ask the target to load this image. Many of these objects will never be loaded
+									into the target unless they are needed by symbolication. You often have a crash log that has
+									100 to 200 different shared libraries loaded, but your crash log stack backtraces only use a few
+									of these shared libraries. Only the images that contain stack backtrace addresses need to be loaded
+									in the target in order to symbolicate.
+								</p>
+								<p>Subclasses of this class will want to override the <b>locate_module_and_debug_symbols</b> method:
+<code><pre><tt>class CustomImage(lldb.utils.symbolication.Image):
+    def locate_module_and_debug_symbols (self):
+        <font color=green># Locate the module and symbol given the info found in the crash log</font>
+</tt></pre></code>
+								<p>Overriding this function allows clients to find the correct executable module and symbol files as they might reside on a build server.<p>
+								<h2>lldb.utils.symbolication.Symbolicator</h2>
+								<p>This class coordinates the symbolication process by loading only the <b>lldb.utils.symbolication.Image</b>
+									instances that need to be loaded in order to symbolicate an supplied address.
+								</p>
+							<h2>lldb.macosx.crashlog</h2>
+							<p><b>lldb.macosx.crashlog</b> is a package that is distributed on MacOSX builds that subclasses the above classes.
+								This module parses the information in the Darwin crash logs and creates symbolcation objects that
+								represent the images, the sections and the thread frames for the backtraces. It then uses the functions
+								in the lldb.utils.symbolication to symbolicate the crash logs.</p>
+							<p>
+								This module installs a new "crashlog" command into the lldb command interpreter so that you can use
 								it to parse and symbolicate MacOSX crash logs:</p>
 <code><pre><tt><b>(lldb)</b> script import lldb.macosx.crashlog
 "crashlog" and "save_crashlog" command installed, use the "--help" option for detailed help
-<b>(lldb)</b> crashlog --help
+<b>(lldb)</b> crashlog /tmp/crash.log
+...
+</tt></pre></code>
+							<p>The command that is installed has built in help that shows the variety of
+								different options that can be used when symbolicating:
+<code><pre><tt><b>(lldb)</b> crashlog --help
 Usage: crashlog [options] <FILE> [FILE ...]
 
 Symbolicate one or more darwin crash log files to provide source file and line
@@ -310,14 +348,14 @@ Options:
   -i, --interactive     parse all crash logs and enter interactive mode
 
 </tt></pre></code>
-						<p>The source for the "symbolication" and "crashlog" modules are available in SVN:
-						<br><a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/python/symbolication.py">symbolication.py</a>
-						<br><a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/python/crashlog.py">crashlog.py</a>
-
+						<p>The source for the "symbolication" and "crashlog" modules are available in SVN:</p>
+						<ul>
+							<li><a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/python/symbolication.py">symbolication.py</a></li>
+							<li><a href="http://llvm.org/svn/llvm-project/lldb/trunk/examples/python/crashlog.py">crashlog.py</a></li>
+						</ul>
     			</div>
          	<div class="postfooter"></div>
         </div>
-
 </div>
 </body>
 </html>
