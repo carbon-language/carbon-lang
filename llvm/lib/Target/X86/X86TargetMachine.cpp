@@ -190,6 +190,10 @@ bool X86PassConfig::addPreEmitPass() {
     addPass(createX86IssueVZeroUpperPass());
     ShouldPrint = true;
   }
+  if (getX86Subtarget().padShortFunctions()){
+    addPass(createX86PadShortFunctions());
+    ShouldPrint = true;
+  }
 
   return ShouldPrint;
 }

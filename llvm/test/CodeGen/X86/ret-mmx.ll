@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-apple-darwin11 -mattr=+mmx,+sse2 | FileCheck %s
+; RUN: llc < %s -mtriple=x86_64-apple-darwin11 -mcpu=core2 -mattr=+mmx,+sse2 | FileCheck %s
 ; rdar://6602459
 
 @g_v1di = external global <1 x i64>

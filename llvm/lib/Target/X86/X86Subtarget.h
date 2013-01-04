@@ -146,6 +146,10 @@ protected:
   /// PostRAScheduler - True if using post-register-allocation scheduler.
   bool PostRAScheduler;
 
+  /// PadShortFunctions - True if the short functions should be padded to prevent
+  /// a stall when returning too early.
+  bool PadShortFunctions;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -231,6 +235,7 @@ public:
   bool hasCmpxchg16b() const { return HasCmpxchg16b; }
   bool useLeaForSP() const { return UseLeaForSP; }
   bool hasSlowDivide() const { return HasSlowDivide; }
+  bool padShortFunctions() const { return PadShortFunctions; }
 
   bool isAtom() const { return X86ProcFamily == IntelAtom; }
 
