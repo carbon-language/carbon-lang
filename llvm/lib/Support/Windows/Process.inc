@@ -116,7 +116,7 @@ void Process::GetTimeUsage(TimeValue &elapsed, TimeValue &user_time,
     return;
 
   user_time = getTimeValueFromFILETIME(UserTime);
-  sys_time = getTimeValueFromFILETIME(SystemTime);
+  sys_time = getTimeValueFromFILETIME(KernelTime);
 }
 
 int Process::GetCurrentUserId()
