@@ -1037,8 +1037,8 @@ bool X86DAGToDAGISel::MatchAddressRecursively(SDValue N, X86ISelAddressMode &AM,
         AM.IndexReg = ShVal;
         return false;
       }
-    break;
     }
+    break;
 
   case ISD::SRL: {
     // Scale must not be used already.
