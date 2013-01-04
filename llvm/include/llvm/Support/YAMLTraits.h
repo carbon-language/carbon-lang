@@ -276,20 +276,9 @@ public:
 
 
 // Test if SequenceTraits<T> is defined on type T
-// and SequenceTraits<T>::flow is *not* defined.
 template<typename T>
 struct has_SequenceTraits : public  llvm::integral_constant<bool,
-                                         has_SequenceMethodTraits<T>::value
-                                      && !has_FlowTraits<T>::value > { };
-
-
-// Test if SequenceTraits<T> is defined on type T
-// and SequenceTraits<T>::flow is defined.
-template<typename T>
-struct has_FlowSequenceTraits : public llvm::integral_constant<bool,
-                                         has_SequenceMethodTraits<T>::value
-                                      && has_FlowTraits<T>::value > { };
-
+                                      has_SequenceMethodTraits<T>::value > { };
 
 
 // Test if DocumentListTraits<T> is defined on type T
@@ -318,7 +307,6 @@ struct missingTraits : public  llvm::integral_constant<bool,
                                       && !has_ScalarTraits<T>::value
                                       && !has_MappingTraits<T>::value
                                       && !has_SequenceTraits<T>::value
-                                      && !has_FlowSequenceTraits<T>::value
                                       && !has_DocumentListTraits<T>::value >  {};
 
 
@@ -510,33 +498,31 @@ yamlize(IO &io, T &Val, bool) {
 template<typename T>
 typename llvm::enable_if_c<has_SequenceTraits<T>::value,void>::type
 yamlize(IO &io, T &Seq, bool) {
-  unsigned incount = io.beginSequence();
-  unsigned count = io.outputting() ? SequenceTraits<T>::size(io, Seq) : incount;
-  for(unsigned i=0; i < count; ++i) {
-    void *SaveInfo;
-    if ( io.preflightElement(i, SaveInfo) ) {
-      yamlize(io, SequenceTraits<T>::element(io, Seq, i), true);
-      io.postflightElement(SaveInfo);
+  if ( has_FlowTraits< SequenceTraits<T> >::value ) {
+    unsigned incnt = io.beginFlowSequence();
+    unsigned count = io.outputting() ? SequenceTraits<T>::size(io, Seq) : incnt;
+    for(unsigned i=0; i < count; ++i) {
+      void *SaveInfo;
+      if ( io.preflightFlowElement(i, SaveInfo) ) {
+        yamlize(io, SequenceTraits<T>::element(io, Seq, i), true);
+        io.postflightFlowElement(SaveInfo);
+      }
     }
+    io.endFlowSequence();
   }
-  io.endSequence();
-}
-
-template<typename T>
-typename llvm::enable_if_c<has_FlowSequenceTraits<T>::value,void>::type
-yamlize(IO &io, T &Seq, bool) {
-  unsigned incount = io.beginFlowSequence();
-  unsigned count = io.outputting() ? SequenceTraits<T>::size(io, Seq) : incount;
-  for(unsigned i=0; i < count; ++i) {
-    void *SaveInfo;
-    if ( io.preflightFlowElement(i, SaveInfo) ) {
-      yamlize(io, SequenceTraits<T>::element(io, Seq, i), true);
-      io.postflightFlowElement(SaveInfo);
+  else {
+    unsigned incnt = io.beginSequence();
+    unsigned count = io.outputting() ? SequenceTraits<T>::size(io, Seq) : incnt;
+    for(unsigned i=0; i < count; ++i) {
+      void *SaveInfo;
+      if ( io.preflightElement(i, SaveInfo) ) {
+        yamlize(io, SequenceTraits<T>::element(io, Seq, i), true);
+        io.postflightElement(SaveInfo);
+      }
     }
+    io.endSequence();
   }
-  io.endFlowSequence();
 }
-
 
 
 template<>

@@ -600,8 +600,14 @@ TEST(YAMLIO, TestReadWriteMyFlowSequence) {
     map.numbers.push_back(1024);
 
     llvm::raw_string_ostream ostr(intermediate);
-    Output yout(ostr);
+    Output yout(ostr); 
     yout << map;
+    
+    // Verify sequences were written in flow style
+    ostr.flush();
+    llvm::StringRef flowOut(intermediate);
+    EXPECT_NE(llvm::StringRef::npos, flowOut.find("one, two"));
+    EXPECT_NE(llvm::StringRef::npos, flowOut.find("10, -30, 1024"));
   }
 
   {
@@ -632,7 +638,7 @@ LLVM_YAML_STRONG_TYPEDEF(uint32_t, TotalSeconds)
 
 typedef std::vector<TotalSeconds> SecondsSequence;
 
-LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(TotalSeconds)
+LLVM_YAML_IS_SEQUENCE_VECTOR(TotalSeconds)
 
 
 namespace llvm {
@@ -745,7 +751,7 @@ struct KindAndFlags {
 
 typedef std::vector<KindAndFlags> KindAndFlagsSequence;
 
-LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(KindAndFlags)
+LLVM_YAML_IS_SEQUENCE_VECTOR(KindAndFlags)
 
 namespace llvm {
 namespace yaml {

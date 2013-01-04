@@ -411,8 +411,8 @@ void Output::postflightElement(void *) {
 }
 
 unsigned Output::beginFlowSequence() {
-  this->newLineCheck();
   StateStack.push_back(inFlowSeq);
+  this->newLineCheck();
   ColumnAtFlowStart = Column;
   output("[ ");
   NeedFlowSequenceComma = false;
