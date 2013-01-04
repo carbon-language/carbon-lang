@@ -225,78 +225,142 @@ std::string Attribute::getAsString() const {
 }
 
 //===----------------------------------------------------------------------===//
-// AttrBuilder Implementation
+// AttrBuilder Method Implementations
 //===----------------------------------------------------------------------===//
 
-AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val){
-  Bits |= AttributeImpl::getAttrMask(Val);
+void AttrBuilder::clear() {
+  Attrs.clear();
+  Alignment = StackAlignment = 0;
+}
+
+AttrBuilder &AttrBuilder::addAttribute(Attribute::AttrKind Val) {
+  Attrs.insert(Val);
   return *this;
 }
 
-AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
-  Bits |= Val;
+AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
+  Attrs.erase(Val);
+  if (Val == Attribute::Alignment)
+    Alignment = 0;
+  else if (Val == Attribute::StackAlignment)
+    StackAlignment = 0;
+
   return *this;
 }
 
 AttrBuilder &AttrBuilder::addAlignmentAttr(unsigned Align) {
   if (Align == 0) return *this;
+
   assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
   assert(Align <= 0x40000000 && "Alignment too large.");
-  Bits |= (Log2_32(Align) + 1) << 16;
-  return *this;
-}
-AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align){
-  // Default alignment, allow the target to define how to align it.
-  if (Align == 0) return *this;
-  assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
-  assert(Align <= 0x100 && "Alignment too large.");
-  Bits |= (Log2_32(Align) + 1) << 26;
+
+  Attrs.insert(Attribute::Alignment);
+  Alignment = Align;
   return *this;
 }
 
-AttrBuilder &AttrBuilder::removeAttribute(Attribute::AttrKind Val) {
-  Bits &= ~AttributeImpl::getAttrMask(Val);
+AttrBuilder &AttrBuilder::addStackAlignmentAttr(unsigned Align) {
+  // Default alignment, allow the target to define how to align it.
+  if (Align == 0) return *this;
+
+  assert(isPowerOf2_32(Align) && "Alignment must be a power of two.");
+  assert(Align <= 0x100 && "Alignment too large.");
+
+  Attrs.insert(Attribute::StackAlignment);
+  StackAlignment = Align;
+  return *this;
+}
+
+AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
+  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
+       I = Attribute::AttrKind(I + 1)) {
+    if (uint64_t A = (Val & AttributeImpl::getAttrMask(I))) {
+      Attrs.insert(I);
+
+      if (I == Attribute::Alignment)
+        Alignment = 1ULL << ((A >> 16) - 1);
+      else if (I == Attribute::StackAlignment)
+        StackAlignment = 1ULL << ((A >> 26)-1);
+    }
+  }
+
   return *this;
 }
 
 AttrBuilder &AttrBuilder::addAttributes(const Attribute &A) {
-  Bits |= A.getBitMask();
+  uint64_t Mask = A.getBitMask();
+
+  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
+       I = Attribute::AttrKind(I + 1)) {
+    if (uint64_t A = (Mask & AttributeImpl::getAttrMask(I))) {
+      Attrs.insert(I);
+
+      if (I == Attribute::Alignment)
+        Alignment = 1ULL << ((A >> 16) - 1);
+      else if (I == Attribute::StackAlignment)
+        StackAlignment = 1ULL << ((A >> 26)-1);
+    }
+  }
+
   return *this;
 }
 
 AttrBuilder &AttrBuilder::removeAttributes(const Attribute &A){
-  Bits &= ~A.getBitMask();
+  uint64_t Mask = A.getBitMask();
+
+  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
+       I = Attribute::AttrKind(I + 1)) {
+    if (Mask & AttributeImpl::getAttrMask(I)) {
+      Attrs.erase(I);
+
+      if (I == Attribute::Alignment)
+        Alignment = 0;
+      else if (I == Attribute::StackAlignment)
+        StackAlignment = 0;
+    }
+  }
+
   return *this;
 }
 
 bool AttrBuilder::contains(Attribute::AttrKind A) const {
-  return Bits & AttributeImpl::getAttrMask(A);
+  return Attrs.count(A);
 }
 
 bool AttrBuilder::hasAttributes() const {
-  return Bits != 0;
+  return !Attrs.empty();
 }
 
 bool AttrBuilder::hasAttributes(const Attribute &A) const {
-  return Bits & A.getBitMask();
+  return getBitMask() & A.getBitMask();
 }
 
 bool AttrBuilder::hasAlignmentAttr() const {
-  return Bits & AttributeImpl::getAttrMask(Attribute::Alignment);
+  return Alignment != 0;
 }
 
-uint64_t AttrBuilder::getAlignment() const {
-  if (!hasAlignmentAttr())
-    return 0;
-  return 1ULL <<
-    (((Bits & AttributeImpl::getAttrMask(Attribute::Alignment)) >> 16) - 1);
+uint64_t AttrBuilder::getBitMask() const {
+  uint64_t Mask = 0;
+
+  for (DenseSet<Attribute::AttrKind>::const_iterator I = Attrs.begin(),
+         E = Attrs.end(); I != E; ++I) {
+    Attribute::AttrKind Kind = *I;
+
+    if (Kind == Attribute::Alignment)
+      Mask |= (Log2_32(Alignment) + 1) << 16;
+    else if (Kind == Attribute::StackAlignment)
+      Mask |= (Log2_32(StackAlignment) + 1) << 26;
+    else
+      Mask |= AttributeImpl::getAttrMask(Kind);
+  }
+
+  return Mask;
 }
 
-uint64_t AttrBuilder::getStackAlignment() const {
-  if (!hasAlignmentAttr())
-    return 0;
-  return 1ULL <<
-    (((Bits & AttributeImpl::getAttrMask(Attribute::StackAlignment))>>26)-1);
+bool AttrBuilder::operator==(const AttrBuilder &B) {
+  SmallVector<Attribute::AttrKind, 8> This(Attrs.begin(), Attrs.end());
+  SmallVector<Attribute::AttrKind, 8> That(B.Attrs.begin(), B.Attrs.end());
+  return This == That;
 }
 
 //===----------------------------------------------------------------------===//
@@ -345,6 +409,7 @@ uint64_t AttributeImpl::getBitMask() const {
 
 uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   switch (Val) {
+  case Attribute::EndAttrKinds:    break;
   case Attribute::None:            return 0;
   case Attribute::ZExt:            return 1 << 0;
   case Attribute::SExt:            return 1 << 1;

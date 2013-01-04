@@ -17,6 +17,7 @@
 #define LLVM_ATTRIBUTES_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <string>
@@ -90,7 +91,9 @@ public:
     StackProtectReq,       ///< Stack protection required.
     StructRet,             ///< Hidden pointer to structure to return
     UWTable,               ///< Function must be in a unwind table
-    ZExt                   ///< Zero extended before/after call
+    ZExt,                  ///< Zero extended before/after call
+
+    EndAttrKinds           ///< Sentinal value useful for loops
   };
 private:
   AttributeImpl *pImpl;
@@ -152,18 +155,44 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// \class
+/// \brief Provide DenseMapInfo for Attribute::AttrKinds. This is used by
+/// AttrBuilder.
+template<> struct DenseMapInfo<Attribute::AttrKind> {
+  static inline Attribute::AttrKind getEmptyKey() {
+    return Attribute::AttrKind(~0U);
+  }
+  static inline Attribute::AttrKind getTombstoneKey() {
+    return Attribute::AttrKind(~0U - 1);
+  }
+  static unsigned getHashValue(const Attribute::AttrKind &Val) {
+    return Val * 37U;
+  }
+  static bool isEqual(const Attribute::AttrKind &LHS,
+                      const Attribute::AttrKind &RHS) {
+    return LHS == RHS;
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// \class
 /// \brief This class is used in conjunction with the Attribute::get method to
 /// create an Attribute object. The object itself is uniquified. The Builder's
 /// value, however, is not. So this can be used as a quick way to test for
 /// equality, presence of attributes, etc.
 class AttrBuilder {
-  uint64_t Bits;
+  DenseSet<Attribute::AttrKind> Attrs;
+  uint64_t Alignment;
+  uint64_t StackAlignment;
 public:
-  AttrBuilder() : Bits(0) {}
-  explicit AttrBuilder(uint64_t B) : Bits(B) {}
-  AttrBuilder(const Attribute &A) : Bits(A.getBitMask()) {}
+  AttrBuilder() : Alignment(0), StackAlignment(0) {}
+  explicit AttrBuilder(uint64_t B) : Alignment(0), StackAlignment(0) {
+    addRawValue(B);
+  }
+  AttrBuilder(const Attribute &A) : Alignment(0), StackAlignment(0) {
+    addAttributes(A);
+  }
 
-  void clear() { Bits = 0; }
+  void clear();
 
   /// \brief Add an attribute to the builder.
   AttrBuilder &addAttribute(Attribute::AttrKind Val);
@@ -191,10 +220,10 @@ public:
   bool hasAlignmentAttr() const;
 
   /// \brief Retrieve the alignment attribute, if it exists.
-  uint64_t getAlignment() const;
+  uint64_t getAlignment() const { return Alignment; }
 
   /// \brief Retrieve the stack alignment attribute, if it exists.
-  uint64_t getStackAlignment() const;
+  uint64_t getStackAlignment() const { return StackAlignment; }
 
   /// \brief This turns an int alignment (which must be a power of 2) into the
   /// form used internally in Attribute.
@@ -233,13 +262,11 @@ public:
       .removeAttribute(Attribute::NoDuplicate);
   }
 
-  uint64_t getBitMask() const { return Bits; }
+  uint64_t getBitMask() const;
 
-  bool operator==(const AttrBuilder &B) {
-    return Bits == B.Bits;
-  }
+  bool operator==(const AttrBuilder &B);
   bool operator!=(const AttrBuilder &B) {
-    return Bits != B.Bits;
+    return !(*this == B);
   }
 };
 
