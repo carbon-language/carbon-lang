@@ -4,9 +4,13 @@
 # want to the use the system version of Python on Mac OS X.
 # This one has the scripting bridge enabled.
 
+import sys
+if sys.version_info < (2, 7):
+    print "set-xcode-analyzer requires Python 2.7 or later"
+    sys.exit(1)
+    
 import os
 import subprocess
-import sys
 import re
 import tempfile
 import shutil
