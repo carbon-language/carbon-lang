@@ -378,6 +378,19 @@ ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void 
                 section_dst_len = section_bytes_left;
             return CopyData (section->GetFileOffset() + section_offset, section_dst_len, dst);
         }
+        else
+        {
+            if (section->GetType() == eSectionTypeZeroFill)
+            {
+                const uint64_t section_size = section->GetByteSize();
+                const uint64_t section_bytes_left = section_size - section_offset;
+                uint64_t section_dst_len = dst_len;
+                if (section_dst_len > section_bytes_left)
+                    section_dst_len = section_bytes_left;
+                bzero(dst, section_dst_len);
+                return section_dst_len;
+            }
+        }
     }
     return 0;
 }
