@@ -164,6 +164,7 @@ public:
         if (symbol->getType() == llvm::ELF::STT_NOTYPE
             || symbol->getType() == llvm::ELF::STT_OBJECT
             || symbol->getType() == llvm::ELF::STT_FUNC
+            || symbol->getType() == llvm::ELF::STT_GNU_IFUNC
             || symbol->getType() == llvm::ELF::STT_SECTION
             || symbol->getType() == llvm::ELF::STT_FILE
             || symbol->getType() == llvm::ELF::STT_TLS
