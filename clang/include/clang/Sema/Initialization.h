@@ -177,8 +177,7 @@ public:
   /// \brief Create the initialization entity for a parameter.
   static InitializedEntity InitializeParameter(ASTContext &Context,
                                                ParmVarDecl *Parm) {
-    return InitializeParameter(Context, Parm,
-                               Parm->getType().getUnqualifiedType());
+    return InitializeParameter(Context, Parm, Parm->getType());
   }
 
   /// \brief Create the initialization entity for a parameter, but use
@@ -191,7 +190,8 @@ public:
 
     InitializedEntity Entity;
     Entity.Kind = EK_Parameter;
-    Entity.Type = Context.getVariableArrayDecayedType(Type);
+    Entity.Type =
+      Context.getVariableArrayDecayedType(Type.getUnqualifiedType());
     Entity.Parent = 0;
     Entity.Parameter
       = (static_cast<uintptr_t>(Consumed) | reinterpret_cast<uintptr_t>(Parm));
