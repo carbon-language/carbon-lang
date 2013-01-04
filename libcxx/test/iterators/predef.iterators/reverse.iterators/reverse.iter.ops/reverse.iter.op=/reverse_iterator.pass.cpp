@@ -32,14 +32,14 @@ test(U u)
     assert(&rr == &r1);
 }
 
-struct base {};
-struct derived : base {};
+struct Base {};
+struct Derived : Base {};
 
 int main()
 {
-    derived d;
+    Derived d;
 
-    test<bidirectional_iterator<base*> >(bidirectional_iterator<derived*>(&d));
-    test<random_access_iterator<const base*> >(random_access_iterator<derived*>(&d));
-    test<base*>(&d);
+    test<bidirectional_iterator<Base*> >(bidirectional_iterator<Derived*>(&d));
+    test<random_access_iterator<const Base*> >(random_access_iterator<Derived*>(&d));
+    test<Base*>(&d);
 }
