@@ -224,14 +224,13 @@ bool llvm::finalizeBundles(MachineFunction &MF) {
   bool Changed = false;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock &MBB = *I;
-
     MachineBasicBlock::instr_iterator MII = MBB.instr_begin();
-    assert(!MII->isInsideBundle() &&
-           "First instr cannot be inside bundle before finalization!");
-
     MachineBasicBlock::instr_iterator MIE = MBB.instr_end();
     if (MII == MIE)
       continue;
+    assert(!MII->isInsideBundle() &&
+           "First instr cannot be inside bundle before finalization!");
+
     for (++MII; MII != MIE; ) {
       if (!MII->isInsideBundle())
         ++MII;
