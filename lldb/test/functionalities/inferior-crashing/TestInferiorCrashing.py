@@ -39,14 +39,19 @@ class CrashingInferiorTestCase(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
 
+        if sys.platform.startswith("darwin"):
+            stop_reason = 'stop reason = EXC_BAD_ACCESS'
+        else:
+            stop_reason = 'stop reason = invalid address'
+
         # The stop reason of the thread should be a bad access exception.
         self.expect("thread list", STOPPED_DUE_TO_EXC_BAD_ACCESS,
             substrs = ['stopped',
-                       'stop reason = EXC_BAD_ACCESS'])
+                       stop_reason])
 
         # And it should report the correct line number.
         self.expect("thread backtrace all",
-            substrs = ['stop reason = EXC_BAD_ACCESS',
+            substrs = [stop_reason,
                        'main.c:%d' % self.line])
 
     def inferior_crashing_python(self):
