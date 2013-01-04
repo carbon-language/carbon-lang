@@ -14,6 +14,7 @@ add_clang_library(clangARCMigrate
   TransGCAttrs.cpp
   TransGCCalls.cpp
   TransProperties.cpp
+  TransProtectedScope.cpp
   TransRetainReleaseDealloc.cpp
   TransUnbridgedCasts.cpp
   TransUnusedInitDelegate.cpp
