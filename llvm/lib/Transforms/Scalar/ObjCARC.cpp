@@ -995,7 +995,7 @@ bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
       // zap the pair.
       if (Push && cast<CallInst>(Inst)->getArgOperand(0) == Push) {
         Changed = true;
-        DEBUG(dbgs() << "ObjCARCAPElim: OptimizeBB: Zapping push pop autorelease pair:\n"
+        DEBUG(dbgs() << "ObjCARCAPElim::OptimizeBB: Zapping push pop autorelease pair:\n"
                      << "                           Pop: " << *Inst << "\n"
                      << "                           Push: " << *Push << "\n");
         Inst->eraseFromParent();
@@ -2286,7 +2286,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
 
-    DEBUG(dbgs() << "ObjCARCOpt: OptimizeIndividualCalls: Visiting: " <<
+    DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Visiting: " <<
           *Inst << "\n");
 
     InstructionClass Class = GetBasicInstructionClass(Inst);
@@ -2503,7 +2503,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
       }
     } while (!Worklist.empty());
 
-    DEBUG(dbgs() << "ObjCARCOpt: Finished Individual Call Queue.\n\n");
+    DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Finished Queue.\n\n");
 
   }
 }
@@ -3409,7 +3409,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
 
-    DEBUG(dbgs() << "ObjCARCOpt: OptimizeWeakCalls: Visiting: " << *Inst <<
+    DEBUG(dbgs() << "ObjCARCOpt::OptimizeWeakCalls: Visiting: " << *Inst <<
           "\n");
 
     InstructionClass Class = GetBasicInstructionClass(Inst);
@@ -3558,7 +3558,7 @@ void ObjCARCOpt::OptimizeWeakCalls(Function &F) {
     }
   }
   
-  DEBUG(dbgs() << "ObjCARCOpt: Finished visiting weak calls.\n\n");
+  DEBUG(dbgs() << "ObjCARCOpt::OptimizeWeakCalls: Finished List.\n\n");
   
 }
 
@@ -3609,7 +3609,7 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
     BasicBlock *BB = FI;
     ReturnInst *Ret = dyn_cast<ReturnInst>(&BB->back());
 
-    DEBUG(dbgs() << "ObjCARCOpt: OptimizeReturns: Visiting: " << *Ret << "\n");
+    DEBUG(dbgs() << "ObjCARCOpt::OptimizeReturns: Visiting: " << *Ret << "\n");
 
     if (!Ret) continue;
 
@@ -3695,7 +3695,7 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
     Visited.clear();
   }
   
-  DEBUG(dbgs() << "ObjCARCOpt: OptimizeReturns: Finished visiting returns.\n\n");
+  DEBUG(dbgs() << "ObjCARCOpt::OptimizeReturns: Finished List.\n\n");
   
 }
 
@@ -4151,7 +4151,7 @@ bool ObjCARCContract::runOnFunction(Function &F) {
 
       if (&*BBI == GetObjCArg(Inst)) {
         DEBUG(dbgs() << "ObjCARCContract: Adding inline asm marker for "
-              "retainAutoreleasedReturnValue optimization.\n");
+                        "retainAutoreleasedReturnValue optimization.\n");
         Changed = true;
         InlineAsm *IA =
           InlineAsm::get(FunctionType::get(Type::getVoidTy(Inst->getContext()),
