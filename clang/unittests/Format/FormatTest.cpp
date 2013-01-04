@@ -859,6 +859,13 @@ TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
                "};");
 }
 
+TEST_F(FormatTest, DoesNotTouchUnwrappedLinesWithErrors) {
+  verifyFormat("namespace {\n"
+               "class Foo {\n"
+               "  Foo  ( };\n"
+               "}  // comment");
+}
+
 TEST_F(FormatTest, IncorrectCodeErrorDetection) {
   EXPECT_EQ("{\n{\n}\n", format("{\n{\n}\n"));
   EXPECT_EQ("{\n  {\n}\n", format("{\n  {\n}\n"));

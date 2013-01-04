@@ -120,7 +120,7 @@ public:
 
     // Check whether the UnwrappedLine can be put onto a single line. If so,
     // this is bound to be the optimal solution (by definition) and we don't
-    // need to analyze the entire solution space. 
+    // need to analyze the entire solution space.
     unsigned Columns = State.Column;
     bool FitsOnALine = true;
     for (unsigned i = 1, n = Line.Tokens.size(); i != n; ++i) {
@@ -535,14 +535,16 @@ public:
           return true;
         }
         if (Tokens[Index].Tok.is(tok::r_paren) ||
-            Tokens[Index].Tok.is(tok::r_square))
+            Tokens[Index].Tok.is(tok::r_square) ||
+            Tokens[Index].Tok.is(tok::r_brace))
           return false;
         if (Tokens[Index].Tok.is(tok::pipepipe) ||
             Tokens[Index].Tok.is(tok::ampamp) ||
             Tokens[Index].Tok.is(tok::question) ||
             Tokens[Index].Tok.is(tok::colon))
           return false;
-        consumeToken();
+        if (!consumeToken())
+          return false;
       }
       return false;
     }
@@ -553,9 +555,11 @@ public:
           next();
           return true;
         }
-        if (Tokens[Index].Tok.is(tok::r_square))
+        if (Tokens[Index].Tok.is(tok::r_square) ||
+            Tokens[Index].Tok.is(tok::r_brace))
           return false;
-        consumeToken();
+        if (!consumeToken())
+          return false;
       }
       return false;
     }
@@ -566,9 +570,11 @@ public:
           next();
           return true;
         }
-        if (Tokens[Index].Tok.is(tok::r_paren))
+        if (Tokens[Index].Tok.is(tok::r_paren) ||
+            Tokens[Index].Tok.is(tok::r_brace))
           return false;
-        consumeToken();
+        if (!consumeToken())
+          return false;
       }
       return false;
     }
@@ -580,7 +586,8 @@ public:
           next();
           return true;
         }
-        consumeToken();
+        if (!consumeToken())
+          return false;
       }
       return false;
     }
@@ -598,19 +605,21 @@ public:
       return false;
     }
 
-    void consumeToken() {
+    bool consumeToken() {
       unsigned CurrentIndex = Index;
       next();
       switch (Tokens[CurrentIndex].Tok.getKind()) {
       case tok::l_paren:
-        parseParens();
+        if (!parseParens())
+          return false;
         if (Index < Tokens.size() && Tokens[Index].Tok.is(tok::colon)) {
           Annotations[Index].Type = TokenAnnotation::TT_CtorInitializerColon;
           next();
         }
         break;
       case tok::l_square:
-        parseSquare();
+        if (!parseSquare())
+          return false;
         break;
       case tok::less:
         if (parseAngle())
@@ -620,6 +629,9 @@ public:
           Index = CurrentIndex + 1;
         }
         break;
+      case tok::r_paren:
+      case tok::r_square:
+        return false;
       case tok::greater:
         Annotations[CurrentIndex].Type = TokenAnnotation::TT_BinaryOperator;
         break;
@@ -647,6 +659,7 @@ public:
       default:
         break;
       }
+      return true;
     }
 
     void parseIncludeDirective() {
@@ -678,14 +691,16 @@ public:
       }
     }
 
-    void parseLine() {
+    bool parseLine() {
       if (Tokens[Index].Tok.is(tok::hash)) {
         parsePreprocessorDirective();
-        return;
+        return true;
       }
       while (Index < Tokens.size()) {
-        consumeToken();
+        if (!consumeToken())
+          return false;
       }
+      return true;
     }
 
     void next() {
@@ -698,14 +713,15 @@ public:
     unsigned Index;
   };
 
-  void annotate() {
+  bool annotate() {
     Annotations.clear();
     for (int i = 0, e = Line.Tokens.size(); i != e; ++i) {
       Annotations.push_back(TokenAnnotation());
     }
 
     AnnotatingParser Parser(Line.Tokens, Annotations);
-    Parser.parseLine();
+    if (!Parser.parseLine())
+      return false;
 
     determineTokenTypes();
     bool IsObjCMethodDecl =
@@ -806,6 +822,7 @@ public:
       if (Annotation.MustBreakBefore)
         Annotation.CanBreakBefore = true;
     }
+    return true;
   }
 
   const std::vector<TokenAnnotation> &getAnnotations() {
@@ -1092,7 +1109,8 @@ private:
         continue;
 
       TokenAnnotator Annotator(TheLine, Style, SourceMgr);
-      Annotator.annotate();
+      if (!Annotator.annotate())
+        return;
       UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine,
                                        Annotator.getAnnotations(), Replaces,
                                        StructuralError);
