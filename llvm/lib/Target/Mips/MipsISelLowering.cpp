@@ -520,7 +520,9 @@ MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT, bool *Fast) const {
 }
 
 EVT MipsTargetLowering::getSetCCResultType(EVT VT) const {
-  return MVT::i32;
+  if (!VT.isVector())
+    return MVT::i32;
+  return VT.changeVectorElementTypeToInteger();
 }
 
 // SelectMadd -
