@@ -426,6 +426,9 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
   DwarfLocDWOSection =
     Ctx->getELFSection(".debug_loc.dwo", ELF::SHT_PROGBITS, 0,
                        SectionKind::getMetadata());
+  DwarfStrOffDWOSection =
+    Ctx->getELFSection(".debug_str_offsets.dwo", ELF::SHT_PROGBITS, 0,
+                       SectionKind::getMetadata());
 }
 
 
