@@ -23,7 +23,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace clang;
@@ -252,18 +252,15 @@ void NSOrCFErrorDerefChecker::checkEvent(ImplicitNullDerefEvent event) const {
     return;
 
   // Storing to possible null NSError/CFErrorRef out parameter.
+  llvm::SmallString<128> Buf;
+  llvm::raw_svector_ostream os(Buf);
 
-  // Emit an error.
-  std::string err;
-  llvm::raw_string_ostream os(err);
-    os << "Potential null dereference.  According to coding standards ";
+  os << "Potential null dereference.  According to coding standards ";
+  os << (isNSError
+         ? "in 'Creating and Returning NSError Objects' the parameter"
+         : "documented in CoreFoundation/CFError.h the parameter");
 
-  if (isNSError)
-    os << "in 'Creating and Returning NSError Objects' the parameter '";
-  else
-    os << "documented in CoreFoundation/CFError.h the parameter '";
-
-  os  << "' may be null.";
+  os  << " may be null";
 
   BugType *bug = 0;
   if (isNSError)
