@@ -878,8 +878,9 @@ private:
     const FormatToken &PrevToken = Line.Tokens[Index - 1];
     const FormatToken &NextToken = Line.Tokens[Index + 1];
 
-    if (PrevToken.Tok.is(tok::l_paren) || PrevToken.Tok.is(tok::comma) ||
-        PrevToken.Tok.is(tok::kw_return) || PrevToken.Tok.is(tok::colon) ||
+    if (PrevToken.Tok.is(tok::l_paren) || PrevToken.Tok.is(tok::l_square) ||
+        PrevToken.Tok.is(tok::comma) || PrevToken.Tok.is(tok::kw_return) ||
+        PrevToken.Tok.is(tok::colon) ||
         Annotations[Index - 1].Type == TokenAnnotation::TT_BinaryOperator)
       return TokenAnnotation::TT_UnaryOperator;
 

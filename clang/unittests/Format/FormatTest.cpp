@@ -768,6 +768,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("a * ++b;");
   verifyFormat("a * --b;");
 
+  verifyFormat("InvalidRegions[*R] = 0;");
+
   // FIXME: Is this desired for LLVM? Fix if not.
   verifyFormat("A<int *> a;");
   verifyFormat("A<int **> a;");
