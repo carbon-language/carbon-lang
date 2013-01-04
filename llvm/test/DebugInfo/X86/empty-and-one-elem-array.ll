@@ -29,33 +29,33 @@ declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
 ; should.
 
 ; CHECK:      0x00000074:   DW_TAG_base_type [5]  
-; CHECK-NEXT: 0x00000075:     DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000043] = "int")
-; CHECK-NEXT: 0x00000079:     DW_AT_encoding [DW_FORM_data1]   (0x05)
-; CHECK-NEXT: 0x0000007a:     DW_AT_byte_size [DW_FORM_data1]  (0x04)
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000043] = "int")
+; CHECK-NEXT: DW_AT_encoding [DW_FORM_data1]   (0x05)
+; CHECK-NEXT: DW_AT_byte_size [DW_FORM_data1]  (0x04)
 
 ; int[1]:
-; CHECK:      0x0000007e:   DW_TAG_array_type [7] *
-; CHECK-NEXT: 0x0000007f:     DW_AT_type [DW_FORM_ref4]    (cu + 0x0074 => {0x00000074})
-; CHECK:      0x00000083:     DW_TAG_subrange_type [8]  
-; CHECK-NEXT: 0x00000084:       DW_AT_type [DW_FORM_ref4]  (cu + 0x007b => {0x0000007b})
-; CHECK-NEXT: 0x00000088:       DW_AT_upper_bound [DW_FORM_data1]  (0x00)
+; CHECK:      0x00000082:   DW_TAG_array_type [7] *
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]    (cu + 0x0074 => {0x00000074})
+; CHECK:      0x00000087:     DW_TAG_subrange_type [8]
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x007b => {0x0000007b})
+; CHECK-NEXT: DW_AT_upper_bound [DW_FORM_data1]  (0x00)
 
 ; int foo::b[1]:
-; CHECK:      0x000000a1:     DW_TAG_member [10]  
-; CHECK-NEXT: 0x000000a2:       DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000050] = "b")
-; CHECK-NEXT: 0x000000a6:       DW_AT_type [DW_FORM_ref4]  (cu + 0x007e => {0x0000007e})
+; CHECK:      0x000000a5:     DW_TAG_member [10]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000050] = "b")
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x0082 => {0x00000082})
 
 ; int[0]:
-; CHECK:      0x000000b1:   DW_TAG_array_type [7] *
-; CHECK-NEXT: 0x000000b2:     DW_AT_type [DW_FORM_ref4]    (cu + 0x0074 => {0x00000074})
-; CHECK:      0x000000b6:     DW_TAG_subrange_type [11]  
-; CHECK-NEXT: 0x000000b7:       DW_AT_type [DW_FORM_ref4]  (cu + 0x007b => {0x0000007b})
+; CHECK:      0x000000b5:   DW_TAG_array_type [7] *
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]    (cu + 0x0074 => {0x00000074})
+; CHECK:      0x000000ba:     DW_TAG_subrange_type [11]
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x007b => {0x0000007b})
 ; CHECK-NOT:  DW_AT_upper_bound
 
 ; int bar::b[0]:
-; CHECK:      0x000000d3:     DW_TAG_member [10]  
-; CHECK-NEXT: 0x000000d4:       DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000050] = "b")
-; CHECK-NEXT: 0x000000d8:       DW_AT_type [DW_FORM_ref4]  (cu + 0x00b1 => {0x000000b1})
+; CHECK:      0x000000d7:     DW_TAG_member [10]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000050] = "b")
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x00b5 => {0x000000b5})
 
 !llvm.dbg.cu = !{!0}
 

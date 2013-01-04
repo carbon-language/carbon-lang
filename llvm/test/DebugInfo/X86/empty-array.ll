@@ -7,19 +7,20 @@
 @a = global %class.A zeroinitializer, align 4
 
 ; CHECK:      0x0000002d:   DW_TAG_base_type [3]  
-; CHECK-NEXT: 0x0000002e:     DW_AT_byte_size [DW_FORM_data1]  (0x04)
-; CHECK-NEXT: 0x0000002f:     DW_AT_encoding [DW_FORM_data1]   (0x05)
+; CHECK-NEXT: DW_AT_name
+; CHECK-NEXT: DW_AT_byte_size [DW_FORM_data1]  (0x04)
+; CHECK-NEXT: DW_AT_encoding [DW_FORM_data1]   (0x05)
 
-; CHECK:      0x00000030:   DW_TAG_array_type [4] *
-; CHECK-NEXT: 0x00000031:     DW_AT_type [DW_FORM_ref4]    (cu + 0x0026 => {0x00000026})
+; CHECK:      0x00000034:   DW_TAG_array_type [4] *
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]    (cu + 0x0026 => {0x00000026})
 
-; CHECK:      0x00000035:     DW_TAG_subrange_type [5]  
-; CHECK-NEXT: 0x00000036:       DW_AT_type [DW_FORM_ref4]  (cu + 0x002d => {0x0000002d})
+; CHECK:      0x00000039:     DW_TAG_subrange_type [5]
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x002d => {0x0000002d})
 ; CHECK-NOT:  DW_AT_upper_bound
 
-; CHECK:      0x00000048:     DW_TAG_member [8]  
-; CHECK-NEXT: 0x00000049:       DW_AT_name [DW_FORM_strp]  ( .debug_str[0x0000003f] = "x")
-; CHECK-NEXT: 0x0000004d:       DW_AT_type [DW_FORM_ref4]  (cu + 0x0030 => {0x00000030})
+; CHECK:      DW_TAG_member [8]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x0000003f] = "x")
+; CHECK-NEXT: DW_AT_type [DW_FORM_ref4]  (cu + 0x0034 => {0x00000034})
 
 !llvm.dbg.cu = !{!0}
 
