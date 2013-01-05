@@ -1378,8 +1378,6 @@ void CompileUnit::constructContainingTypeDIEs() {
 /// constructVariableDIE - Construct a DIE for the given DbgVariable.
 DIE *CompileUnit::constructVariableDIE(DbgVariable *DV, bool isScopeAbstract) {
   StringRef Name = DV->getName();
-  if (Name.empty())
-    return NULL;
 
   // Translate tag to proper Dwarf tag.
   unsigned Tag = DV->getTag();

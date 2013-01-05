@@ -1,20 +1,25 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
-; CHECK: DW_AT_object_pointer [DW_FORM_ref4]     (cu + 0x00bf => {0x000000bf})
-; CHECK: 0x000000bf:     DW_TAG_formal_parameter [12]
-; CHECK-NEXT: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000085] = "this")
+; CHECK: DW_TAG_formal_parameter [
+; CHECK: DW_TAG_class_type
+; CHECK: DW_AT_object_pointer [DW_FORM_ref4]     (cu + 0x00fd => {0x000000fd})
+; CHECK: 0x000000fd:     DW_TAG_formal_parameter [13]
+; CHECK-NEXT: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x00000086] = "this")
 
 %class.A = type { i32 }
 
-define i32 @_Z3foov() nounwind uwtable ssp {
+define i32 @_Z3fooi(i32) nounwind uwtable ssp {
 entry:
+  %.addr = alloca i32, align 4
   %a = alloca %class.A, align 4
+  store i32 %0, i32* %.addr, align 4
+  call void @llvm.dbg.declare(metadata !{i32* %.addr}, metadata !36), !dbg !35
   call void @llvm.dbg.declare(metadata !{%class.A* %a}, metadata !21), !dbg !23
   call void @_ZN1AC1Ev(%class.A* %a), !dbg !24
   %m_a = getelementptr inbounds %class.A* %a, i32 0, i32 0, !dbg !25
-  %0 = load i32* %m_a, align 4, !dbg !25
-  ret i32 %0, !dbg !25
+  %1 = load i32* %m_a, align 4, !dbg !25
+  ret i32 %1, !dbg !25
 }
 
 declare void @llvm.dbg.declare(metadata, metadata) nounwind readnone
@@ -47,7 +52,7 @@ entry:
 !2 = metadata !{i32 0}
 !3 = metadata !{metadata !4}
 !4 = metadata !{metadata !5, metadata !10, metadata !20}
-!5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3foov", metadata !6, i32 7, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 ()* @_Z3foov, null, null, metadata !1, i32 7} ; [ DW_TAG_subprogram ] [line 7] [def] [foo]
+!5 = metadata !{i32 786478, i32 0, metadata !6, metadata !"foo", metadata !"foo", metadata !"_Z3fooi", metadata !6, i32 7, metadata !7, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, i32 (i32)* @_Z3fooi, null, null, metadata !1, i32 7} ; [ DW_TAG_subprogram ] [line 7] [def] [foo]
 !6 = metadata !{i32 786473, metadata !"bar.cpp", metadata !"/Users/echristo/debug-tests", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 786453, i32 0, metadata !"", i32 0, i32 0, i64 0, i64 0, i64 0, i32 0, null, metadata !8, i32 0, i32 0} ; [ DW_TAG_subroutine_type ] [line 0, size 0, align 0, offset 0] [from ]
 !8 = metadata !{metadata !9}
@@ -63,6 +68,8 @@ entry:
 !18 = metadata !{metadata !19}
 !19 = metadata !{i32 786468}                      ; [ DW_TAG_base_type ] [line 0, size 0, align 0, offset 0]
 !20 = metadata !{i32 786478, i32 0, null, metadata !"A", metadata !"A", metadata !"_ZN1AC2Ev", metadata !6, i32 3, metadata !11, i1 false, i1 true, i32 0, i32 0, null, i32 256, i1 false, void (%class.A*)* @_ZN1AC2Ev, null, metadata !17, metadata !1, i32 3} ; [ DW_TAG_subprogram ] [line 3] [def] [A]
+!36 = metadata !{i32 786689, metadata !5, metadata !"", metadata !6, i32 16777223, metadata !9, i32 0, i32 0} ; [ DW_TAG_arg_variable ] [line 7]
+!35 = metadata !{i32 7, i32 0, metadata !5, null}
 !21 = metadata !{i32 786688, metadata !22, metadata !"a", metadata !6, i32 8, metadata !14, i32 0, i32 0} ; [ DW_TAG_auto_variable ] [a] [line 8]
 !22 = metadata !{i32 786443, metadata !5, i32 7, i32 11, metadata !6, i32 0} ; [ DW_TAG_lexical_block ] [/Users/echristo/debug-tests/bar.cpp]
 !23 = metadata !{i32 8, i32 5, metadata !22, null}
