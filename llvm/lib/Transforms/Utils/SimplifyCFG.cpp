@@ -3523,8 +3523,7 @@ static bool ShouldBuildLookupTable(SwitchInst *SI,
     Type *Ty = I->second;
 
     // Saturate this flag to true.
-    HasIllegalType = HasIllegalType ||
-      !TTI->getScalarTargetTransformInfo()->isTypeLegal(Ty);
+    HasIllegalType = HasIllegalType || !TTI->isTypeLegal(Ty);
 
     // Saturate this flag to false.
     AllTablesFitInRegister = AllTablesFitInRegister &&
@@ -3561,8 +3560,7 @@ static bool SwitchToLookupTable(SwitchInst *SI,
   assert(SI->getNumCases() > 1 && "Degenerate switch?");
 
   // Only build lookup table when we have a target that supports it.
-  if (!TTI || !TTI->getScalarTargetTransformInfo() ||
-      !TTI->getScalarTargetTransformInfo()->shouldBuildLookupTables())
+  if (!TTI || !TTI->shouldBuildLookupTables())
     return false;
 
   // FIXME: If the switch is too sparse for a lookup table, perhaps we could
