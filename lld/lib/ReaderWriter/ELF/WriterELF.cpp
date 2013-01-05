@@ -1213,7 +1213,9 @@ public:
   ELFProgramHeader()
   : Chunk<target_endianness, max_align, is64Bits>(
       "elfphdr",
-      Chunk<target_endianness, max_align, is64Bits>::K_ELFProgramHeader) { }
+      Chunk<target_endianness, max_align, is64Bits>::K_ELFProgramHeader) {
+    resetProgramHeaders();
+  }
 
   bool addSegment(Segment<target_endianness, max_align, is64Bits> *segment) {
     Elf_Phdr *phdr = nullptr;
