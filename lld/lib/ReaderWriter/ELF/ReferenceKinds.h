@@ -115,6 +115,34 @@ private:
                       uint64_t targetAddress, uint64_t addend)> > _fixupHandler;
 };
 
+class X86_64KindHandler : public KindHandler {
+public:
+  enum Kinds {
+    invalid, // used to denote an error creating a Reference
+    none,
+  };
+
+  enum RelocationError {
+    NoError,
+  };
+
+  virtual ~X86_64KindHandler();
+  X86_64KindHandler();
+  virtual Kind stringToKind(StringRef str);
+  virtual StringRef kindToString(Kind);
+  virtual bool isCallSite(Kind);
+  virtual bool isPointer(Kind);
+  virtual bool isLazyImmediate(Kind);
+  virtual bool isLazyTarget(Kind);
+  virtual void applyFixup(int32_t reloc, uint64_t addend, uint8_t *location,
+                          uint64_t fixupAddress, uint64_t targetAddress);
+
+private:
+  llvm::DenseMap<int32_t,
+           std::function<int (uint8_t *location, uint64_t fixupAddress,
+                      uint64_t targetAddress, uint64_t addend)> > _fixupHandler;
+};
+
 class PPCKindHandler : public KindHandler {
 public:
   enum Kinds {

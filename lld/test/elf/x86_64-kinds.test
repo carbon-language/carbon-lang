@@ -1,0 +1,1 @@
+RUN: lld -flavor core -target x86_64-linux

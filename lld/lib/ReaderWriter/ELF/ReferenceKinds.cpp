@@ -30,6 +30,8 @@ KindHandler::makeHandler(uint16_t arch, llvm::support::endianness endian) {
     return std::unique_ptr<KindHandler>(new HexagonKindHandler());
   case llvm::ELF::EM_386:
     return std::unique_ptr<KindHandler>(new X86KindHandler());
+  case llvm::ELF::EM_X86_64:
+    return std::unique_ptr<KindHandler>(new X86_64KindHandler());
   case llvm::ELF::EM_PPC:
     return std::unique_ptr<KindHandler>(new PPCKindHandler(endian));
   default:
