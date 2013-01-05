@@ -1,4 +1,5 @@
-// RUN: %clang -fverbose-asm -g -S %s -o - | grep DW_ACCESS_protected
+// RUN: %clang -fverbose-asm -g -S %s -o - | FileCheck %s
+// CHECK: DW_ACCESS_protected
 class A {
 protected:
   int foo();
