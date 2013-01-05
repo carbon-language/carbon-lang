@@ -803,10 +803,10 @@ bool InstCombiner::SimplifyStoreAtEndOfBlock(StoreInst &SI) {
   NewSI->setDebugLoc(OtherStore->getDebugLoc()); 
 
   // If the two stores had the same TBAA tag, preserve it.
-  if (MDNode *TBAATag1 = SI.getMetadata(LLVMContext::MD_tbaa))
-    if (MDNode *TBAATag2 = OtherStore->getMetadata(LLVMContext::MD_tbaa))
-      if (TBAATag1 == TBAATag2)
-        NewSI->setMetadata(LLVMContext::MD_tbaa, TBAATag1);
+  if (MDNode *TBAATag = SI.getMetadata(LLVMContext::MD_tbaa))
+    if ((TBAATag = MDNode::getMostGenericTBAA(TBAATag,
+                               OtherStore->getMetadata(LLVMContext::MD_tbaa))))
+      NewSI->setMetadata(LLVMContext::MD_tbaa, TBAATag);
 
   
   // Nuke the old stores.

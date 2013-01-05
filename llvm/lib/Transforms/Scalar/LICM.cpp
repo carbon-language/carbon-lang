@@ -46,6 +46,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Metadata.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -816,10 +817,11 @@ void LICM::PromoteAliasSet(AliasSet &AS,
       if (LoopUses.empty()) {
         // On the first load/store, just take its TBAA tag.
         TBAATag = Use->getMetadata(LLVMContext::MD_tbaa);
-      } else if (TBAATag && TBAATag != Use->getMetadata(LLVMContext::MD_tbaa)) {
-        TBAATag = 0;
+      } else if (TBAATag) {
+        TBAATag = MDNode::getMostGenericTBAA(TBAATag,
+                                       Use->getMetadata(LLVMContext::MD_tbaa));
       }
-    
+      
       LoopUses.push_back(Use);
     }
   }

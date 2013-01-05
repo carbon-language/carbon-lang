@@ -22,7 +22,6 @@
 #include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/TypeFinder.h"
-
 using namespace llvm;
 
 namespace {
