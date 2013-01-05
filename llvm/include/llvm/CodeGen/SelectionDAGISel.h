@@ -31,6 +31,7 @@ namespace llvm {
   class TargetLowering;
   class TargetLibraryInfo;
   class TargetInstrInfo;
+  class TargetTransformInfo;
   class FunctionLoweringInfo;
   class ScheduleHazardRecognizer;
   class GCFunctionInfo;
@@ -44,6 +45,7 @@ public:
   const TargetMachine &TM;
   const TargetLowering &TLI;
   const TargetLibraryInfo *LibInfo;
+  const TargetTransformInfo *TTI;
   FunctionLoweringInfo *FuncInfo;
   MachineFunction *MF;
   MachineRegisterInfo *RegInfo;
