@@ -45,6 +45,8 @@ def ModifySpec(path, isBuiltinAnalyzer, pathToChecker):
         m = re.search('^(\s*ExecPath\s*=\s*")', line)
         if m:
           line = "".join([m.group(0), pathToChecker, '";\n'])
+          # Do not modify further ExecPath's later in the xcspec.
+          foundAnalyzer = False
       t.write(line)
   t.close()
   print "(+) processing:", path
