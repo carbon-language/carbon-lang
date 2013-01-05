@@ -41,6 +41,7 @@ void llvm::initializeCore(PassRegistry &Registry) {
   initializePrintFunctionPassPass(Registry);
   initializeVerifierPass(Registry);
   initializePreVerifierPass(Registry);
+  initializeTargetTransformInfoAnalysisGroup(Registry);
 }
 
 void LLVMInitializeCore(LLVMPassRegistryRef R) {

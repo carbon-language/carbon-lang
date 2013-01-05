@@ -658,8 +658,8 @@ int main(int argc, char **argv) {
   std::auto_ptr<TargetMachine> TM(Machine);
 
   if (TM.get()) {
-    Passes.add(new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
-                                       TM->getVectorTargetTransformInfo()));
+    Passes.add(createNoTTIPass(TM->getScalarTargetTransformInfo(),
+                               TM->getVectorTargetTransformInfo()));
   }
 
   OwningPtr<FunctionPassManager> FPasses;

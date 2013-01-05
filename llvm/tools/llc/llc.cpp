@@ -321,8 +321,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
   PM.add(TLI);
 
   if (target.get()) {
-    PM.add(new TargetTransformInfo(target->getScalarTargetTransformInfo(),
-                                   target->getVectorTargetTransformInfo()));
+    PM.add(createNoTTIPass(target->getScalarTargetTransformInfo(),
+                           target->getVectorTargetTransformInfo()));
   }
 
   // Add the target data from the target machine, if it exists, or the module.
