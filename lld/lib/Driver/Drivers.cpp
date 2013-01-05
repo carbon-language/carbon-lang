@@ -166,6 +166,23 @@ std::unique_ptr<Driver> Driver::create( Driver::Flavor flavor
   }
 }
 
+std::unique_ptr<llvm::opt::ArgList>
+lld::parseCoreArgs(llvm::ArrayRef<const char *> args) {
+  core::CoreOptTable core;
+  unsigned missingIndex, missingCount;
+  std::unique_ptr<llvm::opt::ArgList> list(
+    core.ParseArgs( args.begin(), args.end(), missingIndex, missingCount));
+
+  if (missingCount) {
+    llvm::errs() << "error: missing arg value for '"
+                  << list->getArgString(missingIndex)
+                  << "' expected " << missingCount << " argument(s).\n";
+    return std::unique_ptr<llvm::opt::ArgList>();
+  }
+
+  return list;
+}
+
 LinkerOptions lld::generateOptions(const llvm::opt::ArgList &args) {
   LinkerOptions ret;
 

@@ -58,6 +58,9 @@ public:
                                         StringRef defaultTargetTriple);
 };
 
+std::unique_ptr<llvm::opt::ArgList>
+parseCoreArgs(llvm::ArrayRef<const char *> args);
+
 LinkerOptions generateOptions(const llvm::opt::ArgList &args);
 } // end namespace lld
 

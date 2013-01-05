@@ -124,6 +124,9 @@ int main(int argc, char **argv) {
     driver = Driver::create(iHazAFlavor, getDefaultTarget(argc, argv));
     coreArgs = driver->transform(
       llvm::ArrayRef<const char *>(argv + 1, argv + argc));
+  } else {
+    coreArgs = parseCoreArgs(
+      llvm::ArrayRef<const char *>(argv + 1, argv + argc));
   }
 
   if (!coreArgs)

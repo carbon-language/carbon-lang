@@ -1,5 +1,6 @@
 include "llvm/Option/OptParser.td"
 
+def flavor : Separate<["-"], "flavor">;
 def target : Separate<["-"], "target">, HelpText<"Target triple to link for">;
 
 def output : Joined<["-"], "output=">;
