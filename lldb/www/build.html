@@ -124,16 +124,16 @@
                 <p> If you wish to build a release version of LLDB, run configure with the <tt>--enable-optimized</tt> flag.</p>
                 
                 <h2>Additional Notes</h2>
-                <p>LLDB has a Python scripting capability and supplies its own Python module,
-                <tt>lldb</tt>, built alongside the <tt>lldb</tt> binary.  Python needs to know where to
-                look for this module when LLDB starts up.  To tell Python the location of LLDB, set
-                <tt>PYTHONPATH</tt> environment variable.
-                <p>In bash with a <tt>Debug+Asserts</tt> build (the default if configure is invoked
-                like in the example on this page) one might run:</p>
-                <code>&gt; export PYTHONPATH=$llvm/build/Debug+Asserts/lib/python2.7/site-packages</code>
-                <p>If you used a different build directory, made a release build, or have a different version of
-                Python, you may need to adjust the above to suit your needs. To test that the lldb Python module
-                is built correctly and is available to Python, run:</p>
+                <p>LLDB has a Python scripting capability and supplies its own Python module named <tt>lldb</tt>.
+                If a script is run inside the command line <tt>lldb</tt> application, the Python module
+                is made available automatically.  However, if a script is to be run by a Python interpreter
+                outside the command line application, the <tt>PYTHONPATH</tt> environment variable can be used
+                to let the Python interpreter find the <tt>lldb</tt> module. 
+                <p>The correct path can be obtained by invoking the command line <tt>lldb</tt> tool with the -P flag:</p>
+                <code>&gt; export PYTHONPATH=`$llvm/build/Debug+Asserts/bin/lldb -P`</code>
+                <p>If you used a different build directory or made a release build, you may need to adjust the
+                above to suit your needs. To test that the lldb Python module
+                is built correctly and is available to the default Python interpreter, run:</p>
                 <code>&gt; python -c 'import lldb'</code></p>
                 </div>
               	<div class="postfooter"></div>
