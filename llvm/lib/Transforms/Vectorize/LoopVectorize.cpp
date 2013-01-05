@@ -1912,10 +1912,6 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
     if (Iter->use_empty())
       return false;
 
-    // Any reduction instr must be of one of the allowed kinds.
-    if (!isReductionInstr(Iter, Kind))
-      return false;
-
     // Did we find a user inside this loop already ?
     bool FoundInBlockUser = false;
     // Did we reach the initial PHI node already ?
@@ -1953,6 +1949,16 @@ bool LoopVectorizationLegality::AddReductionVar(PHINode *Phi,
       if (FoundInBlockUser)
         return false;
       FoundInBlockUser = true;
+
+      // Any reduction instr must be of one of the allowed kinds.
+      if (!isReductionInstr(U, Kind))
+        return false;
+
+      // Reductions of instructions such as Div, and Sub is only
+      // possible if the LHS is the reduction variable.
+      if (!U->isCommutative() && U->getOperand(0) != Iter)
+        return false;
+
       Iter = U;
     }
 
@@ -1985,8 +1991,11 @@ LoopVectorizationLegality::isReductionInstr(Instruction *I,
   case Instruction::PHI:
     // possibly.
     return true;
+  case Instruction::Sub:
   case Instruction::Add:
     return Kind == IntegerAdd;
+  case Instruction::SDiv:
+  case Instruction::UDiv:
   case Instruction::Mul:
     return Kind == IntegerMult;
   case Instruction::And:
