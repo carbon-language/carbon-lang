@@ -62,11 +62,12 @@ typedef enum : NSUInteger {
     TMap       *map = [TMap mapForID:mapID];
 // Make sure we do not map code generated for the block to the above line.
 // CHECK: define internal void @"__39-[TServer serverConnection:getCommand:]_block_invoke"
-// CHECK: if.end:
+// CHECK: bitcast %5** [[TMP:%.*]] to i8**
 // CHECK: call void @objc_storeStrong(i8** [[VAL1:%.*]], i8* null) nounwind, !dbg ![[MD1:.*]]
+// CHECK: bitcast %4** [[TMP:%.*]] to i8**
 // CHECK: call void @objc_storeStrong(i8** [[VAL2:%.*]], i8* null) nounwind, !dbg ![[MD1]]
 // CHECK-NEXT: ret
-// CHECK: ![[MD1]] = metadata !{i32 83
+// CHECK: ![[MD1]] = metadata !{i32 84
     [map dataWithCompletionBlock:^(NSData *data, NSError *error) {
         if (data) {
             NSString    *encoded = [[data compressedData] encodedString:18];
