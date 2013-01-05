@@ -2247,6 +2247,11 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
         GetObjCArg(I) == Arg) {
       Changed = true;
       ++NumPeeps;
+      
+      DEBUG(dbgs() << "ObjCARCOpt::OptimizeRetainRVCall: Erasing " << *I << "\n"
+                   << "                                  Erasing " << *RetainRV
+                   << "\n");
+      
       EraseInstruction(I);
       EraseInstruction(RetainRV);
       return true;
