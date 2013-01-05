@@ -29,6 +29,7 @@ class LLVMContext;
 /// \brief This class represents a single, uniqued attribute. That attribute
 /// could be a single enum, a tuple, or a string.
 class AttributeImpl : public FoldingSetNode {
+  LLVMContext &Context;
   Constant *Data;
   SmallVector<Constant*, 0> Vals;
 public:
@@ -47,7 +48,10 @@ public:
   bool hasAttributes() const;
 
   uint64_t getAlignment() const;
+  void setAlignment(unsigned Align);
+
   uint64_t getStackAlignment() const;
+  void setStackAlignment(unsigned Align);
 
   bool operator==(Attribute::AttrKind Kind) const;
   bool operator!=(Attribute::AttrKind Kind) const;

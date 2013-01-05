@@ -116,9 +116,15 @@ public:
   /// value.
   unsigned getAlignment() const;
 
+  /// \brief Set the alignment field of an attribute.
+  void setAlignment(unsigned Align);
+
   /// \brief Returns the stack alignment field of an attribute as a byte
   /// alignment value.
   unsigned getStackAlignment() const;
+
+  /// \brief Set the stack alignment field of an attribute.
+  void setStackAlignment(unsigned Align);
 
   /// \brief Equality and non-equality query methods.
   bool operator==(AttrKind K) const;
@@ -233,6 +239,15 @@ public:
   /// the form used internally in Attribute.
   AttrBuilder &addStackAlignmentAttr(unsigned Align);
 
+  typedef DenseSet<Attribute::AttrKind>::iterator       iterator;
+  typedef DenseSet<Attribute::AttrKind>::const_iterator const_iterator;
+
+  iterator begin() { return Attrs.begin(); }
+  iterator end()   { return Attrs.end(); }
+
+  const_iterator begin() const { return Attrs.begin(); }
+  const_iterator end() const   { return Attrs.end(); }
+
   /// \brief Add the raw value to the internal representation.
   /// 
   /// N.B. This should be used ONLY for decoding LLVM bitcode!
@@ -329,6 +344,7 @@ public:
 
   /// \brief Return an AttributeSet with the specified parameters in it.
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
+  static AttributeSet get(LLVMContext &C, unsigned Idx, AttrBuilder &B);
 
   /// \brief Add the specified attribute at the specified index to this
   /// attribute list.  Since attribute lists are immutable, this returns the new

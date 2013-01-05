@@ -76,12 +76,24 @@ unsigned Attribute::getAlignment() const {
   return 1U << ((pImpl->getAlignment() >> 16) - 1);
 }
 
+void Attribute::setAlignment(unsigned Align) {
+  assert(hasAttribute(Attribute::Alignment) &&
+         "Trying to set the alignment on a non-alignment attribute!");
+  pImpl->setAlignment(Align);
+}
+
 /// This returns the stack alignment field of an attribute as a byte alignment
 /// value.
 unsigned Attribute::getStackAlignment() const {
   if (!hasAttribute(Attribute::StackAlignment))
     return 0;
   return 1U << ((pImpl->getStackAlignment() >> 26) - 1);
+}
+
+void Attribute::setStackAlignment(unsigned Align) {
+  assert(hasAttribute(Attribute::StackAlignment) &&
+         "Trying to set the stack alignment on a non-alignment attribute!");
+  pImpl->setStackAlignment(Align);
 }
 
 bool Attribute::operator==(AttrKind K) const {
@@ -367,19 +379,23 @@ bool AttrBuilder::operator==(const AttrBuilder &B) {
 // AttributeImpl Definition
 //===----------------------------------------------------------------------===//
 
-AttributeImpl::AttributeImpl(LLVMContext &C, uint64_t data) {
+AttributeImpl::AttributeImpl(LLVMContext &C, uint64_t data)
+  : Context(C) {
   Data = ConstantInt::get(Type::getInt64Ty(C), data);
 }
-AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind data) {
+AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind data)
+  : Context(C) {
   Data = ConstantInt::get(Type::getInt64Ty(C), data);
 }
 AttributeImpl::AttributeImpl(LLVMContext &C, Attribute::AttrKind data,
-                             ArrayRef<Constant*> values) {
+                             ArrayRef<Constant*> values)
+  : Context(C) {
   Data = ConstantInt::get(Type::getInt64Ty(C), data);
   Vals.reserve(values.size());
   Vals.append(values.begin(), values.end());
 }
-AttributeImpl::AttributeImpl(LLVMContext &C, StringRef data) {
+AttributeImpl::AttributeImpl(LLVMContext &C, StringRef data)
+  : Context(C) {
   Data = ConstantDataArray::getString(C, data);
 }
 
@@ -456,8 +472,16 @@ uint64_t AttributeImpl::getAlignment() const {
   return getBitMask() & getAttrMask(Attribute::Alignment);
 }
 
+void AttributeImpl::setAlignment(unsigned Align) {
+  Vals.push_back(ConstantInt::get(Type::getInt64Ty(Context), Align));
+}
+
 uint64_t AttributeImpl::getStackAlignment() const {
   return getBitMask() & getAttrMask(Attribute::StackAlignment);
+}
+
+void AttributeImpl::setStackAlignment(unsigned Align) {
+  Vals.push_back(ConstantInt::get(Type::getInt64Ty(Context), Align));
 }
 
 //===----------------------------------------------------------------------===//
@@ -485,8 +509,7 @@ AttributeSet AttributeSet::get(LLVMContext &C,
   AttributeSetImpl::Profile(ID, Attrs);
 
   void *InsertPoint;
-  AttributeSetImpl *PA = pImpl->AttrsLists.FindNodeOrInsertPos(ID,
-                                                                InsertPoint);
+  AttributeSetImpl *PA = pImpl->AttrsLists.FindNodeOrInsertPos(ID, InsertPoint);
 
   // If we didn't find any existing attributes of the same shape then
   // create a new one and insert it.
@@ -497,6 +520,23 @@ AttributeSet AttributeSet::get(LLVMContext &C,
 
   // Return the AttributesList that we found or created.
   return AttributeSet(PA);
+}
+
+AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
+  SmallVector<AttributeWithIndex, 8> Attrs;
+  for (AttrBuilder::iterator I = B.begin(), E = B.end(); I != E; ++I) {
+    Attribute::AttrKind Kind = *I;
+    Attribute A = Attribute::get(C, Kind);
+
+    if (Kind == Attribute::Alignment)
+      A.setAlignment(B.getAlignment());
+    else if (Kind == Attribute::StackAlignment)
+      A.setStackAlignment(B.getStackAlignment());
+
+    Attrs.push_back(AttributeWithIndex::get(Idx, A));
+  }
+
+  return get(C, Attrs);
 }
 
 //===----------------------------------------------------------------------===//
