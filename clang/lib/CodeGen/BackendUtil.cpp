@@ -61,10 +61,8 @@ private:
       CodeGenPasses->add(new DataLayout(TheModule));
       // Add TargetTransformInfo.
       if (TM) {
-        TargetTransformInfo *TTI =
-        new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
-                                TM->getVectorTargetTransformInfo());
-        CodeGenPasses->add(TTI);
+        CodeGenPasses->add(createNoTTIPass(TM->getScalarTargetTransformInfo(),
+                                           TM->getVectorTargetTransformInfo()));
       }
     }
     return CodeGenPasses;
@@ -75,10 +73,9 @@ private:
       PerModulePasses = new PassManager();
       PerModulePasses->add(new DataLayout(TheModule));
       if (TM) {
-        TargetTransformInfo *TTI =
-        new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
-                                TM->getVectorTargetTransformInfo());
-        PerModulePasses->add(TTI);
+        PerModulePasses->add(
+            createNoTTIPass(TM->getScalarTargetTransformInfo(),
+                            TM->getVectorTargetTransformInfo()));
       }
     }
     return PerModulePasses;
@@ -89,10 +86,9 @@ private:
       PerFunctionPasses = new FunctionPassManager(TheModule);
       PerFunctionPasses->add(new DataLayout(TheModule));
       if (TM) {
-        TargetTransformInfo *TTI =
-        new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
-                                TM->getVectorTargetTransformInfo());
-        PerFunctionPasses->add(TTI);
+        PerFunctionPasses->add(
+            createNoTTIPass(TM->getScalarTargetTransformInfo(),
+                            TM->getVectorTargetTransformInfo()));
       }
     }
     return PerFunctionPasses;
@@ -482,8 +478,8 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   PM->add(TLI);
 
   // Add TargetTransformInfo.
-  PM->add(new TargetTransformInfo(TM->getScalarTargetTransformInfo(),
-                                  TM->getVectorTargetTransformInfo()));
+  PM->add(createNoTTIPass(TM->getScalarTargetTransformInfo(),
+                          TM->getVectorTargetTransformInfo()));
 
   // Normal mode, emit a .s or .o file by running the code generator. Note,
   // this also adds codegenerator level optimization passes.
