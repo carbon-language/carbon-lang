@@ -34,7 +34,7 @@ namespace {
 
   public:
     static char ID; // Class identification, replacement for typeinfo
-    CostModelAnalysis() : FunctionPass(ID), F(0), VTTI(0) {
+    CostModelAnalysis() : FunctionPass(ID), F(0), TTI(0) {
       initializeCostModelAnalysisPass(
         *PassRegistry::getPassRegistry());
     }
@@ -52,8 +52,8 @@ namespace {
 
     /// The function that we analyze.
     Function *F;
-    /// Vector target information.
-    const VectorTargetTransformInfo *VTTI;
+    /// Target information.
+    const TargetTransformInfo *TTI;
   };
 }  // End of anonymous namespace
 
@@ -75,25 +75,20 @@ CostModelAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
 bool
 CostModelAnalysis::runOnFunction(Function &F) {
  this->F = &F;
-
- // Target information.
- TargetTransformInfo *TTI;
  TTI = getAnalysisIfAvailable<TargetTransformInfo>();
- if (TTI)
-   VTTI = TTI->getVectorTargetTransformInfo();
 
  return false;
 }
 
 unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
-  if (!VTTI)
+  if (!TTI)
     return -1;
 
   switch (I->getOpcode()) {
   case Instruction::Ret:
   case Instruction::PHI:
   case Instruction::Br: {
-    return VTTI->getCFInstrCost(I->getOpcode());
+    return TTI->getCFInstrCost(I->getOpcode());
   }
   case Instruction::Add:
   case Instruction::FAdd:
@@ -113,28 +108,28 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor: {
-    return VTTI->getArithmeticInstrCost(I->getOpcode(), I->getType());
+    return TTI->getArithmeticInstrCost(I->getOpcode(), I->getType());
   }
   case Instruction::Select: {
     const SelectInst *SI = cast<SelectInst>(I);
     Type *CondTy = SI->getCondition()->getType();
-    return VTTI->getCmpSelInstrCost(I->getOpcode(), I->getType(), CondTy);
+    return TTI->getCmpSelInstrCost(I->getOpcode(), I->getType(), CondTy);
   }
   case Instruction::ICmp:
   case Instruction::FCmp: {
     Type *ValTy = I->getOperand(0)->getType();
-    return VTTI->getCmpSelInstrCost(I->getOpcode(), ValTy);
+    return TTI->getCmpSelInstrCost(I->getOpcode(), ValTy);
   }
   case Instruction::Store: {
     const StoreInst *SI = cast<StoreInst>(I);
     Type *ValTy = SI->getValueOperand()->getType();
-    return VTTI->getMemoryOpCost(I->getOpcode(), ValTy,
+    return TTI->getMemoryOpCost(I->getOpcode(), ValTy,
                                  SI->getAlignment(),
                                  SI->getPointerAddressSpace());
   }
   case Instruction::Load: {
     const LoadInst *LI = cast<LoadInst>(I);
-    return VTTI->getMemoryOpCost(I->getOpcode(), I->getType(),
+    return TTI->getMemoryOpCost(I->getOpcode(), I->getType(),
                                  LI->getAlignment(),
                                  LI->getPointerAddressSpace());
   }
@@ -151,7 +146,7 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
   case Instruction::FPTrunc:
   case Instruction::BitCast: {
     Type *SrcTy = I->getOperand(0)->getType();
-    return VTTI->getCastInstrCost(I->getOpcode(), I->getType(), SrcTy);
+    return TTI->getCastInstrCost(I->getOpcode(), I->getType(), SrcTy);
   }
   case Instruction::ExtractElement: {
     const ExtractElementInst * EEI = cast<ExtractElementInst>(I);
@@ -159,8 +154,8 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
     unsigned Idx = -1;
     if (CI)
       Idx = CI->getZExtValue();
-    return VTTI->getVectorInstrCost(I->getOpcode(),
-                                    EEI->getOperand(0)->getType(), Idx);
+    return TTI->getVectorInstrCost(I->getOpcode(),
+                                   EEI->getOperand(0)->getType(), Idx);
   }
   case Instruction::InsertElement: {
       const InsertElementInst * IE = cast<InsertElementInst>(I);
@@ -168,8 +163,8 @@ unsigned CostModelAnalysis::getInstructionCost(const Instruction *I) const {
       unsigned Idx = -1;
       if (CI)
         Idx = CI->getZExtValue();
-      return VTTI->getVectorInstrCost(I->getOpcode(),
-                                      IE->getType(), Idx);
+      return TTI->getVectorInstrCost(I->getOpcode(),
+                                     IE->getType(), Idx);
     }
   default:
     // We don't have any information on this instruction.
