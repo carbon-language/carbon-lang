@@ -124,6 +124,9 @@ private:
   void nextToken();
   void readToken();
 
+  // FIXME: We are constantly running into bugs where Line.Level is incorrectly
+  // subtracted from beyond 0. Introduce a method to subtract from Line.Level
+  // and use that everywhere in the Parser.
   UnwrappedLine Line;
   FormatToken FormatTok;
 

@@ -27,10 +27,11 @@ public:
   ScopedMacroState(UnwrappedLine &Line, FormatTokenSource *&TokenSource,
                    FormatToken &ResetToken)
       : Line(Line), TokenSource(TokenSource), ResetToken(ResetToken),
-        PreviousTokenSource(TokenSource) {
+        PreviousLineLevel(Line.Level), PreviousTokenSource(TokenSource) {
     TokenSource = this;
     // FIXME: Back up all other state (errors, line indent, etc) and reset after
     // parsing the macro.
+    Line.Level = 0;
     Line.InPPDirective = true;
   }
 
@@ -38,7 +39,7 @@ public:
     TokenSource = PreviousTokenSource;
     ResetToken = Token;
     Line.InPPDirective = false;
-    Line.Level = 0;  // FIXME: Test + this is obviously incorrect
+    Line.Level = PreviousLineLevel;
   }
 
   virtual FormatToken getNextToken() {
@@ -65,7 +66,7 @@ private:
   UnwrappedLine &Line;
   FormatTokenSource *&TokenSource;
   FormatToken &ResetToken;
-
+  unsigned PreviousLineLevel;
   FormatTokenSource *PreviousTokenSource;
 
   FormatToken Token;

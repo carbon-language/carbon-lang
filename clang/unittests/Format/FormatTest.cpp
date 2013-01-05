@@ -466,9 +466,12 @@ TEST_F(FormatTest, HashInMacroDefinition) {
                "  }", getLLVMStyleWithColumns(11));
 }
 
+TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {
+  EXPECT_EQ("{\n  {\n#define A\n  }\n}", format("{{\n#define A\n}}"));
+}
+
 // FIXME: write test for unbalanced braces in macros...
-// FIXME: test { { #include "a.h" } }
-// FIXME: test # in the middle of a statement without \n before it
+// FIXME: test # inside a normal statement (like {#define A b})
 
 TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
   EXPECT_EQ(
