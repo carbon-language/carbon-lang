@@ -142,3 +142,34 @@ save_state_and_return:
 }
 
 declare void @BZ2_bz__AssertH__fail()
+
+; Make sure we don't speculate on div/idiv instructions
+; CHECK: test_idiv
+; CHECK-NOT: cmov
+define i32 @test_idiv(i32 %a, i32 %b) nounwind uwtable readnone ssp {
+  %1 = icmp eq i32 %b, 0
+  br i1 %1, label %4, label %2
+
+; <label>:2                                       ; preds = %0
+  %3 = sdiv i32 %a, %b
+  br label %4
+
+; <label>:4                                       ; preds = %0, %2
+  %5 = phi i32 [ %3, %2 ], [ %a, %0 ]
+  ret i32 %5
+}
+
+; CHECK: test_div
+; CHECK-NOT: cmov
+define i32 @test_div(i32 %a, i32 %b) nounwind uwtable readnone ssp {
+  %1 = icmp eq i32 %b, 0
+  br i1 %1, label %4, label %2
+
+; <label>:2                                       ; preds = %0
+  %3 = udiv i32 %a, %b
+  br label %4
+
+; <label>:4                                       ; preds = %0, %2
+  %5 = phi i32 [ %3, %2 ], [ %a, %0 ]
+  ret i32 %5
+}
