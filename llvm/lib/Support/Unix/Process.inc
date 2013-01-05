@@ -69,7 +69,7 @@ static std::pair<TimeValue, TimeValue> getRUsageTimes() {
 }
 
 TimeValue self_process::get_user_time() const {
-#ifdef _POSIX_CPUTIME
+#if _POSIX_TIMERS > 0 && defined(_POSIX_CPUTIME)
   // Try to get a high resolution CPU timer.
   struct timespec TS;
   if (::clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &TS) == 0)
