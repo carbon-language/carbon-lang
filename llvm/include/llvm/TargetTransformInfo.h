@@ -22,7 +22,6 @@
 #ifndef LLVM_TRANSFORMS_TARGET_TRANSFORM_INTERFACE
 #define LLVM_TRANSFORMS_TARGET_TRANSFORM_INTERFACE
 
-#include "llvm/AddressingMode.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
