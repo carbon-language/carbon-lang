@@ -71,27 +71,24 @@ Here's the short story for getting up and running quickly with LLVM:
    * ``../llvm/configure [options]``
      Some common options:
 
-     * ``--prefix=directory`` ---
+     * ``--prefix=directory`` --- Specify for *directory* the full pathname of
+       where you want the LLVM tools and libraries to be installed (default
+       ``/usr/local``).
 
-       Specify for *directory* the full pathname of where you want the LLVM
-       tools and libraries to be installed (default ``/usr/local``).
+     * ``--enable-optimized`` --- Compile with optimizations enabled (default
+       is NO).
 
-     * ``--enable-optimized`` ---
-
-       Compile with optimizations enabled (default is NO).
-
-     * ``--enable-assertions`` ---
-
-       Compile with assertion checks enabled (default is YES).
+     * ``--enable-assertions`` --- Compile with assertion checks enabled
+       (default is YES).
 
    * ``make [-j]`` --- The ``-j`` specifies the number of jobs (commands) to run
      simultaneously.  This builds both LLVM and Clang for Debug+Asserts mode.
-     The --enabled-optimized configure option is used to specify a Release
+     The ``--enabled-optimized`` configure option is used to specify a Release
      build.
 
    * ``make check-all`` --- This run the regression tests to ensure everything
      is in working order.
-  
+
    * ``make update`` --- This command is used to update all the svn repositories
      at once, rather then having to ``cd`` into the individual repositories and
      running ``svn update``.
@@ -664,14 +661,15 @@ configure the build system:
 | Variable   | Purpose                                                   |
 +============+===========================================================+
 | CC         | Tells ``configure`` which C compiler to use.  By default, |
-|            | ``configure`` will look for the first GCC C compiler in   |
-|            | ``PATH``.  Use this variable to override ``configure``\'s |
-|            | default behavior.                                         |
+|            | ``configure`` will check ``PATH`` for ``clang`` and GCC C |
+|            | compilers (in this order).  Use this variable to override |
+|            | ``configure``\'s  default behavior.                       |
 +------------+-----------------------------------------------------------+
 | CXX        | Tells ``configure`` which C++ compiler to use.  By        |
-|            | default, ``configure`` will look for the first GCC C++    |
-|            | compiler in ``PATH``.  Use this variable to override      |
-|            | ``configure``'s default behavior.                         |
+|            | default, ``configure`` will check ``PATH`` for            |
+|            | ``clang++`` and GCC C++ compilers (in this order).  Use   |
+|            | this variable to override  ``configure``'s default        |
+|            | behavior.                                                 |
 +------------+-----------------------------------------------------------+
 
 The following options can be used to set or enable LLVM specific options:
