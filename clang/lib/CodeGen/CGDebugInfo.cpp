@@ -2428,23 +2428,9 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
       Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
       return;
     }
-    
-    // Create the descriptor for the variable.
-    llvm::DIVariable D =
-      DBuilder.createLocalVariable(Tag, llvm::DIDescriptor(Scope), 
-                                   Name, Unit, Line, Ty, 
-                                   CGM.getLangOpts().Optimize, Flags, ArgNo);
-    
-    // Insert an llvm.dbg.declare into the current block.
-    llvm::Instruction *Call =
-      DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
-    Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
-    return;
-  }
-  
-  // If VD is an anonymous union then Storage represents value for
-  // all union fields.
-  if (const RecordType *RT = dyn_cast<RecordType>(VD->getType())) {
+  } else if (const RecordType *RT = dyn_cast<RecordType>(VD->getType())) {
+    // If VD is an anonymous union then Storage represents value for
+    // all union fields.
     const RecordDecl *RD = cast<RecordDecl>(RT->getDecl());
     if (RD->isUnion()) {
       for (RecordDecl::field_iterator I = RD->field_begin(),
@@ -2471,7 +2457,19 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
         Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
       }
     }
+    return;
   }
+
+  // Create the descriptor for the variable.
+  llvm::DIVariable D =
+    DBuilder.createLocalVariable(Tag, llvm::DIDescriptor(Scope),
+                                 Name, Unit, Line, Ty,
+                                 CGM.getLangOpts().Optimize, Flags, ArgNo);
+
+  // Insert an llvm.dbg.declare into the current block.
+  llvm::Instruction *Call =
+    DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
+  Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
 }
 
 void CGDebugInfo::EmitDeclareOfAutoVariable(const VarDecl *VD,
