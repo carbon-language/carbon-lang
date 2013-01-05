@@ -12614,10 +12614,6 @@ ac_res=$ac_cv_search_clock_gettime
 if test "$ac_res" != no; then
   test "$ac_res" = "none required" || LIBS="$ac_res $LIBS"
 
-else
-  { { echo "$as_me:$LINENO: error: clock_gettime not found and is required for modern POSIX timing uspport" >&5
-echo "$as_me: error: clock_gettime not found and is required for modern POSIX timing uspport" >&2;}
-   { (exit 1); exit 1; }; }
 fi
 
 
