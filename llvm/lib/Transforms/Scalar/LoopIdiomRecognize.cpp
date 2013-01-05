@@ -135,12 +135,12 @@ namespace {
     DominatorTree *DT;
     ScalarEvolution *SE;
     TargetLibraryInfo *TLI;
-    const ScalarTargetTransformInfo *STTI;
+    const TargetTransformInfo *TTI;
   public:
     static char ID;
     explicit LoopIdiomRecognize() : LoopPass(ID) {
       initializeLoopIdiomRecognizePass(*PassRegistry::getPassRegistry());
-      TD = 0; DT = 0; SE = 0; TLI = 0; STTI = 0;
+      TD = 0; DT = 0; SE = 0; TLI = 0; TTI = 0;
     }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -195,12 +195,10 @@ namespace {
       return TLI ? TLI : (TLI = &getAnalysis<TargetLibraryInfo>());
     }
 
-    const ScalarTargetTransformInfo *getScalarTargetTransformInfo() {
-      if (!STTI) {
-        TargetTransformInfo *TTI = getAnalysisIfAvailable<TargetTransformInfo>();
-        if (TTI) STTI = TTI->getScalarTargetTransformInfo();
-      }
-      return STTI;
+    const TargetTransformInfo *getTargetTransformInfo() {
+      if (!TTI)
+        TTI = getAnalysisIfAvailable<TargetTransformInfo>();
+      return TTI;
     }
 
     Loop *getLoop() const { return CurLoop; }
@@ -312,8 +310,8 @@ NclPopcountRecognize::NclPopcountRecognize(LoopIdiomRecognize &TheLIR):
 }
 
 bool NclPopcountRecognize::preliminaryScreen() {
-  const ScalarTargetTransformInfo *STTI = LIR.getScalarTargetTransformInfo();
-  if (STTI->getPopcntHwSupport(32) != ScalarTargetTransformInfo::Fast)
+  const TargetTransformInfo *TTI = LIR.getTargetTransformInfo();
+  if (TTI->getPopcntHwSupport(32) != TargetTransformInfo::Fast)
     return false;
 
   // Counting population are usually conducted by few arithmetic instrutions.
@@ -631,7 +629,7 @@ CallInst *NclPopcountRecognize::createPopcntIntrinsic(IRBuilderTy &IRBuilder,
 ///   call, and return true; otherwise, return false.
 bool NclPopcountRecognize::recognize() {
 
-  if (!LIR.getScalarTargetTransformInfo())
+  if (!LIR.getTargetTransformInfo())
     return false;
 
   LIR.getScalarEvolution();
