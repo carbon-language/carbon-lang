@@ -93,7 +93,11 @@ public:
     UWTable,               ///< Function must be in a unwind table
     ZExt,                  ///< Zero extended before/after call
 
-    EndAttrKinds           ///< Sentinal value useful for loops
+    EndAttrKinds,          ///< Sentinal value useful for loops
+
+    // Values for DenseMapInfo
+    EmptyKey     = 0x7FFFFFFF,
+    TombstoneKey = -0x7FFFFFFF - 1
   };
 private:
   AttributeImpl *pImpl;
@@ -165,10 +169,10 @@ public:
 /// AttrBuilder.
 template<> struct DenseMapInfo<Attribute::AttrKind> {
   static inline Attribute::AttrKind getEmptyKey() {
-    return Attribute::AttrKind(~0U);
+    return Attribute::EmptyKey;
   }
   static inline Attribute::AttrKind getTombstoneKey() {
-    return Attribute::AttrKind(~0U - 1);
+    return Attribute::TombstoneKey;
   }
   static unsigned getHashValue(const Attribute::AttrKind &Val) {
     return Val * 37U;
