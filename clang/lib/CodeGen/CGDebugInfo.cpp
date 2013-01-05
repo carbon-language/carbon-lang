@@ -2432,7 +2432,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     // If VD is an anonymous union then Storage represents value for
     // all union fields.
     const RecordDecl *RD = cast<RecordDecl>(RT->getDecl());
-    if (RD->isUnion()) {
+    if (RD->isUnion() && RD->isAnonymousStructOrUnion()) {
       for (RecordDecl::field_iterator I = RD->field_begin(),
              E = RD->field_end();
            I != E; ++I) {
@@ -2456,8 +2456,8 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
           DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
         Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
       }
+      return;
     }
-    return;
   }
 
   // Create the descriptor for the variable.
