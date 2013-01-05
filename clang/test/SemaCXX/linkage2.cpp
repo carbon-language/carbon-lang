@@ -18,3 +18,25 @@ extern "C" {
   static void test2_f(int x) { // expected-error {{conflicting types for 'test2_f'}}
   }
 }
+
+namespace test3 {
+  extern "C" {
+    namespace {
+      extern int x2;
+      void f2();
+    }
+  }
+  namespace {
+    int x2;
+    void f2() {}
+  }
+}
+
+namespace test4 {
+  void dummy() {
+    void Bar();
+    class A {
+      friend void Bar();
+    };
+  }
+}

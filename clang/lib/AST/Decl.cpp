@@ -268,8 +268,8 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D,
   if (D->isInAnonymousNamespace()) {
     const VarDecl *Var = dyn_cast<VarDecl>(D);
     const FunctionDecl *Func = dyn_cast<FunctionDecl>(D);
-    if ((!Var || !Var->getDeclContext()->isExternCContext()) &&
-        (!Func || !Func->getDeclContext()->isExternCContext()))
+    if ((!Var || !Var->hasCLanguageLinkage()) &&
+        (!Func || !Func->hasCLanguageLinkage()))
       return LinkageInfo::uniqueExternal();
   }
 
@@ -634,6 +634,31 @@ LinkageInfo NamedDecl::getLinkageAndVisibility() const {
   CachedLinkage = LV.linkage();
   CacheValidAndVisibility = LV.visibility() + 1;
   CachedVisibilityExplicit = LV.visibilityExplicit();
+
+#ifndef NDEBUG
+  // In C (because of gnu inline) and in c++ with microsoft extensions an
+  // static can follow an extern, so we can have two decls with different
+  // linkages.
+  const LangOptions &Opts = getASTContext().getLangOpts();
+  if (!Opts.CPlusPlus || Opts.MicrosoftExt)
+    return LV;
+
+  // We have just computed the linkage for this decl. By induction we know
+  // that all other computed linkages match, check that the one we just computed
+  // also does.
+  NamedDecl *D = NULL;
+  for (redecl_iterator I = redecls_begin(), E = redecls_end(); I != E; ++I) {
+    NamedDecl *T = cast<NamedDecl>(*I);
+    if (T == this)
+      continue;
+    if (T->CacheValidAndVisibility != 0) {
+      D = T;
+      break;
+    }
+  }
+  assert(!D || D->CachedLinkage == CachedLinkage);
+#endif
+
   return LV;
 }
 
@@ -772,7 +797,7 @@ static LinkageInfo computeLVForDecl(const NamedDecl *D, bool OnlyTemplate) {
   //   one such matching entity, the program is ill-formed. Otherwise,
   //   if no matching entity is found, the block scope entity receives
   //   external linkage.
-  if (D->getLexicalDeclContext()->isFunctionOrMethod()) {
+  if (D->getDeclContext()->isFunctionOrMethod()) {
     if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
       if (Function->isInAnonymousNamespace() &&
           !Function->getDeclContext()->isExternCContext())
