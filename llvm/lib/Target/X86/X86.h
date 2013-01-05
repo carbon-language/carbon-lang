@@ -63,11 +63,6 @@ FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
 ///
 FunctionPass *createEmitX86CodeToMemory();
 
-/// createX86PadShortFunctions - Return a pass that pads short functions
-/// with NOOPs. This will prevent a stall when returning from the function
-/// on the Atom.
-FunctionPass *createX86PadShortFunctions();
-
 } // End llvm namespace
 
 #endif
