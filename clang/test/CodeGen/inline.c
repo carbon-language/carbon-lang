@@ -1,55 +1,55 @@
 // RUN: echo "GNU89 tests:"
-// RUN: %clang %s -target i386-unknown-unknown -O1 -emit-llvm -S -o %t -std=gnu89
-// RUN: grep "define available_externally i32 @ei()" %t
-// RUN: grep "define i32 @foo()" %t
-// RUN: grep "define i32 @bar()" %t
-// RUN: grep "define void @unreferenced1()" %t
-// RUN: not grep unreferenced2 %t
-// RUN: grep "define void @gnu_inline()" %t
-// RUN: grep "define available_externally void @gnu_ei_inline()" %t
-// RUN: grep "define i32 @test1" %t
-// RUN: grep "define i32 @test2" %t
-// RUN: grep "define void @test3()" %t
-// RUN: grep "define available_externally i32 @test4" %t
-// RUN: grep "define available_externally i32 @test5" %t
-// RUN: grep "define i32 @test6" %t
-// RUN: grep "define void @test7" %t
-// RUN: grep "define i.. @strlcpy" %t
-// RUN: not grep test9 %t
-// RUN: grep "define void @testA" %t
-// RUN: grep "define void @testB" %t
-// RUN: grep "define void @testC" %t
+// RUN: %clang %s -target i386-unknown-unknown -O1 -emit-llvm -S -o - -std=gnu89 | FileCheck %s --check-prefix=CHECK1
+// CHECK1: define i32 @foo()
+// CHECK1: define i32 @bar()
+// CHECK1: define void @unreferenced1()
+// CHECK1-NOT: unreferenced2
+// CHECK1: define void @gnu_inline()
+// CHECK1: define i32 @test1
+// CHECK1: define i32 @test2
+// CHECK1: define void @test3()
+// CHECK1: define available_externally i32 @test4
+// CHECK1: define available_externally i32 @test5
+// CHECK1: define i32 @test6
+// CHECK1: define void @test7
+// CHECK1: define i{{..}} @strlcpy
+// CHECK1-NOT: test9
+// CHECK1: define void @testA
+// CHECK1: define void @testB
+// CHECK1: define void @testC
+// CHECK1: define available_externally void @gnu_ei_inline()
+// CHECK1: define available_externally i32 @ei()
 
 // RUN: echo "C99 tests:"
-// RUN: %clang %s -target i386-unknown-unknown -O1 -emit-llvm -S -o %t -std=gnu99
-// RUN: grep "define i32 @ei()" %t
-// RUN: grep "define available_externally i32 @foo()" %t
-// RUN: grep "define i32 @bar()" %t
-// RUN: not grep unreferenced1 %t
-// RUN: grep "define void @unreferenced2()" %t
-// RUN: grep "define void @gnu_inline()" %t
-// RUN: grep "define available_externally void @gnu_ei_inline()" %t
-// RUN: grep "define i32 @test1" %t
-// RUN: grep "define i32 @test2" %t
-// RUN: grep "define void @test3" %t
-// RUN: grep "define available_externally i32 @test4" %t
-// RUN: grep "define available_externally i32 @test5" %t
-// RUN: grep "define i32 @test6" %t
-// RUN: grep "define void @test7" %t
-// RUN: grep "define available_externally i.. @strlcpy" %t
-// RUN: grep "define void @test9" %t
-// RUN: grep "define void @testA" %t
-// RUN: grep "define void @testB" %t
-// RUN: grep "define void @testC" %t
+// RUN: %clang %s -target i386-unknown-unknown -O1 -emit-llvm -S -o - -std=gnu99 | FileCheck %s --check-prefix=CHECK2
+// CHECK2: define i32 @ei()
+// CHECK2: define i32 @bar()
+// CHECK2-NOT: unreferenced1
+// CHECK2: define void @unreferenced2()
+// CHECK2: define void @gnu_inline()
+// CHECK2: define i32 @test1
+// CHECK2: define i32 @test2
+// CHECK2: define void @test3
+// CHECK2: define available_externally i32 @test4
+// CHECK2: define available_externally i32 @test5
+// CHECK2: define i32 @test6
+// CHECK2: define void @test7
+// CHECK2: define available_externally i{{..}} @strlcpy
+// CHECK2: define void @test9
+// CHECK2: define void @testA
+// CHECK2: define void @testB
+// CHECK2: define void @testC
+// CHECK2: define available_externally void @gnu_ei_inline()
+// CHECK2: define available_externally i32 @foo()
 
 // RUN: echo "C++ tests:"
-// RUN: %clang -x c++ %s -target i386-unknown-unknown -O1 -emit-llvm -S -o %t -std=c++98
-// RUN: grep "define linkonce_odr i32 @_Z2eiv()" %t
-// RUN: grep "define linkonce_odr i32 @_Z3foov()" %t
-// RUN: grep "define i32 @_Z3barv()" %t
-// RUN: not grep unreferenced %t
-// RUN: grep "define void @_Z10gnu_inlinev()" %t
-// RUN: grep "define available_externally void @_Z13gnu_ei_inlinev()" %t
+// RUN: %clang -x c++ %s -target i386-unknown-unknown -O1 -emit-llvm -S -o - -std=c++98 | FileCheck %s --check-prefix=CHECK3
+// CHECK3: define i32 @_Z3barv()
+// CHECK3: define linkonce_odr i32 @_Z3foov()
+// CHECK3-NOT: unreferenced
+// CHECK3: define void @_Z10gnu_inlinev()
+// CHECK3: define available_externally void @_Z13gnu_ei_inlinev()
+// CHECK3: define linkonce_odr i32 @_Z2eiv()
 
 extern __inline int ei() { return 123; }
 
