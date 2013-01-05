@@ -21,6 +21,7 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/Allocator.h"
+#include "llvm/Support/ArrayRecycler.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Support/Recycler.h"
 
@@ -104,6 +105,9 @@ class MachineFunction {
 
   // Allocation management for instructions in function.
   Recycler<MachineInstr> InstructionRecycler;
+
+  // Allocation management for operand arrays on instructions.
+  ArrayRecycler<MachineOperand> OperandRecycler;
 
   // Allocation management for basic blocks in function.
   Recycler<MachineBasicBlock> BasicBlockRecycler;
@@ -393,6 +397,21 @@ public:
   /// explicitly deallocated.
   MachineMemOperand *getMachineMemOperand(const MachineMemOperand *MMO,
                                           int64_t Offset, uint64_t Size);
+
+  typedef ArrayRecycler<MachineOperand>::Capacity OperandCapacity;
+
+  /// Allocate an array of MachineOperands. This is only intended for use by
+  /// internal MachineInstr functions.
+  MachineOperand *allocateOperandArray(OperandCapacity Cap) {
+    return OperandRecycler.allocate(Cap, Allocator);
+  }
+
+  /// Dellocate an array of MachineOperands and recycle the memory. This is
+  /// only intended for use by internal MachineInstr functions.
+  /// Cap must be the same capacity that was used to allocate the array.
+  void deallocateOperandArray(OperandCapacity Cap, MachineOperand *Array) {
+    OperandRecycler.deallocate(Cap, Array);
+  }
 
   /// allocateMemRefsArray - Allocate an array to hold MachineMemOperand
   /// pointers.  This array is owned by the MachineFunction.

@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/IR/InlineAsm.h"
 #include "llvm/MC/MCInstrDesc.h"
+#include "llvm/Support/ArrayRecycler.h"
 #include "llvm/Support/DebugLoc.h"
 #include "llvm/Target/TargetOpcodes.h"
 #include <vector>
@@ -63,6 +64,13 @@ public:
   };
 private:
   const MCInstrDesc *MCID;              // Instruction descriptor.
+  MachineBasicBlock *Parent;            // Pointer to the owning basic block.
+
+  // Operands are allocated by an ArrayRecycler.
+  MachineOperand *Operands;             // Pointer to the first operand.
+  unsigned NumOperands;                 // Number of operands on instruction.
+  typedef ArrayRecycler<MachineOperand>::Capacity OperandCapacity;
+  OperandCapacity CapOperands;          // Capacity of the Operands array.
 
   uint8_t Flags;                        // Various bits of additional
                                         // information about machine
@@ -78,8 +86,6 @@ private:
   uint16_t NumMemRefs;                  // information on memory references
   mmo_iterator MemRefs;
 
-  std::vector<MachineOperand> Operands; // the operands
-  MachineBasicBlock *Parent;            // Pointer to the owning basic block.
   DebugLoc debugLoc;                    // Source line information.
 
   MachineInstr(const MachineInstr&) LLVM_DELETED_FUNCTION;
@@ -252,7 +258,7 @@ public:
 
   /// Access to explicit operands of the instruction.
   ///
-  unsigned getNumOperands() const { return (unsigned)Operands.size(); }
+  unsigned getNumOperands() const { return NumOperands; }
 
   const MachineOperand& getOperand(unsigned i) const {
     assert(i < getNumOperands() && "getOperand() out of range!");
@@ -268,14 +274,14 @@ public:
   unsigned getNumExplicitOperands() const;
 
   /// iterator/begin/end - Iterate over all operands of a machine instruction.
-  typedef std::vector<MachineOperand>::iterator mop_iterator;
-  typedef std::vector<MachineOperand>::const_iterator const_mop_iterator;
+  typedef MachineOperand *mop_iterator;
+  typedef const MachineOperand *const_mop_iterator;
 
-  mop_iterator operands_begin() { return Operands.begin(); }
-  mop_iterator operands_end() { return Operands.end(); }
+  mop_iterator operands_begin() { return Operands; }
+  mop_iterator operands_end() { return Operands + NumOperands; }
 
-  const_mop_iterator operands_begin() const { return Operands.begin(); }
-  const_mop_iterator operands_end() const { return Operands.end(); }
+  const_mop_iterator operands_begin() const { return Operands; }
+  const_mop_iterator operands_end() const { return Operands + NumOperands; }
 
   /// Access to memory operands of the instruction
   mmo_iterator memoperands_begin() const { return MemRefs; }

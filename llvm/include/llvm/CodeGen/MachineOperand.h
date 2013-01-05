@@ -35,6 +35,11 @@ class MCSymbol;
 
 /// MachineOperand class - Representation of each machine instruction operand.
 ///
+/// This class isn't a POD type because it has a private constructor, but its
+/// destructor must be trivial. Functions like MachineInstr::addOperand(),
+/// MachineRegisterInfo::moveOperands(), and MF::DeleteMachineInstr() depend on
+/// not having to call the MachineOperand destructor.
+///
 class MachineOperand {
 public:
   enum MachineOperandType {

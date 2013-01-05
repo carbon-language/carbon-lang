@@ -532,12 +532,16 @@ void MachineInstr::addImplicitDefUseOperands(MachineFunction &MF) {
 /// the MCInstrDesc.
 MachineInstr::MachineInstr(MachineFunction &MF, const MCInstrDesc &tid,
                            const DebugLoc dl, bool NoImp)
-  : MCID(&tid), Flags(0), AsmPrinterFlags(0),
-    NumMemRefs(0), MemRefs(0), Parent(0), debugLoc(dl) {
-  unsigned NumImplicitOps = 0;
-  if (!NoImp)
-    NumImplicitOps = MCID->getNumImplicitDefs() + MCID->getNumImplicitUses();
-  Operands.reserve(NumImplicitOps + MCID->getNumOperands());
+  : MCID(&tid), Parent(0), Operands(0), NumOperands(0),
+    Flags(0), AsmPrinterFlags(0),
+    NumMemRefs(0), MemRefs(0), debugLoc(dl) {
+  // Reserve space for the expected number of operands.
+  if (unsigned NumOps = MCID->getNumOperands() +
+    MCID->getNumImplicitDefs() + MCID->getNumImplicitUses()) {
+    CapOperands = OperandCapacity::get(NumOps);
+    Operands = MF.allocateOperandArray(CapOperands);
+  }
+
   if (!NoImp)
     addImplicitDefUseOperands(MF);
   // Make sure that we get added to a machine basicblock
@@ -547,10 +551,12 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MCInstrDesc &tid,
 /// MachineInstr ctor - Copies MachineInstr arg exactly
 ///
 MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
-  : MCID(&MI.getDesc()), Flags(0), AsmPrinterFlags(0),
+  : MCID(&MI.getDesc()), Parent(0), Operands(0), NumOperands(0),
+    Flags(0), AsmPrinterFlags(0),
     NumMemRefs(MI.NumMemRefs), MemRefs(MI.MemRefs),
-    Parent(0), debugLoc(MI.getDebugLoc()) {
-  Operands.reserve(MI.getNumOperands());
+    debugLoc(MI.getDebugLoc()) {
+  CapOperands = OperandCapacity::get(MI.getNumOperands());
+  Operands = MF.allocateOperandArray(CapOperands);
 
   // Add operands
   for (unsigned i = 0; i != MI.getNumOperands(); ++i)
@@ -611,35 +617,52 @@ void MachineInstr::addOperand(const MachineOperand &Op) {
   addOperand(*MF, Op);
 }
 
+/// Move NumOps MachineOperands from Src to Dst, with support for overlapping
+/// ranges. If MRI is non-null also update use-def chains.
+static void moveOperands(MachineOperand *Dst, MachineOperand *Src,
+                         unsigned NumOps, MachineRegisterInfo *MRI) {
+  if (MRI)
+    return MRI->moveOperands(Dst, Src, NumOps);
+
+  // Here it would be convenient to call memmove, so that isn't allowed because
+  // MachineOperand has a constructor and so isn't a POD type.
+  if (Dst < Src)
+    for (unsigned i = 0; i != NumOps; ++i)
+      new (Dst + i) MachineOperand(Src[i]);
+  else
+    for (unsigned i = NumOps; i ; --i)
+      new (Dst + i - 1) MachineOperand(Src[i - 1]);
+}
+
 /// addOperand - Add the specified operand to the instruction.  If it is an
 /// implicit operand, it is added to the end of the operand list.  If it is
 /// an explicit operand it is added at the end of the explicit operand list
 /// (before the first implicit operand).
 void MachineInstr::addOperand(MachineFunction &MF, const MachineOperand &Op) {
   assert(MCID && "Cannot add operands before providing an instr descriptor");
-  bool isImpReg = Op.isReg() && Op.isImplicit();
-  MachineRegisterInfo *RegInfo = getRegInfo();
 
-  // If the Operands backing store is reallocated, all register operands must
-  // be removed and re-added to RegInfo.  It is storing pointers to operands.
-  bool Reallocate = RegInfo &&
-    !Operands.empty() && getNumOperands() == Operands.capacity();
+  // Check if we're adding one of our existing operands.
+  if (&Op >= Operands && &Op < Operands + NumOperands) {
+    // This is unusual: MI->addOperand(MI->getOperand(i)).
+    // If adding Op requires reallocating or moving existing operands around,
+    // the Op reference could go stale. Support it by copying Op.
+    MachineOperand CopyOp(Op);
+    return addOperand(MF, CopyOp);
+  }
 
   // Find the insert location for the new operand.  Implicit registers go at
-  // the end, everything goes before the implicit regs.
-  unsigned OpNo = getNumOperands();
-
-  // Remove all the implicit operands from RegInfo if they need to be shifted.
+  // the end, everything else goes before the implicit regs.
+  //
   // FIXME: Allow mixed explicit and implicit operands on inline asm.
   // InstrEmitter::EmitSpecialNode() is marking inline asm clobbers as
   // implicit-defs, but they must not be moved around.  See the FIXME in
   // InstrEmitter.cpp.
+  unsigned OpNo = getNumOperands();
+  bool isImpReg = Op.isReg() && Op.isImplicit();
   if (!isImpReg && !isInlineAsm()) {
     while (OpNo && Operands[OpNo-1].isReg() && Operands[OpNo-1].isImplicit()) {
       --OpNo;
       assert(!Operands[OpNo].isTied() && "Cannot move tied operands");
-      if (RegInfo)
-        RegInfo->removeRegOperandFromUseList(&Operands[OpNo]);
     }
   }
 
@@ -650,55 +673,56 @@ void MachineInstr::addOperand(MachineFunction &MF, const MachineOperand &Op) {
           OpNo < MCID->getNumOperands()) &&
          "Trying to add an operand to a machine instr that is already done!");
 
-  // All operands from OpNo have been removed from RegInfo.  If the Operands
-  // backing store needs to be reallocated, we also need to remove any other
-  // register operands.
-  if (Reallocate)
-    for (unsigned i = 0; i != OpNo; ++i)
-      if (Operands[i].isReg())
-        RegInfo->removeRegOperandFromUseList(&Operands[i]);
+  MachineRegisterInfo *MRI = getRegInfo();
 
-  // Insert the new operand at OpNo.
-  Operands.insert(Operands.begin() + OpNo, Op);
-  Operands[OpNo].ParentMI = this;
+  // Determine if the Operands array needs to be reallocated.
+  // Save the old capacity and operand array.
+  OperandCapacity OldCap = CapOperands;
+  MachineOperand *OldOperands = Operands;
+  if (!OldOperands || OldCap.getSize() == getNumOperands()) {
+    CapOperands = OldOperands ? OldCap.getNext() : OldCap.get(1);
+    Operands = MF.allocateOperandArray(CapOperands);
+    // Move the operands before the insertion point.
+    if (OpNo)
+      moveOperands(Operands, OldOperands, OpNo, MRI);
+  }
 
-  // The Operands backing store has now been reallocated, so we can re-add the
-  // operands before OpNo.
-  if (Reallocate)
-    for (unsigned i = 0; i != OpNo; ++i)
-      if (Operands[i].isReg())
-        RegInfo->addRegOperandToUseList(&Operands[i]);
+  // Move the operands following the insertion point.
+  if (OpNo != NumOperands)
+    moveOperands(Operands + OpNo + 1, OldOperands + OpNo, NumOperands - OpNo,
+                 MRI);
+  ++NumOperands;
 
-  // When adding a register operand, tell RegInfo about it.
-  if (Operands[OpNo].isReg()) {
+  // Deallocate the old operand array.
+  if (OldOperands != Operands && OldOperands)
+    MF.deallocateOperandArray(OldCap, OldOperands);
+
+  // Copy Op into place. It still needs to be inserted into the MRI use lists.
+  MachineOperand *NewMO = new (Operands + OpNo) MachineOperand(Op);
+  NewMO->ParentMI = this;
+
+  // When adding a register operand, tell MRI about it.
+  if (NewMO->isReg()) {
     // Ensure isOnRegUseList() returns false, regardless of Op's status.
-    Operands[OpNo].Contents.Reg.Prev = 0;
+    NewMO->Contents.Reg.Prev = 0;
     // Ignore existing ties. This is not a property that can be copied.
-    Operands[OpNo].TiedTo = 0;
-    // Add the new operand to RegInfo.
-    if (RegInfo)
-      RegInfo->addRegOperandToUseList(&Operands[OpNo]);
+    NewMO->TiedTo = 0;
+    // Add the new operand to MRI, but only for instructions in an MBB.
+    if (MRI)
+      MRI->addRegOperandToUseList(NewMO);
     // The MCID operand information isn't accurate until we start adding
     // explicit operands. The implicit operands are added first, then the
     // explicits are inserted before them.
     if (!isImpReg) {
       // Tie uses to defs as indicated in MCInstrDesc.
-      if (Operands[OpNo].isUse()) {
+      if (NewMO->isUse()) {
         int DefIdx = MCID->getOperandConstraint(OpNo, MCOI::TIED_TO);
         if (DefIdx != -1)
           tieOperands(DefIdx, OpNo);
       }
       // If the register operand is flagged as early, mark the operand as such.
       if (MCID->getOperandConstraint(OpNo, MCOI::EARLY_CLOBBER) != -1)
-        Operands[OpNo].setIsEarlyClobber(true);
-    }
-  }
-
-  // Re-add all the implicit ops.
-  if (RegInfo) {
-    for (unsigned i = OpNo + 1, e = getNumOperands(); i != e; ++i) {
-      assert(Operands[i].isReg() && "Should only be an implicit reg!");
-      RegInfo->addRegOperandToUseList(&Operands[i]);
+        NewMO->setIsEarlyClobber(true);
     }
   }
 }
@@ -709,16 +733,6 @@ void MachineInstr::addOperand(MachineFunction &MF, const MachineOperand &Op) {
 void MachineInstr::RemoveOperand(unsigned OpNo) {
   assert(OpNo < getNumOperands() && "Invalid operand number");
   untieRegOperand(OpNo);
-  MachineRegisterInfo *RegInfo = getRegInfo();
-
-  // If we have reginfo to update, remove all operands that will be shifted
-  // down from their reg lists, move everything down, then re-add them.
-  if (RegInfo) {
-    for (unsigned i = OpNo, e = getNumOperands(); i != e; ++i) {
-      if (Operands[i].isReg())
-        RegInfo->removeRegOperandFromUseList(&Operands[i]);
-    }
-  }
 
 #ifndef NDEBUG
   // Moving tied operands would break the ties.
@@ -727,14 +741,17 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
       assert(!Operands[i].isTied() && "Cannot move tied operands");
 #endif
 
-  Operands.erase(Operands.begin()+OpNo);
+  MachineRegisterInfo *MRI = getRegInfo();
+  if (MRI && Operands[OpNo].isReg())
+    MRI->removeRegOperandFromUseList(Operands + OpNo);
 
-  if (RegInfo) {
-    for (unsigned i = OpNo, e = getNumOperands(); i != e; ++i) {
-      if (Operands[i].isReg())
-        RegInfo->addRegOperandToUseList(&Operands[i]);
-    }
-  }
+  // Don't call the MachineOperand destructor. A lot of this code depends on
+  // MachineOperand having a trivial destructor anyway, and adding a call here
+  // wouldn't make it 'destructor-correct'.
+
+  if (unsigned N = NumOperands - 1 - OpNo)
+    moveOperands(Operands + OpNo, Operands + OpNo + 1, N, MRI);
+  --NumOperands;
 }
 
 /// addMemOperand - Add a MachineMemOperand to the machine instruction.

@@ -78,6 +78,7 @@ MachineFunction::MachineFunction(const Function *F, const TargetMachine &TM,
 MachineFunction::~MachineFunction() {
   BasicBlocks.clear();
   InstructionRecycler.clear(Allocator);
+  OperandRecycler.clear(Allocator);
   BasicBlockRecycler.clear(Allocator);
   if (RegInfo) {
     RegInfo->~MachineRegisterInfo();
@@ -177,6 +178,12 @@ MachineFunction::CloneMachineInstr(const MachineInstr *Orig) {
 ///
 void
 MachineFunction::DeleteMachineInstr(MachineInstr *MI) {
+  // Strip it for parts. The operand array and the MI object itself are
+  // independently recyclable.
+  if (MI->Operands)
+    deallocateOperandArray(MI->CapOperands, MI->Operands);
+  MI->Operands = 0;
+  MI->NumOperands = 0;
   MI->~MachineInstr();
   InstructionRecycler.Deallocate(Allocator, MI);
 }
