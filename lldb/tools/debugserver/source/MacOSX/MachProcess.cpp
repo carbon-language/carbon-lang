@@ -364,6 +364,7 @@ MachProcess::Kill (const struct timespec *timeout_abstime)
     nub_state_t state = DoSIGSTOP(true, false, NULL);
     DNBLogThreadedIf(LOG_PROCESS, "MachProcess::Kill() DoSIGSTOP() state = %s", DNBStateAsString(state));
     errno = 0;
+    DNBLog ("Sending ptrace PT_KILL to terminate inferior process.");
     ::ptrace (PT_KILL, m_pid, 0, 0);
     DNBError err;
     err.SetErrorToErrno();
@@ -1690,6 +1691,7 @@ MachProcess::LaunchForDebug
         {
             if (launch_err.AsString() == NULL)
                 launch_err.SetErrorString("unable to start the exception thread");
+            DNBLog ("Could not get inferior's Mach exception port, sending ptrace PT_KILL and exiting.");
             ::ptrace (PT_KILL, m_pid, 0, 0);
             m_pid = INVALID_NUB_PROCESS;
             return INVALID_NUB_PROCESS;
@@ -2030,6 +2032,7 @@ MachProcess::SBLaunchForDebug (const char *path, char const *argv[], char const 
         {
             if (launch_err.AsString() == NULL)
                 launch_err.SetErrorString("unable to start the exception thread");
+            DNBLog ("Could not get inferior's Mach exception port, sending ptrace PT_KILL and exiting.");
             ::ptrace (PT_KILL, m_pid, 0, 0);
             m_pid = INVALID_NUB_PROCESS;
             return INVALID_NUB_PROCESS;
