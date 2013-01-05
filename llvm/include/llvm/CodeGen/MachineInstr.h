@@ -43,6 +43,10 @@ class MachineMemOperand;
 //===----------------------------------------------------------------------===//
 /// MachineInstr - Representation of each machine instruction.
 ///
+/// This class isn't a POD type, but it must have a trivial destructor. When a
+/// MachineFunction is deleted, all the contained MachineInstrs are deallocated
+/// without having their destructor called.
+///
 class MachineInstr : public ilist_node<MachineInstr> {
 public:
   typedef MachineMemOperand **mmo_iterator;
@@ -90,6 +94,8 @@ private:
 
   MachineInstr(const MachineInstr&) LLVM_DELETED_FUNCTION;
   void operator=(const MachineInstr&) LLVM_DELETED_FUNCTION;
+  // Use MachineFunction::DeleteMachineInstr() instead.
+  ~MachineInstr() LLVM_DELETED_FUNCTION;
 
   // Intrusive list support
   friend struct ilist_traits<MachineInstr>;
@@ -105,8 +111,6 @@ private:
   /// MCInstrDesc.  An explicit DebugLoc is supplied.
   MachineInstr(MachineFunction&, const MCInstrDesc &MCID,
                const DebugLoc dl, bool NoImp = false);
-
-  ~MachineInstr();
 
   // MachineInstrs are pool-allocated and owned by MachineFunction.
   friend class MachineFunction;

@@ -35,7 +35,6 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/LeakDetector.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetInstrInfo.h"
@@ -544,8 +543,6 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MCInstrDesc &tid,
 
   if (!NoImp)
     addImplicitDefUseOperands(MF);
-  // Make sure that we get added to a machine basicblock
-  LeakDetector::addGarbageObject(this);
 }
 
 /// MachineInstr ctor - Copies MachineInstr arg exactly
@@ -558,28 +555,12 @@ MachineInstr::MachineInstr(MachineFunction &MF, const MachineInstr &MI)
   CapOperands = OperandCapacity::get(MI.getNumOperands());
   Operands = MF.allocateOperandArray(CapOperands);
 
-  // Add operands
+  // Copy operands.
   for (unsigned i = 0; i != MI.getNumOperands(); ++i)
     addOperand(MF, MI.getOperand(i));
 
   // Copy all the sensible flags.
   setFlags(MI.Flags);
-
-  // Set parent to null.
-  Parent = 0;
-
-  LeakDetector::addGarbageObject(this);
-}
-
-MachineInstr::~MachineInstr() {
-  LeakDetector::removeGarbageObject(this);
-#ifndef NDEBUG
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    assert(Operands[i].ParentMI == this && "ParentMI mismatch!");
-    assert((!Operands[i].isReg() || !Operands[i].isOnRegUseList()) &&
-           "Reg operand def/use list corrupted");
-  }
-#endif
 }
 
 /// getRegInfo - If this instruction is embedded into a MachineFunction,

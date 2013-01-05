@@ -30,12 +30,6 @@ MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI)
 }
 
 MachineRegisterInfo::~MachineRegisterInfo() {
-#ifndef NDEBUG
-  clearVirtRegs();
-  for (unsigned i = 0, e = TRI->getNumRegs(); i != e; ++i)
-    assert(!PhysRegUseDefLists[i] &&
-           "PhysRegUseDefLists has entries after all instructions are deleted");
-#endif
   delete [] PhysRegUseDefLists;
 }
 
