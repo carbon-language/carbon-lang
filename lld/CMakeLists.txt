@@ -68,28 +68,25 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
 "`CMakeFiles'. Please delete them.")
 endif()
 
-#
-# lld now requires C++11 to build
-#
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-if (NOT MSVC)
-  include(CheckCXXCompilerFlag)
-  check_cxx_compiler_flag("-std=c++0x" SUPPORTS_CXX11_FLAG)
-  if( SUPPORTS_CXX11_FLAG )
-    message(STATUS "Building with -std=c++0x")
-    set(CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}")
-  else( SUPPORTS_CXX11_FLAG )
-    message(WARNING "-std=c++0x not supported.")
+# lld requires c++11 to build. Make sure that we have a compiler and standard
+# library combination that can do that.
+if (MSVC11)
+  # Do nothing, we're good.
+elseif (NOT MSVC)
+  # gcc and clang require the -std=c++0x or -std=c++11 flag.
+  if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR
+      "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+    if (NOT ("${CMAKE_CXX_FLAGS}" MATCHES "-std=c\\+\\+0x" OR
+             "${CMAKE_CXX_FLAGS}" MATCHES "-std=c\\+\\+11"))
+      message(FATAL_ERROR
+        "lld requires c++11. Clang and gcc require -std=c++0x or -std=c++11 to "
+        "enter this mode. Please set CMAKE_CXX_FLAGS accordingly.")
+    endif()
   endif()
-  check_cxx_compiler_flag("-stdlib=libc++" SUPPORTS_LIBCXX_FLAG)
-  if( SUPPORTS_LIBCXX_FLAG )
-    message(STATUS "Building with -stdlib=libc++")
-    set(CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}")
-  else( SUPPORTS_LIBCXX_FLAG )
-    message(WARNING "-stdlib=libc++ not supported.")
-  endif()
+else()
+  message(FATAL_ERROR "The selected compiler does not support c++11 which is "
+          "required to build lld.")
 endif()
-
 
 macro(add_lld_library name)
   llvm_process_sources(srcs ${ARGN})
