@@ -17,7 +17,7 @@
 #include <regex>
 #include <cassert>
 
-#include "../../platform_support.h"
+#include "platform_support.h"
 
 int main()
 {

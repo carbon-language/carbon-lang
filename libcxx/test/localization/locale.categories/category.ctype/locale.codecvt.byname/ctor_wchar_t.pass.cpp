@@ -17,7 +17,7 @@
 #include <locale>
 #include <cassert>
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 typedef std::codecvt_byname<wchar_t, char, std::mbstate_t> F;
 

@@ -15,7 +15,7 @@
 #include <numeric>
 #include <cassert>
 
-#include "../../../iterators.h"
+#include "test_iterators.h"
 
 template <class InIter>
 void

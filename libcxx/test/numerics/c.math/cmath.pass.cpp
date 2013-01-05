@@ -13,7 +13,7 @@
 #include <type_traits>
 #include <cassert>
 
-#include "../../hexfloat.h"
+#include "hexfloat.h"
 
 void test_abs()
 {

@@ -23,9 +23,9 @@
 
 #include <locale>
 #include <cassert>
-#include "../../../../iterators.h"
+#include "test_iterators.h"
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 typedef std::time_put_byname<char, output_iterator<char*> > F;
 

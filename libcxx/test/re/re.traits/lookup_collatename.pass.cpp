@@ -18,7 +18,7 @@
 #include <regex>
 #include <iterator>
 #include <cassert>
-#include "../../iterators.h"
+#include "test_iterators.h"
 
 template <class char_type>
 void

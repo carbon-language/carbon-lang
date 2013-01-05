@@ -18,7 +18,7 @@
 #include <ios>
 #include <cassert>
 #include <streambuf>
-#include "../../../../../iterators.h"
+#include "test_iterators.h"
 
 typedef std::num_get<char, input_iterator<const char*> > F;
 

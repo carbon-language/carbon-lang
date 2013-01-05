@@ -20,7 +20,7 @@
 #include <cassert>
 #include <cfloat>
 
-#include "../../../../iterators.h"
+#include "test_iterators.h"
 #include "../../../test_compare.h"
 #include "../../../test_hash.h"
 #include "../../../test_allocator.h"

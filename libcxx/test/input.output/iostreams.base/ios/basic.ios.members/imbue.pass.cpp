@@ -17,7 +17,7 @@
 #include <streambuf>
 #include <cassert>
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 struct testbuf
     : public std::streambuf

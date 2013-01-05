@@ -16,7 +16,7 @@
 #include <fstream>
 #include <cassert>
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 template <class CharT>
 struct test_buf

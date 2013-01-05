@@ -20,7 +20,7 @@
 #include <memory>
 #endif
 
-#include "../../../iterators.h"
+#include "test_iterators.h"
 
 template <class InIter, class OutIter>
 void

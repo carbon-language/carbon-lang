@@ -17,7 +17,7 @@
 
 #include <locale>
 #include <cassert>
-#include "../../../../../iterators.h"
+#include "test_iterators.h"
 
 typedef input_iterator<const char*> I;
 

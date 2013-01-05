@@ -18,7 +18,7 @@
 #include <locale>
 #include <cassert>
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 class test
     : public std::ios

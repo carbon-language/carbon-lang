@@ -15,9 +15,9 @@
 
 #include <locale>
 #include <cassert>
-#include "../../../../iterators.h"
+#include "test_iterators.h"
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 typedef std::time_get_byname<wchar_t, input_iterator<const wchar_t*> > F;
 

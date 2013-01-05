@@ -40,6 +40,7 @@ if [ -z "$OPTIONS" ]
 then
 	OPTIONS="-std=c++0x -stdlib=libc++"
 fi
+OPTIONS="$OPTIONS -I$LIBCXX_ROOT/test/support"
 
 if [ -z "$HEADER_INCLUDE" ]
 then

@@ -15,7 +15,7 @@
 #include <cassert>
 #include <new>
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 int new_called = 0;
 

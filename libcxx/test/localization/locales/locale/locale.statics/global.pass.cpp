@@ -14,7 +14,7 @@
 #include <locale>
 #include <cassert>
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 void check(const std::locale& loc)
 {

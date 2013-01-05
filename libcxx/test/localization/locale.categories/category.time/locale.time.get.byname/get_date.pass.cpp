@@ -17,9 +17,9 @@
 
 #include <locale>
 #include <cassert>
-#include "../../../../iterators.h"
+#include "test_iterators.h"
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 typedef input_iterator<const char*> I;
 

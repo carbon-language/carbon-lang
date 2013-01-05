@@ -19,7 +19,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "../../../iterators.h"
+#include "test_iterators.h"
 
 template <class InIter1, class InIter2, class OutIter>
 void

@@ -19,7 +19,7 @@
 #include <string>
 #include <cassert>
 
-#include "../../../../iterators.h"
+#include "test_iterators.h"
 
 int main()
 {

@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <cassert>
 
-#include "../../../../iterators.h"
+#include "test_iterators.h"
 
 template <class Iter1, class Iter2, class OutIter>
 void

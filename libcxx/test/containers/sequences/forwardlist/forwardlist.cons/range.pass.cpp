@@ -16,7 +16,7 @@
 #include <cassert>
 #include <iterator>
 
-#include "../../../../iterators.h"
+#include "test_iterators.h"
 
 int main()
 {

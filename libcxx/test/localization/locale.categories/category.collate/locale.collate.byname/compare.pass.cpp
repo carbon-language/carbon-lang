@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 
-#include "../../../../platform_support.h" // locale name macros
+#include "platform_support.h" // locale name macros
 
 int main()
 {
