@@ -6,6 +6,7 @@ set(LLVM_LINK_COMPONENTS
 add_llvm_unittest(SupportTests
   AlignOfTest.cpp
   AllocatorTest.cpp
+  ArrayRecyclerTest.cpp
   BlockFrequencyTest.cpp
   Casting.cpp
   CommandLineTest.cpp
