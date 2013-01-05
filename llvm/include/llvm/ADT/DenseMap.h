@@ -75,7 +75,7 @@ public:
 
   void clear() {
     if (getNumEntries() == 0 && getNumTombstones() == 0) return;
-    
+
     // If the capacity of the array is huge, and the # elements used is small,
     // shrink the array.
     if (getNumEntries() * 4 < getNumBuckets() && getNumBuckets() > 64) {
@@ -1028,7 +1028,7 @@ private:
       ++Ptr;
   }
 };
-  
+
 template<typename KeyT, typename ValueT, typename KeyInfoT>
 static inline size_t
 capacity_in_bytes(const DenseMap<KeyT, ValueT, KeyInfoT> &X) {
