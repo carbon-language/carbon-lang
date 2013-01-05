@@ -531,13 +531,13 @@ public:
     init(NumInitBuckets);
   }
 
-  DenseMap(const DenseMap &other) {
+  DenseMap(const DenseMap &other) : BaseT() {
     init(0);
     copyFrom(other);
   }
 
 #if LLVM_HAS_RVALUE_REFERENCES
-  DenseMap(DenseMap &&other) {
+  DenseMap(DenseMap &&other) : BaseT() {
     init(0);
     swap(other);
   }
