@@ -76,7 +76,7 @@ namespace llvm {
 // Forward declarations.
 class LoopVectorizationLegality;
 class LoopVectorizationCostModel;
-class VectorTargetTransformInfo;
+class TargetTransformInfo;
 
 /// InnerLoopVectorizer vectorizes loops which contain only one basic
 /// block to a specified vectorization factor (VF).
@@ -468,18 +468,18 @@ private:
 
 /// LoopVectorizationCostModel - estimates the expected speedups due to
 /// vectorization.
-/// In many cases vectorization is not profitable. This can happen because
-/// of a number of reasons. In this class we mainly attempt to predict
-/// the expected speedup/slowdowns due to the supported instruction set.
-/// We use the VectorTargetTransformInfo to query the different backends
-/// for the cost of different operations.
+/// In many cases vectorization is not profitable. This can happen because of
+/// a number of reasons. In this class we mainly attempt to predict the
+/// expected speedup/slowdowns due to the supported instruction set. We use the
+/// TargetTransformInfo to query the different backends for the cost of
+/// different operations.
 class LoopVectorizationCostModel {
 public:
   /// C'tor.
   LoopVectorizationCostModel(Loop *Lp, ScalarEvolution *Se, LoopInfo *Li,
                              LoopVectorizationLegality *Leg,
-                             const VectorTargetTransformInfo *Vtti):
-  TheLoop(Lp), SE(Se), LI(Li), Legal(Leg), VTTI(Vtti) { }
+                             const TargetTransformInfo *Tti):
+  TheLoop(Lp), SE(Se), LI(Li), Legal(Leg), TTI(Tti) { }
 
   /// \return The most profitable vectorization factor.
   /// This method checks every power of two up to VF. If UserVF is not ZERO
@@ -532,7 +532,7 @@ private:
   /// Vectorization legality.
   LoopVectorizationLegality *Legal;
   /// Vector target information.
-  const VectorTargetTransformInfo *VTTI;
+  const TargetTransformInfo *TTI;
 };
 
 }// namespace llvm
