@@ -430,7 +430,8 @@ private:
     incrementNumEntries();
 
     // If we are writing over a tombstone, remember this.
-    if (!KeyInfoT::isEqual(TheBucket->first, getEmptyKey()))
+    const KeyT EmptyKey = getEmptyKey();
+    if (!KeyInfoT::isEqual(TheBucket->first, EmptyKey))
       decrementNumTombstones();
 
     return TheBucket;
