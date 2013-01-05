@@ -23,6 +23,7 @@
 #define LLVM_TRANSFORMS_TARGET_TRANSFORM_INTERFACE
 
 #include "llvm/IR/Intrinsics.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
