@@ -1,3 +1,1 @@
-RUN: lld -flavor ld -target x86_64-linux 2>&1 | FileCheck %s
-
-CHECK-NOT: Failed to create target
+RUN: lld -flavor ld -target x86_64-linux
