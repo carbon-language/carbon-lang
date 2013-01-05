@@ -7,7 +7,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-
 #include "ReferenceKinds.h"
 
 #include "llvm/ADT/StringRef.h"
@@ -15,21 +14,17 @@
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ELF.h"
+
 namespace lld {
 namespace elf {
-
-//===----------------------------------------------------------------------===//
-//  KindHandler
-//===----------------------------------------------------------------------===//
-
 KindHandler::KindHandler() {
 }
 
 KindHandler::~KindHandler() {
 }
 
-std::unique_ptr<KindHandler> KindHandler::makeHandler(uint16_t arch,
-                                          llvm::support::endianness endian) {
+std::unique_ptr<KindHandler>
+KindHandler::makeHandler(uint16_t arch, llvm::support::endianness endian) {
   switch(arch) {
   case llvm::ELF::EM_HEXAGON:
     return std::unique_ptr<KindHandler>(new HexagonKindHandler());
@@ -41,9 +36,5 @@ std::unique_ptr<KindHandler> KindHandler::makeHandler(uint16_t arch,
     llvm_unreachable("arch not supported");
   }
 }
-
 } // namespace elf
 } // namespace lld
-
-
-

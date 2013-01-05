@@ -6,41 +6,33 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-
+///
+/// \file
+/// The following relocation routines are derived from the
+/// SYSTEM V APPLICATION BINARY INTERFACE: Intel386 Architecture Processor
+/// Supplement (Fourth Edition)
+/// Symbols used:
+///   P: Place, address of the field being relocated, r_offset
+///   S: Value of the symbol whose index resides in the relocation entry.
+///   A: Addend used to compute the value, r_addend
+///
+//===----------------------------------------------------------------------===//
 
 #include "ReferenceKinds.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
-#include "llvm/Support/ELF.h"
 
 namespace lld {
 namespace elf {
-
-//===----------------------------------------------------------------------===//
-//  X86KindHandler
-//  TODO: more to do here
-//===----------------------------------------------------------------------===//
-
 X86KindHandler::~X86KindHandler() {
 }
 
-/// \brief The following relocation routines are derived from the
-///  SYSTEM V APPLICATION BINARY INTERFACE: Intel386 Architecture Processor
-///  Supplement (Fourth Edition)
-/// Symbols used:
-///  P: Place, address of the field being relocated, r_offset
-///  S: Value of the symbol whose index resides in the relocation entry.
-///  A: Addend used to compute the value, r_addend
-
-namespace x86 {
-int relocNone(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
-  return X86KindHandler::NoError;
-}
-
+namespace {
 /// \brief R_386_32 - word32:  S + A
 int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   int32_t result = (uint32_t)(S + A);
@@ -48,6 +40,7 @@ int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return X86KindHandler::NoError;
 }
+
 /// \brief R_386_PC32 - word32: S + A - P
 int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)((S + A) - P);
@@ -55,12 +48,11 @@ int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
             (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
   return X86KindHandler::NoError;
 }
-
-} // namespace x86
+} // end anon namespace
 
 X86KindHandler::X86KindHandler(){
-  _fixupHandler[llvm::ELF::R_386_32] = x86::reloc32;
-  _fixupHandler[llvm::ELF::R_386_PC32] = x86::relocPC32;
+  _fixupHandler[llvm::ELF::R_386_32] = reloc32;
+  _fixupHandler[llvm::ELF::R_386_PC32] = relocPC32;
 }
 
 Reference::Kind X86KindHandler::stringToKind(StringRef str) {
@@ -116,6 +108,5 @@ void X86KindHandler::applyFixup(int32_t reloc, uint64_t addend,
     }
   }
 }
-
-} // namespace elf
-} // namespace lld
+} // end namespace elf
+} // end namespace lld
