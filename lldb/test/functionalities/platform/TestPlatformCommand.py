@@ -18,7 +18,7 @@ class PlatformCommandTestCase(TestBase):
         self.expect("platform list",
             patterns = ['^Available platforms:'])
 
-    @expectedFailureLinux # due to bugzilla 14541
+    @expectedFailureLinux # due to bugzilla 14541 -- Cannot list processes on Linux
     def test_process_list(self):
         self.expect("platform process list",
             substrs = ['PID', 'ARCH', 'NAME'])
@@ -28,6 +28,7 @@ class PlatformCommandTestCase(TestBase):
         self.expect("platform process info", error=True,
             substrs = ['one or more process id(s) must be specified'])
 
+    @expectedFailureLinux # due to bugzilla 14806 -- "platform status" prints more information on Mac OS X than on Linux
     def test_status(self):
         self.expect("platform status",
             substrs = ['Platform', 'Triple', 'OS Version', 'Kernel', 'Hostname'])
