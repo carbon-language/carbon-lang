@@ -182,7 +182,7 @@ public:
     return Found;
   }
 
-  friend class RecursiveASTVisitor<DeclFinderASTVisitor>;
+  friend class clang::RecursiveASTVisitor<DeclFinderASTVisitor>;
 
 private:
   std::string Name;
