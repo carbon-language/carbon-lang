@@ -95,9 +95,8 @@ public:
 
     EndAttrKinds,          ///< Sentinal value useful for loops
 
-    // Values for DenseMapInfo
-    EmptyKey     = 0x7FFFFFFF,
-    TombstoneKey = -0x7FFFFFFF - 1
+    AttrKindEmptyKey,      ///< Empty key value for DenseMapInfo
+    AttrKindTombstoneKey   ///< Tombstone key value for DenseMapInfo
   };
 private:
   AttributeImpl *pImpl;
@@ -169,10 +168,10 @@ public:
 /// AttrBuilder.
 template<> struct DenseMapInfo<Attribute::AttrKind> {
   static inline Attribute::AttrKind getEmptyKey() {
-    return Attribute::EmptyKey;
+    return Attribute::AttrKindEmptyKey;
   }
   static inline Attribute::AttrKind getTombstoneKey() {
-    return Attribute::TombstoneKey;
+    return Attribute::AttrKindTombstoneKey;
   }
   static unsigned getHashValue(const Attribute::AttrKind &Val) {
     return Val * 37U;

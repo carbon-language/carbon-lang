@@ -425,9 +425,11 @@ uint64_t AttributeImpl::getBitMask() const {
 
 uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   switch (Val) {
-  case Attribute::EndAttrKinds:    break;
-  case Attribute::EmptyKey:        break;
-  case Attribute::TombstoneKey:    break;
+  case Attribute::EndAttrKinds:
+  case Attribute::AttrKindEmptyKey:
+  case Attribute::AttrKindTombstoneKey:
+    llvm_unreachable("Synthetic enumerators which should never get here");
+
   case Attribute::None:            return 0;
   case Attribute::ZExt:            return 1 << 0;
   case Attribute::SExt:            return 1 << 1;
