@@ -1,4 +1,4 @@
-; RUN: opt < %s  -loop-vectorize -force-vector-width=4 -dce -instcombine -licm -S | FileCheck %s
+; RUN: opt < %s  -loop-vectorize -force-vector-unroll=1 -force-vector-width=4 -dce -instcombine -licm -S | FileCheck %s
 
 ; rdar://problem/12848162
 
