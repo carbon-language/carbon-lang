@@ -35,7 +35,7 @@ namespace object {
 
 using support::endianness;
 
-template<typename T, std::size_t max_align>
+template<typename T, int max_align>
 struct MaximumAlignment {
   enum {value = AlignOf<T>::Alignment > max_align ? max_align
                                                   : AlignOf<T>::Alignment};
