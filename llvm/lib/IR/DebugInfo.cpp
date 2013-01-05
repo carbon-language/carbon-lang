@@ -1122,6 +1122,11 @@ void DISubprogram::printInternal(raw_ostream &OS) const {
   if (getScopeLineNumber() != getLineNumber())
     OS << " [scope " << getScopeLineNumber() << "]";
 
+  if (isPrivate())
+    OS << " [private]";
+  else if (isProtected())
+    OS << " [protected]";
+
   StringRef Res = getName();
   if (!Res.empty())
     OS << " [" << Res << ']';
