@@ -470,6 +470,10 @@ TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {
   EXPECT_EQ("{\n  {\n#define A\n  }\n}", format("{{\n#define A\n}}"));
 }
 
+TEST_F(FormatTest, FormatHashIfNotAtStartOfLine) {
+  verifyFormat("{\n  {\n    a #c;\n  }\n}");
+}
+
 // FIXME: write test for unbalanced braces in macros...
 // FIXME: test # inside a normal statement (like {#define A b})
 

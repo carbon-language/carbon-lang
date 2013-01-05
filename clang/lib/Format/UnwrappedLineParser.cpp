@@ -470,7 +470,9 @@ void UnwrappedLineParser::nextToken() {
 
 void UnwrappedLineParser::readToken() {
   FormatTok = Tokens->getNextToken();
-  while (!Line.InPPDirective && FormatTok.Tok.is(tok::hash)) {
+  while (!Line.InPPDirective && FormatTok.Tok.is(tok::hash) &&
+         ((FormatTok.NewlinesBefore > 0 && FormatTok.HasUnescapedNewline) ||
+          FormatTok.IsFirst)) {
     // FIXME: This is incorrect - the correct way is to create a
     // data structure that will construct the parts around the preprocessor
     // directive as a structured \c UnwrappedLine.

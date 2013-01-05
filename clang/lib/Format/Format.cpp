@@ -483,8 +483,7 @@ private:
 
     unsigned Newlines =
         std::min(Token.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
-    unsigned Offset = SourceMgr.getFileOffset(Token.WhiteSpaceStart);
-    if (Newlines == 0 && Offset != 0)
+    if (Newlines == 0 && !Token.IsFirst)
       Newlines = 1;
     unsigned Indent = Line.Level * 2;
     if ((Token.Tok.is(tok::kw_public) || Token.Tok.is(tok::kw_protected) ||
@@ -685,9 +684,10 @@ public:
       next();
       if (Index >= Tokens.size())
         return;
-      // It is the responsibility of the UnwrappedLineParser to make sure
-      // this sequence is not produced inside an unwrapped line.
-      assert(Tokens[Index].Tok.getIdentifierInfo() != NULL);
+      // Hashes in the middle of a line can lead to any strange token
+      // sequence.
+      if (Tokens[Index].Tok.getIdentifierInfo() == NULL)
+        return;
       switch (Tokens[Index].Tok.getIdentifierInfo()->getPPKeywordID()) {
       case tok::pp_include:
       case tok::pp_import:
@@ -1033,6 +1033,8 @@ public:
     Lex.LexFromRawLexer(FormatTok.Tok);
     StringRef Text = tokenText(FormatTok.Tok);
     FormatTok.WhiteSpaceStart = FormatTok.Tok.getLocation();
+    if (SourceMgr.getFileOffset(FormatTok.WhiteSpaceStart) == 0)
+      FormatTok.IsFirst = true;
 
     // Consume and record whitespace until we find a significant token.
     while (FormatTok.Tok.is(tok::unknown)) {

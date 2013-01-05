@@ -31,7 +31,8 @@ namespace format {
 /// whitespace characters preceeding it.
 struct FormatToken {
   FormatToken()
-      : NewlinesBefore(0), HasUnescapedNewline(false), WhiteSpaceLength(0) {
+      : NewlinesBefore(0), HasUnescapedNewline(false), WhiteSpaceLength(0),
+        IsFirst(false) {
   }
 
   /// \brief The \c Token.
@@ -56,6 +57,9 @@ struct FormatToken {
   /// \brief The length in characters of the whitespace immediately preceeding
   /// the \c Token.
   unsigned WhiteSpaceLength;
+
+  /// \brief Indicates that this is the first token.
+  bool IsFirst;
 };
 
 /// \brief An unwrapped line is a sequence of \c Token, that we would like to
