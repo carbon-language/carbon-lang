@@ -1755,7 +1755,7 @@ public:
       _programHeader->setFileOffset(_elfHeader->fileSize());
     }
     bool newSegmentHeaderAdded = true;
-    while (true) {
+    while (true && !_segments.empty()) {
       for (auto si : _segments) {
         newSegmentHeaderAdded = _programHeader->addSegment(si);
         numSlices += si->numSlices();
