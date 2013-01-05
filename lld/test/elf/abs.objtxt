@@ -11,11 +11,9 @@
 #
 RUN: lld-core -reader ELF %p/Inputs/abs-test.i386 | FileCheck -check-prefix=YAML %s
 
+YAML:  absolute-atoms: 
 YAML:    - name:              absLocalSymbol
-YAML:      definition:        absolute
-YAML:      value:             0xc0000
-
+YAML:      value:             {{0x[0]+C0000}}
 YAML:    - name:              absGlobalSymbol
-YAML:      definition:        absolute
 YAML:      scope:             global
-YAML:      value:             0xd0000
+YAML:      value:             {{0x[0]+D0000}}

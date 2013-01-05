@@ -5,7 +5,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - ref-name:          L0
       scope:             hidden
       type:              c-string
@@ -16,13 +16,13 @@ atoms:
       type:              c-string
       content:           [ 74, 68, 65, 72, 65, 00 ]
 ---
-atoms:
+defined-atoms:
     - ref-name:          L2
       scope:             hidden
       type:              c-string
       content:           [ 68, 65, 6c, 6c, 6f, 00 ]
 ---
-atoms:
+defined-atoms:
     - ref-name:          L2
       scope:             hidden
       type:              c-string

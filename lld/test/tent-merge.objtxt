@@ -6,17 +6,15 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:         _foo
-      definition:   regular
-      merge:        asTentative
+      merge:        as-tentative
       scope:        global
       type:         zero-fill
       size:         4
 ---
-atoms:
+defined-atoms:
     - name:         _foo
-      definition:   regular
       scope:        global
       type:         data
       content:      [ 00, 00, 00, 00 ]
@@ -24,4 +22,4 @@ atoms:
 
 
 # CHECK:        name: _foo
-# CHECK-NOT:   merge: asTentative
+# CHECK-NOT:   merge: as-tentative

@@ -5,15 +5,15 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:         _foo1
       dead-strip:   normal
 ---
-atoms:
+defined-atoms:
     - name:         _foo2
       dead-strip:   never
 ---
-atoms:
+defined-atoms:
     - name:         _foo3
       dead-strip:   always
 ...

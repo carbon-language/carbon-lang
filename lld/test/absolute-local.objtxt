@@ -4,23 +4,22 @@
 # Test that absolute symbols with local scope do not cause name conflict
 #
 ---
-atoms:
+absolute-atoms:
     - name:              putchar
-      definition:        absolute
+      ref-name:          pc1
       value:             0xFFFF0040
       scope:             static
 
     - name:              putchar
-      definition:        absolute
+      ref-name:          pc2
       value:             0xFFFF0040
       scope:             static
 ...
 
-# CHECK:      ---
+# CHECK:     ---
+# CHECK:     absolute-atoms:
 # CHECK:     - name:         putchar
-# CHECK:       definition:   absolute
-# CHECK:       value:        0xffff0040
+# CHECK:       value:        0x00000000FFFF0040
 # CHECK:     - name:         putchar
-# CHECK:       definition:   absolute
-# CHECK:       value:        0xffff0040
-# CHECK:       ...
+# CHECK:       value:        0x00000000FFFF0040
+# CHECK:     ...

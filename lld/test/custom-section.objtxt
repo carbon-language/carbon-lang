@@ -5,7 +5,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:             _foo1
       scope:            global
       section-choice:   content

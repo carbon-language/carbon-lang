@@ -6,7 +6,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:         entry
       scope:        hidden
       foobar:       true
@@ -15,5 +15,5 @@ atoms:
 ...
 
 
-# CHECK:       error: Unknown atom attribute
+# CHECK:       error: unknown key 'foobar'
 # CHECK:       foobar

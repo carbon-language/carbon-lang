@@ -173,6 +173,10 @@ public:
 
     uint16_t powerOf2;
     uint16_t modulus;
+    
+    bool operator==(const Alignment &rhs) const {  
+      return (powerOf2 == rhs.powerOf2) && (modulus == rhs.modulus);
+    }
   };
 
   /// \brief returns a value for the order of this Atom within its file.

@@ -4,24 +4,24 @@ RUN: elf-dump %t1 |  FileCheck -check-prefix=hexagon-elfdump %s
 
 hexagon-yaml:    - name:              back
 hexagon-yaml:      scope:             global
-hexagon-yaml:      type:              code
-hexagon-yaml:      section-choice:    custom-required
-hexagon-yaml:      section-name:      .text
 hexagon-yaml:      content:           [ 00, C0, 00, 7F, 00, C0, 00, 5A, 00, 00, 00, 00, 
 hexagon-yaml:                           00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00 ]
+hexagon-yaml:      section-choice:    custom-required
+hexagon-yaml:      section-name:      .text
 
 hexagon-yaml:      fixups:
-hexagon-yaml:      - offset:            4
+hexagon-yaml:      - kind:  
+hexagon-yaml:        offset:            4
 hexagon-yaml:        target:            target
 
 hexagon-yaml:    - name:              target
 hexagon-yaml:      scope:             global
-hexagon-yaml:      type:              code
+hexagon-yaml:      content:           [ 00, C0, 00, 5A ]
 hexagon-yaml:      section-choice:    custom-required
 hexagon-yaml:      section-name:      .text
-hexagon-yaml:      content:           [ 00, C0, 00, 5A ]
 hexagon-yaml:      fixups:
-hexagon-yaml:      - offset:            0
+hexagon-yaml:      - kind:  
+hexagon-yaml:        offset:            0
 hexagon-yaml:        target:            back
 
 

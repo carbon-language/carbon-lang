@@ -6,7 +6,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:          entry
       scope:         hidden
       fixups:
@@ -18,5 +18,4 @@ atoms:
 ...
 
 
-# CHECK:       error: Unknown fixup attribute
-# CHECK:       weasel
+# CHECK:       error: unknown key 'weasel'

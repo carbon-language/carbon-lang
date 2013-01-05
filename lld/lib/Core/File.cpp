@@ -18,4 +18,10 @@ StringRef File::translationUnitSource() const {
   return StringRef();
 }
 
+
+File::atom_collection_empty<DefinedAtom>       File::_noDefinedAtoms;
+File::atom_collection_empty<UndefinedAtom>     File::_noUndefinedAtoms;
+File::atom_collection_empty<SharedLibraryAtom> File::_noSharedLibaryAtoms;
+File::atom_collection_empty<AbsoluteAtom>      File::_noAbsoluteAtoms;
+
 }

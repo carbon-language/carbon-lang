@@ -7,7 +7,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:         entry
       dead-strip:   never
       fixups:
@@ -21,13 +21,12 @@ atoms:
     - name:         mydead1
       scope:        global
 
+undefined-atoms:
     - name:         bar
-      definition:   undefined
 
     - name:         baz
-      definition:   undefined
 ---
-atoms:
+defined-atoms:
     - name:         mydead2
       scope:        global
       type:         data
@@ -36,7 +35,7 @@ atoms:
       scope:        global
       type:         data
 ---
-atoms:
+defined-atoms:
     - name:         baz
       scope:        global
       type:         code

@@ -6,7 +6,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:         entry
       scope:        hidden
       type:         superluminal
@@ -15,5 +15,5 @@ atoms:
 ...
 
 
-# CHECK:       error: Invalid value for 'type:'
+# CHECK:       error: unknown enumerated scalar
 # CHECK:       superluminal

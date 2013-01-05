@@ -5,7 +5,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:              foo
       type:              code
       content:           [ 48, 8B, 0D, 00, 00, 00, 00, 
@@ -43,32 +43,33 @@ atoms:
       scope:             global
       interposable:      yes
 
+shared-library-atoms:
     - name:              malloc
-      definition:        shared-library
       load-name:         libc.so
       
 ...
 
+# CHECK:  defined-atoms:
 # CHECK:       name:         foo
 # CHECK:       fixups: 
-# CHECK:       offset:       3
-# CHECK:       kind:         pcrel32
-# CHECK:       target:       L
-# CHECK:       offset:       10
-# CHECK:       kind:         lea32wasGot
-# CHECK:       target:       myPrivate
-# CHECK:       offset:       17
-# CHECK:       kind:         pcrel32
-# CHECK:       target:       L
-# CHECK:       offset:       24
-# CHECK:       kind:         pcrel32
-# CHECK:       target:       L
-# CHECK:       offset:       32
-# CHECK:       kind:         pcrel32
-# CHECK:       target:       L
-# CHECK:       offset:       40
-# CHECK:       kind:         pcrel32
-# CHECK:       target:       L
+# CHECK:        kind:         pcrel32
+# CHECK:        offset:       3
+# CHECK:        target:       L
+# CHECK:        kind:         lea32wasGot
+# CHECK:        offset:       10
+# CHECK:        target:       myPrivate
+# CHECK:        kind:         pcrel32
+# CHECK:        offset:       17
+# CHECK:        target:       L
+# CHECK:        kind:         pcrel32
+# CHECK:        offset:       24
+# CHECK:        target:       L
+# CHECK:        kind:         pcrel32
+# CHECK:        offset:       32
+# CHECK:        target:       L
+# CHECK:        kind:         pcrel32
+# CHECK:        offset:       40
+# CHECK:        target:       L
 # CHECK:       name:         myPrivate
 # CHECK:       name:         myInterposable
 # CHECK:       interposable: yes
@@ -76,6 +77,6 @@ atoms:
 # CHECK:       type:         got
 # CHECK:       type:         got
 # CHECK:       type:         got
+# CHECK:   shared-library-atoms:
 # CHECK:       name:         malloc
-# CHECK:       definition:   shared-library
 # CHECK:       ...

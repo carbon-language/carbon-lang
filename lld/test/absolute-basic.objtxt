@@ -5,21 +5,19 @@
 #
 
 ---
-atoms:
+absolute-atoms:
     - name:              putchar
-      definition:        absolute
       value:             0xFFFF0040
       
     - name:              reset
-      definition:        absolute
       value:             0xFFFF0080
 
 ...
 
+
+# CHECK: absolute-atoms: 
 # CHECK:       name:         putchar
-# CHECK:       definition:   absolute
-# CHECK:       value:        0xffff0040
+# CHECK:       value:        0x00000000FFFF0040
 # CHECK:       name:         reset
-# CHECK:       definition:   absolute
-# CHECK:       value:        0xffff0080
+# CHECK:       value:        0x00000000FFFF0080
 # CHECK:       ...

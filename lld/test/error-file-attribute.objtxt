@@ -7,12 +7,11 @@
 
 ---
 aardvark:           true
-atoms:
+defined-atoms:
     - name:         entry
       scope:        hidden
   
 ...
 
 
-# CHECK:       error: Unknown file attribute
-# CHECK:       aardvark
+# CHECK:       error: unknown key 'aardvark'

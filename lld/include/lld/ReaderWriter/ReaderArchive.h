@@ -56,7 +56,7 @@ private:
 };
 
 /// \brief ReaderArchive is a class for reading archive libraries
-class ReaderArchive {
+class ReaderArchive : public Reader {
 public:
   ReaderArchive(const ReaderOptionsArchive &options)
     : _options(options)

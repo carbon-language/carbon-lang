@@ -6,13 +6,12 @@
 #
 
 ---
-atoms:
+undefined-atoms:
     - name:         foo
       type:         code
-      definition:   undefined
   
 ...
 
 
-# CHECK: error: Undefined atom 'foo' has attributes only allowed on defined atoms
+# CHECK: error: unknown key 'type'
 

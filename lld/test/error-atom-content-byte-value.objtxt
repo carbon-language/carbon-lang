@@ -6,7 +6,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:         entry
       scope:        hidden
       content:      [ A5, 00, 4G, 1F ]
@@ -14,5 +14,5 @@ atoms:
 ...
 
 
-# CHECK:       error: Invalid content hex byte
+# CHECK:       error: invalid two-digit-hex number
 # CHECK:       4G

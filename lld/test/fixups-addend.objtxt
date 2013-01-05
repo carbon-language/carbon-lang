@@ -5,7 +5,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:              foo
       type:              code
       content:           [ 48, 8D, 3D, 00, 00, 00, 00, 
@@ -34,8 +34,8 @@ atoms:
         target:          bar
         addend:          -50
   
+undefined-atoms:
     - name:              bar
-      definition:        undefined
 
   
 ...

@@ -16,6 +16,7 @@
 #include "lld/Core/UndefinedAtom.h"
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/Support/ErrorHandling.h"
 
 #include <vector>
 
@@ -66,9 +67,8 @@ public:
     return true;
   }
 
-protected:
-  template <typename T> class atom_iterator; // forward reference
 public:
+  template <typename T> class atom_iterator; // forward reference
 
   /// For use interating over DefinedAtoms in this File.
   typedef atom_iterator<DefinedAtom>  defined_iterator;
@@ -91,10 +91,6 @@ public:
   /// call this method when no longer iterating over the File's Atoms.
   virtual void addAtom(const Atom&) = 0;
 
-protected:
-  /// only subclasses of File can be instantiated
-  File(StringRef p) : _path(p) {}
-
   /// Different object file readers may instantiate and manage atoms with
   /// different data structures.  This class is a collection abstraction.
   /// Each concrete File instance must implement these atom_collection
@@ -105,8 +101,8 @@ protected:
     virtual ~atom_collection() { }
     virtual atom_iterator<T> begin() const = 0;
     virtual atom_iterator<T> end() const = 0;
-    virtual const T* deref(const void* it) const = 0;
-    virtual void next(const void*& it) const = 0;
+    virtual const T *deref(const void *it) const = 0;
+    virtual void next(const void *&it) const = 0;
   };
 
   /// The class is the iterator type used to iterate through a File's Atoms.
@@ -140,7 +136,7 @@ protected:
     const void*                 _it;
   };
 
-public:
+
   /// Must be implemented to return the atom_collection object for
   /// all DefinedAtoms in this File.
   virtual const atom_collection<DefinedAtom>& defined() const = 0;
@@ -158,6 +154,10 @@ public:
   virtual const atom_collection<AbsoluteAtom>& absolute() const = 0;
 
 protected:
+  /// only subclasses of File can be instantiated 
+  File(StringRef p) : _path(p) {}
+
+
   /// This is a convenience class for File subclasses which manage their
   /// atoms as a simple std::vector<>.
   template <typename T>
@@ -181,6 +181,32 @@ protected:
     }
     std::vector<const T*>   _atoms;
   };
+
+  /// This is a convenience class for File subclasses which need to return
+  /// an empty collection
+  template <typename T>
+  class atom_collection_empty : public atom_collection<T> {
+  public:
+    virtual atom_iterator<T> begin() const { 
+      return atom_iterator<T>(*this, nullptr);
+    }
+    virtual atom_iterator<T> end() const{ 
+      return atom_iterator<T>(*this, nullptr);
+    }
+    virtual const T *deref(const void *it) const {
+      llvm_unreachable("empty collection should never be accessed");
+    }
+    virtual void next(const void *&it) const {
+    }
+    virtual void push_back(const T *element) {
+      llvm_unreachable("empty collection should never be grown");
+    }
+  };
+
+  static atom_collection_empty<DefinedAtom>       _noDefinedAtoms;
+  static atom_collection_empty<UndefinedAtom>     _noUndefinedAtoms;
+  static atom_collection_empty<SharedLibraryAtom> _noSharedLibaryAtoms;
+  static atom_collection_empty<AbsoluteAtom>      _noAbsoluteAtoms;
 
   StringRef _path;
 };

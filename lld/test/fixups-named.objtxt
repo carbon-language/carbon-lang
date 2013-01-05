@@ -5,10 +5,11 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:              foo
       type:              code
-      content:           [ E8, 00, 00, 00, 00, E8, 00, 00, 00, 00 ]
+      content:           [ E8, 00, 00, 00, 00, 
+                           E8, 00, 00, 00, 00 ]
       fixups:
       - offset:          1
         kind:            3
@@ -21,8 +22,8 @@ atoms:
       scope:             static
       type:              code
 
+undefined-atoms:
     - name:              bar
-      definition:        undefined
   
 
 ...

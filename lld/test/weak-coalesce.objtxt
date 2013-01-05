@@ -5,29 +5,26 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:         _foo
-      definition:   regular
-      merge:        asWeak
+      merge:        as-weak
       scope:        global
       type:         data
 ---
-atoms:
+defined-atoms:
     - name:         _foo
-      definition:   regular
       scope:        global
       type:         data
 ---
-atoms:
+defined-atoms:
     - name:         _foo
-      definition:   regular
-      merge:        asWeak
+      merge:        as-weak
       scope:        global
       type:         data
 ...
 
 
 # CHECK:       name: _foo
-# CHECK-NOT:   merge: asWeak
+# CHECK-NOT:   merge: as-weak
 # CHECK-NOT:   name: _foo
 # CHECK:       ...

@@ -5,64 +5,56 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:              _inlineFunc1
       scope:             global
-      definition:        regular
       type:              code
-      merge:             asWeak
+      merge:             as-weak
      
     - name:              _inlineFunc2
       scope:             global
-      definition:        regular
       type:              code
-      merge:             asWeak
+      merge:             as-weak
     
     - name:              _inlineFunc3
       scope:             global
-      definition:        regular
       type:              code
-      merge:             asAddressedWeak
+      merge:             as-addressed-weak
     
     - name:              _inlineFunc4
       scope:             global
-      definition:        regular
       type:              code
-      merge:             asAddressedWeak
+      merge:             as-addressed-weak
 ---
-atoms:
+defined-atoms:
     - name:              _inlineFunc1
       scope:             global
-      definition:        regular
       type:              code
-      merge:             asWeak
+      merge:             as-weak
     
     - name:              _inlineFunc2
       scope:             global
-      definition:        regular
       type:              code
-      merge:             asAddressedWeak
+      merge:             as-addressed-weak
    
     - name:              _inlineFunc3
       scope:             global
-      definition:        regular
       type:              code
-      merge:             asWeak
+      merge:             as-weak
   
     - name:              _inlineFunc4
       scope:             global
-      definition:        regular
       type:              code
-      merge:             asAddressedWeak
+      merge:             as-addressed-weak
 ...
 
 
 # CHECK:       name: _inlineFunc1
-# CHECK:       merge: asWeak
+# CHECK:       merge: as-weak
 # CHECK:       name: _inlineFunc3
-# CHECK:       merge: asAddressedWeak
+# CHECK:       merge: as-addressed-weak
 # CHECK:       name: _inlineFunc4
-# CHECK:       merge: asAddressedWeak
+# CHECK:       merge: as-addressed-weak
 # CHECK:       name: _inlineFunc2
-# CHECK:       merge: asAddressedWeak
+# CHECK:       merge: as-addressed-weak
 # CHECK:       ...

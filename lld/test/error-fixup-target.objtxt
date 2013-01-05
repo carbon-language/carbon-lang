@@ -6,7 +6,7 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:          entry
       scope:         hidden
       fixups:
@@ -17,11 +17,10 @@ atoms:
         kind:        3
         target:      baz
 
+undefined-atoms:
     - name:          bar
-      definition:    undefined
 
 ...
 
 
-# CHECK:  error: Fixup has target 'baz' which does not exist
-# CHECK:      baz
+# CHECK:  error: no such atom name: baz

@@ -6,41 +6,37 @@
 #
 
 ---
-atoms:
+defined-atoms:
     - name:              foo
       type:              code
       
+undefined-atoms:
     - name:              malloc
-      definition:        undefined
-
     - name:              free
-      definition:        undefined
 ---
-atoms:
+defined-atoms:
     - name:              bar
       type:              code
       
+undefined-atoms:
     - name:              malloc
-      definition:        undefined
-  
     - name:              myfunc
-      definition:        undefined
 ---
-atoms:
+defined-atoms:
     - name:              myfunc
       scope:             global
       type:              code
       
+undefined-atoms:
     - name:              free
-      definition:        undefined
 ...
 
+# CHECK:  defined-atoms:
 # CHECK:       name:       foo
 # CHECK:       name:       bar
 # CHECK:       name:       myfunc
 # CHECK:       scope:      global
+# CHECK:  undefined-atoms:
 # CHECK:       name:       malloc
-# CHECK:     definition:   undefined
 # CHECK:       name:       free
-# CHECK:     definition:   undefined
 # CHECK:       ...
