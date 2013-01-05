@@ -27,8 +27,14 @@ bool ScalarTargetTransformImpl::isLegalICmpImmediate(int64_t imm) const {
   return TLI->isLegalICmpImmediate(imm);
 }
 
-bool ScalarTargetTransformImpl::isLegalAddressingMode(const AddrMode &AM,
-                                                      Type *Ty) const {
+bool ScalarTargetTransformImpl::isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
+                                     int64_t BaseOffset, bool HasBaseReg,
+                                     int64_t Scale) const {
+  AddrMode AM;
+  AM.BaseGV = BaseGV;
+  AM.BaseOffs = BaseOffset;
+  AM.HasBaseReg = HasBaseReg;
+  AM.Scale = Scale;
   return TLI->isLegalAddressingMode(AM, Ty);
 }
 
