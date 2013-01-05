@@ -1251,8 +1251,8 @@ AC_SEARCH_LIBS(dlopen,dl,AC_DEFINE([HAVE_DLOPEN],[1],
                AC_MSG_WARN([dlopen() not found - disabling plugin support]))
 
 dnl Search for the clock_gettime() function. Note that we rely on the POSIX
-dnl macros to detect whether clock_gettime is available, dnl this just finds
-dnl the right libraries to link with.
+dnl macros to detect whether clock_gettime is available, this just finds the
+dnl right libraries to link with.
 AC_SEARCH_LIBS(clock_gettime,rt)
 
 dnl libffi is optional; used to call external functions from the interpreter
