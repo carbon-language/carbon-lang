@@ -2452,6 +2452,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     // Set nounwind as needed.
     if (IsNoThrow(Class)) {
       Changed = true;
+      DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Found no throw"
+            " class. Setting nounwind on: " << *Inst << "\n");
       cast<CallInst>(Inst)->setDoesNotThrow();
     }
 
