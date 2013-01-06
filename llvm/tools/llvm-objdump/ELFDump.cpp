@@ -44,17 +44,19 @@ void printProgramHeaders(
       outs() << " UNKNOWN ";
     }
 
+    const char *Fmt = is64Bits ? "0x%016" PRIx64 " " : "0x%08" PRIx64 " ";
+
     outs() << "off    "
-           << format(is64Bits ? "0x%016x " : "0x%08x ", pi->p_offset)
+           << format(Fmt, (uint64_t)pi->p_offset)
            << "vaddr "
-           << format(is64Bits ? "0x%016x " : "0x%08x ", pi->p_vaddr)
+           << format(Fmt, (uint64_t)pi->p_vaddr)
            << "paddr "
-           << format(is64Bits ? "0x%016x " : "0x%08x ", pi->p_paddr)
-           << format("align 2**%d\n", CountTrailingZeros_32(pi->p_align))
+           << format(Fmt, (uint64_t)pi->p_paddr)
+           << format("align 2**%u\n", CountTrailingZeros_64(pi->p_align))
            << "         filesz "
-           << format(is64Bits ? "0x%016x " : "0x%08x ", pi->p_filesz)
+           << format(Fmt, (uint64_t)pi->p_filesz)
            << "memsz "
-           << format(is64Bits ? "0x%016x " : "0x%08x ", pi->p_memsz)
+           << format(Fmt, (uint64_t)pi->p_memsz)
            << "flags "
            << ((pi->p_flags & ELF::PF_R) ? "r" : "-")
            << ((pi->p_flags & ELF::PF_W) ? "w" : "-")
