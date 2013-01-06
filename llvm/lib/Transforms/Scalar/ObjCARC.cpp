@@ -2343,6 +2343,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     case IC_NoopCast:
       Changed = true;
       ++NumNoops;
+      DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Erasing no-op cast:"
+                   " " << *Inst << "\n");
       EraseInstruction(Inst);
       continue;
 
