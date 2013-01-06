@@ -19,6 +19,7 @@ namespace llvm {
 
 namespace object {
   class COFFObjectFile;
+  class ObjectFile;
   class RelocationRef;
 }
 class error_code;
@@ -32,6 +33,7 @@ bool RelocAddressLess(object::RelocationRef a, object::RelocationRef b);
 void DumpBytes(StringRef bytes);
 void DisassembleInputMachO(StringRef Filename);
 void printCOFFUnwindInfo(const object::COFFObjectFile* o);
+void printELFFileHeader(const object::ObjectFile *o);
 
 class StringRefMemoryObject : public MemoryObject {
   virtual void anchor();

@@ -28,6 +28,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Object/Archive.h"
 #include "llvm/Object/COFF.h"
+#include "llvm/Object/ELF.h"
 #include "llvm/Object/MachO.h"
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Casting.h"
@@ -111,6 +112,14 @@ UnwindInfo("unwind-info", cl::desc("Display unwind information"));
 static cl::alias
 UnwindInfoShort("u", cl::desc("Alias for --unwind-info"),
                 cl::aliasopt(UnwindInfo));
+
+static cl::opt<bool>
+PrivateHeaders("private-headers",
+               cl::desc("Display format specific file headers"));
+
+static cl::alias
+PrivateHeadersShort("p", cl::desc("Alias for --private-headers"),
+                    cl::aliasopt(PrivateHeaders));
 
 static StringRef ToolName;
 
@@ -627,6 +636,8 @@ static void DumpObject(const ObjectFile *o) {
     PrintSymbolTable(o);
   if (UnwindInfo)
     PrintUnwindInfo(o);
+  if (PrivateHeaders && o->isELF())
+    printELFFileHeader(o);
 }
 
 /// @brief Dump each object file in \a a;
@@ -706,7 +717,8 @@ int main(int argc, char **argv) {
       && !SectionHeaders
       && !SectionContents
       && !SymbolTable
-      && !UnwindInfo) {
+      && !UnwindInfo
+      && !PrivateHeaders) {
     cl::PrintHelpMessage();
     return 2;
   }

@@ -1,0 +1,8 @@
+RUN: llvm-objdump -p %p/Inputs/program-headers.elf-i386 \
+RUN:              | FileCheck %s -check-prefix ELF-i386
+
+ELF-i386: Program Header:
+ELF-i386:     LOAD off    0x00000000 vaddr 0x08048000 paddr 0x08048000 align 2**12
+ELF-i386:          filesz 0x00000134 memsz 0x00000134 flags r-x
+ELF-i386:    STACK off    0x00000000 vaddr 0x00000000 paddr 0x00000000 align 2**2
+ELF-i386:          filesz 0x00000000 memsz 0x00000000 flags rw-
