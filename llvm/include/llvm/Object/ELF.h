@@ -441,10 +441,10 @@ struct Elf_Ehdr_Impl {
 };
 
 template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
-struct Elf_Phdr;
+struct Elf_Phdr_Impl;
 
 template<endianness target_endianness, std::size_t max_alignment>
-struct Elf_Phdr<target_endianness, max_alignment, false> {
+struct Elf_Phdr_Impl<target_endianness, max_alignment, false> {
   LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, false)
   Elf_Word p_type;   // Type of segment
   Elf_Off  p_offset; // FileOffset where segment is located, in bytes
@@ -457,7 +457,7 @@ struct Elf_Phdr<target_endianness, max_alignment, false> {
 };
 
 template<endianness target_endianness, std::size_t max_alignment>
-struct Elf_Phdr<target_endianness, max_alignment, true> {
+struct Elf_Phdr_Impl<target_endianness, max_alignment, true> {
   LLVM_ELF_IMPORT_TYPES(target_endianness, max_alignment, true)
   Elf_Word p_type;   // Type of segment
   Elf_Word p_flags;  // Segment flags
@@ -477,6 +477,7 @@ class ELFObjectFile : public ObjectFile {
   typedef Elf_Shdr_Impl<target_endianness, max_alignment, is64Bits> Elf_Shdr;
   typedef Elf_Sym_Impl<target_endianness, max_alignment, is64Bits> Elf_Sym;
   typedef Elf_Dyn_Impl<target_endianness, max_alignment, is64Bits> Elf_Dyn;
+  typedef Elf_Phdr_Impl<target_endianness, max_alignment, is64Bits> Elf_Phdr;
   typedef
     Elf_Rel_Impl<target_endianness, max_alignment, is64Bits, false> Elf_Rel;
   typedef
@@ -738,6 +739,21 @@ public:
   Elf_Rel_Iter endELFRel(const Elf_Shdr *sec) const {
     return Elf_Rel_Iter(sec->sh_entsize, (const char *)
                         (base() + sec->sh_offset + sec->sh_size));
+  }
+
+  /// \brief Iterate over program header table.
+  typedef ELFEntityIterator<const Elf_Phdr> Elf_Phdr_Iter;
+
+  Elf_Phdr_Iter begin_program_headers() const {
+    return Elf_Phdr_Iter(Header->e_phentsize,
+                         (const char*)base() + Header->e_phoff);
+  }
+
+  Elf_Phdr_Iter end_program_headers() const {
+    return Elf_Phdr_Iter(Header->e_phentsize,
+                         (const char*)base() +
+                           Header->e_phoff +
+                           (Header->e_phnum * Header->e_phentsize));
   }
 
   virtual uint8_t getBytesInAddress() const;
