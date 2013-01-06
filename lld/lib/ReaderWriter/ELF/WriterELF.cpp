@@ -1208,7 +1208,7 @@ template<support::endianness target_endianness,
          bool is64Bits>
 class ELFProgramHeader : public Chunk<target_endianness, max_align, is64Bits> {
 public:
-  typedef Elf_Phdr<target_endianness, max_align, is64Bits> Elf_Phdr;
+  typedef Elf_Phdr_Impl<target_endianness, max_align, is64Bits> Elf_Phdr;
 
   ELFProgramHeader()
   : Chunk<target_endianness, max_align, is64Bits>(
