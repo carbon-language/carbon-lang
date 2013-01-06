@@ -89,3 +89,14 @@ As various categories of Clang Tools are added to the extra repository,
 they'll be tracked here. The focus of this documentation is on the scope
 and features of the tools for other tool developers; each tool should
 provide its own user-focused documentation.
+
+Ideas for new Tools
+-------------------
+
+* C++11 null pointer conversion tool.  Will convert all null pointer constants
+  (like ``NULL`` or ``0``) to C++11 ``nullptr``.
+
+* C++ cast conversion tool.  Will convert C-style casts (``(type) value``) to
+  appropriate C++ cast (``static_cast``, ``const_cast`` or
+  ``reinterpret_cast``).
+
