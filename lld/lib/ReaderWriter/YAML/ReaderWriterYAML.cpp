@@ -721,7 +721,6 @@ struct MappingTraits<const lld::File*> {
         // Eventually we will have an external function to call, similar
         // to mappingAtoms() and mappingArchive() but implememented
         // with coresponding file format code.
-      default:
         llvm_unreachable("section based YAML not supported yet");
     }
   }
