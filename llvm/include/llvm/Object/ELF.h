@@ -527,54 +527,54 @@ private:
   mutable const char *dt_soname;
 
 public:
-  /// \brief Iterate over relocations in a .rel or .rela section.
-  template<class RelocT>
-  class ELFRelocationIterator {
+  /// \brief Iterate over constant sized entities.
+  template<class EntT>
+  class ELFEntityIterator {
   public:
     typedef void difference_type;
-    typedef const RelocT value_type;
+    typedef EntT value_type;
     typedef std::forward_iterator_tag iterator_category;
     typedef value_type &reference;
     typedef value_type *pointer;
 
     /// \brief Default construct iterator.
-    ELFRelocationIterator() : Section(0), Current(0) {}
-    ELFRelocationIterator(const Elf_Shdr *Sec, const char *Start)
-      : Section(Sec)
+    ELFEntityIterator() : EntitySize(0), Current(0) {}
+    ELFEntityIterator(uint64_t EntSize, const char *Start)
+      : EntitySize(EntSize)
       , Current(Start) {}
 
     reference operator *() {
       assert(Current && "Attempted to dereference an invalid iterator!");
-      return *reinterpret_cast<const RelocT*>(Current);
+      return *reinterpret_cast<pointer>(Current);
     }
 
     pointer operator ->() {
       assert(Current && "Attempted to dereference an invalid iterator!");
-      return reinterpret_cast<const RelocT*>(Current);
+      return reinterpret_cast<pointer>(Current);
     }
 
-    bool operator ==(const ELFRelocationIterator &Other) {
-      return Section == Other.Section && Current == Other.Current;
+    bool operator ==(const ELFEntityIterator &Other) {
+      return Current == Other.Current;
     }
 
-    bool operator !=(const ELFRelocationIterator &Other) {
+    bool operator !=(const ELFEntityIterator &Other) {
       return !(*this == Other);
     }
 
-    ELFRelocationIterator &operator ++(int) {
+    ELFEntityIterator &operator ++() {
       assert(Current && "Attempted to increment an invalid iterator!");
-      Current += Section->sh_entsize;
+      Current += EntitySize;
       return *this;
     }
 
-    ELFRelocationIterator operator ++() {
-      ELFRelocationIterator Tmp = *this;
+    ELFEntityIterator operator ++(int) {
+      ELFEntityIterator Tmp = *this;
       ++*this;
       return Tmp;
     }
 
   private:
-    const Elf_Shdr *Section;
+    const uint64_t EntitySize;
     const char *Current;
   };
 
@@ -717,24 +717,26 @@ public:
   virtual dyn_iterator begin_dynamic_table() const;
   virtual dyn_iterator end_dynamic_table() const;
 
-  typedef ELFRelocationIterator<Elf_Rela> Elf_Rela_Iter;
-  typedef ELFRelocationIterator<Elf_Rel> Elf_Rel_Iter;
+  typedef ELFEntityIterator<const Elf_Rela> Elf_Rela_Iter;
+  typedef ELFEntityIterator<const Elf_Rel> Elf_Rel_Iter;
 
-  virtual Elf_Rela_Iter beginELFRela(const Elf_Shdr *sec) const {
-    return Elf_Rela_Iter(sec, (const char *)(base() + sec->sh_offset));
+  Elf_Rela_Iter beginELFRela(const Elf_Shdr *sec) const {
+    return Elf_Rela_Iter(sec->sh_entsize,
+                         (const char *)(base() + sec->sh_offset));
   }
 
-  virtual Elf_Rela_Iter endELFRela(const Elf_Shdr *sec) const {
-    return Elf_Rela_Iter(sec, (const char *)
+  Elf_Rela_Iter endELFRela(const Elf_Shdr *sec) const {
+    return Elf_Rela_Iter(sec->sh_entsize, (const char *)
                          (base() + sec->sh_offset + sec->sh_size));
   }
 
-  virtual Elf_Rel_Iter beginELFRel(const Elf_Shdr *sec) const {
-    return Elf_Rel_Iter(sec, (const char *)(base() + sec->sh_offset));
+  Elf_Rel_Iter beginELFRel(const Elf_Shdr *sec) const {
+    return Elf_Rel_Iter(sec->sh_entsize,
+                        (const char *)(base() + sec->sh_offset));
   }
 
-  virtual Elf_Rel_Iter endELFRel(const Elf_Shdr *sec) const {
-    return Elf_Rel_Iter(sec, (const char *)
+  Elf_Rel_Iter endELFRel(const Elf_Shdr *sec) const {
+    return Elf_Rel_Iter(sec->sh_entsize, (const char *)
                         (base() + sec->sh_offset + sec->sh_size));
   }
 
