@@ -2425,6 +2425,14 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
                            Call->getArgOperand(0), "", Call);
         NewCall->setMetadata(ImpreciseReleaseMDKind,
                              MDNode::get(C, ArrayRef<Value *>()));
+        
+        DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Replacing "
+                        "objc_autorelease(x) with objc_release(x) since x is "
+                        "otherwise unused.\n"
+                        "                                     Old: " << *Call
+                        "\n                                     New: " <<
+                        *NewCall << "\n");
+        
         EraseInstruction(Call);
         Inst = NewCall;
         Class = IC_Release;
