@@ -2443,6 +2443,9 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     // a tail keyword.
     if (IsAlwaysTail(Class)) {
       Changed = true;
+      DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Adding tail keyword"
+            " to function since it can never be passed stack args: " << *Inst <<
+            "\n");
       cast<CallInst>(Inst)->setTailCall();
     }
 
