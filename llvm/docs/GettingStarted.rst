@@ -384,6 +384,11 @@ intermittent failures when building LLVM with position independent code.  The
 symptom is an error about cyclic dependencies.  We recommend upgrading to a
 newer version of Gold.
 
+**Clang 3.0 with libstdc++ 4.7.x**: a few Linux distributions (Ubuntu 12.10,
+Fedora 17) have both Clang 3.0 and libstdc++ 4.7 in their repositories.  Clang
+3.0 does not implement a few builtins that are used in this library.  We
+recommend using the system GCC to compile LLVM and Clang in this case.
+
 .. _Getting Started with LLVM:
 
 Getting Started with LLVM
