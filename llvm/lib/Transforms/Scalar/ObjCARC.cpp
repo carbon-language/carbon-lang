@@ -2429,7 +2429,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Replacing "
                         "objc_autorelease(x) with objc_release(x) since x is "
                         "otherwise unused.\n"
-                        "                                     Old: " << *Call
+                        "                                     Old: " << *Call <<
                         "\n                                     New: " <<
                         *NewCall << "\n");
         
