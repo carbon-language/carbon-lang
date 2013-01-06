@@ -2298,8 +2298,20 @@ ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV) {
 
   Changed = true;
   ++NumPeeps;
+
+  DEBUG(dbgs() << "ObjCARCOpt::OptimizeAutoreleaseRVCall: Transforming "
+                  "objc_autoreleaseReturnValue => "
+                  "objc_autorelease since its operand is not used as a return "
+                  "value.\n"
+                  "                                       Old: "
+               << *AutoreleaseRV << "\n");
+
   cast<CallInst>(AutoreleaseRV)->
     setCalledFunction(getAutoreleaseCallee(F.getParent()));
+  
+  DEBUG(dbgs() << "                                       New: "
+               << *AutoreleaseRV << "\n");
+  
 }
 
 /// OptimizeIndividualCalls - Visit each call, one at a time, and make
