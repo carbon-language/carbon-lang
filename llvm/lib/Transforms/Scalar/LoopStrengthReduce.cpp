@@ -4820,7 +4820,7 @@ bool LoopStrengthReduce::runOnLoop(Loop *L, LPPassManager & /*LPM*/) {
 
   // Remove any extra phis created by processing inner loops.
   Changed |= DeleteDeadPHIs(L->getHeader());
-  if (EnablePhiElim) {
+  if (EnablePhiElim && L->isLoopSimplifyForm()) {
     SmallVector<WeakVH, 16> DeadInsts;
     SCEVExpander Rewriter(getAnalysis<ScalarEvolution>(), "lsr");
 #ifndef NDEBUG
