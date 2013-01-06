@@ -464,9 +464,9 @@ struct Elf_Phdr_Impl<target_endianness, max_alignment, true> {
   Elf_Off  p_offset; // FileOffset where segment is located, in bytes
   Elf_Addr p_vaddr;  // Virtual Address of beginning of segment
   Elf_Addr p_paddr;  // Physical address of beginning of segment (OS-specific)
-  Elf_Word p_filesz; // Num. of bytes in file image of segment (may be zero)
-  Elf_Word p_memsz;  // Num. of bytes in mem image of segment (may be zero)
-  Elf_Word p_align;  // Segment alignment constraint
+  Elf_Xword p_filesz; // Num. of bytes in file image of segment (may be zero)
+  Elf_Xword p_memsz;  // Num. of bytes in mem image of segment (may be zero)
+  Elf_Xword p_align;  // Segment alignment constraint
 };
 
 template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
