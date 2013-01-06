@@ -84,13 +84,13 @@ bool UnwrappedLineParser::parse() {
 }
 
 bool UnwrappedLineParser::parseFile() {
-  bool Error = parseLevel();
+  bool Error = parseLevel(/*HasOpeningBrace=*/false);
   // Make sure to format the remaining tokens.
   addUnwrappedLine();
   return Error;
 }
 
-bool UnwrappedLineParser::parseLevel() {
+bool UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
   bool Error = false;
   do {
     switch (FormatTok.Tok.getKind()) {
@@ -103,8 +103,15 @@ bool UnwrappedLineParser::parseLevel() {
       addUnwrappedLine();
       break;
     case tok::r_brace:
-      // Stray '}' is an error.
-      return true;
+      if (HasOpeningBrace) {
+        return false;
+      } else {
+        // Stray '}' is an error.
+        Error = true;
+        nextToken();
+        addUnwrappedLine();
+      }
+      break;
     default:
       parseStatement();
       break;
@@ -120,7 +127,7 @@ bool UnwrappedLineParser::parseBlock(unsigned AddLevels) {
   addUnwrappedLine();
 
   Line.Level += AddLevels;
-  parseLevel();
+  parseLevel(/*HasOpeningBrace=*/true);
   Line.Level -= AddLevels;
 
   // FIXME: Add error handling.

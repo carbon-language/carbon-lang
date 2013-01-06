@@ -474,8 +474,12 @@ TEST_F(FormatTest, FormatHashIfNotAtStartOfLine) {
   verifyFormat("{\n  {\n    a #c;\n  }\n}");
 }
 
-// FIXME: write test for unbalanced braces in macros...
-// FIXME: test # inside a normal statement (like {#define A b})
+TEST_F(FormatTest, FormatUnbalancedStructuralElements) {
+  EXPECT_EQ("#define A \\\n  {       \\\n    {\nint i;",
+            format("#define A { {\nint i;", getLLVMStyleWithColumns(11)));
+  EXPECT_EQ("#define A \\\n  }       \\\n  }\nint i;",
+            format("#define A } }\nint i;", getLLVMStyleWithColumns(11)));
+}
 
 TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
   EXPECT_EQ(

@@ -106,7 +106,7 @@ public:
 
 private:
   bool parseFile();
-  bool parseLevel();
+  bool parseLevel(bool HasOpeningBrace);
   bool parseBlock(unsigned AddLevels = 1);
   void parsePPDirective();
   void parsePPDefine();
