@@ -2361,7 +2361,13 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         new StoreInst(UndefValue::get(cast<PointerType>(Ty)->getElementType()),
                       Constant::getNullValue(Ty),
                       CI);
-        CI->replaceAllUsesWith(UndefValue::get(CI->getType()));
+        llvm::Value *NewValue = UndefValue::get(CI->getType());        
+        DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: A null "
+                        "pointer-to-weak-pointer is undefined behavior.\n"
+                        "                                     Old = " << *CI <<
+                        "\n                                     New = " <<
+                        *NewValue << "\n");        
+        CI->replaceAllUsesWith(NewValue);
         CI->eraseFromParent();
         continue;
       }
@@ -2377,7 +2383,15 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         new StoreInst(UndefValue::get(cast<PointerType>(Ty)->getElementType()),
                       Constant::getNullValue(Ty),
                       CI);
-        CI->replaceAllUsesWith(UndefValue::get(CI->getType()));
+
+        llvm::Value *NewValue = UndefValue::get(CI->getType());
+        DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: A null "
+                        "pointer-to-weak-pointer is undefined behavior.\n"
+                        "                                     Old = " << *CI <<
+                        "\n                                     New = " <<
+                        *NewValue << "\n");
+        
+        CI->replaceAllUsesWith(NewValue);
         CI->eraseFromParent();
         continue;
       }
