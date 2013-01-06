@@ -633,8 +633,21 @@ upstream git repo, run:
 
 This leaves your working directories on their master branches, so you'll need to
 ``checkout`` each working branch individually and ``rebase`` it on top of its
-parent branch.  (Note: This script is intended for relative newbies to git.  If
-you have more experience, you can likely improve on it.)
+parent branch.
+
+To commit back changes via git-svn, use ``dcommit``:
+
+.. code-block:: console
+
+  % git svn dcommit
+
+Note that git-svn will create one SVN commit for each Git commit you have pending,
+so squash and edit each commit before executing ``dcommit`` to make sure they all
+conform to the coding standards and the developers' policy.
+
+On success, ``dcommit`` will rebase against the HEAD of SVN, so to avoid conflict,
+please make sure your current branch is up-to-date (via fetch/rebase) before
+proceeding.
 
 The git-svn metadata can get out of sync after you mess around with branches and
 ``dcommit``. When that happens, ``git svn dcommit`` stops working, complaining
@@ -644,6 +657,8 @@ about files with uncommitted changes. The fix is to rebuild the metadata:
 
   % rm -rf .git/svn
   % git svn rebase -l
+
+Please, refer to the Git-SVN manual (``man git-svn``) for more information.
 
 Local LLVM Configuration
 ------------------------
