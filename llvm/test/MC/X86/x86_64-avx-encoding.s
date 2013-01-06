@@ -1404,25 +1404,25 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc5,0xfa,0x2c,0x01]
           vcvttss2si  (%rcx), %eax
 
-// CHECK: vcvtsi2ss  (%rax), %xmm11, %xmm12
+// CHECK: vcvtsi2ssl  (%rax), %xmm11, %xmm12
 // CHECK: encoding: [0xc5,0x22,0x2a,0x20]
-          vcvtsi2ss  (%rax), %xmm11, %xmm12
+          vcvtsi2ssl  (%rax), %xmm11, %xmm12
 
-// CHECK: vcvtsi2ss  (%rax), %xmm11, %xmm12
+// CHECK: vcvtsi2ssl  (%rax), %xmm11, %xmm12
 // CHECK: encoding: [0xc5,0x22,0x2a,0x20]
-          vcvtsi2ss  (%rax), %xmm11, %xmm12
+          vcvtsi2ssl  (%rax), %xmm11, %xmm12
 
 // CHECK: vcvttsd2si  (%rcx), %eax
 // CHECK: encoding: [0xc5,0xfb,0x2c,0x01]
           vcvttsd2si  (%rcx), %eax
 
-// CHECK: vcvtsi2sd  (%rax), %xmm11, %xmm12
+// CHECK: vcvtsi2sdl  (%rax), %xmm11, %xmm12
 // CHECK: encoding: [0xc5,0x23,0x2a,0x20]
-          vcvtsi2sd  (%rax), %xmm11, %xmm12
+          vcvtsi2sdl  (%rax), %xmm11, %xmm12
 
-// CHECK: vcvtsi2sd  (%rax), %xmm11, %xmm12
+// CHECK: vcvtsi2sdl  (%rax), %xmm11, %xmm12
 // CHECK: encoding: [0xc5,0x23,0x2a,0x20]
-          vcvtsi2sd  (%rax), %xmm11, %xmm12
+          vcvtsi2sdl  (%rax), %xmm11, %xmm12
 
 // CHECK: vmovaps  (%rax), %xmm12
 // CHECK: encoding: [0xc5,0x78,0x28,0x20]
@@ -1512,11 +1512,11 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc4,0x41,0x18,0x12,0xeb]
           vmovhlps  %xmm11, %xmm12, %xmm13
 
-// CHECK: vcvtss2sil  %xmm11, %eax
+// CHECK: vcvtss2si  %xmm11, %eax
 // CHECK: encoding: [0xc4,0xc1,0x7a,0x2d,0xc3]
           vcvtss2si  %xmm11, %eax
 
-// CHECK: vcvtss2sil  (%rax), %ebx
+// CHECK: vcvtss2si  (%rax), %ebx
 // CHECK: encoding: [0xc5,0xfa,0x2d,0x18]
           vcvtss2si  (%rax), %ebx
 
@@ -3860,29 +3860,29 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc4,0x63,0x2d,0x06,0x18,0x07]
           vperm2f128  $7, (%rax), %ymm10, %ymm11
 
-// CHECK: vcvtsd2sil  %xmm8, %r8d
+// CHECK: vcvtsd2si  %xmm8, %r8d
 // CHECK: encoding: [0xc4,0x41,0x7b,0x2d,0xc0]
-          vcvtsd2sil  %xmm8, %r8d
+          vcvtsd2si  %xmm8, %r8d
 
-// CHECK: vcvtsd2sil  (%rcx), %ecx
+// CHECK: vcvtsd2si  (%rcx), %ecx
 // CHECK: encoding: [0xc5,0xfb,0x2d,0x09]
-          vcvtsd2sil  (%rcx), %ecx
+          vcvtsd2si  (%rcx), %ecx
 
-// CHECK: vcvtss2siq  %xmm4, %rcx
+// CHECK: vcvtss2si  %xmm4, %rcx
 // CHECK: encoding: [0xc4,0xe1,0xfa,0x2d,0xcc]
-          vcvtss2siq  %xmm4, %rcx
+          vcvtss2si  %xmm4, %rcx
 
-// CHECK: vcvtss2siq  (%rcx), %r8
+// CHECK: vcvtss2si  (%rcx), %r8
 // CHECK: encoding: [0xc4,0x61,0xfa,0x2d,0x01]
-          vcvtss2siq  (%rcx), %r8
+          vcvtss2si  (%rcx), %r8
 
-// CHECK: vcvtsi2sd  %r8d, %xmm8, %xmm15
+// CHECK: vcvtsi2sdl  %r8d, %xmm8, %xmm15
 // CHECK: encoding: [0xc4,0x41,0x3b,0x2a,0xf8]
-          vcvtsi2sd  %r8d, %xmm8, %xmm15
+          vcvtsi2sdl  %r8d, %xmm8, %xmm15
 
-// CHECK: vcvtsi2sd  (%rbp), %xmm8, %xmm15
+// CHECK: vcvtsi2sdl  (%rbp), %xmm8, %xmm15
 // CHECK: encoding: [0xc5,0x3b,0x2a,0x7d,0x00]
-          vcvtsi2sd  (%rbp), %xmm8, %xmm15
+          vcvtsi2sdl  (%rbp), %xmm8, %xmm15
 
 // CHECK: vcvtsi2sdq  %rcx, %xmm4, %xmm6
 // CHECK: encoding: [0xc4,0xe1,0xdb,0x2a,0xf1]
@@ -3900,21 +3900,21 @@ vdivpd  -4(%rcx,%rbx,8), %xmm10, %xmm11
 // CHECK: encoding: [0xc4,0xe1,0xda,0x2a,0x31]
           vcvtsi2ssq  (%rcx), %xmm4, %xmm6
 
-// CHECK: vcvttsd2siq  %xmm4, %rcx
+// CHECK: vcvttsd2si  %xmm4, %rcx
 // CHECK: encoding: [0xc4,0xe1,0xfb,0x2c,0xcc]
-          vcvttsd2siq  %xmm4, %rcx
+          vcvttsd2si  %xmm4, %rcx
 
-// CHECK: vcvttsd2siq  (%rcx), %rcx
+// CHECK: vcvttsd2si  (%rcx), %rcx
 // CHECK: encoding: [0xc4,0xe1,0xfb,0x2c,0x09]
-          vcvttsd2siq  (%rcx), %rcx
+          vcvttsd2si  (%rcx), %rcx
 
-// CHECK: vcvttss2siq  %xmm4, %rcx
+// CHECK: vcvttss2si  %xmm4, %rcx
 // CHECK: encoding: [0xc4,0xe1,0xfa,0x2c,0xcc]
-          vcvttss2siq  %xmm4, %rcx
+          vcvttss2si  %xmm4, %rcx
 
-// CHECK: vcvttss2siq  (%rcx), %rcx
+// CHECK: vcvttss2si  (%rcx), %rcx
 // CHECK: encoding: [0xc4,0xe1,0xfa,0x2c,0x09]
-          vcvttss2siq  (%rcx), %rcx
+          vcvttss2si  (%rcx), %rcx
 
 // CHECK: vlddqu  (%rax), %ymm12
 // CHECK: encoding: [0xc5,0x7f,0xf0,0x20]

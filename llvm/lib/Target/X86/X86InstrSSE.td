@@ -1435,7 +1435,7 @@ defm VCVTTSS2SI   : sse12_cvt_s<0x2C, FR32, GR32, fp_to_sint, f32mem, loadf32,
                                 SSE_CVT_SS2SI_32>,
                                 XS, VEX, VEX_LIG;
 defm VCVTTSS2SI64 : sse12_cvt_s<0x2C, FR32, GR64, fp_to_sint, f32mem, loadf32,
-                                "cvttss2si{q}\t{$src, $dst|$dst, $src}",
+                                "cvttss2si\t{$src, $dst|$dst, $src}",
                                 SSE_CVT_SS2SI_64>,
                                 XS, VEX, VEX_W, VEX_LIG;
 defm VCVTTSD2SI   : sse12_cvt_s<0x2C, FR64, GR32, fp_to_sint, f64mem, loadf64,
@@ -1443,26 +1443,43 @@ defm VCVTTSD2SI   : sse12_cvt_s<0x2C, FR64, GR32, fp_to_sint, f64mem, loadf64,
                                 SSE_CVT_SD2SI>,
                                 XD, VEX, VEX_LIG;
 defm VCVTTSD2SI64 : sse12_cvt_s<0x2C, FR64, GR64, fp_to_sint, f64mem, loadf64,
-                                "cvttsd2si{q}\t{$src, $dst|$dst, $src}",
+                                "cvttsd2si\t{$src, $dst|$dst, $src}",
                                 SSE_CVT_SD2SI>,
                                 XD, VEX, VEX_W, VEX_LIG;
+
+def : InstAlias<"vcvttss2si{l}\t{$src, $dst|$dst, $src}",
+                (VCVTTSS2SIrr GR32:$dst, FR32:$src), 0>;
+def : InstAlias<"vcvttss2si{l}\t{$src, $dst|$dst, $src}",
+                (VCVTTSS2SIrm GR32:$dst, f32mem:$src), 0>;
+def : InstAlias<"vcvttsd2si{l}\t{$src, $dst|$dst, $src}",
+                (VCVTTSD2SIrr GR32:$dst, FR64:$src), 0>;
+def : InstAlias<"vcvttsd2si{l}\t{$src, $dst|$dst, $src}",
+                (VCVTTSD2SIrm GR32:$dst, f64mem:$src), 0>;
+def : InstAlias<"vcvttss2si{q}\t{$src, $dst|$dst, $src}",
+                (VCVTTSS2SI64rr GR64:$dst, FR32:$src), 0>;
+def : InstAlias<"vcvttss2si{q}\t{$src, $dst|$dst, $src}",
+                (VCVTTSS2SI64rm GR64:$dst, f32mem:$src), 0>;
+def : InstAlias<"vcvttsd2si{q}\t{$src, $dst|$dst, $src}",
+                (VCVTTSD2SI64rr GR64:$dst, FR64:$src), 0>;
+def : InstAlias<"vcvttsd2si{q}\t{$src, $dst|$dst, $src}",
+                (VCVTTSD2SI64rm GR64:$dst, f64mem:$src), 0>;
 
 // The assembler can recognize rr 64-bit instructions by seeing a rxx
 // register, but the same isn't true when only using memory operands,
 // provide other assembly "l" and "q" forms to address this explicitly
 // where appropriate to do so.
-defm VCVTSI2SS   : sse12_vcvt_avx<0x2A, GR32, FR32, i32mem, "cvtsi2ss">,
+defm VCVTSI2SS   : sse12_vcvt_avx<0x2A, GR32, FR32, i32mem, "cvtsi2ss{l}">,
                                   XS, VEX_4V, VEX_LIG;
 defm VCVTSI2SS64 : sse12_vcvt_avx<0x2A, GR64, FR32, i64mem, "cvtsi2ss{q}">,
                                   XS, VEX_4V, VEX_W, VEX_LIG;
-defm VCVTSI2SD   : sse12_vcvt_avx<0x2A, GR32, FR64, i32mem, "cvtsi2sd">,
+defm VCVTSI2SD   : sse12_vcvt_avx<0x2A, GR32, FR64, i32mem, "cvtsi2sd{l}">,
                                   XD, VEX_4V, VEX_LIG;
 defm VCVTSI2SD64 : sse12_vcvt_avx<0x2A, GR64, FR64, i64mem, "cvtsi2sd{q}">,
                                   XD, VEX_4V, VEX_W, VEX_LIG;
 
-def : InstAlias<"vcvtsi2sd{l}\t{$src, $src1, $dst|$dst, $src1, $src}",
-                (VCVTSI2SDrr FR64:$dst, FR64:$src1, GR32:$src)>;
-def : InstAlias<"vcvtsi2sd{l}\t{$src, $src1, $dst|$dst, $src1, $src}",
+def : InstAlias<"vcvtsi2ss\t{$src, $src1, $dst|$dst, $src1, $src}",
+                (VCVTSI2SSrm FR64:$dst, FR64:$src1, i32mem:$src)>;
+def : InstAlias<"vcvtsi2sd\t{$src, $src1, $dst|$dst, $src1, $src}",
                 (VCVTSI2SDrm FR64:$dst, FR64:$src1, i32mem:$src)>;
 
 let Predicates = [HasAVX] in {
@@ -1489,26 +1506,48 @@ defm CVTTSS2SI : sse12_cvt_s<0x2C, FR32, GR32, fp_to_sint, f32mem, loadf32,
                       "cvttss2si\t{$src, $dst|$dst, $src}",
                       SSE_CVT_SS2SI_32>, XS;
 defm CVTTSS2SI64 : sse12_cvt_s<0x2C, FR32, GR64, fp_to_sint, f32mem, loadf32,
-                      "cvttss2si{q}\t{$src, $dst|$dst, $src}",
+                      "cvttss2si\t{$src, $dst|$dst, $src}",
                       SSE_CVT_SS2SI_64>, XS, REX_W;
 defm CVTTSD2SI : sse12_cvt_s<0x2C, FR64, GR32, fp_to_sint, f64mem, loadf64,
                       "cvttsd2si\t{$src, $dst|$dst, $src}",
                       SSE_CVT_SD2SI>, XD;
 defm CVTTSD2SI64 : sse12_cvt_s<0x2C, FR64, GR64, fp_to_sint, f64mem, loadf64,
-                      "cvttsd2si{q}\t{$src, $dst|$dst, $src}",
+                      "cvttsd2si\t{$src, $dst|$dst, $src}",
                       SSE_CVT_SD2SI>, XD, REX_W;
 defm CVTSI2SS  : sse12_cvt_s<0x2A, GR32, FR32, sint_to_fp, i32mem, loadi32,
-                      "cvtsi2ss\t{$src, $dst|$dst, $src}",
+                      "cvtsi2ss{l}\t{$src, $dst|$dst, $src}",
                       SSE_CVT_Scalar>, XS;
 defm CVTSI2SS64 : sse12_cvt_s<0x2A, GR64, FR32, sint_to_fp, i64mem, loadi64,
                       "cvtsi2ss{q}\t{$src, $dst|$dst, $src}",
                       SSE_CVT_Scalar>, XS, REX_W;
 defm CVTSI2SD  : sse12_cvt_s<0x2A, GR32, FR64, sint_to_fp, i32mem, loadi32,
-                      "cvtsi2sd\t{$src, $dst|$dst, $src}",
+                      "cvtsi2sd{l}\t{$src, $dst|$dst, $src}",
                       SSE_CVT_Scalar>, XD;
 defm CVTSI2SD64 : sse12_cvt_s<0x2A, GR64, FR64, sint_to_fp, i64mem, loadi64,
                       "cvtsi2sd{q}\t{$src, $dst|$dst, $src}",
                       SSE_CVT_Scalar>, XD, REX_W;
+
+def : InstAlias<"cvttss2si{l}\t{$src, $dst|$dst, $src}",
+                (CVTTSS2SIrr GR32:$dst, FR32:$src), 0>;
+def : InstAlias<"cvttss2si{l}\t{$src, $dst|$dst, $src}",
+                (CVTTSS2SIrm GR32:$dst, f32mem:$src), 0>;
+def : InstAlias<"cvttsd2si{l}\t{$src, $dst|$dst, $src}",
+                (CVTTSD2SIrr GR32:$dst, FR64:$src), 0>;
+def : InstAlias<"cvttsd2si{l}\t{$src, $dst|$dst, $src}",
+                (CVTTSD2SIrm GR32:$dst, f64mem:$src), 0>;
+def : InstAlias<"cvttss2si{q}\t{$src, $dst|$dst, $src}",
+                (CVTTSS2SI64rr GR64:$dst, FR32:$src), 0>;
+def : InstAlias<"cvttss2si{q}\t{$src, $dst|$dst, $src}",
+                (CVTTSS2SI64rm GR64:$dst, f32mem:$src), 0>;
+def : InstAlias<"cvttsd2si{q}\t{$src, $dst|$dst, $src}",
+                (CVTTSD2SI64rr GR64:$dst, FR64:$src), 0>;
+def : InstAlias<"cvttsd2si{q}\t{$src, $dst|$dst, $src}",
+                (CVTTSD2SI64rm GR64:$dst, f64mem:$src), 0>;
+
+def : InstAlias<"cvtsi2ss\t{$src, $dst|$dst, $src}",
+                (CVTSI2SSrm FR64:$dst, i32mem:$src)>;
+def : InstAlias<"cvtsi2sd\t{$src, $dst|$dst, $src}",
+                (CVTSI2SDrm FR64:$dst, i32mem:$src)>;
 
 // Conversion Instructions Intrinsics - Match intrinsics which expect MM
 // and/or XMM operand(s).
@@ -1544,27 +1583,27 @@ multiclass sse12_cvt_sint_3addr<bits<8> opc, RegisterClass SrcRC,
 }
 
 defm VCVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32,
-                  int_x86_sse2_cvtsd2si, sdmem, sse_load_f64, "cvtsd2si{l}",
+                  int_x86_sse2_cvtsd2si, sdmem, sse_load_f64, "cvtsd2si",
                   SSE_CVT_SD2SI>, XD, VEX, VEX_LIG;
 defm VCVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64,
-                    int_x86_sse2_cvtsd2si64, sdmem, sse_load_f64, "cvtsd2si{q}",
+                    int_x86_sse2_cvtsd2si64, sdmem, sse_load_f64, "cvtsd2si",
                     SSE_CVT_SD2SI>, XD, VEX, VEX_W, VEX_LIG;
 
 defm CVTSD2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse2_cvtsd2si,
-                 sdmem, sse_load_f64, "cvtsd2si{l}", SSE_CVT_SD2SI>, XD;
+                 sdmem, sse_load_f64, "cvtsd2si", SSE_CVT_SD2SI>, XD;
 defm CVTSD2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse2_cvtsd2si64,
-                   sdmem, sse_load_f64, "cvtsd2si{q}", SSE_CVT_SD2SI>, XD, REX_W;
+                   sdmem, sse_load_f64, "cvtsd2si", SSE_CVT_SD2SI>, XD, REX_W;
 
 
 defm Int_VCVTSI2SS : sse12_cvt_sint_3addr<0x2A, GR32, VR128,
-          int_x86_sse_cvtsi2ss, i32mem, loadi32, "cvtsi2ss",
+          int_x86_sse_cvtsi2ss, i32mem, loadi32, "cvtsi2ss{l}",
           SSE_CVT_Scalar, 0>, XS, VEX_4V;
 defm Int_VCVTSI2SS64 : sse12_cvt_sint_3addr<0x2A, GR64, VR128,
           int_x86_sse_cvtsi642ss, i64mem, loadi64, "cvtsi2ss{q}",
           SSE_CVT_Scalar, 0>, XS, VEX_4V,
           VEX_W;
 defm Int_VCVTSI2SD : sse12_cvt_sint_3addr<0x2A, GR32, VR128,
-          int_x86_sse2_cvtsi2sd, i32mem, loadi32, "cvtsi2sd",
+          int_x86_sse2_cvtsi2sd, i32mem, loadi32, "cvtsi2sd{l}",
           SSE_CVT_Scalar, 0>, XD, VEX_4V;
 defm Int_VCVTSI2SD64 : sse12_cvt_sint_3addr<0x2A, GR64, VR128,
           int_x86_sse2_cvtsi642sd, i64mem, loadi64, "cvtsi2sd{q}",
@@ -1574,13 +1613,13 @@ defm Int_VCVTSI2SD64 : sse12_cvt_sint_3addr<0x2A, GR64, VR128,
 let Constraints = "$src1 = $dst" in {
   defm Int_CVTSI2SS : sse12_cvt_sint_3addr<0x2A, GR32, VR128,
                         int_x86_sse_cvtsi2ss, i32mem, loadi32,
-                        "cvtsi2ss", SSE_CVT_Scalar>, XS;
+                        "cvtsi2ss{l}", SSE_CVT_Scalar>, XS;
   defm Int_CVTSI2SS64 : sse12_cvt_sint_3addr<0x2A, GR64, VR128,
                         int_x86_sse_cvtsi642ss, i64mem, loadi64,
                         "cvtsi2ss{q}", SSE_CVT_Scalar>, XS, REX_W;
   defm Int_CVTSI2SD : sse12_cvt_sint_3addr<0x2A, GR32, VR128,
                         int_x86_sse2_cvtsi2sd, i32mem, loadi32,
-                        "cvtsi2sd", SSE_CVT_Scalar>, XD;
+                        "cvtsi2sd{l}", SSE_CVT_Scalar>, XD;
   defm Int_CVTSI2SD64 : sse12_cvt_sint_3addr<0x2A, GR64, VR128,
                         int_x86_sse2_cvtsi642sd, i64mem, loadi64,
                         "cvtsi2sd{q}", SSE_CVT_Scalar>, XD, REX_W;
@@ -1594,40 +1633,40 @@ defm Int_VCVTTSS2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse_cvttss2si,
                                     SSE_CVT_SS2SI_32>, XS, VEX;
 defm Int_VCVTTSS2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                    int_x86_sse_cvttss2si64, ssmem, sse_load_f32,
-                                   "cvttss2si{q}", SSE_CVT_SS2SI_64>,
+                                   "cvttss2si", SSE_CVT_SS2SI_64>,
                                    XS, VEX, VEX_W;
 defm Int_VCVTTSD2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse2_cvttsd2si,
                                     sdmem, sse_load_f64, "cvttsd2si",
                                     SSE_CVT_SD2SI>, XD, VEX;
 defm Int_VCVTTSD2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                   int_x86_sse2_cvttsd2si64, sdmem, sse_load_f64,
-                                  "cvttsd2si{q}", SSE_CVT_SD2SI>,
+                                  "cvttsd2si", SSE_CVT_SD2SI>,
                                   XD, VEX, VEX_W;
 defm Int_CVTTSS2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse_cvttss2si,
                                     ssmem, sse_load_f32, "cvttss2si",
                                     SSE_CVT_SS2SI_32>, XS;
 defm Int_CVTTSS2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                    int_x86_sse_cvttss2si64, ssmem, sse_load_f32,
-                                   "cvttss2si{q}", SSE_CVT_SS2SI_64>, XS, REX_W;
+                                   "cvttss2si", SSE_CVT_SS2SI_64>, XS, REX_W;
 defm Int_CVTTSD2SI : sse12_cvt_sint<0x2C, VR128, GR32, int_x86_sse2_cvttsd2si,
                                     sdmem, sse_load_f64, "cvttsd2si",
                                     SSE_CVT_SD2SI>, XD;
 defm Int_CVTTSD2SI64 : sse12_cvt_sint<0x2C, VR128, GR64,
                                   int_x86_sse2_cvttsd2si64, sdmem, sse_load_f64,
-                                  "cvttsd2si{q}", SSE_CVT_SD2SI>, XD, REX_W;
+                                  "cvttsd2si", SSE_CVT_SD2SI>, XD, REX_W;
 
 defm VCVTSS2SI   : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
-                                  ssmem, sse_load_f32, "cvtss2si{l}",
+                                  ssmem, sse_load_f32, "cvtss2si",
                                   SSE_CVT_SS2SI_32>, XS, VEX, VEX_LIG;
 defm VCVTSS2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse_cvtss2si64,
-                                  ssmem, sse_load_f32, "cvtss2si{q}",
+                                  ssmem, sse_load_f32, "cvtss2si",
                                   SSE_CVT_SS2SI_64>, XS, VEX, VEX_W, VEX_LIG;
 
 defm CVTSS2SI : sse12_cvt_sint<0x2D, VR128, GR32, int_x86_sse_cvtss2si,
-                               ssmem, sse_load_f32, "cvtss2si{l}",
+                               ssmem, sse_load_f32, "cvtss2si",
                                SSE_CVT_SS2SI_32>, XS;
 defm CVTSS2SI64 : sse12_cvt_sint<0x2D, VR128, GR64, int_x86_sse_cvtss2si64,
-                                 ssmem, sse_load_f32, "cvtss2si{q}",
+                                 ssmem, sse_load_f32, "cvtss2si",
                                  SSE_CVT_SS2SI_64>, XS, REX_W;
 
 defm VCVTDQ2PS   : sse12_cvt_p<0x5B, VR128, VR128, i128mem,
@@ -1643,6 +1682,40 @@ defm CVTDQ2PS : sse12_cvt_p<0x5B, VR128, VR128, i128mem,
                             "cvtdq2ps\t{$src, $dst|$dst, $src}",
                             SSEPackedSingle, SSE_CVT_PS>,
                             TB, Requires<[UseSSE2]>;
+
+def : InstAlias<"vcvtss2si{l}\t{$src, $dst|$dst, $src}",
+                (VCVTSS2SIrr GR32:$dst, VR128:$src), 0>;
+def : InstAlias<"vcvtss2si{l}\t{$src, $dst|$dst, $src}",
+                (VCVTSS2SIrm GR32:$dst, ssmem:$src), 0>;
+def : InstAlias<"vcvtsd2si{l}\t{$src, $dst|$dst, $src}",
+                (VCVTSD2SIrr GR32:$dst, VR128:$src), 0>;
+def : InstAlias<"vcvtsd2si{l}\t{$src, $dst|$dst, $src}",
+                (VCVTSD2SIrm GR32:$dst, sdmem:$src), 0>;
+def : InstAlias<"vcvtss2si{q}\t{$src, $dst|$dst, $src}",
+                (VCVTSS2SI64rr GR64:$dst, VR128:$src), 0>;
+def : InstAlias<"vcvtss2si{q}\t{$src, $dst|$dst, $src}",
+                (VCVTSS2SI64rm GR64:$dst, ssmem:$src), 0>;
+def : InstAlias<"vcvtsd2si{q}\t{$src, $dst|$dst, $src}",
+                (VCVTSD2SI64rr GR64:$dst, VR128:$src), 0>;
+def : InstAlias<"vcvtsd2si{q}\t{$src, $dst|$dst, $src}",
+                (VCVTSD2SI64rm GR64:$dst, sdmem:$src), 0>;
+
+def : InstAlias<"cvtss2si{l}\t{$src, $dst|$dst, $src}",
+                (CVTSS2SIrr GR32:$dst, VR128:$src), 0>;
+def : InstAlias<"cvtss2si{l}\t{$src, $dst|$dst, $src}",
+                (CVTSS2SIrm GR32:$dst, ssmem:$src), 0>;
+def : InstAlias<"cvtsd2si{l}\t{$src, $dst|$dst, $src}",
+                (CVTSD2SIrr GR32:$dst, VR128:$src), 0>;
+def : InstAlias<"cvtsd2si{l}\t{$src, $dst|$dst, $src}",
+                (CVTSD2SIrm GR32:$dst, sdmem:$src), 0>;
+def : InstAlias<"cvtss2si{q}\t{$src, $dst|$dst, $src}",
+                (CVTSS2SI64rr GR64:$dst, VR128:$src), 0>;
+def : InstAlias<"cvtss2si{q}\t{$src, $dst|$dst, $src}",
+                (CVTSS2SI64rm GR64:$dst, ssmem:$src), 0>;
+def : InstAlias<"cvtsd2si{q}\t{$src, $dst|$dst, $src}",
+                (CVTSD2SI64rr GR64:$dst, VR128:$src), 0>;
+def : InstAlias<"cvtsd2si{q}\t{$src, $dst|$dst, $src}",
+                (CVTSD2SI64rm GR64:$dst, sdmem:$src)>;
 
 /// SSE 2 Only
 

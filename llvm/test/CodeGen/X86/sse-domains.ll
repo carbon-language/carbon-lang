@@ -55,10 +55,10 @@ while.end:
 ; instructions, they are still dependent on themselves.
 ; CHECK: xorps [[XMM1:%xmm[0-9]+]]
 ; CHECK: , [[XMM1]]
-; CHECK: cvtsi2ss %{{.*}}, [[XMM1]]
+; CHECK: cvtsi2ssl %{{.*}}, [[XMM1]]
 ; CHECK: xorps [[XMM2:%xmm[0-9]+]]
 ; CHECK: , [[XMM2]]
-; CHECK: cvtsi2ss %{{.*}}, [[XMM2]]
+; CHECK: cvtsi2ssl %{{.*}}, [[XMM2]]
 ;
 define float @f2(i32 %m) nounwind uwtable readnone ssp {
 entry:

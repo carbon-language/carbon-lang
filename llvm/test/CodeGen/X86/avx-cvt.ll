@@ -46,7 +46,7 @@ entry:
   ret double %conv
 }
 
-; CHECK: vcvtsi2sd (%
+; CHECK: vcvtsi2sdl (%
 define double @funcB(i32* nocapture %e) nounwind uwtable readonly ssp {
 entry:
   %tmp1 = load i32* %e, align 4
@@ -54,7 +54,7 @@ entry:
   ret double %conv
 }
 
-; CHECK: vcvtsi2ss (%
+; CHECK: vcvtsi2ssl (%
 define float @funcC(i32* nocapture %e) nounwind uwtable readonly ssp {
 entry:
   %tmp1 = load i32* %e, align 4
