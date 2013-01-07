@@ -677,9 +677,28 @@ CXCursor cxcursor::MakeMacroExpansionCursor(MacroExpansion *MI,
   return C;
 }
 
-MacroExpansion *cxcursor::getCursorMacroExpansion(CXCursor C) {
-  assert(C.kind == CXCursor_MacroExpansion);
-  return static_cast<MacroExpansion *>(C.data[0]);
+CXCursor cxcursor::MakeMacroExpansionCursor(MacroDefinition *MI,
+                                            SourceLocation Loc,
+                                            CXTranslationUnit TU) {
+  assert(Loc.isValid());
+  CXCursor C = { CXCursor_MacroExpansion, 0, { MI, Loc.getPtrEncoding(), TU } };
+  return C;
+}
+
+const IdentifierInfo *cxcursor::MacroExpansionCursor::getName() const {
+  if (isPseudo())
+    return getAsMacroDefinition()->getName();
+  return getAsMacroExpansion()->getName();
+}
+MacroDefinition *cxcursor::MacroExpansionCursor::getDefinition() const {
+  if (isPseudo())
+    return getAsMacroDefinition();
+  return getAsMacroExpansion()->getDefinition();
+}
+SourceRange cxcursor::MacroExpansionCursor::getSourceRange() const {
+  if (isPseudo())
+    return getPseudoLoc();
+  return getAsMacroExpansion()->getSourceRange();
 }
 
 CXCursor cxcursor::MakeInclusionDirectiveCursor(InclusionDirective *ID, 

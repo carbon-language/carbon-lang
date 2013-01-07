@@ -520,6 +520,19 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
                                                     A->getInterfaceLoc(), TU));
   }
 
+  // If pointing inside a macro definition, check if the token is an identifier
+  // that was ever defined as a macro. In such a case, create a "pseudo" macro
+  // expansion cursor for that token.
+  SourceLocation BeginLoc = RegionOfInterest.getBegin();
+  if (Cursor.kind == CXCursor_MacroDefinition &&
+      BeginLoc == RegionOfInterest.getEnd()) {
+    SourceLocation Loc = AU->mapLocationToPreamble(BeginLoc);
+    MacroInfo *MI = getMacroInfo(cxcursor::getCursorMacroDefinition(Cursor),TU);
+    if (MacroDefinition *MacroDef =
+          checkForMacroInMacroDefinition(MI, Loc, TU))
+      return Visit(cxcursor::MakeMacroExpansionCursor(MacroDef, BeginLoc, TU));
+  }
+
   // Nothing to visit at the moment.
   return false;
 }
@@ -3185,7 +3198,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
   }
   
   if (C.kind == CXCursor_MacroExpansion)
-    return createCXString(getCursorMacroExpansion(C)->getName()
+    return createCXString(getCursorMacroExpansion(C).getName()
                                                            ->getNameStart());
 
   if (C.kind == CXCursor_MacroDefinition)
@@ -3999,7 +4012,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
 
   if (C.kind == CXCursor_MacroExpansion) {
     SourceLocation L
-      = cxcursor::getCursorMacroExpansion(C)->getSourceRange().getBegin();
+      = cxcursor::getCursorMacroExpansion(C).getSourceRange().getBegin();
     return cxloc::translateSourceLocation(getCursorContext(C), L);
   }
 
@@ -4125,7 +4138,7 @@ static SourceRange getRawCursorExtent(CXCursor C) {
 
   if (C.kind == CXCursor_MacroExpansion) {
     ASTUnit *TU = getCursorASTUnit(C);
-    SourceRange Range = cxcursor::getCursorMacroExpansion(C)->getSourceRange();
+    SourceRange Range = cxcursor::getCursorMacroExpansion(C).getSourceRange();
     return TU->mapRangeFromPreamble(Range);
   }
 
@@ -4265,7 +4278,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   }
   
   if (C.kind == CXCursor_MacroExpansion) {
-    if (MacroDefinition *Def = getCursorMacroExpansion(C)->getDefinition())
+    if (MacroDefinition *Def = getCursorMacroExpansion(C).getDefinition())
       return MakeMacroDefinitionCursor(Def, tu);
   }
 
@@ -5265,7 +5278,7 @@ public:
     if (cursor.kind != CXCursor_MacroExpansion)
       return CXChildVisit_Continue;
 
-    SourceRange macroRange = getCursorMacroExpansion(cursor)->getSourceRange();
+    SourceRange macroRange = getCursorMacroExpansion(cursor).getSourceRange();
     if (macroRange.getBegin() == macroRange.getEnd())
       return CXChildVisit_Continue; // it's not a function macro.
 
@@ -6167,6 +6180,100 @@ void cxindex::printDiagsToStderr(ASTUnit *Unit) {
   // but writing to the same device.
   fflush(stderr);
 #endif
+}
+
+MacroInfo *cxindex::getMacroInfo(const IdentifierInfo &II,
+                                 SourceLocation MacroDefLoc,
+                                 CXTranslationUnit TU){
+  if (MacroDefLoc.isInvalid() || !TU)
+    return 0;
+
+  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  Preprocessor &PP = Unit->getPreprocessor();
+  if (!II.hadMacroDefinition())
+    return 0;
+
+  MacroInfo *MI = PP.getMacroInfoHistory(const_cast<IdentifierInfo*>(&II));
+  while (MI) {
+    if (MacroDefLoc == MI->getDefinitionLoc())
+      return MI;
+    MI = MI->getPreviousDefinition();
+  }
+
+  return 0;
+}
+
+MacroInfo *cxindex::getMacroInfo(MacroDefinition *MacroDef,
+                                 CXTranslationUnit TU) {
+  if (!MacroDef || !TU)
+    return 0;
+  const IdentifierInfo *II = MacroDef->getName();
+  if (!II)
+    return 0;
+
+  return getMacroInfo(*II, MacroDef->getLocation(), TU);
+}
+
+MacroDefinition *cxindex::checkForMacroInMacroDefinition(const MacroInfo *MI,
+                                                         const Token &Tok,
+                                                         CXTranslationUnit TU) {
+  if (!MI || !TU)
+    return 0;
+  if (Tok.isNot(tok::raw_identifier))
+    return 0;
+
+  if (MI->getNumTokens() == 0)
+    return 0;
+  SourceRange DefRange(MI->getReplacementToken(0).getLocation(),
+                       MI->getDefinitionEndLoc());
+  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+
+  // Check that the token is inside the definition and not its argument list.
+  SourceManager &SM = Unit->getSourceManager();
+  if (SM.isBeforeInTranslationUnit(Tok.getLocation(), DefRange.getBegin()))
+    return 0;
+  if (SM.isBeforeInTranslationUnit(DefRange.getEnd(), Tok.getLocation()))
+    return 0;
+
+  Preprocessor &PP = Unit->getPreprocessor();
+  PreprocessingRecord *PPRec = PP.getPreprocessingRecord();
+  if (!PPRec)
+    return 0;
+
+  StringRef Name(Tok.getRawIdentifierData(), Tok.getLength());
+  IdentifierInfo &II = PP.getIdentifierTable().get(Name);
+  if (!II.hadMacroDefinition())
+    return 0;
+
+  // Check that the identifier is not one of the macro arguments.
+  if (std::find(MI->arg_begin(), MI->arg_end(), &II) != MI->arg_end())
+    return 0;
+
+  MacroInfo *InnerMI = PP.getMacroInfoHistory(&II);
+  if (!InnerMI)
+    return 0;
+
+  return PPRec->findMacroDefinition(InnerMI);
+}
+
+MacroDefinition *cxindex::checkForMacroInMacroDefinition(const MacroInfo *MI,
+                                                         SourceLocation Loc,
+                                                         CXTranslationUnit TU) {
+  if (Loc.isInvalid() || !MI || !TU)
+    return 0;
+
+  if (MI->getNumTokens() == 0)
+    return 0;
+  ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData);
+  Preprocessor &PP = Unit->getPreprocessor();
+  if (!PP.getPreprocessingRecord())
+    return 0;
+  Loc = Unit->getSourceManager().getSpellingLoc(Loc);
+  Token Tok;
+  if (PP.getRawToken(Loc, Tok))
+    return 0;
+
+  return checkForMacroInMacroDefinition(MI, Tok, TU);
 }
 
 extern "C" {

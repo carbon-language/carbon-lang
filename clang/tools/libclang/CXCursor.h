@@ -42,6 +42,7 @@ class TemplateDecl;
 class TemplateName;
 class TypeDecl;
 class VarDecl;
+class IdentifierInfo;
   
 namespace cxcursor {
 
@@ -153,9 +154,51 @@ MacroDefinition *getCursorMacroDefinition(CXCursor C);
 CXCursor MakeMacroExpansionCursor(MacroExpansion *,
                                   CXTranslationUnit TU);
 
-/// \brief Unpack a given macro expansion cursor to retrieve its
-/// source range.
-MacroExpansion *getCursorMacroExpansion(CXCursor C);
+/// \brief Create a "pseudo" macro expansion cursor, using a macro definition
+/// and a source location.
+CXCursor MakeMacroExpansionCursor(MacroDefinition *, SourceLocation Loc,
+                                  CXTranslationUnit TU);
+
+/// \brief Wraps a macro expansion cursor and provides a common interface
+/// for a normal macro expansion cursor or a "pseudo" one.
+///
+/// "Pseudo" macro expansion cursors (essentially a macro definition along with
+/// a source location) are created in special cases, for example they can be
+/// created for identifiers inside macro definitions, if these identifiers are
+/// macro names.
+class MacroExpansionCursor {
+  CXCursor C;
+
+  bool isPseudo() const {
+    return C.data[1] != 0;
+  }
+  MacroDefinition *getAsMacroDefinition() const {
+    assert(isPseudo());
+    return static_cast<MacroDefinition *>(C.data[0]);
+  }
+  MacroExpansion *getAsMacroExpansion() const {
+    assert(!isPseudo());
+    return static_cast<MacroExpansion *>(C.data[0]);
+  }
+  SourceLocation getPseudoLoc() const {
+    assert(isPseudo());
+    return SourceLocation::getFromPtrEncoding(C.data[1]);
+  }
+
+public:
+  MacroExpansionCursor(CXCursor C) : C(C) {
+    assert(C.kind == CXCursor_MacroExpansion);
+  }
+
+  const IdentifierInfo *getName() const;
+  MacroDefinition *getDefinition() const;
+  SourceRange getSourceRange() const;
+};
+
+/// \brief Unpack a given macro expansion cursor to retrieve its info.
+static inline MacroExpansionCursor getCursorMacroExpansion(CXCursor C) {
+  return C;
+}
 
 /// \brief Create an inclusion directive cursor.
 CXCursor MakeInclusionDirectiveCursor(InclusionDirective *,

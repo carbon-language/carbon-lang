@@ -1,6 +1,6 @@
 #define OBSCURE(X) X
 #define DECORATION
-
+#define FNM(X) OBSCURE(X)
 typedef int T;
 void OBSCURE(func)(int x) {
   OBSCURE(T) DECORATION value;
@@ -22,6 +22,8 @@ const char *fname = __FILE__;
 
 #if defined(OBSCURE)
 #endif
+
+#define C(A) A
 
 // RUN: c-index-test -cursor-at=%s:1:11 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-1 %s
 // CHECK-1: macro definition=OBSCURE
@@ -45,8 +47,17 @@ const char *fname = __FILE__;
 // CHECK-10: 20:8 macro expansion=OBSCURE
 // CHECK-10: 23:13 macro expansion=OBSCURE
 
+// RUN: c-index-test -cursor-at=%s:3:20 -cursor-at=%s:12:14 \
+// RUN:              -cursor-at=%s:26:11 -cursor-at=%s:26:14 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-IN-MACRODEF %s
+// CHECK-IN-MACRODEF: 3:16 macro expansion=OBSCURE
+// CHECK-IN-MACRODEF: 12:14 macro expansion=A
+// CHECK-IN-MACRODEF: 26:9 macro definition=C
+// CHECK-IN-MACRODEF: 26:9 macro definition=C
+
 // Same tests, but with "editing" optimizations
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -cursor-at=%s:1:11 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-1 %s
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -cursor-at=%s:2:14 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-2 %s
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -cursor-at=%s:5:7 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-3 %s
 // RUN: env CINDEXTEST_EDITING=1 c-index-test -cursor-at=%s:9:10 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-6 %s
+// RUN: env CINDEXTEST_EDITING=1 c-index-test -cursor-at=%s:3:20 -cursor-at=%s:12:14 \
+// RUN:              -cursor-at=%s:26:11 -cursor-at=%s:26:14 -I%S/Inputs %s | FileCheck -check-prefix=CHECK-IN-MACRODEF %s
