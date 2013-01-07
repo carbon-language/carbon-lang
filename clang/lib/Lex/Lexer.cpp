@@ -414,6 +414,17 @@ static bool isWhitespace(unsigned char c);
 unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
                                    const SourceManager &SM,
                                    const LangOptions &LangOpts) {
+  Token TheTok;
+  if (getRawToken(Loc, TheTok, SM, LangOpts))
+    return 0;
+  return TheTok.getLength();
+}
+
+/// \brief Relex the token at the specified location.
+/// \returns true if there was a failure, false on success.
+bool Lexer::getRawToken(SourceLocation Loc, Token &Result,
+                        const SourceManager &SM,
+                        const LangOptions &LangOpts) {
   // TODO: this could be special cased for common tokens like identifiers, ')',
   // etc to make this faster, if it mattered.  Just look at StrData[0] to handle
   // all obviously single-char tokens.  This could use
@@ -427,20 +438,19 @@ unsigned Lexer::MeasureTokenLength(SourceLocation Loc,
   bool Invalid = false;
   StringRef Buffer = SM.getBufferData(LocInfo.first, &Invalid);
   if (Invalid)
-    return 0;
+    return true;
 
   const char *StrData = Buffer.data()+LocInfo.second;
 
   if (isWhitespace(StrData[0]))
-    return 0;
+    return true;
 
   // Create a lexer starting at the beginning of this token.
   Lexer TheLexer(SM.getLocForStartOfFile(LocInfo.first), LangOpts,
                  Buffer.begin(), StrData, Buffer.end());
   TheLexer.SetCommentRetentionState(true);
-  Token TheTok;
-  TheLexer.LexFromRawLexer(TheTok);
-  return TheTok.getLength();
+  TheLexer.LexFromRawLexer(Result);
+  return false;
 }
 
 static SourceLocation getBeginningOfFileToken(SourceLocation Loc,

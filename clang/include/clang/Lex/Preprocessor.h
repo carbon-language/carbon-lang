@@ -958,6 +958,12 @@ public:
                         SmallVectorImpl<char> &Buffer,
                         bool *Invalid = 0) const;
 
+  /// \brief Relex the token at the specified location.
+  /// \returns true if there was a failure, false on success.
+  bool getRawToken(SourceLocation Loc, Token &Result) {
+    return Lexer::getRawToken(Loc, Result, SourceMgr, LangOpts);
+  }
+
   /// getSpellingOfSingleCharacterNumericConstant - Tok is a numeric constant
   /// with length 1, return the character.
   char getSpellingOfSingleCharacterNumericConstant(const Token &Tok,

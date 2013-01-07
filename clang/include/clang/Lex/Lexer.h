@@ -273,6 +273,12 @@ public:
                                      const SourceManager &SM,
                                      const LangOptions &LangOpts);
 
+  /// \brief Relex the token at the specified location.
+  /// \returns true if there was a failure, false on success.
+  static bool getRawToken(SourceLocation Loc, Token &Result,
+                          const SourceManager &SM,
+                          const LangOptions &LangOpts);
+
   /// \brief Given a location any where in a source buffer, find the location
   /// that corresponds to the beginning of the token in which the original
   /// source location lands.
