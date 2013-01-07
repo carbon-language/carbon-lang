@@ -13,3 +13,5 @@ def relocatable : Flag<["--"], "relocatable">;
 def relocatable_r : Flag<["-"], "r">, Alias<relocatable>;
 
 def OCTOTHORPE_OCTOTHORPE_OCTOTHORPE : Flag<["-"], "###">;
+
+def emit_yaml : Flag<["-"], "emit-yaml">;

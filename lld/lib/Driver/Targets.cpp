@@ -19,8 +19,12 @@
 #include "lld/ReaderWriter/ReaderELF.h"
 #include "lld/ReaderWriter/ReaderYAML.h"
 #include "lld/ReaderWriter/WriterELF.h"
+#include "lld/ReaderWriter/WriterYAML.h"
 
 #include "llvm/ADT/Triple.h"
+#include "llvm/Support/raw_ostream.h"
+
+#include <set>
 
 using namespace lld;
 
@@ -30,6 +34,7 @@ public:
     _readerELF.reset(createReaderELF(_roe, _roa));
     _readerYAML.reset(createReaderYAML(_roy));
     _writer.reset(createWriterELF(_woe));
+    _writerYAML.reset(createWriterYAML(_woy));
   }
 
   virtual ErrorOr<lld::Reader&> getReader(const LinkerInput &input) {
@@ -47,7 +52,7 @@ public:
   }
 
   virtual ErrorOr<lld::Writer&> getWriter() {
-    return *_writer;
+    return _options._outputYAML ? *_writerYAML : *_writer;
   }
 
 private:
@@ -72,8 +77,20 @@ private:
     }
   } _woe;
 
+  struct WYOpts : lld::WriterOptionsYAML {
+    virtual StringRef kindToString(Reference::Kind k) const {
+      std::string str;
+      llvm::raw_string_ostream rso(str);
+      rso << (unsigned)k;
+      rso.flush();
+      return *_strings.insert(str).first;
+    }
+
+    mutable std::set<std::string> _strings;
+  } _woy;
+
   std::unique_ptr<lld::Reader> _readerELF, _readerYAML;
-  std::unique_ptr<lld::Writer> _writer;
+  std::unique_ptr<lld::Writer> _writer, _writerYAML;
 };
 
 class X86_64LinuxTarget final : public Target {
@@ -83,6 +100,7 @@ public:
     _readerELF.reset(createReaderELF(_roe, _roa));
     _readerYAML.reset(createReaderYAML(_roy));
     _writer.reset(createWriterELF(_woe));
+    _writerYAML.reset(createWriterYAML(_woy));
   }
 
   virtual ErrorOr<lld::Reader&> getReader(const LinkerInput &input) {
@@ -100,7 +118,7 @@ public:
   }
 
   virtual ErrorOr<lld::Writer&> getWriter() {
-    return *_writer;
+    return _options._outputYAML ? *_writerYAML : *_writer;
   }
 
 private:
@@ -125,8 +143,20 @@ private:
     }
   } _woe;
 
+  struct WYOpts : lld::WriterOptionsYAML {
+    virtual StringRef kindToString(Reference::Kind k) const {
+      std::string str;
+      llvm::raw_string_ostream rso(str);
+      rso << (unsigned)k;
+      rso.flush();
+      return *_strings.insert(str).first;
+    }
+
+    mutable std::set<std::string> _strings;
+  } _woy;
+
   std::unique_ptr<lld::Reader> _readerELF, _readerYAML;
-  std::unique_ptr<lld::Writer> _writer;
+  std::unique_ptr<lld::Writer> _writer, _writerYAML;
 };
 
 std::unique_ptr<Target> Target::create(const LinkerOptions &lo) {

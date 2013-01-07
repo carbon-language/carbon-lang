@@ -8,3 +8,5 @@ def entry : Joined<["-"], "entry=">;
 def relocatable : Flag<["-"], "relocatable">;
 
 def OCTOTHORPE_OCTOTHORPE_OCTOTHORPE : Flag<["-"], "###">;
+
+def emit_yaml : Flag<["-"], "emit-yaml">;
