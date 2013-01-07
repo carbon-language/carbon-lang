@@ -2060,7 +2060,10 @@ private:
                            AccessSpecifier AS, bool EnteringContext,
                            DeclSpecContext DSC, 
                            ParsedAttributesWithRange &Attributes);
-  void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
+  void ParseCXXMemberSpecification(SourceLocation StartLoc,
+                                   SourceLocation AttrFixitLoc,
+                                   ParsedAttributes &Attrs,
+                                   unsigned TagType,
                                    Decl *TagDecl);
   ExprResult ParseCXXMemberInitializer(Decl *D, bool IsFunction,
                                        SourceLocation &EqualLoc);

@@ -64,7 +64,6 @@ class [[]] class_attr {};
 union [[]] union_attr;
 
 // Checks attributes placed at wrong syntactic locations of class specifiers.
-// FIXME: provide fix-it hint.
 class [[]] [[]]
   attr_after_class_name_decl [[]] [[]]; // expected-error {{an attribute list cannot appear here}}
 

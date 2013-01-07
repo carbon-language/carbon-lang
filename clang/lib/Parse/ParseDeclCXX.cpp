@@ -1106,6 +1106,10 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
   // styles of attributes?
   MaybeParseCXX11Attributes(attrs);
 
+  // Source location used by FIXIT to insert misplaced
+  // C++11 attributes
+  SourceLocation AttrFixitLoc = Tok.getLocation();
+
   if (TagType == DeclSpec::TST_struct &&
       !Tok.is(tok::identifier) &&
       Tok.getIdentifierInfo() &&
@@ -1322,9 +1326,25 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
 
   // Forbid misplaced attributes. In cases of a reference, we pass attributes
   // to caller to handle.
-  // FIXME: provide fix-it hints if we can.
-  if (TUK != Sema::TUK_Reference)
-    ProhibitAttributes(Attributes);
+  if (TUK != Sema::TUK_Reference) {
+    // If this is not a reference, then the only possible
+    // valid place for C++11 attributes to appear here
+    // is between class-key and class-name. If there are
+    // any attributes after class-name, we try a fixit to move
+    // them to the right place.
+    SourceRange AttrRange = Attributes.Range;
+    if (AttrRange.isValid()) {
+      Diag(AttrRange.getBegin(), diag::err_attributes_not_allowed)
+        << AttrRange
+        << FixItHint::CreateInsertionFromRange(AttrFixitLoc,
+                                               CharSourceRange(AttrRange, true))
+        << FixItHint::CreateRemoval(AttrRange);
+
+      // Recover by adding misplaced attributes to the attribute list
+      // of the class so they can be applied on the class later.
+      attrs.takeAllFrom(Attributes);
+    }
+  }
 
   // If this is an elaborated type specifier, and we delayed
   // diagnostics before, just merge them into the current pool.
@@ -1508,7 +1528,8 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
            (getLangOpts().CPlusPlus && Tok.is(tok::colon)) ||
            isCXX11FinalKeyword());
     if (getLangOpts().CPlusPlus)
-      ParseCXXMemberSpecification(StartLoc, TagType, TagOrTempResult.get());
+      ParseCXXMemberSpecification(StartLoc, AttrFixitLoc, attrs, TagType,
+                                  TagOrTempResult.get());
     else
       ParseStructUnionBody(StartLoc, TagType, TagOrTempResult.get());
   }
@@ -2346,6 +2367,8 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
 ///         access-specifier ':' member-specification[opt]
 ///
 void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
+                                         SourceLocation AttrFixitLoc,
+                                         ParsedAttributes &Attrs,
                                          unsigned TagType, Decl *TagDecl) {
   assert((TagType == DeclSpec::TST_struct ||
          TagType == DeclSpec::TST_interface ||
@@ -2414,10 +2437,24 @@ void Parser::ParseCXXMemberSpecification(SourceLocation RecordLoc,
            diag::ext_override_control_keyword) << "final";
     }
 
-    // Forbid C++11 attributes that appear here.
-    ParsedAttributesWithRange Attrs(AttrFactory);
-    MaybeParseCXX11Attributes(Attrs);
-    ProhibitAttributes(Attrs);
+    // Parse any C++11 attributes after 'final' keyword.
+    // These attributes are not allowed to appear here,
+    // and the only possible place for them to appertain
+    // to the class would be between class-key and class-name.
+    ParsedAttributesWithRange Attributes(AttrFactory);
+    MaybeParseCXX11Attributes(Attributes);
+    SourceRange AttrRange = Attributes.Range;
+    if (AttrRange.isValid()) {
+      Diag(AttrRange.getBegin(), diag::err_attributes_not_allowed)
+        << AttrRange
+        << FixItHint::CreateInsertionFromRange(AttrFixitLoc,
+                                               CharSourceRange(AttrRange, true))
+        << FixItHint::CreateRemoval(AttrRange);
+
+      // Recover by adding attributes to the attribute list of the class
+      // so they can be applied on the class later.
+      Attrs.takeAllFrom(Attributes);
+    }
   }
 
   if (Tok.is(tok::colon)) {
