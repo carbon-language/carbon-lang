@@ -11,7 +11,8 @@ Clang Language Extensions
 
    ObjectiveCLiterals
    BlockLanguageSpec
-   AutomaticReferenceCounting
+   Block-ABI-Apple
+   AutomaticReferenceCounting   
 
 Introduction
 ============
@@ -850,8 +851,8 @@ Blocks
 ======
 
 The syntax and high level language feature description is in
-:doc:`BlockLanguageSpec`.  Implementation and ABI details for the clang
-implementation are in `Block-ABI-Apple.txt <Block-ABI-Apple.txt>`_.
+:doc:`BlockLanguageSpec<BlockLanguageSpec>`. Implementation and ABI details for
+the clang implementation are in :doc:`Block-ABI-Apple<Block-ABI-Apple>`.
 
 Query for this feature with ``__has_extension(blocks)``.
 
