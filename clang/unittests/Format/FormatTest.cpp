@@ -290,6 +290,9 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
       "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;  // Trailing comment");
+
+  EXPECT_EQ("int i;  // single line trailing comment",
+            format("int i;\\\n// single line trailing comment"));
 }
 
 TEST_F(FormatTest, UnderstandsMultiLineComments) {

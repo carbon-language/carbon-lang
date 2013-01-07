@@ -520,8 +520,8 @@ private:
 class TokenAnnotator {
 public:
   TokenAnnotator(const UnwrappedLine &Line, const FormatStyle &Style,
-                 SourceManager &SourceMgr)
-      : Line(Line), Style(Style), SourceMgr(SourceMgr) {
+                 SourceManager &SourceMgr, Lexer &Lex)
+      : Line(Line), Style(Style), SourceMgr(SourceMgr), Lex(Lex) {
   }
 
   /// \brief A parser that gathers additional information about tokens.
@@ -865,10 +865,9 @@ private:
       } else if (isBinaryOperator(Line.Tokens[i])) {
         Annotation.Type = TokenAnnotation::TT_BinaryOperator;
       } else if (Tok.Tok.is(tok::comment)) {
-        // FIXME: Use Lexer::getSpelling(Tok, SourceMgr, LangOpts, bool*);
-        StringRef Data(SourceMgr.getCharacterData(Tok.Tok.getLocation()),
-                       Tok.Tok.getLength());
-        if (Data.startswith("//"))
+        std::string Data(
+            Lexer::getSpelling(Tok.Tok, SourceMgr, Lex.getLangOpts()));
+        if (StringRef(Data).startswith("//"))
           Annotation.Type = TokenAnnotation::TT_LineComment;
         else
           Annotation.Type = TokenAnnotation::TT_BlockComment;
@@ -1012,6 +1011,7 @@ private:
   const UnwrappedLine &Line;
   FormatStyle Style;
   SourceManager &SourceMgr;
+  Lexer &Lex;
   std::vector<TokenAnnotation> Annotations;
 };
 
@@ -1142,7 +1142,7 @@ private:
                                               LineRange.getBegin()))
         continue;
 
-      TokenAnnotator Annotator(TheLine, Style, SourceMgr);
+      TokenAnnotator Annotator(TheLine, Style, SourceMgr, Lex);
       if (!Annotator.annotate())
         break;
       UnwrappedLineFormatter Formatter(
