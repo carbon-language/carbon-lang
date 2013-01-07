@@ -67,3 +67,4 @@ Autoconf            llvm/autoconf
 Google Test         llvm/utils/unittest/googletest
 OpenBSD regex       llvm/lib/Support/{reg*, COPYRIGHT.regex}
 pyyaml tests        llvm/test/YAMLParser/{*.data, LICENSE.TXT}
+ARM contributions   llvm/lib/Target/ARM/LICENSE.TXT
