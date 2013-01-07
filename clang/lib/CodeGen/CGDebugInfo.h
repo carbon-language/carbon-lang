@@ -111,6 +111,8 @@ class CGDebugInfo {
   llvm::DIType getCompletedTypeOrNull(const QualType);
   llvm::DIType getOrCreateMethodType(const CXXMethodDecl *Method,
                                      llvm::DIFile F);
+  llvm::DIType getOrCreateInstanceMethodType(
+      QualType ThisPtr, const FunctionProtoType *Func, llvm::DIFile Unit);
   llvm::DIType getOrCreateFunctionType(const Decl *D, QualType FnType,
                                        llvm::DIFile F);
   llvm::DIType getOrCreateVTablePtrType(llvm::DIFile F);

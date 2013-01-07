@@ -904,16 +904,18 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
 llvm::DIType
 CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
                                    llvm::DIFile Unit) {
-  llvm::DIType FnTy
-    = getOrCreateType(QualType(Method->getType()->getAs<FunctionProtoType>(),
-                               0),
-                      Unit);
-
+  const FunctionProtoType *Func = Method->getType()->getAs<FunctionProtoType>();
   if (Method->isStatic())
-    return FnTy;
+    return getOrCreateType(QualType(Func, 0), Unit);
+  return getOrCreateInstanceMethodType(Method->getThisType(CGM.getContext()),
+                                       Func, Unit);
+}
 
+llvm::DIType CGDebugInfo::getOrCreateInstanceMethodType(
+    QualType ThisPtr, const FunctionProtoType *Func, llvm::DIFile Unit) {
   // Add "this" pointer.
-  llvm::DIArray Args = llvm::DICompositeType(FnTy).getTypeArray();
+  llvm::DIArray Args = llvm::DICompositeType(
+      getOrCreateType(QualType(Func, 0), Unit)).getTypeArray();
   assert (Args.getNumElements() && "Invalid number of arguments!");
 
   SmallVector<llvm::Value *, 16> Elts;
@@ -922,9 +924,7 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
   Elts.push_back(Args.getElement(0));
 
   // "this" pointer is always first argument.
-  QualType ThisPtr = Method->getThisType(CGM.getContext());
-
-  const CXXRecordDecl *RD = Method->getParent();
+  const CXXRecordDecl *RD = ThisPtr->getPointeeCXXRecordDecl();
   if (isa<ClassTemplateSpecializationDecl>(RD)) {
     // Create pointer type directly in this case.
     const PointerType *ThisPtrTy = cast<PointerType>(ThisPtr);
