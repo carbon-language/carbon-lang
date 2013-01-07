@@ -1144,6 +1144,7 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
       unsigned NextIndex = 3;
       SourceLocation Loc = ReadSourceLocation(F, Record, NextIndex);
       MacroInfo *MI = PP.AllocateMacroInfo(Loc);
+      MI->setDefinitionEndLoc(ReadSourceLocation(F, Record, NextIndex));
 
       // Record this macro.
       MacrosLoaded[GlobalID - NUM_PREDEF_MACRO_IDS] = MI;

@@ -1853,6 +1853,7 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
       addMacroRef(MI, Record);
       Record.push_back(inferSubmoduleIDFromLocation(MI->getDefinitionLoc()));
       AddSourceLocation(MI->getDefinitionLoc(), Record);
+      AddSourceLocation(MI->getDefinitionEndLoc(), Record);
       AddSourceLocation(MI->getUndefLoc(), Record);
       Record.push_back(MI->isUsed());
       Record.push_back(MI->isPublic());
