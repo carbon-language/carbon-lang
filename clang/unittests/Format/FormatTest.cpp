@@ -384,8 +384,8 @@ TEST_F(FormatTest, StaticInitializers) {
 
   // FIXME: Format like enums if the static initializer does not fit on a line.
   verifyFormat(
-      "static SomeClass WithALoooooooooooooooooooongName = { 100000000,\n"
-      "    \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" };");
+      "static SomeClass WithALoooooooooooooooooooongName = {\n"
+      "  100000000, \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" };");
 }
 
 TEST_F(FormatTest, FormatsSmallMacroDefinitionsInSingleLine) {
@@ -641,23 +641,34 @@ TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
       "    ccccccccccccccccccccccccc) {\n}");
 }
 
+TEST_F(FormatTest, PrefersNotToBreakAfterAssignments) {
+  verifyFormat(
+      "unsigned Cost = TTI.getMemoryOpCost(I->getOpcode(), VectorTy,\n"
+      "                                    SI->getAlignment(),\n"
+      "                                    SI->getPointerAddressSpaceee());\n");
+  verifyFormat(
+      "CharSourceRange LineRange = CharSourceRange::getTokenRange(\n"
+      "                                Line.Tokens.front().Tok.getLocation(),\n"
+      "                                Line.Tokens.back().Tok.getLocation());");
+}
+
 TEST_F(FormatTest, AlignsAfterAssignments) {
   verifyFormat(
       "int Result = aaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaa +\n"
-      "             aaaaaaaaaaaaaaaaaaaaaaaaa;"); 
+      "             aaaaaaaaaaaaaaaaaaaaaaaaa;");
   verifyFormat(
       "Result += aaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaa +\n"
-      "          aaaaaaaaaaaaaaaaaaaaaaaaa;"); 
+      "          aaaaaaaaaaaaaaaaaaaaaaaaa;");
   verifyFormat(
       "Result >>= aaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaa +\n"
-      "           aaaaaaaaaaaaaaaaaaaaaaaaa;"); 
+      "           aaaaaaaaaaaaaaaaaaaaaaaaa;");
   verifyFormat(
       "int Result = (aaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaa +\n"
-      "              aaaaaaaaaaaaaaaaaaaaaaaaa);"); 
+      "              aaaaaaaaaaaaaaaaaaaaaaaaa);");
   verifyFormat(
-      "double LooooooooooooooooooooooooongResult =\n"
-      "    aaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaa +\n"
-      "    aaaaaaaaaaaaaaaaaaaaaaaaa;"); 
+      "double LooooooooooooooooooooooooongResult = aaaaaaaaaaaaaaaaaaaaaaaa +\n"
+      "                                            aaaaaaaaaaaaaaaaaaaaaaaa +\n"
+      "                                            aaaaaaaaaaaaaaaaaaaaaaaa;");
 }
 
 TEST_F(FormatTest, AlignsAfterReturn) {
@@ -713,8 +724,10 @@ TEST_F(FormatTest, UnderstandsEquals) {
       "               aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n"
       "}");
 
-  verifyFormat("if (int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
-               "        100000000 + 100000000) {\n}");
+  verifyFormat(
+      "if (int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = 100000000 +\n"
+      "                                                           10000000) {\n"
+      "}");
 }
 
 TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {

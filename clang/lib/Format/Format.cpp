@@ -257,7 +257,12 @@ private:
 
     if (Newline) {
       unsigned WhitespaceStartColumn = State.Column;
-      if (Current.Tok.is(tok::string_literal) &&
+      if (Previous.Tok.is(tok::l_brace)) {
+        // FIXME: This does not work with nested static initializers.
+        // Implement a better handling for static initializers and similar
+        // constructs.
+        State.Column = Line.Level * 2 + 2;
+      } else if (Current.Tok.is(tok::string_literal) &&
           Previous.Tok.is(tok::string_literal)) {
         State.Column = State.Column - Previous.TokenLength;
       } else if (Current.Tok.is(tok::lessless) &&
@@ -306,17 +311,19 @@ private:
       if (!DryRun)
         replaceWhitespace(Current, 0, Spaces);
 
-      // FIXME: Look into using this alignment at other ParenLevels.
-      if (ParenLevel == 0 && (getPrecedence(Previous) == prec::Assignment ||
-                              Previous.Tok.is(tok::kw_return)))
+      if (Line.Tokens[0].Tok.isNot(tok::kw_for) &&
+          (getPrecedence(Previous) == prec::Assignment ||
+           Previous.Tok.is(tok::kw_return)))
         State.Indent[ParenLevel] = State.Column + Spaces;
       if (Previous.Tok.is(tok::l_paren) ||
           Annotations[Index - 1].Type == TT_TemplateOpener)
         State.Indent[ParenLevel] = State.Column;
 
-      // Top-level spaces are exempt as that mostly leads to better results.
+      // Top-level spaces that are not part of assignments are exempt as that
+      // mostly leads to better results.
       State.Column += Spaces;
-      if (Spaces > 0 && ParenLevel != 0)
+      if (Spaces > 0 &&
+          (ParenLevel != 0 || getPrecedence(Previous) == prec::Assignment))
         State.LastSpace[ParenLevel] = State.Column;
     }
     moveStateToNextToken(State);
@@ -375,7 +382,13 @@ private:
     if (Left.Tok.is(tok::l_paren))
       return 20;
 
-    prec::Level Level = getPrecedence(Line.Tokens[Index]);
+    prec::Level Level = getPrecedence(Left);
+
+    // Breaking after an assignment leads to a bad result as the two sides of
+    // the assignment are visually very close together.
+    if (Level == prec::Assignment)
+      return 50;
+
     if (Level != prec::Unknown)
       return Level;
 
