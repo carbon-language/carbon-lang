@@ -513,7 +513,7 @@ class LoopVectorizationCostModel {
 public:
   LoopVectorizationCostModel(Loop *L, ScalarEvolution *SE, LoopInfo *LI,
                              LoopVectorizationLegality *Legal,
-                             const TargetTransformInfo *TTI)
+                             const TargetTransformInfo &TTI)
       : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI) {}
 
   /// \return The most profitable vectorization factor.
@@ -567,7 +567,7 @@ private:
   /// Vectorization legality.
   LoopVectorizationLegality *Legal;
   /// Vector target information.
-  const TargetTransformInfo *TTI;
+  const TargetTransformInfo &TTI;
 };
 
 /// The LoopVectorize Pass.
@@ -593,7 +593,7 @@ struct LoopVectorize : public LoopPass {
     SE = &getAnalysis<ScalarEvolution>();
     DL = getAnalysisIfAvailable<DataLayout>();
     LI = &getAnalysis<LoopInfo>();
-    TTI = getAnalysisIfAvailable<TargetTransformInfo>();
+    TTI = &getAnalysis<TargetTransformInfo>();
     DT = &getAnalysis<DominatorTree>();
 
     DEBUG(dbgs() << "LV: Checking a loop in \"" <<
@@ -607,7 +607,7 @@ struct LoopVectorize : public LoopPass {
     }
 
     // Use the cost model.
-    LoopVectorizationCostModel CM(L, SE, LI, &LVL, TTI);
+    LoopVectorizationCostModel CM(L, SE, LI, &LVL, *TTI);
 
     // Check the function attribues to find out if this function should be
     // optimized for size.
@@ -648,9 +648,10 @@ struct LoopVectorize : public LoopPass {
     LoopPass::getAnalysisUsage(AU);
     AU.addRequiredID(LoopSimplifyID);
     AU.addRequiredID(LCSSAID);
+    AU.addRequired<DominatorTree>();
     AU.addRequired<LoopInfo>();
     AU.addRequired<ScalarEvolution>();
-    AU.addRequired<DominatorTree>();
+    AU.addRequired<TargetTransformInfo>();
     AU.addPreserved<LoopInfo>();
     AU.addPreserved<DominatorTree>();
   }
@@ -2646,11 +2647,6 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
     return UserVF;
   }
 
-  if (!TTI) {
-    DEBUG(dbgs() << "LV: No vector target information. Not vectorizing. \n");
-    return 1;
-  }
-
   float Cost = expectedCost(1);
   unsigned Width = 1;
   DEBUG(dbgs() << "LV: Scalar loop costs: "<< (int)Cost << ".\n");
@@ -2682,7 +2678,7 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   if (OptForSize)
     return 1;
 
-  unsigned TargetVectorRegisters = TTI->getNumberOfRegisters(true);
+  unsigned TargetVectorRegisters = TTI.getNumberOfRegisters(true);
   DEBUG(dbgs() << "LV: The target has " << TargetVectorRegisters <<
         " vector registers\n");
 
@@ -2857,8 +2853,6 @@ unsigned LoopVectorizationCostModel::expectedCost(unsigned VF) {
 
 unsigned
 LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
-  assert(TTI && "Invalid vector target transformation info");
-
   // If we know that this instruction will remain uniform, check the cost of
   // the scalar version.
   if (Legal->isUniformAfterVectorization(I))
@@ -2875,7 +2869,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     // generate vector geps.
     return 0;
   case Instruction::Br: {
-    return TTI->getCFInstrCost(I->getOpcode());
+    return TTI.getCFInstrCost(I->getOpcode());
   }
   case Instruction::PHI:
     //TODO: IF-converted IFs become selects.
@@ -2898,7 +2892,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
-    return TTI->getArithmeticInstrCost(I->getOpcode(), VectorTy);
+    return TTI.getArithmeticInstrCost(I->getOpcode(), VectorTy);
   case Instruction::Select: {
     SelectInst *SI = cast<SelectInst>(I);
     const SCEV *CondSCEV = SE->getSCEV(SI->getCondition());
@@ -2907,13 +2901,13 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     if (ScalarCond)
       CondTy = VectorType::get(CondTy, VF);
 
-    return TTI->getCmpSelInstrCost(I->getOpcode(), VectorTy, CondTy);
+    return TTI.getCmpSelInstrCost(I->getOpcode(), VectorTy, CondTy);
   }
   case Instruction::ICmp:
   case Instruction::FCmp: {
     Type *ValTy = I->getOperand(0)->getType();
     VectorTy = ToVectorTy(ValTy, VF);
-    return TTI->getCmpSelInstrCost(I->getOpcode(), VectorTy);
+    return TTI.getCmpSelInstrCost(I->getOpcode(), VectorTy);
   }
   case Instruction::Store: {
     StoreInst *SI = cast<StoreInst>(I);
@@ -2921,7 +2915,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     VectorTy = ToVectorTy(ValTy, VF);
 
     if (VF == 1)
-      return TTI->getMemoryOpCost(I->getOpcode(), VectorTy,
+      return TTI.getMemoryOpCost(I->getOpcode(), VectorTy,
                                    SI->getAlignment(),
                                    SI->getPointerAddressSpace());
 
@@ -2934,26 +2928,24 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
       // The cost of extracting from the value vector and pointer vector.
       Type *PtrTy = ToVectorTy(I->getOperand(0)->getType(), VF);
       for (unsigned i = 0; i < VF; ++i) {
-        Cost += TTI->getVectorInstrCost(Instruction::ExtractElement,
-                                        VectorTy, i);
-        Cost += TTI->getVectorInstrCost(Instruction::ExtractElement,
-                                        PtrTy, i);
+        Cost += TTI.getVectorInstrCost(Instruction::ExtractElement, VectorTy,
+                                       i);
+        Cost += TTI.getVectorInstrCost(Instruction::ExtractElement, PtrTy, i);
       }
 
       // The cost of the scalar stores.
-      Cost += VF * TTI->getMemoryOpCost(I->getOpcode(),
-                                        ValTy->getScalarType(),
-                                         SI->getAlignment(),
-                                         SI->getPointerAddressSpace());
+      Cost += VF * TTI.getMemoryOpCost(I->getOpcode(), ValTy->getScalarType(),
+                                       SI->getAlignment(),
+                                       SI->getPointerAddressSpace());
       return Cost;
     }
 
     // Wide stores.
-    unsigned Cost = TTI->getMemoryOpCost(I->getOpcode(), VectorTy,
-                                         SI->getAlignment(),
-                                         SI->getPointerAddressSpace());
+    unsigned Cost = TTI.getMemoryOpCost(I->getOpcode(), VectorTy,
+                                        SI->getAlignment(),
+                                        SI->getPointerAddressSpace());
     if (Reverse)
-      Cost += TTI->getShuffleCost(TargetTransformInfo::SK_Reverse,
+      Cost += TTI.getShuffleCost(TargetTransformInfo::SK_Reverse,
                                   VectorTy, 0);
     return Cost;
   }
@@ -2961,9 +2953,8 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     LoadInst *LI = cast<LoadInst>(I);
 
     if (VF == 1)
-      return TTI->getMemoryOpCost(I->getOpcode(), VectorTy,
-                                  LI->getAlignment(),
-                                  LI->getPointerAddressSpace());
+      return TTI.getMemoryOpCost(I->getOpcode(), VectorTy, LI->getAlignment(),
+                                 LI->getPointerAddressSpace());
 
     // Scalarized loads.
     int Stride = Legal->isConsecutivePtr(LI->getPointerOperand());
@@ -2974,29 +2965,25 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
 
       // The cost of extracting from the pointer vector.
       for (unsigned i = 0; i < VF; ++i)
-        Cost += TTI->getVectorInstrCost(Instruction::ExtractElement,
-                                        PtrTy, i);
+        Cost += TTI.getVectorInstrCost(Instruction::ExtractElement, PtrTy, i);
 
       // The cost of inserting data to the result vector.
       for (unsigned i = 0; i < VF; ++i)
-        Cost += TTI->getVectorInstrCost(Instruction::InsertElement,
-                                        VectorTy, i);
+        Cost += TTI.getVectorInstrCost(Instruction::InsertElement, VectorTy, i);
 
       // The cost of the scalar stores.
-      Cost += VF * TTI->getMemoryOpCost(I->getOpcode(),
-                                        RetTy->getScalarType(),
-                                        LI->getAlignment(),
-                                        LI->getPointerAddressSpace());
+      Cost += VF * TTI.getMemoryOpCost(I->getOpcode(), RetTy->getScalarType(),
+                                       LI->getAlignment(),
+                                       LI->getPointerAddressSpace());
       return Cost;
     }
 
     // Wide loads.
-    unsigned Cost = TTI->getMemoryOpCost(I->getOpcode(), VectorTy,
-                                         LI->getAlignment(),
-                                         LI->getPointerAddressSpace());
+    unsigned Cost = TTI.getMemoryOpCost(I->getOpcode(), VectorTy,
+                                        LI->getAlignment(),
+                                        LI->getPointerAddressSpace());
     if (Reverse)
-      Cost += TTI->getShuffleCost(TargetTransformInfo::SK_Reverse,
-                                  VectorTy, 0);
+      Cost += TTI.getShuffleCost(TargetTransformInfo::SK_Reverse, VectorTy, 0);
     return Cost;
   }
   case Instruction::ZExt:
@@ -3015,11 +3002,11 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     // The cost of these is the same as the scalar operation.
     if (I->getOpcode() == Instruction::Trunc &&
         Legal->isInductionVariable(I->getOperand(0)))
-         return TTI->getCastInstrCost(I->getOpcode(), I->getType(),
-                                      I->getOperand(0)->getType());
+      return TTI.getCastInstrCost(I->getOpcode(), I->getType(),
+                                  I->getOperand(0)->getType());
 
     Type *SrcVecTy = ToVectorTy(I->getOperand(0)->getType(), VF);
-    return TTI->getCastInstrCost(I->getOpcode(), VectorTy, SrcVecTy);
+    return TTI.getCastInstrCost(I->getOpcode(), VectorTy, SrcVecTy);
   }
   case Instruction::Call: {
     assert(isTriviallyVectorizableIntrinsic(I));
@@ -3028,7 +3015,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     SmallVector<Type*, 4> Tys;
     for (unsigned i = 0, ie = II->getNumArgOperands(); i != ie; ++i)
       Tys.push_back(ToVectorTy(II->getArgOperand(i)->getType(), VF));
-    return TTI->getIntrinsicInstrCost(II->getIntrinsicID(), RetTy, Tys);
+    return TTI.getIntrinsicInstrCost(II->getIntrinsicID(), RetTy, Tys);
   }
   default: {
     // We are scalarizing the instruction. Return the cost of the scalar
@@ -3037,10 +3024,10 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
     unsigned Cost = 0;
 
     if (!RetTy->isVoidTy() && VF != 1) {
-      unsigned InsCost = TTI->getVectorInstrCost(Instruction::InsertElement,
-                                                 VectorTy);
-      unsigned ExtCost = TTI->getVectorInstrCost(Instruction::ExtractElement,
-                                                 VectorTy);
+      unsigned InsCost = TTI.getVectorInstrCost(Instruction::InsertElement,
+                                                VectorTy);
+      unsigned ExtCost = TTI.getVectorInstrCost(Instruction::ExtractElement,
+                                                VectorTy);
 
       // The cost of inserting the results plus extracting each one of the
       // operands.
@@ -3049,7 +3036,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
 
     // The cost of executing VF copies of the scalar instruction. This opcode
     // is unknown. Assume that it is the same as 'mul'.
-    Cost += VF * TTI->getArithmeticInstrCost(Instruction::Mul, VectorTy);
+    Cost += VF * TTI.getArithmeticInstrCost(Instruction::Mul, VectorTy);
     return Cost;
   }
   }// end of switch.
@@ -3065,6 +3052,7 @@ char LoopVectorize::ID = 0;
 static const char lv_name[] = "Loop Vectorization";
 INITIALIZE_PASS_BEGIN(LoopVectorize, LV_NAME, lv_name, false, false)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_END(LoopVectorize, LV_NAME, lv_name, false, false)
