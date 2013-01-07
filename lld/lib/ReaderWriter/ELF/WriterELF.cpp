@@ -1742,7 +1742,6 @@ public:
   }
 
   void assignVirtualAddress() {
-    int32_t numSlices = 0;
     uint64_t virtualAddress = _options.baseAddress();
 
     // Add the ELF Header
@@ -1760,7 +1759,6 @@ public:
     while (true && !_segments.empty()) {
       for (auto si : _segments) {
         newSegmentHeaderAdded = _programHeader->addSegment(si);
-        numSlices += si->numSlices();
       }
       if (!newSegmentHeaderAdded)
         break;
