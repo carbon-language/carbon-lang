@@ -91,7 +91,7 @@ and features of the tools for other tool developers; each tool should
 provide its own user-focused documentation.
 
 Ideas for new Tools
--------------------
+===================
 
 * C++11 null pointer conversion tool.  Will convert all null pointer constants
   (like ``NULL`` or ``0``) to C++11 ``nullptr``.
