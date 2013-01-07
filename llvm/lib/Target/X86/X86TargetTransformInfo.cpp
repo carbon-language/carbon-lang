@@ -204,7 +204,7 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
 unsigned X86TTI::getShuffleCost(ShuffleKind Kind, Type *Tp, int Index,
                                 Type *SubTp) const {
   // We only estimate the cost of reverse shuffles.
-  if (Kind != Reverse)
+  if (Kind != SK_Reverse)
     return TargetTransformInfo::getShuffleCost(Kind, Tp, Index, SubTp);
 
   std::pair<unsigned, MVT> LT = TLI->getTypeLegalizationCost(Tp);

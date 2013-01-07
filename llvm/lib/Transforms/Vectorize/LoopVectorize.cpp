@@ -2437,7 +2437,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
                                          SI->getAlignment(),
                                          SI->getPointerAddressSpace());
     if (Reverse)
-      Cost += TTI->getShuffleCost(TargetTransformInfo::Reverse,
+      Cost += TTI->getShuffleCost(TargetTransformInfo::SK_Reverse,
                                   VectorTy, 0);
     return Cost;
   }
@@ -2479,7 +2479,7 @@ LoopVectorizationCostModel::getInstructionCost(Instruction *I, unsigned VF) {
                                          LI->getAlignment(),
                                          LI->getPointerAddressSpace());
     if (Reverse)
-      Cost += TTI->getShuffleCost(TargetTransformInfo::Reverse,
+      Cost += TTI->getShuffleCost(TargetTransformInfo::SK_Reverse,
                                   VectorTy, 0);
     return Cost;
   }

@@ -135,11 +135,12 @@ public:
   /// \name Vector Target Information
   /// @{
 
+  /// \brief The various kinds of shuffle patterns for vector queries.
   enum ShuffleKind {
-    Broadcast,       // Broadcast element 0 to all other elements.
-    Reverse,         // Reverse the order of the vector.
-    InsertSubvector, // InsertSubvector. Index indicates start offset.
-    ExtractSubvector // ExtractSubvector Index indicates start offset.
+    SK_Broadcast,       ///< Broadcast element 0 to all other elements.
+    SK_Reverse,         ///< Reverse the order of the vector.
+    SK_InsertSubvector, ///< InsertSubvector. Index indicates start offset.
+    SK_ExtractSubvector ///< ExtractSubvector Index indicates start offset.
   };
 
   /// \return The number of scalar or vector registers that the target has.
