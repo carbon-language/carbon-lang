@@ -670,7 +670,7 @@ void comment_to_xml_conversion_10(int aaa, int bbb);
 template<typename T, typename U>
 class comment_to_xml_conversion_11 { };
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:7: ClassTemplate=comment_to_xml_conversion_11:{{.*}} FullCommentAsXML=[<Class templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="7"><Name>comment_to_xml_conversion_11</Name><USR>c:@CT&gt;2#T#T@comment_to_xml_conversion_11</USR><Declaration>template &lt;typename T = int, typename U = int&gt;\nclass comment_to_xml_conversion_11 {\n}\ntemplate &lt;typename T, typename U&gt; class comment_to_xml_conversion_11 {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Class>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:7: ClassTemplate=comment_to_xml_conversion_11:{{.*}} FullCommentAsXML=[<Class templateKind="template" file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="7"><Name>comment_to_xml_conversion_11</Name><USR>c:@CT&gt;2#T#T@comment_to_xml_conversion_11</USR><Declaration>template &lt;typename T = int, typename U = int&gt;\nclass comment_to_xml_conversion_11 {\n} template &lt;typename T, typename U&gt; class comment_to_xml_conversion_11 {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Class>]
 
 /// Aaa.
 template<typename T>

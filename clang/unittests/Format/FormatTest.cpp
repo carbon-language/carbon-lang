@@ -332,6 +332,13 @@ TEST_F(FormatTest, FormatsDerivedClass) {
                "};");
 }
 
+TEST_F(FormatTest, FormatsVariableDeclarationsAfterStructOrClass) {
+  verifyFormat("class A {\n"
+               "} a, b;");
+  verifyFormat("struct A {\n"
+               "} a, b;");
+}
+
 TEST_F(FormatTest, FormatsEnum) {
   verifyFormat("enum {\n"
                "  Zero,\n"
@@ -624,7 +631,7 @@ TEST_F(FormatTest, BreaksAsHighAsPossible) {
 TEST_F(FormatTest, BreaksDesireably) {
   verifyFormat("if (aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
                "    aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
-               "    aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa)) {\n};");
+               "    aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa)) {\n}");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
@@ -974,14 +981,14 @@ TEST_F(FormatTest, IncorrectAccessSpecifier) {
                "int qwerty;");
   verifyFormat("public\n"
                "B {\n"
-               "};");
+               "}");
   verifyFormat("public\n"
                "{\n"
-               "};");
+               "}");
   verifyFormat("public\n"
                "B {\n"
                "  int x;\n"
-               "};");
+               "}");
 }
 
 TEST_F(FormatTest, IncorrectCodeUnbalancedBraces) {
@@ -990,16 +997,16 @@ TEST_F(FormatTest, IncorrectCodeUnbalancedBraces) {
 
 TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
   verifyFormat("do {\n"
-               "};");
+               "}");
   verifyFormat("do {\n"
-               "};\n"
+               "}\n"
                "f();");
   verifyFormat("do {\n"
                "}\n"
                "wheeee(fun);");
   verifyFormat("do {\n"
                "  f();\n"
-               "};");
+               "}");
 }
 
 TEST_F(FormatTest, DoesNotTouchUnwrappedLinesWithErrors) {

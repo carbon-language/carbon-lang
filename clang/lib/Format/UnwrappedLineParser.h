@@ -128,6 +128,7 @@ private:
   void parseNamespace();
   void parseAccessSpecifier();
   void parseEnum();
+  void parseStructOrClass();
   void addUnwrappedLine();
   bool eof() const;
   void nextToken();

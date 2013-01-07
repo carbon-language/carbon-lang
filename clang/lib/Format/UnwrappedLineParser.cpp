@@ -129,13 +129,10 @@ bool UnwrappedLineParser::parseBlock(unsigned AddLevels) {
   parseLevel(/*HasOpeningBrace=*/true);
   Line.Level -= AddLevels;
 
-  // FIXME: Add error handling.
   if (!FormatTok.Tok.is(tok::r_brace))
     return true;
 
-  nextToken();
-  if (FormatTok.Tok.is(tok::semi))
-    nextToken();
+  nextToken();  // Munch the closing brace.
   return false;
 }
 
@@ -245,6 +242,10 @@ void UnwrappedLineParser::parseStructuralElement() {
     switch (FormatTok.Tok.getKind()) {
     case tok::kw_enum:
       parseEnum();
+      return;
+    case tok::kw_struct:  // fallthrough
+    case tok::kw_class:
+      parseStructOrClass();
       return;
     case tok::semi:
       nextToken();
@@ -453,6 +454,26 @@ void UnwrappedLineParser::parseEnum() {
       return;
     default:
       HasContents = true;
+      nextToken();
+      break;
+    }
+  } while (!eof());
+}
+
+void UnwrappedLineParser::parseStructOrClass() {
+  nextToken();
+  do {
+    switch (FormatTok.Tok.getKind()) {
+    case tok::l_brace:
+      // FIXME: Think about how to resolve the error handling here.
+      parseBlock();
+      parseStructuralElement();
+      return;
+    case tok::semi:
+      nextToken();
+      addUnwrappedLine();
+      return;
+    default:
       nextToken();
       break;
     }
