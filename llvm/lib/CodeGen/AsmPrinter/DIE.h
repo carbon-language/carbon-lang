@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // Data structures for DWARF info entries.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef CODEGEN_ASMPRINTER_DIE_H__
@@ -155,7 +155,7 @@ namespace llvm {
     void setTag(unsigned Tag) { Abbrev.setTag(Tag); }
     void setOffset(unsigned O) { Offset = O; }
     void setSize(unsigned S) { Size = S; }
-    
+
     /// addValue - Add a value and attributes to a DIE.
     ///
     void addValue(unsigned Attribute, unsigned Form, DIEValue *Value) {

@@ -2138,7 +2138,7 @@ void DwarfUnits::emitStrings(const MCSection *StrSection,
   // Get all of the string pool entries and put them in an array by their ID so
   // we can sort them.
   SmallVector<std::pair<unsigned,
-                        StringMapEntry<std::pair<MCSymbol*, unsigned> >*>, 64> Entries;
+                 StringMapEntry<std::pair<MCSymbol*, unsigned> >*>, 64> Entries;
 
   for (StringMap<std::pair<MCSymbol*, unsigned> >::iterator
          I = StringPool->begin(), E = StringPool->end();
@@ -2481,7 +2481,8 @@ void DwarfDebug::emitDebugAbbrevDWO() {
 // sections.
 void DwarfDebug::emitDebugStrDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
-  const MCSection *OffSec = Asm->getObjFileLowering().getDwarfStrOffDWOSection();
+  const MCSection *OffSec = Asm->getObjFileLowering()
+                            .getDwarfStrOffDWOSection();
   const MCSymbol *StrSym = DwarfStrSectionSym;
   InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection(),
                          OffSec, StrSym);
