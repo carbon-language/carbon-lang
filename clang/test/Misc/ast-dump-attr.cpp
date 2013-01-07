@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -std=c++11 -ast-dump -ast-dump-filter Test %s | FileCheck --strict-whitespace %s
+// RUN: %clang_cc1 -triple x86_64-pc-linux -std=c++11 -ast-dump -ast-dump-filter Test %s | FileCheck --strict-whitespace %s
 
 int TestLocation
 __attribute__((unused));
