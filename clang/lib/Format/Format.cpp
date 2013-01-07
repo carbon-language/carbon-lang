@@ -99,7 +99,7 @@ public:
         Annotations(Annotations), Replaces(Replaces),
         StructuralError(StructuralError) {
     Parameters.PenaltyIndentLevel = 15;
-    Parameters.PenaltyLevelDecrease = 10;
+    Parameters.PenaltyLevelDecrease = 30;
   }
 
   /// \brief Formats an \c UnwrappedLine.
@@ -369,7 +369,7 @@ private:
       return Level;
 
     if (Right.Tok.is(tok::arrow) || Right.Tok.is(tok::period))
-      return 50;
+      return 150;
 
     return 3;
   }
