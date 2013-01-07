@@ -741,16 +741,14 @@ void MachineInstr::RemoveOperand(unsigned OpNo) {
 void MachineInstr::addMemOperand(MachineFunction &MF,
                                  MachineMemOperand *MO) {
   mmo_iterator OldMemRefs = MemRefs;
-  uint16_t OldNumMemRefs = NumMemRefs;
+  unsigned OldNumMemRefs = NumMemRefs;
 
-  uint16_t NewNum = NumMemRefs + 1;
+  unsigned NewNum = NumMemRefs + 1;
   mmo_iterator NewMemRefs = MF.allocateMemRefsArray(NewNum);
 
   std::copy(OldMemRefs, OldMemRefs + OldNumMemRefs, NewMemRefs);
   NewMemRefs[NewNum - 1] = MO;
-
-  MemRefs = NewMemRefs;
-  NumMemRefs = NewNum;
+  setMemRefs(NewMemRefs, NewMemRefs + NewNum);
 }
 
 bool MachineInstr::hasPropertyInBundle(unsigned Mask, QueryType Type) const {
