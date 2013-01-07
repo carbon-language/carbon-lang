@@ -126,7 +126,7 @@ bool BasicTTI::isLegalICmpImmediate(int64_t imm) const {
 bool BasicTTI::isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
                                      int64_t BaseOffset, bool HasBaseReg,
                                      int64_t Scale) const {
-  AddrMode AM;
+  TargetLowering::AddrMode AM;
   AM.BaseGV = BaseGV;
   AM.BaseOffs = BaseOffset;
   AM.HasBaseReg = HasBaseReg;

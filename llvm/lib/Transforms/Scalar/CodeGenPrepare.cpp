@@ -823,7 +823,7 @@ namespace {
 
 /// ExtAddrMode - This is an extended version of TargetLowering::AddrMode
 /// which holds actual Value*'s for register values.
-struct ExtAddrMode : public AddrMode {
+struct ExtAddrMode : public TargetLowering::AddrMode {
   Value *BaseReg;
   Value *ScaledReg;
   ExtAddrMode() : BaseReg(0), ScaledReg(0) {}

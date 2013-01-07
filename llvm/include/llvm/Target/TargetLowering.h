@@ -23,7 +23,6 @@
 #define LLVM_TARGET_TARGETLOWERING_H
 
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/AddressingMode.h"
 #include "llvm/CodeGen/DAGCombine.h"
 #include "llvm/CodeGen/RuntimeLibcalls.h"
 #include "llvm/CodeGen/SelectionDAGNodes.h"
@@ -1697,6 +1696,22 @@ public:
                                     Type *&AccessTy) const {
     return false;
   }
+
+  /// AddrMode - This represents an addressing mode of:
+  ///    BaseGV + BaseOffs + BaseReg + Scale*ScaleReg
+  /// If BaseGV is null,  there is no BaseGV.
+  /// If BaseOffs is zero, there is no base offset.
+  /// If HasBaseReg is false, there is no base register.
+  /// If Scale is zero, there is no ScaleReg.  Scale of 1 indicates a reg with
+  /// no scale.
+  ///
+  struct AddrMode {
+    GlobalValue *BaseGV;
+    int64_t      BaseOffs;
+    bool         HasBaseReg;
+    int64_t      Scale;
+    AddrMode() : BaseGV(0), BaseOffs(0), HasBaseReg(false), Scale(0) {}
+  };
 
   /// isLegalAddressingMode - Return true if the addressing mode represented by
   /// AM is legal for this target, for a load/store of the specified type.
