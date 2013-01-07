@@ -112,7 +112,7 @@ bool UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
       }
       break;
     default:
-      parseStatement();
+      parseStructuralElement();
       break;
     }
   } while (!eof());
@@ -196,7 +196,7 @@ void UnwrappedLineParser::parseComments() {
   }
 }
 
-void UnwrappedLineParser::parseStatement() {
+void UnwrappedLineParser::parseStructuralElement() {
   parseComments();
 
   int TokenNumber = 0;
@@ -306,7 +306,7 @@ void UnwrappedLineParser::parseIfThenElse() {
   } else {
     addUnwrappedLine();
     ++Line.Level;
-    parseStatement();
+    parseStructuralElement();
     --Line.Level;
   }
   if (FormatTok.Tok.is(tok::kw_else)) {
@@ -319,7 +319,7 @@ void UnwrappedLineParser::parseIfThenElse() {
     } else {
       addUnwrappedLine();
       ++Line.Level;
-      parseStatement();
+      parseStructuralElement();
       --Line.Level;
     }
   } else if (NeedsUnwrappedLine) {
@@ -350,7 +350,7 @@ void UnwrappedLineParser::parseForOrWhileLoop() {
   } else {
     addUnwrappedLine();
     ++Line.Level;
-    parseStatement();
+    parseStructuralElement();
     --Line.Level;
   }
 }
@@ -363,7 +363,7 @@ void UnwrappedLineParser::parseDoWhile() {
   } else {
     addUnwrappedLine();
     ++Line.Level;
-    parseStatement();
+    parseStructuralElement();
     --Line.Level;
   }
 
@@ -374,7 +374,7 @@ void UnwrappedLineParser::parseDoWhile() {
   }
 
   nextToken();
-  parseStatement();
+  parseStructuralElement();
 }
 
 void UnwrappedLineParser::parseLabel() {
@@ -410,7 +410,7 @@ void UnwrappedLineParser::parseSwitch() {
   } else {
     addUnwrappedLine();
     Line.Level += (Style.IndentCaseLabels ? 2 : 1);
-    parseStatement();
+    parseStructuralElement();
     Line.Level -= (Style.IndentCaseLabels ? 2 : 1);
   }
 }

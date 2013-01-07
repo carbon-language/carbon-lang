@@ -117,7 +117,7 @@ private:
   void parsePPDefine();
   void parsePPUnknown();
   void parseComments();
-  void parseStatement();
+  void parseStructuralElement();
   void parseParens();
   void parseIfThenElse();
   void parseForOrWhileLoop();
