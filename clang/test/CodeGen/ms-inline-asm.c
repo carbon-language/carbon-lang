@@ -228,3 +228,11 @@ void t22() {
 // CHECK: call void @t22_helper
 // CHECK: call void asm sideeffect inteldialect "mov esp, ebx\0A\09pop ebx", "~{ebx},~{esp},~{dirflag},~{fpsr},~{flags}"() nounwind
 }
+
+void t23() {
+  __asm {
+  the_label:
+  }
+// CHECK: t23
+// CHECK: call void asm sideeffect inteldialect "the_label:", "~{dirflag},~{fpsr},~{flags}"() nounwind
+}
