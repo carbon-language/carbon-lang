@@ -29,8 +29,6 @@ public:
       : Line(Line), TokenSource(TokenSource), ResetToken(ResetToken),
         PreviousLineLevel(Line.Level), PreviousTokenSource(TokenSource) {
     TokenSource = this;
-    // FIXME: Back up all other state (errors, line indent, etc) and reset after
-    // parsing the macro.
     Line.Level = 0;
     Line.InPPDirective = true;
   }
@@ -173,6 +171,12 @@ void UnwrappedLineParser::parsePPDefine() {
   }
   addUnwrappedLine();
   Line.Level = 1;
+
+  // Errors during a preprocessor directive can only affect the layout of the
+  // preprocessor directive, and thus we ignore them. An alternative approach
+  // would be to use the same approach we use on the file level (no
+  // re-indentation if there was a structural error) within the macro
+  // definition.
   parseFile();
 }
 
