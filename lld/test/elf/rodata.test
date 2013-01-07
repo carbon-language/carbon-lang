@@ -1,0 +1,4 @@
+RUN: lld -flavor ld -target x86_64-linux -o %t %p/Inputs/constdata.x86-64
+RUN: llvm-objdump -s %t | FileCheck %s
+
+CHECK: Hellooooooooo

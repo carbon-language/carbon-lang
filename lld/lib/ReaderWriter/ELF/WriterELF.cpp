@@ -273,6 +273,7 @@ public:
       switch(definedAtom->contentType()) {
       case  DefinedAtom::typeCode:
       case  DefinedAtom::typeData:
+      case  DefinedAtom::typeConstant:
         _atoms.push_back(std::make_pair(atom, std::make_pair(fOffset, 0)));
         this->_fsize = fOffset + definedAtom->size();
         this->_msize = mOffset + definedAtom->size();
@@ -456,6 +457,8 @@ public:
     uint8_t *chunkBuffer = buffer->getBufferStart();
     for (auto &ai : _atoms) {
       const DefinedAtom *definedAtom = llvm::dyn_cast<DefinedAtom>(ai.first);
+      if (definedAtom->contentType() == DefinedAtom::typeZeroFill)
+        continue;
       // Copy raw content of atom to file buffer.
       ArrayRef<uint8_t> content = definedAtom->rawContent();
       uint64_t contentSize = content.size();
@@ -1067,6 +1070,7 @@ public:
         type = ELF::STT_FUNC;
         break;
       case  DefinedAtom::typeData:
+      case  DefinedAtom::typeConstant:
         symbol->st_value = addr;
         type = ELF::STT_OBJECT;
         break;
