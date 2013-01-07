@@ -162,7 +162,7 @@ private:
 */
     template <class T> friend class valarray;
 };
-// CHECK: <Declaration>template &lt;class T = unsigned int&gt; class valarray {\n} template &lt;class T&gt; class valarray</Declaration>
+// CHECK: <Declaration>template &lt;class T&gt; class valarray</Declaration>
 // CHECK: <Declaration>friend template &lt;class T&gt; class valarray</Declaration>
 
 class gslice

@@ -911,7 +911,7 @@ void getSourceTextOfDeclaration(const DeclInfo *ThisDecl,
   PPolicy.PolishForDeclaration = true;
   PPolicy.TerseOutput = true;
   ThisDecl->CurrentDecl->print(OS, PPolicy,
-                               /*Indentation*/0, /*PrintInstantiation*/true);
+                               /*Indentation*/0, /*PrintInstantiation*/false);
 }
   
 void CommentASTToXMLConverter::formatTextOfDeclaration(
