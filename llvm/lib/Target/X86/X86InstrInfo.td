@@ -1304,34 +1304,34 @@ def BTS64mi8 : RIi8<0xBA, MRM5m, (outs), (ins i64mem:$src1, i64i8imm:$src2),
 multiclass ATOMIC_SWAP<bits<8> opc8, bits<8> opc, string mnemonic, string frag,
                        InstrItinClass itin> {
   let Constraints = "$val = $dst" in {
-    def #NAME#8rm  : I<opc8, MRMSrcMem, (outs GR8:$dst),
-                       (ins GR8:$val, i8mem:$ptr),
-                       !strconcat(mnemonic, "{b}\t{$val, $ptr|$ptr, $val}"),
+    def NAME#8rm  : I<opc8, MRMSrcMem, (outs GR8:$dst),
+                      (ins GR8:$val, i8mem:$ptr),
+                      !strconcat(mnemonic, "{b}\t{$val, $ptr|$ptr, $val}"),
+                      [(set
+                         GR8:$dst,
+                         (!cast<PatFrag>(frag # "_8") addr:$ptr, GR8:$val))],
+                      itin>;
+    def NAME#16rm : I<opc, MRMSrcMem, (outs GR16:$dst),
+                      (ins GR16:$val, i16mem:$ptr),
+                      !strconcat(mnemonic, "{w}\t{$val, $ptr|$ptr, $val}"),
+                      [(set
+                         GR16:$dst,
+                         (!cast<PatFrag>(frag # "_16") addr:$ptr, GR16:$val))],
+                      itin>, OpSize;
+    def NAME#32rm : I<opc, MRMSrcMem, (outs GR32:$dst),
+                      (ins GR32:$val, i32mem:$ptr),
+                      !strconcat(mnemonic, "{l}\t{$val, $ptr|$ptr, $val}"),
+                      [(set
+                         GR32:$dst,
+                         (!cast<PatFrag>(frag # "_32") addr:$ptr, GR32:$val))],
+                      itin>;
+    def NAME#64rm : RI<opc, MRMSrcMem, (outs GR64:$dst),
+                       (ins GR64:$val, i64mem:$ptr),
+                       !strconcat(mnemonic, "{q}\t{$val, $ptr|$ptr, $val}"),
                        [(set
-                          GR8:$dst,
-                          (!cast<PatFrag>(frag # "_8") addr:$ptr, GR8:$val))],
+                         GR64:$dst,
+                         (!cast<PatFrag>(frag # "_64") addr:$ptr, GR64:$val))],
                        itin>;
-    def #NAME#16rm : I<opc, MRMSrcMem, (outs GR16:$dst),
-                       (ins GR16:$val, i16mem:$ptr),
-                       !strconcat(mnemonic, "{w}\t{$val, $ptr|$ptr, $val}"),
-                       [(set
-                          GR16:$dst,
-                          (!cast<PatFrag>(frag # "_16") addr:$ptr, GR16:$val))],
-                       itin>, OpSize;
-    def #NAME#32rm : I<opc, MRMSrcMem, (outs GR32:$dst),
-                       (ins GR32:$val, i32mem:$ptr),
-                       !strconcat(mnemonic, "{l}\t{$val, $ptr|$ptr, $val}"),
-                       [(set
-                          GR32:$dst,
-                          (!cast<PatFrag>(frag # "_32") addr:$ptr, GR32:$val))],
-                       itin>;
-    def #NAME#64rm : RI<opc, MRMSrcMem, (outs GR64:$dst),
-                        (ins GR64:$val, i64mem:$ptr),
-                        !strconcat(mnemonic, "{q}\t{$val, $ptr|$ptr, $val}"),
-                        [(set
-                          GR64:$dst,
-                          (!cast<PatFrag>(frag # "_64") addr:$ptr, GR64:$val))],
-                        itin>;
   }
 }
 

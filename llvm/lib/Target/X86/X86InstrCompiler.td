@@ -513,18 +513,18 @@ def CMOV_RFP80 : I<0, Pseudo,
 
 multiclass PSEUDO_ATOMIC_LOAD_BINOP<string mnemonic> {
   let usesCustomInserter = 1, mayLoad = 1, mayStore = 1 in {
-    def #NAME#8  : I<0, Pseudo, (outs GR8:$dst),
-                     (ins i8mem:$ptr, GR8:$val),
-                     !strconcat(mnemonic, "8 PSEUDO!"), []>;
-    def #NAME#16 : I<0, Pseudo,(outs GR16:$dst),
-                     (ins i16mem:$ptr, GR16:$val),
-                     !strconcat(mnemonic, "16 PSEUDO!"), []>;
-    def #NAME#32 : I<0, Pseudo, (outs GR32:$dst),
-                     (ins i32mem:$ptr, GR32:$val),
-                     !strconcat(mnemonic, "32 PSEUDO!"), []>;
-    def #NAME#64 : I<0, Pseudo, (outs GR64:$dst),
-                     (ins i64mem:$ptr, GR64:$val),
-                     !strconcat(mnemonic, "64 PSEUDO!"), []>;
+    def NAME#8  : I<0, Pseudo, (outs GR8:$dst),
+                    (ins i8mem:$ptr, GR8:$val),
+                    !strconcat(mnemonic, "8 PSEUDO!"), []>;
+    def NAME#16 : I<0, Pseudo,(outs GR16:$dst),
+                    (ins i16mem:$ptr, GR16:$val),
+                    !strconcat(mnemonic, "16 PSEUDO!"), []>;
+    def NAME#32 : I<0, Pseudo, (outs GR32:$dst),
+                    (ins i32mem:$ptr, GR32:$val),
+                    !strconcat(mnemonic, "32 PSEUDO!"), []>;
+    def NAME#64 : I<0, Pseudo, (outs GR64:$dst),
+                    (ins i64mem:$ptr, GR64:$val),
+                    !strconcat(mnemonic, "64 PSEUDO!"), []>;
   }
 }
 
@@ -560,9 +560,9 @@ defm : PSEUDO_ATOMIC_LOAD_BINOP_PATS<"ATOMUMIN", "atomic_load_umin">;
 
 multiclass PSEUDO_ATOMIC_LOAD_BINOP6432<string mnemonic> {
   let usesCustomInserter = 1, mayLoad = 1, mayStore = 1, hasSideEffects = 0 in
-    def #NAME#6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
-                       (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
-                       !strconcat(mnemonic, "6432 PSEUDO!"), []>;
+    def NAME#6432 : I<0, Pseudo, (outs GR32:$dst1, GR32:$dst2),
+                      (ins i64mem:$ptr, GR32:$val1, GR32:$val2),
+                      !strconcat(mnemonic, "6432 PSEUDO!"), []>;
 }
 
 defm ATOMAND  : PSEUDO_ATOMIC_LOAD_BINOP6432<"#ATOMAND">;
@@ -604,77 +604,77 @@ multiclass LOCK_ArithBinOp<bits<8> RegOpc, bits<8> ImmOpc, bits<8> ImmOpc8,
                            Format ImmMod, string mnemonic> {
 let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1 in {
 
-def #NAME#8mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
-                   RegOpc{3}, RegOpc{2}, RegOpc{1}, 0 },
-                   MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
-                   !strconcat(mnemonic, "{b}\t",
+def NAME#8mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
+                  RegOpc{3}, RegOpc{2}, RegOpc{1}, 0 },
+                  MRMDestMem, (outs), (ins i8mem:$dst, GR8:$src2),
+                  !strconcat(mnemonic, "{b}\t",
+                             "{$src2, $dst|$dst, $src2}"),
+                  [], IIC_ALU_NONMEM>, LOCK;
+def NAME#16mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
+                   RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
+                   MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
+                   !strconcat(mnemonic, "{w}\t",
+                              "{$src2, $dst|$dst, $src2}"),
+                   [], IIC_ALU_NONMEM>, OpSize, LOCK;
+def NAME#32mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
+                   RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
+                   MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
+                   !strconcat(mnemonic, "{l}\t",
                               "{$src2, $dst|$dst, $src2}"),
                    [], IIC_ALU_NONMEM>, LOCK;
-def #NAME#16mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
+def NAME#64mr : RI<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
                     RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
-                    MRMDestMem, (outs), (ins i16mem:$dst, GR16:$src2),
-                    !strconcat(mnemonic, "{w}\t",
-                               "{$src2, $dst|$dst, $src2}"),
-                    [], IIC_ALU_NONMEM>, OpSize, LOCK;
-def #NAME#32mr : I<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
-                    RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
-                    MRMDestMem, (outs), (ins i32mem:$dst, GR32:$src2),
-                    !strconcat(mnemonic, "{l}\t",
+                    MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
+                    !strconcat(mnemonic, "{q}\t",
                                "{$src2, $dst|$dst, $src2}"),
                     [], IIC_ALU_NONMEM>, LOCK;
-def #NAME#64mr : RI<{RegOpc{7}, RegOpc{6}, RegOpc{5}, RegOpc{4},
-                     RegOpc{3}, RegOpc{2}, RegOpc{1}, 1 },
-                     MRMDestMem, (outs), (ins i64mem:$dst, GR64:$src2),
-                     !strconcat(mnemonic, "{q}\t",
-                                "{$src2, $dst|$dst, $src2}"),
-                     [], IIC_ALU_NONMEM>, LOCK;
 
-def #NAME#8mi : Ii8<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
-                     ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 0 },
-                     ImmMod, (outs), (ins i8mem :$dst, i8imm :$src2),
-                     !strconcat(mnemonic, "{b}\t",
-                                "{$src2, $dst|$dst, $src2}"),
-                     [], IIC_ALU_MEM>, LOCK;
+def NAME#8mi : Ii8<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
+                    ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 0 },
+                    ImmMod, (outs), (ins i8mem :$dst, i8imm :$src2),
+                    !strconcat(mnemonic, "{b}\t",
+                               "{$src2, $dst|$dst, $src2}"),
+                    [], IIC_ALU_MEM>, LOCK;
 
-def #NAME#16mi : Ii16<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
-                       ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
-                       ImmMod, (outs), (ins i16mem :$dst, i16imm :$src2),
-                       !strconcat(mnemonic, "{w}\t",
-                                  "{$src2, $dst|$dst, $src2}"),
-                       [], IIC_ALU_MEM>, OpSize, LOCK;
+def NAME#16mi : Ii16<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
+                      ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
+                      ImmMod, (outs), (ins i16mem :$dst, i16imm :$src2),
+                      !strconcat(mnemonic, "{w}\t",
+                                 "{$src2, $dst|$dst, $src2}"),
+                      [], IIC_ALU_MEM>, OpSize, LOCK;
 
-def #NAME#32mi : Ii32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
-                       ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
-                       ImmMod, (outs), (ins i32mem :$dst, i32imm :$src2),
-                       !strconcat(mnemonic, "{l}\t",
+def NAME#32mi : Ii32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
+                      ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
+                      ImmMod, (outs), (ins i32mem :$dst, i32imm :$src2),
+                      !strconcat(mnemonic, "{l}\t",
+                                 "{$src2, $dst|$dst, $src2}"),
+                      [], IIC_ALU_MEM>, LOCK;
+
+def NAME#64mi32 : RIi32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
+                         ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
+                         ImmMod, (outs), (ins i64mem :$dst, i64i32imm :$src2),
+                         !strconcat(mnemonic, "{q}\t",
+                                    "{$src2, $dst|$dst, $src2}"),
+                         [], IIC_ALU_MEM>, LOCK;
+
+def NAME#16mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
+                      ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
+                      ImmMod, (outs), (ins i16mem :$dst, i16i8imm :$src2),
+                      !strconcat(mnemonic, "{w}\t",
+                                 "{$src2, $dst|$dst, $src2}"),
+                      [], IIC_ALU_MEM>, OpSize, LOCK;
+def NAME#32mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
+                      ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
+                      ImmMod, (outs), (ins i32mem :$dst, i32i8imm :$src2),
+                      !strconcat(mnemonic, "{l}\t",
+                                 "{$src2, $dst|$dst, $src2}"),
+                      [], IIC_ALU_MEM>, LOCK;
+def NAME#64mi8 : RIi8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
+                       ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
+                       ImmMod, (outs), (ins i64mem :$dst, i64i8imm :$src2),
+                       !strconcat(mnemonic, "{q}\t",
                                   "{$src2, $dst|$dst, $src2}"),
                        [], IIC_ALU_MEM>, LOCK;
-
-def #NAME#64mi32 : RIi32<{ImmOpc{7}, ImmOpc{6}, ImmOpc{5}, ImmOpc{4},
-                          ImmOpc{3}, ImmOpc{2}, ImmOpc{1}, 1 },
-                          ImmMod, (outs), (ins i64mem :$dst, i64i32imm :$src2),
-                          !strconcat(mnemonic, "{q}\t",
-                                     "{$src2, $dst|$dst, $src2}"),
-                          [], IIC_ALU_MEM>, LOCK;
-
-def #NAME#16mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
-                       ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
-                       ImmMod, (outs), (ins i16mem :$dst, i16i8imm :$src2),
-                       !strconcat(mnemonic, "{w}\t",
-                                  "{$src2, $dst|$dst, $src2}"),
-                       [], IIC_ALU_MEM>, OpSize, LOCK;
-def #NAME#32mi8 : Ii8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
-                       ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
-                       ImmMod, (outs), (ins i32mem :$dst, i32i8imm :$src2),
-                       !strconcat(mnemonic, "{l}\t",
-                                  "{$src2, $dst|$dst, $src2}"),
-                       [], IIC_ALU_MEM>, LOCK;
-def #NAME#64mi8 : RIi8<{ImmOpc8{7}, ImmOpc8{6}, ImmOpc8{5}, ImmOpc8{4},
-                        ImmOpc8{3}, ImmOpc8{2}, ImmOpc8{1}, 1 },
-                        ImmMod, (outs), (ins i64mem :$dst, i64i8imm :$src2),
-                        !strconcat(mnemonic, "{q}\t",
-                                   "{$src2, $dst|$dst, $src2}"),
-                        [], IIC_ALU_MEM>, LOCK;
 
 }
 
@@ -691,18 +691,18 @@ multiclass LOCK_ArithUnOp<bits<8> Opc8, bits<8> Opc, Format Form,
                           string mnemonic> {
 let Defs = [EFLAGS], mayLoad = 1, mayStore = 1, isCodeGenOnly = 1 in {
 
-def #NAME#8m  : I<Opc8, Form, (outs), (ins i8mem :$dst),
-                  !strconcat(mnemonic, "{b}\t$dst"),
+def NAME#8m  : I<Opc8, Form, (outs), (ins i8mem :$dst),
+                 !strconcat(mnemonic, "{b}\t$dst"),
+                 [], IIC_UNARY_MEM>, LOCK;
+def NAME#16m : I<Opc, Form, (outs), (ins i16mem:$dst),
+                 !strconcat(mnemonic, "{w}\t$dst"),
+                 [], IIC_UNARY_MEM>, OpSize, LOCK;
+def NAME#32m : I<Opc, Form, (outs), (ins i32mem:$dst),
+                 !strconcat(mnemonic, "{l}\t$dst"),
+                 [], IIC_UNARY_MEM>, LOCK;
+def NAME#64m : RI<Opc, Form, (outs), (ins i64mem:$dst),
+                  !strconcat(mnemonic, "{q}\t$dst"),
                   [], IIC_UNARY_MEM>, LOCK;
-def #NAME#16m : I<Opc, Form, (outs), (ins i16mem:$dst),
-                  !strconcat(mnemonic, "{w}\t$dst"),
-                  [], IIC_UNARY_MEM>, OpSize, LOCK;
-def #NAME#32m : I<Opc, Form, (outs), (ins i32mem:$dst),
-                  !strconcat(mnemonic, "{l}\t$dst"),
-                  [], IIC_UNARY_MEM>, LOCK;
-def #NAME#64m : RI<Opc, Form, (outs), (ins i64mem:$dst),
-                   !strconcat(mnemonic, "{q}\t$dst"),
-                   [], IIC_UNARY_MEM>, LOCK;
 }
 }
 
@@ -714,9 +714,9 @@ multiclass LCMPXCHG_UnOp<bits<8> Opc, Format Form, string mnemonic,
                          SDPatternOperator frag, X86MemOperand x86memop,
                          InstrItinClass itin> {
 let isCodeGenOnly = 1 in {
-  def #NAME# : I<Opc, Form, (outs), (ins x86memop:$ptr),
-                 !strconcat(mnemonic, "\t$ptr"),
-                 [(frag addr:$ptr)], itin>, TB, LOCK;
+  def NAME : I<Opc, Form, (outs), (ins x86memop:$ptr),
+               !strconcat(mnemonic, "\t$ptr"),
+               [(frag addr:$ptr)], itin>, TB, LOCK;
 }
 }
 
@@ -725,21 +725,21 @@ multiclass LCMPXCHG_BinOp<bits<8> Opc8, bits<8> Opc, Format Form,
                           InstrItinClass itin8, InstrItinClass itin> {
 let isCodeGenOnly = 1 in {
   let Defs = [AL, EFLAGS], Uses = [AL] in
-  def #NAME#8  : I<Opc8, Form, (outs), (ins i8mem:$ptr, GR8:$swap),
-                   !strconcat(mnemonic, "{b}\t{$swap, $ptr|$ptr, $swap}"),
-                   [(frag addr:$ptr, GR8:$swap, 1)], itin8>, TB, LOCK;
+  def NAME#8  : I<Opc8, Form, (outs), (ins i8mem:$ptr, GR8:$swap),
+                  !strconcat(mnemonic, "{b}\t{$swap, $ptr|$ptr, $swap}"),
+                  [(frag addr:$ptr, GR8:$swap, 1)], itin8>, TB, LOCK;
   let Defs = [AX, EFLAGS], Uses = [AX] in
-  def #NAME#16 : I<Opc, Form, (outs), (ins i16mem:$ptr, GR16:$swap),
-                   !strconcat(mnemonic, "{w}\t{$swap, $ptr|$ptr, $swap}"),
-                   [(frag addr:$ptr, GR16:$swap, 2)], itin>, TB, OpSize, LOCK;
+  def NAME#16 : I<Opc, Form, (outs), (ins i16mem:$ptr, GR16:$swap),
+                  !strconcat(mnemonic, "{w}\t{$swap, $ptr|$ptr, $swap}"),
+                  [(frag addr:$ptr, GR16:$swap, 2)], itin>, TB, OpSize, LOCK;
   let Defs = [EAX, EFLAGS], Uses = [EAX] in
-  def #NAME#32 : I<Opc, Form, (outs), (ins i32mem:$ptr, GR32:$swap),
-                   !strconcat(mnemonic, "{l}\t{$swap, $ptr|$ptr, $swap}"),
-                   [(frag addr:$ptr, GR32:$swap, 4)], itin>, TB, LOCK;
+  def NAME#32 : I<Opc, Form, (outs), (ins i32mem:$ptr, GR32:$swap),
+                  !strconcat(mnemonic, "{l}\t{$swap, $ptr|$ptr, $swap}"),
+                  [(frag addr:$ptr, GR32:$swap, 4)], itin>, TB, LOCK;
   let Defs = [RAX, EFLAGS], Uses = [RAX] in
-  def #NAME#64 : RI<Opc, Form, (outs), (ins i64mem:$ptr, GR64:$swap),
-                    !strconcat(mnemonic, "{q}\t{$swap, $ptr|$ptr, $swap}"),
-                    [(frag addr:$ptr, GR64:$swap, 8)], itin>, TB, LOCK;
+  def NAME#64 : RI<Opc, Form, (outs), (ins i64mem:$ptr, GR64:$swap),
+                   !strconcat(mnemonic, "{q}\t{$swap, $ptr|$ptr, $swap}"),
+                   [(frag addr:$ptr, GR64:$swap, 8)], itin>, TB, LOCK;
 }
 }
 
@@ -764,33 +764,33 @@ multiclass ATOMIC_LOAD_BINOP<bits<8> opc8, bits<8> opc, string mnemonic,
                              string frag,
                              InstrItinClass itin8, InstrItinClass itin> {
   let Constraints = "$val = $dst", Defs = [EFLAGS], isCodeGenOnly = 1 in {
-    def #NAME#8  : I<opc8, MRMSrcMem, (outs GR8:$dst),
-                     (ins GR8:$val, i8mem:$ptr),
-                     !strconcat(mnemonic, "{b}\t{$val, $ptr|$ptr, $val}"),
-                     [(set GR8:$dst,
-                           (!cast<PatFrag>(frag # "_8") addr:$ptr, GR8:$val))],
-                     itin8>;
-    def #NAME#16 : I<opc, MRMSrcMem, (outs GR16:$dst),
-                     (ins GR16:$val, i16mem:$ptr),
-                     !strconcat(mnemonic, "{w}\t{$val, $ptr|$ptr, $val}"),
+    def NAME#8  : I<opc8, MRMSrcMem, (outs GR8:$dst),
+                    (ins GR8:$val, i8mem:$ptr),
+                    !strconcat(mnemonic, "{b}\t{$val, $ptr|$ptr, $val}"),
+                    [(set GR8:$dst,
+                          (!cast<PatFrag>(frag # "_8") addr:$ptr, GR8:$val))],
+                    itin8>;
+    def NAME#16 : I<opc, MRMSrcMem, (outs GR16:$dst),
+                    (ins GR16:$val, i16mem:$ptr),
+                    !strconcat(mnemonic, "{w}\t{$val, $ptr|$ptr, $val}"),
+                    [(set
+                       GR16:$dst,
+                       (!cast<PatFrag>(frag # "_16") addr:$ptr, GR16:$val))],
+                    itin>, OpSize;
+    def NAME#32 : I<opc, MRMSrcMem, (outs GR32:$dst),
+                    (ins GR32:$val, i32mem:$ptr),
+                    !strconcat(mnemonic, "{l}\t{$val, $ptr|$ptr, $val}"),
+                    [(set
+                       GR32:$dst,
+                       (!cast<PatFrag>(frag # "_32") addr:$ptr, GR32:$val))],
+                    itin>;
+    def NAME#64 : RI<opc, MRMSrcMem, (outs GR64:$dst),
+                     (ins GR64:$val, i64mem:$ptr),
+                     !strconcat(mnemonic, "{q}\t{$val, $ptr|$ptr, $val}"),
                      [(set
-                        GR16:$dst,
-                        (!cast<PatFrag>(frag # "_16") addr:$ptr, GR16:$val))],
-                     itin>, OpSize;
-    def #NAME#32 : I<opc, MRMSrcMem, (outs GR32:$dst),
-                     (ins GR32:$val, i32mem:$ptr),
-                     !strconcat(mnemonic, "{l}\t{$val, $ptr|$ptr, $val}"),
-                     [(set
-                        GR32:$dst,
-                        (!cast<PatFrag>(frag # "_32") addr:$ptr, GR32:$val))],
+                        GR64:$dst,
+                        (!cast<PatFrag>(frag # "_64") addr:$ptr, GR64:$val))],
                      itin>;
-    def #NAME#64 : RI<opc, MRMSrcMem, (outs GR64:$dst),
-                      (ins GR64:$val, i64mem:$ptr),
-                      !strconcat(mnemonic, "{q}\t{$val, $ptr|$ptr, $val}"),
-                      [(set
-                         GR64:$dst,
-                         (!cast<PatFrag>(frag # "_64") addr:$ptr, GR64:$val))],
-                      itin>;
   }
 }
 

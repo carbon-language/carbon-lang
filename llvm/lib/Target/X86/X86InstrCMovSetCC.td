@@ -17,19 +17,19 @@
 multiclass CMOV<bits<8> opc, string Mnemonic, PatLeaf CondNode> {
   let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst",
       isCommutable = 1 in {
-    def #NAME#16rr
+    def NAME#16rr
       : I<opc, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
           !strconcat(Mnemonic, "{w}\t{$src2, $dst|$dst, $src2}"),
           [(set GR16:$dst,
                 (X86cmov GR16:$src1, GR16:$src2, CondNode, EFLAGS))],
                 IIC_CMOV16_RR>,TB,OpSize;
-    def #NAME#32rr
+    def NAME#32rr
       : I<opc, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
           !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
           [(set GR32:$dst,
                 (X86cmov GR32:$src1, GR32:$src2, CondNode, EFLAGS))],
                 IIC_CMOV32_RR>, TB;
-    def #NAME#64rr
+    def NAME#64rr
       :RI<opc, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
           !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
           [(set GR64:$dst,
@@ -38,18 +38,18 @@ multiclass CMOV<bits<8> opc, string Mnemonic, PatLeaf CondNode> {
   }
 
   let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst" in {
-    def #NAME#16rm
+    def NAME#16rm
       : I<opc, MRMSrcMem, (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
           !strconcat(Mnemonic, "{w}\t{$src2, $dst|$dst, $src2}"),
           [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
                                     CondNode, EFLAGS))], IIC_CMOV16_RM>,
                                     TB, OpSize;
-    def #NAME#32rm
+    def NAME#32rm
       : I<opc, MRMSrcMem, (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
           !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
           [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
                                     CondNode, EFLAGS))], IIC_CMOV32_RM>, TB;
-    def #NAME#64rm
+    def NAME#64rm
       :RI<opc, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
           !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
           [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
