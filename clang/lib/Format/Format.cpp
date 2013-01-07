@@ -263,7 +263,7 @@ private:
         // constructs.
         State.Column = Line.Level * 2 + 2;
       } else if (Current.Tok.is(tok::string_literal) &&
-          Previous.Tok.is(tok::string_literal)) {
+                 Previous.Tok.is(tok::string_literal)) {
         State.Column = State.Column - Previous.TokenLength;
       } else if (Current.Tok.is(tok::lessless) &&
                  State.FirstLessLess[ParenLevel] != 0) {
@@ -484,17 +484,17 @@ private:
                            unsigned Spaces, unsigned WhitespaceStartColumn) {
     std::string NewLineText;
     if (NewLines > 0) {
-      unsigned Offset =
-          std::min<int>(Style.ColumnLimit - 1, WhitespaceStartColumn);
+      unsigned Offset = std::min<int>(Style.ColumnLimit - 1,
+                                      WhitespaceStartColumn);
       for (unsigned i = 0; i < NewLines; ++i) {
         NewLineText += std::string(Style.ColumnLimit - Offset - 1, ' ');
         NewLineText += "\\\n";
         Offset = 0;
       }
     }
-    Replaces.insert(tooling::Replacement(
-        SourceMgr, Tok.WhiteSpaceStart, Tok.WhiteSpaceLength,
-        NewLineText + std::string(Spaces, ' ')));
+    Replaces.insert(tooling::Replacement(SourceMgr, Tok.WhiteSpaceStart,
+                                         Tok.WhiteSpaceLength, NewLineText +
+                                         std::string(Spaces, ' ')));
   }
 
   /// \brief Add a new line and the required indent before the first Token
@@ -505,8 +505,8 @@ private:
     if (!Token.WhiteSpaceStart.isValid() || StructuralError)
       return SourceMgr.getSpellingColumnNumber(Token.Tok.getLocation()) - 1;
 
-    unsigned Newlines =
-        std::min(Token.NewlinesBefore, Style.MaxEmptyLinesToKeep + 1);
+    unsigned Newlines = std::min(Token.NewlinesBefore,
+                                 Style.MaxEmptyLinesToKeep + 1);
     if (Newlines == 0 && !Token.IsFirst)
       Newlines = 1;
     unsigned Indent = Line.Level * 2;
@@ -1084,8 +1084,8 @@ public:
     // Consume and record whitespace until we find a significant token.
     while (FormatTok.Tok.is(tok::unknown)) {
       FormatTok.NewlinesBefore += Text.count('\n');
-      FormatTok.HasUnescapedNewline =
-          Text.count("\\\n") != FormatTok.NewlinesBefore;
+      FormatTok.HasUnescapedNewline = Text.count("\\\n") !=
+                                      FormatTok.NewlinesBefore;
       FormatTok.WhiteSpaceLength += FormatTok.Tok.getLength();
 
       if (FormatTok.Tok.is(tok::eof))
@@ -1157,8 +1157,8 @@ public:
     for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),
                                               E = UnwrappedLines.end();
          I != E; ++I)
-      PreviousEndOfLineColumn =
-          formatUnwrappedLine(*I, PreviousEndOfLineColumn);
+      PreviousEndOfLineColumn = formatUnwrappedLine(*I,
+                                                    PreviousEndOfLineColumn);
     return Replaces;
   }
 
@@ -1170,11 +1170,11 @@ private:
   unsigned formatUnwrappedLine(const UnwrappedLine &TheLine,
                                unsigned PreviousEndOfLineColumn) {
     if (TheLine.Tokens.empty())
-      return 0;  // FIXME: Find out how this can ever happen.
+      return 0; // FIXME: Find out how this can ever happen.
 
-    CharSourceRange LineRange =
-        CharSourceRange::getTokenRange(TheLine.Tokens.front().Tok.getLocation(),
-                                       TheLine.Tokens.back().Tok.getLocation());
+    CharSourceRange LineRange = CharSourceRange::getTokenRange(
+                                    TheLine.Tokens.front().Tok.getLocation(),
+                                    TheLine.Tokens.back().Tok.getLocation());
 
     for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
       if (SourceMgr.isBeforeInTranslationUnit(LineRange.getEnd(),
@@ -1218,5 +1218,5 @@ tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
   return formatter.format();
 }
 
-}  // namespace format
-}  // namespace clang
+} // namespace format
+} // namespace clang

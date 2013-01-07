@@ -30,8 +30,8 @@ protected:
     LangOpts.CPlusPlus = 1;
     LangOpts.CPlusPlus11 = 1;
     Lexer Lex(ID, Context.Sources.getBuffer(ID), Context.Sources, LangOpts);
-    tooling::Replacements Replace =
-        reformat(Style, Lex, Context.Sources, Ranges);
+    tooling::Replacements Replace = reformat(Style, Lex, Context.Sources,
+                                             Ranges);
     EXPECT_TRUE(applyAllReplacements(Replace, Context.Rewrite));
     return Context.getRewrittenText(ID);
   }
@@ -109,7 +109,6 @@ TEST_F(FormatTest, FormatsNestedCall) {
   verifyFormat("Method(f1, f2(f3));");
   verifyFormat("Method(f1(f2, f3()));");
 }
-
 
 //===----------------------------------------------------------------------===//
 // Tests for control statements.
@@ -264,7 +263,6 @@ TEST_F(FormatTest, FormatsLabels) {
                "some_other_code();");
 }
 
-
 //===----------------------------------------------------------------------===//
 // Tests for comments.
 //===----------------------------------------------------------------------===//
@@ -300,7 +298,6 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
 TEST_F(FormatTest, UnderstandsMultiLineComments) {
   verifyFormat("f(/*test=*/ true);");
 }
-
 
 //===----------------------------------------------------------------------===//
 // Tests for classes, namespaces, etc.
@@ -395,9 +392,8 @@ TEST_F(FormatTest, FormatsSmallMacroDefinitionsInSingleLine) {
 }
 
 TEST_F(FormatTest, DoesNotBreakPureVirtualFunctionDefinition) {
-  verifyFormat(
-      "virtual void write(ELFWriter *writerrr,\n"
-      "                   OwningPtr<FileOutputBuffer> &buffer) = 0;");
+  verifyFormat("virtual void write(ELFWriter *writerrr,\n"
+               "                   OwningPtr<FileOutputBuffer> &buffer) = 0;");
 }
 
 TEST_F(FormatTest, BreaksOnHashWhenDirectiveIsInvalid) {
@@ -496,9 +492,9 @@ TEST_F(FormatTest, FormatUnbalancedStructuralElements) {
 }
 
 TEST_F(FormatTest, EscapedNewlineAtStartOfTokenInMacroDefinition) {
-  EXPECT_EQ("#define A \\\n  int i;  \\\n  int j;",
-            format("#define A \\\nint i;\\\n  int j;",
-                   getLLVMStyleWithColumns(11)));
+  EXPECT_EQ(
+      "#define A \\\n  int i;  \\\n  int j;",
+      format("#define A \\\nint i;\\\n  int j;", getLLVMStyleWithColumns(11)));
 }
 
 TEST_F(FormatTest, CalculateSpaceOnConsecutiveLinesInMacro) {
@@ -618,24 +614,21 @@ TEST_F(FormatTest, BreaksDesireably) {
       "       aaaaaaaaaaaaaaaaaaaaaaaaa || aaaaaaaaaaaaaaaaaaaaaaa ||\n"
       "       (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
-  verifyFormat(
-      "{\n  {\n    {\n"
-      "      Annotation.SpaceRequiredBefore =\n"
-      "          Line.Tokens[i - 1].Tok.isNot(tok::l_paren) &&\n"
-      "          Line.Tokens[i - 1].Tok.isNot(tok::l_square);\n"
-      "    }\n  }\n}");
+  verifyFormat("{\n  {\n    {\n"
+               "      Annotation.SpaceRequiredBefore =\n"
+               "          Line.Tokens[i - 1].Tok.isNot(tok::l_paren) &&\n"
+               "          Line.Tokens[i - 1].Tok.isNot(tok::l_square);\n"
+               "    }\n  }\n}");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
   verifyFormat(
       "if (aaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
       "    bbbbbbbbbbbbbbbbbbbbbbbbb && ccccccccccccccccccccccccc) {\n}");
-  verifyFormat(
-      "if (aaaaaaaaaaaaaaaaaaaaaaaaa && bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
-      "    ccccccccccccccccccccccccc) {\n}");
-  verifyFormat(
-      "if (aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
-      "    ccccccccccccccccccccccccc) {\n}");
+  verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaa && bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
+               "    ccccccccccccccccccccccccc) {\n}");
+  verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
+               "    ccccccccccccccccccccccccc) {\n}");
   verifyFormat(
       "if ((aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb) &&\n"
       "    ccccccccccccccccccccccccc) {\n}");
@@ -898,9 +891,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
 }
 
 TEST_F(FormatTest, DoesNotBreakBeforePointerOrReference) {
-  verifyFormat(
-      "int *someFunction(int LoooooooooooooooongParam1,\n"
-      "                  int LoooooooooooooooongParam2) {\n}");
+  verifyFormat("int *someFunction(int LoooooooooooooooongParam1,\n"
+               "                  int LoooooooooooooooongParam2) {\n}");
   verifyFormat(
       "TypeSpecDecl *TypeSpecDecl::Create(ASTContext &C, DeclContext *DC,\n"
       "                                   SourceLocation L, IdentifierIn *II,\n"
@@ -925,7 +917,6 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
   EXPECT_EQ("#import \"string.h\"\n", format("#import \"string.h\"\n"));
   EXPECT_EQ("#import \"string.h\"\n", format("#import \"string.h\"\n"));
 }
-
 
 //===----------------------------------------------------------------------===//
 // Error recovery tests.
@@ -998,8 +989,7 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
   verifyFormat("- (void)sendAction:(SEL)aSelector to:(BOOL)anObject;");
   EXPECT_EQ("- (NSUInteger)indexOfObject:(id)anObject;",
             format("-(NSUInteger)indexOfObject:(id)anObject;"));
-  EXPECT_EQ("- (NSInteger)Mthod1;",
-            format("-(NSInteger)Mthod1;"));
+  EXPECT_EQ("- (NSInteger)Mthod1;", format("-(NSInteger)Mthod1;"));
   EXPECT_EQ("+ (id)Mthod2;", format("+(id)Mthod2;"));
   EXPECT_EQ("- (NSInteger)Method3:(id)anObject;",
             format("-(NSInteger)Method3:(id)anObject;"));
@@ -1009,24 +999,26 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
             format("-(NSInteger)Method5:(id)anObject:(id)AnotherObject;"));
   EXPECT_EQ("- (id)Method6:(id)A:(id)B:(id)C:(id)D;",
             format("- (id)Method6:(id)A:(id)B:(id)C:(id)D;"));
-  EXPECT_EQ("- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;",
-            format("- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;"));
+  EXPECT_EQ(
+      "- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;",
+      format("- (void)sendAction:(SEL)aSelector to:(id)anObject forAllCells:(BOOL)flag;"));
 
   // Very long objectiveC method declaration.
-  EXPECT_EQ("- (NSUInteger)indexOfObject:(id)anObject inRange:(NSRange)range\n    "
-            "outRange:(NSRange)out_range outRange1:(NSRange)out_range1\n    "
-            "outRange2:(NSRange)out_range2 outRange3:(NSRange)out_range3\n    "
-            "outRange4:(NSRange)out_range4 outRange5:(NSRange)out_range5\n    "
-            "outRange6:(NSRange)out_range6 outRange7:(NSRange)out_range7\n    "
-            "outRange8:(NSRange)out_range8 outRange9:(NSRange)out_range9;",
-
-            format("- (NSUInteger)indexOfObject:(id)anObject inRange:(NSRange)range "
-                   "outRange:(NSRange) out_range outRange1:(NSRange) out_range1 "
-                   "outRange2:(NSRange) out_range2  outRange3:(NSRange) out_range3  "
-                   "outRange4:(NSRange) out_range4  outRange5:(NSRange) out_range5 "
-                   "outRange6:(NSRange) out_range6  outRange7:(NSRange) out_range7  "
-                   "outRange8:(NSRange) out_range8  outRange9:(NSRange) out_range9;"));
+  EXPECT_EQ(
+      "- (NSUInteger)indexOfObject:(id)anObject inRange:(NSRange)range\n    "
+      "outRange:(NSRange)out_range outRange1:(NSRange)out_range1\n    "
+      "outRange2:(NSRange)out_range2 outRange3:(NSRange)out_range3\n    "
+      "outRange4:(NSRange)out_range4 outRange5:(NSRange)out_range5\n    "
+      "outRange6:(NSRange)out_range6 outRange7:(NSRange)out_range7\n    "
+      "outRange8:(NSRange)out_range8 outRange9:(NSRange)out_range9;",
+      format(
+          "- (NSUInteger)indexOfObject:(id)anObject inRange:(NSRange)range "
+          "outRange:(NSRange) out_range outRange1:(NSRange) out_range1 "
+          "outRange2:(NSRange) out_range2  outRange3:(NSRange) out_range3  "
+          "outRange4:(NSRange) out_range4  outRange5:(NSRange) out_range5 "
+          "outRange6:(NSRange) out_range6  outRange7:(NSRange) out_range7  "
+          "outRange8:(NSRange) out_range8  outRange9:(NSRange) out_range9;"));
 }
 
-}  // end namespace tooling
-}  // end namespace clang
+} // end namespace tooling
+} // end namespace clang

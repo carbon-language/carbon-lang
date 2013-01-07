@@ -144,7 +144,7 @@ private:
   UnwrappedLineConsumer &Callback;
 };
 
-}  // end namespace format
-}  // end namespace clang
+} // end namespace format
+} // end namespace clang
 
-#endif  // LLVM_CLANG_FORMAT_UNWRAPPED_LINE_PARSER_H
+#endif // LLVM_CLANG_FORMAT_UNWRAPPED_LINE_PARSER_H

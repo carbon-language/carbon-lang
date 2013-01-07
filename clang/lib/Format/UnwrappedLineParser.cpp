@@ -493,5 +493,5 @@ void UnwrappedLineParser::readToken() {
   }
 }
 
-}  // end namespace format
-}  // end namespace clang
+} // end namespace format
+} // end namespace clang
