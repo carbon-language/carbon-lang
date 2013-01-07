@@ -3459,11 +3459,19 @@ void ASTWriter::WriteASTCore(Sema &SemaRef,
 
   // If there are any out-of-date identifiers, bring them up to date.
   if (ExternalPreprocessorSource *ExtSource = PP.getExternalSource()) {
+    // Find out-of-date identifiers.
+    SmallVector<IdentifierInfo *, 4> OutOfDate;
     for (IdentifierTable::iterator ID = PP.getIdentifierTable().begin(),
                                 IDEnd = PP.getIdentifierTable().end();
-         ID != IDEnd; ++ID)
+         ID != IDEnd; ++ID) {
       if (ID->second->isOutOfDate())
-        ExtSource->updateOutOfDateIdentifier(*ID->second);
+        OutOfDate.push_back(ID->second);
+    }
+
+    // Update the out-of-date identifiers.
+    for (unsigned I = 0, N = OutOfDate.size(); I != N; ++I) {
+      ExtSource->updateOutOfDateIdentifier(*OutOfDate[I]);
+    }
   }
 
   // Build a record containing all of the tentative definitions in this file, in
