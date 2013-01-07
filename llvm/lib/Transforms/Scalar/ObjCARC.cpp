@@ -2468,6 +2468,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     if (isNullOrUndef(Arg)) {
       Changed = true;
       ++NumNoops;
+      DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: ARC calls with "
+            " null are no-ops. Erasing: " << *Inst << "\n");
       EraseInstruction(Inst);
       continue;
     }
