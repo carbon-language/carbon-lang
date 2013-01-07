@@ -94,13 +94,12 @@ class TargetTransformInfo;
 /// and reduction variables that were found to a given vectorization factor.
 class InnerLoopVectorizer {
 public:
-  /// Ctor.
-  InnerLoopVectorizer(Loop *Orig, ScalarEvolution *Se, LoopInfo *Li,
-                      DominatorTree *Dt, DataLayout *Dl,
-                      unsigned VecWidth, unsigned UnrollFactor):
-  OrigLoop(Orig), SE(Se), LI(Li), DT(Dt), DL(Dl), VF(VecWidth),
-  UF(UnrollFactor), Builder(Se->getContext()), Induction(0), OldInduction(0),
-  WidenMap(UnrollFactor) { }
+  InnerLoopVectorizer(Loop *OrigLoop, ScalarEvolution *SE, LoopInfo *LI,
+                      DominatorTree *DT, DataLayout *DL, unsigned VecWidth,
+                      unsigned UnrollFactor)
+      : OrigLoop(OrigLoop), SE(SE), LI(LI), DT(DT), DL(DL), VF(VecWidth),
+        UF(UnrollFactor), Builder(SE->getContext()), Induction(0),
+        OldInduction(0), WidenMap(UnrollFactor) {}
 
   // Perform the actual loop widening (vectorization).
   void vectorize(LoopVectorizationLegality *Legal) {
@@ -192,9 +191,9 @@ private:
     /// save value in 'Val'.
     /// \return A reference to a vector with splat values.
     VectorParts &splat(Value *Key, Value *Val) {
-        MapStoreage[Key].clear();
-        MapStoreage[Key].append(UF, Val);
-        return MapStoreage[Key];
+      MapStoreage[Key].clear();
+      MapStoreage[Key].append(UF, Val);
+      return MapStoreage[Key];
     }
 
     ///\return A reference to the value that is stored at 'Key'.
@@ -273,37 +272,35 @@ private:
 /// induction variable and the different reduction variables.
 class LoopVectorizationLegality {
 public:
-  LoopVectorizationLegality(Loop *Lp, ScalarEvolution *Se, DataLayout *Dl,
-                            DominatorTree *Dt):
-  TheLoop(Lp), SE(Se), DL(Dl), DT(Dt), Induction(0) { }
+  LoopVectorizationLegality(Loop *L, ScalarEvolution *SE, DataLayout *DL,
+                            DominatorTree *DT)
+      : TheLoop(L), SE(SE), DL(DL), DT(DT), Induction(0) {}
 
   /// This enum represents the kinds of reductions that we support.
   enum ReductionKind {
-    NoReduction, /// Not a reduction.
-    IntegerAdd,  /// Sum of numbers.
-    IntegerMult, /// Product of numbers.
-    IntegerOr,   /// Bitwise or logical OR of numbers.
-    IntegerAnd,  /// Bitwise or logical AND of numbers.
-    IntegerXor   /// Bitwise or logical XOR of numbers.
+    NoReduction, ///< Not a reduction.
+    IntegerAdd,  ///< Sum of numbers.
+    IntegerMult, ///< Product of numbers.
+    IntegerOr,   ///< Bitwise or logical OR of numbers.
+    IntegerAnd,  ///< Bitwise or logical AND of numbers.
+    IntegerXor   ///< Bitwise or logical XOR of numbers.
   };
 
   /// This enum represents the kinds of inductions that we support.
   enum InductionKind {
-    NoInduction,         /// Not an induction variable.
-    IntInduction,        /// Integer induction variable. Step = 1.
-    ReverseIntInduction, /// Reverse int induction variable. Step = -1.
-    PtrInduction         /// Pointer induction variable. Step = sizeof(elem).
+    NoInduction,         ///< Not an induction variable.
+    IntInduction,        ///< Integer induction variable. Step = 1.
+    ReverseIntInduction, ///< Reverse int induction variable. Step = -1.
+    PtrInduction         ///< Pointer induction variable. Step = sizeof(elem).
   };
 
   /// This POD struct holds information about reduction variables.
   struct ReductionDescriptor {
-    // Default C'tor
-    ReductionDescriptor():
-    StartValue(0), LoopExitInstr(0), Kind(NoReduction) {}
+    ReductionDescriptor() : StartValue(0), LoopExitInstr(0), Kind(NoReduction) {
+    }
 
-    // C'tor.
-    ReductionDescriptor(Value *Start, Instruction *Exit, ReductionKind K):
-    StartValue(Start), LoopExitInstr(Exit), Kind(K) {}
+    ReductionDescriptor(Value *Start, Instruction *Exit, ReductionKind K)
+        : StartValue(Start), LoopExitInstr(Exit), Kind(K) {}
 
     // The starting value of the reduction.
     // It does not have to be zero!
@@ -317,7 +314,7 @@ public:
   // This POD struct holds information about the memory runtime legality
   // check that a group of pointers do not overlap.
   struct RuntimePointerCheck {
-    RuntimePointerCheck(): Need(false) {}
+    RuntimePointerCheck() : Need(false) {}
 
     /// Reset the state of the pointer runtime information.
     void reset() {
@@ -342,10 +339,8 @@ public:
 
   /// A POD for saving information about induction variables.
   struct InductionInfo {
-    /// Ctors.
-    InductionInfo(Value *Start, InductionKind K):
-    StartValue(Start), IK(K) {};
-    InductionInfo(): StartValue(0), IK(NoInduction) {};
+    InductionInfo(Value *Start, InductionKind K) : StartValue(Start), IK(K) {}
+    InductionInfo() : StartValue(0), IK(NoInduction) {}
     /// Start value.
     Value *StartValue;
     /// Induction kind.
@@ -366,7 +361,7 @@ public:
   bool canVectorize();
 
   /// Returns the Induction variable.
-  PHINode *getInduction() {return Induction;}
+  PHINode *getInduction() { return Induction; }
 
   /// Returns the reduction variables found in the loop.
   ReductionList *getReductionVars() { return &Reductions; }
@@ -395,10 +390,10 @@ public:
   bool isUniform(Value *V);
 
   /// Returns true if this instruction will remain scalar after vectorization.
-  bool isUniformAfterVectorization(Instruction* I) {return Uniforms.count(I);}
+  bool isUniformAfterVectorization(Instruction* I) { return Uniforms.count(I); }
 
   /// Returns the information that we collected about runtime memory check.
-  RuntimePointerCheck *getRuntimePointerCheck() {return &PtrRtCheck; }
+  RuntimePointerCheck *getRuntimePointerCheck() { return &PtrRtCheck; }
 private:
   /// Check if a single basic block loop is vectorizable.
   /// At this point we know that this is a loop with a constant trip count
@@ -475,11 +470,10 @@ private:
 /// different operations.
 class LoopVectorizationCostModel {
 public:
-  /// C'tor.
-  LoopVectorizationCostModel(Loop *Lp, ScalarEvolution *Se, LoopInfo *Li,
-                             LoopVectorizationLegality *Leg,
-                             const TargetTransformInfo *Tti):
-  TheLoop(Lp), SE(Se), LI(Li), Legal(Leg), TTI(Tti) { }
+  LoopVectorizationCostModel(Loop *L, ScalarEvolution *SE, LoopInfo *LI,
+                             LoopVectorizationLegality *Legal,
+                             const TargetTransformInfo *TTI)
+      : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI) {}
 
   /// \return The most profitable vectorization factor.
   /// This method checks every power of two up to VF. If UserVF is not ZERO
