@@ -1609,10 +1609,11 @@ ScriptInterpreterPython::GenerateFunction(const char *signature, const StringLis
     
     // Wrap everything up inside the function, increasing the indentation.
     
+    auto_generated_function.AppendString("     if True:");
     for (int i = 0; i < num_lines; ++i)
     {
         sstr.Clear ();
-        sstr.Printf ("     %s", input.GetStringAtIndex (i));
+        sstr.Printf ("       %s", input.GetStringAtIndex (i));
         auto_generated_function.AppendString (sstr.GetData());
     }
     auto_generated_function.AppendString ("     for key in new_keys:");  // Iterate over all the keys from session dict
@@ -1702,7 +1703,8 @@ ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, std::st
     auto_generated_class.AppendString (sstr.GetData());
         
     // Wrap everything up inside the class, increasing the indentation.
-    
+    // we don't need to play any fancy indentation tricks here because there is no
+    // surrounding code whose indentation we need to honor
     for (int i = 0; i < num_lines; ++i)
     {
         sstr.Clear ();
