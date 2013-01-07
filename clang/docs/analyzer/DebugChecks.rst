@@ -9,6 +9,7 @@ The analyzer contains a number of checkers which can aid in debugging. Enable
 them by using the "-analyzer-checker=" flag, followed by the name of the
 checker.
 
+
 General Analysis Dumpers
 ========================
 
