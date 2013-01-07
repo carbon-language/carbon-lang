@@ -177,6 +177,7 @@ namespace {
       AU.addPreserved<DominatorTree>();
       AU.addRequired<DominatorTree>();
       AU.addRequired<TargetLibraryInfo>();
+      AU.addRequired<TargetTransformInfo>();
     }
 
     const DataLayout *getDataLayout() {
@@ -196,9 +197,7 @@ namespace {
     }
 
     const TargetTransformInfo *getTargetTransformInfo() {
-      if (!TTI)
-        TTI = getAnalysisIfAvailable<TargetTransformInfo>();
-      return TTI;
+      return TTI ? TTI : (TTI = &getAnalysis<TargetTransformInfo>());
     }
 
     Loop *getLoop() const { return CurLoop; }
@@ -219,6 +218,7 @@ INITIALIZE_PASS_DEPENDENCY(LCSSA)
 INITIALIZE_PASS_DEPENDENCY(ScalarEvolution)
 INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
+INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
 INITIALIZE_PASS_END(LoopIdiomRecognize, "loop-idiom", "Recognize loop idioms",
                     false, false)
 
