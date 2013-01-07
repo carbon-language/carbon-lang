@@ -1589,38 +1589,8 @@ llvm::DIType CGDebugInfo::CreateType(const RValueReferenceType *Ty,
 
 llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty, 
                                      llvm::DIFile U) {
-  QualType PointerDiffTy = CGM.getContext().getPointerDiffType();
-  llvm::DIType PointerDiffDITy = getOrCreateType(PointerDiffTy, U);
-  
-  if (!Ty->getPointeeType()->isFunctionType()) {
-    // We have a data member pointer type.
-    return PointerDiffDITy;
-  }
-  
-  // We have a member function pointer type. Treat it as a struct with two
-  // ptrdiff_t members.
-  std::pair<uint64_t, unsigned> Info = CGM.getContext().getTypeInfo(Ty);
-
-  uint64_t FieldOffset = 0;
-  llvm::Value *ElementTypes[2];
-  
-  // FIXME: This should be a DW_TAG_pointer_to_member type.
-  ElementTypes[0] =
-    DBuilder.createMemberType(U, "ptr", U, 0,
-                              Info.first, Info.second, FieldOffset, 0,
-                              PointerDiffDITy);
-  FieldOffset += Info.first;
-  
-  ElementTypes[1] =
-    DBuilder.createMemberType(U, "ptr", U, 0,
-                              Info.first, Info.second, FieldOffset, 0,
-                              PointerDiffDITy);
-  
-  llvm::DIArray Elements = DBuilder.getOrCreateArray(ElementTypes);
-
-  return DBuilder.createStructType(U, StringRef("test"), 
-                                   U, 0, FieldOffset, 
-                                   0, 0, Elements);
+  return DBuilder.createMemberPointerType(CreatePointeeType(Ty->getPointeeType(), U),
+                                    getOrCreateType(QualType(Ty->getClass(), 0), U));
 }
 
 llvm::DIType CGDebugInfo::CreateType(const AtomicType *Ty, 
