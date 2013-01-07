@@ -1,4 +1,4 @@
-//===- llvm/unittest/VMCore/Metadata.cpp - Metadata unit tests ------------===//
+//===- llvm/unittest/IR/Metadata.cpp - Metadata unit tests ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

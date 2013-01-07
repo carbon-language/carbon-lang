@@ -1,4 +1,4 @@
-##===- unittests/VMCore/Makefile ---------------------------*- Makefile -*-===##
+##===- unittests/IR/Makefile -------------------------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-TESTNAME = VMCore
+TESTNAME = IR
 LINK_COMPONENTS := core ipa asmparser
 
 include $(LEVEL)/Makefile.config

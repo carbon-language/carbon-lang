@@ -1,4 +1,4 @@
-//===- llvm/unittest/VMCore/InstructionsTest.cpp - Instructions unit tests ===//
+//===- llvm/unittest/IR/InstructionsTest.cpp - Instructions unit tests ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //

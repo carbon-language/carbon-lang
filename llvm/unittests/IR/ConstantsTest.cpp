@@ -1,4 +1,4 @@
-//===- llvm/unittest/VMCore/ConstantsTest.cpp - Constants unit tests ------===//
+//===- llvm/unittest/IR/ConstantsTest.cpp - Constants unit tests ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

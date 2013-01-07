@@ -1,4 +1,4 @@
-//===- llvm/unittest/VMCore/PassManager.cpp - Constants unit tests ------===//
+//===- llvm/unittest/IR/PassManager.cpp - PassManager unit tests ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

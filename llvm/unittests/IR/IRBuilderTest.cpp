@@ -1,4 +1,4 @@
-//===- llvm/unittest/VMCore/IRBuilderTest.cpp - IRBuilder tests -----------===//
+//===- llvm/unittest/IR/IRBuilderTest.cpp - IRBuilder tests ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- llvm/unittest/VMCore/TypesTest.cpp - Type unit tests ---------------===//
+//===- llvm/unittest/IR/TypesTest.cpp - Type unit tests -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

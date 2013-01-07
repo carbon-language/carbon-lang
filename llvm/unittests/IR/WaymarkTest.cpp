@@ -1,4 +1,4 @@
-//===- llvm/unittest/VMCore/WaymarkTest.cpp - getUser() unit tests --------===//
+//===- llvm/unittest/IR/WaymarkTest.cpp - getUser() unit tests ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

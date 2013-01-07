@@ -1,4 +1,4 @@
-//===- llvm/unittest/VMCore/VerifierTest.cpp - Verifier unit tests --------===//
+//===- llvm/unittest/IR/VerifierTest.cpp - Verifier unit tests ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
