@@ -2732,17 +2732,17 @@ multiclass PDI_binop_all<bits<8> opc, string OpcodeStr, SDNode Opcode,
                          ValueType OpVT128, ValueType OpVT256,
                          OpndItins itins, bit IsCommutable = 0> {
 let Predicates = [HasAVX] in
-  defm V#NAME# : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode, OpVT128,
+  defm V#NAME : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode, OpVT128,
                     VR128, memopv2i64, i128mem, itins, IsCommutable, 0>, VEX_4V;
 
 let Constraints = "$src1 = $dst" in
-  defm #NAME# : PDI_binop_rm<opc, OpcodeStr, Opcode, OpVT128, VR128,
-                             memopv2i64, i128mem, itins, IsCommutable, 1>;
+  defm NAME : PDI_binop_rm<opc, OpcodeStr, Opcode, OpVT128, VR128,
+                           memopv2i64, i128mem, itins, IsCommutable, 1>;
 
 let Predicates = [HasAVX2] in
   defm V#NAME#Y : PDI_binop_rm<opc, !strconcat("v", OpcodeStr), Opcode,
-                                OpVT256, VR256, memopv4i64, i256mem, itins,
-                                IsCommutable, 0>, VEX_4V, VEX_L;
+                               OpVT256, VR256, memopv4i64, i256mem, itins,
+                               IsCommutable, 0>, VEX_4V, VEX_L;
 }
 
 // These are ordered here for pattern ordering requirements with the fp versions
@@ -3635,13 +3635,13 @@ multiclass PDI_binop_all_int<bits<8> opc, string OpcodeStr, Intrinsic IntId128,
                              Intrinsic IntId256, OpndItins itins,
                              bit IsCommutable = 0> {
 let Predicates = [HasAVX] in
-  defm V#NAME# : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId128,
-                                  VR128, memopv2i64, i128mem, itins,
-                                  IsCommutable, 0>, VEX_4V;
+  defm V#NAME : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId128,
+                                 VR128, memopv2i64, i128mem, itins,
+                                 IsCommutable, 0>, VEX_4V;
 
 let Constraints = "$src1 = $dst" in
-  defm #NAME# : PDI_binop_rm_int<opc, OpcodeStr, IntId128, VR128, memopv2i64,
-                                 i128mem, itins, IsCommutable, 1>;
+  defm NAME : PDI_binop_rm_int<opc, OpcodeStr, IntId128, VR128, memopv2i64,
+                               i128mem, itins, IsCommutable, 1>;
 
 let Predicates = [HasAVX2] in
   defm V#NAME#Y : PDI_binop_rm_int<opc, !strconcat("v", OpcodeStr), IntId256,
