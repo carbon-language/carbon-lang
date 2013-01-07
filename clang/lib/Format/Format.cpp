@@ -946,6 +946,8 @@ private:
              (Left.isNot(tok::identifier) && Left.isNot(tok::kw_sizeof) &&
               Left.isNot(tok::kw_typeof) && Left.isNot(tok::kw_alignof));
     }
+    if (Left.is(tok::at) && Right.getObjCKeywordID() != tok::objc_not_keyword)
+      return false;
     return true;
   }
 

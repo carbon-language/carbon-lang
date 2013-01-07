@@ -1022,10 +1022,9 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
 }
 
 TEST_F(FormatTest, ObjCAt) {
-  // FIXME: Make the uncommented lines pass.
   verifyFormat("@autoreleasepool");
-  //verifyFormat("@catch");
-  //verifyFormat("@class");
+  verifyFormat("@catch");
+  verifyFormat("@class");
   verifyFormat("@compatibility_alias");
   verifyFormat("@defs");
   verifyFormat("@dynamic");
@@ -1037,17 +1036,17 @@ TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@interface");
   verifyFormat("@optional");
   verifyFormat("@package");
-  //verifyFormat("@private");
+  verifyFormat("@private");
   verifyFormat("@property");
-  //verifyFormat("@protected");
+  verifyFormat("@protected");
   verifyFormat("@protocol");
-  //verifyFormat("@public");
+  verifyFormat("@public");
   verifyFormat("@required");
   verifyFormat("@selector");
   verifyFormat("@synchronized");
   verifyFormat("@synthesize");
-  //verifyFormat("@throw");
-  //verifyFormat("@try");
+  verifyFormat("@throw");
+  verifyFormat("@try");
 
   EXPECT_EQ("@interface", format("@ interface"));
 
