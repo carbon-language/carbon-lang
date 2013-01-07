@@ -50,10 +50,10 @@ private:
   unsigned Loc;
 
   /// isMem - True if this is a memory loc, false if it is a register loc.
-  bool isMem : 1;
+  unsigned isMem : 1;
 
   /// isCustom - True if this arg/retval requires special handling.
-  bool isCustom : 1;
+  unsigned isCustom : 1;
 
   /// Information about how the value is assigned.
   LocInfo HTP : 6;
