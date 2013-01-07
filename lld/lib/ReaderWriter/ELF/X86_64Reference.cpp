@@ -15,6 +15,7 @@
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace lld {
 namespace elf {
@@ -62,8 +63,10 @@ void X86_64KindHandler::applyFixup(int32_t reloc, uint64_t addend,
                                    uint64_t targetAddress) {
   if (_fixupHandler[reloc])
     _fixupHandler[reloc](location, fixupAddress, targetAddress, addend);
-  else
+  else {
+    llvm::errs() << "Unknown relocation type: " << reloc << "\n";
     llvm_unreachable("Unknown relocation type.");
+  }
 }
 } // end namespace elf
 } // end namespace lld
