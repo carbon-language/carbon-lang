@@ -426,20 +426,25 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     bool IsExternal = false;
     bool IsFunction = false;
     bool IsCommon = false;
+    bool IsAvailExt = false;
 
     if (MO.isGlobal()) {
       const GlobalValue *GValue = MO.getGlobal();
-      MOSymbol = Mang->getSymbol(GValue);
-      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GValue);
+      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
+      const GlobalValue *RealGValue = GAlias ?
+        GAlias->resolveAliasedGlobal(false) : GValue;
+      MOSymbol = Mang->getSymbol(RealGValue);
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
       IsExternal = GVar && !GVar->hasInitializer();
-      IsCommon = GVar && GValue->hasCommonLinkage();
+      IsCommon = GVar && RealGValue->hasCommonLinkage();
       IsFunction = !GVar;
+      IsAvailExt = GVar && RealGValue->hasAvailableExternallyLinkage();
     } else if (MO.isCPI())
       MOSymbol = GetCPISymbol(MO.getIndex());
     else if (MO.isJTI())
       MOSymbol = GetJTISymbol(MO.getIndex());
 
-    if (IsExternal || IsFunction || IsCommon || MO.isJTI())
+    if (IsExternal || IsFunction || IsCommon || IsAvailExt || MO.isJTI())
       MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
 
     const MCExpr *Exp =
@@ -466,10 +471,14 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       MOSymbol = lookUpOrCreateTOCEntry(GetJTISymbol(MO.getIndex()));
     else {
       const GlobalValue *GValue = MO.getGlobal();
-      MOSymbol = Mang->getSymbol(GValue);
-      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GValue);
+      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
+      const GlobalValue *RealGValue = GAlias ?
+        GAlias->resolveAliasedGlobal(false) : GValue;
+      MOSymbol = Mang->getSymbol(RealGValue);
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
     
-      if (!GVar || !GVar->hasInitializer() || GValue->hasCommonLinkage())
+      if (!GVar || !GVar->hasInitializer() || RealGValue->hasCommonLinkage() ||
+          RealGValue->hasAvailableExternallyLinkage())
         MOSymbol = lookUpOrCreateTOCEntry(MOSymbol);
     }
 
@@ -496,8 +505,11 @@ void PPCAsmPrinter::EmitInstruction(const MachineInstr *MI) {
 
     if (MO.isGlobal()) {
       const GlobalValue *GValue = MO.getGlobal();
-      MOSymbol = Mang->getSymbol(GValue);
-      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(GValue);
+      const GlobalAlias *GAlias = dyn_cast<GlobalAlias>(GValue);
+      const GlobalValue *RealGValue = GAlias ?
+        GAlias->resolveAliasedGlobal(false) : GValue;
+      MOSymbol = Mang->getSymbol(RealGValue);
+      const GlobalVariable *GVar = dyn_cast<GlobalVariable>(RealGValue);
       IsExternal = GVar && !GVar->hasInitializer();
       IsFunction = !GVar;
     } else if (MO.isCPI())
