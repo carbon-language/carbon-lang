@@ -338,6 +338,9 @@ public:
     return getTypeWidth(IntMaxType);
   }
 
+  // Return the size of unwind_word for this target.
+  unsigned getUnwindWordWidth() const { return getPointerWidth(0); }
+
   /// \brief Return the "preferred" register width on this target.
   uint64_t getRegisterWidth() const {
     // Currently we assume the register width on the target matches the pointer

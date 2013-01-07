@@ -3270,6 +3270,10 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     if (Str == "pointer")
       DestWidth = S.Context.getTargetInfo().getPointerWidth(0);
     break;
+  case 11:
+    if (Str == "unwind_word")
+      DestWidth = S.Context.Target.getUnwindWordWidth();
+    break;
   }
 
   QualType OldTy;

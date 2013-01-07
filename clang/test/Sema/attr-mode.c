@@ -17,6 +17,8 @@ typedef int invalid_3 __attribute((mode(II))); // expected-error{{unknown machin
 typedef struct {int i,j,k;} invalid_4 __attribute((mode(SI))); // expected-error{{mode attribute only supported for integer and floating-point types}}
 typedef float invalid_5 __attribute((mode(SI))); // expected-error{{type of machine mode does not match type of base type}}
 
+typedef unsigned unwind_word __attribute((mode(unwind_word)));
+
 int **__attribute((mode(QI)))* i32;  // expected-error{{mode attribute}}
 
 typedef _Complex double c32 __attribute((mode(SC)));
