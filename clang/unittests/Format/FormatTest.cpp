@@ -394,6 +394,7 @@ TEST_F(FormatTest, FormatsSmallMacroDefinitionsInSingleLine) {
 
 TEST_F(FormatTest, BreaksOnHashWhenDirectiveIsInvalid) {
   EXPECT_EQ("#\n;", format("#;"));
+  verifyFormat("#\n;\n;\n;");
 }
 
 TEST_F(FormatTest, UnescapedEndOfLineEndsPPDirective) {

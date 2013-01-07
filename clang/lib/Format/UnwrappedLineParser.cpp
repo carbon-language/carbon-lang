@@ -41,8 +41,9 @@ public:
   }
 
   virtual FormatToken getNextToken() {
-    // FIXME: Write test that breaks due to a missing
-    // if (eof()) return createEOF();
+    // The \c UnwrappedLineParser guards against this by never calling
+    // \c getNextToken() after it has encountered the first eof token.
+    assert(!eof());
     Token = PreviousTokenSource->getNextToken();
     if (eof())
       return createEOF();
