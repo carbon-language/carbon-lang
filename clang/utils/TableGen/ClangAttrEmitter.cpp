@@ -549,11 +549,6 @@ namespace {
     }
     void writeDump(raw_ostream &OS) const {
       OS << "    switch(SA->get" << getUpperName() << "()) {\n";
-      OS << "    default:\n";
-      OS << "      llvm_unreachable(\"Unknown " << getAttrName() << "Attr::"
-         << type << "!\");\n";
-      OS << "      break;\n";
-
       for (std::vector<StringRef>::const_iterator I = uniques.begin(),
            E = uniques.end(); I != E; ++I) {
         OS << "    case " << getAttrName() << "Attr::" << *I << ":\n";
