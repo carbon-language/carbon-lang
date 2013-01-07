@@ -71,7 +71,7 @@ tools that very specifically compliment, and allow use and testing of
 *Clang* specific functionality.
 
 ``clang-check``
-~~~~~~~~~~~~~~~
+---------------
 
 This tool combines the LibTooling framework for running a Clang tool
 with the basic Clang diagnostics by syntax checking specific files in a
