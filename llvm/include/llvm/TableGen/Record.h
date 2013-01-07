@@ -128,16 +128,8 @@ public:   // These methods should only be called from subclasses of Init
     return convertValue((TypedInit*)FI);
   }
 
-public:   // These methods should only be called by subclasses of RecTy.
-  // baseClassOf - These virtual methods should be overloaded to return true iff
-  // all values of type 'RHS' can be converted to the 'this' type.
-  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
-  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
+public:
+  virtual bool baseClassOf(const RecTy*) const;
 };
 
 inline raw_ostream &operator<<(raw_ostream &OS, const RecTy &Ty) {
@@ -179,14 +171,7 @@ public:
   virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
-  virtual bool baseClassOf(const BitRecTy    *RHS) const { return true; }
-  virtual bool baseClassOf(const BitsRecTy   *RHS) const;
-  virtual bool baseClassOf(const IntRecTy    *RHS) const { return true; }
-  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
-  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
-
+  virtual bool baseClassOf(const RecTy*) const;
 };
 
 
@@ -226,16 +211,7 @@ public:
   virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
-  virtual bool baseClassOf(const BitRecTy    *RHS) const { return Size == 1; }
-  virtual bool baseClassOf(const BitsRecTy   *RHS) const {
-    return RHS->Size == Size;
-  }
-  virtual bool baseClassOf(const IntRecTy    *RHS) const { return true; }
-  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
-  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
-
+  virtual bool baseClassOf(const RecTy*) const;
 };
 
 
@@ -273,14 +249,7 @@ public:
     return RHS->baseClassOf(this);
   }
 
-  virtual bool baseClassOf(const BitRecTy    *RHS) const { return true; }
-  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return true; }
-  virtual bool baseClassOf(const IntRecTy    *RHS) const { return true; }
-  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
-  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
-
+  virtual bool baseClassOf(const RecTy*) const;
 };
 
 /// StringRecTy - 'string' - Represent an string value
@@ -317,14 +286,6 @@ public:
   virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
-
-  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const StringRecTy *RHS) const { return true; }
-  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
 };
 
 // ListRecTy - 'list<Ty>' - Represent a list of values, all of which must be of
@@ -366,15 +327,7 @@ public:
     return RHS->baseClassOf(this);
   }
 
-  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
-  virtual bool baseClassOf(const ListRecTy   *RHS) const {
-    return RHS->getElementType()->typeIsConvertibleTo(Ty);
-  }
-  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
+  virtual bool baseClassOf(const RecTy*) const;
 };
 
 /// DagRecTy - 'dag' - Represent a dag fragment
@@ -410,14 +363,6 @@ public:
   virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
-
-  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
-  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const DagRecTy    *RHS) const { return true; }
-  virtual bool baseClassOf(const RecordRecTy *RHS) const { return false; }
 };
 
 
@@ -458,13 +403,7 @@ public:
   virtual bool typeIsConvertibleTo(const RecTy *RHS) const {
     return RHS->baseClassOf(this);
   }
-  virtual bool baseClassOf(const BitRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const BitsRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
-  virtual bool baseClassOf(const ListRecTy   *RHS) const { return false; }
-  virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
-  virtual bool baseClassOf(const RecordRecTy *RHS) const;
+  virtual bool baseClassOf(const RecTy*) const;
 };
 
 /// resolveTypes - Find a common type that T1 and T2 convert to.

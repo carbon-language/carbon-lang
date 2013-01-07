@@ -95,13 +95,14 @@ ListRecTy *RecTy::getListTy() {
   return ListTy;
 }
 
+bool RecTy::baseClassOf(const RecTy *RHS) const{
+  assert (RHS && "NULL pointer");
+  return Kind == RHS->getRecTyKind();
+}
+
 Init *BitRecTy::convertValue(BitsInit *BI) {
   if (BI->getNumBits() != 1) return 0; // Only accept if just one bit!
   return BI->getBit(0);
-}
-
-bool BitRecTy::baseClassOf(const BitsRecTy *RHS) const {
-  return RHS->getNumBits() == 1;
 }
 
 Init *BitRecTy::convertValue(IntInit *II) {
@@ -116,6 +117,14 @@ Init *BitRecTy::convertValue(TypedInit *VI) {
   if (isa<BitRecTy>(Ty) || isa<BitsRecTy>(Ty) || isa<IntRecTy>(Ty))
     return VI;  // Accept variable if it is already of bit type!
   return 0;
+}
+
+bool BitRecTy::baseClassOf(const RecTy *RHS) const{
+  if(RecTy::baseClassOf(RHS) || getRecTyKind() == IntRecTyKind)
+    return true;
+  if(const BitsRecTy *BitsTy = dyn_cast<BitsRecTy>(RHS))
+    return BitsTy->getNumBits() == 1;
+  return false;
 }
 
 BitsRecTy *BitsRecTy::get(unsigned Sz) {
@@ -193,6 +202,13 @@ Init *BitsRecTy::convertValue(TypedInit *VI) {
   return 0;
 }
 
+bool BitsRecTy::baseClassOf(const RecTy *RHS) const{
+  if (RecTy::baseClassOf(RHS)) //argument and the receiver are the same type
+    return cast<BitsRecTy>(RHS)->Size == Size;
+  RecTyKind kind = RHS->getRecTyKind();
+  return (kind == BitRecTyKind && Size == 1) || (kind == IntRecTyKind);
+}
+
 Init *IntRecTy::convertValue(BitInit *BI) {
   return IntInit::get(BI->getValue());
 }
@@ -212,6 +228,11 @@ Init *IntRecTy::convertValue(TypedInit *TI) {
   if (TI->getType()->typeIsConvertibleTo(this))
     return TI;  // Accept variable if already of the right type!
   return 0;
+}
+
+bool IntRecTy::baseClassOf(const RecTy *RHS) const{
+  RecTyKind kind = RHS->getRecTyKind();
+  return kind==BitRecTyKind || kind==BitsRecTyKind || kind==IntRecTyKind;
 }
 
 Init *StringRecTy::convertValue(UnOpInit *BO) {
@@ -275,6 +296,12 @@ Init *ListRecTy::convertValue(TypedInit *TI) {
   return 0;
 }
 
+bool ListRecTy::baseClassOf(const RecTy *RHS) const{
+  if(const ListRecTy* ListTy = dyn_cast<ListRecTy>(RHS))
+    return ListTy->getElementType()->typeIsConvertibleTo(Ty);
+  return false;
+}
+
 Init *DagRecTy::convertValue(TypedInit *TI) {
   if (TI->getType()->typeIsConvertibleTo(this))
     return TI;
@@ -328,13 +355,17 @@ Init *RecordRecTy::convertValue(TypedInit *TI) {
   return 0;
 }
 
-bool RecordRecTy::baseClassOf(const RecordRecTy *RHS) const {
-  if (Rec == RHS->getRecord() || RHS->getRecord()->isSubClassOf(Rec))
+bool RecordRecTy::baseClassOf(const RecTy *RHS) const{
+  const RecordRecTy *RTy = dyn_cast<RecordRecTy>(RHS);
+  if (!RTy)
+    return false;
+
+  if (Rec == RTy->getRecord() || RTy->getRecord()->isSubClassOf(Rec))
     return true;
 
   const std::vector<Record*> &SC = Rec->getSuperClasses();
   for (unsigned i = 0, e = SC.size(); i != e; ++i)
-    if (RHS->getRecord()->isSubClassOf(SC[i]))
+    if (RTy->getRecord()->isSubClassOf(SC[i]))
       return true;
 
   return false;
