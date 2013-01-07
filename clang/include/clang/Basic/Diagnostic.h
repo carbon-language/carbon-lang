@@ -77,7 +77,7 @@ public:
                                    bool BeforePreviousInsertions = false) {
     FixItHint Hint;
     Hint.RemoveRange =
-      CharSourceRange(SourceRange(InsertionLoc, InsertionLoc), false);
+      CharSourceRange::getCharRange(InsertionLoc, InsertionLoc);
     Hint.CodeToInsert = Code;
     Hint.BeforePreviousInsertions = BeforePreviousInsertions;
     return Hint;
@@ -90,7 +90,7 @@ public:
                                         bool BeforePreviousInsertions = false) {
     FixItHint Hint;
     Hint.RemoveRange =
-      CharSourceRange(SourceRange(InsertionLoc, InsertionLoc), false);
+      CharSourceRange::getCharRange(InsertionLoc, InsertionLoc);
     Hint.InsertFromRange = FromRange;
     Hint.BeforePreviousInsertions = BeforePreviousInsertions;
     return Hint;

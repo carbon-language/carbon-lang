@@ -227,20 +227,14 @@ class CharSourceRange {
   bool IsTokenRange;
 public:
   CharSourceRange() : IsTokenRange(false) {}
-  CharSourceRange(SourceRange R, bool ITR) : Range(R),IsTokenRange(ITR){}
+  CharSourceRange(SourceRange R, bool ITR) : Range(R), IsTokenRange(ITR) {}
 
   static CharSourceRange getTokenRange(SourceRange R) {
-    CharSourceRange Result;
-    Result.Range = R;
-    Result.IsTokenRange = true;
-    return Result;
+    return CharSourceRange(R, true);
   }
 
   static CharSourceRange getCharRange(SourceRange R) {
-    CharSourceRange Result;
-    Result.Range = R;
-    Result.IsTokenRange = false;
-    return Result;
+    return CharSourceRange(R, false);
   }
     
   static CharSourceRange getTokenRange(SourceLocation B, SourceLocation E) {
