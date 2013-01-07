@@ -697,6 +697,13 @@ APFloat::operator=(const APFloat &rhs)
 }
 
 bool
+APFloat::isDenormal() const {
+  return isNormal() && (exponent == semantics->minExponent) &&
+         (APInt::tcExtractBit(significandParts(), 
+                              semantics->precision - 1) == 0);
+}
+
+bool
 APFloat::bitwiseIsEqual(const APFloat &rhs) const {
   if (this == &rhs)
     return true;

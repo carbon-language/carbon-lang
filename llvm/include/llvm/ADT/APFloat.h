@@ -327,6 +327,7 @@ namespace llvm {
     bool isNegative() const { return sign; }
     bool isPosZero() const { return isZero() && !isNegative(); }
     bool isNegZero() const { return isZero() && isNegative(); }
+    bool isDenormal() const;
 
     APFloat& operator=(const APFloat &);
 

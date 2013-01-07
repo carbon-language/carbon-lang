@@ -33,6 +33,58 @@ static std::string convertToString(double d, unsigned Prec, unsigned Pad) {
 
 namespace {
 
+TEST(APFloatTest, Denormal) {
+  APFloat::roundingMode rdmd = APFloat::rmNearestTiesToEven;
+
+  // Test single precision
+  {
+    const char *MinNormalStr = "1.17549435082228750797e-38";
+    EXPECT_FALSE(APFloat(APFloat::IEEEsingle, MinNormalStr).isDenormal());
+    EXPECT_FALSE(APFloat(APFloat::IEEEsingle, 0.0).isDenormal());
+
+    APFloat Val2(APFloat::IEEEsingle, 2.0e0);
+    APFloat T(APFloat::IEEEsingle, MinNormalStr);
+    T.divide(Val2, rdmd);
+    EXPECT_TRUE(T.isDenormal());
+  }
+
+  // Test double precision
+  {
+    const char *MinNormalStr = "2.22507385850720138309e-308";
+    EXPECT_FALSE(APFloat(APFloat::IEEEdouble, MinNormalStr).isDenormal());
+    EXPECT_FALSE(APFloat(APFloat::IEEEdouble, 0.0).isDenormal());
+
+    APFloat Val2(APFloat::IEEEdouble, 2.0e0);
+    APFloat T(APFloat::IEEEdouble, MinNormalStr);
+    T.divide(Val2, rdmd);
+    EXPECT_TRUE(T.isDenormal());
+  }
+
+  // Test Intel double-ext
+  {
+    const char *MinNormalStr = "3.36210314311209350626e-4932";
+    EXPECT_FALSE(APFloat(APFloat::x87DoubleExtended, MinNormalStr).isDenormal());
+    EXPECT_FALSE(APFloat(APFloat::x87DoubleExtended, 0.0).isDenormal());
+
+    APFloat Val2(APFloat::x87DoubleExtended, 2.0e0);
+    APFloat T(APFloat::x87DoubleExtended, MinNormalStr);
+    T.divide(Val2, rdmd);
+    EXPECT_TRUE(T.isDenormal());
+  }
+
+  // Test quadruple precision
+  {
+    const char *MinNormalStr = "3.36210314311209350626267781732175260e-4932";
+    EXPECT_FALSE(APFloat(APFloat::IEEEquad, MinNormalStr).isDenormal());
+    EXPECT_FALSE(APFloat(APFloat::IEEEquad, 0.0).isDenormal());
+
+    APFloat Val2(APFloat::IEEEquad, 2.0e0);
+    APFloat T(APFloat::IEEEquad, MinNormalStr);
+    T.divide(Val2, rdmd);
+    EXPECT_TRUE(T.isDenormal());
+  }
+}
+
 TEST(APFloatTest, Zero) {
   EXPECT_EQ(0.0f,  APFloat(0.0f).convertToFloat());
   EXPECT_EQ(-0.0f, APFloat(-0.0f).convertToFloat());
