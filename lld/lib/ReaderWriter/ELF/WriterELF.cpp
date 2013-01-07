@@ -641,7 +641,7 @@ template<support::endianness target_endianness,
 class SegmentSlice {
 public:
   typedef typename std::vector<
-    Section<target_endianness, max_align, is64Bits> *>::iterator sectionIter;
+    Chunk<target_endianness, max_align, is64Bits> *>::iterator sectionIter;
 
   SegmentSlice() { }
 
@@ -721,7 +721,7 @@ public:
   typedef typename std::vector<SegmentSlice<
     target_endianness, max_align, is64Bits> *>::iterator slice_iter;
   typedef typename std::vector<
-    Section<target_endianness, max_align, is64Bits> *>::iterator SectionIter;
+    Chunk<target_endianness, max_align, is64Bits> *>::iterator SectionIter;
 
   Segment(const StringRef name,
           const ELFLayout::SegmentType type,
@@ -894,7 +894,9 @@ public:
           virtualAddressSet = true;
         }
         (*si)->setVAddr(addr);
-        (*si)->assignVirtualAddress(addr);
+        if (auto s =
+              dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si))
+          s->assignVirtualAddress(addr);
         (*si)->setMemSize(addr - (*si)->virtualAddr());
       }
       (*sei)->setMemSize(addr - (*sei)->virtualAddr());
@@ -956,7 +958,8 @@ public:
   }
 
 private:
-  std::vector<Section<target_endianness, max_align, is64Bits> *> _sections;
+  /// \brief Section or some other chunk type.
+  std::vector<Chunk<target_endianness, max_align, is64Bits> *> _sections;
   std::vector<SegmentSlice<target_endianness, max_align, is64Bits> *>
     _segmentSlices;
   ELFLayout::SegmentType _segmentType;
