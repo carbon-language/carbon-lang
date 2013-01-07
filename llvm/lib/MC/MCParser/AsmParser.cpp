@@ -1214,7 +1214,8 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
       return Error(IDLoc, "invalid symbol redefinition");
 
     // Emit the label.
-    Out.EmitLabel(Sym);
+    if (!ParsingInlineAsm)
+      Out.EmitLabel(Sym);
 
     // If we are generating dwarf for assembly source files then gather the
     // info to make a dwarf label entry for this label if needed.
