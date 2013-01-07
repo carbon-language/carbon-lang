@@ -29,6 +29,7 @@ protected:
     LangOptions LangOpts;
     LangOpts.CPlusPlus = 1;
     LangOpts.CPlusPlus11 = 1;
+    LangOpts.ObjC1 = 1;
     Lexer Lex(ID, Context.Sources.getBuffer(ID), Context.Sources, LangOpts);
     tooling::Replacements Replace = reformat(Style, Lex, Context.Sources,
                                              Ranges);
@@ -1018,6 +1019,11 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
           "outRange4:(NSRange) out_range4  outRange5:(NSRange) out_range5 "
           "outRange6:(NSRange) out_range6  outRange7:(NSRange) out_range7  "
           "outRange8:(NSRange) out_range8  outRange9:(NSRange) out_range9;"));
+}
+
+TEST_F(FormatTest, DoNotDropAt) {
+  verifyFormat("@interface");
+  verifyFormat("@dynamic");
 }
 
 } // end namespace tooling
