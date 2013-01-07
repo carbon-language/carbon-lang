@@ -135,8 +135,8 @@ bool EliminateDuplicatePHINodes(BasicBlock *BB);
 /// of the CFG.  It returns true if a modification was made, possibly deleting
 /// the basic block that was pointed to.
 ///
-bool SimplifyCFG(BasicBlock *BB, const DataLayout *TD = 0,
-                 const TargetTransformInfo *TTI = 0);
+bool SimplifyCFG(BasicBlock *BB, const TargetTransformInfo &TTI,
+                 const DataLayout *TD = 0);
 
 /// FoldBranchToCommonDest - If this basic block is ONLY a setcc and a branch,
 /// and if a predecessor branches to us and one of our successors, fold the
