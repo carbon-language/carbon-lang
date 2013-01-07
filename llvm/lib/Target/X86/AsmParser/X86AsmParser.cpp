@@ -463,7 +463,7 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   static X86Operand *CreateToken(StringRef Str, SMLoc Loc) {
-    SMLoc EndLoc = SMLoc::getFromPointer(Loc.getPointer() + Str.size() - 1);
+    SMLoc EndLoc = SMLoc::getFromPointer(Loc.getPointer() + Str.size());
     X86Operand *Res = new X86Operand(Token, Loc, EndLoc);
     Res->Tok.Data = Str.data();
     Res->Tok.Length = Str.size();
@@ -558,10 +558,12 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
     Parser.Lex(); // Eat percent token.
 
   const AsmToken &Tok = Parser.getTok();
+  EndLoc = Tok.getEndLoc();
+
   if (Tok.isNot(AsmToken::Identifier)) {
     if (isParsingIntelSyntax()) return true;
     return Error(StartLoc, "invalid register name",
-                 SMRange(StartLoc, Tok.getEndLoc()));
+                 SMRange(StartLoc, EndLoc));
   }
 
   RegNo = MatchRegisterName(Tok.getString());
@@ -582,13 +584,12 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
         X86II::isX86_64ExtendedReg(RegNo))
       return Error(StartLoc, "register %"
                    + Tok.getString() + " is only available in 64-bit mode",
-                   SMRange(StartLoc, Tok.getEndLoc()));
+                   SMRange(StartLoc, EndLoc));
   }
 
   // Parse "%st" as "%st(0)" and "%st(1)", which is multiple tokens.
   if (RegNo == 0 && (Tok.getString() == "st" || Tok.getString() == "ST")) {
     RegNo = X86::ST0;
-    EndLoc = Tok.getLoc();
     Parser.Lex(); // Eat 'st'
 
     // Check to see if we have '(4)' after %st.
@@ -615,10 +616,12 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
     if (getParser().Lex().isNot(AsmToken::RParen))
       return Error(Parser.getTok().getLoc(), "expected ')'");
 
-    EndLoc = Tok.getLoc();
+    EndLoc = Parser.getTok().getEndLoc();
     Parser.Lex(); // Eat ')'
     return false;
   }
+
+  EndLoc = Parser.getTok().getEndLoc();
 
   // If this is "db[0-7]", match it as an alias
   // for dr[0-7].
@@ -636,7 +639,7 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
     }
 
     if (RegNo != 0) {
-      EndLoc = Tok.getLoc();
+      EndLoc = Parser.getTok().getEndLoc();
       Parser.Lex(); // Eat it.
       return false;
     }
@@ -645,10 +648,9 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
   if (RegNo == 0) {
     if (isParsingIntelSyntax()) return true;
     return Error(StartLoc, "invalid register name",
-                 SMRange(StartLoc, Tok.getEndLoc()));
+                 SMRange(StartLoc, EndLoc));
   }
 
-  EndLoc = Tok.getEndLoc();
   Parser.Lex(); // Eat identifier token.
   return false;
 }
@@ -677,7 +679,7 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
                                                    unsigned Size) {
   unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
   const AsmToken &Tok = Parser.getTok();
-  SMLoc Start = Tok.getLoc(), End;
+  SMLoc Start = Tok.getLoc(), End = Tok.getEndLoc();
 
   const MCExpr *Disp = MCConstantExpr::Create(0, getContext());
   // Parse [ BaseReg + Scale*IndexReg + Disp ] or [ symbol ]
@@ -693,9 +695,9 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       // Handle '[' 'symbol' ']'
       if (getParser().ParseExpression(Disp, End)) return 0;
       if (getLexer().isNot(AsmToken::RBrac))
-        return ErrorOperand(Start, "Expected ']' token!");
+        return ErrorOperand(Parser.getTok().getLoc(), "Expected ']' token!");
+      End = Parser.getTok().getEndLoc();
       Parser.Lex();
-      End = Tok.getLoc();
       return X86Operand::CreateMem(Disp, Start, End, Size);
     }
   } else if (getLexer().is(AsmToken::Integer)) {
@@ -704,8 +706,8 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       SMLoc Loc = Tok.getLoc();
       if (getLexer().is(AsmToken::RBrac)) {
         // Handle '[' number ']'
+        End = Parser.getTok().getEndLoc();
         Parser.Lex();
-        End = Tok.getLoc();
         const MCExpr *Disp = MCConstantExpr::Create(Val, getContext());
         if (SegReg)
           return X86Operand::CreateMem(SegReg, Disp, 0, 0, Scale,
@@ -726,8 +728,8 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
   bool ExpectRBrac = true;
   if (getLexer().is(AsmToken::RBrac)) {
     ExpectRBrac = false;
+    End = Parser.getTok().getEndLoc();
     Parser.Lex();
-    End = Tok.getLoc();
   }
 
   if (getLexer().is(AsmToken::Plus) || getLexer().is(AsmToken::Minus) ||
@@ -753,18 +755,18 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         return ErrorOperand(PlusLoc, "unexpected token after +");
     } else if (getLexer().is(AsmToken::Identifier)) {
       // This could be an index register or a displacement expression.
-      End = Tok.getLoc();
       if (!IndexReg)
         ParseRegister(IndexReg, Start, End);
-      else if (getParser().ParseExpression(Disp, End)) return 0;
+      else if (getParser().ParseExpression(Disp, End))
+        return 0;
     }
   }
   
   // Parse ][ as a plus.
   if (getLexer().is(AsmToken::RBrac)) {
     ExpectRBrac = false;
+    End = Parser.getTok().getEndLoc();
     Parser.Lex();
-    End = Tok.getLoc();
     if (getLexer().is(AsmToken::LBrac)) {
       ExpectRBrac = true;
       Parser.Lex();
@@ -772,15 +774,15 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
         return 0;
     }
   } else if (ExpectRBrac) {
-      if (getParser().ParseExpression(Disp, End))
-        return 0;
+    if (getParser().ParseExpression(Disp, End))
+      return 0;
   }
 
   if (ExpectRBrac) {
     if (getLexer().isNot(AsmToken::RBrac))
       return ErrorOperand(End, "expected ']' token!");
+    End = Parser.getTok().getEndLoc();
     Parser.Lex();
-    End = Tok.getLoc();
   }
 
   // Parse the dot operator (e.g., [ebx].foo.bar).
@@ -790,11 +792,10 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
     if (ParseIntelDotOperator(Disp, &NewDisp, Err))
       return ErrorOperand(Tok.getLoc(), Err);
     
+    End = Parser.getTok().getEndLoc();
     Parser.Lex();  // Eat the field.
     Disp = NewDisp;
   }
-
-  End = Tok.getLoc();
 
   // handle [-42]
   if (!BaseReg && !IndexReg)
@@ -831,8 +832,8 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
   }
 
   const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
-  if (getParser().ParseExpression(Disp, End)) return 0;
-  End = Parser.getTok().getLoc();
+  if (getParser().ParseExpression(Disp, End))
+    return 0;
 
   bool NeedSizeDir = false;
   if (!Size && isParsingInlineAsm()) {
@@ -921,8 +922,6 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator(SMLoc Start) {
   if (getParser().ParseExpression(Val, End))
     return ErrorOperand(Start, "Unable to parse expression!");
 
-  End = Parser.getTok().getLoc();
-
   // Don't emit the offset operator.
   InstInfo->AsmRewrites->push_back(AsmRewrite(AOK_Skip, OffsetOfLoc, 7));
 
@@ -946,8 +945,6 @@ X86Operand *X86AsmParser::ParseIntelTypeOperator(SMLoc Start) {
   const MCExpr *Val;
   if (getParser().ParseExpression(Val, End))
     return 0;
-
-  End = Parser.getTok().getLoc();
 
   unsigned Size = 0;
   if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Val)) {
@@ -995,7 +992,6 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
       getLexer().is(AsmToken::Minus)) {
     const MCExpr *Val;
     if (!getParser().ParseExpression(Val, End)) {
-      End = Parser.getTok().getLoc();
       return X86Operand::CreateImm(Val, Start, End);
     }
   }
@@ -1006,7 +1002,7 @@ X86Operand *X86AsmParser::ParseIntelOperand() {
     // If this is a segment register followed by a ':', then this is the start
     // of a memory reference, otherwise this is a normal register reference.
     if (getLexer().isNot(AsmToken::Colon))
-      return X86Operand::CreateReg(RegNo, Start, Parser.getTok().getLoc());
+      return X86Operand::CreateReg(RegNo, Start, End);
 
     getParser().Lex(); // Eat the colon.
     return ParseIntelMemOperand(RegNo, Start);
@@ -1183,7 +1179,7 @@ X86Operand *X86AsmParser::ParseMemOperand(unsigned SegReg, SMLoc MemStart) {
     Error(Parser.getTok().getLoc(), "unexpected token in memory operand");
     return 0;
   }
-  SMLoc MemEnd = Parser.getTok().getLoc();
+  SMLoc MemEnd = Parser.getTok().getEndLoc();
   Parser.Lex(); // Eat the ')'.
 
   // If we have both a base register and an index register make sure they are

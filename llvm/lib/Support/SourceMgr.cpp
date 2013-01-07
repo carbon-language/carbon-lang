@@ -304,7 +304,7 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
   for (unsigned r = 0, e = Ranges.size(); r != e; ++r) {
     std::pair<unsigned, unsigned> R = Ranges[r];
     for (unsigned i = R.first,
-         e = std::min(R.second, (unsigned)LineContents.size())+1; i != e; ++i)
+         e = std::min(R.second, (unsigned)LineContents.size()); i != e; ++i)
       CaretLine[i] = '~';
   }
     

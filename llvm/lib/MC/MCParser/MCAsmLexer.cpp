@@ -28,5 +28,5 @@ SMLoc AsmToken::getLoc() const {
 }
 
 SMLoc AsmToken::getEndLoc() const {
-  return SMLoc::getFromPointer(Str.data() + Str.size() - 1);
+  return SMLoc::getFromPointer(Str.data() + Str.size());
 }

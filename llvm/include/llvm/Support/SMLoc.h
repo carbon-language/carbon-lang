@@ -19,7 +19,7 @@
 
 namespace llvm {
 
-/// SMLoc - Represents a location in source code.
+/// Represents a location in source code.
 class SMLoc {
   const char *Ptr;
 public:
@@ -39,9 +39,11 @@ public:
   }
 };
 
-/// SMRange - Represents a range in source code.  Note that unlike standard STL
-/// ranges, the locations specified are considered to be *inclusive*.  For
-/// example, [X,X] *does* include X, it isn't an empty range.
+/// Represents a range in source code.
+///
+/// SMRange is implemented using a half-open range, as is the convention in C++.
+/// In the string "abc", the range (1,3] represents the substring "bc", and the
+/// range (2,2] represents an empty range between the characters "b" and "c".
 class SMRange {
 public:
   SMLoc Start, End;

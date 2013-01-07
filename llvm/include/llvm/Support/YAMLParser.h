@@ -184,7 +184,7 @@ public:
     : Node(NK_Scalar, D, Anchor)
     , Value(Val) {
     SMLoc Start = SMLoc::getFromPointer(Val.begin());
-    SMLoc End = SMLoc::getFromPointer(Val.end() - 1);
+    SMLoc End = SMLoc::getFromPointer(Val.end());
     SourceRange = SMRange(Start, End);
   }
 
