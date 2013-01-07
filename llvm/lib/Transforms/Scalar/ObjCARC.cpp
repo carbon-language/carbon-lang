@@ -3753,6 +3753,9 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
           // If so, we can zap the retain and autorelease.
           Changed = true;
           ++NumRets;
+          DEBUG(dbgs() << "ObjCARCOpt::OptimizeReturns: Erasing: " << *Retain
+                       << "\n                             Erasing: "
+                       << *Autorelease << "\n");
           EraseInstruction(Retain);
           EraseInstruction(Autorelease);
         }
