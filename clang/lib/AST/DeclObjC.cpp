@@ -1352,15 +1352,19 @@ void ObjCProtocolDecl::startDefinition() {
 }
 
 void ObjCProtocolDecl::collectPropertiesToImplement(PropertyMap &PM) const {
-  for (ObjCProtocolDecl::prop_iterator P = prop_begin(),
-      E = prop_end(); P != E; ++P) {
+  const ObjCProtocolDecl *PDecl = this;
+  if (!isThisDeclarationADefinition() && getDefinition())
+    PDecl = getDefinition();
+
+  for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
+       E = PDecl->prop_end(); P != E; ++P) {
     ObjCPropertyDecl *Prop = *P;
     // Insert into PM if not there already.
     PM.insert(std::make_pair(Prop->getIdentifier(), Prop));
   }
   // Scan through protocol's protocols.
-  for (ObjCProtocolDecl::protocol_iterator PI = protocol_begin(),
-      E = protocol_end(); PI != E; ++PI)
+  for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
+      E = PDecl->protocol_end(); PI != E; ++PI)
     (*PI)->collectPropertiesToImplement(PM);
 }
 

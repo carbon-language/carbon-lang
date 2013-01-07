@@ -1593,6 +1593,11 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
       NSIDecl = IDecl->lookupInheritedClass(&Context.Idents.get("NSProxy"));
   }
 
+  // If this is a forward protocol declaration, get its definition.
+  if (!PDecl->isThisDeclarationADefinition() &&
+      PDecl->getDefinition())
+    PDecl = PDecl->getDefinition();
+  
   // If a method lookup fails locally we still need to look and see if
   // the method was implemented by a base class or an inherited
   // protocol. This lookup is slow, but occurs rarely in correct code
