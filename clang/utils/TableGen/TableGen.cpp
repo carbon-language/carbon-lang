@@ -33,6 +33,7 @@ enum ActionType {
   GenClangAttrTemplateInstantiate,
   GenClangAttrParsedAttrList,
   GenClangAttrParsedAttrKinds,
+  GenClangAttrDump,
   GenClangDiagsDefs,
   GenClangDiagGroups,
   GenClangDiagsIndexName,
@@ -81,6 +82,8 @@ namespace {
                     clEnumValN(GenClangAttrParsedAttrKinds,
                                "gen-clang-attr-parsed-attr-kinds",
                                "Generate a clang parsed attribute kinds"),
+                    clEnumValN(GenClangAttrDump, "gen-clang-attr-dump",
+                               "Generate clang attribute dumper"),
                     clEnumValN(GenClangDiagsDefs, "gen-clang-diags-defs",
                                "Generate Clang diagnostics definitions"),
                     clEnumValN(GenClangDiagGroups, "gen-clang-diag-groups",
@@ -152,6 +155,9 @@ bool ClangTableGenMain(raw_ostream &OS, RecordKeeper &Records) {
     break;
   case GenClangAttrParsedAttrKinds:
     EmitClangAttrParsedAttrKinds(Records, OS);
+    break;
+  case GenClangAttrDump:
+    EmitClangAttrDump(Records, OS);
     break;
   case GenClangDiagsDefs:
     EmitClangDiagsDefs(Records, OS, ClangComponent);

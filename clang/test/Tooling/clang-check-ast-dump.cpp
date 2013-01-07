@@ -31,7 +31,8 @@
 // RUN: clang-check -ast-dump -ast-dump-filter test_namespace::TheClass::n "%s" -- 2>&1 | FileCheck -check-prefix CHECK-ATTR %s
 // CHECK-ATTR: test_namespace
 // CHECK-ATTR-NEXT: (FieldDecl{{.*}}n
-// FIXME: attribute dumping not implemented yet
+// CHECK-ATTR-NEXT:   (AlignedAttr
+// CHECK-ATTR-NEXT:     (BinaryOperator
 //
 // RUN: clang-check -ast-dump -ast-dump-filter test_namespace::AfterNullNode "%s" -- 2>&1 | FileCheck -check-prefix CHECK-AFTER-NULL %s
 // CHECK-AFTER-NULL: class AfterNullNode

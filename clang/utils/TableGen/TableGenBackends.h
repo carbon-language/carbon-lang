@@ -39,6 +39,7 @@ void EmitClangAttrLateParsedList(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrTemplateInstantiate(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrParsedAttrList(RecordKeeper &Records, raw_ostream &OS);
 void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS);
+void EmitClangAttrDump(RecordKeeper &Records, raw_ostream &OS);
 
 void EmitClangDiagsDefs(RecordKeeper &Records, raw_ostream &OS,
                         const std::string &Component);

@@ -125,6 +125,8 @@ namespace {
     virtual void writePCHReadDecls(raw_ostream &OS) const = 0;
     virtual void writePCHWrite(raw_ostream &OS) const = 0;
     virtual void writeValue(raw_ostream &OS) const = 0;
+    virtual void writeDump(raw_ostream &OS) const = 0;
+    virtual void writeDumpChildren(raw_ostream &OS) const {}
   };
 
   class SimpleArgument : public Argument {
@@ -179,6 +181,28 @@ namespace {
         OS << "\" << get" << getUpperName() << "().getRawEncoding() << \"";
       } else {
         OS << "\" << get" << getUpperName() << "() << \"";
+      }
+    }
+    void writeDump(raw_ostream &OS) const {
+      if (type == "FunctionDecl *") {
+        OS << "    OS << \" \";\n";
+        OS << "    dumpBareDeclRef(SA->get" << getUpperName() << "());\n"; 
+      } else if (type == "IdentifierInfo *") {
+        OS << "    OS << \" \" << SA->get" << getUpperName()
+           << "()->getName();\n";
+      } else if (type == "QualType") {
+        OS << "    OS << \" \" << SA->get" << getUpperName()
+           << "().getAsString();\n";
+      } else if (type == "SourceLocation") {
+        OS << "    OS << \" \";\n";
+        OS << "    SA->get" << getUpperName() << "().print(OS, *SM);\n";
+      } else if (type == "bool") {
+        OS << "    if (SA->get" << getUpperName() << "()) OS << \" "
+           << getUpperName() << "\";\n";
+      } else if (type == "int" || type == "unsigned") {
+        OS << "    OS << \" \" << SA->get" << getUpperName() << "();\n";
+      } else {
+        llvm_unreachable("Unknown SimpleArgument type!");
       }
     }
   };
@@ -240,6 +264,10 @@ namespace {
     }
     void writeValue(raw_ostream &OS) const {
       OS << "\\\"\" << get" << getUpperName() << "() << \"\\\"";
+    }
+    void writeDump(raw_ostream &OS) const {
+      OS << "    OS << \" \\\"\" << SA->get" << getUpperName()
+         << "() << \"\\\"\";\n";
     }
   };
 
@@ -353,6 +381,15 @@ namespace {
          << "  " << getLowerName() << "Expr->printPretty(OS, 0, Policy);\n"
          << "  OS << \"";
     }
+    void writeDump(raw_ostream &OS) const {
+    }
+    void writeDumpChildren(raw_ostream &OS) const {
+      OS << "    if (SA->is" << getUpperName() << "Expr())\n";
+      OS << "      dumpStmt(SA->get" << getUpperName() << "Expr());\n";
+      OS << "    else\n";
+      OS << "      dumpType(SA->get" << getUpperName()
+         << "Type()->getType());\n";
+    }
   };
 
   class VariadicArgument : public Argument {
@@ -439,17 +476,30 @@ namespace {
          << "  }\n";
       OS << "  OS << \"";
     }
+    void writeDump(raw_ostream &OS) const {
+      OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
+         << "_iterator I = SA->" << getLowerName() << "_begin(), E = SA->"
+         << getLowerName() << "_end(); I != E; ++I)\n";
+      OS << "      OS << \" \" << *I;\n";
+    }
   };
 
   class EnumArgument : public Argument {
     std::string type;
-    std::vector<StringRef> values, enums;
+    std::vector<StringRef> values, enums, uniques;
   public:
     EnumArgument(Record &Arg, StringRef Attr)
       : Argument(Arg, Attr), type(Arg.getValueAsString("Type")),
         values(getValueAsListOfStrings(Arg, "Values")),
-        enums(getValueAsListOfStrings(Arg, "Enums"))
-    {}
+        enums(getValueAsListOfStrings(Arg, "Enums")),
+        uniques(enums)
+    {
+      // Calculate the various enum values
+      std::sort(uniques.begin(), uniques.end());
+      uniques.erase(std::unique(uniques.begin(), uniques.end()), uniques.end());
+      // FIXME: Emit a proper error
+      assert(!uniques.empty());
+    }
 
     void writeAccessors(raw_ostream &OS) const {
       OS << "  " << type << " get" << getUpperName() << "() const {\n";
@@ -469,16 +519,8 @@ namespace {
       OS << type << " " << getUpperName();
     }
     void writeDeclarations(raw_ostream &OS) const {
-      // Calculate the various enum values
-      std::vector<StringRef> uniques(enums);
-      std::sort(uniques.begin(), uniques.end());
-      uniques.erase(std::unique(uniques.begin(), uniques.end()),
-                    uniques.end());
-      // FIXME: Emit a proper error
-      assert(!uniques.empty());
-
-      std::vector<StringRef>::iterator i = uniques.begin(),
-                                       e = uniques.end();
+      std::vector<StringRef>::const_iterator i = uniques.begin(),
+                                             e = uniques.end();
       // The last one needs to not have a comma.
       --e;
 
@@ -504,6 +546,21 @@ namespace {
     }
     void writeValue(raw_ostream &OS) const {
       OS << "\" << get" << getUpperName() << "() << \"";
+    }
+    void writeDump(raw_ostream &OS) const {
+      OS << "    switch(SA->get" << getUpperName() << "()) {\n";
+      OS << "    default:\n";
+      OS << "      llvm_unreachable(\"Unknown " << getAttrName() << "Attr::"
+         << type << "!\");\n";
+      OS << "      break;\n";
+
+      for (std::vector<StringRef>::const_iterator I = uniques.begin(),
+           E = uniques.end(); I != E; ++I) {
+        OS << "    case " << getAttrName() << "Attr::" << *I << ":\n";
+        OS << "      OS << \" " << *I << "\";\n";
+        OS << "      break;\n";
+      }
+      OS << "    }\n";
     }
   };
 
@@ -552,6 +609,9 @@ namespace {
     void writeValue(raw_ostream &OS) const {
       OS << getLowerName() << "=\" << get" << getUpperName() << "() << \"";
     }
+    void writeDump(raw_ostream &OS) const {
+      OS << "    OS << \" \" << SA->get" << getUpperName() << "();\n";
+    }
   };
 
   class ExprArgument : public SimpleArgument {
@@ -574,6 +634,13 @@ namespace {
       OS << "        tempInst" << getUpperName() << " = "
          << "Result.takeAs<Expr>();\n";
       OS << "      }\n";
+    }
+
+    void writeDump(raw_ostream &OS) const {
+    }
+
+    void writeDumpChildren(raw_ostream &OS) const {
+      OS << "    dumpStmt(SA->get" << getUpperName() << "());\n";
     }
   };
 
@@ -606,6 +673,16 @@ namespace {
       OS << "          *TI = Result.takeAs<Expr>();\n";
       OS << "        }\n";
       OS << "      }\n";
+    }
+
+    void writeDump(raw_ostream &OS) const {
+    }
+
+    void writeDumpChildren(raw_ostream &OS) const {
+      OS << "    for (" << getAttrName() << "Attr::" << getLowerName()
+         << "_iterator I = SA->" << getLowerName() << "_begin(), E = SA->"
+         << getLowerName() << "_end(); I != E; ++I)\n";
+      OS << "      dumpStmt(*I);\n";
     }
   };
 }
@@ -1161,6 +1238,38 @@ void EmitClangAttrParsedAttrKinds(RecordKeeper &Records, raw_ostream &OS) {
   StringMatcher("Name", Matches, OS).Emit();
   OS << "return AttributeList::UnknownAttribute;\n"
      << "}\n";
+}
+
+// Emits the code to dump an attribute.
+void EmitClangAttrDump(RecordKeeper &Records, raw_ostream &OS) {
+  OS <<
+    "  switch (A->getKind()) {\n"
+    "  default:\n"
+    "    llvm_unreachable(\"Unknown attribute kind!\");\n"
+    "    break;\n";
+  std::vector<Record*> Attrs = Records.getAllDerivedDefinitions("Attr"), Args;
+  for (std::vector<Record*>::iterator I = Attrs.begin(), E = Attrs.end();
+       I != E; ++I) {
+    Record &R = **I;
+    if (!R.getValueAsBit("ASTNode"))
+      continue;
+    OS << "  case attr::" << R.getName() << ": {\n";
+    Args = R.getValueAsListOfDefs("Args");
+    if (!Args.empty()) {
+      OS << "    const " << R.getName() << "Attr *SA = cast<" << R.getName()
+         << "Attr>(A);\n";
+      for (std::vector<Record*>::iterator I = Args.begin(), E = Args.end();
+           I != E; ++I)
+        createArgument(**I, R.getName())->writeDump(OS);
+      for (std::vector<Record*>::iterator I = Args.begin(), E = Args.end();
+           I != E; ++I)
+        createArgument(**I, R.getName())->writeDumpChildren(OS);
+    }
+    OS <<
+      "    break;\n"
+      "  }\n";
+  }
+  OS << "  }\n";
 }
 
 } // end namespace clang

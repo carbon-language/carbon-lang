@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/Attr.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclVisitor.h"
@@ -74,6 +75,7 @@ namespace  {
     void dumpDeclRef(const Decl *Node, const char *Label = 0);
     void dumpName(const NamedDecl *D);
     void dumpDeclContext(const DeclContext *DC);
+    void dumpAttr(const Attr *A);
 
     // C++ Utilities
     void dumpAccessSpecifier(AccessSpecifier AS);
@@ -141,6 +143,7 @@ namespace  {
     // Stmts.
     void VisitStmt(Stmt *Node);
     void VisitDeclStmt(DeclStmt *Node);
+    void VisitAttributedStmt(AttributedStmt *Node);
     void VisitLabelStmt(LabelStmt *Node);
     void VisitGotoStmt(GotoStmt *Node);
 
@@ -308,6 +311,19 @@ void ASTDumper::dumpDeclContext(const DeclContext *DC) {
     dumpDecl(*I);
 }
 
+void ASTDumper::dumpAttr(const Attr *A) {
+  IndentScope Indent(*this);
+  switch (A->getKind()) {
+#define ATTR(X) case attr::X: OS << #X; break;
+#include "clang/Basic/AttrList.inc"
+  default: llvm_unreachable("unexpected attribute kind");
+  }
+  OS << "Attr";
+  dumpPointer(A);
+  dumpSourceRange(A->getRange());
+#include "clang/AST/AttrDump.inc"
+}
+
 //===----------------------------------------------------------------------===//
 //  C++ Utilities
 //===----------------------------------------------------------------------===//
@@ -425,6 +441,11 @@ void ASTDumper::dumpDecl(Decl *D) {
   dumpPointer(D);
   dumpSourceRange(D->getSourceRange());
   DeclVisitor<ASTDumper>::Visit(D);
+  if (D->hasAttrs()) {
+    for (AttrVec::const_iterator I = D->getAttrs().begin(),
+         E = D->getAttrs().end(); I != E; ++I)
+      dumpAttr(*I);
+  }
   // Decls within functions are visited by the body
   if (!isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D))
     dumpDeclContext(dyn_cast<DeclContext>(D));
@@ -957,6 +978,13 @@ void ASTDumper::VisitDeclStmt(DeclStmt *Node) {
   for (DeclStmt::decl_iterator I = Node->decl_begin(), E = Node->decl_end();
        I != E; ++I)
     dumpDecl(*I);
+}
+
+void ASTDumper::VisitAttributedStmt(AttributedStmt *Node) {
+  VisitStmt(Node);
+  for (ArrayRef<const Attr*>::iterator I = Node->getAttrs().begin(),
+       E = Node->getAttrs().end(); I != E; ++I)
+    dumpAttr(*I);
 }
 
 void ASTDumper::VisitLabelStmt(LabelStmt *Node) {

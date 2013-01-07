@@ -8,6 +8,11 @@ clang_tablegen(AttrImpl.inc -gen-clang-attr-impl
   SOURCE ../Basic/Attr.td
   TARGET ClangAttrImpl)
 
+clang_tablegen(AttrDump.inc -gen-clang-attr-dump
+  -I ${CMAKE_CURRENT_SOURCE_DIR}/../../
+  SOURCE ../Basic/Attr.td
+  TARGET ClangAttrDump)
+
 clang_tablegen(StmtNodes.inc -gen-clang-stmt-nodes
   SOURCE ../Basic/StmtNodes.td
   TARGET ClangStmtNodes)
