@@ -143,7 +143,7 @@ void MachineOperand::ChangeToRegister(unsigned Reg, bool isDef, bool isImp,
   // Change this to a register and set the reg#.
   OpKind = MO_Register;
   SmallContents.RegNo = Reg;
-  SubReg = 0;
+  SubReg_TargetFlags = 0;
   IsDef = isDef;
   IsImp = isImp;
   IsKill = isKill;

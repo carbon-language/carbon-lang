@@ -65,15 +65,11 @@ private:
   /// union.
   unsigned char OpKind; // MachineOperandType
 
-  // This union is discriminated by OpKind.
-  union {
-    /// SubReg - Subregister number, only valid for MO_Register.  A value of 0
-    /// indicates the MO_Register has no subReg.
-    unsigned char SubReg;
-
-    /// TargetFlags - This is a set of target-specific operand flags.
-    unsigned char TargetFlags;
-  };
+  /// Subregister number for MO_Register.  A value of 0 indicates the
+  /// MO_Register has no subReg.
+  ///
+  /// For all other kinds of operands, this field holds target-specific flags.
+  unsigned SubReg_TargetFlags : 12;
 
   /// TiedTo - Non-zero when this register operand is tied to another register
   /// operand. The encoding of this field is described in the block comment
@@ -181,24 +177,25 @@ private:
     } OffsetedInfo;
   } Contents;
 
-  explicit MachineOperand(MachineOperandType K) : OpKind(K), ParentMI(0) {
-    TargetFlags = 0;
-  }
+  explicit MachineOperand(MachineOperandType K)
+    : OpKind(K), SubReg_TargetFlags(0), ParentMI(0) {}
 public:
   /// getType - Returns the MachineOperandType for this operand.
   ///
   MachineOperandType getType() const { return (MachineOperandType)OpKind; }
 
-  unsigned char getTargetFlags() const {
-    return isReg() ? 0 : TargetFlags;
+  unsigned getTargetFlags() const {
+    return isReg() ? 0 : SubReg_TargetFlags;
   }
-  void setTargetFlags(unsigned char F) {
+  void setTargetFlags(unsigned F) {
     assert(!isReg() && "Register operands can't have target flags");
-    TargetFlags = F;
+    SubReg_TargetFlags = F;
+    assert(SubReg_TargetFlags == F && "Target flags out of range");
   }
-  void addTargetFlag(unsigned char F) {
+  void addTargetFlag(unsigned F) {
     assert(!isReg() && "Register operands can't have target flags");
-    TargetFlags |= F;
+    SubReg_TargetFlags |= F;
+    assert((SubReg_TargetFlags & F) && "Target flags out of range");
   }
 
 
@@ -266,7 +263,7 @@ public:
 
   unsigned getSubReg() const {
     assert(isReg() && "Wrong MachineOperand accessor");
-    return (unsigned)SubReg;
+    return SubReg_TargetFlags;
   }
 
   bool isUse() const {
@@ -341,7 +338,8 @@ public:
 
   void setSubReg(unsigned subReg) {
     assert(isReg() && "Wrong MachineOperand accessor");
-    SubReg = (unsigned char)subReg;
+    SubReg_TargetFlags = subReg;
+    assert(SubReg_TargetFlags == subReg && "SubReg out of range");
   }
 
   /// substVirtReg - Substitute the current register with the virtual
@@ -579,7 +577,7 @@ public:
     Op.SmallContents.RegNo = Reg;
     Op.Contents.Reg.Prev = 0;
     Op.Contents.Reg.Next = 0;
-    Op.SubReg = SubReg;
+    Op.setSubReg(SubReg);
     return Op;
   }
   static MachineOperand CreateMBB(MachineBasicBlock *MBB,
