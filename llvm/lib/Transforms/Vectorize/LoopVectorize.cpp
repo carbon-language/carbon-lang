@@ -101,7 +101,13 @@ EnableIfConversion("enable-if-conversion", cl::init(true), cl::Hidden,
                    cl::desc("Enable if-conversion during vectorization."));
 
 /// We don't vectorize loops with a known constant trip count below this number.
-static const unsigned TinyTripCountThreshold = 16;
+static const unsigned TinyTripCountVectorThreshold = 16;
+
+/// We don't unroll loops with a known constant trip count below this number.
+static const unsigned TinyTripCountUnrollThreshold = 128;
+
+/// We don't unroll loops that are larget than this threshold.
+static const unsigned MaxLoopSizeThreshold = 32;
 
 /// When performing a runtime memory check, do not check more than this
 /// number of pointers. Notice that the check is quadratic!
@@ -2016,7 +2022,7 @@ bool LoopVectorizationLegality::canVectorize() {
 
   // Do not loop-vectorize loops with a tiny trip count.
   unsigned TC = SE->getSmallConstantTripCount(TheLoop, Latch);
-  if (TC > 0u && TC < TinyTripCountThreshold) {
+  if (TC > 0u && TC < TinyTripCountVectorThreshold) {
     DEBUG(dbgs() << "LV: Found a loop with a very small trip count. " <<
           "This loop is not worth vectorizing.\n");
     return false;
@@ -2678,6 +2684,12 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   if (OptForSize)
     return 1;
 
+  // Do not unroll loops with a relatively small trip count.
+  unsigned TC = SE->getSmallConstantTripCount(TheLoop,
+                                              TheLoop->getLoopLatch());
+  if (TC > 1 && TC < TinyTripCountUnrollThreshold)
+    return 1;
+
   unsigned TargetVectorRegisters = TTI.getNumberOfRegisters(true);
   DEBUG(dbgs() << "LV: The target has " << TargetVectorRegisters <<
         " vector registers\n");
@@ -2698,7 +2710,7 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
 
   // We don't want to unroll the loops to the point where they do not fit into
   // the decoded cache. Assume that we only allow 32 IR instructions.
-  UF = std::min(UF, (32 / R.NumInstructions));
+  UF = std::min(UF, (MaxLoopSizeThreshold / R.NumInstructions));
 
   // Clamp the unroll factor ranges to reasonable factors.
   if (UF > MaxUnrollSize)
