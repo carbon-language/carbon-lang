@@ -52,8 +52,8 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
 }
 
 void ARMBaseTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
-  // Add first the target-independent BasicTTI pass, then our X86 pass. This
-  // allows the X86 pass to delegate to the target independent layer when
+  // Add first the target-independent BasicTTI pass, then our ARM pass. This
+  // allows the ARM pass to delegate to the target independent layer when
   // appropriate.
   PM.add(createBasicTargetTransformInfoPass(getTargetLowering()));
   PM.add(createARMTargetTransformInfoPass(this));
