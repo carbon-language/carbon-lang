@@ -408,7 +408,8 @@ Derived type descriptors
     i32,      ;; Flags to encode attributes, e.g. private
     metadata, ;; Reference to type derived from
     metadata, ;; (optional) Name of the Objective C property associated with
-              ;; Objective-C an ivar
+              ;; Objective-C an ivar, or the type of which this
+              ;; pointer-to-member is pointing to members of.
     metadata, ;; (optional) Name of the Objective C property getter selector.
     metadata, ;; (optional) Name of the Objective C property setter selector.
     i32       ;; (optional) Objective C property attributes.
@@ -420,14 +421,15 @@ values:
 
 .. code-block:: llvm
 
-  DW_TAG_formal_parameter = 5
-  DW_TAG_member           = 13
-  DW_TAG_pointer_type     = 15
-  DW_TAG_reference_type   = 16
-  DW_TAG_typedef          = 22
-  DW_TAG_const_type       = 38
-  DW_TAG_volatile_type    = 53
-  DW_TAG_restrict_type    = 55
+  DW_TAG_formal_parameter   = 5
+  DW_TAG_member             = 13
+  DW_TAG_pointer_type       = 15
+  DW_TAG_reference_type     = 16
+  DW_TAG_typedef            = 22
+  DW_TAG_ptr_to_member_type = 31
+  DW_TAG_const_type         = 38
+  DW_TAG_volatile_type      = 53
+  DW_TAG_restrict_type      = 55
 
 ``DW_TAG_member`` is used to define a member of a :ref:`composite type
 <format_composite_type>` or :ref:`subprogram <format_subprograms>`.  The type
