@@ -241,6 +241,26 @@ std::string Attribute::getAsString() const {
 // AttrBuilder Method Implementations
 //===----------------------------------------------------------------------===//
 
+AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Idx)
+  : Alignment(0), StackAlignment(0) {
+  AttributeSetImpl *pImpl = AS.AttrList;
+  if (!pImpl) return;
+
+  ArrayRef<AttributeWithIndex> AttrList = pImpl->getAttributes();
+  const AttributeWithIndex *AWI = 0;
+  for (unsigned I = 0, E = AttrList.size(); I != E; ++I)
+    if (AttrList[I].Index == Idx) {
+      AWI = &AttrList[I];
+      break;
+    }
+
+  assert(AWI && "Cannot find index in attribute set!");
+
+  /// FIXME: This will be modified in the future. Basically, the
+  /// AttributeWithIndex class will contain the
+
+}
+
 void AttrBuilder::clear() {
   Attrs.clear();
   Alignment = StackAlignment = 0;

@@ -39,9 +39,7 @@ public:
                 ArrayRef<Constant*> values);
   AttributeImpl(LLVMContext &C, StringRef data);
 
-  ArrayRef<Constant*> getValues() const {
-    return Vals;
-  }
+  ArrayRef<Constant*> getValues() const { return Vals; }
 
   bool hasAttribute(Attribute::AttrKind A) const;
 
