@@ -389,6 +389,9 @@ Fedora 17) have both Clang 3.0 and libstdc++ 4.7 in their repositories.  Clang
 3.0 does not implement a few builtins that are used in this library.  We
 recommend using the system GCC to compile LLVM and Clang in this case.
 
+**Clang 3.0 on Mageia 2**.  There's a packaging issue: Clang can not find at
+least some (``cxxabi.h``) libstdc++ headers.
+
 .. _Getting Started with LLVM:
 
 Getting Started with LLVM
