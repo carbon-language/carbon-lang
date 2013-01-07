@@ -340,7 +340,7 @@ struct X9 : X8 {
 // CHECK: Punctuation: ")" [92:26 - 92:27] CallExpr=g:86:8
 
 // Dependent name type
-// CHECK: Keyword: "typedef" [100:3 - 100:10] ClassTemplate=X5:98:8 (Definition)
+// CHECK: Keyword: "typedef" [100:3 - 100:10] TypedefDecl=iter_type:100:63 (Definition)
 // CHECK: Keyword: "typename" [100:11 - 100:19] TypedefDecl=iter_type:100:63 (Definition)
 // CHECK: Identifier: "outer_alias" [100:20 - 100:31] NamespaceRef=outer_alias:10:11
 // CHECK: Punctuation: "::" [100:31 - 100:33] TypedefDecl=iter_type:100:63 (Definition)
@@ -354,7 +354,7 @@ struct X9 : X8 {
 // CHECK: Identifier: "iterator" [100:54 - 100:62] TypedefDecl=iter_type:100:63 (Definition)
 // CHECK: Identifier: "iter_type" [100:63 - 100:72] TypedefDecl=iter_type:100:63 (Definition)
 
-// CHECK: Keyword: "typedef" [101:3 - 101:10] ClassTemplate=X5:98:8 (Definition)
+// CHECK: Keyword: "typedef" [101:3 - 101:10] TypedefDecl=int_ptr_type:101:62 (Definition)
 // CHECK: Keyword: "typename" [101:11 - 101:19] TypedefDecl=int_ptr_type:101:62 (Definition)
 // CHECK: Identifier: "outer_alias" [101:20 - 101:31] NamespaceRef=outer_alias:10:11
 // CHECK: Punctuation: "::" [101:31 - 101:33] TypedefDecl=int_ptr_type:101:62 (Definition)
@@ -386,7 +386,7 @@ struct X9 : X8 {
 // CHECK: Punctuation: ">" [107:74 - 107:75] TypedefDecl=type1:107:76 (Definition)
 // CHECK: Identifier: "type1" [107:76 - 107:81] TypedefDecl=type1:107:76 (Definition)
 
-// CHECK: Keyword: "typedef" [108:3 - 108:10] ClassTemplate=X6:105:8 (Definition)
+// CHECK: Keyword: "typedef" [108:3 - 108:10] TypedefDecl=type2:108:83 (Definition)
 // CHECK: Keyword: "typename" [108:11 - 108:19] TypedefDecl=type2:108:83 (Definition)
 // CHECK: Identifier: "outer_alias" [108:20 - 108:31] NamespaceRef=outer_alias:10:11
 // CHECK: Punctuation: "::" [108:31 - 108:33] TypedefDecl=type2:108:83 (Definition)
@@ -406,7 +406,7 @@ struct X9 : X8 {
 // CHECK: Identifier: "other" [108:77 - 108:82] TypedefDecl=type2:108:83 (Definition)
 // CHECK: Identifier: "type2" [108:83 - 108:88] TypedefDecl=type2:108:83 (Definition)
 
-// CHECK: Keyword: "typedef" [109:3 - 109:10] ClassTemplate=X6:105:8 (Definition)
+// CHECK: Keyword: "typedef" [109:3 - 109:10] TypedefDecl=type3:109:73 (Definition)
 // CHECK: Keyword: "class" [109:11 - 109:16] TypedefDecl=type3:109:73 (Definition)
 // CHECK: Identifier: "outer_alias" [109:17 - 109:28] NamespaceRef=outer_alias:10:11
 // CHECK: Punctuation: "::" [109:28 - 109:30] TypedefDecl=type3:109:73 (Definition)
@@ -444,7 +444,7 @@ struct X9 : X8 {
 // CHECK: Identifier: "type4" [110:80 - 110:85] TypedefDecl=type4:110:80 (Definition)
 
 // Template template arguments
-// CHECK: Keyword: "typedef" [126:3 - 126:10] ClassTemplate=X7:123:8 (Definition)
+// CHECK: Keyword: "typedef" [126:3 - 126:10] TypedefDecl=type:126:74 (Definition)
 // CHECK: Identifier: "outer_alias" [126:11 - 126:22] NamespaceRef=outer_alias:10:11
 // CHECK: Punctuation: "::" [126:22 - 126:24] TypedefDecl=type:126:74 (Definition)
 // CHECK: Identifier: "inner" [126:24 - 126:29] NamespaceRef=inner:114:13

@@ -5142,24 +5142,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   
   SourceLocation L = SourceLocation::getFromRawEncoding(Loc.int_data);
 
-  // Adjust the annotated range based specific declarations.
   const enum CXCursorKind cursorK = clang_getCursorKind(cursor);
-  if (clang_isDeclaration(cursorK)) {
-    Decl *D = cxcursor::getCursorDecl(cursor);
-    
-    SourceLocation StartLoc;
-    if (const DeclaratorDecl *DD = dyn_cast_or_null<DeclaratorDecl>(D)) {
-      if (TypeSourceInfo *TI = DD->getTypeSourceInfo())
-        StartLoc = TI->getTypeLoc().getLocStart();
-    } else if (TypedefDecl *Typedef = dyn_cast_or_null<TypedefDecl>(D)) {
-      if (TypeSourceInfo *TI = Typedef->getTypeSourceInfo())
-        StartLoc = TI->getTypeLoc().getLocStart();
-    }
-
-    if (StartLoc.isValid() && L.isValid() &&
-        SrcMgr.isBeforeInTranslationUnit(StartLoc, L))
-      cursorRange.setBegin(StartLoc);
-  }
   
   // If the location of the cursor occurs within a macro instantiation, record
   // the spelling location of the cursor in our annotation map.  We can then

@@ -74,7 +74,7 @@ enum Color g(int i, ...) {
 // CHECK: Punctuation: "&" [8:22 - 8:23] UnaryOperator=
 // CHECK: Identifier: "x" [8:23 - 8:24] DeclRefExpr=x:7:12
 // CHECK: Punctuation: ";" [8:24 - 8:25] DeclStmt=
-// CHECK: Keyword: "const" [9:3 - 9:8] DeclStmt=
+// CHECK: Keyword: "const" [9:3 - 9:8] VarDecl=hello:9:16 (Definition)
 // CHECK: Keyword: "char" [9:9 - 9:13] VarDecl=hello:9:16 (Definition)
 // CHECK: Punctuation: "*" [9:14 - 9:15] VarDecl=hello:9:16 (Definition)
 // CHECK: Identifier: "hello" [9:16 - 9:21] VarDecl=hello:9:16 (Definition)

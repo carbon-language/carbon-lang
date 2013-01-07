@@ -480,7 +480,7 @@ static Rdar8595462_A * Rdar8595462_staticVar;
 // CHECK: Identifier: "localVar" [100:10 - 100:18] DeclRefExpr=localVar:99:19
 // CHECK: Punctuation: ";" [100:18 - 100:19] CompoundStmt=
 // CHECK: Punctuation: "}" [101:1 - 101:2] CompoundStmt=
-// CHECK: Keyword: "static" [102:1 - 102:7] ObjCImplementationDecl=Rdar8595462_B:97:17 (Definition)
+// CHECK: Keyword: "static" [102:1 - 102:7] VarDecl=Rdar8595462_staticVar:102:24
 // CHECK: Identifier: "Rdar8595462_A" [102:8 - 102:21] ObjCClassRef=Rdar8595462_A:93:8
 // CHECK: Punctuation: "*" [102:22 - 102:23] VarDecl=Rdar8595462_staticVar:102:24
 // CHECK: Identifier: "Rdar8595462_staticVar" [102:24 - 102:45] VarDecl=Rdar8595462_staticVar:102:24

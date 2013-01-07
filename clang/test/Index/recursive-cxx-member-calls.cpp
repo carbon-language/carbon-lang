@@ -222,11 +222,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Keyword: "int" [7:3 - 7:6] FunctionDecl=memcmp:7:7
 // CHECK-tokens: Identifier: "memcmp" [7:7 - 7:13] FunctionDecl=memcmp:7:7
 // CHECK-tokens: Punctuation: "(" [7:13 - 7:14] FunctionDecl=memcmp:7:7
-// CHECK-tokens: Keyword: "const" [7:14 - 7:19] FunctionDecl=memcmp:7:7
+// CHECK-tokens: Keyword: "const" [7:14 - 7:19] ParmDecl=:7:26 (Definition)
 // CHECK-tokens: Keyword: "void" [7:20 - 7:24] ParmDecl=:7:26 (Definition)
 // CHECK-tokens: Punctuation: "*" [7:25 - 7:26] ParmDecl=:7:26 (Definition)
 // CHECK-tokens: Punctuation: "," [7:26 - 7:27] ParmDecl=:7:26 (Definition)
-// CHECK-tokens: Keyword: "const" [7:28 - 7:33] FunctionDecl=memcmp:7:7
+// CHECK-tokens: Keyword: "const" [7:28 - 7:33] ParmDecl=:7:40 (Definition)
 // CHECK-tokens: Keyword: "void" [7:34 - 7:38] ParmDecl=:7:40 (Definition)
 // CHECK-tokens: Punctuation: "*" [7:39 - 7:40] ParmDecl=:7:40 (Definition)
 // CHECK-tokens: Punctuation: "," [7:40 - 7:41] ParmDecl=:7:40 (Definition)
@@ -236,7 +236,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "size_t" [8:3 - 8:9] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "strlen" [8:10 - 8:16] FunctionDecl=strlen:8:10
 // CHECK-tokens: Punctuation: "(" [8:16 - 8:17] FunctionDecl=strlen:8:10
-// CHECK-tokens: Keyword: "const" [8:17 - 8:22] FunctionDecl=strlen:8:10
+// CHECK-tokens: Keyword: "const" [8:17 - 8:22] ParmDecl=:8:29 (Definition)
 // CHECK-tokens: Keyword: "char" [8:23 - 8:27] ParmDecl=:8:29 (Definition)
 // CHECK-tokens: Punctuation: "*" [8:28 - 8:29] ParmDecl=:8:29 (Definition)
 // CHECK-tokens: Punctuation: ")" [8:29 - 8:30] ParmDecl=:8:29 (Definition)
@@ -397,11 +397,11 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "IgnoredAttribute" [31:25 - 31:41] EnumConstantDecl=IgnoredAttribute:31:25 (Definition)
 // CHECK-tokens: Punctuation: "}" [32:5 - 32:6] EnumDecl=Kind:13:10 (Definition)
 // CHECK-tokens: Punctuation: ";" [32:6 - 32:7] ClassDecl=AttributeList:12:9 (Definition)
-// CHECK-tokens: Keyword: "static" [33:5 - 33:11] ClassDecl=AttributeList:12:9 (Definition)
+// CHECK-tokens: Keyword: "static" [33:5 - 33:11] CXXMethod=getKind:33:17 (static)
 // CHECK-tokens: Identifier: "Kind" [33:12 - 33:16] TypeRef=enum clang::AttributeList::Kind:13:10
 // CHECK-tokens: Identifier: "getKind" [33:17 - 33:24] CXXMethod=getKind:33:17 (static)
 // CHECK-tokens: Punctuation: "(" [33:24 - 33:25] CXXMethod=getKind:33:17 (static)
-// CHECK-tokens: Keyword: "const" [33:25 - 33:30] CXXMethod=getKind:33:17 (static)
+// CHECK-tokens: Keyword: "const" [33:25 - 33:30] ParmDecl=Name:33:48 (Definition)
 // CHECK-tokens: Identifier: "IdentifierInfo" [33:31 - 33:45] TypeRef=class clang::IdentifierInfo:66:7
 // CHECK-tokens: Punctuation: "*" [33:46 - 33:47] ParmDecl=Name:33:48 (Definition)
 // CHECK-tokens: Identifier: "Name" [33:48 - 33:52] ParmDecl=Name:33:48 (Definition)
@@ -413,7 +413,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "size_t" [36:1 - 36:7] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "magic_length" [36:8 - 36:20] FunctionDecl=magic_length:36:8
 // CHECK-tokens: Punctuation: "(" [36:20 - 36:21] FunctionDecl=magic_length:36:8
-// CHECK-tokens: Keyword: "const" [36:21 - 36:26] FunctionDecl=magic_length:36:8
+// CHECK-tokens: Keyword: "const" [36:21 - 36:26] ParmDecl=s:36:33 (Definition)
 // CHECK-tokens: Keyword: "char" [36:27 - 36:31] ParmDecl=s:36:33 (Definition)
 // CHECK-tokens: Punctuation: "*" [36:32 - 36:33] ParmDecl=s:36:33 (Definition)
 // CHECK-tokens: Identifier: "s" [36:33 - 36:34] ParmDecl=s:36:33 (Definition)
@@ -427,14 +427,14 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "{" [38:17 - 38:18] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Keyword: "public" [39:1 - 39:7] CXXAccessSpecifier=:39:1 (Definition)
 // CHECK-tokens: Punctuation: ":" [39:7 - 39:8] CXXAccessSpecifier=:39:1 (Definition)
-// CHECK-tokens: Keyword: "typedef" [40:3 - 40:10] ClassDecl=StringRef:38:7 (Definition)
-// CHECK-tokens: Keyword: "const" [40:11 - 40:16] ClassDecl=StringRef:38:7 (Definition)
+// CHECK-tokens: Keyword: "typedef" [40:3 - 40:10] TypedefDecl=iterator:40:23 (Definition)
+// CHECK-tokens: Keyword: "const" [40:11 - 40:16] TypedefDecl=iterator:40:23 (Definition)
 // CHECK-tokens: Keyword: "char" [40:17 - 40:21] TypedefDecl=iterator:40:23 (Definition)
 // CHECK-tokens: Punctuation: "*" [40:22 - 40:23] TypedefDecl=iterator:40:23 (Definition)
 // CHECK-tokens: Identifier: "iterator" [40:23 - 40:31] TypedefDecl=iterator:40:23 (Definition)
 // CHECK-tokens: Punctuation: ";" [40:31 - 40:32] ClassDecl=StringRef:38:7 (Definition)
-// CHECK-tokens: Keyword: "static" [41:3 - 41:9] ClassDecl=StringRef:38:7 (Definition)
-// CHECK-tokens: Keyword: "const" [41:10 - 41:15] ClassDecl=StringRef:38:7 (Definition)
+// CHECK-tokens: Keyword: "static" [41:3 - 41:9] VarDecl=npos:41:23
+// CHECK-tokens: Keyword: "const" [41:10 - 41:15] VarDecl=npos:41:23
 // CHECK-tokens: Identifier: "size_t" [41:16 - 41:22] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "npos" [41:23 - 41:27] VarDecl=npos:41:23
 // CHECK-tokens: Punctuation: "=" [41:28 - 41:29] VarDecl=npos:41:23
@@ -446,7 +446,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ";" [41:40 - 41:41] ClassDecl=StringRef:38:7 (Definition)
 // CHECK-tokens: Keyword: "private" [42:1 - 42:8] CXXAccessSpecifier=:42:1 (Definition)
 // CHECK-tokens: Punctuation: ":" [42:8 - 42:9] CXXAccessSpecifier=:42:1 (Definition)
-// CHECK-tokens: Keyword: "const" [43:3 - 43:8] ClassDecl=StringRef:38:7 (Definition)
+// CHECK-tokens: Keyword: "const" [43:3 - 43:8] FieldDecl=Data:43:15 (Definition)
 // CHECK-tokens: Keyword: "char" [43:9 - 43:13] FieldDecl=Data:43:15 (Definition)
 // CHECK-tokens: Punctuation: "*" [43:14 - 43:15] FieldDecl=Data:43:15 (Definition)
 // CHECK-tokens: Identifier: "Data" [43:15 - 43:19] FieldDecl=Data:43:15 (Definition)
@@ -454,7 +454,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "size_t" [44:3 - 44:9] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "Length" [44:10 - 44:16] FieldDecl=Length:44:10 (Definition)
 // CHECK-tokens: Punctuation: ";" [44:16 - 44:17] ClassDecl=StringRef:38:7 (Definition)
-// CHECK-tokens: Keyword: "static" [45:3 - 45:9] ClassDecl=StringRef:38:7 (Definition)
+// CHECK-tokens: Keyword: "static" [45:3 - 45:9] CXXMethod=min:45:17 (Definition) (static)
 // CHECK-tokens: Identifier: "size_t" [45:10 - 45:16] TypeRef=size_t:2:25
 // CHECK-tokens: Identifier: "min" [45:17 - 45:20] CXXMethod=min:45:17 (Definition) (static)
 // CHECK-tokens: Punctuation: "(" [45:20 - 45:21] CXXMethod=min:45:17 (Definition) (static)
@@ -494,7 +494,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "}" [47:36 - 47:37] CompoundStmt=
 // CHECK-tokens: Identifier: "StringRef" [48:3 - 48:12] CXXConstructor=StringRef:48:3 (Definition)
 // CHECK-tokens: Punctuation: "(" [48:12 - 48:13] CXXConstructor=StringRef:48:3 (Definition)
-// CHECK-tokens: Keyword: "const" [48:13 - 48:18] CXXConstructor=StringRef:48:3 (Definition)
+// CHECK-tokens: Keyword: "const" [48:13 - 48:18] ParmDecl=Str:48:25 (Definition)
 // CHECK-tokens: Keyword: "char" [48:19 - 48:23] ParmDecl=Str:48:25 (Definition)
 // CHECK-tokens: Punctuation: "*" [48:24 - 48:25] ParmDecl=Str:48:25 (Definition)
 // CHECK-tokens: Identifier: "Str" [48:25 - 48:28] ParmDecl=Str:48:25 (Definition)
@@ -516,7 +516,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "}" [48:70 - 48:71] CompoundStmt=
 // CHECK-tokens: Identifier: "StringRef" [49:3 - 49:12] CXXConstructor=StringRef:49:3 (Definition)
 // CHECK-tokens: Punctuation: "(" [49:12 - 49:13] CXXConstructor=StringRef:49:3 (Definition)
-// CHECK-tokens: Keyword: "const" [49:13 - 49:18] CXXConstructor=StringRef:49:3 (Definition)
+// CHECK-tokens: Keyword: "const" [49:13 - 49:18] ParmDecl=data:49:25 (Definition)
 // CHECK-tokens: Keyword: "char" [49:19 - 49:23] ParmDecl=data:49:25 (Definition)
 // CHECK-tokens: Punctuation: "*" [49:24 - 49:25] ParmDecl=data:49:25 (Definition)
 // CHECK-tokens: Identifier: "data" [49:25 - 49:29] ParmDecl=data:49:25 (Definition)
@@ -670,7 +670,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "(" [67:22 - 67:23] CXXConstructor=IdentifierInfo:67:8
 // CHECK-tokens: Punctuation: ")" [67:23 - 67:24] CXXConstructor=IdentifierInfo:67:8
 // CHECK-tokens: Punctuation: ";" [67:24 - 67:25] ClassDecl=IdentifierInfo:66:7 (Definition)
-// CHECK-tokens: Keyword: "const" [68:3 - 68:8] ClassDecl=IdentifierInfo:66:7 (Definition)
+// CHECK-tokens: Keyword: "const" [68:3 - 68:8] CXXMethod=getNameStart:68:15 (Definition)
 // CHECK-tokens: Keyword: "char" [68:9 - 68:13] CXXMethod=getNameStart:68:15 (Definition)
 // CHECK-tokens: Punctuation: "*" [68:14 - 68:15] CXXMethod=getNameStart:68:15 (Definition)
 // CHECK-tokens: Identifier: "getNameStart" [68:15 - 68:27] CXXMethod=getNameStart:68:15 (Definition)
@@ -678,7 +678,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ")" [68:28 - 68:29] CXXMethod=getNameStart:68:15 (Definition)
 // CHECK-tokens: Keyword: "const" [68:30 - 68:35] CXXMethod=getNameStart:68:15 (Definition)
 // CHECK-tokens: Punctuation: "{" [68:36 - 68:37] CompoundStmt=
-// CHECK-tokens: Keyword: "typedef" [69:5 - 69:12] DeclStmt=
+// CHECK-tokens: Keyword: "typedef" [69:5 - 69:12] TypedefDecl=actualtype:69:54 (Definition)
 // CHECK-tokens: Identifier: "std" [69:13 - 69:16] NamespaceRef=std:3:11
 // CHECK-tokens: Punctuation: "::" [69:16 - 69:18] TypedefDecl=actualtype:69:54 (Definition)
 // CHECK-tokens: Identifier: "pair" [69:18 - 69:22] TemplateRef=pair:4:44
@@ -710,7 +710,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ")" [72:22 - 72:23] CXXMethod=getLength:72:12 (Definition)
 // CHECK-tokens: Keyword: "const" [72:24 - 72:29] CXXMethod=getLength:72:12 (Definition)
 // CHECK-tokens: Punctuation: "{" [72:30 - 72:31] CompoundStmt=
-// CHECK-tokens: Keyword: "typedef" [73:5 - 73:12] DeclStmt=
+// CHECK-tokens: Keyword: "typedef" [73:5 - 73:12] TypedefDecl=actualtype:73:54 (Definition)
 // CHECK-tokens: Identifier: "std" [73:13 - 73:16] NamespaceRef=std:3:11
 // CHECK-tokens: Punctuation: "::" [73:16 - 73:18] TypedefDecl=actualtype:73:54 (Definition)
 // CHECK-tokens: Identifier: "pair" [73:18 - 73:22] TemplateRef=pair:4:44
@@ -723,7 +723,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ">" [73:53 - 73:54] TypedefDecl=actualtype:73:54 (Definition)
 // CHECK-tokens: Identifier: "actualtype" [73:54 - 73:64] TypedefDecl=actualtype:73:54 (Definition)
 // CHECK-tokens: Punctuation: ";" [73:64 - 73:65] DeclStmt=
-// CHECK-tokens: Keyword: "const" [74:5 - 74:10] DeclStmt=
+// CHECK-tokens: Keyword: "const" [74:5 - 74:10] VarDecl=p:74:17 (Definition)
 // CHECK-tokens: Keyword: "char" [74:11 - 74:15] VarDecl=p:74:17 (Definition)
 // CHECK-tokens: Punctuation: "*" [74:16 - 74:17] VarDecl=p:74:17 (Definition)
 // CHECK-tokens: Identifier: "p" [74:17 - 74:18] VarDecl=p:74:17 (Definition)
@@ -816,7 +816,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "StringRef" [84:3 - 84:12] TypeRef=class llvm::StringRef:38:7
 // CHECK-tokens: Identifier: "Str" [84:13 - 84:16] FieldDecl=Str:84:13 (Definition)
 // CHECK-tokens: Punctuation: ";" [84:16 - 84:17] ClassTemplate=StringSwitch:83:47 (Definition)
-// CHECK-tokens: Keyword: "const" [85:3 - 85:8] ClassTemplate=StringSwitch:83:47 (Definition)
+// CHECK-tokens: Keyword: "const" [85:3 - 85:8] FieldDecl=Result:85:12 (Definition)
 // CHECK-tokens: Identifier: "T" [85:9 - 85:10] TypeRef=T:83:21
 // CHECK-tokens: Punctuation: "*" [85:11 - 85:12] FieldDecl=Result:85:12 (Definition)
 // CHECK-tokens: Identifier: "Result" [85:12 - 85:18] FieldDecl=Result:85:12 (Definition)
@@ -850,7 +850,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "&" [88:40 - 88:41] FunctionTemplate=Case:88:42 (Definition)
 // CHECK-tokens: Identifier: "Case" [88:42 - 88:46] FunctionTemplate=Case:88:42 (Definition)
 // CHECK-tokens: Punctuation: "(" [88:46 - 88:47] FunctionTemplate=Case:88:42 (Definition)
-// CHECK-tokens: Keyword: "const" [88:47 - 88:52] FunctionTemplate=Case:88:42 (Definition)
+// CHECK-tokens: Keyword: "const" [88:47 - 88:52] ParmDecl=S:88:60 (Definition)
 // CHECK-tokens: Keyword: "char" [88:53 - 88:57] ParmDecl=S:88:60 (Definition)
 // CHECK-tokens: Punctuation: "(" [88:58 - 88:59] ParmDecl=S:88:60 (Definition)
 // CHECK-tokens: Punctuation: "&" [88:59 - 88:60] ParmDecl=S:88:60 (Definition)
@@ -860,7 +860,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "N" [88:63 - 88:64] DeclRefExpr=N:88:23
 // CHECK-tokens: Punctuation: "]" [88:64 - 88:65] ParmDecl=S:88:60 (Definition)
 // CHECK-tokens: Punctuation: "," [88:65 - 88:66] FunctionTemplate=Case:88:42 (Definition)
-// CHECK-tokens: Keyword: "const" [89:47 - 89:52] FunctionTemplate=Case:88:42 (Definition)
+// CHECK-tokens: Keyword: "const" [89:47 - 89:52] ParmDecl=Value:89:57 (Definition)
 // CHECK-tokens: Identifier: "T" [89:53 - 89:54] TypeRef=T:83:21
 // CHECK-tokens: Punctuation: "&" [89:55 - 89:56] ParmDecl=Value:89:57 (Definition)
 // CHECK-tokens: Identifier: "Value" [89:57 - 89:62] ParmDecl=Value:89:57 (Definition)
@@ -874,7 +874,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Identifier: "R" [92:3 - 92:4] TypeRef=R:83:33
 // CHECK-tokens: Identifier: "Default" [92:5 - 92:12] CXXMethod=Default:92:5 (Definition)
 // CHECK-tokens: Punctuation: "(" [92:12 - 92:13] CXXMethod=Default:92:5 (Definition)
-// CHECK-tokens: Keyword: "const" [92:13 - 92:18] CXXMethod=Default:92:5 (Definition)
+// CHECK-tokens: Keyword: "const" [92:13 - 92:18] ParmDecl=Value:92:23 (Definition)
 // CHECK-tokens: Identifier: "T" [92:19 - 92:20] TypeRef=T:83:21
 // CHECK-tokens: Punctuation: "&" [92:21 - 92:22] ParmDecl=Value:92:23 (Definition)
 // CHECK-tokens: Identifier: "Value" [92:23 - 92:28] ParmDecl=Value:92:23 (Definition)
@@ -899,7 +899,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: "::" [100:34 - 100:36] CXXMethod=getKind:100:36 (Definition) (static)
 // CHECK-tokens: Identifier: "getKind" [100:36 - 100:43] CXXMethod=getKind:100:36 (Definition) (static)
 // CHECK-tokens: Punctuation: "(" [100:43 - 100:44] CXXMethod=getKind:100:36 (Definition) (static)
-// CHECK-tokens: Keyword: "const" [100:44 - 100:49] CXXMethod=getKind:100:36 (Definition) (static)
+// CHECK-tokens: Keyword: "const" [100:44 - 100:49] ParmDecl=Name:100:67 (Definition)
 // CHECK-tokens: Identifier: "IdentifierInfo" [100:50 - 100:64] TypeRef=class clang::IdentifierInfo:66:7
 // CHECK-tokens: Punctuation: "*" [100:65 - 100:66] ParmDecl=Name:100:67 (Definition)
 // CHECK-tokens: Identifier: "Name" [100:67 - 100:71] ParmDecl=Name:100:67 (Definition)
