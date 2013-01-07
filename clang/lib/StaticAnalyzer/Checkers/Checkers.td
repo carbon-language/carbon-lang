@@ -351,7 +351,7 @@ def MacOSKeychainAPIChecker : Checker<"SecKeychainAPI">,
   HelpText<"Check for proper uses of Secure Keychain APIs">,
   DescFile<"MacOSKeychainAPIChecker.cpp">;
 
-} // end "macosx"
+} // end "osx"
 
 let ParentPackage = Cocoa in {
 

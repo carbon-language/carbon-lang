@@ -305,6 +305,25 @@ void DellocWithCFStringCreate4(CFAllocatorRef alloc) {
   }
 }
 
+static CFAllocatorRef gKeychainDeallocator = 0;
+
+static CFAllocatorRef GetKeychainDeallocator() {  
+  return gKeychainDeallocator;
+}
+
+CFStringRef DellocWithCFStringCreate5(CFAllocatorRef alloc) {
+  unsigned int *ptr = 0;
+  OSStatus st = 0;
+  UInt32 length;
+  void *bytes;
+  char * x;
+  st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &bytes);
+  if (st == noErr) {
+    return CFStringCreateWithBytesNoCopy(alloc, bytes, length, 5, 0, GetKeychainDeallocator()); // no-warning
+  }
+  return 0;
+}
+
 void radar10508828() {
   UInt32 pwdLen = 0;
   void*  pwdBytes = 0;

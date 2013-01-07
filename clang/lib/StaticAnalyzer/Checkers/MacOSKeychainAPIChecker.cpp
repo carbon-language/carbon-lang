@@ -393,16 +393,18 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
           return;
         }
         // If kCFAllocatorNull, which does not deallocate, we still have to
-        // find the deallocator. Otherwise, assume that the user had written a
-        // custom deallocator which does the right thing.
-        if (DE->getFoundDecl()->getName() != "kCFAllocatorNull") {
-          State = State->remove<AllocatedData>(ArgSM);
-          C.addTransition(State);
+        // find the deallocator.
+        if (DE->getFoundDecl()->getName() == "kCFAllocatorNull")
           return;
-        }
       }
+      // In all other cases, assume the user supplied a correct deallocator
+      // that will free memory so stop tracking.
+      State = State->remove<AllocatedData>(ArgSM);
+      C.addTransition(State);
+      return;
     }
-    return;
+
+    llvm_unreachable("We know of no other possible APIs.");
   }
 
   // The call is deallocating a value we previously allocated, so remove it
