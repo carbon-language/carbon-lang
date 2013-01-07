@@ -91,3 +91,32 @@ define void @test5(i8* %ptr, i8** %esc) {
   store volatile i8 4, i8* %g
   ret void
 }
+
+;; When a basic block contains only a call to free and this block is accessed
+;; through a test of the argument of free against null, move the call in the
+;; predecessor block.
+;; Using simplifycfg will remove the empty basic block and the branch operation
+;; Then, performing a dead elimination will remove the comparison.
+;; This is what happens with -O1 and upper.
+; CHECK: @test6
+define void @test6(i8* %foo) minsize {
+; CHECK:  %tobool = icmp eq i8* %foo, null
+;; Call to free moved
+; CHECK-NEXT: tail call void @free(i8* %foo)
+; CHECK-NEXT: br i1 %tobool, label %if.end, label %if.then
+; CHECK: if.then:
+;; Block is now empty and may be simplified by simplifycfg
+; CHECK-NEXT:   br label %if.end
+; CHECK: if.end:
+; CHECK-NEXT:  ret void
+entry:
+  %tobool = icmp eq i8* %foo, null
+  br i1 %tobool, label %if.end, label %if.then
+
+if.then:                                          ; preds = %entry
+  tail call void @free(i8* %foo)
+  br label %if.end
+
+if.end:                                           ; preds = %entry, %if.then
+  ret void
+}

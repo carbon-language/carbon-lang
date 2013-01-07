@@ -1475,6 +1475,62 @@ Instruction *InstCombiner::visitAllocSite(Instruction &MI) {
   return 0;
 }
 
+/// \brief Move the call to free before a NULL test.
+///
+/// Check if this free is accessed after its argument has been test
+/// against NULL (property 0).
+/// If yes, it is legal to move this call in its predecessor block.
+///
+/// The move is performed only if the block containing the call to free
+/// will be removed, i.e.:
+/// 1. it has only one predecessor P, and P has two successors
+/// 2. it contains the call and an unconditional branch
+/// 3. its successor is the same as its predecessor's successor
+///
+/// The profitability is out-of concern here and this function should
+/// be called only if the caller knows this transformation would be
+/// profitable (e.g., for code size).
+static Instruction *
+tryToMoveFreeBeforeNullTest(CallInst &FI) {
+  Value *Op = FI.getArgOperand(0);
+  BasicBlock *FreeInstrBB = FI.getParent();
+  BasicBlock *PredBB = FreeInstrBB->getSinglePredecessor();
+
+  // Validate part of constraint #1: Only one predecessor
+  // FIXME: We can extend the number of predecessor, but in that case, we
+  //        would duplicate the call to free in each predecessor and it may
+  //        not be profitable even for code size.
+  if (!PredBB)
+    return 0;
+
+  // Validate constraint #2: Does this block contains only the call to
+  //                         free and an unconditional branch?
+  // FIXME: We could check if we can speculate everything in the
+  //        predecessor block
+  if (FreeInstrBB->size() != 2)
+    return 0;
+  BasicBlock *SuccBB;
+  if (!match(FreeInstrBB->getTerminator(), m_UnconditionalBr(SuccBB)))
+    return 0;
+
+  // Validate the rest of constraint #1 by matching on the pred branch.
+  TerminatorInst *TI = PredBB->getTerminator();
+  BasicBlock *TrueBB, *FalseBB;
+  ICmpInst::Predicate Pred;
+  if (!match(TI, m_Br(m_ICmp(Pred, m_Specific(Op), m_Zero()), TrueBB, FalseBB)))
+    return 0;
+  if (Pred != ICmpInst::ICMP_EQ && Pred != ICmpInst::ICMP_NE)
+    return 0;
+
+  // Validate constraint #3: Ensure the null case just falls through.
+  if (SuccBB != (Pred == ICmpInst::ICMP_EQ ? TrueBB : FalseBB))
+    return 0;
+  assert(FreeInstrBB == (Pred == ICmpInst::ICMP_EQ ? FalseBB : TrueBB) &&
+         "Broken CFG: missing edge from predecessor to successor");
+
+  FI.moveBefore(TI);
+  return &FI;
+}
 
 
 Instruction *InstCombiner::visitFree(CallInst &FI) {
@@ -1492,6 +1548,16 @@ Instruction *InstCombiner::visitFree(CallInst &FI) {
   // when lots of inlining happens.
   if (isa<ConstantPointerNull>(Op))
     return EraseInstFromFunction(FI);
+
+  // If we optimize for code size, try to move the call to free before the null
+  // test so that simplify cfg can remove the empty block and dead code
+  // elimination the branch. I.e., helps to turn something like:
+  // if (foo) free(foo);
+  // into
+  // free(foo);
+  if (MinimizeSize)
+    if (Instruction *I = tryToMoveFreeBeforeNullTest(FI))
+      return I;
 
   return 0;
 }
@@ -2393,6 +2459,9 @@ public:
 bool InstCombiner::runOnFunction(Function &F) {
   TD = getAnalysisIfAvailable<DataLayout>();
   TLI = &getAnalysis<TargetLibraryInfo>();
+  // Minimizing size?
+  MinimizeSize = F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                                Attribute::MinSize);
 
   /// Builder - This is an IRBuilder that automatically inserts new
   /// instructions into the worklist when they are created.

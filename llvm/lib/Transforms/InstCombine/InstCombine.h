@@ -76,6 +76,7 @@ class LLVM_LIBRARY_VISIBILITY InstCombiner
   TargetLibraryInfo *TLI;
   bool MadeIRChange;
   LibCallSimplifier *Simplifier;
+  bool MinimizeSize;
 public:
   /// Worklist - All of the instructions that need to be simplified.
   InstCombineWorklist Worklist;
@@ -87,6 +88,7 @@ public:
       
   static char ID; // Pass identification, replacement for typeid
   InstCombiner() : FunctionPass(ID), TD(0), Builder(0) {
+    MinimizeSize = false;
     initializeInstCombinerPass(*PassRegistry::getPassRegistry());
   }
 
