@@ -47,7 +47,7 @@ struct A
 // CHECK: Punctuation: "#" [2:1 - 2:2] preprocessing directive=
 // CHECK: Identifier: "define" [2:2 - 2:8] preprocessing directive=
 // CHECK: Identifier: "STILL_NOTHING" [2:9 - 2:22] macro definition=STILL_NOTHING
-// CHECK: Identifier: "NOTHING" [2:23 - 2:30] macro definition=STILL_NOTHING
+// CHECK: Identifier: "NOTHING" [2:23 - 2:30] macro expansion=NOTHING:1:9
 // CHECK: Punctuation: "(" [2:30 - 2:31] macro definition=STILL_NOTHING
 // CHECK: Identifier: "honk" [2:31 - 2:35] macro definition=STILL_NOTHING
 // CHECK: Punctuation: "," [2:35 - 2:36] macro definition=STILL_NOTHING

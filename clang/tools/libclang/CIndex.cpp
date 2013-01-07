@@ -5307,6 +5307,7 @@ static void annotatePreprocessorTokens(CXTranslationUnit TU,
                                        unsigned NumTokens) {
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(TU->TUData);
 
+  Preprocessor &PP = CXXUnit->getPreprocessor();
   SourceManager &SourceMgr = CXXUnit->getSourceManager();
   std::pair<FileID, unsigned> BeginLocInfo
     = SourceMgr.getDecomposedLoc(RegionOfInterest.getBegin());
@@ -5348,11 +5349,40 @@ static void annotatePreprocessorTokens(CXTranslationUnit TU,
       // #undefs, to provide specific cursor kinds for those.
 
       SourceLocation BeginLoc = Tok.getLocation();
+      if (lexNext(Lex, Tok, NextIdx, NumTokens))
+        break;
+
+      MacroInfo *MI = 0;
+      if (Tok.is(tok::raw_identifier) &&
+          StringRef(Tok.getRawIdentifierData(), Tok.getLength()) == "define") {
+        if (lexNext(Lex, Tok, NextIdx, NumTokens))
+          break;
+
+        if (Tok.is(tok::raw_identifier)) {
+          StringRef Name(Tok.getRawIdentifierData(), Tok.getLength());
+          IdentifierInfo &II = PP.getIdentifierTable().get(Name);
+          SourceLocation MappedTokLoc =
+              CXXUnit->mapLocationToPreamble(Tok.getLocation());
+          MI = getMacroInfo(II, MappedTokLoc, TU);
+        }
+      }
+
       bool finished = false;
       do {
         if (lexNext(Lex, Tok, NextIdx, NumTokens)) {
           finished = true;
           break;
+        }
+        // If we are in a macro definition, check if the token was ever a
+        // macro name and annotate it if that's the case.
+        if (MI) {
+          SourceLocation SaveLoc = Tok.getLocation();
+          Tok.setLocation(CXXUnit->mapLocationToPreamble(SaveLoc));
+          MacroDefinition *MacroDef = checkForMacroInMacroDefinition(MI,Tok,TU);
+          Tok.setLocation(SaveLoc);
+          if (MacroDef)
+            Cursors[NextIdx-1] = MakeMacroExpansionCursor(MacroDef,
+                                                         Tok.getLocation(), TU);
         }
       } while (!Tok.isAtStartOfLine());
 
@@ -5364,7 +5394,7 @@ static void annotatePreprocessorTokens(CXTranslationUnit TU,
           MakePreprocessingDirectiveCursor(SourceRange(BeginLoc, EndLoc), TU);
 
       for (; TokIdx <= LastIdx; ++TokIdx)
-        Cursors[TokIdx] = Cursor;
+        updateCursorAnnotation(Cursors[TokIdx], Cursor);
       
       if (finished)
         break;
