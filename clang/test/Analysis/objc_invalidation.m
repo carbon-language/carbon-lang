@@ -151,3 +151,32 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
  // expected-warning@-6 {{Instance variable _Ivar4 needs to be invalidated}}
  // expected-warning@-7 {{Instance variable Ivar5 needs to be invalidated or set to nil}}
 @end
+
+// Example, where the same property is inherited through 
+// the parent and directly through a protocol. If a property backing ivar is 
+// synthesized in the parent, let the parent invalidate it.
+
+@protocol IDEBuildable <NSObject>
+@property (readonly, strong) id <Invalidation2> ObjB;
+@end
+
+@interface Parent : NSObject <IDEBuildable, Invalidation2> {
+  Invalidation2Class *_ObjB; // Invalidation of ObjB happens in the parent.
+}
+@end
+
+@interface Child: Parent <Invalidation2, IDEBuildable> 
+@end
+
+@implementation Parent
+@synthesize ObjB = _ObjB;
+- (void)invalidate{
+  _ObjB = ((void*)0);
+}
+@end
+
+@implementation Child
+- (void)invalidate{ 
+  // no-warning
+} 
+@end

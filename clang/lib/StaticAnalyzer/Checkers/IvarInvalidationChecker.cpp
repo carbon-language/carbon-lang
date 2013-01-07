@@ -271,7 +271,9 @@ const ObjCIvarDecl *IvarInvalidationChecker::findPropertyBackingIvar(
 
   // Lookup for the synthesized case.
   IvarD = Prop->getPropertyIvarDecl();
-  if (IvarD) {
+  // We only track the ivars/properties that are defined in the current 
+  // class (not the parent).
+  if (IvarD && IvarD->getContainingInterface() == InterfaceD) {
     if (TrackedIvars.count(IvarD)) {
       return IvarD;
     }
