@@ -99,7 +99,7 @@ int lsh_overflow(int a, int b) {
 
 // CHECK: @rsh_inbounds
 int rsh_inbounds(int a, int b) {
-  // CHECK:      %[[INBOUNDS:.*]] = icmp ult i32 %[[RHS:.*]], 32
+  // CHECK:      %[[INBOUNDS:.*]] = icmp ule i32 %[[RHS:.*]], 31
   // CHECK:      br i1 %[[INBOUNDS]]
 
   // CHECK:      %[[ARG1:.*]] = zext

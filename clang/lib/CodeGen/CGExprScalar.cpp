@@ -429,6 +429,8 @@ public:
   // Check for undefined division and modulus behaviors.
   void EmitUndefinedBehaviorIntegerDivAndRemCheck(const BinOpInfo &Ops, 
                                                   llvm::Value *Zero,bool isDiv);
+  // Common helper for getting how wide LHS of shift is.
+  static Value *GetWidthMinusOneValue(Value* LHS,Value* RHS);
   Value *EmitDiv(const BinOpInfo &Ops);
   Value *EmitRem(const BinOpInfo &Ops);
   Value *EmitAdd(const BinOpInfo &Ops);
@@ -2365,6 +2367,11 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {
   return Builder.CreateExactSDiv(diffInChars, divisor, "sub.ptr.div");
 }
 
+Value *ScalarExprEmitter::GetWidthMinusOneValue(Value* LHS,Value* RHS) {
+  unsigned Width = cast<llvm::IntegerType>(LHS->getType())->getBitWidth();
+  return llvm::ConstantInt::get(RHS->getType(), Width - 1);
+}
+
 Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
   // LLVM requires the LHS and RHS to be the same type: promote or truncate the
   // RHS to the same size as the LHS.
@@ -2372,11 +2379,9 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
   if (Ops.LHS->getType() != RHS->getType())
     RHS = Builder.CreateIntCast(RHS, Ops.LHS->getType(), false, "sh_prom");
 
-  if (CGF.getLangOpts().SanitizeShift &&
-      isa<llvm::IntegerType>(Ops.LHS->getType())) {
-    unsigned Width = cast<llvm::IntegerType>(Ops.LHS->getType())->getBitWidth();
-    llvm::Value *WidthMinusOne =
-      llvm::ConstantInt::get(RHS->getType(), Width - 1);
+  if (CGF.getLangOpts().SanitizeShift && !CGF.getLangOpts().OpenCL
+      && isa<llvm::IntegerType>(Ops.LHS->getType())) {
+    llvm::Value *WidthMinusOne = GetWidthMinusOneValue(Ops.LHS, RHS);
     // FIXME: Emit the branching explicitly rather than emitting the check
     // twice.
     EmitBinOpCheck(Builder.CreateICmpULE(RHS, WidthMinusOne), Ops);
@@ -2401,6 +2406,9 @@ Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
       EmitBinOpCheck(Builder.CreateICmpEQ(BitsShiftedOff, Zero), Ops);
     }
   }
+  // OpenCL 6.3j: shift values are effectively % word size of LHS.
+  if (CGF.getLangOpts().OpenCL)
+    RHS = Builder.CreateAnd(RHS, GetWidthMinusOneValue(Ops.LHS, RHS), "shl.mask");
 
   return Builder.CreateShl(Ops.LHS, RHS, "shl");
 }
@@ -2412,12 +2420,13 @@ Value *ScalarExprEmitter::EmitShr(const BinOpInfo &Ops) {
   if (Ops.LHS->getType() != RHS->getType())
     RHS = Builder.CreateIntCast(RHS, Ops.LHS->getType(), false, "sh_prom");
 
-  if (CGF.getLangOpts().SanitizeShift &&
-      isa<llvm::IntegerType>(Ops.LHS->getType())) {
-    unsigned Width = cast<llvm::IntegerType>(Ops.LHS->getType())->getBitWidth();
-    llvm::Value *WidthVal = llvm::ConstantInt::get(RHS->getType(), Width);
-    EmitBinOpCheck(Builder.CreateICmpULT(RHS, WidthVal), Ops);
-  }
+  if (CGF.getLangOpts().SanitizeShift && !CGF.getLangOpts().OpenCL
+      && isa<llvm::IntegerType>(Ops.LHS->getType()))
+    EmitBinOpCheck(Builder.CreateICmpULE(RHS, GetWidthMinusOneValue(Ops.LHS, RHS)), Ops);
+
+  // OpenCL 6.3j: shift values are effectively % word size of LHS.
+  if (CGF.getLangOpts().OpenCL)
+    RHS = Builder.CreateAnd(RHS, GetWidthMinusOneValue(Ops.LHS, RHS), "shr.mask");
 
   if (Ops.Ty->hasUnsignedIntegerRepresentation())
     return Builder.CreateLShr(Ops.LHS, RHS, "shr");
