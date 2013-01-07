@@ -50,7 +50,7 @@ public:
     return &InstrItins;
   }
 
-  /// \brief Register X86 analysis passes with a pass manager.
+  /// \brief Register ARM analysis passes with a pass manager.
   virtual void addAnalysisPasses(PassManagerBase &PM);
 
   // Pass Pipeline Configuration
