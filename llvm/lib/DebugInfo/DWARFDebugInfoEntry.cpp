@@ -12,6 +12,7 @@
 #include "DWARFContext.h"
 #include "DWARFDebugAbbrev.h"
 #include "DWARFFormValue.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
@@ -113,9 +114,14 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
     uint32_t i;
     uint16_t form;
     for (i=0; i<numAttributes; ++i) {
+
       form = AbbrevDecl->getFormByIndex(i);
 
-      const uint8_t fixed_skip_size = fixed_form_sizes[form];
+      // FIXME: Currently we're checking if this is less than the last
+      // entry in the fixed_form_sizes table, but this should be changed
+      // to use dynamic dispatch.
+      const uint8_t fixed_skip_size = (form < DW_FORM_ref_sig8) ?
+                                       fixed_form_sizes[form] : 0;
       if (fixed_skip_size)
         offset += fixed_skip_size;
       else {
@@ -187,6 +193,8 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
           case DW_FORM_sdata:
           case DW_FORM_udata:
           case DW_FORM_ref_udata:
+          case DW_FORM_GNU_str_index:
+          case DW_FORM_GNU_addr_index:
             debug_info_data.getULEB128(&offset);
             break;
 
@@ -207,7 +215,6 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
             return false;
           }
           offset += form_size;
-
         } while (form_is_indirect);
       }
     }
@@ -327,6 +334,8 @@ DWARFDebugInfoEntryMinimal::extract(const DWARFCompileUnit *cu,
               case DW_FORM_sdata:
               case DW_FORM_udata:
               case DW_FORM_ref_udata:
+              case DW_FORM_GNU_str_index:
+              case DW_FORM_GNU_addr_index:
                 debug_info_data.getULEB128(&offset);
                 break;
 

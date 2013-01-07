@@ -64,6 +64,8 @@ public:
   uint64_t getUnsigned() const { return Value.uval; }
   int64_t getSigned() const { return Value.sval; }
   const char *getAsCString(const DataExtractor *debug_str_data_ptr) const;
+  const char *getIndirectCString(const DataExtractor *,
+                                 const DataExtractor *) const;
   bool skipValue(DataExtractor debug_info_data, uint32_t *offset_ptr,
                  const DWARFCompileUnit *cu) const;
   static bool skipValue(uint16_t form, DataExtractor debug_info_data,

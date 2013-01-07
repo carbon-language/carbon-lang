@@ -240,7 +240,7 @@ public:
                  const MCSymbol *);
 
   /// \brief Emit all of the strings to the section given.
-  void emitStrings(const MCSection *);
+  void emitStrings(const MCSection *, const MCSection *, const MCSymbol *);
 
   /// \brief Returns the entry into the start of the pool.
   MCSymbol *getStringPoolSym();
@@ -248,6 +248,10 @@ public:
   /// \brief Returns an entry into the string pool with the given
   /// string text.
   MCSymbol *getStringPoolEntry(StringRef Str);
+
+  /// \brief Returns the index into the string pool with the given
+  /// string text.
+  unsigned getStringPoolIndex(StringRef Str);
 
   /// \brief Returns the string pool.
   StrPool *getStringPool() { return StringPool; }

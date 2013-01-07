@@ -198,6 +198,10 @@ public:
   ///
   void addString(DIE *Die, unsigned Attribute, const StringRef Str);
 
+  /// addLocalString - Add a string attribute data and value.
+  ///
+  void addLocalString(DIE *Die, unsigned Attribute, const StringRef Str);
+
   /// addLabel - Add a Dwarf label attribute data and value.
   ///
   void addLabel(DIE *Die, unsigned Attribute, unsigned Form,

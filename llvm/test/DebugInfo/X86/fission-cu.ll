@@ -30,10 +30,10 @@
 ; FIXME: Strings will ultimately be a different form.
 ; CHECK: .debug_info.dwo contents:
 ; CHECK: DW_TAG_compile_unit
-; CHECK: DW_AT_producer [DW_FORM_strp]
+; CHECK: DW_AT_producer [DW_FORM_GNU_str_index] ( indexed (00000000) string = "clang version 3.3 (trunk 169021) (llvm/trunk 169020)")
 ; CHECK: DW_AT_language [DW_FORM_data2]        (0x000c)
-; CHECK: DW_AT_name [DW_FORM_strp]             ( .debug_str[0x00000035] = "baz.c")
+; CHECK: DW_AT_name [DW_FORM_GNU_str_index]    ( indexed (00000001) string = "baz.c")
 ; CHECK: DW_TAG_base_type
-; CHECK: DW_AT_name [DW_FORM_strp]      ( .debug_str[0x00000061] = "int")
+; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000004) string = "int")
 ; CHECK: DW_TAG_variable
-; CHECK: DW_AT_name [DW_FORM_strp]     ( .debug_str[0x0000005f] = "a")
+; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000003) string = "a")

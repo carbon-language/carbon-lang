@@ -128,6 +128,27 @@ void CompileUnit::addSInt(DIE *Die, unsigned Attribute,
 /// reference to the string pool instead of immediate strings so that DIEs have
 /// more predictable sizes.
 void CompileUnit::addString(DIE *Die, unsigned Attribute, StringRef String) {
+  if (!DD->useSplitDwarf()) {
+    MCSymbol *Symb = DU->getStringPoolEntry(String);
+    DIEValue *Value;
+    if (Asm->needsRelocationsForDwarfStringPool())
+      Value = new (DIEValueAllocator) DIELabel(Symb);
+    else {
+      MCSymbol *StringPool = DU->getStringPoolSym();
+      Value = new (DIEValueAllocator) DIEDelta(Symb, StringPool);
+    }
+    Die->addValue(Attribute, dwarf::DW_FORM_strp, Value);
+  } else {
+    unsigned idx = DU->getStringPoolIndex(String);
+    DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
+    Die->addValue(Attribute, dwarf::DW_FORM_GNU_str_index, Value);
+  }
+}
+
+/// addLocalString - Add a string attribute data and value. This is guaranteed
+/// to be in the local string pool instead of indirected.
+void CompileUnit::addLocalString(DIE *Die, unsigned Attribute,
+                                 StringRef String) {
   MCSymbol *Symb = DU->getStringPoolEntry(String);
   DIEValue *Value;
   if (Asm->needsRelocationsForDwarfStringPool())

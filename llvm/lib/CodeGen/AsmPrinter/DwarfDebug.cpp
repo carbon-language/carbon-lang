@@ -228,6 +228,16 @@ MCSymbol *DwarfUnits::getStringPoolEntry(StringRef Str) {
   return Entry.first = Asm->GetTempSymbol(StringPref, Entry.second);
 }
 
+unsigned DwarfUnits::getStringPoolIndex(StringRef Str) {
+  std::pair<MCSymbol*, unsigned> &Entry =
+    StringPool->GetOrCreateValue(Str).getValue();
+  if (Entry.first) return Entry.second;
+
+  Entry.second = NextStringPoolNumber++;
+  Entry.first = Asm->GetTempSymbol(StringPref, Entry.second);
+  return Entry.second;
+}
+
 // Define a unique number for the abbreviation.
 //
 void DwarfUnits::assignAbbrevNumber(DIEAbbrev &Abbrev) {
@@ -2116,12 +2126,14 @@ void DwarfDebug::emitDebugPubTypes() {
 }
 
 // Emit strings into a string section.
-void DwarfUnits::emitStrings(const MCSection *Section) {
+void DwarfUnits::emitStrings(const MCSection *StrSection,
+                             const MCSection *OffsetSection = NULL,
+                             const MCSymbol *StrSecSym = NULL) {
 
   if (StringPool->empty()) return;
 
   // Start the dwarf str section.
-  Asm->OutStreamer.SwitchSection(Section);
+  Asm->OutStreamer.SwitchSection(StrSection);
 
   // Get all of the string pool entries and put them in an array by their ID so
   // we can sort them.
@@ -2143,6 +2155,17 @@ void DwarfUnits::emitStrings(const MCSection *Section) {
     Asm->OutStreamer.EmitBytes(StringRef(Entries[i].second->getKeyData(),
                                          Entries[i].second->getKeyLength()+1),
                                0/*addrspace*/);
+  }
+
+  // If we've got an offset section go ahead and emit that now as well.
+  if (OffsetSection) {
+    Asm->OutStreamer.SwitchSection(OffsetSection);
+    unsigned offset = 0;
+    unsigned size = 4;
+    for (unsigned i = 0, e = Entries.size(); i != e; ++i) {
+      Asm->OutStreamer.EmitIntValue(offset, size, 0);
+      offset += Entries[i].second->getKeyLength() + 1;
+    }
   }
 }
 
@@ -2377,7 +2400,7 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
                                        DIUnit.getLanguage(), Die, Asm,
                                        this, &SkeletonHolder);
   // FIXME: This should be the .dwo file.
-  NewCU->addString(Die, dwarf::DW_AT_GNU_dwo_name, FN);
+  NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name, FN);
 
   // FIXME: We also need DW_AT_addr_base and DW_AT_dwo_id.
 
@@ -2393,7 +2416,7 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
     NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
 
   if (!CompilationDir.empty())
-    NewCU->addString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
+    NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
 
   SkeletonHolder.addUnit(NewCU);
 
@@ -2458,5 +2481,8 @@ void DwarfDebug::emitDebugAbbrevDWO() {
 // sections.
 void DwarfDebug::emitDebugStrDWO() {
   assert(useSplitDwarf() && "No split dwarf?");
-  InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection());
+  const MCSection *OffSec = Asm->getObjFileLowering().getDwarfStrOffDWOSection();
+  const MCSymbol *StrSym = DwarfStrSectionSym;
+  InfoHolder.emitStrings(Asm->getObjFileLowering().getDwarfStrDWOSection(),
+                         OffSec, StrSym);
 }
