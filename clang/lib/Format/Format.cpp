@@ -773,97 +773,22 @@ public:
     for (int i = 1, e = Line.Tokens.size(); i != e; ++i) {
       TokenAnnotation &Annotation = Annotations[i];
 
-      Annotation.CanBreakBefore = canBreakBefore(i);
+      Annotation.SpaceRequiredBefore = spaceRequiredBefore(i);
 
-      if (Annotation.Type == TT_CtorInitializerColon) {
+      if (Annotation.Type == TT_CtorInitializerColon ||
+          Annotations[i - 1].Type == TT_LineComment ||
+          (Line.Tokens[i].Tok.is(tok::string_literal) &&
+           Line.Tokens[i - 1].Tok.is(tok::string_literal))) {
         Annotation.MustBreakBefore = true;
-        Annotation.SpaceRequiredBefore = true;
-      } else if (Annotation.Type == TT_OverloadedOperator) {
-        Annotation.SpaceRequiredBefore =
-            Line.Tokens[i].Tok.is(tok::identifier) ||
-            Line.Tokens[i].Tok.is(tok::kw_new) ||
-            Line.Tokens[i].Tok.is(tok::kw_delete);
-      } else if (Annotations[i - 1].Type == TT_OverloadedOperator) {
-        Annotation.SpaceRequiredBefore = false;
-      } else if (CurrentLineType == LT_ObjCMethodDecl &&
-                 Line.Tokens[i].Tok.is(tok::identifier) && (i != e - 1) &&
-                 Line.Tokens[i + 1].Tok.is(tok::colon) &&
-                 Line.Tokens[i - 1].Tok.is(tok::identifier)) {
-        Annotation.CanBreakBefore = true;
-        Annotation.SpaceRequiredBefore = true;
-      } else if (CurrentLineType == LT_ObjCMethodDecl &&
-                 Line.Tokens[i].Tok.is(tok::identifier) &&
-                 Line.Tokens[i - 1].Tok.is(tok::l_paren) &&
-                 Line.Tokens[i - 2].Tok.is(tok::colon)) {
-        // Don't break this identifier as ':' or identifier
-        // before it will break.
-        Annotation.CanBreakBefore = false;
       } else if (Line.Tokens[i].Tok.is(tok::at) &&
                  Line.Tokens[i - 2].Tok.is(tok::at)) {
         // Don't put two objc's '@' on the same line. This could happen,
         // as in, @optional @property ...
         Annotation.MustBreakBefore = true;
-      } else if (Line.Tokens[i].Tok.is(tok::colon)) {
-        Annotation.SpaceRequiredBefore =
-            Line.Tokens[0].Tok.isNot(tok::kw_case) &&
-            CurrentLineType != LT_ObjCMethodDecl && (i != e - 1);
-        // Don't break at ':' if identifier before it can beak.
-        if (CurrentLineType == LT_ObjCMethodDecl &&
-            Line.Tokens[i - 1].Tok.is(tok::identifier) &&
-            Annotations[i - 1].CanBreakBefore)
-          Annotation.CanBreakBefore = false;
-      } else if (Annotations[i - 1].Type == TT_ObjCMethodSpecifier) {
-        Annotation.SpaceRequiredBefore = true;
-      } else if (Annotations[i - 1].Type == TT_UnaryOperator) {
-        Annotation.SpaceRequiredBefore = false;
-      } else if (Annotation.Type == TT_UnaryOperator) {
-        Annotation.SpaceRequiredBefore =
-            Line.Tokens[i - 1].Tok.isNot(tok::l_paren) &&
-            Line.Tokens[i - 1].Tok.isNot(tok::l_square);
-      } else if (Line.Tokens[i - 1].Tok.is(tok::greater) &&
-                 Line.Tokens[i].Tok.is(tok::greater)) {
-        if (Annotation.Type == TT_TemplateCloser &&
-            Annotations[i - 1].Type == TT_TemplateCloser)
-          Annotation.SpaceRequiredBefore = Style.SplitTemplateClosingGreater;
-        else
-          Annotation.SpaceRequiredBefore = false;
-      } else if (Annotation.Type == TT_DirectorySeparator ||
-                 Annotations[i - 1].Type == TT_DirectorySeparator) {
-        Annotation.SpaceRequiredBefore = false;
-      } else if (Annotation.Type == TT_BinaryOperator ||
-                 Annotations[i - 1].Type == TT_BinaryOperator) {
-        Annotation.SpaceRequiredBefore = true;
-      } else if (Annotations[i - 1].Type == TT_TemplateCloser &&
-                 Line.Tokens[i].Tok.is(tok::l_paren)) {
-        Annotation.SpaceRequiredBefore = false;
-      } else if (Line.Tokens[i].Tok.is(tok::less) &&
-                 Line.Tokens[0].Tok.is(tok::hash)) {
-        Annotation.SpaceRequiredBefore = true;
-      } else if (CurrentLineType == LT_ObjCMethodDecl &&
-                 Line.Tokens[i - 1].Tok.is(tok::r_paren) &&
-                 Line.Tokens[i].Tok.is(tok::identifier)) {
-        // Don't space between ')' and <id>
-        Annotation.SpaceRequiredBefore = false;
-      } else if (CurrentLineType == LT_ObjCMethodDecl &&
-                 Line.Tokens[i - 1].Tok.is(tok::colon) &&
-                 Line.Tokens[i].Tok.is(tok::l_paren)) {
-        // Don't space between ':' and '('
-        Annotation.SpaceRequiredBefore = false;
-      } else if (Annotation.Type == TT_TrailingUnaryOperator) {
-        Annotation.SpaceRequiredBefore = false;
-      } else {
-        Annotation.SpaceRequiredBefore =
-            spaceRequiredBetween(Line.Tokens[i - 1].Tok, Line.Tokens[i].Tok);
       }
 
-      if (Annotations[i - 1].Type == TT_LineComment ||
-          (Line.Tokens[i].Tok.is(tok::string_literal) &&
-           Line.Tokens[i - 1].Tok.is(tok::string_literal))) {
-        Annotation.MustBreakBefore = true;
-      }
-
-      if (Annotation.MustBreakBefore)
-        Annotation.CanBreakBefore = true;
+      Annotation.CanBreakBefore = Annotation.MustBreakBefore ||
+                                  canBreakBefore(i);
     }
     return true;
   }
@@ -1024,7 +949,84 @@ private:
     return true;
   }
 
+  bool spaceRequiredBefore(unsigned i) {
+    TokenAnnotation &Annotation = Annotations[i];
+    const FormatToken &Current = Line.Tokens[i];
+
+    if (CurrentLineType == LT_ObjCMethodDecl) {
+      if (Current.Tok.is(tok::identifier) && (i != Line.Tokens.size() - 1) &&
+          Line.Tokens[i + 1].Tok.is(tok::colon) &&
+          Line.Tokens[i - 1].Tok.is(tok::identifier))
+        return true;
+      if (Current.Tok.is(tok::colon))
+        return false;
+      if (Annotations[i - 1].Type == TT_ObjCMethodSpecifier)
+        return true;
+      if (Line.Tokens[i - 1].Tok.is(tok::r_paren) &&
+          Current.Tok.is(tok::identifier))
+        // Don't space between ')' and <id>
+        return false;
+      if (Line.Tokens[i - 1].Tok.is(tok::colon) && Current.Tok.is(tok::l_paren))
+        // Don't space between ':' and '('
+        return false;
+    }
+
+    if (Annotation.Type == TT_CtorInitializerColon)
+      return true;
+    if (Annotation.Type == TT_OverloadedOperator)
+      return Current.Tok.is(tok::identifier) || Current.Tok.is(tok::kw_new) ||
+             Current.Tok.is(tok::kw_delete);
+    if (Annotations[i - 1].Type == TT_OverloadedOperator)
+      return false;
+    if (Current.Tok.is(tok::colon))
+      return Line.Tokens[0].Tok.isNot(tok::kw_case) &&
+             (i != Line.Tokens.size() - 1);
+    if (Annotations[i - 1].Type == TT_UnaryOperator)
+      return false;
+    if (Annotation.Type == TT_UnaryOperator)
+      return Line.Tokens[i - 1].Tok.isNot(tok::l_paren) &&
+             Line.Tokens[i - 1].Tok.isNot(tok::l_square);
+    if (Line.Tokens[i - 1].Tok.is(tok::greater) &&
+        Current.Tok.is(tok::greater)) {
+      return Annotation.Type == TT_TemplateCloser && Annotations[i - 1].Type ==
+             TT_TemplateCloser && Style.SplitTemplateClosingGreater;
+    }
+    if (Annotation.Type == TT_DirectorySeparator ||
+        Annotations[i - 1].Type == TT_DirectorySeparator)
+      return false;
+    if (Annotation.Type == TT_BinaryOperator ||
+        Annotations[i - 1].Type == TT_BinaryOperator)
+      return true;
+    if (Annotations[i - 1].Type == TT_TemplateCloser &&
+        Current.Tok.is(tok::l_paren))
+      return false;
+    if (Current.Tok.is(tok::less) && Line.Tokens[0].Tok.is(tok::hash))
+      return true;
+    if (Annotation.Type == TT_TrailingUnaryOperator)
+      return false;
+    return spaceRequiredBetween(Line.Tokens[i - 1].Tok, Current.Tok);
+  }
+
   bool canBreakBefore(unsigned i) {
+    if (CurrentLineType == LT_ObjCMethodDecl) {
+      if (Line.Tokens[i].Tok.is(tok::identifier) &&
+          (i != Line.Tokens.size() - 1) &&
+          Line.Tokens[i + 1].Tok.is(tok::colon) &&
+          Line.Tokens[i - 1].Tok.is(tok::identifier))
+        return true;
+      if (CurrentLineType == LT_ObjCMethodDecl &&
+          Line.Tokens[i].Tok.is(tok::identifier) &&
+          Line.Tokens[i - 1].Tok.is(tok::l_paren) &&
+          Line.Tokens[i - 2].Tok.is(tok::colon))
+        // Don't break this identifier as ':' or identifier
+        // before it will break.
+        return false;
+      if (Line.Tokens[i].Tok.is(tok::colon) &&
+          Line.Tokens[i - 1].Tok.is(tok::identifier) &&
+          Annotations[i - 1].CanBreakBefore)
+        // Don't break at ':' if identifier before it can beak.
+        return false;
+    }
     if (Annotations[i - 1].ClosesTemplateDeclaration)
       return true;
     if (Annotations[i - 1].Type == TT_PointerOrReference ||
