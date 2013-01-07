@@ -20,13 +20,13 @@
 #define CM_NAME "cost-model"
 #define DEBUG_TYPE CM_NAME
 #include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/TargetTransformInfo.h"
 using namespace llvm;
 
 namespace {

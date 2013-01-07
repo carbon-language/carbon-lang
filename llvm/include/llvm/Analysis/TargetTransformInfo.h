@@ -1,4 +1,4 @@
-//===- llvm/Transforms/TargetTransformInfo.h --------------------*- C++ -*-===//
+//===- llvm/Analysis/TargetTransformInfo.h ----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,11 +19,11 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_TARGET_TRANSFORM_INTERFACE
-#define LLVM_TRANSFORMS_TARGET_TRANSFORM_INTERFACE
+#ifndef LLVM_ANALYSIS_TARGET_TRANSFORM_INTERFACE
+#define LLVM_ANALYSIS_TARGET_TRANSFORM_INTERFACE
 
-#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/GlobalValue.h"
+#include "llvm/IR/Intrinsics.h"
 #include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"

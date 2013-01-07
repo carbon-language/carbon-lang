@@ -1,4 +1,4 @@
-//===- llvm/IR/TargetTransformInfo.cpp --------------------------*- C++ -*-===//
+//===- llvm/Analysis/TargetTransformInfo.cpp ------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "tti"
-#include "llvm/TargetTransformInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;

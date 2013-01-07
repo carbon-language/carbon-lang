@@ -56,6 +56,7 @@ add_llvm_library(LLVMAnalysis
   ScalarEvolutionExpander.cpp
   ScalarEvolutionNormalization.cpp
   SparsePropagation.cpp
+  TargetTransformInfo.cpp
   Trace.cpp
   TypeBasedAliasAnalysis.cpp
   ValueTracking.cpp
