@@ -278,21 +278,23 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                "  // Doesn't do anything\n"
                "}");
 
-  verifyFormat("int i  // This is a fancy variable\n"
+  verifyFormat("int i // This is a fancy variable\n"
                "    = 5;");
 
   verifyFormat("enum E {\n"
                "  // comment\n"
-               "  VAL_A,  // comment\n"
+               "  VAL_A, // comment\n"
                "  VAL_B\n"
                "};");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
-      "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;  // Trailing comment");
+      "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb; // Trailing comment");
 
-  EXPECT_EQ("int i;  // single line trailing comment",
+  EXPECT_EQ("int i; // single line trailing comment",
             format("int i;\\\n// single line trailing comment"));
+
+  verifyGoogleFormat("int a;  // Trailing comment.");
 }
 
 TEST_F(FormatTest, UnderstandsMultiLineComments) {

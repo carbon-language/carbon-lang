@@ -77,6 +77,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.AccessModifierOffset = -2;
   LLVMStyle.SplitTemplateClosingGreater = true;
   LLVMStyle.IndentCaseLabels = false;
+  LLVMStyle.SpacesBeforeTrailingComments = 1;
   return LLVMStyle;
 }
 
@@ -88,6 +89,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.AccessModifierOffset = -1;
   GoogleStyle.SplitTemplateClosingGreater = false;
   GoogleStyle.IndentCaseLabels = true;
+  GoogleStyle.SpacesBeforeTrailingComments = 2;
   return GoogleStyle;
 }
 
@@ -299,7 +301,7 @@ private:
 
       unsigned Spaces = Annotations[Index].SpaceRequiredBefore ? 1 : 0;
       if (Annotations[Index].Type == TT_LineComment)
-        Spaces = 2;
+        Spaces = Style.SpacesBeforeTrailingComments;
 
       if (!DryRun)
         replaceWhitespace(Current, 0, Spaces);

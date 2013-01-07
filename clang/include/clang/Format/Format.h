@@ -52,6 +52,9 @@ struct FormatStyle {
   /// When false, use the same indentation level as for the switch statement.
   /// Switch statement body is always indented one level more than case labels.
   bool IndentCaseLabels;
+
+  /// \brief The number of spaces to before trailing line comments.
+  unsigned SpacesBeforeTrailingComments;
 };
 
 /// \brief Returns a format style complying with the LLVM coding standards:
