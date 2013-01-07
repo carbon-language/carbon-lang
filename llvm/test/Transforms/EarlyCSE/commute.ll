@@ -19,9 +19,9 @@ define void @test2(float %A, float %B, i1* %PA, i1* %PB) {
   ; CHECK-NEXT: store
   ; CHECK-NEXT: store
   ; CHECK-NEXT: ret
-  %C = fcmp eq float %A, %B
+  %C = fcmp oeq float %A, %B
   store i1 %C, i1* %PA
-  %D = fcmp eq float %B, %A
+  %D = fcmp oeq float %B, %A
   store i1 %D, i1* %PB
   ret void
 }

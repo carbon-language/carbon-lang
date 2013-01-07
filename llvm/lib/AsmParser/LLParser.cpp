@@ -3120,7 +3120,7 @@ int LLParser::ParseInstruction(Instruction *&Inst, BasicBlock *BB,
 bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
   if (Opc == Instruction::FCmp) {
     switch (Lex.getKind()) {
-    default: TokError("expected fcmp predicate (e.g. 'oeq')");
+    default: return TokError("expected fcmp predicate (e.g. 'oeq')");
     case lltok::kw_oeq: P = CmpInst::FCMP_OEQ; break;
     case lltok::kw_one: P = CmpInst::FCMP_ONE; break;
     case lltok::kw_olt: P = CmpInst::FCMP_OLT; break;
@@ -3140,7 +3140,7 @@ bool LLParser::ParseCmpPredicate(unsigned &P, unsigned Opc) {
     }
   } else {
     switch (Lex.getKind()) {
-    default: TokError("expected icmp predicate (e.g. 'eq')");
+    default: return TokError("expected icmp predicate (e.g. 'eq')");
     case lltok::kw_eq:  P = CmpInst::ICMP_EQ; break;
     case lltok::kw_ne:  P = CmpInst::ICMP_NE; break;
     case lltok::kw_slt: P = CmpInst::ICMP_SLT; break;

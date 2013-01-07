@@ -1,5 +1,5 @@
 ; RUN: opt -loop-idiom < %s -mtriple=x86_64-apple-darwin -mcpu=corei7 -S | FileCheck %s
-
+booom
 ;To recognize this pattern:
 ;int popcount(unsigned long long a) {
 ;    int c = 0;
