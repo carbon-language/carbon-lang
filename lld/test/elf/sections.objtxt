@@ -1,9 +1,10 @@
-RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/section-test.i386 | llvm-objdump -section-headers %t1 |  FileCheck -check-prefix=OBJDUMP %s 
+RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/section-test.i386
+RUN: llvm-objdump -section-headers %t1 |  FileCheck -check-prefix=OBJDUMP %s
 RUN: llvm-readobj  %t1 |  FileCheck -check-prefix=READOBJ %s 
 RUN: elf-dump  --dump-section %t1 |  FileCheck -check-prefix=ED %s 
 
 OBJDUMP:  0               000000000 00000000000000000
-OBJDUMP:  1 .text         00000000a 00000000000000000 TEXT DATA
+OBJDUMP:  1 .text         00000000a 00000000000000074 TEXT DATA
 OBJDUMP:  2 .data         000000004 00000000000001000 DATA
 OBJDUMP:  3 .special      000000004 00000000000001004 DATA
 OBJDUMP:  4 .anotherspecial 000000004 00000000000001008 DATA
@@ -16,8 +17,8 @@ READOBJ: File Format : ELF32-i386
 READOBJ: Arch        : i386
 READOBJ: Address Size: 32 bits
 READOBJ: Symbols
-READOBJ: baz                               FUNC                 0                 a              1000  global
-READOBJ: y                                 DATA              1004                 4              3008  global
+READOBJ: baz FUNC   74 a   e8 global
+READOBJ: y   DATA 1004 4 2008 global
 
 ED: 'e_indent[EI_DATA]', 0x01
 ED: 'e_machine', 0x0003

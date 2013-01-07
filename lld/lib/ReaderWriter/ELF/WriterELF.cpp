@@ -747,6 +747,11 @@ public:
       this->_align2 = section->align2();
   }
 
+  /// Prepend a generic chunk to the segment.
+  void prepend(Chunk<target_endianness, max_align, is64Bits> *c) {
+    _sections.insert(_sections.begin(), c);
+  }
+
   /// Sort segments depending on the property
   /// If we have a Program Header segment, it should appear first
   /// If we have a INTERP segment, that should appear after the Program Header
@@ -869,27 +874,19 @@ public:
   }
 
   /// \brief Assign virtual addresses to the slices
-  void assignVirtualAddress(uint64_t &addr, bool isFirstSegment) {
+  void assignVirtualAddress(uint64_t &addr) {
     for (auto sei = slices_begin(), see = slices_end(); sei != see; ++sei) {
-      bool firstSlice = (sei == slices_begin());
-      // The first segment has distinct since it contains the
-      // ELF header and the Program Header, if we get to the first segment
-      // and the first slice, set it to the baseaddress
-      // which is the segment address
-      if (isFirstSegment && firstSlice)
-        (*sei)->setVAddr(this->virtualAddr());
-      else {
-        // Align to a page
-        addr = llvm::RoundUpToAlignment(addr, _options.pageSize());
-        // Align to the slice alignment
-        addr = llvm::RoundUpToAlignment(addr, (*sei)->align2());
-      }
+      // Align to a page
+      addr = llvm::RoundUpToAlignment(addr, _options.pageSize());
+      // Align to the slice alignment
+      addr = llvm::RoundUpToAlignment(addr, (*sei)->align2());
+
       bool virtualAddressSet = false;
       for (auto si = (*sei)->sections_begin(), se = (*sei)->sections_end();
                                                si != se; ++si) {
         // Align the section address
         addr = llvm::RoundUpToAlignment(addr, (*si)->align2());
-        if (!isFirstSegment && !virtualAddressSet) {
+        if (!virtualAddressSet) {
           (*sei)->setVAddr(addr);
           virtualAddressSet = true;
         }
@@ -897,6 +894,8 @@ public:
         if (auto s =
               dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si))
           s->assignVirtualAddress(addr);
+        else
+          addr += (*si)->memSize();
         (*si)->setMemSize(addr - (*si)->virtualAddr());
       }
       (*sei)->setMemSize(addr - (*sei)->virtualAddr());
@@ -1161,6 +1160,9 @@ public:
   ELFHeader()
   : Chunk<target_endianness, max_align, is64Bits>(
       "elfhdr", Chunk<target_endianness, max_align, is64Bits>::K_ELFHeader) {
+    this->_align2 = is64Bits ? 8 : 4;
+    this->_fsize = sizeof(Elf_Ehdr);
+    this->_msize = sizeof(Elf_Ehdr);
     memset(_eh.e_ident, 0, llvm::ELF::EI_NIDENT);
     e_ident(ELF::EI_MAG0, 0x7f);
     e_ident(ELF::EI_MAG1, 'E');
@@ -1217,6 +1219,7 @@ public:
   : Chunk<target_endianness, max_align, is64Bits>(
       "elfphdr",
       Chunk<target_endianness, max_align, is64Bits>::K_ELFProgramHeader) {
+    this->_align2 = is64Bits ? 8 : 4;
     resetProgramHeaders();
   }
 
@@ -1245,6 +1248,10 @@ public:
       phdr->p_align = (phdr->p_type == llvm::ELF::PT_LOAD) ?
                        segment->pageSize() : (*sei)->align2();
     }
+
+    this->_fsize = fileSize();
+    this->_msize = this->_fsize;
+
     return ret;
   }
 
@@ -1252,13 +1259,8 @@ public:
     _phi = _ph.begin();
   }
 
-  void setVAddr(uint64_t addr) {
-    this->_start = llvm::RoundUpToAlignment(addr, 8);
-    this->_fsize = this->_start - addr;
-  }
-
   uint64_t  fileSize() {
-    return this->_fsize + (sizeof (Elf_Phdr) * _ph.size());
+    return sizeof(Elf_Phdr) * _ph.size();
   }
 
   static inline bool classof(
@@ -1745,27 +1747,27 @@ public:
   }
 
   void assignVirtualAddress() {
+    if (_segments.empty())
+      return;
+
     uint64_t virtualAddress = _options.baseAddress();
 
-    // Add the ELF Header
-    if (_elfHeader) {
-      _elfHeader->setFileOffset(0);
-      _elfHeader->setVAddr(virtualAddress);
-    }
-    // Add the program header
-    if (_programHeader) {
-      _programHeader->setVAddr(
-        uint64_t(virtualAddress + _elfHeader->fileSize()));
-      _programHeader->setFileOffset(_elfHeader->fileSize());
-    }
+    // HACK: This is a super dirty hack. The elf header and program header are
+    // not part of a section, but we need them to be loaded at the base address
+    // so that AT_PHDR is set correctly by the loader and so they are accessible
+    // at runtime. To do this we simply prepend them to the first Segment and
+    // let the layout logic take care of it.
+    _segments[0]->prepend(_programHeader);
+    _segments[0]->prepend(_elfHeader);
+
     bool newSegmentHeaderAdded = true;
-    while (true && !_segments.empty()) {
+    while (true) {
       for (auto si : _segments) {
         newSegmentHeaderAdded = _programHeader->addSegment(si);
       }
       if (!newSegmentHeaderAdded)
         break;
-      uint64_t fileoffset = _elfHeader->fileSize() + _programHeader->fileSize();
+      uint64_t fileoffset = 0;
       uint64_t address = virtualAddress;
       // Fix the offsets after adding the program header
       for (auto &si : _segments) {
@@ -1780,7 +1782,7 @@ public:
         // The first segment has the virtualAddress set to the base address as
         // we have added the file header and the program header dont align the
         // first segment to the pagesize
-        (*si)->assignVirtualAddress(address, (si == _segments.begin()));
+        (*si)->assignVirtualAddress(address);
         (*si)->setMemSize(address - virtualAddress);
         virtualAddress = llvm::RoundUpToAlignment(address, _options.pageSize());
       }
@@ -2136,9 +2138,6 @@ error_code ELFExecutableWriter<target_endianness, max_align, is64Bits>
   if (ec)
     return ec;
 
-  for (auto si = _layout->sections_begin(); si != _layout->sections_end(); ++si)
-    (*si)->write(this, buffer);
-
   _elfHeader->e_ident(ELF::EI_CLASS, (_options.is64Bit() ? ELF::ELFCLASS64
                                                         : ELF::ELFCLASS32));
   _elfHeader->e_ident(ELF::EI_DATA, _options.endianness() == llvm::support::big
@@ -2159,8 +2158,15 @@ error_code ELFExecutableWriter<target_endianness, max_align, is64Bits>
   uint64_t virtualAddr = 0;
   _layout->findAtomAddrByName("_start", virtualAddr);
   _elfHeader->e_entry(virtualAddr);
+
+  // HACK: We have to write out the header and program header here even though
+  // they are a member of a segment because only sections are written in the
+  // following loop.
   _elfHeader->write(this, buffer);
   _programHeader->write(this, buffer);
+
+  for (auto si = _layout->sections_begin(); si != _layout->sections_end(); ++si)
+    (*si)->write(this, buffer);
 
   return buffer->commit();
 }
