@@ -1021,9 +1021,14 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
           "outRange8:(NSRange) out_range8  outRange9:(NSRange) out_range9;"));
 }
 
-TEST_F(FormatTest, DoNotDropAt) {
+TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@interface");
   verifyFormat("@dynamic");
+  EXPECT_EQ("@interface", format("@ interface"));
+
+  // The precise formatting of this doesn't matter, nobody writes code like
+  // this.
+  verifyFormat("@ /*foo*/ interface");
 }
 
 } // end namespace tooling
