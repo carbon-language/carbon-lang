@@ -39,7 +39,7 @@ void DWARFDebugInfoEntryMinimal::dump(raw_ostream &OS,
         OS << format(" [%u] %c\n", abbrCode,
                      AbbrevDecl->hasChildren() ? '*' : ' ');
 
-        // Dump all data in the .debug_info for the attributes
+        // Dump all data in the DIE for the attributes.
         const uint32_t numAttributes = AbbrevDecl->getNumAttributes();
         for (uint32_t i = 0; i != numAttributes; ++i) {
           uint16_t attr = AbbrevDecl->getAttrByIndex(i);
