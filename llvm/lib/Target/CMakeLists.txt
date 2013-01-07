@@ -8,7 +8,6 @@ add_llvm_library(LLVMTarget
   TargetMachine.cpp
   TargetMachineC.cpp
   TargetSubtargetInfo.cpp
-  TargetTransformImpl.cpp
   )
 
 foreach(t ${LLVM_TARGETS_TO_BUILD})

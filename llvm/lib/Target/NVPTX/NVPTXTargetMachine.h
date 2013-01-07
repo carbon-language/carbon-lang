@@ -25,7 +25,6 @@
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetSelectionDAGInfo.h"
-#include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {
 
@@ -44,9 +43,6 @@ class NVPTXTargetMachine : public LLVMTargetMachine {
 
   // Hold Strings that can be free'd all together with NVPTXTargetMachine
   ManagedStringPool     ManagedStrPool;
-
-  ScalarTargetTransformImpl STTI;
-  VectorTargetTransformImpl VTTI;
 
   //bool addCommonCodeGenPasses(PassManagerBase &, CodeGenOpt::Level,
   //                            bool DisableVerify, MCContext *&OutCtx);
@@ -75,12 +71,6 @@ public:
 
   virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const {
     return &TSInfo;
-  }
-  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
-    return &STTI;
-  }
-  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
-    return &VTTI;
   }
 
   //virtual bool addInstSelector(PassManagerBase &PM,

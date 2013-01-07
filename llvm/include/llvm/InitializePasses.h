@@ -69,6 +69,7 @@ void initializeArgPromotionPass(PassRegistry&);
 void initializeBarrierNoopPass(PassRegistry&);
 void initializeBasicAliasAnalysisPass(PassRegistry&);
 void initializeBasicCallGraphPass(PassRegistry&);
+void initializeBasicTTIPass(PassRegistry&);
 void initializeBlockExtractorPassPass(PassRegistry&);
 void initializeBlockFrequencyInfoPass(PassRegistry&);
 void initializeBlockPlacementPass(PassRegistry&);

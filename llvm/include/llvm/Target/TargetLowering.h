@@ -895,6 +895,18 @@ public:
   }
 
   //===--------------------------------------------------------------------===//
+  /// \name Helpers for TargetTransformInfo implementations
+  /// @{
+
+  /// Get the ISD node that corresponds to the Instruction class opcode.
+  int InstructionOpcodeToISD(unsigned Opcode) const;
+
+  /// Estimate the cost of type-legalization and the legalized type.
+  std::pair<unsigned, MVT> getTypeLegalizationCost(Type *Ty) const;
+
+  /// @}
+
+  //===--------------------------------------------------------------------===//
   // TargetLowering Optimization Methods
   //
 

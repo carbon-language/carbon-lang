@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/Target/TargetTransformImpl.h"
 #include <vector>
 
 namespace llvm {
@@ -574,16 +573,6 @@ namespace llvm {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
                              const TargetLibraryInfo *libInfo);
   }
-
-  class ARMScalarTargetTransformImpl : public ScalarTargetTransformImpl {
-    const ARMSubtarget *Subtarget;
-  public:
-    explicit ARMScalarTargetTransformImpl(const TargetLowering *TL) :
-      ScalarTargetTransformImpl(TL),
-      Subtarget(&TL->getTargetMachine().getSubtarget<ARMSubtarget>()) {};
-
-    virtual unsigned getIntImmCost(const APInt &Imm, Type *Ty) const;
-  };
 }
 
 #endif  // ARMISELLOWERING_H

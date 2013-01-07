@@ -74,8 +74,7 @@ HexagonTargetMachine::HexagonTargetMachine(const Target &T, StringRef TT,
     Subtarget(TT, CPU, FS), InstrInfo(Subtarget), TLInfo(*this),
     TSInfo(*this),
     FrameLowering(Subtarget),
-    InstrItins(&Subtarget.getInstrItineraryData()),
-    STTI(&TLInfo), VTTI(&TLInfo) {
+    InstrItins(&Subtarget.getInstrItineraryData()) {
   setMCUseCFI(false);
 }
 

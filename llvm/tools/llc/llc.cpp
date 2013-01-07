@@ -38,7 +38,6 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/TargetTransformInfo.h"
 #include <memory>
 using namespace llvm;
 
@@ -320,10 +319,8 @@ static int compileModule(char **argv, LLVMContext &Context) {
     TLI->disableAllFunctions();
   PM.add(TLI);
 
-  if (target.get()) {
-    PM.add(createNoTTIPass(target->getScalarTargetTransformInfo(),
-                           target->getVectorTargetTransformInfo()));
-  }
+  // Add intenal analysis passes from the target machine.
+  Target.addAnalysisPasses(PM);
 
   // Add the target data from the target machine, if it exists, or the module.
   if (const DataLayout *TD = Target.getDataLayout())

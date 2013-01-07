@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "tti"
 #include "llvm/TargetTransformInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -17,6 +18,25 @@ INITIALIZE_ANALYSIS_GROUP(TargetTransformInfo, "Target Information", NoTTI)
 char TargetTransformInfo::ID = 0;
 
 TargetTransformInfo::~TargetTransformInfo() {
+}
+
+void TargetTransformInfo::pushTTIStack(Pass *P) {
+  TopTTI = this;
+  PrevTTI = &P->getAnalysis<TargetTransformInfo>();
+
+  // Walk up the chain and update the top TTI pointer.
+  for (TargetTransformInfo *PTTI = PrevTTI; PTTI; PTTI = PTTI->PrevTTI)
+    PTTI->TopTTI = this;
+}
+
+void TargetTransformInfo::popTTIStack() {
+  TopTTI = 0;
+
+  // Walk up the chain and update the top TTI pointer.
+  for (TargetTransformInfo *PTTI = PrevTTI; PTTI; PTTI = PTTI->PrevTTI)
+    PTTI->TopTTI = PrevTTI;
+
+  PrevTTI = 0;
 }
 
 void TargetTransformInfo::getAnalysisUsage(AnalysisUsage &AU) const {
@@ -122,26 +142,18 @@ unsigned TargetTransformInfo::getNumberOfParts(Type *Tp) const {
 
 namespace {
 
-class NoTTI : public ImmutablePass, public TargetTransformInfo {
-  const ScalarTargetTransformInfo *STTI;
-  const VectorTargetTransformInfo *VTTI;
-
-public:
-  // FIXME: This constructor doesn't work which breaks the use of NoTTI on the
-  // commandline. This has to be fixed for NoTTI to be fully usable as an
-  // analysis pass.
-  NoTTI() : ImmutablePass(ID), TargetTransformInfo(0) {
-    llvm_unreachable("Unsupported code path!");
-  }
-
-  NoTTI(const ScalarTargetTransformInfo *S, const VectorTargetTransformInfo *V)
-      : ImmutablePass(ID),
-        TargetTransformInfo(0), // NoTTI is special and doesn't delegate here.
-        STTI(S), VTTI(V) {
+struct NoTTI : ImmutablePass, TargetTransformInfo {
+  NoTTI() : ImmutablePass(ID) {
     initializeNoTTIPass(*PassRegistry::getPassRegistry());
   }
 
-  void getAnalysisUsage(AnalysisUsage &AU) const {
+  virtual void initializePass() {
+    // Note that this subclass is special, and must *not* call initializeTTI as
+    // it does not chain.
+    PrevTTI = 0;
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     // Note that this subclass is special, and must *not* call
     // TTI::getAnalysisUsage as it breaks the recursion.
   }
@@ -157,107 +169,102 @@ public:
   }
 
 
-  // Delegate all predicates through the STTI or VTTI interface.
-
   bool isLegalAddImmediate(int64_t Imm) const {
-    return STTI->isLegalAddImmediate(Imm);
+    return false;
   }
 
   bool isLegalICmpImmediate(int64_t Imm) const {
-    return STTI->isLegalICmpImmediate(Imm);
+    return false;
   }
 
   bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
                              bool HasBaseReg, int64_t Scale) const {
-    return STTI->isLegalAddressingMode(Ty, BaseGV, BaseOffset, HasBaseReg,
-                                       Scale);
+    return false;
   }
 
   bool isTruncateFree(Type *Ty1, Type *Ty2) const {
-    return STTI->isTruncateFree(Ty1, Ty2);
+    return false;
   }
 
   bool isTypeLegal(Type *Ty) const {
-    return STTI->isTypeLegal(Ty);
+    return false;
   }
 
   unsigned getJumpBufAlignment() const {
-    return STTI->getJumpBufAlignment();
+    return 0;
   }
 
   unsigned getJumpBufSize() const {
-    return STTI->getJumpBufSize();
+    return 0;
   }
 
   bool shouldBuildLookupTables() const {
-    return STTI->shouldBuildLookupTables();
+    return true;
   }
 
   PopcntHwSupport getPopcntHwSupport(unsigned IntTyWidthInBit) const {
-    return (PopcntHwSupport)STTI->getPopcntHwSupport(IntTyWidthInBit);
+    return None;
   }
 
   unsigned getIntImmCost(const APInt &Imm, Type *Ty) const {
-    return STTI->getIntImmCost(Imm, Ty);
+    return 1;
   }
 
   unsigned getNumberOfRegisters(bool Vector) const {
-    return VTTI->getNumberOfRegisters(Vector);
+    return 8;
   }
 
   unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
-    return VTTI->getArithmeticInstrCost(Opcode, Ty);
+    return 1;
   }
 
   unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
                           int Index = 0, Type *SubTp = 0) const {
-    return VTTI->getShuffleCost((VectorTargetTransformInfo::ShuffleKind)Kind,
-                                Tp, Index, SubTp);
+    return 1;
   }
 
   unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
                             Type *Src) const {
-    return VTTI->getCastInstrCost(Opcode, Dst, Src);
+    return 1;
   }
 
   unsigned getCFInstrCost(unsigned Opcode) const {
-    return VTTI->getCFInstrCost(Opcode);
+    return 1;
   }
 
   unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
                               Type *CondTy = 0) const {
-    return VTTI->getCmpSelInstrCost(Opcode, ValTy, CondTy);
+    return 1;
   }
 
   unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
                               unsigned Index = -1) const {
-    return VTTI->getVectorInstrCost(Opcode, Val, Index);
+    return 1;
   }
 
   unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
                            unsigned Alignment,
                            unsigned AddressSpace) const {
-    return VTTI->getMemoryOpCost(Opcode, Src, Alignment, AddressSpace);
+    return 1;
   }
 
   unsigned getIntrinsicInstrCost(Intrinsic::ID ID,
                                  Type *RetTy,
                                  ArrayRef<Type*> Tys) const {
-    return VTTI->getIntrinsicInstrCost(ID, RetTy, Tys);
+    return 1;
   }
 
   unsigned getNumberOfParts(Type *Tp) const {
-    return VTTI->getNumberOfParts(Tp);
+    return 0;
   }
 };
 
 } // end anonymous namespace
 
-INITIALIZE_AG_PASS(NoTTI, TargetTransformInfo, "no-tti",
+INITIALIZE_AG_PASS(NoTTI, TargetTransformInfo, "notti",
                    "No target information", true, true, true)
 char NoTTI::ID = 0;
 
-ImmutablePass *llvm::createNoTTIPass(const ScalarTargetTransformInfo *S,
-                                     const VectorTargetTransformInfo *V) {
-  return new NoTTI(S, V);
+ImmutablePass *llvm::createNoTargetTransformInfoPass() {
+  return new NoTTI();
 }

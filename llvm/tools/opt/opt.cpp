@@ -43,7 +43,6 @@
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/TargetTransformInfo.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include <algorithm>
 #include <memory>
@@ -657,10 +656,9 @@ int main(int argc, char **argv) {
     Machine = GetTargetMachine(Triple(ModuleTriple));
   std::auto_ptr<TargetMachine> TM(Machine);
 
-  if (TM.get()) {
-    Passes.add(createNoTTIPass(TM->getScalarTargetTransformInfo(),
-                               TM->getVectorTargetTransformInfo()));
-  }
+  // Add internal analysis passes from the target machine.
+  if (TM.get())
+    TM->addAnalysisPasses(Passes);
 
   OwningPtr<FunctionPassManager> FPasses;
   if (OptLevelO1 || OptLevelO2 || OptLevelOs || OptLevelOz || OptLevelO3) {

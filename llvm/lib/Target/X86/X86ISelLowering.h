@@ -23,7 +23,6 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {
   namespace X86ISD {
@@ -945,40 +944,6 @@ namespace llvm {
     FastISel *createFastISel(FunctionLoweringInfo &funcInfo,
                              const TargetLibraryInfo *libInfo);
   }
-
-  class X86ScalarTargetTransformImpl : public ScalarTargetTransformImpl {
-  public:
-    explicit X86ScalarTargetTransformImpl(const TargetLowering *TL) :
-      ScalarTargetTransformImpl(TL) {};
-
-    virtual PopcntHwSupport getPopcntHwSupport(unsigned TyWidth) const;
-  };
-
-  class X86VectorTargetTransformInfo : public VectorTargetTransformImpl {
-  public:
-    explicit X86VectorTargetTransformInfo(const TargetLowering *TL) :
-    VectorTargetTransformImpl(TL) {}
-
-    virtual unsigned getNumberOfRegisters(bool Vector) const;
-
-    virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
-
-    virtual unsigned getMemoryOpCost(unsigned Opcode, Type *Src,
-                                     unsigned Alignment,
-                                     unsigned AddressSpace) const;
-
-    virtual unsigned getVectorInstrCost(unsigned Opcode, Type *Val,
-                                        unsigned Index) const;
-
-    virtual unsigned getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
-                                        Type *CondTy) const;
-
-    virtual unsigned getCastInstrCost(unsigned Opcode, Type *Dst,
-                                      Type *Src) const;
-
-    unsigned getShuffleCost(ShuffleKind Kind,
-                            Type *Tp, int Index, Type *SubTp) const;
-  };
 }
 
 #endif    // X86ISELLOWERING_H

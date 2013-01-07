@@ -63,6 +63,9 @@ FunctionPass *createX86JITCodeEmitterPass(X86TargetMachine &TM,
 ///
 FunctionPass *createEmitX86CodeToMemory();
 
+/// \brief Creates an X86-specific Target Transformation Info pass.
+ImmutablePass *createX86TargetTransformInfoPass(const X86TargetMachine *TM);
+
 } // End llvm namespace
 
 #endif

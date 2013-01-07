@@ -108,10 +108,6 @@ public:
   virtual const TargetLowering    *getTargetLowering() const { return 0; }
   virtual const TargetSelectionDAGInfo *getSelectionDAGInfo() const{ return 0; }
   virtual const DataLayout             *getDataLayout() const { return 0; }
-  virtual const ScalarTargetTransformInfo*
-  getScalarTargetTransformInfo() const { return 0; }
-  virtual const VectorTargetTransformInfo*
-  getVectorTargetTransformInfo() const { return 0; }
 
   /// getMCAsmInfo - Return target specific asm information.
   ///
@@ -232,6 +228,9 @@ public:
   /// sections.
   static void setFunctionSections(bool);
 
+  /// \brief Register analysis passes for this target with a pass manager.
+  virtual void addAnalysisPasses(PassManagerBase &) {}
+
   /// CodeGenFileType - These enums are meant to be passed into
   /// addPassesToEmitFile to indicate what type of file to emit, and returned by
   /// it to indicate what type of file could actually be made.
@@ -290,6 +289,11 @@ protected: // Can only create subclasses.
                     CodeGenOpt::Level OL);
 
 public:
+  /// \brief Register analysis passes for this target with a pass manager.
+  ///
+  /// This registers target independent analysis passes.
+  virtual void addAnalysisPasses(PassManagerBase &PM);
+
   /// createPassConfig - Create a pass configuration object to be used by
   /// addPassToEmitX methods for generating a pipeline of CodeGen passes.
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);

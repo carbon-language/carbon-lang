@@ -30,6 +30,7 @@ set(sources
   X86Subtarget.cpp
   X86TargetMachine.cpp
   X86TargetObjectFile.cpp
+  X86TargetTransformInfo.cpp
   X86VZeroUpper.cpp
   )
 

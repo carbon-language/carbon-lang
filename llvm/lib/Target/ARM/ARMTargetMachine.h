@@ -27,7 +27,6 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetTransformImpl.h"
 
 namespace llvm {
 
@@ -51,6 +50,9 @@ public:
     return &InstrItins;
   }
 
+  /// \brief Register X86 analysis passes with a pass manager.
+  virtual void addAnalysisPasses(PassManagerBase &PM);
+
   // Pass Pipeline Configuration
   virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 
@@ -66,8 +68,6 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   ARMTargetLowering   TLInfo;
   ARMSelectionDAGInfo TSInfo;
   ARMFrameLowering    FrameLowering;
-  ARMScalarTargetTransformImpl STTI;
-  VectorTargetTransformImpl VTTI;
  public:
   ARMTargetMachine(const Target &T, StringRef TT,
                    StringRef CPU, StringRef FS,
@@ -89,12 +89,6 @@ class ARMTargetMachine : public ARMBaseTargetMachine {
   virtual const ARMFrameLowering *getFrameLowering() const {
     return &FrameLowering;
   }
-  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
-    return &STTI;
-  }
-  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
-    return &VTTI;
-  }
   virtual const ARMInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const DataLayout       *getDataLayout() const { return &DL; }
 };
@@ -112,8 +106,6 @@ class ThumbTargetMachine : public ARMBaseTargetMachine {
   ARMSelectionDAGInfo TSInfo;
   // Either Thumb1FrameLowering or ARMFrameLowering.
   OwningPtr<ARMFrameLowering> FrameLowering;
-  ARMScalarTargetTransformImpl STTI;
-  VectorTargetTransformImpl VTTI;
 public:
   ThumbTargetMachine(const Target &T, StringRef TT,
                      StringRef CPU, StringRef FS,
@@ -141,12 +133,6 @@ public:
   /// returns either Thumb1FrameLowering or ARMFrameLowering
   virtual const ARMFrameLowering *getFrameLowering() const {
     return FrameLowering.get();
-  }
-  virtual const ScalarTargetTransformInfo *getScalarTargetTransformInfo()const {
-    return &STTI;
-  }
-  virtual const VectorTargetTransformInfo *getVectorTargetTransformInfo()const {
-    return &VTTI;
   }
   virtual const DataLayout       *getDataLayout() const { return &DL; }
 };

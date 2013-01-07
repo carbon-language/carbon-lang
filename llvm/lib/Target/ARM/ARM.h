@@ -44,6 +44,9 @@ FunctionPass *createMLxExpansionPass();
 FunctionPass *createThumb2ITBlockPass();
 FunctionPass *createThumb2SizeReductionPass();
 
+/// \brief Creates an X86-specific Target Transformation Info pass.
+ImmutablePass *createARMTargetTransformInfoPass(const ARMBaseTargetMachine *TM);
+
 void LowerARMMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
                                   ARMAsmPrinter &AP);
 

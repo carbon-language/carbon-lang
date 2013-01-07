@@ -51,6 +51,15 @@ ARMBaseTargetMachine::ARMBaseTargetMachine(const Target &T, StringRef TT,
     this->Options.FloatABIType = FloatABI::Soft;
 }
 
+void ARMBaseTargetMachine::addAnalysisPasses(PassManagerBase &PM) {
+  // Add first the target-independent BasicTTI pass, then our X86 pass. This
+  // allows the X86 pass to delegate to the target independent layer when
+  // appropriate.
+  PM.add(createBasicTargetTransformInfoPass(getTargetLowering()));
+  PM.add(createARMTargetTransformInfoPass(this));
+}
+
+
 void ARMTargetMachine::anchor() { }
 
 ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
@@ -70,8 +79,7 @@ ARMTargetMachine::ARMTargetMachine(const Target &T, StringRef TT,
                            "v128:64:128-v64:64:64-n32-S32")),
     TLInfo(*this),
     TSInfo(*this),
-    FrameLowering(Subtarget),
-    STTI(&TLInfo), VTTI(&TLInfo) {
+    FrameLowering(Subtarget) {
   if (!Subtarget.hasARMOps())
     report_fatal_error("CPU: '" + Subtarget.getCPUString() + "' does not "
                        "support ARM mode execution!");
@@ -103,8 +111,7 @@ ThumbTargetMachine::ThumbTargetMachine(const Target &T, StringRef TT,
     TSInfo(*this),
     FrameLowering(Subtarget.hasThumb2()
               ? new ARMFrameLowering(Subtarget)
-              : (ARMFrameLowering*)new Thumb1FrameLowering(Subtarget)),
-    STTI(&TLInfo), VTTI(&TLInfo) {
+              : (ARMFrameLowering*)new Thumb1FrameLowering(Subtarget)) {
 }
 
 namespace {

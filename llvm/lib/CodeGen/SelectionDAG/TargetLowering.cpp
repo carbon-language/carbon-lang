@@ -1099,6 +1099,103 @@ TargetLowering::isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const {
 }
 
 //===----------------------------------------------------------------------===//
+//  TargetTransformInfo Helpers
+//===----------------------------------------------------------------------===//
+
+int TargetLowering::InstructionOpcodeToISD(unsigned Opcode) const {
+  enum InstructionOpcodes {
+#define HANDLE_INST(NUM, OPCODE, CLASS) OPCODE = NUM,
+#define LAST_OTHER_INST(NUM) InstructionOpcodesCount = NUM
+#include "llvm/IR/Instruction.def"
+  };
+  switch (static_cast<InstructionOpcodes>(Opcode)) {
+  case Ret:            return 0;
+  case Br:             return 0;
+  case Switch:         return 0;
+  case IndirectBr:     return 0;
+  case Invoke:         return 0;
+  case Resume:         return 0;
+  case Unreachable:    return 0;
+  case Add:            return ISD::ADD;
+  case FAdd:           return ISD::FADD;
+  case Sub:            return ISD::SUB;
+  case FSub:           return ISD::FSUB;
+  case Mul:            return ISD::MUL;
+  case FMul:           return ISD::FMUL;
+  case UDiv:           return ISD::UDIV;
+  case SDiv:           return ISD::UDIV;
+  case FDiv:           return ISD::FDIV;
+  case URem:           return ISD::UREM;
+  case SRem:           return ISD::SREM;
+  case FRem:           return ISD::FREM;
+  case Shl:            return ISD::SHL;
+  case LShr:           return ISD::SRL;
+  case AShr:           return ISD::SRA;
+  case And:            return ISD::AND;
+  case Or:             return ISD::OR;
+  case Xor:            return ISD::XOR;
+  case Alloca:         return 0;
+  case Load:           return ISD::LOAD;
+  case Store:          return ISD::STORE;
+  case GetElementPtr:  return 0;
+  case Fence:          return 0;
+  case AtomicCmpXchg:  return 0;
+  case AtomicRMW:      return 0;
+  case Trunc:          return ISD::TRUNCATE;
+  case ZExt:           return ISD::ZERO_EXTEND;
+  case SExt:           return ISD::SIGN_EXTEND;
+  case FPToUI:         return ISD::FP_TO_UINT;
+  case FPToSI:         return ISD::FP_TO_SINT;
+  case UIToFP:         return ISD::UINT_TO_FP;
+  case SIToFP:         return ISD::SINT_TO_FP;
+  case FPTrunc:        return ISD::FP_ROUND;
+  case FPExt:          return ISD::FP_EXTEND;
+  case PtrToInt:       return ISD::BITCAST;
+  case IntToPtr:       return ISD::BITCAST;
+  case BitCast:        return ISD::BITCAST;
+  case ICmp:           return ISD::SETCC;
+  case FCmp:           return ISD::SETCC;
+  case PHI:            return 0;
+  case Call:           return 0;
+  case Select:         return ISD::SELECT;
+  case UserOp1:        return 0;
+  case UserOp2:        return 0;
+  case VAArg:          return 0;
+  case ExtractElement: return ISD::EXTRACT_VECTOR_ELT;
+  case InsertElement:  return ISD::INSERT_VECTOR_ELT;
+  case ShuffleVector:  return ISD::VECTOR_SHUFFLE;
+  case ExtractValue:   return ISD::MERGE_VALUES;
+  case InsertValue:    return ISD::MERGE_VALUES;
+  case LandingPad:     return 0;
+  }
+
+  llvm_unreachable("Unknown instruction type encountered!");
+}
+
+std::pair<unsigned, MVT>
+TargetLowering::getTypeLegalizationCost(Type *Ty) const {
+  LLVMContext &C = Ty->getContext();
+  EVT MTy = getValueType(Ty);
+
+  unsigned Cost = 1;
+  // We keep legalizing the type until we find a legal kind. We assume that
+  // the only operation that costs anything is the split. After splitting
+  // we need to handle two types.
+  while (true) {
+    LegalizeKind LK = getTypeConversion(C, MTy);
+
+    if (LK.first == TypeLegal)
+      return std::make_pair(Cost, MTy.getSimpleVT());
+
+    if (LK.first == TypeSplitVector || LK.first == TypeExpandInteger)
+      Cost *= 2;
+
+    // Keep legalizing the type.
+    MTy = LK.second;
+  }
+}
+
+//===----------------------------------------------------------------------===//
 //  Optimization Methods
 //===----------------------------------------------------------------------===//
 
