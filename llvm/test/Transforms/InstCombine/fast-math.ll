@@ -160,3 +160,88 @@ define double @select3(i32 %cond, double %x, double %y) {
 ; CHECK: @select3
 ; CHECK: fmul nnan nsz double %cond1, %x
 }
+
+; =========================================================================
+;
+;   Testing-cases about fmul begin
+;
+; =========================================================================
+
+; ((X*C1) + C2) * C3 => (X * (C1*C3)) + (C2*C3) (i.e. distribution)
+define float @fmul_distribute1(float %f1) {
+  %t1 = fmul float %f1, 6.0e+3
+  %t2 = fadd float %t1, 2.0e+3
+  %t3 = fmul fast float %t2, 5.0e+3
+  ret float %t3 
+; CHECK: @fmul_distribute1
+; CHECK: %1 = fmul fast float %f1, 3.000000e+07
+; CHECK: %t3 = fadd fast float %1, 1.000000e+07
+}
+
+; (X/C1 + C2) * C3 => X/(C1/C3) + C2*C3
+define double @fmul_distribute2(double %f1, double %f2) {
+  %t1 = fdiv double %f1, 3.0e+0
+  %t2 = fadd double %t1, 5.0e+1
+  ; 0x10000000000000 = DBL_MIN
+  %t3 = fmul fast double %t2, 0x10000000000000
+  ret double %t3
+
+; CHECK: @fmul_distribute2
+; CHECK: %1 = fdiv fast double %f1, 0x7FE8000000000000
+; CHECK: fadd fast double %1, 0x69000000000000
+}
+
+; 5.0e-1 * DBL_MIN yields denormal, so "(f1*3.0 + 5.0e-1) * DBL_MIN" cannot
+; be simplified into f1 * (3.0*DBL_MIN) + (5.0e-1*DBL_MIN)
+define double @fmul_distribute3(double %f1) {
+  %t1 = fdiv double %f1, 3.0e+0
+  %t2 = fadd double %t1, 5.0e-1
+  %t3 = fmul fast double %t2, 0x10000000000000
+  ret double %t3
+
+; CHECK: @fmul_distribute3
+; CHECK: fmul fast double %t2, 0x10000000000000
+}
+
+; C1/X * C2 => (C1*C2) / X
+define float @fmul2(float %f1) {
+  %t1 = fdiv float 2.0e+3, %f1 
+  %t3 = fmul fast float %t1, 6.0e+3
+  ret float %t3 
+; CHECK: @fmul2
+; CHECK: fdiv fast float 1.200000e+07, %f1
+}
+
+; X/C1 * C2 => X * (C2/C1) (if C2/C1 is normal Fp)
+define float @fmul3(float %f1, float %f2) {
+  %t1 = fdiv float %f1, 2.0e+3
+  %t3 = fmul fast float %t1, 6.0e+3
+  ret float %t3 
+; CHECK: @fmul3
+; CHECK: fmul fast float %f1, 3.000000e+00
+}
+
+; Rule "X/C1 * C2 => X * (C2/C1) is not applicable if C2/C1 is either a special
+; value of a denormal. The 0x3810000000000000 here take value FLT_MIN
+;
+define float @fmul4(float %f1, float %f2) {
+  %t1 = fdiv float %f1, 2.0e+3
+  %t3 = fmul fast float %t1, 0x3810000000000000
+  ret float %t3 
+; CHECK: @fmul4
+; CHECK: fmul fast float %t1, 0x3810000000000000
+}
+
+; X / C1 * C2 => X / (C2/C1) if  C1/C2 is either a special value of a denormal, 
+;  and C2/C1 is a normal value.
+; 
+define float @fmul5(float %f1, float %f2) {
+  %t1 = fdiv float %f1, 3.0e+0
+  %t3 = fmul fast float %t1, 0x3810000000000000
+  ret float %t3 
+; CHECK: @fmul5
+; CHECK: fdiv fast float %f1, 0x47E8000000000000
+}
+
+
+

@@ -291,9 +291,89 @@ static void detectLog2OfHalf(Value *&Op, Value *&Y, IntrinsicInst *&Log2) {
      Y = I->getOperand(0);
 } 
 
+/// Helper function of InstCombiner::visitFMul(BinaryOperator(). It returns
+/// true iff the given value is FMul or FDiv with one and only one operand
+/// being a normal constant (i.e. not Zero/NaN/Infinity).
+static bool isFMulOrFDivWithConstant(Value *V) {
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (!I || (I->getOpcode() != Instruction::FMul && 
+             I->getOpcode() != Instruction::FDiv)) {
+    return false;
+  }
+
+  ConstantFP *C0 = dyn_cast<ConstantFP>(I->getOperand(0));
+  ConstantFP *C1 = dyn_cast<ConstantFP>(I->getOperand(1));
+
+  if (C0 && C1)
+    return false;
+
+  return (C0 && C0->getValueAPF().isNormal()) ||
+         (C1 && C1->getValueAPF().isNormal());
+}
+
+static bool isNormalFp(const ConstantFP *C) {
+  const APFloat &Flt = C->getValueAPF();
+  return Flt.isNormal() && !Flt.isDenormal();
+}
+
+/// foldFMulConst() is a helper routine of InstCombiner::visitFMul().
+/// The input \p FMulOrDiv is a FMul/FDiv with one and only one operand
+/// being a constant (i.e. isFMulOrFDivWithConstant(FMulOrDiv) == true).
+/// This function is to simplify "FMulOrDiv * C" and returns the 
+/// resulting expression. Note that this function could return NULL in
+/// case the constants cannot be folded into a normal floating-point.
+/// 
+Value *InstCombiner::foldFMulConst
+  (Instruction *FMulOrDiv, ConstantFP *C, Instruction *InsertBefore) {
+  assert(isFMulOrFDivWithConstant(FMulOrDiv) && "V is invalid");
+
+  Value *Opnd0 = FMulOrDiv->getOperand(0);
+  Value *Opnd1 = FMulOrDiv->getOperand(1);
+
+  ConstantFP *C0 = dyn_cast<ConstantFP>(Opnd0);
+  ConstantFP *C1 = dyn_cast<ConstantFP>(Opnd1);
+
+  BinaryOperator *R = 0;
+
+  // (X * C0) * C => X * (C0*C)
+  if (FMulOrDiv->getOpcode() == Instruction::FMul) {
+    Constant *F = ConstantExpr::getFMul(C1 ? C1 : C0, C);
+    if (isNormalFp(cast<ConstantFP>(F)))
+      R = BinaryOperator::CreateFMul(C1 ? Opnd0 : Opnd1, F);
+  } else {
+    if (C0) {
+      // (C0 / X) * C => (C0 * C) / X
+      ConstantFP *F = cast<ConstantFP>(ConstantExpr::getFMul(C0, C));
+      if (isNormalFp(F))
+        R = BinaryOperator::CreateFDiv(F, Opnd1);
+    } else {
+      // (X / C1) * C => X * (C/C1) if C/C1 is not a denormal
+      ConstantFP *F = cast<ConstantFP>(ConstantExpr::getFDiv(C, C1));
+      if (isNormalFp(F)) {
+        R = BinaryOperator::CreateFMul(Opnd0, F);
+      } else {
+        // (X / C1) * C => X / (C1/C) 
+        Constant *F = ConstantExpr::getFDiv(C1, C);
+        if (isNormalFp(cast<ConstantFP>(F)))
+          R = BinaryOperator::CreateFDiv(Opnd0, F);
+      }
+    }
+  }
+
+  if (R) {
+    R->setHasUnsafeAlgebra(true);
+    InsertNewInstWith(R, *InsertBefore);
+  }
+
+  return R;
+}
+
 Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
+
+  if (isa<Constant>(Op0))
+    std::swap(Op0, Op1);
 
   if (Value *V = SimplifyFMulInst(Op0, Op1, I.getFastMathFlags(), TD))
     return ReplaceInstUsesWith(I, V);
@@ -308,6 +388,53 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
     if (isa<PHINode>(Op0))
       if (Instruction *NV = FoldOpIntoPhi(I))
         return NV;
+
+    ConstantFP *C = dyn_cast<ConstantFP>(Op1);
+    if (C && I.hasUnsafeAlgebra() && C->getValueAPF().isNormal()) {
+      // Let MDC denote an expression in one of these forms:
+      // X * C, C/X, X/C, where C is a constant.
+      //
+      // Try to simplify "MDC * Constant"
+      if (isFMulOrFDivWithConstant(Op0)) {
+        Value *V = foldFMulConst(cast<Instruction>(Op0), C, &I);
+        if (V)
+          return ReplaceInstUsesWith(I, V);
+      }
+
+      // (MDC +/- C1) * C2 => (MDC * C2) +/- (C1 * C2)
+      Instruction *FAddSub = dyn_cast<Instruction>(Op0);
+      if (FAddSub &&
+          (FAddSub->getOpcode() == Instruction::FAdd ||
+           FAddSub->getOpcode() == Instruction::FSub)) {
+        Value *Opnd0 = FAddSub->getOperand(0);
+        Value *Opnd1 = FAddSub->getOperand(1);
+        ConstantFP *C0 = dyn_cast<ConstantFP>(Opnd0);
+        ConstantFP *C1 = dyn_cast<ConstantFP>(Opnd1);
+        bool Swap = false;
+        if (C0) {
+          std::swap(C0, C1); std::swap(Opnd0, Opnd1); Swap = true; 
+        }
+
+        if (C1 && C1->getValueAPF().isNormal() &&
+            isFMulOrFDivWithConstant(Opnd0)) {
+          Value *M0 = ConstantExpr::getFMul(C1, C);
+          Value *M1 = isNormalFp(cast<ConstantFP>(M0)) ? 
+                      foldFMulConst(cast<Instruction>(Opnd0), C, &I) :
+                      0;
+          if (M0 && M1) {
+            if (Swap && FAddSub->getOpcode() == Instruction::FSub)
+              std::swap(M0, M1);
+
+            Value *R = (FAddSub->getOpcode() == Instruction::FAdd) ?
+                        BinaryOperator::CreateFAdd(M0, M1) :
+                        BinaryOperator::CreateFSub(M0, M1);
+            Instruction *RI = cast<Instruction>(R);
+            RI->setHasUnsafeAlgebra(true);
+            return RI;
+          }
+        }
+      }
+    }
   }
 
   if (Value *Op0v = dyn_castFNegVal(Op0))     // -X * -Y = X*Y
