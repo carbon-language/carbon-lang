@@ -30,6 +30,7 @@ protected:
     LangOpts.CPlusPlus = 1;
     LangOpts.CPlusPlus11 = 1;
     LangOpts.ObjC1 = 1;
+    LangOpts.ObjC2 = 1;
     Lexer Lex(ID, Context.Sources.getBuffer(ID), Context.Sources, LangOpts);
     tooling::Replacements Replace = reformat(Style, Lex, Context.Sources,
                                              Ranges);
@@ -422,6 +423,34 @@ TEST_F(FormatTest, FormatObjCTryCatch) {
                "@finally {\n"
                "  exit(42);\n"
                "}");
+}
+
+TEST_F(FormatTest, FormatObjCInterface) {
+  verifyFormat("@interface Foo : NSObject<NSSomeDelegate> {\n"
+               "@public\n"
+               "  int field1;\n"
+               "@protected\n"
+               "  int field2;\n"
+               "@private\n"
+               "  int field3;\n"
+               "@package\n"
+               "  int field4;\n"
+               "}\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyGoogleFormat("@interface Foo : NSObject<NSSomeDelegate> {\n"
+                     " @public\n"
+                     "  int field1;\n"
+                     " @protected\n"
+                     "  int field2;\n"
+                     " @private\n"
+                     "  int field3;\n"
+                     " @package\n"
+                     "  int field4;\n"
+                     "}\n"
+                     "+ (id)init;\n"
+                     "@end");
 }
 
 TEST_F(FormatTest, StaticInitializers) {

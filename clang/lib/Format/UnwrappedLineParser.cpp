@@ -198,6 +198,18 @@ void UnwrappedLineParser::parseStructuralElement() {
 
   int TokenNumber = 0;
   switch (FormatTok.Tok.getKind()) {
+  case tok::at:
+    nextToken();
+    switch (FormatTok.Tok.getObjCKeywordID()) {
+    case tok::objc_public:
+    case tok::objc_protected:
+    case tok::objc_package:
+    case tok::objc_private:
+      return parseAccessSpecifier();
+    default:
+      break;
+    }
+    break;
   case tok::kw_namespace:
     parseNamespace();
     return;

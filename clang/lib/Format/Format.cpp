@@ -510,8 +510,19 @@ private:
     if (Newlines == 0 && !Token.IsFirst)
       Newlines = 1;
     unsigned Indent = Line.Level * 2;
-    if ((Token.Tok.is(tok::kw_public) || Token.Tok.is(tok::kw_protected) ||
-         Token.Tok.is(tok::kw_private)) &&
+
+    bool IsAccessModifier = false;
+    if (Token.Tok.is(tok::kw_public) || Token.Tok.is(tok::kw_protected) ||
+        Token.Tok.is(tok::kw_private))
+      IsAccessModifier = true;
+    else if (Token.Tok.is(tok::at) && Line.Tokens.size() > 1 &&
+             (Line.Tokens[1].Tok.isObjCAtKeyword(tok::objc_public) ||
+              Line.Tokens[1].Tok.isObjCAtKeyword(tok::objc_protected) ||
+              Line.Tokens[1].Tok.isObjCAtKeyword(tok::objc_package) ||
+              Line.Tokens[1].Tok.isObjCAtKeyword(tok::objc_private)))
+      IsAccessModifier = true;
+
+    if (IsAccessModifier &&
         static_cast<int>(Indent) + Style.AccessModifierOffset >= 0)
       Indent += Style.AccessModifierOffset;
     if (!Line.InPPDirective || Token.HasUnescapedNewline)
