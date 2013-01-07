@@ -1,4 +1,4 @@
-; RUN: opt < %s -loop-reduce -S | FileCheck %s
+; RUN: opt < %s -loop-reduce -S -mtriple=x86_64-unknown-unknown | FileCheck %s
 ;
 ; Test LSR's OptimizeShadowIV. Handle a floating-point IV with a
 ; nonzero initial value.

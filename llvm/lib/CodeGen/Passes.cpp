@@ -362,7 +362,7 @@ void TargetPassConfig::addIRPasses() {
 
   // Run loop strength reduction before anything else.
   if (getOptLevel() != CodeGenOpt::None && !DisableLSR) {
-    addPass(createLoopStrengthReducePass(getTargetLowering()));
+    addPass(createLoopStrengthReducePass());
     if (PrintLSR)
       addPass(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &dbgs()));
   }

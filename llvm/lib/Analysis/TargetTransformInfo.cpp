@@ -179,7 +179,9 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
 
   bool isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV, int64_t BaseOffset,
                              bool HasBaseReg, int64_t Scale) const {
-    return false;
+    // Guess that reg+reg addressing is allowed. This heuristic is taken from
+    // the implementation of LSR.
+    return !BaseGV && BaseOffset == 0 && Scale <= 1;
   }
 
   bool isTruncateFree(Type *Ty1, Type *Ty2) const {

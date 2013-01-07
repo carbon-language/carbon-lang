@@ -16,11 +16,11 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Target/TargetLowering.h"
 
 using namespace llvm;
 
@@ -1600,14 +1600,14 @@ static bool width_descending(Value *lhs, Value *rhs) {
 /// the same context that SCEVExpander is used.
 unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
                                            SmallVectorImpl<WeakVH> &DeadInsts,
-                                           const TargetLowering *TLI) {
+                                           const TargetTransformInfo *TTI) {
   // Find integer phis in order of increasing width.
   SmallVector<PHINode*, 8> Phis;
   for (BasicBlock::iterator I = L->getHeader()->begin();
        PHINode *Phi = dyn_cast<PHINode>(I); ++I) {
     Phis.push_back(Phi);
   }
-  if (TLI)
+  if (TTI)
     std::sort(Phis.begin(), Phis.end(), width_descending);
 
   unsigned NumElim = 0;
@@ -1635,8 +1635,8 @@ unsigned SCEVExpander::replaceCongruentIVs(Loop *L, const DominatorTree *DT,
     PHINode *&OrigPhiRef = ExprToIVMap[SE.getSCEV(Phi)];
     if (!OrigPhiRef) {
       OrigPhiRef = Phi;
-      if (Phi->getType()->isIntegerTy() && TLI
-          && TLI->isTruncateFree(Phi->getType(), Phis.back()->getType())) {
+      if (Phi->getType()->isIntegerTy() && TTI
+          && TTI->isTruncateFree(Phi->getType(), Phis.back()->getType())) {
         // This phi can be freely truncated to the narrowest phi type. Map the
         // truncated expression to it so it will be reused for narrow types.
         const SCEV *TruncExpr =
