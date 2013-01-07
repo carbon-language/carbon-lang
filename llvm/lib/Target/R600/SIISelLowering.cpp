@@ -327,9 +327,8 @@ SDValue SITargetLowering::LowerBRCOND(SDValue BRCOND,
     // As long as we negate the condition everything is fine
     SDNode *SetCC = Intr;
     assert(SetCC->getConstantOperandVal(1) == 1);
-
-    CondCodeSDNode *CC = cast<CondCodeSDNode>(SetCC->getOperand(2).getNode());
-    assert(CC->get() == ISD::SETNE);
+    assert(cast<CondCodeSDNode>(SetCC->getOperand(2).getNode())->get() ==
+           ISD::SETNE);
     Intr = SetCC->getOperand(0).getNode();
 
   } else {
