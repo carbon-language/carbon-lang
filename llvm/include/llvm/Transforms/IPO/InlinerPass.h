@@ -17,7 +17,7 @@
 #ifndef LLVM_TRANSFORMS_IPO_INLINERPASS_H
 #define LLVM_TRANSFORMS_IPO_INLINERPASS_H
 
-#include "llvm/CallGraphSCCPass.h"
+#include "llvm/Analysis/CallGraphSCCPass.h"
 
 namespace llvm {
   class CallSite;

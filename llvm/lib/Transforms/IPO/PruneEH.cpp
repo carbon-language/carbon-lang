@@ -20,7 +20,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/CallGraphSCCPass.h"
+#include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"

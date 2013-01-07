@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "cgscc-passmgr"
-#include "llvm/CallGraphSCCPass.h"
+#include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/CallGraph.h"

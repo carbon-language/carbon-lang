@@ -9,11 +9,11 @@
 
 #include "llvm/PassManager.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/CallGraphSCCPass.h"
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/Constants.h"

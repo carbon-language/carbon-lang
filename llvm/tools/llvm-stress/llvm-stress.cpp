@@ -12,9 +12,9 @@
 //
 //===----------------------------------------------------------------------===//
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/PrintModulePass.h"
-#include "llvm/CallGraphSCCPass.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Module.h"

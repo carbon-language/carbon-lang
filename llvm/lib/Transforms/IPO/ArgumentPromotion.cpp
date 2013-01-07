@@ -36,7 +36,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/CallGraphSCCPass.h"
+#include "llvm/Analysis/CallGraphSCCPass.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
