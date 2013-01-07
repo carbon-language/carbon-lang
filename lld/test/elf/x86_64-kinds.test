@@ -1,1 +1,4 @@
-RUN: lld -flavor core -target x86_64-linux
+RUN: lld -flavor ld -target x86_64-linux -o %t | llvm-objdump -p %t \
+RUN: | FileCheck %s
+
+CHECK: ELF64-x86-64

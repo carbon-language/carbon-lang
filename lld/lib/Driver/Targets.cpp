@@ -118,7 +118,7 @@ private:
   struct WOpts : lld::WriterOptionsELF {
     WOpts(StringRef entry) {
       _endianness = llvm::support::little;
-      _is64Bit = false;
+      _is64Bit = true;
       _type = llvm::ELF::ET_EXEC;
       _machine = llvm::ELF::EM_X86_64;
       _entryPoint = entry;
