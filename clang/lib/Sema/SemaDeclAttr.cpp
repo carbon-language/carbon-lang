@@ -3272,7 +3272,7 @@ static void handleModeAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     break;
   case 11:
     if (Str == "unwind_word")
-      DestWidth = S.Context.Target.getUnwindWordWidth();
+      DestWidth = S.Context.getTargetInfo().getUnwindWordWidth();
     break;
   }
 
