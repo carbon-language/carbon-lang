@@ -100,8 +100,11 @@ public:
   void setLayoutOrder(unsigned Value) { LayoutOrder = Value; }
 
   /// \brief Does this fragment have instructions emitted into it? By default
-  ///  this is false, but specific fragment types may set it to true.
+  /// this is false, but specific fragment types may set it to true.
   virtual bool hasInstructions() const { return false; }
+
+  /// \brief Should this fragment be placed at the end of an aligned bundle?
+  virtual bool alignToBundleEnd() const { return false; }
 
   /// \brief Get the padding size that must be inserted before this fragment.
   /// Used for bundling. By default, no padding is inserted.
@@ -165,6 +168,9 @@ class MCDataFragment : public MCEncodedFragment {
   /// \brief Does this fragment contain encoded instructions anywhere in it?
   bool HasInstructions;
 
+  /// \brief Should this fragment be aligned to the end of a bundle?
+  bool AlignToBundleEnd;
+
   SmallVector<char, 32> Contents;
 
   /// Fixups - The list of fixups in this fragment.
@@ -172,7 +178,7 @@ class MCDataFragment : public MCEncodedFragment {
 public:
   MCDataFragment(MCSectionData *SD = 0)
     : MCEncodedFragment(FT_Data, SD),
-      HasInstructions(false)
+      HasInstructions(false), AlignToBundleEnd(false)
   {
   }
 
@@ -189,6 +195,9 @@ public:
 
   virtual bool hasInstructions() const { return HasInstructions; }
   virtual void setHasInstructions(bool V) { HasInstructions = V; }
+
+  virtual bool alignToBundleEnd() const { return AlignToBundleEnd; }
+  virtual void setAlignToBundleEnd(bool V) { AlignToBundleEnd = V; }
 
   fixup_iterator fixup_begin() { return Fixups.begin(); }
   const_fixup_iterator fixup_begin() const { return Fixups.begin(); }
@@ -476,6 +485,12 @@ public:
   typedef FragmentListType::const_reverse_iterator const_reverse_iterator;
   typedef FragmentListType::reverse_iterator reverse_iterator;
 
+  /// \brief Express the state of bundle locked groups while emitting code.
+  enum BundleLockStateType {
+    NotBundleLocked,
+    BundleLocked,
+    BundleLockedAlignToEnd
+  };
 private:
   FragmentListType Fragments;
   const MCSection *Section;
@@ -489,8 +504,8 @@ private:
   /// Alignment - The maximum alignment seen in this section.
   unsigned Alignment;
 
-  /// \brief We're currently inside a bundle-locked group.
-  bool BundleLocked;
+  /// \brief Keeping track of bundle-locked state.
+  BundleLockStateType BundleLockState; 
 
   /// \brief We've seen a bundle_lock directive but not its first instruction
   /// yet.
@@ -549,11 +564,15 @@ public:
   bool empty() const { return Fragments.empty(); }
 
   bool isBundleLocked() const {
-    return BundleLocked;
+    return BundleLockState != NotBundleLocked;
   }
 
-  void setBundleLocked(bool IsLocked) {
-    BundleLocked = IsLocked;
+  BundleLockStateType getBundleLockState() const {
+    return BundleLockState;
+  }
+
+  void setBundleLockState(BundleLockStateType NewState) {
+    BundleLockState = NewState;
   }
 
   bool isBundleGroupBeforeFirstInst() const {

@@ -2473,15 +2473,31 @@ bool AsmParser::ParseDirectiveBundleAlignMode() {
 }
 
 /// ParseDirectiveBundleLock
-/// ::= {.bundle_lock}
+/// ::= {.bundle_lock} [align_to_end]
 bool AsmParser::ParseDirectiveBundleLock() {
   CheckForValidSection();
+  bool AlignToEnd = false;
 
-  if (getLexer().isNot(AsmToken::EndOfStatement))
-    return TokError("unexpected token in '.bundle_lock' directive");
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    StringRef Option;
+    SMLoc Loc = getTok().getLoc();
+    const char *kInvalidOptionError =
+      "invalid option for '.bundle_lock' directive";
+
+    if (ParseIdentifier(Option))
+      return Error(Loc, kInvalidOptionError);
+
+    if (Option != "align_to_end")
+      return Error(Loc, kInvalidOptionError);
+    else if (getLexer().isNot(AsmToken::EndOfStatement))
+      return Error(Loc,
+                   "unexpected token after '.bundle_lock' directive option");
+    AlignToEnd = true;
+  }
+
   Lex();
 
-  getStreamer().EmitBundleLock();
+  getStreamer().EmitBundleLock(AlignToEnd);
   return false;
 }
 

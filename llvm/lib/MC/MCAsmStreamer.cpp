@@ -260,7 +260,7 @@ public:
   virtual void EmitInstruction(const MCInst &Inst);
 
   virtual void EmitBundleAlignMode(unsigned AlignPow2);
-  virtual void EmitBundleLock();
+  virtual void EmitBundleLock(bool AlignToEnd);
   virtual void EmitBundleUnlock();
 
   /// EmitRawText - If this file is backed by an assembly streamer, this dumps
@@ -1370,8 +1370,10 @@ void MCAsmStreamer::EmitBundleAlignMode(unsigned AlignPow2) {
   EmitEOL();
 }
 
-void MCAsmStreamer::EmitBundleLock() {
+void MCAsmStreamer::EmitBundleLock(bool AlignToEnd) {
   OS << "\t.bundle_lock";
+  if (AlignToEnd)
+    OS << " align_to_end";
   EmitEOL();
 }
 

@@ -562,7 +562,10 @@ namespace llvm {
     virtual void EmitBundleAlignMode(unsigned AlignPow2) = 0;
 
     /// \brief The following instructions are a bundle-locked group.
-    virtual void EmitBundleLock() = 0;
+    ///
+    /// \param AlignToEnd - If true, the bundle-locked group will be aligned to
+    ///                     the end of a bundle.
+    virtual void EmitBundleLock(bool AlignToEnd) = 0;
 
     /// \brief Ends a bundle-locked group.
     virtual void EmitBundleUnlock() = 0;

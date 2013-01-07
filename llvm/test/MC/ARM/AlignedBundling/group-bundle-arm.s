@@ -2,7 +2,7 @@
 # RUN:   | llvm-objdump -no-show-raw-insn -triple armv7 -disassemble - | FileCheck %s
 
 # On ARM each instruction is 4 bytes long so padding for individual
-# instructions should not be inserted. However, for bundle=locked groups
+# instructions should not be inserted. However, for bundle-locked groups
 # it can be.
 
 	.syntax unified

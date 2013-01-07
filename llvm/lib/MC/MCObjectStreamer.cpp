@@ -233,7 +233,7 @@ void MCObjectStreamer::EmitBundleAlignMode(unsigned AlignPow2) {
   llvm_unreachable(BundlingNotImplementedMsg);
 }
 
-void MCObjectStreamer::EmitBundleLock() {
+void MCObjectStreamer::EmitBundleLock(bool AlignToEnd) {
   llvm_unreachable(BundlingNotImplementedMsg);
 }
 

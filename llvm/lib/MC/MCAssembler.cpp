@@ -167,10 +167,34 @@ uint64_t MCAsmLayout::computeBundlePadding(const MCFragment *F,
          "computeBundlePadding should only be called if bundling is enabled");
   uint64_t BundleMask = BundleSize - 1;
   uint64_t OffsetInBundle = FOffset & BundleMask;
+  uint64_t EndOfFragment = OffsetInBundle + FSize;
 
-  // If the fragment would cross a bundle boundary, add enough padding until
-  // the end of the current bundle.
-  if (OffsetInBundle + FSize > BundleSize)
+  // There are two kinds of bundling restrictions:
+  // 
+  // 1) For alignToBundleEnd(), add padding to ensure that the fragment will
+  //    *end* on a bundle boundary.
+  // 2) Otherwise, check if the fragment would cross a bundle boundary. If it
+  //    would, add padding until the end of the bundle so that the fragment
+  //    will start in a new one.
+  if (F->alignToBundleEnd()) {
+    // Three possibilities here:
+    //
+    // A) The fragment just happens to end at a bundle boundary, so we're good.
+    // B) The fragment ends before the current bundle boundary: pad it just
+    //    enough to reach the boundary.
+    // C) The fragment ends after the current bundle boundary: pad it until it
+    //    reaches the end of the next bundle boundary.
+    //
+    // Note: this code could be made shorter with some modulo trickery, but it's
+    // intentionally kept in its more explicit form for simplicity.
+    if (EndOfFragment == BundleSize)
+      return 0;
+    else if (EndOfFragment < BundleSize)
+      return BundleSize - EndOfFragment;
+    else { // EndOfFragment > BundleSize
+      return 2 * BundleSize - EndOfFragment;
+    }
+  } else if (EndOfFragment > BundleSize)
     return BundleSize - OffsetInBundle;
   else
     return 0;
@@ -204,7 +228,7 @@ MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
   : Section(&_Section),
     Ordinal(~UINT32_C(0)),
     Alignment(1),
-    BundleLocked(false), BundleGroupBeforeFirstInst(false),
+    BundleLockState(NotBundleLocked), BundleGroupBeforeFirstInst(false),
     HasInstructions(false)
 {
   if (A)

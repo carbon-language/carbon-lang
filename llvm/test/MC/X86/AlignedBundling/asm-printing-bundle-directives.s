@@ -14,5 +14,9 @@ foo:
   jle     .L_ELSE
   .bundle_unlock
 # CHECK: .bundle_unlock
+  .bundle_lock align_to_end
+# CHECK: .bundle_lock align_to_end
+  add     %rbx, %rdx
+  .bundle_unlock
 
 
