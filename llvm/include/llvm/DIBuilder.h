@@ -126,6 +126,11 @@ namespace llvm {
                              uint64_t AlignInBits = 0, 
                              StringRef Name = StringRef());
 
+    /// \brief Create debugging information entry for a pointer to member.
+    /// @param PointeeTy Type pointed to by this pointer.
+    /// @param Class Type for which this pointer points to members of.
+    DIType createMemberPointerType(DIType PointeeTy, DIType Class);
+
     /// createReferenceType - Create debugging information entry for a c++
     /// style reference or rvalue reference type.
     DIType createReferenceType(unsigned Tag, DIType RTy);

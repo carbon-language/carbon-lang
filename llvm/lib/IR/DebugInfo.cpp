@@ -172,6 +172,7 @@ bool DIDescriptor::isDerivedType() const {
   switch (getTag()) {
   case dwarf::DW_TAG_typedef:
   case dwarf::DW_TAG_pointer_type:
+  case dwarf::DW_TAG_ptr_to_member_type:
   case dwarf::DW_TAG_reference_type:
   case dwarf::DW_TAG_rvalue_reference_type:
   case dwarf::DW_TAG_const_type:
@@ -423,6 +424,7 @@ bool DIType::Verify() const {
   unsigned Tag = getTag();
   if (!isBasicType() && Tag != dwarf::DW_TAG_const_type &&
       Tag != dwarf::DW_TAG_volatile_type && Tag != dwarf::DW_TAG_pointer_type &&
+      Tag != dwarf::DW_TAG_ptr_to_member_type &&
       Tag != dwarf::DW_TAG_reference_type &&
       Tag != dwarf::DW_TAG_rvalue_reference_type &&
       Tag != dwarf::DW_TAG_restrict_type && Tag != dwarf::DW_TAG_vector_type &&

@@ -784,6 +784,9 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIDerivedType DTy) {
   if (Size && Tag != dwarf::DW_TAG_pointer_type)
     addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
 
+  if (Tag == dwarf::DW_TAG_ptr_to_member_type)
+      addDIEEntry(&Buffer, dwarf::DW_AT_containing_type, dwarf::DW_FORM_ref4,
+                  getOrCreateTypeDIE(DTy.getClassType()));
   // Add source line info if available and TyDesc is not a forward declaration.
   if (!DTy.isForwardDecl())
     addSourceLine(&Buffer, DTy);

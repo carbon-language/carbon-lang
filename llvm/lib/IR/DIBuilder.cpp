@@ -229,6 +229,24 @@ DIType DIBuilder::createPointerType(DIType PointeeTy, uint64_t SizeInBits,
   return DIType(MDNode::get(VMContext, Elts));
 }
 
+DIType DIBuilder::createMemberPointerType(DIType PointeeTy, DIType Base) {
+  // Pointer types are encoded in DIDerivedType format.
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_ptr_to_member_type),
+    NULL, //TheCU,
+    NULL,
+    NULL, // Filename
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Line
+    ConstantInt::get(Type::getInt64Ty(VMContext), 0),
+    ConstantInt::get(Type::getInt64Ty(VMContext), 0),
+    ConstantInt::get(Type::getInt64Ty(VMContext), 0), // Offset
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0), // Flags
+    PointeeTy,
+    Base
+  };
+  return DIType(MDNode::get(VMContext, Elts));
+}
+
 /// createReferenceType - Create debugging information entry for a reference
 /// type.
 DIType DIBuilder::createReferenceType(unsigned Tag, DIType RTy) {

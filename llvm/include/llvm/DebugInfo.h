@@ -354,6 +354,11 @@ namespace llvm {
     /// associated with one.
     MDNode *getObjCProperty() const;
 
+    DIType getClassType() const {
+      assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
+      return getFieldAs<DIType>(10);
+    }
+
     StringRef getObjCPropertyName() const {
       if (getVersion() > LLVMDebugVersion11)
         return StringRef();
