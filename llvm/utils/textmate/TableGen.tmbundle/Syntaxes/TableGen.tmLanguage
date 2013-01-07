@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>fileTypes</key>
-	<array/>
+	<array><string>td</string></array>
 	<key>foldingStartMarker</key>
 	<string>/\*\*|\{\s*$</string>
 	<key>foldingStopMarker</key>

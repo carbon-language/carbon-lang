@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>name</key>
-	<string>TableGen Bundle</string>
+	<string>TableGen</string>
 	<key>ordering</key>
 	<array/>
 	<key>uuid</key>
