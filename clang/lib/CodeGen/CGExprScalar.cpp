@@ -827,7 +827,7 @@ void ScalarExprEmitter::EmitBinOpCheck(Value *Check, const BinOpInfo &Info) {
     } else if (Opcode == BO_Div || Opcode == BO_Rem) {
       // Divide or modulo by zero, or signed overflow (eg INT_MAX / -1).
       CheckName = "divrem_overflow";
-      StaticData.push_back(CGF.EmitCheckTypeDescriptor(Info.E->getType()));
+      StaticData.push_back(CGF.EmitCheckTypeDescriptor(Info.Ty));
     } else {
       // Signed arithmetic overflow (+, -, *).
       switch (Opcode) {
@@ -836,7 +836,7 @@ void ScalarExprEmitter::EmitBinOpCheck(Value *Check, const BinOpInfo &Info) {
       case BO_Mul: CheckName = "mul_overflow"; break;
       default: llvm_unreachable("unexpected opcode for bin op check");
       }
-      StaticData.push_back(CGF.EmitCheckTypeDescriptor(Info.E->getType()));
+      StaticData.push_back(CGF.EmitCheckTypeDescriptor(Info.Ty));
     }
     DynamicData.push_back(Info.LHS);
     DynamicData.push_back(Info.RHS);
