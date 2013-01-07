@@ -17,9 +17,42 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 
+using namespace llvm::ELF;
+
+namespace {
+/// \brief R_X86_64_PC32 - word32: S + A - P
+int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+  uint32_t result = (uint32_t)((S + A) - P);
+  *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result +
+            (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  return 0;
+}
+
+/// \brief R_X86_64_32 - word32:  S + A
+int reloc32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+  int32_t result = (uint32_t)(S + A);
+  *reinterpret_cast<llvm::support::ulittle32_t *>(location) = result |
+            (uint32_t)*reinterpret_cast<llvm::support::ulittle32_t *>(location);
+  // TODO: Make sure that the result zero extends to the 64bit value.
+  return 0;
+}
+
+/// \brief R_X86_64_32S - word32:  S + A
+int reloc32S(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+  int32_t result = (int32_t)(S + A);
+  *reinterpret_cast<llvm::support::little32_t *>(location) = result |
+            (int32_t)*reinterpret_cast<llvm::support::little32_t *>(location);
+  // TODO: Make sure that the result sign extends to the 64bit value.
+  return 0;
+}
+} // end anon namespace
+
 namespace lld {
 namespace elf {
 X86_64KindHandler::X86_64KindHandler(){
+  _fixupHandler[R_X86_64_PC32] = relocPC32;
+  _fixupHandler[R_X86_64_32] = reloc32;
+  _fixupHandler[R_X86_64_32S] = reloc32S;
 }
 
 X86_64KindHandler::~X86_64KindHandler() {
@@ -28,11 +61,17 @@ X86_64KindHandler::~X86_64KindHandler() {
 Reference::Kind X86_64KindHandler::stringToKind(StringRef str) {
   return llvm::StringSwitch<Reference::Kind>(str)
     .Case("none", none)
+    .Case("R_X86_64_PC32", R_X86_64_PC32)
+    .Case("R_X86_64_32S", R_X86_64_32S)
     .Default(invalid);
 }
 
 StringRef X86_64KindHandler::kindToString(Reference::Kind kind) {
   switch ((int32_t)kind) {
+  case R_X86_64_PC32:
+    return "R_X86_64_PC32";
+  case R_X86_64_32S:
+    return "R_X86_64_32S";
   default:
     return "none";
   }
