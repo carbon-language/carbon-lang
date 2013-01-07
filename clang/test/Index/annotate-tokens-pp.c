@@ -192,7 +192,7 @@ struct A
 // CHECK: Identifier: "x" [25:25 - 25:26] DeclRefExpr=x:24:7
 // CHECK: Punctuation: "," [25:26 - 25:27]
 // CHECK: Punctuation: "{" [25:28 - 25:29] CompoundStmt=
-// CHECK: Keyword: "int" [25:30 - 25:33] DeclStmt=
+// CHECK: Keyword: "int" [25:30 - 25:33] VarDecl=z:25:34 (Definition)
 // CHECK: Identifier: "z" [25:34 - 25:35] VarDecl=z:25:34 (Definition)
 // CHECK: Punctuation: "=" [25:36 - 25:37] VarDecl=z:25:34 (Definition)
 // CHECK: Identifier: "x" [25:38 - 25:39] DeclRefExpr=x:24:7
