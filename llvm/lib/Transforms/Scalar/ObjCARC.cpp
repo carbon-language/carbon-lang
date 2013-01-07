@@ -4027,12 +4027,20 @@ ObjCARCContract::ContractAutorelease(Function &F, Instruction *Autorelease,
 
   Changed = true;
   ++NumPeeps;
-
+  
+  DEBUG(dbgs() << "ObjCARCContract::ContractAutorelease: Fusing "
+                  "retain/autorelease. Erasing: " << *Autorelease << "\n"
+                  "                                      Old Retain: "
+               << *Retain << "\n");
+  
   if (Class == IC_AutoreleaseRV)
     Retain->setCalledFunction(getRetainAutoreleaseRVCallee(F.getParent()));
   else
     Retain->setCalledFunction(getRetainAutoreleaseCallee(F.getParent()));
-
+  
+  DEBUG(dbgs() << "                                      New Retain: "
+               << *Retain << "\n");
+  
   EraseInstruction(Autorelease);
   return true;
 }
