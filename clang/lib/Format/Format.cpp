@@ -808,9 +808,8 @@ private:
       TokenAnnotation &Annotation = Annotations[i];
       const FormatToken &Tok = Line.Tokens[i];
 
-      if (getPrecedence(Tok) == prec::Assignment)
-        IsRHS = true;
-      else if (Tok.Tok.is(tok::kw_return))
+      if (getPrecedence(Tok) == prec::Assignment ||
+          Tok.Tok.is(tok::kw_return) || Tok.Tok.is(tok::kw_throw))
         IsRHS = true;
 
       if (Annotation.Type != TT_Unknown)

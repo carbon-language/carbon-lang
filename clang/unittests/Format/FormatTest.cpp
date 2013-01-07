@@ -377,6 +377,46 @@ TEST_F(FormatTest, FormatsNamespaces) {
                "}");
 }
 
+TEST_F(FormatTest, FormatTryCatch) {
+  verifyFormat("try {\n"
+               "  throw a * b;\n"
+               "}\n"
+               "catch (int a) {\n"
+               "  // Do nothing.\n"
+               "}\n"
+               "catch (...) {\n"
+               "  exit(42);\n"
+               "}");
+
+  // Function-level try statements.
+  verifyFormat("int f() try {\n"
+               "  return 4;\n"
+               "}\n"
+               "catch (...) {\n"
+               "  return 5;\n"
+               "}");
+  verifyFormat("class A {\n"
+               "  int a;\n"
+               "  A() try : a(0) {\n"
+               "  }\n"
+               "  catch (...) {\n"
+               "    throw;\n"
+               "  }\n"
+               "};\n");
+}
+
+TEST_F(FormatTest, FormatObjCTryCatch) {
+  verifyFormat("@try {\n"
+               "  f();\n"
+               "}\n"
+               "@catch (NSException e) {\n"
+               "  @throw;\n"
+               "}\n"
+               "@finally {\n"
+               "  exit(42);\n"
+               "}");
+}
+
 TEST_F(FormatTest, StaticInitializers) {
   verifyFormat("static SomeClass SC = { 1, 'a' };");
 
