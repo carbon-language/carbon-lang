@@ -99,7 +99,7 @@ multiclass ALU32_Pbase<string mnemonic, bit isNot,
                        bit isPredNew> {
 
   let PNewValue = #!if(isPredNew, "new", "") in
-  def #NAME# : ALU32_rr<(outs IntRegs:$dst),
+  def NAME : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs: $src3),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
             ") $dst = ")#mnemonic#"($src2, $src3)",
@@ -108,9 +108,9 @@ multiclass ALU32_Pbase<string mnemonic, bit isNot,
 
 multiclass ALU32_Pred<string mnemonic, bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true") in {
-    defm _c#NAME# : ALU32_Pbase<mnemonic, PredNot, 0>;
+    defm _c#NAME : ALU32_Pbase<mnemonic, PredNot, 0>;
     // Predicate new
-    defm _cdn#NAME# : ALU32_Pbase<mnemonic, PredNot, 1>;
+    defm _cdn#NAME : ALU32_Pbase<mnemonic, PredNot, 1>;
   }
 }
 
@@ -118,7 +118,7 @@ let InputType = "reg" in
 multiclass ALU32_base<string mnemonic, string CextOp, SDNode OpNode> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_rr in {
     let isPredicable = 1 in
-    def #NAME# : ALU32_rr<(outs IntRegs:$dst),
+    def NAME : ALU32_rr<(outs IntRegs:$dst),
             (ins IntRegs:$src1, IntRegs:$src2),
             "$dst = "#mnemonic#"($src1, $src2)",
             [(set (i32 IntRegs:$dst), (OpNode (i32 IntRegs:$src1),
@@ -145,7 +145,7 @@ defm SUB_rr : ALU32_base<"sub", "SUB", sub>, ImmRegRel, PredNewRel;
 //===----------------------------------------------------------------------===//
 multiclass ALU32ri_Pbase<string mnemonic, bit isNot, bit isPredNew> {
   let PNewValue = #!if(isPredNew, "new", "") in
-  def #NAME# : ALU32_ri<(outs IntRegs:$dst),
+  def NAME : ALU32_ri<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, s8Ext: $src3),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew,".new) $dst = ",
             ") $dst = ")#mnemonic#"($src2, #$src3)",
@@ -154,9 +154,9 @@ multiclass ALU32ri_Pbase<string mnemonic, bit isNot, bit isPredNew> {
 
 multiclass ALU32ri_Pred<string mnemonic, bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true") in {
-    defm _c#NAME# : ALU32ri_Pbase<mnemonic, PredNot, 0>;
+    defm _c#NAME : ALU32ri_Pbase<mnemonic, PredNot, 0>;
     // Predicate new
-    defm _cdn#NAME# : ALU32ri_Pbase<mnemonic, PredNot, 1>;
+    defm _cdn#NAME : ALU32ri_Pbase<mnemonic, PredNot, 1>;
   }
 }
 
@@ -165,7 +165,7 @@ multiclass ALU32ri_base<string mnemonic, string CextOp, SDNode OpNode> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#_ri in {
     let opExtendable = 2, isExtentSigned = 1, opExtentBits = 16,
     isPredicable = 1 in
-    def #NAME# : ALU32_ri<(outs IntRegs:$dst),
+    def NAME : ALU32_ri<(outs IntRegs:$dst),
             (ins IntRegs:$src1, s16Ext:$src2),
             "$dst = "#mnemonic#"($src1, #$src2)",
             [(set (i32 IntRegs:$dst), (OpNode (i32 IntRegs:$src1),
@@ -223,14 +223,14 @@ def SUB_ri : ALU32_ri<(outs IntRegs:$dst),
 
 multiclass TFR_Pred<bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true") in {
-    def _c#NAME# : ALU32_rr<(outs IntRegs:$dst),
-                            (ins PredRegs:$src1, IntRegs:$src2),
+    def _c#NAME : ALU32_rr<(outs IntRegs:$dst),
+                           (ins PredRegs:$src1, IntRegs:$src2),
             !if(PredNot, "if (!$src1", "if ($src1")#") $dst = $src2",
             []>;
     // Predicate new
     let PNewValue = "new" in
-    def _cdn#NAME# : ALU32_rr<(outs IntRegs:$dst),
-                              (ins PredRegs:$src1, IntRegs:$src2),
+    def _cdn#NAME : ALU32_rr<(outs IntRegs:$dst),
+                             (ins PredRegs:$src1, IntRegs:$src2),
             !if(PredNot, "if (!$src1", "if ($src1")#".new) $dst = $src2",
             []>;
   }
@@ -240,7 +240,7 @@ let InputType = "reg", neverHasSideEffects = 1 in
 multiclass TFR_base<string CextOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp in {
     let isPredicable = 1 in
-    def #NAME# : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
+    def NAME : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
             "$dst = $src1",
             []>;
 
@@ -253,14 +253,14 @@ multiclass TFR_base<string CextOp> {
 
 multiclass TFR64_Pred<bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true") in {
-    def _c#NAME# : ALU32_rr<(outs DoubleRegs:$dst),
-                            (ins PredRegs:$src1, DoubleRegs:$src2),
+    def _c#NAME : ALU32_rr<(outs DoubleRegs:$dst),
+                           (ins PredRegs:$src1, DoubleRegs:$src2),
             !if(PredNot, "if (!$src1", "if ($src1")#") $dst = $src2",
             []>;
     // Predicate new
     let PNewValue = "new" in
-    def _cdn#NAME# : ALU32_rr<(outs DoubleRegs:$dst),
-                              (ins PredRegs:$src1, DoubleRegs:$src2),
+    def _cdn#NAME : ALU32_rr<(outs DoubleRegs:$dst),
+                             (ins PredRegs:$src1, DoubleRegs:$src2),
             !if(PredNot, "if (!$src1", "if ($src1")#".new) $dst = $src2",
             []>;
   }
@@ -270,7 +270,7 @@ let InputType = "reg", neverHasSideEffects = 1 in
 multiclass TFR64_base<string CextOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp in {
     let isPredicable = 1 in
-    def #NAME# : ALU32_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1),
+    def NAME : ALU32_rr<(outs DoubleRegs:$dst), (ins DoubleRegs:$src1),
             "$dst = $src1",
             []>;
 
@@ -284,15 +284,15 @@ multiclass TFR64_base<string CextOp> {
 
 multiclass TFRI_Pred<bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true") in {
-    def _c#NAME# : ALU32_ri<(outs IntRegs:$dst),
-                            (ins PredRegs:$src1, s12Ext:$src2),
+    def _c#NAME : ALU32_ri<(outs IntRegs:$dst),
+                           (ins PredRegs:$src1, s12Ext:$src2),
             !if(PredNot, "if (!$src1", "if ($src1")#") $dst = #$src2",
             []>;
 
     // Predicate new
     let PNewValue = "new" in
-    def _cdn#NAME# : ALU32_rr<(outs IntRegs:$dst),
-                              (ins PredRegs:$src1, s12Ext:$src2),
+    def _cdn#NAME : ALU32_rr<(outs IntRegs:$dst),
+                             (ins PredRegs:$src1, s12Ext:$src2),
             !if(PredNot, "if (!$src1", "if ($src1")#".new) $dst = #$src2",
             []>;
   }
@@ -303,7 +303,7 @@ multiclass TFRI_base<string CextOp> {
   let CextOpcode = CextOp, BaseOpcode = CextOp#I in {
     let opExtendable = 1, opExtentBits = 16, isMoveImm = 1, isPredicable = 1,
     isReMaterializable = 1 in
-    def #NAME# : ALU32_ri<(outs IntRegs:$dst), (ins s16Ext:$src1),
+    def NAME : ALU32_ri<(outs IntRegs:$dst), (ins s16Ext:$src1),
             "$dst = #$src1",
             [(set (i32 IntRegs:$dst), s16ExtPred:$src1)]>;
 
@@ -846,7 +846,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1, isPredicated = 1,
 multiclass LD_MEMri_Pbase<string mnemonic, RegisterClass RC,
                           bit isNot, bit isPredNew> {
   let PNewValue = #!if(isPredNew, "new", "") in
-  def #NAME# : LDInst2<(outs RC:$dst),
+  def NAME : LDInst2<(outs RC:$dst),
                        (ins PredRegs:$src1, MEMri:$addr),
             #!if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
             ") ")#"$dst = "#mnemonic#"($addr)",
@@ -855,9 +855,9 @@ multiclass LD_MEMri_Pbase<string mnemonic, RegisterClass RC,
 
 multiclass LD_MEMri_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true") in {
-    defm _c#NAME# : LD_MEMri_Pbase<mnemonic, RC, PredNot, 0>;
+    defm _c#NAME : LD_MEMri_Pbase<mnemonic, RC, PredNot, 0>;
     // Predicate new
-    defm _cdn#NAME# : LD_MEMri_Pbase<mnemonic, RC, PredNot, 1>;
+    defm _cdn#NAME : LD_MEMri_Pbase<mnemonic, RC, PredNot, 1>;
   }
 }
 
@@ -868,7 +868,7 @@ multiclass LD_MEMri<string mnemonic, string CextOp, RegisterClass RC,
   let CextOpcode = CextOp, BaseOpcode = CextOp in {
     let opExtendable = 2, isExtentSigned = 1, opExtentBits = ImmBits,
         isPredicable = 1 in
-      def #NAME# : LDInst2<(outs RC:$dst), (ins MEMri:$addr),
+      def NAME : LDInst2<(outs RC:$dst), (ins MEMri:$addr),
                    "$dst = "#mnemonic#"($addr)",
                    []>;
 
@@ -912,8 +912,8 @@ def : Pat < (i64 (load ADDRriS11_3:$addr)),
 multiclass LD_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
                         bit isNot, bit isPredNew> {
   let PNewValue = #!if(isPredNew, "new", "") in
-  def #NAME# : LDInst2<(outs RC:$dst),
-                       (ins PredRegs:$src1, IntRegs:$src2, predImmOp:$src3),
+  def NAME : LDInst2<(outs RC:$dst),
+                     (ins PredRegs:$src1, IntRegs:$src2, predImmOp:$src3),
             #!if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
             ") ")#"$dst = "#mnemonic#"($src2+#$src3)",
             []>;
@@ -922,9 +922,9 @@ multiclass LD_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
 multiclass LD_Idxd_Pred<string mnemonic, RegisterClass RC, Operand predImmOp,
                         bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true") in {
-    defm _c#NAME# : LD_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 0>;
+    defm _c#NAME : LD_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 0>;
     // Predicate new
-    defm _cdn#NAME# : LD_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 1>;
+    defm _cdn#NAME : LD_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 1>;
   }
 }
 
@@ -936,7 +936,7 @@ multiclass LD_Idxd<string mnemonic, string CextOp, RegisterClass RC,
   let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed in {
     let opExtendable = 2, isExtentSigned = 1, opExtentBits = ImmBits,
         isPredicable = 1, AddedComplexity = 20 in
-      def #NAME# : LDInst2<(outs RC:$dst), (ins IntRegs:$src1, ImmOp:$offset),
+      def NAME : LDInst2<(outs RC:$dst), (ins IntRegs:$src1, ImmOp:$offset),
                    "$dst = "#mnemonic#"($src1+#$offset)",
                    []>;
 
@@ -1006,7 +1006,7 @@ def LDd_GP : LDInst2<(outs DoubleRegs:$dst),
 multiclass LD_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
                             bit isNot, bit isPredNew> {
   let PNewValue = #!if(isPredNew, "new", "") in
-  def #NAME# : LDInst2PI<(outs RC:$dst, IntRegs:$dst2),
+  def NAME : LDInst2PI<(outs RC:$dst, IntRegs:$dst2),
                        (ins PredRegs:$src1, IntRegs:$src2, ImmOp:$offset),
             #!if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
             ") ")#"$dst = "#mnemonic#"($src2++#$offset)",
@@ -1017,7 +1017,7 @@ multiclass LD_PostInc_Pbase<string mnemonic, RegisterClass RC, Operand ImmOp,
 multiclass LD_PostInc_Pred<string mnemonic, RegisterClass RC,
                            Operand ImmOp, bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true") in {
-    defm _c#NAME# : LD_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
+    defm _c#NAME : LD_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 0>;
     // Predicate new
     let Predicates = [HasV4T], validSubTargets = HasV4SubT in
     defm _cdn#NAME#_V4 : LD_PostInc_Pbase<mnemonic, RC, ImmOp, PredNot, 1>;
@@ -1029,8 +1029,8 @@ multiclass LD_PostInc<string mnemonic, string BaseOp, RegisterClass RC,
 
   let BaseOpcode = "POST_"#BaseOp in {
     let isPredicable = 1 in
-    def #NAME# : LDInst2PI<(outs RC:$dst, IntRegs:$dst2),
-                           (ins IntRegs:$src1, ImmOp:$offset),
+    def NAME : LDInst2PI<(outs RC:$dst, IntRegs:$dst2),
+                         (ins IntRegs:$src1, ImmOp:$offset),
                  "$dst = "#mnemonic#"($src1++#$offset)",
                  [],
                  "$src1 = $dst2">;
@@ -1441,7 +1441,7 @@ def POST_STdri_cNotPt : STInst2PI<(outs IntRegs:$dst),
 multiclass ST_MEMri_Pbase<string mnemonic, RegisterClass RC, bit isNot,
                           bit isPredNew> {
   let PNewValue = #!if(isPredNew, "new", "") in
-  def #NAME# : STInst2<(outs),
+  def NAME : STInst2<(outs),
             (ins PredRegs:$src1, MEMri:$addr, RC: $src2),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
             ") ")#mnemonic#"($addr) = $src2",
@@ -1450,7 +1450,7 @@ multiclass ST_MEMri_Pbase<string mnemonic, RegisterClass RC, bit isNot,
 
 multiclass ST_MEMri_Pred<string mnemonic, RegisterClass RC, bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true") in {
-    defm _c#NAME# : ST_MEMri_Pbase<mnemonic, RC, PredNot, 0>;
+    defm _c#NAME : ST_MEMri_Pbase<mnemonic, RC, PredNot, 0>;
 
     // Predicate new
     let validSubTargets = HasV4SubT, Predicates = [HasV4T] in
@@ -1465,7 +1465,7 @@ multiclass ST_MEMri<string mnemonic, string CextOp, RegisterClass RC,
   let CextOpcode = CextOp, BaseOpcode = CextOp in {
     let opExtendable = 1, isExtentSigned = 1, opExtentBits = ImmBits,
          isPredicable = 1 in
-    def #NAME# : STInst2<(outs),
+    def NAME : STInst2<(outs),
             (ins MEMri:$addr, RC:$src),
             #mnemonic#"($addr) = $src",
             []>;
@@ -1507,7 +1507,7 @@ def : Pat<(store (i64 DoubleRegs:$src1), ADDRriS11_3:$addr),
 multiclass ST_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
                         bit isNot, bit isPredNew> {
   let PNewValue = #!if(isPredNew, "new", "") in
-  def #NAME# : STInst2<(outs),
+  def NAME : STInst2<(outs),
             (ins PredRegs:$src1, IntRegs:$src2, predImmOp:$src3, RC: $src4),
             !if(isNot, "if (!$src1", "if ($src1")#!if(isPredNew, ".new) ",
             ") ")#mnemonic#"($src2+#$src3) = $src4",
@@ -1517,7 +1517,7 @@ multiclass ST_Idxd_Pbase<string mnemonic, RegisterClass RC, Operand predImmOp,
 multiclass ST_Idxd_Pred<string mnemonic, RegisterClass RC, Operand predImmOp,
                         bit PredNot> {
   let PredSense = #!if(PredNot, "false", "true"), isPredicated = 1 in {
-    defm _c#NAME# : ST_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 0>;
+    defm _c#NAME : ST_Idxd_Pbase<mnemonic, RC, predImmOp, PredNot, 0>;
 
     // Predicate new
     let validSubTargets = HasV4SubT, Predicates = [HasV4T] in
@@ -1533,7 +1533,7 @@ multiclass ST_Idxd<string mnemonic, string CextOp, RegisterClass RC,
   let CextOpcode = CextOp, BaseOpcode = CextOp#_indexed in {
     let opExtendable = 1, isExtentSigned = 1, opExtentBits = ImmBits,
          isPredicable = 1 in
-    def #NAME# : STInst2<(outs),
+    def NAME : STInst2<(outs),
             (ins IntRegs:$src1, ImmOp:$src2, RC:$src3),
             #mnemonic#"($src1+#$src2) = $src3",
             []>;

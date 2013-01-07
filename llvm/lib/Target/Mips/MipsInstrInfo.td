@@ -420,8 +420,8 @@ class Store<string opstr, SDPatternOperator OpNode, RegisterClass RC,
 
 multiclass LoadM<string opstr, RegisterClass RC,
                  SDPatternOperator OpNode = null_frag> {
-  def #NAME# : Load<opstr, OpNode, RC, mem>, Requires<[NotN64, HasStdEnc]>;
-  def _P8    : Load<opstr, OpNode, RC, mem64>, Requires<[IsN64, HasStdEnc]> {
+  def NAME : Load<opstr, OpNode, RC, mem>, Requires<[NotN64, HasStdEnc]>;
+  def _P8  : Load<opstr, OpNode, RC, mem64>, Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -429,8 +429,8 @@ multiclass LoadM<string opstr, RegisterClass RC,
 
 multiclass StoreM<string opstr, RegisterClass RC,
                   SDPatternOperator OpNode = null_frag> {
-  def #NAME# : Store<opstr, OpNode, RC, mem>, Requires<[NotN64, HasStdEnc]>;
-  def _P8    : Store<opstr, OpNode, RC, mem64>, Requires<[IsN64, HasStdEnc]> {
+  def NAME : Store<opstr, OpNode, RC, mem>, Requires<[NotN64, HasStdEnc]>;
+  def _P8  : Store<opstr, OpNode, RC, mem64>, Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -455,20 +455,20 @@ class StoreLeftRight<string opstr, SDNode OpNode, RegisterClass RC,
 }
 
 multiclass LoadLeftRightM<string opstr, SDNode OpNode, RegisterClass RC> {
-  def #NAME# : LoadLeftRight<opstr, OpNode, RC, mem>,
-               Requires<[NotN64, HasStdEnc]>;
-  def _P8    : LoadLeftRight<opstr, OpNode, RC, mem64>,
-               Requires<[IsN64, HasStdEnc]> {
+  def NAME : LoadLeftRight<opstr, OpNode, RC, mem>,
+             Requires<[NotN64, HasStdEnc]>;
+  def _P8  : LoadLeftRight<opstr, OpNode, RC, mem64>,
+             Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
 }
 
 multiclass StoreLeftRightM<string opstr, SDNode OpNode, RegisterClass RC> {
-  def #NAME# : StoreLeftRight<opstr, OpNode, RC, mem>,
-               Requires<[NotN64, HasStdEnc]>;
-  def _P8    : StoreLeftRight<opstr, OpNode, RC, mem64>,
-               Requires<[IsN64, HasStdEnc]> {
+  def NAME : StoreLeftRight<opstr, OpNode, RC, mem>,
+             Requires<[NotN64, HasStdEnc]>;
+  def _P8  : StoreLeftRight<opstr, OpNode, RC, mem64>,
+             Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
     let isCodeGenOnly = 1;
   }
@@ -678,9 +678,9 @@ class Atomic2Ops<PatFrag Op, RegisterClass DRC, RegisterClass PRC> :
            [(set DRC:$dst, (Op PRC:$ptr, DRC:$incr))]>;
 
 multiclass Atomic2Ops32<PatFrag Op> {
-  def #NAME# : Atomic2Ops<Op, CPURegs, CPURegs>, Requires<[NotN64, HasStdEnc]>;
-  def _P8    : Atomic2Ops<Op, CPURegs, CPU64Regs>,
-               Requires<[IsN64, HasStdEnc]> {
+  def NAME : Atomic2Ops<Op, CPURegs, CPURegs>, Requires<[NotN64, HasStdEnc]>;
+  def _P8  : Atomic2Ops<Op, CPURegs, CPU64Regs>,
+             Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
   }
 }
@@ -691,10 +691,10 @@ class AtomicCmpSwap<PatFrag Op, RegisterClass DRC, RegisterClass PRC> :
            [(set DRC:$dst, (Op PRC:$ptr, DRC:$cmp, DRC:$swap))]>;
 
 multiclass AtomicCmpSwap32<PatFrag Op>  {
-  def #NAME# : AtomicCmpSwap<Op, CPURegs, CPURegs>,
-               Requires<[NotN64, HasStdEnc]>;
-  def _P8    : AtomicCmpSwap<Op, CPURegs, CPU64Regs>,
-                             Requires<[IsN64, HasStdEnc]> {
+  def NAME : AtomicCmpSwap<Op, CPURegs, CPURegs>,
+             Requires<[NotN64, HasStdEnc]>;
+  def _P8  : AtomicCmpSwap<Op, CPURegs, CPU64Regs>,
+             Requires<[IsN64, HasStdEnc]> {
     let DecoderNamespace = "Mips64";
   }
 }
