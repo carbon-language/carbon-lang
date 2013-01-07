@@ -28,10 +28,10 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/TypeFinder.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include "llvm/TypeFinder.h"
 using namespace llvm;
 
 namespace {

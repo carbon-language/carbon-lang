@@ -1,4 +1,4 @@
-//===-- llvm/TypeFinder.h - Class for finding used struct types -*- C++ -*-===//
+//===-- llvm/IR/TypeFinder.h - Class to find used struct types --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TYPEFINDER_H
-#define LLVM_TYPEFINDER_H
+#ifndef LLVM_IR_TYPEFINDER_H
+#define LLVM_IR_TYPEFINDER_H
 
 #include "llvm/ADT/DenseSet.h"
 #include <vector>

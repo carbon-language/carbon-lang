@@ -30,6 +30,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Operator.h"
+#include "llvm/IR/TypeFinder.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
@@ -37,7 +38,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/TypeFinder.h"
 #include <algorithm>
 #include <cctype>
 using namespace llvm;

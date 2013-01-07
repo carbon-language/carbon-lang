@@ -20,8 +20,8 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/TypeFinder.h"
 #include "llvm/Pass.h"
-#include "llvm/TypeFinder.h"
 using namespace llvm;
 
 namespace {
