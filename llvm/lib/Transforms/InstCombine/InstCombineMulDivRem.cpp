@@ -297,9 +297,8 @@ static void detectLog2OfHalf(Value *&Op, Value *&Y, IntrinsicInst *&Log2) {
 static bool isFMulOrFDivWithConstant(Value *V) {
   Instruction *I = dyn_cast<Instruction>(V);
   if (!I || (I->getOpcode() != Instruction::FMul && 
-             I->getOpcode() != Instruction::FDiv)) {
+             I->getOpcode() != Instruction::FDiv))
     return false;
-  }
 
   ConstantFP *C0 = dyn_cast<ConstantFP>(I->getOperand(0));
   ConstantFP *C1 = dyn_cast<ConstantFP>(I->getOperand(1));
@@ -323,8 +322,8 @@ static bool isNormalFp(const ConstantFP *C) {
 /// resulting expression. Note that this function could return NULL in
 /// case the constants cannot be folded into a normal floating-point.
 /// 
-Value *InstCombiner::foldFMulConst
-  (Instruction *FMulOrDiv, ConstantFP *C, Instruction *InsertBefore) {
+Value *InstCombiner::foldFMulConst(Instruction *FMulOrDiv, ConstantFP *C,
+                                   Instruction *InsertBefore) {
   assert(isFMulOrFDivWithConstant(FMulOrDiv) && "V is invalid");
 
   Value *Opnd0 = FMulOrDiv->getOperand(0);
@@ -412,7 +411,9 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
         ConstantFP *C1 = dyn_cast<ConstantFP>(Opnd1);
         bool Swap = false;
         if (C0) {
-          std::swap(C0, C1); std::swap(Opnd0, Opnd1); Swap = true; 
+          std::swap(C0, C1);
+          std::swap(Opnd0, Opnd1);
+          Swap = true; 
         }
 
         if (C1 && C1->getValueAPF().isNormal() &&
