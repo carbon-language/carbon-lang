@@ -3893,7 +3893,7 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
       for (CFGBlock::const_pred_iterator I = B.pred_begin(), E = B.pred_end();
            I != E; ++I, ++i) {
 
-        if (i == 8 || (i-8) == 0)
+        if (i % 10 == 8)
           OS << "\n     ";
 
         OS << " B" << (*I)->getBlockID();
@@ -3922,7 +3922,7 @@ static void print_block(raw_ostream &OS, const CFG* cfg,
       for (CFGBlock::const_succ_iterator I = B.succ_begin(), E = B.succ_end();
            I != E; ++I, ++i) {
 
-        if (i == 8 || (i-8) % 10 == 0)
+        if (i % 10 == 8)
           OS << "\n    ";
 
         if (*I)
