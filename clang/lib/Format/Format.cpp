@@ -137,7 +137,7 @@ public:
       // FIXME: We need to check whether we're in a preprocessor directive, even
       // if all tokens fit - the next line might be a preprocessor directive,
       // too, in which case we need to account for the possible escaped newline.
-      if (Columns > Style.ColumnLimit ||
+      if (Columns > Style.ColumnLimit - (Line.InPPDirective ? 1 : 0) ||
           (Annotations[i].MustBreakBefore &&
            Annotations[i].Type != TokenAnnotation::TT_CtorInitializerColon)) {
         FitsOnALine = false;

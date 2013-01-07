@@ -413,11 +413,13 @@ TEST_F(FormatTest, EndOfFileEndsPPDirective) {
 }
 
 TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
-  // If the macro fits in one line, we have the full width.
-  verifyFormat("#define A(B)", getLLVMStyleWithColumns(12));
+  // If the macro fits in one line, we still do not get the full
+  // line, as only the next line decides whether we need an escaped newline and
+  // thus use the last column.
+  verifyFormat("#define A(B)", getLLVMStyleWithColumns(13));
 
-  verifyFormat("#define A(\\\n    B)", getLLVMStyleWithColumns(11));
-  verifyFormat("#define AA(\\\n    B)", getLLVMStyleWithColumns(11));
+  verifyFormat("#define A( \\\n    B)", getLLVMStyleWithColumns(12));
+  verifyFormat("#define AA(\\\n    B)", getLLVMStyleWithColumns(12));
   verifyFormat("#define A( \\\n    A, B)", getLLVMStyleWithColumns(12));
 }
 
@@ -488,6 +490,13 @@ TEST_F(FormatTest, EscapedNewlineAtStartOfTokenInMacroDefinition) {
   EXPECT_EQ("#define A \\\n  int i;  \\\n  int j;",
             format("#define A \\\nint i;\\\n  int j;",
                    getLLVMStyleWithColumns(11)));
+}
+
+TEST_F(FormatTest, CalculateSpaceOnConsecutiveLinesInMacro) {
+  verifyFormat("#define A \\\n"
+               "  int v(  \\\n"
+               "      a); \\\n"
+               "  int i;", getLLVMStyleWithColumns(11));
 }
 
 TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
