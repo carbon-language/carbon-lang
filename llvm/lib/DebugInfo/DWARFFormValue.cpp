@@ -258,7 +258,7 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
     // 0 byte values - implied from the form.
     case DW_FORM_flag_present:
       return true;
-      
+
     // 1 byte values
     case DW_FORM_data1:
     case DW_FORM_flag:
@@ -308,7 +308,7 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
       else
         *offset_ptr += 8;
       return true;
-      
+
     default:
       return false;
     }
@@ -425,7 +425,7 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
     else
       OS << format("0x%016" PRIx64, uvalue);
     break;
-    
+
   default:
     OS << format("DW_FORM(0x%4.4x)", Form);
     break;

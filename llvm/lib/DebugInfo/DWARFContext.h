@@ -163,7 +163,9 @@ public:
     return StringOffsetDWOSection;
   }
   virtual StringRef getRangeDWOSection() { return RangeDWOSection; }
-  virtual const RelocAddrMap &infoDWORelocMap() const { return InfoDWORelocMap; }
+  virtual const RelocAddrMap &infoDWORelocMap() const {
+    return InfoDWORelocMap;
+  }
 };
 
 }
