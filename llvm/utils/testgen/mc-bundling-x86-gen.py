@@ -5,10 +5,13 @@
 # For every possible offset in an aligned bundle, a bundle-locked group of every
 # size in the inclusive range [1, bundle_size] is inserted. An appropriate CHECK
 # is added to verify that NOP padding occurred (or did not occur) as expected.
+# Run with --align-to-end to generate a similar test with align_to_end for each
+# .bundle_lock directive.
 
-# This script runs with Python 2.6+ (including 3.x)
+# This script runs with Python 2.7 and 3.2+
 
 from __future__ import print_function
+import argparse
 
 BUNDLE_SIZE_POW2 = 4
 BUNDLE_SIZE = 2 ** BUNDLE_SIZE_POW2
@@ -28,14 +31,14 @@ PREAMBLE = '''
 ALIGNTO = '  .align {0}, 0x90'
 NOPFILL = '  .fill {0}, 1, 0x90'
 
-def print_bundle_locked_sequence(len):
-  print('  .bundle_lock')
+def print_bundle_locked_sequence(len, align_to_end=False):
+  print('  .bundle_lock{0}'.format(' align_to_end' if align_to_end else ''))
   print('  .rept {0}'.format(len))
   print('  inc %eax')
   print('  .endr')
   print('  .bundle_unlock')
 
-def generate():
+def generate(align_to_end=False):
   print(PREAMBLE)
   
   ntest = 0
@@ -47,24 +50,49 @@ def generate():
       print('INSTRLEN_{0}_OFFSET_{1}:'.format(instlen, offset))
       if offset > 0:
         print(NOPFILL.format(offset))
-      print_bundle_locked_sequence(instlen)
+      print_bundle_locked_sequence(instlen, align_to_end)
 
       # Now generate an appropriate CHECK line
       base_offset = ntest * 2 * BUNDLE_SIZE
       inst_orig_offset = base_offset + offset  # had it not been padded...
+
+      def print_check(adjusted_offset=None):
+        if adjusted_offset is not None:
+          print('# CHECK: {0:x}: nop'.format(inst_orig_offset))
+          print('# CHECK: {0:x}: incl'.format(adjusted_offset))
+        else:
+          print('# CHECK: {0:x}: incl'.format(inst_orig_offset))
       
-      if offset + instlen > BUNDLE_SIZE:
-        # Padding needed
-        print('# CHECK: {0:x}: nop'.format(inst_orig_offset))
-        aligned_offset = (inst_orig_offset + instlen) & ~(BUNDLE_SIZE - 1)
-        print('# CHECK: {0:x}: incl'.format(aligned_offset))
+      if align_to_end:
+        if offset + instlen == BUNDLE_SIZE:
+          # No padding needed
+          print_check()
+        elif offset + instlen < BUNDLE_SIZE:
+          # Pad to end at nearest bundle boundary
+          offset_to_end = base_offset + (BUNDLE_SIZE - instlen)
+          print_check(offset_to_end)
+        else: # offset + instlen > BUNDLE_SIZE
+          # Pad to end at next bundle boundary
+          offset_to_end = base_offset + (BUNDLE_SIZE * 2 - instlen)
+          print_check(offset_to_end)
       else:
-        # No padding needed
-        print('# CHECK: {0:x}: incl'.format(inst_orig_offset))
+        if offset + instlen > BUNDLE_SIZE:
+          # Padding needed
+          aligned_offset = (inst_orig_offset + instlen) & ~(BUNDLE_SIZE - 1)
+          print_check(aligned_offset)
+        else:
+          # No padding needed
+          print_check()
 
       print()
       ntest += 1
 
 if __name__ == '__main__':
-  generate()
+  argparser = argparse.ArgumentParser()
+  argparser.add_argument('--align-to-end',
+                         action='store_true',
+                         help='generate .bundle_lock with align_to_end option')
+  args = argparser.parse_args()
+  generate(align_to_end=args.align_to_end)
+
 
