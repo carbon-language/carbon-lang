@@ -131,9 +131,12 @@ public:
     bool FitsOnALine = true;
     for (unsigned i = 1, n = Line.Tokens.size(); i != n; ++i) {
       Columns += (Annotations[i].SpaceRequiredBefore ? 1 : 0) +
-                 Line.Tokens[i].Tok.getLength();
+                 Line.Tokens[i].TokenLength;
       // A special case for the colon of a constructor initializer as this only
       // needs to be put on a new line if the line needs to be split.
+      // FIXME: We need to check whether we're in a preprocessor directive, even
+      // if all tokens fit - the next line might be a preprocessor directive,
+      // too, in which case we need to account for the possible escaped newline.
       if (Columns > Style.ColumnLimit ||
           (Annotations[i].MustBreakBefore &&
            Annotations[i].Type != TokenAnnotation::TT_CtorInitializerColon)) {
@@ -247,7 +250,7 @@ private:
       unsigned WhitespaceStartColumn = State.Column;
       if (Current.Tok.is(tok::string_literal) &&
           Previous.Tok.is(tok::string_literal)) {
-        State.Column = State.Column - Previous.Tok.getLength();
+        State.Column = State.Column - Previous.TokenLength;
       } else if (Current.Tok.is(tok::lessless) &&
                  State.FirstLessLess[ParenLevel] != 0) {
         State.Column = State.FirstLessLess[ParenLevel];
@@ -286,7 +289,7 @@ private:
         State.Indent[ParenLevel] += 2;
     } else {
       if (Current.Tok.is(tok::equal) && Line.Tokens[0].Tok.is(tok::kw_for))
-        State.ForLoopVariablePos = State.Column - Previous.Tok.getLength();
+        State.ForLoopVariablePos = State.Column - Previous.TokenLength;
 
       unsigned Spaces = Annotations[Index].SpaceRequiredBefore ? 1 : 0;
       if (Annotations[Index].Type == TokenAnnotation::TT_LineComment)
@@ -321,7 +324,7 @@ private:
     if (Current.Tok.is(tok::lessless) && State.FirstLessLess[ParenLevel] == 0)
       State.FirstLessLess[ParenLevel] = State.Column;
 
-    State.Column += Current.Tok.getLength();
+    State.Column += Current.TokenLength;
 
     // If we encounter an opening (, [, { or <, we add a level to our stacks to
     // prepare for the following tokens.
@@ -862,6 +865,7 @@ private:
       } else if (isBinaryOperator(Line.Tokens[i])) {
         Annotation.Type = TokenAnnotation::TT_BinaryOperator;
       } else if (Tok.Tok.is(tok::comment)) {
+        // FIXME: Use Lexer::getSpelling(Tok, SourceMgr, LangOpts, bool*);
         StringRef Data(SourceMgr.getCharacterData(Tok.Tok.getLocation()),
                        Tok.Tok.getLength());
         if (Data.startswith("//"))
@@ -1031,7 +1035,7 @@ public:
 
     FormatTok = FormatToken();
     Lex.LexFromRawLexer(FormatTok.Tok);
-    StringRef Text = tokenText(FormatTok.Tok);
+    StringRef Text = rawTokenText(FormatTok.Tok);
     FormatTok.WhiteSpaceStart = FormatTok.Tok.getLocation();
     if (SourceMgr.getFileOffset(FormatTok.WhiteSpaceStart) == 0)
       FormatTok.IsFirst = true;
@@ -1046,8 +1050,12 @@ public:
       if (FormatTok.Tok.is(tok::eof))
         return FormatTok;
       Lex.LexFromRawLexer(FormatTok.Tok);
-      Text = tokenText(FormatTok.Tok);
+      Text = rawTokenText(FormatTok.Tok);
     }
+
+    // Now FormatTok is the next non-whitespace token.
+    FormatTok.TokenLength = Text.size();
+
     // In case the token starts with escaped newlines, we want to
     // take them into account as whitespace - this pattern is quite frequent
     // in macro definitions.
@@ -1057,6 +1065,7 @@ public:
     unsigned i = 0;
     while (i + 1 < Text.size() && Text[i] == '\\' && Text[i+1] == '\n') {
       FormatTok.WhiteSpaceLength += 2;
+      FormatTok.TokenLength -= 2;
       i += 2;
     }
 
@@ -1082,7 +1091,7 @@ private:
   IdentifierTable IdentTable;
 
   /// Returns the text of \c FormatTok.
-  StringRef tokenText(Token &Tok) {
+  StringRef rawTokenText(Token &Tok) {
     return StringRef(SourceMgr.getCharacterData(Tok.getLocation()),
                      Tok.getLength());
   }

@@ -32,7 +32,7 @@ namespace format {
 struct FormatToken {
   FormatToken()
       : NewlinesBefore(0), HasUnescapedNewline(false), WhiteSpaceLength(0),
-        IsFirst(false) {
+        TokenLength(0), IsFirst(false) {
   }
 
   /// \brief The \c Token.
@@ -57,6 +57,11 @@ struct FormatToken {
   /// \brief The length in characters of the whitespace immediately preceeding
   /// the \c Token.
   unsigned WhiteSpaceLength;
+
+  /// \brief The length of the non-whitespace parts of the token. This is
+  /// necessary because we need to handle escaped newlines that are stored
+  /// with the token.
+  unsigned TokenLength;
 
   /// \brief Indicates that this is the first token.
   bool IsFirst;

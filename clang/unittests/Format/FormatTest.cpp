@@ -481,6 +481,12 @@ TEST_F(FormatTest, FormatUnbalancedStructuralElements) {
             format("#define A } }\nint i;", getLLVMStyleWithColumns(11)));
 }
 
+TEST_F(FormatTest, EscapedNewlineAtStartOfTokenInMacroDefinition) {
+  EXPECT_EQ("#define A \\\n  int i;  \\\n  int j;",
+            format("#define A \\\nint i;\\\n  int j;",
+                   getLLVMStyleWithColumns(11)));
+}
+
 TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
   EXPECT_EQ(
       "#define ALooooooooooooooooooooooooooooooooooooooongMacro("
