@@ -311,7 +311,7 @@ NclPopcountRecognize::NclPopcountRecognize(LoopIdiomRecognize &TheLIR):
 
 bool NclPopcountRecognize::preliminaryScreen() {
   const TargetTransformInfo *TTI = LIR.getTargetTransformInfo();
-  if (TTI->getPopcntHwSupport(32) != TargetTransformInfo::Fast)
+  if (TTI->getPopcntSupport(32) != TargetTransformInfo::PSK_FastHardware)
     return false;
 
   // Counting population are usually conducted by few arithmetic instrutions.

@@ -79,9 +79,9 @@ bool TargetTransformInfo::shouldBuildLookupTables() const {
   return PrevTTI->shouldBuildLookupTables();
 }
 
-TargetTransformInfo::PopcntHwSupport
-TargetTransformInfo::getPopcntHwSupport(unsigned IntTyWidthInBit) const {
-  return PrevTTI->getPopcntHwSupport(IntTyWidthInBit);
+TargetTransformInfo::PopcntSupportKind
+TargetTransformInfo::getPopcntSupport(unsigned IntTyWidthInBit) const {
+  return PrevTTI->getPopcntSupport(IntTyWidthInBit);
 }
 
 unsigned TargetTransformInfo::getIntImmCost(const APInt &Imm, Type *Ty) const {
@@ -202,8 +202,8 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
     return true;
   }
 
-  PopcntHwSupport getPopcntHwSupport(unsigned IntTyWidthInBit) const {
-    return None;
+  PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const {
+    return PSK_Software;
   }
 
   unsigned getIntImmCost(const APInt &Imm, Type *Ty) const {

@@ -76,7 +76,7 @@ public:
   /// \name Scalar TTI Implementations
   /// @{
 
-  virtual PopcntHwSupport getPopcntHwSupport(unsigned TyWidth) const;
+  virtual PopcntSupportKind getPopcntSupport(unsigned TyWidth) const;
 
   /// @}
 
@@ -157,12 +157,12 @@ FindInConvertTable(const X86TypeConversionCostTblEntry *Tbl, unsigned len,
 }
 
 
-X86TTI::PopcntHwSupport X86TTI::getPopcntHwSupport(unsigned TyWidth) const {
+X86TTI::PopcntSupportKind X86TTI::getPopcntSupport(unsigned TyWidth) const {
   assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
   // TODO: Currently the __builtin_popcount() implementation using SSE3
   //   instructions is inefficient. Once the problem is fixed, we should
   //   call ST->hasSSE3() instead of ST->hasSSE4().
-  return ST->hasSSE41() ? Fast : None;
+  return ST->hasSSE41() ? PSK_FastHardware : PSK_Software;
 }
 
 unsigned X86TTI::getNumberOfRegisters(bool Vector) const {

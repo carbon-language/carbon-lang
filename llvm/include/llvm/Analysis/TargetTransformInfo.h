@@ -70,16 +70,18 @@ public:
   /// \name Scalar Target Information
   /// @{
 
-  /// PopcntHwSupport - Hardware support for population count. Compared to the
-  /// SW implementation, HW support is supposed to significantly boost the
-  /// performance when the population is dense, and it may or may not degrade
-  /// performance if the population is sparse. A HW support is considered as
-  /// "Fast" if it can outperform, or is on a par with, SW implementaion when
-  /// the population is sparse; otherwise, it is considered as "Slow".
-  enum PopcntHwSupport {
-    None,
-    Fast,
-    Slow
+  /// \brief Flags indicating the kind of support for population count.
+  ///
+  /// Compared to the SW implementation, HW support is supposed to
+  /// significantly boost the performance when the population is dense, and it
+  /// may or may not degrade performance if the population is sparse. A HW
+  /// support is considered as "Fast" if it can outperform, or is on a par
+  /// with, SW implementaion when the population is sparse; otherwise, it is
+  /// considered as "Slow".
+  enum PopcntSupportKind {
+    PSK_Software,
+    PSK_SlowHardware,
+    PSK_FastHardware
   };
 
   /// isLegalAddImmediate - Return true if the specified immediate is legal
@@ -121,8 +123,8 @@ public:
   /// lookup tables for the target.
   virtual bool shouldBuildLookupTables() const;
 
-  /// getPopcntHwSupport - Return hardware support for population count.
-  virtual PopcntHwSupport getPopcntHwSupport(unsigned IntTyWidthInBit) const;
+  /// getPopcntSupport - Return hardware support for population count.
+  virtual PopcntSupportKind getPopcntSupport(unsigned IntTyWidthInBit) const;
 
   /// getIntImmCost - Return the expected cost of materializing the given
   /// integer immediate of the specified type.
