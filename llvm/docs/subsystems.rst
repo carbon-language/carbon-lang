@@ -24,6 +24,7 @@ Subsystem Documentation
    WritingAnLLVMBackend
    GarbageCollection
    WritingAnLLVMPass
+   TableGen/LangRef
 
 * :doc:`WritingAnLLVMPass`
 
