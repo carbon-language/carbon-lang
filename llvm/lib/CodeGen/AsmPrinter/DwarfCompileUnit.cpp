@@ -126,7 +126,9 @@ void CompileUnit::addSInt(DIE *Die, unsigned Attribute,
 
 /// addString - Add a string attribute data and value. We always emit a
 /// reference to the string pool instead of immediate strings so that DIEs have
-/// more predictable sizes.
+/// more predictable sizes. In the case of split dwarf we emit an index
+/// into another table which gets us the static offset into the string
+/// table.
 void CompileUnit::addString(DIE *Die, unsigned Attribute, StringRef String) {
   if (!DD->useSplitDwarf()) {
     MCSymbol *Symb = DU->getStringPoolEntry(String);
