@@ -364,7 +364,7 @@ private:
     ++State.ConsumedTokens;
   }
 
-  /// \brief Calculate the panelty for splitting after the token at \p Index.
+  /// \brief Calculate the penalty for splitting after the token at \p Index.
   unsigned splitPenalty(unsigned Index) {
     assert(Index < Line.Tokens.size() &&
            "Tried to calculate penalty for splitting after the last token");
