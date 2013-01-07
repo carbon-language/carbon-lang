@@ -1069,7 +1069,7 @@ public:
         type = ELF::STT_OBJECT;
         break;
       case  DefinedAtom::typeZeroFill:
-        type = ELF::STT_COMMON;
+        type = ELF::STT_OBJECT;
         symbol->st_value = addr;
         break;
       default:
