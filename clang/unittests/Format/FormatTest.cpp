@@ -392,6 +392,12 @@ TEST_F(FormatTest, FormatsSmallMacroDefinitionsInSingleLine) {
                "    aLoooooooooooooooooooooooongFuuuuuuuuuuuuuunctiooooooooo)");
 }
 
+TEST_F(FormatTest, DoesNotBreakPureVirtualFunctionDefinition) {
+  verifyFormat(
+      "virtual void write(ELFWriter *writerrr,\n"
+      "                   OwningPtr<FileOutputBuffer> &buffer) = 0;");
+}
+
 TEST_F(FormatTest, BreaksOnHashWhenDirectiveIsInvalid) {
   EXPECT_EQ("#\n;", format("#;"));
   verifyFormat("#\n;\n;\n;");
