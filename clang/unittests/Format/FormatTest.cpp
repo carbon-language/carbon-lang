@@ -1022,8 +1022,33 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
 }
 
 TEST_F(FormatTest, ObjCAt) {
-  verifyFormat("@interface");
+  // FIXME: Make the uncommented lines pass.
+  verifyFormat("@autoreleasepool");
+  //verifyFormat("@catch");
+  //verifyFormat("@class");
+  verifyFormat("@compatibility_alias");
+  verifyFormat("@defs");
   verifyFormat("@dynamic");
+  verifyFormat("@encode");
+  verifyFormat("@end");
+  verifyFormat("@finally");
+  verifyFormat("@implementation");
+  verifyFormat("@import");
+  verifyFormat("@interface");
+  verifyFormat("@optional");
+  verifyFormat("@package");
+  //verifyFormat("@private");
+  verifyFormat("@property");
+  //verifyFormat("@protected");
+  verifyFormat("@protocol");
+  //verifyFormat("@public");
+  verifyFormat("@required");
+  verifyFormat("@selector");
+  verifyFormat("@synchronized");
+  verifyFormat("@synthesize");
+  //verifyFormat("@throw");
+  //verifyFormat("@try");
+
   EXPECT_EQ("@interface", format("@ interface"));
 
   // The precise formatting of this doesn't matter, nobody writes code like
