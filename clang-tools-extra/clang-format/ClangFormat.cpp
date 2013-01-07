@@ -62,6 +62,7 @@ static void format() {
   LangOpts.CPlusPlus = 1;
   LangOpts.CPlusPlus11 = 1;
   LangOpts.ObjC1 = 1;
+  LangOpts.ObjC2 = 1;
   Lexer Lex(ID, Sources.getBuffer(ID), Sources, LangOpts);
   SourceLocation Start =
       Sources.getLocForStartOfFile(ID).getLocWithOffset(Offset);
