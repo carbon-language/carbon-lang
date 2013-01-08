@@ -387,11 +387,10 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
                                           const MCFragment &F) const {
   switch (F.getKind()) {
   case MCFragment::FT_Data:
-    return cast<MCDataFragment>(F).getContents().size();
+  case MCFragment::FT_Relaxable:
+    return cast<MCEncodedFragment>(F).getContents().size();
   case MCFragment::FT_Fill:
     return cast<MCFillFragment>(F).getSize();
-  case MCFragment::FT_Relaxable:
-    return cast<MCRelaxableFragment>(F).getInstSize();
 
   case MCFragment::FT_LEB:
     return cast<MCLEBFragment>(F).getContents().size();

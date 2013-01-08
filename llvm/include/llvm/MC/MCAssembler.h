@@ -235,7 +235,6 @@ public:
   virtual SmallVectorImpl<char> &getContents() { return Contents; }
   virtual const SmallVectorImpl<char> &getContents() const { return Contents; }
 
-  unsigned getInstSize() const { return Contents.size(); }
   const MCInst &getInst() const { return Inst; }
   void setInst(const MCInst& Value) { Inst = Value; }
 
