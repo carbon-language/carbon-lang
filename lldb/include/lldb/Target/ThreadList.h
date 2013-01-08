@@ -75,6 +75,9 @@ public:
     FindThreadByID (lldb::tid_t tid, bool can_update = true);
 
     lldb::ThreadSP
+    RemoveThreadByID (lldb::tid_t tid, bool can_update = true);
+
+    lldb::ThreadSP
     FindThreadByIndexID (uint32_t index_id, bool can_update = true);
 
     lldb::ThreadSP

@@ -1377,18 +1377,32 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
         num_thread_ids = m_thread_ids.size();
     }
 
+    ThreadList old_thread_list_copy(old_thread_list);
     if (num_thread_ids > 0)
     {
         for (size_t i=0; i<num_thread_ids; ++i)
         {
             tid_t tid = m_thread_ids[i];
-            ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
+            ThreadSP thread_sp (old_thread_list_copy.RemoveThreadByID (tid, false));
             if (!thread_sp)
                 thread_sp.reset (new ThreadGDBRemote (*this, tid));
             new_thread_list.AddThread(thread_sp);
         }
     }
-
+    
+    // Whatever that is left in old_thread_list_copy are not
+    // present in new_thread_list. Remove non-existent threads from internal id table.
+    size_t old_num_thread_ids = old_thread_list_copy.GetSize(false);
+    for (size_t i=0; i<old_num_thread_ids; i++)
+    {
+        ThreadSP old_thread_sp(old_thread_list_copy.GetThreadAtIndex (i, false));
+        if (old_thread_sp)
+        {
+            lldb::tid_t old_thread_id = old_thread_sp->GetID();
+            m_thread_id_to_index_id_map.erase(old_thread_id);
+        }
+    }
+    
     return true;
 }
 

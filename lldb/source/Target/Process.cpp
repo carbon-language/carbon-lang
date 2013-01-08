@@ -937,6 +937,7 @@ Process::Process(Target &target, Listener &listener) :
     m_private_state_thread (LLDB_INVALID_HOST_THREAD),
     m_mod_id (),
     m_thread_index_id (0),
+    m_thread_id_to_index_id_map (),
     m_exit_status (-1),
     m_exit_string (),
     m_thread_list (this),
@@ -1460,10 +1461,49 @@ Process::UpdateThreadListIfNeeded ()
     }
 }
 
+// This is obsoleted. Staged removal for Xcode.
 uint32_t
 Process::GetNextThreadIndexID ()
 {
     return ++m_thread_index_id;
+}
+
+uint32_t
+Process::GetNextThreadIndexID (uint64_t thread_id)
+{
+    return AssignIndexIDToThread(thread_id);
+}
+
+bool
+Process::HasAssignedIndexIDToThread(uint64_t thread_id)
+{
+    std::map<uint64_t, uint32_t>::iterator iterator = m_thread_id_to_index_id_map.find(thread_id);
+    if (iterator == m_thread_id_to_index_id_map.end())
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
+uint32_t
+Process::AssignIndexIDToThread(uint64_t thread_id)
+{
+    uint32_t result = 0;
+    std::map<uint64_t, uint32_t>::iterator iterator = m_thread_id_to_index_id_map.find(thread_id);
+    if (iterator == m_thread_id_to_index_id_map.end())
+    {
+        result = ++m_thread_index_id;
+        m_thread_id_to_index_id_map[thread_id] = result;
+    }
+    else
+    {
+        result = iterator->second;
+    }
+    
+    return result;
 }
 
 StateType

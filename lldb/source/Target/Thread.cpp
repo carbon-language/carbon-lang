@@ -243,7 +243,7 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     Broadcaster(&process.GetTarget().GetDebugger(), Thread::GetStaticBroadcasterClass().AsCString()),
     m_process_wp (process.shared_from_this()),
     m_actual_stop_info_sp (),
-    m_index_id (process.GetNextThreadIndexID ()),
+    m_index_id (process.GetNextThreadIndexID(tid)),
     m_reg_context_sp (),
     m_state (eStateUnloaded),
     m_state_mutex (Mutex::eMutexTypeRecursive),
@@ -258,7 +258,6 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_unwinder_ap (),
     m_destroy_called (false),
     m_thread_stop_reason_stop_id (0)
-
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)

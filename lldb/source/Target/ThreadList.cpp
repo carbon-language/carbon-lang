@@ -128,6 +128,29 @@ ThreadList::FindThreadByID (lldb::tid_t tid, bool can_update)
 }
 
 ThreadSP
+ThreadList::RemoveThreadByID (lldb::tid_t tid, bool can_update)
+{
+    Mutex::Locker locker(m_threads_mutex);
+    
+    if (can_update)
+        m_process->UpdateThreadListIfNeeded();
+    
+    ThreadSP thread_sp;
+    uint32_t idx = 0;
+    const uint32_t num_threads = m_threads.size();
+    for (idx = 0; idx < num_threads; ++idx)
+    {
+        if (m_threads[idx]->GetID() == tid)
+        {
+            thread_sp = m_threads[idx];
+            m_threads.erase(m_threads.begin()+idx);
+            break;
+        }
+    }
+    return thread_sp;
+}
+
+ThreadSP
 ThreadList::GetThreadSPForThreadPtr (Thread *thread_ptr)
 {
     ThreadSP thread_sp;
