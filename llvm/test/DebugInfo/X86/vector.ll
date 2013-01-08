@@ -1,6 +1,12 @@
 ; RUN: llc -mtriple=x86_64-linux-gnu -O0 -filetype=obj -o %t %s
 ; RUN: llvm-dwarfdump %t | FileCheck %s
 
+; Generated from:
+; clang -g -S -emit-llvm -o foo.ll foo.c
+; typedef int v4si __attribute__((__vector_size__(16)));
+;
+; v4si a
+
 @a = common global <4 x i32> zeroinitializer, align 16
 
 !llvm.dbg.cu = !{!0}
