@@ -29,7 +29,8 @@ public:
         eSignalDeliveredMessage,
         eTraceMessage,
         eBreakpointMessage,
-        eCrashMessage
+        eCrashMessage,
+        eNewThreadMessage
     };
 
     enum CrashReason
@@ -111,6 +112,11 @@ public:
         return message;
     }
 
+    /// Indicates that the thread @p tid was spawned.
+    static ProcessMessage NewThread(lldb::tid_t parent_tid, lldb::tid_t child_tid) {
+        return ProcessMessage(parent_tid, eNewThreadMessage, child_tid);
+    }
+
     int GetExitStatus() const {
         assert(GetKind() == eExitMessage || GetKind() == eLimboMessage);
         return m_status;
@@ -137,6 +143,11 @@ public:
         return m_addr;
     }
 
+    lldb::tid_t GetChildTID() const {
+        assert(GetKind() == eNewThreadMessage);
+        return m_child_tid;
+    }
+
     static const char *
     GetCrashReasonString(CrashReason reason);
 
@@ -159,13 +170,23 @@ private:
           m_kind(kind),
           m_crash_reason(eInvalidCrashReason),
           m_status(status),
-          m_addr(addr) { }
+          m_addr(addr),
+          m_child_tid(0) { }
+
+    ProcessMessage(lldb::tid_t tid, Kind kind, lldb::tid_t child_tid)
+        : m_tid(tid),
+          m_kind(kind),
+          m_crash_reason(eInvalidCrashReason),
+          m_status(0),
+          m_addr(0),
+          m_child_tid(child_tid) { }
 
     lldb::tid_t m_tid;
     Kind        m_kind         : 8;
     CrashReason m_crash_reason : 8;
     int m_status;
     lldb::addr_t m_addr;
+    lldb::tid_t m_child_tid;
 };
 
 #endif // #ifndef liblldb_ProcessMessage_H_

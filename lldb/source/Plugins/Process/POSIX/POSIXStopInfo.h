@@ -89,4 +89,32 @@ private:
     ProcessMessage::CrashReason m_crash_reason;
 };    
 
+//===----------------------------------------------------------------------===//
+/// @class POSIXNewThreadStopInfo
+/// @brief Represents the stop state of process when a new thread is spawned.
+///
+
+class POSIXNewThreadStopInfo
+    : public POSIXStopInfo
+{
+public:
+    POSIXNewThreadStopInfo (POSIXThread &thread)
+        : POSIXStopInfo (thread, 0)
+        { }
+
+    ~POSIXNewThreadStopInfo();
+
+    lldb::StopReason
+    GetStopReason() const;
+
+    const char *
+    GetDescription();
+
+    bool
+    ShouldStop(lldb_private::Event *event_ptr);
+
+    bool
+    ShouldNotify(lldb_private::Event *event_ptr);
+};
+
 #endif

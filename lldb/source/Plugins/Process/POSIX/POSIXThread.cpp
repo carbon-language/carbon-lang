@@ -226,6 +226,10 @@ POSIXThread::Notify(const ProcessMessage &message)
     case ProcessMessage::eCrashMessage:
         CrashNotify(message);
         break;
+
+    case ProcessMessage::eNewThreadMessage:
+        ThreadNotify(message);
+        break;
     }
 }
 
@@ -299,6 +303,12 @@ POSIXThread::CrashNotify(const ProcessMessage &message)
     m_stop_info = lldb::StopInfoSP(new POSIXCrashStopInfo(
                                        *this, signo, message.GetCrashReason()));
     SetResumeSignal(signo);
+}
+
+void
+POSIXThread::ThreadNotify(const ProcessMessage &message)
+{
+    m_stop_info = lldb::StopInfoSP(new POSIXNewThreadStopInfo(*this));
 }
 
 unsigned

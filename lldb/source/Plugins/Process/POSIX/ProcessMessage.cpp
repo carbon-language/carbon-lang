@@ -224,6 +224,9 @@ ProcessMessage::PrintKind(Kind kind)
     case eCrashMessage:
         str = "eCrashMessage";
         break;
+    case eNewThreadMessage:
+        str = "eNewThreadMessage";
+        break;
     }
 #endif
 

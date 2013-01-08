@@ -147,7 +147,8 @@ MonitorChildProcessThreadFunction (void *arg)
     delete info;
 
     int status = -1;
-    const int options = 0;
+    const int options = __WALL;
+
     while (1)
     {
         log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_PROCESS);
@@ -156,7 +157,8 @@ MonitorChildProcessThreadFunction (void *arg)
 
         // Wait for all child processes
         ::pthread_testcancel ();
-        const lldb::pid_t wait_pid = ::waitpid (pid, &status, options);
+        // Get signals from all children with same process group of pid
+        const lldb::pid_t wait_pid = ::waitpid (-1*pid, &status, options);
         ::pthread_testcancel ();
 
         if (wait_pid == -1)
@@ -166,7 +168,7 @@ MonitorChildProcessThreadFunction (void *arg)
             else
                 break;
         }
-        else if (wait_pid == pid)
+        else if (wait_pid > 0)
         {
             bool exited = false;
             int signal = 0;
@@ -181,14 +183,17 @@ MonitorChildProcessThreadFunction (void *arg)
             {
                 exit_status = WEXITSTATUS(status);
                 status_cstr = "EXITED";
-                exited = true;
+                if (wait_pid == pid)
+                    exited = true;
             }
             else if (WIFSIGNALED(status))
             {
                 signal = WTERMSIG(status);
                 status_cstr = "SIGNALED";
-                exited = true;
-                exit_status = -1;
+                if (wait_pid == pid) {
+                    exited = true;
+                    exit_status = -1;
+                }
             }
             else
             {
@@ -215,7 +220,7 @@ MonitorChildProcessThreadFunction (void *arg)
                 {
                     bool callback_return = false;
                     if (callback)
-                        callback_return = callback (callback_baton, pid, exited, signal, exit_status);
+                        callback_return = callback (callback_baton, wait_pid, exited, signal, exit_status);
                     
                     // If our process exited, then this thread should exit
                     if (exited)

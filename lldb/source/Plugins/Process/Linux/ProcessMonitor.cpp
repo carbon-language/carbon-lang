@@ -985,6 +985,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     const size_t err_len = 1024;
     char err_str[err_len];
     lldb::pid_t pid;
+    long ptrace_opts = 0;
 
     lldb::ThreadSP inferior;
     LogSP log (ProcessPOSIXLog::GetLogIfAllCategoriesSet (POSIX_LOG_PROCESS));
@@ -1102,7 +1103,12 @@ ProcessMonitor::Launch(LaunchArgs *args)
 
     // Have the child raise an event on exit.  This is used to keep the child in
     // limbo until it is destroyed.
-    if (PTRACE(PTRACE_SETOPTIONS, pid, NULL, (void*)PTRACE_O_TRACEEXIT) < 0)
+    ptrace_opts |= PTRACE_O_TRACEEXIT;
+
+    // Have the tracer trace threads which spawn in the inferior process.
+    ptrace_opts |= PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK | PTRACE_O_TRACECLONE;
+
+    if (PTRACE(PTRACE_SETOPTIONS, pid, NULL, (void*)ptrace_opts) < 0)
     {
         args->m_error.SetErrorToErrno();
         goto FINISH;
@@ -1281,6 +1287,17 @@ ProcessMonitor::MonitorSIGTRAP(ProcessMonitor *monitor,
     default:
         assert(false && "Unexpected SIGTRAP code!");
         break;
+
+    case (SIGTRAP | (PTRACE_EVENT_FORK << 8)):
+    case (SIGTRAP | (PTRACE_EVENT_VFORK << 8)):
+    case (SIGTRAP | (PTRACE_EVENT_CLONE << 8)):
+    {
+        unsigned long tid = 0;
+        if (!monitor->GetEventMessage(pid, &tid))
+            tid = -1;
+        message = ProcessMessage::NewThread(pid, tid);
+        break;
+    }
 
     case (SIGTRAP | (PTRACE_EVENT_EXIT << 8)):
     {
