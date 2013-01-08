@@ -2043,6 +2043,7 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
   VersionTuple MergedDeprecated = Deprecated;
   VersionTuple MergedObsoleted = Obsoleted;
   bool FoundAny = false;
+  bool DroppedAny = false;
 
   if (D->hasAttrs()) {
     AttrVec &Attrs = D->getAttrs();
@@ -2077,6 +2078,7 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
         Diag(OldAA->getLocation(), diag::warn_mismatched_availability);
         Diag(Range.getBegin(), diag::note_previous_attribute);
         Attrs.erase(Attrs.begin() + i);
+        DroppedAny = true;
         --e;
         continue;
       }
@@ -2096,6 +2098,7 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
                                 MergedIntroduced2, MergedDeprecated2,
                                 MergedObsoleted2)) {
         Attrs.erase(Attrs.begin() + i);
+        DroppedAny = true;
         --e;
         continue;
       }
@@ -2106,6 +2109,9 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
       ++i;
     }
   }
+
+  if (DroppedAny)
+    D->ClearLVCache();
 
   if (FoundAny &&
       MergedIntroduced == Introduced &&

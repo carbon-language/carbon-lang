@@ -51,3 +51,6 @@ void f8() {
   int (^b)(int);
   b = ^ (int i) __attribute__((availability(macosx,introduced=10.2))) { return 1; }; // expected-warning {{'availability' attribute ignored}}
 }
+
+extern int x2 __attribute__((availability(macosx,introduced=10.2))); // expected-note {{previous attribute is here}}
+extern int x2 __attribute__((availability(macosx,introduced=10.5))); // expected-warning {{availability does not match previous declaration}}
