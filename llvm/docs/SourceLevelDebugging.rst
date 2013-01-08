@@ -484,14 +484,13 @@ are possible tag values:
   DW_TAG_enumeration_type = 4
   DW_TAG_structure_type   = 19
   DW_TAG_union_type       = 23
-  DW_TAG_vector_type      = 259
   DW_TAG_subroutine_type  = 21
   DW_TAG_inheritance      = 28
 
 The vector flag indicates that an array type is a native packed vector.
 
-The members of array types (tag = ``DW_TAG_array_type``) or vector types (tag =
-``DW_TAG_vector_type``) are :ref:`subrange descriptors <format_subrange>`, each
+The members of array types (tag = ``DW_TAG_array_type``) are
+:ref:`subrange descriptors <format_subrange>`, each
 representing the range of subscripts at that level of indexing.
 
 The members of enumeration types (tag = ``DW_TAG_enumeration_type``) are

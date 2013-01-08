@@ -616,9 +616,10 @@ DIType DIBuilder::createArrayType(uint64_t Size, uint64_t AlignInBits,
 /// createVectorType - Create debugging information entry for a vector.
 DIType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
                                    DIType Ty, DIArray Subscripts) {
-  // TAG_vector_type is encoded in DICompositeType format.
+
+  // A vector is an array type with the FlagVector flag applied.
   Value *Elts[] = {
-    GetTagConstant(VMContext, dwarf::DW_TAG_vector_type),
+    GetTagConstant(VMContext, dwarf::DW_TAG_array_type),
     NULL, //TheCU,
     MDString::get(VMContext, ""),
     NULL, //TheCU,
@@ -626,7 +627,7 @@ DIType DIBuilder::createVectorType(uint64_t Size, uint64_t AlignInBits,
     ConstantInt::get(Type::getInt64Ty(VMContext), Size),
     ConstantInt::get(Type::getInt64Ty(VMContext), AlignInBits),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    ConstantInt::get(Type::getInt32Ty(VMContext), DIType::FlagVector),
     Ty,
     Subscripts,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),

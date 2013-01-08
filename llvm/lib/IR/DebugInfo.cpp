@@ -197,7 +197,6 @@ bool DIDescriptor::isCompositeType() const {
   case dwarf::DW_TAG_structure_type:
   case dwarf::DW_TAG_union_type:
   case dwarf::DW_TAG_enumeration_type:
-  case dwarf::DW_TAG_vector_type:
   case dwarf::DW_TAG_subroutine_type:
   case dwarf::DW_TAG_class_type:
     return true;
@@ -426,7 +425,7 @@ bool DIType::Verify() const {
       Tag != dwarf::DW_TAG_ptr_to_member_type &&
       Tag != dwarf::DW_TAG_reference_type &&
       Tag != dwarf::DW_TAG_rvalue_reference_type &&
-      Tag != dwarf::DW_TAG_restrict_type && Tag != dwarf::DW_TAG_vector_type &&
+      Tag != dwarf::DW_TAG_restrict_type &&
       Tag != dwarf::DW_TAG_array_type &&
       Tag != dwarf::DW_TAG_enumeration_type &&
       Tag != dwarf::DW_TAG_subroutine_type &&
@@ -1100,6 +1099,8 @@ void DIType::printInternal(raw_ostream &OS) const {
 
   if (isForwardDecl())
     OS << " [fwd]";
+  if (isVector())
+    OS << " [vector]";
 }
 
 void DIDerivedType::printInternal(raw_ostream &OS) const {

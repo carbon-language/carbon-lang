@@ -61,7 +61,8 @@ namespace llvm {
       FlagExplicit           = 1 << 7,
       FlagPrototyped         = 1 << 8,
       FlagObjcClassComplete  = 1 << 9,
-      FlagObjectPointer      = 1 << 10
+      FlagObjectPointer      = 1 << 10,
+      FlagVector             = 1 << 11
     };
   protected:
     const MDNode *DbgNode;
@@ -295,6 +296,9 @@ namespace llvm {
     }
     bool isObjcClassComplete() const {
       return (getFlags() & FlagObjcClassComplete) != 0;
+    }
+    bool isVector() const {
+      return (getFlags() & FlagVector) != 0;
     }
     bool isValid() const {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());

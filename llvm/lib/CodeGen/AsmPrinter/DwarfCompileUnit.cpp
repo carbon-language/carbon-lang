@@ -825,7 +825,6 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
   Buffer.setTag(Tag);
 
   switch (Tag) {
-  case dwarf::DW_TAG_vector_type:
   case dwarf::DW_TAG_array_type:
     constructArrayTypeDIE(Buffer, &CTy);
     break;
@@ -1347,7 +1346,7 @@ void CompileUnit::constructSubrangeDIE(DIE &Buffer, DISubrange SR,
 void CompileUnit::constructArrayTypeDIE(DIE &Buffer,
                                         DICompositeType *CTy) {
   Buffer.setTag(dwarf::DW_TAG_array_type);
-  if (CTy->getTag() == dwarf::DW_TAG_vector_type)
+  if (CTy->isVector())
     addFlag(&Buffer, dwarf::DW_AT_GNU_vector);
 
   // Emit derived type.
