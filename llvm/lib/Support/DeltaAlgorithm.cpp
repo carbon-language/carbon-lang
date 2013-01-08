@@ -27,13 +27,15 @@ bool DeltaAlgorithm::GetTestResult(const changeset_ty &Changes) {
 
 void DeltaAlgorithm::Split(const changeset_ty &S, changesetlist_ty &Res) {
   // FIXME: Allow clients to provide heuristics for improved splitting.
+  // Get the iterator to the middle.
+  unsigned N = S.size() / 2;
+  changeset_ty::iterator middle(S.begin());
+  std::advance(middle, N);
 
-  // FIXME: This is really slow.
-  changeset_ty LHS, RHS;
-  unsigned idx = 0, N = S.size() / 2;
-  for (changeset_ty::const_iterator it = S.begin(),
-         ie = S.end(); it != ie; ++it, ++idx)
-    ((idx < N) ? LHS : RHS).insert(*it);
+  // Create each vector using the middle as the split.
+  changeset_ty LHS(S.begin(), middle);
+  changeset_ty RHS(middle, S.end());
+
   if (!LHS.empty())
     Res.push_back(LHS);
   if (!RHS.empty())
