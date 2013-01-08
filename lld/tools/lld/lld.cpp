@@ -132,12 +132,6 @@ int main(int argc, char **argv) {
   if (!coreArgs)
     return 1;
 
-  for (const auto &arg : *coreArgs) {
-    if (arg->getOption().getKind() == llvm::opt::Option::UnknownClass) {
-      llvm::errs() << "Unknown option: " << arg->getAsString(*coreArgs) << "\n";
-    }
-  }
-
   LinkerOptions lo(generateOptions(*coreArgs));
 
   if (lo._outputCommands) {

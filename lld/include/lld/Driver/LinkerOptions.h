@@ -26,6 +26,7 @@
 #include "llvm/Support/MemoryBuffer.h"
 
 #include <memory>
+#include <vector>
 
 namespace lld {
 enum class InputKind {
@@ -105,8 +106,11 @@ private:
 
 struct LinkerOptions {
   LinkerOptions() {}
+
+  // This exists because MSVC doesn't support = default :(
   LinkerOptions(LinkerOptions &&other)
     : _input(std::move(other._input))
+    , _llvmArgs(std::move(other._llvmArgs))
     , _target(std::move(other._target))
     , _outputPath(std::move(other._outputPath))
     , _entrySymbol(std::move(other._entrySymbol))
@@ -115,6 +119,7 @@ struct LinkerOptions {
     , _outputYAML(other._outputYAML) {}
 
   std::vector<LinkerInput> _input;
+  std::vector<std::string> _llvmArgs;
   std::string _target;
   std::string _outputPath;
   std::string _entrySymbol;

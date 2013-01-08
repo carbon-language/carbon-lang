@@ -13,11 +13,23 @@
 #include "lld/Core/Resolver.h"
 #include "lld/Driver/Target.h"
 
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace lld;
 
 void LinkerInvocation::operator()() {
+  // Honor -mllvm
+  if (!_options._llvmArgs.empty()) {
+    unsigned NumArgs = _options._llvmArgs.size();
+    const char **Args = new const char*[NumArgs + 2];
+    Args[0] = "lld (LLVM option parsing)";
+    for (unsigned i = 0; i != NumArgs; ++i)
+      Args[i + 1] = _options._llvmArgs[i].c_str();
+    Args[NumArgs + 1] = 0;
+    llvm::cl::ParseCommandLineOptions(NumArgs + 1, Args);
+  }
+
   // Create target.
   std::unique_ptr<Target> target(Target::create(_options));
 

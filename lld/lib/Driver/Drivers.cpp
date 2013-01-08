@@ -103,6 +103,13 @@ public:
       return std::unique_ptr<llvm::opt::DerivedArgList>();
     }
 
+    for (llvm::opt::arg_iterator it = _inputArgs->filtered_begin(ld::OPT_UNKNOWN),
+                                 ie = _inputArgs->filtered_end();
+                                 it != ie; ++it) {
+      llvm::errs() << "warning: ignoring unknown argument: "
+                   << (*it)->getAsString(*_inputArgs) << "\n";
+    }
+
     std::unique_ptr<llvm::opt::DerivedArgList> newArgs(
       new llvm::opt::DerivedArgList(*_inputArgs));
 
@@ -147,6 +154,14 @@ public:
                                 (*it)->getValue());
     }
 
+    // Copy mllvm
+    for (llvm::opt::arg_iterator it = _inputArgs->filtered_begin(ld::OPT_mllvm),
+                                 ie = _inputArgs->filtered_end();
+                                 it != ie; ++it) {
+      newArgs->AddPositionalArg(*it, _core.getOption(core::OPT_mllvm),
+                                (*it)->getValue());
+    }
+
     return std::move(newArgs);
   }
 
@@ -183,6 +198,17 @@ lld::parseCoreArgs(llvm::ArrayRef<const char *> args) {
     return std::unique_ptr<llvm::opt::ArgList>();
   }
 
+  bool hasUnknown = false;
+  for (llvm::opt::arg_iterator it = list->filtered_begin(ld::OPT_UNKNOWN),
+                               ie = list->filtered_end();
+                               it != ie; ++it) {
+    llvm::errs() << "error: ignoring unknown argument: "
+                 << (*it)->getAsString(*list) << "\n";
+    hasUnknown = true;
+  }
+  if (hasUnknown)
+    return std::unique_ptr<llvm::opt::ArgList>();
+
   return list;
 }
 
@@ -195,6 +221,7 @@ LinkerOptions lld::generateOptions(const llvm::opt::ArgList &args) {
     ret._input.push_back(LinkerInput((*it)->getValue(), InputKind::Object));
   }
 
+  ret._llvmArgs = args.getAllArgValues(core::OPT_mllvm);
   ret._target = llvm::Triple::normalize(args.getLastArgValue(core::OPT_target));
   ret._outputPath = args.getLastArgValue(core::OPT_output);
   ret._entrySymbol = args.getLastArgValue(core::OPT_entry);
