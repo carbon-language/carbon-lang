@@ -281,8 +281,7 @@ POSIXThread::SignalDeliveredNotify(const ProcessMessage &message)
 {
     int signo = message.GetSignal();
 
-    // Just treat debugger generated signal events like breakpoints for now.
-    m_stop_info = StopInfo::CreateStopReasonToTrace(*this);
+    m_stop_info = StopInfo::CreateStopReasonWithSignal(*this, signo);
     SetResumeSignal(signo);
 }
 
