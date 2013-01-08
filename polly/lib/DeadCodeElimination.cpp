@@ -40,10 +40,10 @@ char DeadCodeElim::ID = 0;
 bool DeadCodeElim::runOnScop(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
 
-  int dependencyKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR |
-                        Dependences::TYPE_WAW;
+  int Kinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR |
+              Dependences::TYPE_WAW;
 
-  isl_union_map *dependences = D->getDependences(dependencyKinds);
+  isl_union_map *Deps = D->getDependences(Kinds);
 
   // The idea of this pass is to loop over all statments and remove statement
   // iterations that do not calculate any value that is read later on. We need
@@ -51,7 +51,7 @@ bool DeadCodeElim::runOnScop(Scop &S) {
   //
   // A case where this pass might be useful is
   // http://llvm.org/bugs/show_bug.cgi?id=5117
-  isl_union_map_free(dependences);
+  isl_union_map_free(Deps);
   return false;
 }
 
