@@ -387,14 +387,14 @@ struct Elf_Rel_Impl<target_endianness, max_alignment, true, isRela>
 
   // These accessors and mutators correspond to the ELF64_R_SYM, ELF64_R_TYPE,
   // and ELF64_R_INFO macros defined in the ELF specification:
-  uint64_t getSymbol() const { return (r_info >> 32); }
-  unsigned char getType() const {
-    return (unsigned char) (r_info & 0xffffffffL);
+  uint32_t getSymbol() const { return (uint32_t) (r_info >> 32); }
+  uint32_t getType() const {
+    return (uint32_t) (r_info & 0xffffffffL);
   }
-  void setSymbol(uint64_t s) { setSymbolAndType(s, getType()); }
-  void setType(unsigned char t) { setSymbolAndType(getSymbol(), t); }
-  void setSymbolAndType(uint64_t s, unsigned char t) {
-    r_info = (s << 32) + (t&0xffffffffL);
+  void setSymbol(uint32_t s) { setSymbolAndType(s, getType()); }
+  void setType(uint32_t t) { setSymbolAndType(getSymbol(), t); }
+  void setSymbolAndType(uint32_t s, uint32_t t) {
+    r_info = ((uint64_t)s << 32) + (t&0xffffffffL);
   }
 };
 
@@ -1553,7 +1553,7 @@ error_code ELFObjectFile<target_endianness, max_alignment, is64Bits>
                         ::getRelocationTypeName(DataRefImpl Rel,
                                           SmallVectorImpl<char> &Result) const {
   const Elf_Shdr *sec = getSection(Rel.w.b);
-  uint8_t type;
+  uint32_t type;
   StringRef res;
   switch (sec->sh_type) {
     default :
