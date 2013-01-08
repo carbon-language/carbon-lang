@@ -22,16 +22,17 @@ using namespace polly;
 
 namespace {
 
-  class DeadCodeElim : public ScopPass {
+class DeadCodeElim : public ScopPass {
 
-  public:
-    static char ID;
-    explicit DeadCodeElim() : ScopPass(ID) {}
+public:
+  static char ID;
+  explicit DeadCodeElim() : ScopPass(ID) {
+  }
 
-    virtual bool runOnScop(Scop &S);
-    void printScop(llvm::raw_ostream &OS) const;
-    void getAnalysisUsage(AnalysisUsage &AU) const;
-  };
+  virtual bool runOnScop(Scop &S);
+  void printScop(llvm::raw_ostream &OS) const;
+  void getAnalysisUsage(AnalysisUsage &AU) const;
+};
 }
 
 char DeadCodeElim::ID = 0;
@@ -39,9 +40,8 @@ char DeadCodeElim::ID = 0;
 bool DeadCodeElim::runOnScop(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
 
-  int dependencyKinds = Dependences::TYPE_RAW
-                          | Dependences::TYPE_WAR
-                          | Dependences::TYPE_WAW;
+  int dependencyKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR |
+                        Dependences::TYPE_WAW;
 
   isl_union_map *dependences = D->getDependences(dependencyKinds);
 
