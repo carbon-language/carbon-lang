@@ -66,6 +66,10 @@ FunctionPass *createEmitX86CodeToMemory();
 /// \brief Creates an X86-specific Target Transformation Info pass.
 ImmutablePass *createX86TargetTransformInfoPass(const X86TargetMachine *TM);
 
+/// createX86PadShortFunctions - Return a pass that pads short functions
+/// with NOOPs. This will prevent a stall when returning on the Atom.
+FunctionPass *createX86PadShortFunctions();
+
 } // End llvm namespace
 
 #endif

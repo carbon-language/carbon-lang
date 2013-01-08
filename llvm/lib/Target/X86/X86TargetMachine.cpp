@@ -202,6 +202,12 @@ bool X86PassConfig::addPreEmitPass() {
     ShouldPrint = true;
   }
 
+  if (getOptLevel() != CodeGenOpt::None &&
+      getX86Subtarget().padShortFunctions()) {
+    addPass(createX86PadShortFunctions());
+    ShouldPrint = true;
+  }
+
   return ShouldPrint;
 }
 

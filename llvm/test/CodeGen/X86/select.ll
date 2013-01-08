@@ -282,7 +282,7 @@ define i32 @test13(i32 %a, i32 %b) nounwind {
 ; ATOM: test13:
 ; ATOM: cmpl
 ; ATOM-NEXT: sbbl
-; ATOM-NEXT: ret
+; ATOM: ret
 }
 
 define i32 @test14(i32 %a, i32 %b) nounwind {
@@ -299,7 +299,7 @@ define i32 @test14(i32 %a, i32 %b) nounwind {
 ; ATOM: cmpl
 ; ATOM-NEXT: sbbl
 ; ATOM-NEXT: notl
-; ATOM-NEXT: ret
+; ATOM: ret
 }
 
 ; rdar://10961709
