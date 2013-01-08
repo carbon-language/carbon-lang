@@ -15,16 +15,13 @@
 
 <h1>C++ Support</h1>
 
-<p>The Clang frontend
-now <a href="http://clang.llvm.org/cxx_status.html">supports the
-majority of C++</a>.  Support in the frontend for C++ language
-features, however, does not automatically translate into support for
-those features in the static analyzer.  Language features need to be
-specifically modeled in the static analyzer so their semantics can be
-properly analyzed.  Support for analyzing C++ and Objective-C++ files
-is currently extremely limited, and we are only encouraging those who
-are interested in contributing to the development of the analyzer to
-try this functionality out at this time.</p>
+<p>The Clang compiler <a
+href="http://clang.llvm.org/cxx_status.html">supports almost all of C++11</a>.
+Support in the frontend for C++ language features, however, does not
+automatically translate into support for those features in the static analyzer.
+Language features need to be specifically modeled in the static analyzer so
+their semantics can be properly analyzed. Support for analyzing C++ and
+Objective-C++ files is currently fairly basic.</p>
 
 <p>Listed here are a set of open tasks that are prerequisites for
 decent analysis of C++.  This list is also not complete; new tasks
@@ -33,16 +30,22 @@ will be added as deemed necessary.</p>
 <ul>
   <li>Control-Flow Graph Enhancements:
   <ul>
-    <li>Model C++ destructors</li>
-    <li>Model C++ initializers (in constructors)</li>
+    <li>Model destructors for temporary objects</li>
+    <li>Model the implicit allocator call to <tt>operator new</tt></li>
   </ul>
   </li>
-  <li>Path-Sensitive Analysis Engine (GRExprEngine):
+  <li>Path-Sensitive Analysis Engine (ExprEngine):
   <ul>
-    <li>Model C++ casts</li>
-    <li>Model C++ constructors</li>
-    <li>Model C++ destructors</li>
-    <li>Model <tt>new</tt> and <tt>delete</tt></li>
+    <li>Allow constructors to be inlined</li>
+    <li>Allow destructors to be inlined</li>
+    <li>Fully model <tt>new</tt> and <tt>delete</tt></li>
+    <li>Track type info through casts more precisely</li>
+  </ul>
+  </li>
+  <li>Checkers:
+  <ul>
+    <li>Check that <tt>new</tt> and <tt>delete</tt> are correctly paired</li>
+    <li>For more ideas, see the <a href="potential_checkers.html">list of potential checkers</a></li>
   </ul>
   </li>
 </ul>

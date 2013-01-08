@@ -2,7 +2,7 @@
           "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
-  <title>Build and Analyze: running the analyzer within Xcode</title>
+  <title>Running the analyzer within Xcode</title>
   <link type="text/css" rel="stylesheet" href="content.css">
   <link type="text/css" rel="stylesheet" href="menu.css">
   <script type="text/javascript" src="scripts/menu.js"></script>
@@ -14,15 +14,16 @@
 <!--#include virtual="menu.html.incl"-->
 <div id="content">
 
-<h1>Build and Analyze: running the analyzer within Xcode</h1>
+<h1>Running the analyzer within Xcode</h1>
 
 <table style="margin-top:0px" width="100%" border="0" cellpadding="0px" cellspacing="0">
 <tr><td>
 
 <h3>What is it?</h3>
-<p><i>Build and Analyze</i> is an Xcode feature (introduced in Xcode 3.2) that
-allows users to run the Clang Static Analyzer <a
-href="http://developer.apple.com/mac/library/featuredarticles/StaticAnalysis/index.html">directly
+
+<p>Since Xcode 3.2, users have been able to run the Clang Static Analyzer
+<a
+href="https://developer.apple.com/library/mac/documentation/ToolsLanguages/Conceptual/Xcode4UserGuide/060-Debug_Your_App/debug_app.html#//apple_ref/doc/uid/TP40010215-CH3-SW17">directly
 within Xcode</a>.</p>
 
 <p>It integrates directly with the Xcode build system and
@@ -45,23 +46,24 @@ presents analysis results directly within Xcode's editor.</p>
   single keystroke or mouse click.</li>
   <li><b>Transparency:</b> Works effortlessly with Xcode projects (including iPhone projects).
   <li><b>Cons:</b> Doesn't work well with non-Xcode projects. For those,
-  consider using <a href="/scan-build.html"><b>scan-build</b></a>.
+  consider using <a href="scan-build.html"><b>scan-build</b></a>.
 </ul>
 
 
 <h2>Getting Started</h2>
 
-<p>Xcode 3.2 is available as a free download from Apple, with <a
-href="http://developer.apple.com/mac/library/featuredarticles/StaticAnalysis/index.html">instructions available</a>
-for using <i>Build and Analyze</i>.</p>
+<p>Xcode is available as a free download from Apple on the <a
+href="https://itunes.apple.com/us/app/xcode/id497799835?mt=12">Mac
+App Store</a>, with <a 
+href="https://developer.apple.com/library/mac/documentation/ToolsLanguages/Conceptual/Xcode4UserGuide/060-Debug_Your_App/debug_app.html#//apple_ref/doc/uid/TP40010215-CH3-SW17">instructions
+available</a> for using the analyzer.</p>
 
-<h2>Using open source analyzer builds with <i>Build and Analyze</i></h2>
+<h2>Using open source analyzer builds with Xcode</h2>
 
 <p>By default, Xcode uses the version of <tt>clang</tt> that came bundled with
-it to provide the results for <i>Build and Analyze</i>. It is possible to change
-Xcode's behavior to use an alternate version of <tt>clang</tt> for this purpose
-while continuing to use the <tt>clang</tt> that came with Xcode for compiling
-projects.</p>
+it to analyze your code. It is possible to change Xcode's behavior to use an
+alternate version of <tt>clang</tt> for this purpose while continuing to use
+the <tt>clang</tt> that came with Xcode for compiling projects.</p>
 
 <h3>Why try open source builds?</h3>
 
@@ -78,7 +80,7 @@ issues.</p>
 
 <p>Starting with analyzer build checker-234, analyzer builds contain a command
 line utility called <tt>set-xcode-analyzer</tt> that allows users to change what
-copy of <tt>clang</tt> that Xcode uses for <i>Build and Analyze</i>:</p>
+copy of <tt>clang</tt> that Xcode uses for analysis:</p>
 
 <pre class="code_example">
 $ <b>set-xcode-analyzer -h</b>
@@ -93,8 +95,8 @@ Options:
 </pre>
 
 <p>Operationally, <b>set-xcode-analyzer</b> edits Xcode's configuration files
-(in <tt>/Developer</tt>) to point it to use the version of <tt>clang</tt> you
-specify for static analysis.  Within this model it provides you two basic modes:</p>
+to point it to use the version of <tt>clang</tt> you specify for static
+analysis. Within this model it provides you two basic modes:</p>
 
 <ul>
   <li><b>--use-xcode-clang</b>: Switch Xcode (back) to using the <tt>clang</tt> that came bundled with it for static analysis.</li>
@@ -104,14 +106,14 @@ specify for static analysis.  Within this model it provides you two basic modes:
 <h4>Things to keep in mind</h4>
 
 <ul>
-<li>You should quit Xcode prior to running <tt>set-xcode-analyzer</tt>.</li>
-<li>You will need to run <tt>set-xcode-analyzer</tt> under <b><tt>sudo</tt></b>
-  in order to have write privileges to modify the Xcode configuration files.</li>
+  <li>You should quit Xcode prior to running <tt>set-xcode-analyzer</tt>.</li>    <li>You will need to run <tt>set-xcode-analyzer</tt> under
+<b><tt>sudo</tt></b> in order to have write privileges to modify the Xcode
+configuration files.</li>
 </ul>
 
 <h4>Examples</h4>
 
-<p><b>Example 1</b>: Telling Xcode to use checker-235 for <i>Build and Analyze</i>:</p>
+<p><b>Example 1</b>: Telling Xcode to use checker-235:</p>
 
 <pre class="code_example">
 $ pwd

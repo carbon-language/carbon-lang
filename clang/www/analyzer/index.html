@@ -69,12 +69,12 @@
 
 <h1>Clang Static Analyzer</h1>  
 
-<p>The Clang Static Analyzer is source code analysis tool that find bugs in C
-and Objective-C programs.</p>
+<p>The Clang Static Analyzer is a source code analysis tool that finds bugs in
+C, C++, and Objective-C programs.</p>
 
-<p>Currently it can be run either as a <a href="/scan-build.html">standalone
-tool</a> or <a href="/xcode.html">within Xcode</a>. The standalone tool is
-invoked from the command-line, and is intended to be run in tandem with a build
+<p>Currently it can be run either as a <a href="scan-build.html">standalone
+tool</a> or <a href="xcode.html">within Xcode</a>. The standalone tool is
+invoked from the command line, and is intended to be run in tandem with a build
 of a codebase.</p>
 
 <p>The analyzer is 100% open source and is part of the <a
@@ -138,14 +138,14 @@ applications.</p>
 
 </td><td style="padding-left:10px">
 <a href="images/analyzer_xcode.png"><img src="images/analyzer_xcode.png" width="450" alt="analyzer in xcode"></a>
-<div style="text-align:center"><b>Viewing static analyzer results in Xcode 3.2</b></div>
+<div style="text-align:center"><b>Viewing static analyzer results in Xcode</b></div>
 <a href="images/analyzer_html.png"><img src="images/analyzer_html.png" width="450" alt="analyzer in browser"></a>
 <div style="text-align:center"><b>Viewing static analyzer results in a web browser</b></div>
 </td></tr></table>
 
 <h2 id="StaticAnalysis">What is Static Analysis?</h2>
 
-<p>The term &quot;static analysis&quot; is conflated, but here we use it to mean
+<p>The term "static analysis" is conflated, but here we use it to mean
 a collection of algorithms and techniques used to analyze source code in order
 to automatically find bugs. The idea is similar in spirit to compiler warnings
 (which can be useful for finding coding errors) but to take that idea a step
@@ -155,9 +155,8 @@ techniques such as testing.</p>
 <p>Static analysis bug-finding tools have evolved over the last several decades
 from basic syntactic checkers to those that find deep bugs by reasoning about
 the semantics of code. The goal of the Clang Static Analyzer is to provide a
-industrial-quality static analysis framework for analyzing C and Objective-C
-programs that is freely available, extensible, and has a high quality of
-implementation.</p>
+industrial-quality static analysis framework for analyzing C, C++, and 
+Objective-C programs that is freely available, extensible, and has a high quality of implementation.</p>
 
 <h3 id="Clang">Part of Clang and LLVM</h3>
 
@@ -175,11 +174,11 @@ bugs, we ask you to bear in mind a few points when using it.</p>
 
 <h3>Work-in-Progress</h3>
 
-<p>The analyzer is a continuous work-in-progress.
-There are many planned enhancements to improve both the precision and scope of
-its analysis algorithms as well as the kinds bugs it will find. While there are
-fundamental limitations to what static analysis can do, we have a long way to go
-before hitting that wall.</p>
+<p>The analyzer is a continuous work-in-progress. There are many planned
+enhancements to improve both the precision and scope of its analysis algorithms
+as well as the kinds of bugs it will find. While there are fundamental
+limitations to what static analysis can do, we have a long way to go before
+hitting that wall.</p>
 
 <h3>Slower than Compilation</h3>
 

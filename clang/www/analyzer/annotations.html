@@ -127,7 +127,10 @@ conventions can cause the analyzer to miss bugs or flag false positives.</p>
 
 <p>One can educate the analyzer (and others who read your code) about methods or
 functions that deviate from the Cocoa and Core Foundation conventions using the
-attributes described here.</p>
+attributes described here. However, you should consider using proper naming
+conventions or the <a 
+href="http://clang.llvm.org/docs/LanguageExtensions.html#the-objc-method-family-attribute"><tt>objc_method_family</tt></a>
+attribute, if applicable.</p>
 
 <h4 id="attr_ns_returns_retained">Attribute 'ns_returns_retained'
 (Clang-specific)</h4>
@@ -135,7 +138,9 @@ attributes described here.</p>
 <p>The GCC-style (Clang-specific) attribute 'ns_returns_retained' allows one to
 annotate an Objective-C method or C function as returning a retained Cocoa
 object that the caller is responsible for releasing (via sending a
-<tt>release</tt> message to the object).</p>
+<tt>release</tt> message to the object). The Foundation framework defines a
+macro <b><tt>NS_RETURNS_RETAINED</tt></b> that is functionally equivalent to the
+one shown below.</p>
 
 <p><b>Placing on Objective-C methods</b>: For Objective-C methods, this
 annotation essentially tells the analyzer to treat the method as if its name
@@ -202,7 +207,9 @@ href="#attr_ns_returns_retained">ns_returns_retained</a>'. Where a function or
 method may appear to obey the Cocoa conventions and return a retained Cocoa
 object, this attribute can be used to indicate that the object reference
 returned should not be considered as an &quot;owning&quot; reference being
-returned to the caller.</p>
+returned to the caller. The Foundation framework defines a
+macro <b><tt>NS_RETURNS_NOT_RETAINED</tt></b> that is functionally equivalent to
+the one shown below.</p>
 
 <p>Usage is identical to <a
 href="#attr_ns_returns_retained">ns_returns_retained</a>.  When using the
@@ -229,7 +236,9 @@ its availability, as it is not available in earlier versions of the analyzer:</p
 
 <p>The GCC-style (Clang-specific) attribute 'cf_returns_retained' allows one to
 annotate an Objective-C method or C function as returning a retained Core
-Foundation object that the caller is responsible for releasing. 
+Foundation object that the caller is responsible for releasing. The 
+CoreFoundation framework defines a macro <b><tt>CF_RETURNS_RETAINED</tt></b>
+that is functionally equivalent to the one shown below.</p>
 
 <p><b>Placing on Objective-C methods</b>: With respect to Objective-C methods.,
 this attribute is identical in its behavior and usage to 'ns_returns_retained'
@@ -330,7 +339,9 @@ href="#attr_cf_returns_retained">cf_returns_retained</a>'. Where a function or
 method may appear to obey the Core Foundation or Cocoa conventions and return
 a retained Core Foundation object, this attribute can be used to indicate that
 the object reference returned should not be considered as an
-&quot;owning&quot; reference being returned to the caller.</p>
+&quot;owning&quot; reference being returned to the caller. The 
+CoreFoundation framework defines a macro <b><tt>CF_RETURNS_NOT_RETAINED</tt></b>
+that is functionally equivalent to the one shown below.</p>
 
 <p>Usage is identical to <a
 href="#attr_cf_returns_retained">cf_returns_retained</a>.  When using the
@@ -355,9 +366,12 @@ its availability, as it is not available in earlier versions of the analyzer:</p
 <h4 id="attr_ns_consumed">Attribute 'ns_consumed'
 (Clang-specific)</h4>
 
-<p>The 'ns_consumed' attribute can be placed on a specific parameter in either the declaration of a function or an Objective-C method.
-  It indicates to the static analyzer that a <tt>release</tt> message is implicitly sent to the parameter upon
-  completion of the call to the given function or method.
+<p>The 'ns_consumed' attribute can be placed on a specific parameter in either
+the declaration of a function or an Objective-C method. It indicates to the
+static analyzer that a <tt>release</tt> message is implicitly sent to the
+parameter upon completion of the call to the given function or method. The 
+Foundation framework defines a macro <b><tt>NS_RELEASES_ARGUMENT</tt></b> that 
+is functionally equivalent to the <tt>NS_CONSUMED</tt> macro shown below.</p>
   
 <p><b>Important note when using Garbage Collection</b>: Note that the analyzer
 essentially ignores this attribute when code is compiled to use Objective-C
@@ -409,14 +423,19 @@ void test_method2() {
 <h4 id="attr_cf_consumed">Attribute 'cf_consumed'
 (Clang-specific)</h4>
 
-<p>The 'cf_consumed' attribute is practically identical to <a href="#attr_ns_consumed">ns_consumed</a>.
-The attribute can be placed on a specific parameter in either the declaration of a function or an Objective-C method.
-It indicates to the static analyzer that the object reference is implicitly passed to a call to <tt>CFRelease</tt> upon
-completion of the call to the given function or method.</p>
+<p>The 'cf_consumed' attribute is practically identical to <a
+href="#attr_ns_consumed">ns_consumed</a>. The attribute can be placed on a
+specific parameter in either the declaration of a function or an Objective-C
+method. It indicates to the static analyzer that the object reference is
+implicitly passed to a call to <tt>CFRelease</tt> upon completion of the call
+to the given function or method. The CoreFoundation framework defines a macro
+<b><tt>CF_RELEASES_ARGUMENT</tt></b> that is functionally equivalent to the
+<tt>CF_CONSUMED</tt> macro shown below.</p>
     
-<p>Operationally this attribute is nearly identical to ns_consumed
-with the main difference that the reference count decrement still occurs when using Objective-C garbage
-collection (which is import for Core Foundation types, which are not automatically garbage collected).</p>
+<p>Operationally this attribute is nearly identical to 'ns_consumed' with the
+main difference that the reference count decrement still occurs when using
+Objective-C garbage collection (which is import for Core Foundation types,
+which are not automatically garbage collected).</p>
 
 <p><b>Example</b></p>
 
@@ -461,13 +480,13 @@ void test_method() {
 <h4 id="attr_ns_consumes_self">Attribute 'ns_consumes_self'
 (Clang-specific)</h4>
 
-<p>The 'ns_consumes_self' attribute can be placed only on an Objective-C method declaration.
-  It indicates that the receiver of the message is &quot;consumed&quot; (a single reference count decremented)
-  after the message is sent.  This matches the semantics of all &quot;init&quot; methods.
-</p>
+<p>The 'ns_consumes_self' attribute can be placed only on an Objective-C method
+declaration. It indicates that the receiver of the message is
+&quot;consumed&quot; (a single reference count decremented) after the message
+is sent. This matches the semantics of all &quot;init&quot; methods.</p>
 
-<p>One use of this attribute is declare your own init-like methods that do not follow the
-  standard Cocoa naming conventions.</p>
+<p>One use of this attribute is declare your own init-like methods that do not
+follow the standard Cocoa naming conventions.</p>
 
 <p><b>Example</b></p>
   
@@ -490,8 +509,15 @@ void test_method() {
 @end
 </pre>
 
-<p>In this example, <tt>nonstandardInitWith:</tt> has the same ownership semantics as the init method <tt>initWith:</tt>.
-  The static analyzer will observe that the method consumes the receiver, and then returns an object with a +1 retain count.</p>
+<p>In this example, <tt>-nonstandardInitWith:</tt> has the same ownership
+semantics as the init method <tt>-initWith:</tt>. The static analyzer will
+observe that the method consumes the receiver, and then returns an object with
+a +1 retain count.</p>
+
+<p>The Foundation framework defines a macro <b><tt>NS_REPLACES_RECEIVER</tt></b>
+which is functionally equivalent to the combination of <tt>NS_CONSUMES_SELF</tt>
+and <tt>NS_RETURNS_RETAINED</tt> shown above.</p>
+
 
 <!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
 <h2 id="custom_assertions">Custom Assertion Handlers</h2>
