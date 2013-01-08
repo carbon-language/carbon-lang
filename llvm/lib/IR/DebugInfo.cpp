@@ -1095,6 +1095,9 @@ void DIType::printInternal(raw_ostream &OS) const {
   else if (isProtected())
     OS << " [protected]";
 
+  if (isArtificial())
+    OS << " [artificial]";
+
   if (isForwardDecl())
     OS << " [fwd]";
 }
