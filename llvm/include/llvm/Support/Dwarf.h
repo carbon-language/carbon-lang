@@ -37,7 +37,7 @@ enum {
 namespace dwarf {
 
 //===----------------------------------------------------------------------===//
-// Dwarf constants as gleaned from the DWARF Debugging Information Format V.3
+// Dwarf constants as gleaned from the DWARF Debugging Information Format V.4
 // reference manual http://dwarf.freestandards.org .
 //
 
@@ -50,7 +50,7 @@ enum llvm_dwarf_constants {
 
   DW_TAG_auto_variable = 0x100,         // Tag for local (auto) variables.
   DW_TAG_arg_variable = 0x101,          // Tag for argument variables.
-  DW_TAG_return_variable = 0x102,       // Tag for return variables.
+  // 0x102 - Unused.
   DW_TAG_vector_type = 0x103,           // Tag for vector types.
 
   DW_TAG_user_base = 0x1000,            // Recommended base for user tags.

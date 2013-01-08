@@ -212,7 +212,6 @@ bool DIDescriptor::isVariable() const {
   switch (getTag()) {
   case dwarf::DW_TAG_auto_variable:
   case dwarf::DW_TAG_arg_variable:
-  case dwarf::DW_TAG_return_variable:
     return true;
   default:
     return false;

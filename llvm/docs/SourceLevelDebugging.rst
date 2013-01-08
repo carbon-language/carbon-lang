@@ -585,12 +585,10 @@ value of the tag depends on the usage of the variable:
 
   DW_TAG_auto_variable   = 256
   DW_TAG_arg_variable    = 257
-  DW_TAG_return_variable = 258
 
 An auto variable is any variable declared in the body of the function.  An
 argument variable is any variable that appears as a formal argument to the
-function.  A return variable is used to track the result of a function and has
-no source correspondent.
+function.
 
 The context is either the subprogram or block where the variable is defined.
 Name the source variable name.  Context and line indicate where the variable
