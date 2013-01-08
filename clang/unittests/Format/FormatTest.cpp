@@ -551,6 +551,15 @@ TEST_F(FormatTest, HashInMacroDefinition) {
                "  {       \\\n"
                "    f(#c);\\\n"
                "  }", getLLVMStyleWithColumns(11));
+
+  verifyFormat("#define A(X)         \\\n"
+               "  void function##X()", getLLVMStyleWithColumns(22));
+
+  verifyFormat("#define A(a, b, c)   \\\n"
+               "  void a##b##c()", getLLVMStyleWithColumns(22));
+
+  verifyFormat("#define A            \\\n"
+               "  void # ## #", getLLVMStyleWithColumns(22));
 }
 
 TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {

@@ -928,6 +928,10 @@ private:
 
   bool spaceRequiredBetween(const AnnotatedToken &Left,
                             const AnnotatedToken &Right) {
+    if (Right.is(tok::hashhash))
+      return Left.is(tok::hash);
+    if (Left.is(tok::hashhash) || Left.is(tok::hash))
+      return Right.is(tok::hash);
     if (Right.is(tok::r_paren) || Right.is(tok::semi) || Right.is(tok::comma))
       return false;
     if (Left.is(tok::kw_template) && Right.is(tok::less))
@@ -961,8 +965,6 @@ private:
     if (Left.is(tok::colon) || Right.is(tok::colon))
       return true;
     if (Left.is(tok::l_paren))
-      return false;
-    if (Left.is(tok::hash))
       return false;
     if (Right.is(tok::l_paren)) {
       return Left.is(tok::kw_if) || Left.is(tok::kw_for) ||
