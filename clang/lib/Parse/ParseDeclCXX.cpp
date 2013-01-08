@@ -2162,7 +2162,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     // this call will *not* return the created decl; It will return null.
     // See Sema::ActOnCXXMemberDeclarator for details.
 
-    Decl *ThisDecl = 0;
+    NamedDecl *ThisDecl = 0;
     if (DS.isFriendSpecified()) {
       // C++11 [dcl.attr.grammar] p4: If an attribute-specifier-seq appertains 
       // to a friend declaration, that declaration shall be a definition.

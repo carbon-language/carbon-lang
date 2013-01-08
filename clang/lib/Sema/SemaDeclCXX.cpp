@@ -1565,7 +1565,7 @@ static bool InitializationHasSideEffects(const FieldDecl &FD) {
 /// bitfield width if there is one, 'InitExpr' specifies the initializer if
 /// one has been parsed, and 'InitStyle' is set if an in-class initializer is
 /// present (but parsing it has been deferred).
-Decl *
+NamedDecl *
 Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                                MultiTemplateParamsArg TemplateParameterLists,
                                Expr *BW, const VirtSpecifiers &VS,
@@ -1666,7 +1666,7 @@ Sema::ActOnCXXMemberDeclarator(Scope *S, AccessSpecifier AS, Declarator &D,
                        DS.getStorageClassSpec() == DeclSpec::SCS_mutable) &&
                       !isFunc);
 
-  Decl *Member;
+  NamedDecl *Member;
   if (isInstField) {
     CXXScopeSpec &SS = D.getCXXScopeSpec();
 
@@ -10547,8 +10547,8 @@ Decl *Sema::ActOnFriendTypeDecl(Scope *S, const DeclSpec &DS,
   return D;
 }
 
-Decl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
-                                    MultiTemplateParamsArg TemplateParams) {
+NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
+                                        MultiTemplateParamsArg TemplateParams) {
   const DeclSpec &DS = D.getDeclSpec();
 
   assert(DS.isFriendSpecified());
