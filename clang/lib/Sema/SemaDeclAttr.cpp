@@ -2032,7 +2032,7 @@ static bool checkAvailabilityAttr(Sema &S, SourceRange Range,
   return false;
 }
 
-AvailabilityAttr *Sema::mergeAvailabilityAttr(Decl *D, SourceRange Range,
+AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
                                               IdentifierInfo *Platform,
                                               VersionTuple Introduced,
                                               VersionTuple Deprecated,
@@ -2147,7 +2147,7 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
   if (SE)
     Str = SE->getString();
 
-  AvailabilityAttr *NewAttr = S.mergeAvailabilityAttr(D, Attr.getRange(),
+  AvailabilityAttr *NewAttr = S.mergeAvailabilityAttr(ND, Attr.getRange(),
                                                       Platform,
                                                       Introduced.Version,
                                                       Deprecated.Version,
