@@ -1790,12 +1790,16 @@ DeclHasAttr(const Decl *D, const Attr *A) {
 
 bool Sema::mergeDeclAttribute(Decl *D, InheritableAttr *Attr) {
   InheritableAttr *NewAttr = NULL;
-  if (AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attr))
+  if (AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attr)) {
     NewAttr = mergeAvailabilityAttr(D, AA->getRange(), AA->getPlatform(),
                                     AA->getIntroduced(), AA->getDeprecated(),
                                     AA->getObsoleted(), AA->getUnavailable(),
                                     AA->getMessage());
-  else if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr)) {
+    if (NewAttr) {
+      NamedDecl *ND = cast<NamedDecl>(D);
+      ND->ClearLVCache();
+    }
+  } else if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr)) {
     NewAttr = mergeVisibilityAttr(D, VA->getRange(), VA->getVisibility());
     if (NewAttr) {
       NamedDecl *ND = cast<NamedDecl>(D);

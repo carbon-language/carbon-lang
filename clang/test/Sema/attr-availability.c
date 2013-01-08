@@ -43,3 +43,6 @@ void f7(int) __attribute__((availability(ios,deprecated=4.0))); // expected-warn
 #if !__has_feature(attribute_availability_with_message)
 # error "Missing __has_feature"
 #endif
+
+extern int x __attribute__((availability(macosx,introduced=10.5)));
+extern int x;
