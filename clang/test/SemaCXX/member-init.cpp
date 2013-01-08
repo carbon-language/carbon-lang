@@ -73,3 +73,19 @@ namespace PR10578 {
   } catch(...) {
   }
 }
+
+namespace PR14838 {
+  struct base { ~base() {} };
+  class function : base {
+    ~function() {} // expected-note {{implicitly declared private here}}
+  public:
+    function(...) {}
+  };
+  struct thing {};
+  struct another {
+    another() : r(thing()) {}
+    // expected-error@-1 {{temporary of type 'const PR14838::function' has private destructor}}
+    // expected-warning@-2 {{binding reference member 'r' to a temporary value}}
+    const function &r; // expected-note {{reference member declared here}}
+  } af;
+}

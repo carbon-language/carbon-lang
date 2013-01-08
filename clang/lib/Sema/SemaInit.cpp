@@ -4290,7 +4290,7 @@ getAssignmentAction(const InitializedEntity &Entity) {
   llvm_unreachable("Invalid EntityKind!");
 }
 
-/// \brief Whether we should binding a created object as a temporary when
+/// \brief Whether we should bind a created object as a temporary when
 /// initializing the given entity.
 static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   switch (Entity.getKind()) {
@@ -4320,7 +4320,6 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
 /// created for that initialization, requires destruction.
 static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
   switch (Entity.getKind()) {
-    case InitializedEntity::EK_Member:
     case InitializedEntity::EK_Result:
     case InitializedEntity::EK_New:
     case InitializedEntity::EK_Base:
@@ -4331,6 +4330,7 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
     case InitializedEntity::EK_LambdaCapture:
       return false;
 
+    case InitializedEntity::EK_Member:
     case InitializedEntity::EK_Variable:
     case InitializedEntity::EK_Parameter:
     case InitializedEntity::EK_Temporary:
