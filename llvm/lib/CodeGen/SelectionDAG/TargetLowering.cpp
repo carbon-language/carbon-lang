@@ -94,98 +94,124 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::ADD_F32] = "__addsf3";
   Names[RTLIB::ADD_F64] = "__adddf3";
   Names[RTLIB::ADD_F80] = "__addxf3";
+  Names[RTLIB::ADD_F128] = "__addtf3";
   Names[RTLIB::ADD_PPCF128] = "__gcc_qadd";
   Names[RTLIB::SUB_F32] = "__subsf3";
   Names[RTLIB::SUB_F64] = "__subdf3";
   Names[RTLIB::SUB_F80] = "__subxf3";
+  Names[RTLIB::SUB_F128] = "__subtf3";
   Names[RTLIB::SUB_PPCF128] = "__gcc_qsub";
   Names[RTLIB::MUL_F32] = "__mulsf3";
   Names[RTLIB::MUL_F64] = "__muldf3";
   Names[RTLIB::MUL_F80] = "__mulxf3";
+  Names[RTLIB::MUL_F128] = "__multf3";
   Names[RTLIB::MUL_PPCF128] = "__gcc_qmul";
   Names[RTLIB::DIV_F32] = "__divsf3";
   Names[RTLIB::DIV_F64] = "__divdf3";
   Names[RTLIB::DIV_F80] = "__divxf3";
+  Names[RTLIB::DIV_F128] = "__divtf3";
   Names[RTLIB::DIV_PPCF128] = "__gcc_qdiv";
   Names[RTLIB::REM_F32] = "fmodf";
   Names[RTLIB::REM_F64] = "fmod";
   Names[RTLIB::REM_F80] = "fmodl";
+  Names[RTLIB::REM_F128] = "fmodl";
   Names[RTLIB::REM_PPCF128] = "fmodl";
   Names[RTLIB::FMA_F32] = "fmaf";
   Names[RTLIB::FMA_F64] = "fma";
   Names[RTLIB::FMA_F80] = "fmal";
+  Names[RTLIB::FMA_F128] = "fmal";
   Names[RTLIB::FMA_PPCF128] = "fmal";
   Names[RTLIB::POWI_F32] = "__powisf2";
   Names[RTLIB::POWI_F64] = "__powidf2";
   Names[RTLIB::POWI_F80] = "__powixf2";
+  Names[RTLIB::POWI_F128] = "__powitf2";
   Names[RTLIB::POWI_PPCF128] = "__powitf2";
   Names[RTLIB::SQRT_F32] = "sqrtf";
   Names[RTLIB::SQRT_F64] = "sqrt";
   Names[RTLIB::SQRT_F80] = "sqrtl";
+  Names[RTLIB::SQRT_F128] = "sqrtl";
   Names[RTLIB::SQRT_PPCF128] = "sqrtl";
   Names[RTLIB::LOG_F32] = "logf";
   Names[RTLIB::LOG_F64] = "log";
   Names[RTLIB::LOG_F80] = "logl";
+  Names[RTLIB::LOG_F128] = "logl";
   Names[RTLIB::LOG_PPCF128] = "logl";
   Names[RTLIB::LOG2_F32] = "log2f";
   Names[RTLIB::LOG2_F64] = "log2";
   Names[RTLIB::LOG2_F80] = "log2l";
+  Names[RTLIB::LOG2_F128] = "log2l";
   Names[RTLIB::LOG2_PPCF128] = "log2l";
   Names[RTLIB::LOG10_F32] = "log10f";
   Names[RTLIB::LOG10_F64] = "log10";
   Names[RTLIB::LOG10_F80] = "log10l";
+  Names[RTLIB::LOG10_F128] = "log10l";
   Names[RTLIB::LOG10_PPCF128] = "log10l";
   Names[RTLIB::EXP_F32] = "expf";
   Names[RTLIB::EXP_F64] = "exp";
   Names[RTLIB::EXP_F80] = "expl";
+  Names[RTLIB::EXP_F128] = "expl";
   Names[RTLIB::EXP_PPCF128] = "expl";
   Names[RTLIB::EXP2_F32] = "exp2f";
   Names[RTLIB::EXP2_F64] = "exp2";
   Names[RTLIB::EXP2_F80] = "exp2l";
+  Names[RTLIB::EXP2_F128] = "exp2l";
   Names[RTLIB::EXP2_PPCF128] = "exp2l";
   Names[RTLIB::SIN_F32] = "sinf";
   Names[RTLIB::SIN_F64] = "sin";
   Names[RTLIB::SIN_F80] = "sinl";
+  Names[RTLIB::SIN_F128] = "sinl";
   Names[RTLIB::SIN_PPCF128] = "sinl";
   Names[RTLIB::COS_F32] = "cosf";
   Names[RTLIB::COS_F64] = "cos";
   Names[RTLIB::COS_F80] = "cosl";
+  Names[RTLIB::COS_F128] = "cosl";
   Names[RTLIB::COS_PPCF128] = "cosl";
   Names[RTLIB::POW_F32] = "powf";
   Names[RTLIB::POW_F64] = "pow";
   Names[RTLIB::POW_F80] = "powl";
+  Names[RTLIB::POW_F128] = "powl";
   Names[RTLIB::POW_PPCF128] = "powl";
   Names[RTLIB::CEIL_F32] = "ceilf";
   Names[RTLIB::CEIL_F64] = "ceil";
   Names[RTLIB::CEIL_F80] = "ceill";
+  Names[RTLIB::CEIL_F128] = "ceill";
   Names[RTLIB::CEIL_PPCF128] = "ceill";
   Names[RTLIB::TRUNC_F32] = "truncf";
   Names[RTLIB::TRUNC_F64] = "trunc";
   Names[RTLIB::TRUNC_F80] = "truncl";
+  Names[RTLIB::TRUNC_F128] = "truncl";
   Names[RTLIB::TRUNC_PPCF128] = "truncl";
   Names[RTLIB::RINT_F32] = "rintf";
   Names[RTLIB::RINT_F64] = "rint";
   Names[RTLIB::RINT_F80] = "rintl";
+  Names[RTLIB::RINT_F128] = "rintl";
   Names[RTLIB::RINT_PPCF128] = "rintl";
   Names[RTLIB::NEARBYINT_F32] = "nearbyintf";
   Names[RTLIB::NEARBYINT_F64] = "nearbyint";
   Names[RTLIB::NEARBYINT_F80] = "nearbyintl";
+  Names[RTLIB::NEARBYINT_F128] = "nearbyintl";
   Names[RTLIB::NEARBYINT_PPCF128] = "nearbyintl";
   Names[RTLIB::FLOOR_F32] = "floorf";
   Names[RTLIB::FLOOR_F64] = "floor";
   Names[RTLIB::FLOOR_F80] = "floorl";
+  Names[RTLIB::FLOOR_F128] = "floorl";
   Names[RTLIB::FLOOR_PPCF128] = "floorl";
   Names[RTLIB::COPYSIGN_F32] = "copysignf";
   Names[RTLIB::COPYSIGN_F64] = "copysign";
   Names[RTLIB::COPYSIGN_F80] = "copysignl";
+  Names[RTLIB::COPYSIGN_F128] = "copysignl";
   Names[RTLIB::COPYSIGN_PPCF128] = "copysignl";
+  Names[RTLIB::FPEXT_F64_F128] = "__extenddftf2";
+  Names[RTLIB::FPEXT_F32_F128] = "__extendsftf2";
   Names[RTLIB::FPEXT_F32_F64] = "__extendsfdf2";
   Names[RTLIB::FPEXT_F16_F32] = "__gnu_h2f_ieee";
   Names[RTLIB::FPROUND_F32_F16] = "__gnu_f2h_ieee";
   Names[RTLIB::FPROUND_F64_F32] = "__truncdfsf2";
   Names[RTLIB::FPROUND_F80_F32] = "__truncxfsf2";
+  Names[RTLIB::FPROUND_F128_F32] = "__trunctfsf2";
   Names[RTLIB::FPROUND_PPCF128_F32] = "__trunctfsf2";
   Names[RTLIB::FPROUND_F80_F64] = "__truncxfdf2";
+  Names[RTLIB::FPROUND_F128_F64] = "__trunctfdf2";
   Names[RTLIB::FPROUND_PPCF128_F64] = "__trunctfdf2";
   Names[RTLIB::FPTOSINT_F32_I8] = "__fixsfqi";
   Names[RTLIB::FPTOSINT_F32_I16] = "__fixsfhi";
@@ -200,6 +226,9 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOSINT_F80_I32] = "__fixxfsi";
   Names[RTLIB::FPTOSINT_F80_I64] = "__fixxfdi";
   Names[RTLIB::FPTOSINT_F80_I128] = "__fixxfti";
+  Names[RTLIB::FPTOSINT_F128_I32] = "__fixtfsi";
+  Names[RTLIB::FPTOSINT_F128_I64] = "__fixtfdi";
+  Names[RTLIB::FPTOSINT_F128_I128] = "__fixtfti";
   Names[RTLIB::FPTOSINT_PPCF128_I32] = "__fixtfsi";
   Names[RTLIB::FPTOSINT_PPCF128_I64] = "__fixtfdi";
   Names[RTLIB::FPTOSINT_PPCF128_I128] = "__fixtfti";
@@ -216,49 +245,66 @@ static void InitLibcallNames(const char **Names) {
   Names[RTLIB::FPTOUINT_F80_I32] = "__fixunsxfsi";
   Names[RTLIB::FPTOUINT_F80_I64] = "__fixunsxfdi";
   Names[RTLIB::FPTOUINT_F80_I128] = "__fixunsxfti";
+  Names[RTLIB::FPTOUINT_F128_I32] = "__fixunstfsi";
+  Names[RTLIB::FPTOUINT_F128_I64] = "__fixunstfdi";
+  Names[RTLIB::FPTOUINT_F128_I128] = "__fixunstfti";
   Names[RTLIB::FPTOUINT_PPCF128_I32] = "__fixunstfsi";
   Names[RTLIB::FPTOUINT_PPCF128_I64] = "__fixunstfdi";
   Names[RTLIB::FPTOUINT_PPCF128_I128] = "__fixunstfti";
   Names[RTLIB::SINTTOFP_I32_F32] = "__floatsisf";
   Names[RTLIB::SINTTOFP_I32_F64] = "__floatsidf";
   Names[RTLIB::SINTTOFP_I32_F80] = "__floatsixf";
+  Names[RTLIB::SINTTOFP_I32_F128] = "__floatsitf";
   Names[RTLIB::SINTTOFP_I32_PPCF128] = "__floatsitf";
   Names[RTLIB::SINTTOFP_I64_F32] = "__floatdisf";
   Names[RTLIB::SINTTOFP_I64_F64] = "__floatdidf";
   Names[RTLIB::SINTTOFP_I64_F80] = "__floatdixf";
+  Names[RTLIB::SINTTOFP_I64_F128] = "__floatditf";
   Names[RTLIB::SINTTOFP_I64_PPCF128] = "__floatditf";
   Names[RTLIB::SINTTOFP_I128_F32] = "__floattisf";
   Names[RTLIB::SINTTOFP_I128_F64] = "__floattidf";
   Names[RTLIB::SINTTOFP_I128_F80] = "__floattixf";
+  Names[RTLIB::SINTTOFP_I128_F128] = "__floattitf";
   Names[RTLIB::SINTTOFP_I128_PPCF128] = "__floattitf";
   Names[RTLIB::UINTTOFP_I32_F32] = "__floatunsisf";
   Names[RTLIB::UINTTOFP_I32_F64] = "__floatunsidf";
   Names[RTLIB::UINTTOFP_I32_F80] = "__floatunsixf";
+  Names[RTLIB::UINTTOFP_I32_F128] = "__floatunsitf";
   Names[RTLIB::UINTTOFP_I32_PPCF128] = "__floatunsitf";
   Names[RTLIB::UINTTOFP_I64_F32] = "__floatundisf";
   Names[RTLIB::UINTTOFP_I64_F64] = "__floatundidf";
   Names[RTLIB::UINTTOFP_I64_F80] = "__floatundixf";
+  Names[RTLIB::UINTTOFP_I64_F128] = "__floatunditf";
   Names[RTLIB::UINTTOFP_I64_PPCF128] = "__floatunditf";
   Names[RTLIB::UINTTOFP_I128_F32] = "__floatuntisf";
   Names[RTLIB::UINTTOFP_I128_F64] = "__floatuntidf";
   Names[RTLIB::UINTTOFP_I128_F80] = "__floatuntixf";
+  Names[RTLIB::UINTTOFP_I128_F128] = "__floatuntitf";
   Names[RTLIB::UINTTOFP_I128_PPCF128] = "__floatuntitf";
   Names[RTLIB::OEQ_F32] = "__eqsf2";
   Names[RTLIB::OEQ_F64] = "__eqdf2";
+  Names[RTLIB::OEQ_F128] = "__eqtf2";
   Names[RTLIB::UNE_F32] = "__nesf2";
   Names[RTLIB::UNE_F64] = "__nedf2";
+  Names[RTLIB::UNE_F128] = "__netf2";
   Names[RTLIB::OGE_F32] = "__gesf2";
   Names[RTLIB::OGE_F64] = "__gedf2";
+  Names[RTLIB::OGE_F128] = "__getf2";
   Names[RTLIB::OLT_F32] = "__ltsf2";
   Names[RTLIB::OLT_F64] = "__ltdf2";
+  Names[RTLIB::OLT_F128] = "__lttf2";
   Names[RTLIB::OLE_F32] = "__lesf2";
   Names[RTLIB::OLE_F64] = "__ledf2";
+  Names[RTLIB::OLE_F128] = "__letf2";
   Names[RTLIB::OGT_F32] = "__gtsf2";
   Names[RTLIB::OGT_F64] = "__gtdf2";
+  Names[RTLIB::OGT_F128] = "__gttf2";
   Names[RTLIB::UO_F32] = "__unordsf2";
   Names[RTLIB::UO_F64] = "__unorddf2";
+  Names[RTLIB::UO_F128] = "__unordtf2";
   Names[RTLIB::O_F32] = "__unordsf2";
   Names[RTLIB::O_F64] = "__unorddf2";
+  Names[RTLIB::O_F128] = "__unordtf2";
   Names[RTLIB::MEMCPY] = "memcpy";
   Names[RTLIB::MEMMOVE] = "memmove";
   Names[RTLIB::MEMSET] = "memset";
@@ -311,6 +357,11 @@ RTLIB::Libcall RTLIB::getFPEXT(EVT OpVT, EVT RetVT) {
   if (OpVT == MVT::f32) {
     if (RetVT == MVT::f64)
       return FPEXT_F32_F64;
+    if (RetVT == MVT::f128)
+      return FPEXT_F32_F128;
+  } else if (OpVT == MVT::f64) {
+    if (RetVT == MVT::f128)
+      return FPEXT_F64_F128;
   }
 
   return UNKNOWN_LIBCALL;
@@ -324,11 +375,15 @@ RTLIB::Libcall RTLIB::getFPROUND(EVT OpVT, EVT RetVT) {
       return FPROUND_F64_F32;
     if (OpVT == MVT::f80)
       return FPROUND_F80_F32;
+    if (OpVT == MVT::f128)
+      return FPROUND_F128_F32;
     if (OpVT == MVT::ppcf128)
       return FPROUND_PPCF128_F32;
   } else if (RetVT == MVT::f64) {
     if (OpVT == MVT::f80)
       return FPROUND_F80_F64;
+    if (OpVT == MVT::f128)
+      return FPROUND_F128_F64;
     if (OpVT == MVT::ppcf128)
       return FPROUND_PPCF128_F64;
   }
@@ -368,6 +423,13 @@ RTLIB::Libcall RTLIB::getFPTOSINT(EVT OpVT, EVT RetVT) {
       return FPTOSINT_F80_I64;
     if (RetVT == MVT::i128)
       return FPTOSINT_F80_I128;
+  } else if (OpVT == MVT::f128) {
+    if (RetVT == MVT::i32)
+      return FPTOSINT_F128_I32;
+    if (RetVT == MVT::i64)
+      return FPTOSINT_F128_I64;
+    if (RetVT == MVT::i128)
+      return FPTOSINT_F128_I128;
   } else if (OpVT == MVT::ppcf128) {
     if (RetVT == MVT::i32)
       return FPTOSINT_PPCF128_I32;
@@ -411,6 +473,13 @@ RTLIB::Libcall RTLIB::getFPTOUINT(EVT OpVT, EVT RetVT) {
       return FPTOUINT_F80_I64;
     if (RetVT == MVT::i128)
       return FPTOUINT_F80_I128;
+  } else if (OpVT == MVT::f128) {
+    if (RetVT == MVT::i32)
+      return FPTOUINT_F128_I32;
+    if (RetVT == MVT::i64)
+      return FPTOUINT_F128_I64;
+    if (RetVT == MVT::i128)
+      return FPTOUINT_F128_I128;
   } else if (OpVT == MVT::ppcf128) {
     if (RetVT == MVT::i32)
       return FPTOUINT_PPCF128_I32;
@@ -432,6 +501,8 @@ RTLIB::Libcall RTLIB::getSINTTOFP(EVT OpVT, EVT RetVT) {
       return SINTTOFP_I32_F64;
     if (RetVT == MVT::f80)
       return SINTTOFP_I32_F80;
+    if (RetVT == MVT::f128)
+      return SINTTOFP_I32_F128;
     if (RetVT == MVT::ppcf128)
       return SINTTOFP_I32_PPCF128;
   } else if (OpVT == MVT::i64) {
@@ -441,6 +512,8 @@ RTLIB::Libcall RTLIB::getSINTTOFP(EVT OpVT, EVT RetVT) {
       return SINTTOFP_I64_F64;
     if (RetVT == MVT::f80)
       return SINTTOFP_I64_F80;
+    if (RetVT == MVT::f128)
+      return SINTTOFP_I64_F128;
     if (RetVT == MVT::ppcf128)
       return SINTTOFP_I64_PPCF128;
   } else if (OpVT == MVT::i128) {
@@ -450,6 +523,8 @@ RTLIB::Libcall RTLIB::getSINTTOFP(EVT OpVT, EVT RetVT) {
       return SINTTOFP_I128_F64;
     if (RetVT == MVT::f80)
       return SINTTOFP_I128_F80;
+    if (RetVT == MVT::f128)
+      return SINTTOFP_I128_F128;
     if (RetVT == MVT::ppcf128)
       return SINTTOFP_I128_PPCF128;
   }
@@ -466,6 +541,8 @@ RTLIB::Libcall RTLIB::getUINTTOFP(EVT OpVT, EVT RetVT) {
       return UINTTOFP_I32_F64;
     if (RetVT == MVT::f80)
       return UINTTOFP_I32_F80;
+    if (RetVT == MVT::f128)
+      return UINTTOFP_I32_F128;
     if (RetVT == MVT::ppcf128)
       return UINTTOFP_I32_PPCF128;
   } else if (OpVT == MVT::i64) {
@@ -475,6 +552,8 @@ RTLIB::Libcall RTLIB::getUINTTOFP(EVT OpVT, EVT RetVT) {
       return UINTTOFP_I64_F64;
     if (RetVT == MVT::f80)
       return UINTTOFP_I64_F80;
+    if (RetVT == MVT::f128)
+      return UINTTOFP_I64_F128;
     if (RetVT == MVT::ppcf128)
       return UINTTOFP_I64_PPCF128;
   } else if (OpVT == MVT::i128) {
@@ -484,6 +563,8 @@ RTLIB::Libcall RTLIB::getUINTTOFP(EVT OpVT, EVT RetVT) {
       return UINTTOFP_I128_F64;
     if (RetVT == MVT::f80)
       return UINTTOFP_I128_F80;
+    if (RetVT == MVT::f128)
+      return UINTTOFP_I128_F128;
     if (RetVT == MVT::ppcf128)
       return UINTTOFP_I128_PPCF128;
   }
@@ -496,20 +577,28 @@ static void InitCmpLibcallCCs(ISD::CondCode *CCs) {
   memset(CCs, ISD::SETCC_INVALID, sizeof(ISD::CondCode)*RTLIB::UNKNOWN_LIBCALL);
   CCs[RTLIB::OEQ_F32] = ISD::SETEQ;
   CCs[RTLIB::OEQ_F64] = ISD::SETEQ;
+  CCs[RTLIB::OEQ_F128] = ISD::SETEQ;
   CCs[RTLIB::UNE_F32] = ISD::SETNE;
   CCs[RTLIB::UNE_F64] = ISD::SETNE;
+  CCs[RTLIB::UNE_F128] = ISD::SETNE;
   CCs[RTLIB::OGE_F32] = ISD::SETGE;
   CCs[RTLIB::OGE_F64] = ISD::SETGE;
+  CCs[RTLIB::OGE_F128] = ISD::SETGE;
   CCs[RTLIB::OLT_F32] = ISD::SETLT;
   CCs[RTLIB::OLT_F64] = ISD::SETLT;
+  CCs[RTLIB::OLT_F128] = ISD::SETLT;
   CCs[RTLIB::OLE_F32] = ISD::SETLE;
   CCs[RTLIB::OLE_F64] = ISD::SETLE;
+  CCs[RTLIB::OLE_F128] = ISD::SETLE;
   CCs[RTLIB::OGT_F32] = ISD::SETGT;
   CCs[RTLIB::OGT_F64] = ISD::SETGT;
+  CCs[RTLIB::OGT_F128] = ISD::SETGT;
   CCs[RTLIB::UO_F32] = ISD::SETNE;
   CCs[RTLIB::UO_F64] = ISD::SETNE;
+  CCs[RTLIB::UO_F128] = ISD::SETNE;
   CCs[RTLIB::O_F32] = ISD::SETEQ;
   CCs[RTLIB::O_F64] = ISD::SETEQ;
+  CCs[RTLIB::O_F128] = ISD::SETEQ;
 }
 
 /// NOTE: The constructor takes ownership of TLOF.
@@ -547,6 +636,7 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   setOperationAction(ISD::ConstantFP, MVT::f32, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f64, Expand);
   setOperationAction(ISD::ConstantFP, MVT::f80, Expand);
+  setOperationAction(ISD::ConstantFP, MVT::f128, Expand);
 
   // These library functions default to expand.
   setOperationAction(ISD::FLOG ,  MVT::f16, Expand);
@@ -579,6 +669,16 @@ TargetLowering::TargetLowering(const TargetMachine &tm,
   setOperationAction(ISD::FCEIL,  MVT::f64, Expand);
   setOperationAction(ISD::FRINT,  MVT::f64, Expand);
   setOperationAction(ISD::FTRUNC, MVT::f64, Expand);
+  setOperationAction(ISD::FLOG ,  MVT::f128, Expand);
+  setOperationAction(ISD::FLOG2,  MVT::f128, Expand);
+  setOperationAction(ISD::FLOG10, MVT::f128, Expand);
+  setOperationAction(ISD::FEXP ,  MVT::f128, Expand);
+  setOperationAction(ISD::FEXP2,  MVT::f128, Expand);
+  setOperationAction(ISD::FFLOOR, MVT::f128, Expand);
+  setOperationAction(ISD::FNEARBYINT, MVT::f128, Expand);
+  setOperationAction(ISD::FCEIL,  MVT::f128, Expand);
+  setOperationAction(ISD::FRINT,  MVT::f128, Expand);
+  setOperationAction(ISD::FTRUNC, MVT::f128, Expand);
 
   // Default ISD::TRAP to expand (which turns it into abort).
   setOperationAction(ISD::TRAP, MVT::Other, Expand);
