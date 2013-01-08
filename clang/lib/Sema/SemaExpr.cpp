@@ -10759,7 +10759,7 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
       }
       return true;
     }
-    // Prohibit prohibit structs with flexisble array members too.
+    // Prohibit structs with flexiable array members too.
     // We cannot capture what is in the tail end of the struct.
     if (const RecordType *VTTy = Var->getType()->getAs<RecordType>()) {
       if (VTTy->getDecl()->hasFlexibleArrayMember()) {
