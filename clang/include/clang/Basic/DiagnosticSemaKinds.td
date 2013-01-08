@@ -4612,9 +4612,6 @@ let CategoryName = "Lambda Issue" in {
   def err_lambda_capture_vm_type : Error<
     "variable %0 with variably modified type cannot be captured in "
     "a lambda expression">;
-  def err_lambda_capture_flexarray_type : Error<
-    "variable %0 with flexible array member cannot be captured in "
-    "a lambda expression">;
   def err_lambda_impcap : Error<
     "variable %0 cannot be implicitly captured in a lambda with no "
     "capture-default specified">;
