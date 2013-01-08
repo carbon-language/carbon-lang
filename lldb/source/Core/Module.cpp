@@ -1064,6 +1064,25 @@ Module::SymbolIndicesToSymbolContextList (Symtab *symtab, std::vector<uint32_t> 
 }
 
 size_t
+Module::FindFunctionSymbols (const ConstString &name,
+                             uint32_t name_type_mask,
+                             SymbolContextList& sc_list)
+{
+    Timer scoped_timer(__PRETTY_FUNCTION__,
+                       "Module::FindSymbolsFunctions (name = %s, mask = 0x%8.8x)",
+                       name.AsCString(),
+                       name_type_mask);
+    ObjectFile *objfile = GetObjectFile ();
+    if (objfile)
+    {
+        Symtab *symtab = objfile->GetSymtab();
+        if (symtab)
+            return symtab->FindFunctionSymbols (name, name_type_mask, sc_list);
+    }
+    return 0;
+}
+
+size_t
 Module::FindSymbolsWithNameAndType (const ConstString &name, SymbolType symbol_type, SymbolContextList &sc_list)
 {
     // No need to protect this call using m_mutex all other method calls are

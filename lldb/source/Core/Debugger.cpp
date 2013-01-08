@@ -2614,13 +2614,13 @@ Debugger::EnableLog (const char *channel, const char **categories, const char *l
     else
     {
         LogStreamMap::iterator pos = m_log_streams.find(log_file);
-        if (pos == m_log_streams.end())
+        if (pos != m_log_streams.end())
+            log_stream_sp = pos->second.lock();
+        if (!log_stream_sp)
         {
             log_stream_sp.reset (new StreamFile (log_file));
             m_log_streams[log_file] = log_stream_sp;
         }
-        else
-            log_stream_sp = pos->second;
     }
     assert (log_stream_sp.get());
     

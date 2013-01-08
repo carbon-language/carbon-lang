@@ -56,7 +56,6 @@ public:
             Symbol *    SymbolAtIndex (uint32_t idx);
     const   Symbol *    SymbolAtIndex (uint32_t idx) const;
             Symbol *    FindSymbolWithType (lldb::SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, uint32_t &start_idx);
-//    const   Symbol *    FindSymbolWithType (lldb::SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, uint32_t &start_idx) const;
             uint32_t    AppendSymbolIndexesWithType (lldb::SymbolType symbol_type, std::vector<uint32_t>& indexes, uint32_t start_idx = 0, uint32_t end_index = UINT32_MAX) const;
             uint32_t    AppendSymbolIndexesWithTypeAndFlagsValue (lldb::SymbolType symbol_type, uint32_t flags_value, std::vector<uint32_t>& indexes, uint32_t start_idx = 0, uint32_t end_index = UINT32_MAX) const;
             uint32_t    AppendSymbolIndexesWithType (lldb::SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& matches, uint32_t start_idx = 0, uint32_t end_index = UINT32_MAX) const;
@@ -71,10 +70,9 @@ public:
             size_t      FindAllSymbolsMatchingRexExAndType (const RegularExpression &regex, lldb::SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility, std::vector<uint32_t>& symbol_indexes);
             Symbol *    FindFirstSymbolWithNameAndType (const ConstString &name, lldb::SymbolType symbol_type, Debug symbol_debug_type, Visibility symbol_visibility);
             Symbol *    FindSymbolWithFileAddress (lldb::addr_t file_addr);
-//            Symbol *    FindSymbolContainingAddress (const Address& value, const uint32_t* indexes, uint32_t num_indexes);
-//            Symbol *    FindSymbolContainingAddress (const Address& value);
             Symbol *    FindSymbolContainingFileAddress (lldb::addr_t file_addr, const uint32_t* indexes, uint32_t num_indexes);
             Symbol *    FindSymbolContainingFileAddress (lldb::addr_t file_addr);
+            size_t      FindFunctionSymbols (const ConstString &name, uint32_t name_type_mask, SymbolContextList& sc_list);
             size_t      CalculateSymbolSize (Symbol *symbol);
 
             void        SortSymbolIndexesByValue (std::vector<uint32_t>& indexes, bool remove_duplicates) const;
@@ -109,6 +107,7 @@ protected:
     collection          m_symbols;
     std::vector<uint32_t> m_addr_indexes;
     UniqueCStringMap<uint32_t> m_name_to_index;
+    UniqueCStringMap<uint32_t> m_selector_to_index;
     mutable Mutex       m_mutex; // Provide thread safety for this symbol table
     bool                m_addr_indexes_computed:1,
                         m_name_indexes_computed:1;
@@ -147,6 +146,9 @@ private:
         return false;
     }
 
+    void
+    SymbolIndicesToSymbolContextList (std::vector<uint32_t> &symbol_indexes,
+                                      SymbolContextList &sc_list);
 
     DISALLOW_COPY_AND_ASSIGN (Symtab);
 };

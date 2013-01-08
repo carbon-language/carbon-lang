@@ -369,7 +369,7 @@ protected:
 
     InputReaderStack m_input_reader_stack;
     std::string m_input_reader_data;
-    typedef std::map<std::string, lldb::StreamSP> LogStreamMap;
+    typedef std::map<std::string, lldb::StreamWP> LogStreamMap;
     LogStreamMap m_log_streams;
     lldb::StreamSP m_log_callback_stream_sp;
     ConstString m_instance_name;

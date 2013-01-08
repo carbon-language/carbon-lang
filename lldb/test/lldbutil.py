@@ -275,6 +275,9 @@ def run_break_set_by_file_and_line (test, file_name, line_number, extra_options 
     else:
         command = 'breakpoint set -f "%s" -l %d'%(file_name, line_number)
 
+    if module_name:
+        command += " --shlib '%s'" % (module_name)
+
     if extra_options:
         command += " " + extra_options
 
@@ -292,6 +295,10 @@ def run_break_set_by_symbol (test, symbol, extra_options = None, num_expected_lo
 
     If sym_exact is true, then the output symbol must match the input exactly, otherwise we do a substring match."""
     command = 'breakpoint set -n "%s"'%(symbol)
+
+    if module_name:
+        command += " --shlib '%s'" % (module_name)
+
     if extra_options:
         command += " " + extra_options
 
@@ -307,7 +314,11 @@ def run_break_set_by_symbol (test, symbol, extra_options = None, num_expected_lo
 def run_break_set_by_selector (test, selector, extra_options = None, num_expected_locations = -1, module_name=None):
     """Set a breakpoint by selector.  Common options are the same as run_break_set_by_file_and_line."""
 
-    command = 'breakpoint set -S "%s"'%(selector)
+    command = 'breakpoint set -S "%s"' % (selector)
+
+    if module_name:
+        command += ' --shlib "%s"' % (module_name)
+
     if extra_options:
         command += " " + extra_options
 

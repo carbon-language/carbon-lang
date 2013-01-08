@@ -182,8 +182,7 @@ BreakpointResolverName::SearchCallback
                     
                     if (num_functions == 0 && !filter_by_cu)
                     {
-                        if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeAuto))
-                            context.module_sp->FindSymbolsWithNameAndType (m_func_names[j], eSymbolTypeCode, sym_list);
+                        context.module_sp->FindFunctionSymbols (m_func_names[j], m_func_name_type_mask, sym_list);
                     }
                 }
             }

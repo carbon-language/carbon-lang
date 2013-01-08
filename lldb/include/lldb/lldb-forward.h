@@ -350,6 +350,7 @@ namespace lldb {
     typedef STD_SHARED_PTR(lldb_private::StopInfo) StopInfoSP;
     typedef STD_SHARED_PTR(lldb_private::StoppointLocation) StoppointLocationSP;
     typedef STD_SHARED_PTR(lldb_private::Stream) StreamSP;
+    typedef STD_WEAK_PTR  (lldb_private::Stream) StreamWP;
     typedef STD_SHARED_PTR(lldb_private::StringSummaryFormat) StringTypeSummaryImplSP;
     typedef STD_SHARED_PTR(lldb_private::SymbolFile) SymbolFileSP;
     typedef STD_SHARED_PTR(lldb_private::SymbolFileType) SymbolFileTypeSP;

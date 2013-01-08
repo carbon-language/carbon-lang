@@ -81,7 +81,7 @@ class FoundationDisassembleTestCase(TestBase):
         lldbutil.run_break_set_by_symbol (self, '-[MyString initWithNSString:]', num_expected_locations=1, sym_exact=True)
 
         # Stop at the "description" selector.
-        lldbutil.run_break_set_by_selector (self, 'description', num_expected_locations=1)
+        lldbutil.run_break_set_by_selector (self, 'description', num_expected_locations=1, module_name='a.out')
 
         # Stop at -[NSAutoreleasePool release].
         break_results = lldbutil.run_break_set_command (self, "_regexp-break -[NSAutoreleasePool release]")
