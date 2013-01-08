@@ -28,3 +28,17 @@ namespace test3 {
     g<int>();
   }
 }
+
+namespace test4 {
+  static void f();
+  static void f();
+  template<typename T>
+  static void g() {
+    f();
+  }
+  static void f() {
+  }
+  void h() {
+    g<int>();
+  }
+}
