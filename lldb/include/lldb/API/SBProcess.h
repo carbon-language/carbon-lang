@@ -171,6 +171,9 @@ public:
     void
     SendAsyncInterrupt();
     
+    uint32_t
+    GetStopID(bool include_expression_stops = false);
+    
     size_t
     ReadMemory (addr_t addr, void *buf, size_t size, lldb::SBError &error);
 

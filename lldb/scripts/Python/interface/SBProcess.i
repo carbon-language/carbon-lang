@@ -216,6 +216,16 @@ public:
     lldb::SBError
     Signal (int signal);
 
+    %feature("docstring", "
+    Returns a stop id that will increase every time the process executes.  If
+    include_expression_stops is true, then stops caused by expression evaluation
+    will cause the returned value to increase, otherwise the counter returned will
+    only increase when execution is continued explicitly by the user.  Note, the value
+    will always increase, but may increase by more than one per stop.
+    ") GetStopID;
+    uint32_t
+    GetStopID(bool include_expression_stops = false);
+    
     void
     SendAsyncInterrupt();
     

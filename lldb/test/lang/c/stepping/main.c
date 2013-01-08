@@ -11,6 +11,7 @@
 int a(int);
 int b(int);
 int c(int);
+const char *print_string = "aaaaaaaaaa\n";
 
 int a(int val)
 {
@@ -63,5 +64,6 @@ int main (int argc, char const *argv[])
 
     int A7 = complex (a(5), b(6), c(7)); // Stop here to make sure bogus target steps over.
 
+    printf ("I am using print_string: %s.\n", print_string);
     return 0;
 }

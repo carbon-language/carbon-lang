@@ -1129,6 +1129,7 @@ friend bool operator== (const ProcessModID &lhs, const ProcessModID &rhs);
 public:
     ProcessModID () : 
         m_stop_id (0),
+        m_last_natural_stop_id(0),
         m_resume_id (0), 
         m_memory_id (0),
         m_last_user_expression_resume (0),
@@ -1153,7 +1154,9 @@ public:
     ~ProcessModID () {}
     
     void BumpStopID () { 
-        m_stop_id++; 
+        m_stop_id++;
+        if (!IsLastResumeForUserExpression())
+            m_last_natural_stop_id++;
     }
     
     void BumpMemoryID () { m_memory_id++; }
@@ -1165,6 +1168,7 @@ public:
     }
     
     uint32_t GetStopID() const { return m_stop_id; }
+    uint32_t GetLastNaturalStopID() const { return m_last_natural_stop_id; }
     uint32_t GetMemoryID () const { return m_memory_id; }
     uint32_t GetResumeID () const { return m_resume_id; }
     uint32_t GetLastUserExpressionResumeID () const { return m_last_user_expression_resume; }
@@ -1207,6 +1211,7 @@ public:
     
 private:
     uint32_t m_stop_id;
+    uint32_t m_last_natural_stop_id;
     uint32_t m_resume_id;
     uint32_t m_memory_id;
     uint32_t m_last_user_expression_resume;
@@ -2514,6 +2519,12 @@ public:
     GetLastUserExpressionResumeID () const
     {
         return m_mod_id.GetLastUserExpressionResumeID();
+    }
+    
+    uint32_t
+    GetLastNaturalStopID()
+    {
+        return m_mod_id.GetLastNaturalStopID();
     }
     
     //------------------------------------------------------------------

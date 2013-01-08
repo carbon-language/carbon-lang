@@ -509,6 +509,21 @@ SBProcess::GetThreadAtIndex (size_t index)
     return sb_thread;
 }
 
+uint32_t
+SBProcess::GetStopID(bool include_expression_stops)
+{
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        if (include_expression_stops)
+            return process_sp->GetStopID();
+        else
+            return process_sp->GetLastNaturalStopID();
+    }
+    return 0;
+}
+
 StateType
 SBProcess::GetState ()
 {

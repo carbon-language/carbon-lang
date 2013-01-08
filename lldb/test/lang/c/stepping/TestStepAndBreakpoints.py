@@ -72,6 +72,9 @@ class TestObjCStepping(TestBase):
 
         thread = threads[0]
 
+        # Get the stop id and for fun make sure it increases:
+        old_stop_id = process.GetStopID()
+
         # Now step over, which should cause us to hit the breakpoint in "a"
         thread.StepOver()
 
@@ -79,6 +82,10 @@ class TestObjCStepping(TestBase):
         threads = lldbutil.get_threads_stopped_at_breakpoint (process, break_in_a)
         if len(threads) != 1:
             self.fail ("Failed to stop at breakpoint in a.")
+
+        # Check that the stop ID increases:
+        new_stop_id = process.GetStopID()
+        self.assertTrue(new_stop_id > old_stop_id, "Stop ID increases monotonically.")
 
         thread = threads[0]
 
@@ -99,13 +106,25 @@ class TestObjCStepping(TestBase):
         current_bp.append(thread.GetStopReasonDataAtIndex(0))
         current_bp.append(thread.GetStopReasonDataAtIndex(1))
 
-        frame.EvaluateExpression ('(int) printf ("aaaaaaaaaa\n")')
+        stop_id_before_expression = process.GetStopID()
+        stop_id_before_including_expressions = process.GetStopID(True)
+
+        frame.EvaluateExpression ("(int) printf (print_string)")
 
         frame = thread.GetFrameAtIndex(0)
         self.assertTrue (current_line == frame.GetLineEntry().GetLine(), "The line stayed the same after expression.")
         self.assertTrue (current_file == frame.GetLineEntry().GetFileSpec(), "The file stayed the same after expression.")
         self.assertTrue (thread.GetStopReason() == lldb.eStopReasonBreakpoint, "We still say we stopped for a breakpoint.")
         self.assertTrue (thread.GetStopReasonDataAtIndex(0) == current_bp[0] and thread.GetStopReasonDataAtIndex(1) == current_bp[1], "And it is the same breakpoint.")
+        
+        # Also make sure running the expression didn't change the public stop id
+        # but did change if we are asking for expression stops as well.
+        stop_id_after_expression = process.GetStopID()
+        stop_id_after_including_expressions = process.GetStopID(True)
+
+        self.assertTrue (stop_id_before_expression == stop_id_after_expression, "Expression calling doesn't change stop ID")
+
+        self.assertTrue (stop_id_after_including_expressions > stop_id_before_including_expressions, "Stop ID including expressions increments over expression call.")
 
         # Do the same thing with an expression that's going to crash, and make sure we are still unchanged.
 
