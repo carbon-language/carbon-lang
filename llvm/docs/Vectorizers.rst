@@ -120,6 +120,8 @@ reduction operations, such as addition, multiplication, XOR, AND and OR.
     return sum;
   }
 
+We support floating point reduction operations when `-ffast-math` is used.
+
 Inductions
 ^^^^^^^^^^
 
