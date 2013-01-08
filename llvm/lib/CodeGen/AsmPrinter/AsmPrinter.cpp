@@ -1784,27 +1784,30 @@ static void emitGlobalConstantFP(const ConstantFP *CFP, unsigned AddrSpace,
     return;
   }
 
-  if (CFP->getType()->isX86_FP80Ty()) {
+  if (CFP->getType()->isX86_FP80Ty() || CFP->getType()->isFP128Ty()) {
     // all long double variants are printed as hex
     // API needed to prevent premature destruction
     APInt API = CFP->getValueAPF().bitcastToAPInt();
     const uint64_t *p = API.getRawData();
     if (AP.isVerbose()) {
       // Convert to double so we can print the approximate val as a comment.
-      APFloat DoubleVal = CFP->getValueAPF();
-      bool ignored;
-      DoubleVal.convert(APFloat::IEEEdouble, APFloat::rmNearestTiesToEven,
-                        &ignored);
-      AP.OutStreamer.GetCommentOS() << "x86_fp80 ~= "
-        << DoubleVal.convertToDouble() << '\n';
+      SmallString<8> StrVal;
+      CFP->getValueAPF().toString(StrVal);
+
+      const char *TyNote = CFP->getType()->isFP128Ty() ? "fp128 " : "x86_fp80 ";
+      AP.OutStreamer.GetCommentOS() << TyNote << StrVal << '\n';
     }
 
+    // The 80-bit type is made of a 64-bit and 16-bit value, the 128-bit has 2
+    // 64-bit words.
+    uint32_t TrailingSize = CFP->getType()->isFP128Ty() ? 8 : 2;
+
     if (AP.TM.getDataLayout()->isBigEndian()) {
-      AP.OutStreamer.EmitIntValue(p[1], 2, AddrSpace);
+      AP.OutStreamer.EmitIntValue(p[1], TrailingSize, AddrSpace);
       AP.OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
     } else {
       AP.OutStreamer.EmitIntValue(p[0], 8, AddrSpace);
-      AP.OutStreamer.EmitIntValue(p[1], 2, AddrSpace);
+      AP.OutStreamer.EmitIntValue(p[1], TrailingSize, AddrSpace);
     }
 
     // Emit the tail padding for the long double.
