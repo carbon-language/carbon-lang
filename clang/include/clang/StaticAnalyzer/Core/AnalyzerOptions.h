@@ -304,7 +304,7 @@ public:
     NoRetryExhausted = 0;
     // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).
     InlineMaxStackDepth = 5;
-    InlineMaxFunctionSize = 200;
+    InlineMaxFunctionSize = 50;
     InliningMode = NoRedundancy;
   }
 };
