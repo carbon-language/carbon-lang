@@ -135,7 +135,10 @@ ThreadMemory::GetPrivateStopReason ()
 void
 ThreadMemory::RefreshStateAfterStop()
 {
-    RegisterContextSP reg_ctx_sp(GetRegisterContext());
+    // Don't fetch the registers by calling Thread::GetRegisterContext() below.
+    // We might not have fetched any registers yet and we don't want to fetch
+    // the registers just to call invalidate on them...
+    RegisterContextSP reg_ctx_sp(m_reg_context_sp);
     if (reg_ctx_sp)
     {
         const bool force = true;
