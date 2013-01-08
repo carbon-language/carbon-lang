@@ -1561,7 +1561,7 @@ StringRef FunctionType::getNameForCallConv(CallingConv CC) {
 FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
                                      unsigned numArgs, QualType canonical,
                                      const ExtProtoInfo &epi)
-  : FunctionType(FunctionProto, result, epi.TypeQuals, epi.RefQualifier,
+  : FunctionType(FunctionProto, result, epi.TypeQuals,
                  canonical,
                  result->isDependentType(),
                  result->isInstantiationDependentType(),
@@ -1571,8 +1571,11 @@ FunctionProtoType::FunctionProtoType(QualType result, const QualType *args,
     NumArgs(numArgs), NumExceptions(epi.NumExceptions),
     ExceptionSpecType(epi.ExceptionSpecType),
     HasAnyConsumedArgs(epi.ConsumedArguments != 0),
-    Variadic(epi.Variadic), HasTrailingReturn(epi.HasTrailingReturn)
+    Variadic(epi.Variadic), HasTrailingReturn(epi.HasTrailingReturn),
+    RefQualifier(epi.RefQualifier)
 {
+  assert(NumArgs == numArgs && "function has too many parameters");
+
   // Fill in the trailing argument array.
   QualType *argSlot = reinterpret_cast<QualType*>(this+1);
   for (unsigned i = 0; i != numArgs; ++i) {
