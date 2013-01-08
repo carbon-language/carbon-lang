@@ -54,6 +54,13 @@ FileSpec
 PlatformDarwin::LocateExecutableScriptingResource (const ModuleSpec &module_spec)
 {
     const FileSpec *exec_fspec = module_spec.GetFileSpecPtr();
+    // APIs such as NSLinkModule() allow us to attach a library without a filename
+    // make sure we do not crash under those circumstances
+    if (!exec_fspec)
+        return FileSpec();
+
+    // if the arch and uuid are ever used for anything other than display purposes
+    // make sure they are not NULL before proceeding
     const ArchSpec *arch = module_spec.GetArchitecturePtr();
     const UUID *uuid = module_spec.GetUUIDPtr();
     
