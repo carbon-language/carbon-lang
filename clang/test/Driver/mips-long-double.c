@@ -1,7 +1,7 @@
 // RUN: %clang_cc1 -triple mips64-unknown-freebsd -std=c11 -verify %s
 // RUN: %clang_cc1 -triple mips-unknown-freebsd -std=c11 -verify %s
-// RUN: %clang_cc1 -triple mips-unknown-linux-std=c11 -verify %s
-// RUN: %clang_cc1 -triple mips64-unknown-linux-std=c11 -verify %s
+// RUN: %clang_cc1 -triple mips-unknown-linux -std=c11 -verify %s
+// RUN: %clang_cc1 -triple mips64-unknown-linux -std=c11 -verify %s
 // expected-no-diagnostics
 
 #ifdef _ABI64
