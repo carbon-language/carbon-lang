@@ -537,8 +537,8 @@ TEST_F(FormatTest, LayoutRemainingTokens) {
 }
 
 TEST_F(FormatTest, LayoutSingleUnwrappedLineInMacro) {
-  EXPECT_EQ("#define A \\\n  b;",
-            format("#define A b;", 10, 2, getLLVMStyleWithColumns(11)));
+  EXPECT_EQ("# define A\\\n  b;",
+            format("# define A b;", 11, 2, getLLVMStyleWithColumns(11)));
 }
 
 TEST_F(FormatTest, MacroDefinitionInsideStatement) {

@@ -74,7 +74,8 @@ private:
 UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          FormatTokenSource &Tokens,
                                          UnwrappedLineConsumer &Callback)
-    : Style(Style), Tokens(&Tokens), Callback(Callback) {
+    : RootTokenInitialized(false), Style(Style), Tokens(&Tokens),
+      Callback(Callback) {
 }
 
 bool UnwrappedLineParser::parse() {
@@ -493,13 +494,15 @@ void UnwrappedLineParser::parseStructOrClass() {
 }
 
 void UnwrappedLineParser::addUnwrappedLine() {
+  if (!RootTokenInitialized)
+    return;
   // Consume trailing comments.
   while (!eof() && FormatTok.NewlinesBefore == 0 &&
          FormatTok.Tok.is(tok::comment)) {
     nextToken();
   }
   Callback.consumeUnwrappedLine(Line);
-  Line.Tokens.clear();
+  RootTokenInitialized = false;
 }
 
 bool UnwrappedLineParser::eof() const {
@@ -509,7 +512,14 @@ bool UnwrappedLineParser::eof() const {
 void UnwrappedLineParser::nextToken() {
   if (eof())
     return;
-  Line.Tokens.push_back(FormatTok);
+  if (RootTokenInitialized) {
+    LastInCurrentLine->Children.push_back(FormatTok);
+    LastInCurrentLine = &LastInCurrentLine->Children.back();
+  } else {
+    Line.RootToken = FormatTok;
+    RootTokenInitialized = true;
+    LastInCurrentLine = &Line.RootToken;
+  }
   readToken();
 }
 

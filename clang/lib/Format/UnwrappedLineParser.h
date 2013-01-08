@@ -24,6 +24,8 @@
 #include "clang/Format/Format.h"
 #include "clang/Lex/Lexer.h"
 
+#include <vector>
+
 namespace clang {
 namespace format {
 
@@ -65,6 +67,11 @@ struct FormatToken {
 
   /// \brief Indicates that this is the first token.
   bool IsFirst;
+
+  // FIXME: We currently assume that there is exactly one token in this vector
+  // except for the very last token that does not have any children.
+  /// \brief All tokens that logically follow this token.
+  std::vector<FormatToken> Children;
 };
 
 /// \brief An unwrapped line is a sequence of \c Token, that we would like to
@@ -78,7 +85,7 @@ struct UnwrappedLine {
   }
 
   /// \brief The \c Token comprising this \c UnwrappedLine.
-  SmallVector<FormatToken, 16> Tokens;
+  FormatToken RootToken;
 
   /// \brief The indent level of the \c UnwrappedLine.
   unsigned Level;
@@ -138,6 +145,8 @@ private:
   // subtracted from beyond 0. Introduce a method to subtract from Line.Level
   // and use that everywhere in the Parser.
   UnwrappedLine Line;
+  bool RootTokenInitialized;
+  FormatToken *LastInCurrentLine;
   FormatToken FormatTok;
 
   const FormatStyle &Style;
