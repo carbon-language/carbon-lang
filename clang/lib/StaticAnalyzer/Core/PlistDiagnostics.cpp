@@ -495,25 +495,32 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
         // Output the bug hash for issue unique-ing. Currently, it's just an
         // offset from the beginning of the function.
         if (const Stmt *Body = DeclWithIssue->getBody()) {
-          FullSourceLoc Loc(SM->getExpansionLoc(D->getLocation().asLocation()),
-                            *SM);
-          FullSourceLoc FunLoc(SM->getExpansionLoc(Body->getLocStart()), *SM);
-          o << "  <key>issue_hash</key><string>"
-            << Loc.getExpansionLineNumber() - FunLoc.getExpansionLineNumber();
           
-          // Augment the hash with the bug uniqueing location. For example, 
-          // this ensures that two leaks reported on the same line will have 
-          // different issue_hashes.
+          // If the bug uniqueing location exists, use it for the hash.
+          // For example, this ensures that two leaks reported on the same line
+          // will have different issue_hashes and that the hash will identify
+          // the leak location even after code is added between the allocation
+          // site and the end of scope (leak report location).
           PathDiagnosticLocation UPDLoc = D->getUniqueingLoc();
           if (UPDLoc.isValid()) {
             FullSourceLoc UL(SM->getExpansionLoc(UPDLoc.asLocation()),
                              *SM);
             FullSourceLoc UFunL(SM->getExpansionLoc(
               D->getUniqueingDecl()->getBody()->getLocStart()), *SM);
-            o << "_" 
-              << UL.getExpansionLineNumber() - UFunL.getExpansionLineNumber();
+            o << "  <key>issue_hash</key><string>"
+              << UL.getExpansionLineNumber() - UFunL.getExpansionLineNumber()
+              << "</string>\n";
+
+          // Otherwise, use the location on which the bug is reported.
+          } else {
+            FullSourceLoc L(SM->getExpansionLoc(D->getLocation().asLocation()),
+                            *SM);
+            FullSourceLoc FunL(SM->getExpansionLoc(Body->getLocStart()), *SM);
+            o << "  <key>issue_hash</key><string>"
+              << L.getExpansionLineNumber() - FunL.getExpansionLineNumber()
+              << "</string>\n";
           }
-          o << "</string>\n";
+
         }
       }
     }
