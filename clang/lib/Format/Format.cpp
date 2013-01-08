@@ -1049,9 +1049,8 @@ private:
     if (Left.ClosesTemplateDeclaration)
       return true;
     if (Left.Type == TT_PointerOrReference || Left.Type == TT_TemplateCloser ||
-        Right.Type == TT_ConditionalExpr) {
+        Left.Type == TT_UnaryOperator || Right.Type == TT_ConditionalExpr)
       return false;
-    }
     if (Left.is(tok::equal) && CurrentLineType == LT_VirtualFunctionDecl)
       return false;
 

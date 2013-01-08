@@ -958,7 +958,6 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
 
   verifyFormat("InvalidRegions[*R] = 0;");
 
-  // FIXME: Is this desired for LLVM? Fix if not.
   verifyFormat("A<int *> a;");
   verifyFormat("A<int **> a;");
   verifyFormat("A<int *, int *> a;");
@@ -966,6 +965,10 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("Type *A = static_cast<Type *>(P);");
   verifyFormat("Type *A = (Type *) P;");
   verifyFormat("Type *A = (vector<Type *, int *>) P;");
+
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaaaaaa, *aaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
 
   verifyGoogleFormat("int main(int argc, char** argv) {\n}");
   verifyGoogleFormat("A<int*> a;");
