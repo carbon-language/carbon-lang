@@ -40,9 +40,15 @@ void IO::setContext(void *Context) {
 //  Input
 //===----------------------------------------------------------------------===//
 
-Input::Input(StringRef InputContent, void *Ctxt) : IO(Ctxt), CurrentNode(NULL) {
-  Strm = new Stream(InputContent, SrcMgr);
+Input::Input(StringRef InputContent, void *Ctxt) 
+  : IO(Ctxt), 
+    Strm(new Stream(InputContent, SrcMgr)),
+    CurrentNode(NULL) {
   DocIterator = Strm->begin();
+}
+
+Input::~Input() {
+  
 }
 
 error_code Input::error() {
@@ -65,7 +71,8 @@ bool Input::setCurrentDocument() {
       ++DocIterator;
       return setCurrentDocument();
     }
-    CurrentNode = this->createHNodes(N);
+    TopNode.reset(this->createHNodes(N));
+    CurrentNode = TopNode.get();
     return true;
   }
   return false;
@@ -271,13 +278,13 @@ Input::HNode *Input::createHNodes(Node *N) {
     if (!StringStorage.empty()) {
       // Copy string to permanent storage
       unsigned Len = StringStorage.size();
-      char *Buf = Allocator.Allocate<char>(Len);
+      char *Buf = StringAllocator.Allocate<char>(Len);
       memcpy(Buf, &StringStorage[0], Len);
       KeyStr = StringRef(Buf, Len);
     }
-    return new (Allocator) ScalarHNode(N, KeyStr);
+    return new ScalarHNode(N, KeyStr);
   } else if (SequenceNode *SQ = dyn_cast<SequenceNode>(N)) {
-    SequenceHNode *SQHNode = new (Allocator) SequenceHNode(N);
+    SequenceHNode *SQHNode = new SequenceHNode(N);
     for (SequenceNode::iterator i = SQ->begin(), End = SQ->end(); i != End;
          ++i) {
       HNode *Entry = this->createHNodes(i);
@@ -287,7 +294,7 @@ Input::HNode *Input::createHNodes(Node *N) {
     }
     return SQHNode;
   } else if (MappingNode *Map = dyn_cast<MappingNode>(N)) {
-    MapHNode *mapHNode = new (Allocator) MapHNode(N);
+    MapHNode *mapHNode = new MapHNode(N);
     for (MappingNode::iterator i = Map->begin(), End = Map->end(); i != End;
          ++i) {
       ScalarNode *KeyScalar = dyn_cast<ScalarNode>(i->getKey());
@@ -296,7 +303,7 @@ Input::HNode *Input::createHNodes(Node *N) {
       if (!StringStorage.empty()) {
         // Copy string to permanent storage
         unsigned Len = StringStorage.size();
-        char *Buf = Allocator.Allocate<char>(Len);
+        char *Buf = StringAllocator.Allocate<char>(Len);
         memcpy(Buf, &StringStorage[0], Len);
         KeyStr = StringRef(Buf, Len);
       }
@@ -307,7 +314,7 @@ Input::HNode *Input::createHNodes(Node *N) {
     }
     return mapHNode;
   } else if (isa<NullNode>(N)) {
-    return new (Allocator) EmptyHNode(N);
+    return new EmptyHNode(N);
   } else {
     setError(N, "unknown node kind");
     return NULL;
@@ -326,6 +333,22 @@ bool Input::MapHNode::isValidKey(StringRef Key) {
 void Input::setError(const Twine &Message) {
   this->setError(CurrentNode, Message);
 }
+
+Input::MapHNode::~MapHNode() {
+  for (MapHNode::NameToNode::iterator i = Mapping.begin(), End = Mapping.end();
+                                                                i != End; ++i) {
+    delete i->second;
+  }
+}
+
+Input::SequenceHNode::~SequenceHNode() {
+  for (std::vector<HNode*>::iterator i = Entries.begin(), End = Entries.end();
+                                                                i != End; ++i) {
+    delete *i;
+  }
+}
+
+
 
 //===----------------------------------------------------------------------===//
 //  Output

@@ -685,7 +685,8 @@ class Input : public IO {
 public:
   // Construct a yaml Input object from a StringRef and optional user-data.
   Input(StringRef InputContent, void *Ctxt=NULL);
-
+  ~Input();
+  
   // Check if there was an syntax or semantic error during parsing.
   llvm::error_code error();
 
@@ -718,6 +719,7 @@ private:
   class HNode {
   public:
     HNode(Node *n) : _node(n) { }
+    virtual ~HNode() { }
     static inline bool classof(const HNode *) { return true; }
 
     Node *_node;
@@ -726,6 +728,7 @@ private:
   class EmptyHNode : public HNode {
   public:
     EmptyHNode(Node *n) : HNode(n) { }
+    virtual ~EmptyHNode() {}
     static inline bool classof(const HNode *n) {
       return NullNode::classof(n->_node);
     }
@@ -735,6 +738,7 @@ private:
   class ScalarHNode : public HNode {
   public:
     ScalarHNode(Node *n, StringRef s) : HNode(n), _value(s) { }
+    virtual ~ScalarHNode() { }
 
     StringRef value() const { return _value; }
 
@@ -749,6 +753,7 @@ private:
   class MapHNode : public HNode {
   public:
     MapHNode(Node *n) : HNode(n) { }
+    virtual ~MapHNode();
 
     static inline bool classof(const HNode *n) {
       return MappingNode::classof(n->_node);
@@ -774,6 +779,7 @@ private:
   class SequenceHNode : public HNode {
   public:
     SequenceHNode(Node *n) : HNode(n) { }
+    virtual ~SequenceHNode();
 
     static inline bool classof(const HNode *n) {
       return SequenceNode::classof(n->_node);
@@ -795,10 +801,11 @@ public:
   void nextDocument();
 
 private:
-  llvm::yaml::Stream              *Strm;
-  llvm::SourceMgr                  SrcMgr;
+  llvm::SourceMgr                  SrcMgr; // must be before Strm
+  OwningPtr<llvm::yaml::Stream>    Strm;
+  OwningPtr<HNode>                 TopNode;
   llvm::error_code                 EC;
-  llvm::BumpPtrAllocator           Allocator;
+  llvm::BumpPtrAllocator           StringAllocator;
   llvm::yaml::document_iterator    DocIterator;
   std::vector<bool>                BitValuesUsed;
   HNode                           *CurrentNode;
