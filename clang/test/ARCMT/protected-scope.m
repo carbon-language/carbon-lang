@@ -18,6 +18,7 @@ void test(id p, int x) {
     id w3 = p;
     break;
   case 2:
+  case 3:
     break;
   default:
     break;

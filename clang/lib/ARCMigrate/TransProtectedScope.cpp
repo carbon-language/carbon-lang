@@ -15,6 +15,7 @@
 #include "Transforms.h"
 #include "Internals.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "clang/AST/ASTContext.h"
 
 using namespace clang;
 using namespace arcmt;
@@ -22,26 +23,58 @@ using namespace trans;
 
 namespace {
 
+class LocalRefsCollector : public RecursiveASTVisitor<LocalRefsCollector> {
+  SmallVectorImpl<DeclRefExpr *> &Refs;
+
+public:
+  LocalRefsCollector(SmallVectorImpl<DeclRefExpr *> &refs)
+    : Refs(refs) { }
+
+  bool VisitDeclRefExpr(DeclRefExpr *E) {
+    if (ValueDecl *D = E->getDecl())
+      if (D->getDeclContext()->getRedeclContext()->isFunctionOrMethod())
+        Refs.push_back(E);
+    return true;
+  }
+};
+
 struct CaseInfo {
   SwitchCase *SC;
   SourceRange Range;
-  bool FixedBypass;
+  enum {
+    St_Unchecked,
+    St_CannotFix,
+    St_Fixed
+  } State;
   
-  CaseInfo() : SC(0), FixedBypass(false) {}
+  CaseInfo() : SC(0), State(St_Unchecked) {}
   CaseInfo(SwitchCase *S, SourceRange Range)
-    : SC(S), Range(Range), FixedBypass(false) {}
+    : SC(S), Range(Range), State(St_Unchecked) {}
 };
 
 class CaseCollector : public RecursiveASTVisitor<CaseCollector> {
+  ParentMap &PMap;
   llvm::SmallVectorImpl<CaseInfo> &Cases;
 
 public:
-  CaseCollector(llvm::SmallVectorImpl<CaseInfo> &Cases)
-    : Cases(Cases) { }
+  CaseCollector(ParentMap &PMap, llvm::SmallVectorImpl<CaseInfo> &Cases)
+    : PMap(PMap), Cases(Cases) { }
 
   bool VisitSwitchStmt(SwitchStmt *S) {
-    SourceLocation NextLoc = S->getLocEnd();
     SwitchCase *Curr = S->getSwitchCaseList();
+    if (!Curr)
+      return true;
+    Stmt *Parent = getCaseParent(Curr);
+    Curr = Curr->getNextSwitchCase();
+    // Make sure all case statements are in the same scope.
+    while (Curr) {
+      if (getCaseParent(Curr) != Parent)
+        return true;
+      Curr = Curr->getNextSwitchCase();
+    }
+
+    SourceLocation NextLoc = S->getLocEnd();
+    Curr = S->getSwitchCaseList();
     // We iterate over case statements in reverse source-order.
     while (Curr) {
       Cases.push_back(CaseInfo(Curr,SourceRange(Curr->getLocStart(), NextLoc)));
@@ -50,69 +83,114 @@ public:
     }
     return true;
   }
+
+  Stmt *getCaseParent(SwitchCase *S) {
+    Stmt *Parent = PMap.getParent(S);
+    while (Parent && (isa<SwitchCase>(Parent) || isa<LabelStmt>(Parent)))
+      Parent = PMap.getParent(Parent);
+    return Parent;
+  }
+};
+
+class ProtectedScopeFixer {
+  MigrationPass &Pass;
+  SourceManager &SM;
+  SmallVector<CaseInfo, 16> Cases;
+  SmallVector<DeclRefExpr *, 16> LocalRefs;
+
+public:
+  ProtectedScopeFixer(BodyContext &BodyCtx)
+    : Pass(BodyCtx.getMigrationContext().Pass),
+      SM(Pass.Ctx.getSourceManager()) {
+
+    CaseCollector(BodyCtx.getParentMap(), Cases)
+        .TraverseStmt(BodyCtx.getTopStmt());
+    LocalRefsCollector(LocalRefs).TraverseStmt(BodyCtx.getTopStmt());
+
+    SourceRange BodyRange = BodyCtx.getTopStmt()->getSourceRange();
+    const CapturedDiagList &DiagList = Pass.getDiags();
+    CapturedDiagList::iterator I = DiagList.begin(), E = DiagList.end();
+    while (I != E) {
+      if (I->getID() == diag::err_switch_into_protected_scope &&
+          isInRange(I->getLocation(), BodyRange)) {
+        handleProtectedScopeError(I, E);
+        continue;
+      }
+      ++I;
+    }
+  }
+
+  void handleProtectedScopeError(CapturedDiagList::iterator &DiagI,
+                                 CapturedDiagList::iterator DiagE) {
+    Transaction Trans(Pass.TA);
+    assert(DiagI->getID() == diag::err_switch_into_protected_scope);
+    SourceLocation ErrLoc = DiagI->getLocation();
+    bool handledAllNotes = true;
+    ++DiagI;
+    for (; DiagI != DiagE && DiagI->getLevel() == DiagnosticsEngine::Note;
+         ++DiagI) {
+      if (!handleProtectedNote(*DiagI))
+        handledAllNotes = false;
+    }
+
+    if (handledAllNotes)
+      Pass.TA.clearDiagnostic(diag::err_switch_into_protected_scope, ErrLoc);
+  }
+
+  bool handleProtectedNote(const StoredDiagnostic &Diag) {
+    assert(Diag.getLevel() == DiagnosticsEngine::Note);
+
+    for (unsigned i = 0; i != Cases.size(); i++) {
+      CaseInfo &info = Cases[i];
+      if (isInRange(Diag.getLocation(), info.Range)) {
+
+        if (info.State == CaseInfo::St_Unchecked)
+          tryFixing(info);
+        assert(info.State != CaseInfo::St_Unchecked);
+
+        if (info.State == CaseInfo::St_Fixed) {
+          Pass.TA.clearDiagnostic(Diag.getID(), Diag.getLocation());
+          return true;
+        }
+        return false;
+      }
+    }
+
+    return false;
+  }
+
+  void tryFixing(CaseInfo &info) {
+    assert(info.State == CaseInfo::St_Unchecked);
+    if (hasVarReferencedOutside(info)) {
+      info.State = CaseInfo::St_CannotFix;
+      return;
+    }
+
+    Pass.TA.insertAfterToken(info.SC->getColonLoc(), " {");
+    Pass.TA.insert(info.Range.getEnd(), "}\n");
+    info.State = CaseInfo::St_Fixed;
+  }
+
+  bool hasVarReferencedOutside(CaseInfo &info) {
+    for (unsigned i = 0, e = LocalRefs.size(); i != e; ++i) {
+      DeclRefExpr *DRE = LocalRefs[i];
+      if (isInRange(DRE->getDecl()->getLocation(), info.Range) &&
+          !isInRange(DRE->getLocation(), info.Range))
+        return true;
+    }
+    return false;
+  }
+
+  bool isInRange(SourceLocation Loc, SourceRange R) {
+    if (Loc.isInvalid())
+      return false;
+    return !SM.isBeforeInTranslationUnit(Loc, R.getBegin()) &&
+            SM.isBeforeInTranslationUnit(Loc, R.getEnd());
+  }
 };
 
 } // anonymous namespace
 
-static bool isInRange(FullSourceLoc Loc, SourceRange R) {
-  return !Loc.isBeforeInTranslationUnitThan(R.getBegin()) &&
-          Loc.isBeforeInTranslationUnitThan(R.getEnd());
-}
-
-static bool handleProtectedNote(const StoredDiagnostic &Diag,
-                                llvm::SmallVectorImpl<CaseInfo> &Cases,
-                                TransformActions &TA) {
-  assert(Diag.getLevel() == DiagnosticsEngine::Note);
-
-  for (unsigned i = 0; i != Cases.size(); i++) {
-    CaseInfo &info = Cases[i];
-    if (isInRange(Diag.getLocation(), info.Range)) {
-      TA.clearDiagnostic(Diag.getID(), Diag.getLocation());
-      if (!info.FixedBypass) {
-        TA.insertAfterToken(info.SC->getColonLoc(), " {");
-        TA.insert(info.Range.getEnd(), "}\n");
-        info.FixedBypass = true;
-      }
-      return true;
-    }
-  }
-
-  return false;
-}
-
-static void handleProtectedScopeError(CapturedDiagList::iterator &DiagI,
-                                      CapturedDiagList::iterator DiagE,
-                                      llvm::SmallVectorImpl<CaseInfo> &Cases,
-                                      TransformActions &TA) {
-  Transaction Trans(TA);
-  assert(DiagI->getID() == diag::err_switch_into_protected_scope);
-  SourceLocation ErrLoc = DiagI->getLocation();
-  bool handledAllNotes = true;
-  ++DiagI;
-  for (; DiagI != DiagE && DiagI->getLevel() == DiagnosticsEngine::Note;
-       ++DiagI) {
-    if (!handleProtectedNote(*DiagI, Cases, TA))
-      handledAllNotes = false;
-  }
-
-  if (handledAllNotes)
-    TA.clearDiagnostic(diag::err_switch_into_protected_scope, ErrLoc);
-}
-
 void ProtectedScopeTraverser::traverseBody(BodyContext &BodyCtx) {
-  MigrationPass &Pass = BodyCtx.getMigrationContext().Pass;
-  SmallVector<CaseInfo, 16> Cases;
-  CaseCollector(Cases).TraverseStmt(BodyCtx.getTopStmt());
-
-  SourceRange BodyRange = BodyCtx.getTopStmt()->getSourceRange();
-  const CapturedDiagList &DiagList = Pass.getDiags();
-  CapturedDiagList::iterator I = DiagList.begin(), E = DiagList.end();
-  while (I != E) {
-    if (I->getID() == diag::err_switch_into_protected_scope &&
-        isInRange(I->getLocation(), BodyRange)) {
-      handleProtectedScopeError(I, E, Cases, Pass.TA);
-      continue;
-    }
-    ++I;
-  }
+  ProtectedScopeFixer Fix(BodyCtx);
 }
