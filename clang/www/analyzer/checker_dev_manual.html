@@ -116,28 +116,44 @@ for general developer guidelines and information. </p>
   
   <h3>Representing Values</h3>
   During symbolic execution, <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1SVal.html">SVal</a> 
-  objects are used to represent the semantic evaluation of expressions. They can 
-  represent things like concrete integers, symbolic values, or memory locations 
-  (which are memory regions). They are a discriminated union of "values", 
-  symbolic and otherwise.
+  objects are used to represent the semantic evaluation of expressions. 
+  They can represent things like concrete 
+  integers, symbolic values, or memory locations (which are memory regions). 
+  They are a discriminated union of "values", symbolic and otherwise. 
+  If a value isn't symbolic, usually that means there is no symbolic 
+  information to track. For example, if the value was an integer, such as 
+  <tt>42</tt>, it would be a <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1nonloc_1_1ConcreteInt.html">ConcreteInt</a>, 
+  and the checker doesn't usually need to track any state with the concrete 
+  number. In some cases, <tt>SVal</tt> is not a symbol, but it really should be 
+  a symbolic value. This happens when the analyzer cannot reason about something 
+  (yet). An example is floating point numbers. In such cases, the 
+  <tt>SVal</tt> will evaluate to <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1UnknownVal.html">UnknownVal<a>. 
+  This represents a case that is outside the realm of the analyzer's reasoning 
+  capabilities. <tt>SVals</tt> are value objects and their values can be viewed 
+  using the <tt>.dump()</tt> method. Often they wrap persistent objects such as 
+  symbols or regions. 
   <p>
   <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1SymExpr.html">SymExpr</a> (symbol) 
-  is meant to represent abstract, but named, symbolic value. 
-  Symbolic values can have constraints associated with them. Symbols represent 
+  is meant to represent abstract, but named, symbolic value. Symbols represent 
   an actual (immutable) value. We might not know what its specific value is, but 
-  we can associate constraints with that value as we analyze a path. 
+  we can associate constraints with that value as we analyze a path. For 
+  example, we might record that the value of a symbol is greater than 
+  <tt>0</tt>, etc.
   <p>
-  
+
+  <p>
   <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1MemRegion.html">MemRegion</a> is similar to a symbol.  
   It is used to provide a lexicon of how to describe abstract memory. Regions can 
   layer on top of other regions, providing a layered approach to representing memory. 
   For example, a struct object on the stack might be represented by a <tt>VarRegion</tt>, 
   but a <tt>FieldRegion</tt> which is a subregion of the <tt>VarRegion</tt> could 
   be used to represent the memory associated with a specific field of that object.
-  So how do we represent symbolic memory regions? That's what <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1SymbolicRegion.html">SymbolicRegion</a> 
-  is for.  It is a <tt>MemRegion</tt> that has an associated symbol. Since the 
+  So how do we represent symbolic memory regions? That's what 
+  <a href="http://clang.llvm.org/doxygen/classclang_1_1ento_1_1SymbolicRegion.html">SymbolicRegion</a> 
+  is for. It is a <tt>MemRegion</tt> that has an associated symbol. Since the 
   symbol is unique and has a unique name; that symbol names the region.
-  <p>
+  
+  <P>
   Let's see how the analyzer processes the expressions in the following example:
   <p>
   <pre class="code_example">
