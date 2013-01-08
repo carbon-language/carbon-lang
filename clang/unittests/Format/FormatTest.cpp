@@ -1170,7 +1170,11 @@ TEST_F(FormatTest, ObjCSnippets) {
   verifyFormat("@compatibility_alias AliasName ExistingClass;");
   verifyFormat("@dynamic textColor;");
   //verifyFormat("char *buf1 = @encode(int **);");
+  verifyFormat("Protocol *proto = @protocol(p1);");
   //verifyFormat("SEL s = @selector(foo:);");
+  verifyFormat("@synchronized(self) {\n"
+               "  f();\n"
+               "}");
   verifyFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
 
   // FIXME: "getter=bar" should not be surround by spaces in @property.
