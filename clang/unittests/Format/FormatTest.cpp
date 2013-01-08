@@ -1144,10 +1144,17 @@ TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@ /*foo*/ interface");
 }
 
-TEST_F(FormatTest, ObjCOneLiners) {
+TEST_F(FormatTest, ObjCSnippets) {
+  // FIXME: Make the uncommented lines below pass.
+  verifyFormat("@autoreleasepool {\n"
+               "  foo();\n"
+               "}");
   verifyFormat("@class Foo, Bar;");
-  verifyFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
+  verifyFormat("@compatibility_alias AliasName ExistingClass;");
   verifyFormat("@dynamic textColor;");
+  //verifyFormat("char *buf1 = @encode(int **);");
+  //verifyFormat("SEL s = @selector(foo:);");
+  verifyFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
 
   // FIXME: "getter=bar" should not be surround by spaces in @property.
   verifyFormat("@property(assign, nonatomic) CGFloat hoverAlpha;");
