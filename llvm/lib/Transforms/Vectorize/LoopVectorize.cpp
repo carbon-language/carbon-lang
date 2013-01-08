@@ -1263,6 +1263,29 @@ isTriviallyVectorizableIntrinsic(Instruction *Inst) {
   return false;
 }
 
+/// This function translates the reduction kind to an LLVM binary operator.
+static Instruction::BinaryOps
+getReductionBinOp(LoopVectorizationLegality::ReductionKind Kind) {
+  switch (Kind) {
+    case LoopVectorizationLegality::RK_IntegerAdd:
+      return Instruction::Add;
+    case LoopVectorizationLegality::RK_IntegerMult:
+      return Instruction::Mul;
+    case LoopVectorizationLegality::RK_IntegerOr:
+      return Instruction::Or;
+    case LoopVectorizationLegality::RK_IntegerAnd:
+      return Instruction::And;
+    case LoopVectorizationLegality::RK_IntegerXor:
+      return Instruction::Xor;
+    case LoopVectorizationLegality::RK_FloatMult:
+      return Instruction::FMul;
+    case LoopVectorizationLegality::RK_FloatAdd:
+      return Instruction::FAdd;
+    default:
+      llvm_unreachable("Unknown reduction operation");
+  }
+}
+
 void
 InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
   //===------------------------------------------------===//
@@ -1376,40 +1399,10 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // Reduce all of the unrolled parts into a single vector.
     Value *ReducedPartRdx = RdxParts[0];
     for (unsigned part = 1; part < UF; ++part) {
-      switch (RdxDesc.Kind) {
-      case LoopVectorizationLegality::RK_IntegerAdd:
-        ReducedPartRdx = 
-          Builder.CreateAdd(RdxParts[part], ReducedPartRdx, "add.rdx");
-        break;
-      case LoopVectorizationLegality::RK_IntegerMult:
-        ReducedPartRdx =
-          Builder.CreateMul(RdxParts[part], ReducedPartRdx, "mul.rdx");
-        break;
-      case LoopVectorizationLegality::RK_IntegerOr:
-        ReducedPartRdx =
-          Builder.CreateOr(RdxParts[part], ReducedPartRdx, "or.rdx");
-        break;
-      case LoopVectorizationLegality::RK_IntegerAnd:
-        ReducedPartRdx =
-          Builder.CreateAnd(RdxParts[part], ReducedPartRdx, "and.rdx");
-        break;
-      case LoopVectorizationLegality::RK_IntegerXor:
-        ReducedPartRdx =
-          Builder.CreateXor(RdxParts[part], ReducedPartRdx, "xor.rdx");
-        break;
-      case LoopVectorizationLegality::RK_FloatMult:
-        ReducedPartRdx =
-          Builder.CreateFMul(RdxParts[part], ReducedPartRdx, "fmul.rdx");
-        break;
-      case LoopVectorizationLegality::RK_FloatAdd:
-        ReducedPartRdx =
-          Builder.CreateFAdd(RdxParts[part], ReducedPartRdx, "fadd.rdx");
-        break;
-      default:
-        llvm_unreachable("Unknown reduction operation");
-      }
+      Instruction::BinaryOps Op = getReductionBinOp(RdxDesc.Kind);
+      ReducedPartRdx = Builder.CreateBinOp(Op, RdxParts[part], ReducedPartRdx,
+                                           "bin.rdx");
     }
-    
 
     // VF is a power of 2 so we can emit the reduction using log2(VF) shuffles
     // and vector ops, reducing the set of values being computed by half each
@@ -1433,32 +1426,8 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
                                     ConstantVector::get(ShuffleMask),
                                     "rdx.shuf");
 
-      // Emit the operation on the shuffled value.
-      switch (RdxDesc.Kind) {
-      case LoopVectorizationLegality::RK_IntegerAdd:
-        TmpVec = Builder.CreateAdd(TmpVec, Shuf, "add.rdx");
-        break;
-      case LoopVectorizationLegality::RK_IntegerMult:
-        TmpVec = Builder.CreateMul(TmpVec, Shuf, "mul.rdx");
-        break;
-      case LoopVectorizationLegality::RK_IntegerOr:
-        TmpVec = Builder.CreateOr(TmpVec, Shuf, "or.rdx");
-        break;
-      case LoopVectorizationLegality::RK_IntegerAnd:
-        TmpVec = Builder.CreateAnd(TmpVec, Shuf, "and.rdx");
-        break;
-      case LoopVectorizationLegality::RK_IntegerXor:
-        TmpVec = Builder.CreateXor(TmpVec, Shuf, "xor.rdx");
-        break;
-      case LoopVectorizationLegality::RK_FloatMult:
-        TmpVec = Builder.CreateFMul(TmpVec, Shuf, "fmul.rdx");
-        break;
-      case LoopVectorizationLegality::RK_FloatAdd:
-        TmpVec = Builder.CreateFAdd(TmpVec, Shuf, "fadd.rdx");
-        break;
-      default:
-        llvm_unreachable("Unknown reduction operation");
-      }
+      Instruction::BinaryOps Op = getReductionBinOp(RdxDesc.Kind);
+      TmpVec = Builder.CreateBinOp(Op, TmpVec, Shuf, "bin.rdx");
     }
 
     // The result is in the first element of the vector.
