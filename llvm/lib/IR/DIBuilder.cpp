@@ -659,7 +659,8 @@ DIType DIBuilder::createArtificialType(DIType Ty) {
   return DIType(MDNode::get(VMContext, Elts));
 }
 
-/// createArtificialType - Create a new DIType with "artificial" flag set.
+/// createObjectPointerType - Create a new type with both the object pointer
+/// and artificial flags set.
 DIType DIBuilder::createObjectPointerType(DIType Ty) {
   if (Ty.isObjectPointer())
     return Ty;
