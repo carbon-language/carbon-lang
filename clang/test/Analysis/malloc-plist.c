@@ -388,7 +388,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>diagnosticTest</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>5</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>5_2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>15</integer>
@@ -550,7 +550,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>myArrayAllocation</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>4</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>4_2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>22</integer>
@@ -935,7 +935,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>reallocDiagnostics</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>5</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>5_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>29</integer>
@@ -1334,7 +1334,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>test_wrapper</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>3</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>3_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>46</integer>
@@ -2413,7 +2413,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>reallocIntra</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>3</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>3_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>77</integer>
@@ -2681,7 +2681,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>use_ret</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>3</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>3_2</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>87</integer>
@@ -2843,7 +2843,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>LeakedSymbol</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>8</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>8_3</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>98</integer>
@@ -3048,7 +3048,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak1</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>2_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>104</integer>
@@ -3253,7 +3253,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak2</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>2_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>112</integer>
@@ -3555,7 +3555,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak3</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>3</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>3_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>121</integer>
@@ -3857,7 +3857,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak4</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>5</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>5_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>132</integer>
@@ -4062,7 +4062,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak5</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>2_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>143</integer>
@@ -4267,7 +4267,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>function_with_leak6</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>2_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>154</integer>
@@ -4501,7 +4501,7 @@ void use_function_with_leak7() {
 // CHECK-NEXT:    <key>type</key><string>Memory leak</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>use_function_with_leak7</string>
-// CHECK-NEXT:   <key>issue_hash</key><string>2</string>
+// CHECK-NEXT:   <key>issue_hash</key><string>2_1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>170</integer>
@@ -4510,3 +4510,5 @@ void use_function_with_leak7() {
 // CHECK-NEXT:   </dict>
 // CHECK-NEXT:   </dict>
 // CHECK-NEXT:  </array>
+// CHECK-NEXT: </dict>
+// CHECK-NEXT: </plist>

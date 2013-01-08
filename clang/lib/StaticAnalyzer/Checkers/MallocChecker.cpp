@@ -113,7 +113,7 @@ struct ReallocPair {
   }
 };
 
-typedef std::pair<const Stmt*, const MemRegion*> LeakInfo;
+typedef std::pair<const ExplodedNode*, const MemRegion*> LeakInfo;
 
 class MallocChecker : public Checker<check::DeadSymbols,
                                      check::PointerEscape,
@@ -1039,14 +1039,7 @@ MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
     N = N->pred_empty() ? NULL : *(N->pred_begin());
   }
 
-  ProgramPoint P = AllocNode->getLocation();
-  const Stmt *AllocationStmt = 0;
-  if (CallExitEnd *Exit = dyn_cast<CallExitEnd>(&P))
-    AllocationStmt = Exit->getCalleeContext()->getCallSite();
-  else if (StmtPoint *SP = dyn_cast<StmtPoint>(&P))
-    AllocationStmt = SP->getStmt();
-
-  return LeakInfo(AllocationStmt, ReferenceRegion);
+  return LeakInfo(AllocNode, ReferenceRegion);
 }
 
 void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
@@ -1066,12 +1059,20 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   // With leaks, we want to unique them by the location where they were
   // allocated, and only report a single path.
   PathDiagnosticLocation LocUsedForUniqueing;
-  const Stmt *AllocStmt = 0;
+  const ExplodedNode *AllocNode = 0;
   const MemRegion *Region = 0;
-  llvm::tie(AllocStmt, Region) = getAllocationSite(N, Sym, C);
-  if (AllocStmt)
-    LocUsedForUniqueing = PathDiagnosticLocation::createBegin(AllocStmt,
-                            C.getSourceManager(), N->getLocationContext());
+  llvm::tie(AllocNode, Region) = getAllocationSite(N, Sym, C);
+  
+  ProgramPoint P = AllocNode->getLocation();
+  const Stmt *AllocationStmt = 0;
+  if (CallExitEnd *Exit = dyn_cast<CallExitEnd>(&P))
+    AllocationStmt = Exit->getCalleeContext()->getCallSite();
+  else if (StmtPoint *SP = dyn_cast<StmtPoint>(&P))
+    AllocationStmt = SP->getStmt();
+  if (AllocationStmt)
+    LocUsedForUniqueing = PathDiagnosticLocation::createBegin(AllocationStmt,
+                                              C.getSourceManager(),
+                                              AllocNode->getLocationContext());
 
   SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);
@@ -1082,7 +1083,9 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
     os << '\'';
   }
 
-  BugReport *R = new BugReport(*BT_Leak, os.str(), N, LocUsedForUniqueing);
+  BugReport *R = new BugReport(*BT_Leak, os.str(), N, 
+                               LocUsedForUniqueing, 
+                               AllocNode->getLocationContext()->getDecl());
   R->markInteresting(Sym);
   R->addVisitor(new MallocBugVisitor(Sym, true));
   C.emitReport(R);

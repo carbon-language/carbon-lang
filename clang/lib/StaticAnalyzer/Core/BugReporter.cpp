@@ -1527,8 +1527,9 @@ const Decl *BugReport::getDeclWithIssue() const {
 void BugReport::Profile(llvm::FoldingSetNodeID& hash) const {
   hash.AddPointer(&BT);
   hash.AddString(Description);
-  if (UniqueingLocation.isValid()) {
-    UniqueingLocation.Profile(hash);
+  PathDiagnosticLocation UL = getUniqueingLocation();
+  if (UL.isValid()) {
+    UL.Profile(hash);
   } else if (Location.isValid()) {
     Location.Profile(hash);
   } else {
@@ -2295,7 +2296,9 @@ void BugReporter::FlushReport(BugReport *exampleReport,
                          exampleReport->getBugType().getName(),
                          exampleReport->getDescription(),
                          exampleReport->getShortDescription(/*Fallback=*/false),
-                         BT.getCategory()));
+                         BT.getCategory(),
+                         exampleReport->getUniqueingLocation(),
+                         exampleReport->getUniqueingDecl()));
 
   // Generate the full path diagnostic, using the generation scheme
   // specified by the PathDiagnosticConsumer. Note that we have to generate

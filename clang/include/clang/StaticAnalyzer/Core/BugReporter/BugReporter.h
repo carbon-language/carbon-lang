@@ -75,6 +75,8 @@ protected:
   std::string Description;
   PathDiagnosticLocation Location;
   PathDiagnosticLocation UniqueingLocation;
+  const Decl *UniqueingDecl;
+  
   const ExplodedNode *ErrorNode;
   SmallVector<SourceRange, 4> Ranges;
   ExtraTextList ExtraText;
@@ -162,9 +164,10 @@ public:
   /// for uniquing reports. For example, memory leaks checker, could set this to
   /// the allocation site, rather then the location where the bug is reported.
   BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode,
-            PathDiagnosticLocation LocationToUnique)
+            PathDiagnosticLocation LocationToUnique, const Decl *DeclToUnique)
     : BT(bt), DeclWithIssue(0), Description(desc),
       UniqueingLocation(LocationToUnique),
+      UniqueingDecl(DeclToUnique),
       ErrorNode(errornode), ConfigurationChangeToken(0),
       DoNotPrunePath(false) {}
 
@@ -259,6 +262,16 @@ public:
   ///  location that can be used to identify where the key issue occurred.
   ///  This location is used by clients rendering diagnostics.
   virtual PathDiagnosticLocation getLocation(const SourceManager &SM) const;
+
+  /// \brief Get the location on which the report should be uniqued.
+  PathDiagnosticLocation getUniqueingLocation() const {
+    return UniqueingLocation;
+  }
+  
+  /// \brief Get the declaration containing the uniqueing location.
+  const Decl *getUniqueingDecl() const {
+    return UniqueingDecl;
+  }
 
   const Stmt *getStmt() const;
 

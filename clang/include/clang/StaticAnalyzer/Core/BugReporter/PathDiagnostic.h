@@ -672,11 +672,17 @@ class PathDiagnostic : public llvm::FoldingSetNode {
   PathPieces pathImpl;
   llvm::SmallVector<PathPieces *, 3> pathStack;
   
+  /// \brief Important bug uniqueing location.
+  /// The location info is useful to differentiate between bugs.
+  PathDiagnosticLocation UniqueingLoc;
+  const Decl *UniqueingDecl;
+
   PathDiagnostic(); // Do not implement.
 public:
   PathDiagnostic(const Decl *DeclWithIssue, StringRef bugtype,
                  StringRef verboseDesc, StringRef shortDesc,
-                 StringRef category);
+                 StringRef category, PathDiagnosticLocation LocationToUnique,
+                 const Decl *DeclToUnique);
 
   ~PathDiagnostic();
   
@@ -736,6 +742,16 @@ public:
   PathDiagnosticLocation getLocation() const {
     assert(Loc.isValid() && "No end-of-path location set yet!");
     return Loc;
+  }
+
+  /// \brief Get the location on which the report should be uniqued.
+  PathDiagnosticLocation getUniqueingLoc() const {
+    return UniqueingLoc;
+  }
+
+  /// \brief Get the declaration containing the uniqueing location.
+  const Decl *getUniqueingDecl() const {
+    return UniqueingDecl;
   }
 
   void flattenLocations() {

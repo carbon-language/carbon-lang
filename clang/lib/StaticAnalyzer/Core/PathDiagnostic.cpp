@@ -107,12 +107,16 @@ PathDiagnostic::~PathDiagnostic() {}
 
 PathDiagnostic::PathDiagnostic(const Decl *declWithIssue,
                                StringRef bugtype, StringRef verboseDesc,
-                               StringRef shortDesc, StringRef category)
+                               StringRef shortDesc, StringRef category,
+                               PathDiagnosticLocation LocationToUnique,
+                               const Decl *DeclToUnique)
   : DeclWithIssue(declWithIssue),
     BugType(StripTrailingDots(bugtype)),
     VerboseDesc(StripTrailingDots(verboseDesc)),
     ShortDesc(StripTrailingDots(shortDesc)),
     Category(StripTrailingDots(category)),
+    UniqueingLoc(LocationToUnique),
+    UniqueingDecl(DeclToUnique),
     path(pathImpl) {}
 
 void PathDiagnosticConsumer::anchor() { }
