@@ -124,7 +124,12 @@ AllocaInst *llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
   }
 
   // Insert a load in place of the PHI and replace all uses.
-  Value *V = new LoadInst(Slot, P->getName()+".reload", P);
+  BasicBlock::iterator InsertPt = P;
+
+  for (; isa<PHINode>(InsertPt) || isa<LandingPadInst>(InsertPt); ++InsertPt)
+    /* empty */;   // Don't insert before PHI nodes or landingpad instrs.
+
+  Value *V = new LoadInst(Slot, P->getName()+".reload", InsertPt);
   P->replaceAllUsesWith(V);
 
   // Delete PHI.
