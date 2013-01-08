@@ -23,6 +23,7 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -1838,6 +1839,26 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
 
   // Otherwise, we can't handle this case efficiently.
   return ExpandVectorBuildThroughStack(Node);
+}
+
+static bool isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
+                                SDValue &Chain, const TargetLowering &TLI) {
+  const Function *F = DAG.getMachineFunction().getFunction();
+
+  // Conservatively require the attributes of the call to match those of
+  // the return. Ignore noalias because it doesn't affect the call sequence.
+  Attribute CallerRetAttr = F->getAttributes().getRetAttributes();
+  if (AttrBuilder(CallerRetAttr)
+      .removeAttribute(Attribute::NoAlias).hasAttributes())
+    return false;
+
+  // It's not safe to eliminate the sign / zero extension of the return value.
+  if (CallerRetAttr.hasAttribute(Attribute::ZExt) ||
+      CallerRetAttr.hasAttribute(Attribute::SExt))
+    return false;
+
+  // Check if the only use is a function return node.
+  return TLI.isUsedByReturnOnly(Node, Chain);
 }
 
 // ExpandLibCall - Expand a node into a call to a libcall.  If the result value

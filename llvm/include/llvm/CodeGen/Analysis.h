@@ -89,9 +89,6 @@ ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred);
 bool isInTailCallPosition(ImmutableCallSite CS, Attribute CalleeRetAttr,
                           const TargetLowering &TLI);
 
-bool isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
-                          SDValue &Chain, const TargetLowering &TLI);
-
 } // End llvm namespace
 
 #endif
