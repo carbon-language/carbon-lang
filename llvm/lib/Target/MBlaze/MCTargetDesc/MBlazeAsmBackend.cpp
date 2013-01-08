@@ -54,7 +54,7 @@ public:
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
-                            const MCInstFragment *DF,
+                            const MCRelaxableFragment *DF,
                             const MCAsmLayout &Layout) const;
 
   void relaxInstruction(const MCInst &Inst, MCInst &Res) const;
@@ -88,7 +88,7 @@ bool MBlazeAsmBackend::mayNeedRelaxation(const MCInst &Inst) const {
 
 bool MBlazeAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
                                             uint64_t Value,
-                                            const MCInstFragment *DF,
+                                            const MCRelaxableFragment *DF,
                                             const MCAsmLayout &Layout) const {
   // FIXME: Is this right? It's what the "generic" code was doing before,
   // but is X86 specific. Is it actually true for MBlaze also, or was it

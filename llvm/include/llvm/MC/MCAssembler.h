@@ -48,7 +48,7 @@ public:
     FT_Align,
     FT_Data,
     FT_Fill,
-    FT_Inst,
+    FT_Relaxable,
     FT_Org,
     FT_Dwarf,
     FT_DwarfFrame,
@@ -158,10 +158,12 @@ public:
 
   static bool classof(const MCFragment *F) {
     MCFragment::FragmentType Kind = F->getKind();
-    return Kind == MCFragment::FT_Inst || Kind == MCFragment::FT_Data;
+    return Kind == MCFragment::FT_Relaxable || Kind == MCFragment::FT_Data;
   }
 };
 
+/// Fragment for data and encoded instructions.
+///
 class MCDataFragment : public MCEncodedFragment {
   virtual void anchor();
 
@@ -210,7 +212,10 @@ public:
   }
 };
 
-class MCInstFragment : public MCEncodedFragment {
+/// A relaxable fragment holds on to its MCInst, since it may need to be
+/// relaxed during the assembler layout and relaxation stage.
+///
+class MCRelaxableFragment : public MCEncodedFragment {
   virtual void anchor();
 
   /// Inst - The instruction this is a fragment for.
@@ -223,8 +228,8 @@ class MCInstFragment : public MCEncodedFragment {
   SmallVector<MCFixup, 1> Fixups;
 
 public:
-  MCInstFragment(const MCInst &_Inst, MCSectionData *SD = 0)
-    : MCEncodedFragment(FT_Inst, SD), Inst(_Inst) {
+  MCRelaxableFragment(const MCInst &_Inst, MCSectionData *SD = 0)
+    : MCEncodedFragment(FT_Relaxable, SD), Inst(_Inst) {
   }
 
   virtual SmallVectorImpl<char> &getContents() { return Contents; }
@@ -251,7 +256,7 @@ public:
   const_fixup_iterator fixup_end() const {return Fixups.end();}
 
   static bool classof(const MCFragment *F) {
-    return F->getKind() == MCFragment::FT_Inst;
+    return F->getKind() == MCFragment::FT_Relaxable;
   }
 };
 
@@ -817,11 +822,11 @@ private:
 
   /// Check whether a fixup can be satisfied, or whether it needs to be relaxed
   /// (increased in size, in order to hold its value correctly).
-  bool fixupNeedsRelaxation(const MCFixup &Fixup, const MCInstFragment *DF,
+  bool fixupNeedsRelaxation(const MCFixup &Fixup, const MCRelaxableFragment *DF,
                             const MCAsmLayout &Layout) const;
 
   /// Check whether the given fragment needs relaxation.
-  bool fragmentNeedsRelaxation(const MCInstFragment *IF,
+  bool fragmentNeedsRelaxation(const MCRelaxableFragment *IF,
                                const MCAsmLayout &Layout) const;
 
   /// \brief Perform one layout iteration and return true if any offsets
@@ -832,7 +837,7 @@ private:
   /// if any offsets were adjusted.
   bool layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD);
 
-  bool relaxInstruction(MCAsmLayout &Layout, MCInstFragment &IF);
+  bool relaxInstruction(MCAsmLayout &Layout, MCRelaxableFragment &IF);
 
   bool relaxLEB(MCAsmLayout &Layout, MCLEBFragment &IF);
 

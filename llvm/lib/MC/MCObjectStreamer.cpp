@@ -217,7 +217,8 @@ void MCObjectStreamer::EmitInstruction(const MCInst &Inst) {
 void MCObjectStreamer::EmitInstToFragment(const MCInst &Inst) {
   // Always create a new, separate fragment here, because its size can change
   // during relaxation.
-  MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
+  MCRelaxableFragment *IF =
+    new MCRelaxableFragment(Inst, getCurrentSectionData());
 
   SmallString<128> Code;
   raw_svector_ostream VecOS(Code);

@@ -119,7 +119,7 @@ public:
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
-                            const MCInstFragment *DF,
+                            const MCRelaxableFragment *DF,
                             const MCAsmLayout &Layout) const {
     // FIXME.
     llvm_unreachable("relaxInstruction() unimplemented");

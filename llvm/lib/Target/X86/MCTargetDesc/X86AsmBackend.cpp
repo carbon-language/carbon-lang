@@ -113,7 +113,7 @@ public:
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
-                            const MCInstFragment *DF,
+                            const MCRelaxableFragment *DF,
                             const MCAsmLayout &Layout) const;
 
   void relaxInstruction(const MCInst &Inst, MCInst &Res) const;
@@ -255,7 +255,7 @@ bool X86AsmBackend::mayNeedRelaxation(const MCInst &Inst) const {
 
 bool X86AsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
                                          uint64_t Value,
-                                         const MCInstFragment *DF,
+                                         const MCRelaxableFragment *DF,
                                          const MCAsmLayout &Layout) const {
   // Relax if the value is too big for a (signed) i8.
   return int64_t(Value) != int64_t(int8_t(Value));

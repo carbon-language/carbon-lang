@@ -49,7 +49,7 @@ public:
   virtual void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                           uint64_t Value) const;
   virtual bool fixupNeedsRelaxation(const MCFixup &Fixup, uint64_t Value,
-                                    const MCInstFragment *DF,
+                                    const MCRelaxableFragment *DF,
                                     const MCAsmLayout &Layout) const {
     return false;
   }

@@ -122,7 +122,7 @@ public:
 
   bool fixupNeedsRelaxation(const MCFixup &Fixup,
                             uint64_t Value,
-                            const MCInstFragment *DF,
+                            const MCRelaxableFragment *DF,
                             const MCAsmLayout &Layout) const;
 
   void relaxInstruction(const MCInst &Inst, MCInst &Res) const;
@@ -165,7 +165,7 @@ bool ARMAsmBackend::mayNeedRelaxation(const MCInst &Inst) const {
 
 bool ARMAsmBackend::fixupNeedsRelaxation(const MCFixup &Fixup,
                                          uint64_t Value,
-                                         const MCInstFragment *DF,
+                                         const MCRelaxableFragment *DF,
                                          const MCAsmLayout &Layout) const {
   switch ((unsigned)Fixup.getKind()) {
   case ARM::fixup_arm_thumb_br: {

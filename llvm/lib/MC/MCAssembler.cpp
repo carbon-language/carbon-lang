@@ -390,8 +390,8 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
     return cast<MCDataFragment>(F).getContents().size();
   case MCFragment::FT_Fill:
     return cast<MCFillFragment>(F).getSize();
-  case MCFragment::FT_Inst:
-    return cast<MCInstFragment>(F).getInstSize();
+  case MCFragment::FT_Relaxable:
+    return cast<MCRelaxableFragment>(F).getInstSize();
 
   case MCFragment::FT_LEB:
     return cast<MCLEBFragment>(F).getContents().size();
@@ -566,7 +566,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     writeFragmentContents(F, OW);
     break;
 
-  case MCFragment::FT_Inst:
+  case MCFragment::FT_Relaxable:
     ++stats::EmittedInstFragments;
     writeFragmentContents(F, OW);
     break;
@@ -763,7 +763,7 @@ void MCAssembler::Finish() {
 }
 
 bool MCAssembler::fixupNeedsRelaxation(const MCFixup &Fixup,
-                                       const MCInstFragment *DF,
+                                       const MCRelaxableFragment *DF,
                                        const MCAsmLayout &Layout) const {
   // If we cannot resolve the fixup value, it requires relaxation.
   MCValue Target;
@@ -774,25 +774,25 @@ bool MCAssembler::fixupNeedsRelaxation(const MCFixup &Fixup,
   return getBackend().fixupNeedsRelaxation(Fixup, Value, DF, Layout);
 }
 
-bool MCAssembler::fragmentNeedsRelaxation(const MCInstFragment *IF,
+bool MCAssembler::fragmentNeedsRelaxation(const MCRelaxableFragment *F,
                                           const MCAsmLayout &Layout) const {
   // If this inst doesn't ever need relaxation, ignore it. This occurs when we
   // are intentionally pushing out inst fragments, or because we relaxed a
   // previous instruction to one that doesn't need relaxation.
-  if (!getBackend().mayNeedRelaxation(IF->getInst()))
+  if (!getBackend().mayNeedRelaxation(F->getInst()))
     return false;
 
-  for (MCInstFragment::const_fixup_iterator it = IF->fixup_begin(),
-       ie = IF->fixup_end(); it != ie; ++it)
-    if (fixupNeedsRelaxation(*it, IF, Layout))
+  for (MCRelaxableFragment::const_fixup_iterator it = F->fixup_begin(),
+       ie = F->fixup_end(); it != ie; ++it)
+    if (fixupNeedsRelaxation(*it, F, Layout))
       return true;
 
   return false;
 }
 
 bool MCAssembler::relaxInstruction(MCAsmLayout &Layout,
-                                   MCInstFragment &IF) {
-  if (!fragmentNeedsRelaxation(&IF, Layout))
+                                   MCRelaxableFragment &F) {
+  if (!fragmentNeedsRelaxation(&F, Layout))
     return false;
 
   ++stats::RelaxedInstructions;
@@ -803,7 +803,7 @@ bool MCAssembler::relaxInstruction(MCAsmLayout &Layout,
   // Relax the fragment.
 
   MCInst Relaxed;
-  getBackend().relaxInstruction(IF.getInst(), Relaxed);
+  getBackend().relaxInstruction(F.getInst(), Relaxed);
 
   // Encode the new instruction.
   //
@@ -815,10 +815,10 @@ bool MCAssembler::relaxInstruction(MCAsmLayout &Layout,
   getEmitter().EncodeInstruction(Relaxed, VecOS, Fixups);
   VecOS.flush();
 
-  // Update the instruction fragment.
-  IF.setInst(Relaxed);
-  IF.getContents() = Code;
-  IF.getFixups() = Fixups;
+  // Update the fragment.
+  F.setInst(Relaxed);
+  F.getContents() = Code;
+  F.getFixups() = Fixups;
 
   return true;
 }
@@ -886,10 +886,10 @@ bool MCAssembler::layoutSectionOnce(MCAsmLayout &Layout, MCSectionData &SD) {
     switch(I->getKind()) {
     default:
       break;
-    case MCFragment::FT_Inst:
+    case MCFragment::FT_Relaxable:
       assert(!getRelaxAll() &&
-             "Did not expect a MCInstFragment in RelaxAll mode");
-      RelaxedFrag = relaxInstruction(Layout, *cast<MCInstFragment>(I));
+             "Did not expect a MCRelaxableFragment in RelaxAll mode");
+      RelaxedFrag = relaxInstruction(Layout, *cast<MCRelaxableFragment>(I));
       break;
     case MCFragment::FT_Dwarf:
       RelaxedFrag = relaxDwarfLineAddr(Layout,
@@ -956,7 +956,7 @@ void MCFragment::dump() {
   case MCFragment::FT_Align: OS << "MCAlignFragment"; break;
   case MCFragment::FT_Data:  OS << "MCDataFragment"; break;
   case MCFragment::FT_Fill:  OS << "MCFillFragment"; break;
-  case MCFragment::FT_Inst:  OS << "MCInstFragment"; break;
+  case MCFragment::FT_Relaxable:  OS << "MCRelaxableFragment"; break;
   case MCFragment::FT_Org:   OS << "MCOrgFragment"; break;
   case MCFragment::FT_Dwarf: OS << "MCDwarfFragment"; break;
   case MCFragment::FT_DwarfFrame: OS << "MCDwarfCallFrameFragment"; break;
@@ -1008,11 +1008,11 @@ void MCFragment::dump() {
        << " Size:" << FF->getSize();
     break;
   }
-  case MCFragment::FT_Inst:  {
-    const MCInstFragment *IF = cast<MCInstFragment>(this);
+  case MCFragment::FT_Relaxable:  {
+    const MCRelaxableFragment *F = cast<MCRelaxableFragment>(this);
     OS << "\n       ";
     OS << " Inst:";
-    IF->getInst().dump_pretty(OS);
+    F->getInst().dump_pretty(OS);
     break;
   }
   case MCFragment::FT_Org:  {
@@ -1096,7 +1096,7 @@ void MCAssembler::dump() {
 // anchors for MC*Fragment vtables
 void MCEncodedFragment::anchor() { }
 void MCDataFragment::anchor() { }
-void MCInstFragment::anchor() { }
+void MCRelaxableFragment::anchor() { }
 void MCAlignFragment::anchor() { }
 void MCFillFragment::anchor() { }
 void MCOrgFragment::anchor() { }

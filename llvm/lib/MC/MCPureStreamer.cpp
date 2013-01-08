@@ -188,7 +188,8 @@ bool MCPureStreamer::EmitValueToOffset(const MCExpr *Offset,
 }
 
 void MCPureStreamer::EmitInstToFragment(const MCInst &Inst) {
-  MCInstFragment *IF = new MCInstFragment(Inst, getCurrentSectionData());
+  MCRelaxableFragment *IF =
+    new MCRelaxableFragment(Inst, getCurrentSectionData());
 
   // Add the fixups and data.
   //
