@@ -1071,6 +1071,10 @@ TEST_F(FormatTest, IncorrectCodeErrorDetection) {
 
 }
 
+//===----------------------------------------------------------------------===//
+// Objective-C tests.
+//===----------------------------------------------------------------------===//
+
 TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
   verifyFormat("- (void)sendAction:(SEL)aSelector to:(BOOL)anObject;");
   EXPECT_EQ("- (NSUInteger)indexOfObject:(id)anObject;",
@@ -1138,6 +1142,15 @@ TEST_F(FormatTest, ObjCAt) {
   // The precise formatting of this doesn't matter, nobody writes code like
   // this.
   verifyFormat("@ /*foo*/ interface");
+}
+
+TEST_F(FormatTest, ObjCOneLiners) {
+  verifyFormat("@class Foo, Bar;");
+  verifyFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
+  verifyFormat("@dynamic textColor;");
+
+  // FIXME: "getter=bar" should not be surround by spaces in @property.
+  verifyFormat("@property(assign, nonatomic) CGFloat hoverAlpha;");
 }
 
 } // end namespace tooling
