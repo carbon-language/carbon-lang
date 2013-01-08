@@ -259,21 +259,32 @@ struct ArchMember {
   const lld::File    *_content;
 };
 
+
 // The content bytes in a DefinedAtom are just uint8_t but we want
 // special formatting, so define a strong type.
-LLVM_YAML_STRONG_TYPEDEF(uint8_t, ImplicitHex8);
+LLVM_YAML_STRONG_TYPEDEF(uint8_t, ImplicitHex8)
 
 // SharedLibraryAtoms have a bool canBeNull() method which we'd like to be
 // more readable than just true/false.
-LLVM_YAML_STRONG_TYPEDEF(bool, ShlibCanBeNull);
+LLVM_YAML_STRONG_TYPEDEF(bool, ShlibCanBeNull)
 
 // lld::Reference::Kind is a typedef of int32.  We need a stronger
 // type to make template matching work, so invent RefKind.
-LLVM_YAML_STRONG_TYPEDEF(lld::Reference::Kind, RefKind);
+LLVM_YAML_STRONG_TYPEDEF(lld::Reference::Kind, RefKind)
 
 
 } // namespace anon
 
+
+LLVM_YAML_IS_SEQUENCE_VECTOR(ArchMember);
+LLVM_YAML_IS_SEQUENCE_VECTOR(const lld::Reference*)
+
+// Always write DefinedAtoms content bytes as a flow sequence.
+LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(ImplicitHex8);
+
+// for compatibility with gcc-4.7 in C++11 mode, add extra namespace
+namespace llvm {
+namespace yaml { 
 
 // This is a custom formatter for RefKind
 template<>
@@ -531,7 +542,6 @@ struct MappingTraits<ArchMember> {
   }
 };
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(ArchMember);
 
 
 // Declare that an AtomList is a yaml sequence.
@@ -566,9 +576,6 @@ struct ScalarTraits<ImplicitHex8> {
     return StringRef(); // returning empty string means success
   }
 };
-
-// Always write DefinedAtoms content bytes as a flow sequence.
-LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(ImplicitHex8);
 
 
 // YAML conversion for std::vector<const lld::File*>
@@ -808,7 +815,6 @@ struct MappingTraits<const lld::Reference*> {
   }
 };
 
-LLVM_YAML_IS_SEQUENCE_VECTOR(const lld::Reference*)
 
 
 // YAML conversion for const lld::DefinedAtom*
@@ -970,39 +976,6 @@ struct MappingTraits<const lld::DefinedAtom*> {
   }
 };
 
-
-
-
-inline 
-const lld::File*
-MappingTraits<const lld::File*>::NormalizedFile::denormalize(IO &io) {
-  typedef MappingTraits<const lld::DefinedAtom*>::NormalizedAtom NormalizedAtom;
-  
-  RefNameResolver nameResolver(this, io);
-  // Now that all atoms are parsed, references can be bound.
-  for (const lld::DefinedAtom *a : this->defined() ) {
-    NormalizedAtom *normAtom = (NormalizedAtom*)a;
-    normAtom->bind(nameResolver);
-  }
-  return this;
-}
-
-inline
-void MappingTraits<const lld::DefinedAtom*>::
-              NormalizedAtom::bind(const RefNameResolver &resolver) {
-  typedef MappingTraits<const lld::Reference*>::NormalizedReference 
-                                                            NormalizedReference;
-  for (const lld::Reference *ref : _references) {
-    NormalizedReference *normRef = (NormalizedReference*)ref;
-    normRef->bind(resolver);
-  }
-}
-
-inline
-void MappingTraits<const lld::Reference*>::
-         NormalizedReference::bind(const RefNameResolver &resolver) {
-  _target = resolver.lookup(_targetName);
-}
 
 
 
@@ -1200,6 +1173,9 @@ struct MappingTraits<const lld::AbsoluteAtom*> {
   }
 };
 
+} // namespace llvm
+} // namespace yaml 
+
 
 RefNameResolver::RefNameResolver(const lld::File *file, IO &io) : _io(io) {
   typedef MappingTraits<const lld::DefinedAtom*>::NormalizedAtom NormalizedAtom;
@@ -1225,6 +1201,39 @@ RefNameResolver::RefNameResolver(const lld::File *file, IO &io) : _io(io) {
     else
       add(na->_refName, a);
    }
+}
+
+
+
+inline 
+const lld::File*
+MappingTraits<const lld::File*>::NormalizedFile::denormalize(IO &io) {
+  typedef MappingTraits<const lld::DefinedAtom*>::NormalizedAtom NormalizedAtom;
+  
+  RefNameResolver nameResolver(this, io);
+  // Now that all atoms are parsed, references can be bound.
+  for (const lld::DefinedAtom *a : this->defined() ) {
+    NormalizedAtom *normAtom = (NormalizedAtom*)a;
+    normAtom->bind(nameResolver);
+  }
+  return this;
+}
+
+inline
+void MappingTraits<const lld::DefinedAtom*>::
+              NormalizedAtom::bind(const RefNameResolver &resolver) {
+  typedef MappingTraits<const lld::Reference*>::NormalizedReference 
+                                                            NormalizedReference;
+  for (const lld::Reference *ref : _references) {
+    NormalizedReference *normRef = (NormalizedReference*)ref;
+    normRef->bind(resolver);
+  }
+}
+
+inline
+void MappingTraits<const lld::Reference*>::
+         NormalizedReference::bind(const RefNameResolver &resolver) {
+  _target = resolver.lookup(_targetName);
 }
 
 
