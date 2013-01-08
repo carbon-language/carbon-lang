@@ -1678,7 +1678,7 @@ from a ``__strong`` object with :ref:`precise lifetime semantics
 C retainable pointer types
 --------------------------
 
-A type is a :arc-term:`C retainable pointer type`` if it is a pointer to
+A type is a :arc-term:`C retainable pointer type` if it is a pointer to
 (possibly qualified) ``void`` or a pointer to a (possibly qualifier) ``struct``
 or ``class`` type.
 
