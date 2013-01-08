@@ -2131,6 +2131,12 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
     S.Diag(PlatformLoc, diag::warn_availability_unknown_platform)
       << Platform;
 
+  NamedDecl *ND = dyn_cast<NamedDecl>(D);
+  if (!ND) {
+    S.Diag(Attr.getLoc(), diag::warn_attribute_ignored) << Attr.getName();
+    return;
+  }
+
   AvailabilityChange Introduced = Attr.getAvailabilityIntroduced();
   AvailabilityChange Deprecated = Attr.getAvailabilityDeprecated();
   AvailabilityChange Obsoleted = Attr.getAvailabilityObsoleted();
@@ -2149,7 +2155,6 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
                                                       IsUnavailable, Str);
   if (NewAttr) {
     D->addAttr(NewAttr);
-    NamedDecl *ND = cast<NamedDecl>(D);
     ND->ClearLVCache();
   }
 }
