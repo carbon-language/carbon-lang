@@ -780,14 +780,16 @@ ProcessMonitor::LaunchArgs::LaunchArgs(ProcessMonitor *monitor,
                                        char const **envp,
                                        const char *stdin_path,
                                        const char *stdout_path,
-                                       const char *stderr_path)
+                                       const char *stderr_path,
+                                       const char *working_dir)
     : OperationArgs(monitor),
       m_module(module),
       m_argv(argv),
       m_envp(envp),
       m_stdin_path(stdin_path),
       m_stdout_path(stdout_path),
-      m_stderr_path(stderr_path) { }
+      m_stderr_path(stderr_path),
+      m_working_dir(working_dir) { }
 
 ProcessMonitor::LaunchArgs::~LaunchArgs()
 { }
@@ -818,6 +820,7 @@ ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
                                const char *stdin_path,
                                const char *stdout_path,
                                const char *stderr_path,
+                               const char *working_dir,
                                lldb_private::Error &error)
     : m_process(static_cast<ProcessLinux *>(process)),
       m_operation_thread(LLDB_INVALID_HOST_THREAD),
@@ -830,7 +833,7 @@ ProcessMonitor::ProcessMonitor(ProcessPOSIX *process,
     std::auto_ptr<LaunchArgs> args;
 
     args.reset(new LaunchArgs(this, module, argv, envp,
-                              stdin_path, stdout_path, stderr_path));
+                              stdin_path, stdout_path, stderr_path, working_dir));
 
     // Server/client descriptors.
     if (!EnableIPC())
@@ -976,6 +979,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
     const char *stdin_path = args->m_stdin_path;
     const char *stdout_path = args->m_stdout_path;
     const char *stderr_path = args->m_stderr_path;
+    const char *working_dir = args->m_working_dir;
 
     lldb_utility::PseudoTerminal terminal;
     const size_t err_len = 1024;
@@ -1010,6 +1014,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
         eDupStdinFailed,
         eDupStdoutFailed,
         eDupStderrFailed,
+        eChdirFailed,
         eExecFailed
     };
 
@@ -1041,6 +1046,11 @@ ProcessMonitor::Launch(LaunchArgs *args)
         if (stderr_path != NULL && stderr_path[0])
             if (!DupDescriptor(stderr_path, STDERR_FILENO, O_WRONLY | O_CREAT))
                 exit(eDupStderrFailed);
+
+        // Change working directory
+        if (working_dir != NULL && working_dir[0])
+          if (0 != ::chdir(working_dir))
+              exit(eChdirFailed);
 
         // Execute.  We should never return.
         execve(argv[0],
@@ -1074,6 +1084,9 @@ ProcessMonitor::Launch(LaunchArgs *args)
                 break;
             case eDupStderrFailed:
                 args->m_error.SetErrorString("Child open stderr failed.");
+                break;
+            case eChdirFailed:
+                args->m_error.SetErrorString("Child failed to set working directory.");
                 break;
             case eExecFailed:
                 args->m_error.SetErrorString("Child exec failed.");

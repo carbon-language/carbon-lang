@@ -152,7 +152,7 @@ class ProcessLaunchTestCase(TestBase):
                                                                err_file_path)
 
         self.expect(launch_command, error=True,
-                startstr = "error: No such file or directory: %sz" % my_working_dir_path)
+                patterns = ["error:.* No such file or directory: %sz" % my_working_dir_path])
 
         # Really launch the process
         launch_command = "process launch -w %s -o %s -e %s" % (my_working_dir_path,

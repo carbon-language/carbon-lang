@@ -17,6 +17,7 @@
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
 #include "lldb/Core/State.h"
+#include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Host.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/DynamicLoader.h"
@@ -162,6 +163,16 @@ ProcessPOSIX::DoLaunch (Module *module,
     Error error;
     assert(m_monitor == NULL);
 
+    const char* working_dir = launch_info.GetWorkingDirectory();
+    if (working_dir) {
+      FileSpec WorkingDir(working_dir, true);
+      if (!WorkingDir || WorkingDir.GetFileType() != FileSpec::eFileTypeDirectory)
+      {
+          error.SetErrorStringWithFormat("No such file or directory: %s", working_dir);
+          return error;
+      }
+    }
+
     SetPrivateState(eStateLaunching);
 
     const lldb_private::ProcessLaunchInfo::FileAction *file_action;
@@ -170,7 +181,7 @@ ProcessPOSIX::DoLaunch (Module *module,
     const char *stdin_path = NULL;
     const char *stdout_path = NULL;
     const char *stderr_path = NULL;
-    
+
     file_action = launch_info.GetFileActionForFD (STDIN_FILENO);
     stdin_path = GetFilePath(file_action, stdin_path);
 
@@ -187,6 +198,7 @@ ProcessPOSIX::DoLaunch (Module *module,
                                     stdin_path, 
                                     stdout_path, 
                                     stderr_path,
+                                    working_dir,
                                     error);
 
     m_module = module;

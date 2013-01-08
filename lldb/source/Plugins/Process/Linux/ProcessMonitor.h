@@ -56,6 +56,7 @@ public:
                    const char *stdin_path,
                    const char *stdout_path,
                    const char *stderr_path,
+                   const char *working_dir,
                    lldb_private::Error &error);
 
     ProcessMonitor(ProcessPOSIX *process,
@@ -200,7 +201,8 @@ private:
                    char const **envp,
                    const char *stdin_path,
                    const char *stdout_path,
-                   const char *stderr_path);
+                   const char *stderr_path,
+                   const char *working_dir);
 
         ~LaunchArgs();
 
@@ -210,6 +212,7 @@ private:
         const char *m_stdin_path;       // Redirect stdin or NULL.
         const char *m_stdout_path;      // Redirect stdout or NULL.
         const char *m_stderr_path;      // Redirect stderr or NULL.
+        const char *m_working_dir;      // Working directory or NULL.
     };
 
     void
