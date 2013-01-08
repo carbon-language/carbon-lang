@@ -1269,12 +1269,6 @@ static bool isArraySizeVLA(Sema &S, Expr *ArraySize, llvm::APSInt &SizeVal) {
                                            S.LangOpts.GNUMode).isInvalid();
 }
 
-/// \brief Determine whether the given type is a POD or standard-layout type,
-/// as appropriate for the C++ language options.
-static bool isPODType(QualType T, ASTContext &Context) {
-  return Context.getLangOpts().CPlusPlus11? T.isCXX11PODType(Context)
-                                          : T.isCXX98PODType(Context);
-}
 
 /// \brief Build an array type.
 ///
@@ -1448,8 +1442,8 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       // Prohibit the use of non-POD types in VLAs.
       QualType BaseT = Context.getBaseElementType(T);
       if (!T->isDependentType() &&
-          !BaseT->isObjCLifetimeType() &&
-          !isPODType(BaseT, Context)) {
+          !BaseT.isPODType(Context) &&
+          !BaseT->isObjCLifetimeType()) {
         Diag(Loc, diag::err_vla_non_pod)
           << BaseT;
         return QualType();
