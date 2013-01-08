@@ -10501,11 +10501,10 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
   // and, because of the two phase lookup, this function is called with at
   // decl in the middle of a decl chain. We loop to maintain the invariant
   // that once a decl is used, all decls after it are also used.
-  for (FunctionDecl *F = Func->getMostRecentDecl();;) {
+  for (FunctionDecl *F = Func->getMostRecentDecl();; F = F->getPreviousDecl()) {
     F->setUsed(true);
     if (F == Func)
       break;
-    F = F->getPreviousDecl();
   }
 }
 
