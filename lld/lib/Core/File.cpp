@@ -1,4 +1,4 @@
-//===- Core/File.cpp - A Contaier of Atoms --------------------------------===//
+//===- Core/File.cpp - A Container of Atoms -------------------------------===//
 //
 //                             The LLVM Linker
 //
