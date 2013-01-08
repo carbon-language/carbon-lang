@@ -940,7 +940,10 @@ private:
       return false;
     if (Left.is(tok::exclaim) || Left.is(tok::tilde))
       return false;
-    if (Left.is(tok::at) && Right.is(tok::identifier))
+    if (Left.is(tok::at) &&
+        (Right.is(tok::identifier) || Right.is(tok::string_literal) ||
+         Right.is(tok::char_constant) || Right.is(tok::numeric_constant) ||
+         Right.is(tok::l_paren) || Right.is(tok::l_brace)))
       return false;
     if (Left.is(tok::less) || Right.is(tok::greater) || Right.is(tok::less))
       return false;

@@ -1137,6 +1137,20 @@ TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@throw");
   verifyFormat("@try");
 
+  // FIXME: Make the uncommented lines below pass.
+  verifyFormat("@\"String\"");
+  verifyFormat("@1");
+  //verifyFormat("@+4.8");
+  //verifyFormat("@-4");
+  verifyFormat("@1LL");
+  verifyFormat("@.5");
+  verifyFormat("@'c'");
+  verifyFormat("@true");
+  verifyFormat("NSNumber *smallestInt = @(-INT_MAX - 1);");
+  verifyFormat("@[");
+  verifyFormat("@{");
+
+
   EXPECT_EQ("@interface", format("@ interface"));
 
   // The precise formatting of this doesn't matter, nobody writes code like
