@@ -3862,6 +3862,18 @@ CXCursor clang_getNullCursor(void) {
 }
 
 unsigned clang_equalCursors(CXCursor X, CXCursor Y) {
+  // Clear out the "FirstInDeclGroup" part in a declaration cursor, since we
+  // can't set consistently. For example, when visiting a DeclStmt we will set
+  // it but we don't set it on the result of clang_getCursorDefinition for
+  // a reference of the same declaration.
+  // FIXME: Setting "FirstInDeclGroup" in CXCursors is a hack that only works
+  // when visiting a DeclStmt currently, the AST should be enhanced to be able
+  // to provide that kind of info.
+  if (clang_isDeclaration(X.kind))
+    X.data[1] = 0;
+  if (clang_isDeclaration(Y.kind))
+    Y.data[1] = 0;
+
   return X == Y;
 }
 
