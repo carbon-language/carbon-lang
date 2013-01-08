@@ -82,9 +82,6 @@ Do not use LibTooling when you...:
 * want high level abstractions like cursors and code completion out of the box
 * do not want to write your tools in C++
 
-Clang Tools
------------
-
 :doc:`Clang tools <ClangTools>` are a collection of specific developer tools
 built on top of the LibTooling infrastructure as part of the Clang project.
 They are targeted at automating and improving core development activities of
