@@ -341,7 +341,7 @@ void test(struct S syz, int *pp) {
 //CHECK:    <key>type</key><string>Dereference of null pointer</string>
 //CHECK:   <key>issue_context_kind</key><string>function</string>
 //CHECK:   <key>issue_context</key><string>test</string>
-//CHECK:   <key>issue_hash</key><integer>6</integer>
+//CHECK:   <key>issue_hash</key><string>6</string>
 //CHECK:   <key>location</key>
 //CHECK:   <dict>
 //CHECK:    <key>line</key><integer>25</integer>

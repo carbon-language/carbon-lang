@@ -172,7 +172,7 @@ void test_bug_2() {
 // CHECK:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK:   <key>issue_context_kind</key><string>function</string>
 // CHECK:   <key>issue_context</key><string>bug</string>
-// CHECK:   <key>issue_hash</key><integer>1</integer>
+// CHECK:   <key>issue_hash</key><string>1</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
 // CHECK:    <key>line</key><integer>5</integer>

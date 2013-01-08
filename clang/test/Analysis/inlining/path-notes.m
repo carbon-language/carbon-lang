@@ -502,7 +502,7 @@ int testDispatchSyncInliningNoPruning(int coin) {
 // CHECK-NEXT:    <key>type</key><string>Dereference of null pointer</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testReturnZeroIfNil</string>
-// CHECK-NEXT:   <key>issue_hash</key><integer>1</integer>
+// CHECK-NEXT:   <key>issue_hash</key><string>1</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>21</integer>
@@ -827,7 +827,7 @@ int testDispatchSyncInliningNoPruning(int coin) {
 // CHECK-NEXT:    <key>type</key><string>Division by zero</string>
 // CHECK-NEXT:   <key>issue_context_kind</key><string>function</string>
 // CHECK-NEXT:   <key>issue_context</key><string>testDispatchSyncInlining</string>
-// CHECK-NEXT:   <key>issue_hash</key><integer>14</integer>
+// CHECK-NEXT:   <key>issue_hash</key><string>14</string>
 // CHECK-NEXT:   <key>location</key>
 // CHECK-NEXT:   <dict>
 // CHECK-NEXT:    <key>line</key><integer>43</integer>

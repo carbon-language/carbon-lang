@@ -498,9 +498,9 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
           FullSourceLoc Loc(SM->getExpansionLoc(D->getLocation().asLocation()),
                             *SM);
           FullSourceLoc FunLoc(SM->getExpansionLoc(Body->getLocStart()), *SM);
-          o << "  <key>issue_hash</key><integer>"
+          o << "  <key>issue_hash</key><string>"
               << Loc.getExpansionLineNumber() - FunLoc.getExpansionLineNumber()
-              << "</integer>\n";
+              << "</string>\n";
         }
       }
     }

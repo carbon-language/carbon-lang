@@ -463,7 +463,7 @@ static void CreateRef(SCDynamicStoreRef *storeRef, unsigned x) {
 //CHECK:     <key>type</key><string>null passed to CFRetain/CFRelease/CFMakeCollectable</string>
 //CHECK:    <key>issue_context_kind</key><string>Objective-C method</string>
 //CHECK:    <key>issue_context</key><string>test</string>
-//CHECK:    <key>issue_hash</key><integer>5</integer>
+//CHECK:    <key>issue_hash</key><string>5</string>
 //CHECK:    <key>location</key>
 //CHECK:    <dict>
 //CHECK:     <key>line</key><integer>37</integer>

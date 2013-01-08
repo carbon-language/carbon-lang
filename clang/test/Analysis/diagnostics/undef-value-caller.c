@@ -152,7 +152,7 @@ int test_calling_unimportant_callee(int argc, char *argv[]) {
 //CHECK:    <key>type</key><string>Garbage return value</string>
 //CHECK:   <key>issue_context_kind</key><string>function</string>
 //CHECK:   <key>issue_context</key><string>test_calling_unimportant_callee</string>
-//CHECK:   <key>issue_hash</key><integer>3</integer>
+//CHECK:   <key>issue_hash</key><string>3</string>
 //CHECK:   <key>location</key>
 //CHECK:   <dict>
 //CHECK:    <key>line</key><integer>11</integer>
