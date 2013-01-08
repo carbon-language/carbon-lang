@@ -54,7 +54,6 @@
 #include "Plugins/ObjectContainer/Universal-Mach-O/ObjectContainerUniversalMachO.h"
 #include "Plugins/ObjectFile/Mach-O/ObjectFileMachO.h"
 #include "Plugins/Process/MacOSX-Kernel/ProcessKDP.h"
-#include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
 #include "Plugins/Platform/MacOSX/PlatformMacOSX.h"
 #include "Plugins/Platform/MacOSX/PlatformRemoteiOS.h"
 #include "Plugins/Platform/MacOSX/PlatformiOSSimulator.h"
@@ -67,12 +66,12 @@
 #endif
 
 #if defined (__FreeBSD__)
-#include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
 #include "Plugins/Process/POSIX/ProcessPOSIX.h"
 #include "Plugins/Process/FreeBSD/ProcessFreeBSD.h"
 #endif
 
 #include "Plugins/Platform/gdb-server/PlatformRemoteGDBServer.h"
+#include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
 #include "Plugins/DynamicLoader/Static/DynamicLoaderStatic.h"
 
 using namespace lldb;
@@ -125,7 +124,6 @@ lldb_private::Initialize ()
         AppleObjCRuntimeV1::Initialize();
         ObjectContainerUniversalMachO::Initialize();
         ObjectFileMachO::Initialize();
-        ProcessGDBRemote::Initialize();
         ProcessKDP::Initialize();
         ProcessMachCore::Initialize();
         SymbolVendorMacOSX::Initialize();
@@ -141,12 +139,12 @@ lldb_private::Initialize ()
 #endif
 #if defined (__FreeBSD__)
         ProcessFreeBSD::Initialize();
-        ProcessGDBRemote::Initialize();
 #endif
         //----------------------------------------------------------------------
         // Platform agnostic plugins
         //----------------------------------------------------------------------
         PlatformRemoteGDBServer::Initialize ();
+        ProcessGDBRemote::Initialize();
         DynamicLoaderStatic::Initialize();
 
         // Scan for any system or user LLDB plug-ins
@@ -203,7 +201,6 @@ lldb_private::Terminate ()
     ObjectContainerUniversalMachO::Terminate();
     ObjectFileMachO::Terminate();
     ProcessMachCore::Terminate();
-    ProcessGDBRemote::Terminate();
     ProcessKDP::Terminate();
     SymbolVendorMacOSX::Terminate();
     PlatformMacOSX::Terminate();
@@ -219,9 +216,9 @@ lldb_private::Terminate ()
 
 #if defined (__FreeBSD__)
     ProcessFreeBSD::Terminate();
-    ProcessGDBRemote::Terminate();
 #endif
     
+    ProcessGDBRemote::Terminate();
     DynamicLoaderStatic::Terminate();
 
     Log::Terminate();
