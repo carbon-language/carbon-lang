@@ -155,15 +155,14 @@ DIType DbgVariable::getType() const {
 DwarfDebug::DwarfDebug(AsmPrinter *A, Module *M)
   : Asm(A), MMI(Asm->MMI), FirstCU(0),
     AbbreviationsSet(InitAbbreviationsSetSize),
-    SourceIdMap(DIEValueAllocator), InfoStringPool(DIEValueAllocator),
+    SourceIdMap(DIEValueAllocator),
     PrevLabel(NULL), GlobalCUIndexCount(0),
-    InfoHolder(A, &AbbreviationsSet, &Abbreviations,
-               &InfoStringPool, "info_string"),
+    InfoHolder(A, &AbbreviationsSet, &Abbreviations, "info_string",
+               DIEValueAllocator),
     SkeletonCU(0),
     SkeletonAbbrevSet(InitAbbreviationsSetSize),
-    SkeletonStringPool(DIEValueAllocator),
-    SkeletonHolder(A, &SkeletonAbbrevSet, &SkeletonAbbrevs,
-                   &SkeletonStringPool, "skel_string") {
+    SkeletonHolder(A, &SkeletonAbbrevSet, &SkeletonAbbrevs, "skel_string",
+                   DIEValueAllocator) {
 
   DwarfInfoSectionSym = DwarfAbbrevSectionSym = 0;
   DwarfStrSectionSym = TextSectionSym = 0;
@@ -221,7 +220,7 @@ MCSymbol *DwarfUnits::getStringPoolSym() {
 
 MCSymbol *DwarfUnits::getStringPoolEntry(StringRef Str) {
   std::pair<MCSymbol*, unsigned> &Entry =
-    StringPool->GetOrCreateValue(Str).getValue();
+    StringPool.GetOrCreateValue(Str).getValue();
   if (Entry.first) return Entry.first;
 
   Entry.second = NextStringPoolNumber++;
@@ -230,7 +229,7 @@ MCSymbol *DwarfUnits::getStringPoolEntry(StringRef Str) {
 
 unsigned DwarfUnits::getStringPoolIndex(StringRef Str) {
   std::pair<MCSymbol*, unsigned> &Entry =
-    StringPool->GetOrCreateValue(Str).getValue();
+    StringPool.GetOrCreateValue(Str).getValue();
   if (Entry.first) return Entry.second;
 
   Entry.second = NextStringPoolNumber++;
@@ -2130,7 +2129,7 @@ void DwarfUnits::emitStrings(const MCSection *StrSection,
                              const MCSection *OffsetSection = NULL,
                              const MCSymbol *StrSecSym = NULL) {
 
-  if (StringPool->empty()) return;
+  if (StringPool.empty()) return;
 
   // Start the dwarf str section.
   Asm->OutStreamer.SwitchSection(StrSection);
@@ -2141,7 +2140,7 @@ void DwarfUnits::emitStrings(const MCSection *StrSection,
                  StringMapEntry<std::pair<MCSymbol*, unsigned> >*>, 64> Entries;
 
   for (StringMap<std::pair<MCSymbol*, unsigned> >::iterator
-         I = StringPool->begin(), E = StringPool->end();
+         I = StringPool.begin(), E = StringPool.end();
        I != E; ++I)
     Entries.push_back(std::make_pair(I->second.second, &*I));
 

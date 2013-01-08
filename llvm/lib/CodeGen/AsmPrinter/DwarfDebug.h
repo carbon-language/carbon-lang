@@ -211,16 +211,16 @@ class DwarfUnits {
   SmallVector<CompileUnit *, 1> CUs;
 
   // Collection of strings for this unit and assorted symbols.
-  StrPool *StringPool;
+  StrPool StringPool;
   unsigned NextStringPoolNumber;
   std::string StringPref;
 
 public:
   DwarfUnits(AsmPrinter *AP, FoldingSet<DIEAbbrev> *AS,
-             std::vector<DIEAbbrev *> *A,
-             StrPool *SP, const char *Pref) :
+             std::vector<DIEAbbrev *> *A, const char *Pref,
+             BumpPtrAllocator &DA) :
     Asm(AP), AbbreviationsSet(AS), Abbreviations(A),
-    StringPool(SP), NextStringPoolNumber(0), StringPref(Pref) {}
+    StringPool(DA), NextStringPoolNumber(0), StringPref(Pref) {}
 
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
@@ -254,7 +254,7 @@ public:
   unsigned getStringPoolIndex(StringRef Str);
 
   /// \brief Returns the string pool.
-  StrPool *getStringPool() { return StringPool; }
+  StrPool *getStringPool() { return &StringPool; }
 };
 
 /// \brief Collects and handles dwarf debug information.
@@ -289,10 +289,6 @@ class DwarfDebug {
   // Source id map, i.e. pair of source filename and directory,
   // separated by a zero byte, mapped to a unique id.
   StringMap<unsigned, BumpPtrAllocator&> SourceIdMap;
-
-  // A String->Symbol mapping of strings used by indirect
-  // references.
-  StrPool InfoStringPool;
 
   // Provides a unique id per text section.
   SetVector<const MCSection*> SectionMap;
@@ -408,9 +404,6 @@ class DwarfDebug {
 
   // A list of all the unique abbreviations in use.
   std::vector<DIEAbbrev *> SkeletonAbbrevs;
-
-  // List of strings used in the skeleton.
-  StrPool SkeletonStringPool;
 
   // Holder for the skeleton information.
   DwarfUnits SkeletonHolder;
