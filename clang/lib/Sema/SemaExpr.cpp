@@ -9716,11 +9716,11 @@ ExprResult Sema::BuildVAArgExpr(SourceLocation BuiltinLoc,
     if (TInfo->getType()->isSpecificBuiltinType(BuiltinType::Float))
       PromoteType = Context.DoubleTy;
     if (!PromoteType.isNull())
-      Diag(TInfo->getTypeLoc().getBeginLoc(),
-          diag::warn_second_parameter_to_va_arg_never_compatible)
-        << TInfo->getType()
-        << PromoteType
-        << TInfo->getTypeLoc().getSourceRange();
+      DiagRuntimeBehavior(TInfo->getTypeLoc().getBeginLoc(), E,
+                  PDiag(diag::warn_second_parameter_to_va_arg_never_compatible)
+                          << TInfo->getType()
+                          << PromoteType
+                          << TInfo->getTypeLoc().getSourceRange());
   }
 
   QualType T = TInfo->getType().getNonLValueExprType(Context);
