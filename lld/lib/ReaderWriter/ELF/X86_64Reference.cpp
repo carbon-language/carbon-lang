@@ -20,6 +20,14 @@
 using namespace llvm::ELF;
 
 namespace {
+/// \brief R_X86_64_64 - word64: S + A
+int reloc64(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
+  uint64_t result = S + A;
+  *reinterpret_cast<llvm::support::ulittle64_t *>(location) = result |
+            (uint64_t)*reinterpret_cast<llvm::support::ulittle64_t *>(location);
+  return 0;
+}
+
 /// \brief R_X86_64_PC32 - word32: S + A - P
 int relocPC32(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
   uint32_t result = (uint32_t)((S + A) - P);
@@ -50,6 +58,7 @@ int reloc32S(uint8_t *location, uint64_t P, uint64_t S, uint64_t A) {
 namespace lld {
 namespace elf {
 X86_64KindHandler::X86_64KindHandler(){
+  _fixupHandler[R_X86_64_64] = reloc64;
   _fixupHandler[R_X86_64_PC32] = relocPC32;
   _fixupHandler[R_X86_64_32] = reloc32;
   _fixupHandler[R_X86_64_32S] = reloc32S;
@@ -61,6 +70,7 @@ X86_64KindHandler::~X86_64KindHandler() {
 Reference::Kind X86_64KindHandler::stringToKind(StringRef str) {
   return llvm::StringSwitch<Reference::Kind>(str)
     .Case("none", none)
+    .Case("R_X86_64_64", R_X86_64_64)
     .Case("R_X86_64_PC32", R_X86_64_PC32)
     .Case("R_X86_64_32S", R_X86_64_32S)
     .Default(invalid);
@@ -68,6 +78,8 @@ Reference::Kind X86_64KindHandler::stringToKind(StringRef str) {
 
 StringRef X86_64KindHandler::kindToString(Reference::Kind kind) {
   switch ((int32_t)kind) {
+  case R_X86_64_64:
+    return "R_X86_64_64";
   case R_X86_64_PC32:
     return "R_X86_64_PC32";
   case R_X86_64_32S:
