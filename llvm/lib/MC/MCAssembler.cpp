@@ -34,8 +34,8 @@ using namespace llvm;
 namespace {
 namespace stats {
 STATISTIC(EmittedFragments, "Number of emitted assembler fragments - total");
-STATISTIC(EmittedInstFragments,
-          "Number of emitted assembler fragments - instruction");
+STATISTIC(EmittedRelaxableFragments,
+          "Number of emitted assembler fragments - relaxable");
 STATISTIC(EmittedDataFragments,
           "Number of emitted assembler fragments - data");
 STATISTIC(EmittedAlignFragments,
@@ -567,7 +567,7 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     break;
 
   case MCFragment::FT_Relaxable:
-    ++stats::EmittedInstFragments;
+    ++stats::EmittedRelaxableFragments;
     writeFragmentContents(F, OW);
     break;
 
