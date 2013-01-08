@@ -1,7 +1,7 @@
 # RUN: lld-core %s | FileCheck %s
 
 #
-# Test fixups to simple named atoms
+# Test references to simple named atoms
 #
 
 ---
@@ -10,7 +10,7 @@ defined-atoms:
       type:              code
       content:           [ E8, 00, 00, 00, 00, 
                            E8, 00, 00, 00, 00 ]
-      fixups:
+      references:
       - offset:          1
         kind:            3
         target:          bar
@@ -29,7 +29,7 @@ undefined-atoms:
 ...
 
 # CHECK:      name: foo
-# CHECK:      fixups:
+# CHECK:      references:
 # CHECK:      target: bar
 # CHECK:      target: baz
 # CHECK:      ...

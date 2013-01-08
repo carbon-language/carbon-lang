@@ -12,7 +12,7 @@ defined-atoms:
       content:           [ 55, 48, 89, E5, 48, 8D, 3D, 00, 
                            00, 00, 00, E8, 00, 00, 00, 00, 
                            31, C0, 5D, C3 ]
-      fixups:
+      references:
       - offset:          7
         kind:            pcrel32
         target:          LC1

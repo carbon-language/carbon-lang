@@ -15,7 +15,7 @@ defined-atoms:
                            48, 83, 3D, 00, 00, 00, 00, 00, 
                            48, 83, 3D, 00, 00, 00, 00, 00,
                            48, 83, 3D, 00, 00, 00, 00, 00 ]
-      fixups:
+      references:
       - offset:          3
         kind:            gotLoad32
         target:          malloc
@@ -51,7 +51,7 @@ shared-library-atoms:
 
 # CHECK:  defined-atoms:
 # CHECK:       name:         foo
-# CHECK:       fixups: 
+# CHECK:       references: 
 # CHECK:        kind:         pcrel32
 # CHECK:        offset:       3
 # CHECK:        target:       L

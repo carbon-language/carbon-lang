@@ -966,7 +966,7 @@ struct MappingTraits<const lld::DefinedAtom*> {
                                         lld::DefinedAtom::deadStripNormal);
     io.mapOptional("permissions",    keys->_permissions,   
                                         lld::DefinedAtom::permR_X);
-    io.mapOptional("fixups",         keys->_references);
+    io.mapOptional("references",     keys->_references);
   }
 };
 

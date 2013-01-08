@@ -10,7 +10,7 @@ defined-atoms:
       type:              code
       content:           [ E8, 00, 00, 00, 00, E8, 00, 00, 00, 
                            00, 48 ,8B, 05, 00, 00, 00, 00 ]
-      fixups:
+      references:
       - offset:          1
         kind:            call32
         target:          malloc
@@ -31,7 +31,7 @@ shared-library-atoms:
 ...
 
 # CHECK:       name:         foo
-# CHECK:       fixups: 
+# CHECK:       references: 
 # CHECK:       kind:         call32
 # CHECK:       target:       L
 # CHECK:       kind:         call32

@@ -9,7 +9,7 @@
 defined-atoms:
     - name:         entry
       dead-strip:   never
-      fixups:
+      references:
       - offset:          1
         kind:            pcrel32
         target:          bar

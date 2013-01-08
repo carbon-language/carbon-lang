@@ -9,7 +9,7 @@
 defined-atoms:
     - name:          entry
       scope:         hidden
-      fixups:
+      references:
       - offset:      3
         kind:        3
         target:      bar

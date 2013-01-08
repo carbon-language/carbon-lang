@@ -1,7 +1,7 @@
 # RUN: lld-core %s | FileCheck %s
 
 #
-# Test fixups to unnamed atoms
+# Test references to unnamed atoms
 #
 
 ---
@@ -10,7 +10,7 @@ defined-atoms:
       type:              code
       content:           [ 48, 8D, 3D, 00, 00, 00, 00, 
                            48, 8D, 3D, 00, 00, 00, 00 ]
-      fixups:
+      references:
       - offset:          3
         kind:            3
         target:          LC1
@@ -33,7 +33,7 @@ defined-atoms:
 ...
 
 # CHECK:      name: foo
-# CHECK:      fixups:
+# CHECK:      references:
 # CHECK:      offset: 3
 # CHECK:      offset: 10
 # CHECK:      ref-name:

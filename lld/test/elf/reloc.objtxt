@@ -32,7 +32,7 @@ ELF-i386:                           00, 00, 00, 00, E8, FC, FF, FF, FF, 31, C0, 
 ELF-i386:                           C3 ]
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .text.startup
-ELF-i386:      fixups:
+ELF-i386:      references:
 ELF-i386:      - kind:              ???
 ELF-i386:        offset:            12
 ELF-i386:        target:            .rodata.str1.1
@@ -59,7 +59,7 @@ ELF-i386:                           19, 00, 00, 00, 00, 41, 0E, 08, 85, 02, 42, 
 ELF-i386:                           05, 55, C5, 0C, 04, 04, 00, 00 ]
 ELF-i386:      section-choice:    custom-required
 ELF-i386:      section-name:      .eh_frame
-ELF-i386:      fixups:
+ELF-i386:      references:
 ELF-i386:      - kind:              call32
 ELF-i386:        offset:            32
 ELF-i386:        target:            .text.startup
