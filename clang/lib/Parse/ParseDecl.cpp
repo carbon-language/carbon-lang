@@ -4189,7 +4189,11 @@ void Parser::ParseDeclaratorInternal(Declarator &D,
     if (SS.isNotEmpty()) {
       if (Tok.isNot(tok::star)) {
         // The scope spec really belongs to the direct-declarator.
-        D.getCXXScopeSpec() = SS;
+        if (D.mayHaveIdentifier())
+          D.getCXXScopeSpec() = SS;
+        else
+          AnnotateScopeToken(SS, true);
+
         if (DirectDeclParser)
           (this->*DirectDeclParser)(D);
         return;

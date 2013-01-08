@@ -39,3 +39,5 @@ static_assert(something, ""); // expected-error {{undeclared identifier}}
 struct SS {
   typedef void d() = default; // expected-error {{function definition declared 'typedef'}} expected-error {{only special member functions may be defaulted}}
 };
+
+using PR14855 = int S::; // expected-error {{expected ';' after alias declaration}}
