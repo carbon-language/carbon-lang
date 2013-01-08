@@ -1,4 +1,4 @@
-; RUN: llc -march=ppc64 < %s | FileCheck --check-prefix=BIGENDIAN %s
+; RUN: llc -mtriple=powerpc64-none-linux < %s | FileCheck --check-prefix=BIGENDIAN %s
 
 @var = global fp128 0xL00000000000000008000000000000000
 

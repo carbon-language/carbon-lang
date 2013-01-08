@@ -1,4 +1,4 @@
-; RUN: llc -march=arm < %s | FileCheck --check-prefix=LITTLEENDIAN %s
+; RUN: llc -mtriple=arm-none-linux < %s | FileCheck --check-prefix=LITTLEENDIAN %s
 
 @var = global fp128 0xL00000000000000008000000000000000
 
