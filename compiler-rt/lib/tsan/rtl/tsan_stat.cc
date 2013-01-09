@@ -218,6 +218,7 @@ void StatOutput(u64 *stat) {
   name[StatInt_recv]                     = "  recv                            ";
   name[StatInt_recvmsg]                  = "  recvmsg                         ";
   name[StatInt_unlink]                   = "  unlink                          ";
+  name[StatInt_fileno]                   = "  fileno                          ";
   name[StatInt_fopen]                    = "  fopen                           ";
   name[StatInt_freopen]                  = "  freopen                         ";
   name[StatInt_fclose]                   = "  fclose                          ";
