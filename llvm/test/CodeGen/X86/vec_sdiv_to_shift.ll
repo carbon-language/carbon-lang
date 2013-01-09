@@ -1,4 +1,4 @@
-; RUN: llc < %s -mcpu=penryn -mattr=+avx2 | FileCheck %s
+; RUN: llc < %s -march=x86-64 -mcpu=penryn -mattr=+avx2 | FileCheck %s
 
 
 define <8 x i16> @sdiv_vec8x16(<8 x i16> %var) {
