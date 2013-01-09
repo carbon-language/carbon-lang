@@ -155,7 +155,7 @@ public:
   //      Optional InstrItinerary OperandCycles provides expected latency.
   //      TODO: can't yet specify both min and expected latency per operand.
   int MinLatency;
-  static const unsigned DefaultMinLatency = -1;
+  static const int DefaultMinLatency = -1;
 
   // LoadLatency is the expected latency of load instructions.
   //
@@ -171,6 +171,16 @@ public:
   // If MinLatency >= 0, this may be overriden by InstrItinData OperandCycles.
   unsigned HighLatency;
   static const unsigned DefaultHighLatency = 10;
+
+  // ILPWindow is the number of cycles that the scheduler effectively ignores
+  // before attempting to hide latency. This should be zero for in-order cpus to
+  // always hide expected latency. For out-of-order cpus, it may be tweaked as
+  // desired to roughly approximate instruction buffers. The actual threshold is
+  // not very important for an OOO processor, as long as it isn't too high. A
+  // nonzero value helps avoid rescheduling to hide latency when its is fairly
+  // obviously useless and makes register pressure heuristics more effective.
+  unsigned ILPWindow;
+  static const unsigned DefaultILPWindow = 0;
 
   // MispredictPenalty is the typical number of extra cycles the processor
   // takes to recover from a branch misprediction.
@@ -196,6 +206,7 @@ public:
                   MinLatency(DefaultMinLatency),
                   LoadLatency(DefaultLoadLatency),
                   HighLatency(DefaultHighLatency),
+                  ILPWindow(DefaultILPWindow),
                   MispredictPenalty(DefaultMispredictPenalty),
                   ProcID(0), ProcResourceTable(0), SchedClassTable(0),
                   NumProcResourceKinds(0), NumSchedClasses(0),
@@ -205,12 +216,12 @@ public:
   }
 
   // Table-gen driven ctor.
-  MCSchedModel(unsigned iw, int ml, unsigned ll, unsigned hl, unsigned mp,
-               unsigned pi, const MCProcResourceDesc *pr,
+  MCSchedModel(unsigned iw, int ml, unsigned ll, unsigned hl, unsigned ilp,
+               unsigned mp, unsigned pi, const MCProcResourceDesc *pr,
                const MCSchedClassDesc *sc, unsigned npr, unsigned nsc,
                const InstrItinerary *ii):
     IssueWidth(iw), MinLatency(ml), LoadLatency(ll), HighLatency(hl),
-    MispredictPenalty(mp), ProcID(pi), ProcResourceTable(pr),
+    ILPWindow(ilp), MispredictPenalty(mp), ProcID(pi), ProcResourceTable(pr),
     SchedClassTable(sc), NumProcResourceKinds(npr), NumSchedClasses(nsc),
     InstrItineraries(ii) {}
 

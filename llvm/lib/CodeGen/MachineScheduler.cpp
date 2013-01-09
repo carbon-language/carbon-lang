@@ -48,15 +48,6 @@ static cl::opt<unsigned> MISchedCutoff("misched-cutoff", cl::Hidden,
 static bool ViewMISchedDAGs = false;
 #endif // NDEBUG
 
-// Threshold to very roughly model an out-of-order processor's instruction
-// buffers. If the actual value of this threshold matters much in practice, then
-// it can be specified by the machine model. For now, it's an experimental
-// tuning knob to determine when and if it matters.
-static cl::opt<unsigned> ILPWindow("ilp-window", cl::Hidden,
-  cl::desc("Allow expected latency to exceed the critical path by N cycles "
-           "before attempting to balance ILP"),
-  cl::init(10U));
-
 // Experimental heuristics
 static cl::opt<bool> EnableLoadCluster("misched-cluster", cl::Hidden,
   cl::desc("Enable load clustering."), cl::init(true));
@@ -1297,7 +1288,8 @@ void ConvergingScheduler::SchedBoundary::setLatencyPolicy(CandPolicy &Policy) {
     if (L > RemLatency)
       RemLatency = L;
   }
-  if (RemLatency + ExpectedLatency >= Rem->CriticalPath + ILPWindow
+  unsigned CriticalPathLimit = Rem->CriticalPath + SchedModel->getILPWindow();
+  if (RemLatency + ExpectedLatency >= CriticalPathLimit
       && RemLatency > Rem->getMaxRemainingCount(SchedModel)) {
     Policy.ReduceLatency = true;
     DEBUG(dbgs() << "Increase ILP: " << Available.getName() << '\n');

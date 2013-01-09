@@ -1,15 +1,15 @@
-; RUN: llc < %s -enable-misched -march=thumb -mcpu=swift \
-; RUN:          -pre-RA-sched=source -scheditins=false -ilp-window=0 \
+; RUN: llc < %s -enable-misched -pre-RA-sched=source -scheditins=false \
 ; RUN:          -disable-ifcvt-triangle-false -disable-post-ra | FileCheck %s
 ;
-; For these tests, we set -ilp-window=0 to simulate in order processor.
+target datalayout = "E-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-f128:128:128-v128:128:128-n32:64"
+target triple = "powerpc64-bgq-linux"
 
-; %val1 is a 3-cycle load live out of %entry. It should be hoisted
+; %val1 is a load live out of %entry. It should be hoisted
 ; above the add.
-; CHECK: @testload
+; CHECK: testload:
 ; CHECK: %entry
-; CHECK: ldr
-; CHECK: adds
+; CHECK: lwz
+; CHECK: addi
 ; CHECK: bne
 ; CHECK: %true
 define i32 @testload(i32 *%ptr, i32 %sumin) {
@@ -34,15 +34,22 @@ end:
 ; The prefetch gets a default latency of 3 cycles and should be hoisted
 ; above the add.
 ;
-; CHECK: @testprefetch
+; CHECK: testprefetch:
 ; CHECK: %entry
-; CHECK: pld
-; CHECK: adds
-; CHECK: bx
+; CHECK: dcbt
+; CHECK: addi
+; CHECK: blr
 define i32 @testprefetch(i8 *%ptr, i32 %i) {
 entry:
-  %tmp = add i32 %i, 1
+  %val1 = add i32 %i, 1
   tail call void @llvm.prefetch( i8* %ptr, i32 0, i32 3, i32 1 )
-  ret i32 %tmp
+  %p = icmp eq i32 %i, 0
+  br i1 %p, label %true, label %end
+true:
+  %val2 = add i32 %val1, 1
+  br label %end
+end:
+  %valmerge = phi i32 [ %val1, %entry], [ %val2, %true ]
+  ret i32 %valmerge
 }
 declare void @llvm.prefetch(i8*, i32, i32, i32) nounwind
