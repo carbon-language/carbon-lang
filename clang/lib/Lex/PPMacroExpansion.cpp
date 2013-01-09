@@ -985,8 +985,14 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
     // Save '(' location for possible missing ')' message.
     LParenLoc = Tok.getLocation();
 
-    // Get the file name.
-    PP.getCurrentLexer()->LexIncludeFilename(Tok);
+    if (PP.getCurrentLexer()) {
+      // Get the file name.
+      PP.getCurrentLexer()->LexIncludeFilename(Tok);
+    } else {
+      // We're in a macro, so we can't use LexIncludeFilename; just
+      // grab the next token.
+      PP.Lex(Tok);
+    }
   }
 
   // Reserve a buffer to get the spelling.

@@ -64,6 +64,33 @@
   #error "defined(__has_include_next) failed (8)."
 #endif
 
+// Fun with macros
+#define MACRO1 __has_include(<stdint.h>)
+#define MACRO2 ("stdint.h")
+#define MACRO3 ("blahblah.h")
+#define MACRO4 blahblah.h>)
+#define MACRO5 <stdint.h>
+
+#if !MACRO1
+  #error "__has_include with macro failed (1)."
+#endif
+
+#if !__has_include MACRO2
+  #error "__has_include with macro failed (2)."
+#endif
+
+#if __has_include MACRO3
+  #error "__has_include with macro failed (3)."
+#endif
+
+#if __has_include(<MACRO4
+  #error "__has_include with macro failed (4)."
+#endif
+
+#if !__has_include(MACRO5)
+  #error "__has_include with macro failed (2)."
+#endif
+
 // Try badly formed expressions.
 // FIXME: We can recover better in almost all of these cases. (PR13335)
 
