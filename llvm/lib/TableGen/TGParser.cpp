@@ -2160,7 +2160,12 @@ bool TGParser::ParseTopLevelLet(MultiClass *CurMultiClass) {
 /// ParseMultiClass - Parse a multiclass definition.
 ///
 ///  MultiClassInst ::= MULTICLASS ID TemplateArgList?
-///                     ':' BaseMultiClassList '{' MultiClassDef+ '}'
+///                     ':' BaseMultiClassList '{' MultiClassObject+ '}'
+///  MultiClassObject ::= DefInst
+///  MultiClassObject ::= MultiClassInst
+///  MultiClassObject ::= DefMInst
+///  MultiClassObject ::= LETCommand '{' ObjectList '}'
+///  MultiClassObject ::= LETCommand Object
 ///
 bool TGParser::ParseMultiClass() {
   assert(Lex.getCode() == tgtok::MultiClass && "Unexpected token");

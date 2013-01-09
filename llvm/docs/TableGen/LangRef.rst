@@ -370,6 +370,7 @@ applied at the end of parsing the base classes of a record.
 
 .. productionlist::
    MultiClass: "multiclass" `TokIdentifier` [`TemplateArgList`]
-             : [":" `BaseMultiClassList`] "{" `MultiClassDef`+ "}"
+             : [":" `BaseMultiClassList`] "{" `MultiClassObject`+ "}"
    BaseMultiClassList: `MultiClassID` ("," `MultiClassID`)*
    MultiClassID: `TokIdentifier`
+   MultiClassObject: `Def` | `Defm` | `Let` | `Foreach`
