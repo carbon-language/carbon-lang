@@ -1861,6 +1861,17 @@ bool TGParser::ParseBody(Record *CurRec) {
   return false;
 }
 
+/// \brief Apply the current let bindings to \a CurRec.
+/// \returns true on error, false otherwise.
+bool TGParser::ApplyLetStack(Record *CurRec) {
+  for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
+    for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
+      if (SetValue(CurRec, LetStack[i][j].Loc, LetStack[i][j].Name,
+                   LetStack[i][j].Bits, LetStack[i][j].Value))
+        return true;
+  return false;
+}
+
 /// ParseObjectBody - Parse the body of a def or class.  This consists of an
 /// optional ClassList followed by a Body.  CurRec is the current def or class
 /// that is being parsed.
@@ -1891,12 +1902,8 @@ bool TGParser::ParseObjectBody(Record *CurRec) {
     }
   }
 
-  // Process any variables on the let stack.
-  for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
-    for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
-      if (SetValue(CurRec, LetStack[i][j].Loc, LetStack[i][j].Name,
-                   LetStack[i][j].Bits, LetStack[i][j].Value))
-        return true;
+  if (ApplyLetStack(CurRec))
+    return true;
 
   return ParseBody(CurRec);
 }
@@ -2355,11 +2362,8 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
                                     Record *DefProto,
                                     SMLoc DefmPrefixLoc) {
   // If the mdef is inside a 'let' expression, add to each def.
-  for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
-    for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
-      if (SetValue(CurRec, LetStack[i][j].Loc, LetStack[i][j].Name,
-                   LetStack[i][j].Bits, LetStack[i][j].Value))
-        return Error(DefmPrefixLoc, "when instantiating this defm");
+  if (ApplyLetStack(CurRec))
+    return Error(DefmPrefixLoc, "when instantiating this defm");
 
   // Don't create a top level definition for defm inside multiclasses,
   // instead, only update the prototypes and bind the template args
@@ -2483,12 +2487,8 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
         if (AddSubClass(CurRec, SubClass))
           return true;
 
-        // Process any variables on the let stack.
-        for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
-          for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
-            if (SetValue(CurRec, LetStack[i][j].Loc, LetStack[i][j].Name,
-                         LetStack[i][j].Bits, LetStack[i][j].Value))
-              return true;
+        if (ApplyLetStack(CurRec))
+          return true;
       }
 
       if (Lex.getCode() != tgtok::comma) break;
