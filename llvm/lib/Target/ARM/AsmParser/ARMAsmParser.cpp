@@ -271,7 +271,7 @@ public:
 namespace {
 
 /// ARMOperand - Instances of this class represent a parsed ARM machine
-/// instruction.
+/// operand.
 class ARMOperand : public MCParsedAsmOperand {
   enum KindTy {
     k_CondCode,
