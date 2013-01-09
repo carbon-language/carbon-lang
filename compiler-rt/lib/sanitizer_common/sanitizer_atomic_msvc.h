@@ -24,10 +24,31 @@ extern "C" void _mm_pause();
 extern "C" long _InterlockedExchangeAdd(  // NOLINT
     long volatile * Addend, long Value);  // NOLINT
 #pragma intrinsic(_InterlockedExchangeAdd)
+
+#ifdef _WIN64
 extern "C" void *_InterlockedCompareExchangePointer(
     void *volatile *Destination,
     void *Exchange, void *Comparand);
 #pragma intrinsic(_InterlockedCompareExchangePointer)
+#else
+// There's no _InterlockedCompareExchangePointer intrinsic on x86,
+// so call _InterlockedCompareExchange instead.
+extern "C"
+long __cdecl _InterlockedCompareExchange(
+    long volatile *Destination,
+    long Exchange, long Comparand);
+#pragma intrinsic(_InterlockedCompareExchange)
+
+inline static void *_InterlockedCompareExchangePointer(
+    void *volatile *Destination,
+    void *Exchange, void *Comparand) {
+  return reinterpret_cast<void*>(
+      _InterlockedCompareExchange(
+          reinterpret_cast<long volatile*>(Destination),
+          reinterpret_cast<long>(Exchange),
+          reinterpret_cast<long>(Comparand)));
+}
+#endif
 
 namespace __sanitizer {
 
