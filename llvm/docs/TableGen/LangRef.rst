@@ -293,12 +293,12 @@ Bodies
    ObjectBody: `BaseClassList` `Body`
    BaseClassList: [`BaseClassListNE`]
    BaseClassListNE: `SubClassRef` ("," `SubClassRef`)*
-   SubClassRef: (`ClassID` | `DefmID`) ["<" `ValueList` ">"]
+   SubClassRef: (`ClassID` | `MultiClassID`) ["<" `ValueList` ">"]
    DefmID: `TokIdentifier`
 
-The version with the :token:`DefmID` is only valid in the
+The version with the :token:`MultiClassID` is only valid in the
 :token:`BaseClassList` of a ``defm``.
-The :token:`DefmID` should be the name of a ``multiclass``.
+The :token:`MultiClassID` should be the name of a ``multiclass``.
 
 .. put this somewhere else
 
