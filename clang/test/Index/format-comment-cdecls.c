@@ -90,10 +90,10 @@ enum e {
  *\brief block declaration
 */
 int (^Block) (int i, int j);
-// CHECK: <Declaration>int ( ^ Block) (int, int)</Declaration>
+// CHECK: <Declaration>int (^Block) (int, int)</Declaration>
 
 /**
  *\brief block declaration
 */
 int (^Block1) (int i, int j) = ^(int i, int j) { return i + j; };
-// CHECK: <Declaration>int ( ^ Block1) (int, int) = ^ (int i, int j) {\n}</Declaration>
+// CHECK: <Declaration>int (^Block1) (int, int) = ^(int i, int j) {\n}</Declaration>

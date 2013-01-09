@@ -1122,6 +1122,11 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
           "outRange8:(NSRange) out_range8  outRange9:(NSRange) out_range9;"));
 }
 
+TEST_F(FormatTest, FormatObjCBlocks) {
+  verifyFormat("int (^Block) (int, int);");
+  verifyFormat("int (^Block1) (int, int) = ^(int i, int j)");
+}
+
 TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@autoreleasepool");
   verifyFormat("@catch");

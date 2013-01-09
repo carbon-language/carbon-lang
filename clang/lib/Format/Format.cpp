@@ -846,8 +846,9 @@ private:
     if (Current.Type == TT_Unknown) {
       if (Current.is(tok::star) || Current.is(tok::amp)) {
         Current.Type = determineStarAmpUsage(Current, IsRHS);
-      } else if (Current.is(tok::minus) || Current.is(tok::plus)) {
-        Current.Type = determinePlusMinusUsage(Current);
+      } else if (Current.is(tok::minus) || Current.is(tok::plus) ||
+                 Current.is(tok::caret)) {
+        Current.Type = determinePlusMinusCaretUsage(Current);
       } else if (Current.is(tok::minusminus) || Current.is(tok::plusplus)) {
         Current.Type = determineIncrementUsage(Current);
       } else if (Current.is(tok::exclaim)) {
@@ -905,7 +906,7 @@ private:
     return TT_PointerOrReference;
   }
 
-  TokenType determinePlusMinusUsage(const AnnotatedToken &Tok) {
+  TokenType determinePlusMinusCaretUsage(const AnnotatedToken &Tok) {
     // At the start of the line, +/- specific ObjectiveC method declarations.
     if (Tok.Parent == NULL)
       return TT_ObjCMethodSpecifier;
