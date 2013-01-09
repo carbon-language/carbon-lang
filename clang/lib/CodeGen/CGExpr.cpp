@@ -1992,7 +1992,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
 
   llvm::Constant *Info = llvm::ConstantStruct::getAnon(StaticArgs);
   llvm::GlobalValue *InfoPtr =
-      new llvm::GlobalVariable(CGM.getModule(), Info->getType(), true,
+      new llvm::GlobalVariable(CGM.getModule(), Info->getType(), false,
                                llvm::GlobalVariable::PrivateLinkage, Info);
   InfoPtr->setUnnamedAddr(true);
 

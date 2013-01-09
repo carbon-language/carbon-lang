@@ -5,7 +5,7 @@
 // CHECK: @[[INT:.*]] = private unnamed_addr constant { i16, i16, [6 x i8] } { i16 0, i16 11, [6 x i8] c"'int'\00" }
 
 // FIXME: When we only emit each type once, use [[INT]] more below.
-// CHECK: @[[LINE_100:.*]] = private unnamed_addr constant {{.*}}, i32 100, i32 5 {{.*}} @[[INT]], i64 4, i8 1
+// CHECK: @[[LINE_100:.*]] = private unnamed_addr global {{.*}}, i32 100, i32 5 {{.*}} @[[INT]], i64 4, i8 1
 // CHECK: @[[LINE_200:.*]] = {{.*}}, i32 200, i32 10 {{.*}}, i64 4, i8 0
 // CHECK: @[[LINE_300_A:.*]] = {{.*}}, i32 300, i32 12 {{.*}} @{{.*}}, {{.*}} @{{.*}}
 // CHECK: @[[LINE_300_B:.*]] = {{.*}}, i32 300, i32 12 {{.*}} @{{.*}}, {{.*}} @{{.*}}
@@ -19,7 +19,7 @@
 // CHECK: @[[LINE_800:.*]] = {{.*}}, i32 800, i32 12 {{.*}} @{{.*}} }
 // CHECK: @[[LINE_900:.*]] = {{.*}}, i32 900, i32 11 {{.*}} @{{.*}} }
 
-// CHECK-NULL: @[[LINE_100:.*]] = private unnamed_addr constant {{.*}}, i32 100, i32 5 {{.*}}
+// CHECK-NULL: @[[LINE_100:.*]] = private unnamed_addr global {{.*}}, i32 100, i32 5 {{.*}}
 
 // PR6805
 // CHECK: @foo
