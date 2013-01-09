@@ -56,7 +56,7 @@ class ExprFormattersTestCase(TestBase):
         self.runCmd("frame variable foo1.b --show-types")
         self.runCmd("frame variable foo1.b.b_ref --show-types")
 
-        self.expect("expression *(new foo(47))",
+        self.expect("expression --show-types -- *(new foo(47))",
             substrs = ['(int) a = 47', '(bar) b = {', '(int) i = 94', '(baz) b = {', '(int) k = 99'])
 
         self.runCmd("type summary add -F formatters.foo_SummaryProvider foo")
@@ -94,7 +94,7 @@ class ExprFormattersTestCase(TestBase):
         self.runCmd("type summary delete foo")
         self.runCmd("type synthetic add --python-class foosynth.FooSyntheticProvider foo")
 
-        self.expect("expression $" + object_name,
+        self.expect("expression --show-types -- $" + object_name,
             substrs = ['(foo) $', ' = {', '(int) *i_ptr = 243'])
 
         self.runCmd("n")
@@ -118,7 +118,7 @@ class ExprFormattersTestCase(TestBase):
         self.runCmd("type summary delete foo")
         self.runCmd("type synthetic add --python-class foosynth.FooSyntheticProvider foo")
 
-        self.expect("expression $" + object_name,
+        self.expect("expression --show-types -- $" + object_name,
             substrs = ['(foo) $', ' = {', '(int) *i_ptr = 8888'])
 
         self.runCmd("n")

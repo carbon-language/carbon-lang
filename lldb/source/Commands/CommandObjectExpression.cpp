@@ -53,10 +53,8 @@ OptionDefinition
 CommandObjectExpression::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "all-threads",        'a', required_argument, NULL, 0, eArgTypeBoolean,    "Should we run all threads if the execution doesn't complete on one thread."},
-    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "dynamic-value",      'd', required_argument, NULL, 0, eArgTypeBoolean,    "Upcast the value resulting from the expression to its dynamic type if available."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "timeout",            't', required_argument, NULL, 0, eArgTypeUnsignedInteger,  "Timeout value for running the expression."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "unwind-on-error",    'u', required_argument, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
-    { LLDB_OPT_SET_2                 , false, "object-description", 'O', no_argument,       NULL, 0, eArgTypeNone,       "Print the object description of the value resulting from the expression."},
 };
 
 
@@ -96,27 +94,6 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
         }
         break;
         
-    case 'd':
-        {
-            bool success;
-            bool result;
-            result = Args::StringToBoolean(option_arg, true, &success);
-            if (!success)
-                error.SetErrorStringWithFormat("invalid dynamic value setting: \"%s\"", option_arg);
-            else
-            {
-                if (result)
-                    use_dynamic = eLazyBoolYes;  
-                else
-                    use_dynamic = eLazyBoolNo;
-            }
-        }
-        break;
-        
-    case 'O':
-        print_object = true;
-        break;
-        
     case 't':
         {
             bool success;
@@ -148,10 +125,7 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
 void
 CommandObjectExpression::CommandOptions::OptionParsingStarting (CommandInterpreter &interpreter)
 {
-    use_dynamic = eLazyBoolCalculate;
-    print_object = false;
     unwind_on_error = true;
-    show_types = true;
     show_summary = true;
     try_all_threads = true;
     timeout = 0;
@@ -212,6 +186,7 @@ Examples: \n\
     // Add the "--format" and "--gdb-format"
     m_option_group.Append (&m_format_options, OptionGroupFormat::OPTION_GROUP_FORMAT | OptionGroupFormat::OPTION_GROUP_GDB_FMT, LLDB_OPT_SET_1);
     m_option_group.Append (&m_command_options);
+    m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1 | LLDB_OPT_SET_2);
     m_option_group.Finalize();
 }
 
@@ -327,26 +302,12 @@ CommandObjectExpression::EvaluateExpression
         ExecutionResults exe_results;
         
         bool keep_in_memory = true;
-        lldb::DynamicValueType use_dynamic;
-        // If use dynamic is not set, get it from the target:
-        switch (m_command_options.use_dynamic)
-        {
-        case eLazyBoolCalculate:
-            use_dynamic = target->GetPreferDynamicValue();
-            break;
-        case eLazyBoolYes:
-            use_dynamic = lldb::eDynamicCanRunTarget;
-            break;
-        case eLazyBoolNo:
-            use_dynamic = lldb::eNoDynamicValues;
-            break;
-        }
-        
+
         EvaluateExpressionOptions options;
-        options.SetCoerceToId(m_command_options.print_object)
+        options.SetCoerceToId(m_varobj_options.use_objc)
         .SetUnwindOnError(m_command_options.unwind_on_error)
         .SetKeepInMemory(keep_in_memory)
-        .SetUseDynamic(use_dynamic)
+        .SetUseDynamic(m_varobj_options.use_dynamic)
         .SetRunOthers(m_command_options.try_all_threads)
         .SetTimeoutUsec(m_command_options.timeout);
         
@@ -395,21 +356,21 @@ CommandObjectExpression::EvaluateExpression
                         result_valobj_sp->SetFormat (format);
 
                     ValueObject::DumpValueObjectOptions options;
-                    options.SetMaximumPointerDepth(0)
-                    .SetMaximumDepth(UINT32_MAX)
-                    .SetShowLocation(false)
-                    .SetShowTypes(m_command_options.show_types)
-                    .SetUseObjectiveC(m_command_options.print_object)
-                    .SetUseDynamicType(use_dynamic)
-                    .SetScopeChecked(true)
-                    .SetFlatOutput(false)
-                    .SetUseSyntheticValue(true)
-                    .SetIgnoreCap(false)
+                    options.SetMaximumPointerDepth(m_varobj_options.ptr_depth)
+                    .SetMaximumDepth(m_varobj_options.max_depth)
+                    .SetShowTypes(m_varobj_options.show_types)
+                    .SetShowLocation(m_varobj_options.show_location)
+                    .SetUseObjectiveC(m_varobj_options.use_objc)
+                    .SetUseDynamicType(m_varobj_options.use_dynamic)
+                    .SetUseSyntheticValue(m_varobj_options.use_synth)
+                    .SetFlatOutput(m_varobj_options.flat_output)
+                    .SetOmitSummaryDepth(m_varobj_options.no_summary_depth)
+                    .SetIgnoreCap(m_varobj_options.ignore_cap)
                     .SetFormat(format)
                     .SetSummary()
-                    .SetShowSummary(!m_command_options.print_object)
-                    .SetHideRootType(m_command_options.print_object);
-                    
+                    .SetShowSummary(!m_varobj_options.use_objc)
+                    .SetHideRootType(m_varobj_options.use_objc);
+
                     ValueObject::DumpValueObject (*(output_stream),
                                                   result_valobj_sp.get(),   // Variable object to dump
                                                   options);

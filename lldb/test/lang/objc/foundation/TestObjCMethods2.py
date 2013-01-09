@@ -200,7 +200,7 @@ class FoundationTestCase2(TestBase):
 
         self.runCmd("run", RUN_SUCCEEDED)
         
-        self.expect("expression *my",
+        self.expect("expression --show-types -- *my",
             patterns = ["\(MyString\) \$.* = ", "\(MyBase\)", "\(NSObject\)", "\(Class\)"])
         self.runCmd("process continue")
 

@@ -142,16 +142,16 @@ class AliasTestCase(TestBase):
                                  "= 0x000004d2" ])
 
         self.expect ('exprf2 c "Hi there!"',
-                     substrs = [ "(const char) [0] = 'H'",
-                                 "(const char) [1] = 'i'",
-                                 "(const char) [2] = ' '",
-                                 "(const char) [3] = 't'",
-                                 "(const char) [4] = 'h'",
-                                 "(const char) [5] = 'e'",
-                                 "(const char) [6] = 'r'",
-                                 "(const char) [7] = 'e'",
-                                 "(const char) [8] = '!'",
-                                 "(const char) [9] = '\\0'" ])
+                     substrs = [ "[0] = 'H'",
+                                 "[1] = 'i'",
+                                 "[2] = ' '",
+                                 "[3] = 't'",
+                                 "[4] = 'h'",
+                                 "[5] = 'e'",
+                                 "[6] = 'r'",
+                                 "[7] = 'e'",
+                                 "[8] = '!'",
+                                 "[9] = '\\0'" ])
         
 
         self.expect ("exprf x 1234",

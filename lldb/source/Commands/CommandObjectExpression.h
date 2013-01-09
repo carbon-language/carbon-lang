@@ -16,6 +16,7 @@
 // Project includes
 #include "lldb/Interpreter/CommandObject.h"
 #include "lldb/Interpreter/OptionGroupFormat.h"
+#include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/Target/ExecutionContext.h"
 
 namespace lldb_private {
@@ -50,8 +51,6 @@ public:
         // Options table: Required for subclasses of Options.
 
         static OptionDefinition g_option_table[];
-        bool        print_object;
-        LazyBool    use_dynamic;
         bool        unwind_on_error;
         bool        show_types;
         bool        show_summary;
@@ -88,6 +87,7 @@ protected:
 
     OptionGroupOptions m_option_group;
     OptionGroupFormat m_format_options;
+    OptionGroupValueObjectDisplay m_varobj_options;
     CommandOptions m_command_options;
     uint32_t m_expr_line_count;
     std::string m_expr_lines; // Multi-line expression support

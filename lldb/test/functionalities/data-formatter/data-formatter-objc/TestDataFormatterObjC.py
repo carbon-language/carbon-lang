@@ -270,7 +270,7 @@ class ObjCDataFormatterTestCase(TestBase):
                     '(NSAttributedString *) mutableAttrString = ',' @"hello world from foo"',
                     '(NSString *) mutableGetConst = ',' @"foo said this string needs to be very long so much longer than whatever other string has been seen ever before by anyone of the mankind that of course this is still not long enough given what foo our friend foo our lovely dearly friend foo desired of us so i am adding more stuff here for the sake of it and for the joy of our friend who is named guess what just foo. hence, dear friend foo, stay safe, your string is now  long enough to accommodate your testing need and I will make sure that if not we extend it with even more fuzzy random meaningless words pasted one after the other from a long tiresome friday evening spent working in my office. my office mate went home but I am still randomly typing just for the fun of seeing what happens of the length of a Mutable String in Cocoa if it goes beyond one byte.. so be it, dear foo"'])
 
-        self.expect('frame variable -d run-target path',substrs = ['usr/blah/stuff'])
+        self.expect('expr -d run-target -- path',substrs = ['usr/blah/stuff'])
         self.expect('frame variable path',substrs = ['usr/blah/stuff'])
 
         self.expect('frame variable immutableData mutableData data_ref mutable_data_ref mutable_string_ref',
@@ -411,18 +411,18 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('expression ((id)@"Hello")', matching=False,
                     substrs = ['Hello'])
 
-        self.expect('expression -d true -- ((id)@"Hello")',
+        self.expect('expression -d run -- ((id)@"Hello")',
         substrs = ['Hello'])
 
-        self.expect('expr -d true -- label1',
+        self.expect('expr -d run -- label1',
             substrs = ['Process Name'])
 
-        self.expect('expr -d true -- @"Hello"',
+        self.expect('expr -d run -- @"Hello"',
             substrs = ['Hello'])
 
-        self.expect('expr -d true --object-description -- @"Hello"',
+        self.expect('expr -d run --object-description -- @"Hello"',
             substrs = ['Hello'])
-        self.expect('expr -d true --object-description -- @"Hello"', matching=False,
+        self.expect('expr -d run --object-description -- @"Hello"', matching=False,
             substrs = ['@"Hello" Hello'])
 
 
