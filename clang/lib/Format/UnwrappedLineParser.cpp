@@ -209,7 +209,8 @@ void UnwrappedLineParser::parseStructuralElement() {
     case tok::objc_private:
       return parseAccessSpecifier();
     case tok::objc_interface:
-      return parseObjCInterface();
+    case tok::objc_implementation:
+      return parseObjCInterfaceOrImplementation();
     case tok::objc_protocol:
       return parseObjCProtocol();
     case tok::objc_end:
@@ -519,7 +520,7 @@ void UnwrappedLineParser::parseObjCUntilAtEnd() {
   } while (!eof());
 }
 
-void UnwrappedLineParser::parseObjCInterface() {
+void UnwrappedLineParser::parseObjCInterfaceOrImplementation() {
   nextToken();
   nextToken();  // interface name
 

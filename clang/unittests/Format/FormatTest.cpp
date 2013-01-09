@@ -1251,6 +1251,77 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "@end");
 }
 
+TEST_F(FormatTest, FormatObjCImplementation) {
+  verifyFormat("@implementation Foo : NSObject {\n"
+               "@public\n"
+               "  int field1;\n"
+               "@protected\n"
+               "  int field2;\n"
+               "@private\n"
+               "  int field3;\n"
+               "@package\n"
+               "  int field4;\n"
+               "}\n"
+               "+ (id)init {\n"
+               "}\n"
+               "@end");
+
+  verifyGoogleFormat("@implementation Foo : NSObject {\n"
+                     " @public\n"
+                     "  int field1;\n"
+                     " @protected\n"
+                     "  int field2;\n"
+                     " @private\n"
+                     "  int field3;\n"
+                     " @package\n"
+                     "  int field4;\n"
+                     "}\n"
+                     "+ (id)init {\n"
+                     "}\n"
+                     "@end");
+
+  verifyFormat("@implementation Foo\n"
+               "+ (id)init {\n"
+               "  if (true)\n"
+               "    return nil;\n"
+               "}\n"
+               "// Look, a comment!\n"
+               "- (int)answerWith:(int)i {\n"
+               "  return i;\n"
+               "}\n"
+               "@end");
+
+  verifyFormat("@implementation Foo\n"
+               "@end\n"
+               "@implementation Bar\n"
+               "@end");
+
+  verifyFormat("@implementation Foo : Bar\n"
+               "+ (id)init {\n"
+               "}\n"
+               "@end");
+
+  verifyFormat("@implementation Foo {\n"
+               "  int _i;\n"
+               "}\n"
+               "+ (id)init {\n"
+               "}\n"
+               "@end");
+
+  verifyFormat("@implementation Foo : Bar {\n"
+               "  int _i;\n"
+               "}\n"
+               "+ (id)init {\n"
+               "}\n"
+               "@end");
+
+  // FIXME: there should be a space before '(' for categories.
+  verifyFormat("@implementation Foo(HackStuff)\n"
+               "+ (id)init {\n"
+               "}\n"
+               "@end");
+}
+
 TEST_F(FormatTest, FormatObjCProtocol) {
   verifyFormat("@protocol Foo\n"
                "@property(weak) id delegate;\n"

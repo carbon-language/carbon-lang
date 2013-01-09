@@ -162,7 +162,7 @@
 */
 - (void) setPropertyMyClassCategory : (id) arg {}
 @end
-// CHECK: <Declaration>@implementation MyClass(Category)  @end</Declaration>
+// CHECK: <Declaration>@implementation MyClass(Category)\n@end</Declaration>
 // CHECK: <Declaration>- (void)MethodMyClassCategory;</Declaration>
 // CHECK: <Declaration>- (id)PropertyMyClassCategory;</Declaration>
 // CHECK: <Declaration>- (void)setPropertyMyClassCategory:(id)arg;</Declaration>
@@ -172,4 +172,4 @@
 */
 @implementation NSObject
 @end
-// CHECK: <Declaration>@implementation NSObject @end</Declaration>
+// CHECK: <Declaration>@implementation NSObject\n@end</Declaration>

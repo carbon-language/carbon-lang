@@ -144,7 +144,7 @@ private:
   void parseStructOrClass();
   void parseObjCProtocolList();
   void parseObjCUntilAtEnd();
-  void parseObjCInterface();
+  void parseObjCInterfaceOrImplementation();
   void parseObjCProtocol();
   void addUnwrappedLine();
   bool eof() const;
