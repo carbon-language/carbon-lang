@@ -51,6 +51,8 @@ bool Constant::isNegativeZeroValue() const {
   return isNullValue();
 }
 
+// Return true iff this constant is positive zero (floating point), negative
+// zero (floating point), or a null value.
 bool Constant::isZeroValue() const {
   // Floating point values have an explicit -0.0 value.
   if (const ConstantFP *CFP = dyn_cast<ConstantFP>(this))
