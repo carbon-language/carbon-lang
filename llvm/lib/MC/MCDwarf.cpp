@@ -269,8 +269,8 @@ const MCSymbol *MCDwarfFileTable::Emit(MCStreamer *MCOS) {
   const std::vector<StringRef> &MCDwarfDirs =
     context.getMCDwarfDirs();
   for (unsigned i = 0; i < MCDwarfDirs.size(); i++) {
-    MCOS->EmitBytes(MCDwarfDirs[i], 0); // the DirectoryName
-    MCOS->EmitBytes(StringRef("\0", 1), 0); // the null term. of the string
+    MCOS->EmitBytes(MCDwarfDirs[i]); // the DirectoryName
+    MCOS->EmitBytes(StringRef("\0", 1)); // the null term. of the string
   }
   MCOS->EmitIntValue(0, 1); // Terminate the directory list
 
@@ -278,8 +278,8 @@ const MCSymbol *MCDwarfFileTable::Emit(MCStreamer *MCOS) {
   const std::vector<MCDwarfFile *> &MCDwarfFiles =
     MCOS->getContext().getMCDwarfFiles();
   for (unsigned i = 1; i < MCDwarfFiles.size(); i++) {
-    MCOS->EmitBytes(MCDwarfFiles[i]->getName(), 0); // FileName
-    MCOS->EmitBytes(StringRef("\0", 1), 0); // the null term. of the string
+    MCOS->EmitBytes(MCDwarfFiles[i]->getName()); // FileName
+    MCOS->EmitBytes(StringRef("\0", 1)); // the null term. of the string
     // the Directory num
     MCOS->EmitULEB128IntValue(MCDwarfFiles[i]->getDirIndex());
     MCOS->EmitIntValue(0, 1); // last modification timestamp (always 0)
@@ -342,7 +342,7 @@ void MCDwarfLineAddr::Emit(MCStreamer *MCOS, int64_t LineDelta,
   SmallString<256> Tmp;
   raw_svector_ostream OS(Tmp);
   MCDwarfLineAddr::Encode(LineDelta, AddrDelta, OS);
-  MCOS->EmitBytes(OS.str(), /*AddrSpace=*/0);
+  MCOS->EmitBytes(OS.str());
 }
 
 /// Utility function to encode a Dwarf pair of LineDelta and AddrDeltas.
@@ -618,29 +618,29 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
   const std::vector<StringRef> &MCDwarfDirs =
     context.getMCDwarfDirs();
   if (MCDwarfDirs.size() > 0) {
-    MCOS->EmitBytes(MCDwarfDirs[0], 0);
-    MCOS->EmitBytes("/", 0);
+    MCOS->EmitBytes(MCDwarfDirs[0]);
+    MCOS->EmitBytes("/");
   }
   const std::vector<MCDwarfFile *> &MCDwarfFiles =
     MCOS->getContext().getMCDwarfFiles();
-  MCOS->EmitBytes(MCDwarfFiles[1]->getName(), 0);
+  MCOS->EmitBytes(MCDwarfFiles[1]->getName());
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
   // AT_comp_dir, the working directory the assembly was done in.
-  MCOS->EmitBytes(context.getCompilationDir(), 0);
+  MCOS->EmitBytes(context.getCompilationDir());
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
   // AT_APPLE_flags, the command line arguments of the assembler tool.
   StringRef DwarfDebugFlags = context.getDwarfDebugFlags();
   if (!DwarfDebugFlags.empty()){
-    MCOS->EmitBytes(DwarfDebugFlags, 0);
+    MCOS->EmitBytes(DwarfDebugFlags);
     MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
   }
 
   // AT_producer, the version of the assembler tool.
-  MCOS->EmitBytes(StringRef("llvm-mc (based on LLVM "), 0);
-  MCOS->EmitBytes(StringRef(PACKAGE_VERSION), 0);
-  MCOS->EmitBytes(StringRef(")"), 0);
+  MCOS->EmitBytes(StringRef("llvm-mc (based on LLVM "));
+  MCOS->EmitBytes(StringRef(PACKAGE_VERSION));
+  MCOS->EmitBytes(StringRef(")"));
   MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
   // AT_language, a 4 byte value.  We use DW_LANG_Mips_Assembler as the dwarf2
@@ -661,7 +661,7 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS,
     MCOS->EmitULEB128IntValue(2);
 
     // AT_name, of the label without any leading underbar.
-    MCOS->EmitBytes(Entry->getName(), 0);
+    MCOS->EmitBytes(Entry->getName());
     MCOS->EmitIntValue(0, 1); // NULL byte to terminate the string.
 
     // AT_decl_file, index into the file table.
@@ -1071,7 +1071,7 @@ void FrameEmitterImpl::EmitCFIInstruction(MCStreamer &Streamer,
   }
   case MCCFIInstruction::OpEscape:
     if (VerboseAsm) Streamer.AddComment("Escape bytes");
-    Streamer.EmitBytes(Instr.getValues(), 0);
+    Streamer.EmitBytes(Instr.getValues());
     return;
   }
   llvm_unreachable("Unhandled case in switch");
@@ -1229,7 +1229,7 @@ const MCSymbol &FrameEmitterImpl::EmitCIE(MCStreamer &streamer,
     Augmentation += "R";
     if (IsSignalFrame)
       Augmentation += "S";
-    streamer.EmitBytes(Augmentation.str(), 0);
+    streamer.EmitBytes(Augmentation.str());
   }
   streamer.EmitIntValue(0, 1);
 
@@ -1493,7 +1493,7 @@ void MCDwarfFrameEmitter::EmitAdvanceLoc(MCStreamer &Streamer,
   SmallString<256> Tmp;
   raw_svector_ostream OS(Tmp);
   MCDwarfFrameEmitter::EncodeAdvanceLoc(AddrDelta, OS);
-  Streamer.EmitBytes(OS.str(), /*AddrSpace=*/0);
+  Streamer.EmitBytes(OS.str());
 }
 
 void MCDwarfFrameEmitter::EncodeAdvanceLoc(uint64_t AddrDelta,

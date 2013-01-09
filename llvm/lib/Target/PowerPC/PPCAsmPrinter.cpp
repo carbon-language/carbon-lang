@@ -732,14 +732,14 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
   // Generates a R_PPC64_ADDR64 (from FK_DATA_8) relocation for the function
   // entry point.
   OutStreamer.EmitValue(MCSymbolRefExpr::Create(Symbol1, OutContext),
-                        8/*size*/, 0/*addrspace*/);
+			8 /*size*/);
   MCSymbol *Symbol2 = OutContext.GetOrCreateSymbol(StringRef(".TOC."));
   // Generates a R_PPC64_TOC relocation for TOC base insertion.
   OutStreamer.EmitValue(MCSymbolRefExpr::Create(Symbol2,
                         MCSymbolRefExpr::VK_PPC_TOC, OutContext),
-                        8/*size*/, 0/*addrspace*/);
+                        8/*size*/);
   // Emit a null environment pointer.
-  OutStreamer.EmitIntValue(0, 8 /* size */, 0 /* addrspace */);
+  OutStreamer.EmitIntValue(0, 8 /* size */);
   OutStreamer.SwitchSection(Current);
 
   MCSymbol *RealFnSym = OutContext.GetOrCreateSymbol(
@@ -1031,7 +1031,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
 
       if (MCSym.getInt())
         // External to current translation unit.
-        OutStreamer.EmitIntValue(0, isPPC64 ? 8 : 4/*size*/, 0/*addrspace*/);
+        OutStreamer.EmitIntValue(0, isPPC64 ? 8 : 4/*size*/);
       else
         // Internal to current translation unit.
         //
@@ -1041,7 +1041,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
         // fill in the value for the NLP in those cases.
         OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym.getPointer(),
                                                       OutContext),
-                              isPPC64 ? 8 : 4/*size*/, 0/*addrspace*/);
+                              isPPC64 ? 8 : 4/*size*/);
     }
 
     Stubs.clear();
@@ -1060,7 +1060,7 @@ bool PPCDarwinAsmPrinter::doFinalization(Module &M) {
       OutStreamer.EmitValue(MCSymbolRefExpr::
                             Create(Stubs[i].second.getPointer(),
                                    OutContext),
-                            isPPC64 ? 8 : 4/*size*/, 0/*addrspace*/);
+                            isPPC64 ? 8 : 4/*size*/);
     }
 
     Stubs.clear();

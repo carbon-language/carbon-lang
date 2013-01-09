@@ -543,7 +543,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
                                         MCSA_IndirectSymbol);
         // hlt; hlt; hlt; hlt; hlt     hlt = 0xf4.
         const char HltInsts[] = "\xf4\xf4\xf4\xf4\xf4";
-        OutStreamer.EmitBytes(StringRef(HltInsts, 5), 0/*addrspace*/);
+        OutStreamer.EmitBytes(StringRef(HltInsts, 5));
       }
 
       Stubs.clear();
@@ -569,7 +569,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         // .long 0
         if (MCSym.getInt())
           // External to current translation unit.
-          OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
+          OutStreamer.EmitIntValue(0, 4/*size*/);
         else
           // Internal to current translation unit.
           //
@@ -578,8 +578,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
           // using NLPs.  However, sometimes the types are local to the file. So
           // we need to fill in the value for the NLP in those cases.
           OutStreamer.EmitValue(MCSymbolRefExpr::Create(MCSym.getPointer(),
-                                                        OutContext),
-                                4/*size*/, 0/*addrspace*/);
+                                                        OutContext), 4/*size*/);
       }
       Stubs.clear();
       OutStreamer.AddBlankLine();
@@ -596,8 +595,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         // .long _foo
         OutStreamer.EmitValue(MCSymbolRefExpr::
                               Create(Stubs[i].second.getPointer(),
-                                     OutContext),
-                              4/*size*/, 0/*addrspace*/);
+                                     OutContext), 4/*size*/);
       }
       Stubs.clear();
       OutStreamer.AddBlankLine();
@@ -663,7 +661,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
           name += ",DATA";
         else
         name += ",data";
-        OutStreamer.EmitBytes(name, 0);
+        OutStreamer.EmitBytes(name);
       }
 
       for (unsigned i = 0, e = DLLExportedFns.size(); i != e; ++i) {
@@ -672,7 +670,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
         else
           name = " -export:";
         name += DLLExportedFns[i]->getName();
-        OutStreamer.EmitBytes(name, 0);
+        OutStreamer.EmitBytes(name);
       }
     }
   }
@@ -692,7 +690,7 @@ void X86AsmPrinter::EmitEndOfAsmFile(Module &M) {
       for (unsigned i = 0, e = Stubs.size(); i != e; ++i) {
         OutStreamer.EmitLabel(Stubs[i].first);
         OutStreamer.EmitSymbolValue(Stubs[i].second.getPointer(),
-                                    TD->getPointerSize(), 0);
+                                    TD->getPointerSize());
       }
       Stubs.clear();
     }

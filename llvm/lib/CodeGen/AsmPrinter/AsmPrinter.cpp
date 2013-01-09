@@ -391,9 +391,9 @@ void AsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
     //   - pointer to mangled symbol above with initializer
     unsigned PtrSize = TD->getPointerSizeInBits()/8;
     OutStreamer.EmitSymbolValue(GetExternalSymbolSymbol("_tlv_bootstrap"),
-                          PtrSize, 0);
-    OutStreamer.EmitIntValue(0, PtrSize, 0);
-    OutStreamer.EmitSymbolValue(MangSym, PtrSize, 0);
+				PtrSize);
+    OutStreamer.EmitIntValue(0, PtrSize);
+    OutStreamer.EmitSymbolValue(MangSym, PtrSize);
 
     OutStreamer.AddBlankLine();
     return;

@@ -182,7 +182,7 @@ namespace {
       const size_t TagHeaderSize = 1 + 4;
 
       Streamer.EmitIntValue(VendorHeaderSize + TagHeaderSize + ContentsSize, 4);
-      Streamer.EmitBytes(CurrentVendor, 0);
+      Streamer.EmitBytes(CurrentVendor);
       Streamer.EmitIntValue(0, 1); // '\0'
 
       Streamer.EmitIntValue(ARMBuildAttrs::File, 1);
@@ -199,7 +199,7 @@ namespace {
           Streamer.EmitULEB128IntValue(item.IntValue, 0);
           break;
         case AttributeItemType::TextAttribute:
-          Streamer.EmitBytes(item.StringValue.upper(), 0);
+          Streamer.EmitBytes(item.StringValue.upper());
           Streamer.EmitIntValue(0, 1); // '\0'
           break;
         }
