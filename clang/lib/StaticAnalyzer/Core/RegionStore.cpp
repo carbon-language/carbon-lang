@@ -1133,6 +1133,11 @@ SVal RegionStoreManager::getBinding(RegionBindingsConstRef B, Loc L, QualType T)
   const TypedValueRegion *R = cast<TypedValueRegion>(MR);
   QualType RTy = R->getValueType();
 
+  // FIXME: we do not yet model the parts of a complex type, so treat the
+  // whole thing as "unknown".
+  if (RTy->isAnyComplexType())
+    return UnknownVal();
+
   // FIXME: We should eventually handle funny addressing.  e.g.:
   //
   //   int x = ...;
