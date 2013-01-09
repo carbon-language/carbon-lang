@@ -1848,6 +1848,17 @@ public:
     return LibcallCallingConvs[Call];
   }
 
+  bool isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
+                            SDValue &Chain) const;
+
+  void softenSetCCOperands(SelectionDAG &DAG, EVT VT,
+                           SDValue &NewLHS, SDValue &NewRHS,
+                           ISD::CondCode &CCCode, DebugLoc DL) const;
+
+  SDValue makeLibCall(SelectionDAG &DAG, RTLIB::Libcall LC, EVT RetVT,
+                      const SDValue *Ops, unsigned NumOps,
+                      bool isSigned, DebugLoc dl) const;
+
 private:
   const TargetMachine &TM;
   const DataLayout *TD;

@@ -1012,6 +1012,161 @@ MVT::SimpleValueType TargetLowering::getCmpLibcallReturnType() const {
   return MVT::i32; // return the default value
 }
 
+/// Check whether a given call node is in tail position within its function. If
+/// so, it sets Chain to the input chain of the tail call.
+bool TargetLowering::isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
+                                          SDValue &Chain) const {
+  const Function *F = DAG.getMachineFunction().getFunction();
+
+  // Conservatively require the attributes of the call to match those of
+  // the return. Ignore noalias because it doesn't affect the call sequence.
+  Attribute CallerRetAttr = F->getAttributes().getRetAttributes();
+  if (AttrBuilder(CallerRetAttr)
+      .removeAttribute(Attribute::NoAlias).hasAttributes())
+    return false;
+
+  // It's not safe to eliminate the sign / zero extension of the return value.
+  if (CallerRetAttr.hasAttribute(Attribute::ZExt) ||
+      CallerRetAttr.hasAttribute(Attribute::SExt))
+    return false;
+
+  // Check if the only use is a function return node.
+  return isUsedByReturnOnly(Node, Chain);
+}
+
+
+/// Generate a libcall taking the given operands as arguments and returning a
+/// result of type RetVT.
+SDValue TargetLowering::makeLibCall(SelectionDAG &DAG,
+                                    RTLIB::Libcall LC, EVT RetVT,
+                                    const SDValue *Ops, unsigned NumOps,
+                                    bool isSigned, DebugLoc dl) const {
+  TargetLowering::ArgListTy Args;
+  Args.reserve(NumOps);
+
+  TargetLowering::ArgListEntry Entry;
+  for (unsigned i = 0; i != NumOps; ++i) {
+    Entry.Node = Ops[i];
+    Entry.Ty = Entry.Node.getValueType().getTypeForEVT(*DAG.getContext());
+    Entry.isSExt = isSigned;
+    Entry.isZExt = !isSigned;
+    Args.push_back(Entry);
+  }
+  SDValue Callee = DAG.getExternalSymbol(getLibcallName(LC), getPointerTy());
+
+  Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
+  TargetLowering::
+  CallLoweringInfo CLI(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
+                    false, 0, getLibcallCallingConv(LC),
+                    /*isTailCall=*/false,
+                    /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
+                    Callee, Args, DAG, dl);
+  std::pair<SDValue,SDValue> CallInfo = LowerCallTo(CLI);
+
+  return CallInfo.first;
+}
+
+
+/// SoftenSetCCOperands - Soften the operands of a comparison.  This code is
+/// shared among BR_CC, SELECT_CC, and SETCC handlers.
+void TargetLowering::softenSetCCOperands(SelectionDAG &DAG, EVT VT,
+                                         SDValue &NewLHS, SDValue &NewRHS,
+                                         ISD::CondCode &CCCode,
+                                         DebugLoc dl) const {
+  assert((VT == MVT::f32 || VT == MVT::f64 || VT == MVT::f128)
+         && "Unsupported setcc type!");
+
+  // Expand into one or more soft-fp libcall(s).
+  RTLIB::Libcall LC1 = RTLIB::UNKNOWN_LIBCALL, LC2 = RTLIB::UNKNOWN_LIBCALL;
+  switch (CCCode) {
+  case ISD::SETEQ:
+  case ISD::SETOEQ:
+    LC1 = (VT == MVT::f32) ? RTLIB::OEQ_F32 :
+          (VT == MVT::f64) ? RTLIB::OEQ_F64 : RTLIB::OEQ_F128;
+    break;
+  case ISD::SETNE:
+  case ISD::SETUNE:
+    LC1 = (VT == MVT::f32) ? RTLIB::UNE_F32 :
+          (VT == MVT::f64) ? RTLIB::UNE_F64 : RTLIB::UNE_F128;
+    break;
+  case ISD::SETGE:
+  case ISD::SETOGE:
+    LC1 = (VT == MVT::f32) ? RTLIB::OGE_F32 :
+          (VT == MVT::f64) ? RTLIB::OGE_F64 : RTLIB::OGE_F128;
+    break;
+  case ISD::SETLT:
+  case ISD::SETOLT:
+    LC1 = (VT == MVT::f32) ? RTLIB::OLT_F32 :
+          (VT == MVT::f64) ? RTLIB::OLT_F64 : RTLIB::OLT_F128;
+    break;
+  case ISD::SETLE:
+  case ISD::SETOLE:
+    LC1 = (VT == MVT::f32) ? RTLIB::OLE_F32 :
+          (VT == MVT::f64) ? RTLIB::OLE_F64 : RTLIB::OLE_F128;
+    break;
+  case ISD::SETGT:
+  case ISD::SETOGT:
+    LC1 = (VT == MVT::f32) ? RTLIB::OGT_F32 :
+          (VT == MVT::f64) ? RTLIB::OGT_F64 : RTLIB::OGT_F128;
+    break;
+  case ISD::SETUO:
+    LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 :
+          (VT == MVT::f64) ? RTLIB::UO_F64 : RTLIB::UO_F128;
+    break;
+  case ISD::SETO:
+    LC1 = (VT == MVT::f32) ? RTLIB::O_F32 :
+          (VT == MVT::f64) ? RTLIB::O_F64 : RTLIB::O_F128;
+    break;
+  default:
+    LC1 = (VT == MVT::f32) ? RTLIB::UO_F32 :
+          (VT == MVT::f64) ? RTLIB::UO_F64 : RTLIB::UO_F128;
+    switch (CCCode) {
+    case ISD::SETONE:
+      // SETONE = SETOLT | SETOGT
+      LC1 = (VT == MVT::f32) ? RTLIB::OLT_F32 :
+            (VT == MVT::f64) ? RTLIB::OLT_F64 : RTLIB::OLT_F128;
+      // Fallthrough
+    case ISD::SETUGT:
+      LC2 = (VT == MVT::f32) ? RTLIB::OGT_F32 :
+            (VT == MVT::f64) ? RTLIB::OGT_F64 : RTLIB::OGT_F128;
+      break;
+    case ISD::SETUGE:
+      LC2 = (VT == MVT::f32) ? RTLIB::OGE_F32 :
+            (VT == MVT::f64) ? RTLIB::OGE_F64 : RTLIB::OGE_F128;
+      break;
+    case ISD::SETULT:
+      LC2 = (VT == MVT::f32) ? RTLIB::OLT_F32 :
+            (VT == MVT::f64) ? RTLIB::OLT_F64 : RTLIB::OLT_F128;
+      break;
+    case ISD::SETULE:
+      LC2 = (VT == MVT::f32) ? RTLIB::OLE_F32 :
+            (VT == MVT::f64) ? RTLIB::OLE_F64 : RTLIB::OLE_F128;
+      break;
+    case ISD::SETUEQ:
+      LC2 = (VT == MVT::f32) ? RTLIB::OEQ_F32 :
+            (VT == MVT::f64) ? RTLIB::OEQ_F64 : RTLIB::OEQ_F128;
+      break;
+    default: llvm_unreachable("Do not know how to soften this setcc!");
+    }
+  }
+
+  // Use the target specific return value for comparions lib calls.
+  EVT RetVT = getCmpLibcallReturnType();
+  SDValue Ops[2] = { NewLHS, NewRHS };
+  NewLHS = makeLibCall(DAG, LC1, RetVT, Ops, 2, false/*sign irrelevant*/, dl);
+  NewRHS = DAG.getConstant(0, RetVT);
+  CCCode = getCmpLibcallCC(LC1);
+  if (LC2 != RTLIB::UNKNOWN_LIBCALL) {
+    SDValue Tmp = DAG.getNode(ISD::SETCC, dl, getSetCCResultType(RetVT),
+                              NewLHS, NewRHS, DAG.getCondCode(CCCode));
+    NewLHS = makeLibCall(DAG, LC2, RetVT, Ops, 2, false/*sign irrelevant*/, dl);
+    NewLHS = DAG.getNode(ISD::SETCC, dl, getSetCCResultType(RetVT), NewLHS,
+                         NewRHS, DAG.getCondCode(getCmpLibcallCC(LC2)));
+    NewLHS = DAG.getNode(ISD::OR, dl, Tmp.getValueType(), Tmp, NewLHS);
+    NewRHS = SDValue();
+  }
+}
+
 /// getVectorTypeBreakdown - Vector types are broken down into some number of
 /// legal first class types.  For example, MVT::v8f32 maps to 2 MVT::v4f32
 /// with Altivec or SSE1, or 8 promoted MVT::f64 values with the X86 FP stack.

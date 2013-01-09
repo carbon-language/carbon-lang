@@ -1841,26 +1841,6 @@ SDValue SelectionDAGLegalize::ExpandBUILD_VECTOR(SDNode *Node) {
   return ExpandVectorBuildThroughStack(Node);
 }
 
-static bool isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
-                                SDValue &Chain, const TargetLowering &TLI) {
-  const Function *F = DAG.getMachineFunction().getFunction();
-
-  // Conservatively require the attributes of the call to match those of
-  // the return. Ignore noalias because it doesn't affect the call sequence.
-  Attribute CallerRetAttr = F->getAttributes().getRetAttributes();
-  if (AttrBuilder(CallerRetAttr)
-      .removeAttribute(Attribute::NoAlias).hasAttributes())
-    return false;
-
-  // It's not safe to eliminate the sign / zero extension of the return value.
-  if (CallerRetAttr.hasAttribute(Attribute::ZExt) ||
-      CallerRetAttr.hasAttribute(Attribute::SExt))
-    return false;
-
-  // Check if the only use is a function return node.
-  return TLI.isUsedByReturnOnly(Node, Chain);
-}
-
 // ExpandLibCall - Expand a node into a call to a libcall.  If the result value
 // does not fit into a register, return the lo part and set the hi part to the
 // by-reg argument.  If it does fit into a single register, return the result
@@ -1891,7 +1871,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   // isTailCall may be true since the callee does not reference caller stack
   // frame. Check if it's in the right position.
   SDValue TCChain = InChain;
-  bool isTailCall = isInTailCallPosition(DAG, Node, TCChain, TLI);
+  bool isTailCall = TLI.isInTailCallPosition(DAG, Node, TCChain);
   if (isTailCall)
     InChain = TCChain;
 

@@ -1020,50 +1020,20 @@ SDValue DAGTypeLegalizer::LibCallify(RTLIB::Libcall LC, SDNode *N,
   unsigned NumOps = N->getNumOperands();
   DebugLoc dl = N->getDebugLoc();
   if (NumOps == 0) {
-    return MakeLibCall(LC, N->getValueType(0), 0, 0, isSigned, dl);
+    return TLI.makeLibCall(DAG, LC, N->getValueType(0), 0, 0, isSigned, dl);
   } else if (NumOps == 1) {
     SDValue Op = N->getOperand(0);
-    return MakeLibCall(LC, N->getValueType(0), &Op, 1, isSigned, dl);
+    return TLI.makeLibCall(DAG, LC, N->getValueType(0), &Op, 1, isSigned, dl);
   } else if (NumOps == 2) {
     SDValue Ops[2] = { N->getOperand(0), N->getOperand(1) };
-    return MakeLibCall(LC, N->getValueType(0), Ops, 2, isSigned, dl);
+    return TLI.makeLibCall(DAG, LC, N->getValueType(0), Ops, 2, isSigned, dl);
   }
   SmallVector<SDValue, 8> Ops(NumOps);
   for (unsigned i = 0; i < NumOps; ++i)
     Ops[i] = N->getOperand(i);
 
-  return MakeLibCall(LC, N->getValueType(0), &Ops[0], NumOps, isSigned, dl);
-}
-
-/// MakeLibCall - Generate a libcall taking the given operands as arguments and
-/// returning a result of type RetVT.
-SDValue DAGTypeLegalizer::MakeLibCall(RTLIB::Libcall LC, EVT RetVT,
-                                      const SDValue *Ops, unsigned NumOps,
-                                      bool isSigned, DebugLoc dl) {
-  TargetLowering::ArgListTy Args;
-  Args.reserve(NumOps);
-
-  TargetLowering::ArgListEntry Entry;
-  for (unsigned i = 0; i != NumOps; ++i) {
-    Entry.Node = Ops[i];
-    Entry.Ty = Entry.Node.getValueType().getTypeForEVT(*DAG.getContext());
-    Entry.isSExt = isSigned;
-    Entry.isZExt = !isSigned;
-    Args.push_back(Entry);
-  }
-  SDValue Callee = DAG.getExternalSymbol(TLI.getLibcallName(LC),
-                                         TLI.getPointerTy());
-
-  Type *RetTy = RetVT.getTypeForEVT(*DAG.getContext());
-  TargetLowering::
-  CallLoweringInfo CLI(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
-                    false, 0, TLI.getLibcallCallingConv(LC),
-                    /*isTailCall=*/false,
-                    /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
-                    Callee, Args, DAG, dl);
-  std::pair<SDValue,SDValue> CallInfo = TLI.LowerCallTo(CLI);
-
-  return CallInfo.first;
+  return TLI.makeLibCall(DAG, LC, N->getValueType(0),
+                         &Ops[0], NumOps, isSigned, dl);
 }
 
 // ExpandChainLibCall - Expand a node into a call to a libcall. Similar to
