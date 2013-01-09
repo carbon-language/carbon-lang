@@ -244,11 +244,11 @@ PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
   assert(Entity);
   SourceLocation BeginLoc = Entity->getSourceRange().getBegin();
 
-  if (!isa<class InclusionDirective>(Entity)) {
+  if (isa<MacroDefinition>(Entity)) {
     assert((PreprocessedEntities.empty() ||
             !SourceMgr.isBeforeInTranslationUnit(BeginLoc,
                    PreprocessedEntities.back()->getSourceRange().getBegin())) &&
-           "a macro directive was encountered out-of-order");
+           "a macro definition was encountered out-of-order");
     PreprocessedEntities.push_back(Entity);
     return getPPEntityID(PreprocessedEntities.size()-1, /*isLoaded=*/false);
   }
@@ -263,7 +263,15 @@ PreprocessingRecord::addPreprocessedEntity(PreprocessedEntity *Entity) {
 
   // The entity's location is not after the previous one; this can happen with
   // include directives that form the filename using macros, e.g:
-  // "#include MACRO(STUFF)".
+  // "#include MACRO(STUFF)"
+  // or with macro expansions inside macro arguments where the arguments are
+  // not expanded in the same order as listed, e.g:
+  // \code
+  //  #define M1 1
+  //  #define M2 2
+  //  #define FM(x,y) y x
+  //  FM(M1, M2)
+  // \endcode
 
   typedef std::vector<PreprocessedEntity *>::iterator pp_iter;
 
