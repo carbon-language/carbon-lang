@@ -116,9 +116,6 @@ static const unsigned RuntimeMemoryCheckThreshold = 4;
 /// This is the highest vector width that we try to generate.
 static const unsigned MaxVectorSize = 8;
 
-/// This is the highest Unroll Factor.
-static const unsigned MaxUnrollSize = 4;
-
 namespace {
 
 // Forward declarations.
@@ -2715,6 +2712,8 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   UF = std::min(UF, (MaxLoopSizeThreshold / R.NumInstructions));
 
   // Clamp the unroll factor ranges to reasonable factors.
+  unsigned MaxUnrollSize = TTI.getMaximumUnrollFactor();
+  
   if (UF > MaxUnrollSize)
     UF = MaxUnrollSize;
   else if (UF < 1)

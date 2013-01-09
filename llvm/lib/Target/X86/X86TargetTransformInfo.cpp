@@ -75,7 +75,6 @@ public:
 
   /// \name Scalar TTI Implementations
   /// @{
-
   virtual PopcntSupportKind getPopcntSupport(unsigned TyWidth) const;
 
   /// @}
@@ -84,6 +83,7 @@ public:
   /// @{
 
   virtual unsigned getNumberOfRegisters(bool Vector) const;
+  virtual unsigned getMaximumUnrollFactor() const;
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
                                   int Index, Type *SubTp) const;
@@ -156,7 +156,6 @@ FindInConvertTable(const X86TypeConversionCostTblEntry *Tbl, unsigned len,
   return -1;
 }
 
-
 X86TTI::PopcntSupportKind X86TTI::getPopcntSupport(unsigned TyWidth) const {
   assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
   // TODO: Currently the __builtin_popcount() implementation using SSE3
@@ -169,6 +168,18 @@ unsigned X86TTI::getNumberOfRegisters(bool Vector) const {
   if (ST->is64Bit())
     return 16;
   return 8;
+}
+
+unsigned X86TTI::getMaximumUnrollFactor() const {
+  if (ST->isAtom())
+    return 1;
+
+  // Sandybridge and Haswell have multiple execution ports and pipelined
+  // vector units.
+  if (ST->hasAVX())
+    return 4;
+
+  return 2;
 }
 
 unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {

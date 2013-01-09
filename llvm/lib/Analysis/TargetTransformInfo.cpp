@@ -92,6 +92,10 @@ unsigned TargetTransformInfo::getNumberOfRegisters(bool Vector) const {
   return PrevTTI->getNumberOfRegisters(Vector);
 }
 
+unsigned TargetTransformInfo::getMaximumUnrollFactor() const {
+  return PrevTTI->getMaximumUnrollFactor();
+}
+
 unsigned TargetTransformInfo::getArithmeticInstrCost(unsigned Opcode,
                                                      Type *Ty) const {
   return PrevTTI->getArithmeticInstrCost(Opcode, Ty);
@@ -214,6 +218,10 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
 
   unsigned getNumberOfRegisters(bool Vector) const {
     return 8;
+  }
+
+  unsigned getMaximumUnrollFactor() const {
+    return 1;
   }
 
   unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {

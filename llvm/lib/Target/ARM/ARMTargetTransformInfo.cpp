@@ -77,6 +77,31 @@ public:
   virtual unsigned getIntImmCost(const APInt &Imm, Type *Ty) const;
 
   /// @}
+
+
+  /// \name Vector TTI Implementations
+  /// @{
+
+  unsigned getNumberOfRegisters(bool Vector) const {
+    if (Vector) {
+      if (ST->hasNEON())
+        return 16;
+      return 0;
+    }
+
+    if (ST->isThumb1Only())
+      return 8;
+    return 16;
+  }
+
+  unsigned getMaximumUnrollFactor() const {
+    // These are out of order CPUs:
+    if (ST->isCortexA15() || ST->isSwift())
+      return 2;
+    return 1;
+  }
+
+  /// @}
 };
 
 } // end anonymous namespace

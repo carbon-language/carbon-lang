@@ -53,8 +53,6 @@ define void @example1() nounwind uwtable ssp {
 ;UNROLL: @example10b
 ;UNROLL: load <4 x i16>
 ;UNROLL: load <4 x i16>
-;UNROLL: load <4 x i16>
-;UNROLL: store <4 x i32>
 ;UNROLL: store <4 x i32>
 ;UNROLL: store <4 x i32>
 ;UNROLL: ret void
