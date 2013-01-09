@@ -32,13 +32,23 @@ Using Clang as a Library
    Tooling
    IntroductionToTheClangAST
    LibTooling
+   LibFormat
    ClangPlugins
    RAVFrontendAction
    LibASTMatchersTutorial
    LibASTMatchers
-   ClangTools
    HowToSetupToolingForLLVM
    JSONCompilationDatabase
+
+Using Clang Tools
+=================
+
+.. toctree::
+   :maxdepth: 1
+
+   ClangTools
+   ClangCheck
+   ClangFormat
 
 Design Documents
 ================
