@@ -982,18 +982,13 @@ MachineInstr::getRegClassConstraint(unsigned OpIdx,
   return NULL;
 }
 
-/// getBundleSize - Return the number of instructions inside the MI bundle.
+/// Return the number of instructions inside the MI bundle, not counting the
+/// header instruction.
 unsigned MachineInstr::getBundleSize() const {
-  assert(isBundle() && "Expecting a bundle");
-
-  const MachineBasicBlock *MBB = getParent();
-  MachineBasicBlock::const_instr_iterator I = *this, E = MBB->instr_end();
+  MachineBasicBlock::const_instr_iterator I = this;
   unsigned Size = 0;
-  while ((++I != E) && I->isInsideBundle()) {
-    ++Size;
-  }
-  assert(Size > 1 && "Malformed bundle");
-
+  while (I->isBundledWithSucc())
+    ++Size, ++I;
   return Size;
 }
 

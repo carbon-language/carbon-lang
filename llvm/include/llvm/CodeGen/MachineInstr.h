@@ -699,7 +699,11 @@ public:
     }
   }
 
-  /// getBundleSize - Return the number of instructions inside the MI bundle.
+  /// Return the number of instructions inside the MI bundle, excluding the
+  /// bundle header.
+  ///
+  /// This is the number of instructions that MachineBasicBlock::iterator
+  /// skips, 0 for unbundled instructions.
   unsigned getBundleSize() const;
 
   /// readsRegister - Return true if the MachineInstr reads the specified
