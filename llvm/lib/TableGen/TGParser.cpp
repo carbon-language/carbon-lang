@@ -455,14 +455,6 @@ MultiClass *TGParser::ParseMultiClassID() {
   return Result;
 }
 
-Record *TGParser::ParseDefmID() {
-  MultiClass *MC = ParseMultiClassID();
-  if (!MC)
-    return 0;
-  return &MC->Rec;
-}
-
-
 /// ParseSubClassReference - Parse a reference to a subclass or to a templated
 /// subclass.  This returns a SubClassRefTy with a null Record* on error.
 ///
@@ -474,10 +466,12 @@ ParseSubClassReference(Record *CurRec, bool isDefm) {
   SubClassReference Result;
   Result.RefLoc = Lex.getLoc();
 
-  if (isDefm)
-    Result.Rec = ParseDefmID();
-  else
+  if (isDefm) {
+    if (MultiClass *MC = ParseMultiClassID())
+      Result.Rec = &MC->Rec;
+  } else {
     Result.Rec = ParseClassID();
+  }
   if (Result.Rec == 0) return Result;
 
   // If there is no template arg list, we're done.

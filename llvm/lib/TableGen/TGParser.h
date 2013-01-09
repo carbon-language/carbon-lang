@@ -183,7 +183,6 @@ private:  // Parser methods.
   Init *ParseObjectName(MultiClass *CurMultiClass);
   Record *ParseClassID();
   MultiClass *ParseMultiClassID();
-  Record *ParseDefmID();
 };
 
 } // end namespace llvm
