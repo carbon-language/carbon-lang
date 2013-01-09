@@ -295,6 +295,10 @@ void sys::PrintStackTraceOnErrorSignal() {
   LeaveCriticalSection(&CriticalSection);
 }
 
+void llvm::sys::PrintStackTrace(FILE *) {
+  // FIXME: Implement.
+}
+
 
 void sys::SetInterruptFunction(void (*IF)()) {
   RegisterHandler();

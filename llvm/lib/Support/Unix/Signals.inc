@@ -254,7 +254,7 @@ void llvm::sys::AddSignalHandler(void (*FnPtr)(void *), void *Cookie) {
 //
 // On glibc systems we have the 'backtrace' function, which works nicely, but
 // doesn't demangle symbols.
-static void PrintStackTrace(void *) {
+void llvm::sys::PrintStackTrace(FILE *FD) {
 #if defined(HAVE_BACKTRACE) && defined(ENABLE_BACKTRACES)
   static void* StackTrace[256];
   // Use backtrace() to output a backtrace on Linux systems with glibc.
@@ -278,26 +278,26 @@ static void PrintStackTrace(void *) {
     Dl_info dlinfo;
     dladdr(StackTrace[i], &dlinfo);
 
-    fprintf(stderr, "%-2d", i);
+    fprintf(FD, "%-2d", i);
 
     const char* name = strrchr(dlinfo.dli_fname, '/');
-    if (name == NULL) fprintf(stderr, " %-*s", width, dlinfo.dli_fname);
-    else              fprintf(stderr, " %-*s", width, name+1);
+    if (name == NULL) fprintf(FD, " %-*s", width, dlinfo.dli_fname);
+    else              fprintf(FD, " %-*s", width, name+1);
 
-    fprintf(stderr, " %#0*lx",
+    fprintf(FD, " %#0*lx",
             (int)(sizeof(void*) * 2) + 2, (unsigned long)StackTrace[i]);
 
     if (dlinfo.dli_sname != NULL) {
       int res;
-      fputc(' ', stderr);
+      fputc(' ', FD);
       char* d = abi::__cxa_demangle(dlinfo.dli_sname, NULL, NULL, &res);
-      if (d == NULL) fputs(dlinfo.dli_sname, stderr);
-      else           fputs(d, stderr);
+      if (d == NULL) fputs(dlinfo.dli_sname, FD);
+      else           fputs(d, FD);
       free(d);
 
-      fprintf(stderr, " + %tu",(char*)StackTrace[i]-(char*)dlinfo.dli_saddr);
+      fprintf(FD, " + %tu",(char*)StackTrace[i]-(char*)dlinfo.dli_saddr);
     }
-    fputc('\n', stderr);
+    fputc('\n', FD);
   }
 #else
   backtrace_symbols_fd(StackTrace, depth, STDERR_FILENO);
@@ -305,10 +305,14 @@ static void PrintStackTrace(void *) {
 #endif
 }
 
+static void PrintStackTraceSignalHandler(void *) {
+  PrintStackTrace(stderr);
+}
+
 /// PrintStackTraceOnErrorSignal - When an error signal (such as SIGABRT or
 /// SIGSEGV) is delivered to the process, print a stack trace and then exit.
 void llvm::sys::PrintStackTraceOnErrorSignal() {
-  AddSignalHandler(PrintStackTrace, 0);
+  AddSignalHandler(PrintStackTraceSignalHandler, 0);
 
 #if defined(__APPLE__)
   // Environment variable to disable any kind of crash dialog.
