@@ -17,7 +17,7 @@ extern "C" int fileno(FILE *f) {
   static int first = 0;
   if (__sync_lock_test_and_set(&first, 1) == 0)
     printf("user fileno\n");
-  return __interceptor_fileno(f);
+  return 1;
 }
 
 int main() {

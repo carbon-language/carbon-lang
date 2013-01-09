@@ -55,6 +55,7 @@ extern "C" void *pthread_self();
 extern "C" void _exit(int status);
 extern "C" int __cxa_atexit(void (*func)(void *arg), void *arg, void *dso);
 extern "C" int *__errno_location();
+extern "C" int fileno_unlocked(void *stream);
 const int PTHREAD_MUTEX_RECURSIVE = 1;
 const int PTHREAD_MUTEX_RECURSIVE_NP = 1;
 const int kPthreadAttrSize = 56;
@@ -1366,17 +1367,12 @@ TSAN_INTERCEPTOR(int, unlink, char *path) {
   return res;
 }
 
-TSAN_INTERCEPTOR(int, fileno, void *f) {
-  SCOPED_TSAN_INTERCEPTOR(fileno, f);
-  return REAL(fileno)(f);
-}
-
 TSAN_INTERCEPTOR(void*, fopen, char *path, char *mode) {
   SCOPED_TSAN_INTERCEPTOR(fopen, path, mode);
   void *res = REAL(fopen)(path, mode);
   Acquire(thr, pc, File2addr(path));
   if (res) {
-    int fd = REAL(fileno)(res);
+    int fd = fileno_unlocked(res);
     if (fd >= 0)
       FdFileCreate(thr, pc, fd);
   }
@@ -1386,14 +1382,14 @@ TSAN_INTERCEPTOR(void*, fopen, char *path, char *mode) {
 TSAN_INTERCEPTOR(void*, freopen, char *path, char *mode, void *stream) {
   SCOPED_TSAN_INTERCEPTOR(freopen, path, mode, stream);
   if (stream) {
-    int fd = REAL(fileno)(stream);
+    int fd = fileno_unlocked(stream);
     if (fd >= 0)
       FdClose(thr, pc, fd);
   }
   void *res = REAL(freopen)(path, mode, stream);
   Acquire(thr, pc, File2addr(path));
   if (res) {
-    int fd = REAL(fileno)(res);
+    int fd = fileno_unlocked(res);
     if (fd >= 0)
       FdFileCreate(thr, pc, fd);
   }
@@ -1401,25 +1397,30 @@ TSAN_INTERCEPTOR(void*, freopen, char *path, char *mode, void *stream) {
 }
 
 TSAN_INTERCEPTOR(int, fclose, void *stream) {
-  SCOPED_TSAN_INTERCEPTOR(fclose, stream);
-  if (stream) {
-    int fd = REAL(fileno)(stream);
-    if (fd >= 0)
-      FdClose(thr, pc, fd);
+  {
+    SCOPED_TSAN_INTERCEPTOR(fclose, stream);
+    if (stream) {
+      int fd = fileno_unlocked(stream);
+      if (fd >= 0)
+        FdClose(thr, pc, fd);
+    }
   }
-  int res = REAL(fclose)(stream);
-  return res;
+  return REAL(fclose)(stream);
 }
 
 TSAN_INTERCEPTOR(uptr, fread, void *ptr, uptr size, uptr nmemb, void *f) {
-  SCOPED_TSAN_INTERCEPTOR(fread, ptr, size, nmemb, f);
-  MemoryAccessRange(thr, pc, (uptr)ptr, size * nmemb, true);
+  {
+    SCOPED_TSAN_INTERCEPTOR(fread, ptr, size, nmemb, f);
+    MemoryAccessRange(thr, pc, (uptr)ptr, size * nmemb, true);
+  }
   return REAL(fread)(ptr, size, nmemb, f);
 }
 
 TSAN_INTERCEPTOR(uptr, fwrite, const void *p, uptr size, uptr nmemb, void *f) {
-  SCOPED_TSAN_INTERCEPTOR(fwrite, p, size, nmemb, f);
-  MemoryAccessRange(thr, pc, (uptr)p, size * nmemb, false);
+  {
+    SCOPED_TSAN_INTERCEPTOR(fwrite, p, size, nmemb, f);
+    MemoryAccessRange(thr, pc, (uptr)p, size * nmemb, false);
+  }
   return REAL(fwrite)(p, size, nmemb, f);
 }
 
@@ -1823,7 +1824,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(recvmsg);
 
   TSAN_INTERCEPT(unlink);
-  TSAN_INTERCEPT(fileno);
   TSAN_INTERCEPT(fopen);
   TSAN_INTERCEPT(freopen);
   TSAN_INTERCEPT(fclose);

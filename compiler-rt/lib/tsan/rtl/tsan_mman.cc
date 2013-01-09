@@ -121,7 +121,9 @@ void *user_realloc(ThreadState *thr, uptr pc, void *p, uptr sz) {
 MBlock *user_mblock(ThreadState *thr, void *p) {
   CHECK_NE(p, (void*)0);
   Allocator *a = allocator();
-  return (MBlock*)a->GetMetaData(a->GetBlockBegin(p));
+  void *b = a->GetBlockBegin(p);
+  CHECK_NE(b, 0);
+  return (MBlock*)a->GetMetaData(b);
 }
 
 void invoke_malloc_hook(void *ptr, uptr size) {

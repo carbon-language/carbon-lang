@@ -213,7 +213,6 @@ enum StatType {
   StatInt_recv,
   StatInt_recvmsg,
   StatInt_unlink,
-  StatInt_fileno,
   StatInt_fopen,
   StatInt_freopen,
   StatInt_fclose,
