@@ -123,6 +123,7 @@ public:
     typeLiteral16,          // a sixteen-btye read-only constant
     typeData,               // read-write data
     typeZeroFill,           // zero-fill data
+    typeConstData,          // read-only data after dynamic linker is done
     typeObjC1Class,         // ObjC1 class [Darwin]
     typeLazyPointer,        // pointer through which a stub jumps
     typeLazyDylibPointer,   // pointer through which a stub jumps [Darwin]
@@ -152,6 +153,7 @@ public:
     permRWX  = 8 + 4 + 2,   // mapped readable and writable and executable
     permRW_L = 8 + 4 + 1,   // initially mapped r/w, then made read-only
                             // loader writable
+    permUnknown = 16        // unknown or invalid permissions
   };
 
   enum SectionChoice {
@@ -230,7 +232,7 @@ public:
   ///
   /// A function atom is R_X, a global variable is RW_, and a read-only constant
   /// is R__.
-  virtual ContentPermissions permissions() const = 0;
+  virtual ContentPermissions permissions() const;
 
   /// \brief only applicable to ARM code. Tells the linker if the code uses
   /// thumb or arm instructions.  The linker needs to know this to set the low
@@ -285,6 +287,9 @@ public:
   static inline bool classof(const Atom *a) {
     return a->definition() == definitionRegular;
   }
+
+  /// Utility for deriving permissions from content type
+  static ContentPermissions permissions(ContentType type);
 
 protected:
   // DefinedAtom is an abstract base class. Only subclasses can access

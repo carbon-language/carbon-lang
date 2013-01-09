@@ -366,12 +366,13 @@ struct ScalarEnumerationTraits<lld::DefinedAtom::DeadStripKind> {
 template <>
 struct ScalarEnumerationTraits<lld::DefinedAtom::ContentPermissions> {
   static void enumeration(IO &io, lld::DefinedAtom::ContentPermissions &value) {
-    io.enumCase(value, "---",  lld::DefinedAtom::perm___);
-    io.enumCase(value, "r--",  lld::DefinedAtom::permR__);
-    io.enumCase(value, "r-x",  lld::DefinedAtom::permR_X);
-    io.enumCase(value, "rw-",  lld::DefinedAtom::permRW_);
-    io.enumCase(value, "rwx",  lld::DefinedAtom::permRWX);
-    io.enumCase(value, "rw-l", lld::DefinedAtom::permRW_L);
+    io.enumCase(value, "---",     lld::DefinedAtom::perm___);
+    io.enumCase(value, "r--",     lld::DefinedAtom::permR__);
+    io.enumCase(value, "r-x",     lld::DefinedAtom::permR_X);
+    io.enumCase(value, "rw-",     lld::DefinedAtom::permRW_);
+    io.enumCase(value, "rwx",     lld::DefinedAtom::permRWX);
+    io.enumCase(value, "rw-l",    lld::DefinedAtom::permRW_L);
+    io.enumCase(value, "unknown", lld::DefinedAtom::permUnknown);
   }
 };
 
@@ -390,6 +391,8 @@ struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
                           lld::DefinedAtom::typeData);
     io.enumCase(value, "zero-fill",           
                           lld::DefinedAtom::typeZeroFill);
+    io.enumCase(value, "const-data",                 
+                          lld::DefinedAtom::typeConstData);
     io.enumCase(value, "got",                 
                           lld::DefinedAtom::typeGOT);
     io.enumCase(value, "resolver",            
@@ -970,8 +973,10 @@ struct MappingTraits<const lld::DefinedAtom*> {
                                         StringRef());
     io.mapOptional("dead-strip",     keys->_deadStrip,     
                                         lld::DefinedAtom::deadStripNormal);
-    io.mapOptional("permissions",    keys->_permissions,   
-                                        lld::DefinedAtom::permR_X);
+    // default permissions based on content type
+    io.mapOptional("permissions",    keys->_permissions,  
+                                                lld::DefinedAtom::permissions(
+                                                           keys->_contentType));
     io.mapOptional("references",     keys->_references);
   }
 };
