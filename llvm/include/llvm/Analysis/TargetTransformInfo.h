@@ -148,6 +148,9 @@ public:
   /// set to false, it returns the number of scalar registers.
   virtual unsigned getNumberOfRegisters(bool Vector) const;
 
+  /// \return The width of the largest scalar or vector register type.
+  virtual unsigned getRegisterBitWidth(bool Vector) const;
+
   /// \return The maximum unroll factor that the vectorizer should try to
   /// perform for this target. This number depends on the level of parallelism
   /// and the number of execution units in the CPU.

@@ -92,6 +92,10 @@ unsigned TargetTransformInfo::getNumberOfRegisters(bool Vector) const {
   return PrevTTI->getNumberOfRegisters(Vector);
 }
 
+unsigned TargetTransformInfo::getRegisterBitWidth(bool Vector) const {
+  return PrevTTI->getRegisterBitWidth(Vector);
+}
+
 unsigned TargetTransformInfo::getMaximumUnrollFactor() const {
   return PrevTTI->getMaximumUnrollFactor();
 }
@@ -218,6 +222,10 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
 
   unsigned getNumberOfRegisters(bool Vector) const {
     return 8;
+  }
+
+  unsigned  getRegisterBitWidth(bool Vector) const {
+    return 32;
   }
 
   unsigned getMaximumUnrollFactor() const {

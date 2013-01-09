@@ -94,6 +94,16 @@ public:
     return 16;
   }
 
+  unsigned getRegisterBitWidth(bool Vector) const {
+    if (Vector) {
+      if (ST->hasNEON())
+        return 128;
+      return 0;
+    }
+
+    return 32;
+  }
+
   unsigned getMaximumUnrollFactor() const {
     // These are out of order CPUs:
     if (ST->isCortexA15() || ST->isSwift())

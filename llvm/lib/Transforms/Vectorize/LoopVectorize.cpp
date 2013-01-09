@@ -113,9 +113,6 @@ static const unsigned MaxLoopSizeThreshold = 32;
 /// number of pointers. Notice that the check is quadratic!
 static const unsigned RuntimeMemoryCheckThreshold = 4;
 
-/// This is the highest vector width that we try to generate.
-static const unsigned MaxVectorSize = 8;
-
 namespace {
 
 // Forward declarations.
@@ -523,6 +520,10 @@ public:
   /// possible.
   unsigned selectVectorizationFactor(bool OptForSize, unsigned UserVF);
 
+  /// \returns The size (in bits) of the widest type in the code that
+  /// needs to be vectorized. We ignore values that remain scalar such as
+  /// 64 bit loop indices.
+  unsigned getWidestType();
 
   /// \return The most profitable unroll factor.
   /// If UserUF is non-zero then this method finds the best unroll-factor
@@ -2621,6 +2622,20 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   unsigned TC = SE->getSmallConstantTripCount(TheLoop, TheLoop->getLoopLatch());
   DEBUG(dbgs() << "LV: Found trip count:"<<TC<<"\n");
 
+  unsigned WidestType = getWidestType();
+  unsigned WidestRegister = TTI.getRegisterBitWidth(true);
+  unsigned MaxVectorSize = WidestRegister / WidestType;
+  DEBUG(dbgs() << "LV: The Widest type: " << WidestType << " bits.\n");
+  DEBUG(dbgs() << "LV: The Widest register is:" << WidestRegister << "bits.\n");
+
+  if (MaxVectorSize == 0) {
+    DEBUG(dbgs() << "LV: The target has no vector registers.\n");
+    return 1;
+  }
+
+  assert(MaxVectorSize <= 32 && "Did not expect to pack so many elements"
+         " into one vector.");
+  
   unsigned VF = MaxVectorSize;
 
   // If we optimize the program for size, avoid creating the tail loop.
@@ -2670,6 +2685,36 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
 
   DEBUG(dbgs() << "LV: Selecting VF = : "<< Width << ".\n");
   return Width;
+}
+
+unsigned LoopVectorizationCostModel::getWidestType() {
+  unsigned MaxWidth = 8;
+
+  // For each block.
+  for (Loop::block_iterator bb = TheLoop->block_begin(),
+       be = TheLoop->block_end(); bb != be; ++bb) {
+    BasicBlock *BB = *bb;
+
+    // For each instruction in the loop.
+    for (BasicBlock::iterator it = BB->begin(), e = BB->end(); it != e; ++it) {
+      if (Legal->isUniformAfterVectorization(it))
+        continue;
+
+      Type *T = it->getType();
+
+      if (StoreInst *ST = dyn_cast<StoreInst>(it))
+        T = ST->getValueOperand()->getType();
+
+      // PHINodes and pointers are difficult to analyze, but we catch all other
+      // uses of the types in other instructions.
+      if (isa<PHINode>(it) || T->isPointerTy() || T->isVoidTy())
+        continue;
+
+      MaxWidth = std::max(MaxWidth, T->getScalarSizeInBits());
+    }
+  }
+
+  return MaxWidth;
 }
 
 unsigned

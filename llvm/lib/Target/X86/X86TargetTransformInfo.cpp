@@ -83,6 +83,7 @@ public:
   /// @{
 
   virtual unsigned getNumberOfRegisters(bool Vector) const;
+  virtual unsigned getRegisterBitWidth(bool Vector) const;
   virtual unsigned getMaximumUnrollFactor() const;
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
@@ -165,9 +166,25 @@ X86TTI::PopcntSupportKind X86TTI::getPopcntSupport(unsigned TyWidth) const {
 }
 
 unsigned X86TTI::getNumberOfRegisters(bool Vector) const {
+  if (Vector && !ST->hasSSE1())
+    return 0;
+
   if (ST->is64Bit())
     return 16;
   return 8;
+}
+
+unsigned X86TTI::getRegisterBitWidth(bool Vector) const {
+  if (Vector) {
+    if (ST->hasAVX()) return 256;
+    if (ST->hasSSE1()) return 128;
+    return 0;
+  }
+
+  if (ST->is64Bit())
+    return 64;
+  return 32;
+
 }
 
 unsigned X86TTI::getMaximumUnrollFactor() const {

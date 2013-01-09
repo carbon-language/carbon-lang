@@ -27,7 +27,7 @@ define i32 @read_mod_write_single_ptr(float* nocapture %a, i32 %n) nounwind uwta
 
 
 ;CHECK: @read_mod_i64
-;CHECK: load <8 x i64>
+;CHECK: load <4 x i64>
 ;CHECK: ret i32
 define i32 @read_mod_i64(i64* nocapture %a, i32 %n) nounwind uwtable ssp {
   %1 = icmp sgt i32 %n, 0

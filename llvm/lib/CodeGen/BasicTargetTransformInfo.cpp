@@ -84,6 +84,7 @@ public:
 
   virtual unsigned getNumberOfRegisters(bool Vector) const;
   virtual unsigned getMaximumUnrollFactor() const;
+  virtual unsigned getRegisterBitWidth(bool Vector) const;
   virtual unsigned getArithmeticInstrCost(unsigned Opcode, Type *Ty) const;
   virtual unsigned getShuffleCost(ShuffleKind Kind, Type *Tp,
                                   int Index, Type *SubTp) const;
@@ -181,6 +182,10 @@ unsigned BasicTTI::getScalarizationOverhead(Type *Ty, bool Insert,
 
 unsigned BasicTTI::getNumberOfRegisters(bool Vector) const {
   return 1;
+}
+
+unsigned BasicTTI::getRegisterBitWidth(bool Vector) const {
+  return 32;
 }
 
 unsigned BasicTTI::getMaximumUnrollFactor() const {
