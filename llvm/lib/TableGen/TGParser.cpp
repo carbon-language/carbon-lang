@@ -456,18 +456,9 @@ MultiClass *TGParser::ParseMultiClassID() {
 }
 
 Record *TGParser::ParseDefmID() {
-  if (Lex.getCode() != tgtok::Id) {
-    TokError("expected multiclass name");
+  MultiClass *MC = ParseMultiClassID();
+  if (!MC)
     return 0;
-  }
-
-  MultiClass *MC = MultiClasses[Lex.getCurStrVal()];
-  if (MC == 0) {
-    TokError("Couldn't find multiclass '" + Lex.getCurStrVal() + "'");
-    return 0;
-  }
-
-  Lex.Lex();
   return &MC->Rec;
 }
 
