@@ -523,7 +523,7 @@ void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
   case ELF::R_PPC64_ADDR32 : {
     int32_t Result = static_cast<int32_t>(Value + Addend);
     if (SignExtend32<32>(Result) != Result)
-      llvm_unreachable("Relocation R_PPC64_REL32 overflow");
+      llvm_unreachable("Relocation R_PPC64_ADDR32 overflow");
     writeInt32BE(LocalAddress, Result);
   } break;
   case ELF::R_PPC64_REL24 : {
@@ -533,6 +533,13 @@ void RuntimeDyldELF::resolvePPC64Relocation(const SectionEntry &Section,
       llvm_unreachable("Relocation R_PPC64_REL24 overflow");
     // Generates a 'bl <address>' instruction
     writeInt32BE(LocalAddress, 0x48000001 | (delta & 0x03FFFFFC));
+  } break;
+  case ELF::R_PPC64_REL32 : {
+    uint64_t FinalAddress = (Section.LoadAddress + Offset);
+    int32_t delta = static_cast<int32_t>(Value - FinalAddress + Addend);
+    if (SignExtend32<32>(delta) != delta)
+      llvm_unreachable("Relocation R_PPC64_REL32 overflow");
+    writeInt32BE(LocalAddress, delta);
   } break;
   case ELF::R_PPC64_ADDR64 :
     writeInt64BE(LocalAddress, Value + Addend);

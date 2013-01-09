@@ -257,16 +257,13 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
         ? dwarf::DW_EH_PE_udata4 : dwarf::DW_EH_PE_absptr;
     }
   } else if (T.getArch() == Triple::ppc64) {
-    PersonalityEncoding = dwarf::DW_EH_PE_udata8;
-    PersonalityEncoding |= (RelocM == Reloc::PIC_)
-     ? dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel
-     : dwarf::DW_EH_PE_absptr;
-    unsigned PICFlag = (RelocM == Reloc::PIC_) ? dwarf::DW_EH_PE_pcrel
-     : dwarf::DW_EH_PE_absptr;
-    FDECFIEncoding = PICFlag | dwarf::DW_EH_PE_sdata4;
-    LSDAEncoding = PICFlag | dwarf::DW_EH_PE_udata8;
-    FDEEncoding = PICFlag | dwarf::DW_EH_PE_sdata4;
-    TTypeEncoding = PICFlag | dwarf::DW_EH_PE_sdata4;
+    PersonalityEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+      dwarf::DW_EH_PE_udata8;
+    FDECFIEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_sdata4;
+    LSDAEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata8;
+    FDEEncoding = dwarf::DW_EH_PE_pcrel | dwarf::DW_EH_PE_udata8;
+    TTypeEncoding = dwarf::DW_EH_PE_indirect | dwarf::DW_EH_PE_pcrel |
+      dwarf::DW_EH_PE_udata8;
   }
 
   // Solaris requires different flags for .eh_frame to seemingly every other

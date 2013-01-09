@@ -469,6 +469,7 @@ enum {
   R_PPC64_ADDR16_HI           = 5,
   R_PPC64_ADDR14              = 7,
   R_PPC64_REL24               = 10,
+  R_PPC64_REL32               = 26,
   R_PPC64_ADDR64              = 38,
   R_PPC64_ADDR16_HIGHER       = 39,
   R_PPC64_ADDR16_HIGHEST      = 41,

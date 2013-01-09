@@ -20,7 +20,7 @@ entry:
 ; STATIC-NEXT: ('sh_info', 0x00000000)
 ; STATIC-NEXT: ('sh_addralign', 0x0000000000000008)
 ; STATIC-NEXT: ('sh_entsize', 0x0000000000000000)
-; STATIC-NEXT: ('_section_data', '00000010 00000000 017a5200 01784101 0b0c0100 00000010 00000018 00000000 00000010 00000000')
+; STATIC-NEXT: ('_section_data', '00000010 00000000 017a5200 01784101 1b0c0100 00000010 00000018 00000000 00000010 00000000')
 
 ; STATIC:      ('sh_name', 0x{{.*}}) # '.rela.eh_frame'
 ; STATIC-NEXT: ('sh_type', 0x00000004)
@@ -34,11 +34,11 @@ entry:
 ; STATIC-NEXT: ('sh_entsize', 0x0000000000000018)
 ; STATIC-NEXT: ('_relocations', [
 
-; Static build should create R_PPC64_ADDR32 relocations
+; Static build should create R_PPC64_REL32 relocations
 ; STATIC-NEXT:  # Relocation 0
 ; STATIC-NEXT:  (('r_offset', 0x000000000000001c)
 ; STATIC-NEXT:   ('r_sym', 0x{{.*}})
-; STATIC-NEXT:   ('r_type', 0x00000001)
+; STATIC-NEXT:   ('r_type', 0x0000001a)
 ; STATIC-NEXT:   ('r_addend', 0x0000000000000000)
 ; STATIC-NEXT:  ),
 ; STATIC-NEXT: ])
