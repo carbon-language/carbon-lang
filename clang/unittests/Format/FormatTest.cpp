@@ -816,8 +816,9 @@ TEST_F(FormatTest, UnderstandsEquals) {
       "}");
 
   verifyFormat(
+      // FIXME: Does an expression like this ever make sense? If yes, fix.
       "if (int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = 100000000 +\n"
-      "                                                           10000000) {\n"
+      "    10000000) {\n"
       "}");
 }
 
@@ -872,7 +873,10 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
   verifyFormat("template <typename T>\n"
                "void aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
                "    int aaaaaaaaaaaaaaaaa);");
-
+  verifyFormat(
+      "template <typename T1, typename T2 = char, typename T3 = char,\n"
+      "          typename T4 = char>\n"
+      "void f();");
 }
 
 TEST_F(FormatTest, UnderstandsTemplateParameters) {

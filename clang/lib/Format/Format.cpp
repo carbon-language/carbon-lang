@@ -333,7 +333,9 @@ private:
       if (!DryRun)
         replaceWhitespace(Current, 0, Spaces);
 
-      if (RootToken.isNot(tok::kw_for) &&
+      // FIXME: Do we need to do this for assignments nested in other
+      // expressions?
+      if (RootToken.isNot(tok::kw_for) && ParenLevel == 0 &&
           (getPrecedence(Previous) == prec::Assignment ||
            Previous.is(tok::kw_return)))
         State.Indent[ParenLevel] = State.Column + Spaces;
