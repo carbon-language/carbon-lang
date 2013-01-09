@@ -1062,8 +1062,10 @@ private:
     if (Left.is(tok::equal) && CurrentLineType == LT_VirtualFunctionDecl)
       return false;
 
+    if (Right.is(tok::comment))
+      return !Right.Children.empty();
     if (Right.is(tok::r_paren) || Right.is(tok::l_brace) ||
-        Right.is(tok::comment) || Right.is(tok::greater))
+        Right.is(tok::greater))
       return false;
     return (isBinaryOperator(Left) && Left.isNot(tok::lessless)) ||
            Left.is(tok::comma) || Right.is(tok::lessless) ||
