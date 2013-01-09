@@ -46,7 +46,6 @@ typedef u64 UIntMax;
 /// \brief Largest floating-point type we support.
 typedef long double FloatMax;
 
-
 /// \brief A description of a source location. This corresponds to Clang's
 /// \c PresumedLoc type.
 class SourceLocation {
@@ -61,6 +60,25 @@ public:
 
   /// \brief Determine whether the source location is known.
   bool isInvalid() const { return !Filename; }
+
+  /// \brief Atomically acquire a copy, disabling original in-place.
+  /// Exactly one call to acquire() returns a copy that isn't disabled.
+  SourceLocation acquire() {
+#ifdef __ATOMIC_RELAXED
+    // Use weaker ordering if available (relaxed/monotonic)
+    u32 OldColumn = __atomic_exchange_n(&Column, ~u32(0), __ATOMIC_RELAXED);
+#else
+    // Otherwise, do a TAS which has acquire semantics, stronger than needed.
+    u32 OldColumn = __sync_lock_test_and_set(&Column, ~u32(0));
+#endif
+    return SourceLocation(Filename, Line, OldColumn);
+  }
+
+  /// \brief Determine if this Location has been disabled.
+  /// Disabled SourceLocations are invalid to use.
+  bool isDisabled() {
+    return Column == ~u32(0);
+  }
 
   /// \brief Get the presumed filename for the source location.
   const char *getFilename() const { return Filename; }

@@ -28,7 +28,11 @@ namespace __ubsan {
 
 static void handleTypeMismatchImpl(TypeMismatchData *Data, ValueHandle Pointer,
                                    Location FallbackLoc) {
-  Location Loc = Data->Loc;
+  Location Loc = Data->Loc.acquire();
+
+  // Use the SourceLocation from Data to track deduplication, even if 'invalid'
+  if (Loc.getSourceLocation().isDisabled())
+    return;
   if (Data->Loc.isInvalid())
     Loc = FallbackLoc;
 
@@ -62,8 +66,12 @@ template<typename T> static void HandleIntegerOverflow(OverflowData *Data,
                                                        ValueHandle LHS,
                                                        const char *Operator,
                                                        T RHS) {
-  Diag(Data->Loc, DL_Error, "%0 integer overflow: "
-                            "%1 %2 %3 cannot be represented in type %4")
+  SourceLocation Loc = Data->Loc.acquire();
+  if (Loc.isDisabled())
+    return;
+
+  Diag(Loc, DL_Error, "%0 integer overflow: "
+                      "%1 %2 %3 cannot be represented in type %4")
     << (Data->Type.isSignedIntegerTy() ? "signed" : "unsigned")
     << Value(Data->Type, LHS) << Operator << RHS << Data->Type;
 }
@@ -103,13 +111,17 @@ void __ubsan::__ubsan_handle_mul_overflow_abort(OverflowData *Data,
 
 void __ubsan::__ubsan_handle_negate_overflow(OverflowData *Data,
                                              ValueHandle OldVal) {
+  SourceLocation Loc = Data->Loc.acquire();
+  if (Loc.isDisabled())
+    return;
+
   if (Data->Type.isSignedIntegerTy())
-    Diag(Data->Loc, DL_Error,
+    Diag(Loc, DL_Error,
          "negation of %0 cannot be represented in type %1; "
          "cast to an unsigned type to negate this value to itself")
       << Value(Data->Type, OldVal) << Data->Type;
   else
-    Diag(Data->Loc, DL_Error,
+    Diag(Loc, DL_Error,
          "negation of %0 cannot be represented in type %1")
       << Value(Data->Type, OldVal) << Data->Type;
 }
@@ -121,14 +133,18 @@ void __ubsan::__ubsan_handle_negate_overflow_abort(OverflowData *Data,
 
 void __ubsan::__ubsan_handle_divrem_overflow(OverflowData *Data,
                                              ValueHandle LHS, ValueHandle RHS) {
+  SourceLocation Loc = Data->Loc.acquire();
+  if (Loc.isDisabled())
+    return;
+
   Value LHSVal(Data->Type, LHS);
   Value RHSVal(Data->Type, RHS);
   if (RHSVal.isMinusOne())
-    Diag(Data->Loc, DL_Error,
+    Diag(Loc, DL_Error,
          "division of %0 by -1 cannot be represented in type %1")
       << LHSVal << Data->Type;
   else
-    Diag(Data->Loc, DL_Error, "division by zero");
+    Diag(Loc, DL_Error, "division by zero");
 }
 void __ubsan::__ubsan_handle_divrem_overflow_abort(OverflowData *Data,
                                                     ValueHandle LHS,
@@ -140,18 +156,22 @@ void __ubsan::__ubsan_handle_divrem_overflow_abort(OverflowData *Data,
 void __ubsan::__ubsan_handle_shift_out_of_bounds(ShiftOutOfBoundsData *Data,
                                                  ValueHandle LHS,
                                                  ValueHandle RHS) {
+  SourceLocation Loc = Data->Loc.acquire();
+  if (Loc.isDisabled())
+    return;
+
   Value LHSVal(Data->LHSType, LHS);
   Value RHSVal(Data->RHSType, RHS);
   if (RHSVal.isNegative())
-    Diag(Data->Loc, DL_Error, "shift exponent %0 is negative") << RHSVal;
+    Diag(Loc, DL_Error, "shift exponent %0 is negative") << RHSVal;
   else if (RHSVal.getPositiveIntValue() >= Data->LHSType.getIntegerBitWidth())
-    Diag(Data->Loc, DL_Error,
+    Diag(Loc, DL_Error,
          "shift exponent %0 is too large for %1-bit type %2")
       << RHSVal << Data->LHSType.getIntegerBitWidth() << Data->LHSType;
   else if (LHSVal.isNegative())
-    Diag(Data->Loc, DL_Error, "left shift of negative value %0") << LHSVal;
+    Diag(Loc, DL_Error, "left shift of negative value %0") << LHSVal;
   else
-    Diag(Data->Loc, DL_Error,
+    Diag(Loc, DL_Error,
          "left shift of %0 by %1 places cannot be represented in type %2")
       << LHSVal << RHSVal << Data->LHSType;
 }
@@ -177,8 +197,12 @@ void __ubsan::__ubsan_handle_missing_return(UnreachableData *Data) {
 
 void __ubsan::__ubsan_handle_vla_bound_not_positive(VLABoundData *Data,
                                                     ValueHandle Bound) {
-  Diag(Data->Loc, DL_Error, "variable length array bound evaluates to "
-                            "non-positive value %0")
+  SourceLocation Loc = Data->Loc.acquire();
+  if (Loc.isDisabled())
+    return;
+
+  Diag(Loc, DL_Error, "variable length array bound evaluates to "
+                      "non-positive value %0")
     << Value(Data->Type, Bound);
 }
 void __ubsan::__ubsan_handle_vla_bound_not_positive_abort(VLABoundData *Data,
@@ -190,6 +214,7 @@ void __ubsan::__ubsan_handle_vla_bound_not_positive_abort(VLABoundData *Data,
 
 void __ubsan::__ubsan_handle_float_cast_overflow(FloatCastOverflowData *Data,
                                                  ValueHandle From) {
+  // TODO: Add deduplication once a SourceLocation is generated for this check.
   Diag(getCallerLocation(), DL_Error,
        "value %0 is outside the range of representable values of type %2")
     << Value(Data->FromType, From) << Data->FromType << Data->ToType;
@@ -205,6 +230,7 @@ void __ubsan::__ubsan_handle_float_cast_overflow_abort(
 
 void __ubsan::__ubsan_handle_load_invalid_value(InvalidValueData *Data,
                                                 ValueHandle Val) {
+  // TODO: Add deduplication once a SourceLocation is generated for this check.
   Diag(getCallerLocation(), DL_Error,
        "load of value %0, which is not a valid value for type %1")
     << Value(Data->Type, Val) << Data->Type;
