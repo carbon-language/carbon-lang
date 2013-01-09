@@ -443,13 +443,13 @@ Record *TGParser::ParseClassID() {
 ///
 MultiClass *TGParser::ParseMultiClassID() {
   if (Lex.getCode() != tgtok::Id) {
-    TokError("expected name for ClassID");
+    TokError("expected name for MultiClassID");
     return 0;
   }
 
   MultiClass *Result = MultiClasses[Lex.getCurStrVal()];
   if (Result == 0)
-    TokError("Couldn't find class '" + Lex.getCurStrVal() + "'");
+    TokError("Couldn't find multiclass '" + Lex.getCurStrVal() + "'");
 
   Lex.Lex();
   return Result;
