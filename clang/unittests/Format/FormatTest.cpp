@@ -1026,6 +1026,15 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
 // Error recovery tests.
 //===----------------------------------------------------------------------===//
 
+TEST_F(FormatTest, IndentationWithinColumnLimitNotPossible) {
+  verifyFormat("int aaaaaaaa =\n"
+               "    // Overly long comment\n"
+               "    b;", getLLVMStyleWithColumns(20));
+  verifyFormat("function(\n"
+               "    ShortArgument,\n"
+               "    LoooooooooooongArgument);\n", getLLVMStyleWithColumns(20));
+}
+
 TEST_F(FormatTest, IncorrectAccessSpecifier) {
   verifyFormat("public:");
   verifyFormat("class A {\n"

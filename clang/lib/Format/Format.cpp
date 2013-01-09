@@ -116,6 +116,7 @@ FormatStyle getGoogleStyle() {
 struct OptimizationParameters {
   unsigned PenaltyIndentLevel;
   unsigned PenaltyLevelDecrease;
+  unsigned PenaltyExcessCharacter;
 };
 
 class UnwrappedLineFormatter {
@@ -131,6 +132,7 @@ public:
         Replaces(Replaces), StructuralError(StructuralError) {
     Parameters.PenaltyIndentLevel = 15;
     Parameters.PenaltyLevelDecrease = 30;
+    Parameters.PenaltyExcessCharacter = 1000000;
   }
 
   /// \brief Formats an \c UnwrappedLine.
@@ -419,6 +421,10 @@ private:
     return 3;
   }
 
+  unsigned getColumnLimit() {
+    return Style.ColumnLimit - (Line.InPPDirective ? 1 : 0);
+  }
+
   /// \brief Calculate the number of lines needed to format the remaining part
   /// of the unwrapped line.
   ///
@@ -454,9 +460,11 @@ private:
 
     addTokenToState(NewLine, true, State);
 
-    // Exceeding column limit is bad.
-    if (State.Column > Style.ColumnLimit - (Line.InPPDirective ? 1 : 0))
-      return UINT_MAX;
+    // Exceeding column limit is bad, assign penalty.
+    if (State.Column > getColumnLimit()) {
+      unsigned ExcessCharacters = State.Column - getColumnLimit();
+      CurrentPenalty += Parameters.PenaltyExcessCharacter * ExcessCharacters;
+    }
 
     if (StopAt <= CurrentPenalty)
       return UINT_MAX;
