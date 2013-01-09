@@ -45,7 +45,7 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   // Otherwise, build a key to look up the existing attributes.
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
-  ID.AddInteger(B.getBitMask());
+  ID.AddInteger(B.Raw());
 
   void *InsertPoint;
   AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
@@ -53,7 +53,7 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   if (!PA) {
     // If we didn't find any existing attributes of the same shape then create a
     // new one and insert it.
-    PA = new AttributeImpl(Context, B.getBitMask());
+    PA = new AttributeImpl(Context, B.Raw());
     pImpl->AttrsSet.InsertNode(PA, InsertPoint);
   }
 
@@ -103,8 +103,8 @@ bool Attribute::operator!=(AttrKind K) const {
   return !(*this == K);
 }
 
-uint64_t Attribute::getBitMask() const {
-  return pImpl ? pImpl->getBitMask() : 0;
+uint64_t Attribute::Raw() const {
+  return pImpl ? pImpl->Raw() : 0;
 }
 
 Attribute Attribute::typeIncompatible(Type *Ty) {
@@ -139,10 +139,10 @@ uint64_t Attribute::encodeLLVMAttributesForBitcode(Attribute Attrs) {
 
   // Store the alignment in the bitcode as a 16-bit raw value instead of a 5-bit
   // log2 encoded value. Shift the bits above the alignment up by 11 bits.
-  uint64_t EncodedAttrs = Attrs.getBitMask() & 0xffff;
+  uint64_t EncodedAttrs = Attrs.Raw() & 0xffff;
   if (Attrs.hasAttribute(Attribute::Alignment))
     EncodedAttrs |= Attrs.getAlignment() << 16;
-  EncodedAttrs |= (Attrs.getBitMask() & (0xffffULL << 21)) << 11;
+  EncodedAttrs |= (Attrs.Raw() & (0xffffULL << 21)) << 11;
   return EncodedAttrs;
 }
 
@@ -320,7 +320,7 @@ AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
 }
 
 AttrBuilder &AttrBuilder::addAttributes(const Attribute &A) {
-  uint64_t Mask = A.getBitMask();
+  uint64_t Mask = A.Raw();
 
   for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
        I = Attribute::AttrKind(I + 1)) {
@@ -338,7 +338,7 @@ AttrBuilder &AttrBuilder::addAttributes(const Attribute &A) {
 }
 
 AttrBuilder &AttrBuilder::removeAttributes(const Attribute &A){
-  uint64_t Mask = A.getBitMask();
+  uint64_t Mask = A.Raw();
 
   for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
        I = Attribute::AttrKind(I + 1)) {
@@ -364,14 +364,14 @@ bool AttrBuilder::hasAttributes() const {
 }
 
 bool AttrBuilder::hasAttributes(const Attribute &A) const {
-  return getBitMask() & A.getBitMask();
+  return Raw() & A.Raw();
 }
 
 bool AttrBuilder::hasAlignmentAttr() const {
   return Alignment != 0;
 }
 
-uint64_t AttrBuilder::getBitMask() const {
+uint64_t AttrBuilder::Raw() const {
   uint64_t Mask = 0;
 
   for (DenseSet<Attribute::AttrKind>::const_iterator I = Attrs.begin(),
@@ -438,7 +438,7 @@ bool AttributeImpl::operator!=(StringRef Kind) const {
   return !(*this == Kind);
 }
 
-uint64_t AttributeImpl::getBitMask() const {
+uint64_t AttributeImpl::Raw() const {
   // FIXME: Remove this.
   return cast<ConstantInt>(Data)->getZExtValue();
 }
@@ -485,15 +485,15 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
 }
 
 bool AttributeImpl::hasAttribute(Attribute::AttrKind A) const {
-  return (getBitMask() & getAttrMask(A)) != 0;
+  return (Raw() & getAttrMask(A)) != 0;
 }
 
 bool AttributeImpl::hasAttributes() const {
-  return getBitMask() != 0;
+  return Raw() != 0;
 }
 
 uint64_t AttributeImpl::getAlignment() const {
-  return getBitMask() & getAttrMask(Attribute::Alignment);
+  return Raw() & getAttrMask(Attribute::Alignment);
 }
 
 void AttributeImpl::setAlignment(unsigned Align) {
@@ -501,7 +501,7 @@ void AttributeImpl::setAlignment(unsigned Align) {
 }
 
 uint64_t AttributeImpl::getStackAlignment() const {
-  return getBitMask() & getAttrMask(Attribute::StackAlignment);
+  return Raw() & getAttrMask(Attribute::StackAlignment);
 }
 
 void AttributeImpl::setStackAlignment(unsigned Align) {
@@ -511,9 +511,12 @@ void AttributeImpl::setStackAlignment(unsigned Align) {
 void AttributeImpl::Profile(FoldingSetNodeID &ID, Constant *Data,
                             ArrayRef<Constant*> Vals) {
   ID.AddInteger(cast<ConstantInt>(Data)->getZExtValue());
+#if 0
+  // FIXME: Not yet supported.
   for (ArrayRef<Constant*>::iterator I = Vals.begin(), E = Vals.end();
        I != E; ++I)
     ID.AddPointer(*I);
+#endif
 }
 
 //===----------------------------------------------------------------------===//
@@ -611,9 +614,9 @@ unsigned AttributeSet::getStackAlignment(unsigned Index) const {
   return getAttributes(Index).getStackAlignment();
 }
 
-uint64_t AttributeSet::getBitMask(unsigned Index) const {
+uint64_t AttributeSet::Raw(unsigned Index) const {
   // FIXME: Remove this.
-  return getAttributes(Index).getBitMask();
+  return getAttributes(Index).Raw();
 }
 
 /// getAttributes - The attributes for the specified index are returned.

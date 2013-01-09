@@ -142,7 +142,7 @@ public:
     return pImpl != A.pImpl;
   }
 
-  uint64_t getBitMask() const;
+  uint64_t Raw() const;
 
   /// \brief Which attributes cannot be applied to a type.
   static Attribute typeIncompatible(Type *Ty);
@@ -302,7 +302,7 @@ public:
   /// \brief Return the attributes at the index as a string.
   std::string getAsString(unsigned Index) const;
 
-  uint64_t getBitMask(unsigned Index) const;
+  uint64_t Raw(unsigned Index) const;
 
   /// \brief Return true if the specified attribute is set for at least one
   /// parameter or for the return value.
@@ -445,7 +445,7 @@ public:
       .removeAttribute(Attribute::NoDuplicate);
   }
 
-  uint64_t getBitMask() const;
+  uint64_t Raw() const;
 
   bool operator==(const AttrBuilder &B);
   bool operator!=(const AttrBuilder &B) {

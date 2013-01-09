@@ -57,7 +57,7 @@ public:
   bool operator==(StringRef Kind) const;
   bool operator!=(StringRef Kind) const;
 
-  uint64_t getBitMask() const;         // FIXME: Remove.
+  uint64_t Raw() const;         // FIXME: Remove.
 
   static uint64_t getAttrMask(Attribute::AttrKind Val);
 
@@ -93,7 +93,7 @@ public:
                       ArrayRef<AttributeWithIndex> AttrList){
     for (unsigned i = 0, e = AttrList.size(); i != e; ++i) {
       ID.AddInteger(AttrList[i].Index);
-      ID.AddInteger(AttrList[i].Attrs.getBitMask());
+      ID.AddInteger(AttrList[i].Attrs.Raw());
     }
   }
 };
