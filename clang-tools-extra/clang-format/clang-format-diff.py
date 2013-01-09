@@ -106,10 +106,8 @@ def main():
       ranges.append((filename, int(match.group(1)), line_count))
 
   # Reverse the ranges so that the reformatting does not influence file offsets.
-  ranges.reverse()
-
-  # Do the actual formatting.
-  for r in ranges:
+  for r in reversed(ranges):
+    # Do the actual formatting.
     formatRange(r, args.style)
 
 
