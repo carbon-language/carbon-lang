@@ -2562,10 +2562,16 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
                 Op = new BitCastInst(Op, ParamTy, "", InsertPos);
               Clone->setArgOperand(0, Op);
               Clone->insertBefore(InsertPos);
+
+              DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Cloning "
+                           << *CInst << "\n"
+                           "                                     And inserting "
+                           "clone at " << *InsertPos << "\n");
               Worklist.push_back(std::make_pair(Clone, Incoming));
             }
           }
           // Erase the original call.
+          DEBUG(dbgs() << "Erasing: " << *CInst << "\n");
           EraseInstruction(CInst);
           continue;
         }
@@ -3226,6 +3232,11 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
                         MDNode::get(M->getContext(), ArrayRef<Value *>()));
     else
       Call->setTailCall();
+
+    DEBUG(dbgs() << "ObjCARCOpt::MoveCalls: Inserting new Release: " << *Call
+                 << "\n"
+                    "                       At insertion point: " << *InsertPt
+                 << "\n");
   }
   for (SmallPtrSet<Instruction *, 2>::const_iterator
        PI = RetainsToMove.ReverseInsertPts.begin(),
@@ -3241,6 +3252,11 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
     Call->setDoesNotThrow();
     if (ReleasesToMove.IsTailCallRelease)
       Call->setTailCall();
+
+    DEBUG(dbgs() << "ObjCARCOpt::MoveCalls: Inserting new Retain: " << *Call
+                 << "\n"
+                    "                       At insertion point: " << *InsertPt
+                 << "\n");
   }
 
   // Delete the original retain and release calls.
@@ -3250,6 +3266,8 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
     Instruction *OrigRetain = *AI;
     Retains.blot(OrigRetain);
     DeadInsts.push_back(OrigRetain);
+    DEBUG(dbgs() << "ObjCARCOpt::MoveCalls: Deleting retain: " << *OrigRetain <<
+                    "\n");
   }
   for (SmallPtrSet<Instruction *, 2>::const_iterator
        AI = ReleasesToMove.Calls.begin(),
@@ -3257,6 +3275,8 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
     Instruction *OrigRelease = *AI;
     Releases.erase(OrigRelease);
     DeadInsts.push_back(OrigRelease);
+    DEBUG(dbgs() << "ObjCARCOpt::MoveCalls: Deleting release: " << *OrigRelease
+                 << "\n");
   }
 }
 
@@ -3282,6 +3302,10 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
     if (!V) continue; // blotted
 
     Instruction *Retain = cast<Instruction>(V);
+
+    DEBUG(dbgs() << "ObjCARCOpt::PerformCodePlacement: Visiting: " << *Retain
+          << "\n");
+
     Value *Arg = GetObjCArg(Retain);
 
     // If the object being released is in static or stack storage, we know it's
