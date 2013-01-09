@@ -74,6 +74,11 @@ TableGen also has two string-like literals:
    TokString: '"' <non-'"' characters and C-like escapes> '"'
    TokCodeFragment: "[{" <shortest text not containing "}]"> "}]"
 
+.. note::
+   The current implementation accepts the following C-like escapes::
+
+      \\ \' \" \t \n
+
 TableGen also has the following keywords::
 
    bit   bits      class   code         dag
