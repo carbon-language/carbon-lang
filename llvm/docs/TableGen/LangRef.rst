@@ -86,11 +86,13 @@ TableGen also has the following keywords::
    int   let       list    multiclass   string
 
 TableGen also has "bang operators" which have a
-wide variety of meanings::
+wide variety of meanings:
 
-   !eq     !if      !head    !tail      !con
-   !shl    !sra     !srl
-   !cast   !empty   !subst   !foreach   !strconcat
+.. productionlist::
+   BangOperator: one of
+               :!eq     !if      !head    !tail      !con
+               :!shl    !sra     !srl
+               :!cast   !empty   !subst   !foreach   !strconcat
 
 Syntax
 ======
