@@ -352,7 +352,7 @@ DIInliningInfo DWARFContext::getInliningInfoForAddress(uint64_t Address,
 }
 
 DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
-  IsLittleEndian(true /* FIXME */) {
+  IsLittleEndian(Obj->isLittleEndian()) {
   error_code ec;
   for (object::section_iterator i = Obj->begin_sections(),
          e = Obj->end_sections();
