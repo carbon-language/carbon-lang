@@ -6735,18 +6735,24 @@ SDValue DAGCombiner::visitBRCOND(SDNode *N) {
     if (Op0.getOpcode() == Op1.getOpcode()) {
       // Avoid missing important xor optimizations.
       SDValue Tmp = visitXOR(TheXor);
-      if (Tmp.getNode() && Tmp.getNode() != TheXor) {
-        DEBUG(dbgs() << "\nReplacing.8 ";
-              TheXor->dump(&DAG);
-              dbgs() << "\nWith: ";
-              Tmp.getNode()->dump(&DAG);
-              dbgs() << '\n');
-        WorkListRemover DeadNodes(*this);
-        DAG.ReplaceAllUsesOfValueWith(N1, Tmp);
-        removeFromWorkList(TheXor);
-        DAG.DeleteNode(TheXor);
-        return DAG.getNode(ISD::BRCOND, N->getDebugLoc(),
-                           MVT::Other, Chain, Tmp, N2);
+      if (Tmp.getNode()) {
+        if (Tmp.getNode() != TheXor) {
+          DEBUG(dbgs() << "\nReplacing.8 ";
+                TheXor->dump(&DAG);
+                dbgs() << "\nWith: ";
+                Tmp.getNode()->dump(&DAG);
+                dbgs() << '\n');
+          WorkListRemover DeadNodes(*this);
+          DAG.ReplaceAllUsesOfValueWith(N1, Tmp);
+          removeFromWorkList(TheXor);
+          DAG.DeleteNode(TheXor);
+          return DAG.getNode(ISD::BRCOND, N->getDebugLoc(),
+                             MVT::Other, Chain, Tmp, N2);
+        }
+
+        // visitXOR has changed XOR's operands.
+        Op0 = TheXor->getOperand(0);
+        Op1 = TheXor->getOperand(1);
       }
     }
 
