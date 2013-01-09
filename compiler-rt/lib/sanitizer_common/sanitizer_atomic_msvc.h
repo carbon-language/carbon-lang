@@ -34,9 +34,9 @@ extern "C" void *_InterlockedCompareExchangePointer(
 // There's no _InterlockedCompareExchangePointer intrinsic on x86,
 // so call _InterlockedCompareExchange instead.
 extern "C"
-long __cdecl _InterlockedCompareExchange(
-    long volatile *Destination,
-    long Exchange, long Comparand);
+long __cdecl _InterlockedCompareExchange(  // NOLINT
+    long volatile *Destination,            // NOLINT
+    long Exchange, long Comparand);        // NOLINT
 #pragma intrinsic(_InterlockedCompareExchange)
 
 inline static void *_InterlockedCompareExchangePointer(
@@ -44,9 +44,9 @@ inline static void *_InterlockedCompareExchangePointer(
     void *Exchange, void *Comparand) {
   return reinterpret_cast<void*>(
       _InterlockedCompareExchange(
-          reinterpret_cast<long volatile*>(Destination),
-          reinterpret_cast<long>(Exchange),
-          reinterpret_cast<long>(Comparand)));
+          reinterpret_cast<long volatile*>(Destination),  // NOLINT
+          reinterpret_cast<long>(Exchange),               // NOLINT
+          reinterpret_cast<long>(Comparand)));            // NOLINT
 }
 #endif
 
