@@ -1189,6 +1189,8 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "@end");
 
   verifyFormat("@interface Foo\n"
+               "@end\n"
+               "@interface Bar\n"
                "@end");
 
   verifyFormat("@interface Foo : Bar\n"
@@ -1262,6 +1264,11 @@ TEST_F(FormatTest, FormatObjCProtocol) {
 
   verifyFormat("@protocol Foo;\n"
                "@protocol Bar;\n");
+
+  verifyFormat("@protocol Foo\n"
+               "@end\n"
+               "@protocol Bar\n"
+               "@end");
 }
 
 TEST_F(FormatTest, ObjCAt) {

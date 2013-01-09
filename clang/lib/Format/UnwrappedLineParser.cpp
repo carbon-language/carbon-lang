@@ -212,6 +212,8 @@ void UnwrappedLineParser::parseStructuralElement() {
       return parseObjCInterface();
     case tok::objc_protocol:
       return parseObjCProtocol();
+    case tok::objc_end:
+      return; // Handled by the caller.
     default:
       break;
     }
