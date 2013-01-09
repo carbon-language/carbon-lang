@@ -48,9 +48,9 @@ struct ArchiveMemberHeader {
   }
 
   uint64_t getSize() const {
-    APInt ret;
+    uint64_t ret;
     StringRef(Size, sizeof(Size)).getAsInteger(10, ret);
-    return ret.getZExtValue();
+    return ret;
   }
 };
 }
@@ -110,11 +110,11 @@ error_code Archive::Child::getName(StringRef &Result) const {
     }
     // It's a long name.
     // Get the offset.
-    APInt offset;
+    uint64_t offset;
     name.substr(1).getAsInteger(10, offset);
     const char *addr = Parent->StringTable->Data.begin()
                        + sizeof(ArchiveMemberHeader)
-                       + offset.getZExtValue();
+                       + offset;
     // Verify it.
     if (Parent->StringTable == Parent->end_children()
         || addr < (Parent->StringTable->Data.begin()
@@ -133,9 +133,9 @@ error_code Archive::Child::getName(StringRef &Result) const {
     }
     return object_error::success;
   } else if (name.startswith("#1/")) {
-    APInt name_size;
+    uint64_t name_size;
     name.substr(3).getAsInteger(10, name_size);
-    Result = Data.substr(0, name_size.getZExtValue());
+    Result = Data.substr(0, name_size);
     return object_error::success;
   }
   // It's a simple name.
@@ -151,9 +151,9 @@ uint64_t Archive::Child::getSize() const {
   // Don't include attached name.
   StringRef name =  ToHeader(Data.data())->getName();
   if (name.startswith("#1/")) {
-    APInt name_size;
+    uint64_t name_size;
     name.substr(3).getAsInteger(10, name_size);
-    size -= name_size.getZExtValue();
+    size -= name_size;
   }
   return size;
 }
@@ -163,9 +163,9 @@ MemoryBuffer *Archive::Child::getBuffer() const {
   if (getName(name)) return NULL;
   int size = sizeof(ArchiveMemberHeader);
   if (name.startswith("#1/")) {
-    APInt name_size;
+    uint64_t name_size;
     name.substr(3).getAsInteger(10, name_size);
-    size += name_size.getZExtValue();
+    size += name_size;
   }
   return MemoryBuffer::getMemBuffer(Data.substr(size, getSize()),
                                     name,
