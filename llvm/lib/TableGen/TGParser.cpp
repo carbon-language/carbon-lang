@@ -2368,24 +2368,24 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
   // Don't create a top level definition for defm inside multiclasses,
   // instead, only update the prototypes and bind the template args
   // with the new created definition.
-  if (CurMultiClass) {
-    for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size();
-         i != e; ++i)
-      if (CurMultiClass->DefPrototypes[i]->getNameInit()
-          == CurRec->getNameInit())
-        return Error(DefmPrefixLoc, "defm '" + CurRec->getNameInitAsString() +
-                     "' already defined in this multiclass!");
-    CurMultiClass->DefPrototypes.push_back(CurRec);
+  if (!CurMultiClass)
+    return false;
+  for (unsigned i = 0, e = CurMultiClass->DefPrototypes.size();
+       i != e; ++i)
+    if (CurMultiClass->DefPrototypes[i]->getNameInit()
+        == CurRec->getNameInit())
+      return Error(DefmPrefixLoc, "defm '" + CurRec->getNameInitAsString() +
+                   "' already defined in this multiclass!");
+  CurMultiClass->DefPrototypes.push_back(CurRec);
 
-    // Copy the template arguments for the multiclass into the new def.
-    const std::vector<Init *> &TA =
-      CurMultiClass->Rec.getTemplateArgs();
+  // Copy the template arguments for the multiclass into the new def.
+  const std::vector<Init *> &TA =
+    CurMultiClass->Rec.getTemplateArgs();
 
-    for (unsigned i = 0, e = TA.size(); i != e; ++i) {
-      const RecordVal *RV = CurMultiClass->Rec.getValue(TA[i]);
-      assert(RV && "Template arg doesn't exist?");
-      CurRec->addValue(*RV);
-    }
+  for (unsigned i = 0, e = TA.size(); i != e; ++i) {
+    const RecordVal *RV = CurMultiClass->Rec.getValue(TA[i]);
+    assert(RV && "Template arg doesn't exist?");
+    CurRec->addValue(*RV);
   }
 
   return false;
