@@ -268,7 +268,10 @@ void PrintPPOutputPPCallbacks::FileChanged(SourceLocation Loc,
   Lexer::Stringify(CurFilename);
   FileType = NewFileType;
 
-  if (DisableLineMarkers) return;
+  if (DisableLineMarkers) {
+    startNewLineIfNeeded(/*ShouldUpdateCurrentLine=*/false);
+    return;
+  }
   
   if (!Initialized) {
     WriteLineInfo(CurLine);
