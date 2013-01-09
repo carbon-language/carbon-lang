@@ -10,7 +10,7 @@ standalone tool and editor integrations.
 Standalone Tool
 ===============
 
-`clang-format` is part of the `clang/tools/extra` (see
+:program:`clang-format` is part of the `clang/tools/extra` (see
 :doc:`ClangTools <ClangTools>`) repository and can be used to format
 C/C++/Obj-C code.
 
@@ -42,10 +42,10 @@ C/C++/Obj-C code.
 Vim Integration
 ===============
 
-There is an integration for `vim` which lets you run the `clang-format`
-standalone tool on your current buffer, optionally selecting regions to
-reformat. The integration has to form of a `python`-file which can be found
-under `clang/tools/extra/clang-format/clang-format.py`.
+There is an integration for :program:`vim` which lets you run the
+:program:`clang-format` standalone tool on your current buffer, optionally
+selecting regions to reformat. The integration has to form of a `python`-file
+which can be found under `clang/tools/extra/clang-format/clang-format.py`.
 
 This can be integrated by mapping the following to your `.vimrc`:
 
@@ -54,9 +54,9 @@ This can be integrated by mapping the following to your `.vimrc`:
   map <C-I> :pyf <path-to-this-file>/clang-format.py<CR>
   imap <C-I> <ESC>:pyf <path-to-this-file>/clang-format.py<CR>i
 
-The first line enables `clang-format` for NORMAL and VISUAL mode, the second
-line adds support for INSER` mode. Change "C-I" to another binding if you
-need clang-format on a different key (C-I stands for Ctrl+i).
+The first line enables :program:`clang-format` for NORMAL and VISUAL mode, the
+second line adds support for INSERT mode. Change "C-I" to another binding if
+you need :program:`clang-format` on a different key (C-I stands for Ctrl+i).
 
 With this integration you can press the bound key and clang-format will
 format the current line in NORMAL and INSERT mode or the selected region in
@@ -71,7 +71,7 @@ Script for patch reformatting
 =============================
 
 The python script `clang/tools/extra/clang-format-diff.py` parses the output of
-a unified diff and reformats all contained lines with `clang-format`.
+a unified diff and reformats all contained lines with :program:`clang-format`.
 
 .. code-block:: console
 
@@ -84,11 +84,11 @@ a unified diff and reformats all contained lines with `clang-format`.
     -p P          strip the smallest prefix containing P slashes
     -style STYLE  formatting style to apply (LLVM, Google)
 
-So to reformat all the lines in the latest `git` commit, just do:
+So to reformat all the lines in the latest :program:`git` commit, just do:
 
 .. code-block:: console
 
   git diff -U0 HEAD^ | clang-format-diff.py
-  
-The `-U0` will create a diff without context lines (the script would format
+
+The :option:`-U0` will create a diff without context lines (the script would format
 those as well).
