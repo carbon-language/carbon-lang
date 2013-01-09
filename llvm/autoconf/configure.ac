@@ -1257,7 +1257,27 @@ AC_MSG_CHECKING([optional compiler flags])
 CXX_FLAG_CHECK(NO_VARIADIC_MACROS, [-Wno-variadic-macros])
 CXX_FLAG_CHECK(NO_MISSING_FIELD_INITIALIZERS, [-Wno-missing-field-initializers])
 CXX_FLAG_CHECK(COVERED_SWITCH_DEFAULT, [-Wcovered-switch-default])
-AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT])
+dnl GCC's potential uninitialized use analysis is weak and presents lots of
+dnl false positives, so disable it.
+if test "$GXX" = "yes"
+then
+  CXX_FLAG_CHECK(NO_MAYBE_UNINITIALIZED, [-Wno-maybe-uninitialized])
+  dnl gcc 4.7 introduced -Wmaybe-uninitialized to distinguish cases which are
+  dnl known to be uninitialized from cases which might be uninitialized.  We 
+  dnl still want to catch the first kind of errors.
+  if test "$NO_MAYBE_UNINITIALIZED" != "-Wno-maybe-uninitialized"
+  then
+    CXX_FLAG_CHECK(NO_UNINITIALIZED, [-Wno-uninitialized])
+  else
+    dnl AC_SUBST doesn't work with empty strings.
+    NO_UNINITIALIZED=
+  fi
+else
+  NO_UNINITIALIZED=
+  NO_MAYBE_UNINITIALIZED=
+fi
+AC_MSG_RESULT([$NO_VARIADIC_MACROS $NO_MISSING_FIELD_INITIALIZERS $COVERED_SWITCH_DEFAULT $NO_UNINITIALIZED $NO_MAYBE_UNINITIALIZED])
+
 
 dnl===-----------------------------------------------------------------------===
 dnl===
