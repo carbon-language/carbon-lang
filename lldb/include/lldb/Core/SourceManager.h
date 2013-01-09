@@ -119,13 +119,6 @@ public:
     }
 
     size_t
-    DisplaySourceLines (const FileSpec &file,
-                        uint32_t line,
-                        uint32_t context_before,
-                        uint32_t context_after,
-                        Stream *s);
-
-    size_t
     DisplaySourceLinesWithLineNumbers (const FileSpec &file,
                                        uint32_t line,
                                        uint32_t context_before,
@@ -145,7 +138,8 @@ public:
 
     size_t
     DisplayMoreWithLineNumbers (Stream *s,
-                                const SymbolContextList *bp_locs = NULL);
+                                const SymbolContextList *bp_locs = NULL,
+                                bool reverse = false);
 
     bool
     SetDefaultFileAndLine (const FileSpec &file_spec, uint32_t line);
@@ -179,6 +173,7 @@ protected:
     uint32_t m_last_file_context_before;
     uint32_t m_last_file_context_after;
     bool     m_default_set;
+    bool     m_first_reverse;
     Target *m_target;
     Debugger *m_debugger;
     

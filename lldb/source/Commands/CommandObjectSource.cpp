@@ -201,6 +201,9 @@ class CommandObjectSourceList : public CommandObjectParsed
             case 'b':
                 show_bp_locs = true;
                 break;
+            case 'r':
+                reverse = true;
+                break;
            default:
                 error.SetErrorStringWithFormat("unrecognized short option '%c'", short_option);
                 break;
@@ -219,6 +222,7 @@ class CommandObjectSourceList : public CommandObjectParsed
             start_line = 0;
             num_lines = 10;
             show_bp_locs = false;
+            reverse = false;
             modules.clear();
         }
 
@@ -238,6 +242,7 @@ class CommandObjectSourceList : public CommandObjectParsed
         uint32_t num_lines;
         STLStringArray modules;        
         bool show_bp_locs;
+        bool reverse;
     };
  
 public:   
@@ -248,18 +253,6 @@ public:
                              NULL),
         m_options (interpreter)
     {
-        CommandArgumentEntry arg;
-        CommandArgumentData file_arg;
-        
-        // Define the first (and only) variant of this arg.
-        file_arg.arg_type = eArgTypeFilename;
-        file_arg.arg_repetition = eArgRepeatOptional;
-        
-        // There is only one variant this argument could be; put it into the argument entry.
-        arg.push_back (file_arg);
-        
-        // Push the data for the first argument into the m_arguments vector.
-        m_arguments.push_back (arg);
     }
 
     ~CommandObjectSourceList ()
@@ -276,7 +269,29 @@ public:
     virtual const char *
     GetRepeatCommand (Args &current_command_args, uint32_t index)
     {
-        return m_cmd_name.c_str();
+        // This is kind of gross, but the command hasn't been parsed yet so we can't look at the option
+        // values for this invocation...  I have to scan the arguments directly.
+        size_t num_args = current_command_args.GetArgumentCount();
+        bool is_reverse = false;
+        for (size_t i = 0 ; i < num_args; i++)
+        {
+            const char *arg = current_command_args.GetArgumentAtIndex(i);
+            if (arg && (strcmp(arg, "-r") == 0 || strcmp(arg, "--reverse") == 0))
+            {
+                is_reverse = true;
+            }
+        }
+        if (is_reverse)
+        {
+            if (m_reverse_name.empty())
+            {
+                m_reverse_name = m_cmd_name;
+                m_reverse_name.append (" -r");
+            }
+            return m_reverse_name.c_str();
+        }
+        else
+            return m_cmd_name.c_str();
     }
 
 protected:
@@ -570,7 +585,8 @@ protected:
             if (m_options.start_line == 0)
             {
                 if (target->GetSourceManager().DisplayMoreWithLineNumbers (&result.GetOutputStream(),
-                                                                                               GetBreakpointLocations ()))
+                                                                           GetBreakpointLocations (),
+                                                                           m_options.reverse))
                 {
                     result.SetStatus (eReturnStatusSuccessFinishResult);
                 }
@@ -724,6 +740,7 @@ protected:
     }
     CommandOptions m_options;
     FileLineResolver m_breakpoint_locations;
+    std::string    m_reverse_name;
 
 };
 
@@ -738,6 +755,7 @@ CommandObjectSourceList::CommandOptions::g_option_table[] =
 { LLDB_OPT_SET_1  , false, "line",   'l', required_argument, NULL, 0, eArgTypeLineNum,    "The line number at which to start the display source."},
 { LLDB_OPT_SET_2  , false, "name",   'n', required_argument, NULL, CommandCompletions::eSymbolCompletion, eArgTypeSymbol,    "The name of a function whose source to display."},
 { LLDB_OPT_SET_3  , false, "address",'a', required_argument, NULL, 0, eArgTypeAddress, "Lookup the address and display the source information for the corresponding file and line."},
+{ LLDB_OPT_SET_4, false, "reverse", 'r', no_argument, NULL, 0, eArgTypeNone, "Reverse the listing to look backwards from the last displayed block of source."},
 { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
 
