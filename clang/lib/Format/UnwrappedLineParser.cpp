@@ -208,6 +208,8 @@ void UnwrappedLineParser::parseStructuralElement() {
     case tok::objc_package:
     case tok::objc_private:
       return parseAccessSpecifier();
+    case tok::objc_interface:
+      return parseObjCInterface();
     default:
       break;
     }
@@ -491,6 +493,46 @@ void UnwrappedLineParser::parseStructOrClass() {
       nextToken();
       break;
     }
+  } while (!eof());
+}
+
+void UnwrappedLineParser::parseObjCInterface() {
+  nextToken();
+  nextToken();  // interface name
+
+  // @interface can be followed by either a base class, or a category.
+  if (FormatTok.Tok.is(tok::colon)) {
+    nextToken();
+    nextToken();  // base class name
+  } else if (FormatTok.Tok.is(tok::l_paren))
+    // Skip category, if present.
+    parseParens();
+
+  // Skip protocol list, if present.
+  if (FormatTok.Tok.is(tok::less)) {
+    do
+      nextToken();
+    while (!eof() && FormatTok.Tok.isNot(tok::greater));
+    nextToken(); // Skip '>'.
+  }
+
+  // If instance variables are present, keep the '{' on the first line too.
+  if (FormatTok.Tok.is(tok::l_brace))
+    parseBlock();
+
+  // With instance variables, this puts '}' on its own line.  Without instance
+  // variables, this ends the @interface line.
+  addUnwrappedLine();
+
+  // Read everything up to the @end.
+  do {
+    if (FormatTok.Tok.isObjCAtKeyword(tok::objc_end)) {
+      nextToken();
+      addUnwrappedLine();
+      break;
+    }
+
+    parseStructuralElement();
   } while (!eof());
 }
 

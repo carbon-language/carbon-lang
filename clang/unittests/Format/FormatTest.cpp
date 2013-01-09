@@ -443,34 +443,6 @@ TEST_F(FormatTest, FormatObjCTryCatch) {
                "}");
 }
 
-TEST_F(FormatTest, FormatObjCInterface) {
-  verifyFormat("@interface Foo : NSObject<NSSomeDelegate> {\n"
-               "@public\n"
-               "  int field1;\n"
-               "@protected\n"
-               "  int field2;\n"
-               "@private\n"
-               "  int field3;\n"
-               "@package\n"
-               "  int field4;\n"
-               "}\n"
-               "+ (id)init;\n"
-               "@end");
-
-  verifyGoogleFormat("@interface Foo : NSObject<NSSomeDelegate> {\n"
-                     " @public\n"
-                     "  int field1;\n"
-                     " @protected\n"
-                     "  int field2;\n"
-                     " @private\n"
-                     "  int field3;\n"
-                     " @package\n"
-                     "  int field4;\n"
-                     "}\n"
-                     "+ (id)init;\n"
-                     "@end");
-}
-
 TEST_F(FormatTest, StaticInitializers) {
   verifyFormat("static SomeClass SC = { 1, 'a' };");
 
@@ -1178,6 +1150,103 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
 TEST_F(FormatTest, FormatObjCBlocks) {
   verifyFormat("int (^Block) (int, int);");
   verifyFormat("int (^Block1) (int, int) = ^(int i, int j)");
+}
+
+TEST_F(FormatTest, FormatObjCInterface) {
+  // FIXME: Handle comments like in "@interface /* wait for it */ Foo", PR14875
+  // FIXME: In google style, it's "+(id) init", not "+ (id)init".
+  verifyFormat("@interface Foo : NSObject<NSSomeDelegate> {\n"
+               "@public\n"
+               "  int field1;\n"
+               "@protected\n"
+               "  int field2;\n"
+               "@private\n"
+               "  int field3;\n"
+               "@package\n"
+               "  int field4;\n"
+               "}\n"
+               "+ (id)init;\n"
+               "@end");
+
+  // FIXME: In LLVM style, there should be a space before '<' for protocols.
+  verifyGoogleFormat("@interface Foo : NSObject<NSSomeDelegate> {\n"
+                     " @public\n"
+                     "  int field1;\n"
+                     " @protected\n"
+                     "  int field2;\n"
+                     " @private\n"
+                     "  int field3;\n"
+                     " @package\n"
+                     "  int field4;\n"
+                     "}\n"
+                     "+ (id)init;\n"
+                     "@end");
+
+  verifyFormat("@interface Foo\n"
+               "+ (id)init;\n"
+               "// Look, a comment!\n"
+               "- (int)answerWith:(int)i;\n"
+               "@end");
+
+  verifyFormat("@interface Foo\n"
+               "@end");
+
+  verifyFormat("@interface Foo : Bar\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyFormat("@interface Foo : Bar<Baz, Quux>\n"
+               "+ (id)init;\n"
+               "@end");
+
+  // FIXME: there should be a space before '(' for categories.
+  verifyFormat("@interface Foo(HackStuff)\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyFormat("@interface Foo()\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyFormat("@interface Foo(HackStuff)<MyProtocol>\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyFormat("@interface Foo {\n"
+               "  int _i;\n"
+               "}\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyFormat("@interface Foo : Bar {\n"
+               "  int _i;\n"
+               "}\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyFormat("@interface Foo : Bar<Baz, Quux> {\n"
+               "  int _i;\n"
+               "}\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyFormat("@interface Foo(HackStuff) {\n"
+               "  int _i;\n"
+               "}\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyFormat("@interface Foo() {\n"
+               "  int _i;\n"
+               "}\n"
+               "+ (id)init;\n"
+               "@end");
+
+  verifyFormat("@interface Foo(HackStuff)<MyProtocol> {\n"
+               "  int _i;\n"
+               "}\n"
+               "+ (id)init;\n"
+               "@end");
 }
 
 TEST_F(FormatTest, ObjCAt) {

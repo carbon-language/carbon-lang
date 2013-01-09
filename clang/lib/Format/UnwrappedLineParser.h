@@ -142,6 +142,7 @@ private:
   void parseAccessSpecifier();
   void parseEnum();
   void parseStructOrClass();
+  void parseObjCInterface();
   void addUnwrappedLine();
   bool eof() const;
   void nextToken();
