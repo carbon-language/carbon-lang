@@ -118,3 +118,9 @@ module import_decl {
 framework module * { 
   exclude NotAModule
 }
+
+module linkage_merge_left {
+  explicit module sub {
+    header "linkage-merge-sub.h"
+  }
+}
