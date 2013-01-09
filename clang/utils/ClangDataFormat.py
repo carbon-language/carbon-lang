@@ -39,6 +39,7 @@ class SourceLocation(object):
 	def __init__(self, srcloc):
 		self.srcloc = srcloc
 		self.ID = srcloc.GetChildAtIndex(0).GetValueAsUnsigned()
+		self.frame = srcloc.GetFrame()
 	
 	def offset(self):
 		return getValueFromExpression(self.srcloc, ".getOffset()").GetValueAsUnsigned()
@@ -50,7 +51,7 @@ class SourceLocation(object):
 		return getValueFromExpression(self.srcloc, ".isMacroID()").GetValueAsUnsigned()
 
 	def isLocal(self, srcmgr_path):
-		return lldb.frame.EvaluateExpression("(%s).isLocalSourceLocation(%s)" % (srcmgr_path, getExpressionPath(self.srcloc))).GetValueAsUnsigned()
+		return self.frame.EvaluateExpression("(%s).isLocalSourceLocation(%s)" % (srcmgr_path, getExpressionPath(self.srcloc))).GetValueAsUnsigned()
 
 	def getPrint(self, srcmgr_path):
 		print_str = getValueFromExpression(self.srcloc, ".printToString(%s)" % srcmgr_path)
@@ -59,7 +60,7 @@ class SourceLocation(object):
 	def summary(self):
 		if self.isInvalid():
 			return "<invalid loc>"
-		srcmgr_path = findObjectExpressionPath("clang::SourceManager", lldb.frame)
+		srcmgr_path = findObjectExpressionPath("clang::SourceManager", self.frame)
 		if srcmgr_path:
 			return "%s (offset: %d, %s, %s)" % (self.getPrint(srcmgr_path), self.offset(), "macro" if self.isMacro() else "file", "local" if self.isLocal(srcmgr_path) else "loaded")
 		return "(offset: %d, %s)" % (self.offset(), "macro" if self.isMacro() else "file")
@@ -152,7 +153,7 @@ def findObject(typename, frame):
 			return found if not found.TypeIsPointerType() else found.Dereference()
 
 def getValueFromExpression(val, expr):
-	return lldb.frame.EvaluateExpression(getExpressionPath(val) + expr)
+	return val.GetFrame().EvaluateExpression(getExpressionPath(val) + expr)
 
 def getExpressionPath(val):
 	stream = lldb.SBStream()
