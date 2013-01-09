@@ -897,7 +897,7 @@ void MachineInstr::unbundleFromSucc() {
   assert(isBundledWithSucc() && "MI isn't bundled with its successor");
   clearFlag(BundledSucc);
   MachineBasicBlock::instr_iterator Succ = this;
-  --Succ;
+  ++Succ;
   assert(Succ->isBundledWithPred() && "Inconsistent bundle flags");
   Succ->clearFlag(BundledPred);
 }
