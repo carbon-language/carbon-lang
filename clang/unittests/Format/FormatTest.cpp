@@ -759,6 +759,15 @@ TEST_F(FormatTest, AlignsAfterReturn) {
       "        aaaaaaaaaaaaaaaaaaaaaaaaa);");
 }
 
+TEST_F(FormatTest, BreaksConditionalExpressions) {
+  verifyFormat(
+      "aaaa(aaaaaaaaaaaaaaaaaaaa,\n"
+      "     aaaaaaaaaaaaaaaaaaaaaaaaaa ? aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa :\n"
+      "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat("aaaa(aaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaa ?\n"
+               "         aaaaaaaaaaaaaaaaaaaaaaa : aaaaaaaaaaaaaaaaaaaaa);");
+}
+
 TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("loooooooooooooooooooooooooongFunction(\"short literal \"\n"
                "                                      \"short literal\");");
