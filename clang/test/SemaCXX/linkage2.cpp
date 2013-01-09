@@ -40,3 +40,11 @@ namespace test4 {
     };
   }
 }
+
+namespace test5 {
+  static void g();
+  void f()
+  {
+    void g();
+  }
+}

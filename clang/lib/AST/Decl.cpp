@@ -803,6 +803,10 @@ static LinkageInfo computeLVForDecl(const NamedDecl *D, bool OnlyTemplate) {
           !Function->getDeclContext()->isExternCContext())
         return LinkageInfo::uniqueExternal();
 
+      // This is a "void f();" which got merged with a file static.
+      if (Function->getStorageClass() == SC_Static)
+        return LinkageInfo::internal();
+
       LinkageInfo LV;
       if (!OnlyTemplate) {
         if (llvm::Optional<Visibility> Vis = Function->getExplicitVisibility())
