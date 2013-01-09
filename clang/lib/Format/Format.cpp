@@ -315,7 +315,7 @@ private:
                               WhitespaceStartColumn);
       }
 
-      State.LastSpace[ParenLevel] = State.Indent[ParenLevel];
+      State.LastSpace[ParenLevel] = State.Column;
       if (Current.is(tok::colon) && CurrentLineType != LT_ObjCMethodDecl &&
           State.NextToken->Type != TT_ConditionalExpr)
         State.Indent[ParenLevel] += 2;
