@@ -45,16 +45,34 @@ bool finalizeBundles(MachineFunction &MF);
 ///
 inline MachineInstr *getBundleStart(MachineInstr *MI) {
   MachineBasicBlock::instr_iterator I = MI;
-  while (I->isInsideBundle())
+  while (I->isBundledWithPred())
     --I;
   return I;
 }
 
 inline const MachineInstr *getBundleStart(const MachineInstr *MI) {
   MachineBasicBlock::const_instr_iterator I = MI;
-  while (I->isInsideBundle())
+  while (I->isBundledWithPred())
     --I;
   return I;
+}
+
+/// Return an iterator pointing beyond the bundle containing MI.
+inline MachineBasicBlock::instr_iterator
+getBundleEnd(MachineInstr *MI) {
+  MachineBasicBlock::instr_iterator I = MI;
+  while (I->isBundledWithSucc())
+    ++I;
+  return ++I;
+}
+
+/// Return an iterator pointing beyond the bundle containing MI.
+inline MachineBasicBlock::const_instr_iterator
+getBundleEnd(const MachineInstr *MI) {
+  MachineBasicBlock::const_instr_iterator I = MI;
+  while (I->isBundledWithSucc())
+    ++I;
+  return ++I;
 }
 
 //===----------------------------------------------------------------------===//

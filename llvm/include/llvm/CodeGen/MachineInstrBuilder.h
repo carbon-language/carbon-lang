@@ -18,6 +18,7 @@
 #define LLVM_CODEGEN_MACHINEINSTRBUILDER_H
 
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
@@ -391,11 +392,7 @@ public:
   /// Create an MIBundleBuilder representing an existing instruction or bundle
   /// that has MI as its head.
   explicit MIBundleBuilder(MachineInstr *MI)
-    : MBB(*MI->getParent()), Begin(MI) {
-    MachineBasicBlock::iterator I = MI;
-    ++I;
-    End = I.getInstrIterator();
-  }
+    : MBB(*MI->getParent()), Begin(MI), End(getBundleEnd(MI)) {}
 
   /// Return a reference to the basic block containing this bundle.
   MachineBasicBlock &getMBB() const { return MBB; }
