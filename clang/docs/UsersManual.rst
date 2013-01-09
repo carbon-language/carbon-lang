@@ -334,13 +334,12 @@ output format of the diagnostics that it generates.
 
 .. _opt_fdiagnostics-print-source-range-info:
 
-**-f[no-]diagnostics-print-source-range-info**
+**-fdiagnostics-print-source-range-info**
    Print machine parsable information about source ranges.
-   This option, which defaults to off, controls whether or not Clang
-   prints information about source ranges in a machine parsable format
-   after the file/line/column number information. The information is a
-   simple sequence of brace enclosed ranges, where each range lists the
-   start and end line/column locations. For example, in this output:
+   This option makes Clang print information about source ranges in a machine
+   parsable format after the file/line/column number information. The
+   information is a simple sequence of brace enclosed ranges, where each range
+   lists the start and end line/column locations. For example, in this output:
 
    ::
 
