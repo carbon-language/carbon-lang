@@ -1042,17 +1042,23 @@ IRInterpreter::supportsFunction (Function &llvm_function,
                     }
                 }
                 break;
+            case Instruction::And:
+            case Instruction::AShr:
             case Instruction::IntToPtr:
             case Instruction::PtrToInt:
             case Instruction::Load:
+            case Instruction::LShr:
             case Instruction::Mul:
+            case Instruction::Or:
             case Instruction::Ret:
             case Instruction::SDiv:
+            case Instruction::Shl:
             case Instruction::SRem:
             case Instruction::Store:
             case Instruction::Sub:
             case Instruction::UDiv:
             case Instruction::URem:
+            case Instruction::Xor:
             case Instruction::ZExt:
                 break;
             }
@@ -1139,6 +1145,12 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
         case Instruction::UDiv:
         case Instruction::SRem:
         case Instruction::URem:
+        case Instruction::Shl:
+        case Instruction::LShr:
+        case Instruction::AShr:
+        case Instruction::And:
+        case Instruction::Or:
+        case Instruction::Xor:
             {
                 const BinaryOperator *bin_op = dyn_cast<BinaryOperator>(inst);
                 
@@ -1201,6 +1213,25 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     break;
                 case Instruction::URem:
                     result = L.GetRawBits64(0) % R.GetRawBits64(1);
+                    break;
+                case Instruction::Shl:
+                    result = L << R;
+                    break;
+                case Instruction::AShr:
+                    result = L >> R;
+                    break;
+                case Instruction::LShr:
+                    result = L;
+                    result.ShiftRightLogical(R);
+                    break;
+                case Instruction::And:
+                    result = L & R;
+                    break;
+                case Instruction::Or:
+                    result = L | R;
+                    break;
+                case Instruction::Xor:
+                    result = L ^ R;
                     break;
                 }
                                 

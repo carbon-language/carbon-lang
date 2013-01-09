@@ -1717,6 +1717,22 @@ lldb_private::operator^ (const Scalar& lhs, const Scalar& rhs)
     return result;
 }
 
+const Scalar
+lldb_private::operator<< (const Scalar& lhs, const Scalar &rhs)
+{
+    Scalar result = lhs;
+    result <<= rhs;
+    return result;
+}
+
+const Scalar
+lldb_private::operator>> (const Scalar& lhs, const Scalar &rhs)
+{
+    Scalar result = lhs;
+    result >>= rhs;
+    return result;
+}
+
 // Return the raw unsigned integer without any casting or conversion
 unsigned int
 Scalar::RawUInt () const

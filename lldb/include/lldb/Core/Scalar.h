@@ -277,6 +277,8 @@ private:
     friend const Scalar operator|   (const Scalar& lhs, const Scalar& rhs);
     friend const Scalar operator%   (const Scalar& lhs, const Scalar& rhs);
     friend const Scalar operator^   (const Scalar& lhs, const Scalar& rhs);
+    friend const Scalar operator<<  (const Scalar& lhs, const Scalar& rhs);
+    friend const Scalar operator>>  (const Scalar& lhs, const Scalar& rhs);
     friend          bool operator== (const Scalar& lhs, const Scalar& rhs);
     friend          bool operator!= (const Scalar& lhs, const Scalar& rhs);
     friend          bool operator<  (const Scalar& lhs, const Scalar& rhs);
@@ -309,6 +311,8 @@ const Scalar operator& (const Scalar& lhs, const Scalar& rhs);
 const Scalar operator| (const Scalar& lhs, const Scalar& rhs);
 const Scalar operator% (const Scalar& lhs, const Scalar& rhs);
 const Scalar operator^ (const Scalar& lhs, const Scalar& rhs);
+const Scalar operator<< (const Scalar& lhs, const Scalar& rhs);
+const Scalar operator>> (const Scalar& lhs, const Scalar& rhs);
 bool operator== (const Scalar& lhs, const Scalar& rhs);
 bool operator!= (const Scalar& lhs, const Scalar& rhs);
 bool operator<  (const Scalar& lhs, const Scalar& rhs);
