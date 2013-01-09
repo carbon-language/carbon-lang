@@ -600,7 +600,7 @@ public:
                              "target variable",
                              "Read global variable(s) prior to, or while running your binary.",
                              NULL,
-                             0),
+                             eFlagRequiresTarget),
         m_option_group (interpreter),
         m_option_variable (false), // Don't include frame options
         m_option_format (eFormatDefault),
@@ -769,188 +769,66 @@ protected:
     virtual bool
     DoExecute (Args& args, CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
-        Target *target = exe_ctx.GetTargetPtr();
-        if (target)
+        Target *target = m_exe_ctx.GetTargetPtr();
+        const size_t argc = args.GetArgumentCount();
+        Stream &s = result.GetOutputStream();
+        
+        if (argc > 0)
         {
-            const size_t argc = args.GetArgumentCount();
-            Stream &s = result.GetOutputStream();
-            
-            if (argc > 0)
+
+            for (size_t idx = 0; idx < argc; ++idx)
             {
+                VariableList variable_list;
+                ValueObjectList valobj_list;
 
-                for (size_t idx = 0; idx < argc; ++idx)
+                const char *arg = args.GetArgumentAtIndex(idx);
+                uint32_t matches = 0;
+                bool use_var_name = false;
+                if (m_option_variable.use_regex)
                 {
-                    VariableList variable_list;
-                    ValueObjectList valobj_list;
-
-                    const char *arg = args.GetArgumentAtIndex(idx);
-                    uint32_t matches = 0;
-                    bool use_var_name = false;
-                    if (m_option_variable.use_regex)
+                    RegularExpression regex(arg);
+                    if (!regex.IsValid ())
                     {
-                        RegularExpression regex(arg);
-                        if (!regex.IsValid ())
-                        {
-                            result.GetErrorStream().Printf ("error: invalid regular expression: '%s'\n", arg);
-                            result.SetStatus (eReturnStatusFailed);
-                            return false;
-                        }
-                        use_var_name = true;
-                        matches = target->GetImages().FindGlobalVariables (regex,
-                                                                           true, 
-                                                                           UINT32_MAX, 
-                                                                           variable_list);
-                    }
-                    else
-                    {
-                        Error error (Variable::GetValuesForVariableExpressionPath (arg,
-                                                                                   exe_ctx.GetBestExecutionContextScope(),
-                                                                                   GetVariableCallback,
-                                                                                   target,
-                                                                                   variable_list,
-                                                                                   valobj_list));
-                        matches = variable_list.GetSize();
-                    }
-                    
-                    if (matches == 0)
-                    {
-                        result.GetErrorStream().Printf ("error: can't find global variable '%s'\n", arg);
+                        result.GetErrorStream().Printf ("error: invalid regular expression: '%s'\n", arg);
                         result.SetStatus (eReturnStatusFailed);
                         return false;
                     }
-                    else
-                    {
-                        for (uint32_t global_idx=0; global_idx<matches; ++global_idx)
-                        {
-                            VariableSP var_sp (variable_list.GetVariableAtIndex(global_idx));
-                            if (var_sp)
-                            {
-                                ValueObjectSP valobj_sp (valobj_list.GetValueObjectAtIndex(global_idx));
-                                if (!valobj_sp)
-                                    valobj_sp = ValueObjectVariable::Create (exe_ctx.GetBestExecutionContextScope(), var_sp);
-                                
-                                if (valobj_sp)
-                                    DumpValueObject (s, var_sp, valobj_sp, use_var_name ? var_sp->GetName().GetCString() : arg);
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                const FileSpecList &compile_units = m_option_compile_units.GetOptionValue().GetCurrentValue();
-                const FileSpecList &shlibs = m_option_shared_libraries.GetOptionValue().GetCurrentValue();
-                SymbolContextList sc_list;
-                const size_t num_compile_units = compile_units.GetSize();
-                const size_t num_shlibs = shlibs.GetSize();
-                if (num_compile_units == 0 && num_shlibs == 0)
-                {
-                    bool success = false;
-                    StackFrame *frame = exe_ctx.GetFramePtr();
-                    CompileUnit *comp_unit = NULL;
-                    if (frame)
-                    {
-                        SymbolContext sc = frame->GetSymbolContext (eSymbolContextCompUnit);
-                        if (sc.comp_unit)
-                        {
-                            const bool can_create = true;
-                            VariableListSP comp_unit_varlist_sp (sc.comp_unit->GetVariableList(can_create));
-                            if (comp_unit_varlist_sp)
-                            {
-                                size_t count = comp_unit_varlist_sp->GetSize();
-                                if (count > 0)
-                                {
-                                    DumpGlobalVariableList(exe_ctx, sc, *comp_unit_varlist_sp, s);
-                                    success = true;
-                                }
-                            }
-                        }
-                    }
-                    if (!success)
-                    {
-                        if (frame)
-                        {
-                            if (comp_unit)
-                                result.AppendErrorWithFormat ("no global variables in current compile unit: %s/%s\n", 
-                                                              comp_unit->GetDirectory().GetCString(), 
-                                                              comp_unit->GetFilename().GetCString());
-                            else
-                                result.AppendErrorWithFormat ("no debug information for frame %u\n", frame->GetFrameIndex());
-                        }                        
-                        else
-                            result.AppendError ("'target variable' takes one or more global variable names as arguments\n");
-                        result.SetStatus (eReturnStatusFailed);
-                    }
+                    use_var_name = true;
+                    matches = target->GetImages().FindGlobalVariables (regex,
+                                                                       true, 
+                                                                       UINT32_MAX, 
+                                                                       variable_list);
                 }
                 else
                 {
-                    SymbolContextList sc_list;
-                    const bool append = true;
-                    // We have one or more compile unit or shlib
-                    if (num_shlibs > 0)
+                    Error error (Variable::GetValuesForVariableExpressionPath (arg,
+                                                                               m_exe_ctx.GetBestExecutionContextScope(),
+                                                                               GetVariableCallback,
+                                                                               target,
+                                                                               variable_list,
+                                                                               valobj_list));
+                    matches = variable_list.GetSize();
+                }
+                
+                if (matches == 0)
+                {
+                    result.GetErrorStream().Printf ("error: can't find global variable '%s'\n", arg);
+                    result.SetStatus (eReturnStatusFailed);
+                    return false;
+                }
+                else
+                {
+                    for (uint32_t global_idx=0; global_idx<matches; ++global_idx)
                     {
-                        for (size_t shlib_idx=0; shlib_idx<num_shlibs; ++shlib_idx)
+                        VariableSP var_sp (variable_list.GetVariableAtIndex(global_idx));
+                        if (var_sp)
                         {
-                            const FileSpec module_file(shlibs.GetFileSpecAtIndex(shlib_idx));
-                            ModuleSpec module_spec (module_file);
+                            ValueObjectSP valobj_sp (valobj_list.GetValueObjectAtIndex(global_idx));
+                            if (!valobj_sp)
+                                valobj_sp = ValueObjectVariable::Create (m_exe_ctx.GetBestExecutionContextScope(), var_sp);
                             
-                            ModuleSP module_sp (target->GetImages().FindFirstModule(module_spec));
-                            if (module_sp)
-                            {
-                                if (num_compile_units > 0)
-                                {
-                                    for (size_t cu_idx=0; cu_idx<num_compile_units; ++cu_idx)
-                                        module_sp->FindCompileUnits(compile_units.GetFileSpecAtIndex(cu_idx), append, sc_list);
-                                }
-                                else
-                                {
-                                    SymbolContext sc;
-                                    sc.module_sp = module_sp;
-                                    sc_list.Append(sc);
-                                }
-                            }
-                            else
-                            {
-                                // Didn't find matching shlib/module in target...
-                                result.AppendErrorWithFormat ("target doesn't contain the specified shared library: %s%s%s\n",
-                                                              module_file.GetDirectory().GetCString(),
-                                                              module_file.GetDirectory() ? "/" : "",
-                                                              module_file.GetFilename().GetCString());
-                            }
-                        }
-                    }
-                    else
-                    {
-                        // No shared libraries, we just want to find globals for the compile units files that were specified
-                        for (size_t cu_idx=0; cu_idx<num_compile_units; ++cu_idx)
-                            target->GetImages().FindCompileUnits(compile_units.GetFileSpecAtIndex(cu_idx), append, sc_list);
-                    }
-                    
-                    const uint32_t num_scs = sc_list.GetSize();
-                    if (num_scs > 0)
-                    {
-                        SymbolContext sc;
-                        for (uint32_t sc_idx=0; sc_idx<num_scs; ++sc_idx)
-                        {
-                            if (sc_list.GetContextAtIndex(sc_idx, sc))
-                            {
-                                if (sc.comp_unit)
-                                {
-                                    const bool can_create = true;
-                                    VariableListSP comp_unit_varlist_sp (sc.comp_unit->GetVariableList(can_create));
-                                    if (comp_unit_varlist_sp)
-                                        DumpGlobalVariableList(exe_ctx, sc, *comp_unit_varlist_sp, s);
-                                }
-                                else if (sc.module_sp)
-                                {
-                                    // Get all global variables for this module
-                                    lldb_private::RegularExpression all_globals_regex("."); // Any global with at least one character
-                                    VariableList variable_list;
-                                    sc.module_sp->FindGlobalVariables(all_globals_regex, append, UINT32_MAX, variable_list);
-                                    DumpGlobalVariableList(exe_ctx, sc, variable_list, s);
-                                }
-                            }
+                            if (valobj_sp)
+                                DumpValueObject (s, var_sp, valobj_sp, use_var_name ? var_sp->GetName().GetCString() : arg);
                         }
                     }
                 }
@@ -958,11 +836,123 @@ protected:
         }
         else
         {
-            result.AppendError ("invalid target, create a debug target using the 'target create' command");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
+            const FileSpecList &compile_units = m_option_compile_units.GetOptionValue().GetCurrentValue();
+            const FileSpecList &shlibs = m_option_shared_libraries.GetOptionValue().GetCurrentValue();
+            SymbolContextList sc_list;
+            const size_t num_compile_units = compile_units.GetSize();
+            const size_t num_shlibs = shlibs.GetSize();
+            if (num_compile_units == 0 && num_shlibs == 0)
+            {
+                bool success = false;
+                StackFrame *frame = m_exe_ctx.GetFramePtr();
+                CompileUnit *comp_unit = NULL;
+                if (frame)
+                {
+                    SymbolContext sc = frame->GetSymbolContext (eSymbolContextCompUnit);
+                    if (sc.comp_unit)
+                    {
+                        const bool can_create = true;
+                        VariableListSP comp_unit_varlist_sp (sc.comp_unit->GetVariableList(can_create));
+                        if (comp_unit_varlist_sp)
+                        {
+                            size_t count = comp_unit_varlist_sp->GetSize();
+                            if (count > 0)
+                            {
+                                DumpGlobalVariableList(m_exe_ctx, sc, *comp_unit_varlist_sp, s);
+                                success = true;
+                            }
+                        }
+                    }
+                }
+                if (!success)
+                {
+                    if (frame)
+                    {
+                        if (comp_unit)
+                            result.AppendErrorWithFormat ("no global variables in current compile unit: %s/%s\n", 
+                                                          comp_unit->GetDirectory().GetCString(), 
+                                                          comp_unit->GetFilename().GetCString());
+                        else
+                            result.AppendErrorWithFormat ("no debug information for frame %u\n", frame->GetFrameIndex());
+                    }                        
+                    else
+                        result.AppendError ("'target variable' takes one or more global variable names as arguments\n");
+                    result.SetStatus (eReturnStatusFailed);
+                }
+            }
+            else
+            {
+                SymbolContextList sc_list;
+                const bool append = true;
+                // We have one or more compile unit or shlib
+                if (num_shlibs > 0)
+                {
+                    for (size_t shlib_idx=0; shlib_idx<num_shlibs; ++shlib_idx)
+                    {
+                        const FileSpec module_file(shlibs.GetFileSpecAtIndex(shlib_idx));
+                        ModuleSpec module_spec (module_file);
+                        
+                        ModuleSP module_sp (target->GetImages().FindFirstModule(module_spec));
+                        if (module_sp)
+                        {
+                            if (num_compile_units > 0)
+                            {
+                                for (size_t cu_idx=0; cu_idx<num_compile_units; ++cu_idx)
+                                    module_sp->FindCompileUnits(compile_units.GetFileSpecAtIndex(cu_idx), append, sc_list);
+                            }
+                            else
+                            {
+                                SymbolContext sc;
+                                sc.module_sp = module_sp;
+                                sc_list.Append(sc);
+                            }
+                        }
+                        else
+                        {
+                            // Didn't find matching shlib/module in target...
+                            result.AppendErrorWithFormat ("target doesn't contain the specified shared library: %s%s%s\n",
+                                                          module_file.GetDirectory().GetCString(),
+                                                          module_file.GetDirectory() ? "/" : "",
+                                                          module_file.GetFilename().GetCString());
+                        }
+                    }
+                }
+                else
+                {
+                    // No shared libraries, we just want to find globals for the compile units files that were specified
+                    for (size_t cu_idx=0; cu_idx<num_compile_units; ++cu_idx)
+                        target->GetImages().FindCompileUnits(compile_units.GetFileSpecAtIndex(cu_idx), append, sc_list);
+                }
+                
+                const uint32_t num_scs = sc_list.GetSize();
+                if (num_scs > 0)
+                {
+                    SymbolContext sc;
+                    for (uint32_t sc_idx=0; sc_idx<num_scs; ++sc_idx)
+                    {
+                        if (sc_list.GetContextAtIndex(sc_idx, sc))
+                        {
+                            if (sc.comp_unit)
+                            {
+                                const bool can_create = true;
+                                VariableListSP comp_unit_varlist_sp (sc.comp_unit->GetVariableList(can_create));
+                                if (comp_unit_varlist_sp)
+                                    DumpGlobalVariableList(m_exe_ctx, sc, *comp_unit_varlist_sp, s);
+                            }
+                            else if (sc.module_sp)
+                            {
+                                // Get all global variables for this module
+                                lldb_private::RegularExpression all_globals_regex("."); // Any global with at least one character
+                                VariableList variable_list;
+                                sc.module_sp->FindGlobalVariables(all_globals_regex, append, UINT32_MAX, variable_list);
+                                DumpGlobalVariableList(m_exe_ctx, sc, variable_list, s);
+                            }
+                        }
+                    }
+                }
+            }
         }
-        
+
         if (m_interpreter.TruncationWarningNecessary())
         {
             result.GetOutputStream().Printf(m_interpreter.TruncationWarningText(),
@@ -1997,10 +1987,11 @@ class CommandObjectTargetModulesSourceFileAutoComplete : public CommandObjectPar
 public:
     
     CommandObjectTargetModulesSourceFileAutoComplete (CommandInterpreter &interpreter,
-                                          const char *name,
-                                          const char *help,
-                                          const char *syntax) :
-        CommandObjectParsed (interpreter, name, help, syntax)
+                                                      const char *name,
+                                                      const char *help,
+                                                      const char *syntax,
+                                                      uint32_t flags) :
+        CommandObjectParsed (interpreter, name, help, syntax, flags)
     {
         CommandArgumentEntry arg;
         CommandArgumentData source_file_arg;
@@ -2461,9 +2452,10 @@ class CommandObjectTargetModulesDumpLineTable : public CommandObjectTargetModule
 public:
     CommandObjectTargetModulesDumpLineTable (CommandInterpreter &interpreter) :
     CommandObjectTargetModulesSourceFileAutoComplete (interpreter,
-                                          "target modules dump line-table",
-                                          "Dump the debug symbol file for one or more target modules.",
-                                          NULL)
+                                                      "target modules dump line-table",
+                                                      "Dump the debug symbol file for one or more target modules.",
+                                                      NULL,
+                                                      eFlagRequiresTarget)
     {
     }
     
@@ -2477,65 +2469,55 @@ protected:
     DoExecute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        if (target == NULL)
+        Target *target = m_exe_ctx.GetTargetPtr();
+        uint32_t total_num_dumped = 0;
+        
+        uint32_t addr_byte_size = target->GetArchitecture().GetAddressByteSize();
+        result.GetOutputStream().SetAddressByteSize(addr_byte_size);
+        result.GetErrorStream().SetAddressByteSize(addr_byte_size);
+        
+        if (command.GetArgumentCount() == 0)
         {
-            result.AppendError ("invalid target, create a debug target using the 'target create' command");
+            result.AppendErrorWithFormat ("\nSyntax: %s\n", m_cmd_syntax.c_str());
             result.SetStatus (eReturnStatusFailed);
-            return false;
         }
         else
         {
-            ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-            uint32_t total_num_dumped = 0;
-            
-            uint32_t addr_byte_size = target->GetArchitecture().GetAddressByteSize();
-            result.GetOutputStream().SetAddressByteSize(addr_byte_size);
-            result.GetErrorStream().SetAddressByteSize(addr_byte_size);
-            
-            if (command.GetArgumentCount() == 0)
+            // Dump specified images (by basename or fullpath)
+            const char *arg_cstr;
+            for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
             {
-                result.AppendErrorWithFormat ("\nSyntax: %s\n", m_cmd_syntax.c_str());
-                result.SetStatus (eReturnStatusFailed);
-            }
-            else
-            {
-                // Dump specified images (by basename or fullpath)
-                const char *arg_cstr;
-                for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
+                FileSpec file_spec(arg_cstr, false);
+                
+                const ModuleList &target_modules = target->GetImages();
+                Mutex::Locker modules_locker(target_modules.GetMutex());
+                const uint32_t num_modules = target_modules.GetSize();
+                if (num_modules > 0)
                 {
-                    FileSpec file_spec(arg_cstr, false);
-                    
-                    const ModuleList &target_modules = target->GetImages();
-                    Mutex::Locker modules_locker(target_modules.GetMutex());
-                    const uint32_t num_modules = target_modules.GetSize();
-                    if (num_modules > 0)
+                    uint32_t num_dumped = 0;
+                    for (uint32_t i = 0; i<num_modules; ++i)
                     {
-                        uint32_t num_dumped = 0;
-                        for (uint32_t i = 0; i<num_modules; ++i)
-                        {
-                            if (DumpCompileUnitLineTable (m_interpreter,
-                                                          result.GetOutputStream(),
-                                                          target_modules.GetModulePointerAtIndexUnlocked(i),
-                                                          file_spec,
-                                                          exe_ctx.GetProcessPtr() && exe_ctx.GetProcessRef().IsAlive()))
-                                num_dumped++;
-                        }
-                        if (num_dumped == 0)
-                            result.AppendWarningWithFormat ("No source filenames matched '%s'.\n", arg_cstr);
-                        else
-                            total_num_dumped += num_dumped;
+                        if (DumpCompileUnitLineTable (m_interpreter,
+                                                      result.GetOutputStream(),
+                                                      target_modules.GetModulePointerAtIndexUnlocked(i),
+                                                      file_spec,
+                                                      m_exe_ctx.GetProcessPtr() && m_exe_ctx.GetProcessRef().IsAlive()))
+                            num_dumped++;
                     }
+                    if (num_dumped == 0)
+                        result.AppendWarningWithFormat ("No source filenames matched '%s'.\n", arg_cstr);
+                    else
+                        total_num_dumped += num_dumped;
                 }
             }
-            
-            if (total_num_dumped > 0)
-                result.SetStatus (eReturnStatusSuccessFinishResult);
-            else
-            {
-                result.AppendError ("no source filenames matched any command arguments");
-                result.SetStatus (eReturnStatusFailed);
-            }
+        }
+        
+        if (total_num_dumped > 0)
+            result.SetStatus (eReturnStatusSuccessFinishResult);
+        else
+        {
+            result.AppendError ("no source filenames matched any command arguments");
+            result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
     }
@@ -3475,10 +3457,10 @@ public:
     public:
 
         CommandOptions (CommandInterpreter &interpreter) :
-        Options(interpreter),
-        m_type(eLookupTypeInvalid),
-        m_str(),
-        m_addr(LLDB_INVALID_ADDRESS)
+            Options(interpreter),
+            m_type(eLookupTypeInvalid),
+            m_str(),
+            m_addr(LLDB_INVALID_ADDRESS)
         {
         }
 
@@ -3541,7 +3523,11 @@ public:
         CommandObjectParsed (interpreter,
                              "target modules show-unwind",
                              "Show synthesized unwind instructions for a function.",
-                             NULL),
+                             NULL,
+                             eFlagRequiresTarget        |
+                             eFlagRequiresProcess       |
+                             eFlagProcessMustBeLaunched |
+                             eFlagProcessMustBePaused   ),
         m_options (interpreter)
     {
     }
@@ -3563,16 +3549,8 @@ protected:
     DoExecute (Args& command,
              CommandReturnObject &result)
     {
-        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        if (!target)
-        {
-            result.AppendError ("invalid target, create a debug target using the 'target create' command");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-
-        ExecutionContext exe_ctx = m_interpreter.GetDebugger().GetSelectedExecutionContext();
-        Process *process = exe_ctx.GetProcessPtr();
+        Target *target = m_exe_ctx.GetTargetPtr();
+        Process *process = m_exe_ctx.GetProcessPtr();
         ABI *abi = NULL;
         if (process)
           abi = process->GetABI().get();
@@ -3837,7 +3815,8 @@ public:
         CommandObjectParsed (interpreter,
                              "target modules lookup",
                              "Look up information within executable and dependent shared library images.",
-                             NULL),
+                             NULL,
+                             eFlagRequiresTarget),
         m_options (interpreter)
     {
         CommandArgumentEntry arg;
@@ -3881,9 +3860,7 @@ public:
                 break;
         }
         
-        ExecutionContext exe_ctx = interpreter.GetDebugger().GetSelectedExecutionContext();
-        
-        StackFrameSP frame = exe_ctx.GetFrameSP();
+        StackFrameSP frame = m_exe_ctx.GetFrameSP();
         
         if (!frame)
             return false;
@@ -4375,198 +4352,190 @@ protected:
     DoExecute (Args& args,
              CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
-        Target *target = exe_ctx.GetTargetPtr();
+        Target *target = m_exe_ctx.GetTargetPtr();
         result.SetStatus (eReturnStatusFailed);
-        if (target == NULL)
-        {
-            result.AppendError ("invalid target, create a debug target using the 'target create' command");
-        }
-        else
-        {
-            bool flush = false;
-            ModuleSpec module_spec;
-            const bool uuid_option_set = m_uuid_option_group.GetOptionValue().OptionWasSet();
-            const bool file_option_set = m_file_option.GetOptionValue().OptionWasSet();
-            const bool frame_option_set = m_current_frame_option.GetOptionValue().OptionWasSet();
+        bool flush = false;
+        ModuleSpec module_spec;
+        const bool uuid_option_set = m_uuid_option_group.GetOptionValue().OptionWasSet();
+        const bool file_option_set = m_file_option.GetOptionValue().OptionWasSet();
+        const bool frame_option_set = m_current_frame_option.GetOptionValue().OptionWasSet();
 
-            const size_t argc = args.GetArgumentCount();
-            if (argc == 0)
+        const size_t argc = args.GetArgumentCount();
+        if (argc == 0)
+        {
+            if (uuid_option_set || file_option_set || frame_option_set)
             {
-                if (uuid_option_set || file_option_set || frame_option_set)
+                bool success = false;
+                bool error_set = false;
+                if (frame_option_set)
                 {
-                    bool success = false;
-                    bool error_set = false;
-                    if (frame_option_set)
+                    Process *process = m_exe_ctx.GetProcessPtr();
+                    if (process)
                     {
-                        Process *process = exe_ctx.GetProcessPtr();
-                        if (process)
+                        const StateType process_state = process->GetState();
+                        if (StateIsStoppedState (process_state, true))
                         {
-                            const StateType process_state = process->GetState();
-                            if (StateIsStoppedState (process_state, true))
+                            StackFrame *frame = m_exe_ctx.GetFramePtr();
+                            if (frame)
                             {
-                                StackFrame *frame = exe_ctx.GetFramePtr();
-                                if (frame)
+                                ModuleSP frame_module_sp (frame->GetSymbolContext(eSymbolContextModule).module_sp);
+                                if (frame_module_sp)
                                 {
-                                    ModuleSP frame_module_sp (frame->GetSymbolContext(eSymbolContextModule).module_sp);
-                                    if (frame_module_sp)
+                                    if (frame_module_sp->GetPlatformFileSpec().Exists())
                                     {
-                                        if (frame_module_sp->GetPlatformFileSpec().Exists())
-                                        {
-                                            module_spec.GetArchitecture() = frame_module_sp->GetArchitecture();
-                                            module_spec.GetFileSpec() = frame_module_sp->GetPlatformFileSpec();
-                                        }
-                                        module_spec.GetUUID() = frame_module_sp->GetUUID();
-                                        success = module_spec.GetUUID().IsValid() || module_spec.GetFileSpec();
+                                        module_spec.GetArchitecture() = frame_module_sp->GetArchitecture();
+                                        module_spec.GetFileSpec() = frame_module_sp->GetPlatformFileSpec();
                                     }
-                                    else
-                                    {
-                                        result.AppendError ("frame has no module");
-                                        error_set = true;
-                                    }
+                                    module_spec.GetUUID() = frame_module_sp->GetUUID();
+                                    success = module_spec.GetUUID().IsValid() || module_spec.GetFileSpec();
                                 }
                                 else
                                 {
-                                    result.AppendError ("invalid current frame");
+                                    result.AppendError ("frame has no module");
                                     error_set = true;
                                 }
                             }
                             else
                             {
-                                result.AppendErrorWithFormat ("process is not stopped: %s", StateAsCString(process_state));
+                                result.AppendError ("invalid current frame");
                                 error_set = true;
                             }
                         }
                         else
                         {
-                            result.AppendError ("a process must exist in order to use the --frame option");
+                            result.AppendErrorWithFormat ("process is not stopped: %s", StateAsCString(process_state));
                             error_set = true;
                         }
                     }
                     else
                     {
-                        if (uuid_option_set)
-                        {
-                            module_spec.GetUUID() = m_uuid_option_group.GetOptionValue().GetCurrentValue();
-                            success |= module_spec.GetUUID().IsValid();
-                        }
-                        else if (file_option_set)
-                        {
-                            module_spec.GetFileSpec() = m_file_option.GetOptionValue().GetCurrentValue();
-                            ModuleSP module_sp (target->GetImages().FindFirstModule(module_spec));
-                            if (module_sp)
-                            {
-                                module_spec.GetFileSpec() = module_sp->GetFileSpec();
-                                module_spec.GetPlatformFileSpec() = module_sp->GetPlatformFileSpec();
-                                module_spec.GetUUID() = module_sp->GetUUID();
-                                module_spec.GetArchitecture() = module_sp->GetArchitecture();
-                            }
-                            else
-                            {
-                                module_spec.GetArchitecture() = target->GetArchitecture();
-                            }
-                            success |= module_spec.GetFileSpec().Exists();
-                        }
-                    }
-
-                    if (success)
-                    {
-                        if (Symbols::DownloadObjectAndSymbolFile (module_spec))
-                        {
-                            if (module_spec.GetSymbolFileSpec())
-                                success = AddModuleSymbols (target, module_spec, flush, result);
-                        }
-                    }
-
-                    if (!success && !error_set)
-                    {
-                        StreamString error_strm;
-                        if (uuid_option_set)
-                        {
-                            error_strm.PutCString("unable to find debug symbols for UUID ");
-                            module_spec.GetUUID().Dump (&error_strm);
-                        }
-                        else if (file_option_set)
-                        {
-                            error_strm.PutCString("unable to find debug symbols for the executable file ");
-                            error_strm << module_spec.GetFileSpec();
-                        }
-                        else if (frame_option_set)
-                        {
-                            error_strm.PutCString("unable to find debug symbols for the current frame");                            
-                        }
-                        result.AppendError (error_strm.GetData());
+                        result.AppendError ("a process must exist in order to use the --frame option");
+                        error_set = true;
                     }
                 }
                 else
                 {
-                    result.AppendError ("one or more symbol file paths must be specified, or options must be specified");
+                    if (uuid_option_set)
+                    {
+                        module_spec.GetUUID() = m_uuid_option_group.GetOptionValue().GetCurrentValue();
+                        success |= module_spec.GetUUID().IsValid();
+                    }
+                    else if (file_option_set)
+                    {
+                        module_spec.GetFileSpec() = m_file_option.GetOptionValue().GetCurrentValue();
+                        ModuleSP module_sp (target->GetImages().FindFirstModule(module_spec));
+                        if (module_sp)
+                        {
+                            module_spec.GetFileSpec() = module_sp->GetFileSpec();
+                            module_spec.GetPlatformFileSpec() = module_sp->GetPlatformFileSpec();
+                            module_spec.GetUUID() = module_sp->GetUUID();
+                            module_spec.GetArchitecture() = module_sp->GetArchitecture();
+                        }
+                        else
+                        {
+                            module_spec.GetArchitecture() = target->GetArchitecture();
+                        }
+                        success |= module_spec.GetFileSpec().Exists();
+                    }
+                }
+
+                if (success)
+                {
+                    if (Symbols::DownloadObjectAndSymbolFile (module_spec))
+                    {
+                        if (module_spec.GetSymbolFileSpec())
+                            success = AddModuleSymbols (target, module_spec, flush, result);
+                    }
+                }
+
+                if (!success && !error_set)
+                {
+                    StreamString error_strm;
+                    if (uuid_option_set)
+                    {
+                        error_strm.PutCString("unable to find debug symbols for UUID ");
+                        module_spec.GetUUID().Dump (&error_strm);
+                    }
+                    else if (file_option_set)
+                    {
+                        error_strm.PutCString("unable to find debug symbols for the executable file ");
+                        error_strm << module_spec.GetFileSpec();
+                    }
+                    else if (frame_option_set)
+                    {
+                        error_strm.PutCString("unable to find debug symbols for the current frame");                            
+                    }
+                    result.AppendError (error_strm.GetData());
                 }
             }
             else
             {
-                if (uuid_option_set)
-                {
-                    result.AppendError ("specify either one or more paths to symbol files or use the --uuid option without arguments");
-                }
-                else if (file_option_set)
-                {
-                    result.AppendError ("specify either one or more paths to symbol files or use the --file option without arguments");
-                }
-                else if (frame_option_set)
-                {
-                    result.AppendError ("specify either one or more paths to symbol files or use the --frame option without arguments");
-                }
-                else
-                {
-                    PlatformSP platform_sp (target->GetPlatform());
+                result.AppendError ("one or more symbol file paths must be specified, or options must be specified");
+            }
+        }
+        else
+        {
+            if (uuid_option_set)
+            {
+                result.AppendError ("specify either one or more paths to symbol files or use the --uuid option without arguments");
+            }
+            else if (file_option_set)
+            {
+                result.AppendError ("specify either one or more paths to symbol files or use the --file option without arguments");
+            }
+            else if (frame_option_set)
+            {
+                result.AppendError ("specify either one or more paths to symbol files or use the --frame option without arguments");
+            }
+            else
+            {
+                PlatformSP platform_sp (target->GetPlatform());
 
-                    for (size_t i=0; i<argc; ++i)
+                for (size_t i=0; i<argc; ++i)
+                {
+                    const char *symfile_path = args.GetArgumentAtIndex(i);
+                    if (symfile_path)
                     {
-                        const char *symfile_path = args.GetArgumentAtIndex(i);
-                        if (symfile_path)
+                        module_spec.GetSymbolFileSpec().SetFile(symfile_path, true);
+                        if (platform_sp)
                         {
-                            module_spec.GetSymbolFileSpec().SetFile(symfile_path, true);
-                            if (platform_sp)
-                            {
-                                FileSpec symfile_spec;
-                                if (platform_sp->ResolveSymbolFile(*target, module_spec, symfile_spec).Success())
-                                    module_spec.GetSymbolFileSpec() = symfile_spec;
-                            }
-                            
-                            ArchSpec arch;
-                            bool symfile_exists = module_spec.GetSymbolFileSpec().Exists();
+                            FileSpec symfile_spec;
+                            if (platform_sp->ResolveSymbolFile(*target, module_spec, symfile_spec).Success())
+                                module_spec.GetSymbolFileSpec() = symfile_spec;
+                        }
+                        
+                        ArchSpec arch;
+                        bool symfile_exists = module_spec.GetSymbolFileSpec().Exists();
 
-                            if (symfile_exists)
-                            {
-                                if (!AddModuleSymbols (target, module_spec, flush, result))
-                                    break;
-                            }
-                            else
-                            {
-                                char resolved_symfile_path[PATH_MAX];
-                                if (module_spec.GetSymbolFileSpec().GetPath (resolved_symfile_path, sizeof(resolved_symfile_path)))
-                                {
-                                    if (strcmp (resolved_symfile_path, symfile_path) != 0)
-                                    {
-                                        result.AppendErrorWithFormat ("invalid module path '%s' with resolved path '%s'\n", symfile_path, resolved_symfile_path);
-                                        break;
-                                    }
-                                }
-                                result.AppendErrorWithFormat ("invalid module path '%s'\n", symfile_path);
+                        if (symfile_exists)
+                        {
+                            if (!AddModuleSymbols (target, module_spec, flush, result))
                                 break;
+                        }
+                        else
+                        {
+                            char resolved_symfile_path[PATH_MAX];
+                            if (module_spec.GetSymbolFileSpec().GetPath (resolved_symfile_path, sizeof(resolved_symfile_path)))
+                            {
+                                if (strcmp (resolved_symfile_path, symfile_path) != 0)
+                                {
+                                    result.AppendErrorWithFormat ("invalid module path '%s' with resolved path '%s'\n", symfile_path, resolved_symfile_path);
+                                    break;
+                                }
                             }
+                            result.AppendErrorWithFormat ("invalid module path '%s'\n", symfile_path);
+                            break;
                         }
                     }
                 }
             }
+        }
 
-            if (flush)
-            {
-                Process *process = exe_ctx.GetProcessPtr();
-                if (process)
-                    process->Flush();
-            }
+        if (flush)
+        {
+            Process *process = m_exe_ctx.GetProcessPtr();
+            if (process)
+                process->Flush();
         }
         return result.Succeeded();
     }

@@ -168,7 +168,7 @@ CommandObjectExpression::CommandObjectExpression (CommandInterpreter &interprete
                       "expression",
                       "Evaluate a C/ObjC/C++ expression in the current program context, using user defined variables and variables currently in scope.",
                       NULL,
-                      eFlagProcessMustBePaused),
+                      eFlagProcessMustBePaused | eFlagTryTargetAPILock),
     m_option_group (interpreter),
     m_format_options (eFormatDefault),
     m_command_options (),
@@ -315,7 +315,7 @@ CommandObjectExpression::EvaluateExpression
     CommandReturnObject *result
 )
 {
-    Target *target = m_interpreter.GetExecutionContext().GetTargetPtr();
+    Target *target = m_exe_ctx.GetTargetPtr();
     
     if (!target)
         target = Host::GetDummyTarget(m_interpreter.GetDebugger()).get();
@@ -351,7 +351,7 @@ CommandObjectExpression::EvaluateExpression
         .SetTimeoutUsec(m_command_options.timeout);
         
         exe_results = target->EvaluateExpression (expr, 
-                                                  m_interpreter.GetExecutionContext().GetFramePtr(),
+                                                  m_exe_ctx.GetFramePtr(),
                                                   result_valobj_sp,
                                                   options);
         
@@ -360,7 +360,7 @@ CommandObjectExpression::EvaluateExpression
             uint32_t start_frame = 0;
             uint32_t num_frames = 1;
             uint32_t num_frames_with_source = 0;
-            Thread *thread = m_interpreter.GetExecutionContext().GetThreadPtr();
+            Thread *thread = m_exe_ctx.GetThreadPtr();
             if (thread)
             {
                 thread->GetStatus (result->GetOutputStream(), 
@@ -370,7 +370,7 @@ CommandObjectExpression::EvaluateExpression
             }
             else 
             {
-                Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
+                Process *process = m_exe_ctx.GetProcessPtr();
                 if (process)
                 {
                     bool only_threads_with_stop_reason = true;

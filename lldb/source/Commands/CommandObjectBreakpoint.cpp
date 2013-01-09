@@ -561,7 +561,7 @@ private:
         // Then use the current stack frame's file.
         if (!target->GetSourceManager().GetDefaultFileAndLine(file, default_line))
         {
-            StackFrame *cur_frame = m_interpreter.GetExecutionContext().GetFramePtr();
+            StackFrame *cur_frame = m_exe_ctx.GetFramePtr();
             if (cur_frame == NULL)
             {
                 result.AppendError ("No selected frame to use to find the default file.");

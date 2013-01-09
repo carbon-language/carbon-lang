@@ -273,7 +273,6 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
     if (m_options.show_mixed && m_options.num_lines_context == 0)
         m_options.num_lines_context = 1;
 
-    ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
     // Always show the PC in the disassembly
     uint32_t options = Disassembler::eOptionMarkPCAddress;
 
@@ -294,7 +293,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
         if (Disassembler::Disassemble (m_interpreter.GetDebugger(), 
                                        m_options.arch,
                                        plugin_name,
-                                       exe_ctx,
+                                       m_exe_ctx,
                                        name,
                                        NULL,    // Module *
                                        m_options.num_instructions,
@@ -313,7 +312,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
     else
     {
         AddressRange range;
-        StackFrame *frame = exe_ctx.GetFramePtr();
+        StackFrame *frame = m_exe_ctx.GetFramePtr();
         if (m_options.frame_line)
         {
             if (frame == NULL)
@@ -414,7 +413,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
             if (Disassembler::Disassemble (m_interpreter.GetDebugger(), 
                                            m_options.arch,
                                            plugin_name,
-                                           exe_ctx,
+                                           m_exe_ctx,
                                            range.GetBaseAddress(),
                                            m_options.num_instructions,
                                            m_options.show_mixed ? m_options.num_lines_context : 0,
@@ -460,7 +459,7 @@ CommandObjectDisassemble::DoExecute (Args& command, CommandReturnObject &result)
             if (Disassembler::Disassemble (m_interpreter.GetDebugger(), 
                                            m_options.arch,
                                            plugin_name,
-                                           exe_ctx,
+                                           m_exe_ctx,
                                            range,
                                            m_options.num_instructions,
                                            m_options.show_mixed ? m_options.num_lines_context : 0,

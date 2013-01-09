@@ -250,7 +250,8 @@ public:
         CommandObjectParsed (interpreter,
                              "source list",
                              "Display source code (as specified) based on the current executable's debug info.",
-                             NULL),
+                             NULL,
+                             eFlagRequiresTarget), 
         m_options (interpreter)
     {
     }
@@ -307,18 +308,7 @@ protected:
             return false;
         }
 
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        Target *target = exe_ctx.GetTargetPtr();
-
-        if (target == NULL)
-            target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-            
-        if (target == NULL)
-        {
-            result.AppendError ("invalid target, create a debug target using the 'target create' command");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
+        Target *target = m_exe_ctx.GetTargetPtr();
 
         SymbolContextList sc_list;
         if (!m_options.symbol_name.empty())
@@ -455,7 +445,7 @@ protected:
             {
                 const bool show_inlines = true;
                 m_breakpoint_locations.Reset (start_file, 0, show_inlines);
-                SearchFilter target_search_filter (exe_ctx.GetTargetSP());
+                SearchFilter target_search_filter (m_exe_ctx.GetTargetSP());
                 target_search_filter.Search (m_breakpoint_locations);
             }
             else
@@ -556,7 +546,7 @@ protected:
                     bool show_module = true;
                     bool show_inlined_frames = true;
                     sc.DumpStopContext(&result.GetOutputStream(),
-                                       exe_ctx.GetBestExecutionContextScope(),
+                                       m_exe_ctx.GetBestExecutionContextScope(),
                                        sc.line_entry.range.GetBaseAddress(),
                                        show_fullpaths,
                                        show_module,

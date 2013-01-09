@@ -63,7 +63,10 @@ public:
                              "frame info",
                              "List information about the currently selected frame in the current thread.",
                              "frame info",
-                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+                             eFlagRequiresFrame         |
+                             eFlagTryTargetAPILock      |
+                             eFlagProcessMustBeLaunched |
+                             eFlagProcessMustBePaused   )
     {
     }
 
@@ -73,21 +76,10 @@ public:
 
 protected:
     bool
-    DoExecute (Args& command,
-             CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        StackFrame *frame = exe_ctx.GetFramePtr();
-        if (frame)
-        {
-            frame->DumpUsingSettingsFormat (&result.GetOutputStream());
-            result.SetStatus (eReturnStatusSuccessFinishResult);
-        }
-        else
-        {
-            result.AppendError ("no current frame");
-            result.SetStatus (eReturnStatusFailed);
-        }
+        m_exe_ctx.GetFrameRef().DumpUsingSettingsFormat (&result.GetOutputStream());
+        result.SetStatus (eReturnStatusSuccessFinishResult);
         return result.Succeeded();
     }
 };
@@ -162,7 +154,10 @@ public:
                              "frame select",
                              "Select a frame by index from within the current thread and make it the current frame.",
                              NULL,
-                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+                             eFlagRequiresThread        |
+                             eFlagTryTargetAPILock      |
+                             eFlagProcessMustBeLaunched |
+                             eFlagProcessMustBePaused   ),
         m_options (interpreter)
     {
         CommandArgumentEntry arg;
@@ -193,111 +188,104 @@ public:
 
 protected:
     bool
-    DoExecute (Args& command,
-             CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
-        Thread *thread = exe_ctx.GetThreadPtr();
-        if (thread)
+        // No need to check "thread" for validity as eFlagRequiresThread ensures it is valid
+        Thread *thread = m_exe_ctx.GetThreadPtr();
+
+        uint32_t frame_idx = UINT32_MAX;
+        if (m_options.relative_frame_offset != INT32_MIN)
         {
-            uint32_t frame_idx = UINT32_MAX;
-            if (m_options.relative_frame_offset != INT32_MIN)
+            // The one and only argument is a signed relative frame index
+            frame_idx = thread->GetSelectedFrameIndex ();
+            if (frame_idx == UINT32_MAX)
+                frame_idx = 0;
+            
+            if (m_options.relative_frame_offset < 0)
             {
-                // The one and only argument is a signed relative frame index
-                frame_idx = thread->GetSelectedFrameIndex ();
-                if (frame_idx == UINT32_MAX)
-                    frame_idx = 0;
-                
-                if (m_options.relative_frame_offset < 0)
-                {
-                    if (frame_idx >= -m_options.relative_frame_offset)
-                        frame_idx += m_options.relative_frame_offset;
-                    else
-                    {
-                        if (frame_idx == 0)
-                        {
-                            //If you are already at the bottom of the stack, then just warn and don't reset the frame.
-                            result.AppendError("Already at the bottom of the stack");
-                            result.SetStatus(eReturnStatusFailed);
-                            return false;
-                        }
-                        else
-                            frame_idx = 0;
-                    }
-                }
-                else if (m_options.relative_frame_offset > 0)
-                {
-                    // I don't want "up 20" where "20" takes you past the top of the stack to produce
-                    // an error, but rather to just go to the top.  So I have to count the stack here...
-                    const uint32_t num_frames = thread->GetStackFrameCount();
-                    if (num_frames - frame_idx > m_options.relative_frame_offset)
-                        frame_idx += m_options.relative_frame_offset;
-                    else
-                    {
-                        if (frame_idx == num_frames - 1)
-                        {
-                            //If we are already at the top of the stack, just warn and don't reset the frame.
-                            result.AppendError("Already at the top of the stack");
-                            result.SetStatus(eReturnStatusFailed);
-                            return false;
-                        }
-                        else
-                            frame_idx = num_frames - 1;
-                    }
-                }
-            }
-            else 
-            {
-                if (command.GetArgumentCount() == 1)
-                {
-                    const char *frame_idx_cstr = command.GetArgumentAtIndex(0);
-                    frame_idx = Args::StringToUInt32 (frame_idx_cstr, UINT32_MAX, 0);
-                }
-                else if (command.GetArgumentCount() == 0)
-                {
-                    frame_idx = thread->GetSelectedFrameIndex ();
-                    if (frame_idx == UINT32_MAX)
-                    {
-                        frame_idx = 0;
-                    }
-                }
+                if (frame_idx >= -m_options.relative_frame_offset)
+                    frame_idx += m_options.relative_frame_offset;
                 else
                 {
-                    result.AppendError ("invalid arguments.\n");
-                    m_options.GenerateOptionUsage (result.GetErrorStream(), this);
+                    if (frame_idx == 0)
+                    {
+                        //If you are already at the bottom of the stack, then just warn and don't reset the frame.
+                        result.AppendError("Already at the bottom of the stack");
+                        result.SetStatus(eReturnStatusFailed);
+                        return false;
+                    }
+                    else
+                        frame_idx = 0;
                 }
             }
-
-            const bool broadcast = true;
-            bool success = thread->SetSelectedFrameByIndex (frame_idx, broadcast);
-            if (success)
+            else if (m_options.relative_frame_offset > 0)
             {
-                exe_ctx.SetFrameSP(thread->GetSelectedFrame ());
-                StackFrame *frame = exe_ctx.GetFramePtr();
-                if (frame)
+                // I don't want "up 20" where "20" takes you past the top of the stack to produce
+                // an error, but rather to just go to the top.  So I have to count the stack here...
+                const uint32_t num_frames = thread->GetStackFrameCount();
+                if (num_frames - frame_idx > m_options.relative_frame_offset)
+                    frame_idx += m_options.relative_frame_offset;
+                else
                 {
-                    bool already_shown = false;
-                    SymbolContext frame_sc(frame->GetSymbolContext(eSymbolContextLineEntry));
-                    if (m_interpreter.GetDebugger().GetUseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
+                    if (frame_idx == num_frames - 1)
                     {
-                        already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+                        //If we are already at the top of the stack, just warn and don't reset the frame.
+                        result.AppendError("Already at the top of the stack");
+                        result.SetStatus(eReturnStatusFailed);
+                        return false;
                     }
-
-                    bool show_frame_info = true;
-                    bool show_source = !already_shown;
-                    if (frame->GetStatus (result.GetOutputStream(), show_frame_info, show_source))
-                    {
-                        result.SetStatus (eReturnStatusSuccessFinishResult);
-                        return result.Succeeded();
-                    }
+                    else
+                        frame_idx = num_frames - 1;
                 }
             }
-            result.AppendErrorWithFormat ("Frame index (%u) out of range.\n", frame_idx);
         }
-        else
+        else 
         {
-            result.AppendError ("no current thread");
+            if (command.GetArgumentCount() == 1)
+            {
+                const char *frame_idx_cstr = command.GetArgumentAtIndex(0);
+                frame_idx = Args::StringToUInt32 (frame_idx_cstr, UINT32_MAX, 0);
+            }
+            else if (command.GetArgumentCount() == 0)
+            {
+                frame_idx = thread->GetSelectedFrameIndex ();
+                if (frame_idx == UINT32_MAX)
+                {
+                    frame_idx = 0;
+                }
+            }
+            else
+            {
+                result.AppendError ("invalid arguments.\n");
+                m_options.GenerateOptionUsage (result.GetErrorStream(), this);
+            }
         }
+
+        const bool broadcast = true;
+        bool success = thread->SetSelectedFrameByIndex (frame_idx, broadcast);
+        if (success)
+        {
+            m_exe_ctx.SetFrameSP(thread->GetSelectedFrame ());
+            StackFrame *frame = m_exe_ctx.GetFramePtr();
+            if (frame)
+            {
+                bool already_shown = false;
+                SymbolContext frame_sc(frame->GetSymbolContext(eSymbolContextLineEntry));
+                if (m_interpreter.GetDebugger().GetUseExternalEditor() && frame_sc.line_entry.file && frame_sc.line_entry.line != 0)
+                {
+                    already_shown = Host::OpenFileInExternalEditor (frame_sc.line_entry.file, frame_sc.line_entry.line);
+                }
+
+                bool show_frame_info = true;
+                bool show_source = !already_shown;
+                if (frame->GetStatus (result.GetOutputStream(), show_frame_info, show_source))
+                {
+                    result.SetStatus (eReturnStatusSuccessFinishResult);
+                    return result.Succeeded();
+                }
+            }
+        }
+        result.AppendErrorWithFormat ("Frame index (%u) out of range.\n", frame_idx);
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
@@ -331,7 +319,10 @@ public:
                              "Children of aggregate variables can be specified such as "
                              "'var->child.x'.",
                              NULL,
-                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+                             eFlagRequiresFrame |
+                             eFlagTryTargetAPILock |
+                             eFlagProcessMustBeLaunched |
+                             eFlagProcessMustBePaused),
         m_option_group (interpreter),
         m_option_variable(true), // Include the frame specific options by passing "true"
         m_option_format (eFormatDefault),
@@ -372,14 +363,8 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        StackFrame *frame = exe_ctx.GetFramePtr();
-        if (frame == NULL)
-        {
-            result.AppendError ("you must be stopped in a valid stack frame to view frame variables.");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
+        // No need to check "frame" for validity as eFlagRequiresFrame ensures it is valid
+        StackFrame *frame = m_exe_ctx.GetFramePtr();
 
         Stream &s = result.GetOutputStream();
 

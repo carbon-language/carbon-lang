@@ -45,7 +45,10 @@ public:
                              "register read",
                              "Dump the contents of one or more register values from the current frame.  If no register is specified, dumps them all.",
                              NULL,
-                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+                             eFlagRequiresFrame         |
+                             eFlagRequiresRegContext    |
+                             eFlagProcessMustBeLaunched |
+                             eFlagProcessMustBePaused   ),
         m_option_group (interpreter),
         m_format_options (eFormatDefault),
         m_command_options ()
@@ -165,88 +168,79 @@ protected:
     DoExecute (Args& command, CommandReturnObject &result)
     {
         Stream &strm = result.GetOutputStream();
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        RegisterContext *reg_ctx = exe_ctx.GetRegisterContext ();
+        RegisterContext *reg_ctx = m_exe_ctx.GetRegisterContext ();
 
-        if (reg_ctx)
+        const RegisterInfo *reg_info = NULL;
+        if (command.GetArgumentCount() == 0)
         {
-            const RegisterInfo *reg_info = NULL;
-            if (command.GetArgumentCount() == 0)
+            uint32_t set_idx;
+            
+            uint32_t num_register_sets = 1;
+            const uint32_t set_array_size = m_command_options.set_indexes.GetSize();
+            if (set_array_size > 0)
             {
-                uint32_t set_idx;
-                
-                uint32_t num_register_sets = 1;
-                const uint32_t set_array_size = m_command_options.set_indexes.GetSize();
-                if (set_array_size > 0)
+                for (uint32_t i=0; i<set_array_size; ++i)
                 {
-                    for (uint32_t i=0; i<set_array_size; ++i)
+                    set_idx = m_command_options.set_indexes[i]->GetUInt64Value (UINT32_MAX, NULL);
+                    if (set_idx != UINT32_MAX)
                     {
-                        set_idx = m_command_options.set_indexes[i]->GetUInt64Value (UINT32_MAX, NULL);
-                        if (set_idx != UINT32_MAX)
+                        if (!DumpRegisterSet (m_exe_ctx, strm, reg_ctx, set_idx))
                         {
-                            if (!DumpRegisterSet (exe_ctx, strm, reg_ctx, set_idx))
-                            {
-                                result.AppendErrorWithFormat ("invalid register set index: %u\n", set_idx);
-                                result.SetStatus (eReturnStatusFailed);
-                                break;
-                            }
-                        }
-                        else
-                        {
-                            result.AppendError ("invalid register set index\n");
+                            result.AppendErrorWithFormat ("invalid register set index: %u\n", set_idx);
                             result.SetStatus (eReturnStatusFailed);
                             break;
                         }
                     }
-                }
-                else
-                {
-                    if (m_command_options.dump_all_sets)
-                        num_register_sets = reg_ctx->GetRegisterSetCount();
-
-                    for (set_idx = 0; set_idx < num_register_sets; ++set_idx)
+                    else
                     {
-                        // When dump_all_sets option is set, dump primitive as well as derived registers.
-                        DumpRegisterSet (exe_ctx, strm, reg_ctx, set_idx, !m_command_options.dump_all_sets.GetCurrentValue());
+                        result.AppendError ("invalid register set index\n");
+                        result.SetStatus (eReturnStatusFailed);
+                        break;
                     }
                 }
             }
             else
             {
                 if (m_command_options.dump_all_sets)
-                {
-                    result.AppendError ("the --all option can't be used when registers names are supplied as arguments\n");
-                    result.SetStatus (eReturnStatusFailed);
-                }
-                else if (m_command_options.set_indexes.GetSize() > 0)
-                {
-                    result.AppendError ("the --set <set> option can't be used when registers names are supplied as arguments\n");
-                    result.SetStatus (eReturnStatusFailed);
-                }
-                else
-                {
-                    const char *arg_cstr;
-                    for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
-                    {
-                        reg_info = reg_ctx->GetRegisterInfoByName(arg_cstr);
+                    num_register_sets = reg_ctx->GetRegisterSetCount();
 
-                        if (reg_info)
-                        {
-                            if (!DumpRegister (exe_ctx, strm, reg_ctx, reg_info))
-                                strm.Printf("%-12s = error: unavailable\n", reg_info->name);
-                        }
-                        else
-                        {
-                            result.AppendErrorWithFormat ("Invalid register name '%s'.\n", arg_cstr);
-                        }
-                    }
+                for (set_idx = 0; set_idx < num_register_sets; ++set_idx)
+                {
+                    // When dump_all_sets option is set, dump primitive as well as derived registers.
+                    DumpRegisterSet (m_exe_ctx, strm, reg_ctx, set_idx, !m_command_options.dump_all_sets.GetCurrentValue());
                 }
             }
         }
         else
         {
-            result.AppendError ("no current frame");
-            result.SetStatus (eReturnStatusFailed);
+            if (m_command_options.dump_all_sets)
+            {
+                result.AppendError ("the --all option can't be used when registers names are supplied as arguments\n");
+                result.SetStatus (eReturnStatusFailed);
+            }
+            else if (m_command_options.set_indexes.GetSize() > 0)
+            {
+                result.AppendError ("the --set <set> option can't be used when registers names are supplied as arguments\n");
+                result.SetStatus (eReturnStatusFailed);
+            }
+            else
+            {
+                const char *arg_cstr;
+                for (int arg_idx = 0; (arg_cstr = command.GetArgumentAtIndex(arg_idx)) != NULL; ++arg_idx)
+                {
+                    reg_info = reg_ctx->GetRegisterInfoByName(arg_cstr);
+
+                    if (reg_info)
+                    {
+                        if (!DumpRegister (m_exe_ctx, strm, reg_ctx, reg_info))
+                            strm.Printf("%-12s = error: unavailable\n", reg_info->name);
+                    }
+                    else
+                    {
+                        result.AppendErrorWithFormat ("Invalid register name '%s'.\n", arg_cstr);
+                    }
+                }
+            }
         }
         return result.Succeeded();
     }
@@ -366,7 +360,10 @@ public:
                              "register write",
                              "Modify a single register value.",
                              NULL,
-                             eFlagProcessMustBeLaunched | eFlagProcessMustBePaused)
+                             eFlagRequiresFrame         |
+                             eFlagRequiresRegContext    |
+                             eFlagProcessMustBeLaunched |
+                             eFlagProcessMustBePaused)
     {
         CommandArgumentEntry arg1;
         CommandArgumentEntry arg2;
@@ -402,64 +399,55 @@ protected:
     DoExecute(Args& command, CommandReturnObject &result)
     {
         DataExtractor reg_data;
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        RegisterContext *reg_ctx = exe_ctx.GetRegisterContext ();
+        RegisterContext *reg_ctx = m_exe_ctx.GetRegisterContext ();
 
-        if (reg_ctx)
+        if (command.GetArgumentCount() != 2)
         {
-            if (command.GetArgumentCount() != 2)
+            result.AppendError ("register write takes exactly 2 arguments: <reg-name> <value>");
+            result.SetStatus (eReturnStatusFailed);
+        }
+        else
+        {
+            const char *reg_name = command.GetArgumentAtIndex(0);
+            const char *value_str = command.GetArgumentAtIndex(1);
+            const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoByName(reg_name);
+
+            if (reg_info)
             {
-                result.AppendError ("register write takes exactly 2 arguments: <reg-name> <value>");
+                RegisterValue reg_value;
+                
+                Error error (reg_value.SetValueFromCString (reg_info, value_str));
+                if (error.Success())
+                {
+                    if (reg_ctx->WriteRegister (reg_info, reg_value))
+                    {
+                        // Toss all frames and anything else in the thread
+                        // after a register has been written.
+                        m_exe_ctx.GetThreadRef().Flush();
+                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                        return true;
+                    }
+                }
+                if (error.AsCString())
+                {
+                    result.AppendErrorWithFormat ("Failed to write register '%s' with value '%s': %s\n",
+                                                 reg_name,
+                                                 value_str,
+                                                 error.AsCString());
+                }
+                else
+                {
+                    result.AppendErrorWithFormat ("Failed to write register '%s' with value '%s'",
+                                                 reg_name,
+                                                 value_str);
+                }
                 result.SetStatus (eReturnStatusFailed);
             }
             else
             {
-                const char *reg_name = command.GetArgumentAtIndex(0);
-                const char *value_str = command.GetArgumentAtIndex(1);
-                const RegisterInfo *reg_info = reg_ctx->GetRegisterInfoByName(reg_name);
-
-                if (reg_info)
-                {
-                    RegisterValue reg_value;
-                    
-                    Error error (reg_value.SetValueFromCString (reg_info, value_str));
-                    if (error.Success())
-                    {
-                        if (reg_ctx->WriteRegister (reg_info, reg_value))
-                        {
-                            // Toss all frames and anything else in the thread
-                            // after a register has been written.
-                            exe_ctx.GetThreadRef().Flush();
-                            result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                            return true;
-                        }
-                    }
-                    if (error.AsCString())
-                    {
-                        result.AppendErrorWithFormat ("Failed to write register '%s' with value '%s': %s\n",
-                                                     reg_name,
-                                                     value_str,
-                                                     error.AsCString());
-                    }
-                    else
-                    {
-                        result.AppendErrorWithFormat ("Failed to write register '%s' with value '%s'",
-                                                     reg_name,
-                                                     value_str);
-                    }
-                    result.SetStatus (eReturnStatusFailed);
-                }
-                else
-                {
-                    result.AppendErrorWithFormat ("Register not found for '%s'.\n", reg_name);
-                    result.SetStatus (eReturnStatusFailed);
-                }
+                result.AppendErrorWithFormat ("Register not found for '%s'.\n", reg_name);
+                result.SetStatus (eReturnStatusFailed);
             }
-        }
-        else
-        {
-            result.AppendError ("no current frame");
-            result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
     }

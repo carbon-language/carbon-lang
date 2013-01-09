@@ -202,12 +202,10 @@ insert-before or insert-after.\n");
                 }
                 else
                 {
-                    ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-
                     // Complete setting value
                     const char *setting_var_name = input.GetArgumentAtIndex(setting_var_idx);
                     Error error;
-                    lldb::OptionValueSP value_sp (m_interpreter.GetDebugger().GetPropertyValue(&exe_ctx, setting_var_name, false, error));
+                    lldb::OptionValueSP value_sp (m_interpreter.GetDebugger().GetPropertyValue(&m_exe_ctx, setting_var_name, false, error));
                     if (value_sp)
                     {
                         value_sp->AutoComplete (m_interpreter,
@@ -256,7 +254,6 @@ protected:
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         Error error;
         if (m_options.m_global)
         {
@@ -268,7 +265,7 @@ protected:
         
         if (error.Success())
         {
-            error = m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+            error = m_interpreter.GetDebugger().SetPropertyValue (&m_exe_ctx,
                                                                   eVarSetOperationAssign,
                                                                   var_name,
                                                                   var_value_string.c_str());
@@ -357,7 +354,6 @@ protected:
     virtual bool
     DoExecute (Args& args, CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         result.SetStatus (eReturnStatusSuccessFinishResult);
 
         const size_t argc = args.GetArgumentCount ();
@@ -367,7 +363,7 @@ protected:
             {
                 const char *property_path = args.GetArgumentAtIndex (i);
 
-                Error error(m_interpreter.GetDebugger().DumpPropertyValue (&exe_ctx, result.GetOutputStream(), property_path, OptionValue::eDumpGroupValue));
+                Error error(m_interpreter.GetDebugger().DumpPropertyValue (&m_exe_ctx, result.GetOutputStream(), property_path, OptionValue::eDumpGroupValue));
                 if (error.Success())
                 {
                     result.GetOutputStream().EOL();
@@ -381,7 +377,7 @@ protected:
         }
         else
         {
-            m_interpreter.GetDebugger().DumpAllPropertyValues (& exe_ctx, result.GetOutputStream(), OptionValue::eDumpGroupValue);
+            m_interpreter.GetDebugger().DumpAllPropertyValues (&m_exe_ctx, result.GetOutputStream(), OptionValue::eDumpGroupValue);
         }
 
         return result.Succeeded();
@@ -450,7 +446,6 @@ protected:
     virtual bool
     DoExecute (Args& args, CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
         result.SetStatus (eReturnStatusSuccessFinishResult);
 
         const bool will_modify = false;
@@ -463,7 +458,7 @@ protected:
             {
                 const char *property_path = args.GetArgumentAtIndex (i);
                 
-                const Property *property = m_interpreter.GetDebugger().GetValueProperties()->GetPropertyAtPath (&exe_ctx, will_modify, property_path);
+                const Property *property = m_interpreter.GetDebugger().GetValueProperties()->GetPropertyAtPath (&m_exe_ctx, will_modify, property_path);
 
                 if (property)
                 {
@@ -592,8 +587,7 @@ protected:
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
         
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        Error error (m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+        Error error (m_interpreter.GetDebugger().SetPropertyValue (&m_exe_ctx,
                                                                    eVarSetOperationRemove,
                                                                    var_name,
                                                                    var_value_string.c_str()));
@@ -719,8 +713,7 @@ protected:
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        Error error(m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+        Error error(m_interpreter.GetDebugger().SetPropertyValue (&m_exe_ctx,
                                                                   eVarSetOperationReplace,
                                                                   var_name,
                                                                   var_value_string.c_str()));
@@ -853,8 +846,7 @@ protected:
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        Error error(m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+        Error error(m_interpreter.GetDebugger().SetPropertyValue (&m_exe_ctx,
                                                                   eVarSetOperationInsertBefore,
                                                                   var_name,
                                                                   var_value_string.c_str()));
@@ -982,8 +974,7 @@ protected:
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        Error error(m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+        Error error(m_interpreter.GetDebugger().SetPropertyValue (&m_exe_ctx,
                                                                   eVarSetOperationInsertAfter,
                                                                   var_name,
                                                                   var_value_string.c_str()));
@@ -1102,8 +1093,7 @@ protected:
         StripLeadingSpaces(var_value_str);
         std::string var_value_string = var_value_str.str();
 
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        Error error(m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+        Error error(m_interpreter.GetDebugger().SetPropertyValue (&m_exe_ctx,
                                                                   eVarSetOperationAppend,
                                                                   var_name,
                                                                   var_value_string.c_str()));
@@ -1196,8 +1186,7 @@ protected:
             return false;
         }
         
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        Error error (m_interpreter.GetDebugger().SetPropertyValue (&exe_ctx,
+        Error error (m_interpreter.GetDebugger().SetPropertyValue (&m_exe_ctx,
                                                                    eVarSetOperationClear,
                                                                    var_name,
                                                                    NULL));

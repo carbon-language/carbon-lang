@@ -934,7 +934,10 @@ public:
                              "If watchpoint setting fails, consider disable/delete existing ones "
                              "to free up resources.",
                              NULL,
-                            eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+                             eFlagRequiresFrame         |
+                             eFlagTryTargetAPILock      |
+                             eFlagProcessMustBeLaunched |
+                             eFlagProcessMustBePaused   ),
         m_option_group (interpreter),
         m_option_watchpoint ()
     {
@@ -988,18 +991,10 @@ protected:
     }
     
     virtual bool
-    DoExecute (Args& command,
-             CommandReturnObject &result)
+    DoExecute (Args& command, CommandReturnObject &result)
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        StackFrame *frame = exe_ctx.GetFramePtr();
-        if (frame == NULL)
-        {
-            result.AppendError ("you must be stopped in a valid stack frame to set a watchpoint.");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
+        StackFrame *frame = m_exe_ctx.GetFramePtr();
 
         // If no argument is present, issue an error message.  There's no way to set a watchpoint.
         if (command.GetArgumentCount() <= 0)
@@ -1025,7 +1020,8 @@ protected:
         Stream &output_stream = result.GetOutputStream();
 
         // A simple watch variable gesture allows only one argument.
-        if (command.GetArgumentCount() != 1) {
+        if (command.GetArgumentCount() != 1)
+        {
             result.GetErrorStream().Printf("error: specify exactly one variable to watch for\n");
             result.SetStatus(eReturnStatusFailed);
             return false;
@@ -1041,14 +1037,15 @@ protected:
                                                               var_sp,
                                                               error);
         
-        if (!valobj_sp) {
+        if (!valobj_sp)
+        {
             // Not in the frame; let's check the globals.
             
             VariableList variable_list;
             ValueObjectList valobj_list;
             
             Error error (Variable::GetValuesForVariableExpressionPath (command.GetArgumentAtIndex(0),
-                                                                       exe_ctx.GetBestExecutionContextScope(),
+                                                                       m_exe_ctx.GetBestExecutionContextScope(),
                                                                        GetVariableCallback,
                                                                        target,
                                                                        variable_list,
@@ -1060,17 +1057,21 @@ protected:
         
         ClangASTType type;
         
-        if (valobj_sp) {
+        if (valobj_sp)
+        {
             AddressType addr_type;
             addr = valobj_sp->GetAddressOf(false, &addr_type);
-            if (addr_type == eAddressTypeLoad) {
+            if (addr_type == eAddressTypeLoad)
+            {
                 // We're in business.
                 // Find out the size of this variable.
                 size = m_option_watchpoint.watch_size == 0 ? valobj_sp->GetByteSize()
                                                            : m_option_watchpoint.watch_size;
             }
             type.SetClangType(valobj_sp->GetClangAST(), valobj_sp->GetClangType());
-        } else {
+        }
+        else
+        {
             const char *error_cstr = error.AsCString(NULL);
             if (error_cstr)
                 result.GetErrorStream().Printf("error: %s\n", error_cstr);
@@ -1084,10 +1085,12 @@ protected:
         uint32_t watch_type = m_option_watchpoint.watch_type;
         error.Clear();
         Watchpoint *wp = target->CreateWatchpoint(addr, size, &type, watch_type, error).get();
-        if (wp) {
+        if (wp)
+        {
             wp->SetWatchSpec(command.GetArgumentAtIndex(0));
             wp->SetWatchVariable(true);
-            if (var_sp && var_sp->GetDeclaration().GetFile()) {
+            if (var_sp && var_sp->GetDeclaration().GetFile())
+            {
                 StreamString ss;
                 // True to show fullpath for declaration file.
                 var_sp->GetDeclaration().DumpStopContext(&ss, true);
@@ -1097,7 +1100,9 @@ protected:
             wp->GetDescription(&output_stream, lldb::eDescriptionLevelFull);
             output_stream.EOL();
             result.SetStatus(eReturnStatusSuccessFinishResult);
-        } else {
+        }
+        else
+        {
             result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%" PRIx64 ", size=%lu, variable expression='%s').\n",
                                          addr, size, command.GetArgumentAtIndex(0));
             if (error.AsCString(NULL))
@@ -1135,7 +1140,10 @@ public:
                           "If watchpoint setting fails, consider disable/delete existing ones "
                           "to free up resources.",
                           NULL,
-                          eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
+                          eFlagRequiresFrame         |
+                          eFlagTryTargetAPILock      |
+                          eFlagProcessMustBeLaunched |
+                          eFlagProcessMustBePaused   ),
         m_option_group (interpreter),
         m_option_watchpoint ()
     {
@@ -1182,14 +1190,7 @@ protected:
     DoExecute (const char *raw_command, CommandReturnObject &result)
     {
         Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        StackFrame *frame = exe_ctx.GetFramePtr();
-        if (frame == NULL)
-        {
-            result.AppendError ("you must be stopped in a valid stack frame to set a watchpoint.");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
+        StackFrame *frame = m_exe_ctx.GetFramePtr();
 
         Args command(raw_command);
 
@@ -1247,7 +1248,8 @@ protected:
                                                                    frame, 
                                                                    valobj_sp,
                                                                    options);
-        if (expr_result != eExecutionCompleted) {
+        if (expr_result != eExecutionCompleted)
+        {
             result.GetErrorStream().Printf("error: expression evaluation of address to watch failed\n");
             result.GetErrorStream().Printf("expression evaluated: %s\n", expr_str.c_str());
             result.SetStatus(eReturnStatusFailed);
@@ -1257,7 +1259,8 @@ protected:
         // Get the address to watch.
         bool success = false;
         addr = valobj_sp->GetValueAsUnsigned(0, &success);
-        if (!success) {
+        if (!success)
+        {
             result.GetErrorStream().Printf("error: expression did not evaluate to an address\n");
             result.SetStatus(eReturnStatusFailed);
             return false;
@@ -1276,8 +1279,10 @@ protected:
         
         Error error;
         Watchpoint *wp = target->CreateWatchpoint(addr, size, &type, watch_type, error).get();
-        if (wp) {
-            if (var_sp && var_sp->GetDeclaration().GetFile()) {
+        if (wp)
+        {
+            if (var_sp && var_sp->GetDeclaration().GetFile())
+            {
                 StreamString ss;
                 // True to show fullpath for declaration file.
                 var_sp->GetDeclaration().DumpStopContext(&ss, true);
@@ -1287,7 +1292,9 @@ protected:
             wp->GetDescription(&output_stream, lldb::eDescriptionLevelFull);
             output_stream.EOL();
             result.SetStatus(eReturnStatusSuccessFinishResult);
-        } else {
+        }
+        else
+        {
             result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%" PRIx64 ", size=%lu).\n",
                                          addr, size);
             if (error.AsCString(NULL))

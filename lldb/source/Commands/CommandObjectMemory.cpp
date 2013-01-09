@@ -298,7 +298,7 @@ public:
                              "memory read",
                              "Read from the memory of the process being debugged.",
                              NULL,
-                             eFlagProcessMustBePaused),
+                             eFlagRequiresTarget | eFlagProcessMustBePaused),
         m_option_group (interpreter),
         m_format_options (eFormatBytesWithASCII, 1, 8),
         m_memory_options (),
@@ -371,17 +371,11 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx (m_interpreter.GetExecutionContext());
-        Target *target = exe_ctx.GetTargetPtr();
-        if (target == NULL)
-        {
-            result.AppendError("need at least a target to read memory");
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
+        // No need to check "target" for validity as eFlagRequiresTarget ensures it is valid
+        Target *target = m_exe_ctx.GetTargetPtr();
+
         const size_t argc = command.GetArgumentCount();
 
-        
         if ((argc == 0 && m_next_addr == LLDB_INVALID_ADDRESS) || argc > 2)
         {
             result.AppendErrorWithFormat ("%s takes a start address expression with an optional end address expression.\n", m_cmd_name.c_str());
@@ -496,7 +490,7 @@ protected:
             }
                     
             ConstString lookup_type_name(type_str.c_str());
-            StackFrame *frame = exe_ctx.GetFramePtr();
+            StackFrame *frame = m_exe_ctx.GetFramePtr();
             if (frame)
             {
                 sc = frame->GetSymbolContext (eSymbolContextModule);
@@ -603,7 +597,7 @@ protected:
         }
 
         if (argc > 0)
-            addr = Args::StringToAddress(&exe_ctx, command.GetArgumentAtIndex(0), LLDB_INVALID_ADDRESS, &error);
+            addr = Args::StringToAddress(&m_exe_ctx, command.GetArgumentAtIndex(0), LLDB_INVALID_ADDRESS, &error);
 
         if (addr == LLDB_INVALID_ADDRESS)
         {
@@ -615,7 +609,7 @@ protected:
 
         if (argc == 2)
         {
-            lldb::addr_t end_addr = Args::StringToAddress(&exe_ctx, command.GetArgumentAtIndex(1), LLDB_INVALID_ADDRESS, 0);
+            lldb::addr_t end_addr = Args::StringToAddress(&m_exe_ctx, command.GetArgumentAtIndex(1), LLDB_INVALID_ADDRESS, 0);
             if (end_addr == LLDB_INVALID_ADDRESS)
             {
                 result.AppendError("invalid end address expression.");
@@ -742,7 +736,7 @@ protected:
         }
 
 
-        ExecutionContextScope *exe_scope = exe_ctx.GetBestExecutionContextScope();
+        ExecutionContextScope *exe_scope = m_exe_ctx.GetBestExecutionContextScope();
         if (clang_ast_type.GetOpaqueQualType())
         {
             for (uint32_t i = 0; i<item_count; ++i)
@@ -922,7 +916,7 @@ public:
                              "memory write",
                              "Write to the memory of the process being debugged.",
                              NULL,
-                             eFlagProcessMustBeLaunched),
+                             eFlagRequiresProcess | eFlagProcessMustBeLaunched),
         m_option_group (interpreter),
         m_format_options (eFormatBytes, 1, UINT64_MAX),
         m_memory_options ()
@@ -999,14 +993,8 @@ protected:
     virtual bool
     DoExecute (Args& command, CommandReturnObject &result)
     {
-        ExecutionContext exe_ctx(m_interpreter.GetExecutionContext());
-        Process *process = exe_ctx.GetProcessPtr();
-        if (process == NULL)
-        {
-            result.AppendError("need a process to read memory");
-            result.SetStatus(eReturnStatusFailed);
-            return false;
-        }
+        // No need to check "process" for validity as eFlagRequiresProcess ensures it is valid
+        Process *process = m_exe_ctx.GetProcessPtr();
 
         const size_t argc = command.GetArgumentCount();
 
@@ -1034,7 +1022,7 @@ protected:
         size_t item_byte_size = byte_size_value.GetCurrentValue();
 
         Error error;
-        lldb::addr_t addr = Args::StringToAddress (&exe_ctx,
+        lldb::addr_t addr = Args::StringToAddress (&m_exe_ctx,
                                                    command.GetArgumentAtIndex(0),
                                                    LLDB_INVALID_ADDRESS,
                                                    &error);

@@ -20,6 +20,8 @@
 #include "lldb/Interpreter/CommandCompletions.h"
 #include "lldb/Core/StringList.h"
 #include "lldb/Core/Flags.h"
+#include "lldb/Host/Mutex.h"
+#include "lldb/Target/ExecutionContext.h"
 
 namespace lldb_private {
 
@@ -224,15 +226,91 @@ public:
     bool
     IsPairType (ArgumentRepetitionType arg_repeat_type);
     
-    enum 
+    enum
     {
-        eFlagProcessMustBeLaunched = (1 << 0),
-        eFlagProcessMustBePaused = (1 << 1)
+        //----------------------------------------------------------------------
+        // eFlagRequiresTarget
+        //
+        // Ensures a valid target is contained in m_exe_ctx prior to executing
+        // the command. If a target doesn't exist or is invalid, the command
+        // will fail and CommandObject::GetInvalidTargetDescription() will be
+        // returned as the error. CommandObject subclasses can override the
+        // virtual function for GetInvalidTargetDescription() to provide custom
+        // strings when needed.
+        //----------------------------------------------------------------------
+        eFlagRequiresTarget         = (1u << 0),
+        //----------------------------------------------------------------------
+        // eFlagRequiresProcess
+        //
+        // Ensures a valid process is contained in m_exe_ctx prior to executing
+        // the command. If a process doesn't exist or is invalid, the command
+        // will fail and CommandObject::GetInvalidProcessDescription() will be
+        // returned as the error. CommandObject subclasses can override the
+        // virtual function for GetInvalidProcessDescription() to provide custom
+        // strings when needed.
+        //----------------------------------------------------------------------
+        eFlagRequiresProcess        = (1u << 1),
+        //----------------------------------------------------------------------
+        // eFlagRequiresThread
+        //
+        // Ensures a valid thread is contained in m_exe_ctx prior to executing
+        // the command. If a thread doesn't exist or is invalid, the command
+        // will fail and CommandObject::GetInvalidThreadDescription() will be
+        // returned as the error. CommandObject subclasses can override the
+        // virtual function for GetInvalidThreadDescription() to provide custom
+        // strings when needed.
+        //----------------------------------------------------------------------
+        eFlagRequiresThread         = (1u << 2),
+        //----------------------------------------------------------------------
+        // eFlagRequiresFrame
+        //
+        // Ensures a valid frame is contained in m_exe_ctx prior to executing
+        // the command. If a frame doesn't exist or is invalid, the command
+        // will fail and CommandObject::GetInvalidFrameDescription() will be
+        // returned as the error. CommandObject subclasses can override the
+        // virtual function for GetInvalidFrameDescription() to provide custom
+        // strings when needed.
+        //----------------------------------------------------------------------
+        eFlagRequiresFrame          = (1u << 3),
+        //----------------------------------------------------------------------
+        // eFlagRequiresRegContext
+        //
+        // Ensures a valid register context (from the selected frame if there
+        // is a frame in m_exe_ctx, or from the selected thread from m_exe_ctx)
+        // is availble from m_exe_ctx prior to executing the command. If a
+        // target doesn't exist or is invalid, the command will fail and
+        // CommandObject::GetInvalidRegContextDescription() will be returned as
+        // the error. CommandObject subclasses can override the virtual function
+        // for GetInvalidRegContextDescription() to provide custom strings when
+        // needed.
+        //----------------------------------------------------------------------
+        eFlagRequiresRegContext     = (1u << 4),
+        //----------------------------------------------------------------------
+        // eFlagTryTargetAPILock
+        //
+        // Attempts to acquire the target lock if a target is selected in the
+        // command interpreter. If the command object fails to acquire the API
+        // lock, the command will fail with an appropriate error message.
+        //----------------------------------------------------------------------
+        eFlagTryTargetAPILock       = (1u << 5),
+        //----------------------------------------------------------------------
+        // eFlagProcessMustBeLaunched
+        //
+        // Verifies that there is a launched process in m_exe_ctx, if there
+        // isn't, the command will fail with an appropriate error message.
+        //----------------------------------------------------------------------
+        eFlagProcessMustBeLaunched  = (1u << 6),
+        //----------------------------------------------------------------------
+        // eFlagProcessMustBePaused
+        //
+        // Verifies that there is a paused process in m_exe_ctx, if there
+        // isn't, the command will fail with an appropriate error message.
+        //----------------------------------------------------------------------
+        eFlagProcessMustBePaused    = (1u << 7)
     };
 
     bool
-    ParseOptions (Args& args,
-                  CommandReturnObject &result);
+    ParseOptions (Args& args, CommandReturnObject &result);
 
     void
     SetCommandName (const char *name);
@@ -375,19 +453,6 @@ public:
     }
     
     //------------------------------------------------------------------
-    /// Check the command flags against the interpreter's current execution context.
-    ///
-    /// @param[out] result
-    ///     A command result object, if it is not okay to run the command this will be
-    ///     filled in with a suitable error.
-    ///
-    /// @return
-    ///     \b true if it is okay to run this command, \b false otherwise.
-    //------------------------------------------------------------------
-    bool
-    CheckFlags (CommandReturnObject &result);
-    
-    //------------------------------------------------------------------
     /// Get the command that appropriate for a "repeat" of the current command.
     ///
     /// @param[in] current_command_line
@@ -426,7 +491,56 @@ public:
     Execute (const char *args_string, CommandReturnObject &result) = 0;
 
 protected:
+    virtual const char *
+    GetInvalidTargetDescription()
+    {
+        return "invalid target, create a target using the 'target create' command";
+    }
+
+    virtual const char *
+    GetInvalidProcessDescription()
+    {
+        return "invalid process";
+    }
+
+    virtual const char *
+    GetInvalidThreadDescription()
+    {
+        return "invalid thread";
+    }
+    
+    virtual const char *
+    GetInvalidFrameDescription()
+    {
+        return "invalid frame";
+    }
+    
+    virtual const char *
+    GetInvalidRegContextDescription ()
+    {
+        return "invalid frame, no registers";
+    }
+
+    //------------------------------------------------------------------
+    /// Check the command to make sure anything required by this
+    /// command is available.
+    ///
+    /// @param[out] result
+    ///     A command result object, if it is not okay to run the command
+    ///     this will be filled in with a suitable error.
+    ///
+    /// @return
+    ///     \b true if it is okay to run this command, \b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    CheckRequirements (CommandReturnObject &result);
+    
+    void
+    Cleanup ();
+
     CommandInterpreter &m_interpreter;
+    ExecutionContext m_exe_ctx;
+    Mutex::Locker m_api_locker;
     std::string m_cmd_name;
     std::string m_cmd_help_short;
     std::string m_cmd_help_long;

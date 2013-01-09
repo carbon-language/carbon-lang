@@ -208,8 +208,77 @@ CommandObject::ParseOptions
 
 
 bool
-CommandObject::CheckFlags (CommandReturnObject &result)
+CommandObject::CheckRequirements (CommandReturnObject &result)
 {
+#ifdef LLDB_CONFIGURATION_DEBUG
+    // Nothing should be stored in m_exe_ctx between running commands as m_exe_ctx
+    // has shared pointers to the target, process, thread and frame and we don't
+    // want any CommandObject instances to keep any of these objects around
+    // longer than for a single command. Every command should call
+    // CommandObject::Cleanup() after it has completed
+    assert (m_exe_ctx.GetTargetPtr() == NULL);
+    assert (m_exe_ctx.GetProcessPtr() == NULL);
+    assert (m_exe_ctx.GetThreadPtr() == NULL);
+    assert (m_exe_ctx.GetFramePtr() == NULL);
+#endif
+
+    // Lock down the interpreter's execution context prior to running the
+    // command so we guarantee the selected target, process, thread and frame
+    // can't go away during the execution
+    m_exe_ctx = m_interpreter.GetExecutionContext();
+
+    const uint32_t flags = GetFlags().Get();
+    if (flags & (eFlagRequiresTarget   |
+                 eFlagRequiresProcess  |
+                 eFlagRequiresThread   |
+                 eFlagRequiresFrame    |
+                 eFlagTryTargetAPILock ))
+    {
+
+        if ((flags & eFlagRequiresTarget) && !m_exe_ctx.HasTargetScope())
+        {
+            result.AppendError (GetInvalidTargetDescription());
+            return false;
+        }
+
+        if ((flags & eFlagRequiresProcess) && !m_exe_ctx.HasProcessScope())
+        {
+            result.AppendError (GetInvalidProcessDescription());
+            return false;
+        }
+        
+        if ((flags & eFlagRequiresThread) && !m_exe_ctx.HasThreadScope())
+        {
+            result.AppendError (GetInvalidThreadDescription());
+            return false;
+        }
+        
+        if ((flags & eFlagRequiresFrame) && !m_exe_ctx.HasFrameScope())
+        {
+            result.AppendError (GetInvalidFrameDescription());
+            return false;
+        }
+        
+        if ((flags & eFlagRequiresRegContext) && (m_exe_ctx.GetRegisterContext() == NULL))
+        {
+            result.AppendError (GetInvalidRegContextDescription());
+            return false;
+        }
+
+        if (flags & eFlagTryTargetAPILock)
+        {
+            Target *target = m_exe_ctx.GetTargetPtr();
+            if (target)
+            {
+                if (m_api_locker.TryLock (target->GetAPIMutex(), NULL) == false)
+                {
+                    result.AppendError ("failed to get API lock");
+                    return false;
+                }
+            }
+        }
+    }
+
     if (GetFlags().AnySet (CommandObject::eFlagProcessMustBeLaunched | CommandObject::eFlagProcessMustBePaused))
     {
         Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
@@ -262,6 +331,14 @@ CommandObject::CheckFlags (CommandReturnObject &result)
     }
     return true;
 }
+
+void
+CommandObject::Cleanup ()
+{
+    m_exe_ctx.Clear();
+    m_api_locker.Unlock();
+}
+
 
 class CommandDictCommandPartialMatch
 {
@@ -888,14 +965,16 @@ CommandObjectParsed::Execute (const char *args_string, CommandReturnObject &resu
                 cmd_args.ReplaceArgumentAtIndex (i, m_interpreter.ProcessEmbeddedScriptCommands (tmp_str));
         }
 
-        if (!CheckFlags(result))
-            return false;
-            
-        if (!ParseOptions (cmd_args, result))
-            return false;
+        if (CheckRequirements(result))
+        {
+            if (ParseOptions (cmd_args, result))
+            {
+                // Call the command-specific version of 'Execute', passing it the already processed arguments.
+                handled = DoExecute (cmd_args, result);
+            }
+        }
 
-        // Call the command-specific version of 'Execute', passing it the already processed arguments.
-        handled = DoExecute (cmd_args, result);
+        Cleanup();
     }
     return handled;
 }
@@ -916,10 +995,10 @@ CommandObjectRaw::Execute (const char *args_string, CommandReturnObject &result)
     }
     if (!handled)
     {
-        if (!CheckFlags(result))
-            return false;
-        else
+        if (CheckRequirements(result))
             handled = DoExecute (args_string, result);
+        
+        Cleanup();
     }
     return handled;
 }

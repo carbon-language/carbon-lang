@@ -357,11 +357,11 @@ class CommandObjectPlatformProcessLaunch : public CommandObjectParsed
 {
 public:
     CommandObjectPlatformProcessLaunch (CommandInterpreter &interpreter) :
-        CommandObjectParsed (interpreter, 
+        CommandObjectParsed (interpreter,
                              "platform process launch",
                              "Launch a new process on a remote platform.",
                              "platform process launch program",
-                             0),
+                             eFlagRequiresTarget | eFlagTryTargetAPILock),
         m_options (interpreter)
     {
     }
@@ -387,14 +387,7 @@ protected:
         {
             Error error;
             const uint32_t argc = args.GetArgumentCount();
-            Target *target = m_interpreter.GetExecutionContext().GetTargetPtr();
-            if (target == NULL)
-            {
-                result.AppendError ("invalid target, create a debug target using the 'target create' command");
-                result.SetStatus (eReturnStatusFailed);
-                return false;
-            }
-
+            Target *target = m_exe_ctx.GetTargetPtr();
             Module *exe_module = target->GetExecutableModulePointer();
             if (exe_module)
             {
