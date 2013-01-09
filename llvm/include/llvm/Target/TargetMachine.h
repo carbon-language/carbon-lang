@@ -59,10 +59,6 @@ protected: // Can only create subclasses.
   TargetMachine(const Target &T, StringRef TargetTriple,
                 StringRef CPU, StringRef FS, const TargetOptions &Options);
 
-  /// getSubtargetImpl - virtual method implemented by subclasses that returns
-  /// a reference to that target's TargetSubtargetInfo-derived member variable.
-  virtual const TargetSubtargetInfo *getSubtargetImpl() const { return 0; }
-
   /// TheTarget - The Target that this machine was created for.
   const Target &TheTarget;
 
@@ -94,6 +90,10 @@ public:
   const StringRef getTargetTriple() const { return TargetTriple; }
   const StringRef getTargetCPU() const { return TargetCPU; }
   const StringRef getTargetFeatureString() const { return TargetFS; }
+
+  /// getSubtargetImpl - virtual method implemented by subclasses that returns
+  /// a reference to that target's TargetSubtargetInfo-derived member variable.
+  virtual const TargetSubtargetInfo *getSubtargetImpl() const { return 0; }
 
   TargetOptions Options;
 
