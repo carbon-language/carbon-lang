@@ -108,7 +108,7 @@
 */
 @property (copy) id PropertyMyClassCategory;
 @end
-// CHECK: <Declaration>@interface MyClass(Category) @end</Declaration>
+// CHECK: <Declaration>@interface MyClass(Category)\n@end</Declaration>
 // CHECK: <Declaration>- (void)MethodMyClassCategory;</Declaration>
 // CHECK: <Declaration>@property(readwrite, copy, atomic) id PropertyMyClassCategory;</Declaration>
 // CHECK: <Declaration>- (id)PropertyMyClassCategory;</Declaration>
