@@ -509,6 +509,14 @@ void AttributeImpl::setStackAlignment(unsigned Align) {
   Vals.push_back(ConstantInt::get(Type::getInt64Ty(Context), Align));
 }
 
+void Profile(FoldingSetNodeID &ID, Constant *Data,
+             ArrayRef<Constant*> Vals) {
+  ID.AddInteger(cast<ConstantInt>(Data)->getZExtValue());
+  for (ArrayRef<Constant*>::iterator I = Vals.begin(), E = Vals.end();
+       I != E; ++I)
+    ID.AddPointer(*I);
+}
+
 //===----------------------------------------------------------------------===//
 // AttributeSetImpl Definition
 //===----------------------------------------------------------------------===//

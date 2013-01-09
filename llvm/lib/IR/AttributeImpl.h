@@ -65,12 +65,7 @@ public:
     Profile(ID, Data, Vals);
   }
   static void Profile(FoldingSetNodeID &ID, Constant *Data,
-                      ArrayRef<Constant*> Vals) {
-    ID.AddPointer(Data);
-    for (ArrayRef<Constant*>::iterator I = Vals.begin(), E = Vals.end();
-         I != E; ++I)
-      ID.AddPointer(*I);
-  }
+                      ArrayRef<Constant*> Vals);
 };
 
 //===----------------------------------------------------------------------===//
