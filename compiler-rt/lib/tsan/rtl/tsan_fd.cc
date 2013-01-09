@@ -164,6 +164,12 @@ void FdRelease(ThreadState *thr, uptr pc, int fd) {
   MemoryRead8Byte(thr, pc, (uptr)d);
 }
 
+void FdAccess(ThreadState *thr, uptr pc, int fd) {
+  DPrintf("#%d: FdAccess(%d)\n", thr->tid, fd);
+  FdDesc *d = fddesc(thr, pc, fd);
+  MemoryRead8Byte(thr, pc, (uptr)d);
+}
+
 void FdClose(ThreadState *thr, uptr pc, int fd) {
   DPrintf("#%d: FdClose(%d)\n", thr->tid, fd);
   FdDesc *d = fddesc(thr, pc, fd);

@@ -41,6 +41,7 @@ namespace __tsan {
 void FdInit();
 void FdAcquire(ThreadState *thr, uptr pc, int fd);
 void FdRelease(ThreadState *thr, uptr pc, int fd);
+void FdAccess(ThreadState *thr, uptr pc, int fd);
 void FdClose(ThreadState *thr, uptr pc, int fd);
 void FdFileCreate(ThreadState *thr, uptr pc, int fd);
 void FdDup(ThreadState *thr, uptr pc, int oldfd, int newfd);
