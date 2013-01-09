@@ -169,17 +169,20 @@ LLVM_ALIGNEDCHARARRAY_TEMPLATE_ALIGNMENT(128)
 
 namespace detail {
 template <typename T1,
-          typename T2 = char, typename T3 = char, typename T4 = char>
+          typename T2 = char, typename T3 = char, typename T4 = char,
+          typename T5 = char, typename T6 = char, typename T7 = char>
 class AlignerImpl {
-  T1 t1; T2 t2; T3 t3; T4 t4;
+  T1 t1; T2 t2; T3 t3; T4 t4; T5 t5; T6 t6; T7 t7;
 
   AlignerImpl(); // Never defined or instantiated.
 };
 
 template <typename T1,
-          typename T2 = char, typename T3 = char, typename T4 = char>
+          typename T2 = char, typename T3 = char, typename T4 = char,
+          typename T5 = char, typename T6 = char, typename T7 = char>
 union SizerImpl {
-  char arr1[sizeof(T1)], arr2[sizeof(T2)], arr3[sizeof(T3)], arr4[sizeof(T4)];
+  char arr1[sizeof(T1)], arr2[sizeof(T2)], arr3[sizeof(T3)], arr4[sizeof(T4)],
+       arr5[sizeof(T5)], arr6[sizeof(T6)], arr7[sizeof(T7)];
 };
 } // end namespace detail
 
@@ -188,14 +191,14 @@ union SizerImpl {
 ///
 /// These types may be arrays, structs, or any other types. The goal is to
 /// expose a char array buffer member which can be used as suitable storage for
-/// a placement new of any of these types. Support for more than four types can
+/// a placement new of any of these types. Support for more than seven types can
 /// be added at the cost of more boiler plate.
 template <typename T1,
-          typename T2 = char, typename T3 = char, typename T4 = char>
-struct AlignedCharArrayUnion :
-  llvm::AlignedCharArray<AlignOf<detail::AlignerImpl<T1, T2, T3, T4> >
-                                            ::Alignment,
-                                 sizeof(detail::SizerImpl<T1, T2, T3, T4>)> {
+          typename T2 = char, typename T3 = char, typename T4 = char,
+          typename T5 = char, typename T6 = char, typename T7 = char>
+struct AlignedCharArrayUnion : llvm::AlignedCharArray<
+    AlignOf<detail::AlignerImpl<T1, T2, T3, T4, T5, T6, T7> >::Alignment,
+    sizeof(detail::SizerImpl<T1, T2, T3, T4, T5, T6, T7>)> {
 };
 } // end namespace llvm
 #endif
