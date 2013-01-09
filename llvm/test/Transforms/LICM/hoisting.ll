@@ -90,3 +90,29 @@ for.end:                                          ; preds = %for.body
 
 declare void @foo_may_call_exit(i32)
 
+; PR14854
+; CHECK: @test5
+; CHECK: extractvalue
+; CHECK: br label %tailrecurse
+; CHECK: tailrecurse:
+; CHECK: ifend:
+; CHECK: insertvalue
+define { i32*, i32 } @test5(i32 %i, { i32*, i32 } %e) {
+entry:
+  br label %tailrecurse
+
+tailrecurse:                                      ; preds = %then, %entry
+  %i.tr = phi i32 [ %i, %entry ], [ %cmp2, %then ]
+  %out = extractvalue { i32*, i32 } %e, 1
+  %d = insertvalue { i32*, i32 } %e, i32* null, 0
+  %cmp1 = icmp sgt i32 %out, %i.tr
+  br i1 %cmp1, label %then, label %ifend
+
+then:                                             ; preds = %tailrecurse
+  call void @foo()
+  %cmp2 = add i32 %i.tr, 1
+  br label %tailrecurse
+
+ifend:                                            ; preds = %tailrecurse
+  ret { i32*, i32 } %d
+}

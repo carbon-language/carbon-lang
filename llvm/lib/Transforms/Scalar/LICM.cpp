@@ -440,13 +440,12 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
   }
 
   // Only these instructions are hoistable/sinkable.
-  bool HoistableKind = (isa<BinaryOperator>(I) || isa<CastInst>(I) ||
-                            isa<SelectInst>(I) || isa<GetElementPtrInst>(I) ||
-                            isa<CmpInst>(I)    || isa<InsertElementInst>(I) ||
-                            isa<ExtractElementInst>(I) ||
-                            isa<ShuffleVectorInst>(I));
-  if (!HoistableKind)
-      return false;
+  if (!isa<BinaryOperator>(I) && !isa<CastInst>(I) && !isa<SelectInst>(I) &&
+      !isa<GetElementPtrInst>(I) && !isa<CmpInst>(I) &&
+      !isa<InsertElementInst>(I) && !isa<ExtractElementInst>(I) &&
+      !isa<ShuffleVectorInst>(I) && !isa<ExtractValueInst>(I) &&
+      !isa<InsertValueInst>(I))
+    return false;
 
   return isSafeToExecuteUnconditionally(I);
 }
