@@ -11,7 +11,7 @@ class output_iterator
     template <class U> friend class output_iterator;
 public:
     typedef          std::output_iterator_tag                  iterator_category;
-    typedef typename std::iterator_traits<It>::value_type      value_type;
+    typedef void                                               value_type;
     typedef typename std::iterator_traits<It>::difference_type difference_type;
     typedef It                                                 pointer;
     typedef typename std::iterator_traits<It>::reference       reference;
