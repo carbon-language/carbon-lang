@@ -255,7 +255,7 @@ static void get_threads_profile_data(task_t task, nub_process_t pid, int &num_th
         if (kr != KERN_SUCCESS) continue;
 
         if ((basic_info.flags & TH_FLAGS_IDLE) == 0) {
-            threads_id.push_back(identifier_info.thread_id);
+            threads_id.push_back(threads[i]);
             
             if (identifier_info.thread_handle != 0) {
                 struct proc_threadinfo proc_threadinfo;
@@ -338,11 +338,10 @@ MachTask::GetProfileData ()
         profile_data_stream << "elapsed_usec:" << elapsed_usec << ';';
         profile_data_stream << "task_used_usec:" << task_used_usec << ';';
         
-        profile_data_stream << "threads_used_usec:" << num_threads;
         for (int i=0; i<num_threads; i++) {
-            profile_data_stream << ',' << threads_id[i];
+            profile_data_stream << "thread_used_id:" << std::hex << threads_id[i] << std::dec << ';';
             
-            profile_data_stream << ',';
+            profile_data_stream << "thread_used_name:";
             int len = threads_name[i].size();
             if (len) {
                 const char *thread_name = threads_name[i].c_str();
@@ -356,10 +355,10 @@ MachTask::GetProfileData ()
                 // Reset back to DECIMAL.
                 profile_data_stream << DECIMAL;
             }
+            profile_data_stream << ';';
             
-            profile_data_stream << ',' << threads_used_usec[i];
+            profile_data_stream << "thread_used_usec:" << threads_used_usec[i] << ';';
         }
-        profile_data_stream << ';';
         
         profile_data_stream << "wired:" << vm_stats.wire_count * vm_page_size << ';';
         profile_data_stream << "active:" << vm_stats.active_count * vm_page_size << ';';
