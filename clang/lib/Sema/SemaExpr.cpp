@@ -10762,10 +10762,13 @@ bool Sema::tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
     // Prohibit structs with flexible array members too.
     // We cannot capture what is in the tail end of the struct.
     if (const RecordType *VTTy = Var->getType()->getAs<RecordType>()) {
-      if (VTTy->getDecl()->hasFlexibleArrayMember() && IsBlock) {
+      if (VTTy->getDecl()->hasFlexibleArrayMember()) {
         if (BuildAndDiagnose) {
           if (IsBlock)
             Diag(Loc, diag::err_ref_flexarray_type);
+          else
+            Diag(Loc, diag::err_lambda_capture_flexarray_type)
+              << Var->getDeclName();
           Diag(Var->getLocation(), diag::note_previous_decl)
             << Var->getDeclName();
         }
