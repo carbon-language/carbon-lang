@@ -64,13 +64,7 @@ public:
   /// \brief Atomically acquire a copy, disabling original in-place.
   /// Exactly one call to acquire() returns a copy that isn't disabled.
   SourceLocation acquire() {
-#ifdef __ATOMIC_RELAXED
-    // Use weaker ordering if available (relaxed/monotonic)
-    u32 OldColumn = __atomic_exchange_n(&Column, ~u32(0), __ATOMIC_RELAXED);
-#else
-    // Otherwise, do a TAS which has acquire semantics, stronger than needed.
     u32 OldColumn = __sync_lock_test_and_set(&Column, ~u32(0));
-#endif
     return SourceLocation(Filename, Line, OldColumn);
   }
 
