@@ -210,6 +210,8 @@ void UnwrappedLineParser::parseStructuralElement() {
       return parseAccessSpecifier();
     case tok::objc_interface:
       return parseObjCInterface();
+    case tok::objc_protocol:
+      return parseObjCProtocol();
     default:
       break;
     }
@@ -496,6 +498,25 @@ void UnwrappedLineParser::parseStructOrClass() {
   } while (!eof());
 }
 
+void UnwrappedLineParser::parseObjCProtocolList() {
+  assert(FormatTok.Tok.is(tok::less) && "'<' expected.");
+  do
+    nextToken();
+  while (!eof() && FormatTok.Tok.isNot(tok::greater));
+  nextToken(); // Skip '>'.
+}
+
+void UnwrappedLineParser::parseObjCUntilAtEnd() {
+  do {
+    if (FormatTok.Tok.isObjCAtKeyword(tok::objc_end)) {
+      nextToken();
+      addUnwrappedLine();
+      break;
+    }
+    parseStructuralElement();
+  } while (!eof());
+}
+
 void UnwrappedLineParser::parseObjCInterface() {
   nextToken();
   nextToken();  // interface name
@@ -508,13 +529,8 @@ void UnwrappedLineParser::parseObjCInterface() {
     // Skip category, if present.
     parseParens();
 
-  // Skip protocol list, if present.
-  if (FormatTok.Tok.is(tok::less)) {
-    do
-      nextToken();
-    while (!eof() && FormatTok.Tok.isNot(tok::greater));
-    nextToken(); // Skip '>'.
-  }
+  if (FormatTok.Tok.is(tok::less))
+    parseObjCProtocolList();
 
   // If instance variables are present, keep the '{' on the first line too.
   if (FormatTok.Tok.is(tok::l_brace))
@@ -524,16 +540,24 @@ void UnwrappedLineParser::parseObjCInterface() {
   // variables, this ends the @interface line.
   addUnwrappedLine();
 
-  // Read everything up to the @end.
-  do {
-    if (FormatTok.Tok.isObjCAtKeyword(tok::objc_end)) {
-      nextToken();
-      addUnwrappedLine();
-      break;
-    }
+  parseObjCUntilAtEnd();
+}
 
-    parseStructuralElement();
-  } while (!eof());
+void UnwrappedLineParser::parseObjCProtocol() {
+  nextToken();
+  nextToken();  // protocol name
+
+  if (FormatTok.Tok.is(tok::less))
+    parseObjCProtocolList();
+
+  // Check for protocol declaration.
+  if (FormatTok.Tok.is(tok::semi)) {
+    nextToken();
+    return addUnwrappedLine();
+  }
+
+  addUnwrappedLine();
+  parseObjCUntilAtEnd();
 }
 
 void UnwrappedLineParser::addUnwrappedLine() {

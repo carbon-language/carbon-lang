@@ -1249,6 +1249,21 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "@end");
 }
 
+TEST_F(FormatTest, FormatObjCProtocol) {
+  verifyFormat("@protocol Foo\n"
+               "@property(weak) id delegate;\n"
+               "- (NSUInteger)numberOfThings;\n"
+               "@end");
+
+  // FIXME: In LLVM style, there should be a space before '<' for protocols.
+  verifyFormat("@protocol MyProtocol<NSObject>\n"
+               "- (NSUInteger)numberOfThings;\n"
+               "@end");
+
+  verifyFormat("@protocol Foo;\n"
+               "@protocol Bar;\n");
+}
+
 TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@autoreleasepool");
   verifyFormat("@catch");
