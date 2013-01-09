@@ -516,8 +516,8 @@ Value *InstCombiner::dyn_castNegVal(Value *V) const {
 // instruction if the LHS is a constant negative zero (which is the 'negate'
 // form).
 //
-Value *InstCombiner::dyn_castFNegVal(Value *V) const {
-  if (BinaryOperator::isFNeg(V))
+Value *InstCombiner::dyn_castFNegVal(Value *V, bool IgnoreZeroSign) const {
+  if (BinaryOperator::isFNeg(V, IgnoreZeroSign))
     return BinaryOperator::getFNegArgument(V);
 
   // Constants can be considered to be negated values if they can be folded.

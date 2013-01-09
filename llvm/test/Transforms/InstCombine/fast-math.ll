@@ -243,5 +243,16 @@ define float @fmul5(float %f1, float %f2) {
 ; CHECK: fdiv fast float %f1, 0x47E8000000000000
 }
 
-
-
+; =========================================================================
+;
+;   Testing-cases about negation
+;
+; =========================================================================
+define float @fneg1(float %f1, float %f2) {
+  %sub = fsub float -0.000000e+00, %f1
+  %sub1 = fsub nsz float 0.000000e+00, %f2
+  %mul = fmul float %sub, %sub1
+  ret float %mul
+; CHECK: @fneg1
+; CHECK: fmul float %f1, %f2
+}

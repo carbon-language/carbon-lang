@@ -309,7 +309,7 @@ public:
   /// NEG, FNeg, or NOT instruction.
   ///
   static bool isNeg(const Value *V);
-  static bool isFNeg(const Value *V);
+  static bool isFNeg(const Value *V, bool IgnoreZeroSign=false);
   static bool isNot(const Value *V);
 
   /// getNegArgument, getNotArgument - Helper functions to extract the
