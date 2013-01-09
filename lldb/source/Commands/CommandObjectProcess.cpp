@@ -1094,7 +1094,7 @@ public:
     virtual CommandObject *
     GetProxyCommandObject()
     {
-        Process *process = m_exe_ctx.GetProcessPtr();
+        Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
         if (process)
             return process->GetPluginCommandObject();
         return NULL;
