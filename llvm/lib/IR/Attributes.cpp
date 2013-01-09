@@ -45,8 +45,7 @@ Attribute Attribute::get(LLVMContext &Context, AttrBuilder &B) {
   // Otherwise, build a key to look up the existing attributes.
   LLVMContextImpl *pImpl = Context.pImpl;
   FoldingSetNodeID ID;
-  // FIXME: Don't look up ConstantInts here.
-  ID.AddPointer(ConstantInt::get(Type::getInt64Ty(Context), B.getBitMask()));
+  ID.AddInteger(B.getBitMask());
 
   void *InsertPoint;
   AttributeImpl *PA = pImpl->AttrsSet.FindNodeOrInsertPos(ID, InsertPoint);
