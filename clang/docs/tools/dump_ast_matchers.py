@@ -133,17 +133,48 @@ def act_on_decl(declaration, comment, allowed_types):
   if declaration.strip():
     # Node matchers are defined by writing:
     #   VariadicDynCastAllOfMatcher<ResultType, ArgumentType> name;
-    m = re.match(r""".*VariadicDynCastAllOfMatcher\s*<
-                       \s*([^\s,]+)\s*,
-                       \s*([^\s>]+)\s*>
+    m = re.match(r""".*Variadic(?:DynCast)?AllOfMatcher\s*<
+                       \s*([^\s,]+)\s*(?:,
+                       \s*([^\s>]+)\s*)?>
                        \s*([^\s;]+)\s*;\s*$""", declaration, flags=re.X)
     if m:
       result, inner, name = m.groups()
+      if not inner:
+        inner = result
       add_matcher(result, name, 'Matcher<%s>...' % inner,
                   comment, is_dyncast=True)
       return
 
     # Parse the various matcher definition macros.
+    m = re.match(""".*AST_TYPE_MATCHER\(
+                       \s*([^\s,]+\s*),
+                       \s*([^\s,]+\s*)
+                     \)\s*;\s*$""", declaration, flags=re.X)
+    if m:
+      inner, name = m.groups()
+      add_matcher('Type', name, 'Matcher<%s>...' % inner,
+                  comment, is_dyncast=True)
+      add_matcher('TypeLoc', '%sLoc' % name, 'Matcher<%sLoc>...' % inner,
+                  comment, is_dyncast=True)
+      return
+
+    m = re.match(""".*AST_TYPE(LOC)?_TRAVERSE_MATCHER\(
+                       \s*([^\s,]+\s*),
+                       \s*(?:[^\s,]+\s*)
+                     \)\s*;\s*$""", declaration, flags=re.X)
+    if m:
+      loc = m.group(1)
+      name = m.group(2)
+      result_types = extract_result_types(comment)
+      if not result_types:
+        raise Exception('Did not find allowed result types for: %s' % name)
+      for result_type in result_types:
+        add_matcher(result_type, name, 'Matcher<Type>', comment)
+        if loc:
+          add_matcher('%sLoc' % result_type, '%sLoc' % name, 'Matcher<TypeLoc>',
+                      comment)
+      return
+
     m = re.match(r"""^\s*AST_(POLYMORPHIC_)?MATCHER(_P)?(.?)\(
                        (?:\s*([^\s,]+)\s*,)?
                           \s*([^\s,]+)\s*
@@ -178,9 +209,9 @@ def act_on_decl(declaration, comment, allowed_types):
     if m:
       result, name, args = m.groups()
       args = ', '.join(p.strip() for p in args.split(','))
-      m = re.match(r'.*\s+internal::Matcher<([^>]+)>$', result)
+      m = re.match(r'.*\s+internal::(Bindable)?Matcher<([^>]+)>$', result)
       if m:
-        result_types = [m.group(1)]
+        result_types = [m.group(2)]
       else:
         result_types = extract_result_types(comment)
       if not result_types:
