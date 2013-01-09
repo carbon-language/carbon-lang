@@ -1,10 +1,17 @@
-; RUN: opt < %s  -loop-vectorize -mtriple=thumbv7-apple-ios3.0.0 -S
+; RUN: opt < %s  -loop-vectorize -mtriple=thumbv7-apple-ios3.0.0 -S | FileCheck %s
+; RUN: opt < %s  -loop-vectorize -mtriple=thumbv7-apple-ios3.0.0 -mcpu=swift -S | FileCheck %s --check-prefix=SWIFT
 
 target datalayout = "e-p:32:32:32-i1:8:32-i8:8:32-i16:16:32-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:32:64-v128:32:128-a0:0:32-n32-S32"
 target triple = "thumbv7-apple-ios3.0.0"
 
-; Make sure that we are not crashing on ARM.
-
+;CHECK: @foo
+;CHECK: load <4 x i32>
+;CHECK-NOT: load <4 x i32>
+;CHECK: ret
+;SWIFT: @foo
+;SWIFT: load <4 x i32>
+;SWIFT: load <4 x i32>
+;SWIFT: ret
 define i32 @foo(i32* nocapture %A, i32 %n) nounwind readonly ssp {
   %1 = icmp sgt i32 %n, 0
   br i1 %1, label %.lr.ph, label %._crit_edge
