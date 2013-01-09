@@ -568,7 +568,8 @@ public:
   /// EvaluateKnownConstInt - Call EvaluateAsRValue and return the folded
   /// integer. This must be called on an expression that constant folds to an
   /// integer.
-  llvm::APSInt EvaluateKnownConstInt(const ASTContext &Ctx) const;
+  llvm::APSInt EvaluateKnownConstInt(const ASTContext &Ctx,
+                  llvm::SmallVectorImpl<PartialDiagnosticAt> *Diag=0) const;
 
   /// EvaluateAsLValue - Evaluate an expression to see if we can fold it to an
   /// lvalue with link time known address, with no side-effects.

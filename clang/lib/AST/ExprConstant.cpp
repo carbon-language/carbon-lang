@@ -6364,8 +6364,10 @@ bool Expr::isEvaluatable(const ASTContext &Ctx) const {
   return EvaluateAsRValue(Result, Ctx) && !Result.HasSideEffects;
 }
 
-APSInt Expr::EvaluateKnownConstInt(const ASTContext &Ctx) const {
+APSInt Expr::EvaluateKnownConstInt(const ASTContext &Ctx,
+               llvm::SmallVectorImpl<PartialDiagnosticAt> *Diag) const {
   EvalResult EvalResult;
+  EvalResult.Diag = Diag;
   bool Result = EvaluateAsRValue(EvalResult, Ctx);
   (void)Result;
   assert(Result && "Could not evaluate expression");
