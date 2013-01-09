@@ -863,12 +863,18 @@ void AsmWriterEmitter::EmitPrintAliasInstruction(raw_ostream &O) {
 
           break;
         }
-        case CodeGenInstAlias::ResultOperand::K_Imm:
-          Cond = std::string("MI->getOperand(") +
-            llvm::utostr(i) + ").getImm() == " +
-            llvm::utostr(CGA->ResultOperands[i].getImm());
+        case CodeGenInstAlias::ResultOperand::K_Imm: {
+          std::string Op = "MI->getOperand(" + llvm::utostr(i) + ")";
+
+          // Just because the alias has an immediate result, doesn't mean the
+          // MCInst will. An MCExpr could be present, for example.
+          IAP->addCond(Op + ".isImm()");
+
+          Cond = Op + ".getImm() == "
+            + llvm::utostr(CGA->ResultOperands[i].getImm());
           IAP->addCond(Cond);
           break;
+        }
         case CodeGenInstAlias::ResultOperand::K_Reg:
           // If this is zero_reg, something's playing tricks we're not
           // equipped to handle.
