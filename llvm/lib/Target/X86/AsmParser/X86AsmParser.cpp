@@ -2017,7 +2017,7 @@ bool X86AsmParser::ParseDirectiveWord(unsigned Size, SMLoc L) {
       if (getParser().ParseExpression(Value))
         return true;
 
-      getParser().getStreamer().EmitValue(Value, Size, 0 /*addrspace*/);
+      getParser().getStreamer().EmitValue(Value, Size);
 
       if (getLexer().is(AsmToken::EndOfStatement))
         break;

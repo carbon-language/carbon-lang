@@ -2160,7 +2160,7 @@ void DwarfUnits::emitStrings(const MCSection *StrSection,
     unsigned offset = 0;
     unsigned size = 4;
     for (unsigned i = 0, e = Entries.size(); i != e; ++i) {
-      Asm->OutStreamer.EmitIntValue(offset, size, 0);
+      Asm->OutStreamer.EmitIntValue(offset, size);
       offset += Entries[i].second->getKeyLength() + 1;
     }
   }
@@ -2201,8 +2201,8 @@ void DwarfDebug::emitDebugLoc() {
       Asm->OutStreamer.EmitIntValue(0, Size);
       Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", index));
     } else {
-      Asm->OutStreamer.EmitSymbolValue(Entry.Begin, Size, 0);
-      Asm->OutStreamer.EmitSymbolValue(Entry.End, Size, 0);
+      Asm->OutStreamer.EmitSymbolValue(Entry.Begin, Size);
+      Asm->OutStreamer.EmitSymbolValue(Entry.End, Size);
       DIVariable DV(Entry.Variable);
       Asm->OutStreamer.AddComment("Loc expr size");
       MCSymbol *begin = Asm->OutStreamer.getContext().CreateTempSymbol();
@@ -2288,7 +2288,7 @@ void DwarfDebug::emitDebugRanges() {
          I = DebugRangeSymbols.begin(), E = DebugRangeSymbols.end();
        I != E; ++I) {
     if (*I)
-      Asm->OutStreamer.EmitSymbolValue(const_cast<MCSymbol*>(*I), Size, 0);
+      Asm->OutStreamer.EmitSymbolValue(const_cast<MCSymbol*>(*I), Size);
     else
       Asm->OutStreamer.EmitIntValue(0, Size);
   }
@@ -2374,7 +2374,7 @@ void DwarfDebug::emitDebugInlineInfo() {
 
       if (Asm->isVerbose()) Asm->OutStreamer.AddComment("low_pc");
       Asm->OutStreamer.EmitSymbolValue(LI->first,
-                                       Asm->getDataLayout().getPointerSize(),0);
+                                       Asm->getDataLayout().getPointerSize());
     }
   }
 

@@ -145,7 +145,7 @@ void OcamlGCMetadataPrinter::finishAssembly(AsmPrinter &AP) {
                            "Live root count "+Twine(LiveCount)+" >= 65536.");
       }
 
-      AP.OutStreamer.EmitSymbolValue(J->Label, IntPtrSize, 0);
+      AP.OutStreamer.EmitSymbolValue(J->Label, IntPtrSize);
       AP.EmitInt16(FrameSize);
       AP.EmitInt16(LiveCount);
 

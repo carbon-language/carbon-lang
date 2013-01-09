@@ -46,7 +46,7 @@ void AsmPrinter::EmitULEB128(unsigned Value, const char *Desc,
   if (isVerbose() && Desc)
     OutStreamer.AddComment(Desc);
 
-  OutStreamer.EmitULEB128IntValue(Value, 0/*addrspace*/, PadTo);
+  OutStreamer.EmitULEB128IntValue(Value, PadTo);
 }
 
 /// EmitCFAByte - Emit a .byte 42 directive for a DW_CFA_xxx value.

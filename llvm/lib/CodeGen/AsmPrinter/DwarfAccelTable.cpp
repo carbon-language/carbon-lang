@@ -173,7 +173,7 @@ void DwarfAccelTable::EmitOffsets(AsmPrinter *Asm, MCSymbol *SecBegin) {
         MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create((*HI)->Sym, Context),
                                 MCSymbolRefExpr::Create(SecBegin, Context),
                                 Context);
-      Asm->OutStreamer.EmitValue(Sub, sizeof(uint32_t), 0);
+      Asm->OutStreamer.EmitValue(Sub, sizeof(uint32_t));
     }
   }
 }

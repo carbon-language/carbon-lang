@@ -171,7 +171,7 @@ void XCoreAsmPrinter::EmitGlobalVariable(const GlobalVariable *GV) {
   // The ABI requires that unsigned scalar types smaller than 32 bits
   // are padded to 32 bits.
   if (Size < 4)
-    OutStreamer.EmitZeros(4 - Size, 0);
+    OutStreamer.EmitZeros(4 - Size);
   
   // Mark the end of the global
   OutStreamer.EmitRawText("\t.cc_bottom " + Twine(GVSym->getName()) + ".data");

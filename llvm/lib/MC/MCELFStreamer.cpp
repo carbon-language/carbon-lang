@@ -469,7 +469,7 @@ void MCELFStreamer::FinishImpl() {
 }
 void MCELFStreamer::EmitTCEntry(const MCSymbol &S) {
   // Creates a R_PPC64_TOC relocation
-  MCObjectStreamer::EmitSymbolValue(&S, 8, 0);
+  MCObjectStreamer::EmitSymbolValue(&S, 8);
 }
 
 MCStreamer *llvm::createELFStreamer(MCContext &Context, MCAsmBackend &MAB,
