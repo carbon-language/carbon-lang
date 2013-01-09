@@ -37,6 +37,11 @@ class OperatingSystemPlugIn(object):
             #   'none' thread is just stopped because the process is stopped
             #   'trace' the thread just single stepped
             #   The usual value for this while threads are in memory is 'none'
+            # register_data_addr => the address of the register data in memory (optional key/value pair)
+            #   Specifying this key/value pair for a thread will avoid a call to get_register_data()
+            #   and can be used when your registers are in a thread context structure that is contiguous
+            #   in memory. Don't specify this if your register layout in memory doesn't match the layout
+            #   described by the dictionary returned from a call to the get_register_info() method.
             self.threads = [
                     { 'tid' : 0x111111111, 'name' : 'one'  , 'queue' : 'queue1', 'state' : 'stopped', 'stop_reason' : 'breakpoint'},
                     { 'tid' : 0x222222222, 'name' : 'two'  , 'queue' : 'queue2', 'state' : 'stopped', 'stop_reason' : 'none'      },
