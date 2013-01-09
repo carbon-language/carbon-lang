@@ -23,6 +23,9 @@
 
 /* See "Data Definitions for libgcc_s" in the Linux Standard Base.*/
 
+#ifndef __CLANG_UNWIND_H
+#define __CLANG_UNWIND_H
+
 #if __has_include_next(<unwind.h>)
 /* Darwin and libunwind provide an unwind.h. If that's available, use
  * it. libunwind wraps some of its definitions in #ifdef _GNU_SOURCE,
@@ -59,7 +62,9 @@ extern "C" {
 /* It is a bit strange for a header to play with the visibility of the
    symbols it declares, but this matches gcc's behavior and some programs
    depend on it */
+#ifndef HIDE_EXPORTS
 #pragma GCC visibility push(default)
+#endif
 
 struct _Unwind_Context;
 typedef enum {
@@ -115,10 +120,14 @@ uintptr_t _Unwind_GetIP(struct _Unwind_Context* context);
 typedef _Unwind_Reason_Code (*_Unwind_Trace_Fn)(struct _Unwind_Context*, void*);
 _Unwind_Reason_Code _Unwind_Backtrace(_Unwind_Trace_Fn, void*);
 
+#ifndef HIDE_EXPORTS
 #pragma GCC visibility pop
+#endif
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif
+
+#endif /* __CLANG_UNWIND_H */
