@@ -46,17 +46,24 @@ protected:
   std::string messUp(llvm::StringRef Code) {
     std::string MessedUp(Code.str());
     bool InComment = false;
+    bool InPreprocessorDirective = false;
     bool JustReplacedNewline = false;
     for (unsigned i = 0, e = MessedUp.size() - 1; i != e; ++i) {
       if (MessedUp[i] == '/' && MessedUp[i + 1] == '/') {
         if (JustReplacedNewline)
           MessedUp[i - 1] = '\n';
         InComment = true;
+      } else if (MessedUp[i] == '#' && JustReplacedNewline) {
+        MessedUp[i - 1] = '\n';
+        InPreprocessorDirective = true;
       } else if (MessedUp[i] == '\\' && MessedUp[i + 1] == '\n') {
         MessedUp[i] = ' ';
+        MessedUp[i + 1] = ' ';
       } else if (MessedUp[i] == '\n') {
         if (InComment) {
           InComment = false;
+        } else if (InPreprocessorDirective) {
+          InPreprocessorDirective = false;
         } else {
           JustReplacedNewline = true;
           MessedUp[i] = ' ';
@@ -83,6 +90,14 @@ protected:
     verifyFormat(Code, getGoogleStyle());
   }
 };
+
+TEST_F(FormatTest, MessUp) {
+  EXPECT_EQ("1 2 3", messUp("1 2 3"));
+  EXPECT_EQ("1 2 3\n", messUp("1\n2\n3\n"));
+  EXPECT_EQ("a\n//b\nc", messUp("a\n//b\nc"));
+  EXPECT_EQ("a\n#b\nc", messUp("a\n#b\nc"));
+  EXPECT_EQ("a\n#b  c  d\ne", messUp("a\n#b\\\nc\\\nd\ne"));
+}
 
 //===----------------------------------------------------------------------===//
 // Basic function tests.
@@ -545,7 +560,9 @@ TEST_F(FormatTest, LayoutSingleUnwrappedLineInMacro) {
 }
 
 TEST_F(FormatTest, MacroDefinitionInsideStatement) {
-  EXPECT_EQ("int x,\n#define A\ny;", format("int x,\n#define A\ny;"));
+  EXPECT_EQ("int x,\n"
+            "#define A\n"
+            "    y;", format("int x,\n#define A\ny;"));
 }
 
 TEST_F(FormatTest, HashInMacroDefinition) {
@@ -607,6 +624,23 @@ TEST_F(FormatTest, MixingPreprocessorDirectivesAndNormalCode) {
              "  \n"
              "   AlooooooooooooooooooooooooooooooooooooooongCaaaaaaaaaal(\n"
              "  aLooooooooooooooooooooooonPaaaaaaaaaaaaaaaaaaaaarmmmm);\n"));
+}
+
+TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
+  EXPECT_EQ("int\n"
+            "#define A\n"
+            "    a;",
+            format("int\n#define A\na;"));
+  verifyFormat(
+      "functionCallTo(someOtherFunction(\n"
+      "    withSomeParameters, whichInSequence,\n"
+      "    areLongerThanALine(andAnotherCall,\n"
+      "#define A                                                           \\\n"
+      "  B\n"
+      "                       withMoreParamters,\n"
+      "                       whichStronglyInfluenceTheLayout),\n"
+      "    andMoreParameters),\n"
+      "               trailing);", getLLVMStyleWithColumns(69));
 }
 
 //===----------------------------------------------------------------------===//

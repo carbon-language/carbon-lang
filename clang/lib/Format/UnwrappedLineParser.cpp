@@ -74,8 +74,9 @@ private:
 UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          FormatTokenSource &Tokens,
                                          UnwrappedLineConsumer &Callback)
-    : RootTokenInitialized(false), Style(Style), Tokens(&Tokens),
-      Callback(Callback) {
+    : Line(new UnwrappedLine), RootTokenInitialized(false),
+      LastInCurrentLine(NULL), MustBreakBeforeNextToken(false), Style(Style),
+      Tokens(&Tokens), Callback(Callback) {
 }
 
 bool UnwrappedLineParser::parse() {
@@ -126,9 +127,9 @@ bool UnwrappedLineParser::parseBlock(unsigned AddLevels) {
 
   addUnwrappedLine();
 
-  Line.Level += AddLevels;
+  Line->Level += AddLevels;
   parseLevel(/*HasOpeningBrace=*/true);
-  Line.Level -= AddLevels;
+  Line->Level -= AddLevels;
 
   if (!FormatTok.Tok.is(tok::r_brace))
     return true;
@@ -139,7 +140,7 @@ bool UnwrappedLineParser::parseBlock(unsigned AddLevels) {
 
 void UnwrappedLineParser::parsePPDirective() {
   assert(FormatTok.Tok.is(tok::hash) && "'#' expected");
-  ScopedMacroState MacroState(Line, Tokens, FormatTok);
+  ScopedMacroState MacroState(*Line, Tokens, FormatTok);
   nextToken();
 
   if (FormatTok.Tok.getIdentifierInfo() == NULL) {
@@ -169,7 +170,7 @@ void UnwrappedLineParser::parsePPDefine() {
     parseParens();
   }
   addUnwrappedLine();
-  Line.Level = 1;
+  Line->Level = 1;
 
   // Errors during a preprocessor directive can only affect the layout of the
   // preprocessor directive, and thus we ignore them. An alternative approach
@@ -319,9 +320,9 @@ void UnwrappedLineParser::parseIfThenElse() {
     NeedsUnwrappedLine = true;
   } else {
     addUnwrappedLine();
-    ++Line.Level;
+    ++Line->Level;
     parseStructuralElement();
-    --Line.Level;
+    --Line->Level;
   }
   if (FormatTok.Tok.is(tok::kw_else)) {
     nextToken();
@@ -332,9 +333,9 @@ void UnwrappedLineParser::parseIfThenElse() {
       parseIfThenElse();
     } else {
       addUnwrappedLine();
-      ++Line.Level;
+      ++Line->Level;
       parseStructuralElement();
-      --Line.Level;
+      --Line->Level;
     }
   } else if (NeedsUnwrappedLine) {
     addUnwrappedLine();
@@ -363,9 +364,9 @@ void UnwrappedLineParser::parseForOrWhileLoop() {
     addUnwrappedLine();
   } else {
     addUnwrappedLine();
-    ++Line.Level;
+    ++Line->Level;
     parseStructuralElement();
-    --Line.Level;
+    --Line->Level;
   }
 }
 
@@ -376,9 +377,9 @@ void UnwrappedLineParser::parseDoWhile() {
     parseBlock();
   } else {
     addUnwrappedLine();
-    ++Line.Level;
+    ++Line->Level;
     parseStructuralElement();
-    --Line.Level;
+    --Line->Level;
   }
 
   // FIXME: Add error handling.
@@ -395,14 +396,14 @@ void UnwrappedLineParser::parseLabel() {
   // FIXME: remove all asserts.
   assert(FormatTok.Tok.is(tok::colon) && "':' expected");
   nextToken();
-  unsigned OldLineLevel = Line.Level;
-  if (Line.Level > 0)
-    --Line.Level;
+  unsigned OldLineLevel = Line->Level;
+  if (Line->Level > 0)
+    --Line->Level;
   if (FormatTok.Tok.is(tok::l_brace)) {
     parseBlock();
   }
   addUnwrappedLine();
-  Line.Level = OldLineLevel;
+  Line->Level = OldLineLevel;
 }
 
 void UnwrappedLineParser::parseCaseLabel() {
@@ -423,9 +424,9 @@ void UnwrappedLineParser::parseSwitch() {
     addUnwrappedLine();
   } else {
     addUnwrappedLine();
-    Line.Level += (Style.IndentCaseLabels ? 2 : 1);
+    Line->Level += (Style.IndentCaseLabels ? 2 : 1);
     parseStructuralElement();
-    Line.Level -= (Style.IndentCaseLabels ? 2 : 1);
+    Line->Level -= (Style.IndentCaseLabels ? 2 : 1);
   }
 }
 
@@ -444,7 +445,7 @@ void UnwrappedLineParser::parseEnum() {
     case tok::l_brace:
       nextToken();
       addUnwrappedLine();
-      ++Line.Level;
+      ++Line->Level;
       parseComments();
       break;
     case tok::l_paren:
@@ -458,7 +459,7 @@ void UnwrappedLineParser::parseEnum() {
     case tok::r_brace:
       if (HasContents)
         addUnwrappedLine();
-      --Line.Level;
+      --Line->Level;
       nextToken();
       break;
     case tok::semi:
@@ -501,8 +502,9 @@ void UnwrappedLineParser::addUnwrappedLine() {
          FormatTok.Tok.is(tok::comment)) {
     nextToken();
   }
-  Callback.consumeUnwrappedLine(Line);
+  Callback.consumeUnwrappedLine(*Line);
   RootTokenInitialized = false;
+  LastInCurrentLine = NULL;
 }
 
 bool UnwrappedLineParser::eof() const {
@@ -513,26 +515,42 @@ void UnwrappedLineParser::nextToken() {
   if (eof())
     return;
   if (RootTokenInitialized) {
+    assert(LastInCurrentLine->Children.empty());
     LastInCurrentLine->Children.push_back(FormatTok);
     LastInCurrentLine = &LastInCurrentLine->Children.back();
   } else {
-    Line.RootToken = FormatTok;
+    Line->RootToken = FormatTok;
     RootTokenInitialized = true;
-    LastInCurrentLine = &Line.RootToken;
+    LastInCurrentLine = &Line->RootToken;
+  }
+  if (MustBreakBeforeNextToken) {
+    LastInCurrentLine->MustBreakBefore = true;
+    MustBreakBeforeNextToken = false;
   }
   readToken();
 }
 
 void UnwrappedLineParser::readToken() {
   FormatTok = Tokens->getNextToken();
-  while (!Line.InPPDirective && FormatTok.Tok.is(tok::hash) &&
+  while (!Line->InPPDirective && FormatTok.Tok.is(tok::hash) &&
          ((FormatTok.NewlinesBefore > 0 && FormatTok.HasUnescapedNewline) ||
           FormatTok.IsFirst)) {
-    // FIXME: This is incorrect - the correct way is to create a
-    // data structure that will construct the parts around the preprocessor
-    // directive as a structured \c UnwrappedLine.
-    addUnwrappedLine();
+    UnwrappedLine* StoredLine = Line.take();
+    Line.reset(new UnwrappedLine(*StoredLine));
+    assert(LastInCurrentLine == NULL || LastInCurrentLine->Children.empty());
+    FormatToken *StoredLastInCurrentLine = LastInCurrentLine;
+    bool PreviousInitialized = RootTokenInitialized;
+    RootTokenInitialized = false;
+    LastInCurrentLine = NULL;
+
     parsePPDirective();
+
+    assert(!RootTokenInitialized);
+    Line.reset(StoredLine);
+    RootTokenInitialized = PreviousInitialized;
+    LastInCurrentLine = StoredLastInCurrentLine;
+    assert(LastInCurrentLine == NULL || LastInCurrentLine->Children.empty());
+    MustBreakBeforeNextToken = true;
   }
 }
 

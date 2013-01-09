@@ -803,18 +803,21 @@ public:
   void calculateExtraInformation(AnnotatedToken &Current) {
     Current.SpaceRequiredBefore = spaceRequiredBefore(Current);
 
-    if (Current.Type == TT_CtorInitializerColon || Current.Parent->Type ==
-        TT_LineComment || (Current.is(tok::string_literal) &&
-                           Current.Parent->is(tok::string_literal))) {
-      Current.MustBreakBefore = true;
-    } else if (Current.is(tok::at) && Current.Parent->Parent->is(tok::at)) {
-      // Don't put two objc's '@' on the same line. This could happen,
-      // as in, @optional @property ...
+    if (Current.FormatTok.MustBreakBefore) {
       Current.MustBreakBefore = true;
     } else {
-      Current.MustBreakBefore = false;
+      if (Current.Type == TT_CtorInitializerColon || Current.Parent->Type ==
+          TT_LineComment || (Current.is(tok::string_literal) &&
+                             Current.Parent->is(tok::string_literal))) {
+        Current.MustBreakBefore = true;
+      } else if (Current.is(tok::at) && Current.Parent->Parent->is(tok::at)) {
+        // Don't put two objc's '@' on the same line. This could happen,
+        // as in, @optional @property ...
+        Current.MustBreakBefore = true;
+      } else {
+        Current.MustBreakBefore = false;
+      }
     }
-
     Current.CanBreakBefore = Current.MustBreakBefore || canBreakBefore(Current);
 
     if (!Current.Children.empty())
