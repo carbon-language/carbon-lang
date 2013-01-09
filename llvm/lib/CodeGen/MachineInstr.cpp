@@ -1585,7 +1585,8 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
   }
 
   bool HaveSemi = false;
-  if (Flags) {
+  const unsigned PrintableFlags = FrameSetup;
+  if (Flags & PrintableFlags) {
     if (!HaveSemi) OS << ";"; HaveSemi = true;
     OS << " flags: ";
 
