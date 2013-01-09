@@ -1040,7 +1040,7 @@ void AsmPrinter::EmitConstantPool() {
       // Emit inter-object padding for alignment.
       unsigned AlignMask = CPE.getAlignment() - 1;
       unsigned NewOffset = (Offset + AlignMask) & ~AlignMask;
-      OutStreamer.EmitFill(NewOffset - Offset, 0/*fillval*/, 0/*addrspace*/);
+      OutStreamer.EmitZeros(NewOffset - Offset);
 
       Type *Ty = CPE.getType();
       Offset = NewOffset + TM.getDataLayout()->getTypeAllocSize(Ty);
@@ -1203,7 +1203,7 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
   assert(Value && "Unknown entry kind!");
 
   unsigned EntrySize = MJTI->getEntrySize(*TM.getDataLayout());
-  OutStreamer.EmitValue(Value, EntrySize, /*addrspace*/0);
+  OutStreamer.EmitValue(Value, EntrySize);
 }
 
 
@@ -1326,19 +1326,19 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
 /// EmitInt8 - Emit a byte directive and value.
 ///
 void AsmPrinter::EmitInt8(int Value) const {
-  OutStreamer.EmitIntValue(Value, 1, 0/*addrspace*/);
+  OutStreamer.EmitIntValue(Value, 1);
 }
 
 /// EmitInt16 - Emit a short directive and value.
 ///
 void AsmPrinter::EmitInt16(int Value) const {
-  OutStreamer.EmitIntValue(Value, 2, 0/*addrspace*/);
+  OutStreamer.EmitIntValue(Value, 2);
 }
 
 /// EmitInt32 - Emit a long directive and value.
 ///
 void AsmPrinter::EmitInt32(int Value) const {
-  OutStreamer.EmitIntValue(Value, 4, 0/*addrspace*/);
+  OutStreamer.EmitIntValue(Value, 4);
 }
 
 /// EmitLabelDifference - Emit something like ".long Hi-Lo" where the size
@@ -1353,14 +1353,14 @@ void AsmPrinter::EmitLabelDifference(const MCSymbol *Hi, const MCSymbol *Lo,
                             OutContext);
 
   if (!MAI->hasSetDirective()) {
-    OutStreamer.EmitValue(Diff, Size, 0/*AddrSpace*/);
+    OutStreamer.EmitValue(Diff, Size);
     return;
   }
 
   // Otherwise, emit with .set (aka assignment).
   MCSymbol *SetLabel = GetTempSymbol("set", SetCounter++);
   OutStreamer.EmitAssignment(SetLabel, Diff);
-  OutStreamer.EmitSymbolValue(SetLabel, Size, 0/*AddrSpace*/);
+  OutStreamer.EmitSymbolValue(SetLabel, Size);
 }
 
 /// EmitLabelOffsetDifference - Emit something like ".long Hi+Offset-Lo"
@@ -1384,12 +1384,12 @@ void AsmPrinter::EmitLabelOffsetDifference(const MCSymbol *Hi, uint64_t Offset,
                             OutContext);
 
   if (!MAI->hasSetDirective())
-    OutStreamer.EmitValue(Diff, 4, 0/*AddrSpace*/);
+    OutStreamer.EmitValue(Diff, 4);
   else {
     // Otherwise, emit with .set (aka assignment).
     MCSymbol *SetLabel = GetTempSymbol("set", SetCounter++);
     OutStreamer.EmitAssignment(SetLabel, Diff);
-    OutStreamer.EmitSymbolValue(SetLabel, 4, 0/*AddrSpace*/);
+    OutStreamer.EmitSymbolValue(SetLabel, 4);
   }
 }
 
@@ -1407,7 +1407,7 @@ void AsmPrinter::EmitLabelPlusOffset(const MCSymbol *Label, uint64_t Offset,
                                    MCConstantExpr::Create(Offset, OutContext),
                                    OutContext);
 
-  OutStreamer.EmitValue(Expr, Size, 0/*AddrSpace*/);
+  OutStreamer.EmitValue(Expr, Size);
 }
 
 

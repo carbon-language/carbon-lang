@@ -1942,8 +1942,7 @@ void DwarfDebug::emitEndOfLineMatrix(unsigned SectionEnd) {
   Asm->OutStreamer.AddComment("Section end label");
 
   Asm->OutStreamer.EmitSymbolValue(Asm->GetTempSymbol("section_end",SectionEnd),
-                                   Asm->getDataLayout().getPointerSize(),
-                                   0/*AddrSpace*/);
+                                   Asm->getDataLayout().getPointerSize());
 
   // Mark end of matrix.
   Asm->OutStreamer.AddComment("DW_LNE_end_sequence");
@@ -2152,8 +2151,7 @@ void DwarfUnits::emitStrings(const MCSection *StrSection,
 
     // Emit the string itself with a terminating null byte.
     Asm->OutStreamer.EmitBytes(StringRef(Entries[i].second->getKeyData(),
-                                         Entries[i].second->getKeyLength()+1),
-                               0/*addrspace*/);
+                                         Entries[i].second->getKeyLength()+1));
   }
 
   // If we've got an offset section go ahead and emit that now as well.
@@ -2199,8 +2197,8 @@ void DwarfDebug::emitDebugLoc() {
     DotDebugLocEntry &Entry = *I;
     if (Entry.isMerged()) continue;
     if (Entry.isEmpty()) {
-      Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);
-      Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);
+      Asm->OutStreamer.EmitIntValue(0, Size);
+      Asm->OutStreamer.EmitIntValue(0, Size);
       Asm->OutStreamer.EmitLabel(Asm->GetTempSymbol("debug_loc", index));
     } else {
       Asm->OutStreamer.EmitSymbolValue(Entry.Begin, Size, 0);
@@ -2292,7 +2290,7 @@ void DwarfDebug::emitDebugRanges() {
     if (*I)
       Asm->OutStreamer.EmitSymbolValue(const_cast<MCSymbol*>(*I), Size, 0);
     else
-      Asm->OutStreamer.EmitIntValue(0, Size, /*addrspace*/0);
+      Asm->OutStreamer.EmitIntValue(0, Size);
   }
 }
 

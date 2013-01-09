@@ -204,7 +204,7 @@ void DIEInteger::EmitValue(AsmPrinter *Asm, unsigned Form) const {
     Size = Asm->getDataLayout().getPointerSize(); break;
   default: llvm_unreachable("DIE Value form not supported yet");
   }
-  Asm->OutStreamer.EmitIntValue(Integer, Size, 0/*addrspace*/);
+  Asm->OutStreamer.EmitIntValue(Integer, Size);
 }
 
 /// SizeOf - Determine size of integer value in bytes.
@@ -243,7 +243,7 @@ void DIEInteger::print(raw_ostream &O) {
 /// EmitValue - Emit label value.
 ///
 void DIELabel::EmitValue(AsmPrinter *AP, unsigned Form) const {
-  AP->OutStreamer.EmitSymbolValue(Label, SizeOf(AP, Form), 0/*AddrSpace*/);
+  AP->OutStreamer.EmitSymbolValue(Label, SizeOf(AP, Form));
 }
 
 /// SizeOf - Determine size of label value in bytes.

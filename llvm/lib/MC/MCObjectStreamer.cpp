@@ -315,7 +315,7 @@ bool MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
 
   if (!Delta->EvaluateAsAbsolute(Res, getAssembler()))
     return true;
-  EmitFill(Res, Value, 0);
+  EmitFill(Res, Value);
   return false;
 }
 

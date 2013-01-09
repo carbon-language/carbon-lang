@@ -608,7 +608,7 @@ void DwarfException::EmitExceptionTable() {
       if (!S.PadLabel) {
         if (VerboseAsm)
           Asm->OutStreamer.AddComment("    has no landing pad");
-        Asm->OutStreamer.EmitIntValue(0, 4/*size*/, 0/*addrspace*/);
+        Asm->OutStreamer.EmitIntValue(0, 4/*size*/);
       } else {
         if (VerboseAsm)
           Asm->OutStreamer.AddComment(Twine("    jumps to ") +

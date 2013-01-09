@@ -366,7 +366,7 @@ namespace llvm {
     ///
     /// This is used to implement assembler directives such as .byte, .ascii,
     /// etc.
-    virtual void EmitBytes(StringRef Data, unsigned AddrSpace) = 0;
+    virtual void EmitBytes(StringRef Data, unsigned AddrSpace = 0) = 0;
 
     /// EmitValue - Emit the expression @p Value into the output as a native
     /// integer of the given @p Size bytes.
@@ -429,11 +429,11 @@ namespace llvm {
     /// EmitFill - Emit NumBytes bytes worth of the value specified by
     /// FillValue.  This implements directives such as '.space'.
     virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
-                          unsigned AddrSpace);
+                          unsigned AddrSpace = 0);
 
     /// EmitZeros - Emit NumBytes worth of zeros.  This is a convenience
     /// function that just wraps EmitFill.
-    void EmitZeros(uint64_t NumBytes, unsigned AddrSpace) {
+    void EmitZeros(uint64_t NumBytes, unsigned AddrSpace = 0) {
       EmitFill(NumBytes, 0, AddrSpace);
     }
 

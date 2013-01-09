@@ -86,7 +86,7 @@ public:
   virtual void EmitBundleAlignMode(unsigned AlignPow2);
   virtual void EmitBundleLock(bool AlignToEnd);
   virtual void EmitBundleUnlock();
-  virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
+  virtual void EmitBytes(StringRef Data, unsigned AddrSpace = 0);
   virtual void EmitValueToAlignment(unsigned ByteAlignment,
                                     int64_t Value = 0,
                                     unsigned ValueSize = 1,
@@ -103,7 +103,7 @@ public:
   virtual void EmitGPRel32Value(const MCExpr *Value);
   virtual void EmitGPRel64Value(const MCExpr *Value);
   virtual void EmitFill(uint64_t NumBytes, uint8_t FillValue,
-                        unsigned AddrSpace);
+                        unsigned AddrSpace = 0);
   virtual void FinishImpl();
 
   /// @}
