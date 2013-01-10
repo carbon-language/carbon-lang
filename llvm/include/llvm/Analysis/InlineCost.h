@@ -14,19 +14,15 @@
 #ifndef LLVM_ANALYSIS_INLINECOST_H
 #define LLVM_ANALYSIS_INLINECOST_H
 
-#include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/SmallPtrSet.h"
-#include "llvm/ADT/ValueMap.h"
 #include "llvm/Analysis/CodeMetrics.h"
-#include "llvm/IR/Function.h"
 #include <cassert>
 #include <climits>
-#include <vector>
 
 namespace llvm {
 
   class CallSite;
   class DataLayout;
+  class Function;
 
   namespace InlineConstants {
     // Various magic constants used to adjust heuristics.
