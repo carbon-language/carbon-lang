@@ -37,6 +37,7 @@ enum TokenType {
   TT_DirectorySeparator,
   TT_LineComment,
   TT_ObjCBlockLParen,
+  TT_ObjCDecl,
   TT_ObjCMethodSpecifier,
   TT_OverloadedOperator,
   TT_PointerOrReference,
@@ -53,6 +54,7 @@ enum LineType {
   LT_Other,
   LT_PreprocessorDirective,
   LT_VirtualFunctionDecl,
+  LT_ObjCDecl, // An @interface, @implementation, or @protocol line.
   LT_ObjCMethodDecl
 };
 
@@ -835,6 +837,8 @@ public:
 
     if (RootToken.Type == TT_ObjCMethodSpecifier)
       CurrentLineType = LT_ObjCMethodDecl;
+    else if (RootToken.Type == TT_ObjCDecl)
+      CurrentLineType = LT_ObjCDecl;
 
     if (!RootToken.Children.empty())
       calculateExtraInformation(RootToken.Children[0]);
@@ -879,6 +883,15 @@ private:
                   Current.Parent->Type == TT_TemplateCloser)) {
         // FIXME: We need to get smarter and understand more cases of casts.
         Current.Type = TT_CastRParen;
+      } else if (Current.is(tok::at) && Current.Children.size()) {
+        switch (Current.Children[0].FormatTok.Tok.getObjCKeywordID()) {
+        case tok::objc_interface:
+        case tok::objc_implementation:
+        case tok::objc_protocol:
+          Current.Type = TT_ObjCDecl;
+        default:
+          break;
+        }
       }
     }
 
@@ -997,8 +1010,9 @@ private:
     if (Left.is(tok::l_paren))
       return false;
     if (Right.is(tok::l_paren)) {
-      return Left.is(tok::kw_if) || Left.is(tok::kw_for) ||
-             Left.is(tok::kw_while) || Left.is(tok::kw_switch) ||
+      return CurrentLineType == LT_ObjCDecl || Left.is(tok::kw_if) ||
+             Left.is(tok::kw_for) || Left.is(tok::kw_while) ||
+             Left.is(tok::kw_switch) ||
              Left.is(tok::kw_return) || Left.is(tok::kw_catch);
     }
     if (Left.is(tok::at) &&

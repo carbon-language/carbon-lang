@@ -90,7 +90,7 @@
   id IvarMyClassExtension;
 }
 @end
-// CHECK: <Declaration>@interface MyClass() {\n  id IvarMyClassExtension;\n}\n@end</Declaration>
+// CHECK: <Declaration>@interface MyClass () {\n  id IvarMyClassExtension;\n}\n@end</Declaration>
 // CHECK: <Declaration>id IvarMyClassExtension</Declaration>
 
 
@@ -108,7 +108,7 @@
 */
 @property (copy) id PropertyMyClassCategory;
 @end
-// CHECK: <Declaration>@interface MyClass(Category)\n@end</Declaration>
+// CHECK: <Declaration>@interface MyClass (Category)\n@end</Declaration>
 // CHECK: <Declaration>- (void)MethodMyClassCategory;</Declaration>
 // CHECK: <Declaration>@property(readwrite, copy, atomic) id PropertyMyClassCategory;</Declaration>
 // CHECK: <Declaration>- (id)PropertyMyClassCategory;</Declaration>
@@ -162,7 +162,7 @@
 */
 - (void) setPropertyMyClassCategory : (id) arg {}
 @end
-// CHECK: <Declaration>@implementation MyClass(Category)\n@end</Declaration>
+// CHECK: <Declaration>@implementation MyClass (Category)\n@end</Declaration>
 // CHECK: <Declaration>- (void)MethodMyClassCategory;</Declaration>
 // CHECK: <Declaration>- (id)PropertyMyClassCategory;</Declaration>
 // CHECK: <Declaration>- (void)setPropertyMyClassCategory:(id)arg;</Declaration>

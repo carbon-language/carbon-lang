@@ -1232,16 +1232,15 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  // FIXME: there should be a space before '(' for categories.
-  verifyFormat("@interface Foo(HackStuff)\n"
+  verifyFormat("@interface Foo (HackStuff)\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo()\n"
+  verifyFormat("@interface Foo ()\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo(HackStuff)<MyProtocol>\n"
+  verifyFormat("@interface Foo (HackStuff)<MyProtocol>\n"
                "+ (id)init;\n"
                "@end");
 
@@ -1263,19 +1262,19 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo(HackStuff) {\n"
+  verifyFormat("@interface Foo (HackStuff) {\n"
                "  int _i;\n"
                "}\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo() {\n"
+  verifyFormat("@interface Foo () {\n"
                "  int _i;\n"
                "}\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo(HackStuff)<MyProtocol> {\n"
+  verifyFormat("@interface Foo (HackStuff)<MyProtocol> {\n"
                "  int _i;\n"
                "}\n"
                "+ (id)init;\n"
@@ -1341,8 +1340,7 @@ TEST_F(FormatTest, FormatObjCImplementation) {
                "+ (id)init {}\n"
                "@end");
 
-  // FIXME: there should be a space before '(' for categories.
-  verifyFormat("@implementation Foo(HackStuff)\n"
+  verifyFormat("@implementation Foo (HackStuff)\n"
                "+ (id)init {}\n"
                "@end");
 }
