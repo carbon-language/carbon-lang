@@ -1176,6 +1176,12 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
           "outRange4:(NSRange) out_range4  outRange5:(NSRange) out_range5 "
           "outRange6:(NSRange) out_range6  outRange7:(NSRange) out_range7  "
           "outRange8:(NSRange) out_range8  outRange9:(NSRange) out_range9;"));
+
+  verifyFormat("- (int)sum:(vector<int>)numbers;");
+  verifyGoogleFormat("- (void)setDelegate:(id<Protocol>)delegate;");
+  // FIXME: In LLVM style, there should be a space in front of a '<' for ObjC
+  // protocol lists (but not for template classes):
+  //verifyFormat("- (void)setDelegate:(id <Protocol>)delegate;");
 }
 
 TEST_F(FormatTest, FormatObjCBlocks) {
