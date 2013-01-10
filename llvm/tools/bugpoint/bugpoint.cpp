@@ -17,7 +17,7 @@
 #include "ToolRunner.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/LinkAllPasses.h"
-#include "llvm/LinkAllVMCore.h"
+#include "llvm/LinkAllIR.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ManagedStatic.h"

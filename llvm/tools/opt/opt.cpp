@@ -27,7 +27,7 @@
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Module.h"
 #include "llvm/LinkAllPasses.h"
-#include "llvm/LinkAllVMCore.h"
+#include "llvm/LinkAllIR.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/PassManager.h"
 #include "llvm/Support/Debug.h"
