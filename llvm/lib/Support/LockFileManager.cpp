@@ -64,6 +64,7 @@ bool LockFileManager::processStillExecuting(StringRef Hostname, int PID) {
 
 LockFileManager::LockFileManager(StringRef FileName)
 {
+  this->FileName = FileName;
   LockFileName = FileName;
   LockFileName += ".lock";
 
@@ -175,6 +176,7 @@ void LockFileManager::waitForUnlock() {
 #endif
   // Don't wait more than an hour for the file to appear.
   const unsigned MaxSeconds = 3600;
+  bool LockFileGone = false;
   do {
     // Sleep for the designated interval, to allow the owning process time to
     // finish up and remove the lock file.
@@ -185,10 +187,18 @@ void LockFileManager::waitForUnlock() {
 #else
     nanosleep(&Interval, NULL);
 #endif
-    // If the file no longer exists, we're done.
+    // If the lock file no longer exists, wait for the actual file.
     bool Exists = false;
-    if (!sys::fs::exists(LockFileName.str(), Exists) && !Exists)
-      return;
+    if (!LockFileGone) {
+      if (!sys::fs::exists(LockFileName.str(), Exists) && !Exists) {
+        LockFileGone = true;
+        Exists = false;
+      }
+    }
+    if (LockFileGone) {
+      if (!sys::fs::exists(FileName.str(), Exists) && Exists)
+        return;
+    }
 
     if (!processStillExecuting((*Owner).first, (*Owner).second))
       return;
