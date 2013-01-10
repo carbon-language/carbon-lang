@@ -374,8 +374,8 @@ private:
   void initializeDirectiveKindMapping();
 };
 
-/// \brief Generic implementations of directive handling, etc. which is shared
-/// (or the default, at least) for all assembler parser.
+/// \brief Generic implementation of directive handling, etc. which is shared
+/// (or the default, at least) for all assembler parsers.
 class GenericAsmParser : public MCAsmParserExtension {
   template<bool (GenericAsmParser::*Handler)(StringRef, SMLoc)>
   void AddDirectiveHandler(StringRef Directive) {
