@@ -730,8 +730,8 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
         LoVal = Lo->EvaluateKnownConstInt(Context, &Diags);
         if (Diags.size() == 1 && 
             Diags[0].second.getDiagID() == diag::note_constexpr_overflow) {
-          Diag(Lo->getLocStart(), diag::warn_case_value_overflow) <<
-            LoVal.toString(10) << "switch condition value";
+          Diag(Lo->getLocStart(), diag::warn_case_constant_overflow) <<
+            LoVal.toString(10);
           Diag(Diags[0].first, Diags[0].second);
         }
 
