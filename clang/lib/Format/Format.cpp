@@ -1220,55 +1220,63 @@ public:
     unsigned PreviousEndOfLineColumn = 0;
     for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),
                                               E = UnwrappedLines.end();
-         I != E; ++I)
-      PreviousEndOfLineColumn = formatUnwrappedLine(*I,
-                                                    PreviousEndOfLineColumn);
+         I != E; ++I) {
+      const UnwrappedLine &TheLine = *I;
+      if (touchesRanges(TheLine)) {
+        TokenAnnotator Annotator(TheLine, Style, SourceMgr, Lex);
+        if (!Annotator.annotate())
+          break;
+        unsigned Indent = formatFirstToken(Annotator.getRootToken(),
+                                           TheLine.Level, TheLine.InPPDirective,
+                                           PreviousEndOfLineColumn);
+        bool FitsOnALine = fitsOnALine(Annotator.getRootToken(), Indent,
+                                       TheLine.InPPDirective);
+        UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
+                                         FitsOnALine, Annotator.getLineType(),
+                                         Annotator.getRootToken(), Replaces,
+                                         StructuralError);
+        PreviousEndOfLineColumn = Formatter.format();
+      } else {
+        // If we did not reformat this unwrapped line, the column at the end of
+        // the last token is unchanged - thus, we can calculate the end of the
+        // last token, and return the result.
+        const FormatToken *Last = getLastLine(TheLine);
+        PreviousEndOfLineColumn =
+            SourceMgr.getSpellingColumnNumber(Last->Tok.getLocation()) +
+            Lex.MeasureTokenLength(Last->Tok.getLocation(), SourceMgr,
+                                   Lex.getLangOpts()) -
+            1;
+      }
+    }
     return Replaces;
   }
 
 private:
-  virtual void consumeUnwrappedLine(const UnwrappedLine &TheLine) {
-    UnwrappedLines.push_back(TheLine);
-  }
-
-  unsigned formatUnwrappedLine(const UnwrappedLine &TheLine,
-                               unsigned PreviousEndOfLineColumn) {
-    const FormatToken *First = &TheLine.RootToken;
-    const FormatToken *Last = First;
+  const FormatToken *getLastLine(const UnwrappedLine &TheLine) {
+    const FormatToken *Last = &TheLine.RootToken;
     while (!Last->Children.empty())
       Last = &Last->Children.back();
+    return Last;
+  }
+
+  bool touchesRanges(const UnwrappedLine &TheLine) {
+    const FormatToken *First = &TheLine.RootToken;
+    const FormatToken *Last = getLastLine(TheLine);
     CharSourceRange LineRange = CharSourceRange::getTokenRange(
                                     First->Tok.getLocation(),
                                     Last->Tok.getLocation());
-
     for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
-      if (SourceMgr.isBeforeInTranslationUnit(LineRange.getEnd(),
-                                              Ranges[i].getBegin()) ||
-          SourceMgr.isBeforeInTranslationUnit(Ranges[i].getEnd(),
-                                              LineRange.getBegin()))
-        continue;
-
-      TokenAnnotator Annotator(TheLine, Style, SourceMgr, Lex);
-      if (!Annotator.annotate())
-        break;
-      unsigned Indent = formatFirstToken(Annotator.getRootToken(),
-                                         TheLine.Level, TheLine.InPPDirective,
-                                         PreviousEndOfLineColumn);
-      bool FitsOnALine = fitsOnALine(Annotator.getRootToken(), Indent,
-                                     TheLine.InPPDirective);
-      UnwrappedLineFormatter Formatter(
-          Style, SourceMgr, TheLine, Indent, FitsOnALine,
-          Annotator.getLineType(), Annotator.getRootToken(), Replaces,
-          StructuralError);
-      return Formatter.format();
+      if (!SourceMgr.isBeforeInTranslationUnit(LineRange.getEnd(),
+                                               Ranges[i].getBegin()) &&
+          !SourceMgr.isBeforeInTranslationUnit(Ranges[i].getEnd(),
+                                               LineRange.getBegin()))
+        return true;
     }
-    // If we did not reformat this unwrapped line, the column at the end of the
-    // last token is unchanged - thus, we can calculate the end of the last
-    // token, and return the result.
-    return SourceMgr.getSpellingColumnNumber(Last->Tok.getLocation()) +
-           Lex.MeasureTokenLength(Last->Tok.getLocation(), SourceMgr,
-                                  Lex.getLangOpts()) -
-           1;
+    return false;
+  }
+
+  virtual void consumeUnwrappedLine(const UnwrappedLine &TheLine) {
+    UnwrappedLines.push_back(TheLine);
   }
 
   bool fitsOnALine(const AnnotatedToken &RootToken, unsigned Indent,
