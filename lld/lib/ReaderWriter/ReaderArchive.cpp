@@ -9,6 +9,21 @@
 
 #include "lld/ReaderWriter/ReaderArchive.h"
 
+#include "llvm/ADT/Hashing.h"
+
+#include <unordered_map>
+
+namespace std {
+  template<>
+  struct hash<llvm::StringRef> {
+  public:
+    size_t operator()(const llvm::StringRef &s) const {
+      using llvm::hash_value;
+      return hash_value(s);
+    }
+  };
+}
+
 namespace lld {
 /// \brief The FileArchive class represents an Archive Library file
 class FileArchive : public ArchiveLibraryFile {
@@ -19,12 +34,12 @@ public:
   /// \brief Check if any member of the archive contains an Atom with the
   /// specified name and return the File object for that member, or nullptr.
   virtual const File *find(StringRef name, bool dataSymbolOnly) const {
-    error_code ec;  
-    llvm::object::Archive::child_iterator ci;
-
-    ci = _archive.get()->findSym(name);
-    if (ci == _archive->end_children()) 
+    auto member = _symbolMemberMap.find(name);
+    if (member == _symbolMemberMap.end())
       return nullptr;
+
+    error_code ec;
+    llvm::object::Archive::child_iterator ci = member->second;
     
     if (dataSymbolOnly && (ec = isDataSymbol(ci->getBuffer(), name)))
       return nullptr;
@@ -117,7 +132,21 @@ public:
     if (ec)
       return;
     _archive.swap(archive_obj);
+
+    // Cache symbols.
+    for (auto i = _archive->begin_symbols(), e = _archive->end_symbols();
+              i != e; ++i) {
+      StringRef name;
+      llvm::object::Archive::child_iterator member;
+      if ((ec = i->getName(name)))
+        return;
+      if ((ec = i->getMember(member)))
+        return;
+      _symbolMemberMap[name] = member;
+    }
   }
+
+  std::unordered_map<StringRef, llvm::object::Archive::child_iterator> _symbolMemberMap;
 }; // class FileArchive
 
 // Returns a vector of Files that are contained in the archive file 
