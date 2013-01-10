@@ -15,6 +15,7 @@
 #include "CGCleanup.h"
 #include "CGObjCRuntime.h"
 #include "TargetInfo.h"
+#include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/CallSite.h"
@@ -434,6 +435,17 @@ void CodeGenFunction::EmitCXXThrowExpr(const CXXThrowExpr *E) {
 
   QualType ThrowType = E->getSubExpr()->getType();
 
+  if (ThrowType->isObjCObjectPointerType()) {
+    const Stmt *ThrowStmt = E->getSubExpr();
+    const ObjCAtThrowStmt S(E->getExprLoc(),
+                            const_cast<Stmt *>(ThrowStmt));
+    CGM.getObjCRuntime().EmitThrowStmt(*this, S, false);
+    // This will clear insertion point which was not cleared in
+    // call to EmitThrowStmt.
+    EmitBlock(createBasicBlock("throw.cont"));
+    return;
+  }
+  
   // Now allocate the exception object.
   llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
   uint64_t TypeSize = getContext().getTypeSizeInChars(ThrowType).getQuantity();
