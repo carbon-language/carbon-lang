@@ -49,7 +49,7 @@ struct ArchiveMemberHeader {
 
   uint64_t getSize() const {
     uint64_t ret;
-    StringRef(Size, sizeof(Size)).getAsInteger(10, ret);
+    StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, ret);
     return ret;
   }
 };
@@ -110,7 +110,7 @@ error_code Archive::Child::getName(StringRef &Result) const {
     }
     // It's a long name.
     // Get the offset.
-    uint64_t offset;
+    std::size_t offset;
     name.substr(1).getAsInteger(10, offset);
     const char *addr = Parent->StringTable->Data.begin()
                        + sizeof(ArchiveMemberHeader)
@@ -218,6 +218,10 @@ Archive::Archive(MemoryBuffer *source, error_code &ec)
     SymbolTable = i;
     StringTable = e;
     if (i != e) ++i;
+    if (i == e) {
+      ec = object_error::parse_failed;
+      return;
+    }
     if ((ec = i->getName(name)))
       return;
     if (name[0] != '/') {
