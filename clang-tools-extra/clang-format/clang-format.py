@@ -41,7 +41,12 @@ stdout, stderr = p.communicate(input=text)
 
 # If successful, replace buffer contents.
 if stderr:
-  print stderr
+  message = stderr.splitlines()[0]
+  parts = message.split(' ', 2)
+  if len(parts) > 2:
+    message = parts[2]
+  print 'Formatting failed: %s (total %d warnings, %d errors)' % (
+      message, stderr.count('warning:'), stderr.count('error:'))
 else:
   if not stdout:
     print 'Segfault occurred. Please report to bugs.llvm.org.'
