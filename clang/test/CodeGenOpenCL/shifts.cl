@@ -26,3 +26,32 @@ long positiveShift64(long a,long b) {
   //CHECK-NEXT: ret i64 [[E64]]
   return e;
 }
+
+typedef __attribute__((ext_vector_type(4))) int int4;
+
+//CHECK: @vectorVectorTest
+int4 vectorVectorTest(int4 a,int4 b) {
+  //CHECK: [[VM:%.+]] = and <4 x i32> %b, <i32 31, i32 31, i32 31, i32 31>
+  //CHECK-NEXT: [[VC:%.+]] = shl <4 x i32> %a, [[VM]]
+  int4 c = a << b;
+  //CHECK-NEXT: [[VF:%.+]] = add <4 x i32> [[VC]], <i32 2, i32 4, i32 16, i32 8>
+  int4 d = {1, 1, 1, 1};
+  int4 e = {33, 34, -28, -29};
+  int4 f = c + (d << e);
+  //CHECK-NEXT: ret <4 x i32> [[VF]]
+  return f;
+}
+
+//CHECK: @vectorScalarTest
+int4 vectorScalarTest(int4 a,int b) {
+  //CHECK: [[SP0:%.+]] = insertelement <4 x i32> undef, i32 %b, i32 0
+  //CHECK: [[SP1:%.+]] = shufflevector <4 x i32> [[SP0]], <4 x i32> undef, <4 x i32> zeroinitializer
+  //CHECK: [[VSM:%.+]] = and <4 x i32> [[SP1]], <i32 31, i32 31, i32 31, i32 31>
+  //CHECK-NEXT: [[VSC:%.+]] = shl <4 x i32> %a, [[VSM]]
+  int4 c = a << b;
+  //CHECK-NEXT: [[VSF:%.+]] = add <4 x i32> [[VSC]], <i32 4, i32 4, i32 4, i32 4>
+  int4 d = {1, 1, 1, 1};
+  int4 f = c + (d << 34);
+  //CHECK-NEXT: ret <4 x i32> [[VSF]]
+  return f;
+}
