@@ -32,6 +32,7 @@ const int kMsanRetvalTlsSizeInWords = 100;
 namespace __msan {
 extern int msan_inited;
 extern bool msan_init_is_running;
+extern int msan_report_count;
 
 bool ProtectRange(uptr beg, uptr end);
 bool InitShadow(bool prot1, bool prot2, bool map_shadow, bool init_origins);
@@ -42,6 +43,7 @@ void *MsanReallocate(StackTrace *stack, void *oldp, uptr size,
                      uptr alignment, bool zeroise);
 void MsanDeallocate(void *ptr);
 void InstallTrapHandler();
+void InstallAtExitHandler();
 void ReplaceOperatorsNewAndDelete();
 
 void MsanDie();
@@ -52,6 +54,7 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp);
 
 void ReportUMR(StackTrace *stack, u32 origin);
 void ReportExpectedUMRNotFound(StackTrace *stack);
+void ReportAtExitStatistics();
 
 #define GET_MALLOC_STACK_TRACE                                     \
   StackTrace stack;                                                \

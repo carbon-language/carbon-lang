@@ -89,4 +89,12 @@ void ReportExpectedUMRNotFound(StackTrace *stack) {
   StackTrace::PrintStack(stack->trace, stack->size, true, "", 0);
 }
 
+void ReportAtExitStatistics() {
+  Decorator d;
+  Printf("%s", d.Warning());
+  Printf("MemorySanitizer: %d warnings reported.\n", msan_report_count);
+  Printf("%s", d.End());
+}
+
+
 }  // namespace msan

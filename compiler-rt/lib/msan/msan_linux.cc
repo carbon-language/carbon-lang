@@ -91,6 +91,19 @@ void InstallTrapHandler() {
 void MsanDie() {
   _exit(flags()->exit_code);
 }
+
+static void MsanAtExit(void) {
+  if (msan_report_count > 0) {
+    ReportAtExitStatistics();
+    if (flags()->exit_code)
+      _exit(flags()->exit_code);
+  }
+}
+
+void InstallAtExitHandler() {
+  atexit(MsanAtExit);
+}
+
 }
 
 #endif  // __linux__

@@ -90,6 +90,8 @@ Flags *flags() {
 int msan_inited = 0;
 bool msan_init_is_running;
 
+int msan_report_count = 0;
+
 // Array of stack origins.
 // FIXME: make it resizable.
 static const uptr kNumStackOriginDescrs = 1024 * 1024;
@@ -163,6 +165,8 @@ void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin) {
     return;
   }
 
+  ++msan_report_count;
+
   StackTrace stack;
   GetStackTrace(&stack, kStackTraceMax, pc, bp);
 
@@ -176,7 +180,6 @@ void PrintWarningWithOrigin(uptr pc, uptr bp, u32 origin) {
            origin);
   }
 }
-
 
 }  // namespace __msan
 
@@ -202,6 +205,7 @@ void __msan_init() {
   if (msan_inited) return;
   msan_init_is_running = 1;
 
+  InstallAtExitHandler();
   SetDieCallback(MsanDie);
   InitializeInterceptors();
 
