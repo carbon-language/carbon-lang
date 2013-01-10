@@ -309,10 +309,10 @@ def err_falloff_nonvoid_block : Error<
   "control reaches end of non-void block">;
 def warn_suggest_noreturn_function : Warning<
   "%select{function|method}0 %1 could be declared with attribute 'noreturn'">,
-  InGroup<DiagGroup<"missing-noreturn">>, DefaultIgnore;
+  InGroup<MissingNoreturn>, DefaultIgnore;
 def warn_suggest_noreturn_block : Warning<
   "block could be declared with attribute 'noreturn'">,
-  InGroup<DiagGroup<"missing-noreturn">>, DefaultIgnore;
+  InGroup<MissingNoreturn>, DefaultIgnore;
 def warn_unreachable : Warning<"will never be executed">,
   InGroup<DiagGroup<"unreachable-code">>, DefaultIgnore;
 
@@ -352,7 +352,7 @@ def note_bad_memaccess_silence : Note<
 def warn_sizeof_pointer_expr_memaccess : Warning<
   "'%0' call operates on objects of type %1 while the size is based on a " 
   "different type %2">, 
-  InGroup<DiagGroup<"sizeof-pointer-memaccess">>;
+  InGroup<SizeofPointerMemaccess>;
 def warn_sizeof_pointer_expr_memaccess_note : Note<
   "did you mean to %select{dereference the argument to 'sizeof' (and multiply "
   "it by the number of elements)|remove the addressof in the argument to "
@@ -361,7 +361,7 @@ def warn_sizeof_pointer_expr_memaccess_note : Note<
 def warn_sizeof_pointer_type_memaccess : Warning<
   "argument to 'sizeof' in %0 call is the same pointer type %1 as the "
   "%select{destination|source}2; expected %3 or an explicit length">,
-  InGroup<DiagGroup<"sizeof-pointer-memaccess">>;
+  InGroup<SizeofPointerMemaccess>;
 def warn_strlcpycat_wrong_size : Warning<
   "size argument in %0 call appears to be size of the source; expected the size of "
   "the destination">,
@@ -528,7 +528,7 @@ def warn_conflicting_overriding_ret_type_modifiers : Warning<
 def warn_conflicting_ret_type_modifiers : Warning<
   "conflicting distributed object modifiers on return type "
   "in implementation of %0">,
-  InGroup<DiagGroup<"distributed-object-modifiers">>;
+  InGroup<DistributedObjectModifiers>;
 
 def warn_non_covariant_overriding_ret_types : Warning<
   "conflicting return type in "
@@ -538,7 +538,7 @@ def warn_non_covariant_overriding_ret_types : Warning<
 def warn_non_covariant_ret_types : Warning<
   "conflicting return type in "
   "implementation of %0: %1 vs %2">,
-  InGroup<DiagGroup<"method-signatures">>, DefaultIgnore;
+  InGroup<MethodSignatures>, DefaultIgnore;
 
 def warn_conflicting_overriding_param_types : Warning<
   "conflicting parameter types in "
@@ -553,7 +553,7 @@ def warn_conflicting_param_types : Warning<
 def warn_conflicting_param_modifiers : Warning<
   "conflicting distributed object modifiers on parameter type "
   "in implementation of %0">,
-  InGroup<DiagGroup<"distributed-object-modifiers">>;
+  InGroup<DistributedObjectModifiers>;
 
 def warn_conflicting_overriding_param_modifiers : Warning<
   "conflicting distributed object modifiers on parameter type "
@@ -568,7 +568,7 @@ def warn_non_contravariant_overriding_param_types : Warning<
 def warn_non_contravariant_param_types : Warning<
   "conflicting parameter types in "
   "implementation of %0: %1 vs %2">,
-  InGroup<DiagGroup<"method-signatures">>, DefaultIgnore;
+  InGroup<MethodSignatures>, DefaultIgnore;
 
 def warn_conflicting_overriding_variadic :Warning<
   "conflicting variadic declaration of method and its "
@@ -1983,16 +1983,16 @@ def warn_thread_safety_beta : Warning<
 
 def warn_impcast_vector_scalar : Warning<
   "implicit conversion turns vector to scalar: %0 to %1">,
-  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+  InGroup<Conversion>, DefaultIgnore;
 def warn_impcast_complex_scalar : Warning<
   "implicit conversion discards imaginary component: %0 to %1">,
-  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+  InGroup<Conversion>, DefaultIgnore;
 def warn_impcast_float_precision : Warning<
   "implicit conversion loses floating-point precision: %0 to %1">,
-  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+  InGroup<Conversion>, DefaultIgnore;
 def warn_impcast_float_integer : Warning<
   "implicit conversion turns floating-point number into integer: %0 to %1">,
-  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+  InGroup<Conversion>, DefaultIgnore;
 def warn_impcast_integer_sign : Warning<
   "implicit conversion changes signedness: %0 to %1">,
   InGroup<SignConversion>, DefaultIgnore;
@@ -2001,7 +2001,7 @@ def warn_impcast_integer_sign_conditional : Warning<
   InGroup<SignConversion>, DefaultIgnore;
 def warn_impcast_integer_precision : Warning<
   "implicit conversion loses integer precision: %0 to %1">,
-  InGroup<DiagGroup<"conversion">>, DefaultIgnore;
+  InGroup<Conversion>, DefaultIgnore;
 def warn_impcast_integer_64_32 : Warning<
   "implicit conversion loses integer precision: %0 to %1">,
   InGroup<Shorten64To32>, DefaultIgnore;
@@ -3239,10 +3239,10 @@ def note_used_here : Note<"used here">;
 
 def warn_internal_in_extern_inline : ExtWarn<
   "static %select{function|variable}0 %1 is used in an inline function with "
-  "external linkage">, InGroup<DiagGroup<"static-in-inline"> >;
+  "external linkage">, InGroup<StaticInInline>;
 def ext_internal_in_extern_inline : Extension<
   "static %select{function|variable}0 %1 is used in an inline function with "
-  "external linkage">, InGroup<DiagGroup<"static-in-inline"> >;
+  "external linkage">, InGroup<StaticInInline>;
 def note_convert_inline_to_static : Note<
   "use 'static' to give inline function %0 internal linkage">;
 def note_internal_decl_declared_here : Note<
@@ -3348,7 +3348,7 @@ def err_array_too_large : Error<
   "array is too large (%0 elements)">;
 def warn_array_new_too_large : Warning<"array is too large (%0 elements)">,
   // FIXME PR11644: ", will throw std::bad_array_new_length at runtime"
-  InGroup<DiagGroup<"bad-array-new-length">>;
+  InGroup<BadArrayNewLength>;
 
 // -Wpadded, -Wpacked
 def warn_padded_struct_field : Warning<
@@ -3368,7 +3368,7 @@ def warn_unnecessary_packed : Warning<
 def err_typecheck_negative_array_size : Error<"array size is negative">;
 def warn_typecheck_negative_array_new_size : Warning<"array size is negative">,
   // FIXME PR11644: ", will throw std::bad_array_new_length at runtime"
-  InGroup<DiagGroup<"bad-array-new-length">>;
+  InGroup<BadArrayNewLength>;
 def warn_typecheck_function_qualifiers : Warning<
   "qualifier on function type %0 has unspecified behavior">;
 def err_typecheck_invalid_restrict_not_pointer : Error<
@@ -3383,7 +3383,7 @@ def err_typecheck_zero_array_size : Error<
   "zero-length arrays are not permitted in C++">;
 def warn_typecheck_zero_static_array_size : Warning<
   "'static' has no effect on zero-length arrays">,
-  InGroup<DiagGroup<"array-bounds">>;
+  InGroup<ArrayBounds>;
 def err_array_size_non_int : Error<"size of array has non-integer type %0">;
 def err_init_element_not_constant : Error<
   "initializer element is not a compile-time constant">;
@@ -4116,7 +4116,7 @@ def note_indirection_through_null : Note<
 def warn_pointer_indirection_from_incompatible_type : Warning<
   "dereference of type %1 that was reinterpret_cast from type %0 has undefined "
   "behavior">,
-  InGroup<DiagGroup<"undefined-reinterpret-cast">>, DefaultIgnore;
+  InGroup<UndefinedReinterpretCast>, DefaultIgnore;
 
 def err_objc_object_assignment : Error<
   "cannot assign to class object (%0 invalid)">;
@@ -4173,11 +4173,11 @@ def warn_comparison_of_mixed_enum_types : Warning<
   InGroup<DiagGroup<"enum-compare">>;
 def warn_null_in_arithmetic_operation : Warning<
   "use of NULL in arithmetic operation">,
-  InGroup<DiagGroup<"null-arithmetic">>;
+  InGroup<NullArithmetic>;
 def warn_null_in_comparison_operation : Warning<
   "comparison between NULL and non-pointer "
   "%select{(%1 and NULL)|(NULL and %1)}0">,
-  InGroup<DiagGroup<"null-arithmetic">>;
+  InGroup<NullArithmetic>;
 
 def err_invalid_this_use : Error<
   "invalid use of 'this' outside of a non-static member function">;
@@ -4435,7 +4435,7 @@ def err_bad_reinterpret_cast_reference : Error<
   "reinterpret_cast of a %0 to %1 needs its address which is not allowed">;
 def warn_undefined_reinterpret_cast : Warning<
   "reinterpret_cast from %0 to %1 has undefined behavior">,
-  InGroup<DiagGroup<"undefined-reinterpret-cast">>, DefaultIgnore;
+  InGroup<UndefinedReinterpretCast>, DefaultIgnore;
 
 // These messages don't adhere to the pattern.
 // FIXME: Display the path somehow better.
@@ -5067,7 +5067,7 @@ def err_ref_bad_target : Error<
 def warn_non_pod_vararg_with_format_string : Warning<
   "cannot pass %select{non-POD|non-trivial}0 object of type %1 to variadic "
   "%select{function|block|method|constructor}2; expected type from format "
-  "string was %3">, InGroup<DiagGroup<"non-pod-varargs">>, DefaultError;
+  "string was %3">, InGroup<NonPODVarargs>, DefaultError;
 // The arguments to this diagnostic should match the warning above.
 def err_cannot_pass_objc_interface_to_vararg_format : Error<
   "cannot pass object with interface type %1 by value to variadic "
@@ -5080,7 +5080,7 @@ def err_cannot_pass_objc_interface_to_vararg : Error<
 def warn_cannot_pass_non_pod_arg_to_vararg : Warning<
   "cannot pass object of %select{non-POD|non-trivial}0 type %1 through variadic"
   " %select{function|block|method|constructor}2; call will abort at runtime">,
-  InGroup<DiagGroup<"non-pod-varargs">>, DefaultError;
+  InGroup<NonPODVarargs>, DefaultError;
 def warn_cxx98_compat_pass_non_pod_arg_to_vararg : Warning<
   "passing object of trivial but non-POD type %0 through variadic"
   " %select{function|block|method|constructor}1 is incompatible with C++98">,
@@ -5500,17 +5500,17 @@ def ext_implicit_exception_spec_mismatch : ExtWarn<
 
 def warn_ptr_arith_precedes_bounds : Warning<
   "the pointer decremented by %0 refers before the beginning of the array">,
-  InGroup<DiagGroup<"array-bounds-pointer-arithmetic">>, DefaultIgnore;
+  InGroup<ArrayBoundsPointerArithmetic>, DefaultIgnore;
 def warn_ptr_arith_exceeds_bounds : Warning<
   "the pointer incremented by %0 refers past the end of the array (that "
   "contains %1 element%s2)">,
-  InGroup<DiagGroup<"array-bounds-pointer-arithmetic">>, DefaultIgnore;
+  InGroup<ArrayBoundsPointerArithmetic>, DefaultIgnore;
 def warn_array_index_precedes_bounds : Warning<
   "array index %0 is before the beginning of the array">,
-  InGroup<DiagGroup<"array-bounds">>;
+  InGroup<ArrayBounds>;
 def warn_array_index_exceeds_bounds : Warning<
   "array index %0 is past the end of the array (which contains %1 "
-  "element%s2)">, InGroup<DiagGroup<"array-bounds">>;
+  "element%s2)">, InGroup<ArrayBounds>;
 def note_array_index_out_of_bounds : Note<
   "array %0 declared here">;
 
@@ -5548,7 +5548,7 @@ def warn_format_mix_positional_nonpositional_args : Warning<
   InGroup<Format>;
 def warn_static_array_too_small : Warning<
   "array argument is too small; contains %0 elements, callee requires at least %1">,
-  InGroup<DiagGroup<"array-bounds">>;
+  InGroup<ArrayBounds>;
 def note_callee_static_array : Note<
   "callee declares array parameter as static here">;
 def warn_empty_format_string : Warning<
@@ -5597,19 +5597,19 @@ def warn_null_arg : Warning<
 // CHECK: returning address/reference of stack memory
 def warn_ret_stack_addr : Warning<
   "address of stack memory associated with local variable %0 returned">,
-  InGroup<DiagGroup<"return-stack-address">>;
+  InGroup<ReturnStackAddress>;
 def warn_ret_stack_ref : Warning<
   "reference to stack memory associated with local variable %0 returned">,
-  InGroup<DiagGroup<"return-stack-address">>;
+  InGroup<ReturnStackAddress>;
 def warn_ret_local_temp_addr : Warning<
   "returning address of local temporary object">,
-  InGroup<DiagGroup<"return-stack-address">>;
+  InGroup<ReturnStackAddress>;
 def warn_ret_local_temp_ref : Warning<
   "returning reference to local temporary object">,
-  InGroup<DiagGroup<"return-stack-address">>;
+  InGroup<ReturnStackAddress>;
 def warn_ret_addr_label : Warning<
   "returning address of label, which is local">,
-  InGroup<DiagGroup<"return-stack-address">>;
+  InGroup<ReturnStackAddress>;
 def err_ret_local_block : Error<
   "returning block that lives on the local stack">;
 def note_ref_var_local_bind : Note<
@@ -5619,13 +5619,13 @@ def note_ref_var_local_bind : Note<
 // a constructor parameter.
 def warn_bind_ref_member_to_parameter : Warning<
   "binding reference member %0 to stack allocated parameter %1">,
-  InGroup<DiagGroup<"dangling-field">>;
+  InGroup<DanglingField>;
 def warn_init_ptr_member_to_parameter_addr : Warning<
   "initializing pointer member %0 with the stack address of parameter %1">,
-  InGroup<DiagGroup<"dangling-field">>;
+  InGroup<DanglingField>;
 def warn_bind_ref_member_to_temporary : Warning<
   "binding reference member %0 to a temporary value">,
-  InGroup<DiagGroup<"dangling-field">>;
+  InGroup<DanglingField>;
 def note_ref_or_ptr_member_declared_here : Note<
   "%select{reference|pointer}0 member declared here">;
 
@@ -5711,7 +5711,7 @@ def warn_bool_switch_condition : Warning<
   "switch condition has boolean value">;
 def warn_case_value_overflow : Warning<
   "overflow converting case value to switch condition type (%0 to %1)">,
-  InGroup<DiagGroup<"switch">>;
+  InGroup<Switch>;
 def err_duplicate_case : Error<"duplicate case value '%0'">;
 def err_duplicate_case_differing_expr : Error<
   "duplicate case value: '%0' and '%1' both equal '%2'">;
@@ -5814,10 +5814,10 @@ def err_second_parameter_to_va_arg_abstract: Error<
   "second argument to 'va_arg' is of abstract type %0">;
 def warn_second_parameter_to_va_arg_not_pod : Warning<
   "second argument to 'va_arg' is of non-POD type %0">,
-  InGroup<DiagGroup<"non-pod-varargs">>, DefaultError;
+  InGroup<NonPODVarargs>, DefaultError;
 def warn_second_parameter_to_va_arg_ownership_qualified : Warning<
   "second argument to 'va_arg' is of ARC ownership-qualified type %0">,
-  InGroup<DiagGroup<"non-pod-varargs">>, DefaultError;
+  InGroup<NonPODVarargs>, DefaultError;
 def warn_second_parameter_to_va_arg_never_compatible : Warning<
   "second argument to 'va_arg' is of promotable type %0; this va_arg has "
   "undefined behavior because arguments will be promoted to %1">;
@@ -5839,10 +5839,10 @@ def err_return_init_list : Error<
   "must not return a value">;
 def warn_noreturn_function_has_return_expr : Warning<
   "function %0 declared 'noreturn' should not return">,
-  InGroup<DiagGroup<"invalid-noreturn">>;
+  InGroup<InvalidNoreturn>;
 def warn_falloff_noreturn_function : Warning<
   "function declared 'noreturn' should not return">,
-  InGroup<DiagGroup<"invalid-noreturn">>;
+  InGroup<InvalidNoreturn>;
 def err_noreturn_block_has_return_expr : Error<
   "block declared 'noreturn' should not return">;
 def err_block_on_nonlocal : Error<

@@ -110,19 +110,19 @@ def warn_c_kext : Warning<
   "ignoring -fapple-kext which is valid for C++ and Objective-C++ only">;
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused%select{ when '%3' is present|}2">,
-  InGroup<DiagGroup<"unused-command-line-argument">>;
+  InGroup<UnusedCommandLineArgument>;
 def warn_drv_input_file_unused_by_cpp : Warning<
   "%0: '%1' input unused in cpp mode">,
-  InGroup<DiagGroup<"unused-command-line-argument">>;
+  InGroup<UnusedCommandLineArgument>;
 def warn_drv_preprocessed_input_file_unused : Warning<
   "%0: previously preprocessed input%select{ unused when '%2' is present|}1">,
-  InGroup<DiagGroup<"unused-command-line-argument">>;
+  InGroup<UnusedCommandLineArgument>;
 def warn_drv_unused_argument : Warning<
   "argument unused during compilation: '%0'">,
-  InGroup<DiagGroup<"unused-command-line-argument">>;
+  InGroup<UnusedCommandLineArgument>;
 def warn_drv_empty_joined_argument : Warning<
   "joined argument expects additional value: '%0'">,
-  InGroup<DiagGroup<"unused-command-line-argument">>;
+  InGroup<UnusedCommandLineArgument>;
 def warn_drv_clang_unsupported : Warning<
   "the clang compiler does not support '%0'">;
 def warn_drv_deprecated_arg : Warning<
