@@ -103,7 +103,6 @@ static void MsanAtExit(void) {
 void InstallAtExitHandler() {
   atexit(MsanAtExit);
 }
-
 }
 
 #endif  // __linux__

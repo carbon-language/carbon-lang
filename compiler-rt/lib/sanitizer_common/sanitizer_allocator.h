@@ -747,6 +747,8 @@ class LargeMmapAllocator {
     h->size = size;
     h->map_beg = map_beg;
     h->map_size = map_size;
+    uptr size_log = SANITIZER_WORDSIZE - __builtin_clzl(map_size) - 1;
+    CHECK_LT(size_log, ARRAY_SIZE(stats.by_size_log));
     {
       SpinMutexLock l(&mutex_);
       uptr idx = n_chunks_++;
@@ -756,6 +758,7 @@ class LargeMmapAllocator {
       stats.n_allocs++;
       stats.currently_allocated += map_size;
       stats.max_allocated = Max(stats.max_allocated, stats.currently_allocated);
+      stats.by_size_log[size_log]++;
     }
     return reinterpret_cast<void*>(res);
   }
@@ -827,9 +830,15 @@ class LargeMmapAllocator {
 
   void PrintStats() {
     Printf("Stats: LargeMmapAllocator: allocated %zd times, "
-           "remains %zd (%zd K) max %zd M\n",
+           "remains %zd (%zd K) max %zd M; by size logs: ",
            stats.n_allocs, stats.n_allocs - stats.n_frees,
            stats.currently_allocated >> 10, stats.max_allocated >> 20);
+    for (uptr i = 0; i < ARRAY_SIZE(stats.by_size_log); i++) {
+      uptr c = stats.by_size_log[i];
+      if (!c) continue;
+      Printf("%zd:%zd; ", i, c);
+    }
+    Printf("\n");
   }
 
  private:
@@ -860,7 +869,7 @@ class LargeMmapAllocator {
   Header *chunks_[kMaxNumChunks];
   uptr n_chunks_;
   struct Stats {
-    uptr n_allocs, n_frees, currently_allocated, max_allocated;
+    uptr n_allocs, n_frees, currently_allocated, max_allocated, by_size_log[64];
   } stats;
   SpinMutex mutex_;
 };
