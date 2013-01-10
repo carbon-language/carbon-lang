@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "UnwrappedLineParser.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/raw_ostream.h"
 
 // Uncomment to get debug output from the UnwrappedLineParser.
@@ -110,12 +111,12 @@ private:
   bool PreBlockRootTokenInitialized;
 };
 
-UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
-                                         FormatTokenSource &Tokens,
-                                         UnwrappedLineConsumer &Callback)
+UnwrappedLineParser::UnwrappedLineParser(
+    clang::DiagnosticsEngine &Diag, const FormatStyle &Style,
+    FormatTokenSource &Tokens, UnwrappedLineConsumer &Callback)
     : Line(new UnwrappedLine), RootTokenInitialized(false),
-      LastInCurrentLine(NULL), MustBreakBeforeNextToken(false), Style(Style),
-      Tokens(&Tokens), Callback(Callback) {
+      LastInCurrentLine(NULL), MustBreakBeforeNextToken(false), Diag(Diag),
+      Style(Style), Tokens(&Tokens), Callback(Callback) {
 }
 
 bool UnwrappedLineParser::parse() {
@@ -149,7 +150,9 @@ bool UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
       if (HasOpeningBrace) {
         return false;
       } else {
-        // Stray '}' is an error.
+        Diag.Report(FormatTok.Tok.getLocation(),
+                    Diag.getCustomDiagID(clang::DiagnosticsEngine::Error,
+                                         "Stray '}' found"));
         Error = true;
         nextToken();
         addUnwrappedLine();

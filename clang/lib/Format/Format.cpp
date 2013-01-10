@@ -18,8 +18,10 @@
 
 #include "clang/Format/Format.h"
 #include "UnwrappedLineParser.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/OperatorPrecedence.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Lex/Lexer.h"
 #include <string>
 
@@ -1222,10 +1224,11 @@ private:
 
 class Formatter : public UnwrappedLineConsumer {
 public:
-  Formatter(const FormatStyle &Style, Lexer &Lex, SourceManager &SourceMgr,
+  Formatter(clang::DiagnosticsEngine &Diag, const FormatStyle &Style,
+            Lexer &Lex, SourceManager &SourceMgr,
             const std::vector<CharSourceRange> &Ranges)
-      : Style(Style), Lex(Lex), SourceMgr(SourceMgr), Ranges(Ranges),
-        StructuralError(false) {
+      : Diag(Diag), Style(Style), Lex(Lex), SourceMgr(SourceMgr),
+        Ranges(Ranges), StructuralError(false) {
   }
 
   virtual ~Formatter() {
@@ -1233,7 +1236,7 @@ public:
 
   tooling::Replacements format() {
     LexerBasedFormatTokenSource Tokens(Lex, SourceMgr);
-    UnwrappedLineParser Parser(Style, Tokens, *this);
+    UnwrappedLineParser Parser(Diag, Style, Tokens, *this);
     StructuralError = Parser.parse();
     unsigned PreviousEndOfLineColumn = 0;
     for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),
@@ -1284,6 +1287,7 @@ private:
            1;
   }
 
+  clang::DiagnosticsEngine &Diag;
   FormatStyle Style;
   Lexer &Lex;
   SourceManager &SourceMgr;
@@ -1296,7 +1300,14 @@ private:
 tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                SourceManager &SourceMgr,
                                std::vector<CharSourceRange> Ranges) {
-  Formatter formatter(Style, Lex, SourceMgr, Ranges);
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
+  TextDiagnosticPrinter DiagnosticPrinter(llvm::errs(), &*DiagOpts);
+  DiagnosticPrinter.BeginSourceFile(Lex.getLangOpts(), Lex.getPP());
+  DiagnosticsEngine Diagnostics(
+      llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()), &*DiagOpts,
+      &DiagnosticPrinter, false);
+  Diagnostics.setSourceManager(&SourceMgr);
+  Formatter formatter(Diagnostics, Style, Lex, SourceMgr, Ranges);
   return formatter.format();
 }
 
