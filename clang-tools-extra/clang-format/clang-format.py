@@ -47,13 +47,14 @@ if stderr:
     message = parts[2]
   print 'Formatting failed: %s (total %d warnings, %d errors)' % (
       message, stderr.count('warning:'), stderr.count('error:'))
-else:
-  if not stdout:
-    print 'Segfault occurred. Please report to bugs.llvm.org.'
-  elif stdout != text:
-    lines = stdout.split('\n')
-    for i in range(min(len(buf), len(lines))):
-      buf[i] = lines[i]
-    for line in lines[len(buf):]:
-      buf.append(line)
-    del buf[len(lines):]
+
+if not stdout:
+  print ('No output from clang-format (crashed?).\n' +
+      'Please report to bugs.llvm.org.')
+elif stdout != text:
+  lines = stdout.split('\n')
+  for i in range(min(len(buf), len(lines))):
+    buf[i] = lines[i]
+  for line in lines[len(buf):]:
+    buf.append(line)
+  del buf[len(lines):]
