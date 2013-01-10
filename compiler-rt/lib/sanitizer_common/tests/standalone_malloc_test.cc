@@ -10,7 +10,7 @@ const size_t kNumThreds = 16;
 const size_t kNumIters = 1 << 20;
 
 
-void *MallocThread(void *t) {
+static void *MallocThread(void *t) {
   size_t total_malloced = 0, total_freed = 0;
   size_t max_in_use = 0;
   size_t tid = reinterpret_cast<size_t>(t);
@@ -48,8 +48,8 @@ void *MallocThread(void *t) {
   return 0;
 }
 
-
-int main() {
+// Build with -Dstandalone_malloc_test=main to make it a separate program.
+int standalone_malloc_test() {
   pthread_t t[kNumThreds];
   for (size_t i = 0; i < kNumThreds; i++)
     pthread_create(&t[i], 0, MallocThread, reinterpret_cast<void *>(i));
