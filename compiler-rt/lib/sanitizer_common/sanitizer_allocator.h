@@ -660,9 +660,9 @@ class SizeClassAllocator32 {
   State *state_;
 };
 
-// Objects of this type should be used as local caches for SizeClassAllocator64.
-// Since the typical use of this class is to have one object per thread in TLS,
-// is has to be POD.
+// Objects of this type should be used as local caches for SizeClassAllocator64
+// or SizeClassAllocator32. Since the typical use of this class is to have one
+// object per thread in TLS, is has to be POD.
 template<class SizeClassAllocator>
 struct SizeClassAllocatorLocalCache {
   typedef SizeClassAllocator Allocator;
