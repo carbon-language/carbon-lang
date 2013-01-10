@@ -27,21 +27,22 @@ namespace clang {
 namespace format {
 
 enum TokenType {
-  TT_Unknown,
-  TT_TemplateOpener,
-  TT_TemplateCloser,
   TT_BinaryOperator,
-  TT_UnaryOperator,
-  TT_TrailingUnaryOperator,
-  TT_OverloadedOperator,
-  TT_PointerOrReference,
+  TT_BlockComment,
+  TT_CastRParen,
   TT_ConditionalExpr,
   TT_CtorInitializerColon,
-  TT_LineComment,
-  TT_BlockComment,
   TT_DirectorySeparator,
+  TT_LineComment,
+  TT_ObjCMethodSpecifier,
+  TT_OverloadedOperator,
+  TT_PointerOrReference,
   TT_PureVirtualSpecifier,
-  TT_ObjCMethodSpecifier
+  TT_TemplateCloser,
+  TT_TemplateOpener,
+  TT_TrailingUnaryOperator,
+  TT_UnaryOperator,
+  TT_Unknown
 };
 
 enum LineType {
@@ -897,6 +898,11 @@ private:
           Current.Type = TT_LineComment;
         else
           Current.Type = TT_BlockComment;
+      } else if (Current.is(tok::r_paren) &&
+                 (Current.Parent->Type == TT_PointerOrReference ||
+                  Current.Parent->Type == TT_TemplateCloser)) {
+        // FIXME: We need to get smarter and understand more cases of casts.
+        Current.Type = TT_CastRParen;
       }
     }
 
@@ -919,7 +925,8 @@ private:
 
     if (PrevToken.Tok.is(tok::l_paren) || PrevToken.Tok.is(tok::l_square) ||
         PrevToken.Tok.is(tok::comma) || PrevToken.Tok.is(tok::kw_return) ||
-        PrevToken.Tok.is(tok::colon) || Tok.Parent->Type == TT_BinaryOperator)
+        PrevToken.Tok.is(tok::colon) || Tok.Parent->Type == TT_BinaryOperator ||
+        Tok.Parent->Type == TT_CastRParen)
       return TT_UnaryOperator;
 
     if (PrevToken.Tok.isLiteral() || NextToken.Tok.isLiteral() ||
@@ -1050,7 +1057,8 @@ private:
       return false;
     if (Tok.is(tok::colon))
       return RootToken.isNot(tok::kw_case) && (!Tok.Children.empty());
-    if (Tok.Parent->Type == TT_UnaryOperator)
+    if (Tok.Parent->Type == TT_UnaryOperator ||
+        Tok.Parent->Type == TT_CastRParen)
       return false;
     if (Tok.Type == TT_UnaryOperator)
       return Tok.Parent->isNot(tok::l_paren) &&

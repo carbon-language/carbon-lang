@@ -980,6 +980,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("a * -b;");
   verifyFormat("a * ++b;");
   verifyFormat("a * --b;");
+  verifyFormat("int *pa = (int *)&a;");
 
   verifyFormat("InvalidRegions[*R] = 0;");
 
@@ -988,8 +989,8 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("A<int *, int *> a;");
   verifyFormat("A<int **, int **> a;");
   verifyFormat("Type *A = static_cast<Type *>(P);");
-  verifyFormat("Type *A = (Type *) P;");
-  verifyFormat("Type *A = (vector<Type *, int *>) P;");
+  verifyFormat("Type *A = (Type *)P;");
+  verifyFormat("Type *A = (vector<Type *, int *>)P;");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
