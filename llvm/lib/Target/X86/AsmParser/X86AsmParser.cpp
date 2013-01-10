@@ -495,7 +495,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
   /// Create an absolute memory operand.
   static X86Operand *CreateMem(const MCExpr *Disp, SMLoc StartLoc, SMLoc EndLoc,
-                               unsigned Size = 0, bool NeedSizeDir = false){
+                               unsigned Size = 0, bool NeedSizeDir = false) {
     X86Operand *Res = new X86Operand(Memory, StartLoc, EndLoc);
     Res->Mem.SegReg   = 0;
     Res->Mem.Disp     = Disp;
@@ -504,6 +504,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.Scale    = 1;
     Res->Mem.Size     = Size;
     Res->Mem.NeedSizeDir = NeedSizeDir;
+    Res->AddressOf = false;
     return Res;
   }
 
