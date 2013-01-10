@@ -49,7 +49,8 @@ struct ArchiveMemberHeader {
 
   uint64_t getSize() const {
     uint64_t ret;
-    StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, ret);
+    if (StringRef(Size, sizeof(Size)).rtrim(" ").getAsInteger(10, ret))
+      llvm_unreachable("Size is not an integer.");
     return ret;
   }
 };
@@ -111,7 +112,8 @@ error_code Archive::Child::getName(StringRef &Result) const {
     // It's a long name.
     // Get the offset.
     std::size_t offset;
-    name.substr(1).getAsInteger(10, offset);
+    if (name.substr(1).rtrim(" ").getAsInteger(10, offset))
+      llvm_unreachable("Long name offset is not an integer");
     const char *addr = Parent->StringTable->Data.begin()
                        + sizeof(ArchiveMemberHeader)
                        + offset;
@@ -134,8 +136,9 @@ error_code Archive::Child::getName(StringRef &Result) const {
     return object_error::success;
   } else if (name.startswith("#1/")) {
     uint64_t name_size;
-    name.substr(3).getAsInteger(10, name_size);
-    Result = Data.substr(0, name_size);
+    if (name.substr(3).rtrim(" ").getAsInteger(10, name_size))
+      llvm_unreachable("Long name length is not an ingeter");
+    Result = Data.substr(sizeof(ArchiveMemberHeader), name_size);
     return object_error::success;
   }
   // It's a simple name.
@@ -152,21 +155,24 @@ uint64_t Archive::Child::getSize() const {
   StringRef name =  ToHeader(Data.data())->getName();
   if (name.startswith("#1/")) {
     uint64_t name_size;
-    name.substr(3).getAsInteger(10, name_size);
+    if (name.substr(3).rtrim(" ").getAsInteger(10, name_size))
+      llvm_unreachable("Long name length is not an integer");
     size -= name_size;
   }
   return size;
 }
 
 MemoryBuffer *Archive::Child::getBuffer() const {
-  StringRef name;
-  if (getName(name)) return NULL;
+  StringRef name = ToHeader(Data.data())->getName();
   int size = sizeof(ArchiveMemberHeader);
   if (name.startswith("#1/")) {
     uint64_t name_size;
-    name.substr(3).getAsInteger(10, name_size);
+    if (name.substr(3).rtrim(" ").getAsInteger(10, name_size))
+      llvm_unreachable("Long name length is not an integer");
     size += name_size;
   }
+  if (getName(name))
+    return 0;
   return MemoryBuffer::getMemBuffer(Data.substr(size, getSize()),
                                     name,
                                     false);
