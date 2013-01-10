@@ -11,7 +11,7 @@ CLANG_LEVEL := ../..
 
 include $(CLANG_LEVEL)/../../Makefile.config
 
-PARALLEL_DIRS := remove-cstr-calls tool-template loop-convert clang-format cpp11-migrate
+PARALLEL_DIRS := remove-cstr-calls tool-template clang-format cpp11-migrate
 
 include $(CLANG_LEVEL)/Makefile
 
