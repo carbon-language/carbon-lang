@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-#===- cindex.py - Python Indexing Library Bindings -----------*- python -*--===#
+#===- clang-format-diff.py - ClangFormat Diff Reformatter ----*- python -*--===#
 #
 #                     The LLVM Compiler Infrastructure
 #
