@@ -1313,8 +1313,9 @@ TEST(AddressSanitizer, StrCmpAndFriendsLogicTest) {
 typedef int(*PointerToStrCmp)(const char*, const char*);
 void RunStrCmpTest(PointerToStrCmp StrCmp) {
   size_t size = Ident(100);
-  char *s1 = MallocAndMemsetString(size);
-  char *s2 = MallocAndMemsetString(size);
+  int fill = 'o';
+  char *s1 = MallocAndMemsetString(size, fill);
+  char *s2 = MallocAndMemsetString(size, fill);
   s1[size - 1] = '\0';
   s2[size - 1] = '\0';
   // Normal StrCmp calls
@@ -1330,7 +1331,7 @@ void RunStrCmpTest(PointerToStrCmp StrCmp) {
   EXPECT_DEATH(Ident(StrCmp)(s1 + size, s2), RightOOBReadMessage(0));
   EXPECT_DEATH(Ident(StrCmp)(s1, s2 + size), RightOOBReadMessage(0));
   // Hit unallocated memory and die.
-  s2[size - 1] = 'z';
+  s1[size - 1] = fill;
   EXPECT_DEATH(Ident(StrCmp)(s1, s1), RightOOBReadMessage(0));
   EXPECT_DEATH(Ident(StrCmp)(s1 + size - 1, s2), RightOOBReadMessage(0));
   free(s1);

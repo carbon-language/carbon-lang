@@ -251,9 +251,16 @@ class Quarantine: public AsanChunkFifoList {
   void SwallowThreadLocalQuarantine(AsanThreadLocalMallocStorage *ms) {
     AsanChunkFifoList *q = &ms->quarantine_;
     if (!q->size()) return;
-    SpinMutexLock l(&mutex_);
-    PushList(q);
-    PopAndDeallocateLoop(ms);
+    AsanChunkFifoList tmp;
+    uptr max_size = flags()->quarantine_size;
+    {
+      SpinMutexLock l(&mutex_);
+      PushList(q);
+      while (size() > max_size)
+        tmp.Push(Pop());
+    }
+    while (!tmp.empty())
+      Deallocate(tmp.Pop(), ms);
   }
 
   void BypassThreadLocalQuarantine(AsanChunk *m) {
@@ -262,14 +269,7 @@ class Quarantine: public AsanChunkFifoList {
   }
 
  private:
-  void PopAndDeallocateLoop(AsanThreadLocalMallocStorage *ms) {
-    while (size() > (uptr)flags()->quarantine_size) {
-      PopAndDeallocate(ms);
-    }
-  }
-  void PopAndDeallocate(AsanThreadLocalMallocStorage *ms) {
-    CHECK_GT(size(), 0);
-    AsanChunk *m = Pop();
+  static void Deallocate(AsanChunk *m, AsanThreadLocalMallocStorage *ms) {
     CHECK(m);
     CHECK(m->chunk_state == CHUNK_QUARANTINE);
     m->chunk_state = CHUNK_AVAILABLE;
