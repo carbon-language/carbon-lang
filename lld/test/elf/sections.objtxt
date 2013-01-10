@@ -1,17 +1,17 @@
 RUN: lld-core -reader ELF -writer ELF -o %t1 %p/Inputs/section-test.i386
 RUN: llvm-objdump -section-headers %t1 |  FileCheck -check-prefix=OBJDUMP %s
-RUN: llvm-readobj  %t1 |  FileCheck -check-prefix=READOBJ %s 
-RUN: elf-dump  --dump-section %t1 |  FileCheck -check-prefix=ED %s 
+RUN: llvm-readobj  %t1 |  FileCheck -check-prefix=READOBJ %s
+RUN: elf-dump  --dump-section %t1 |  FileCheck -check-prefix=ED %s
 
-OBJDUMP:  0               000000000 00000000000000000
-OBJDUMP:  1 .text         00000000a 00000000000000074 TEXT DATA
-OBJDUMP:  2 .data         000000004 00000000000001000 DATA
-OBJDUMP:  3 .special      000000004 00000000000001004 DATA
-OBJDUMP:  4 .anotherspecial 000000004 00000000000001008 DATA
-OBJDUMP:  5 .bss          000000001 0000000000000100c BSS
-OBJDUMP:  6 .shstrtab     000000045 00000000000000000
-OBJDUMP:  7 .symtab       000000110 00000000000000000
-OBJDUMP:  8 .strtab       000000061 00000000000000000
+OBJDUMP:  0               00000000 0000000000000000
+OBJDUMP:  1 .text         0000000a 0000000000000074 TEXT DATA
+OBJDUMP:  2 .data         00000004 0000000000001000 DATA
+OBJDUMP:  3 .special      00000004 0000000000001004 DATA
+OBJDUMP:  4 .anotherspecial 00000004 0000000000001008 DATA
+OBJDUMP:  5 .bss          00000001 000000000000100c BSS
+OBJDUMP:  6 .shstrtab     {{[0-9]+}} 0000000000000000
+OBJDUMP:  7 .symtab       {{[0-9]+}} 0000000000000000
+OBJDUMP:  8 .strtab       {{[0-9]+}} 0000000000000000
 
 READOBJ: File Format : ELF32-i386
 READOBJ: Arch        : i386

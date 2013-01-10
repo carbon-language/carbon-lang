@@ -4,6 +4,6 @@ RUN: lld-core -arch hexagon -reader ELF -writer ELF -o %t2 \
 RUN:   %p/Inputs/rodata-test.hexagon
 RUN: llvm-objdump -section-headers %t2 |  FileCheck -check-prefix=hexagon %s
 
-i386: 2 .rodata       000000004
+i386: 2 .rodata       00000004
 
-hexagon: 3 .rodata       000000004
+hexagon: 3 .rodata       00000004
