@@ -10,9 +10,9 @@
 #ifndef LLVM_LIBCLANG_CLOG_H
 #define LLVM_LIBCLANG_CLOG_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/raw_ostream.h"
 #include <string>
 
@@ -47,7 +47,7 @@ public:
   static bool isLoggingEnabled() { return getEnvVar() != 0; }
   static bool isStackTracingEnabled() {
     if (const char *EnvOpt = Logger::getEnvVar())
-      return llvm::StringRef(EnvOpt) =="2";
+      return llvm::StringRef(EnvOpt) == "2";
     return false;
   }
   static LogRef make(llvm::StringRef name,
@@ -89,6 +89,7 @@ public:
 ///   LOG_FUNC_SECTION {
 ///     *Log << "blah";
 ///   }
+/// \endcode
 #define LOG_SECTION(NAME) if (LogRef Log = clang::cxindex::Logger::make(NAME))
 #define LOG_FUNC_SECTION LOG_SECTION(__func__)
 
