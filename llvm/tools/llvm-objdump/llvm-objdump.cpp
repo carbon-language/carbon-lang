@@ -442,7 +442,7 @@ static void PrintSectionHeaders(const ObjectFile *o) {
     if (error(si->isBSS(BSS))) return;
     std::string Type = (std::string(Text ? "TEXT " : "") +
                         (Data ? "DATA " : "") + (BSS ? "BSS" : ""));
-    outs() << format("%3d %-13s %09" PRIx64 " %017" PRIx64 " %s\n",
+    outs() << format("%3d %-13s %08" PRIx64 " %016" PRIx64 " %s\n",
                      i, Name.str().c_str(), Size, Address, Type.c_str());
     ++i;
   }
@@ -572,7 +572,10 @@ static void PrintSymbolTable(const ObjectFile *o) {
       else if (Type == SymbolRef::ST_Function)
         FileFunc = 'F';
 
-      outs() << format("%08" PRIx64, Address) << " "
+      const char *Fmt = o->getBytesInAddress() > 4 ? "%016" PRIx64 :
+                                                     "%08" PRIx64;
+
+      outs() << format(Fmt, Address) << " "
              << GlobLoc // Local -> 'l', Global -> 'g', Neither -> ' '
              << (Weak ? 'w' : ' ') // Weak?
              << ' ' // Constructor. Not supported yet.
