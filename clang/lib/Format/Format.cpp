@@ -1033,6 +1033,8 @@ private:
     if (Left.is(tok::at) &&
         Right.FormatTok.Tok.getObjCKeywordID() != tok::objc_not_keyword)
       return false;
+    if (Left.is(tok::l_brace) && Right.is(tok::r_brace))
+      return false;
     return true;
   }
 

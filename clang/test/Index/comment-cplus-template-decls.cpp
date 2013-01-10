@@ -25,7 +25,7 @@ template<typename T> struct A {
 */
   void f() { }
 };
-// CHECK: <Declaration>template &lt;typename T&gt; struct A {\n}</Declaration>
+// CHECK: <Declaration>template &lt;typename T&gt; struct A {}</Declaration>
 // CHECK: <Declaration>A&lt;T&gt;()</Declaration>
 // CHECK: <Declaration>void ~A&lt;T&gt;()</Declaration>
 
@@ -40,7 +40,7 @@ template <typename T> struct D : A<T> {
   
   void f();
 };
-// CHECK: <Declaration>template &lt;typename T&gt; struct D :  A&lt;T&gt; {\n}</Declaration>
+// CHECK: <Declaration>template &lt;typename T&gt; struct D :  A&lt;T&gt; {}</Declaration>
 // CHECK: <Declaration>using A&lt;T&gt;::f</Declaration>
 
 struct Base {
@@ -55,7 +55,7 @@ template<typename T> struct E : Base {
 */
   using Base::foo;
 };
-// CHECK: <Declaration>template &lt;typename T&gt; struct E :  Base {\n}</Declaration>
+// CHECK: <Declaration>template &lt;typename T&gt; struct E :  Base {}</Declaration>
 // CHECK: <Declaration>using Base::foo</Declaration>
 
 /// \tparam
@@ -66,4 +66,4 @@ void func_template_1(T AAA);
 
 template<template<template<typename CCC> class DDD, class BBB> class AAA>
 void func_template_2();
-<Declaration>template &lt;template &lt;template &lt;typename CCC&gt; class DDD, class BBB&gt; class AAA&gt; void func_template_2()</Declaration>
+// FIXME: There is not Declaration field in the generated output.
