@@ -95,7 +95,8 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
            (TySize >= 8 && isa<ArrayType>(Ty) &&
             cast<ArrayType>(Ty)->getElementType()->isIntegerTy(8)));
         StaticAllocaMap[AI] =
-          MF->getFrameInfo()->CreateStackObject(TySize, Align, false,
+          MF->getFrameInfo()->CreateStackObjectWithMinAlign(TySize, Align,
+                                                AI->getAlignment(), false,
                                                 MayNeedSP, AI);
       }
 

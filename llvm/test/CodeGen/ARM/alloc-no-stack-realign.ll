@@ -39,7 +39,7 @@ entry:
 ; NO-REALIGN: add [[R2:r[0-9]+]], [[R1:r[0-9]+]], #16
 ; NO-REALIGN: vst1.64
 ; NO-REALIGN: vst1.64
- %retval = alloca <16 x float>, align 16
+ %retval = alloca <16 x float>, align 4
  %0 = load <16 x float>* @T3_retval, align 16
  store <16 x float> %0, <16 x float>* %retval
  %1 = load <16 x float>* %retval
