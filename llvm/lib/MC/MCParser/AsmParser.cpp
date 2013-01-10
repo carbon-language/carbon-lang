@@ -3777,8 +3777,8 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                  MCAsmParserSemaCallback &SI) {
   SmallVector<void *, 4> InputDecls;
   SmallVector<void *, 4> OutputDecls;
-  SmallVector<bool, 4> InputDeclsOffsetOf;
-  SmallVector<bool, 4> OutputDeclsOffsetOf;
+  SmallVector<bool, 4> InputDeclsAddressOf;
+  SmallVector<bool, 4> OutputDeclsAddressOf;
   SmallVector<std::string, 4> InputConstraints;
   SmallVector<std::string, 4> OutputConstraints;
   std::set<std::string> ClobberRegs;
@@ -3815,7 +3815,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
         }
 
         // Register operand.
-        if (Operand->isReg() && !Operand->isOffsetOf()) {
+        if (Operand->isReg() && !Operand->needAddressOf()) {
           unsigned NumDefs = Desc.getNumDefs();
           // Clobber.
           if (NumDefs && Operand->getMCOperandNum() < NumDefs) {
@@ -3829,11 +3829,12 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
 
         // Expr/Input or Output.
         unsigned Size;
+        bool IsVarDecl;
         void *OpDecl = SI.LookupInlineAsmIdentifier(Operand->getName(), AsmLoc,
-                                                    Size);
+                                                    Size, IsVarDecl);
         if (OpDecl) {
           bool isOutput = (i == 1) && Desc.mayStore();
-          if (!Operand->isOffsetOf() && Operand->needSizeDirective())
+          if (Operand->isMem() && Operand->needSizeDirective())
             AsmStrRewrites.push_back(AsmRewrite(AOK_SizeDirective,
                                                 Operand->getStartLoc(),
                                                 /*Len*/0,
@@ -3842,7 +3843,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
             std::string Constraint = "=";
             ++InputIdx;
             OutputDecls.push_back(OpDecl);
-            OutputDeclsOffsetOf.push_back(Operand->isOffsetOf());
+            OutputDeclsAddressOf.push_back(Operand->needAddressOf());
             Constraint += Operand->getConstraint().str();
             OutputConstraints.push_back(Constraint);
             AsmStrRewrites.push_back(AsmRewrite(AOK_Output,
@@ -3850,7 +3851,7 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                                 Operand->getNameLen()));
           } else {
             InputDecls.push_back(OpDecl);
-            InputDeclsOffsetOf.push_back(Operand->isOffsetOf());
+            InputDeclsAddressOf.push_back(Operand->needAddressOf());
             InputConstraints.push_back(Operand->getConstraint().str());
             AsmStrRewrites.push_back(AsmRewrite(AOK_Input,
                                                 Operand->getStartLoc(),
@@ -3876,14 +3877,14 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
     OpDecls.resize(NumExprs);
     Constraints.resize(NumExprs);
     // FIXME: Constraints are hard coded to 'm', but we need an 'r'
-    // constraint for offsetof.  This needs to be cleaned up!
+    // constraint for addressof.  This needs to be cleaned up!
     for (unsigned i = 0; i < NumOutputs; ++i) {
-      OpDecls[i] = std::make_pair(OutputDecls[i], OutputDeclsOffsetOf[i]);
-      Constraints[i] = OutputDeclsOffsetOf[i] ? "=r" : OutputConstraints[i];
+      OpDecls[i] = std::make_pair(OutputDecls[i], OutputDeclsAddressOf[i]);
+      Constraints[i] = OutputDeclsAddressOf[i] ? "=r" : OutputConstraints[i];
     }
     for (unsigned i = 0, j = NumOutputs; i < NumInputs; ++i, ++j) {
-      OpDecls[j] = std::make_pair(InputDecls[i], InputDeclsOffsetOf[i]);
-      Constraints[j] = InputDeclsOffsetOf[i] ? "r" : InputConstraints[i];
+      OpDecls[j] = std::make_pair(InputDecls[i], InputDeclsAddressOf[i]);
+      Constraints[j] = InputDeclsAddressOf[i] ? "r" : InputConstraints[i];
     }
   }
 

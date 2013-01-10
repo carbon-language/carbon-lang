@@ -168,6 +168,7 @@ struct X86Operand : public MCParsedAsmOperand {
 
   SMLoc StartLoc, EndLoc;
   SMLoc OffsetOfLoc;
+  bool AddressOf;
 
   union {
     struct {
@@ -340,6 +341,10 @@ struct X86Operand : public MCParsedAsmOperand {
     return OffsetOfLoc.getPointer();
   }
 
+  bool needAddressOf() const {
+    return AddressOf;
+  }
+
   bool needSizeDirective() const {
     assert(Kind == Memory && "Invalid access!");
     return Mem.NeedSizeDir;
@@ -471,9 +476,11 @@ struct X86Operand : public MCParsedAsmOperand {
   }
 
   static X86Operand *CreateReg(unsigned RegNo, SMLoc StartLoc, SMLoc EndLoc,
+                               bool AddressOf = false,
                                SMLoc OffsetOfLoc = SMLoc()) {
     X86Operand *Res = new X86Operand(Register, StartLoc, EndLoc);
     Res->Reg.RegNo = RegNo;
+    Res->AddressOf = AddressOf;
     Res->OffsetOfLoc = OffsetOfLoc;
     return Res;
   }
@@ -836,24 +843,39 @@ X86Operand *X86AsmParser::ParseIntelMemOperand(unsigned SegReg, SMLoc Start) {
     return 0;
 
   bool NeedSizeDir = false;
-  if (!Size && isParsingInlineAsm()) {
+  bool IsVarDecl = false;
+  if (isParsingInlineAsm()) {
     if (const MCSymbolRefExpr *SymRef = dyn_cast<MCSymbolRefExpr>(Disp)) {
       const MCSymbol &Sym = SymRef->getSymbol();
       // FIXME: The SemaLookup will fail if the name is anything other then an
       // identifier.
       // FIXME: Pass a valid SMLoc.
-      SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, Size);
+      unsigned tSize;
+      SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, tSize,
+                                              IsVarDecl);
+      if (!Size)
+        Size = tSize;
       NeedSizeDir = Size > 0;
     }
   }
   if (!isParsingInlineAsm())
     return X86Operand::CreateMem(Disp, Start, End, Size);
-  else
+  else {
+    // If this is not a VarDecl then assume it is a FuncDecl or some other label
+    // reference.  We need an 'r' constraint here, so we need to create register
+    // operand to ensure proper matching.  Just pick a GPR based on the size of
+    // a pointer.
+    if (!IsVarDecl) {
+      unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
+      return X86Operand::CreateReg(RegNo, Start, End, /*AddressOf=*/true);
+    }
+
     // When parsing inline assembly we set the base register to a non-zero value
     // as we don't know the actual value at this time.  This is necessary to
     // get the matching correct in some cases.
     return X86Operand::CreateMem(/*SegReg*/0, Disp, /*BaseReg*/1, /*IndexReg*/0,
                                  /*Scale*/1, Start, End, Size, NeedSizeDir);
+  }
 }
 
 /// Parse the '.' operator.
@@ -929,7 +951,8 @@ X86Operand *X86AsmParser::ParseIntelOffsetOfOperator(SMLoc Start) {
   // register operand to ensure proper matching.  Just pick a GPR based on
   // the size of a pointer.
   unsigned RegNo = is64BitMode() ? X86::RBX : X86::EBX;
-  return X86Operand::CreateReg(RegNo, Start, End, OffsetOfLoc);
+  return X86Operand::CreateReg(RegNo, Start, End, /*GetAddress=*/true,
+                               OffsetOfLoc);
 }
 
 /// Parse the 'TYPE' operator.  The TYPE operator returns the size of a C or
@@ -952,7 +975,9 @@ X86Operand *X86AsmParser::ParseIntelTypeOperator(SMLoc Start) {
     // FIXME: The SemaLookup will fail if the name is anything other then an
     // identifier.
     // FIXME: Pass a valid SMLoc.
-    if (!SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, Size))
+    bool IsVarDecl;
+    if (!SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, Size,
+                                                 IsVarDecl))
       return ErrorOperand(Start, "Unable to lookup TYPE of expr!");
 
     Size /= 8; // Size is in terms of bits, but we want bytes in the context.

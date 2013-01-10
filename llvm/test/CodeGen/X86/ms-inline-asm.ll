@@ -61,3 +61,21 @@ entry:
 ; CHECK: .att_syntax
 ; CHECK: {{## InlineAsm End|#NO_APP}}
 }
+
+define void @t19_helper() nounwind {
+entry:
+  ret void
+}
+
+define void @t19() nounwind {
+entry:
+  call void asm sideeffect inteldialect "call $0", "r,~{dirflag},~{fpsr},~{flags}"(void ()* @t19_helper) nounwind
+  ret void
+; CHECK: t19
+; CHECK: movl $_t19_helper, %eax
+; CHECK: {{## InlineAsm Start|#APP}}
+; CHECK: .intel_syntax
+; CHECK: call eax
+; CHECK: .att_syntax
+; CHECK: {{## InlineAsm End|#NO_APP}}
+}
