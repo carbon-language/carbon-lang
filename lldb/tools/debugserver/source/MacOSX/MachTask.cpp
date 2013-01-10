@@ -373,7 +373,7 @@ MachTask::GetProfileData ()
         profile_data_stream << "vprvt:" << vprvt << ';';
         profile_data_stream << "vsize:" << vsize << ';';
         profile_data_stream << "dirty:" << dirty_size << ';';
-        profile_data_stream << "end;";
+        profile_data_stream << "--end--;";
         
         result = profile_data_stream.str();
     }
