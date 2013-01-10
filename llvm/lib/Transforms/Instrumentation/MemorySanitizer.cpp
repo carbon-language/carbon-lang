@@ -1774,7 +1774,7 @@ struct VarArgAMD64Helper : public VarArgHelper {
     // Unpoison the whole __va_list_tag.
     // FIXME: magic ABI constants.
     IRB.CreateMemSet(ShadowPtr, Constant::getNullValue(IRB.getInt8Ty()),
-                     /* size */24, /* alignment */16, false);
+                     /* size */24, /* alignment */8, false);
   }
 
   void visitVACopyInst(VACopyInst &I) {
@@ -1785,7 +1785,7 @@ struct VarArgAMD64Helper : public VarArgHelper {
     // Unpoison the whole __va_list_tag.
     // FIXME: magic ABI constants.
     IRB.CreateMemSet(ShadowPtr, Constant::getNullValue(IRB.getInt8Ty()),
-                     /* size */ 24, /* alignment */ 16, false);
+                     /* size */24, /* alignment */8, false);
   }
 
   void finalizeInstrumentation() {

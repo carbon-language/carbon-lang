@@ -534,3 +534,16 @@ define <8 x i8*> @VectorOfPointers(<8 x i8*>* %p) nounwind uwtable {
 ; CHECK: load <8 x i8*>*
 ; CHECK: store <8 x i64> {{.*}} @__msan_retval_tls
 ; CHECK: ret <8 x i8*>
+
+; Test handling of va_copy.
+
+declare void @llvm.va_copy(i8*, i8*) nounwind
+
+define void @VACopy(i8* %p1, i8* %p2) nounwind uwtable {
+  call void @llvm.va_copy(i8* %p1, i8* %p2) nounwind
+  ret void
+}
+
+; CHECK: @VACopy
+; CHECK: call void @llvm.memset.p0i8.i64({{.*}}, i8 0, i64 24, i32 8, i1 false)
+; CHECK: ret void
