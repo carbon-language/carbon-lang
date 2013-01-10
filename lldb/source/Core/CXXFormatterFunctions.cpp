@@ -135,6 +135,151 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
     return valobj_sp;
 }
 
+template<typename SourceDataType, ConversionResult (*ConvertFunction) (const SourceDataType**,
+                                                                       const SourceDataType*,
+                                                                       UTF8**,
+                                                                       UTF8*,
+                                                                       ConversionFlags)>
+static bool
+ReadUTFBufferAndDumpToStream (uint64_t location,
+                              const ProcessSP& process_sp,
+                              Stream& stream,
+                              bool want_at = true,
+                              bool want_quotes = true)
+{
+    if (location == 0 || location == LLDB_INVALID_ADDRESS)
+        return false;
+    if (!process_sp)
+        return false;
+
+    const int origin_encoding = 8*sizeof(SourceDataType);
+    if (origin_encoding != 8 && origin_encoding != 16 && origin_encoding != 32)
+        return false;
+    // if not UTF8, I need a conversion function to return proper UTF8
+    if (origin_encoding != 8 && !ConvertFunction)
+        return false;
+    const int bufferSPSize = 1024;
+    const int sourceSize = (bufferSPSize / (origin_encoding >> 2));
+
+    Error error;
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(bufferSPSize,0));
+    size_t data_read = process_sp->ReadMemoryFromInferior(location, (char*)buffer_sp->GetBytes(), bufferSPSize, error);
+    if (error.Fail())
+    {
+        stream.Printf("unable to read data");
+        return true;
+    }
+    else
+    {
+        if (want_at)
+            stream.Printf("@");
+        if (want_quotes)
+            stream.Printf("\"");
+    }
+    if (data_read)
+    {
+        SourceDataType *data_ptr = (SourceDataType*)buffer_sp->GetBytes();
+        SourceDataType *data_end_ptr = data_ptr + sourceSize;
+        
+        while (data_ptr < data_end_ptr)
+        {
+            if (!*data_ptr)
+            {
+                data_end_ptr = data_ptr;
+                break;
+            }
+            data_ptr++;
+        }
+        
+        *data_ptr = 0;
+        data_ptr = (SourceDataType*)buffer_sp->GetBytes();
+        
+        lldb::DataBufferSP utf8_data_buffer_sp(new DataBufferHeap(bufferSPSize,0));
+        UTF8* utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
+        UTF8* utf8_data_end_ptr = utf8_data_ptr + bufferSPSize;
+        
+        if (ConvertFunction)
+            ConvertFunction ( (const SourceDataType**)&data_ptr, data_end_ptr, &utf8_data_ptr, utf8_data_end_ptr, lenientConversion );
+        else
+        {
+            // just copy the pointers - the cast is necessary to make the compiler happy
+            // but this should only happen if we are reading UTF8 data
+            utf8_data_ptr = (UTF8*)data_ptr;
+            utf8_data_end_ptr = (UTF8*)data_end_ptr;
+        }
+        
+        utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
+        for (;utf8_data_ptr != utf8_data_end_ptr; utf8_data_ptr++)
+        {
+            if (!*utf8_data_ptr)
+                break;
+            stream.Printf("%c",*utf8_data_ptr);
+        }
+        if (want_quotes)
+            stream.Printf("\"");
+        return true;
+    }
+    if (want_quotes)
+        stream.Printf("\"");
+    return true;
+}
+
+bool
+lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+    
+    if (!ReadUTFBufferAndDumpToStream<UTF16, ConvertUTF16toUTF8>(valobj_addr,
+                                                                 process_sp,
+                                                                 stream,
+                                                                 false, // no @ sign for C++
+                                                                 true)) // but use quotes
+    {
+        stream.Printf("Summary Unavailable");
+        return true;
+    }
+
+    return true;
+}
+
+bool
+lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+    
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    
+    if (!valobj_addr)
+        return false;
+    
+    if (!ReadUTFBufferAndDumpToStream<UTF32, ConvertUTF32toUTF8>(valobj_addr,
+                                                                 process_sp,
+                                                                 stream,
+                                                                 false, // no @ sign for C++
+                                                                 true)) // but use quotes
+    {
+        stream.Printf("Summary Unavailable");
+        return true;
+    }
+    
+    return true;
+}
+
+bool
+lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    return false;
+}
+
 template<bool name_entries>
 bool
 lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream)
@@ -476,62 +621,6 @@ lldb_private::formatters::NSNumberSummaryProvider (ValueObject& valobj, Stream& 
     }
 }
 
-static bool
-ReadUTFBufferAndDumpToStream (uint64_t location,
-                              const ProcessSP& process_sp,
-                              Stream& stream)
-{
-    Error error;
-    lldb::DataBufferSP buffer_sp(new DataBufferHeap(1024,0));
-    size_t data_read = process_sp->ReadMemoryFromInferior(location, (char*)buffer_sp->GetBytes(), 1024, error);
-    if (error.Fail())
-    {
-        stream.Printf("unable to read data");
-        return true;
-    }
-    else
-        stream.Printf("@\"");
-    if (data_read)
-    {
-        UTF16 *data_ptr = (UTF16*)buffer_sp->GetBytes();
-        UTF16 *data_end_ptr = data_ptr + 256;
-        
-        while (data_ptr < data_end_ptr)
-        {
-            if (!*data_ptr)
-            {
-                data_end_ptr = data_ptr;
-                break;
-            }
-            data_ptr++;
-        }
-        
-        *data_ptr = 0;
-        data_ptr = (UTF16*)buffer_sp->GetBytes();
-        
-        lldb::DataBufferSP utf8_data_buffer_sp(new DataBufferHeap(1024,0));
-        UTF8* utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
-        UTF8* utf8_data_end_ptr = utf8_data_ptr + 1024;
-        
-        ConvertUTF16toUTF8	(	(const UTF16**)&data_ptr,
-                             data_end_ptr,
-                             &utf8_data_ptr,
-                             utf8_data_end_ptr,
-                             lenientConversion);
-        utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
-        for (;utf8_data_ptr != utf8_data_end_ptr; utf8_data_ptr++)
-        {
-            if (!*utf8_data_ptr)
-                break;
-            stream.Printf("%c",*utf8_data_ptr);
-        }
-        stream.Printf("\"");
-        return true;
-    }
-    stream.Printf("\"");
-    return true;
-}
-
 bool
 lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& stream)
 {
@@ -597,7 +686,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         if (error.Fail())
             return false;
         if (has_explicit_length and is_unicode)
-            return ReadUTFBufferAndDumpToStream (location, process_sp, stream);
+            return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream);
         else
         {
             location++;
@@ -640,12 +729,12 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             if (error.Fail())
                 return false;
         }
-        return ReadUTFBufferAndDumpToStream (location, process_sp, stream);
+        return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream);
     }
     else if (is_special)
     {
         uint64_t location = valobj_addr + (ptr_size == 8 ? 12 : 8);
-        return ReadUTFBufferAndDumpToStream (location, process_sp, stream);
+        return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream);
     }
     else if (is_inline)
     {

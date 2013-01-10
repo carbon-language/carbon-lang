@@ -40,6 +40,15 @@ namespace lldb_private {
                               const char* selector,
                               const char* key);
         
+        bool
+        Char16StringSummaryProvider (ValueObject& valobj, Stream& stream); // char16_t*
+        
+        bool
+        Char32StringSummaryProvider (ValueObject& valobj, Stream& stream); // char32_t*
+        
+        bool
+        WCharStringSummaryProvider (ValueObject& valobj, Stream& stream); // wchar_t*
+        
         template<bool name_entries>
         bool
         NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream);

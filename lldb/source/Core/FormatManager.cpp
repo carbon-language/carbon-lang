@@ -719,6 +719,63 @@ FormatManager::FormatManager() :
     EnableCategory(m_system_category_name,CategoryMap::Last);
 }
 
+static void
+AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,
+                 const char* string,
+                 ConstString type_name,
+                 TypeSummaryImpl::Flags flags)
+{
+    lldb::TypeSummaryImplSP summary_sp(new StringSummaryFormat(flags,
+                                                               string));
+    category_sp->GetSummaryNavigator()->Add(type_name,
+                                            summary_sp);
+}
+
+#ifndef LLDB_DISABLE_PYTHON
+static void
+AddScriptSummary(TypeCategoryImpl::SharedPointer category_sp,
+                 const char* funct_name,
+                 ConstString type_name,
+                 TypeSummaryImpl::Flags flags)
+{
+    
+    std::string code("     ");
+    code.append(funct_name).append("(valobj,internal_dict)");
+    
+    lldb::TypeSummaryImplSP summary_sp(new ScriptSummaryFormat(flags,
+                                                               funct_name,
+                                                               code.c_str()));
+    category_sp->GetSummaryNavigator()->Add(type_name,
+                                            summary_sp);
+}
+#endif
+
+#ifndef LLDB_DISABLE_PYTHON
+static void
+AddCXXSummary (TypeCategoryImpl::SharedPointer category_sp,
+               CXXFunctionSummaryFormat::Callback funct,
+               const char* description,
+               ConstString type_name,
+               TypeSummaryImpl::Flags flags)
+{
+    lldb::TypeSummaryImplSP summary_sp(new CXXFunctionSummaryFormat(flags,funct,description));
+    category_sp->GetSummaryNavigator()->Add(type_name,
+                                            summary_sp);
+}
+#endif
+
+#ifndef LLDB_DISABLE_PYTHON
+static void AddCXXSynthetic  (TypeCategoryImpl::SharedPointer category_sp,
+                              CXXSyntheticChildren::CreateFrontEndCallback generator,
+                              const char* description,
+                              ConstString type_name,
+                              TypeSyntheticImpl::Flags flags)
+{
+    lldb::SyntheticChildrenSP synth_sp(new CXXSyntheticChildren(flags,description,generator));
+    category_sp->GetSyntheticNavigator()->Add(type_name,synth_sp);
+}
+#endif
+
 void
 FormatManager::LoadSTLFormatters()
 {
@@ -839,14 +896,17 @@ FormatManager::LoadLibcxxFormatters()
 void
 FormatManager::LoadSystemFormatters()
 {
-    lldb::TypeSummaryImplSP string_format(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
-                                                                  .SetSkipPointers(true)
-                                                                  .SetSkipReferences(false)
-                                                                  .SetDontShowChildren(true)
-                                                                  .SetDontShowValue(false)
-                                                                  .SetShowMembersOneLiner(false)
-                                                                  .SetHideItemNames(false),
-                                                                  "${var%s}"));
+    
+    TypeSummaryImpl::Flags string_flags;
+    string_flags.SetCascades(false)
+    .SetSkipPointers(true)
+    .SetSkipReferences(false)
+    .SetDontShowChildren(true)
+    .SetDontShowValue(false)
+    .SetShowMembersOneLiner(false)
+    .SetHideItemNames(false);
+    
+    lldb::TypeSummaryImplSP string_format(new StringSummaryFormat(string_flags, "${var%s}"));
     
     
     lldb::TypeSummaryImplSP string_array_format(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
@@ -876,64 +936,14 @@ FormatManager::LoadSystemFormatters()
                                                                    "${var%O}"));
     
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("OSType"), ostype_summary);
-}
-
-static void
-AddStringSummary(TypeCategoryImpl::SharedPointer category_sp,
-                 const char* string,
-                 ConstString type_name,
-                 TypeSummaryImpl::Flags flags)
-{
-    lldb::TypeSummaryImplSP summary_sp(new StringSummaryFormat(flags,
-                                                               string));
-    category_sp->GetSummaryNavigator()->Add(type_name,
-                                            summary_sp);
-}
-
-#ifndef LLDB_DISABLE_PYTHON
-static void
-AddScriptSummary(TypeCategoryImpl::SharedPointer category_sp,
-                 const char* funct_name,
-                 ConstString type_name,
-                 TypeSummaryImpl::Flags flags)
-{
     
-    std::string code("     ");
-    code.append(funct_name).append("(valobj,internal_dict)");
+    // FIXME because of a bug in the FormatNavigator we need to add a summary for both X* and const X* (<rdar://problem/12717717>)
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::Char16StringSummaryProvider, "char16_t * summary provider", ConstString("char16_t *"), string_flags);
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::Char16StringSummaryProvider, "char16_t * summary provider", ConstString("const char16_t *"), string_flags);
     
-    lldb::TypeSummaryImplSP summary_sp(new ScriptSummaryFormat(flags,
-                                                               funct_name,
-                                                               code.c_str()));
-    category_sp->GetSummaryNavigator()->Add(type_name,
-                                            summary_sp);
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::Char32StringSummaryProvider, "char32_t * summary provider", ConstString("char32_t *"), string_flags);
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::Char32StringSummaryProvider, "char32_t * summary provider", ConstString("const char32_t *"), string_flags);
 }
-#endif
-
-#ifndef LLDB_DISABLE_PYTHON
-static void
-AddCXXSummary (TypeCategoryImpl::SharedPointer category_sp,
-               CXXFunctionSummaryFormat::Callback funct,
-               const char* description,
-               ConstString type_name,
-               TypeSummaryImpl::Flags flags)
-{
-    lldb::TypeSummaryImplSP summary_sp(new CXXFunctionSummaryFormat(flags,funct,description));
-    category_sp->GetSummaryNavigator()->Add(type_name,
-                                            summary_sp);
-}
-#endif
-
-#ifndef LLDB_DISABLE_PYTHON
-static void AddCXXSynthetic  (TypeCategoryImpl::SharedPointer category_sp,
-                              CXXSyntheticChildren::CreateFrontEndCallback generator,
-                              const char* description,
-                              ConstString type_name,
-                              TypeSyntheticImpl::Flags flags)
-{
-    lldb::SyntheticChildrenSP synth_sp(new CXXSyntheticChildren(flags,description,generator));
-    category_sp->GetSyntheticNavigator()->Add(type_name,synth_sp);
-}
-#endif
 
 void
 FormatManager::LoadObjCFormatters()
@@ -960,10 +970,10 @@ FormatManager::LoadObjCFormatters()
 #ifndef LLDB_DISABLE_PYTHON
     // we need to skip pointers here since we are special casing a SEL* when retrieving its value
     objc_flags.SetSkipPointers(true);
-    AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<false>, "SEL summary", ConstString("SEL"), objc_flags);
-    AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<false>, "SEL summary", ConstString("struct objc_selector"), objc_flags);
-    AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<false>, "SEL summary", ConstString("objc_selector"), objc_flags);
-    AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<true>, "SEL summary", ConstString("objc_selector *"), objc_flags);
+    AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<false>, "SEL summary provider", ConstString("SEL"), objc_flags);
+    AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<false>, "SEL summary provider", ConstString("struct objc_selector"), objc_flags);
+    AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<false>, "SEL summary provider", ConstString("objc_selector"), objc_flags);
+    AddCXXSummary(objc_category_sp, lldb_private::formatters::ObjCSELSummaryProvider<true>, "SEL summary provider", ConstString("objc_selector *"), objc_flags);
     
     AddScriptSummary(objc_category_sp, "lldb.formatters.objc.Class.Class_Summary", ConstString("Class"), objc_flags);
 #endif // LLDB_DISABLE_PYTHON
