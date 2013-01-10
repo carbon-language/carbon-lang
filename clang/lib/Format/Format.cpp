@@ -59,9 +59,9 @@ enum LineType {
 class AnnotatedToken {
 public:
   AnnotatedToken(const FormatToken &FormatTok)
-      : FormatTok(FormatTok), Type(TT_Unknown),
-        ClosesTemplateDeclaration(false), Parent(NULL) {
-  }
+      : FormatTok(FormatTok), Type(TT_Unknown), SpaceRequiredBefore(false),
+        CanBreakBefore(false), MustBreakBefore(false),
+        ClosesTemplateDeclaration(false), Parent(NULL) {}
 
   bool is(tok::TokenKind Kind) const {
     return FormatTok.Tok.is(Kind);
@@ -160,13 +160,13 @@ static void replacePPWhitespace(
 
 class UnwrappedLineFormatter {
 public:
-  UnwrappedLineFormatter(
-      const FormatStyle &Style, SourceManager &SourceMgr,
-      const UnwrappedLine &Line, unsigned FirstIndent,
-      LineType CurrentLineType, const AnnotatedToken &RootToken,
-      tooling::Replacements &Replaces, bool StructuralError)
+  UnwrappedLineFormatter(const FormatStyle &Style, SourceManager &SourceMgr,
+                         const UnwrappedLine &Line, unsigned FirstIndent,
+                         bool FitsOnALine, LineType CurrentLineType,
+                         const AnnotatedToken &RootToken,
+                         tooling::Replacements &Replaces, bool StructuralError)
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
-        FirstIndent(FirstIndent),
+        FirstIndent(FirstIndent), FitsOnALine(FitsOnALine),
         CurrentLineType(CurrentLineType), RootToken(RootToken),
         Replaces(Replaces) {
     Parameters.PenaltyIndentLevel = 15;
@@ -193,25 +193,6 @@ public:
 
     // The first token has already been indented and thus consumed.
     moveStateToNextToken(State);
-
-    // Check whether the UnwrappedLine can be put onto a single line. If so,
-    // this is bound to be the optimal solution (by definition) and we don't
-    // need to analyze the entire solution space.
-    unsigned Columns = State.Column;
-    bool FitsOnALine = true;
-    const AnnotatedToken *Tok = State.NextToken;
-    while (Tok != NULL) {
-      Columns += (Tok->SpaceRequiredBefore ? 1 : 0) +
-                 Tok->FormatTok.TokenLength;
-      // A special case for the colon of a constructor initializer as this only
-      // needs to be put on a new line if the line needs to be split.
-      if (Columns > Style.ColumnLimit - (Line.InPPDirective ? 1 : 0) ||
-          (Tok->MustBreakBefore && Tok->Type != TT_CtorInitializerColon)) {
-        FitsOnALine = false;
-        break;
-      }
-      Tok = Tok->Children.empty() ? NULL : &Tok->Children[0];
-    }
 
     // Start iterating at 1 as we have correctly formatted of Token #0 above.
     while (State.NextToken != NULL) {
@@ -566,6 +547,7 @@ private:
   SourceManager &SourceMgr;
   const UnwrappedLine &Line;
   const unsigned FirstIndent;
+  const bool FitsOnALine;
   const LineType CurrentLineType;
   const AnnotatedToken &RootToken;
   tooling::Replacements &Replaces;
@@ -1256,8 +1238,10 @@ private:
       unsigned Indent = formatFirstToken(Annotator.getRootToken(),
                                          TheLine.Level, TheLine.InPPDirective,
                                          PreviousEndOfLineColumn);
+      bool FitsOnALine = fitsOnALine(Annotator.getRootToken(), Indent,
+                                     TheLine.InPPDirective);
       UnwrappedLineFormatter Formatter(
-          Style, SourceMgr, TheLine, Indent,
+          Style, SourceMgr, TheLine, Indent, FitsOnALine,
           Annotator.getLineType(), Annotator.getRootToken(), Replaces,
           StructuralError);
       return Formatter.format();
@@ -1269,6 +1253,29 @@ private:
            Lex.MeasureTokenLength(Last->Tok.getLocation(), SourceMgr,
                                   Lex.getLangOpts()) -
            1;
+  }
+
+  bool fitsOnALine(const AnnotatedToken &RootToken, unsigned Indent,
+                   bool InPPDirective) {
+    // Check whether the UnwrappedLine can be put onto a single line. If so,
+    // this is bound to be the optimal solution (by definition) and we don't
+    // need to analyze the entire solution space.
+    unsigned Columns = Indent + RootToken.FormatTok.TokenLength;
+    bool FitsOnALine = true;
+    const AnnotatedToken *Tok = &RootToken;
+    while (Tok != NULL) {
+      Columns += (Tok->SpaceRequiredBefore ? 1 : 0) +
+                 Tok->FormatTok.TokenLength;
+      // A special case for the colon of a constructor initializer as this only
+      // needs to be put on a new line if the line needs to be split.
+      if (Columns > Style.ColumnLimit - (InPPDirective ? 1 : 0) ||
+          (Tok->MustBreakBefore && Tok->Type != TT_CtorInitializerColon)) {
+        FitsOnALine = false;
+        break;
+      }
+      Tok = Tok->Children.empty() ? NULL : &Tok->Children[0];
+    }
+    return FitsOnALine;
   }
 
   /// \brief Add a new line and the required indent before the first Token
