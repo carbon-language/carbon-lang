@@ -180,3 +180,43 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
   // no-warning
 } 
 @end
+
+@protocol Invalidation <NSObject>
+- (void)invalidate __attribute__((annotate("objc_instance_variable_invalidator")));
+@end
+
+@interface Foo : NSObject <Invalidation>
+@end
+
+@class FooBar;
+@protocol FooBar_Protocol <NSObject>
+@end
+
+@interface MissingInvalidationMethod : Foo <FooBar_Protocol>
+@property (assign) MissingInvalidationMethod *foobar15_warn; // expected-warning {{No invalidation method defined in the @implementation for MissingInvalidationMethod; Property foobar15_warn needs to be invalidated}}
+@end
+@implementation MissingInvalidationMethod
+@end
+
+@interface MissingInvalidationMethod2 : Foo <FooBar_Protocol> {
+  Foo *Ivar1;// expected-warning {{No invalidation method defined in the @implementation for MissingInvalidationMethod2; Instance variable Ivar1 needs to be invalidated}}
+}
+@end
+@implementation MissingInvalidationMethod2
+@end
+
+@interface MissingInvalidationMethodDecl : NSObject {
+  Foo *Ivar1;// expected-warning {{No invalidation method declared in the @interface for MissingInvalidationMethodDecl; Instance variable Ivar1 needs to be invalidated}}
+}
+@end
+@implementation MissingInvalidationMethodDecl
+@end
+
+@interface MissingInvalidationMethodDecl2 : NSObject {
+@private
+    Foo *_foo1;
+}
+@property (strong) Foo *bar1; // expected-warning {{No invalidation method declared in the @interface for MissingInvalidationMethodDecl2; Property bar1 needs to be invalidated}} 
+@end
+@implementation MissingInvalidationMethodDecl2
+@end
