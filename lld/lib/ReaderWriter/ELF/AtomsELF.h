@@ -283,6 +283,9 @@ public:
           || _symbol->st_shndx == llvm::ELF::SHN_COMMON)
         ret = typeZeroFill;
       break;
+    case llvm::ELF::SHT_INIT_ARRAY:
+      ret = typeData;
+      break;
     }
 
     return ret;
@@ -354,6 +357,9 @@ public:
       }
 
     case llvm::ELF::SHT_NOBITS:
+      return permRW_;
+
+    case llvm::ELF::SHT_INIT_ARRAY:
       return permRW_;
 
     default:

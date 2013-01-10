@@ -1457,6 +1457,8 @@ public:
     ORDER_EH_FRAMEHDR,
     ORDER_CTORS,
     ORDER_DTORS,
+    ORDER_INIT_ARRAY,
+    ORDER_FINI_ARRAY,
     ORDER_DYNAMIC,
     ORDER_GOT,
     ORDER_GOT_PLT,
@@ -1565,7 +1567,9 @@ public:
       return ORDER_RODATA;
 
     case DefinedAtom::typeData:
-      return ORDER_DATA;
+      return llvm::StringSwitch<Reference::Kind>(name)
+        .StartsWith(".init_array", ORDER_INIT_ARRAY)
+        .Default(ORDER_DATA);
 
     case DefinedAtom::typeZeroFill:
       return ORDER_BSS;
@@ -1624,6 +1628,8 @@ public:
     case ORDER_GOT_PLT:
     case ORDER_DATA:
     case ORDER_BSS:
+    case ORDER_INIT_ARRAY:
+    case ORDER_FINI_ARRAY:
       return llvm::ELF::PT_LOAD;
 
     default:
@@ -1654,6 +1660,8 @@ public:
     case ORDER_GOT:
     case ORDER_GOT_PLT:
     case ORDER_DATA:
+    case ORDER_INIT_ARRAY:
+    case ORDER_FINI_ARRAY:
     case ORDER_BSS:
       return true;
 
@@ -1706,6 +1714,25 @@ public:
     else 
       llvm_unreachable("Only absolute / defined atoms can be added here");
     return error_code::success();
+  }
+
+  /// \biref Find an output Section given a section name.
+  ///
+  /// \todo Make this not O(n). We can't use _mergedSectionMap because it
+  /// doesn't get virtual addresses set :(
+  Chunk<target_endianness, max_align, is64Bits> *
+  findOutputSection(StringRef name) {
+    for (auto seg : _segments) {
+      for (auto sliceI = seg->slices_begin(),
+                sliceE = seg->slices_end(); sliceI != sliceE; ++sliceI) {
+        for (auto secI = (*sliceI)->sections_begin(),
+                  secE = (*sliceI)->sections_end(); secI != secE; ++secI) {
+          if ((*secI)->name() == name)
+            return *secI;
+        }
+      }
+    }
+    return nullptr;
   }
 
   /// \brief find a absolute atom given a name
@@ -2211,6 +2238,8 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
   _runtimeFile.addAbsoluteAtom("__bss_end");
   _runtimeFile.addAbsoluteAtom("_end");
   _runtimeFile.addAbsoluteAtom("end");
+  _runtimeFile.addAbsoluteAtom("__init_array_start");
+  _runtimeFile.addAbsoluteAtom("__init_array_end");
 }
 
 /// \brief Hook in lld to add CRuntime file 
@@ -2234,6 +2263,18 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
  auto bssEndAtomIter = _layout->findAbsoluteAtom("__bss_end");
  auto underScoreEndAtomIter = _layout->findAbsoluteAtom("_end");
  auto endAtomIter = _layout->findAbsoluteAtom("end");
+ auto initArrayStartIter = _layout->findAbsoluteAtom("__init_array_start");
+ auto initArrayEndIter = _layout->findAbsoluteAtom("__init_array_end");
+
+ auto section = _layout->findOutputSection(".init_array");
+ if (section) {
+   initArrayStartIter->setValue(section->virtualAddr());
+   initArrayEndIter->setValue(section->virtualAddr() +
+                              section->memSize());
+ } else {
+   initArrayStartIter->setValue(0);
+   initArrayEndIter->setValue(0);
+ }
 
  assert(!(bssStartAtomIter == _layout->absAtomsEnd() ||
          bssEndAtomIter == _layout->absAtomsEnd() ||
