@@ -26,7 +26,7 @@ using namespace llvm;
 
 namespace llvm {
 struct SubClassReference {
-  SMLoc RefLoc;
+  SMRange RefRange;
   Record *Rec;
   std::vector<Init*> TemplateArgs;
   SubClassReference() : Rec(0) {}
@@ -35,7 +35,7 @@ struct SubClassReference {
 };
 
 struct SubMultiClassReference {
-  SMLoc RefLoc;
+  SMRange RefRange;
   MultiClass *MC;
   std::vector<Init*> TemplateArgs;
   SubMultiClassReference() : MC(0) {}
@@ -150,22 +150,23 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
   // Add all of the values in the subclass into the current class.
   const std::vector<RecordVal> &Vals = SC->getValues();
   for (unsigned i = 0, e = Vals.size(); i != e; ++i)
-    if (AddValue(CurRec, SubClass.RefLoc, Vals[i]))
+    if (AddValue(CurRec, SubClass.RefRange.Start, Vals[i]))
       return true;
 
   const std::vector<Init *> &TArgs = SC->getTemplateArgs();
 
   // Ensure that an appropriate number of template arguments are specified.
   if (TArgs.size() < SubClass.TemplateArgs.size())
-    return Error(SubClass.RefLoc, "More template args specified than expected");
+    return Error(SubClass.RefRange.Start,
+                 "More template args specified than expected");
 
   // Loop over all of the template arguments, setting them to the specified
   // value or leaving them as the default if necessary.
   for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
     if (i < SubClass.TemplateArgs.size()) {
       // If a value is specified for this template arg, set it now.
-      if (SetValue(CurRec, SubClass.RefLoc, TArgs[i], std::vector<unsigned>(),
-                   SubClass.TemplateArgs[i]))
+      if (SetValue(CurRec, SubClass.RefRange.Start, TArgs[i],
+                   std::vector<unsigned>(), SubClass.TemplateArgs[i]))
         return true;
 
       // Resolve it next.
@@ -175,7 +176,8 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
       CurRec->removeValue(TArgs[i]);
 
     } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
-      return Error(SubClass.RefLoc,"Value not specified for template argument #"
+      return Error(SubClass.RefRange.Start,
+                   "Value not specified for template argument #"
                    + utostr(i) + " (" + TArgs[i]->getAsUnquotedString()
                    + ") of subclass '" + SC->getNameInitAsString() + "'!");
     }
@@ -184,17 +186,18 @@ bool TGParser::AddSubClass(Record *CurRec, SubClassReference &SubClass) {
   // Since everything went well, we can now set the "superclass" list for the
   // current record.
   const std::vector<Record*> &SCs = SC->getSuperClasses();
+  ArrayRef<SMRange> SCRanges = SC->getSuperClassRanges();
   for (unsigned i = 0, e = SCs.size(); i != e; ++i) {
     if (CurRec->isSubClassOf(SCs[i]))
-      return Error(SubClass.RefLoc,
+      return Error(SubClass.RefRange.Start,
                    "Already subclass of '" + SCs[i]->getName() + "'!\n");
-    CurRec->addSuperClass(SCs[i]);
+    CurRec->addSuperClass(SCs[i], SCRanges[i]);
   }
 
   if (CurRec->isSubClassOf(SC))
-    return Error(SubClass.RefLoc,
+    return Error(SubClass.RefRange.Start,
                  "Already subclass of '" + SC->getName() + "'!\n");
-  CurRec->addSuperClass(SC);
+  CurRec->addSuperClass(SC, SubClass.RefRange);
   return false;
 }
 
@@ -211,7 +214,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
   // Add all of the values in the subclass into the current class.
   const std::vector<RecordVal> &SMCVals = SMC->Rec.getValues();
   for (unsigned i = 0, e = SMCVals.size(); i != e; ++i)
-    if (AddValue(CurRec, SubMultiClass.RefLoc, SMCVals[i]))
+    if (AddValue(CurRec, SubMultiClass.RefRange.Start, SMCVals[i]))
       return true;
 
   int newDefStart = CurMC->DefPrototypes.size();
@@ -226,7 +229,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
 
     // Add all of the values in the superclass into the current def.
     for (unsigned i = 0, e = MCVals.size(); i != e; ++i)
-      if (AddValue(NewDef, SubMultiClass.RefLoc, MCVals[i]))
+      if (AddValue(NewDef, SubMultiClass.RefRange.Start, MCVals[i]))
         return true;
 
     CurMC->DefPrototypes.push_back(NewDef);
@@ -237,7 +240,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
   // Ensure that an appropriate number of template arguments are
   // specified.
   if (SMCTArgs.size() < SubMultiClass.TemplateArgs.size())
-    return Error(SubMultiClass.RefLoc,
+    return Error(SubMultiClass.RefRange.Start,
                  "More template args specified than expected");
 
   // Loop over all of the template arguments, setting them to the specified
@@ -246,7 +249,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
     if (i < SubMultiClass.TemplateArgs.size()) {
       // If a value is specified for this template arg, set it in the
       // superclass now.
-      if (SetValue(CurRec, SubMultiClass.RefLoc, SMCTArgs[i],
+      if (SetValue(CurRec, SubMultiClass.RefRange.Start, SMCTArgs[i],
                    std::vector<unsigned>(),
                    SubMultiClass.TemplateArgs[i]))
         return true;
@@ -266,7 +269,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
            ++j) {
         Record *Def = *j;
 
-        if (SetValue(Def, SubMultiClass.RefLoc, SMCTArgs[i],
+        if (SetValue(Def, SubMultiClass.RefRange.Start, SMCTArgs[i],
                      std::vector<unsigned>(),
                      SubMultiClass.TemplateArgs[i]))
           return true;
@@ -278,7 +281,7 @@ bool TGParser::AddSubMultiClass(MultiClass *CurMC,
         Def->removeValue(SMCTArgs[i]);
       }
     } else if (!CurRec->getValue(SMCTArgs[i])->getValue()->isComplete()) {
-      return Error(SubMultiClass.RefLoc,
+      return Error(SubMultiClass.RefRange.Start,
                    "Value not specified for template argument #"
                    + utostr(i) + " (" + SMCTArgs[i]->getAsUnquotedString()
                    + ") of subclass '" + SMC->Rec.getNameInitAsString() + "'!");
@@ -464,7 +467,7 @@ MultiClass *TGParser::ParseMultiClassID() {
 SubClassReference TGParser::
 ParseSubClassReference(Record *CurRec, bool isDefm) {
   SubClassReference Result;
-  Result.RefLoc = Lex.getLoc();
+  Result.RefRange.Start = Lex.getLoc();
 
   if (isDefm) {
     if (MultiClass *MC = ParseMultiClassID())
@@ -475,8 +478,10 @@ ParseSubClassReference(Record *CurRec, bool isDefm) {
   if (Result.Rec == 0) return Result;
 
   // If there is no template arg list, we're done.
-  if (Lex.getCode() != tgtok::less)
+  if (Lex.getCode() != tgtok::less) {
+    Result.RefRange.End = Lex.getLoc();
     return Result;
+  }
   Lex.Lex();  // Eat the '<'
 
   if (Lex.getCode() == tgtok::greater) {
@@ -497,6 +502,7 @@ ParseSubClassReference(Record *CurRec, bool isDefm) {
     return Result;
   }
   Lex.Lex();
+  Result.RefRange.End = Lex.getLoc();
 
   return Result;
 }
@@ -511,14 +517,16 @@ ParseSubClassReference(Record *CurRec, bool isDefm) {
 SubMultiClassReference TGParser::
 ParseSubMultiClassReference(MultiClass *CurMC) {
   SubMultiClassReference Result;
-  Result.RefLoc = Lex.getLoc();
+  Result.RefRange.Start = Lex.getLoc();
 
   Result.MC = ParseMultiClassID();
   if (Result.MC == 0) return Result;
 
   // If there is no template arg list, we're done.
-  if (Lex.getCode() != tgtok::less)
+  if (Lex.getCode() != tgtok::less) {
+    Result.RefRange.End = Lex.getLoc();
     return Result;
+  }
   Lex.Lex();  // Eat the '<'
 
   if (Lex.getCode() == tgtok::greater) {
@@ -539,6 +547,7 @@ ParseSubMultiClassReference(MultiClass *CurMC) {
     return Result;
   }
   Lex.Lex();
+  Result.RefRange.End = Lex.getLoc();
 
   return Result;
 }
@@ -1199,6 +1208,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
       return 0;
     }
     Lex.Lex();  // eat the '>'
+    SMLoc EndLoc = Lex.getLoc();
 
     // Create the new record, set it as CurRec temporarily.
     static unsigned AnonCounter = 0;
@@ -1207,7 +1217,7 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
                                 Records,
                                 /*IsAnonymous=*/true);
     SubClassReference SCRef;
-    SCRef.RefLoc = NameLoc;
+    SCRef.RefRange = SMRange(NameLoc, EndLoc);
     SCRef.Rec = Class;
     SCRef.TemplateArgs = ValueList;
     // Add info about the subclass to NewRec.
@@ -2246,7 +2256,7 @@ Record *TGParser::
 InstantiateMulticlassDef(MultiClass &MC,
                          Record *DefProto,
                          Init *DefmPrefix,
-                         SMLoc DefmPrefixLoc) {
+                         SMRange DefmPrefixRange) {
   // We need to preserve DefProto so it can be reused for later
   // instantiations, so create a new Record to inherit from it.
 
@@ -2276,21 +2286,21 @@ InstantiateMulticlassDef(MultiClass &MC,
   }
 
   // Make a trail of SMLocs from the multiclass instantiations.
-  SmallVector<SMLoc, 4> Locs(1, DefmPrefixLoc);
+  SmallVector<SMLoc, 4> Locs(1, DefmPrefixRange.Start);
   Locs.append(DefProto->getLoc().begin(), DefProto->getLoc().end());
   Record *CurRec = new Record(DefName, Locs, Records, IsAnonymous);
 
   SubClassReference Ref;
-  Ref.RefLoc = DefmPrefixLoc;
+  Ref.RefRange = DefmPrefixRange;
   Ref.Rec = DefProto;
   AddSubClass(CurRec, Ref);
 
   // Set the value for NAME. We don't resolve references to it 'til later,
   // though, so that uses in nested multiclass names don't get
   // confused.
-  if (SetValue(CurRec, Ref.RefLoc, "NAME", std::vector<unsigned>(),
+  if (SetValue(CurRec, Ref.RefRange.Start, "NAME", std::vector<unsigned>(),
                DefmPrefix)) {
-    Error(DefmPrefixLoc, "Could not resolve "
+    Error(DefmPrefixRange.Start, "Could not resolve "
           + CurRec->getNameInitAsString() + ":NAME to '"
           + DefmPrefix->getAsUnquotedString() + "'");
     return 0;
@@ -2321,7 +2331,7 @@ InstantiateMulticlassDef(MultiClass &MC,
 
     // Ensure redefinition doesn't happen.
     if (Records.getDef(CurRec->getNameInitAsString())) {
-      Error(DefmPrefixLoc, "def '" + CurRec->getNameInitAsString() + 
+      Error(DefmPrefixRange.Start, "def '" + CurRec->getNameInitAsString() +
             "' already defined, instantiating defm with subdef '" + 
             DefProto->getNameInitAsString() + "'");
       return 0;
@@ -2407,14 +2417,14 @@ bool TGParser::ResolveMulticlassDef(MultiClass &MC,
 ///
 bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
   assert(Lex.getCode() == tgtok::Defm && "Unexpected token!");
-
+  SMLoc DefmLoc = Lex.getLoc();
   Init *DefmPrefix = 0;
 
   if (Lex.Lex() == tgtok::Id) {  // eat the defm.
     DefmPrefix = ParseObjectName(CurMultiClass);
   }
 
-  SMLoc DefmPrefixLoc = Lex.getLoc();
+  SMLoc DefmPrefixEndLoc = Lex.getLoc();
   if (Lex.getCode() != tgtok::colon)
     return TokError("expected ':' after defm identifier");
 
@@ -2450,15 +2460,17 @@ bool TGParser::ParseDefm(MultiClass *CurMultiClass) {
     for (unsigned i = 0, e = MC->DefPrototypes.size(); i != e; ++i) {
       Record *DefProto = MC->DefPrototypes[i];
 
-      Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefix, DefmPrefixLoc);
+      Record *CurRec = InstantiateMulticlassDef(*MC, DefProto, DefmPrefix,
+                                                SMRange(DefmLoc,
+                                                        DefmPrefixEndLoc));
       if (!CurRec)
         return true;
 
-      if (ResolveMulticlassDefArgs(*MC, CurRec, DefmPrefixLoc, SubClassLoc,
+      if (ResolveMulticlassDefArgs(*MC, CurRec, DefmLoc, SubClassLoc,
                                    TArgs, TemplateVals, true/*Delete args*/))
         return Error(SubClassLoc, "could not instantiate def");
 
-      if (ResolveMulticlassDef(*MC, CurRec, DefProto, DefmPrefixLoc))
+      if (ResolveMulticlassDef(*MC, CurRec, DefProto, DefmLoc))
         return Error(SubClassLoc, "could not instantiate def");
 
       NewRecDefs.push_back(CurRec);

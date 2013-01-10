@@ -134,7 +134,7 @@ private:  // Parser methods.
   Record *InstantiateMulticlassDef(MultiClass &MC,
                                    Record *DefProto,
                                    Init *DefmPrefix,
-                                   SMLoc DefmPrefixLoc);
+                                   SMRange DefmPrefixRange);
   bool ResolveMulticlassDefArgs(MultiClass &MC,
                                 Record *DefProto,
                                 SMLoc DefmPrefixLoc,

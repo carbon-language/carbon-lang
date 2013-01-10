@@ -1387,7 +1387,8 @@ class Record {
   SmallVector<SMLoc, 4> Locs;
   std::vector<Init *> TemplateArgs;
   std::vector<RecordVal> Values;
-  std::vector<Record*> SuperClasses;
+  std::vector<Record *> SuperClasses;
+  std::vector<SMRange> SuperClassRanges;
 
   // Tracks Record instances. Not owned by Record.
   RecordKeeper &TrackedRecords;
@@ -1419,8 +1420,8 @@ public:
   Record(const Record &O) :
     ID(LastID++), Name(O.Name), Locs(O.Locs), TemplateArgs(O.TemplateArgs),
     Values(O.Values), SuperClasses(O.SuperClasses),
-    TrackedRecords(O.TrackedRecords), TheInit(O.TheInit),
-    IsAnonymous(O.IsAnonymous) { }
+    SuperClassRanges(O.SuperClassRanges), TrackedRecords(O.TrackedRecords),
+    TheInit(O.TheInit), IsAnonymous(O.IsAnonymous) { }
 
   ~Record() {}
 
@@ -1451,6 +1452,7 @@ public:
   }
   const std::vector<RecordVal> &getValues() const { return Values; }
   const std::vector<Record*>   &getSuperClasses() const { return SuperClasses; }
+  ArrayRef<SMRange> getSuperClassRanges() const { return SuperClassRanges; }
 
   bool isTemplateArg(Init *Name) const {
     for (unsigned i = 0, e = TemplateArgs.size(); i != e; ++i)
@@ -1525,9 +1527,10 @@ public:
     return false;
   }
 
-  void addSuperClass(Record *R) {
+  void addSuperClass(Record *R, SMRange Range) {
     assert(!isSubClassOf(R) && "Already subclassing record!");
     SuperClasses.push_back(R);
+    SuperClassRanges.push_back(Range);
   }
 
   /// resolveReferences - If there are any field references that refer to fields
