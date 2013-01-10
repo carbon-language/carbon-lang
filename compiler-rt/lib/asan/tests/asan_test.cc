@@ -1774,28 +1774,30 @@ TEST(AddressSanitizer, DISABLED_MallocFreeUnwindAndSymbolizeTest) {
                "malloc_fff.*malloc_eee.*malloc_ddd");
 }
 
-static void TryToSetThreadName(const char *name) {
-#ifdef __linux__
-  prctl(PR_SET_NAME, (unsigned long)name, 0, 0, 0);
+static bool TryToSetThreadName(const char *name) {
+#if defined(__linux__) && defined(PR_SET_NAME)
+  return 0 == prctl(PR_SET_NAME, (unsigned long)name, 0, 0, 0);
+#else
+  return false;
 #endif
 }
 
 void *ThreadedTestAlloc(void *a) {
-  TryToSetThreadName("AllocThr");
+  EXPECT_EQ(true, TryToSetThreadName("AllocThr"));
   int **p = (int**)a;
   *p = new int;
   return 0;
 }
 
 void *ThreadedTestFree(void *a) {
-  TryToSetThreadName("FreeThr");
+  EXPECT_EQ(true, TryToSetThreadName("FreeThr"));
   int **p = (int**)a;
   delete *p;
   return 0;
 }
 
 void *ThreadedTestUse(void *a) {
-  TryToSetThreadName("UseThr");
+  EXPECT_EQ(true, TryToSetThreadName("UseThr"));
   int **p = (int**)a;
   **p = 1;
   return 0;
@@ -1820,20 +1822,29 @@ TEST(AddressSanitizer, ThreadedTest) {
                ".*Thread T.*created");
 }
 
-#ifdef __linux__
-TEST(AddressSanitizer, ThreadNamesTest) {
-  // ThreadedTestSpawn();
+void *ThreadedTestFunc(void *unused) {
+  // Check if prctl(PR_SET_NAME) is supported. Return if not.
+  if (!TryToSetThreadName("TestFunc"))
+    return 0;
   EXPECT_DEATH(ThreadedTestSpawn(),
                ASAN_PCRE_DOTALL
                "WRITE .*thread T. .UseThr."
                ".*freed by thread T. .FreeThr. here:"
                ".*previously allocated by thread T. .AllocThr. here:"
-               ".*Thread T. .UseThr. created by T. here:"
-               ".*Thread T. .FreeThr. created by T. here:"
-               ".*Thread T. .AllocThr. created by T. here:"
+               ".*Thread T. .UseThr. created by T.*TestFunc"
+               ".*Thread T. .FreeThr. created by T"
+               ".*Thread T. .AllocThr. created by T"
                "");
+  return 0;
 }
-#endif
+
+TEST(AddressSanitizer, ThreadNamesTest) {
+  // Run ThreadedTestFunc in a separate thread because it tries to set a
+  // thread name and we don't want to change the main thread's name.
+  pthread_t t;
+  PTHREAD_CREATE(&t, 0, ThreadedTestFunc, 0);
+  PTHREAD_JOIN(t, 0);
+}
 
 #if ASAN_NEEDS_SEGV
 TEST(AddressSanitizer, ShadowGapTest) {
