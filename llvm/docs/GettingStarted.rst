@@ -467,6 +467,8 @@ The files are as follows, with *x.y* marking the version number:
 
   Binary release of the llvm-gcc-4.2 front end for a specific platform.
 
+.. _checkout:
+
 Checkout LLVM from Subversion
 -----------------------------
 
