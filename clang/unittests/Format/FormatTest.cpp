@@ -1178,10 +1178,18 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
           "outRange8:(NSRange) out_range8  outRange9:(NSRange) out_range9;"));
 
   verifyFormat("- (int)sum:(vector<int>)numbers;");
-  verifyGoogleFormat("- (void)setDelegate:(id<Protocol>)delegate;");
+  verifyGoogleFormat("-(void) setDelegate:(id<Protocol>)delegate;");
   // FIXME: In LLVM style, there should be a space in front of a '<' for ObjC
   // protocol lists (but not for template classes):
   //verifyFormat("- (void)setDelegate:(id <Protocol>)delegate;");
+
+  verifyFormat("- (int(*)())foo:(int(*)())f;");
+  verifyGoogleFormat("-(int(*)()) foo:(int(*)())foo;");
+
+  // If there's no return type (very rare in practice!), LLVM and Google style
+  // agree.
+  verifyFormat("- foo:(int)f;");
+  verifyGoogleFormat("- foo:(int)foo;");
 }
 
 TEST_F(FormatTest, FormatObjCBlocks) {
@@ -1191,7 +1199,6 @@ TEST_F(FormatTest, FormatObjCBlocks) {
 
 TEST_F(FormatTest, FormatObjCInterface) {
   // FIXME: Handle comments like in "@interface /* wait for it */ Foo", PR14875
-  // FIXME: In google style, it's "+(id) init", not "+ (id)init".
   verifyFormat("@interface Foo : NSObject <NSSomeDelegate> {\n"
                "@public\n"
                "  int field1;\n"
@@ -1215,7 +1222,7 @@ TEST_F(FormatTest, FormatObjCInterface) {
                      " @package\n"
                      "  int field4;\n"
                      "}\n"
-                     "+ (id)init;\n"
+                     "+(id) init;\n"
                      "@end");
 
   verifyFormat("@interface Foo\n"
@@ -1238,7 +1245,7 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "@end");
 
   verifyGoogleFormat("@interface Foo : Bar<Baz, Quux>\n"
-                     "+ (id)init;\n"
+                     "+(id) init;\n"
                      "@end");
 
   verifyFormat("@interface Foo (HackStuff)\n"
@@ -1254,7 +1261,7 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "@end");
 
   verifyGoogleFormat("@interface Foo (HackStuff)<MyProtocol>\n"
-                     "+ (id)init;\n"
+                     "+(id) init;\n"
                      "@end");
 
   verifyFormat("@interface Foo {\n"
@@ -1318,7 +1325,7 @@ TEST_F(FormatTest, FormatObjCImplementation) {
                      " @package\n"
                      "  int field4;\n"
                      "}\n"
-                     "+ (id)init {}\n"
+                     "+(id) init {}\n"
                      "@end");
 
   verifyFormat("@implementation Foo\n"
@@ -1369,7 +1376,7 @@ TEST_F(FormatTest, FormatObjCProtocol) {
                "@end");
 
   verifyGoogleFormat("@protocol MyProtocol<NSObject>\n"
-                     "- (NSUInteger)numberOfThings;\n"
+                     "-(NSUInteger) numberOfThings;\n"
                      "@end");
 
   verifyFormat("@protocol Foo;\n"

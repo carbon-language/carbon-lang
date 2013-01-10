@@ -39,6 +39,7 @@ enum TokenType {
   TT_ObjCBlockLParen,
   TT_ObjCDecl,
   TT_ObjCMethodSpecifier,
+  TT_ObjCSelectorStart,
   TT_ObjCProperty,
   TT_OverloadedOperator,
   TT_PointerOrReference,
@@ -107,6 +108,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
+  LLVMStyle.ObjCSpaceBeforeReturnType = true;
   return LLVMStyle;
 }
 
@@ -120,6 +122,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
+  GoogleStyle.ObjCSpaceBeforeReturnType = false;
   return GoogleStyle;
 }
 
@@ -680,14 +683,26 @@ public:
       AnnotatedToken *Tok = CurrentToken;
       next();
       switch (Tok->FormatTok.Tok.getKind()) {
-      case tok::l_paren:
+      case tok::plus:
+      case tok::minus:
+        // At the start of the line, +/- specific ObjectiveC method
+        // declarations.
+        if (Tok->Parent == NULL)
+          Tok->Type = TT_ObjCMethodSpecifier;
+        break;
+      case tok::l_paren: {
+        bool ParensWereObjCReturnType =
+            Tok->Parent && Tok->Parent->Type == TT_ObjCMethodSpecifier;
         if (!parseParens())
           return false;
         if (CurrentToken != NULL && CurrentToken->is(tok::colon)) {
           CurrentToken->Type = TT_CtorInitializerColon;
           next();
+        } else if (CurrentToken != NULL && ParensWereObjCReturnType) {
+          CurrentToken->Type = TT_ObjCSelectorStart;
+          next();
         }
-        break;
+      } break;
       case tok::l_square:
         if (!parseSquare())
           return false;
@@ -948,10 +963,6 @@ private:
   }
 
   TokenType determinePlusMinusCaretUsage(const AnnotatedToken &Tok) {
-    // At the start of the line, +/- specific ObjectiveC method declarations.
-    if (Tok.Parent == NULL)
-      return TT_ObjCMethodSpecifier;
-
     // Use heuristics to recognize unary operators.
     if (Tok.Parent->is(tok::equal) || Tok.Parent->is(tok::l_paren) ||
         Tok.Parent->is(tok::comma) || Tok.Parent->is(tok::l_square) ||
@@ -1044,7 +1055,9 @@ private:
       if (Tok.is(tok::colon))
         return false;
       if (Tok.Parent->Type == TT_ObjCMethodSpecifier)
-        return true;
+        return Style.ObjCSpaceBeforeReturnType || Tok.isNot(tok::l_paren);
+      if (Tok.Type == TT_ObjCSelectorStart)
+        return !Style.ObjCSpaceBeforeReturnType;
       if (Tok.Parent->is(tok::r_paren) && Tok.is(tok::identifier))
         // Don't space between ')' and <id>
         return false;
