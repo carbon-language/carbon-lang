@@ -1347,6 +1347,8 @@ TEST_F(FormatTest, FormatObjCProtocol) {
                "- (void)optional;\n"
                "@required\n"
                "- (void)required;\n"
+               "@optional\n"
+               "@property(assign) int madProp;\n"
                "@end\n");
 }
 

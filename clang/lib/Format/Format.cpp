@@ -812,10 +812,6 @@ public:
           TT_LineComment || (Current.is(tok::string_literal) &&
                              Current.Parent->is(tok::string_literal))) {
         Current.MustBreakBefore = true;
-      } else if (Current.is(tok::at) && Current.Parent->Parent->is(tok::at)) {
-        // Don't put two objc's '@' on the same line. This could happen,
-        // as in, @optional @property ...
-        Current.MustBreakBefore = true;
       } else {
         Current.MustBreakBefore = false;
       }
