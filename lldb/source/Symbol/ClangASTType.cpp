@@ -58,6 +58,7 @@ ClangASTType::GetTypeNameForQualType (clang::ASTContext *ast, clang::QualType qu
     
     clang::PrintingPolicy printing_policy (ast->getPrintingPolicy());
     printing_policy.SuppressTagKeyword = true;
+    printing_policy.LangOpts.WChar = true;
     const clang::TypedefType *typedef_type = qual_type->getAs<clang::TypedefType>();
     if (typedef_type)
     {

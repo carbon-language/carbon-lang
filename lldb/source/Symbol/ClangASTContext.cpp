@@ -266,6 +266,8 @@ ParseLangArgs
     Opts.GNUInline = !Std.isC99();
     Opts.HexFloats = Std.hasHexFloats();
     Opts.ImplicitInt = Std.hasImplicitInt();
+    
+    Opts.WChar = true;
 
     // OpenCL has some additional defaults.
     if (LangStd == LangStandard::lang_opencl) {
