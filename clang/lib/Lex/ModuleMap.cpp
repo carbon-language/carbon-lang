@@ -397,10 +397,22 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   // If the framework has a parent path from which we're allowed to infer
   // a framework module, do so.
   if (!Parent) {
+    // Determine whether we're allowed to infer a module map.
+    StringRef FrameworkDirName = FrameworkDir->getName();
+#ifdef LLVM_ON_UNIX
+    // Note: as an egregious but useful hack we use the real path here, because
+    // we might be looking at an embedded framework that symlinks out to a
+    // top-level framework, and we need to infer as if we were naming the
+    // top-level framework.
+    char RealFrameworkDirName[PATH_MAX];
+    if (realpath(FrameworkDir->getName(), RealFrameworkDirName))
+      FrameworkDirName = RealFrameworkDirName;
+#endif
+
     bool canInfer = false;
-    if (llvm::sys::path::has_parent_path(FrameworkDir->getName())) {
+    if (llvm::sys::path::has_parent_path(FrameworkDirName)) {
       // Figure out the parent path.
-      StringRef Parent = llvm::sys::path::parent_path(FrameworkDir->getName());
+      StringRef Parent = llvm::sys::path::parent_path(FrameworkDirName);
       if (const DirectoryEntry *ParentDir = FileMgr.getDirectory(Parent)) {
         // Check whether we have already looked into the parent directory
         // for a module map.
@@ -424,7 +436,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
         if (inferred->second.InferModules) {
           // We're allowed to infer for this directory, but make sure it's okay
           // to infer this particular module.
-          StringRef Name = llvm::sys::path::filename(FrameworkDir->getName());
+          StringRef Name = llvm::sys::path::stem(FrameworkDirName);
           canInfer = std::find(inferred->second.ExcludedModules.begin(),
                                inferred->second.ExcludedModules.end(),
                                Name) == inferred->second.ExcludedModules.end();
@@ -1692,11 +1704,16 @@ bool ModuleMapParser::parseModuleMapFile() {
 }
 
 bool ModuleMap::parseModuleMapFile(const FileEntry *File) {
+  llvm::DenseMap<const FileEntry *, bool>::iterator Known
+    = ParsedModuleMap.find(File);
+  if (Known != ParsedModuleMap.end())
+    return Known->second;
+
   assert(Target != 0 && "Missing target information");
   FileID ID = SourceMgr->createFileID(File, SourceLocation(), SrcMgr::C_User);
   const llvm::MemoryBuffer *Buffer = SourceMgr->getBuffer(ID);
   if (!Buffer)
-    return true;
+    return ParsedModuleMap[File] = true;
   
   // Parse this module map file.
   Lexer L(ID, SourceMgr->getBuffer(ID), *SourceMgr, MMapLangOpts);
@@ -1705,6 +1722,6 @@ bool ModuleMap::parseModuleMapFile(const FileEntry *File) {
                          BuiltinIncludeDir);
   bool Result = Parser.parseModuleMapFile();
   Diags->getClient()->EndSourceFile();
-  
+  ParsedModuleMap[File] = Result;
   return Result;
 }

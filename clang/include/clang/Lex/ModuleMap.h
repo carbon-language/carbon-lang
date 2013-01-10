@@ -111,6 +111,10 @@ class ModuleMap {
   /// framework modules from within those directories.
   llvm::DenseMap<const DirectoryEntry *, InferredDirectory> InferredDirectories;
 
+  /// \brief Describes whether we haved parsed a particular file as a module
+  /// map.
+  llvm::DenseMap<const FileEntry *, bool> ParsedModuleMap;
+
   friend class ModuleMapParser;
   
   /// \brief Resolve the given export declaration into an actual export
