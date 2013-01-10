@@ -958,7 +958,9 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
 
   StringRef FloatABI = getMipsFloatABI(D, Args);
 
-  if (FloatABI == "soft") {
+  bool IsMips16 = Args.getLastArg(options::OPT_mips16) != NULL;
+
+  if (FloatABI == "soft" || (FloatABI == "hard" && IsMips16)) {
     // Floating point operations and argument passing are soft.
     CmdArgs.push_back("-msoft-float");
     CmdArgs.push_back("-mfloat-abi");
@@ -969,6 +971,11 @@ void Clang::AddMIPSTargetArgs(const ArgList &Args,
     // Now it is the only method.
     CmdArgs.push_back("-target-feature");
     CmdArgs.push_back("+soft-float");
+
+    if (FloatABI == "hard" && IsMips16) {
+      CmdArgs.push_back("-mllvm");
+      CmdArgs.push_back("-mips16-hard-float");
+    }
   }
   else if (FloatABI == "single") {
     // Restrict the use of hardware floating-point
