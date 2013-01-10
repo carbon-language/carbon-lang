@@ -19,6 +19,11 @@
 #include "UnwrappedLineParser.h"
 #include "llvm/Support/raw_ostream.h"
 
+// Uncomment to get debug output from the UnwrappedLineParser.
+// Use in combination with --gtest_filter=*TestName* to limit the output to a
+// single test.
+// #define UNWRAPPED_LINE_PARSER_DEBUG_OUTPUT
+
 namespace clang {
 namespace format {
 
@@ -80,6 +85,9 @@ UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
 }
 
 bool UnwrappedLineParser::parse() {
+#ifdef UNWRAPPED_LINE_PARSER_DEBUG_OUTPUT
+  llvm::errs() << "----\n";
+#endif
   readToken();
   return parseFile();
 }
@@ -576,6 +584,15 @@ void UnwrappedLineParser::addUnwrappedLine() {
          FormatTok.Tok.is(tok::comment)) {
     nextToken();
   }
+#ifdef UNWRAPPED_LINE_PARSER_DEBUG_OUTPUT
+  FormatToken* NextToken = &Line->RootToken;
+  llvm::errs() << "Line: ";
+  while (NextToken) {
+    llvm::errs() << NextToken->Tok.getName() << " ";
+    NextToken = NextToken->Children.empty() ? NULL : &NextToken->Children[0];
+  }
+  llvm::errs() << "\n";
+#endif
   Callback.consumeUnwrappedLine(*Line);
   RootTokenInitialized = false;
   LastInCurrentLine = NULL;
