@@ -29,8 +29,8 @@ class Module;
 template <typename T> class SmallVectorImpl;
 template<typename ValueSubClass, typename ItemParentClass>
   class SymbolTableListTraits;
-  
-  
+
+
 //===----------------------------------------------------------------------===//
 /// MDString - a single uniqued string.
 /// These are used to efficiently contain a byte sequence for metadata.
@@ -51,7 +51,7 @@ public:
   unsigned getLength() const { return (unsigned)getName().size(); }
 
   typedef StringRef::iterator iterator;
-  
+
   /// begin() - Pointer to the first byte of the string.
   iterator begin() const { return getName().begin(); }
 
@@ -64,9 +64,9 @@ public:
   }
 };
 
-  
+
 class MDNodeOperand;
-  
+
 //===----------------------------------------------------------------------===//
 /// MDNode - a tuple of other values.
 class MDNode : public Value, public FoldingSetNode {
@@ -82,37 +82,37 @@ class MDNode : public Value, public FoldingSetNode {
   /// NumOperands - This many 'MDNodeOperand' items are co-allocated onto the
   /// end of this MDNode.
   unsigned NumOperands;
-  
+
   // Subclass data enums.
   enum {
     /// FunctionLocalBit - This bit is set if this MDNode is function local.
     /// This is true when it (potentially transitively) contains a reference to
     /// something in a function, like an argument, basicblock, or instruction.
     FunctionLocalBit = 1 << 0,
-    
+
     /// NotUniquedBit - This is set on MDNodes that are not uniqued because they
     /// have a null operand.
     NotUniquedBit    = 1 << 1,
-    
+
     /// DestroyFlag - This bit is set by destroy() so the destructor can assert
     /// that the node isn't being destroyed with a plain 'delete'.
     DestroyFlag      = 1 << 2
   };
-  
+
   // FunctionLocal enums.
   enum FunctionLocalness {
     FL_Unknown = -1,
     FL_No = 0,
     FL_Yes = 1
   };
-  
-  /// replaceOperand - Replace each instance of F from the operand list of this 
+
+  /// replaceOperand - Replace each instance of F from the operand list of this
   /// node with T.
   void replaceOperand(MDNodeOperand *Op, Value *NewVal);
   ~MDNode();
 
   MDNode(LLVMContext &C, ArrayRef<Value*> Vals, bool isFunctionLocal);
-  
+
   static MDNode *getMDNode(LLVMContext &C, ArrayRef<Value*> Vals,
                            FunctionLocalness FL, bool Insert = true);
 public:
@@ -123,7 +123,7 @@ public:
   static MDNode *getWhenValsUnresolved(LLVMContext &Context,
                                        ArrayRef<Value*> Vals,
                                        bool isFunctionLocal);
-                                       
+
   static MDNode *getIfExists(LLVMContext &Context, ArrayRef<Value*> Vals);
 
   /// getTemporary - Return a temporary MDNode, for use in constructing
@@ -137,22 +137,22 @@ public:
 
   /// replaceOperandWith - Replace a specific operand.
   void replaceOperandWith(unsigned i, Value *NewVal);
-  
+
   /// getOperand - Return specified operand.
   Value *getOperand(unsigned i) const;
-  
+
   /// getNumOperands - Return number of MDNode operands.
   unsigned getNumOperands() const { return NumOperands; }
-  
+
   /// isFunctionLocal - Return whether MDNode is local to a function.
   bool isFunctionLocal() const {
     return (getSubclassDataFromValue() & FunctionLocalBit) != 0;
   }
-  
+
   // getFunction - If this metadata is function-local and recursively has a
   // function-local operand, return the first such operand's parent function.
   // Otherwise, return null. getFunction() should not be used for performance-
-  // critical code because it recursively visits all the MDNode's operands.  
+  // critical code because it recursively visits all the MDNode's operands.
   const Function *getFunction() const;
 
   /// Profile - calculate a unique identifier for this MDNode to collapse
@@ -172,11 +172,11 @@ private:
   // destroy - Delete this node.  Only when there are no uses.
   void destroy();
 
-  bool isNotUniqued() const { 
+  bool isNotUniqued() const {
     return (getSubclassDataFromValue() & NotUniquedBit) != 0;
   }
   void setIsNotUniqued();
-  
+
   // Shadow Value::setValueSubclassData with a private forwarding method so that
   // any future subclasses cannot accidentally use it.
   void setValueSubclassData(unsigned short D) {
@@ -220,7 +220,7 @@ public:
 
   /// getOperand - Return specified operand.
   MDNode *getOperand(unsigned i) const;
-  
+
   /// getNumOperands - Return the number of NamedMDNode operands.
   unsigned getNumOperands() const;
 
