@@ -3749,7 +3749,13 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
         // Convert the autorelease to an autoreleaseRV, since it's
         // returning the value.
         if (AutoreleaseClass == IC_Autorelease) {
+          DEBUG(dbgs() << "ObjCARCOpt::OptimizeReturns: Converting autorelease "
+                          "=> autoreleaseRV since it's returning a value.\n"
+                          "                             In: " << *Autorelease
+                       << "\n");
           Autorelease->setCalledFunction(getAutoreleaseRVCallee(F.getParent()));
+          DEBUG(dbgs() << "                             Out: " << *Autorelease
+                       << "\n");
           AutoreleaseClass = IC_AutoreleaseRV;
         }
 
