@@ -238,10 +238,10 @@ void MultiplexExternalSemaSource::ReadDynamicClasses(
     Sources[i]->ReadDynamicClasses(Decls);
 }
 
-void MultiplexExternalSemaSource::ReadLocallyScopedExternalDecls(
+void MultiplexExternalSemaSource::ReadLocallyScopedExternCDecls(
                                            SmallVectorImpl<NamedDecl*> &Decls) {
   for(size_t i = 0; i < Sources.size(); ++i)
-    Sources[i]->ReadLocallyScopedExternalDecls(Decls);
+    Sources[i]->ReadLocallyScopedExternCDecls(Decls);
 }
 
 void MultiplexExternalSemaSource::ReadReferencedSelectors(

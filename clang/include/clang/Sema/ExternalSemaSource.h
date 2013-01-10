@@ -130,7 +130,7 @@ public:
   /// declarations to the given vector of declarations. Note that this routine 
   /// may be invoked multiple times; the external source should take care not 
   /// to introduce the same declarations repeatedly.
-  virtual void ReadLocallyScopedExternalDecls(
+  virtual void ReadLocallyScopedExternCDecls(
                  SmallVectorImpl<NamedDecl *> &Decls) {}
 
   /// \brief Read the set of referenced selectors known to the

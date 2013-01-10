@@ -2119,9 +2119,9 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       }
       break;
 
-    case LOCALLY_SCOPED_EXTERNAL_DECLS:
+    case LOCALLY_SCOPED_EXTERN_C_DECLS:
       for (unsigned I = 0, N = Record.size(); I != N; ++I)
-        LocallyScopedExternalDecls.push_back(getGlobalDeclID(F, Record[I]));
+        LocallyScopedExternCDecls.push_back(getGlobalDeclID(F, Record[I]));
       break;
 
     case SELECTOR_OFFSETS: {
@@ -5961,14 +5961,14 @@ void ASTReader::ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl *> &Decls) {
 }
 
 void 
-ASTReader::ReadLocallyScopedExternalDecls(SmallVectorImpl<NamedDecl *> &Decls) {
-  for (unsigned I = 0, N = LocallyScopedExternalDecls.size(); I != N; ++I) {
-    NamedDecl *D 
-      = dyn_cast_or_null<NamedDecl>(GetDecl(LocallyScopedExternalDecls[I]));
+ASTReader::ReadLocallyScopedExternCDecls(SmallVectorImpl<NamedDecl *> &Decls) {
+  for (unsigned I = 0, N = LocallyScopedExternCDecls.size(); I != N; ++I) {
+    NamedDecl *D
+      = dyn_cast_or_null<NamedDecl>(GetDecl(LocallyScopedExternCDecls[I]));
     if (D)
       Decls.push_back(D);
   }
-  LocallyScopedExternalDecls.clear();
+  LocallyScopedExternCDecls.clear();
 }
 
 void ASTReader::ReadReferencedSelectors(

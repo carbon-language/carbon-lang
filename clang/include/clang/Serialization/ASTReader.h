@@ -638,11 +638,11 @@ private:
   /// \brief Fields containing data that is used for semantic analysis
   //@{
 
-  /// \brief The IDs of all locally scoped external decls in the chain.
+  /// \brief The IDs of all locally scoped extern "C" decls in the chain.
   ///
   /// Sema tracks these to validate that the types are consistent across all
-  /// local external declarations.
-  SmallVector<uint64_t, 16> LocallyScopedExternalDecls;
+  /// local extern "C" declarations.
+  SmallVector<uint64_t, 16> LocallyScopedExternCDecls;
 
   /// \brief The IDs of all dynamic class declarations in the chain.
   ///
@@ -1488,7 +1488,7 @@ public:
 
   virtual void ReadDynamicClasses(SmallVectorImpl<CXXRecordDecl *> &Decls);
 
-  virtual void ReadLocallyScopedExternalDecls(
+  virtual void ReadLocallyScopedExternCDecls(
                  SmallVectorImpl<NamedDecl *> &Decls);
 
   virtual void ReadReferencedSelectors(
