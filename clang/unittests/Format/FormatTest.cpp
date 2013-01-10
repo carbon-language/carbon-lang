@@ -1186,7 +1186,7 @@ TEST_F(FormatTest, FormatObjCBlocks) {
 TEST_F(FormatTest, FormatObjCInterface) {
   // FIXME: Handle comments like in "@interface /* wait for it */ Foo", PR14875
   // FIXME: In google style, it's "+(id) init", not "+ (id)init".
-  verifyFormat("@interface Foo : NSObject<NSSomeDelegate> {\n"
+  verifyFormat("@interface Foo : NSObject <NSSomeDelegate> {\n"
                "@public\n"
                "  int field1;\n"
                "@protected\n"
@@ -1199,7 +1199,6 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  // FIXME: In LLVM style, there should be a space before '<' for protocols.
   verifyGoogleFormat("@interface Foo : NSObject<NSSomeDelegate> {\n"
                      " @public\n"
                      "  int field1;\n"
@@ -1228,9 +1227,13 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo : Bar<Baz, Quux>\n"
+  verifyFormat("@interface Foo : Bar <Baz, Quux>\n"
                "+ (id)init;\n"
                "@end");
+
+  verifyGoogleFormat("@interface Foo : Bar<Baz, Quux>\n"
+                     "+ (id)init;\n"
+                     "@end");
 
   verifyFormat("@interface Foo (HackStuff)\n"
                "+ (id)init;\n"
@@ -1240,9 +1243,13 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo (HackStuff)<MyProtocol>\n"
+  verifyFormat("@interface Foo (HackStuff) <MyProtocol>\n"
                "+ (id)init;\n"
                "@end");
+
+  verifyGoogleFormat("@interface Foo (HackStuff)<MyProtocol>\n"
+                     "+ (id)init;\n"
+                     "@end");
 
   verifyFormat("@interface Foo {\n"
                "  int _i;\n"
@@ -1256,7 +1263,7 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo : Bar<Baz, Quux> {\n"
+  verifyFormat("@interface Foo : Bar <Baz, Quux> {\n"
                "  int _i;\n"
                "}\n"
                "+ (id)init;\n"
@@ -1274,7 +1281,7 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo (HackStuff)<MyProtocol> {\n"
+  verifyFormat("@interface Foo (HackStuff) <MyProtocol> {\n"
                "  int _i;\n"
                "}\n"
                "+ (id)init;\n"
@@ -1351,10 +1358,13 @@ TEST_F(FormatTest, FormatObjCProtocol) {
                "- (NSUInteger)numberOfThings;\n"
                "@end");
 
-  // FIXME: In LLVM style, there should be a space before '<' for protocols.
-  verifyFormat("@protocol MyProtocol<NSObject>\n"
+  verifyFormat("@protocol MyProtocol <NSObject>\n"
                "- (NSUInteger)numberOfThings;\n"
                "@end");
+
+  verifyGoogleFormat("@protocol MyProtocol<NSObject>\n"
+                     "- (NSUInteger)numberOfThings;\n"
+                     "@end");
 
   verifyFormat("@protocol Foo;\n"
                "@protocol Bar;\n");

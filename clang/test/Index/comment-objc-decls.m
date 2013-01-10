@@ -73,7 +73,7 @@
 */
 @property (copy) id PropertyMyClass;
 @end
-// CHECK: <Declaration>@interface MyClass : NSObject&lt;MyProto&gt; {\n    id IvarMyClass;\n}\n@end</Declaration>
+// CHECK: <Declaration>@interface MyClass : NSObject &lt;MyProto&gt; {\n    id IvarMyClass;\n}\n@end</Declaration>
 // CHECK: <Declaration>id IvarMyClass</Declaration>
 // CHECK: <Declaration>- (id)MethodMyClass;</Declaration>
 // CHECK: <Declaration>+ (id)ClassMethodMyClass;</Declaration>

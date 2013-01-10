@@ -104,6 +104,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SplitTemplateClosingGreater = true;
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
+  LLVMStyle.ObjCSpaceBeforeProtocolList = true;
   return LLVMStyle;
 }
 
@@ -116,6 +117,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SplitTemplateClosingGreater = false;
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
+  GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   return GoogleStyle;
 }
 
@@ -974,7 +976,9 @@ private:
       return Right.is(tok::hash);
     if (Right.is(tok::r_paren) || Right.is(tok::semi) || Right.is(tok::comma))
       return false;
-    if (Left.is(tok::kw_template) && Right.is(tok::less))
+    if (Right.is(tok::less) &&
+        (Left.is(tok::kw_template) ||
+         (CurrentLineType == LT_ObjCDecl && Style.ObjCSpaceBeforeProtocolList)))
       return true;
     if (Left.is(tok::arrow) || Right.is(tok::arrow))
       return false;
