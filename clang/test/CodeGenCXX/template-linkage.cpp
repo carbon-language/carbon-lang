@@ -1,4 +1,7 @@
 // RUN: %clang_cc1 %s -triple=x86_64-apple-darwin10 -emit-llvm -o - | FileCheck %s
+
+// CHECK: Outer5Inner{{.*}}localE6memberE = external global
+
 template<typename T> struct A {
   virtual void f(T) { }
   inline void g() { } 
@@ -42,3 +45,20 @@ void test_X1() {
   X1<char> i1c;
 }
 
+namespace PR14825 {
+struct Outer {
+  template <typename T> struct Inner {
+    static int member;
+  };
+  template <typename T> void Get() {
+    int m = Inner<T>::member;
+  }
+};
+
+void test() {
+  struct local {};
+  Outer o;
+  typedef void (Outer::*mptr)();
+  mptr method = &Outer::Get<local>;
+}
+}
