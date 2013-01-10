@@ -1825,7 +1825,8 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
                                              GlobalValue::InternalLinkage,
                                         ConstantInt::getFalse(GV->getContext()),
                                              GV->getName()+".b",
-                                             GV->getThreadLocalMode());
+                                             GV->getThreadLocalMode(),
+                                             GV->getType()->getAddressSpace());
   GV->getParent()->getGlobalList().insert(GV, NewGV);
 
   Constant *InitVal = GV->getInitializer();

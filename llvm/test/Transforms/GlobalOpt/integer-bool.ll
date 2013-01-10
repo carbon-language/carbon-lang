@@ -1,23 +1,28 @@
-; RUN: opt < %s -globalopt -instcombine | \
-; RUN:    llvm-dis | grep "ret i1 true"
-
+; RUN: opt < %s -S -globalopt -instcombine | FileCheck %s
 ;; check that global opt turns integers that only hold 0 or 1 into bools.
 
-@G = internal global i32 0              ; <i32*> [#uses=3]
+@G = internal addrspace(1) global i32 0
+; CHECK @G.b
+; CHECK addrspace(1)
+; CHECK global i1 0
 
 define void @set1() {
-        store i32 0, i32* @G
-        ret void
+  store i32 0, i32 addrspace(1)* @G
+; CHECK: store i1 false
+  ret void
 }
 
 define void @set2() {
-        store i32 1, i32* @G
-        ret void
+  store i32 1, i32 addrspace(1)* @G
+; CHECK: store i1 true
+  ret void
 }
 
 define i1 @get() {
-        %A = load i32* @G               ; <i32> [#uses=1]
-        %C = icmp slt i32 %A, 2         ; <i1> [#uses=1]
-        ret i1 %C
+; CHECK @get
+  %A = load i32 addrspace(1) * @G
+  %C = icmp slt i32 %A, 2
+  ret i1 %C
+; CHECK: ret i1 true
 }
 
