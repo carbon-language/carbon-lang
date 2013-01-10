@@ -56,4 +56,5 @@ int standalone_malloc_test() {
   for (size_t i = 0; i < kNumThreds; i++)
     pthread_join(t[i], 0);
   malloc_stats();
+  return 0;
 }
