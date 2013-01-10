@@ -1,4 +1,4 @@
-//===- LinkAllVMCore.h - Reference All VMCore Code --------------*- C++ -*-===//
+//===----- LinkAllIR.h - Reference All VMCore Code --------------*- C++ -*-===//
 //
 //                      The LLVM Compiler Infrastructure
 //
@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LINKALLVMCORE_H
-#define LLVM_LINKALLVMCORE_H
+#ifndef LLVM_LINKALLIR_H
+#define LLVM_LINKALLIR_H
 
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/IR/InlineAsm.h"
