@@ -946,7 +946,8 @@ private:
     if (Tok.Parent->is(tok::equal) || Tok.Parent->is(tok::l_paren) ||
         Tok.Parent->is(tok::comma) || Tok.Parent->is(tok::l_square) ||
         Tok.Parent->is(tok::question) || Tok.Parent->is(tok::colon) ||
-        Tok.Parent->is(tok::kw_return) || Tok.Parent->is(tok::kw_case))
+        Tok.Parent->is(tok::kw_return) || Tok.Parent->is(tok::kw_case) ||
+        Tok.Parent->is(tok::at))
       return TT_UnaryOperator;
 
     // There can't be to consecutive binary operators.
@@ -1054,7 +1055,8 @@ private:
       return false;
     if (Tok.Type == TT_UnaryOperator)
       return Tok.Parent->isNot(tok::l_paren) &&
-             Tok.Parent->isNot(tok::l_square);
+             Tok.Parent->isNot(tok::l_square) &&
+             Tok.Parent->isNot(tok::at);
     if (Tok.Parent->is(tok::greater) && Tok.is(tok::greater)) {
       return Tok.Type == TT_TemplateCloser && Tok.Parent->Type ==
              TT_TemplateCloser && Style.SplitTemplateClosingGreater;

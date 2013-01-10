@@ -1402,11 +1402,10 @@ TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@throw");
   verifyFormat("@try");
 
-  // FIXME: Make the uncommented lines below pass.
   verifyFormat("@\"String\"");
   verifyFormat("@1");
-  //verifyFormat("@+4.8");
-  //verifyFormat("@-4");
+  verifyFormat("@+4.8");
+  verifyFormat("@-4");
   verifyFormat("@1LL");
   verifyFormat("@.5");
   verifyFormat("@'c'");
