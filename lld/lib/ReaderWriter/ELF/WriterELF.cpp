@@ -2230,16 +2230,15 @@ template<support::endianness target_endianness,
          bool is64Bits>
 void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::finalizeDefaultAtomValues() {
- auto abse = _layout->absAtomsEnd();
  auto bssStartAtomIter = _layout->findAbsoluteAtom("__bss_start");
  auto bssEndAtomIter = _layout->findAbsoluteAtom("__bss_end");
  auto underScoreEndAtomIter = _layout->findAbsoluteAtom("_end");
  auto endAtomIter = _layout->findAbsoluteAtom("end");
 
- assert(!(bssStartAtomIter == abse ||
-         bssEndAtomIter == abse ||
-         underScoreEndAtomIter == abse ||
-         endAtomIter == abse) && 
+ assert(!(bssStartAtomIter == _layout->absAtomsEnd() ||
+         bssEndAtomIter == _layout->absAtomsEnd() ||
+         underScoreEndAtomIter == _layout->absAtomsEnd() ||
+         endAtomIter == _layout->absAtomsEnd()) && 
         "Unable to find the absolute atoms that have been added by lld");
 
  auto phe = _programHeader->findProgramHeader(
