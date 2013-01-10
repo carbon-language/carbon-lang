@@ -15,11 +15,15 @@
 
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
+#include "llvm/Support/Locale.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 using namespace llvm;
+
+static const size_t TabStop = 8;
 
 namespace {
   struct LineNoCacheTy {
@@ -146,7 +150,8 @@ void SourceMgr::PrintIncludeStack(SMLoc IncludeLoc, raw_ostream &OS) const {
 /// prefixed to the message.
 SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
                                    const Twine &Msg,
-                                   ArrayRef<SMRange> Ranges) const {
+                                   ArrayRef<SMRange> Ranges,
+                                   ArrayRef<SMFixIt> FixIts) const {
 
   // First thing to do: find the current buffer containing the specified
   // location to pull out the source line.
@@ -193,6 +198,7 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
         R.End = SMLoc::getFromPointer(LineEnd);
       
       // Translate from SMLoc ranges to column ranges.
+      // FIXME: Handle multibyte characters.
       ColRanges.push_back(std::make_pair(R.Start.getPointer()-LineStart,
                                          R.End.getPointer()-LineStart));
     }
@@ -202,13 +208,13 @@ SMDiagnostic SourceMgr::GetMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
     
   return SMDiagnostic(*this, Loc, BufferID, LineAndCol.first,
                       LineAndCol.second-1, Kind, Msg.str(),
-                      LineStr, ColRanges);
+                      LineStr, ColRanges, FixIts);
 }
 
 void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
                              const Twine &Msg, ArrayRef<SMRange> Ranges,
-                             bool ShowColors) const {
-  SMDiagnostic Diagnostic = GetMessage(Loc, Kind, Msg, Ranges);
+                             ArrayRef<SMFixIt> FixIts, bool ShowColors) const {
+  SMDiagnostic Diagnostic = GetMessage(Loc, Kind, Msg, Ranges, FixIts);
   
   // Report the message with the diagnostic handler if present.
   if (DiagHandler) {
@@ -231,15 +237,104 @@ void SourceMgr::PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind,
 // SMDiagnostic Implementation
 //===----------------------------------------------------------------------===//
 
-SMDiagnostic::SMDiagnostic(const SourceMgr &sm, SMLoc L, const std::string &FN,
+SMDiagnostic::SMDiagnostic(const SourceMgr &sm, SMLoc L, StringRef FN,
                            int Line, int Col, SourceMgr::DiagKind Kind,
-                           const std::string &Msg,
-                           const std::string &LineStr,
-                           ArrayRef<std::pair<unsigned,unsigned> > Ranges)
+                           StringRef Msg, StringRef LineStr,
+                           ArrayRef<std::pair<unsigned,unsigned> > Ranges,
+                           ArrayRef<SMFixIt> Hints)
   : SM(&sm), Loc(L), Filename(FN), LineNo(Line), ColumnNo(Col), Kind(Kind),
-    Message(Msg), LineContents(LineStr), Ranges(Ranges.vec()) {
+    Message(Msg), LineContents(LineStr), Ranges(Ranges.vec()),
+    FixIts(Hints.begin(), Hints.end()) {
+  std::sort(FixIts.begin(), FixIts.end());
 }
 
+void buildFixItLine(std::string &CaretLine, std::string &FixItLine,
+                    ArrayRef<SMFixIt> FixIts, ArrayRef<char> SourceLine) {
+  if (FixIts.empty())
+    return;
+
+  const char *LineStart = SourceLine.begin();
+  const char *LineEnd = SourceLine.end();
+
+  size_t PrevHintEndCol = 0;
+
+  for (ArrayRef<SMFixIt>::iterator I = FixIts.begin(), E = FixIts.end();
+       I != E; ++I) {
+    // If the fixit contains a newline or tab, ignore it.
+    if (I->getText().find_first_of("\n\r\t") != StringRef::npos)
+      continue;
+
+    SMRange R = I->getRange();
+
+    // If the line doesn't contain any part of the range, then ignore it.
+    if (R.Start.getPointer() > LineEnd || R.End.getPointer() < LineStart)
+      continue;
+
+    // Translate from SMLoc to column.
+    // Ignore pieces of the range that go onto other lines.
+    // FIXME: Handle multibyte characters in the source line.
+    unsigned FirstCol;
+    if (R.Start.getPointer() < LineStart)
+      FirstCol = 0;
+    else
+      FirstCol = R.Start.getPointer() - LineStart;
+
+    // If we inserted a long previous hint, push this one forwards, and add
+    // an extra space to show that this is not part of the previous
+    // completion. This is sort of the best we can do when two hints appear
+    // to overlap.
+    //
+    // Note that if this hint is located immediately after the previous
+    // hint, no space will be added, since the location is more important.
+    unsigned HintCol = FirstCol;
+    if (HintCol < PrevHintEndCol)
+      HintCol = PrevHintEndCol + 1;
+
+    // FIXME: This assertion is intended to catch unintended use of multibyte
+    // characters in fixits. If we decide to do this, we'll have to track
+    // separate byte widths for the source and fixit lines.
+    assert((size_t)llvm::sys::locale::columnWidth(I->getText()) ==
+           I->getText().size());
+
+    // This relies on one byte per column in our fixit hints.
+    unsigned LastColumnModified = HintCol + I->getText().size();
+    if (LastColumnModified > FixItLine.size())
+      FixItLine.resize(LastColumnModified, ' ');
+
+    std::copy(I->getText().begin(), I->getText().end(),
+              FixItLine.begin() + HintCol);
+
+    PrevHintEndCol = LastColumnModified;
+
+    // For replacements, mark the removal range with '~'.
+    // FIXME: Handle multibyte characters in the source line.
+    unsigned LastCol;
+    if (R.End.getPointer() >= LineEnd)
+      LastCol = LineEnd - LineStart;
+    else
+      LastCol = R.End.getPointer() - LineStart;
+
+    std::fill(&CaretLine[FirstCol], &CaretLine[LastCol], '~');
+  }
+}
+
+static void printSourceLine(raw_ostream &S, StringRef LineContents) {
+  // Print out the source line one character at a time, so we can expand tabs.
+  for (unsigned i = 0, e = LineContents.size(), OutCol = 0; i != e; ++i) {
+    if (LineContents[i] != '\t') {
+      S << LineContents[i];
+      ++OutCol;
+      continue;
+    }
+
+    // If we have a tab, emit at least one space, then round up to 8 columns.
+    do {
+      S << ' ';
+      ++OutCol;
+    } while ((OutCol % TabStop) != 0);
+  }
+  S << '\n';
+}
 
 void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
                          bool ShowColors) const {
@@ -297,43 +392,49 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
   if (LineNo == -1 || ColumnNo == -1)
     return;
 
+  // FIXME: If there are multibyte characters in the source, all our ranges will
+  // be wrong. To do this properly, we'll need a byte-to-column map like Clang's
+  // TextDiagnostic. For now, we'll just handle tabs by expanding them later,
+  // and bail out rather than show incorrect ranges and misaligned fixits for
+  // any other odd characters.
+  SmallString<128> PrintableLine(LineContents);
+  std::replace(PrintableLine.begin(), PrintableLine.end(), '\t', ' ');
+  size_t NumColumns = (size_t)llvm::sys::locale::columnWidth(PrintableLine);
+  if (NumColumns != PrintableLine.size()) {
+    printSourceLine(S, LineContents);
+    return;
+  }
+
   // Build the line with the caret and ranges.
-  std::string CaretLine(LineContents.size()+1, ' ');
+  std::string CaretLine(NumColumns+1, ' ');
   
   // Expand any ranges.
   for (unsigned r = 0, e = Ranges.size(); r != e; ++r) {
     std::pair<unsigned, unsigned> R = Ranges[r];
-    for (unsigned i = R.first,
-         e = std::min(R.second, (unsigned)LineContents.size()); i != e; ++i)
-      CaretLine[i] = '~';
+    std::fill(&CaretLine[R.first],
+              &CaretLine[std::min((size_t)R.second, CaretLine.size())],
+              '~');
   }
-    
+
+  // Add any fix-its.
+  // FIXME: Find the beginning of the line properly for multibyte characters.
+  std::string FixItInsertionLine;
+  buildFixItLine(CaretLine, FixItInsertionLine, FixIts,
+                 makeArrayRef(Loc.getPointer() - ColumnNo,
+                              LineContents.size()));
+
   // Finally, plop on the caret.
-  if (unsigned(ColumnNo) <= LineContents.size())
+  if (unsigned(ColumnNo) <= NumColumns)
     CaretLine[ColumnNo] = '^';
   else 
-    CaretLine[LineContents.size()] = '^';
+    CaretLine[NumColumns] = '^';
   
   // ... and remove trailing whitespace so the output doesn't wrap for it.  We
   // know that the line isn't completely empty because it has the caret in it at
   // least.
   CaretLine.erase(CaretLine.find_last_not_of(' ')+1);
   
-  // Print out the source line one character at a time, so we can expand tabs.
-  for (unsigned i = 0, e = LineContents.size(), OutCol = 0; i != e; ++i) {
-    if (LineContents[i] != '\t') {
-      S << LineContents[i];
-      ++OutCol;
-      continue;
-    }
-    
-    // If we have a tab, emit at least one space, then round up to 8 columns.
-    do {
-      S << ' ';
-      ++OutCol;
-    } while (OutCol & 7);
-  }
-  S << '\n';
+  printSourceLine(S, LineContents);
 
   if (ShowColors)
     S.changeColor(raw_ostream::GREEN, true);
@@ -350,11 +451,36 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
     do {
       S << CaretLine[i];
       ++OutCol;
-    } while (OutCol & 7);
+    } while ((OutCol % TabStop) != 0);
   }
+  S << '\n';
 
   if (ShowColors)
     S.resetColor();
+
+  // Print out the replacement line, matching tabs in the source line.
+  if (FixItInsertionLine.empty())
+    return;
   
+  for (size_t i = 0, e = FixItInsertionLine.size(), OutCol = 0; i != e; ++i) {
+    if (i >= LineContents.size() || LineContents[i] != '\t') {
+      S << FixItInsertionLine[i];
+      ++OutCol;
+      continue;
+    }
+
+    // Okay, we have a tab.  Insert the appropriate number of characters.
+    do {
+      S << FixItInsertionLine[i];
+      // FIXME: This is trying not to break up replacements, but then to re-sync
+      // with the tabs between replacements. This will fail, though, if two
+      // fix-it replacements are exactly adjacent, or if a fix-it contains a
+      // space. Really we should be precomputing column widths, which we'll
+      // need anyway for multibyte chars.
+      if (FixItInsertionLine[i] != ' ')
+        ++i;
+      ++OutCol;
+    } while (((OutCol % TabStop) != 0) && i != e);
+  }
   S << '\n';
 }
