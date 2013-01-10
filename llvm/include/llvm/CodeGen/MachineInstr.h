@@ -313,11 +313,11 @@ public:
   /// The second argument indicates whether the query should look inside
   /// instruction bundles.
   bool hasProperty(unsigned MCFlag, QueryType Type = AnyInBundle) const {
-    // Inline the fast path.
-    if (Type == IgnoreBundle || !isBundled())
+    // Inline the fast path for unbundled or bundle-internal instructions.
+    if (Type == IgnoreBundle || !isBundled() || isBundledWithPred())
       return getDesc().getFlags() & (1 << MCFlag);
 
-    // If we have a bundle, take the slow path.
+    // If this is the first instruction in a bundle, take the slow path.
     return hasPropertyInBundle(1 << MCFlag, Type);
   }
 
