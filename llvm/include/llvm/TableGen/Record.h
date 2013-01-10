@@ -1393,6 +1393,7 @@ class Record {
   RecordKeeper &TrackedRecords;
 
   DefInit *TheInit;
+  bool IsAnonymous;
 
   void init();
   void checkName();
@@ -1401,14 +1402,15 @@ public:
 
   // Constructs a record.
   explicit Record(const std::string &N, ArrayRef<SMLoc> locs,
-                  RecordKeeper &records) :
+                  RecordKeeper &records, bool Anonymous = false) :
     ID(LastID++), Name(StringInit::get(N)), Locs(locs.begin(), locs.end()),
-    TrackedRecords(records), TheInit(0) {
+    TrackedRecords(records), TheInit(0), IsAnonymous(Anonymous) {
     init();
   }
-  explicit Record(Init *N, ArrayRef<SMLoc> locs, RecordKeeper &records) :
+  explicit Record(Init *N, ArrayRef<SMLoc> locs, RecordKeeper &records,
+                  bool Anonymous = false) :
     ID(LastID++), Name(N), Locs(locs.begin(), locs.end()),
-    TrackedRecords(records), TheInit(0) {
+    TrackedRecords(records), TheInit(0), IsAnonymous(Anonymous) {
     init();
   }
 
@@ -1417,7 +1419,8 @@ public:
   Record(const Record &O) :
     ID(LastID++), Name(O.Name), Locs(O.Locs), TemplateArgs(O.TemplateArgs),
     Values(O.Values), SuperClasses(O.SuperClasses),
-    TrackedRecords(O.TrackedRecords), TheInit(O.TheInit) { }
+    TrackedRecords(O.TrackedRecords), TheInit(O.TheInit),
+    IsAnonymous(O.IsAnonymous) { }
 
   ~Record() {}
 
@@ -1539,6 +1542,10 @@ public:
 
   RecordKeeper &getRecords() const {
     return TrackedRecords;
+  }
+
+  bool isAnonymous() const {
+    return IsAnonymous;
   }
 
   void dump() const;

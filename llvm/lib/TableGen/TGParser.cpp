@@ -383,7 +383,7 @@ static std::string GetNewAnonymousName() {
 }
 
 /// ParseObjectName - If an object name is specified, return it.  Otherwise,
-/// return an anonymous name.
+/// return 0.
 ///   ObjectName ::= Value [ '#' Value ]*
 ///   ObjectName ::= /*empty*/
 ///
@@ -395,7 +395,7 @@ Init *TGParser::ParseObjectName(MultiClass *CurMultiClass) {
     // These are all of the tokens that can begin an object body.
     // Some of these can also begin values but we disallow those cases
     // because they are unlikely to be useful.
-    return StringInit::get(GetNewAnonymousName());
+    return 0;
   default:
     break;
   }
@@ -1204,7 +1204,8 @@ Init *TGParser::ParseSimpleValue(Record *CurRec, RecTy *ItemType,
     static unsigned AnonCounter = 0;
     Record *NewRec = new Record("anonymous.val."+utostr(AnonCounter++),
                                 NameLoc,
-                                Records);
+                                Records,
+                                /*IsAnonymous=*/true);
     SubClassReference SCRef;
     SCRef.RefLoc = NameLoc;
     SCRef.Rec = Class;
@@ -1919,7 +1920,13 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
   Lex.Lex();  // Eat the 'def' token.
 
   // Parse ObjectName and make a record for it.
-  Record *CurRec = new Record(ParseObjectName(CurMultiClass), DefLoc, Records);
+  Record *CurRec;
+  Init *Name = ParseObjectName(CurMultiClass);
+  if (Name)
+    CurRec = new Record(Name, DefLoc, Records);
+  else
+    CurRec = new Record(GetNewAnonymousName(), DefLoc, Records,
+                        /*IsAnonymous=*/true);
 
   if (!CurMultiClass && Loops.empty()) {
     // Top-level def definition.
@@ -2248,8 +2255,11 @@ InstantiateMulticlassDef(MultiClass &MC,
   // name, substitute the prefix for #NAME#.  Otherwise, use the defm name
   // as a prefix.
 
-  if (DefmPrefix == 0)
+  bool IsAnonymous = false;
+  if (DefmPrefix == 0) {
     DefmPrefix = StringInit::get(GetNewAnonymousName());
+    IsAnonymous = true;
+  }
 
   Init *DefName = DefProto->getNameInit();
 
@@ -2268,7 +2278,7 @@ InstantiateMulticlassDef(MultiClass &MC,
   // Make a trail of SMLocs from the multiclass instantiations.
   SmallVector<SMLoc, 4> Locs(1, DefmPrefixLoc);
   Locs.append(DefProto->getLoc().begin(), DefProto->getLoc().end());
-  Record *CurRec = new Record(DefName, Locs, Records);
+  Record *CurRec = new Record(DefName, Locs, Records, IsAnonymous);
 
   SubClassReference Ref;
   Ref.RefLoc = DefmPrefixLoc;
