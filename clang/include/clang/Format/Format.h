@@ -55,6 +55,10 @@ struct FormatStyle {
 
   /// \brief The number of spaces to before trailing line comments.
   unsigned SpacesBeforeTrailingComments;
+
+  /// \brief Add a space in front of an Objective-C protocol list, i.e. use
+  /// Foo <Protocol> instead of Foo<Protocol>.
+  bool ObjCSpaceBeforeProtocolList;
 };
 
 /// \brief Returns a format style complying with the LLVM coding standards:
