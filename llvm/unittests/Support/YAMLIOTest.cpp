@@ -789,11 +789,13 @@ namespace yaml {
         AFlags aflags;
         memcpy(&aflags, &kf.flags, sizeof(aflags));
         io.mapRequired("flags", aflags);
+        memcpy(&kf.flags, &aflags, sizeof(kf.flags));
       }
       else {
         BFlags bflags;
         memcpy(&bflags, &kf.flags, sizeof(bflags));
         io.mapRequired("flags", bflags);
+        memcpy(&kf.flags, &bflags, sizeof(kf.flags));
       }
     }
   };
