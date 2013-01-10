@@ -83,7 +83,7 @@ static void renderLocation(Location Loc) {
            Loc.getModuleLocation().getOffset());
     break;
   case Location::LK_Memory:
-    Printf("0x%zx:", Loc.getMemoryLocation());
+    Printf("%p:", Loc.getMemoryLocation());
     break;
   case Location::LK_Null:
     RawWrite("<unknown>:");
@@ -135,7 +135,7 @@ static void renderText(const char *Message, const Diag::Arg *Args) {
         break;
       }
       case Diag::AK_Pointer:
-        Printf("0x%zx", (uptr)A.Pointer);
+        Printf("%p", A.Pointer);
         break;
       }
     }
