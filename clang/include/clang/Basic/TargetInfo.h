@@ -775,7 +775,6 @@ public:
         return CCCR_Warning;
       case CC_C:
       case CC_Default:
-      case CC_IntelOclBicc:
         return CCCR_OK;
     }
   }
