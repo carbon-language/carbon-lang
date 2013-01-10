@@ -2,8 +2,6 @@
 Sphinx Quickstart Template
 ==========================
 
-.. sectionauthor:: Sean Silva <silvas@purdue.edu>
-
 Introduction and Quickstart
 ===========================
 

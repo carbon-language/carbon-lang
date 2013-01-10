@@ -6,11 +6,6 @@ How To Release LLVM To The Public
    :local:
    :depth: 1
 
-.. sectionauthor:: Tanya Lattner <tonic@nondot.org>,
-                   Reid Spencer <rspencer@x10sys.com>,
-                   John Criswell <criswell@cs.uiuc.edu> and
-                   Bill Wendling <wendling@apple.com>
-
 Introduction
 ============
 

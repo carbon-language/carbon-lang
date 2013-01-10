@@ -4,8 +4,6 @@
 The LLVM gold plugin
 ====================
 
-.. sectionauthor:: Nick Lewycky
-
 Introduction
 ============
 

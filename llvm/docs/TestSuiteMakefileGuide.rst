@@ -2,9 +2,6 @@
 LLVM test-suite Makefile Guide
 ==============================
 
-Written by John T. Criswell, Daniel Dunbar, Reid Spencer, and Tanya
-Lattner
-
 .. contents::
    :local:
 

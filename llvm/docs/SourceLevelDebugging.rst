@@ -2,8 +2,6 @@
 Source Level Debugging with LLVM
 ================================
 
-.. sectionauthor:: Chris Lattner <sabre@nondot.org> and Jim Laskey <jlaskey@mac.com>
-
 .. contents::
    :local:
 

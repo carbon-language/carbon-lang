@@ -2,8 +2,6 @@
 System Library
 ==============
 
-.. sectionauthor:: Reid Spencer <rspencer@x10sys.com>
-
 Abstract
 ========
 

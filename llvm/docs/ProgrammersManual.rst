@@ -6,14 +6,7 @@ LLVM Programmer's Manual
    :local:
 
 .. warning::
-   This is a work in progress.
-
-.. sectionauthor:: Chris Lattner <sabre@nondot.org>,
-                   Dinakar Dhurjati <dhurjati@cs.uiuc.edu>,
-                   Gabor Greif <ggreif@gmail.com>,
-                   Joel Stanley <jstanley@cs.uiuc.edu>,
-                   Reid Spencer <rspencer@x10sys.com> and
-                   Owen Anderson <owen@apple.com>
+   This is always a work in progress.
 
 .. _introduction:
 

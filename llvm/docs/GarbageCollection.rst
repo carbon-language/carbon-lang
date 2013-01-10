@@ -5,9 +5,6 @@ Accurate Garbage Collection with LLVM
 .. contents::
    :local:
 
-.. sectionauthor:: Chris Lattner <sabre@nondot.org>  and
-                   Gordon Henriksen
-
 Introduction
 ============
 

@@ -7,8 +7,6 @@ Writing an LLVM Compiler Backend
 
    HowToUseInstrMappings
 
-.. sectionauthor:: Mason Woo <http://www.woo.com> and Misha Brukman <http://misha.brukman.net>
-
 .. contents::
    :local:
 

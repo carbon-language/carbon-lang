@@ -4,8 +4,6 @@
 How To Build On ARM
 ===================================================================
 
-.. sectionauthor:: Wei-Ren Chen (陳韋任) <chenwj@iis.sinica.edu.tw>
-
 Introduction
 ============
 

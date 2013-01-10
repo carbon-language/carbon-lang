@@ -5,9 +5,6 @@ Writing an LLVM Pass
 .. contents::
     :local:
 
-Written by `Chris Lattner <mailto:sabre@nondot.org>`_ and
-`Jim Laskey <mailto:jlaskey@mac.com>`_
-
 Introduction --- What is a pass?
 ================================
 

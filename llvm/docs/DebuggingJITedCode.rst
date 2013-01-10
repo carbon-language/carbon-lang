@@ -4,8 +4,6 @@
 Debugging JIT-ed Code With GDB
 ==============================
 
-.. sectionauthor:: Reid Kleckner and Eli Bendersky
-
 Background
 ==========
 

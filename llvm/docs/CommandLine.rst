@@ -68,9 +68,7 @@ CommandLine library to have the following features:
 
 This document will hopefully let you jump in and start using CommandLine in your
 utility quickly and painlessly.  Additionally it should be a simple reference
-manual to figure out how stuff works.  If it is failing in some area (or you
-want an extension to the library), nag the author, `Chris
-Lattner <mailto:sabre@nondot.org>`_.
+manual to figure out how stuff works.
 
 Quick Start Guide
 =================
