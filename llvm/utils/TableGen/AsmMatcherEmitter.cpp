@@ -1658,6 +1658,16 @@ void MatchableInfo::buildAliasResultOperands() {
   }
 }
 
+// Modify a string so that it is suitable for use as an enum tag.
+static std::string mangle(const std::string &Name) {
+  std::string MangledName = Name;
+  for (unsigned i = 0; i < MangledName.size(); ++i) {
+    if (!isalnum(MangledName[i]) && MangledName[i] != '_')
+      MangledName[i] = '_';
+  }
+  return MangledName;
+}
+
 static unsigned getConverterOperandID(const std::string &Name,
                                       SetVector<std::string> &Table,
                                       bool &IsNew) {
@@ -1754,7 +1764,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
 
       // Remember this converter for the kind enum.
       unsigned KindID = OperandConversionKinds.size();
-      OperandConversionKinds.insert("CVT_" + AsmMatchConverter);
+      OperandConversionKinds.insert("CVT_" + mangle(AsmMatchConverter));
 
       // Add the converter row for this instruction.
       ConversionTable.push_back(std::vector<uint8_t>());
@@ -1762,7 +1772,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
       ConversionTable.back().push_back(CVT_Done);
 
       // Add the handler to the conversion driver function.
-      CvtOS << "    case CVT_" << AsmMatchConverter << ":\n"
+      CvtOS << "    case CVT_" << mangle(AsmMatchConverter) << ":\n"
             << "      " << AsmMatchConverter << "(Inst, Operands);\n"
             << "      break;\n";
 
@@ -1800,6 +1810,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
         // the index of its entry in the vector).
         std::string Name = "CVT_" + (Op.Class->isRegisterClass() ? "Reg" :
                                      Op.Class->RenderMethod);
+        Name = mangle(Name);
 
         bool IsNewConverter = false;
         unsigned ID = getConverterOperandID(Name, OperandConversionKinds,
