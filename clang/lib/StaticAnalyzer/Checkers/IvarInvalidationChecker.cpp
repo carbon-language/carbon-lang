@@ -576,15 +576,23 @@ void IvarInvalidationChecker::MethodCrawler::VisitBinaryOperator(
     const BinaryOperator *BO) {
   VisitStmt(BO);
 
-  if (BO->getOpcode() != BO_Assign)
+  // Do we assign/compare against zero? If yes, check the variable we are
+  // assigning to.
+  BinaryOperatorKind Opcode = BO->getOpcode();
+  if (Opcode != BO_Assign &&
+      Opcode != BO_EQ &&
+      Opcode != BO_NE)
     return;
 
-  // Do we assign zero?
-  if (!isZero(BO->getRHS()))
-    return;
+  if (isZero(BO->getRHS())) {
+      check(BO->getLHS());
+      return;
+  }
 
-  // Check the variable we are assigning to.
-  check(BO->getLHS());
+  if (Opcode != BO_Assign && isZero(BO->getLHS())) {
+    check(BO->getRHS());
+    return;
+  }
 }
 
 void IvarInvalidationChecker::MethodCrawler::VisitObjCMessageExpr(

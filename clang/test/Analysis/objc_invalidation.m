@@ -1,4 +1,10 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.osx.cocoa.InstanceVariableInvalidation -fobjc-default-synthesize-properties -verify %s
+extern void __assert_fail (__const char *__assertion, __const char *__file,
+    unsigned int __line, __const char *__function)
+     __attribute__ ((__noreturn__));
+
+#define assert(expr) \
+  ((expr)  ? (void)(0)  : __assert_fail (#expr, __FILE__, __LINE__, __func__))
 
 @protocol NSObject
 @end
@@ -168,10 +174,24 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 @interface Child: Parent <Invalidation2, IDEBuildable> 
 @end
 
-@implementation Parent
+@implementation Parent{
+  @private
+  Invalidation2Class *Ivar10;
+  Invalidation2Class *Ivar11;
+  Invalidation2Class *Ivar12;
+}
+
 @synthesize ObjB = _ObjB;
 - (void)invalidate{
   _ObjB = ((void*)0);
+  
+  assert(Ivar10 == 0);
+
+  if (__builtin_expect(!(Ivar11 == ((void*)0)), 0))
+    assert(0);
+
+  assert(0 == Ivar12);
+
 }
 @end
 
