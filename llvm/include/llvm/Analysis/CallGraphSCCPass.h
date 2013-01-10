@@ -18,8 +18,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CALL_GRAPH_SCC_PASS_H
-#define LLVM_CALL_GRAPH_SCC_PASS_H
+#ifndef LLVM_ANALYSIS_CALLGRAPHSCCPASS_H
+#define LLVM_ANALYSIS_CALLGRAPHSCCPASS_H
 
 #include "llvm/Analysis/CallGraph.h"
 #include "llvm/Pass.h"

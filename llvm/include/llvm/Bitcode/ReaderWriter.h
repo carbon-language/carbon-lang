@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_BITCODE_H
-#define LLVM_BITCODE_H
+#ifndef LLVM_BITCODE_READERWRITER_H
+#define LLVM_BITCODE_READERWRITER_H
 
 #include <string>
 

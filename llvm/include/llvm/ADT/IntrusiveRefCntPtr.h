@@ -18,8 +18,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_INTRUSIVE_REF_CNT_PTR
-#define LLVM_ADT_INTRUSIVE_REF_CNT_PTR
+#ifndef LLVM_ADT_INTRUSIVEREFCNTPTR_H
+#define LLVM_ADT_INTRUSIVEREFCNTPTR_H
 
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/Compiler.h"
@@ -240,4 +240,4 @@ namespace llvm {
 
 } // end namespace llvm
 
-#endif // LLVM_ADT_INTRUSIVE_REF_CNT_PTR
+#endif // LLVM_ADT_INTRUSIVEREFCNTPTR_H

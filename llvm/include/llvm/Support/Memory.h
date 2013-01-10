@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_MEMORY_H
-#define LLVM_SYSTEM_MEMORY_H
+#ifndef LLVM_SUPPORT_MEMORY_H
+#define LLVM_SUPPORT_MEMORY_H
 
 #include "llvm/Support/DataTypes.h"
 #include "llvm/Support/system_error.h"

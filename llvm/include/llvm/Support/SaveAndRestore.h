@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_SAVERESTORE
-#define LLVM_ADT_SAVERESTORE
+#ifndef LLVM_SUPPORT_SAVEANDRESTORE_H
+#define LLVM_SUPPORT_SAVEANDRESTORE_H
 
 namespace llvm {
 

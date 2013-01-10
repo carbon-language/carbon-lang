@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef GENERIC_VALUE_H
-#define GENERIC_VALUE_H
+#ifndef LLVM_EXECUTIONENGINE_GENERICVALUE_H
+#define LLVM_EXECUTIONENGINE_GENERICVALUE_H
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/Support/DataTypes.h"

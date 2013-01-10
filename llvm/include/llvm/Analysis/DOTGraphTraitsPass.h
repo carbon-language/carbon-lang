@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_DOT_GRAPHTRAITS_PASS_H
-#define LLVM_ANALYSIS_DOT_GRAPHTRAITS_PASS_H
+#ifndef LLVM_ANALYSIS_DOTGRAPHTRAITSPASS_H
+#define LLVM_ANALYSIS_DOTGRAPHTRAITSPASS_H
 
 #include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/Pass.h"

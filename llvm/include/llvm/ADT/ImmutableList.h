@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_IMLIST_H
-#define LLVM_ADT_IMLIST_H
+#ifndef LLVM_ADT_IMMUTABLELIST_H
+#define LLVM_ADT_IMMUTABLELIST_H
 
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/Allocator.h"

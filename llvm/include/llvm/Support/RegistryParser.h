@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_REGISTRY_PARSER_H
-#define LLVM_SUPPORT_REGISTRY_PARSER_H
+#ifndef LLVM_SUPPORT_REGISTRYPARSER_H
+#define LLVM_SUPPORT_REGISTRYPARSER_H
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Registry.h"
@@ -52,4 +52,4 @@ namespace llvm {
 
 }
 
-#endif // LLVM_SUPPORT_REGISTRY_PARSER_H
+#endif // LLVM_SUPPORT_REGISTRYPARSER_H

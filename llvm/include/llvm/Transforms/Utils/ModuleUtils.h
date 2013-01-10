@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TRANSFORMS_UTILS_MODULE_UTILS_H
-#define LLVM_TRANSFORMS_UTILS_MODULE_UTILS_H
+#ifndef LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
+#define LLVM_TRANSFORMS_UTILS_MODULEUTILS_H
 
 namespace llvm {
 
@@ -30,4 +30,4 @@ void appendToGlobalDtors(Module &M, Function *F, int Priority);
 
 } // End llvm namespace
 
-#endif //  LLVM_TRANSFORMS_UTILS_MODULE_UTILS_H
+#endif //  LLVM_TRANSFORMS_UTILS_MODULEUTILS_H

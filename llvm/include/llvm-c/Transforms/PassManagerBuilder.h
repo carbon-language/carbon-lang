@@ -11,8 +11,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef LLVM_C_PASSMANAGERBUILDER
-#define LLVM_C_PASSMANAGERBUILDER
+#ifndef LLVM_C_TRANSFORMS_PASSMANAGERBUILDER_H
+#define LLVM_C_TRANSFORMS_PASSMANAGERBUILDER_H
 
 #include "llvm-c/Core.h"
 

@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCASMLEXER_H
-#define LLVM_MC_MCASMLEXER_H
+#ifndef LLVM_MC_MCPARSER_MCASMLEXER_H
+#define LLVM_MC_MCPARSER_MCASMLEXER_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"

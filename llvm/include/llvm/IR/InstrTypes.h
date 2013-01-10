@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INSTRUCTION_TYPES_H
-#define LLVM_INSTRUCTION_TYPES_H
+#ifndef LLVM_IR_INSTRTYPES_H
+#define LLVM_IR_INSTRTYPES_H
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/IR/DerivedTypes.h"

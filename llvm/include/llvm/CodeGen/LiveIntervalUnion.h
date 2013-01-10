@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_LIVEINTERVALUNION
-#define LLVM_CODEGEN_LIVEINTERVALUNION
+#ifndef LLVM_CODEGEN_LIVEINTERVALUNION_H
+#define LLVM_CODEGEN_LIVEINTERVALUNION_H
 
 #include "llvm/ADT/IntervalMap.h"
 #include "llvm/CodeGen/LiveInterval.h"
@@ -202,4 +202,4 @@ public:
 
 } // end namespace llvm
 
-#endif // !defined(LLVM_CODEGEN_LIVEINTERVALUNION)
+#endif // !defined(LLVM_CODEGEN_LIVEINTERVALUNION_H)

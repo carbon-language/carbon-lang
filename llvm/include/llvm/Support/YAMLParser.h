@@ -35,8 +35,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_YAML_PARSER_H
-#define LLVM_SUPPORT_YAML_PARSER_H
+#ifndef LLVM_SUPPORT_YAMLPARSER_H
+#define LLVM_SUPPORT_YAMLPARSER_H
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/SmallString.h"

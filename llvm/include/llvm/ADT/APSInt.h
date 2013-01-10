@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_APSINT_H
-#define LLVM_APSINT_H
+#ifndef LLVM_ADT_APSINT_H
+#define LLVM_ADT_APSINT_H
 
 #include "llvm/ADT/APInt.h"
 

@@ -18,8 +18,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CONSTANTS_H
-#define LLVM_CONSTANTS_H
+#ifndef LLVM_IR_CONSTANTS_H
+#define LLVM_IR_CONSTANTS_H
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"

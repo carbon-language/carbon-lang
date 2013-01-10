@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_LIBCALL_AA_H
-#define LLVM_ANALYSIS_LIBCALL_AA_H
+#ifndef LLVM_ANALYSIS_LIBCALLALIASANALYSIS_H
+#define LLVM_ANALYSIS_LIBCALLALIASANALYSIS_H
 
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Pass.h"

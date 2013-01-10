@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_USER_H
-#define LLVM_USER_H
+#ifndef LLVM_IR_USER_H
+#define LLVM_IR_USER_H
 
 #include "llvm/IR/Value.h"
 #include "llvm/Support/ErrorHandling.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INSTRUCTION_H
-#define LLVM_INSTRUCTION_H
+#ifndef LLVM_IR_INSTRUCTION_H
+#define LLVM_IR_INSTRUCTION_H
 
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/IR/User.h"

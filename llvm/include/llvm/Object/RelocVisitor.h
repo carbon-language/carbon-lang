@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef _LLVM_OBJECT_RELOCVISITOR
-#define _LLVM_OBJECT_RELOCVISITOR
+#ifndef LLVM_OBJECT_RELOCVISITOR_H
+#define LLVM_OBJECT_RELOCVISITOR_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/ELF.h"

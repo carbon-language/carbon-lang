@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_IRBUILDER_H
-#define LLVM_IRBUILDER_H
+#ifndef LLVM_IR_IRBUILDER_H
+#define LLVM_IR_IRBUILDER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"

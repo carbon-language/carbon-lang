@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_PATH_H
-#define LLVM_SYSTEM_PATH_H
+#ifndef LLVM_SUPPORT_PATHV1_H
+#define LLVM_SUPPORT_PATHV1_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/Compiler.h"

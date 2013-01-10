@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_SIGNALS_H
-#define LLVM_SYSTEM_SIGNALS_H
+#ifndef LLVM_SUPPORT_SIGNALS_H
+#define LLVM_SUPPORT_SIGNALS_H
 
 #include "llvm/Support/Path.h"
 

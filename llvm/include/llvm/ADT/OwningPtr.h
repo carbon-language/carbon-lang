@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_OWNING_PTR_H
-#define LLVM_ADT_OWNING_PTR_H
+#ifndef LLVM_ADT_OWNINGPTR_H
+#define LLVM_ADT_OWNINGPTR_H
 
 #include "llvm/Support/Compiler.h"
 #include <cassert>

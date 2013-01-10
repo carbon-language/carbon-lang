@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CONSTANTRANGESSET_H_
-#define CONSTANTRANGESSET_H_
+#ifndef LLVM_SUPPORT_INTEGERSSUBSET_H
+#define LLVM_SUPPORT_INTEGERSSUBSET_H
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -537,4 +537,4 @@ public:
 
 }
 
-#endif /* CONSTANTRANGESSET_H_ */
+#endif /* CLLVM_SUPPORT_INTEGERSSUBSET_H */

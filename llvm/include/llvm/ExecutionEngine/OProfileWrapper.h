@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef OPROFILE_WRAPPER_H
-#define OPROFILE_WRAPPER_H
+#ifndef LLVM_EXECUTIONENGINE_OPROFILEWRAPPER_H
+#define LLVM_EXECUTIONENGINE_OPROFILEWRAPPER_H
 
 #include "llvm/Support/DataTypes.h"
 #include <opagent.h>
@@ -121,4 +121,4 @@ private:
 
 } // namespace llvm
 
-#endif //OPROFILE_WRAPPER_H
+#endif // LLVM_EXECUTIONENGINE_OPROFILEWRAPPER_H

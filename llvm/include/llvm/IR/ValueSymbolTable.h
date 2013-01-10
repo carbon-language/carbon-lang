@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_VALUE_SYMBOL_TABLE_H
-#define LLVM_VALUE_SYMBOL_TABLE_H
+#ifndef LLVM_IR_VALUESYMBOLTABLE_H
+#define LLVM_IR_VALUESYMBOLTABLE_H
 
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/Value.h"

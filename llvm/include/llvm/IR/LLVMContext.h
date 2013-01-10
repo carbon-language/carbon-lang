@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_LLVMCONTEXT_H
-#define LLVM_LLVMCONTEXT_H
+#ifndef LLVM_IR_LLVMCONTEXT_H
+#define LLVM_IR_LLVMCONTEXT_H
 
 #include "llvm/Support/Compiler.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CONSTANT_H
-#define LLVM_CONSTANT_H
+#ifndef LLVM_IR_CONSTANT_H
+#define LLVM_IR_CONSTANT_H
 
 #include "llvm/IR/User.h"
 

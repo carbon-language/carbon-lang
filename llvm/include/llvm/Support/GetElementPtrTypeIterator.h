@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_GETELEMENTPTRTYPE_H
-#define LLVM_SUPPORT_GETELEMENTPTRTYPE_H
+#ifndef LLVM_SUPPORT_GETELEMENTPTRTYPEITERATOR_H
+#define LLVM_SUPPORT_GETELEMENTPTRTYPEITERATOR_H
 
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/User.h"

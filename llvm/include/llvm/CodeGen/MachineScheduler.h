@@ -24,8 +24,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MACHINESCHEDULER_H
-#define MACHINESCHEDULER_H
+#ifndef LLVM_CODEGEN_MACHINESCHEDULER_H
+#define LLVM_CODEGEN_MACHINESCHEDULER_H
 
 #include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/RegisterPressure.h"

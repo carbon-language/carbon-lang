@@ -12,8 +12,8 @@
 // the operands in the most efficient manner.
 //
 
-#ifndef LLVM_OPERAND_TRAITS_H
-#define LLVM_OPERAND_TRAITS_H
+#ifndef LLVM_IR_OPERANDTRAITS_H
+#define LLVM_IR_OPERANDTRAITS_H
 
 #include "llvm/IR/User.h"
 

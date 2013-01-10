@@ -22,8 +22,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_PROCESS_H
-#define LLVM_SYSTEM_PROCESS_H
+#ifndef LLVM_SUPPORT_PROCESS_H
+#define LLVM_SUPPORT_PROCESS_H
 
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/DataTypes.h"

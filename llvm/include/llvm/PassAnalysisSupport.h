@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PASS_ANALYSIS_SUPPORT_H
-#define LLVM_PASS_ANALYSIS_SUPPORT_H
+#ifndef LLVM_PASSANALYSISSUPPORT_H
+#define LLVM_PASSANALYSISSUPPORT_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"

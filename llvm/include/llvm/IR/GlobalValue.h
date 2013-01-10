@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_GLOBALVALUE_H
-#define LLVM_GLOBALVALUE_H
+#ifndef LLVM_IR_GLOBALVALUE_H
+#define LLVM_IR_GLOBALVALUE_H
 
 #include "llvm/IR/Constant.h"
 

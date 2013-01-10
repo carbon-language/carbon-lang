@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef MEMORYOBJECT_H
-#define MEMORYOBJECT_H
+#ifndef LLVM_SUPPORT_MEMORYOBJECT_H
+#define LLVM_SUPPORT_MEMORYOBJECT_H
 
 #include "llvm/Support/DataTypes.h"
 

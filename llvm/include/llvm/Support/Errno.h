@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_ERRNO_H
-#define LLVM_SYSTEM_ERRNO_H
+#ifndef LLVM_SUPPORT_ERRNO_H
+#define LLVM_SUPPORT_ERRNO_H
 
 #include <string>
 

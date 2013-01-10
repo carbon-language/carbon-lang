@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_METADATA_H
-#define LLVM_METADATA_H
+#ifndef LLVM_IR_METADATA_H
+#define LLVM_IR_METADATA_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/FoldingSet.h"

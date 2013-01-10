@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_YAML_TRAITS_H_
-#define LLVM_YAML_TRAITS_H_
+#ifndef LLVM_SUPPORT_YAMLTRAITS_H
+#define LLVM_SUPPORT_YAMLTRAITS_H
 
 
 #include "llvm/ADT/DenseMap.h"
@@ -1101,4 +1101,4 @@ operator<<(Output &yout, T &seq) {
 
 
 
-#endif // LLVM_YAML_TRAITS_H_
+#endif // LLVM_SUPPORT_YAMLTRAITS_H

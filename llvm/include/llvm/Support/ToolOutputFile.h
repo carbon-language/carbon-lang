@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_TOOL_OUTPUT_FILE_H
-#define LLVM_SUPPORT_TOOL_OUTPUT_FILE_H
+#ifndef LLVM_SUPPORT_TOOLOUTPUTFILE_H
+#define LLVM_SUPPORT_TOOLOUTPUTFILE_H
 
 #include "llvm/Support/raw_ostream.h"
 

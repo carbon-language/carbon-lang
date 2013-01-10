@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ATTRIBUTES_H
-#define LLVM_ATTRIBUTES_H
+#ifndef LLVM_IR_ATTRIBUTES_H
+#define LLVM_IR_ATTRIBUTES_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseSet.h"

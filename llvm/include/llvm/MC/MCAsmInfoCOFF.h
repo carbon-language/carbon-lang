@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_COFF_TARGET_ASM_INFO_H
-#define LLVM_COFF_TARGET_ASM_INFO_H
+#ifndef LLVM_MC_MCASMINFOCOFF_H
+#define LLVM_MC_MCASMINFOCOFF_H
 
 #include "llvm/MC/MCAsmInfo.h"
 
@@ -33,4 +33,4 @@ namespace llvm {
 }
 
 
-#endif // LLVM_COFF_TARGET_ASM_INFO_H
+#endif // LLVM_MC_MCASMINFOCOFF_H

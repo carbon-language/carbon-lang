@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_SPARSE_PROPAGATION_H
-#define LLVM_ANALYSIS_SPARSE_PROPAGATION_H
+#ifndef LLVM_ANALYSIS_SPARSEPROPAGATION_H
+#define LLVM_ANALYSIS_SPARSEPROPAGATION_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -203,4 +203,4 @@ private:
 
 } // end namespace llvm
 
-#endif // LLVM_ANALYSIS_SPARSE_PROPAGATION_H
+#endif // LLVM_ANALYSIS_SPARSEPROPAGATION_H

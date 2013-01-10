@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef EE_MACHINE_CODE_INFO_H
-#define EE_MACHINE_CODE_INFO_H
+#ifndef LLVM_CODEGEN_MACHINECODEINFO_H
+#define LLVM_CODEGEN_MACHINECODEINFO_H
 
 #include "llvm/Support/DataTypes.h"
 

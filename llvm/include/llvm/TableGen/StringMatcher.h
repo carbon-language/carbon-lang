@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef STRINGMATCHER_H
-#define STRINGMATCHER_H
+#ifndef LLVM_TABLEGEN_STRINGMATCHER_H
+#define LLVM_TABLEGEN_STRINGMATCHER_H
 
 #include "llvm/ADT/StringRef.h"
 #include <string>

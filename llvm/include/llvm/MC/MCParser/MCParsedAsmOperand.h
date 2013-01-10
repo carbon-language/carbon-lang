@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCASMOPERAND_H
-#define LLVM_MC_MCASMOPERAND_H
+#ifndef LLVM_MC_MCPARSER_MCPARSEDASMOPERAND_H
+#define LLVM_MC_MCPARSER_MCPARSEDASMOPERAND_H
 
 namespace llvm {
 class SMLoc;

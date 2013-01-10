@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_THREADING_H
-#define LLVM_SYSTEM_THREADING_H
+#ifndef LLVM_SUPPORT_THREADING_H
+#define LLVM_SUPPORT_THREADING_H
 
 namespace llvm {
   /// llvm_start_multithreaded - Allocate and initialize structures needed to

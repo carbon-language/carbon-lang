@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TRANSFORMS_UTILS_BYPASSSLOWDIVISION_H
-#define TRANSFORMS_UTILS_BYPASSSLOWDIVISION_H
+#ifndef LLVM_TRANSFORMS_UTILS_BYPASSSLOWDIVISION_H
+#define LLVM_TRANSFORMS_UTILS_BYPASSSLOWDIVISION_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/IR/Function.h"

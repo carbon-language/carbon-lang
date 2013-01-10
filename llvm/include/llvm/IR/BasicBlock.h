@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_BASICBLOCK_H
-#define LLVM_BASICBLOCK_H
+#ifndef LLVM_IR_BASICBLOCK_H
+#define LLVM_IR_BASICBLOCK_H
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/ilist.h"

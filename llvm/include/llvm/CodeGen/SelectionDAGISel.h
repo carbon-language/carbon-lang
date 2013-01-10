@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_SELECTIONDAG_ISEL_H
-#define LLVM_CODEGEN_SELECTIONDAG_ISEL_H
+#ifndef LLVM_CODEGEN_SELECTIONDAGISEL_H
+#define LLVM_CODEGEN_SELECTIONDAGISEL_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -281,4 +281,4 @@ private:
 
 }
 
-#endif /* LLVM_CODEGEN_SELECTIONDAG_ISEL_H */
+#endif /* LLVM_CODEGEN_SELECTIONDAGISEL_H */

@@ -97,8 +97,8 @@
     nexttoward.
 */
 
-#ifndef LLVM_FLOAT_H
-#define LLVM_FLOAT_H
+#ifndef LLVM_ADT_APFLOAT_H
+#define LLVM_ADT_APFLOAT_H
 
 // APInt contains static functions implementing bignum arithmetic.
 #include "llvm/ADT/APInt.h"
@@ -463,4 +463,4 @@ namespace llvm {
   hash_code hash_value(const APFloat &Arg);
 } /* namespace llvm */
 
-#endif /* LLVM_FLOAT_H */
+#endif /* LLVM_ADT_APFLOAT_H */

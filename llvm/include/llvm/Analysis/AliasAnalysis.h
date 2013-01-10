@@ -34,8 +34,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_ALIAS_ANALYSIS_H
-#define LLVM_ANALYSIS_ALIAS_ANALYSIS_H
+#ifndef LLVM_ANALYSIS_ALIASANALYSIS_H
+#define LLVM_ANALYSIS_ALIASANALYSIS_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/CallSite.h"

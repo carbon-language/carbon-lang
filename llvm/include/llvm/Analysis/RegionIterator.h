@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 // This file defines the iterators to iterate over the elements of a Region.
 //===----------------------------------------------------------------------===//
-#ifndef LLVM_ANALYSIS_REGION_ITERATOR_H
-#define LLVM_ANALYSIS_REGION_ITERATOR_H
+#ifndef LLVM_ANALYSIS_REGIONITERATOR_H
+#define LLVM_ANALYSIS_REGIONITERATOR_H
 
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/PointerIntPair.h"

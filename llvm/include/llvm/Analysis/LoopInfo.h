@@ -27,8 +27,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_LOOP_INFO_H
-#define LLVM_ANALYSIS_LOOP_INFO_H
+#ifndef LLVM_ANALYSIS_LOOPINFO_H
+#define LLVM_ANALYSIS_LOOPINFO_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"

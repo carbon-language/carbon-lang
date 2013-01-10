@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TYPEBUILDER_H
-#define LLVM_TYPEBUILDER_H
+#ifndef LLVM_IR_TYPEBUILDER_H
+#define LLVM_IR_TYPEBUILDER_H
 
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/LLVMContext.h"

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TYPE_H
-#define LLVM_TYPE_H
+#ifndef LLVM_IR_TYPE_H
+#define LLVM_IR_TYPE_H
 
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"

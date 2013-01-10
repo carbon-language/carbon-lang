@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_FENV_H
-#define LLVM_SYSTEM_FENV_H
+#ifndef LLVM_SUPPORT_FENV_H
+#define LLVM_SUPPORT_FENV_H
 
 #include "llvm/Config/config.h"
 #include <cerrno>

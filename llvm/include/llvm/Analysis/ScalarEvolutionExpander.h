@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
-#define LLVM_ANALYSIS_SCALAREVOLUTION_EXPANDER_H
+#ifndef LLVM_ANALYSIS_SCALAREVOLUTIONEXPANDER_H
+#define LLVM_ANALYSIS_SCALAREVOLUTIONEXPANDER_H
 
 #include "llvm/Analysis/ScalarEvolutionExpressions.h"
 #include "llvm/Analysis/ScalarEvolutionNormalization.h"

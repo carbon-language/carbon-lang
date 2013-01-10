@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_SCHEDULEDAGILP_H
-#define LLVM_CODEGEN_SCHEDULEDAGILP_H
+#ifndef LLVM_CODEGEN_SCHEDULEDFS_H
+#define LLVM_CODEGEN_SCHEDULEDFS_H
 
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/DataTypes.h"

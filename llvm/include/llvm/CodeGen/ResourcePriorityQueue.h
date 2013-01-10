@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef RESOURCE_PRIORITY_QUEUE_H
-#define RESOURCE_PRIORITY_QUEUE_H
+#ifndef LLVM_CODEGEN_RESOURCEPRIORITYQUEUE_H
+#define LLVM_CODEGEN_RESOURCEPRIORITYQUEUE_H
 
 #include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/ScheduleDAG.h"

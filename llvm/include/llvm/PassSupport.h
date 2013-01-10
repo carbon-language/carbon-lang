@@ -18,8 +18,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PASS_SUPPORT_H
-#define LLVM_PASS_SUPPORT_H
+#ifndef LLVM_PASSSUPPORT_H
+#define LLVM_PASSSUPPORT_H
 
 #include "Pass.h"
 #include "llvm/InitializePasses.h"

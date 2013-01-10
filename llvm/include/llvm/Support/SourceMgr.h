@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_SOURCEMGR_H
-#define SUPPORT_SOURCEMGR_H
+#ifndef LLVM_SUPPORT_SOURCEMGR_H
+#define LLVM_SUPPORT_SOURCEMGR_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/SMLoc.h"

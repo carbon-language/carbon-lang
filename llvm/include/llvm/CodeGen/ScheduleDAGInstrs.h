@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SCHEDULEDAGINSTRS_H
-#define SCHEDULEDAGINSTRS_H
+#ifndef LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
+#define LLVM_CODEGEN_SCHEDULEDAGINSTRS_H
 
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SparseSet.h"

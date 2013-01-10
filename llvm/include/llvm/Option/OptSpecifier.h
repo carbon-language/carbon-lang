@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_OPTSPECIFIER_H
-#define LLVM_SUPPORT_OPTSPECIFIER_H
+#ifndef LLVM_OPTION_OPTSPECIFIER_H
+#define LLVM_OPTION_OPTSPECIFIER_H
 
 namespace llvm {
 namespace opt {

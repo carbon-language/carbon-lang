@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_PROGRAM_H
-#define LLVM_SYSTEM_PROGRAM_H
+#ifndef LLVM_SUPPORT_PROGRAM_H
+#define LLVM_SUPPORT_PROGRAM_H
 
 #include "llvm/Support/Path.h"
 

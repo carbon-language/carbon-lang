@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_EXECUTION_ENGINE_SECTION_MEMORY_MANAGER_H
-#define LLVM_EXECUTION_ENGINE_SECTION_MEMORY_MANAGER_H
+#ifndef LLVM_EXECUTIONENGINE_SECTIONMEMORYMANAGER_H
+#define LLVM_EXECUTIONENGINE_SECTIONMEMORYMANAGER_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ExecutionEngine/JITMemoryManager.h"

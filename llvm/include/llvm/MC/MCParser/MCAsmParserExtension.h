@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MC_MCASMPARSEREXTENSION_H
-#define LLVM_MC_MCASMPARSEREXTENSION_H
+#ifndef LLVM_MC_MCPARSER_MCASMPARSEREXTENSION_H
+#define LLVM_MC_MCPARSER_MCASMPARSEREXTENSION_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCParser/MCAsmParser.h"

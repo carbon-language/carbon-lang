@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_LIVESTACK_ANALYSIS_H
-#define LLVM_CODEGEN_LIVESTACK_ANALYSIS_H
+#ifndef LLVM_CODEGEN_LIVESTACKANALYSIS_H
+#define LLVM_CODEGEN_LIVESTACKANALYSIS_H
 
 #include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"

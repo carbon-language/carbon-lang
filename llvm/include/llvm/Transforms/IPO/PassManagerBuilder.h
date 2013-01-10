@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_PASSMANAGERBUILDER_H
-#define LLVM_SUPPORT_PASSMANAGERBUILDER_H
+#ifndef LLVM_TRANSFORMS_IPO_PASSMANAGERBUILDER_H
+#define LLVM_TRANSFORMS_IPO_PASSMANAGERBUILDER_H
 
 #include <vector>
 

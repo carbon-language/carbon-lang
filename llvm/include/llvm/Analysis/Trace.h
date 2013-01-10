@@ -116,4 +116,4 @@ public:
 
 } // end namespace llvm
 
-#endif // TRACE_H
+#endif // LLVM_ANALYSIS_TRACE_H

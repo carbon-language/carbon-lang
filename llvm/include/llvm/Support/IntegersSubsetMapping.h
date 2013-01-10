@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef CRSBUILDER_H_
-#define CRSBUILDER_H_
+#ifndef LLVM_SUPPORT_INTEGERSSUBSETMAPPING_H
+#define LLVM_SUPPORT_INTEGERSSUBSETMAPPING_H
 
 #include "llvm/Support/IntegersSubset.h"
 #include <list>
@@ -585,4 +585,4 @@ typedef IntegersSubsetMapping<BasicBlock> IntegersSubsetToBB;
 
 }
 
-#endif /* CRSBUILDER_H_ */
+#endif /* LLVM_SUPPORT_INTEGERSSUBSETMAPPING_CRSBUILDER_H */

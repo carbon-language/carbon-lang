@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_HOST_H
-#define LLVM_SYSTEM_HOST_H
+#ifndef LLVM_SUPPORT_HOST_H
+#define LLVM_SUPPORT_HOST_H
 
 #include "llvm/ADT/StringMap.h"
 #include <string>

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_MUTEX_H
-#define LLVM_SYSTEM_MUTEX_H
+#ifndef LLVM_SUPPORT_MUTEX_H
+#define LLVM_SUPPORT_MUTEX_H
 
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/Threading.h"

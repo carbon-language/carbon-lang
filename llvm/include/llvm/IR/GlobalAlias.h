@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_GLOBAL_ALIAS_H
-#define LLVM_GLOBAL_ALIAS_H
+#ifndef LLVM_IR_GLOBALALIAS_H
+#define LLVM_IR_GLOBALALIAS_H
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/ilist_node.h"

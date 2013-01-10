@@ -22,8 +22,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYMBOLTABLELISTTRAITS_H
-#define LLVM_SYMBOLTABLELISTTRAITS_H
+#ifndef LLVM_IR_SYMBOLTABLELISTTRAITS_H
+#define LLVM_IR_SYMBOLTABLELISTTRAITS_H
 
 #include "llvm/ADT/ilist.h"
 

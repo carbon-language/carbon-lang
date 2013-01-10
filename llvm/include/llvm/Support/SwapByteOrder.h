@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_SWAP_BYTE_ORDER_H
-#define LLVM_SYSTEM_SWAP_BYTE_ORDER_H
+#ifndef LLVM_SUPPORT_SWAPBYTEORDER_H
+#define LLVM_SUPPORT_SWAPBYTEORDER_H
 
 #include "llvm/Support/DataTypes.h"
 #include <cstddef>

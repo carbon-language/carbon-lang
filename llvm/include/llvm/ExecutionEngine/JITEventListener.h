@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_EXECUTION_ENGINE_JIT_EVENTLISTENER_H
-#define LLVM_EXECUTION_ENGINE_JIT_EVENTLISTENER_H
+#ifndef LLVM_EXECUTIONENGINE_JITEVENTLISTENER_H
+#define LLVM_EXECUTIONENGINE_JITEVENTLISTENER_H
 
 #include "llvm/Config/llvm-config.h"
 #include "llvm/Support/DataTypes.h"
@@ -127,4 +127,4 @@ public:
 
 } // end namespace llvm.
 
-#endif // defined LLVM_EXECUTION_ENGINE_JIT_EVENTLISTENER_H
+#endif // defined LLVM_EXECUTIONENGINE_JITEVENTLISTENER_H

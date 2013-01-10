@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef SUPPORT_SMLOC_H
-#define SUPPORT_SMLOC_H
+#ifndef LLVM_SUPPORT_SMLOC_H
+#define LLVM_SUPPORT_SMLOC_H
 
 #include <cassert>
 

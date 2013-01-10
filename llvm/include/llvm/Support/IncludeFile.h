@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_INCLUDEFILE_H
-#define LLVM_SYSTEM_INCLUDEFILE_H
+#ifndef LLVM_SUPPORT_INCLUDEFILE_H
+#define LLVM_SUPPORT_INCLUDEFILE_H
 
 /// This macro is the public interface that IncludeFile.h exports. This gives
 /// us the option to implement the "link the definition" capability in any

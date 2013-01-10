@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PATHPROFILEINFO_H
-#define LLVM_PATHPROFILEINFO_H
+#ifndef LLVM_ANALYSIS_PATHPROFILEINFO_H
+#define LLVM_ANALYSIS_PATHPROFILEINFO_H
 
 #include "llvm/Analysis/PathNumbering.h"
 #include "llvm/IR/BasicBlock.h"

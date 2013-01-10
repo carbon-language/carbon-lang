@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_DYNAMIC_LIBRARY_H
-#define LLVM_SYSTEM_DYNAMIC_LIBRARY_H
+#ifndef LLVM_SYSTEM_DYNAMICLIBRARY_H
+#define LLVM_SYSTEM_DYNAMICLIBRARY_H
 
 #include <string>
 

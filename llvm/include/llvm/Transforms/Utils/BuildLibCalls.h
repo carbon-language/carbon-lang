@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TRANSFORMS_UTILS_BUILDLIBCALLS_H
-#define TRANSFORMS_UTILS_BUILDLIBCALLS_H
+#ifndef LLVM_TRANSFORMS_UTILS_BUILDLIBCALLS_H
+#define LLVM_TRANSFORMS_UTILS_BUILDLIBCALLS_H
 
 #include "llvm/IR/IRBuilder.h"
 

@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_MEMORY_DEPENDENCE_H
-#define LLVM_ANALYSIS_MEMORY_DEPENDENCE_H
+#ifndef LLVM_ANALYSIS_MEMORYDEPENDENCEANALYSIS_H
+#define LLVM_ANALYSIS_MEMORYDEPENDENCEANALYSIS_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/OwningPtr.h"

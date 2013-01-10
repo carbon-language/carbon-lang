@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_IMMUTABLE_INTERVAL_MAP_H
-#define LLVM_ADT_IMMUTABLE_INTERVAL_MAP_H
+#ifndef LLVM_ADT_IMMUTABLEINTERVALMAP_H
+#define LLVM_ADT_IMMUTABLEINTERVALMAP_H
 
 #include "llvm/ADT/ImmutableMap.h"
 

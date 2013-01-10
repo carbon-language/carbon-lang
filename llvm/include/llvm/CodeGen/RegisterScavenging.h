@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_REGISTER_SCAVENGING_H
-#define LLVM_CODEGEN_REGISTER_SCAVENGING_H
+#ifndef LLVM_CODEGEN_REGISTERSCAVENGING_H
+#define LLVM_CODEGEN_REGISTERSCAVENGING_H
 
 #include "llvm/ADT/BitVector.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"

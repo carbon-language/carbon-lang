@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MDBUILDER_H
-#define LLVM_MDBUILDER_H
+#ifndef LLVM_IR_MDBUILDER_H
+#define LLVM_IR_MDBUILDER_H
 
 #include "llvm/ADT/APInt.h"
 #include "llvm/IR/Constants.h"

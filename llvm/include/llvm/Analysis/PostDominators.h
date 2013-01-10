@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_POST_DOMINATORS_H
-#define LLVM_ANALYSIS_POST_DOMINATORS_H
+#ifndef LLVM_ANALYSIS_POSTDOMINATORS_H
+#define LLVM_ANALYSIS_POSTDOMINATORS_H
 
 #include "llvm/Analysis/Dominators.h"
 

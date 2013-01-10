@@ -1,5 +1,5 @@
-#ifndef LLVM_SUPPORT_LOCALE
-#define LLVM_SUPPORT_LOCALE
+#ifndef LLVM_SUPPORT_LOCALE_H
+#define LLVM_SUPPORT_LOCALE_H
 
 #include "llvm/ADT/StringRef.h"
 
@@ -14,4 +14,4 @@ bool isPrint(int c);
 }
 }
 
-#endif // LLVM_SUPPORT_LOCALE
+#endif // LLVM_SUPPORT_LOCALE_H

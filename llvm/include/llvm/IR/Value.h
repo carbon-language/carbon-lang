@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_VALUE_H
-#define LLVM_VALUE_H
+#ifndef LLVM_IR_VALUE_H
+#define LLVM_IR_VALUE_H
 
 #include "llvm/IR/Use.h"
 #include "llvm/Support/Casting.h"

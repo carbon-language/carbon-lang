@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef __LTO_CAPI_H__
-#define __LTO_CAPI_H__
+#ifndef LLVM_C_LINKTIMEOPTIMIZER_H
+#define LLVM_C_LINKTIMEOPTIMIZER_H
 
 #ifdef __cplusplus
 extern "C" {

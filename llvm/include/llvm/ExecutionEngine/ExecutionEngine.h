@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_EXECUTION_ENGINE_H
-#define LLVM_EXECUTION_ENGINE_H
+#ifndef LLVM_EXECUTIONENGINE_EXECUTIONENGINE_H
+#define LLVM_EXECUTIONENGINE_EXECUTIONENGINE_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"

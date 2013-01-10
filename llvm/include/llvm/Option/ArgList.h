@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_ARGLIST_H_
-#define LLVM_SUPPORT_ARGLIST_H_
+#ifndef LLVM_OPTION_ARGLIST_H
+#define LLVM_OPTION_ARGLIST_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"

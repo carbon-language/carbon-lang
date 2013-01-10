@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_OPTIONAL
-#define LLVM_ADT_OPTIONAL
+#ifndef LLVM_ADT_OPTIONAL_H
+#define LLVM_ADT_OPTIONAL_H
 
 #include "llvm/Support/Compiler.h"
 #include <cassert>

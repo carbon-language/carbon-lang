@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_PRIORITY_QUEUE_H
-#define LLVM_ADT_PRIORITY_QUEUE_H
+#ifndef LLVM_ADT_PRIORITYQUEUE_H
+#define LLVM_ADT_PRIORITYQUEUE_H
 
 #include <algorithm>
 #include <queue>

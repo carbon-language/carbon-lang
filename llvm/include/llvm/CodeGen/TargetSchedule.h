@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_TARGET_TARGETSCHEDMODEL_H
-#define LLVM_TARGET_TARGETSCHEDMODEL_H
+#ifndef LLVM_CODEGEN_TARGETSCHEDULE_H
+#define LLVM_CODEGEN_TARGETSCHEDULE_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/MC/MCInstrItineraries.h"

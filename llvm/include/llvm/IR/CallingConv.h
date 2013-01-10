@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CALLINGCONV_H
-#define LLVM_CALLINGCONV_H
+#ifndef LLVM_IR_CALLINGCONV_H
+#define LLVM_IR_CALLINGCONV_H
 
 namespace llvm {
 

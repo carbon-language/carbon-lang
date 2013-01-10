@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef ASMCOND_H
-#define ASMCOND_H
+#ifndef LLVM_MC_MCPARSER_ASMCOND_H
+#define LLVM_MC_MCPARSER_ASMCOND_H
 
 namespace llvm {
 

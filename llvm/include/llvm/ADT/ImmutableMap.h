@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_IMMAP_H
-#define LLVM_ADT_IMMAP_H
+#ifndef LLVM_ADT_IMMUTABLEMAP_H
+#define LLVM_ADT_IMMUTABLEMAP_H
 
 #include "llvm/ADT/ImmutableSet.h"
 

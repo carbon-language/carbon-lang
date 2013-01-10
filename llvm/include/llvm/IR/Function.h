@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_FUNCTION_H
-#define LLVM_FUNCTION_H
+#ifndef LLVM_IR_FUNCTION_H
+#define LLVM_IR_FUNCTION_H
 
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Attributes.h"

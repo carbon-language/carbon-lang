@@ -33,8 +33,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_SCALAREVOLUTION_NORMALIZATION_H
-#define LLVM_ANALYSIS_SCALAREVOLUTION_NORMALIZATION_H
+#ifndef LLVM_ANALYSIS_SCALAREVOLUTIONNORMALIZATION_H
+#define LLVM_ANALYSIS_SCALAREVOLUTIONNORMALIZATION_H
 
 #include "llvm/ADT/SmallPtrSet.h"
 

@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef BITSTREAM_READER_H
-#define BITSTREAM_READER_H
+#ifndef LLVM_BITCODE_BITSTREAMREADER_H
+#define LLVM_BITCODE_BITSTREAMREADER_H
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/BitCodes.h"

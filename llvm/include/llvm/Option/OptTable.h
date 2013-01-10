@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_OPTTABLE_H
-#define LLVM_SUPPORT_OPTTABLE_H
+#ifndef LLVM_OPTION_OPTTABLE_H
+#define LLVM_OPTION_OPTTABLE_H
 
 #include "llvm/ADT/StringSet.h"
 #include "llvm/Option/OptSpecifier.h"

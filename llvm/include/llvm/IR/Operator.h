@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OPERATOR_H
-#define LLVM_OPERATOR_H
+#ifndef LLVM_IR_OPERATOR_H
+#define LLVM_IR_OPERATOR_H
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DataLayout.h"

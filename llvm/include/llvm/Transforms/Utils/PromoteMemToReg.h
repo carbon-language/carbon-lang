@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef TRANSFORMS_UTILS_PROMOTEMEMTOREG_H
-#define TRANSFORMS_UTILS_PROMOTEMEMTOREG_H
+#ifndef LLVM_TRANSFORMS_UTILS_PROMOTEMEMTOREG_H
+#define LLVM_TRANSFORMS_UTILS_PROMOTEMEMTOREG_H
 
 #include <vector>
 

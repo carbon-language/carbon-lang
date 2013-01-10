@@ -20,8 +20,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_WIN_COFF_H
-#define LLVM_SUPPORT_WIN_COFF_H
+#ifndef LLVM_SUPPORT_COFF_H
+#define LLVM_SUPPORT_COFF_H
 
 #include "llvm/Support/DataTypes.h"
 #include <cassert>

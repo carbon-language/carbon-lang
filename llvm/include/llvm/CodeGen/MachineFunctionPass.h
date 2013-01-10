@@ -16,8 +16,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MACHINE_FUNCTION_PASS_H
-#define LLVM_CODEGEN_MACHINE_FUNCTION_PASS_H
+#ifndef LLVM_CODEGEN_MACHINEFUNCTIONPASS_H
+#define LLVM_CODEGEN_MACHINEFUNCTIONPASS_H
 
 #include "llvm/Pass.h"
 

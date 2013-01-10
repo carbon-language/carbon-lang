@@ -30,8 +30,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INTERVAL_ITERATOR_H
-#define LLVM_INTERVAL_ITERATOR_H
+#ifndef LLVM_ANALYSIS_INTERVALITERATOR_H
+#define LLVM_ANALYSIS_INTERVALITERATOR_H
 
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/IR/Function.h"

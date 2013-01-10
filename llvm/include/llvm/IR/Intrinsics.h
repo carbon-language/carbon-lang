@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INTRINSICS_H
-#define LLVM_INTRINSICS_H
+#ifndef LLVM_IR_INTRINSICS_H
+#define LLVM_IR_INTRINSICS_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include <string>

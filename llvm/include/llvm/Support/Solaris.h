@@ -11,8 +11,8 @@
  *
  *===----------------------------------------------------------------------===*/
 
-#ifndef LLVM_SYSTEM_SOLARIS_H
-#define LLVM_SYSTEM_SOLARIS_H
+#ifndef LLVM_SUPPORT_SOLARIS_H
+#define LLVM_SUPPORT_SOLARIS_H
 
 #include <sys/types.h>
 #include <sys/regset.h>

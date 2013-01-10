@@ -13,8 +13,8 @@
 |*                                                                            *|
 \*===----------------------------------------------------------------------===*/
 
-#ifndef LTO_H
-#define LTO_H  1
+#ifndef LLVM_C_LTO_H
+#define LLVM_C_LTO_H
 
 #include <stdbool.h>
 #include <stddef.h>

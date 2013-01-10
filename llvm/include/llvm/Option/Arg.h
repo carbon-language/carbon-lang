@@ -12,8 +12,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_ARG_H_
-#define LLVM_SUPPORT_ARG_H_
+#ifndef LLVM_OPTION_ARG_H
+#define LLVM_OPTION_ARG_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"

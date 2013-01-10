@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DATALAYOUT_H
-#define LLVM_DATALAYOUT_H
+#ifndef LLVM_IR_DATALAYOUT_H
+#define LLVM_IR_DATALAYOUT_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"

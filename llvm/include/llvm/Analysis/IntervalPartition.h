@@ -20,8 +20,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INTERVAL_PARTITION_H
-#define LLVM_INTERVAL_PARTITION_H
+#ifndef LLVM_ANALYSIS_INTERVALPARTITION_H
+#define LLVM_ANALYSIS_INTERVALPARTITION_H
 
 #include "llvm/Analysis/Interval.h"
 #include "llvm/Pass.h"

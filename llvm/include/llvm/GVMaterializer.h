@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef GVMATERIALIZER_H
-#define GVMATERIALIZER_H
+#ifndef LLVM_GVMATERIALIZER_H
+#define LLVM_GVMATERIALIZER_H
 
 #include <string>
 

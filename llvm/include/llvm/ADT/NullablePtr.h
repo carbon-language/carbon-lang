@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_NULLABLE_PTR_H
-#define LLVM_ADT_NULLABLE_PTR_H
+#ifndef LLVM_ADT_NULLABLEPTR_H
+#define LLVM_ADT_NULLABLEPTR_H
 
 #include <cassert>
 #include <cstddef>

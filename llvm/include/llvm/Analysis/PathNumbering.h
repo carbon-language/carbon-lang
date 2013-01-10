@@ -23,8 +23,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_PATH_NUMBERING_H
-#define LLVM_PATH_NUMBERING_H
+#ifndef LLVM_ANALYSIS_PATHNUMBERING_H
+#define LLVM_ANALYSIS_PATHNUMBERING_H
 
 #include "llvm/Analysis/ProfileInfoTypes.h"
 #include "llvm/IR/BasicBlock.h"

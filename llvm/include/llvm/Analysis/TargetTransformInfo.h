@@ -19,8 +19,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_TARGET_TRANSFORM_INTERFACE
-#define LLVM_ANALYSIS_TARGET_TRANSFORM_INTERFACE
+#ifndef LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
+#define LLVM_ANALYSIS_TARGETTRANSFORMINFO_H
 
 #include "llvm/IR/GlobalValue.h"
 #include "llvm/IR/Intrinsics.h"

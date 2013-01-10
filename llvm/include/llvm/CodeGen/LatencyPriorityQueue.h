@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LATENCY_PRIORITY_QUEUE_H
-#define LATENCY_PRIORITY_QUEUE_H
+#ifndef LLVM_CODEGEN_LATENCYPRIORITYQUEUE_H
+#define LLVM_CODEGEN_LATENCYPRIORITYQUEUE_H
 
 #include "llvm/CodeGen/ScheduleDAG.h"
 

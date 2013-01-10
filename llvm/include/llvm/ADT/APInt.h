@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_APINT_H
-#define LLVM_APINT_H
+#ifndef LLVM_ADT_APINT_H
+#define LLVM_ADT_APINT_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/Compiler.h"

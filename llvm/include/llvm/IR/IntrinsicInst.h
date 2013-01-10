@@ -21,8 +21,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INTRINSICINST_H
-#define LLVM_INTRINSICINST_H
+#ifndef LLVM_IR_INTRINSICINST_H
+#define LLVM_IR_INTRINSICINST_H
 
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Function.h"

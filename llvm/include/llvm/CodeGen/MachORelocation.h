@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 
-#ifndef LLVM_CODEGEN_MACHO_RELOCATION_H
-#define LLVM_CODEGEN_MACHO_RELOCATION_H
+#ifndef LLVM_CODEGEN_MACHORELOCATION_H
+#define LLVM_CODEGEN_MACHORELOCATION_H
 
 #include "llvm/Support/DataTypes.h"
 
@@ -53,4 +53,4 @@ namespace llvm {
 
 } // end llvm namespace
 
-#endif // LLVM_CODEGEN_MACHO_RELOCATION_H
+#endif // LLVM_CODEGEN_MACHORELOCATION_H

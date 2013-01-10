@@ -109,4 +109,4 @@ namespace llvm {
   };
 } // end namespace llvm
 
-#endif /* LLVM_DEBUGLOC_H */
+#endif /* LLVM_SUPPORT_DEBUGLOC_H */

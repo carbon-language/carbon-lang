@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_PBQP_MATH_H 
+#ifndef LLVM_CODEGEN_PBQP_MATH_H
 #define LLVM_CODEGEN_PBQP_MATH_H
 
 #include <algorithm>

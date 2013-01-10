@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_MANGLER_H
-#define LLVM_SUPPORT_MANGLER_H
+#ifndef LLVM_TARGET_MANGLER_H
+#define LLVM_TARGET_MANGLER_H
 
 #include "llvm/ADT/DenseMap.h"
 
@@ -69,4 +69,4 @@ public:
 
 } // End llvm namespace
 
-#endif // LLVM_SUPPORT_MANGLER_H
+#endif // LLVM_TARGET_MANGLER_H

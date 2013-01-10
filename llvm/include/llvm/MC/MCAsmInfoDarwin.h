@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DARWIN_TARGET_ASM_INFO_H
-#define LLVM_DARWIN_TARGET_ASM_INFO_H
+#ifndef LLVM_MC_MCASMINFODARWIN_H
+#define LLVM_MC_MCASMINFODARWIN_H
 
 #include "llvm/MC/MCAsmInfo.h"
 
@@ -26,4 +26,4 @@ namespace llvm {
 }
 
 
-#endif // LLVM_DARWIN_TARGET_ASM_INFO_H
+#endif // LLVM_MC_MCASMINFODARWIN_H

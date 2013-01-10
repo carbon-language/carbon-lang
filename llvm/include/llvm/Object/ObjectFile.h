@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_OBJECT_OBJECT_FILE_H
-#define LLVM_OBJECT_OBJECT_FILE_H
+#ifndef LLVM_OBJECT_OBJECTFILE_H
+#define LLVM_OBJECT_OBJECTFILE_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Object/Binary.h"

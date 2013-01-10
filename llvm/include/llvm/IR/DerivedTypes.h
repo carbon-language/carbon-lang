@@ -15,8 +15,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_DERIVED_TYPES_H
-#define LLVM_DERIVED_TYPES_H
+#ifndef LLVM_IR_DERIVEDTYPES_H
+#define LLVM_IR_DERIVEDTYPES_H
 
 #include "llvm/IR/Type.h"
 #include "llvm/Support/Compiler.h"

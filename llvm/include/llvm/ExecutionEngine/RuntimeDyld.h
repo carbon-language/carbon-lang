@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_RUNTIME_DYLD_H
-#define LLVM_RUNTIME_DYLD_H
+#ifndef LLVM_EXECUTIONENGINE_RUNTIMEDYLD_H
+#define LLVM_EXECUTIONENGINE_RUNTIMEDYLD_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/ObjectBuffer.h"

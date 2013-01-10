@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_MODULE_H
-#define LLVM_MODULE_H
+#ifndef LLVM_IR_MODULE_H
+#define LLVM_IR_MODULE_H
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/IR/Function.h"

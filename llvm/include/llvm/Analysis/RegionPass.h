@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_REGION_PASS_H
-#define LLVM_REGION_PASS_H
+#ifndef LLVM_ANALYSIS_REGIONPASS_H
+#define LLVM_ANALYSIS_REGIONPASS_H
 
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/IR/Function.h"

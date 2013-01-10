@@ -24,8 +24,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_REGION_INFO_H
-#define LLVM_ANALYSIS_REGION_INFO_H
+#ifndef LLVM_ANALYSIS_REGIONINFO_H
+#define LLVM_ANALYSIS_REGIONINFO_H
 
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Analysis/DominanceFrontier.h"

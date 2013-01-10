@@ -20,8 +20,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SUPPORT_PASS_NAME_PARSER_H
-#define LLVM_SUPPORT_PASS_NAME_PARSER_H
+#ifndef LLVM_SUPPORT_PASSNAMEPARSER_H
+#define LLVM_SUPPORT_PASSNAMEPARSER_H
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Pass.h"

@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INSTRUCTIONS_H
-#define LLVM_INSTRUCTIONS_H
+#ifndef LLVM_IR_INSTRUCTIONS_H
+#define LLVM_IR_INSTRUCTIONS_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallVector.h"

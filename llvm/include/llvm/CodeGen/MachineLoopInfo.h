@@ -27,8 +27,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_MACHINE_LOOP_INFO_H
-#define LLVM_CODEGEN_MACHINE_LOOP_INFO_H
+#ifndef LLVM_CODEGEN_MACHINELOOPINFO_H
+#define LLVM_CODEGEN_MACHINELOOPINFO_H
 
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"

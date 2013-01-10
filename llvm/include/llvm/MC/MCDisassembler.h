@@ -6,8 +6,8 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifndef MCDISASSEMBLER_H
-#define MCDISASSEMBLER_H
+#ifndef LLVM_MC_MCDISASSEMBLER_H
+#define LLVM_MC_MCDISASSEMBLER_H
 
 #include "llvm-c/Disassembler.h"
 #include "llvm/Support/DataTypes.h"

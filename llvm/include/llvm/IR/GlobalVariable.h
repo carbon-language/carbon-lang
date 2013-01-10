@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_GLOBAL_VARIABLE_H
-#define LLVM_GLOBAL_VARIABLE_H
+#ifndef LLVM_IR_GLOBALVARIABLE_H
+#define LLVM_IR_GLOBALVARIABLE_H
 
 #include "llvm/ADT/Twine.h"
 #include "llvm/ADT/ilist_node.h"

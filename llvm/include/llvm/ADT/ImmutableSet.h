@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_IMSET_H
-#define LLVM_ADT_IMSET_H
+#ifndef LLVM_ADT_IMMUTABLESET_H
+#define LLVM_ADT_IMMUTABLESET_H
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"

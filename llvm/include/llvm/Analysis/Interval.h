@@ -17,8 +17,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INTERVAL_H
-#define LLVM_INTERVAL_H
+#ifndef LLVM_ANALYSIS_INTERVAL_H
+#define LLVM_ANALYSIS_INTERVAL_H
 
 #include "llvm/ADT/GraphTraits.h"
 #include <vector>

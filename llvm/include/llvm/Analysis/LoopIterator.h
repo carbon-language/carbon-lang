@@ -21,8 +21,8 @@
 // reachable from the loop header.
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_LOOP_ITERATOR_H
-#define LLVM_ANALYSIS_LOOP_ITERATOR_H
+#ifndef LLVM_ANALYSIS_LOOPITERATOR_H
+#define LLVM_ANALYSIS_LOOPITERATOR_H
 
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/PostOrderIterator.h"

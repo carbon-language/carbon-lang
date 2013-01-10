@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ANALYSIS_DIBUILDER_H
-#define LLVM_ANALYSIS_DIBUILDER_H
+#ifndef LLVM_DIBUILDER_H
+#define LLVM_DIBUILDER_H
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/StringRef.h"

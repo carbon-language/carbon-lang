@@ -13,8 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_INLINEASM_H
-#define LLVM_INLINEASM_H
+#ifndef LLVM_IR_INLINEASM_H
+#define LLVM_IR_INLINEASM_H
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Value.h"

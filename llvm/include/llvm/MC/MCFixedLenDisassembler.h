@@ -8,8 +8,8 @@
 //===----------------------------------------------------------------------===//
 // Fixed length disassembler decoder state machine driver.
 //===----------------------------------------------------------------------===//
-#ifndef MCFIXEDLENDISASSEMBLER_H
-#define MCFIXEDLENDISASSEMBLER_H
+#ifndef LLVM_MC_MCFIXEDLENDISASSEMBLER_H
+#define LLVM_MC_MCFIXEDLENDISASSEMBLER_H
 
 namespace llvm {
 

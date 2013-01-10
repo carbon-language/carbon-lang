@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_GCOV_H
-#define LLVM_GCOV_H
+#ifndef LLVM_SUPPORT_GCOV_H
+#define LLVM_SUPPORT_GCOV_H
 
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"

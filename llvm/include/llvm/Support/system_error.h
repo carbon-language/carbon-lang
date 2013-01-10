@@ -14,8 +14,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_SYSTEM_SYSTEM_ERROR_H
-#define LLVM_SYSTEM_SYSTEM_ERROR_H
+#ifndef LLVM_SUPPORT_SYSTEM_ERROR_H
+#define LLVM_SUPPORT_SYSTEM_ERROR_H
 
 #include "llvm/Support/Compiler.h"
 

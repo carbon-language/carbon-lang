@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_ADT_VARIADIC_FUNCTION_H
-#define LLVM_ADT_VARIADIC_FUNCTION_H
+#ifndef LLVM_ADT_VARIADICFUNCTION_H
+#define LLVM_ADT_VARIADICFUNCTION_H
 
 #include "llvm/ADT/ArrayRef.h"
 
@@ -328,4 +328,4 @@ struct VariadicFunction3 {
 
 } // end namespace llvm
 
-#endif  // LLVM_ADT_VARIADIC_FUNCTION_H
+#endif  // LLVM_ADT_VARIADICFUNCTION_H
