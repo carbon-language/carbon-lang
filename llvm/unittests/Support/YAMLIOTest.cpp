@@ -783,10 +783,18 @@ namespace yaml {
     static void mapping(IO &io, KindAndFlags& kf) {
       io.mapRequired("kind",  kf.kind);
       // type of flags field varies depending on kind field
-      if ( kf.kind == kindA )
-        io.mapRequired("flags", *((AFlags*)&kf.flags));
-      else
-        io.mapRequired("flags", *((BFlags*)&kf.flags));
+
+      // Use memcpy here to avoid breaking strict aliasing rules.
+      if ( kf.kind == kindA ) {
+        AFlags aflags;
+        memcpy(&aflags, &kf.flags, sizeof(aflags));
+        io.mapRequired("flags", aflags);
+      }
+      else {
+        BFlags bflags;
+        memcpy(&bflags, &kf.flags, sizeof(bflags));
+        io.mapRequired("flags", bflags);
+      }
     }
   };
 }
