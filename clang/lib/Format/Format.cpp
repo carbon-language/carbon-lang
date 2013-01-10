@@ -123,17 +123,52 @@ struct OptimizationParameters {
   unsigned PenaltyExcessCharacter;
 };
 
+/// \brief Replaces the whitespace in front of \p Tok. Only call once for
+/// each \c FormatToken.
+static void replaceWhitespace(const AnnotatedToken &Tok, unsigned NewLines,
+                              unsigned Spaces, const FormatStyle &Style,
+                              SourceManager &SourceMgr,
+                              tooling::Replacements &Replaces) {
+  Replaces.insert(tooling::Replacement(
+      SourceMgr, Tok.FormatTok.WhiteSpaceStart, Tok.FormatTok.WhiteSpaceLength,
+      std::string(NewLines, '\n') + std::string(Spaces, ' ')));
+}
+
+/// \brief Like \c replaceWhitespace, but additionally adds right-aligned
+/// backslashes to escape newlines inside a preprocessor directive.
+///
+/// This function and \c replaceWhitespace have the same behavior if
+/// \c Newlines == 0.
+static void replacePPWhitespace(
+    const AnnotatedToken &Tok, unsigned NewLines, unsigned Spaces,
+    unsigned WhitespaceStartColumn, const FormatStyle &Style,
+    SourceManager &SourceMgr, tooling::Replacements &Replaces) {
+  std::string NewLineText;
+  if (NewLines > 0) {
+    unsigned Offset = std::min<int>(Style.ColumnLimit - 1,
+                                    WhitespaceStartColumn);
+    for (unsigned i = 0; i < NewLines; ++i) {
+      NewLineText += std::string(Style.ColumnLimit - Offset - 1, ' ');
+      NewLineText += "\\\n";
+      Offset = 0;
+    }
+  }
+  Replaces.insert(tooling::Replacement(SourceMgr, Tok.FormatTok.WhiteSpaceStart,
+                                       Tok.FormatTok.WhiteSpaceLength,
+                                       NewLineText + std::string(Spaces, ' ')));
+}
+
 class UnwrappedLineFormatter {
 public:
   UnwrappedLineFormatter(
       const FormatStyle &Style, SourceManager &SourceMgr,
-      const UnwrappedLine &Line, unsigned PreviousEndOfLineColumn,
+      const UnwrappedLine &Line, unsigned FirstIndent,
       LineType CurrentLineType, const AnnotatedToken &RootToken,
       tooling::Replacements &Replaces, bool StructuralError)
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
-        PreviousEndOfLineColumn(PreviousEndOfLineColumn),
+        FirstIndent(FirstIndent),
         CurrentLineType(CurrentLineType), RootToken(RootToken),
-        Replaces(Replaces), StructuralError(StructuralError) {
+        Replaces(Replaces) {
     Parameters.PenaltyIndentLevel = 15;
     Parameters.PenaltyLevelDecrease = 30;
     Parameters.PenaltyExcessCharacter = 1000000;
@@ -144,15 +179,12 @@ public:
   /// \returns The column after the last token in the last line of the
   /// \c UnwrappedLine.
   unsigned format() {
-    // Format first token and initialize indent.
-    unsigned Indent = formatFirstToken();
-
     // Initialize state dependent on indent.
     IndentState State;
-    State.Column = Indent;
+    State.Column = FirstIndent;
     State.NextToken = &RootToken;
-    State.Indent.push_back(Indent + 4);
-    State.LastSpace.push_back(Indent);
+    State.Indent.push_back(FirstIndent + 4);
+    State.LastSpace.push_back(FirstIndent);
     State.FirstLessLess.push_back(0);
     State.BreakBeforeClosingBrace.push_back(false);
     State.ForLoopVariablePos = 0;
@@ -325,10 +357,12 @@ private:
 
       if (!DryRun) {
         if (!Line.InPPDirective)
-          replaceWhitespace(Current.FormatTok, 1, State.Column);
+          replaceWhitespace(Current.FormatTok, 1, State.Column, Style,
+                            SourceMgr, Replaces);
         else
           replacePPWhitespace(Current.FormatTok, 1, State.Column,
-                              WhitespaceStartColumn);
+                              WhitespaceStartColumn, Style, SourceMgr,
+                              Replaces);
       }
 
       State.LastSpace[ParenLevel] = State.Column;
@@ -345,7 +379,7 @@ private:
         Spaces = Style.SpacesBeforeTrailingComments;
 
       if (!DryRun)
-        replaceWhitespace(Current, 0, Spaces);
+        replaceWhitespace(Current, 0, Spaces, Style, SourceMgr, Replaces);
 
       // FIXME: Do we need to do this for assignments nested in other
       // expressions?
@@ -528,82 +562,13 @@ private:
     return Result == UINT_MAX ? UINT_MAX : Result + CurrentPenalty;
   }
 
-  /// \brief Replaces the whitespace in front of \p Tok. Only call once for
-  /// each \c FormatToken.
-  void replaceWhitespace(const AnnotatedToken &Tok, unsigned NewLines,
-                         unsigned Spaces) {
-    Replaces.insert(tooling::Replacement(
-        SourceMgr, Tok.FormatTok.WhiteSpaceStart,
-        Tok.FormatTok.WhiteSpaceLength,
-        std::string(NewLines, '\n') + std::string(Spaces, ' ')));
-  }
-
-  /// \brief Like \c replaceWhitespace, but additionally adds right-aligned
-  /// backslashes to escape newlines inside a preprocessor directive.
-  ///
-  /// This function and \c replaceWhitespace have the same behavior if
-  /// \c Newlines == 0.
-  void replacePPWhitespace(const AnnotatedToken &Tok, unsigned NewLines,
-                           unsigned Spaces, unsigned WhitespaceStartColumn) {
-    std::string NewLineText;
-    if (NewLines > 0) {
-      unsigned Offset = std::min<int>(Style.ColumnLimit - 1,
-                                      WhitespaceStartColumn);
-      for (unsigned i = 0; i < NewLines; ++i) {
-        NewLineText += std::string(Style.ColumnLimit - Offset - 1, ' ');
-        NewLineText += "\\\n";
-        Offset = 0;
-      }
-    }
-    Replaces.insert(
-        tooling::Replacement(SourceMgr, Tok.FormatTok.WhiteSpaceStart,
-                             Tok.FormatTok.WhiteSpaceLength,
-                             NewLineText + std::string(Spaces, ' ')));
-  }
-
-  /// \brief Add a new line and the required indent before the first Token
-  /// of the \c UnwrappedLine if there was no structural parsing error.
-  /// Returns the indent level of the \c UnwrappedLine.
-  unsigned formatFirstToken() {
-    const FormatToken &Tok = RootToken.FormatTok;
-    if (!Tok.WhiteSpaceStart.isValid() || StructuralError)
-      return SourceMgr.getSpellingColumnNumber(Tok.Tok.getLocation()) - 1;
-
-    unsigned Newlines = std::min(Tok.NewlinesBefore,
-                                 Style.MaxEmptyLinesToKeep + 1);
-    if (Newlines == 0 && !Tok.IsFirst)
-      Newlines = 1;
-    unsigned Indent = Line.Level * 2;
-
-    bool IsAccessModifier = false;
-    if (RootToken.is(tok::kw_public) || RootToken.is(tok::kw_protected) ||
-        RootToken.is(tok::kw_private))
-      IsAccessModifier = true;
-    else if (RootToken.is(tok::at) && !RootToken.Children.empty() &&
-             (RootToken.Children[0].isObjCAtKeyword(tok::objc_public) ||
-              RootToken.Children[0].isObjCAtKeyword(tok::objc_protected) ||
-              RootToken.Children[0].isObjCAtKeyword(tok::objc_package) ||
-              RootToken.Children[0].isObjCAtKeyword(tok::objc_private)))
-      IsAccessModifier = true;
-
-    if (IsAccessModifier &&
-        static_cast<int>(Indent) + Style.AccessModifierOffset >= 0)
-      Indent += Style.AccessModifierOffset;
-    if (!Line.InPPDirective || Tok.HasUnescapedNewline)
-      replaceWhitespace(Tok, Newlines, Indent);
-    else
-      replacePPWhitespace(Tok, Newlines, Indent, PreviousEndOfLineColumn);
-    return Indent;
-  }
-
   FormatStyle Style;
   SourceManager &SourceMgr;
   const UnwrappedLine &Line;
-  const unsigned PreviousEndOfLineColumn;
+  const unsigned FirstIndent;
   const LineType CurrentLineType;
   const AnnotatedToken &RootToken;
   tooling::Replacements &Replaces;
-  bool StructuralError;
 
   // A map from an indent state to a pair (Result, Used-StopAt).
   typedef std::map<IndentState, std::pair<unsigned, unsigned> > StateMap;
@@ -1245,8 +1210,7 @@ public:
             Lexer &Lex, SourceManager &SourceMgr,
             const std::vector<CharSourceRange> &Ranges)
       : Diag(Diag), Style(Style), Lex(Lex), SourceMgr(SourceMgr),
-        Ranges(Ranges), StructuralError(false) {
-  }
+        Ranges(Ranges) {}
 
   virtual ~Formatter() {
   }
@@ -1289,8 +1253,11 @@ private:
       TokenAnnotator Annotator(TheLine, Style, SourceMgr, Lex);
       if (!Annotator.annotate())
         break;
+      unsigned Indent = formatFirstToken(Annotator.getRootToken(),
+                                         TheLine.Level, TheLine.InPPDirective,
+                                         PreviousEndOfLineColumn);
       UnwrappedLineFormatter Formatter(
-          Style, SourceMgr, TheLine, PreviousEndOfLineColumn,
+          Style, SourceMgr, TheLine, Indent,
           Annotator.getLineType(), Annotator.getRootToken(), Replaces,
           StructuralError);
       return Formatter.format();
@@ -1302,6 +1269,45 @@ private:
            Lex.MeasureTokenLength(Last->Tok.getLocation(), SourceMgr,
                                   Lex.getLangOpts()) -
            1;
+  }
+
+  /// \brief Add a new line and the required indent before the first Token
+  /// of the \c UnwrappedLine if there was no structural parsing error.
+  /// Returns the indent level of the \c UnwrappedLine.
+  unsigned formatFirstToken(const AnnotatedToken &RootToken, unsigned Level,
+                            bool InPPDirective,
+                            unsigned PreviousEndOfLineColumn) {
+    const FormatToken& Tok = RootToken.FormatTok;
+    if (!Tok.WhiteSpaceStart.isValid() || StructuralError)
+      return SourceMgr.getSpellingColumnNumber(Tok.Tok.getLocation()) - 1;
+
+    unsigned Newlines = std::min(Tok.NewlinesBefore,
+                                 Style.MaxEmptyLinesToKeep + 1);
+    if (Newlines == 0 && !Tok.IsFirst)
+      Newlines = 1;
+    unsigned Indent = Level * 2;
+
+    bool IsAccessModifier = false;
+    if (RootToken.is(tok::kw_public) || RootToken.is(tok::kw_protected) ||
+        RootToken.is(tok::kw_private))
+      IsAccessModifier = true;
+    else if (RootToken.is(tok::at) && !RootToken.Children.empty() &&
+             (RootToken.Children[0].isObjCAtKeyword(tok::objc_public) ||
+              RootToken.Children[0].isObjCAtKeyword(tok::objc_protected) ||
+              RootToken.Children[0].isObjCAtKeyword(tok::objc_package) ||
+              RootToken.Children[0].isObjCAtKeyword(tok::objc_private)))
+      IsAccessModifier = true;
+
+    if (IsAccessModifier &&
+        static_cast<int>(Indent) + Style.AccessModifierOffset >= 0)
+      Indent += Style.AccessModifierOffset;
+    if (!InPPDirective || Tok.HasUnescapedNewline) {
+      replaceWhitespace(Tok, Newlines, Indent, Style, SourceMgr, Replaces);
+    } else {
+      replacePPWhitespace(Tok, Newlines, Indent, PreviousEndOfLineColumn, Style,
+                          SourceMgr, Replaces);
+    }
+    return Indent;
   }
 
   clang::DiagnosticsEngine &Diag;
