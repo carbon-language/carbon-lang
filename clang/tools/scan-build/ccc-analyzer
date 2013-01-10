@@ -491,6 +491,10 @@ foreach (my $i = 0; $i < scalar(@ARGV); ++$i) {
     while ($Cnt > 0) { ++$i; --$Cnt; push @CompileOpts, $ARGV[$i]; }
     next;
   }
+  if ($Arg =~ /-msse.*/) {
+    push @CompileOpts,$Arg;
+    next;
+  }
 
   # Options with possible arguments that should pass through to linker.
   if (defined $LinkerOptionMap{$ArgKey}) {
