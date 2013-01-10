@@ -239,3 +239,10 @@ void t23() {
 // CHECK: t23
 // CHECK: call void asm sideeffect inteldialect "the_label:", "~{dirflag},~{fpsr},~{flags}"() nounwind
 }
+
+void t24_helper(void) {}
+void t24() {
+  __asm call t24_helper
+// CHECK: t24
+// CHECK: call void asm sideeffect inteldialect "call $0", "r,~{dirflag},~{fpsr},~{flags}"(void ()* @t24_helper) nounwind
+}
