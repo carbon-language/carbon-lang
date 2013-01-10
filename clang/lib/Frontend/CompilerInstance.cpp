@@ -982,7 +982,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       compileModule(*this, ModuleNameLoc, Module, ModuleFileName);
       ModuleFile = FileMgr->getFile(ModuleFileName);
 
-      if (!ModuleFile)
+      if (!ModuleFile && getPreprocessorOpts().FailedModules)
         getPreprocessorOpts().FailedModules->addFailed(ModuleName);
     }
 
@@ -1057,7 +1057,8 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
           ModuleManager->ReadAST(ModuleFileName,
                                  serialization::MK_Module, ImportLoc,
                                  ASTReader::ARR_None) != ASTReader::Success) {
-        getPreprocessorOpts().FailedModules->addFailed(ModuleName);
+        if (getPreprocessorOpts().FailedModules)
+          getPreprocessorOpts().FailedModules->addFailed(ModuleName);
         KnownModules[Path[0].first] = 0;
         return ModuleLoadResult();
       }
