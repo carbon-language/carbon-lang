@@ -752,20 +752,18 @@ void MachineInstr::addMemOperand(MachineFunction &MF,
 }
 
 bool MachineInstr::hasPropertyInBundle(unsigned Mask, QueryType Type) const {
-  const MachineBasicBlock *MBB = getParent();
-  MachineBasicBlock::const_instr_iterator MII = *this; ++MII;
-  while (MII != MBB->end() && MII->isInsideBundle()) {
+  for (MachineBasicBlock::const_instr_iterator MII = this;; ++MII) {
     if (MII->getDesc().getFlags() & Mask) {
       if (Type == AnyInBundle)
         return true;
     } else {
-      if (Type == AllInBundle)
+      if (Type == AllInBundle && !MII->isBundle())
         return false;
     }
-    ++MII;
+    // This was the last instruction in the bundle.
+    if (!MII->isBundledWithSucc())
+      return Type == AllInBundle;
   }
-
-  return Type == AllInBundle;
 }
 
 bool MachineInstr::isIdenticalTo(const MachineInstr *Other,

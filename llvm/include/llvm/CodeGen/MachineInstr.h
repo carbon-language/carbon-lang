@@ -314,7 +314,7 @@ public:
   /// instruction bundles.
   bool hasProperty(unsigned MCFlag, QueryType Type = AnyInBundle) const {
     // Inline the fast path.
-    if (Type == IgnoreBundle || !isBundle())
+    if (Type == IgnoreBundle || !isBundled())
       return getDesc().getFlags() & (1 << MCFlag);
 
     // If we have a bundle, take the slow path.
