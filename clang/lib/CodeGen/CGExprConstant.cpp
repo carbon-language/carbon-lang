@@ -1006,6 +1006,23 @@ public:
 
 llvm::Constant *CodeGenModule::EmitConstantInit(const VarDecl &D,
                                                 CodeGenFunction *CGF) {
+  // Make a quick check if variable can be default NULL initialized
+  // and avoid going through rest of code which may do, for c++11,
+  // initialization of memory to all NULLs.
+  if (!D.hasLocalStorage()) {
+    QualType Ty = D.getType();
+    if (Ty->isArrayType())
+      Ty = Context.getBaseElementType(Ty);
+    if (Ty->isRecordType())
+      if (const CXXConstructExpr *E =
+          dyn_cast_or_null<CXXConstructExpr>(D.getInit())) {
+        const CXXConstructorDecl *CD = E->getConstructor();
+        if (CD->isTrivial() && CD->isDefaultConstructor() &&
+            Ty->getAsCXXRecordDecl()->hasTrivialDestructor())
+          return EmitNullConstant(D.getType());
+      }
+  }
+  
   if (const APValue *Value = D.evaluateValue())
     return EmitConstantValueForMemory(*Value, D.getType(), CGF);
 
