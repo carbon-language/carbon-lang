@@ -2368,8 +2368,12 @@ Value *ScalarExprEmitter::EmitSub(const BinOpInfo &op) {
 }
 
 Value *ScalarExprEmitter::GetWidthMinusOneValue(Value* LHS,Value* RHS) {
-  unsigned Width = cast<llvm::IntegerType>(LHS->getType())->getBitWidth();
-  return llvm::ConstantInt::get(RHS->getType(), Width - 1);
+  llvm::IntegerType *Ty;
+  if (llvm::VectorType *VT = dyn_cast<llvm::VectorType>(LHS->getType()))
+    Ty = cast<llvm::IntegerType>(VT->getElementType());
+  else
+    Ty = cast<llvm::IntegerType>(LHS->getType());
+  return llvm::ConstantInt::get(RHS->getType(), Ty->getBitWidth() - 1);
 }
 
 Value *ScalarExprEmitter::EmitShl(const BinOpInfo &Ops) {
