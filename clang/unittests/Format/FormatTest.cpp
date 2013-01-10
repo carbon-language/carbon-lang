@@ -1340,6 +1340,14 @@ TEST_F(FormatTest, FormatObjCProtocol) {
                "@end\n"
                "@protocol Bar\n"
                "@end");
+
+  verifyFormat("@protocol myProtocol\n"
+               "- (void)mandatoryWithInt:(int)i;\n"
+               "@optional\n"
+               "- (void)optional;\n"
+               "@required\n"
+               "- (void)required;\n"
+               "@end\n");
 }
 
 TEST_F(FormatTest, ObjCAt) {

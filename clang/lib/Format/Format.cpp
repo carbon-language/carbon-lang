@@ -273,6 +273,7 @@ private:
   void addTokenToState(bool Newline, bool DryRun, IndentState &State) {
     const AnnotatedToken &Current = *State.NextToken;
     const AnnotatedToken &Previous = *State.NextToken->Parent;
+    assert(State.Indent.size());
     unsigned ParenLevel = State.Indent.size() - 1;
 
     if (Newline) {
@@ -357,6 +358,7 @@ private:
   /// accordingly.
   void moveStateToNextToken(IndentState &State) {
     const AnnotatedToken &Current = *State.NextToken;
+    assert(State.Indent.size());
     unsigned ParenLevel = State.Indent.size() - 1;
 
     if (Current.is(tok::lessless) && State.FirstLessLess[ParenLevel] == 0)

@@ -215,6 +215,11 @@ void UnwrappedLineParser::parseStructuralElement() {
       return parseObjCProtocol();
     case tok::objc_end:
       return; // Handled by the caller.
+    case tok::objc_optional:
+    case tok::objc_required:
+      nextToken();
+      addUnwrappedLine();
+      return;
     default:
       break;
     }
