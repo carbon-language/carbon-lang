@@ -1117,6 +1117,21 @@ TEST_F(FormatTest, IncorrectCodeErrorDetection) {
 
 }
 
+TEST_F(FormatTest, LayoutCallsInsideBraceInitializers) {
+  verifyFormat(
+      "int x = {\n"
+      "  avariable,\n"
+      "  b(alongervariable) };", getLLVMStyleWithColumns(25));
+}
+
+TEST_F(FormatTest, LayoutTokensFollowingBlockInParentheses) {
+  verifyFormat(
+      "Aaa({\n"
+      "  int i;\n"
+      "}, aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
+      "                                    ccccccccccccccccc));");
+}
+
 //===----------------------------------------------------------------------===//
 // Objective-C tests.
 //===----------------------------------------------------------------------===//

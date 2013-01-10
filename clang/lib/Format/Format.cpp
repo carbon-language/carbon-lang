@@ -282,11 +282,6 @@ private:
       unsigned WhitespaceStartColumn = State.Column;
       if (Current.is(tok::r_brace)) {
         State.Column = Line.Level * 2;
-      } else if (Previous.is(tok::l_brace)) {
-        // FIXME: This does not work with nested static initializers.
-        // Implement a better handling for static initializers and similar
-        // constructs.
-        State.Column = Line.Level * 2 + 2;
       } else if (Current.is(tok::string_literal) &&
                  Previous.is(tok::string_literal)) {
         State.Column = State.Column - Previous.FormatTok.TokenLength;
@@ -309,7 +304,9 @@ private:
         State.Column = State.Indent[ParenLevel];
       }
 
-      State.StartOfLineLevel = ParenLevel + 1;
+      // A line starting with a closing brace is assumed to be correct for the
+      // same level as before the opening brace.
+      State.StartOfLineLevel = ParenLevel + (Current.is(tok::r_brace) ? 0 : 1);
 
       if (RootToken.is(tok::kw_for))
         State.LineContainsContinuedForLoopSection = Previous.isNot(tok::semi);
@@ -345,6 +342,7 @@ private:
            Previous.is(tok::kw_return)))
         State.Indent[ParenLevel] = State.Column + Spaces;
       if (Previous.is(tok::l_paren) ||
+          Previous.is(tok::l_brace) ||
           State.NextToken->Parent->Type == TT_TemplateOpener)
         State.Indent[ParenLevel] = State.Column;
 
@@ -368,14 +366,19 @@ private:
     if (Current.is(tok::lessless) && State.FirstLessLess[ParenLevel] == 0)
       State.FirstLessLess[ParenLevel] = State.Column;
 
-    State.Column += Current.FormatTok.TokenLength;
-
     // If we encounter an opening (, [, { or <, we add a level to our stacks to
     // prepare for the following tokens.
     if (Current.is(tok::l_paren) || Current.is(tok::l_square) ||
         Current.is(tok::l_brace) ||
         State.NextToken->Type == TT_TemplateOpener) {
-      State.Indent.push_back(4 + State.LastSpace.back());
+      if (Current.is(tok::l_brace)) {
+        // FIXME: This does not work with nested static initializers.
+        // Implement a better handling for static initializers and similar
+        // constructs.
+        State.Indent.push_back(Line.Level * 2 + 2);
+      } else {
+        State.Indent.push_back(4 + State.LastSpace.back());
+      }
       State.LastSpace.push_back(State.LastSpace.back());
       State.FirstLessLess.push_back(0);
     }
@@ -389,10 +392,13 @@ private:
       State.LastSpace.pop_back();
       State.FirstLessLess.pop_back();
     }
+
     if (State.NextToken->Children.empty())
       State.NextToken = NULL;
     else
       State.NextToken = &State.NextToken->Children[0];
+
+    State.Column += Current.FormatTok.TokenLength;
   }
 
   /// \brief Calculate the penalty for splitting after the token at \p Index.
@@ -847,7 +853,6 @@ public:
       }
     }
     Current.CanBreakBefore = Current.MustBreakBefore || canBreakBefore(Current);
-
     if (!Current.Children.empty())
       calculateExtraInformation(Current.Children[0]);
   }
