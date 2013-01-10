@@ -3374,10 +3374,11 @@ static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
   }
 
   assert(!VT.isVector() && "Can't handle vector type here!");
-  unsigned NumVTBytes = VT.getSizeInBits() / 8;
+  unsigned NumVTBits = VT.getSizeInBits();
+  unsigned NumVTBytes = NumVTBits / 8;
   unsigned NumBytes = std::min(NumVTBytes, unsigned(Str.size()));
 
-  APInt Val(NumBytes*8, 0);
+  APInt Val(NumVTBits, 0);
   if (TLI.isLittleEndian()) {
     for (unsigned i = 0; i != NumBytes; ++i)
       Val |= (uint64_t)(unsigned char)Str[i] << i*8;

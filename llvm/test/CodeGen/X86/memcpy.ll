@@ -87,8 +87,21 @@ entry:
   tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([30 x i8]* @.str, i64 0, i64 0), i64 16, i32 1, i1 false)
   ret void
 
+; DARWIN: test5:
 ; DARWIN: movabsq	$7016996765293437281
 ; DARWIN: movabsq	$7016996765293437184
 }
 
+
+; PR14896
+@.str2 = private unnamed_addr constant [2 x i8] c"x\00", align 1
+
+define void @test6() nounwind uwtable {
+entry:
+; DARWIN: test6
+; DARWIN: movw $0, 8
+; DARWIN: movq $120, 0
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* null, i8* getelementptr inbounds ([2 x i8]* @.str2, i64 0, i64 0), i64 10, i32 1, i1 false)
+  ret void
+}
 
