@@ -65,12 +65,7 @@ static void format() {
   }
   FileID ID = createInMemoryFile(Code.get(), Sources, Files);
   // FIXME: Pull this out into a common method and use here and in the tests.
-  LangOptions LangOpts;
-  LangOpts.CPlusPlus = 1;
-  LangOpts.CPlusPlus11 = 1;
-  LangOpts.ObjC1 = 1;
-  LangOpts.ObjC2 = 1;
-  Lexer Lex(ID, Sources.getBuffer(ID), Sources, LangOpts);
+  Lexer Lex(ID, Sources.getBuffer(ID), Sources, getFormattingLangOpts());
   SourceLocation Start =
       Sources.getLocForStartOfFile(ID).getLocWithOffset(Offset);
   SourceLocation End = Sources.getLocForEndOfFile(ID);
