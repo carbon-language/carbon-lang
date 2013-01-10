@@ -1430,7 +1430,6 @@ TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@[");
   verifyFormat("@{");
 
-
   EXPECT_EQ("@interface", format("@ interface"));
 
   // The precise formatting of this doesn't matter, nobody writes code like
@@ -1452,10 +1451,16 @@ TEST_F(FormatTest, ObjCSnippets) {
   verifyFormat("@synchronized(self) {\n"
                "  f();\n"
                "}");
-  verifyFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
 
-  // FIXME: "getter=bar" should not be surround by spaces in @property.
+  // FIXME: Some Apple code examples don't have spaces around '=' for
+  // @synthesize, decide if that's desired or not in LLVM style. Google style
+  // definitely wants spaces.
+  verifyFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
+  verifyGoogleFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
+
   verifyFormat("@property(assign, nonatomic) CGFloat hoverAlpha;");
+  verifyFormat("@property(assign, getter=isEditable) BOOL editable;");
+  verifyGoogleFormat("@property(assign, getter=isEditable) BOOL editable;");
 }
 
 } // end namespace tooling

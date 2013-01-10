@@ -39,6 +39,7 @@ enum TokenType {
   TT_ObjCBlockLParen,
   TT_ObjCDecl,
   TT_ObjCMethodSpecifier,
+  TT_ObjCProperty,
   TT_OverloadedOperator,
   TT_PointerOrReference,
   TT_PureVirtualSpecifier,
@@ -55,7 +56,8 @@ enum LineType {
   LT_PreprocessorDirective,
   LT_VirtualFunctionDecl,
   LT_ObjCDecl, // An @interface, @implementation, or @protocol line.
-  LT_ObjCMethodDecl
+  LT_ObjCMethodDecl,
+  LT_ObjCProperty // An @property line.
 };
 
 class AnnotatedToken {
@@ -841,6 +843,8 @@ public:
       CurrentLineType = LT_ObjCMethodDecl;
     else if (RootToken.Type == TT_ObjCDecl)
       CurrentLineType = LT_ObjCDecl;
+    else if (RootToken.Type == TT_ObjCProperty)
+      CurrentLineType = LT_ObjCProperty;
 
     if (!RootToken.Children.empty())
       calculateExtraInformation(RootToken.Children[0]);
@@ -891,6 +895,10 @@ private:
         case tok::objc_implementation:
         case tok::objc_protocol:
           Current.Type = TT_ObjCDecl;
+          break;
+        case tok::objc_property:
+          Current.Type = TT_ObjCProperty;
+          break;
         default:
           break;
         }
@@ -1044,6 +1052,9 @@ private:
         // Don't space between ':' and '('
         return false;
     }
+    if (CurrentLineType == LT_ObjCProperty &&
+        (Tok.is(tok::equal) || Tok.Parent->is(tok::equal)))
+      return false;
 
     if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
       return true;
