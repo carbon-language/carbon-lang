@@ -1204,8 +1204,34 @@ Instruction *InstCombiner::visitFPTrunc(FPTruncInst &CI) {
       }
       break;  
     }
+
+    // (fptrunc (fneg x)) -> (fneg (fptrunc x))
+    if (BinaryOperator::isFNeg(OpI)) {
+      Value *InnerTrunc = Builder->CreateFPTrunc(OpI->getOperand(1),
+                                                 CI.getType());
+      return BinaryOperator::CreateFNeg(InnerTrunc);
+    }
   }
-  
+
+  IntrinsicInst *II = dyn_cast<IntrinsicInst>(CI.getOperand(0));
+  if (II) {
+    switch (II->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::fabs: {
+        // (fptrunc (fabs x)) -> (fabs (fptrunc x))
+        Value *InnerTrunc = Builder->CreateFPTrunc(II->getArgOperand(0),
+                                                   CI.getType());
+        Type *IntrinsicType[] = { CI.getType() };
+        Function *Overload =
+          Intrinsic::getDeclaration(CI.getParent()->getParent()->getParent(),
+                                    II->getIntrinsicID(), IntrinsicType);
+
+        Value *Args[] = { InnerTrunc };
+        return CallInst::Create(Overload, Args, II->getName());
+      }
+    }
+  }
+
   // Fold (fptrunc (sqrt (fpext x))) -> (sqrtf x)
   CallInst *Call = dyn_cast<CallInst>(CI.getOperand(0));
   if (Call && Call->getCalledFunction() && TLI->has(LibFunc::sqrtf) &&

@@ -13,3 +13,22 @@ define i8 @test2() {
 ; CHECK: ret i8 -1
 }
 
+; CHECK: test3
+define half @test3(float %a) {
+; CHECK: fptrunc
+; CHECK: llvm.fabs.f16
+  %b = call float @llvm.fabs.f32(float %a)
+  %c = fptrunc float %b to half
+  ret half %c
+}
+
+; CHECK: test4
+define half @test4(float %a) {
+; CHECK: fptrunc
+; CHECK: fsub
+  %b = fsub float -0.0, %a
+  %c = fptrunc float %b to half
+  ret half %c
+}
+
+declare float @llvm.fabs.f32(float) nounwind readonly
