@@ -407,7 +407,7 @@ bool NclPopcountRecognize::detectIdiom(Instruction *&CntInst,
 
   // step 2: detect instructions corresponding to "x2 = x1 & (x1 - 1)"
   {
-    if (DefX2->getOpcode() != Instruction::And)
+    if (!DefX2 || DefX2->getOpcode() != Instruction::And)
       return false;
 
     BinaryOperator *SubOneOp;
