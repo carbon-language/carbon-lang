@@ -430,7 +430,13 @@ TEST_F(FormatTest, StaticInitializers) {
   // FIXME: Format like enums if the static initializer does not fit on a line.
   verifyFormat(
       "static SomeClass WithALoooooooooooooooooooongName = {\n"
-      "  100000000, \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\" };");
+      "  100000000, \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n"
+      "};");
+
+  verifyFormat(
+      "static SomeClass = { a, b, c, d, e, f, g, h, i, j,\n"
+      "                     looooooooooooooooooooooooooooooooooongname,\n"
+      "                     looooooooooooooooooooooooooooooong };");
 }
 
 TEST_F(FormatTest, FormatsSmallMacroDefinitionsInSingleLine) {
@@ -1121,7 +1127,8 @@ TEST_F(FormatTest, LayoutCallsInsideBraceInitializers) {
   verifyFormat(
       "int x = {\n"
       "  avariable,\n"
-      "  b(alongervariable) };", getLLVMStyleWithColumns(25));
+      "  b(alongervariable)\n"
+      "};", getLLVMStyleWithColumns(25));
 }
 
 TEST_F(FormatTest, LayoutTokensFollowingBlockInParentheses) {

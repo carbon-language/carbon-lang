@@ -154,6 +154,7 @@ public:
     State.Indent.push_back(Indent + 4);
     State.LastSpace.push_back(Indent);
     State.FirstLessLess.push_back(0);
+    State.BreakBeforeClosingBrace.push_back(false);
     State.ForLoopVariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
     State.StartOfLineLevel = 1;
@@ -223,6 +224,13 @@ private:
     /// on a level.
     std::vector<unsigned> FirstLessLess;
 
+    /// \brief Whether a newline needs to be inserted before the block's closing
+    /// brace.
+    ///
+    /// We only want to insert a newline before the closing brace if there also
+    /// was a newline after the beginning left brace.
+    std::vector<bool> BreakBeforeClosingBrace;
+
     /// \brief The column of the first variable in a for-loop declaration.
     ///
     /// Used to align the second variable if necessary.
@@ -262,6 +270,8 @@ private:
       if (Other.LineContainsContinuedForLoopSection !=
           LineContainsContinuedForLoopSection)
         return LineContainsContinuedForLoopSection;
+      if (Other.BreakBeforeClosingBrace != BreakBeforeClosingBrace)
+        return Other.BreakBeforeClosingBrace > BreakBeforeClosingBrace;
       return false;
     }
   };
@@ -346,7 +356,7 @@ private:
       if (Previous.is(tok::l_paren) ||
           Previous.is(tok::l_brace) ||
           State.NextToken->Parent->Type == TT_TemplateOpener)
-        State.Indent[ParenLevel] = State.Column;
+        State.Indent[ParenLevel] = State.Column + Spaces;
 
       // Top-level spaces that are not part of assignments are exempt as that
       // mostly leads to better results.
@@ -356,6 +366,9 @@ private:
         State.LastSpace[ParenLevel] = State.Column;
     }
     moveStateToNextToken(State);
+    if (Newline && Previous.is(tok::l_brace)) {
+      State.BreakBeforeClosingBrace.back() = true;
+    }
   }
 
   /// \brief Mark the next token as consumed in \p State and modify its stacks
@@ -383,6 +396,7 @@ private:
       }
       State.LastSpace.push_back(State.LastSpace.back());
       State.FirstLessLess.push_back(0);
+      State.BreakBeforeClosingBrace.push_back(false);
     }
 
     // If we encounter a closing ), ], } or >, we can remove a level from our
@@ -393,6 +407,7 @@ private:
       State.Indent.pop_back();
       State.LastSpace.pop_back();
       State.FirstLessLess.pop_back();
+      State.BreakBeforeClosingBrace.pop_back();
     }
 
     if (State.NextToken->Children.empty())
@@ -460,6 +475,9 @@ private:
       return UINT_MAX;
     if (NewLine && !State.NextToken->CanBreakBefore)
       return UINT_MAX;
+    if (!NewLine && State.NextToken->is(tok::r_brace) &&
+        State.BreakBeforeClosingBrace.back())
+      return UINT_MAX;
     if (!NewLine && State.NextToken->Parent->is(tok::semi) &&
         State.LineContainsContinuedForLoopSection)
       return UINT_MAX;
@@ -485,7 +503,6 @@ private:
     if (StopAt <= CurrentPenalty)
       return UINT_MAX;
     StopAt -= CurrentPenalty;
-
     StateMap::iterator I = Memory.find(State);
     if (I != Memory.end()) {
       // If this state has already been examined, we can safely return the
@@ -1129,7 +1146,7 @@ private:
            Right.is(tok::arrow) || Right.is(tok::period) ||
            Right.is(tok::colon) || Left.is(tok::semi) ||
            Left.is(tok::l_brace) || Left.is(tok::question) ||
-           Left.Type == TT_ConditionalExpr ||
+           Right.is(tok::r_brace) || Left.Type == TT_ConditionalExpr ||
            (Left.is(tok::l_paren) && !Right.is(tok::r_paren));
   }
 
