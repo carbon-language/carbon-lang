@@ -25,7 +25,9 @@ struct TypeMismatchData {
 };
 
 #define RECOVERABLE(checkname, ...) \
+  SANITIZER_INTERFACE_ATTRIBUTE \
   extern "C" void __ubsan_handle_ ## checkname( __VA_ARGS__ ); \
+  SANITIZER_INTERFACE_ATTRIBUTE \
   extern "C" void __ubsan_handle_ ## checkname ## _abort( __VA_ARGS__ );
 
 /// \brief Handle a runtime type check failure, caused by either a misaligned
@@ -70,8 +72,10 @@ struct UnreachableData {
 };
 
 /// \brief Handle a __builtin_unreachable which is reached.
+SANITIZER_INTERFACE_ATTRIBUTE
 extern "C" void __ubsan_handle_builtin_unreachable(UnreachableData *Data);
 /// \brief Handle reaching the end of a value-returning function.
+SANITIZER_INTERFACE_ATTRIBUTE
 extern "C" void __ubsan_handle_missing_return(UnreachableData *Data);
 
 struct VLABoundData {
