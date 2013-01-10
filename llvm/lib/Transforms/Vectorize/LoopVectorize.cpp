@@ -1682,13 +1682,13 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       for (unsigned Part = 0; Part < UF; ++Part) {
         Value *V = Builder.CreateBinOp(BinOp->getOpcode(), A[Part], B[Part]);
 
-        // Update the NSW, NUW and Exact flags.
-        BinaryOperator *VecOp = cast<BinaryOperator>(V);
-        if (isa<OverflowingBinaryOperator>(BinOp)) {
+        // Update the NSW, NUW and Exact flags. Notice: V can be an Undef.
+        BinaryOperator *VecOp = dyn_cast<BinaryOperator>(V);
+        if (VecOp && isa<OverflowingBinaryOperator>(BinOp)) {
           VecOp->setHasNoSignedWrap(BinOp->hasNoSignedWrap());
           VecOp->setHasNoUnsignedWrap(BinOp->hasNoUnsignedWrap());
         }
-        if (isa<PossiblyExactOperator>(VecOp))
+        if (VecOp && isa<PossiblyExactOperator>(VecOp))
           VecOp->setIsExact(BinOp->isExact());
 
         Entry[Part] = V;
