@@ -5714,7 +5714,7 @@ def warn_case_value_overflow : Warning<
   InGroup<Switch>;
 def warn_case_constant_overflow : Warning<
   "overflow in case constant expression results in new value (%0)">,
-  InGroup<DiagGroup<"switch">>;
+  InGroup<Switch>;
 def err_duplicate_case : Error<"duplicate case value '%0'">;
 def err_duplicate_case_differing_expr : Error<
   "duplicate case value: '%0' and '%1' both equal '%2'">;
