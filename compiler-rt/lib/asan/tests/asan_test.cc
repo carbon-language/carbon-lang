@@ -26,6 +26,7 @@
 # include <sys/types.h>
 # include <sys/stat.h>
 # include <fcntl.h>
+#include <unistd.h>
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -870,34 +871,35 @@ void MemSetOOBTestTemplate(size_t length) {
   T *array = Ident((T*)malloc(size));
   int element = Ident(42);
   int zero = Ident(0);
+  void *(*MEMSET)(void *s, int c, size_t n) = Ident(memset);
   // memset interval inside array
-  memset(array, element, size);
-  memset(array, element, size - 1);
-  memset(array + length - 1, element, sizeof(T));
-  memset(array, element, 1);
+  MEMSET(array, element, size);
+  MEMSET(array, element, size - 1);
+  MEMSET(array + length - 1, element, sizeof(T));
+  MEMSET(array, element, 1);
 
   // memset 0 bytes
-  memset(array - 10, element, zero);
-  memset(array - 1, element, zero);
-  memset(array, element, zero);
-  memset(array + length, 0, zero);
-  memset(array + length + 1, 0, zero);
+  MEMSET(array - 10, element, zero);
+  MEMSET(array - 1, element, zero);
+  MEMSET(array, element, zero);
+  MEMSET(array + length, 0, zero);
+  MEMSET(array + length + 1, 0, zero);
 
   // try to memset bytes to the right of array
-  EXPECT_DEATH(memset(array, 0, size + 1),
+  EXPECT_DEATH(MEMSET(array, 0, size + 1),
                RightOOBWriteMessage(0));
-  EXPECT_DEATH(memset((char*)(array + length) - 1, element, 6),
-               RightOOBWriteMessage(4));
-  EXPECT_DEATH(memset(array + 1, element, size + sizeof(T)),
-               RightOOBWriteMessage(2 * sizeof(T) - 1));
+  EXPECT_DEATH(MEMSET((char*)(array + length) - 1, element, 6),
+               RightOOBWriteMessage(0));
+  EXPECT_DEATH(MEMSET(array + 1, element, size + sizeof(T)),
+               RightOOBWriteMessage(0));
   // whole interval is to the right
-  EXPECT_DEATH(memset(array + length + 1, 0, 10),
+  EXPECT_DEATH(MEMSET(array + length + 1, 0, 10),
                RightOOBWriteMessage(sizeof(T)));
 
   // try to memset bytes to the left of array
-  EXPECT_DEATH(memset((char*)array - 1, element, size),
+  EXPECT_DEATH(MEMSET((char*)array - 1, element, size),
                LeftOOBWriteMessage(1));
-  EXPECT_DEATH(memset((char*)array - 5, 0, 6),
+  EXPECT_DEATH(MEMSET((char*)array - 5, 0, 6),
                LeftOOBWriteMessage(5));
   if (length >= 100) {
     // Large OOB, we find it only if the redzone is large enough.
@@ -905,11 +907,11 @@ void MemSetOOBTestTemplate(size_t length) {
                  LeftOOBWriteMessage(5 * sizeof(T)));
   }
   // whole interval is to the left
-  EXPECT_DEATH(memset(array - 2, 0, sizeof(T)),
+  EXPECT_DEATH(MEMSET(array - 2, 0, sizeof(T)),
                LeftOOBWriteMessage(2 * sizeof(T)));
 
   // try to memset bytes both to the left & to the right
-  EXPECT_DEATH(memset((char*)array - 2, element, size + 4),
+  EXPECT_DEATH(MEMSET((char*)array - 2, element, size + 4),
                LeftOOBWriteMessage(2));
 
   free(array);
@@ -990,9 +992,9 @@ void MemTransferOOBTestTemplate(size_t length) {
 
   // try to change mem to the right of dest
   EXPECT_DEATH(M::transfer(dest + 1, src, size),
-               RightOOBWriteMessage(sizeof(T) - 1));
+               RightOOBWriteMessage(0));
   EXPECT_DEATH(M::transfer((char*)(dest + length) - 1, src, 5),
-               RightOOBWriteMessage(3));
+               RightOOBWriteMessage(0));
 
   // try to change mem to the left of dest
   EXPECT_DEATH(M::transfer(dest - 2, src, size),
@@ -1002,9 +1004,9 @@ void MemTransferOOBTestTemplate(size_t length) {
 
   // try to access mem to the right of src
   EXPECT_DEATH(M::transfer(dest, src + 2, size),
-               RightOOBReadMessage(2 * sizeof(T) - 1));
+               RightOOBReadMessage(0));
   EXPECT_DEATH(M::transfer(dest, (char*)(src + length) - 3, 6),
-               RightOOBReadMessage(2));
+               RightOOBReadMessage(0));
 
   // try to access mem to the left of src
   EXPECT_DEATH(M::transfer(dest, src - 1, size),
@@ -1033,7 +1035,7 @@ void MemTransferOOBTestTemplate(size_t length) {
 class MemCpyWrapper {
  public:
   static void* transfer(void *to, const void *from, size_t size) {
-    return memcpy(to, from, size);
+    return Ident(memcpy)(to, from, size);
   }
 };
 TEST(AddressSanitizer, MemCpyOOBTest) {
@@ -1044,7 +1046,7 @@ TEST(AddressSanitizer, MemCpyOOBTest) {
 class MemMoveWrapper {
  public:
   static void* transfer(void *to, const void *from, size_t size) {
-    return memmove(to, from, size);
+    return Ident(memmove)(to, from, size);
   }
 };
 TEST(AddressSanitizer, MemMoveOOBTest) {
