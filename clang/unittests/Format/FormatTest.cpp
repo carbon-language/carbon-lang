@@ -26,12 +26,8 @@ protected:
     std::vector<CharSourceRange> Ranges(
         1,
         CharSourceRange::getCharRange(Start, Start.getLocWithOffset(Length)));
-    LangOptions LangOpts;
-    LangOpts.CPlusPlus = 1;
-    LangOpts.CPlusPlus11 = 1;
-    LangOpts.ObjC1 = 1;
-    LangOpts.ObjC2 = 1;
-    Lexer Lex(ID, Context.Sources.getBuffer(ID), Context.Sources, LangOpts);
+    Lexer Lex(ID, Context.Sources.getBuffer(ID), Context.Sources,
+              getFormattingLangOpts());
     tooling::Replacements Replace = reformat(Style, Lex, Context.Sources,
                                              Ranges);
     EXPECT_TRUE(applyAllReplacements(Replace, Context.Rewrite));
@@ -1029,6 +1025,15 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat("int a = b ? *c : *d;");
 }
 
+TEST_F(FormatTest, FormatsFunctionTypes) {
+  // FIXME: Determine the cases that need a space after the return type and fix.
+  verifyFormat("A<bool()> a;");
+  verifyFormat("A<SomeType()> a;");
+  verifyFormat("A<void(*)(int, std::string)> a;");
+
+  verifyFormat("int(*func)(void *);");
+}
+
 TEST_F(FormatTest, DoesNotBreakBeforePointerOrReference) {
   verifyFormat("int *someFunction(int LoooooooooooooooongParam1,\n"
                "                  int LoooooooooooooooongParam2) {\n}");
@@ -1177,8 +1182,8 @@ TEST_F(FormatTest, FormatForObjectiveCMethodDecls) {
 }
 
 TEST_F(FormatTest, FormatObjCBlocks) {
-  verifyFormat("int (^Block) (int, int);");
-  verifyFormat("int (^Block1) (int, int) = ^(int i, int j)");
+  verifyFormat("int (^Block)(int, int);");
+  verifyFormat("int (^Block1)(int, int) = ^(int i, int j)");
 }
 
 TEST_F(FormatTest, FormatObjCInterface) {

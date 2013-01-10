@@ -34,6 +34,7 @@ enum TokenType {
   TT_CtorInitializerColon,
   TT_DirectorySeparator,
   TT_LineComment,
+  TT_ObjCBlockLParen,
   TT_ObjCMethodSpecifier,
   TT_OverloadedOperator,
   TT_PointerOrReference,
@@ -627,6 +628,8 @@ public:
     }
 
     bool parseParens() {
+      if (CurrentToken != NULL && CurrentToken->is(tok::caret))
+        CurrentToken->Parent->Type = TT_ObjCBlockLParen;
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::r_paren)) {
           next();
@@ -995,7 +998,8 @@ private:
     if (Left.is(tok::at) &&
         (Right.is(tok::identifier) || Right.is(tok::string_literal) ||
          Right.is(tok::char_constant) || Right.is(tok::numeric_constant) ||
-         Right.is(tok::l_paren) || Right.is(tok::l_brace)))
+         Right.is(tok::l_paren) || Right.is(tok::l_brace) ||
+         Right.is(tok::kw_true) || Right.is(tok::kw_false)))
       return false;
     if (Left.is(tok::less) || Right.is(tok::greater) || Right.is(tok::less))
       return false;
@@ -1024,8 +1028,7 @@ private:
     if (Right.is(tok::l_paren)) {
       return Left.is(tok::kw_if) || Left.is(tok::kw_for) ||
              Left.is(tok::kw_while) || Left.is(tok::kw_switch) ||
-             (Left.isNot(tok::identifier) && Left.isNot(tok::kw_sizeof) &&
-              Left.isNot(tok::kw_typeof) && Left.isNot(tok::kw_alignof));
+             Left.is(tok::kw_return) || Left.is(tok::kw_catch);
     }
     if (Left.is(tok::at) &&
         Right.FormatTok.Tok.getObjCKeywordID() != tok::objc_not_keyword)
@@ -1050,11 +1053,11 @@ private:
         return false;
     }
 
-    if (Tok.Type == TT_CtorInitializerColon)
+    if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
       return true;
     if (Tok.Type == TT_OverloadedOperator)
       return Tok.is(tok::identifier) || Tok.is(tok::kw_new) ||
-             Tok.is(tok::kw_delete);
+             Tok.is(tok::kw_delete) || Tok.is(tok::kw_bool);
     if (Tok.Parent->Type == TT_OverloadedOperator)
       return false;
     if (Tok.is(tok::colon))
@@ -1288,6 +1291,16 @@ tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                std::vector<CharSourceRange> Ranges) {
   Formatter formatter(Style, Lex, SourceMgr, Ranges);
   return formatter.format();
+}
+
+LangOptions getFormattingLangOpts() {
+  LangOptions LangOpts;
+  LangOpts.CPlusPlus = 1;
+  LangOpts.CPlusPlus11 = 1;
+  LangOpts.Bool = 1;
+  LangOpts.ObjC1 = 1;
+  LangOpts.ObjC2 = 1;
+  return LangOpts;
 }
 
 } // namespace format

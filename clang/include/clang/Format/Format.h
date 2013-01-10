@@ -78,6 +78,9 @@ tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                SourceManager &SourceMgr,
                                std::vector<CharSourceRange> Ranges);
 
+/// \brief Returns the \c LangOpts that the formatter expects you to set.
+LangOptions getFormattingLangOpts();
+
 } // end namespace format
 } // end namespace clang
 
