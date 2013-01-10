@@ -180,7 +180,7 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
     if (DATy->getNumElements() != cast<ArrayType>(SrcTy)->getNumElements())
       return false;
   } else if (VectorType *DVTy = dyn_cast<VectorType>(DstTy)) {
-    if (DVTy->getNumElements() != cast<ArrayType>(SrcTy)->getNumElements())
+    if (DVTy->getNumElements() != cast<VectorType>(SrcTy)->getNumElements())
       return false;
   }
 

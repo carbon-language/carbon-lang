@@ -13,6 +13,10 @@
 ; The uses of intlist in the other file should be remapped.
 ; CHECK-NOT: {{%intlist.[0-9]}}
 
+; CHECK: %VecSize = type { <5 x i32> }
+; CHECK: %VecSize.{{[0-9]}} = type { <10 x i32> }
+%VecSize = type { <5 x i32> }
+
 %Struct1 = type opaque
 @S1GV = external global %Struct1*
 
@@ -93,3 +97,5 @@ define internal void @Testintern() {
 define void @testIntern() {
   ret void
 }
+
+declare void @VecSizeCrash(%VecSize)
