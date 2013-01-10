@@ -72,11 +72,16 @@ void LinkerInvocation::operator()() {
       _undefinesAreErrors = true;
     }
   } ro;
+
+  auto writer = target->getWriter();
+
+  // Give writer a chance to add files
+  writer->addFiles(inputs);
+
   Resolver resolver(ro, inputs);
   resolver.resolve();
   File &merged = resolver.resultFile();
 
-  auto writer = target->getWriter();
   if (error_code ec = writer) {
     llvm::errs() << "Failed to get writer: " << ec.message() << ".\n";
     return;

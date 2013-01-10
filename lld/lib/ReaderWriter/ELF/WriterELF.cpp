@@ -34,7 +34,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
-#include "AtomsELF.h"
+#include "ExecutableAtoms.h"
 
 #include <map>
 #include <unordered_map>
@@ -842,8 +842,7 @@ public:
           (*si)->setFileOffset(curSliceFileOffset);
           curSliceSize = newOffset - curSliceFileOffset + (*si)->fileSize();
           sliceAlign = (*si)->align2();
-        }
-        else {
+        } else {
           if (sliceAlign < (*si)->align2())
             sliceAlign = (*si)->align2();
           (*si)->setFileOffset(newOffset);
@@ -1101,9 +1100,8 @@ public:
         binding = ELF::STB_GLOBAL;
         break;
       }
-      symbol->st_value = aa->value();
-    }
-    else {
+      symbol->st_value = addr;
+    } else {
      symbol->st_value = 0;
      type = ELF::STT_NOTYPE;
      binding = ELF::STB_WEAK;
@@ -1218,6 +1216,28 @@ template<support::endianness target_endianness,
 class ELFProgramHeader : public Chunk<target_endianness, max_align, is64Bits> {
 public:
   typedef Elf_Phdr_Impl<target_endianness, max_align, is64Bits> Elf_Phdr;
+  typedef typename std::vector<Elf_Phdr *>::iterator PhIterT;
+
+  /// \brief Find a program header entry, given the type of entry that
+  /// we are looking for
+  class FindPhdr {
+  public:
+    FindPhdr(uint64_t type, uint64_t flags, uint64_t flagsClear) 
+             : _type(type)
+             , _flags(flags)
+             , _flagsClear(flagsClear)
+    {}
+
+    bool operator()(const Elf_Phdr* j) const { 
+      return ((j->p_type == _type) &&
+              ((j->p_flags & _flags) == _flags) &&
+              (!(j->p_flags & _flagsClear)));
+    }
+  private:
+    uint64_t _type;
+    uint64_t _flags;
+    uint64_t _flagsClear;
+  };
 
   ELFProgramHeader()
   : Chunk<target_endianness, max_align, is64Bits>(
@@ -1283,6 +1303,20 @@ public:
     }
   }
 
+  /// \brief find a program header entry in the list of program headers
+  PhIterT findProgramHeader(uint64_t type, uint64_t flags, uint64_t flagClear) {
+    return std::find_if(_ph.begin(), _ph.end(), 
+                        FindPhdr(type, flags, flagClear));
+  }
+
+  PhIterT begin() {
+    return _ph.begin();
+  }
+
+  PhIterT end() {
+    return _ph.end();
+  }
+
   void finalize() { }
 
   int64_t entsize() {
@@ -1295,8 +1329,7 @@ public:
 
 private:
   std::vector<Elf_Phdr *> _ph;
-  typedef typename std::vector<Elf_Phdr *>::iterator ph_iter;
-  ph_iter _phi;
+  PhIterT _phi;
   llvm::BumpPtrAllocator  _allocator;
 };
 
@@ -1482,6 +1515,35 @@ public:
                              Segment<target_endianness, max_align, is64Bits>*,
                              SegmentHashKey> SegmentMapT;
 
+  /// \brief All absolute atoms are created in the ELF Layout by using 
+  /// an AbsoluteAtomPair. Contains a pair of AbsoluteAtom and the 
+  /// value which is the address of the absolute atom
+  class AbsoluteAtomPair {
+  public:
+    AbsoluteAtomPair(const AbsoluteAtom *a, int64_t value) 
+                     : _absoluteAtom(a)
+                     , _value(value) { }
+
+    const AbsoluteAtom *absoluteAtom() { return _absoluteAtom; }
+    int64_t value() const { return _value; }
+    void setValue(int64_t val) { _value = val; }
+
+  private:
+    const AbsoluteAtom *_absoluteAtom;
+    int64_t _value;
+  };
+
+  /// \brief find a absolute atom pair given a absolute atom name
+  struct FindByName {
+    const std::string name;
+    FindByName(const StringRef name) : name(name) {}
+    bool operator()(AbsoluteAtomPair& j) { 
+      return j.absoluteAtom()->name() == name; 
+    }
+  };
+
+  typedef typename std::vector<AbsoluteAtomPair>::iterator AbsoluteAtomIterT;
+
   DefaultELFLayout(const WriterOptionsELF &options):_options(options) { }
 
   /// \brief Return the section order for a input section
@@ -1602,40 +1664,63 @@ public:
 
   // Adds an atom to the section
   virtual error_code addAtom(const Atom *atom) {
-    const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom);
-    const StringRef sectionName =
-                getSectionName(definedAtom->customSectionName(),
-                               definedAtom->contentType());
-    const lld::DefinedAtom::ContentPermissions permissions =
-                                  definedAtom->permissions();
-    const lld::DefinedAtom::ContentType contentType =
-                                  definedAtom->contentType();
-    const Key key(sectionName, std::make_pair(contentType, permissions));
-    const std::pair<Key, Section<target_endianness, max_align, is64Bits> *>
-                                                currentSection(key, nullptr);
-    std::pair<typename SectionMapT::iterator, bool>
-                              sectionInsert(_sectionMap.insert(currentSection));
-    Section<target_endianness, max_align, is64Bits> *section;
-    // the section is already in the map
-    if (!sectionInsert.second) {
-      section = sectionInsert.first->second;
-      section->setContentPermissions(permissions);
+    if (const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom)) {
+      const StringRef sectionName =
+                  getSectionName(definedAtom->customSectionName(),
+                                 definedAtom->contentType());
+      const lld::DefinedAtom::ContentPermissions permissions =
+                                    definedAtom->permissions();
+      const lld::DefinedAtom::ContentType contentType =
+                                    definedAtom->contentType();
+      const Key key(sectionName, std::make_pair(contentType, permissions));
+      const std::pair<Key, Section<target_endianness, max_align, is64Bits> *>
+                                                  currentSection(key, nullptr);
+      std::pair<typename SectionMapT::iterator, bool>
+                                sectionInsert(_sectionMap.insert(currentSection));
+      Section<target_endianness, max_align, is64Bits> *section;
+      // the section is already in the map
+      if (!sectionInsert.second) {
+        section = sectionInsert.first->second;
+        section->setContentPermissions(permissions);
+      } else {
+        SectionOrder section_order = getSectionOrder(sectionName,
+                                       contentType,
+                                       permissions);
+        section = new (_allocator.Allocate
+                       <Section<target_endianness, max_align, is64Bits>>())
+                       Section<target_endianness, max_align, is64Bits>
+                       (sectionName, contentType,
+                        permissions, section_order);
+        sectionInsert.first->second = section;
+        section->setOrder(section_order);
+        _sections.push_back(section);
+      }
+      section->appendAtom(atom);
     }
-    else {
-      SectionOrder section_order = getSectionOrder(sectionName,
-                                     contentType,
-                                     permissions);
-      section = new (_allocator.Allocate
-                     <Section<target_endianness, max_align, is64Bits>>())
-                     Section<target_endianness, max_align, is64Bits>
-                     (sectionName, contentType,
-                      permissions, section_order);
-      sectionInsert.first->second = section;
-      section->setOrder(section_order);
-      _sections.push_back(section);
+    // Absolute atoms are not part of any section, they are global for the whole
+    // link
+    else if (const AbsoluteAtom *absoluteAtom = dyn_cast<AbsoluteAtom>(atom)) {
+      _absoluteAtoms.push_back(AbsoluteAtomPair(absoluteAtom, 
+                                                absoluteAtom->value()));
     }
-    section->appendAtom(atom);
+    else 
+      llvm_unreachable("Only absolute / defined atoms can be added here");
     return error_code::success();
+  }
+
+  /// \brief find a absolute atom given a name
+  AbsoluteAtomIterT findAbsoluteAtom(const StringRef name) {
+    return std::find_if(_absoluteAtoms.begin(), _absoluteAtoms.end(),
+                                                FindByName(name));
+  }
+
+  /// \bried Begin/End iterators
+  AbsoluteAtomIterT absAtomsBegin() { 
+    return _absoluteAtoms.begin();
+  }
+
+  AbsoluteAtomIterT absAtomsEnd() { 
+    return _absoluteAtoms.end();
   }
 
   // Merge sections with the same name into a MergedSections
@@ -1651,8 +1736,7 @@ public:
                               (_mergedSectionMap.insert(currentMergedSections));
       if (!mergedSectionInsert.second) {
         mergedSection = mergedSectionInsert.first->second;
-      }
-      else {
+      } else {
         mergedSection = new (_allocator.Allocate<
           MergedSections<target_endianness, max_align, is64Bits>>())
           MergedSections<target_endianness, max_align, is64Bits>(si->name());
@@ -1922,13 +2006,13 @@ private:
   SectionMapT _sectionMap;
   MergedSectionMapT _mergedSectionMap;
   SegmentMapT _segmentMap;
-
   std::vector<Chunk<target_endianness, max_align, is64Bits> *> _sections;
   std::vector<Segment<target_endianness, max_align, is64Bits> *> _segments;
   std::vector<MergedSections<target_endianness, max_align, is64Bits> *>
     _mergedSections;
   ELFHeader<target_endianness, max_align, is64Bits> *_elfHeader;
   ELFProgramHeader<target_endianness, max_align, is64Bits> *_programHeader;
+  std::vector<AbsoluteAtomPair> _absoluteAtoms;
   llvm::BumpPtrAllocator _allocator;
   const WriterOptionsELF &_options;
 };
@@ -1955,6 +2039,9 @@ private:
   void buildSectionHeaderTable();
   void assignSectionsWithNoSegments();
   void addAbsoluteUndefinedSymbols(const lld::File &File);
+  void addDefaultAtoms();
+  void addFiles(InputFiles&);
+  void finalizeDefaultAtomValues();
 
   uint64_t addressOfAtom(const Atom *atom) {
     return _atomToAddressMap[atom];
@@ -1977,6 +2064,7 @@ private:
   ELFStringTable<target_endianness, max_align, is64Bits> *_strtab;
   ELFStringTable<target_endianness, max_align, is64Bits> *_shstrtab;
   ELFSectionHeader<target_endianness, max_align, is64Bits> *_shdrtab;
+  CRuntimeFile<target_endianness, max_align, is64Bits> _runtimeFile;
 };
 
 //===----------------------------------------------------------------------===//
@@ -1989,7 +2077,8 @@ ELFExecutableWriter<target_endianness, max_align, is64Bits>
                    ::ELFExecutableWriter(const WriterOptionsELF &options)
   : _options(options)
   , _referenceKindHandler(KindHandler::makeHandler(_options.machine(),
-                                                   target_endianness)) {
+                                                   target_endianness))
+  , _runtimeFile(options) {
   _layout =
     new DefaultELFLayout<target_endianness, max_align, is64Bits>(options);
 }
@@ -2001,6 +2090,10 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::buildChunks(const lld::File &file){
   for (const DefinedAtom *definedAtom : file.defined() ) {
     _layout->addAtom(definedAtom);
+  }
+  /// Add all the absolute atoms to the layout
+  for (const AbsoluteAtom *absoluteAtom : file.absolute()) {
+    _layout->addAtom(absoluteAtom);
   }
 }
 
@@ -2028,12 +2121,14 @@ template<support::endianness target_endianness,
          bool is64Bits>
 void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::addAbsoluteUndefinedSymbols(const lld::File &file) {
+  /// add all the absolute symbols that the layout contains to the output symbol
+  /// table
+  for (auto absi = _layout->absAtomsBegin(), abse = _layout->absAtomsEnd();
+       absi != abse; ++absi) {
+    _symtab->addSymbol(absi->absoluteAtom(), ELF::SHN_ABS, absi->value());
+  }
  for (const UndefinedAtom *a : file.undefined()) {
    _symtab->addSymbol(a, ELF::SHN_UNDEF);
- }
-
- for (const AbsoluteAtom *a : file.absolute()) {
-   _symtab->addSymbol(a, ELF::SHN_ABS);
  }
 }
 
@@ -2053,6 +2148,11 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
     for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
       _atomToAddressMap[ai->first] = (ai)->second.second;
     }
+  }
+  /// build the atomToAddressMap that contains absolute symbols too
+  for (auto absi = _layout->absAtomsBegin(), abse = _layout->absAtomsEnd();
+       absi != abse; ++absi) {
+    _atomToAddressMap[absi->absoluteAtom()] = absi->value();
   }
 }
 
@@ -2099,6 +2199,63 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
   }
 }
 
+/// \brief Add absolute symbols by default. These are linker added
+/// absolute symbols
+template<support::endianness target_endianness,
+         std::size_t max_align,
+         bool is64Bits>
+void ELFExecutableWriter<target_endianness, max_align, is64Bits>
+                        ::addDefaultAtoms() {
+  _runtimeFile.addUndefinedAtom("_start");
+  _runtimeFile.addAbsoluteAtom("__bss_start");
+  _runtimeFile.addAbsoluteAtom("__bss_end");
+  _runtimeFile.addAbsoluteAtom("_end");
+  _runtimeFile.addAbsoluteAtom("end");
+}
+
+/// \brief Hook in lld to add CRuntime file 
+template<support::endianness target_endianness,
+         std::size_t max_align,
+         bool is64Bits>
+void ELFExecutableWriter<target_endianness, max_align, is64Bits>
+                        ::addFiles(InputFiles &inputFiles) {
+  addDefaultAtoms();
+  inputFiles.prependFile(_runtimeFile);
+}
+
+/// Finalize the value of all the absolute symbols that we 
+/// created
+template<support::endianness target_endianness,
+         std::size_t max_align,
+         bool is64Bits>
+void ELFExecutableWriter<target_endianness, max_align, is64Bits>
+                        ::finalizeDefaultAtomValues() {
+ auto abse = _layout->absAtomsEnd();
+ auto bssStartAtomIter = _layout->findAbsoluteAtom("__bss_start");
+ auto bssEndAtomIter = _layout->findAbsoluteAtom("__bss_end");
+ auto underScoreEndAtomIter = _layout->findAbsoluteAtom("_end");
+ auto endAtomIter = _layout->findAbsoluteAtom("end");
+
+ if (bssStartAtomIter == abse ||
+     bssEndAtomIter == abse ||
+     underScoreEndAtomIter == abse ||
+     endAtomIter == abse) 
+   assert(0 && "Unable to find the absolute atoms that have been added by lld");
+
+ auto phe = _programHeader->findProgramHeader(
+                                 llvm::ELF::PT_LOAD,
+                                 llvm::ELF::PF_W,
+                                 llvm::ELF::PF_X);
+
+ if (phe == _programHeader->end()) 
+   assert(0 && "Can't find a data segment in the program header!");
+
+ bssStartAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_filesz);
+ bssEndAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_memsz);
+ underScoreEndAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_memsz);
+ endAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_memsz);
+}
+
 template<support::endianness target_endianness,
          std::size_t max_align,
          bool is64Bits>
@@ -2113,6 +2270,9 @@ error_code ELFExecutableWriter<target_endianness, max_align, is64Bits>
   _layout->assignSectionsToSegments();
   _layout->assignFileOffsets();
   _layout->assignVirtualAddress();
+
+  // Finalize the default value of symbols that the linker adds
+  finalizeDefaultAtomValues();
 
   // Build the Atom To Address map for applying relocations
   buildAtomToAddressMap();

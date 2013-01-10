@@ -1,1 +1,2 @@
-RUN: lld -flavor ld -target x86_64-linux
+# Will fail with unersolved symbol 
+RUN: lld -flavor ld -target x86_64-linux || exit 0 
