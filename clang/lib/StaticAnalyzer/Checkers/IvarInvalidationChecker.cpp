@@ -175,7 +175,8 @@ class IvarInvalidationChecker :
 
   /// Check if ivar should be tracked and add to TrackedIvars if positive.
   /// Returns true if ivar should be tracked.
-  static bool trackIvar(const ObjCIvarDecl *Iv, IvarSet &TrackedIvars);
+  static bool trackIvar(const ObjCIvarDecl *Iv, IvarSet &TrackedIvars,
+                        const ObjCIvarDecl **FirstIvarDecl);
 
   /// Given the property declaration, and the list of tracked ivars, finds
   /// the ivar backing the property when possible. Returns '0' when no such
@@ -183,7 +184,8 @@ class IvarInvalidationChecker :
   static const ObjCIvarDecl *findPropertyBackingIvar(
       const ObjCPropertyDecl *Prop,
       const ObjCInterfaceDecl *InterfaceD,
-      IvarSet &TrackedIvars);
+      IvarSet &TrackedIvars,
+      const ObjCIvarDecl **FirstIvarDecl);
 
   /// Print ivar name or the property if the given ivar backs a property.
   static void printIvar(llvm::raw_svector_ostream &os,
@@ -251,7 +253,8 @@ void IvarInvalidationChecker::containsInvalidationMethod(
 }
 
 bool IvarInvalidationChecker::trackIvar(const ObjCIvarDecl *Iv,
-                                        IvarSet &TrackedIvars) {
+                                        IvarSet &TrackedIvars,
+                                        const ObjCIvarDecl **FirstIvarDecl) {
   QualType IvQTy = Iv->getType();
   const ObjCObjectPointerType *IvTy = IvQTy->getAs<ObjCObjectPointerType>();
   if (!IvTy)
@@ -261,7 +264,10 @@ bool IvarInvalidationChecker::trackIvar(const ObjCIvarDecl *Iv,
   InvalidationInfo Info;
   containsInvalidationMethod(IvInterf, Info);
   if (Info.needsInvalidation()) {
-    TrackedIvars[cast<ObjCIvarDecl>(Iv->getCanonicalDecl())] = Info;
+    const ObjCIvarDecl *I = cast<ObjCIvarDecl>(Iv->getCanonicalDecl());
+    TrackedIvars[I] = Info;
+    if (!*FirstIvarDecl)
+      *FirstIvarDecl = I;
     return true;
   }
   return false;
@@ -270,7 +276,8 @@ bool IvarInvalidationChecker::trackIvar(const ObjCIvarDecl *Iv,
 const ObjCIvarDecl *IvarInvalidationChecker::findPropertyBackingIvar(
                         const ObjCPropertyDecl *Prop,
                         const ObjCInterfaceDecl *InterfaceD,
-                        IvarSet &TrackedIvars) {
+                        IvarSet &TrackedIvars,
+                        const ObjCIvarDecl **FirstIvarDecl) {
   const ObjCIvarDecl *IvarD = 0;
 
   // Lookup for the synthesized case.
@@ -282,7 +289,7 @@ const ObjCIvarDecl *IvarInvalidationChecker::findPropertyBackingIvar(
       return IvarD;
     }
     // If the ivar is synthesized we still want to track it.
-    if (trackIvar(IvarD, TrackedIvars))
+    if (trackIvar(IvarD, TrackedIvars, FirstIvarDecl))
       return IvarD;
   }
 
@@ -330,13 +337,17 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCImplementationDecl *ImplD,
                                           BugReporter &BR) const {
   // Collect all ivars that need cleanup.
   IvarSet Ivars;
+  // Record the first Ivar needing invalidation; used in reporting when only
+  // one ivar is sufficient. Cannot grab the first on the Ivars set to ensure
+  // deterministic output.
+  const ObjCIvarDecl *FirstIvarDecl = 0;
   const ObjCInterfaceDecl *InterfaceD = ImplD->getClassInterface();
 
   // Collect ivars declared in this class, its extensions and its implementation
   ObjCInterfaceDecl *IDecl = const_cast<ObjCInterfaceDecl *>(InterfaceD);
   for (const ObjCIvarDecl *Iv = IDecl->all_declared_ivar_begin(); Iv;
        Iv= Iv->getNextIvar())
-    trackIvar(Iv, Ivars);
+    trackIvar(Iv, Ivars, &FirstIvarDecl);
 
   // Construct Property/Property Accessor to Ivar maps to assist checking if an
   // ivar which is backing a property has been reset.
@@ -352,7 +363,8 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCImplementationDecl *ImplD,
       I = PropMap.begin(), E = PropMap.end(); I != E; ++I) {
     const ObjCPropertyDecl *PD = I->second;
 
-    const ObjCIvarDecl *ID = findPropertyBackingIvar(PD, InterfaceD, Ivars);
+    const ObjCIvarDecl *ID = findPropertyBackingIvar(PD, InterfaceD, Ivars,
+                                                     &FirstIvarDecl);
     if (!ID) {
       continue;
     }
@@ -390,14 +402,14 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCImplementationDecl *ImplD,
     llvm::raw_svector_ostream os(sbuf);
     os << "No invalidation method declared in the @interface for "
        << InterfaceD->getName() << "; ";
-    const ObjCIvarDecl *IvarDecl = Ivars.begin()->first;
-    printIvar(os, IvarDecl, IvarToPopertyMap);
+    assert(FirstIvarDecl);
+    printIvar(os, FirstIvarDecl, IvarToPopertyMap);
     os << "needs to be invalidated";
 
     PathDiagnosticLocation IvarDecLocation =
-        PathDiagnosticLocation::createBegin(IvarDecl, BR.getSourceManager());
+      PathDiagnosticLocation::createBegin(FirstIvarDecl, BR.getSourceManager());
 
-    BR.EmitBasicReport(IvarDecl, "Incomplete invalidation",
+    BR.EmitBasicReport(FirstIvarDecl, "Incomplete invalidation",
                        categories::CoreFoundationObjectiveC, os.str(),
                        IvarDecLocation);
     return;
@@ -455,14 +467,14 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCImplementationDecl *ImplD,
     llvm::raw_svector_ostream os(sbuf);
     os << "No invalidation method defined in the @implementation for "
        << InterfaceD->getName() << "; ";
-    const ObjCIvarDecl *IvarDecl = Ivars.begin()->first;
-    printIvar(os, IvarDecl, IvarToPopertyMap);
+    assert(FirstIvarDecl);
+    printIvar(os, FirstIvarDecl, IvarToPopertyMap);
     os << "needs to be invalidated";
 
     PathDiagnosticLocation IvarDecLocation =
-        PathDiagnosticLocation::createBegin(IvarDecl,
+        PathDiagnosticLocation::createBegin(FirstIvarDecl,
                                             BR.getSourceManager());
-    BR.EmitBasicReport(IvarDecl, "Incomplete invalidation",
+    BR.EmitBasicReport(FirstIvarDecl, "Incomplete invalidation",
                        categories::CoreFoundationObjectiveC, os.str(),
                        IvarDecLocation);
   }
@@ -576,7 +588,7 @@ void IvarInvalidationChecker::MethodCrawler::VisitBinaryOperator(
 }
 
 void IvarInvalidationChecker::MethodCrawler::VisitObjCMessageExpr(
-    const ObjCMessageExpr *ME) {
+  const ObjCMessageExpr *ME) {
   const ObjCMethodDecl *MD = ME->getMethodDecl();
   const Expr *Receiver = ME->getInstanceReceiver();
 

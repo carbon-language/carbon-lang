@@ -214,9 +214,9 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 
 @interface MissingInvalidationMethodDecl2 : NSObject {
 @private
-    Foo *_foo1;
+    Foo *_foo1; // expected-warning {{No invalidation method declared in the @interface for MissingInvalidationMethodDecl2; Instance variable _foo1 needs to be invalidated}} 
 }
-@property (strong) Foo *bar1; // expected-warning {{No invalidation method declared in the @interface for MissingInvalidationMethodDecl2; Property bar1 needs to be invalidated}} 
+@property (strong) Foo *bar1; 
 @end
 @implementation MissingInvalidationMethodDecl2
 @end
