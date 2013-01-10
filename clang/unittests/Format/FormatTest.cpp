@@ -1459,9 +1459,6 @@ TEST_F(FormatTest, ObjCSnippets) {
                "  f();\n"
                "}");
 
-  // FIXME: Some Apple code examples don't have spaces around '=' for
-  // @synthesize, decide if that's desired or not in LLVM style. Google style
-  // definitely wants spaces.
   verifyFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
   verifyGoogleFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
 
