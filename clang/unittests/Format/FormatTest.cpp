@@ -1036,6 +1036,10 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
 // Error recovery tests.
 //===----------------------------------------------------------------------===//
 
+TEST_F(FormatTest, IncorrectCodeTrailingStuff) {
+  verifyFormat("void f() {  return } 42");
+}
+
 TEST_F(FormatTest, IndentationWithinColumnLimitNotPossible) {
   verifyFormat("int aaaaaaaa =\n"
                "    // Overly long comment\n"

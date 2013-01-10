@@ -651,6 +651,21 @@ public:
       return false;
     }
 
+    bool parseBrace() {
+      while (CurrentToken != NULL) {
+        if (CurrentToken->is(tok::r_brace)) {
+          next();
+          return true;
+        }
+        if (CurrentToken->is(tok::r_paren) || CurrentToken->is(tok::r_square))
+          return false;
+        if (!consumeToken())
+          return false;
+      }
+      // Lines can currently end with '{'.
+      return true;
+    }
+
     bool parseConditional() {
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::colon)) {
@@ -693,6 +708,10 @@ public:
         if (!parseSquare())
           return false;
         break;
+      case tok::l_brace:
+        if (!parseBrace())
+          return false;
+        break;
       case tok::less:
         if (parseAngle())
           Tok->Type = TT_TemplateOpener;
@@ -705,6 +724,11 @@ public:
       case tok::r_paren:
       case tok::r_square:
         return false;
+      case tok::r_brace:
+        // Lines can start with '}'.
+        if (Tok->Parent != NULL)
+          return false;
+        break;
       case tok::greater:
         Tok->Type = TT_BinaryOperator;
         break;
