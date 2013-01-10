@@ -279,7 +279,9 @@ private:
 
     if (Newline) {
       unsigned WhitespaceStartColumn = State.Column;
-      if (Previous.is(tok::l_brace)) {
+      if (Current.is(tok::r_brace)) {
+        State.Column = Line.Level * 2;
+      } else if (Previous.is(tok::l_brace)) {
         // FIXME: This does not work with nested static initializers.
         // Implement a better handling for static initializers and similar
         // constructs.

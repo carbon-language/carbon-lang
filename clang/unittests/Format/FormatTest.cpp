@@ -615,6 +615,30 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
       "               trailing);", getLLVMStyleWithColumns(69));
 }
 
+TEST_F(FormatTest, LayoutBlockInsideParens) {
+  EXPECT_EQ("functionCall({\n"
+            "  int i;\n"
+            "});", format(" functionCall ( {int i;} );"));
+}
+
+TEST_F(FormatTest, LayoutBlockInsideStatement) {
+  EXPECT_EQ("SOME_MACRO {\n"
+            "  int i;\n"
+            "}\n"
+            "int i;", format("  SOME_MACRO  {int i;}  int i;"));
+}
+
+TEST_F(FormatTest, LayoutNestedBlocks) {
+  verifyFormat("void AddOsStrings(unsigned bitmask) {\n"
+               "  struct s {\n"
+               "    int i;\n"
+               "  };\n"
+               "  s kBitsToOs[] = { { 10 } };\n"
+               "  for (int i = 0; i < 10; ++i)\n"
+               "    return;\n"
+               "}");
+}
+
 //===----------------------------------------------------------------------===//
 // Line break tests.
 //===----------------------------------------------------------------------===//

@@ -131,6 +131,7 @@ private:
   void parsePPUnknown();
   void parseComments();
   void parseStructuralElement();
+  void parseBracedList();
   void parseParens();
   void parseIfThenElse();
   void parseForOrWhileLoop();
@@ -163,6 +164,8 @@ private:
   const FormatStyle &Style;
   FormatTokenSource *Tokens;
   UnwrappedLineConsumer &Callback;
+
+  friend class ScopedLineState;
 };
 
 } // end namespace format

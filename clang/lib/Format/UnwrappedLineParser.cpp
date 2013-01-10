@@ -76,6 +76,40 @@ private:
   FormatToken Token;
 };
 
+class ScopedLineState {
+public:
+  ScopedLineState(UnwrappedLineParser &Parser) : Parser(Parser) {
+    PreBlockLine = Parser.Line.take();
+    Parser.Line.reset(new UnwrappedLine(*PreBlockLine));
+    assert(Parser.LastInCurrentLine == NULL ||
+           Parser.LastInCurrentLine->Children.empty());
+    PreBlockLastToken = Parser.LastInCurrentLine;
+    PreBlockRootTokenInitialized = Parser.RootTokenInitialized;
+    Parser.RootTokenInitialized = false;
+    Parser.LastInCurrentLine = NULL;
+  }
+
+  ~ScopedLineState() {
+    if (Parser.RootTokenInitialized) {
+      Parser.addUnwrappedLine();
+    }
+    assert(!Parser.RootTokenInitialized);
+    Parser.Line.reset(PreBlockLine);
+    Parser.RootTokenInitialized = PreBlockRootTokenInitialized;
+    Parser.LastInCurrentLine = PreBlockLastToken;
+    assert(Parser.LastInCurrentLine == NULL ||
+           Parser.LastInCurrentLine->Children.empty());
+    Parser.MustBreakBeforeNextToken = true;
+  }
+
+private:
+  UnwrappedLineParser &Parser;
+
+  UnwrappedLine *PreBlockLine;
+  FormatToken* PreBlockLastToken;
+  bool PreBlockRootTokenInitialized;
+};
+
 UnwrappedLineParser::UnwrappedLineParser(const FormatStyle &Style,
                                          FormatTokenSource &Tokens,
                                          UnwrappedLineConsumer &Callback)
@@ -204,6 +238,7 @@ void UnwrappedLineParser::parseComments() {
 }
 
 void UnwrappedLineParser::parseStructuralElement() {
+  assert(!FormatTok.Tok.is(tok::l_brace));
   parseComments();
 
   int TokenNumber = 0;
@@ -289,6 +324,10 @@ void UnwrappedLineParser::parseStructuralElement() {
       parseParens();
       break;
     case tok::l_brace:
+      // A block outside of parentheses must be the last part of a
+      // structural element.
+      // FIXME: Figure out cases where this is not true, and add projections for
+      // them (the one we know is missing are lambdas).
       parseBlock();
       addUnwrappedLine();
       return;
@@ -301,10 +340,28 @@ void UnwrappedLineParser::parseStructuralElement() {
       break;
     case tok::equal:
       nextToken();
-      // Skip initializers as they will be formatted by a later step.
-      if (FormatTok.Tok.is(tok::l_brace))
-        nextToken();
+      if (FormatTok.Tok.is(tok::l_brace)) {
+        parseBracedList();
+      }
       break;
+    default:
+      nextToken();
+      break;
+    }
+  } while (!eof());
+}
+
+void UnwrappedLineParser::parseBracedList() {
+  nextToken();
+
+  do {
+    switch (FormatTok.Tok.getKind()) {
+    case tok::l_brace:
+      parseBracedList();
+      break;
+    case tok::r_brace:
+      nextToken();
+      return;
     default:
       nextToken();
       break;
@@ -323,6 +380,15 @@ void UnwrappedLineParser::parseParens() {
     case tok::r_paren:
       nextToken();
       return;
+    case tok::l_brace:
+      {
+        nextToken();
+        ScopedLineState LineState(*this);
+        Line->Level += 1;
+        parseLevel(/*HasOpeningBrace=*/true);
+        Line->Level -= 1;
+      }
+      break;
     default:
       nextToken();
       break;
@@ -626,22 +692,8 @@ void UnwrappedLineParser::readToken() {
   while (!Line->InPPDirective && FormatTok.Tok.is(tok::hash) &&
          ((FormatTok.NewlinesBefore > 0 && FormatTok.HasUnescapedNewline) ||
           FormatTok.IsFirst)) {
-    UnwrappedLine* StoredLine = Line.take();
-    Line.reset(new UnwrappedLine(*StoredLine));
-    assert(LastInCurrentLine == NULL || LastInCurrentLine->Children.empty());
-    FormatToken *StoredLastInCurrentLine = LastInCurrentLine;
-    bool PreviousInitialized = RootTokenInitialized;
-    RootTokenInitialized = false;
-    LastInCurrentLine = NULL;
-
+    ScopedLineState BlockState(*this);
     parsePPDirective();
-
-    assert(!RootTokenInitialized);
-    Line.reset(StoredLine);
-    RootTokenInitialized = PreviousInitialized;
-    LastInCurrentLine = StoredLastInCurrentLine;
-    assert(LastInCurrentLine == NULL || LastInCurrentLine->Children.empty());
-    MustBreakBeforeNextToken = true;
   }
 }
 
