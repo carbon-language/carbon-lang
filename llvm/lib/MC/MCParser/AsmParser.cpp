@@ -293,20 +293,20 @@ private:
   // Directive Parsing.
 
   enum DirectiveKind {
-    VK_NO_DIRECTIVE, // Placeholder
-    VK_SET, VK_EQU, VK_EQUIV, VK_ASCII, VK_ASCIZ, VK_STRING, VK_BYTE, VK_SHORT,
-    VK_VALUE, VK_2BYTE, VK_LONG, VK_INT, VK_4BYTE, VK_QUAD, VK_8BYTE, VK_SINGLE,
-    VK_FLOAT, VK_DOUBLE, VK_ALIGN, VK_ALIGN32, VK_BALIGN, VK_BALIGNW,
-    VK_BALIGNL, VK_P2ALIGN, VK_P2ALIGNW, VK_P2ALIGNL, VK_ORG, VK_FILL,
-    VK_SPACE, VK_SKIP, VK_ENDR,
-    VK_BUNDLE_ALIGN_MODE, VK_BUNDLE_LOCK, VK_BUNDLE_UNLOCK,
-    VK_ZERO, VK_EXTERN, VK_GLOBL, VK_GLOBAL, VK_INDIRECT_SYMBOL,
-    VK_LAZY_REFERENCE, VK_NO_DEAD_STRIP, VK_SYMBOL_RESOLVER, VK_PRIVATE_EXTERN,
-    VK_REFERENCE, VK_WEAK_DEFINITION, VK_WEAK_REFERENCE,
-    VK_WEAK_DEF_CAN_BE_HIDDEN, VK_COMM, VM_COMMON, VK_LCOMM, VK_ABORT,
-    VK_INCLUDE, VK_INCBIN, VK_CODE16, VK_CODE16GCC, VK_REPT, VK_IRP, VK_IRPC,
-    VK_IF, VK_IFB, VK_IFNB, VK_IFC, VK_IFNC, VK_IFDEF, VK_IFNDEF, VK_IFNOTDEF,
-    VK_ELSEIF, VK_ELSE, VK_ENDIF
+    DK_NO_DIRECTIVE, // Placeholder
+    DK_SET, DK_EQU, DK_EQUIV, DK_ASCII, DK_ASCIZ, DK_STRING, DK_BYTE, DK_SHORT,
+    DK_VALUE, DK_2BYTE, DK_LONG, DK_INT, DK_4BYTE, DK_QUAD, DK_8BYTE, DK_SINGLE,
+    DK_FLOAT, DK_DOUBLE, DK_ALIGN, DK_ALIGN32, DK_BALIGN, DK_BALIGNW,
+    DK_BALIGNL, DK_P2ALIGN, DK_P2ALIGNW, DK_P2ALIGNL, DK_ORG, DK_FILL,
+    DK_SPACE, DK_SKIP, DK_ENDR,
+    DK_BUNDLE_ALIGN_MODE, DK_BUNDLE_LOCK, DK_BUNDLE_UNLOCK,
+    DK_ZERO, DK_EXTERN, DK_GLOBL, DK_GLOBAL, DK_INDIRECT_SYMBOL,
+    DK_LAZY_REFERENCE, DK_NO_DEAD_STRIP, DK_SYMBOL_RESOLVER, DK_PRIVATE_EXTERN,
+    DK_REFERENCE, DK_WEAK_DEFINITION, DK_WEAK_REFERENCE,
+    DK_WEAK_DEF_CAN_BE_HIDDEN, DK_COMM, DK_COMMON, DK_LCOMM, DK_ABORT,
+    DK_INCLUDE, DK_INCBIN, DK_CODE16, DK_CODE16GCC, DK_REPT, DK_IRP, DK_IRPC,
+    DK_IF, DK_IFB, DK_IFNB, DK_IFC, DK_IFNC, DK_IFDEF, DK_IFNDEF, DK_IFNOTDEF,
+    DK_ELSEIF, DK_ELSE, DK_ENDIF
   };
 
   StringMap<DirectiveKind> DirectiveKindMapping;
@@ -1184,31 +1184,31 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
   StringMap<DirectiveKind>::const_iterator DirKindIt =
     DirectiveKindMapping.find(IDVal);
   DirectiveKind DirKind =
-    (DirKindIt == DirectiveKindMapping.end()) ? VK_NO_DIRECTIVE :
+    (DirKindIt == DirectiveKindMapping.end()) ? DK_NO_DIRECTIVE :
                                                 DirKindIt->getValue();
   switch (DirKind) {
     default:
       break;
-    case VK_IF:
+    case DK_IF:
       return ParseDirectiveIf(IDLoc);
-    case VK_IFB:
+    case DK_IFB:
       return ParseDirectiveIfb(IDLoc, true);
-    case VK_IFNB:
+    case DK_IFNB:
       return ParseDirectiveIfb(IDLoc, false);
-    case VK_IFC:
+    case DK_IFC:
       return ParseDirectiveIfc(IDLoc, true);
-    case VK_IFNC:
+    case DK_IFNC:
       return ParseDirectiveIfc(IDLoc, false);
-    case VK_IFDEF:
+    case DK_IFDEF:
       return ParseDirectiveIfdef(IDLoc, true);
-    case VK_IFNDEF:
-    case VK_IFNOTDEF:
+    case DK_IFNDEF:
+    case DK_IFNOTDEF:
       return ParseDirectiveIfdef(IDLoc, false);
-    case VK_ELSEIF:
+    case DK_ELSEIF:
       return ParseDirectiveElseIf(IDLoc);
-    case VK_ELSE:
+    case DK_ELSE:
       return ParseDirectiveElse(IDLoc);
-    case VK_ENDIF:
+    case DK_ENDIF:
       return ParseDirectiveEndIf(IDLoc);
   }
 
@@ -1291,114 +1291,114 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
     switch (DirKind) {
       default:
         break;
-      case VK_SET:
-      case VK_EQU:
+      case DK_SET:
+      case DK_EQU:
         return ParseDirectiveSet(IDVal, true);
-      case VK_EQUIV:
+      case DK_EQUIV:
         return ParseDirectiveSet(IDVal, false);
-      case VK_ASCII:
+      case DK_ASCII:
         return ParseDirectiveAscii(IDVal, false);
-      case VK_ASCIZ:
-      case VK_STRING:
+      case DK_ASCIZ:
+      case DK_STRING:
         return ParseDirectiveAscii(IDVal, true);
-      case VK_BYTE:
+      case DK_BYTE:
         return ParseDirectiveValue(1);
-      case VK_SHORT:
-      case VK_VALUE:
-      case VK_2BYTE:
+      case DK_SHORT:
+      case DK_VALUE:
+      case DK_2BYTE:
         return ParseDirectiveValue(2);
-      case VK_LONG:
-      case VK_INT:
-      case VK_4BYTE:
+      case DK_LONG:
+      case DK_INT:
+      case DK_4BYTE:
         return ParseDirectiveValue(4);
-      case VK_QUAD:
-      case VK_8BYTE:
+      case DK_QUAD:
+      case DK_8BYTE:
         return ParseDirectiveValue(8);
-      case VK_SINGLE:
-      case VK_FLOAT:
+      case DK_SINGLE:
+      case DK_FLOAT:
         return ParseDirectiveRealValue(APFloat::IEEEsingle);
-      case VK_DOUBLE:
+      case DK_DOUBLE:
         return ParseDirectiveRealValue(APFloat::IEEEdouble);
-      case VK_ALIGN: {
+      case DK_ALIGN: {
         bool IsPow2 = !getContext().getAsmInfo().getAlignmentIsInBytes();
         return ParseDirectiveAlign(IsPow2, /*ExprSize=*/1);
       }
-      case VK_ALIGN32: {
+      case DK_ALIGN32: {
         bool IsPow2 = !getContext().getAsmInfo().getAlignmentIsInBytes();
         return ParseDirectiveAlign(IsPow2, /*ExprSize=*/4);
       }
-      case VK_BALIGN:
+      case DK_BALIGN:
         return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/1);
-      case VK_BALIGNW:
+      case DK_BALIGNW:
         return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/2);
-      case VK_BALIGNL:
+      case DK_BALIGNL:
         return ParseDirectiveAlign(/*IsPow2=*/false, /*ExprSize=*/4);
-      case VK_P2ALIGN:
+      case DK_P2ALIGN:
         return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/1);
-      case VK_P2ALIGNW:
+      case DK_P2ALIGNW:
         return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/2);
-      case VK_P2ALIGNL:
+      case DK_P2ALIGNL:
         return ParseDirectiveAlign(/*IsPow2=*/true, /*ExprSize=*/4);
-      case VK_ORG:
+      case DK_ORG:
         return ParseDirectiveOrg();
-      case VK_FILL:
+      case DK_FILL:
         return ParseDirectiveFill();
-      case VK_SPACE:
-      case VK_SKIP:
+      case DK_SPACE:
+      case DK_SKIP:
         return ParseDirectiveSpace();
-      case VK_ZERO:
+      case DK_ZERO:
         return ParseDirectiveZero();
-      case VK_EXTERN:
+      case DK_EXTERN:
         EatToEndOfStatement(); // .extern is the default, ignore it.
         return false;
-      case VK_GLOBL:
-      case VK_GLOBAL:
+      case DK_GLOBL:
+      case DK_GLOBAL:
         return ParseDirectiveSymbolAttribute(MCSA_Global);
-      case VK_INDIRECT_SYMBOL:
+      case DK_INDIRECT_SYMBOL:
         return ParseDirectiveSymbolAttribute(MCSA_IndirectSymbol);
-      case VK_LAZY_REFERENCE:
+      case DK_LAZY_REFERENCE:
         return ParseDirectiveSymbolAttribute(MCSA_LazyReference);
-      case VK_NO_DEAD_STRIP:
+      case DK_NO_DEAD_STRIP:
         return ParseDirectiveSymbolAttribute(MCSA_NoDeadStrip);
-      case VK_SYMBOL_RESOLVER:
+      case DK_SYMBOL_RESOLVER:
         return ParseDirectiveSymbolAttribute(MCSA_SymbolResolver);
-      case VK_PRIVATE_EXTERN:
+      case DK_PRIVATE_EXTERN:
         return ParseDirectiveSymbolAttribute(MCSA_PrivateExtern);
-      case VK_REFERENCE:
+      case DK_REFERENCE:
         return ParseDirectiveSymbolAttribute(MCSA_Reference);
-      case VK_WEAK_DEFINITION:
+      case DK_WEAK_DEFINITION:
         return ParseDirectiveSymbolAttribute(MCSA_WeakDefinition);
-      case VK_WEAK_REFERENCE:
+      case DK_WEAK_REFERENCE:
         return ParseDirectiveSymbolAttribute(MCSA_WeakReference);
-      case VK_WEAK_DEF_CAN_BE_HIDDEN:
+      case DK_WEAK_DEF_CAN_BE_HIDDEN:
         return ParseDirectiveSymbolAttribute(MCSA_WeakDefAutoPrivate);
-      case VK_COMM:
-      case VM_COMMON:
+      case DK_COMM:
+      case DK_COMMON:
         return ParseDirectiveComm(/*IsLocal=*/false);
-      case VK_LCOMM:
+      case DK_LCOMM:
         return ParseDirectiveComm(/*IsLocal=*/true);
-      case VK_ABORT:
+      case DK_ABORT:
         return ParseDirectiveAbort();
-      case VK_INCLUDE:
+      case DK_INCLUDE:
         return ParseDirectiveInclude();
-      case VK_INCBIN:
+      case DK_INCBIN:
         return ParseDirectiveIncbin();
-      case VK_CODE16:
-      case VK_CODE16GCC:
+      case DK_CODE16:
+      case DK_CODE16GCC:
         return TokError(Twine(IDVal) + " not supported yet");
-      case VK_REPT:
+      case DK_REPT:
         return ParseDirectiveRept(IDLoc);
-      case VK_IRP:
+      case DK_IRP:
         return ParseDirectiveIrp(IDLoc);
-      case VK_IRPC:
+      case DK_IRPC:
         return ParseDirectiveIrpc(IDLoc);
-      case VK_ENDR:
+      case DK_ENDR:
         return ParseDirectiveEndr(IDLoc);
-      case VK_BUNDLE_ALIGN_MODE:
+      case DK_BUNDLE_ALIGN_MODE:
         return ParseDirectiveBundleAlignMode();
-      case VK_BUNDLE_LOCK:
+      case DK_BUNDLE_LOCK:
         return ParseDirectiveBundleLock();
-      case VK_BUNDLE_UNLOCK:
+      case DK_BUNDLE_UNLOCK:
         return ParseDirectiveBundleUnlock();
     }
 
@@ -2892,75 +2892,75 @@ bool AsmParser::ParseDirectiveEndIf(SMLoc DirectiveLoc) {
 }
 
 void AsmParser::initializeDirectiveKindMapping() {
-  DirectiveKindMapping[".set"] = VK_SET;
-  DirectiveKindMapping[".equ"] = VK_EQU;
-  DirectiveKindMapping[".equiv"] = VK_EQUIV;
-  DirectiveKindMapping[".ascii"] = VK_ASCII;
-  DirectiveKindMapping[".asciz"] = VK_ASCIZ;
-  DirectiveKindMapping[".string"] = VK_STRING;
-  DirectiveKindMapping[".byte"] = VK_BYTE;
-  DirectiveKindMapping[".short"] = VK_SHORT;
-  DirectiveKindMapping[".value"] = VK_VALUE;
-  DirectiveKindMapping[".2byte"] = VK_2BYTE;
-  DirectiveKindMapping[".long"] = VK_LONG;
-  DirectiveKindMapping[".int"] = VK_INT;
-  DirectiveKindMapping[".4byte"] = VK_4BYTE;
-  DirectiveKindMapping[".quad"] = VK_QUAD;
-  DirectiveKindMapping[".8byte"] = VK_8BYTE;
-  DirectiveKindMapping[".single"] = VK_SINGLE;
-  DirectiveKindMapping[".float"] = VK_FLOAT;
-  DirectiveKindMapping[".double"] = VK_DOUBLE;
-  DirectiveKindMapping[".align"] = VK_ALIGN;
-  DirectiveKindMapping[".align32"] = VK_ALIGN32;
-  DirectiveKindMapping[".balign"] = VK_BALIGN;
-  DirectiveKindMapping[".balignw"] = VK_BALIGNW;
-  DirectiveKindMapping[".balignl"] = VK_BALIGNL;
-  DirectiveKindMapping[".p2align"] = VK_P2ALIGN;
-  DirectiveKindMapping[".p2alignw"] = VK_P2ALIGNW;
-  DirectiveKindMapping[".p2alignl"] = VK_P2ALIGNL;
-  DirectiveKindMapping[".org"] = VK_ORG;
-  DirectiveKindMapping[".fill"] = VK_FILL;
-  DirectiveKindMapping[".space"] = VK_SPACE;
-  DirectiveKindMapping[".skip"] = VK_SKIP;
-  DirectiveKindMapping[".zero"] = VK_ZERO;
-  DirectiveKindMapping[".extern"] = VK_EXTERN;
-  DirectiveKindMapping[".globl"] = VK_GLOBL;
-  DirectiveKindMapping[".global"] = VK_GLOBAL;
-  DirectiveKindMapping[".indirect_symbol"] = VK_INDIRECT_SYMBOL;
-  DirectiveKindMapping[".lazy_reference"] = VK_LAZY_REFERENCE;
-  DirectiveKindMapping[".no_dead_strip"] = VK_NO_DEAD_STRIP;
-  DirectiveKindMapping[".symbol_resolver"] = VK_SYMBOL_RESOLVER;
-  DirectiveKindMapping[".private_extern"] = VK_PRIVATE_EXTERN;
-  DirectiveKindMapping[".reference"] = VK_REFERENCE;
-  DirectiveKindMapping[".weak_definition"] = VK_WEAK_DEFINITION;
-  DirectiveKindMapping[".weak_reference"] = VK_WEAK_REFERENCE;
-  DirectiveKindMapping[".weak_def_can_be_hidden"] = VK_WEAK_DEF_CAN_BE_HIDDEN;
-  DirectiveKindMapping[".comm"] = VK_COMM;
-  DirectiveKindMapping[".common"] = VM_COMMON;
-  DirectiveKindMapping[".lcomm"] = VK_LCOMM;
-  DirectiveKindMapping[".abort"] = VK_ABORT;
-  DirectiveKindMapping[".include"] = VK_INCLUDE;
-  DirectiveKindMapping[".incbin"] = VK_INCBIN;
-  DirectiveKindMapping[".code16"] = VK_CODE16;
-  DirectiveKindMapping[".code16gcc"] = VK_CODE16GCC;
-  DirectiveKindMapping[".rept"] = VK_REPT;
-  DirectiveKindMapping[".irp"] = VK_IRP;
-  DirectiveKindMapping[".irpc"] = VK_IRPC;
-  DirectiveKindMapping[".endr"] = VK_ENDR;
-  DirectiveKindMapping[".bundle_align_mode"] = VK_BUNDLE_ALIGN_MODE;
-  DirectiveKindMapping[".bundle_lock"] = VK_BUNDLE_LOCK;
-  DirectiveKindMapping[".bundle_unlock"] = VK_BUNDLE_UNLOCK;
-  DirectiveKindMapping[".if"] = VK_IF;
-  DirectiveKindMapping[".ifb"] = VK_IFB;
-  DirectiveKindMapping[".ifnb"] = VK_IFNB;
-  DirectiveKindMapping[".ifc"] = VK_IFC;
-  DirectiveKindMapping[".ifnc"] = VK_IFNC;
-  DirectiveKindMapping[".ifdef"] = VK_IFDEF;
-  DirectiveKindMapping[".ifndef"] = VK_IFNDEF;
-  DirectiveKindMapping[".ifnotdef"] = VK_IFNOTDEF;
-  DirectiveKindMapping[".elseif"] = VK_ELSEIF;
-  DirectiveKindMapping[".else"] = VK_ELSE;
-  DirectiveKindMapping[".endif"] = VK_ENDIF;
+  DirectiveKindMapping[".set"] = DK_SET;
+  DirectiveKindMapping[".equ"] = DK_EQU;
+  DirectiveKindMapping[".equiv"] = DK_EQUIV;
+  DirectiveKindMapping[".ascii"] = DK_ASCII;
+  DirectiveKindMapping[".asciz"] = DK_ASCIZ;
+  DirectiveKindMapping[".string"] = DK_STRING;
+  DirectiveKindMapping[".byte"] = DK_BYTE;
+  DirectiveKindMapping[".short"] = DK_SHORT;
+  DirectiveKindMapping[".value"] = DK_VALUE;
+  DirectiveKindMapping[".2byte"] = DK_2BYTE;
+  DirectiveKindMapping[".long"] = DK_LONG;
+  DirectiveKindMapping[".int"] = DK_INT;
+  DirectiveKindMapping[".4byte"] = DK_4BYTE;
+  DirectiveKindMapping[".quad"] = DK_QUAD;
+  DirectiveKindMapping[".8byte"] = DK_8BYTE;
+  DirectiveKindMapping[".single"] = DK_SINGLE;
+  DirectiveKindMapping[".float"] = DK_FLOAT;
+  DirectiveKindMapping[".double"] = DK_DOUBLE;
+  DirectiveKindMapping[".align"] = DK_ALIGN;
+  DirectiveKindMapping[".align32"] = DK_ALIGN32;
+  DirectiveKindMapping[".balign"] = DK_BALIGN;
+  DirectiveKindMapping[".balignw"] = DK_BALIGNW;
+  DirectiveKindMapping[".balignl"] = DK_BALIGNL;
+  DirectiveKindMapping[".p2align"] = DK_P2ALIGN;
+  DirectiveKindMapping[".p2alignw"] = DK_P2ALIGNW;
+  DirectiveKindMapping[".p2alignl"] = DK_P2ALIGNL;
+  DirectiveKindMapping[".org"] = DK_ORG;
+  DirectiveKindMapping[".fill"] = DK_FILL;
+  DirectiveKindMapping[".space"] = DK_SPACE;
+  DirectiveKindMapping[".skip"] = DK_SKIP;
+  DirectiveKindMapping[".zero"] = DK_ZERO;
+  DirectiveKindMapping[".extern"] = DK_EXTERN;
+  DirectiveKindMapping[".globl"] = DK_GLOBL;
+  DirectiveKindMapping[".global"] = DK_GLOBAL;
+  DirectiveKindMapping[".indirect_symbol"] = DK_INDIRECT_SYMBOL;
+  DirectiveKindMapping[".lazy_reference"] = DK_LAZY_REFERENCE;
+  DirectiveKindMapping[".no_dead_strip"] = DK_NO_DEAD_STRIP;
+  DirectiveKindMapping[".symbol_resolver"] = DK_SYMBOL_RESOLVER;
+  DirectiveKindMapping[".private_extern"] = DK_PRIVATE_EXTERN;
+  DirectiveKindMapping[".reference"] = DK_REFERENCE;
+  DirectiveKindMapping[".weak_definition"] = DK_WEAK_DEFINITION;
+  DirectiveKindMapping[".weak_reference"] = DK_WEAK_REFERENCE;
+  DirectiveKindMapping[".weak_def_can_be_hidden"] = DK_WEAK_DEF_CAN_BE_HIDDEN;
+  DirectiveKindMapping[".comm"] = DK_COMM;
+  DirectiveKindMapping[".common"] = DK_COMMON;
+  DirectiveKindMapping[".lcomm"] = DK_LCOMM;
+  DirectiveKindMapping[".abort"] = DK_ABORT;
+  DirectiveKindMapping[".include"] = DK_INCLUDE;
+  DirectiveKindMapping[".incbin"] = DK_INCBIN;
+  DirectiveKindMapping[".code16"] = DK_CODE16;
+  DirectiveKindMapping[".code16gcc"] = DK_CODE16GCC;
+  DirectiveKindMapping[".rept"] = DK_REPT;
+  DirectiveKindMapping[".irp"] = DK_IRP;
+  DirectiveKindMapping[".irpc"] = DK_IRPC;
+  DirectiveKindMapping[".endr"] = DK_ENDR;
+  DirectiveKindMapping[".bundle_align_mode"] = DK_BUNDLE_ALIGN_MODE;
+  DirectiveKindMapping[".bundle_lock"] = DK_BUNDLE_LOCK;
+  DirectiveKindMapping[".bundle_unlock"] = DK_BUNDLE_UNLOCK;
+  DirectiveKindMapping[".if"] = DK_IF;
+  DirectiveKindMapping[".ifb"] = DK_IFB;
+  DirectiveKindMapping[".ifnb"] = DK_IFNB;
+  DirectiveKindMapping[".ifc"] = DK_IFC;
+  DirectiveKindMapping[".ifnc"] = DK_IFNC;
+  DirectiveKindMapping[".ifdef"] = DK_IFDEF;
+  DirectiveKindMapping[".ifndef"] = DK_IFNDEF;
+  DirectiveKindMapping[".ifnotdef"] = DK_IFNOTDEF;
+  DirectiveKindMapping[".elseif"] = DK_ELSEIF;
+  DirectiveKindMapping[".else"] = DK_ELSE;
+  DirectiveKindMapping[".endif"] = DK_ENDIF;
 }
 
 /// ParseDirectiveFile
