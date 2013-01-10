@@ -1228,7 +1228,7 @@ public:
              , _flagsClear(flagsClear)
     {}
 
-    bool operator()(const Elf_Phdr* j) const { 
+    bool operator()(const Elf_Phdr *j) const { 
       return ((j->p_type == _type) &&
               ((j->p_flags & _flags) == _flags) &&
               (!(j->p_flags & _flagsClear)));
@@ -2236,19 +2236,19 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
  auto underScoreEndAtomIter = _layout->findAbsoluteAtom("_end");
  auto endAtomIter = _layout->findAbsoluteAtom("end");
 
- if (bssStartAtomIter == abse ||
-     bssEndAtomIter == abse ||
-     underScoreEndAtomIter == abse ||
-     endAtomIter == abse) 
-   assert(0 && "Unable to find the absolute atoms that have been added by lld");
+ assert(!(bssStartAtomIter == abse ||
+         bssEndAtomIter == abse ||
+         underScoreEndAtomIter == abse ||
+         endAtomIter == abse) && 
+        "Unable to find the absolute atoms that have been added by lld");
 
  auto phe = _programHeader->findProgramHeader(
                                  llvm::ELF::PT_LOAD,
                                  llvm::ELF::PF_W,
                                  llvm::ELF::PF_X);
 
- if (phe == _programHeader->end()) 
-   assert(0 && "Can't find a data segment in the program header!");
+ assert(!(phe == _programHeader->end()) &&
+       "Can't find a data segment in the program header!");
 
  bssStartAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_filesz);
  bssEndAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_memsz);
