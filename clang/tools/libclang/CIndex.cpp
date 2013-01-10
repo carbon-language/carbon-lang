@@ -21,6 +21,7 @@
 #include "CXTranslationUnit.h"
 #include "CXType.h"
 #include "CursorVisitor.h"
+#include "CLog.h"
 #include "SimpleFormatContext.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Basic/Diagnostic.h"
@@ -46,6 +47,12 @@
 #include "llvm/Support/Threading.h"
 #include "llvm/Support/Timer.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Format.h"
+#include "llvm/Config/config.h"
+
+#if HAVE_PTHREAD_H
+#include <pthread.h>
+#endif
 
 using namespace clang;
 using namespace clang::cxcursor;
@@ -2681,6 +2688,12 @@ CXTranslationUnit clang_parseTranslationUnit(CXIndex CIdx,
                                             struct CXUnsavedFile *unsaved_files,
                                              unsigned num_unsaved_files,
                                              unsigned options) {
+  LOG_FUNC_SECTION {
+    *Log << source_filename << ": ";
+    for (int i = 0; i != num_command_line_args; ++i)
+      *Log << command_line_args[i] << " ";
+  }
+
   ParseTranslationUnitInfo PTUI = { CIdx, source_filename, command_line_args,
                                     num_command_line_args, unsaved_files,
                                     num_unsaved_files, options, 0 };
@@ -2744,6 +2757,10 @@ static void clang_saveTranslationUnit_Impl(void *UserData) {
 
 int clang_saveTranslationUnit(CXTranslationUnit TU, const char *FileName,
                               unsigned options) {
+  LOG_FUNC_SECTION {
+    *Log << TU << ' ' << FileName;
+  }
+
   if (!TU)
     return CXSaveError_InvalidTU;
 
@@ -2861,6 +2878,10 @@ int clang_reparseTranslationUnit(CXTranslationUnit TU,
                                  unsigned num_unsaved_files,
                                  struct CXUnsavedFile *unsaved_files,
                                  unsigned options) {
+  LOG_FUNC_SECTION {
+    *Log << TU;
+  }
+
   ReparseTranslationUnitInfo RTUI = { TU, num_unsaved_files, unsaved_files,
                                       options, 0 };
 
@@ -3808,8 +3829,7 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
   SourceLocation SLoc = cxloc::translateSourceLocation(Loc);
   CXCursor Result = cxcursor::getCursor(TU, SLoc);
 
-  bool Logging = getenv("LIBCLANG_LOGGING");  
-  if (Logging) {
+  LOG_FUNC_SECTION {
     CXFile SearchFile;
     unsigned SearchLine, SearchColumn;
     CXFile ResultFile;
@@ -3818,18 +3838,19 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
     const char *IsDef = clang_isCursorDefinition(Result)? " (Definition)" : "";
     CXSourceLocation ResultLoc = clang_getCursorLocation(Result);
     
-    clang_getExpansionLocation(Loc, &SearchFile, &SearchLine, &SearchColumn, 0);
-    clang_getExpansionLocation(ResultLoc, &ResultFile, &ResultLine,
+    clang_getFileLocation(Loc, &SearchFile, &SearchLine, &SearchColumn, 0);
+    clang_getFileLocation(ResultLoc, &ResultFile, &ResultLine,
                                &ResultColumn, 0);
     SearchFileName = clang_getFileName(SearchFile);
     ResultFileName = clang_getFileName(ResultFile);
     KindSpelling = clang_getCursorKindSpelling(Result.kind);
     USR = clang_getCursorUSR(Result);
-    fprintf(stderr, "clang_getCursor(%s:%d:%d) = %s(%s:%d:%d):%s%s\n",
-            clang_getCString(SearchFileName), SearchLine, SearchColumn,
-            clang_getCString(KindSpelling),
-            clang_getCString(ResultFileName), ResultLine, ResultColumn,
-            clang_getCString(USR), IsDef);
+    *Log << llvm::format("(%s:%d:%d) = %s",
+                   clang_getCString(SearchFileName), SearchLine, SearchColumn,
+                   clang_getCString(KindSpelling))
+        << llvm::format("(%s:%d:%d):%s%s",
+                     clang_getCString(ResultFileName), ResultLine, ResultColumn,
+                     clang_getCString(USR), IsDef);
     clang_disposeString(SearchFileName);
     clang_disposeString(ResultFileName);
     clang_disposeString(KindSpelling);
@@ -3842,13 +3863,13 @@ CXCursor clang_getCursor(CXTranslationUnit TU, CXSourceLocation Loc) {
                                 = clang_getCursorKindSpelling(Definition.kind);
       CXFile DefinitionFile;
       unsigned DefinitionLine, DefinitionColumn;
-      clang_getExpansionLocation(DefinitionLoc, &DefinitionFile,
+      clang_getFileLocation(DefinitionLoc, &DefinitionFile,
                                  &DefinitionLine, &DefinitionColumn, 0);
       CXString DefinitionFileName = clang_getFileName(DefinitionFile);
-      fprintf(stderr, "  -> %s(%s:%d:%d)\n",
-              clang_getCString(DefinitionKindSpelling),
-              clang_getCString(DefinitionFileName),
-              DefinitionLine, DefinitionColumn);
+      *Log << llvm::format("  -> %s(%s:%d:%d)",
+                     clang_getCString(DefinitionKindSpelling),
+                     clang_getCString(DefinitionFileName),
+                     DefinitionLine, DefinitionColumn);
       clang_disposeString(DefinitionFileName);
       clang_disposeString(DefinitionKindSpelling);
     }
@@ -4850,6 +4871,10 @@ static void getTokens(ASTUnit *CXXUnit, SourceRange Range,
 
 void clang_tokenize(CXTranslationUnit TU, CXSourceRange Range,
                     CXToken **Tokens, unsigned *NumTokens) {
+  LOG_FUNC_SECTION {
+    *Log << TU << ' ' << Range;
+  }
+
   if (Tokens)
     *Tokens = 0;
   if (NumTokens)
@@ -5522,9 +5547,17 @@ extern "C" {
 void clang_annotateTokens(CXTranslationUnit TU,
                           CXToken *Tokens, unsigned NumTokens,
                           CXCursor *Cursors) {
-
-  if (NumTokens == 0 || !Tokens || !Cursors)
+  if (NumTokens == 0 || !Tokens || !Cursors) {
+    LOG_FUNC_SECTION { *Log << "<null input>"; }
     return;
+  }
+
+  LOG_FUNC_SECTION {
+    *Log << TU << ' ';
+    CXSourceLocation bloc = clang_getTokenLocation(TU, Tokens[0]);
+    CXSourceLocation eloc = clang_getTokenLocation(TU, Tokens[NumTokens-1]);
+    *Log << clang_getRange(bloc, eloc);
+  }
 
   // Any token we don't specifically annotate will have a NULL cursor.
   CXCursor C = clang_getNullCursor();
@@ -6290,3 +6323,88 @@ CXString clang_getClangVersion() {
 
 } // end: extern "C"
 
+Logger &cxindex::Logger::operator<<(CXTranslationUnit TU) {
+  if (TU) {
+    if (ASTUnit *Unit = static_cast<ASTUnit *>(TU->TUData)) {
+      LogOS << '<' << Unit->getMainFileName() << '>';
+      return *this;
+    }
+  }
+
+  LogOS << "<NULL TU>";
+  return *this;
+}
+
+Logger &cxindex::Logger::operator<<(CXSourceLocation Loc) {
+  CXFile File;
+  unsigned Line, Column;
+  clang_getFileLocation(Loc, &File, &Line, &Column, 0);
+  CXString FileName = clang_getFileName(File);
+  *this << llvm::format("(%s:%d:%d)", clang_getCString(FileName), Line, Column);
+  clang_disposeString(FileName);
+  return *this;
+}
+
+Logger &cxindex::Logger::operator<<(CXSourceRange range) {
+  CXSourceLocation BLoc = clang_getRangeStart(range);
+  CXSourceLocation ELoc = clang_getRangeEnd(range);
+
+  CXFile BFile;
+  unsigned BLine, BColumn;
+  clang_getFileLocation(BLoc, &BFile, &BLine, &BColumn, 0);
+
+  CXFile EFile;
+  unsigned ELine, EColumn;
+  clang_getFileLocation(ELoc, &EFile, &ELine, &EColumn, 0);
+
+  CXString BFileName = clang_getFileName(BFile);
+  if (BFile == EFile) {
+    *this << llvm::format("[%s %d:%d-%d:%d]", clang_getCString(BFileName),
+                         BLine, BColumn, ELine, EColumn);
+  } else {
+    CXString EFileName = clang_getFileName(EFile);
+    *this << llvm::format("[%s:%d:%d - ", clang_getCString(BFileName),
+                          BLine, BColumn)
+          << llvm::format("%s:%d:%d]", clang_getCString(EFileName),
+                          ELine, EColumn);
+    clang_disposeString(EFileName);
+  }
+  clang_disposeString(BFileName);
+  return *this;
+}
+
+Logger &cxindex::Logger::operator<<(CXString Str) {
+  *this << clang_getCString(Str);
+  return *this;
+}
+
+Logger &cxindex::Logger::operator<<(const llvm::format_object_base &Fmt) {
+  LogOS << Fmt;
+  return *this;
+}
+
+cxindex::Logger::~Logger() {
+  LogOS.flush();
+
+  llvm::sys::ScopedLock L(EnableMultithreadingMutex);
+
+  static llvm::TimeRecord sBeginTR = llvm::TimeRecord::getCurrentTime();
+
+  llvm::raw_ostream &OS = llvm::errs();
+  OS << "[libclang:" << Name << ':';
+
+  // FIXME: Portability.
+#if HAVE_PTHREAD_H && __APPLE__
+  mach_port_t tid = pthread_mach_thread_np(pthread_self());
+  OS << tid << ':';
+#endif
+
+  llvm::TimeRecord TR = llvm::TimeRecord::getCurrentTime();
+  OS << llvm::format("%7.4f] ", TR.getWallTime() - sBeginTR.getWallTime());
+  OS << Msg.str() << '\n';
+
+  if (Trace) {
+    llvm::sys::PrintStackTrace(stderr);
+    OS << "--------------------------------------------------\n";
+  }
+}

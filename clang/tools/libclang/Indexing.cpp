@@ -14,6 +14,7 @@
 #include "CXSourceLocation.h"
 #include "CXString.h"
 #include "CXTranslationUnit.h"
+#include "CLog.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/DeclVisitor.h"
 #include "clang/Frontend/ASTUnit.h"
@@ -968,6 +969,11 @@ int clang_indexSourceFile(CXIndexAction idxAction,
                           unsigned num_unsaved_files,
                           CXTranslationUnit *out_TU,
                           unsigned TU_options) {
+  LOG_FUNC_SECTION {
+    *Log << source_filename << ": ";
+    for (int i = 0; i != num_command_line_args; ++i)
+      *Log << command_line_args[i] << " ";
+  }
 
   IndexSourceFileInfo ITUI = { idxAction, client_data, index_callbacks,
                                index_callbacks_size, index_options,
@@ -1018,6 +1024,9 @@ int clang_indexTranslationUnit(CXIndexAction idxAction,
                                unsigned index_callbacks_size,
                                unsigned index_options,
                                CXTranslationUnit TU) {
+  LOG_FUNC_SECTION {
+    *Log << TU;
+  }
 
   IndexTranslationUnitInfo ITUI = { idxAction, client_data, index_callbacks,
                                     index_callbacks_size, index_options, TU,

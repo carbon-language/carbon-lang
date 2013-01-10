@@ -11,11 +11,13 @@
 #include "CXCursor.h"
 #include "CXSourceLocation.h"
 #include "CXTranslationUnit.h"
+#include "CLog.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Frontend/ASTUnit.h"
 
 using namespace clang;
 using namespace cxcursor;
+using namespace cxindex;
 
 static void getTopOverriddenMethods(CXTranslationUnit TU,
                                     Decl *D,
@@ -341,26 +343,26 @@ extern "C" {
 
 void clang_findReferencesInFile(CXCursor cursor, CXFile file,
                                 CXCursorAndRangeVisitor visitor) {
-  bool Logging = ::getenv("LIBCLANG_LOGGING");
+  LogRef Log = Logger::make(__func__);
 
   if (clang_Cursor_isNull(cursor)) {
-    if (Logging)
-      llvm::errs() << "clang_findReferencesInFile: Null cursor\n";
+    if (Log)
+      *Log << "Null cursor";
     return;
   }
   if (cursor.kind == CXCursor_NoDeclFound) {
-    if (Logging)
-      llvm::errs() << "clang_findReferencesInFile: Got CXCursor_NoDeclFound\n";
+    if (Log)
+      *Log << "Got CXCursor_NoDeclFound";
     return;
   }
   if (!file) {
-    if (Logging)
-      llvm::errs() << "clang_findReferencesInFile: Null file\n";
+    if (Log)
+      *Log << "Null file";
     return;
   }
   if (!visitor.visit) {
-    if (Logging)
-      llvm::errs() << "clang_findReferencesInFile: Null visitor\n";
+    if (Log)
+      *Log << "Null visitor";
     return;
   }
 
@@ -391,9 +393,8 @@ void clang_findReferencesInFile(CXCursor cursor, CXFile file,
   CXCursor refCursor = clang_getCursorReferenced(cursor);
 
   if (!clang_isDeclaration(refCursor.kind)) {
-    if (Logging)
-      llvm::errs() << "clang_findReferencesInFile: cursor is not referencing a "
-                      "declaration\n";
+    if (Log)
+      *Log << "cursor is not referencing a declaration";
     return;
   }
 

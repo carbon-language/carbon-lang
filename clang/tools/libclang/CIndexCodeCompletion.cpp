@@ -17,6 +17,7 @@
 #include "CXCursor.h"
 #include "CXString.h"
 #include "CXTranslationUnit.h"
+#include "CLog.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Type.h"
@@ -48,6 +49,7 @@
 
 using namespace clang;
 using namespace clang::cxstring;
+using namespace clang::cxindex;
 
 extern "C" {
 
@@ -821,6 +823,11 @@ CXCodeCompleteResults *clang_codeCompleteAt(CXTranslationUnit TU,
                                             struct CXUnsavedFile *unsaved_files,
                                             unsigned num_unsaved_files,
                                             unsigned options) {
+  LOG_FUNC_SECTION {
+    *Log << TU << ' '
+         << complete_filename << ':' << complete_line << ':' << complete_column;
+  }
+
   CodeCompleteAtInfo CCAI = { TU, complete_filename, complete_line,
                               complete_column, unsaved_files, num_unsaved_files,
                               options, 0 };

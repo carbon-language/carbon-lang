@@ -17,9 +17,12 @@
 #include "CXSourceLocation.h"
 #include "CXString.h"
 #include "CXTranslationUnit.h"
+#include "CLog.h"
+#include "llvm/Support/Format.h"
 
 using namespace clang;
 using namespace clang::cxstring;
+using namespace clang::cxindex;
 
 //===----------------------------------------------------------------------===//
 // Internal predicates on CXSourceLocations.
@@ -122,24 +125,25 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
   if (!tu || !file)
     return clang_getNullLocation();
   
-  bool Logging = ::getenv("LIBCLANG_LOGGING");
+  LogRef Log = Logger::make(__func__);
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
   const FileEntry *File = static_cast<const FileEntry *>(file);
   SourceLocation SLoc = CXXUnit->getLocation(File, line, column);
   if (SLoc.isInvalid()) {
-    if (Logging)
-      llvm::errs() << "clang_getLocation(\"" << File->getName() 
-      << "\", " << line << ", " << column << ") = invalid\n";
+    if (Log)
+      *Log << llvm::format("(\"%s\", %d, %d) = invalid",
+                           File->getName(), line, column);
     return clang_getNullLocation();
   }
   
-  if (Logging)
-    llvm::errs() << "clang_getLocation(\"" << File->getName() 
-    << "\", " << line << ", " << column << ") = " 
-    << SLoc.getRawEncoding() << "\n";
+  CXSourceLocation CXLoc =
+      cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc);
+  if (Log)
+    *Log << llvm::format("(\"%s\", %d, %d) = ", File->getName(), line, column)
+         << CXLoc;
   
-  return cxloc::translateSourceLocation(CXXUnit->getASTContext(), SLoc);
+  return CXLoc;
 }
   
 CXSourceLocation clang_getLocationForOffset(CXTranslationUnit tu,
