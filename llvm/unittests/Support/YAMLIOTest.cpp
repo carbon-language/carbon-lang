@@ -785,15 +785,13 @@ namespace yaml {
       // Type of "flags" field varies depending on "kind" field.
       // Use memcpy here to avoid breaking strict aliasing rules.
       if (kf.kind == kindA) {
-        AFlags aflags;
-        memcpy(&aflags, &kf.flags, sizeof(aflags));
+        AFlags aflags = static_cast<AFlags>(kf.flags);
         io.mapRequired("flags", aflags);
-        memcpy(&kf.flags, &aflags, sizeof(kf.flags));
+        kf.flags = aflags;
       } else {
-        BFlags bflags;
-        memcpy(&bflags, &kf.flags, sizeof(bflags));
+        BFlags bflags = static_cast<BFlags>(kf.flags);
         io.mapRequired("flags", bflags);
-        memcpy(&kf.flags, &bflags, sizeof(kf.flags));
+        kf.flags = bflags;
       }
     }
   };
