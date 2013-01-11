@@ -14,81 +14,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/IR/Value.h"
 #include "llvm/Pass.h"
-#include "llvm/Support/GraphWriter.h"
-#include "llvm/Support/ToolOutputFile.h"
+
 using namespace llvm;
-
-template<typename GraphType>
-static void WriteGraphToFile(raw_ostream &O, const std::string &GraphName,
-                             const GraphType &GT) {
-  std::string Filename = GraphName + ".dot";
-  O << "Writing '" << Filename << "'...";
-  std::string ErrInfo;
-  tool_output_file F(Filename.c_str(), ErrInfo);
-
-  if (ErrInfo.empty()) {
-    WriteGraph(F.os(), GT);
-    F.os().close();
-    if (!F.os().has_error()) {
-      O << "\n";
-      F.keep();
-      return;
-    }
-  }
-  O << "  error opening file for writing!\n";
-  F.os().clear_error();
-}
-
-
-//===----------------------------------------------------------------------===//
-//                              Call Graph Printer
-//===----------------------------------------------------------------------===//
-
-namespace llvm {
-  template<>
-  struct DOTGraphTraits<CallGraph*> : public DefaultDOTGraphTraits {
-
-  DOTGraphTraits (bool isSimple=false) : DefaultDOTGraphTraits(isSimple) {}
-
-    static std::string getGraphName(CallGraph *F) {
-      return "Call Graph";
-    }
-
-    static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph) {
-      if (Node->getFunction())
-        return ((Value*)Node->getFunction())->getName();
-      return "external node";
-    }
-  };
-}
-
-
-namespace {
-  struct CallGraphPrinter : public ModulePass {
-    static char ID; // Pass ID, replacement for typeid
-    CallGraphPrinter() : ModulePass(ID) {}
-
-    virtual bool runOnModule(Module &M) {
-      WriteGraphToFile(llvm::errs(), "callgraph", &getAnalysis<CallGraph>());
-      return false;
-    }
-
-    void print(raw_ostream &OS, const llvm::Module*) const {}
-
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.addRequired<CallGraph>();
-      AU.setPreservesAll();
-    }
-  };
-}
-
-char CallGraphPrinter::ID = 0;
-static RegisterPass<CallGraphPrinter> P2("dot-callgraph",
-                                         "Print Call Graph to 'dot' file");
 
 //===----------------------------------------------------------------------===//
 //                            DomInfoPrinter Pass

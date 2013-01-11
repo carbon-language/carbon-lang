@@ -20,6 +20,8 @@ using namespace llvm;
 void llvm::initializeIPA(PassRegistry &Registry) {
   initializeBasicCallGraphPass(Registry);
   initializeCallGraphAnalysisGroup(Registry);
+  initializeCallGraphPrinterPass(Registry);
+  initializeCallGraphViewerPass(Registry);
   initializeFindUsedTypesPass(Registry);
   initializeGlobalsModRefPass(Registry);
 }

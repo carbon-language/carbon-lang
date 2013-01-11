@@ -77,6 +77,8 @@ void initializeBoundsCheckingPass(PassRegistry&);
 void initializeBranchFolderPassPass(PassRegistry&);
 void initializeBranchProbabilityInfoPass(PassRegistry&);
 void initializeBreakCriticalEdgesPass(PassRegistry&);
+void initializeCallGraphPrinterPass(PassRegistry&);
+void initializeCallGraphViewerPass(PassRegistry&);
 void initializeCFGOnlyPrinterPass(PassRegistry&);
 void initializeCFGOnlyViewerPass(PassRegistry&);
 void initializeCFGPrinterPass(PassRegistry&);
