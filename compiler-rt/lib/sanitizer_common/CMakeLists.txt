@@ -38,6 +38,7 @@ set(SANITIZER_HEADERS
   sanitizer_placement_new.h
   sanitizer_platform_interceptors.h
   sanitizer_procmaps.h
+  sanitizer_quarantine.h
   sanitizer_report_decorator.h
   sanitizer_stackdepot.h
   sanitizer_stacktrace.h

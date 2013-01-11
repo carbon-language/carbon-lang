@@ -27,6 +27,7 @@
 #include "sanitizer_common/sanitizer_internal_defs.h"
 #include "sanitizer_common/sanitizer_list.h"
 #include "sanitizer_common/sanitizer_stackdepot.h"
+#include "sanitizer_common/sanitizer_quarantine.h"
 
 namespace __asan {
 
@@ -91,15 +92,6 @@ static const uptr kMaxThreadLocalQuarantine =
   FIRST_32_SECOND_64(1 << 18, 1 << 20);
 
 static const uptr kReturnOnZeroMalloc = 2048;  // Zero page is protected.
-
-static int inited = 0;
-
-static void Init() {
-  if (inited) return;
-  __asan_init();
-  inited = true;  // this must happen before any threads are created.
-  allocator.Init();
-}
 
 // Every chunk of memory allocated by this allocator can be in one of 3 states:
 // CHUNK_AVAILABLE: the chunk is in the free list and ready to be allocated.
@@ -246,31 +238,26 @@ void AsanChunkView::GetFreeStack(StackTrace *stack) {
                                 chunk_->FreeStackSize());
 }
 
-class Quarantine: public AsanChunkFifoList {
- public:
-  void SwallowThreadLocalQuarantine(AsanThreadLocalMallocStorage *ms) {
-    AsanChunkFifoList *q = &ms->quarantine_;
-    if (!q->size()) return;
-    AsanChunkFifoList tmp;
-    uptr max_size = flags()->quarantine_size;
-    {
-      SpinMutexLock l(&mutex_);
-      PushList(q);
-      while (size() > max_size)
-        tmp.Push(Pop());
-    }
-    while (!tmp.empty())
-      Deallocate(tmp.Pop(), ms);
+struct QuarantineCallback;
+typedef Quarantine<QuarantineCallback, AsanChunk> AsanQuarantine;
+typedef AsanQuarantine::Cache QuarantineCache;
+static AsanQuarantine quarantine(LINKER_INITIALIZED);
+static QuarantineCache fallback_quarantine_cache(LINKER_INITIALIZED);
+static AllocatorCache fallback_allocator_cache;
+static SpinMutex fallback_mutex;
+
+QuarantineCache *GetQuarantineCache(AsanThreadLocalMallocStorage *ms) {
+  DCHECK(ms);
+  DCHECK_LE(sizeof(QuarantineCache), sizeof(ms->quarantine_cache));
+  return reinterpret_cast<QuarantineCache *>(ms->quarantine_cache);
+}
+
+struct QuarantineCallback {
+  explicit QuarantineCallback(AllocatorCache *cache)
+      : cache_(cache) {
   }
 
-  void BypassThreadLocalQuarantine(AsanChunk *m) {
-    SpinMutexLock l(&mutex_);
-    Push(m);
-  }
-
- private:
-  static void Deallocate(AsanChunk *m, AsanThreadLocalMallocStorage *ms) {
-    CHECK(m);
+  void Recycle(AsanChunk *m) {
     CHECK(m->chunk_state == CHUNK_QUARANTINE);
     m->chunk_state = CHUNK_AVAILABLE;
     CHECK_NE(m->alloc_tid, kInvalidTid);
@@ -290,34 +277,27 @@ class Quarantine: public AsanChunkFifoList {
     thread_stats.real_frees++;
     thread_stats.really_freed += m->UsedSize();
 
-    allocator.Deallocate(GetAllocatorCache(ms), p);
+    allocator.Deallocate(cache_, p);
   }
-  SpinMutex mutex_;
+
+  void *Allocate(uptr size) {
+    return allocator.Allocate(cache_, size, 0, false);
+  }
+
+  void Deallocate(void *p) {
+    allocator.Deallocate(cache_, p);
+  }
+
+  AllocatorCache *cache_;
 };
 
-static Quarantine quarantine;
-
-void AsanChunkFifoList::PushList(AsanChunkFifoList *q) {
-  CHECK(q->size() > 0);
-  size_ += q->size();
-  append_back(q);
-  q->clear();
-}
-
-void AsanChunkFifoList::Push(AsanChunk *n) {
-  push_back(n);
-  size_ += n->UsedSize();
-}
-
-// Interesting performance observation: this function takes up to 15% of overal
-// allocator time. That's because *first_ has been evicted from cache long time
-// ago. Not sure if we can or want to do anything with this.
-AsanChunk *AsanChunkFifoList::Pop() {
-  CHECK(first_);
-  AsanChunk *res = front();
-  size_ -= res->UsedSize();
-  pop_front();
-  return res;
+static void Init() {
+  static int inited = 0;
+  if (inited) return;
+  __asan_init();
+  inited = true;  // this must happen before any threads are created.
+  allocator.Init();
+  quarantine.Init((uptr)flags()->quarantine_size, kMaxThreadLocalQuarantine);
 }
 
 static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
@@ -468,13 +448,13 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
 
   // Push into quarantine.
   if (t) {
-    AsanChunkFifoList &q = t->malloc_storage().quarantine_;
-    q.Push(m);
-
-    if (q.size() > kMaxThreadLocalQuarantine)
-      quarantine.SwallowThreadLocalQuarantine(&t->malloc_storage());
+    AsanThreadLocalMallocStorage *ms = &t->malloc_storage();
+    AllocatorCache *ac = GetAllocatorCache(ms);
+    quarantine.Put(GetQuarantineCache(ms), QuarantineCallback(ac), m);
   } else {
-    quarantine.BypassThreadLocalQuarantine(m);
+    SpinMutexLock l(&fallback_mutex);
+    AllocatorCache *ac = &fallback_allocator_cache;
+    quarantine.Put(&fallback_quarantine_cache, QuarantineCallback(ac), m);
   }
 
   ASAN_FREE_HOOK(ptr);
@@ -586,7 +566,8 @@ AsanChunkView FindHeapChunkByAddress(uptr addr) {
 }
 
 void AsanThreadLocalMallocStorage::CommitBack() {
-  quarantine.SwallowThreadLocalQuarantine(this);
+  AllocatorCache *ac = GetAllocatorCache(this);
+  quarantine.Drain(GetQuarantineCache(this), QuarantineCallback(ac));
   allocator.SwallowCache(GetAllocatorCache(this));
 }
 

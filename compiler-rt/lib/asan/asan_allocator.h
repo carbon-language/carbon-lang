@@ -23,7 +23,7 @@
 // to a new one (version 2). The change is quite intrusive so both allocators
 // will co-exist in the source base for a while. The actual allocator is chosen
 // at build time by redefining this macrozz.
-#define ASAN_ALLOCATOR_VERSION 1
+#define ASAN_ALLOCATOR_VERSION 2
 
 namespace __asan {
 
@@ -98,16 +98,20 @@ class AsanChunkFifoList: public IntrusiveList<AsanChunk> {
 
 struct AsanThreadLocalMallocStorage {
   explicit AsanThreadLocalMallocStorage(LinkerInitialized x)
-      : quarantine_(x) { }
+#if ASAN_ALLOCATOR_VERSION == 1
+      : quarantine_(x)
+#endif
+      { }
   AsanThreadLocalMallocStorage() {
     CHECK(REAL(memset));
     REAL(memset)(this, 0, sizeof(AsanThreadLocalMallocStorage));
   }
 
-  AsanChunkFifoList quarantine_;
 #if ASAN_ALLOCATOR_VERSION == 1
+  AsanChunkFifoList quarantine_;
   AsanChunk *free_lists_[kNumberOfSizeClasses];
 #else
+  uptr quarantine_cache[16];
   uptr allocator2_cache[1024];  // Opaque.
 #endif
   void CommitBack();
