@@ -1716,23 +1716,13 @@ public:
     return error_code::success();
   }
 
-  /// \biref Find an output Section given a section name.
-  ///
-  /// \todo Make this not O(n). We can't use _mergedSectionMap because it
-  /// doesn't get virtual addresses set :(
-  Chunk<target_endianness, max_align, is64Bits> *
+  /// \brief Find an output Section given a section name.
+  MergedSections<target_endianness, max_align, is64Bits> *
   findOutputSection(StringRef name) {
-    for (auto seg : _segments) {
-      for (auto sliceI = seg->slices_begin(),
-                sliceE = seg->slices_end(); sliceI != sliceE; ++sliceI) {
-        for (auto secI = (*sliceI)->sections_begin(),
-                  secE = (*sliceI)->sections_end(); secI != secE; ++secI) {
-          if ((*secI)->name() == name)
-            return *secI;
-        }
-      }
-    }
-    return nullptr;
+    auto iter = _mergedSectionMap.find(name);
+    if (iter == _mergedSectionMap.end()) 
+      return nullptr;
+    return iter->second;
   }
 
   /// \brief find a absolute atom given a name
