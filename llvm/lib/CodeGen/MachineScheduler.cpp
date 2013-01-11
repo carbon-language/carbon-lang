@@ -1533,8 +1533,8 @@ void ConvergingScheduler::checkResourceLimits(
   ConvergingScheduler::SchedCandidate &BotCand) {
 
   // Set ReduceLatency to true if needed.
-  Bot.setLatencyPolicy(BopCand.Policy);
-  Top.setLatencyPolicy(TotCand.Policy);
+  Bot.setLatencyPolicy(BotCand.Policy);
+  Top.setLatencyPolicy(TopCand.Policy);
 
   // Handle resource-limited regions.
   if (Top.IsResourceLimited && Bot.IsResourceLimited
