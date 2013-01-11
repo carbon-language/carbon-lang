@@ -36,7 +36,7 @@ namespace {
   class StackProtector : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
     /// target type sizes.
-    const TargetLowering *TLI;
+    const TargetLoweringBase *TLI;
 
     Function *F;
     Module *M;
@@ -68,7 +68,7 @@ namespace {
     StackProtector() : FunctionPass(ID), TLI(0) {
       initializeStackProtectorPass(*PassRegistry::getPassRegistry());
     }
-    StackProtector(const TargetLowering *tli)
+    StackProtector(const TargetLoweringBase *tli)
       : FunctionPass(ID), TLI(tli) {
       initializeStackProtectorPass(*PassRegistry::getPassRegistry());
     }
@@ -85,7 +85,7 @@ char StackProtector::ID = 0;
 INITIALIZE_PASS(StackProtector, "stack-protector",
                 "Insert stack protectors", false, false)
 
-FunctionPass *llvm::createStackProtectorPass(const TargetLowering *tli) {
+FunctionPass *llvm::createStackProtectorPass(const TargetLoweringBase *tli) {
   return new StackProtector(tli);
 }
 

@@ -151,7 +151,7 @@ namespace {
     /// basic block number.
     std::vector<BBInfo> BBAnalysis;
 
-    const TargetLowering *TLI;
+    const TargetLoweringBase *TLI;
     const TargetInstrInfo *TII;
     const TargetRegisterInfo *TRI;
     const InstrItineraryData *InstrItins;

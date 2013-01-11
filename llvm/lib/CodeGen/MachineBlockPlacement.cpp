@@ -171,7 +171,7 @@ class MachineBlockPlacement : public MachineFunctionPass {
   const TargetInstrInfo *TII;
 
   /// \brief A handle to the target's lowering info.
-  const TargetLowering *TLI;
+  const TargetLoweringBase *TLI;
 
   /// \brief Allocator and owner of BlockChain structures.
   ///

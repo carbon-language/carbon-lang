@@ -43,7 +43,7 @@ STATISTIC(NumSpilled, "Number of registers live across unwind edges");
 
 namespace {
   class SjLjEHPrepare : public FunctionPass {
-    const TargetLowering *TLI;
+    const TargetLoweringBase *TLI;
     Type *FunctionContextTy;
     Constant *RegisterFn;
     Constant *UnregisterFn;
@@ -58,7 +58,7 @@ namespace {
     AllocaInst *FuncCtx;
   public:
     static char ID; // Pass identification, replacement for typeid
-    explicit SjLjEHPrepare(const TargetLowering *tli = NULL)
+    explicit SjLjEHPrepare(const TargetLoweringBase *tli = NULL)
       : FunctionPass(ID), TLI(tli) { }
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
@@ -82,7 +82,7 @@ namespace {
 char SjLjEHPrepare::ID = 0;
 
 // Public Interface To the SjLjEHPrepare pass.
-FunctionPass *llvm::createSjLjEHPreparePass(const TargetLowering *TLI) {
+FunctionPass *llvm::createSjLjEHPreparePass(const TargetLoweringBase *TLI) {
   return new SjLjEHPrepare(TLI);
 }
 // doInitialization - Set up decalarations and types needed to process

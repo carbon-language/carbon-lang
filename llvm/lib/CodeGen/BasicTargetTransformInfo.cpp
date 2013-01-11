@@ -26,7 +26,7 @@ using namespace llvm;
 namespace {
 
 class BasicTTI : public ImmutablePass, public TargetTransformInfo {
-  const TargetLowering *TLI;
+  const TargetLoweringBase *TLI;
 
   /// Estimate the overhead of scalarizing an instruction. Insert and Extract
   /// are set if the result needs to be inserted and/or extracted from vectors.
@@ -37,7 +37,7 @@ public:
     llvm_unreachable("This pass cannot be directly constructed");
   }
 
-  BasicTTI(const TargetLowering *TLI) : ImmutablePass(ID), TLI(TLI) {
+  BasicTTI(const TargetLoweringBase *TLI) : ImmutablePass(ID), TLI(TLI) {
     initializeBasicTTIPass(*PassRegistry::getPassRegistry());
   }
 
@@ -112,7 +112,7 @@ INITIALIZE_AG_PASS(BasicTTI, TargetTransformInfo, "basictti",
 char BasicTTI::ID = 0;
 
 ImmutablePass *
-llvm::createBasicTargetTransformInfoPass(const TargetLowering *TLI) {
+llvm::createBasicTargetTransformInfoPass(const TargetLoweringBase *TLI) {
   return new BasicTTI(TLI);
 }
 
@@ -128,7 +128,7 @@ bool BasicTTI::isLegalICmpImmediate(int64_t imm) const {
 bool BasicTTI::isLegalAddressingMode(Type *Ty, GlobalValue *BaseGV,
                                      int64_t BaseOffset, bool HasBaseReg,
                                      int64_t Scale) const {
-  TargetLowering::AddrMode AM;
+  TargetLoweringBase::AddrMode AM;
   AM.BaseGV = BaseGV;
   AM.BaseOffs = BaseOffset;
   AM.HasBaseReg = HasBaseReg;

@@ -62,7 +62,7 @@ namespace {
   class MachineLICM : public MachineFunctionPass {
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;
-    const TargetLowering *TLI;
+    const TargetLoweringBase *TLI;
     const TargetRegisterInfo *TRI;
     const MachineFrameInfo *MFI;
     MachineRegisterInfo *MRI;

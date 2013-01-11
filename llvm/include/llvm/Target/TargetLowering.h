@@ -68,17 +68,12 @@ namespace llvm {
     };
   }
 
-//===----------------------------------------------------------------------===//
-/// TargetLowering - This class defines information used to lower LLVM code to
-/// legal SelectionDAG operators that the target instruction selector can accept
-/// natively.
-///
-/// This class also defines callbacks that targets must implement to lower
-/// target-specific constructs to SelectionDAG operators.
-///
-class TargetLowering {
-  TargetLowering(const TargetLowering&) LLVM_DELETED_FUNCTION;
-  void operator=(const TargetLowering&) LLVM_DELETED_FUNCTION;
+/// TargetLoweringBase - This base class for TargetLowering contains the
+/// SelectionDAG-independent parts that can be used from the rest of CodeGen.
+class TargetLoweringBase {
+  TargetLoweringBase(const TargetLoweringBase&) LLVM_DELETED_FUNCTION;
+  void operator=(const TargetLoweringBase&) LLVM_DELETED_FUNCTION;
+
 public:
   /// LegalizeAction - This enum indicates whether operations are valid for a
   /// target, and if not, what action should be used to make them valid.
@@ -136,9 +131,9 @@ public:
   }
 
   /// NOTE: The constructor takes ownership of TLOF.
-  explicit TargetLowering(const TargetMachine &TM,
-                          const TargetLoweringObjectFile *TLOF);
-  virtual ~TargetLowering();
+  explicit TargetLoweringBase(const TargetMachine &TM,
+                              const TargetLoweringObjectFile *TLOF);
+  virtual ~TargetLoweringBase();
 
   const TargetMachine &getTargetMachine() const { return TM; }
   const DataLayout *getDataLayout() const { return TD; }
@@ -829,55 +824,6 @@ public:
     return InsertFencesForAtomic;
   }
 
-  /// getPreIndexedAddressParts - returns true by value, base pointer and
-  /// offset pointer and addressing mode by reference if the node's address
-  /// can be legally represented as pre-indexed load / store address.
-  virtual bool getPreIndexedAddressParts(SDNode * /*N*/, SDValue &/*Base*/,
-                                         SDValue &/*Offset*/,
-                                         ISD::MemIndexedMode &/*AM*/,
-                                         SelectionDAG &/*DAG*/) const {
-    return false;
-  }
-
-  /// getPostIndexedAddressParts - returns true by value, base pointer and
-  /// offset pointer and addressing mode by reference if this node can be
-  /// combined with a load / store to form a post-indexed load / store.
-  virtual bool getPostIndexedAddressParts(SDNode * /*N*/, SDNode * /*Op*/,
-                                          SDValue &/*Base*/, SDValue &/*Offset*/,
-                                          ISD::MemIndexedMode &/*AM*/,
-                                          SelectionDAG &/*DAG*/) const {
-    return false;
-  }
-
-  /// getJumpTableEncoding - Return the entry encoding for a jump table in the
-  /// current function.  The returned value is a member of the
-  /// MachineJumpTableInfo::JTEntryKind enum.
-  virtual unsigned getJumpTableEncoding() const;
-
-  virtual const MCExpr *
-  LowerCustomJumpTableEntry(const MachineJumpTableInfo * /*MJTI*/,
-                            const MachineBasicBlock * /*MBB*/, unsigned /*uid*/,
-                            MCContext &/*Ctx*/) const {
-    llvm_unreachable("Need to implement this hook if target has custom JTIs");
-  }
-
-  /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
-  /// jumptable.
-  virtual SDValue getPICJumpTableRelocBase(SDValue Table,
-                                           SelectionDAG &DAG) const;
-
-  /// getPICJumpTableRelocBaseExpr - This returns the relocation base for the
-  /// given PIC jumptable, the same as getPICJumpTableRelocBase, but as an
-  /// MCExpr.
-  virtual const MCExpr *
-  getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
-                               unsigned JTI, MCContext &Ctx) const;
-
-  /// isOffsetFoldingLegal - Return true if folding a constant offset
-  /// with the given GlobalAddress is legal.  It is frequently not legal in
-  /// PIC relocation models.
-  virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
-
   /// getStackCookieLocation - Return true if the target stores stack
   /// protector cookies at a fixed offset in some non-standard address
   /// space, and populates the address space and offset as
@@ -904,152 +850,6 @@ public:
   std::pair<unsigned, MVT> getTypeLegalizationCost(Type *Ty) const;
 
   /// @}
-
-  //===--------------------------------------------------------------------===//
-  // TargetLowering Optimization Methods
-  //
-
-  /// TargetLoweringOpt - A convenience struct that encapsulates a DAG, and two
-  /// SDValues for returning information from TargetLowering to its clients
-  /// that want to combine
-  struct TargetLoweringOpt {
-    SelectionDAG &DAG;
-    bool LegalTys;
-    bool LegalOps;
-    SDValue Old;
-    SDValue New;
-
-    explicit TargetLoweringOpt(SelectionDAG &InDAG,
-                               bool LT, bool LO) :
-      DAG(InDAG), LegalTys(LT), LegalOps(LO) {}
-
-    bool LegalTypes() const { return LegalTys; }
-    bool LegalOperations() const { return LegalOps; }
-
-    bool CombineTo(SDValue O, SDValue N) {
-      Old = O;
-      New = N;
-      return true;
-    }
-
-    /// ShrinkDemandedConstant - Check to see if the specified operand of the
-    /// specified instruction is a constant integer.  If so, check to see if
-    /// there are any bits set in the constant that are not demanded.  If so,
-    /// shrink the constant and return true.
-    bool ShrinkDemandedConstant(SDValue Op, const APInt &Demanded);
-
-    /// ShrinkDemandedOp - Convert x+y to (VT)((SmallVT)x+(SmallVT)y) if the
-    /// casts are free.  This uses isZExtFree and ZERO_EXTEND for the widening
-    /// cast, but it could be generalized for targets with other types of
-    /// implicit widening casts.
-    bool ShrinkDemandedOp(SDValue Op, unsigned BitWidth, const APInt &Demanded,
-                          DebugLoc dl);
-  };
-
-  /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
-  /// DemandedMask bits of the result of Op are ever used downstream.  If we can
-  /// use this information to simplify Op, create a new simplified DAG node and
-  /// return true, returning the original and new nodes in Old and New.
-  /// Otherwise, analyze the expression and return a mask of KnownOne and
-  /// KnownZero bits for the expression (used to simplify the caller).
-  /// The KnownZero/One bits may only be accurate for those bits in the
-  /// DemandedMask.
-  bool SimplifyDemandedBits(SDValue Op, const APInt &DemandedMask,
-                            APInt &KnownZero, APInt &KnownOne,
-                            TargetLoweringOpt &TLO, unsigned Depth = 0) const;
-
-  /// computeMaskedBitsForTargetNode - Determine which of the bits specified in
-  /// Mask are known to be either zero or one and return them in the
-  /// KnownZero/KnownOne bitsets.
-  virtual void computeMaskedBitsForTargetNode(const SDValue Op,
-                                              APInt &KnownZero,
-                                              APInt &KnownOne,
-                                              const SelectionDAG &DAG,
-                                              unsigned Depth = 0) const;
-
-  /// ComputeNumSignBitsForTargetNode - This method can be implemented by
-  /// targets that want to expose additional information about sign bits to the
-  /// DAG Combiner.
-  virtual unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
-                                                   unsigned Depth = 0) const;
-
-  struct DAGCombinerInfo {
-    void *DC;  // The DAG Combiner object.
-    CombineLevel Level;
-    bool CalledByLegalizer;
-  public:
-    SelectionDAG &DAG;
-
-    DAGCombinerInfo(SelectionDAG &dag, CombineLevel level,  bool cl, void *dc)
-      : DC(dc), Level(level), CalledByLegalizer(cl), DAG(dag) {}
-
-    bool isBeforeLegalize() const { return Level == BeforeLegalizeTypes; }
-    bool isBeforeLegalizeOps() const { return Level < AfterLegalizeVectorOps; }
-    bool isAfterLegalizeVectorOps() const {
-      return Level == AfterLegalizeDAG;
-    }
-    CombineLevel getDAGCombineLevel() { return Level; }
-    bool isCalledByLegalizer() const { return CalledByLegalizer; }
-
-    void AddToWorklist(SDNode *N);
-    void RemoveFromWorklist(SDNode *N);
-    SDValue CombineTo(SDNode *N, const std::vector<SDValue> &To,
-                      bool AddTo = true);
-    SDValue CombineTo(SDNode *N, SDValue Res, bool AddTo = true);
-    SDValue CombineTo(SDNode *N, SDValue Res0, SDValue Res1, bool AddTo = true);
-
-    void CommitTargetLoweringOpt(const TargetLoweringOpt &TLO);
-  };
-
-  /// SimplifySetCC - Try to simplify a setcc built with the specified operands
-  /// and cc. If it is unable to simplify it, return a null SDValue.
-  SDValue SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
-                          ISD::CondCode Cond, bool foldBooleans,
-                          DAGCombinerInfo &DCI, DebugLoc dl) const;
-
-  /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
-  /// node is a GlobalAddress + offset.
-  virtual bool
-  isGAPlusOffset(SDNode *N, const GlobalValue* &GA, int64_t &Offset) const;
-
-  /// PerformDAGCombine - This method will be invoked for all target nodes and
-  /// for any target-independent nodes that the target has registered with
-  /// invoke it for.
-  ///
-  /// The semantics are as follows:
-  /// Return Value:
-  ///   SDValue.Val == 0   - No change was made
-  ///   SDValue.Val == N   - N was replaced, is dead, and is already handled.
-  ///   otherwise          - N should be replaced by the returned Operand.
-  ///
-  /// In addition, methods provided by DAGCombinerInfo may be used to perform
-  /// more complex transformations.
-  ///
-  virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
-
-  /// isTypeDesirableForOp - Return true if the target has native support for
-  /// the specified value type and it is 'desirable' to use the type for the
-  /// given node type. e.g. On x86 i16 is legal, but undesirable since i16
-  /// instruction encodings are longer and some i16 instructions are slow.
-  virtual bool isTypeDesirableForOp(unsigned /*Opc*/, EVT VT) const {
-    // By default, assume all legal types are desirable.
-    return isTypeLegal(VT);
-  }
-
-  /// isDesirableToPromoteOp - Return true if it is profitable for dag combiner
-  /// to transform a floating point op of specified opcode to a equivalent op of
-  /// an integer type. e.g. f32 load -> i32 load can be profitable on ARM.
-  virtual bool isDesirableToTransformToIntegerOp(unsigned /*Opc*/,
-                                                 EVT /*VT*/) const {
-    return false;
-  }
-
-  /// IsDesirableToPromoteOp - This method query the target whether it is
-  /// beneficial for dag combiner to promote the specified node. If true, it
-  /// should return the desired promotion type by reference.
-  virtual bool IsDesirableToPromoteOp(SDValue /*Op*/, EVT &/*PVT*/) const {
-    return false;
-  }
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
@@ -1302,387 +1102,6 @@ protected:
 
 public:
   //===--------------------------------------------------------------------===//
-  // Lowering methods - These methods must be implemented by targets so that
-  // the SelectionDAGBuilder code knows how to lower these.
-  //
-
-  /// LowerFormalArguments - This hook must be implemented to lower the
-  /// incoming (formal) arguments, described by the Ins array, into the
-  /// specified DAG. The implementation should fill in the InVals array
-  /// with legal-type argument values, and return the resulting token
-  /// chain value.
-  ///
-  virtual SDValue
-    LowerFormalArguments(SDValue /*Chain*/, CallingConv::ID /*CallConv*/,
-                         bool /*isVarArg*/,
-                         const SmallVectorImpl<ISD::InputArg> &/*Ins*/,
-                         DebugLoc /*dl*/, SelectionDAG &/*DAG*/,
-                         SmallVectorImpl<SDValue> &/*InVals*/) const {
-    llvm_unreachable("Not Implemented");
-  }
-
-  struct ArgListEntry {
-    SDValue Node;
-    Type* Ty;
-    bool isSExt  : 1;
-    bool isZExt  : 1;
-    bool isInReg : 1;
-    bool isSRet  : 1;
-    bool isNest  : 1;
-    bool isByVal : 1;
-    uint16_t Alignment;
-
-    ArgListEntry() : isSExt(false), isZExt(false), isInReg(false),
-      isSRet(false), isNest(false), isByVal(false), Alignment(0) { }
-  };
-  typedef std::vector<ArgListEntry> ArgListTy;
-
-  /// CallLoweringInfo - This structure contains all information that is
-  /// necessary for lowering calls. It is passed to TLI::LowerCallTo when the
-  /// SelectionDAG builder needs to lower a call, and targets will see this
-  /// struct in their LowerCall implementation.
-  struct CallLoweringInfo {
-    SDValue Chain;
-    Type *RetTy;
-    bool RetSExt           : 1;
-    bool RetZExt           : 1;
-    bool IsVarArg          : 1;
-    bool IsInReg           : 1;
-    bool DoesNotReturn     : 1;
-    bool IsReturnValueUsed : 1;
-
-    // IsTailCall should be modified by implementations of
-    // TargetLowering::LowerCall that perform tail call conversions.
-    bool IsTailCall;
-
-    unsigned NumFixedArgs;
-    CallingConv::ID CallConv;
-    SDValue Callee;
-    ArgListTy &Args;
-    SelectionDAG &DAG;
-    DebugLoc DL;
-    ImmutableCallSite *CS;
-    SmallVector<ISD::OutputArg, 32> Outs;
-    SmallVector<SDValue, 32> OutVals;
-    SmallVector<ISD::InputArg, 32> Ins;
-
-
-    /// CallLoweringInfo - Constructs a call lowering context based on the
-    /// ImmutableCallSite \p cs.
-    CallLoweringInfo(SDValue chain, Type *retTy,
-                     FunctionType *FTy, bool isTailCall, SDValue callee,
-                     ArgListTy &args, SelectionDAG &dag, DebugLoc dl,
-                     ImmutableCallSite &cs)
-    : Chain(chain), RetTy(retTy), RetSExt(cs.paramHasAttr(0, Attribute::SExt)),
-      RetZExt(cs.paramHasAttr(0, Attribute::ZExt)), IsVarArg(FTy->isVarArg()),
-      IsInReg(cs.paramHasAttr(0, Attribute::InReg)),
-      DoesNotReturn(cs.doesNotReturn()),
-      IsReturnValueUsed(!cs.getInstruction()->use_empty()),
-      IsTailCall(isTailCall), NumFixedArgs(FTy->getNumParams()),
-      CallConv(cs.getCallingConv()), Callee(callee), Args(args), DAG(dag),
-      DL(dl), CS(&cs) {}
-
-    /// CallLoweringInfo - Constructs a call lowering context based on the
-    /// provided call information.
-    CallLoweringInfo(SDValue chain, Type *retTy, bool retSExt, bool retZExt,
-                     bool isVarArg, bool isInReg, unsigned numFixedArgs,
-                     CallingConv::ID callConv, bool isTailCall,
-                     bool doesNotReturn, bool isReturnValueUsed, SDValue callee,
-                     ArgListTy &args, SelectionDAG &dag, DebugLoc dl)
-    : Chain(chain), RetTy(retTy), RetSExt(retSExt), RetZExt(retZExt),
-      IsVarArg(isVarArg), IsInReg(isInReg), DoesNotReturn(doesNotReturn),
-      IsReturnValueUsed(isReturnValueUsed), IsTailCall(isTailCall),
-      NumFixedArgs(numFixedArgs), CallConv(callConv), Callee(callee),
-      Args(args), DAG(dag), DL(dl), CS(NULL) {}
-  };
-
-  /// LowerCallTo - This function lowers an abstract call to a function into an
-  /// actual call.  This returns a pair of operands.  The first element is the
-  /// return value for the function (if RetTy is not VoidTy).  The second
-  /// element is the outgoing token chain. It calls LowerCall to do the actual
-  /// lowering.
-  std::pair<SDValue, SDValue> LowerCallTo(CallLoweringInfo &CLI) const;
-
-  /// LowerCall - This hook must be implemented to lower calls into the
-  /// the specified DAG. The outgoing arguments to the call are described
-  /// by the Outs array, and the values to be returned by the call are
-  /// described by the Ins array. The implementation should fill in the
-  /// InVals array with legal-type return values from the call, and return
-  /// the resulting token chain value.
-  virtual SDValue
-    LowerCall(CallLoweringInfo &/*CLI*/,
-              SmallVectorImpl<SDValue> &/*InVals*/) const {
-    llvm_unreachable("Not Implemented");
-  }
-
-  /// HandleByVal - Target-specific cleanup for formal ByVal parameters.
-  virtual void HandleByVal(CCState *, unsigned &, unsigned) const {}
-
-  /// CanLowerReturn - This hook should be implemented to check whether the
-  /// return values described by the Outs array can fit into the return
-  /// registers.  If false is returned, an sret-demotion is performed.
-  ///
-  virtual bool CanLowerReturn(CallingConv::ID /*CallConv*/,
-                              MachineFunction &/*MF*/, bool /*isVarArg*/,
-               const SmallVectorImpl<ISD::OutputArg> &/*Outs*/,
-               LLVMContext &/*Context*/) const
-  {
-    // Return true by default to get preexisting behavior.
-    return true;
-  }
-
-  /// LowerReturn - This hook must be implemented to lower outgoing
-  /// return values, described by the Outs array, into the specified
-  /// DAG. The implementation should return the resulting token chain
-  /// value.
-  ///
-  virtual SDValue
-    LowerReturn(SDValue /*Chain*/, CallingConv::ID /*CallConv*/,
-                bool /*isVarArg*/,
-                const SmallVectorImpl<ISD::OutputArg> &/*Outs*/,
-                const SmallVectorImpl<SDValue> &/*OutVals*/,
-                DebugLoc /*dl*/, SelectionDAG &/*DAG*/) const {
-    llvm_unreachable("Not Implemented");
-  }
-
-  /// isUsedByReturnOnly - Return true if result of the specified node is used
-  /// by a return node only. It also compute and return the input chain for the
-  /// tail call.
-  /// This is used to determine whether it is possible
-  /// to codegen a libcall as tail call at legalization time.
-  virtual bool isUsedByReturnOnly(SDNode *, SDValue &Chain) const {
-    return false;
-  }
-
-  /// mayBeEmittedAsTailCall - Return true if the target may be able emit the
-  /// call instruction as a tail call. This is used by optimization passes to
-  /// determine if it's profitable to duplicate return instructions to enable
-  /// tailcall optimization.
-  virtual bool mayBeEmittedAsTailCall(CallInst *) const {
-    return false;
-  }
-
-  /// getTypeForExtArgOrReturn - Return the type that should be used to zero or
-  /// sign extend a zeroext/signext integer argument or return value.
-  /// FIXME: Most C calling convention requires the return type to be promoted,
-  /// but this is not true all the time, e.g. i1 on x86-64. It is also not
-  /// necessary for non-C calling conventions. The frontend should handle this
-  /// and include all of the necessary information.
-  virtual MVT getTypeForExtArgOrReturn(MVT VT,
-                                       ISD::NodeType /*ExtendKind*/) const {
-    MVT MinVT = getRegisterType(MVT::i32);
-    return VT.bitsLT(MinVT) ? MinVT : VT;
-  }
-
-  /// LowerOperationWrapper - This callback is invoked by the type legalizer
-  /// to legalize nodes with an illegal operand type but legal result types.
-  /// It replaces the LowerOperation callback in the type Legalizer.
-  /// The reason we can not do away with LowerOperation entirely is that
-  /// LegalizeDAG isn't yet ready to use this callback.
-  /// TODO: Consider merging with ReplaceNodeResults.
-
-  /// The target places new result values for the node in Results (their number
-  /// and types must exactly match those of the original return values of
-  /// the node), or leaves Results empty, which indicates that the node is not
-  /// to be custom lowered after all.
-  /// The default implementation calls LowerOperation.
-  virtual void LowerOperationWrapper(SDNode *N,
-                                     SmallVectorImpl<SDValue> &Results,
-                                     SelectionDAG &DAG) const;
-
-  /// LowerOperation - This callback is invoked for operations that are
-  /// unsupported by the target, which are registered to use 'custom' lowering,
-  /// and whose defined values are all legal.
-  /// If the target has no operations that require custom lowering, it need not
-  /// implement this.  The default implementation of this aborts.
-  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
-
-  /// ReplaceNodeResults - This callback is invoked when a node result type is
-  /// illegal for the target, and the operation was registered to use 'custom'
-  /// lowering for that result type.  The target places new result values for
-  /// the node in Results (their number and types must exactly match those of
-  /// the original return values of the node), or leaves Results empty, which
-  /// indicates that the node is not to be custom lowered after all.
-  ///
-  /// If the target has no operations that require custom lowering, it need not
-  /// implement this.  The default implementation aborts.
-  virtual void ReplaceNodeResults(SDNode * /*N*/,
-                                  SmallVectorImpl<SDValue> &/*Results*/,
-                                  SelectionDAG &/*DAG*/) const {
-    llvm_unreachable("ReplaceNodeResults not implemented for this target!");
-  }
-
-  /// getTargetNodeName() - This method returns the name of a target specific
-  /// DAG node.
-  virtual const char *getTargetNodeName(unsigned Opcode) const;
-
-  /// createFastISel - This method returns a target specific FastISel object,
-  /// or null if the target does not support "fast" ISel.
-  virtual FastISel *createFastISel(FunctionLoweringInfo &,
-                                   const TargetLibraryInfo *) const {
-    return 0;
-  }
-
-  //===--------------------------------------------------------------------===//
-  // Inline Asm Support hooks
-  //
-
-  /// ExpandInlineAsm - This hook allows the target to expand an inline asm
-  /// call to be explicit llvm code if it wants to.  This is useful for
-  /// turning simple inline asms into LLVM intrinsics, which gives the
-  /// compiler more information about the behavior of the code.
-  virtual bool ExpandInlineAsm(CallInst *) const {
-    return false;
-  }
-
-  enum ConstraintType {
-    C_Register,            // Constraint represents specific register(s).
-    C_RegisterClass,       // Constraint represents any of register(s) in class.
-    C_Memory,              // Memory constraint.
-    C_Other,               // Something else.
-    C_Unknown              // Unsupported constraint.
-  };
-
-  enum ConstraintWeight {
-    // Generic weights.
-    CW_Invalid  = -1,     // No match.
-    CW_Okay     = 0,      // Acceptable.
-    CW_Good     = 1,      // Good weight.
-    CW_Better   = 2,      // Better weight.
-    CW_Best     = 3,      // Best weight.
-
-    // Well-known weights.
-    CW_SpecificReg  = CW_Okay,    // Specific register operands.
-    CW_Register     = CW_Good,    // Register operands.
-    CW_Memory       = CW_Better,  // Memory operands.
-    CW_Constant     = CW_Best,    // Constant operand.
-    CW_Default      = CW_Okay     // Default or don't know type.
-  };
-
-  /// AsmOperandInfo - This contains information for each constraint that we are
-  /// lowering.
-  struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
-    /// ConstraintCode - This contains the actual string for the code, like "m".
-    /// TargetLowering picks the 'best' code from ConstraintInfo::Codes that
-    /// most closely matches the operand.
-    std::string ConstraintCode;
-
-    /// ConstraintType - Information about the constraint code, e.g. Register,
-    /// RegisterClass, Memory, Other, Unknown.
-    TargetLowering::ConstraintType ConstraintType;
-
-    /// CallOperandval - If this is the result output operand or a
-    /// clobber, this is null, otherwise it is the incoming operand to the
-    /// CallInst.  This gets modified as the asm is processed.
-    Value *CallOperandVal;
-
-    /// ConstraintVT - The ValueType for the operand value.
-    MVT ConstraintVT;
-
-    /// isMatchingInputConstraint - Return true of this is an input operand that
-    /// is a matching constraint like "4".
-    bool isMatchingInputConstraint() const;
-
-    /// getMatchedOperand - If this is an input matching constraint, this method
-    /// returns the output operand it matches.
-    unsigned getMatchedOperand() const;
-
-    /// Copy constructor for copying from an AsmOperandInfo.
-    AsmOperandInfo(const AsmOperandInfo &info)
-      : InlineAsm::ConstraintInfo(info),
-        ConstraintCode(info.ConstraintCode),
-        ConstraintType(info.ConstraintType),
-        CallOperandVal(info.CallOperandVal),
-        ConstraintVT(info.ConstraintVT) {
-    }
-
-    /// Copy constructor for copying from a ConstraintInfo.
-    AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
-      : InlineAsm::ConstraintInfo(info),
-        ConstraintType(TargetLowering::C_Unknown),
-        CallOperandVal(0), ConstraintVT(MVT::Other) {
-    }
-  };
-
-  typedef std::vector<AsmOperandInfo> AsmOperandInfoVector;
-
-  /// ParseConstraints - Split up the constraint string from the inline
-  /// assembly value into the specific constraints and their prefixes,
-  /// and also tie in the associated operand values.
-  /// If this returns an empty vector, and if the constraint string itself
-  /// isn't empty, there was an error parsing.
-  virtual AsmOperandInfoVector ParseConstraints(ImmutableCallSite CS) const;
-
-  /// Examine constraint type and operand type and determine a weight value.
-  /// The operand object must already have been set up with the operand type.
-  virtual ConstraintWeight getMultipleConstraintMatchWeight(
-      AsmOperandInfo &info, int maIndex) const;
-
-  /// Examine constraint string and operand type and determine a weight value.
-  /// The operand object must already have been set up with the operand type.
-  virtual ConstraintWeight getSingleConstraintMatchWeight(
-      AsmOperandInfo &info, const char *constraint) const;
-
-  /// ComputeConstraintToUse - Determines the constraint code and constraint
-  /// type to use for the specific AsmOperandInfo, setting
-  /// OpInfo.ConstraintCode and OpInfo.ConstraintType.  If the actual operand
-  /// being passed in is available, it can be passed in as Op, otherwise an
-  /// empty SDValue can be passed.
-  virtual void ComputeConstraintToUse(AsmOperandInfo &OpInfo,
-                                      SDValue Op,
-                                      SelectionDAG *DAG = 0) const;
-
-  /// getConstraintType - Given a constraint, return the type of constraint it
-  /// is for this target.
-  virtual ConstraintType getConstraintType(const std::string &Constraint) const;
-
-  /// getRegForInlineAsmConstraint - Given a physical register constraint (e.g.
-  /// {edx}), return the register number and the register class for the
-  /// register.
-  ///
-  /// Given a register class constraint, like 'r', if this corresponds directly
-  /// to an LLVM register class, return a register of 0 and the register class
-  /// pointer.
-  ///
-  /// This should only be used for C_Register constraints.  On error,
-  /// this returns a register number of 0 and a null register class pointer..
-  virtual std::pair<unsigned, const TargetRegisterClass*>
-    getRegForInlineAsmConstraint(const std::string &Constraint,
-                                 EVT VT) const;
-
-  /// LowerXConstraint - try to replace an X constraint, which matches anything,
-  /// with another that has more specific requirements based on the type of the
-  /// corresponding operand.  This returns null if there is no replacement to
-  /// make.
-  virtual const char *LowerXConstraint(EVT ConstraintVT) const;
-
-  /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
-  /// vector.  If it is invalid, don't add anything to Ops.
-  virtual void LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
-                                            std::vector<SDValue> &Ops,
-                                            SelectionDAG &DAG) const;
-
-  //===--------------------------------------------------------------------===//
-  // Instruction Emitting Hooks
-  //
-
-  // EmitInstrWithCustomInserter - This method should be implemented by targets
-  // that mark instructions with the 'usesCustomInserter' flag.  These
-  // instructions are special in various ways, which require special support to
-  // insert.  The specified MachineInstr is created but not inserted into any
-  // basic blocks, and this method is called to expand it into a sequence of
-  // instructions, potentially also creating new basic blocks and control flow.
-  virtual MachineBasicBlock *
-    EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
-
-  /// AdjustInstrPostInstrSelection - This method should be implemented by
-  /// targets that mark instructions with the 'hasPostISelHook' flag. These
-  /// instructions must be adjusted after instruction selection by target hooks.
-  /// e.g. To fill in optional defs for ARM 's' setting instructions.
-  virtual void
-  AdjustInstrPostInstrSelection(MachineInstr *MI, SDNode *Node) const;
-
-  //===--------------------------------------------------------------------===//
   // Addressing mode description hooks (used by LSR etc).
   //
 
@@ -1798,17 +1217,6 @@ public:
   }
 
   //===--------------------------------------------------------------------===//
-  // Div utility functions
-  //
-  SDValue BuildExactSDIV(SDValue Op1, SDValue Op2, DebugLoc dl,
-                         SelectionDAG &DAG) const;
-  SDValue BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
-                      std::vector<SDNode*> *Created) const;
-  SDValue BuildUDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
-                      std::vector<SDNode*> *Created) const;
-
-
-  //===--------------------------------------------------------------------===//
   // Runtime Library hooks
   //
 
@@ -1847,17 +1255,6 @@ public:
   CallingConv::ID getLibcallCallingConv(RTLIB::Libcall Call) const {
     return LibcallCallingConvs[Call];
   }
-
-  bool isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
-                            SDValue &Chain) const;
-
-  void softenSetCCOperands(SelectionDAG &DAG, EVT VT,
-                           SDValue &NewLHS, SDValue &NewRHS,
-                           ISD::CondCode &CCCode, DebugLoc DL) const;
-
-  SDValue makeLibCall(SelectionDAG &DAG, RTLIB::Libcall LC, EVT RetVT,
-                      const SDValue *Ops, unsigned NumOps,
-                      bool isSigned, DebugLoc dl) const;
 
 private:
   const TargetMachine &TM;
@@ -2246,10 +1643,625 @@ protected:
   /// more expensive than a branch if the branch is usually predicted right.
   bool predictableSelectIsExpensive;
 
-private:
+protected:
   /// isLegalRC - Return true if the value types that can be represented by the
   /// specified register class are all legal.
   bool isLegalRC(const TargetRegisterClass *RC) const;
+};
+
+//===----------------------------------------------------------------------===//
+/// TargetLowering - This class defines information used to lower LLVM code to
+/// legal SelectionDAG operators that the target instruction selector can accept
+/// natively.
+///
+/// This class also defines callbacks that targets must implement to lower
+/// target-specific constructs to SelectionDAG operators.
+///
+class TargetLowering : public TargetLoweringBase {
+  TargetLowering(const TargetLowering&) LLVM_DELETED_FUNCTION;
+  void operator=(const TargetLowering&) LLVM_DELETED_FUNCTION;
+
+public:
+  /// NOTE: The constructor takes ownership of TLOF.
+  explicit TargetLowering(const TargetMachine &TM,
+                          const TargetLoweringObjectFile *TLOF);
+
+  /// getPreIndexedAddressParts - returns true by value, base pointer and
+  /// offset pointer and addressing mode by reference if the node's address
+  /// can be legally represented as pre-indexed load / store address.
+  virtual bool getPreIndexedAddressParts(SDNode * /*N*/, SDValue &/*Base*/,
+                                         SDValue &/*Offset*/,
+                                         ISD::MemIndexedMode &/*AM*/,
+                                         SelectionDAG &/*DAG*/) const {
+    return false;
+  }
+
+  /// getPostIndexedAddressParts - returns true by value, base pointer and
+  /// offset pointer and addressing mode by reference if this node can be
+  /// combined with a load / store to form a post-indexed load / store.
+  virtual bool getPostIndexedAddressParts(SDNode * /*N*/, SDNode * /*Op*/,
+                                          SDValue &/*Base*/, SDValue &/*Offset*/,
+                                          ISD::MemIndexedMode &/*AM*/,
+                                          SelectionDAG &/*DAG*/) const {
+    return false;
+  }
+
+  /// getJumpTableEncoding - Return the entry encoding for a jump table in the
+  /// current function.  The returned value is a member of the
+  /// MachineJumpTableInfo::JTEntryKind enum.
+  virtual unsigned getJumpTableEncoding() const;
+
+  virtual const MCExpr *
+  LowerCustomJumpTableEntry(const MachineJumpTableInfo * /*MJTI*/,
+                            const MachineBasicBlock * /*MBB*/, unsigned /*uid*/,
+                            MCContext &/*Ctx*/) const {
+    llvm_unreachable("Need to implement this hook if target has custom JTIs");
+  }
+
+  /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
+  /// jumptable.
+  virtual SDValue getPICJumpTableRelocBase(SDValue Table,
+                                           SelectionDAG &DAG) const;
+
+  /// getPICJumpTableRelocBaseExpr - This returns the relocation base for the
+  /// given PIC jumptable, the same as getPICJumpTableRelocBase, but as an
+  /// MCExpr.
+  virtual const MCExpr *
+  getPICJumpTableRelocBaseExpr(const MachineFunction *MF,
+                               unsigned JTI, MCContext &Ctx) const;
+
+  /// isOffsetFoldingLegal - Return true if folding a constant offset
+  /// with the given GlobalAddress is legal.  It is frequently not legal in
+  /// PIC relocation models.
+  virtual bool isOffsetFoldingLegal(const GlobalAddressSDNode *GA) const;
+
+  bool isInTailCallPosition(SelectionDAG &DAG, SDNode *Node,
+                            SDValue &Chain) const;
+
+  void softenSetCCOperands(SelectionDAG &DAG, EVT VT,
+                           SDValue &NewLHS, SDValue &NewRHS,
+                           ISD::CondCode &CCCode, DebugLoc DL) const;
+
+  SDValue makeLibCall(SelectionDAG &DAG, RTLIB::Libcall LC, EVT RetVT,
+                      const SDValue *Ops, unsigned NumOps,
+                      bool isSigned, DebugLoc dl) const;
+
+  //===--------------------------------------------------------------------===//
+  // TargetLowering Optimization Methods
+  //
+
+  /// TargetLoweringOpt - A convenience struct that encapsulates a DAG, and two
+  /// SDValues for returning information from TargetLowering to its clients
+  /// that want to combine
+  struct TargetLoweringOpt {
+    SelectionDAG &DAG;
+    bool LegalTys;
+    bool LegalOps;
+    SDValue Old;
+    SDValue New;
+
+    explicit TargetLoweringOpt(SelectionDAG &InDAG,
+                               bool LT, bool LO) :
+      DAG(InDAG), LegalTys(LT), LegalOps(LO) {}
+
+    bool LegalTypes() const { return LegalTys; }
+    bool LegalOperations() const { return LegalOps; }
+
+    bool CombineTo(SDValue O, SDValue N) {
+      Old = O;
+      New = N;
+      return true;
+    }
+
+    /// ShrinkDemandedConstant - Check to see if the specified operand of the
+    /// specified instruction is a constant integer.  If so, check to see if
+    /// there are any bits set in the constant that are not demanded.  If so,
+    /// shrink the constant and return true.
+    bool ShrinkDemandedConstant(SDValue Op, const APInt &Demanded);
+
+    /// ShrinkDemandedOp - Convert x+y to (VT)((SmallVT)x+(SmallVT)y) if the
+    /// casts are free.  This uses isZExtFree and ZERO_EXTEND for the widening
+    /// cast, but it could be generalized for targets with other types of
+    /// implicit widening casts.
+    bool ShrinkDemandedOp(SDValue Op, unsigned BitWidth, const APInt &Demanded,
+                          DebugLoc dl);
+  };
+
+  /// SimplifyDemandedBits - Look at Op.  At this point, we know that only the
+  /// DemandedMask bits of the result of Op are ever used downstream.  If we can
+  /// use this information to simplify Op, create a new simplified DAG node and
+  /// return true, returning the original and new nodes in Old and New.
+  /// Otherwise, analyze the expression and return a mask of KnownOne and
+  /// KnownZero bits for the expression (used to simplify the caller).
+  /// The KnownZero/One bits may only be accurate for those bits in the
+  /// DemandedMask.
+  bool SimplifyDemandedBits(SDValue Op, const APInt &DemandedMask,
+                            APInt &KnownZero, APInt &KnownOne,
+                            TargetLoweringOpt &TLO, unsigned Depth = 0) const;
+
+  /// computeMaskedBitsForTargetNode - Determine which of the bits specified in
+  /// Mask are known to be either zero or one and return them in the
+  /// KnownZero/KnownOne bitsets.
+  virtual void computeMaskedBitsForTargetNode(const SDValue Op,
+                                              APInt &KnownZero,
+                                              APInt &KnownOne,
+                                              const SelectionDAG &DAG,
+                                              unsigned Depth = 0) const;
+
+  /// ComputeNumSignBitsForTargetNode - This method can be implemented by
+  /// targets that want to expose additional information about sign bits to the
+  /// DAG Combiner.
+  virtual unsigned ComputeNumSignBitsForTargetNode(SDValue Op,
+                                                   unsigned Depth = 0) const;
+
+  struct DAGCombinerInfo {
+    void *DC;  // The DAG Combiner object.
+    CombineLevel Level;
+    bool CalledByLegalizer;
+  public:
+    SelectionDAG &DAG;
+
+    DAGCombinerInfo(SelectionDAG &dag, CombineLevel level,  bool cl, void *dc)
+      : DC(dc), Level(level), CalledByLegalizer(cl), DAG(dag) {}
+
+    bool isBeforeLegalize() const { return Level == BeforeLegalizeTypes; }
+    bool isBeforeLegalizeOps() const { return Level < AfterLegalizeVectorOps; }
+    bool isAfterLegalizeVectorOps() const {
+      return Level == AfterLegalizeDAG;
+    }
+    CombineLevel getDAGCombineLevel() { return Level; }
+    bool isCalledByLegalizer() const { return CalledByLegalizer; }
+
+    void AddToWorklist(SDNode *N);
+    void RemoveFromWorklist(SDNode *N);
+    SDValue CombineTo(SDNode *N, const std::vector<SDValue> &To,
+                      bool AddTo = true);
+    SDValue CombineTo(SDNode *N, SDValue Res, bool AddTo = true);
+    SDValue CombineTo(SDNode *N, SDValue Res0, SDValue Res1, bool AddTo = true);
+
+    void CommitTargetLoweringOpt(const TargetLoweringOpt &TLO);
+  };
+
+  /// SimplifySetCC - Try to simplify a setcc built with the specified operands
+  /// and cc. If it is unable to simplify it, return a null SDValue.
+  SDValue SimplifySetCC(EVT VT, SDValue N0, SDValue N1,
+                          ISD::CondCode Cond, bool foldBooleans,
+                          DAGCombinerInfo &DCI, DebugLoc dl) const;
+
+  /// isGAPlusOffset - Returns true (and the GlobalValue and the offset) if the
+  /// node is a GlobalAddress + offset.
+  virtual bool
+  isGAPlusOffset(SDNode *N, const GlobalValue* &GA, int64_t &Offset) const;
+
+  /// PerformDAGCombine - This method will be invoked for all target nodes and
+  /// for any target-independent nodes that the target has registered with
+  /// invoke it for.
+  ///
+  /// The semantics are as follows:
+  /// Return Value:
+  ///   SDValue.Val == 0   - No change was made
+  ///   SDValue.Val == N   - N was replaced, is dead, and is already handled.
+  ///   otherwise          - N should be replaced by the returned Operand.
+  ///
+  /// In addition, methods provided by DAGCombinerInfo may be used to perform
+  /// more complex transformations.
+  ///
+  virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+
+  /// isTypeDesirableForOp - Return true if the target has native support for
+  /// the specified value type and it is 'desirable' to use the type for the
+  /// given node type. e.g. On x86 i16 is legal, but undesirable since i16
+  /// instruction encodings are longer and some i16 instructions are slow.
+  virtual bool isTypeDesirableForOp(unsigned /*Opc*/, EVT VT) const {
+    // By default, assume all legal types are desirable.
+    return isTypeLegal(VT);
+  }
+
+  /// isDesirableToPromoteOp - Return true if it is profitable for dag combiner
+  /// to transform a floating point op of specified opcode to a equivalent op of
+  /// an integer type. e.g. f32 load -> i32 load can be profitable on ARM.
+  virtual bool isDesirableToTransformToIntegerOp(unsigned /*Opc*/,
+                                                 EVT /*VT*/) const {
+    return false;
+  }
+
+  /// IsDesirableToPromoteOp - This method query the target whether it is
+  /// beneficial for dag combiner to promote the specified node. If true, it
+  /// should return the desired promotion type by reference.
+  virtual bool IsDesirableToPromoteOp(SDValue /*Op*/, EVT &/*PVT*/) const {
+    return false;
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Lowering methods - These methods must be implemented by targets so that
+  // the SelectionDAGBuilder code knows how to lower these.
+  //
+
+  /// LowerFormalArguments - This hook must be implemented to lower the
+  /// incoming (formal) arguments, described by the Ins array, into the
+  /// specified DAG. The implementation should fill in the InVals array
+  /// with legal-type argument values, and return the resulting token
+  /// chain value.
+  ///
+  virtual SDValue
+    LowerFormalArguments(SDValue /*Chain*/, CallingConv::ID /*CallConv*/,
+                         bool /*isVarArg*/,
+                         const SmallVectorImpl<ISD::InputArg> &/*Ins*/,
+                         DebugLoc /*dl*/, SelectionDAG &/*DAG*/,
+                         SmallVectorImpl<SDValue> &/*InVals*/) const {
+    llvm_unreachable("Not Implemented");
+  }
+
+  struct ArgListEntry {
+    SDValue Node;
+    Type* Ty;
+    bool isSExt  : 1;
+    bool isZExt  : 1;
+    bool isInReg : 1;
+    bool isSRet  : 1;
+    bool isNest  : 1;
+    bool isByVal : 1;
+    uint16_t Alignment;
+
+    ArgListEntry() : isSExt(false), isZExt(false), isInReg(false),
+      isSRet(false), isNest(false), isByVal(false), Alignment(0) { }
+  };
+  typedef std::vector<ArgListEntry> ArgListTy;
+
+  /// CallLoweringInfo - This structure contains all information that is
+  /// necessary for lowering calls. It is passed to TLI::LowerCallTo when the
+  /// SelectionDAG builder needs to lower a call, and targets will see this
+  /// struct in their LowerCall implementation.
+  struct CallLoweringInfo {
+    SDValue Chain;
+    Type *RetTy;
+    bool RetSExt           : 1;
+    bool RetZExt           : 1;
+    bool IsVarArg          : 1;
+    bool IsInReg           : 1;
+    bool DoesNotReturn     : 1;
+    bool IsReturnValueUsed : 1;
+
+    // IsTailCall should be modified by implementations of
+    // TargetLowering::LowerCall that perform tail call conversions.
+    bool IsTailCall;
+
+    unsigned NumFixedArgs;
+    CallingConv::ID CallConv;
+    SDValue Callee;
+    ArgListTy &Args;
+    SelectionDAG &DAG;
+    DebugLoc DL;
+    ImmutableCallSite *CS;
+    SmallVector<ISD::OutputArg, 32> Outs;
+    SmallVector<SDValue, 32> OutVals;
+    SmallVector<ISD::InputArg, 32> Ins;
+
+
+    /// CallLoweringInfo - Constructs a call lowering context based on the
+    /// ImmutableCallSite \p cs.
+    CallLoweringInfo(SDValue chain, Type *retTy,
+                     FunctionType *FTy, bool isTailCall, SDValue callee,
+                     ArgListTy &args, SelectionDAG &dag, DebugLoc dl,
+                     ImmutableCallSite &cs)
+    : Chain(chain), RetTy(retTy), RetSExt(cs.paramHasAttr(0, Attribute::SExt)),
+      RetZExt(cs.paramHasAttr(0, Attribute::ZExt)), IsVarArg(FTy->isVarArg()),
+      IsInReg(cs.paramHasAttr(0, Attribute::InReg)),
+      DoesNotReturn(cs.doesNotReturn()),
+      IsReturnValueUsed(!cs.getInstruction()->use_empty()),
+      IsTailCall(isTailCall), NumFixedArgs(FTy->getNumParams()),
+      CallConv(cs.getCallingConv()), Callee(callee), Args(args), DAG(dag),
+      DL(dl), CS(&cs) {}
+
+    /// CallLoweringInfo - Constructs a call lowering context based on the
+    /// provided call information.
+    CallLoweringInfo(SDValue chain, Type *retTy, bool retSExt, bool retZExt,
+                     bool isVarArg, bool isInReg, unsigned numFixedArgs,
+                     CallingConv::ID callConv, bool isTailCall,
+                     bool doesNotReturn, bool isReturnValueUsed, SDValue callee,
+                     ArgListTy &args, SelectionDAG &dag, DebugLoc dl)
+    : Chain(chain), RetTy(retTy), RetSExt(retSExt), RetZExt(retZExt),
+      IsVarArg(isVarArg), IsInReg(isInReg), DoesNotReturn(doesNotReturn),
+      IsReturnValueUsed(isReturnValueUsed), IsTailCall(isTailCall),
+      NumFixedArgs(numFixedArgs), CallConv(callConv), Callee(callee),
+      Args(args), DAG(dag), DL(dl), CS(NULL) {}
+  };
+
+  /// LowerCallTo - This function lowers an abstract call to a function into an
+  /// actual call.  This returns a pair of operands.  The first element is the
+  /// return value for the function (if RetTy is not VoidTy).  The second
+  /// element is the outgoing token chain. It calls LowerCall to do the actual
+  /// lowering.
+  std::pair<SDValue, SDValue> LowerCallTo(CallLoweringInfo &CLI) const;
+
+  /// LowerCall - This hook must be implemented to lower calls into the
+  /// the specified DAG. The outgoing arguments to the call are described
+  /// by the Outs array, and the values to be returned by the call are
+  /// described by the Ins array. The implementation should fill in the
+  /// InVals array with legal-type return values from the call, and return
+  /// the resulting token chain value.
+  virtual SDValue
+    LowerCall(CallLoweringInfo &/*CLI*/,
+              SmallVectorImpl<SDValue> &/*InVals*/) const {
+    llvm_unreachable("Not Implemented");
+  }
+
+  /// HandleByVal - Target-specific cleanup for formal ByVal parameters.
+  virtual void HandleByVal(CCState *, unsigned &, unsigned) const {}
+
+  /// CanLowerReturn - This hook should be implemented to check whether the
+  /// return values described by the Outs array can fit into the return
+  /// registers.  If false is returned, an sret-demotion is performed.
+  ///
+  virtual bool CanLowerReturn(CallingConv::ID /*CallConv*/,
+                              MachineFunction &/*MF*/, bool /*isVarArg*/,
+               const SmallVectorImpl<ISD::OutputArg> &/*Outs*/,
+               LLVMContext &/*Context*/) const
+  {
+    // Return true by default to get preexisting behavior.
+    return true;
+  }
+
+  /// LowerReturn - This hook must be implemented to lower outgoing
+  /// return values, described by the Outs array, into the specified
+  /// DAG. The implementation should return the resulting token chain
+  /// value.
+  ///
+  virtual SDValue
+    LowerReturn(SDValue /*Chain*/, CallingConv::ID /*CallConv*/,
+                bool /*isVarArg*/,
+                const SmallVectorImpl<ISD::OutputArg> &/*Outs*/,
+                const SmallVectorImpl<SDValue> &/*OutVals*/,
+                DebugLoc /*dl*/, SelectionDAG &/*DAG*/) const {
+    llvm_unreachable("Not Implemented");
+  }
+
+  /// isUsedByReturnOnly - Return true if result of the specified node is used
+  /// by a return node only. It also compute and return the input chain for the
+  /// tail call.
+  /// This is used to determine whether it is possible
+  /// to codegen a libcall as tail call at legalization time.
+  virtual bool isUsedByReturnOnly(SDNode *, SDValue &Chain) const {
+    return false;
+  }
+
+  /// mayBeEmittedAsTailCall - Return true if the target may be able emit the
+  /// call instruction as a tail call. This is used by optimization passes to
+  /// determine if it's profitable to duplicate return instructions to enable
+  /// tailcall optimization.
+  virtual bool mayBeEmittedAsTailCall(CallInst *) const {
+    return false;
+  }
+
+  /// getTypeForExtArgOrReturn - Return the type that should be used to zero or
+  /// sign extend a zeroext/signext integer argument or return value.
+  /// FIXME: Most C calling convention requires the return type to be promoted,
+  /// but this is not true all the time, e.g. i1 on x86-64. It is also not
+  /// necessary for non-C calling conventions. The frontend should handle this
+  /// and include all of the necessary information.
+  virtual MVT getTypeForExtArgOrReturn(MVT VT,
+                                       ISD::NodeType /*ExtendKind*/) const {
+    MVT MinVT = getRegisterType(MVT::i32);
+    return VT.bitsLT(MinVT) ? MinVT : VT;
+  }
+
+  /// LowerOperationWrapper - This callback is invoked by the type legalizer
+  /// to legalize nodes with an illegal operand type but legal result types.
+  /// It replaces the LowerOperation callback in the type Legalizer.
+  /// The reason we can not do away with LowerOperation entirely is that
+  /// LegalizeDAG isn't yet ready to use this callback.
+  /// TODO: Consider merging with ReplaceNodeResults.
+
+  /// The target places new result values for the node in Results (their number
+  /// and types must exactly match those of the original return values of
+  /// the node), or leaves Results empty, which indicates that the node is not
+  /// to be custom lowered after all.
+  /// The default implementation calls LowerOperation.
+  virtual void LowerOperationWrapper(SDNode *N,
+                                     SmallVectorImpl<SDValue> &Results,
+                                     SelectionDAG &DAG) const;
+
+  /// LowerOperation - This callback is invoked for operations that are
+  /// unsupported by the target, which are registered to use 'custom' lowering,
+  /// and whose defined values are all legal.
+  /// If the target has no operations that require custom lowering, it need not
+  /// implement this.  The default implementation of this aborts.
+  virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+
+  /// ReplaceNodeResults - This callback is invoked when a node result type is
+  /// illegal for the target, and the operation was registered to use 'custom'
+  /// lowering for that result type.  The target places new result values for
+  /// the node in Results (their number and types must exactly match those of
+  /// the original return values of the node), or leaves Results empty, which
+  /// indicates that the node is not to be custom lowered after all.
+  ///
+  /// If the target has no operations that require custom lowering, it need not
+  /// implement this.  The default implementation aborts.
+  virtual void ReplaceNodeResults(SDNode * /*N*/,
+                                  SmallVectorImpl<SDValue> &/*Results*/,
+                                  SelectionDAG &/*DAG*/) const {
+    llvm_unreachable("ReplaceNodeResults not implemented for this target!");
+  }
+
+  /// getTargetNodeName() - This method returns the name of a target specific
+  /// DAG node.
+  virtual const char *getTargetNodeName(unsigned Opcode) const;
+
+  /// createFastISel - This method returns a target specific FastISel object,
+  /// or null if the target does not support "fast" ISel.
+  virtual FastISel *createFastISel(FunctionLoweringInfo &,
+                                   const TargetLibraryInfo *) const {
+    return 0;
+  }
+
+  //===--------------------------------------------------------------------===//
+  // Inline Asm Support hooks
+  //
+
+  /// ExpandInlineAsm - This hook allows the target to expand an inline asm
+  /// call to be explicit llvm code if it wants to.  This is useful for
+  /// turning simple inline asms into LLVM intrinsics, which gives the
+  /// compiler more information about the behavior of the code.
+  virtual bool ExpandInlineAsm(CallInst *) const {
+    return false;
+  }
+
+  enum ConstraintType {
+    C_Register,            // Constraint represents specific register(s).
+    C_RegisterClass,       // Constraint represents any of register(s) in class.
+    C_Memory,              // Memory constraint.
+    C_Other,               // Something else.
+    C_Unknown              // Unsupported constraint.
+  };
+
+  enum ConstraintWeight {
+    // Generic weights.
+    CW_Invalid  = -1,     // No match.
+    CW_Okay     = 0,      // Acceptable.
+    CW_Good     = 1,      // Good weight.
+    CW_Better   = 2,      // Better weight.
+    CW_Best     = 3,      // Best weight.
+
+    // Well-known weights.
+    CW_SpecificReg  = CW_Okay,    // Specific register operands.
+    CW_Register     = CW_Good,    // Register operands.
+    CW_Memory       = CW_Better,  // Memory operands.
+    CW_Constant     = CW_Best,    // Constant operand.
+    CW_Default      = CW_Okay     // Default or don't know type.
+  };
+
+  /// AsmOperandInfo - This contains information for each constraint that we are
+  /// lowering.
+  struct AsmOperandInfo : public InlineAsm::ConstraintInfo {
+    /// ConstraintCode - This contains the actual string for the code, like "m".
+    /// TargetLowering picks the 'best' code from ConstraintInfo::Codes that
+    /// most closely matches the operand.
+    std::string ConstraintCode;
+
+    /// ConstraintType - Information about the constraint code, e.g. Register,
+    /// RegisterClass, Memory, Other, Unknown.
+    TargetLowering::ConstraintType ConstraintType;
+
+    /// CallOperandval - If this is the result output operand or a
+    /// clobber, this is null, otherwise it is the incoming operand to the
+    /// CallInst.  This gets modified as the asm is processed.
+    Value *CallOperandVal;
+
+    /// ConstraintVT - The ValueType for the operand value.
+    MVT ConstraintVT;
+
+    /// isMatchingInputConstraint - Return true of this is an input operand that
+    /// is a matching constraint like "4".
+    bool isMatchingInputConstraint() const;
+
+    /// getMatchedOperand - If this is an input matching constraint, this method
+    /// returns the output operand it matches.
+    unsigned getMatchedOperand() const;
+
+    /// Copy constructor for copying from an AsmOperandInfo.
+    AsmOperandInfo(const AsmOperandInfo &info)
+      : InlineAsm::ConstraintInfo(info),
+        ConstraintCode(info.ConstraintCode),
+        ConstraintType(info.ConstraintType),
+        CallOperandVal(info.CallOperandVal),
+        ConstraintVT(info.ConstraintVT) {
+    }
+
+    /// Copy constructor for copying from a ConstraintInfo.
+    AsmOperandInfo(const InlineAsm::ConstraintInfo &info)
+      : InlineAsm::ConstraintInfo(info),
+        ConstraintType(TargetLowering::C_Unknown),
+        CallOperandVal(0), ConstraintVT(MVT::Other) {
+    }
+  };
+
+  typedef std::vector<AsmOperandInfo> AsmOperandInfoVector;
+
+  /// ParseConstraints - Split up the constraint string from the inline
+  /// assembly value into the specific constraints and their prefixes,
+  /// and also tie in the associated operand values.
+  /// If this returns an empty vector, and if the constraint string itself
+  /// isn't empty, there was an error parsing.
+  virtual AsmOperandInfoVector ParseConstraints(ImmutableCallSite CS) const;
+
+  /// Examine constraint type and operand type and determine a weight value.
+  /// The operand object must already have been set up with the operand type.
+  virtual ConstraintWeight getMultipleConstraintMatchWeight(
+      AsmOperandInfo &info, int maIndex) const;
+
+  /// Examine constraint string and operand type and determine a weight value.
+  /// The operand object must already have been set up with the operand type.
+  virtual ConstraintWeight getSingleConstraintMatchWeight(
+      AsmOperandInfo &info, const char *constraint) const;
+
+  /// ComputeConstraintToUse - Determines the constraint code and constraint
+  /// type to use for the specific AsmOperandInfo, setting
+  /// OpInfo.ConstraintCode and OpInfo.ConstraintType.  If the actual operand
+  /// being passed in is available, it can be passed in as Op, otherwise an
+  /// empty SDValue can be passed.
+  virtual void ComputeConstraintToUse(AsmOperandInfo &OpInfo,
+                                      SDValue Op,
+                                      SelectionDAG *DAG = 0) const;
+
+  /// getConstraintType - Given a constraint, return the type of constraint it
+  /// is for this target.
+  virtual ConstraintType getConstraintType(const std::string &Constraint) const;
+
+  /// getRegForInlineAsmConstraint - Given a physical register constraint (e.g.
+  /// {edx}), return the register number and the register class for the
+  /// register.
+  ///
+  /// Given a register class constraint, like 'r', if this corresponds directly
+  /// to an LLVM register class, return a register of 0 and the register class
+  /// pointer.
+  ///
+  /// This should only be used for C_Register constraints.  On error,
+  /// this returns a register number of 0 and a null register class pointer..
+  virtual std::pair<unsigned, const TargetRegisterClass*>
+    getRegForInlineAsmConstraint(const std::string &Constraint,
+                                 EVT VT) const;
+
+  /// LowerXConstraint - try to replace an X constraint, which matches anything,
+  /// with another that has more specific requirements based on the type of the
+  /// corresponding operand.  This returns null if there is no replacement to
+  /// make.
+  virtual const char *LowerXConstraint(EVT ConstraintVT) const;
+
+  /// LowerAsmOperandForConstraint - Lower the specified operand into the Ops
+  /// vector.  If it is invalid, don't add anything to Ops.
+  virtual void LowerAsmOperandForConstraint(SDValue Op, std::string &Constraint,
+                                            std::vector<SDValue> &Ops,
+                                            SelectionDAG &DAG) const;
+
+  //===--------------------------------------------------------------------===//
+  // Div utility functions
+  //
+  SDValue BuildExactSDIV(SDValue Op1, SDValue Op2, DebugLoc dl,
+                         SelectionDAG &DAG) const;
+  SDValue BuildSDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
+                      std::vector<SDNode*> *Created) const;
+  SDValue BuildUDIV(SDNode *N, SelectionDAG &DAG, bool IsAfterLegalization,
+                      std::vector<SDNode*> *Created) const;
+
+  //===--------------------------------------------------------------------===//
+  // Instruction Emitting Hooks
+  //
+
+  // EmitInstrWithCustomInserter - This method should be implemented by targets
+  // that mark instructions with the 'usesCustomInserter' flag.  These
+  // instructions are special in various ways, which require special support to
+  // insert.  The specified MachineInstr is created but not inserted into any
+  // basic blocks, and this method is called to expand it into a sequence of
+  // instructions, potentially also creating new basic blocks and control flow.
+  virtual MachineBasicBlock *
+    EmitInstrWithCustomInserter(MachineInstr *MI, MachineBasicBlock *MBB) const;
+
+  /// AdjustInstrPostInstrSelection - This method should be implemented by
+  /// targets that mark instructions with the 'hasPostISelHook' flag. These
+  /// instructions must be adjusted after instruction selection by target hooks.
+  /// e.g. To fill in optional defs for ARM 's' setting instructions.
+  virtual void
+  AdjustInstrPostInstrSelection(MachineInstr *MI, SDNode *Node) const;
 };
 
 /// GetReturnInfo - Given an LLVM IR type and return type attributes,

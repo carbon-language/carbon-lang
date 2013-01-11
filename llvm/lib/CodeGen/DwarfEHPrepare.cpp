@@ -33,7 +33,7 @@ STATISTIC(NumResumesLowered, "Number of resume calls lowered");
 namespace {
   class DwarfEHPrepare : public FunctionPass {
     const TargetMachine *TM;
-    const TargetLowering *TLI;
+    const TargetLoweringBase *TLI;
 
     // RewindFunction - _Unwind_Resume or the target equivalent.
     Constant *RewindFunction;
