@@ -26,7 +26,7 @@ unsigned clang_isVirtualBase(CXCursor C) {
   if (C.kind != CXCursor_CXXBaseSpecifier)
     return 0;
   
-  CXXBaseSpecifier *B = getCursorCXXBaseSpecifier(C);
+  const CXXBaseSpecifier *B = getCursorCXXBaseSpecifier(C);
   return B->isVirtual();
 }
 

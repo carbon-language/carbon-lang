@@ -2101,7 +2101,7 @@ enum CXCursorKind {
 typedef struct {
   enum CXCursorKind kind;
   int xdata;
-  void *data[3];
+  const void *data[3];
 } CXCursor;
 
 /**

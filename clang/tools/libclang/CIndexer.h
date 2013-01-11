@@ -107,7 +107,8 @@ public:
                             CXTranslationUnit TU);
 
     /// \brief Retrieves the corresponding MacroInfo of a MacroDefinition.
-    MacroInfo *getMacroInfo(MacroDefinition *MacroDef, CXTranslationUnit TU);
+    const MacroInfo *getMacroInfo(const MacroDefinition *MacroDef,
+                                  CXTranslationUnit TU);
 
     /// \brief If \c Loc resides inside the definition of \c MI and it points at
     /// an identifier that has ever been a macro name, this returns the latest

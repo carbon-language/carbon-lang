@@ -512,7 +512,7 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   }
 
   if (Cursor.kind == CXCursor_CXXBaseSpecifier) {
-    if (CXXBaseSpecifier *Base = getCursorCXXBaseSpecifier(Cursor)) {
+    if (const CXXBaseSpecifier *Base = getCursorCXXBaseSpecifier(Cursor)) {
       if (TypeSourceInfo *BaseTSInfo = Base->getTypeSourceInfo()) {
         return Visit(BaseTSInfo->getTypeLoc());
       }
@@ -534,7 +534,8 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   if (Cursor.kind == CXCursor_MacroDefinition &&
       BeginLoc == RegionOfInterest.getEnd()) {
     SourceLocation Loc = AU->mapLocationToPreamble(BeginLoc);
-    MacroInfo *MI = getMacroInfo(cxcursor::getCursorMacroDefinition(Cursor),TU);
+    const MacroInfo *MI =
+        getMacroInfo(cxcursor::getCursorMacroDefinition(Cursor), TU);
     if (MacroDefinition *MacroDef =
           checkForMacroInMacroDefinition(MI, Loc, TU))
       return Visit(cxcursor::MakeMacroExpansionCursor(MacroDef, BeginLoc, TU));
@@ -3123,52 +3124,52 @@ CXString clang_getCursorSpelling(CXCursor C) {
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
     case CXCursor_ObjCSuperClassRef: {
-      ObjCInterfaceDecl *Super = getCursorObjCSuperClassRef(C).first;
+      const ObjCInterfaceDecl *Super = getCursorObjCSuperClassRef(C).first;
       return createCXString(Super->getIdentifier()->getNameStart());
     }
     case CXCursor_ObjCClassRef: {
-      ObjCInterfaceDecl *Class = getCursorObjCClassRef(C).first;
+      const ObjCInterfaceDecl *Class = getCursorObjCClassRef(C).first;
       return createCXString(Class->getIdentifier()->getNameStart());
     }
     case CXCursor_ObjCProtocolRef: {
-      ObjCProtocolDecl *OID = getCursorObjCProtocolRef(C).first;
+      const ObjCProtocolDecl *OID = getCursorObjCProtocolRef(C).first;
       assert(OID && "getCursorSpelling(): Missing protocol decl");
       return createCXString(OID->getIdentifier()->getNameStart());
     }
     case CXCursor_CXXBaseSpecifier: {
-      CXXBaseSpecifier *B = getCursorCXXBaseSpecifier(C);
+      const CXXBaseSpecifier *B = getCursorCXXBaseSpecifier(C);
       return createCXString(B->getType().getAsString());
     }
     case CXCursor_TypeRef: {
-      TypeDecl *Type = getCursorTypeRef(C).first;
+      const TypeDecl *Type = getCursorTypeRef(C).first;
       assert(Type && "Missing type decl");
 
       return createCXString(getCursorContext(C).getTypeDeclType(Type).
                               getAsString());
     }
     case CXCursor_TemplateRef: {
-      TemplateDecl *Template = getCursorTemplateRef(C).first;
+      const TemplateDecl *Template = getCursorTemplateRef(C).first;
       assert(Template && "Missing template decl");
       
       return createCXString(Template->getNameAsString());
     }
         
     case CXCursor_NamespaceRef: {
-      NamedDecl *NS = getCursorNamespaceRef(C).first;
+      const NamedDecl *NS = getCursorNamespaceRef(C).first;
       assert(NS && "Missing namespace decl");
       
       return createCXString(NS->getNameAsString());
     }
 
     case CXCursor_MemberRef: {
-      FieldDecl *Field = getCursorMemberRef(C).first;
+      const FieldDecl *Field = getCursorMemberRef(C).first;
       assert(Field && "Missing member decl");
       
       return createCXString(Field->getNameAsString());
     }
 
     case CXCursor_LabelRef: {
-      LabelStmt *Label = getCursorLabelRef(C).first;
+      const LabelStmt *Label = getCursorLabelRef(C).first;
       assert(Label && "Missing label");
       
       return createCXString(Label->getName());
@@ -3191,7 +3192,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
     }
         
     case CXCursor_VariableRef: {
-      VarDecl *Var = getCursorVariableRef(C).first;
+      const VarDecl *Var = getCursorVariableRef(C).first;
       assert(Var && "Missing variable decl");
       
       return createCXString(Var->getNameAsString());
@@ -3902,7 +3903,7 @@ unsigned clang_hashCursor(CXCursor C) {
   if (clang_isExpression(C.kind) || clang_isStatement(C.kind))
     Index = 1;
   
-  return llvm::DenseMapInfo<std::pair<unsigned, void*> >::getHashValue(
+  return llvm::DenseMapInfo<std::pair<unsigned, const void*> >::getHashValue(
                                         std::make_pair(C.kind, C.data[Index]));
 }
 
@@ -3959,50 +3960,51 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
     case CXCursor_ObjCSuperClassRef: {
-      std::pair<ObjCInterfaceDecl *, SourceLocation> P
+      std::pair<const ObjCInterfaceDecl *, SourceLocation> P
         = getCursorObjCSuperClassRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_ObjCProtocolRef: {
-      std::pair<ObjCProtocolDecl *, SourceLocation> P
+      std::pair<const ObjCProtocolDecl *, SourceLocation> P
         = getCursorObjCProtocolRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_ObjCClassRef: {
-      std::pair<ObjCInterfaceDecl *, SourceLocation> P
+      std::pair<const ObjCInterfaceDecl *, SourceLocation> P
         = getCursorObjCClassRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_TypeRef: {
-      std::pair<TypeDecl *, SourceLocation> P = getCursorTypeRef(C);
+      std::pair<const TypeDecl *, SourceLocation> P = getCursorTypeRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_TemplateRef: {
-      std::pair<TemplateDecl *, SourceLocation> P = getCursorTemplateRef(C);
+      std::pair<const TemplateDecl *, SourceLocation> P =
+          getCursorTemplateRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_NamespaceRef: {
-      std::pair<NamedDecl *, SourceLocation> P = getCursorNamespaceRef(C);
+      std::pair<const NamedDecl *, SourceLocation> P = getCursorNamespaceRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_MemberRef: {
-      std::pair<FieldDecl *, SourceLocation> P = getCursorMemberRef(C);
+      std::pair<const FieldDecl *, SourceLocation> P = getCursorMemberRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_VariableRef: {
-      std::pair<VarDecl *, SourceLocation> P = getCursorVariableRef(C);
+      std::pair<const VarDecl *, SourceLocation> P = getCursorVariableRef(C);
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
     case CXCursor_CXXBaseSpecifier: {
-      CXXBaseSpecifier *BaseSpec = getCursorCXXBaseSpecifier(C);
+      const CXXBaseSpecifier *BaseSpec = getCursorCXXBaseSpecifier(C);
       if (!BaseSpec)
         return clang_getNullLocation();
       
@@ -4015,7 +4017,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
     }
 
     case CXCursor_LabelRef: {
-      std::pair<LabelStmt *, SourceLocation> P = getCursorLabelRef(C);
+      std::pair<const LabelStmt *, SourceLocation> P = getCursorLabelRef(C);
       return cxloc::translateSourceLocation(getCursorContext(C), P.second);
     }
 
@@ -4310,7 +4312,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   }
   
   if (C.kind == CXCursor_MacroExpansion) {
-    if (MacroDefinition *Def = getCursorMacroExpansion(C).getDefinition())
+    if (const MacroDefinition *Def = getCursorMacroExpansion(C).getDefinition())
       return MakeMacroDefinitionCursor(Def, tu);
   }
 
@@ -4322,16 +4324,16 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       return MakeCXCursor(getCursorObjCSuperClassRef(C).first, tu);
 
     case CXCursor_ObjCProtocolRef: {
-      ObjCProtocolDecl *Prot = getCursorObjCProtocolRef(C).first;
-      if (ObjCProtocolDecl *Def = Prot->getDefinition())
+      const ObjCProtocolDecl *Prot = getCursorObjCProtocolRef(C).first;
+      if (const ObjCProtocolDecl *Def = Prot->getDefinition())
         return MakeCXCursor(Def, tu);
 
       return MakeCXCursor(Prot, tu);
     }
 
     case CXCursor_ObjCClassRef: {
-      ObjCInterfaceDecl *Class = getCursorObjCClassRef(C).first;
-      if (ObjCInterfaceDecl *Def = Class->getDefinition())
+      const ObjCInterfaceDecl *Class = getCursorObjCClassRef(C).first;
+      if (const ObjCInterfaceDecl *Def = Class->getDefinition())
         return MakeCXCursor(Def, tu);
 
       return MakeCXCursor(Class, tu);
@@ -4350,7 +4352,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       return MakeCXCursor(getCursorMemberRef(C).first, tu );
 
     case CXCursor_CXXBaseSpecifier: {
-      CXXBaseSpecifier *B = cxcursor::getCursorCXXBaseSpecifier(C);
+      const CXXBaseSpecifier *B = cxcursor::getCursorCXXBaseSpecifier(C);
       return clang_getTypeDeclaration(cxtype::MakeCXType(B->getType(),
                                                          tu ));
     }
@@ -5828,7 +5830,7 @@ CXFile clang_getIncludedFile(CXCursor cursor) {
   if (cursor.kind != CXCursor_InclusionDirective)
     return 0;
   
-  InclusionDirective *ID = getCursorInclusionDirective(cursor);
+  const InclusionDirective *ID = getCursorInclusionDirective(cursor);
   return (void *)ID->getFile();
 }
 
@@ -6241,8 +6243,8 @@ MacroInfo *cxindex::getMacroInfo(const IdentifierInfo &II,
   return 0;
 }
 
-MacroInfo *cxindex::getMacroInfo(MacroDefinition *MacroDef,
-                                 CXTranslationUnit TU) {
+const MacroInfo *cxindex::getMacroInfo(const MacroDefinition *MacroDef,
+                                       CXTranslationUnit TU) {
   if (!MacroDef || !TU)
     return 0;
   const IdentifierInfo *II = MacroDef->getName();

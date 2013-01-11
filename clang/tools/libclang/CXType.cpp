@@ -635,23 +635,23 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return cxstring::createCXString("");
 
-  Decl *D = static_cast<Decl*>(C.data[0]);
+  const Decl *D = static_cast<const Decl*>(C.data[0]);
   ASTUnit *AU = cxcursor::getCursorASTUnit(C);
   ASTContext &Ctx = AU->getASTContext();
   std::string encoding;
 
-  if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D))  {
+  if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(D))  {
     if (Ctx.getObjCEncodingForMethodDecl(OMD, encoding))
       return cxstring::createCXString("?");
-  } else if (ObjCPropertyDecl *OPD = dyn_cast<ObjCPropertyDecl>(D)) 
+  } else if (const ObjCPropertyDecl *OPD = dyn_cast<ObjCPropertyDecl>(D))
     Ctx.getObjCEncodingForPropertyDecl(OPD, NULL, encoding);
-  else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+  else if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     Ctx.getObjCEncodingForFunctionDecl(FD, encoding);
   else {
     QualType Ty;
-    if (TypeDecl *TD = dyn_cast<TypeDecl>(D))
+    if (const TypeDecl *TD = dyn_cast<TypeDecl>(D))
       Ty = Ctx.getTypeDeclType(TD);
-    if (ValueDecl *VD = dyn_cast<ValueDecl>(D))
+    if (const ValueDecl *VD = dyn_cast<ValueDecl>(D))
       Ty = VD->getType();
     else return cxstring::createCXString("?");
     Ctx.getObjCEncodingForType(Ty, encoding);
