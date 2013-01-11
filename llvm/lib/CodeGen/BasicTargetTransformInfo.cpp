@@ -241,19 +241,32 @@ unsigned BasicTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
   std::pair<unsigned, MVT> SrcLT = TLI->getTypeLegalizationCost(Src);
   std::pair<unsigned, MVT> DstLT = TLI->getTypeLegalizationCost(Dst);
 
+  // Check for NOOP conversions.
+  if (SrcLT.first == DstLT.first &&
+      SrcLT.second.getSizeInBits() == DstLT.second.getSizeInBits()) {
+
+      // Bitcast between types that are legalized to the same type are free.
+      if (Opcode == Instruction::BitCast || Opcode == Instruction::Trunc)
+        return 0;
+  }
+
+  if (Opcode == Instruction::Trunc &&
+      TLI->isTruncateFree(SrcLT.second, DstLT.second))
+    return 0;
+
+  if (Opcode == Instruction::ZExt &&
+      TLI->isZExtFree(SrcLT.second, DstLT.second))
+    return 0;
+
+  // If the cast is marked as legal (or promote) then assume low cost.
+  if (TLI->isOperationLegalOrPromote(ISD, DstLT.second))
+    return 1;
+
   // Handle scalar conversions.
   if (!Src->isVectorTy() && !Dst->isVectorTy()) {
 
     // Scalar bitcasts are usually free.
     if (Opcode == Instruction::BitCast)
-      return 0;
-
-    if (Opcode == Instruction::Trunc &&
-        TLI->isTruncateFree(SrcLT.second, DstLT.second))
-      return 0;
-
-    if (Opcode == Instruction::ZExt &&
-        TLI->isZExtFree(SrcLT.second, DstLT.second))
       return 0;
 
     // Just check the op cost. If the operation is legal then assume it costs 1.
@@ -270,10 +283,6 @@ unsigned BasicTTI::getCastInstrCost(unsigned Opcode, Type *Dst,
     // If the cast is between same-sized registers, then the check is simple.
     if (SrcLT.first == DstLT.first &&
         SrcLT.second.getSizeInBits() == DstLT.second.getSizeInBits()) {
-
-      // Bitcast between types that are legalized to the same type are free.
-      if (Opcode == Instruction::BitCast || Opcode == Instruction::Trunc)
-        return 0;
 
       // Assume that Zext is done using AND.
       if (Opcode == Instruction::ZExt)
