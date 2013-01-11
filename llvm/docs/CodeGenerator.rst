@@ -15,6 +15,8 @@ The LLVM Target-Independent Code Generator
     .partial { background-color: #F88017 }
     .yes { background-color: #0F0; }
     .yes:before { content: "Y" }
+    .na { background-color: #6666FF; }
+    .na:before { content: "N/A" }
   </style>
 
 .. contents::
@@ -1746,12 +1748,14 @@ the key:
 :raw-html:`<table border="1" cellspacing="0">`
 :raw-html:`<tr>`
 :raw-html:`<th>Unknown</th>`
+:raw-html:`<th>Not Applicable</th>`
 :raw-html:`<th>No support</th>`
 :raw-html:`<th>Partial Support</th>`
 :raw-html:`<th>Complete Support</th>`
 :raw-html:`</tr>`
 :raw-html:`<tr>`
 :raw-html:`<td class="unknown"></td>`
+:raw-html:`<td class="na"></td>`
 :raw-html:`<td class="no"></td>`
 :raw-html:`<td class="partial"></td>`
 :raw-html:`<td class="yes"></td>`
@@ -1785,7 +1789,7 @@ Here is the table:
 :raw-html:`<td class="no"></td> <!-- MBlaze -->`
 :raw-html:`<td class="unknown"></td> <!-- MSP430 -->`
 :raw-html:`<td class="yes"></td> <!-- Mips -->`
-:raw-html:`<td class="no"></td> <!-- PTX -->`
+:raw-html:`<td class="yes"></td> <!-- PTX -->`
 :raw-html:`<td class="yes"></td> <!-- PowerPC -->`
 :raw-html:`<td class="yes"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
@@ -1813,7 +1817,7 @@ Here is the table:
 :raw-html:`<td class="yes"></td> <!-- MBlaze -->`
 :raw-html:`<td class="no"></td> <!-- MSP430 -->`
 :raw-html:`<td class="no"></td> <!-- Mips -->`
-:raw-html:`<td class="no"></td> <!-- PTX -->`
+:raw-html:`<td class="na"></td> <!-- PTX -->`
 :raw-html:`<td class="no"></td> <!-- PowerPC -->`
 :raw-html:`<td class="no"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
@@ -1827,7 +1831,7 @@ Here is the table:
 :raw-html:`<td class="yes"></td> <!-- MBlaze -->`
 :raw-html:`<td class="unknown"></td> <!-- MSP430 -->`
 :raw-html:`<td class="no"></td> <!-- Mips -->`
-:raw-html:`<td class="unknown"></td> <!-- PTX -->`
+:raw-html:`<td class="yes"></td> <!-- PTX -->`
 :raw-html:`<td class="yes"></td> <!-- PowerPC -->`
 :raw-html:`<td class="unknown"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
@@ -1841,7 +1845,7 @@ Here is the table:
 :raw-html:`<td class="no"></td> <!-- MBlaze -->`
 :raw-html:`<td class="unknown"></td> <!-- MSP430 -->`
 :raw-html:`<td class="yes"></td> <!-- Mips -->`
-:raw-html:`<td class="unknown"></td> <!-- PTX -->`
+:raw-html:`<td class="na"></td> <!-- PTX -->`
 :raw-html:`<td class="yes"></td> <!-- PowerPC -->`
 :raw-html:`<td class="unknown"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
@@ -1855,7 +1859,7 @@ Here is the table:
 :raw-html:`<td class="yes"></td> <!-- MBlaze -->`
 :raw-html:`<td class="no"></td> <!-- MSP430 -->`
 :raw-html:`<td class="no"></td> <!-- Mips -->`
-:raw-html:`<td class="no"></td> <!-- PTX -->`
+:raw-html:`<td class="na"></td> <!-- PTX -->`
 :raw-html:`<td class="no"></td> <!-- PowerPC -->`
 :raw-html:`<td class="no"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
@@ -1869,7 +1873,7 @@ Here is the table:
 :raw-html:`<td class="no"></td> <!-- MBlaze -->`
 :raw-html:`<td class="unknown"></td> <!-- MSP430 -->`
 :raw-html:`<td class="no"></td> <!-- Mips -->`
-:raw-html:`<td class="unknown"></td> <!-- PTX -->`
+:raw-html:`<td class="no"></td> <!-- PTX -->`
 :raw-html:`<td class="yes"></td> <!-- PowerPC -->`
 :raw-html:`<td class="unknown"></td> <!-- Sparc -->`
 :raw-html:`<td class="yes"></td> <!-- X86 -->`
