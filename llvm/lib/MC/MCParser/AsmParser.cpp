@@ -3934,7 +3934,8 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
             std::string Constraint = "=";
             ++InputIdx;
             OutputDecls.push_back(OpDecl);
-            OutputDeclsAddressOf.push_back(Operand->needAddressOf());
+            OutputDeclsAddressOf.push_back(Operand->isReg() &&
+                                           Operand->needAddressOf());
             Constraint += Operand->getConstraint().str();
             OutputConstraints.push_back(Constraint);
             AsmStrRewrites.push_back(AsmRewrite(AOK_Output,
@@ -3942,7 +3943,8 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
                                                 Operand->getNameLen()));
           } else {
             InputDecls.push_back(OpDecl);
-            InputDeclsAddressOf.push_back(Operand->needAddressOf());
+            InputDeclsAddressOf.push_back(Operand->isReg() &&
+                                          Operand->needAddressOf());
             InputConstraints.push_back(Operand->getConstraint().str());
             AsmStrRewrites.push_back(AsmRewrite(AOK_Input,
                                                 Operand->getStartLoc(),
