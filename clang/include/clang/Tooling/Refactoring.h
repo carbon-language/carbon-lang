@@ -105,35 +105,48 @@ public:
 /// FIXME: Change to a vector and deduplicate in the RefactoringTool.
 typedef std::set<Replacement, Replacement::Less> Replacements;
 
-/// \brief Apply all replacements on the Rewriter.
+/// \brief Apply all replacements in \p Replaces to the Rewriter \p Rewrite.
 ///
-/// If at least one Apply returns false, ApplyAll returns false. Every
-/// Apply will be executed independently of the result of other
-/// Apply operations.
+/// Replacement applications happen independently of the success of
+/// other applications.
+///
+/// \returns true if all replacements apply. false otherwise.
 bool applyAllReplacements(Replacements &Replaces, Rewriter &Rewrite);
 
 /// \brief A tool to run refactorings.
 ///
-/// This is a refactoring specific version of \see ClangTool.
-/// All text replacements added to getReplacements() during the run of the
-/// tool will be applied and saved after all translation units have been
-/// processed.
-class RefactoringTool {
+/// This is a refactoring specific version of \see ClangTool. FrontendActions
+/// passed to run() and runAndSave() should add replacements to
+/// getReplacements().
+class RefactoringTool : public ClangTool {
 public:
   /// \see ClangTool::ClangTool.
   RefactoringTool(const CompilationDatabase &Compilations,
                   ArrayRef<std::string> SourcePaths);
 
-  /// \brief Returns a set of replacements. All replacements added during the
-  /// run of the tool will be applied after all translation units have been
-  /// processed.
+  /// \brief Returns the set of replacements to which replacements should
+  /// be added during the run of the tool.
   Replacements &getReplacements();
 
-  /// \see ClangTool::run.
-  int run(FrontendActionFactory *ActionFactory);
+  /// \brief Call run(), apply all generated replacements, and immediately save
+  /// the results to disk.
+  ///
+  /// \returns 0 upon success. Non-zero upon failure.
+  int runAndSave(FrontendActionFactory *ActionFactory);
+
+  /// \brief Apply all stored replacements to the given Rewriter.
+  ///
+  /// Replacement applications happen independently of the success of other
+  /// applications.
+  ///
+  /// \returns true if all replacements apply. false otherwise.
+  bool applyAllReplacements(Rewriter &Rewrite);
 
 private:
-  ClangTool Tool;
+  /// \brief Write all refactored files to disk.
+  int saveRewrittenFiles(Rewriter &Rewrite);
+
+private:
   Replacements Replace;
 };
 
@@ -149,4 +162,3 @@ Replacement::Replacement(SourceManager &Sources, const Node &NodeToReplace,
 } // end namespace clang
 
 #endif // end namespace LLVM_CLANG_TOOLING_REFACTORING_H
-

@@ -52,7 +52,11 @@ public:
   iterator end() const { return Buffer.end(); }
   unsigned size() const { return Buffer.size(); }
 
-  raw_ostream &write(raw_ostream &) const;
+  /// \brief Write to \p Stream the result of applying all changes to the
+  /// original buffer.
+  ///
+  /// The original buffer is not actually changed.
+  raw_ostream &write(raw_ostream &Stream) const;
 
   /// RemoveText - Remove the specified text.
   void RemoveText(unsigned OrigOffset, unsigned Size,

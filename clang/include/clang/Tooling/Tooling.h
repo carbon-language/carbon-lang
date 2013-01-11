@@ -179,6 +179,8 @@ class ClangTool {
   ClangTool(const CompilationDatabase &Compilations,
             ArrayRef<std::string> SourcePaths);
 
+  virtual ~ClangTool() {}
+
   /// \brief Map a virtual file to be used while running the tool.
   ///
   /// \param FilePath The path at which the content will be mapped.
@@ -195,7 +197,7 @@ class ClangTool {
   /// \param ActionFactory Factory generating the frontend actions. The function
   /// takes ownership of this parameter. A new action is generated for every
   /// processed translation unit.
-  int run(FrontendActionFactory *ActionFactory);
+  virtual int run(FrontendActionFactory *ActionFactory);
 
   /// \brief Returns the file manager used in the tool.
   ///
