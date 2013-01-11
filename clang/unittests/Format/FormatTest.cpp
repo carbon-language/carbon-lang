@@ -1108,6 +1108,10 @@ TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
                "}");
 }
 
+TEST_F(FormatTest, IncorrectIf) {
+  verifyFormat("if {\n  foo;\n  foo();\n}");
+}
+
 TEST_F(FormatTest, DoesNotTouchUnwrappedLinesWithErrors) {
   verifyFormat("namespace {\n"
                "class Foo {  Foo  ( }; }  // comment");

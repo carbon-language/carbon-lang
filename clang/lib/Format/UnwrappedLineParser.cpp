@@ -404,7 +404,8 @@ void UnwrappedLineParser::parseParens() {
 void UnwrappedLineParser::parseIfThenElse() {
   assert(FormatTok.Tok.is(tok::kw_if) && "'if' expected");
   nextToken();
-  parseParens();
+  if (FormatTok.Tok.is(tok::l_paren))
+    parseParens();
   bool NeedsUnwrappedLine = false;
   if (FormatTok.Tok.is(tok::l_brace)) {
     parseBlock();
