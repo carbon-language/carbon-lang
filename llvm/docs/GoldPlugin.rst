@@ -1,5 +1,3 @@
-.. _gold-plugin:
-
 ====================
 The LLVM gold plugin
 ====================

@@ -1,5 +1,3 @@
-.. _userguides:
-
 User Guides
 ===========
 
@@ -26,18 +24,18 @@ User Guides
    Passes
    YamlIO
 
-* :ref:`getting_started`
+* :doc:`GettingStarted`
     
    Discusses how to get up and running quickly with the LLVM infrastructure.
    Everything from unpacking and compilation of the distribution to execution
    of some tools.
     
-* :ref:`building-with-cmake`
+* :doc:`CMake`
 
    An addendum to the main Getting Started guide for those using the `CMake
    build system <http://www.cmake.org>`_.
 
-* :ref:`how_to_build_on_arm`
+* :doc:`HowToBuildOnARM`
 
    Notes on building and testing LLVM/Clang on ARM.
 
@@ -51,11 +49,11 @@ User Guides
    Tutorials about using LLVM. Includes a tutorial about making a custom
    language with LLVM.
 
-* :ref:`developer_policy`
+* :doc:`DeveloperPolicy`
 
    The LLVM project's policy towards developers and their contributions.
 
-* :ref:`LLVM Command Guide <commands>`
+* :doc:`LLVM Command Guide <CommandGuide/index>`
 
    A reference manual for the LLVM command line utilities ("man" pages for LLVM
    tools).
@@ -64,7 +62,7 @@ User Guides
 
    A list of optimizations and analyses implemented in LLVM.
 
-* :ref:`faq`
+* :doc:`FAQ`
 
    A list of common questions and problems and their solutions.
     
@@ -72,7 +70,7 @@ User Guides
 
    This describes new features, known bugs, and other limitations.
 
-* :ref:`how-to-submit-a-bug-report`
+* :doc:`HowToSubmitABug`
     
    Instructions for properly submitting information about any bugs you run into
    in the LLVM system.
@@ -89,19 +87,19 @@ User Guides
 
    Instructions for building the clang front-end from source.
     
-* :ref:`packaging`
+* :doc:`Packaging`
 
    Advice on packaging LLVM into a distribution.
     
-* :ref:`lexicon`
+* :doc:`Lexicon`
 
    Definition of acronyms, terms and concepts used in LLVM.
 
-* :ref:`how_to_add_a_builder`
+* :doc:`HowToAddABuilder`
 
    Instructions for adding new builder to LLVM buildbot master.
     
-* :ref:`yamlio`
+* :doc:`YamlIO`
 
    A reference guide for using LLVM's YAML I/O library.
 

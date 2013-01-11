@@ -196,7 +196,7 @@ Build LLVM
 
 Build ``Debug``, ``Release+Asserts``, and ``Release`` versions
 of ``llvm`` on all supported platforms.  Directions to build ``llvm``
-are :ref:`here <getting_started>`.
+are :doc:`here <GettingStarted>`.
 
 Build Clang Binary Distribution
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

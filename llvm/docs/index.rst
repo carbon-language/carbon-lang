@@ -1,5 +1,3 @@
-.. _contents:
-
 Overview
 ========
 
@@ -18,7 +16,7 @@ targeted at different audiences:
 * **Design & Overview**
 
  Several introductory papers and presentations are available at
- :ref:`design_and_overview`.
+ :doc:`design_and_overview`.
 
 * **Publications**
 
@@ -26,7 +24,7 @@ targeted at different audiences:
 
 * **User Guides**
 
- Those new to the LLVM system should first visit the :ref:`userguides`.
+ Those new to the LLVM system should first visit the :doc:`userguides`.
 
  NOTE: If you are a user who is only interested in using LLVM-based
  compilers, you should look into `Clang <http://clang.llvm.org>`_ or
@@ -37,21 +35,21 @@ targeted at different audiences:
 * **API Clients**
 
  Developers of applications which use LLVM as a library should visit the
- :ref:`programming`.
+ :doc:`programming`.
 
 * **Subsystems**
 
  API clients and LLVM developers may be interested in the
- :ref:`subsystems` documentation.
+ :doc:`subsystems` documentation.
 
 * **Development Process**
 
  Additional documentation on the LLVM project can be found at
- :ref:`development_process`.
+ :doc:`development_process`.
 
 * **Mailing Lists**
 
- For more information, consider consulting the LLVM :ref:`mailing_lists`.
+ For more information, consider consulting the LLVM :doc:`mailing_lists`.
 
 .. toctree::
    :maxdepth: 2

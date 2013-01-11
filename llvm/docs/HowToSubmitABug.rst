@@ -1,5 +1,3 @@
-.. _how-to-submit-a-bug-report:
-
 ================================
 How to submit an LLVM bug report
 ================================

@@ -1,5 +1,3 @@
-.. _alias_analysis:
-
 ==================================
 LLVM Alias Analysis Infrastructure
 ==================================

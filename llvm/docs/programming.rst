@@ -1,5 +1,3 @@
-.. _programming:
-
 Programming Documentation
 =========================
 
@@ -14,12 +12,12 @@ Programming Documentation
    HowToSetUpLLVMStyleRTTI
    ProgrammersManual
 
-* `LLVM Language Reference Manual <LangRef.html>`_
+* :doc:`LLVM Language Reference Manual <LangRef>`
 
   Defines the LLVM intermediate representation and the assembly form of the
   different nodes.
 
-* :ref:`atomics`
+* :doc:`Atomics`
 
   Information about LLVM's concurrency model.
 
@@ -28,11 +26,11 @@ Programming Documentation
   Introduction to the general layout of the LLVM sourcebase, important classes
   and APIs, and some tips & tricks.
 
-* :ref:`commandline`
+* :doc:`CommandLine`
 
   Provides information on using the command line parsing library.
 
-* :ref:`coding_standards`
+* :doc:`CodingStandards`
 
   Details the LLVM coding standards and provides useful information on writing
   efficient C++ code.
@@ -42,7 +40,7 @@ Programming Documentation
   How to make ``isa<>``, ``dyn_cast<>``, etc. available for clients of your
   class hierarchy.
 
-* :ref:`extending_llvm`
+* :doc:`ExtendingLLVM`
 
   Look here to see how to add instructions and intrinsics to LLVM.
 
@@ -53,6 +51,6 @@ Programming Documentation
 
 * `ViewVC Repository Browser <http://llvm.org/viewvc/>`_
 
-* :ref:`compiler_writer_info`
+* :doc:`CompilerWriterInfo`
 
   A list of helpful links for compiler writers.

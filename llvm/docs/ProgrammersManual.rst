@@ -77,8 +77,8 @@ Here are some useful links:
    (even better, get the book)
    <http://www.mindview.net/Books/TICPP/ThinkingInCPP2e.html>`_.
 
-You are also encouraged to take a look at the :ref:`LLVM Coding Standards
-<coding_standards>` guide which focuses on how to write maintainable code more
+You are also encouraged to take a look at the :doc:`LLVM Coding Standards
+<CodingStandards>` guide which focuses on how to write maintainable code more
 than where to put your curly braces.
 
 .. _resources:
@@ -178,8 +178,8 @@ rarely have to include this file directly).
 
 These five templates can be used with any classes, whether they have a v-table
 or not.  If you want to add support for these templates, see the document
-:ref:`How to set up LLVM-style RTTI for your class hierarchy
-<how-to-set-up-llvm-style-rtti>`
+:doc:`How to set up LLVM-style RTTI for your class hierarchy
+<HowToSetUpLLVMStyleRTTI>`
 
 .. _string_apis:
 

@@ -1,5 +1,3 @@
-.. _code_generator:
-
 ==========================================
 The LLVM Target-Independent Code Generator
 ==========================================

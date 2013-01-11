@@ -1,5 +1,3 @@
-.. _yaml2obj:
-
 yaml2obj
 ========
 

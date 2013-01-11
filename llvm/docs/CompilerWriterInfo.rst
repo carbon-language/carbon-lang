@@ -1,5 +1,3 @@
-.. _compiler_writer_info:
-
 ========================================================
 Architecture & Platform Information for Compiler Writers
 ========================================================

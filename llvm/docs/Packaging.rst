@@ -1,5 +1,3 @@
-.. _packaging:
-
 ========================
 Advice on Packaging LLVM
 ========================

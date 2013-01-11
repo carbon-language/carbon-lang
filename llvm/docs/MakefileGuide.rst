@@ -1,5 +1,3 @@
-.. _makefile_guide:
-
 ===================
 LLVM Makefile Guide
 ===================

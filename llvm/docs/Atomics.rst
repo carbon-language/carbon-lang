@@ -1,5 +1,3 @@
-.. _atomics:
-
 ==============================================
 LLVM Atomic Instructions and Concurrency Guide
 ==============================================

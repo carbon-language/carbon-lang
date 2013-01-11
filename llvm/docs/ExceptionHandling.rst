@@ -1,5 +1,3 @@
-.. _exception_handling:
-
 ==========================
 Exception Handling in LLVM
 ==========================

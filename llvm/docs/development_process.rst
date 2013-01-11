@@ -1,5 +1,3 @@
-.. _development_process:
-
 Development Process Documentation
 =================================
 
@@ -11,7 +9,7 @@ Development Process Documentation
    LLVMBuild
    HowToReleaseLLVM
 
-* :ref:`projects`
+* :doc:`Projects`
 
   How-to guide and templates for new projects that *use* the LLVM
   infrastructure.  The templates (directory organization, Makefiles, and test
@@ -23,7 +21,7 @@ Development Process Documentation
   Describes the LLVMBuild organization and files used by LLVM to specify
   component descriptions.
 
-* :ref:`makefile_guide`
+* :doc:`MakefileGuide`
 
   Describes how the LLVM makefiles work and how to use them.
 

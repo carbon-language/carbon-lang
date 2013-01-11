@@ -1,5 +1,3 @@
-.. _tablegen:
-
 =====================
 TableGen Fundamentals
 =====================

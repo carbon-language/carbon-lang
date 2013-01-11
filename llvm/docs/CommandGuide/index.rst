@@ -1,5 +1,3 @@
-.. _commands:
-
 LLVM Command Guide
 ------------------
 

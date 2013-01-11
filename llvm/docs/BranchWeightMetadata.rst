@@ -1,5 +1,3 @@
-.. _branch_weight:
-
 ===========================
 LLVM Branch Weight Metadata
 ===========================

@@ -1,5 +1,3 @@
-.. _developer_policy:
-
 =====================
 LLVM Developer Policy
 =====================

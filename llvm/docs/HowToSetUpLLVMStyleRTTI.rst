@@ -1,5 +1,3 @@
-.. _how-to-set-up-llvm-style-rtti:
-
 ======================================================
 How to set up LLVM-style RTTI for your class hierarchy
 ======================================================

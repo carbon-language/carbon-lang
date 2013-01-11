@@ -1,5 +1,3 @@
-.. _bitcode_format:
-
 .. role:: raw-html(raw)
    :format: html
 

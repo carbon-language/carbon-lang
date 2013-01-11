@@ -1,5 +1,3 @@
-.. _design_and_overview:
-
 LLVM Design & Overview
 ======================
 
@@ -31,7 +29,7 @@ LLVM Design & Overview
 
   More details (quite old now).
 
-* :ref:`gep`
+* :doc:`GetElementPtr`
 
   Answers to some very frequent questions about LLVM's most frequently
   misunderstood instruction.

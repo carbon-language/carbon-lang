@@ -1,5 +1,3 @@
-.. _coding_standards:
-
 =====================
 LLVM Coding Standards
 =====================

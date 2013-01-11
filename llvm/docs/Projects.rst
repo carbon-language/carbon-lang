@@ -1,5 +1,3 @@
-.. _projects:
-
 ========================
 Creating an LLVM Project
 ========================

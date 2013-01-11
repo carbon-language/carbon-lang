@@ -1,5 +1,3 @@
-.. _debugging-jited-code:
-
 ==============================
 Debugging JIT-ed Code With GDB
 ==============================

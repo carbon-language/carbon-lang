@@ -1,5 +1,3 @@
-.. _segmented_stacks:
-
 ========================
 Segmented Stacks in LLVM
 ========================

@@ -1,5 +1,3 @@
-.. _marked_up_disassembly:
-
 =======================================
 LLVM's Optional Rich Disassembly Output
 =======================================
