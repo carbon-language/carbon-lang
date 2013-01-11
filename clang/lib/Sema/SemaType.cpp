@@ -1996,6 +1996,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       SemaRef.Diag(OwnedTagDecl->getLocation(),
              diag::err_type_defined_in_alias_template)
         << SemaRef.Context.getTypeDeclType(OwnedTagDecl);
+      D.setInvalidType(true);
       break;
     case Declarator::TypeNameContext:
     case Declarator::TemplateParamContext:
@@ -2006,6 +2007,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       SemaRef.Diag(OwnedTagDecl->getLocation(),
              diag::err_type_defined_in_type_specifier)
         << SemaRef.Context.getTypeDeclType(OwnedTagDecl);
+      D.setInvalidType(true);
       break;
     case Declarator::PrototypeContext:
     case Declarator::ObjCParameterContext:
@@ -2016,6 +2018,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       SemaRef.Diag(OwnedTagDecl->getLocation(),
                    diag::err_type_defined_in_param_type)
         << SemaRef.Context.getTypeDeclType(OwnedTagDecl);
+      D.setInvalidType(true);
       break;
     case Declarator::ConditionContext:
       // C++ 6.4p2:
@@ -2023,6 +2026,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
       // a new class or enumeration.
       SemaRef.Diag(OwnedTagDecl->getLocation(),
                    diag::err_type_defined_in_condition);
+      D.setInvalidType(true);
       break;
     }
   }

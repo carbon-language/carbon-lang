@@ -105,9 +105,7 @@ namespace TagName {
   template<typename Z> using S = struct { int n; }; // expected-error {{can not be defined}}
   template<typename Z> using T = class { int n; }; // expected-error {{can not be defined}}
   template<typename Z> using U = enum { a, b, c }; // expected-error {{can not be defined}}
-  template<typename Z> using V = struct V { int n; }; // expected-error {{redefinition of 'V' as different kind of symbol}} \
-                                                         expected-error {{'TagName::V' can not be defined in a type alias template}} \
-                                                         expected-note {{previous definition is here}}
+  template<typename Z> using V = struct V { int n; }; // expected-error {{'TagName::V' can not be defined in a type alias template}}
 }
 
 namespace StdExample {
