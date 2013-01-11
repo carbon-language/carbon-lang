@@ -421,7 +421,7 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
 
   // Flip the chunk_state atomically to avoid race on double-free.
   u8 old_chunk_state = atomic_exchange((atomic_uint8_t*)m, CHUNK_QUARANTINE,
-                                       memory_order_acq_rel);
+                                       memory_order_relaxed);
 
   if (old_chunk_state == CHUNK_QUARANTINE)
     ReportDoubleFree((uptr)ptr, stack);
