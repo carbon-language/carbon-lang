@@ -38,6 +38,7 @@ using namespace __sanitizer;  // NOLINT
 # define UNLIKELY(x) (x)
 # define UNUSED
 # define USED
+# define PREFETCH(x) /* _mm_prefetch(x, _MM_HINT_NTA) */
 #else  // _MSC_VER
 # define ALWAYS_INLINE __attribute__((always_inline))
 # define ALIAS(x) __attribute__((alias(x)))
@@ -51,6 +52,7 @@ using namespace __sanitizer;  // NOLINT
 # define UNLIKELY(x)   __builtin_expect(!!(x), 0)
 # define UNUSED __attribute__((unused))
 # define USED __attribute__((used))
+# define PREFETCH(x) __builtin_prefetch(x)
 #endif  // _MSC_VER
 
 #if defined(_WIN32)
