@@ -336,6 +336,10 @@ static void printSourceLine(raw_ostream &S, StringRef LineContents) {
   S << '\n';
 }
 
+static bool isNonASCII(char c) {
+  return c & 0x80;
+}
+
 void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
                          bool ShowColors) const {
   // Display colors only if OS supports colors.
@@ -392,18 +396,17 @@ void SMDiagnostic::print(const char *ProgName, raw_ostream &S,
   if (LineNo == -1 || ColumnNo == -1)
     return;
 
-  // FIXME: If there are multibyte characters in the source, all our ranges will
-  // be wrong. To do this properly, we'll need a byte-to-column map like Clang's
-  // TextDiagnostic. For now, we'll just handle tabs by expanding them later,
-  // and bail out rather than show incorrect ranges and misaligned fixits for
-  // any other odd characters.
-  SmallString<128> PrintableLine(LineContents);
-  std::replace(PrintableLine.begin(), PrintableLine.end(), '\t', ' ');
-  size_t NumColumns = (size_t)llvm::sys::locale::columnWidth(PrintableLine);
-  if (NumColumns != PrintableLine.size()) {
+  // FIXME: If there are multibyte or multi-column characters in the source, all
+  // our ranges will be wrong. To do this properly, we'll need a byte-to-column
+  // map like Clang's TextDiagnostic. For now, we'll just handle tabs by
+  // expanding them later, and bail out rather than show incorrect ranges and
+  // misaligned fixits for any other odd characters.
+  if (std::find_if(LineContents.begin(), LineContents.end(), isNonASCII) !=
+      LineContents.end()) {
     printSourceLine(S, LineContents);
     return;
   }
+  size_t NumColumns = LineContents.size();
 
   // Build the line with the caret and ranges.
   std::string CaretLine(NumColumns+1, ' ');
