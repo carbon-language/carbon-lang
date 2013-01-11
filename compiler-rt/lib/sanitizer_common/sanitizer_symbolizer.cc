@@ -68,7 +68,18 @@ static const char *ExtractInt(const char *str, const char *delims,
   char *buff;
   const char *ret = ExtractToken(str, delims, &buff);
   if (buff != 0) {
-    *result = internal_atoll(buff);
+    *result = (int)internal_atoll(buff);
+  }
+  InternalFree(buff);
+  return ret;
+}
+
+static const char *ExtractUptr(const char *str, const char *delims,
+                               uptr *result) {
+  char *buff;
+  const char *ret = ExtractToken(str, delims, &buff);
+  if (buff != 0) {
+    *result = (uptr)internal_atoll(buff);
   }
   InternalFree(buff);
   return ret;
@@ -98,26 +109,93 @@ class ExternalSymbolizer {
     CHECK_NE(output_fd_, kInvalidFd);
   }
 
-  // Returns the number of frames for a given address, or zero if
-  // symbolization failed.
-  uptr SymbolizeCode(uptr addr, const char *module_name, uptr module_offset,
-                     AddressInfo *frames, uptr max_frames) {
+  char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
     CHECK(module_name);
-    // FIXME: Make sure this buffer always has sufficient size to hold
-    // large debug info.
-    static const int kMaxBufferSize = 4096;
-    InternalScopedBuffer<char> buffer(kMaxBufferSize);
-    char *buffer_data = buffer.data();
-    internal_snprintf(buffer_data, kMaxBufferSize, "%s 0x%zx\n",
-                      module_name, module_offset);
-    if (!writeToSymbolizer(buffer_data, internal_strlen(buffer_data)))
+    internal_snprintf(buffer_, kBufferSize, "%s%s 0x%zx\n",
+                      is_data ? "DATA " : "", module_name, module_offset);
+    if (!writeToSymbolizer(buffer_, internal_strlen(buffer_)))
       return 0;
+    if (!readFromSymbolizer(buffer_, kBufferSize))
+      return 0;
+    return buffer_;
+  }
 
-    if (!readFromSymbolizer(buffer_data, kMaxBufferSize))
+  bool Restart() {
+    if (times_restarted_ >= kMaxTimesRestarted) return false;
+    times_restarted_++;
+    internal_close(input_fd_);
+    internal_close(output_fd_);
+    return StartSymbolizerSubprocess(path_, &input_fd_, &output_fd_);
+  }
+
+ private:
+  bool readFromSymbolizer(char *buffer, uptr max_length) {
+    if (max_length == 0)
+      return true;
+    uptr read_len = 0;
+    while (true) {
+      uptr just_read = internal_read(input_fd_, buffer + read_len,
+                                     max_length - read_len);
+      // We can't read 0 bytes, as we don't expect external symbolizer to close
+      // its stdout.
+      if (just_read == 0 || just_read == (uptr)-1) {
+        Report("WARNING: Can't read from symbolizer at fd %d\n", input_fd_);
+        return false;
+      }
+      read_len += just_read;
+      // Empty line marks the end of symbolizer output.
+      if (read_len >= 2 && buffer[read_len - 1] == '\n' &&
+                           buffer[read_len - 2] == '\n') {
+        break;
+      }
+    }
+    return true;
+  }
+
+  bool writeToSymbolizer(const char *buffer, uptr length) {
+    if (length == 0)
+      return true;
+    uptr write_len = internal_write(output_fd_, buffer, length);
+    if (write_len == 0 || write_len == (uptr)-1) {
+      Report("WARNING: Can't write to symbolizer at fd %d\n", output_fd_);
+      return false;
+    }
+    return true;
+  }
+
+  const char *path_;
+  int input_fd_;
+  int output_fd_;
+
+  static const uptr kBufferSize = 16 * 1024;
+  char buffer_[kBufferSize];
+
+  static const uptr kMaxTimesRestarted = 5;
+  uptr times_restarted_;
+};
+
+static LowLevelAllocator symbolizer_allocator;  // Linker initialized.
+
+class Symbolizer {
+ public:
+  uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
+    if (max_frames == 0)
       return 0;
-    const char *str = buffer_data;
-    uptr frame_id;
-    CHECK_GT(max_frames, 0);
+    LoadedModule *module = FindModuleForAddress(addr);
+    if (module == 0)
+      return 0;
+    const char *module_name = module->full_name();
+    uptr module_offset = addr - module->base_address();
+    const char *str = SendCommand(false, module_name, module_offset);
+    if (str == 0) {
+      // External symbolizer was not initialized or failed. Fill only data
+      // about module name and offset.
+      AddressInfo *info = &frames[0];
+      info->Clear();
+      info->FillAddressAndModuleInfo(addr, module_name, module_offset);
+      return 1;
+    }
+    uptr frame_id = 0;
     for (frame_id = 0; frame_id < max_frames; frame_id++) {
       AddressInfo *info = &frames[frame_id];
       char *function_name = 0;
@@ -160,110 +238,23 @@ class ExternalSymbolizer {
     return frame_id;
   }
 
-  bool Restart() {
-    if (times_restarted_ >= kMaxTimesRestarted) return false;
-    times_restarted_++;
-    internal_close(input_fd_);
-    internal_close(output_fd_);
-    return StartSymbolizerSubprocess(path_, &input_fd_, &output_fd_);
-  }
-
- private:
-  bool readFromSymbolizer(char *buffer, uptr max_length) {
-    if (max_length == 0)
-      return true;
-    uptr read_len = 0;
-    while (true) {
-      uptr just_read = internal_read(input_fd_, buffer + read_len,
-                                     max_length - read_len);
-      // We can't read 0 bytes, as we don't expect external symbolizer to close
-      // its stdout.
-      if (just_read == 0 || just_read == (uptr)-1) {
-        Report("WARNING: Can't read from symbolizer at fd %d\n", input_fd_);
-        return false;
-      }
-      read_len += just_read;
-      // Empty line marks the end of symbolizer output.
-      if (read_len >= 2 && buffer[read_len - 1] == '\n' &&
-                           buffer[read_len - 2] == '\n') {
-        break;
-      }
-    }
-    return true;
-  }
-  bool writeToSymbolizer(const char *buffer, uptr length) {
-    if (length == 0)
-      return true;
-    uptr write_len = internal_write(output_fd_, buffer, length);
-    if (write_len == 0 || write_len == (uptr)-1) {
-      Report("WARNING: Can't write to symbolizer at fd %d\n", output_fd_);
-      return false;
-    }
-    return true;
-  }
-
-  const char *path_;
-  int input_fd_;
-  int output_fd_;
-
-  static const uptr kMaxTimesRestarted = 5;
-  uptr times_restarted_;
-};
-
-static LowLevelAllocator symbolizer_allocator;  // Linker initialized.
-
-class Symbolizer {
- public:
-  uptr SymbolizeCode(uptr addr, AddressInfo *frames, uptr max_frames) {
-    if (max_frames == 0)
-      return 0;
-    LoadedModule *module = FindModuleForAddress(addr);
-    if (module == 0)
-      return 0;
-    const char *module_name = module->full_name();
-    uptr module_offset = addr - module->base_address();
-    uptr actual_frames = 0;
-    if (external_symbolizer_ == 0) {
-      ReportExternalSymbolizerError(
-          "WARNING: Trying to symbolize code, but external "
-          "symbolizer is not initialized!\n");
-    } else {
-      while (true) {
-        actual_frames = external_symbolizer_->SymbolizeCode(
-            addr, module_name, module_offset, frames, max_frames);
-        if (actual_frames > 0) {
-          // Symbolization was successful.
-          break;
-        }
-        // Try to restart symbolizer subprocess. If we don't succeed, forget
-        // about it and don't try to use it later.
-        if (!external_symbolizer_->Restart()) {
-          ReportExternalSymbolizerError(
-              "WARNING: Failed to use and restart external symbolizer!\n");
-          external_symbolizer_ = 0;
-          break;
-        }
-      }
-    }
-    if (external_symbolizer_ == 0) {
-      // External symbolizer was not initialized or failed. Fill only data
-      // about module name and offset.
-      AddressInfo *info = &frames[0];
-      info->Clear();
-      info->FillAddressAndModuleInfo(addr, module_name, module_offset);
-      return 1;
-    }
-    // Otherwise, the data was filled by external symbolizer.
-    return actual_frames;
-  }
-
-  bool SymbolizeData(uptr addr, AddressInfo *frame) {
+  bool SymbolizeData(uptr addr, DataInfo *info) {
     LoadedModule *module = FindModuleForAddress(addr);
     if (module == 0)
       return false;
     const char *module_name = module->full_name();
     uptr module_offset = addr - module->base_address();
-    frame->FillAddressAndModuleInfo(addr, module_name, module_offset);
+    internal_memset(info, 0, sizeof(*info));
+    info->address = addr;
+    info->module = internal_strdup(module_name);
+    info->module_offset = module_offset;
+    const char *str = SendCommand(true, module_name, module_offset);
+    if (str == 0)
+      return true;
+    str = ExtractToken(str, "\n", &info->name);
+    str = ExtractUptr(str, " ", &info->start);
+    str = ExtractUptr(str, "\n", &info->size);
+    info->start += module->base_address();
     return true;
   }
 
@@ -278,6 +269,29 @@ class Symbolizer {
   }
 
  private:
+  char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
+    if (external_symbolizer_ == 0) {
+      ReportExternalSymbolizerError(
+          "WARNING: Trying to symbolize code, but external "
+          "symbolizer is not initialized!\n");
+      return 0;
+    }
+    for (;;) {
+      char *reply = external_symbolizer_->SendCommand(is_data, module_name,
+          module_offset);
+      if (reply)
+        return reply;
+      // Try to restart symbolizer subprocess. If we don't succeed, forget
+      // about it and don't try to use it later.
+      if (!external_symbolizer_->Restart()) {
+        ReportExternalSymbolizerError(
+            "WARNING: Failed to use and restart external symbolizer!\n");
+        external_symbolizer_ = 0;
+        return 0;
+      }
+    }
+  }
+
   LoadedModule *FindModuleForAddress(uptr address) {
     if (modules_ == 0) {
       modules_ = (LoadedModule*)(symbolizer_allocator.Allocate(
@@ -318,8 +332,8 @@ uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames) {
   return symbolizer.SymbolizeCode(address, frames, max_frames);
 }
 
-bool SymbolizeData(uptr address, AddressInfo *frame) {
-  return symbolizer.SymbolizeData(address, frame);
+bool SymbolizeData(uptr address, DataInfo *info) {
+  return symbolizer.SymbolizeData(address, info);
 }
 
 bool InitializeExternalSymbolizer(const char *path_to_symbolizer) {

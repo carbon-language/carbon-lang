@@ -53,12 +53,21 @@ struct AddressInfo {
   }
 };
 
+struct DataInfo {
+  uptr address;
+  char *module;
+  uptr module_offset;
+  char *name;
+  uptr start;
+  uptr size;
+};
+
 // Fills at most "max_frames" elements of "frames" with descriptions
 // for a given address (in all inlined functions). Returns the number
 // of descriptions actually filled.
 // This function should NOT be called from two threads simultaneously.
 uptr SymbolizeCode(uptr address, AddressInfo *frames, uptr max_frames);
-bool SymbolizeData(uptr address, AddressInfo *frame);
+bool SymbolizeData(uptr address, DataInfo *info);
 
 // Attempts to demangle the provided C++ mangled name.
 const char *Demangle(const char *Name);

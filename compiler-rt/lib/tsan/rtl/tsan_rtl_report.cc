@@ -277,22 +277,9 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
     return;
   }
 #endif
-  ReportStack *symb = SymbolizeData(addr);
-  if (symb) {
-    void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
-    ReportLocation *loc = new(mem) ReportLocation();
+  ReportLocation *loc = SymbolizeData(addr);
+  if (loc) {
     rep_->locs.PushBack(loc);
-    loc->type = ReportLocationGlobal;
-    loc->addr = addr;
-    loc->size = size;
-    loc->module = symb->module ? internal_strdup(symb->module) : 0;
-    loc->offset = symb->offset;
-    loc->tid = 0;
-    loc->name = symb->func ? internal_strdup(symb->func) : 0;
-    loc->file = symb->file ? internal_strdup(symb->file) : 0;
-    loc->line = symb->line;
-    loc->stack = 0;
-    internal_free(symb);
     return;
   }
 }

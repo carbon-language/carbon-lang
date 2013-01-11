@@ -104,9 +104,8 @@ static void PrintMop(const ReportMop *mop, bool first) {
 static void PrintLocation(const ReportLocation *loc) {
   char thrbuf[kThreadBufSize];
   if (loc->type == ReportLocationGlobal) {
-    Printf("  Location is global '%s' of size %zu at %zx %s:%d (%s+%p)\n\n",
-               loc->name, loc->size, loc->addr, loc->file, loc->line,
-               loc->module, loc->offset);
+    Printf("  Location is global '%s' of size %zu at %zx (%s+%p)\n\n",
+               loc->name, loc->size, loc->addr, loc->module, loc->offset);
   } else if (loc->type == ReportLocationHeap) {
     char thrbuf[kThreadBufSize];
     Printf("  Location is heap block of size %zu at %p allocated by %s:\n",

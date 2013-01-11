@@ -35,7 +35,7 @@ bool IsExpectedReport(uptr addr, uptr size) {
 void internal_start_thread(void(*func)(void*), void *arg) {
 }
 
-ReportStack *SymbolizeData(uptr addr) {
+ReportLocation *SymbolizeData(uptr addr) {
   return 0;
 }
 
