@@ -55,6 +55,8 @@ static cl::opt<bool>
 Demangle("demangle", cl::init(true),
          cl::desc("Demangle function names"));
 
+static const std::string kSymbolizerBadString = "??";
+
 static StringRef ToolInvocationPath;
 
 static bool error(error_code ec) {
@@ -96,7 +98,9 @@ class ModuleInfo {
     // Override function name from symbol table if necessary.
     if (PrintFunctions && UseSymbolTable) {
       std::string Function;
-      if (getFunctionNameFromSymbolTable(ModuleOffset, Function)) {
+      uint64_t Start, Size;
+      if (getNameFromSymbolTable(SymbolRef::ST_Function,
+                                 ModuleOffset, Function, Start, Size)) {
         patchFunctionNameInDILineInfo(Function, LineInfo);
       }
     }
@@ -121,7 +125,9 @@ class ModuleInfo {
         DILineInfo LineInfo = InlinedContext.getFrame(i);
         if (i == n - 1) {
           std::string Function;
-          if (getFunctionNameFromSymbolTable(ModuleOffset, Function)) {
+          uint64_t Start, Size;
+          if (getNameFromSymbolTable(SymbolRef::ST_Function,
+                                     ModuleOffset, Function, Start, Size)) {
             patchFunctionNameInDILineInfo(Function, LineInfo);
           }
         }
@@ -132,9 +138,18 @@ class ModuleInfo {
     return InlinedContext;
   }
 
+  bool symbolizeData(uint64_t ModuleOffset, std::string &Name,
+                     uint64_t &Start, uint64_t &Size) const {
+    return getNameFromSymbolTable(SymbolRef::ST_Data,
+                                  ModuleOffset, Name, Start, Size);
+  }
+
  private:
-  bool getFunctionNameFromSymbolTable(uint64_t Address,
-                                      std::string &FunctionName) const {
+  bool getNameFromSymbolTable(SymbolRef::Type Type,
+                              uint64_t Address,
+                              std::string &Name,
+                              uint64_t &Addr,
+                              uint64_t &Size) const {
     assert(Module);
     error_code ec;
     for (symbol_iterator si = Module->begin_symbols(),
@@ -152,16 +167,37 @@ class ModuleInfo {
       // FIXME: If a function has alias, there are two entries in symbol table
       // with same address size. Make sure we choose the correct one.
       if (SymbolAddress <= Address && Address < SymbolAddress + SymbolSize &&
-          SymbolType == SymbolRef::ST_Function) {
-        StringRef Name;
-        if (error(si->getName(Name))) continue;
-        FunctionName = Name.str();
+          SymbolType == Type) {
+        StringRef SymbolName;
+        if (error(si->getName(SymbolName))) continue;
+        Name = SymbolName.str();
+        Addr = SymbolAddress;
+        Size = SymbolSize;
         return true;
       }
     }
     return false;
   }
 };
+
+#if !defined(_MSC_VER)
+// Assume that __cxa_demangle is provided by libcxxabi (except for Windows).
+extern "C" char *__cxa_demangle(const char *mangled_name, char *output_buffer,
+                                size_t *length, int *status);
+#endif
+
+void DemangleName(std::string &Name) {
+#if !defined(_MSC_VER)
+  if (!Demangle)
+    return;
+  int status = 0;
+  char *DemangledName = __cxa_demangle(Name.c_str(), 0, 0, &status);
+  if (status != 0)
+    return;
+  Name = DemangledName;
+  free(DemangledName);
+#endif
+}
 
 typedef std::map<std::string, ModuleInfo*> ModuleMapTy;
 typedef ModuleMapTy::iterator ModuleMapIter;
@@ -226,32 +262,15 @@ static ModuleInfo *getOrCreateModuleInfo(const std::string &ModuleName) {
   return Info;
 }
 
-#if !defined(_MSC_VER)
-// Assume that __cxa_demangle is provided by libcxxabi (except for Windows).
-extern "C" char *__cxa_demangle(const char *mangled_name, char *output_buffer,
-                                size_t *length, int *status);
-#endif
-
 static void printDILineInfo(DILineInfo LineInfo) {
   // By default, DILineInfo contains "<invalid>" for function/filename it
   // cannot fetch. We replace it to "??" to make our output closer to addr2line.
   static const std::string kDILineInfoBadString = "<invalid>";
-  static const std::string kSymbolizerBadString = "??";
   if (PrintFunctions) {
     std::string FunctionName = LineInfo.getFunctionName();
     if (FunctionName == kDILineInfoBadString)
       FunctionName = kSymbolizerBadString;
-#if !defined(_MSC_VER)
-    if (Demangle) {
-      int status = 0;
-      char *DemangledName = __cxa_demangle(
-          FunctionName.c_str(), 0, 0, &status);
-      if (status == 0) {
-        FunctionName = DemangledName;
-        free(DemangledName);
-      }
-    }
-#endif
+    DemangleName(FunctionName);
     outs() << FunctionName << "\n";
   }
   std::string Filename = LineInfo.getFileName();
@@ -263,7 +282,7 @@ static void printDILineInfo(DILineInfo LineInfo) {
          "\n";
 }
 
-static void symbolize(std::string ModuleName, std::string ModuleOffsetStr) {
+static void symbolizeCode(std::string ModuleName, std::string ModuleOffsetStr) {
   ModuleInfo *Info = getOrCreateModuleInfo(ModuleName);
   uint64_t Offset = 0;
   if (Info == 0 ||
@@ -286,17 +305,48 @@ static void symbolize(std::string ModuleName, std::string ModuleOffsetStr) {
   outs().flush();
 }
 
-static bool parseModuleNameAndOffset(std::string &ModuleName,
-                                     std::string &ModuleOffsetStr) {
-  static const int kMaxInputStringLength = 1024;
-  static const char kDelimiters[] = " \n";
+static void symbolizeData(std::string ModuleName, std::string ModuleOffsetStr) {
+  std::string Name = kSymbolizerBadString;
+  uint64_t Start = 0;
+  uint64_t Size = 0;
+  uint64_t Offset = 0;
+  if (UseSymbolTable) {
+    ModuleInfo *Info = getOrCreateModuleInfo(ModuleName);
+    if (Info && !StringRef(ModuleOffsetStr).getAsInteger(0, Offset)) {
+      if (Info->symbolizeData(Offset, Name, Start, Size))
+        DemangleName(Name);
+    }
+  }
+  outs() << Name << "\n" << Start << " " << Size << "\n\n";
+  outs().flush();
+}
+
+static bool parseCommand(bool &IsData,
+                         std::string &ModuleName,
+                         std::string &ModuleOffsetStr) {
+  const char *kDataCmd = "DATA ";
+  const char *kCodeCmd = "CODE ";
+  const int kMaxInputStringLength = 1024;
+  const char kDelimiters[] = " \n";
   char InputString[kMaxInputStringLength];
   if (!fgets(InputString, sizeof(InputString), stdin))
     return false;
+  IsData = false;
   ModuleName = "";
   ModuleOffsetStr = "";
+  char *pos = InputString;
+  if (strncmp(pos, kDataCmd, strlen(kDataCmd)) == 0) {
+    IsData = true;
+    pos += strlen(kDataCmd);
+  } else if (strncmp(pos, kCodeCmd, strlen(kCodeCmd)) == 0) {
+    IsData = false;
+    pos += strlen(kCodeCmd);
+  } else {
+    // If no cmd, assume it's CODE.
+    IsData = false;
+  }
   // FIXME: Handle case when filename is given in quotes.
-  if (char *FilePath = strtok(InputString, kDelimiters)) {
+  if (char *FilePath = strtok(pos, kDelimiters)) {
     ModuleName = FilePath;
     if (char *OffsetStr = strtok((char*)0, kDelimiters))
       ModuleOffsetStr = OffsetStr;
@@ -313,10 +363,14 @@ int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv, "llvm symbolizer for compiler-rt\n");
   ToolInvocationPath = argv[0];
 
+  bool IsData = false;
   std::string ModuleName;
   std::string ModuleOffsetStr;
-  while (parseModuleNameAndOffset(ModuleName, ModuleOffsetStr)) {
-    symbolize(ModuleName, ModuleOffsetStr);
+  while (parseCommand(IsData, ModuleName, ModuleOffsetStr)) {
+    if (IsData)
+      symbolizeData(ModuleName, ModuleOffsetStr);
+    else
+      symbolizeCode(ModuleName, ModuleOffsetStr);
   }
   return 0;
 }
