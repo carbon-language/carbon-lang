@@ -61,6 +61,8 @@ class VectorLegalizer {
   // Implements expansion for UINT_TO_FLOAT; falls back to UnrollVectorOp if
   // SINT_TO_FLOAT and SHR on vectors isn't legal.
   SDValue ExpandUINT_TO_FLOAT(SDValue Op);
+  // Implement expansion for SIGN_EXTEND_INREG using SRL and SRA.
+  SDValue ExpandSEXTINREG(SDValue Op);
   // Implement vselect in terms of XOR, AND, OR when blend is not supported
   // by the target.
   SDValue ExpandVSELECT(SDValue Op);
@@ -262,7 +264,9 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
     // FALL THROUGH
   }
   case TargetLowering::Expand:
-    if (Node->getOpcode() == ISD::VSELECT)
+    if (Node->getOpcode() == ISD::SIGN_EXTEND_INREG)
+      Result = ExpandSEXTINREG(Op);
+    else if (Node->getOpcode() == ISD::VSELECT)
       Result = ExpandVSELECT(Op);
     else if (Node->getOpcode() == ISD::SELECT)
       Result = ExpandSELECT(Op);
@@ -499,6 +503,26 @@ SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
   Op2 = DAG.getNode(ISD::AND, DL, MaskTy, Op2, NotMask);
   SDValue Val = DAG.getNode(ISD::OR, DL, MaskTy, Op1, Op2);
   return DAG.getNode(ISD::BITCAST, DL, Op.getValueType(), Val);
+}
+
+SDValue VectorLegalizer::ExpandSEXTINREG(SDValue Op) {
+  EVT VT = Op.getValueType();
+
+  // Make sure that the SRA and SRL instructions are available.
+  if (TLI.getOperationAction(ISD::SRA, VT) == TargetLowering::Expand ||
+      TLI.getOperationAction(ISD::SRL, VT) == TargetLowering::Expand)
+    return DAG.UnrollVectorOp(Op.getNode());
+
+  DebugLoc DL = Op.getDebugLoc();
+  EVT OrigTy = cast<VTSDNode>(Op->getOperand(1))->getVT();
+
+  unsigned BW = VT.getScalarType().getSizeInBits();
+  unsigned OrigBW = OrigTy.getScalarType().getSizeInBits();
+  SDValue ShiftSz = DAG.getConstant(BW - OrigBW, VT);
+
+  Op = Op.getOperand(0);
+  Op =   DAG.getNode(ISD::SRL, DL, VT, Op, ShiftSz);
+  return DAG.getNode(ISD::SRA, DL, VT, Op, ShiftSz);
 }
 
 SDValue VectorLegalizer::ExpandVSELECT(SDValue Op) {
