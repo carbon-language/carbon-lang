@@ -1,11 +1,11 @@
-; RUN: opt < %s -tailcallelim -S | \
-; RUN:    grep "tail call void @foo"
+; RUN: opt < %s -tailcallelim -S | FileCheck %s
 
 
 declare void @foo()
 
 define void @bar() {
-	call void @foo( )
+; CHECK: tail call void @foo()
+	call void @foo()
 	ret void
 }
 

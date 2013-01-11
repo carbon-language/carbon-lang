@@ -1,5 +1,5 @@
 ; This function contains intervening instructions which should be moved out of the way
-; RUN: opt < %s -tailcallelim -S | not grep call
+; RUN: opt < %s -tailcallelim -S | FileCheck %s
 
 define i32 @Test(i32 %X) {
 entry:
@@ -10,6 +10,7 @@ then.0:		; preds = %entry
 	ret i32 %tmp.4
 endif.0:		; preds = %entry
 	%tmp.10 = add i32 %X, -1		; <i32> [#uses=1]
+; CHECK-NOT: call
 	%tmp.8 = call i32 @Test( i32 %tmp.10 )		; <i32> [#uses=1]
 	%DUMMY = add i32 %X, 1		; <i32> [#uses=0]
 	ret i32 %tmp.8
