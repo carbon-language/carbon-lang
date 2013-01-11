@@ -96,8 +96,6 @@ static prec::Level getPrecedence(const AnnotatedToken &Tok) {
   return getBinOpPrecedence(Tok.FormatTok.Tok.getKind(), true, true);
 }
 
-using llvm::MutableArrayRef;
-
 FormatStyle getLLVMStyle() {
   FormatStyle LLVMStyle;
   LLVMStyle.ColumnLimit = 80;
@@ -189,13 +187,10 @@ public:
   /// \c UnwrappedLine.
   unsigned format() {
     // Initialize state dependent on indent.
-    IndentState State;
+    LineState State;
     State.Column = FirstIndent;
     State.NextToken = &RootToken;
-    State.Indent.push_back(FirstIndent + 4);
-    State.LastSpace.push_back(FirstIndent);
-    State.FirstLessLess.push_back(0);
-    State.BreakBeforeClosingBrace.push_back(false);
+    State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent, 0, false));
     State.ForLoopVariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
     State.StartOfLineLevel = 1;
@@ -217,41 +212,59 @@ public:
   }
 
 private:
-  /// \brief The current state when indenting a unwrapped line.
-  ///
-  /// As the indenting tries different combinations this is copied by value.
-  struct IndentState {
-    /// \brief The number of used columns in the current line.
-    unsigned Column;
-
-    const AnnotatedToken *NextToken;
-
-    /// \brief The parenthesis level of the first token on the current line.
-    unsigned StartOfLineLevel;
+  struct ParenState {
+    ParenState(unsigned Indent, unsigned LastSpace, unsigned FirstLessLess,
+               bool BreakBeforeClosingBrace)
+        : Indent(Indent), LastSpace(LastSpace), FirstLessLess(FirstLessLess),
+          BreakBeforeClosingBrace(BreakBeforeClosingBrace) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
-    std::vector<unsigned> Indent;
+    unsigned Indent;
 
     /// \brief The position of the last space on each level.
     ///
     /// Used e.g. to break like:
     /// functionCall(Parameter, otherCall(
     ///                             OtherParameter));
-    std::vector<unsigned> LastSpace;
+    unsigned LastSpace;
 
     /// \brief The position the first "<<" operator encountered on each level.
     ///
     /// Used to align "<<" operators. 0 if no such operator has been encountered
     /// on a level.
-    std::vector<unsigned> FirstLessLess;
+    unsigned FirstLessLess;
 
     /// \brief Whether a newline needs to be inserted before the block's closing
     /// brace.
     ///
     /// We only want to insert a newline before the closing brace if there also
     /// was a newline after the beginning left brace.
-    std::vector<bool> BreakBeforeClosingBrace;
+    bool BreakBeforeClosingBrace;
+
+    bool operator<(const ParenState &Other) const {
+      if (Indent != Other.Indent)
+        return Indent < Other.Indent; 
+      if (LastSpace != Other.LastSpace)
+        return LastSpace < Other.LastSpace;
+      if (FirstLessLess != Other.FirstLessLess)
+        return FirstLessLess < Other.FirstLessLess;
+      return BreakBeforeClosingBrace;
+    }
+  };
+
+  /// \brief The current state when indenting a unwrapped line.
+  ///
+  /// As the indenting tries different combinations this is copied by value.
+  struct LineState {
+    /// \brief The number of used columns in the current line.
+    unsigned Column;
+
+    /// \brief The token that needs to be next formatted.
+    const AnnotatedToken *NextToken;
+
+    /// \brief The parenthesis level of the first token on the current line.
+    unsigned StartOfLineLevel;
 
     /// \brief The column of the first variable in a for-loop declaration.
     ///
@@ -261,40 +274,24 @@ private:
     /// \brief \c true if this line contains a continued for-loop section.
     bool LineContainsContinuedForLoopSection;
 
-    /// \brief Comparison operator to be able to used \c IndentState in \c map.
-    bool operator<(const IndentState &Other) const {
+    /// \brief A stack keeping track of properties applying to parenthesis
+    /// levels.
+    std::vector<ParenState> Stack;
+
+    /// \brief Comparison operator to be able to used \c LineState in \c map.
+    bool operator<(const LineState &Other) const {
       if (Other.NextToken != NextToken)
         return Other.NextToken > NextToken;
       if (Other.Column != Column)
         return Other.Column > Column;
       if (Other.StartOfLineLevel != StartOfLineLevel)
         return Other.StartOfLineLevel > StartOfLineLevel;
-      if (Other.Indent.size() != Indent.size())
-        return Other.Indent.size() > Indent.size();
-      for (int i = 0, e = Indent.size(); i != e; ++i) {
-        if (Other.Indent[i] != Indent[i])
-          return Other.Indent[i] > Indent[i];
-      }
-      if (Other.LastSpace.size() != LastSpace.size())
-        return Other.LastSpace.size() > LastSpace.size();
-      for (int i = 0, e = LastSpace.size(); i != e; ++i) {
-        if (Other.LastSpace[i] != LastSpace[i])
-          return Other.LastSpace[i] > LastSpace[i];
-      }
-      if (Other.FirstLessLess.size() != FirstLessLess.size())
-        return Other.FirstLessLess.size() > FirstLessLess.size();
-      for (int i = 0, e = FirstLessLess.size(); i != e; ++i) {
-        if (Other.FirstLessLess[i] != FirstLessLess[i])
-          return Other.FirstLessLess[i] > FirstLessLess[i];
-      }
       if (Other.ForLoopVariablePos != ForLoopVariablePos)
         return Other.ForLoopVariablePos < ForLoopVariablePos;
       if (Other.LineContainsContinuedForLoopSection !=
           LineContainsContinuedForLoopSection)
         return LineContainsContinuedForLoopSection;
-      if (Other.BreakBeforeClosingBrace != BreakBeforeClosingBrace)
-        return Other.BreakBeforeClosingBrace > BreakBeforeClosingBrace;
-      return false;
+      return Other.Stack < Stack;
     }
   };
 
@@ -306,11 +303,11 @@ private:
   ///
   /// If \p DryRun is \c false, also creates and stores the required
   /// \c Replacement.
-  void addTokenToState(bool Newline, bool DryRun, IndentState &State) {
+  void addTokenToState(bool Newline, bool DryRun, LineState &State) {
     const AnnotatedToken &Current = *State.NextToken;
     const AnnotatedToken &Previous = *State.NextToken->Parent;
-    assert(State.Indent.size());
-    unsigned ParenLevel = State.Indent.size() - 1;
+    assert(State.Stack.size());
+    unsigned ParenLevel = State.Stack.size() - 1;
 
     if (Newline) {
       unsigned WhitespaceStartColumn = State.Column;
@@ -320,8 +317,8 @@ private:
                  Previous.is(tok::string_literal)) {
         State.Column = State.Column - Previous.FormatTok.TokenLength;
       } else if (Current.is(tok::lessless) &&
-                 State.FirstLessLess[ParenLevel] != 0) {
-        State.Column = State.FirstLessLess[ParenLevel];
+                 State.Stack[ParenLevel].FirstLessLess != 0) {
+        State.Column = State.Stack[ParenLevel].FirstLessLess;
       } else if (ParenLevel != 0 &&
                  (Previous.is(tok::equal) || Current.is(tok::arrow) ||
                   Current.is(tok::period) || Previous.is(tok::question) ||
@@ -329,13 +326,13 @@ private:
         // Indent and extra 4 spaces after if we know the current expression is
         // continued.  Don't do that on the top level, as we already indent 4
         // there.
-        State.Column = State.Indent[ParenLevel] + 4;
+        State.Column = State.Stack[ParenLevel].Indent + 4;
       } else if (RootToken.is(tok::kw_for) && Previous.is(tok::comma)) {
         State.Column = State.ForLoopVariablePos;
       } else if (State.NextToken->Parent->ClosesTemplateDeclaration) {
-        State.Column = State.Indent[ParenLevel] - 4;
+        State.Column = State.Stack[ParenLevel].Indent - 4;
       } else {
-        State.Column = State.Indent[ParenLevel];
+        State.Column = State.Stack[ParenLevel].Indent;
       }
 
       // A line starting with a closing brace is assumed to be correct for the
@@ -355,10 +352,10 @@ private:
                               Replaces);
       }
 
-      State.LastSpace[ParenLevel] = State.Column;
+      State.Stack[ParenLevel].LastSpace = State.Column;
       if (Current.is(tok::colon) && CurrentLineType != LT_ObjCMethodDecl &&
           State.NextToken->Type != TT_ConditionalExpr)
-        State.Indent[ParenLevel] += 2;
+        State.Stack[ParenLevel].Indent += 2;
     } else {
       if (Current.is(tok::equal) && RootToken.is(tok::kw_for))
         State.ForLoopVariablePos = State.Column -
@@ -376,51 +373,50 @@ private:
       if (RootToken.isNot(tok::kw_for) && ParenLevel == 0 &&
           (getPrecedence(Previous) == prec::Assignment ||
            Previous.is(tok::kw_return)))
-        State.Indent[ParenLevel] = State.Column + Spaces;
+        State.Stack[ParenLevel].Indent = State.Column + Spaces;
       if (Previous.is(tok::l_paren) ||
           Previous.is(tok::l_brace) ||
           State.NextToken->Parent->Type == TT_TemplateOpener)
-        State.Indent[ParenLevel] = State.Column + Spaces;
+        State.Stack[ParenLevel].Indent = State.Column + Spaces;
 
       // Top-level spaces that are not part of assignments are exempt as that
       // mostly leads to better results.
       State.Column += Spaces;
       if (Spaces > 0 &&
           (ParenLevel != 0 || getPrecedence(Previous) == prec::Assignment))
-        State.LastSpace[ParenLevel] = State.Column;
+        State.Stack[ParenLevel].LastSpace = State.Column;
     }
     moveStateToNextToken(State);
     if (Newline && Previous.is(tok::l_brace)) {
-      State.BreakBeforeClosingBrace.back() = true;
+      State.Stack.back().BreakBeforeClosingBrace = true;
     }
   }
 
   /// \brief Mark the next token as consumed in \p State and modify its stacks
   /// accordingly.
-  void moveStateToNextToken(IndentState &State) {
+  void moveStateToNextToken(LineState &State) {
     const AnnotatedToken &Current = *State.NextToken;
-    assert(State.Indent.size());
-    unsigned ParenLevel = State.Indent.size() - 1;
+    assert(State.Stack.size());
 
-    if (Current.is(tok::lessless) && State.FirstLessLess[ParenLevel] == 0)
-      State.FirstLessLess[ParenLevel] = State.Column;
+    if (Current.is(tok::lessless) && State.Stack.back().FirstLessLess == 0)
+      State.Stack.back().FirstLessLess = State.Column;
 
     // If we encounter an opening (, [, { or <, we add a level to our stacks to
     // prepare for the following tokens.
     if (Current.is(tok::l_paren) || Current.is(tok::l_square) ||
         Current.is(tok::l_brace) ||
         State.NextToken->Type == TT_TemplateOpener) {
+      unsigned NewIndent;
       if (Current.is(tok::l_brace)) {
         // FIXME: This does not work with nested static initializers.
         // Implement a better handling for static initializers and similar
         // constructs.
-        State.Indent.push_back(Line.Level * 2 + 2);
+        NewIndent = Line.Level * 2 + 2;
       } else {
-        State.Indent.push_back(4 + State.LastSpace.back());
+        NewIndent = 4 + State.Stack.back().LastSpace;
       }
-      State.LastSpace.push_back(State.LastSpace.back());
-      State.FirstLessLess.push_back(0);
-      State.BreakBeforeClosingBrace.push_back(false);
+      State.Stack.push_back(
+          ParenState(NewIndent, State.Stack.back().LastSpace, 0, false));
     }
 
     // If we encounter a closing ), ], } or >, we can remove a level from our
@@ -428,10 +424,7 @@ private:
     if (Current.is(tok::r_paren) || Current.is(tok::r_square) ||
         (Current.is(tok::r_brace) && State.NextToken != &RootToken) ||
         State.NextToken->Type == TT_TemplateCloser) {
-      State.Indent.pop_back();
-      State.LastSpace.pop_back();
-      State.FirstLessLess.pop_back();
-      State.BreakBeforeClosingBrace.pop_back();
+      State.Stack.pop_back();
     }
 
     if (State.NextToken->Children.empty())
@@ -484,13 +477,13 @@ private:
   /// of the unwrapped line.
   ///
   /// Assumes the formatting so far has led to
-  /// the \c IndentState \p State. If \p NewLine is set, a new line will be
+  /// the \c LineSta \p State. If \p NewLine is set, a new line will be
   /// added after the previous token.
   ///
   /// \param StopAt is used for optimization. If we can determine that we'll
   /// definitely need at least \p StopAt additional lines, we already know of a
   /// better solution.
-  unsigned calcPenalty(IndentState State, bool NewLine, unsigned StopAt) {
+  unsigned calcPenalty(LineState State, bool NewLine, unsigned StopAt) {
     // We are at the end of the unwrapped line, so we don't need any more lines.
     if (State.NextToken == NULL)
       return 0;
@@ -500,7 +493,7 @@ private:
     if (NewLine && !State.NextToken->CanBreakBefore)
       return UINT_MAX;
     if (!NewLine && State.NextToken->is(tok::r_brace) &&
-        State.BreakBeforeClosingBrace.back())
+        State.Stack.back().BreakBeforeClosingBrace)
       return UINT_MAX;
     if (!NewLine && State.NextToken->Parent->is(tok::semi) &&
         State.LineContainsContinuedForLoopSection)
@@ -508,12 +501,12 @@ private:
 
     unsigned CurrentPenalty = 0;
     if (NewLine) {
-      CurrentPenalty += Parameters.PenaltyIndentLevel * State.Indent.size() +
+      CurrentPenalty += Parameters.PenaltyIndentLevel * State.Stack.size() +
                         splitPenalty(*State.NextToken->Parent);
     } else {
-      if (State.Indent.size() < State.StartOfLineLevel)
+      if (State.Stack.size() < State.StartOfLineLevel)
         CurrentPenalty += Parameters.PenaltyLevelDecrease *
-                          (State.StartOfLineLevel - State.Indent.size());
+                          (State.StartOfLineLevel - State.Stack.size());
     }
 
     addTokenToState(NewLine, true, State);
@@ -562,7 +555,7 @@ private:
   tooling::Replacements &Replaces;
 
   // A map from an indent state to a pair (Result, Used-StopAt).
-  typedef std::map<IndentState, std::pair<unsigned, unsigned> > StateMap;
+  typedef std::map<LineState, std::pair<unsigned, unsigned> > StateMap;
   StateMap Memory;
 
   OptimizationParameters Parameters;
