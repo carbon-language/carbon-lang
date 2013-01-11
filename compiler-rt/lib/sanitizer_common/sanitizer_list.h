@@ -72,6 +72,8 @@ struct IntrusiveList {
 
   void append_front(IntrusiveList<Item> *l) {
     CHECK_NE(this, l);
+    if (l->empty())
+      return;
     if (empty()) {
       *this = *l;
     } else if (!l->empty()) {
@@ -84,6 +86,8 @@ struct IntrusiveList {
 
   void append_back(IntrusiveList<Item> *l) {
     CHECK_NE(this, l);
+    if (l->empty())
+      return;
     if (empty()) {
       *this = *l;
     } else {

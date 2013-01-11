@@ -154,4 +154,21 @@ TEST(SanitizerCommon, IntrusiveList) {
   CHECK(l2.empty());
 }
 
+TEST(SanitizerCommon, IntrusiveListAppendEmpty) {
+  ListItem i;
+  List l;
+  l.clear();
+  l.push_back(&i);
+  List l2;
+  l2.clear();
+  l.append_back(&l2);
+  CHECK_EQ(l.back(), &i);
+  CHECK_EQ(l.front(), &i);
+  CHECK_EQ(l.size(), 1);
+  l.append_front(&l2);
+  CHECK_EQ(l.back(), &i);
+  CHECK_EQ(l.front(), &i);
+  CHECK_EQ(l.size(), 1);
+}
+
 }  // namespace __sanitizer
