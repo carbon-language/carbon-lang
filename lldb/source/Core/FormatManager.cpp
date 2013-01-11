@@ -943,6 +943,9 @@ FormatManager::LoadSystemFormatters()
     
     AddCXXSummary(sys_category_sp, lldb_private::formatters::Char32StringSummaryProvider, "char32_t * summary provider", ConstString("char32_t *"), string_flags);
     AddCXXSummary(sys_category_sp, lldb_private::formatters::Char32StringSummaryProvider, "char32_t * summary provider", ConstString("const char32_t *"), string_flags);
+    
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::WCharStringSummaryProvider, "wchar_t * summary provider", ConstString("wchar_t *"), string_flags);
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::WCharStringSummaryProvider, "wchar_t * summary provider", ConstString("const wchar_t *"), string_flags);
 }
 
 void

@@ -163,6 +163,10 @@ ReadUTFBufferAndDumpToStream (uint64_t location,
 
     Error error;
     lldb::DataBufferSP buffer_sp(new DataBufferHeap(bufferSPSize,0));
+    
+    if (!buffer_sp->GetBytes())
+        return false;
+    
     size_t data_read = process_sp->ReadMemoryFromInferior(location, (char*)buffer_sp->GetBytes(), bufferSPSize, error);
     if (error.Fail())
     {
@@ -194,12 +198,18 @@ ReadUTFBufferAndDumpToStream (uint64_t location,
         *data_ptr = 0;
         data_ptr = (SourceDataType*)buffer_sp->GetBytes();
         
-        lldb::DataBufferSP utf8_data_buffer_sp(new DataBufferHeap(bufferSPSize,0));
-        UTF8* utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
-        UTF8* utf8_data_end_ptr = utf8_data_ptr + bufferSPSize;
-        
+        lldb::DataBufferSP utf8_data_buffer_sp;
+        UTF8* utf8_data_ptr = nullptr;
+        UTF8* utf8_data_end_ptr = nullptr;
+
         if (ConvertFunction)
+        {
+            utf8_data_buffer_sp.reset(new DataBufferHeap(bufferSPSize,0));
+            utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
+            utf8_data_end_ptr = utf8_data_ptr + bufferSPSize;
             ConvertFunction ( (const SourceDataType**)&data_ptr, data_end_ptr, &utf8_data_ptr, utf8_data_end_ptr, lenientConversion );
+            utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes(); // needed because the ConvertFunction will change the value of the data_ptr
+        }
         else
         {
             // just copy the pointers - the cast is necessary to make the compiler happy
@@ -208,7 +218,6 @@ ReadUTFBufferAndDumpToStream (uint64_t location,
             utf8_data_end_ptr = (UTF8*)data_end_ptr;
         }
         
-        utf8_data_ptr = (UTF8*)utf8_data_buffer_sp->GetBytes();
         for (;utf8_data_ptr != utf8_data_end_ptr; utf8_data_ptr++)
         {
             if (!*utf8_data_ptr)
@@ -277,7 +286,50 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
 bool
 lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Stream& stream)
 {
-    return false;
+    ProcessSP process_sp = valobj.GetProcessSP();
+    if (!process_sp)
+        return false;
+
+    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+
+    if (!valobj_addr)
+        return false;
+
+    clang::ASTContext* ast = valobj.GetClangAST();
+
+    if (!ast)
+        return false;
+
+    uint32_t wchar_size = ClangASTType::GetClangTypeBitWidth(ast, ClangASTType::GetBasicType(ast, lldb::eBasicTypeWChar).GetOpaqueQualType());
+
+    switch (wchar_size)
+    {
+        case 8:
+            // utf 8
+            return ReadUTFBufferAndDumpToStream<UTF8, nullptr>(valobj_addr,
+                                                               process_sp,
+                                                               stream,
+                                                               false, // no @ sign for C++
+                                                               true); // but use quotes
+        case 16:
+            // utf 16
+            return ReadUTFBufferAndDumpToStream<UTF16, ConvertUTF16toUTF8>(valobj_addr,
+                                                                           process_sp,
+                                                                           stream,
+                                                                           false, // no @ sign for C++
+                                                                           true); // but use quotes
+        case 32:
+            // utf 32
+            return ReadUTFBufferAndDumpToStream<UTF32, ConvertUTF32toUTF8>(valobj_addr,
+                                                                           process_sp,
+                                                                           stream,
+                                                                           false, // no @ sign for C++
+                                                                           true); // but use quotes
+        default:
+            stream.Printf("size for wchar_t is not valid");
+            return true;
+    }
+    return true;
 }
 
 template<bool name_entries>
@@ -337,7 +389,7 @@ lldb_private::formatters::NSDictionarySummaryProvider (ValueObject& valobj, Stre
             return false;
         if (is_64bit)
             value &= ~0x0f1f000000000000UL;
-            }
+    }
     else
     {
         if (!ExtractValueFromObjCExpression(valobj, "int", "count", value))

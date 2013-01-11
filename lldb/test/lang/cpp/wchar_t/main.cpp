@@ -23,5 +23,6 @@ int main (int argc, char const *argv[])
 {
     Foo<int> foo_x('a');
     Foo<wchar_t> foo_y(L'a');
+    const wchar_t *mazeltov = L"מזל טוב";
     return 0; // Set break point at this line.
 }

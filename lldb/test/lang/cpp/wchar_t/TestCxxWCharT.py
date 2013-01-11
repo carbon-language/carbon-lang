@@ -1,3 +1,4 @@
+#coding=utf8
 """
 Test that C++ supports wchar_t correctly.
 """
@@ -67,6 +68,10 @@ class CxxWCharTTestCase(TestBase):
 
         # Check that we can run expressions that return wchar_t
         self.expect("expression L'a'",substrs = ['(wchar_t) $'])
+
+        # Mazel Tov if this works!
+        self.expect("frame variable mazeltov",
+            substrs = ['(const wchar_t *) mazeltov = ','מזל טוב'])
 
 
 if __name__ == '__main__':
