@@ -35,6 +35,9 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 - (void) invalidate2 __attribute__((annotate("objc_instance_variable_invalidator")));
 @end
 
+@protocol Invalidation3;
+@protocol Invalidation2;
+
 @interface Invalidation2Class <Invalidation2>
 @end
 

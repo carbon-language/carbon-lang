@@ -233,7 +233,7 @@ void IvarInvalidationChecker::containsInvalidationMethod(
     for (ObjCInterfaceDecl::protocol_iterator
         I = InterfD->protocol_begin(),
         E = InterfD->protocol_end(); I != E; ++I) {
-      containsInvalidationMethod(*I, OutInfo);
+      containsInvalidationMethod((*I)->getDefinition(), OutInfo);
     }
 
     // Visit all categories in case the invalidation method is declared in
@@ -252,7 +252,7 @@ void IvarInvalidationChecker::containsInvalidationMethod(
     for (ObjCInterfaceDecl::protocol_iterator
         I = ProtD->protocol_begin(),
         E = ProtD->protocol_end(); I != E; ++I) {
-      containsInvalidationMethod(*I, OutInfo);
+      containsInvalidationMethod((*I)->getDefinition(), OutInfo);
     }
     return;
   }
