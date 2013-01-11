@@ -146,7 +146,7 @@ private:
   void parseNamespace();
   void parseAccessSpecifier();
   void parseEnum();
-  void parseStructOrClass();
+  void parseStructClassOrBracedList();
   void parseObjCProtocolList();
   void parseObjCUntilAtEnd();
   void parseObjCInterfaceOrImplementation();

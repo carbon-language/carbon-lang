@@ -319,7 +319,7 @@ void UnwrappedLineParser::parseStructuralElement() {
       return;
     case tok::kw_struct:  // fallthrough
     case tok::kw_class:
-      parseStructOrClass();
+      parseStructClassOrBracedList();
       return;
     case tok::semi:
       nextToken();
@@ -565,7 +565,7 @@ void UnwrappedLineParser::parseEnum() {
   } while (!eof());
 }
 
-void UnwrappedLineParser::parseStructOrClass() {
+void UnwrappedLineParser::parseStructClassOrBracedList() {
   nextToken();
   do {
     switch (FormatTok.Tok.getKind()) {
@@ -578,6 +578,12 @@ void UnwrappedLineParser::parseStructOrClass() {
       nextToken();
       addUnwrappedLine();
       return;
+    case tok::equal:
+      nextToken();
+      if (FormatTok.Tok.is(tok::l_brace)) {
+        parseBracedList();
+      }
+      break;
     default:
       nextToken();
       break;

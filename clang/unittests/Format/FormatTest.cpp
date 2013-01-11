@@ -1163,6 +1163,10 @@ TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
                "}");
 }
 
+TEST_F(FormatTest, BracedInitListWithElaboratedTypeSpecifier) {
+  verifyFormat("struct foo a = { bar };\nint n;");
+}
+
 // FIXME: This breaks the order of the unwrapped lines:
 // TEST_F(FormatTest, OrderUnwrappedLines) {
 //   verifyFormat("{\n"
