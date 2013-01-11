@@ -5119,7 +5119,7 @@ void Parser::ParseBracketDeclarator(Declarator &D) {
     MaybeParseCXX11Attributes(attrs);
 
     // Remember that we parsed a array type, and remember its features.
-    D.AddTypeInfo(DeclaratorChunk::getArray(0, false, 0,
+    D.AddTypeInfo(DeclaratorChunk::getArray(0, false, false,
                                             ExprRes.release(),
                                             T.getOpenLocation(),
                                             T.getCloseLocation()),
