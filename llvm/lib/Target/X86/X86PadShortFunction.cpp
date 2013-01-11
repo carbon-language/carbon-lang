@@ -33,6 +33,19 @@ using namespace llvm;
 STATISTIC(NumBBsPadded, "Number of basic blocks padded");
 
 namespace {
+  struct VisitedBBInfo {
+    // HasReturn - Whether the BB contains a return instruction
+    bool HasReturn;
+
+    // Cycles - Number of cycles until return if HasReturn is true, otherwise
+    // number of cycles until end of the BB
+    unsigned int Cycles;
+
+    VisitedBBInfo() : HasReturn(false), Cycles(0) {}
+    VisitedBBInfo(bool HasReturn, unsigned int Cycles)
+      : HasReturn(HasReturn), Cycles(Cycles) {}
+  };
+
   struct PadShortFunc : public MachineFunctionPass {
     static char ID;
     PadShortFunc() : MachineFunctionPass(ID)
@@ -49,15 +62,20 @@ namespace {
                      unsigned int Cycles = 0);
 
     bool cyclesUntilReturn(MachineBasicBlock *MBB,
-                           unsigned int &Cycles,
-                           MachineBasicBlock::iterator *Location = 0);
+                           unsigned int &Cycles);
 
     void addPadding(MachineBasicBlock *MBB,
                     MachineBasicBlock::iterator &MBBI,
                     unsigned int NOOPsToAdd);
 
     const unsigned int Threshold;
+
+    // ReturnBBs - Maps basic blocks that return to the minimum number of
+    // cycles until the return, starting from the entry block.
     DenseMap<MachineBasicBlock*, unsigned int> ReturnBBs;
+
+    // VisitedBBs - Cache of previously visited BBs.
+    DenseMap<MachineBasicBlock*, VisitedBBInfo> VisitedBBs;
 
     const TargetMachine *TM;
     const TargetInstrInfo *TII;
@@ -73,25 +91,26 @@ FunctionPass *llvm::createX86PadShortFunctions() {
 /// runOnMachineFunction - Loop over all of the basic blocks, inserting
 /// NOOP instructions before early exits.
 bool PadShortFunc::runOnMachineFunction(MachineFunction &MF) {
-  bool OptForSize = MF.getFunction()->getAttributes().
-    hasAttribute(AttributeSet::FunctionIndex, Attribute::OptimizeForSize);
-
-  if (OptForSize)
+  const AttributeSet &FnAttrs = MF.getFunction()->getAttributes();
+  if (FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
+                           Attribute::OptimizeForSize) ||
+      FnAttrs.hasAttribute(AttributeSet::FunctionIndex,
+                           Attribute::MinSize)) {
     return false;
+  }
 
   TM = &MF.getTarget();
   TII = TM->getInstrInfo();
 
   // Search through basic blocks and mark the ones that have early returns
   ReturnBBs.clear();
+  VisitedBBs.clear();
   findReturns(MF.begin());
 
   bool MadeChange = false;
 
-  MachineBasicBlock::iterator ReturnLoc;
   MachineBasicBlock *MBB;
   unsigned int Cycles = 0;
-  unsigned int BBCycles;
 
   // Pad the identified basic blocks with NOOPs
   for (DenseMap<MachineBasicBlock*, unsigned int>::iterator I = ReturnBBs.begin();
@@ -100,8 +119,16 @@ bool PadShortFunc::runOnMachineFunction(MachineFunction &MF) {
     Cycles = I->second;
 
     if (Cycles < Threshold) {
-      if (!cyclesUntilReturn(MBB, BBCycles, &ReturnLoc))
-        continue;
+      // BB ends in a return. Skip over any DBG_VALUE instructions
+      // trailing the terminator.
+      assert(MBB->size() > 0 &&
+             "Basic block should contain at least a RET but is empty");
+      MachineBasicBlock::iterator ReturnLoc = --MBB->end();
+
+      while (ReturnLoc->isDebugValue())
+        --ReturnLoc;
+      assert(ReturnLoc->isReturn() && !ReturnLoc->isCall() &&
+             "Basic block does not end with RET");
 
       addPadding(MBB, ReturnLoc, Threshold - Cycles);
       NumBBsPadded++;
@@ -127,18 +154,30 @@ void PadShortFunc::findReturns(MachineBasicBlock *MBB, unsigned int Cycles) {
 
   // Follow branches in BB and look for returns
   for (MachineBasicBlock::succ_iterator I = MBB->succ_begin();
-      I != MBB->succ_end(); ++I) {
+       I != MBB->succ_end(); ++I) {
+    if (*I == MBB)
+      continue;
     findReturns(*I, Cycles);
   }
 }
 
-/// cyclesUntilReturn - if the MBB has a return instruction, set Location
-/// to the instruction and return true. Return false otherwise.
+/// cyclesUntilReturn - return true if the MBB has a return instruction,
+/// and return false otherwise.
 /// Cycles will be incremented by the number of cycles taken to reach the
 /// return or the end of the BB, whichever occurs first.
 bool PadShortFunc::cyclesUntilReturn(MachineBasicBlock *MBB,
-                                     unsigned int &Cycles,
-                                     MachineBasicBlock::iterator *Location) {
+                                     unsigned int &Cycles) {
+  // Return cached result if BB was previously visited
+  DenseMap<MachineBasicBlock*, VisitedBBInfo>::iterator it
+    = VisitedBBs.find(MBB);
+  if (it != VisitedBBs.end()) {
+    VisitedBBInfo BBInfo = it->second;
+    Cycles += BBInfo.Cycles;
+    return BBInfo.HasReturn;
+  }
+
+  unsigned int CyclesToEnd = 0;
+
   for (MachineBasicBlock::iterator MBBI = MBB->begin();
         MBBI != MBB->end(); ++MBBI) {
     MachineInstr *MI = MBBI;
@@ -146,14 +185,16 @@ bool PadShortFunc::cyclesUntilReturn(MachineBasicBlock *MBB,
     // functions do not count because the called function will be padded,
     // if necessary.
     if (MI->isReturn() && !MI->isCall()) {
-      if (Location)
-        *Location = MBBI;
+      VisitedBBs[MBB] = VisitedBBInfo(true, CyclesToEnd);
+      Cycles += CyclesToEnd;
       return true;
     }
 
-    Cycles += TII->getInstrLatency(TM->getInstrItineraryData(), MI);
+    CyclesToEnd += TII->getInstrLatency(TM->getInstrItineraryData(), MI);
   }
 
+  VisitedBBs[MBB] = VisitedBBInfo(false, CyclesToEnd);
+  Cycles += CyclesToEnd;
   return false;
 }
 

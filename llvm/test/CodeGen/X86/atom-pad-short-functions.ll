@@ -22,6 +22,13 @@ define i32 @test_optsize(i32 %a) nounwind optsize {
   ret i32 %a
 }
 
+define i32 @test_minsize(i32 %a) nounwind minsize {
+; CHECK: test_minsize
+; CHECK: movl
+; CHECK-NEXT: ret
+  ret i32 %a
+}
+
 define i32 @test_add(i32 %a, i32 %b) nounwind {
 ; CHECK: test_add
 ; CHECK: addl
@@ -76,3 +83,21 @@ if.end:
   ret void
 
 }
+
+define void @test_branch_to_same_bb(i32 %x, i32 %y) nounwind {
+; CHECK: @test_branch_to_same_bb
+  %cmp = icmp sgt i32 %x, 0
+  br i1 %cmp, label %while.cond, label %while.end
+
+while.cond:
+  br label %while.cond
+
+; CHECK: nop
+; CHECK: nop
+; CHECK: nop
+; CHECK: nop
+; CHECK: ret
+while.end:
+  ret void
+}
+
