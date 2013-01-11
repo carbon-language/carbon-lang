@@ -337,8 +337,15 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
   }
 
   AsanThread *t = asanThreadRegistry().GetCurrent();
-  AllocatorCache *cache = t ? GetAllocatorCache(&t->malloc_storage()) : 0;
-  void *allocated = allocator.Allocate(cache, needed_size, 8, false);
+  void *allocated;
+  if (t) {
+    AllocatorCache *cache = GetAllocatorCache(&t->malloc_storage());
+    allocated = allocator.Allocate(cache, needed_size, 8, false);
+  } else {
+    SpinMutexLock l(&fallback_mutex);
+    AllocatorCache *cache = &fallback_cache;
+    allocated = allocator.Allocate(cache, needed_size, 8, false);
+  }
   uptr alloc_beg = reinterpret_cast<uptr>(allocated);
   uptr alloc_end = alloc_beg + needed_size;
   uptr beg_plus_redzone = alloc_beg + rz_size;

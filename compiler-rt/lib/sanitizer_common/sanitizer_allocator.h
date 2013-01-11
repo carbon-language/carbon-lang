@@ -728,6 +728,7 @@ class LargeMmapAllocator {
     internal_memset(this, 0, sizeof(*this));
     page_size_ = GetPageSizeCached();
   }
+
   void *Allocate(uptr size, uptr alignment) {
     CHECK(IsPowerOfTwo(alignment));
     uptr map_size = RoundUpMapSize(size);
@@ -899,14 +900,10 @@ class CombinedAllocator {
     if (alignment > 8)
       size = RoundUpTo(size, alignment);
     void *res;
-    if (primary_.CanAllocate(size, alignment)) {
-      if (cache)  // Allocate from cache.
-        res = cache->Allocate(&primary_, primary_.ClassID(size));
-      else  // No thread-local cache, allocate directly from primary allocator.
-        res = primary_.Allocate(size, alignment);
-    } else {  // Secondary allocator does not use cache.
+    if (primary_.CanAllocate(size, alignment))
+      res = cache->Allocate(&primary_, primary_.ClassID(size));
+    else
       res = secondary_.Allocate(size, alignment);
-    }
     if (alignment > 8)
       CHECK_EQ(reinterpret_cast<uptr>(res) & (alignment - 1), 0);
     if (cleared && res)
