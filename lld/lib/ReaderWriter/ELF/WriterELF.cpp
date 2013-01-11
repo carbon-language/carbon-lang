@@ -203,6 +203,18 @@ private:
   ELFLayoutOptions _layoutOptions;
 };
 
+struct AtomLayout {
+  AtomLayout(const Atom *a, uint64_t fileOff, uint64_t virAddr)
+    : _atom(a), _fileOffset(fileOff), _virtualAddr(virAddr) {}
+
+  AtomLayout()
+    : _atom(nullptr), _fileOffset(0), _virtualAddr(0) {}
+
+  const Atom *_atom;
+  uint64_t _fileOffset;
+  uint64_t _virtualAddr;
+};
+
 /// \brief A section contains a set of atoms that have similiar properties
 ///        The atoms that have similiar properties are merged to form a section
 template<support::endianness target_endianness,
@@ -274,12 +286,12 @@ public:
       case  DefinedAtom::typeCode:
       case  DefinedAtom::typeData:
       case  DefinedAtom::typeConstant:
-        _atoms.push_back(std::make_pair(atom, std::make_pair(fOffset, 0)));
+        _atoms.push_back(AtomLayout(atom, fOffset, 0));
         this->_fsize = fOffset + definedAtom->size();
         this->_msize = mOffset + definedAtom->size();
         break;
       case  DefinedAtom::typeZeroFill:
-        _atoms.push_back(std::make_pair(atom, std::make_pair(mOffset, 0)));
+        _atoms.push_back(AtomLayout(atom, mOffset, 0));
         this->_msize = mOffset + definedAtom->size();
         break;
       default:
@@ -303,7 +315,7 @@ public:
   /// of the section
   void assignVirtualAddress(uint64_t &addr) {
     for (auto &ai : _atoms) {
-      ai.second.second = addr + ai.second.first;
+      ai._virtualAddr = addr + ai._fileOffset;
     }
     addr += this->memSize();
   }
@@ -312,7 +324,7 @@ public:
   /// gets called after the linker fixes up the section offset
   void assignOffsets(uint64_t offset) {
     for (auto &ai : _atoms) {
-      ai.second.first = offset + ai.second.first;
+      ai._fileOffset = offset + ai._fileOffset;
     }
   }
 
@@ -321,8 +333,8 @@ public:
   ///  to fix the relocation
   bool findAtomAddrByName(const StringRef name, uint64_t &addr) {
     for (auto ai : _atoms) {
-      if (ai.first->name() == name) {
-        addr = ai.second.second;
+      if (ai._atom->name() == name) {
+        addr = ai._virtualAddr;
         return true;
       }
     }
@@ -456,7 +468,7 @@ public:
              OwningPtr<FileOutputBuffer> &buffer) {
     uint8_t *chunkBuffer = buffer->getBufferStart();
     for (auto &ai : _atoms) {
-      const DefinedAtom *definedAtom = llvm::dyn_cast<DefinedAtom>(ai.first);
+      const DefinedAtom *definedAtom = llvm::dyn_cast<DefinedAtom>(ai._atom);
       if (definedAtom->contentType() == DefinedAtom::typeZeroFill)
         continue;
       // Copy raw content of atom to file buffer.
@@ -464,14 +476,14 @@ public:
       uint64_t contentSize = content.size();
       if (contentSize == 0)
         continue;
-      uint8_t *atomContent = chunkBuffer + ai.second.first;
+      uint8_t *atomContent = chunkBuffer + ai._fileOffset;
       std::copy_n(content.data(), contentSize, atomContent);
       for (auto ref = definedAtom->begin(); ref != definedAtom->end(); ++ref) {
         uint32_t offset = ref->offsetInAtom();
         uint64_t targetAddress = 0;
         assert(ref->target() != nullptr && "Found the target to be NULL");
         targetAddress = writer->addressOfAtom(ref->target());
-        uint64_t fixupAddress = writer->addressOfAtom(ai.first) + offset;
+        uint64_t fixupAddress = writer->addressOfAtom(ai._atom) + offset;
         // apply the relocation
         writer->kindHandler()->applyFixup(ref->kind(),
                                           ref->addend(),
@@ -483,8 +495,7 @@ public:
   }
 
   /// Atom Iterators
-  typedef typename std::vector<std::pair<const Atom *,
-          std::pair<uint64_t, uint64_t>>>::iterator atom_iter;
+  typedef typename std::vector<AtomLayout>::iterator atom_iter;
 
   atom_iter atoms_begin() { return _atoms.begin(); }
 
@@ -493,12 +504,8 @@ public:
 protected:
   int32_t _contentType;
   int32_t _contentPermissions;
-  SectionKind    _sectionKind;
-  // An Atom is appended to the vector with the following fields
-  // field1 : Atom
-  // field2 : fileoffset (initially set with a base offset of 0)
-  // field3 : virtual address
-  std::vector<std::pair<const Atom *, std::pair<uint64_t, uint64_t>>> _atoms;
+  SectionKind _sectionKind;
+  std::vector<AtomLayout> _atoms;
   ELFLayout::SegmentType _segmentType;
   int64_t _entSize;
   int64_t _shInfo;
@@ -2126,7 +2133,7 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
     section =
       llvm::dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si);
     for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
-      _symtab->addSymbol(ai->first, section->ordinal(), ai->second.second);
+      _symtab->addSymbol(ai->_atom, section->ordinal(), ai->_virtualAddr);
     }
   }
 }
@@ -2160,7 +2167,7 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
       continue;
     section = cast<Section<target_endianness, max_align, is64Bits>>(*si);
     for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
-      _atomToAddressMap[ai->first] = (ai)->second.second;
+      _atomToAddressMap[ai->_atom] = (ai)->_virtualAddr;
     }
   }
   /// build the atomToAddressMap that contains absolute symbols too
