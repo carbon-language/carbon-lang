@@ -297,8 +297,7 @@ private:
     DK_SET, DK_EQU, DK_EQUIV, DK_ASCII, DK_ASCIZ, DK_STRING, DK_BYTE, DK_SHORT,
     DK_VALUE, DK_2BYTE, DK_LONG, DK_INT, DK_4BYTE, DK_QUAD, DK_8BYTE, DK_SINGLE,
     DK_FLOAT, DK_DOUBLE, DK_ALIGN, DK_ALIGN32, DK_BALIGN, DK_BALIGNW,
-    DK_BALIGNL, DK_P2ALIGN, DK_P2ALIGNW, DK_P2ALIGNL, DK_ORG, DK_FILL,
-    DK_SPACE, DK_SKIP, DK_ENDR,
+    DK_BALIGNL, DK_P2ALIGN, DK_P2ALIGNW, DK_P2ALIGNL, DK_ORG, DK_FILL, DK_ENDR,
     DK_BUNDLE_ALIGN_MODE, DK_BUNDLE_LOCK, DK_BUNDLE_UNLOCK,
     DK_ZERO, DK_EXTERN, DK_GLOBL, DK_GLOBAL, DK_INDIRECT_SYMBOL,
     DK_LAZY_REFERENCE, DK_NO_DEAD_STRIP, DK_SYMBOL_RESOLVER, DK_PRIVATE_EXTERN,
@@ -316,7 +315,6 @@ private:
   bool ParseDirectiveValue(unsigned Size); // ".byte", ".long", ...
   bool ParseDirectiveRealValue(const fltSemantics &); // ".single", ...
   bool ParseDirectiveFill(); // ".fill"
-  bool ParseDirectiveSpace(); // ".space"
   bool ParseDirectiveZero(); // ".zero"
   // ".set", ".equ", ".equiv"
   bool ParseDirectiveSet(StringRef IDVal, bool allow_redef);
@@ -399,6 +397,9 @@ public:
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveLoc>(".loc");
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveStabs>(".stabs");
 
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveSpace>(".space");
+    AddDirectiveHandler<&GenericAsmParser::ParseDirectiveSpace>(".skip");
+
     // CFI directives.
     AddDirectiveHandler<&GenericAsmParser::ParseDirectiveCFISections>(
                                                                ".cfi_sections");
@@ -459,6 +460,7 @@ public:
   bool ParseDirectiveLine(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveStabs(StringRef, SMLoc DirectiveLoc);
+  bool ParseDirectiveSpace(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFISections(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIStartProc(StringRef, SMLoc DirectiveLoc);
   bool ParseDirectiveCFIEndProc(StringRef, SMLoc DirectiveLoc);
@@ -1343,9 +1345,6 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
         return ParseDirectiveOrg();
       case DK_FILL:
         return ParseDirectiveFill();
-      case DK_SPACE:
-      case DK_SKIP:
-        return ParseDirectiveSpace();
       case DK_ZERO:
         return ParseDirectiveZero();
       case DK_EXTERN:
@@ -2243,39 +2242,6 @@ bool AsmParser::ParseDirectiveRealValue(const fltSemantics &Semantics) {
   return false;
 }
 
-/// ParseDirectiveSpace
-///  ::= .space expression [ , expression ]
-bool AsmParser::ParseDirectiveSpace() {
-  CheckForValidSection();
-
-  int64_t NumBytes;
-  if (ParseAbsoluteExpression(NumBytes))
-    return true;
-
-  int64_t FillExpr = 0;
-  if (getLexer().isNot(AsmToken::EndOfStatement)) {
-    if (getLexer().isNot(AsmToken::Comma))
-      return TokError("unexpected token in '.space' directive");
-    Lex();
-
-    if (ParseAbsoluteExpression(FillExpr))
-      return true;
-
-    if (getLexer().isNot(AsmToken::EndOfStatement))
-      return TokError("unexpected token in '.space' directive");
-  }
-
-  Lex();
-
-  if (NumBytes <= 0)
-    return TokError("invalid number of bytes in '.space' directive");
-
-  // FIXME: Sometimes the fill expr is 'nop' if it isn't supplied, instead of 0.
-  getStreamer().EmitFill(NumBytes, FillExpr, DEFAULT_ADDRSPACE);
-
-  return false;
-}
-
 /// ParseDirectiveZero
 ///  ::= .zero expression
 bool AsmParser::ParseDirectiveZero() {
@@ -2920,8 +2886,6 @@ void AsmParser::initializeDirectiveKindMapping() {
   DirectiveKindMapping[".p2alignl"] = DK_P2ALIGNL;
   DirectiveKindMapping[".org"] = DK_ORG;
   DirectiveKindMapping[".fill"] = DK_FILL;
-  DirectiveKindMapping[".space"] = DK_SPACE;
-  DirectiveKindMapping[".skip"] = DK_SKIP;
   DirectiveKindMapping[".zero"] = DK_ZERO;
   DirectiveKindMapping[".extern"] = DK_EXTERN;
   DirectiveKindMapping[".globl"] = DK_GLOBL;
@@ -3149,6 +3113,39 @@ bool GenericAsmParser::ParseDirectiveLoc(StringRef, SMLoc DirectiveLoc) {
 bool GenericAsmParser::ParseDirectiveStabs(StringRef Directive,
                                            SMLoc DirectiveLoc) {
   return TokError("unsupported directive '" + Directive + "'");
+}
+
+/// ParseDirectiveSpace
+///  ::= .space expression [ , expression ]
+bool GenericAsmParser::ParseDirectiveSpace(StringRef, SMLoc DirectiveLoc) {
+  getParser().CheckForValidSection();
+
+  int64_t NumBytes;
+  if (getParser().ParseAbsoluteExpression(NumBytes))
+    return true;
+
+  int64_t FillExpr = 0;
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    if (getLexer().isNot(AsmToken::Comma))
+      return TokError("unexpected token in '.space' directive");
+    Lex();
+
+    if (getParser().ParseAbsoluteExpression(FillExpr))
+      return true;
+
+    if (getLexer().isNot(AsmToken::EndOfStatement))
+      return TokError("unexpected token in '.space' directive");
+  }
+
+  Lex();
+
+  if (NumBytes <= 0)
+    return TokError("invalid number of bytes in '.space' directive");
+
+  // FIXME: Sometimes the fill expr is 'nop' if it isn't supplied, instead of 0.
+  getStreamer().EmitFill(NumBytes, FillExpr, DEFAULT_ADDRSPACE);
+
+  return false;
 }
 
 /// ParseDirectiveCFISections
