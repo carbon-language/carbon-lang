@@ -5713,7 +5713,7 @@ def warn_case_value_overflow : Warning<
   "overflow converting case value to switch condition type (%0 to %1)">,
   InGroup<Switch>;
 def warn_case_constant_overflow : Warning<
-  "overflow in case constant expression results in new value (%0)">,
+  "overflow in case constant expression results in value %0">,
   InGroup<Switch>;
 def err_duplicate_case : Error<"duplicate case value '%0'">;
 def err_duplicate_case_differing_expr : Error<
