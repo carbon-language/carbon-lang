@@ -44,7 +44,7 @@ CXString cxstring::createCXString(const char *String, bool DupString){
 CXString cxstring::createCXString(StringRef String, bool DupString) {
   CXString Result;
   if (DupString || (!String.empty() && String.data()[String.size()] != 0)) {
-    char *Spelling = (char *)malloc(String.size() + 1);
+    char *Spelling = static_cast<char *>(malloc(String.size() + 1));
     memmove(Spelling, String.data(), String.size());
     Spelling[String.size()] = 0;
     Result.data = Spelling;
@@ -112,9 +112,9 @@ bool cxstring::isManagedByPool(CXString str) {
 extern "C" {
 const char *clang_getCString(CXString string) {
   if (string.private_flags == (unsigned) CXS_StringBuf) {
-    return ((CXStringBuf*)string.data)->Data.data();
+    return static_cast<const CXStringBuf *>(string.data)->Data.data();
   }
-  return (const char*) string.data;
+  return static_cast<const char *>(string.data);
 }
 
 void clang_disposeString(CXString string) {
@@ -126,7 +126,8 @@ void clang_disposeString(CXString string) {
         free(const_cast<void *>(string.data));
       break;
     case CXS_StringBuf:
-      disposeCXStringBuf((CXStringBuf *) string.data);
+      disposeCXStringBuf(static_cast<CXStringBuf *>(
+                             const_cast<void *>(string.data)));
       break;
   }
 }
