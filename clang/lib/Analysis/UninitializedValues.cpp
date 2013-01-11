@@ -828,7 +828,7 @@ void clang::runUninitializedVariablesAnalysis(
   if (!PBH.hadAnyUse)
     return;
 
-  // Run through the blocks one more time, and report uninitialized variabes.
+  // Run through the blocks one more time, and report uninitialized variables.
   for (CFG::const_iterator BI = cfg.begin(), BE = cfg.end(); BI != BE; ++BI) {
     const CFGBlock *block = *BI;
     if (PBH.hadUse[block->getBlockID()]) {
