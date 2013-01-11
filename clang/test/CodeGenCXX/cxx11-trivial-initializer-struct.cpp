@@ -1,6 +1,6 @@
-// RUN: %clang_cc1 -std=c++11 -S -emit-llvm -o - %s -triple x86_64-apple-darwin10 | FileCheck %s
-// RUN: %clang_cc1 -S -emit-llvm -o %t.ll %s -triple x86_64-apple-darwin10 
 // RUN: %clang_cc1 -std=c++11 -S -emit-llvm -o %t-c++11.ll %s -triple x86_64-apple-darwin10 
+// RUN: FileCheck %s < %t-c++11.ll
+// RUN: %clang_cc1  -std=c++98 -S -emit-llvm -o %t.ll %s -triple x86_64-apple-darwin10 
 // RUN: diff %t.ll  %t-c++11.ll
 
 // rdar://12897704
