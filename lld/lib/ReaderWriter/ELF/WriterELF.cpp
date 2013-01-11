@@ -469,10 +469,8 @@ public:
       for (auto ref = definedAtom->begin(); ref != definedAtom->end(); ++ref) {
         uint32_t offset = ref->offsetInAtom();
         uint64_t targetAddress = 0;
-        if (ref->target() != nullptr)
-          targetAddress = writer->addressOfAtom(ref->target());
-        else
-          assert(0 && "Found the target to be NULL");
+        assert(ref->target() != nullptr && "Found the target to be NULL");
+        targetAddress = writer->addressOfAtom(ref->target());
         uint64_t fixupAddress = writer->addressOfAtom(ai.first) + offset;
         // apply the relocation
         writer->kindHandler()->applyFixup(ref->kind(),
