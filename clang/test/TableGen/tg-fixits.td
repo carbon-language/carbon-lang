@@ -38,9 +38,4 @@ def HardTabs : Warning<"">,
 def Unicode : Warning<"ユニコード">, InGroup<DiagGroup<"name">>;
 //      CHECK: tg-fixits.td:[[@LINE-1]]:51: error: group 'name' is referred to anonymously
 // CHECK-NEXT: def Unicode : Warning<"{{[^"]+}}">, InGroup<DiagGroup<"name">>;
-// Next two lines should not be printed, we get the underline wrong.  Our
-// implementation of diagnostic printing can skip printing these lines on some
-// OSes, but not on all.  See PR14910.
-// CHECK: {{(^                                          ~~~~~~~~\^~~~~~~~~~~~~~~~~~$)?}}
-// CHECK: {{(^                                          InGroup<NamedGroup>$)?}}
-// CHECK: note:
+// CHECK-NEXT: note:
