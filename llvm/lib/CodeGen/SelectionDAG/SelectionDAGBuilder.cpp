@@ -5948,6 +5948,10 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
     // Compute the constraint code and ConstraintType to use.
     TLI.ComputeConstraintToUse(OpInfo, OpInfo.CallOperand, &DAG);
 
+    if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
+        OpInfo.Type == InlineAsm::isClobber)
+      continue;
+
     // If this is a memory input, and if the operand is not indirect, do what we
     // need to to provide an address for the memory input.
     if (OpInfo.ConstraintType == TargetLowering::C_Memory &&
@@ -6051,6 +6055,8 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
         ExtraInfo |= InlineAsm::Extra_MayLoad;
       else if (OpInfo.Type == InlineAsm::isOutput)
         ExtraInfo |= InlineAsm::Extra_MayStore;
+      else if (OpInfo.Type == InlineAsm::isClobber)
+        ExtraInfo |= (InlineAsm::Extra_MayLoad | InlineAsm::Extra_MayStore);
     }
   }
 

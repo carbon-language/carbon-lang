@@ -3068,7 +3068,9 @@ PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const {
 
 TargetLowering::ConstraintType
 TargetLowering::getConstraintType(const std::string &Constraint) const {
-  if (Constraint.size() == 1) {
+  unsigned S = Constraint.size();
+
+  if (S == 1) {
     switch (Constraint[0]) {
     default: break;
     case 'r': return C_RegisterClass;
@@ -3097,9 +3099,11 @@ TargetLowering::getConstraintType(const std::string &Constraint) const {
     }
   }
 
-  if (Constraint.size() > 1 && Constraint[0] == '{' &&
-      Constraint[Constraint.size()-1] == '}')
+  if (S > 1 && Constraint[0] == '{' && Constraint[S-1] == '}') {
+    if (S == 8 && !Constraint.compare(1, 6, "memory", 6))  // "{memory}"
+      return C_Memory;
     return C_Register;
+  }
   return C_Unknown;
 }
 

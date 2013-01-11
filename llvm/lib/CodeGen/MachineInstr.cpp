@@ -1476,10 +1476,14 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << " ";
     getOperand(InlineAsm::MIOp_AsmString).print(OS, TM);
 
-    // Print HasSideEffects, IsAlignStack
+    // Print HasSideEffects, MayLoad, MayStore, IsAlignStack
     unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();
     if (ExtraInfo & InlineAsm::Extra_HasSideEffects)
       OS << " [sideeffect]";
+    if (ExtraInfo & InlineAsm::Extra_MayLoad)
+      OS << " [mayload]";
+    if (ExtraInfo & InlineAsm::Extra_MayStore)
+      OS << " [maystore]";
     if (ExtraInfo & InlineAsm::Extra_IsAlignStack)
       OS << " [alignstack]";
     if (getInlineAsmDialect() == InlineAsm::AD_ATT)
