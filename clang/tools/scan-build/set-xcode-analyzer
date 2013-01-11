@@ -76,7 +76,7 @@ def main():
   for x in NSWorkspace.sharedWorkspace().runningApplications():
     if x.localizedName().find("Xcode") >= 0:
       print "(-) You must quit Xcode first before modifying its configuration files."
-      return
+      sys.exit(1)
 
   isBuiltinAnalyzer = False
   if options.path:
