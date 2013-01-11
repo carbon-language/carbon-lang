@@ -138,7 +138,7 @@ unsigned getMacroUsagePriority(StringRef MacroName,
 
 /// \brief Determine the libclang cursor kind associated with the given
 /// declaration.
-CXCursorKind getCursorKindForDecl(Decl *D);
+CXCursorKind getCursorKindForDecl(const Decl *D);
 
 class FunctionDecl;
 class FunctionType;

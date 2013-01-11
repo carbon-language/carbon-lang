@@ -2828,7 +2828,7 @@ unsigned clang::getMacroUsagePriority(StringRef MacroName,
   return Priority;
 }
 
-CXCursorKind clang::getCursorKindForDecl(Decl *D) {
+CXCursorKind clang::getCursorKindForDecl(const Decl *D) {
   if (!D)
     return CXCursor_UnexposedDecl;
   
@@ -2888,7 +2888,7 @@ CXCursorKind clang::getCursorKindForDecl(Decl *D) {
         return CXCursor_ModuleImportDecl;
       
     default:
-      if (TagDecl *TD = dyn_cast<TagDecl>(D)) {
+      if (const TagDecl *TD = dyn_cast<TagDecl>(D)) {
         switch (TD->getTagKind()) {
           case TTK_Interface:  // fall through
           case TTK_Struct: return CXCursor_StructDecl;
