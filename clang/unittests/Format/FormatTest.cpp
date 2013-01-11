@@ -1388,6 +1388,9 @@ TEST_F(FormatTest, FormatObjCImplementation) {
                "- (int)answerWith:(int)i {\n"
                "  return i;\n"
                "}\n"
+               "+ (int)answerWith:(int)i {\n"
+               "  return i;\n"
+               "}\n"
                "@end");
 
   verifyFormat("@implementation Foo\n"
@@ -1397,6 +1400,7 @@ TEST_F(FormatTest, FormatObjCImplementation) {
 
   verifyFormat("@implementation Foo : Bar\n"
                "+ (id)init {}\n"
+               "- (void)foo {}\n"
                "@end");
 
   verifyFormat("@implementation Foo {\n"

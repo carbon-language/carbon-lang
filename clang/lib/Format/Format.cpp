@@ -1342,8 +1342,9 @@ private:
         Last->Tok.isNot(tok::kw_do) && Last->Tok.isNot(tok::r_brace) &&
         Last->Tok.isNot(tok::kw_else) && Last->Tok.isNot(tok::kw_try) &&
         Last->Tok.isNot(tok::kw_catch) && Last->Tok.isNot(tok::kw_for) &&
-        // This gets rid of all ObjC @ keywords and - based definitions.
-        Last->Tok.isNot(tok::at) && Last->Tok.isNot(tok::minus);
+        // This gets rid of all ObjC @ keywords and methods.
+        Last->Tok.isNot(tok::at) && Last->Tok.isNot(tok::minus) &&
+        Last->Tok.isNot(tok::plus);
     while (!Last->Children.empty())
       Last = &Last->Children.back();
     if (!Last->Tok.is(tok::l_brace))
