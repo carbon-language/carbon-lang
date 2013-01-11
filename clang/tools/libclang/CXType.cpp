@@ -636,8 +636,7 @@ CXString clang_getDeclObjCTypeEncoding(CXCursor C) {
     return cxstring::createCXString("");
 
   Decl *D = static_cast<Decl*>(C.data[0]);
-  CXTranslationUnit TU = static_cast<CXTranslationUnit>(C.data[2]);
-  ASTUnit *AU = static_cast<ASTUnit*>(TU->TUData);
+  ASTUnit *AU = cxcursor::getCursorASTUnit(C);
   ASTContext &Ctx = AU->getASTContext();
   std::string encoding;
 

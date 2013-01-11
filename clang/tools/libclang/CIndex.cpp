@@ -3118,8 +3118,7 @@ static CXString getDeclSpelling(Decl *D) {
 
 CXString clang_getCursorSpelling(CXCursor C) {
   if (clang_isTranslationUnit(C.kind))
-    return clang_getTranslationUnitSpelling(
-                            static_cast<CXTranslationUnit>(C.data[2]));
+    return clang_getTranslationUnitSpelling(getCursorTU(C));
 
   if (clang_isReference(C.kind)) {
     switch (C.kind) {
