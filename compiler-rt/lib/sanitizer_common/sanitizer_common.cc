@@ -50,8 +50,8 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
   if (CheckFailedCallback) {
     CheckFailedCallback(file, line, cond, v1, v2);
   }
-  Report("Sanitizer CHECK failed: %s:%d %s (%zd, %zd)\n", file, line, cond,
-                                                          v1, v2);
+  Report("Sanitizer CHECK failed: %s:%d %s (%lld, %lld)\n", file, line, cond,
+                                                            v1, v2);
   Die();
 }
 
