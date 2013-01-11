@@ -161,7 +161,7 @@ public:
     uintptr_t ActualSizeResult;
   };
   std::vector<StartExceptionTableCall> startExceptionTableCalls;
-  virtual uint8_t* startExceptionTable(const Function* F,
+  virtual uint8_t *startExceptionTable(const Function *F,
                                        uintptr_t &ActualSize) {
     uintptr_t InitialActualSize = ActualSize;
     uint8_t *Result = Base->startExceptionTable(F, ActualSize);
@@ -203,14 +203,21 @@ bool LoadAssemblyInto(Module *M, const char *assembly) {
 
 class JITTest : public testing::Test {
  protected:
+  virtual RecordingJITMemoryManager *createMemoryManager() {
+    return new RecordingJITMemoryManager;
+  }
+
   virtual void SetUp() {
     M = new Module("<main>", Context);
-    RJMM = new RecordingJITMemoryManager;
+    RJMM = createMemoryManager();
     RJMM->setPoisonMemory(true);
     std::string Error;
+    TargetOptions Options;
+    Options.JITExceptionHandling = true;
     TheJIT.reset(EngineBuilder(M).setEngineKind(EngineKind::JIT)
                  .setJITMemoryManager(RJMM)
-                 .setErrorStr(&Error).create());
+                 .setErrorStr(&Error)
+                 .setTargetOptions(Options).create());
     ASSERT_TRUE(TheJIT.get() != NULL) << Error;
   }
 
@@ -296,6 +303,46 @@ TEST(JIT, GlobalInFunction) {
 }
 
 #endif // !defined(__arm__) && !defined(__powerpc__)
+
+// Regression test for a bug.  The JITEmitter wasn't checking to verify that
+// it hadn't run out of space while generating the DWARF exception information
+// for an emitted function.
+
+class ExceptionMemoryManagerMock : public RecordingJITMemoryManager {
+ public:
+  virtual uint8_t *startExceptionTable(const Function *F,
+                                       uintptr_t &ActualSize) {
+    // force an insufficient size the first time through.
+    bool ChangeActualSize = false;
+    if (ActualSize == 0)
+      ChangeActualSize = true;;
+    uint8_t *result =
+      RecordingJITMemoryManager::startExceptionTable(F, ActualSize);
+    if (ChangeActualSize)
+      ActualSize = 1;
+    return result;
+  }
+};
+
+class JITExceptionMemoryTest : public JITTest {
+ protected:
+  virtual RecordingJITMemoryManager *createMemoryManager() {
+    return new ExceptionMemoryManagerMock;
+  }
+};
+
+TEST_F(JITExceptionMemoryTest, ExceptionTableOverflow) {
+  Function *F = Function::Create(TypeBuilder<void(void), false>::get(Context),
+                                 Function::ExternalLinkage,
+                                 "func1", M);
+  BasicBlock *Block = BasicBlock::Create(Context, "block", F);
+  IRBuilder<> Builder(Block);
+  Builder.CreateRetVoid();
+  TheJIT->getPointerToFunction(F);
+  ASSERT_TRUE(RJMM->startExceptionTableCalls.size() == 2);
+  ASSERT_TRUE(RJMM->deallocateExceptionTableCalls.size() == 1);
+  ASSERT_TRUE(RJMM->endExceptionTableCalls.size() == 1);
+}
 
 int PlusOne(int arg) {
   return arg + 1;
