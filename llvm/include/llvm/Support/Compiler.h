@@ -249,4 +249,13 @@
 # define LLVM_ASSUME_ALIGNED(p, a) (p)
 #endif
 
+/// \macro LLVM_FUNCTION_NAME
+/// \brief Expands to __func__ on compilers which support it.  Otherwise,
+/// expands to a compiler-dependent replacement.
+#if defined(_MSC_VER)
+# define LLVM_FUNCTION_NAME __FUNCTION__
+#else
+# define LLVM_FUNCTION_NAME __func__
+#endif
+
 #endif
