@@ -232,5 +232,5 @@ int main(int argc, const char **argv) {
                   callee(methodDecl(hasName(StringCStrMethod))),
                   on(id("arg", expr())))))),
       &Callback);
-  return Tool.run(newFrontendActionFactory(&Finder));
+  return Tool.runAndSave(newFrontendActionFactory(&Finder));
 }
