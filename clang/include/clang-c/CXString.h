@@ -36,7 +36,7 @@ extern "C" {
  * with the string data, call \c clang_disposeString() to free the string.
  */
 typedef struct {
-  void *data;
+  const void *data;
   unsigned private_flags;
 } CXString;
 

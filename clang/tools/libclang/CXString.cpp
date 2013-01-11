@@ -35,7 +35,7 @@ CXString cxstring::createCXString(const char *String, bool DupString){
     Str.data = strdup(String);
     Str.private_flags = (unsigned) CXS_Malloc;
   } else {
-    Str.data = (void*)String;
+    Str.data = String;
     Str.private_flags = (unsigned) CXS_Unmanaged;
   }
   return Str;
@@ -50,7 +50,7 @@ CXString cxstring::createCXString(StringRef String, bool DupString) {
     Result.data = Spelling;
     Result.private_flags = (unsigned) CXS_Malloc;
   } else {
-    Result.data = (void*) String.data();
+    Result.data = String.data();
     Result.private_flags = (unsigned) CXS_Unmanaged;
   }
   return Result;
@@ -123,7 +123,7 @@ void clang_disposeString(CXString string) {
       break;
     case CXS_Malloc:
       if (string.data)
-        free((void*)string.data);
+        free(const_cast<void *>(string.data));
       break;
     case CXS_StringBuf:
       disposeCXStringBuf((CXStringBuf *) string.data);
