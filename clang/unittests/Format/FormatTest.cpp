@@ -362,30 +362,24 @@ TEST_F(FormatTest, FormatsEnum) {
 TEST_F(FormatTest, FormatsNamespaces) {
   verifyFormat("namespace some_namespace {\n"
                "class A {};\n"
-               "void f() {\n"
-               "  f();\n"
-               "}\n"
+               "void f() { f(); }\n"
                "}");
   verifyFormat("namespace {\n"
                "class A {};\n"
-               "void f() {\n"
-               "  f();\n"
-               "}\n"
+               "void f() { f(); }\n"
                "}");
   verifyFormat("inline namespace X {\n"
                "class A {};\n"
-               "void f() {\n"
-               "  f();\n"
-               "}\n"
+               "void f() { f(); }\n"
                "}");
   verifyFormat("using namespace some_namespace;\n"
                "class A {};\n"
-               "void f() {\n"
-               "  f();\n"
-               "}");
+               "void f() { f(); }");
 }
 
 TEST_F(FormatTest, FormatTryCatch) {
+  // FIXME: Handle try-catch explicitly in the UnwrappedLineParser, then we'll
+  // also not create single-line-blocks.
   verifyFormat("try {\n"
                "  throw a * b;\n"
                "}\n"
@@ -397,9 +391,7 @@ TEST_F(FormatTest, FormatTryCatch) {
                "}");
 
   // Function-level try statements.
-  verifyFormat("int f() try {\n"
-               "  return 4;\n"
-               "}\n"
+  verifyFormat("int f() try { return 4; }\n"
                "catch (...) {\n"
                "  return 5;\n"
                "}");
@@ -413,15 +405,9 @@ TEST_F(FormatTest, FormatTryCatch) {
 }
 
 TEST_F(FormatTest, FormatObjCTryCatch) {
-  verifyFormat("@try {\n"
-               "  f();\n"
-               "}\n"
-               "@catch (NSException e) {\n"
-               "  @throw;\n"
-               "}\n"
-               "@finally {\n"
-               "  exit(42);\n"
-               "}");
+  verifyFormat("@try { f(); }\n"
+               "@catch (NSException e) { @throw; }\n"
+               "@finally { exit(42); }");
 }
 
 TEST_F(FormatTest, StaticInitializers) {
@@ -546,7 +532,7 @@ TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {
 }
 
 TEST_F(FormatTest, FormatHashIfNotAtStartOfLine) {
-  verifyFormat("{\n  {\n    a #c;\n  }\n}");
+  verifyFormat("{\n  { a #c; }\n}");
 }
 
 TEST_F(FormatTest, FormatUnbalancedStructuralElements) {
@@ -609,9 +595,7 @@ TEST_F(FormatTest, LayoutBlockInsideParens) {
 }
 
 TEST_F(FormatTest, LayoutBlockInsideStatement) {
-  EXPECT_EQ("SOME_MACRO {\n"
-            "  int i;\n"
-            "}\n"
+  EXPECT_EQ("SOME_MACRO { int i; }\n"
             "int i;", format("  SOME_MACRO  {int i;}  int i;"));
 }
 
@@ -1106,9 +1090,7 @@ TEST_F(FormatTest, IncorrectAccessSpecifier) {
   verifyFormat("public\n"
                "{}");
   verifyFormat("public\n"
-               "B {\n"
-               "  int x;\n"
-               "}");
+               "B { int x; }");
 }
 
 TEST_F(FormatTest, IncorrectCodeUnbalancedBraces) {
@@ -1165,6 +1147,30 @@ TEST_F(FormatTest, LayoutTokensFollowingBlockInParentheses) {
       "}, aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb,\n"
       "                                    ccccccccccccccccc));");
 }
+
+TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
+  verifyFormat("void f() { return 42; }");
+  verifyFormat("void f() {\n"
+               "  // Comment\n"
+               "}");
+  verifyFormat("{\n"
+               "#error {\n"
+               "  int a;\n"
+               "}");
+  verifyFormat("{\n"
+               "  int a;\n"
+               "#error {\n"
+               "}");
+}
+
+// FIXME: This breaks the order of the unwrapped lines:
+// TEST_F(FormatTest, OrderUnwrappedLines) {
+//   verifyFormat("{\n"
+//                "  bool a; //\n"
+//                "#error {\n"
+//                "  int a;\n"
+//                "}");
+// }
 
 //===----------------------------------------------------------------------===//
 // Objective-C tests.
@@ -1291,39 +1297,27 @@ TEST_F(FormatTest, FormatObjCInterface) {
                      "+(id) init;\n"
                      "@end");
 
-  verifyFormat("@interface Foo {\n"
-               "  int _i;\n"
-               "}\n"
+  verifyFormat("@interface Foo { int _i; }\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo : Bar {\n"
-               "  int _i;\n"
-               "}\n"
+  verifyFormat("@interface Foo : Bar { int _i; }\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo : Bar <Baz, Quux> {\n"
-               "  int _i;\n"
-               "}\n"
+  verifyFormat("@interface Foo : Bar <Baz, Quux> { int _i; }\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo (HackStuff) {\n"
-               "  int _i;\n"
-               "}\n"
+  verifyFormat("@interface Foo (HackStuff) { int _i; }\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo () {\n"
-               "  int _i;\n"
-               "}\n"
+  verifyFormat("@interface Foo () { int _i; }\n"
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo (HackStuff) <MyProtocol> {\n"
-               "  int _i;\n"
-               "}\n"
+  verifyFormat("@interface Foo (HackStuff) <MyProtocol> { int _i; }\n"
                "+ (id)init;\n"
                "@end");
 }
@@ -1361,9 +1355,7 @@ TEST_F(FormatTest, FormatObjCImplementation) {
                "    return nil;\n"
                "}\n"
                "// Look, a comment!\n"
-               "- (int)answerWith:(int)i {\n"
-               "  return i;\n"
-               "}\n"
+               "- (int)answerWith:(int)i { return i; }\n"
                "@end");
 
   verifyFormat("@implementation Foo\n"
@@ -1375,15 +1367,11 @@ TEST_F(FormatTest, FormatObjCImplementation) {
                "+ (id)init {}\n"
                "@end");
 
-  verifyFormat("@implementation Foo {\n"
-               "  int _i;\n"
-               "}\n"
+  verifyFormat("@implementation Foo { int _i; }\n"
                "+ (id)init {}\n"
                "@end");
 
-  verifyFormat("@implementation Foo : Bar {\n"
-               "  int _i;\n"
-               "}\n"
+  verifyFormat("@implementation Foo : Bar { int _i; }\n"
                "+ (id)init {}\n"
                "@end");
 
@@ -1473,18 +1461,14 @@ TEST_F(FormatTest, ObjCAt) {
 
 TEST_F(FormatTest, ObjCSnippets) {
   // FIXME: Make the uncommented lines below pass.
-  verifyFormat("@autoreleasepool {\n"
-               "  foo();\n"
-               "}");
+  verifyFormat("@autoreleasepool { foo(); }");
   verifyFormat("@class Foo, Bar;");
   verifyFormat("@compatibility_alias AliasName ExistingClass;");
   verifyFormat("@dynamic textColor;");
   //verifyFormat("char *buf1 = @encode(int **);");
   verifyFormat("Protocol *proto = @protocol(p1);");
   //verifyFormat("SEL s = @selector(foo:);");
-  verifyFormat("@synchronized(self) {\n"
-               "  f();\n"
-               "}");
+  verifyFormat("@synchronized(self) { f(); }");
 
   verifyFormat("@synthesize dropArrowPosition = dropArrowPosition_;");
   verifyGoogleFormat("@synthesize dropArrowPosition = dropArrowPosition_;");

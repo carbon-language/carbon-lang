@@ -1279,28 +1279,27 @@ public:
          I != E; ++I) {
       const UnwrappedLine &TheLine = *I;
       if (touchesRanges(TheLine)) {
-        TokenAnnotator Annotator(TheLine, Style, SourceMgr, Lex);
-        if (!Annotator.annotate())
+        llvm::OwningPtr<TokenAnnotator> AnnotatedLine(
+            new TokenAnnotator(TheLine, Style, SourceMgr, Lex));
+        if (!AnnotatedLine->annotate())
           break;
-        unsigned Indent = formatFirstToken(Annotator.getRootToken(),
+        unsigned Indent = formatFirstToken(AnnotatedLine->getRootToken(),
                                            TheLine.Level, TheLine.InPPDirective,
                                            PreviousEndOfLineColumn);
-        unsigned Limit = Style.ColumnLimit - (TheLine.InPPDirective ? 1 : 0) -
-                         Indent;
-        // Check whether the UnwrappedLine can be put onto a single line. If
-        // so, this is bound to be the optimal solution (by definition) and we
-        // don't need to analyze the entire solution space.
-        bool FitsOnALine = fitsIntoLimit(Annotator.getRootToken(), Limit);
-        UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
-                                         FitsOnALine, Annotator.getLineType(),
-                                         Annotator.getRootToken(), Replaces,
-                                         StructuralError);
+
+        UnwrappedLine Line(TheLine);
+        bool FitsOnALine = tryFitMultipleLinesInOne(Indent, Line, AnnotatedLine,
+                                                    I, E);
+        UnwrappedLineFormatter Formatter(
+            Style, SourceMgr, Line, Indent, FitsOnALine,
+            AnnotatedLine->getLineType(), AnnotatedLine->getRootToken(),
+            Replaces, StructuralError);
         PreviousEndOfLineColumn = Formatter.format();
       } else {
         // If we did not reformat this unwrapped line, the column at the end of
         // the last token is unchanged - thus, we can calculate the end of the
         // last token, and return the result.
-        const FormatToken *Last = getLastLine(TheLine);
+        const FormatToken *Last = getLastInLine(TheLine);
         PreviousEndOfLineColumn =
             SourceMgr.getSpellingColumnNumber(Last->Tok.getLocation()) +
             Lex.MeasureTokenLength(Last->Tok.getLocation(), SourceMgr,
@@ -1312,7 +1311,75 @@ public:
   }
 
 private:
-  const FormatToken *getLastLine(const UnwrappedLine &TheLine) {
+  /// \brief Tries to merge lines into one.
+  ///
+  /// This will change \c Line and \c AnnotatedLine to contain the merged line,
+  /// if possible; note that \c I will be incremented when lines are merged.
+  ///
+  /// Returns whether the resulting \c Line can fit in a single line.
+  bool tryFitMultipleLinesInOne(unsigned Indent, UnwrappedLine &Line,
+                                llvm::OwningPtr<TokenAnnotator> &AnnotatedLine,
+                                std::vector<UnwrappedLine>::iterator &I,
+                                std::vector<UnwrappedLine>::iterator E) {
+    unsigned Limit = Style.ColumnLimit - (I->InPPDirective ? 1 : 0) - Indent;
+
+    // Check whether the UnwrappedLine can be put onto a single line. If
+    // so, this is bound to be the optimal solution (by definition) and we
+    // don't need to analyze the entire solution space.
+    bool FitsOnALine = fitsIntoLimit(AnnotatedLine->getRootToken(), Limit);
+    if (!FitsOnALine || I + 1 == E || I + 2 == E)
+      return FitsOnALine;
+
+    // Try to merge the next two lines if possible.
+    UnwrappedLine Combined(Line);
+
+    // First, check that the current line allows merging. This is the case if
+    // we're not in a control flow statement and the last token is an opening
+    // brace.
+    FormatToken *Last = &Combined.RootToken;
+    bool AllowedTokens =
+        !Last->Tok.is(tok::kw_if) && !Last->Tok.is(tok::kw_while) &&
+        !Last->Tok.is(tok::kw_do) && !Last->Tok.is(tok::r_brace) &&
+        !Last->Tok.is(tok::kw_else) && !Last->Tok.is(tok::kw_try) &&
+        !Last->Tok.is(tok::kw_catch) && !Last->Tok.is(tok::kw_for);
+    while (!Last->Children.empty())
+      Last = &Last->Children.back();
+    if (!Last->Tok.is(tok::l_brace))
+      return FitsOnALine;
+
+    // Second, check that the next line does not contain any braces - if it
+    // does, readability declines when putting it into a single line.
+    const FormatToken *Next = &(I + 1)->RootToken;
+    while (Next) {
+      AllowedTokens = AllowedTokens && !Next->Tok.is(tok::l_brace) &&
+                      !Next->Tok.is(tok::r_brace);
+      Last->Children.push_back(*Next);
+      Last = &Last->Children[0];
+      Last->Children.clear();
+      Next = Next->Children.empty() ? NULL : &Next->Children.back();
+    }
+
+    // Last, check that the third line contains a single closing brace.
+    Next = &(I + 2)->RootToken;
+    AllowedTokens = AllowedTokens && Next->Tok.is(tok::r_brace);
+    if (!Next->Children.empty() || !AllowedTokens)
+      return FitsOnALine;
+    Last->Children.push_back(*Next);
+
+    llvm::OwningPtr<TokenAnnotator> CombinedAnnotator(
+        new TokenAnnotator(Combined, Style, SourceMgr, Lex));
+    if (CombinedAnnotator->annotate() &&
+        fitsIntoLimit(CombinedAnnotator->getRootToken(), Limit)) {
+      // If the merged line fits, we use that instead and skip the next two
+      // lines.
+      AnnotatedLine.reset(CombinedAnnotator.take());
+      Line = Combined;
+      I += 2;
+    }
+    return FitsOnALine;
+  }
+
+  const FormatToken *getLastInLine(const UnwrappedLine &TheLine) {
     const FormatToken *Last = &TheLine.RootToken;
     while (!Last->Children.empty())
       Last = &Last->Children.back();
@@ -1321,7 +1388,7 @@ private:
 
   bool touchesRanges(const UnwrappedLine &TheLine) {
     const FormatToken *First = &TheLine.RootToken;
-    const FormatToken *Last = getLastLine(TheLine);
+    const FormatToken *Last = getLastInLine(TheLine);
     CharSourceRange LineRange = CharSourceRange::getTokenRange(
                                     First->Tok.getLocation(),
                                     Last->Tok.getLocation());

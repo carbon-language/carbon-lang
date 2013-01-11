@@ -45,7 +45,7 @@
   id IvarNSObject;
 }
 @end
-// CHECK: Declaration>@interface NSObject {\n  id IvarNSObject;\n}\n@end</Declaration>
+// CHECK: Declaration>@interface NSObject { id IvarNSObject; }\n@end</Declaration>
 // CHECK: <Declaration>id IvarNSObject</Declaration>
 
 /**
@@ -73,7 +73,7 @@
 */
 @property (copy) id PropertyMyClass;
 @end
-// CHECK: <Declaration>@interface MyClass : NSObject &lt;MyProto&gt; {\n    id IvarMyClass;\n}\n@end</Declaration>
+// CHECK: <Declaration>@interface MyClass : NSObject &lt;MyProto&gt; { id IvarMyClass; }\n@end</Declaration>
 // CHECK: <Declaration>id IvarMyClass</Declaration>
 // CHECK: <Declaration>- (id)MethodMyClass;</Declaration>
 // CHECK: <Declaration>+ (id)ClassMethodMyClass;</Declaration>
@@ -90,7 +90,7 @@
   id IvarMyClassExtension;
 }
 @end
-// CHECK: <Declaration>@interface MyClass () {\n  id IvarMyClassExtension;\n}\n@end</Declaration>
+// CHECK: <Declaration>@interface MyClass () { id IvarMyClassExtension; }\n@end</Declaration>
 // CHECK: <Declaration>id IvarMyClassExtension</Declaration>
 
 
