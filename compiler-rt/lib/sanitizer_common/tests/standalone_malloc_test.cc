@@ -34,6 +34,7 @@ static void *MallocThread(void *t) {
       if (allocated.empty()) continue;
       size_t slot = i % allocated.size();
       char *p = allocated[slot].first;
+      p[0] = 0;  // emulate last user touch of the block
       size_t size = allocated[slot].second;
       total_freed += size;
       swap(allocated[slot], allocated.back());
