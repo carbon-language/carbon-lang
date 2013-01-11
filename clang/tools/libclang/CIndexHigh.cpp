@@ -14,6 +14,7 @@
 #include "CLog.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Frontend/ASTUnit.h"
+#include "llvm/Support/Compiler.h"
 
 using namespace clang;
 using namespace cxcursor;
@@ -343,7 +344,7 @@ extern "C" {
 
 void clang_findReferencesInFile(CXCursor cursor, CXFile file,
                                 CXCursorAndRangeVisitor visitor) {
-  LogRef Log = Logger::make(__func__);
+  LogRef Log = Logger::make(LLVM_FUNCTION_NAME);
 
   if (clang_Cursor_isNull(cursor)) {
     if (Log)

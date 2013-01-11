@@ -18,6 +18,7 @@
 #include "CXString.h"
 #include "CXTranslationUnit.h"
 #include "CLog.h"
+#include "llvm/Support/Compiler.h"
 #include "llvm/Support/Format.h"
 
 using namespace clang;
@@ -125,7 +126,7 @@ CXSourceLocation clang_getLocation(CXTranslationUnit tu,
   if (!tu || !file)
     return clang_getNullLocation();
   
-  LogRef Log = Logger::make(__func__);
+  LogRef Log = Logger::make(LLVM_FUNCTION_NAME);
   ASTUnit *CXXUnit = static_cast<ASTUnit *>(tu->TUData);
   ASTUnit::ConcurrencyCheck Check(*CXXUnit);
   const FileEntry *File = static_cast<const FileEntry *>(file);
