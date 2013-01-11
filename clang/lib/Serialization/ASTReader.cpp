@@ -655,7 +655,8 @@ ASTDeclContextNameLookupTrait::ReadData(internal_key_type,
                                         unsigned DataLen) {
   using namespace clang::io;
   unsigned NumDecls = ReadUnalignedLE16(d);
-  LE32DeclID *Start = (LE32DeclID *)d;
+  LE32DeclID *Start = reinterpret_cast<LE32DeclID *>(
+                        const_cast<unsigned char *>(d));
   return std::make_pair(Start, Start + NumDecls);
 }
 
