@@ -1338,10 +1338,12 @@ private:
     // brace.
     FormatToken *Last = &Combined.RootToken;
     bool AllowedTokens =
-        !Last->Tok.is(tok::kw_if) && !Last->Tok.is(tok::kw_while) &&
-        !Last->Tok.is(tok::kw_do) && !Last->Tok.is(tok::r_brace) &&
-        !Last->Tok.is(tok::kw_else) && !Last->Tok.is(tok::kw_try) &&
-        !Last->Tok.is(tok::kw_catch) && !Last->Tok.is(tok::kw_for);
+        Last->Tok.isNot(tok::kw_if) && Last->Tok.isNot(tok::kw_while) &&
+        Last->Tok.isNot(tok::kw_do) && Last->Tok.isNot(tok::r_brace) &&
+        Last->Tok.isNot(tok::kw_else) && Last->Tok.isNot(tok::kw_try) &&
+        Last->Tok.isNot(tok::kw_catch) && Last->Tok.isNot(tok::kw_for) &&
+        // This gets rid of all ObjC @ keywords and - based definitions.
+        Last->Tok.isNot(tok::at) && Last->Tok.isNot(tok::minus);
     while (!Last->Children.empty())
       Last = &Last->Children.back();
     if (!Last->Tok.is(tok::l_brace))
