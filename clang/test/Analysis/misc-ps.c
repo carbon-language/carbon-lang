@@ -157,3 +157,9 @@ void PR14635(int *p) {
   *p = a || b; // expected-warning {{Assigned value is garbage or undefined}}
 }
 
+// Test handling floating point values with unary '!'.
+int PR14634(int x) {
+  double y = (double)x;
+  return !y;
+}
+

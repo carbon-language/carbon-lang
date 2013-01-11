@@ -809,7 +809,10 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
             Result = evalBinOp(state, BO_EQ, cast<Loc>(V), X,
                                U->getType());
           }
-          else {
+          else if (Ex->getType()->isFloatingType()) {
+            // FIXME: handle floating point types.
+            Result = UnknownVal();
+          } else {
             nonloc::ConcreteInt X(getBasicVals().getValue(0, Ex->getType()));
             Result = evalBinOp(state, BO_EQ, cast<NonLoc>(V), X,
                                U->getType());
