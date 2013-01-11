@@ -297,8 +297,9 @@ namespace lldb_private {
         // Locating the file should happen only on the local computer or using
         // the current computers global settings.
         //----------------------------------------------------------------------
-        virtual FileSpec
-        LocateExecutableScriptingResource (const ModuleSpec &module_spec);
+        virtual FileSpecList
+        LocateExecutableScriptingResources (Target *target,
+                                            Module &module);
         
         virtual Error
         GetSharedModule (const ModuleSpec &module_spec, 

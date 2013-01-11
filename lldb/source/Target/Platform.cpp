@@ -89,10 +89,10 @@ Platform::GetFile (const FileSpec &platform_file,
     return Error();
 }
 
-FileSpec
-Platform::LocateExecutableScriptingResource (const ModuleSpec &module_spec)
+FileSpecList
+Platform::LocateExecutableScriptingResources (Target *target, Module &module)
 {
-    return FileSpec();
+    return FileSpecList();
 }
 
 Error

@@ -1180,29 +1180,45 @@ Module::LoadScriptingResourceInTarget (Target *target, Error& error)
         return false;
     }
     
-    PlatformSP platform_sp(target->GetPlatform());
-    
-    if (!platform_sp)
+    Debugger &debugger = target->GetDebugger();
+    const ScriptLanguage script_language = debugger.GetScriptLanguage();
+    if (script_language != eScriptLanguageNone)
     {
-        error.SetErrorString("invalid Platform");
-        return false;
-    }
+        
+        PlatformSP platform_sp(target->GetPlatform());
+        
+        if (!platform_sp)
+        {
+            error.SetErrorString("invalid Platform");
+            return false;
+        }
 
-    ModuleSpec module_spec(GetFileSpec());
-    FileSpec scripting_fspec = platform_sp->LocateExecutableScriptingResource(module_spec);
-    Debugger &debugger(target->GetDebugger());
-    if (scripting_fspec && scripting_fspec.Exists())
-    {
         ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
         if (script_interpreter)
         {
-            StreamString scripting_stream;
-            scripting_fspec.Dump(&scripting_stream);
-            const bool can_reload = false;
-            const bool init_lldb_globals = false;
-            bool did_load = script_interpreter->LoadScriptingModule(scripting_stream.GetData(), can_reload, init_lldb_globals, error);
-            if (!did_load)
-                return false;
+            FileSpecList file_specs = platform_sp->LocateExecutableScriptingResources (target,
+                                                                                       *this);
+            
+            
+            const uint32_t num_specs = file_specs.GetSize();
+            if (num_specs)
+            {
+                for (uint32_t i=0; i<num_specs; ++i)
+                {
+                    FileSpec scripting_fspec (file_specs.GetFileSpecAtIndex(i));
+                    if (scripting_fspec && scripting_fspec.Exists())
+                    {
+
+                        StreamString scripting_stream;
+                        scripting_fspec.Dump(&scripting_stream);
+                        const bool can_reload = false;
+                        const bool init_lldb_globals = false;
+                        bool did_load = script_interpreter->LoadScriptingModule(scripting_stream.GetData(), can_reload, init_lldb_globals, error);
+                        if (!did_load)
+                            return false;
+                    }
+                }
+            }
         }
         else
         {

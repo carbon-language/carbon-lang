@@ -4272,7 +4272,24 @@ protected:
             // current target, so we need to find that module in the
             // target
             ModuleList matching_module_list;
-            const size_t num_matches = target->GetImages().FindModules (module_spec, matching_module_list);
+            size_t num_matches = target->GetImages().FindModules (module_spec, matching_module_list);
+            while (num_matches == 0)
+            {
+                ConstString filename_no_extension(module_spec.GetFileSpec().GetFileNameStrippingExtension());
+                // Empty string returned, lets bail
+                if (!filename_no_extension)
+                    break;
+                
+                // Check if there was no extension to strip and the basename is the same
+                if (filename_no_extension == module_spec.GetFileSpec().GetFilename())
+                    break;
+                
+                // Replace basename with one less extension
+                module_spec.GetFileSpec().GetFilename() = filename_no_extension;
+                
+                num_matches = target->GetImages().FindModules (module_spec, matching_module_list);
+            }
+
             if (num_matches > 1)
             {
                 result.AppendErrorWithFormat ("multiple modules match symbol file '%s', use the --uuid option to resolve the ambiguity.\n", symfile_path);
@@ -4309,6 +4326,12 @@ protected:
                             ModuleList module_list;
                             module_list.Append (module_sp);
                             target->ModulesDidLoad (module_list);
+                            
+                            // Make sure we load any scripting resources that may be embedded
+                            // in the debug info files in case the platform supports that.
+                            Error error;
+                            module_sp->LoadScriptingResourceInTarget (target, error);
+
                             flush = true;
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                             return true;
@@ -4317,7 +4340,6 @@ protected:
                 }
                 // Clear the symbol file spec if anything went wrong
                 module_sp->SetSymbolFileFileSpec (FileSpec());
-
             }
 
             if (module_spec.GetUUID().IsValid())

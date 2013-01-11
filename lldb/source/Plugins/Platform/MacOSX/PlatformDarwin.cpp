@@ -24,6 +24,8 @@
 #include "lldb/Host/Host.h"
 #include "lldb/Host/Symbols.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Symbol/SymbolFile.h"
+#include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Target/Target.h"
 
 using namespace lldb;
@@ -50,87 +52,56 @@ PlatformDarwin::~PlatformDarwin()
 {
 }
 
-FileSpec
-PlatformDarwin::LocateExecutableScriptingResource (const ModuleSpec &module_spec)
+FileSpecList
+PlatformDarwin::LocateExecutableScriptingResources (Target *target,
+                                                    Module &module)
 {
-    const FileSpec *exec_fspec = module_spec.GetFileSpecPtr();
-    // APIs such as NSLinkModule() allow us to attach a library without a filename
-    // make sure we do not crash under those circumstances
-    if (!exec_fspec)
-        return FileSpec();
-
-    // if the arch and uuid are ever used for anything other than display purposes
-    // make sure they are not NULL before proceeding
-    const ArchSpec *arch = module_spec.GetArchitecturePtr();
-    const UUID *uuid = module_spec.GetUUIDPtr();
-    
-    const char* module_directory = exec_fspec->GetDirectory().GetCString();
-
-    // NB some extensions might be meaningful and should not be stripped - "this.binary.file"
-    // should not lose ".file" but GetFileNameStrippingExtension() will do precisely that.
-    // Ideally, we should have a per-platform list of extensions (".exe", ".app", ".dSYM", ".framework")
-    // which should be stripped while leaving "this.binary.file" as-is.
-    const char* module_basename = exec_fspec->GetFileNameStrippingExtension().GetCString();
-    
-    if (!module_directory || !module_basename)
-        return FileSpec();
-    
-    Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "LocateExecutableScriptingResource (file = %s, arch = %s, uuid = %p)",
-                        exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
-                        arch ? arch->GetArchitectureName() : "<NULL>",
-                        uuid);
-    
-    // FIXME: for Python, we cannot allow dots in the middle of the filenames we import.
-    // Theoretically, different scripting languages may have different sets of
-    // forbidden tokens in filenames, and that should be dealt with by each ScriptInterpreter.
-    // For now, we just replace dots with underscores, but if we ever support anything
-    // other than Python we will need to rework this
-    std::auto_ptr<char> module_basename_fixed_ap(new char[strlen(module_basename)+1]);
-    char* module_basename_fixed = module_basename_fixed_ap.get();
-    strcpy(module_basename_fixed, module_basename);
-    while (*module_basename_fixed)
+    FileSpecList file_list;
+    if (target && target->GetDebugger().GetScriptLanguage() == eScriptLanguagePython)
     {
-        if (*module_basename_fixed == '.')
-            *module_basename_fixed = '_';
-        module_basename_fixed++;
-    }
-    module_basename_fixed = module_basename_fixed_ap.get();
-    
-    FileSpec symbol_fspec (Symbols::LocateExecutableSymbolFile(module_spec));
-    
-    FileSpec script_fspec;
-    
-    StreamString path_string;
-    
-    if (symbol_fspec && symbol_fspec.Exists())
-    {
-        // for OSX we are going to be in .dSYM/Contents/Resources/DWARF/<basename>
-        // let us go to .dSYM/Contents/Resources/Python/<basename>.py and see if the file exists
-        path_string.Printf("%s/../Python/%s.py",symbol_fspec.GetDirectory().AsCString(""),module_basename_fixed);
-        script_fspec.SetFile(path_string.GetData(), true);
-        if (!script_fspec.Exists())
-            script_fspec.Clear();
-    }
-    
-    // no symbols or symbols did not have a scripting resource
-    if (!symbol_fspec || !script_fspec)
-    {
-        path_string.Clear();
-        path_string.Printf("%s.framework",module_basename);
-        if (module_directory && strstr(module_directory, path_string.GetData()))
+        // NB some extensions might be meaningful and should not be stripped - "this.binary.file"
+        // should not lose ".file" but GetFileNameStrippingExtension() will do precisely that.
+        // Ideally, we should have a per-platform list of extensions (".exe", ".app", ".dSYM", ".framework")
+        // which should be stripped while leaving "this.binary.file" as-is.
+        std::string module_basename (module.GetFileSpec().GetFileNameStrippingExtension().AsCString(""));
+        if (!module_basename.empty())
         {
-            // we are going to be in foo.framework/Versions/X/foo
-            path_string.Clear();
-            // let's go to foo.framework/Versions/X/Resources/Python/foo.py
-            path_string.Printf("%s/Resources/Python/%s.py",module_directory,module_basename_fixed);
-            script_fspec.SetFile(path_string.GetData(), true);
-            if (!script_fspec.Exists())
-                script_fspec.Clear();
+            // FIXME: for Python, we cannot allow certain characters in module
+            // filenames we import. Theoretically, different scripting languages may
+            // have different sets of forbidden tokens in filenames, and that should
+            // be dealt with by each ScriptInterpreter. For now, we just replace dots
+            // with underscores, but if we ever support anything other than Python
+            // we will need to rework this
+            std::replace(module_basename.begin(), module_basename.end(), '.', '_');
+            std::replace(module_basename.begin(), module_basename.end(), ' ', '_');
+            std::replace(module_basename.begin(), module_basename.end(), '-', '_');
+        
+            SymbolVendor *symbols = module.GetSymbolVendor ();
+            if (symbols)
+            {
+                SymbolFile *symfile = symbols->GetSymbolFile();
+                if (symfile)
+                {
+                    ObjectFile *objfile = symfile->GetObjectFile();
+                    if (objfile)
+                    {
+                        FileSpec symfile_spec (objfile->GetFileSpec());
+                        if (symfile_spec && symfile_spec.Exists())
+                        {
+                            StreamString path_string;
+                            // for OSX we are going to be in .dSYM/Contents/Resources/DWARF/<basename>
+                            // let us go to .dSYM/Contents/Resources/Python/<basename>.py and see if the file exists
+                            path_string.Printf("%s/../Python/%s.py",symfile_spec.GetDirectory().GetCString(), module_basename.c_str());
+                            FileSpec script_fspec(path_string.GetData(), true);
+                            if (script_fspec.Exists())
+                                file_list.Append (script_fspec);
+                        }
+                    }
+                }
+            }
         }
     }
-    
-    return script_fspec;
+    return file_list;
 }
 
 Error
