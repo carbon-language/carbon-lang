@@ -152,7 +152,7 @@ bool UnwrappedLineParser::parseLevel(bool HasOpeningBrace) {
       } else {
         Diag.Report(FormatTok.Tok.getLocation(),
                     Diag.getCustomDiagID(clang::DiagnosticsEngine::Error,
-                                         "Stray '}' found"));
+                                         "unexpected '}'"));
         Error = true;
         nextToken();
         addUnwrappedLine();
