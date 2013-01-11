@@ -64,7 +64,7 @@ public:
   /// \brief Writes the chunks into the output file specified by path
   virtual error_code writeFile(const lld::File &File, StringRef path) = 0;
 
-  /// \brief Writes the chunks into the output file specified by path
+  /// \brief Get the virtual address of \p atom after layout.
   virtual uint64_t addressOfAtom(const Atom *atom) = 0;
 
   /// \brief Return the processing function to apply Relocations
