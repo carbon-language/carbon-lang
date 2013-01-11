@@ -31,11 +31,11 @@ my $os_release = 11;
 my $original_env_path = $ENV{PATH};
 
 our %llvm_config_info = (
-   'Debug'         => { configure_options => '--disable-optimized --disable-assertions --enable-libcpp', make_options => 'DEBUG_SYMBOLS=1'},
-   'Debug+Asserts' => { configure_options => '--disable-optimized --enable-assertions --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
-   'Release'       => { configure_options => '--enable-optimized --disable-assertions --enable-libcpp' , make_options => ''},
-   'Release+Debug' => { configure_options => '--enable-optimized --disable-assertions --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
-   'Release+Asserts' => { configure_options => '--enable-optimized --enable-assertions --enable-libcpp' , make_options => ''},
+    'Debug'         => { configure_options => '--disable-optimized --disable-assertions --enable-libcpp', make_options => 'DEBUG_SYMBOLS=1'},
+    'Debug+Asserts' => { configure_options => '--disable-optimized --enable-assertions --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
+    'Release'       => { configure_options => '--enable-optimized --disable-assertions --enable-libcpp' , make_options => ''},
+    'Release+Debug' => { configure_options => '--enable-optimized --disable-assertions --enable-libcpp' , make_options => 'DEBUG_SYMBOLS=1'},
+    'Release+Asserts' => { configure_options => '--enable-optimized --enable-assertions --enable-libcpp' , make_options => ''},
 );
 
 our $llvm_config_href = undef;
@@ -264,7 +264,7 @@ sub build_llvm
             do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus tools-only VERBOSE=1 $llvm_config_href->{make_options} NO_RUNTIME_LIBS=1 PROJECT_NAME='llvm' $extra_make_flags EDIS_VERSION=1", "making libedis", 1);
             # Combine all .o files from a bunch of static libraries from llvm
             # and clang into a single .a file.
-            create_single_llvm_arhive_for_arch ($llvm_dstroot_arch, 1);
+            create_single_llvm_archive_for_arch ($llvm_dstroot_arch, 1);
         }
 
         ++$arch_idx;
@@ -329,7 +329,7 @@ sub do_command
     }
 }
 
-sub create_single_llvm_arhive_for_arch
+sub create_single_llvm_archive_for_arch
 {
     my $arch_dstroot = shift;
     my $split_into_objects = shift;
