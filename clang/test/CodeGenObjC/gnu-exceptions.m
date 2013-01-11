@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -triple x86_64-pc-linux-gnu -emit-llvm -fexceptions -fobjc-exceptions -fobjc-runtime=gcc -o - %s | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-unknown-freebsd -emit-llvm -fexceptions -fobjc-exceptions -fobjc-runtime=gnustep-1.7 -o - %s | FileCheck -check-prefix=NEW-ABI %s
 
 void opaque(void);
 void log(int i);
@@ -21,6 +22,8 @@ void test0() {
     // CHECK: call void @log(i32 0)
 
     // CHECK: resume
+    // NEW-ABI: objc_begin_catch
+    // NEW-ABI: objc_end_catch
 
     log(0);
   }
