@@ -7,8 +7,7 @@
 using namespace std;
 
 const size_t kNumThreds = 16;
-const size_t kNumIters = 1 << 20;
-
+const size_t kNumIters = 1 << 23;
 
 static void *MallocThread(void *t) {
   size_t total_malloced = 0, total_freed = 0;
@@ -17,9 +16,12 @@ static void *MallocThread(void *t) {
   vector<pair<char *, size_t> > allocated;
   allocated.reserve(kNumIters);
   for (size_t i = 1; i < kNumIters; i++) {
-    if ((i % (kNumIters / 2)) == 0 && tid == 0)
+    if ((i % (kNumIters / 4)) == 0 && tid == 0)
       fprintf(stderr, "   T[%ld] iter %ld\n", tid, i);
-    if ((i % 5) <= 2) {  // 0, 1, 2
+    bool allocate = (i % 5) <= 2;  // 60% malloc, 40% free
+    if (i > kNumIters / 4)
+      allocate = i % 2;  // then switch to 50% malloc, 50% free
+    if (allocate) {
       size_t size = 1 + (i % 200);
       if ((i % 10001) == 0)
         size *= 4096;
@@ -28,7 +30,7 @@ static void *MallocThread(void *t) {
       x[0] = x[size - 1] = x[size / 2] = 0;
       allocated.push_back(make_pair(x, size));
       max_in_use = max(max_in_use, total_malloced - total_freed);
-    } else {  // 3, 4
+    } else {
       if (allocated.empty()) continue;
       size_t slot = i % allocated.size();
       char *p = allocated[slot].first;
