@@ -146,6 +146,9 @@ public:
     if (llvm::opt::Arg *A = _inputArgs->getLastArg(ld::OPT_emit_yaml))
       newArgs->AddFlagArg(A, _core.getOption(core::OPT_emit_yaml));
 
+    if (llvm::opt::Arg *A = _inputArgs->getLastArg(ld::OPT_noinhibit_exec))
+      newArgs->AddFlagArg(A, _core.getOption(core::OPT_noinhibit_exec));
+
     // Copy input args.
     for (llvm::opt::arg_iterator it = _inputArgs->filtered_begin(ld::OPT_INPUT),
                                  ie = _inputArgs->filtered_end();
@@ -228,6 +231,7 @@ LinkerOptions lld::generateOptions(const llvm::opt::ArgList &args) {
   ret._relocatable = args.hasArg(core::OPT_relocatable);
   ret._outputCommands = args.hasArg(core::OPT_OCTOTHORPE_OCTOTHORPE_OCTOTHORPE);
   ret._outputYAML = args.hasArg(core::OPT_emit_yaml);
+  ret._noInhibitExec = args.hasArg(core::OPT_noinhibit_exec);
 
   return std::move(ret);
 }

@@ -11,3 +11,6 @@ def relocatable : Flag<["-"], "relocatable">;
 def OCTOTHORPE_OCTOTHORPE_OCTOTHORPE : Flag<["-"], "###">;
 
 def emit_yaml : Flag<["-"], "emit-yaml">;
+
+def noinhibit_exec : Flag<["-"], "noinhibit-exec">, 
+    HelpText<"Retain the executable output file whenever it is still usable">;

@@ -67,11 +67,11 @@ void LinkerInvocation::operator()() {
   }
 
   struct Blah : ResolverOptions {
-    Blah()
+    Blah(const LinkerOptions &options)
       : ResolverOptions() {
-      _undefinesAreErrors = true;
+      _undefinesAreErrors = !options._noInhibitExec;
     }
-  } ro;
+  } ro(_options);
 
   auto writer = target->getWriter();
 

@@ -23,3 +23,6 @@ def m : Separate<["-"], "m">;
 def static : Flag<["-"], "static">;
 
 def L : Joined<["-"], "L">;
+
+def noinhibit_exec : Flag<["--"], "noinhibit-exec">,
+    HelpText<"Retain the executable output file whenever it is still usable">;

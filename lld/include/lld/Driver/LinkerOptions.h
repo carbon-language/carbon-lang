@@ -116,7 +116,8 @@ struct LinkerOptions {
     , _entrySymbol(std::move(other._entrySymbol))
     , _relocatable(other._relocatable)
     , _outputCommands(other._outputCommands)
-    , _outputYAML(other._outputYAML) {}
+    , _outputYAML(other._outputYAML)
+    , _noInhibitExec(other._noInhibitExec) {}
 
   std::vector<LinkerInput> _input;
   std::vector<std::string> _llvmArgs;
@@ -127,6 +128,7 @@ struct LinkerOptions {
   /// \brief -###
   unsigned _outputCommands : 1;
   unsigned _outputYAML : 1;
+  unsigned _noInhibitExec : 1;
 
 private:
   LinkerOptions(const LinkerOptions&) LLVM_DELETED_FUNCTION;
