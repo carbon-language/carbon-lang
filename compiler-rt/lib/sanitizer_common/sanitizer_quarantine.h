@@ -63,22 +63,8 @@ class Quarantine {
       SpinMutexLock l(&cache_mutex_);
       cache_.Transfer(c);
     }
-    if (cache_.Size() > max_size_ && recycle_mutex_.TryLock()) {
-      Cache tmp;
-      {
-        SpinMutexLock l(&cache_mutex_);
-        while (cache_.Size() > max_size_) {
-          QuarantineBatch *b = cache_.DequeueBatch();
-          tmp.EnqueueBatch(b);
-        }
-      }
-      recycle_mutex_.Unlock();
-      while (QuarantineBatch *b = tmp.DequeueBatch()) {
-        for (uptr i = 0; i < b->count; i++)
-          cb.Recycle((Node*)b->batch[i]);
-        cb.Deallocate(b);
-      }
-    }
+    if (cache_.Size() > max_size_ && recycle_mutex_.TryLock())
+      Recycle(cb);
   }
 
  private:
@@ -92,6 +78,23 @@ class Quarantine {
   SpinMutex recycle_mutex_;
   Cache cache_;
   char pad2_[kCacheLineSize];
+
+  void NOINLINE Recycle(Callback cb) {
+    Cache tmp;
+    {
+      SpinMutexLock l(&cache_mutex_);
+      while (cache_.Size() > min_size_) {
+        QuarantineBatch *b = cache_.DequeueBatch();
+        tmp.EnqueueBatch(b);
+      }
+    }
+    recycle_mutex_.Unlock();
+    while (QuarantineBatch *b = tmp.DequeueBatch()) {
+      for (uptr i = 0; i < b->count; i++)
+        cb.Recycle((Node*)b->batch[i]);
+      cb.Deallocate(b);
+    }
+  }
 };
 
 // Per-thread cache of memory blocks.
