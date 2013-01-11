@@ -2158,8 +2158,7 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
     if ((*si)->kind() !=
           Chunk<target_endianness, max_align, is64Bits>::K_ELFSection)
       continue;
-    section =
-      llvm::dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si);
+    section = cast<Section<target_endianness, max_align, is64Bits>>(*si);
     for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
       _atomToAddressMap[ai->first] = (ai)->second.second;
     }
