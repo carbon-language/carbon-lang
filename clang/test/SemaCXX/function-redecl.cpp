@@ -116,3 +116,21 @@ bool Foo::isGood() { // expected-error {{out-of-line definition of 'isGood' does
 }
 void Foo::beEvil() {} // expected-error {{out-of-line definition of 'beEvil' does not match any declaration in namespace 'redecl_typo::Foo'; did you mean 'BeEvil'?}}
 }
+
+namespace test2 {
+  extern "C" {
+    void f() {
+      void test2_g(int); // expected-note {{previous declaration is here}}
+    }
+  }
+}
+int test2_g(int); // expected-error {{functions that differ only in their return type cannot be overloaded}}
+
+namespace test3 {
+  extern "C" {
+    void f() {
+      extern int test3_x; // expected-note {{previous definition is here}}
+    }
+  }
+}
+float test3_x; // expected-error {{redefinition of 'test3_x' with a different type: 'float' vs 'int'}}

@@ -92,8 +92,6 @@ void outer_test3() {
   int *(*fp)(int) = outer8; // expected-error{{use of undeclared identifier 'outer8'}}
 }
 
-static float outer8(float); // okay
-
 enum e { e1, e2 };
 
 // GNU extension: prototypes and K&R function definitions

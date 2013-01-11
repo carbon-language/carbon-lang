@@ -4691,6 +4691,14 @@ void Sema::CheckShadow(Scope *S, VarDecl *D) {
   CheckShadow(S, D, R);
 }
 
+template<typename T>
+static bool mayConflictWithNonVisibleExternC(const T *ND) {
+  VarDecl::StorageClass SC = ND->getStorageClass();
+  if (ND->hasCLanguageLinkage() && (SC == SC_Extern || SC == SC_PrivateExtern))
+    return true;
+  return ND->getDeclContext()->isTranslationUnit();
+}
+
 /// \brief Perform semantic checking on a newly-created variable
 /// declaration.
 ///
@@ -4793,10 +4801,9 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
     NewVD->setTypeSourceInfo(FixedTInfo);
   }
 
-  if (Previous.empty() && NewVD->isExternC()) {
-    // Since we did not find anything by this name and we're declaring
-    // an extern "C" variable, look for a non-visible extern "C"
-    // declaration with the same name.
+  if (Previous.empty() && mayConflictWithNonVisibleExternC(NewVD)) {
+    // Since we did not find anything by this name, look for a non-visible
+    // extern "C" declaration with the same name.
     llvm::DenseMap<DeclarationName, NamedDecl *>::iterator Pos
       = findLocallyScopedExternCDecl(NewVD->getDeclName());
     if (Pos != LocallyScopedExternCDecls.end())
@@ -6146,10 +6153,9 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
          && "Variably modified return types are not handled here");
 
   // Check for a previous declaration of this name.
-  if (Previous.empty() && NewFD->isExternC()) {
-    // Since we did not find anything by this name and we're declaring
-    // an extern "C" function, look for a non-visible extern "C"
-    // declaration with the same name.
+  if (Previous.empty() && mayConflictWithNonVisibleExternC(NewFD)) {
+    // Since we did not find anything by this name, look for a non-visible
+    // extern "C" declaration with the same name.
     llvm::DenseMap<DeclarationName, NamedDecl *>::iterator Pos
       = findLocallyScopedExternCDecl(NewFD->getDeclName());
     if (Pos != LocallyScopedExternCDecls.end())
