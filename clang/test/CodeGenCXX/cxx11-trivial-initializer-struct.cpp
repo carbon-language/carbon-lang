@@ -1,3 +1,4 @@
+// RUN: %clang_cc1 -std=c++11 -S -emit-llvm -o - %s -triple x86_64-apple-darwin10 | FileCheck %s
 // RUN: %clang_cc1 -S -emit-llvm -o %t.ll %s -triple x86_64-apple-darwin10 
 // RUN: %clang_cc1 -std=c++11 -S -emit-llvm -o %t-c++11.ll %s -triple x86_64-apple-darwin10 
 // RUN: diff %t.ll  %t-c++11.ll
@@ -10,8 +11,10 @@ struct sAFSearchPos {
 };
 
 static volatile struct sAFSearchPos testPositions;
+// CHECK: @_ZL13testPositions = internal global %struct.sAFSearchPos zeroinitializer
 
 static volatile struct sAFSearchPos arrayPositions[100][10][5];
+// CHECK: @_ZL14arrayPositions = internal global [100 x [10 x [5 x %struct.sAFSearchPos]]] zeroinitializer
 
 int main() {
   return testPositions.count + arrayPositions[10][4][3].count; 
