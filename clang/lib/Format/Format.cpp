@@ -1063,7 +1063,8 @@ private:
       return CurrentLineType == LT_ObjCDecl || Left.is(tok::kw_if) ||
              Left.is(tok::kw_for) || Left.is(tok::kw_while) ||
              Left.is(tok::kw_switch) || Left.is(tok::kw_return) ||
-             Left.is(tok::kw_catch);
+             Left.is(tok::kw_catch) || Left.is(tok::kw_new) ||
+             Left.is(tok::kw_delete);
     }
     if (Left.is(tok::at) &&
         Right.FormatTok.Tok.getObjCKeywordID() != tok::objc_not_keyword)

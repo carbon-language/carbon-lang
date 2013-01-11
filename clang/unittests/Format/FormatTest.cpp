@@ -980,6 +980,13 @@ TEST_F(FormatTest, UndestandsOverloadedOperators) {
   verifyFormat("void operator delete[](void *ptr);");
 }
 
+TEST_F(FormatTest, UnderstandsNewAndDelete) {
+  verifyFormat("A *a = new A;");
+  verifyFormat("A *a = new (placement) A;");
+  verifyFormat("delete a;");
+  verifyFormat("delete (A *)a;");
+}
+
 TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("int *f(int *a) {}");
   verifyFormat("f(a, *a);");
