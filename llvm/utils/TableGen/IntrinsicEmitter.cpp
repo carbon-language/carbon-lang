@@ -221,27 +221,28 @@ enum IIT_Info {
   IIT_I16  = 3,
   IIT_I32  = 4,
   IIT_I64  = 5,
-  IIT_F32  = 6,
-  IIT_F64  = 7,
-  IIT_V2   = 8,
-  IIT_V4   = 9,
-  IIT_V8   = 10,
-  IIT_V16  = 11,
-  IIT_V32  = 12,
-  IIT_MMX  = 13,
+  IIT_F16  = 6,
+  IIT_F32  = 7,
+  IIT_F64  = 8,
+  IIT_V2   = 9,
+  IIT_V4   = 10,
+  IIT_V8   = 11,
+  IIT_V16  = 12,
+  IIT_V32  = 13,
   IIT_PTR  = 14,
   IIT_ARG  = 15,
-  
+
   // Values from 16+ are only encodable with the inefficient encoding.
-  IIT_METADATA = 16,
-  IIT_EMPTYSTRUCT = 17,
-  IIT_STRUCT2 = 18,
-  IIT_STRUCT3 = 19,
-  IIT_STRUCT4 = 20,
-  IIT_STRUCT5 = 21,
-  IIT_EXTEND_VEC_ARG = 22,
-  IIT_TRUNC_VEC_ARG = 23,
-  IIT_ANYPTR = 24
+  IIT_MMX  = 16,
+  IIT_METADATA = 17,
+  IIT_EMPTYSTRUCT = 18,
+  IIT_STRUCT2 = 19,
+  IIT_STRUCT3 = 20,
+  IIT_STRUCT4 = 21,
+  IIT_STRUCT5 = 22,
+  IIT_EXTEND_VEC_ARG = 23,
+  IIT_TRUNC_VEC_ARG = 24,
+  IIT_ANYPTR = 25
 };
 
 
@@ -261,6 +262,7 @@ static void EncodeFixedValueType(MVT::SimpleValueType VT,
   
   switch (VT) {
   default: PrintFatalError("unhandled MVT in intrinsic!");
+  case MVT::f16: return Sig.push_back(IIT_F16);
   case MVT::f32: return Sig.push_back(IIT_F32);
   case MVT::f64: return Sig.push_back(IIT_F64);
   case MVT::Metadata: return Sig.push_back(IIT_METADATA);

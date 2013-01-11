@@ -79,7 +79,7 @@ namespace Intrinsic {
   /// getIntrinsicInfoTableEntries.
   struct IITDescriptor {
     enum IITDescriptorKind {
-      Void, MMX, Metadata, Float, Double,
+      Void, MMX, Metadata, Half, Float, Double,
       Integer, Vector, Pointer, Struct,
       Argument, ExtendVecArgument, TruncVecArgument
     } Kind;

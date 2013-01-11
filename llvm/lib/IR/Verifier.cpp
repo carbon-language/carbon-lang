@@ -1800,6 +1800,7 @@ bool Verifier::VerifyIntrinsicType(Type *Ty,
   case IITDescriptor::Void: return !Ty->isVoidTy();
   case IITDescriptor::MMX:  return !Ty->isX86_MMXTy();
   case IITDescriptor::Metadata: return !Ty->isMetadataTy();
+  case IITDescriptor::Half: return !Ty->isHalfTy();
   case IITDescriptor::Float: return !Ty->isFloatTy();
   case IITDescriptor::Double: return !Ty->isDoubleTy();
   case IITDescriptor::Integer: return !Ty->isIntegerTy(D.Integer_Width);
