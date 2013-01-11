@@ -375,7 +375,7 @@ static bool HandleRacyStacks(ThreadState *thr, const StackTrace (&traces)[2],
     uptr addr_min, uptr addr_max) {
   Context *ctx = CTX();
   bool equal_stack = false;
-  RacyStacks hash = {};
+  RacyStacks hash;
   if (flags()->suppress_equal_stacks) {
     hash.hash[0] = md5_hash(traces[0].Begin(), traces[0].Size() * sizeof(uptr));
     hash.hash[1] = md5_hash(traces[1].Begin(), traces[1].Size() * sizeof(uptr));
