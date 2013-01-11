@@ -408,11 +408,10 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCImplementationDecl *ImplD,
   if (!Info.needsInvalidation()) {
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
-    os << "No invalidation method declared in the @interface for "
-       << InterfaceD->getName() << "; ";
     assert(FirstIvarDecl);
     printIvar(os, FirstIvarDecl, IvarToPopertyMap);
-    os << "needs to be invalidated";
+    os << "needs to be invalidated; ";
+    os << "No invalidation method is declared for " << InterfaceD->getName();
 
     PathDiagnosticLocation IvarDecLocation =
       PathDiagnosticLocation::createBegin(FirstIvarDecl, BR.getSourceManager());
@@ -473,11 +472,11 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCImplementationDecl *ImplD,
   if (!AtImplementationContainsAtLeastOneInvalidationMethod) {
     SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
-    os << "No invalidation method defined in the @implementation for "
-       << InterfaceD->getName() << "; ";
     assert(FirstIvarDecl);
     printIvar(os, FirstIvarDecl, IvarToPopertyMap);
-    os << "needs to be invalidated";
+    os << "needs to be invalidated; ";
+    os << "No invalidation method is defined in the @implementation for "
+       << InterfaceD->getName();
 
     PathDiagnosticLocation IvarDecLocation =
         PathDiagnosticLocation::createBegin(FirstIvarDecl,

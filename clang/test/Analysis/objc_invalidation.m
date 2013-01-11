@@ -225,20 +225,20 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 @end
 
 @interface MissingInvalidationMethod : Foo <FooBar_Protocol>
-@property (assign) MissingInvalidationMethod *foobar15_warn; // expected-warning {{No invalidation method defined in the @implementation for MissingInvalidationMethod; Property foobar15_warn needs to be invalidated}}
+@property (assign) MissingInvalidationMethod *foobar15_warn; // expected-warning {{Property foobar15_warn needs to be invalidated; No invalidation method is defined in the @implementation for MissingInvalidationMethod}}
 @end
 @implementation MissingInvalidationMethod
 @end
 
 @interface MissingInvalidationMethod2 : Foo <FooBar_Protocol> {
-  Foo *Ivar1;// expected-warning {{No invalidation method defined in the @implementation for MissingInvalidationMethod2; Instance variable Ivar1 needs to be invalidated}}
+  Foo *Ivar1;// expected-warning {{Instance variable Ivar1 needs to be invalidated; No invalidation method is defined in the @implementation for MissingInvalidationMethod2}}
 }
 @end
 @implementation MissingInvalidationMethod2
 @end
 
 @interface MissingInvalidationMethodDecl : NSObject {
-  Foo *Ivar1;// expected-warning {{No invalidation method declared in the @interface for MissingInvalidationMethodDecl; Instance variable Ivar1 needs to be invalidated}}
+  Foo *Ivar1;// expected-warning {{Instance variable Ivar1 needs to be invalidated; No invalidation method is declared for MissingInvalidationMethodDecl}}
 }
 @end
 @implementation MissingInvalidationMethodDecl
@@ -246,7 +246,7 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 
 @interface MissingInvalidationMethodDecl2 : NSObject {
 @private
-    Foo *_foo1; // expected-warning {{No invalidation method declared in the @interface for MissingInvalidationMethodDecl2; Instance variable _foo1 needs to be invalidated}} 
+    Foo *_foo1; // expected-warning {{Instance variable _foo1 needs to be invalidated; No invalidation method is declared for MissingInvalidationMethodDecl2}} 
 }
 @property (strong) Foo *bar1; 
 @end
