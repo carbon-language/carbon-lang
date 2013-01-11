@@ -48,8 +48,8 @@ User Guides
     
 * :doc:`tutorial/index`
 
-   A walk through the process of using LLVM for a custom language, and the
-   facilities LLVM offers in tutorial form.
+   Tutorials about using LLVM. Includes a tutorial about making a custom
+   language with LLVM.
 
 * :ref:`developer_policy`
 
