@@ -3,7 +3,7 @@ How To Setup Clang Tooling For LLVM
 ===================================
 
 Clang Tooling provides infrastructure to write tools that need syntactic
-and semantic infomation about a program. This term also relates to a set
+and semantic information about a program. This term also relates to a set
 of specific tools using this infrastructure (e.g. ``clang-check``). This
 document provides information on how to set up and use Clang Tooling for
 the LLVM source code.
@@ -144,24 +144,12 @@ Examples:
 
 Optionally you can use the `Ninja <https://github.com/martine/ninja>`_
 build system instead of make. It is aimed at making your builds faster.
-Currently this step will require building Ninja from sources and using a
-development version of CMake.
+Currently this step will require building Ninja from sources.
 
 To take advantage of using Clang Tools along with Ninja build you need
-at least CMake 2.8.9. At the moment CMake 2.8.9 is still under
-development, so you can get latest development sources and build it
-yourself:
+at least CMake 2.8.9.
 
-.. code-block:: console
-
-  $ git clone git://cmake.org/cmake.git
-  $ cd cmake
-  $ ./bootstrap
-  $ make
-  $ sudo make install
-
-Having the correct version of CMake, you can clone the Ninja git
-repository and build Ninja from sources:
+Clone the Ninja git repository and build Ninja from sources:
 
 .. code-block:: console
 
