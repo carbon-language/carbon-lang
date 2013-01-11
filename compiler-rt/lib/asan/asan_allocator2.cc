@@ -247,8 +247,8 @@ static AllocatorCache fallback_allocator_cache;
 static SpinMutex fallback_mutex;
 
 QuarantineCache *GetQuarantineCache(AsanThreadLocalMallocStorage *ms) {
-  DCHECK(ms);
-  DCHECK_LE(sizeof(QuarantineCache), sizeof(ms->quarantine_cache));
+  CHECK(ms);
+  CHECK_LE(sizeof(QuarantineCache), sizeof(ms->quarantine_cache));
   return reinterpret_cast<QuarantineCache *>(ms->quarantine_cache);
 }
 
@@ -281,7 +281,7 @@ struct QuarantineCallback {
   }
 
   void *Allocate(uptr size) {
-    return allocator.Allocate(cache_, size, 0, false);
+    return allocator.Allocate(cache_, size, 1, false);
   }
 
   void Deallocate(void *p) {
@@ -450,11 +450,13 @@ static void Deallocate(void *ptr, StackTrace *stack, AllocType alloc_type) {
   if (t) {
     AsanThreadLocalMallocStorage *ms = &t->malloc_storage();
     AllocatorCache *ac = GetAllocatorCache(ms);
-    quarantine.Put(GetQuarantineCache(ms), QuarantineCallback(ac), m);
+    quarantine.Put(GetQuarantineCache(ms), QuarantineCallback(ac),
+                   m, m->UsedSize());
   } else {
     SpinMutexLock l(&fallback_mutex);
     AllocatorCache *ac = &fallback_allocator_cache;
-    quarantine.Put(&fallback_quarantine_cache, QuarantineCallback(ac), m);
+    quarantine.Put(&fallback_quarantine_cache, QuarantineCallback(ac),
+                   m, m->UsedSize());
   }
 
   ASAN_FREE_HOOK(ptr);

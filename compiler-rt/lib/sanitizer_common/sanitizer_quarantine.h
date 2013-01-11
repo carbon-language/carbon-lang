@@ -19,19 +19,28 @@
 
 #include "sanitizer_internal_defs.h"
 #include "sanitizer_mutex.h"
+#include "sanitizer_list.h"
 
 namespace __sanitizer {
 
 template<typename Node> class QuarantineCache;
 
+struct QuarantineBatch {
+  static const uptr kSize = 1024;
+  QuarantineBatch *next;
+  uptr size;
+  uptr count;
+  void *batch[kSize];
+};
+
 // The callback interface is:
-// Callback cb;
-// Node *ptr;
-// cb.Recycle(ptr);
+// void Callback::Recycle(Node *ptr);
+// void *cb.Allocate(uptr size);
+// void cb.Deallocate(void *ptr);
 template<typename Callback, typename Node>
 class Quarantine {
  public:
-  typedef QuarantineCache<Node> Cache;
+  typedef QuarantineCache<Callback> Cache;
 
   explicit Quarantine(LinkerInitialized)
       : cache_(LINKER_INITIALIZED) {
@@ -39,68 +48,112 @@ class Quarantine {
 
   void Init(uptr size, uptr cache_size) {
     max_size_ = size;
+    min_size_ = size / 10 * 9;  // 90% of max size.
     max_cache_size_ = cache_size;
   }
 
-  void Put(Cache *c, Callback cb, Node *ptr) {
-    c->Enqueue(ptr);
+  void Put(Cache *c, Callback cb, Node *ptr, uptr size) {
+    c->Enqueue(cb, ptr, size);
     if (c->Size() > max_cache_size_)
       Drain(c, cb);
   }
 
-  void Drain(Cache *c, Callback cb) {
-    SpinMutexLock l(&mutex_);
-    while (Node *ptr = c->Dequeue())
-      cache_.Enqueue(ptr);
-    while (cache_.Size() > max_size_) {
-      Node *ptr = cache_.Dequeue();
-      cb.Recycle(ptr);
+  void NOINLINE Drain(Cache *c, Callback cb) {
+    {
+      SpinMutexLock l(&cache_mutex_);
+      cache_.Transfer(c);
+    }
+    if (cache_.Size() > max_size_ && recycle_mutex_.TryLock()) {
+      Cache tmp;
+      {
+        SpinMutexLock l(&cache_mutex_);
+        while (cache_.Size() > max_size_) {
+          QuarantineBatch *b = cache_.DequeueBatch();
+          tmp.EnqueueBatch(b);
+        }
+      }
+      recycle_mutex_.Unlock();
+      while (QuarantineBatch *b = tmp.DequeueBatch()) {
+        for (uptr i = 0; i < b->count; i++)
+          cb.Recycle((Node*)b->batch[i]);
+        cb.Deallocate(b);
+      }
     }
   }
 
  private:
-  SpinMutex mutex_;
+  // Read-only data.
+  char pad0_[kCacheLineSize];
   uptr max_size_;
+  uptr min_size_;
   uptr max_cache_size_;
+  char pad1_[kCacheLineSize];
+  SpinMutex cache_mutex_;
+  SpinMutex recycle_mutex_;
   Cache cache_;
+  char pad2_[kCacheLineSize];
 };
 
-// Per-thread cache of memory blocks (essentially FIFO queue).
-template<typename Node>
+// Per-thread cache of memory blocks.
+template<typename Callback>
 class QuarantineCache {
  public:
   explicit QuarantineCache(LinkerInitialized) {
   }
 
+  QuarantineCache()
+      : size_() {
+    list_.clear();
+  }
+
   uptr Size() const {
-    return size_;
+    return atomic_load(&size_, memory_order_relaxed);
   }
 
-  void Enqueue(Node *ptr) {
-    size_ += ptr->UsedSize();
-    ptr->next = 0;
-    if (tail_)
-      tail_->next = ptr;
-    else
-      head_ = ptr;
-    tail_ = ptr;
+  void Enqueue(Callback cb, void *ptr, uptr size) {
+    if (list_.empty() || list_.back()->count == QuarantineBatch::kSize)
+      AllocBatch(cb);
+    QuarantineBatch *b = list_.back();
+    b->batch[b->count++] = ptr;
+    b->size += size;
+    SizeAdd(size);
   }
 
-  Node *Dequeue() {
-    Node *ptr = head_;
-    if (ptr == 0)
+  void Transfer(QuarantineCache *c) {
+    list_.append_back(&c->list_);
+    SizeAdd(c->Size());
+    atomic_store(&c->size_, 0, memory_order_relaxed);
+  }
+
+  void EnqueueBatch(QuarantineBatch *b) {
+    list_.push_back(b);
+    SizeAdd(b->size);
+  }
+
+  QuarantineBatch *DequeueBatch() {
+    if (list_.empty())
       return 0;
-    head_ = ptr->next;
-    if (head_ == 0)
-      tail_ = 0;
-    size_ -= ptr->UsedSize();
-    return ptr;
+    QuarantineBatch *b = list_.front();
+    list_.pop_front();
+    SizeAdd(-b->size);
+    return b;
   }
 
  private:
-  Node *head_;
-  Node *tail_;
-  uptr size_;
+  IntrusiveList<QuarantineBatch> list_;
+  atomic_uintptr_t size_;
+
+  void SizeAdd(uptr add) {
+    atomic_store(&size_, Size() + add, memory_order_relaxed);
+  }
+
+  QuarantineBatch *NOINLINE AllocBatch(Callback cb) {
+    QuarantineBatch *b = (QuarantineBatch *)cb.Allocate(sizeof(*b));
+    b->count = 0;
+    b->size = 0;
+    list_.push_back(b);
+    return b;
+  }
 };
 }
 

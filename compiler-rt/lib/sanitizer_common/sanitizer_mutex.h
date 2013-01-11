@@ -27,9 +27,13 @@ class StaticSpinMutex {
   }
 
   void Lock() {
-    if (atomic_exchange(&state_, 1, memory_order_acquire) == 0)
+    if (TryLock())
       return;
     LockSlow();
+  }
+
+  bool TryLock() {
+    return atomic_exchange(&state_, 1, memory_order_acquire) == 0;
   }
 
   void Unlock() {
