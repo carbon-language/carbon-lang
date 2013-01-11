@@ -36,7 +36,7 @@ OptionGroupPlatform::CreatePlatformWithOptions (CommandInterpreter &interpreter,
         platform_sp = Platform::Create (m_platform_name.c_str(), error);
         if (platform_sp)
         {
-            if (platform_arch.IsValid() && !platform_sp->IsCompatibleArchitecture(arch, &platform_arch))
+            if (platform_arch.IsValid() && !platform_sp->IsCompatibleArchitecture(arch, false, &platform_arch))
             {
                 error.SetErrorStringWithFormat("platform '%s' doesn't support '%s'", platform_sp->GetName(), arch.GetTriple().getTriple().c_str());
                 platform_sp.reset();

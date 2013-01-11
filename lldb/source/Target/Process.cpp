@@ -2996,7 +2996,7 @@ Process::CompleteAttach ()
     if (platform_sp)
     {
         const ArchSpec &target_arch = m_target.GetArchitecture();
-        if (target_arch.IsValid() && !platform_sp->IsCompatibleArchitecture (target_arch))
+        if (target_arch.IsValid() && !platform_sp->IsCompatibleArchitecture (target_arch, false, NULL))
         {
             ArchSpec platform_arch;
             platform_sp = platform_sp->GetPlatformForArchitecture (target_arch, &platform_arch);

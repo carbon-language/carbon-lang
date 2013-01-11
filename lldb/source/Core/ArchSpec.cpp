@@ -604,7 +604,7 @@ ArchSpec::SetTriple (const char *triple_cstr, Platform *platform)
                     // architecture. If this is not available (might not be
                     // connected) use the first supported architecture.
                     ArchSpec compatible_arch;
-                    if (platform->IsCompatibleArchitecture (raw_arch, &compatible_arch))
+                    if (platform->IsCompatibleArchitecture (raw_arch, false, &compatible_arch))
                     {
                         if (compatible_arch.IsValid())
                         {

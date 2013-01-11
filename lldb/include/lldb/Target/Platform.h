@@ -347,7 +347,9 @@ namespace lldb_private {
         /// architecture and the target triple contained within.
         //------------------------------------------------------------------
         virtual bool
-        IsCompatibleArchitecture (const ArchSpec &arch, ArchSpec *compatible_arch_ptr = NULL);
+        IsCompatibleArchitecture (const ArchSpec &arch,
+                                  bool exact_arch_match,
+                                  ArchSpec *compatible_arch_ptr);
 
         //------------------------------------------------------------------
         /// Not all platforms will support debugging a process by spawning

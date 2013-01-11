@@ -104,7 +104,7 @@ TargetList::CreateTarget (Debugger &debugger,
         // current architecture if we have a valid architecture.
         platform_sp = debugger.GetPlatformList().GetSelectedPlatform ();
         
-        if (arch.IsValid() && !platform_sp->IsCompatibleArchitecture(arch, &platform_arch))
+        if (arch.IsValid() && !platform_sp->IsCompatibleArchitecture(arch, false, &platform_arch))
         {
             platform_sp = Platform::GetPlatformForArchitecture(arch, &platform_arch);
         }
@@ -142,7 +142,7 @@ TargetList::CreateTarget (Debugger &debugger,
     {
         if (arch.IsValid())
         {
-            if (!platform_sp->IsCompatibleArchitecture(arch))
+            if (!platform_sp->IsCompatibleArchitecture(arch, false, NULL))
                 platform_sp = Platform::GetPlatformForArchitecture(specified_arch, &arch);
         }
     }
