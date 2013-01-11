@@ -64,7 +64,8 @@ namespace __sanitizer {
 //    c32 => s: 512 diff: +32 06% l 9 cached: 64 32768; id 32
 
 
-template <uptr kMaxSizeLog, uptr kMaxNumCached, uptr kMaxBytesCachedLog>
+template <uptr kMaxSizeLog, uptr kMaxNumCached, uptr kMaxBytesCachedLog,
+          uptr kMinBatchClassT>
 class SizeClassMap {
   static const uptr kMinSizeLog = 3;
   static const uptr kMidSizeLog = kMinSizeLog + 4;
@@ -75,6 +76,13 @@ class SizeClassMap {
   static const uptr M = (1 << S) - 1;
 
  public:
+  struct TransferBatch {
+    TransferBatch *next;
+    uptr count;
+    void *batch[kMaxNumCached];
+  };
+
+  static const uptr kMinBatchClass = kMinBatchClassT;
   static const uptr kMaxSize = 1 << kMaxSizeLog;
   static const uptr kNumClasses =
       kMidClass + ((kMaxSizeLog - kMidSizeLog) << S) + 1;
@@ -150,44 +158,25 @@ class SizeClassMap {
       if (c > 0)
         CHECK_LT(Size(c-1), s);
     }
+
+    // TransferBatch for kMinBatchClass must fit into the block itself.
+    const uptr batch_size = sizeof(TransferBatch)
+        - sizeof(void*)  // NOLINT
+            * (kMaxNumCached - MaxCached(kMinBatchClass));
+    CHECK_LE(batch_size, Size(kMinBatchClass));
+    // TransferBatch for kMinBatchClass-1 must not fit into the block itself.
+    const uptr batch_size1 = sizeof(TransferBatch)
+        - sizeof(void*)  // NOLINT
+            * (kMaxNumCached - MaxCached(kMinBatchClass - 1));
+    CHECK_GT(batch_size1, Size(kMinBatchClass - 1));
   }
 };
 
-typedef SizeClassMap<15, 256, 16> DefaultSizeClassMap;
-typedef SizeClassMap<15, 64, 14> CompactSizeClassMap;
-
-
-struct AllocatorListNode {
-  AllocatorListNode *next;
-};
-
-typedef IntrusiveList<AllocatorListNode> AllocatorFreeList;
-
-// Move at most max_count chunks from allocate_from to allocate_to.
-// This function is better be a method of AllocatorFreeList, but we can't
-// inherit it from IntrusiveList as the ancient gcc complains about non-PODness.
-static inline uptr BulkMove(uptr max_count,
-                            AllocatorFreeList *allocate_from,
-                            AllocatorFreeList *allocate_to) {
-  CHECK(!allocate_from->empty());
-  CHECK(allocate_to->empty());
-  uptr res = 0;
-  if (allocate_from->size() <= max_count) {
-    res = allocate_from->size();
-    allocate_to->append_front(allocate_from);
-    CHECK(allocate_from->empty());
-  } else {
-    for (uptr i = 0; i < max_count; i++) {
-      AllocatorListNode *node = allocate_from->front();
-      allocate_from->pop_front();
-      allocate_to->push_front(node);
-    }
-    res = max_count;
-    CHECK(!allocate_from->empty());
-  }
-  CHECK(!allocate_to->empty());
-  return res;
-}
+typedef SizeClassMap<15, 256, 16, FIRST_32_SECOND_64(33, 36)>
+    DefaultSizeClassMap;
+typedef SizeClassMap<15, 64, 14, FIRST_32_SECOND_64(25, 28)>
+    CompactSizeClassMap;
+template<class SizeClassAllocator> struct SizeClassAllocatorLocalCache;
 
 // Allocators call these callbacks on mmap/munmap.
 struct NoOpMapUnmapCallback {
@@ -216,6 +205,11 @@ template <const uptr kSpaceBeg, const uptr kSpaceSize,
           class MapUnmapCallback = NoOpMapUnmapCallback>
 class SizeClassAllocator64 {
  public:
+  typedef typename SizeClassMap::TransferBatch Batch;
+  typedef SizeClassAllocator64<kSpaceBeg, kSpaceSize, kMetadataSize,
+      SizeClassMap, MapUnmapCallback> ThisT;
+  typedef SizeClassAllocatorLocalCache<ThisT> AllocatorCache;
+
   void Init() {
     CHECK_EQ(kSpaceBeg,
              reinterpret_cast<uptr>(Mprotect(kSpaceBeg, kSpaceSize)));
@@ -237,36 +231,24 @@ class SizeClassAllocator64 {
       alignment <= SizeClassMap::kMaxSize;
   }
 
-  void *Allocate(uptr size, uptr alignment) {
-    if (size < alignment) size = alignment;
-    CHECK(CanAllocate(size, alignment));
-    return AllocateBySizeClass(ClassID(size));
-  }
-
-  void Deallocate(void *p) {
-    CHECK(PointerIsMine(p));
-    DeallocateBySizeClass(p, GetSizeClass(p));
-  }
-
-  // Allocate several chunks of the given class_id.
-  void BulkAllocate(uptr class_id, AllocatorFreeList *free_list) {
+  Batch *NOINLINE AllocateBatch(AllocatorCache *c, uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     RegionInfo *region = GetRegionInfo(class_id);
     SpinMutexLock l(&region->mutex);
-    if (region->free_list.empty()) {
-      PopulateFreeList(class_id, region);
-    }
-    region->n_allocated += BulkMove(SizeClassMap::MaxCached(class_id),
-                                    &region->free_list, free_list);
+    if (region->free_list.empty())
+      PopulateFreeList(c, class_id, region);
+    CHECK(!region->free_list.empty());
+    Batch *b = region->free_list.front();
+    region->free_list.pop_front();
+    region->n_allocated++;
+    return b;
   }
 
-  // Swallow the entire free_list for the given class_id.
-  void BulkDeallocate(uptr class_id, AllocatorFreeList *free_list) {
-    CHECK_LT(class_id, kNumClasses);
+  void NOINLINE DeallocateBatch(uptr class_id, Batch *b) {
     RegionInfo *region = GetRegionInfo(class_id);
     SpinMutexLock l(&region->mutex);
-    region->n_freed += free_list->size();
-    region->free_list.append_front(free_list);
+    region->free_list.push_front(b);
+    region->n_freed++;
   }
 
   static bool PointerIsMine(void *p) {
@@ -354,7 +336,7 @@ class SizeClassAllocator64 {
   COMPILER_CHECK((kRegionSize) >= (1ULL << (SANITIZER_WORDSIZE / 2)));
   // Populate the free list with at most this number of bytes at once
   // or with one element if its size is greater.
-  static const uptr kPopulateSize = 1 << 15;
+  static const uptr kPopulateSize = 1 << 14;
   // Call mmap for user memory with at least this size.
   static const uptr kUserMapSize = 1 << 15;
   // Call mmap for metadata memory with at least this size.
@@ -362,7 +344,7 @@ class SizeClassAllocator64 {
 
   struct RegionInfo {
     SpinMutex mutex;
-    AllocatorFreeList free_list;
+    IntrusiveList<Batch> free_list;
     uptr allocated_user;  // Bytes allocated for user memory.
     uptr allocated_meta;  // Bytes allocated for metadata.
     uptr mapped_user;  // Bytes mapped for user memory.
@@ -390,11 +372,13 @@ class SizeClassAllocator64 {
     return offset / (u32)size;
   }
 
-  void PopulateFreeList(uptr class_id, RegionInfo *region) {
+  void NOINLINE PopulateFreeList(AllocatorCache *c, uptr class_id,
+                                 RegionInfo *region) {
     CHECK(region->free_list.empty());
     uptr size = SizeClassMap::Size(class_id);
+    uptr count = size < kPopulateSize ? SizeClassMap::MaxCached(class_id) : 1;
     uptr beg_idx = region->allocated_user;
-    uptr end_idx = beg_idx + kPopulateSize;
+    uptr end_idx = beg_idx + count * size;
     uptr region_beg = kSpaceBeg + kRegionSize * class_id;
     if (end_idx + size > region->mapped_user) {
       // Do the mmap for the user memory.
@@ -405,17 +389,18 @@ class SizeClassAllocator64 {
       MapWithCallback(region_beg + region->mapped_user, map_size);
       region->mapped_user += map_size;
     }
-    uptr idx = beg_idx;
-    uptr i = 0;
-    do {  // do-while loop because we need to put at least one item.
-      uptr p = region_beg + idx;
-      region->free_list.push_front(reinterpret_cast<AllocatorListNode*>(p));
-      idx += size;
-      i++;
-    } while (idx < end_idx);
-    region->allocated_user += idx - beg_idx;
+    Batch *b;
+    if (class_id < SizeClassMap::kMinBatchClass)
+      b = (Batch*)c->Allocate(this, SizeClassMap::ClassID(sizeof(Batch)));
+    else
+      b = (Batch*)(region_beg + beg_idx);
+    b->count = count;
+    for (uptr i = 0; i < count; i++)
+      b->batch[i] = (void*)(region_beg + beg_idx + i * size);
+    region->free_list.push_back(b);
+    region->allocated_user += count * size;
     CHECK_LE(region->allocated_user, region->mapped_user);
-    region->allocated_meta += i * kMetadataSize;
+    region->allocated_meta += count * kMetadataSize;
     if (region->allocated_meta > region->mapped_meta) {
       uptr map_size = kMetaMapSize;
       while (region->allocated_meta > region->mapped_meta + map_size)
@@ -433,27 +418,6 @@ class SizeClassAllocator64 {
           kRegionSize / 1024 / 1024, size);
       Die();
     }
-  }
-
-  void *AllocateBySizeClass(uptr class_id) {
-    CHECK_LT(class_id, kNumClasses);
-    RegionInfo *region = GetRegionInfo(class_id);
-    SpinMutexLock l(&region->mutex);
-    if (region->free_list.empty()) {
-      PopulateFreeList(class_id, region);
-    }
-    CHECK(!region->free_list.empty());
-    AllocatorListNode *node = region->free_list.front();
-    region->free_list.pop_front();
-    region->n_allocated++;
-    return reinterpret_cast<void*>(node);
-  }
-
-  void DeallocateBySizeClass(void *p, uptr class_id) {
-    RegionInfo *region = GetRegionInfo(class_id);
-    SpinMutexLock l(&region->mutex);
-    region->free_list.push_front(reinterpret_cast<AllocatorListNode*>(p));
-    region->n_freed++;
   }
 };
 
@@ -482,6 +446,11 @@ template <const uptr kSpaceBeg, const u64 kSpaceSize,
           class MapUnmapCallback = NoOpMapUnmapCallback>
 class SizeClassAllocator32 {
  public:
+  typedef typename SizeClassMap::TransferBatch Batch;
+  typedef SizeClassAllocator32<kSpaceBeg, kSpaceSize, kMetadataSize,
+      SizeClassMap, MapUnmapCallback> ThisT;
+  typedef SizeClassAllocatorLocalCache<ThisT> AllocatorCache;
+
   void Init() {
     state_ = reinterpret_cast<State *>(MapWithCallback(sizeof(State)));
   }
@@ -502,17 +471,6 @@ class SizeClassAllocator32 {
       alignment <= SizeClassMap::kMaxSize;
   }
 
-  void *Allocate(uptr size, uptr alignment) {
-    if (size < alignment) size = alignment;
-    CHECK(CanAllocate(size, alignment));
-    return AllocateBySizeClass(ClassID(size));
-  }
-
-  void Deallocate(void *p) {
-    CHECK(PointerIsMine(p));
-    DeallocateBySizeClass(p, GetSizeClass(p));
-  }
-
   void *GetMetaData(void *p) {
     CHECK(PointerIsMine(p));
     uptr mem = reinterpret_cast<uptr>(p);
@@ -524,20 +482,23 @@ class SizeClassAllocator32 {
     return reinterpret_cast<void*>(meta);
   }
 
-  // Allocate several chunks of the given class_id.
-  void BulkAllocate(uptr class_id, AllocatorFreeList *free_list) {
+  Batch *NOINLINE AllocateBatch(AllocatorCache *c, uptr class_id) {
+    CHECK_LT(class_id, kNumClasses);
     SizeClassInfo *sci = GetSizeClassInfo(class_id);
     SpinMutexLock l(&sci->mutex);
-    EnsureSizeClassHasAvailableChunks(sci, class_id);
+    if (sci->free_list.empty())
+      PopulateFreeList(c, sci, class_id);
     CHECK(!sci->free_list.empty());
-    BulkMove(SizeClassMap::MaxCached(class_id), &sci->free_list, free_list);
+    Batch *b = sci->free_list.front();
+    sci->free_list.pop_front();
+    return b;
   }
 
-  // Swallow the entire free_list for the given class_id.
-  void BulkDeallocate(uptr class_id, AllocatorFreeList *free_list) {
+  void NOINLINE DeallocateBatch(uptr class_id, Batch *b) {
+    CHECK_LT(class_id, kNumClasses);
     SizeClassInfo *sci = GetSizeClassInfo(class_id);
     SpinMutexLock l(&sci->mutex);
-    sci->free_list.append_front(free_list);
+    sci->free_list.push_front(b);
   }
 
   bool PointerIsMine(void *p) {
@@ -595,8 +556,8 @@ class SizeClassAllocator32 {
 
   struct SizeClassInfo {
     SpinMutex mutex;
-    AllocatorFreeList free_list;
-    char padding[kCacheLineSize - sizeof(uptr) - sizeof(AllocatorFreeList)];
+    IntrusiveList<Batch> free_list;
+    char padding[kCacheLineSize - sizeof(uptr) - sizeof(IntrusiveList<Batch>)];
   };
   COMPILER_CHECK(sizeof(SizeClassInfo) == kCacheLineSize);
 
@@ -626,31 +587,27 @@ class SizeClassAllocator32 {
     return &state_->size_class_info_array[class_id];
   }
 
-  void EnsureSizeClassHasAvailableChunks(SizeClassInfo *sci, uptr class_id) {
-    if (!sci->free_list.empty()) return;
+  void PopulateFreeList(AllocatorCache *c, SizeClassInfo *sci, uptr class_id) {
     uptr size = SizeClassMap::Size(class_id);
     uptr reg = AllocateRegion(class_id);
     uptr n_chunks = kRegionSize / (size + kMetadataSize);
-    for (uptr i = reg; i < reg + n_chunks * size; i += size)
-      sci->free_list.push_back(reinterpret_cast<AllocatorListNode*>(i));
-  }
-
-  void *AllocateBySizeClass(uptr class_id) {
-    CHECK_LT(class_id, kNumClasses);
-    SizeClassInfo *sci = GetSizeClassInfo(class_id);
-    SpinMutexLock l(&sci->mutex);
-    EnsureSizeClassHasAvailableChunks(sci, class_id);
-    CHECK(!sci->free_list.empty());
-    AllocatorListNode *node = sci->free_list.front();
-    sci->free_list.pop_front();
-    return reinterpret_cast<void*>(node);
-  }
-
-  void DeallocateBySizeClass(void *p, uptr class_id) {
-    CHECK_LT(class_id, kNumClasses);
-    SizeClassInfo *sci = GetSizeClassInfo(class_id);
-    SpinMutexLock l(&sci->mutex);
-    sci->free_list.push_front(reinterpret_cast<AllocatorListNode*>(p));
+    Batch *b = 0;
+    for (uptr i = reg; i < reg + n_chunks * size; i += size) {
+      if (b == 0) {
+        if (class_id < SizeClassMap::kMinBatchClass)
+          b = (Batch*)c->Allocate(this, SizeClassMap::ClassID(sizeof(Batch)));
+        else
+          b = (Batch*)i;
+        b->count = 0;
+      }
+      b->batch[b->count++] = (void*)i;
+      if (b->count == SizeClassMap::MaxCached(class_id)) {
+        sci->free_list.push_back(b);
+        b = 0;
+      }
+    }
+    if (b)
+      sci->free_list.push_back(b);
   }
 
   struct State {
@@ -675,47 +632,62 @@ struct SizeClassAllocatorLocalCache {
   void *Allocate(SizeClassAllocator *allocator, uptr class_id) {
     CHECK_NE(class_id, 0UL);
     CHECK_LT(class_id, kNumClasses);
-    AllocatorFreeList *free_list = &free_lists_[class_id];
-    if (free_list->empty())
-      allocator->BulkAllocate(class_id, free_list);
-    CHECK(!free_list->empty());
-    void *res = free_list->front();
-    free_list->pop_front();
+    PerClass *c = &per_class_[class_id];
+    if (c->cur == 0) {
+      DCHECK_EQ(c->old, 0);
+      c->cur = allocator->AllocateBatch(this, class_id);
+    }
+    DCHECK_GT(c->cur->count, 0);
+    void *res = c->cur->batch[--c->cur->count];
+    if (c->cur->count == 0) {
+      if (class_id < SizeClassMap::kMinBatchClass)
+        Deallocate(allocator, SizeClassMap::ClassID(sizeof(Batch)), c->cur);
+      c->cur = c->old;
+      c->old = 0;
+    }
     return res;
   }
 
   void Deallocate(SizeClassAllocator *allocator, uptr class_id, void *p) {
     CHECK_NE(class_id, 0UL);
     CHECK_LT(class_id, kNumClasses);
-    AllocatorFreeList *free_list = &free_lists_[class_id];
-    free_list->push_front(reinterpret_cast<AllocatorListNode*>(p));
-    if (free_list->size() >= 2 * SizeClassMap::MaxCached(class_id))
-      DrainHalf(allocator, class_id);
+    PerClass *c = &per_class_[class_id];
+    if (c->cur == 0 || c->cur->count == SizeClassMap::MaxCached(class_id)) {
+      if (c->old)
+        allocator->DeallocateBatch(class_id, c->old);
+      c->old = c->cur;
+      if (class_id < SizeClassMap::kMinBatchClass)
+        c->cur = (Batch*)Allocate(allocator,
+                                  SizeClassMap::ClassID(sizeof(Batch)));
+      else
+        c->cur = (Batch*)p;
+      c->cur->count = 0;
+    }
+    c->cur->batch[c->cur->count++] = p;
   }
 
   void Drain(SizeClassAllocator *allocator) {
     for (uptr i = 0; i < kNumClasses; i++) {
-      allocator->BulkDeallocate(i, &free_lists_[i]);
-      CHECK(free_lists_[i].empty());
+      PerClass *c = &per_class_[i];
+      if (c->cur) {
+        allocator->DeallocateBatch(i, c->cur);
+        c->cur = 0;
+      }
+      if (c->old) {
+        allocator->DeallocateBatch(i, c->old);
+        c->old = 0;
+      }
     }
   }
 
   // private:
   typedef typename SizeClassAllocator::SizeClassMapT SizeClassMap;
-  AllocatorFreeList free_lists_[kNumClasses];
-
-  void DrainHalf(SizeClassAllocator *allocator, uptr class_id) {
-    AllocatorFreeList *free_list = &free_lists_[class_id];
-    AllocatorFreeList half;
-    half.clear();
-    const uptr count = free_list->size() / 2;
-    for (uptr i = 0; i < count; i++) {
-      AllocatorListNode *node = free_list->front();
-      free_list->pop_front();
-      half.push_front(node);
-    }
-    allocator->BulkDeallocate(class_id, &half);
-  }
+  typedef typename SizeClassMap::TransferBatch Batch;
+  struct PerClass {
+    Batch *cur;
+    Batch *old;
+  };
+  PerClass per_class_[kNumClasses];
 };
 
 // This class can (de)allocate only large chunks of memory using mmap/unmap.
