@@ -105,6 +105,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SplitTemplateClosingGreater = true;
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
+  LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
   LLVMStyle.ObjCSpaceBeforeReturnType = true;
   return LLVMStyle;
@@ -119,6 +120,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SplitTemplateClosingGreater = false;
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
+  GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.ObjCSpaceBeforeReturnType = false;
   return GoogleStyle;
@@ -165,6 +167,26 @@ static void replacePPWhitespace(
                                        NewLineText + std::string(Spaces, ' ')));
 }
 
+/// \brief Checks whether the (remaining) \c UnwrappedLine starting with
+/// \p RootToken fits into \p Limit columns.
+bool fitsIntoLimit(const AnnotatedToken &RootToken, unsigned Limit) {
+  unsigned Columns = RootToken.FormatTok.TokenLength;
+  bool FitsOnALine = true;
+  const AnnotatedToken *Tok = &RootToken;
+  while (!Tok->Children.empty()) {
+    Tok = &Tok->Children[0];
+    Columns += (Tok->SpaceRequiredBefore ? 1 : 0) + Tok->FormatTok.TokenLength;
+    // A special case for the colon of a constructor initializer as this only
+    // needs to be put on a new line if the line needs to be split.
+    if (Columns > Limit ||
+        (Tok->MustBreakBefore && Tok->Type != TT_CtorInitializerColon)) {
+      FitsOnALine = false;
+      break;
+    }
+  };
+  return FitsOnALine;
+}
+
 class UnwrappedLineFormatter {
 public:
   UnwrappedLineFormatter(const FormatStyle &Style, SourceManager &SourceMgr,
@@ -190,7 +212,7 @@ public:
     LineState State;
     State.Column = FirstIndent;
     State.NextToken = &RootToken;
-    State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent, 0, false));
+    State.Stack.push_back(ParenState(FirstIndent + 4, FirstIndent));
     State.ForLoopVariablePos = 0;
     State.LineContainsContinuedForLoopSection = false;
     State.StartOfLineLevel = 1;
@@ -206,6 +228,13 @@ public:
         unsigned NoBreak = calcPenalty(State, false, UINT_MAX);
         unsigned Break = calcPenalty(State, true, NoBreak);
         addTokenToState(Break < NoBreak, false, State);
+        if (State.NextToken != NULL &&
+            State.NextToken->Parent->Type == TT_CtorInitializerColon) {
+          if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine &&
+              !fitsIntoLimit(*State.NextToken,
+                             getColumnLimit() - State.Column - 1))
+            State.Stack.back().BreakAfterComma = true;
+        }
       }
     }
     return State.Column;
@@ -213,10 +242,9 @@ public:
 
 private:
   struct ParenState {
-    ParenState(unsigned Indent, unsigned LastSpace, unsigned FirstLessLess,
-               bool BreakBeforeClosingBrace)
-        : Indent(Indent), LastSpace(LastSpace), FirstLessLess(FirstLessLess),
-          BreakBeforeClosingBrace(BreakBeforeClosingBrace) {}
+    ParenState(unsigned Indent, unsigned LastSpace)
+        : Indent(Indent), LastSpace(LastSpace), FirstLessLess(0),
+          BreakBeforeClosingBrace(false), BreakAfterComma(false) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
@@ -242,6 +270,8 @@ private:
     /// was a newline after the beginning left brace.
     bool BreakBeforeClosingBrace;
 
+    bool BreakAfterComma;
+
     bool operator<(const ParenState &Other) const {
       if (Indent != Other.Indent)
         return Indent < Other.Indent; 
@@ -249,7 +279,9 @@ private:
         return LastSpace < Other.LastSpace;
       if (FirstLessLess != Other.FirstLessLess)
         return FirstLessLess < Other.FirstLessLess;
-      return BreakBeforeClosingBrace;
+      if (BreakBeforeClosingBrace != Other.BreakBeforeClosingBrace)
+        return BreakBeforeClosingBrace;
+      return BreakAfterComma;
     }
   };
 
@@ -416,7 +448,7 @@ private:
         NewIndent = 4 + State.Stack.back().LastSpace;
       }
       State.Stack.push_back(
-          ParenState(NewIndent, State.Stack.back().LastSpace, 0, false));
+          ParenState(NewIndent, State.Stack.back().LastSpace));
     }
 
     // If we encounter a closing ), ], } or >, we can remove a level from our
@@ -497,6 +529,10 @@ private:
       return UINT_MAX;
     if (!NewLine && State.NextToken->Parent->is(tok::semi) &&
         State.LineContainsContinuedForLoopSection)
+      return UINT_MAX;
+    if (!NewLine && State.NextToken->Parent->is(tok::comma) &&
+        State.NextToken->Type != TT_LineComment &&
+        State.Stack.back().BreakAfterComma)
       return UINT_MAX;
 
     unsigned CurrentPenalty = 0;
@@ -1250,8 +1286,12 @@ public:
         unsigned Indent = formatFirstToken(Annotator.getRootToken(),
                                            TheLine.Level, TheLine.InPPDirective,
                                            PreviousEndOfLineColumn);
-        bool FitsOnALine = fitsOnALine(Annotator.getRootToken(), Indent,
-                                       TheLine.InPPDirective);
+        unsigned Limit = Style.ColumnLimit - (TheLine.InPPDirective ? 1 : 0) -
+                         Indent;
+        // Check whether the UnwrappedLine can be put onto a single line. If
+        // so, this is bound to be the optimal solution (by definition) and we
+        // don't need to analyze the entire solution space.
+        bool FitsOnALine = fitsIntoLimit(Annotator.getRootToken(), Limit);
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
                                          FitsOnALine, Annotator.getLineType(),
                                          Annotator.getRootToken(), Replaces,
@@ -1298,29 +1338,6 @@ private:
 
   virtual void consumeUnwrappedLine(const UnwrappedLine &TheLine) {
     UnwrappedLines.push_back(TheLine);
-  }
-
-  bool fitsOnALine(const AnnotatedToken &RootToken, unsigned Indent,
-                   bool InPPDirective) {
-    // Check whether the UnwrappedLine can be put onto a single line. If so,
-    // this is bound to be the optimal solution (by definition) and we don't
-    // need to analyze the entire solution space.
-    unsigned Columns = Indent + RootToken.FormatTok.TokenLength;
-    bool FitsOnALine = true;
-    const AnnotatedToken *Tok = &RootToken;
-    while (Tok != NULL) {
-      Columns += (Tok->SpaceRequiredBefore ? 1 : 0) +
-                 Tok->FormatTok.TokenLength;
-      // A special case for the colon of a constructor initializer as this only
-      // needs to be put on a new line if the line needs to be split.
-      if (Columns > Style.ColumnLimit - (InPPDirective ? 1 : 0) ||
-          (Tok->MustBreakBefore && Tok->Type != TT_CtorInitializerColon)) {
-        FitsOnALine = false;
-        break;
-      }
-      Tok = Tok->Children.empty() ? NULL : &Tok->Children[0];
-    }
-    return FitsOnALine;
   }
 
   /// \brief Add a new line and the required indent before the first Token

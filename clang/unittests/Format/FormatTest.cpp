@@ -649,10 +649,25 @@ TEST_F(FormatTest, FormatsAwesomeMethodCall) {
 
 TEST_F(FormatTest, ConstructorInitializers) {
   verifyFormat("Constructor() : Initializer(FitsOnTheLine) {}");
+  verifyFormat("Constructor() : Inttializer(FitsOnTheLine) {}",
+               getLLVMStyleWithColumns(45));
+  verifyFormat("Constructor()\n"
+               "    : Inttializer(FitsOnTheLine) {}",
+               getLLVMStyleWithColumns(44));
 
   verifyFormat(
       "SomeClass::Constructor()\n"
       "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaaaa(aaaaaaaaaaaa) {}");
+
+  verifyFormat(
+      "SomeClass::Constructor()\n"
+      "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}");
+  verifyGoogleFormat(
+      "SomeClass::Constructor()\n"
+      "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}");
 
   verifyFormat(
       "SomeClass::Constructor()\n"
