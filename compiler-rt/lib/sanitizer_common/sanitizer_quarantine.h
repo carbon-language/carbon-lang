@@ -89,9 +89,18 @@ class Quarantine {
       }
     }
     recycle_mutex_.Unlock();
-    while (QuarantineBatch *b = tmp.DequeueBatch()) {
-      for (uptr i = 0; i < b->count; i++)
+    DoRecycle(&tmp, cb);
+  }
+
+  void NOINLINE DoRecycle(Cache *c, Callback cb) {
+    while (QuarantineBatch *b = c->DequeueBatch()) {
+      const uptr kPrefetch = 16;
+      for (uptr i = 0; i < kPrefetch; i++)
+        PREFETCH(b->batch[i]);
+      for (uptr i = 0; i < b->count; i++) {
+        PREFETCH(b->batch[i + kPrefetch]);
         cb.Recycle((Node*)b->batch[i]);
+      }
       cb.Deallocate(b);
     }
   }
