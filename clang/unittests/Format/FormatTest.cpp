@@ -1114,8 +1114,12 @@ TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
                "}");
 }
 
-TEST_F(FormatTest, IncorrectIf) {
+TEST_F(FormatTest, IncorrectCodeMissingParens) {
   verifyFormat("if {\n  foo;\n  foo();\n}");
+  verifyFormat("switch {\n  foo;\n  foo();\n}");
+  verifyFormat("for {\n  foo;\n  foo();\n}");
+  verifyFormat("while {\n  foo;\n  foo();\n}");
+  verifyFormat("do {\n  foo;\n  foo();\n} while;");
 }
 
 TEST_F(FormatTest, DoesNotTouchUnwrappedLinesWithErrors) {

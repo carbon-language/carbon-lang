@@ -450,7 +450,8 @@ void UnwrappedLineParser::parseForOrWhileLoop() {
   assert((FormatTok.Tok.is(tok::kw_for) || FormatTok.Tok.is(tok::kw_while)) &&
          "'for' or 'while' expected");
   nextToken();
-  parseParens();
+  if (FormatTok.Tok.is(tok::l_paren))
+    parseParens();
   if (FormatTok.Tok.is(tok::l_brace)) {
     parseBlock();
     addUnwrappedLine();
@@ -510,7 +511,8 @@ void UnwrappedLineParser::parseCaseLabel() {
 void UnwrappedLineParser::parseSwitch() {
   assert(FormatTok.Tok.is(tok::kw_switch) && "'switch' expected");
   nextToken();
-  parseParens();
+  if (FormatTok.Tok.is(tok::l_paren))
+    parseParens();
   if (FormatTok.Tok.is(tok::l_brace)) {
     parseBlock(Style.IndentCaseLabels ? 2 : 1);
     addUnwrappedLine();
