@@ -741,6 +741,11 @@ TEST_F(FormatTest, BreaksDesireably) {
                "    }\n  }\n}");
 }
 
+TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {
+  verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
+               "    GUARDED_BY(aaaaaaaaaaaaa);");
+}
+
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
   verifyFormat(
       "if (aaaaaaaaaaaaaaaaaaaaaaaaa ||\n"

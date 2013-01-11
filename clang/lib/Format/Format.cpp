@@ -183,7 +183,7 @@ bool fitsIntoLimit(const AnnotatedToken &RootToken, unsigned Limit) {
       FitsOnALine = false;
       break;
     }
-  };
+  }
   return FitsOnALine;
 }
 
@@ -274,7 +274,7 @@ private:
 
     bool operator<(const ParenState &Other) const {
       if (Indent != Other.Indent)
-        return Indent < Other.Indent; 
+        return Indent < Other.Indent;
       if (LastSpace != Other.LastSpace)
         return LastSpace < Other.LastSpace;
       if (FirstLessLess != Other.FirstLessLess)
@@ -406,8 +406,7 @@ private:
           (getPrecedence(Previous) == prec::Assignment ||
            Previous.is(tok::kw_return)))
         State.Stack[ParenLevel].Indent = State.Column + Spaces;
-      if (Previous.is(tok::l_paren) ||
-          Previous.is(tok::l_brace) ||
+      if (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
           State.NextToken->Parent->Type == TT_TemplateOpener)
         State.Stack[ParenLevel].Indent = State.Column + Spaces;
 
@@ -604,8 +603,7 @@ public:
   TokenAnnotator(const UnwrappedLine &Line, const FormatStyle &Style,
                  SourceManager &SourceMgr, Lexer &Lex)
       : Style(Style), SourceMgr(SourceMgr), Lex(Lex),
-        RootToken(Line.RootToken) {
-  }
+        RootToken(Line.RootToken) {}
 
   /// \brief A parser that gathers additional information about tokens.
   ///
@@ -615,8 +613,7 @@ public:
   class AnnotatingParser {
   public:
     AnnotatingParser(AnnotatedToken &RootToken)
-        : CurrentToken(&RootToken), KeywordVirtualFound(false) {
-    }
+        : CurrentToken(&RootToken), KeywordVirtualFound(false) {}
 
     bool parseAngle() {
       while (CurrentToken != NULL) {
@@ -1065,8 +1062,8 @@ private:
     if (Right.is(tok::l_paren)) {
       return CurrentLineType == LT_ObjCDecl || Left.is(tok::kw_if) ||
              Left.is(tok::kw_for) || Left.is(tok::kw_while) ||
-             Left.is(tok::kw_switch) ||
-             Left.is(tok::kw_return) || Left.is(tok::kw_catch);
+             Left.is(tok::kw_switch) || Left.is(tok::kw_return) ||
+             Left.is(tok::kw_catch);
     }
     if (Left.is(tok::at) &&
         Right.FormatTok.Tok.getObjCKeywordID() != tok::objc_not_keyword)
@@ -1167,6 +1164,8 @@ private:
            Right.is(tok::colon) || Left.is(tok::semi) ||
            Left.is(tok::l_brace) || Left.is(tok::question) ||
            Right.is(tok::r_brace) || Left.Type == TT_ConditionalExpr ||
+           (Left.is(tok::r_paren) && Left.Type != TT_CastRParen &&
+            Right.is(tok::identifier)) ||
            (Left.is(tok::l_paren) && !Right.is(tok::r_paren));
   }
 
@@ -1267,8 +1266,7 @@ public:
       : Diag(Diag), Style(Style), Lex(Lex), SourceMgr(SourceMgr),
         Ranges(Ranges) {}
 
-  virtual ~Formatter() {
-  }
+  virtual ~Formatter() {}
 
   tooling::Replacements format() {
     LexerBasedFormatTokenSource Tokens(Lex, SourceMgr);
@@ -1346,7 +1344,7 @@ private:
   unsigned formatFirstToken(const AnnotatedToken &RootToken, unsigned Level,
                             bool InPPDirective,
                             unsigned PreviousEndOfLineColumn) {
-    const FormatToken& Tok = RootToken.FormatTok;
+    const FormatToken &Tok = RootToken.FormatTok;
     if (!Tok.WhiteSpaceStart.isValid() || StructuralError)
       return SourceMgr.getSpellingColumnNumber(Tok.Tok.getLocation()) - 1;
 
