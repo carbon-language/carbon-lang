@@ -537,24 +537,28 @@ void ExprEngine::VisitLogicalExpr(const BinaryOperator* B, ExplodedNode *Pred,
     const Expr *RHS = cast<Expr>(Elem.getStmt());
     SVal RHSVal = N->getState()->getSVal(RHS, Pred->getLocationContext());
 
-    DefinedOrUnknownSVal DefinedRHS = cast<DefinedOrUnknownSVal>(RHSVal);
-    ProgramStateRef StTrue, StFalse;
-    llvm::tie(StTrue, StFalse) = N->getState()->assume(DefinedRHS);
-    if (StTrue) {
-      if (StFalse) {
-        // We can't constrain the value to 0 or 1; the best we can do is a cast.
-        X = getSValBuilder().evalCast(RHSVal, B->getType(), RHS->getType());
-      } else {
-        // The value is known to be true.
-        X = getSValBuilder().makeIntVal(1, B->getType());
-      }
+    if (RHSVal.isUndef()) {
+      X = RHSVal;
     } else {
-      // The value is known to be false.
-      assert(StFalse && "Infeasible path!");
-      X = getSValBuilder().makeIntVal(0, B->getType());
+      DefinedOrUnknownSVal DefinedRHS = cast<DefinedOrUnknownSVal>(RHSVal);
+      ProgramStateRef StTrue, StFalse;
+      llvm::tie(StTrue, StFalse) = N->getState()->assume(DefinedRHS);
+      if (StTrue) {
+        if (StFalse) {
+          // We can't constrain the value to 0 or 1.
+          // The best we can do is a cast.
+          X = getSValBuilder().evalCast(RHSVal, B->getType(), RHS->getType());
+        } else {
+          // The value is known to be true.
+          X = getSValBuilder().makeIntVal(1, B->getType());
+        }
+      } else {
+        // The value is known to be false.
+        assert(StFalse && "Infeasible path!");
+        X = getSValBuilder().makeIntVal(0, B->getType());
+      }
     }
   }
-
   Bldr.generateNode(B, Pred, state->BindExpr(B, Pred->getLocationContext(), X));
 }
 
