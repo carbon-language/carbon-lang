@@ -227,15 +227,23 @@ void IvarInvalidationChecker::containsInvalidationMethod(
   }
 
   // If interface, check all parent protocols and super.
-  // TODO: Visit all categories in case the invalidation method is declared in
-  // a category.
-  if (const ObjCInterfaceDecl *InterfaceD = dyn_cast<ObjCInterfaceDecl>(D)) {
+  if (const ObjCInterfaceDecl *InterfD = dyn_cast<ObjCInterfaceDecl>(D)) {
+
+    // Visit all protocols.
     for (ObjCInterfaceDecl::protocol_iterator
-        I = InterfaceD->protocol_begin(),
-        E = InterfaceD->protocol_end(); I != E; ++I) {
+        I = InterfD->protocol_begin(),
+        E = InterfD->protocol_end(); I != E; ++I) {
       containsInvalidationMethod(*I, OutInfo);
     }
-    containsInvalidationMethod(InterfaceD->getSuperClass(), OutInfo);
+
+    // Visit all categories in case the invalidation method is declared in
+    // a category.
+    for (const ObjCCategoryDecl *I = InterfD->getFirstClassExtension(); I;
+        I = I->getNextClassExtension()) {
+      containsInvalidationMethod(I, OutInfo);
+    }
+
+    containsInvalidationMethod(InterfD->getSuperClass(), OutInfo);
     return;
   }
 
@@ -249,7 +257,7 @@ void IvarInvalidationChecker::containsInvalidationMethod(
     return;
   }
 
-  llvm_unreachable("One of the casts above should have succeeded.");
+  return;
 }
 
 bool IvarInvalidationChecker::trackIvar(const ObjCIvarDecl *Iv,

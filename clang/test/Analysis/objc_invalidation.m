@@ -41,6 +41,13 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 @interface Invalidation1Class <Invalidation1>
 @end
 
+@interface ClassWithInvalidationMethodInCategory <NSObject>
+@end
+
+@interface ClassWithInvalidationMethodInCategory ()
+- (void) invalidate __attribute__((annotate("objc_instance_variable_invalidator")));
+@end
+
 @interface SomeInvalidationImplementingObject: NSObject <Invalidation3, Invalidation2> {
   SomeInvalidationImplementingObject *ObjA; // invalidation in the parent
 }
@@ -107,6 +114,7 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
 @implementation SomeSubclassInvalidatableObject{
   @private
   SomeInvalidationImplementingObject *Ivar5;
+  ClassWithInvalidationMethodInCategory *Ivar13;
 }
 
 @synthesize Prop7 = _propIvar;
@@ -156,6 +164,7 @@ extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 
  // expected-warning@-5 {{Instance variable _Ivar3 needs to be invalidated}}
  // expected-warning@-6 {{Instance variable _Ivar4 needs to be invalidated}}
  // expected-warning@-7 {{Instance variable Ivar5 needs to be invalidated or set to nil}}
+// expected-warning@-8 {{Instance variable Ivar13 needs to be invalidated or set to nil}}
 @end
 
 // Example, where the same property is inherited through 
