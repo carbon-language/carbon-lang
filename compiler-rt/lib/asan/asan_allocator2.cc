@@ -343,7 +343,7 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     allocated = allocator.Allocate(cache, needed_size, 8, false);
   } else {
     SpinMutexLock l(&fallback_mutex);
-    AllocatorCache *cache = &fallback_cache;
+    AllocatorCache *cache = &fallback_allocator_cache;
     allocated = allocator.Allocate(cache, needed_size, 8, false);
   }
   uptr alloc_beg = reinterpret_cast<uptr>(allocated);
