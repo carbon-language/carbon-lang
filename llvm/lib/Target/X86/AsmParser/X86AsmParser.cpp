@@ -528,6 +528,7 @@ struct X86Operand : public MCParsedAsmOperand {
     Res->Mem.Scale    = Scale;
     Res->Mem.Size     = Size;
     Res->Mem.NeedSizeDir = NeedSizeDir;
+    Res->AddressOf = false;
     return Res;
   }
 };
