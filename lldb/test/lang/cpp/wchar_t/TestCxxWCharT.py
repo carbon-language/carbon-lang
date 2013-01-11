@@ -71,7 +71,7 @@ class CxxWCharTTestCase(TestBase):
 
         # Mazel Tov if this works!
         self.expect("frame variable mazeltov",
-            substrs = ['(const wchar_t *) mazeltov = ','מזל טוב'])
+            substrs = ['(const wchar_t *) mazeltov = ','L"מזל טוב"'])
 
 
 if __name__ == '__main__':

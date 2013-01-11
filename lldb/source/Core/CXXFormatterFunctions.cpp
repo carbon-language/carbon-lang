@@ -144,7 +144,7 @@ static bool
 ReadUTFBufferAndDumpToStream (uint64_t location,
                               const ProcessSP& process_sp,
                               Stream& stream,
-                              bool want_at = true,
+                              char prefix_token = '@',
                               bool want_quotes = true)
 {
     if (location == 0 || location == LLDB_INVALID_ADDRESS)
@@ -175,8 +175,8 @@ ReadUTFBufferAndDumpToStream (uint64_t location,
     }
     else
     {
-        if (want_at)
-            stream.Printf("@");
+        if (prefix_token != 0)
+            stream.Printf("%c",prefix_token);
         if (want_quotes)
             stream.Printf("\"");
     }
@@ -248,7 +248,7 @@ lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stre
     if (!ReadUTFBufferAndDumpToStream<UTF16, ConvertUTF16toUTF8>(valobj_addr,
                                                                  process_sp,
                                                                  stream,
-                                                                 false, // no @ sign for C++
+                                                                 'u',
                                                                  true)) // but use quotes
     {
         stream.Printf("Summary Unavailable");
@@ -273,7 +273,7 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
     if (!ReadUTFBufferAndDumpToStream<UTF32, ConvertUTF32toUTF8>(valobj_addr,
                                                                  process_sp,
                                                                  stream,
-                                                                 false, // no @ sign for C++
+                                                                 'U',
                                                                  true)) // but use quotes
     {
         stream.Printf("Summary Unavailable");
@@ -309,21 +309,21 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
             return ReadUTFBufferAndDumpToStream<UTF8, nullptr>(valobj_addr,
                                                                process_sp,
                                                                stream,
-                                                               false, // no @ sign for C++
+                                                               'L',
                                                                true); // but use quotes
         case 16:
             // utf 16
             return ReadUTFBufferAndDumpToStream<UTF16, ConvertUTF16toUTF8>(valobj_addr,
                                                                            process_sp,
                                                                            stream,
-                                                                           false, // no @ sign for C++
+                                                                           'L',
                                                                            true); // but use quotes
         case 32:
             // utf 32
             return ReadUTFBufferAndDumpToStream<UTF32, ConvertUTF32toUTF8>(valobj_addr,
                                                                            process_sp,
                                                                            stream,
-                                                                           false, // no @ sign for C++
+                                                                           'L',
                                                                            true); // but use quotes
         default:
             stream.Printf("size for wchar_t is not valid");
@@ -738,7 +738,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         if (error.Fail())
             return false;
         if (has_explicit_length and is_unicode)
-            return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream);
+            return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream, '@');
         else
         {
             location++;
@@ -781,12 +781,12 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             if (error.Fail())
                 return false;
         }
-        return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream);
+        return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream, '@');
     }
     else if (is_special)
     {
         uint64_t location = valobj_addr + (ptr_size == 8 ? 12 : 8);
-        return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream);
+        return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream, '@');
     }
     else if (is_inline)
     {

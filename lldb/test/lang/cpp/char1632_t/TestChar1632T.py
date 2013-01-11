@@ -55,11 +55,11 @@ class Char1632TestCase(TestBase):
 
         # Check that we correctly report the const types
         self.expect("frame variable cs16 cs32",
-            substrs = ['(const char16_t *) cs16 = ','(const char32_t *) cs32 = ','"hello world ྒྙྐ"','"hello world ྒྙྐ"'])
+            substrs = ['(const char16_t *) cs16 = ','(const char32_t *) cs32 = ','u"hello world ྒྙྐ"','U"hello world ྒྙྐ"'])
 
         # Check that we correctly report the non-const types
         self.expect("frame variable s16 s32",
-            substrs = ['(char16_t *) s16 = ','(char32_t *) s32 = ','"ﺸﺵۻ"','"ЕЙРГЖО"'])
+            substrs = ['(char16_t *) s16 = ','(char32_t *) s32 = ','u"ﺸﺵۻ"','U"ЕЙРГЖО"'])
 
         self.runCmd("next") # step to after the string is nullified
 
@@ -70,7 +70,7 @@ class Char1632TestCase(TestBase):
         self.runCmd("next")
         self.runCmd("next")
 
-        # check that the new strings shows
+        # check that the new strings show
         self.expect("frame variable s16 s32",
             substrs = ['(char16_t *) s16 = 0x','(char32_t *) s32 = ','"色ハ匂ヘト散リヌルヲ"','"෴"'])
 
