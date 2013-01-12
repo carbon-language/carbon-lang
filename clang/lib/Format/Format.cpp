@@ -969,7 +969,8 @@ private:
         Tok.Parent->Type == TT_CastRParen)
       return TT_UnaryOperator;
 
-    if (PrevToken.Tok.isLiteral() || NextToken.Tok.isLiteral() ||
+    if (PrevToken.Tok.isLiteral() || PrevToken.Tok.is(tok::r_paren) ||
+        PrevToken.Tok.is(tok::r_square) || NextToken.Tok.isLiteral() ||
         NextToken.Tok.is(tok::plus) || NextToken.Tok.is(tok::minus) ||
         NextToken.Tok.is(tok::plusplus) || NextToken.Tok.is(tok::minusminus) ||
         NextToken.Tok.is(tok::tilde) || NextToken.Tok.is(tok::exclaim) ||
