@@ -1544,9 +1544,6 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
       "  if ((self = [super initWithContentRect:contentRect styleMask:styleMask\n"
       "                  backing:NSBackingStoreBuffered defer:YES]))");
   
-  verifyFormat("[foo setasdfasdffffffffffffadfasdfasdf:\n"
-               "    [bar dowith:asdfdsfasdfasdfasfasfasfsafasdfsfad]];");
-
   verifyFormat("[foo checkThatBreakingAfterColonWorksOk:\n"
                "    [bar ifItDoes:reduceOverallLineLengthLikeInThisCase]];");
   

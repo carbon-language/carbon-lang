@@ -190,7 +190,7 @@ static bool fitsIntoLimit(const AnnotatedToken &RootToken, unsigned Limit) {
 
 /// \brief Returns if a token is an Objective-C selector name.
 ///
-/// For example, "bar" is a selector name in [foo bar:(4 + 5)]
+/// For example, "bar" is a selector name in [foo bar:(4 + 5)].
 static bool isObjCSelectorName(const AnnotatedToken &Tok) {
   return Tok.is(tok::identifier) && !Tok.Children.empty() &&
          Tok.Children[0].is(tok::colon) &&
