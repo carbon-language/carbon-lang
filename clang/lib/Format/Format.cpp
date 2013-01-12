@@ -39,6 +39,7 @@ enum TokenType {
   TT_ObjCBlockLParen,
   TT_ObjCDecl,
   TT_ObjCMethodSpecifier,
+  TT_ObjCMethodExpr,
   TT_ObjCSelectorStart,
   TT_ObjCProperty,
   TT_OverloadedOperator,
@@ -613,7 +614,8 @@ public:
   class AnnotatingParser {
   public:
     AnnotatingParser(AnnotatedToken &RootToken)
-        : CurrentToken(&RootToken), KeywordVirtualFound(false) {}
+        : CurrentToken(&RootToken), KeywordVirtualFound(false),
+          ColonIsObjCMethodExpr(false) {}
 
     bool parseAngle() {
       while (CurrentToken != NULL) {
@@ -651,8 +653,34 @@ public:
     }
 
     bool parseSquare() {
+      if (!CurrentToken)
+        return false;
+
+      // A '[' could be an index subscript (after an indentifier or after
+      // ')' or ']'), or it could be the start of an Objective-C method
+      // expression.
+      AnnotatedToken *LSquare = CurrentToken->Parent;
+      bool StartsObjCMethodExpr =
+          !LSquare->Parent || LSquare->Parent->is(tok::colon) ||
+          LSquare->Parent->is(tok::l_square) ||
+          LSquare->Parent->is(tok::l_paren) ||
+          LSquare->Parent->is(tok::kw_return) ||
+          LSquare->Parent->is(tok::kw_throw) ||
+          getBinOpPrecedence(LSquare->Parent->FormatTok.Tok.getKind(),
+                             true, true) > prec::Unknown;
+
+      bool ColonWasObjCMethodExpr = ColonIsObjCMethodExpr;
+      if (StartsObjCMethodExpr) {
+        ColonIsObjCMethodExpr = true;
+        LSquare->Type = TT_ObjCMethodExpr;
+      }
+
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::r_square)) {
+          if (StartsObjCMethodExpr) {
+            ColonIsObjCMethodExpr = ColonWasObjCMethodExpr;
+            CurrentToken->Type = TT_ObjCMethodExpr;
+          }
           next();
           return true;
         }
@@ -715,6 +743,11 @@ public:
         // declarations.
         if (Tok->Parent == NULL)
           Tok->Type = TT_ObjCMethodSpecifier;
+        break;
+      case tok::colon:
+        // Colons from ?: are handled in parseConditional().
+        if (ColonIsObjCMethodExpr)
+          Tok->Type = TT_ObjCMethodExpr;
         break;
       case tok::l_paren: {
         bool ParensWereObjCReturnType =
@@ -841,6 +874,7 @@ public:
   private:
     AnnotatedToken *CurrentToken;
     bool KeywordVirtualFound;
+    bool ColonIsObjCMethodExpr;
   };
 
   void createAnnotatedTokens(AnnotatedToken &Current) {
@@ -1048,8 +1082,9 @@ private:
              Style.PointerAndReferenceBindToType;
     if (Right.is(tok::star) && Left.is(tok::l_paren))
       return false;
-    if (Left.is(tok::l_square) || Right.is(tok::l_square) ||
-        Right.is(tok::r_square))
+    if (Left.is(tok::l_square) || Right.is(tok::r_square))
+      return false;
+    if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr)
       return false;
     if (Left.is(tok::coloncolon) ||
         (Right.is(tok::coloncolon) &&
@@ -1057,8 +1092,10 @@ private:
       return false;
     if (Left.is(tok::period) || Right.is(tok::period))
       return false;
-    if (Left.is(tok::colon) || Right.is(tok::colon))
-      return true;
+    if (Left.is(tok::colon))
+      return Left.Type != TT_ObjCMethodExpr;
+    if (Right.is(tok::colon))
+      return Right.Type != TT_ObjCMethodExpr;
     if (Left.is(tok::l_paren))
       return false;
     if (Right.is(tok::l_paren)) {
@@ -1106,7 +1143,8 @@ private:
     if (Tok.Parent->Type == TT_OverloadedOperator)
       return false;
     if (Tok.is(tok::colon))
-      return RootToken.isNot(tok::kw_case) && (!Tok.Children.empty());
+      return RootToken.isNot(tok::kw_case) && !Tok.Children.empty() &&
+             Tok.Type != TT_ObjCMethodExpr;
     if (Tok.Parent->Type == TT_UnaryOperator ||
         Tok.Parent->Type == TT_CastRParen)
       return false;
@@ -1148,6 +1186,10 @@ private:
         // Don't break at ':' if identifier before it can beak.
         return false;
     }
+    if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
+      return false;
+    if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
+      return true;
     if (Left.ClosesTemplateDeclaration)
       return true;
     if (Left.Type == TT_PointerOrReference || Left.Type == TT_TemplateCloser ||
