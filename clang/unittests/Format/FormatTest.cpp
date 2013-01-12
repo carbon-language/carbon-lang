@@ -1537,12 +1537,18 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("throw [self errorFor:a];");
   verifyFormat("@throw [self errorFor:a];");
 
-  // The formatting of this isn't ideal yet. It tests that the formatter doesn't
-  // break after "backing" but before ":", which would be at 80 columns.
+  // This tests that the formatter doesn't break after "backing" but before ":",
+  // which would be at 80 columns.
   verifyFormat(
       "void f() {\n"
-      "  if ((self = [super initWithContentRect:contentRect styleMask:\n"
-      "                  styleMask backing:NSBackingStoreBuffered defer:YES]))");
+      "  if ((self = [super initWithContentRect:contentRect styleMask:styleMask\n"
+      "                  backing:NSBackingStoreBuffered defer:YES]))");
+  
+  verifyFormat("[foo setasdfasdffffffffffffadfasdfasdf:\n"
+               "    [bar dowith:asdfdsfasdfasdfasfasfasfsafasdfsfad]];");
+
+  verifyFormat("[foo checkThatBreakingAfterColonWorksOk:\n"
+               "    [bar ifItDoes:reduceOverallLineLengthLikeInThisCase]];");
   
 }
 
@@ -1582,6 +1588,7 @@ TEST_F(FormatTest, ObjCAt) {
   verifyFormat("@'c'");
   verifyFormat("@true");
   verifyFormat("NSNumber *smallestInt = @(-INT_MAX - 1);");
+  // FIXME: Array and dictionary literals need more work.
   verifyFormat("@[");
   verifyFormat("@{");
 

@@ -170,7 +170,7 @@ static void replacePPWhitespace(
 
 /// \brief Checks whether the (remaining) \c UnwrappedLine starting with
 /// \p RootToken fits into \p Limit columns.
-bool fitsIntoLimit(const AnnotatedToken &RootToken, unsigned Limit) {
+static bool fitsIntoLimit(const AnnotatedToken &RootToken, unsigned Limit) {
   unsigned Columns = RootToken.FormatTok.TokenLength;
   bool FitsOnALine = true;
   const AnnotatedToken *Tok = &RootToken;
@@ -186,6 +186,15 @@ bool fitsIntoLimit(const AnnotatedToken &RootToken, unsigned Limit) {
     }
   }
   return FitsOnALine;
+}
+
+/// \brief Returns if a token is an Objective-C selector name.
+///
+/// For example, "bar" is a selector name in [foo bar:(4 + 5)]
+static bool isObjCSelectorName(const AnnotatedToken &Tok) {
+  return Tok.is(tok::identifier) && !Tok.Children.empty() &&
+         Tok.Children[0].is(tok::colon) &&
+         Tok.Children[0].Type == TT_ObjCMethodExpr;
 }
 
 class UnwrappedLineFormatter {
@@ -479,6 +488,14 @@ private:
     if (Left.is(tok::semi) || Left.is(tok::comma) ||
         Left.ClosesTemplateDeclaration)
       return 0;
+
+    // In Objective-C method expressions, prefer breaking before "param:" over
+    // breaking after it.
+    if (isObjCSelectorName(Right))
+      return 0;
+    if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
+      return 20;
+
     if (Left.is(tok::l_paren))
       return 20;
 
@@ -1187,6 +1204,8 @@ private:
     if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
       return false;
     if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
+      return true;
+    if (isObjCSelectorName(Right))
       return true;
     if (Left.ClosesTemplateDeclaration)
       return true;
