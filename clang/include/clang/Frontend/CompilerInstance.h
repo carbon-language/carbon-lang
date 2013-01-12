@@ -649,6 +649,10 @@ public:
                                       ModuleIdPath Path,
                                       Module::NameVisibilityKind Visibility,
                                       bool IsInclusionDirective);
+
+  virtual void makeModuleVisible(Module *Mod,
+                                 Module::NameVisibilityKind Visibility);
+
 };
 
 } // end namespace clang

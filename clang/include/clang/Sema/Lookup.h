@@ -138,7 +138,8 @@ public:
       IDNS(0),
       Redecl(Redecl != Sema::NotForRedeclaration),
       HideTags(true),
-      Diagnose(Redecl == Sema::NotForRedeclaration)
+      Diagnose(Redecl == Sema::NotForRedeclaration),
+      AllowHidden(Redecl == Sema::ForRedeclaration)
   {
     configure();
   }
@@ -158,7 +159,8 @@ public:
       IDNS(0),
       Redecl(Redecl != Sema::NotForRedeclaration),
       HideTags(true),
-      Diagnose(Redecl == Sema::NotForRedeclaration)
+      Diagnose(Redecl == Sema::NotForRedeclaration),
+      AllowHidden(Redecl == Sema::ForRedeclaration)
   {
     configure();
   }
@@ -176,7 +178,8 @@ public:
       IDNS(Other.IDNS),
       Redecl(Other.Redecl),
       HideTags(Other.HideTags),
-      Diagnose(false)
+      Diagnose(false),
+      AllowHidden(Other.AllowHidden)
   {}
 
   ~LookupResult() {
@@ -214,10 +217,16 @@ public:
     return Redecl;
   }
 
+  /// \brief Specify whether hidden declarations are visible, e.g.,
+  /// for recovery reasons.
+  void setAllowHidden(bool AH) {
+    AllowHidden = AH;
+  }
+
   /// \brief Determine whether this lookup is permitted to see hidden
   /// declarations, such as those in modules that have not yet been imported.
   bool isHiddenDeclarationVisible() const {
-    return Redecl || LookupKind == Sema::LookupTagName;
+    return AllowHidden || LookupKind == Sema::LookupTagName;
   }
   
   /// Sets whether tag declarations should be hidden by non-tag
@@ -483,6 +492,7 @@ public:
   /// \brief Change this lookup's redeclaration kind.
   void setRedeclarationKind(Sema::RedeclarationKind RK) {
     Redecl = RK;
+    AllowHidden = (RK == Sema::ForRedeclaration);
     configure();
   }
 
@@ -644,6 +654,9 @@ private:
   bool HideTags;
 
   bool Diagnose;
+
+  /// \brief True if we should allow hidden declarations to be 'visible'.
+  bool AllowHidden;
 };
 
   /// \brief Consumes visible declarations found when searching for

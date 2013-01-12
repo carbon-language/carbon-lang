@@ -275,12 +275,6 @@ public:
   /// This is only necessary for issuing pretty diagnostics.
   ExtVectorDeclsType ExtVectorDecls;
 
-  /// \brief The set of types for which we have already complained about the
-  /// definitions being hidden.
-  ///
-  /// This set is used to suppress redundant diagnostics.
-  llvm::SmallPtrSet<NamedDecl *, 4> HiddenDefinitions;
-
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
   OwningPtr<CXXFieldCollector> FieldCollector;
 
@@ -1455,6 +1449,14 @@ public:
   /// \param Path The module access path.
   DeclResult ActOnModuleImport(SourceLocation AtLoc, SourceLocation ImportLoc,
                                ModuleIdPath Path);
+
+  /// \brief Create an implicit import of the given module at the given
+  /// source location.
+  ///
+  /// This routine is typically used for error recovery, when the entity found
+  /// by name lookup is actually hidden within a module that we know about but
+  /// the user has forgotten to import.
+  void createImplicitModuleImport(SourceLocation Loc, Module *Mod);
 
   /// \brief Retrieve a suitable printing policy.
   PrintingPolicy getPrintingPolicy() const {

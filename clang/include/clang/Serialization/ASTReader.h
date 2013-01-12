@@ -1558,7 +1558,12 @@ public:
   /// \brief Retrieve the submodule that corresponds to a global submodule ID.
   ///
   Module *getSubmodule(serialization::SubmoduleID GlobalID);
-  
+
+  /// \brief Retrieve the module that corresponds to the given module ID.
+  ///
+  /// Note: overrides method in ExternalASTSource
+  virtual Module *getModule(unsigned ID);
+
   /// \brief Retrieve a selector from the given module with its local ID
   /// number.
   Selector getLocalSelector(ModuleFile &M, unsigned LocalID);

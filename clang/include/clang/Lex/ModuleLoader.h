@@ -80,6 +80,10 @@ public:
                                       ModuleIdPath Path,
                                       Module::NameVisibilityKind Visibility,
                                       bool IsInclusionDirective) = 0;
+
+  /// \brief Make the given module visible.
+  virtual void makeModuleVisible(Module *Mod,
+                                 Module::NameVisibilityKind Visibility) = 0;
 };
   
 }

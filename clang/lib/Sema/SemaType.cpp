@@ -4392,9 +4392,14 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
       // repeating the diagnostic.
       // FIXME: Add a Fix-It that imports the corresponding module or includes
       // the header.
-      if (isSFINAEContext() || HiddenDefinitions.insert(Def)) {
-        Diag(Loc, diag::err_module_private_definition) << T;
-        Diag(Def->getLocation(), diag::note_previous_definition);
+      Module *Owner = Def->getOwningModule();
+      Diag(Loc, diag::err_module_private_definition)
+        << T << Owner->getFullModuleName();
+      Diag(Def->getLocation(), diag::note_previous_definition);
+
+      if (!isSFINAEContext()) {
+        // Recover by implicitly importing this module.
+        createImplicitModuleImport(Loc, Owner);
       }
     }
 

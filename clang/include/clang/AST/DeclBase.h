@@ -32,6 +32,7 @@ class DependentDiagnostic;
 class EnumDecl;
 class FunctionDecl;
 class LinkageSpecDecl;
+class Module;
 class NamedDecl;
 class NamespaceDecl;
 class ObjCCategoryDecl;
@@ -593,7 +594,18 @@ public:
     
     return 0;
   }
-  
+
+private:
+  Module *getOwningModuleSlow() const;
+
+public:
+  Module *getOwningModule() const {
+    if (!isFromASTFile())
+      return 0;
+
+    return getOwningModuleSlow();
+  }
+
   unsigned getIdentifierNamespace() const {
     return IdentifierNamespace;
   }

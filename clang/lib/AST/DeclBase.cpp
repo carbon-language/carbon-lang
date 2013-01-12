@@ -59,6 +59,11 @@ void *Decl::AllocateDeserializedDecl(const ASTContext &Context,
   return Result;
 }
 
+Module *Decl::getOwningModuleSlow() const {
+  assert(isFromASTFile() && "Not from AST file?");
+  return getASTContext().getExternalSource()->getModule(getOwningModuleID());
+}
+
 const char *Decl::getDeclKindName() const {
   switch (DeclKind) {
   default: llvm_unreachable("Declaration not in DeclNodes.inc!");

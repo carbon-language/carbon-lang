@@ -837,6 +837,10 @@ public:
     // ASTUnit doesn't know how to load modules (not that this matters).
     return ModuleLoadResult();
   }
+
+  virtual void makeModuleVisible(Module *Mod,
+                                 Module::NameVisibilityKind Visibility) { }
+
 };
 
 } // namespace clang

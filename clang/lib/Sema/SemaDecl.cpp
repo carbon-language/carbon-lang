@@ -11173,6 +11173,18 @@ DeclResult Sema::ActOnModuleImport(SourceLocation AtLoc,
   return Import;
 }
 
+void Sema::createImplicitModuleImport(SourceLocation Loc, Module *Mod) {
+  // Create the implicit import declaration.
+  TranslationUnitDecl *TU = getASTContext().getTranslationUnitDecl();
+  ImportDecl *ImportD = ImportDecl::CreateImplicit(getASTContext(), TU,
+                                                   Loc, Mod, Loc);
+  TU->addDecl(ImportD);
+  Consumer.HandleImplicitImportDecl(ImportD);
+
+  // Make the module visible.
+  PP.getModuleLoader().makeModuleVisible(Mod, Module::AllVisible);
+}
+
 void Sema::ActOnPragmaRedefineExtname(IdentifierInfo* Name,
                                       IdentifierInfo* AliasName,
                                       SourceLocation PragmaLoc,

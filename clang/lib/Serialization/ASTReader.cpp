@@ -6200,7 +6200,11 @@ Module *ASTReader::getSubmodule(SubmoduleID GlobalID) {
   
   return SubmodulesLoaded[GlobalID - NUM_PREDEF_SUBMODULE_IDS];
 }
-                               
+
+Module *ASTReader::getModule(unsigned ID) {
+  return getSubmodule(ID);
+}
+
 Selector ASTReader::getLocalSelector(ModuleFile &M, unsigned LocalID) {
   return DecodeSelector(getGlobalSelectorID(M, LocalID));
 }

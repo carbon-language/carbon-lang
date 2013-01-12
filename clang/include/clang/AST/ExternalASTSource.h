@@ -25,6 +25,7 @@ class CXXBaseSpecifier;
 class DeclarationName;
 class ExternalSemaSource; // layering violation required for downcasting
 class FieldDecl;
+class Module;
 class NamedDecl;
 class RecordDecl;
 class Selector;
@@ -131,8 +132,11 @@ public:
   /// \brief Ensures that the table of all visible declarations inside this
   /// context is up to date.
   ///
-  /// The default implementation of this functino is a no-op.
+  /// The default implementation of this function is a no-op.
   virtual void completeVisibleDeclsMap(const DeclContext *DC);
+
+  /// \brief Retrieve the module that corresponds to the given module ID.
+  virtual Module *getModule(unsigned ID) { return 0; }
 
   /// \brief Finds all declarations lexically contained within the given
   /// DeclContext, after applying an optional filter predicate.
