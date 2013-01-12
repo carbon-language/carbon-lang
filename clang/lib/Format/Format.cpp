@@ -192,13 +192,11 @@ class UnwrappedLineFormatter {
 public:
   UnwrappedLineFormatter(const FormatStyle &Style, SourceManager &SourceMgr,
                          const UnwrappedLine &Line, unsigned FirstIndent,
-                         bool FitsOnALine, LineType CurrentLineType,
-                         const AnnotatedToken &RootToken,
+                         bool FitsOnALine, const AnnotatedToken &RootToken,
                          tooling::Replacements &Replaces, bool StructuralError)
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
         FirstIndent(FirstIndent), FitsOnALine(FitsOnALine),
-        CurrentLineType(CurrentLineType), RootToken(RootToken),
-        Replaces(Replaces) {
+        RootToken(RootToken), Replaces(Replaces) {
     Parameters.PenaltyIndentLevel = 15;
     Parameters.PenaltyLevelDecrease = 30;
     Parameters.PenaltyExcessCharacter = 1000000;
@@ -587,7 +585,6 @@ private:
   const UnwrappedLine &Line;
   const unsigned FirstIndent;
   const bool FitsOnALine;
-  const LineType CurrentLineType;
   const AnnotatedToken &RootToken;
   tooling::Replacements &Replaces;
 
@@ -1337,8 +1334,7 @@ public:
                                                     I, E);
         UnwrappedLineFormatter Formatter(
             Style, SourceMgr, Line, Indent, FitsOnALine,
-            AnnotatedLine->getLineType(), AnnotatedLine->getRootToken(),
-            Replaces, StructuralError);
+            AnnotatedLine->getRootToken(), Replaces, StructuralError);
         PreviousEndOfLineColumn = Formatter.format();
       } else {
         // If we did not reformat this unwrapped line, the column at the end of
