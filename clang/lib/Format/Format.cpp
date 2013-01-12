@@ -386,8 +386,7 @@ private:
       }
 
       State.Stack[ParenLevel].LastSpace = State.Column;
-      if (Current.is(tok::colon) && CurrentLineType != LT_ObjCMethodDecl &&
-          State.NextToken->Type != TT_ConditionalExpr)
+      if (Current.is(tok::colon) && State.NextToken->Type != TT_ConditionalExpr)
         State.Stack[ParenLevel].Indent += 2;
     } else {
       if (Current.is(tok::equal) && RootToken.is(tok::kw_for))
