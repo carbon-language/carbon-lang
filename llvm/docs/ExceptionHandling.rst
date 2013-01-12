@@ -32,7 +32,7 @@ execution of an application.
 
 A more complete description of the Itanium ABI exception handling runtime
 support of can be found at `Itanium C++ ABI: Exception Handling
-<http://refspecs.linuxfoundation.org/abi-eh-1.22.html>`_. A description of the
+<http://mentorembedded.github.com/cxx-abi/abi-eh.html>`_. A description of the
 exception frame format can be found at `Exception Frames
 <http://refspecs.linuxfoundation.org/LSB_3.0.0/LSB-Core-generic/LSB-Core-generic/ehframechpt.html>`_,
 with details of the DWARF 4 specification at `DWARF 4 Standard
