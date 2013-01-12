@@ -167,12 +167,8 @@ JSONCompilationDatabase::getCompileCommands(StringRef FilePath) const {
   std::string Error;
   llvm::raw_string_ostream ES(Error);
   StringRef Match = MatchTrie.findEquivalent(NativeFilePath.str(), ES);
-  if (Match.empty()) {
-    if (Error.empty())
-      Error = "No match found.";
-    llvm::outs() << Error << "\n";
+  if (Match.empty())
     return std::vector<CompileCommand>();
-  }
   llvm::StringMap< std::vector<CompileCommandRef> >::const_iterator
     CommandsRefI = IndexByFile.find(Match);
   if (CommandsRefI == IndexByFile.end())
