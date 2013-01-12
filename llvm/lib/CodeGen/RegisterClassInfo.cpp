@@ -83,6 +83,9 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
 
   unsigned N = 0;
   SmallVector<MCPhysReg, 16> CSRAlias;
+  unsigned MinCost = 0xff;
+  unsigned LastCost = ~0u;
+  unsigned LastCostChange = 0;
 
   // FIXME: Once targets reserve registers instead of removing them from the
   // allocation order, we can simply use begin/end here.
@@ -92,17 +95,31 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
     // Remove reserved registers from the allocation order.
     if (Reserved.test(PhysReg))
       continue;
+    unsigned Cost = TRI->getCostPerUse(PhysReg);
+    MinCost = std::min(MinCost, Cost);
+
     if (CSRNum[PhysReg])
       // PhysReg aliases a CSR, save it for later.
       CSRAlias.push_back(PhysReg);
-    else
+    else {
+      if (Cost != LastCost)
+        LastCostChange = N;
       RCI.Order[N++] = PhysReg;
+      LastCost = Cost;
+    }
   }
   RCI.NumRegs = N + CSRAlias.size();
   assert (RCI.NumRegs <= NumRegs && "Allocation order larger than regclass");
 
   // CSR aliases go after the volatile registers, preserve the target's order.
-  std::copy(CSRAlias.begin(), CSRAlias.end(), &RCI.Order[N]);
+  for (unsigned i = 0, e = CSRAlias.size(); i != e; ++i) {
+    unsigned PhysReg = CSRAlias[i];
+    unsigned Cost = TRI->getCostPerUse(PhysReg);
+    if (Cost != LastCost)
+      LastCostChange = N;
+    RCI.Order[N++] = PhysReg;
+    LastCost = Cost;
+  }
 
   // Register allocator stress test.  Clip register class to N registers.
   if (StressRA && RCI.NumRegs > StressRA)
@@ -112,6 +129,9 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
   if (const TargetRegisterClass *Super = TRI->getLargestLegalSuperClass(RC))
     if (Super != RC && getNumAllocatableRegs(Super) > RCI.NumRegs)
       RCI.ProperSubClass = true;
+
+  RCI.MinCost = uint8_t(MinCost);
+  RCI.LastCostChange = LastCostChange;
 
   DEBUG({
     dbgs() << "AllocationOrder(" << RC->getName() << ") = [";
