@@ -1687,6 +1687,11 @@ set_logging (const char *p)
                     p += sizeof ("LOG_RNB_PACKETS") - 1;
                     bitmask |= LOG_RNB_PACKETS;
                 }
+                else if (strncmp (p, "LOG_WATCHPOINTS", sizeof ("LOG_WATCHPOINTS") - 1) == 0)
+                {
+                    p += sizeof ("LOG_WATCHPOINTS") - 1;
+                    bitmask |= LOG_WATCHPOINTS;
+                }
                 else if (strncmp (p, "LOG_RNB_ALL", sizeof ("LOG_RNB_ALL") - 1) == 0)
                 {
                     p += sizeof ("LOG_RNB_ALL") - 1;
