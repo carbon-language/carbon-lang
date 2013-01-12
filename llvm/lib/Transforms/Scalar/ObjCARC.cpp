@@ -2212,8 +2212,8 @@ ObjCARCOpt::OptimizeRetainCall(Function &F, Instruction *Retain) {
   ++NumPeeps;
 
   DEBUG(dbgs() << "ObjCARCOpt::OptimizeRetainCall: Transforming "
-                  "objc_retainAutoreleasedReturnValue => "
-                  "objc_retain since the operand is not a return value.\n"
+                  "objc_retain => objc_retainAutoreleasedReturnValue"
+                  " since the operand is a return value.\n"
                   "                                Old: "
                << *Retain << "\n");
 
