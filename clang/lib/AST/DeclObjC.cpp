@@ -947,6 +947,11 @@ ObjCMethodDecl::findPropertyDecl(bool CheckOverrides) const {
   
   if (isPropertyAccessor()) {
     const ObjCContainerDecl *Container = cast<ObjCContainerDecl>(getParent());
+    // If container is class extension, find its primary class.
+    if (const ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(Container))
+      if (CatDecl->IsClassExtension())
+        Container = CatDecl->getClassInterface();
+    
     bool IsGetter = (NumArgs == 0);
 
     for (ObjCContainerDecl::prop_iterator I = Container->prop_begin(),
