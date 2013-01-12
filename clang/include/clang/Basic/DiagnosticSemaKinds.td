@@ -1118,8 +1118,6 @@ def note_nontrivial_variadic : Note<"because it is a variadic function">;
 def note_nontrivial_subobject : Note<
   "because the function selected to %select{construct|copy|move|copy|move|"
   "destroy}2 %select{base class|field}0 of type %1 is not trivial">;
-def note_nontrivial_user_declared_ctor : Note<
-  "because type %0 has a user-declared constructor">;
 def note_nontrivial_objc_ownership : Note<
   "because type %0 has a member with %select{no|no|__strong|__weak|"
   "__autoreleasing}1 ownership">;
@@ -4625,8 +4623,6 @@ let CategoryName = "Lambda Issue" in {
     "cannot deduce lambda return type from initializer list">;
   def err_lambda_capture_default_arg : Error<
     "lambda expression in default argument cannot capture any entity">;
-  def err_lambda_unexpanded_pack : Error<
-    "unexpanded function parameter pack capture is unsupported">;
   def err_lambda_incomplete_result : Error<
     "incomplete result type %0 in lambda expression">;
   def err_lambda_objc_object_result : Error<
