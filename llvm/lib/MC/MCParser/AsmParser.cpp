@@ -226,6 +226,10 @@ public:
   virtual bool ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc);
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
+  /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
+  /// and set \p Res to the identifier contents.
+  virtual bool ParseIdentifier(StringRef &Res);
+
   /// }
 
 private:
@@ -285,10 +289,6 @@ private:
   bool ParseBinOpRHS(unsigned Precedence, const MCExpr *&Res, SMLoc &EndLoc);
   bool ParseParenExpr(const MCExpr *&Res, SMLoc &EndLoc);
   bool ParseBracketExpr(const MCExpr *&Res, SMLoc &EndLoc);
-
-  /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
-  /// and set \p Res to the identifier contents.
-  virtual bool ParseIdentifier(StringRef &Res);
 
   // Directive Parsing.
 
