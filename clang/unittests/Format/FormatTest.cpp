@@ -1532,6 +1532,7 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("[self stuffWithInt:a ? [self foo:bar] : c];");
   verifyFormat("[self stuffWithInt:a ? (e ? f : g) : c];");
   verifyFormat("[cond ? obj1 : obj2 methodWithParam:param]");
+  verifyFormat("[button setAction:@selector(zoomOut:)];");
   
   verifyFormat("arr[[self indexForFoo:a]];");
   verifyFormat("throw [self errorFor:a];");
