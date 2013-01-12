@@ -63,19 +63,10 @@ PlatformDarwin::LocateExecutableScriptingResources (Target *target,
         // should not lose ".file" but GetFileNameStrippingExtension() will do precisely that.
         // Ideally, we should have a per-platform list of extensions (".exe", ".app", ".dSYM", ".framework")
         // which should be stripped while leaving "this.binary.file" as-is.
-        std::string module_basename (module.GetFileSpec().GetFileNameStrippingExtension().AsCString(""));
-        if (!module_basename.empty())
-        {
-            // FIXME: for Python, we cannot allow certain characters in module
-            // filenames we import. Theoretically, different scripting languages may
-            // have different sets of forbidden tokens in filenames, and that should
-            // be dealt with by each ScriptInterpreter. For now, we just replace dots
-            // with underscores, but if we ever support anything other than Python
-            // we will need to rework this
-            std::replace(module_basename.begin(), module_basename.end(), '.', '_');
-            std::replace(module_basename.begin(), module_basename.end(), ' ', '_');
-            std::replace(module_basename.begin(), module_basename.end(), '-', '_');
+        FileSpec module_spec = module.GetFileSpec();
         
+        if (module_spec)
+        {
             SymbolVendor *symbols = module.GetSymbolVendor ();
             if (symbols)
             {
@@ -88,13 +79,40 @@ PlatformDarwin::LocateExecutableScriptingResources (Target *target,
                         FileSpec symfile_spec (objfile->GetFileSpec());
                         if (symfile_spec && symfile_spec.Exists())
                         {
-                            StreamString path_string;
-                            // for OSX we are going to be in .dSYM/Contents/Resources/DWARF/<basename>
-                            // let us go to .dSYM/Contents/Resources/Python/<basename>.py and see if the file exists
-                            path_string.Printf("%s/../Python/%s.py",symfile_spec.GetDirectory().GetCString(), module_basename.c_str());
-                            FileSpec script_fspec(path_string.GetData(), true);
-                            if (script_fspec.Exists())
-                                file_list.Append (script_fspec);
+                            while (module_spec.GetFilename())
+                            {
+                                std::string module_basename (module_spec.GetFilename().GetCString());
+
+                                // FIXME: for Python, we cannot allow certain characters in module
+                                // filenames we import. Theoretically, different scripting languages may
+                                // have different sets of forbidden tokens in filenames, and that should
+                                // be dealt with by each ScriptInterpreter. For now, we just replace dots
+                                // with underscores, but if we ever support anything other than Python
+                                // we will need to rework this
+                                std::replace(module_basename.begin(), module_basename.end(), '.', '_');
+                                std::replace(module_basename.begin(), module_basename.end(), ' ', '_');
+                                std::replace(module_basename.begin(), module_basename.end(), '-', '_');
+                                
+
+                                StreamString path_string;
+                                // for OSX we are going to be in .dSYM/Contents/Resources/DWARF/<basename>
+                                // let us go to .dSYM/Contents/Resources/Python/<basename>.py and see if the file exists
+                                path_string.Printf("%s/../Python/%s.py",symfile_spec.GetDirectory().GetCString(), module_basename.c_str());
+                                FileSpec script_fspec(path_string.GetData(), true);
+                                if (script_fspec.Exists())
+                                {
+                                    file_list.Append (script_fspec);
+                                    break;
+                                }
+                                
+                                // If we didn't find the python file, then keep
+                                // stripping the extensions and try again
+                                ConstString filename_no_extension (module_spec.GetFileNameStrippingExtension());
+                                if (module_spec.GetFilename() == filename_no_extension)
+                                    break;
+                                
+                                module_spec.GetFilename() = filename_no_extension;
+                            }
                         }
                     }
                 }
