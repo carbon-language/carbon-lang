@@ -508,9 +508,9 @@ SDValue VectorLegalizer::ExpandSELECT(SDValue Op) {
 SDValue VectorLegalizer::ExpandSEXTINREG(SDValue Op) {
   EVT VT = Op.getValueType();
 
-  // Make sure that the SRA and SRL instructions are available.
+  // Make sure that the SRA and SHL instructions are available.
   if (TLI.getOperationAction(ISD::SRA, VT) == TargetLowering::Expand ||
-      TLI.getOperationAction(ISD::SRL, VT) == TargetLowering::Expand)
+      TLI.getOperationAction(ISD::SHL, VT) == TargetLowering::Expand)
     return DAG.UnrollVectorOp(Op.getNode());
 
   DebugLoc DL = Op.getDebugLoc();
@@ -521,7 +521,7 @@ SDValue VectorLegalizer::ExpandSEXTINREG(SDValue Op) {
   SDValue ShiftSz = DAG.getConstant(BW - OrigBW, VT);
 
   Op = Op.getOperand(0);
-  Op =   DAG.getNode(ISD::SRL, DL, VT, Op, ShiftSz);
+  Op =   DAG.getNode(ISD::SHL, DL, VT, Op, ShiftSz);
   return DAG.getNode(ISD::SRA, DL, VT, Op, ShiftSz);
 }
 

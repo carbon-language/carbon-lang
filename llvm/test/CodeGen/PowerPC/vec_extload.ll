@@ -15,7 +15,7 @@ define <16 x i8> @v16si8_sext_in_reg(<16 x i8> %a) {
   ret <16 x i8> %c
 }
 ; CHECK: v16si8_sext_in_reg:
-; CHECK: vsrb
+; CHECK: vslb
 ; CHECK: vsrab
 ; CHECK: blr 
 
@@ -37,7 +37,7 @@ define <8 x i16> @v8si16_sext_in_reg(<8 x i16> %a) {
   ret <8 x i16> %c
 }
 ; CHECK: v8si16_sext_in_reg:
-; CHECK: vsrh
+; CHECK: vslh
 ; CHECK: vsrah
 ; CHECK: blr 
 
@@ -61,7 +61,7 @@ define <4 x i32> @v4si32_sext_in_reg(<4 x i32> %a) {
   ret <4 x i32> %c
 }
 ; CHECK: v4si32_sext_in_reg:
-; CHECK: vsrw
+; CHECK: vslw
 ; CHECK: vsraw
 ; CHECK: blr 
 
