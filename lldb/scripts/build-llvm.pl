@@ -208,6 +208,7 @@ sub build_llvm
                     for $prog (@tools)
                     {
                         chomp(my $actual_prog_path = `xcrun -sdk '$ENV{SDKROOT}' -find ${prog}`);
+                        symlink($actual_prog_path, "$llvm_dstroot_arch_bin/${prog}");
                         my $script_prog_path = "$llvm_dstroot_arch_bin/arm-apple-darwin${os_release}-${prog}";
                         open (SCRIPT, ">$script_prog_path") or die "Can't open $! for writing...\n";
                         print SCRIPT "#!/bin/sh\nexec '$actual_prog_path' \"\$\@\"\n";
@@ -219,6 +220,7 @@ sub build_llvm
                     for $prog (@arch_sysroot_tools)
                     {
                         chomp(my $actual_prog_path = `xcrun -sdk '$ENV{SDKROOT}' -find ${prog}`);
+                        symlink($actual_prog_path, "$llvm_dstroot_arch_bin/${prog}");
                         my $script_prog_path = "$llvm_dstroot_arch_bin/arm-apple-darwin${os_release}-${prog}";
                         open (SCRIPT, ">$script_prog_path") or die "Can't open $! for writing...\n";
                         print SCRIPT "#!/bin/sh\nexec '$actual_prog_path' -arch ${arch} -isysroot '$ENV{SDKROOT}' \"\$\@\"\n";
@@ -240,13 +242,13 @@ sub build_llvm
 
             if ($is_arm)
             {
-                $lldb_configuration_options .= " --host=arm-apple-darwin${os_release} --target=arm-apple-darwin${os_release} --build=i686-apple-darwin${os_release}";
+                $lldb_configuration_options .= " --host=arm-apple-darwin${os_release} --target=arm-apple-darwin${os_release} --build=i686-apple-darwin${os_release} --program-prefix=\"\"";
             }
             else
             {
                 $lldb_configuration_options .= " --build=$arch-apple-darwin${os_release}";
             }
-            do_command ("cd '$llvm_dstroot_arch' && '$llvm_srcroot/configure' $lldb_configuration_options",
+            do_command ("cd '$llvm_dstroot_arch' && unset SDKROOT && '$llvm_srcroot/configure' $lldb_configuration_options",
                         "configuring llvm build", 1);
         }
 
@@ -258,7 +260,7 @@ sub build_llvm
             my $extra_make_flags = '';
             if ($is_arm)
             {
-                $extra_make_flags = "UNIVERSAL=1 UNIVERSAL_ARCH=${arch} UNIVERSAL_SDK_PATH='$ENV{SDKROOT}'";
+                $extra_make_flags = "UNIVERSAL=1 UNIVERSAL_ARCH=${arch} UNIVERSAL_SDK_PATH='$ENV{SDKROOT}' SDKROOT=";
             }
             do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus clang-only VERBOSE=1 $llvm_config_href->{make_options} NO_RUNTIME_LIBS=1 PROJECT_NAME='llvm' $extra_make_flags", "making llvm and clang", 1);
             do_command ("cd '$llvm_dstroot_arch' && make -j$num_cpus tools-only VERBOSE=1 $llvm_config_href->{make_options} NO_RUNTIME_LIBS=1 PROJECT_NAME='llvm' $extra_make_flags EDIS_VERSION=1", "making libedis", 1);
