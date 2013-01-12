@@ -958,6 +958,7 @@ FormatManager::LoadSystemFormatters()
     
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("OSType"), ostype_summary);
     
+#ifndef LLDB_DISABLE_PYTHON
     // FIXME because of a bug in the FormatNavigator we need to add a summary for both X* and const X* (<rdar://problem/12717717>)
     AddCXXSummary(sys_category_sp, lldb_private::formatters::Char16StringSummaryProvider, "char16_t * summary provider", ConstString("char16_t *"), string_flags);
     AddCXXSummary(sys_category_sp, lldb_private::formatters::Char16StringSummaryProvider, "char16_t * summary provider", ConstString("const char16_t *"), string_flags);
@@ -967,6 +968,7 @@ FormatManager::LoadSystemFormatters()
     
     AddCXXSummary(sys_category_sp, lldb_private::formatters::WCharStringSummaryProvider, "wchar_t * summary provider", ConstString("wchar_t *"), string_flags);
     AddCXXSummary(sys_category_sp, lldb_private::formatters::WCharStringSummaryProvider, "wchar_t * summary provider", ConstString("const wchar_t *"), string_flags);
+#endif
 }
 
 void
