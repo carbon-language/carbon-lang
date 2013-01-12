@@ -1515,7 +1515,6 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("[self stuffWithInt:a ? (e ? f : g) : c];");
   verifyFormat("[cond ? obj1 : obj2 methodWithParam:param]");
   
-
   verifyFormat("arr[[self indexForFoo:a]];");
   verifyFormat("throw [self errorFor:a];");
   verifyFormat("@throw [self errorFor:a];");

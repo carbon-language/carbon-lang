@@ -1176,8 +1176,8 @@ private:
       if (Right.is(tok::identifier) && !Right.Children.empty() &&
           Right.Children[0].is(tok::colon) && Left.is(tok::identifier))
         return true;
-      if (CurrentLineType == LT_ObjCMethodDecl && Right.is(tok::identifier) &&
-          Left.is(tok::l_paren) && Left.Parent->is(tok::colon))
+      if (Right.is(tok::identifier) && Left.is(tok::l_paren) &&
+          Left.Parent->is(tok::colon))
         // Don't break this identifier as ':' or identifier
         // before it will break.
         return false;
