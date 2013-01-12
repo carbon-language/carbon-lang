@@ -83,6 +83,7 @@ PARSE_MODE_SYSTEM = 4
 
 class CrashLog(symbolication.Symbolicator):
     """Class that does parses darwin crash logs"""
+    parent_process_regex = re.compile('^Parent Process:\s*(.*)\[(\d+)\]');
     thread_state_regex = re.compile('^Thread ([0-9]+) crashed with')
     thread_regex = re.compile('^Thread ([0-9]+)([^:]*):(.*)')
     frame_regex = re.compile('^([0-9]+) +([^ ]+) *\t?(0x[0-9a-fA-F]+) +(.*)')
@@ -265,9 +266,10 @@ class CrashLog(symbolication.Symbolicator):
                     else:
                         self.process = version_string
                         self.process_compatability_version = version_string
-                elif line.startswith ('Parent Process:'):
-                    (self.parent_process_name, pid_with_brackets) = line[15:].strip().split()
-                    self.parent_process_id = pid_with_brackets.strip('[]') 
+                elif self.parent_process_regex.search(line):
+                    parent_process_match = self.parent_process_regex.search(line)
+                    self.parent_process_name = parent_process_match.group(1)
+                    self.parent_process_id = parent_process_match.group(2)
                 elif line.startswith ('Exception Type:'):
                     self.thread_exception = line[15:].strip()
                     continue
