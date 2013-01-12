@@ -39,6 +39,9 @@ public:
                   const VirtRegMap &VRM,
                   const RegisterClassInfo &RegClassInfo);
 
+  /// Get the allocation order without reordered hints.
+  ArrayRef<MCPhysReg> getOrder() const { return Order; }
+
   /// Return the next physical register in the allocation order, or 0.
   /// It is safe to call next() again after it returned 0, it will keep
   /// returning 0 until rewind() is called.
@@ -50,6 +53,18 @@ public:
       if (!isHint(Reg))
         return Reg;
     }
+    return 0;
+  }
+
+  /// As next(), but allow duplicates to be returned, and stop before the
+  /// Limit'th register in the RegisterClassInfo allocation order.
+  ///
+  /// This can produce more than Limit registers if there are hints.
+  unsigned nextWithDups(unsigned Limit) {
+    if (Pos < 0)
+      return Hints.end()[Pos++];
+    if (Pos < int(Limit))
+      return Order[Pos++];
     return 0;
   }
 

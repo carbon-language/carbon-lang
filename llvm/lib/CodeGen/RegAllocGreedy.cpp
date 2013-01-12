@@ -632,16 +632,33 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
   // Keep track of the cheapest interference seen so far.
   EvictionCost BestCost(~0u);
   unsigned BestPhys = 0;
+  unsigned OrderLimit = Order.getOrder().size();
 
   // When we are just looking for a reduced cost per use, don't break any
   // hints, and only evict smaller spill weights.
   if (CostPerUseLimit < ~0u) {
     BestCost.BrokenHints = 0;
     BestCost.MaxWeight = VirtReg.weight;
+
+    // Check of any registers in RC are below CostPerUseLimit.
+    const TargetRegisterClass *RC = MRI->getRegClass(VirtReg.reg);
+    unsigned MinCost = RegClassInfo.getMinCost(RC);
+    if (MinCost >= CostPerUseLimit) {
+      DEBUG(dbgs() << RC->getName() << " minimum cost = " << MinCost
+                   << ", no cheaper registers to be found.\n");
+      return 0;
+    }
+
+    // It is normal for register classes to have a long tail of registers with
+    // the same cost. We don't need to look at them if they're too expensive.
+    if (TRI->getCostPerUse(Order.getOrder().back()) >= CostPerUseLimit) {
+      OrderLimit = RegClassInfo.getLastCostChange(RC);
+      DEBUG(dbgs() << "Only trying the first " << OrderLimit << " regs.\n");
+    }
   }
 
   Order.rewind();
-  while (unsigned PhysReg = Order.next()) {
+  while (unsigned PhysReg = Order.nextWithDups(OrderLimit)) {
     if (TRI->getCostPerUse(PhysReg) >= CostPerUseLimit)
       continue;
     // The first use of a callee-saved register in a function has cost 1.
