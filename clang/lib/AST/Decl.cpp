@@ -1761,6 +1761,9 @@ bool FunctionDecl::isReservedGlobalPlacementOperator() const {
 }
 
 bool FunctionDecl::hasCLanguageLinkage() const {
+  // Users expect to be able to write
+  // extern "C" void *__builtin_alloca (size_t);
+  // so consider builtins as having C language linkage.
   if (getBuiltinID())
     return true;
 
