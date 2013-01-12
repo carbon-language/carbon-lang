@@ -16,16 +16,14 @@
 #define LLVM_CLANG_GR_WORKLIST
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/BlockCounter.h"
-#include <cstddef>
+#include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
+#include <cassert>
 
 namespace clang {
   
 class CFGBlock;
 
 namespace ento {
-
-class ExplodedNode;
-class ExplodedNodeImpl;
 
 class WorkListUnit {
   ExplodedNode *node;

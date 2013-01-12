@@ -16,6 +16,7 @@
 #define LLVM_CLANG_SEMA_TYPOCORRECTION_H
 
 #include "clang/AST/DeclCXX.h"
+#include "clang/Sema/DeclSpec.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {

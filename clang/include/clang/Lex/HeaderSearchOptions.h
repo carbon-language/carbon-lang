@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_LEX_HEADERSEARCHOPTIONS_H
 #define LLVM_CLANG_LEX_HEADERSEARCHOPTIONS_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/StringRef.h"
 #include <vector>

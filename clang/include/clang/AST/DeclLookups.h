@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_AST_DECLLOOKUPS_H
 #define LLVM_CLANG_AST_DECLLOOKUPS_H
 
+#include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclBase.h"
 #include "clang/AST/DeclContextInternals.h"
 #include "clang/AST/DeclarationName.h"

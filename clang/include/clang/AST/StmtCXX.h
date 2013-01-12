@@ -14,6 +14,9 @@
 #ifndef LLVM_CLANG_AST_STMTCXX_H
 #define LLVM_CLANG_AST_STMTCXX_H
 
+#include "clang/AST/DeclarationName.h"
+#include "clang/AST/Expr.h"
+#include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/Stmt.h"
 #include "llvm/Support/Compiler.h"
 

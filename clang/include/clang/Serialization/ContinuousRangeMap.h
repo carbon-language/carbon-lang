@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_SERIALIZATION_CONTINUOUS_RANGE_MAP_H
 #define LLVM_CLANG_SERIALIZATION_CONTINUOUS_RANGE_MAP_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/SmallVector.h"
 #include <algorithm>
 #include <utility>

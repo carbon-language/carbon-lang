@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_FRONTEND_TARGETOPTIONS_H
 #define LLVM_CLANG_FRONTEND_TARGETOPTIONS_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include <string>
 #include <vector>

@@ -15,7 +15,9 @@
 #define LLVM_CLANG_LEX_EXTERNAL_PREPROCESSOR_SOURCE_H
 
 namespace clang {
-  
+
+class IdentifierInfo;
+
 /// \brief Abstract interface for external sources of preprocessor 
 /// information.
 ///

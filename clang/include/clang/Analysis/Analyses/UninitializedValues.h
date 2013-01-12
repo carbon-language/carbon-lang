@@ -15,6 +15,7 @@
 #ifndef LLVM_CLANG_UNINIT_VALS_H
 #define LLVM_CLANG_UNINIT_VALS_H
 
+#include "clang/AST/Stmt.h"
 #include "llvm/ADT/SmallVector.h"
 
 namespace clang {
