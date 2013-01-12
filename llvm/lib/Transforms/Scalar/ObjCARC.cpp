@@ -2602,10 +2602,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         }
       }
     } while (!Worklist.empty());
-
-    DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Finished Queue.\n\n");
-
   }
+  DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Finished List.\n");
 }
 
 /// CheckForCFGHazards - Check for critical edges, loop boundaries, irreducible
@@ -3869,6 +3867,8 @@ bool ObjCARCOpt::runOnFunction(Function &F) {
 
   Changed = false;
 
+  DEBUG(dbgs() << "ObjCARCOpt: Visiting Function: " << F.getName() << "\n");
+
   PA.setAA(&getAnalysis<AliasAnalysis>());
 
   // This pass performs several distinct transformations. As a compile-time aid
@@ -3901,6 +3901,8 @@ bool ObjCARCOpt::runOnFunction(Function &F) {
   if (UsedInThisFunction & ((1 << IC_Autorelease) |
                             (1 << IC_AutoreleaseRV)))
     OptimizeReturns(F);
+
+  DEBUG(dbgs() << "\n");
 
   return Changed;
 }
