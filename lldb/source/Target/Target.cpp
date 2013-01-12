@@ -1722,31 +1722,10 @@ Target::EvaluateExpression
     m_suppress_stop_hooks = true;
 
     ExecutionContext exe_ctx;
-
-    const size_t expr_cstr_len = ::strlen (expr_cstr);
-
+    
     if (frame)
     {
         frame->CalculateExecutionContext(exe_ctx);
-        Error error;
-        const uint32_t expr_path_options = StackFrame::eExpressionPathOptionCheckPtrVsMember |
-                                           StackFrame::eExpressionPathOptionsNoFragileObjcIvar |
-                                           StackFrame::eExpressionPathOptionsNoSyntheticChildren;
-        lldb::VariableSP var_sp;
-        
-        // Make sure we don't have any things that we know a variable expression
-        // won't be able to deal with before calling into it
-        if (::strcspn (expr_cstr, "()+*&|!~<=/^%,?") == expr_cstr_len)
-        {
-            result_valobj_sp = frame->GetValueForVariableExpressionPath (expr_cstr, 
-                                                                         options.GetUseDynamic(),
-                                                                         expr_path_options, 
-                                                                         var_sp, 
-                                                                         error);
-            // if this expression results in a bitfield, we give up and let the IR handle it
-            if (result_valobj_sp && result_valobj_sp->IsBitfield())
-                result_valobj_sp.reset();
-        }
     }
     else if (m_process_sp)
     {
@@ -1757,89 +1736,32 @@ Target::EvaluateExpression
         CalculateExecutionContext(exe_ctx);
     }
     
-    if (result_valobj_sp)
+    // Make sure we aren't just trying to see the value of a persistent
+    // variable (something like "$0")
+    lldb::ClangExpressionVariableSP persistent_var_sp;
+    // Only check for persistent variables the expression starts with a '$' 
+    if (expr_cstr[0] == '$')
+        persistent_var_sp = m_persistent_variables.GetVariable (expr_cstr);
+
+    if (persistent_var_sp)
     {
+        result_valobj_sp = persistent_var_sp->GetValueObject ();
         execution_results = eExecutionCompleted;
-        // We got a result from the frame variable expression path above...
-        ConstString persistent_variable_name (m_persistent_variables.GetNextPersistentVariableName());
-
-        lldb::ValueObjectSP const_valobj_sp;
-        
-        // Check in case our value is already a constant value
-        if (result_valobj_sp->GetIsConstant())
-        {
-            const_valobj_sp = result_valobj_sp;
-            const_valobj_sp->SetName (persistent_variable_name);
-        }
-        else
-        {
-            if (options.GetUseDynamic() != lldb::eNoDynamicValues)
-            {
-                ValueObjectSP dynamic_sp = result_valobj_sp->GetDynamicValue(options.GetUseDynamic());
-                if (dynamic_sp)
-                    result_valobj_sp = dynamic_sp;
-            }
-
-            const_valobj_sp = result_valobj_sp->CreateConstantValue (persistent_variable_name);
-        }
-
-        lldb::ValueObjectSP live_valobj_sp = result_valobj_sp;
-        
-        result_valobj_sp = const_valobj_sp;
-
-        ClangExpressionVariableSP clang_expr_variable_sp(m_persistent_variables.CreatePersistentVariable(result_valobj_sp));        
-        assert (clang_expr_variable_sp.get());
-        
-        // Set flags and live data as appropriate
-
-        const Value &result_value = live_valobj_sp->GetValue();
-        
-        switch (result_value.GetValueType())
-        {
-        case Value::eValueTypeHostAddress:
-        case Value::eValueTypeFileAddress:
-            // we don't do anything with these for now
-            break;
-        case Value::eValueTypeScalar:
-        case Value::eValueTypeVector:
-            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsLLDBAllocated;
-            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVNeedsAllocation;
-            break;
-        case Value::eValueTypeLoadAddress:
-            clang_expr_variable_sp->m_live_sp = live_valobj_sp;
-            clang_expr_variable_sp->m_flags |= ClangExpressionVariable::EVIsProgramReference;
-            break;
-        }
     }
     else
     {
-        // Make sure we aren't just trying to see the value of a persistent 
-        // variable (something like "$0")
-        lldb::ClangExpressionVariableSP persistent_var_sp;
-        // Only check for persistent variables the expression starts with a '$' 
-        if (expr_cstr[0] == '$')
-            persistent_var_sp = m_persistent_variables.GetVariable (expr_cstr);
-
-        if (persistent_var_sp)
-        {
-            result_valobj_sp = persistent_var_sp->GetValueObject ();
-            execution_results = eExecutionCompleted;
-        }
-        else
-        {
-            const char *prefix = GetExpressionPrefixContentsAsCString();
-                    
-            execution_results = ClangUserExpression::Evaluate (exe_ctx, 
-                                                               options.GetExecutionPolicy(),
-                                                               lldb::eLanguageTypeUnknown,
-                                                               options.DoesCoerceToId() ? ClangUserExpression::eResultTypeId : ClangUserExpression::eResultTypeAny,
-                                                               options.DoesUnwindOnError(),
-                                                               expr_cstr, 
-                                                               prefix, 
-                                                               result_valobj_sp,
-                                                               options.GetRunOthers(),
-                                                               options.GetTimeoutUsec());
-        }
+        const char *prefix = GetExpressionPrefixContentsAsCString();
+                
+        execution_results = ClangUserExpression::Evaluate (exe_ctx, 
+                                                           options.GetExecutionPolicy(),
+                                                           lldb::eLanguageTypeUnknown,
+                                                           options.DoesCoerceToId() ? ClangUserExpression::eResultTypeId : ClangUserExpression::eResultTypeAny,
+                                                           options.DoesUnwindOnError(),
+                                                           expr_cstr, 
+                                                           prefix, 
+                                                           result_valobj_sp,
+                                                           options.GetRunOthers(),
+                                                           options.GetTimeoutUsec());
     }
     
     m_suppress_stop_hooks = old_suppress_value;
