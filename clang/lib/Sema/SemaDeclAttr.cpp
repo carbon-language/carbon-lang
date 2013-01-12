@@ -2043,7 +2043,6 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
   VersionTuple MergedDeprecated = Deprecated;
   VersionTuple MergedObsoleted = Obsoleted;
   bool FoundAny = false;
-  bool DroppedAny = false;
 
   if (D->hasAttrs()) {
     AttrVec &Attrs = D->getAttrs();
@@ -2078,7 +2077,6 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
         Diag(OldAA->getLocation(), diag::warn_mismatched_availability);
         Diag(Range.getBegin(), diag::note_previous_attribute);
         Attrs.erase(Attrs.begin() + i);
-        DroppedAny = true;
         --e;
         continue;
       }
@@ -2098,7 +2096,6 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
                                 MergedIntroduced2, MergedDeprecated2,
                                 MergedObsoleted2)) {
         Attrs.erase(Attrs.begin() + i);
-        DroppedAny = true;
         --e;
         continue;
       }
@@ -2109,9 +2106,6 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
       ++i;
     }
   }
-
-  if (DroppedAny)
-    D->ClearLVCache();
 
   if (FoundAny &&
       MergedIntroduced == Introduced &&
@@ -2159,10 +2153,8 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
                                                       Deprecated.Version,
                                                       Obsoleted.Version,
                                                       IsUnavailable, Str);
-  if (NewAttr) {
+  if (NewAttr)
     D->addAttr(NewAttr);
-    ND->ClearLVCache();
-  }
 }
 
 VisibilityAttr *Sema::mergeVisibilityAttr(Decl *D, SourceRange Range,
@@ -2179,8 +2171,6 @@ VisibilityAttr *Sema::mergeVisibilityAttr(Decl *D, SourceRange Range,
     Diag(ExistingAttr->getLocation(), diag::err_mismatched_visibility);
     Diag(Range.getBegin(), diag::note_previous_attribute);
     D->dropAttr<VisibilityAttr>();
-    NamedDecl *ND = cast<NamedDecl>(D);
-    ND->ClearLVCache();
   }
   return ::new (Context) VisibilityAttr(Range, Context, Vis);
 }
@@ -2224,11 +2214,8 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   VisibilityAttr *NewAttr = S.mergeVisibilityAttr(D, Attr.getRange(), type);
-  if (NewAttr) {
+  if (NewAttr)
     D->addAttr(NewAttr);
-    NamedDecl *ND = cast<NamedDecl>(D);
-    ND->ClearLVCache();
-  }
 }
 
 static void handleObjCMethodFamilyAttr(Sema &S, Decl *decl,

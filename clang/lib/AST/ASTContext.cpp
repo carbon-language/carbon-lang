@@ -958,7 +958,6 @@ ASTContext::setInstantiatedFromStaticDataMember(VarDecl *Inst, VarDecl *Tmpl,
          "Already noted what static data member was instantiated from");
   InstantiatedFromStaticDataMember[Inst] 
     = new (*this) MemberSpecializationInfo(Tmpl, TSK, PointOfInstantiation);
-  Inst->ClearLVCache();
 }
 
 FunctionDecl *ASTContext::getClassScopeSpecializationPattern(

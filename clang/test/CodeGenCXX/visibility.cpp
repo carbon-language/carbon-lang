@@ -1112,3 +1112,47 @@ namespace test60 {
     // CHECK-HIDDEN: define linkonce_odr hidden void @_ZN6test604testINS_1bENS_1aEEEvv
   }
 }
+
+namespace test61 {
+  template <typename T1>
+  struct Class1
+  {
+    void f1() { f2(); }
+    inline void f2();
+  };
+  template<>
+  inline void Class1<int>::f2()
+  {
+  }
+  void g(Class1<int> *x) {
+    x->f1();
+  }
+}
+namespace test61 {
+  // Just test that we don't crash. Currently we apply this attribute. Current
+  // gcc issues a warning about it being unused since "the type is already
+  // defined". We should probably do the same.
+  template class __attribute__ ((visibility("hidden"))) Class1<int>;
+}
+
+namespace test62 {
+  template <typename T1>
+  struct Class1
+  {
+    void f1() { f2(); }
+    inline void f2() {}
+  };
+  template<>
+  inline void Class1<int>::f2()
+  {
+  }
+  void g(Class1<int> *x) {
+    x->f2();
+  }
+}
+namespace test62 {
+  template class __attribute__ ((visibility("hidden"))) Class1<int>;
+  // Just test that we don't crash. Currently we apply this attribute. Current
+  // gcc issues a warning about it being unused since "the type is already
+  // defined". We should probably do the same.
+}

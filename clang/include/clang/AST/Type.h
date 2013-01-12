@@ -1781,7 +1781,7 @@ public:
   std::pair<Linkage,Visibility> getLinkageAndVisibility() const;
 
   /// \brief Note that the linkage is no longer known.
-  void ClearLVCache();
+  void ClearLinkageCache();
 
   const char *getTypeClassName() const;
 

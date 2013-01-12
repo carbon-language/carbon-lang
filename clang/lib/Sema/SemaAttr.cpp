@@ -321,7 +321,6 @@ void Sema::AddPushedVisibilityAttribute(Decl *D) {
     = (VisibilityAttr::VisibilityType) rawType;
   SourceLocation loc = Stack->back().second;
 
-  ND->ClearLVCache();
   D->addAttr(::new (Context) VisibilityAttr(loc, Context, type));
 }
 
