@@ -2891,7 +2891,6 @@ void
 LSRInstance::InsertInitialFormula(const SCEV *S, LSRUse &LU, size_t LUIdx) {
   Formula F;
   F.InitialMatch(S, L, SE);
-  F.HasBaseReg = true;
   bool Inserted = InsertFormula(LU, LUIdx, F);
   assert(Inserted && "Initial formula already exists!"); (void)Inserted;
 }
@@ -2903,6 +2902,7 @@ LSRInstance::InsertSupplementalFormula(const SCEV *S,
                                        LSRUse &LU, size_t LUIdx) {
   Formula F;
   F.BaseRegs.push_back(S);
+  F.HasBaseReg = true;
   bool Inserted = InsertFormula(LU, LUIdx, F);
   assert(Inserted && "Supplemental formula already exists!"); (void)Inserted;
 }
