@@ -29,3 +29,6 @@ class X {
   static void g(float);
   static void g(int); // expected-error {{static and non-static member functions with the same parameter types cannot be overloaded}}
 };
+
+int main() {} // expected-note {{previous definition is here}}
+int main(int,char**) {} // expected-error {{conflicting types for 'main'}}

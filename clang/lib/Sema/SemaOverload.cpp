@@ -935,6 +935,11 @@ static bool canBeOverloaded(const FunctionDecl &D) {
     return true;
   if (D.hasCLanguageLinkage())
     return false;
+
+  // Main cannot be overloaded (basic.start.main).
+  if (D.isMain())
+    return false;
+
   return true;
 }
 
