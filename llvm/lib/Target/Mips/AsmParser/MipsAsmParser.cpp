@@ -332,14 +332,14 @@ public:
   }
 
   bool isCPURegsAsm() const {
-    return Reg.Kind == Kind_CPURegs;
+    return Kind == k_Register && Reg.Kind == Kind_CPURegs;
   }
   void addCPURegsAsmOperands(MCInst &Inst, unsigned N) const {
     Inst.addOperand(MCOperand::CreateReg(Reg.RegNum));
   }
 
   bool isCPU64RegsAsm() const {
-    return Reg.Kind == Kind_CPU64Regs;
+    return Kind == k_Register && Reg.Kind == Kind_CPU64Regs;
   }
   void addCPU64RegsAsmOperands(MCInst &Inst, unsigned N) const {
     Inst.addOperand(MCOperand::CreateReg(Reg.RegNum));
