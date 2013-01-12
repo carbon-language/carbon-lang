@@ -956,6 +956,9 @@ TEST_F(FormatTest, UnderstandsUnaryOperators) {
                "case -1:\n"
                "  break;\n"
                "}");
+
+  verifyFormat("const NSPoint kBrowserFrameViewPatternOffset = { -5, +3 };");
+  verifyFormat("const NSPoint kBrowserFrameViewPatternOffset = { +5, -3 };");
 }
 
 TEST_F(FormatTest, UndestandsOverloadedOperators) {

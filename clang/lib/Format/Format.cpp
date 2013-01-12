@@ -994,7 +994,7 @@ private:
         Tok.Parent->is(tok::comma) || Tok.Parent->is(tok::l_square) ||
         Tok.Parent->is(tok::question) || Tok.Parent->is(tok::colon) ||
         Tok.Parent->is(tok::kw_return) || Tok.Parent->is(tok::kw_case) ||
-        Tok.Parent->is(tok::at))
+        Tok.Parent->is(tok::at) || Tok.Parent->is(tok::l_brace))
       return TT_UnaryOperator;
 
     // There can't be to consecutive binary operators.
