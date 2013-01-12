@@ -23,7 +23,7 @@
 
 namespace lld {
 
-void StubsPass::perform(File& mergedFile) {
+void StubsPass::perform(MutableFile &mergedFile) {
   // Skip this pass if output format uses text relocations instead of stubs.
   if ( ! this->noTextRelocs() )
     return;
@@ -63,7 +63,4 @@ void StubsPass::perform(File& mergedFile) {
   // Add all created stubs and support Atoms.
  this->addStubAtoms(mergedFile);
 }
-
-
-
 }

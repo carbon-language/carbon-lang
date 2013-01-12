@@ -263,7 +263,7 @@ int main(int argc, char *argv[]) {
   // merge all atom graphs
   Resolver resolver(options, inputFiles);
   resolver.resolve();
-  File &mergedMasterFile = resolver.resultFile();
+  MutableFile &mergedMasterFile = resolver.resultFile();
 
   // run passes
   if ( GOTPass *pass = writer->gotPass() ) {

@@ -56,10 +56,6 @@ public:
     return result[0].release();
   }
 
-  virtual void addAtom(const Atom&) {
-    llvm_unreachable("cannot add atoms to archive files");
-  }
-
   virtual const atom_collection<DefinedAtom> &defined() const {
     return _definedAtoms;
   }

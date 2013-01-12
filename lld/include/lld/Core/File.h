@@ -76,15 +76,6 @@ public:
   /// \brief For use interating over AbsoluteAtoms in this File.
   typedef atom_iterator<AbsoluteAtom> absolute_iterator;
 
-  /// Note: this method is not const.  All File objects instantiated by reading
-  /// an object file from disk are "const File*" objects and cannot be
-  /// modified.  This method can only be used with temporay File objects
-  /// such as is seen by each Pass object when it runs.
-  /// This method is *not* safe to call while iterating through this File's
-  /// Atoms.  A Pass should queue up any Atoms it want to add and then
-  /// call this method when no longer iterating over the File's Atoms.
-  virtual void addAtom(const Atom&) = 0;
-
   /// \brief Different object file readers may instantiate and manage atoms with
   /// different data structures.  This class is a collection abstraction.
   /// Each concrete File instance must implement these atom_collection
@@ -203,6 +194,18 @@ protected:
   static atom_collection_empty<AbsoluteAtom>      _noAbsoluteAtoms;
 
   StringRef _path;
+};
+
+/// \brief A mutable File.
+class MutableFile : public File {
+public:
+  /// \brief Add an atom to the file. Invalidates iterators for all returned
+  /// containters.
+  virtual void addAtom(const Atom&) = 0;
+
+protected:
+  /// \brief only subclasses of MutableFile can be instantiated 
+  MutableFile(StringRef p) : File(p) {}
 };
 } // end namespace lld
 

@@ -213,10 +213,9 @@ private:
   uint32_t _ordinal;
 };
 
-class TestingPassFile : public File {
+class TestingPassFile : public MutableFile {
 public:
-  TestingPassFile() : File("Testing pass") {
-  }
+  TestingPassFile() : MutableFile("Testing pass") {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
@@ -285,7 +284,7 @@ public:
     return result;
   }
 
-  virtual void addStubAtoms(File &mergedFile) {
+  virtual void addStubAtoms(MutableFile &mergedFile) {
     for (const DefinedAtom *stub : _file.defined() ) {
       mergedFile.addAtom(*stub);
     }

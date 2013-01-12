@@ -135,7 +135,7 @@ public:
   /// @brief do work of merging and resolving and return list
   void resolve();
 
-  File& resultFile() {
+  MutableFile& resultFile() {
     return _result;
   }
 
@@ -155,9 +155,9 @@ private:
   void addAtoms(const std::vector<const DefinedAtom *>&);
 
 
-  class MergedFile : public File {
+  class MergedFile : public MutableFile {
   public:
-    MergedFile() : File("<linker-internal>") { }
+    MergedFile() : MutableFile("<linker-internal>") { }
 
   virtual const atom_collection<DefinedAtom>& defined() const {
     return _definedAtoms;

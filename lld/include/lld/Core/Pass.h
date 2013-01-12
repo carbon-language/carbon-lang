@@ -17,6 +17,7 @@
 
 namespace lld {
 class DefinedAtom;
+class MutableFile;
 
 /// Once the core linking is done (which resolves references, coalesces atoms
 /// and produces a complete Atom graph), the linker runs a series of passes
@@ -33,7 +34,7 @@ public:
   virtual ~Pass() { }
 
   /// Do the actual work of the Pass.
-  virtual void perform(File &mergedFile) = 0;
+  virtual void perform(MutableFile &mergedFile) = 0;
 
 protected:
   // Only subclassess can be instantiated.
@@ -50,7 +51,7 @@ public:
   /// Scans all Atoms looking for call-site uses of SharedLibraryAtoms
   /// and transfroms the call-site to call a stub instead using the
   /// helper methods below.
-  virtual void perform(File &mergedFile);
+  virtual void perform(MutableFile &mergedFile);
 
   /// If true, the pass should use stubs for references
   /// to shared library symbols. If false, the pass
@@ -71,7 +72,7 @@ public:
   /// After the default implementation of perform() is done calling getStub(),
   /// it will call this method to add all the stub (and support) atoms to the
   /// master file object.
-  virtual void addStubAtoms(File &masterFile) = 0;
+  virtual void addStubAtoms(MutableFile &masterFile) = 0;
 };
 
 /// Pass for adding GOT entries for pointers to functions/data
@@ -84,7 +85,7 @@ public:
   /// Scans all Atoms looking for pointer to SharedLibraryAtoms
   /// and transfroms them to a pointer to a GOT entry using the
   /// helper methods below.
-  virtual void perform(File &mergedFile);
+  virtual void perform(MutableFile &mergedFile);
 
   /// If true, the pass will use GOT entries for references
   /// to shared library symbols. If false, the pass

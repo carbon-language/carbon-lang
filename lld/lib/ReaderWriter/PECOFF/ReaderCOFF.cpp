@@ -330,10 +330,6 @@ public:
     }
   }
 
-  virtual void addAtom(const Atom&) {
-    llvm_unreachable("cannot add atoms to native .obj files");
-  }
-
   virtual const atom_collection<DefinedAtom> &defined() const {
     return DefinedAtoms;
   }

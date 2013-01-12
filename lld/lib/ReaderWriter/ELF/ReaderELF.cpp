@@ -209,6 +209,9 @@ public:
         // Get the symbol's content:
         llvm::ArrayRef<uint8_t> symbolData;
         uint64_t contentSize;
+
+        // If the next symbol is at the same location
+
         if (si + 1 == se) {
           // if this is the last symbol, take up the remaining data.
           contentSize = (isCommon) ? 0
@@ -270,10 +273,6 @@ public:
       const Elf_Sym  *Symbol  = _objFile->getElfSymbol(ri->targetSymbolIndex());
       ri->setTarget(findAtom (Symbol));
     }
-  }
-
-  virtual void addAtom(const Atom&) {
-    llvm_unreachable("cannot add atoms to native .o files");
   }
 
   virtual const atom_collection<DefinedAtom> &defined() const {

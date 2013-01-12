@@ -40,7 +40,7 @@
 #include "llvm/ADT/DenseMap.h"
 
 namespace lld {
-void GOTPass::perform(File& mergedFile) {
+void GOTPass::perform(MutableFile &mergedFile) {
   // Use map so all pointers to same symbol use same GOT entry.
   llvm::DenseMap<const Atom*, const DefinedAtom*> targetToGOT;
 

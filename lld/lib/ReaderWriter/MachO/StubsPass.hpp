@@ -119,7 +119,7 @@ public:
   }
 
 
-  virtual void addStubAtoms(File &mergedFile) {
+  virtual void addStubAtoms(MutableFile &mergedFile) {
     // Exit early if no stubs needed.
     if ( _targetToStub.size() == 0 )
       return;

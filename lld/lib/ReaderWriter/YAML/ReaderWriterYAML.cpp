@@ -614,10 +614,7 @@ struct MappingTraits<const lld::File*> {
     const lld::File *denormalize(IO &io) {
       return this;
     }
-    
-    virtual void addAtom(const lld::Atom&) {
-      llvm_unreachable("cannot add atoms to yaml .o files");
-    }
+
     virtual const atom_collection<lld::DefinedAtom> &defined() const {
       return _noDefinedAtoms;
     }
@@ -672,11 +669,7 @@ struct MappingTraits<const lld::File*> {
         _absoluteAtoms.push_back(a);
     }
     const lld::File *denormalize(IO &io); 
- 
-  
-    virtual void addAtom(const lld::Atom&) {
-      llvm_unreachable("cannot add atoms to yaml .o files");
-    }
+
     virtual const atom_collection<lld::DefinedAtom> &defined() const {
       return _definedAtoms;
     }

@@ -371,10 +371,6 @@ public:
       return _absoluteAtoms;
   }
 
-  virtual void addAtom(const Atom&) {
-    assert(0 && "cannot add atoms to native .o files");
-  }
-
 private:
   friend class NativeDefinedAtomV1;
   friend class NativeUndefinedAtomV1;
