@@ -4323,8 +4323,6 @@ def error_no_super_class_message : Error<
   "no @interface declaration found in class messaging of %0">;
 def error_root_class_cannot_use_super : Error<
   "%0 cannot use 'super' because it is a root class">;
-def err_invalid_receiver_to_message : Error<
-  "invalid receiver to message expression">;
 def err_invalid_receiver_to_message_super : Error<
   "'super' is only valid in a method body">;
 def err_invalid_receiver_class_message : Error<
