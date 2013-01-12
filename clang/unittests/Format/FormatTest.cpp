@@ -797,6 +797,13 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
                "         aaaaaaaaaaaaaaaaaaaaaaa : aaaaaaaaaaaaaaaaaaaaa);");
 }
 
+TEST_F(FormatTest, ConditionalExpressionsInBrackets) {
+  verifyFormat("arr[foo ? bar : baz];");
+  verifyFormat("f()[foo ? bar : baz];");
+  verifyFormat("(a + b)[foo ? bar : baz];");
+  verifyFormat("arr[foo ? (4 > 5 ? 4 : 5) : 5 < 5 ? 5 : 7];");
+}
+
 TEST_F(FormatTest, AlignsStringLiterals) {
   verifyFormat("loooooooooooooooooooooooooongFunction(\"short literal \"\n"
                "                                      \"short literal\");");
