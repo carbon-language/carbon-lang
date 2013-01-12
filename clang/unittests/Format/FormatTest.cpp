@@ -1016,6 +1016,9 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("a * --b;");
   verifyFormat("a[4] * b;");
   verifyFormat("f() * b;");
+  verifyFormat("a * [self dostuff];");
+  verifyFormat("a * (a + b);");
+  verifyFormat("(a *)(a + b);");
   verifyFormat("int *pa = (int *)&a;");
 
   verifyFormat("InvalidRegions[*R] = 0;");

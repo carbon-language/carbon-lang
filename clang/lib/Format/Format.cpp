@@ -974,6 +974,7 @@ private:
         NextToken.Tok.is(tok::plus) || NextToken.Tok.is(tok::minus) ||
         NextToken.Tok.is(tok::plusplus) || NextToken.Tok.is(tok::minusminus) ||
         NextToken.Tok.is(tok::tilde) || NextToken.Tok.is(tok::exclaim) ||
+        NextToken.Tok.is(tok::l_paren) || NextToken.Tok.is(tok::l_square) ||
         NextToken.Tok.is(tok::kw_alignof) || NextToken.Tok.is(tok::kw_sizeof))
       return TT_BinaryOperator;
 
