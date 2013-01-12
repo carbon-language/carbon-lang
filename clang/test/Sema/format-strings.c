@@ -58,6 +58,9 @@ def"
   printf("%*d", (unsigned) 1, 1); // no-warning  
 }
 
+// When calling a non-variadic format function (vprintf, vscanf, NSLogv, ...),
+// warn only if the format string argument is a parameter that is not itself
+// declared as a format string with compatible format.
 __attribute__((__format__ (__printf__, 2, 4)))
 void check_string_literal2( FILE* fp, const char* s, char *buf, ... ) {
   char * b;
