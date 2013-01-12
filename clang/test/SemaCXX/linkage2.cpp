@@ -48,3 +48,26 @@ namespace test5 {
     void g();
   }
 }
+
+// pr14898
+namespace test6 {
+  template <class _Rp>
+  class __attribute__ ((__visibility__("default"))) shared_future;
+  template <class _Rp>
+  class future {
+    template <class> friend class shared_future;
+    shared_future<_Rp> share();
+  };
+  template <class _Rp> future<_Rp>
+  get_future();
+  template <class _Rp>
+  struct shared_future<_Rp&> {
+    shared_future(future<_Rp&>&& __f); // expected-warning {{rvalue references are a C++11 extension}}
+  };
+  void f() {
+    typedef int T;
+    get_future<int>();
+    typedef int& U;
+    shared_future<int&> f1 = get_future<int&>();
+  }
+}
