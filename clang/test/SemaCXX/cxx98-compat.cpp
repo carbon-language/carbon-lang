@@ -8,6 +8,8 @@ namespace std {
     initializer_list(T*, size_t);
     T *p;
     size_t n;
+    T *begin();
+    T *end();
   };
 }
 
@@ -102,6 +104,11 @@ auto f() -> int; // expected-warning {{trailing return types are incompatible wi
 void RangeFor() {
   int xs[] = {1, 2, 3};
   for (int &a : xs) { // expected-warning {{range-based for loop is incompatible with C++98}}
+  }
+  for (auto &b : {1, 2, 3}) {
+  // expected-warning@-1 {{range-based for loop is incompatible with C++98}}
+  // expected-warning@-2 {{'auto' type specifier is incompatible with C++98}}
+  // expected-warning@-3 {{initialization of initializer_list object is incompatible with C++98}}
   }
 }
 
