@@ -759,16 +759,16 @@ private:
     // most would actually belong to the users' lldbinit file or to some other form of configurable
     // storage
     void
-    LoadSTLFormatters();
+    LoadLibStdcppFormatters ();
     
     void
-    LoadLibcxxFormatters();
+    LoadLibcxxFormatters ();
     
     void
-    LoadSystemFormatters();
+    LoadSystemFormatters ();
     
     void
-    LoadObjCFormatters();
+    LoadObjCFormatters ();
 };
     
 } // namespace lldb_private

@@ -704,7 +704,7 @@ FormatManager::FormatManager() :
 {
     
     LoadSystemFormatters();
-    LoadSTLFormatters();
+    LoadLibStdcppFormatters();
     LoadLibcxxFormatters();
     LoadObjCFormatters();
     
@@ -777,7 +777,7 @@ static void AddCXXSynthetic  (TypeCategoryImpl::SharedPointer category_sp,
 #endif
 
 void
-FormatManager::LoadSTLFormatters()
+FormatManager::LoadLibStdcppFormatters()
 {
     TypeSummaryImpl::Flags stl_summary_flags;
     stl_summary_flags.SetCascades(true)
@@ -801,6 +801,19 @@ FormatManager::LoadSTLFormatters()
                                                 std_string_summary_sp);
     gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char, std::char_traits<char>, std::allocator<char> >"),
                                                 std_string_summary_sp);
+    
+    // making sure we force-pick the summary for printing wstring (_M_p is a wchar_t*)
+    lldb::TypeSummaryImplSP std_wstring_summary_sp(new StringSummaryFormat(stl_summary_flags,
+                                                                           "${var._M_dataplus._M_p%S}"));
+    
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::wstring"),
+                                                std_wstring_summary_sp);
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<wchar_t>"),
+                                                std_wstring_summary_sp);
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<wchar_t,std::char_traits<wchar_t>,std::allocator<wchar_t> >"),
+                                                std_wstring_summary_sp);
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<wchar_t, std::char_traits<wchar_t>, std::allocator<wchar_t> >"),
+                                                std_wstring_summary_sp);
     
     
 #ifndef LLDB_DISABLE_PYTHON

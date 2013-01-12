@@ -6,6 +6,9 @@ import lldb.formatters.Logger
 # ships with current releases of OS X - They will not work for other implementations
 # of the standard C++ library - and they are bound to use the libc++-specific namespace
 
+# the std::string summary is just an example for your convenience
+# the actual summary that LLDB uses is C++ code inside the debugger's own core
+
 # this could probably be made more efficient but since it only reads a handful of bytes at a time
 # we probably don't need to worry too much about this for the time being
 def make_string(F,L):
