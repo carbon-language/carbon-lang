@@ -1165,8 +1165,9 @@ private:
       return false;
     if (Tok.Type == TT_UnaryOperator)
       return Tok.Parent->isNot(tok::l_paren) &&
-             Tok.Parent->isNot(tok::l_square) &&
-             Tok.Parent->isNot(tok::at);
+             Tok.Parent->isNot(tok::l_square) && Tok.Parent->isNot(tok::at) &&
+             (Tok.Parent->isNot(tok::colon) ||
+              Tok.Parent->Type != TT_ObjCMethodExpr);
     if (Tok.Parent->is(tok::greater) && Tok.is(tok::greater)) {
       return Tok.Type == TT_TemplateCloser && Tok.Parent->Type ==
              TT_TemplateCloser && Style.SplitTemplateClosingGreater;

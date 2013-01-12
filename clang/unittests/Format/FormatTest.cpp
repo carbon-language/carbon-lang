@@ -1533,6 +1533,7 @@ TEST_F(FormatTest, FormatObjCMethodExpr) {
   verifyFormat("[self stuffWithInt:a ? (e ? f : g) : c];");
   verifyFormat("[cond ? obj1 : obj2 methodWithParam:param]");
   verifyFormat("[button setAction:@selector(zoomOut:)];");
+  verifyFormat("[color getRed:&r green:&g blue:&b alpha:&a];");
   
   verifyFormat("arr[[self indexForFoo:a]];");
   verifyFormat("throw [self errorFor:a];");
