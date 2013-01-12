@@ -5,6 +5,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 set(IRSources
+  AttributesTest.cpp
   ConstantsTest.cpp
   DominatorTreeTest.cpp
   IRBuilderTest.cpp
