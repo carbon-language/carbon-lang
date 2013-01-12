@@ -150,7 +150,7 @@ define void @test8() {
 ; Don't apply the RV optimization to autorelease if there's no retain.
 
 ; CHECK: define i8* @test9(i8* %p)
-; CHECK: tail call i8* @objc_autorelease(i8* %p)
+; CHECK: call i8* @objc_autorelease(i8* %p)
 define i8* @test9(i8* %p) {
   call i8* @objc_autorelease(i8* %p)
   ret i8* %p
@@ -174,7 +174,7 @@ define i8* @test10(i8* %p) {
 ; CHECK: define i8* @test11(i8* %p)
 ; CHECK: tail call i8* @objc_retain(i8* %p)
 ; CHECK-NEXT: call void @use_pointer(i8* %p)
-; CHECK: tail call i8* @objc_autorelease(i8* %p)
+; CHECK: call i8* @objc_autorelease(i8* %p)
 ; CHECK-NEXT: ret i8* %p
 define i8* @test11(i8* %p) {
   %1 = call i8* @objc_retain(i8* %p)
@@ -201,7 +201,7 @@ define i8* @test12(i8* %p) {
 
 ; CHECK: define i8* @test13(
 ; CHECK: tail call i8* @objc_retainAutoreleasedReturnValue(i8* %p)
-; CHECK: tail call i8* @objc_autorelease(i8* %p)
+; CHECK: call i8* @objc_autorelease(i8* %p)
 ; CHECK: ret i8* %p
 define i8* @test13() {
   %p = call i8* @returner()
@@ -323,7 +323,7 @@ define i8* @test22(i8* %p) {
 ; Convert autoreleaseRV to autorelease.
 
 ; CHECK: define void @test23(
-; CHECK: tail call i8* @objc_autorelease(i8* %p) nounwind
+; CHECK: call i8* @objc_autorelease(i8* %p) nounwind
 define void @test23(i8* %p) {
   store i8 0, i8* %p
   call i8* @objc_autoreleaseReturnValue(i8* %p)

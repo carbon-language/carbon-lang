@@ -39,7 +39,7 @@ entry:
 define void @test2(i8* %x) nounwind {
 entry:
   %0 = tail call i8* @objc_retain(i8* %x) nounwind
-  tail call i8* @objc_autorelease(i8* %0) nounwind
+  call i8* @objc_autorelease(i8* %0) nounwind
   call void @use_pointer(i8* %x)
   ret void
 }
@@ -66,7 +66,7 @@ define void @test3(i8* %x, i64 %n) {
 entry:
   tail call i8* @objc_retain(i8* %x) nounwind
   call void @use_pointer(i8* %x)
-  tail call i8* @objc_autorelease(i8* %x) nounwind
+  call i8* @objc_autorelease(i8* %x) nounwind
   ret void
 }
 
@@ -84,7 +84,7 @@ define void @test4(i8* %x, i64 %n) {
 entry:
   tail call i8* @objc_retain(i8* %x) nounwind
   call void @use_pointer(i8* %x)
-  tail call i8* @objc_autorelease(i8* %x) nounwind
+  call i8* @objc_autorelease(i8* %x) nounwind
   tail call void @objc_release(i8* %x) nounwind
   ret void
 }
@@ -94,7 +94,7 @@ entry:
 ; CHECK: define void @test5(
 ; CHECK: tail call i8* @objc_retain(i8* %p) nounwind
 ; CHECK: true:
-; CHECK: tail call i8* @objc_autorelease(i8* %0) nounwind
+; CHECK: call i8* @objc_autorelease(i8* %0) nounwind
 ; CHECK: }
 define void @test5(i8* %p, i1 %a) {
 entry:
@@ -102,7 +102,7 @@ entry:
   br i1 %a, label %true, label %false
 
 true:
-  tail call i8* @objc_autorelease(i8* %p) nounwind
+  call i8* @objc_autorelease(i8* %p) nounwind
   call void @use_pointer(i8* %p)
   ret void
 

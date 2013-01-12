@@ -405,7 +405,7 @@ entry:
 
 ; CHECK: define void @test11(
 ; CHECK: tail call i8* @objc_retain(i8* %x) nounwind
-; CHECK: tail call i8* @objc_autorelease(i8* %0) nounwind
+; CHECK: call i8* @objc_autorelease(i8* %0) nounwind
 ; CHECK: }
 define void @test11(i8* %x) nounwind {
 entry:
@@ -465,7 +465,7 @@ entry:
 ; CHECK: tail call i8* @objc_retain(i8* %x) nounwind
 ; CHECK: tail call i8* @objc_retain(i8* %x) nounwind
 ; CHECK: @use_pointer(i8* %x)
-; CHECK: tail call i8* @objc_autorelease(i8* %x) nounwind
+; CHECK: call i8* @objc_autorelease(i8* %x) nounwind
 ; CHECK: }
 define void @test13(i8* %x, i64 %n) {
 entry:
@@ -1452,7 +1452,7 @@ define void @test45(i8** %pp, i8** %qq) {
 ; CHECK: define void @test46(
 ; CHECK: tail call i8* @objc_retain(i8* %p) nounwind
 ; CHECK: true:
-; CHECK: tail call i8* @objc_autorelease(i8* %p) nounwind
+; CHECK: call i8* @objc_autorelease(i8* %p) nounwind
 define void @test46(i8* %p, i1 %a) {
 entry:
   call i8* @objc_retain(i8* %p)

@@ -212,7 +212,7 @@ bb99:                                             ; preds = %bb57
   br label %bb104
 
 bb104:                                            ; preds = %bb99, %bb57
-  %tmp105 = tail call i8* @objc_autorelease(i8* %tmp72) nounwind
+  %tmp105 = call i8* @objc_autorelease(i8* %tmp72) nounwind
   %tmp106 = bitcast i8* %tmp105 to %14*
   tail call void @objc_release(i8* %tmp85) nounwind
   %tmp107 = bitcast %18* %tmp47 to i8*

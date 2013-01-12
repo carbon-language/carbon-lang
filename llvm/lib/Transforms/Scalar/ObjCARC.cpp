@@ -426,8 +426,18 @@ static bool IsAlwaysTail(InstructionClass Class) {
   // IC_RetainBlock may be given a stack argument.
   return Class == IC_Retain ||
          Class == IC_RetainRV ||
-         Class == IC_Autorelease ||
          Class == IC_AutoreleaseRV;
+}
+
+/// \brief Test if the given class represents instructions which are never safe
+/// to mark with the "tail" keyword.
+static bool IsNeverTail(InstructionClass Class) {
+  /// It is never safe to tail call objc_autorelease since by tail calling
+  /// objc_autorelease, we also tail call -[NSObject autorelease] which supports
+  /// fast autoreleasing causing our object to be potentially reclaimed from the
+  /// autorelease pool which violates the semantics of __autoreleasing types in
+  /// ARC.
+  return Class == IC_Autorelease;
 }
 
 /// IsNoThrow - Test if the given class represents instructions which are always
@@ -2306,8 +2316,10 @@ ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV) {
                   "                                       Old: "
                << *AutoreleaseRV << "\n");
 
-  cast<CallInst>(AutoreleaseRV)->
+  CallInst *AutoreleaseRVCI = cast<CallInst>(AutoreleaseRV);
+  AutoreleaseRVCI->
     setCalledFunction(getAutoreleaseCallee(F.getParent()));
+  AutoreleaseRVCI->setTailCall(false); // Never tail call objc_autorelease.
 
   DEBUG(dbgs() << "                                       New: "
                << *AutoreleaseRV << "\n");
@@ -2447,6 +2459,16 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
             " to function since it can never be passed stack args: " << *Inst <<
             "\n");
       cast<CallInst>(Inst)->setTailCall();
+    }
+
+    // Ensure that functions that can never have a "tail" keyword due to the
+    // semantics of ARC truly do not do so.
+    if (IsNeverTail(Class)) {
+      Changed = true;
+      DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Removing tail keyword"
+            " from function: " << *Inst <<
+            "\n");
+      cast<CallInst>(Inst)->setTailCall(false);
     }
 
     // Set nounwind as needed.
@@ -3756,6 +3778,7 @@ void ObjCARCOpt::OptimizeReturns(Function &F) {
           Autorelease->setCalledFunction(getAutoreleaseRVCallee(F.getParent()));
           DEBUG(dbgs() << "                             Out: " << *Autorelease
                        << "\n");
+          Autorelease->setTailCall(); // Always tail call autoreleaseRV.
           AutoreleaseClass = IC_AutoreleaseRV;
         }
 
