@@ -229,6 +229,7 @@ public:
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \p Res to the identifier contents.
   virtual bool ParseIdentifier(StringRef &Res);
+  virtual void EatToEndOfStatement();
 
   /// }
 
@@ -266,8 +267,6 @@ private:
   /// \param InBuffer If not -1, should be the known buffer id that contains the
   /// location.
   void JumpToLoc(SMLoc Loc, int InBuffer=-1);
-
-  virtual void EatToEndOfStatement();
 
   bool ParseMacroArgument(MacroArgument &MA,
                           AsmToken::TokenKind &ArgumentDelimiter);
