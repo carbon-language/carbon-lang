@@ -4,16 +4,12 @@
 # in Diagnostic*.td files but not used in sources.
 #
 
-ALL_DIAGS=$(mktemp)
-ALL_SOURCES=$(mktemp)
+# Gather all diagnostic identifiers from the .td files.
+ALL_DIAGS=$(grep -E --only-matching --no-filename '(err_|warn_|ext_|note_)[a-z_]+' ./include/clang/Basic/Diagnostic*.td)
 
-grep -E --only-matching --no-filename '(err_|warn_|ext_|note_)[a-z_]+ ' ./include/clang/Basic/Diagnostic*.td > $ALL_DIAGS
-find lib include tools -name \*.cpp -or -name \*.h > $ALL_SOURCES
-for DIAG in $(cat $ALL_DIAGS); do
-  if ! grep -r $DIAG $(cat $ALL_SOURCES) > /dev/null; then
-    echo $DIAG
-  fi;
-done
+# Now look for all potential identifiers in the source files.
+ALL_SOURCES=$(find lib include tools -name \*.cpp -or -name \*.h)
+DIAGS_IN_SOURCES=$(grep -E --only-matching --no-filename '(err_|warn_|ext_|note_)[a-z_]+' $ALL_SOURCES)
 
-rm $ALL_DIAGS $ALL_SOURCES
-
+# Print all diags that occur in the .td files but not in the source.
+diff -u <(sort -u <<< "$ALL_DIAGS") <(sort -u <<< "$DIAGS_IN_SOURCES") | sed -En 's/^-([a-z_]+)/\1/p'
