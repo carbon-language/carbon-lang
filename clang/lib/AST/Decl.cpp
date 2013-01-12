@@ -1761,6 +1761,9 @@ bool FunctionDecl::isReservedGlobalPlacementOperator() const {
 }
 
 bool FunctionDecl::hasCLanguageLinkage() const {
+  if (getBuiltinID())
+    return true;
+
   return hasCLanguageLinkageTemplate(*this);
 }
 

@@ -20,3 +20,7 @@ template int equal<&__builtin_strcmp>(const char*, const char*); // expected-err
 void f2() {
   __builtin_isnan; // expected-error {{builtin functions must be directly called}}
 }
+
+// pr14895
+typedef __typeof(sizeof(int)) size_t;
+extern "C" void *__builtin_alloca (size_t);
