@@ -1716,7 +1716,8 @@ namespace {
 
     void OptimizeRetainCall(Function &F, Instruction *Retain);
     bool OptimizeRetainRVCall(Function &F, Instruction *RetainRV);
-    void OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV);
+    void OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
+                                   InstructionClass &Class);
     void OptimizeIndividualCalls(Function &F);
 
     void CheckForCFGHazards(const BasicBlock *BB,
@@ -2289,7 +2290,8 @@ ObjCARCOpt::OptimizeRetainRVCall(Function &F, Instruction *RetainRV) {
 /// OptimizeAutoreleaseRVCall - Turn objc_autoreleaseReturnValue into
 /// objc_autorelease if the result is not used as a return value.
 void
-ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV) {
+ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV,
+                                      InstructionClass &Class) {
   // Check for a return of the pointer value.
   const Value *Ptr = GetObjCArg(AutoreleaseRV);
   SmallVector<const Value *, 2> Users;
@@ -2320,6 +2322,7 @@ ObjCARCOpt::OptimizeAutoreleaseRVCall(Function &F, Instruction *AutoreleaseRV) {
   AutoreleaseRVCI->
     setCalledFunction(getAutoreleaseCallee(F.getParent()));
   AutoreleaseRVCI->setTailCall(false); // Never tail call objc_autorelease.
+  Class = IC_Autorelease;
 
   DEBUG(dbgs() << "                                       New: "
                << *AutoreleaseRV << "\n");
@@ -2417,7 +2420,7 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
         continue;
       break;
     case IC_AutoreleaseRV:
-      OptimizeAutoreleaseRVCall(F, Inst);
+      OptimizeAutoreleaseRVCall(F, Inst, Class);
       break;
     }
 

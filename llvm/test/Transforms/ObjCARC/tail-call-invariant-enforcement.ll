@@ -67,7 +67,7 @@ entry:
 ; @objc_autorelease, ensure that the tail call is removed.
 define i8* @test5(i8* %x) {
 entry:
-  ; TMP: %tmp0 = call i8* @objc_autorelease(i8* %x)
+  ; CHECK: %tmp0 = call i8* @objc_autorelease(i8* %x)
   %tmp0 = tail call i8* @objc_autoreleaseReturnValue(i8* %x)
   ret i8* %tmp0
 }
