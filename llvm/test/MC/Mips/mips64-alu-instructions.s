@@ -1,4 +1,4 @@
-# RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding -mcpu=mips32r2 | FileCheck %s
+# RUN: llvm-mc %s -triple=mipsel-unknown-linux -show-encoding -mcpu=mips64r2 | FileCheck %s
 # Check that the assembler can handle the documented syntax
 # for arithmetic and logical instructions.
 # CHECK: .section __TEXT,__text,regular,pure_instructions
@@ -28,7 +28,7 @@
 # CHECK:  srl    $4, $3, 7       # encoding: [0xc2,0x21,0x03,0x00]
 # CHECK:  srlv   $2, $3, $5      # encoding: [0x06,0x10,0xa3,0x00]
 # CHECK:  xor    $3, $3, $5      # encoding: [0x26,0x18,0x65,0x00]
-# CHECK:  xori    $9, $6, 17767   # encoding: [0x67,0x45,0xc9,0x38]
+# CHECK:  xori    $9, $6, 17767  # encoding: [0x67,0x45,0xc9,0x38]
 # CHECK:  xori   $9, $6, 17767   # encoding: [0x67,0x45,0xc9,0x38]
 # CHECK:  wsbh   $6, $7          # encoding: [0xa0,0x30,0x07,0x7c]
 # CHECK:  nor    $7, $8, $zero   # encoding: [0x27,0x38,0x00,0x01]
@@ -64,37 +64,31 @@
 # Arithmetic instructions
 #------------------------------------------------------------------------------
 
-# CHECK:  add    $9, $6, $7      # encoding: [0x20,0x48,0xc7,0x00]
-# CHECK:  addi   $9, $6, 17767   # encoding: [0x67,0x45,0xc9,0x20]
-# CHECK:  addiu  $9, $6, -15001  # encoding: [0x67,0xc5,0xc9,0x24]
-# CHECK:  addi   $9, $6, 17767   # encoding: [0x67,0x45,0xc9,0x20]
-# CHECK:  addiu  $9, $6, -15001  # encoding: [0x67,0xc5,0xc9,0x24]
-# CHECK:  addu   $9, $6, $7      # encoding: [0x21,0x48,0xc7,0x00]
+# CHECK:  dadd    $9, $6, $7      # encoding: [0x2c,0x48,0xc7,0x00]
+# CHECK:  daddi   $9, $6, 17767   # encoding: [0x67,0x45,0xc9,0x60]
+# CHECK:  daddiu  $9, $6, -15001  # encoding: [0x67,0xc5,0xc9,0x64]
+# CHECK:  daddi   $9, $6, 17767   # encoding: [0x67,0x45,0xc9,0x60]
+# CHECK:  daddiu  $9, $6, -15001  # encoding: [0x67,0xc5,0xc9,0x64]
+# CHECK:  daddu   $9, $6, $7      # encoding: [0x2d,0x48,0xc7,0x00]
 # CHECK:  madd   $6, $7          # encoding: [0x00,0x00,0xc7,0x70]
 # CHECK:  maddu  $6, $7          # encoding: [0x01,0x00,0xc7,0x70]
 # CHECK:  msub   $6, $7          # encoding: [0x04,0x00,0xc7,0x70]
 # CHECK:  msubu  $6, $7          # encoding: [0x05,0x00,0xc7,0x70]
 # CHECK:  mult   $3, $5          # encoding: [0x18,0x00,0x65,0x00]
 # CHECK:  multu  $3, $5          # encoding: [0x19,0x00,0x65,0x00]
-# CHECK:  sub    $9, $6, $7      # encoding: [0x22,0x48,0xc7,0x00]
-# CHECK:  subu   $4, $3, $5      # encoding: [0x23,0x20,0x65,0x00]
-# CHECK:  sub     $6, $zero, $7  # encoding: [0x22,0x30,0x07,0x00]
-# CHECK:  subu    $6, $zero, $7  # encoding: [0x23,0x30,0x07,0x00]
-# CHECK:  addu    $7, $8, $zero  # encoding: [0x21,0x38,0x00,0x01]
-    add    $9,$6,$7
-    add    $9,$6,17767
-    addu   $9,$6,-15001
-    addi   $9,$6,17767
-    addiu  $9,$6,-15001
-    addu   $9,$6,$7
+# CHECK:  dsubu   $4, $3, $5      # encoding: [0x2f,0x20,0x65,0x00]
+# CHECK:  daddu    $7, $8, $zero  # encoding: [0x2d,0x38,0x00,0x01]
+    dadd    $9,$6,$7
+    dadd    $9,$6,17767
+    daddu   $9,$6,-15001
+    daddi   $9,$6,17767
+    daddiu  $9,$6,-15001
+    daddu   $9,$6,$7
     madd   $6,$7
     maddu  $6,$7
     msub   $6,$7
     msubu  $6,$7
     mult   $3,$5
     multu  $3,$5
-    sub    $9,$6,$7
-    subu   $4,$3,$5
-    neg    $6,$7
-    negu   $6,$7
+    dsubu   $4,$3,$5
     move   $7,$8

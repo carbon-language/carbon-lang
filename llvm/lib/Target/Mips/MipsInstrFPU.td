@@ -138,6 +138,16 @@ class MTC1_FT<string opstr, RegisterClass DstRC, RegisterClass SrcRC,
   InstSE<(outs DstRC:$fs), (ins SrcRC:$rt), !strconcat(opstr, "\t$rt, $fs"),
          [(set DstRC:$fs, (OpNode SrcRC:$rt))], Itin, FrmFR>;
 
+class MFC1_FT_CCR<string opstr, RegisterClass DstRC, RegisterOperand SrcRC,
+              InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
+  InstSE<(outs DstRC:$rt), (ins SrcRC:$fs), !strconcat(opstr, "\t$rt, $fs"),
+         [(set DstRC:$rt, (OpNode SrcRC:$fs))], Itin, FrmFR>;
+
+class MTC1_FT_CCR<string opstr, RegisterOperand DstRC, RegisterClass SrcRC,
+              InstrItinClass Itin, SDPatternOperator OpNode= null_frag> :
+  InstSE<(outs DstRC:$fs), (ins SrcRC:$rt), !strconcat(opstr, "\t$rt, $fs"),
+         [(set DstRC:$fs, (OpNode SrcRC:$rt))], Itin, FrmFR>;
+
 class LW_FT<string opstr, RegisterClass RC, InstrItinClass Itin,
             Operand MemOpnd, SDPatternOperator OpNode= null_frag> :
   InstSE<(outs RC:$rt), (ins MemOpnd:$addr), !strconcat(opstr, "\t$rt, $addr"),
@@ -265,8 +275,8 @@ defm FSQRT : ABSS_M<"sqrt.d", IIFsqrtDouble, fsqrt>, ABSS_FM<0x4, 17>;
 // regardless of register aliasing.
 
 /// Move Control Registers From/To CPU Registers
-def CFC1 : MFC1_FT<"cfc1", CPURegs, CCR, IIFmove>, MFC1_FM<2>;
-def CTC1 : MTC1_FT<"ctc1", CCR, CPURegs, IIFmove>, MFC1_FM<6>;
+def CFC1 : MFC1_FT_CCR<"cfc1", CPURegs, CCROpnd, IIFmove>, MFC1_FM<2>;
+def CTC1 : MTC1_FT_CCR<"ctc1", CCROpnd, CPURegs, IIFmove>, MFC1_FM<6>;
 def MFC1 : MFC1_FT<"mfc1", CPURegs, FGR32, IIFmove, bitconvert>, MFC1_FM<0>;
 def MTC1 : MTC1_FT<"mtc1", FGR32, CPURegs, IIFmove, bitconvert>, MFC1_FM<4>;
 def DMFC1 : MFC1_FT<"dmfc1", CPU64Regs, FGR64, IIFmove, bitconvert>, MFC1_FM<1>;
@@ -437,7 +447,7 @@ def FCMP_D64 : CEQS_FT<"d", FGR64, IIFcmp, MipsFPCmp>, CEQS_FM<17>,
 //===----------------------------------------------------------------------===//
 // Floating Point Pseudo-Instructions
 //===----------------------------------------------------------------------===//
-def MOVCCRToCCR : PseudoSE<(outs CCR:$dst), (ins CCR:$src), []>;
+def MOVCCRToCCR : PseudoSE<(outs CCR:$dst), (ins CCROpnd:$src), []>;
 
 // This pseudo instr gets expanded into 2 mtc1 instrs after register
 // allocation.

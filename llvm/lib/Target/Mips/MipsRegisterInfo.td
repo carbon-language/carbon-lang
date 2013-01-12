@@ -331,3 +331,48 @@ def HWRegs64 : RegisterClass<"Mips", [i64], 32, (add HWR29_64)>;
 
 // Accumulator Registers
 def ACRegs : RegisterClass<"Mips", [i64], 64, (sequence "AC%u", 0, 3)>;
+
+def CPURegsAsmOperand : AsmOperandClass {
+  let Name = "CPURegsAsm";
+  let ParserMethod = "parseCPURegs";
+}
+
+def CPU64RegsAsmOperand : AsmOperandClass {
+  let Name = "CPU64RegsAsm";
+  let ParserMethod = "parseCPU64Regs";
+}
+
+def CCRAsmOperand : AsmOperandClass {
+  let Name = "CCRAsm";
+  let ParserMethod = "parseCCRRegs";
+}
+
+def CPURegsOpnd : RegisterOperand<CPURegs, "printCPURegs"> {
+  let ParserMatchClass = CPURegsAsmOperand;
+}
+
+def CPU64RegsOpnd : RegisterOperand<CPU64Regs, "printCPURegs"> {
+  let ParserMatchClass = CPU64RegsAsmOperand;
+}
+
+def CCROpnd : RegisterOperand<CCR, "printCPURegs"> {
+  let ParserMatchClass = CCRAsmOperand;
+}
+
+def HWRegsAsmOperand : AsmOperandClass {
+  let Name = "HWRegsAsm";
+  let ParserMethod = "parseHWRegs";
+}
+
+def HW64RegsAsmOperand : AsmOperandClass {
+  let Name = "HW64RegsAsm";
+  let ParserMethod = "parseHW64Regs";
+}
+
+def HWRegsOpnd : RegisterOperand<HWRegs, "printCPURegs"> {
+  let ParserMatchClass = HWRegsAsmOperand;
+}
+
+def HW64RegsOpnd : RegisterOperand<HWRegs, "printCPURegs"> {
+  let ParserMatchClass = HW64RegsAsmOperand;
+}
