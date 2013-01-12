@@ -2828,7 +2828,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
           return false;
         }
 
-        Constant *RetVal;
+        Constant *RetVal = 0;
         // Execute the call, if successful, use the return value.
         ValueStack.push_back(new DenseMap<Value*, Constant*>);
         if (!EvaluateFunction(Callee, RetVal, Formals)) {
