@@ -974,9 +974,16 @@ bool SourceManager::isMacroArgExpansion(SourceLocation Loc) const {
   if (!Loc.isMacroID()) return false;
 
   FileID FID = getFileID(Loc);
-  const SrcMgr::SLocEntry *E = &getSLocEntry(FID);
-  const SrcMgr::ExpansionInfo &Expansion = E->getExpansion();
+  const SrcMgr::ExpansionInfo &Expansion = getSLocEntry(FID).getExpansion();
   return Expansion.isMacroArgExpansion();
+}
+
+bool SourceManager::isMacroBodyExpansion(SourceLocation Loc) const {
+  if (!Loc.isMacroID()) return false;
+
+  FileID FID = getFileID(Loc);
+  const SrcMgr::ExpansionInfo &Expansion = getSLocEntry(FID).getExpansion();
+  return Expansion.isMacroBodyExpansion();
 }
 
 

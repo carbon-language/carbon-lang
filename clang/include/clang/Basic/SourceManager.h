@@ -329,6 +329,11 @@ namespace SrcMgr {
         SourceLocation::getFromRawEncoding(ExpansionLocEnd).isInvalid();
     }
 
+    bool isMacroBodyExpansion() const {
+      return getExpansionLocStart().isValid() &&
+        SourceLocation::getFromRawEncoding(ExpansionLocEnd).isValid();
+    }
+
     bool isFunctionMacroExpansion() const {
       return getExpansionLocStart().isValid() &&
           getExpansionLocStart() != getExpansionLocEnd();
@@ -1125,6 +1130,13 @@ public:
   /// locations representing where a particular function-like macro was
   /// expanded.
   bool isMacroArgExpansion(SourceLocation Loc) const;
+
+  /// \brief Tests whether the given source location represents the expansion of
+  /// a macro body.
+  ///
+  /// This is equivalent to testing whether the location is part of a macro
+  /// expansion but not the expansion of an argument to a function-like macro.
+  bool isMacroBodyExpansion(SourceLocation Loc) const;
 
   /// \brief Returns true if \p Loc is inside the [\p Start, +\p Length)
   /// chunk of the source location address space.

@@ -126,7 +126,7 @@ static bool DiagnoseUnusedComparison(Sema &S, const Expr *E) {
 
   // Suppress warnings when the operator, suspicious as it may be, comes from
   // a macro expansion.
-  if (Loc.isMacroID())
+  if (S.SourceMgr.isMacroBodyExpansion(Loc))
     return false;
 
   S.Diag(Loc, diag::warn_unused_comparison)
