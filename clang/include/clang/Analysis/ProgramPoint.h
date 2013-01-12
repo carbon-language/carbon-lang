@@ -218,7 +218,7 @@ public:
   const Stmt *getStmt() const { return (const Stmt*) getData1(); }
 
   template <typename T>
-  const T* getStmtAs() const { return llvm::dyn_cast<T>(getStmt()); }
+  const T* getStmtAs() const { return dyn_cast<T>(getStmt()); }
 
   static bool classof(const ProgramPoint* Location) {
     unsigned k = Location->getKind();

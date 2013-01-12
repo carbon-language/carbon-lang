@@ -55,7 +55,7 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
                  SourceRange IntroducerRange,
                  TypeSourceInfo *MethodType,
                  SourceLocation EndLoc,
-                 llvm::ArrayRef<ParmVarDecl *> Params) {
+                 ArrayRef<ParmVarDecl *> Params) {
   // C++11 [expr.prim.lambda]p5:
   //   The closure type for a lambda-expression has a public inline function 
   //   call operator (13.5.4) whose parameters and return type are described by
@@ -376,7 +376,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   bool ExplicitResultType = true;
   bool ContainsUnexpandedParameterPack = false;
   SourceLocation EndLoc;
-  llvm::SmallVector<ParmVarDecl *, 8> Params;
+  SmallVector<ParmVarDecl *, 8> Params;
   if (ParamInfo.getNumTypeObjects() == 0) {
     // C++11 [expr.prim.lambda]p4:
     //   If a lambda-expression does not include a lambda-declarator, it is as 
@@ -449,7 +449,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   // Handle explicit captures.
   SourceLocation PrevCaptureLoc
     = Intro.Default == LCD_None? Intro.Range.getBegin() : Intro.DefaultLoc;
-  for (llvm::SmallVector<LambdaCapture, 4>::const_iterator
+  for (SmallVector<LambdaCapture, 4>::const_iterator
          C = Intro.Captures.begin(), 
          E = Intro.Captures.end(); 
        C != E; 
@@ -734,8 +734,8 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                                  Scope *CurScope, 
                                  bool IsInstantiation) {
   // Collect information from the lambda scope.
-  llvm::SmallVector<LambdaExpr::Capture, 4> Captures;
-  llvm::SmallVector<Expr *, 4> CaptureInits;
+  SmallVector<LambdaExpr::Capture, 4> Captures;
+  SmallVector<Expr *, 4> CaptureInits;
   LambdaCaptureDefault CaptureDefault;
   CXXRecordDecl *Class;
   CXXMethodDecl *CallOperator;
@@ -744,8 +744,8 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
   bool ExplicitResultType;
   bool LambdaExprNeedsCleanups;
   bool ContainsUnexpandedParameterPack;
-  llvm::SmallVector<VarDecl *, 4> ArrayIndexVars;
-  llvm::SmallVector<unsigned, 4> ArrayIndexStarts;
+  SmallVector<VarDecl *, 4> ArrayIndexVars;
+  SmallVector<unsigned, 4> ArrayIndexStarts;
   {
     LambdaScopeInfo *LSI = getCurLambda();
     CallOperator = LSI->CallOperator;

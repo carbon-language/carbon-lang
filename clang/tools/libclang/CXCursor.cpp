@@ -1071,7 +1071,7 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
 
 namespace {
   struct OverridenCursorsPool {
-    typedef llvm::SmallVector<CXCursor, 2> CursorVec;
+    typedef SmallVector<CXCursor, 2> CursorVec;
     std::vector<CursorVec*> AllCursors;
     std::vector<CursorVec*> AvailableCursors;
     

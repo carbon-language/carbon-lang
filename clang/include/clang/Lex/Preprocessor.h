@@ -84,7 +84,7 @@ public:
 /// like the \#include stack, token expansion, etc.
 ///
 class Preprocessor : public RefCountedBase<Preprocessor> {
-  llvm::IntrusiveRefCntPtr<PreprocessorOptions> PPOpts;
+  IntrusiveRefCntPtr<PreprocessorOptions> PPOpts;
   DiagnosticsEngine        *Diags;
   LangOptions       &LangOpts;
   const TargetInfo  *Target;
@@ -215,8 +215,7 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   SourceLocation ModuleImportLoc;
 
   /// \brief The module import path that we're currently processing.
-  llvm::SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> 
-    ModuleImportPath;
+  SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> ModuleImportPath;
   
   /// \brief Whether the module import expectes an identifier next. Otherwise,
   /// it expects a '.' or ';'.
@@ -396,7 +395,7 @@ private:  // Cached tokens state.
   MacroInfoChain *MICache;
 
 public:
-  Preprocessor(llvm::IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
+  Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
                DiagnosticsEngine &diags, LangOptions &opts,
                const TargetInfo *target,
                SourceManager &SM, HeaderSearch &Headers,

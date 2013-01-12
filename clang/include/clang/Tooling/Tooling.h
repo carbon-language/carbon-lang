@@ -155,7 +155,7 @@ class ToolInvocation {
                      const clang::driver::ArgStringList &CC1Args);
 
   std::vector<std::string> CommandLine;
-  llvm::OwningPtr<FrontendAction> ToolAction;
+  OwningPtr<FrontendAction> ToolAction;
   FileManager *Files;
   // Maps <file name> -> <file content>.
   llvm::StringMap<StringRef> MappedFileContents;
@@ -212,7 +212,7 @@ class ClangTool {
   // Contains a list of pairs (<file name>, <file content>).
   std::vector< std::pair<StringRef, StringRef> > MappedFileContents;
 
-  llvm::OwningPtr<ArgumentsAdjuster> ArgsAdjuster;
+  OwningPtr<ArgumentsAdjuster> ArgsAdjuster;
 };
 
 template <typename T>
@@ -246,7 +246,7 @@ inline FrontendActionFactory *newFrontendActionFactory(
         : ConsumerFactory(ConsumerFactory), EndCallback(EndCallback) {}
 
       clang::ASTConsumer *CreateASTConsumer(clang::CompilerInstance &,
-                                            llvm::StringRef) {
+                                            StringRef) {
         return ConsumerFactory->newASTConsumer();
       }
 

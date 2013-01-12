@@ -223,7 +223,7 @@ public:
                                               const ExplodedNode *N);
 
   bool patternMatch(const Expr *Ex,
-                    llvm::raw_ostream &Out,
+                    raw_ostream &Out,
                     BugReporterContext &BRC,
                     BugReport &R,
                     const ExplodedNode *N,

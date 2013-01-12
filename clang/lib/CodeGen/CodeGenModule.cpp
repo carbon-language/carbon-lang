@@ -768,7 +768,7 @@ void CodeGenModule::EmitGlobalAnnotations() {
   gv->setSection(AnnotationSection);
 }
 
-llvm::Constant *CodeGenModule::EmitAnnotationString(llvm::StringRef Str) {
+llvm::Constant *CodeGenModule::EmitAnnotationString(StringRef Str) {
   llvm::StringMap<llvm::Constant*>::iterator i = AnnotationStrings.find(Str);
   if (i != AnnotationStrings.end())
     return i->second;
@@ -1820,7 +1820,7 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
       continue;
 
     // Get the call site's attribute list.
-    llvm::SmallVector<llvm::AttributeWithIndex, 8> newAttrs;
+    SmallVector<llvm::AttributeWithIndex, 8> newAttrs;
     llvm::AttributeSet oldAttrs = callSite.getAttributes();
 
     // Collect any return attributes from the call.

@@ -70,7 +70,7 @@ static unsigned getOptimizationLevel(ArgList &Args, InputKind IK,
 
     assert (A->getOption().matches(options::OPT_O));
 
-    llvm::StringRef S(A->getValue());
+    StringRef S(A->getValue());
     if (S == "s" || S == "z" || S.empty())
       return 2;
 
@@ -1495,7 +1495,7 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
 namespace {
 
   class ModuleSignature {
-    llvm::SmallVector<uint64_t, 16> Data;
+    SmallVector<uint64_t, 16> Data;
     unsigned CurBit;
     uint64_t CurValue;
     

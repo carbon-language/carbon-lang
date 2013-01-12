@@ -31,15 +31,14 @@ class DependencyGraphCallback : public PPCallbacks {
   std::string OutputFile;
   std::string SysRoot;
   llvm::SetVector<const FileEntry *> AllFiles;
-  typedef llvm::DenseMap<const FileEntry *, 
-                         llvm::SmallVector<const FileEntry *, 2> >
-    DependencyMap;
+  typedef llvm::DenseMap<const FileEntry *,
+                         SmallVector<const FileEntry *, 2> > DependencyMap;
   
   DependencyMap Dependencies;
   
 private:
-  llvm::raw_ostream &writeNodeReference(llvm::raw_ostream &OS,
-                                        const FileEntry *Node);
+  raw_ostream &writeNodeReference(raw_ostream &OS,
+                                  const FileEntry *Node);
   void OutputGraphFile();
 
 public:
@@ -93,8 +92,8 @@ void DependencyGraphCallback::InclusionDirective(SourceLocation HashLoc,
   AllFiles.insert(FromFile);
 }
 
-llvm::raw_ostream &
-DependencyGraphCallback::writeNodeReference(llvm::raw_ostream &OS,
+raw_ostream &
+DependencyGraphCallback::writeNodeReference(raw_ostream &OS,
                                             const FileEntry *Node) {
   OS << "header_" << Node->getUID();
   return OS;

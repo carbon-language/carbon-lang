@@ -139,13 +139,13 @@ private:
   Decl *FD;
 
   /// \brief The list of functions called from this node.
-  llvm::SmallVector<CallRecord, 5> CalledFunctions;
+  SmallVector<CallRecord, 5> CalledFunctions;
 
 public:
   CallGraphNode(Decl *D) : FD(D) {}
 
-  typedef llvm::SmallVector<CallRecord, 5>::iterator iterator;
-  typedef llvm::SmallVector<CallRecord, 5>::const_iterator const_iterator;
+  typedef SmallVector<CallRecord, 5>::iterator iterator;
+  typedef SmallVector<CallRecord, 5>::const_iterator const_iterator;
 
   /// Iterators through all the callees/children of the node.
   inline iterator begin() { return CalledFunctions.begin(); }

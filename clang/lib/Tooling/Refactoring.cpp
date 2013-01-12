@@ -28,18 +28,18 @@ static const char * const InvalidLocation = "";
 Replacement::Replacement()
   : FilePath(InvalidLocation), Offset(0), Length(0) {}
 
-Replacement::Replacement(llvm::StringRef FilePath, unsigned Offset,
-                         unsigned Length, llvm::StringRef ReplacementText)
+Replacement::Replacement(StringRef FilePath, unsigned Offset,
+                         unsigned Length, StringRef ReplacementText)
   : FilePath(FilePath), Offset(Offset),
     Length(Length), ReplacementText(ReplacementText) {}
 
 Replacement::Replacement(SourceManager &Sources, SourceLocation Start,
-                         unsigned Length, llvm::StringRef ReplacementText) {
+                         unsigned Length, StringRef ReplacementText) {
   setFromSourceLocation(Sources, Start, Length, ReplacementText);
 }
 
 Replacement::Replacement(SourceManager &Sources, const CharSourceRange &Range,
-                         llvm::StringRef ReplacementText) {
+                         StringRef ReplacementText) {
   setFromSourceRange(Sources, Range, ReplacementText);
 }
 
@@ -89,7 +89,7 @@ bool Replacement::Less::operator()(const Replacement &R1,
 
 void Replacement::setFromSourceLocation(SourceManager &Sources,
                                         SourceLocation Start, unsigned Length,
-                                        llvm::StringRef ReplacementText) {
+                                        StringRef ReplacementText) {
   const std::pair<FileID, unsigned> DecomposedLocation =
       Sources.getDecomposedLoc(Start);
   const FileEntry *Entry = Sources.getFileEntryForID(DecomposedLocation.first);
@@ -116,7 +116,7 @@ static int getRangeSize(SourceManager &Sources, const CharSourceRange &Range) {
 
 void Replacement::setFromSourceRange(SourceManager &Sources,
                                      const CharSourceRange &Range,
-                                     llvm::StringRef ReplacementText) {
+                                     StringRef ReplacementText) {
   setFromSourceLocation(Sources, Sources.getSpellingLoc(Range.getBegin()),
                         getRangeSize(Sources, Range), ReplacementText);
 }
@@ -150,7 +150,7 @@ int RefactoringTool::runAndSave(FrontendActionFactory *ActionFactory) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
   TextDiagnosticPrinter DiagnosticPrinter(llvm::errs(), &*DiagOpts);
   DiagnosticsEngine Diagnostics(
-      llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
+      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()),
       &*DiagOpts, &DiagnosticPrinter, false);
   SourceManager Sources(Diagnostics, getFiles());
   Rewriter Rewrite(Sources, DefaultLangOptions);

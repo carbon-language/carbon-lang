@@ -445,7 +445,7 @@ namespace {
     }
     void writePCHReadDecls(raw_ostream &OS) const {
       OS << "  unsigned " << getLowerName() << "Size = Record[Idx++];\n";
-      OS << "  llvm::SmallVector<" << type << ", 4> " << getLowerName()
+      OS << "  SmallVector<" << type << ", 4> " << getLowerName()
          << ";\n";
       OS << "  " << getLowerName() << ".reserve(" << getLowerName()
          << "Size);\n";
@@ -802,7 +802,7 @@ void EmitClangAttrClass(RecordKeeper &Records, raw_ostream &OS) {
     OS << "  }\n\n";
 
     OS << "  virtual " << R.getName() << "Attr *clone (ASTContext &C) const;\n";
-    OS << "  virtual void printPretty(llvm::raw_ostream &OS,"
+    OS << "  virtual void printPretty(raw_ostream &OS,"
        << "                           const PrintingPolicy &Policy) const;\n";
 
     for (ai = Args.begin(); ai != ae; ++ai) {
@@ -859,7 +859,7 @@ void EmitClangAttrImpl(RecordKeeper &Records, raw_ostream &OS) {
     OS << ");\n}\n\n";
 
     OS << "void " << R.getName() << "Attr::printPretty("
-       << "llvm::raw_ostream &OS, const PrintingPolicy &Policy) const {\n";
+       << "raw_ostream &OS, const PrintingPolicy &Policy) const {\n";
     if (Spellings.begin() != Spellings.end()) {
       std::string Spelling = (*Spellings.begin())->getValueAsString("Name");
       OS << "  OS << \" __attribute__((" << Spelling;

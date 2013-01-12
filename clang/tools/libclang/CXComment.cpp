@@ -923,7 +923,7 @@ void CommentASTToXMLConverter::formatTextOfDeclaration(
     
   // Formatter specific code.
   // Form a unique in memory buffer name.
-  llvm::SmallString<128> filename;
+  SmallString<128> filename;
   filename += "xmldecl";
   filename += llvm::utostr(FormatInMemoryUniqueId);
   filename += ".xd";

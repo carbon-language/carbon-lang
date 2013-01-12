@@ -283,7 +283,7 @@ StringRef CodeCompletionTUInfo::getParentName(DeclContext *DC) {
     return StringRef();
 
   // Find the interesting names.
-  llvm::SmallVector<DeclContext *, 2> Contexts;
+  SmallVector<DeclContext *, 2> Contexts;
   while (DC && !DC->isFunctionOrMethod()) {
     if (NamedDecl *ND = dyn_cast<NamedDecl>(DC)) {
       if (ND->getIdentifier())
@@ -294,7 +294,7 @@ StringRef CodeCompletionTUInfo::getParentName(DeclContext *DC) {
   }
 
   {
-    llvm::SmallString<128> S;
+    SmallString<128> S;
     llvm::raw_svector_ostream OS(S);
     bool First = true;
     for (unsigned I = Contexts.size(); I != 0; --I) {

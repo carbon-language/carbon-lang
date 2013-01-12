@@ -1205,7 +1205,7 @@ public:
                                           unsigned P,
                                           IdentifierInfo *Id,
                                           TemplateParameterList *Params,
-                             llvm::ArrayRef<TemplateParameterList*> Expansions);
+                                 ArrayRef<TemplateParameterList *> Expansions);
 
   static TemplateTemplateParmDecl *CreateDeserialized(ASTContext &C,
                                                       unsigned ID);

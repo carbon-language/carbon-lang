@@ -601,7 +601,7 @@ void Sema::ActOnEndOfTranslationUnit() {
     if (Module *CurrentModule = PP.getCurrentModule()) {
       ModuleMap &ModMap = PP.getHeaderSearchInfo().getModuleMap();
       
-      llvm::SmallVector<Module *, 2> Stack;
+      SmallVector<Module *, 2> Stack;
       Stack.push_back(CurrentModule);
       while (!Stack.empty()) {
         Module *Mod = Stack.back();

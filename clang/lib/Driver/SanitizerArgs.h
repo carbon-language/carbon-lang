@@ -57,7 +57,7 @@ class SanitizerArgs {
   void addArgs(const ArgList &Args, ArgStringList &CmdArgs) const {
     if (!Kind)
       return;
-    llvm::SmallString<256> SanitizeOpt("-fsanitize=");
+    SmallString<256> SanitizeOpt("-fsanitize=");
 #define SANITIZER(NAME, ID) \
     if (Kind & ID) \
       SanitizeOpt += NAME ",";
@@ -65,7 +65,7 @@ class SanitizerArgs {
     SanitizeOpt.pop_back();
     CmdArgs.push_back(Args.MakeArgString(SanitizeOpt));
     if (!BlacklistFile.empty()) {
-      llvm::SmallString<64> BlacklistOpt("-fsanitize-blacklist=");
+      SmallString<64> BlacklistOpt("-fsanitize-blacklist=");
       BlacklistOpt += BlacklistFile;
       CmdArgs.push_back(Args.MakeArgString(BlacklistOpt));
     }

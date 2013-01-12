@@ -139,7 +139,7 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
     SmallVector<CharSourceRange, 20> MutableRanges(Ranges.begin(),
                                                    Ranges.end());
 
-    llvm::SmallVector<FixItHint, 8> MergedFixits;
+    SmallVector<FixItHint, 8> MergedFixits;
     if (!FixItHints.empty()) {
       mergeFixits(FixItHints, *SM, LangOpts, MergedFixits);
       FixItHints = MergedFixits;

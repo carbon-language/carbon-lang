@@ -192,7 +192,7 @@ protected:
   /// The element types must match the types of the structure elements in the
   /// first argument.
   llvm::GlobalVariable *MakeGlobal(llvm::StructType *Ty,
-                                   llvm::ArrayRef<llvm::Constant*> V,
+                                   ArrayRef<llvm::Constant *> V,
                                    StringRef Name="",
                                    llvm::GlobalValue::LinkageTypes linkage
                                          =llvm::GlobalValue::InternalLinkage) {
@@ -204,7 +204,7 @@ protected:
   /// elements that the array type declares, of the type specified as the array
   /// element type.
   llvm::GlobalVariable *MakeGlobal(llvm::ArrayType *Ty,
-                                   llvm::ArrayRef<llvm::Constant*> V,
+                                   ArrayRef<llvm::Constant *> V,
                                    StringRef Name="",
                                    llvm::GlobalValue::LinkageTypes linkage
                                          =llvm::GlobalValue::InternalLinkage) {
@@ -215,7 +215,7 @@ protected:
   /// Generates a global array, inferring the array type from the specified
   /// element type and the size of the initialiser.  
   llvm::GlobalVariable *MakeGlobalArray(llvm::Type *Ty,
-                                        llvm::ArrayRef<llvm::Constant*> V,
+                                        ArrayRef<llvm::Constant *> V,
                                         StringRef Name="",
                                         llvm::GlobalValue::LinkageTypes linkage
                                          =llvm::GlobalValue::InternalLinkage) {
@@ -1955,7 +1955,7 @@ llvm::Constant *CGObjCGNU::MakeBitField(ArrayRef<bool> bits) {
     }
     return llvm::ConstantInt::get(IntPtrTy, val);
   }
-  llvm::SmallVector<llvm::Constant*, 8> values;
+  SmallVector<llvm::Constant *, 8> values;
   int v=0;
   while (v < bitCount) {
     int32_t word = 0;

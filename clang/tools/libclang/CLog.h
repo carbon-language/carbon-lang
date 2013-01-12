@@ -38,7 +38,7 @@ typedef IntrusiveRefCntPtr<Logger> LogRef;
 class Logger : public RefCountedBase<Logger> {
   std::string Name;
   bool Trace;
-  llvm::SmallString<64> Msg;
+  SmallString<64> Msg;
   llvm::raw_svector_ostream LogOS;
 public:
   static const char *getEnvVar() {

@@ -78,7 +78,7 @@ llvm::Constant *CGNVCUDARuntime::getLaunchFn() const {
 void CGNVCUDARuntime::EmitDeviceStubBody(CodeGenFunction &CGF,
                                          FunctionArgList &Args) {
   // Build the argument value list and the argument stack struct type.
-  llvm::SmallVector<llvm::Value *, 16> ArgValues;
+  SmallVector<llvm::Value *, 16> ArgValues;
   std::vector<llvm::Type *> ArgTypes;
   for (FunctionArgList::const_iterator I = Args.begin(), E = Args.end();
        I != E; ++I) {

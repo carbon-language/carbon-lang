@@ -44,18 +44,18 @@ public:
                         BugReporter &BR) const;
 
   void CheckMallocArgument(
-    llvm::SmallVectorImpl<MallocOverflowCheck> &PossibleMallocOverflows,
+    SmallVectorImpl<MallocOverflowCheck> &PossibleMallocOverflows,
     const Expr *TheArgument, ASTContext &Context) const;
 
   void OutputPossibleOverflows(
-    llvm::SmallVectorImpl<MallocOverflowCheck> &PossibleMallocOverflows,
+    SmallVectorImpl<MallocOverflowCheck> &PossibleMallocOverflows,
     const Decl *D, BugReporter &BR, AnalysisManager &mgr) const;
 
 };
 } // end anonymous namespace
 
 void MallocOverflowSecurityChecker::CheckMallocArgument(
-  llvm::SmallVectorImpl<MallocOverflowCheck> &PossibleMallocOverflows,
+  SmallVectorImpl<MallocOverflowCheck> &PossibleMallocOverflows,
   const Expr *TheArgument,
   ASTContext &Context) const {
 
@@ -111,7 +111,7 @@ namespace {
 class CheckOverflowOps :
   public EvaluatedExprVisitor<CheckOverflowOps> {
 public:
-  typedef llvm::SmallVectorImpl<MallocOverflowCheck> theVecType;
+  typedef SmallVectorImpl<MallocOverflowCheck> theVecType;
 
 private:
     theVecType &toScanFor;
@@ -197,7 +197,7 @@ private:
 // detect the most blatent cases of overflow and educate the
 // programmer.
 void MallocOverflowSecurityChecker::OutputPossibleOverflows(
-  llvm::SmallVectorImpl<MallocOverflowCheck> &PossibleMallocOverflows,
+  SmallVectorImpl<MallocOverflowCheck> &PossibleMallocOverflows,
   const Decl *D, BugReporter &BR, AnalysisManager &mgr) const {
   // By far the most common case: nothing to check.
   if (PossibleMallocOverflows.empty())
@@ -230,7 +230,7 @@ void MallocOverflowSecurityChecker::checkASTCodeBody(const Decl *D,
     return;
 
   // A list of variables referenced in possibly overflowing malloc operands.
-  llvm::SmallVector<MallocOverflowCheck, 2> PossibleMallocOverflows;
+  SmallVector<MallocOverflowCheck, 2> PossibleMallocOverflows;
 
   for (CFG::iterator it = cfg->begin(), ei = cfg->end(); it != ei; ++it) {
     CFGBlock *block = *it;

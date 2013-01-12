@@ -657,7 +657,7 @@ void CXXNameMangler::mangleFloat(const llvm::APFloat &f) {
   assert(numCharacters != 0);
 
   // Allocate a buffer of the right number of characters.
-  llvm::SmallVector<char, 20> buffer;
+  SmallVector<char, 20> buffer;
   buffer.set_size(numCharacters);
 
   // Fill the buffer left-to-right.

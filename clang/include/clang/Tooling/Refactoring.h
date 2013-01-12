@@ -47,22 +47,22 @@ public:
   /// \param FilePath A source file accessible via a SourceManager.
   /// \param Offset The byte offset of the start of the range in the file.
   /// \param Length The length of the range in bytes.
-  Replacement(llvm::StringRef FilePath, unsigned Offset,
-              unsigned Length, llvm::StringRef ReplacementText);
+  Replacement(StringRef FilePath, unsigned Offset,
+              unsigned Length, StringRef ReplacementText);
 
   /// \brief Creates a Replacement of the range [Start, Start+Length) with
   /// ReplacementText.
   Replacement(SourceManager &Sources, SourceLocation Start, unsigned Length,
-              llvm::StringRef ReplacementText);
+              StringRef ReplacementText);
 
   /// \brief Creates a Replacement of the given range with ReplacementText.
   Replacement(SourceManager &Sources, const CharSourceRange &Range,
-              llvm::StringRef ReplacementText);
+              StringRef ReplacementText);
 
   /// \brief Creates a Replacement of the node with ReplacementText.
   template <typename Node>
   Replacement(SourceManager &Sources, const Node &NodeToReplace,
-              llvm::StringRef ReplacementText);
+              StringRef ReplacementText);
 
   /// \brief Returns whether this replacement can be applied to a file.
   ///
@@ -91,9 +91,9 @@ public:
 
  private:
   void setFromSourceLocation(SourceManager &Sources, SourceLocation Start,
-                             unsigned Length, llvm::StringRef ReplacementText);
+                             unsigned Length, StringRef ReplacementText);
   void setFromSourceRange(SourceManager &Sources, const CharSourceRange &Range,
-                          llvm::StringRef ReplacementText);
+                          StringRef ReplacementText);
 
   std::string FilePath;
   unsigned Offset;
@@ -152,7 +152,7 @@ private:
 
 template <typename Node>
 Replacement::Replacement(SourceManager &Sources, const Node &NodeToReplace,
-                         llvm::StringRef ReplacementText) {
+                         StringRef ReplacementText) {
   const CharSourceRange Range =
       CharSourceRange::getTokenRange(NodeToReplace->getSourceRange());
   setFromSourceRange(Sources, Range, ReplacementText);

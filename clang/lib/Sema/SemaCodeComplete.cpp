@@ -3093,7 +3093,7 @@ void Sema::CodeCompleteModuleImport(SourceLocation ImportLoc,
   typedef CodeCompletionResult Result;
   if (Path.empty()) {
     // Enumerate all top-level modules.
-    llvm::SmallVector<Module *, 8> Modules;
+    SmallVector<Module *, 8> Modules;
     PP.getHeaderSearchInfo().collectAllModules(Modules);
     for (unsigned I = 0, N = Modules.size(); I != N; ++I) {
       Builder.AddTypedTextChunk(

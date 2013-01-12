@@ -344,7 +344,7 @@ private:
                  
   /// \brief The set of declarations that may have redeclaration chains that
   /// need to be serialized.
-  llvm::SetVector<Decl *, llvm::SmallVector<Decl *, 4>, 
+  llvm::SetVector<Decl *, SmallVector<Decl *, 4>,
                   llvm::SmallPtrSet<Decl *, 4> > Redeclarations;
                                       
   /// \brief Statements that we've encountered while serializing a
@@ -729,7 +729,7 @@ class PCHGenerator : public SemaConsumer {
   std::string isysroot;
   raw_ostream *Out;
   Sema *SemaPtr;
-  llvm::SmallVector<char, 128> Buffer;
+  SmallVector<char, 128> Buffer;
   llvm::BitstreamWriter Stream;
   ASTWriter Writer;
 

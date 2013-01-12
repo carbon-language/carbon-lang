@@ -928,7 +928,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   }
 }
 
-bool ConditionBRVisitor::patternMatch(const Expr *Ex, llvm::raw_ostream &Out,
+bool ConditionBRVisitor::patternMatch(const Expr *Ex, raw_ostream &Out,
                                       BugReporterContext &BRC,
                                       BugReport &report,
                                       const ExplodedNode *N,

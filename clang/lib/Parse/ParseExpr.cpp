@@ -1404,7 +1404,7 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       
       if (Tok.is(tok::code_completion)) {
         Actions.CodeCompleteCall(getCurScope(), LHS.get(),
-                                 llvm::ArrayRef<Expr *>());
+                                 ArrayRef<Expr *>());
         cutOffParsing();
         return ExprError();
       }
@@ -2305,10 +2305,10 @@ ExprResult Parser::ParseGenericSelectionExpression() {
 /// [C++0x]   braced-init-list
 /// \endverbatim
 bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
-                            SmallVectorImpl<SourceLocation> &CommaLocs,
-                                 void (Sema::*Completer)(Scope *S, 
-                                                           Expr *Data,
-                                                   llvm::ArrayRef<Expr *> Args),
+                                 SmallVectorImpl<SourceLocation> &CommaLocs,
+                                 void (Sema::*Completer)(Scope *S,
+                                                         Expr *Data,
+                                                         ArrayRef<Expr *> Args),
                                  Expr *Data) {
   while (1) {
     if (Tok.is(tok::code_completion)) {

@@ -388,7 +388,7 @@ static StringRef getSpelling(Sema &SemaRef, Token AsmTok) {
 static bool buildMSAsmString(Sema &SemaRef,
                              SourceLocation AsmLoc,
                              ArrayRef<Token> AsmToks,
-                             llvm::SmallVectorImpl<unsigned> &TokOffsets,
+                             SmallVectorImpl<unsigned> &TokOffsets,
                              std::string &AsmString) {
   assert (!AsmToks.empty() && "Didn't expect an empty AsmToks!");
 
@@ -578,7 +578,7 @@ StmtResult Sema::ActOnMSAsmStmt(SourceLocation AsmLoc, SourceLocation LBraceLoc,
   }
 
   std::string AsmString;
-  llvm::SmallVector<unsigned, 8> TokOffsets;
+  SmallVector<unsigned, 8> TokOffsets;
   if (buildMSAsmString(*this, AsmLoc, AsmToks, TokOffsets, AsmString))
     return StmtError();
 

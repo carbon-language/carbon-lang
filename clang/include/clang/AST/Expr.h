@@ -490,7 +490,7 @@ public:
   /// constexpr. Return false if the function can never produce a constant
   /// expression, along with diagnostics describing why not.
   static bool isPotentialConstantExpr(const FunctionDecl *FD,
-                                      llvm::SmallVectorImpl<
+                                      SmallVectorImpl<
                                         PartialDiagnosticAt> &Diags);
 
   /// isConstantInitializer - Returns true if this expression can be emitted to
@@ -510,7 +510,7 @@ public:
     /// foldable. If the expression is foldable, but not a constant expression,
     /// the notes will describes why it isn't a constant expression. If the
     /// expression *is* a constant expression, no notes will be produced.
-    llvm::SmallVectorImpl<PartialDiagnosticAt> *Diag;
+    SmallVectorImpl<PartialDiagnosticAt> *Diag;
 
     EvalStatus() : HasSideEffects(false), Diag(0) {}
 
@@ -569,7 +569,7 @@ public:
   /// integer. This must be called on an expression that constant folds to an
   /// integer.
   llvm::APSInt EvaluateKnownConstInt(const ASTContext &Ctx,
-                  llvm::SmallVectorImpl<PartialDiagnosticAt> *Diag=0) const;
+                          SmallVectorImpl<PartialDiagnosticAt> *Diag=0) const;
 
   /// EvaluateAsLValue - Evaluate an expression to see if we can fold it to an
   /// lvalue with link time known address, with no side-effects.
@@ -581,7 +581,7 @@ public:
   /// notes will be produced if the expression is not a constant expression.
   bool EvaluateAsInitializer(APValue &Result, const ASTContext &Ctx,
                              const VarDecl *VD,
-                       llvm::SmallVectorImpl<PartialDiagnosticAt> &Notes) const;
+                             SmallVectorImpl<PartialDiagnosticAt> &Notes) const;
 
   /// \brief Enumeration used to describe the kind of Null pointer constant
   /// returned from \c isNullPointerConstant().
@@ -729,7 +729,7 @@ public:
     return const_cast<Expr*>(this)->IgnoreParenNoopCasts(Ctx);
   }
 
-  static bool hasAnyTypeDependentArguments(llvm::ArrayRef<Expr *> Exprs);
+  static bool hasAnyTypeDependentArguments(ArrayRef<Expr *> Exprs);
 
   /// \brief For an expression of class type or pointer to class type,
   /// return the most derived class decl the expression is known to refer to.

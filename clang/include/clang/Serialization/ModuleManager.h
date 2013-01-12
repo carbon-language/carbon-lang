@@ -27,7 +27,7 @@ namespace serialization {
 class ModuleManager {
   /// \brief The chain of AST files. The first entry is the one named by the
   /// user, the last one is the one that doesn't depend on anything further.
-  llvm::SmallVector<ModuleFile*, 2> Chain;
+  SmallVector<ModuleFile *, 2> Chain;
   
   /// \brief All loaded modules, indexed by name.
   llvm::DenseMap<const FileEntry *, ModuleFile *> Modules;

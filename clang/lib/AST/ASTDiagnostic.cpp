@@ -396,7 +396,7 @@ class TemplateDiff {
   QualType ToType;
 
   /// Str - Storage for the output stream.
-  llvm::SmallString<128> Str;
+  SmallString<128> Str;
 
   /// OS - The stream used to construct the output strings.
   llvm::raw_svector_ostream OS;
@@ -452,7 +452,7 @@ class TemplateDiff {
     };
 
     /// FlatTree - A flattened tree used to store the DiffNodes.
-    llvm::SmallVector<DiffNode, 16> FlatTree;
+    SmallVector<DiffNode, 16> FlatTree;
 
     /// CurrentNode - The index of the current node being used.
     unsigned CurrentNode;

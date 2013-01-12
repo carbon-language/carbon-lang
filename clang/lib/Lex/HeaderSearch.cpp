@@ -39,7 +39,7 @@ HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
 
 ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
 
-HeaderSearch::HeaderSearch(llvm::IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts,
+HeaderSearch::HeaderSearch(IntrusiveRefCntPtr<HeaderSearchOptions> HSOpts,
                            FileManager &FM, DiagnosticsEngine &Diags,
                            const LangOptions &LangOpts, 
                            const TargetInfo *Target)
@@ -889,7 +889,7 @@ StringRef HeaderSearch::getUniqueFrameworkName(StringRef Framework) {
 
 bool HeaderSearch::hasModuleMap(StringRef FileName, 
                                 const DirectoryEntry *Root) {
-  llvm::SmallVector<const DirectoryEntry *, 2> FixUpDirectories;
+  SmallVector<const DirectoryEntry *, 2> FixUpDirectories;
   
   StringRef DirName = FileName;
   do {
@@ -979,7 +979,7 @@ Module *HeaderSearch::loadFrameworkModule(StringRef Name,
 
   // Figure out the top-level framework directory and the submodule path from
   // that top-level framework to the requested framework.
-  llvm::SmallVector<std::string, 2> SubmodulePath;
+  SmallVector<std::string, 2> SubmodulePath;
   SubmodulePath.push_back(Name);
   const DirectoryEntry *TopFrameworkDir
     = ::getTopFrameworkDir(FileMgr, Dir->getName(), SubmodulePath);
@@ -1055,7 +1055,7 @@ HeaderSearch::loadModuleMapFile(const DirectoryEntry *Dir) {
   return LMM_InvalidModuleMap;
 }
 
-void HeaderSearch::collectAllModules(llvm::SmallVectorImpl<Module *> &Modules) {
+void HeaderSearch::collectAllModules(SmallVectorImpl<Module *> &Modules) {
   Modules.clear();
   
   // Load module maps for each of the header search directories.

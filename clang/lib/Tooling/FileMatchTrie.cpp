@@ -172,7 +172,7 @@ void FileMatchTrie::insert(StringRef NewPath) {
 }
 
 StringRef FileMatchTrie::findEquivalent(StringRef FileName,
-                                        llvm::raw_ostream &Error) const {
+                                        raw_ostream &Error) const {
   if (llvm::sys::path::is_relative(FileName)) {
     Error << "Cannot resolve relative paths";
     return StringRef();

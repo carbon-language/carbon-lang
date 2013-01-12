@@ -29,8 +29,6 @@ namespace llvm {
   class Function;
   class Type;
   class Value;
-
-  template<typename T, unsigned> class SmallVector;
 }
 
 namespace clang {

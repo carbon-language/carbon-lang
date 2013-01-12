@@ -3462,7 +3462,7 @@ static QualType getCoreType(QualType Ty) {
 static bool hasSimilarParameters(ASTContext &Context,
                                      FunctionDecl *Declaration,
                                      FunctionDecl *Definition,
-                                     llvm::SmallVectorImpl<unsigned> &Params) {
+                                     SmallVectorImpl<unsigned> &Params) {
   Params.clear();
   if (Declaration->param_size() != Definition->param_size())
     return false;
@@ -4972,7 +4972,7 @@ class DifferentNameValidatorCCC : public CorrectionCandidateCallback {
     if (candidate.getEditDistance() == 0)
       return false;
 
-    llvm::SmallVector<unsigned, 1> MismatchedParams;
+    SmallVector<unsigned, 1> MismatchedParams;
     for (TypoCorrection::const_decl_iterator CDecl = candidate.begin(),
                                           CDeclEnd = candidate.end();
          CDecl != CDeclEnd; ++CDecl) {
@@ -5018,8 +5018,8 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
   DeclContext *NewDC = NewFD->getDeclContext();
   LookupResult Prev(SemaRef, Name, NewFD->getLocation(),
                     Sema::LookupOrdinaryName, Sema::ForRedeclaration);
-  llvm::SmallVector<unsigned, 1> MismatchedParams;
-  llvm::SmallVector<std::pair<FunctionDecl*, unsigned>, 1> NearMatches;
+  SmallVector<unsigned, 1> MismatchedParams;
+  SmallVector<std::pair<FunctionDecl *, unsigned>, 1> NearMatches;
   TypoCorrection Correction;
   bool isFriendDecl = (SemaRef.getLangOpts().CPlusPlus &&
                        ExtraArgs.D.getDeclSpec().isFriendSpecified());
@@ -5123,7 +5123,7 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
   if (CXXMethodDecl *NewMD = dyn_cast<CXXMethodDecl>(NewFD))
     NewFDisConst = NewMD->isConst();
 
-  for (llvm::SmallVector<std::pair<FunctionDecl*, unsigned>, 1>::iterator
+  for (SmallVector<std::pair<FunctionDecl *, unsigned>, 1>::iterator
        NearMatch = NearMatches.begin(), NearMatchEnd = NearMatches.end();
        NearMatch != NearMatchEnd; ++NearMatch) {
     FunctionDecl *FD = NearMatch->first;
@@ -7371,7 +7371,7 @@ void Sema::CheckCompleteVariableDeclaration(VarDecl *var) {
         << Init->getSourceRange();
 
     if (var->isConstexpr()) {
-      llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
+      SmallVector<PartialDiagnosticAt, 8> Notes;
       if (!var->evaluateValue(Notes) || !var->isInitICE()) {
         SourceLocation DiagLoc = var->getLocation();
         // If the note doesn't add any useful information other than a source
@@ -10807,8 +10807,8 @@ static void CheckForDuplicateEnumValues(Sema &S, Decl **Elements,
   if (Enum->getNumPositiveBits() > 63 || Enum->getNumNegativeBits() > 64)
     return;
 
-  typedef llvm::SmallVector<EnumConstantDecl*, 3> ECDVector;
-  typedef llvm::SmallVector<ECDVector*, 3> DuplicatesVector;
+  typedef SmallVector<EnumConstantDecl *, 3> ECDVector;
+  typedef SmallVector<ECDVector *, 3> DuplicatesVector;
 
   typedef llvm::PointerUnion<EnumConstantDecl*, ECDVector*> DeclOrVector;
   typedef llvm::DenseMap<DupKey, DeclOrVector, DenseMapInfoDupKey>
@@ -11149,7 +11149,7 @@ DeclResult Sema::ActOnModuleImport(SourceLocation AtLoc,
   if (!Mod)
     return true;
   
-  llvm::SmallVector<SourceLocation, 2> IdentifierLocs;
+  SmallVector<SourceLocation, 2> IdentifierLocs;
   Module *ModCheck = Mod;
   for (unsigned I = 0, N = Path.size(); I != N; ++I) {
     // If we've run out of module parents, just drop the remaining identifiers.

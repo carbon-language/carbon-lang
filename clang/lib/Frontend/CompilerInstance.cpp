@@ -1108,7 +1108,7 @@ CompilerInstance::loadModule(SourceLocation ImportLoc,
       
       if (!Sub) {
         // Attempt to perform typo correction to find a module name that works.
-        llvm::SmallVector<StringRef, 2> Best;
+        SmallVector<StringRef, 2> Best;
         unsigned BestEditDistance = (std::numeric_limits<unsigned>::max)();
         
         for (clang::Module::submodule_iterator J = Module->submodule_begin(), 

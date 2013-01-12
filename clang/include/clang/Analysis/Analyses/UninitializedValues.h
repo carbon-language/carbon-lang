@@ -43,7 +43,7 @@ private:
 
   /// This use is always uninitialized if it occurs after any of these branches
   /// is taken.
-  llvm::SmallVector<Branch, 2> UninitBranches;
+  SmallVector<Branch, 2> UninitBranches;
 
 public:
   UninitUse(const Expr *User, bool AlwaysUninit) :
@@ -72,7 +72,7 @@ public:
            !branch_empty() ? Sometimes : Maybe;
   }
 
-  typedef llvm::SmallVectorImpl<Branch>::const_iterator branch_iterator;
+  typedef SmallVectorImpl<Branch>::const_iterator branch_iterator;
   /// Branches which inevitably result in the variable being used uninitialized.
   branch_iterator branch_begin() const { return UninitBranches.begin(); }
   branch_iterator branch_end() const { return UninitBranches.end(); }

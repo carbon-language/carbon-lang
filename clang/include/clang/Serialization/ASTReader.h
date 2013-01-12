@@ -388,7 +388,7 @@ private:
 
   typedef llvm::MapVector<Decl *, uint64_t,
                           llvm::SmallDenseMap<Decl *, unsigned, 4>,
-                          llvm::SmallVector<std::pair<Decl *, uint64_t>, 4> >
+                          SmallVector<std::pair<Decl *, uint64_t>, 4> >
     PendingBodiesMap;
 
   /// \brief Functions or methods that have bodies that will be attached.
@@ -433,7 +433,7 @@ private:
   GlobalMacroMapType GlobalMacroMap;
 
   typedef llvm::DenseMap<serialization::MacroID,
-            llvm::SmallVector<std::pair<serialization::SubmoduleID,
+            SmallVector<std::pair<serialization::SubmoduleID,
                                         MacroUpdate>, 1> >
     MacroUpdatesMap;
 
@@ -503,8 +503,7 @@ private:
 };
 
   /// \brief A set of hidden declarations.
-  typedef llvm::SmallVector<HiddenName, 2>
-    HiddenNames;
+  typedef SmallVector<HiddenName, 2> HiddenNames;
   
   typedef llvm::DenseMap<Module *, HiddenNames> HiddenNamesMapType;
 
@@ -533,8 +532,7 @@ private:
   
   /// \brief The set of module imports and exports that still need to be 
   /// resolved.
-  llvm::SmallVector<UnresolvedModuleImportExport, 2> 
-    UnresolvedModuleImportExports;
+  SmallVector<UnresolvedModuleImportExport, 2> UnresolvedModuleImportExports;
   
   /// \brief A vector containing selectors that have already been loaded.
   ///
@@ -556,7 +554,7 @@ private:
   llvm::DenseMap<Selector, unsigned> SelectorGeneration;
 
   typedef llvm::MapVector<IdentifierInfo *,
-                          llvm::SmallVector<serialization::MacroID, 2> >
+                          SmallVector<serialization::MacroID, 2> >
     PendingMacroIDsMap;
 
   /// \brief Mapping from identifiers that have a macro history to the global
@@ -798,7 +796,7 @@ private:
   /// Each element is the global declaration ID of the first declaration in
   /// the chain. Elements in this vector should be unique; use 
   /// PendingDeclChainsKnown to ensure uniqueness.
-  llvm::SmallVector<serialization::DeclID, 16> PendingDeclChains;
+  SmallVector<serialization::DeclID, 16> PendingDeclChains;
 
   /// \brief Keeps track of the elements added to PendingDeclChains.
   llvm::SmallSet<serialization::DeclID, 16> PendingDeclChainsKnown;
@@ -810,9 +808,9 @@ private:
   /// \brief The set of Objective-C class definitions that have already been
   /// loaded, for which we will need to check for categories whenever a new
   /// module is loaded.
-  llvm::SmallVector<ObjCInterfaceDecl *, 16> ObjCClassesLoaded;
+  SmallVector<ObjCInterfaceDecl *, 16> ObjCClassesLoaded;
   
-  typedef llvm::DenseMap<Decl *, llvm::SmallVector<serialization::DeclID, 2> >
+  typedef llvm::DenseMap<Decl *, SmallVector<serialization::DeclID, 2> >
     MergedDeclsMap;
     
   /// \brief A mapping from canonical declarations to the set of additional
@@ -821,7 +819,7 @@ private:
   MergedDeclsMap MergedDecls;
   
   typedef llvm::DenseMap<serialization::GlobalDeclID, 
-                         llvm::SmallVector<serialization::DeclID, 2> >
+                         SmallVector<serialization::DeclID, 2> >
     StoredMergedDeclsMap;
   
   /// \brief A mapping from canonical declaration IDs to the set of additional
@@ -909,10 +907,10 @@ private:
 
   ASTReadResult ReadASTCore(StringRef FileName, ModuleKind Type,
                             SourceLocation ImportLoc, ModuleFile *ImportedBy,
-                            llvm::SmallVectorImpl<ImportedModule> &Loaded,
+                            SmallVectorImpl<ImportedModule> &Loaded,
                             unsigned ClientLoadCapabilities);
   ASTReadResult ReadControlBlock(ModuleFile &F,
-                                 llvm::SmallVectorImpl<ImportedModule> &Loaded,
+                                 SmallVectorImpl<ImportedModule> &Loaded,
                                  unsigned ClientLoadCapabilities);
   bool ReadASTBlock(ModuleFile &F);
   bool ParseLineTable(ModuleFile &F, SmallVectorImpl<uint64_t> &Record);

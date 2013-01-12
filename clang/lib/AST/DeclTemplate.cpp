@@ -132,7 +132,7 @@ RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() {
   if (!Common) {
     // Walk the previous-declaration chain until we either find a declaration
     // with a common pointer or we run out of previous declarations.
-    llvm::SmallVector<RedeclarableTemplateDecl *, 2> PrevDecls;
+    SmallVector<RedeclarableTemplateDecl *, 2> PrevDecls;
     for (RedeclarableTemplateDecl *Prev = getPreviousDecl(); Prev;
          Prev = Prev->getPreviousDecl()) {
       if (Prev->Common) {
@@ -620,7 +620,7 @@ TemplateTemplateParmDecl::Create(const ASTContext &C, DeclContext *DC,
                                  SourceLocation L, unsigned D, unsigned P,
                                  IdentifierInfo *Id,
                                  TemplateParameterList *Params,
-                            llvm::ArrayRef<TemplateParameterList*> Expansions) {
+                                 ArrayRef<TemplateParameterList *> Expansions) {
   void *Mem = C.Allocate(sizeof(TemplateTemplateParmDecl) +
                          sizeof(TemplateParameterList*) * Expansions.size());
   return new (Mem) TemplateTemplateParmDecl(DC, L, D, P, Id, Params,

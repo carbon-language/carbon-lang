@@ -244,7 +244,7 @@ void CommentDumper::visitFullComment(const FullComment *C) {
 
 } // unnamed namespace
 
-void Comment::dump(llvm::raw_ostream &OS, const CommandTraits *Traits,
+void Comment::dump(raw_ostream &OS, const CommandTraits *Traits,
                    const SourceManager *SM) const {
   const FullComment *FC = dyn_cast<FullComment>(this);
   CommentDumper D(llvm::errs(), Traits, SM, FC);

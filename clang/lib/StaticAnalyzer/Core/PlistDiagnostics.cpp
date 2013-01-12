@@ -369,7 +369,7 @@ void PlistDiagnostics::FlushDiagnosticsImpl(
 
     const PathDiagnostic *D = *DI;
 
-    llvm::SmallVector<const PathPieces *, 5> WorkList;
+    SmallVector<const PathPieces *, 5> WorkList;
     WorkList.push_back(&D->path);
 
     while (!WorkList.empty()) {

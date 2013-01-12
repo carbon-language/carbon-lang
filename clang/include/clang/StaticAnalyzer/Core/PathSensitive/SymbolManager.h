@@ -96,7 +96,7 @@ public:
 };
 
 typedef const SymExpr* SymbolRef;
-typedef llvm::SmallVector<SymbolRef, 2> SymbolRefSmallVectorTy;
+typedef SmallVector<SymbolRef, 2> SymbolRefSmallVectorTy;
 
 typedef unsigned SymbolID;
 /// \brief A symbol representing data which can be stored in a memory location

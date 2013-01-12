@@ -270,7 +270,7 @@ void CodeGenFunction::EmitMCountInstrumentation() {
 // FIXME: Add type, address, and access qualifiers.
 static void GenOpenCLArgMetadata(const FunctionDecl *FD, llvm::Function *Fn,
                                  CodeGenModule &CGM,llvm::LLVMContext &Context,
-                                 llvm::SmallVector <llvm::Value*, 5> &kernelMDArgs) {
+                                 SmallVector <llvm::Value*, 5> &kernelMDArgs) {
 
   // Create MDNodes that represents the kernel arg metadata.
   // Each MDNode is a list in the form of "key", N number of values which is
@@ -299,7 +299,7 @@ void CodeGenFunction::EmitOpenCLKernelMetadata(const FunctionDecl *FD,
 
   llvm::LLVMContext &Context = getLLVMContext();
 
-  llvm::SmallVector <llvm::Value*, 5> kernelMDArgs;
+  SmallVector <llvm::Value*, 5> kernelMDArgs;
   kernelMDArgs.push_back(Fn);
 
   if (CGM.getCodeGenOpts().EmitOpenCLArgMetadata)
@@ -561,7 +561,7 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
     if (getLangOpts().SanitizeReturn)
       EmitCheck(Builder.getFalse(), "missing_return",
                 EmitCheckSourceLocation(FD->getLocation()),
-                llvm::ArrayRef<llvm::Value*>(), CRK_Unrecoverable);
+                ArrayRef<llvm::Value *>(), CRK_Unrecoverable);
     else if (CGM.getCodeGenOpts().OptimizationLevel == 0)
       Builder.CreateCall(CGM.getIntrinsic(llvm::Intrinsic::trap));
     Builder.CreateUnreachable();
@@ -1239,7 +1239,7 @@ void CodeGenFunction::unprotectFromPeepholes(PeepholeProtection protection) {
 
 llvm::Value *CodeGenFunction::EmitAnnotationCall(llvm::Value *AnnotationFn,
                                                  llvm::Value *AnnotatedVal,
-                                                 llvm::StringRef AnnotationStr,
+                                                 StringRef AnnotationStr,
                                                  SourceLocation Location) {
   llvm::Value *Args[4] = {
     AnnotatedVal,

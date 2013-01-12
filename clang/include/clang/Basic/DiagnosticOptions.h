@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_BASIC_DIAGNOSTICOPTIONS_H
 #define LLVM_CLANG_BASIC_DIAGNOSTICOPTIONS_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include <string>
 #include <vector>
@@ -25,7 +26,7 @@ enum OverloadsShown {
 
 /// DiagnosticOptions - Options for controlling the compiler diagnostics
 /// engine.
-class DiagnosticOptions : public llvm::RefCountedBase<DiagnosticOptions>{
+class DiagnosticOptions : public RefCountedBase<DiagnosticOptions>{
 public:
   enum TextDiagnosticFormat { Clang, Msvc, Vi };
 

@@ -71,7 +71,7 @@ public:
     ID.AddPointer(S);
   }
 
-  void dump(llvm::raw_ostream &OS) const {
+  void dump(raw_ostream &OS) const {
     static const char *Table[] = {
       "Allocated",
       "Released",
@@ -1101,7 +1101,7 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   RegionStateTy RS = state->get<RegionState>();
   RegionStateTy::Factory &F = state->get_context<RegionState>();
 
-  llvm::SmallVector<SymbolRef, 2> Errors;
+  SmallVector<SymbolRef, 2> Errors;
   for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
     if (SymReaper.isDead(I->first)) {
       if (I->second.isAllocated())
@@ -1135,7 +1135,7 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   if (!Errors.empty()) {
     static SimpleProgramPointTag Tag("MallocChecker : DeadSymbolsLeak");
     N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
-    for (llvm::SmallVector<SymbolRef, 2>::iterator
+    for (SmallVector<SymbolRef, 2>::iterator
         I = Errors.begin(), E = Errors.end(); I != E; ++I) {
       reportLeak(*I, N, C);
     }

@@ -1830,7 +1830,7 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
          "Improper start to module import");
   SourceLocation ImportLoc = ConsumeToken();
   
-  llvm::SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
+  SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
   
   // Parse the module path.
   do {

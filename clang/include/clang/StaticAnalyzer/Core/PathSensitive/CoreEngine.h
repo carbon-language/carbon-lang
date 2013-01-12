@@ -463,7 +463,7 @@ public:
     bool operator!=(const iterator &X) const { return I != X.I; }
 
     const LabelDecl *getLabel() const {
-      return llvm::cast<LabelStmt>((*I)->getLabel())->getDecl();
+      return cast<LabelStmt>((*I)->getLabel())->getDecl();
     }
 
     const CFGBlock *getBlock() const {
@@ -510,7 +510,7 @@ public:
     bool operator==(const iterator &X) const { return I == X.I; }
 
     const CaseStmt *getCase() const {
-      return llvm::cast<CaseStmt>((*I)->getLabel());
+      return cast<CaseStmt>((*I)->getLabel());
     }
 
     const CFGBlock *getBlock() const {
@@ -522,7 +522,7 @@ public:
   iterator end() { return iterator(Src->succ_rend()); }
 
   const SwitchStmt *getSwitch() const {
-    return llvm::cast<SwitchStmt>(Src->getTerminator());
+    return cast<SwitchStmt>(Src->getTerminator());
   }
 
   ExplodedNode *generateCaseStmtNode(const iterator &I,

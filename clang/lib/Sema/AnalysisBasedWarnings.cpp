@@ -1198,7 +1198,7 @@ private:
 //===----------------------------------------------------------------------===//
 namespace clang {
 namespace thread_safety {
-typedef llvm::SmallVector<PartialDiagnosticAt, 1> OptionalNotes;
+typedef SmallVector<PartialDiagnosticAt, 1> OptionalNotes;
 typedef std::pair<PartialDiagnosticAt, OptionalNotes> DelayedDiag;
 typedef std::list<DelayedDiag> DiagList;
 

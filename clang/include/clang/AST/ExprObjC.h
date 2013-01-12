@@ -135,7 +135,7 @@ class ObjCArrayLiteral : public Expr {
   SourceRange Range;
   ObjCMethodDecl *ArrayWithObjectsMethod;
   
-  ObjCArrayLiteral(llvm::ArrayRef<Expr *> Elements,
+  ObjCArrayLiteral(ArrayRef<Expr *> Elements,
                    QualType T, ObjCMethodDecl * Method,
                    SourceRange SR);
   
@@ -144,7 +144,7 @@ class ObjCArrayLiteral : public Expr {
 
 public:
   static ObjCArrayLiteral *Create(ASTContext &C, 
-                                  llvm::ArrayRef<Expr *> Elements,
+                                  ArrayRef<Expr *> Elements,
                                   QualType T, ObjCMethodDecl * Method,
                                   SourceRange SR);
 

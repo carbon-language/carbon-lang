@@ -103,15 +103,15 @@ const Module *Module::getTopLevelModule() const {
 }
 
 std::string Module::getFullModuleName() const {
-  llvm::SmallVector<StringRef, 2> Names;
+  SmallVector<StringRef, 2> Names;
   
   // Build up the set of module names (from innermost to outermost).
   for (const Module *M = this; M; M = M->Parent)
     Names.push_back(M->Name);
   
   std::string Result;
-  for (llvm::SmallVector<StringRef, 2>::reverse_iterator I = Names.rbegin(),
-                                                      IEnd = Names.rend(); 
+  for (SmallVector<StringRef, 2>::reverse_iterator I = Names.rbegin(),
+                                                IEnd = Names.rend();
        I != IEnd; ++I) {
     if (!Result.empty())
       Result += '.';
@@ -140,7 +140,7 @@ void Module::addRequirement(StringRef Feature, const LangOptions &LangOpts,
   if (!IsAvailable)
     return;
 
-  llvm::SmallVector<Module *, 2> Stack;
+  SmallVector<Module *, 2> Stack;
   Stack.push_back(this);
   while (!Stack.empty()) {
     Module *Current = Stack.back();
@@ -167,7 +167,7 @@ Module *Module::findSubmodule(StringRef Name) const {
   return SubModules[Pos->getValue()];
 }
 
-static void printModuleId(llvm::raw_ostream &OS, const ModuleId &Id) {
+static void printModuleId(raw_ostream &OS, const ModuleId &Id) {
   for (unsigned I = 0, N = Id.size(); I != N; ++I) {
     if (I)
       OS << ".";
@@ -175,7 +175,7 @@ static void printModuleId(llvm::raw_ostream &OS, const ModuleId &Id) {
   }
 }
 
-void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
+void Module::print(raw_ostream &OS, unsigned Indent) const {
   OS.indent(Indent);
   if (IsFramework)
     OS << "framework ";

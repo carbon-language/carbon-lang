@@ -94,18 +94,18 @@ public:
   }
 
   CompoundStmt *getTryBlock() {
-    return llvm::cast<CompoundStmt>(getStmts()[0]);
+    return cast<CompoundStmt>(getStmts()[0]);
   }
   const CompoundStmt *getTryBlock() const {
-    return llvm::cast<CompoundStmt>(getStmts()[0]);
+    return cast<CompoundStmt>(getStmts()[0]);
   }
 
   unsigned getNumHandlers() const { return NumHandlers; }
   CXXCatchStmt *getHandler(unsigned i) {
-    return llvm::cast<CXXCatchStmt>(getStmts()[i + 1]);
+    return cast<CXXCatchStmt>(getStmts()[i + 1]);
   }
   const CXXCatchStmt *getHandler(unsigned i) const {
-    return llvm::cast<CXXCatchStmt>(getStmts()[i + 1]);
+    return cast<CXXCatchStmt>(getStmts()[i + 1]);
   }
 
   static bool classof(const Stmt *T) {

@@ -2010,7 +2010,7 @@ struct LambdaIntroducer {
   SourceRange Range;
   SourceLocation DefaultLoc;
   LambdaCaptureDefault Default;
-  llvm::SmallVector<LambdaCapture, 4> Captures;
+  SmallVector<LambdaCapture, 4> Captures;
 
   LambdaIntroducer()
     : Default(LCD_None) {}

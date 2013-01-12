@@ -2518,7 +2518,7 @@ public:
   /// Emit an annotation call (intrinsic or builtin).
   llvm::Value *EmitAnnotationCall(llvm::Value *AnnotationFn,
                                   llvm::Value *AnnotatedVal,
-                                  llvm::StringRef AnnotationStr,
+                                  StringRef AnnotationStr,
                                   SourceLocation Location);
 
   /// Emit local annotations for the local variable V, declared by D.
@@ -2584,8 +2584,8 @@ public:
   /// sanitizer runtime with the provided arguments, and create a conditional
   /// branch to it.
   void EmitCheck(llvm::Value *Checked, StringRef CheckName,
-                 llvm::ArrayRef<llvm::Constant *> StaticArgs,
-                 llvm::ArrayRef<llvm::Value *> DynamicArgs,
+                 ArrayRef<llvm::Constant *> StaticArgs,
+                 ArrayRef<llvm::Value *> DynamicArgs,
                  CheckRecoverableKind Recoverable);
 
   /// \brief Create a basic block that will call the trap intrinsic, and emit a

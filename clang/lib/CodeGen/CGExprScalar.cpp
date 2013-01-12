@@ -802,8 +802,8 @@ Value *ScalarExprEmitter::EmitNullValue(QualType Ty) {
 /// operation). The check passes if \p Check, which is an \c i1, is \c true.
 void ScalarExprEmitter::EmitBinOpCheck(Value *Check, const BinOpInfo &Info) {
   StringRef CheckName;
-  llvm::SmallVector<llvm::Constant *, 4> StaticData;
-  llvm::SmallVector<llvm::Value *, 2> DynamicData;
+  SmallVector<llvm::Constant *, 4> StaticData;
+  SmallVector<llvm::Value *, 2> DynamicData;
 
   BinaryOperatorKind Opcode = Info.Opcode;
   if (BinaryOperator::isCompoundAssignmentOp(Opcode))

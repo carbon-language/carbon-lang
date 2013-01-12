@@ -54,10 +54,10 @@ struct CaseInfo {
 
 class CaseCollector : public RecursiveASTVisitor<CaseCollector> {
   ParentMap &PMap;
-  llvm::SmallVectorImpl<CaseInfo> &Cases;
+  SmallVectorImpl<CaseInfo> &Cases;
 
 public:
-  CaseCollector(ParentMap &PMap, llvm::SmallVectorImpl<CaseInfo> &Cases)
+  CaseCollector(ParentMap &PMap, SmallVectorImpl<CaseInfo> &Cases)
     : PMap(PMap), Cases(Cases) { }
 
   bool VisitSwitchStmt(SwitchStmt *S) {

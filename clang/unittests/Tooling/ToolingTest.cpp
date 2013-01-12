@@ -98,9 +98,9 @@ TEST(runToolOnCode, FindsClassDecl) {
 }
 
 TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromType) {
-  llvm::OwningPtr<FrontendActionFactory> Factory(
-    newFrontendActionFactory<SyntaxOnlyAction>());
-  llvm::OwningPtr<FrontendAction> Action(Factory->create());
+  OwningPtr<FrontendActionFactory> Factory(
+      newFrontendActionFactory<SyntaxOnlyAction>());
+  OwningPtr<FrontendAction> Action(Factory->create());
   EXPECT_TRUE(Action.get() != NULL);
 }
 
@@ -112,9 +112,9 @@ struct IndependentFrontendActionCreator {
 
 TEST(newFrontendActionFactory, CreatesFrontendActionFactoryFromFactoryType) {
   IndependentFrontendActionCreator Creator;
-  llvm::OwningPtr<FrontendActionFactory> Factory(
-    newFrontendActionFactory(&Creator));
-  llvm::OwningPtr<FrontendAction> Action(Factory->create());
+  OwningPtr<FrontendActionFactory> Factory(
+      newFrontendActionFactory(&Creator));
+  OwningPtr<FrontendAction> Action(Factory->create());
   EXPECT_TRUE(Action.get() != NULL);
 }
 

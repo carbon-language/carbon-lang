@@ -875,7 +875,7 @@ DeclContext *DeclContext::getPrimaryContext() {
 }
 
 void 
-DeclContext::collectAllContexts(llvm::SmallVectorImpl<DeclContext *> &Contexts){
+DeclContext::collectAllContexts(SmallVectorImpl<DeclContext *> &Contexts){
   Contexts.clear();
   
   if (DeclKind != Decl::Namespace) {
@@ -1130,7 +1130,7 @@ StoredDeclsMap *DeclContext::buildLookup() {
   if (!LookupPtr.getInt())
     return LookupPtr.getPointer();
 
-  llvm::SmallVector<DeclContext *, 2> Contexts;
+  SmallVector<DeclContext *, 2> Contexts;
   collectAllContexts(Contexts);
   for (unsigned I = 0, N = Contexts.size(); I != N; ++I)
     buildLookupImpl(Contexts[I]);
@@ -1203,8 +1203,8 @@ DeclContext::lookup(DeclarationName Name) {
   return I->second.getLookupResult();
 }
 
-void DeclContext::localUncachedLookup(DeclarationName Name, 
-                                  llvm::SmallVectorImpl<NamedDecl *> &Results) {
+void DeclContext::localUncachedLookup(DeclarationName Name,
+                                      SmallVectorImpl<NamedDecl *> &Results) {
   Results.clear();
   
   // If there's no external storage, just perform a normal lookup and copy

@@ -157,7 +157,7 @@ Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
   }
   
   const DirectoryEntry *Dir = File->getDir();
-  llvm::SmallVector<const DirectoryEntry *, 2> SkippedDirs;
+  SmallVector<const DirectoryEntry *, 2> SkippedDirs;
 #ifdef LLVM_ON_UNIX
   // Note: as an egregious but useful hack we use the real path here, because
   // frameworks moving from top-level frameworks to embedded frameworks tend
@@ -260,7 +260,7 @@ bool ModuleMap::isHeaderInUnavailableModule(const FileEntry *Header) {
     return !Known->second.isAvailable();
   
   const DirectoryEntry *Dir = Header->getDir();
-  llvm::SmallVector<const DirectoryEntry *, 2> SkippedDirs;
+  SmallVector<const DirectoryEntry *, 2> SkippedDirs;
   StringRef DirName = Dir->getName();
 
   // Keep walking up the directory hierarchy, looking for a directory with
@@ -725,8 +725,7 @@ namespace clang {
     /// (or the end of the file).
     void skipUntil(MMToken::TokenKind K);
 
-    typedef llvm::SmallVector<std::pair<std::string, SourceLocation>, 2>
-      ModuleId;
+    typedef SmallVector<std::pair<std::string, SourceLocation>, 2> ModuleId;
     bool parseModuleId(ModuleId &Id);
     void parseModuleDecl();
     void parseRequiresDecl();
@@ -1184,9 +1183,9 @@ void ModuleMapParser::parseRequiresDecl() {
 /// \brief Append to \p Paths the set of paths needed to get to the 
 /// subframework in which the given module lives.
 static void appendSubframeworkPaths(Module *Mod,
-                                    llvm::SmallVectorImpl<char> &Path) {
+                                    SmallVectorImpl<char> &Path) {
   // Collect the framework names from the given module to the top-level module.
-  llvm::SmallVector<StringRef, 2> Paths;
+  SmallVector<StringRef, 2> Paths;
   for (; Mod; Mod = Mod->Parent) {
     if (Mod->IsFramework)
       Paths.push_back(Mod->Name);

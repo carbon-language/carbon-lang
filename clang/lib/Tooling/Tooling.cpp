@@ -63,7 +63,7 @@ static const clang::driver::ArgStringList *getCC1Arguments(
   // failed. Extract that job from the Compilation.
   const clang::driver::JobList &Jobs = Compilation->getJobs();
   if (Jobs.size() != 1 || !isa<clang::driver::Command>(*Jobs.begin())) {
-    llvm::SmallString<256> error_msg;
+    SmallString<256> error_msg;
     llvm::raw_svector_ostream error_stream(error_msg);
     Compilation->PrintJob(error_stream, Compilation->getJobs(), "; ", true);
     Diagnostics->Report(clang::diag::err_fe_expected_compiler_job)
@@ -121,7 +121,7 @@ bool runToolOnCodeWithArgs(clang::FrontendAction *ToolAction, const Twine &Code,
 }
 
 std::string getAbsolutePath(StringRef File) {
-  llvm::SmallString<1024> BaseDirectory;
+  SmallString<1024> BaseDirectory;
   if (const char *PWD = ::getenv("PWD"))
     BaseDirectory = PWD;
   else
@@ -136,7 +136,7 @@ std::string getAbsolutePath(StringRef File) {
   if (RelativePath.startswith("./")) {
     RelativePath = RelativePath.substr(strlen("./"));
   }
-  llvm::SmallString<1024> AbsolutePath(BaseDirectory);
+  SmallString<1024> AbsolutePath(BaseDirectory);
   llvm::sys::path::append(AbsolutePath, RelativePath);
   llvm::sys::path::native(Twine(AbsolutePath), PathStorage);
   return PathStorage.str();
@@ -163,21 +163,21 @@ bool ToolInvocation::run() {
   TextDiagnosticPrinter DiagnosticPrinter(
       llvm::errs(), &*DiagOpts);
   DiagnosticsEngine Diagnostics(
-    llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs>(new DiagnosticIDs()),
+    IntrusiveRefCntPtr<clang::DiagnosticIDs>(new DiagnosticIDs()),
     &*DiagOpts, &DiagnosticPrinter, false);
 
-  const llvm::OwningPtr<clang::driver::Driver> Driver(
+  const OwningPtr<clang::driver::Driver> Driver(
       newDriver(&Diagnostics, BinaryName));
   // Since the input might only be virtual, don't check whether it exists.
   Driver->setCheckInputsExist(false);
-  const llvm::OwningPtr<clang::driver::Compilation> Compilation(
+  const OwningPtr<clang::driver::Compilation> Compilation(
       Driver->BuildCompilation(llvm::makeArrayRef(Argv)));
   const clang::driver::ArgStringList *const CC1Args = getCC1Arguments(
       &Diagnostics, Compilation.get());
   if (CC1Args == NULL) {
     return false;
   }
-  llvm::OwningPtr<clang::CompilerInvocation> Invocation(
+  OwningPtr<clang::CompilerInvocation> Invocation(
       newInvocation(&Diagnostics, *CC1Args));
   return runInvocation(BinaryName, Compilation.get(), Invocation.take(),
                        *CC1Args);
@@ -204,7 +204,7 @@ bool ToolInvocation::runInvocation(
   // ToolAction can have lifetime requirements for Compiler or its members, and
   // we need to ensure it's deleted earlier than Compiler. So we pass it to an
   // OwningPtr declared after the Compiler variable.
-  llvm::OwningPtr<FrontendAction> ScopedToolAction(ToolAction.take());
+  OwningPtr<FrontendAction> ScopedToolAction(ToolAction.take());
 
   // Create the compilers actual diagnostics engine.
   Compiler.createDiagnostics(CC1Args.size(),
@@ -241,7 +241,7 @@ ClangTool::ClangTool(const CompilationDatabase &Compilations,
     : Files((FileSystemOptions())),
       ArgsAdjuster(new ClangSyntaxOnlyAdjuster()) {
   for (unsigned I = 0, E = SourcePaths.size(); I != E; ++I) {
-    llvm::SmallString<1024> File(getAbsolutePath(SourcePaths[I]));
+    SmallString<1024> File(getAbsolutePath(SourcePaths[I]));
 
     std::vector<CompileCommand> CompileCommandsForFile =
       Compilations.getCompileCommands(File.str());

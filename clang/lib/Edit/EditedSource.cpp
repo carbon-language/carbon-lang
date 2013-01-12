@@ -24,7 +24,7 @@ void EditsReceiver::remove(CharSourceRange range) {
 }
 
 StringRef EditedSource::copyString(const Twine &twine) {
-  llvm::SmallString<128> Data;
+  SmallString<128> Data;
   return copyString(twine.toStringRef(Data));
 }
 
@@ -89,7 +89,7 @@ bool EditedSource::commitInsertFromRange(SourceLocation OrigLoc,
   if (Len == 0)
     return true;
 
-  llvm::SmallString<128> StrVec;
+  SmallString<128> StrVec;
   FileOffset BeginOffs = InsertFromRangeOffs;
   FileOffset EndOffs = BeginOffs.getWithOffset(Len);
   FileEditsTy::iterator I = FileEdits.upper_bound(BeginOffs);
@@ -332,7 +332,7 @@ static void applyRewrite(EditsReceiver &receiver,
 }
 
 void EditedSource::applyRewrites(EditsReceiver &receiver) {
-  llvm::SmallString<128> StrVec;
+  SmallString<128> StrVec;
   FileOffset CurOffs, CurEnd;
   unsigned CurLen;
 

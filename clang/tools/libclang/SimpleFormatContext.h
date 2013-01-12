@@ -63,8 +63,8 @@ public:
     return Result;
   }
 
-  llvm::IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
-  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diagnostics;
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
+  IntrusiveRefCntPtr<DiagnosticsEngine> Diagnostics;
   FileManager Files;
   SourceManager Sources;
   Rewriter Rewrite;

@@ -521,7 +521,7 @@ void ASTDumper::VisitFunctionDecl(FunctionDecl *D) {
       D->getTemplateSpecializationInfo())
     dumpTemplateArgumentList(*FTSI->TemplateArguments);
 
-  for (llvm::ArrayRef<NamedDecl*>::iterator
+  for (ArrayRef<NamedDecl *>::iterator
        I = D->getDeclsInPrototypeScope().begin(),
        E = D->getDeclsInPrototypeScope().end(); I != E; ++I)
     dumpDecl(*I);

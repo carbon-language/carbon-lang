@@ -252,7 +252,7 @@ void NSOrCFErrorDerefChecker::checkEvent(ImplicitNullDerefEvent event) const {
     return;
 
   // Storing to possible null NSError/CFErrorRef out parameter.
-  llvm::SmallString<128> Buf;
+  SmallString<128> Buf;
   llvm::raw_svector_ostream os(Buf);
 
   os << "Potential null dereference.  According to coding standards ";

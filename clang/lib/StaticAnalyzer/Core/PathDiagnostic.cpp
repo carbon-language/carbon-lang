@@ -130,7 +130,7 @@ PathDiagnosticConsumer::~PathDiagnosticConsumer() {
 }
 
 void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
-  llvm::OwningPtr<PathDiagnostic> OwningD(D);
+  OwningPtr<PathDiagnostic> OwningD(D);
   
   if (!D || D->path.empty())
     return;
@@ -146,7 +146,7 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
     // Verify that the entire path is from the same FileID.
     FileID FID;
     const SourceManager &SMgr = (*D->path.begin())->getLocation().getManager();
-    llvm::SmallVector<const PathPieces *, 5> WorkList;
+    SmallVector<const PathPieces *, 5> WorkList;
     WorkList.push_back(&D->path);
 
     while (!WorkList.empty()) {

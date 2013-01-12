@@ -1646,7 +1646,7 @@ StringRef Hexagon_TC::GetTargetCPU(const ArgList &Args)
   // Select the default CPU (v4) if none was given or detection failed.
   Arg *A = GetLastHexagonArchArg (Args);
   if (A) {
-    llvm::StringRef WhichHexagon = A->getValue();
+    StringRef WhichHexagon = A->getValue();
     if (WhichHexagon.startswith("hexagon"))
       return WhichHexagon.substr(sizeof("hexagon") - 1);
     if (WhichHexagon != "")

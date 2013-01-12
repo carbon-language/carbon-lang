@@ -41,7 +41,7 @@ enum ObjCXXARCStandardLibraryKind {
   
 /// PreprocessorOptions - This class is used for passing the various options
 /// used in preprocessor initialization to InitializePreprocessor().
-class PreprocessorOptions : public llvm::RefCountedBase<PreprocessorOptions> {
+class PreprocessorOptions : public RefCountedBase<PreprocessorOptions> {
 public:
   std::vector<std::pair<std::string, bool/*isUndef*/> > Macros;
   std::vector<std::string> Includes;
@@ -118,7 +118,7 @@ public:
   ObjCXXARCStandardLibraryKind ObjCXXARCStandardLibrary;
     
   /// \brief Records the set of modules
-  class FailedModulesSet : public llvm::RefCountedBase<FailedModulesSet> {
+  class FailedModulesSet : public RefCountedBase<FailedModulesSet> {
     llvm::StringSet<> Failed;
 
   public:
@@ -137,7 +137,7 @@ public:
   /// to (re)build modules, so that once a module fails to build anywhere,
   /// other instances will see that the module has failed and won't try to
   /// build it again.
-  llvm::IntrusiveRefCntPtr<FailedModulesSet> FailedModules;
+  IntrusiveRefCntPtr<FailedModulesSet> FailedModules;
 
   typedef std::vector<std::pair<std::string, std::string> >::iterator
     remapped_file_iterator;

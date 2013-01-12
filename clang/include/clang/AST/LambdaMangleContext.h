@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_LAMBDAMANGLECONTEXT_H
 #define LLVM_CLANG_LAMBDAMANGLECONTEXT_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
@@ -24,7 +25,7 @@ class FunctionProtoType;
 
 /// \brief Keeps track of the mangled names of lambda expressions within a
 /// particular context.
-class LambdaMangleContext : public llvm::RefCountedBase<LambdaMangleContext> {
+class LambdaMangleContext : public RefCountedBase<LambdaMangleContext> {
   llvm::DenseMap<const FunctionProtoType *, unsigned> ManglingNumbers;
   
 public:

@@ -40,7 +40,7 @@ typedef MatchFinder::MatchCallback MatchCallback;
 class ParentMapASTVisitor : public RecursiveASTVisitor<ParentMapASTVisitor> {
 public:
   /// \brief Contains parents of a node.
-  typedef llvm::SmallVector<ast_type_traits::DynTypedNode, 1> ParentVector;
+  typedef SmallVector<ast_type_traits::DynTypedNode, 1> ParentVector;
 
   /// \brief Maps from a node to its parents.
   typedef llvm::DenseMap<const void *, ParentVector> ParentMap;
@@ -94,7 +94,7 @@ private:
   }
 
   ParentMap *Parents;
-  llvm::SmallVector<ast_type_traits::DynTypedNode, 16> ParentStack;
+  SmallVector<ast_type_traits::DynTypedNode, 16> ParentStack;
 
   friend class RecursiveASTVisitor<ParentMapASTVisitor>;
 };
@@ -573,7 +573,7 @@ private:
   typedef llvm::DenseMap<UntypedMatchInput, MemoizedMatchResult> MemoizationMap;
   MemoizationMap ResultCache;
 
-  llvm::OwningPtr<ParentMapASTVisitor::ParentMap> Parents;
+  OwningPtr<ParentMapASTVisitor::ParentMap> Parents;
 };
 
 // Returns true if the given class is directly or indirectly derived
@@ -622,7 +622,7 @@ bool MatchASTVisitor::classIsDerivedFrom(const CXXRecordDecl *Declaration,
       if (SpecializationDecl != NULL) {
         ClassDecl = SpecializationDecl;
       } else {
-        ClassDecl = llvm::dyn_cast<CXXRecordDecl>(
+        ClassDecl = dyn_cast<CXXRecordDecl>(
             TemplateType->getTemplateName()
                 .getAsTemplateDecl()->getTemplatedDecl());
       }

@@ -60,7 +60,7 @@ public:
 
 private:
   typedef std::pair<SymbolRef, const AllocationState*> AllocationPair;
-  typedef llvm::SmallVector<AllocationPair, 2> AllocationPairVec;
+  typedef SmallVector<AllocationPair, 2> AllocationPairVec;
 
   enum APIKind {
     /// Denotes functions tracked by this checker.

@@ -726,7 +726,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
       } else {
         // We already verified that the expression has a i-c-e value (C99
         // 6.8.4.2p3) - get that value now.
-        llvm::SmallVector<PartialDiagnosticAt, 8> Diags;
+        SmallVector<PartialDiagnosticAt, 8> Diags;
         LoVal = Lo->EvaluateKnownConstInt(Context, &Diags);
         if (Diags.size() == 1 && 
             Diags[0].second.getDiagID() == diag::note_constexpr_overflow) {
@@ -802,7 +802,7 @@ Sema::ActOnFinishSwitchStmt(SourceLocation SwitchLoc, Stmt *Switch,
           if (DeclRefExpr *DeclRef = dyn_cast<DeclRefExpr>(CurrCase)) {
             CurrString = DeclRef->getDecl()->getName();
           }
-          llvm::SmallString<16> CaseValStr;
+          SmallString<16> CaseValStr;
           CaseVals[i-1].first.toString(CaseValStr);
 
           if (PrevString == CurrString)
@@ -1180,13 +1180,13 @@ namespace {
   // of the excluded constructs are used.
   class DeclExtractor : public EvaluatedExprVisitor<DeclExtractor> {
     llvm::SmallPtrSet<VarDecl*, 8> &Decls;
-    llvm::SmallVector<SourceRange, 10> &Ranges;
+    SmallVector<SourceRange, 10> &Ranges;
     bool Simple;
 public:
   typedef EvaluatedExprVisitor<DeclExtractor> Inherited;
 
   DeclExtractor(Sema &S, llvm::SmallPtrSet<VarDecl*, 8> &Decls,
-                llvm::SmallVector<SourceRange, 10> &Ranges) :
+                SmallVector<SourceRange, 10> &Ranges) :
       Inherited(S.Context),
       Decls(Decls),
       Ranges(Ranges),
@@ -1335,7 +1335,7 @@ public:
 
     PartialDiagnostic PDiag = S.PDiag(diag::warn_variables_not_in_loop_body);
     llvm::SmallPtrSet<VarDecl*, 8> Decls;
-    llvm::SmallVector<SourceRange, 10> Ranges;
+    SmallVector<SourceRange, 10> Ranges;
     DeclExtractor DE(S, Decls, Ranges);
     DE.Visit(Second);
 
@@ -1371,8 +1371,8 @@ public:
     // Load SourceRanges into diagnostic if there is room.
     // Otherwise, load the SourceRange of the conditional expression.
     if (Ranges.size() <= PartialDiagnostic::MaxArguments)
-      for (llvm::SmallVector<SourceRange, 10>::iterator I = Ranges.begin(),
-                                                        E = Ranges.end();
+      for (SmallVector<SourceRange, 10>::iterator I = Ranges.begin(),
+                                                  E = Ranges.end();
            I != E; ++I)
         PDiag << *I;
     else

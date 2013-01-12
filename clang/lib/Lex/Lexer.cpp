@@ -1328,7 +1328,7 @@ SourceLocation Lexer::findLocationAfterToken(SourceLocation Loc,
 
   // Try to load the file buffer.
   bool InvalidTemp = false;
-  llvm::StringRef File = SM.getBufferData(LocInfo.first, &InvalidTemp);
+  StringRef File = SM.getBufferData(LocInfo.first, &InvalidTemp);
   if (InvalidTemp)
     return SourceLocation();
 

@@ -455,7 +455,7 @@ void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
 
     // Accumulate and sort bases, in order to visit them in address order, which
     // may not be the same as declaration order.
-    llvm::SmallVector<BaseInfo, 8> Bases;
+    SmallVector<BaseInfo, 8> Bases;
     Bases.reserve(CD->getNumBases());
     unsigned BaseNo = 0;
     for (CXXRecordDecl::base_class_const_iterator Base = CD->bases_begin(),

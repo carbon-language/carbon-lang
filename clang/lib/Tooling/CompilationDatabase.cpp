@@ -72,7 +72,7 @@ findCompilationDatabaseFromDirectory(StringRef Directory,
 CompilationDatabase *
 CompilationDatabase::autoDetectFromSource(StringRef SourceFile,
                                           std::string &ErrorMessage) {
-  llvm::SmallString<1024> AbsolutePath(getAbsolutePath(SourceFile));
+  SmallString<1024> AbsolutePath(getAbsolutePath(SourceFile));
   StringRef Directory = llvm::sys::path::parent_path(AbsolutePath);
 
   CompilationDatabase *DB = findCompilationDatabaseFromDirectory(Directory,
@@ -87,7 +87,7 @@ CompilationDatabase::autoDetectFromSource(StringRef SourceFile,
 CompilationDatabase *
 CompilationDatabase::autoDetectFromDirectory(StringRef SourceDir,
                                              std::string &ErrorMessage) {
-  llvm::SmallString<1024> AbsolutePath(getAbsolutePath(SourceDir));
+  SmallString<1024> AbsolutePath(getAbsolutePath(SourceDir));
 
   CompilationDatabase *DB = findCompilationDatabaseFromDirectory(AbsolutePath,
                                                                  ErrorMessage);

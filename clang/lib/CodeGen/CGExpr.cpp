@@ -553,7 +553,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
     // FIXME: This is not guaranteed to be deterministic! Move to a
     //        fingerprinting mechanism once LLVM provides one. For the time
     //        being the implementation happens to be deterministic.
-    llvm::SmallString<64> MangledName;
+    SmallString<64> MangledName;
     llvm::raw_svector_ostream Out(MangledName);
     CGM.getCXXABI().getMangleContext().mangleCXXRTTI(Ty.getUnqualifiedType(),
                                                      Out);
@@ -1095,7 +1095,7 @@ void CodeGenFunction::EmitStoreOfScalar(llvm::Value *Value, llvm::Value *Addr,
       llvm::LLVMContext &VMContext = getLLVMContext();
       
       // Our source is a vec3, do a shuffle vector to make it a vec4.
-      llvm::SmallVector<llvm::Constant*, 4> Mask;
+      SmallVector<llvm::Constant*, 4> Mask;
       Mask.push_back(llvm::ConstantInt::get(
                                             llvm::Type::getInt32Ty(VMContext),
                                             0));
@@ -1908,7 +1908,7 @@ llvm::Constant *CodeGenFunction::EmitCheckTypeDescriptor(QualType T) {
 
   // Format the type name as if for a diagnostic, including quotes and
   // optionally an 'aka'.
-  llvm::SmallString<32> Buffer;
+  SmallString<32> Buffer;
   CGM.getDiags().ConvertArgToString(DiagnosticsEngine::ak_qualtype,
                                     (intptr_t)T.getAsOpaquePtr(),
                                     0, 0, 0, 0, 0, 0, Buffer,
@@ -1971,8 +1971,8 @@ llvm::Constant *CodeGenFunction::EmitCheckSourceLocation(SourceLocation Loc) {
 }
 
 void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
-                                llvm::ArrayRef<llvm::Constant *> StaticArgs,
-                                llvm::ArrayRef<llvm::Value *> DynamicArgs,
+                                ArrayRef<llvm::Constant *> StaticArgs,
+                                ArrayRef<llvm::Value *> DynamicArgs,
                                 CheckRecoverableKind RecoverKind) {
   llvm::BasicBlock *Cont = createBasicBlock("cont");
 
@@ -1994,8 +1994,8 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
                                llvm::GlobalVariable::PrivateLinkage, Info);
   InfoPtr->setUnnamedAddr(true);
 
-  llvm::SmallVector<llvm::Value *, 4> Args;
-  llvm::SmallVector<llvm::Type *, 4> ArgTypes;
+  SmallVector<llvm::Value *, 4> Args;
+  SmallVector<llvm::Type *, 4> ArgTypes;
   Args.reserve(DynamicArgs.size() + 1);
   ArgTypes.reserve(DynamicArgs.size() + 1);
 
@@ -3260,7 +3260,7 @@ RValue CodeGenFunction::EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest) {
   // Use a library call.  See: http://gcc.gnu.org/wiki/Atomic/GCCMM/LIbrary .
   if (UseLibcall) {
 
-    llvm::SmallVector<QualType, 5> Params;
+    SmallVector<QualType, 5> Params;
     CallArgList Args;
     // Size is always the first parameter
     Args.add(RValue::get(llvm::ConstantInt::get(SizeTy, Size)),
@@ -3485,7 +3485,7 @@ static LValueOrRValue emitPseudoObjectExpr(CodeGenFunction &CGF,
                                            const PseudoObjectExpr *E,
                                            bool forLValue,
                                            AggValueSlot slot) {
-  llvm::SmallVector<CodeGenFunction::OpaqueValueMappingData, 4> opaques;
+  SmallVector<CodeGenFunction::OpaqueValueMappingData, 4> opaques;
 
   // Find the result expression, if any.
   const Expr *resultExpr = E->getResultExpr();

@@ -23,7 +23,7 @@ using namespace ento;
 
 namespace {
   class BoolAssignmentChecker : public Checker< check::Bind > {
-    mutable llvm::OwningPtr<BuiltinBug> BT;
+    mutable OwningPtr<BuiltinBug> BT;
     void emitReport(ProgramStateRef state, CheckerContext &C) const;
   public:
     void checkBind(SVal loc, SVal val, const Stmt *S, CheckerContext &C) const;

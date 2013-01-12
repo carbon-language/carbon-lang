@@ -11,6 +11,7 @@
 #define CLANG_DRIVER_DRIVER_H_
 
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/LLVM.h"
 #include "clang/Driver/Phases.h"
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
@@ -23,9 +24,6 @@
 #include <set>
 #include <string>
 
-namespace llvm {
-  template<typename T> class ArrayRef;
-}
 namespace clang {
 namespace driver {
   class Action;

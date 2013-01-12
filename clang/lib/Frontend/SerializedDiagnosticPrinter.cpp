@@ -44,8 +44,8 @@ public:
   }
 };
  
-typedef llvm::SmallVector<uint64_t, 64> RecordData;
-typedef llvm::SmallVectorImpl<uint64_t> RecordDataImpl;
+typedef SmallVector<uint64_t, 64> RecordData;
+typedef SmallVectorImpl<uint64_t> RecordDataImpl;
 
 class SDiagsWriter;
   
@@ -92,11 +92,11 @@ class SDiagsWriter : public DiagnosticConsumer {
 
   struct SharedState;
 
-  explicit SDiagsWriter(llvm::IntrusiveRefCntPtr<SharedState> State)
+  explicit SDiagsWriter(IntrusiveRefCntPtr<SharedState> State)
     : LangOpts(0), OriginalInstance(false), State(State) { }
 
 public:
-  SDiagsWriter(llvm::raw_ostream *os, DiagnosticOptions *diags)
+  SDiagsWriter(raw_ostream *os, DiagnosticOptions *diags)
     : LangOpts(0), OriginalInstance(true), State(new SharedState(os, diags))
   {
     EmitPreamble();
@@ -190,12 +190,12 @@ private:
 
   /// \brief State that is shared among the various clones of this diagnostic
   /// consumer.
-  struct SharedState : llvm::RefCountedBase<SharedState> {
-    SharedState(llvm::raw_ostream *os, DiagnosticOptions *diags)
+  struct SharedState : RefCountedBase<SharedState> {
+    SharedState(raw_ostream *os, DiagnosticOptions *diags)
       : DiagOpts(diags), Stream(Buffer), OS(os), EmittedAnyDiagBlocks(false) { }
 
     /// \brief Diagnostic options.
-    llvm::IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
+    IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
 
     /// \brief The byte buffer for the serialized content.
     SmallString<1024> Buffer;
@@ -204,7 +204,7 @@ private:
     llvm::BitstreamWriter Stream;
 
     /// \brief The name of the diagnostics file.
-    OwningPtr<llvm::raw_ostream> OS;
+    OwningPtr<raw_ostream> OS;
 
     /// \brief The set of constructed record abbreviations.
     AbbreviationMap Abbrevs;
@@ -221,7 +221,7 @@ private:
     /// \brief The collection of files used.
     llvm::DenseMap<const char *, unsigned> Files;
 
-    typedef llvm::DenseMap<const void *, std::pair<unsigned, llvm::StringRef> >
+    typedef llvm::DenseMap<const void *, std::pair<unsigned, StringRef> >
     DiagFlagsTy;
 
     /// \brief Map for uniquing strings.
@@ -234,14 +234,13 @@ private:
   };
 
   /// \brief State shared among the various clones of this diagnostic consumer.
-  llvm::IntrusiveRefCntPtr<SharedState> State;
+  IntrusiveRefCntPtr<SharedState> State;
 };
 } // end anonymous namespace
 
 namespace clang {
 namespace serialized_diags {
-DiagnosticConsumer *create(llvm::raw_ostream *OS,
-                           DiagnosticOptions *diags) {
+DiagnosticConsumer *create(raw_ostream *OS, DiagnosticOptions *diags) {
   return new SDiagsWriter(OS, diags);
 }
 } // end namespace serialized_diags

@@ -809,7 +809,7 @@ namespace clang {
 
     void NoteCandidates(Sema &S,
                         OverloadCandidateDisplayKind OCD,
-                        llvm::ArrayRef<Expr *> Args,
+                        ArrayRef<Expr *> Args,
                         StringRef Opc = "",
                         SourceLocation Loc = SourceLocation());
   };

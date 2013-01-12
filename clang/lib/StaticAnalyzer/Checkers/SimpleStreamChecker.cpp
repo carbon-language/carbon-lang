@@ -25,7 +25,7 @@ using namespace clang;
 using namespace ento;
 
 namespace {
-typedef llvm::SmallVector<SymbolRef, 2> SymbolVector;
+typedef SmallVector<SymbolRef, 2> SymbolVector;
 
 struct StreamState {
 private:
@@ -226,7 +226,7 @@ void SimpleStreamChecker::reportLeaks(SymbolVector LeakedStreams,
                                                ExplodedNode *ErrNode) const {
   // Attach bug reports to the leak node.
   // TODO: Identify the leaked file descriptor.
-  for (llvm::SmallVector<SymbolRef, 2>::iterator
+  for (SmallVector<SymbolRef, 2>::iterator
       I = LeakedStreams.begin(), E = LeakedStreams.end(); I != E; ++I) {
     BugReport *R = new BugReport(*LeakBugType,
         "Opened file is never closed; potential resource leak", ErrNode);

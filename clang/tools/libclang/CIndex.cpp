@@ -2393,7 +2393,7 @@ bool CursorVisitor::Visit(Stmt *S) {
 }
 
 namespace {
-typedef llvm::SmallVector<SourceRange, 4> RefNamePieces;
+typedef SmallVector<SourceRange, 4> RefNamePieces;
 RefNamePieces buildPieces(unsigned NameFlags, bool IsMemberRefExpr, 
                           const DeclarationNameInfo &NI, 
                           const SourceRange &QLoc, 
@@ -4935,7 +4935,7 @@ class AnnotateTokensWorker {
     SourceRange CursorRange;
     unsigned BeforeChildrenTokenIdx;
   };
-  llvm::SmallVector<PostChildrenInfo, 8> PostChildrenInfos;
+  SmallVector<PostChildrenInfo, 8> PostChildrenInfos;
   
   bool MoreTokens() const { return TokIdx < NumTokens; }
   unsigned NextToken() const { return TokIdx; }
@@ -6391,7 +6391,7 @@ cxindex::Logger::~Logger() {
 
   static llvm::TimeRecord sBeginTR = llvm::TimeRecord::getCurrentTime();
 
-  llvm::raw_ostream &OS = llvm::errs();
+  raw_ostream &OS = llvm::errs();
   OS << "[libclang:" << Name << ':';
 
   // FIXME: Portability.

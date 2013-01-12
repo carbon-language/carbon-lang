@@ -109,7 +109,7 @@ bool AnalyzerOptions::shouldAvoidSuppressingNullArgumentPaths() {
 }
 
 int AnalyzerOptions::getOptionAsInteger(StringRef Name, int DefaultVal) {
-  llvm::SmallString<10> StrBuf;
+  SmallString<10> StrBuf;
   llvm::raw_svector_ostream OS(StrBuf);
   OS << DefaultVal;
   

@@ -970,7 +970,7 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
 
 /// \brief Wrapper around a case statement checking if AttrName is
 /// one of the thread safety attributes
-bool Parser::IsThreadSafetyAttribute(llvm::StringRef AttrName){
+bool Parser::IsThreadSafetyAttribute(StringRef AttrName) {
   return llvm::StringSwitch<bool>(AttrName)
       .Case("guarded_by", true)
       .Case("guarded_var", true)

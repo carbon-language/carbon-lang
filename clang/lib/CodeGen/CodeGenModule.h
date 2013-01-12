@@ -860,7 +860,7 @@ public:
   void EmitGlobalAnnotations();
 
   /// Emit an annotation string.
-  llvm::Constant *EmitAnnotationString(llvm::StringRef Str);
+  llvm::Constant *EmitAnnotationString(StringRef Str);
 
   /// Emit the annotation's translation unit.
   llvm::Constant *EmitAnnotationUnit(SourceLocation Loc);

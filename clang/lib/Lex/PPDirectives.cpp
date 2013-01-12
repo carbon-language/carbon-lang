@@ -1426,7 +1426,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     // Compute the module access path corresponding to this module.
     // FIXME: Should we have a second loadModule() overload to avoid this
     // extra lookup step?
-    llvm::SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
+    SmallVector<std::pair<IdentifierInfo *, SourceLocation>, 2> Path;
     for (Module *Mod = SuggestedModule; Mod; Mod = Mod->Parent)
       Path.push_back(std::make_pair(getIdentifierInfo(Mod->Name),
                                     FilenameTok.getLocation()));

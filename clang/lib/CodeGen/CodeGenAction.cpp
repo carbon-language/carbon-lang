@@ -398,7 +398,7 @@ void CodeGenAction::ExecuteAction() {
         Msg = Msg.substr(7);
 
       // Escape '%', which is interpreted as a format character.
-      llvm::SmallString<128> EscapedMessage;
+      SmallString<128> EscapedMessage;
       for (unsigned i = 0, e = Msg.size(); i != e; ++i) {
         if (Msg[i] == '%')
           EscapedMessage += '%';

@@ -432,7 +432,7 @@ public:
 
   template <typename REGION>
   const REGION* getRegionAs() const {
-    return llvm::dyn_cast<REGION>(getRegion());
+    return dyn_cast<REGION>(getRegion());
   }
 
   inline bool operator==(const MemRegionVal& R) const {

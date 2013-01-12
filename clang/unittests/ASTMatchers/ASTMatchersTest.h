@@ -89,7 +89,7 @@ testing::AssertionResult
 matchAndVerifyResultConditionally(const std::string &Code, const T &AMatcher,
                                   BoundNodesCallback *FindResultVerifier,
                                   bool ExpectResult) {
-  llvm::OwningPtr<BoundNodesCallback> ScopedVerifier(FindResultVerifier);
+  OwningPtr<BoundNodesCallback> ScopedVerifier(FindResultVerifier);
   bool VerifiedResult = false;
   MatchFinder Finder;
   Finder.addMatcher(

@@ -3365,8 +3365,8 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
     if (SawVoid)
       return false;
     
-    llvm::SmallVector<OpaqueValueExpr, 2> OpaqueArgExprs;
-    llvm::SmallVector<Expr *, 2> ArgExprs;
+    SmallVector<OpaqueValueExpr, 2> OpaqueArgExprs;
+    SmallVector<Expr *, 2> ArgExprs;
     ArgExprs.reserve(Args.size() - 1);
     for (unsigned I = 1, N = Args.size(); I != N; ++I) {
       QualType T = Args[I]->getType();
@@ -3433,7 +3433,7 @@ ExprResult Sema::BuildTypeTrait(TypeTrait Kind, SourceLocation KWLoc,
 ExprResult Sema::ActOnTypeTrait(TypeTrait Kind, SourceLocation KWLoc, 
                                 ArrayRef<ParsedType> Args, 
                                 SourceLocation RParenLoc) {
-  llvm::SmallVector<TypeSourceInfo *, 4> ConvertedArgs;
+  SmallVector<TypeSourceInfo *, 4> ConvertedArgs;
   ConvertedArgs.reserve(Args.size());
   
   for (unsigned I = 0, N = Args.size(); I != N; ++I) {

@@ -76,7 +76,7 @@ public:
   /// matches, an empty \c StringRef is returned and a corresponding message
   /// written to 'Error'.
   StringRef findEquivalent(StringRef FileName,
-                           llvm::raw_ostream &Error) const;
+                           raw_ostream &Error) const;
 private:
   FileMatchTrieNode *Root;
   OwningPtr<PathComparator> Comparator;

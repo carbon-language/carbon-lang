@@ -67,7 +67,7 @@ enum LockErrorKind {
 /// Handler class for thread safety warnings.
 class ThreadSafetyHandler {
 public:
-  typedef llvm::StringRef Name;
+  typedef StringRef Name;
   ThreadSafetyHandler() : IssueBetaWarnings(false) { }
   virtual ~ThreadSafetyHandler();
 

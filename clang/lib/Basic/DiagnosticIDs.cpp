@@ -546,9 +546,8 @@ StringRef DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
 }
 
 void DiagnosticIDs::getDiagnosticsInGroup(
-  const WarningOption *Group,
-  llvm::SmallVectorImpl<diag::kind> &Diags) const
-{
+    const WarningOption *Group,
+    SmallVectorImpl<diag::kind> &Diags) const {
   // Add the members of the option diagnostic set.
   if (const short *Member = Group->Members) {
     for (; *Member != -1; ++Member)
@@ -563,9 +562,8 @@ void DiagnosticIDs::getDiagnosticsInGroup(
 }
 
 bool DiagnosticIDs::getDiagnosticsInGroup(
-  StringRef Group,
-  llvm::SmallVectorImpl<diag::kind> &Diags) const
-{
+    StringRef Group,
+    SmallVectorImpl<diag::kind> &Diags) const {
   WarningOption Key = { Group.size(), Group.data(), 0, 0 };
   const WarningOption *Found =
   std::lower_bound(OptionTable, OptionTable + OptionTableSize, Key,
@@ -579,7 +577,7 @@ bool DiagnosticIDs::getDiagnosticsInGroup(
 }
 
 void DiagnosticIDs::getAllDiagnostics(
-                               llvm::SmallVectorImpl<diag::kind> &Diags) const {
+                               SmallVectorImpl<diag::kind> &Diags) const {
   for (unsigned i = 0; i != StaticDiagInfoSize; ++i)
     Diags.push_back(StaticDiagInfo[i].DiagID);
 }

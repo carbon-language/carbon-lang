@@ -53,7 +53,7 @@ ExternalPreprocessorSource::~ExternalPreprocessorSource() { }
 
 PPMutationListener::~PPMutationListener() { }
 
-Preprocessor::Preprocessor(llvm::IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
+Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
                            DiagnosticsEngine &diags, LangOptions &opts,
                            const TargetInfo *target, SourceManager &SM,
                            HeaderSearch &Headers, ModuleLoader &TheModuleLoader,
@@ -293,7 +293,7 @@ Preprocessor::macro_end(bool IncludeExternalMacros) const {
 
 /// \brief Compares macro tokens with a specified token value sequence.
 static bool MacroDefinitionEquals(const MacroInfo *MI,
-                                  llvm::ArrayRef<TokenValue> Tokens) {
+                                  ArrayRef<TokenValue> Tokens) {
   return Tokens.size() == MI->getNumTokens() &&
       std::equal(Tokens.begin(), Tokens.end(), MI->tokens_begin());
 }

@@ -79,7 +79,7 @@ public:
   static const char *const HelpMessage;
 
 private:
-  llvm::OwningPtr<CompilationDatabase> Compilations;
+  OwningPtr<CompilationDatabase> Compilations;
   std::vector<std::string> SourcePathList;
 };
 

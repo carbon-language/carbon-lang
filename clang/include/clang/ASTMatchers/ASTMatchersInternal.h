@@ -193,7 +193,7 @@ class ASTMatchFinder;
 /// current node and doesn't care about its children or descendants,
 /// implement SingleNodeMatcherInterface instead.
 template <typename T>
-class MatcherInterface : public llvm::RefCountedBaseVPTR {
+class MatcherInterface : public RefCountedBaseVPTR {
 public:
   virtual ~MatcherInterface() {}
 
@@ -343,7 +343,7 @@ private:
     const Matcher<Base> From;
   };
 
-  llvm::IntrusiveRefCntPtr< MatcherInterface<T> > Implementation;
+  IntrusiveRefCntPtr< MatcherInterface<T> > Implementation;
 };  // class Matcher
 
 /// \brief A convenient helper for creating a Matcher<T> without specifying
@@ -676,7 +676,7 @@ public:
   virtual bool matches(const T &Node,
                        ASTMatchFinder *Finder,
                        BoundNodesTreeBuilder *Builder) const {
-    const To *InnerMatchValue = llvm::dyn_cast<To>(&Node);
+    const To *InnerMatchValue = dyn_cast<To>(&Node);
     return InnerMatchValue != NULL &&
       InnerMatcher.matches(*InnerMatchValue, Finder, Builder);
   }

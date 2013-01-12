@@ -104,7 +104,7 @@ private:
 
   FileMatchTrie MatchTrie;
 
-  llvm::OwningPtr<llvm::MemoryBuffer> Database;
+  OwningPtr<llvm::MemoryBuffer> Database;
   llvm::SourceMgr SM;
   llvm::yaml::Stream YAMLStream;
 };

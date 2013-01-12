@@ -103,7 +103,7 @@ private:
                                CheckerContext &C) const;
                                
   
-  typedef llvm::SmallVector<unsigned, 2> ArgVector;
+  typedef SmallVector<unsigned, 2> ArgVector;
 
   /// \brief A struct used to specify taint propagation rules for a function.
   ///

@@ -81,7 +81,7 @@ int main(int argc, const char **argv, char * const *envp) {
   // FIXME: This is a hack to try to force the driver to do something we can
   // recognize. We need to extend the driver library to support this use model
   // (basically, exactly one input, and the operation mode is hard wired).
-  llvm::SmallVector<const char *, 16> Args(argv, argv + argc);
+  SmallVector<const char *, 16> Args(argv, argv + argc);
   Args.push_back("-fsyntax-only");
   OwningPtr<Compilation> C(TheDriver.BuildCompilation(Args));
   if (!C)

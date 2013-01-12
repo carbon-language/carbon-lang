@@ -1321,7 +1321,7 @@ public:
          I != E; ++I) {
       const UnwrappedLine &TheLine = *I;
       if (touchesRanges(TheLine)) {
-        llvm::OwningPtr<TokenAnnotator> AnnotatedLine(
+        OwningPtr<TokenAnnotator> AnnotatedLine(
             new TokenAnnotator(TheLine, Style, SourceMgr, Lex));
         if (!AnnotatedLine->annotate())
           break;
@@ -1359,7 +1359,7 @@ private:
   ///
   /// Returns whether the resulting \c Line can fit in a single line.
   bool tryFitMultipleLinesInOne(unsigned Indent, UnwrappedLine &Line,
-                                llvm::OwningPtr<TokenAnnotator> &AnnotatedLine,
+                                OwningPtr<TokenAnnotator> &AnnotatedLine,
                                 std::vector<UnwrappedLine>::iterator &I,
                                 std::vector<UnwrappedLine>::iterator E) {
     unsigned Limit = Style.ColumnLimit - (I->InPPDirective ? 1 : 0) - Indent;
@@ -1410,7 +1410,7 @@ private:
       return FitsOnALine;
     Last->Children.push_back(*Next);
 
-    llvm::OwningPtr<TokenAnnotator> CombinedAnnotator(
+    OwningPtr<TokenAnnotator> CombinedAnnotator(
         new TokenAnnotator(Combined, Style, SourceMgr, Lex));
     if (CombinedAnnotator->annotate() &&
         fitsIntoLimit(CombinedAnnotator->getRootToken(), Limit)) {
@@ -1506,7 +1506,7 @@ tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
   TextDiagnosticPrinter DiagnosticPrinter(llvm::errs(), &*DiagOpts);
   DiagnosticPrinter.BeginSourceFile(Lex.getLangOpts(), Lex.getPP());
   DiagnosticsEngine Diagnostics(
-      llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()), &*DiagOpts,
+      IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()), &*DiagOpts,
       &DiagnosticPrinter, false);
   Diagnostics.setSourceManager(&SourceMgr);
   Formatter formatter(Diagnostics, Style, Lex, SourceMgr, Ranges);

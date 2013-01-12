@@ -143,8 +143,8 @@ class ASTSelectorLookupTrait {
 public:
   struct data_type {
     SelectorID ID;
-    llvm::SmallVector<ObjCMethodDecl *, 2> Instance;
-    llvm::SmallVector<ObjCMethodDecl *, 2> Factory;
+    SmallVector<ObjCMethodDecl *, 2> Instance;
+    SmallVector<ObjCMethodDecl *, 2> Factory;
   };
   
   typedef Selector external_key_type;

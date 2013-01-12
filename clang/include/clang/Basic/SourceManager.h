@@ -522,7 +522,7 @@ public:
 /// \brief The stack used when building modules on demand, which is used
 /// to provide a link between the source managers of the different compiler
 /// instances.
-typedef llvm::ArrayRef<std::pair<std::string, FullSourceLoc> > ModuleBuildStack;
+typedef ArrayRef<std::pair<std::string, FullSourceLoc> > ModuleBuildStack;
 
 /// \brief This class handles loading and caching of source files into memory.
 ///

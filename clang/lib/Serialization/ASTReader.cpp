@@ -1626,7 +1626,7 @@ void ASTReader::MaybeAddSystemRootToFilename(ModuleFile &M,
 
 ASTReader::ASTReadResult
 ASTReader::ReadControlBlock(ModuleFile &F,
-                            llvm::SmallVectorImpl<ImportedModule> &Loaded,
+                            SmallVectorImpl<ImportedModule> &Loaded,
                             unsigned ClientLoadCapabilities) {
   llvm::BitstreamCursor &Stream = F.Stream;
 
@@ -2602,7 +2602,7 @@ void ASTReader::makeNamesVisible(const HiddenNames &Names) {
 void ASTReader::makeModuleVisible(Module *Mod, 
                                   Module::NameVisibilityKind NameVisibility) {
   llvm::SmallPtrSet<Module *, 4> Visited;
-  llvm::SmallVector<Module *, 4> Stack;
+  SmallVector<Module *, 4> Stack;
   Stack.push_back(Mod);  
   while (!Stack.empty()) {
     Mod = Stack.back();
@@ -2642,7 +2642,7 @@ void ASTReader::makeModuleVisible(Module *Mod,
     // Push any exported modules onto the stack to be marked as visible.
     bool AnyWildcard = false;
     bool UnrestrictedWildcard = false;
-    llvm::SmallVector<Module *, 4> WildcardRestrictions;
+    SmallVector<Module *, 4> WildcardRestrictions;
     for (unsigned I = 0, N = Mod->Exports.size(); I != N; ++I) {
       Module *Exported = Mod->Exports[I].getPointer();
       if (!Mod->Exports[I].getInt()) {
@@ -2705,7 +2705,7 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   unsigned PreviousGeneration = CurrentGeneration++;
 
   unsigned NumModules = ModuleMgr.size();
-  llvm::SmallVector<ImportedModule, 4> Loaded;
+  SmallVector<ImportedModule, 4> Loaded;
   switch(ASTReadResult ReadResult = ReadASTCore(FileName, Type, ImportLoc,
                                                 /*ImportedBy=*/0, Loaded,
                                                 ClientLoadCapabilities)) {
@@ -2724,8 +2724,8 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   // Here comes stuff that we only do once the entire chain is loaded.
 
   // Load the AST blocks of all of the modules that we loaded.
-  for (llvm::SmallVectorImpl<ImportedModule>::iterator M = Loaded.begin(),
-                                                  MEnd = Loaded.end();
+  for (SmallVectorImpl<ImportedModule>::iterator M = Loaded.begin(),
+                                              MEnd = Loaded.end();
        M != MEnd; ++M) {
     ModuleFile &F = *M->Mod;
 
@@ -2751,8 +2751,8 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
   }
 
   // Setup the import locations.
-  for (llvm::SmallVectorImpl<ImportedModule>::iterator M = Loaded.begin(),
-                                                    MEnd = Loaded.end();
+  for (SmallVectorImpl<ImportedModule>::iterator M = Loaded.begin(),
+                                              MEnd = Loaded.end();
        M != MEnd; ++M) {
     ModuleFile &F = *M->Mod;
     if (!M->ImportedBy)
@@ -2825,7 +2825,7 @@ ASTReader::ReadASTCore(StringRef FileName,
                        ModuleKind Type,
                        SourceLocation ImportLoc,
                        ModuleFile *ImportedBy,
-                       llvm::SmallVectorImpl<ImportedModule> &Loaded,
+                       SmallVectorImpl<ImportedModule> &Loaded,
                        unsigned ClientLoadCapabilities) {
   ModuleFile *M;
   bool NewModule;
@@ -4094,7 +4094,7 @@ HeaderFileInfo ASTReader::GetHeaderFileInfo(const FileEntry *FE) {
 
 void ASTReader::ReadPragmaDiagnosticMappings(DiagnosticsEngine &Diag) {
   // FIXME: Make it work properly with modules.
-  llvm::SmallVector<DiagnosticsEngine::DiagState *, 32> DiagStates;
+  SmallVector<DiagnosticsEngine::DiagState *, 32> DiagStates;
   for (ModuleIterator I = ModuleMgr.begin(), E = ModuleMgr.end(); I != E; ++I) {
     ModuleFile &F = *(*I);
     unsigned Idx = 0;
@@ -5326,7 +5326,7 @@ namespace {
   /// declaration context.
   class DeclContextNameLookupVisitor {
     ASTReader &Reader;
-    llvm::SmallVectorImpl<const DeclContext *> &Contexts;
+    SmallVectorImpl<const DeclContext *> &Contexts;
     DeclarationName Name;
     SmallVectorImpl<NamedDecl *> &Decls;
 
@@ -5429,7 +5429,7 @@ namespace {
   /// declaration context.
   class DeclContextAllNamesVisitor {
     ASTReader &Reader;
-    llvm::SmallVectorImpl<const DeclContext *> &Contexts;
+    SmallVectorImpl<const DeclContext *> &Contexts;
     llvm::DenseMap<DeclarationName, SmallVector<NamedDecl *, 8> > &Decls;
     bool VisitAll;
 
@@ -5488,7 +5488,7 @@ namespace {
 void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
   if (!DC->hasExternalVisibleStorage())
     return;
-  llvm::DenseMap<DeclarationName, llvm::SmallVector<NamedDecl*, 8> > Decls;
+  llvm::DenseMap<DeclarationName, SmallVector<NamedDecl *, 8> > Decls;
 
   // Compute the declaration contexts we need to look into. Multiple such
   // declaration contexts occur when two declaration contexts from disjoint
@@ -5512,7 +5512,7 @@ void ASTReader::completeVisibleDeclsMap(const DeclContext *DC) {
   ++NumVisibleDeclContextsRead;
 
   for (llvm::DenseMap<DeclarationName,
-                      llvm::SmallVector<NamedDecl*, 8> >::iterator
+                      SmallVector<NamedDecl *, 8> >::iterator
          I = Decls.begin(), E = Decls.end(); I != E; ++I) {
     SetExternalVisibleDeclsForName(DC, I->first, I->second);
   }
@@ -5811,8 +5811,8 @@ namespace clang { namespace serialization {
     ASTReader &Reader;
     Selector Sel;
     unsigned PriorGeneration;
-    llvm::SmallVector<ObjCMethodDecl *, 4> InstanceMethods;
-    llvm::SmallVector<ObjCMethodDecl *, 4> FactoryMethods;
+    SmallVector<ObjCMethodDecl *, 4> InstanceMethods;
+    SmallVector<ObjCMethodDecl *, 4> FactoryMethods;
 
   public:
     ReadMethodPoolVisitor(ASTReader &Reader, Selector Sel, 

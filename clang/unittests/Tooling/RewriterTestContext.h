@@ -36,7 +36,7 @@ class RewriterTestContext {
  public:
   RewriterTestContext()
       : DiagOpts(new DiagnosticOptions()),
-        Diagnostics(llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
+        Diagnostics(IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs),
                     &*DiagOpts),
         DiagnosticPrinter(llvm::outs(), &*DiagOpts),
         Files((FileSystemOptions())),
@@ -72,7 +72,7 @@ class RewriterTestContext {
       llvm::raw_fd_ostream Closer(FD, /*shouldClose=*/true);
       TemporaryDirectory = llvm::sys::path::parent_path(TemporaryDirectory);
     }
-    llvm::SmallString<1024> Path(TemporaryDirectory);
+    SmallString<1024> Path(TemporaryDirectory);
     llvm::sys::path::append(Path, Name);
     std::string ErrorInfo;
     llvm::raw_fd_ostream OutStream(Path.c_str(),
@@ -101,7 +101,7 @@ class RewriterTestContext {
   }
 
   std::string getFileContentFromDisk(StringRef Name) {
-    llvm::SmallString<1024> Path(TemporaryDirectory.str());
+    SmallString<1024> Path(TemporaryDirectory.str());
     llvm::sys::path::append(Path, Name);
     // We need to read directly from the FileManager without relaying through
     // a FileEntry, as otherwise we'd read through an already opened file
@@ -111,7 +111,7 @@ class RewriterTestContext {
     return Files.getBufferForFile(Path, NULL)->getBuffer();
   }
 
-  llvm::IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
   DiagnosticsEngine Diagnostics;
   TextDiagnosticPrinter DiagnosticPrinter;
   FileManager Files;

@@ -3631,7 +3631,7 @@ public:
   static FunctionParmPackExpr *Create(ASTContext &Context, QualType T,
                                       ParmVarDecl *ParamPack,
                                       SourceLocation NameLoc,
-                                      llvm::ArrayRef<Decl*> Params);
+                                      ArrayRef<Decl *> Params);
   static FunctionParmPackExpr *CreateEmpty(ASTContext &Context,
                                            unsigned NumParams);
 

@@ -29,9 +29,9 @@ namespace {
 class DeadCodeScan {
   llvm::BitVector Visited;
   llvm::BitVector &Reachable;
-  llvm::SmallVector<const CFGBlock *, 10> WorkList;
+  SmallVector<const CFGBlock *, 10> WorkList;
   
-  typedef llvm::SmallVector<std::pair<const CFGBlock *, const Stmt *>, 12>
+  typedef SmallVector<std::pair<const CFGBlock *, const Stmt *>, 12>
       DeferredLocsTy;
   
   DeferredLocsTy DeferredLocs;

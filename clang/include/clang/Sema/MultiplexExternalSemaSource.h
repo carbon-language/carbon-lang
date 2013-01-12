@@ -39,7 +39,7 @@ namespace clang {
 class MultiplexExternalSemaSource : public ExternalSemaSource {
 
 private:
-  llvm::SmallVector<ExternalSemaSource*, 2> Sources; // doesn't own them.
+  SmallVector<ExternalSemaSource *, 2> Sources; // doesn't own them.
 
 public:
   

@@ -103,7 +103,7 @@ enum CXXInlineableMemberKind {
 };
 
 
-class AnalyzerOptions : public llvm::RefCountedBase<AnalyzerOptions> {
+class AnalyzerOptions : public RefCountedBase<AnalyzerOptions> {
 public:
   typedef llvm::StringMap<std::string> ConfigTable;
 
@@ -207,7 +207,7 @@ private:
                         bool DefaultVal);
   
   /// Interprets an option's string value as an integer value.
-  int getOptionAsInteger(llvm::StringRef Name, int DefaultVal);
+  int getOptionAsInteger(StringRef Name, int DefaultVal);
 
 public:
   /// Returns the option controlling which C++ member functions will be
@@ -309,7 +309,7 @@ public:
   }
 };
   
-typedef llvm::IntrusiveRefCntPtr<AnalyzerOptions> AnalyzerOptionsRef;
+typedef IntrusiveRefCntPtr<AnalyzerOptions> AnalyzerOptionsRef;
   
 }
 

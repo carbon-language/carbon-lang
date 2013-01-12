@@ -318,7 +318,7 @@ namespace {
 
     OptionalDiagnostic &operator<<(const APSInt &I) {
       if (Diag) {
-        llvm::SmallVector<char, 32> Buffer;
+        SmallVector<char, 32> Buffer;
         I.toString(Buffer);
         *Diag << StringRef(Buffer.data(), Buffer.size());
       }
@@ -327,7 +327,7 @@ namespace {
 
     OptionalDiagnostic &operator<<(const APFloat &F) {
       if (Diag) {
-        llvm::SmallVector<char, 32> Buffer;
+        SmallVector<char, 32> Buffer;
         F.toString(Buffer);
         *Diag << StringRef(Buffer.data(), Buffer.size());
       }
@@ -535,8 +535,7 @@ namespace {
 
   public:
     SpeculativeEvaluationRAII(EvalInfo &Info,
-                              llvm::SmallVectorImpl<PartialDiagnosticAt>
-                                *NewDiag = 0)
+                              SmallVectorImpl<PartialDiagnosticAt> *NewDiag = 0)
       : Info(Info), Old(Info.EvalStatus) {
       Info.EvalStatus.Diag = NewDiag;
     }
@@ -587,7 +586,7 @@ CallStackFrame::~CallStackFrame() {
 }
 
 /// Produce a string describing the given constexpr call.
-static void describeCall(CallStackFrame *Frame, llvm::raw_ostream &Out) {
+static void describeCall(CallStackFrame *Frame, raw_ostream &Out) {
   unsigned ArgIndex = 0;
   bool IsMemberCall = isa<CXXMethodDecl>(Frame->Callee) &&
                       !isa<CXXConstructorDecl>(Frame->Callee) &&
@@ -635,7 +634,7 @@ void EvalInfo::addCallStack(unsigned Limit) {
       continue;
     }
 
-    llvm::SmallVector<char, 128> Buffer;
+    SmallVector<char, 128> Buffer;
     llvm::raw_svector_ostream Out(Buffer);
     describeCall(Frame, Out);
     addDiag(Frame->CallLoc, diag::note_constexpr_call_here) << Out.str();
@@ -1463,7 +1462,7 @@ static bool EvaluateVarDeclInit(EvalInfo &Info, const Expr *E,
 
   // Check that we can fold the initializer. In C++, we will have already done
   // this in the cases where it matters for conformance.
-  llvm::SmallVector<PartialDiagnosticAt, 8> Notes;
+  SmallVector<PartialDiagnosticAt, 8> Notes;
   if (!VD->evaluateValue(Notes)) {
     Info.Diag(E, diag::note_constexpr_var_init_non_constant,
               Notes.size() + 1) << VD;
@@ -2312,7 +2311,7 @@ private:
 
     // Speculatively evaluate both arms.
     {
-      llvm::SmallVector<PartialDiagnosticAt, 8> Diag;
+      SmallVector<PartialDiagnosticAt, 8> Diag;
       SpeculativeEvaluationRAII Speculate(Info, &Diag);
 
       StmtVisitorTy::Visit(E->getFalseExpr());
@@ -2483,7 +2482,7 @@ public:
 
     const FunctionDecl *FD = 0;
     LValue *This = 0, ThisVal;
-    llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
+    ArrayRef<const Expr *> Args(E->getArgs(), E->getNumArgs());
     bool HasQualifier = false;
 
     // Extract function decl and 'this' pointer from the callee.
@@ -3488,7 +3487,7 @@ bool RecordExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   if (ZeroInit && !ZeroInitialization(E))
     return false;
 
-  llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
+  ArrayRef<const Expr *> Args(E->getArgs(), E->getNumArgs());
   return HandleConstructorCall(E->getExprLoc(), This, Args,
                                cast<CXXConstructorDecl>(Definition), Info,
                                Result);
@@ -3899,7 +3898,7 @@ bool ArrayExprEvaluator::VisitCXXConstructExpr(const CXXConstructExpr *E) {
       return false;
   }
 
-  llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
+  ArrayRef<const Expr *> Args(E->getArgs(), E->getNumArgs());
   return HandleConstructorCall(E->getExprLoc(), Subobject, Args,
                                cast<CXXConstructorDecl>(Definition),
                                Info, *Value);
@@ -6320,7 +6319,7 @@ bool Expr::EvaluateAsLValue(EvalResult &Result, const ASTContext &Ctx) const {
 
 bool Expr::EvaluateAsInitializer(APValue &Value, const ASTContext &Ctx,
                                  const VarDecl *VD,
-                      llvm::SmallVectorImpl<PartialDiagnosticAt> &Notes) const {
+                            SmallVectorImpl<PartialDiagnosticAt> &Notes) const {
   // FIXME: Evaluating initializers for large array and record types can cause
   // performance problems. Only do so in C++11 for now.
   if (isRValue() && (getType()->isArrayType() || getType()->isRecordType()) &&
@@ -6365,7 +6364,7 @@ bool Expr::isEvaluatable(const ASTContext &Ctx) const {
 }
 
 APSInt Expr::EvaluateKnownConstInt(const ASTContext &Ctx,
-               llvm::SmallVectorImpl<PartialDiagnosticAt> *Diag) const {
+                    SmallVectorImpl<PartialDiagnosticAt> *Diag) const {
   EvalResult EvalResult;
   EvalResult.Diag = Diag;
   bool Result = EvaluateAsRValue(EvalResult, Ctx);
@@ -6843,7 +6842,7 @@ bool Expr::isCXX11ConstantExpr(ASTContext &Ctx, APValue *Result,
 
   // Build evaluation settings.
   Expr::EvalStatus Status;
-  llvm::SmallVector<PartialDiagnosticAt, 8> Diags;
+  SmallVector<PartialDiagnosticAt, 8> Diags;
   Status.Diag = &Diags;
   EvalInfo Info(Ctx, Status);
 
@@ -6862,7 +6861,7 @@ bool Expr::isCXX11ConstantExpr(ASTContext &Ctx, APValue *Result,
 }
 
 bool Expr::isPotentialConstantExpr(const FunctionDecl *FD,
-                                   llvm::SmallVectorImpl<
+                                   SmallVectorImpl<
                                      PartialDiagnosticAt> &Diags) {
   // FIXME: It would be useful to check constexpr function templates, but at the
   // moment the constant expression evaluator cannot cope with the non-rigorous

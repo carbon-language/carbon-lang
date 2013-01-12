@@ -3016,7 +3016,7 @@ IdentifierInfo *Parser::TryParseCXX11AttributeIdentifier(SourceLocation &Loc) {
   case tok::exclaimequal: // 'not_eq'
     // Alternative tokens do not have identifier info, but their spelling
     // starts with an alphabetical character.
-    llvm::SmallString<8> SpellingBuf;
+    SmallString<8> SpellingBuf;
     StringRef Spelling = PP.getSpelling(Tok.getLocation(), SpellingBuf);
     if (std::isalpha(Spelling[0])) {
       Loc = ConsumeToken();

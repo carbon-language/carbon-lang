@@ -166,7 +166,7 @@ class FlushRewrittenFilesTest : public ::testing::Test {
   }
 
   FileID createFile(llvm::StringRef Name, llvm::StringRef Content) {
-    llvm::SmallString<1024> Path(TemporaryDirectory.str());
+    SmallString<1024> Path(TemporaryDirectory.str());
     llvm::sys::path::append(Path, Name);
     std::string ErrorInfo;
     llvm::raw_fd_ostream OutStream(Path.c_str(),
@@ -180,7 +180,7 @@ class FlushRewrittenFilesTest : public ::testing::Test {
   }
 
   std::string getFileContentFromDisk(llvm::StringRef Name) {
-    llvm::SmallString<1024> Path(TemporaryDirectory.str());
+    SmallString<1024> Path(TemporaryDirectory.str());
     llvm::sys::path::append(Path, Name);
     // We need to read directly from the FileManager without relaying through
     // a FileEntry, as otherwise we'd read through an already opened file

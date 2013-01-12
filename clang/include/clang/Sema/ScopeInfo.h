@@ -511,11 +511,11 @@ public:
   bool ContainsUnexpandedParameterPack;
 
   /// \brief Variables used to index into by-copy array captures.
-  llvm::SmallVector<VarDecl *, 4> ArrayIndexVars;
+  SmallVector<VarDecl *, 4> ArrayIndexVars;
 
   /// \brief Offsets into the ArrayIndexVars array at which each capture starts
   /// its list of array index variables.
-  llvm::SmallVector<unsigned, 4> ArrayIndexStarts;
+  SmallVector<unsigned, 4> ArrayIndexStarts;
   
   LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda,
                   CXXMethodDecl *CallOperator)

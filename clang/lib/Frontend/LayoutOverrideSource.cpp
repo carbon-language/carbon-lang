@@ -26,7 +26,7 @@ static std::string parseName(StringRef S) {
   return S.substr(0, Offset).str();
 }
 
-LayoutOverrideSource::LayoutOverrideSource(llvm::StringRef Filename) {
+LayoutOverrideSource::LayoutOverrideSource(StringRef Filename) {
   std::ifstream Input(Filename.str().c_str());
   if (!Input.is_open())
     return;
@@ -188,7 +188,7 @@ LayoutOverrideSource::layoutRecordType(const RecordDecl *Record,
 }
 
 void LayoutOverrideSource::dump() {
-  llvm::raw_ostream &OS = llvm::errs();
+  raw_ostream &OS = llvm::errs();
   for (llvm::StringMap<Layout>::iterator L = Layouts.begin(), 
                                       LEnd = Layouts.end();
        L != LEnd; ++L) {

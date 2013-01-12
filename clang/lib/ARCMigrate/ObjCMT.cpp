@@ -36,8 +36,8 @@ public:
   std::string MigrateDir;
   bool MigrateLiterals;
   bool MigrateSubscripting;
-  llvm::OwningPtr<NSAPI> NSAPIObj;
-  llvm::OwningPtr<edit::EditedSource> Editor;
+  OwningPtr<NSAPI> NSAPIObj;
+  OwningPtr<edit::EditedSource> Editor;
   FileRemapper &Remapper;
   FileManager &FileMgr;
   const PPConditionalDirectiveRecord *PPRec;
@@ -193,13 +193,13 @@ void ObjCMigrateASTConsumer::HandleTranslationUnit(ASTContext &Ctx) {
     RewriteBuffer &buf = I->second;
     const FileEntry *file = Ctx.getSourceManager().getFileEntryForID(FID);
     assert(file);
-    llvm::SmallString<512> newText;
+    SmallString<512> newText;
     llvm::raw_svector_ostream vecOS(newText);
     buf.write(vecOS);
     vecOS.flush();
     llvm::MemoryBuffer *memBuf = llvm::MemoryBuffer::getMemBufferCopy(
                    StringRef(newText.data(), newText.size()), file->getName());
-    llvm::SmallString<64> filePath(file->getName());
+    SmallString<64> filePath(file->getName());
     FileMgr.FixupRelativePath(filePath);
     Remapper.remap(filePath.str(), memBuf);
   }

@@ -2445,7 +2445,7 @@ static bool shouldEmitSeparateBlockRetain(const Expr *e) {
 /// This massively duplicates emitPseudoObjectRValue.
 static TryEmitResult tryEmitARCRetainPseudoObject(CodeGenFunction &CGF,
                                                   const PseudoObjectExpr *E) {
-  llvm::SmallVector<CodeGenFunction::OpaqueValueMappingData, 4> opaques;
+  SmallVector<CodeGenFunction::OpaqueValueMappingData, 4> opaques;
 
   // Find the result expression.
   const Expr *resultExpr = E->getResultExpr();

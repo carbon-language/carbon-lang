@@ -144,7 +144,7 @@ inline BlockFieldFlags operator|(BlockFieldFlag_t l, BlockFieldFlag_t r) {
 class CGBlockInfo {
 public:
   /// Name - The name of the block, kindof.
-  llvm::StringRef Name;
+  StringRef Name;
 
   /// The field index of 'this' within the block, if there is one.
   unsigned CXXThisIndex;
@@ -247,7 +247,7 @@ public:
     return BlockExpression;
   }
 
-  CGBlockInfo(const BlockDecl *blockDecl, llvm::StringRef Name);
+  CGBlockInfo(const BlockDecl *blockDecl, StringRef Name);
 };
 
 }  // end namespace CodeGen

@@ -1228,8 +1228,8 @@ inline internal::Matcher<Stmt> sizeOfExpr(
 AST_MATCHER_P(NamedDecl, hasName, std::string, Name) {
   assert(!Name.empty());
   const std::string FullNameString = "::" + Node.getQualifiedNameAsString();
-  const llvm::StringRef FullName = FullNameString;
-  const llvm::StringRef Pattern = Name;
+  const StringRef FullName = FullNameString;
+  const StringRef Pattern = Name;
   if (Pattern.startswith("::")) {
     return FullName == Pattern;
   } else {
@@ -1705,8 +1705,7 @@ AST_MATCHER_P(DeclRefExpr, to, internal::Matcher<Decl>,
 AST_MATCHER_P(DeclRefExpr, throughUsingDecl,
               internal::Matcher<UsingShadowDecl>, InnerMatcher) {
   const NamedDecl *FoundDecl = Node.getFoundDecl();
-  if (const UsingShadowDecl *UsingDecl =
-      llvm::dyn_cast<UsingShadowDecl>(FoundDecl))
+  if (const UsingShadowDecl *UsingDecl = dyn_cast<UsingShadowDecl>(FoundDecl))
     return InnerMatcher.matches(*UsingDecl, Finder, Builder);
   return false;
 }

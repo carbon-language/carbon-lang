@@ -88,7 +88,7 @@ public:
   virtual bool isLateParsed() const { return false; }
 
   // Pretty print this attribute.
-  virtual void printPretty(llvm::raw_ostream &OS,
+  virtual void printPretty(raw_ostream &OS,
                            const PrintingPolicy &Policy) const = 0;
 };
 

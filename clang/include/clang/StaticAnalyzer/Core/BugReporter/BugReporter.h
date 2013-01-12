@@ -89,14 +89,14 @@ protected:
   /// diagnostics to include when constructing the final path diagnostic.
   /// The stack is largely used by BugReporter when generating PathDiagnostics
   /// for multiple PathDiagnosticConsumers.
-  llvm::SmallVector<Symbols *, 2> interestingSymbols;
+  SmallVector<Symbols *, 2> interestingSymbols;
 
   /// A (stack of) set of regions that are registered with this report as being
   /// "interesting", and thus used to help decide which diagnostics
   /// to include when constructing the final path diagnostic.
   /// The stack is largely used by BugReporter when generating PathDiagnostics
   /// for multiple PathDiagnosticConsumers.
-  llvm::SmallVector<Regions *, 2> interestingRegions;
+  SmallVector<Regions *, 2> interestingRegions;
 
   /// A set of location contexts that correspoind to call sites which should be
   /// considered "interesting".

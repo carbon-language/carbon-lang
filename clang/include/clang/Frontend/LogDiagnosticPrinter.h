@@ -42,7 +42,7 @@ class LogDiagnosticPrinter : public DiagnosticConsumer {
   
   raw_ostream &OS;
   const LangOptions *LangOpts;
-  llvm::IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts;
 
   SourceLocation LastWarningLoc;
   FullSourceLoc LastLoc;

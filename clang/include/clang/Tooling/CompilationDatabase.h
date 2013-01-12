@@ -152,7 +152,7 @@ public:
   /// The argument list is meant to be compatible with normal llvm command line
   /// parsing in main methods.
   /// int main(int argc, char **argv) {
-  ///   llvm::OwningPtr<FixedCompilationDatabase> Compilations(
+  ///   OwningPtr<FixedCompilationDatabase> Compilations(
   ///     FixedCompilationDatabase::loadFromCommandLine(argc, argv));
   ///   cl::ParseCommandLineOptions(argc, argv);
   ///   ...

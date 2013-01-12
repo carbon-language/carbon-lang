@@ -464,7 +464,7 @@ public:
   }
 
   bool ok() { return FileStream; }
-  llvm::raw_ostream &getStream() { return *FileStream; }
+  raw_ostream &getStream() { return *FileStream; }
 
 private:
   DiagnosticsEngine &Diagnostics;

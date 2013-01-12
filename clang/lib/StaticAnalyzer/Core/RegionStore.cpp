@@ -202,7 +202,7 @@ public:
     return asImmutableMap().getRootWithoutRetain();
   }
 
-  void dump(llvm::raw_ostream &OS, const char *nl) const {
+  void dump(raw_ostream &OS, const char *nl) const {
    for (iterator I = begin(), E = end(); I != E; ++I) {
      const ClusterBindings &Cluster = I.getData();
      for (ClusterBindings::iterator CI = Cluster.begin(), CE = Cluster.end();

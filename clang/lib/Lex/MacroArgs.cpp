@@ -23,7 +23,7 @@ using namespace clang;
 
 /// MacroArgs ctor function - This destroys the vector passed in.
 MacroArgs *MacroArgs::create(const MacroInfo *MI,
-                             llvm::ArrayRef<Token> UnexpArgTokens,
+                             ArrayRef<Token> UnexpArgTokens,
                              bool VarargsElided, Preprocessor &PP) {
   assert(MI->isFunctionLike() &&
          "Can't have args for an object-like macro!");

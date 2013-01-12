@@ -1355,7 +1355,7 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
       // We construct a SmallVector here to talk to getDiagnosticIDs().
       // Although we don't use the result, this isn't a hot path, and not
       // worth special casing.
-      llvm::SmallVector<diag::kind, 10> Diags;
+      SmallVector<diag::kind, 10> Diags;
       Value = !getDiagnostics().getDiagnosticIDs()->
         getDiagnosticsInGroup(WarningName.substr(2), Diags);
     } while (false);
