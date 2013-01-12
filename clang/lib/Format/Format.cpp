@@ -282,7 +282,9 @@ private:
         return FirstLessLess < Other.FirstLessLess;
       if (BreakBeforeClosingBrace != Other.BreakBeforeClosingBrace)
         return BreakBeforeClosingBrace;
-      return BreakAfterComma;
+      if (BreakAfterComma != Other.BreakAfterComma)
+        return BreakAfterComma;
+      return false;
     }
   };
 

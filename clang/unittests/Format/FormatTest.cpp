@@ -681,6 +681,24 @@ TEST_F(FormatTest, ConstructorInitializers) {
                      "    : some_var_(var),  // 4 space indent\n"
                      "      some_other_var_(var + 1) {  // lined up\n"
                      "}");
+
+  // This test takes VERY long when memoization is broken.
+  verifyGoogleFormat(
+      "Constructor()\n"
+      "    : aaaa(a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
+      " a, a, a,\n"
+      "           a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
+      " a, a, a,\n"
+      "           a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
+      " a, a, a,\n"
+      "           a, a, a, a, a, a, a, a, a, a, a)\n"
+      "      aaaa(a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
+      " a, a, a,\n"
+      "           a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
+      " a, a, a,\n"
+      "           a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
+      " a, a, a,\n"
+      "           a, a, a, a, a, a, a, a, a, a, a) {}\n");
 }
 
 TEST_F(FormatTest, BreaksAsHighAsPossible) {
