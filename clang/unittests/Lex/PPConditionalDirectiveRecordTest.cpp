@@ -59,6 +59,9 @@ class VoidModuleLoader : public ModuleLoader {
                                       bool IsInclusionDirective) {
     return ModuleLoadResult();
   }
+
+  virtual void makeModuleVisible(Module *Mod,
+                                 Module::NameVisibilityKind Visibility) { }
 };
 
 TEST_F(PPConditionalDirectiveRecordTest, PPRecAPI) {

@@ -36,6 +36,9 @@ class VoidModuleLoader : public ModuleLoader {
                                       bool IsInclusionDirective) {
     return ModuleLoadResult();
   }
+
+  virtual void makeModuleVisible(Module *Mod,
+                                 Module::NameVisibilityKind Visibility) { }
 };
 
 // Stub to collect data from InclusionDirective callbacks.
