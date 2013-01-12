@@ -49,6 +49,12 @@ namespace lldb_private {
         bool
         WCharStringSummaryProvider (ValueObject& valobj, Stream& stream); // wchar_t*
         
+        bool
+        LibcxxStringSummaryProvider (ValueObject& valobj, Stream& stream); // libc++ std::string
+
+        bool
+        LibcxxWStringSummaryProvider (ValueObject& valobj, Stream& stream); // libc++ std::wstring
+        
         template<bool name_entries>
         bool
         NSDictionarySummaryProvider (ValueObject& valobj, Stream& stream);

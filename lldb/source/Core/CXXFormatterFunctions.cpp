@@ -158,8 +158,9 @@ ReadUTFBufferAndDumpToStream (uint64_t location,
     // if not UTF8, I need a conversion function to return proper UTF8
     if (origin_encoding != 8 && !ConvertFunction)
         return false;
-    const int bufferSPSize = 1024;
-    const int sourceSize = (bufferSPSize / (origin_encoding >> 2));
+
+    const int sourceSize = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
+    const int bufferSPSize = sourceSize * (origin_encoding >> 2);
 
     Error error;
     lldb::DataBufferSP buffer_sp(new DataBufferHeap(bufferSPSize,0));
@@ -218,6 +219,9 @@ ReadUTFBufferAndDumpToStream (uint64_t location,
             utf8_data_end_ptr = (UTF8*)data_end_ptr;
         }
         
+        // since we tend to accept partial data (and even partially malformed data)
+        // we might end up with no NULL terminator before the end_ptr
+        // hence we need to take a slower route and ensure we stay within boundaries
         for (;utf8_data_ptr != utf8_data_end_ptr; utf8_data_ptr++)
         {
             if (!*utf8_data_ptr)
@@ -290,9 +294,14 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     if (!process_sp)
         return false;
 
-    lldb::addr_t valobj_addr = valobj.GetValueAsUnsigned(0);
+    lldb::addr_t data_addr = 0;
+    
+    if (valobj.IsPointerType())
+        data_addr = valobj.GetValueAsUnsigned(0);
+    else if (valobj.IsArrayType())
+        data_addr = valobj.GetAddressOf();
 
-    if (!valobj_addr)
+    if (data_addr == 0 || data_addr == LLDB_INVALID_ADDRESS)
         return false;
 
     clang::ASTContext* ast = valobj.GetClangAST();
@@ -306,21 +315,21 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     {
         case 8:
             // utf 8
-            return ReadUTFBufferAndDumpToStream<UTF8, nullptr>(valobj_addr,
+            return ReadUTFBufferAndDumpToStream<UTF8, nullptr>(data_addr,
                                                                process_sp,
                                                                stream,
                                                                'L',
                                                                true); // but use quotes
         case 16:
             // utf 16
-            return ReadUTFBufferAndDumpToStream<UTF16, ConvertUTF16toUTF8>(valobj_addr,
+            return ReadUTFBufferAndDumpToStream<UTF16, ConvertUTF16toUTF8>(data_addr,
                                                                            process_sp,
                                                                            stream,
                                                                            'L',
                                                                            true); // but use quotes
         case 32:
             // utf 32
-            return ReadUTFBufferAndDumpToStream<UTF32, ConvertUTF32toUTF8>(valobj_addr,
+            return ReadUTFBufferAndDumpToStream<UTF32, ConvertUTF32toUTF8>(data_addr,
                                                                            process_sp,
                                                                            stream,
                                                                            'L',
@@ -330,6 +339,86 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
             return true;
     }
     return true;
+}
+
+// this function extracts information from a libcxx std::basic_string<>
+// irregardless of template arguments. it reports the size (in item count not bytes)
+// and the location in memory where the string data can be found
+static bool
+ExtractLibcxxStringInfo (ValueObject& valobj,
+                         ValueObjectSP &location_sp,
+                         uint64_t& size)
+{
+    ValueObjectSP D(valobj.GetChildAtIndexPath({0,0,0,0}));
+    if (!D)
+        return false;
+    
+    ValueObjectSP size_mode(D->GetChildAtIndexPath({1,0,0}));
+    if (!size_mode)
+        return false;
+    
+    uint64_t size_mode_value(size_mode->GetValueAsUnsigned(0));
+    
+    if ((size_mode_value & 1) == 0) // this means the string is in short-mode and the data is stored inline
+    {
+        ValueObjectSP s(D->GetChildAtIndex(1, true));
+        if (!s)
+            return false;
+        size = ((size_mode_value >> 1) % 256);
+        location_sp = s->GetChildAtIndex(1, true);
+        return (location_sp.get() != nullptr);
+    }
+    else
+    {
+        ValueObjectSP l(D->GetChildAtIndex(0, true));
+        if (!l)
+            return false;
+        location_sp = l->GetChildAtIndex(2, true);
+        ValueObjectSP size_vo(l->GetChildAtIndex(1, true));
+        if (!size_vo || !location_sp)
+            return false;
+        size = size_vo->GetValueAsUnsigned(0);
+        return true;
+    }
+}
+
+bool
+lldb_private::formatters::LibcxxWStringSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    uint64_t size = 0;
+    ValueObjectSP location_sp((ValueObject*)nullptr);
+    if (!ExtractLibcxxStringInfo(valobj, location_sp, size))
+        return false;
+    if (size == 0)
+    {
+        stream.Printf("L\"\"");
+        return true;
+    }
+    if (!location_sp)
+        return false;
+    return WCharStringSummaryProvider(*location_sp.get(), stream);
+}
+
+bool
+lldb_private::formatters::LibcxxStringSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    uint64_t size = 0;
+    ValueObjectSP location_sp((ValueObject*)nullptr);
+    if (!ExtractLibcxxStringInfo(valobj, location_sp, size))
+        return false;
+    if (size == 0)
+    {
+        stream.Printf("\"\"");
+        return true;
+    }
+    if (!location_sp)
+        return false;
+    Error error;
+    location_sp->ReadPointedString(stream,
+                                   error,
+                                   0, // max length is decided by the settings
+                                   false); // do not honor array (terminates on first 0 byte even for a char[])
+    return error.Success();
 }
 
 template<bool name_entries>

@@ -734,6 +734,23 @@ public:
     virtual lldb::ValueObjectSP
     GetChildAtIndex (uint32_t idx, bool can_create);
 
+    // this will always create the children if necessary
+    lldb::ValueObjectSP
+    GetChildAtIndexPath (const std::initializer_list<uint32_t> &idxs,
+                         uint32_t* index_of_error = NULL);
+    
+    lldb::ValueObjectSP
+    GetChildAtIndexPath (const std::vector<uint32_t> &idxs,
+                         uint32_t* index_of_error = NULL);
+    
+    lldb::ValueObjectSP
+    GetChildAtIndexPath (const std::initializer_list< std::pair<uint32_t, bool> > &idxs,
+                         uint32_t* index_of_error = NULL);
+
+    lldb::ValueObjectSP
+    GetChildAtIndexPath (const std::vector< std::pair<uint32_t, bool> > &idxs,
+                         uint32_t* index_of_error = NULL);
+    
     virtual lldb::ValueObjectSP
     GetChildMemberWithName (const ConstString &name, bool can_create);
 

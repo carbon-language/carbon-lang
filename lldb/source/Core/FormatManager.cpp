@@ -844,9 +844,12 @@ FormatManager::LoadLibcxxFormatters()
     .SetHideItemNames(false);
     
 #ifndef LLDB_DISABLE_PYTHON
-    std::string code("     lldb.formatters.cpp.libcxx.stdstring_SummaryProvider(valobj,internal_dict)");
-    lldb::TypeSummaryImplSP std_string_summary_sp(new ScriptSummaryFormat(stl_summary_flags, "lldb.formatters.cpp.libcxx.stdstring_SummaryProvider",code.c_str()));
+    //std::string code("     lldb.formatters.cpp.libcxx.stdstring_SummaryProvider(valobj,internal_dict)");
+    //lldb::TypeSummaryImplSP std_string_summary_sp(new ScriptSummaryFormat(stl_summary_flags, "lldb.formatters.cpp.libcxx.stdstring_SummaryProvider",code.c_str()));
     
+    lldb::TypeSummaryImplSP std_string_summary_sp(new CXXFunctionSummaryFormat(stl_summary_flags, lldb_private::formatters::LibcxxStringSummaryProvider, "std::string summary provider"));
+    lldb::TypeSummaryImplSP std_wstring_summary_sp(new CXXFunctionSummaryFormat(stl_summary_flags, lldb_private::formatters::LibcxxWStringSummaryProvider, "std::wstring summary provider"));
+
     TypeCategoryImpl::SharedPointer libcxx_category_sp = GetCategory(m_libcxx_category_name);
     
     libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::string"),
@@ -854,6 +857,11 @@ FormatManager::LoadLibcxxFormatters()
     libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >"),
                                                    std_string_summary_sp);
 
+    libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::wstring"),
+                                                   std_wstring_summary_sp);
+    libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::basic_string<wchar_t, std::__1::char_traits<wchar_t>, std::__1::allocator<wchar_t> >"),
+                                                   std_wstring_summary_sp);
+    
     SyntheticChildren::Flags stl_synth_flags;
     stl_synth_flags.SetCascades(true).SetSkipPointers(false).SetSkipReferences(false);
     

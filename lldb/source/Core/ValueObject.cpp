@@ -533,6 +533,86 @@ ValueObject::GetChildAtIndex (uint32_t idx, bool can_create)
     return child_sp;
 }
 
+ValueObjectSP
+ValueObject::GetChildAtIndexPath (const std::initializer_list<uint32_t>& idxs,
+                                  uint32_t* index_of_error)
+{
+    if (idxs.size() == 0)
+        return GetSP();
+    ValueObjectSP root(GetSP());
+    for (uint32_t idx : idxs)
+    {
+        root = root->GetChildAtIndex(idx, true);
+        if (!root)
+        {
+            if (index_of_error)
+                *index_of_error = idx;
+            return root;
+        }
+    }
+    return root;
+}
+
+ValueObjectSP
+ValueObject::GetChildAtIndexPath (const std::initializer_list< std::pair<uint32_t, bool> >& idxs,
+                                  uint32_t* index_of_error)
+{
+    if (idxs.size() == 0)
+        return GetSP();
+    ValueObjectSP root(GetSP());
+    for (std::pair<uint32_t, bool> idx : idxs)
+    {
+        root = root->GetChildAtIndex(idx.first, idx.second);
+        if (!root)
+        {
+            if (index_of_error)
+                *index_of_error = idx.first;
+            return root;
+        }
+    }
+    return root;
+}
+
+lldb::ValueObjectSP
+ValueObject::GetChildAtIndexPath (const std::vector<uint32_t> &idxs,
+                                  uint32_t* index_of_error)
+{
+    if (idxs.size() == 0)
+        return GetSP();
+    ValueObjectSP root(GetSP());
+    for (uint32_t idx : idxs)
+    {
+        root = root->GetChildAtIndex(idx, true);
+        if (!root)
+        {
+            if (index_of_error)
+                *index_of_error = idx;
+            return root;
+        }
+    }
+    return root;
+}
+
+lldb::ValueObjectSP
+ValueObject::GetChildAtIndexPath (const std::vector< std::pair<uint32_t, bool> > &idxs,
+                                  uint32_t* index_of_error)
+{
+    if (idxs.size() == 0)
+        return GetSP();
+    ValueObjectSP root(GetSP());
+    for (std::pair<uint32_t, bool> idx : idxs)
+    {
+        root = root->GetChildAtIndex(idx.first, idx.second);
+        if (!root)
+        {
+            if (index_of_error)
+                *index_of_error = idx.first;
+            return root;
+        }
+    }
+    return root;
+}
+
 uint32_t
 ValueObject::GetIndexOfChildWithName (const ConstString &name)
 {
