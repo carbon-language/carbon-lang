@@ -5590,6 +5590,30 @@ defm PMOVSXBQ   : SS41I_binop_rm_int2<0x22, "pmovsxbq", int_x86_sse41_pmovsxbq>;
 defm PMOVZXBQ   : SS41I_binop_rm_int2<0x32, "pmovzxbq", int_x86_sse41_pmovzxbq>;
 
 let Predicates = [HasAVX2] in {
+  def : Pat<(v16i16 (X86vsext (v16i8 VR128:$src))), (VPMOVSXBWYrr VR128:$src)>;
+  def : Pat<(v8i32  (X86vsext (v16i8 VR128:$src))), (VPMOVSXBDYrr VR128:$src)>;
+  def : Pat<(v4i64  (X86vsext (v16i8 VR128:$src))), (VPMOVSXBQYrr VR128:$src)>;
+
+  def : Pat<(v8i32  (X86vsext (v8i16 VR128:$src))), (VPMOVSXWDYrr VR128:$src)>;
+  def : Pat<(v4i64  (X86vsext (v8i16 VR128:$src))), (VPMOVSXWQYrr VR128:$src)>;
+
+  def : Pat<(v4i64  (X86vsext (v4i32 VR128:$src))), (VPMOVSXDQYrr VR128:$src)>;
+
+  def : Pat<(v16i16 (X86vsext (v32i8 VR256:$src))),
+            (VPMOVSXBWYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+  def : Pat<(v8i32 (X86vsext (v32i8 VR256:$src))),
+            (VPMOVSXBDYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+  def : Pat<(v4i64 (X86vsext (v32i8 VR256:$src))),
+            (VPMOVSXBQYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+
+  def : Pat<(v8i32 (X86vsext (v16i16 VR256:$src))),
+            (VPMOVSXWDYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+  def : Pat<(v4i64 (X86vsext (v16i16 VR256:$src))),
+            (VPMOVSXWQYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+
+  def : Pat<(v4i64 (X86vsext (v8i32 VR256:$src))),
+            (VPMOVSXDQYrr (EXTRACT_SUBREG VR256:$src, sub_xmm))>;
+
   def : Pat<(v8i32 (X86vsmovl (v8i16 (bitconvert (v2i64 (load addr:$src)))))),
             (VPMOVSXWDYrm addr:$src)>;
   def : Pat<(v4i64 (X86vsmovl (v4i32 (bitconvert (v2i64 (load addr:$src)))))),
@@ -5628,6 +5652,15 @@ let Predicates = [HasAVX] in {
 }
 
 let Predicates = [UseSSE41] in {
+  def : Pat<(v8i16 (X86vsext (v16i8 VR128:$src))), (PMOVSXBWrr VR128:$src)>;
+  def : Pat<(v4i32 (X86vsext (v16i8 VR128:$src))), (PMOVSXBDrr VR128:$src)>;
+  def : Pat<(v2i64 (X86vsext (v16i8 VR128:$src))), (PMOVSXBQrr VR128:$src)>;
+
+  def : Pat<(v4i32 (X86vsext (v8i16 VR128:$src))), (PMOVSXWDrr VR128:$src)>;
+  def : Pat<(v2i64 (X86vsext (v8i16 VR128:$src))), (PMOVSXWQrr VR128:$src)>;
+
+  def : Pat<(v2i64 (X86vsext (v4i32 VR128:$src))), (PMOVSXDQrr VR128:$src)>;
+
   // Common patterns involving scalar load
   def : Pat<(int_x86_sse41_pmovsxbq
               (bitconvert (v4i32 (X86vzmovl
@@ -5726,6 +5759,15 @@ let Predicates = [HasAVX] in {
             (VPMOVZXDQrm addr:$src)>;
   def : Pat<(v2i64 (X86vzext (v4i32 (bitconvert (v2i64 (X86vzload addr:$src)))))),
             (VPMOVZXDQrm addr:$src)>;
+
+  def : Pat<(v8i16 (X86vsext (v16i8 VR128:$src))), (VPMOVSXBWrr VR128:$src)>;
+  def : Pat<(v4i32 (X86vsext (v16i8 VR128:$src))), (VPMOVSXBDrr VR128:$src)>;
+  def : Pat<(v2i64 (X86vsext (v16i8 VR128:$src))), (VPMOVSXBQrr VR128:$src)>;
+
+  def : Pat<(v4i32 (X86vsext (v8i16 VR128:$src))), (VPMOVSXWDrr VR128:$src)>;
+  def : Pat<(v2i64 (X86vsext (v8i16 VR128:$src))), (VPMOVSXWQrr VR128:$src)>;
+
+  def : Pat<(v2i64 (X86vsext (v4i32 VR128:$src))), (VPMOVSXDQrr VR128:$src)>;
 
   def : Pat<(v4i32 (X86vsext (v8i16 (bitconvert (v2i64
                     (scalar_to_vector (loadi64 addr:$src))))))),
