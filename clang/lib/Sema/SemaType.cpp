@@ -4213,9 +4213,7 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
       attr.setUsedAsTypeAttr();
       break;
     case AttributeList::AT_ExtVectorType:
-      if (state.getDeclarator().getDeclSpec().getStorageClassSpec()
-            != DeclSpec::SCS_typedef)
-        HandleExtVectorTypeAttr(type, attr, state.getSema());
+      HandleExtVectorTypeAttr(type, attr, state.getSema());
       attr.setUsedAsTypeAttr();
       break;
     case AttributeList::AT_NeonVectorType:

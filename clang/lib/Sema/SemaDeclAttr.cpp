@@ -912,47 +912,16 @@ static void handleLocksExcludedAttr(Sema &S, Decl *D,
 
 static void handleExtVectorTypeAttr(Sema &S, Scope *scope, Decl *D,
                                     const AttributeList &Attr) {
-  TypedefNameDecl *tDecl = dyn_cast<TypedefNameDecl>(D);
-  if (tDecl == 0) {
+  TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(D);
+  if (TD == 0) {
+    // __attribute__((ext_vector_type(N))) can only be applied to typedefs
+    // and type-ids.
     S.Diag(Attr.getLoc(), diag::err_typecheck_ext_vector_not_typedef);
     return;
   }
 
-  QualType curType = tDecl->getUnderlyingType();
-
-  Expr *sizeExpr;
-
-  // Special case where the argument is a template id.
-  if (Attr.getParameterName()) {
-    CXXScopeSpec SS;
-    SourceLocation TemplateKWLoc;
-    UnqualifiedId id;
-    id.setIdentifier(Attr.getParameterName(), Attr.getLoc());
-
-    ExprResult Size = S.ActOnIdExpression(scope, SS, TemplateKWLoc, id,
-                                          false, false);
-    if (Size.isInvalid())
-      return;
-
-    sizeExpr = Size.get();
-  } else {
-    // check the attribute arguments.
-    if (!checkAttributeNumArgs(S, Attr, 1))
-      return;
-
-    sizeExpr = Attr.getArg(0);
-  }
-
-  // Instantiate/Install the vector type, and let Sema build the type for us.
-  // This will run the reguired checks.
-  QualType T = S.BuildExtVectorType(curType, sizeExpr, Attr.getLoc());
-  if (!T.isNull()) {
-    // FIXME: preserve the old source info.
-    tDecl->setTypeSourceInfo(S.Context.getTrivialTypeSourceInfo(T));
-
-    // Remember this typedef decl, we will need it later for diagnostics.
-    S.ExtVectorDecls.push_back(tDecl);
-  }
+  // Remember this typedef decl, we will need it later for diagnostics.
+  S.ExtVectorDecls.push_back(TD);
 }
 
 static void handlePackedAttr(Sema &S, Decl *D, const AttributeList &Attr) {
