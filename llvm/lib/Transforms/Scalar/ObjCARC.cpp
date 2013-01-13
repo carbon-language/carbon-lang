@@ -30,6 +30,7 @@
 
 #define DEBUG_TYPE "objc-arc"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -625,6 +626,10 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
   // Walk the def-use chains.
   SmallVector<const Value *, 4> Worklist;
   Worklist.push_back(BlockPtr);
+
+  // Ensure we do not visit any value twice.
+  SmallPtrSet<const Value *, 4> VisitedSet;
+
   do {
     const Value *V = Worklist.pop_back_val();
 
@@ -655,9 +660,15 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
         // result is an escape.
         if (isa<BitCastInst>(UUser) || isa<GetElementPtrInst>(UUser) ||
             isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
-          DEBUG(dbgs() << "DoesObjCBlockEscape: User copies value. Escapes if "
-                          "result escapes. Adding to list.\n");
-          Worklist.push_back(UUser);
+
+          if (!VisitedSet.count(UUser)) {
+            DEBUG(dbgs() << "DoesObjCBlockEscape: User copies value. Escapes if "
+                            "result escapes. Adding to list.\n");
+            VisitedSet.insert(V);
+            Worklist.push_back(UUser);
+          } else {
+            DEBUG(dbgs() << "DoesObjCBlockEscape: Already visited node.\n");
+          }
           continue;
         }
         // Use by a load is not an escape.
