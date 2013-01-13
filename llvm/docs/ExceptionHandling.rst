@@ -149,10 +149,10 @@ type info index are passed in as arguments. The landing pad saves the exception
 structure reference and then proceeds to select the catch block that corresponds
 to the type info of the exception object.
 
-The LLVM `landingpad instruction <LangRef.html#i_landingpad>`_ is used to convey
-information about the landing pad to the back end. For C++, the ``landingpad``
-instruction returns a pointer and integer pair corresponding to the pointer to
-the *exception structure* and the *selector value* respectively.
+The LLVM :ref:`i_landingpad` is used to convey information about the landing
+pad to the back end. For C++, the ``landingpad`` instruction returns a pointer
+and integer pair corresponding to the pointer to the *exception structure* and
+the *selector value* respectively.
 
 The ``landingpad`` instruction takes a reference to the personality function to
 be used for this ``try``/``catch`` sequence. The remainder of the instruction is
@@ -201,10 +201,9 @@ A cleanup is extra code which needs to be run as part of unwinding a scope.  C++
 destructors are a typical example, but other languages and language extensions
 provide a variety of different kinds of cleanups. In general, a landing pad may
 need to run arbitrary amounts of cleanup code before actually entering a catch
-block. To indicate the presence of cleanups, a `landingpad
-instruction <LangRef.html#i_landingpad>`_ should have a *cleanup*
-clause. Otherwise, the unwinder will not stop at the landing pad if there are no
-catches or filters that require it to.
+block. To indicate the presence of cleanups, a :ref:`i_landingpad` should have
+a *cleanup* clause.  Otherwise, the unwinder will not stop at the landing pad if
+there are no catches or filters that require it to.
 
 .. note::
 
@@ -224,9 +223,9 @@ Throw Filters
 
 C++ allows the specification of which exception types may be thrown from a
 function. To represent this, a top level landing pad may exist to filter out
-invalid types. To express this in LLVM code the `landingpad
-instruction <LangRef.html#i_landingpad>`_ will have a filter clause. The clause
-consists of an array of type infos.  ``landingpad`` will return a negative value
+invalid types. To express this in LLVM code the :ref:`i_landingpad` will have a
+filter clause. The clause consists of an array of type infos.
+``landingpad`` will return a negative value
 if the exception does not match any of the type infos. If no match is found then
 a call to ``__cxa_call_unexpected`` should be made, otherwise
 ``_Unwind_Resume``.  Each of these functions requires a reference to the
