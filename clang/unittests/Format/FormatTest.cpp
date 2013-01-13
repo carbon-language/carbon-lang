@@ -121,6 +121,7 @@ TEST_F(FormatTest, FormatsNestedBlockStatements) {
 TEST_F(FormatTest, FormatsNestedCall) {
   verifyFormat("Method(f1, f2(f3));");
   verifyFormat("Method(f1(f2, f3()));");
+  verifyFormat("Method(f1(f2, (f3())));");
 }
 
 //===----------------------------------------------------------------------===//

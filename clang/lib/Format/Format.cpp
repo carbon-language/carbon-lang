@@ -1149,6 +1149,8 @@ private:
         (Tok.is(tok::equal) || Tok.Parent->is(tok::equal)))
       return false;
 
+    if (Tok.Parent->is(tok::comma))
+      return true;
     if (Tok.Type == TT_IncludePath)
       return Tok.is(tok::less) || Tok.is(tok::string_literal);
     if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
