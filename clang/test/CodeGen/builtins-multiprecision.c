@@ -1,4 +1,6 @@
+// RUN: %clang_cc1 -triple "i686-unknown-unknown"   -emit-llvm -x c %s -o - -O3 | FileCheck %s
 // RUN: %clang_cc1 -triple "x86_64-unknown-unknown" -emit-llvm -x c %s -o - -O3 | FileCheck %s
+// RUN: %clang_cc1 -triple "x86_64-mingw32"         -emit-llvm -x c %s -o - -O3 | FileCheck %s
 
 unsigned short test_addcs(unsigned short x, unsigned short y,
                           unsigned short carryin, unsigned short *z) {
@@ -38,16 +40,17 @@ unsigned test_addc(unsigned x, unsigned y, unsigned carryin, unsigned *z) {
 
 unsigned long test_addcl(unsigned long x, unsigned long y,
                          unsigned long carryin, unsigned long *z) {
-  // CHECK: @test_addcl
-  // CHECK: %{{.+}} = {{.*}} call { i64, i1 } @llvm.uadd.with.overflow.i64(i64 %x, i64 %y)
-  // CHECK: %{{.+}} = extractvalue { i64, i1 } %{{.+}}, 1
-  // CHECK: %{{.+}} = extractvalue { i64, i1 } %{{.+}}, 0
-  // CHECK: %{{.+}} = {{.*}} call { i64, i1 } @llvm.uadd.with.overflow.i64(i64 %{{.+}}, i64 %carryin)
-  // CHECK: %{{.+}} = extractvalue { i64, i1 } %{{.+}}, 1
-  // CHECK: %{{.+}} = extractvalue { i64, i1 } %{{.+}}, 0
+  // long is i32 on i686, i64 on x86_64.
+  // CHECK: @test_addcl([[UL:i32|i64]] %x
+  // CHECK: %{{.+}} = {{.*}} call { [[UL]], i1 } @llvm.uadd.with.overflow.[[UL]]([[UL]] %x, [[UL]] %y)
+  // CHECK: %{{.+}} = extractvalue { [[UL]], i1 } %{{.+}}, 1
+  // CHECK: %{{.+}} = extractvalue { [[UL]], i1 } %{{.+}}, 0
+  // CHECK: %{{.+}} = {{.*}} call { [[UL]], i1 } @llvm.uadd.with.overflow.[[UL]]([[UL]] %{{.+}}, [[UL]] %carryin)
+  // CHECK: %{{.+}} = extractvalue { [[UL]], i1 } %{{.+}}, 1
+  // CHECK: %{{.+}} = extractvalue { [[UL]], i1 } %{{.+}}, 0
   // CHECK: %{{.+}} = or i1 %{{.+}}, %{{.+}}
-  // CHECK: %{{.+}} = zext i1 %{{.+}} to i64
-  // CHECK: store i64 %{{.+}}, i64* %z, align 8
+  // CHECK: %{{.+}} = zext i1 %{{.+}} to [[UL]]
+  // CHECK: store [[UL]] %{{.+}}, [[UL]]* %z
   unsigned long carryout;
   *z = __builtin_addcl(x, y, carryin, &carryout);
 
@@ -66,7 +69,7 @@ unsigned long long test_addcll(unsigned long long x, unsigned long long y,
   // CHECK: %{{.+}} = extractvalue { i64, i1 } %{{.+}}, 0
   // CHECK: %{{.+}} = or i1 %{{.+}}, %{{.+}}
   // CHECK: %{{.+}} = zext i1 %{{.+}} to i64
-  // CHECK: store i64 %{{.+}}, i64* %z, align 8
+  // CHECK: store i64 %{{.+}}, i64* %z
   unsigned long long carryout;
   *z = __builtin_addcll(x, y, carryin, &carryout);
 
