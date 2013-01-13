@@ -11,7 +11,7 @@ else()
   set(ENABLE_SHARED 0)
 endif(BUILD_SHARED_LIBS)
 
-configure_file(
+configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg)
 
