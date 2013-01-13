@@ -187,8 +187,7 @@ static llvm::Value *EmitOverflowIntrinsic(CodeGenFunction &CGF,
          "Arguments must be the same type. (Did you forget to make sure both "
          "arguments have the same integer width?)");
 
-  ArrayRef<llvm::Type *> Type(X->getType());
-  llvm::Value *Callee = CGF.CGM.getIntrinsic(IntrinsicID, Type);
+  llvm::Value *Callee = CGF.CGM.getIntrinsic(IntrinsicID, X->getType());
   llvm::Value *Tmp = CGF.Builder.CreateCall2(Callee, X, Y);
   Carry = CGF.Builder.CreateExtractValue(Tmp, 1);
   return CGF.Builder.CreateExtractValue(Tmp, 0);
