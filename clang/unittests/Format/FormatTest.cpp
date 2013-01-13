@@ -343,6 +343,7 @@ TEST_F(FormatTest, FormatsDerivedClass) {
 TEST_F(FormatTest, FormatsVariableDeclarationsAfterStructOrClass) {
   verifyFormat("class A {} a, b;");
   verifyFormat("struct A {} a, b;");
+  verifyFormat("union A {} a;");
 }
 
 TEST_F(FormatTest, FormatsEnum) {

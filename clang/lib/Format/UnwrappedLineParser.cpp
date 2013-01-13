@@ -317,7 +317,8 @@ void UnwrappedLineParser::parseStructuralElement() {
     case tok::kw_enum:
       parseEnum();
       return;
-    case tok::kw_struct:  // fallthrough
+    case tok::kw_struct: // fallthrough
+    case tok::kw_union:  // fallthrough
     case tok::kw_class:
       parseStructClassOrBracedList();
       return;
