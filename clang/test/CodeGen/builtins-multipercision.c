@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -emit-llvm -x c %s -o - -O3 | FileCheck %s
+// RUN: %clang_cc1 -triple "x86_64-unknown-unknown" -emit-llvm -x c %s -o - -O3 | FileCheck %s
 
 unsigned short test_addcs(unsigned short x, unsigned short y,
                           unsigned short carryin, unsigned short *z) {
