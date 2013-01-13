@@ -9614,7 +9614,9 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
 
   DiagnoseSentinelCalls(Constructor, Loc, AllArgs.data(), AllArgs.size());
 
-  CheckConstructorCall(Constructor, AllArgs.data(), AllArgs.size(),
+  CheckConstructorCall(Constructor,
+                       llvm::makeArrayRef<const Expr *>(AllArgs.data(),
+                                                        AllArgs.size()),
                        Proto, Loc);
 
   return Invalid;
