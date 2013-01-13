@@ -266,8 +266,8 @@ handling information at various points in generated code.
 
 .. _llvm.eh.typeid.for:
 
-llvm.eh.typeid.for
-------------------
+``llvm.eh.typeid.for``
+----------------------
 
 .. code-block:: llvm
 
@@ -280,8 +280,8 @@ function.  This value can be used to compare against the result of
 
 .. _llvm.eh.sjlj.setjmp:
 
-llvm.eh.sjlj.setjmp
--------------------
+``llvm.eh.sjlj.setjmp``
+-----------------------
 
 .. code-block:: llvm
 
@@ -302,8 +302,8 @@ available for use in a target-specific manner.
 
 .. _llvm.eh.sjlj.longjmp:
 
-llvm.eh.sjlj.longjmp
---------------------
+``llvm.eh.sjlj.longjmp``
+------------------------
 
 .. code-block:: llvm
 
@@ -315,8 +315,8 @@ a buffer populated by `llvm.eh.sjlj.setjmp`_. The frame pointer and stack
 pointer are restored from the buffer, then control is transferred to the
 destination address.
 
-llvm.eh.sjlj.lsda
------------------
+``llvm.eh.sjlj.lsda``
+---------------------
 
 .. code-block:: llvm
 
@@ -327,8 +327,8 @@ the address of the Language Specific Data Area (LSDA) for the current
 function. The SJLJ front-end code stores this address in the exception handling
 function context for use by the runtime.
 
-llvm.eh.sjlj.callsite
----------------------
+``llvm.eh.sjlj.callsite``
+-------------------------
 
 .. code-block:: llvm
 
