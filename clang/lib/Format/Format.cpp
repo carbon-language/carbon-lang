@@ -34,7 +34,7 @@ enum TokenType {
   TT_CastRParen,
   TT_ConditionalExpr,
   TT_CtorInitializerColon,
-  TT_DirectorySeparator,
+  TT_IncludePath,
   TT_LineComment,
   TT_ObjCBlockLParen,
   TT_ObjCDecl,
@@ -834,12 +834,7 @@ public:
 
     void parseIncludeDirective() {
       while (CurrentToken != NULL) {
-        if (CurrentToken->is(tok::slash))
-          CurrentToken->Type = TT_DirectorySeparator;
-        else if (CurrentToken->is(tok::less))
-          CurrentToken->Type = TT_TemplateOpener;
-        else if (CurrentToken->is(tok::greater))
-          CurrentToken->Type = TT_TemplateCloser;
+        CurrentToken->Type = TT_IncludePath;
         next();
       }
     }
@@ -1154,6 +1149,8 @@ private:
         (Tok.is(tok::equal) || Tok.Parent->is(tok::equal)))
       return false;
 
+    if (Tok.Type == TT_IncludePath)
+      return Tok.is(tok::less) || Tok.is(tok::string_literal);
     if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
       return true;
     if (Tok.Type == TT_OverloadedOperator)
@@ -1176,9 +1173,6 @@ private:
       return Tok.Type == TT_TemplateCloser && Tok.Parent->Type ==
              TT_TemplateCloser && Style.SplitTemplateClosingGreater;
     }
-    if (Tok.Type == TT_DirectorySeparator ||
-        Tok.Parent->Type == TT_DirectorySeparator)
-      return false;
     if (Tok.Type == TT_BinaryOperator || Tok.Parent->Type == TT_BinaryOperator)
       return true;
     if (Tok.Parent->Type == TT_TemplateCloser && Tok.is(tok::l_paren))
@@ -1206,6 +1200,8 @@ private:
         // Don't break at ':' if identifier before it can beak.
         return false;
     }
+    if (Right.Type == TT_IncludePath)
+      return false;
     if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
       return false;
     if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
