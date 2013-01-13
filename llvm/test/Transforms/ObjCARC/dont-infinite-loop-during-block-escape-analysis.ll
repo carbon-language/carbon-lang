@@ -1,4 +1,5 @@
 ; RUN: opt -S -objc-arc < %s
+; bugzilla://14551
 ; rdar://12851911
 
 ; Make sure that we do not hang clang during escape analysis.
