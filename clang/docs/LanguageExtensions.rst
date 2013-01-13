@@ -1395,6 +1395,43 @@ correct code by avoiding expensive loops around
 implementation details of ``__sync_lock_test_and_set()``.  The
 ``__sync_swap()`` builtin is a full barrier.
 
+Multiprecision Arithmetic Builtins
+----------------------------------
+
+Clang provides a set of builtins which expose multiprecision arithmetic in a
+manner amenable to C. They all have the following form:
+
+.. code-block:: c
+
+  unsigned x = ..., y = ..., carryin = ..., carryout;
+  unsigned sum = __builtin_addc(x, y, carryin, &carryout);
+
+Thus one can form a multiprecision addition chain in the following manner:
+
+.. code-block:: c
+
+  unsigned *x, *y, *z, carryin=0, carryout;
+  z[0] = __builtin_addc(x[0], y[0], carryin, &carryout);
+  carryin = carryout;
+  z[1] = __builtin_addc(x[1], y[1], carryin, &carryout);
+  carryin = carryout;
+  z[2] = __builtin_addc(x[2], y[2], carryin, &carryout);
+  carryin = carryout;
+  z[3] = __builtin_addc(x[3], y[3], carryin, &carryout);
+
+The complete list of builtins are:
+
+.. code-block:: c
+
+  unsigned short     __builtin_addcs (unsigned short x, unsigned short y, unsigned short carryin, unsigned short *carryout);
+  unsigned           __builtin_addc  (unsigned x, unsigned y, unsigned carryin, unsigned *carryout);
+  unsigned long      __builtin_addcl (unsigned long x, unsigned long y, unsigned long carryin, unsigned long *carryout);
+  unsigned long long __builtin_addcll(unsigned long long x, unsigned long long y, unsigned long long carryin, unsigned long long *carryout);
+  unsigned short     __builtin_subcs (unsigned short x, unsigned short y, unsigned short carryin, unsigned short *carryout);
+  unsigned           __builtin_subc  (unsigned x, unsigned y, unsigned carryin, unsigned *carryout);
+  unsigned long      __builtin_subcl (unsigned long x, unsigned long y, unsigned long carryin, unsigned long *carryout);
+  unsigned long long __builtin_subcll(unsigned long long x, unsigned long long y, unsigned long long carryin, unsigned long long *carryout);
+
 .. _langext-__c11_atomic:
 
 __c11_atomic builtins
