@@ -619,14 +619,23 @@ static bool ModuleHasARC(const Module &M) {
 /// escape analysis in that a use as an argument to a call is not considered
 /// an escape.
 static bool DoesObjCBlockEscape(const Value *BlockPtr) {
+
+  DEBUG(dbgs() << "DoesObjCBlockEscape: Target: " << *BlockPtr << "\n");
+
   // Walk the def-use chains.
   SmallVector<const Value *, 4> Worklist;
   Worklist.push_back(BlockPtr);
   do {
     const Value *V = Worklist.pop_back_val();
+
+    DEBUG(dbgs() << "DoesObjCBlockEscape: Visiting: " << *V << "\n");
+
     for (Value::const_use_iterator UI = V->use_begin(), UE = V->use_end();
          UI != UE; ++UI) {
       const User *UUser = *UI;
+
+      DEBUG(dbgs() << "DoesObjCBlockEscape: User: " << *UUser << "\n");
+
       // Special - Use by a call (callee or argument) is not considered
       // to be an escape.
       switch (GetBasicInstructionClass(UUser)) {
@@ -634,15 +643,20 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
       case IC_InitWeak:
       case IC_StoreStrong:
       case IC_Autorelease:
-      case IC_AutoreleaseRV:
+      case IC_AutoreleaseRV: {
+        DEBUG(dbgs() << "DoesObjCBlockEscape: User copies pointer arguments. "
+                        "Block Escapes!\n");
         // These special functions make copies of their pointer arguments.
         return true;
+      }
       case IC_User:
       case IC_None:
         // Use by an instruction which copies the value is an escape if the
         // result is an escape.
         if (isa<BitCastInst>(UUser) || isa<GetElementPtrInst>(UUser) ||
             isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
+          DEBUG(dbgs() << "DoesObjCBlockEscape: User copies value. Escapes if "
+                          "result escapes. Adding to list.\n");
           Worklist.push_back(UUser);
           continue;
         }
@@ -659,11 +673,13 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
         continue;
       }
       // Otherwise, conservatively assume an escape.
+      DEBUG(dbgs() << "DoesObjCBlockEscape: Assuming block escapes.\n");
       return true;
     }
   } while (!Worklist.empty());
 
   // No escapes found.
+  DEBUG(dbgs() << "DoesObjCBlockEscape: Block does not escape.\n");
   return false;
 }
 
