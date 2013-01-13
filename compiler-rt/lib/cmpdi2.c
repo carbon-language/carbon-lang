@@ -36,3 +36,16 @@ __cmpdi2(di_int a, di_int b)
         return 2;
     return 1;
 }
+
+#ifdef __ARM_EABI__
+/* Returns: if (a <  b) returns -1
+*           if (a == b) returns  0
+*           if (a >  b) returns  1
+*/
+COMPILER_RT_ABI si_int
+__aeabi_lcmp(di_int a, di_int b)
+{
+	return __cmpdi2(a, b) - 1;
+}
+#endif
+
