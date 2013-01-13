@@ -884,9 +884,11 @@ struct MappingTraits<const lld::DefinedAtom*> {
     virtual ContentPermissions permissions() const   { return _permissions; }
     virtual bool               isThumb() const       { return false; }
     virtual bool               isAlias() const       { return false; }
-    ArrayRef<uint8_t>          rawContent() const    { 
-                  return ArrayRef<uint8_t>((uint8_t*)&_content.operator[](0), 
-                                                      _content.size()); }
+    ArrayRef<uint8_t>          rawContent() const    {
+      return ArrayRef<uint8_t>(
+        reinterpret_cast<const uint8_t *>(_content.data()), _content.size());
+    }
+
     virtual uint64_t           ordinal() const       { return 0; }
     
     reference_iterator begin() const { 
