@@ -925,5 +925,11 @@ LIBBUILTIN(_Block_object_dispose, "vvC*iC", "f", "Blocks.h", ALL_LANGUAGES)
 // Annotation function
 BUILTIN(__builtin_annotation, "v.", "tn")
 
+// Multiprecision Arithmetic Builtins.
+BUILTIN(__builtin_addcs, "UsUsCUsCUsCUs*", "n")
+BUILTIN(__builtin_addc, "UiUiCUiCUiCUi*", "n")
+BUILTIN(__builtin_addcl, "ULiULiCULiCULiCULi*", "n")
+BUILTIN(__builtin_addcll, "ULLiULLiCULLiCULLiCULLi*", "n")
+
 #undef BUILTIN
 #undef LIBBUILTIN
