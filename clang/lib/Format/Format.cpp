@@ -901,9 +901,12 @@ public:
     if (Current.FormatTok.MustBreakBefore) {
       Current.MustBreakBefore = true;
     } else {
-      if (Current.Type == TT_CtorInitializerColon || Current.Parent->Type ==
-          TT_LineComment || (Current.is(tok::string_literal) &&
-                             Current.Parent->is(tok::string_literal))) {
+      if (Current.Type == TT_LineComment) {
+        Current.MustBreakBefore = Current.FormatTok.NewlinesBefore > 0;
+      } else if (Current.Type == TT_CtorInitializerColon ||
+                 Current.Parent->Type == TT_LineComment ||
+                 (Current.is(tok::string_literal) &&
+                  Current.Parent->is(tok::string_literal))) {
         Current.MustBreakBefore = true;
       } else {
         Current.MustBreakBefore = false;
@@ -1219,7 +1222,10 @@ private:
       return false;
 
     if (Right.is(tok::comment))
-      return !Right.Children.empty();
+      // We rely on MustBreakBefore being set correctly here as we should not
+      // change the "binding" behavior of a comment.
+      return false;
+
     if (Right.is(tok::r_paren) || Right.is(tok::l_brace) ||
         Right.is(tok::greater))
       return false;

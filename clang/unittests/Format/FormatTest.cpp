@@ -285,6 +285,14 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
   verifyFormat("void f() {\n"
                "  // Doesn't do anything\n"
                "}");
+  verifyFormat("void f(int i, // some comment (probably for i)\n"
+               "       int j, // some comment (probably for j)\n"
+               "       int k); // some comment (probably for k)");
+  verifyFormat("void f(int i,\n"
+               "       // some comment (probably for j)\n"
+               "       int j,\n"
+               "       // some comment (probably for k)\n"
+               "       int k);");
 
   verifyFormat("int i // This is a fancy variable\n"
                "    = 5;");
