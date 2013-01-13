@@ -1045,9 +1045,6 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("A<int **> a;");
   verifyFormat("A<int *, int *> a;");
   verifyFormat("A<int **, int **> a;");
-  verifyFormat("Type *A = static_cast<Type *>(P);");
-  verifyFormat("Type *A = (Type *)P;");
-  verifyFormat("Type *A = (vector<Type *, int *>)P;");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
@@ -1060,6 +1057,25 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat("A<int**, int**> a;");
   verifyGoogleFormat("f(b ? *c : *d);");
   verifyGoogleFormat("int a = b ? *c : *d;");
+}
+
+TEST_F(FormatTest, FormatsCasts) {
+  verifyFormat("Type *A = static_cast<Type *>(P);");
+  verifyFormat("Type *A = (Type *)P;");
+  verifyFormat("Type *A = (vector<Type *, int *>)P;");
+  verifyFormat("int a = (int)(2.0f);");
+
+  // FIXME: These also need to be identified.
+  verifyFormat("int a = (int) 2.0f;");
+  verifyFormat("int a = (int) * b;");
+
+  // These are not casts.
+  verifyFormat("void f(int *) {}");
+  verifyFormat("void f(int *);");
+  verifyFormat("void f(int *) = 0;");
+  verifyFormat("void f(SmallVector<int>) {}");
+  verifyFormat("void f(SmallVector<int>);");
+  verifyFormat("void f(SmallVector<int>) = 0;");
 }
 
 TEST_F(FormatTest, FormatsFunctionTypes) {
