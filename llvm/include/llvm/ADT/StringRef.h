@@ -535,7 +535,7 @@ namespace llvm {
     return LHS.compare(RHS) != -1;
   }
 
-  inline std::string &operator+=(std::string &buffer, llvm::StringRef string) {
+  inline std::string &operator+=(std::string &buffer, StringRef string) {
     return buffer.append(string.data(), string.size());
   }
 

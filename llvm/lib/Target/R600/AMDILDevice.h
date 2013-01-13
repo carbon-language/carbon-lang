@@ -104,7 +104,7 @@ public:
   static const unsigned int QuarterWavefrontSize = 16;
 protected:
   virtual void setCaps();
-  llvm::BitVector mHWBits;
+  BitVector mHWBits;
   llvm::BitVector mSWBits;
   AMDGPUSubtarget *mSTM;
   uint32_t DeviceFlag;

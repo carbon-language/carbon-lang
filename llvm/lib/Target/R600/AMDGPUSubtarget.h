@@ -44,7 +44,7 @@ public:
   virtual ~AMDGPUSubtarget();
 
   const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
-  virtual void ParseSubtargetFeatures(llvm::StringRef CPU, llvm::StringRef FS);
+  virtual void ParseSubtargetFeatures(StringRef CPU, StringRef FS);
 
   bool isOverride(AMDGPUDeviceInfo::Caps) const;
   bool is64bit() const;

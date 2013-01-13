@@ -22,7 +22,7 @@ namespace llvm {
 template <class Analysis, bool Simple>
 class DOTGraphTraitsViewer : public FunctionPass {
 public:
-  DOTGraphTraitsViewer(llvm::StringRef GraphName, char &ID)
+  DOTGraphTraitsViewer(StringRef GraphName, char &ID)
     : FunctionPass(ID), Name(GraphName) {}
 
   virtual bool runOnFunction(Function &F) {
@@ -47,7 +47,7 @@ private:
 template <class Analysis, bool Simple>
 class DOTGraphTraitsPrinter : public FunctionPass {
 public:
-  DOTGraphTraitsPrinter(llvm::StringRef GraphName, char &ID)
+  DOTGraphTraitsPrinter(StringRef GraphName, char &ID)
     : FunctionPass(ID), Name(GraphName) {}
 
   virtual bool runOnFunction(Function &F) {
@@ -82,7 +82,7 @@ private:
 template <class Analysis, bool Simple>
 class DOTGraphTraitsModuleViewer : public ModulePass {
 public:
-  DOTGraphTraitsModuleViewer(llvm::StringRef GraphName, char &ID)
+  DOTGraphTraitsModuleViewer(StringRef GraphName, char &ID)
     : ModulePass(ID), Name(GraphName) {}
 
   virtual bool runOnModule(Module &M) {
@@ -106,7 +106,7 @@ private:
 template <class Analysis, bool Simple>
 class DOTGraphTraitsModulePrinter : public ModulePass {
 public:
-  DOTGraphTraitsModulePrinter(llvm::StringRef GraphName, char &ID)
+  DOTGraphTraitsModulePrinter(StringRef GraphName, char &ID)
     : ModulePass(ID), Name(GraphName) {}
 
   virtual bool runOnModule(Module &M) {

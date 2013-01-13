@@ -3448,7 +3448,7 @@ void APFloat::toString(SmallVectorImpl<char> &Str,
 
   AdjustToPrecision(significand, exp, FormatPrecision);
 
-  llvm::SmallVector<char, 256> buffer;
+  SmallVector<char, 256> buffer;
 
   // Fill the buffer.
   unsigned precision = significand.getBitWidth();

@@ -46,7 +46,7 @@ void llvm::sys::DynamicLibrary::AddSymbol(StringRef symbolName,
                                           void *symbolValue) {
   SmartScopedLock<true> lock(getMutex());
   if (ExplicitSymbols == 0)
-    ExplicitSymbols = new llvm::StringMap<void*>();
+    ExplicitSymbols = new StringMap<void*>();
   (*ExplicitSymbols)[symbolName] = symbolValue;
 }
 
