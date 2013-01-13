@@ -894,6 +894,8 @@ bool ObjCARCExpand::runOnFunction(Function &F) {
 
   bool Changed = false;
 
+  DEBUG(dbgs() << "ObjCARCExpand: Visiting Function: " << F.getName() << "\n");
+
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ++I) {
     Instruction *Inst = &*I;
 
@@ -2630,8 +2632,13 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       // If the terminator is an invoke marked with the
       // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
       // ignored, for ARC purposes.
-      if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind))
+      if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind)) {
+        DEBUG(dbgs() << "ObjCARCOpt::CheckForCFGHazards: Found an invoke "
+                        "terminator marked with "
+                        "clang.arc.no_objc_arc_exceptions. Ignoring unwind "
+                        "edge.\n");
         --SE;
+      }
 
       for (; SI != SE; ++SI) {
         Sequence SuccSSeq = S_None;
@@ -2684,8 +2691,13 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       // If the terminator is an invoke marked with the
       // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
       // ignored, for ARC purposes.
-      if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind))
+      if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind)) {
+        DEBUG(dbgs() << "ObjCARCOpt::CheckForCFGHazards: Found an invoke "
+                        "terminator marked with "
+                        "clang.arc.no_objc_arc_exceptions. Ignoring unwind "
+                        "edge.\n");
         --SE;
+      }
 
       for (; SI != SE; ++SI) {
         Sequence SuccSSeq = S_None;
@@ -2752,8 +2764,11 @@ ObjCARCOpt::VisitInstructionBottomUp(Instruction *Inst,
     // Theoretically we could implement removal of nested retain+release
     // pairs by making PtrState hold a stack of states, but this is
     // simple and avoids adding overhead for the non-nested case.
-    if (S.GetSeq() == S_Release || S.GetSeq() == S_MovableRelease)
+    if (S.GetSeq() == S_Release || S.GetSeq() == S_MovableRelease) {
+      DEBUG(dbgs() << "ObjCARCOpt::VisitInstructionBottomUp: Found nested "
+                      "releases (i.e. a release pair)\n");
       NestingDetected = true;
+    }
 
     MDNode *ReleaseMetadata = Inst->getMetadata(ImpreciseReleaseMDKind);
     S.ResetSequenceProgress(ReleaseMetadata ? S_MovableRelease : S_Release);
@@ -2915,6 +2930,8 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
     // Invoke instructions are visited as part of their successors (below).
     if (isa<InvokeInst>(Inst))
       continue;
+
+    DEBUG(dbgs() << "ObjCARCOpt::VisitButtonUp: Visiting " << *Inst << "\n");
 
     NestingDetected |= VisitInstructionBottomUp(Inst, BB, Retains, MyStates);
   }
@@ -3098,6 +3115,9 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
   // Visit all the instructions, top-down.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
     Instruction *Inst = I;
+
+    DEBUG(dbgs() << "ObjCARCOpt::VisitTopDown: Visiting " << *Inst << "\n");
+
     NestingDetected |= VisitInstructionTopDown(Inst, Releases, MyStates);
   }
 
@@ -3136,8 +3156,13 @@ ComputePostOrders(Function &F,
     // If the terminator is an invoke marked with the
     // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
     // ignored, for ARC purposes.
-    if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind))
+    if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind)) {
+        DEBUG(dbgs() << "ObjCARCOpt::ComputePostOrders: Found an invoke "
+                        "terminator marked with "
+                        "clang.arc.no_objc_arc_exceptions. Ignoring unwind "
+                        "edge.\n");
       --SE;
+    }
 
     while (SuccStack.back().second != SE) {
       BasicBlock *SuccBB = *SuccStack.back().second++;
