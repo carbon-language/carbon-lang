@@ -387,17 +387,19 @@ SizeOffsetType ObjectSizeOffsetVisitor::compute(Value *V) {
   V = V->stripPointerCasts();
 
   if (isa<Instruction>(V) || isa<GEPOperator>(V)) {
-    // If we have already seen this instruction, bail out.
-    if (!SeenInsts.insert(V))
-      return unknown();
+    // return cached value or insert unknown in cache if size of V was not
+    // computed yet in order to avoid recursions in PHis
+    std::pair<CacheMapTy::iterator, bool> CacheVal =
+      CacheMap.insert(std::make_pair(V, unknown()));
+    if (!CacheVal.second)
+      return CacheVal.first->second;
 
-    SizeOffsetType Ret;
+    SizeOffsetType Result;
     if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
-      Ret = visitGEPOperator(*GEP);
+      Result = visitGEPOperator(*GEP);
     else
-      Ret = visit(cast<Instruction>(*V));
-    SeenInsts.erase(V);
-    return Ret;
+      Result = visit(cast<Instruction>(*V));
+    return CacheMap[V] = Result;
   }
 
   if (Argument *A = dyn_cast<Argument>(V))
