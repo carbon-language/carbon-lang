@@ -470,7 +470,11 @@ public:
         {return (__state_ & __constructed) || (__exception_ != nullptr);}
 
     _LIBCPP_INLINE_VISIBILITY
-    void __set_future_attached() {__state_ |= __future_attached;}
+    void __set_future_attached()
+    {
+        lock_guard<mutex> __lk(__mut_);
+        __state_ |= __future_attached;
+    }
     _LIBCPP_INLINE_VISIBILITY
     bool __has_future_attached() const {return __state_ & __future_attached;}
 

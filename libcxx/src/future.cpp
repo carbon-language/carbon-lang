@@ -78,8 +78,8 @@ __assoc_sub_state::set_value()
         throw future_error(make_error_code(future_errc::promise_already_satisfied));
 #endif
     __state_ |= __constructed | ready;
-    __lk.unlock();
     __cv_.notify_all();
+    __lk.unlock();
 }
 
 void
