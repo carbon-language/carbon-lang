@@ -137,21 +137,21 @@ long double    tanhl(long double x);
 
 //  C99
 
-bool signbit(floating_point x);
+bool signbit(arithmetic x);
 
-int fpclassify(floating_point x);
+int fpclassify(arithmetic x);
 
-bool isfinite(floating_point x);
-bool isinf(floating_point x);
-bool isnan(floating_point x);
-bool isnormal(floating_point x);
+bool isfinite(arithmetic x);
+bool isinf(arithmetic x);
+bool isnan(arithmetic x);
+bool isnormal(arithmetic x);
 
-bool isgreater(floating_point x, floating_point y);
-bool isgreaterequal(floating_point x, floating_point y);
-bool isless(floating_point x, floating_point y);
-bool islessequal(floating_point x, floating_point y);
-bool islessgreater(floating_point x, floating_point y);
-bool isunordered(floating_point x, floating_point y);
+bool isgreater(arithmetic x, arithmetic y);
+bool isgreaterequal(arithmetic x, arithmetic y);
+bool isless(arithmetic x, arithmetic y);
+bool islessequal(arithmetic x, arithmetic y);
+bool islessgreater(arithmetic x, arithmetic y);
+bool isunordered(arithmetic x, arithmetic y);
 
 floating_point acosh (arithmetic x);
 float          acoshf(float x);
@@ -325,10 +325,10 @@ __libcpp_signbit(_A1 __x) _NOEXCEPT
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+typename std::enable_if<std::is_arithmetic<_A1>::value, bool>::type
 signbit(_A1 __x) _NOEXCEPT
 {
-    return __libcpp_signbit(__x);
+    return __libcpp_signbit((typename std::__promote<_A1>::type)__x);
 }
 
 #endif  // signbit
@@ -349,10 +349,10 @@ __libcpp_fpclassify(_A1 __x) _NOEXCEPT
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-typename std::enable_if<std::is_floating_point<_A1>::value, int>::type
+typename std::enable_if<std::is_arithmetic<_A1>::value, int>::type
 fpclassify(_A1 __x) _NOEXCEPT
 {
-    return __libcpp_fpclassify(__x);
+    return __libcpp_fpclassify((typename std::__promote<_A1>::type)__x);
 }
 
 #endif  // fpclassify
@@ -373,10 +373,10 @@ __libcpp_isfinite(_A1 __x) _NOEXCEPT
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+typename std::enable_if<std::is_arithmetic<_A1>::value, bool>::type
 isfinite(_A1 __x) _NOEXCEPT
 {
-    return __libcpp_isfinite(__x);
+    return __libcpp_isfinite((typename std::__promote<_A1>::type)__x);
 }
 
 #endif  // isfinite
@@ -397,10 +397,10 @@ __libcpp_isinf(_A1 __x) _NOEXCEPT
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+typename std::enable_if<std::is_arithmetic<_A1>::value, bool>::type
 isinf(_A1 __x) _NOEXCEPT
 {
-    return __libcpp_isinf(__x);
+    return __libcpp_isinf((typename std::__promote<_A1>::type)__x);
 }
 
 #endif  // isinf
@@ -421,10 +421,10 @@ __libcpp_isnan(_A1 __x) _NOEXCEPT
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+typename std::enable_if<std::is_arithmetic<_A1>::value, bool>::type
 isnan(_A1 __x) _NOEXCEPT
 {
-    return __libcpp_isnan(__x);
+    return __libcpp_isnan((typename std::__promote<_A1>::type)__x);
 }
 
 #endif  // isnan
@@ -445,10 +445,10 @@ __libcpp_isnormal(_A1 __x) _NOEXCEPT
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
-typename std::enable_if<std::is_floating_point<_A1>::value, bool>::type
+typename std::enable_if<std::is_arithmetic<_A1>::value, bool>::type
 isnormal(_A1 __x) _NOEXCEPT
 {
-    return __libcpp_isnormal(__x);
+    return __libcpp_isnormal((typename std::__promote<_A1>::type)__x);
 }
 
 #endif  // isnormal
@@ -471,13 +471,14 @@ template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
 typename std::enable_if
 <
-    std::is_floating_point<_A1>::value &&
-    std::is_floating_point<_A2>::value,
+    std::is_arithmetic<_A1>::value &&
+    std::is_arithmetic<_A2>::value,
     bool
 >::type
 isgreater(_A1 __x, _A2 __y) _NOEXCEPT
 {
-    return __libcpp_isgreater(__x, __y);
+    typedef typename std::__promote<_A1, _A2>::type type;
+    return __libcpp_isgreater((type)__x, (type)__y);
 }
 
 #endif  // isgreater
@@ -500,13 +501,14 @@ template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
 typename std::enable_if
 <
-    std::is_floating_point<_A1>::value &&
-    std::is_floating_point<_A2>::value,
+    std::is_arithmetic<_A1>::value &&
+    std::is_arithmetic<_A2>::value,
     bool
 >::type
 isgreaterequal(_A1 __x, _A2 __y) _NOEXCEPT
 {
-    return __libcpp_isgreaterequal(__x, __y);
+    typedef typename std::__promote<_A1, _A2>::type type;
+    return __libcpp_isgreaterequal((type)__x, (type)__y);
 }
 
 #endif  // isgreaterequal
@@ -529,13 +531,14 @@ template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
 typename std::enable_if
 <
-    std::is_floating_point<_A1>::value &&
-    std::is_floating_point<_A2>::value,
+    std::is_arithmetic<_A1>::value &&
+    std::is_arithmetic<_A2>::value,
     bool
 >::type
 isless(_A1 __x, _A2 __y) _NOEXCEPT
 {
-    return __libcpp_isless(__x, __y);
+    typedef typename std::__promote<_A1, _A2>::type type;
+    return __libcpp_isless((type)__x, (type)__y);
 }
 
 #endif  // isless
@@ -558,13 +561,14 @@ template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
 typename std::enable_if
 <
-    std::is_floating_point<_A1>::value &&
-    std::is_floating_point<_A2>::value,
+    std::is_arithmetic<_A1>::value &&
+    std::is_arithmetic<_A2>::value,
     bool
 >::type
 islessequal(_A1 __x, _A2 __y) _NOEXCEPT
 {
-    return __libcpp_islessequal(__x, __y);
+    typedef typename std::__promote<_A1, _A2>::type type;
+    return __libcpp_islessequal((type)__x, (type)__y);
 }
 
 #endif  // islessequal
@@ -587,13 +591,14 @@ template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
 typename std::enable_if
 <
-    std::is_floating_point<_A1>::value &&
-    std::is_floating_point<_A2>::value,
+    std::is_arithmetic<_A1>::value &&
+    std::is_arithmetic<_A2>::value,
     bool
 >::type
 islessgreater(_A1 __x, _A2 __y) _NOEXCEPT
 {
-    return __libcpp_islessgreater(__x, __y);
+    typedef typename std::__promote<_A1, _A2>::type type;
+    return __libcpp_islessgreater((type)__x, (type)__y);
 }
 
 #endif  // islessgreater
@@ -616,13 +621,14 @@ template <class _A1, class _A2>
 inline _LIBCPP_INLINE_VISIBILITY
 typename std::enable_if
 <
-    std::is_floating_point<_A1>::value &&
-    std::is_floating_point<_A2>::value,
+    std::is_arithmetic<_A1>::value &&
+    std::is_arithmetic<_A2>::value,
     bool
 >::type
 isunordered(_A1 __x, _A2 __y) _NOEXCEPT
 {
-    return __libcpp_isunordered(__x, __y);
+    typedef typename std::__promote<_A1, _A2>::type type;
+    return __libcpp_isunordered((type)__x, (type)__y);
 }
 
 #endif  // isunordered
