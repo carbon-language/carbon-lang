@@ -11,6 +11,7 @@
 #include "MCTargetDesc/ARMAddressingModes.h"
 #include "MCTargetDesc/ARMBaseInfo.h"
 #include "MCTargetDesc/ARMFixupKinds.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/MC/MCAsmBackend.h"
 #include "llvm/MC/MCAssembler.h"
 #include "llvm/MC/MCContext.h"
@@ -663,34 +664,20 @@ MCAsmBackend *llvm::createARMAsmBackend(const Target &T, StringRef TT, StringRef
   Triple TheTriple(TT);
 
   if (TheTriple.isOSDarwin()) {
-    if (TheTriple.getArchName() == "armv4t" ||
-        TheTriple.getArchName() == "thumbv4t")
-      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V4T);
-    else if (TheTriple.getArchName() == "armv5e" ||
-        TheTriple.getArchName() == "thumbv5e")
-      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V5TEJ);
-    else if (TheTriple.getArchName() == "armv6" ||
-        TheTriple.getArchName() == "thumbv6")
-      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V6);
-    else if (TheTriple.getArchName() == "armv6m" ||
-        TheTriple.getArchName() == "thumbv6m")
-      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V6M);
-    else if (TheTriple.getArchName() == "armv7em" ||
-        TheTriple.getArchName() == "thumbv7em")
-      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7EM);
-    else if (TheTriple.getArchName() == "armv7f" ||
-        TheTriple.getArchName() == "thumbv7f")
-      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7F);
-    else if (TheTriple.getArchName() == "armv7k" ||
-        TheTriple.getArchName() == "thumbv7k")
-      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7K);
-    else if (TheTriple.getArchName() == "armv7m" ||
-        TheTriple.getArchName() == "thumbv7m")
-      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7M);
-    else if (TheTriple.getArchName() == "armv7s" ||
-        TheTriple.getArchName() == "thumbv7s")
-      return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7S);
-    return new DarwinARMAsmBackend(T, TT, object::mach::CSARM_V7);
+    object::mach::CPUSubtypeARM CS =
+      StringSwitch<object::mach::CPUSubtypeARM>(TheTriple.getArchName())
+      .Cases("armv4t", "thumbv4t", object::mach::CSARM_V4T)
+      .Cases("armv5e", "thumbv5e",object::mach::CSARM_V5TEJ)
+      .Cases("armv6", "thumbv6", object::mach::CSARM_V6)
+      .Cases("armv6m", "thumbv6m", object::mach::CSARM_V6M)
+      .Cases("armv7em", "thumbv7em", object::mach::CSARM_V7EM)
+      .Cases("armv7f", "thumbv7f", object::mach::CSARM_V7F)
+      .Cases("armv7k", "thumbv7k", object::mach::CSARM_V7K)
+      .Cases("armv7m", "thumbv7m", object::mach::CSARM_V7M)
+      .Cases("armv7s", "thumbv7s", object::mach::CSARM_V7S)
+      .Default(object::mach::CSARM_V7);
+
+    return new DarwinARMAsmBackend(T, TT, CS);
   }
 
   if (TheTriple.isOSWindows())
