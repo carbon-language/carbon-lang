@@ -12,4 +12,4 @@ ALL_SOURCES=$(find lib include tools -name \*.cpp -or -name \*.h)
 DIAGS_IN_SOURCES=$(grep -E --only-matching --no-filename '(err_|warn_|ext_|note_)[a-z_]+' $ALL_SOURCES)
 
 # Print all diags that occur in the .td files but not in the source.
-diff -u <(sort -u <<< "$ALL_DIAGS") <(sort -u <<< "$DIAGS_IN_SOURCES") | sed -En 's/^-([a-z_]+)/\1/p'
+comm -23 <(sort -u <<< "$ALL_DIAGS") <(sort -u <<< "$DIAGS_IN_SOURCES")
