@@ -50,8 +50,8 @@ protected:
         if (JustReplacedNewline)
           MessedUp[i - 1] = '\n';
         InComment = true;
-      } else if (MessedUp[i] == '#' && JustReplacedNewline) {
-        MessedUp[i - 1] = '\n';
+      } else if (MessedUp[i] == '#' && (JustReplacedNewline || i == 0)) {
+        if (i != 0) MessedUp[i - 1] = '\n';
         InPreprocessorDirective = true;
       } else if (MessedUp[i] == '\\' && MessedUp[i + 1] == '\n') {
         MessedUp[i] = ' ';
@@ -469,7 +469,7 @@ TEST_F(FormatTest, BreaksOnHashWhenDirectiveIsInvalid) {
 TEST_F(FormatTest, UnescapedEndOfLineEndsPPDirective) {
   EXPECT_EQ("#line 42 \"test\"\n",
             format("#  \\\n  line  \\\n  42  \\\n  \"test\"\n"));
-  EXPECT_EQ("#define A  \\\n  B\n",
+  EXPECT_EQ("#define A B\n",
             format("#  \\\n define  \\\n    A  \\\n       B\n",
                    getLLVMStyleWithColumns(12)));
 }
@@ -477,9 +477,8 @@ TEST_F(FormatTest, UnescapedEndOfLineEndsPPDirective) {
 TEST_F(FormatTest, EndOfFileEndsPPDirective) {
   EXPECT_EQ("#line 42 \"test\"",
             format("#  \\\n  line  \\\n  42  \\\n  \"test\""));
-  EXPECT_EQ("#define A  \\\n  B",
-            format("#  \\\n define  \\\n    A  \\\n       B",
-                   getLLVMStyleWithColumns(12)));
+  EXPECT_EQ("#define A B",
+            format("#  \\\n define  \\\n    A  \\\n       B"));
 }
 
 TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
@@ -491,6 +490,13 @@ TEST_F(FormatTest, IndentsPPDirectiveInReducedSpace) {
   verifyFormat("#define A( \\\n    B)", getLLVMStyleWithColumns(12));
   verifyFormat("#define AA(\\\n    B)", getLLVMStyleWithColumns(12));
   verifyFormat("#define A( \\\n    A, B)", getLLVMStyleWithColumns(12));
+
+  verifyFormat("#define A A\n#define A A");
+  verifyFormat("#define A(X) A\n#define A A");
+
+  verifyFormat("#define Something Other", getLLVMStyleWithColumns(24));
+  verifyFormat("#define Something     \\\n"
+               "  Other", getLLVMStyleWithColumns(23));
 }
 
 TEST_F(FormatTest, HandlePreprocessorDirectiveContext) {
@@ -548,8 +554,7 @@ TEST_F(FormatTest, HashInMacroDefinition) {
   verifyFormat("#define A(a, b, c)   \\\n"
                "  void a##b##c()", getLLVMStyleWithColumns(22));
 
-  verifyFormat("#define A            \\\n"
-               "  void # ## #", getLLVMStyleWithColumns(22));
+  verifyFormat("#define A void # ## #", getLLVMStyleWithColumns(22));
 }
 
 TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {
@@ -605,8 +610,7 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
       "functionCallTo(someOtherFunction(\n"
       "    withSomeParameters, whichInSequence,\n"
       "    areLongerThanALine(andAnotherCall,\n"
-      "#define A                                                           \\\n"
-      "  B\n"
+      "#define A B\n"
       "                       withMoreParamters,\n"
       "                       whichStronglyInfluenceTheLayout),\n"
       "    andMoreParameters),\n"

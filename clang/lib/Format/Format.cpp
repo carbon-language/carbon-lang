@@ -185,6 +185,7 @@ static void replacePPWhitespace(
 static bool fitsIntoLimit(const AnnotatedToken &RootToken, unsigned Limit,
                           unsigned *Length = 0) {
   unsigned Columns = RootToken.FormatTok.TokenLength;
+  if (Columns > Limit) return false;
   const AnnotatedToken *Tok = &RootToken;
   while (!Tok->Children.empty()) {
     Tok = &Tok->Children[0];
@@ -1415,8 +1416,23 @@ private:
       tryMergeSimpleBlock(I, E, Limit);
     } else if (I->First.is(tok::kw_if)) {
       tryMergeSimpleIf(I, E, Limit);
+    } else if (I->InPPDirective && (I->First.FormatTok.HasUnescapedNewline ||
+                                    I->First.FormatTok.IsFirst)) {
+      tryMergeSimplePPDirective(I, E, Limit);
     }
     return true;
+  }
+
+  void tryMergeSimplePPDirective(std::vector<AnnotatedLine>::iterator &I,
+                                 std::vector<AnnotatedLine>::iterator E,
+                                 unsigned Limit) {
+    AnnotatedLine &Line = *I;
+    if (!(I + 1)->InPPDirective) return;
+    if (I + 2 != E && (I + 2)->InPPDirective &&
+        !(I + 2)->First.FormatTok.HasUnescapedNewline)
+      return;
+    if (!fitsIntoLimit((I + 1)->First, Limit)) return;
+    join(Line, *(++I));
   }
 
   void tryMergeSimpleIf(std::vector<AnnotatedLine>::iterator &I,
