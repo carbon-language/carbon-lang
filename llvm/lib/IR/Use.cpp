@@ -139,7 +139,7 @@ User *Use::getUser() const {
   const UserRef *ref = reinterpret_cast<const UserRef*>(End);
   return ref->getInt()
     ? ref->getPointer()
-    : (User*)End;
+    : reinterpret_cast<User*>(const_cast<Use*>(End));
 }
 
 } // End llvm namespace
