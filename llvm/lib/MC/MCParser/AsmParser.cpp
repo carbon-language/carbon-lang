@@ -375,10 +375,6 @@ class GenericAsmParser : public MCAsmParserExtension {
 public:
   GenericAsmParser() {}
 
-  AsmParser &getParser() {
-    return (AsmParser&) this->MCAsmParserExtension::getParser();
-  }
-
   virtual void Initialize(MCAsmParser &Parser) {
     // Call the base implementation.
     this->MCAsmParserExtension::Initialize(Parser);
