@@ -369,6 +369,13 @@ TEST_F(FormatTest, FormatsEnum) {
                "};");
 }
 
+TEST_F(FormatTest, FormatsBitfields) {
+  verifyFormat("struct Bitfields {\n"
+               "  unsigned sClass : 8;\n"
+               "  unsigned ValueKind : 2;\n"
+               "};");
+}
+
 TEST_F(FormatTest, FormatsNamespaces) {
   verifyFormat("namespace some_namespace {\n"
                "class A {};\n"
