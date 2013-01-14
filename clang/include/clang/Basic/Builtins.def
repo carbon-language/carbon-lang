@@ -930,6 +930,10 @@ BUILTIN(__builtin_addcs, "UsUsCUsCUsCUs*", "n")
 BUILTIN(__builtin_addc, "UiUiCUiCUiCUi*", "n")
 BUILTIN(__builtin_addcl, "ULiULiCULiCULiCULi*", "n")
 BUILTIN(__builtin_addcll, "ULLiULLiCULLiCULLiCULLi*", "n")
+BUILTIN(__builtin_subcs, "UsUsCUsCUsCUs*", "n")
+BUILTIN(__builtin_subc, "UiUiCUiCUiCUi*", "n")
+BUILTIN(__builtin_subcl, "ULiULiCULiCULiCULi*", "n")
+BUILTIN(__builtin_subcll, "ULLiULLiCULLiCULLiCULLi*", "n")
 
 #undef BUILTIN
 #undef LIBBUILTIN

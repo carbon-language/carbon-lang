@@ -1348,7 +1348,11 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_addcs:
   case Builtin::BI__builtin_addc:
   case Builtin::BI__builtin_addcl:
-  case Builtin::BI__builtin_addcll: {
+  case Builtin::BI__builtin_addcll:
+  case Builtin::BI__builtin_subcs:
+  case Builtin::BI__builtin_subc:
+  case Builtin::BI__builtin_subcl:
+  case Builtin::BI__builtin_subcll: {
 
     // We translate all of these builtins from expressions of the form:
     //   int x = ..., y = ..., carryin = ..., carryout, result;
@@ -1374,7 +1378,23 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     std::pair<llvm::Value*, unsigned> CarryOutPtr =
       EmitPointerWithAlignment(E->getArg(3));
 
-    const llvm::Intrinsic::ID IntrinsicId = llvm::Intrinsic::uadd_with_overflow;
+    // Decide if we are lowering to a uadd.with.overflow or usub.with.overflow.
+    llvm::Intrinsic::ID IntrinsicId;
+    switch (BuiltinID) {
+    default: llvm_unreachable("Unknown multiprecision builtin id.");
+    case Builtin::BI__builtin_addcs:
+    case Builtin::BI__builtin_addc:
+    case Builtin::BI__builtin_addcl:
+    case Builtin::BI__builtin_addcll:
+      IntrinsicId = llvm::Intrinsic::uadd_with_overflow;
+      break;
+    case Builtin::BI__builtin_subcs:
+    case Builtin::BI__builtin_subc:
+    case Builtin::BI__builtin_subcl:
+    case Builtin::BI__builtin_subcll:
+      IntrinsicId = llvm::Intrinsic::usub_with_overflow;
+      break;
+    }
 
     // Construct our resulting LLVM IR expression.
     llvm::Value *Carry1;
