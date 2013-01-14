@@ -11,6 +11,7 @@
 #define LLVM_MC_MCPARSER_MCASMPARSER_H
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/Support/DataTypes.h"
 #include <vector>
@@ -43,8 +44,24 @@ public:
 };
 
 
+/// \brief Helper types for tracking macro definitions.
 typedef std::vector<AsmToken> MCAsmMacroArgument;
+typedef std::vector<MCAsmMacroArgument> MCAsmMacroArguments;
+typedef std::pair<StringRef, MCAsmMacroArgument> MCAsmMacroParameter;
+typedef std::vector<MCAsmMacroParameter> MCAsmMacroParameters;
 
+struct MCAsmMacro {
+  StringRef Name;
+  StringRef Body;
+  MCAsmMacroParameters Parameters;
+
+public:
+  MCAsmMacro(StringRef N, StringRef B, const MCAsmMacroParameters &P) :
+    Name(N), Body(B), Parameters(P) {}
+
+  MCAsmMacro(const MCAsmMacro& Other)
+    : Name(Other.Name), Body(Other.Body), Parameters(Other.Parameters) {}
+};
 
 /// MCAsmParser - Generic assembler parser interface, for use by target specific
 /// assembly parsers.
@@ -141,9 +158,34 @@ public:
   /// recovery.
   virtual void EatToEndOfStatement() = 0;
 
-  /// Control a flag in the parser that enables or disables macros.
+  /// \brief Are macros enabled in the parser?
   virtual bool MacrosEnabled() = 0;
+
+  /// \brief Control a flag in the parser that enables or disables macros.
   virtual void SetMacrosEnabled(bool flag) = 0;
+
+  /// \brief Lookup a previously defined macro.
+  /// \param Name Macro name.
+  /// \returns Pointer to macro. NULL if no such macro was defined.
+  virtual const MCAsmMacro* LookupMacro(StringRef Name) = 0;
+
+  /// \brief Define a new macro with the given name and information.
+  virtual void DefineMacro(StringRef Name, const MCAsmMacro& Macro) = 0;
+
+  /// \brief Undefine a macro. If no such macro was defined, it's a no-op.
+  virtual void UndefineMacro(StringRef Name) = 0;
+
+  /// \brief Are we inside a macro instantiation?
+  virtual bool InsideMacroInstantiation() = 0;
+
+  /// \brief Handle entry to macro instantiation. 
+  ///
+  /// \param M The macro.
+  /// \param NameLoc Instantiation location.
+  virtual bool HandleMacroEntry(const MCAsmMacro *M, SMLoc NameLoc) = 0;
+
+  /// \brief Handle exit from macro instantiation.
+  virtual void HandleMacroExit() = 0;
 
   /// ParseMacroArgument - Extract AsmTokens for a macro argument. If the
   /// argument delimiter is initially unknown, set it to AsmToken::Eof. It will

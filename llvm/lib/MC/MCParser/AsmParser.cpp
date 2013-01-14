@@ -50,26 +50,12 @@ MCAsmParserSemaCallback::~MCAsmParserSemaCallback() {}
 
 namespace {
 
-/// \brief Helper class for tracking macro definitions.
-typedef std::vector<MCAsmMacroArgument> MacroArguments;
-typedef std::pair<StringRef, MCAsmMacroArgument> MacroParameter;
-typedef std::vector<MacroParameter> MacroParameters;
-
-struct Macro {
-  StringRef Name;
-  StringRef Body;
-  MacroParameters Parameters;
-
-public:
-  Macro(StringRef N, StringRef B, const MacroParameters &P) :
-    Name(N), Body(B), Parameters(P) {}
-};
 
 /// \brief Helper class for storing information about an active macro
 /// instantiation.
 struct MacroInstantiation {
   /// The macro being instantiated.
-  const Macro *TheMacro;
+  const MCAsmMacro *TheMacro;
 
   /// The macro instantiation with substitutions.
   MemoryBuffer *Instantiation;
@@ -84,7 +70,7 @@ struct MacroInstantiation {
   SMLoc ExitLoc;
 
 public:
-  MacroInstantiation(const Macro *M, SMLoc IL, int EB, SMLoc EL,
+  MacroInstantiation(const MCAsmMacro *M, SMLoc IL, int EB, SMLoc EL,
                      MemoryBuffer *I);
 };
 
@@ -115,8 +101,6 @@ struct ParseStatementInfo {
 
 /// \brief The concrete assembly parser instance.
 class AsmParser : public MCAsmParser {
-  friend class GenericAsmParser;
-
   AsmParser(const AsmParser &) LLVM_DELETED_FUNCTION;
   void operator=(const AsmParser &) LLVM_DELETED_FUNCTION;
 private:
@@ -144,7 +128,7 @@ private:
   StringMap<std::pair<MCAsmParserExtension*, DirectiveHandler> > DirectiveMap;
 
   /// MacroMap - Map of currently defined macros.
-  StringMap<Macro*> MacroMap;
+  StringMap<MCAsmMacro*> MacroMap;
 
   /// ActiveMacros - Stack of active macro instantiations.
   std::vector<MacroInstantiation*> ActiveMacros;
@@ -225,6 +209,9 @@ public:
   virtual bool ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc);
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
+  bool ParseMacroArgument(MCAsmMacroArgument &MA,
+                          AsmToken::TokenKind &ArgumentDelimiter);
+
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \p Res to the identifier contents.
   virtual bool ParseIdentifier(StringRef &Res);
@@ -232,6 +219,14 @@ public:
 
   virtual bool MacrosEnabled() {return MacrosEnabledFlag;}
   virtual void SetMacrosEnabled(bool flag) {MacrosEnabledFlag = flag;}
+
+  virtual const MCAsmMacro* LookupMacro(StringRef Name);
+  virtual void DefineMacro(StringRef Name, const MCAsmMacro& Macro);
+  virtual void UndefineMacro(StringRef Name);
+
+  virtual bool InsideMacroInstantiation() {return !ActiveMacros.empty();}
+  virtual bool HandleMacroEntry(const MCAsmMacro *M, SMLoc NameLoc);
+  void HandleMacroExit();
 
   virtual void CheckForValidSection();
   /// }
@@ -242,12 +237,10 @@ private:
   void EatToEndOfLine();
   bool ParseCppHashLineFilenameComment(const SMLoc &L);
 
-  bool HandleMacroEntry(StringRef Name, SMLoc NameLoc, const Macro *M);
   bool expandMacro(raw_svector_ostream &OS, StringRef Body,
-                   const MacroParameters &Parameters,
-                   const MacroArguments &A,
+                   const MCAsmMacroParameters &Parameters,
+                   const MCAsmMacroArguments &A,
                    const SMLoc &L);
-  void HandleMacroExit();
 
   void PrintMacroInstantiations();
   void PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind, const Twine &Msg,
@@ -270,9 +263,7 @@ private:
   /// location.
   void JumpToLoc(SMLoc Loc, int InBuffer=-1);
 
-  bool ParseMacroArgument(MCAsmMacroArgument &MA,
-                          AsmToken::TokenKind &ArgumentDelimiter);
-  bool ParseMacroArguments(const Macro *M, MacroArguments &A);
+  bool ParseMacroArguments(const MCAsmMacro *M, MCAsmMacroArguments &A);
 
   /// \brief Parse up to the end of statement and a return the contents from the
   /// current token until the end of the statement; the current token on exit
@@ -359,8 +350,8 @@ private:
                                     MCSymbolRefExpr::VariantKind Variant);
 
   // Macro-like directives
-  Macro *ParseMacroLikeBody(SMLoc DirectiveLoc);
-  void InstantiateMacroLikeBody(Macro *M, SMLoc DirectiveLoc,
+  MCAsmMacro *ParseMacroLikeBody(SMLoc DirectiveLoc);
+  void InstantiateMacroLikeBody(MCAsmMacro *M, SMLoc DirectiveLoc,
                                 raw_svector_ostream &OS);
   bool ParseDirectiveRept(SMLoc DirectiveLoc); // ".rept"
   bool ParseDirectiveIrp(SMLoc DirectiveLoc);  // ".irp"
@@ -540,7 +531,7 @@ AsmParser::~AsmParser() {
   assert(ActiveMacros.empty() && "Unexpected active macro instantiation!");
 
   // Destroy any macros.
-  for (StringMap<Macro*>::iterator it = MacroMap.begin(),
+  for (StringMap<MCAsmMacro*>::iterator it = MacroMap.begin(),
          ie = MacroMap.end(); it != ie; ++it)
     delete it->getValue();
 
@@ -1278,8 +1269,9 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
 
   // If macros are enabled, check to see if this is a macro instantiation.
   if (MacrosEnabled())
-    if (const Macro *M = MacroMap.lookup(IDVal))
-      return HandleMacroEntry(IDVal, IDLoc, M);
+    if (const MCAsmMacro *M = LookupMacro(IDVal)) {
+      return HandleMacroEntry(M, IDLoc);
+    }
 
   // Otherwise, we have a normal instruction or directive.
   if (IDVal[0] == '.' && IDVal != ".") {
@@ -1590,8 +1582,8 @@ static bool isIdentifierChar(char c) {
 }
 
 bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
-                            const MacroParameters &Parameters,
-                            const MacroArguments &A,
+                            const MCAsmMacroParameters &Parameters,
+                            const MCAsmMacroArguments &A,
                             const SMLoc &L) {
   unsigned NParameters = Parameters.size();
   if (NParameters != 0 && NParameters != A.size())
@@ -1690,7 +1682,7 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
   return false;
 }
 
-MacroInstantiation::MacroInstantiation(const Macro *M, SMLoc IL,
+MacroInstantiation::MacroInstantiation(const MCAsmMacro *M, SMLoc IL,
                                        int EB, SMLoc EL,
                                        MemoryBuffer *I)
   : TheMacro(M), Instantiation(I), InstantiationLoc(IL), ExitBuffer(EB),
@@ -1807,7 +1799,7 @@ bool AsmParser::ParseMacroArgument(MCAsmMacroArgument &MA,
 }
 
 // Parse the macro instantiation arguments.
-bool AsmParser::ParseMacroArguments(const Macro *M, MacroArguments &A) {
+bool AsmParser::ParseMacroArguments(const MCAsmMacro *M, MCAsmMacroArguments &A) {
   const unsigned NParameters = M ? M->Parameters.size() : 0;
   // Argument delimiter is initially unknown. It will be set by
   // ParseMacroArgument()
@@ -1851,14 +1843,30 @@ bool AsmParser::ParseMacroArguments(const Macro *M, MacroArguments &A) {
   return TokError("Too many arguments");
 }
 
-bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
-                                 const Macro *M) {
+const MCAsmMacro* AsmParser::LookupMacro(StringRef Name) {
+  StringMap<MCAsmMacro*>::iterator I = MacroMap.find(Name);
+  return (I == MacroMap.end()) ? NULL : I->getValue();
+}
+
+void AsmParser::DefineMacro(StringRef Name, const MCAsmMacro& Macro) {
+  MacroMap[Name] = new MCAsmMacro(Macro);
+}
+
+void AsmParser::UndefineMacro(StringRef Name) {
+  StringMap<MCAsmMacro*>::iterator I = MacroMap.find(Name);
+  if (I != MacroMap.end()) {
+    delete I->getValue();
+    MacroMap.erase(I);
+  }
+}
+
+bool AsmParser::HandleMacroEntry(const MCAsmMacro *M, SMLoc NameLoc) {
   // Arbitrarily limit macro nesting depth, to match 'as'. We can eliminate
   // this, although we should protect against infinite loops.
   if (ActiveMacros.size() == 20)
     return TokError("macros cannot be nested more than 20 levels deep");
 
-  MacroArguments A;
+  MCAsmMacroArguments A;
   if (ParseMacroArguments(M, A))
     return true;
 
@@ -1877,7 +1885,7 @@ bool AsmParser::HandleMacroEntry(StringRef Name, SMLoc NameLoc,
   if (expandMacro(OS, Body, M->Parameters, A, getTok().getLoc()))
     return true;
 
-  // We include the .endmacro in the buffer as our queue to exit the macro
+  // We include the .endmacro in the buffer as our cue to exit the macro
   // instantiation.
   OS << ".endmacro\n";
 
@@ -3498,13 +3506,13 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
   if (getParser().ParseIdentifier(Name))
     return TokError("expected identifier in '.macro' directive");
 
-  MacroParameters Parameters;
+  MCAsmMacroParameters Parameters;
   // Argument delimiter is initially unknown. It will be set by
   // ParseMacroArgument()
   AsmToken::TokenKind ArgumentDelimiter = AsmToken::Eof;
   if (getLexer().isNot(AsmToken::EndOfStatement)) {
     for (;;) {
-      MacroParameter Parameter;
+      MCAsmMacroParameter Parameter;
       if (getParser().ParseIdentifier(Parameter.first))
         return TokError("expected identifier in '.macro' directive");
 
@@ -3550,14 +3558,14 @@ bool GenericAsmParser::ParseDirectiveMacro(StringRef Directive,
     getParser().EatToEndOfStatement();
   }
 
-  if (getParser().MacroMap.lookup(Name)) {
+  if (getParser().LookupMacro(Name)) {
     return Error(DirectiveLoc, "macro '" + Name + "' is already defined");
   }
 
   const char *BodyStart = StartToken.getLoc().getPointer();
   const char *BodyEnd = EndToken.getLoc().getPointer();
   StringRef Body = StringRef(BodyStart, BodyEnd - BodyStart);
-  getParser().MacroMap[Name] = new Macro(Name, Body, Parameters);
+  getParser().DefineMacro(Name, MCAsmMacro(Name, Body, Parameters));
   return false;
 }
 
@@ -3571,7 +3579,7 @@ bool GenericAsmParser::ParseDirectiveEndMacro(StringRef Directive,
 
   // If we are inside a macro instantiation, terminate the current
   // instantiation.
-  if (!getParser().ActiveMacros.empty()) {
+  if (getParser().InsideMacroInstantiation()) {
     getParser().HandleMacroExit();
     return false;
   }
@@ -3593,13 +3601,10 @@ bool GenericAsmParser::ParseDirectivePurgeMacro(StringRef Directive,
   if (getLexer().isNot(AsmToken::EndOfStatement))
     return TokError("unexpected token in '.purgem' directive");
 
-  StringMap<Macro*>::iterator I = getParser().MacroMap.find(Name);
-  if (I == getParser().MacroMap.end())
+  if (!getParser().LookupMacro(Name))
     return Error(DirectiveLoc, "macro '" + Name + "' is not defined");
 
-  // Undefine the macro.
-  delete I->getValue();
-  getParser().MacroMap.erase(I);
+  getParser().UndefineMacro(Name);
   return false;
 }
 
@@ -3622,7 +3627,7 @@ bool GenericAsmParser::ParseDirectiveLEB128(StringRef DirName, SMLoc) {
   return false;
 }
 
-Macro *AsmParser::ParseMacroLikeBody(SMLoc DirectiveLoc) {
+MCAsmMacro *AsmParser::ParseMacroLikeBody(SMLoc DirectiveLoc) {
   AsmToken EndToken, StartToken = getTok();
 
   unsigned NestLevel = 0;
@@ -3663,11 +3668,11 @@ Macro *AsmParser::ParseMacroLikeBody(SMLoc DirectiveLoc) {
 
   // We Are Anonymous.
   StringRef Name;
-  MacroParameters Parameters;
-  return new Macro(Name, Body, Parameters);
+  MCAsmMacroParameters Parameters;
+  return new MCAsmMacro(Name, Body, Parameters);
 }
 
-void AsmParser::InstantiateMacroLikeBody(Macro *M, SMLoc DirectiveLoc,
+void AsmParser::InstantiateMacroLikeBody(MCAsmMacro *M, SMLoc DirectiveLoc,
                                          raw_svector_ostream &OS) {
   OS << ".endr\n";
 
@@ -3703,15 +3708,15 @@ bool AsmParser::ParseDirectiveRept(SMLoc DirectiveLoc) {
   Lex();
 
   // Lex the rept definition.
-  Macro *M = ParseMacroLikeBody(DirectiveLoc);
+  MCAsmMacro *M = ParseMacroLikeBody(DirectiveLoc);
   if (!M)
     return true;
 
   // Macro instantiation is lexical, unfortunately. We construct a new buffer
   // to hold the macro body with substitutions.
   SmallString<256> Buf;
-  MacroParameters Parameters;
-  MacroArguments A;
+  MCAsmMacroParameters Parameters;
+  MCAsmMacroArguments A;
   raw_svector_ostream OS(Buf);
   while (Count--) {
     if (expandMacro(OS, M->Body, Parameters, A, getTok().getLoc()))
@@ -3725,8 +3730,8 @@ bool AsmParser::ParseDirectiveRept(SMLoc DirectiveLoc) {
 /// ParseDirectiveIrp
 /// ::= .irp symbol,values
 bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
-  MacroParameters Parameters;
-  MacroParameter Parameter;
+  MCAsmMacroParameters Parameters;
+  MCAsmMacroParameter Parameter;
 
   if (ParseIdentifier(Parameter.first))
     return TokError("expected identifier in '.irp' directive");
@@ -3738,7 +3743,7 @@ bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
 
   Lex();
 
-  MacroArguments A;
+  MCAsmMacroArguments A;
   if (ParseMacroArguments(0, A))
     return true;
 
@@ -3746,7 +3751,7 @@ bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
   Lex();
 
   // Lex the irp definition.
-  Macro *M = ParseMacroLikeBody(DirectiveLoc);
+  MCAsmMacro *M = ParseMacroLikeBody(DirectiveLoc);
   if (!M)
     return true;
 
@@ -3755,8 +3760,8 @@ bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
   SmallString<256> Buf;
   raw_svector_ostream OS(Buf);
 
-  for (MacroArguments::iterator i = A.begin(), e = A.end(); i != e; ++i) {
-    MacroArguments Args;
+  for (MCAsmMacroArguments::iterator i = A.begin(), e = A.end(); i != e; ++i) {
+    MCAsmMacroArguments Args;
     Args.push_back(*i);
 
     if (expandMacro(OS, M->Body, Parameters, Args, getTok().getLoc()))
@@ -3771,8 +3776,8 @@ bool AsmParser::ParseDirectiveIrp(SMLoc DirectiveLoc) {
 /// ParseDirectiveIrpc
 /// ::= .irpc symbol,values
 bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
-  MacroParameters Parameters;
-  MacroParameter Parameter;
+  MCAsmMacroParameters Parameters;
+  MCAsmMacroParameter Parameter;
 
   if (ParseIdentifier(Parameter.first))
     return TokError("expected identifier in '.irpc' directive");
@@ -3784,7 +3789,7 @@ bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
 
   Lex();
 
-  MacroArguments A;
+  MCAsmMacroArguments A;
   if (ParseMacroArguments(0, A))
     return true;
 
@@ -3795,7 +3800,7 @@ bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
   Lex();
 
   // Lex the irpc definition.
-  Macro *M = ParseMacroLikeBody(DirectiveLoc);
+  MCAsmMacro *M = ParseMacroLikeBody(DirectiveLoc);
   if (!M)
     return true;
 
@@ -3810,7 +3815,7 @@ bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
     MCAsmMacroArgument Arg;
     Arg.push_back(AsmToken(AsmToken::Identifier, Values.slice(I, I+1)));
 
-    MacroArguments Args;
+    MCAsmMacroArguments Args;
     Args.push_back(Arg);
 
     if (expandMacro(OS, M->Body, Parameters, Args, getTok().getLoc()))
