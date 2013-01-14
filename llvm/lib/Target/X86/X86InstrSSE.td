@@ -1110,34 +1110,41 @@ def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
 // SSE 1 & 2 - Move Low packed FP Instructions
 //===----------------------------------------------------------------------===//
 
-multiclass sse12_mov_hilo_packed<bits<8>opc, RegisterClass RC,
-                                 SDNode psnode, SDNode pdnode, string base_opc,
-                                 string asm_opr, InstrItinClass itin> {
+multiclass sse12_mov_hilo_packed_base<bits<8>opc, SDNode psnode, SDNode pdnode,
+                                      string base_opc, string asm_opr,
+                                      InstrItinClass itin> {
   def PSrm : PI<opc, MRMSrcMem,
          (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
          !strconcat(base_opc, "s", asm_opr),
-     [(set RC:$dst,
-       (psnode RC:$src1,
+     [(set VR128:$dst,
+       (psnode VR128:$src1,
               (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))))],
               itin, SSEPackedSingle>, TB;
 
   def PDrm : PI<opc, MRMSrcMem,
-         (outs RC:$dst), (ins RC:$src1, f64mem:$src2),
+         (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
          !strconcat(base_opc, "d", asm_opr),
-     [(set RC:$dst, (v2f64 (pdnode RC:$src1,
+     [(set VR128:$dst, (v2f64 (pdnode VR128:$src1,
                               (scalar_to_vector (loadf64 addr:$src2)))))],
               itin, SSEPackedDouble>, TB, OpSize;
+
+}
+
+multiclass sse12_mov_hilo_packed<bits<8>opc, SDNode psnode, SDNode pdnode,
+                                 string base_opc, InstrItinClass itin> {
+  defm V#NAME : sse12_mov_hilo_packed_base<opc, psnode, pdnode, base_opc,
+                                    "\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                                    itin>, VEX_4V;
+
+let Constraints = "$src1 = $dst" in
+  defm NAME : sse12_mov_hilo_packed_base<opc, psnode, pdnode, base_opc,
+                                    "\t{$src2, $dst|$dst, $src2}",
+                                    itin>;
 }
 
 let AddedComplexity = 20 in {
-  defm VMOVL : sse12_mov_hilo_packed<0x12, VR128, X86Movlps, X86Movlpd, "movlp",
-                     "\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     IIC_SSE_MOV_LH>, VEX_4V;
-}
-let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
-  defm MOVL : sse12_mov_hilo_packed<0x12, VR128, X86Movlps, X86Movlpd, "movlp",
-                                   "\t{$src2, $dst|$dst, $src2}",
-                                   IIC_SSE_MOV_LH>;
+  defm MOVL : sse12_mov_hilo_packed<0x12, X86Movlps, X86Movlpd, "movlp",
+                                    IIC_SSE_MOV_LH>;
 }
 
 def VMOVLPSmr : VPSI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
@@ -1235,14 +1242,8 @@ let Predicates = [UseSSE2] in {
 //===----------------------------------------------------------------------===//
 
 let AddedComplexity = 20 in {
-  defm VMOVH : sse12_mov_hilo_packed<0x16, VR128, X86Movlhps, X86Movlhpd, "movhp",
-                     "\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                     IIC_SSE_MOV_LH>, VEX_4V;
-}
-let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
-  defm MOVH : sse12_mov_hilo_packed<0x16, VR128, X86Movlhps, X86Movlhpd, "movhp",
-                                   "\t{$src2, $dst|$dst, $src2}",
-                                   IIC_SSE_MOV_LH>;
+  defm MOVH : sse12_mov_hilo_packed<0x16, X86Movlhps, X86Movlhpd, "movhp",
+                                    IIC_SSE_MOV_LH>;
 }
 
 // v2f64 extract element 1 is always custom lowered to unpack high to low
