@@ -14,6 +14,8 @@
 #include "sanitizer_common/sanitizer_allocator.h"
 #include "sanitizer_common/sanitizer_common.h"
 
+#include "sanitizer_test_utils.h"
+
 #include "gtest/gtest.h"
 
 #include <stdlib.h>
@@ -481,7 +483,7 @@ TEST(Allocator, Stress) {
   char *ptrs[kCount];
   unsigned rnd = 42;
   for (int i = 0; i < kCount; i++) {
-    uptr sz = rand_r(&rnd) % 1000;
+    uptr sz = my_rand_r(&rnd) % 1000;
     char *p = (char*)InternalAlloc(sz);
     EXPECT_NE(p, (char*)0);
     ptrs[i] = p;

@@ -26,21 +26,13 @@
 #include <algorithm>
 #include <vector>
 
-// Simple stand-alone pseudorandom number generator.
-// Current algorithm is ANSI C linear congruential PRNG.
-static inline u32 my_rand(u32* state) {
-  return (*state = *state * 1103515245 + 12345) >> 16;
-}
-
-static u32 global_seed = 0;
-
 
 TEST(AddressSanitizer, InternalSimpleDeathTest) {
   EXPECT_DEATH(exit(1), "");
 }
 
 static void MallocStress(size_t n) {
-  u32 seed = my_rand(&global_seed);
+  u32 seed = my_rand();
   __asan::StackTrace stack1;
   stack1.trace[0] = 0xa123;
   stack1.trace[1] = 0xa456;
@@ -60,19 +52,19 @@ static void MallocStress(size_t n) {
   for (size_t i = 0; i < n; i++) {
     if ((i % 3) == 0) {
       if (vec.empty()) continue;
-      size_t idx = my_rand(&seed) % vec.size();
+      size_t idx = my_rand_r(&seed) % vec.size();
       void *ptr = vec[idx];
       vec[idx] = vec.back();
       vec.pop_back();
       __asan::asan_free(ptr, &stack1, __asan::FROM_MALLOC);
     } else {
-      size_t size = my_rand(&seed) % 1000 + 1;
-      switch ((my_rand(&seed) % 128)) {
+      size_t size = my_rand_r(&seed) % 1000 + 1;
+      switch ((my_rand_r(&seed) % 128)) {
         case 0: size += 1024; break;
         case 1: size += 2048; break;
         case 2: size += 4096; break;
       }
-      size_t alignment = 1 << (my_rand(&seed) % 10 + 1);
+      size_t alignment = 1 << (my_rand_r(&seed) % 10 + 1);
       char *ptr = (char*)__asan::asan_memalign(alignment, size,
                                                &stack2, __asan::FROM_MALLOC);
       vec.push_back(ptr);
@@ -209,7 +201,7 @@ static uptr pc_array[] = {
 };
 
 void CompressStackTraceTest(size_t n_iter) {
-  u32 seed = my_rand(&global_seed);
+  u32 seed = my_rand();
   const size_t kNumPcs = ARRAY_SIZE(pc_array);
   u32 compressed[2 * kNumPcs];
 
@@ -217,9 +209,9 @@ void CompressStackTraceTest(size_t n_iter) {
     std::random_shuffle(pc_array, pc_array + kNumPcs);
     __asan::StackTrace stack0, stack1;
     stack0.CopyFrom(pc_array, kNumPcs);
-    stack0.size = std::max((size_t)1, (size_t)(my_rand(&seed) % stack0.size));
+    stack0.size = std::max((size_t)1, (size_t)(my_rand_r(&seed) % stack0.size));
     size_t compress_size =
-      std::max((size_t)2, (size_t)my_rand(&seed) % (2 * kNumPcs));
+      std::max((size_t)2, (size_t)my_rand_r(&seed) % (2 * kNumPcs));
     size_t n_frames =
       __asan::StackTrace::CompressStack(&stack0, compressed, compress_size);
     Ident(n_frames);
@@ -278,13 +270,13 @@ TEST(AddressSanitizer, QuarantineTest) {
 
 void *ThreadedQuarantineTestWorker(void *unused) {
   (void)unused;
-  u32 seed = my_rand(&global_seed);
+  u32 seed = my_rand();
   __asan::StackTrace stack;
   stack.trace[0] = 0x890;
   stack.size = 1;
 
   for (size_t i = 0; i < 1000; i++) {
-    void *p = __asan::asan_malloc(1 + (my_rand(&seed) % 4000), &stack);
+    void *p = __asan::asan_malloc(1 + (my_rand_r(&seed) % 4000), &stack);
     __asan::asan_free(p, &stack, __asan::FROM_MALLOC);
   }
   return NULL;

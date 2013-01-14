@@ -58,14 +58,6 @@ typedef uint64_t  U8;
 
 static const int kPageSize = 4096;
 
-// Simple stand-alone pseudorandom number generator.
-// Current algorithm is ANSI C linear congruential PRNG.
-static inline uint32_t my_rand(uint32_t* state) {
-  return (*state = *state * 1103515245 + 12345) >> 16;
-}
-
-static uint32_t global_seed = 0;
-
 const size_t kLargeMalloc = 1 << 24;
 
 template<typename T>
@@ -417,21 +409,21 @@ TEST(AddressSanitizer, SignalTest) {
 #endif
 
 static void MallocStress(size_t n) {
-  uint32_t seed = my_rand(&global_seed);
+  uint32_t seed = my_rand();
   for (size_t iter = 0; iter < 10; iter++) {
     vector<void *> vec;
     for (size_t i = 0; i < n; i++) {
       if ((i % 3) == 0) {
         if (vec.empty()) continue;
-        size_t idx = my_rand(&seed) % vec.size();
+        size_t idx = my_rand_r(&seed) % vec.size();
         void *ptr = vec[idx];
         vec[idx] = vec.back();
         vec.pop_back();
         free_aaa(ptr);
       } else {
-        size_t size = my_rand(&seed) % 1000 + 1;
+        size_t size = my_rand_r(&seed) % 1000 + 1;
 #ifndef __APPLE__
-        size_t alignment = 1 << (my_rand(&seed) % 7 + 3);
+        size_t alignment = 1 << (my_rand_r(&seed) % 7 + 3);
         char *ptr = (char*)memalign_aaa(alignment, size);
 #else
         char *ptr = (char*) malloc_aaa(size);
@@ -537,7 +529,7 @@ TEST(AddressSanitizer, ReallocTest) {
   ptr[3] = 3;
   for (int i = 0; i < 10000; i++) {
     ptr = (int*)realloc(ptr,
-        (my_rand(&global_seed) % 1000 + kMinElem) * sizeof(int));
+        (my_rand() % 1000 + kMinElem) * sizeof(int));
     EXPECT_EQ(3, ptr[3]);
   }
 }
