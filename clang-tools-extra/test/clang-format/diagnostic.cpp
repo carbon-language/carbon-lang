@@ -2,4 +2,4 @@
 // REQUIRES: shell
 
 }
-// CHECK: :[[@LINE-1]]:1: error: unexpected '}'
+// CHECK: diagnostic.cpp:[[@LINE-1]]:1: error: unexpected '}'
