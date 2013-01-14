@@ -1938,6 +1938,21 @@ void test_CFPlugInInstanceCreate(CFUUIDRef factoryUUID, CFUUIDRef typeUUID) {
   CFPlugInInstanceCreate(kCFAllocatorDefault, factoryUUID, typeUUID); // no-warning
 }
 
+//===----------------------------------------------------------------------===//
+// PR14927: -drain only has retain-count semantics on NSAutoreleasePool.
+//===----------------------------------------------------------------------===//
+
+@interface PR14927 : NSObject
+- (void)drain;
+@end
+
+void test_drain() {
+  PR14927 *obj = [[PR14927 alloc] init];
+  [obj drain];
+  [obj release]; // no-warning
+}
+
+
 // CHECK:  <key>diagnostics</key>
 // CHECK-NEXT:  <array>
 // CHECK-NEXT:   <dict>
