@@ -70,7 +70,7 @@ if ("${LIBCXX_CXX_ABI}" STREQUAL "libsupc++")
   set(LIBCXX_LIBSUPCXX_INCLUDE_PATHS "${LIBCXX_LIBSUPCXX_INCLUDE_PATHS}"
       CACHE STRINGS
       "Paths to libsupc++ include directories separate by ';'.")
-  set(LIBCXX_CXX_ABI_LIBRARIES stdc++)
+  set(LIBCXX_CXX_ABI_LIBRARIES supc++)
   set(LIBCXX_LIBSUPCXX_FILES
       cxxabi.h
       bits/c++config.h

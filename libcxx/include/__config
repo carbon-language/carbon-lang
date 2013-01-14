@@ -66,6 +66,12 @@
 #  endif
 #endif  // _WIN32
 
+#ifdef __linux__
+#  if defined(__GNUC__) && _GNUC_VER >= 403
+#    define _LIBCP_HAS_IS_BASE_OF
+#  endif
+#endif
+
 #ifdef __sun__
 # include <sys/isa_defs.h>
 # ifdef _LITTLE_ENDIAN
