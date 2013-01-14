@@ -95,49 +95,48 @@ AllowNonAffine("polly-allow-nonaffine",
 
 STATISTIC(ValidRegion, "Number of regions that a valid part of Scop");
 
-#define BADSCOP_STAT(NAME, DESC) STATISTIC(Bad##NAME##ForScop, \
-                                           "Number of bad regions for Scop: "\
-                                           DESC)
+#define BADSCOP_STAT(NAME, DESC)                                               \
+  STATISTIC(Bad##NAME##ForScop, "Number of bad regions for Scop: " DESC)
 
-#define INVALID(NAME, MESSAGE) \
-  do { \
-    std::string Buf; \
-    raw_string_ostream fmt(Buf); \
-    fmt << MESSAGE; \
-    fmt.flush(); \
-    LastFailure = Buf; \
-    DEBUG(dbgs() << MESSAGE); \
-    DEBUG(dbgs() << "\n"); \
-    assert(!Context.Verifying && #NAME); \
-    if (!Context.Verifying) ++Bad##NAME##ForScop; \
-    return false; \
+#define INVALID(NAME, MESSAGE)                                                 \
+  do {                                                                         \
+    std::string Buf;                                                           \
+    raw_string_ostream fmt(Buf);                                               \
+    fmt << MESSAGE;                                                            \
+    fmt.flush();                                                               \
+    LastFailure = Buf;                                                         \
+    DEBUG(dbgs() << MESSAGE);                                                  \
+    DEBUG(dbgs() << "\n");                                                     \
+    assert(!Context.Verifying && #NAME);                                       \
+    if (!Context.Verifying)                                                    \
+      ++Bad##NAME##ForScop;                                                    \
+    return false;                                                              \
   } while (0);
 
-
-#define INVALID_NOVERIFY(NAME, MESSAGE) \
-  do { \
-    std::string Buf; \
-    raw_string_ostream fmt(Buf); \
-    fmt << MESSAGE; \
-    fmt.flush(); \
-    LastFailure = Buf; \
-    DEBUG(dbgs() << MESSAGE); \
-    DEBUG(dbgs() << "\n"); \
-    /* DISABLED: assert(!Context.Verifying && #NAME); */ \
-    if (!Context.Verifying) ++Bad##NAME##ForScop; \
-    return false; \
+#define INVALID_NOVERIFY(NAME, MESSAGE)                                        \
+  do {                                                                         \
+    std::string Buf;                                                           \
+    raw_string_ostream fmt(Buf);                                               \
+    fmt << MESSAGE;                                                            \
+    fmt.flush();                                                               \
+    LastFailure = Buf;                                                         \
+    DEBUG(dbgs() << MESSAGE);                                                  \
+    DEBUG(dbgs() << "\n");                                                     \
+    /* DISABLED: assert(!Context.Verifying && #NAME); */                       \
+    if (!Context.Verifying)                                                    \
+      ++Bad##NAME##ForScop;                                                    \
+    return false;                                                              \
   } while (0);
 
-
-BADSCOP_STAT(CFG,             "CFG too complex");
-BADSCOP_STAT(IndVar,          "Non canonical induction variable in loop");
-BADSCOP_STAT(LoopBound,       "Loop bounds can not be computed");
-BADSCOP_STAT(FuncCall,        "Function call with side effects appeared");
-BADSCOP_STAT(AffFunc,         "Expression not affine");
-BADSCOP_STAT(Scalar,          "Found scalar dependency");
-BADSCOP_STAT(Alias,           "Found base address alias");
-BADSCOP_STAT(SimpleRegion,    "Region not simple");
-BADSCOP_STAT(Other,           "Others");
+BADSCOP_STAT(CFG, "CFG too complex");
+BADSCOP_STAT(IndVar, "Non canonical induction variable in loop");
+BADSCOP_STAT(LoopBound, "Loop bounds can not be computed");
+BADSCOP_STAT(FuncCall, "Function call with side effects appeared");
+BADSCOP_STAT(AffFunc, "Expression not affine");
+BADSCOP_STAT(Scalar, "Found scalar dependency");
+BADSCOP_STAT(Alias, "Found base address alias");
+BADSCOP_STAT(SimpleRegion, "Region not simple");
+BADSCOP_STAT(Other, "Others");
 
 //===----------------------------------------------------------------------===//
 // ScopDetection.
@@ -167,7 +166,8 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
   if (!Br)
     INVALID(CFG, "Non branch instruction terminates BB: " + BB.getName());
 
-  if (Br->isUnconditional()) return true;
+  if (Br->isUnconditional())
+    return true;
 
   Value *Condition = Br->getCondition();
 
@@ -193,8 +193,8 @@ bool ScopDetection::isValidCFG(BasicBlock &BB,
       return false;
 
     // Are both operands of the ICmp affine?
-    if (isa<UndefValue>(ICmp->getOperand(0))
-        || isa<UndefValue>(ICmp->getOperand(1)))
+    if (isa<UndefValue>(ICmp->getOperand(0)) ||
+        isa<UndefValue>(ICmp->getOperand(1)))
       INVALID(AffFunc, "undef operand in branch at BB: " + BB.getName());
 
     const SCEV *LHS = SE->getSCEV(ICmp->getOperand(0));

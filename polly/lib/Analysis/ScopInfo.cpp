@@ -52,8 +52,8 @@
 using namespace llvm;
 using namespace polly;
 
-STATISTIC(ScopFound,  "Number of valid Scops");
-STATISTIC(RichScopFound,   "Number of Scops containing a loop");
+STATISTIC(ScopFound, "Number of valid Scops");
+STATISTIC(RichScopFound, "Number of Scops containing a loop");
 
 /// Translate a SCEVExpression into an isl_pw_aff object.
 struct SCEVAffinator : public SCEVVisitor<SCEVAffinator, isl_pw_aff*> {
@@ -337,9 +337,7 @@ void MemoryAccess::print(raw_ostream &OS) const {
   OS.indent(16) << getAccessRelationStr() << ";\n";
 }
 
-void MemoryAccess::dump() const {
-  print(errs());
-}
+void MemoryAccess::dump() const { print(errs()); }
 
 // Create a map in the size of the provided set domain, that maps from the
 // one element of the provided set domain to another element of the provided
@@ -437,9 +435,7 @@ void MemoryAccess::setNewAccessRelation(isl_map *newAccess) {
 
 //===----------------------------------------------------------------------===//
 
-isl_map *ScopStmt::getScattering() const {
-  return isl_map_copy(Scattering);
-}
+isl_map *ScopStmt::getScattering() const { return isl_map_copy(Scattering); }
 
 void ScopStmt::setScattering(isl_map *NewScattering) {
   isl_map_free(Scattering);
@@ -458,8 +454,8 @@ void ScopStmt::buildScattering(SmallVectorImpl<unsigned> &Scatter) {
 
   // Loop dimensions.
   for (unsigned i = 0; i < NbIterators; ++i)
-    Scattering = isl_map_equate(Scattering, isl_dim_out, 2 * i + 1,
-                                isl_dim_in, i);
+    Scattering = isl_map_equate(Scattering, isl_dim_out, 2 * i + 1, isl_dim_in,
+                                i);
 
   // Constant dimensions
   for (unsigned i = 0; i < NbIterators + 1; ++i)
@@ -587,11 +583,10 @@ __isl_give isl_set *ScopStmt::buildDomain(TempScop &tempScop,
   return Domain;
 }
 
-ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop,
-                   const Region &CurRegion, BasicBlock &bb,
-                   SmallVectorImpl<Loop*> &NestLoops,
+ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop, const Region &CurRegion,
+                   BasicBlock &bb, SmallVectorImpl<Loop *> &NestLoops,
                    SmallVectorImpl<unsigned> &Scatter)
-  : Parent(parent), BB(&bb), IVS(NestLoops.size()) {
+    : Parent(parent), BB(&bb), IVS(NestLoops.size()) {
   // Setup the induction variables.
   for (unsigned i = 0, e = NestLoops.size(); i < e; ++i) {
     PHINode *PN = NestLoops[i]->getCanonicalInductionVariable();
@@ -611,17 +606,13 @@ ScopStmt::ScopStmt(Scop &parent, TempScop &tempScop,
   buildAccesses(tempScop, CurRegion);
 }
 
-std::string ScopStmt::getDomainStr() const {
-  return stringFromIslObj(Domain);
-}
+std::string ScopStmt::getDomainStr() const { return stringFromIslObj(Domain); }
 
 std::string ScopStmt::getScatteringStr() const {
   return stringFromIslObj(Scattering);
 }
 
-unsigned ScopStmt::getNumParams() const {
-  return Parent.getNumParams();
-}
+unsigned ScopStmt::getNumParams() const { return Parent.getNumParams(); }
 
 unsigned ScopStmt::getNumIterators() const {
   // The final read has one dimension with one element.
@@ -637,8 +628,8 @@ unsigned ScopStmt::getNumScattering() const {
 
 const char *ScopStmt::getBaseName() const { return BaseName.c_str(); }
 
-const PHINode *ScopStmt::getInductionVariableForDimension(unsigned Dimension)
-  const {
+const PHINode *ScopStmt::getInductionVariableForDimension(
+    unsigned Dimension) const {
   return IVS[Dimension].first;
 }
 
@@ -646,21 +637,15 @@ const Loop *ScopStmt::getLoopForDimension(unsigned Dimension) const {
   return IVS[Dimension].second;
 }
 
-isl_ctx *ScopStmt::getIslCtx() const {
-  return Parent.getIslCtx();
-}
+isl_ctx *ScopStmt::getIslCtx() const { return Parent.getIslCtx(); }
 
-isl_set *ScopStmt::getDomain() const {
-  return isl_set_copy(Domain);
-}
+isl_set *ScopStmt::getDomain() const { return isl_set_copy(Domain); }
 
 isl_space *ScopStmt::getDomainSpace() const {
   return isl_set_get_space(Domain);
 }
 
-isl_id *ScopStmt::getDomainId() const {
-  return isl_set_get_tuple_id(Domain);
-}
+isl_id *ScopStmt::getDomainId() const { return isl_set_get_tuple_id(Domain); }
 
 ScopStmt::~ScopStmt() {
   while (!MemAccs.empty()) {
@@ -762,12 +747,12 @@ void Scop::addParameterBounds() {
     isl_int_init(V);
 
     isl_int_set_si(V, 1);
-    isl_int_mul_2exp(V, V, Width-1);
+    isl_int_mul_2exp(V, V, Width - 1);
     isl_int_neg(V, V);
     isl_set_lower_bound(Context, isl_dim_param, i, V);
 
     isl_int_set_si(V, 1);
-    isl_int_mul_2exp(V, V, Width-1);
+    isl_int_mul_2exp(V, V, Width - 1);
     isl_int_sub_ui(V, V, 1);
     isl_set_upper_bound(Context, isl_dim_param, i, V);
 
@@ -823,9 +808,7 @@ Scop::~Scop() {
     delete *I;
 }
 
-std::string Scop::getContextStr() const {
-  return stringFromIslObj(Context);
-}
+std::string Scop::getContextStr() const { return stringFromIslObj(Context); }
 
 std::string Scop::getNameStr() const {
   std::string ExitName, EntryName;
@@ -844,9 +827,7 @@ std::string Scop::getNameStr() const {
   return EntryName + "---" + ExitName;
 }
 
-__isl_give isl_set *Scop::getContext() const {
-  return isl_set_copy(Context);
-}
+__isl_give isl_set *Scop::getContext() const { return isl_set_copy(Context); }
 __isl_give isl_space *Scop::getParamSpace() const {
   return isl_set_get_space(this->Context);
 }
@@ -910,11 +891,9 @@ bool Scop::isTrivialBB(BasicBlock *BB, TempScop &tempScop) {
   return true;
 }
 
-void Scop::buildScop(TempScop &tempScop,
-                      const Region &CurRegion,
-                      SmallVectorImpl<Loop*> &NestLoops,
-                      SmallVectorImpl<unsigned> &Scatter,
-                      LoopInfo &LI) {
+void Scop::buildScop(TempScop &tempScop, const Region &CurRegion,
+                     SmallVectorImpl<Loop *> &NestLoops,
+                     SmallVectorImpl<unsigned> &Scatter, LoopInfo &LI) {
   Loop *L = castToLoop(CurRegion, LI);
 
   if (L)
@@ -947,7 +926,7 @@ void Scop::buildScop(TempScop &tempScop,
   // Exiting a loop region.
   Scatter[loopDepth] = 0;
   NestLoops.pop_back();
-  ++Scatter[loopDepth-1];
+  ++Scatter[loopDepth - 1];
 }
 
 //===----------------------------------------------------------------------===//
@@ -983,7 +962,8 @@ bool ScopInfo::runOnRegion(Region *R, RGPassManager &RGM) {
 
   // Statistics.
   ++ScopFound;
-  if (tempScop->getMaxLoopDepth() > 0) ++RichScopFound;
+  if (tempScop->getMaxLoopDepth() > 0)
+    ++RichScopFound;
 
   scop = new Scop(*tempScop, LI, SE, ctx);
 
