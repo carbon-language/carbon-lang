@@ -452,7 +452,7 @@ void BlockingMutex::Lock() {
   if (atomic_exchange(m, MtxLocked, memory_order_acquire) == MtxUnlocked)
     return;
   while (atomic_exchange(m, MtxSleeping, memory_order_acquire) != MtxUnlocked)
-    syscall(__NR_futex, m, FUTEX_WAIT_PRIVATE, MtxSleeping, 0, 0, 0);
+    syscall(__NR_futex, m, FUTEX_WAIT, MtxSleeping, 0, 0, 0);
 }
 
 void BlockingMutex::Unlock() {
@@ -460,7 +460,7 @@ void BlockingMutex::Unlock() {
   u32 v = atomic_exchange(m, MtxUnlocked, memory_order_relaxed);
   CHECK_NE(v, MtxUnlocked);
   if (v == MtxSleeping)
-    syscall(__NR_futex, m, FUTEX_WAKE_PRIVATE, 1, 0, 0, 0);
+    syscall(__NR_futex, m, FUTEX_WAKE, 1, 0, 0, 0);
 }
 
 }  // namespace __sanitizer
