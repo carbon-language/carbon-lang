@@ -46,7 +46,8 @@ TEST(WaymarkTest, TwoBit) {
 	Use::initTags(many, many + 8212);
   for (const Use *U = many, *Ue = many + 8212 - 1; U != Ue; ++U)
   {
-    EXPECT_EQ((User*)(Ue + 1), U->getUser());
+    EXPECT_EQ(reinterpret_cast<User*>(const_cast<Use *>(Ue + 1)),
+              U->getUser());
   }
 }
 
