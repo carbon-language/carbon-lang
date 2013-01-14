@@ -41,3 +41,11 @@ struct SS {
 };
 
 using PR14855 = int S::; // expected-error {{expected ';' after alias declaration}}
+
+// Ensure that 'this' has a const-qualified type in a trailing return type for
+// a constexpr function.
+struct ConstexprTrailingReturn {
+  int n;
+  constexpr auto f() -> decltype((n));
+};
+constexpr const int &ConstexprTrailingReturn::f() const { return n; }
