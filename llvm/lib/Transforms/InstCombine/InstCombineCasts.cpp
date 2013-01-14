@@ -739,7 +739,7 @@ static bool CanEvaluateZExtd(Value *V, Type *Ty, unsigned &BitsToClear) {
 }
 
 Instruction *InstCombiner::visitZExt(ZExtInst &CI) {
-  // If this zero extend is only used by a truncate, let the truncate by
+  // If this zero extend is only used by a truncate, let the truncate be
   // eliminated before we try to optimize this zext.
   if (CI.hasOneUse() && isa<TruncInst>(CI.use_back()))
     return 0;
