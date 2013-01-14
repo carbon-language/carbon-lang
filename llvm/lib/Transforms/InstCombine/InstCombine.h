@@ -27,7 +27,7 @@ namespace llvm {
   class DbgDeclareInst;
   class MemIntrinsic;
   class MemSetInst;
-  
+
 /// SelectPatternFlavor - We can match a variety of different patterns for
 /// select operations.
 enum SelectPatternFlavor {
@@ -36,7 +36,7 @@ enum SelectPatternFlavor {
   SPF_SMAX, SPF_UMAX
   //SPF_ABS - TODO.
 };
-  
+
 /// getComplexity:  Assign a complexity or rank value to LLVM Values...
 ///   0 -> undef, 1 -> Const, 2 -> Other, 3 -> Arg, 3 -> Unary, 4 -> OtherInst
 static inline unsigned getComplexity(Value *V) {
@@ -51,23 +51,23 @@ static inline unsigned getComplexity(Value *V) {
   return isa<Constant>(V) ? (isa<UndefValue>(V) ? 0 : 1) : 2;
 }
 
-  
+
 /// InstCombineIRInserter - This is an IRBuilder insertion helper that works
 /// just like the normal insertion helper, but also adds any new instructions
 /// to the instcombine worklist.
-class LLVM_LIBRARY_VISIBILITY InstCombineIRInserter 
+class LLVM_LIBRARY_VISIBILITY InstCombineIRInserter
     : public IRBuilderDefaultInserter<true> {
   InstCombineWorklist &Worklist;
 public:
   InstCombineIRInserter(InstCombineWorklist &WL) : Worklist(WL) {}
-  
+
   void InsertHelper(Instruction *I, const Twine &Name,
                     BasicBlock *BB, BasicBlock::iterator InsertPt) const {
     IRBuilderDefaultInserter<true>::InsertHelper(I, Name, BB, InsertPt);
     Worklist.Add(I);
   }
 };
-  
+
 /// InstCombiner - The -instcombine pass.
 class LLVM_LIBRARY_VISIBILITY InstCombiner
                              : public FunctionPass,
@@ -85,7 +85,7 @@ public:
   /// instructions into the worklist when they are created.
   typedef IRBuilder<true, TargetFolder, InstCombineIRInserter> BuilderTy;
   BuilderTy *Builder;
-      
+
   static char ID; // Pass identification, replacement for typeid
   InstCombiner() : FunctionPass(ID), TD(0), Builder(0) {
     MinimizeSize = false;
@@ -94,7 +94,7 @@ public:
 
 public:
   virtual bool runOnFunction(Function &F);
-  
+
   bool DoOneIteration(Function &F, unsigned ItNum);
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -212,10 +212,10 @@ private:
   bool ShouldChangeType(Type *From, Type *To) const;
   Value *dyn_castNegVal(Value *V) const;
   Value *dyn_castFNegVal(Value *V, bool NoSignedZero=false) const;
-  Type *FindElementAtOffset(Type *Ty, int64_t Offset, 
+  Type *FindElementAtOffset(Type *Ty, int64_t Offset,
                                   SmallVectorImpl<Value*> &NewIndices);
   Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI);
-                                 
+
   /// ShouldOptimizeCast - Return true if the cast from "V to Ty" actually
   /// results in any code being generated and is interesting to optimize out. If
   /// the cast can be eliminated by some other simple transformation, we prefer
@@ -247,7 +247,7 @@ public:
     return New;
   }
 
-  // InsertNewInstWith - same as InsertNewInstBefore, but also sets the 
+  // InsertNewInstWith - same as InsertNewInstBefore, but also sets the
   // debug loc.
   //
   Instruction *InsertNewInstWith(Instruction *New, Instruction &Old) {
@@ -263,10 +263,10 @@ public:
   //
   Instruction *ReplaceInstUsesWith(Instruction &I, Value *V) {
     Worklist.AddUsersToWorkList(I);   // Add all modified instrs to worklist.
-    
+
     // If we are replacing the instruction with itself, this must be in a
     // segment of unreachable code, so just clobber the instruction.
-    if (&I == V) 
+    if (&I == V)
       V = UndefValue::get(I.getType());
 
     DEBUG(errs() << "IC: Replacing " << I << "\n"
@@ -296,13 +296,13 @@ public:
     MadeIRChange = true;
     return 0;  // Don't do anything with FI
   }
-      
+
   void ComputeMaskedBits(Value *V, APInt &KnownZero,
                          APInt &KnownOne, unsigned Depth = 0) const {
     return llvm::ComputeMaskedBits(V, KnownZero, KnownOne, TD, Depth);
   }
-  
-  bool MaskedValueIsZero(Value *V, const APInt &Mask, 
+
+  bool MaskedValueIsZero(Value *V, const APInt &Mask,
                          unsigned Depth = 0) const {
     return llvm::MaskedValueIsZero(V, Mask, TD, Depth);
   }
@@ -325,10 +325,10 @@ private:
 
   /// SimplifyDemandedUseBits - Attempts to replace V with a simpler value
   /// based on the demanded bits.
-  Value *SimplifyDemandedUseBits(Value *V, APInt DemandedMask, 
+  Value *SimplifyDemandedUseBits(Value *V, APInt DemandedMask,
                                  APInt& KnownZero, APInt& KnownOne,
                                  unsigned Depth);
-  bool SimplifyDemandedBits(Use &U, APInt DemandedMask, 
+  bool SimplifyDemandedBits(Use &U, APInt DemandedMask,
                             APInt& KnownZero, APInt& KnownOne,
                             unsigned Depth=0);
   /// Helper routine of SimplifyDemandedUseBits. It tries to simplify demanded
@@ -336,15 +336,15 @@ private:
   Value *SimplifyShrShlDemandedBits(Instruction *Lsr, Instruction *Sftl,
                                     APInt DemandedMask, APInt &KnownZero,
                                     APInt &KnownOne);
-      
+
   /// SimplifyDemandedInstructionBits - Inst is an integer instruction that
   /// SimplifyDemandedBits knows about.  See if the instruction has any
   /// properties that allow us to simplify its operands.
   bool SimplifyDemandedInstructionBits(Instruction &Inst);
-      
+
   Value *SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
                                     APInt& UndefElts, unsigned Depth = 0);
-    
+
   // FoldOpIntoPhi - Given a binary operator, cast instruction, or select
   // which has a PHI node as operand #0, see if we can fold the instruction
   // into the PHI (which is only possible if all operands to the PHI are
@@ -360,10 +360,10 @@ private:
   Instruction *FoldPHIArgGEPIntoPHI(PHINode &PN);
   Instruction *FoldPHIArgLoadIntoPHI(PHINode &PN);
 
-  
+
   Instruction *OptAndOp(Instruction *Op, ConstantInt *OpRHS,
                         ConstantInt *AndRHS, BinaryOperator &TheAnd);
-  
+
   Value *FoldLogicalPlusAnd(Value *LHS, Value *RHS, ConstantInt *Mask,
                             bool isSub, Instruction &I);
   Value *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
@@ -382,8 +382,8 @@ private:
   Value *Descale(Value *Val, APInt Scale, bool &NoSignedWrap);
 };
 
-      
-  
+
+
 } // end namespace llvm.
 
 #endif

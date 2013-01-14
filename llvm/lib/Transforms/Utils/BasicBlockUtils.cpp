@@ -37,12 +37,12 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
          // Can delete self loop.
          BB->getSinglePredecessor() == BB) && "Block is not dead!");
   TerminatorInst *BBTerm = BB->getTerminator();
-  
+
   // Loop through all of our successors and make sure they know that one
   // of their predecessors is going away.
   for (unsigned i = 0, e = BBTerm->getNumSuccessors(); i != e; ++i)
     BBTerm->getSuccessor(i)->removePredecessor(BB);
-  
+
   // Zap all the instructions in the block.
   while (!BB->empty()) {
     Instruction &I = BB->back();
@@ -55,7 +55,7 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
       I.replaceAllUsesWith(UndefValue::get(I.getType()));
     BB->getInstList().pop_back();
   }
-  
+
   // Zap the block!
   BB->eraseFromParent();
 }
@@ -66,25 +66,25 @@ void llvm::DeleteDeadBlock(BasicBlock *BB) {
 /// when the block has exactly one predecessor.
 void llvm::FoldSingleEntryPHINodes(BasicBlock *BB, Pass *P) {
   if (!isa<PHINode>(BB->begin())) return;
-  
+
   AliasAnalysis *AA = 0;
   MemoryDependenceAnalysis *MemDep = 0;
   if (P) {
     AA = P->getAnalysisIfAvailable<AliasAnalysis>();
     MemDep = P->getAnalysisIfAvailable<MemoryDependenceAnalysis>();
   }
-  
+
   while (PHINode *PN = dyn_cast<PHINode>(BB->begin())) {
     if (PN->getIncomingValue(0) != PN)
       PN->replaceAllUsesWith(PN->getIncomingValue(0));
     else
       PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-    
+
     if (MemDep)
       MemDep->removeInstruction(PN);  // Memdep updates AA itself.
     else if (AA && isa<PointerType>(PN->getType()))
       AA->deleteValue(PN);
-    
+
     PN->eraseFromParent();
   }
 }
@@ -115,7 +115,7 @@ bool llvm::DeleteDeadPHIs(BasicBlock *BB, const TargetLibraryInfo *TLI) {
 bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   // Don't merge away blocks who have their address taken.
   if (BB->hasAddressTaken()) return false;
-  
+
   // Can't merge if there are multiple predecessors, or no predecessors.
   BasicBlock *PredBB = BB->getUniquePredecessor();
   if (!PredBB) return false;
@@ -124,7 +124,7 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   if (PredBB == BB) return false;
   // Don't break invokes.
   if (isa<InvokeInst>(PredBB->getTerminator())) return false;
-  
+
   succ_iterator SI(succ_begin(PredBB)), SE(succ_end(PredBB));
   BasicBlock *OnlySucc = BB;
   for (; SI != SE; ++SI)
@@ -132,7 +132,7 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
       OnlySucc = 0;     // There are multiple distinct successors!
       break;
     }
-  
+
   // Can't merge if there are multiple successors.
   if (!OnlySucc) return false;
 
@@ -149,21 +149,21 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
   // Begin by getting rid of unneeded PHIs.
   if (isa<PHINode>(BB->front()))
     FoldSingleEntryPHINodes(BB, P);
-  
+
   // Delete the unconditional branch from the predecessor...
   PredBB->getInstList().pop_back();
-  
+
   // Make all PHI nodes that referred to BB now refer to Pred as their
   // source...
   BB->replaceAllUsesWith(PredBB);
-  
+
   // Move all definitions in the successor to the predecessor...
   PredBB->getInstList().splice(PredBB->end(), BB->getInstList());
-  
+
   // Inherit predecessors name if it exists.
   if (!PredBB->hasName())
     PredBB->takeName(BB);
-  
+
   // Finally, erase the old block and update dominator info.
   if (P) {
     if (DominatorTree *DT = P->getAnalysisIfAvailable<DominatorTree>()) {
@@ -176,16 +176,16 @@ bool llvm::MergeBlockIntoPredecessor(BasicBlock *BB, Pass *P) {
 
         DT->eraseNode(BB);
       }
-      
+
       if (LoopInfo *LI = P->getAnalysisIfAvailable<LoopInfo>())
         LI->removeBlock(BB);
-      
+
       if (MemoryDependenceAnalysis *MD =
             P->getAnalysisIfAvailable<MemoryDependenceAnalysis>())
         MD->invalidateCachedPredecessors();
     }
   }
-  
+
   BB->eraseFromParent();
   return true;
 }
@@ -251,11 +251,11 @@ unsigned llvm::GetSuccessorNumber(BasicBlock *BB, BasicBlock *Succ) {
   }
 }
 
-/// SplitEdge -  Split the edge connecting specified block. Pass P must 
-/// not be NULL. 
+/// SplitEdge -  Split the edge connecting specified block. Pass P must
+/// not be NULL.
 BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
   unsigned SuccNum = GetSuccessorNumber(BB, Succ);
-  
+
   // If this is a critical edge, let SplitCriticalEdge do it.
   TerminatorInst *LatchTerm = BB->getTerminator();
   if (SplitCriticalEdge(LatchTerm, SuccNum, P))
@@ -271,11 +271,11 @@ BasicBlock *llvm::SplitEdge(BasicBlock *BB, BasicBlock *Succ, Pass *P) {
     SP = NULL;
     return SplitBlock(Succ, Succ->begin(), P);
   }
-  
+
   // Otherwise, if BB has a single successor, split it at the bottom of the
   // block.
   assert(BB->getTerminator()->getNumSuccessors() == 1 &&
-         "Should have a single succ!"); 
+         "Should have a single succ!");
   return SplitBlock(BB, BB->getTerminator(), P);
 }
 
@@ -301,12 +301,12 @@ BasicBlock *llvm::SplitBlock(BasicBlock *Old, Instruction *SplitPt, Pass *P) {
     if (DomTreeNode *OldNode = DT->getNode(Old)) {
       std::vector<DomTreeNode *> Children;
       for (DomTreeNode::iterator I = OldNode->begin(), E = OldNode->end();
-           I != E; ++I) 
+           I != E; ++I)
         Children.push_back(*I);
 
       DomTreeNode *NewNode = DT->addNewBlock(New,Old);
       for (std::vector<DomTreeNode *>::iterator I = Children.begin(),
-             E = Children.end(); I != E; ++I) 
+             E = Children.end(); I != E; ++I)
         DT->changeImmediateDominator(*I, NewNode);
     }
   }
@@ -424,7 +424,7 @@ static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
       PHINode *NewPHI =
         PHINode::Create(PN->getType(), Preds.size(), PN->getName() + ".ph", BI);
       if (AA) AA->copyValue(PN, NewPHI);
-      
+
       // Move all of the PHI values for 'Preds' to the new PHI.
       for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
         Value *V = PN->removeIncomingValue(Preds[i], false);
@@ -451,16 +451,16 @@ static void UpdatePHINodes(BasicBlock *OrigBB, BasicBlock *NewBB,
 /// preserve LoopSimplify (because it's complicated to handle the case where one
 /// of the edges being split is an exit of a loop with other exits).
 ///
-BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB, 
+BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
                                          ArrayRef<BasicBlock*> Preds,
                                          const char *Suffix, Pass *P) {
   // Create new basic block, insert right before the original block.
   BasicBlock *NewBB = BasicBlock::Create(BB->getContext(), BB->getName()+Suffix,
                                          BB->getParent(), BB);
-  
+
   // The new block unconditionally branches to the old block.
   BranchInst *BI = BranchInst::Create(BB, NewBB);
-  
+
   // Move the edges from Preds to point to NewBB instead of BB.
   for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
     // This is slightly more strict than necessary; the minimum requirement
@@ -497,13 +497,13 @@ BasicBlock *llvm::SplitBlockPredecessors(BasicBlock *BB,
 /// block gets the remaining predecessors of OrigBB. The landingpad instruction
 /// OrigBB is clone into both of the new basic blocks. The new blocks are given
 /// the suffixes 'Suffix1' and 'Suffix2', and are returned in the NewBBs vector.
-/// 
+///
 /// This currently updates the LLVM IR, AliasAnalysis, DominatorTree,
 /// DominanceFrontier, LoopInfo, and LCCSA but no other analyses. In particular,
 /// it does not preserve LoopSimplify (because it's complicated to handle the
 /// case where one of the edges being split is an exit of a loop with other
 /// exits).
-/// 
+///
 void llvm::SplitLandingPadPredecessors(BasicBlock *OrigBB,
                                        ArrayRef<BasicBlock*> Preds,
                                        const char *Suffix1, const char *Suffix2,
@@ -608,11 +608,11 @@ void llvm::FindFunctionBackedges(const Function &F,
   const BasicBlock *BB = &F.getEntryBlock();
   if (succ_begin(BB) == succ_end(BB))
     return;
-  
+
   SmallPtrSet<const BasicBlock*, 8> Visited;
   SmallVector<std::pair<const BasicBlock*, succ_const_iterator>, 8> VisitStack;
   SmallPtrSet<const BasicBlock*, 8> InStack;
-  
+
   Visited.insert(BB);
   VisitStack.push_back(std::make_pair(BB, succ_begin(BB)));
   InStack.insert(BB);
@@ -620,7 +620,7 @@ void llvm::FindFunctionBackedges(const Function &F,
     std::pair<const BasicBlock*, succ_const_iterator> &Top = VisitStack.back();
     const BasicBlock *ParentBB = Top.first;
     succ_const_iterator &I = Top.second;
-    
+
     bool FoundNew = false;
     while (I != succ_end(ParentBB)) {
       BB = *I++;
@@ -632,7 +632,7 @@ void llvm::FindFunctionBackedges(const Function &F,
       if (InStack.count(BB))
         Result.push_back(std::make_pair(ParentBB, BB));
     }
-    
+
     if (FoundNew) {
       // Go down one level if there is a unvisited successor.
       InStack.insert(BB);
@@ -641,7 +641,7 @@ void llvm::FindFunctionBackedges(const Function &F,
       // Go up one level.
       InStack.erase(VisitStack.pop_back_val().first);
     }
-  } while (!VisitStack.empty()); 
+  } while (!VisitStack.empty());
 }
 
 /// FoldReturnIntoUncondBranch - This method duplicates the specified return
@@ -655,7 +655,7 @@ ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
   // Clone the return and add it to the end of the predecessor.
   Instruction *NewRet = RI->clone();
   Pred->getInstList().push_back(NewRet);
-      
+
   // If the return instruction returns a value, and if the value was a
   // PHI node in "BB", propagate the right value into the return.
   for (User::op_iterator i = NewRet->op_begin(), e = NewRet->op_end();
@@ -679,7 +679,7 @@ ReturnInst *llvm::FoldReturnIntoUncondBranch(ReturnInst *RI, BasicBlock *BB,
       }
     }
   }
-      
+
   // Update any PHI nodes in the returning block to realize that we no
   // longer branch to them.
   BB->removePredecessor(Pred);
