@@ -2060,13 +2060,14 @@ TEST(AddressSanitizer, AttributeNoAddressSafetyTest) {
   Ident(NoAddressSafety)();
 }
 
+// TODO(glider): Enable this test on Mac when alloc/dealloc mismatch is
+// fixed there.
+#ifndef __APPLE__
 static string MismatchStr(const string &str) {
   return string("AddressSanitizer: alloc-dealloc-mismatch \\(") + str;
 }
 
-// This test is disabled until we enable alloc_dealloc_mismatch by default.
-// The feature is also tested by lit tests.
-TEST(AddressSanitizer, DISABLED_AllocDeallocMismatch) {
+TEST(AddressSanitizer, AllocDeallocMismatch) {
   EXPECT_DEATH(free(Ident(new int)),
                MismatchStr("operator new vs free"));
   EXPECT_DEATH(free(Ident(new int[2])),
@@ -2080,6 +2081,7 @@ TEST(AddressSanitizer, DISABLED_AllocDeallocMismatch) {
   EXPECT_DEATH(delete [] (Ident((int*)malloc(2 * sizeof(int)))),
                MismatchStr("malloc vs operator delete \\[\\]"));
 }
+#endif  // __APPLE__
 
 // ------------------ demo tests; run each one-by-one -------------
 // e.g. --gtest_filter=*DemoOOBLeftHigh --gtest_also_run_disabled_tests
