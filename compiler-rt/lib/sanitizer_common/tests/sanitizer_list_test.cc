@@ -21,8 +21,7 @@ struct ListItem {
 
 typedef IntrusiveList<ListItem> List;
 
-// Check that IntrusiveList can be made thread-local.
-static THREADLOCAL List static_list;
+static List static_list;
 
 static void SetList(List *l, ListItem *x = 0,
                     ListItem *y = 0, ListItem *z = 0) {

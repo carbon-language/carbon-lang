@@ -386,7 +386,7 @@ TEST(SanitizerCommon, CombinedAllocator32Compact) {
 
 template <class AllocatorCache>
 void TestSizeClassAllocatorLocalCache() {
-  static THREADLOCAL AllocatorCache static_allocator_cache;
+  static AllocatorCache static_allocator_cache;
   static_allocator_cache.Init();
   AllocatorCache cache;
   typedef typename AllocatorCache::Allocator Allocator;
@@ -438,7 +438,7 @@ TEST(SanitizerCommon, SizeClassAllocator32CompactLocalCache) {
 
 #if SANITIZER_WORDSIZE == 64
 typedef SizeClassAllocatorLocalCache<Allocator64> AllocatorCache;
-static THREADLOCAL AllocatorCache static_allocator_cache;
+static AllocatorCache static_allocator_cache;
 
 void *AllocatorLeakTestWorker(void *arg) {
   typedef AllocatorCache::Allocator Allocator;

@@ -34,7 +34,7 @@ typedef LargeMmapAllocator<> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
           SecondaryAllocator> Allocator;
 
-static THREADLOCAL AllocatorCache cache;
+static AllocatorCache cache;
 static Allocator allocator;
 
 static int inited = 0;
