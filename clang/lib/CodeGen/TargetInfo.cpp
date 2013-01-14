@@ -2825,13 +2825,51 @@ llvm::Value *PPC64_SVR4_ABIInfo::EmitVAArg(llvm::Value *VAListAddr,
   llvm::Value *VAListAddrAsBPP = Builder.CreateBitCast(VAListAddr, BPP, "ap");
   llvm::Value *Addr = Builder.CreateLoad(VAListAddrAsBPP, "ap.cur");
 
-  // Update the va_list pointer.
+  // Update the va_list pointer.  The pointer should be bumped by the
+  // size of the object.  We can trust getTypeSize() except for a complex
+  // type whose base type is smaller than a doubleword.  For these, the
+  // size of the object is 16 bytes; see below for further explanation.
   unsigned SizeInBytes = CGF.getContext().getTypeSize(Ty) / 8;
+  QualType BaseTy;
+  unsigned CplxBaseSize = 0;
+
+  if (const ComplexType *CTy = Ty->getAs<ComplexType>()) {
+    BaseTy = CTy->getElementType();
+    CplxBaseSize = CGF.getContext().getTypeSize(BaseTy) / 8;
+    if (CplxBaseSize < 8)
+      SizeInBytes = 16;
+  }
+
   unsigned Offset = llvm::RoundUpToAlignment(SizeInBytes, 8);
   llvm::Value *NextAddr =
     Builder.CreateGEP(Addr, llvm::ConstantInt::get(CGF.Int64Ty, Offset),
                       "ap.next");
   Builder.CreateStore(NextAddr, VAListAddrAsBPP);
+
+  // If we have a complex type and the base type is smaller than 8 bytes,
+  // the ABI calls for the real and imaginary parts to be right-adjusted
+  // in separate doublewords.  However, Clang expects us to produce a
+  // pointer to a structure with the two parts packed tightly.  So generate
+  // loads of the real and imaginary parts relative to the va_list pointer,
+  // and store them to a temporary structure.
+  if (CplxBaseSize && CplxBaseSize < 8) {
+    llvm::Value *RealAddr = Builder.CreatePtrToInt(Addr, CGF.Int64Ty);
+    llvm::Value *ImagAddr = RealAddr;
+    RealAddr = Builder.CreateAdd(RealAddr, Builder.getInt64(8 - CplxBaseSize));
+    ImagAddr = Builder.CreateAdd(ImagAddr, Builder.getInt64(16 - CplxBaseSize));
+    llvm::Type *PBaseTy = llvm::PointerType::getUnqual(CGF.ConvertType(BaseTy));
+    RealAddr = Builder.CreateIntToPtr(RealAddr, PBaseTy);
+    ImagAddr = Builder.CreateIntToPtr(ImagAddr, PBaseTy);
+    llvm::Value *Real = Builder.CreateLoad(RealAddr, false, ".vareal");
+    llvm::Value *Imag = Builder.CreateLoad(ImagAddr, false, ".vaimag");
+    llvm::Value *Ptr = CGF.CreateTempAlloca(CGT.ConvertTypeForMem(Ty),
+                                            "vacplx");
+    llvm::Value *RealPtr = Builder.CreateStructGEP(Ptr, 0, ".real");
+    llvm::Value *ImagPtr = Builder.CreateStructGEP(Ptr, 1, ".imag");
+    Builder.CreateStore(Real, RealPtr, false);
+    Builder.CreateStore(Imag, ImagPtr, false);
+    return Ptr;
+  }
 
   // If the argument is smaller than 8 bytes, it is right-adjusted in
   // its doubleword slot.  Adjust the pointer to pick it up from the
