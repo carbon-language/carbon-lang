@@ -795,7 +795,7 @@ DNBArchImplX86_64::GetWatchAddress(const DBG &debug_state, uint32_t hw_index)
 bool
 DNBArchImplX86_64::StartTransForHWP()
 {
-    if (m_2pc_trans_state != Trans_Done || m_2pc_trans_state != Trans_Rolled_Back)
+    if (m_2pc_trans_state != Trans_Done && m_2pc_trans_state != Trans_Rolled_Back)
         DNBLogError ("%s inconsistent state detected, expected %d or %d, got: %d", __FUNCTION__, Trans_Done, Trans_Rolled_Back, m_2pc_trans_state);
     m_2pc_dbg_checkpoint = m_state.context.dbg;
     m_2pc_trans_state = Trans_Pending;
