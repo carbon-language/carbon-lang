@@ -44,10 +44,11 @@ static cl::opt<std::string> FileName(cl::Positional, cl::desc("[<file>]"),
 namespace clang {
 namespace format {
 
-static FileID createInMemoryFile(const MemoryBuffer *Source,
+static FileID createInMemoryFile(StringRef FileName, const MemoryBuffer *Source,
                                  SourceManager &Sources, FileManager &Files) {
-  const FileEntry *Entry =
-      Files.getVirtualFile("<stdio>", Source->getBufferSize(), 0);
+  const FileEntry *Entry = Files.getVirtualFile(FileName == "-" ? "<stdin>" :
+                                                    FileName,
+                                                Source->getBufferSize(), 0);
   Sources.overrideFileContents(Entry, Source, true);
   return Sources.createFileID(Entry, SourceLocation(), SrcMgr::C_User);
 }
@@ -63,7 +64,7 @@ static void format() {
     llvm::errs() << ec.message() << "\n";
     return;
   }
-  FileID ID = createInMemoryFile(Code.get(), Sources, Files);
+  FileID ID = createInMemoryFile(FileName, Code.get(), Sources, Files);
   Lexer Lex(ID, Sources.getBuffer(ID), Sources, getFormattingLangOpts());
   SourceLocation Start =
       Sources.getLocForStartOfFile(ID).getLocWithOffset(Offset);
