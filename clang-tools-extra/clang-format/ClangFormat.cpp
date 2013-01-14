@@ -33,7 +33,8 @@ static cl::opt<int> Length(
     "length", cl::desc("Format a range of this length, -1 for end of file."),
     cl::init(-1));
 static cl::opt<std::string> Style(
-    "style", cl::desc("Coding style, currently supports: LLVM, Google."),
+    "style",
+    cl::desc("Coding style, currently supports: LLVM, Google, Chromium."),
     cl::init("LLVM"));
 static cl::opt<bool> Inplace("i",
                              cl::desc("Inplace edit <file>, if specified."));
@@ -51,6 +52,14 @@ static FileID createInMemoryFile(StringRef FileName, const MemoryBuffer *Source,
                                                 Source->getBufferSize(), 0);
   Sources.overrideFileContents(Entry, Source, true);
   return Sources.createFileID(Entry, SourceLocation(), SrcMgr::C_User);
+}
+
+static FormatStyle getStyle(StringRef name) {
+  if (name == "LLVM")
+    return getLLVMStyle();
+  if (name == "Chromium")
+    return getChromiumStyle();
+  return getGoogleStyle();
 }
 
 static void format() {
@@ -73,8 +82,8 @@ static void format() {
     End = Start.getLocWithOffset(Length);
   std::vector<CharSourceRange> Ranges(
       1, CharSourceRange::getCharRange(Start, End));
-  FormatStyle FStyle = Style == "LLVM" ? getLLVMStyle() : getGoogleStyle();
-  tooling::Replacements Replaces = reformat(FStyle, Lex, Sources, Ranges);
+  tooling::Replacements Replaces = reformat(getStyle(Style), Lex, Sources,
+                                            Ranges);
   Rewriter Rewrite(Sources, LangOptions());
   tooling::applyAllReplacements(Replaces, Rewrite);
   if (Inplace) {
