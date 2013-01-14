@@ -51,9 +51,8 @@ MCAsmParserSemaCallback::~MCAsmParserSemaCallback() {}
 namespace {
 
 /// \brief Helper class for tracking macro definitions.
-typedef std::vector<AsmToken> MacroArgument;
-typedef std::vector<MacroArgument> MacroArguments;
-typedef std::pair<StringRef, MacroArgument> MacroParameter;
+typedef std::vector<MCAsmMacroArgument> MacroArguments;
+typedef std::pair<StringRef, MCAsmMacroArgument> MacroParameter;
 typedef std::vector<MacroParameter> MacroParameters;
 
 struct Macro {
@@ -271,7 +270,7 @@ private:
   /// location.
   void JumpToLoc(SMLoc Loc, int InBuffer=-1);
 
-  bool ParseMacroArgument(MacroArgument &MA,
+  bool ParseMacroArgument(MCAsmMacroArgument &MA,
                           AsmToken::TokenKind &ArgumentDelimiter);
   bool ParseMacroArguments(const Macro *M, MacroArguments &A);
 
@@ -1650,7 +1649,7 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
           break;
 
         // Otherwise substitute with the token values, with spaces eliminated.
-        for (MacroArgument::const_iterator it = A[Index].begin(),
+        for (MCAsmMacroArgument::const_iterator it = A[Index].begin(),
                ie = A[Index].end(); it != ie; ++it)
           OS << it->getString();
         break;
@@ -1677,7 +1676,7 @@ bool AsmParser::expandMacro(raw_svector_ostream &OS, StringRef Body,
             Pos = I;
           }
       } else {
-        for (MacroArgument::const_iterator it = A[Index].begin(),
+        for (MCAsmMacroArgument::const_iterator it = A[Index].begin(),
                ie = A[Index].end(); it != ie; ++it)
           if (it->getKind() == AsmToken::String)
             OS << it->getStringContents();
@@ -1735,10 +1734,7 @@ static bool IsOperator(AsmToken::TokenKind kind)
   }
 }
 
-/// ParseMacroArgument - Extract AsmTokens for a macro argument.
-/// This is used for both default macro parameter values and the
-/// arguments in macro invocations
-bool AsmParser::ParseMacroArgument(MacroArgument &MA,
+bool AsmParser::ParseMacroArgument(MCAsmMacroArgument &MA,
                                    AsmToken::TokenKind &ArgumentDelimiter) {
   unsigned ParenLevel = 0;
   unsigned AddTokens = 0;
@@ -1825,7 +1821,7 @@ bool AsmParser::ParseMacroArguments(const Macro *M, MacroArguments &A) {
   // - macros defined with parameters accept at most that many of them
   for (unsigned Parameter = 0; !NParameters || Parameter < NParameters;
        ++Parameter) {
-    MacroArgument MA;
+    MCAsmMacroArgument MA;
 
     if (ParseMacroArgument(MA, ArgumentDelimiter))
       return true;
@@ -3814,7 +3810,7 @@ bool AsmParser::ParseDirectiveIrpc(SMLoc DirectiveLoc) {
   StringRef Values = A.front().front().getString();
   std::size_t I, End = Values.size();
   for (I = 0; I < End; ++I) {
-    MacroArgument Arg;
+    MCAsmMacroArgument Arg;
     Arg.push_back(AsmToken(AsmToken::Identifier, Values.slice(I, I+1)));
 
     MacroArguments Args;
