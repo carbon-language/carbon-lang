@@ -60,14 +60,14 @@ multiclass fma3p_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                        PatFrag MemFrag128, PatFrag MemFrag256,
                        SDNode Op, ValueType OpTy128, ValueType OpTy256> {
   defm r213 : fma3p_rm<opc213,
-                       !strconcat(OpcodeStr, !strconcat("213", PackTy)),
+                       !strconcat(OpcodeStr, "213", PackTy),
                        MemFrag128, MemFrag256, OpTy128, OpTy256, Op>;
 let neverHasSideEffects = 1 in {
   defm r132 : fma3p_rm<opc132,
-                       !strconcat(OpcodeStr, !strconcat("132", PackTy)),
+                       !strconcat(OpcodeStr, "132", PackTy),
                        MemFrag128, MemFrag256, OpTy128, OpTy256>;
   defm r231 : fma3p_rm<opc231,
-                       !strconcat(OpcodeStr, !strconcat("231", PackTy)),
+                       !strconcat(OpcodeStr, "231", PackTy),
                        MemFrag128, MemFrag256, OpTy128, OpTy256>;
 } // neverHasSideEffects = 1
 }
@@ -160,15 +160,15 @@ multiclass fma3s_forms<bits<8> opc132, bits<8> opc213, bits<8> opc231,
                        X86MemOperand x86memop, Operand memop, PatFrag mem_frag,
                        ComplexPattern mem_cpat> {
 let neverHasSideEffects = 1 in {
-  defm r132 : fma3s_rm<opc132, !strconcat(OpStr, !strconcat("132", PackTy)),
+  defm r132 : fma3s_rm<opc132, !strconcat(OpStr, "132", PackTy),
                        x86memop, RC, OpVT, mem_frag>;
-  defm r231 : fma3s_rm<opc231, !strconcat(OpStr, !strconcat("231", PackTy)),
+  defm r231 : fma3s_rm<opc231, !strconcat(OpStr, "231", PackTy),
                        x86memop, RC, OpVT, mem_frag>;
 }
 
-defm r213 : fma3s_rm<opc213, !strconcat(OpStr, !strconcat("213", PackTy)),
+defm r213 : fma3s_rm<opc213, !strconcat(OpStr, "213", PackTy),
                      x86memop, RC, OpVT, mem_frag, OpNode>,
-            fma3s_rm_int<opc213, !strconcat(OpStr, !strconcat("213", PackTy)),
+            fma3s_rm_int<opc213, !strconcat(OpStr, "213", PackTy),
                          memop, mem_cpat, Int, RC>;
 }
 

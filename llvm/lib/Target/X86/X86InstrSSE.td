@@ -3013,18 +3013,18 @@ multiclass sse1_fp_unop_s<bits<8> opc, string OpcodeStr,
 let Predicates = [HasAVX], hasSideEffects = 0 in {
   def V#NAME#SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst),
                       (ins FR32:$src1, FR32:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       []>, VEX_4V, VEX_LIG;
   let mayLoad = 1 in {
   def V#NAME#SSm : SSI<opc, MRMSrcMem, (outs FR32:$dst),
                       (ins FR32:$src1,f32mem:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       []>, VEX_4V, VEX_LIG;
   def V#NAME#SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
                       (ins VR128:$src1, ssmem:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       []>, VEX_4V, VEX_LIG;
   }
@@ -3055,18 +3055,18 @@ multiclass sse1_fp_unop_rw<bits<8> opc, string OpcodeStr, SDNode OpNode,
 let Predicates = [HasAVX], hasSideEffects = 0 in {
   def V#NAME#SSr : SSI<opc, MRMSrcReg, (outs FR32:$dst),
                        (ins FR32:$src1, FR32:$src2),
-                       !strconcat(!strconcat("v", OpcodeStr),
+                       !strconcat("v", OpcodeStr,
                            "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                 []>, VEX_4V, VEX_LIG;
   let mayLoad = 1 in {
   def V#NAME#SSm : SSI<opc, MRMSrcMem, (outs FR32:$dst),
                       (ins FR32:$src1,f32mem:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       []>, VEX_4V, VEX_LIG;
   def V#NAME#SSm_Int : SSI<opc, MRMSrcMem, (outs VR128:$dst),
                       (ins VR128:$src1, ssmem:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "ss\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       []>, VEX_4V, VEX_LIG;
   }
@@ -3101,22 +3101,22 @@ multiclass sse1_fp_unop_p<bits<8> opc, string OpcodeStr, SDNode OpNode,
                           OpndItins itins> {
 let Predicates = [HasAVX] in {
   def V#NAME#PSr : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       !strconcat(!strconcat("v", OpcodeStr),
+                       !strconcat("v", OpcodeStr,
                                   "ps\t{$src, $dst|$dst, $src}"),
                        [(set VR128:$dst, (v4f32 (OpNode VR128:$src)))],
                        itins.rr>, VEX;
   def V#NAME#PSm : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                       !strconcat(!strconcat("v", OpcodeStr),
+                       !strconcat("v", OpcodeStr,
                                   "ps\t{$src, $dst|$dst, $src}"),
                        [(set VR128:$dst, (OpNode (memopv4f32 addr:$src)))],
                        itins.rm>, VEX;
   def V#NAME#PSYr : PSI<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-                        !strconcat(!strconcat("v", OpcodeStr),
+                        !strconcat("v", OpcodeStr,
                                    "ps\t{$src, $dst|$dst, $src}"),
                         [(set VR256:$dst, (v8f32 (OpNode VR256:$src)))],
                         itins.rr>, VEX, VEX_L;
   def V#NAME#PSYm : PSI<opc, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
-                        !strconcat(!strconcat("v", OpcodeStr),
+                        !strconcat("v", OpcodeStr,
                                    "ps\t{$src, $dst|$dst, $src}"),
                         [(set VR256:$dst, (OpNode (memopv8f32 addr:$src)))],
                         itins.rm>, VEX, VEX_L;
@@ -3136,23 +3136,23 @@ multiclass sse1_fp_unop_p_int<bits<8> opc, string OpcodeStr,
                               OpndItins itins> {
 let Predicates = [HasAVX] in {
   def V#NAME#PSr_Int : PSI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                           !strconcat(!strconcat("v", OpcodeStr),
+                           !strconcat("v", OpcodeStr,
                                       "ps\t{$src, $dst|$dst, $src}"),
                            [(set VR128:$dst, (V4F32Int VR128:$src))],
                            itins.rr>, VEX;
   def V#NAME#PSm_Int : PSI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                          !strconcat(!strconcat("v", OpcodeStr),
+                          !strconcat("v", OpcodeStr,
                           "ps\t{$src, $dst|$dst, $src}"),
                           [(set VR128:$dst, (V4F32Int (memopv4f32 addr:$src)))],
                           itins.rm>, VEX;
   def V#NAME#PSYr_Int : PSI<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-                            !strconcat(!strconcat("v", OpcodeStr),
+                            !strconcat("v", OpcodeStr,
                                        "ps\t{$src, $dst|$dst, $src}"),
                             [(set VR256:$dst, (V8F32Int VR256:$src))],
                             itins.rr>, VEX, VEX_L;
   def V#NAME#PSYm_Int : PSI<opc, MRMSrcMem, (outs VR256:$dst),
                           (ins f256mem:$src),
-                          !strconcat(!strconcat("v", OpcodeStr),
+                          !strconcat("v", OpcodeStr,
                                     "ps\t{$src, $dst|$dst, $src}"),
                           [(set VR256:$dst, (V8F32Int (memopv8f32 addr:$src)))],
                           itins.rm>, VEX, VEX_L;
@@ -3174,18 +3174,18 @@ multiclass sse2_fp_unop_s<bits<8> opc, string OpcodeStr,
 let Predicates = [HasAVX], hasSideEffects = 0 in {
   def V#NAME#SDr : SDI<opc, MRMSrcReg, (outs FR64:$dst),
                       (ins FR64:$src1, FR64:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       []>, VEX_4V, VEX_LIG;
   let mayLoad = 1 in {
   def V#NAME#SDm : SDI<opc, MRMSrcMem, (outs FR64:$dst),
                       (ins FR64:$src1,f64mem:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       []>, VEX_4V, VEX_LIG;
   def V#NAME#SDm_Int : SDI<opc, MRMSrcMem, (outs VR128:$dst),
                       (ins VR128:$src1, sdmem:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "sd\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       []>, VEX_4V, VEX_LIG;
   }
@@ -3212,22 +3212,22 @@ multiclass sse2_fp_unop_p<bits<8> opc, string OpcodeStr,
                           SDNode OpNode, OpndItins itins> {
 let Predicates = [HasAVX] in {
   def V#NAME#PDr : PDI<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
-                       !strconcat(!strconcat("v", OpcodeStr),
+                       !strconcat("v", OpcodeStr,
                                   "pd\t{$src, $dst|$dst, $src}"),
                        [(set VR128:$dst, (v2f64 (OpNode VR128:$src)))],
                        itins.rr>, VEX;
   def V#NAME#PDm : PDI<opc, MRMSrcMem, (outs VR128:$dst), (ins f128mem:$src),
-                       !strconcat(!strconcat("v", OpcodeStr),
+                       !strconcat("v", OpcodeStr,
                                   "pd\t{$src, $dst|$dst, $src}"),
                        [(set VR128:$dst, (OpNode (memopv2f64 addr:$src)))],
                        itins.rm>, VEX;
   def V#NAME#PDYr : PDI<opc, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-                        !strconcat(!strconcat("v", OpcodeStr),
+                        !strconcat("v", OpcodeStr,
                                    "pd\t{$src, $dst|$dst, $src}"),
                         [(set VR256:$dst, (v4f64 (OpNode VR256:$src)))],
                         itins.rr>, VEX, VEX_L;
   def V#NAME#PDYm : PDI<opc, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
-                        !strconcat(!strconcat("v", OpcodeStr),
+                        !strconcat("v", OpcodeStr,
                                    "pd\t{$src, $dst|$dst, $src}"),
                         [(set VR256:$dst, (OpNode (memopv4f64 addr:$src)))],
                         itins.rm>, VEX, VEX_L;
@@ -3986,14 +3986,14 @@ multiclass sse2_pshuffle<string OpcodeStr, ValueType vt128, ValueType vt256,
 let Predicates = [HasAVX] in {
   def V#NAME#ri : Ii8<0x70, MRMSrcReg, (outs VR128:$dst),
                       (ins VR128:$src1, i8imm:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       [(set VR128:$dst,
                         (vt128 (OpNode VR128:$src1, (i8 imm:$src2))))],
                       IIC_SSE_PSHUF>, VEX;
   def V#NAME#mi : Ii8<0x70, MRMSrcMem, (outs VR128:$dst),
                       (ins i128mem:$src1, i8imm:$src2),
-                      !strconcat(!strconcat("v", OpcodeStr),
+                      !strconcat("v", OpcodeStr,
                                  "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                      [(set VR128:$dst,
                        (vt128 (OpNode (bitconvert (memopv2i64 addr:$src1)),
@@ -4003,14 +4003,14 @@ let Predicates = [HasAVX] in {
 let Predicates = [HasAVX2] in {
   def V#NAME#Yri : Ii8<0x70, MRMSrcReg, (outs VR256:$dst),
                        (ins VR256:$src1, i8imm:$src2),
-                       !strconcat(!strconcat("v", OpcodeStr),
+                       !strconcat("v", OpcodeStr,
                                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                        [(set VR256:$dst,
                          (vt256 (OpNode VR256:$src1, (i8 imm:$src2))))],
                        IIC_SSE_PSHUF>, VEX, VEX_L;
   def V#NAME#Ymi : Ii8<0x70, MRMSrcMem, (outs VR256:$dst),
                        (ins i256mem:$src1, i8imm:$src2),
-                       !strconcat(!strconcat("v", OpcodeStr),
+                       !strconcat("v", OpcodeStr,
                                   "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
                       [(set VR256:$dst,
                         (vt256 (OpNode (bitconvert (memopv4i64 addr:$src1)),
