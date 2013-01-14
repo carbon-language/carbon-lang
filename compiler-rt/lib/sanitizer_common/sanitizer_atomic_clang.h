@@ -41,6 +41,7 @@ INLINE typename T::Type atomic_load(
       | memory_order_acquire | memory_order_seq_cst));
   DCHECK(!((uptr)a % sizeof(*a)));
   typename T::Type v;
+  // FIXME(dvyukov): 64-bit load is not atomic on 32-bits.
   if (mo == memory_order_relaxed) {
     v = a->val_dont_use;
   } else {
@@ -56,6 +57,7 @@ INLINE void atomic_store(volatile T *a, typename T::Type v, memory_order mo) {
   DCHECK(mo & (memory_order_relaxed | memory_order_release
       | memory_order_seq_cst));
   DCHECK(!((uptr)a % sizeof(*a)));
+  // FIXME(dvyukov): 64-bit store is not atomic on 32-bits.
   if (mo == memory_order_relaxed) {
     a->val_dont_use = v;
   } else {
