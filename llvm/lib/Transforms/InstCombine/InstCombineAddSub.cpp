@@ -66,10 +66,12 @@ namespace {
     bool insaneIntVal(int V) { return V > 4 || V < -4; }
     APFloat *getFpValPtr(void)
       { return reinterpret_cast<APFloat*>(&FpValBuf.buffer[0]); }
+    const APFloat *getFpValPtr(void) const
+      { return reinterpret_cast<const APFloat*>(&FpValBuf.buffer[0]); }
 
     const APFloat &getFpVal(void) const {
       assert(IsFp && BufHasFpVal && "Incorret state");
-      return *reinterpret_cast<const APFloat*>(&FpValBuf.buffer[0]);
+      return *getFpValPtr();
     }
 
     APFloat &getFpVal(void)
