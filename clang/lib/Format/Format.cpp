@@ -449,10 +449,10 @@ private:
           (ParenLevel != 0 || getPrecedence(Previous) == prec::Assignment))
         State.Stack[ParenLevel].LastSpace = State.Column;
     }
-    moveStateToNextToken(State);
     if (Newline && Previous.is(tok::l_brace)) {
       State.Stack.back().BreakBeforeClosingBrace = true;
     }
+    moveStateToNextToken(State);
   }
 
   /// \brief Mark the next token as consumed in \p State and modify its stacks
@@ -502,6 +502,11 @@ private:
   unsigned splitPenalty(const AnnotatedToken &Tok) {
     const AnnotatedToken &Left = Tok;
     const AnnotatedToken &Right = Tok.Children[0];
+
+    if (Left.is(tok::l_brace) && Right.isNot(tok::l_brace))
+      return 50;
+    if (Left.is(tok::equal) && Right.is(tok::l_brace))
+      return 150;
 
     // In for-loops, prefer breaking at ',' and ';'.
     if (RootToken.is(tok::kw_for) &&
@@ -561,7 +566,9 @@ private:
 
     if (!NewLine && State.NextToken->MustBreakBefore)
       return UINT_MAX;
-    if (NewLine && !State.NextToken->CanBreakBefore)
+    if (NewLine && !State.NextToken->CanBreakBefore &&
+        !(State.NextToken->is(tok::r_brace) &&
+          State.Stack.back().BreakBeforeClosingBrace))
       return UINT_MAX;
     if (!NewLine && State.NextToken->is(tok::r_brace) &&
         State.Stack.back().BreakBeforeClosingBrace)
@@ -1249,17 +1256,21 @@ private:
       // change the "binding" behavior of a comment.
       return false;
 
-    if (Right.is(tok::r_paren) || Right.is(tok::l_brace) ||
+    // We only break before r_brace if there was a corresponding break before
+    // the l_brace, which is tracked by BreakBeforeClosingBrace.
+    if (Right.is(tok::r_brace))
+      return false;
+
+    if (Right.is(tok::r_paren) ||
         Right.is(tok::greater))
       return false;
     return (isBinaryOperator(Left) && Left.isNot(tok::lessless)) ||
            Left.is(tok::comma) || Right.is(tok::lessless) ||
            Right.is(tok::arrow) || Right.is(tok::period) ||
            Right.is(tok::colon) || Left.is(tok::semi) ||
-           Left.is(tok::l_brace) || Left.is(tok::question) ||
-           Right.is(tok::r_brace) || Left.Type == TT_ConditionalExpr ||
-           (Left.is(tok::r_paren) && Left.Type != TT_CastRParen &&
-            Right.is(tok::identifier)) ||
+           Left.is(tok::l_brace) || Left.is(tok::question) || Left.Type ==
+           TT_ConditionalExpr || (Left.is(tok::r_paren) && Left.Type !=
+                                  TT_CastRParen && Right.is(tok::identifier)) ||
            (Left.is(tok::l_paren) && !Right.is(tok::r_paren));
   }
 

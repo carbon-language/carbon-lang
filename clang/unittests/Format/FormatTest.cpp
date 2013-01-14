@@ -459,6 +459,32 @@ TEST_F(FormatTest, StaticInitializers) {
       "                     looooooooooooooooooooooooooooooong };");
 }
 
+TEST_F(FormatTest, NestedStaticInitializers) {
+  verifyFormat("static A x = { { {} } };\n");
+  verifyFormat(
+      "static A x = {\n"
+      "  { { init1, init2, init3, init4 }, { init1, init2, init3, init4 } }\n"
+      "};\n");
+  verifyFormat(
+      "somes Status::global_reps[3] = {\n"
+      "  { kGlobalRef, OK_CODE, NULL, NULL, NULL },\n"
+      "  { kGlobalRef, CANCELLED_CODE, NULL, NULL, NULL },\n"
+      "  { kGlobalRef, UNKNOWN_CODE, NULL, NULL, NULL }\n"
+      "};");
+  verifyFormat(
+      "CGRect cg_rect = { { rect.fLeft, rect.fTop },\n"
+      "                   { rect.fRight - rect.fLeft, rect.fBottom - rect.fTop"
+      " } };");
+
+  // FIXME: We might at some point want to handle this similar to parameters
+  // lists, where we have an option to put each on a single line.
+  verifyFormat("struct {\n"
+               "  unsigned bit;\n"
+               "  const char *const name;\n"
+               "} kBitsToOs[] = { { kOsMac, \"Mac\" }, { kOsWin, \"Windows\" },\n"
+               "                  { kOsLinux, \"Linux\" }, { kOsCrOS, \"Chrome OS\" } };");
+}
+
 TEST_F(FormatTest, FormatsSmallMacroDefinitionsInSingleLine) {
   verifyFormat("#define ALooooooooooooooooooooooooooooooooooooooongMacro("
                "                      \\\n"
