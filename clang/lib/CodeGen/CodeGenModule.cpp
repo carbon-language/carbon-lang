@@ -173,8 +173,7 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();
   EmitLLVMUsed();
-  EmitLinkLibraries();
-  
+
   SimplifyPersonality();
 
   if (getCodeGenOpts().EmitDeclMetadata)
@@ -714,24 +713,6 @@ void CodeGenModule::EmitLLVMUsed() {
                              "llvm.used");
 
   GV->setSection("llvm.metadata");
-}
-
-void CodeGenModule::EmitLinkLibraries() {
-  // If there are no libraries to link against, do nothing.
-  if (LinkLibraries.empty())
-    return;
-
-  // Create metadata for each library we're linking against.
-  llvm::NamedMDNode *Metadata
-    = getModule().getOrInsertNamedMetadata("llvm.link.libraries");
-  for (unsigned I = 0, N = LinkLibraries.size(); I != N; ++I) {
-    llvm::Value *Args[2] = {
-      llvm::MDString::get(getLLVMContext(), LinkLibraries[I].Library),
-      llvm::ConstantInt::get(llvm::Type::getInt1Ty(getLLVMContext()),
-                             LinkLibraries[I].IsFramework)
-    };
-    Metadata->addOperand(llvm::MDNode::get(getLLVMContext(), Args));
-  }
 }
 
 void CodeGenModule::EmitDeferred() {
@@ -2802,16 +2783,44 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
       Stack.push_back(Mod);
     }
 
+    if (Stack.empty())
+      break;
+
+    // Get/create metadata for the link options.
+    llvm::NamedMDNode *Metadata
+      = getModule().getOrInsertNamedMetadata("llvm.module.linkoptions");
+
     // Find all of the non-explicit submodules of the modules we've imported and
     // import them.
     while (!Stack.empty()) {
       clang::Module *Mod = Stack.back();
       Stack.pop_back();
 
-      // Add the link libraries for this module.
-      LinkLibraries.insert(LinkLibraries.end(),
-                           Mod->LinkLibraries.begin(),
-                           Mod->LinkLibraries.end());
+      // Add linker options to link against the libraries/frameworks
+      // described by this module.
+      for (unsigned I = 0, N = Mod->LinkLibraries.size(); I != N; ++I) {
+        // FIXME: -lfoo is Unix-centric and -framework Foo is Darwin-centric.
+        // We need to know more about the linker to know how to encode these
+        // options propertly.
+
+        // Link against a framework.
+        if (Mod->LinkLibraries[I].IsFramework) {
+          llvm::Value *Args[2] = {
+            llvm::MDString::get(getLLVMContext(), "-framework"),
+            llvm::MDString::get(getLLVMContext(),
+                                Mod->LinkLibraries[I].Library)
+          };
+          
+          Metadata->addOperand(llvm::MDNode::get(getLLVMContext(), Args));
+          continue;
+        }
+
+        // Link against a library.
+        llvm::Value *OptString
+          = llvm::MDString::get(getLLVMContext(),
+                                "-l" + Mod->LinkLibraries[I].Library);
+        Metadata->addOperand(llvm::MDNode::get(getLLVMContext(), OptString));
+      }
 
       // We've imported this module; now import any of its children that haven't
       // already been imported.

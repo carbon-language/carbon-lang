@@ -319,9 +319,6 @@ class CodeGenModule : public CodeGenTypeCache {
   /// \brief The complete set of modules that has been imported.
   llvm::SetVector<clang::Module *> ImportedModules;
 
-  /// \brief The set of libraries to link against.
-  std::vector<clang::Module::LinkLibrary> LinkLibraries;
-
   /// @name Cache for Objective-C runtime types
   /// @{
 
@@ -997,9 +994,6 @@ private:
   /// EmitLLVMUsed - Emit the llvm.used metadata used to force
   /// references to global which may otherwise be optimized out.
   void EmitLLVMUsed();
-
-  /// \brief Emit the set of libraries to link against.
-  void EmitLinkLibraries();
 
   void EmitDeclMetadata();
 
