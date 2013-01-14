@@ -27,9 +27,14 @@
 #define LOCALE_zh_CN_UTF_8     "Chinese_China.936"
 #else
 #define LOCALE_en_US_UTF_8     "en_US.UTF-8"
-#define LOCALE_cs_CZ_ISO8859_2 "cs_CZ.ISO8859-2"
 #define LOCALE_fr_FR_UTF_8     "fr_FR.UTF-8"
+#ifdef __linux__
+#define LOCALE_fr_CA_ISO8859_1 "fr_CA.ISO-8859-1"
+#define LOCALE_cs_CZ_ISO8859_2 "cs_CZ.ISO-8859-2"
+#else
 #define LOCALE_fr_CA_ISO8859_1 "fr_CA.ISO8859-1"
+#define LOCALE_cs_CZ_ISO8859_2 "cs_CZ.ISO8859-2"
+#endif
 #define LOCALE_ru_RU_UTF_8     "ru_RU.UTF-8"
 #define LOCALE_zh_CN_UTF_8     "zh_CN.UTF-8"
 #endif
