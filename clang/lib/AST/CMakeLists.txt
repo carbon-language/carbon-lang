@@ -12,7 +12,6 @@ add_clang_library(clangAST
   Comment.cpp
   CommentBriefParser.cpp
   CommentCommandTraits.cpp
-  CommentDumper.cpp
   CommentLexer.cpp
   CommentParser.cpp
   CommentSema.cpp

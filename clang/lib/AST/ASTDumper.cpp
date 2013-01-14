@@ -14,6 +14,7 @@
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Attr.h"
+#include "clang/AST/CommentVisitor.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclVisitor.h"
@@ -22,6 +23,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
+using namespace clang::comments;
 
 //===----------------------------------------------------------------------===//
 // ASTDumper Visitor
@@ -29,9 +31,11 @@ using namespace clang;
 
 namespace  {
   class ASTDumper
-      : public DeclVisitor<ASTDumper>, public StmtVisitor<ASTDumper> {
-    SourceManager *SM;
+      : public DeclVisitor<ASTDumper>, public StmtVisitor<ASTDumper>,
+        public ConstCommentVisitor<ASTDumper> {
     raw_ostream &OS;
+    const CommandTraits *Traits;
+    const SourceManager *SM;
     unsigned IndentLevel;
     bool IsFirstLine;
 
@@ -39,6 +43,9 @@ namespace  {
     /// print out deltas from then on out.
     const char *LastLocFilename;
     unsigned LastLocLine;
+
+    /// The \c FullComment parent of the comment being dumped.
+    const FullComment *FC;
 
     class IndentScope {
       ASTDumper &Dumper;
@@ -52,9 +59,10 @@ namespace  {
     };
 
   public:
-    ASTDumper(SourceManager *SM, raw_ostream &OS)
-      : SM(SM), OS(OS), IndentLevel(0), IsFirstLine(true),
-        LastLocFilename(""), LastLocLine(~0U) { }
+    ASTDumper(raw_ostream &OS, const CommandTraits *Traits,
+              const SourceManager *SM)
+      : OS(OS), Traits(Traits), SM(SM), IndentLevel(0), IsFirstLine(true),
+        LastLocFilename(""), LastLocLine(~0U), FC(0) { }
 
     ~ASTDumper() {
       OS << "\n";
@@ -62,6 +70,7 @@ namespace  {
 
     void dumpDecl(Decl *D);
     void dumpStmt(Stmt *S);
+    void dumpFullComment(const FullComment *C);
 
     // Utilities
     void indent();
@@ -188,6 +197,24 @@ namespace  {
     void VisitObjCSubscriptRefExpr(ObjCSubscriptRefExpr *Node);
     void VisitObjCIvarRefExpr(ObjCIvarRefExpr *Node);
     void VisitObjCBoolLiteralExpr(ObjCBoolLiteralExpr *Node);
+
+    // Comments.
+    const char *getCommandName(unsigned CommandID);
+    void dumpComment(const Comment *C);
+
+    // Inline comments.
+    void visitTextComment(const TextComment *C);
+    void visitInlineCommandComment(const InlineCommandComment *C);
+    void visitHTMLStartTagComment(const HTMLStartTagComment *C);
+    void visitHTMLEndTagComment(const HTMLEndTagComment *C);
+
+    // Block comments.
+    void visitBlockCommandComment(const BlockCommandComment *C);
+    void visitParamCommandComment(const ParamCommandComment *C);
+    void visitTParamCommandComment(const TParamCommandComment *C);
+    void visitVerbatimBlockComment(const VerbatimBlockComment *C);
+    void visitVerbatimBlockLineComment(const VerbatimBlockLineComment *C);
+    void visitVerbatimLineComment(const VerbatimLineComment *C);
   };
 }
 
@@ -446,6 +473,7 @@ void ASTDumper::dumpDecl(Decl *D) {
          E = D->getAttrs().end(); I != E; ++I)
       dumpAttr(*I);
   }
+  dumpFullComment(D->getASTContext().getCommentForDecl(D, 0));
   // Decls within functions are visited by the body
   if (!isa<FunctionDecl>(*D) && !isa<ObjCMethodDecl>(*D))
     dumpDeclContext(dyn_cast<DeclContext>(D));
@@ -1376,6 +1404,145 @@ void ASTDumper::VisitObjCBoolLiteralExpr(ObjCBoolLiteralExpr *Node) {
 }
 
 //===----------------------------------------------------------------------===//
+// Comments
+//===----------------------------------------------------------------------===//
+
+const char *ASTDumper::getCommandName(unsigned CommandID) {
+  if (Traits)
+    return Traits->getCommandInfo(CommandID)->Name;
+  const CommandInfo *Info = CommandTraits::getBuiltinCommandInfo(CommandID);
+  if (Info)
+    return Info->Name;
+  return "<not a builtin command>";
+}
+
+void ASTDumper::dumpFullComment(const FullComment *C) {
+  if (!C)
+    return;
+
+  FC = C;
+  dumpComment(C);
+  FC = 0;
+}
+
+void ASTDumper::dumpComment(const Comment *C) {
+  IndentScope Indent(*this);
+
+  if (!C) {
+    OS << "<<<NULL>>>";
+    return;
+  }
+
+  OS << C->getCommentKindName();
+  dumpPointer(C);
+  dumpSourceRange(C->getSourceRange());
+  ConstCommentVisitor<ASTDumper>::visit(C);
+  for (Comment::child_iterator I = C->child_begin(), E = C->child_end();
+       I != E; ++I)
+    dumpComment(*I);
+}
+
+void ASTDumper::visitTextComment(const TextComment *C) {
+  OS << " Text=\"" << C->getText() << "\"";
+}
+
+void ASTDumper::visitInlineCommandComment(const InlineCommandComment *C) {
+  OS << " Name=\"" << getCommandName(C->getCommandID()) << "\"";
+  switch (C->getRenderKind()) {
+  case InlineCommandComment::RenderNormal:
+    OS << " RenderNormal";
+    break;
+  case InlineCommandComment::RenderBold:
+    OS << " RenderBold";
+    break;
+  case InlineCommandComment::RenderMonospaced:
+    OS << " RenderMonospaced";
+    break;
+  case InlineCommandComment::RenderEmphasized:
+    OS << " RenderEmphasized";
+    break;
+  }
+
+  for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
+    OS << " Arg[" << i << "]=\"" << C->getArgText(i) << "\"";
+}
+
+void ASTDumper::visitHTMLStartTagComment(const HTMLStartTagComment *C) {
+  OS << " Name=\"" << C->getTagName() << "\"";
+  if (C->getNumAttrs() != 0) {
+    OS << " Attrs: ";
+    for (unsigned i = 0, e = C->getNumAttrs(); i != e; ++i) {
+      const HTMLStartTagComment::Attribute &Attr = C->getAttr(i);
+      OS << " \"" << Attr.Name << "=\"" << Attr.Value << "\"";
+    }
+  }
+  if (C->isSelfClosing())
+    OS << " SelfClosing";
+}
+
+void ASTDumper::visitHTMLEndTagComment(const HTMLEndTagComment *C) {
+  OS << " Name=\"" << C->getTagName() << "\"";
+}
+
+void ASTDumper::visitBlockCommandComment(const BlockCommandComment *C) {
+  OS << " Name=\"" << getCommandName(C->getCommandID()) << "\"";
+  for (unsigned i = 0, e = C->getNumArgs(); i != e; ++i)
+    OS << " Arg[" << i << "]=\"" << C->getArgText(i) << "\"";
+}
+
+void ASTDumper::visitParamCommandComment(const ParamCommandComment *C) {
+  OS << " " << ParamCommandComment::getDirectionAsString(C->getDirection());
+
+  if (C->isDirectionExplicit())
+    OS << " explicitly";
+  else
+    OS << " implicitly";
+
+  if (C->hasParamName()) {
+    if (C->isParamIndexValid())
+      OS << " Param=\"" << C->getParamName(FC) << "\"";
+    else
+      OS << " Param=\"" << C->getParamNameAsWritten() << "\"";
+  }
+
+  if (C->isParamIndexValid())
+    OS << " ParamIndex=" << C->getParamIndex();
+}
+
+void ASTDumper::visitTParamCommandComment(const TParamCommandComment *C) {
+  if (C->hasParamName()) {
+    if (C->isPositionValid())
+      OS << " Param=\"" << C->getParamName(FC) << "\"";
+    else
+      OS << " Param=\"" << C->getParamNameAsWritten() << "\"";
+  }
+
+  if (C->isPositionValid()) {
+    OS << " Position=<";
+    for (unsigned i = 0, e = C->getDepth(); i != e; ++i) {
+      OS << C->getIndex(i);
+      if (i != e - 1)
+        OS << ", ";
+    }
+    OS << ">";
+  }
+}
+
+void ASTDumper::visitVerbatimBlockComment(const VerbatimBlockComment *C) {
+  OS << " Name=\"" << getCommandName(C->getCommandID()) << "\""
+        " CloseName=\"" << C->getCloseName() << "\"";
+}
+
+void ASTDumper::visitVerbatimBlockLineComment(
+    const VerbatimBlockLineComment *C) {
+  OS << " Text=\"" << C->getText() << "\"";
+}
+
+void ASTDumper::visitVerbatimLineComment(const VerbatimLineComment *C) {
+  OS << " Text=\"" << C->getText() << "\"";
+}
+
+//===----------------------------------------------------------------------===//
 // Decl method implementations
 //===----------------------------------------------------------------------===//
 
@@ -1384,7 +1551,8 @@ void Decl::dump() const {
 }
 
 void Decl::dump(raw_ostream &OS) const {
-  ASTDumper P(&getASTContext().getSourceManager(), OS);
+  ASTDumper P(OS, &getASTContext().getCommentCommandTraits(),
+              &getASTContext().getSourceManager());
   P.dumpDecl(const_cast<Decl*>(this));
 }
 
@@ -1397,11 +1565,31 @@ void Stmt::dump(SourceManager &SM) const {
 }
 
 void Stmt::dump(raw_ostream &OS, SourceManager &SM) const {
-  ASTDumper P(&SM, OS);
+  ASTDumper P(OS, 0, &SM);
   P.dumpStmt(const_cast<Stmt*>(this));
 }
 
 void Stmt::dump() const {
-  ASTDumper P(0, llvm::errs());
+  ASTDumper P(llvm::errs(), 0, 0);
   P.dumpStmt(const_cast<Stmt*>(this));
+}
+
+//===----------------------------------------------------------------------===//
+// Comment method implementations
+//===----------------------------------------------------------------------===//
+
+void Comment::dump() const {
+  dump(llvm::errs(), 0, 0);
+}
+
+void Comment::dump(const ASTContext &Context) const {
+  dump(llvm::errs(), &Context.getCommentCommandTraits(),
+       &Context.getSourceManager());
+}
+
+void Comment::dump(llvm::raw_ostream &OS, const CommandTraits *Traits,
+                   const SourceManager *SM) const {
+  const FullComment *FC = dyn_cast<FullComment>(this);
+  ASTDumper D(OS, Traits, SM);
+  D.dumpFullComment(FC);
 }
