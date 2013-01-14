@@ -111,3 +111,28 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
     )
   set_target_properties(check-sanitizer PROPERTIES FOLDER "Sanitizer unittests")
 endif()
+
+if(ANDROID)
+  # We assume that unit tests on Android are built in a build
+  # tree with fresh Clang as a host compiler.
+  add_executable(SanitizerTest
+    ${SANITIZER_UNITTESTS}
+    ${COMPILER_RT_GTEST_SOURCE}
+    $<TARGET_OBJECTS:RTSanitizerCommon.arm.android>
+    )
+  set_target_compile_flags(SanitizerTest
+    ${SANITIZER_COMMON_CFLAGS}
+    ${COMPILER_RT_GTEST_INCLUDE_CFLAGS}
+    -I${COMPILER_RT_SOURCE_DIR}/include
+    -I${COMPILER_RT_SOURCE_DIR}/lib
+    -I${COMPILER_RT_SOURCE_DIR}/lib/sanitizer_common
+    -O2 -g
+    )
+  # Setup correct output directory and link flags.
+  get_unittest_directory(OUTPUT_DIR)
+  set_target_properties(AsanTest PROPERTIES
+    RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
+  set_target_link_flags(SanitizerTest ${SANITIZER_TEST_LINK_FLAGS})
+  # Add unit test to test suite.
+  add_dependencies(SanitizerUnitTests SanitizerTest)
+endif()
