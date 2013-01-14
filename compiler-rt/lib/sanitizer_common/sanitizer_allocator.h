@@ -19,6 +19,7 @@
 #include "sanitizer_libc.h"
 #include "sanitizer_list.h"
 #include "sanitizer_mutex.h"
+#include "sanitizer_lfstack.h"
 
 namespace __sanitizer {
 
@@ -172,9 +173,9 @@ class SizeClassMap {
   }
 };
 
-typedef SizeClassMap<15, 256, 16, FIRST_32_SECOND_64(33, 36)>
+typedef SizeClassMap<17, 256, 16, FIRST_32_SECOND_64(33, 36)>
     DefaultSizeClassMap;
-typedef SizeClassMap<15, 64, 14, FIRST_32_SECOND_64(25, 28)>
+typedef SizeClassMap<17, 64, 14, FIRST_32_SECOND_64(25, 28)>
     CompactSizeClassMap;
 template<class SizeClassAllocator> struct SizeClassAllocatorLocalCache;
 
@@ -234,20 +235,16 @@ class SizeClassAllocator64 {
   Batch *NOINLINE AllocateBatch(AllocatorCache *c, uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     RegionInfo *region = GetRegionInfo(class_id);
-    BlockingMutexLock l(&region->mutex);
-    if (region->free_list.empty())
-      PopulateFreeList(c, class_id, region);
-    CHECK(!region->free_list.empty());
-    Batch *b = region->free_list.front();
-    region->free_list.pop_front();
+    Batch *b = region->free_list.Pop();
+    if (b == 0)
+      b = PopulateFreeList(c, class_id, region);
     region->n_allocated++;
     return b;
   }
 
   void NOINLINE DeallocateBatch(uptr class_id, Batch *b) {
     RegionInfo *region = GetRegionInfo(class_id);
-    BlockingMutexLock l(&region->mutex);
-    region->free_list.push_front(b);
+    region->free_list.Push(b);
     region->n_freed++;
   }
 
@@ -344,7 +341,7 @@ class SizeClassAllocator64 {
 
   struct RegionInfo {
     BlockingMutex mutex;
-    IntrusiveList<Batch> free_list;
+    LFStack<Batch> free_list;
     uptr allocated_user;  // Bytes allocated for user memory.
     uptr allocated_meta;  // Bytes allocated for metadata.
     uptr mapped_user;  // Bytes mapped for user memory.
@@ -372,9 +369,12 @@ class SizeClassAllocator64 {
     return offset / (u32)size;
   }
 
-  void NOINLINE PopulateFreeList(AllocatorCache *c, uptr class_id,
-                                 RegionInfo *region) {
-    CHECK(region->free_list.empty());
+  Batch *NOINLINE PopulateFreeList(AllocatorCache *c, uptr class_id,
+                                   RegionInfo *region) {
+    BlockingMutexLock l(&region->mutex);
+    Batch *b = region->free_list.Pop();
+    if (b)
+      return b;
     uptr size = SizeClassMap::Size(class_id);
     uptr count = size < kPopulateSize ? SizeClassMap::MaxCached(class_id) : 1;
     uptr beg_idx = region->allocated_user;
@@ -389,18 +389,22 @@ class SizeClassAllocator64 {
       MapWithCallback(region_beg + region->mapped_user, map_size);
       region->mapped_user += map_size;
     }
-    Batch *b;
-    if (class_id < SizeClassMap::kMinBatchClass)
-      b = (Batch*)c->Allocate(this, SizeClassMap::ClassID(sizeof(Batch)));
-    else
-      b = (Batch*)(region_beg + beg_idx);
-    b->count = count;
-    for (uptr i = 0; i < count; i++)
-      b->batch[i] = (void*)(region_beg + beg_idx + i * size);
-    region->free_list.push_back(b);
-    region->allocated_user += count * size;
-    CHECK_LE(region->allocated_user, region->mapped_user);
-    region->allocated_meta += count * kMetadataSize;
+    for (;;) {
+      if (class_id < SizeClassMap::kMinBatchClass)
+        b = (Batch*)c->Allocate(this, SizeClassMap::ClassID(sizeof(Batch)));
+      else
+        b = (Batch*)(region_beg + beg_idx);
+      b->count = count;
+      for (uptr i = 0; i < count; i++)
+        b->batch[i] = (void*)(region_beg + beg_idx + i * size);
+      region->allocated_user += count * size;
+      CHECK_LE(region->allocated_user, region->mapped_user);
+      region->allocated_meta += count * kMetadataSize;
+      beg_idx += count * size;
+      if (beg_idx + count * size + size > region->mapped_user)
+        break;
+      region->free_list.Push(b);
+    }
     if (region->allocated_meta > region->mapped_meta) {
       uptr map_size = kMetaMapSize;
       while (region->allocated_meta > region->mapped_meta + map_size)
@@ -418,6 +422,7 @@ class SizeClassAllocator64 {
           kRegionSize / 1024 / 1024, size);
       Die();
     }
+    return b;
   }
 };
 

@@ -32,6 +32,7 @@ set(SANITIZER_HEADERS
   sanitizer_common_interceptors.h
   sanitizer_flags.h
   sanitizer_internal_defs.h
+  sanitizer_lfstack.h
   sanitizer_libc.h
   sanitizer_list.h
   sanitizer_mutex.h
