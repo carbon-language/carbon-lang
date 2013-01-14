@@ -234,7 +234,7 @@ class SizeClassAllocator64 {
   Batch *NOINLINE AllocateBatch(AllocatorCache *c, uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     RegionInfo *region = GetRegionInfo(class_id);
-    SpinMutexLock l(&region->mutex);
+    BlockingMutexLock l(&region->mutex);
     if (region->free_list.empty())
       PopulateFreeList(c, class_id, region);
     CHECK(!region->free_list.empty());
@@ -246,7 +246,7 @@ class SizeClassAllocator64 {
 
   void NOINLINE DeallocateBatch(uptr class_id, Batch *b) {
     RegionInfo *region = GetRegionInfo(class_id);
-    SpinMutexLock l(&region->mutex);
+    BlockingMutexLock l(&region->mutex);
     region->free_list.push_front(b);
     region->n_freed++;
   }
@@ -343,7 +343,7 @@ class SizeClassAllocator64 {
   static const uptr kMetaMapSize = 1 << 16;
 
   struct RegionInfo {
-    SpinMutex mutex;
+    BlockingMutex mutex;
     IntrusiveList<Batch> free_list;
     uptr allocated_user;  // Bytes allocated for user memory.
     uptr allocated_meta;  // Bytes allocated for metadata.

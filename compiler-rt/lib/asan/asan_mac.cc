@@ -141,25 +141,6 @@ void AsanPlatformThreadInit() {
   }
 }
 
-AsanLock::AsanLock(LinkerInitialized) {
-  // We assume that OS_SPINLOCK_INIT is zero
-}
-
-void AsanLock::Lock() {
-  CHECK(sizeof(OSSpinLock) <= sizeof(opaque_storage_));
-  CHECK(OS_SPINLOCK_INIT == 0);
-  CHECK(owner_ != (uptr)pthread_self());
-  OSSpinLockLock((OSSpinLock*)&opaque_storage_);
-  CHECK(!owner_);
-  owner_ = (uptr)pthread_self();
-}
-
-void AsanLock::Unlock() {
-  CHECK(owner_ == (uptr)pthread_self());
-  owner_ = 0;
-  OSSpinLockUnlock((OSSpinLock*)&opaque_storage_);
-}
-
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
   (void)fast;
   stack->size = 0;

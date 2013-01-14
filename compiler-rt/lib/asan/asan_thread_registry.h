@@ -15,10 +15,10 @@
 #ifndef ASAN_THREAD_REGISTRY_H
 #define ASAN_THREAD_REGISTRY_H
 
-#include "asan_lock.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
 #include "asan_thread.h"
+#include "sanitizer_common/sanitizer_mutex.h"
 
 namespace __asan {
 
@@ -73,7 +73,7 @@ class AsanThreadRegistry {
   // per-thread AsanStats.
   uptr max_malloced_memory_;
   u32 n_threads_;
-  AsanLock mu_;
+  BlockingMutex mu_;
   bool inited_;
 };
 

@@ -19,15 +19,14 @@
 
 #include "asan_interceptors.h"
 #include "asan_internal.h"
-#include "asan_lock.h"
 #include "asan_thread.h"
 #include "sanitizer_common/sanitizer_libc.h"
-#include "sanitizer_common/sanitizer_placement_new.h"
+#include "sanitizer_common/sanitizer_mutex.h"
 
 namespace __asan {
 
 // ---------------------- Stacktraces, symbols, etc. ---------------- {{{1
-static AsanLock dbghelp_lock(LINKER_INITIALIZED);
+static BlockingMutex dbghelp_lock(LINKER_INITIALIZED);
 static bool dbghelp_initialized = false;
 #pragma comment(lib, "dbghelp.lib")
 
@@ -53,42 +52,6 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
   stack->size = cs_ret - offset;
   for (uptr i = 0; i < stack->size; i++)
     stack->trace[i] = (uptr)tmp[i + offset];
-}
-
-// ---------------------- AsanLock ---------------- {{{1
-enum LockState {
-  LOCK_UNINITIALIZED = 0,
-  LOCK_READY = -1,
-};
-
-AsanLock::AsanLock(LinkerInitialized li) {
-  // FIXME: see comments in AsanLock::Lock() for the details.
-  CHECK(li == LINKER_INITIALIZED || owner_ == LOCK_UNINITIALIZED);
-
-  CHECK(sizeof(CRITICAL_SECTION) <= sizeof(opaque_storage_));
-  InitializeCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
-  owner_ = LOCK_READY;
-}
-
-void AsanLock::Lock() {
-  if (owner_ == LOCK_UNINITIALIZED) {
-    // FIXME: hm, global AsanLock objects are not initialized?!?
-    // This might be a side effect of the clang+cl+link Frankenbuild...
-    new(this) AsanLock((LinkerInitialized)(LINKER_INITIALIZED + 1));
-
-    // FIXME: If it turns out the linker doesn't invoke our
-    // constructors, we should probably manually Lock/Unlock all the global
-    // locks while we're starting in one thread to avoid double-init races.
-  }
-  EnterCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
-  CHECK(owner_ == LOCK_READY);
-  owner_ = GetThreadSelf();
-}
-
-void AsanLock::Unlock() {
-  CHECK(owner_ == GetThreadSelf());
-  owner_ = LOCK_READY;
-  LeaveCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
 }
 
 // ---------------------- TSD ---------------- {{{1
@@ -151,7 +114,7 @@ using namespace __asan;  // NOLINT
 extern "C" {
 SANITIZER_INTERFACE_ATTRIBUTE NOINLINE
 bool __asan_symbolize(const void *addr, char *out_buffer, int buffer_size) {
-  ScopedLock lock(&dbghelp_lock);
+  BlockingMutexLock lock(&dbghelp_lock);
   if (!dbghelp_initialized) {
     SymSetOptions(SYMOPT_DEFERRED_LOADS |
                   SYMOPT_UNDNAME |

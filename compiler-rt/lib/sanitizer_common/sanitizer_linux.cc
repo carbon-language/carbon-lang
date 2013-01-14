@@ -34,6 +34,7 @@
 #include <unwind.h>
 #include <errno.h>
 #include <sys/prctl.h>
+#include <linux/futex.h>
 
 // Are we using 32-bit or 64-bit syscalls?
 // x32 (which defines __x86_64__) has SANITIZER_WORDSIZE == 32
@@ -435,6 +436,34 @@ void StackTrace::SlowUnwindStack(uptr pc, uptr max_depth) {
 }
 
 #endif  // #ifndef SANITIZER_GO
+
+enum MutexState {
+  MtxUnlocked = 0,
+  MtxLocked = 1,
+  MtxSleeping = 2
+};
+
+BlockingMutex::BlockingMutex(LinkerInitialized) {
+}
+
+void BlockingMutex::Lock() {
+  atomic_uint32_t *m = reinterpret_cast<atomic_uint32_t *>(&opaque_storage_);
+  if (atomic_exchange(m, MtxLocked, memory_order_acquire) == MtxUnlocked)
+    return;
+  while (atomic_exchange(m, MtxSleeping, memory_order_acquire) != MtxUnlocked)
+    syscall(__NR_futex, m, FUTEX_WAIT_PRIVATE, MtxSleeping, 0, 0, 0);
+}
+
+void BlockingMutex::Unlock() {
+  atomic_uint32_t *m = reinterpret_cast<atomic_uint32_t *>(&opaque_storage_);
+  u32 v = atomic_exchange(m, MtxUnlocked, memory_order_relaxed);
+  if (v == MtxUnlocked) {
+    Printf("FATAL: unlock of unlocked mutex\n");
+    Die();
+  }
+  if (v == MtxSleeping)
+    syscall(__NR_futex, m, FUTEX_WAKE_PRIVATE, 1, 0, 0, 0);
+}
 
 }  // namespace __sanitizer
 

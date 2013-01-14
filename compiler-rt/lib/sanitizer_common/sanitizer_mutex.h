@@ -67,6 +67,15 @@ class SpinMutex : public StaticSpinMutex {
   void operator=(const SpinMutex&);
 };
 
+class BlockingMutex {
+ public:
+  explicit BlockingMutex(LinkerInitialized);
+  void Lock();
+  void Unlock();
+ private:
+  uptr opaque_storage_[10];
+};
+
 template<typename MutexType>
 class GenericScopedLock {
  public:
@@ -106,6 +115,7 @@ class GenericScopedReadLock {
 };
 
 typedef GenericScopedLock<StaticSpinMutex> SpinMutexLock;
+typedef GenericScopedLock<BlockingMutex> BlockingMutexLock;
 
 }  // namespace __sanitizer
 

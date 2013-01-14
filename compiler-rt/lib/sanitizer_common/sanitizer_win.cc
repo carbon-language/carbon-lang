@@ -20,6 +20,7 @@
 
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
+#include "sanitizer_placement_new.h"
 
 namespace __sanitizer {
 
@@ -224,6 +225,42 @@ uptr internal_readlink(const char *path, char *buf, uptr bufsize) {
 int internal_sched_yield() {
   Sleep(0);
   return 0;
+}
+
+// ---------------------- BlockingMutex ---------------- {{{1
+enum LockState {
+  LOCK_UNINITIALIZED = 0,
+  LOCK_READY = -1,
+};
+
+BlockingMutex::BlockingMutex(LinkerInitialized li) {
+  // FIXME: see comments in BlockingMutex::Lock() for the details.
+  CHECK(li == LINKER_INITIALIZED || owner_ == LOCK_UNINITIALIZED);
+
+  CHECK(sizeof(CRITICAL_SECTION) <= sizeof(opaque_storage_));
+  InitializeCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
+  owner_ = LOCK_READY;
+}
+
+void BlockingMutex::Lock() {
+  if (owner_ == LOCK_UNINITIALIZED) {
+    // FIXME: hm, global BlockingMutex objects are not initialized?!?
+    // This might be a side effect of the clang+cl+link Frankenbuild...
+    new(this) BlockingMutex((LinkerInitialized)(LINKER_INITIALIZED + 1));
+
+    // FIXME: If it turns out the linker doesn't invoke our
+    // constructors, we should probably manually Lock/Unlock all the global
+    // locks while we're starting in one thread to avoid double-init races.
+  }
+  EnterCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
+  CHECK(owner_ == LOCK_READY);
+  owner_ = GetThreadSelf();
+}
+
+void BlockingMutex::Unlock() {
+  CHECK(owner_ == GetThreadSelf());
+  owner_ = LOCK_READY;
+  LeaveCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
 }
 
 }  // namespace __sanitizer
