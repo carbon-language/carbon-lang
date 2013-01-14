@@ -444,6 +444,7 @@ enum MutexState {
 };
 
 BlockingMutex::BlockingMutex(LinkerInitialized) {
+  CHECK_EQ(owner_, 0);
 }
 
 void BlockingMutex::Lock() {
