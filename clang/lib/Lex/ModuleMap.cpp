@@ -383,6 +383,23 @@ bool ModuleMap::canInferFrameworkModule(const DirectoryEntry *ParentDir,
   return canInfer;
 }
 
+/// \brief For a framework module, infer the framework against which we
+/// should link.
+static void inferFrameworkLink(Module *Mod, const DirectoryEntry *FrameworkDir,
+                               FileManager &FileMgr) {
+  assert(Mod->IsFramework && "Can only infer linking for framework modules");
+  assert(!Mod->isSubFramework() &&
+         "Can only infer linking for top-level frameworks");
+
+  SmallString<128> LibName;
+  LibName += FrameworkDir->getName();
+  llvm::sys::path::append(LibName, Mod->Name);
+  if (FileMgr.getFile(LibName)) {
+    Mod->LinkLibraries.push_back(Module::LinkLibrary(Mod->Name,
+                                                     /*IsFramework=*/true));
+  }
+}
+
 Module *
 ModuleMap::inferFrameworkModule(StringRef ModuleName,
                                 const DirectoryEntry *FrameworkDir,
@@ -535,6 +552,12 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
                              llvm::sys::path::stem(Dir->path()), NameBuf),
                            SubframeworkDir, IsSystem, Result);
     }
+  }
+
+  // If the module is a top-level framework, automatically link against the
+  // framework.
+  if (!Result->isSubFramework()) {
+    inferFrameworkLink(Result, FrameworkDir, FileMgr);
   }
 
   return Result;
@@ -1145,6 +1168,13 @@ void ModuleMapParser::parseModuleDecl() {
     Diags.Report(Tok.getLocation(), diag::err_mmap_expected_rbrace);
     Diags.Report(LBraceLoc, diag::note_mmap_lbrace_match);
     HadError = true;
+  }
+
+  // If the active module is a top-level framework, and there are no link
+  // libraries, automatically link against the framework.
+  if (ActiveModule->IsFramework && !ActiveModule->isSubFramework() &&
+      ActiveModule->LinkLibraries.empty()) {
+    inferFrameworkLink(ActiveModule, Directory, SourceMgr.getFileManager());
   }
 
   // We're done parsing this module. Pop back to the previous module.

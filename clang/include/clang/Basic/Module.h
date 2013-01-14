@@ -237,7 +237,13 @@ public:
     
     return false;
   }
-  
+
+  /// \brief Determine whether this module is a subframework of another
+  /// framework.
+  bool isSubFramework() const {
+    return IsFramework && Parent && Parent->isPartOfFramework();
+  }
+
   /// \brief Retrieve the full name of this module, including the path from
   /// its top-level module.
   std::string getFullModuleName() const;
