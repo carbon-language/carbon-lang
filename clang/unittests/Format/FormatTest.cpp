@@ -978,6 +978,8 @@ TEST_F(FormatTest, UnderstandsUnaryOperators) {
   verifyFormat("if (i < -1) {}");
   verifyFormat("++(a->f());");
   verifyFormat("--(a->f());");
+  verifyFormat("(a->f())++;");
+  verifyFormat("a[42]++;");
   verifyFormat("if (!(a->f())) {}");
 
   verifyFormat("a-- > b;");

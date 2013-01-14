@@ -1060,7 +1060,10 @@ private:
 
   /// \brief Determine whether ++/-- are pre- or post-increments/-decrements.
   TokenType determineIncrementUsage(const AnnotatedToken &Tok) {
-    if (Tok.Parent != NULL && Tok.Parent->is(tok::identifier))
+    if (Tok.Parent == NULL)
+      return TT_UnaryOperator;
+    if (Tok.Parent->is(tok::r_paren) || Tok.Parent->is(tok::r_square) ||
+        Tok.Parent->is(tok::identifier))
       return TT_TrailingUnaryOperator;
 
     return TT_UnaryOperator;
