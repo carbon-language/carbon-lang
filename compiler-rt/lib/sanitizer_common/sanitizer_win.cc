@@ -21,6 +21,7 @@
 #include "sanitizer_common.h"
 #include "sanitizer_libc.h"
 #include "sanitizer_placement_new.h"
+#include "sanitizer_mutex.h"
 
 namespace __sanitizer {
 
