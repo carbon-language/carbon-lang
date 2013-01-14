@@ -9,6 +9,11 @@ using namespace std;
 const size_t kNumThreds = 16;
 const size_t kNumIters = 1 << 23;
 
+inline void break_optimization(void *arg) {
+  __asm__ __volatile__("" : : "r" (arg) : "memory");
+}
+
+__attribute__((noinline))
 static void *MallocThread(void *t) {
   size_t total_malloced = 0, total_freed = 0;
   size_t max_in_use = 0;
@@ -51,11 +56,30 @@ static void *MallocThread(void *t) {
   return 0;
 }
 
+template <int depth>
+struct DeepStack {
+  __attribute__((noinline))
+  static void *run(void *t) {
+    break_optimization(0);
+    DeepStack<depth - 1>::run(t);
+    break_optimization(0);
+    return 0;
+  }
+};
+
+template<>
+struct DeepStack<0> {
+  static void *run(void *t) {
+    MallocThread(t);
+    return 0;
+  }
+};
+
 // Build with -Dstandalone_malloc_test=main to make it a separate program.
 int standalone_malloc_test() {
   pthread_t t[kNumThreds];
   for (size_t i = 0; i < kNumThreds; i++)
-    pthread_create(&t[i], 0, MallocThread, reinterpret_cast<void *>(i));
+    pthread_create(&t[i], 0, DeepStack<200>::run, reinterpret_cast<void *>(i));
   for (size_t i = 0; i < kNumThreds; i++)
     pthread_join(t[i], 0);
   malloc_stats();
