@@ -457,10 +457,7 @@ void BlockingMutex::Lock() {
 void BlockingMutex::Unlock() {
   atomic_uint32_t *m = reinterpret_cast<atomic_uint32_t *>(&opaque_storage_);
   u32 v = atomic_exchange(m, MtxUnlocked, memory_order_relaxed);
-  if (v == MtxUnlocked) {
-    Printf("FATAL: unlock of unlocked mutex\n");
-    Die();
-  }
+  CHECK_NE(v, MtxUnlocked);
   if (v == MtxSleeping)
     syscall(__NR_futex, m, FUTEX_WAKE_PRIVATE, 1, 0, 0, 0);
 }

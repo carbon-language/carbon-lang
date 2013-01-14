@@ -74,6 +74,7 @@ class BlockingMutex {
   void Unlock();
  private:
   uptr opaque_storage_[10];
+  uptr owner_;  // for debugging
 };
 
 template<typename MutexType>
