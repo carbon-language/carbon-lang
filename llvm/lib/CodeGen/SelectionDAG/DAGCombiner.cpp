@@ -5100,16 +5100,26 @@ SDValue DAGCombiner::ReduceLoadWidth(SDNode *N) {
 
   // If we haven't found a load, we can't narrow it.  Don't transform one with
   // multiple uses, this would require adding a new load.
-  if (!isa<LoadSDNode>(N0) || !N0.hasOneUse() ||
-      // Don't change the width of a volatile load.
-      cast<LoadSDNode>(N0)->isVolatile())
+  if (!isa<LoadSDNode>(N0) || !N0.hasOneUse())
+    return SDValue();
+
+  // Don't change the width of a volatile load.
+  LoadSDNode *LN0 = cast<LoadSDNode>(N0);
+  if (LN0->isVolatile())
     return SDValue();
 
   // Verify that we are actually reducing a load width here.
-  if (cast<LoadSDNode>(N0)->getMemoryVT().getSizeInBits() < EVTBits)
+  if (LN0->getMemoryVT().getSizeInBits() < EVTBits)
     return SDValue();
 
-  LoadSDNode *LN0 = cast<LoadSDNode>(N0);
+  // For the transform to be legal, the load must produce only two values
+  // (the value loaded and the chain).  Don't transform a pre-increment
+  // load, for example, which produces an extra value.  Otherwise the 
+  // transformation is not equivalent, and the downstream logic to replace
+  // uses gets things wrong.
+  if (LN0->getNumValues() > 2)
+    return SDValue();
+
   EVT PtrType = N0.getOperand(1).getValueType();
 
   if (PtrType == MVT::Untyped || PtrType.isExtended())
