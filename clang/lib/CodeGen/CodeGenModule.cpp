@@ -173,6 +173,7 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();
   EmitLLVMUsed();
+  EmitModuleLinkOptions();
 
   SimplifyPersonality();
 
@@ -713,6 +714,116 @@ void CodeGenModule::EmitLLVMUsed() {
                              "llvm.used");
 
   GV->setSection("llvm.metadata");
+}
+
+/// \brief Add link options implied by the given module, including modules
+/// it depends on, using a postorder walk.
+static void addLinkOptionsPostorder(llvm::LLVMContext &Context,
+                                    Module *Mod,
+                                    SmallVectorImpl<llvm::MDNode *> &Metadata,
+                                    llvm::SmallPtrSet<Module *, 16> &Visited) {
+  // Import this module's parent.
+  if (Mod->Parent && Visited.insert(Mod->Parent)) {
+    addLinkOptionsPostorder(Context, Mod->Parent, Metadata, Visited);
+  }
+
+  // Import this module's dependencies.
+  for (unsigned I = Mod->Imports.size(); I > 0; --I) {
+    if (Visited.insert(Mod->Imports[I-1]))
+      addLinkOptionsPostorder(Context, Mod->Imports[I-1], Metadata, Visited);
+  }
+
+  // Add linker options to link against the libraries/frameworks
+  // described by this module.
+  for (unsigned I = Mod->LinkLibraries.size(); I > 0; --I) {
+    // FIXME: -lfoo is Unix-centric and -framework Foo is Darwin-centric.
+    // We need to know more about the linker to know how to encode these
+    // options propertly.
+
+    // Link against a framework.
+    if (Mod->LinkLibraries[I-1].IsFramework) {
+      llvm::Value *Args[2] = {
+        llvm::MDString::get(Context, "-framework"),
+        llvm::MDString::get(Context, Mod->LinkLibraries[I-1].Library)
+      };
+
+      Metadata.push_back(llvm::MDNode::get(Context, Args));
+      continue;
+    }
+
+    // Link against a library.
+    llvm::Value *OptString
+    = llvm::MDString::get(Context,
+                          "-l" + Mod->LinkLibraries[I-1].Library);
+    Metadata.push_back(llvm::MDNode::get(Context, OptString));
+  }
+}
+
+void CodeGenModule::EmitModuleLinkOptions() {
+  // Collect the set of all of the modules we want to visit to emit link
+  // options, which is essentially the imported modules and all of their
+  // non-explicit child modules.
+  llvm::SetVector<clang::Module *> LinkModules;
+  llvm::SmallPtrSet<clang::Module *, 16> Visited;
+  SmallVector<clang::Module *, 16> Stack;
+
+  // Seed the stack with imported modules.
+  for (llvm::SetVector<clang::Module *>::iterator M = ImportedModules.begin(),
+                                               MEnd = ImportedModules.end();
+       M != MEnd; ++M) {
+    if (Visited.insert(*M))
+      Stack.push_back(*M);
+  }
+
+  // Find all of the modules to import, making a little effort to prune
+  // non-leaf modules.
+  while (!Stack.empty()) {
+    clang::Module *Mod = Stack.back();
+    Stack.pop_back();
+
+    bool AnyChildren = false;
+
+    // Visit the submodules of this module.
+    for (clang::Module::submodule_iterator Sub = Mod->submodule_begin(),
+                                        SubEnd = Mod->submodule_end();
+         Sub != SubEnd; ++Sub) {
+      // Skip explicit children; they need to be explicitly imported to be
+      // linked against.
+      if ((*Sub)->IsExplicit)
+        continue;
+
+      if (Visited.insert(*Sub)) {
+        Stack.push_back(*Sub);
+        AnyChildren = true;
+      }
+    }
+
+    // We didn't find any children, so add this module to the list of
+    // modules to link against.
+    if (!AnyChildren) {
+      LinkModules.insert(Mod);
+    }
+  }
+
+  // Add link options for all of the imported modules in reverse topological
+  // order.
+  SmallVector<llvm::MDNode *, 16> MetadataArgs;
+  Visited.clear();
+  for (llvm::SetVector<clang::Module *>::iterator M = LinkModules.begin(),
+                                               MEnd = LinkModules.end();
+       M != MEnd; ++M) {
+    if (Visited.insert(*M))
+      addLinkOptionsPostorder(getLLVMContext(), *M, MetadataArgs, Visited);
+  }
+
+  // Get/create metadata for the link options.
+  llvm::NamedMDNode *Metadata
+    = getModule().getOrInsertNamedMetadata("llvm.module.linkoptions");
+
+  // Add link options in topological order.
+  for (unsigned I = MetadataArgs.size(); I > 0; --I) {
+    Metadata->addOperand(MetadataArgs[I-1]);
+  }
 }
 
 void CodeGenModule::EmitDeferred() {
@@ -2772,73 +2883,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
         break;
     }
 
-    // Walk from this module up to its top-level module; we'll import all of
-    // these modules and their non-explicit child modules.
-    llvm::SmallVector<clang::Module *, 2> Stack;
-    for (clang::Module *Mod = Import->getImportedModule(); Mod;
-         Mod = Mod->Parent) {
-      if (!ImportedModules.insert(Mod))
-        break;
-      
-      Stack.push_back(Mod);
-    }
-
-    if (Stack.empty())
-      break;
-
-    // Get/create metadata for the link options.
-    llvm::NamedMDNode *Metadata
-      = getModule().getOrInsertNamedMetadata("llvm.module.linkoptions");
-
-    // Find all of the non-explicit submodules of the modules we've imported and
-    // import them.
-    while (!Stack.empty()) {
-      clang::Module *Mod = Stack.back();
-      Stack.pop_back();
-
-      // Add linker options to link against the libraries/frameworks
-      // described by this module.
-      for (unsigned I = 0, N = Mod->LinkLibraries.size(); I != N; ++I) {
-        // FIXME: -lfoo is Unix-centric and -framework Foo is Darwin-centric.
-        // We need to know more about the linker to know how to encode these
-        // options propertly.
-
-        // Link against a framework.
-        if (Mod->LinkLibraries[I].IsFramework) {
-          llvm::Value *Args[2] = {
-            llvm::MDString::get(getLLVMContext(), "-framework"),
-            llvm::MDString::get(getLLVMContext(),
-                                Mod->LinkLibraries[I].Library)
-          };
-          
-          Metadata->addOperand(llvm::MDNode::get(getLLVMContext(), Args));
-          continue;
-        }
-
-        // Link against a library.
-        llvm::Value *OptString
-          = llvm::MDString::get(getLLVMContext(),
-                                "-l" + Mod->LinkLibraries[I].Library);
-        Metadata->addOperand(llvm::MDNode::get(getLLVMContext(), OptString));
-      }
-
-      // Import this module's (non-explicit) submodules.
-      for (clang::Module::submodule_iterator Sub = Mod->submodule_begin(),
-                                          SubEnd = Mod->submodule_end();
-           Sub != SubEnd; ++Sub) {
-        if ((*Sub)->IsExplicit)
-          continue;
-
-        if (ImportedModules.insert(*Sub))
-          Stack.push_back(*Sub);
-      }
-
-      // Import this module's dependencies.
-      for (unsigned I = 0, N = Mod->Imports.size(); I != N; ++I) {
-        if (ImportedModules.insert(Mod->Imports[I]))
-          Stack.push_back(Mod->Imports[I]);
-      }
-    }
+    ImportedModules.insert(Import->getImportedModule());
     break;
  }
 

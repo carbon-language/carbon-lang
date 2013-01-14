@@ -995,6 +995,9 @@ private:
   /// references to global which may otherwise be optimized out.
   void EmitLLVMUsed();
 
+  /// \brief Emit the link options introduced by imported modules.
+  void EmitModuleLinkOptions();
+
   void EmitDeclMetadata();
 
   /// EmitCoverageFile - Emit the llvm.gcov metadata used to tell LLVM where
