@@ -40,8 +40,10 @@ namespace llvm {
     // New instructions receive a name to identifies them with the current pass.
     const char* IVName;
 
-    std::map<std::pair<const SCEV *, Instruction *>, AssertingVH<Value> >
+    // InsertedExpressions caches Values for reuse, so must track RAUW.
+    std::map<std::pair<const SCEV *, Instruction *>, TrackingVH<Value> >
       InsertedExpressions;
+    // InsertedValues only flags inserted instructions so needs no RAUW.
     std::set<AssertingVH<Value> > InsertedValues;
     std::set<AssertingVH<Value> > InsertedPostIncValues;
 

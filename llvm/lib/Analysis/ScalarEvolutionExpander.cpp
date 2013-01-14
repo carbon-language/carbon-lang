@@ -1523,9 +1523,8 @@ Value *SCEVExpander::expand(const SCEV *S) {
     }
 
   // Check to see if we already expanded this here.
-  std::map<std::pair<const SCEV *, Instruction *>,
-           AssertingVH<Value> >::iterator I =
-    InsertedExpressions.find(std::make_pair(S, InsertPt));
+  std::map<std::pair<const SCEV *, Instruction *>, TrackingVH<Value> >::iterator
+    I = InsertedExpressions.find(std::make_pair(S, InsertPt));
   if (I != InsertedExpressions.end())
     return I->second;
 
