@@ -36,6 +36,7 @@ public:
   /// @{
 
   virtual void InitSections();
+  virtual void InitToTextSection();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
@@ -104,11 +105,14 @@ public:
 } // end anonymous namespace.
 
 void MCPureStreamer::InitSections() {
+  InitToTextSection();
+}
+
+void MCPureStreamer::InitToTextSection() {
   // FIMXE: To what!?
   SwitchSection(getContext().getMachOSection("__TEXT", "__text",
                                     MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
                                     0, SectionKind::getText()));
-
 }
 
 void MCPureStreamer::EmitLabel(MCSymbol *Symbol) {

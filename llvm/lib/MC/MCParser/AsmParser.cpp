@@ -708,10 +708,7 @@ bool AsmParser::Run(bool NoInitialTextSection, bool NoFinalize) {
 void AsmParser::CheckForValidSection() {
   if (!ParsingInlineAsm && !getStreamer().getCurrentSection()) {
     TokError("expected section directive before assembly directive");
-    Out.SwitchSection(Ctx.getMachOSection(
-                        "__TEXT", "__text",
-                        MCSectionMachO::S_ATTR_PURE_INSTRUCTIONS,
-                        0, SectionKind::getText()));
+    Out.InitToTextSection();
   }
 }
 

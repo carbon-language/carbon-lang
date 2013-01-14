@@ -234,6 +234,9 @@ namespace llvm {
     /// InitSections - Create the default sections and set the initial one.
     virtual void InitSections() = 0;
 
+    /// InitToTextSection - Create a text section and switch the streamer to it.
+    virtual void InitToTextSection() = 0;
+
     /// EmitLabel - Emit a label for @p Symbol into the current section.
     ///
     /// This corresponds to an assembler statement such as:

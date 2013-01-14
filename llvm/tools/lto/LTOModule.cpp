@@ -771,6 +771,7 @@ namespace {
 
     // Noop calls.
     virtual void ChangeSection(const MCSection *Section) {}
+    virtual void InitToTextSection() {}
     virtual void InitSections() {}
     virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) {}
     virtual void EmitThumbFunc(MCSymbol *Func) {}

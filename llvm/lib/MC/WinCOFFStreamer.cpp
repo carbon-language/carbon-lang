@@ -50,6 +50,7 @@ public:
   // MCStreamer interface
 
   virtual void InitSections();
+  virtual void InitToTextSection();
   virtual void EmitLabel(MCSymbol *Symbol);
   virtual void EmitDebugLabel(MCSymbol *Symbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
@@ -172,6 +173,10 @@ void WinCOFFStreamer::AddCommonSymbol(MCSymbol *Symbol, uint64_t Size,
 }
 
 // MCStreamer interface
+
+void WinCOFFStreamer::InitToTextSection() {
+  SetSectionText();
+}
 
 void WinCOFFStreamer::InitSections() {
   SetSectionText();
