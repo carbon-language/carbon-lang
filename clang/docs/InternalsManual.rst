@@ -1601,6 +1601,8 @@ subsequent declarations of the same name.
 ``[[]]`` C++11 syntax, you have to define a list of ``Namespaces``, which will
 let users write ``[[namespace::spelling]]``.  Using the empty string for a
 namespace will allow users to write just the spelling with no "``::``".
+Attributes which g++-4.8 accepts should also have a
+``CXX11<"gnu", "spelling">`` spelling.
 
 ``Subjects`` restricts what kinds of AST node to which this attribute can
 appertain (roughly, attach).
