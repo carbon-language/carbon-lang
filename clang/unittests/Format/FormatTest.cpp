@@ -29,7 +29,8 @@ protected:
     Lexer Lex(ID, Context.Sources.getBuffer(ID), Context.Sources,
               getFormattingLangOpts());
     tooling::Replacements Replace = reformat(Style, Lex, Context.Sources,
-                                             Ranges);
+                                             Ranges,
+                                             new IgnoringDiagConsumer());
     EXPECT_TRUE(applyAllReplacements(Replace, Context.Rewrite));
     return Context.getRewrittenText(ID);
   }
@@ -1206,8 +1207,6 @@ TEST_F(FormatTest, IncorrectCodeErrorDetection) {
   EXPECT_EQ("{\n  {}\n", format("{\n  {\n  }\n"));
   EXPECT_EQ("{\n  {}\n  }\n}\n", format("{\n  {\n    }\n  }\n}\n"));
 
-  FormatStyle Style = getLLVMStyle();
-  Style.ColumnLimit = 10;
   EXPECT_EQ("{\n"
             "    {\n"
             " breakme(\n"
@@ -1215,8 +1214,7 @@ TEST_F(FormatTest, IncorrectCodeErrorDetection) {
             "}\n", format("{\n"
                           "    {\n"
                           " breakme(qwe);\n"
-                          "}\n", Style));
-
+                          "}\n", getLLVMStyleWithColumns(10)));
 }
 
 TEST_F(FormatTest, LayoutCallsInsideBraceInitializers) {

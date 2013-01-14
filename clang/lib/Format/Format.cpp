@@ -1331,7 +1331,7 @@ private:
 
 class Formatter : public UnwrappedLineConsumer {
 public:
-  Formatter(clang::DiagnosticsEngine &Diag, const FormatStyle &Style,
+  Formatter(DiagnosticsEngine &Diag, const FormatStyle &Style,
             Lexer &Lex, SourceManager &SourceMgr,
             const std::vector<CharSourceRange> &Ranges)
       : Diag(Diag), Style(Style), Lex(Lex), SourceMgr(SourceMgr),
@@ -1517,7 +1517,7 @@ private:
     return Indent;
   }
 
-  clang::DiagnosticsEngine &Diag;
+  DiagnosticsEngine &Diag;
   FormatStyle Style;
   Lexer &Lex;
   SourceManager &SourceMgr;
@@ -1529,13 +1529,18 @@ private:
 
 tooling::Replacements reformat(const FormatStyle &Style, Lexer &Lex,
                                SourceManager &SourceMgr,
-                               std::vector<CharSourceRange> Ranges) {
+                               std::vector<CharSourceRange> Ranges,
+                               DiagnosticConsumer *DiagClient) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
-  TextDiagnosticPrinter DiagnosticPrinter(llvm::errs(), &*DiagOpts);
-  DiagnosticPrinter.BeginSourceFile(Lex.getLangOpts(), Lex.getPP());
+  OwningPtr<DiagnosticConsumer> DiagPrinter;
+  if (DiagClient == 0) {
+    DiagPrinter.reset(new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts));
+    DiagPrinter->BeginSourceFile(Lex.getLangOpts(), Lex.getPP());
+    DiagClient = DiagPrinter.get();
+  }
   DiagnosticsEngine Diagnostics(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs()), &*DiagOpts,
-      &DiagnosticPrinter, false);
+      DiagClient, false);
   Diagnostics.setSourceManager(&SourceMgr);
   Formatter formatter(Diagnostics, Style, Lex, SourceMgr, Ranges);
   return formatter.format();
