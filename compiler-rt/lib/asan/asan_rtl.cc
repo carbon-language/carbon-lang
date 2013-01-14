@@ -141,7 +141,7 @@ void InitializeFlags(Flags *f, const char *env) {
   f->allow_reexec = true;
   f->print_full_thread_history = true;
   f->log_path = 0;
-  f->fast_unwind_on_fatal = true;
+  f->fast_unwind_on_fatal = false;
   f->fast_unwind_on_malloc = true;
   f->poison_heap = true;
   // Turn off alloc/dealloc mismatch checker on Mac for now.
