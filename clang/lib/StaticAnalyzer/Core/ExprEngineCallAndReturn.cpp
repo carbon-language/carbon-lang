@@ -608,11 +608,11 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
 
 static ProgramStateRef getInlineFailedState(ProgramStateRef State,
                                             const Stmt *CallE) {
-  void *ReplayState = State->get<ReplayWithoutInlining>();
+  const void *ReplayState = State->get<ReplayWithoutInlining>();
   if (!ReplayState)
     return 0;
 
-  assert(ReplayState == (const void*)CallE && "Backtracked to the wrong call.");
+  assert(ReplayState == CallE && "Backtracked to the wrong call.");
   (void)CallE;
 
   return State->remove<ReplayWithoutInlining>();

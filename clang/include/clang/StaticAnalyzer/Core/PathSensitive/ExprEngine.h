@@ -555,7 +555,7 @@ private:
 struct ReplayWithoutInlining{};
 template <>
 struct ProgramStateTrait<ReplayWithoutInlining> :
-  public ProgramStatePartialTrait<void*> {
+  public ProgramStatePartialTrait<const void*> {
   static void *GDMIndex() { static int index = 0; return &index; }
 };
 

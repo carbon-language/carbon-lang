@@ -167,7 +167,7 @@ namespace ento {
     }
 
     static inline void *MakeVoidPtr(data_type D) {
-      return const_cast<llvm::ImmutableListImpl<T> >(D.getInternalPointer());
+      return const_cast<llvm::ImmutableListImpl<T> *>(D.getInternalPointer());
     }
 
     static inline context_type MakeContext(void *p) {
@@ -223,7 +223,20 @@ namespace ento {
     }
   };
 
-} // end GR namespace
+  // Partial specialization for const void *.
+  template <> struct ProgramStatePartialTrait<const void *> {
+    typedef const void *data_type;
+
+    static inline data_type MakeData(void * const *p) {
+      return p ? *p : data_type();
+    }
+
+    static inline void *MakeVoidPtr(data_type d) {
+      return const_cast<void *>(d);
+    }
+  };
+
+} // end ento namespace
 
 } // end clang namespace
 
