@@ -135,55 +135,34 @@ lldb_private::formatters::CallSelectorOnObject (ValueObject &valobj,
     return valobj_sp;
 }
 
-template<typename SourceDataType, ConversionResult (*ConvertFunction) (const SourceDataType**,
-                                                                       const SourceDataType*,
-                                                                       UTF8**,
-                                                                       UTF8*,
-                                                                       ConversionFlags)>
+// use this call if you already have an LLDB-side buffer for the data
+template<typename SourceDataType>
 static bool
-ReadUTFBufferAndDumpToStream (uint64_t location,
-                              const ProcessSP& process_sp,
-                              Stream& stream,
-                              char prefix_token = '@',
-                              bool want_quotes = true)
+DumpUTFBufferToStream (ConversionResult (*ConvertFunction) (const SourceDataType**,
+                                                            const SourceDataType*,
+                                                            UTF8**,
+                                                            UTF8*,
+                                                            ConversionFlags),
+                       DataExtractor& data,
+                       Stream& stream,
+                       char prefix_token = '@',
+                       char quote = '"',
+                       int sourceSize = 0)
 {
-    if (location == 0 || location == LLDB_INVALID_ADDRESS)
-        return false;
-    if (!process_sp)
-        return false;
-
-    const int origin_encoding = 8*sizeof(SourceDataType);
-    if (origin_encoding != 8 && origin_encoding != 16 && origin_encoding != 32)
-        return false;
-    // if not UTF8, I need a conversion function to return proper UTF8
-    if (origin_encoding != 8 && !ConvertFunction)
-        return false;
-
-    const int sourceSize = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
-    const int bufferSPSize = sourceSize * (origin_encoding >> 2);
-
-    Error error;
-    lldb::DataBufferSP buffer_sp(new DataBufferHeap(bufferSPSize,0));
-    
-    if (!buffer_sp->GetBytes())
-        return false;
-    
-    size_t data_read = process_sp->ReadMemoryFromInferior(location, (char*)buffer_sp->GetBytes(), bufferSPSize, error);
-    if (error.Fail())
+    if (prefix_token != 0)
+        stream.Printf("%c",prefix_token);
+    if (quote != 0)
+        stream.Printf("%c",quote);
+    if (data.GetByteSize() && data.GetDataStart() && data.GetDataEnd())
     {
-        stream.Printf("unable to read data");
-        return true;
-    }
-    else
-    {
-        if (prefix_token != 0)
-            stream.Printf("%c",prefix_token);
-        if (want_quotes)
-            stream.Printf("\"");
-    }
-    if (data_read)
-    {
-        SourceDataType *data_ptr = (SourceDataType*)buffer_sp->GetBytes();
+        const int bufferSPSize = data.GetByteSize();
+        if (sourceSize == 0)
+        {
+            const int origin_encoding = 8*sizeof(SourceDataType);
+            sourceSize = bufferSPSize/(origin_encoding >> 2);
+        }
+        
+        SourceDataType *data_ptr = (SourceDataType*)data.GetDataStart();
         SourceDataType *data_end_ptr = data_ptr + sourceSize;
         
         while (data_ptr < data_end_ptr)
@@ -197,12 +176,12 @@ ReadUTFBufferAndDumpToStream (uint64_t location,
         }
         
         *data_ptr = 0;
-        data_ptr = (SourceDataType*)buffer_sp->GetBytes();
+        data_ptr = (SourceDataType*)data.GetDataStart();
         
         lldb::DataBufferSP utf8_data_buffer_sp;
         UTF8* utf8_data_ptr = nullptr;
         UTF8* utf8_data_end_ptr = nullptr;
-
+        
         if (ConvertFunction)
         {
             utf8_data_buffer_sp.reset(new DataBufferHeap(bufferSPSize,0));
@@ -228,13 +207,58 @@ ReadUTFBufferAndDumpToStream (uint64_t location,
                 break;
             stream.Printf("%c",*utf8_data_ptr);
         }
-        if (want_quotes)
-            stream.Printf("\"");
+    }
+    if (quote != 0)
+        stream.Printf("%c",quote);
+    return true;
+}
+
+template<typename SourceDataType>
+static bool
+ReadUTFBufferAndDumpToStream (ConversionResult (*ConvertFunction) (const SourceDataType**,
+                                                                   const SourceDataType*,
+                                                                   UTF8**,
+                                                                   UTF8*,
+                                                                   ConversionFlags),
+                              uint64_t location,
+                              const ProcessSP& process_sp,
+                              Stream& stream,
+                              char prefix_token = '@',
+                              char quote = '"',
+                              int sourceSize = 0)
+{
+    if (location == 0 || location == LLDB_INVALID_ADDRESS)
+        return false;
+    if (!process_sp)
+        return false;
+
+    const int origin_encoding = 8*sizeof(SourceDataType);
+    if (origin_encoding != 8 && origin_encoding != 16 && origin_encoding != 32)
+        return false;
+    // if not UTF8, I need a conversion function to return proper UTF8
+    if (origin_encoding != 8 && !ConvertFunction)
+        return false;
+
+    if (sourceSize == 0)
+        sourceSize = process_sp->GetTarget().GetMaximumSizeOfStringSummary();
+    const int bufferSPSize = sourceSize * (origin_encoding >> 2);
+
+    Error error;
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(bufferSPSize,0));
+    
+    if (!buffer_sp->GetBytes())
+        return false;
+    
+    size_t data_read = process_sp->ReadMemoryFromInferior(location, (char*)buffer_sp->GetBytes(), bufferSPSize, error);
+    if (error.Fail() || data_read == 0)
+    {
+        stream.Printf("unable to read data");
         return true;
     }
-    if (want_quotes)
-        stream.Printf("\"");
-    return true;
+    
+    DataExtractor data(buffer_sp, process_sp->GetByteOrder(), process_sp->GetAddressByteSize());
+    
+    return DumpUTFBufferToStream(ConvertFunction, data, stream, prefix_token, quote, sourceSize);
 }
 
 bool
@@ -249,11 +273,10 @@ lldb_private::formatters::Char16StringSummaryProvider (ValueObject& valobj, Stre
     if (!valobj_addr)
         return false;
     
-    if (!ReadUTFBufferAndDumpToStream<UTF16, ConvertUTF16toUTF8>(valobj_addr,
+    if (!ReadUTFBufferAndDumpToStream<UTF16>(ConvertUTF16toUTF8,valobj_addr,
                                                                  process_sp,
                                                                  stream,
-                                                                 'u',
-                                                                 true)) // but use quotes
+                                                                 'u'))
     {
         stream.Printf("Summary Unavailable");
         return true;
@@ -274,11 +297,10 @@ lldb_private::formatters::Char32StringSummaryProvider (ValueObject& valobj, Stre
     if (!valobj_addr)
         return false;
     
-    if (!ReadUTFBufferAndDumpToStream<UTF32, ConvertUTF32toUTF8>(valobj_addr,
+    if (!ReadUTFBufferAndDumpToStream<UTF32>(ConvertUTF32toUTF8,valobj_addr,
                                                                  process_sp,
                                                                  stream,
-                                                                 'U',
-                                                                 true)) // but use quotes
+                                                                 'U'))
     {
         stream.Printf("Summary Unavailable");
         return true;
@@ -315,25 +337,107 @@ lldb_private::formatters::WCharStringSummaryProvider (ValueObject& valobj, Strea
     {
         case 8:
             // utf 8
-            return ReadUTFBufferAndDumpToStream<UTF8, nullptr>(data_addr,
+            return ReadUTFBufferAndDumpToStream<UTF8>(nullptr, data_addr,
                                                                process_sp,
                                                                stream,
-                                                               'L',
-                                                               true); // but use quotes
+                                                               'L');
         case 16:
             // utf 16
-            return ReadUTFBufferAndDumpToStream<UTF16, ConvertUTF16toUTF8>(data_addr,
+            return ReadUTFBufferAndDumpToStream<UTF16>(ConvertUTF16toUTF8, data_addr,
                                                                            process_sp,
                                                                            stream,
-                                                                           'L',
-                                                                           true); // but use quotes
+                                                                           'L');
         case 32:
             // utf 32
-            return ReadUTFBufferAndDumpToStream<UTF32, ConvertUTF32toUTF8>(data_addr,
+            return ReadUTFBufferAndDumpToStream<UTF32>(ConvertUTF32toUTF8, data_addr,
                                                                            process_sp,
                                                                            stream,
-                                                                           'L',
-                                                                           true); // but use quotes
+                                                                           'L');
+        default:
+            stream.Printf("size for wchar_t is not valid");
+            return true;
+    }
+    return true;
+}
+
+bool
+lldb_private::formatters::Char16SummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    DataExtractor data;
+    valobj.GetData(data);
+    
+    std::string value;
+    valobj.GetValueAsCString(lldb::eFormatUnicode16, value);
+    if (!value.empty())
+        stream.Printf("%s ", value.c_str());
+
+    return DumpUTFBufferToStream<UTF16>(ConvertUTF16toUTF8,data,stream, 'u','\'',1);
+}
+
+bool
+lldb_private::formatters::Char32SummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    DataExtractor data;
+    valobj.GetData(data);
+    
+    std::string value;
+    valobj.GetValueAsCString(lldb::eFormatUnicode32, value);
+    if (!value.empty())
+        stream.Printf("%s ", value.c_str());
+    
+    return DumpUTFBufferToStream<UTF32>(ConvertUTF32toUTF8,data,stream, 'U','\'',1);
+}
+
+bool
+lldb_private::formatters::WCharSummaryProvider (ValueObject& valobj, Stream& stream)
+{
+    DataExtractor data;
+    valobj.GetData(data);
+    
+    clang::ASTContext* ast = valobj.GetClangAST();
+    
+    if (!ast)
+        return false;
+    
+    std::string value;
+    
+    uint32_t wchar_size = ClangASTType::GetClangTypeBitWidth(ast, ClangASTType::GetBasicType(ast, lldb::eBasicTypeWChar).GetOpaqueQualType());
+    
+    switch (wchar_size)
+    {
+        case 8:
+            // utf 8
+            valobj.GetValueAsCString(lldb::eFormatChar, value);
+            if (!value.empty())
+                stream.Printf("%s ", value.c_str());
+            return DumpUTFBufferToStream<UTF8>(nullptr,
+                                               data,
+                                               stream,
+                                               'L',
+                                               '\'',
+                                               1);
+        case 16:
+            // utf 16
+            valobj.GetValueAsCString(lldb::eFormatUnicode16, value);
+            if (!value.empty())
+                stream.Printf("%s ", value.c_str());
+            return DumpUTFBufferToStream<UTF16>(ConvertUTF16toUTF8,
+                                                data,
+                                                stream,
+                                                'L',
+                                                '\'',
+                                                1);
+        case 32:
+            // utf 32
+            valobj.GetValueAsCString(lldb::eFormatUnicode32, value);
+            if (!value.empty())
+                stream.Printf("%s ", value.c_str());
+            return DumpUTFBufferToStream<UTF32>(ConvertUTF32toUTF8,
+                                                data,
+                                                stream,
+                                                'L',
+                                                '\'',
+                                                1);
         default:
             stream.Printf("size for wchar_t is not valid");
             return true;
@@ -827,7 +931,7 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
         if (error.Fail())
             return false;
         if (has_explicit_length and is_unicode)
-            return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream, '@');
+            return ReadUTFBufferAndDumpToStream<UTF16> (ConvertUTF16toUTF8,location, process_sp, stream, '@');
         else
         {
             location++;
@@ -870,12 +974,12 @@ lldb_private::formatters::NSStringSummaryProvider (ValueObject& valobj, Stream& 
             if (error.Fail())
                 return false;
         }
-        return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream, '@');
+        return ReadUTFBufferAndDumpToStream<UTF16> (ConvertUTF16toUTF8, location, process_sp, stream, '@');
     }
     else if (is_special)
     {
         uint64_t location = valobj_addr + (ptr_size == 8 ? 12 : 8);
-        return ReadUTFBufferAndDumpToStream<UTF16,ConvertUTF16toUTF8> (location, process_sp, stream, '@');
+        return ReadUTFBufferAndDumpToStream<UTF16> (ConvertUTF16toUTF8, location, process_sp, stream, '@');
     }
     else if (is_inline)
     {

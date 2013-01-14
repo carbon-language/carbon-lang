@@ -968,6 +968,25 @@ FormatManager::LoadSystemFormatters()
     
     AddCXXSummary(sys_category_sp, lldb_private::formatters::WCharStringSummaryProvider, "wchar_t * summary provider", ConstString("wchar_t *"), string_flags);
     AddCXXSummary(sys_category_sp, lldb_private::formatters::WCharStringSummaryProvider, "wchar_t * summary provider", ConstString("const wchar_t *"), string_flags);
+    
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::Char16StringSummaryProvider, "unichar * summary provider", ConstString("unichar *"), string_flags);
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::Char16StringSummaryProvider, "unichar * summary provider", ConstString("const unichar *"), string_flags);
+    
+    TypeSummaryImpl::Flags widechar_flags;
+    widechar_flags.SetDontShowValue(true)
+    .SetSkipPointers(true)
+    .SetSkipReferences(false)
+    .SetCascades(true)
+    .SetDontShowChildren(true)
+    .SetHideItemNames(true)
+    .SetShowMembersOneLiner(false);
+    
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::Char16SummaryProvider, "char16_t summary provider", ConstString("char16_t"), widechar_flags);
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::Char32SummaryProvider, "char32_t summary provider", ConstString("char32_t"), widechar_flags);
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::WCharSummaryProvider, "wchar_t summary provider", ConstString("wchar_t"), widechar_flags);
+
+    AddCXXSummary(sys_category_sp, lldb_private::formatters::Char16SummaryProvider, "unichar summary provider", ConstString("unichar"), widechar_flags);
+    
 #endif
 }
 

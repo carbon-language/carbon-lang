@@ -370,6 +370,9 @@ CommandObjectExpression::EvaluateExpression
                     .SetSummary()
                     .SetShowSummary(!m_varobj_options.use_objc)
                     .SetHideRootType(m_varobj_options.use_objc);
+                    
+                    if (m_varobj_options.be_raw)
+                        options.SetRawDisplay(true);
 
                     ValueObject::DumpValueObject (*(output_stream),
                                                   result_valobj_sp.get(),   // Variable object to dump

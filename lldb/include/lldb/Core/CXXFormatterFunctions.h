@@ -41,13 +41,22 @@ namespace lldb_private {
                               const char* key);
         
         bool
-        Char16StringSummaryProvider (ValueObject& valobj, Stream& stream); // char16_t*
+        Char16StringSummaryProvider (ValueObject& valobj, Stream& stream); // char16_t* and unichar*
         
         bool
         Char32StringSummaryProvider (ValueObject& valobj, Stream& stream); // char32_t*
         
         bool
         WCharStringSummaryProvider (ValueObject& valobj, Stream& stream); // wchar_t*
+        
+        bool
+        Char16SummaryProvider (ValueObject& valobj, Stream& stream); // char16_t and unichar
+        
+        bool
+        Char32SummaryProvider (ValueObject& valobj, Stream& stream); // char32_t
+        
+        bool
+        WCharSummaryProvider (ValueObject& valobj, Stream& stream); // wchar_t
         
         bool
         LibcxxStringSummaryProvider (ValueObject& valobj, Stream& stream); // libc++ std::string
