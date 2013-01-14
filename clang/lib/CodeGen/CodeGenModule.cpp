@@ -2822,8 +2822,7 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
         Metadata->addOperand(llvm::MDNode::get(getLLVMContext(), OptString));
       }
 
-      // We've imported this module; now import any of its children that haven't
-      // already been imported.
+      // Import this module's (non-explicit) submodules.
       for (clang::Module::submodule_iterator Sub = Mod->submodule_begin(),
                                           SubEnd = Mod->submodule_end();
            Sub != SubEnd; ++Sub) {
@@ -2832,6 +2831,12 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
 
         if (ImportedModules.insert(*Sub))
           Stack.push_back(*Sub);
+      }
+
+      // Import this module's dependencies.
+      for (unsigned I = 0, N = Mod->Imports.size(); I != N; ++I) {
+        if (ImportedModules.insert(Mod->Imports[I]))
+          Stack.push_back(Mod->Imports[I]);
       }
     }
     break;
