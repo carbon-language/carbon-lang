@@ -277,6 +277,8 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
         return false;
     if (process && m_jit_alloc != LLDB_INVALID_ADDRESS)
         m_jit_process_wp = lldb::ProcessWP(process->shared_from_this());
+    
+    m_JITted = true;
 
     return true;
 }
