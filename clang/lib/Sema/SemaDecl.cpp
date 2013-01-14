@@ -6873,9 +6873,6 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   if (!VDecl->isInvalidDecl() && (DclT != SavT))
     VDecl->setType(DclT);
 
-  // Check any implicit conversions within the expression.
-  CheckImplicitConversions(Init, VDecl->getLocation());
-
   if (!VDecl->isInvalidDecl()) {
     checkUnsafeAssigns(VDecl->getLocation(), VDecl->getType(), Init);
 
@@ -6898,7 +6895,24 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     }
   }
 
-  Init = MaybeCreateExprWithCleanups(Init);
+  // The initialization is usually a full-expression.
+  //
+  // FIXME: If this is a braced initialization of an aggregate, it is not
+  // an expression, and each individual field initializer is a separate
+  // full-expression. For instance, in:
+  //
+  //   struct Temp { ~Temp(); };
+  //   struct S { S(Temp); };
+  //   struct T { S a, b; } t = { Temp(), Temp() }
+  //
+  // we should destroy the first Temp before constructing the second.
+  ExprResult Result = ActOnFinishFullExpr(Init, VDecl->getLocation());
+  if (Result.isInvalid()) {
+    VDecl->setInvalidDecl();
+    return;
+  }
+  Init = Result.take();
+
   // Attach the initializer to the decl.
   VDecl->setInit(Init);
 

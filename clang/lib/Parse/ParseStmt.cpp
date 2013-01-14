@@ -335,7 +335,7 @@ StmtResult Parser::ParseExprStatement() {
 
   // Otherwise, eat the semicolon.
   ExpectAndConsumeSemi(diag::err_expected_semi_after_expr);
-  return Actions.ActOnExprStmt(Actions.MakeFullExpr(Expr.get()));
+  return Actions.ActOnExprStmt(Expr);
 }
 
 StmtResult Parser::ParseSEHTryBlock() {
@@ -856,7 +856,7 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
         // Eat the semicolon at the end of stmt and convert the expr into a
         // statement.
         ExpectAndConsumeSemi(diag::err_expected_semi_after_expr);
-        R = Actions.ActOnExprStmt(Actions.MakeFullExpr(Res.get()));
+        R = Actions.ActOnExprStmt(Res);
       }
     }
 
@@ -1437,7 +1437,7 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
       if (ForEach)
         FirstPart = Actions.ActOnForEachLValueExpr(Value.get());
       else
-        FirstPart = Actions.ActOnExprStmt(Actions.MakeFullExpr(Value.get()));
+        FirstPart = Actions.ActOnExprStmt(Value);
     }
 
     if (Tok.is(tok::semi)) {
@@ -1505,7 +1505,9 @@ StmtResult Parser::ParseForStatement(SourceLocation *TrailingElseLoc) {
     // Parse the third part of the for specifier.
     if (Tok.isNot(tok::r_paren)) {   // for (...;...;)
       ExprResult Third = ParseExpression();
-      ThirdPart = Actions.MakeFullExpr(Third.take());
+      // FIXME: The C++11 standard doesn't actually say that this is a
+      // discarded-value expression, but it clearly should be.
+      ThirdPart = Actions.MakeFullDiscardedValueExpr(Third.take());
     }
   }
   // Match the ')'.

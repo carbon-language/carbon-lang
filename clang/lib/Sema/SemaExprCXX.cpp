@@ -5467,7 +5467,8 @@ ExprResult Sema::IgnoredValueConversions(Expr *E) {
   return Owned(E);
 }
 
-ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC) {
+ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
+                                     bool DiscardedValue) {
   ExprResult FullExpr = Owned(FE);
 
   if (!FullExpr.get())
@@ -5477,21 +5478,23 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC) {
     return ExprError();
 
   // Top-level message sends default to 'id' when we're in a debugger.
-  if (getLangOpts().DebuggerCastResultToId &&
+  if (DiscardedValue && getLangOpts().DebuggerCastResultToId &&
       FullExpr.get()->getType() == Context.UnknownAnyTy &&
       isa<ObjCMessageExpr>(FullExpr.get())) {
     FullExpr = forceUnknownAnyToType(FullExpr.take(), Context.getObjCIdType());
     if (FullExpr.isInvalid())
       return ExprError();
   }
-  
-  FullExpr = CheckPlaceholderExpr(FullExpr.take());
-  if (FullExpr.isInvalid())
-    return ExprError();
 
-  FullExpr = IgnoredValueConversions(FullExpr.take());
-  if (FullExpr.isInvalid())
-    return ExprError();
+  if (DiscardedValue) {
+    FullExpr = CheckPlaceholderExpr(FullExpr.take());
+    if (FullExpr.isInvalid())
+      return ExprError();
+
+    FullExpr = IgnoredValueConversions(FullExpr.take());
+    if (FullExpr.isInvalid())
+      return ExprError();
+  }
 
   CheckImplicitConversions(FullExpr.get(), CC);
   return MaybeCreateExprWithCleanups(FullExpr);

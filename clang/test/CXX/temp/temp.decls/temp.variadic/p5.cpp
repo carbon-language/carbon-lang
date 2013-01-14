@@ -351,6 +351,15 @@ void test_unexpanded_exprs(Types ...values) {
   // FIXME: Objective-C expressions will need to go elsewhere
 
   for (auto t : values) { } // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  switch (values) { } // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  do { } while (values); // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+test:
+  goto *values; // expected-error{{expression contains unexpanded parameter pack 'values'}}
+
+  void f(int arg = values); // expected-error{{default argument contains unexpanded parameter pack 'values'}}
 }
 
 // Test unexpanded parameter packs in partial specializations.

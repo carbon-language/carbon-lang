@@ -36,9 +36,13 @@
 using namespace clang;
 using namespace sema;
 
-StmtResult Sema::ActOnExprStmt(FullExprArg expr) {
-  Expr *E = expr.get();
-  if (!E) // FIXME: FullExprArg has no error state?
+StmtResult Sema::ActOnExprStmt(ExprResult FE) {
+  if (FE.isInvalid())
+    return StmtError();
+
+  FE = ActOnFinishFullExpr(FE.get(), FE.get()->getExprLoc(),
+                           /*DiscardedValue*/ true);
+  if (FE.isInvalid())
     return StmtError();
 
   // C99 6.8.3p2: The expression in an expression statement is evaluated as a
@@ -46,7 +50,7 @@ StmtResult Sema::ActOnExprStmt(FullExprArg expr) {
   // operand, even incomplete types.
 
   // Same thing in for stmt first clause (when expr) and third clause.
-  return Owned(static_cast<Stmt*>(E));
+  return Owned(static_cast<Stmt*>(FE.take()));
 }
 
 
@@ -598,8 +602,7 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   Cond = CondResult.take();
 
   if (!CondVar) {
-    CheckImplicitConversions(Cond, SwitchLoc);
-    CondResult = MaybeCreateExprWithCleanups(Cond);
+    CondResult = ActOnFinishFullExpr(Cond, SwitchLoc);
     if (CondResult.isInvalid())
       return StmtError();
     Cond = CondResult.take();
@@ -1163,8 +1166,7 @@ Sema::ActOnDoStmt(SourceLocation DoLoc, Stmt *Body,
     return StmtError();
   Cond = CondResult.take();
 
-  CheckImplicitConversions(Cond, DoLoc);
-  CondResult = MaybeCreateExprWithCleanups(Cond);
+  CondResult = ActOnFinishFullExpr(Cond, DoLoc);
   if (CondResult.isInvalid())
     return StmtError();
   Cond = CondResult.take();
@@ -1442,12 +1444,10 @@ StmtResult Sema::ActOnForEachLValueExpr(Expr *E) {
   if (result.isInvalid()) return StmtError();
   E = result.take();
 
-  CheckImplicitConversions(E);
-
-  result = MaybeCreateExprWithCleanups(E);
-  if (result.isInvalid()) return StmtError();
-
-  return Owned(static_cast<Stmt*>(result.take()));
+  ExprResult FullExpr = ActOnFinishFullExpr(E);
+  if (FullExpr.isInvalid())
+    return StmtError();
+  return StmtResult(static_cast<Stmt*>(FullExpr.take()));
 }
 
 ExprResult
@@ -1518,7 +1518,7 @@ Sema::CheckObjCForCollectionOperand(SourceLocation forLoc, Expr *collection) {
   }
 
   // Wrap up any cleanups in the expression.
-  return Owned(MaybeCreateExprWithCleanups(collection));
+  return Owned(collection);
 }
 
 StmtResult
@@ -1560,6 +1560,10 @@ Sema::ActOnObjCForCollectionStmt(SourceLocation ForLoc,
                            << FirstType << First->getSourceRange());
   }
 
+  if (CollectionExprResult.isInvalid())
+    return StmtError();
+
+  CollectionExprResult = ActOnFinishFullExpr(CollectionExprResult.take());
   if (CollectionExprResult.isInvalid())
     return StmtError();
 
@@ -2105,8 +2109,12 @@ Sema::ActOnIndirectGotoStmt(SourceLocation GotoLoc, SourceLocation StarLoc,
     E = ExprRes.take();
     if (DiagnoseAssignmentResult(ConvTy, StarLoc, DestTy, ETy, E, AA_Passing))
       return StmtError();
-    E = MaybeCreateExprWithCleanups(E);
   }
+
+  ExprResult ExprRes = ActOnFinishFullExpr(E);
+  if (ExprRes.isInvalid())
+    return StmtError();
+  E = ExprRes.take();
 
   getCurFunction()->setHasIndirectGoto();
 
@@ -2379,8 +2387,10 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   }
 
   if (RetValExp) {
-    CheckImplicitConversions(RetValExp, ReturnLoc);
-    RetValExp = MaybeCreateExprWithCleanups(RetValExp);
+    ExprResult ER = ActOnFinishFullExpr(RetValExp, ReturnLoc);
+    if (ER.isInvalid())
+      return StmtError();
+    RetValExp = ER.take();
   }
   ReturnStmt *Result = new (Context) ReturnStmt(ReturnLoc, RetValExp,
                                                 NRVOCandidate);
@@ -2482,8 +2492,10 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
       }
 
       if (RetValExp) {
-        CheckImplicitConversions(RetValExp, ReturnLoc);
-        RetValExp = MaybeCreateExprWithCleanups(RetValExp);
+        ExprResult ER = ActOnFinishFullExpr(RetValExp, ReturnLoc);
+        if (ER.isInvalid())
+          return StmtError();
+        RetValExp = ER.take();
       }
     }
 
@@ -2541,8 +2553,10 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     }
 
     if (RetValExp) {
-      CheckImplicitConversions(RetValExp, ReturnLoc);
-      RetValExp = MaybeCreateExprWithCleanups(RetValExp);
+      ExprResult ER = ActOnFinishFullExpr(RetValExp, ReturnLoc);
+      if (ER.isInvalid())
+        return StmtError();
+      RetValExp = ER.take();
     }
     Result = new (Context) ReturnStmt(ReturnLoc, RetValExp, NRVOCandidate);
   }
@@ -2592,7 +2606,11 @@ StmtResult Sema::BuildObjCAtThrowStmt(SourceLocation AtLoc, Expr *Throw) {
     if (Result.isInvalid())
       return StmtError();
 
-    Throw = MaybeCreateExprWithCleanups(Result.take());
+    Result = ActOnFinishFullExpr(Result.take());
+    if (Result.isInvalid())
+      return StmtError();
+    Throw = Result.take();
+
     QualType ThrowType = Throw->getType();
     // Make sure the expression type is an ObjC pointer or "void *".
     if (!ThrowType->isDependentType() &&
@@ -2643,7 +2661,7 @@ Sema::ActOnObjCAtSynchronizedOperand(SourceLocation atLoc, Expr *operand) {
   }
 
   // The operand to @synchronized is a full-expression.
-  return MaybeCreateExprWithCleanups(operand);
+  return ActOnFinishFullExpr(operand);
 }
 
 StmtResult
