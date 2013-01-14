@@ -5,6 +5,8 @@ using size_t = decltype(sizeof(int));
 struct S {
   constexpr int f();
   constexpr int g() const;
+  constexpr int h();
+  int h();
   static constexpr int Sf();
   /*static*/ constexpr void *operator new(size_t) noexcept;
   template<typename T> constexpr T tm();
@@ -25,6 +27,8 @@ void f(const S &s) {
 
 constexpr int S::f() const { return 0; }
 constexpr int S::g() { return 1; }
+constexpr int S::h() { return 0; }
+int S::h() { return 0; }
 constexpr int S::Sf() { return 2; }
 constexpr void *S::operator new(size_t) noexcept { return 0; }
 template<typename T> constexpr T S::tm() { return T(); }
