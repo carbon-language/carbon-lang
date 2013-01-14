@@ -130,7 +130,7 @@ if(ANDROID)
     )
   # Setup correct output directory and link flags.
   get_unittest_directory(OUTPUT_DIR)
-  set_target_properties(AsanTest PROPERTIES
+  set_target_properties(SanitizerTest PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR})
   set_target_link_flags(SanitizerTest ${SANITIZER_TEST_LINK_FLAGS})
   # Add unit test to test suite.
