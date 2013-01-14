@@ -136,6 +136,10 @@ public:
   /// recovery.
   virtual void EatToEndOfStatement() = 0;
 
+  /// Control a flag in the parser that enables or disables macros.
+  virtual bool MacrosEnabled() = 0;
+  virtual void SetMacrosEnabled(bool flag) = 0;
+
   /// ParseExpression - Parse an arbitrary expression.
   ///
   /// @param Res - The value of the expression. The result is undefined

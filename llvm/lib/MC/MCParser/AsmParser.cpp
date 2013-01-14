@@ -151,7 +151,7 @@ private:
   std::vector<MacroInstantiation*> ActiveMacros;
 
   /// Boolean tracking whether macro substitution is enabled.
-  unsigned MacrosEnabled : 1;
+  unsigned MacrosEnabledFlag : 1;
 
   /// Flag tracking whether any errors have been encountered.
   unsigned HadError : 1;
@@ -230,6 +230,9 @@ public:
   /// and set \p Res to the identifier contents.
   virtual bool ParseIdentifier(StringRef &Res);
   virtual void EatToEndOfStatement();
+
+  virtual bool MacrosEnabled() {return MacrosEnabledFlag;}
+  virtual void SetMacrosEnabled(bool flag) {MacrosEnabledFlag = flag;}
 
   /// }
 
@@ -503,7 +506,7 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
-    CurBuffer(0), MacrosEnabled(true), CppHashLineNumber(0),
+    CurBuffer(0), MacrosEnabledFlag(true), CppHashLineNumber(0),
     AssemblerDialect(~0U), IsDarwin(false), ParsingInlineAsm(false) {
   // Save the old handler.
   SavedDiagHandler = SrcMgr.getDiagHandler();
@@ -1278,7 +1281,7 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
   }
 
   // If macros are enabled, check to see if this is a macro instantiation.
-  if (MacrosEnabled)
+  if (MacrosEnabled())
     if (const Macro *M = MacroMap.lookup(IDVal))
       return HandleMacroEntry(IDVal, IDLoc, M);
 
@@ -3489,7 +3492,7 @@ bool GenericAsmParser::ParseDirectiveMacrosOnOff(StringRef Directive,
     return Error(getLexer().getLoc(),
                  "unexpected token in '" + Directive + "' directive");
 
-  getParser().MacrosEnabled = Directive == ".macros_on";
+  getParser().SetMacrosEnabled(Directive == ".macros_on");
 
   return false;
 }
