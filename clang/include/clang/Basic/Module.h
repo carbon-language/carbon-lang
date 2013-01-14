@@ -164,7 +164,28 @@ public:
   
   /// \brief The set of export declarations that have yet to be resolved.
   SmallVector<UnresolvedExportDecl, 2> UnresolvedExports;
-  
+
+  /// \brief A library or framework to link against when an entity from this
+  /// module is used.
+  struct LinkLibrary {
+    LinkLibrary() : IsFramework(false) { }
+    LinkLibrary(const std::string &Library, bool IsFramework)
+      : Library(Library), IsFramework(IsFramework) { }
+    
+    /// \brief The library to link against.
+    ///
+    /// This will typically be a library or framework name, but can also
+    /// be an absolute path to the library or framework.
+    std::string Library;
+
+    /// \brief Whether this is a framework rather than a library.
+    bool IsFramework;
+  };
+
+  /// \brief The set of libraries or frameworks to link against when
+  /// an entity from this module is used.
+  llvm::SmallVector<LinkLibrary, 2> LinkLibraries;
+
   /// \brief Construct a top-level module.
   explicit Module(StringRef Name, SourceLocation DefinitionLoc,
                   bool IsFramework)

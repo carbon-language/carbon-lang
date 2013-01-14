@@ -3413,6 +3413,9 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         DeserializationListener->ModuleRead(GlobalID, CurrentModule);
       
       SubmodulesLoaded[GlobalIndex] = CurrentModule;
+
+      // Clear out link libraries; the module file has them.
+      CurrentModule->LinkLibraries.clear();
       break;
     }
         
@@ -3600,6 +3603,20 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
                                     Context.getTargetInfo());
       break;
     }
+
+    case SUBMODULE_LINK_LIBRARY:
+      if (First) {
+        Error("missing submodule metadata record at beginning of block");
+        return true;
+      }
+
+      if (!CurrentModule)
+        break;
+
+      CurrentModule->LinkLibraries.push_back(
+         Module::LinkLibrary(StringRef(BlobStart, BlobLen),
+         Record[0]));
+      break;
     }
   }
 }

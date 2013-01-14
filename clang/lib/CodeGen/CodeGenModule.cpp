@@ -32,6 +32,7 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/ConvertUTF.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/Module.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Frontend/CodeGenOptions.h"
@@ -172,7 +173,8 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();
   EmitLLVMUsed();
-
+  EmitLinkLibraries();
+  
   SimplifyPersonality();
 
   if (getCodeGenOpts().EmitDeclMetadata)
@@ -712,6 +714,24 @@ void CodeGenModule::EmitLLVMUsed() {
                              "llvm.used");
 
   GV->setSection("llvm.metadata");
+}
+
+void CodeGenModule::EmitLinkLibraries() {
+  // If there are no libraries to link against, do nothing.
+  if (LinkLibraries.empty())
+    return;
+
+  // Create metadata for each library we're linking against.
+  llvm::NamedMDNode *Metadata
+    = getModule().getOrInsertNamedMetadata("llvm.link.libraries");
+  for (unsigned I = 0, N = LinkLibraries.size(); I != N; ++I) {
+    llvm::Value *Args[2] = {
+      llvm::MDString::get(getLLVMContext(), LinkLibraries[I].Library),
+      llvm::ConstantInt::get(llvm::Type::getInt1Ty(getLLVMContext()),
+                             LinkLibraries[I].IsFramework)
+    };
+    Metadata->addOperand(llvm::MDNode::get(getLLVMContext(), Args));
+  }
 }
 
 void CodeGenModule::EmitDeferred() {
@@ -2681,7 +2701,6 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
   case Decl::TypeAliasTemplate:
   case Decl::NamespaceAlias:
   case Decl::Block:
-  case Decl::Import:
     break;
   case Decl::CXXConstructor:
     // Skip function templates
@@ -2761,6 +2780,53 @@ void CodeGenModule::EmitTopLevelDecl(Decl *D) {
       getModule().setModuleInlineAsm(S + '\n' + AsmString.str());
     break;
   }
+
+  case Decl::Import: {
+    ImportDecl *Import = cast<ImportDecl>(D);
+
+    // Ignore import declarations that come from imported modules.
+    if (clang::Module *Owner = Import->getOwningModule()) {
+      if (getLangOpts().CurrentModule.empty() ||
+          Owner->getTopLevelModule()->Name == getLangOpts().CurrentModule)
+        break;
+    }
+
+    // Walk from this module up to its top-level module; we'll import all of
+    // these modules and their non-explicit child modules.
+    llvm::SmallVector<clang::Module *, 2> Stack;
+    for (clang::Module *Mod = Import->getImportedModule(); Mod;
+         Mod = Mod->Parent) {
+      if (!ImportedModules.insert(Mod))
+        break;
+      
+      Stack.push_back(Mod);
+    }
+
+    // Find all of the non-explicit submodules of the modules we've imported and
+    // import them.
+    while (!Stack.empty()) {
+      clang::Module *Mod = Stack.back();
+      Stack.pop_back();
+
+      // Add the link libraries for this module.
+      LinkLibraries.insert(LinkLibraries.end(),
+                           Mod->LinkLibraries.begin(),
+                           Mod->LinkLibraries.end());
+
+      // We've imported this module; now import any of its children that haven't
+      // already been imported.
+      for (clang::Module::submodule_iterator Sub = Mod->submodule_begin(),
+                                          SubEnd = Mod->submodule_end();
+           Sub != SubEnd; ++Sub) {
+        if ((*Sub)->IsExplicit)
+          continue;
+
+        if (ImportedModules.insert(*Sub))
+          Stack.push_back(*Sub);
+      }
+    }
+    break;
+ }
 
   default:
     // Make sure we handled everything we should, every other kind is a

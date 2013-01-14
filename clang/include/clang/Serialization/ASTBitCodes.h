@@ -603,7 +603,9 @@ namespace clang {
       SUBMODULE_REQUIRES = 8,
       /// \brief Specifies a header that has been explicitly excluded
       /// from this submodule.
-      SUBMODULE_EXCLUDED_HEADER = 9
+      SUBMODULE_EXCLUDED_HEADER = 9,
+      /// \brief Specifies a library or framework to link against.
+      SUBMODULE_LINK_LIBRARY = 10
     };
 
     /// \brief Record types used within a comments block.
