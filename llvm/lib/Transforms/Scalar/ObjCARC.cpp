@@ -192,7 +192,8 @@ static bool IsPotentialUse(const Value *Op) {
   return true;
 }
 
-/// \brief Helper for GetInstructionClass. Determines what kind of construct CS is.
+/// \brief Helper for GetInstructionClass. Determines what kind of construct CS
+/// is.
 static InstructionClass GetCallSiteClass(ImmutableCallSite CS) {
   for (ImmutableCallSite::arg_iterator I = CS.arg_begin(), E = CS.arg_end();
        I != E; ++I)
@@ -418,8 +419,8 @@ static bool IsNoopOnNull(InstructionClass Class) {
          Class == IC_RetainBlock;
 }
 
-/// \brief Test if the given class represents instructions which are always safe to
-/// mark with the "tail" keyword.
+/// \brief Test if the given class represents instructions which are always safe
+/// to mark with the "tail" keyword.
 static bool IsAlwaysTail(InstructionClass Class) {
   // IC_RetainBlock may be given a stack argument.
   return Class == IC_Retain ||
@@ -613,8 +614,8 @@ static bool ModuleHasARC(const Module &M) {
     M.getNamedValue("objc_unretainedPointer");
 }
 
-/// \brief Test whether the given pointer, which is an Objective C block pointer, does
-/// not "escape".
+/// \brief Test whether the given pointer, which is an Objective C block
+/// pointer, does not "escape".
 ///
 /// This differs from regular escape analysis in that a use as an
 /// argument to a call is not considered an escape.
@@ -662,8 +663,8 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
             isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
 
           if (!VisitedSet.count(UUser)) {
-            DEBUG(dbgs() << "DoesObjCBlockEscape: User copies value. Escapes if "
-                            "result escapes. Adding to list.\n");
+            DEBUG(dbgs() << "DoesObjCBlockEscape: User copies value. Escapes "
+                            "if result escapes. Adding to list.\n");
             VisitedSet.insert(V);
             Worklist.push_back(UUser);
           } else {
@@ -696,7 +697,7 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
 
 /// @}
 ///
-/// \defgroup ARCAA An extension of alias analysis using ObjC specific knowledge.
+/// \defgroup ARCAA Extends alias analysis using ObjC specific knowledge.
 /// @{
 
 #include "llvm/Analysis/AliasAnalysis.h"
@@ -1036,8 +1037,9 @@ bool ObjCARCAPElim::OptimizeBB(BasicBlock *BB) {
       // zap the pair.
       if (Push && cast<CallInst>(Inst)->getArgOperand(0) == Push) {
         Changed = true;
-        DEBUG(dbgs() << "ObjCARCAPElim::OptimizeBB: Zapping push pop autorelease pair:\n"
-                     << "                           Pop: " << *Inst << "\n"
+        DEBUG(dbgs() << "ObjCARCAPElim::OptimizeBB: Zapping push pop "
+                        "autorelease pair:\n"
+                        "                           Pop: " << *Inst << "\n"
                      << "                           Push: " << *Push << "\n");
         Inst->eraseFromParent();
         Push->eraseFromParent();
@@ -1652,7 +1654,8 @@ void BBState::MergePred(const BBState &Other) {
   // loop backedge. Loop backedges are special.
   TopDownPathCount += Other.TopDownPathCount;
 
-  // Check for overflow. If we have overflow, fall back to conservative behavior.
+  // Check for overflow. If we have overflow, fall back to conservative
+  // behavior.
   if (TopDownPathCount < Other.TopDownPathCount) {
     clearTopDownPointers();
     return;
@@ -1683,7 +1686,8 @@ void BBState::MergeSucc(const BBState &Other) {
   // loop backedge. Loop backedges are special.
   BottomUpPathCount += Other.BottomUpPathCount;
 
-  // Check for overflow. If we have overflow, fall back to conservative behavior.
+  // Check for overflow. If we have overflow, fall back to conservative
+  // behavior.
   if (BottomUpPathCount < Other.BottomUpPathCount) {
     clearBottomUpPointers();
     return;
@@ -2513,8 +2517,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
     // semantics of ARC truly do not do so.
     if (IsNeverTail(Class)) {
       Changed = true;
-      DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Removing tail keyword"
-            " from function: " << *Inst <<
+      DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Removing tail "
+            "keyword from function: " << *Inst <<
             "\n");
       cast<CallInst>(Inst)->setTailCall(false);
     }
