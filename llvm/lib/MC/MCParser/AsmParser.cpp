@@ -233,10 +233,10 @@ public:
   virtual bool MacrosEnabled() {return MacrosEnabledFlag;}
   virtual void SetMacrosEnabled(bool flag) {MacrosEnabledFlag = flag;}
 
+  virtual void CheckForValidSection();
   /// }
 
 private:
-  void CheckForValidSection();
 
   bool ParseStatement(ParseStatementInfo &Info);
   void EatToEndOfLine();
