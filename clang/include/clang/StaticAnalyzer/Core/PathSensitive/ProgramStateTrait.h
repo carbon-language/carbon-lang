@@ -167,7 +167,7 @@ namespace ento {
     }
 
     static inline void *MakeVoidPtr(data_type D) {
-      return  (void*) D.getInternalPointer();
+      return const_cast<llvm::ImmutableListImpl<T> >(D.getInternalPointer());
     }
 
     static inline context_type MakeContext(void *p) {
