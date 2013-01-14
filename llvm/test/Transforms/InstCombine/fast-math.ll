@@ -256,3 +256,99 @@ define float @fneg1(float %f1, float %f2) {
 ; CHECK: @fneg1
 ; CHECK: fmul float %f1, %f2
 }
+
+; =========================================================================
+;
+;   Testing-cases about div
+;
+; =========================================================================
+; X/C1 / C2 => X * (1/(C2*C1))
+
+define float @fdiv1(float %x) {
+  %div = fdiv float %x, 0x3FF3333340000000
+  %div1 = fdiv fast float %div, 0x4002666660000000
+  ret float %div1
+; 0x3FF3333340000000 = 1.2f
+; 0x4002666660000000 = 2.3f
+; 0x3FD7303B60000000 = 0.36231884057971014492
+; CHECK: @fdiv1
+; CHECK: fmul fast float %x, 0x3FD7303B60000000
+}
+
+; X*C1 / C2 => X * (C1/C2)
+define float @fdiv2(float %x) {
+  %mul = fmul float %x, 0x3FF3333340000000
+  %div1 = fdiv fast float %mul, 0x4002666660000000
+  ret float %div1
+
+; 0x3FF3333340000000 = 1.2f
+; 0x4002666660000000 = 2.3f
+; 0x3FE0B21660000000 = 0.52173918485641479492
+; CHECK: @fdiv2
+; CHECK: fmul fast float %x, 0x3FE0B21660000000
+}
+
+; "X/C1 / C2 => X * (1/(C2*C1))" is disabled (for now) is C2/C1 is a denormal
+; 
+define float @fdiv3(float %x) {
+  %div = fdiv float %x, 0x47EFFFFFE0000000
+  %div1 = fdiv fast float %div, 0x4002666660000000
+  ret float %div1
+; CHECK: @fdiv3
+; CHECK: fdiv float %x, 0x47EFFFFFE0000000
+}
+
+; "X*C1 / C2 => X * (C1/C2)" is disabled if C1/C2 is a denormal
+define float @fdiv4(float %x) {
+  %mul = fmul float %x, 0x47EFFFFFE0000000
+  %div = fdiv float %mul, 0x3FC99999A0000000
+  ret float %div
+; CHECK: @fdiv4
+; CHECK: fmul float %x, 0x47EFFFFFE0000000
+}
+
+; (X/Y)/Z = > X/(Y*Z)
+define float @fdiv5(float %f1, float %f2, float %f3) {
+  %t1 = fdiv float %f1, %f2
+  %t2 = fdiv fast float %t1, %f3
+  ret float %t2
+; CHECK: @fdiv5
+; CHECK: fmul float %f2, %f3
+}
+
+; Z/(X/Y) = > (Z*Y)/X
+define float @fdiv6(float %f1, float %f2, float %f3) {
+  %t1 = fdiv float %f1, %f2
+  %t2 = fdiv fast float %f3, %t1
+  ret float %t2
+; CHECK: @fdiv6
+; CHECK: fmul float %f3, %f2
+}
+
+; C1/(X*C2) => (C1/C2) / X
+define float @fdiv7(float %x) {
+  %t1 = fmul float %x, 3.0e0
+  %t2 = fdiv fast float 15.0e0, %t1
+  ret float %t2
+; CHECK: @fdiv7
+; CHECK: fdiv fast float 5.000000e+00, %x
+}
+
+; C1/(X/C2) => (C1*C2) / X
+define float @fdiv8(float %x) {
+  %t1 = fdiv float %x, 3.0e0
+  %t2 = fdiv fast float 15.0e0, %t1
+  ret float %t2
+; CHECK: @fdiv8
+; CHECK: fdiv fast float 4.500000e+01, %x
+}
+
+; C1/(C2/X) => (C1/C2) * X
+define float @fdiv9(float %x) {
+  %t1 = fdiv float 3.0e0, %x
+  %t2 = fdiv fast float 15.0e0, %t1
+  ret float %t2
+; CHECK: @fdiv9
+; CHECK: fmul fast float %x, 5.000000e+00
+}
+

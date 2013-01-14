@@ -784,21 +784,140 @@ Instruction *InstCombiner::visitSDiv(BinaryOperator &I) {
   return 0;
 }
 
+/// CvtFDivConstToReciprocal tries to convert X/C into X*1/C if C not a special
+/// FP value and:
+///    1) 1/C is exact, or 
+///    2) reciprocal is allowed.
+/// If the convertion was successful, the simplified expression "X * 1/C" is
+/// returned; otherwise, NULL is returned.
+///
+static Instruction *CvtFDivConstToReciprocal(Value *Dividend,
+                                             ConstantFP *Divisor,
+                                             bool AllowReciprocal) {
+  const APFloat &FpVal = Divisor->getValueAPF();
+  APFloat Reciprocal(FpVal.getSemantics());
+  bool Cvt = FpVal.getExactInverse(&Reciprocal);
+    
+  if (!Cvt && AllowReciprocal && FpVal.isNormal()) {
+    Reciprocal = APFloat(FpVal.getSemantics(), 1.0f);
+    (void)Reciprocal.divide(FpVal, APFloat::rmNearestTiesToEven);
+    Cvt = !Reciprocal.isDenormal();
+  }
+
+  if (!Cvt)
+    return 0;
+
+  ConstantFP *R;
+  R = ConstantFP::get(Dividend->getType()->getContext(), Reciprocal);
+  return BinaryOperator::CreateFMul(Dividend, R);
+}
+
 Instruction *InstCombiner::visitFDiv(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
   if (Value *V = SimplifyFDivInst(Op0, Op1, TD))
     return ReplaceInstUsesWith(I, V);
 
-  if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
-    const APFloat &Op1F = Op1C->getValueAPF();
+  bool AllowReassociate = I.hasUnsafeAlgebra();
+  bool AllowReciprocal = I.hasAllowReciprocal();
 
-    // If the divisor has an exact multiplicative inverse we can turn the fdiv
-    // into a cheaper fmul.
-    APFloat Reciprocal(Op1F.getSemantics());
-    if (Op1F.getExactInverse(&Reciprocal)) {
-      ConstantFP *RFP = ConstantFP::get(Builder->getContext(), Reciprocal);
-      return BinaryOperator::CreateFMul(Op0, RFP);
+  if (ConstantFP *Op1C = dyn_cast<ConstantFP>(Op1)) {
+    if (AllowReassociate) {
+      ConstantFP *C1 = 0;
+      ConstantFP *C2 = Op1C;
+      Value *X;
+      Instruction *Res = 0;
+
+      if (match(Op0, m_FMul(m_Value(X), m_ConstantFP(C1)))) {
+        // (X*C1)/C2 => X * (C1/C2)
+        //
+        Constant *C = ConstantExpr::getFDiv(C1, C2);
+        const APFloat &F = cast<ConstantFP>(C)->getValueAPF();
+        if (F.isNormal() && !F.isDenormal())
+          Res = BinaryOperator::CreateFMul(X, C);
+      } else if (match(Op0, m_FDiv(m_Value(X), m_ConstantFP(C1)))) {
+        // (X/C1)/C2 => X /(C2*C1) [=> X * 1/(C2*C1) if reciprocal is allowed]
+        //
+        Constant *C = ConstantExpr::getFMul(C1, C2);
+        const APFloat &F = cast<ConstantFP>(C)->getValueAPF();
+        if (F.isNormal() && !F.isDenormal()) {
+          Res = CvtFDivConstToReciprocal(X, cast<ConstantFP>(C), 
+                                         AllowReciprocal);
+          if (!Res)
+            Res = BinaryOperator::CreateFDiv(X, C); 
+        }
+      }
+
+      if (Res) {
+        Res->setFastMathFlags(I.getFastMathFlags());
+        return Res;
+      }
+    }
+
+    // X / C => X * 1/C
+    if (Instruction *T = CvtFDivConstToReciprocal(Op0, Op1C, AllowReciprocal))
+      return T;
+
+    return 0;
+  }
+
+  if (AllowReassociate && isa<ConstantFP>(Op0)) {
+    ConstantFP *C1 = cast<ConstantFP>(Op0), *C2;
+    Constant *Fold = 0;
+    Value *X;
+    bool CreateDiv = true;
+
+    // C1 / (X*C2) => (C1/C2) / X
+    if (match(Op1, m_FMul(m_Value(X), m_ConstantFP(C2))))
+      Fold = ConstantExpr::getFDiv(C1, C2);
+    else if (match(Op1, m_FDiv(m_Value(X), m_ConstantFP(C2)))) {
+      // C1 / (X/C2) => (C1*C2) / X
+      Fold = ConstantExpr::getFMul(C1, C2);
+    } else if (match(Op1, m_FDiv(m_ConstantFP(C2), m_Value(X)))) {
+      // C1 / (C2/X) => (C1/C2) * X
+      Fold = ConstantExpr::getFDiv(C1, C2);
+      CreateDiv = false;
+    }
+
+    if (Fold) {
+      const APFloat &FoldC = cast<ConstantFP>(Fold)->getValueAPF();
+      if (FoldC.isNormal() && !FoldC.isDenormal()) {
+        Instruction *R = CreateDiv ? 
+                         BinaryOperator::CreateFDiv(Fold, X) :
+                         BinaryOperator::CreateFMul(X, Fold);
+        R->setFastMathFlags(I.getFastMathFlags());
+        return R;
+      }
+    }
+    return 0;
+  }
+
+  if (AllowReassociate) {
+    Value *X, *Y;
+    Value *NewInst = 0;
+    Instruction *SimpR = 0;
+
+    if (Op0->hasOneUse() && match(Op0, m_FDiv(m_Value(X), m_Value(Y)))) {
+      // (X/Y) / Z => X / (Y*Z)
+      //
+      if (!isa<ConstantFP>(Y) || !isa<ConstantFP>(Op1)) {
+        NewInst = Builder->CreateFMul(Y, Op1);
+        SimpR = BinaryOperator::CreateFDiv(X, NewInst);
+      }
+    } else if (Op1->hasOneUse() && match(Op1, m_FDiv(m_Value(X), m_Value(Y)))) {
+      // Z / (X/Y) => Z*Y / X
+      //
+      if (!isa<ConstantFP>(Y) || !isa<ConstantFP>(Op0)) {
+        NewInst = Builder->CreateFMul(Op0, Y);
+        SimpR = BinaryOperator::CreateFDiv(NewInst, X);
+      }
+    }
+
+    if (NewInst) {
+      if (Instruction *T = dyn_cast<Instruction>(NewInst))
+        T->setDebugLoc(I.getDebugLoc());
+      SimpR->setFastMathFlags(I.getFastMathFlags());
+      return SimpR;
     }
   }
 
