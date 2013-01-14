@@ -662,10 +662,9 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
         if (isa<BitCastInst>(UUser) || isa<GetElementPtrInst>(UUser) ||
             isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
 
-          if (!VisitedSet.count(UUser)) {
+          if (!VisitedSet.insert(UUser)) {
             DEBUG(dbgs() << "DoesObjCBlockEscape: User copies value. Escapes "
                             "if result escapes. Adding to list.\n");
-            VisitedSet.insert(V);
             Worklist.push_back(UUser);
           } else {
             DEBUG(dbgs() << "DoesObjCBlockEscape: Already visited node.\n");
