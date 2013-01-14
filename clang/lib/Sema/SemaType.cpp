@@ -270,8 +270,18 @@ static void moveAttrFromListToList(AttributeList &attr,
   spliceAttrIntoList(attr, toList);
 }
 
+/// The location of a type attribute.
+enum TypeAttrLocation {
+  /// The attribute is in the decl-specifier-seq.
+  TAL_DeclSpec,
+  /// The attribute is part of a DeclaratorChunk.
+  TAL_DeclChunk,
+  /// The attribute is immediately after the declaration's name.
+  TAL_DeclName
+};
+
 static void processTypeAttrs(TypeProcessingState &state,
-                             QualType &type, bool isDeclSpec,
+                             QualType &type, TypeAttrLocation TAL,
                              AttributeList *attrs);
 
 static bool handleFunctionTypeAttr(TypeProcessingState &state,
@@ -963,7 +973,7 @@ static QualType ConvertDeclSpecToType(TypeProcessingState &state) {
   // list of type attributes to be temporarily saved while the type
   // attributes are pushed around.
   if (AttributeList *attrs = DS.getAttributes().getList())
-    processTypeAttrs(state, Result, true, attrs);
+    processTypeAttrs(state, Result, TAL_DeclSpec, attrs);
 
   // Apply const/volatile/restrict qualifiers to T.
   if (unsigned TypeQuals = DS.getTypeQualifiers()) {
@@ -1859,7 +1869,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
     // "void" instead.
     T = SemaRef.Context.VoidTy;
     if (AttributeList *attrs = D.getDeclSpec().getAttributes().getList())
-      processTypeAttrs(state, T, true, attrs);
+      processTypeAttrs(state, T, TAL_DeclSpec, attrs);
     break;
 
   case UnqualifiedId::IK_ConversionFunctionId:
@@ -2665,7 +2675,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
     // See if there are any attributes on this declarator chunk.
     if (AttributeList *attrs = const_cast<AttributeList*>(DeclType.getAttrs()))
-      processTypeAttrs(state, T, false, attrs);
+      processTypeAttrs(state, T, TAL_DeclChunk, attrs);
   }
 
   if (LangOpts.CPlusPlus && T->isFunctionType()) {
@@ -2753,7 +2763,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
   // Apply any undistributed attributes from the declarator.
   if (!T.isNull())
     if (AttributeList *attrs = D.getAttributes())
-      processTypeAttrs(state, T, false, attrs);
+      processTypeAttrs(state, T, TAL_DeclName, attrs);
 
   // Diagnose any ignored type attributes.
   if (!T.isNull()) state.diagnoseIgnoredTypeAttrs(T);
@@ -4150,7 +4160,7 @@ static void HandleNeonVectorTypeAttr(QualType& CurType,
 }
 
 static void processTypeAttrs(TypeProcessingState &state, QualType &type,
-                             bool isDeclSpec, AttributeList *attrs) {
+                             TypeAttrLocation TAL, AttributeList *attrs) {
   // Scan through and apply attributes to this type where it makes sense.  Some
   // attributes (such as __address_space__, __vector_size__, etc) apply to the
   // type, but others can be present in the type specifiers even though they
@@ -4164,6 +4174,20 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
     // Skip attributes that were marked to be invalid.
     if (attr.isInvalid())
       continue;
+
+    // [[gnu::...]] attributes are treated as declaration attributes, so may
+    // not appertain to a DeclaratorChunk, even if we handle them as type
+    // attributes.
+    // FIXME: All other C++11 type attributes may *only* appertain to a type,
+    // and should only be considered here if they appertain to a
+    // DeclaratorChunk.
+    if (attr.isCXX11Attribute() && TAL == TAL_DeclChunk &&
+        attr.getScopeName() && attr.getScopeName()->isStr("gnu")) {
+      state.getSema().Diag(attr.getLoc(),
+                           diag::warn_cxx11_gnu_attribute_on_type)
+        << attr.getName();
+      continue;
+    }
 
     // If this is an attribute we can handle, do so now,
     // otherwise, add it to the FnAttrs list for rechaining.
@@ -4225,7 +4249,7 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
 
       // Never process function type attributes as part of the
       // declaration-specifiers.
-      if (isDeclSpec)
+      if (TAL == TAL_DeclSpec)
         distributeFunctionTypeAttrFromDeclSpec(state, attr, type);
 
       // Otherwise, handle the possible delays.

@@ -1761,6 +1761,9 @@ def warn_attribute_after_definition_ignored : Warning<
    InGroup<IgnoredAttributes>;
 def warn_unknown_attribute_ignored : Warning<
   "unknown attribute %0 ignored">, InGroup<UnknownAttributes>;
+def warn_cxx11_gnu_attribute_on_type : Warning<
+  "attribute %0 ignored, because it cannot be applied to a type">,
+  InGroup<IgnoredAttributes>;
 def warn_unhandled_ms_attribute_ignored : Warning<
   "__declspec attribute %0 is not supported">, 
   InGroup<IgnoredAttributes>;
