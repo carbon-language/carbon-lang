@@ -159,7 +159,7 @@ public:
     return std::make_pair(iterator(TheBucket, getBucketsEnd(), true), true);
   }
 
-#ifdef LLVM_HAS_RVALUE_REFERENCES
+#if LLVM_HAS_RVALUE_REFERENCES
   // Inserts key,value pair into the map if the key isn't already in the map.
   // If the key is already in the map, it returns false and doesn't update the
   // value.
