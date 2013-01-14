@@ -44,7 +44,8 @@ static void ReadInMemoryStruct(const MachOObject &MOO,
   }
 
   // Check whether we can return a direct pointer.
-  struct_type *Ptr = (struct_type *) (Buffer.data() + Base);
+  struct_type *Ptr = reinterpret_cast<struct_type *>(
+                       const_cast<char *>(Buffer.data() + Base));
   if (!MOO.isSwappedEndian()) {
     Res = Ptr;
     return;
