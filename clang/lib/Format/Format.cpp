@@ -1408,6 +1408,8 @@ private:
     unsigned Length = 0;
     if (!fitsIntoLimit(I->First, Limit, &Length))
       return false;
+    if (Limit == Length)
+      return true; // Couldn't fit a space.
     Limit -= Length + 1; // One space.
     if (I + 1 == E)
       return true;

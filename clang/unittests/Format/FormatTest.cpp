@@ -138,6 +138,8 @@ TEST_F(FormatTest, FormatIfWithoutCompountStatement) {
                "  f();");
   verifyFormat("if (a) return;", getLLVMStyleWithColumns(14));
   verifyFormat("if (a)\n  return;", getLLVMStyleWithColumns(13));
+  verifyFormat("if (aaaaaaaaa)\n"
+               "  return;", getLLVMStyleWithColumns(14));
 }
 
 TEST_F(FormatTest, ParseIfElse) {
