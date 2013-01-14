@@ -1056,7 +1056,7 @@ CXCompletionString clang_getCursorCompletionString(CXCursor cursor) {
     const MacroDefinition *definition = getCursorMacroDefinition(cursor);
     const IdentifierInfo *MacroInfo = definition->getName();
     ASTUnit *unit = getCursorASTUnit(cursor);
-    CodeCompletionResult Result(const_cast<IdentifierInfo *>(MacroInfo));
+    CodeCompletionResult Result(MacroInfo);
     CodeCompletionString *String
       = Result.CreateCodeCompletionString(unit->getASTContext(),
                                           unit->getPreprocessor(),

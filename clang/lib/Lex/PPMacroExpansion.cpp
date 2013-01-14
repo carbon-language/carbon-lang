@@ -32,7 +32,7 @@
 #include <ctime>
 using namespace clang;
 
-MacroInfo *Preprocessor::getMacroInfoHistory(IdentifierInfo *II) const {
+MacroInfo *Preprocessor::getMacroInfoHistory(const IdentifierInfo *II) const {
   assert(II->hadMacroDefinition() && "Identifier has not been not a macro!");
 
   macro_iterator Pos = Macros.find(II);

@@ -661,7 +661,7 @@ public:
     CodeCompletionString *Pattern;
 
     /// \brief When Kind == RK_Macro, the identifier that refers to a macro.
-    IdentifierInfo *Macro;
+    const IdentifierInfo *Macro;
   };
 
   /// \brief The priority of this particular code-completion result.
@@ -728,7 +728,8 @@ public:
   }
 
   /// \brief Build a result that refers to a macro.
-  CodeCompletionResult(IdentifierInfo *Macro, unsigned Priority = CCP_Macro)
+  CodeCompletionResult(const IdentifierInfo *Macro,
+                       unsigned Priority = CCP_Macro)
     : Declaration(0), Macro(Macro), Priority(Priority), StartParameter(0),
       Kind(RK_Macro), CursorKind(CXCursor_MacroDefinition),
       Availability(CXAvailability_Available), Hidden(false),
