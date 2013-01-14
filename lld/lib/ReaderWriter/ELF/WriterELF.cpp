@@ -1542,10 +1542,10 @@ public:
 
   /// \brief find a absolute atom pair given a absolute atom name
   struct FindByName {
-    const std::string name;
-    FindByName(const StringRef name) : name(name) {}
+    const std::string _name;
+    FindByName(const StringRef name) : _name(name) {}
     bool operator()(AbsoluteAtomPair& j) { 
-      return j.absoluteAtom()->name() == name; 
+      return j.absoluteAtom()->name() == _name; 
     }
   };
 
