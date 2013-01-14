@@ -44,10 +44,9 @@ TEST(WaymarkTest, TwoBit) {
   Use* many = (Use*)calloc(sizeof(Use), 8212 + 1);
   ASSERT_TRUE(many);
 	Use::initTags(many, many + 8212);
-  for (const Use *U = many, *Ue = many + 8212 - 1; U != Ue; ++U)
+  for (Use *U = many, *Ue = many + 8212 - 1; U != Ue; ++U)
   {
-    EXPECT_EQ(reinterpret_cast<User*>(const_cast<Use *>(Ue + 1)),
-              U->getUser());
+    EXPECT_EQ(reinterpret_cast<User *>(Ue + 1), U->getUser());
   }
 }
 
