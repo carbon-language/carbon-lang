@@ -112,7 +112,9 @@ static void PrintLocation(const ReportLocation *loc) {
         loc->size, loc->addr, thread_name(thrbuf, loc->tid));
     PrintStack(loc->stack);
   } else if (loc->type == ReportLocationStack) {
-    Printf("  Location is stack of %s\n\n", thread_name(thrbuf, loc->tid));
+    Printf("  Location is stack of %s.\n\n", thread_name(thrbuf, loc->tid));
+  } else if (loc->type == ReportLocationTLS) {
+    Printf("  Location is TLS of %s.\n\n", thread_name(thrbuf, loc->tid));
   } else if (loc->type == ReportLocationFD) {
     Printf("  Location is file descriptor %d created by %s at:\n",
         loc->fd, thread_name(thrbuf, loc->tid));

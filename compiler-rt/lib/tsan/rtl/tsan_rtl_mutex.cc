@@ -55,6 +55,7 @@ void MutexDestroy(ThreadState *thr, uptr pc, uptr addr) {
       && s->owner_tid != SyncVar::kInvalidTid
       && !s->is_broken) {
     s->is_broken = true;
+    Lock l(&ctx->thread_mtx);
     ScopedReport rep(ReportTypeMutexDestroyLocked);
     rep.AddMutex(s);
     StackTrace trace;

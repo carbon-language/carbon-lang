@@ -2,19 +2,11 @@
 #include <pthread.h>
 #include <unistd.h>
 
-void *Thread(void *p) {
-  pthread_mutex_lock((pthread_mutex_t*)p);
-  return 0;
-}
-
 int main() {
   pthread_mutex_t m;
   pthread_mutex_init(&m, 0);
-  pthread_t t;
-  pthread_create(&t, 0, Thread, &m);
-  sleep(1);
+  pthread_mutex_lock(&m);
   pthread_mutex_destroy(&m);
-  pthread_join(t, 0);
   return 0;
 }
 
@@ -23,7 +15,7 @@ int main() {
 // CHECK:     #1 main
 // CHECK:   and:
 // CHECK:     #0 pthread_mutex_lock
-// CHECK:     #1 Thread
+// CHECK:     #1 main
 // CHECK:   Mutex {{.*}} created at:
 // CHECK:     #0 pthread_mutex_init
 // CHECK:     #1 main

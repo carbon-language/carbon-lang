@@ -121,6 +121,7 @@ static ReportStack *SymbolizeStack(const StackTrace& trace) {
 
 ScopedReport::ScopedReport(ReportType typ) {
   ctx_ = CTX();
+  ctx_->thread_mtx.CheckLocked();
   void *mem = internal_alloc(MBlockReport, sizeof(ReportDesc));
   rep_ = new(mem) ReportDesc;
   rep_->typ = typ;
@@ -187,10 +188,32 @@ void ScopedReport::AddThread(const ThreadContext *tctx) {
 
 #ifndef TSAN_GO
 static ThreadContext *FindThread(int unique_id) {
-  CTX()->thread_mtx.CheckLocked();
+  Context *ctx = CTX();
+  ctx->thread_mtx.CheckLocked();
   for (unsigned i = 0; i < kMaxTid; i++) {
-    ThreadContext *tctx = CTX()->threads[i];
+    ThreadContext *tctx = ctx->threads[i];
     if (tctx && tctx->unique_id == unique_id) {
+      return tctx;
+    }
+  }
+  return 0;
+}
+
+ThreadContext *IsThreadStackOrTls(uptr addr, bool *is_stack) {
+  Context *ctx = CTX();
+  ctx->thread_mtx.CheckLocked();
+  for (unsigned i = 0; i < kMaxTid; i++) {
+    ThreadContext *tctx = ctx->threads[i];
+    if (tctx == 0 || tctx->status != ThreadStatusRunning)
+      continue;
+    ThreadState *thr = tctx->thr;
+    CHECK(thr);
+    if (addr >= thr->stk_addr && addr < thr->stk_addr + thr->stk_size) {
+      *is_stack = true;
+      return tctx;
+    }
+    if (addr >= thr->tls_addr && addr < thr->tls_addr + thr->tls_size) {
+      *is_stack = false;
       return tctx;
     }
   }
@@ -276,12 +299,21 @@ void ScopedReport::AddLocation(uptr addr, uptr size) {
       AddThread(tctx);
     return;
   }
-#endif
+  bool is_stack = false;
+  if (ThreadContext *tctx = IsThreadStackOrTls(addr, &is_stack)) {
+    void *mem = internal_alloc(MBlockReportLoc, sizeof(ReportLocation));
+    ReportLocation *loc = new(mem) ReportLocation();
+    rep_->locs.PushBack(loc);
+    loc->type = is_stack ? ReportLocationStack : ReportLocationTLS;
+    loc->tid = tctx->tid;
+    AddThread(tctx);
+  }
   ReportLocation *loc = SymbolizeData(addr);
   if (loc) {
     rep_->locs.PushBack(loc);
     return;
   }
+#endif
 }
 
 #ifndef TSAN_GO
