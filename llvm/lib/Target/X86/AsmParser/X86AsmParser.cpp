@@ -684,115 +684,298 @@ static unsigned getIntelMemOperandSize(StringRef OpStr) {
   return Size;
 }
 
+enum IntelBracExprState {
+  IBES_START,
+  IBES_LBRAC,
+  IBES_RBRAC,
+  IBES_REGISTER,
+  IBES_REGISTER_STAR,
+  IBES_REGISTER_STAR_INTEGER,
+  IBES_INTEGER,
+  IBES_INTEGER_STAR,
+  IBES_INDEX_REGISTER,
+  IBES_IDENTIFIER,
+  IBES_DISP_EXPR,
+  IBES_MINUS,
+  IBES_ERROR
+};
+
+class IntelBracExprStateMachine {
+  IntelBracExprState State;
+  unsigned BaseReg, IndexReg, Scale;
+  int64_t Disp;
+
+  unsigned TmpReg;
+  int64_t TmpInteger;
+
+  bool isPlus;
+
+public:
+  IntelBracExprStateMachine(MCAsmParser &parser) :
+    State(IBES_START), BaseReg(0), IndexReg(0), Scale(1), Disp(0),
+    TmpReg(0), TmpInteger(0), isPlus(true) {}
+
+  unsigned getBaseReg() { return BaseReg; }
+  unsigned getIndexReg() { return IndexReg; }
+  unsigned getScale() { return Scale; }
+  int64_t getDisp() { return Disp; }
+  bool isValidEndState() { return State == IBES_RBRAC; }
+
+  void onPlus() {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_INTEGER:
+      State = IBES_START;
+      if (isPlus)
+        Disp += TmpInteger;
+      else
+        Disp -= TmpInteger;
+      break;
+    case IBES_REGISTER:
+      State = IBES_START;
+      // If we already have a BaseReg, then assume this is the IndexReg with a
+      // scale of 1.
+      if (!BaseReg) {
+        BaseReg = TmpReg;
+      } else {
+        assert (!IndexReg && "BaseReg/IndexReg already set!");
+        IndexReg = TmpReg;
+        Scale = 1;
+      }
+      break;
+    case IBES_INDEX_REGISTER:
+      State = IBES_START;
+      break;
+    }
+    isPlus = true;
+  }
+  void onMinus() {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_START:
+      State = IBES_MINUS;
+      break;
+    case IBES_INTEGER:
+      State = IBES_START;
+      if (isPlus)
+        Disp += TmpInteger;
+      else
+        Disp -= TmpInteger;
+      break;
+    case IBES_REGISTER:
+      State = IBES_START;
+      // If we already have a BaseReg, then assume this is the IndexReg with a
+      // scale of 1.
+      if (!BaseReg) {
+        BaseReg = TmpReg;
+      } else {
+        assert (!IndexReg && "BaseReg/IndexReg already set!");
+        IndexReg = TmpReg;
+        Scale = 1;
+      }
+      break;
+    case IBES_INDEX_REGISTER:
+      State = IBES_START;
+      break;
+    }
+    isPlus = false;
+  }
+  void onRegister(unsigned Reg) {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_START:
+      State = IBES_REGISTER;
+      TmpReg = Reg;
+      break;
+    case IBES_INTEGER_STAR:
+      assert (!IndexReg && "IndexReg already set!");
+      State = IBES_INDEX_REGISTER;
+      IndexReg = Reg;
+      Scale = TmpInteger;
+      break;
+    }
+  }
+  void onDispExpr() {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_START:
+      State = IBES_DISP_EXPR;
+      break;
+    }
+  }
+  void onInteger(int64_t TmpInt) {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_START:
+      State = IBES_INTEGER;
+      TmpInteger = TmpInt;
+      break;
+    case IBES_MINUS:
+      State = IBES_INTEGER;
+      TmpInteger = TmpInt;
+      break;
+    case IBES_REGISTER_STAR:
+      assert (!IndexReg && "IndexReg already set!");
+      State = IBES_INDEX_REGISTER;
+      IndexReg = TmpReg;
+      Scale = TmpInt;
+      break;
+    }
+  }
+  void onStar() {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_INTEGER:
+      State = IBES_INTEGER_STAR;
+      break;
+    case IBES_REGISTER:
+      State = IBES_REGISTER_STAR;
+      break;
+    }
+  }
+  void onLBrac() {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_RBRAC:
+      State = IBES_START;
+      isPlus = true;
+      break;
+    }
+  }
+  void onRBrac() {
+    switch (State) {
+    default:
+      State = IBES_ERROR;
+      break;
+    case IBES_DISP_EXPR:
+      State = IBES_RBRAC;
+      break;
+    case IBES_INTEGER:
+      State = IBES_RBRAC;
+      if (isPlus)
+        Disp += TmpInteger;
+      else
+        Disp -= TmpInteger;
+      break;
+    case IBES_REGISTER:
+      State = IBES_RBRAC;
+      // If we already have a BaseReg, then assume this is the IndexReg with a
+      // scale of 1.
+      if (!BaseReg) {
+        BaseReg = TmpReg;
+      } else {
+        assert (!IndexReg && "BaseReg/IndexReg already set!");
+        IndexReg = TmpReg;
+        Scale = 1;
+      }
+      break;
+    case IBES_INDEX_REGISTER:
+      State = IBES_RBRAC;
+      break;
+    }
+  }
+};
+
 X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg, 
                                                    unsigned Size) {
-  unsigned BaseReg = 0, IndexReg = 0, Scale = 1;
   const AsmToken &Tok = Parser.getTok();
   SMLoc Start = Tok.getLoc(), End = Tok.getEndLoc();
-
-  const MCExpr *Disp = MCConstantExpr::Create(0, getContext());
-  // Parse [ BaseReg + Scale*IndexReg + Disp ] or [ symbol ]
 
   // Eat '['
   if (getLexer().isNot(AsmToken::LBrac))
     return ErrorOperand(Start, "Expected '[' token!");
   Parser.Lex();
 
+  unsigned TmpReg = 0;
+
+  // Try to handle '[' 'symbol' ']'
   if (getLexer().is(AsmToken::Identifier)) {
-    // Parse BaseReg
-    if (ParseRegister(BaseReg, Start, End)) {
-      // Handle '[' 'symbol' ']'
-      if (getParser().ParseExpression(Disp, End)) return 0;
+    if (ParseRegister(TmpReg, Start, End)) {
+      const MCExpr *Disp;
+      if (getParser().ParseExpression(Disp, End))
+        return 0;
+
       if (getLexer().isNot(AsmToken::RBrac))
         return ErrorOperand(Parser.getTok().getLoc(), "Expected ']' token!");
       End = Parser.getTok().getEndLoc();
       Parser.Lex();
       return X86Operand::CreateMem(Disp, Start, End, Size);
     }
-  } else if (getLexer().is(AsmToken::Integer)) {
-      int64_t Val = Tok.getIntVal();
-      Parser.Lex();
-      SMLoc Loc = Tok.getLoc();
-      if (getLexer().is(AsmToken::RBrac)) {
-        // Handle '[' number ']'
-        End = Parser.getTok().getEndLoc();
-        Parser.Lex();
-        const MCExpr *Disp = MCConstantExpr::Create(Val, getContext());
-        if (SegReg)
-          return X86Operand::CreateMem(SegReg, Disp, 0, 0, Scale,
-                                       Start, End, Size);
-        return X86Operand::CreateMem(Disp, Start, End, Size);
-      } else if (getLexer().is(AsmToken::Star)) {
-        // Handle '[' Scale*IndexReg ']'
-        Parser.Lex();
-        SMLoc IdxRegLoc = Tok.getLoc();
-        if (ParseRegister(IndexReg, IdxRegLoc, End))
-          return ErrorOperand(IdxRegLoc, "Expected register");
-        Scale = Val;
-      } else
-        return ErrorOperand(Loc, "Unexpected token");
   }
 
-  // Parse ][ as a plus.
-  bool ExpectRBrac = true;
-  if (getLexer().is(AsmToken::RBrac)) {
-    ExpectRBrac = false;
-    End = Parser.getTok().getEndLoc();
-    Parser.Lex();
-  }
+  // Parse [ BaseReg + Scale*IndexReg + Disp ].
+  bool Done = false;
+  IntelBracExprStateMachine SM(Parser);
 
-  if (getLexer().is(AsmToken::Plus) || getLexer().is(AsmToken::Minus) ||
-      getLexer().is(AsmToken::LBrac)) {
-    ExpectRBrac = true;
-    bool isPlus = getLexer().is(AsmToken::Plus) ||
-      getLexer().is(AsmToken::LBrac);
-    Parser.Lex(); 
-    SMLoc PlusLoc = Tok.getLoc();
-    if (getLexer().is(AsmToken::Integer)) {
+  // If we parsed a register, then the end loc has already been set and
+  // the identifier has already been lexed.  We also need to update the
+  // state.
+  if (TmpReg)
+    SM.onRegister(TmpReg);
+
+  const MCExpr *Disp = 0;
+  while (!Done) {
+    bool UpdateLocLex = true;
+
+    // The period in the dot operator (e.g., [ebx].foo.bar) is parsed as an
+    // identifier.  Don't try an parse it as a register.
+    if (Tok.getString().startswith("."))
+      break;
+
+    switch (getLexer().getKind()) {
+    default: {
+      if (SM.isValidEndState()) {
+        Done = true;
+        break;
+      }
+      return ErrorOperand(Tok.getLoc(), "Unexpected token!");
+    }
+    case AsmToken::Identifier: {
+      // This could be a register or a displacement expression.
+      if(!ParseRegister(TmpReg, Start, End)) {
+        SM.onRegister(TmpReg);
+        UpdateLocLex = false;
+        break;
+      } else if (!getParser().ParseExpression(Disp, End)) {
+        SM.onDispExpr();
+        UpdateLocLex = false;
+        break;
+      }
+      return ErrorOperand(Tok.getLoc(), "Unexpected identifier!");
+    }
+    case AsmToken::Integer: {
       int64_t Val = Tok.getIntVal();
-      Parser.Lex();
-      if (getLexer().is(AsmToken::Star)) {
-        Parser.Lex();
-        SMLoc IdxRegLoc = Tok.getLoc();
-        if (ParseRegister(IndexReg, IdxRegLoc, End))
-          return ErrorOperand(IdxRegLoc, "Expected register");
-        Scale = Val;
-      } else if (getLexer().is(AsmToken::RBrac)) {
-        const MCExpr *ValExpr = MCConstantExpr::Create(Val, getContext());
-        Disp = isPlus ? ValExpr : MCConstantExpr::Create(0-Val, getContext());
-      } else
-        return ErrorOperand(PlusLoc, "unexpected token after +");
-    } else if (getLexer().is(AsmToken::Identifier)) {
-      // This could be an index register or a displacement expression.
-      if (!IndexReg)
-        ParseRegister(IndexReg, Start, End);
-      else if (getParser().ParseExpression(Disp, End))
-        return 0;
+      SM.onInteger(Val);
+      break;
+    }
+    case AsmToken::Plus:    SM.onPlus(); break;
+    case AsmToken::Minus:   SM.onMinus(); break;
+    case AsmToken::Star:    SM.onStar(); break;
+    case AsmToken::LBrac:   SM.onLBrac(); break;
+    case AsmToken::RBrac:   SM.onRBrac(); break;
+    }
+    if (!Done && UpdateLocLex) {
+      End = Tok.getLoc();
+      Parser.Lex(); // Consume the token.
     }
   }
-  
-  // Parse ][ as a plus.
-  if (getLexer().is(AsmToken::RBrac)) {
-    ExpectRBrac = false;
-    End = Parser.getTok().getEndLoc();
-    Parser.Lex();
-    if (getLexer().is(AsmToken::LBrac)) {
-      ExpectRBrac = true;
-      Parser.Lex();
-      if (getParser().ParseExpression(Disp, End))
-        return 0;
-    }
-  } else if (ExpectRBrac) {
-    if (getParser().ParseExpression(Disp, End))
-      return 0;
-  }
 
-  if (ExpectRBrac) {
-    if (getLexer().isNot(AsmToken::RBrac))
-      return ErrorOperand(End, "expected ']' token!");
-    End = Parser.getTok().getEndLoc();
-    Parser.Lex();
-  }
+  if (!Disp)
+    Disp = MCConstantExpr::Create(SM.getDisp(), getContext());
 
   // Parse the dot operator (e.g., [ebx].foo.bar).
   if (Tok.getString().startswith(".")) {
@@ -806,10 +989,18 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
     Disp = NewDisp;
   }
 
-  // handle [-42]
-  if (!BaseReg && !IndexReg)
-    return X86Operand::CreateMem(Disp, Start, End, Size);
+  int BaseReg = SM.getBaseReg();
+  int IndexReg = SM.getIndexReg();
 
+  // handle [-42]
+  if (!BaseReg && !IndexReg) {
+    if (!SegReg)
+      return X86Operand::CreateMem(Disp, Start, End);
+    else
+      return X86Operand::CreateMem(SegReg, Disp, 0, 0, 1, Start, End, Size);
+  }
+
+  int Scale = SM.getScale();
   return X86Operand::CreateMem(SegReg, Disp, BaseReg, IndexReg, Scale,
                                Start, End, Size);
 }
