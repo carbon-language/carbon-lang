@@ -117,6 +117,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
+  LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
   LLVMStyle.ObjCSpaceBeforeReturnType = true;
   return LLVMStyle;
@@ -132,9 +133,16 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
+  GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.ObjCSpaceBeforeReturnType = false;
   return GoogleStyle;
+}
+
+FormatStyle getChromiumStyle() {
+  FormatStyle ChromiumStyle = getGoogleStyle();
+  ChromiumStyle.AllowShortIfStatementsOnASingleLine = false;
+  return ChromiumStyle;
 }
 
 struct OptimizationParameters {
@@ -1441,6 +1449,8 @@ private:
   void tryMergeSimpleIf(std::vector<AnnotatedLine>::iterator &I,
                         std::vector<AnnotatedLine>::iterator E,
                         unsigned Limit) {
+    if (!Style.AllowShortIfStatementsOnASingleLine)
+      return;
     AnnotatedLine &Line = *I;
     if (!fitsIntoLimit((I + 1)->First, Limit))
       return;

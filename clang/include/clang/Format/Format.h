@@ -61,6 +61,9 @@ struct FormatStyle {
   /// initializer on its own line.
   bool ConstructorInitializerAllOnOneLineOrOnePerLine;
 
+  /// \brief If true, "if (a) return;" can be put on a single line.
+  bool AllowShortIfStatementsOnASingleLine;
+
   /// \brief Add a space in front of an Objective-C protocol list, i.e. use
   /// Foo <Protocol> instead of Foo<Protocol>.
   bool ObjCSpaceBeforeProtocolList;
@@ -77,6 +80,10 @@ FormatStyle getLLVMStyle();
 /// \brief Returns a format style complying with Google's C++ style guide:
 /// http://google-styleguide.googlecode.com/svn/trunk/cppguide.xml.
 FormatStyle getGoogleStyle();
+
+/// \brief Returns a format style complying with Chromium's style guide:
+/// http://www.chromium.org/developers/coding-style.
+FormatStyle getChromiumStyle();
 
 /// \brief Reformats the given \p Ranges in the token stream coming out of
 /// \c Lex.
