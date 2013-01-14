@@ -130,12 +130,14 @@ TEST_F(FormatTest, FormatsNestedCall) {
 //===----------------------------------------------------------------------===//
 
 TEST_F(FormatTest, FormatIfWithoutCompountStatement) {
-  verifyFormat("if (true)\n  f();\ng();");
-  verifyFormat("if (a)\n  if (b)\n    if (c)\n      g();\nh();");
+  verifyFormat("if (true) f();\ng();");
+  verifyFormat("if (a)\n  if (b)\n    if (c) g();\nh();");
   verifyFormat("if (a)\n  if (b) {\n    f();\n  }\ng();");
   verifyFormat("if (a)\n"
                "  // comment\n"
                "  f();");
+  verifyFormat("if (a) return;", getLLVMStyleWithColumns(14));
+  verifyFormat("if (a)\n  return;", getLLVMStyleWithColumns(13));
 }
 
 TEST_F(FormatTest, ParseIfElse) {
@@ -152,8 +154,7 @@ TEST_F(FormatTest, ParseIfElse) {
   verifyFormat("if (true)\n"
                "  if (true)\n"
                "    if (true) {\n"
-               "      if (true)\n"
-               "        f();\n"
+               "      if (true) f();\n"
                "    } else {\n"
                "      g();\n"
                "    }\n"
@@ -1454,8 +1455,7 @@ TEST_F(FormatTest, FormatObjCImplementation) {
 
   verifyFormat("@implementation Foo\n"
                "+ (id)init {\n"
-               "  if (true)\n"
-               "    return nil;\n"
+               "  if (true) return nil;\n"
                "}\n"
                "// Look, a comment!\n"
                "- (int)answerWith:(int)i {\n"

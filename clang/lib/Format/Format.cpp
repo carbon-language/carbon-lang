@@ -69,12 +69,9 @@ public:
         CanBreakBefore(false), MustBreakBefore(false),
         ClosesTemplateDeclaration(false), Parent(NULL) {}
 
-  bool is(tok::TokenKind Kind) const {
-    return FormatTok.Tok.is(Kind);
-  }
-  bool isNot(tok::TokenKind Kind) const {
-    return FormatTok.Tok.isNot(Kind);
-  }
+  bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
+  bool isNot(tok::TokenKind Kind) const { return FormatTok.Tok.isNot(Kind); }
+
   bool isObjCAtKeyword(tok::ObjCKeywordKind Kind) const {
     return FormatTok.Tok.isObjCAtKeyword(Kind);
   }
@@ -185,8 +182,8 @@ static void replacePPWhitespace(
 /// \p RootToken fits into \p Limit columns on a single line.
 ///
 /// If true, sets \p Length to the required length.
-static bool fitsIntoLimit(const AnnotatedToken &RootToken,
-                          unsigned Limit, unsigned* Length = 0) {
+static bool fitsIntoLimit(const AnnotatedToken &RootToken, unsigned Limit,
+                          unsigned *Length = 0) {
   unsigned Columns = RootToken.FormatTok.TokenLength;
   const AnnotatedToken *Tok = &RootToken;
   while (!Tok->Children.empty()) {
@@ -781,8 +778,8 @@ public:
           Tok->Type = TT_ObjCMethodExpr;
         break;
       case tok::l_paren: {
-        bool ParensWereObjCReturnType =
-            Tok->Parent && Tok->Parent->Type == TT_ObjCMethodSpecifier;
+        bool ParensWereObjCReturnType = Tok->Parent && Tok->Parent->Type ==
+                                        TT_ObjCMethodSpecifier;
         if (!parseParens())
           return false;
         if (CurrentToken != NULL && CurrentToken->is(tok::colon)) {
@@ -1347,8 +1344,8 @@ private:
 
 class Formatter : public UnwrappedLineConsumer {
 public:
-  Formatter(DiagnosticsEngine &Diag, const FormatStyle &Style,
-            Lexer &Lex, SourceManager &SourceMgr,
+  Formatter(DiagnosticsEngine &Diag, const FormatStyle &Style, Lexer &Lex,
+            SourceManager &SourceMgr,
             const std::vector<CharSourceRange> &Ranges)
       : Diag(Diag), Style(Style), Lex(Lex), SourceMgr(SourceMgr),
         Ranges(Ranges) {}
@@ -1407,25 +1404,46 @@ private:
     // Check whether the UnwrappedLine can be put onto a single line. If
     // so, this is bound to be the optimal solution (by definition) and we
     // don't need to analyze the entire solution space.
-    unsigned LengthLine1 = 0;
-    if (!fitsIntoLimit(I->First, Limit, &LengthLine1))
+    unsigned Length = 0;
+    if (!fitsIntoLimit(I->First, Limit, &Length))
       return false;
+    Limit -= Length + 1; // One space.
+    if (I + 1 == E)
+      return true;
 
+    if (I->Last->is(tok::l_brace)) {
+      tryMergeSimpleBlock(I, E, Limit);
+    } else if (I->First.is(tok::kw_if)) {
+      tryMergeSimpleIf(I, E, Limit);
+    }
+    return true;
+  }
+
+  void tryMergeSimpleIf(std::vector<AnnotatedLine>::iterator &I,
+                        std::vector<AnnotatedLine>::iterator E,
+                        unsigned Limit) {
+    AnnotatedLine &Line = *I;
+    if (!fitsIntoLimit((I + 1)->First, Limit))
+      return;
+    if ((I + 1)->First.is(tok::kw_if) || (I + 1)->First.Type == TT_LineComment)
+      return;
+    // Only inline simple if's (no nested if or else).
+    if (I + 2 != E && (I + 2)->First.is(tok::kw_else))
+      return;
+    join(Line, *(++I));
+  }
+
+  void tryMergeSimpleBlock(std::vector<AnnotatedLine>::iterator &I,
+                        std::vector<AnnotatedLine>::iterator E,
+                        unsigned Limit){
     // Check that we still have three lines and they fit into the limit.
-    if (I + 1 == E || I + 2 == E)
-      return true;
-    unsigned LengthLine2 = 0;
-    unsigned LengthLine3 = 0;
-    if (!fitsIntoLimit((I + 1)->First, Limit, &LengthLine2) ||
-        !fitsIntoLimit((I + 2)->First, Limit, &LengthLine3))
-      return true;
-    if (LengthLine1 + LengthLine2 + LengthLine3 + 2 > Limit) // Two spaces.
-      return true;
+    if (I + 2 == E || !nextTwoLinesFitInto(I, Limit))
+      return;
 
     // First, check that the current line allows merging. This is the case if
     // we're not in a control flow statement and the last token is an opening
     // brace.
-    AnnotatedLine& Line = *I;
+    AnnotatedLine &Line = *I;
     bool AllowedTokens =
         Line.First.isNot(tok::kw_if) && Line.First.isNot(tok::kw_while) &&
         Line.First.isNot(tok::kw_do) && Line.First.isNot(tok::r_brace) &&
@@ -1434,17 +1452,17 @@ private:
         // This gets rid of all ObjC @ keywords and methods.
         Line.First.isNot(tok::at) && Line.First.isNot(tok::minus) &&
         Line.First.isNot(tok::plus);
-    if (Line.Last->isNot(tok::l_brace) || !AllowedTokens)
-      return true;
+    if (!AllowedTokens)
+      return;
 
     // Second, check that the next line does not contain any braces - if it
     // does, readability declines when putting it into a single line.
     const AnnotatedToken *Tok = &(I + 1)->First;
     if ((I + 1)->Last->Type == TT_LineComment || Tok->MustBreakBefore)
-      return true;
+      return;
     do {
       if (Tok->is(tok::l_brace) || Tok->is(tok::r_brace))
-        return true;
+        return;
       Tok = Tok->Children.empty() ? NULL : &Tok->Children.back();
     } while (Tok != NULL);
 
@@ -1452,7 +1470,7 @@ private:
     Tok = &(I + 2)->First;
     if (!Tok->Children.empty() || Tok->isNot(tok::r_brace) ||
         Tok->MustBreakBefore)
-      return true;
+      return;
 
     // If the merged line fits, we use that instead and skip the next two lines.
     Line.Last->Children.push_back((I + 1)->First);
@@ -1464,7 +1482,16 @@ private:
     join(Line, *(I + 1));
     join(Line, *(I + 2));
     I += 2;
-    return true;
+  }
+
+  bool nextTwoLinesFitInto(std::vector<AnnotatedLine>::iterator I,
+                           unsigned Limit) {
+    unsigned LengthLine1 = 0;
+    unsigned LengthLine2 = 0;
+    if (!fitsIntoLimit((I + 1)->First, Limit, &LengthLine1) ||
+        !fitsIntoLimit((I + 2)->First, Limit, &LengthLine2))
+      return false;
+    return LengthLine1 + LengthLine2 + 1 <= Limit; // One space.
   }
 
   void join(AnnotatedLine &A, const AnnotatedLine &B) {
