@@ -238,14 +238,14 @@ class SizeClassAllocator64 {
     Batch *b = region->free_list.Pop();
     if (b == 0)
       b = PopulateFreeList(c, class_id, region);
-    region->n_allocated++;
+    region->n_allocated += b->count;
     return b;
   }
 
   void NOINLINE DeallocateBatch(uptr class_id, Batch *b) {
     RegionInfo *region = GetRegionInfo(class_id);
     region->free_list.Push(b);
-    region->n_freed++;
+    region->n_freed += b->count;
   }
 
   static bool PointerIsMine(void *p) {
