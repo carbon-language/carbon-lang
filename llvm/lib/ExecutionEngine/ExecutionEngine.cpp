@@ -893,7 +893,8 @@ void ExecutionEngine::StoreValueToMemory(const GenericValue &Val,
 /// from Src into IntVal, which is assumed to be wide enough and to hold zero.
 static void LoadIntFromMemory(APInt &IntVal, uint8_t *Src, unsigned LoadBytes) {
   assert((IntVal.getBitWidth()+7)/8 >= LoadBytes && "Integer too small!");
-  uint8_t *Dst = (uint8_t *)IntVal.getRawData();
+  uint8_t *Dst = reinterpret_cast<uint8_t *>(
+                   const_cast<uint64_t *>(IntVal.getRawData()));
 
   if (sys::isLittleEndianHost())
     // Little-endian host - the destination must be ordered from LSB to MSB.
