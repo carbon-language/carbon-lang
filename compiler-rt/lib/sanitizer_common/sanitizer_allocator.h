@@ -389,22 +389,9 @@ class SizeClassAllocator64 {
       MapWithCallback(region_beg + region->mapped_user, map_size);
       region->mapped_user += map_size;
     }
-    for (;;) {
-      if (class_id < SizeClassMap::kMinBatchClass)
-        b = (Batch*)c->Allocate(this, SizeClassMap::ClassID(sizeof(Batch)));
-      else
-        b = (Batch*)(region_beg + beg_idx);
-      b->count = count;
-      for (uptr i = 0; i < count; i++)
-        b->batch[i] = (void*)(region_beg + beg_idx + i * size);
-      region->allocated_user += count * size;
-      CHECK_LE(region->allocated_user, region->mapped_user);
-      region->allocated_meta += count * kMetadataSize;
-      beg_idx += count * size;
-      if (beg_idx + count * size + size > region->mapped_user)
-        break;
-      region->free_list.Push(b);
-    }
+    uptr total_count = (region->mapped_user - beg_idx - size)
+        / size / count * count;
+    region->allocated_meta += total_count * kMetadataSize;
     if (region->allocated_meta > region->mapped_meta) {
       uptr map_size = kMetaMapSize;
       while (region->allocated_meta > region->mapped_meta + map_size)
@@ -421,6 +408,21 @@ class SizeClassAllocator64 {
       Printf("The process has exhausted %zuMB for size class %zu.\n",
           kRegionSize / 1024 / 1024, size);
       Die();
+    }
+    for (;;) {
+      if (class_id < SizeClassMap::kMinBatchClass)
+        b = (Batch*)c->Allocate(this, SizeClassMap::ClassID(sizeof(Batch)));
+      else
+        b = (Batch*)(region_beg + beg_idx);
+      b->count = count;
+      for (uptr i = 0; i < count; i++)
+        b->batch[i] = (void*)(region_beg + beg_idx + i * size);
+      region->allocated_user += count * size;
+      CHECK_LE(region->allocated_user, region->mapped_user);
+      beg_idx += count * size;
+      if (beg_idx + count * size + size > region->mapped_user)
+        break;
+      region->free_list.Push(b);
     }
     return b;
   }
