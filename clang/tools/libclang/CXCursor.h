@@ -48,12 +48,12 @@ namespace cxcursor {
 
 CXCursor getCursor(CXTranslationUnit, SourceLocation);
   
-CXCursor MakeCXCursor(const clang::Attr *A, clang::Decl *Parent,
+CXCursor MakeCXCursor(const clang::Attr *A, const clang::Decl *Parent,
                       CXTranslationUnit TU);
 CXCursor MakeCXCursor(const clang::Decl *D, CXTranslationUnit TU,
                       SourceRange RegionOfInterest = SourceRange(),
                       bool FirstInDeclGroup = true);
-CXCursor MakeCXCursor(const clang::Stmt *S, clang::Decl *Parent,
+CXCursor MakeCXCursor(const clang::Stmt *S, const clang::Decl *Parent,
                       CXTranslationUnit TU,
                       SourceRange RegionOfInterest = SourceRange());
 CXCursor MakeCXCursorInvalid(CXCursorKind K, CXTranslationUnit TU = 0);

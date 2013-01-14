@@ -4462,7 +4462,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   case Decl::CXXConversion: {
     const FunctionDecl *Def = 0;
     if (cast<FunctionDecl>(D)->getBody(Def))
-      return MakeCXCursor(const_cast<FunctionDecl *>(Def), TU);
+      return MakeCXCursor(Def, TU);
     return clang_getNullCursor();
   }
 

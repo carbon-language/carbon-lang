@@ -53,7 +53,7 @@ static CXCursorKind GetCursorKind(const Attr *A) {
   return CXCursor_UnexposedAttr;
 }
 
-CXCursor cxcursor::MakeCXCursor(const Attr *A, Decl *Parent,
+CXCursor cxcursor::MakeCXCursor(const Attr *A, const Decl *Parent,
                                 CXTranslationUnit TU) {
   assert(A && Parent && TU && "Invalid arguments!");
   CXCursor C = { GetCursorKind(A), 0, { Parent, A, TU } };
@@ -89,7 +89,7 @@ CXCursor cxcursor::MakeCXCursor(const Decl *D, CXTranslationUnit TU,
   return C;
 }
 
-CXCursor cxcursor::MakeCXCursor(const Stmt *S, Decl *Parent,
+CXCursor cxcursor::MakeCXCursor(const Stmt *S, const Decl *Parent,
                                 CXTranslationUnit TU,
                                 SourceRange RegionOfInterest) {
   assert(S && TU && "Invalid arguments!");
@@ -830,7 +830,7 @@ void cxcursor::getOverriddenCursors(CXCursor cursor,
 
   for (SmallVector<const NamedDecl *, 8>::iterator
          I = OverDecls.begin(), E = OverDecls.end(); I != E; ++I) {
-    overridden.push_back(MakeCXCursor(const_cast<NamedDecl*>(*I), TU));
+    overridden.push_back(MakeCXCursor(*I, TU));
   }
 }
 

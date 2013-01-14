@@ -69,7 +69,7 @@ AttrListInfo::AttrListInfo(const Decl *D, IndexingContext &IdxCtx)
   for (AttrVec::const_iterator AttrI = D->attr_begin(), AttrE = D->attr_end();
          AttrI != AttrE; ++AttrI) {
     const Attr *A = *AttrI;
-    CXCursor C = MakeCXCursor(A, const_cast<Decl *>(D), IdxCtx.CXTU);
+    CXCursor C = MakeCXCursor(A, D, IdxCtx.CXTU);
     CXIdxLoc Loc =  IdxCtx.getIndexLoc(A->getLocation());
     switch (C.kind) {
     default:
@@ -644,8 +644,7 @@ bool IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
   if (!D)
     return false;
 
-  CXCursor Cursor = E ? MakeCXCursor(const_cast<Expr*>(E),
-                                     const_cast<Decl*>(cast<Decl>(DC)), CXTU)
+  CXCursor Cursor = E ? MakeCXCursor(E, cast<Decl>(DC), CXTU)
                       : getRefCursor(D, Loc);
   return handleReference(D, Loc, Cursor, Parent, DC, E, Kind);
 }
