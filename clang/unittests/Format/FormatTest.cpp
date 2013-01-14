@@ -1133,12 +1133,12 @@ TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
 }
 
 TEST_F(FormatTest, HandlesIncludeDirectives) {
-  verifyFormat("#include <string>");
-  verifyFormat("#include <a/b/c.h>");
-  verifyFormat("#include \"a/b/string\"");
-  verifyFormat("#include \"string.h\"");
-  verifyFormat("#include \"string.h\"");
-  verifyFormat("#include <a-a>");
+  verifyFormat("#include <string>\n"
+               "#include <a/b/c.h>\n"
+               "#include \"a/b/string\"\n"
+               "#include \"string.h\"\n"
+               "#include \"string.h\"\n"
+               "#include <a-a>");
 
   verifyFormat("#import <string>");
   verifyFormat("#import <a/b/c.h>");

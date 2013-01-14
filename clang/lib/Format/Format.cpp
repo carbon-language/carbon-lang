@@ -1427,7 +1427,8 @@ private:
                                  std::vector<AnnotatedLine>::iterator E,
                                  unsigned Limit) {
     AnnotatedLine &Line = *I;
-    if (!(I + 1)->InPPDirective) return;
+    if (!(I + 1)->InPPDirective || (I + 1)->First.FormatTok.HasUnescapedNewline)
+      return;
     if (I + 2 != E && (I + 2)->InPPDirective &&
         !(I + 2)->First.FormatTok.HasUnescapedNewline)
       return;
