@@ -1,18 +1,34 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
+using size_t = decltype(sizeof(int));
+
 struct S {
   constexpr int f();
   constexpr int g() const;
   static constexpr int Sf();
+  /*static*/ constexpr void *operator new(size_t) noexcept;
+  template<typename T> constexpr T tm();
+  template<typename T> static constexpr T ts();
 };
 
 void f(const S &s) {
   s.f();
   s.g();
 
-  int (*f)() = &S::Sf;
+  int (*Sf)() = &S::Sf;
+  int (S::*f)() const = &S::f;
   int (S::*g)() const = &S::g;
+  void *(*opNew)(size_t) = &S::operator new;
+  int (S::*tm)() const = &S::tm;
+  int (*ts)() = &S::ts;
 }
+
+constexpr int S::f() const { return 0; }
+constexpr int S::g() { return 1; }
+constexpr int S::Sf() { return 2; }
+constexpr void *S::operator new(size_t) noexcept { return 0; }
+template<typename T> constexpr T S::tm() { return T(); }
+template<typename T> constexpr T S::ts() { return T(); }
 
 namespace std_example {
 

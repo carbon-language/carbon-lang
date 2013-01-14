@@ -2690,30 +2690,6 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       FreeFunction = (DC && !DC->isRecord());
     }
 
-    // C++0x [dcl.constexpr]p8: A constexpr specifier for a non-static member
-    // function that is not a constructor declares that function to be const.
-    // FIXME: This should be deferred until we know whether this is a static
-    //        member function (for an out-of-class definition, we don't know
-    //        this until we perform redeclaration lookup).
-    if (D.getDeclSpec().isConstexprSpecified() && !FreeFunction &&
-        D.getDeclSpec().getStorageClassSpec() != DeclSpec::SCS_static &&
-        D.getName().getKind() != UnqualifiedId::IK_ConstructorName &&
-        D.getName().getKind() != UnqualifiedId::IK_ConstructorTemplateId &&
-        !(FnTy->getTypeQuals() & DeclSpec::TQ_const)) {
-      // Rebuild function type adding a 'const' qualifier.
-      FunctionProtoType::ExtProtoInfo EPI = FnTy->getExtProtoInfo();
-      EPI.TypeQuals |= DeclSpec::TQ_const;
-      T = Context.getFunctionType(FnTy->getResultType(),
-                                  FnTy->arg_type_begin(),
-                                  FnTy->getNumArgs(), EPI);
-      // Rebuild any parens around the identifier in the function type.
-      for (unsigned i = 0, e = D.getNumTypeObjects(); i != e; ++i) {
-        if (D.getTypeObject(i).Kind != DeclaratorChunk::Paren)
-          break;
-        T = S.BuildParenType(T);
-      }
-    }
-
     // C++11 [dcl.fct]p6 (w/DR1417):
     // An attempt to specify a function type with a cv-qualifier-seq or a
     // ref-qualifier (including by typedef-name) is ill-formed unless it is:

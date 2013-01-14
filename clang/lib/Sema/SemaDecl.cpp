@@ -5598,11 +5598,11 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     }
 
     if (isConstexpr) {
-      // C++0x [dcl.constexpr]p2: constexpr functions and constexpr constructors
+      // C++11 [dcl.constexpr]p2: constexpr functions and constexpr constructors
       // are implicitly inline.
       NewFD->setImplicitlyInline();
 
-      // C++0x [dcl.constexpr]p3: functions declared constexpr are required to
+      // C++11 [dcl.constexpr]p3: functions declared constexpr are required to
       // be either constructors or to return a literal type. Therefore,
       // destructors cannot be declared constexpr.
       if (isa<CXXDestructorDecl>(NewFD))
@@ -6162,6 +6162,7 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
   filterNonConflictingPreviousDecls(Context, NewFD, Previous);
 
   bool Redeclaration = false;
+  NamedDecl *OldDecl = 0;
 
   // Merge or overload the declaration with an existing declaration of
   // the same name, if appropriate.
@@ -6170,8 +6171,6 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
     // a declaration that requires merging. If it's an overload,
     // there's no more work to do here; we'll just add the new
     // function to the scope.
-
-    NamedDecl *OldDecl = 0;
     if (!AllowOverloadingOfFunction(Previous, Context)) {
       Redeclaration = true;
       OldDecl = Previous.getFoundDecl();
@@ -6208,43 +6207,68 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
                                                         Context));
       }
     }
+  }
 
-    if (Redeclaration) {
-      // NewFD and OldDecl represent declarations that need to be
-      // merged.
-      if (MergeFunctionDecl(NewFD, OldDecl, S)) {
-        NewFD->setInvalidDecl();
-        return Redeclaration;
+  // C++11 [dcl.constexpr]p8:
+  //   A constexpr specifier for a non-static member function that is not
+  //   a constructor declares that member function to be const.
+  //
+  // This needs to be delayed until we know whether this is an out-of-line
+  // definition of a static member function.
+  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD);
+  if (MD && MD->isConstexpr() && !MD->isStatic() &&
+      !isa<CXXConstructorDecl>(MD) &&
+      (MD->getTypeQualifiers() & Qualifiers::Const) == 0) {
+    CXXMethodDecl *OldMD = dyn_cast_or_null<CXXMethodDecl>(OldDecl);
+    if (FunctionTemplateDecl *OldTD =
+          dyn_cast_or_null<FunctionTemplateDecl>(OldDecl))
+      OldMD = dyn_cast<CXXMethodDecl>(OldTD->getTemplatedDecl());
+    if (!OldMD || !OldMD->isStatic()) {
+      const FunctionProtoType *FPT =
+        MD->getType()->castAs<FunctionProtoType>();
+      FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+      EPI.TypeQuals |= Qualifiers::Const;
+      MD->setType(Context.getFunctionType(FPT->getResultType(),
+                                          FPT->arg_type_begin(),
+                                          FPT->getNumArgs(), EPI));
+    }
+  }
+
+  if (Redeclaration) {
+    // NewFD and OldDecl represent declarations that need to be
+    // merged.
+    if (MergeFunctionDecl(NewFD, OldDecl, S)) {
+      NewFD->setInvalidDecl();
+      return Redeclaration;
+    }
+
+    Previous.clear();
+    Previous.addDecl(OldDecl);
+
+    if (FunctionTemplateDecl *OldTemplateDecl
+                                  = dyn_cast<FunctionTemplateDecl>(OldDecl)) {
+      NewFD->setPreviousDeclaration(OldTemplateDecl->getTemplatedDecl());
+      FunctionTemplateDecl *NewTemplateDecl
+        = NewFD->getDescribedFunctionTemplate();
+      assert(NewTemplateDecl && "Template/non-template mismatch");
+      if (CXXMethodDecl *Method 
+            = dyn_cast<CXXMethodDecl>(NewTemplateDecl->getTemplatedDecl())) {
+        Method->setAccess(OldTemplateDecl->getAccess());
+        NewTemplateDecl->setAccess(OldTemplateDecl->getAccess());
       }
-
-      Previous.clear();
-      Previous.addDecl(OldDecl);
-
-      if (FunctionTemplateDecl *OldTemplateDecl
-                                    = dyn_cast<FunctionTemplateDecl>(OldDecl)) {
-        NewFD->setPreviousDeclaration(OldTemplateDecl->getTemplatedDecl());
-        FunctionTemplateDecl *NewTemplateDecl
-          = NewFD->getDescribedFunctionTemplate();
-        assert(NewTemplateDecl && "Template/non-template mismatch");
-        if (CXXMethodDecl *Method 
-              = dyn_cast<CXXMethodDecl>(NewTemplateDecl->getTemplatedDecl())) {
-          Method->setAccess(OldTemplateDecl->getAccess());
-          NewTemplateDecl->setAccess(OldTemplateDecl->getAccess());
-        }
-        
-        // If this is an explicit specialization of a member that is a function
-        // template, mark it as a member specialization.
-        if (IsExplicitSpecialization && 
-            NewTemplateDecl->getInstantiatedFromMemberTemplate()) {
-          NewTemplateDecl->setMemberSpecialization();
-          assert(OldTemplateDecl->isMemberSpecialization());
-        }
-        
-      } else {
-        if (isa<CXXMethodDecl>(NewFD)) // Set access for out-of-line definitions
-          NewFD->setAccess(OldDecl->getAccess());
-        NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
+      
+      // If this is an explicit specialization of a member that is a function
+      // template, mark it as a member specialization.
+      if (IsExplicitSpecialization && 
+          NewTemplateDecl->getInstantiatedFromMemberTemplate()) {
+        NewTemplateDecl->setMemberSpecialization();
+        assert(OldTemplateDecl->isMemberSpecialization());
       }
+      
+    } else {
+      if (isa<CXXMethodDecl>(NewFD)) // Set access for out-of-line definitions
+        NewFD->setAccess(OldDecl->getAccess());
+      NewFD->setPreviousDeclaration(cast<FunctionDecl>(OldDecl));
     }
   }
 

@@ -5918,6 +5918,25 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
                                 Ovl->getDeclContext()->getRedeclContext()))
         continue;
 
+      // When matching a constexpr member function template specialization
+      // against the primary template, we don't yet know whether the
+      // specialization has an implicit 'const' (because we don't know whether
+      // it will be a static member function until we know which template it
+      // specializes), so adjust it now assuming it specializes this template.
+      QualType FT = FD->getType();
+      if (FD->isConstexpr()) {
+        CXXMethodDecl *OldMD =
+          dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
+        if (OldMD && OldMD->isConst()) {
+          const FunctionProtoType *FPT = FT->castAs<FunctionProtoType>();
+          FunctionProtoType::ExtProtoInfo EPI = FPT->getExtProtoInfo();
+          EPI.TypeQuals |= Qualifiers::Const;
+          FT = Context.getFunctionType(FPT->getResultType(),
+                                       FPT->arg_type_begin(),
+                                       FPT->getNumArgs(), EPI);
+        }
+      }
+
       // C++ [temp.expl.spec]p11:
       //   A trailing template-argument can be left unspecified in the
       //   template-id naming an explicit function template specialization
@@ -5928,10 +5947,8 @@ Sema::CheckFunctionTemplateSpecialization(FunctionDecl *FD,
       TemplateDeductionInfo Info(FD->getLocation());
       FunctionDecl *Specialization = 0;
       if (TemplateDeductionResult TDK
-            = DeduceTemplateArguments(FunTmpl, ExplicitTemplateArgs,
-                                      FD->getType(),
-                                      Specialization,
-                                      Info)) {
+            = DeduceTemplateArguments(FunTmpl, ExplicitTemplateArgs, FT,
+                                      Specialization, Info)) {
         // FIXME: Template argument deduction failed; record why it failed, so
         // that we can provide nifty diagnostics.
         (void)TDK;

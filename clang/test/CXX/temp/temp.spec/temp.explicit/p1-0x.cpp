@@ -12,7 +12,7 @@ struct Y {
   constexpr int f() { return 0; }
 };
 
-template constexpr int Y<int>::f(); // expected-error{{explicit instantiation cannot be 'constexpr'}}
+template constexpr int Y<int>::f() const; // expected-error{{explicit instantiation cannot be 'constexpr'}}
 
 template<typename T>
 struct Z {
