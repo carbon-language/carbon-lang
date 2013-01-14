@@ -20,6 +20,7 @@
 #error "UBSan not supported for this platform!"
 #endif
 
+#include "sanitizer_common/sanitizer_atomic.h"
 #include "sanitizer_common/sanitizer_common.h"
 
 // FIXME: Move this out to a config header.
@@ -64,7 +65,9 @@ public:
   /// \brief Atomically acquire a copy, disabling original in-place.
   /// Exactly one call to acquire() returns a copy that isn't disabled.
   SourceLocation acquire() {
-    u32 OldColumn = __sync_lock_test_and_set(&Column, ~u32(0));
+    u32 OldColumn = __sanitizer::atomic_exchange(
+                        (__sanitizer::atomic_uint32_t *)&Column, ~u32(0),
+                        __sanitizer::memory_order_relaxed);
     return SourceLocation(Filename, Line, OldColumn);
   }
 
