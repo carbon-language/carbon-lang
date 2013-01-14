@@ -72,15 +72,20 @@ namespace {
     /// getBlockAfter - Return the memory block immediately after this one.
     ///
     MemoryRangeHeader &getBlockAfter() const {
-      return *(MemoryRangeHeader*)((char*)this+BlockSize);
+      return *reinterpret_cast<MemoryRangeHeader *>(
+                reinterpret_cast<char*>(
+                  const_cast<MemoryRangeHeader *>(this))+BlockSize);
     }
 
     /// getFreeBlockBefore - If the block before this one is free, return it,
     /// otherwise return null.
     FreeRangeHeader *getFreeBlockBefore() const {
       if (PrevAllocated) return 0;
-      intptr_t PrevSize = ((intptr_t *)this)[-1];
-      return (FreeRangeHeader*)((char*)this-PrevSize);
+      intptr_t PrevSize = reinterpret_cast<intptr_t *>(
+                            const_cast<MemoryRangeHeader *>(this))[-1];
+      return reinterpret_cast<FreeRangeHeader *>(
+               reinterpret_cast<char*>(
+                 const_cast<MemoryRangeHeader *>(this))-PrevSize);
     }
 
     /// FreeBlock - Turn an allocated block into a free block, adjusting
