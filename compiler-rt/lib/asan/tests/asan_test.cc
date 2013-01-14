@@ -2060,9 +2060,9 @@ TEST(AddressSanitizer, AttributeNoAddressSafetyTest) {
   Ident(NoAddressSafety)();
 }
 
-// TODO(glider): Enable this test on Mac when alloc/dealloc mismatch is
-// fixed there.
-#ifndef __APPLE__
+// TODO(glider): Enable this test on Mac.
+// It doesn't work on Android, as calls to new/delete go through malloc/free.
+#if !defined(__APPLE__) && !defined(ANDROID) && !defined(__ANDROID__)
 static string MismatchStr(const string &str) {
   return string("AddressSanitizer: alloc-dealloc-mismatch \\(") + str;
 }
@@ -2081,7 +2081,7 @@ TEST(AddressSanitizer, AllocDeallocMismatch) {
   EXPECT_DEATH(delete [] (Ident((int*)malloc(2 * sizeof(int)))),
                MismatchStr("malloc vs operator delete \\[\\]"));
 }
-#endif  // __APPLE__
+#endif
 
 // ------------------ demo tests; run each one-by-one -------------
 // e.g. --gtest_filter=*DemoOOBLeftHigh --gtest_also_run_disabled_tests
