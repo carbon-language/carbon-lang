@@ -159,6 +159,24 @@ public:
     return std::make_pair(iterator(TheBucket, getBucketsEnd(), true), true);
   }
 
+#ifdef LLVM_HAS_RVALUE_REFERENCES
+  // Inserts key,value pair into the map if the key isn't already in the map.
+  // If the key is already in the map, it returns false and doesn't update the
+  // value.
+  std::pair<iterator, bool> insert(std::pair<KeyT, ValueT> &&KV) {
+    BucketT *TheBucket;
+    if (LookupBucketFor(KV.first, TheBucket))
+      return std::make_pair(iterator(TheBucket, getBucketsEnd(), true),
+                            false); // Already in map.
+    
+    // Otherwise, insert the new element.
+    TheBucket = InsertIntoBucket(std::move(KV.first),
+                                 std::move(KV.second),
+                                 TheBucket);
+    return std::make_pair(iterator(TheBucket, getBucketsEnd(), true), true);
+  }
+#endif
+  
   /// insert - Range insertion of pairs.
   template<typename InputIt>
   void insert(InputIt I, InputIt E) {
