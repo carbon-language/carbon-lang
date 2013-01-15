@@ -118,7 +118,8 @@ static bool BaseIsNot(const CXXRecordDecl *Base, void *OpaqueTarget) {
 }
 
 bool CXXRecordDecl::isProvablyNotDerivedFrom(const CXXRecordDecl *Base) const {
-  return forallBases(BaseIsNot, (void*) Base->getCanonicalDecl());
+  return forallBases(BaseIsNot,
+                     const_cast<CXXRecordDecl *>(Base->getCanonicalDecl()));
 }
 
 bool
