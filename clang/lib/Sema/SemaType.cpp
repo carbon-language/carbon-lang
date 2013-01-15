@@ -463,6 +463,15 @@ distributeFunctionTypeAttrFromDeclSpec(TypeProcessingState &state,
                                        QualType &declSpecType) {
   state.saveDeclSpecAttrs();
 
+  // C++11 attributes before the decl specifiers actually appertain to
+  // the declarators. Move them straight there. We don't support the
+  // 'put them wherever you like' semantics we allow for GNU attributes.
+  if (attr.isCXX11Attribute()) {
+    moveAttrFromListToList(attr, state.getCurrentAttrListRef(),
+                           state.getDeclarator().getAttrListRef());
+    return;
+  }
+
   // Try to distribute to the innermost.
   if (distributeFunctionTypeAttrToInnermost(state, attr,
                                             state.getCurrentAttrListRef(),
@@ -511,6 +520,11 @@ static void distributeTypeAttrsFromDeclarator(TypeProcessingState &state,
   AttributeList *next;
   do {
     next = attr->getNext();
+
+    // Do not distribute C++11 attributes. They have strict rules for what
+    // they appertain to.
+    if (attr->isCXX11Attribute())
+      continue;
 
     switch (attr->getKind()) {
     OBJC_POINTER_TYPE_ATTRS_CASELIST:

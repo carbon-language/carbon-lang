@@ -44,7 +44,7 @@ void f(X *noreturn) {
   int e2(); // expected-warning {{interpreted as a function declaration}} expected-note{{}}
 
   // A function taking a noreturn function.
-  int(f)([[noreturn]] int()); // expected-note {{here}}
+  int(f)([[gnu::noreturn]] int ()); // expected-note {{here}}
   f(e);
   f(e2); // expected-error {{cannot initialize a parameter of type 'int (*)() __attribute__((noreturn))' with an lvalue of type 'int ()'}}
 

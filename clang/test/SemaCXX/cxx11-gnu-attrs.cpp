@@ -39,7 +39,17 @@ void deprecated3() {
 
 void nonnull [[gnu::nonnull]] (); // expected-warning {{applied to function with no pointer arguments}}
 
+// [[gnu::noreturn]] appertains to a declaration, and marks the innermost
+// function declarator in that declaration as being noreturn.
 int noreturn [[gnu::noreturn]]; // expected-warning {{'noreturn' only applies to function types}}
+int noreturn_fn_1();
+int noreturn_fn_2() [[gnu::noreturn]]; // expected-warning {{cannot be applied to a type}}
+int noreturn_fn_3 [[gnu::noreturn]] ();
+[[gnu::noreturn]] int noreturn_fn_4();
+int (*noreturn_fn_ptr_1 [[gnu::noreturn]])() = &noreturn_fn_1; // expected-error {{cannot initialize}}
+int (*noreturn_fn_ptr_2 [[gnu::noreturn]])() = &noreturn_fn_3;
+[[gnu::noreturn]] int (*noreturn_fn_ptr_3)() = &noreturn_fn_1; // expected-error {{cannot initialize}}
+[[gnu::noreturn]] int (*noreturn_fn_ptr_4)() = &noreturn_fn_3;
 
 struct [[gnu::packed]] packed { char c; int n; };
 static_assert(sizeof(packed) == sizeof(char) + sizeof(int), "not packed");
