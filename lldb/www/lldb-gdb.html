@@ -656,7 +656,18 @@
                             <b>(gdb)</b> p function_with_a_breakpoint()<br>
                         </td>
                         <td class="content">
-                            <b>(lldb)</b> expr -u 0 -- function_with_a_breakpoint()<br>
+                            <b>(lldb)</b> expr -i 0 -- function_with_a_breakpoint()<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Calling a function that crashes, and stopping when the function crashes.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(gdb)</b> set unwindonsignal 0<br>
+                            <b>(gdb)</b> p function_which_crashes()<br>
+                        </td>
+                        <td class="content">
+                            <b>(lldb)</b> expr -u 0 -- function_which_crashes()<br>
                         </td>
                     </tr>
 
