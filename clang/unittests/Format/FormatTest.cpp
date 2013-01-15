@@ -1184,7 +1184,8 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
                "#include \"a/b/string\"\n"
                "#include \"string.h\"\n"
                "#include \"string.h\"\n"
-               "#include <a-a>");
+               "#include <a-a>\n"
+               "#include < path with space >\n");
 
   verifyFormat("#import <string>");
   verifyFormat("#import <a/b/c.h>");
@@ -1332,6 +1333,13 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
                "  class X x;\n"
                "else\n"
                "  f();\n");
+}
+
+TEST_F(FormatTest, DoNotInterfereWithErrorAndWarning) {
+  verifyFormat("#error Leave     all         white!!!!! space* alone!\n");
+  verifyFormat("#warning Leave     all         white!!!!! space* alone!\n");
+  EXPECT_EQ("#error 1", format("  #  error   1"));
+  EXPECT_EQ("#warning 1", format("  #  warning 1"));
 }
 
 // FIXME: This breaks the order of the unwrapped lines:

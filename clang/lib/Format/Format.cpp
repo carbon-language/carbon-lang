@@ -34,7 +34,7 @@ enum TokenType {
   TT_CastRParen,
   TT_ConditionalExpr,
   TT_CtorInitializerColon,
-  TT_IncludePath,
+  TT_ImplicitStringLiteral,
   TT_LineComment,
   TT_ObjCBlockLParen,
   TT_ObjCDecl,
@@ -373,6 +373,11 @@ private:
     const AnnotatedToken &Previous = *State.NextToken->Parent;
     assert(State.Stack.size());
     unsigned ParenLevel = State.Stack.size() - 1;
+
+    if (Current.Type == TT_ImplicitStringLiteral) {
+      moveStateToNextToken(State);
+      return;
+    }
 
     if (Newline) {
       unsigned WhitespaceStartColumn = State.Column;
@@ -862,8 +867,27 @@ public:
     }
 
     void parseIncludeDirective() {
+      next();
+      if (CurrentToken != NULL && CurrentToken->is(tok::less)) {
+        next();
+        while (CurrentToken != NULL) {
+          CurrentToken->Type = TT_ImplicitStringLiteral;
+          next();
+        }
+      } else {
+        while (CurrentToken != NULL) {
+          next();
+        }
+      }
+    }
+
+    void parseWarningOrError() {
+      next();
+      // We still want to format the whitespace left of the first token of the
+      // warning or error.
+      next();
       while (CurrentToken != NULL) {
-        CurrentToken->Type = TT_IncludePath;
+        CurrentToken->Type = TT_ImplicitStringLiteral;
         next();
       }
     }
@@ -881,6 +905,10 @@ public:
       case tok::pp_include:
       case tok::pp_import:
         parseIncludeDirective();
+        break;
+      case tok::pp_error:
+      case tok::pp_warning:
+        parseWarningOrError();
         break;
       default:
         break;
@@ -1213,8 +1241,6 @@ private:
 
     if (Tok.Parent->is(tok::comma))
       return true;
-    if (Tok.Type == TT_IncludePath)
-      return Tok.is(tok::less) || Tok.is(tok::string_literal);
     if (Tok.Type == TT_CtorInitializerColon || Tok.Type == TT_ObjCBlockLParen)
       return true;
     if (Tok.Type == TT_OverloadedOperator)
@@ -1264,8 +1290,6 @@ private:
         // Don't break at ':' if identifier before it can beak.
         return false;
     }
-    if (Right.Type == TT_IncludePath)
-      return false;
     if (Right.is(tok::colon) && Right.Type == TT_ObjCMethodExpr)
       return false;
     if (Left.is(tok::colon) && Left.Type == TT_ObjCMethodExpr)
