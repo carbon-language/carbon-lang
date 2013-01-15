@@ -231,7 +231,9 @@ bool IndexingContext::shouldAbort() {
 
 void IndexingContext::enteredMainFile(const FileEntry *File) {
   if (File && CB.enteredMainFile) {
-    CXIdxClientFile idxFile = CB.enteredMainFile(ClientData, (CXFile)File, 0);
+    CXIdxClientFile idxFile =
+      CB.enteredMainFile(ClientData,
+                         static_cast<CXFile>(const_cast<FileEntry *>(File)), 0);
     FileMap[File] = idxFile;
   }
 }
@@ -247,7 +249,8 @@ void IndexingContext::ppIncludedFile(SourceLocation hashLoc,
   ScratchAlloc SA(*this);
   CXIdxIncludedFileInfo Info = { getIndexLoc(hashLoc),
                                  SA.toCStr(filename),
-                                 (CXFile)File,
+                                 static_cast<CXFile>(
+                                   const_cast<FileEntry *>(File)),
                                  isImport, isAngled, isModuleImport };
   CXIdxClientFile idxFile = CB.ppIncludedFile(ClientData, &Info);
   FileMap[File] = idxFile;
@@ -263,7 +266,8 @@ void IndexingContext::importedModule(const ImportDecl *ImportD) {
   std::string ModuleName = Mod->getFullModuleName();
 
   CXIdxImportedASTFileInfo Info = {
-                                    (CXFile)Mod->getASTFile(),
+                                    static_cast<CXFile>(
+                                    const_cast<FileEntry *>(Mod->getASTFile())),
                                     Mod,
                                     getIndexLoc(ImportD->getLocation()),
                                     ImportD->isImplicit()
@@ -277,7 +281,8 @@ void IndexingContext::importedPCH(const FileEntry *File) {
     return;
 
   CXIdxImportedASTFileInfo Info = {
-                                    (CXFile)File,
+                                    static_cast<CXFile>(
+                                      const_cast<FileEntry *>(File)),
                                     /*module=*/NULL,
                                     getIndexLoc(SourceLocation()),
                                     /*isImplicit=*/false
@@ -862,7 +867,7 @@ CXIdxLoc IndexingContext::getIndexLoc(SourceLocation Loc) const {
   if (Loc.isInvalid())
     return idxLoc;
 
-  idxLoc.ptr_data[0] = (void*)this;
+  idxLoc.ptr_data[0] = const_cast<IndexingContext *>(this);
   idxLoc.int_data = Loc.getRawEncoding();
   return idxLoc;
 }
@@ -888,7 +893,7 @@ void IndexingContext::translateLoc(SourceLocation Loc,
   if (indexFile)
     *indexFile = getIndexFile(FE);
   if (file)
-    *file = (void *)FE;
+    *file = const_cast<FileEntry *>(FE);
   if (line)
     *line = SM.getLineNumber(FID, FileOffset);
   if (column)
