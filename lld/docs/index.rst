@@ -48,6 +48,15 @@ Current Status
 
 lld is in its very early stages of development.
 
+On Linux it can currently statically link `Lua_` against both `diet libc_` +
+`OpenLibm_` and `musl_` on x86-64. It can not currently link against glibc due
+to unimplemented features.
+
+.. _Lua: http://www.lua.org/
+.. _diet libc: http://www.fefe.de/dietlibc/
+.. _OpenLibm: https://github.com/JuliaLang/openlibm#readme
+.. _musl: http://www.musl-libc.org/
+
 Source
 ------
 
