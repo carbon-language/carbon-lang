@@ -404,9 +404,10 @@ void Darwin::AddDeploymentTarget(DerivedArgList &Args) const {
       getDriver().Diag(clang::diag::warn_missing_sysroot) << A->getValue();
   } else {
     if (char *env = ::getenv("SDKROOT")) {
-      // We only use this value as the default if it is an absolute path and
-      // exists.
-      if (llvm::sys::path::is_absolute(env) && llvm::sys::fs::exists(env)) {
+      // We only use this value as the default if it is an absolute path,
+      // exists, and it is not the root path.
+      if (llvm::sys::path::is_absolute(env) && llvm::sys::fs::exists(env) &&
+          StringRef(env) != "/") {
         Args.append(Args.MakeSeparateArg(
                       0, Opts.getOption(options::OPT_isysroot), env));
       }

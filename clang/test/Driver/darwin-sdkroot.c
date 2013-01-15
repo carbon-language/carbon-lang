@@ -11,7 +11,7 @@
 // CHECK-BASIC: "-isysroot" "{{.*tmpdir}}"
 
 // Check that we don't use SDKROOT as the default if it is not a valid path.
-
+//
 // RUN: rm -rf %t.nonpath
 // RUN: env SDKROOT=%t.nonpath %clang -target x86_64-apple-darwin10 \
 // RUN:   -c %s -### 2> %t.log
@@ -20,3 +20,13 @@
 // CHECK-NONPATH: clang
 // CHECK-NONPATH: "-cc1"
 // CHECK-NONPATH-NOT: "-isysroot"
+
+// Check that we don't use SDKROOT as the default if it is just "/"
+//
+// RUN: env SDKROOT=/ %clang -target x86_64-apple-darwin10 \
+// RUN:   -c %s -### 2> %t.log
+// RUN: FileCheck --check-prefix=CHECK-NONROOT < %t.log %s
+//
+// CHECK-NONROOT: clang
+// CHECK-NONROOT: "-cc1"
+// CHECK-NONROOT-NOT: "-isysroot"
