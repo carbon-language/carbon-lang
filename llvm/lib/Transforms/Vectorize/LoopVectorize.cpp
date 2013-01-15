@@ -2633,7 +2633,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
 
   if (MaxVectorSize == 0) {
     DEBUG(dbgs() << "LV: The target has no vector registers.\n");
-    return 1;
+    MaxVectorSize = 1;
   }
 
   assert(MaxVectorSize <= 32 && "Did not expect to pack so many elements"
