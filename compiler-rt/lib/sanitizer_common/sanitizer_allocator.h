@@ -65,7 +65,7 @@ namespace __sanitizer {
 //    c32 => s: 512 diff: +32 06% l 9 cached: 64 32768; id 32
 
 
-template <uptr kMaxSizeLog, uptr kMaxNumCached, uptr kMaxBytesCachedLog,
+template <uptr kMaxSizeLog, uptr kMaxNumCachedT, uptr kMaxBytesCachedLog,
           uptr kMinBatchClassT>
 class SizeClassMap {
   static const uptr kMinSizeLog = 3;
@@ -77,6 +77,7 @@ class SizeClassMap {
   static const uptr M = (1 << S) - 1;
 
  public:
+  static const uptr kMaxNumCached = kMaxNumCachedT;
   struct TransferBatch {
     TransferBatch *next;
     uptr count;
@@ -598,6 +599,7 @@ class SizeClassAllocator32 {
     uptr size = SizeClassMap::Size(class_id);
     uptr reg = AllocateRegion(class_id);
     uptr n_chunks = kRegionSize / (size + kMetadataSize);
+    uptr max_count = SizeClassMap::MaxCached(class_id);
     Batch *b = 0;
     for (uptr i = reg; i < reg + n_chunks * size; i += size) {
       if (b == 0) {
@@ -608,7 +610,7 @@ class SizeClassAllocator32 {
         b->count = 0;
       }
       b->batch[b->count++] = (void*)i;
-      if (b->count == SizeClassMap::MaxCached(class_id)) {
+      if (b->count == max_count) {
         sci->free_list.push_back(b);
         b = 0;
       }
@@ -631,6 +633,7 @@ template<class SizeClassAllocator>
 struct SizeClassAllocatorLocalCache {
   typedef SizeClassAllocator Allocator;
   static const uptr kNumClasses = SizeClassAllocator::kNumClasses;
+
   // Don't need to call Init if the object is a global (i.e. zero-initialized).
   void Init() {
     internal_memset(this, 0, sizeof(*this));
@@ -640,18 +643,10 @@ struct SizeClassAllocatorLocalCache {
     CHECK_NE(class_id, 0UL);
     CHECK_LT(class_id, kNumClasses);
     PerClass *c = &per_class_[class_id];
-    if (c->cur == 0) {
-      DCHECK_EQ(c->old, 0);
-      c->cur = allocator->AllocateBatch(this, class_id);
-    }
-    DCHECK_GT(c->cur->count, 0);
-    void *res = c->cur->batch[--c->cur->count];
-    if (c->cur->count == 0) {
-      if (class_id < SizeClassMap::kMinBatchClass)
-        Deallocate(allocator, SizeClassMap::ClassID(sizeof(Batch)), c->cur);
-      c->cur = c->old;
-      c->old = 0;
-    }
+    if (UNLIKELY(c->count == 0))
+      Refill(allocator, class_id);
+    void *res = c->batch[--c->count];
+    PREFETCH(c->batch[c->count - 1]);
     return res;
   }
 
@@ -659,31 +654,16 @@ struct SizeClassAllocatorLocalCache {
     CHECK_NE(class_id, 0UL);
     CHECK_LT(class_id, kNumClasses);
     PerClass *c = &per_class_[class_id];
-    if (c->cur == 0 || c->cur->count == SizeClassMap::MaxCached(class_id)) {
-      if (c->old)
-        allocator->DeallocateBatch(class_id, c->old);
-      c->old = c->cur;
-      if (class_id < SizeClassMap::kMinBatchClass)
-        c->cur = (Batch*)Allocate(allocator,
-                                  SizeClassMap::ClassID(sizeof(Batch)));
-      else
-        c->cur = (Batch*)p;
-      c->cur->count = 0;
-    }
-    c->cur->batch[c->cur->count++] = p;
+    if (UNLIKELY(c->count == c->max_count))
+      Drain(allocator, class_id);
+    c->batch[c->count++] = p;
   }
 
   void Drain(SizeClassAllocator *allocator) {
-    for (uptr i = 0; i < kNumClasses; i++) {
-      PerClass *c = &per_class_[i];
-      if (c->cur) {
-        allocator->DeallocateBatch(i, c->cur);
-        c->cur = 0;
-      }
-      if (c->old) {
-        allocator->DeallocateBatch(i, c->old);
-        c->old = 0;
-      }
+    for (uptr class_id = 0; class_id < kNumClasses; class_id++) {
+      PerClass *c = &per_class_[class_id];
+      while (c->count > 0)
+        Drain(allocator, class_id);
     }
   }
 
@@ -691,10 +671,49 @@ struct SizeClassAllocatorLocalCache {
   typedef typename SizeClassAllocator::SizeClassMapT SizeClassMap;
   typedef typename SizeClassMap::TransferBatch Batch;
   struct PerClass {
-    Batch *cur;
-    Batch *old;
+    uptr count;
+    uptr max_count;
+    void *batch[2 * SizeClassMap::kMaxNumCached];
   };
   PerClass per_class_[kNumClasses];
+
+  void InitCache() {
+    if (per_class_[0].max_count)
+      return;
+    for (uptr i = 0; i < kNumClasses; i++) {
+      PerClass *c = &per_class_[i];
+      c->max_count = 2 * SizeClassMap::MaxCached(i);
+    }
+  }
+
+  void NOINLINE Refill(SizeClassAllocator *allocator, uptr class_id) {
+    InitCache();
+    PerClass *c = &per_class_[class_id];
+    Batch *b = allocator->AllocateBatch(this, class_id);
+    for (uptr i = 0; i < b->count; i++)
+      c->batch[i] = b->batch[i];
+    c->count = b->count;
+    if (class_id < SizeClassMap::kMinBatchClass)
+      Deallocate(allocator, SizeClassMap::ClassID(sizeof(Batch)), b);
+  }
+
+  void NOINLINE Drain(SizeClassAllocator *allocator, uptr class_id) {
+    InitCache();
+    PerClass *c = &per_class_[class_id];
+    Batch *b;
+    if (class_id < SizeClassMap::kMinBatchClass)
+      b = (Batch*)Allocate(allocator, SizeClassMap::ClassID(sizeof(Batch)));
+    else
+      b = (Batch*)c->batch[0];
+    uptr cnt = Min(c->max_count / 2, c->count);
+    for (uptr i = 0; i < cnt; i++) {
+      b->batch[i] = c->batch[i];
+      c->batch[i] = c->batch[i + c->max_count / 2];
+    }
+    b->count = cnt;
+    c->count -= cnt;
+    allocator->DeallocateBatch(class_id, b);
+  }
 };
 
 // This class can (de)allocate only large chunks of memory using mmap/unmap.
