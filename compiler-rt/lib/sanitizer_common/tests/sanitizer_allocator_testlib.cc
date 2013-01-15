@@ -13,7 +13,7 @@
 /* Usage:
 clang++ -fno-exceptions  -g -fPIC -I. -I../include -Isanitizer \
  sanitizer_common/tests/sanitizer_allocator_testlib.cc \
- sanitizer_common/sanitizer_*.cc -shared -o testmalloc.so
+ sanitizer_common/sanitizer_*.cc -shared -lpthread -o testmalloc.so
 LD_PRELOAD=`pwd`/testmalloc.so /your/app
 */
 #include "sanitizer_common/sanitizer_allocator.h"
@@ -21,11 +21,20 @@ LD_PRELOAD=`pwd`/testmalloc.so /your/app
 #include <stddef.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <assert.h>
+#include <string.h>
+#include <pthread.h>
+
+#ifndef SANITIZER_MALLOC_HOOK
+# define SANITIZER_MALLOC_HOOK(p, s)
+#endif
+
+#ifndef SANITIZER_FREE_HOOK
+# define SANITIZER_FREE_HOOK(p)
+#endif
 
 namespace {
 static const uptr kAllocatorSpace = 0x600000000000ULL;
-static const uptr kAllocatorSize = 0x10000000000;  // 1T.
+static const uptr kAllocatorSize  =  0x10000000000ULL;  // 1T.
 
 typedef SizeClassAllocator64<kAllocatorSpace, kAllocatorSize, 0,
   CompactSizeClassMap> PrimaryAllocator;
@@ -34,77 +43,109 @@ typedef LargeMmapAllocator<> SecondaryAllocator;
 typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
           SecondaryAllocator> Allocator;
 
-static AllocatorCache cache;
 static Allocator allocator;
+static THREADLOCAL AllocatorCache cache;
+static THREADLOCAL bool global_inited;
+static THREADLOCAL bool thread_inited;
+static pthread_key_t pkey;
 
-static int inited = 0;
-
-__attribute__((constructor))
-static void Init() {
-  if (inited) return;
-  inited = true;  // this must happen before any threads are created.
-  allocator.Init();
+static void thread_dtor(void *v) {
+  if ((long)v != 3) {
+    pthread_setspecific(pkey, (void*)((long)v + 1));
+    return;
+  }
+  allocator.SwallowCache(&cache);
 }
 
+static void NOINLINE thread_init() {
+  if (!global_inited) {
+    global_inited = true;
+    allocator.Init();
+    pthread_key_create(&pkey, thread_dtor);
+  }
+  thread_inited = true;
+  pthread_setspecific(pkey, (void*)1);
+  cache.Init();
+}
 }  // namespace
 
-#if 1
 extern "C" {
+
 void *malloc(size_t size) {
-  Init();
-  assert(inited);
-  return allocator.Allocate(&cache, size, 8);
+  if (UNLIKELY(!thread_inited))
+    thread_init();
+  void *p = allocator.Allocate(&cache, size, 8);
+  SANITIZER_MALLOC_HOOK(p, size);
+  return p;
 }
 
 void free(void *p) {
-  if (!inited) return;
-  // assert(inited);
+  if (UNLIKELY(!thread_inited))
+    thread_init();
+  SANITIZER_FREE_HOOK(p);
   allocator.Deallocate(&cache, p);
 }
 
 void *calloc(size_t nmemb, size_t size) {
-  Init();
-  assert(inited);
-  return allocator.Allocate(&cache, nmemb * size, 8, /*cleared=*/true);
+  if (UNLIKELY(!thread_inited))
+    thread_init();
+  size *= nmemb;
+  void *p = allocator.Allocate(&cache, size, 8, false);
+  memset(p, 0, size);
+  SANITIZER_MALLOC_HOOK(p, size);
+  return p;
 }
 
-void *realloc(void *p, size_t new_size) {
-  Init();
-  assert(inited);
-  return allocator.Reallocate(&cache, p, new_size, 8);
+void *realloc(void *p, size_t size) {
+  if (UNLIKELY(!thread_inited))
+    thread_init();
+  if (p) {
+    SANITIZER_FREE_HOOK(p);
+  }
+  p = allocator.Reallocate(&cache, p, size, 8);
+  if (p) {
+    SANITIZER_MALLOC_HOOK(p, size);
+  }
+  return p;
 }
 
-void *memalign(size_t boundary, size_t size) {
-  Init();
-  return allocator.Allocate(&cache, size, boundary);
-}
-void *__libc_memalign(size_t boundary, size_t size) {
-  Init();
-  return allocator.Allocate(&cache, size, boundary);
+void *memalign(size_t alignment, size_t size) {
+  if (UNLIKELY(!thread_inited))
+    thread_init();
+  void *p = allocator.Allocate(&cache, size, alignment);
+  SANITIZER_MALLOC_HOOK(p, size);
+  return p;
 }
 
 int posix_memalign(void **memptr, size_t alignment, size_t size) {
-  Init();
+  if (UNLIKELY(!thread_inited))
+    thread_init();
   *memptr = allocator.Allocate(&cache, size, alignment);
-  CHECK_EQ(((uptr)*memptr & (alignment - 1)), 0);
+  SANITIZER_MALLOC_HOOK(*memptr, size);
   return 0;
 }
 
 void *valloc(size_t size) {
-  Init();
-  assert(inited);
-  return allocator.Allocate(&cache, size, GetPageSizeCached());
+  if (UNLIKELY(!thread_inited))
+    thread_init();
+  if (size == 0)
+    size = GetPageSizeCached();
+  void *p = allocator.Allocate(&cache, size, GetPageSizeCached());
+  SANITIZER_MALLOC_HOOK(p, size);
+  return p;
 }
 
-void *pvalloc(size_t size) {
-  Init();
-  assert(inited);
-  if (size == 0) size = GetPageSizeCached();
-  return allocator.Allocate(&cache, size, GetPageSizeCached());
+void cfree(void *p) ALIAS("free");
+void *pvalloc(size_t size) ALIAS("valloc");
+void *__libc_memalign(size_t alignment, size_t size) ALIAS("memalign");
+
+void malloc_usable_size() {
 }
 
-void malloc_usable_size() { }
-void mallinfo() { }
-void mallopt() { }
+void mallinfo() {
 }
-#endif
+
+void mallopt() {
+}
+
+}  // extern "C"
