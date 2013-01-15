@@ -1191,7 +1191,7 @@ RValue CodeGenFunction::EmitLoadOfBitfieldLValue(LValue LV) {
   cast<llvm::LoadInst>(Val)->setAlignment(Info.StorageAlignment);
 
   if (Info.IsSigned) {
-    assert((Info.Offset + Info.Size) <= Info.StorageSize);
+    assert(static_cast<unsigned>(Info.Offset + Info.Size) <= Info.StorageSize);
     unsigned HighBits = Info.StorageSize - Info.Offset - Info.Size;
     if (HighBits)
       Val = Builder.CreateShl(Val, HighBits, "bf.shl");
