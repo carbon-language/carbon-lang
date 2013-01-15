@@ -253,6 +253,12 @@ public:
 
     // Start iterating at 1 as we have correctly formatted of Token #0 above.
     while (State.NextToken != NULL) {
+      if (State.NextToken->Type == TT_ImplicitStringLiteral)
+        // We will not touch the rest of the white space in this
+        // \c UnwrappedLine. The returned value can also not matter, as we
+        // cannot continue an top-level implicit string literal on the next
+        // line.
+        return 0;
       if (FitsOnALine) {
         addTokenToState(false, false, State);
       } else {
@@ -373,11 +379,6 @@ private:
     const AnnotatedToken &Previous = *State.NextToken->Parent;
     assert(State.Stack.size());
     unsigned ParenLevel = State.Stack.size() - 1;
-
-    if (Current.Type == TT_ImplicitStringLiteral) {
-      moveStateToNextToken(State);
-      return;
-    }
 
     if (Newline) {
       unsigned WhitespaceStartColumn = State.Column;
