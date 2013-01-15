@@ -16,6 +16,7 @@
 #include <string.h>
 
 // C++ Includes
+#include <map>
 #include <string>
 #include <vector>
 
@@ -109,28 +110,44 @@ public:
         lldb_private::Value    *m_lldb_value;   ///< The value found in LLDB for this variable
         lldb::VariableSP        m_lldb_var;     ///< The original variable for this variable
         const lldb_private::Symbol *m_lldb_sym; ///< The original symbol for this variable, if it was a symbol
-
-    private:
-        DISALLOW_COPY_AND_ASSIGN (ParserVars);
     };
+    
+private:
+    typedef std::map <uint64_t, ParserVars> ParserVarMap;
+    ParserVarMap m_parser_vars;
+
+public:
     //----------------------------------------------------------------------
     /// Make this variable usable by the parser by allocating space for
     /// parser-specific variables
     //----------------------------------------------------------------------
     void 
-    EnableParserVars()
+    EnableParserVars(uint64_t parser_id)
     {
-        if (!m_parser_vars.get())
-            m_parser_vars.reset(new ParserVars);
+        m_parser_vars.emplace(parser_id, ParserVars());
     }
     
     //----------------------------------------------------------------------
     /// Deallocate parser-specific variables
     //----------------------------------------------------------------------
     void
-    DisableParserVars()
+    DisableParserVars(uint64_t parser_id)
     {
-        m_parser_vars.reset();
+        m_parser_vars.erase(parser_id);
+    }
+    
+    //----------------------------------------------------------------------
+    /// Access parser-specific variables
+    //----------------------------------------------------------------------
+    ParserVars *
+    GetParserVars(uint64_t parser_id)
+    {
+        ParserVarMap::iterator i = m_parser_vars.find(parser_id);
+        
+        if (i == m_parser_vars.end())
+            return NULL;
+        else
+            return &i->second;
     }
     
     //----------------------------------------------------------------------
@@ -148,25 +165,39 @@ public:
         size_t  m_size;         ///< The space required for the variable, in bytes
         off_t   m_offset;       ///< The offset of the variable in the struct, in bytes
     };
-
+    
+private:
+    typedef std::map <uint64_t, JITVars> JITVarMap;
+    JITVarMap m_jit_vars;
+    
+public:
     //----------------------------------------------------------------------
     /// Make this variable usable for materializing for the JIT by allocating 
     /// space for JIT-specific variables
     //----------------------------------------------------------------------
     void 
-    EnableJITVars()
+    EnableJITVars(uint64_t parser_id)
     {
-        if (!m_jit_vars.get())
-            m_jit_vars.reset(new JITVars);
+        m_jit_vars.emplace(parser_id, JITVars());
     }
     
     //----------------------------------------------------------------------
     /// Deallocate JIT-specific variables
     //----------------------------------------------------------------------
     void 
-    DisableJITVars()
+    DisableJITVars(uint64_t parser_id)
     {
-        m_jit_vars.reset();
+        m_jit_vars.erase(parser_id);
+    }
+    
+    JITVars *GetJITVars(uint64_t parser_id)
+    {
+        JITVarMap::iterator i = m_jit_vars.find(parser_id);
+        
+        if (i == m_jit_vars.end())
+            return NULL;
+        else
+            return &i->second;
     }
         
     //----------------------------------------------------------------------
@@ -222,9 +253,6 @@ public:
     //----------------------------------------------------------------------
     /// Members
     //----------------------------------------------------------------------
-    std::auto_ptr<ParserVars> m_parser_vars;
-    std::auto_ptr<JITVars> m_jit_vars;
-    
     enum Flags 
     {
         EVNone                  = 0,
@@ -245,7 +273,7 @@ public:
     
     lldb::ValueObjectSP m_frozen_sp;
     lldb::ValueObjectSP m_live_sp;
-private:
+    
     DISALLOW_COPY_AND_ASSIGN (ClangExpressionVariable);
 };
 
@@ -348,13 +376,16 @@ public:
     ///     The variable requested, or NULL if that variable is not in the list.
     //----------------------------------------------------------------------
     lldb::ClangExpressionVariableSP
-    GetVariable (const clang::NamedDecl *decl)
+    GetVariable (const clang::NamedDecl *decl, uint64_t parser_id)
     {
         lldb::ClangExpressionVariableSP var_sp;
         for (size_t index = 0, size = GetSize(); index < size; ++index)
         {
             var_sp = GetVariableAtIndex(index);
-            if (var_sp->m_parser_vars.get() && var_sp->m_parser_vars->m_named_decl == decl)
+            
+            ClangExpressionVariable::ParserVars *parser_vars = var_sp->GetParserVars(parser_id);
+            
+            if (parser_vars && parser_vars->m_named_decl == decl)
                 return var_sp;
         }
         var_sp.reset();

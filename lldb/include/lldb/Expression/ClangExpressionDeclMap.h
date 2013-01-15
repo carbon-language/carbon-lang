@@ -798,6 +798,16 @@ private:
         m_material_vars.reset();
     }
     
+    //----------------------------------------------------------------------
+    /// Get this parser's ID for use in extracting parser- and JIT-specific
+    /// data from persistent variables.
+    //----------------------------------------------------------------------
+    uint64_t
+    GetParserID()
+    {
+        return (uint64_t)this;
+    }
+    
     //------------------------------------------------------------------
     /// Given a stack frame, find a variable that matches the given name and 
     /// type.  We need this for expression re-use; we may not always get the
