@@ -13,4 +13,7 @@ set(LLVM_LINK_COMPONENTS
     support
     )
 
-add_lld_unittest(CoreTests ErrorOrTest.cpp)
+add_lld_unittest(CoreTests
+  ErrorOrTest.cpp
+  RangeTest.cpp
+  )
