@@ -20,13 +20,13 @@ defined-atoms:
   
 
     - ref-name:          LC1
-      scope:             hidden
       type:              c-string
+      merge:             by-content
       content:           [ 68, 65, 6c, 6c, 6f, 00 ]
 
     - ref-name:          LC2
-      scope:             hidden
       type:              c-string
+      merge:             by-content
       content:           [ 74, 68, 65, 72, 65, 00 ]
   
 

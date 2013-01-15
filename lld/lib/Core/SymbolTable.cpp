@@ -46,11 +46,16 @@ void SymbolTable::add(const AbsoluteAtom &atom) {
 }
 
 void SymbolTable::add(const DefinedAtom &atom) {
-  assert(atom.scope() != DefinedAtom::scopeTranslationUnit);
-  if ( !atom.name().empty() ) {
+  if (!atom.name().empty() && 
+      (atom.scope() != DefinedAtom::scopeTranslationUnit)) {
+    // Named atoms cannot be merged by content.
+    assert(atom.merge() != DefinedAtom::mergeByContent);
+    // Track named atoms that are not scoped to file (static).
     this->addByName(atom);
   }
-  else {
+  else if ( atom.merge() == DefinedAtom::mergeByContent ) {
+    // Named atoms cannot be merged by content.
+    assert(atom.name().empty());
     this->addByContent(atom);
   }
 }
@@ -123,6 +128,7 @@ static MergeResolution mergeSelect(DefinedAtom::Merge first,
 
 void SymbolTable::addByName(const Atom & newAtom) {
   StringRef name = newAtom.name();
+  assert(!name.empty());
   const Atom *existing = this->findByName(name);
   if (existing == nullptr) {
     // Name is not in symbol table yet, add it associate with this atom.
@@ -283,6 +289,8 @@ bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l,
 }
 
 void SymbolTable::addByContent(const DefinedAtom & newAtom) {
+  // Currently only read-only constants can be merged.
+  assert(newAtom.permissions() == DefinedAtom::permR__);
   AtomContentSet::iterator pos = _contentTable.find(&newAtom);
   if ( pos == _contentTable.end() ) {
     _contentTable.insert(&newAtom);

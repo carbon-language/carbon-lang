@@ -21,8 +21,8 @@ defined-atoms:
         target:          _printf
 
     - ref-name:          LC1
-      scope:             hidden
       type:              c-string
+      merge:             by-content
       content:           [ 68, 65, 6C, 6C, 6F, 0A, 00 ]
 
 shared-library-atoms:     

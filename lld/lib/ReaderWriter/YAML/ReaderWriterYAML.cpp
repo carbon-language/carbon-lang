@@ -351,6 +351,7 @@ struct ScalarEnumerationTraits<lld::DefinedAtom::Merge> {
     io.enumCase(value, "as-weak",      lld::DefinedAtom::mergeAsWeak);
     io.enumCase(value, "as-addressed-weak", 
                                   lld::DefinedAtom::mergeAsWeakAndAddressUsed);
+    io.enumCase(value, "by-content",   lld::DefinedAtom::mergeByContent);
   }
 };
 

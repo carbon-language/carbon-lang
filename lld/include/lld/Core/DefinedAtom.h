@@ -101,8 +101,9 @@ public:
     mergeAsWeak,            // is C++ inline definition that was not inlined,
                             // but address was not taken, so atom can be hidden
                             // by linker
-    mergeAsWeakAndAddressUsed // is C++ definition inline definition whose
+    mergeAsWeakAndAddressUsed,// is C++ definition inline definition whose
                               // address was taken.
+    mergeByContent          // merge with other constants with same content
   };
 
   enum ContentType {

@@ -110,11 +110,8 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   // add to list of known atoms
   _atoms.push_back(&atom);
 
-  // non-static atoms need extra handling
-  if (atom.scope() != DefinedAtom::scopeTranslationUnit) {
-    // tell symbol table about non-static atoms
-    _symbolTable.add(atom);
-  }
+  // tell symbol table 
+  _symbolTable.add(atom);
 
   if (_options.deadCodeStripping()) {
     // add to set of dead-strip-roots, all symbols that
