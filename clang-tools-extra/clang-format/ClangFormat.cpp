@@ -39,6 +39,11 @@ static cl::opt<std::string> Style(
 static cl::opt<bool> Inplace("i",
                              cl::desc("Inplace edit <file>, if specified."));
 
+// FIXME: Remove this when styles are configurable through files.
+static cl::opt<bool> InvertPointerBinding(
+    "invert-pointer-binding", cl::desc("Inverts the side to which */& bind"),
+    cl::init(false));
+
 static cl::opt<std::string> FileName(cl::Positional, cl::desc("[<file>]"),
                                      cl::init("-"));
 
@@ -54,12 +59,17 @@ static FileID createInMemoryFile(StringRef FileName, const MemoryBuffer *Source,
   return Sources.createFileID(Entry, SourceLocation(), SrcMgr::C_User);
 }
 
-static FormatStyle getStyle(StringRef name) {
-  if (name == "LLVM")
-    return getLLVMStyle();
-  if (name == "Chromium")
-    return getChromiumStyle();
-  return getGoogleStyle();
+static FormatStyle getStyle() {
+  FormatStyle TheStyle = getGoogleStyle();
+  if (Style == "LLVM")
+    TheStyle = getLLVMStyle();
+  if (Style == "Chromium")
+    TheStyle = getChromiumStyle();
+  if (InvertPointerBinding) {
+    TheStyle.PointerAndReferenceBindToType =
+        !TheStyle.PointerAndReferenceBindToType;
+  }
+  return TheStyle;
 }
 
 static void format() {
@@ -82,8 +92,7 @@ static void format() {
     End = Start.getLocWithOffset(Length);
   std::vector<CharSourceRange> Ranges(
       1, CharSourceRange::getCharRange(Start, End));
-  tooling::Replacements Replaces = reformat(getStyle(Style), Lex, Sources,
-                                            Ranges);
+  tooling::Replacements Replaces = reformat(getStyle(), Lex, Sources, Ranges);
   Rewriter Rewrite(Sources, LangOptions());
   tooling::applyAllReplacements(Replaces, Rewrite);
   if (Inplace) {
