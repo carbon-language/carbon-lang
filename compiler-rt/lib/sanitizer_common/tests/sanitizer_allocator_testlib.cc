@@ -44,8 +44,8 @@ typedef CombinedAllocator<PrimaryAllocator, AllocatorCache,
           SecondaryAllocator> Allocator;
 
 static Allocator allocator;
+static bool global_inited;
 static THREADLOCAL AllocatorCache cache;
-static THREADLOCAL bool global_inited;
 static THREADLOCAL bool thread_inited;
 static pthread_key_t pkey;
 
@@ -147,3 +147,16 @@ void mallinfo() {
 void mallopt() {
 }
 }  // extern "C"
+
+namespace std {
+  struct nothrow_t;
+}
+
+void *operator new(size_t size) ALIAS("malloc");
+void *operator new[](size_t size) ALIAS("malloc");
+void *operator new(size_t size, std::nothrow_t const&) ALIAS("malloc");
+void *operator new[](size_t size, std::nothrow_t const&) ALIAS("malloc");
+void operator delete(void *ptr) ALIAS("free");
+void operator delete[](void *ptr) ALIAS("free");
+void operator delete(void *ptr, std::nothrow_t const&) ALIAS("free");
+void operator delete[](void *ptr, std::nothrow_t const&) ALIAS("free");
