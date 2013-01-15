@@ -13,6 +13,7 @@
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/range.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/SharedLibraryAtom.h"
 #include "llvm/ADT/ArrayRef.h"
@@ -478,7 +479,7 @@ public:
         continue;
       uint8_t *atomContent = chunkBuffer + ai._fileOffset;
       std::copy_n(content.data(), contentSize, atomContent);
-      for (auto ref = definedAtom->begin(); ref != definedAtom->end(); ++ref) {
+      for (const auto ref : *definedAtom) {
         uint32_t offset = ref->offsetInAtom();
         uint64_t targetAddress = 0;
         assert(ref->target() != nullptr && "Found the target to be NULL");
@@ -497,9 +498,7 @@ public:
   /// Atom Iterators
   typedef typename std::vector<AtomLayout>::iterator atom_iter;
 
-  atom_iter atoms_begin() { return _atoms.begin(); }
-
-  atom_iter atoms_end() { return _atoms.end(); }
+  range<atom_iter> atoms() { return _atoms; }
 
 protected:
   int32_t _contentType;
@@ -587,9 +586,7 @@ public:
   typedef typename std::vector<
     Chunk<target_endianness, max_align, is64Bits> *>::iterator ChunkIter;
 
-  ChunkIter begin_sections() { return _sections.begin(); }
-
-  ChunkIter end_sections() { return _sections.end(); }
+  range<ChunkIter> sections() { return _sections; }
 
   // The below functions returns the properties of the MergeSection
   bool hasSegment() const { return _hasSegment; }
@@ -646,24 +643,23 @@ template<support::endianness target_endianness,
 class SegmentSlice {
 public:
   typedef typename std::vector<
-    Chunk<target_endianness, max_align, is64Bits> *>::iterator sectionIter;
+    Chunk<target_endianness, max_align, is64Bits> *>::iterator SectionIter;
 
   SegmentSlice() { }
 
   /// Set the segment slice so that it begins at the offset specified
-  /// by fileoffset and set the start of the slice to be s and the end
+  /// by file offset and set the start of the slice to be s and the end
   /// of the slice to be e
   void set(uint64_t fileoffset, int32_t s, int e) {
     _startSection = s;
-    _endSection = e+1;
+    _endSection = e + 1;
     _offset = fileoffset;
   }
 
   // Set the segment slice start and end iterators. This is used to walk through
   // the sections that are part of the Segment slice
-  void setSections(sectionIter start, sectionIter end) {
-    _startSectionIter = start;
-    _endSectionIter = end;
+  void setSections(range<SectionIter> sections) {
+    _sections = sections;
   }
 
   // Return the fileOffset of the slice
@@ -698,16 +694,14 @@ public:
     return (a->startSection() < b->startSection());
   }
 
-  // Functions to run through the slice
-  sectionIter sections_begin() { return _startSectionIter; }
-
-  sectionIter sections_end() { return _endSectionIter; }
+  range<SectionIter> sections() {
+    return _sections;
+  }
 
 private:
   int32_t _startSection;
   int32_t _endSection;
-  sectionIter _startSectionIter;
-  sectionIter _endSectionIter;
+  range<SectionIter> _sections;
   uint64_t _addr;
   uint64_t _offset;
   uint64_t _size;
@@ -724,7 +718,7 @@ template<support::endianness target_endianness,
 class Segment : public Chunk<target_endianness, max_align, is64Bits> {
 public:
   typedef typename std::vector<SegmentSlice<
-    target_endianness, max_align, is64Bits> *>::iterator slice_iter;
+    target_endianness, max_align, is64Bits> *>::iterator SliceIter;
   typedef typename std::vector<
     Chunk<target_endianness, max_align, is64Bits> *>::iterator SectionIter;
 
@@ -819,9 +813,9 @@ public:
         // a seperate segment, so that memory is not used up while running
         if ((newOffset - curOffset) > _options.pageSize()) {
           // TODO: use std::find here
-          for (auto sei = slices_begin(); sei != slices_end(); ++sei) {
-            if ((*sei)->startSection() == startSection) {
-              slice = *sei;
+          for (auto s : slices()) {
+            if (s->startSection() == startSection) {
+              slice = s;
               break;
             }
           }
@@ -832,7 +826,7 @@ public:
             _segmentSlices.push_back(slice);
           }
           slice->set(curSliceFileOffset, startSection, currSection);
-          slice->setSections(startSectionIter, endSectionIter);
+          slice->setSections(make_range(startSectionIter, endSectionIter));
           slice->setSize(curSliceSize);
           slice->setAlign(sliceAlign);
           uint64_t newPageOffset =
@@ -855,10 +849,10 @@ public:
       endSectionIter = si;
     }
     SegmentSlice<target_endianness, max_align, is64Bits> *slice = nullptr;
-    for (auto sei = slices_begin(); sei != slices_end(); ++sei) {
+    for (auto s : slices()) {
       // TODO: add std::find
-      if ((*sei)->startSection() == startSection) {
-        slice = *sei;
+      if (s->startSection() == startSection) {
+        slice = s;
         break;
       }
     }
@@ -869,7 +863,7 @@ public:
       _segmentSlices.push_back(slice);
     }
     slice->set(curSliceFileOffset, startSection, currSection);
-    slice->setSections(startSectionIter, _sections.end());
+    slice->setSections(make_range(startSectionIter, _sections.end()));
     slice->setSize(curSliceSize);
     slice->setAlign(sliceAlign);
     this->_fsize = curSliceFileOffset - startOffset + curSliceSize;
@@ -879,49 +873,49 @@ public:
 
   /// \brief Assign virtual addresses to the slices
   void assignVirtualAddress(uint64_t &addr) {
-    for (auto sei = slices_begin(), see = slices_end(); sei != see; ++sei) {
+    for (auto slice : slices()) {
       // Align to a page
       addr = llvm::RoundUpToAlignment(addr, _options.pageSize());
       // Align to the slice alignment
-      addr = llvm::RoundUpToAlignment(addr, (*sei)->align2());
+      addr = llvm::RoundUpToAlignment(addr, slice->align2());
 
       bool virtualAddressSet = false;
-      for (auto si = (*sei)->sections_begin(), se = (*sei)->sections_end();
-                                               si != se; ++si) {
+      for (auto section : slice->sections()) {
         // Align the section address
-        addr = llvm::RoundUpToAlignment(addr, (*si)->align2());
+        addr = llvm::RoundUpToAlignment(addr, section->align2());
         if (!virtualAddressSet) {
-          (*sei)->setVAddr(addr);
+          slice->setVAddr(addr);
           virtualAddressSet = true;
         }
-        (*si)->setVAddr(addr);
-        if (auto s =
-              dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si))
+        section->setVAddr(addr);
+        if (auto s = dyn_cast<Section<target_endianness, max_align, is64Bits>>(
+              section))
           s->assignVirtualAddress(addr);
         else
-          addr += (*si)->memSize();
-        (*si)->setMemSize(addr - (*si)->virtualAddr());
+          addr += section->memSize();
+        section->setMemSize(addr - section->virtualAddr());
       }
-      (*sei)->setMemSize(addr - (*sei)->virtualAddr());
+      slice->setMemSize(addr - slice->virtualAddr());
     }
   }
 
-  slice_iter slices_begin() {
+  range<SliceIter> slices() { return _segmentSlices; }
+
+  // These two accessors are still needed for a call to std::stable_sort.
+  // Consider adding wrappers for two iterator algorithms.
+  SliceIter slices_begin() {
     return _segmentSlices.begin();
   }
 
-  slice_iter slices_end() {
+  SliceIter slices_end() {
     return _segmentSlices.end();
   }
 
   // Write the Segment
   void write(ELFWriter *writer, OwningPtr<FileOutputBuffer> &buffer) {
-    for (auto sei = slices_begin(), see = slices_end(); sei != see; ++sei) {
-      for (auto si = (*sei)->sections_begin(), se = (*sei)->sections_end();
-                                               si != se; ++si) {
-        (*si)->write(writer, buffer);
-      }
-    }
+    for (auto slice : slices())
+      for (auto section : slice->sections())
+        section->write(writer, buffer);
   }
 
   // Finalize the segment, before we want to write to the output file
@@ -1252,8 +1246,7 @@ public:
     Elf_Phdr *phdr = nullptr;
     bool ret = false;
 
-    for (auto sei = segment->slices_begin(), see = segment->slices_end();
-                                             sei != see; ++sei) {
+    for (auto slice : segment->slices()) {
       if (_phi == _ph.end()) {
         phdr = new(_allocator.Allocate<Elf_Phdr>()) Elf_Phdr;
         _ph.push_back(phdr);
@@ -1264,14 +1257,14 @@ public:
         ++_phi;
       }
       phdr->p_type = segment->segmentType();
-      phdr->p_offset = (*sei)->fileOffset();
-      phdr->p_vaddr = (*sei)->virtualAddr();
-      phdr->p_paddr = (*sei)->virtualAddr();
-      phdr->p_filesz = (*sei)->fileSize();
-      phdr->p_memsz = (*sei)->memSize();
+      phdr->p_offset = slice->fileOffset();
+      phdr->p_vaddr = slice->virtualAddr();
+      phdr->p_paddr = slice->virtualAddr();
+      phdr->p_filesz = slice->fileSize();
+      phdr->p_memsz = slice->memSize();
       phdr->p_flags = segment->flags();
       phdr->p_align = (phdr->p_type == llvm::ELF::PT_LOAD) ?
-                       segment->pageSize() : (*sei)->align2();
+                       segment->pageSize() : slice->align2();
     }
 
     this->_fsize = fileSize();
@@ -1732,14 +1725,7 @@ public:
                                                 FindByName(name));
   }
 
-  /// \bried Begin/End iterators
-  AbsoluteAtomIterT absAtomsBegin() { 
-    return _absoluteAtoms.begin();
-  }
-
-  AbsoluteAtomIterT absAtomsEnd() { 
-    return _absoluteAtoms.end();
-  }
+  range<AbsoluteAtomIterT> absoluteAtoms() { return _absoluteAtoms; }
 
   // Merge sections with the same name into a MergedSections
   void mergeSimiliarSections() {
@@ -1776,27 +1762,24 @@ public:
     mergeSimiliarSections();
     // Set the ordinal after sorting the sections
     int ordinal = 1;
-    for (auto &msi : _mergedSections) {
-      (*msi).setOrdinal(ordinal);
-      for (auto ai = (*msi).begin_sections(), ae = (*msi).end_sections();
-                                               ai != ae; ++ai) {
-        (*ai)->setOrdinal(ordinal);
+    for (auto msi : _mergedSections) {
+      msi->setOrdinal(ordinal);
+      for (auto ai : msi->sections()) {
+        ai->setOrdinal(ordinal);
       }
       ++ordinal;
     }
-    for (auto msi = merged_sections_begin(), mse = merged_sections_end();
-                                             msi != mse; ++msi) {
-      for (auto ai = (*msi)->begin_sections(), ae = (*msi)->end_sections();
-                                               ai != ae; ++ai) {
+    for (auto msi : _mergedSections) {
+      for (auto ai : msi->sections()) {
         if (auto section =
-              dyn_cast<Section<target_endianness, max_align, is64Bits>>(*ai)) {
+              dyn_cast<Section<target_endianness, max_align, is64Bits>>(ai)) {
           if (!hasOutputSegment(section))
             continue;
-          (*msi)->setHasSegment();
+          msi->setHasSegment();
           section->setSegment(getSegmentType(section));
           const StringRef segmentName = section->segmentKindToStr();
           // Use the flags of the merged Section for the segment
-          const SegmentKey key(segmentName, (*msi)->flags());
+          const SegmentKey key(segmentName, msi->flags());
           const std::pair<SegmentKey,
                           Segment<target_endianness, max_align, is64Bits> *>
             currentSegment(key, nullptr);
@@ -1900,44 +1883,40 @@ public:
         section->assignOffsets(section->fileOffset());
     }
     // Set the size of the merged Sections
-    for (auto msi = merged_sections_begin(), mse = merged_sections_end();
-                                             msi != mse; ++msi) {
+    for (auto msi : _mergedSections) {
       uint64_t sectionfileoffset = 0;
       uint64_t startFileOffset = 0;
       uint64_t sectionsize = 0;
       bool isFirstSection = true;
-      for (auto si = (*msi)->begin_sections(); si != (*msi)->end_sections();
-                                               ++si) {
+      for (auto si : msi->sections()) {
         if (isFirstSection) {
-          startFileOffset = (*si)->fileOffset();
+          startFileOffset = si->fileOffset();
           isFirstSection = false;
         }
-        sectionfileoffset = (*si)->fileOffset();
-        sectionsize = (*si)->fileSize();
+        sectionfileoffset = si->fileOffset();
+        sectionsize = si->fileSize();
       }
       sectionsize = (sectionfileoffset - startFileOffset) + sectionsize;
-      (*msi)->setFileOffset(startFileOffset);
-      (*msi)->setSize(sectionsize);
+      msi->setFileOffset(startFileOffset);
+      msi->setSize(sectionsize);
     }
     // Set the virtual addr of the merged Sections
-    for (auto msi = merged_sections_begin(), mse = merged_sections_end();
-                                             msi != mse; ++msi) {
+    for (auto msi : _mergedSections) {
       uint64_t sectionstartaddr = 0;
       uint64_t startaddr = 0;
       uint64_t sectionsize = 0;
       bool isFirstSection = true;
-      for (auto si = (*msi)->begin_sections(), se = (*msi)->end_sections();
-                                               si != se; ++si) {
+      for (auto si : msi->sections()) {
         if (isFirstSection) {
-          startaddr = (*si)->virtualAddr();
+          startaddr = si->virtualAddr();
           isFirstSection = false;
         }
-        sectionstartaddr = (*si)->virtualAddr();
-        sectionsize = (*si)->memSize();
+        sectionstartaddr = si->virtualAddr();
+        sectionsize = si->memSize();
       }
       sectionsize = (sectionstartaddr - startaddr) + sectionsize;
-      (*msi)->setMemSize(sectionsize);
-      (*msi)->setAddr(startaddr);
+      msi->setMemSize(sectionsize);
+      msi->setAddr(startaddr);
     }
   }
 
@@ -1964,44 +1943,24 @@ public:
   }
 
   void finalize() {
-    for (auto &si : _sections) {
+    for (auto &si : _sections)
       si->finalize();
-    }
   }
 
   bool findAtomAddrByName(const StringRef name, uint64_t &addr) {
-    for (auto ai = _sections.begin(); ai != _sections.end(); ++ai) {
+    for (auto sec : _sections)
       if (auto section =
-            dyn_cast<Section<target_endianness, max_align, is64Bits>>(*ai)) {
+            dyn_cast<Section<target_endianness, max_align, is64Bits>>(sec))
         if (section->findAtomAddrByName(name, addr))
          return true;
-      }
-    }
     return false;
   }
 
-  MergedSectionIter merged_sections_begin() {
-    return _mergedSections.begin();
-  }
+  range<MergedSectionIter> mergedSections() { return _mergedSections; }
 
-  MergedSectionIter merged_sections_end() {
-    return _mergedSections.end();
-  }
+  range<ChunkIter> sections() { return _sections; }
 
-  ChunkIter sections_begin() {
-    return _sections.begin();
-  }
-  ChunkIter sections_end() {
-    return _sections.end();
-  }
-
-  ChunkIter segments_begin() {
-    return _segments.begin();
-  }
-
-  ChunkIter segments_end() {
-    return _segments.end();
-  }
+  range<ChunkIter> segments() { return _segments; }
 
   ELFHeader<target_endianness, max_align, is64Bits> *elfHeader() {
     return _elfHeader;
@@ -2111,16 +2070,11 @@ template<support::endianness target_endianness,
          bool is64Bits>
 void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::buildSymbolTable () {
-  Section<target_endianness, max_align, is64Bits> *section;
-  for (auto si = _layout->sections_begin(); si != _layout->sections_end();
-                                            ++si) {
+  for (auto sec : _layout->sections())
     if (auto section =
-          dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si)) {
-      for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
-        _symtab->addSymbol(ai->_atom, section->ordinal(), ai->_virtualAddr);
-      }
-    }
-  }
+          dyn_cast<Section<target_endianness, max_align, is64Bits>>(sec))
+      for (const auto &atom : section->atoms())
+        _symtab->addSymbol(atom._atom, section->ordinal(), atom._virtualAddr);
 }
 
 template<support::endianness target_endianness,
@@ -2128,15 +2082,12 @@ template<support::endianness target_endianness,
          bool is64Bits>
 void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::addAbsoluteUndefinedSymbols(const lld::File &file) {
-  /// add all the absolute symbols that the layout contains to the output symbol
-  /// table
-  for (auto absi = _layout->absAtomsBegin(), abse = _layout->absAtomsEnd();
-       absi != abse; ++absi) {
-    _symtab->addSymbol(absi->absoluteAtom(), ELF::SHN_ABS, absi->value());
-  }
- for (const UndefinedAtom *a : file.undefined()) {
-   _symtab->addSymbol(a, ELF::SHN_UNDEF);
- }
+  // add all the absolute symbols that the layout contains to the output symbol
+  // table
+  for (auto &atom : _layout->absoluteAtoms())
+    _symtab->addSymbol(atom.absoluteAtom(), ELF::SHN_ABS, atom.value());
+  for (const UndefinedAtom *a : file.undefined())
+    _symtab->addSymbol(a, ELF::SHN_UNDEF);
 }
 
 template<support::endianness target_endianness,
@@ -2144,19 +2095,14 @@ template<support::endianness target_endianness,
          bool is64Bits>
 void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::buildAtomToAddressMap () {
-  for (auto si = _layout->sections_begin();
-       si != _layout->sections_end(); ++si) {
+  for (auto sec : _layout->sections())
     if (auto section =
-          dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si))
-      for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
-        _atomToAddressMap[ai->_atom] = (ai)->_virtualAddr;
-      }
-  }
-  /// build the atomToAddressMap that contains absolute symbols too
-  for (auto absi = _layout->absAtomsBegin(), abse = _layout->absAtomsEnd();
-       absi != abse; ++absi) {
-    _atomToAddressMap[absi->absoluteAtom()] = absi->value();
-  }
+          dyn_cast<Section<target_endianness, max_align, is64Bits>>(sec))
+      for (const auto &atom : section->atoms())
+        _atomToAddressMap[atom._atom] = atom._virtualAddr;
+  // build the atomToAddressMap that contains absolute symbols too
+  for (auto &atom : _layout->absoluteAtoms())
+    _atomToAddressMap[atom.absoluteAtom()] = atom.value();
 }
 
 template<support::endianness target_endianness,
@@ -2164,13 +2110,12 @@ template<support::endianness target_endianness,
          bool is64Bits>
 void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::buildSectionHeaderTable() {
-  for (auto msi = _layout->merged_sections_begin();
-       msi != _layout->merged_sections_end(); ++msi) {
-    if ((*msi)->kind() !=
+  for (auto mergedSec : _layout->mergedSections()) {
+    if (mergedSec->kind() !=
           Chunk<target_endianness, max_align, is64Bits>::K_ELFSection)
       continue;
-    if ((*msi)->hasSegment())
-      _shdrtab->appendSection(*msi);
+    if (mergedSec->hasSegment())
+      _shdrtab->appendSection(mergedSec);
   }
 }
 
@@ -2179,23 +2124,20 @@ template<support::endianness target_endianness,
          bool is64Bits>
 void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::assignSectionsWithNoSegments() {
-  for (auto msi = _layout->merged_sections_begin();
-       msi != _layout->merged_sections_end(); ++msi) {
-    if ((*msi)->kind() !=
+  for (auto mergedSec : _layout->mergedSections()) {
+    if (mergedSec->kind() !=
           Chunk<target_endianness, max_align, is64Bits>::K_ELFSection)
       continue;
-    if (!(*msi)->hasSegment())
-      _shdrtab->appendSection(*msi);
+    if (!mergedSec->hasSegment())
+      _shdrtab->appendSection(mergedSec);
   }
   _layout->assignOffsetsForMiscSections();
-  for (auto si = _layout->sections_begin();
-       si != _layout->sections_end(); ++si) {
+  for (auto sec : _layout->sections())
     if (auto section =
-          dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si))
+          dyn_cast<Section<target_endianness, max_align, is64Bits>>(sec))
       if (!DefaultELFLayout<target_endianness, max_align, is64Bits>
                            ::hasOutputSegment(section))
         _shdrtab->updateSection(section);
-  }
 }
 
 /// \brief Add absolute symbols by default. These are linker added
@@ -2248,10 +2190,10 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
    initArrayEndIter->setValue(0);
  }
 
- assert(!(bssStartAtomIter == _layout->absAtomsEnd() ||
-         bssEndAtomIter == _layout->absAtomsEnd() ||
-         underScoreEndAtomIter == _layout->absAtomsEnd() ||
-         endAtomIter == _layout->absAtomsEnd()) && 
+ assert(!(bssStartAtomIter == _layout->absoluteAtoms().end() ||
+         bssEndAtomIter == _layout->absoluteAtoms().end() ||
+         underScoreEndAtomIter == _layout->absoluteAtoms().end() ||
+         endAtomIter == _layout->absoluteAtoms().end()) &&
         "Unable to find the absolute atoms that have been added by lld");
 
  auto phe = _programHeader->findProgramHeader(
@@ -2341,8 +2283,8 @@ error_code ELFExecutableWriter<target_endianness, max_align, is64Bits>
   _elfHeader->write(this, buffer);
   _programHeader->write(this, buffer);
 
-  for (auto si = _layout->sections_begin(); si != _layout->sections_end(); ++si)
-    (*si)->write(this, buffer);
+  for (auto section : _layout->sections())
+    section->write(this, buffer);
 
   return buffer->commit();
 }
