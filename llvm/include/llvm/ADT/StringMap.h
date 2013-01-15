@@ -238,7 +238,8 @@ public:
     : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))), Allocator(A) {}
 
   StringMap(unsigned InitialSize, AllocatorTy A)
-    : StringMapImpl(InitialSize), Allocator(A) {}
+    : StringMapImpl(InitialSize, static_cast<unsigned>(sizeof(MapEntryTy))),
+      Allocator(A) {}
 
   StringMap(const StringMap &RHS)
     : StringMapImpl(static_cast<unsigned>(sizeof(MapEntryTy))) {
