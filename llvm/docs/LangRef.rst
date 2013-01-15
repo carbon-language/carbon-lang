@@ -2462,14 +2462,16 @@ Each triplet has the following form:
    (or more) metadata with the same ID. The supported behaviors are
    described below.
 -  The second element is a metadata string that is a unique ID for the
-   metadata. How each ID is interpreted is documented below.
+   metadata. Each module may only have one flag entry for each unique ID (not
+   including entries with the **Require** behavior).
 -  The third element is the value of the flag.
 
 When two (or more) modules are merged together, the resulting
-``llvm.module.flags`` metadata is the union of the modules'
-``llvm.module.flags`` metadata. The only exception being a flag with the
-*Override* behavior, which may override another flag's value (see
-below).
+``llvm.module.flags`` metadata is the union of the modules' flags. That is, for
+each unique metadata ID string, there will be exactly one entry in the merged
+modules ``llvm.module.flags`` metadata table, and the value for that entry will
+be determined by the merge behavior flag, as described below. The only exception
+is that entries with the *Require* behavior are always preserved.
 
 The following behaviors are supported:
 
@@ -2482,25 +2484,33 @@ The following behaviors are supported:
 
    * - 1
      - **Error**
-           Emits an error if two values disagree. It is an error to have an
-           ID with both an Error and a Warning behavior.
+           Emits an error if two values disagree, otherwise the resulting value
+           is that of the operands.
 
    * - 2
      - **Warning**
-           Emits a warning if two values disagree.
+           Emits a warning if two values disagree. The result value will be the
+           operand for the flag from the first module being linked.
 
    * - 3
      - **Require**
-           Emits an error when the specified value is not present or doesn't
-           have the specified value. It is an error for two (or more)
-           ``llvm.module.flags`` with the same ID to have the Require behavior
-           but different values. There may be multiple Require flags per ID.
+           Adds a requirement that another module flag be present and have a
+           specified value after linking is performed. The value must be a
+           metadata pair, where the first element of the pair is the ID of the
+           module flag to be restricted, and the second element of the pair is
+           the value the module flag should be restricted to. This behavior can
+           be used to restrict the allowable results (via triggering of an
+           error) of linking IDs with the **Override** behavior.
 
    * - 4
      - **Override**
-           Uses the specified value if the two values disagree. It is an
-           error for two (or more) ``llvm.module.flags`` with the same ID
-           to have the Override behavior but different values.
+           Uses the specified value, regardless of the behavior or value of the
+           other module. If both modules specify **Override**, but the values
+           differ, an error will be emitted.
+
+It is an error for a particular unique flag ID to have multiple behaviors,
+except in the case of **Require** (which adds restrictions on another metadata
+value) or **Override**.
 
 An example of module flags:
 
@@ -2522,7 +2532,7 @@ An example of module flags:
 
 -  Metadata ``!1`` has the ID ``!"bar"`` and the value '37'. The
    behavior if two or more ``!"bar"`` flags are seen is to use the value
-   '37' if their values are not equal.
+   '37'.
 
 -  Metadata ``!2`` has the ID ``!"qux"`` and the value '42'. The
    behavior if two or more ``!"qux"`` flags are seen is to emit a
@@ -2534,10 +2544,9 @@ An example of module flags:
 
        metadata !{ metadata !"foo", i32 1 }
 
-   The behavior is to emit an error if the ``llvm.module.flags`` does
-   not contain a flag with the ID ``!"foo"`` that has the value '1'. If
-   two or more ``!"qux"`` flags exist, then they must have the same
-   value or an error will be issued.
+   The behavior is to emit an error if the ``llvm.module.flags`` does not
+   contain a flag with the ID ``!"foo"`` that has the value '1' after linking is
+   performed.
 
 Objective-C Garbage Collection Module Flags Metadata
 ----------------------------------------------------
