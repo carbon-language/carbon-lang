@@ -109,6 +109,10 @@ N: Duncan Sands
 E: baldrick@free.fr
 D: DragonEgg
 
+N: Michael Spencer
+E: bigcheesegs@gmail.com
+D: Windows parts of Support, Object, ar, nm, objdump, ranlib, size
+
 N: Tom Stellard
 E: thomas.stellard@amd.com
 E: mesa-dev@lists.freedesktop.org
