@@ -232,7 +232,7 @@ void clang_getExpansionLocation(CXSourceLocation location,
   }
   
   if (file)
-    *file = (void *)SM.getFileEntryForSLocEntry(sloc);
+    *file = const_cast<FileEntry *>(SM.getFileEntryForSLocEntry(sloc));
   if (line)
     *line = SM.getExpansionLineNumber(ExpansionLoc);
   if (column)
@@ -309,7 +309,7 @@ void clang_getSpellingLocation(CXSourceLocation location,
     return createNullLocation(file, line, column, offset);
   
   if (file)
-    *file = (void *)SM.getFileEntryForID(FID);
+    *file = const_cast<FileEntry *>(SM.getFileEntryForID(FID));
   if (line)
     *line = SM.getLineNumber(FID, FileOffset);
   if (column)
