@@ -1,4 +1,4 @@
-//===-- sanitizer_allocator64_testlib.cc ----------------------------------===//
+//===-- sanitizer_allocator_testlib.cc ------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 /* Usage:
 clang++ -fno-exceptions  -g -fPIC -I. -I../include -Isanitizer \
- sanitizer_common/tests/sanitizer_allocator64_testlib.cc \
+ sanitizer_common/tests/sanitizer_allocator_testlib.cc \
  sanitizer_common/sanitizer_*.cc -shared -o testmalloc.so
 LD_PRELOAD=`pwd`/testmalloc.so /your/app
 */
