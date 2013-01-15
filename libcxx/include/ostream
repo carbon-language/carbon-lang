@@ -1100,17 +1100,8 @@ basic_ostream<_CharT, _Traits>::write(const char_type* __s, streamsize __n)
         sentry __sen(*this);
         if (__sen && __n)
         {
-            typedef ostreambuf_iterator<_CharT, _Traits> _Op;
-            _Op __o(*this);
-            for (; __n; --__n, ++__o, ++__s)
-            {
-                *__o = *__s;
-                if (__o.failed())
-                {
-                    this->setstate(ios_base::badbit);
-                    break;
-                }
-            }
+            if (this->rdbuf()->sputn(__s, __n) != __n)
+                this->setstate(ios_base::badbit);
         }
 #ifndef _LIBCPP_NO_EXCEPTIONS
     }
