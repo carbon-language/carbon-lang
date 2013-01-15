@@ -271,8 +271,8 @@ public:
   // the atom file offset is aligned appropriately as set by the Reader
   void appendAtom(const Atom *atom) {
     Atom::Definition atomType = atom->definition();
-    const DefinedAtom *definedAtom = dyn_cast<DefinedAtom>(atom);
-    assert(atom != nullptr && "Expecting the atom to be a DefinedAtom");
+    const DefinedAtom *definedAtom = cast<DefinedAtom>(atom);
+
     DefinedAtom::Alignment atomAlign = definedAtom->alignment();
     uint64_t align2 = 1u << atomAlign.powerOf2;
     // Align the atom to the required modulus/ align the file offset and the
@@ -468,7 +468,7 @@ public:
              OwningPtr<FileOutputBuffer> &buffer) {
     uint8_t *chunkBuffer = buffer->getBufferStart();
     for (auto &ai : _atoms) {
-      const DefinedAtom *definedAtom = llvm::dyn_cast<DefinedAtom>(ai._atom);
+      const DefinedAtom *definedAtom = cast<DefinedAtom>(ai._atom);
       if (definedAtom->contentType() == DefinedAtom::typeZeroFill)
         continue;
       // Copy raw content of atom to file buffer.
@@ -570,11 +570,8 @@ public:
   void appendSection(Chunk<target_endianness, max_align, is64Bits> *c) {
     if (c->align2() > _align2)
       _align2 = c->align2();
-    if (c->kind() ==
-          Chunk<target_endianness, max_align, is64Bits>::K_ELFSection) {
-      Section<target_endianness, max_align, is64Bits> *section;
-      section =
-        llvm::dyn_cast<Section<target_endianness, max_align, is64Bits>>(c);
+    if (const auto section =
+          dyn_cast<Section<target_endianness, max_align, is64Bits>>(c)) {
       _link = section->link();
       _shInfo = section->shinfo();
       _entSize = section->entsize();
@@ -1065,7 +1062,7 @@ public:
     symbol->st_shndx = sectionIndex;
     symbol->st_value = 0;
     symbol->st_other = ELF::STV_DEFAULT;
-    if (const DefinedAtom *da = llvm::dyn_cast<const DefinedAtom>(atom)){
+    if (const DefinedAtom *da = dyn_cast<const DefinedAtom>(atom)){
       symbol->st_size = da->size();
       lld::DefinedAtom::ContentType ct;
       switch (ct = da->contentType()){
@@ -1089,8 +1086,7 @@ public:
         binding = ELF::STB_LOCAL;
       else
         binding = ELF::STB_GLOBAL;
-    } else if (const AbsoluteAtom *aa =
-                 llvm::dyn_cast<const AbsoluteAtom>(atom)){
+    } else if (const AbsoluteAtom *aa = dyn_cast<const AbsoluteAtom>(atom)){
       type = ELF::STT_OBJECT;
       symbol->st_shndx = ELF::SHN_ABS;
       switch (aa->scope()) {
@@ -1788,16 +1784,12 @@ public:
       }
       ++ordinal;
     }
-    Section<target_endianness, max_align, is64Bits> *section;
-    Segment<target_endianness, max_align, is64Bits> *segment;
     for (auto msi = merged_sections_begin(), mse = merged_sections_end();
                                              msi != mse; ++msi) {
       for (auto ai = (*msi)->begin_sections(), ae = (*msi)->end_sections();
                                                ai != ae; ++ai) {
-        if ((*ai)->kind() ==
-              Chunk<target_endianness, max_align, is64Bits>::K_ELFSection) {
-          section = llvm::dyn_cast<
-            Section<target_endianness, max_align, is64Bits>>(*ai);
+        if (auto section =
+              dyn_cast<Section<target_endianness, max_align, is64Bits>>(*ai)) {
           if (!hasOutputSegment(section))
             continue;
           (*msi)->setHasSegment();
@@ -1810,7 +1802,7 @@ public:
             currentSegment(key, nullptr);
           std::pair<typename SegmentMapT::iterator, bool>
                               segmentInsert(_segmentMap.insert(currentSegment));
-
+          Segment<target_endianness, max_align, is64Bits> *segment;
           if (!segmentInsert.second) {
             segment = segmentInsert.first->second;
           } else {
@@ -1901,8 +1893,7 @@ public:
     Section<target_endianness, max_align, is64Bits> *section;
     // Fix the offsets of all the atoms within a section
     for (auto &si : _sections) {
-      section =
-        llvm::dyn_cast<Section<target_endianness, max_align, is64Bits>>(si);
+      section = dyn_cast<Section<target_endianness, max_align, is64Bits>>(si);
       if (section &&
           DefaultELFLayout<target_endianness,
                            max_align, is64Bits>::hasOutputSegment(section))
@@ -1960,8 +1951,7 @@ public:
     fileoffset = fileoffset + size;
     Section<target_endianness, max_align, is64Bits> *section;
     for (auto si : _sections) {
-      section =
-        llvm::dyn_cast<Section<target_endianness, max_align, is64Bits>>(si);
+      section = dyn_cast<Section<target_endianness, max_align, is64Bits>>(si);
       if (section &&
           DefaultELFLayout<target_endianness,
                            max_align, is64Bits>::hasOutputSegment(section))
@@ -1980,12 +1970,9 @@ public:
   }
 
   bool findAtomAddrByName(const StringRef name, uint64_t &addr) {
-    Section<target_endianness, max_align, is64Bits> *section;
     for (auto ai = _sections.begin(); ai != _sections.end(); ++ai) {
-      if ((*ai)->kind() ==
-            Chunk<target_endianness, max_align, is64Bits>::K_ELFSection) {
-        section =
-          llvm::dyn_cast<Section<target_endianness, max_align, is64Bits>>(*ai);
+      if (auto section =
+            dyn_cast<Section<target_endianness, max_align, is64Bits>>(*ai)) {
         if (section->findAtomAddrByName(name, addr))
          return true;
       }
@@ -2127,13 +2114,11 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
   Section<target_endianness, max_align, is64Bits> *section;
   for (auto si = _layout->sections_begin(); si != _layout->sections_end();
                                             ++si) {
-    if ((*si)->kind() !=
-          Chunk<target_endianness, max_align, is64Bits>::K_ELFSection)
-      continue;
-    section =
-      llvm::dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si);
-    for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
-      _symtab->addSymbol(ai->_atom, section->ordinal(), ai->_virtualAddr);
+    if (auto section =
+          dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si)) {
+      for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
+        _symtab->addSymbol(ai->_atom, section->ordinal(), ai->_virtualAddr);
+      }
     }
   }
 }
@@ -2159,16 +2144,13 @@ template<support::endianness target_endianness,
          bool is64Bits>
 void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::buildAtomToAddressMap () {
-  Section<target_endianness, max_align, is64Bits> *section;
   for (auto si = _layout->sections_begin();
        si != _layout->sections_end(); ++si) {
-    if ((*si)->kind() !=
-          Chunk<target_endianness, max_align, is64Bits>::K_ELFSection)
-      continue;
-    section = cast<Section<target_endianness, max_align, is64Bits>>(*si);
-    for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
-      _atomToAddressMap[ai->_atom] = (ai)->_virtualAddr;
-    }
+    if (auto section =
+          dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si))
+      for (auto ai = section->atoms_begin(); ai != section->atoms_end(); ++ai) {
+        _atomToAddressMap[ai->_atom] = (ai)->_virtualAddr;
+      }
   }
   /// build the atomToAddressMap that contains absolute symbols too
   for (auto absi = _layout->absAtomsBegin(), abse = _layout->absAtomsEnd();
@@ -2197,7 +2179,6 @@ template<support::endianness target_endianness,
          bool is64Bits>
 void ELFExecutableWriter<target_endianness, max_align, is64Bits>
                         ::assignSectionsWithNoSegments() {
-  Section<target_endianness, max_align, is64Bits> *section;
   for (auto msi = _layout->merged_sections_begin();
        msi != _layout->merged_sections_end(); ++msi) {
     if ((*msi)->kind() !=
@@ -2209,14 +2190,11 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
   _layout->assignOffsetsForMiscSections();
   for (auto si = _layout->sections_begin();
        si != _layout->sections_end(); ++si) {
-    if ((*si)->kind() !=
-          Chunk<target_endianness, max_align, is64Bits>::K_ELFSection)
-      continue;
-    section =
-      llvm::dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si);
-    if (!DefaultELFLayout<target_endianness, max_align, is64Bits>
-                         ::hasOutputSegment(section))
-      _shdrtab->updateSection(section);
+    if (auto section =
+          dyn_cast<Section<target_endianness, max_align, is64Bits>>(*si))
+      if (!DefaultELFLayout<target_endianness, max_align, is64Bits>
+                           ::hasOutputSegment(section))
+        _shdrtab->updateSection(section);
   }
 }
 
