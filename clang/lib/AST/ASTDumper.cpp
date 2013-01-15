@@ -1587,7 +1587,7 @@ void Comment::dump(const ASTContext &Context) const {
        &Context.getSourceManager());
 }
 
-void Comment::dump(llvm::raw_ostream &OS, const CommandTraits *Traits,
+void Comment::dump(raw_ostream &OS, const CommandTraits *Traits,
                    const SourceManager *SM) const {
   const FullComment *FC = dyn_cast<FullComment>(this);
   ASTDumper D(OS, Traits, SM);
