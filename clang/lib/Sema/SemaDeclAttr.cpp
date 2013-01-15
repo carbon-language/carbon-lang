@@ -2001,13 +2001,32 @@ static bool checkAvailabilityAttr(Sema &S, SourceRange Range,
   return false;
 }
 
+/// \brief Check whether the two versions match.
+///
+/// If either version tuple is empty, then they are assumed to match. If
+/// \p BeforeIsOkay is true, then \p X can be less than or equal to \p Y.
+static bool versionsMatch(const VersionTuple &X, const VersionTuple &Y,
+                          bool BeforeIsOkay) {
+  if (X.empty() || Y.empty())
+    return true;
+
+  if (X == Y)
+    return true;
+
+  if (BeforeIsOkay && X < Y)
+    return true;
+
+  return false;
+}
+
 AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
                                               IdentifierInfo *Platform,
                                               VersionTuple Introduced,
                                               VersionTuple Deprecated,
                                               VersionTuple Obsoleted,
                                               bool IsUnavailable,
-                                              StringRef Message) {
+                                              StringRef Message,
+                                              bool Override) {
   VersionTuple MergedIntroduced = Introduced;
   VersionTuple MergedDeprecated = Deprecated;
   VersionTuple MergedObsoleted = Obsoleted;
@@ -2033,18 +2052,47 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
       VersionTuple OldDeprecated = OldAA->getDeprecated();
       VersionTuple OldObsoleted = OldAA->getObsoleted();
       bool OldIsUnavailable = OldAA->getUnavailable();
-      StringRef OldMessage = OldAA->getMessage();
 
-      if ((!OldIntroduced.empty() && !Introduced.empty() &&
-           OldIntroduced != Introduced) ||
-          (!OldDeprecated.empty() && !Deprecated.empty() &&
-           OldDeprecated != Deprecated) ||
-          (!OldObsoleted.empty() && !Obsoleted.empty() &&
-           OldObsoleted != Obsoleted) ||
-          (OldIsUnavailable != IsUnavailable) ||
-          (OldMessage != Message)) {
-        Diag(OldAA->getLocation(), diag::warn_mismatched_availability);
-        Diag(Range.getBegin(), diag::note_previous_attribute);
+      if (!versionsMatch(OldIntroduced, Introduced, Override) ||
+          !versionsMatch(Deprecated, OldDeprecated, Override) ||
+          !versionsMatch(Obsoleted, OldObsoleted, Override) ||
+          !(OldIsUnavailable == IsUnavailable ||
+            (Override && OldIsUnavailable && !IsUnavailable))) {
+        if (Override) {
+          int Which = -1;
+          VersionTuple FirstVersion;
+          VersionTuple SecondVersion;
+          if (!versionsMatch(OldIntroduced, Introduced, Override)) {
+            Which = 0;
+            FirstVersion = OldIntroduced;
+            SecondVersion = Introduced;
+          } else if (!versionsMatch(Deprecated, OldDeprecated, Override)) {
+            Which = 1;
+            FirstVersion = Deprecated;
+            SecondVersion = OldDeprecated;
+          } else if (!versionsMatch(Obsoleted, OldObsoleted, Override)) {
+            Which = 2;
+            FirstVersion = Obsoleted;
+            SecondVersion = OldObsoleted;
+          }
+
+          if (Which == -1) {
+            Diag(OldAA->getLocation(),
+                 diag::warn_mismatched_availability_override_unavail)
+              << AvailabilityAttr::getPrettyPlatformName(Platform->getName());
+          } else {
+            Diag(OldAA->getLocation(),
+                 diag::warn_mismatched_availability_override)
+              << Which
+              << AvailabilityAttr::getPrettyPlatformName(Platform->getName())
+              << FirstVersion.getAsString() << SecondVersion.getAsString();
+          }
+          Diag(Range.getBegin(), diag::note_overridden_method);
+        } else {
+          Diag(OldAA->getLocation(), diag::warn_mismatched_availability);
+          Diag(Range.getBegin(), diag::note_previous_attribute);
+        }
+
         Attrs.erase(Attrs.begin() + i);
         --e;
         continue;
@@ -2121,7 +2169,8 @@ static void handleAvailabilityAttr(Sema &S, Decl *D,
                                                       Introduced.Version,
                                                       Deprecated.Version,
                                                       Obsoleted.Version,
-                                                      IsUnavailable, Str);
+                                                      IsUnavailable, Str,
+                                                      /*Override=*/false);
   if (NewAttr)
     D->addAttr(NewAttr);
 }

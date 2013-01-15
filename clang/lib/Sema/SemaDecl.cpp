@@ -1822,13 +1822,14 @@ DeclHasAttr(const Decl *D, const Attr *A) {
   return false;
 }
 
-bool Sema::mergeDeclAttribute(NamedDecl *D, InheritableAttr *Attr) {
+bool Sema::mergeDeclAttribute(NamedDecl *D, InheritableAttr *Attr,
+                              bool Override) {
   InheritableAttr *NewAttr = NULL;
   if (AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attr))
     NewAttr = mergeAvailabilityAttr(D, AA->getRange(), AA->getPlatform(),
                                     AA->getIntroduced(), AA->getDeprecated(),
                                     AA->getObsoleted(), AA->getUnavailable(),
-                                    AA->getMessage());
+                                    AA->getMessage(), Override);
   else if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr))
     NewAttr = mergeVisibilityAttr(D, VA->getRange(), VA->getVisibility());
   else if (DLLImportAttr *ImportA = dyn_cast<DLLImportAttr>(Attr))
@@ -1902,7 +1903,7 @@ static void checkNewAttributesAfterDef(Sema &S, Decl *New, const Decl *Old) {
 
 /// mergeDeclAttributes - Copy attributes from the Old decl to the New one.
 void Sema::mergeDeclAttributes(NamedDecl *New, Decl *Old,
-                               bool MergeDeprecation) {
+                               AvailabilityMergeKind AMK) {
   // attributes declared post-definition are currently ignored
   checkNewAttributesAfterDef(*this, New, Old);
 
@@ -1919,14 +1920,25 @@ void Sema::mergeDeclAttributes(NamedDecl *New, Decl *Old,
          i = Old->specific_attr_begin<InheritableAttr>(),
          e = Old->specific_attr_end<InheritableAttr>(); 
        i != e; ++i) {
+    bool Override = false;
     // Ignore deprecated/unavailable/availability attributes if requested.
-    if (!MergeDeprecation &&
-        (isa<DeprecatedAttr>(*i) || 
-         isa<UnavailableAttr>(*i) ||
-         isa<AvailabilityAttr>(*i)))
-      continue;
+    if (isa<DeprecatedAttr>(*i) ||
+        isa<UnavailableAttr>(*i) ||
+        isa<AvailabilityAttr>(*i)) {
+      switch (AMK) {
+      case AMK_None:
+        continue;
 
-    if (mergeDeclAttribute(New, *i))
+      case AMK_Redeclaration:
+        break;
+
+      case AMK_Override:
+        Override = true;
+        break;
+      }
+    }
+
+    if (mergeDeclAttribute(New, *i, Override))
       foundAny = true;
   }
 
@@ -2475,7 +2487,7 @@ void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
                                 ObjCMethodDecl *oldMethod) {
 
   // Merge the attributes, including deprecated/unavailable
-  mergeDeclAttributes(newMethod, oldMethod, /* mergeDeprecation */true);
+  mergeDeclAttributes(newMethod, oldMethod, AMK_Override);
 
   // Merge attributes from the parameters.
   ObjCMethodDecl::param_const_iterator oi = oldMethod->param_begin(),
@@ -2485,7 +2497,7 @@ void Sema::mergeObjCMethodDecls(ObjCMethodDecl *newMethod,
        ni != ne && oi != oe; ++ni, ++oi)
     mergeParamDeclAttributes(*ni, *oi, Context);
 
-  CheckObjCMethodOverride(newMethod, oldMethod, true);
+  CheckObjCMethodOverride(newMethod, oldMethod);
 }
 
 /// MergeVarDeclTypes - We parsed a variable 'New' which has the same name and

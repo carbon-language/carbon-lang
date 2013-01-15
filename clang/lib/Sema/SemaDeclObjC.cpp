@@ -109,8 +109,7 @@ bool Sema::checkInitMethod(ObjCMethodDecl *method,
 }
 
 void Sema::CheckObjCMethodOverride(ObjCMethodDecl *NewMethod, 
-                                   const ObjCMethodDecl *Overridden,
-                                   bool IsImplementation) {
+                                   const ObjCMethodDecl *Overridden) {
   if (Overridden->hasRelatedResultType() && 
       !NewMethod->hasRelatedResultType()) {
     // This can only happen when the method follows a naming convention that

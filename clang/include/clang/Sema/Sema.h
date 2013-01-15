@@ -1677,7 +1677,8 @@ public:
                                           VersionTuple Deprecated,
                                           VersionTuple Obsoleted,
                                           bool IsUnavailable,
-                                          StringRef Message);
+                                          StringRef Message,
+                                          bool Override);
   VisibilityAttr *mergeVisibilityAttr(Decl *D, SourceRange Range,
                                       VisibilityAttr::VisibilityType Vis);
   DLLImportAttr *mergeDLLImportAttr(Decl *D, SourceRange Range);
@@ -1685,10 +1686,24 @@ public:
   FormatAttr *mergeFormatAttr(Decl *D, SourceRange Range, StringRef Format,
                               int FormatIdx, int FirstArg);
   SectionAttr *mergeSectionAttr(Decl *D, SourceRange Range, StringRef Name);
-  bool mergeDeclAttribute(NamedDecl *New, InheritableAttr *Attr);
+  bool mergeDeclAttribute(NamedDecl *New, InheritableAttr *Attr,
+                          bool Override);
+
+  /// \brief Describes the kind of merge to perform for availability
+  /// attributes (including "deprecated", "unavailable", and "availability").
+  enum AvailabilityMergeKind {
+    /// \brief Don't merge availability attributes at all.
+    AMK_None,
+    /// \brief Merge availability attributes for a redeclaration, which requires
+    /// an exact match.
+    AMK_Redeclaration,
+    /// \brief Merge availability attributes for an override, which requires
+    /// an exact match or a weakening of constraints.
+    AMK_Override
+  };
 
   void mergeDeclAttributes(NamedDecl *New, Decl *Old,
-                           bool MergeDeprecation = true);
+                           AvailabilityMergeKind AMK = AMK_Redeclaration);
   void MergeTypedefNameDecl(TypedefNameDecl *New, LookupResult &OldDecls);
   bool MergeFunctionDecl(FunctionDecl *New, Decl *Old, Scope *S);
   bool MergeCompatibleFunctionDecls(FunctionDecl *New, FunctionDecl *Old,
@@ -6383,8 +6398,7 @@ public:
   /// \brief Check whether the given new method is a valid override of the
   /// given overridden method, and set any properties that should be inherited.
   void CheckObjCMethodOverride(ObjCMethodDecl *NewMethod,
-                               const ObjCMethodDecl *Overridden,
-                               bool IsImplementation);
+                               const ObjCMethodDecl *Overridden);
 
   /// \brief Describes the compatibility of a result type with its method.
   enum ResultTypeCompatibilityKind {
