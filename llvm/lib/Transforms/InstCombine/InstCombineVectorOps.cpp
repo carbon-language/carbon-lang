@@ -13,7 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "InstCombine.h"
+#include "llvm/Support/PatternMatch.h"
 using namespace llvm;
+using namespace PatternMatch;
 
 /// CheapToScalarize - Return true if the value is cheaper to scalarize than it
 /// is to leave as a vector operation.  isConstant indicates whether we're
@@ -90,6 +92,13 @@ static Value *FindScalarElement(Value *V, unsigned EltNo) {
     if (InEl < (int)LHSWidth)
       return FindScalarElement(SVI->getOperand(0), InEl);
     return FindScalarElement(SVI->getOperand(1), InEl - LHSWidth);
+  }
+
+  // Extract a value from a vector add operation with a constant zero.
+  Value *Val = 0; Constant *Con = 0;
+  if (match(V, m_Add(m_Value(Val), m_Constant(Con)))) {
+    if (Con->getAggregateElement(EltNo)->isNullValue())
+      return FindScalarElement(Val, EltNo);
   }
 
   // Otherwise, we don't know.
