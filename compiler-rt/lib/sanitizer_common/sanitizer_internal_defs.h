@@ -52,7 +52,7 @@ using namespace __sanitizer;  // NOLINT
 # define UNLIKELY(x)   __builtin_expect(!!(x), 0)
 # define UNUSED __attribute__((unused))
 # define USED __attribute__((used))
-# define PREFETCH(x) __builtin_prefetch(x)
+# define PREFETCH(x) __asm__("prefetchnta (%0)" : : "r" (x))
 #endif  // _MSC_VER
 
 #if defined(_WIN32)
