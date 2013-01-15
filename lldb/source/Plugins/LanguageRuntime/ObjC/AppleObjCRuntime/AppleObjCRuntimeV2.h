@@ -139,8 +139,18 @@ private:
     
     std::auto_ptr<ClangFunction>        m_get_class_name_function;
     std::auto_ptr<ClangUtilityFunction> m_get_class_name_code;
+    
     lldb::addr_t                        m_get_class_name_args;
     Mutex                               m_get_class_name_args_mutex;
+    
+    std::auto_ptr<ClangFunction>        m_summarize_classes_function;
+    std::auto_ptr<ClangUtilityFunction> m_summarize_classes_code;
+    
+    lldb::addr_t                        m_isas_allocation;
+    lldb::addr_t                        m_names_allocation;
+    lldb::addr_t                        m_summarize_classes_args;
+    Mutex                               m_summarize_classes_args_mutex;
+
     std::auto_ptr<TypeVendor>           m_type_vendor_ap;
     lldb::addr_t                        m_isa_hash_table_ptr;
     HashTableSignature                  m_hash_signature;
@@ -149,6 +159,9 @@ private:
     
     static const char *g_find_class_name_function_name;
     static const char *g_find_class_name_function_body;
+    
+    static const char *g_summarize_classes_function_name;
+    static const char *g_summarize_classes_function_body;
 };
     
 } // namespace lldb_private
