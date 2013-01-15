@@ -2065,6 +2065,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
             bool stop_others = true;
             bool try_all_threads = false;
             bool unwind_on_error = true;
+            bool ignore_breakpoints = true;
             
             Value num_isas_value;
             num_isas_value.SetValueType (Value::eValueTypeScalar);
@@ -2080,6 +2081,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
                                                                                       100000,
                                                                                       try_all_threads,
                                                                                       unwind_on_error,
+                                                                                      ignore_breakpoints,
                                                                                       num_isas_value);
             
             if (results != eExecutionCompleted)
@@ -2154,6 +2156,7 @@ AppleObjCRuntimeV2::UpdateISAToDescriptorMapIfNeeded()
                                                                      100000,
                                                                      try_all_threads,
                                                                      unwind_on_error,
+                                                                     ignore_breakpoints,
                                                                      num_isas_value);
             
             if (results != eExecutionCompleted)
