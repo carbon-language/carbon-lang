@@ -772,9 +772,10 @@ void DeclSpec::setProtocolQualifiers(Decl * const *Protos,
                                      SourceLocation *ProtoLocs,
                                      SourceLocation LAngleLoc) {
   if (NP == 0) return;
-  ProtocolQualifiers = new Decl*[NP];
+  Decl **ProtoQuals = new Decl*[NP];
+  memcpy(ProtoQuals, Protos, sizeof(Decl*)*NP);
+  ProtocolQualifiers = ProtoQuals;
   ProtocolLocs = new SourceLocation[NP];
-  memcpy((void*)ProtocolQualifiers, Protos, sizeof(Decl*)*NP);
   memcpy(ProtocolLocs, ProtoLocs, sizeof(SourceLocation)*NP);
   NumProtocolQualifiers = NP;
   ProtocolLAngleLoc = LAngleLoc;
