@@ -3972,15 +3972,13 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
     unsigned NumExprs = NumOutputs + NumInputs;
     OpDecls.resize(NumExprs);
     Constraints.resize(NumExprs);
-    // FIXME: Constraints are hard coded to 'm', but we need an 'r'
-    // constraint for addressof.  This needs to be cleaned up!
     for (unsigned i = 0; i < NumOutputs; ++i) {
       OpDecls[i] = std::make_pair(OutputDecls[i], OutputDeclsAddressOf[i]);
-      Constraints[i] = OutputDeclsAddressOf[i] ? "=r" : OutputConstraints[i];
+      Constraints[i] = OutputConstraints[i];
     }
     for (unsigned i = 0, j = NumOutputs; i < NumInputs; ++i, ++j) {
       OpDecls[j] = std::make_pair(InputDecls[i], InputDeclsAddressOf[i]);
-      Constraints[j] = InputDeclsAddressOf[i] ? "r" : InputConstraints[i];
+      Constraints[j] = InputConstraints[i];
     }
   }
 

@@ -1727,7 +1727,7 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
        << "    default: llvm_unreachable(\"invalid conversion entry!\");\n"
        << "    case CVT_Reg:\n"
        << "      Operands[*(p + 1)]->setMCOperandNum(NumMCOperands);\n"
-       << "      Operands[*(p + 1)]->setConstraint(\"m\");\n"
+       << "      Operands[*(p + 1)]->setConstraint(\"r\");\n"
        << "      ++NumMCOperands;\n"
        << "      break;\n"
        << "    case CVT_Tied:\n"
@@ -1830,9 +1830,13 @@ static void emitConvertFuncs(CodeGenTarget &Target, StringRef ClassName,
 
         // Add a handler for the operand number lookup.
         OpOS << "    case " << Name << ":\n"
-             << "      Operands[*(p + 1)]->setMCOperandNum(NumMCOperands);\n"
-             << "      Operands[*(p + 1)]->setConstraint(\"m\");\n"
-             << "      NumMCOperands += " << OpInfo.MINumOperands << ";\n"
+             << "      Operands[*(p + 1)]->setMCOperandNum(NumMCOperands);\n";
+
+        if (Op.Class->isRegisterClass())
+          OpOS << "      Operands[*(p + 1)]->setConstraint(\"r\");\n";
+        else
+          OpOS << "      Operands[*(p + 1)]->setConstraint(\"m\");\n";
+        OpOS << "      NumMCOperands += " << OpInfo.MINumOperands << ";\n"
              << "      break;\n";
         break;
       }
