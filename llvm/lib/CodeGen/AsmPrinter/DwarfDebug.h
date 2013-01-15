@@ -195,6 +195,10 @@ public:
 typedef StringMap<std::pair<MCSymbol*, unsigned>,
                   BumpPtrAllocator&> StrPool;
 
+// A Symbol->pair<Symbol, unsigned> mapping of addresses used by indirect
+// references.
+typedef DenseMap<MCSymbol *, std::pair<MCSymbol *, unsigned> > AddrPool;
+
 /// \brief Collects and handles information specific to a particular
 /// collection of units.
 class DwarfUnits {
@@ -215,12 +219,17 @@ class DwarfUnits {
   unsigned NextStringPoolNumber;
   std::string StringPref;
 
+  // Collection of addresses for this unit and assorted labels.
+  AddrPool AddressPool;
+  unsigned NextAddrPoolNumber;
+
 public:
   DwarfUnits(AsmPrinter *AP, FoldingSet<DIEAbbrev> *AS,
              std::vector<DIEAbbrev *> *A, const char *Pref,
              BumpPtrAllocator &DA) :
     Asm(AP), AbbreviationsSet(AS), Abbreviations(A),
-    StringPool(DA), NextStringPoolNumber(0), StringPref(Pref) {}
+    StringPool(DA), NextStringPoolNumber(0), StringPref(Pref),
+    AddressPool(), NextAddrPoolNumber(0) {}
 
   /// \brief Compute the size and offset of a DIE given an incoming Offset.
   unsigned computeSizeAndOffset(DIE *Die, unsigned Offset);
@@ -242,6 +251,9 @@ public:
   /// \brief Emit all of the strings to the section given.
   void emitStrings(const MCSection *, const MCSection *, const MCSymbol *);
 
+  /// \brief Emit all of the addresses to the section given.
+  void emitAddresses(const MCSection *);
+
   /// \brief Returns the entry into the start of the pool.
   MCSymbol *getStringPoolSym();
 
@@ -255,6 +267,13 @@ public:
 
   /// \brief Returns the string pool.
   StrPool *getStringPool() { return &StringPool; }
+
+  /// \brief Returns the index into the address pool with the given
+  /// label/symbol.
+  unsigned getAddrPoolIndex(MCSymbol *);
+
+  /// \brief Returns the address pool.
+  AddrPool *getAddrPool() { return &AddressPool; }
 };
 
 /// \brief Collects and handles dwarf debug information.
@@ -560,7 +579,7 @@ private:
   }
 
   /// \brief Return Label preceding the instruction.
-  const MCSymbol *getLabelBeforeInsn(const MachineInstr *MI);
+  MCSymbol *getLabelBeforeInsn(const MachineInstr *MI);
 
   /// \brief Ensure that a label will be emitted after MI.
   void requestLabelAfterInsn(const MachineInstr *MI) {
@@ -568,7 +587,7 @@ private:
   }
 
   /// \brief Return Label immediately following the instruction.
-  const MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
+  MCSymbol *getLabelAfterInsn(const MachineInstr *MI);
 
 public:
   //===--------------------------------------------------------------------===//

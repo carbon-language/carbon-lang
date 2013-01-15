@@ -170,6 +170,26 @@ void CompileUnit::addLabel(DIE *Die, unsigned Attribute, unsigned Form,
   Die->addValue(Attribute, Form, Value);
 }
 
+/// addLabelAddress - Add a dwarf label attribute data and value using
+/// DW_FORM_addr or DW_FORM_GNU_addr_index.
+///
+void CompileUnit::addLabelAddress(DIE *Die, unsigned Attribute,
+                                  MCSymbol *Label) {
+  if (!DD->useSplitDwarf()) {
+    if (Label != NULL) {
+      DIEValue *Value = new (DIEValueAllocator) DIELabel(Label);
+      Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
+    } else {
+      DIEValue *Value = new (DIEValueAllocator) DIEInteger(0);
+      Die->addValue(Attribute, dwarf::DW_FORM_addr, Value);
+    }
+  } else {
+    unsigned idx = DU->getAddrPoolIndex(Label);
+    DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
+    Die->addValue(Attribute, dwarf::DW_FORM_GNU_addr_index, Value);
+  }
+}
+
 /// addDelta - Add a label delta attribute data and value.
 ///
 void CompileUnit::addDelta(DIE *Die, unsigned Attribute, unsigned Form,

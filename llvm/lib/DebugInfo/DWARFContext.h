@@ -108,6 +108,7 @@ public:
   virtual StringRef getStringDWOSection() = 0;
   virtual StringRef getStringOffsetDWOSection() = 0;
   virtual StringRef getRangeDWOSection() = 0;
+  virtual StringRef getAddrSection() = 0;
   virtual const RelocAddrMap &infoDWORelocMap() const = 0;
 
   static bool isSupportedVersion(unsigned version) {
@@ -143,6 +144,7 @@ class DWARFContextInMemory : public DWARFContext {
   StringRef StringDWOSection;
   StringRef StringOffsetDWOSection;
   StringRef RangeDWOSection;
+  StringRef AddrSection;
 
 public:
   DWARFContextInMemory(object::ObjectFile *);
@@ -163,6 +165,9 @@ public:
     return StringOffsetDWOSection;
   }
   virtual StringRef getRangeDWOSection() { return RangeDWOSection; }
+  virtual StringRef getAddrSection() {
+    return AddrSection;
+  }
   virtual const RelocAddrMap &infoDWORelocMap() const {
     return InfoDWORelocMap;
   }

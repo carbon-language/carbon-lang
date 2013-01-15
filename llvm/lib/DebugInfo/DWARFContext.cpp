@@ -86,6 +86,14 @@ void DWARFContext::dump(raw_ostream &OS) {
     OS << format("0x%8.8x: \"%s\"\n", strDWOOffset, s);
     strDWOOffset = offset;
   }
+
+  OS << "\n.debug_str_offsets.dwo contents:\n";
+  DataExtractor strOffsetExt(getStringOffsetDWOSection(), isLittleEndian(), 0);
+  offset = 0;
+  while (offset < getStringOffsetDWOSection().size()) {
+    OS << format("0x%8.8x: ", offset);
+    OS << format("%8.8x\n", strOffsetExt.getU32(&offset));
+  }
 }
 
 const DWARFDebugAbbrev *DWARFContext::getDebugAbbrev() {
@@ -152,7 +160,8 @@ void DWARFContext::parseCompileUnits() {
   while (DIData.isValidOffset(offset)) {
     CUs.push_back(DWARFCompileUnit(getDebugAbbrev(), getInfoSection(),
                                    getAbbrevSection(), getRangeSection(),
-                                   getStringSection(), "",
+                                   getStringSection(), StringRef(),
+                                   getAddrSection(),
                                    &infoRelocMap(),
                                    isLittleEndian()));
     if (!CUs.back().extract(DIData, &offset)) {
@@ -174,6 +183,7 @@ void DWARFContext::parseDWOCompileUnits() {
                                       getRangeDWOSection(),
                                       getStringDWOSection(),
                                       getStringOffsetDWOSection(),
+                                      getAddrSection(),
                                       &infoDWORelocMap(),
                                       isLittleEndian()));
     if (!DWOCUs.back().extract(DIData, &offset)) {
@@ -386,6 +396,8 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
       StringDWOSection = data;
     else if (name == "debug_str_offsets.dwo")
       StringOffsetDWOSection = data;
+    else if (name == "debug_addr")
+      AddrSection = data;
     // Any more debug info sections go here.
     else
       continue;

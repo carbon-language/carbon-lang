@@ -29,6 +29,7 @@ class DWARFCompileUnit {
   StringRef RangeSection;
   StringRef StringSection;
   StringRef StringOffsetSection;
+  StringRef AddrOffsetSection;
   const RelocAddrMap *RelocMap;
   bool isLittleEndian;
 
@@ -43,16 +44,17 @@ class DWARFCompileUnit {
 public:
 
   DWARFCompileUnit(const DWARFDebugAbbrev *DA, StringRef IS, StringRef AS,
-                   StringRef RS, StringRef SS, StringRef SOS,
+                   StringRef RS, StringRef SS, StringRef SOS, StringRef AOS,
                    const RelocAddrMap *M, bool LE) :
     Abbrev(DA), InfoSection(IS), AbbrevSection(AS),
     RangeSection(RS), StringSection(SS), StringOffsetSection(SOS),
-    RelocMap(M), isLittleEndian(LE) {
+    AddrOffsetSection(AOS), RelocMap(M), isLittleEndian(LE) {
     clear();
   }
 
   StringRef getStringSection() const { return StringSection; }
   StringRef getStringOffsetSection() const { return StringOffsetSection; }
+  StringRef getAddrOffsetSection() const { return AddrOffsetSection; }
   const RelocAddrMap *getRelocMap() const { return RelocMap; }
   DataExtractor getDebugInfoExtractor() const;
 

@@ -325,6 +325,16 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
 
   switch (Form) {
   case DW_FORM_addr:      OS << format("0x%016" PRIx64, uvalue); break;
+  case DW_FORM_GNU_addr_index: {
+    StringRef AddrOffsetSec = cu->getAddrOffsetSection();
+    OS << format(" indexed (%8.8x) address = ", (uint32_t)uvalue);
+    if (AddrOffsetSec.size() != 0) {
+      DataExtractor DA(AddrOffsetSec, true, cu->getAddressByteSize());
+      OS << format("0x%016" PRIx64, getIndirectAddress(&DA, cu));
+    } else
+      OS << "<no .debug_addr section>";
+    break;
+  }
   case DW_FORM_flag_present: OS << "true"; break;
   case DW_FORM_flag:
   case DW_FORM_data1:     OS << format("0x%02x", (uint8_t)uvalue); break;
@@ -452,8 +462,17 @@ DWARFFormValue::getIndirectCString(const DataExtractor *DS,
   if (!DS || !DSO) return NULL;
 
   uint32_t offset = Value.uval * 4;
-  uint32_t soffset = DSO->getULEB128(&offset);
+  uint32_t soffset = DSO->getU32(&offset);
   return DS->getCStr(&soffset);
+}
+
+uint64_t
+DWARFFormValue::getIndirectAddress(const DataExtractor *DA,
+                                   const DWARFCompileUnit *cu) const {
+  if (!DA) return 0;
+
+  uint32_t offset = Value.uval * cu->getAddressByteSize();
+  return DA->getAddress(&offset);
 }
 
 uint64_t DWARFFormValue::getReference(const DWARFCompileUnit *cu) const {

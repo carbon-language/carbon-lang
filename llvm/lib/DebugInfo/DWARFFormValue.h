@@ -66,6 +66,8 @@ public:
   const char *getAsCString(const DataExtractor *debug_str_data_ptr) const;
   const char *getIndirectCString(const DataExtractor *,
                                  const DataExtractor *) const;
+  uint64_t getIndirectAddress(const DataExtractor *,
+                              const DWARFCompileUnit *) const;
   bool skipValue(DataExtractor debug_info_data, uint32_t *offset_ptr,
                  const DWARFCompileUnit *cu) const;
   static bool skipValue(uint16_t form, DataExtractor debug_info_data,
