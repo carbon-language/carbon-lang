@@ -1962,9 +1962,11 @@ void ELFObjectFile<ELFT>::VerifyStrTab(const Elf_Shdr *sh) const {
 
 template<class ELFT>
 ELFObjectFile<ELFT>::ELFObjectFile(MemoryBuffer *Object, error_code &ec)
-  : ObjectFile(getELFType(ELFT::TargetEndianness == support::little,
-                          ELFT::Is64Bits),
-               Object, ec)
+  : ObjectFile(getELFType(
+      static_cast<endianness>(ELFT::TargetEndianness) == support::little,
+      ELFT::Is64Bits),
+      Object,
+      ec)
   , isDyldELFObject(false)
   , SectionHeaderTable(0)
   , dot_shstrtab_sec(0)
