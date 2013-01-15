@@ -1290,8 +1290,37 @@ TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
                "}");
 }
 
-TEST_F(FormatTest, BracedInitListWithElaboratedTypeSpecifier) {
+TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
+  // Elaborate type variable declarations.
   verifyFormat("struct foo a = { bar };\nint n;");
+  verifyFormat("class foo a = { bar };\nint n;");
+  verifyFormat("union foo a = { bar };\nint n;");
+
+  // Elaborate types inside function definitions.
+  verifyFormat("struct foo f() {}\nint n;");
+  verifyFormat("class foo f() {}\nint n;");
+  verifyFormat("union foo f() {}\nint n;");
+
+  // Templates.
+  verifyFormat("template <class X> void f() {}\nint n;");
+  verifyFormat("template <struct X> void f() {}\nint n;");
+  verifyFormat("template <union X> void f() {}\nint n;");
+
+  // Actual definitions...
+  verifyFormat("struct {} n;");
+  verifyFormat("template <template <class T, class Y>, class Z > class X {} n;");
+  verifyFormat("union Z {\n  int n;\n} x;");
+  verifyFormat("class MACRO Z {} n;");
+  verifyFormat("class MACRO(X) Z {} n;");
+  verifyFormat("class __attribute__(X) Z {} n;");
+  verifyFormat("class __declspec(X) Z {} n;");
+
+  // Elaborate types where incorrectly parsing the structural element would
+  // break the indent.
+  verifyFormat("if (true)\n"
+               "  class X x;\n"
+               "else\n"
+               "  f();\n");
 }
 
 // FIXME: This breaks the order of the unwrapped lines:

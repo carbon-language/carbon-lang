@@ -320,8 +320,10 @@ void UnwrappedLineParser::parseStructuralElement() {
     case tok::kw_struct: // fallthrough
     case tok::kw_union:  // fallthrough
     case tok::kw_class:
-      parseStructClassOrBracedList();
-      return;
+      parseRecord();
+      // A record declaration or definition is always the start of a structural
+      // element.
+      break;
     case tok::semi:
       nextToken();
       addUnwrappedLine();
@@ -569,30 +571,29 @@ void UnwrappedLineParser::parseEnum() {
   } while (!eof());
 }
 
-void UnwrappedLineParser::parseStructClassOrBracedList() {
+void UnwrappedLineParser::parseRecord() {
   nextToken();
-  do {
-    switch (FormatTok.Tok.getKind()) {
-    case tok::l_brace:
-      // FIXME: Think about how to resolve the error handling here.
-      parseBlock();
-      parseStructuralElement();
-      return;
-    case tok::semi:
-      nextToken();
-      addUnwrappedLine();
-      return;
-    case tok::equal:
-      nextToken();
-      if (FormatTok.Tok.is(tok::l_brace)) {
-        parseBracedList();
-      }
-      break;
-    default:
-      nextToken();
-      break;
+  if (FormatTok.Tok.is(tok::identifier) ||
+      FormatTok.Tok.is(tok::kw___attribute) ||
+      FormatTok.Tok.is(tok::kw___declspec)) {
+    nextToken();
+    // We can have macros or attributes in between 'class' and the class name.
+    if (FormatTok.Tok.is(tok::l_paren)) {
+      parseParens();
     }
-  } while (!eof());
+    if (FormatTok.Tok.is(tok::identifier))
+      nextToken();
+
+    if (FormatTok.Tok.is(tok::colon)) {
+      while (FormatTok.Tok.isNot(tok::l_brace)) {
+        if (FormatTok.Tok.is(tok::semi))
+          return;
+        nextToken();
+      }
+    }
+  }
+  if (FormatTok.Tok.is(tok::l_brace))
+    parseBlock();
 }
 
 void UnwrappedLineParser::parseObjCProtocolList() {
