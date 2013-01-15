@@ -512,7 +512,7 @@ LoadResult DiagLoader::readLocation(CXLoadedDiagnosticSetImpl &TopDiags,
     reportInvalidFile("Corrupted file entry in source location");
     return Failure;
   }
-  Loc.file = (void*) FE;
+  Loc.file = const_cast<FileEntry *>(FE);
   Loc.line = Record[offset++];
   Loc.column = Record[offset++];
   Loc.offset = Record[offset++];
