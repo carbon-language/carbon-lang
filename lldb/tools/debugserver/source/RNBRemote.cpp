@@ -1582,6 +1582,16 @@ set_logging (const char *p)
             {
                 if (*p == '|')
                     p++;
+
+// to regenerate the LOG_ entries (not including the LOG_RNB entries)
+// $ for logname in `grep '^#define LOG_' DNBDefs.h | egrep -v 'LOG_HI|LOG_LO' | awk '{print $2}'` 
+// do 
+//   echo "                else if (strncmp (p, \"$logname\", sizeof (\"$logname\") - 1) == 0)"
+//   echo "                {" 
+//   echo "                    p += sizeof (\"$logname\") - 1;"
+//   echo "                    bitmask |= $logname;"
+//   echo "                }"
+// done
                 if (strncmp (p, "LOG_VERBOSE", sizeof ("LOG_VERBOSE") - 1) == 0)
                 {
                     p += sizeof ("LOG_VERBOSE") - 1;
@@ -1622,26 +1632,48 @@ set_logging (const char *p)
                     p += sizeof ("LOG_MEMORY_DATA_LONG") - 1;
                     bitmask |= LOG_MEMORY_DATA_LONG;
                 }
+                else if (strncmp (p, "LOG_MEMORY_PROTECTIONS", sizeof ("LOG_MEMORY_PROTECTIONS") - 1) == 0)
+                {
+                    p += sizeof ("LOG_MEMORY_PROTECTIONS") - 1;
+                    bitmask |= LOG_MEMORY_PROTECTIONS;
+                }
                 else if (strncmp (p, "LOG_BREAKPOINTS", sizeof ("LOG_BREAKPOINTS") - 1) == 0)
                 {
                     p += sizeof ("LOG_BREAKPOINTS") - 1;
                     bitmask |= LOG_BREAKPOINTS;
-                }
-                else if (strncmp (p, "LOG_ALL", sizeof ("LOG_ALL") - 1) == 0)
-                {
-                    p += sizeof ("LOG_ALL") - 1;
-                    bitmask |= LOG_ALL;
                 }
                 else if (strncmp (p, "LOG_EVENTS", sizeof ("LOG_EVENTS") - 1) == 0)
                 {
                     p += sizeof ("LOG_EVENTS") - 1;
                     bitmask |= LOG_EVENTS;
                 }
+                else if (strncmp (p, "LOG_WATCHPOINTS", sizeof ("LOG_WATCHPOINTS") - 1) == 0)
+                {
+                    p += sizeof ("LOG_WATCHPOINTS") - 1;
+                    bitmask |= LOG_WATCHPOINTS;
+                }
+                else if (strncmp (p, "LOG_STEP", sizeof ("LOG_STEP") - 1) == 0)
+                {
+                    p += sizeof ("LOG_STEP") - 1;
+                    bitmask |= LOG_STEP;
+                }
+                else if (strncmp (p, "LOG_TASK", sizeof ("LOG_TASK") - 1) == 0)
+                {
+                    p += sizeof ("LOG_TASK") - 1;
+                    bitmask |= LOG_TASK;
+                }
+                else if (strncmp (p, "LOG_ALL", sizeof ("LOG_ALL") - 1) == 0)
+                {
+                    p += sizeof ("LOG_ALL") - 1;
+                    bitmask |= LOG_ALL;
+                }
                 else if (strncmp (p, "LOG_DEFAULT", sizeof ("LOG_DEFAULT") - 1) == 0)
                 {
                     p += sizeof ("LOG_DEFAULT") - 1;
                     bitmask |= LOG_DEFAULT;
                 }
+// end of auto-generated entries
+
                 else if (strncmp (p, "LOG_NONE", sizeof ("LOG_NONE") - 1) == 0)
                 {
                     p += sizeof ("LOG_NONE") - 1;
@@ -1686,11 +1718,6 @@ set_logging (const char *p)
                 {
                     p += sizeof ("LOG_RNB_PACKETS") - 1;
                     bitmask |= LOG_RNB_PACKETS;
-                }
-                else if (strncmp (p, "LOG_WATCHPOINTS", sizeof ("LOG_WATCHPOINTS") - 1) == 0)
-                {
-                    p += sizeof ("LOG_WATCHPOINTS") - 1;
-                    bitmask |= LOG_WATCHPOINTS;
                 }
                 else if (strncmp (p, "LOG_RNB_ALL", sizeof ("LOG_RNB_ALL") - 1) == 0)
                 {
