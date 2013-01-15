@@ -53,6 +53,7 @@ OptionDefinition
 CommandObjectExpression::CommandOptions::g_option_table[] =
 {
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "all-threads",        'a', required_argument, NULL, 0, eArgTypeBoolean,    "Should we run all threads if the execution doesn't complete on one thread."},
+    { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "ignore-breakpoints", 'i', required_argument, NULL, 0, eArgTypeBoolean,    "Ignore breakpoint hits while running expressions"},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "timeout",            't', required_argument, NULL, 0, eArgTypeUnsignedInteger,  "Timeout value for running the expression."},
     { LLDB_OPT_SET_1 | LLDB_OPT_SET_2, false, "unwind-on-error",    'u', required_argument, NULL, 0, eArgTypeBoolean,    "Clean up program state if the expression causes a crash, breakpoint hit or signal."},
 };
@@ -94,6 +95,16 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
         }
         break;
         
+    case 'i':
+        {
+            bool success;
+            bool tmp_value = Args::StringToBoolean(option_arg, true, &success);
+            if (success)
+                ignore_breakpoints = tmp_value;
+            else
+                error.SetErrorStringWithFormat("could not convert \"%s\" to a boolean value.", option_arg);
+            break;
+        }
     case 't':
         {
             bool success;
@@ -109,8 +120,10 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
     case 'u':
         {
             bool success;
-            unwind_on_error = Args::StringToBoolean(option_arg, true, &success);
-            if (!success)
+            bool tmp_value = Args::StringToBoolean(option_arg, true, &success);
+            if (success)
+                unwind_on_error = tmp_value;
+            else
                 error.SetErrorStringWithFormat("could not convert \"%s\" to a boolean value.", option_arg);
             break;
         }
@@ -125,7 +138,18 @@ CommandObjectExpression::CommandOptions::SetOptionValue (CommandInterpreter &int
 void
 CommandObjectExpression::CommandOptions::OptionParsingStarting (CommandInterpreter &interpreter)
 {
-    unwind_on_error = true;
+    Process *process = interpreter.GetExecutionContext().GetProcessPtr();
+    if (process != NULL)
+    {
+        ignore_breakpoints = process->GetIgnoreBreakpointsInExpressions();
+        unwind_on_error    = process->GetUnwindOnErrorInExpressions();
+    }
+    else
+    {
+        ignore_breakpoints = false;
+        unwind_on_error = true;
+    }
+    
     show_summary = true;
     try_all_threads = true;
     timeout = 0;
@@ -306,6 +330,7 @@ CommandObjectExpression::EvaluateExpression
         EvaluateExpressionOptions options;
         options.SetCoerceToId(m_varobj_options.use_objc)
         .SetUnwindOnError(m_command_options.unwind_on_error)
+        .SetIgnoreBreakpoints (m_command_options.ignore_breakpoints)
         .SetKeepInMemory(keep_in_memory)
         .SetUseDynamic(m_varobj_options.use_dynamic)
         .SetRunOthers(m_command_options.try_all_threads)
@@ -316,7 +341,8 @@ CommandObjectExpression::EvaluateExpression
                                                   result_valobj_sp,
                                                   options);
         
-        if (exe_results == eExecutionInterrupted && !m_command_options.unwind_on_error)
+        if ((exe_results == eExecutionInterrupted && !m_command_options.unwind_on_error)
+            ||(exe_results == eExecutionHitBreakpoint && !m_command_options.ignore_breakpoints))
         {
             uint32_t start_frame = 0;
             uint32_t num_frames = 1;

@@ -48,7 +48,8 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
             const uint32_t range_scope = eSymbolContextFunction | eSymbolContextSymbol;
             const bool use_inline_block_range = false;
             const bool stop_other_threads = true;
-            const bool discard_on_error = true;
+            const bool unwind_on_error = true;
+            const bool ignore_breakpoints = true;
             const bool try_all_threads = true;
             const uint32_t timeout_usec = 500000;
 
@@ -80,7 +81,8 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
                                                 mmap_range.GetBaseAddress(),
                                                 ClangASTType (clang_ast_context->getASTContext(), clang_void_ptr_type),
                                                 stop_other_threads,
-                                                discard_on_error,
+                                                unwind_on_error,
+                                                ignore_breakpoints,
                                                 &addr,
                                                 &length,
                                                 &prot_arg,
@@ -104,7 +106,8 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
                                                                           call_plan_sp,        
                                                                           stop_other_threads,
                                                                           try_all_threads,
-                                                                          discard_on_error,
+                                                                          unwind_on_error,
+                                                                          ignore_breakpoints,
                                                                           timeout_usec,
                                                                           error_strm);
                         if (result == eExecutionCompleted)
@@ -152,7 +155,8 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
            const uint32_t range_scope = eSymbolContextFunction | eSymbolContextSymbol;
            const bool use_inline_block_range = false;
            const bool stop_other_threads = true;
-           const bool discard_on_error = true;
+           const bool unwind_on_error = true;
+           const bool ignore_breakpoints = true;
            const bool try_all_threads = true;
            const uint32_t timeout_usec = 500000;
            
@@ -163,7 +167,8 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
                                                                             munmap_range.GetBaseAddress(),
                                                                             ClangASTType(),
                                                                             stop_other_threads,
-                                                                            discard_on_error,
+                                                                            unwind_on_error,
+                                                                            ignore_breakpoints,
                                                                             &addr,
                                                                             &length));
                if (call_plan_sp)
@@ -182,7 +187,8 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
                                                                          call_plan_sp,        
                                                                          stop_other_threads,
                                                                          try_all_threads,
-                                                                         discard_on_error,
+                                                                         unwind_on_error,
+                                                                         ignore_breakpoints,
                                                                          timeout_usec,
                                                                          error_strm);
                        if (result == eExecutionCompleted)

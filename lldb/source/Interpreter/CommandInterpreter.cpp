@@ -1320,6 +1320,7 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                     EvaluateExpressionOptions options;
                     options.SetCoerceToId(false)
                     .SetUnwindOnError(true)
+                    .SetIgnoreBreakpoints(true)
                     .SetKeepInMemory(false)
                     .SetRunOthers(true)
                     .SetTimeoutUsec(0);
@@ -1374,6 +1375,9 @@ CommandInterpreter::PreprocessCommand (std::string &command)
                                     break;
                                 case eExecutionInterrupted:
                                     error.SetErrorStringWithFormat("expression interrupted for the expression '%s'", expr_str.c_str());
+                                    break;
+                                case eExecutionHitBreakpoint:
+                                    error.SetErrorStringWithFormat("expression hit breakpoint for the expression '%s'", expr_str.c_str());
                                     break;
                                 case eExecutionTimedOut:
                                     error.SetErrorStringWithFormat("expression timed out for the expression '%s'", expr_str.c_str());

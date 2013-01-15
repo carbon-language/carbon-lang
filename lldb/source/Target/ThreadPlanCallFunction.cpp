@@ -123,7 +123,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 const ClangASTType &return_type,
                                                 addr_t arg,
                                                 bool stop_other_threads,
-                                                bool discard_on_error,
+                                                bool unwind_on_error,
+                                                bool ignore_breakpoints,
                                                 addr_t *this_arg,
                                                 addr_t *cmd_arg) :
     ThreadPlan (ThreadPlan::eKindCallFunction, "Call function plan", thread, eVoteNoOpinion, eVoteNoOpinion),
@@ -134,7 +135,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_return_type (return_type),
     m_takedown_done (false),
     m_stop_address (LLDB_INVALID_ADDRESS),
-    m_discard_on_error (discard_on_error)
+    m_unwind_on_error (unwind_on_error),
+    m_ignore_breakpoints (ignore_breakpoints)
 {
     lldb::addr_t start_load_addr;
     ABI *abi;
@@ -183,7 +185,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
                                                 Address &function,
                                                 const ClangASTType &return_type,
                                                 bool stop_other_threads,
-                                                bool discard_on_error,
+                                                bool unwind_on_error,
+                                                bool ignore_breakpoints,
                                                 addr_t *arg1_ptr,
                                                 addr_t *arg2_ptr,
                                                 addr_t *arg3_ptr,
@@ -198,7 +201,8 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     m_return_type (return_type),
     m_takedown_done (false),
     m_stop_address (LLDB_INVALID_ADDRESS),
-    m_discard_on_error (discard_on_error)
+    m_unwind_on_error (unwind_on_error),
+    m_ignore_breakpoints (ignore_breakpoints)
 {
     lldb::addr_t start_load_addr;
     ABI *abi;
@@ -339,7 +343,10 @@ ThreadPlanCallFunction::PlanExplainsStop ()
     // If our subplan knows why we stopped, even if it's done (which would forward the question to us)
     // we answer yes.
     if (m_subplan_sp.get() != NULL && m_subplan_sp->PlanExplainsStop())
+    {
+        SetPlanComplete();
         return true;
+    }
     
     // Check if the breakpoint is one of ours.
     
@@ -353,7 +360,7 @@ ThreadPlanCallFunction::PlanExplainsStop ()
         return true;
     
     // If we don't want to discard this plan, than any stop we don't understand should be propagated up the stack.
-    if (!m_discard_on_error)
+    if (!m_unwind_on_error)
         return false;
             
     // Otherwise, check the case where we stopped for an internal breakpoint, in that case, continue on.
@@ -385,7 +392,7 @@ ThreadPlanCallFunction::PlanExplainsStop ()
                 return false;
         }
         
-        if (m_discard_on_error)
+        if (m_ignore_breakpoints)
         {
             DoTakedown(false);
             return true;
@@ -399,9 +406,10 @@ ThreadPlanCallFunction::PlanExplainsStop ()
         // If we want to discard the plan, then we say we explain the stop
         // but if we are going to be discarded, let whoever is above us
         // explain the stop.
+        SetPlanComplete(false);
         if (m_subplan_sp)
         {
-            if (m_discard_on_error)
+            if (m_unwind_on_error)
             {
                 DoTakedown(false);
                 return true;
@@ -417,7 +425,11 @@ ThreadPlanCallFunction::PlanExplainsStop ()
 bool
 ThreadPlanCallFunction::ShouldStop (Event *event_ptr)
 {
-    if (IsPlanComplete() || PlanExplainsStop())
+    // We do some computation in PlanExplainsStop that may or may not set the plan as complete.
+    // We need to do that here to make sure our state is correct.
+    PlanExplainsStop();
+    
+    if (IsPlanComplete())
     {
         ReportRegisterState ("Function completed.  Register state was:");
         
@@ -481,10 +493,16 @@ ThreadPlanCallFunction::WillStop ()
 bool
 ThreadPlanCallFunction::MischiefManaged ()
 {
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    
+    if (PlanExplainsStop() && !IsPlanComplete())
+    {
+        if (log)
+            log->Printf ("ThreadPlanCallFunction: Got into MischiefManaged, explained stop but was not complete.");
+    }
+    
     if (IsPlanComplete())
     {
-        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-
         if (log)
             log->Printf("ThreadPlanCallFunction(%p): Completed call function plan.", this);
 
@@ -527,12 +545,19 @@ ThreadPlanCallFunction::BreakpointsExplainStop()
 {
     StopInfoSP stop_info_sp = GetPrivateStopReason();
     
-    if (m_cxx_language_runtime &&
-        m_cxx_language_runtime->ExceptionBreakpointsExplainStop(stop_info_sp))
+    if ((m_cxx_language_runtime &&
+            m_cxx_language_runtime->ExceptionBreakpointsExplainStop(stop_info_sp))
+       ||(m_objc_language_runtime &&
+            m_objc_language_runtime->ExceptionBreakpointsExplainStop(stop_info_sp)))
+    {
+        SetPlanComplete(false);
         return true;
+    }
     
-    if (m_objc_language_runtime &&
-        m_objc_language_runtime->ExceptionBreakpointsExplainStop(stop_info_sp))
+    // Finally, if the process is set to ignore breakpoints in function calls,
+    // then we explain all breakpoint stops.
+    
+    if (m_ignore_breakpoints)
         return true;
     
     return false;

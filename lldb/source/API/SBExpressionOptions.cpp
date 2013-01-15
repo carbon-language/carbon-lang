@@ -65,6 +65,18 @@ SBExpressionOptions::SetUnwindOnError (bool unwind)
     m_opaque_ap->SetUnwindOnError (unwind);
 }
 
+bool
+SBExpressionOptions::GetIgnoreBreakpoints () const
+{
+    return m_opaque_ap->DoesIgnoreBreakpoints ();
+}
+
+void
+SBExpressionOptions::SetIgnoreBreakpoints (bool ignore)
+{
+    m_opaque_ap->SetIgnoreBreakpoints (ignore);
+}
+
 lldb::DynamicValueType
 SBExpressionOptions::GetFetchDynamicValue () const
 {

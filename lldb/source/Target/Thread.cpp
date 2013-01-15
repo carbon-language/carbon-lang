@@ -1283,9 +1283,16 @@ Thread::QueueThreadPlanForCallFunction (bool abort_other_plans,
                                         Address& function,
                                         lldb::addr_t arg,
                                         bool stop_other_threads,
-                                        bool discard_on_error)
+                                        bool unwind_on_error,
+                                        bool ignore_breakpoints)
 {
-    ThreadPlanSP thread_plan_sp (new ThreadPlanCallFunction (*this, function, ClangASTType(), arg, stop_other_threads, discard_on_error));
+    ThreadPlanSP thread_plan_sp (new ThreadPlanCallFunction (*this,
+                                                             function,
+                                                             ClangASTType(),
+                                                             arg,
+                                                             stop_other_threads,
+                                                             unwind_on_error,
+                                                             ignore_breakpoints));
     QueueThreadPlan (thread_plan_sp, abort_other_plans);
     return thread_plan_sp.get();
 }

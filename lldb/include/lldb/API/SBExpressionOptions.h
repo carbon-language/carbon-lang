@@ -42,6 +42,12 @@ public:
     void
     SetUnwindOnError (bool unwind = false);
     
+    bool
+    GetIgnoreBreakpoints () const;
+    
+    void
+    SetIgnoreBreakpoints (bool ignore = false);
+    
     lldb::DynamicValueType
     GetFetchDynamicValue () const;
     

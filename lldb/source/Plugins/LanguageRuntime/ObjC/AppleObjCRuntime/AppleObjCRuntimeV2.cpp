@@ -220,9 +220,10 @@ AppleObjCRuntimeV2::RunFunctionToFindClassName(addr_t object_addr, Thread *threa
     if (!m_get_class_name_function->WriteFunctionArguments (exe_ctx, m_get_class_name_args, find_class_name_address, dispatch_values, errors))
         return false;
     
-    bool stop_others = true;
-    bool try_all_threads = true;
-    bool unwind_on_error = true;
+    const bool stop_others = true;
+    const bool try_all_threads = true;
+    const bool unwind_on_error = true;
+    const bool ignore_breakpoints = true;
     
     ExecutionResults results = m_get_class_name_function->ExecuteFunction (exe_ctx, 
                                                      &m_get_class_name_args, 
@@ -230,7 +231,8 @@ AppleObjCRuntimeV2::RunFunctionToFindClassName(addr_t object_addr, Thread *threa
                                                      stop_others, 
                                                      100000, 
                                                      try_all_threads, 
-                                                     unwind_on_error, 
+                                                     unwind_on_error,
+                                                     ignore_breakpoints,
                                                      void_ptr_value);
                                                      
     if (results != eExecutionCompleted)

@@ -73,6 +73,18 @@ public:
 
     void
     SetPythonOSPluginPath (const FileSpec &file);
+    
+    bool
+    GetIgnoreBreakpointsInExpressions () const;
+    
+    void
+    SetIgnoreBreakpointsInExpressions (bool ignore);
+
+    bool
+    GetUnwindOnErrorInExpressions () const;
+    
+    void
+    SetUnwindOnErrorInExpressions (bool ignore);
 };
 
 typedef STD_SHARED_PTR(ProcessProperties) ProcessPropertiesSP;
@@ -2414,7 +2426,8 @@ public:
                     lldb::ThreadPlanSP &thread_plan_sp,
                     bool stop_others,
                     bool run_others,
-                    bool discard_on_error,
+                    bool unwind_on_error,
+                    bool ignore_breakpoints,
                     uint32_t timeout_usec,
                     Stream &errors);
 

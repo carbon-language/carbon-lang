@@ -131,6 +131,7 @@ typedef enum ExecutionResults
     eExecutionCompleted,
     eExecutionDiscarded,
     eExecutionInterrupted,
+    eExecutionHitBreakpoint,
     eExecutionTimedOut
 } ExecutionResults;
 

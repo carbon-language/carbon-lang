@@ -1,5 +1,14 @@
 #include <stdio.h>
 
+static int static_value = 0;
+
+int
+a_function_to_call()
+{
+    static_value++;
+    return static_value;
+}
+
 int main (int argc, char const *argv[])
 {
     printf ("Hello world!\n");
@@ -29,5 +38,7 @@ int main (int argc, char const *argv[])
     expression printf ("two: %llu, one: %i\n", 2ull, 1)
     expression random() % 255l
 #endif
+
+    a_function_to_call();
     return 0;
 }

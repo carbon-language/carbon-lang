@@ -84,8 +84,15 @@ AppleThreadPlanStepThroughObjCTrampoline::InitializeClangFunction ()
         }
         m_impl_function = m_trampoline_handler->GetLookupImplementationWrapperFunction();
         ExecutionContext exc_ctx;
+        const bool unwind_on_error = true;
+        const bool ignore_breakpoints = true;
         m_thread.CalculateExecutionContext(exc_ctx);
-        m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx, m_args_addr, errors, m_stop_others));
+        m_func_sp.reset(m_impl_function->GetThreadPlanToCallFunction (exc_ctx,
+                                                                      m_args_addr,
+                                                                      errors,
+                                                                      m_stop_others,
+                                                                      unwind_on_error,
+                                                                      ignore_breakpoints));
         m_func_sp->SetOkayToDiscard(true);
         m_thread.QueueThreadPlan (m_func_sp, false);
     }

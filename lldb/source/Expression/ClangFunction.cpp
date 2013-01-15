@@ -402,7 +402,8 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
                                             lldb::addr_t &args_addr, 
                                             Stream &errors, 
                                             bool stop_others, 
-                                            bool discard_on_error, 
+                                            bool unwind_on_error,
+                                            bool ignore_breakpoints,
                                             lldb::addr_t *this_arg,
                                             lldb::addr_t *cmd_arg)
 {
@@ -422,7 +423,8 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
                                                        ClangASTType(),
                                                        args_addr,
                                                        stop_others, 
-                                                       discard_on_error,
+                                                       unwind_on_error,
+                                                       ignore_breakpoints,
                                                        this_arg,
                                                        cmd_arg);
     new_plan->SetIsMasterPlan(true);
@@ -479,8 +481,10 @@ ExecutionResults
 ClangFunction::ExecuteFunction(ExecutionContext &exe_ctx, Stream &errors, bool stop_others, Value &results)
 {
     const bool try_all_threads = false;
-    const bool discard_on_error = true;
-    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, 0UL, try_all_threads, discard_on_error, results);
+    const bool unwind_on_error = true;
+    const bool ignore_breakpoints = true;
+    return ExecuteFunction (exe_ctx, NULL, errors, stop_others, 0UL, try_all_threads,
+                            unwind_on_error, ignore_breakpoints, results);
 }
 
 ExecutionResults
@@ -492,9 +496,10 @@ ClangFunction::ExecuteFunction(
         Value &results)
 {
     const bool stop_others = true;
-    const bool discard_on_error = true;
+    const bool unwind_on_error = true;
+    const bool ignore_breakpoints = true;
     return ExecuteFunction (exe_ctx, NULL, errors, stop_others, timeout_usec,
-                            try_all_threads, discard_on_error, results);
+                            try_all_threads, unwind_on_error, ignore_breakpoints, results);
 }
 
 // This is the static function
@@ -505,7 +510,8 @@ ClangFunction::ExecuteFunction (
         lldb::addr_t &void_arg,
         bool stop_others,
         bool try_all_threads,
-        bool discard_on_error,
+        bool unwind_on_error,
+        bool ignore_breakpoints,
         uint32_t timeout_usec,
         Stream &errors,
         lldb::addr_t *this_arg)
@@ -515,7 +521,8 @@ ClangFunction::ExecuteFunction (
                                                                                  void_arg, 
                                                                                  errors, 
                                                                                  stop_others, 
-                                                                                 discard_on_error, 
+                                                                                 unwind_on_error,
+                                                                                 ignore_breakpoints,
                                                                                  this_arg));
     if (!call_plan_sp)
         return eExecutionSetupError;
@@ -528,7 +535,8 @@ ClangFunction::ExecuteFunction (
     ExecutionResults results = exe_ctx.GetProcessRef().RunThreadPlan (exe_ctx, call_plan_sp,
                                                                       stop_others, 
                                                                       try_all_threads, 
-                                                                      discard_on_error,
+                                                                      unwind_on_error,
+                                                                      ignore_breakpoints,
                                                                       timeout_usec,
                                                                       errors);
     
@@ -546,7 +554,8 @@ ClangFunction::ExecuteFunction(
         bool stop_others, 
         uint32_t timeout_usec, 
         bool try_all_threads,
-        bool discard_on_error, 
+        bool unwind_on_error,
+        bool ignore_breakpoints,
         Value &results)
 {
     using namespace clang;
@@ -573,7 +582,8 @@ ClangFunction::ExecuteFunction(
                                                    args_addr, 
                                                    stop_others, 
                                                    try_all_threads, 
-                                                   discard_on_error, 
+                                                   unwind_on_error,
+                                                   ignore_breakpoints,
                                                    timeout_usec, 
                                                    errors);
 

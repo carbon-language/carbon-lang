@@ -1757,6 +1757,7 @@ Target::EvaluateExpression
                                                            lldb::eLanguageTypeUnknown,
                                                            options.DoesCoerceToId() ? ClangUserExpression::eResultTypeId : ClangUserExpression::eResultTypeAny,
                                                            options.DoesUnwindOnError(),
+                                                           options.DoesIgnoreBreakpoints(),
                                                            expr_cstr, 
                                                            prefix, 
                                                            result_valobj_sp,

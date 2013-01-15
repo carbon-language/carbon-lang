@@ -275,6 +275,47 @@ protected:
                 m_should_stop = false;
 
                 ExecutionContext exe_ctx (m_thread.GetStackFrameAtIndex(0));
+                Process *process  = exe_ctx.GetProcessPtr();
+                if (process->GetModIDRef().IsLastResumeForUserExpression())
+                {
+                    // If we are in the middle of evaluating an expression, don't run asynchronous breakpoint commands or
+                    // expressions.  That could lead to infinite recursion if the command or condition re-calls the function
+                    // with this breakpoint.
+                    // TODO: We can keep a list of the breakpoints we've seen while running expressions in the nested
+                    // PerformAction calls that can arise when the action runs a function that hits another breakpoint,
+                    // and only stop running commands when we see the same breakpoint hit a second time.
+                    
+                    m_should_stop_is_valid = true;
+                    if (log)
+                        log->Printf ("StopInfoBreakpoint::PerformAction - Hit a breakpoint while running an expression,"
+                                     " not running commands to avoid recursion.");
+                    bool ignoring_breakpoints = process->GetIgnoreBreakpointsInExpressions();
+                    if (ignoring_breakpoints)
+                    {
+                        m_should_stop = false;
+                        // Internal breakpoints will always stop.  
+                        for (size_t j = 0; j < num_owners; j++)
+                        {
+                            lldb::BreakpointLocationSP bp_loc_sp = bp_site_sp->GetOwnerAtIndex(j);
+                            if (bp_loc_sp->GetBreakpoint().IsInternal())
+                            {
+                                m_should_stop = true;
+                                break;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        m_should_stop = true;
+                    }
+                    if (log)
+                        log->Printf ("StopInfoBreakpoint::PerformAction - in expression, continuing: %s.",
+                                     m_should_stop ? "true" : "false");
+                    process->GetTarget().GetDebugger().GetAsyncOutputStream()->Printf("Warning: hit breakpoint while "
+                                           "running function, skipping commands and conditions to prevent recursion.");
+                    return;
+                }
+                
                 StoppointCallbackContext context (event_ptr, exe_ctx, false);
 
                 for (size_t j = 0; j < num_owners; j++)
@@ -294,13 +335,15 @@ protected:
                         
                         ExecutionResults result_code;
                         ValueObjectSP result_value_sp;
-                        const bool discard_on_error = true;
+                        const bool unwind_on_error = true;
+                        const bool ignore_breakpoints = true;
                         Error error;
                         result_code = ClangUserExpression::EvaluateWithError (exe_ctx,
                                                                               eExecutionPolicyOnlyWhenNeeded,
                                                                               lldb::eLanguageTypeUnknown,
                                                                               ClangUserExpression::eResultTypeAny,
-                                                                              discard_on_error,
+                                                                              unwind_on_error,
+                                                                              ignore_breakpoints,
                                                                               bp_loc_sp->GetConditionText(),
                                                                               NULL,
                                                                               result_value_sp,
@@ -575,13 +618,15 @@ protected:
                 // constructor errors up to the debugger's Async I/O.
                 ExecutionResults result_code;
                 ValueObjectSP result_value_sp;
-                const bool discard_on_error = true;
+                const bool unwind_on_error = true;
+                const bool ignore_breakpoints = true;
                 Error error;
                 result_code = ClangUserExpression::EvaluateWithError (exe_ctx,
                                                                       eExecutionPolicyOnlyWhenNeeded,
                                                                       lldb::eLanguageTypeUnknown,
                                                                       ClangUserExpression::eResultTypeAny,
-                                                                      discard_on_error,
+                                                                      unwind_on_error,
+                                                                      ignore_breakpoints,
                                                                       wp_sp->GetConditionText(),
                                                                       NULL,
                                                                       result_value_sp,

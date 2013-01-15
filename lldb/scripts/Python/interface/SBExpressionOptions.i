@@ -41,6 +41,14 @@ public:
     void
     SetUnwindOnError (bool unwind = false);
     
+    bool
+    GetIgnoreBreakpoints () const;
+    
+    %feature("docstring", "Sets whether to ignore breakpoint hits while running expressions.") SetUnwindOnError;
+    
+    void
+    SetIgnoreBreakpoints (bool ignore = false);
+    
     lldb::DynamicValueType
     GetFetchDynamicValue () const;
     

@@ -648,7 +648,8 @@ public:
                                     Address& function,
                                     lldb::addr_t arg,
                                     bool stop_other_threads,
-                                    bool discard_on_error = false);
+                                    bool unwind_on_error = false,
+                                    bool ignore_breakpoints = true);
                                             
     //------------------------------------------------------------------
     // Thread Plan accessors:

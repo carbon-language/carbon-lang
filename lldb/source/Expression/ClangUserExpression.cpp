@@ -537,12 +537,16 @@ ClangUserExpression::GetThreadPlanToExecuteJITExpression (Stream &error_stream,
     // ClangUserExpression resources before the thread plan finishes execution in the target.  But because we are 
     // forcing unwind_on_error to be true here, in practical terms that can't happen.
     
+    const bool stop_others = true;
+    const bool unwind_on_error = true;
+    const bool ignore_breakpoints = false;
     return ClangFunction::GetThreadPlanToCallFunction (exe_ctx, 
                                                        m_jit_start_addr, 
                                                        struct_address, 
                                                        error_stream,
-                                                       true,
-                                                       true, 
+                                                       stop_others,
+                                                       unwind_on_error,
+                                                       ignore_breakpoints,
                                                        (m_needs_object_ptr ? &object_ptr : NULL),
                                                        (m_needs_object_ptr && m_objectivec) ? &cmd_ptr : NULL);
 }
@@ -593,7 +597,8 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
 ExecutionResults
 ClangUserExpression::Execute (Stream &error_stream,
                               ExecutionContext &exe_ctx,
-                              bool discard_on_error,
+                              bool unwind_on_error,
+                              bool ignore_breakpoints,
                               ClangUserExpression::ClangUserExpressionSP &shared_ptr_to_me,
                               lldb::ClangExpressionVariableSP &result,
                               bool run_others,
@@ -624,7 +629,8 @@ ClangUserExpression::Execute (Stream &error_stream,
                                                                           wrapper_address, 
                                                                           struct_address, 
                                                                           stop_others, 
-                                                                          discard_on_error, 
+                                                                          unwind_on_error,
+                                                                          ignore_breakpoints,
                                                                           (m_needs_object_ptr ? &object_ptr : NULL),
                                                                           ((m_needs_object_ptr && m_objectivec) ? &cmd_ptr : NULL),
                                                                           shared_ptr_to_me));
@@ -644,7 +650,8 @@ ClangUserExpression::Execute (Stream &error_stream,
                                                                                    call_plan_sp, 
                                                                                    stop_others, 
                                                                                    try_all_threads, 
-                                                                                   discard_on_error,
+                                                                                   unwind_on_error,
+                                                                                   ignore_breakpoints,
                                                                                    timeout_usec, 
                                                                                    error_stream);
         
@@ -654,7 +661,7 @@ ClangUserExpression::Execute (Stream &error_stream,
         if (log)
             log->Printf("-- [ClangUserExpression::Execute] Execution of expression completed --");
 
-        if (execution_result == eExecutionInterrupted)
+        if (execution_result == eExecutionInterrupted || execution_result == eExecutionHitBreakpoint)
         {
             const char *error_desc = NULL;
             
@@ -669,7 +676,8 @@ ClangUserExpression::Execute (Stream &error_stream,
             else
                 error_stream.Printf ("Execution was interrupted.");
                 
-            if (discard_on_error)
+            if ((execution_result == eExecutionInterrupted && unwind_on_error)
+                || (execution_result == eExecutionHitBreakpoint && ignore_breakpoints))
                 error_stream.Printf ("\nThe process has been returned to the state before execution.");
             else
                 error_stream.Printf ("\nThe process has been left at the point where it was interrupted.");
@@ -702,7 +710,8 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                                lldb_private::ExecutionPolicy execution_policy,
                                lldb::LanguageType language,
                                ResultType desired_type,
-                               bool discard_on_error,
+                               bool unwind_on_error,
+                               bool ignore_breakpoints,
                                const char *expr_cstr,
                                const char *expr_prefix,
                                lldb::ValueObjectSP &result_valobj_sp,
@@ -714,7 +723,8 @@ ClangUserExpression::Evaluate (ExecutionContext &exe_ctx,
                               execution_policy,
                               language,
                               desired_type,
-                              discard_on_error,
+                              unwind_on_error,
+                              ignore_breakpoints,
                               expr_cstr,
                               expr_prefix,
                               result_valobj_sp,
@@ -728,7 +738,8 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
                                         lldb_private::ExecutionPolicy execution_policy,
                                         lldb::LanguageType language,
                                         ResultType desired_type,
-                                        bool discard_on_error,
+                                        bool unwind_on_error,
+                                        bool ignore_breakpoints,
                                         const char *expr_cstr,
                                         const char *expr_prefix,
                                         lldb::ValueObjectSP &result_valobj_sp,
@@ -807,7 +818,8 @@ ClangUserExpression::EvaluateWithError (ExecutionContext &exe_ctx,
 
             execution_results = user_expression_sp->Execute (error_stream, 
                                                              exe_ctx, 
-                                                             discard_on_error,
+                                                             unwind_on_error,
+                                                             ignore_breakpoints,
                                                              user_expression_sp, 
                                                              expr_result,
                                                              run_others,

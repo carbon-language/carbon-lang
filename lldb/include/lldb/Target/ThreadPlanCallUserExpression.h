@@ -29,7 +29,8 @@ public:
                                   Address &function,
                                   lldb::addr_t arg,
                                   bool stop_other_threads,
-                                  bool discard_on_error,
+                                  bool unwind_on_error,
+                                  bool ignore_breakpoints,
                                   lldb::addr_t *this_arg,
                                   lldb::addr_t *cmd_arg,
                                   ClangUserExpression::ClangUserExpressionSP &user_expression_sp);

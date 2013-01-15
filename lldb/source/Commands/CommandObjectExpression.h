@@ -52,6 +52,7 @@ public:
 
         static OptionDefinition g_option_table[];
         bool        unwind_on_error;
+        bool        ignore_breakpoints;
         bool        show_types;
         bool        show_summary;
         uint32_t    timeout;

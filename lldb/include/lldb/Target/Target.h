@@ -151,6 +151,7 @@ public:
         m_execution_policy(eExecutionPolicyOnlyWhenNeeded),
         m_coerce_to_id(false),
         m_unwind_on_error(true),
+        m_ignore_breakpoints (false),
         m_keep_in_memory(false),
         m_run_others(true),
         m_use_dynamic(lldb::eNoDynamicValues),
@@ -193,6 +194,19 @@ public:
     SetUnwindOnError (bool unwind = false)
     {
         m_unwind_on_error = unwind;
+        return *this;
+    }
+    
+    bool
+    DoesIgnoreBreakpoints () const
+    {
+        return m_ignore_breakpoints;
+    }
+    
+    EvaluateExpressionOptions&
+    SetIgnoreBreakpoints (bool ignore = false)
+    {
+        m_ignore_breakpoints = ignore;
         return *this;
     }
     
@@ -252,6 +266,7 @@ private:
     ExecutionPolicy m_execution_policy;
     bool m_coerce_to_id;
     bool m_unwind_on_error;
+    bool m_ignore_breakpoints;
     bool m_keep_in_memory;
     bool m_run_others;
     lldb::DynamicValueType m_use_dynamic;

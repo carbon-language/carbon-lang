@@ -117,10 +117,13 @@ public:
     ///     The execution context to use when looking up entities that
     ///     are needed for parsing (locations of variables, etc.)
     ///
-    /// @param[in] discard_on_error
+    /// @param[in] unwind_on_error
     ///     If true, and the execution stops before completion, we unwind the
     ///     function call, and return the program state to what it was before the
     ///     execution.  If false, we leave the program in the stopped state.
+    ///
+    /// @param[in] ignore_breakpoints
+    ///     If true, ignore breakpoints while executing the expression.
     ///
     /// @param[in] shared_ptr_to_me
     ///     This is a shared pointer to this ClangUserExpression.  This is
@@ -150,7 +153,8 @@ public:
     ExecutionResults
     Execute (Stream &error_stream,
              ExecutionContext &exe_ctx,
-             bool discard_on_error,
+             bool unwind_on_error,
+             bool ignore_breakpoints,
              ClangUserExpressionSP &shared_ptr_to_me,
              lldb::ClangExpressionVariableSP &result,
              bool try_all_threads,
@@ -305,9 +309,12 @@ public:
     ///     the expression.  Currently restricted to those languages 
     ///     supported by Clang.
     ///
-    /// @param[in] discard_on_error
+    /// @param[in] unwind_on_error
     ///     True if the thread's state should be restored in the case 
     ///     of an error.
+    ///
+    /// @param[in] ignore_breakpoints
+    ///     If true, ignore breakpoints while executing the expression.
     ///
     /// @param[in] result_type
     ///     If not eResultTypeAny, the type of the desired result.  Will
@@ -341,7 +348,8 @@ public:
               lldb_private::ExecutionPolicy execution_policy,
               lldb::LanguageType language,
               ResultType desired_type,
-              bool discard_on_error,
+              bool unwind_on_error,
+              bool ignore_breakpoints,
               const char *expr_cstr,
               const char *expr_prefix,
               lldb::ValueObjectSP &result_valobj_sp,
@@ -353,7 +361,8 @@ public:
                        lldb_private::ExecutionPolicy execution_policy,
                        lldb::LanguageType language,
                        ResultType desired_type,
-                       bool discard_on_error,
+                       bool unwind_on_error,
+                       bool ignore_breakpoints,
                        const char *expr_cstr,
                        const char *expr_prefix,
                        lldb::ValueObjectSP &result_valobj_sp,

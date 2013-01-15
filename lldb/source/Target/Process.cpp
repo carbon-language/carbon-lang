@@ -97,6 +97,8 @@ g_properties[] =
     { "disable-memory-cache" , OptionValue::eTypeBoolean, false, DISABLE_MEM_CACHE_DEFAULT, NULL, NULL, "Disable reading and caching of memory in fixed-size units." },
     { "extra-startup-command", OptionValue::eTypeArray  , false, OptionValue::eTypeString, NULL, NULL, "A list containing extra commands understood by the particular process plugin used.  "
                                                                                                        "For instance, to turn on debugserver logging set this to \"QSetLogging:bitmask=LOG_DEFAULT;\"" },
+    { "ignore-breakpoints-in-expressions", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, breakpoints will be ignored during expression evaluation." },
+    { "unwind-on-error-in-expressions", OptionValue::eTypeBoolean, true, false, NULL, NULL, "If true, errors in expression evaluation will unwind the stack back to the state before the call." },
     { "python-os-plugin-path", OptionValue::eTypeFileSpec, false, true, NULL, NULL, "A path to a python OS plug-in module file that contains a OperatingSystemPlugIn class." },
     {  NULL                  , OptionValue::eTypeInvalid, false, 0, NULL, NULL, NULL  }
 };
@@ -104,6 +106,8 @@ g_properties[] =
 enum {
     ePropertyDisableMemCache,
     ePropertyExtraStartCommand,
+    ePropertyIgnoreBreakpointsInExpressions,
+    ePropertyUnwindOnErrorInExpressions,
     ePropertyPythonOSPluginPath
 };
 
@@ -162,6 +166,35 @@ ProcessProperties::SetPythonOSPluginPath (const FileSpec &file)
 {
     const uint32_t idx = ePropertyPythonOSPluginPath;
     m_collection_sp->SetPropertyAtIndexAsFileSpec(NULL, idx, file);
+}
+
+
+bool
+ProcessProperties::GetIgnoreBreakpointsInExpressions () const
+{
+    const uint32_t idx = ePropertyIgnoreBreakpointsInExpressions;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean(NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+    
+void
+ProcessProperties::SetIgnoreBreakpointsInExpressions (bool ignore)
+{
+    const uint32_t idx = ePropertyIgnoreBreakpointsInExpressions;
+    m_collection_sp->SetPropertyAtIndexAsBoolean(NULL, idx, ignore);
+}
+
+bool
+ProcessProperties::GetUnwindOnErrorInExpressions () const
+{
+    const uint32_t idx = ePropertyUnwindOnErrorInExpressions;
+    return m_collection_sp->GetPropertyAtIndexAsBoolean(NULL, idx, g_properties[idx].default_uint_value != 0);
+}
+    
+void
+ProcessProperties::SetUnwindOnErrorInExpressions (bool ignore)
+{
+    const uint32_t idx = ePropertyUnwindOnErrorInExpressions;
+    m_collection_sp->SetPropertyAtIndexAsBoolean(NULL, idx, ignore);
 }
 
 void
@@ -1668,7 +1701,8 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
             {
                 ExecutionContext exe_ctx;
                 frame_sp->CalculateExecutionContext (exe_ctx);
-                bool unwind_on_error = true;
+                const bool unwind_on_error = true;
+                const bool ignore_breakpoints = true;
                 StreamString expr;
                 expr.Printf("dlopen (\"%s\", 2)", path);
                 const char *prefix = "extern \"C\" void* dlopen (const char *path, int mode);\n";
@@ -1678,6 +1712,7 @@ Process::LoadImage (const FileSpec &image_spec, Error &error)
                                                lldb::eLanguageTypeUnknown,
                                                ClangUserExpression::eResultTypeAny,
                                                unwind_on_error,
+                                               ignore_breakpoints,
                                                expr.GetData(),
                                                prefix,
                                                result_valobj_sp,
@@ -1743,7 +1778,8 @@ Process::UnloadImage (uint32_t image_token)
                     {
                         ExecutionContext exe_ctx;
                         frame_sp->CalculateExecutionContext (exe_ctx);
-                        bool unwind_on_error = true;
+                        const bool unwind_on_error = true;
+                        const bool ignore_breakpoints = true;
                         StreamString expr;
                         expr.Printf("dlclose ((void *)0x%" PRIx64 ")", image_addr);
                         const char *prefix = "extern \"C\" int dlclose(void* handle);\n";
@@ -1753,6 +1789,7 @@ Process::UnloadImage (uint32_t image_token)
                                                        lldb::eLanguageTypeUnknown,
                                                        ClangUserExpression::eResultTypeAny,
                                                        unwind_on_error,
+                                                       ignore_breakpoints,
                                                        expr.GetData(),
                                                        prefix,
                                                        result_valobj_sp,
@@ -4293,7 +4330,8 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         lldb::ThreadPlanSP &thread_plan_sp,
                         bool stop_others,
                         bool run_others,
-                        bool discard_on_error,
+                        bool unwind_on_error,
+                        bool ignore_breakpoints,
                         uint32_t timeout_usec,
                         Stream &errors)
 {
@@ -4419,8 +4457,10 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         
         bool first_timeout = true;
         bool do_resume = true;
+        bool handle_running_event = true;
         const uint64_t default_one_thread_timeout_usec = 250000;
         uint64_t computed_timeout = 0;
+        bool stopped_by_breakpoint = false;
         
         // This while loop must exit out the bottom, there's cleanup that we need to do when we are done.
         // So don't call return anywhere within it.
@@ -4431,16 +4471,19 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             // The only exception is if we get two running events with no intervening
             // stop, which can happen, we will just wait for then next stop event.
             
-            if (do_resume)
+            if (do_resume || handle_running_event)
             {
                 // Do the initial resume and wait for the running event before going further.
         
-                Error resume_error = PrivateResume ();
-                if (!resume_error.Success())
+                if (do_resume)
                 {
-                    errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
-                    return_value = eExecutionSetupError;
-                    break;
+                    Error resume_error = PrivateResume ();
+                    if (!resume_error.Success())
+                    {
+                        errors.Printf("Error resuming inferior: \"%s\".\n", resume_error.AsCString());
+                        return_value = eExecutionSetupError;
+                        break;
+                    }
                 }
         
                 real_timeout = TimeValue::Now();
@@ -4526,6 +4569,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 if (log)
                     log->PutCString ("Process::RunThreadPlan(): handled an extra running event.");
                 do_resume = true;
+                handle_running_event = true;
             }
             
             // Now wait for the process to stop again:
@@ -4601,10 +4645,24 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                                     }
                                     else
                                     {
-                                        if (log)
-                                            log->PutCString ("Process::RunThreadPlan(): thread plan didn't successfully complete.");
-
-                                        return_value = eExecutionInterrupted;
+                                        // Something restarted the target, so just wait for it to stop for real.
+                                        if (Process::ProcessEventData::GetRestartedFromEvent(event_sp.get()))
+                                        {
+                                            if (log)
+                                                log->PutCString ("Process::RunThreadPlan(): Somebody stopped and then restarted, we'll continue waiting.");
+                                           keep_going = true;
+                                           do_resume = false;
+                                           handle_running_event = true;
+                                        }
+                                        else
+                                        {
+                                            if (log)
+                                                log->PutCString ("Process::RunThreadPlan(): thread plan didn't successfully complete.");
+                                            if (stop_reason == eStopReasonBreakpoint)
+                                                return_value = eExecutionHitBreakpoint;
+                                            else
+                                                return_value = eExecutionInterrupted;
+                                        }
                                     }
                                 }
                             }        
@@ -4619,6 +4677,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                         case lldb::eStateRunning:
                             do_resume = false;
                             keep_going = true;
+                            handle_running_event = false;
                             break;
 
                         default:
@@ -4815,7 +4874,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                 }
 
             }
-            
         }  // END WAIT LOOP
         
         // If we had to start up a temporary private state thread to run this thread plan, shut it down now.
@@ -4832,15 +4890,22 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
 
         }
         
-        // Restore the thread state if we are going to discard the plan execution.
+        // Restore the thread state if we are going to discard the plan execution.  There are three cases where this
+        // could happen:
+        // 1) The execution successfully completed
+        // 2) We hit a breakpoint, and ignore_breakpoints was true
+        // 3) We got some other error, and discard_on_error was true
+        bool should_unwind = (return_value == eExecutionInterrupted && unwind_on_error)
+                             || (return_value == eExecutionHitBreakpoint && ignore_breakpoints);
         
-        if (return_value == eExecutionCompleted || discard_on_error)
+        if (return_value == eExecutionCompleted
+            || should_unwind)
         {
             thread_plan_sp->RestoreThreadState();
         }
         
         // Now do some processing on the results of the run:
-        if (return_value == eExecutionInterrupted)
+        if (return_value == eExecutionInterrupted || return_value == eExecutionHitBreakpoint)
         {
             if (log)
             {
@@ -4933,7 +4998,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
                     log->Printf("Process::RunThreadPlan(): execution interrupted: %s", s.GetData());
             }
             
-            if (discard_on_error && thread_plan_sp)
+            if (should_unwind && thread_plan_sp)
             {
                 if (log)
                     log->Printf ("Process::RunThreadPlan: ExecutionInterrupted - discarding thread plans up to %p.", thread_plan_sp.get());
@@ -4951,7 +5016,7 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             if (log)
                 log->PutCString("Process::RunThreadPlan(): execution set up error.");
                 
-            if (discard_on_error && thread_plan_sp)
+            if (unwind_on_error && thread_plan_sp)
             {
                 thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
                 thread_plan_sp->SetPrivate (orig_plan_private);
@@ -4975,10 +5040,10 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
             {
                 if (log)
                     log->PutCString("Process::RunThreadPlan(): thread plan stopped in mid course");
-                if (discard_on_error && thread_plan_sp)
+                if (unwind_on_error && thread_plan_sp)
                 {
                     if (log)
-                        log->PutCString("Process::RunThreadPlan(): discarding thread plan 'cause discard_on_error is set.");
+                        log->PutCString("Process::RunThreadPlan(): discarding thread plan 'cause unwind_on_error is set.");
                     thread->DiscardThreadPlansUpToPlan (thread_plan_sp);
                     thread_plan_sp->SetPrivate (orig_plan_private);
                 }
@@ -5036,6 +5101,9 @@ Process::ExecutionResultAsCString (ExecutionResults result)
             break;
         case eExecutionInterrupted:
             result_name = "eExecutionInterrupted";
+            break;
+        case eExecutionHitBreakpoint:
+            result_name = "eExecutionHitBreakpoint";
             break;
         case eExecutionSetupError:
             result_name = "eExecutionSetupError";

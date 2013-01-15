@@ -134,9 +134,10 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     lldb::addr_t wrapper_struct_addr = LLDB_INVALID_ADDRESS;
     func.InsertFunction(exe_ctx, wrapper_struct_addr, error_stream);
 
-    bool unwind_on_error = true;
-    bool try_all_threads = true;
-    bool stop_others = true;
+    const bool unwind_on_error = true;
+    const bool try_all_threads = true;
+    const bool stop_others = true;
+    const bool ignore_breakpoints = true;
     
     ExecutionResults results = func.ExecuteFunction (exe_ctx, 
                                                      &wrapper_struct_addr, 
@@ -144,7 +145,8 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
                                                      stop_others, 
                                                      0 /* no timeout */,
                                                      try_all_threads, 
-                                                     unwind_on_error, 
+                                                     unwind_on_error,
+                                                     ignore_breakpoints,
                                                      ret);
     if (results != eExecutionCompleted)
     {

@@ -31,7 +31,8 @@ public:
                             const ClangASTType &return_type,
                             lldb::addr_t arg,
                             bool stop_other_threads,
-                            bool discard_on_error = true,
+                            bool unwind_on_error = true,
+                            bool ignore_breakpoints = false,
                             lldb::addr_t *this_arg = 0,
                             lldb::addr_t *cmd_arg = 0);
 
@@ -39,7 +40,8 @@ public:
                             Address &function,
                             const ClangASTType &return_type,
                             bool stop_other_threads,
-                            bool discard_on_error,
+                            bool unwind_on_error,
+                            bool ignore_breakpoints,
                             lldb::addr_t *arg1_ptr = NULL,
                             lldb::addr_t *arg2_ptr = NULL,
                             lldb::addr_t *arg3_ptr = NULL,
@@ -170,7 +172,8 @@ private:
     lldb::ValueObjectSP                             m_return_valobj_sp;  // If this contains a valid pointer, use the ABI to extract values when complete
     bool                                            m_takedown_done;    // We want to ensure we only do the takedown once.  This ensures that.
     lldb::addr_t                                    m_stop_address;     // This is the address we stopped at.  Also set in DoTakedown;
-    bool                                            m_discard_on_error;
+    bool                                            m_unwind_on_error;
+    bool                                            m_ignore_breakpoints;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanCallFunction);
 };
