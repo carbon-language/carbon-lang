@@ -965,7 +965,7 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
                                      IdentifierInfo *II, Preprocessor &PP,
                                      const DirectoryLookup *LookupFrom) {
   // Save the location of the current token.  If a '(' is later found, use
-  // that location.  If no, use the end of this location instead.
+  // that location.  If not, use the end of this location instead.
   SourceLocation LParenLoc = Tok.getLocation();
 
   // Get '('.
