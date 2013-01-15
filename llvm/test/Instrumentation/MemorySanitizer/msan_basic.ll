@@ -378,60 +378,6 @@ define <2 x i1> @ICmpSLT_vector(<2 x i32*> %x) nounwind uwtable readnone {
 ; CHECK: ret <2 x i1>
 
 
-; Check that we propagate shadow for x == y comparison.
-; This is a bit complex. See the comment in handleEqualityComparison.
-
-define i1 @ICmpEQ(i32 %x, i32 %y) nounwind uwtable readnone {
-  %1 = icmp eq i32 %x, %y
-  ret i1 %1
-}
-
-; CHECK: @ICmpEQ
-; CHECK: xor i32 %x, %y
-; CHECK: or i32
-; CHECK: xor i32
-; CHECK: and i32
-; CHECK: icmp eq i32
-; CHECK: icmp ne i32
-; CHECK: and i1
-; CHECK: icmp eq i32 %x, %y
-; CHECK: ret i1
-
-define <2 x i1> @ICmpEQ_vector(<2 x i32> %x, <2 x i32> %y) nounwind uwtable readnone {
-  %1 = icmp eq <2 x i32> %x, %y
-  ret <2 x i1> %1
-}
-
-; CHECK: @ICmpEQ_vector
-; CHECK: xor <2 x i32> %x, %y
-; CHECK: or <2 x i32>
-; CHECK: xor <2 x i32>
-; CHECK: and <2 x i32>
-; CHECK: icmp eq <2 x i32>
-; CHECK: icmp ne <2 x i32>
-; CHECK: and <2 x i1>
-; CHECK: icmp eq <2 x i32> %x, %y
-; CHECK: ret <2 x i1>
-
-define <2 x i1> @ICmpEQ_pointer_vector(<2 x i32*> %x, <2 x i32*> %y) nounwind uwtable readnone {
-  %1 = icmp eq <2 x i32*> %x, %y
-  ret <2 x i1> %1
-}
-
-; CHECK: @ICmpEQ_pointer_vector
-; CHECK: ptrtoint <2 x i32*> %x to <2 x i64>
-; CHECK: ptrtoint <2 x i32*> %y to <2 x i64>
-; CHECK: xor <2 x i64>
-; CHECK: or <2 x i64>
-; CHECK: xor <2 x i64>
-; CHECK: and <2 x i64>
-; CHECK: icmp eq <2 x i64>
-; CHECK: icmp ne <2 x i64>
-; CHECK: and <2 x i1>
-; CHECK: icmp eq <2 x i32*> %x, %y
-; CHECK: ret <2 x i1>
-
-
 ; Check that loads of shadow have the same aligment as the original loads.
 ; Check that loads of origin have the aligment of max(4, original alignment).
 
