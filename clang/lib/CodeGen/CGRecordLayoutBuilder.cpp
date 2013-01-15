@@ -1075,7 +1075,8 @@ CGRecordLayout *CodeGenTypes::ComputeRecordLayout(const RecordDecl *D,
       // the size + offset should match the storage size in that case as it
       // "starts" at the back.
       if (getDataLayout().isBigEndian())
-        assert((Info.Offset + Info.Size) == Info.StorageSize &&
+        assert(static_cast<unsigned>(Info.Offset + Info.Size) ==
+               Info.StorageSize &&
                "Big endian union bitfield does not end at the back");
       else
         assert(Info.Offset == 0 &&
