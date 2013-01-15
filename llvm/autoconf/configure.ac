@@ -1269,8 +1269,23 @@ then
   then
     CXX_FLAG_CHECK(NO_UNINITIALIZED, [-Wno-uninitialized])
   else
-    dnl AC_SUBST doesn't work with empty strings.
-    NO_UNINITIALIZED=
+    dnl Some versions of gcc accept unsupported -W flags if there is
+    dnl no warning but stop with an error when a warning is
+    dnl encountered.  If this gcc is earlier than 4.7, just use
+    dnl -Wno-uninitialized.
+    gxx_version=`$CXX -dumpversion`
+    gxx_version_major=`echo $gxx_version | cut -d'.' -f1`
+    gxx_version_minor=`echo $gxx_version | cut -d'.' -f2`
+    gxx_version_patch=`echo $gxx_version | cut -d'.' -f3`
+
+    if    test "$gxx_version_major" -ge "4" \
+       && test "$gxx_version_minor" -ge "7"; then
+      dnl AC_SUBST doesn't work with empty strings.
+      NO_UNINITIALIZED=
+    else
+      NO_MAYBE_UNINITIALIZED=
+      CXX_FLAG_CHECK(NO_UNINITIALIZED, [-Wno-uninitialized])
+    fi
   fi
 else
   NO_UNINITIALIZED=

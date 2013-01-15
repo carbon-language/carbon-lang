@@ -12257,7 +12257,19 @@ then
     NO_UNINITIALIZED=`$CXX -Werror -Wno-uninitialized -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-uninitialized`
 
   else
-        NO_UNINITIALIZED=
+                    gxx_version=`$CXX -dumpversion`
+    gxx_version_major=`echo $gxx_version | cut -d'.' -f1`
+    gxx_version_minor=`echo $gxx_version | cut -d'.' -f2`
+    gxx_version_patch=`echo $gxx_version | cut -d'.' -f3`
+
+    if    test "$gxx_version_major" -ge "4" \
+       && test "$gxx_version_minor" -ge "7"; then
+            NO_UNINITIALIZED=
+    else
+      NO_MAYBE_UNINITIALIZED=
+      NO_UNINITIALIZED=`$CXX -Werror -Wno-uninitialized -fsyntax-only -xc /dev/null 2>/dev/null && echo -Wno-uninitialized`
+
+    fi
   fi
 else
   NO_UNINITIALIZED=
