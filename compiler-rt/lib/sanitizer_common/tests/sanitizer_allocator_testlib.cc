@@ -50,8 +50,8 @@ static THREADLOCAL bool thread_inited;
 static pthread_key_t pkey;
 
 static void thread_dtor(void *v) {
-  if ((long)v != 3) {
-    pthread_setspecific(pkey, (void*)((long)v + 1));
+  if ((uptr)v != 3) {
+    pthread_setspecific(pkey, (void*)((uptr)v + 1));
     return;
   }
   allocator.SwallowCache(&cache);
@@ -70,7 +70,6 @@ static void NOINLINE thread_init() {
 }  // namespace
 
 extern "C" {
-
 void *malloc(size_t size) {
   if (UNLIKELY(!thread_inited))
     thread_init();
@@ -147,5 +146,4 @@ void mallinfo() {
 
 void mallopt() {
 }
-
 }  // extern "C"
