@@ -792,7 +792,8 @@ public:
   // Methods for type inquiry through isa, cast, and dyn_cast
   bool isDyldType() const { return isDyldELFObject; }
   static inline bool classof(const Binary *v) {
-    return v->getType() == getELFType(ELFT::TargetEndianness == support::little,
+    return v->getType() == getELFType(static_cast<int>(ELFT::TargetEndianness)
+                                      == static_cast<int>(support::little),
                                       ELFT::Is64Bits);
   }
 };
@@ -2379,7 +2380,8 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
   case ELF::EM_HEXAGON:
     return Triple::hexagon;
   case ELF::EM_MIPS:
-    return (ELFT::TargetEndianness == support::little) ?
+    return (static_cast<int>(ELFT::TargetEndianness)
+            == static_cast<int>(support::little)) ?
            Triple::mipsel : Triple::mips;
   case ELF::EM_PPC64:
     return Triple::ppc64;
