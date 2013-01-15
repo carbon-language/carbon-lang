@@ -362,7 +362,7 @@ safe_malloc(size_t n_bytes)
     {
         const int k_page_size = getpagesize();
         const mach_vm_size_t vm_size = ((n_bytes + k_page_size - 1)/k_page_size) * k_page_size;
-        vm_address_t address = NULL;
+        vm_address_t address = 0;
         kern_return_t kerr = vm_allocate (mach_task_self(), &address, vm_size, true);
         if (kerr == KERN_SUCCESS)
             return (void *)address;
