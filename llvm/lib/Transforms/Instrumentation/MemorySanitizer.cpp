@@ -574,7 +574,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     if (IntegerType *IT = dyn_cast<IntegerType>(OrigTy))
       return IT;
     if (VectorType *VT = dyn_cast<VectorType>(OrigTy)) {
-      uint32_t EltSize = MS.TD->getTypeStoreSizeInBits(VT->getElementType());
+      uint32_t EltSize = MS.TD->getTypeSizeInBits(VT->getElementType());
       return VectorType::get(IntegerType::get(*MS.C, EltSize),
                              VT->getNumElements());
     }
@@ -586,7 +586,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
       DEBUG(dbgs() << "getShadowTy: " << *ST << " ===> " << *Res << "\n");
       return Res;
     }
-    uint32_t TypeSize = MS.TD->getTypeStoreSizeInBits(OrigTy);
+    uint32_t TypeSize = MS.TD->getTypeSizeInBits(OrigTy);
     return IntegerType::get(*MS.C, TypeSize);
   }
 
@@ -1127,10 +1127,13 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
     Value *B = I.getOperand(1);
     Value *Sa = getShadow(A);
     Value *Sb = getShadow(B);
-    if (A->getType()->isPointerTy())
-      A = IRB.CreatePointerCast(A, MS.IntptrTy);
-    if (B->getType()->isPointerTy())
-      B = IRB.CreatePointerCast(B, MS.IntptrTy);
+
+    // Get rid of pointers and vectors of pointers.
+    // For ints (and vectors of ints), types of A and Sa match,
+    // and this is a no-op.
+    A = IRB.CreatePointerCast(A, Sa->getType());
+    B = IRB.CreatePointerCast(B, Sb->getType());
+
     // A == B  <==>  (C = A^B) == 0
     // A != B  <==>  (C = A^B) != 0
     // Sc = Sa | Sb
