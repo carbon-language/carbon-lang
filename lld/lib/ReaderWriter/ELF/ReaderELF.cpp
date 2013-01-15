@@ -15,6 +15,7 @@
 
 #include "lld/ReaderWriter/ReaderELF.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
+#include "lld/Core/ErrorOr.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 
@@ -180,86 +181,45 @@ public:
 
     for (auto &i : sectionSymbols) {
       auto &symbols = i.second;
-      llvm::StringRef symbolName;
-      llvm::StringRef sectionName;
       // Sort symbols by position.
       std::stable_sort(symbols.begin(), symbols.end(),
       [](const Elf_Sym *A, const Elf_Sym *B) {
         return A->st_value < B->st_value;
       });
 
+      StringRef sectionContents;
+      if ((EC = _objFile->getSectionContents(i.first, sectionContents)))
+        return;
+
+      llvm::StringRef sectionName;
+      if ((EC = _objFile->getSectionName(i.first, sectionName)))
+        return;
+
       // i.first is the section the symbol lives in
       for (auto si = symbols.begin(), se = symbols.end(); si != se; ++si) {
-        StringRef symbolContents;
-        if ((EC = _objFile->getSectionContents(i.first, symbolContents)))
-          return;
-
+        llvm::StringRef symbolName;
         if ((EC = _objFile->getSymbolName(i.first, *si, symbolName)))
           return;
 
-        if ((EC = _objFile->getSectionName(i.first, sectionName)))
-          return;
-
-        bool isCommon = false;
-        if (((*si)->getType() == llvm::ELF::STT_COMMON)
-          || (*si)->st_shndx == llvm::ELF::SHN_COMMON)
-          isCommon = true;
+        bool isCommon = (*si)->getType() == llvm::ELF::STT_COMMON ||
+                        (*si)->st_shndx == llvm::ELF::SHN_COMMON;
 
         // Get the symbol's content:
-        llvm::ArrayRef<uint8_t> symbolData;
         uint64_t contentSize;
-
-        // If the next symbol is at the same location
-
         if (si + 1 == se) {
           // if this is the last symbol, take up the remaining data.
           contentSize = (isCommon) ? 0
                                    : ((i.first)->sh_size - (*si)->st_value);
-        }
-        else {
+        } else {
           contentSize = (isCommon) ? 0
                                    : (*(si + 1))->st_value - (*si)->st_value;
         }
 
-        symbolData = llvm::ArrayRef<uint8_t>((uint8_t *)symbolContents.data()
-                                    + (*si)->st_value, contentSize);
+        ArrayRef<uint8_t> symbolData = ArrayRef<uint8_t>(
+          (uint8_t *)sectionContents.data() + (*si)->st_value, contentSize);
 
-        unsigned int referenceStart = _references.size();
-
-        // Only relocations that are inside the domain of the atom are added.
-
-        // Add Rela (those with r_addend) references:
-        for (auto &rai : _relocationAddendRefences[sectionName]) {
-          if ((rai->r_offset >= (*si)->st_value) &&
-              (rai->r_offset < (*si)->st_value+contentSize)) {
-            auto *ERef = new (_readerStorage.Allocate<
-              ELFReference<ELFT> > ())
-              ELFReference<ELFT> (
-                rai, rai->r_offset-(*si)->st_value, nullptr);
-
-            _references.push_back(ERef);
-          }
-        }
-
-        // Add Rel references.
-        for (auto &ri : _relocationReferences[sectionName]) {
-          if (((ri)->r_offset >= (*si)->st_value) &&
-              ((ri)->r_offset < (*si)->st_value+contentSize)) {
-            auto *ERef = new (_readerStorage.Allocate<
-              ELFReference<ELFT> > ())
-              ELFReference<ELFT> (
-                (ri), (ri)->r_offset-(*si)->st_value, nullptr);
-
-            _references.push_back(ERef);
-          }
-        }
-
-        // Create the DefinedAtom and add it to the list of DefinedAtoms.
-        auto *newAtom = new (_readerStorage.Allocate<
-          ELFDefinedAtom<ELFT> > ())
-          ELFDefinedAtom<ELFT>(
-            *this, symbolName, sectionName, *si, i.first, symbolData,
-            referenceStart, _references.size(), _references);
+        auto newAtom = createDefinedAtomAndAssignRelocations(
+          symbolName, sectionName, *si, i.first, symbolData);
 
         _definedAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair((*si), newAtom));
@@ -269,8 +229,8 @@ public:
     // All the Atoms and References are created.  Now update each Reference's
     // target with the Atom pointer it refers to.
     for (auto &ri : _references) {
-      const Elf_Sym  *Symbol  = _objFile->getElfSymbol(ri->targetSymbolIndex());
-      ri->setTarget(findAtom (Symbol));
+      const Elf_Sym *Symbol = _objFile->getElfSymbol(ri->targetSymbolIndex());
+      ri->setTarget(findAtom(Symbol));
     }
   }
 
@@ -290,13 +250,55 @@ public:
     return _absoluteAtoms;
   }
 
-  Atom *findAtom(const Elf_Sym  *symbol) {
-    return (_symbolToAtomMapping.lookup(symbol));
+  Atom *findAtom(const Elf_Sym *symbol) {
+    return _symbolToAtomMapping.lookup(symbol);
   }
 
 private:
-  std::unique_ptr<ELFObjectFile<ELFT> >
-      _objFile;
+  ELFDefinedAtom<ELFT> *
+  createDefinedAtomAndAssignRelocations(StringRef symbolName,
+                                        StringRef sectionName,
+                                        const Elf_Sym *symbol,
+                                        const Elf_Shdr *section,
+                                        ArrayRef<uint8_t> content) {
+    unsigned int referenceStart = _references.size();
+
+    // Only relocations that are inside the domain of the atom are added.
+
+    // Add Rela (those with r_addend) references:
+    for (auto &rai : _relocationAddendRefences[sectionName]) {
+      if (!((rai->r_offset >= symbol->st_value) &&
+          (rai->r_offset < symbol->st_value + content.size())))
+        continue;
+      auto *ERef = new (_readerStorage.Allocate<ELFReference<ELFT>> ())
+        ELFReference<ELFT>(rai, rai->r_offset - symbol->st_value, nullptr);
+      _references.push_back(ERef);
+    }
+
+    // Add Rel references.
+    for (auto &ri : _relocationReferences[sectionName]) {
+      if ((ri->r_offset >= symbol->st_value) &&
+          (ri->r_offset < symbol->st_value + content.size())) {
+        auto *ERef = new (_readerStorage.Allocate<ELFReference<ELFT>>())
+          ELFReference<ELFT>(ri, ri->r_offset - symbol->st_value, nullptr);
+        _references.push_back(ERef);
+      }
+    }
+
+    // Create the DefinedAtom and add it to the list of DefinedAtoms.
+    return new (_readerStorage.Allocate<ELFDefinedAtom<ELFT>>())
+      ELFDefinedAtom<ELFT>(*this,
+                            symbolName,
+                            sectionName,
+                            symbol,
+                            section,
+                            content,
+                            referenceStart,
+                            _references.size(),
+                            _references);
+  }
+
+  std::unique_ptr<ELFObjectFile<ELFT>>      _objFile;
   atom_collection_vector<DefinedAtom>       _definedAtoms;
   atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
@@ -307,20 +309,17 @@ private:
   /// relocations will also have a section named ".rel.text" or ".rela.text"
   /// which will hold the entries. -- .rel or .rela is prepended to create
   /// the SHT_REL(A) section name.
-  std::map<llvm::StringRef, std::vector<const Elf_Rela *> >
-           _relocationAddendRefences;
-  std::map<llvm::StringRef, std::vector<const Elf_Rel *> >
-           _relocationReferences;
-
-  std::vector<ELFReference<ELFT> *>
-    _references;
+  std::map<llvm::StringRef, std::vector<const Elf_Rela *>>
+    _relocationAddendRefences;
+  std::map<llvm::StringRef, std::vector<const Elf_Rel *>>
+    _relocationReferences;
+  std::vector<ELFReference<ELFT> *> _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
-
   llvm::BumpPtrAllocator _readerStorage;
 };
 
 // \brief A reader object that will instantiate correct FileELF by examining the
-// memory buffer for ELF class and bitwidth
+// memory buffer for ELF class and bit width
 class ReaderELF: public Reader {
 public:
   ReaderELF(const ReaderOptionsELF &,
@@ -330,23 +329,21 @@ public:
     _readerOptionsArchive.setReader(this);
   }
 
-  error_code parseFile(std::unique_ptr<MemoryBuffer> mb, std::vector<
-                       std::unique_ptr<File> > &result) {
+  error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
+                       std::vector<std::unique_ptr<File>> &result) {
     using llvm::object::ELFType;
-    llvm::error_code ec;
-    std::unique_ptr<File> f;
-    std::pair<unsigned char, unsigned char> Ident;
-
     llvm::sys::LLVMFileType fileType =
-          llvm::sys::IdentifyFileType(mb->getBufferStart(),
-                                static_cast<unsigned>(mb->getBufferSize()));
+      llvm::sys::IdentifyFileType(mb->getBufferStart(),
+                                  static_cast<unsigned>(mb->getBufferSize()));
 
     std::size_t MaxAlignment =
       1ULL << llvm::CountTrailingZeros_64(uintptr_t(mb->getBufferStart()));
 
+    llvm::error_code ec;
     switch (fileType) {
-    case llvm::sys::ELF_Relocatable_FileType:
-      Ident = getElfArchType(&*mb);
+    case llvm::sys::ELF_Relocatable_FileType: {
+      std::pair<unsigned char, unsigned char> Ident = getElfArchType(&*mb);
+      std::unique_ptr<File> f;
       // Instantiate the correct FileELF template instance based on the Ident
       // pair. Once the File is created we push the file to the vector of files
       // already created during parser's life.
@@ -394,11 +391,10 @@ public:
       if (!ec)
         result.push_back(std::move(f));
       break;
-
+    }
     case llvm::sys::Archive_FileType:
       ec = _readerArchive.parseFile(std::move(mb), result);
       break;
-
     default:
       llvm_unreachable("not supported format");
       break;
