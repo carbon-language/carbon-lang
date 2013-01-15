@@ -90,3 +90,10 @@ namespace PR12660 {
   const int &i { 1 };
   struct S { S(int); } const &s { 2 };
 }
+
+namespace b7891773 {
+  typedef void (*ptr)();
+  template <class T> void f();
+  int g(const ptr &);
+  int k = g({ f<int> });
+}

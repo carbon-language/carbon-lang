@@ -3024,6 +3024,10 @@ static void TryReferenceListInitialization(Sema &S,
         Sequence.RewrapReferenceInitList(cv1T1, InitList);
       return;
     }
+
+    // Update the initializer if we've resolved an overloaded function.
+    if (Sequence.step_begin() != Sequence.step_end())
+      Sequence.RewrapReferenceInitList(cv1T1, InitList);
   }
 
   // Not reference-related. Create a temporary and bind to that.
