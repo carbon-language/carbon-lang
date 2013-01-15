@@ -2023,7 +2023,7 @@ Scalar::ExtractBitfield (uint32_t bit_size,
             return true;
 
         case Scalar::e_ulong:
-            m_data.ulong = SignedBits (m_data.ulong, msbit, lsbit);
+            m_data.ulong = UnsignedBits (m_data.ulong, msbit, lsbit);
             return true;
             
         case Scalar::e_slonglong:
@@ -2031,7 +2031,7 @@ Scalar::ExtractBitfield (uint32_t bit_size,
             return true;
 
         case Scalar::e_ulonglong:
-            m_data.ulonglong = SignedBits (m_data.ulonglong, msbit, lsbit);
+            m_data.ulonglong = UnsignedBits (m_data.ulonglong, msbit, lsbit);
             return true;
     }
     return false;
