@@ -387,6 +387,7 @@ bool LTOCodeGenerator::generateObjectFile(raw_ostream &out,
   FunctionPassManager *codeGenPasses = new FunctionPassManager(mergedModule);
 
   codeGenPasses->add(new DataLayout(*_target->getDataLayout()));
+  _target->addAnalysisPasses(*codeGenPasses);
 
   formatted_raw_ostream Out(out);
 
