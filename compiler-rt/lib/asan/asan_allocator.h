@@ -112,7 +112,7 @@ struct AsanThreadLocalMallocStorage {
   AsanChunk *free_lists_[kNumberOfSizeClasses];
 #else
   uptr quarantine_cache[16];
-  uptr allocator2_cache[1024];  // Opaque.
+  uptr allocator2_cache[96 * (512 * 8 + 16)];  // Opaque.
 #endif
   void CommitBack();
 };
