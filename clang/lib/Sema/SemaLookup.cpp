@@ -2536,7 +2536,7 @@ Sema::LookupLiteralOperator(Scope *S, LookupResult &R,
       if (FD->getNumParams() == 1 &&
           FD->getParamDecl(0)->getType()->getAs<PointerType>())
         IsRaw = true;
-      else {
+      else if (FD->getNumParams() == ArgTys.size()) {
         IsExactMatch = true;
         for (unsigned ArgIdx = 0; ArgIdx != ArgTys.size(); ++ArgIdx) {
           QualType ParamTy = FD->getParamDecl(ArgIdx)->getType();

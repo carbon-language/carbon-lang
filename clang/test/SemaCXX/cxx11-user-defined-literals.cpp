@@ -135,3 +135,9 @@ namespace Namespace {
   int _y(unsigned long long);
   int k2 = 123_y; // expected-error {{no matching literal operator for call to 'operator "" _y'}}
 }
+
+namespace PR14950 {
+  template<...> // expected-error {{expected template parameter}}
+  int operator"" _b(); // expected-error {{no function template matches function template specialization}}
+  int main() { return 0_b; } // expected-error {{no matching literal operator for call to 'operator "" _b'}}
+}
