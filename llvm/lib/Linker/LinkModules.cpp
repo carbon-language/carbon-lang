@@ -1001,19 +1001,10 @@ categorizeModuleFlagNodes(const NamedMDNode *ModFlags,
 
   for (unsigned I = 0, E = ModFlags->getNumOperands(); I != E; ++I) {
     MDNode *Op = ModFlags->getOperand(I);
-    assert(Op->getNumOperands() == 3 && "Invalid module flag metadata!");
-    assert(isa<ConstantInt>(Op->getOperand(0)) &&
-           "Module flag's first operand must be an integer!");
-    assert(isa<MDString>(Op->getOperand(1)) &&
-           "Module flag's second operand must be an MDString!");
-
     ConstantInt *Behavior = cast<ConstantInt>(Op->getOperand(0));
     MDString *ID = cast<MDString>(Op->getOperand(1));
     Value *Val = Op->getOperand(2);
     switch (Behavior->getZExtValue()) {
-    default:
-      assert(false && "Invalid behavior in module flag metadata!");
-      break;
     case Module::Error: {
       MDNode *&ErrNode = ErrorNode[ID];
       if (!ErrNode) ErrNode = Op;
@@ -1126,8 +1117,6 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     for (SmallSetVector<MDNode*, 8>::iterator
            II = Set.begin(), IE = Set.end(); II != IE; ++II) {
       MDNode *Node = *II;
-      assert(isa<MDNode>(Node->getOperand(2)) &&
-             "Module flag's third operand must be an MDNode!");
       MDNode *Val = cast<MDNode>(Node->getOperand(2));
 
       MDString *ReqID = cast<MDString>(Val->getOperand(0));
