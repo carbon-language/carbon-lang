@@ -215,6 +215,22 @@ public:
                                    : (*(si + 1))->st_value - (*si)->st_value;
         }
 
+
+        // Don't allocate content to a weak symbol, as they may be merged away.
+        // Create an anonymous atom to hold the data.
+        ELFDefinedAtom<ELFT> *anonAtom = nullptr;
+        if ((*si)->getBinding() == llvm::ELF::STB_WEAK && contentSize != 0) {
+          // Create a new non-weak ELF symbol.
+          auto sym = new (_readerStorage.Allocate<Elf_Sym>()) Elf_Sym;
+          *sym = **si;
+          sym->setBinding(llvm::ELF::STB_GLOBAL);
+          anonAtom = createDefinedAtomAndAssignRelocations(
+            "", sectionName, sym, i.first,
+            ArrayRef<uint8_t>(
+              (uint8_t *)sectionContents.data() + (*si)->st_value, contentSize));
+          contentSize = 0;
+        }
+
         ArrayRef<uint8_t> symbolData = ArrayRef<uint8_t>(
           (uint8_t *)sectionContents.data() + (*si)->st_value, contentSize);
 
@@ -223,6 +239,8 @@ public:
 
         _definedAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair((*si), newAtom));
+        if (anonAtom)
+          _definedAtoms._atoms.push_back(anonAtom);
       }
     }
 

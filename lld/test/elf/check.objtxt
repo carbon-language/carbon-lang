@@ -13,9 +13,9 @@ ELF-i386:                           00, E8, FC, FF, FF, FF, C9, C3 ]
 
 ELF-i386:    - name:              weak_func
 ELF-i386:      scope:             global
-ELF-i386:      content:           [ 55, 89, E5, 83, EC, 18, C7, 04, 24, 0E, 00, 00, 
-ELF-i386:                           00, E8, FC, FF, FF, FF, C9, C3 ]
 ELF-i386:      merge:             as-weak
+ELF-i386:      content:           [ 55, 89, E5, 83, EC, 18, C7, 04, 24, 0E, 00, 00,
+ELF-i386:                           00, E8, FC, FF, FF, FF, C9, C3 ]
 
 ELF-i386:    - name:              hidden_func
 ELF-i386:      scope:             hidden
@@ -65,9 +65,9 @@ ELF-hexagon:                           00, C0, 00, 5A, 1E, C0, 1E, 96 ]
 
 ELF-hexagon:    - name:              weak_func
 ELF-hexagon:      scope:             global
-ELF-hexagon:      content:           [ 00, C0, 9D, A0, 00, 40, 00, 00, 00, C0, 00, 78, 
-ELF-hexagon:                           00, C0, 00, 5A, 1E, C0, 1E, 96 ]
 ELF-hexagon:      merge:             as-weak
+ELF-hexagon:      content:           [ 00, C0, 9D, A0, 00, 40, 00, 00, 00, C0, 00, 78,
+ELF-hexagon:                           00, C0, 00, 5A, 1E, C0, 1E, 96 ]
 
 ELF-hexagon:    - name:              hidden_func
 ELF-hexagon:      scope:             hidden
