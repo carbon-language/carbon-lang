@@ -1033,31 +1033,55 @@ private:
     return getPrecedence(Tok) > prec::Comma;
   }
 
+  /// \brief Returns the previous token ignoring comments.
+  const AnnotatedToken *getPreviousToken(const AnnotatedToken &Tok) {
+    const AnnotatedToken *PrevToken = Tok.Parent;
+    while (PrevToken != NULL && PrevToken->is(tok::comment))
+      PrevToken = PrevToken->Parent;
+    return PrevToken;
+  }
+
+  /// \brief Returns the next token ignoring comments.
+  const AnnotatedToken *getNextToken(const AnnotatedToken &Tok) {
+    if (Tok.Children.empty())
+      return NULL;
+    const AnnotatedToken *NextToken = &Tok.Children[0];
+    while (NextToken->is(tok::comment)) {
+      if (NextToken->Children.empty())
+        return NULL;
+      NextToken = &NextToken->Children[0];
+    }
+    return NextToken;
+  }
+
+  /// \brief Return the type of the given token assuming it is * or &.
   TokenType determineStarAmpUsage(const AnnotatedToken &Tok, bool IsRHS) {
-    if (Tok.Parent == NULL)
+    const AnnotatedToken *PrevToken = getPreviousToken(Tok);
+    if (PrevToken == NULL)
       return TT_UnaryOperator;
-    if (Tok.Children.size() == 0)
+
+    const AnnotatedToken *NextToken = getNextToken(Tok);
+    if (NextToken == NULL)
       return TT_Unknown;
-    const FormatToken &PrevToken = Tok.Parent->FormatTok;
-    const FormatToken &NextToken = Tok.Children[0].FormatTok;
 
-    if (PrevToken.Tok.is(tok::l_paren) || PrevToken.Tok.is(tok::l_square) ||
-        PrevToken.Tok.is(tok::comma) || PrevToken.Tok.is(tok::kw_return) ||
-        PrevToken.Tok.is(tok::colon) || Tok.Parent->Type == TT_BinaryOperator ||
-        Tok.Parent->Type == TT_CastRParen)
+    if (PrevToken->is(tok::l_paren) || PrevToken->is(tok::l_square) ||
+        PrevToken->is(tok::l_brace) || PrevToken->is(tok::comma) ||
+        PrevToken->is(tok::kw_return) || PrevToken->is(tok::colon) ||
+        PrevToken->Type == TT_BinaryOperator ||
+        PrevToken->Type == TT_CastRParen)
       return TT_UnaryOperator;
 
-    if (PrevToken.Tok.isLiteral() || PrevToken.Tok.is(tok::r_paren) ||
-        PrevToken.Tok.is(tok::r_square) || NextToken.Tok.isLiteral() ||
-        NextToken.Tok.is(tok::plus) || NextToken.Tok.is(tok::minus) ||
-        NextToken.Tok.is(tok::plusplus) || NextToken.Tok.is(tok::minusminus) ||
-        NextToken.Tok.is(tok::tilde) || NextToken.Tok.is(tok::exclaim) ||
-        NextToken.Tok.is(tok::l_paren) || NextToken.Tok.is(tok::l_square) ||
-        NextToken.Tok.is(tok::kw_alignof) || NextToken.Tok.is(tok::kw_sizeof))
+    if (PrevToken->FormatTok.Tok.isLiteral() || PrevToken->is(tok::r_paren) ||
+        PrevToken->is(tok::r_square) || NextToken->FormatTok.Tok.isLiteral() ||
+        NextToken->is(tok::plus) || NextToken->is(tok::minus) ||
+        NextToken->is(tok::plusplus) || NextToken->is(tok::minusminus) ||
+        NextToken->is(tok::tilde) || NextToken->is(tok::exclaim) ||
+        NextToken->is(tok::l_paren) || NextToken->is(tok::l_square) ||
+        NextToken->is(tok::kw_alignof) || NextToken->is(tok::kw_sizeof))
       return TT_BinaryOperator;
 
-    if (NextToken.Tok.is(tok::comma) || NextToken.Tok.is(tok::r_paren) ||
-        NextToken.Tok.is(tok::greater))
+    if (NextToken->is(tok::comma) || NextToken->is(tok::r_paren) ||
+        NextToken->is(tok::greater))
       return TT_PointerOrReference;
 
     // It is very unlikely that we are going to find a pointer or reference type
@@ -1069,16 +1093,20 @@ private:
   }
 
   TokenType determinePlusMinusCaretUsage(const AnnotatedToken &Tok) {
+    const AnnotatedToken *PrevToken = getPreviousToken(Tok);
+    if (PrevToken == NULL)
+      return TT_UnaryOperator;
+
     // Use heuristics to recognize unary operators.
-    if (Tok.Parent->is(tok::equal) || Tok.Parent->is(tok::l_paren) ||
-        Tok.Parent->is(tok::comma) || Tok.Parent->is(tok::l_square) ||
-        Tok.Parent->is(tok::question) || Tok.Parent->is(tok::colon) ||
-        Tok.Parent->is(tok::kw_return) || Tok.Parent->is(tok::kw_case) ||
-        Tok.Parent->is(tok::at) || Tok.Parent->is(tok::l_brace))
+    if (PrevToken->is(tok::equal) || PrevToken->is(tok::l_paren) ||
+        PrevToken->is(tok::comma) || PrevToken->is(tok::l_square) ||
+        PrevToken->is(tok::question) || PrevToken->is(tok::colon) ||
+        PrevToken->is(tok::kw_return) || PrevToken->is(tok::kw_case) ||
+        PrevToken->is(tok::at) || PrevToken->is(tok::l_brace))
       return TT_UnaryOperator;
 
     // There can't be to consecutive binary operators.
-    if (Tok.Parent->Type == TT_BinaryOperator)
+    if (PrevToken->Type == TT_BinaryOperator)
       return TT_UnaryOperator;
 
     // Fall back to marking the token as binary operator.
@@ -1087,10 +1115,11 @@ private:
 
   /// \brief Determine whether ++/-- are pre- or post-increments/-decrements.
   TokenType determineIncrementUsage(const AnnotatedToken &Tok) {
-    if (Tok.Parent == NULL)
+    const AnnotatedToken *PrevToken = getPreviousToken(Tok);
+    if (PrevToken == NULL)
       return TT_UnaryOperator;
-    if (Tok.Parent->is(tok::r_paren) || Tok.Parent->is(tok::r_square) ||
-        Tok.Parent->is(tok::identifier))
+    if (PrevToken->is(tok::r_paren) || PrevToken->is(tok::r_square) ||
+        PrevToken->is(tok::identifier))
       return TT_TrailingUnaryOperator;
 
     return TT_UnaryOperator;
@@ -1261,8 +1290,7 @@ private:
     if (Right.is(tok::r_brace))
       return false;
 
-    if (Right.is(tok::r_paren) ||
-        Right.is(tok::greater))
+    if (Right.is(tok::r_paren) || Right.is(tok::greater))
       return false;
     return (isBinaryOperator(Left) && Left.isNot(tok::lessless)) ||
            Left.is(tok::comma) || Right.is(tok::lessless) ||

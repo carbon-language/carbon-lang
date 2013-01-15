@@ -1037,6 +1037,10 @@ TEST_F(FormatTest, UnderstandsUnaryOperators) {
 
   verifyFormat("const NSPoint kBrowserFrameViewPatternOffset = { -5, +3 };");
   verifyFormat("const NSPoint kBrowserFrameViewPatternOffset = { +5, -3 };");
+
+  verifyFormat("int a = /* confusing comment */ -1;");
+  // FIXME: The space after 'i' is wrong, but hopefully, this is a rare case.
+  verifyFormat("int a = i /* confusing comment */++;");
 }
 
 TEST_F(FormatTest, UndestandsOverloadedOperators) {
@@ -1123,6 +1127,13 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("*(x + y).call();");
   verifyFormat("&(x + y)->call();");
   verifyFormat("&(*I).first");
+
+  verifyFormat("f(b * /* confusing comment */ ++c);");
+  verifyFormat(
+      "int *MyValues = {\n"
+      "  *A, // Operator detection might be confused by the '{'\n"
+      "  *BB // Operator detection might be confused by previous comment\n"
+      "};");
 }
 
 TEST_F(FormatTest, FormatsCasts) {
