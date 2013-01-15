@@ -47,6 +47,7 @@ public:
   enum FragmentType {
     FT_Align,
     FT_Data,
+    FT_CompactEncodedInst,
     FT_Fill,
     FT_Relaxable,
     FT_Org,
@@ -105,6 +106,7 @@ public:
 
   /// \brief Should this fragment be placed at the end of an aligned bundle?
   virtual bool alignToBundleEnd() const { return false; }
+  virtual void setAlignToBundleEnd(bool V) { }
 
   /// \brief Get the padding size that must be inserted before this fragment.
   /// Used for bundling. By default, no padding is inserted.
@@ -120,9 +122,16 @@ public:
   virtual void setBundlePadding(uint8_t N) {
   }
 
+  virtual bool hasFixups() const {
+    return false;
+  }
+
   void dump();
 };
 
+/// Interface implemented by fragments that contain encoded instructions and/or
+/// data.
+///
 class MCEncodedFragment : public MCFragment {
   virtual void anchor();
 
@@ -134,19 +143,8 @@ public:
   }
   virtual ~MCEncodedFragment();
 
-  typedef SmallVectorImpl<MCFixup>::const_iterator const_fixup_iterator;
-  typedef SmallVectorImpl<MCFixup>::iterator fixup_iterator;
-
   virtual SmallVectorImpl<char> &getContents() = 0;
   virtual const SmallVectorImpl<char> &getContents() const = 0;
-
-  virtual SmallVectorImpl<MCFixup> &getFixups() = 0;
-  virtual const SmallVectorImpl<MCFixup> &getFixups() const = 0;
-
-  virtual fixup_iterator fixup_begin() = 0;
-  virtual const_fixup_iterator fixup_begin() const  = 0;
-  virtual fixup_iterator fixup_end() = 0;
-  virtual const_fixup_iterator fixup_end() const = 0;
 
   virtual uint8_t getBundlePadding() const {
     return BundlePadding;
@@ -158,13 +156,55 @@ public:
 
   static bool classof(const MCFragment *F) {
     MCFragment::FragmentType Kind = F->getKind();
-    return Kind == MCFragment::FT_Relaxable || Kind == MCFragment::FT_Data;
+    switch (Kind) {
+      default:
+        return false;
+      case MCFragment::FT_Relaxable:
+      case MCFragment::FT_CompactEncodedInst:
+      case MCFragment::FT_Data:
+        return true;
+    }
+  }
+};
+
+/// Interface implemented by fragments that contain encoded instructions and/or
+/// data and also have fixups registered.
+///
+class MCEncodedFragmentWithFixups : public MCEncodedFragment {
+  virtual void anchor();
+
+public:
+  MCEncodedFragmentWithFixups(MCFragment::FragmentType FType,
+                              MCSectionData *SD = 0)
+    : MCEncodedFragment(FType, SD)
+  {
+  }
+
+  virtual ~MCEncodedFragmentWithFixups();
+
+  virtual bool hasFixups() const {
+    return true;
+  }
+
+  typedef SmallVectorImpl<MCFixup>::const_iterator const_fixup_iterator;
+  typedef SmallVectorImpl<MCFixup>::iterator fixup_iterator;
+
+  virtual SmallVectorImpl<MCFixup> &getFixups() = 0;
+  virtual const SmallVectorImpl<MCFixup> &getFixups() const = 0;
+
+  virtual fixup_iterator fixup_begin() = 0;
+  virtual const_fixup_iterator fixup_begin() const  = 0;
+  virtual fixup_iterator fixup_end() = 0;
+  virtual const_fixup_iterator fixup_end() const = 0;
+
+  static bool classof(const MCFragment *F) {
+    return isa<MCEncodedFragment>(F) && F->hasFixups();
   }
 };
 
 /// Fragment for data and encoded instructions.
 ///
-class MCDataFragment : public MCEncodedFragment {
+class MCDataFragment : public MCEncodedFragmentWithFixups {
   virtual void anchor();
 
   /// \brief Does this fragment contain encoded instructions anywhere in it?
@@ -179,7 +219,7 @@ class MCDataFragment : public MCEncodedFragment {
   SmallVector<MCFixup, 4> Fixups;
 public:
   MCDataFragment(MCSectionData *SD = 0)
-    : MCEncodedFragment(FT_Data, SD),
+    : MCEncodedFragmentWithFixups(FT_Data, SD),
       HasInstructions(false), AlignToBundleEnd(false)
   {
   }
@@ -212,10 +252,43 @@ public:
   }
 };
 
+/// This is a compact (memory-size-wise) fragment for holding an encoded
+/// instruction (non-relaxable) that has no fixups registered. When applicable,
+/// it can be used instead of MCDataFragment and lead to lower memory
+/// consumption.
+///
+class MCCompactEncodedInstFragment : public MCEncodedFragment {
+  virtual void anchor();
+
+  /// \brief Should this fragment be aligned to the end of a bundle?
+  bool AlignToBundleEnd;
+
+  SmallVector<char, 4> Contents;
+public:
+  MCCompactEncodedInstFragment(MCSectionData *SD = 0)
+    : MCEncodedFragment(FT_CompactEncodedInst, SD), AlignToBundleEnd(false)
+  {
+  }
+
+  virtual bool hasInstructions() const {
+    return true;
+  }
+
+  virtual SmallVectorImpl<char> &getContents() { return Contents; }
+  virtual const SmallVectorImpl<char> &getContents() const { return Contents; }
+
+  virtual bool alignToBundleEnd() const { return AlignToBundleEnd; }
+  virtual void setAlignToBundleEnd(bool V) { AlignToBundleEnd = V; }
+
+  static bool classof(const MCFragment *F) {
+    return F->getKind() == MCFragment::FT_CompactEncodedInst;
+  }
+};
+
 /// A relaxable fragment holds on to its MCInst, since it may need to be
 /// relaxed during the assembler layout and relaxation stage.
 ///
-class MCRelaxableFragment : public MCEncodedFragment {
+class MCRelaxableFragment : public MCEncodedFragmentWithFixups {
   virtual void anchor();
 
   /// Inst - The instruction this is a fragment for.
@@ -229,7 +302,7 @@ class MCRelaxableFragment : public MCEncodedFragment {
 
 public:
   MCRelaxableFragment(const MCInst &_Inst, MCSectionData *SD = 0)
-    : MCEncodedFragment(FT_Relaxable, SD), Inst(_Inst) {
+    : MCEncodedFragmentWithFixups(FT_Relaxable, SD), Inst(_Inst) {
   }
 
   virtual SmallVectorImpl<char> &getContents() { return Contents; }

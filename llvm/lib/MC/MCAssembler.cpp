@@ -38,6 +38,8 @@ STATISTIC(EmittedRelaxableFragments,
           "Number of emitted assembler fragments - relaxable");
 STATISTIC(EmittedDataFragments,
           "Number of emitted assembler fragments - data");
+STATISTIC(EmittedCompactEncodedInstFragments,
+          "Number of emitted assembler fragments - compact encoded inst");
 STATISTIC(EmittedAlignFragments,
           "Number of emitted assembler fragments - align");
 STATISTIC(EmittedFillFragments,
@@ -222,6 +224,11 @@ MCEncodedFragment::~MCEncodedFragment() {
 
 /* *** */
 
+MCEncodedFragmentWithFixups::~MCEncodedFragmentWithFixups() {
+}
+
+/* *** */
+
 MCSectionData::MCSectionData() : Section(0) {}
 
 MCSectionData::MCSectionData(const MCSection &_Section, MCAssembler *A)
@@ -388,6 +395,7 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
   switch (F.getKind()) {
   case MCFragment::FT_Data:
   case MCFragment::FT_Relaxable:
+  case MCFragment::FT_CompactEncodedInst:
     return cast<MCEncodedFragment>(F).getContents().size();
   case MCFragment::FT_Fill:
     return cast<MCFillFragment>(F).getSize();
@@ -570,6 +578,11 @@ static void writeFragment(const MCAssembler &Asm, const MCAsmLayout &Layout,
     writeFragmentContents(F, OW);
     break;
 
+  case MCFragment::FT_CompactEncodedInst:
+    ++stats::EmittedCompactEncodedInstFragments;
+    writeFragmentContents(F, OW);
+    break;
+
   case MCFragment::FT_Fill: {
     ++stats::EmittedFillFragments;
     MCFillFragment &FF = cast<MCFillFragment>(F);
@@ -742,9 +755,10 @@ void MCAssembler::Finish() {
   for (MCAssembler::iterator it = begin(), ie = end(); it != ie; ++it) {
     for (MCSectionData::iterator it2 = it->begin(),
            ie2 = it->end(); it2 != ie2; ++it2) {
-      MCEncodedFragment *F = dyn_cast<MCEncodedFragment>(it2);
+      MCEncodedFragmentWithFixups *F =
+        dyn_cast<MCEncodedFragmentWithFixups>(it2);
       if (F) {
-        for (MCEncodedFragment::fixup_iterator it3 = F->fixup_begin(),
+        for (MCEncodedFragmentWithFixups::fixup_iterator it3 = F->fixup_begin(),
              ie3 = F->fixup_end(); it3 != ie3; ++it3) {
           MCFixup &Fixup = *it3;
           uint64_t FixedValue = handleFixup(Layout, *F, Fixup);
@@ -954,6 +968,8 @@ void MCFragment::dump() {
   switch (getKind()) {
   case MCFragment::FT_Align: OS << "MCAlignFragment"; break;
   case MCFragment::FT_Data:  OS << "MCDataFragment"; break;
+  case MCFragment::FT_CompactEncodedInst:
+    OS << "MCCompactEncodedInstFragment"; break;
   case MCFragment::FT_Fill:  OS << "MCFillFragment"; break;
   case MCFragment::FT_Relaxable:  OS << "MCRelaxableFragment"; break;
   case MCFragment::FT_Org:   OS << "MCOrgFragment"; break;
@@ -999,6 +1015,19 @@ void MCFragment::dump() {
       }
       OS << "]";
     }
+    break;
+  }
+  case MCFragment::FT_CompactEncodedInst: {
+    const MCCompactEncodedInstFragment *CEIF =
+      cast<MCCompactEncodedInstFragment>(this);
+    OS << "\n       ";
+    OS << " Contents:[";
+    const SmallVectorImpl<char> &Contents = CEIF->getContents();
+    for (unsigned i = 0, e = Contents.size(); i != e; ++i) {
+      if (i) OS << ",";
+      OS << hexdigit((Contents[i] >> 4) & 0xF) << hexdigit(Contents[i] & 0xF);
+    }
+    OS << "] (" << Contents.size() << " bytes)";
     break;
   }
   case MCFragment::FT_Fill:  {
@@ -1094,7 +1123,9 @@ void MCAssembler::dump() {
 
 // anchors for MC*Fragment vtables
 void MCEncodedFragment::anchor() { }
+void MCEncodedFragmentWithFixups::anchor() { }
 void MCDataFragment::anchor() { }
+void MCCompactEncodedInstFragment::anchor() { }
 void MCRelaxableFragment::anchor() { }
 void MCAlignFragment::anchor() { }
 void MCFillFragment::anchor() { }
@@ -1102,3 +1133,4 @@ void MCOrgFragment::anchor() { }
 void MCLEBFragment::anchor() { }
 void MCDwarfLineAddrFragment::anchor() { }
 void MCDwarfCallFrameFragment::anchor() { }
+
