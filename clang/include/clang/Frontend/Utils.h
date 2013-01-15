@@ -60,7 +60,8 @@ void InitializePreprocessor(Preprocessor &PP,
 /// ProcessWarningOptions - Initialize the diagnostic client and process the
 /// warning options specified on the command line.
 void ProcessWarningOptions(DiagnosticsEngine &Diags,
-                           const DiagnosticOptions &Opts);
+                           const DiagnosticOptions &Opts,
+                           bool ReportDiags = true);
 
 /// DoPrintPreprocessedInput - Implement -E mode.
 void DoPrintPreprocessedInput(Preprocessor &PP, raw_ostream* OS,
