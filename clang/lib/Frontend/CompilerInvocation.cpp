@@ -1241,6 +1241,9 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.ApplePragmaPack = Args.hasArg(OPT_fapple_pragma_pack);
   Opts.CurrentModule = Args.getLastArgValue(OPT_fmodule_name);
 
+  // Check if -fopenmp is specified.
+  Opts.OpenMP = Args.hasArg(OPT_fopenmp);
+
   // Record whether the __DEPRECATED define was requested.
   Opts.Deprecated = Args.hasFlag(OPT_fdeprecated_macro,
                                  OPT_fno_deprecated_macro,
