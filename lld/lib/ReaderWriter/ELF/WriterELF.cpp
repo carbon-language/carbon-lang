@@ -46,9 +46,7 @@ using namespace llvm;
 using namespace llvm::object;
 namespace lld {
 namespace elf {
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
+template<class ELFT>
 class ELFExecutableWriter;
 
 /// \brief The ELFWriter class is a base class for the linker to write
@@ -73,9 +71,7 @@ public:
 };
 
 /// \brief A chunk is a contiguous region of space
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
+template<class ELFT>
 class Chunk {
 public:
 
@@ -218,10 +214,8 @@ struct AtomLayout {
 
 /// \brief A section contains a set of atoms that have similiar properties
 ///        The atoms that have similiar properties are merged to form a section
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-class Section : public Chunk<target_endianness, max_align, is64Bits> {
+template<class ELFT>
+class Section : public Chunk<ELFT> {
 public:
   // The Kind of section that the object represents
   enum SectionKind {
@@ -236,8 +230,7 @@ public:
           const int32_t contentPermissions,
           const int32_t order,
           const SectionKind kind = K_Default)
-    : Chunk<target_endianness,  max_align, is64Bits>(
-       sectionName, Chunk<target_endianness, max_align, is64Bits>::K_ELFSection)
+    : Chunk<ELFT>(sectionName, Chunk<ELFT>::K_ELFSection)
     , _contentType(contentType)
     , _contentPermissions(contentPermissions)
     , _sectionKind(kind)
@@ -455,10 +448,8 @@ public:
   }
 
   /// \brief for LLVM style RTTI information
-  static inline bool classof(
-      const Chunk<target_endianness, max_align, is64Bits> *c) {
-    return c->kind() ==
-      Chunk<target_endianness, max_align, is64Bits>::K_ELFSection;
+  static inline bool classof(const Chunk<ELFT> *c) {
+    return c->kind() == Chunk<ELFT>::K_ELFSection;
   }
 
   /// \brief Finalize the section contents before writing
@@ -514,9 +505,7 @@ protected:
 /// \brief A MergedSections represents a set of sections grouped by the same
 /// name. The output file that gets written by the linker has sections grouped
 /// by similiar names
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
+template<class ELFT>
 class MergedSections {
 public:
   MergedSections(StringRef name)
@@ -566,11 +555,10 @@ public:
 
   // Appends a section into the list of sections that are part of this Merged
   // Section
-  void appendSection(Chunk<target_endianness, max_align, is64Bits> *c) {
+  void appendSection(Chunk<ELFT> *c) {
     if (c->align2() > _align2)
       _align2 = c->align2();
-    if (const auto section =
-          dyn_cast<Section<target_endianness, max_align, is64Bits>>(c)) {
+    if (const auto section = dyn_cast<Section<ELFT>>(c)) {
       _link = section->link();
       _shInfo = section->shinfo();
       _entSize = section->entsize();
@@ -583,8 +571,7 @@ public:
   }
 
   // Iterators
-  typedef typename std::vector<
-    Chunk<target_endianness, max_align, is64Bits> *>::iterator ChunkIter;
+  typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
 
   range<ChunkIter> sections() { return _sections; }
 
@@ -632,18 +619,15 @@ private:
   uint64_t _align2;
   int64_t _kind;
   int64_t _type;
-  std::vector<Chunk<target_endianness, max_align, is64Bits> *> _sections;
+  std::vector<Chunk<ELFT> *> _sections;
 };
 
 /// \brief A segment can be divided into segment slices
 ///        depending on how the segments can be split
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
+template<class ELFT>
 class SegmentSlice {
 public:
-  typedef typename std::vector<
-    Chunk<target_endianness, max_align, is64Bits> *>::iterator SectionIter;
+  typedef typename std::vector<Chunk<ELFT> *>::iterator SectionIter;
 
   SegmentSlice() { }
 
@@ -688,10 +672,8 @@ public:
 
   void setAlign(uint64_t align) { _align2 = align; }
 
-  static bool compare_slices(
-      SegmentSlice<target_endianness, max_align, is64Bits> *a,
-      SegmentSlice<target_endianness, max_align, is64Bits> *b) {
-    return (a->startSection() < b->startSection());
+  static bool compare_slices(SegmentSlice<ELFT> *a, SegmentSlice<ELFT> *b) {
+    return a->startSection() < b->startSection();
   }
 
   range<SectionIter> sections() {
@@ -712,21 +694,16 @@ private:
 /// \brief A segment contains a set of sections, that have similiar properties
 //  the sections are already seperated based on different flags and properties
 //  the segment is just a way to concatenate sections to segments
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-class Segment : public Chunk<target_endianness, max_align, is64Bits> {
+template<class ELFT>
+class Segment : public Chunk<ELFT> {
 public:
-  typedef typename std::vector<SegmentSlice<
-    target_endianness, max_align, is64Bits> *>::iterator SliceIter;
-  typedef typename std::vector<
-    Chunk<target_endianness, max_align, is64Bits> *>::iterator SectionIter;
+  typedef typename std::vector<SegmentSlice<ELFT> *>::iterator SliceIter;
+  typedef typename std::vector<Chunk<ELFT> *>::iterator SectionIter;
 
   Segment(const StringRef name,
           const ELFLayout::SegmentType type,
           const WriterOptionsELF &options)
-    : Chunk<target_endianness, max_align, is64Bits>(name,
-                    Chunk<target_endianness, max_align, is64Bits>::K_ELFSegment)
+    : Chunk<ELFT>(name, Chunk<ELFT>::K_ELFSegment)
     , _segmentType(type)
     , _flags(0)
     , _atomflags(0)
@@ -736,7 +713,7 @@ public:
   }
 
   /// append a section to a segment
-  void append(Section<target_endianness, max_align, is64Bits> *section) {
+  void append(Section<ELFT> *section) {
     _sections.push_back(section);
     if (_flags < section->flags())
       _flags = section->flags();
@@ -747,7 +724,7 @@ public:
   }
 
   /// Prepend a generic chunk to the segment.
-  void prepend(Chunk<target_endianness, max_align, is64Bits> *c) {
+  void prepend(Chunk<ELFT> *c) {
     _sections.insert(_sections.begin(), c);
   }
 
@@ -759,9 +736,7 @@ public:
   /// All Read Execute segments appear next
   /// All Read only segments appear first
   /// All Write execute segments follow
-  static bool compareSegments(
-      Segment<target_endianness, max_align, is64Bits> *sega,
-      Segment<target_endianness, max_align, is64Bits> *segb) {
+  static bool compareSegments(Segment<ELFT> *sega, Segment<ELFT> *segb) {
     if (sega->atomflags() < segb->atomflags())
       return false;
     return true;
@@ -808,7 +783,7 @@ public:
         uint64_t curOffset = curSliceFileOffset + curSliceSize;
         uint64_t newOffset =
           llvm::RoundUpToAlignment(curOffset, (*si)->align2());
-        SegmentSlice<target_endianness, max_align, is64Bits> *slice = nullptr;
+        SegmentSlice<ELFT> *slice = nullptr;
         // If the newOffset computed is more than a page away, lets create
         // a seperate segment, so that memory is not used up while running
         if ((newOffset - curOffset) > _options.pageSize()) {
@@ -820,9 +795,8 @@ public:
             }
           }
           if (!slice) {
-            slice = new (_segmentAllocate.Allocate<
-              SegmentSlice<target_endianness, max_align, is64Bits>>())
-              SegmentSlice<target_endianness, max_align, is64Bits>();
+            slice = new (_segmentAllocate.Allocate<SegmentSlice<ELFT>>())
+              SegmentSlice<ELFT>();
             _segmentSlices.push_back(slice);
           }
           slice->set(curSliceFileOffset, startSection, currSection);
@@ -848,7 +822,7 @@ public:
       currSection++;
       endSectionIter = si;
     }
-    SegmentSlice<target_endianness, max_align, is64Bits> *slice = nullptr;
+    SegmentSlice<ELFT> *slice = nullptr;
     for (auto s : slices()) {
       // TODO: add std::find
       if (s->startSection() == startSection) {
@@ -857,9 +831,8 @@ public:
       }
     }
     if (!slice) {
-      slice = new (_segmentAllocate.Allocate
-                   <SegmentSlice<target_endianness, max_align, is64Bits>>())
-                   SegmentSlice<target_endianness, max_align, is64Bits>();
+      slice = new (_segmentAllocate.Allocate<SegmentSlice<ELFT>>())
+        SegmentSlice<ELFT>();
       _segmentSlices.push_back(slice);
     }
     slice->set(curSliceFileOffset, startSection, currSection);
@@ -868,7 +841,7 @@ public:
     slice->setAlign(sliceAlign);
     this->_fsize = curSliceFileOffset - startOffset + curSliceSize;
     std::stable_sort(slices_begin(), slices_end(),
-      SegmentSlice<target_endianness, max_align, is64Bits>::compare_slices);
+                     SegmentSlice<ELFT>::compare_slices);
   }
 
   /// \brief Assign virtual addresses to the slices
@@ -888,8 +861,7 @@ public:
           virtualAddressSet = true;
         }
         section->setVAddr(addr);
-        if (auto s = dyn_cast<Section<target_endianness, max_align, is64Bits>>(
-              section))
+        if (auto s = dyn_cast<Section<ELFT>>(section))
           s->assignVirtualAddress(addr);
         else
           addr += section->memSize();
@@ -922,10 +894,8 @@ public:
   void finalize() { }
 
   // For LLVM RTTI
-  static inline bool classof(
-      const Chunk<target_endianness, max_align, is64Bits> *c) {
-    return c->kind() ==
-      Chunk<target_endianness, max_align, is64Bits>::K_ELFSegment;
+  static inline bool classof(const Chunk<ELFT> *c) {
+    return c->kind() == Chunk<ELFT>::K_ELFSegment;
   }
 
   // Getters
@@ -956,9 +926,8 @@ public:
 
 private:
   /// \brief Section or some other chunk type.
-  std::vector<Chunk<target_endianness, max_align, is64Bits> *> _sections;
-  std::vector<SegmentSlice<target_endianness, max_align, is64Bits> *>
-    _segmentSlices;
+  std::vector<Chunk<ELFT> *> _sections;
+  std::vector<SegmentSlice<ELFT> *> _segmentSlices;
   ELFLayout::SegmentType _segmentType;
   int64_t _flags;
   int64_t _atomflags;
@@ -967,18 +936,16 @@ private:
 };
 
 /// \brief The class represents the ELF String Table
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-class ELFStringTable : public Section<target_endianness, max_align, is64Bits> {
+template<class ELFT>
+class ELFStringTable : public Section<ELFT> {
 public:
   ELFStringTable(const char *str, int32_t order)
-    : Section<target_endianness, max_align, is64Bits>(
+    : Section<ELFT>(
         str,
         llvm::ELF::SHT_STRTAB,
         DefinedAtom::perm___,
         order,
-        Section<target_endianness, max_align, is64Bits>::K_StringTable) {
+        Section<ELFT>::K_StringTable) {
     // the string table has a NULL entry for which
     // add an empty string
     _strings.push_back("");
@@ -987,10 +954,8 @@ public:
     this->setOrder(order);
   }
 
-  static inline bool classof(
-      const Chunk<target_endianness, max_align, is64Bits> *c) {
-    return c->kind() ==
-      Section<target_endianness, max_align, is64Bits>::K_StringTable;
+  static inline bool classof(const Chunk<ELFT> *c) {
+    return c->kind() == Section<ELFT>::K_StringTable;
   }
 
   uint64_t addString(const StringRef symname) {
@@ -1019,20 +984,18 @@ private:
 };
 
 /// \brief The ELFSymbolTable class represents the symbol table in a ELF file
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-class ELFSymbolTable : public Section<target_endianness, max_align, is64Bits> {
+template<class ELFT>
+class ELFSymbolTable : public Section<ELFT> {
 public:
-  typedef object::Elf_Sym_Impl<target_endianness, max_align, is64Bits> Elf_Sym;
+  typedef object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
   ELFSymbolTable(const char *str, int32_t order)
-    : Section<target_endianness, max_align, is64Bits>(
+    : Section<ELFT>(
         str,
         llvm::ELF::SHT_SYMTAB,
         0,
         order,
-        Section<target_endianness, max_align, is64Bits>::K_SymbolTable) {
+        Section<ELFT>::K_SymbolTable) {
     this->setOrder(order);
     Elf_Sym *symbol = new (_symbolAllocate.Allocate<Elf_Sym>()) Elf_Sym;
     memset((void *)symbol, 0, sizeof(Elf_Sym));
@@ -1042,10 +1005,8 @@ public:
     this->_align2 = sizeof(void *);
   }
 
-  static inline bool classof(
-      const Chunk<target_endianness, max_align, is64Bits> *c) {
-    return c->kind() ==
-      Section<target_endianness, max_align, is64Bits>::K_SymbolTable;
+  static inline bool classof(const Chunk<ELFT> *c) {
+    return c->kind() == Section<ELFT>::K_SymbolTable;
   }
 
   void addSymbol(const Atom *atom, int32_t sectionIndex, uint64_t addr = 0) {
@@ -1106,8 +1067,7 @@ public:
     this->_fsize += sizeof(Elf_Sym);
   }
 
-  void setStringSection(
-      ELFStringTable<target_endianness, max_align, is64Bits> *s) {
+  void setStringSection(ELFStringTable<ELFT> *s) {
     _stringSection = s;
   }
 
@@ -1139,7 +1099,7 @@ public:
   }
 
 private:
-  ELFStringTable<target_endianness, max_align, is64Bits> *_stringSection;
+  ELFStringTable<ELFT> *_stringSection;
   std::vector<Elf_Sym*> _symbolTable;
   llvm::BumpPtrAllocator _symbolAllocate;
   int64_t _link;
@@ -1147,17 +1107,14 @@ private:
 
 /// \brief An ELFHeader represents the Elf[32/64]_Ehdr structure at the
 ///        start of an ELF executable file.
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-class ELFHeader : public Chunk<target_endianness, max_align, is64Bits> {
+template<class ELFT>
+class ELFHeader : public Chunk<ELFT> {
 public:
-  typedef Elf_Ehdr_Impl<target_endianness, max_align, is64Bits> Elf_Ehdr;
+  typedef Elf_Ehdr_Impl<ELFT> Elf_Ehdr;
 
   ELFHeader()
-  : Chunk<target_endianness, max_align, is64Bits>(
-      "elfhdr", Chunk<target_endianness, max_align, is64Bits>::K_ELFHeader) {
-    this->_align2 = is64Bits ? 8 : 4;
+  : Chunk<ELFT>("elfhdr", Chunk<ELFT>::K_ELFHeader) {
+    this->_align2 = ELFT::Is64Bits ? 8 : 4;
     this->_fsize = sizeof(Elf_Ehdr);
     this->_msize = sizeof(Elf_Ehdr);
     memset(_eh.e_ident, 0, llvm::ELF::EI_NIDENT);
@@ -1184,10 +1141,8 @@ public:
   void e_shstrndx(uint16_t shstrndx)   { _eh.e_shstrndx = shstrndx; }
   uint64_t  fileSize()                 { return sizeof (Elf_Ehdr); }
 
-  static inline bool classof(
-      const Chunk<target_endianness, max_align, is64Bits> *c) {
-    return c->Kind() ==
-      Chunk<target_endianness, max_align, is64Bits>::K_ELFHeader;
+  static inline bool classof(const Chunk<ELFT> *c) {
+    return c->Kind() == Chunk<ELFT>::K_ELFHeader;
   }
 
   void write(ELFWriter *writer,
@@ -1205,12 +1160,10 @@ private:
 
 /// \brief An ELFProgramHeader represents the Elf[32/64]_Phdr structure at the
 ///        start of an ELF executable file.
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-class ELFProgramHeader : public Chunk<target_endianness, max_align, is64Bits> {
+template<class ELFT>
+class ELFProgramHeader : public Chunk<ELFT> {
 public:
-  typedef Elf_Phdr_Impl<target_endianness, max_align, is64Bits> Elf_Phdr;
+  typedef Elf_Phdr_Impl<ELFT> Elf_Phdr;
   typedef typename std::vector<Elf_Phdr *>::iterator PhIterT;
 
   /// \brief Find a program header entry, given the type of entry that
@@ -1235,14 +1188,12 @@ public:
   };
 
   ELFProgramHeader()
-  : Chunk<target_endianness, max_align, is64Bits>(
-      "elfphdr",
-      Chunk<target_endianness, max_align, is64Bits>::K_ELFProgramHeader) {
-    this->_align2 = is64Bits ? 8 : 4;
+  : Chunk<ELFT>("elfphdr", Chunk<ELFT>::K_ELFProgramHeader) {
+    this->_align2 = ELFT::Is64Bits ? 8 : 4;
     resetProgramHeaders();
   }
 
-  bool addSegment(Segment<target_endianness, max_align, is64Bits> *segment) {
+  bool addSegment(Segment<ELFT> *segment) {
     Elf_Phdr *phdr = nullptr;
     bool ret = false;
 
@@ -1281,10 +1232,8 @@ public:
     return sizeof(Elf_Phdr) * _ph.size();
   }
 
-  static inline bool classof(
-      const Chunk<target_endianness, max_align, is64Bits> *c) {
-    return c->Kind() ==
-      Chunk<target_endianness, max_align, is64Bits>::K_ELFProgramHeader;
+  static inline bool classof(const Chunk<ELFT> *c) {
+    return c->Kind() == Chunk<ELFT>::K_ELFProgramHeader;
   }
 
   void write(ELFWriter *writer,
@@ -1329,17 +1278,13 @@ private:
 
 /// \brief An ELFSectionHeader represents the Elf[32/64]_Shdr structure
 /// at the end of the file
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-class ELFSectionHeader : public Chunk<target_endianness, max_align, is64Bits> {
+template<class ELFT>
+class ELFSectionHeader : public Chunk<ELFT> {
 public:
-  typedef Elf_Shdr_Impl<target_endianness, max_align, is64Bits> Elf_Shdr;
+  typedef Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
   ELFSectionHeader(int32_t order)
-    : Chunk<target_endianness, max_align, is64Bits>(
-        "shdr",
-        Chunk<target_endianness, max_align, is64Bits>::K_ELFSectionHeader) {
+    : Chunk<ELFT>("shdr", Chunk<ELFT>::K_ELFSectionHeader) {
     this->_fsize = 0;
     this->_align2 = 8;
     this->setOrder(order);
@@ -1354,8 +1299,7 @@ public:
     return sizeof(Elf_Shdr) * _sectionInfo.size();
   }
 
-  void appendSection(
-      MergedSections<target_endianness, max_align, is64Bits> *section) {
+  void appendSection(MergedSections<ELFT> *section) {
     Elf_Shdr *shdr = new (_sectionAllocate.Allocate<Elf_Shdr>()) Elf_Shdr;
     shdr->sh_name   = _stringSection->addString(section->name());
     shdr->sh_type   = section->type();
@@ -1370,7 +1314,7 @@ public:
     _sectionInfo.push_back(shdr);
   }
 
-  void updateSection(Section<target_endianness, max_align, is64Bits> *section) {
+  void updateSection(Section<ELFT> *section) {
     Elf_Shdr *shdr = _sectionInfo[section->ordinal()];
     shdr->sh_type   = section->type();
     shdr->sh_flags  = section->flags();
@@ -1383,14 +1327,11 @@ public:
     shdr->sh_entsize = section->entsize();
   }
 
-  static inline bool classof(
-      const Chunk<target_endianness, max_align, is64Bits> *c) {
-    return c->getChunkKind() ==
-      Chunk<target_endianness, max_align, is64Bits>::K_ELFSectionHeader;
+  static inline bool classof(const Chunk<ELFT> *c) {
+    return c->getChunkKind() == Chunk<ELFT>::K_ELFSectionHeader;
   }
 
-  void setStringSection(
-      ELFStringTable<target_endianness, max_align, is64Bits> *s) {
+  void setStringSection(ELFStringTable<ELFT> *s) {
     _stringSection = s;
   }
 
@@ -1416,7 +1357,7 @@ public:
   }
 
 private:
-  ELFStringTable<target_endianness, max_align, is64Bits> *_stringSection;
+  ELFStringTable<ELFT> *_stringSection;
   std::vector<Elf_Shdr*>                  _sectionInfo;
   llvm::BumpPtrAllocator                  _sectionAllocate;
 };
@@ -1425,9 +1366,7 @@ private:
 ///        sections and segments in the order determined by the target ELF
 ///        format. The writer creates a single instance of the DefaultELFLayout
 ///        class
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
+template<class ELFT>
 class DefaultELFLayout : public ELFLayout {
 public:
 
@@ -1472,18 +1411,16 @@ public:
   // SectionName, [contentType, contentPermissions]
   typedef std::pair<StringRef,
                     std::pair<int32_t, int32_t>> Key;
-  typedef typename std::vector<
-    Chunk<target_endianness, max_align, is64Bits> *>::iterator ChunkIter;
+  typedef typename std::vector<Chunk<ELFT> *>::iterator ChunkIter;
   // The key used for Segments
   // The segments are created using
   // SegmentName, Segment flags
   typedef std::pair<StringRef, int64_t> SegmentKey;
   // Merged Sections contain the map of Sectionnames to a vector of sections,
   // that have been merged to form a single section
-  typedef std::map<StringRef, MergedSections<
-    target_endianness, max_align, is64Bits> *> MergedSectionMapT;
-  typedef typename std::vector<MergedSections<
-    target_endianness, max_align, is64Bits> *>::iterator MergedSectionIter;
+  typedef std::map<StringRef, MergedSections<ELFT> *> MergedSectionMapT;
+  typedef typename std::vector<MergedSections<ELFT> *>::iterator
+    MergedSectionIter;
 
   // HashKey for the Section
   class HashKey {
@@ -1505,10 +1442,9 @@ public:
     }
   };
 
-  typedef std::unordered_map<Key, Section<
-    target_endianness, max_align, is64Bits>*, HashKey> SectionMapT;
+  typedef std::unordered_map<Key, Section<ELFT>*, HashKey> SectionMapT;
   typedef std::unordered_map<SegmentKey,
-                             Segment<target_endianness, max_align, is64Bits>*,
+                             Segment<ELFT>*,
                              SegmentHashKey> SegmentMapT;
 
   /// \brief All absolute atoms are created in the ELF Layout by using 
@@ -1590,8 +1526,7 @@ public:
   }
 
   /// \brief Gets the segment for a output section
-  virtual ELFLayout::SegmentType getSegmentType(
-      Section<target_endianness, max_align, is64Bits> *section) const {
+  virtual ELFLayout::SegmentType getSegmentType(Section<ELFT> *section) const {
     switch(section->order()) {
     case ORDER_INTERP:
       return llvm::ELF::PT_INTERP;
@@ -1633,8 +1568,7 @@ public:
 
   /// \brief Returns true/false depending on whether the section has a Output
   //         segment or not
-  static bool hasOutputSegment(Section<target_endianness, max_align,
-                                 is64Bits> *section) {
+  static bool hasOutputSegment(Section<ELFT> *section) {
     switch(section->order()) {
     case ORDER_INTERP:
     case ORDER_HASH:
@@ -1675,11 +1609,10 @@ public:
       const lld::DefinedAtom::ContentType contentType =
                                     definedAtom->contentType();
       const Key key(sectionName, std::make_pair(contentType, permissions));
-      const std::pair<Key, Section<target_endianness, max_align, is64Bits> *>
-                                                  currentSection(key, nullptr);
+      const std::pair<Key, Section<ELFT> *>currentSection(key, nullptr);
       std::pair<typename SectionMapT::iterator, bool>
-                                sectionInsert(_sectionMap.insert(currentSection));
-      Section<target_endianness, max_align, is64Bits> *section;
+        sectionInsert(_sectionMap.insert(currentSection));
+      Section<ELFT> *section;
       // the section is already in the map
       if (!sectionInsert.second) {
         section = sectionInsert.first->second;
@@ -1688,11 +1621,8 @@ public:
         SectionOrder section_order = getSectionOrder(sectionName,
                                        contentType,
                                        permissions);
-        section = new (_allocator.Allocate
-                       <Section<target_endianness, max_align, is64Bits>>())
-                       Section<target_endianness, max_align, is64Bits>
-                       (sectionName, contentType,
-                        permissions, section_order);
+        section = new (_allocator.Allocate<Section<ELFT>>()) Section<ELFT>(
+          sectionName, contentType, permissions, section_order);
         sectionInsert.first->second = section;
         section->setOrder(section_order);
         _sections.push_back(section);
@@ -1711,8 +1641,7 @@ public:
   }
 
   /// \brief Find an output Section given a section name.
-  MergedSections<target_endianness, max_align, is64Bits> *
-  findOutputSection(StringRef name) {
+  MergedSections<ELFT> *findOutputSection(StringRef name) {
     auto iter = _mergedSectionMap.find(name);
     if (iter == _mergedSectionMap.end()) 
       return nullptr;
@@ -1729,11 +1658,10 @@ public:
 
   // Merge sections with the same name into a MergedSections
   void mergeSimiliarSections() {
-    MergedSections<target_endianness, max_align, is64Bits> *mergedSection;
+    MergedSections<ELFT> *mergedSection;
 
     for (auto &si : _sections) {
-      const std::pair<StringRef,
-                      MergedSections<target_endianness, max_align, is64Bits> *>
+      const std::pair<StringRef, MergedSections<ELFT> *>
         currentMergedSections(si->name(), nullptr);
       std::pair<typename MergedSectionMapT::iterator, bool>
                               mergedSectionInsert
@@ -1741,9 +1669,8 @@ public:
       if (!mergedSectionInsert.second) {
         mergedSection = mergedSectionInsert.first->second;
       } else {
-        mergedSection = new (_allocator.Allocate<
-          MergedSections<target_endianness, max_align, is64Bits>>())
-          MergedSections<target_endianness, max_align, is64Bits>(si->name());
+        mergedSection = new (_allocator.Allocate<MergedSections<ELFT>>())
+          MergedSections<ELFT>(si->name());
         _mergedSections.push_back(mergedSection);
         mergedSectionInsert.first->second = mergedSection;
       }
@@ -1754,8 +1681,7 @@ public:
   void assignSectionsToSegments() {
     // sort the sections by their order as defined by the layout
     std::stable_sort(_sections.begin(), _sections.end(),
-    [](Chunk<target_endianness, max_align, is64Bits> *A,
-       Chunk<target_endianness, max_align, is64Bits> *B) {
+    [](Chunk<ELFT> *A, Chunk<ELFT> *B) {
        return A->order() < B->order();
     });
     // Merge all sections
@@ -1771,8 +1697,7 @@ public:
     }
     for (auto msi : _mergedSections) {
       for (auto ai : msi->sections()) {
-        if (auto section =
-              dyn_cast<Section<target_endianness, max_align, is64Bits>>(ai)) {
+        if (auto section = dyn_cast<Section<ELFT>>(ai)) {
           if (!hasOutputSegment(section))
             continue;
           msi->setHasSegment();
@@ -1780,20 +1705,16 @@ public:
           const StringRef segmentName = section->segmentKindToStr();
           // Use the flags of the merged Section for the segment
           const SegmentKey key(segmentName, msi->flags());
-          const std::pair<SegmentKey,
-                          Segment<target_endianness, max_align, is64Bits> *>
+          const std::pair<SegmentKey, Segment<ELFT> *>
             currentSegment(key, nullptr);
           std::pair<typename SegmentMapT::iterator, bool>
                               segmentInsert(_segmentMap.insert(currentSegment));
-          Segment<target_endianness, max_align, is64Bits> *segment;
+          Segment<ELFT> *segment;
           if (!segmentInsert.second) {
             segment = segmentInsert.first->second;
           } else {
-            segment = new (_allocator.Allocate
-                           <Segment<target_endianness, max_align, is64Bits>>())
-                           Segment<target_endianness, max_align, is64Bits>
-                           (segmentName, getSegmentType(section),
-                            _options);
+            segment = new (_allocator.Allocate<Segment<ELFT>>()) Segment<ELFT>(
+              segmentName, getSegmentType(section), _options);
             segmentInsert.first->second = segment;
             _segments.push_back(segment);
           }
@@ -1803,14 +1724,13 @@ public:
     }
   }
 
-  void addSection(Chunk<target_endianness, max_align, is64Bits> *c) {
+  void addSection(Chunk<ELFT> *c) {
     _sections.push_back(c);
   }
 
   void assignFileOffsets() {
-    std::sort(_segments.begin(),
-              _segments.end(),
-              Segment<target_endianness, max_align, is64Bits>::compareSegments);
+    std::sort(_segments.begin(), _segments.end(),
+              Segment<ELFT>::compareSegments);
     int ordinal = 0;
     // Compute the number of segments that might be needed, so that the
     // size of the program header can be computed
@@ -1822,12 +1742,11 @@ public:
     }
   }
 
-  void setELFHeader(ELFHeader<target_endianness, max_align, is64Bits> *e) {
+  void setELFHeader(ELFHeader<ELFT> *e) {
     _elfHeader = e;
   }
 
-  void setProgramHeader(
-      ELFProgramHeader<target_endianness, max_align, is64Bits> *p) {
+  void setProgramHeader(ELFProgramHeader<ELFT> *p) {
     _programHeader = p;
   }
 
@@ -1873,13 +1792,11 @@ public:
       }
       _programHeader->resetProgramHeaders();
     }
-    Section<target_endianness, max_align, is64Bits> *section;
+    Section<ELFT> *section;
     // Fix the offsets of all the atoms within a section
     for (auto &si : _sections) {
-      section = dyn_cast<Section<target_endianness, max_align, is64Bits>>(si);
-      if (section &&
-          DefaultELFLayout<target_endianness,
-                           max_align, is64Bits>::hasOutputSegment(section))
+      section = dyn_cast<Section<ELFT>>(si);
+      if (section && DefaultELFLayout<ELFT>::hasOutputSegment(section))
         section->assignOffsets(section->fileOffset());
     }
     // Set the size of the merged Sections
@@ -1928,12 +1845,10 @@ public:
       size = si->fileSize();
     }
     fileoffset = fileoffset + size;
-    Section<target_endianness, max_align, is64Bits> *section;
+    Section<ELFT> *section;
     for (auto si : _sections) {
-      section = dyn_cast<Section<target_endianness, max_align, is64Bits>>(si);
-      if (section &&
-          DefaultELFLayout<target_endianness,
-                           max_align, is64Bits>::hasOutputSegment(section))
+      section = dyn_cast<Section<ELFT>>(si);
+      if (section && DefaultELFLayout<ELFT>::hasOutputSegment(section))
         continue;
       fileoffset = llvm::RoundUpToAlignment(fileoffset, si->align2());
       si->setFileOffset(fileoffset);
@@ -1949,8 +1864,7 @@ public:
 
   bool findAtomAddrByName(const StringRef name, uint64_t &addr) {
     for (auto sec : _sections)
-      if (auto section =
-            dyn_cast<Section<target_endianness, max_align, is64Bits>>(sec))
+      if (auto section = dyn_cast<Section<ELFT>>(sec))
         if (section->findAtomAddrByName(name, addr))
          return true;
     return false;
@@ -1962,11 +1876,11 @@ public:
 
   range<ChunkIter> segments() { return _segments; }
 
-  ELFHeader<target_endianness, max_align, is64Bits> *elfHeader() {
+  ELFHeader<ELFT> *elfHeader() {
     return _elfHeader;
   }
 
-  ELFProgramHeader<target_endianness, max_align, is64Bits> *elfProgramHeader() {
+  ELFProgramHeader<ELFT> *elfProgramHeader() {
     return _programHeader;
   }
 
@@ -1974,12 +1888,11 @@ private:
   SectionMapT _sectionMap;
   MergedSectionMapT _mergedSectionMap;
   SegmentMapT _segmentMap;
-  std::vector<Chunk<target_endianness, max_align, is64Bits> *> _sections;
-  std::vector<Segment<target_endianness, max_align, is64Bits> *> _segments;
-  std::vector<MergedSections<target_endianness, max_align, is64Bits> *>
-    _mergedSections;
-  ELFHeader<target_endianness, max_align, is64Bits> *_elfHeader;
-  ELFProgramHeader<target_endianness, max_align, is64Bits> *_programHeader;
+  std::vector<Chunk<ELFT> *> _sections;
+  std::vector<Segment<ELFT> *> _segments;
+  std::vector<MergedSections<ELFT> *> _mergedSections;
+  ELFHeader<ELFT> *_elfHeader;
+  ELFProgramHeader<ELFT> *_programHeader;
   std::vector<AbsoluteAtomPair> _absoluteAtoms;
   llvm::BumpPtrAllocator _allocator;
   const WriterOptionsELF &_options;
@@ -1988,13 +1901,11 @@ private:
 //===----------------------------------------------------------------------===//
 //  ELFExecutableWriter Class
 //===----------------------------------------------------------------------===//
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
+template<class ELFT>
 class ELFExecutableWriter : public ELFWriter {
 public:
-  typedef Elf_Shdr_Impl<target_endianness, max_align, is64Bits> Elf_Shdr;
-  typedef Elf_Sym_Impl<target_endianness, max_align, is64Bits> Elf_Sym;
+  typedef Elf_Shdr_Impl<ELFT> Elf_Shdr;
+  typedef Elf_Sym_Impl<ELFT> Elf_Sym;
 
   ELFExecutableWriter(const WriterOptionsELF &options);
 
@@ -2025,37 +1936,30 @@ private:
   std::unique_ptr<KindHandler> _referenceKindHandler;
   AtomToAddress _atomToAddressMap;
   llvm::BumpPtrAllocator _chunkAllocate;
-  DefaultELFLayout<target_endianness, max_align, is64Bits> *_layout;
-  ELFHeader<target_endianness, max_align, is64Bits> *_elfHeader;
-  ELFProgramHeader<target_endianness, max_align, is64Bits> *_programHeader;
-  ELFSymbolTable<target_endianness, max_align, is64Bits> * _symtab;
-  ELFStringTable<target_endianness, max_align, is64Bits> *_strtab;
-  ELFStringTable<target_endianness, max_align, is64Bits> *_shstrtab;
-  ELFSectionHeader<target_endianness, max_align, is64Bits> *_shdrtab;
-  CRuntimeFile<target_endianness, max_align, is64Bits> _runtimeFile;
+  DefaultELFLayout<ELFT> *_layout;
+  ELFHeader<ELFT> *_elfHeader;
+  ELFProgramHeader<ELFT> *_programHeader;
+  ELFSymbolTable<ELFT> * _symtab;
+  ELFStringTable<ELFT> *_strtab;
+  ELFStringTable<ELFT> *_shstrtab;
+  ELFSectionHeader<ELFT> *_shdrtab;
+  CRuntimeFile<ELFT> _runtimeFile;
 };
 
 //===----------------------------------------------------------------------===//
 //  ELFExecutableWriter
 //===----------------------------------------------------------------------===//
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                   ::ELFExecutableWriter(const WriterOptionsELF &options)
+template<class ELFT>
+ELFExecutableWriter<ELFT>::ELFExecutableWriter(const WriterOptionsELF &options)
   : _options(options)
-  , _referenceKindHandler(KindHandler::makeHandler(_options.machine(),
-                                                   target_endianness))
+  , _referenceKindHandler(KindHandler::makeHandler(
+      _options.machine(), (endianness)ELFT::TargetEndianness))
   , _runtimeFile(options) {
-  _layout =
-    new DefaultELFLayout<target_endianness, max_align, is64Bits>(options);
+  _layout =new DefaultELFLayout<ELFT>(options);
 }
 
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::buildChunks(const lld::File &file){
+template<class ELFT>
+void ELFExecutableWriter<ELFT>::buildChunks(const lld::File &file){
   for (const DefinedAtom *definedAtom : file.defined() ) {
     _layout->addAtom(definedAtom);
   }
@@ -2065,23 +1969,17 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
   }
 }
 
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::buildSymbolTable () {
+template<class ELFT>
+void ELFExecutableWriter<ELFT>::buildSymbolTable () {
   for (auto sec : _layout->sections())
-    if (auto section =
-          dyn_cast<Section<target_endianness, max_align, is64Bits>>(sec))
+    if (auto section = dyn_cast<Section<ELFT>>(sec))
       for (const auto &atom : section->atoms())
         _symtab->addSymbol(atom._atom, section->ordinal(), atom._virtualAddr);
 }
 
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::addAbsoluteUndefinedSymbols(const lld::File &file) {
+template<class ELFT>
+void
+ELFExecutableWriter<ELFT>::addAbsoluteUndefinedSymbols(const lld::File &file) {
   // add all the absolute symbols that the layout contains to the output symbol
   // table
   for (auto &atom : _layout->absoluteAtoms())
@@ -2090,14 +1988,10 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
     _symtab->addSymbol(a, ELF::SHN_UNDEF);
 }
 
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::buildAtomToAddressMap () {
+template<class ELFT>
+void ELFExecutableWriter<ELFT>::buildAtomToAddressMap () {
   for (auto sec : _layout->sections())
-    if (auto section =
-          dyn_cast<Section<target_endianness, max_align, is64Bits>>(sec))
+    if (auto section = dyn_cast<Section<ELFT>>(sec))
       for (const auto &atom : section->atoms())
         _atomToAddressMap[atom._atom] = atom._virtualAddr;
   // build the atomToAddressMap that contains absolute symbols too
@@ -2105,48 +1999,35 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
     _atomToAddressMap[atom.absoluteAtom()] = atom.value();
 }
 
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::buildSectionHeaderTable() {
+template<class ELFT>
+void ELFExecutableWriter<ELFT>::buildSectionHeaderTable() {
   for (auto mergedSec : _layout->mergedSections()) {
-    if (mergedSec->kind() !=
-          Chunk<target_endianness, max_align, is64Bits>::K_ELFSection)
+    if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection)
       continue;
     if (mergedSec->hasSegment())
       _shdrtab->appendSection(mergedSec);
   }
 }
 
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::assignSectionsWithNoSegments() {
+template<class ELFT>
+void ELFExecutableWriter<ELFT>::assignSectionsWithNoSegments() {
   for (auto mergedSec : _layout->mergedSections()) {
-    if (mergedSec->kind() !=
-          Chunk<target_endianness, max_align, is64Bits>::K_ELFSection)
+    if (mergedSec->kind() != Chunk<ELFT>::K_ELFSection)
       continue;
     if (!mergedSec->hasSegment())
       _shdrtab->appendSection(mergedSec);
   }
   _layout->assignOffsetsForMiscSections();
   for (auto sec : _layout->sections())
-    if (auto section =
-          dyn_cast<Section<target_endianness, max_align, is64Bits>>(sec))
-      if (!DefaultELFLayout<target_endianness, max_align, is64Bits>
-                           ::hasOutputSegment(section))
+    if (auto section = dyn_cast<Section<ELFT>>(sec))
+      if (!DefaultELFLayout<ELFT>::hasOutputSegment(section))
         _shdrtab->updateSection(section);
 }
 
 /// \brief Add absolute symbols by default. These are linker added
 /// absolute symbols
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::addDefaultAtoms() {
+template<class ELFT>
+void ELFExecutableWriter<ELFT>::addDefaultAtoms() {
   _runtimeFile.addUndefinedAtom("_start");
   _runtimeFile.addAbsoluteAtom("__bss_start");
   _runtimeFile.addAbsoluteAtom("__bss_end");
@@ -2157,22 +2038,16 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
 }
 
 /// \brief Hook in lld to add CRuntime file 
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::addFiles(InputFiles &inputFiles) {
+template<class ELFT>
+void ELFExecutableWriter<ELFT>::addFiles(InputFiles &inputFiles) {
   addDefaultAtoms();
   inputFiles.prependFile(_runtimeFile);
 }
 
 /// Finalize the value of all the absolute symbols that we 
 /// created
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::finalizeDefaultAtomValues() {
+template<class ELFT>
+void ELFExecutableWriter<ELFT>::finalizeDefaultAtomValues() {
  auto bssStartAtomIter = _layout->findAbsoluteAtom("__bss_start");
  auto bssEndAtomIter = _layout->findAbsoluteAtom("__bss_end");
  auto underScoreEndAtomIter = _layout->findAbsoluteAtom("_end");
@@ -2210,11 +2085,9 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
  endAtomIter->setValue((*phe)->p_vaddr+(*phe)->p_memsz);
 }
 
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-error_code ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                            ::writeFile(const lld::File &file, StringRef path) {
+template<class ELFT>
+error_code
+ELFExecutableWriter<ELFT>::writeFile(const lld::File &file, StringRef path) {
   buildChunks(file);
   // Create the default sections like the symbol table, string table, and the
   // section string table
@@ -2289,33 +2162,21 @@ error_code ELFExecutableWriter<target_endianness, max_align, is64Bits>
   return buffer->commit();
 }
 
-template<support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
-void ELFExecutableWriter<target_endianness, max_align, is64Bits>
-                        ::createDefaultSections() {
-  _elfHeader =
-    new ELFHeader<target_endianness, max_align, is64Bits>();
-  _programHeader =
-    new ELFProgramHeader<target_endianness, max_align, is64Bits>();
+template<class ELFT>
+void ELFExecutableWriter<ELFT>::createDefaultSections() {
+  _elfHeader = new ELFHeader<ELFT>();
+  _programHeader = new ELFProgramHeader<ELFT>();
   _layout->setELFHeader(_elfHeader);
   _layout->setProgramHeader(_programHeader);
 
-  _symtab = new ELFSymbolTable<target_endianness, max_align, is64Bits>(
-    ".symtab",
-    DefaultELFLayout<target_endianness, max_align, is64Bits>
-                    ::ORDER_SYMBOL_TABLE);
-  _strtab = new ELFStringTable<target_endianness, max_align, is64Bits>(
-    ".strtab",
-    DefaultELFLayout<target_endianness, max_align, is64Bits>
-                    ::ORDER_STRING_TABLE);
-  _shstrtab = new ELFStringTable<target_endianness, max_align, is64Bits>(
-    ".shstrtab",
-    DefaultELFLayout<target_endianness, max_align, is64Bits>
-                    ::ORDER_SECTION_STRINGS);
-  _shdrtab  = new ELFSectionHeader<target_endianness, max_align, is64Bits>(
-    DefaultELFLayout<target_endianness, max_align, is64Bits>
-                    ::ORDER_SECTION_HEADERS);
+  _symtab = new ELFSymbolTable<ELFT>(
+    ".symtab", DefaultELFLayout<ELFT>::ORDER_SYMBOL_TABLE);
+  _strtab = new ELFStringTable<ELFT>(
+    ".strtab", DefaultELFLayout<ELFT>::ORDER_STRING_TABLE);
+  _shstrtab = new ELFStringTable<ELFT>(
+    ".shstrtab", DefaultELFLayout<ELFT>::ORDER_SECTION_STRINGS);
+  _shdrtab  = new ELFSectionHeader<ELFT>(
+    DefaultELFLayout<ELFT>::ORDER_SECTION_HEADERS);
   _layout->addSection(_symtab);
   _layout->addSection(_strtab);
   _layout->addSection(_shstrtab);
@@ -2326,18 +2187,23 @@ void ELFExecutableWriter<target_endianness, max_align, is64Bits>
 } // namespace elf
 
 Writer *createWriterELF(const WriterOptionsELF &options) {
+  using llvm::object::ELFType;
   // Set the default layout to be the static executable layout
   // We would set the layout to a dynamic executable layout
   // if we came across any shared libraries in the process
 
   if (!options.is64Bit() && options.endianness() == llvm::support::little)
-    return new elf::ELFExecutableWriter<support::little, 4, false>(options);
+    return
+      new elf::ELFExecutableWriter<ELFType<support::little, 4, false>>(options);
   else if (options.is64Bit() && options.endianness() == llvm::support::little)
-    return new elf::ELFExecutableWriter<support::little, 8, true>(options);
+    return
+      new elf::ELFExecutableWriter<ELFType<support::little, 8, true>>(options);
   else if (!options.is64Bit() && options.endianness() == llvm::support::big)
-    return new elf::ELFExecutableWriter<support::big, 4, false>(options);
+    return
+      new elf::ELFExecutableWriter<ELFType<support::big, 4, false>>(options);
   else if (options.is64Bit() && options.endianness() == llvm::support::big)
-    return new elf::ELFExecutableWriter<support::big, 8, true>(options);
+    return
+      new elf::ELFExecutableWriter<ELFType<support::big, 8, true>>(options);
 
   llvm_unreachable("Invalid Options!");
 }

@@ -26,12 +26,10 @@ namespace elf {
 /// are basically additional symbols required by libc and other runtime 
 /// libraries part of executing a program. This class provides support
 /// for adding absolute symbols and undefined symbols
-template<llvm::support::endianness target_endianness,
-         std::size_t max_align,
-         bool is64Bits>
+template<class ELFT>
 class CRuntimeFile : public File {
 public:
-  typedef llvm::object::Elf_Sym_Impl<target_endianness, max_align, is64Bits> Elf_Sym;
+  typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   CRuntimeFile(const WriterOptionsELF &options) 
     : File("C runtime") 
   { }
@@ -47,8 +45,8 @@ public:
     symbol->st_other = llvm::ELF::STV_DEFAULT;
     symbol->st_size = 0;
     auto *newAtom = new (_allocator.Allocate<
-      ELFAbsoluteAtom<target_endianness, max_align, is64Bits> > ())
-      ELFAbsoluteAtom<target_endianness, max_align, is64Bits>(
+      ELFAbsoluteAtom<ELFT> > ())
+      ELFAbsoluteAtom<ELFT>(
         *this, symbolName, symbol, -1);
     _absoluteAtoms._atoms.push_back(newAtom);
   }
@@ -62,8 +60,8 @@ public:
     symbol->st_other = llvm::ELF::STV_DEFAULT;
     symbol->st_size = 0;
     auto *newAtom = new (_allocator.Allocate<
-      ELFUndefinedAtom<target_endianness, max_align, is64Bits> > ())
-      ELFUndefinedAtom<target_endianness, max_align, is64Bits>(
+      ELFUndefinedAtom<ELFT> > ())
+      ELFUndefinedAtom<ELFT>(
         *this, symbolName, symbol);
     _undefinedAtoms._atoms.push_back(newAtom);
   }

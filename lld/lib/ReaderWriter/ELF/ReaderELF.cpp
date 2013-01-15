@@ -47,12 +47,12 @@ using namespace llvm::object;
 namespace {
 // \brief Read a binary, find out based on the symbol table contents what kind
 // of symbol it is and create corresponding atoms for it
-template<endianness target_endianness, std::size_t max_align, bool is64Bits>
+template<class ELFT>
 class FileELF: public File {
-  typedef Elf_Sym_Impl<target_endianness, max_align, is64Bits> Elf_Sym;
-  typedef Elf_Shdr_Impl<target_endianness, max_align, is64Bits> Elf_Shdr;
-  typedef Elf_Rel_Impl<target_endianness, max_align, is64Bits, false> Elf_Rel;
-  typedef Elf_Rel_Impl<target_endianness, max_align, is64Bits, true> Elf_Rela;
+  typedef Elf_Sym_Impl<ELFT> Elf_Sym;
+  typedef Elf_Shdr_Impl<ELFT> Elf_Shdr;
+  typedef Elf_Rel_Impl<ELFT, false> Elf_Rel;
+  typedef Elf_Rel_Impl<ELFT, true> Elf_Rela;
 
 public:
   FileELF(std::unique_ptr<llvm::MemoryBuffer> MB, llvm::error_code &EC)
@@ -63,8 +63,7 @@ public:
       return;
 
     // Point Obj to correct class and bitwidth ELF object
-    _objFile.reset(llvm::dyn_cast<ELFObjectFile<target_endianness, max_align,
-        is64Bits> >(binaryFile.get()));
+    _objFile.reset(llvm::dyn_cast<ELFObjectFile<ELFT>>(binaryFile.get()));
 
     if (!_objFile) {
       EC = make_error_code(object_error::invalid_file_type);
@@ -143,8 +142,8 @@ public:
       if (symbol->st_shndx == llvm::ELF::SHN_ABS) {
         // Create an absolute atom.
         auto *newAtom = new (_readerStorage.Allocate<
-          ELFAbsoluteAtom<target_endianness, max_align, is64Bits> > ())
-          ELFAbsoluteAtom<target_endianness, max_align, is64Bits>(
+          ELFAbsoluteAtom<ELFT> > ())
+          ELFAbsoluteAtom<ELFT>(
             *this, symbolName, symbol, symbol->st_value);
 
         _absoluteAtoms._atoms.push_back(newAtom);
@@ -152,8 +151,8 @@ public:
       } else if (symbol->st_shndx == llvm::ELF::SHN_UNDEF) {
         // Create an undefined atom.
         auto *newAtom = new (_readerStorage.Allocate<
-          ELFUndefinedAtom<target_endianness, max_align, is64Bits> > ())
-          ELFUndefinedAtom<target_endianness, max_align, is64Bits>(
+          ELFUndefinedAtom<ELFT> > ())
+          ELFUndefinedAtom<ELFT>(
             *this, symbolName, symbol);
 
         _undefinedAtoms._atoms.push_back(newAtom);
@@ -234,8 +233,8 @@ public:
           if ((rai->r_offset >= (*si)->st_value) &&
               (rai->r_offset < (*si)->st_value+contentSize)) {
             auto *ERef = new (_readerStorage.Allocate<
-              ELFReference<target_endianness, max_align, is64Bits> > ())
-              ELFReference<target_endianness, max_align, is64Bits> (
+              ELFReference<ELFT> > ())
+              ELFReference<ELFT> (
                 rai, rai->r_offset-(*si)->st_value, nullptr);
 
             _references.push_back(ERef);
@@ -247,8 +246,8 @@ public:
           if (((ri)->r_offset >= (*si)->st_value) &&
               ((ri)->r_offset < (*si)->st_value+contentSize)) {
             auto *ERef = new (_readerStorage.Allocate<
-              ELFReference<target_endianness, max_align, is64Bits> > ())
-              ELFReference<target_endianness, max_align, is64Bits> (
+              ELFReference<ELFT> > ())
+              ELFReference<ELFT> (
                 (ri), (ri)->r_offset-(*si)->st_value, nullptr);
 
             _references.push_back(ERef);
@@ -257,8 +256,8 @@ public:
 
         // Create the DefinedAtom and add it to the list of DefinedAtoms.
         auto *newAtom = new (_readerStorage.Allocate<
-          ELFDefinedAtom<target_endianness, max_align, is64Bits> > ())
-          ELFDefinedAtom<target_endianness, max_align, is64Bits>(
+          ELFDefinedAtom<ELFT> > ())
+          ELFDefinedAtom<ELFT>(
             *this, symbolName, sectionName, *si, i.first, symbolData,
             referenceStart, _references.size(), _references);
 
@@ -296,7 +295,7 @@ public:
   }
 
 private:
-  std::unique_ptr<ELFObjectFile<target_endianness, max_align, is64Bits> >
+  std::unique_ptr<ELFObjectFile<ELFT> >
       _objFile;
   atom_collection_vector<DefinedAtom>       _definedAtoms;
   atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
@@ -313,7 +312,7 @@ private:
   std::map<llvm::StringRef, std::vector<const Elf_Rel *> >
            _relocationReferences;
 
-  std::vector<ELFReference<target_endianness, max_align, is64Bits> *>
+  std::vector<ELFReference<ELFT> *>
     _references;
   llvm::DenseMap<const Elf_Sym *, Atom *> _symbolToAtomMapping;
 
@@ -333,6 +332,7 @@ public:
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb, std::vector<
                        std::unique_ptr<File> > &result) {
+    using llvm::object::ELFType;
     llvm::error_code ec;
     std::unique_ptr<File> f;
     std::pair<unsigned char, unsigned char> Ident;
@@ -353,41 +353,41 @@ public:
       if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
           == llvm::ELF::ELFDATA2LSB) {
         if (MaxAlignment >= 4)
-          f.reset(
-            new FileELF<llvm::support::little, 4, false>(std::move(mb), ec));
+          f.reset(new FileELF<ELFType<llvm::support::little, 4, false>>(
+                    std::move(mb), ec));
         else if (MaxAlignment >= 2)
-          f.reset(
-            new FileELF<llvm::support::little, 2, false>(std::move(mb), ec));
+          f.reset(new FileELF<ELFType<llvm::support::little, 2, false>>(
+                    std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       } else if (Ident.first == llvm::ELF::ELFCLASS32 && Ident.second
           == llvm::ELF::ELFDATA2MSB) {
         if (MaxAlignment >= 4)
-          f.reset(
-            new FileELF<llvm::support::big, 4, false>(std::move(mb), ec));
+          f.reset(new FileELF<ELFType<llvm::support::big, 4, false>>(
+                    std::move(mb), ec));
         else if (MaxAlignment >= 2)
-          f.reset(
-            new FileELF<llvm::support::big, 2, false>(std::move(mb), ec));
+          f.reset(new FileELF<ELFType<llvm::support::big, 2, false>>(
+                    std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
           == llvm::ELF::ELFDATA2MSB) {
         if (MaxAlignment >= 8)
-          f.reset(
-            new FileELF<llvm::support::big, 8, true>(std::move(mb), ec));
+          f.reset(new FileELF<ELFType<llvm::support::big, 8, true>>(
+                    std::move(mb), ec));
         else if (MaxAlignment >= 2)
-          f.reset(
-            new FileELF<llvm::support::big, 2, true>(std::move(mb), ec));
+          f.reset(new FileELF<ELFType<llvm::support::big, 2, true>>(
+                    std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       } else if (Ident.first == llvm::ELF::ELFCLASS64 && Ident.second
           == llvm::ELF::ELFDATA2LSB) {
         if (MaxAlignment >= 8)
-          f.reset(
-            new FileELF<llvm::support::little, 8, true>(std::move(mb), ec));
+          f.reset(new FileELF<ELFType<llvm::support::little, 8, true>>(
+                    std::move(mb), ec));
         else if (MaxAlignment >= 2)
-          f.reset(
-            new FileELF<llvm::support::little, 2, true>(std::move(mb), ec));
+          f.reset(new FileELF<ELFType<llvm::support::little, 2, true>>(
+                    std::move(mb), ec));
         else
           llvm_unreachable("Invalid alignment for ELF file!");
       }
