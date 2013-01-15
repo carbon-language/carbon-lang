@@ -243,7 +243,8 @@ namespace {
     void visitNamedMDNode(NamedMDNode &NMD);
     void visitMDNode(MDNode &MD, Function *F);
     void visitModuleFlags(Module &M);
-    void visitModuleFlag(MDNode *Op, SmallSetVector<MDString*, 16> &SeenIDs);
+    void visitModuleFlag(MDNode *Op, DenseMap<MDString*, MDNode*> &SeenIDs,
+                         SmallVectorImpl<MDNode*> &Requirements);
     void visitFunction(Function &F);
     void visitBasicBlock(BasicBlock &BB);
     using InstVisitor<Verifier>::visit;
@@ -529,15 +530,37 @@ void Verifier::visitModuleFlags(Module &M) {
   const NamedMDNode *Flags = M.getModuleFlagsMetadata();
   if (!Flags) return;
 
-  // Scan each flag.
-  SmallSetVector<MDString*, 16> SeenIDs;
+  // Scan each flag, and track the flags and requirements.
+  DenseMap<MDString*, MDNode*> SeenIDs;
+  SmallVector<MDNode*, 16> Requirements;
   for (unsigned I = 0, E = Flags->getNumOperands(); I != E; ++I) {
-    visitModuleFlag(Flags->getOperand(I), SeenIDs);
+    visitModuleFlag(Flags->getOperand(I), SeenIDs, Requirements);
+  }
+
+  // Validate that the requirements in the module are valid.
+  for (unsigned I = 0, E = Requirements.size(); I != E; ++I) {
+    MDNode *Requirement = Requirements[I];
+    MDString *Flag = cast<MDString>(Requirement->getOperand(0));
+    Value *ReqValue = Requirement->getOperand(1);
+
+    MDNode *Op = SeenIDs.lookup(Flag);
+    if (!Op) {
+      CheckFailed("invalid requirement on flag, flag is not present in module",
+                  Flag);
+      continue;
+    }
+
+    if (Op->getOperand(2) != ReqValue) {
+      CheckFailed(("invalid requirement on flag, "
+                   "flag does not have the required value"),
+                  Flag);
+      continue;
+    }
   }
 }
 
-void Verifier::visitModuleFlag(MDNode *Op, 
-                               SmallSetVector<MDString*, 16> &SeenIDs) {
+void Verifier::visitModuleFlag(MDNode *Op, DenseMap<MDString*, MDNode*>&SeenIDs,
+                               SmallVectorImpl<MDNode*> &Requirements) {
   // Each module flag should have three arguments, the merge behavior (a
   // constant int), the flag ID (an MDString), and the value.
   Assert1(Op->getNumOperands() == 3,
@@ -558,7 +581,8 @@ void Verifier::visitModuleFlag(MDNode *Op,
 
   // Unless this is a "requires" flag, check the ID is unique.
   if (BehaviorValue != Module::Require) {
-    Assert1(SeenIDs.insert(ID),
+    bool Inserted = SeenIDs.insert(std::make_pair(ID, Op)).second;
+    Assert1(Inserted,
             "module flag identifiers must be unique (or of 'require' type)",
             ID);
   }
@@ -575,6 +599,10 @@ void Verifier::visitModuleFlag(MDNode *Op,
             ("invalid value for 'require' module flag "
              "(first value operand should be a string)"),
             Value->getOperand(0));
+
+    // Append it to the list of requirements, to check once all module flags are
+    // scanned.
+    Requirements.push_back(Value);
   }
 }
 
