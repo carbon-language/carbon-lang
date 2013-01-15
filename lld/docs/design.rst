@@ -468,17 +468,3 @@ scan all atoms looking for any Objective-C data structures.  This could be done
 if the lld::File object had an attribute that said if the file had any
 Objective-C data in it. The Resolving phase would then be required to "merge"
 that attribute as object files are added.
-
-
-Command Line Processing
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Eventually, we may want this linker to be able to be a drop in replacement
-linker for existing linker tools.  That means being able to handle command line
-arguments for different platforms (e.g. darwin or linux).  Currently, there is
-no command line processing code in lld. If clang winds up incorporating the lld
-libraries into the clang binary, lld may be able to punt this work because clang
-will be responsible for setting up the state for lld.
-
-
-

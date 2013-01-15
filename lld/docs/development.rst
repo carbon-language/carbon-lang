@@ -11,6 +11,12 @@ Creating a Reader
 See the :ref:`Creating a Reader <Readers>` guide.
 
 
+Modifying the Driver
+--------------------
+
+See :doc:`Driver`.
+
+
 
 Documentation
 -------------
@@ -24,3 +30,4 @@ information on writing documentation for the project, see the
    :hidden:
 
    Readers
+   Driver
