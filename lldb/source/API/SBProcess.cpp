@@ -596,6 +596,19 @@ SBProcess::GetProcessID ()
     return ret_val;
 }
 
+uint32_t
+SBProcess::GetUniqueID()
+{
+    uint32_t ret_val = 0;
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+        ret_val = process_sp->GetUniqueID();
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    if (log)
+        log->Printf ("SBProcess(%p)::GetUniqueID () => %" PRIu32, process_sp.get(), ret_val);
+    return ret_val;
+}
+
 ByteOrder
 SBProcess::GetByteOrder () const
 {

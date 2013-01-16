@@ -144,8 +144,38 @@ public:
     const char *
     GetExitDescription ();
 
+    //------------------------------------------------------------------
+    /// Gets the process ID
+    ///
+    /// Returns the process identifier for the process as it is known
+    /// on the system on which the process is running. For unix systems
+    /// this is typically the same as if you called "getpid()" in the
+    /// process.
+    ///
+    /// @return
+    ///     Returns LLDB_INVALID_PROCESS_ID if this object does not
+    ///     contain a valid process object, or if the process has not
+    ///     been launched. Returns a valid process ID if the process is
+    ///     valid.
+    //------------------------------------------------------------------
     lldb::pid_t
     GetProcessID ();
+
+    //------------------------------------------------------------------
+    /// Gets the unique ID associated with this process object
+    ///
+    /// Unique IDs start at 1 and increment up with each new process
+    /// instance. Since starting a process on a system might always
+    /// create a process with the same process ID, there needs to be a
+    /// way to tell two process instances apart.
+    ///
+    /// @return
+    ///     Returns a non-zero integer ID if this object contains a
+    ///     valid process object, zero if this object does not contain
+    ///     a valid process object.
+    //------------------------------------------------------------------
+    uint32_t
+    GetUniqueID();
 
     uint32_t
     GetAddressByteSize() const;

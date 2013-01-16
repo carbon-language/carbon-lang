@@ -1392,6 +1392,7 @@ public:
         return GetStaticBroadcasterClass();
     }
 
+    
     //------------------------------------------------------------------
     /// A notification structure that can be used by clients to listen
     /// for changes in a process's lifetime.
@@ -1580,6 +1581,11 @@ public:
     uint32_t
     GetAddressByteSize () const;
 
+    uint32_t
+    GetUniqueID() const
+    {
+        return m_process_unique_id;
+    }
     //------------------------------------------------------------------
     /// Check if a plug-in instance can debug the file in \a module.
     ///
@@ -3499,6 +3505,7 @@ protected:
     Predicate<bool>             m_private_state_control_wait; /// This Predicate is used to signal that a control operation is complete.
     lldb::thread_t              m_private_state_thread;  // Thread ID for the thread that watches interal state events
     ProcessModID                m_mod_id;               ///< Tracks the state of the process over stops and other alterations.
+    uint32_t                    m_process_unique_id;    ///< Each lldb_private::Process class that is created gets a unique integer ID that increments with each new instance
     uint32_t                    m_thread_index_id;      ///< Each thread is created with a 1 based index that won't get re-used.
     std::map<uint64_t, uint32_t> m_thread_id_to_index_id_map;
     int                         m_exit_status;          ///< The exit status of the process, or -1 if not set.

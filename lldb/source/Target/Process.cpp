@@ -914,6 +914,8 @@ ProcessInstanceInfoMatch::Clear()
 ProcessSP
 Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener, const FileSpec *crash_file_path)
 {
+    static uint32_t g_process_unique_id = 0;
+
     ProcessSP process_sp;
     ProcessCreateInstance create_callback = NULL;
     if (plugin_name)
@@ -924,7 +926,11 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
             process_sp = create_callback(target, listener, crash_file_path);
             if (process_sp)
             {
-                if (!process_sp->CanDebug(target, true))
+                if (process_sp->CanDebug(target, true))
+                {
+                    process_sp->m_process_unique_id = ++g_process_unique_id;
+                }
+                else
                     process_sp.reset();
             }
         }
@@ -936,10 +942,13 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
             process_sp = create_callback(target, listener, crash_file_path);
             if (process_sp)
             {
-                if (!process_sp->CanDebug(target, false))
-                    process_sp.reset();
-                else
+                if (process_sp->CanDebug(target, false))
+                {
+                    process_sp->m_process_unique_id = ++g_process_unique_id;
                     break;
+                }
+                else
+                    process_sp.reset();
             }
         }
     }
@@ -969,6 +978,7 @@ Process::Process(Target &target, Listener &listener) :
     m_private_state_control_wait(),
     m_private_state_thread (LLDB_INVALID_HOST_THREAD),
     m_mod_id (),
+    m_process_unique_id(0),
     m_thread_index_id (0),
     m_thread_id_to_index_id_map (),
     m_exit_status (-1),

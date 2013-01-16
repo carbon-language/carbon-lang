@@ -186,8 +186,17 @@ public:
     const char *
     GetExitDescription ();
 
+    %feature("autodoc", "
+    Returns the process ID of the process.
+    ") GetProcessID;
     lldb::pid_t
     GetProcessID ();
+    
+    %feature("autodoc", "
+    Returns an integer ID that is guaranteed to be unique across all process instances. This is not the process ID, just a unique integer for comparison and caching purposes.
+    ") GetUniqueID;
+    uint32_t
+    GetUniqueID();
 
     uint32_t
     GetAddressByteSize() const;
