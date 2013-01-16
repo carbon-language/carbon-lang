@@ -195,7 +195,7 @@ RNBRemote::CreatePacketTable  ()
     t.push_back (Packet (deallocate_memory,             &RNBRemote::HandlePacket_DeallocateMemory, NULL, "_m", "Deallocate memory in the inferior process."));
     t.push_back (Packet (memory_region_info,            &RNBRemote::HandlePacket_MemoryRegionInfo, NULL, "qMemoryRegionInfo", "Return size and attributes of a memory region that contains the given address"));
     t.push_back (Packet (get_profile_data,              &RNBRemote::HandlePacket_GetProfileData, NULL, "qGetProfileData", "Return profiling data of the current target."));
-    t.push_back (Packet (set_enable_profiling,          &RNBRemote::HandlePacket_SetAsyncEnableProfiling, NULL, "QSetAsyncEnableProfiling", "Enable or disable the profiling of current target."));
+    t.push_back (Packet (set_enable_profiling,          &RNBRemote::HandlePacket_SetEnableAsyncProfiling, NULL, "QSetEnableAsyncProfiling", "Enable or disable the profiling of current target."));
     t.push_back (Packet (watchpoint_support_info,       &RNBRemote::HandlePacket_WatchpointSupportInfo, NULL, "qWatchpointSupportInfo", "Return the number of supported hardware watchpoints"));
 
 }
@@ -3512,15 +3512,15 @@ RNBRemote::HandlePacket_GetProfileData (const char *p)
 }
 
 
-// QSetAsyncEnableProfiling;enable:[0|1]:interval_usec:XXXXXX;
+// QSetEnableAsyncProfiling;enable:[0|1]:interval_usec:XXXXXX;
 rnb_err_t
-RNBRemote::HandlePacket_SetAsyncEnableProfiling (const char *p)
+RNBRemote::HandlePacket_SetEnableAsyncProfiling (const char *p)
 {
     nub_process_t pid = m_ctx.ProcessID();
     if (pid == INVALID_NUB_PROCESS)
         return SendPacket ("");
 
-    StringExtractor packet(p += sizeof ("QSetAsyncEnableProfiling:") - 1);
+    StringExtractor packet(p += sizeof ("QSetEnableAsyncProfiling:") - 1);
     bool enable = false;
     uint64_t interval_usec = 0;
     std::string name;
@@ -3541,7 +3541,7 @@ RNBRemote::HandlePacket_SetAsyncEnableProfiling (const char *p)
     {
         enable = 0;
     }
-    DNBProcessSetAsyncEnableProfiling(pid, enable, interval_usec);
+    DNBProcessSetEnableAsyncProfiling(pid, enable, interval_usec);
     return SendPacket ("OK");
 }
 

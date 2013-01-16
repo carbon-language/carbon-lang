@@ -114,7 +114,7 @@ public:
         sync_thread_state,              // 'QSyncThreadState:'
         memory_region_info,             // 'qMemoryRegionInfo:'
         get_profile_data,               // 'qGetProfileData'
-        set_enable_profiling,           // 'QSetAsyncEnableProfiling'
+        set_enable_profiling,           // 'QSetEnableAsyncProfiling'
         watchpoint_support_info,        // 'qWatchpointSupportInfo:'
         allocate_memory,                // '_M'
         deallocate_memory,              // '_m'
@@ -215,7 +215,7 @@ public:
     rnb_err_t HandlePacket_DeallocateMemory (const char *p);
     rnb_err_t HandlePacket_MemoryRegionInfo (const char *p);
     rnb_err_t HandlePacket_GetProfileData(const char *p);
-    rnb_err_t HandlePacket_SetAsyncEnableProfiling(const char *p);
+    rnb_err_t HandlePacket_SetEnableAsyncProfiling(const char *p);
     rnb_err_t HandlePacket_WatchpointSupportInfo (const char *p);
 
     rnb_err_t HandlePacket_stop_process (const char *p);

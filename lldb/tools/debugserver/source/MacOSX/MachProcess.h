@@ -148,7 +148,7 @@ public:
     //----------------------------------------------------------------------
     // Profile functions
     //----------------------------------------------------------------------
-    void                    SetAsyncEnableProfiling (bool enable, uint64_t internal_usec);
+    void                    SetEnableAsyncProfiling (bool enable, uint64_t internal_usec);
     bool                    IsProfilingEnabled () { return m_profile_enabled; }
     uint64_t                ProfileInterval () { return m_profile_interval_usec; }
     bool                    StartProfileThread ();

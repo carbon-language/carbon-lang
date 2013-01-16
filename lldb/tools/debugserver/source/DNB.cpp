@@ -1229,12 +1229,12 @@ DNBProcessGetProfileData (nub_process_t pid)
 }
 
 nub_bool_t
-DNBProcessSetAsyncEnableProfiling (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec)
+DNBProcessSetEnableAsyncProfiling (nub_process_t pid, nub_bool_t enable, uint64_t interval_usec)
 {
     MachProcessSP procSP;
     if (GetProcessSP (pid, procSP))
     {
-        procSP->SetAsyncEnableProfiling(enable, interval_usec);
+        procSP->SetEnableAsyncProfiling(enable, interval_usec);
         return true;
     }
     

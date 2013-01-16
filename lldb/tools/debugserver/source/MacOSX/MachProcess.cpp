@@ -308,7 +308,7 @@ MachProcess::StartSTDIOThread()
 }
 
 void
-MachProcess::SetAsyncEnableProfiling(bool enable, uint64_t interval_usec)
+MachProcess::SetEnableAsyncProfiling(bool enable, uint64_t interval_usec)
 {
     m_profile_enabled = enable;
     m_profile_interval_usec = interval_usec;
