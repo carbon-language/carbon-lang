@@ -2167,61 +2167,79 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
   if (Pos == MethodPool.end())
     return 0;
 
+  // Gather the non-hidden methods.
   ObjCMethodList &MethList = instance ? Pos->second.first : Pos->second.second;
+  llvm::SmallVector<ObjCMethodDecl *, 4> Methods;
+  for (ObjCMethodList *M = &MethList; M; M = M->Next) {
+    if (M->Method && !M->Method->isHidden()) {
+      // If we're not supposed to warn about mismatches, we're done.
+      if (!warn)
+        return M->Method;
 
-  if (warn && MethList.Method && MethList.Next) {
-    bool issueDiagnostic = false, issueError = false;
-
-    // We support a warning which complains about *any* difference in
-    // method signature.
-    bool strictSelectorMatch =
-      (receiverIdOrClass && warn &&
-       (Diags.getDiagnosticLevel(diag::warn_strict_multiple_method_decl,
-                                 R.getBegin()) != 
-      DiagnosticsEngine::Ignored));
-    if (strictSelectorMatch)
-      for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next) {
-        if (!MatchTwoMethodDeclarations(MethList.Method, Next->Method,
-                                        MMS_strict)) {
-          issueDiagnostic = true;
-          break;
-        }
-      }
-
-    // If we didn't see any strict differences, we won't see any loose
-    // differences.  In ARC, however, we also need to check for loose
-    // mismatches, because most of them are errors.
-    if (!strictSelectorMatch ||
-        (issueDiagnostic && getLangOpts().ObjCAutoRefCount))
-      for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next) {
-        // This checks if the methods differ in type mismatch.
-        if (!MatchTwoMethodDeclarations(MethList.Method, Next->Method,
-                                        MMS_loose) &&
-            !isAcceptableMethodMismatch(MethList.Method, Next->Method)) {
-          issueDiagnostic = true;
-          if (getLangOpts().ObjCAutoRefCount)
-            issueError = true;
-          break;
-        }
-      }
-
-    if (issueDiagnostic) {
-      if (issueError)
-        Diag(R.getBegin(), diag::err_arc_multiple_method_decl) << Sel << R;
-      else if (strictSelectorMatch)
-        Diag(R.getBegin(), diag::warn_strict_multiple_method_decl) << Sel << R;
-      else
-        Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel << R;
-
-      Diag(MethList.Method->getLocStart(), 
-           issueError ? diag::note_possibility : diag::note_using)
-        << MethList.Method->getSourceRange();
-      for (ObjCMethodList *Next = MethList.Next; Next; Next = Next->Next)
-        Diag(Next->Method->getLocStart(), diag::note_also_found)
-          << Next->Method->getSourceRange();
+      Methods.push_back(M->Method);
     }
   }
-  return MethList.Method;
+
+  // If there aren't any visible methods, we're done.
+  // FIXME: Recover if there are any known-but-hidden methods?
+  if (Methods.empty())
+    return 0;
+
+  if (Methods.size() == 1)
+    return Methods[0];
+
+  // We found multiple methods, so we may have to complain.
+  bool issueDiagnostic = false, issueError = false;
+
+  // We support a warning which complains about *any* difference in
+  // method signature.
+  bool strictSelectorMatch =
+    (receiverIdOrClass && warn &&
+     (Diags.getDiagnosticLevel(diag::warn_strict_multiple_method_decl,
+                               R.getBegin())
+        != DiagnosticsEngine::Ignored));
+  if (strictSelectorMatch) {
+    for (unsigned I = 1, N = Methods.size(); I != N; ++I) {
+      if (!MatchTwoMethodDeclarations(Methods[0], Methods[I], MMS_strict)) {
+        issueDiagnostic = true;
+        break;
+      }
+    }
+  }
+
+  // If we didn't see any strict differences, we won't see any loose
+  // differences.  In ARC, however, we also need to check for loose
+  // mismatches, because most of them are errors.
+  if (!strictSelectorMatch ||
+      (issueDiagnostic && getLangOpts().ObjCAutoRefCount))
+    for (unsigned I = 1, N = Methods.size(); I != N; ++I) {
+      // This checks if the methods differ in type mismatch.
+      if (!MatchTwoMethodDeclarations(Methods[0], Methods[I], MMS_loose) &&
+          !isAcceptableMethodMismatch(Methods[0], Methods[I])) {
+        issueDiagnostic = true;
+        if (getLangOpts().ObjCAutoRefCount)
+          issueError = true;
+        break;
+      }
+    }
+
+  if (issueDiagnostic) {
+    if (issueError)
+      Diag(R.getBegin(), diag::err_arc_multiple_method_decl) << Sel << R;
+    else if (strictSelectorMatch)
+      Diag(R.getBegin(), diag::warn_strict_multiple_method_decl) << Sel << R;
+    else
+      Diag(R.getBegin(), diag::warn_multiple_method_decl) << Sel << R;
+
+    Diag(Methods[0]->getLocStart(),
+         issueError ? diag::note_possibility : diag::note_using)
+      << Methods[0]->getSourceRange();
+    for (unsigned I = 1, N = Methods.size(); I != N; ++I) {
+      Diag(Methods[I]->getLocStart(), diag::note_also_found)
+        << Methods[I]->getSourceRange();
+  }
+  }
+  return Methods[0];
 }
 
 ObjCMethodDecl *Sema::LookupImplementedMethodInGlobalPool(Selector Sel) {

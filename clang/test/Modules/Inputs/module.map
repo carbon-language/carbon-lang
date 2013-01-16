@@ -107,9 +107,17 @@ module templates_right {
 }
 module MethodPoolA {
   header "MethodPoolA.h"
+
+  explicit module Sub {
+    header "MethodPoolASub.h"
+  }
 }
 module MethodPoolB {
   header "MethodPoolB.h"
+
+  explicit module Sub {
+    header "MethodPoolBSub.h"
+  }
 }
 module import_decl {
   header "import-decl.h"
