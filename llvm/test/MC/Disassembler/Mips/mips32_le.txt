@@ -404,3 +404,9 @@
 
 # CHECK: xori  $9,  $6, 17767
 0x67 0x45 0xc9 0x38
+
+# CHECK: .set    push
+# CHECK: .set    mips32r2
+# CHECK: rdhwr   $5, $29
+# CHECK: .set    pop
+0x3b 0xe8 0x05 0x7c

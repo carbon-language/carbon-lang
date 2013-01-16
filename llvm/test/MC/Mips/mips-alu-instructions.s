@@ -81,6 +81,10 @@
 # CHECK:  sub     $6, $zero, $7  # encoding: [0x22,0x30,0x07,0x00]
 # CHECK:  subu    $6, $zero, $7  # encoding: [0x23,0x30,0x07,0x00]
 # CHECK:  addu    $7, $8, $zero  # encoding: [0x21,0x38,0x00,0x01]
+# CHECK:  .set    push
+# CHECK:  .set    mips32r2
+# CHECK:  rdhwr   $5, $29
+# CHECK:  .set    pop            # encoding: [0x3b,0xe8,0x05,0x7c]
     add    $9,$6,$7
     add    $9,$6,17767
     addu   $9,$6,-15001
@@ -98,3 +102,4 @@
     neg    $6,$7
     negu   $6,$7
     move   $7,$8
+    rdhwr   $5, $29
