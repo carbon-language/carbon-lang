@@ -1465,10 +1465,11 @@ Constant *ConstantExpr::getTruncOrBitCast(Constant *C, Type *Ty) {
 }
 
 Constant *ConstantExpr::getPointerCast(Constant *S, Type *Ty) {
-  assert(S->getType()->isPointerTy() && "Invalid cast");
-  assert((Ty->isIntegerTy() || Ty->isPointerTy()) && "Invalid cast");
+  assert(S->getType()->isPtrOrPtrVectorTy() && "Invalid cast");
+  assert((Ty->isIntOrIntVectorTy() || Ty->isPtrOrPtrVectorTy()) &&
+          "Invalid cast");
 
-  if (Ty->isIntegerTy())
+  if (Ty->isIntOrIntVectorTy())
     return getPtrToInt(S, Ty);
   return getBitCast(S, Ty);
 }

@@ -121,6 +121,36 @@ TEST(ConstantsTest, FP128Test) {
   EXPECT_TRUE(isa<ConstantFP>(X));
 }
 
+TEST(ConstantsTest, PointerCast) {
+  LLVMContext &C(getGlobalContext());
+  Type *Int8PtrTy = Type::getInt8PtrTy(C);
+  Type *Int32PtrTy = Type::getInt32PtrTy(C);
+  Type *Int64Ty = Type::getInt64Ty(C);
+  VectorType *Int8PtrVecTy = VectorType::get(Int8PtrTy, 4);
+  VectorType *Int32PtrVecTy = VectorType::get(Int32PtrTy, 4);
+  VectorType *Int64VecTy = VectorType::get(Int64Ty, 4);
+
+  // ptrtoint i8* to i64
+  EXPECT_EQ(Constant::getNullValue(Int64Ty),
+            ConstantExpr::getPointerCast(
+              Constant::getNullValue(Int8PtrTy), Int64Ty));
+
+  // bitcast i8* to i32*
+  EXPECT_EQ(Constant::getNullValue(Int32PtrTy),
+            ConstantExpr::getPointerCast(
+              Constant::getNullValue(Int8PtrTy), Int32PtrTy));
+
+  // ptrtoint <4 x i8*> to <4 x i64>
+  EXPECT_EQ(Constant::getNullValue(Int64VecTy),
+            ConstantExpr::getPointerCast(
+              Constant::getNullValue(Int8PtrVecTy), Int64VecTy));
+
+  // bitcast <4 x i8*> to <4 x i32*>
+  EXPECT_EQ(Constant::getNullValue(Int32PtrVecTy),
+            ConstantExpr::getPointerCast(
+              Constant::getNullValue(Int8PtrVecTy), Int32PtrVecTy));
+}
+
 #define CHECK(x, y) {                                           \
     std::string __s;                                            \
     raw_string_ostream __o(__s);                                \
