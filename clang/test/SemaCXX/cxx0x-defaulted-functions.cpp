@@ -149,3 +149,24 @@ namespace PR13527 {
   Y &Y::operator=(Y&&) = default; // expected-error {{definition of explicitly defaulted}}
   Y::~Y() = default; // expected-error {{definition of explicitly defaulted}}
 }
+
+namespace PR14577 {
+  template<typename T>
+  struct Outer {
+    template<typename U>
+    struct Inner1 {
+      ~Inner1();
+    };
+
+    template<typename U>
+    struct Inner2 {
+      ~Inner2();
+    };
+  };
+
+  template<typename T>
+  Outer<T>::Inner1<T>::~Inner1() = delete; // expected-error {{nested name specifier 'Outer<T>::Inner1<T>::' for declaration does not refer into a class, class template or class template partial specialization}}  expected-error {{only functions can have deleted definitions}}
+
+  template<typename T>
+  Outer<T>::Inner2<T>::~Inner2() = default; // expected-error {{nested name specifier 'Outer<T>::Inner2<T>::' for declaration does not refer into a class, class template or class template partial specialization}}  expected-error {{only special member functions may be defaulted}}
+}

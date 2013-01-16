@@ -10815,7 +10815,7 @@ NamedDecl *Sema::ActOnFriendFunctionDecl(Scope *S, Declarator &D,
 void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
   AdjustDeclIfTemplate(Dcl);
 
-  FunctionDecl *Fn = dyn_cast<FunctionDecl>(Dcl);
+  FunctionDecl *Fn = dyn_cast_or_null<FunctionDecl>(Dcl);
   if (!Fn) {
     Diag(DelLoc, diag::err_deleted_non_function);
     return;
@@ -10835,7 +10835,7 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
 }
 
 void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {
-  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Dcl);
+  CXXMethodDecl *MD = dyn_cast_or_null<CXXMethodDecl>(Dcl);
 
   if (MD) {
     if (MD->getParent()->isDependentType()) {
