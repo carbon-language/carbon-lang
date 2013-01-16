@@ -162,6 +162,11 @@ TEST(InstructionsTest, VectorGep) {
   ICmpInst *ICmp1 = new ICmpInst(ICmpInst::ICMP_ULT, PtrVecA, PtrVecB);
   EXPECT_NE(ICmp0, ICmp1); // suppress warning.
 
+  BasicBlock* BB0 = BasicBlock::Create(C);
+  // Test InsertAtEnd ICmpInst constructor.
+  ICmpInst *ICmp2 = new ICmpInst(*BB0, ICmpInst::ICMP_SGE, PtrVecA, PtrVecB);
+  EXPECT_NE(ICmp0, ICmp2); // suppress warning.
+
   GetElementPtrInst *Gep0 = GetElementPtrInst::Create(PtrVecA, C2xi32a);
   GetElementPtrInst *Gep1 = GetElementPtrInst::Create(PtrVecA, C2xi32b);
   GetElementPtrInst *Gep2 = GetElementPtrInst::Create(PtrVecB, C2xi32a);
@@ -222,6 +227,9 @@ TEST(InstructionsTest, VectorGep) {
   delete Gep1;
   delete Gep2;
   delete Gep3;
+
+  ICmp2->eraseFromParent();
+  delete BB0;
 
   delete ICmp0;
   delete ICmp1;
