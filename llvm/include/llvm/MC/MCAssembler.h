@@ -122,10 +122,6 @@ public:
   virtual void setBundlePadding(uint8_t N) {
   }
 
-  virtual bool hasFixups() const {
-    return false;
-  }
-
   void dump();
 };
 
@@ -182,10 +178,6 @@ public:
 
   virtual ~MCEncodedFragmentWithFixups();
 
-  virtual bool hasFixups() const {
-    return true;
-  }
-
   typedef SmallVectorImpl<MCFixup>::const_iterator const_fixup_iterator;
   typedef SmallVectorImpl<MCFixup>::iterator fixup_iterator;
 
@@ -198,7 +190,8 @@ public:
   virtual const_fixup_iterator fixup_end() const = 0;
 
   static bool classof(const MCFragment *F) {
-    return isa<MCEncodedFragment>(F) && F->hasFixups();
+    MCFragment::FragmentType Kind = F->getKind();
+    return Kind == MCFragment::FT_Relaxable || Kind == MCFragment::FT_Data;
   }
 };
 
