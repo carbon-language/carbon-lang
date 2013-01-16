@@ -3,10 +3,10 @@
 ; Test 'require' behavior.
 
 ; CHECK: !0 = metadata !{i32 1, metadata !"foo", i32 37}
-; CHECK: !1 = metadata !{i32 3, metadata !"foo", metadata !2}
-; CHECK: !2 = metadata !{metadata !"bar", i32 42}
-; CHECK: !3 = metadata !{i32 1, metadata !"bar", i32 42}
-; CHECK: !llvm.module.flags = !{!0, !1, !3}
+; CHECK: !1 = metadata !{i32 1, metadata !"bar", i32 42}
+; CHECK: !2 = metadata !{i32 3, metadata !"foo", metadata !3}
+; CHECK: !3 = metadata !{metadata !"bar", i32 42}
+; CHECK: !llvm.module.flags = !{!0, !1, !2}
 
 !0 = metadata !{ i32 1, metadata !"foo", i32 37 }
 !1 = metadata !{ i32 1, metadata !"bar", i32 42 }

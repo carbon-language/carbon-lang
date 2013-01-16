@@ -421,13 +421,6 @@ namespace {
     }
     
     void computeTypeMapping();
-    bool categorizeModuleFlagNodes(const NamedMDNode *ModFlags,
-                                   DenseMap<MDString*, MDNode*> &ErrorNode,
-                                   DenseMap<MDString*, MDNode*> &WarningNode,
-                                   DenseMap<MDString*, MDNode*> &OverrideNode,
-                                   DenseMap<MDString*,
-                                   SmallSetVector<MDNode*, 8> > &RequireNodes,
-                                   SmallSetVector<MDString*, 16> &SeenIDs);
     
     bool linkAppendingVarProto(GlobalVariable *DstGV, GlobalVariable *SrcGV);
     bool linkGlobalProto(GlobalVariable *SrcGV);
@@ -987,67 +980,16 @@ void ModuleLinker::linkNamedMDNodes() {
   }
 }
 
-/// categorizeModuleFlagNodes - Categorize the module flags according to their
-/// type: Error, Warning, Override, and Require.
-bool ModuleLinker::
-categorizeModuleFlagNodes(const NamedMDNode *ModFlags,
-                          DenseMap<MDString*, MDNode*> &ErrorNode,
-                          DenseMap<MDString*, MDNode*> &WarningNode,
-                          DenseMap<MDString*, MDNode*> &OverrideNode,
-                          DenseMap<MDString*,
-                            SmallSetVector<MDNode*, 8> > &RequireNodes,
-                          SmallSetVector<MDString*, 16> &SeenIDs) {
-  bool HasErr = false;
-
-  for (unsigned I = 0, E = ModFlags->getNumOperands(); I != E; ++I) {
-    MDNode *Op = ModFlags->getOperand(I);
-    ConstantInt *Behavior = cast<ConstantInt>(Op->getOperand(0));
-    MDString *ID = cast<MDString>(Op->getOperand(1));
-    Value *Val = Op->getOperand(2);
-    switch (Behavior->getZExtValue()) {
-    case Module::Error: {
-      MDNode *&ErrNode = ErrorNode[ID];
-      if (!ErrNode) ErrNode = Op;
-      if (ErrNode->getOperand(2) != Val)
-        HasErr = emitError("linking module flags '" + ID->getString() +
-                           "': IDs have conflicting values");
-      break;
-    }
-    case Module::Warning: {
-      MDNode *&WarnNode = WarningNode[ID];
-      if (!WarnNode) WarnNode = Op;
-      if (WarnNode->getOperand(2) != Val)
-        errs() << "WARNING: linking module flags '" << ID->getString()
-               << "': IDs have conflicting values";
-      break;
-    }
-    case Module::Require:  RequireNodes[ID].insert(Op);     break;
-    case Module::Override: {
-      MDNode *&OvrNode = OverrideNode[ID];
-      if (!OvrNode) OvrNode = Op;
-      if (OvrNode->getOperand(2) != Val)
-        HasErr = emitError("linking module flags '" + ID->getString() +
-                           "': IDs have conflicting override values");
-      break;
-    }
-    }
-
-    SeenIDs.insert(ID);
-  }
-
-  return HasErr;
-}
-
 /// linkModuleFlagsMetadata - Merge the linker flags in Src into the Dest
 /// module.
 bool ModuleLinker::linkModuleFlagsMetadata() {
+  // If the source module has no module flags, we are done.
   const NamedMDNode *SrcModFlags = SrcM->getModuleFlagsMetadata();
   if (!SrcModFlags) return false;
 
-  NamedMDNode *DstModFlags = DstM->getOrInsertModuleFlagsMetadata();
-
   // If the destination module doesn't have module flags yet, then just copy
   // over the source module's flags.
+  NamedMDNode *DstModFlags = DstM->getOrInsertModuleFlagsMetadata();
   if (DstModFlags->getNumOperands() == 0) {
     for (unsigned I = 0, E = SrcModFlags->getNumOperands(); I != E; ++I)
       DstModFlags->addOperand(SrcModFlags->getOperand(I));
@@ -1055,87 +997,109 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
     return false;
   }
 
-  bool HasErr = false;
+  // First build a map of the existing module flags and requirements.
+  DenseMap<MDString*, MDNode*> Flags;
+  SmallSetVector<MDNode*, 16> Requirements;
+  for (unsigned I = 0, E = DstModFlags->getNumOperands(); I != E; ++I) {
+    MDNode *Op = DstModFlags->getOperand(I);
+    ConstantInt *Behavior = cast<ConstantInt>(Op->getOperand(0));
+    MDString *ID = cast<MDString>(Op->getOperand(1));
 
-  // Otherwise, we have to merge them based on their behaviors. First,
-  // categorize all of the nodes in the modules' module flags. If an error or
-  // warning occurs, then emit the appropriate message(s).
-  DenseMap<MDString*, MDNode*> ErrorNode;
-  DenseMap<MDString*, MDNode*> WarningNode;
-  DenseMap<MDString*, MDNode*> OverrideNode;
-  DenseMap<MDString*, SmallSetVector<MDNode*, 8> > RequireNodes;
-  SmallSetVector<MDString*, 16> SeenIDs;
-
-  HasErr |= categorizeModuleFlagNodes(SrcModFlags, ErrorNode, WarningNode,
-                                      OverrideNode, RequireNodes, SeenIDs);
-  HasErr |= categorizeModuleFlagNodes(DstModFlags, ErrorNode, WarningNode,
-                                      OverrideNode, RequireNodes, SeenIDs);
-
-  // Check that there isn't both an error and warning node for a flag.
-  for (SmallSetVector<MDString*, 16>::iterator
-         I = SeenIDs.begin(), E = SeenIDs.end(); I != E; ++I) {
-    MDString *ID = *I;
-    if (ErrorNode[ID] && WarningNode[ID])
-      HasErr = emitError("linking module flags '" + ID->getString() +
-                         "': IDs have conflicting behaviors");
+    if (Behavior->getZExtValue() == Module::Require) {
+      Requirements.insert(cast<MDNode>(Op->getOperand(2)));
+    } else {
+      Flags[ID] = Op;
+    }
   }
 
-  // Early exit if we had an error.
-  if (HasErr) return true;
+  // Merge in the flags from the source module, and also collect its set of
+  // requirements.
+  bool HasErr = false;
+  for (unsigned I = 0, E = SrcModFlags->getNumOperands(); I != E; ++I) {
+    MDNode *SrcOp = SrcModFlags->getOperand(I);
+    ConstantInt *SrcBehavior = cast<ConstantInt>(SrcOp->getOperand(0));
+    MDString *ID = cast<MDString>(SrcOp->getOperand(1));
+    MDNode *DstOp = Flags.lookup(ID);
+    unsigned SrcBehaviorValue = SrcBehavior->getZExtValue();
 
-  // Get the destination's module flags ready for new operands.
-  DstModFlags->dropAllReferences();
-
-  // Add all of the module flags to the destination module.
-  DenseMap<MDString*, SmallVector<MDNode*, 4> > AddedNodes;
-  for (SmallSetVector<MDString*, 16>::iterator
-         I = SeenIDs.begin(), E = SeenIDs.end(); I != E; ++I) {
-    MDString *ID = *I;
-    if (OverrideNode[ID]) {
-      DstModFlags->addOperand(OverrideNode[ID]);
-      AddedNodes[ID].push_back(OverrideNode[ID]);
-    } else if (ErrorNode[ID]) {
-      DstModFlags->addOperand(ErrorNode[ID]);
-      AddedNodes[ID].push_back(ErrorNode[ID]);
-    } else if (WarningNode[ID]) {
-      DstModFlags->addOperand(WarningNode[ID]);
-      AddedNodes[ID].push_back(WarningNode[ID]);
+    // If this is a requirement, add it and continue.
+    if (SrcBehaviorValue == Module::Require) {
+      // If the destination module does not already have this requirement, add
+      // it.
+      if (Requirements.insert(cast<MDNode>(SrcOp->getOperand(2)))) {
+        DstModFlags->addOperand(SrcOp);
+      }
+      continue;
     }
 
-    for (SmallSetVector<MDNode*, 8>::iterator
-           II = RequireNodes[ID].begin(), IE = RequireNodes[ID].end();
-         II != IE; ++II)
-      DstModFlags->addOperand(*II);
+    // If there is no existing flag with this ID, just add it.
+    if (!DstOp) {
+      Flags[ID] = SrcOp;
+      DstModFlags->addOperand(SrcOp);
+      continue;
+    }
+
+    // Otherwise, perform a merge.
+    ConstantInt *DstBehavior = cast<ConstantInt>(DstOp->getOperand(0));
+    unsigned DstBehaviorValue = DstBehavior->getZExtValue();
+
+    // If either flag has override behavior, handle it first.
+    if (DstBehaviorValue == Module::Override) {
+      // Diagnose inconsistent flags which both have override behavior.
+      if (SrcBehaviorValue == Module::Override &&
+          SrcOp->getOperand(2) != DstOp->getOperand(2)) {
+        HasErr |= emitError("linking module flags '" + ID->getString() +
+                            "': IDs have conflicting override values");
+      }
+      continue;
+    } else if (SrcBehaviorValue == Module::Override) {
+      // Update the destination flag to that of the source.
+      DstOp->replaceOperandWith(0, SrcBehavior);
+      DstOp->replaceOperandWith(2, SrcOp->getOperand(2));
+      continue;
+    }
+
+    // Diagnose inconsistent merge behavior types.
+    if (SrcBehaviorValue != DstBehaviorValue) {
+      HasErr |= emitError("linking module flags '" + ID->getString() +
+                          "': IDs have conflicting behaviors");
+      continue;
+    }
+
+    // Perform the merge for standard behavior types.
+    switch (SrcBehaviorValue) {
+    case Module::Require:
+    case Module::Override: assert(0 && "not possible"); break;
+    case Module::Error: {
+      // Emit an error if the values differ.
+      if (SrcOp->getOperand(2) != DstOp->getOperand(2)) {
+        HasErr |= emitError("linking module flags '" + ID->getString() +
+                            "': IDs have conflicting values");
+      }
+      continue;
+    }
+    case Module::Warning: {
+      // Emit a warning if the values differ.
+      if (SrcOp->getOperand(2) != DstOp->getOperand(2)) {
+        errs() << "WARNING: linking module flags '" << ID->getString()
+               << "': IDs have conflicting values";
+      }
+      continue;
+    }
+    }
   }
 
-  // Now check that all of the requirements have been satisfied.
-  for (SmallSetVector<MDString*, 16>::iterator
-         I = SeenIDs.begin(), E = SeenIDs.end(); I != E; ++I) {
-    MDString *ID = *I;
-    SmallSetVector<MDNode*, 8> &Set = RequireNodes[ID];
+  // Check all of the requirements.
+  for (unsigned I = 0, E = Requirements.size(); I != E; ++I) {
+    MDNode *Requirement = Requirements[I];
+    MDString *Flag = cast<MDString>(Requirement->getOperand(0));
+    Value *ReqValue = Requirement->getOperand(1);
 
-    for (SmallSetVector<MDNode*, 8>::iterator
-           II = Set.begin(), IE = Set.end(); II != IE; ++II) {
-      MDNode *Node = *II;
-      MDNode *Val = cast<MDNode>(Node->getOperand(2));
-
-      MDString *ReqID = cast<MDString>(Val->getOperand(0));
-      Value *ReqVal = Val->getOperand(1);
-
-      bool HasValue = false;
-      for (SmallVectorImpl<MDNode*>::iterator
-             RI = AddedNodes[ReqID].begin(), RE = AddedNodes[ReqID].end();
-           RI != RE; ++RI) {
-        MDNode *ReqNode = *RI;
-        if (ReqNode->getOperand(2) == ReqVal) {
-          HasValue = true;
-          break;
-        }
-      }
-
-      if (!HasValue)
-        HasErr = emitError("linking module flags '" + ReqID->getString() +
-                           "': does not have the required value");
+    MDNode *Op = Flags[Flag];
+    if (!Op || Op->getOperand(2) != ReqValue) {
+      HasErr |= emitError("linking module flags '" + Flag->getString() +
+                          "': does not have the required value");
+      continue;
     }
   }
 
