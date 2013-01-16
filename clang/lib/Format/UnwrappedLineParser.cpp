@@ -306,8 +306,8 @@ void UnwrappedLineParser::parseStructuralElement() {
     case tok::kw_enum:
       parseEnum();
       return;
-    case tok::kw_struct: // fallthrough
-    case tok::kw_union:  // fallthrough
+    case tok::kw_struct:
+    case tok::kw_union:
     case tok::kw_class:
       parseRecord();
       // A record declaration or definition is always the start of a structural
@@ -315,6 +315,9 @@ void UnwrappedLineParser::parseStructuralElement() {
       break;
     case tok::semi:
       nextToken();
+      addUnwrappedLine();
+      return;
+    case tok::r_brace:
       addUnwrappedLine();
       return;
     case tok::l_paren:

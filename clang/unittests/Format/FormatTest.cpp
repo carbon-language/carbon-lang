@@ -1213,7 +1213,25 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
 //===----------------------------------------------------------------------===//
 
 TEST_F(FormatTest, IncorrectCodeTrailingStuff) {
-  verifyFormat("void f() {  return } 42");
+  verifyFormat("void f() { return }\n42");
+  verifyFormat("void f() {\n"
+               "  if (0)\n"
+               "    return\n"
+               "}\n"
+               "42");
+}
+
+TEST_F(FormatTest, IncorrectCodeMissingSemicolon) {
+  EXPECT_EQ("void f() { return }", format("void  f ( )  {  return  }"));
+  EXPECT_EQ("void f() {\n"
+            "  if (a)\n"
+            "    return\n"
+            "}", format("void  f  (  )  {  if  ( a )  return  }"));
+  EXPECT_EQ("namespace N { void f() }", format("namespace  N  {  void f()  }"));
+  EXPECT_EQ("namespace N {\n"
+            "void f() {}\n"
+            "void g()\n"
+            "}", format("namespace N  { void f( ) { } void g( ) }"));
 }
 
 TEST_F(FormatTest, IndentationWithinColumnLimitNotPossible) {
