@@ -416,7 +416,9 @@ void PreprocessingRecord::MacroDefined(const Token &Id,
 
 void PreprocessingRecord::MacroUndefined(const Token &Id,
                                          const MacroInfo *MI) {
-  MacroDefinitions.erase(MI);
+  // Note: MI may be null (when #undef'ining an undefined macro).
+  if (MI)
+    MacroDefinitions.erase(MI);
 }
 
 void PreprocessingRecord::InclusionDirective(
