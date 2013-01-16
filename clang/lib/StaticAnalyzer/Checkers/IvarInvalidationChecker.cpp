@@ -411,7 +411,7 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCImplementationDecl *ImplD,
     assert(FirstIvarDecl);
     printIvar(os, FirstIvarDecl, IvarToPopertyMap);
     os << "needs to be invalidated; ";
-    os << "No invalidation method is declared for " << InterfaceD->getName();
+    os << "no invalidation method is declared for " << InterfaceD->getName();
 
     PathDiagnosticLocation IvarDecLocation =
       PathDiagnosticLocation::createBegin(FirstIvarDecl, BR.getSourceManager());
@@ -475,7 +475,7 @@ void IvarInvalidationChecker::checkASTDecl(const ObjCImplementationDecl *ImplD,
     assert(FirstIvarDecl);
     printIvar(os, FirstIvarDecl, IvarToPopertyMap);
     os << "needs to be invalidated; ";
-    os << "No invalidation method is defined in the @implementation for "
+    os << "no invalidation method is defined in the @implementation for "
        << InterfaceD->getName();
 
     PathDiagnosticLocation IvarDecLocation =
