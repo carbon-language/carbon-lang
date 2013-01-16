@@ -16,14 +16,20 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "clang/Format/Format.h"
+#define DEBUG_TYPE "format-formatter"
+
 #include "UnwrappedLineParser.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/OperatorPrecedence.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Format/Format.h"
 #include "clang/Frontend/TextDiagnosticPrinter.h"
 #include "clang/Lex/Lexer.h"
+#include "llvm/Support/Debug.h"
 #include <string>
+
+// Uncomment to get debug output from tests:
+// #define DEBUG_WITH_TYPE(T, X) do { X; } while(0)
 
 namespace clang {
 namespace format {
@@ -246,6 +252,10 @@ public:
     State.LineContainsContinuedForLoopSection = false;
     State.StartOfLineLevel = 1;
 
+    DEBUG({
+      DebugTokenState(*State.NextToken);
+    });
+
     // The first token has already been indented and thus consumed.
     moveStateToNextToken(State);
 
@@ -262,6 +272,18 @@ public:
       } else {
         unsigned NoBreak = calcPenalty(State, false, UINT_MAX);
         unsigned Break = calcPenalty(State, true, NoBreak);
+        DEBUG({
+          if (Break < NoBreak)
+            llvm::errs() << "\n";
+          else
+            llvm::errs() << " ";
+          llvm::errs() << "<";
+          DebugPenalty(Break, Break < NoBreak);
+          llvm::errs() << "/";
+          DebugPenalty(NoBreak, !(Break < NoBreak));
+          llvm::errs() << "> ";
+          DebugTokenState(*State.NextToken);
+        });
         addTokenToState(Break < NoBreak, false, State);
         if (State.NextToken != NULL &&
             State.NextToken->Parent->Type == TT_CtorInitializerColon) {
@@ -271,10 +293,28 @@ public:
         }
       }
     }
+    DEBUG(llvm::errs() << "\n");
     return State.Column;
   }
 
 private:
+  void DebugTokenState(const AnnotatedToken &AnnotatedTok) {
+    const Token &Tok = AnnotatedTok.FormatTok.Tok;
+    llvm::errs()
+        << StringRef(SourceMgr.getCharacterData(Tok.getLocation()),
+                     Tok.getLength());
+    llvm::errs();
+  }
+
+  void DebugPenalty(unsigned Penalty, bool Winner) {
+    llvm::errs().changeColor(Winner ? raw_ostream::GREEN : raw_ostream::RED);
+    if (Penalty == UINT_MAX)
+      llvm::errs() << "MAX";
+    else
+      llvm::errs() << Penalty;
+    llvm::errs().resetColor();
+  }
+
   struct ParenState {
     ParenState(unsigned Indent, unsigned LastSpace)
         : Indent(Indent), LastSpace(LastSpace), FirstLessLess(0),

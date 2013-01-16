@@ -7,10 +7,16 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "format-test"
+
 #include "clang/Format/Format.h"
-#include "../Tooling/RewriterTestContext.h"
 #include "clang/Lex/Lexer.h"
 #include "gtest/gtest.h"
+#include "llvm/Support/Debug.h"
+#include "../Tooling/RewriterTestContext.h"
+
+// Uncomment to get debug output from tests:
+// #define DEBUG_WITH_TYPE(T, X) do { X; } while(0)
 
 namespace clang {
 namespace format {
@@ -19,6 +25,7 @@ class FormatTest : public ::testing::Test {
 protected:
   std::string format(llvm::StringRef Code, unsigned Offset, unsigned Length,
                      const FormatStyle &Style) {
+    DEBUG(llvm::errs() << "---\n");
     RewriterTestContext Context;
     FileID ID = Context.createInMemoryFile("input.cc", Code);
     SourceLocation Start =
@@ -32,6 +39,7 @@ protected:
                                              Ranges,
                                              new IgnoringDiagConsumer());
     EXPECT_TRUE(applyAllReplacements(Replace, Context.Rewrite));
+    DEBUG(llvm::errs() << "\n" << Context.getRewrittenText(ID) << "\n\n");
     return Context.getRewrittenText(ID);
   }
 
