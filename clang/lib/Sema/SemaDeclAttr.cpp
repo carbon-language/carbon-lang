@@ -1370,25 +1370,6 @@ static void handleOwnershipAttr(Sema &S, Decl *D, const AttributeList &AL) {
                                              start, size));
 }
 
-/// Whether this declaration has internal linkage for the purposes of
-/// things that want to complain about things not have internal linkage.
-static bool hasEffectivelyInternalLinkage(NamedDecl *D) {
-  switch (D->getLinkage()) {
-  case NoLinkage:
-  case InternalLinkage:
-    return true;
-
-  // Template instantiations that go from external to unique-external
-  // shouldn't get diagnosed.
-  case UniqueExternalLinkage:
-    return true;
-
-  case ExternalLinkage:
-    return false;
-  }
-  llvm_unreachable("unknown linkage kind!");
-}
-
 static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // Check the attribute arguments.
   if (Attr.getNumArgs() > 1) {
@@ -1439,7 +1420,7 @@ static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // This looks like a bug in gcc. We reject that for now. We should revisit
   // it if this behaviour is actually used.
 
-  if (!hasEffectivelyInternalLinkage(nd)) {
+  if (nd->getLinkage() == ExternalLinkage) {
     S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_static);
     return;
   }
