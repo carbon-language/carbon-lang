@@ -594,7 +594,7 @@ class SystemParameters:
 		global isa_caches
 
 		process = valobj.GetTarget().GetProcess()
-		self.pid = process.GetProcessID()
+		self.pid = process.GetUniqueID() # using the unique ID for added guarantees (<rdar://problem/13009943>)
 
 		if runtime_version.look_for_key(self.pid):
 			self.runtime_version = runtime_version.get_value(self.pid)
