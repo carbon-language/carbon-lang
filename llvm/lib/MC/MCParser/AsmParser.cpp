@@ -50,6 +50,25 @@ MCAsmParserSemaCallback::~MCAsmParserSemaCallback() {}
 
 namespace {
 
+/// \brief Helper types for tracking macro definitions.
+typedef std::vector<AsmToken> MCAsmMacroArgument;
+typedef std::vector<MCAsmMacroArgument> MCAsmMacroArguments;
+typedef std::pair<StringRef, MCAsmMacroArgument> MCAsmMacroParameter;
+typedef std::vector<MCAsmMacroParameter> MCAsmMacroParameters;
+
+struct MCAsmMacro {
+  StringRef Name;
+  StringRef Body;
+  MCAsmMacroParameters Parameters;
+
+public:
+  MCAsmMacro(StringRef N, StringRef B, const MCAsmMacroParameters &P) :
+    Name(N), Body(B), Parameters(P) {}
+
+  MCAsmMacro(const MCAsmMacro& Other)
+    : Name(Other.Name), Body(Other.Body), Parameters(Other.Parameters) {}
+};
+
 /// \brief Helper class for storing information about an active macro
 /// instantiation.
 struct MacroInstantiation {
@@ -73,7 +92,6 @@ public:
                      MemoryBuffer *I);
 };
 
-//struct AsmRewrite;
 struct ParseStatementInfo {
   /// ParsedOperands - The parsed operands from the last parsed statement.
   SmallVector<MCParsedAsmOperand*, 8> ParsedOperands;
@@ -205,24 +223,10 @@ public:
   virtual bool ParseParenExpression(const MCExpr *&Res, SMLoc &EndLoc);
   virtual bool ParseAbsoluteExpression(int64_t &Res);
 
-  bool ParseMacroArgument(MCAsmMacroArgument &MA,
-                          AsmToken::TokenKind &ArgumentDelimiter);
-
   /// ParseIdentifier - Parse an identifier or string (as a quoted identifier)
   /// and set \p Res to the identifier contents.
   virtual bool ParseIdentifier(StringRef &Res);
   virtual void EatToEndOfStatement();
-
-  virtual bool MacrosEnabled() {return MacrosEnabledFlag;}
-  virtual void SetMacrosEnabled(bool flag) {MacrosEnabledFlag = flag;}
-
-  virtual const MCAsmMacro* LookupMacro(StringRef Name);
-  virtual void DefineMacro(StringRef Name, const MCAsmMacro& Macro);
-  virtual void UndefineMacro(StringRef Name);
-
-  virtual bool InsideMacroInstantiation() {return !ActiveMacros.empty();}
-  virtual bool HandleMacroEntry(const MCAsmMacro *M, SMLoc NameLoc);
-  void HandleMacroExit();
 
   virtual void CheckForValidSection();
   /// }
@@ -237,6 +241,44 @@ private:
                    const MCAsmMacroParameters &Parameters,
                    const MCAsmMacroArguments &A,
                    const SMLoc &L);
+
+  /// \brief Are macros enabled in the parser?
+  bool MacrosEnabled() {return MacrosEnabledFlag;}
+
+  /// \brief Control a flag in the parser that enables or disables macros.
+  void SetMacrosEnabled(bool Flag) {MacrosEnabledFlag = Flag;}
+
+  /// \brief Lookup a previously defined macro.
+  /// \param Name Macro name.
+  /// \returns Pointer to macro. NULL if no such macro was defined.
+  const MCAsmMacro* LookupMacro(StringRef Name);
+
+  /// \brief Define a new macro with the given name and information.
+  void DefineMacro(StringRef Name, const MCAsmMacro& Macro);
+
+  /// \brief Undefine a macro. If no such macro was defined, it's a no-op.
+  void UndefineMacro(StringRef Name);
+
+  /// \brief Are we inside a macro instantiation?
+  bool InsideMacroInstantiation() {return !ActiveMacros.empty();}
+
+  /// \brief Handle entry to macro instantiation. 
+  ///
+  /// \param M The macro.
+  /// \param NameLoc Instantiation location.
+  bool HandleMacroEntry(const MCAsmMacro *M, SMLoc NameLoc);
+
+  /// \brief Handle exit from macro instantiation.
+  void HandleMacroExit();
+
+  /// \brief Extract AsmTokens for a macro argument. If the argument delimiter
+  /// is initially unknown, set it to AsmToken::Eof. It will be set to the
+  /// correct delimiter by the method.
+  bool ParseMacroArgument(MCAsmMacroArgument &MA,
+                          AsmToken::TokenKind &ArgumentDelimiter);
+
+  /// \brief Parse all macro arguments for a given macro.
+  bool ParseMacroArguments(const MCAsmMacro *M, MCAsmMacroArguments &A);
 
   void PrintMacroInstantiations();
   void PrintMessage(SMLoc Loc, SourceMgr::DiagKind Kind, const Twine &Msg,
@@ -258,8 +300,6 @@ private:
   /// \param InBuffer If not -1, should be the known buffer id that contains the
   /// location.
   void JumpToLoc(SMLoc Loc, int InBuffer=-1);
-
-  bool ParseMacroArguments(const MCAsmMacro *M, MCAsmMacroArguments &A);
 
   /// \brief Parse up to the end of statement and a return the contents from the
   /// current token until the end of the statement; the current token on exit
