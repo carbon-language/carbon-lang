@@ -141,16 +141,15 @@ public:
 
       if (symbol->st_shndx == llvm::ELF::SHN_ABS) {
         // Create an absolute atom.
-        auto *newAtom = new (_readerStorage.Allocate<ELFAbsoluteAtom<ELFT>>())
-                        ELFAbsoluteAtom<ELFT>(*this, symbolName, symbol,
-                                              symbol->st_value);
+        auto *newAtom = new (_readerStorage)
+            ELFAbsoluteAtom<ELFT>(*this, symbolName, symbol, symbol->st_value);
 
         _absoluteAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair(symbol, newAtom));
       } else if (symbol->st_shndx == llvm::ELF::SHN_UNDEF) {
         // Create an undefined atom.
-        auto *newAtom = new (_readerStorage.Allocate<ELFUndefinedAtom<ELFT>>())
-                        ELFUndefinedAtom<ELFT>(*this, symbolName, symbol);
+        auto *newAtom = new (_readerStorage)
+            ELFUndefinedAtom<ELFT>(*this, symbolName, symbol);
 
         _undefinedAtoms._atoms.push_back(newAtom);
         _symbolToAtomMapping.insert(std::make_pair(symbol, newAtom));
@@ -216,7 +215,7 @@ public:
         ELFDefinedAtom<ELFT> *anonAtom = nullptr;
         if ((*si)->getBinding() == llvm::ELF::STB_WEAK && contentSize != 0) {
           // Create a new non-weak ELF symbol.
-          auto sym = new (_readerStorage.Allocate<Elf_Sym>()) Elf_Sym;
+          auto sym = new (_readerStorage) Elf_Sym;
           *sym = **si;
           sym->setBinding(llvm::ELF::STB_GLOBAL);
           anonAtom = createDefinedAtomAndAssignRelocations(
@@ -281,9 +280,8 @@ private:
       if (!((rai->r_offset >= symbol->st_value) &&
             (rai->r_offset < symbol->st_value + content.size())))
         continue;
-      auto *ERef = new (_readerStorage.Allocate<ELFReference<ELFT>>())
-                   ELFReference<ELFT>(rai, rai->r_offset - symbol->st_value,
-                                      nullptr);
+      auto *ERef = new (_readerStorage)
+          ELFReference<ELFT>(rai, rai->r_offset - symbol->st_value, nullptr);
       _references.push_back(ERef);
     }
 
@@ -291,18 +289,17 @@ private:
     for (auto &ri : _relocationReferences[sectionName]) {
       if ((ri->r_offset >= symbol->st_value) &&
           (ri->r_offset < symbol->st_value + content.size())) {
-        auto *ERef = new (_readerStorage.Allocate<ELFReference<ELFT>>())
-                     ELFReference<ELFT>(ri, ri->r_offset - symbol->st_value,
-                                        nullptr);
+        auto *ERef = new (_readerStorage)
+            ELFReference<ELFT>(ri, ri->r_offset - symbol->st_value, nullptr);
         _references.push_back(ERef);
       }
     }
 
     // Create the DefinedAtom and add it to the list of DefinedAtoms.
-    return new (_readerStorage.Allocate<ELFDefinedAtom<ELFT>>())
-           ELFDefinedAtom<ELFT>(*this, symbolName, sectionName, symbol, section,
-                                content, referenceStart, _references.size(),
-                                _references);
+    return new (_readerStorage)
+        ELFDefinedAtom<ELFT>(*this, symbolName, sectionName, symbol, section,
+                             content, referenceStart, _references.size(),
+                             _references);
   }
 
   std::unique_ptr<ELFObjectFile<ELFT>> _objFile;
