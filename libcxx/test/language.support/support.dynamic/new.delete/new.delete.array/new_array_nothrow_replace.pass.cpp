@@ -29,7 +29,7 @@ void  operator delete(void* p) throw()
     std::free(p);
 }
 
-int A_constructed = 0;
+volatile int A_constructed = 0;
 
 struct A
 {

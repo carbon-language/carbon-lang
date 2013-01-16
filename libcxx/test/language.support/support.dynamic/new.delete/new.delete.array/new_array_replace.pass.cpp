@@ -15,7 +15,7 @@
 #include <cassert>
 #include <limits>
 
-int new_called = 0;
+volatile int new_called = 0;
 
 void* operator new(std::size_t s) throw(std::bad_alloc)
 {

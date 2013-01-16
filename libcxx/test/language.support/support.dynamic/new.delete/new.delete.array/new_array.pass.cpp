@@ -35,7 +35,7 @@ int main()
     std::set_new_handler(new_handler);
     try
     {
-        void* vp = operator new[] (std::numeric_limits<std::size_t>::max());
+        void*volatile vp = operator new[] (std::numeric_limits<std::size_t>::max());
         assert(false);
     }
     catch (std::bad_alloc&)
