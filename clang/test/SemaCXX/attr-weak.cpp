@@ -21,9 +21,16 @@ namespace {
   };
 }
 
+// GCC rejects the instantiation with the internal type, but some existing
+// code expects it. It is also not that different from giving hidden visibility
+// to parts of a template that have explicit default visibility, so we accept
+// this.
 template <class T> struct Test7 {
   void test7() __attribute__((weak)) {}
+  static int var __attribute__((weak));
 };
+template <class T>
+int Test7<T>::var;
 namespace { class Internal; }
 template struct Test7<Internal>;
 template struct Test7<int>;

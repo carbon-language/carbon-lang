@@ -2511,12 +2511,6 @@ static void handleWeakAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 
   NamedDecl *nd = cast<NamedDecl>(D);
 
-  // 'weak' only applies to declarations with external linkage.
-  if (hasEffectivelyInternalLinkage(nd)) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_weak_static);
-    return;
-  }
-
   nd->addAttr(::new (S.Context) WeakAttr(Attr.getRange(), S.Context));
 }
 

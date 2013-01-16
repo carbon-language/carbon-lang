@@ -4312,6 +4312,15 @@ bool Sema::inferObjCARCLifetime(ValueDecl *decl) {
   return false;
 }
 
+static void checkAttributesAfterMerging(Sema &S, NamedDecl &ND) {
+  // 'weak' only applies to declarations with external linkage.
+  WeakAttr *WA = ND.getAttr<WeakAttr>();
+  if (WA && ND.getLinkage() != ExternalLinkage) {
+    S.Diag(WA->getLocation(), diag::err_attribute_weak_static);
+    ND.dropAttr<WeakAttr>();
+  }
+}
+
 NamedDecl*
 Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                               TypeSourceInfo *TInfo, LookupResult &Previous,
@@ -4589,6 +4598,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         CheckMemberSpecialization(NewVD, Previous))
       NewVD->setInvalidDecl();
   }
+
+  checkAttributesAfterMerging(*this, *NewVD);
 
   // If this is a locally-scoped extern C variable, update the map of
   // such variables.
@@ -6055,6 +6066,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
         << D.getCXXScopeSpec().getRange();
     }
   }
+
+  checkAttributesAfterMerging(*this, *NewFD);
 
   AddKnownFunctionAttributes(NewFD);
 
