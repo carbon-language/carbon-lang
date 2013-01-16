@@ -140,7 +140,8 @@ Include File Checking Macros
 Not all developments systems have the same include files.  The
 :ref:`langext-__has_include` and :ref:`langext-__has_include_next` macros allow
 you to check for the existence of an include file before doing a possibly
-failing ``#include`` directive.
+failing ``#include`` directive.  Include file checking macros must be used 
+as expressions in #if or #elif preprocessing directives.
 
 .. _langext-__has_include:
 
