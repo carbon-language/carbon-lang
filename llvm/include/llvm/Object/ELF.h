@@ -37,11 +37,9 @@ using support::endianness;
 
 template<endianness target_endianness, std::size_t max_alignment, bool is64Bits>
 struct ELFType {
-  enum {
-    TargetEndianness = target_endianness,
-    MaxAlignment = max_alignment,
-    Is64Bits = is64Bits
-  };
+  static const endianness TargetEndianness = target_endianness;
+  static const std::size_t MaxAlignment = max_alignment;
+  static const bool Is64Bits = is64Bits;
 };
 
 template<typename T, int max_align>
@@ -792,8 +790,7 @@ public:
   // Methods for type inquiry through isa, cast, and dyn_cast
   bool isDyldType() const { return isDyldELFObject; }
   static inline bool classof(const Binary *v) {
-    return v->getType() == getELFType(static_cast<int>(ELFT::TargetEndianness)
-                                      == static_cast<int>(support::little),
+    return v->getType() == getELFType(ELFT::TargetEndianness == support::little,
                                       ELFT::Is64Bits);
   }
 };
@@ -2380,8 +2377,7 @@ unsigned ELFObjectFile<ELFT>::getArch() const {
   case ELF::EM_HEXAGON:
     return Triple::hexagon;
   case ELF::EM_MIPS:
-    return (static_cast<int>(ELFT::TargetEndianness)
-            == static_cast<int>(support::little)) ?
+    return (ELFT::TargetEndianness == support::little) ?
            Triple::mipsel : Triple::mips;
   case ELF::EM_PPC64:
     return Triple::ppc64;
