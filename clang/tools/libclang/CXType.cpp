@@ -131,6 +131,9 @@ CXType clang_getCursorType(CXCursor C) {
   using namespace cxcursor;
   
   CXTranslationUnit TU = cxcursor::getCursorTU(C);
+  if (!TU)
+    return MakeCXType(QualType(), TU);
+
   ASTContext &Context = static_cast<ASTUnit *>(TU->TUData)->getASTContext();
   if (clang_isExpression(C.kind)) {
     QualType T = cxcursor::getCursorExpr(C)->getType();
