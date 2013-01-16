@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang_cc1 -emit-llvm -o - -fmodule-cache-path %t -fmodules -F %S/Inputs -I %S/Inputs %s | FileCheck %s
+// RUN: %clang_cc1 -emit-llvm -o - -fmodule-cache-path %t -fmodules -fmodules-autolink -F %S/Inputs -I %S/Inputs %s | FileCheck %s
 
 @import autolink.sub2;
 

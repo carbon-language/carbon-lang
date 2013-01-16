@@ -173,7 +173,10 @@ void CodeGenModule::Release() {
   EmitCtorList(GlobalDtors, "llvm.global_dtors");
   EmitGlobalAnnotations();
   EmitLLVMUsed();
-  EmitModuleLinkOptions();
+
+  if (CodeGenOpts.ModulesAutolink) {
+    EmitModuleLinkOptions();
+  }
 
   SimplifyPersonality();
 

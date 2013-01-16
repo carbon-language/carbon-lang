@@ -2622,12 +2622,24 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   // -fmodules enables modules (off by default). However, for C++/Objective-C++,
   // users must also pass -fcxx-modules. The latter flag will disappear once the
   // modules implementation is solid for C++/Objective-C++ programs as well.
+  bool HaveModules = false;
   if (Args.hasFlag(options::OPT_fmodules, options::OPT_fno_modules, false)) {
     bool AllowedInCXX = Args.hasFlag(options::OPT_fcxx_modules, 
                                      options::OPT_fno_cxx_modules, 
                                      false);
-    if (AllowedInCXX || !types::isCXX(InputType))
+    if (AllowedInCXX || !types::isCXX(InputType)) {
       CmdArgs.push_back("-fmodules");
+      HaveModules = true;
+    }
+  }
+
+  // -fmodules-autolink (on by default when modules is enabled) automatically
+  // links against libraries for imported modules.
+  if (HaveModules &&
+      Args.hasFlag(options::OPT_fmodules_autolink,
+                   options::OPT_fno_modules_autolink,
+                   true)) {
+    CmdArgs.push_back("-fmodules-autolink");
   }
 
   // -faccess-control is default.

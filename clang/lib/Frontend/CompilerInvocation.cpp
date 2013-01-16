@@ -332,6 +332,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   }
   Opts.DebugColumnInfo = Args.hasArg(OPT_dwarf_column_info);
 
+  Opts.ModulesAutolink = Args.hasArg(OPT_fmodules_autolink);
   Opts.DisableLLVMOpts = Args.hasArg(OPT_disable_llvm_optzns);
   Opts.DisableRedZone = Args.hasArg(OPT_disable_red_zone);
   Opts.ForbidGuardVariables = Args.hasArg(OPT_fforbid_guard_variables);
