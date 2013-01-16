@@ -69,9 +69,7 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
     CodeCompletionFile(0), CodeCompletionOffset(0), CodeCompletionReached(0),
     SkipMainFilePreamble(0, true), CurPPLexer(0), 
     CurDirLookup(0), CurLexerKind(CLK_Lexer), Callbacks(0), Listener(0),
-    MacroArgCache(0), Record(0), MIChainHead(0), MICache(0),
-    ParsingIfOrElifDirective(false)
-{
+    MacroArgCache(0), Record(0), MIChainHead(0), MICache(0) {
   OwnsHeaderSearch = OwnsHeaders;
   
   ScratchBuf = new ScratchBuffer(SourceMgr);
@@ -98,9 +96,10 @@ Preprocessor::Preprocessor(IntrusiveRefCntPtr<PreprocessorOptions> PPOpts,
   InMacroArgPreExpansion = false;
   NumCachedTokenLexers = 0;
   PragmasEnabled = true;
+  ParsingIfOrElifDirective = false;
 
   CachedLexPos = 0;
-  
+
   // We haven't read anything from the external source.
   ReadMacrosFromExternalSource = false;
   
