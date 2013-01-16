@@ -964,6 +964,12 @@ static bool EvaluateHasIncludeCommon(Token &Tok,
   // that location.  If not, use the end of this location instead.
   SourceLocation LParenLoc = Tok.getLocation();
 
+  // These expressions are only allowed within a preprocessor directive.
+  if (!PP.isParsingIfOrElifDirective()) {
+    PP.Diag(LParenLoc, diag::err_pp_directive_required) << II->getName();
+    return false;
+  }
+
   // Get '('.
   PP.LexNonComment(Tok);
 

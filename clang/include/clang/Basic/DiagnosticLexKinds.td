@@ -285,6 +285,8 @@ def warn_cxx98_compat_empty_fnmacro_arg : Warning<
 def note_macro_here : Note<"macro %0 defined here">;
 
 def err_pp_invalid_directive : Error<"invalid preprocessing directive">;
+def err_pp_directive_required : Error<
+  "%0 must be used within a preprocessing directive">;
 def err_pp_file_not_found : Error<"'%0' file not found">, DefaultFatal;
 def err_pp_file_not_found_not_fatal : Error<
   "'%0' file not found with <angled> include; use \"quotes\" instead">;

@@ -160,6 +160,9 @@ class Preprocessor : public RefCountedBase<Preprocessor> {
   /// \brief True if pragmas are enabled.
   bool PragmasEnabled : 1;
 
+  /// \brief True if we are currently preprocessing a #if or #elif directive
+  bool ParsingIfOrElifDirective;
+
   /// \brief True if we are pre-expanding macro arguments.
   bool InMacroArgPreExpansion;
 
@@ -445,6 +448,11 @@ public:
 
   /// \brief Retrieve the module loader associated with this preprocessor.
   ModuleLoader &getModuleLoader() const { return TheModuleLoader; }
+
+  /// \brief True if we are currently preprocessing a #if or #elif directive
+  bool isParsingIfOrElifDirective() const { 
+    return ParsingIfOrElifDirective;
+  }
 
   /// SetCommentRetentionState - Control whether or not the preprocessor retains
   /// comments in output.
