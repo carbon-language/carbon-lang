@@ -167,7 +167,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.BinPackParameters = false;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
-  GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
+  GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
   GoogleStyle.ObjCSpaceBeforeReturnType = false;
   return GoogleStyle;

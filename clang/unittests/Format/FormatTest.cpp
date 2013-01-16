@@ -151,23 +151,31 @@ TEST_F(FormatTest, FormatIfWithoutCompountStatement) {
   verifyFormat("if (true)\n  f();\ng();");
   verifyFormat("if (a)\n  if (b)\n    if (c)\n      g();\nh();");
   verifyFormat("if (a)\n  if (b) {\n    f();\n  }\ng();");
-  verifyGoogleFormat("if (a)\n"
-                     "  // comment\n"
-                     "  f();");
-  verifyFormat("if (a) return;", getGoogleStyleWithColumns(14));
-  verifyFormat("if (a)\n  return;", getGoogleStyleWithColumns(13));
+
+  FormatStyle AllowsMergedIf = getGoogleStyle();
+  AllowsMergedIf.AllowShortIfStatementsOnASingleLine = true;
+  verifyFormat("if (a)\n"
+               "  // comment\n"
+               "  f();", AllowsMergedIf);
+
+  verifyFormat("if (a)  // Can't merge this\n"
+               "  f();\n", AllowsMergedIf);
+  verifyFormat("if (a) /* still don't merge */\n"
+               "  f();", AllowsMergedIf);
+  verifyFormat("if (a) {  // Never merge this\n"
+               "  f();\n"
+               "}", AllowsMergedIf);
+  verifyFormat("if (a) { /* Never merge this */\n"
+               "  f();\n"
+               "}", AllowsMergedIf);
+
+  AllowsMergedIf.ColumnLimit = 14;
+  verifyFormat("if (a) return;", AllowsMergedIf);
   verifyFormat("if (aaaaaaaaa)\n"
-               "  return;", getGoogleStyleWithColumns(14));
-  verifyGoogleFormat("if (a)  // Can't merge this\n"
-                     "  f();\n");
-  verifyGoogleFormat("if (a) /* still don't merge */\n"
-                     "  f();");
-  verifyGoogleFormat("if (a) {  // Never merge this\n"
-                     "  f();\n"
-                     "}");
-  verifyGoogleFormat("if (a) { /* Never merge this */\n"
-                     "  f();\n"
-                     "}");
+               "  return;", AllowsMergedIf);
+
+  AllowsMergedIf.ColumnLimit = 13;
+  verifyFormat("if (a)\n  return;", AllowsMergedIf);
 }
 
 TEST_F(FormatTest, ParseIfElse) {
