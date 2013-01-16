@@ -886,6 +886,8 @@ public:
         break;
       case tok::colon:
         // Colons from ?: are handled in parseConditional().
+        if (Tok->Parent->is(tok::r_paren))
+          Tok->Type = TT_CtorInitializerColon;
         if (ColonIsObjCMethodExpr)
           Tok->Type = TT_ObjCMethodExpr;
         break;
@@ -894,10 +896,7 @@ public:
                                         TT_ObjCMethodSpecifier;
         if (!parseParens())
           return false;
-        if (CurrentToken != NULL && CurrentToken->is(tok::colon)) {
-          CurrentToken->Type = TT_CtorInitializerColon;
-          next();
-        } else if (CurrentToken != NULL && ParensWereObjCReturnType) {
+        if (CurrentToken != NULL && ParensWereObjCReturnType) {
           CurrentToken->Type = TT_ObjCSelectorStart;
           next();
         }

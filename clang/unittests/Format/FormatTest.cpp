@@ -917,6 +917,9 @@ TEST_F(FormatTest, BreaksConditionalExpressions) {
       "         aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa);");
   verifyFormat("aaaa(aaaaaaaaaaaaaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaaaaa ?\n"
                "         aaaaaaaaaaaaaaaaaaaaaaa : aaaaaaaaaaaaaaaaaaaaa);");
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaa ? aaaa(aaaaaa) :\n"
+      "                                   aaaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, ConditionalExpressionsInBrackets) {
