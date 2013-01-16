@@ -267,6 +267,8 @@ LLDBSwigPythonCallTypeScript
 {
     lldb::SBValue sb_value (valobj_sp);
 
+    retval.clear();
+
     PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *) &sb_value, SWIGTYPE_p_lldb__SBValue, 0);
     
     if (ValObj_PyObj == NULL)
@@ -323,14 +325,14 @@ LLDBSwigPythonCallTypeScript
 SWIGEXPORT void*
 LLDBSwigPythonCreateSyntheticProvider 
 (
-    const std::string python_class_name,
+    const char *python_class_name,
     const char *session_dictionary_name,
     const lldb::ValueObjectSP& valobj_sp
 )
 {
     PyObject* retval = NULL;
 
-    if (python_class_name.empty() || !session_dictionary_name)
+    if (python_class_name == NULL || python_class_name[0] == '\0' || !session_dictionary_name)
         Py_RETURN_NONE;
 
     // I do not want the SBValue to be deallocated when going out of scope because python
@@ -343,7 +345,7 @@ LLDBSwigPythonCreateSyntheticProvider
     if (ValObj_PyObj == NULL)
         Py_RETURN_NONE;
 
-    const char* python_function_name = python_class_name.c_str();
+    const char* python_function_name = python_class_name;
 
     PyObject *session_dict, *pfunc;
     PyObject *pvalue;
@@ -778,14 +780,14 @@ LLDBSwigPythonCallCommand
 SWIGEXPORT void*
 LLDBSWIGPythonCreateOSPlugin
 (
-    const std::string python_class_name,
+    const char *python_class_name,
     const char *session_dictionary_name,
     const lldb::ProcessSP& process_sp
 )
 {
     PyObject* retval = NULL;
 
-    if (python_class_name.empty() || !session_dictionary_name)
+    if (python_class_name == NULL || python_class_name[0] == '\0' || !session_dictionary_name)
         Py_RETURN_NONE;
 
     // I do not want the SBValue to be deallocated when going out of scope because python
@@ -797,7 +799,7 @@ LLDBSWIGPythonCreateOSPlugin
     if (SBProc_PyObj == NULL)
         Py_RETURN_NONE;
 
-    const char* python_function_name = python_class_name.c_str();
+    const char* python_function_name = python_class_name;
 
     PyObject *session_dict, *pfunc;
     PyObject *pvalue;
@@ -875,7 +877,7 @@ LLDBSWIGPythonCreateOSPlugin
 SWIGEXPORT bool
 LLDBSwigPythonCallModuleInit 
 (
-    const std::string python_module_name,
+    const char *python_module_name,
     const char *session_dictionary_name,
     lldb::DebuggerSP& debugger
 )
@@ -890,7 +892,7 @@ LLDBSwigPythonCallModuleInit
     if (DebuggerObj_PyObj == NULL)
         return retval;
         
-    if (!(python_module_name.length()) || !session_dictionary_name)
+    if (python_module_name == NULL || python_module_name[0] == '\0' || !session_dictionary_name)
         return retval;
 
     PyObject *session_dict, *pfunc;
@@ -898,7 +900,8 @@ LLDBSwigPythonCallModuleInit
     
     session_dict = FindSessionDictionary (session_dictionary_name);
     
-    std::string python_function_name_string = python_module_name + (".__lldb_init_module");
+    std::string python_function_name_string = python_module_name;
+    python_function_name_string += ".__lldb_init_module";
     const char* python_function_name = python_function_name_string.c_str();
     
     if (session_dict != NULL)

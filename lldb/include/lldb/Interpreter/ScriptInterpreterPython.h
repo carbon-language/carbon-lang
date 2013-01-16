@@ -76,11 +76,11 @@ public:
     GenerateScriptAliasFunction (StringList &input, std::string& output);
     
     lldb::ScriptInterpreterObjectSP
-    CreateSyntheticScriptedProvider (std::string class_name,
+    CreateSyntheticScriptedProvider (const char *class_name,
                                      lldb::ValueObjectSP valobj);
     
     virtual lldb::ScriptInterpreterObjectSP
-    CreateOSPlugin (std::string class_name,
+    CreateOSPlugin (const char *class_name,
                     lldb::ProcessSP process_sp);
     
     virtual lldb::ScriptInterpreterObjectSP

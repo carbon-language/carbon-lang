@@ -64,72 +64,65 @@ static ScriptInterpreter::SWIGPythonCreateOSPlugin g_swig_create_os_plugin = NUL
 // on linkage-time resolution because the SWIG stuff and this file
 // get built at different times
 extern "C" bool
-LLDBSwigPythonBreakpointCallbackFunction 
-(
- const char *python_function_name,
- const char *session_dictionary_name,
- const lldb::StackFrameSP& sb_frame, 
- const lldb::BreakpointLocationSP& sb_bp_loc
- );
+LLDBSwigPythonBreakpointCallbackFunction (const char *python_function_name,
+                                          const char *session_dictionary_name,
+                                          const lldb::StackFrameSP& sb_frame,
+                                          const lldb::BreakpointLocationSP& sb_bp_loc);
 
 extern "C" bool
-LLDBSwigPythonWatchpointCallbackFunction 
-(
- const char *python_function_name,
- const char *session_dictionary_name,
- const lldb::StackFrameSP& sb_frame, 
- const lldb::WatchpointSP& sb_wp
- );
+LLDBSwigPythonWatchpointCallbackFunction (const char *python_function_name,
+                                          const char *session_dictionary_name,
+                                          const lldb::StackFrameSP& sb_frame,
+                                          const lldb::WatchpointSP& sb_wp);
 
 extern "C" bool
-LLDBSwigPythonCallTypeScript 
-(
- const char *python_function_name,
- void *session_dictionary,
- const lldb::ValueObjectSP& valobj_sp,
- void** pyfunct_wrapper,
- std::string& retval
- );
+LLDBSwigPythonCallTypeScript (const char *python_function_name,
+                              void *session_dictionary,
+                              const lldb::ValueObjectSP& valobj_sp,
+                              void** pyfunct_wrapper,
+                              std::string& retval);
 
 extern "C" void*
-LLDBSwigPythonCreateSyntheticProvider 
-(
- const std::string python_class_name,
- const char *session_dictionary_name,
- const lldb::ValueObjectSP& valobj_sp
- );
+LLDBSwigPythonCreateSyntheticProvider (const char *python_class_name,
+                                       const char *session_dictionary_name,
+                                       const lldb::ValueObjectSP& valobj_sp);
 
 
-extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren                   (void *implementor);
-extern "C" void*          LLDBSwigPython_GetChildAtIndex                        (void *implementor, uint32_t idx);
-extern "C" int            LLDBSwigPython_GetIndexOfChildWithName                (void *implementor, const char* child_name);
-extern "C" void*          LLDBSWIGPython_CastPyObjectToSBValue                  (void* data);
-extern "C" bool           LLDBSwigPython_UpdateSynthProviderInstance            (void* implementor);
-extern "C" bool           LLDBSwigPython_MightHaveChildrenSynthProviderInstance (void* implementor);
+extern "C" uint32_t
+LLDBSwigPython_CalculateNumChildren (void *implementor);
 
-extern "C" bool           LLDBSwigPythonCallCommand 
-(
- const char *python_function_name,
- const char *session_dictionary_name,
- lldb::DebuggerSP& debugger,
- const char* args,
- std::string& err_msg,
- lldb_private::CommandReturnObject& cmd_retobj
- );
+extern "C" void *
+LLDBSwigPython_GetChildAtIndex (void *implementor, uint32_t idx);
 
-extern "C" bool           LLDBSwigPythonCallModuleInit 
-(
- const std::string python_module_name,
- const char *session_dictionary_name,
- lldb::DebuggerSP& debugger
- );
+extern "C" int
+LLDBSwigPython_GetIndexOfChildWithName (void *implementor, const char* child_name);
 
-extern "C" void*        LLDBSWIGPythonCreateOSPlugin
-(
- const std::string python_class_name,
- const char *session_dictionary_name,
- const lldb::ProcessSP& process_sp
-);
+extern "C" void *
+LLDBSWIGPython_CastPyObjectToSBValue (void* data);
+
+extern "C" bool
+LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
+
+extern "C" bool
+LLDBSwigPython_MightHaveChildrenSynthProviderInstance (void* implementor);
+
+extern "C" bool
+LLDBSwigPythonCallCommand (const char *python_function_name,
+                           const char *session_dictionary_name,
+                           lldb::DebuggerSP& debugger,
+                           const char* args,
+                           std::string& err_msg,
+                           lldb_private::CommandReturnObject& cmd_retobj);
+
+extern "C" bool
+LLDBSwigPythonCallModuleInit (const char *python_module_name,
+                              const char *session_dictionary_name,
+                              lldb::DebuggerSP& debugger);
+
+extern "C" void*
+LLDBSWIGPythonCreateOSPlugin (const char *python_class_name,
+                              const char *session_dictionary_name,
+                              const lldb::ProcessSP& process_sp);
 
 static int
 _check_and_flush (FILE *stream)
@@ -1726,10 +1719,9 @@ ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, std::st
 }
 
 lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::CreateOSPlugin (std::string class_name,
-                lldb::ProcessSP process_sp)
+ScriptInterpreterPython::CreateOSPlugin (const char *class_name, lldb::ProcessSP process_sp)
 {
-    if (class_name.empty())
+    if (class_name == NULL || class_name[0] == '\0')
         return lldb::ScriptInterpreterObjectSP();
     
     if (!process_sp)
@@ -1927,10 +1919,10 @@ ScriptInterpreterPython::OSPlugin_QueryForRegisterContextData (lldb::ScriptInter
 }
 
 lldb::ScriptInterpreterObjectSP
-ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name,
+ScriptInterpreterPython::CreateSyntheticScriptedProvider (const char *class_name,
                                                           lldb::ValueObjectSP valobj)
 {
-    if (class_name.empty())
+    if (class_name == NULL || class_name[0] == '\0')
         return lldb::ScriptInterpreterObjectSP();
     
     if (!valobj.get())
@@ -2591,9 +2583,9 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         
         // if we are here, everything worked
         // call __lldb_init_module(debugger,dict)
-        if (!g_swig_call_module_init (basename,
-                                        m_dictionary_name.c_str(),
-                                        debugger_sp))
+        if (!g_swig_call_module_init (basename.c_str(),
+                                      m_dictionary_name.c_str(),
+                                      debugger_sp))
         {
             error.SetErrorString("calling __lldb_init_module failed");
             return false;

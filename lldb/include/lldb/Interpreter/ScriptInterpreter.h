@@ -84,11 +84,11 @@ public:
                                                           void** pyfunct_wrapper,
                                                           std::string& retval);
     
-    typedef void* (*SWIGPythonCreateSyntheticProvider) (const std::string python_class_name,
+    typedef void* (*SWIGPythonCreateSyntheticProvider) (const const char *python_class_name,
                                                         const char *session_dictionary_name,
                                                         const lldb::ValueObjectSP& valobj_sp);
 
-    typedef void* (*SWIGPythonCreateOSPlugin) (const std::string python_class_name,
+    typedef void* (*SWIGPythonCreateOSPlugin) (const const char *python_class_name,
                                                const char *session_dictionary_name,
                                                const lldb::ProcessSP& process_sp);
     
@@ -107,7 +107,7 @@ public:
                                                                      std::string& err_msg,
                                                                      lldb_private::CommandReturnObject& cmd_retobj);
     
-    typedef bool           (*SWIGPythonCallModuleInit)              (const std::string python_module_name,
+    typedef bool           (*SWIGPythonCallModuleInit)              (const const char *python_module_name,
                                                                      const char *session_dictionary_name,
                                                                      lldb::DebuggerSP& debugger);
 
@@ -261,14 +261,14 @@ public:
     }
     
     virtual lldb::ScriptInterpreterObjectSP
-    CreateSyntheticScriptedProvider (std::string class_name,
+    CreateSyntheticScriptedProvider (const char *class_name,
                                      lldb::ValueObjectSP valobj)
     {
         return lldb::ScriptInterpreterObjectSP();
     }
     
     virtual lldb::ScriptInterpreterObjectSP
-    CreateOSPlugin (std::string class_name,
+    CreateOSPlugin (const char *class_name,
                     lldb::ProcessSP process_sp)
     {
         return lldb::ScriptInterpreterObjectSP();

@@ -337,7 +337,7 @@ TypeSyntheticImpl::FrontEnd::FrontEnd(std::string pclass, ValueObject &backend) 
     m_interpreter = target_sp->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     
     if (m_interpreter != NULL)
-        m_wrapper_sp = m_interpreter->CreateSyntheticScriptedProvider(m_python_class, backend.GetSP());
+        m_wrapper_sp = m_interpreter->CreateSyntheticScriptedProvider(m_python_class.c_str(), backend.GetSP());
 }
 
 TypeSyntheticImpl::FrontEnd::~FrontEnd()
