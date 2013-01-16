@@ -1167,6 +1167,11 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat("A<int**, int**> a;");
   verifyGoogleFormat("f(b ? *c : *d);");
   verifyGoogleFormat("int a = b ? *c : *d;");
+  verifyGoogleFormat("Type* t = **x;");
+  verifyGoogleFormat("Type* t = *++*x;");
+  verifyGoogleFormat("*++*x;");
+  verifyGoogleFormat("Type* t = const_cast<T*>(&*x);");
+  verifyGoogleFormat("Type* t = x++ * y;");
 
   verifyFormat("a = *(x + y);");
   verifyFormat("a = &(x + y);");

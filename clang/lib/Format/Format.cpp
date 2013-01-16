@@ -1180,7 +1180,7 @@ private:
         PrevToken->is(tok::l_brace) || PrevToken->is(tok::comma) ||
         PrevToken->is(tok::kw_return) || PrevToken->is(tok::colon) ||
         PrevToken->Type == TT_BinaryOperator ||
-        PrevToken->Type == TT_CastRParen)
+        PrevToken->Type == TT_UnaryOperator || PrevToken->Type == TT_CastRParen)
       return TT_UnaryOperator;
 
     if (PrevToken->FormatTok.Tok.isLiteral() || PrevToken->is(tok::r_paren) ||
