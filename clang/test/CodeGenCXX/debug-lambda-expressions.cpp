@@ -61,11 +61,11 @@ int d(int x) { D y[10]; [x,y] { return y[x].x; }(); }
 // CHECK: [[DES_LAM_A]] = metadata {{.*}}[[LAM_A]], metadata !"~", metadata !"~"{{.*}}[ DW_TAG_subprogram ]
 
 // CVAR:
-// CHECK: metadata !{i32 {{.*}}, i32 0, null, metadata !"cvar", metadata !"cvar", metadata !"", metadata [[FILE]], i32 [[CVAR_LINE:.*]], metadata ![[CVAR_T:.*]], i32 0, i32 1, %class.anon.0* @cvar} ; [ DW_TAG_variable ]
+// CHECK: metadata !{i32 {{.*}}, i32 0, null, metadata !"cvar", metadata !"cvar", metadata !"", metadata [[FILE]], i32 [[CVAR_LINE:.*]], metadata ![[CVAR_T:.*]], i32 0, i32 1, %class.anon.0* @cvar, null} ; [ DW_TAG_variable ]
 // CHECK: [[CVAR_T]] = metadata !{i32 {{.*}}, null, metadata !"", metadata [[FILE]], i32 [[CVAR_LINE]], i64 8, i64 8, i32 0, i32 0, null, metadata ![[CVAR_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ]
 // CHECK: [[CVAR_ARGS]] = metadata !{metadata !{{.*}}, metadata !{{.*}}, metadata !{{.*}}}
 
 // VAR:
-// CHECK: metadata !{i32 {{.*}}, i32 0, null, metadata !"var", metadata !"var", metadata !"", metadata [[FILE]], i32 [[VAR_LINE:.*]], metadata ![[VAR_T:.*]], i32 1, i32 1, %class.anon* @var} ; [ DW_TAG_variable ]
+// CHECK: metadata !{i32 {{.*}}, i32 0, null, metadata !"var", metadata !"var", metadata !"", metadata [[FILE]], i32 [[VAR_LINE:.*]], metadata ![[VAR_T:.*]], i32 1, i32 1, %class.anon* @var, null} ; [ DW_TAG_variable ]
 // CHECK: [[VAR_T]] = metadata !{i32 {{.*}}, null, metadata !"", metadata [[FILE]], i32 [[VAR_LINE]], i64 8, i64 8, i32 0, i32 0, null, metadata ![[VAR_ARGS:.*]], i32 0, null, null} ; [ DW_TAG_class_type ]
 // CHECK: [[VAR_ARGS]] = metadata !{metadata !{{.*}}, metadata !{{.*}}, metadata !{{.*}}}

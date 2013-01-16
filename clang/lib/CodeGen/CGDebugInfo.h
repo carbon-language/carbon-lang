@@ -85,6 +85,7 @@ class CGDebugInfo {
   llvm::DenseMap<const char *, llvm::WeakVH> DIFileCache;
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
   llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH> NameSpaceCache;
+  llvm::DenseMap<const Decl *, llvm::WeakVH> StaticDataMemberCache;
 
   /// Helper functions for getOrCreateType.
   llvm::DIType CreateType(const BuiltinType *Ty);
@@ -158,7 +159,18 @@ class CGDebugInfo {
                                AccessSpecifier AS, uint64_t offsetInBits,
                                llvm::DIFile tunit,
                                llvm::DIDescriptor scope);
-  void CollectRecordStaticVars(const RecordDecl *, llvm::DIType);
+
+  // Helpers for collecting fields of a record.
+  void CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
+                                 SmallVectorImpl<llvm::Value *> &E,
+                                 llvm::DIType RecordTy);
+  void CollectRecordStaticField(const VarDecl *Var,
+                                SmallVectorImpl<llvm::Value *> &E,
+                                llvm::DIType RecordTy);
+  void CollectRecordNormalField(const FieldDecl *Field, uint64_t OffsetInBits,
+                                llvm::DIFile F,
+                                SmallVectorImpl<llvm::Value *> &E,
+                                llvm::DIType RecordTy);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
                            SmallVectorImpl<llvm::Value *> &E,
                            llvm::DIType RecordTy);
@@ -297,6 +309,11 @@ private:
   /// getFunctionDeclaration - Return debug info descriptor to describe method
   /// declaration for the given method definition.
   llvm::DISubprogram getFunctionDeclaration(const Decl *D);
+
+  /// getStaticDataMemberDeclaration - Return debug info descriptor to
+  /// describe in-class static data member declaration for the given
+  /// out-of-class definition.
+  llvm::DIDerivedType getStaticDataMemberDeclaration(const Decl *D);
 
   /// getFunctionName - Get function name for the given FunctionDecl. If the
   /// name is constructred on demand (e.g. C++ destructor) then the name

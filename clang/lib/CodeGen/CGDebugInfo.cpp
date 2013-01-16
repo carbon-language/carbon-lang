@@ -747,33 +747,6 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
 }
 
 
-void CGDebugInfo::
-CollectRecordStaticVars(const RecordDecl *RD, llvm::DIType FwdDecl) {
-  
-  for (RecordDecl::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
-       I != E; ++I)
-    if (const VarDecl *V = dyn_cast<VarDecl>(*I)) {
-      if (V->getInit()) {
-        const APValue *Value = V->evaluateValue();
-        if (Value && Value->isInt()) {
-          llvm::ConstantInt *CI
-            = llvm::ConstantInt::get(CGM.getLLVMContext(), Value->getInt());
-          
-          // Create the descriptor for static variable.
-          llvm::DIFile VUnit = getOrCreateFile(V->getLocation());
-          StringRef VName = V->getName();
-          llvm::DIType VTy = getOrCreateType(V->getType(), VUnit);
-          // Do not use DIGlobalVariable for enums.
-          if (VTy.getTag() != llvm::dwarf::DW_TAG_enumeration_type) {
-            DBuilder.createStaticVariable(FwdDecl, VName, VName, VUnit,
-                                          getLineNumber(V->getLocation()),
-                                          VTy, true, CI);
-          }
-        }
-      }
-    }
-}
-
 llvm::DIType CGDebugInfo::createFieldType(StringRef name,
                                           QualType type,
                                           uint64_t sizeInBitsOverride,
@@ -807,94 +780,155 @@ llvm::DIType CGDebugInfo::createFieldType(StringRef name,
                                    alignInBits, offsetInBits, flags, debugType);
 }
 
+/// CollectRecordLambdaFields - Helper for CollectRecordFields.
+void CGDebugInfo::
+CollectRecordLambdaFields(const CXXRecordDecl *CXXDecl,
+                          SmallVectorImpl<llvm::Value *> &elements,
+                          llvm::DIType RecordTy) {
+  // For C++11 Lambdas a Field will be the same as a Capture, but the Capture
+  // has the name and the location of the variable so we should iterate over
+  // both concurrently.
+  const ASTRecordLayout &layout = CGM.getContext().getASTRecordLayout(CXXDecl);
+  RecordDecl::field_iterator Field = CXXDecl->field_begin();
+  unsigned fieldno = 0;
+  for (CXXRecordDecl::capture_const_iterator I = CXXDecl->captures_begin(),
+         E = CXXDecl->captures_end(); I != E; ++I, ++Field, ++fieldno) {
+    const LambdaExpr::Capture C = *I;
+    if (C.capturesVariable()) {
+      VarDecl *V = C.getCapturedVar();
+      llvm::DIFile VUnit = getOrCreateFile(C.getLocation());
+      StringRef VName = V->getName();
+      uint64_t SizeInBitsOverride = 0;
+      if (Field->isBitField()) {
+        SizeInBitsOverride = Field->getBitWidthValue(CGM.getContext());
+        assert(SizeInBitsOverride && "found named 0-width bitfield");
+      }
+      llvm::DIType fieldType
+        = createFieldType(VName, Field->getType(), SizeInBitsOverride,
+                          C.getLocation(), Field->getAccess(),
+                          layout.getFieldOffset(fieldno), VUnit, RecordTy);
+      elements.push_back(fieldType);
+    } else {
+      // TODO: Need to handle 'this' in some way by probably renaming the
+      // this of the lambda class and having a field member of 'this' or
+      // by using AT_object_pointer for the function and having that be
+      // used as 'this' for semantic references.
+      assert(C.capturesThis() && "Field that isn't captured and isn't this?");
+      FieldDecl *f = *Field;
+      llvm::DIFile VUnit = getOrCreateFile(f->getLocation());
+      QualType type = f->getType();
+      llvm::DIType fieldType
+        = createFieldType("this", type, 0, f->getLocation(), f->getAccess(),
+                          layout.getFieldOffset(fieldno), VUnit, RecordTy);
+
+      elements.push_back(fieldType);
+    }
+  }
+}
+
+/// CollectRecordStaticField - Helper for CollectRecordFields.
+void CGDebugInfo::
+CollectRecordStaticField(const VarDecl *Var,
+                         SmallVectorImpl<llvm::Value *> &elements,
+                         llvm::DIType RecordTy) {
+  // Create the descriptor for the static variable, with or without
+  // constant initializers.
+  llvm::DIFile VUnit = getOrCreateFile(Var->getLocation());
+  llvm::DIType VTy = getOrCreateType(Var->getType(), VUnit);
+
+  // Do not describe enums as static members.
+  if (VTy.getTag() == llvm::dwarf::DW_TAG_enumeration_type)
+    return;
+
+  unsigned LineNumber = getLineNumber(Var->getLocation());
+  StringRef VName = Var->getName();
+  llvm::ConstantInt *CI = NULL;
+  if (Var->getInit()) {
+    const APValue *Value = Var->evaluateValue();
+    if (Value && Value->isInt())
+      CI = llvm::ConstantInt::get(CGM.getLLVMContext(), Value->getInt());
+  }
+
+  unsigned Flags = 0;
+  AccessSpecifier Access = Var->getAccess();
+  if (Access == clang::AS_private)
+    Flags |= llvm::DIDescriptor::FlagPrivate;
+  else if (Access == clang::AS_protected)
+    Flags |= llvm::DIDescriptor::FlagProtected;
+
+  llvm::DIType GV = DBuilder.createStaticMemberType(RecordTy, VName, VUnit,
+                                                    LineNumber, VTy, Flags, CI);
+  elements.push_back(GV);
+  StaticDataMemberCache[Var->getCanonicalDecl()] = llvm::WeakVH(GV);
+}
+
+/// CollectRecordNormalField - Helper for CollectRecordFields.
+void CGDebugInfo::
+CollectRecordNormalField(const FieldDecl *field, uint64_t OffsetInBits,
+                         llvm::DIFile tunit,
+                         SmallVectorImpl<llvm::Value *> &elements,
+                         llvm::DIType RecordTy) {
+  StringRef name = field->getName();
+  QualType type = field->getType();
+
+  // Ignore unnamed fields unless they're anonymous structs/unions.
+  if (name.empty() && !type->isRecordType())
+    return;
+
+  uint64_t SizeInBitsOverride = 0;
+  if (field->isBitField()) {
+    SizeInBitsOverride = field->getBitWidthValue(CGM.getContext());
+    assert(SizeInBitsOverride && "found named 0-width bitfield");
+  }
+
+  llvm::DIType fieldType
+    = createFieldType(name, type, SizeInBitsOverride,
+                      field->getLocation(), field->getAccess(),
+                      OffsetInBits, tunit, RecordTy);
+
+  elements.push_back(fieldType);
+}
+
 /// CollectRecordFields - A helper function to collect debug info for
 /// record fields. This is used while creating debug info entry for a Record.
 void CGDebugInfo::
 CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
                     SmallVectorImpl<llvm::Value *> &elements,
                     llvm::DIType RecordTy) {
-  const ASTRecordLayout &layout = CGM.getContext().getASTRecordLayout(record);
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(record);
 
-  // For C++11 Lambdas a Field will be the same as a Capture, but the Capture
-  // has the name and the location of the variable so we should iterate over
-  // both concurrently.
-  if (CXXDecl && CXXDecl->isLambda()) {
-    RecordDecl::field_iterator Field = CXXDecl->field_begin();
-    unsigned fieldno = 0;
-    for (CXXRecordDecl::capture_const_iterator I = CXXDecl->captures_begin(),
-           E = CXXDecl->captures_end(); I != E; ++I, ++Field, ++fieldno) {
-      const LambdaExpr::Capture C = *I;
-      if (C.capturesVariable()) {
-        VarDecl *V = C.getCapturedVar();
-        llvm::DIFile VUnit = getOrCreateFile(C.getLocation());
-        StringRef VName = V->getName();
-        uint64_t SizeInBitsOverride = 0;
-        if (Field->isBitField()) {
-          SizeInBitsOverride = Field->getBitWidthValue(CGM.getContext());
-          assert(SizeInBitsOverride && "found named 0-width bitfield");
-        }
-        llvm::DIType fieldType
-          = createFieldType(VName, Field->getType(), SizeInBitsOverride, C.getLocation(),
-                            Field->getAccess(), layout.getFieldOffset(fieldno),
-                            VUnit, RecordTy);
-        elements.push_back(fieldType);
-      } else {
-        // TODO: Need to handle 'this' in some way by probably renaming the
-        // this of the lambda class and having a field member of 'this' or
-        // by using AT_object_pointer for the function and having that be
-        // used as 'this' for semantic references.
-        assert(C.capturesThis() && "Field that isn't captured and isn't this?");
-        FieldDecl *f = *Field;
-        llvm::DIFile VUnit = getOrCreateFile(f->getLocation());
-        QualType type = f->getType();
-        llvm::DIType fieldType
-          = createFieldType("this", type, 0, f->getLocation(), f->getAccess(),
-                            layout.getFieldOffset(fieldno), VUnit, RecordTy);
+  if (CXXDecl && CXXDecl->isLambda())
+    CollectRecordLambdaFields(CXXDecl, elements, RecordTy);
+  else {
+    const ASTRecordLayout &layout = CGM.getContext().getASTRecordLayout(record);
 
-        elements.push_back(fieldType);
-      }
-    }
-  } else {
+    // Field number for non-static fields.
     unsigned fieldNo = 0;
+
+    // Bookkeeping for an ms struct, which ignores certain fields.
     bool IsMsStruct = record->isMsStruct(CGM.getContext());
     const FieldDecl *LastFD = 0;
-    for (RecordDecl::field_iterator I = record->field_begin(),
-           E = record->field_end();
-         I != E; ++I, ++fieldNo) {
-      FieldDecl *field = *I;
 
-      if (IsMsStruct) {
-        // Zero-length bitfields following non-bitfield members are ignored
-        if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((field), LastFD)) {
-          --fieldNo;
-          continue;
+    // Static and non-static members should appear in the same order as
+    // the corresponding declarations in the source program.
+    for (RecordDecl::decl_iterator I = record->decls_begin(),
+           E = record->decls_end(); I != E; ++I)
+      if (const VarDecl *V = dyn_cast<VarDecl>(*I))
+        CollectRecordStaticField(V, elements, RecordTy);
+      else if (FieldDecl *field = dyn_cast<FieldDecl>(*I)) {
+        if (IsMsStruct) {
+          // Zero-length bitfields following non-bitfield members are
+          // completely ignored; we don't even count them.
+          if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((field), LastFD))
+            continue;
+          LastFD = field;
         }
-        LastFD = field;
+        CollectRecordNormalField(field, layout.getFieldOffset(fieldNo),
+                                 tunit, elements, RecordTy);
+
+        // Bump field number for next field.
+        ++fieldNo;
       }
-
-      StringRef name = field->getName();
-      QualType type = field->getType();
-
-      // Ignore unnamed fields unless they're anonymous structs/unions.
-      if (name.empty() && !type->isRecordType()) {
-        LastFD = field;
-        continue;
-      }
-
-      uint64_t SizeInBitsOverride = 0;
-      if (field->isBitField()) {
-        SizeInBitsOverride = field->getBitWidthValue(CGM.getContext());
-        assert(SizeInBitsOverride && "found named 0-width bitfield");
-      }
-
-      llvm::DIType fieldType
-        = createFieldType(name, type, SizeInBitsOverride,
-                          field->getLocation(), field->getAccess(),
-                          layout.getFieldOffset(fieldNo), tunit, RecordTy);
-
-      elements.push_back(fieldType);
-    }
   }
 }
 
@@ -1296,8 +1330,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
     CollectVTableInfo(CXXDecl, DefUnit, EltTys);
   }
 
-  // Collect static variables with initializers and other fields.
-  CollectRecordStaticVars(RD, FwdDecl);
+  // Collect data fields (including static variables and any initializers).
   CollectRecordFields(RD, DefUnit, EltTys, FwdDecl);
   llvm::DIArray TParamsArray;
   if (CXXDecl) {
@@ -2679,6 +2712,21 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
   declare->setDebugLoc(llvm::DebugLoc::get(line, column, scope));
 }
 
+/// getStaticDataMemberDeclaration - If D is an out-of-class definition of
+/// a static data member of a class, find its corresponding in-class
+/// declaration.
+llvm::DIDerivedType CGDebugInfo::getStaticDataMemberDeclaration(const Decl *D) {
+  if (cast<VarDecl>(D)->isStaticDataMember()) {
+    llvm::DenseMap<const Decl *, llvm::WeakVH>::iterator
+      MI = StaticDataMemberCache.find(D->getCanonicalDecl());
+    if (MI != StaticDataMemberCache.end())
+      // Verify the info still exists.
+      if (llvm::Value *V = MI->second)
+        return llvm::DIDerivedType(cast<llvm::MDNode>(V));
+  }
+  return llvm::DIDerivedType();
+}
+
 /// EmitGlobalVariable - Emit information about a global variable.
 void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
                                      const VarDecl *D) {
@@ -2710,7 +2758,8 @@ void CGDebugInfo::EmitGlobalVariable(llvm::GlobalVariable *Var,
     getContextDescriptor(dyn_cast<Decl>(D->getDeclContext()));
   DBuilder.createStaticVariable(DContext, DeclName, LinkageName,
                                 Unit, LineNo, getOrCreateType(T, Unit),
-                                Var->hasInternalLinkage(), Var);
+                                Var->hasInternalLinkage(), Var,
+                                getStaticDataMemberDeclaration(D));
 }
 
 /// EmitGlobalVariable - Emit information about an objective-c interface.
@@ -2757,7 +2806,8 @@ void CGDebugInfo::EmitGlobalVariable(const ValueDecl *VD,
     return;
   DBuilder.createStaticVariable(Unit, Name, Name, Unit,
                                 getLineNumber(VD->getLocation()),
-                                Ty, true, Init);
+                                Ty, true, Init,
+                                getStaticDataMemberDeclaration(VD));
 }
 
 /// getOrCreateNamesSpace - Return namespace descriptor for the given
