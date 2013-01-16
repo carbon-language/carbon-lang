@@ -347,6 +347,8 @@ static void *Allocate(uptr size, uptr alignment, StackTrace *stack,
     allocated = allocator.Allocate(cache, needed_size, 8, false);
   }
   uptr alloc_beg = reinterpret_cast<uptr>(allocated);
+  // Clear the first allocated word (an old kMemalignMagic may still be there).
+  reinterpret_cast<uptr *>(alloc_beg)[0] = 0;
   uptr alloc_end = alloc_beg + needed_size;
   uptr beg_plus_redzone = alloc_beg + rz_size;
   uptr user_beg = beg_plus_redzone;
