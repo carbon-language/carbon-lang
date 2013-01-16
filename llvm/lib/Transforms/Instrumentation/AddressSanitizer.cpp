@@ -53,7 +53,7 @@ using namespace llvm;
 static const uint64_t kDefaultShadowScale = 3;
 static const uint64_t kDefaultShadowOffset32 = 1ULL << 29;
 static const uint64_t kDefaultShadowOffset64 = 1ULL << 44;
-static const uint64_t kDefaultShadowOffsetAndroid = 0;
+static const uint64_t kDefaultShadowOffsetPie = 0;
 
 static const size_t kMaxStackMallocSize = 1 << 16;  // 64K
 static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
@@ -186,14 +186,38 @@ class SetOfDynamicallyInitializedGlobals {
   SmallSet<GlobalValue*, 32> DynInitGlobals;
 };
 
-static int MappingScale() {
-  return ClMappingScale ? ClMappingScale : kDefaultShadowScale;
+/// This struct defines the shadow mapping using the rule:
+///   shadow = (mem >> Scale) + Offset.
+struct ShadowMapping {
+  int Scale;
+  uint64_t Offset;
+};
+
+static ShadowMapping getShadowMapping(const Module &M, int LongSize) {
+  llvm::Triple targetTriple(M.getTargetTriple());
+  bool isAndroid = targetTriple.getEnvironment() == llvm::Triple::Android;
+
+  ShadowMapping Mapping;
+
+  Mapping.Offset = isAndroid ? kDefaultShadowOffsetPie :
+      (LongSize == 32 ? kDefaultShadowOffset32 : kDefaultShadowOffset64);
+  if (ClMappingOffsetLog >= 0) {
+    // Zero offset log is the special case.
+    Mapping.Offset = (ClMappingOffsetLog == 0) ? 0 : 1ULL << ClMappingOffsetLog;
+  }
+
+  Mapping.Scale = kDefaultShadowScale;
+  if (ClMappingScale) {
+    Mapping.Scale = ClMappingScale;
+  }
+
+  return Mapping;
 }
 
-static size_t RedzoneSize() {
+static size_t RedzoneSizeForScale(int MappingScale) {
   // Redzone used for stack and globals is at least 32 bytes.
   // For scales 6 and 7, the redzone has to be 64 and 128 bytes respectively.
-  return std::max(32U, 1U << MappingScale());
+  return std::max(32U, 1U << MappingScale);
 }
 
 /// AddressSanitizer: instrument the code in module to find memory bugs.
@@ -227,6 +251,7 @@ struct AddressSanitizer : public FunctionPass {
   void createInitializerPoisonCalls(Module &M,
                                     Value *FirstAddr, Value *LastAddr);
   bool maybeInsertAsanInitAtFunctionEntry(Function &F);
+  void emitShadowMapping(Module &M, IRBuilder<> &IRB) const;
   virtual bool doInitialization(Module &M);
   static char ID;  // Pass identification, replacement for typeid
 
@@ -242,9 +267,9 @@ struct AddressSanitizer : public FunctionPass {
   bool CheckLifetime;
   LLVMContext *C;
   DataLayout *TD;
-  uint64_t MappingOffset;
   int LongSize;
   Type *IntptrTy;
+  ShadowMapping Mapping;
   Function *AsanCtorFunction;
   Function *AsanInitFunction;
   Function *AsanHandleNoReturnFunc;
@@ -278,6 +303,9 @@ class AddressSanitizerModule : public ModulePass {
   bool ShouldInstrumentGlobal(GlobalVariable *G);
   void createInitializerPoisonCalls(Module &M, Value *FirstAddr,
                                     Value *LastAddr);
+  size_t RedzoneSize() const {
+    return RedzoneSizeForScale(Mapping.Scale);
+  }
 
   bool CheckInitOrder;
   SmallString<64> BlacklistFile;
@@ -286,6 +314,7 @@ class AddressSanitizerModule : public ModulePass {
   Type *IntptrTy;
   LLVMContext *C;
   DataLayout *TD;
+  ShadowMapping Mapping;
   Function *AsanPoisonGlobals;
   Function *AsanUnpoisonGlobals;
   Function *AsanRegisterGlobals;
@@ -308,6 +337,7 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   LLVMContext *C;
   Type *IntptrTy;
   Type *IntptrPtrTy;
+  ShadowMapping Mapping;
 
   SmallVector<AllocaInst*, 16> AllocaVec;
   SmallVector<Instruction*, 8> RetVec;
@@ -332,7 +362,8 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
   FunctionStackPoisoner(Function &F, AddressSanitizer &ASan)
       : F(F), ASan(ASan), DIB(*F.getParent()), C(ASan.C),
         IntptrTy(ASan.IntptrTy), IntptrPtrTy(PointerType::get(IntptrTy, 0)),
-        TotalStackSize(0), StackAlignment(1 << MappingScale()) {}
+        Mapping(ASan.Mapping),
+        TotalStackSize(0), StackAlignment(1 << Mapping.Scale) {}
 
   bool runOnFunction() {
     if (!ClStack) return false;
@@ -411,6 +442,9 @@ struct FunctionStackPoisoner : public InstVisitor<FunctionStackPoisoner> {
             AI.getAllocatedType()->isSized());
   }
 
+  size_t RedzoneSize() const {
+    return RedzoneSizeForScale(Mapping.Scale);
+  }
   uint64_t getAllocaSizeInBytes(AllocaInst *AI) {
     Type *Ty = AI->getAllocatedType();
     uint64_t SizeInBytes = ASan.TD->getTypeAllocSize(Ty);
@@ -473,12 +507,12 @@ static bool GlobalWasGeneratedByAsan(GlobalVariable *G) {
 
 Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
   // Shadow >> scale
-  Shadow = IRB.CreateLShr(Shadow, MappingScale());
-  if (MappingOffset == 0)
+  Shadow = IRB.CreateLShr(Shadow, Mapping.Scale);
+  if (Mapping.Offset == 0)
     return Shadow;
   // (Shadow >> scale) | offset
   return IRB.CreateOr(Shadow, ConstantInt::get(IntptrTy,
-                                               MappingOffset));
+                                               Mapping.Offset));
 }
 
 void AddressSanitizer::instrumentMemIntrinsicParam(
@@ -614,7 +648,7 @@ Instruction *AddressSanitizer::generateCrashCode(
 Value *AddressSanitizer::createSlowPathCmp(IRBuilder<> &IRB, Value *AddrLong,
                                             Value *ShadowValue,
                                             uint32_t TypeSize) {
-  size_t Granularity = 1 << MappingScale();
+  size_t Granularity = 1 << Mapping.Scale;
   // Addr & (Granularity - 1)
   Value *LastAccessedByte = IRB.CreateAnd(
       AddrLong, ConstantInt::get(IntptrTy, Granularity - 1));
@@ -635,7 +669,7 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
   Value *AddrLong = IRB.CreatePointerCast(Addr, IntptrTy);
 
   Type *ShadowTy  = IntegerType::get(
-      *C, std::max(8U, TypeSize >> MappingScale()));
+      *C, std::max(8U, TypeSize >> Mapping.Scale));
   Type *ShadowPtrTy = PointerType::get(ShadowTy, 0);
   Value *ShadowPtr = memToShadow(AddrLong, IRB);
   Value *CmpVal = Constant::getNullValue(ShadowTy);
@@ -644,7 +678,7 @@ void AddressSanitizer::instrumentAddress(Instruction *OrigIns,
 
   Value *Cmp = IRB.CreateICmpNE(ShadowValue, CmpVal);
   size_t AccessSizeIndex = TypeSizeToSizeIndex(TypeSize);
-  size_t Granularity = 1 << MappingScale();
+  size_t Granularity = 1 << Mapping.Scale;
   TerminatorInst *CrashTerm = 0;
 
   if (ClAlwaysSlowPath || (TypeSize < 8 * Granularity)) {
@@ -782,7 +816,9 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   BL.reset(new BlackList(BlacklistFile));
   if (BL->isIn(M)) return false;
   C = &(M.getContext());
-  IntptrTy = Type::getIntNTy(*C, TD->getPointerSizeInBits());
+  int LongSize = TD->getPointerSizeInBits();
+  IntptrTy = Type::getIntNTy(*C, LongSize);
+  Mapping = getShadowMapping(M, LongSize);
   initializeCallbacks(M);
   DynamicallyInitializedGlobals.Init(M);
 
@@ -930,6 +966,28 @@ void AddressSanitizer::initializeCallbacks(Module &M) {
                             /*hasSideEffects=*/true);
 }
 
+void AddressSanitizer::emitShadowMapping(Module &M, IRBuilder<> &IRB) const {
+  // Tell the values of mapping offset and scale to the run-time if they are
+  // specified by command-line flags.
+  if (ClMappingOffsetLog >= 0) {
+    GlobalValue *asan_mapping_offset =
+        new GlobalVariable(M, IntptrTy, true, GlobalValue::LinkOnceODRLinkage,
+                       ConstantInt::get(IntptrTy, Mapping.Offset),
+                       kAsanMappingOffsetName);
+    // Read the global, otherwise it may be optimized away.
+    IRB.CreateLoad(asan_mapping_offset, true);
+  }
+
+  if (ClMappingScale) {
+    GlobalValue *asan_mapping_scale =
+        new GlobalVariable(M, IntptrTy, true, GlobalValue::LinkOnceODRLinkage,
+                           ConstantInt::get(IntptrTy, Mapping.Scale),
+                           kAsanMappingScaleName);
+    // Read the global, otherwise it may be optimized away.
+    IRB.CreateLoad(asan_mapping_scale, true);
+  }
+}
+
 // virtual
 bool AddressSanitizer::doInitialization(Module &M) {
   // Initialize the private fields. No one has accessed them before.
@@ -955,41 +1013,10 @@ bool AddressSanitizer::doInitialization(Module &M) {
   AsanInitFunction->setLinkage(Function::ExternalLinkage);
   IRB.CreateCall(AsanInitFunction);
 
-  llvm::Triple targetTriple(M.getTargetTriple());
-  bool isAndroid = targetTriple.getEnvironment() == llvm::Triple::Android;
-
-  MappingOffset = isAndroid ? kDefaultShadowOffsetAndroid :
-    (LongSize == 32 ? kDefaultShadowOffset32 : kDefaultShadowOffset64);
-  if (ClMappingOffsetLog >= 0) {
-    if (ClMappingOffsetLog == 0) {
-      // special case
-      MappingOffset = 0;
-    } else {
-      MappingOffset = 1ULL << ClMappingOffsetLog;
-    }
-  }
-
-
-  if (ClMappingOffsetLog >= 0) {
-    // Tell the run-time the current values of mapping offset and scale.
-    GlobalValue *asan_mapping_offset =
-        new GlobalVariable(M, IntptrTy, true, GlobalValue::LinkOnceODRLinkage,
-                       ConstantInt::get(IntptrTy, MappingOffset),
-                       kAsanMappingOffsetName);
-    // Read the global, otherwise it may be optimized away.
-    IRB.CreateLoad(asan_mapping_offset, true);
-  }
-  if (ClMappingScale) {
-    GlobalValue *asan_mapping_scale =
-        new GlobalVariable(M, IntptrTy, true, GlobalValue::LinkOnceODRLinkage,
-                           ConstantInt::get(IntptrTy, MappingScale()),
-                           kAsanMappingScaleName);
-    // Read the global, otherwise it may be optimized away.
-    IRB.CreateLoad(asan_mapping_scale, true);
-  }
+  Mapping = getShadowMapping(M, LongSize);
+  emitShadowMapping(M, IRB);
 
   appendToGlobalCtors(M, AsanCtorFunction, kAsanCtorAndCtorPriority);
-
   return true;
 }
 
@@ -1147,7 +1174,7 @@ void FunctionStackPoisoner::initializeCallbacks(Module &M) {
 void FunctionStackPoisoner::poisonRedZones(
   const ArrayRef<AllocaInst*> &AllocaVec, IRBuilder<> IRB, Value *ShadowBase,
   bool DoPoison) {
-  size_t ShadowRZSize = RedzoneSize() >> MappingScale();
+  size_t ShadowRZSize = RedzoneSize() >> Mapping.Scale;
   assert(ShadowRZSize >= 1 && ShadowRZSize <= 4);
   Type *RZTy = Type::getIntNTy(*C, ShadowRZSize * 8);
   Type *RZPtrTy = PointerType::get(RZTy, 0);
@@ -1178,13 +1205,13 @@ void FunctionStackPoisoner::poisonRedZones(
       // Poison the partial redzone at right
       Ptr = IRB.CreateAdd(
           ShadowBase, ConstantInt::get(IntptrTy,
-                                       (Pos >> MappingScale()) - ShadowRZSize));
+                                       (Pos >> Mapping.Scale) - ShadowRZSize));
       size_t AddressableBytes = RedzoneSize() - (AlignedSize - SizeInBytes);
       uint32_t Poison = 0;
       if (DoPoison) {
         PoisonShadowPartialRightRedzone((uint8_t*)&Poison, AddressableBytes,
                                         RedzoneSize(),
-                                        1ULL << MappingScale(),
+                                        1ULL << Mapping.Scale,
                                         kAsanStackPartialRedzoneMagic);
       }
       Value *PartialPoison = ConstantInt::get(RZTy, Poison);
@@ -1193,7 +1220,7 @@ void FunctionStackPoisoner::poisonRedZones(
 
     // Poison the full redzone at right.
     Ptr = IRB.CreateAdd(ShadowBase,
-                        ConstantInt::get(IntptrTy, Pos >> MappingScale()));
+                        ConstantInt::get(IntptrTy, Pos >> Mapping.Scale));
     bool LastAlloca = (i == AllocaVec.size() - 1);
     Value *Poison = LastAlloca ? PoisonRight : PoisonMid;
     IRB.CreateStore(Poison, IRB.CreateIntToPtr(Ptr, RZPtrTy));
