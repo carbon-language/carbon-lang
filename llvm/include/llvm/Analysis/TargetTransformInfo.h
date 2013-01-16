@@ -27,6 +27,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
 
@@ -208,6 +209,58 @@ public:
 /// delegate to anything and uses the STTI and VTTI objects passed in to
 /// satisfy the queries.
 ImmutablePass *createNoTargetTransformInfoPass();
+
+//======================================= COST TABLES ==
+
+/// \brief An entry in a cost table
+///
+/// Use it as a static array and call the CostTable below to
+/// iterate through it and find the elements you're looking for.
+///
+/// Leaving Types with fixed size to avoid complications during
+/// static destruction.
+struct CostTableEntry {
+  int ISD;       // instruction ID
+  MVT Types[2];  // Types { dest, source }
+  unsigned Cost; // ideal cost
+};
+
+/// \brief Cost table, containing one or more costs for different instructions
+///
+/// This class implement the cost table lookup, to simplify
+/// how targets declare their own costs.
+class CostTable {
+  const CostTableEntry *table;
+  const size_t size;
+  const unsigned numTypes;
+
+protected:
+  /// Searches for costs on the table
+  unsigned _findCost(int ISD, MVT *Types) const;
+
+  // We don't want to expose a multi-type cost table, since types are not
+  // sequential by nature. If you need more cost table types, implement
+  // them below.
+  CostTable(const CostTableEntry *table, const size_t size, unsigned numTypes);
+
+public:
+  /// Cost Not found while searching
+  static const unsigned COST_NOT_FOUND = -1;
+};
+
+/// Specialisation for one-type cost table
+class UnaryCostTable : public CostTable {
+public:
+  UnaryCostTable(const CostTableEntry *table, const size_t size);
+  unsigned findCost(int ISD, MVT Type) const;
+};
+
+/// Specialisation for two-type cost table
+class BinaryCostTable : public CostTable {
+public:
+  BinaryCostTable(const CostTableEntry *table, const size_t size);
+  unsigned findCost(int ISD, MVT Type, MVT SrcType) const;
+};
 
 } // End llvm namespace
 
