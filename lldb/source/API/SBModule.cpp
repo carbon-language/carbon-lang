@@ -480,6 +480,15 @@ SBModule::FindGlobalVariables (SBTarget &target, const char *name, uint32_t max_
     return sb_value_list;
 }
 
+lldb::SBValue
+SBModule::FindFirstGlobalVariable (lldb::SBTarget &target, const char *name)
+{
+    SBValueList sb_value_list(FindGlobalVariables(target, name, 1));
+    if (sb_value_list.IsValid() && sb_value_list.GetSize() > 0)
+        return sb_value_list.GetValueAtIndex(0);
+    return SBValue();
+}
+
 lldb::SBType
 SBModule::FindFirstType (const char *name_cstr)
 {

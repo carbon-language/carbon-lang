@@ -175,6 +175,22 @@ public:
                          const char *name, 
                          uint32_t max_matches);
     
+    //------------------------------------------------------------------
+    /// Find the first global (or static) variable by name.
+    ///
+    /// @param[in] target
+    ///     A valid SBTarget instance representing the debuggee.
+    ///
+    /// @param[in] name
+    ///     The name of the global or static variable we are looking
+    ///     for.
+    ///
+    /// @return
+    ///     An SBValue that gets filled in with the found variable (if any).
+    //------------------------------------------------------------------
+    lldb::SBValue
+    FindFirstGlobalVariable (lldb::SBTarget &target, const char *name);
+    
     lldb::SBType
     FindFirstType (const char* name);
     

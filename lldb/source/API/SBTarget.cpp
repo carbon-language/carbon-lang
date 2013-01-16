@@ -2232,6 +2232,15 @@ SBTarget::FindGlobalVariables (const char *name, uint32_t max_matches)
     return sb_value_list;
 }
 
+lldb::SBValue
+SBTarget::FindFirstGlobalVariable (const char* name)
+{
+    SBValueList sb_value_list(FindGlobalVariables(name, 1));
+    if (sb_value_list.IsValid() && sb_value_list.GetSize() > 0)
+        return sb_value_list.GetValueAtIndex(0);
+    return SBValue();
+}
+
 SBSourceManager
 SBTarget::GetSourceManager()
 {
