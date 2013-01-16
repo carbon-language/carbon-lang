@@ -2675,17 +2675,6 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       PtrState &S = I->second;
       succ_const_iterator SI(TI), SE(TI, false);
 
-      // If the terminator is an invoke marked with the
-      // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
-      // ignored, for ARC purposes.
-      if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind)) {
-        DEBUG(dbgs() << "ObjCARCOpt::CheckForCFGHazards: Found an invoke "
-                        "terminator marked with "
-                        "clang.arc.no_objc_arc_exceptions. Ignoring unwind "
-                        "edge.\n");
-        --SE;
-      }
-
       for (; SI != SE; ++SI) {
         Sequence SuccSSeq = S_None;
         bool SuccSRRIKnownSafe = false;
@@ -2733,17 +2722,6 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       bool AllSuccsHaveSame = true;
       PtrState &S = I->second;
       succ_const_iterator SI(TI), SE(TI, false);
-
-      // If the terminator is an invoke marked with the
-      // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
-      // ignored, for ARC purposes.
-      if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind)) {
-        DEBUG(dbgs() << "ObjCARCOpt::CheckForCFGHazards: Found an invoke "
-                        "terminator marked with "
-                        "clang.arc.no_objc_arc_exceptions. Ignoring unwind "
-                        "edge.\n");
-        --SE;
-      }
 
       for (; SI != SE; ++SI) {
         Sequence SuccSSeq = S_None;
@@ -3198,17 +3176,6 @@ ComputePostOrders(Function &F,
     BasicBlock *CurrBB = SuccStack.back().first;
     TerminatorInst *TI = cast<TerminatorInst>(&CurrBB->back());
     succ_iterator SE(TI, false);
-
-    // If the terminator is an invoke marked with the
-    // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
-    // ignored, for ARC purposes.
-    if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind)) {
-        DEBUG(dbgs() << "ObjCARCOpt::ComputePostOrders: Found an invoke "
-                        "terminator marked with "
-                        "clang.arc.no_objc_arc_exceptions. Ignoring unwind "
-                        "edge.\n");
-      --SE;
-    }
 
     while (SuccStack.back().second != SE) {
       BasicBlock *SuccBB = *SuccStack.back().second++;
