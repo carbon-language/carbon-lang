@@ -1,4 +1,4 @@
-; RUN: llc %s -o %t -filetype=obj -O0
+; RUN: llc %s -o %t -filetype=obj -O0 -mtriple=x86_64-unknown-linux-gnu
 ; RUN: llvm-dwarfdump %t | FileCheck %s -check-prefix=PRESENT
 ; RUN: llvm-dwarfdump %t | FileCheck %s -check-prefix=ABSENT
 ; Verify that attributes we do want are PRESENT;
