@@ -317,7 +317,7 @@ inline unsigned CountPopulation_32(uint32_t Value) {
 inline unsigned CountPopulation_64(uint64_t Value) {
 #if __GNUC__ >= 4
   return __builtin_popcountll(Value);
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && defined(_M_X64)
   return __popcnt64(Value);
 #else
   uint64_t v = Value - ((Value >> 1) & 0x5555555555555555ULL);
