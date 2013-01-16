@@ -1480,6 +1480,11 @@ private:
     unsigned Length = 0;
     if (!fitsIntoLimit(I->First, Limit, &Length))
       return false;
+
+    // We can never merge stuff if there are trailing line comments.
+    if (I->Last->Type == TT_LineComment)
+      return true;
+
     if (Limit == Length)
       return true; // Couldn't fit a space.
     Limit -= Length + 1; // One space.
@@ -1516,6 +1521,8 @@ private:
     if (!Style.AllowShortIfStatementsOnASingleLine)
       return;
     AnnotatedLine &Line = *I;
+    if (Line.Last->isNot(tok::r_paren))
+      return;
     if (!fitsIntoLimit((I + 1)->First, Limit))
       return;
     if ((I + 1)->First.is(tok::kw_if) || (I + 1)->First.Type == TT_LineComment)

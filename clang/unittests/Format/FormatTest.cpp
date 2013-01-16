@@ -145,7 +145,17 @@ TEST_F(FormatTest, FormatIfWithoutCompountStatement) {
   verifyFormat("if (a) return;", getGoogleStyleWithColumns(14));
   verifyFormat("if (a)\n  return;", getGoogleStyleWithColumns(13));
   verifyFormat("if (aaaaaaaaa)\n"
-                     "  return;", getGoogleStyleWithColumns(14));
+               "  return;", getGoogleStyleWithColumns(14));
+  verifyGoogleFormat("if (a)  // Can't merge this\n"
+                     "  f();\n");
+  verifyGoogleFormat("if (a) /* still don't merge */\n"
+                     "  f();");
+  verifyGoogleFormat("if (a) {  // Never merge this\n"
+                     "  f();\n"
+                     "}");
+  verifyGoogleFormat("if (a) { /* Never merge this */\n"
+                     "  f();\n"
+                     "}");
 }
 
 TEST_F(FormatTest, ParseIfElse) {
