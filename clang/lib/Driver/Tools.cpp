@@ -1442,8 +1442,8 @@ static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
     RelaxDefault);
 }
 
-SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args) {
-  Kind = 0;
+SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
+    : Kind(0), BlacklistFile(""), MsanTrackOrigins(false) {
 
   for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
     unsigned Add, Remove;
