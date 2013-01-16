@@ -2913,10 +2913,12 @@ static void LookupVisibleDecls(DeclContext *Ctx, LookupResult &Result,
   // Traverse the contexts of Objective-C classes.
   if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Ctx)) {
     // Traverse categories.
-    for (ObjCCategoryDecl *Category = IFace->getCategoryList();
-         Category; Category = Category->getNextClassCategory()) {
+    for (ObjCInterfaceDecl::visible_categories_iterator
+           Cat = IFace->visible_categories_begin(),
+           CatEnd = IFace->visible_categories_end();
+         Cat != CatEnd; ++Cat) {
       ShadowContextRAII Shadow(Visited);
-      LookupVisibleDecls(Category, Result, QualifiedNameLookup, false,
+      LookupVisibleDecls(*Cat, Result, QualifiedNameLookup, false,
                          Consumer, Visited);
     }
 

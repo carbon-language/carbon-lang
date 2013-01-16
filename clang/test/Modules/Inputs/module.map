@@ -37,10 +37,18 @@ module category_top { header "category_top.h" }
 module category_left { 
   header "category_left.h" 
   export category_top
+
+  explicit module sub {
+    header "category_left_sub.h"
+  }
 }
 module category_right { 
   header "category_right.h" 
   export category_top
+
+  explicit module sub {
+    header "category_right_sub.h"
+  }
 }
 module category_bottom { 
   header "category_bottom.h" 

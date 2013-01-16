@@ -2404,7 +2404,7 @@ namespace {
       if (Tail)
         ASTDeclReader::setNextObjCCategory(Tail, Cat);
       else
-        Interface->setCategoryList(Cat);
+        Interface->setCategoryListRaw(Cat);
       Tail = Cat;
     }
     
@@ -2419,13 +2419,15 @@ namespace {
         Tail(0) 
     {
       // Populate the name -> category map with the set of known categories.
-      for (ObjCCategoryDecl *Cat = Interface->getCategoryList(); Cat;
-           Cat = Cat->getNextClassCategory()) {
+      for (ObjCInterfaceDecl::known_categories_iterator
+             Cat = Interface->known_categories_begin(),
+             CatEnd = Interface->known_categories_end();
+           Cat != CatEnd; ++Cat) {
         if (Cat->getDeclName())
-          NameCategoryMap[Cat->getDeclName()] = Cat;
+          NameCategoryMap[Cat->getDeclName()] = *Cat;
         
         // Keep track of the tail of the category list.
-        Tail = Cat;
+        Tail = *Cat;
       }
     }
 

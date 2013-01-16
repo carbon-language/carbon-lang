@@ -141,10 +141,12 @@ public:
 
     AtPropDeclsTy AtExtProps;
     // Look through extensions.
-    for (ObjCCategoryDecl *Cat = iface->getCategoryList();
-           Cat; Cat = Cat->getNextClassCategory())
-      if (Cat->IsClassExtension())
-        collectProperties(Cat, AtExtProps, &AtProps);
+    for (ObjCInterfaceDecl::visible_extensions_iterator
+           ext = iface->visible_extensions_begin(),
+           extEnd = iface->visible_extensions_end();
+         ext != extEnd; ++ext) {
+      collectProperties(*ext, AtExtProps, &AtProps);
+    }
 
     for (AtPropDeclsTy::iterator
            I = AtExtProps.begin(), E = AtExtProps.end(); I != E; ++I) {

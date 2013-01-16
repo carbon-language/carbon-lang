@@ -894,7 +894,166 @@ public:
                                               : superCls; 
   }
 
-  ObjCCategoryDecl* getCategoryList() const {
+  /// \brief Iterator that walks over the list of categories, filtering out
+  /// those that do not meet specific criteria.
+  ///
+  /// This class template is used for the various permutations of category
+  /// and extension iterators.
+  template<bool (*Filter)(ObjCCategoryDecl *)>
+  class filtered_category_iterator {
+    ObjCCategoryDecl *Current;
+
+    void findAcceptableCategory();
+    
+  public:
+    typedef ObjCCategoryDecl *      value_type;
+    typedef value_type              reference;
+    typedef value_type              pointer;
+    typedef std::ptrdiff_t          difference_type;
+    typedef std::input_iterator_tag iterator_category;
+
+    filtered_category_iterator() : Current(0) { }
+    explicit filtered_category_iterator(ObjCCategoryDecl *Current)
+      : Current(Current)
+    {
+      findAcceptableCategory();
+    }
+
+    reference operator*() const { return Current; }
+    pointer operator->() const { return Current; }
+
+    filtered_category_iterator &operator++();
+
+    filtered_category_iterator operator++(int) {
+      filtered_category_iterator Tmp = *this;
+      ++(*this);
+      return Tmp;
+    }
+
+    friend bool operator==(filtered_category_iterator X,
+                           filtered_category_iterator Y) {
+      return X.Current = Y.Current;
+    }
+
+    friend bool operator!=(filtered_category_iterator X,
+                           filtered_category_iterator Y) {
+      return X.Current != Y.Current;
+    }
+  };
+
+private:
+  /// \brief Test whether the given category is visible.
+  ///
+  /// Used in the \c visible_categories_iterator.
+  static bool isVisibleCategory(ObjCCategoryDecl *Cat);
+                        
+public:
+  /// \brief Iterator that walks over the list of categories and extensions
+  /// that are visible, i.e., not hidden in a non-imported submodule.
+  typedef filtered_category_iterator<isVisibleCategory>
+    visible_categories_iterator;
+
+  /// \brief Retrieve an iterator to the beginning of the visible-categories
+  /// list.
+  visible_categories_iterator visible_categories_begin() const {
+    return visible_categories_iterator(getCategoryListRaw());
+  }
+
+  /// \brief Retrieve an iterator to the end of the visible-categories list.
+  visible_categories_iterator visible_categories_end() const {
+    return visible_categories_iterator();
+  }
+
+  /// \brief Determine whether the visible-categories list is empty.
+  bool visible_categories_empty() const {
+    return visible_categories_begin() == visible_categories_end();
+  }
+
+private:
+  /// \brief Test whether the given category... is a category.
+  ///
+  /// Used in the \c known_categories_iterator.
+  static bool isKnownCategory(ObjCCategoryDecl *) { return true; }
+
+public:
+  /// \brief Iterator that walks over all of the known categories and
+  /// extensions, including those that are hidden.
+  typedef filtered_category_iterator<isKnownCategory> known_categories_iterator;
+
+  /// \brief Retrieve an iterator to the beginning of the known-categories
+  /// list.
+  known_categories_iterator known_categories_begin() const {
+    return known_categories_iterator(getCategoryListRaw());
+  }
+
+  /// \brief Retrieve an iterator to the end of the known-categories list.
+  known_categories_iterator known_categories_end() const {
+    return known_categories_iterator();
+  }
+
+  /// \brief Determine whether the known-categories list is empty.
+  bool known_categories_empty() const {
+    return known_categories_begin() == known_categories_end();
+  }
+
+private:
+  /// \brief Test whether the given category is a visible extension.
+  ///
+  /// Used in the \c visible_extensions_iterator.
+  static bool isVisibleExtension(ObjCCategoryDecl *Cat);
+
+public:
+  /// \brief Iterator that walks over all of the visible extensions, skipping
+  /// any that are known but hidden.
+  typedef filtered_category_iterator<isVisibleExtension>
+    visible_extensions_iterator;
+
+  /// \brief Retrieve an iterator to the beginning of the visible-extensions
+  /// list.
+  visible_extensions_iterator visible_extensions_begin() const {
+    return visible_extensions_iterator(getCategoryListRaw());
+  }
+
+  /// \brief Retrieve an iterator to the end of the visible-extensions list.
+  visible_extensions_iterator visible_extensions_end() const {
+    return visible_extensions_iterator();
+  }
+
+  /// \brief Determine whether the visible-extensions list is empty.
+  bool visible_extensions_empty() const {
+    return visible_extensions_begin() == visible_extensions_end();
+  }
+
+private:
+  /// \brief Test whether the given category is an extension.
+  ///
+  /// Used in the \c known_extensions_iterator.
+  static bool isKnownExtension(ObjCCategoryDecl *Cat);
+  
+public:
+  /// \brief Iterator that walks over all of the known extensions.
+  typedef filtered_category_iterator<isKnownExtension>
+    known_extensions_iterator;
+
+  /// \brief Retrieve an iterator to the beginning of the known-extensions
+  /// list.
+  known_extensions_iterator known_extensions_begin() const {
+    return known_extensions_iterator(getCategoryListRaw());
+  }
+  
+  /// \brief Retrieve an iterator to the end of the known-extensions list.
+  known_extensions_iterator known_extensions_end() const {
+    return known_extensions_iterator();
+  }
+
+  /// \brief Determine whether the known-extensions list is empty.
+  bool known_extensions_empty() const {
+    return known_extensions_begin() == known_extensions_end();
+  }
+
+  /// \brief Retrieve the raw pointer to the start of the category/extension
+  /// list.
+  ObjCCategoryDecl* getCategoryListRaw() const {
     // FIXME: Should make sure no callers ever do this.
     if (!hasDefinition())
       return 0;
@@ -905,11 +1064,11 @@ public:
     return data().CategoryList;
   }
 
-  void setCategoryList(ObjCCategoryDecl *category) {
+  /// \brief Set the raw pointer to the start of the category/extension
+  /// list.
+  void setCategoryListRaw(ObjCCategoryDecl *category) {
     data().CategoryList = category;
   }
-
-  ObjCCategoryDecl* getFirstClassExtension() const;
 
   ObjCPropertyDecl
     *FindPropertyVisibleInPrimaryClass(IdentifierInfo *PropertyId) const;
@@ -1351,6 +1510,7 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
       CategoryNameLoc(CategoryNameLoc),
       IvarLBraceLoc(IvarLBraceLoc), IvarRBraceLoc(IvarRBraceLoc) {
   }
+
 public:
 
   static ObjCCategoryDecl *Create(ASTContext &C, DeclContext *DC,
@@ -1394,8 +1554,13 @@ public:
 
   ObjCCategoryDecl *getNextClassCategory() const { return NextClassCategory; }
 
+  /// \brief Retrieve the pointer to the next stored category (or extension),
+  /// which may be hidden.
+  ObjCCategoryDecl *getNextClassCategoryRaw() const {
+    return NextClassCategory;
+  }
+
   bool IsClassExtension() const { return getIdentifier() == 0; }
-  const ObjCCategoryDecl *getNextClassExtension() const;
 
   typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
   ivar_iterator ivar_begin() const {
@@ -2029,6 +2194,34 @@ public:
 
   friend class ASTDeclReader;
 };
+
+template<bool (*Filter)(ObjCCategoryDecl *)>
+void
+ObjCInterfaceDecl::filtered_category_iterator<Filter>::
+findAcceptableCategory() {
+  while (Current && !Filter(Current))
+    Current = Current->getNextClassCategoryRaw();
+}
+
+template<bool (*Filter)(ObjCCategoryDecl *)>
+inline ObjCInterfaceDecl::filtered_category_iterator<Filter> &
+ObjCInterfaceDecl::filtered_category_iterator<Filter>::operator++() {
+  Current = Current->getNextClassCategoryRaw();
+  findAcceptableCategory();
+  return *this;
+}
+
+inline bool ObjCInterfaceDecl::isVisibleCategory(ObjCCategoryDecl *Cat) {
+  return !Cat->isHidden();
+}
+
+inline bool ObjCInterfaceDecl::isVisibleExtension(ObjCCategoryDecl *Cat) {
+  return Cat->IsClassExtension() && !Cat->isHidden();
+}
+
+inline bool ObjCInterfaceDecl::isKnownExtension(ObjCCategoryDecl *Cat) {
+  return Cat->IsClassExtension();
+}
 
 }  // end namespace clang
 #endif

@@ -3433,9 +3433,11 @@ static void AddObjCProperties(ObjCContainerDecl *Container,
   } else if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(Container)){
     if (AllowCategories) {
       // Look through categories.
-      for (ObjCCategoryDecl *Category = IFace->getCategoryList();
-           Category; Category = Category->getNextClassCategory())
-        AddObjCProperties(Category, AllowCategories, AllowNullaryMethods, 
+      for (ObjCInterfaceDecl::known_categories_iterator
+             Cat = IFace->known_categories_begin(),
+             CatEnd = IFace->known_categories_end();
+           Cat != CatEnd; ++Cat)
+        AddObjCProperties(*Cat, AllowCategories, AllowNullaryMethods,
                           CurContext, AddedProperties, Results);
     }
     
@@ -4806,9 +4808,13 @@ static void AddObjCMethods(ObjCContainerDecl *Container,
                    CurContext, Selectors, AllowSameLength, Results, false);
   
   // Add methods in categories.
-  for (ObjCCategoryDecl *CatDecl = IFace->getCategoryList(); CatDecl;
-       CatDecl = CatDecl->getNextClassCategory()) {
-    AddObjCMethods(CatDecl, WantInstanceMethods, WantKind, SelIdents, 
+  for (ObjCInterfaceDecl::known_categories_iterator
+         Cat = IFace->known_categories_begin(),
+         CatEnd = IFace->known_categories_end();
+       Cat != CatEnd; ++Cat) {
+    ObjCCategoryDecl *CatDecl = *Cat;
+    
+    AddObjCMethods(CatDecl, WantInstanceMethods, WantKind, SelIdents,
                    NumSelIdents, CurContext, Selectors, AllowSameLength, 
                    Results, InOriginalClass);
     
@@ -5076,11 +5082,14 @@ static ObjCMethodDecl *AddSuperSendCompletion(Sema &S, bool NeedSuperKeyword,
 
     // Check in categories or class extensions.
     if (!SuperMethod) {
-      for (ObjCCategoryDecl *Category = Class->getCategoryList(); Category;
-           Category = Category->getNextClassCategory())
-        if ((SuperMethod = Category->getMethod(CurMethod->getSelector(), 
+      for (ObjCInterfaceDecl::known_categories_iterator
+             Cat = Class->known_categories_begin(),
+             CatEnd = Class->known_categories_end();
+           Cat != CatEnd; ++Cat) {
+        if ((SuperMethod = Cat->getMethod(CurMethod->getSelector(),
                                                CurMethod->isInstanceMethod())))
           break;
+      }
     }
   }
 
@@ -5807,11 +5816,15 @@ void Sema::CodeCompleteObjCInterfaceCategory(Scope *S,
   llvm::SmallPtrSet<IdentifierInfo *, 16> CategoryNames;
   NamedDecl *CurClass
     = LookupSingleName(TUScope, ClassName, ClassNameLoc, LookupOrdinaryName);
-  if (ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(CurClass))
-    for (ObjCCategoryDecl *Category = Class->getCategoryList(); Category;
-         Category = Category->getNextClassCategory())
-      CategoryNames.insert(Category->getIdentifier());
-  
+  if (ObjCInterfaceDecl *Class = dyn_cast_or_null<ObjCInterfaceDecl>(CurClass)){
+    for (ObjCInterfaceDecl::visible_categories_iterator
+           Cat = Class->visible_categories_begin(),
+           CatEnd = Class->visible_categories_end();
+         Cat != CatEnd; ++Cat) {
+      CategoryNames.insert(Cat->getIdentifier());
+    }
+  }
+
   // Add all of the categories we know about.
   Results.EnterNewScope();
   TranslationUnitDecl *TU = Context.getTranslationUnitDecl();
@@ -5853,11 +5866,14 @@ void Sema::CodeCompleteObjCImplementationCategory(Scope *S,
   Results.EnterNewScope();
   bool IgnoreImplemented = true;
   while (Class) {
-    for (ObjCCategoryDecl *Category = Class->getCategoryList(); Category;
-         Category = Category->getNextClassCategory())
-      if ((!IgnoreImplemented || !Category->getImplementation()) &&
-          CategoryNames.insert(Category->getIdentifier()))
-        Results.AddResult(Result(Category, 0), CurContext, 0, false);
+    for (ObjCInterfaceDecl::visible_categories_iterator
+           Cat = Class->visible_categories_begin(),
+           CatEnd = Class->visible_categories_end();
+         Cat != CatEnd; ++Cat) {
+      if ((!IgnoreImplemented || !Cat->getImplementation()) &&
+          CategoryNames.insert(Cat->getIdentifier()))
+        Results.AddResult(Result(*Cat, 0), CurContext, 0, false);
+    }
     
     Class = Class->getSuperClass();
     IgnoreImplemented = false;
@@ -6033,12 +6049,14 @@ static void FindImplementableMethods(ASTContext &Context,
                                KnownMethods, InOriginalClass);
 
     // Add methods from any class extensions and categories.
-    for (const ObjCCategoryDecl *Cat = IFace->getCategoryList(); Cat;
-         Cat = Cat->getNextClassCategory())
-      FindImplementableMethods(Context, const_cast<ObjCCategoryDecl*>(Cat), 
-                               WantInstanceMethods, ReturnType,
+    for (ObjCInterfaceDecl::visible_categories_iterator
+           Cat = IFace->visible_categories_begin(),
+           CatEnd = IFace->visible_categories_end();
+         Cat != CatEnd; ++Cat) {
+      FindImplementableMethods(Context, *Cat, WantInstanceMethods, ReturnType,
                                KnownMethods, false);      
-    
+    }
+
     // Visit the superclass.
     if (IFace->getSuperClass())
       FindImplementableMethods(Context, IFace->getSuperClass(), 
@@ -6898,9 +6916,12 @@ void Sema::CodeCompleteObjCMethodDecl(Scope *S,
         IFace = Category->getClassInterface();
     
     if (IFace) {
-      for (ObjCCategoryDecl *Category = IFace->getCategoryList(); Category;
-           Category = Category->getNextClassCategory())
-        Containers.push_back(Category);
+      for (ObjCInterfaceDecl::visible_categories_iterator
+             Cat = IFace->visible_categories_begin(),
+             CatEnd = IFace->visible_categories_end();
+           Cat != CatEnd; ++Cat) {
+        Containers.push_back(*Cat);
+      }
     }
     
     for (unsigned I = 0, N = Containers.size(); I != N; ++I) {

@@ -3238,10 +3238,12 @@ void ASTWriter::WriteObjCCategories() {
     Categories.push_back(0);
     
     // Add the categories.
-    for (ObjCCategoryDecl *Cat = Class->getCategoryList();
-         Cat; Cat = Cat->getNextClassCategory(), ++Size) {
-      assert(getDeclID(Cat) != 0 && "Bogus category");
-      AddDeclRef(Cat, Categories);
+    for (ObjCInterfaceDecl::known_categories_iterator
+           Cat = Class->known_categories_begin(),
+           CatEnd = Class->known_categories_end();
+         Cat != CatEnd; ++Cat, ++Size) {
+      assert(getDeclID(*Cat) != 0 && "Bogus category");
+      AddDeclRef(*Cat, Categories);
     }
     
     // Update the size.

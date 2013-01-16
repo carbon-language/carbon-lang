@@ -10472,11 +10472,12 @@ void Sema::ActOnFields(Scope* S,
             Diag(ClsIvar->getLocation(), diag::note_previous_definition);
             continue;
           }
-          for (const ObjCCategoryDecl *ClsExtDecl = 
-                IDecl->getFirstClassExtension();
-               ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
-            if (const ObjCIvarDecl *ClsExtIvar = 
-                ClsExtDecl->getIvarDecl(ClsFields[i]->getIdentifier())) {
+          for (ObjCInterfaceDecl::known_extensions_iterator
+                 Ext = IDecl->known_extensions_begin(),
+                 ExtEnd = IDecl->known_extensions_end();
+               Ext != ExtEnd; ++Ext) {
+            if (const ObjCIvarDecl *ClsExtIvar
+                  = Ext->getIvarDecl(ClsFields[i]->getIdentifier())) {
               Diag(ClsFields[i]->getLocation(), 
                    diag::err_duplicate_ivar_declaration); 
               Diag(ClsExtIvar->getLocation(), diag::note_previous_definition);

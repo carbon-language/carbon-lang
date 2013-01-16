@@ -491,13 +491,14 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
            PEnd = Data.AllReferencedProtocols.end();
          P != PEnd; ++P)
       Writer.AddDeclRef(*P, Record);
+
     
-    if (ObjCCategoryDecl *Cat = D->getCategoryList()) {
+    if (ObjCCategoryDecl *Cat = D->getCategoryListRaw()) {
       // Ensure that we write out the set of categories for this class.
       Writer.ObjCClassesWithCategories.insert(D);
       
       // Make sure that the categories get serialized.
-      for (; Cat; Cat = Cat->getNextClassCategory())
+      for (; Cat; Cat = Cat->getNextClassCategoryRaw())
         (void)Writer.GetDeclRef(Cat);
     }
   }  

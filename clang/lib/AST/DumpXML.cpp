@@ -748,14 +748,6 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     visitDeclContext(D);
   }
 
-  // ObjCInterfaceDecl
-  void visitCategoryList(ObjCCategoryDecl *D) {
-    if (!D) return;
-
-    TemporaryContainer C(*this, "categories");
-    for (; D; D = D->getNextClassCategory())
-      visitDeclRef(D);
-  }
   void visitObjCInterfaceDeclAttrs(ObjCInterfaceDecl *D) {
     setPointer("typeptr", D->getTypeForDecl());
     setFlag("forward_decl", !D->isThisDeclarationADefinition());
@@ -770,7 +762,17 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
              I = D->protocol_begin(), E = D->protocol_end(); I != E; ++I)
         visitDeclRef(*I);
     }
-    visitCategoryList(D->getCategoryList());
+
+    if (!D->visible_categories_empty()) {
+      TemporaryContainer C(*this, "categories");
+
+      for (ObjCInterfaceDecl::visible_categories_iterator
+               Cat = D->visible_categories_begin(),
+             CatEnd = D->visible_categories_end();
+           Cat != CatEnd; ++Cat) {
+        visitDeclRef(*Cat);
+      }
+    }
   }
   void visitObjCInterfaceDeclAsContext(ObjCInterfaceDecl *D) {
     visitDeclContext(D);

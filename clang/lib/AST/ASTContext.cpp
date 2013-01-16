@@ -365,10 +365,12 @@ static void addRedeclaredMethods(const ObjCMethodDecl *ObjCMethod,
     if (!ID)
       return;
     // Add redeclared method here.
-    for (const ObjCCategoryDecl *ClsExtDecl = ID->getFirstClassExtension();
-         ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
+    for (ObjCInterfaceDecl::known_extensions_iterator
+           Ext = ID->known_extensions_begin(),
+           ExtEnd = ID->known_extensions_end();
+         Ext != ExtEnd; ++Ext) {
       if (ObjCMethodDecl *RedeclaredMethod =
-            ClsExtDecl->getMethod(ObjCMethod->getSelector(),
+            Ext->getMethod(ObjCMethod->getSelector(),
                                   ObjCMethod->isInstanceMethod()))
         Redeclared.push_back(RedeclaredMethod);
     }
@@ -1689,9 +1691,13 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
     }
     
     // Categories of this Interface.
-    for (const ObjCCategoryDecl *CDeclChain = OI->getCategoryList(); 
-         CDeclChain; CDeclChain = CDeclChain->getNextClassCategory())
-      CollectInheritedProtocols(CDeclChain, Protocols);
+    for (ObjCInterfaceDecl::visible_categories_iterator
+           Cat = OI->visible_categories_begin(),
+           CatEnd = OI->visible_categories_end();
+         Cat != CatEnd; ++Cat) {
+      CollectInheritedProtocols(*Cat, Protocols);
+    }
+
     if (ObjCInterfaceDecl *SD = OI->getSuperClass())
       while (SD) {
         CollectInheritedProtocols(SD, Protocols);
@@ -1721,10 +1727,13 @@ void ASTContext::CollectInheritedProtocols(const Decl *CDecl,
 unsigned ASTContext::CountNonClassIvars(const ObjCInterfaceDecl *OI) const {
   unsigned count = 0;  
   // Count ivars declared in class extension.
-  for (const ObjCCategoryDecl *CDecl = OI->getFirstClassExtension(); CDecl;
-       CDecl = CDecl->getNextClassExtension())
-    count += CDecl->ivar_size();
-
+  for (ObjCInterfaceDecl::known_extensions_iterator
+         Ext = OI->known_extensions_begin(),
+         ExtEnd = OI->known_extensions_end();
+       Ext != ExtEnd; ++Ext) {
+    count += Ext->ivar_size();
+  }
+  
   // Count ivar defined in this class's implementation.  This
   // includes synthesized ivars.
   if (ObjCImplementationDecl *ImplDecl = OI->getImplementation())

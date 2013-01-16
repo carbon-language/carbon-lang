@@ -5744,11 +5744,8 @@ void RewriteObjCFragileABI::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *ID
                                               std::string &Result) {
   ObjCInterfaceDecl *ClassDecl = IDecl->getClassInterface();
   // Find category declaration for this implementation.
-  ObjCCategoryDecl *CDecl;
-  for (CDecl = ClassDecl->getCategoryList(); CDecl;
-       CDecl = CDecl->getNextClassCategory())
-    if (CDecl->getIdentifier() == IDecl->getIdentifier())
-      break;
+  ObjCCategoryDecl *CDecl
+    = ClassDecl->FindCategoryDeclaration(IDecl->getIdentifier());
   
   std::string FullCategoryName = ClassDecl->getNameAsString();
   FullCategoryName += '_';

@@ -129,12 +129,15 @@ ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
     }
     case Decl::ObjCInterface: {
       const ObjCInterfaceDecl *OID = cast<ObjCInterfaceDecl>(this);
-      // Look through categories.
-      for (ObjCCategoryDecl *Cat = OID->getCategoryList();
-           Cat; Cat = Cat->getNextClassCategory())
+      // Look through categories (but not extensions).
+      for (ObjCInterfaceDecl::visible_categories_iterator
+             Cat = OID->visible_categories_begin(),
+             CatEnd = OID->visible_categories_end();
+           Cat != CatEnd; ++Cat) {
         if (!Cat->IsClassExtension())
           if (ObjCPropertyDecl *P = Cat->FindPropertyDeclaration(PropertyId))
             return P;
+      }
 
       // Look through protocols.
       for (ObjCInterfaceDecl::all_protocol_iterator
@@ -296,24 +299,6 @@ void ObjCInterfaceDecl::startDefinition() {
   }
 }
 
-/// getFirstClassExtension - Find first class extension of the given class.
-ObjCCategoryDecl* ObjCInterfaceDecl::getFirstClassExtension() const {
-  for (ObjCCategoryDecl *CDecl = getCategoryList(); CDecl;
-       CDecl = CDecl->getNextClassCategory())
-    if (CDecl->IsClassExtension())
-      return CDecl;
-  return 0;
-}
-
-/// getNextClassCategory - Find next class extension in list of categories.
-const ObjCCategoryDecl* ObjCCategoryDecl::getNextClassExtension() const {
-  for (const ObjCCategoryDecl *CDecl = getNextClassCategory(); CDecl; 
-        CDecl = CDecl->getNextClassCategory())
-    if (CDecl->IsClassExtension())
-      return CDecl;
-  return 0;
-}
-
 ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,
                                               ObjCInterfaceDecl *&clsDeclared) {
   // FIXME: Should make sure no callers ever do this.
@@ -329,9 +314,12 @@ ObjCIvarDecl *ObjCInterfaceDecl::lookupInstanceVariable(IdentifierInfo *ID,
       clsDeclared = ClassDecl;
       return I;
     }
-    for (const ObjCCategoryDecl *CDecl = ClassDecl->getFirstClassExtension();
-         CDecl; CDecl = CDecl->getNextClassExtension()) {
-      if (ObjCIvarDecl *I = CDecl->getIvarDecl(ID)) {
+
+    for (ObjCInterfaceDecl::visible_extensions_iterator
+           Ext = ClassDecl->visible_extensions_begin(),
+           ExtEnd = ClassDecl->visible_extensions_end();
+         Ext != ExtEnd; ++Ext) {
+      if (ObjCIvarDecl *I = Ext->getIvarDecl(ID)) {
         clsDeclared = ClassDecl;
         return I;
       }
@@ -390,21 +378,22 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
         return MethodDecl;
     
     // Didn't find one yet - now look through categories.
-    ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
-    while (CatDecl) {
-      if ((MethodDecl = CatDecl->getMethod(Sel, isInstance)))
+    for (ObjCInterfaceDecl::visible_categories_iterator
+           Cat = ClassDecl->visible_categories_begin(),
+           CatEnd = ClassDecl->visible_categories_end();
+         Cat != CatEnd; ++Cat) {
+      if ((MethodDecl = Cat->getMethod(Sel, isInstance)))
         return MethodDecl;
 
       if (!shallowCategoryLookup) {
         // Didn't find one yet - look through protocols.
         const ObjCList<ObjCProtocolDecl> &Protocols =
-          CatDecl->getReferencedProtocols();
+          Cat->getReferencedProtocols();
         for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
              E = Protocols.end(); I != E; ++I)
           if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
             return MethodDecl;
       }
-      CatDecl = CatDecl->getNextClassCategory();
     }
   
     ClassDecl = ClassDecl->getSuperClass();
@@ -816,10 +805,13 @@ static void CollectOverriddenMethodsRecurse(const ObjCContainerDecl *Container,
          P != PEnd; ++P)
       CollectOverriddenMethodsRecurse(*P, Method, Methods, MovedToSuper);
 
-    for (const ObjCCategoryDecl *Category = Interface->getCategoryList();
-         Category; Category = Category->getNextClassCategory())
-      CollectOverriddenMethodsRecurse(Category, Method, Methods,
+    for (ObjCInterfaceDecl::visible_categories_iterator
+           Cat = Interface->visible_categories_begin(),
+           CatEnd = Interface->visible_categories_end();
+         Cat != CatEnd; ++Cat) {
+      CollectOverriddenMethodsRecurse(*Cat, Method, Methods,
                                       MovedToSuper);
+    }
 
     if (const ObjCInterfaceDecl *Super = Interface->getSuperClass())
       return CollectOverriddenMethodsRecurse(Super, Method, Methods,
@@ -881,11 +873,14 @@ static void collectOnCategoriesAfterLocation(SourceLocation Loc,
   if (!Class)
     return;
 
-  for (const ObjCCategoryDecl *Category = Class->getCategoryList();
-       Category; Category = Category->getNextClassCategory())
-    if (SM.isBeforeInTranslationUnit(Loc, Category->getLocation()))
-      CollectOverriddenMethodsRecurse(Category, Method, Methods, true);
-
+  for (ObjCInterfaceDecl::visible_categories_iterator
+         Cat = Class->visible_categories_begin(),
+         CatEnd = Class->visible_categories_end();
+       Cat != CatEnd; ++Cat) {
+    if (SM.isBeforeInTranslationUnit(Loc, Cat->getLocation()))
+      CollectOverriddenMethodsRecurse(*Cat, Method, Methods, true);
+  }
+  
   collectOnCategoriesAfterLocation(Loc, Class->getSuperClass(), SM,
                                    Method, Methods);
 }
@@ -1072,12 +1067,13 @@ ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
     for (curIvar = data().IvarList; I != E; curIvar = *I, ++I)
       curIvar->setNextIvar(*I);
   }
-  
-  for (const ObjCCategoryDecl *CDecl = getFirstClassExtension(); CDecl;
-       CDecl = CDecl->getNextClassExtension()) {
-    if (!CDecl->ivar_empty()) {
-      ObjCCategoryDecl::ivar_iterator I = CDecl->ivar_begin(),
-                                          E = CDecl->ivar_end();
+
+  for (ObjCInterfaceDecl::known_extensions_iterator
+         Ext = known_extensions_begin(),
+         ExtEnd = known_extensions_end();
+       Ext != ExtEnd; ++Ext) {
+    if (!Ext->ivar_empty()) {
+      ObjCCategoryDecl::ivar_iterator I = Ext->ivar_begin(),E = Ext->ivar_end();
       if (!data().IvarList) {
         data().IvarList = *I; ++I;
         curIvar = data().IvarList;
@@ -1115,29 +1111,41 @@ ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
-  for (ObjCCategoryDecl *Category = getCategoryList();
-       Category; Category = Category->getNextClassCategory())
-    if (Category->getIdentifier() == CategoryId)
-      return Category;
+  for (visible_categories_iterator Cat = visible_categories_begin(),
+                                   CatEnd = visible_categories_end();
+       Cat != CatEnd;
+       ++Cat) {
+    if (Cat->getIdentifier() == CategoryId)
+      return *Cat;
+  }
+  
   return 0;
 }
 
 ObjCMethodDecl *
 ObjCInterfaceDecl::getCategoryInstanceMethod(Selector Sel) const {
-  for (ObjCCategoryDecl *Category = getCategoryList();
-       Category; Category = Category->getNextClassCategory())
-    if (ObjCCategoryImplDecl *Impl = Category->getImplementation())
+  for (visible_categories_iterator Cat = visible_categories_begin(),
+                                   CatEnd = visible_categories_end();
+       Cat != CatEnd;
+       ++Cat) {
+    if (ObjCCategoryImplDecl *Impl = Cat->getImplementation())
       if (ObjCMethodDecl *MD = Impl->getInstanceMethod(Sel))
         return MD;
+  }
+
   return 0;
 }
 
 ObjCMethodDecl *ObjCInterfaceDecl::getCategoryClassMethod(Selector Sel) const {
-  for (ObjCCategoryDecl *Category = getCategoryList();
-       Category; Category = Category->getNextClassCategory())
-    if (ObjCCategoryImplDecl *Impl = Category->getImplementation())
+  for (visible_categories_iterator Cat = visible_categories_begin(),
+                                   CatEnd = visible_categories_end();
+       Cat != CatEnd;
+       ++Cat) {
+    if (ObjCCategoryImplDecl *Impl = Cat->getImplementation())
       if (ObjCMethodDecl *MD = Impl->getClassMethod(Sel))
         return MD;
+  }
+  
   return 0;
 }
 
@@ -1169,10 +1177,13 @@ bool ObjCInterfaceDecl::ClassImplementsProtocol(ObjCProtocolDecl *lProto,
 
   // 2nd, look up the category.
   if (lookupCategory)
-    for (ObjCCategoryDecl *CDecl = IDecl->getCategoryList(); CDecl;
-         CDecl = CDecl->getNextClassCategory()) {
-      for (ObjCCategoryDecl::protocol_iterator PI = CDecl->protocol_begin(),
-           E = CDecl->protocol_end(); PI != E; ++PI)
+    for (visible_categories_iterator Cat = visible_categories_begin(),
+                                     CatEnd = visible_categories_end();
+         Cat != CatEnd;
+         ++Cat) {
+      for (ObjCCategoryDecl::protocol_iterator PI = Cat->protocol_begin(),
+                                               E = Cat->protocol_end();
+           PI != E; ++PI)
         if (getASTContext().ProtocolCompatibleWithProtocol(lProto, *PI))
           return true;
     }
@@ -1393,9 +1404,9 @@ ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
                                                        IvarLBraceLoc, IvarRBraceLoc);
   if (IDecl) {
     // Link this category into its class's category list.
-    CatDecl->NextClassCategory = IDecl->getCategoryList();
+    CatDecl->NextClassCategory = IDecl->getCategoryListRaw();
     if (IDecl->hasDefinition()) {
-      IDecl->setCategoryList(CatDecl);
+      IDecl->setCategoryListRaw(CatDecl);
       if (ASTMutationListener *L = C.getASTMutationListener())
         L->AddedObjCCategoryToInterface(CatDecl, IDecl);
     }

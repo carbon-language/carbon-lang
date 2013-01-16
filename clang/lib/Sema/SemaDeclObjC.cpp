@@ -849,16 +849,12 @@ ActOnStartCategoryInterface(SourceLocation AtInterfaceLoc,
 
   if (CategoryName) {
     /// Check for duplicate interface declaration for this category
-    ObjCCategoryDecl *CDeclChain;
-    for (CDeclChain = IDecl->getCategoryList(); CDeclChain;
-         CDeclChain = CDeclChain->getNextClassCategory()) {
-      if (CDeclChain->getIdentifier() == CategoryName) {
-        // Class extensions can be declared multiple times.
-        Diag(CategoryLoc, diag::warn_dup_category_def)
-          << ClassName << CategoryName;
-        Diag(CDeclChain->getLocation(), diag::note_previous_definition);
-        break;
-      }
+    if (ObjCCategoryDecl *Previous
+          = IDecl->FindCategoryDeclaration(CategoryName)) {
+      // Class extensions can be declared multiple times, categories cannot.
+      Diag(CategoryLoc, diag::warn_dup_category_def)
+        << ClassName << CategoryName;
+      Diag(Previous->getLocation(), diag::note_previous_definition);
     }
   }
 
@@ -1738,24 +1734,27 @@ void Sema::MatchAllMethodDeclarations(const SelectorSet &InsMap,
     // when checking that methods in implementation match their declaration,
     // i.e. when WarnCategoryMethodImpl is false, check declarations in class
     // extension; as well as those in categories.
-    if (!WarnCategoryMethodImpl)
-      for (const ObjCCategoryDecl *CDeclChain = I->getCategoryList();
-           CDeclChain; CDeclChain = CDeclChain->getNextClassCategory())
+    if (!WarnCategoryMethodImpl) {
+      for (ObjCInterfaceDecl::visible_categories_iterator
+             Cat = I->visible_categories_begin(),
+           CatEnd = I->visible_categories_end();
+           Cat != CatEnd; ++Cat) {
         MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
-                                   IMPDecl,
-                                   const_cast<ObjCCategoryDecl *>(CDeclChain),
-                                   IncompleteImpl, false,
+                                   IMPDecl, *Cat, IncompleteImpl, false,
                                    WarnCategoryMethodImpl);
-    else 
+      }
+    } else {
       // Also methods in class extensions need be looked at next.
-      for (const ObjCCategoryDecl *ClsExtDecl = I->getFirstClassExtension(); 
-           ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension())
+      for (ObjCInterfaceDecl::visible_extensions_iterator
+             Ext = I->visible_extensions_begin(),
+             ExtEnd = I->visible_extensions_end();
+           Ext != ExtEnd; ++Ext) {
         MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
-                                   IMPDecl,
-                                   const_cast<ObjCCategoryDecl *>(ClsExtDecl), 
-                                   IncompleteImpl, false, 
+                                   IMPDecl, *Ext, IncompleteImpl, false,
                                    WarnCategoryMethodImpl);
-    
+      }
+    }
+
     // Check for any implementation of a methods declared in protocol.
     for (ObjCInterfaceDecl::all_protocol_iterator
           PI = I->all_referenced_protocol_begin(),
@@ -1858,11 +1857,12 @@ void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
       CheckProtocolMethodDefs(IMPDecl->getLocation(), *PI, IncompleteImpl,
                               InsMap, ClsMap, I);
     // Check class extensions (unnamed categories)
-    for (const ObjCCategoryDecl *Categories = I->getFirstClassExtension();
-         Categories; Categories = Categories->getNextClassExtension())
-      ImplMethodsVsClassMethods(S, IMPDecl, 
-                                const_cast<ObjCCategoryDecl*>(Categories), 
-                                IncompleteImpl);
+    for (ObjCInterfaceDecl::visible_extensions_iterator
+           Ext = I->visible_extensions_begin(),
+           ExtEnd = I->visible_extensions_end();
+         Ext != ExtEnd; ++Ext) {
+      ImplMethodsVsClassMethods(S, IMPDecl, *Ext, IncompleteImpl);
+    }
   } else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl)) {
     // For extended class, unimplemented methods in its protocols will
     // be reported in the primary class.
@@ -2414,11 +2414,12 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
       // of the other class extensions. Mark them as synthesized as
       // property will be synthesized when property with same name is
       // seen in the @implementation.
-      for (const ObjCCategoryDecl *ClsExtDecl =
-           IDecl->getFirstClassExtension();
-           ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
-        for (ObjCContainerDecl::prop_iterator I = ClsExtDecl->prop_begin(),
-             E = ClsExtDecl->prop_end(); I != E; ++I) {
+      for (ObjCInterfaceDecl::visible_extensions_iterator
+             Ext = IDecl->visible_extensions_begin(),
+             ExtEnd = IDecl->visible_extensions_end();
+           Ext != ExtEnd; ++Ext) {
+        for (ObjCContainerDecl::prop_iterator I = Ext->prop_begin(),
+             E = Ext->prop_end(); I != E; ++I) {
           ObjCPropertyDecl *Property = *I;
           // Skip over properties declared @dynamic
           if (const ObjCPropertyImplDecl *PIDecl
@@ -2426,18 +2427,19 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
             if (PIDecl->getPropertyImplementation() 
                   == ObjCPropertyImplDecl::Dynamic)
               continue;
-          
-          for (const ObjCCategoryDecl *CExtDecl =
-               IDecl->getFirstClassExtension();
-               CExtDecl; CExtDecl = CExtDecl->getNextClassExtension()) {
-            if (ObjCMethodDecl *GetterMethod =
-                CExtDecl->getInstanceMethod(Property->getGetterName()))
+
+          for (ObjCInterfaceDecl::visible_extensions_iterator
+                 Ext = IDecl->visible_extensions_begin(),
+                 ExtEnd = IDecl->visible_extensions_end();
+               Ext != ExtEnd; ++Ext) {
+            if (ObjCMethodDecl *GetterMethod
+                  = Ext->getInstanceMethod(Property->getGetterName()))
               GetterMethod->setPropertyAccessor(true);
             if (!Property->isReadOnly())
-              if (ObjCMethodDecl *SetterMethod =
-                  CExtDecl->getInstanceMethod(Property->getSetterName()))
+              if (ObjCMethodDecl *SetterMethod
+                    = Ext->getInstanceMethod(Property->getSetterName()))
                 SetterMethod->setPropertyAccessor(true);
-          }        
+          }
         }
       }
       ImplMethodsVsClassMethods(S, IC, IDecl);
@@ -2486,12 +2488,9 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
     // Find category interface decl and then check that all methods declared
     // in this interface are implemented in the category @implementation.
     if (ObjCInterfaceDecl* IDecl = CatImplClass->getClassInterface()) {
-      for (ObjCCategoryDecl *Categories = IDecl->getCategoryList();
-           Categories; Categories = Categories->getNextClassCategory()) {
-        if (Categories->getIdentifier() == CatImplClass->getIdentifier()) {
-          ImplMethodsVsClassMethods(S, CatImplClass, Categories);
-          break;
-        }
+      if (ObjCCategoryDecl *Cat
+            = IDecl->FindCategoryDeclaration(CatImplClass->getIdentifier())) {
+        ImplMethodsVsClassMethods(S, CatImplClass, Cat);
       }
     }
   }
@@ -2726,9 +2725,12 @@ private:
       return;
     
     //   - categories,
-    for (ObjCCategoryDecl *category = iface->getCategoryList();
-           category; category = category->getNextClassCategory())
-      search(category);
+    for (ObjCInterfaceDecl::visible_categories_iterator
+           cat = iface->visible_categories_begin(),
+           catEnd = iface->visible_categories_end();
+         cat != catEnd; ++cat) {
+      search(*cat);
+    }
 
     //   - the super class, and
     if (ObjCInterfaceDecl *super = iface->getSuperClass())

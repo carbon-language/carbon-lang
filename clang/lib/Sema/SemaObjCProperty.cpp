@@ -270,20 +270,22 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   IdentifierInfo *PropertyId = FD.D.getIdentifier();
   ObjCInterfaceDecl *CCPrimary = CDecl->getClassInterface();
   
-  if (CCPrimary)
+  if (CCPrimary) {
     // Check for duplicate declaration of this property in current and
     // other class extensions.
-    for (const ObjCCategoryDecl *ClsExtDecl = 
-         CCPrimary->getFirstClassExtension();
-         ClsExtDecl; ClsExtDecl = ClsExtDecl->getNextClassExtension()) {
-      if (ObjCPropertyDecl *prevDecl =
-          ObjCPropertyDecl::findPropertyDecl(ClsExtDecl, PropertyId)) {
+    for (ObjCInterfaceDecl::known_extensions_iterator
+           Ext = CCPrimary->known_extensions_begin(),
+           ExtEnd = CCPrimary->known_extensions_end();
+         Ext != ExtEnd; ++Ext) {
+      if (ObjCPropertyDecl *prevDecl
+            = ObjCPropertyDecl::findPropertyDecl(*Ext, PropertyId)) {
         Diag(AtLoc, diag::err_duplicate_property);
         Diag(prevDecl->getLocation(), diag::note_property_declare);
         return 0;
       }
     }
-  
+  }
+
   // Create a new ObjCPropertyDecl with the DeclContext being
   // the class extension.
   // FIXME. We should really be using CreatePropertyDecl for this.
@@ -646,11 +648,14 @@ DiagnoseClassAndClassExtPropertyMismatch(Sema &S, ObjCInterfaceDecl *ClassDecl,
                                          ObjCPropertyDecl *property) {
   unsigned Attributes = property->getPropertyAttributesAsWritten();
   bool warn = (Attributes & ObjCDeclSpec::DQ_PR_readonly);
-  for (const ObjCCategoryDecl *CDecl = ClassDecl->getFirstClassExtension();
-       CDecl; CDecl = CDecl->getNextClassExtension()) {
+  for (ObjCInterfaceDecl::known_extensions_iterator
+         Ext = ClassDecl->known_extensions_begin(),
+         ExtEnd = ClassDecl->known_extensions_end();
+       Ext != ExtEnd; ++Ext) {
     ObjCPropertyDecl *ClassExtProperty = 0;
-    for (ObjCContainerDecl::prop_iterator P = CDecl->prop_begin(),
-         E = CDecl->prop_end(); P != E; ++P) {
+    for (ObjCContainerDecl::prop_iterator P = Ext->prop_begin(),
+                                          E = Ext->prop_end();
+         P != E; ++P) {
       if ((*P)->getIdentifier() == property->getIdentifier()) {
         ClassExtProperty = *P;
         break;
@@ -1404,14 +1409,14 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
   // Main class has the property as 'readonly'. Must search
   // through the category list to see if the property's
   // attribute has been over-ridden to 'readwrite'.
-  for (ObjCCategoryDecl *Category = IDecl->getCategoryList();
-       Category; Category = Category->getNextClassCategory()) {
-    // Even if property is ready only, if a category has a user defined setter,
-    // it is not considered read only.
-    if (Category->getInstanceMethod(PDecl->getSetterName()))
+  for (ObjCInterfaceDecl::visible_categories_iterator
+         Cat = IDecl->visible_categories_begin(),
+         CatEnd = IDecl->visible_categories_end();
+       Cat != CatEnd; ++Cat) {
+    if (Cat->getInstanceMethod(PDecl->getSetterName()))
       return false;
     ObjCPropertyDecl *P =
-      Category->FindPropertyDeclaration(PDecl->getIdentifier());
+      Cat->FindPropertyDeclaration(PDecl->getIdentifier());
     if (P && !P->isReadOnly())
       return false;
   }
