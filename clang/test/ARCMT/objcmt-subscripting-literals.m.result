@@ -153,6 +153,10 @@ typedef const struct __CFString * CFStringRef;
   void *hd;
   o = ((NSArray*)hd)[2];
   o = ivarArr[2];
+
+  dict = @{@"A": @"1", arr[2]: @[]};
+  dict = [NSDictionary dictionaryWithObjects:@[@"1", @"2"] forKeys:arr];
+  dict = @{@"A": @"1", @"B": @"2"};
 }
 @end
 

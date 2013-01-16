@@ -186,6 +186,14 @@ Selector NSAPI::getNSDictionarySelector(
       Sel = Ctx.Selectors.getUnarySelector(
                                      &Ctx.Idents.get("initWithObjectsAndKeys"));
       break;
+    case NSDict_initWithObjectsForKeys: {
+      IdentifierInfo *KeyIdents[] = {
+        &Ctx.Idents.get("initWithObjects"),
+        &Ctx.Idents.get("forKeys")
+      };
+      Sel = Ctx.Selectors.getSelector(2, KeyIdents);
+      break;
+    }
     case NSDict_objectForKey:
       Sel = Ctx.Selectors.getUnarySelector(&Ctx.Idents.get("objectForKey"));
       break;

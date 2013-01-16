@@ -11,6 +11,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/NSAPI.h"
+#include "clang/AST/ParentMap.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Edit/Commit.h"
@@ -120,9 +121,11 @@ bool ObjCMigrateAction::BeginInvocation(CompilerInstance &CI) {
 namespace {
 class ObjCMigrator : public RecursiveASTVisitor<ObjCMigrator> {
   ObjCMigrateASTConsumer &Consumer;
+  ParentMap &PMap;
 
 public:
-  ObjCMigrator(ObjCMigrateASTConsumer &consumer) : Consumer(consumer) { }
+  ObjCMigrator(ObjCMigrateASTConsumer &consumer, ParentMap &PMap)
+    : Consumer(consumer), PMap(PMap) { }
 
   bool shouldVisitTemplateInstantiations() const { return false; }
   bool shouldWalkTypesOfTypeLocs() const { return false; }
@@ -130,7 +133,7 @@ public:
   bool VisitObjCMessageExpr(ObjCMessageExpr *E) {
     if (Consumer.MigrateLiterals) {
       edit::Commit commit(*Consumer.Editor);
-      edit::rewriteToObjCLiteralSyntax(E, *Consumer.NSAPIObj, commit);
+      edit::rewriteToObjCLiteralSyntax(E, *Consumer.NSAPIObj, commit, &PMap);
       Consumer.Editor->commit(commit);
     }
 
@@ -153,6 +156,23 @@ public:
     return WalkUpFromObjCMessageExpr(E);
   }
 };
+
+class BodyMigrator : public RecursiveASTVisitor<BodyMigrator> {
+  ObjCMigrateASTConsumer &Consumer;
+  OwningPtr<ParentMap> PMap;
+
+public:
+  BodyMigrator(ObjCMigrateASTConsumer &consumer) : Consumer(consumer) { }
+
+  bool shouldVisitTemplateInstantiations() const { return false; }
+  bool shouldWalkTypesOfTypeLocs() const { return false; }
+
+  bool TraverseStmt(Stmt *S) {
+    PMap.reset(new ParentMap(S));
+    ObjCMigrator(Consumer, *PMap).TraverseStmt(S);
+    return true;
+  }
+};
 }
 
 void ObjCMigrateASTConsumer::migrateDecl(Decl *D) {
@@ -161,7 +181,7 @@ void ObjCMigrateASTConsumer::migrateDecl(Decl *D) {
   if (isa<ObjCMethodDecl>(D))
     return; // Wait for the ObjC container declaration.
 
-  ObjCMigrator(*this).TraverseDecl(D);
+  BodyMigrator(*this).TraverseDecl(D);
 }
 
 namespace {

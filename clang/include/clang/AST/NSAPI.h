@@ -96,10 +96,11 @@ public:
     NSDict_dictionaryWithObjectsAndKeys,
     NSDict_initWithDictionary,
     NSDict_initWithObjectsAndKeys,
+    NSDict_initWithObjectsForKeys,
     NSDict_objectForKey,
     NSMutableDict_setObjectForKey
   };
-  static const unsigned NumNSDictionaryMethods = 10;
+  static const unsigned NumNSDictionaryMethods = 11;
 
   /// \brief The Objective-C NSDictionary selectors.
   Selector getNSDictionarySelector(NSDictionaryMethodKind MK) const;

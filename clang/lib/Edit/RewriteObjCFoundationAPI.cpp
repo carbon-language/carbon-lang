@@ -16,6 +16,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/NSAPI.h"
+#include "clang/AST/ParentMap.h"
 #include "clang/Edit/Commit.h"
 #include "clang/Lex/Lexer.h"
 
@@ -325,7 +326,8 @@ bool edit::rewriteToObjCSubscriptSyntax(const ObjCMessageExpr *Msg,
 //===----------------------------------------------------------------------===//
 
 static bool rewriteToArrayLiteral(const ObjCMessageExpr *Msg,
-                                  const NSAPI &NS, Commit &commit);
+                                  const NSAPI &NS, Commit &commit,
+                                  const ParentMap *PMap);
 static bool rewriteToDictionaryLiteral(const ObjCMessageExpr *Msg,
                                   const NSAPI &NS, Commit &commit);
 static bool rewriteToNumberLiteral(const ObjCMessageExpr *Msg,
@@ -336,13 +338,14 @@ static bool rewriteToStringBoxedExpression(const ObjCMessageExpr *Msg,
                                            const NSAPI &NS, Commit &commit);
 
 bool edit::rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
-                                      const NSAPI &NS, Commit &commit) {
+                                      const NSAPI &NS, Commit &commit,
+                                      const ParentMap *PMap) {
   IdentifierInfo *II = 0;
   if (!checkForLiteralCreation(Msg, II, NS.getASTContext().getLangOpts()))
     return false;
 
   if (II == NS.getNSClassId(NSAPI::ClassId_NSArray))
-    return rewriteToArrayLiteral(Msg, NS, commit);
+    return rewriteToArrayLiteral(Msg, NS, commit, PMap);
   if (II == NS.getNSClassId(NSAPI::ClassId_NSDictionary))
     return rewriteToDictionaryLiteral(Msg, NS, commit);
   if (II == NS.getNSClassId(NSAPI::ClassId_NSNumber))
@@ -353,6 +356,19 @@ bool edit::rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
   return false;
 }
 
+/// \brief Returns true if the immediate message arguments of \c Msg should not
+/// be rewritten because it will interfere with the rewrite of the parent
+/// message expression. e.g.
+/// \code
+///   [NSDictionary dictionaryWithObjects:
+///                                 [NSArray arrayWithObjects:@"1", @"2", nil]
+///                         forKeys:[NSArray arrayWithObjects:@"A", @"B", nil]];
+/// \endcode
+/// It will return true for this because we are going to rewrite this directly
+/// to a dictionary literal without any array literals.
+static bool shouldNotRewriteImmediateMessageArgs(const ObjCMessageExpr *Msg,
+                                                 const NSAPI &NS);
+
 //===----------------------------------------------------------------------===//
 // rewriteToArrayLiteral.
 //===----------------------------------------------------------------------===//
@@ -361,7 +377,15 @@ bool edit::rewriteToObjCLiteralSyntax(const ObjCMessageExpr *Msg,
 static void objectifyExpr(const Expr *E, Commit &commit);
 
 static bool rewriteToArrayLiteral(const ObjCMessageExpr *Msg,
-                                  const NSAPI &NS, Commit &commit) {
+                                  const NSAPI &NS, Commit &commit,
+                                  const ParentMap *PMap) {
+  if (PMap) {
+    const ObjCMessageExpr *ParentMsg =
+        dyn_cast_or_null<ObjCMessageExpr>(PMap->getParentIgnoreParenCasts(Msg));
+    if (shouldNotRewriteImmediateMessageArgs(ParentMsg, NS))
+      return false;
+  }
+
   Selector Sel = Msg->getSelector();
   SourceRange MsgRange = Msg->getSourceRange();
 
@@ -410,6 +434,59 @@ static bool rewriteToArrayLiteral(const ObjCMessageExpr *Msg,
 //===----------------------------------------------------------------------===//
 // rewriteToDictionaryLiteral.
 //===----------------------------------------------------------------------===//
+
+/// \brief If \c Msg is an NSArray creation message or literal, this gets the
+/// objects that were used to create it.
+/// \returns true if it is an NSArray and we got objects, or false otherwise.
+static bool getNSArrayObjects(const Expr *E, const NSAPI &NS,
+                              SmallVectorImpl<const Expr *> &Objs) {
+  if (!E)
+    return false;
+
+  E = E->IgnoreParenCasts();
+  if (!E)
+    return false;
+
+  if (const ObjCMessageExpr *Msg = dyn_cast<ObjCMessageExpr>(E)) {
+    IdentifierInfo *Cls = 0;
+    if (!checkForLiteralCreation(Msg, Cls, NS.getASTContext().getLangOpts()))
+      return false;
+
+    if (Cls != NS.getNSClassId(NSAPI::ClassId_NSArray))
+      return false;
+
+    Selector Sel = Msg->getSelector();
+    if (Sel == NS.getNSArraySelector(NSAPI::NSArr_array))
+      return true; // empty array.
+
+    if (Sel == NS.getNSArraySelector(NSAPI::NSArr_arrayWithObject)) {
+      if (Msg->getNumArgs() != 1)
+        return false;
+      Objs.push_back(Msg->getArg(0));
+      return true;
+    }
+
+    if (Sel == NS.getNSArraySelector(NSAPI::NSArr_arrayWithObjects) ||
+        Sel == NS.getNSArraySelector(NSAPI::NSArr_initWithObjects)) {
+      if (Msg->getNumArgs() == 0)
+        return false;
+      const Expr *SentinelExpr = Msg->getArg(Msg->getNumArgs() - 1);
+      if (!NS.getASTContext().isSentinelNullExpr(SentinelExpr))
+        return false;
+
+      for (unsigned i = 0, e = Msg->getNumArgs() - 1; i != e; ++i)
+        Objs.push_back(Msg->getArg(i));
+      return true;
+    }
+
+  } else if (const ObjCArrayLiteral *ArrLit = dyn_cast<ObjCArrayLiteral>(E)) {
+    for (unsigned i = 0, e = ArrLit->getNumElements(); i != e; ++i)
+      Objs.push_back(ArrLit->getElement(i));
+    return true;
+  }
+
+  return false;
+}
 
 static bool rewriteToDictionaryLiteral(const ObjCMessageExpr *Msg,
                                        const NSAPI &NS, Commit &commit) {
@@ -478,6 +555,83 @@ static bool rewriteToDictionaryLiteral(const ObjCMessageExpr *Msg,
                          Msg->getArg(SentinelIdx-1)->getLocEnd());
     commit.insertWrap("@{", ArgRange, "}");
     commit.replaceWithInner(MsgRange, ArgRange);
+    return true;
+  }
+
+  if (Sel == NS.getNSDictionarySelector(
+                                  NSAPI::NSDict_dictionaryWithObjectsForKeys) ||
+      Sel == NS.getNSDictionarySelector(NSAPI::NSDict_initWithObjectsForKeys)) {
+    if (Msg->getNumArgs() != 2)
+      return false;
+
+    SmallVector<const Expr *, 8> Vals;
+    if (!getNSArrayObjects(Msg->getArg(0), NS, Vals))
+      return false;
+
+    SmallVector<const Expr *, 8> Keys;
+    if (!getNSArrayObjects(Msg->getArg(1), NS, Keys))
+      return false;
+
+    if (Vals.size() != Keys.size())
+      return false;
+
+    if (Vals.empty()) {
+      commit.replace(MsgRange, "@{}");
+      return true;
+    }
+
+    for (unsigned i = 0, n = Vals.size(); i < n; ++i) {
+      objectifyExpr(Vals[i], commit);
+      objectifyExpr(Keys[i], commit);
+
+      SourceRange ValRange = Vals[i]->getSourceRange();
+      SourceRange KeyRange = Keys[i]->getSourceRange();
+      // Insert value after key.
+      commit.insertAfterToken(KeyRange.getEnd(), ": ");
+      commit.insertFromRange(KeyRange.getEnd(), ValRange, /*afterToken=*/true);
+    }
+    // Range of arguments up until and including the last key.
+    // The first value is cut off, the value will move after the key.
+    SourceRange ArgRange(Keys.front()->getLocStart(),
+                         Keys.back()->getLocEnd());
+    commit.insertWrap("@{", ArgRange, "}");
+    commit.replaceWithInner(MsgRange, ArgRange);
+    return true;
+  }
+
+  return false;
+}
+
+static bool shouldNotRewriteImmediateMessageArgs(const ObjCMessageExpr *Msg,
+                                                 const NSAPI &NS) {
+  if (!Msg)
+    return false;
+
+  IdentifierInfo *II = 0;
+  if (!checkForLiteralCreation(Msg, II, NS.getASTContext().getLangOpts()))
+    return false;
+
+  if (II != NS.getNSClassId(NSAPI::ClassId_NSDictionary))
+    return false;
+
+  Selector Sel = Msg->getSelector();
+  if (Sel == NS.getNSDictionarySelector(
+                                  NSAPI::NSDict_dictionaryWithObjectsForKeys) ||
+      Sel == NS.getNSDictionarySelector(NSAPI::NSDict_initWithObjectsForKeys)) {
+    if (Msg->getNumArgs() != 2)
+      return false;
+
+    SmallVector<const Expr *, 8> Vals;
+    if (!getNSArrayObjects(Msg->getArg(0), NS, Vals))
+      return false;
+
+    SmallVector<const Expr *, 8> Keys;
+    if (!getNSArrayObjects(Msg->getArg(1), NS, Keys))
+      return false;
+
+    if (Vals.size() != Keys.size())
+      return false;
+
     return true;
   }
 
