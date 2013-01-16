@@ -2834,6 +2834,8 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
   ReparseTranslationUnitInfo *RTUI =
     static_cast<ReparseTranslationUnitInfo*>(UserData);
   CXTranslationUnit TU = RTUI->TU;
+  if (!TU)
+    return;
 
   // Reset the associated diagnostics.
   delete static_cast<CXDiagnosticSetImpl*>(TU->Diagnostics);
@@ -2844,9 +2846,6 @@ static void clang_reparseTranslationUnit_Impl(void *UserData) {
   unsigned options = RTUI->options;
   (void) options;
   RTUI->result = 1;
-
-  if (!TU)
-    return;
 
   CIndexer *CXXIdx = (CIndexer*)TU->CIdx;
   if (CXXIdx->isOptEnabled(CXGlobalOpt_ThreadBackgroundPriorityForEditing))
