@@ -1113,8 +1113,7 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
       if (!TheCondState.Ignore)
         return TokError("unexpected token at start of statement");
       IDVal = "";
-    }
-    else {
+    } else {
       IDVal = getTok().getString();
       Lex(); // Consume the integer token to be used as an identifier token.
       if (Lexer.getKind() != AsmToken::Colon) {
@@ -1122,12 +1121,10 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
           return TokError("unexpected token at start of statement");
       }
     }
-
   } else if (Lexer.is(AsmToken::Dot)) {
     // Treat '.' as a valid identifier in this context.
     Lex();
     IDVal = ".";
-
   } else if (ParseIdentifier(IDVal)) {
     if (!TheCondState.Ignore)
       return TokError("unexpected token at start of statement");
@@ -1168,7 +1165,8 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
       return ParseDirectiveEndIf(IDLoc);
   }
 
-  // If we are in a ".if 0" block, ignore this statement.
+  // Ignore the statement if in the middle of inactive conditional
+  // (e.g. ".if 0").
   if (TheCondState.Ignore) {
     EatToEndOfStatement();
     return false;
@@ -1451,13 +1449,10 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
   CheckForValidSection();
 
   // Canonicalize the opcode to lower case.
-  SmallString<128> OpcodeStr;
-  for (unsigned i = 0, e = IDVal.size(); i != e; ++i)
-    OpcodeStr.push_back(tolower(IDVal[i]));
-
+  std::string OpcodeStr = IDVal.lower();
   ParseInstructionInfo IInfo(Info.AsmRewrites);
-  bool HadError = getTargetParser().ParseInstruction(IInfo, OpcodeStr.str(),
-                                                     IDLoc,Info.ParsedOperands);
+  bool HadError = getTargetParser().ParseInstruction(IInfo, OpcodeStr,
+                                                     IDLoc, Info.ParsedOperands);
   Info.ParseError = HadError;
 
   // Dump the parsed representation, if requested.
@@ -1481,22 +1476,22 @@ bool AsmParser::ParseStatement(ParseStatementInfo &Info) {
   if (!HadError && getContext().getGenDwarfForAssembly() &&
       getContext().getGenDwarfSection() == getStreamer().getCurrentSection()) {
 
-     unsigned Line = SrcMgr.FindLineNumber(IDLoc, CurBuffer);
+    unsigned Line = SrcMgr.FindLineNumber(IDLoc, CurBuffer);
 
-     // If we previously parsed a cpp hash file line comment then make sure the
-     // current Dwarf File is for the CppHashFilename if not then emit the
-     // Dwarf File table for it and adjust the line number for the .loc.
-     const std::vector<MCDwarfFile *> &MCDwarfFiles =
-       getContext().getMCDwarfFiles();
-     if (CppHashFilename.size() != 0) {
-       if(MCDwarfFiles[getContext().getGenDwarfFileNumber()]->getName() !=
+    // If we previously parsed a cpp hash file line comment then make sure the
+    // current Dwarf File is for the CppHashFilename if not then emit the
+    // Dwarf File table for it and adjust the line number for the .loc.
+    const std::vector<MCDwarfFile *> &MCDwarfFiles = 
+      getContext().getMCDwarfFiles();
+    if (CppHashFilename.size() != 0) {
+      if (MCDwarfFiles[getContext().getGenDwarfFileNumber()]->getName() !=
           CppHashFilename)
-         getStreamer().EmitDwarfFileDirective(
-           getContext().nextGenDwarfFileNumber(), StringRef(), CppHashFilename);
+        getStreamer().EmitDwarfFileDirective(
+          getContext().nextGenDwarfFileNumber(), StringRef(), CppHashFilename);
 
        unsigned CppHashLocLineNo = SrcMgr.FindLineNumber(CppHashLoc,CppHashBuf);
        Line = CppHashLineNumber - 1 + (Line - CppHashLocLineNo);
-     }
+    }
 
     getStreamer().EmitDwarfLocDirective(getContext().getGenDwarfFileNumber(),
                                         Line, 0, DWARF2_LINE_DEFAULT_IS_STMT ?
