@@ -484,10 +484,11 @@ TEST_F(FormatTest, StaticInitializers) {
 TEST_F(FormatTest, NestedStaticInitializers) {
   verifyFormat("static A x = { { {} } };\n");
   verifyFormat(
-      "static A x = {\n"
-      "  { { init1, init2, init3, init4 }, { init1, init2, init3, init4 } }\n"
-      "};\n");
-  verifyFormat(
+      "static A x = { { { init1, init2, init3, init4 },\n"
+      "                 { init1, init2, init3, init4 } } };");
+
+  // FIXME: Fix this in general an verify that it works in LLVM style again.
+  verifyGoogleFormat(
       "somes Status::global_reps[3] = {\n"
       "  { kGlobalRef, OK_CODE, NULL, NULL, NULL },\n"
       "  { kGlobalRef, CANCELLED_CODE, NULL, NULL, NULL },\n"
@@ -670,8 +671,7 @@ TEST_F(FormatTest, LayoutStatementsAroundPreprocessorDirectives) {
       "#define A B\n"
       "                       withMoreParamters,\n"
       "                       whichStronglyInfluenceTheLayout),\n"
-      "    andMoreParameters),\n"
-      "               trailing);", getLLVMStyleWithColumns(69));
+      "    andMoreParameters), trailing);", getLLVMStyleWithColumns(69));
 }
 
 TEST_F(FormatTest, LayoutBlockInsideParens) {
@@ -763,22 +763,13 @@ TEST_F(FormatTest, ConstructorInitializers) {
                      "}");
 
   // This test takes VERY long when memoization is broken.
-  verifyGoogleFormat(
-      "Constructor()\n"
-      "    : aaaa(a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
-      " a, a, a,\n"
-      "           a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
-      " a, a, a,\n"
-      "           a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
-      " a, a, a,\n"
-      "           a, a, a, a, a, a, a, a, a, a, a)\n"
-      "      aaaa(a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
-      " a, a, a,\n"
-      "           a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
-      " a, a, a,\n"
-      "           a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a, a,"
-      " a, a, a,\n"
-      "           a, a, a, a, a, a, a, a, a, a, a) {}\n");
+  std::string input = "Constructor()\n"
+                 "    : aaaa(a,\n";
+  for (unsigned i = 0, e = 80; i != e; ++i) {
+    input += "           a,\n";
+  }
+  input += "           a) {}";
+  verifyGoogleFormat(input);
 }
 
 TEST_F(FormatTest, BreaksAsHighAsPossible) {
@@ -827,6 +818,31 @@ TEST_F(FormatTest, BreaksDesireably) {
                "          Line.Tokens[i - 1].Tok.isNot(tok::l_paren) &&\n"
                "          Line.Tokens[i - 1].Tok.isNot(tok::l_square);\n"
                "    }\n  }\n}");
+}
+
+TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
+  verifyGoogleFormat(
+      "aaaaaaaa(aaaaaaaaaaaaa,\n"
+      "         aaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)),\n"
+      "         aaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+      "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)));");
+  verifyGoogleFormat(
+      "aaaaaaaaaaaaaaa(aaaaaaaaa,\n"
+      "                aaaaaaaaa,\n"
+      "                aaaaaaaaaaaaaaaaaaaaaaa).aaaaaaaaaaaaaaaaaa();");
+  verifyGoogleFormat(
+      "somefunction(someotherFunction(ddddddddddddddddddddddddddddddddddd,\n"
+      "                               ddddddddddddddddddddddddddddd),\n"
+      "             test);");
+
+  verifyGoogleFormat(
+      "std::vector<aaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "            aaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "            aaaaaaaaaaaaaaaaaaaaaaa> aaaaaaaaaaaaaaaaaa;");
+  verifyGoogleFormat("a(\"a\"\n"
+                     "  \"a\",\n"
+                     "  a);");
 }
 
 TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {

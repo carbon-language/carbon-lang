@@ -73,7 +73,7 @@ public:
   AnnotatedToken(const FormatToken &FormatTok)
       : FormatTok(FormatTok), Type(TT_Unknown), SpaceRequiredBefore(false),
         CanBreakBefore(false), MustBreakBefore(false),
-        ClosesTemplateDeclaration(false), Parent(NULL) {}
+        ClosesTemplateDeclaration(false), MatchingParen(NULL), Parent(NULL) {}
 
   bool is(tok::TokenKind Kind) const { return FormatTok.Tok.is(Kind); }
   bool isNot(tok::TokenKind Kind) const { return FormatTok.Tok.isNot(Kind); }
@@ -91,6 +91,8 @@ public:
   bool MustBreakBefore;
 
   bool ClosesTemplateDeclaration;
+
+  AnnotatedToken *MatchingParen;
 
   /// \brief The total length of the line up to and including this token.
   unsigned TotalLength;
@@ -146,6 +148,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.SplitTemplateClosingGreater = true;
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
+  LLVMStyle.BinPackParameters = true;
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
@@ -162,6 +165,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.SplitTemplateClosingGreater = false;
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
+  GoogleStyle.BinPackParameters = false;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = true;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
@@ -318,7 +322,8 @@ private:
   struct ParenState {
     ParenState(unsigned Indent, unsigned LastSpace)
         : Indent(Indent), LastSpace(LastSpace), FirstLessLess(0),
-          BreakBeforeClosingBrace(false), BreakAfterComma(false) {}
+          BreakBeforeClosingBrace(false), BreakAfterComma(false),
+          HasMultiParameterLine(false) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
@@ -345,6 +350,7 @@ private:
     bool BreakBeforeClosingBrace;
 
     bool BreakAfterComma;
+    bool HasMultiParameterLine;
 
     bool operator<(const ParenState &Other) const {
       if (Indent != Other.Indent)
@@ -357,6 +363,8 @@ private:
         return BreakBeforeClosingBrace;
       if (BreakAfterComma != Other.BreakAfterComma)
         return BreakAfterComma;
+      if (HasMultiParameterLine != Other.HasMultiParameterLine)
+        return HasMultiParameterLine;
       return false;
     }
   };
@@ -484,6 +492,9 @@ private:
       if (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
           State.NextToken->Parent->Type == TT_TemplateOpener)
         State.Stack[ParenLevel].Indent = State.Column + Spaces;
+      if (Previous.is(tok::comma))
+        State.Stack[ParenLevel].HasMultiParameterLine = true;
+
 
       // Top-level spaces that are not part of assignments are exempt as that
       // mostly leads to better results.
@@ -492,9 +503,18 @@ private:
           (ParenLevel != 0 || getPrecedence(Previous) == prec::Assignment))
         State.Stack[ParenLevel].LastSpace = State.Column;
     }
-    if (Newline && Previous.is(tok::l_brace)) {
+
+    // If we break after an {, we should also break before the corresponding }.
+    if (Newline && Previous.is(tok::l_brace))
       State.Stack.back().BreakBeforeClosingBrace = true;
-    }
+
+    // If we are breaking after '(', '{', '<' or ',', we need to break after
+    // future commas as well to avoid bin packing.
+    if (!Style.BinPackParameters && Newline &&
+        (Previous.is(tok::comma) || Previous.is(tok::l_paren) ||
+         Previous.is(tok::l_brace) || Previous.Type == TT_TemplateOpener))
+      State.Stack.back().BreakAfterComma = true;
+
     moveStateToNextToken(State);
   }
 
@@ -523,6 +543,17 @@ private:
       }
       State.Stack.push_back(
           ParenState(NewIndent, State.Stack.back().LastSpace));
+
+      // If the entire set of parameters will not fit on the current line, we
+      // will need to break after commas on this level to avoid bin-packing.
+      if (!Style.BinPackParameters && Current.MatchingParen != NULL &&
+          !Current.Children.empty()) {
+        if (getColumnLimit() < State.Column + Current.FormatTok.TokenLength +
+            Current.MatchingParen->TotalLength -
+            Current.Children[0].TotalLength) {
+          State.Stack.back().BreakAfterComma = true;
+        }
+      }
     }
 
     // If we encounter a closing ), ], } or >, we can remove a level from our
@@ -623,6 +654,11 @@ private:
         State.NextToken->Type != TT_LineComment &&
         State.Stack.back().BreakAfterComma)
       return UINT_MAX;
+    // Trying to insert a parameter on a new line if there are already more than
+    // one parameter on the current line is bin packing.
+    if (NewLine && State.NextToken->Parent->is(tok::comma) &&
+        State.Stack.back().HasMultiParameterLine && !Style.BinPackParameters)
+      return UINT_MAX;
     if (!NewLine && State.NextToken->Type == TT_CtorInitializerColon)
       return UINT_MAX;
 
@@ -631,7 +667,8 @@ private:
       CurrentPenalty += Parameters.PenaltyIndentLevel * State.Stack.size() +
                         splitPenalty(*State.NextToken->Parent);
     } else {
-      if (State.Stack.size() < State.StartOfLineLevel)
+      if (State.Stack.size() < State.StartOfLineLevel &&
+          State.NextToken->is(tok::identifier))
         CurrentPenalty += Parameters.PenaltyLevelDecrease *
                           (State.StartOfLineLevel - State.Stack.size());
     }
@@ -706,8 +743,13 @@ public:
           ColonIsObjCMethodExpr(false) {}
 
     bool parseAngle() {
+      if (CurrentToken == NULL)
+        return false;
+      AnnotatedToken *Left = CurrentToken->Parent;
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::greater)) {
+          Left->MatchingParen = CurrentToken;
+          CurrentToken->MatchingParen = Left;
           CurrentToken->Type = TT_TemplateCloser;
           next();
           return true;
@@ -725,10 +767,15 @@ public:
     }
 
     bool parseParens() {
-      if (CurrentToken != NULL && CurrentToken->is(tok::caret))
-        CurrentToken->Parent->Type = TT_ObjCBlockLParen;
+      if (CurrentToken == NULL)
+        return false;
+      AnnotatedToken *Left = CurrentToken->Parent;
+      if (CurrentToken->is(tok::caret))
+        Left->Type = TT_ObjCBlockLParen;
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::r_paren)) {
+          Left->MatchingParen = CurrentToken;
+          CurrentToken->MatchingParen = Left;
           next();
           return true;
         }
@@ -781,8 +828,14 @@ public:
     }
 
     bool parseBrace() {
+      // Lines are fine to end with '{'.
+      if (CurrentToken == NULL)
+        return true;
+      AnnotatedToken *Left = CurrentToken->Parent;
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::r_brace)) {
+          Left->MatchingParen = CurrentToken;
+          CurrentToken->MatchingParen = Left;
           next();
           return true;
         }
@@ -791,7 +844,6 @@ public:
         if (!consumeToken())
           return false;
       }
-      // Lines can currently end with '{'.
       return true;
     }
 
