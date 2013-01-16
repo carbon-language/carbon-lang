@@ -4560,6 +4560,16 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
   }
 
   QualType T = VD->getType().getNonReferenceType();
+  // C++ [temp.param]p8:
+  //
+  //   A non-type template-parameter of type "array of T" or
+  //   "function returning T" is adjusted to be of type "pointer to
+  //   T" or "pointer to function returning T", respectively.
+  if (ParamType->isArrayType())
+    ParamType = Context.getArrayDecayedType(ParamType);
+  else if (ParamType->isFunctionType())
+    ParamType = Context.getPointerType(ParamType);
+
   if (ParamType->isPointerType()) {
     // When the non-type template parameter is a pointer, take the
     // address of the declaration.
@@ -4589,6 +4599,9 @@ Sema::BuildExpressionFromDeclTemplateArgument(const TemplateArgument &Arg,
     VK = VK_LValue;
     T = Context.getQualifiedType(T,
                               TargetRef->getPointeeType().getQualifiers());
+  } else if (isa<FunctionDecl>(VD)) {
+    // References to functions are always lvalues.
+    VK = VK_LValue;
   }
 
   return BuildDeclRefExpr(VD, T, VK, Loc);
