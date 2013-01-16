@@ -169,6 +169,14 @@ public:
   /// \brief Get previous definition of the macro with the same name.
   MacroInfo *getPreviousDefinition() { return PreviousDefinition; }
 
+  /// \brief Get the first definition in the chain.
+  MacroInfo *getFirstDefinition() {
+    MacroInfo *MI = this;
+    while (MI->PreviousDefinition)
+      MI = MI->PreviousDefinition;
+    return MI;
+  }
+
   /// \brief Find macro definition active in the specified source location. If
   /// this macro was not defined there, return NULL.
   const MacroInfo *findDefinitionAtLoc(SourceLocation L,
