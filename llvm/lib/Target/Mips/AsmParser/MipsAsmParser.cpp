@@ -1071,9 +1071,6 @@ MipsAsmParser::parseHWRegs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
 MipsAsmParser::OperandMatchResultTy
 MipsAsmParser::parseHW64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
-
-  if (!isMips64())
-    return MatchOperand_NoMatch;
     //if the first token is not '$' we have error
   if (Parser.getTok().isNot(AsmToken::Dollar))
     return MatchOperand_NoMatch;
@@ -1091,7 +1088,7 @@ MipsAsmParser::parseHW64Regs(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   MipsOperand *op = MipsOperand::CreateReg(Mips::HWR29_64, S,
         Parser.getTok().getLoc());
-  op->setRegKind(MipsOperand::Kind_HW64Regs);
+  op->setRegKind(MipsOperand::Kind_HWRegs);
   Operands.push_back(op);
 
   Parser.Lex(); // Eat reg number

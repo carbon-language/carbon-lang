@@ -373,6 +373,6 @@ def HWRegsOpnd : RegisterOperand<HWRegs, "printCPURegs"> {
   let ParserMatchClass = HWRegsAsmOperand;
 }
 
-def HW64RegsOpnd : RegisterOperand<HWRegs64, "printCPURegs"> {
+def HW64RegsOpnd : RegisterOperand<HWRegs, "printCPURegs"> {
   let ParserMatchClass = HW64RegsAsmOperand;
 }
