@@ -14,7 +14,6 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/MC/MCParser/AsmLexer.h"
 #include "llvm/Support/DataTypes.h"
-#include <vector>
 
 namespace llvm {
 class MCAsmInfo;
@@ -24,13 +23,11 @@ class MCContext;
 class MCExpr;
 class MCInstPrinter;
 class MCInstrInfo;
-class MCParsedAsmOperand;
 class MCStreamer;
 class MCTargetAsmParser;
 class SMLoc;
 class SMRange;
 class SourceMgr;
-class StringRef;
 class Twine;
 
 /// MCAsmParserSemaCallback - Generic Sema callback for assembly parser.
