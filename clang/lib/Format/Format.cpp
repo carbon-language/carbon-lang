@@ -1176,6 +1176,10 @@ private:
          Right.is(tok::l_paren) || Right.is(tok::l_brace) ||
          Right.is(tok::kw_true) || Right.is(tok::kw_false)))
       return false;
+    if (Left.is(tok::coloncolon))
+      return false;
+    if (Right.is(tok::coloncolon))
+      return Left.isNot(tok::identifier) && Left.isNot(tok::greater);
     if (Left.is(tok::less) || Right.is(tok::greater) || Right.is(tok::less))
       return false;
     if (Right.is(tok::amp) || Right.is(tok::star))
@@ -1190,10 +1194,6 @@ private:
     if (Left.is(tok::l_square) || Right.is(tok::r_square))
       return false;
     if (Right.is(tok::l_square) && Right.Type != TT_ObjCMethodExpr)
-      return false;
-    if (Left.is(tok::coloncolon) ||
-        (Right.is(tok::coloncolon) &&
-         (Left.is(tok::identifier) || Left.is(tok::greater))))
       return false;
     if (Left.is(tok::period) || Right.is(tok::period))
       return false;

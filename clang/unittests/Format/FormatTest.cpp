@@ -131,6 +131,10 @@ TEST_F(FormatTest, FormatsNestedCall) {
   verifyFormat("Method(f1(f2, (f3())));");
 }
 
+TEST_F(FormatTest, ImportantSpaces) {
+  verifyFormat("vector< ::Type> v;");
+}
+
 //===----------------------------------------------------------------------===//
 // Tests for control statements.
 //===----------------------------------------------------------------------===//
