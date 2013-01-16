@@ -350,6 +350,30 @@ DIType DIBuilder::createMemberType(DIDescriptor Scope, StringRef Name,
   return DIType(MDNode::get(VMContext, Elts));
 }
 
+/// createStaticMemberType - Create debugging information entry for a
+/// C++ static data member.
+DIType DIBuilder::createStaticMemberType(DIDescriptor Scope, StringRef Name,
+                                         DIFile File, unsigned LineNumber,
+                                         DIType Ty, unsigned Flags,
+                                         llvm::Value *Val) {
+  // TAG_member is encoded in DIDerivedType format.
+  Flags |= DIDescriptor::FlagStaticMember;
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_member),
+    getNonCompileUnitScope(Scope),
+    MDString::get(VMContext, Name),
+    File,
+    ConstantInt::get(Type::getInt32Ty(VMContext), LineNumber),
+    ConstantInt::get(Type::getInt64Ty(VMContext), 0/*SizeInBits*/),
+    ConstantInt::get(Type::getInt64Ty(VMContext), 0/*AlignInBits*/),
+    ConstantInt::get(Type::getInt64Ty(VMContext), 0/*OffsetInBits*/),
+    ConstantInt::get(Type::getInt32Ty(VMContext), Flags),
+    Ty,
+    Val
+  };
+  return DIType(MDNode::get(VMContext, Elts));
+}
+
 /// createObjCIVar - Create debugging information entry for Objective-C
 /// instance variable.
 DIType DIBuilder::createObjCIVar(StringRef Name,
@@ -787,7 +811,8 @@ createGlobalVariable(StringRef Name, DIFile F, unsigned LineNumber,
     Ty,
     ConstantInt::get(Type::getInt32Ty(VMContext), isLocalToUnit),
     ConstantInt::get(Type::getInt32Ty(VMContext), 1), /* isDefinition*/
-    Val
+    Val,
+    DIDescriptor()
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
   AllGVs.push_back(Node);
@@ -799,7 +824,7 @@ createGlobalVariable(StringRef Name, DIFile F, unsigned LineNumber,
 DIGlobalVariable DIBuilder::
 createStaticVariable(DIDescriptor Context, StringRef Name,
                      StringRef LinkageName, DIFile F, unsigned LineNumber,
-                     DIType Ty, bool isLocalToUnit, Value *Val) {
+                     DIType Ty, bool isLocalToUnit, Value *Val, MDNode *Decl) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_variable),
     Constant::getNullValue(Type::getInt32Ty(VMContext)),
@@ -812,7 +837,8 @@ createStaticVariable(DIDescriptor Context, StringRef Name,
     Ty,
     ConstantInt::get(Type::getInt32Ty(VMContext), isLocalToUnit),
     ConstantInt::get(Type::getInt32Ty(VMContext), 1), /* isDefinition*/
-    Val
+    Val,
+    DIDescriptor(Decl)
   };
   MDNode *Node = MDNode::get(VMContext, Elts);
   AllGVs.push_back(Node);

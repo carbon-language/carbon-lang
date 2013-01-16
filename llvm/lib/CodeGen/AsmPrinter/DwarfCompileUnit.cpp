@@ -670,18 +670,21 @@ void CompileUnit::addTemplateParams(DIE &Buffer, DIArray TParams) {
   }
 }
 
+/// getOrCreateContextDIE - Get context owner's DIE.
+DIE *CompileUnit::getOrCreateContextDIE(DIDescriptor Context) {
+  if (Context.isType())
+    return getOrCreateTypeDIE(DIType(Context));
+  else if (Context.isNameSpace())
+    return getOrCreateNameSpace(DINameSpace(Context));
+  else if (Context.isSubprogram())
+    return getOrCreateSubprogramDIE(DISubprogram(Context));
+  else 
+    return getDIE(Context);
+}
+
 /// addToContextOwner - Add Die into the list of its context owner's children.
 void CompileUnit::addToContextOwner(DIE *Die, DIDescriptor Context) {
-  if (Context.isType()) {
-    DIE *ContextDIE = getOrCreateTypeDIE(DIType(Context));
-    ContextDIE->addChild(Die);
-  } else if (Context.isNameSpace()) {
-    DIE *ContextDIE = getOrCreateNameSpace(DINameSpace(Context));
-    ContextDIE->addChild(Die);
-  } else if (Context.isSubprogram()) {
-    DIE *ContextDIE = getOrCreateSubprogramDIE(DISubprogram(Context));
-    ContextDIE->addChild(Die);
-  } else if (DIE *ContextDIE = getDIE(Context))
+  if (DIE *ContextDIE = getOrCreateContextDIE(Context))
     ContextDIE->addChild(Die);
   else
     addDie(Die);
@@ -925,22 +928,15 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
             dwarf::DW_ACCESS_public);
         if (SP.isExplicit())
           addFlag(ElemDie, dwarf::DW_AT_explicit);
-      }
-      else if (Element.isVariable()) {
-        DIVariable DV(Element);
-        ElemDie = new DIE(dwarf::DW_TAG_variable);
-        addString(ElemDie, dwarf::DW_AT_name, DV.getName());
-        addType(ElemDie, DV.getType());
-        addFlag(ElemDie, dwarf::DW_AT_declaration);
-        addFlag(ElemDie, dwarf::DW_AT_external);
-        addSourceLine(ElemDie, DV);
       } else if (Element.isDerivedType()) {
         DIDerivedType DDTy(Element);
         if (DDTy.getTag() == dwarf::DW_TAG_friend) {
           ElemDie = new DIE(dwarf::DW_TAG_friend);
           addType(ElemDie, DDTy.getTypeDerivedFrom(), dwarf::DW_AT_friend);
-        } else
-          ElemDie = createMemberDIE(DIDerivedType(Element));
+        } else if (DDTy.isStaticMember())
+          ElemDie = createStaticMemberDIE(DDTy);
+        else
+          ElemDie = createMemberDIE(DDTy);
       } else if (Element.isObjCProperty()) {
         DIObjCProperty Property(Element);
         ElemDie = new DIE(Property.getTag());
@@ -1256,33 +1252,48 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   if (!GV.Verify())
     return;
 
-  DIE *VariableDIE = new DIE(GV.getTag());
-  // Add to map.
-  insertDIE(N, VariableDIE);
-
-  // Add name.
-  addString(VariableDIE, dwarf::DW_AT_name, GV.getDisplayName());
-  StringRef LinkageName = GV.getLinkageName();
-  bool isGlobalVariable = GV.getGlobal() != NULL;
-  if (!LinkageName.empty() && isGlobalVariable)
-    addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
-              getRealLinkageName(LinkageName));
-  // Add type.
-  DIType GTy = GV.getType();
-  addType(VariableDIE, GTy);
-
-  // Add scoping info.
-  if (!GV.isLocalToUnit())
-    addFlag(VariableDIE, dwarf::DW_AT_external);
-
-  // Add line number info.
-  addSourceLine(VariableDIE, GV);
-  // Add to context owner.
   DIDescriptor GVContext = GV.getContext();
-  addToContextOwner(VariableDIE, GVContext);
+  DIType GTy = GV.getType();
+
+  // If this is a static data member definition, some attributes belong
+  // to the declaration DIE.
+  DIE *VariableDIE = NULL;
+  DIDerivedType SDMDecl = GV.getStaticDataMemberDeclaration();
+  if (SDMDecl.Verify()) {
+    assert(SDMDecl.isStaticMember() && "Expected static member decl");
+    // We need the declaration DIE that is in the static member's class.
+    // But that class might not exist in the DWARF yet.
+    // Creating the class will create the static member decl DIE.
+    getOrCreateContextDIE(SDMDecl.getContext());
+    VariableDIE = getDIE(SDMDecl);
+    assert(VariableDIE && "Static member decl has no context?");
+  }
+
+  // If this is not a static data member definition, create the variable
+  // DIE and add the initial set of attributes to it.
+  if (!VariableDIE) {
+    VariableDIE = new DIE(GV.getTag());
+    // Add to map.
+    insertDIE(N, VariableDIE);
+
+    // Add name and type.
+    addString(VariableDIE, dwarf::DW_AT_name, GV.getDisplayName());
+    addType(VariableDIE, GTy);
+
+    // Add scoping info.
+    if (!GV.isLocalToUnit())
+      addFlag(VariableDIE, dwarf::DW_AT_external);
+
+    // Add line number info.
+    addSourceLine(VariableDIE, GV);
+    // Add to context owner.
+    addToContextOwner(VariableDIE, GVContext);
+  }
+
   // Add location.
   bool addToAccelTable = false;
   DIE *VariableSpecDIE = NULL;
+  bool isGlobalVariable = GV.getGlobal() != NULL;
   if (isGlobalVariable) {
     addToAccelTable = true;
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
@@ -1298,11 +1309,18 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
       addDIEEntry(VariableSpecDIE, dwarf::DW_AT_specification,
                   dwarf::DW_FORM_ref4, VariableDIE);
       addBlock(VariableSpecDIE, dwarf::DW_AT_location, 0, Block);
-      addFlag(VariableDIE, dwarf::DW_AT_declaration);
+      // A static member's declaration is already flagged as such.
+      if (!SDMDecl.Verify())
+        addFlag(VariableDIE, dwarf::DW_AT_declaration);
       addDie(VariableSpecDIE);
     } else {
       addBlock(VariableDIE, dwarf::DW_AT_location, 0, Block);
     }
+    // Add linkage name.
+    StringRef LinkageName = GV.getLinkageName();
+    if (!LinkageName.empty() && isGlobalVariable)
+      addString(VariableDIE, dwarf::DW_AT_MIPS_linkage_name,
+                getRealLinkageName(LinkageName));
   } else if (const ConstantInt *CI =
              dyn_cast_or_null<ConstantInt>(GV.getConstant()))
     addConstantValue(VariableDIE, CI, GTy.isUnsignedDIType());
@@ -1637,4 +1655,37 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
               PropertyAttributes);
   }
   return MemberDie;
+}
+
+/// createStaticMemberDIE - Create new DIE for C++ static member.
+DIE *CompileUnit::createStaticMemberDIE(const DIDerivedType DT) {
+  if (!DT.Verify())
+    return NULL;
+
+  DIE *StaticMemberDIE = new DIE(DT.getTag());
+  DIType Ty = DT.getTypeDerivedFrom();
+
+  addString(StaticMemberDIE, dwarf::DW_AT_name, DT.getName());
+  addType(StaticMemberDIE, Ty);
+  addSourceLine(StaticMemberDIE, DT);
+  addFlag(StaticMemberDIE, dwarf::DW_AT_external);
+  addFlag(StaticMemberDIE, dwarf::DW_AT_declaration);
+
+  // FIXME: We could omit private if the parent is a class_type, and
+  // public if the parent is something else.
+  if (DT.isProtected())
+    addUInt(StaticMemberDIE, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
+            dwarf::DW_ACCESS_protected);
+  else if (DT.isPrivate())
+    addUInt(StaticMemberDIE, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
+            dwarf::DW_ACCESS_private);
+  else
+    addUInt(StaticMemberDIE, dwarf::DW_AT_accessibility, dwarf::DW_FORM_data1,
+            dwarf::DW_ACCESS_public);
+
+  if (const ConstantInt *CI = dyn_cast_or_null<ConstantInt>(DT.getConstant()))
+    addConstantValue(StaticMemberDIE, CI, Ty.isUnsignedDIType());
+
+  insertDIE(DT, StaticMemberDIE);
+  return StaticMemberDIE;
 }

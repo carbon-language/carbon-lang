@@ -62,7 +62,8 @@ namespace llvm {
       FlagPrototyped         = 1 << 8,
       FlagObjcClassComplete  = 1 << 9,
       FlagObjectPointer      = 1 << 10,
-      FlagVector             = 1 << 11
+      FlagVector             = 1 << 11,
+      FlagStaticMember       = 1 << 12
     };
   protected:
     const MDNode *DbgNode;
@@ -300,6 +301,9 @@ namespace llvm {
     bool isVector() const {
       return (getFlags() & FlagVector) != 0;
     }
+    bool isStaticMember() const {
+      return (getFlags() & FlagStaticMember) != 0;
+    }
     bool isValid() const {
       return DbgNode && (isBasicType() || isDerivedType() || isCompositeType());
     }
@@ -337,7 +341,8 @@ namespace llvm {
   };
 
   /// DIDerivedType - A simple derived type, like a const qualified type,
-  /// a typedef, a pointer or reference, etc.
+  /// a typedef, a pointer or reference, et cetera.  Or, a data member of
+  /// a class/struct/union.
   class DIDerivedType : public DIType {
     friend class DIDescriptor;
     void printInternal(raw_ostream &OS) const;
@@ -361,6 +366,11 @@ namespace llvm {
     DIType getClassType() const {
       assert(getTag() == dwarf::DW_TAG_ptr_to_member_type);
       return getFieldAs<DIType>(10);
+    }
+
+    Constant *getConstant() const {
+      assert((getTag() == dwarf::DW_TAG_member) && isStaticMember());
+      return getConstantField(10);
     }
 
     StringRef getObjCPropertyName() const {
@@ -620,6 +630,9 @@ namespace llvm {
 
     GlobalVariable *getGlobal() const { return getGlobalVariableField(11); }
     Constant *getConstant() const   { return getConstantField(11); }
+    DIDerivedType getStaticDataMemberDeclaration() const {
+      return getFieldAs<DIDerivedType>(12);
+    }
 
     /// Verify - Verify that a global variable descriptor is well formed.
     bool Verify() const;

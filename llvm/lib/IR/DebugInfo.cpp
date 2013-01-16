@@ -1101,6 +1101,8 @@ void DIType::printInternal(raw_ostream &OS) const {
     OS << " [fwd]";
   if (isVector())
     OS << " [vector]";
+  if (isStaticMember())
+    OS << " [static]";
 }
 
 void DIDerivedType::printInternal(raw_ostream &OS) const {
