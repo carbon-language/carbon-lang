@@ -122,8 +122,6 @@ private:
   /// ExtensionDirectiveMap - maps directive names to handler methods in parser
   /// extensions. Extensions register themselves in this map by calling
   /// AddDirectiveHandler.
-  typedef std::pair<MCAsmParserExtension*, DirectiveHandler>
-    ExtensionDirectiveHandler;
   StringMap<ExtensionDirectiveHandler> ExtensionDirectiveMap;
 
   /// MacroMap - Map of currently defined macros.
@@ -160,10 +158,9 @@ public:
 
   virtual bool Run(bool NoInitialTextSection, bool NoFinalize = false);
 
-  virtual void AddDirectiveHandler(MCAsmParserExtension *Object,
-                                   StringRef Directive,
-                                   DirectiveHandler Handler) {
-    ExtensionDirectiveMap[Directive] = std::make_pair(Object, Handler);
+  virtual void AddDirectiveHandler(StringRef Directive,
+                                   ExtensionDirectiveHandler Handler) {
+    ExtensionDirectiveMap[Directive] = Handler;
   }
 
 public:

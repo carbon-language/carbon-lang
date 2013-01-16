@@ -26,10 +26,11 @@ namespace {
 /// \brief Implementation of directive handling which is shared across all
 /// Darwin targets.
 class DarwinAsmParser : public MCAsmParserExtension {
-  template<bool (DarwinAsmParser::*Handler)(StringRef, SMLoc)>
+  template<bool (DarwinAsmParser::*HandlerMethod)(StringRef, SMLoc)>
   void AddDirectiveHandler(StringRef Directive) {
-    getParser().AddDirectiveHandler(this, Directive,
-                                    HandleDirective<DarwinAsmParser, Handler>);
+    MCAsmParser::ExtensionDirectiveHandler Handler = std::make_pair(
+        this, HandleDirective<DarwinAsmParser, HandlerMethod>);
+    getParser().AddDirectiveHandler(Directive, Handler);
   }
 
   bool ParseSectionSwitch(const char *Segment, const char *Section,

@@ -24,10 +24,11 @@ using namespace llvm;
 namespace {
 
 class COFFAsmParser : public MCAsmParserExtension {
-  template<bool (COFFAsmParser::*Handler)(StringRef, SMLoc)>
+  template<bool (COFFAsmParser::*HandlerMethod)(StringRef, SMLoc)>
   void AddDirectiveHandler(StringRef Directive) {
-    getParser().AddDirectiveHandler(this, Directive,
-                                    HandleDirective<COFFAsmParser, Handler>);
+    MCAsmParser::ExtensionDirectiveHandler Handler = std::make_pair(
+        this, HandleDirective<COFFAsmParser, HandlerMethod>);
+    getParser().AddDirectiveHandler(Directive, Handler);
   }
 
   bool ParseSectionSwitch(StringRef Section,

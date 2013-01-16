@@ -22,10 +22,12 @@ using namespace llvm;
 namespace {
 
 class ELFAsmParser : public MCAsmParserExtension {
-  template<bool (ELFAsmParser::*Handler)(StringRef, SMLoc)>
+  template<bool (ELFAsmParser::*HandlerMethod)(StringRef, SMLoc)>
   void AddDirectiveHandler(StringRef Directive) {
-    getParser().AddDirectiveHandler(this, Directive,
-                                    HandleDirective<ELFAsmParser, Handler>);
+    MCAsmParser::ExtensionDirectiveHandler Handler = std::make_pair(
+        this, HandleDirective<ELFAsmParser, HandlerMethod>);
+
+    getParser().AddDirectiveHandler(Directive, Handler);
   }
 
   bool ParseSectionSwitch(StringRef Section, unsigned Type,

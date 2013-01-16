@@ -68,6 +68,8 @@ public:
 class MCAsmParser {
 public:
   typedef bool (*DirectiveHandler)(MCAsmParserExtension*, StringRef, SMLoc);
+  typedef std::pair<MCAsmParserExtension*, DirectiveHandler>
+    ExtensionDirectiveHandler;
 
 private:
   MCAsmParser(const MCAsmParser &) LLVM_DELETED_FUNCTION;
@@ -83,9 +85,8 @@ protected: // Can only create subclasses.
 public:
   virtual ~MCAsmParser();
 
-  virtual void AddDirectiveHandler(MCAsmParserExtension *Object,
-                                   StringRef Directive,
-                                   DirectiveHandler Handler) = 0;
+  virtual void AddDirectiveHandler(StringRef Directive,
+                                   ExtensionDirectiveHandler Handler) = 0;
 
   virtual SourceMgr &getSourceManager() = 0;
 
