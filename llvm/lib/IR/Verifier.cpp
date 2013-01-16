@@ -571,24 +571,25 @@ void Verifier::visitModuleFlag(MDNode *Op, DenseMap<MDString*, MDNode*>&SeenIDs,
           "invalid behavior operand in module flag (expected constant integer)",
           Op->getOperand(0));
   unsigned BehaviorValue = Behavior->getZExtValue();
-  Assert1((Module::Error <= BehaviorValue &&
-           BehaviorValue <= Module::Override),
-          "invalid behavior operand in module flag (unexpected constant)",
-          Op->getOperand(0));
   Assert1(ID,
           "invalid ID operand in module flag (expected metadata string)",
           Op->getOperand(1));
 
-  // Unless this is a "requires" flag, check the ID is unique.
-  if (BehaviorValue != Module::Require) {
-    bool Inserted = SeenIDs.insert(std::make_pair(ID, Op)).second;
-    Assert1(Inserted,
-            "module flag identifiers must be unique (or of 'require' type)",
-            ID);
-  }
+  // Sanity check the values for behaviors with additional requirements.
+  switch (BehaviorValue) {
+  default:
+    Assert1(false,
+            "invalid behavior operand in module flag (unexpected constant)",
+            Op->getOperand(0));
+    break;
 
-  // If this is a "requires" flag, sanity check the value.
-  if (BehaviorValue == Module::Require) {
+  case Module::Error:
+  case Module::Warning:
+  case Module::Override:
+    // These behavior types accept any value.
+    break;
+
+  case Module::Require: {
     // The value should itself be an MDNode with two operands, a flag ID (an
     // MDString), and a value.
     MDNode *Value = dyn_cast<MDNode>(Op->getOperand(2));
@@ -603,6 +604,25 @@ void Verifier::visitModuleFlag(MDNode *Op, DenseMap<MDString*, MDNode*>&SeenIDs,
     // Append it to the list of requirements, to check once all module flags are
     // scanned.
     Requirements.push_back(Value);
+    break;
+  }
+
+  case Module::Append:
+  case Module::AppendUnique: {
+    // These behavior types require the operand be an MDNode.
+    Assert1(isa<MDNode>(Op->getOperand(2)),
+            "invalid value for 'append'-type module flag "
+            "(expected a metadata node)", Op->getOperand(2));
+    break;
+  }
+  }
+
+  // Unless this is a "requires" flag, check the ID is unique.
+  if (BehaviorValue != Module::Require) {
+    bool Inserted = SeenIDs.insert(std::make_pair(ID, Op)).second;
+    Assert1(Inserted,
+            "module flag identifiers must be unique (or of 'require' type)",
+            ID);
   }
 }
 

@@ -2508,6 +2508,16 @@ The following behaviors are supported:
            other module. If both modules specify **Override**, but the values
            differ, an error will be emitted.
 
+   * - 5
+     - **Append**
+           Appends the two values, which are required to be metadata nodes.
+
+   * - 6
+     - **AppendUnique**
+           Appends the two values, which are required to be metadata
+           nodes. However, duplicate entries in the second list are dropped
+           during the append operation.
+
 It is an error for a particular unique flag ID to have multiple behaviors,
 except in the case of **Require** (which adds restrictions on another metadata
 value) or **Override**.

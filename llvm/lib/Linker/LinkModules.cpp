@@ -1086,6 +1086,34 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
       }
       continue;
     }
+    case Module::Append: {
+      MDNode *DstValue = cast<MDNode>(DstOp->getOperand(2));
+      MDNode *SrcValue = cast<MDNode>(SrcOp->getOperand(2));
+      unsigned NumOps = DstValue->getNumOperands() + SrcValue->getNumOperands();
+      Value **VP, **Values = VP = new Value*[NumOps];
+      for (unsigned i = 0, e = DstValue->getNumOperands(); i != e; ++i, ++VP)
+        *VP = DstValue->getOperand(i);
+      for (unsigned i = 0, e = SrcValue->getNumOperands(); i != e; ++i, ++VP)
+        *VP = SrcValue->getOperand(i);
+      DstOp->replaceOperandWith(2, MDNode::get(DstM->getContext(),
+                                               ArrayRef<Value*>(Values,
+                                                                NumOps)));
+      delete[] Values;
+      break;
+    }
+    case Module::AppendUnique: {
+      SmallSetVector<Value*, 16> Elts;
+      MDNode *DstValue = cast<MDNode>(DstOp->getOperand(2));
+      MDNode *SrcValue = cast<MDNode>(SrcOp->getOperand(2));
+      for (unsigned i = 0, e = DstValue->getNumOperands(); i != e; ++i)
+        Elts.insert(DstValue->getOperand(i));
+      for (unsigned i = 0, e = SrcValue->getNumOperands(); i != e; ++i)
+        Elts.insert(SrcValue->getOperand(i));
+      DstOp->replaceOperandWith(2, MDNode::get(DstM->getContext(),
+                                               ArrayRef<Value*>(Elts.begin(),
+                                                                Elts.end())));
+      break;
+    }
     }
   }
 

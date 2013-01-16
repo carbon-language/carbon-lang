@@ -147,30 +147,38 @@ public:
   /// An enumeration for describing the size of a pointer on the target machine.
   enum PointerSize { AnyPointerSize, Pointer32, Pointer64 };
 
-  /// An enumeration for the supported behaviors of module flags. The following
-  /// module flags behavior values are supported:
-  ///
-  ///    Value        Behavior
-  ///    -----        --------
-  ///      1          Error
-  ///                   Emits an error if two values disagree.
-  ///
-  ///      2          Warning
-  ///                   Emits a warning if two values disagree.
-  ///
-  ///      3          Require
-  ///                   Emits an error when the specified value is not present
-  ///                   or doesn't have the specified value. It is an error for
-  ///                   two (or more) llvm.module.flags with the same ID to have
-  ///                   the Require behavior but different values. There may be
-  ///                   multiple Require flags per ID.
-  ///
-  ///      4          Override
-  ///                   Uses the specified value if the two values disagree. It
-  ///                   is an error for two (or more) llvm.module.flags with the
-  ///                   same ID to have the Override behavior but different
-  ///                   values.
-  enum ModFlagBehavior { Error = 1, Warning  = 2, Require = 3, Override = 4 };
+  /// This enumeration defines the supported behaviors of module flags.
+  enum ModFlagBehavior {
+    /// Emits an error if two values disagree, otherwise the resulting value is
+    /// that of the operands.
+    Error = 1,
+
+    /// Emits a warning if two values disagree. The result value will be the
+    /// operand for the flag from the first module being linked.
+    Warning  = 2,
+
+    /// Adds a requirement that another module flag be present and have a
+    /// specified value after linking is performed. The value must be a metadata
+    /// pair, where the first element of the pair is the ID of the module flag
+    /// to be restricted, and the second element of the pair is the value the
+    /// module flag should be restricted to. This behavior can be used to
+    /// restrict the allowable results (via triggering of an error) of linking
+    /// IDs with the **Override** behavior.
+    Require = 3,
+
+    /// Uses the specified value, regardless of the behavior or value of the
+    /// other module. If both modules specify **Override**, but the values
+    /// differ, an error will be emitted.
+    Override = 4,
+
+    /// Appends the two values, which are required to be metadata nodes.
+    Append = 5,
+
+    /// Appends the two values, which are required to be metadata
+    /// nodes. However, duplicate entries in the second list are dropped
+    /// during the append operation.
+    AppendUnique = 6
+  };
 
   struct ModuleFlagEntry {
     ModFlagBehavior Behavior;
