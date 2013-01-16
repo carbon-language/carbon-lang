@@ -96,15 +96,8 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
                     <p>This drops you into the embedded python interpreter. When running under the <b>script</b> command, 
                        lldb sets some convenience variables that give you quick access to the currently selected entities that characterize
                        the program and debugger state.  In each case, if there is no currently selected entity of the appropriate
-                       type, the variable's <b>IsValid</b> method will return false. 
-                    <p>Note also, these variables hold the values
-                       of the selected objects on entry to the embedded interpreter.  They do not update as you use the LLDB
-                       API's to change, for example, the currently selected stack frame or thread.  
-                     <p>As a corollary to this, because they get reset every time the script interpreter is entered, you should not
-                       use these variables in general purpose python code that you write using the lldb module.  After all, lldb can
-                       run in a multithreaded environment, and another thread might call the "script" command, changing the value out
-                       from under you.</p>
-                       These are all global variables contained in the <b>lldb</b> python namespace :</p>
+                       type, the variable's <b>IsValid</b> method will return false. These variables are:</p>
+
                     <table class="stats" width="620" cellspacing="0">
                     <tr>
                         <td class="hed" width="20%">Variable</td>
@@ -164,7 +157,7 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
                             Contains the currently selected thread.
                             The <b>lldb.SBThread</b> object manages the stack frames in that thread.
                             A thread is always selected in the command interpreter when a target stops.
-                            The <b>thread select &lt;thread-index&gt;</b> commmand can be used to change the 
+                            The <b>thread select &lt;thread-index&gt;</b> command can be used to change the 
                             currently selected thread.  So as long as you have a stopped process, there will be
                             some selected thread.
                         </td>
@@ -181,14 +174,25 @@ Python Interactive Interpreter. To exit, type 'quit()', 'exit()' or Ctrl-D.
                             The <b>lldb.SBFrame</b> object manage the stack locals and the register set for
                             that stack.
                             A stack frame is always selected in the command interpreter when a target stops.
-                            The <b>frame select &lt;frame-index&gt;</b> commmand can be used to change the 
+                            The <b>frame select &lt;frame-index&gt;</b> command can be used to change the 
                             currently selected frame.  So as long as you have a stopped process, there will
                             be some selected frame.
                         </td>
                     </tr>
                     </table>
 
-                    <p>Once in the embedded interpreter, these objects can be used. To get started, note that almost 
+                    <p>While extremely convenient, these variables have a couple caveats that you should be aware of.
+                       First of all, they hold the values
+                       of the selected objects on entry to the embedded interpreter.  They do not update as you use the LLDB
+                       API's to change, for example, the currently selected stack frame or thread.  
+                     <p>Moreover, they are only defined and meaningful while in the interactive Python interpreter.
+                       There is no guarantee on their value in any other situation, hence you should not use them when defining
+                       Python formatters, breakpoint scripts and commands (or any other Python extension point that LLDB provides).
+                       As a rationale for such behavior, consider that lldb can
+                       run in a multithreaded environment, and another thread might call the "script" command, changing the value out
+                       from under you.</p>
+
+                    <p>To get started with these objects and LLDB scripting, please note that almost 
                        all of the <b>lldb</b> Python objects are able to briefly describe themselves when you pass them 
                        to the Python <b>print</b> function:
 <code><pre><tt>(lldb) <b>script</b>
