@@ -134,6 +134,9 @@ BUILD_CXX=@BUILD_CXX@
 # Triple for configuring build tools when cross-compiling
 BUILD_TRIPLE=@build@
 
+# Target triple (cpu-vendor-os) which LLVM is compiled for
+HOST_TRIPLE=@host@
+
 # Target triple (cpu-vendor-os) for which we should generate code
 TARGET_TRIPLE=@target@
 

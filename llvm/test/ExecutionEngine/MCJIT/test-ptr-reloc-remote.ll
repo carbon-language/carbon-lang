@@ -1,4 +1,4 @@
-; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -remote-mcjit -O0 %s
+; RUN: %lli_mcjit -remote-mcjit -O0 %s
 ; XFAIL: arm, mips
 
 @.str = private unnamed_addr constant [6 x i8] c"data1\00", align 1

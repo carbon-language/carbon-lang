@@ -1,5 +1,5 @@
 ; PR672
-; RUN: %lli -mtriple=%mcjit_triple -use-mcjit %s
+; RUN: %lli_mcjit %s
 ; XFAIL: mcjit-ia32
 
 define i32 @main() {

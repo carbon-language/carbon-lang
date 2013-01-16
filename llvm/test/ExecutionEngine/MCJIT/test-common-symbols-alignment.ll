@@ -1,4 +1,4 @@
-; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -O0 %s
+; RUN: %lli_mcjit -O0 %s
 
 ; This test checks that common symbols have been allocated addresses honouring
 ; the alignment requirement.

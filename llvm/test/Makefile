@@ -131,7 +131,8 @@ endif
 
 lit.site.cfg: FORCE
 	@echo "Making LLVM 'lit.site.cfg' file..."
-	@$(ECHOPATH) s=@TARGET_TRIPLE@=$(TARGET_TRIPLE)=g > lit.tmp
+	@$(ECHOPATH) s=@LLVM_HOSTTRIPLE@=$(HOST_TRIPLE)=g > lit.tmp
+	@$(ECHOPATH) s=@TARGET_TRIPLE@=$(TARGET_TRIPLE)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_SOURCE_DIR@=$(LLVM_SRC_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_BINARY_DIR@=$(LLVM_OBJ_ROOT)=g >> lit.tmp
 	@$(ECHOPATH) s=@LLVM_TOOLS_DIR@=$(ToolDir)=g >> lit.tmp

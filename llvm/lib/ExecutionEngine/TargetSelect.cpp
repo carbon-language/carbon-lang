@@ -32,18 +32,7 @@ TargetMachine *EngineBuilder::selectTarget() {
   // must use the host architecture.
   if (UseMCJIT && WhichEngine != EngineKind::Interpreter && M)
     TT.setTriple(M->getTargetTriple());
-  else {
-    TT.setTriple(LLVM_HOSTTRIPLE);
-#if defined(__APPLE__)
-#if defined(__LP64__)
-    if (TT.isArch32Bit())
-      TT = TT.get64BitArchVariant();
-#else
-    if (TT.isArch64Bit())
-      TT = TT.get32BitArchVariant();
-#endif
-#endif // APPLE
-  }
+
   return selectTarget(TT, MArch, MCPU, MAttrs);
 }
 
@@ -55,7 +44,7 @@ TargetMachine *EngineBuilder::selectTarget(const Triple &TargetTriple,
                               const SmallVectorImpl<std::string>& MAttrs) {
   Triple TheTriple(TargetTriple);
   if (TheTriple.getTriple().empty())
-    TheTriple.setTriple(sys::getDefaultTargetTriple());
+    TheTriple.setTriple(sys::getProcessTriple());
 
   // Adjust the triple to match what the user requested.
   const Target *TheTarget = 0;

@@ -52,7 +52,7 @@ protected:
     , MArch("")
     , Builder(Context)
     , MM(new SectionMemoryManager)
-    , HostTriple(LLVM_HOSTTRIPLE)
+    , HostTriple(sys::getProcessTriple())
   {
     InitializeNativeTarget();
     InitializeNativeTargetAsmPrinter();

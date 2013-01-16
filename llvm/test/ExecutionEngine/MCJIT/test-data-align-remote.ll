@@ -1,4 +1,4 @@
-; RUN:  %lli -mtriple=%mcjit_triple -use-mcjit -remote-mcjit -O0 %s
+; RUN:  %lli_mcjit -remote-mcjit -O0 %s
 ; XFAIL: arm, mips
 
 ; Check that a variable is always aligned as specified.

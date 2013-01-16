@@ -42,6 +42,10 @@ namespace sys {
   ///   CPU_TYPE-VENDOR-KERNEL-OPERATING_SYSTEM
   std::string getDefaultTargetTriple();
 
+  /// getProcessTriple() - Return an appropriate target triple for generating
+  /// code to be loaded into the current process, e.g. when using the JIT.
+  std::string getProcessTriple();
+
   /// getHostCPUName - Get the LLVM name for the host CPU. The particular format
   /// of the name is target dependent, and suitable for passing as -mcpu to the
   /// target which matches the host.

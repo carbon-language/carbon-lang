@@ -15,6 +15,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Config/config.h"
 #include "llvm/Support/DataStream.h"
 #include "llvm/Support/Debug.h"
@@ -578,3 +579,14 @@ bool sys::getHostCPUFeatures(StringMap<bool> &Features){
   return false;
 }
 #endif
+
+std::string sys::getProcessTriple() {
+  Triple PT(LLVM_HOSTTRIPLE);
+
+  if (sizeof(void *) == 8 && PT.isArch32Bit())
+    PT = PT.get64BitArchVariant();
+  if (sizeof(void *) == 4 && PT.isArch64Bit())
+    PT = PT.get32BitArchVariant();
+
+  return PT.str();
+}

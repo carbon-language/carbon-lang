@@ -1,4 +1,4 @@
-; RUN: %lli -mtriple=%mcjit_triple -use-mcjit %s > /dev/null
+; RUN: %lli_mcjit %s > /dev/null
 
 define i32 @bar(i8* %X) {
         ; pointer should be 4 byte aligned!

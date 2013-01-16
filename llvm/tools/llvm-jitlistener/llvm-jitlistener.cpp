@@ -137,7 +137,7 @@ protected:
     // Override the triple to generate ELF on Windows since that's supported
     Triple Tuple(TheModule->getTargetTriple());
     if (Tuple.getTriple().empty())
-      Tuple.setTriple(LLVM_HOSTTRIPLE);
+      Tuple.setTriple(sys::getProcessTriple());
 
     if (Tuple.isOSWindows() && Triple::ELF != Tuple.getEnvironment()) {
       Tuple.setEnvironment(Triple::ELF);

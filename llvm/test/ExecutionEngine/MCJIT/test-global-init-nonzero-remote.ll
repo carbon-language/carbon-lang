@@ -1,4 +1,4 @@
-; RUN: %lli -mtriple=%mcjit_triple -use-mcjit -remote-mcjit %s > /dev/null
+; RUN: %lli_mcjit -remote-mcjit %s > /dev/null
 ; XFAIL: arm, mips
 
 @count = global i32 1, align 4
