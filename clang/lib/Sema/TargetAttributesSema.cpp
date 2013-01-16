@@ -262,6 +262,54 @@ namespace {
   };
 }
 
+static void HandleMips16Attr(Decl *D, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.hasParameterOrArguments()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  // Attribute can only be applied to function types.
+  if (!isa<FunctionDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << /* function */0;
+    return;
+  }
+  D->addAttr(::new (S.Context) Mips16Attr(Attr.getRange(), S.Context));
+}
+
+static void HandleNoMips16Attr(Decl *D, const AttributeList &Attr, Sema &S) {
+  // check the attribute arguments.
+  if (Attr.hasParameterOrArguments()) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_number_arguments) << 0;
+    return;
+  }
+  // Attribute can only be applied to function types.
+  if (!isa<FunctionDecl>(D)) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << /* function */0;
+    return;
+  }
+  D->addAttr(::new (S.Context) NoMips16Attr(Attr.getRange(), S.Context));
+}
+
+namespace {
+  class MipsAttributesSema : public TargetAttributesSema {
+  public:
+    MipsAttributesSema() { }
+    bool ProcessDeclAttribute(Scope *scope, Decl *D, const AttributeList &Attr,
+                              Sema &S) const {
+      if (Attr.getName()->getName() == "mips16") {
+        HandleMips16Attr(D, Attr, S);
+        return true;
+      } else if (Attr.getName()->getName() == "nomips16") {
+        HandleNoMips16Attr(D, Attr, S);
+        return true;
+      }
+      return false;
+    }
+  };
+}
+
 const TargetAttributesSema &Sema::getTargetAttributesSema() const {
   if (TheTargetAttributesSema)
     return *TheTargetAttributesSema;
@@ -275,6 +323,9 @@ const TargetAttributesSema &Sema::getTargetAttributesSema() const {
   case llvm::Triple::x86:
   case llvm::Triple::x86_64:
     return *(TheTargetAttributesSema = new X86AttributesSema);
+  case llvm::Triple::mips:
+  case llvm::Triple::mipsel:
+    return *(TheTargetAttributesSema = new MipsAttributesSema);
   default:
     return *(TheTargetAttributesSema = new TargetAttributesSema);
   }

@@ -404,6 +404,11 @@ def MBlazeSaveVolatiles : InheritableAttr {
   let SemaHandler = 0;
 }
 
+def Mips16 : InheritableAttr {
+  let Spellings = [GNU<"mips16">, CXX11<"gnu", "mips16">];
+  let Subjects = [Function];
+}
+
 def Mode : Attr {
   let Spellings = [GNU<"mode">, CXX11<"gnu", "mode">];
   let Args = [IdentifierArgument<"Mode">];
@@ -440,6 +445,11 @@ def NoDebug : InheritableAttr {
 
 def NoInline : InheritableAttr {
   let Spellings = [GNU<"noinline">, CXX11<"gnu", "noinline">];
+}
+
+def NoMips16 : InheritableAttr {
+  let Spellings = [GNU<"nomips16">, CXX11<"gnu", "nomips16">];
+  let Subjects = [Function];
 }
 
 def NonNull : InheritableAttr {

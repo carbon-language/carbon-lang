@@ -3884,6 +3884,13 @@ public:
     return 29;
   }
 
+  void SetTargetAttributes(const Decl *D, llvm::GlobalValue *GV,
+                           CodeGen::CodeGenModule &CGM) const {
+    //
+    // can fill this in when new attribute work in llvm is done.
+    // attributes mips16 and nomips16 need to be handled here.
+    //
+  }
   bool initDwarfEHRegSizeTable(CodeGen::CodeGenFunction &CGF,
                                llvm::Value *Address) const;
 
