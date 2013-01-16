@@ -1213,6 +1213,12 @@ TEST_F(FormatTest, HandlesIncludeDirectives) {
 //===----------------------------------------------------------------------===//
 
 TEST_F(FormatTest, IncorrectCodeTrailingStuff) {
+  verifyFormat("void f() { return; }\n42");
+  verifyFormat("void f() {\n"
+               "  if (0)\n"
+               "    return;\n"
+               "}\n"
+               "42");
   verifyFormat("void f() { return }\n42");
   verifyFormat("void f() {\n"
                "  if (0)\n"
