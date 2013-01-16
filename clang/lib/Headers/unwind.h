@@ -105,15 +105,15 @@ typedef enum {
   _UVRSR_FAILED = 2
 } _Unwind_VRS_Result;
 
-_Unwind_VRS_Result _Unwind_VRS_Get(struct _Unwind_Context *context,
-  _Unwind_VRS_RegClass regclass,
-  uint32_t regno,
-  _Unwind_VRS_DataRepresentation representation,
-  void *valuep);
+_Unwind_VRS_Result _Unwind_VRS_Get(struct _Unwind_Context *__context,
+  _Unwind_VRS_RegClass __regclass,
+  uint32_t __regno,
+  _Unwind_VRS_DataRepresentation __representation,
+  void *__valuep);
 
 #else
 
-uintptr_t _Unwind_GetIP(struct _Unwind_Context* context);
+uintptr_t _Unwind_GetIP(struct _Unwind_Context* __context);
 
 #endif
 

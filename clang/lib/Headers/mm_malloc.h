@@ -30,45 +30,45 @@
 #include <malloc.h>
 #else
 #ifndef __cplusplus
-extern int posix_memalign(void **memptr, size_t alignment, size_t size);
+extern int posix_memalign(void **__memptr, size_t __alignment, size_t __size);
 #else
 // Some systems (e.g. those with GNU libc) declare posix_memalign with an
 // exception specifier. Via an "egregious workaround" in
 // Sema::CheckEquivalentExceptionSpec, Clang accepts the following as a valid
 // redeclaration of glibc's declaration.
-extern "C" int posix_memalign(void **memptr, size_t alignment, size_t size);
+extern "C" int posix_memalign(void **__memptr, size_t __alignment, size_t __size);
 #endif
 #endif
 
 #if !(defined(_WIN32) && defined(_mm_malloc))
 static __inline__ void *__attribute__((__always_inline__, __nodebug__,
                                        __malloc__))
-_mm_malloc(size_t size, size_t align)
+_mm_malloc(size_t __size, size_t __align)
 {
-  if (align == 1) {
-    return malloc(size);
+  if (__align == 1) {
+    return malloc(__size);
   }
 
-  if (!(align & (align - 1)) && align < sizeof(void *))
-    align = sizeof(void *);
+  if (!(__align & (__align - 1)) && __align < sizeof(void *))
+    __align = sizeof(void *);
 
-  void *mallocedMemory;
+  void *__mallocedMemory;
 #if defined(__MINGW32__)
-  mallocedMemory = __mingw_aligned_malloc(size, align);
+  __mallocedMemory = __mingw_aligned_malloc(__size, __align);
 #elif defined(_WIN32)
-  mallocedMemory = _aligned_malloc(size, align);
+  __mallocedMemory = _aligned_malloc(__size, __align);
 #else
-  if (posix_memalign(&mallocedMemory, align, size))
+  if (posix_memalign(&__mallocedMemory, __align, __size))
     return 0;
 #endif
 
-  return mallocedMemory;
+  return __mallocedMemory;
 }
 
 static __inline__ void __attribute__((__always_inline__, __nodebug__))
-_mm_free(void *p)
+_mm_free(void *__p)
 {
-  free(p);
+  free(__p);
 }
 #endif
 

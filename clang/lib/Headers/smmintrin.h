@@ -195,10 +195,10 @@ _mm_max_epu32 (__m128i __V1, __m128i __V2)
 /* SSE4 Insertion and Extraction from XMM Register Instructions.  */
 #define _mm_insert_ps(X, Y, N) __builtin_ia32_insertps128((X), (Y), (N))
 #define _mm_extract_ps(X, N) (__extension__                      \
-                              ({ union { int i; float f; } __t;  \
+                              ({ union { int __i; float __f; } __t;  \
                                  __v4sf __a = (__v4sf)(X);       \
-                                 __t.f = __a[N];                 \
-                                 __t.i;}))
+                                 __t.__f = __a[N];                 \
+                                 __t.__i;}))
 
 /* Miscellaneous insert and extract macros.  */
 /* Extract a single-precision float from X at index N into D.  */

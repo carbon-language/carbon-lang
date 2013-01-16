@@ -25,9 +25,10 @@
 #error this header is for x86 only
 #endif
 
-static inline int __get_cpuid (unsigned int level, unsigned int *eax,
-                               unsigned int *ebx, unsigned int *ecx,
-                               unsigned int *edx) {
-    __asm("cpuid" : "=a"(*eax), "=b" (*ebx), "=c"(*ecx), "=d"(*edx) : "0"(level));
+static inline int __get_cpuid (unsigned int __level, unsigned int *__eax,
+                               unsigned int *__ebx, unsigned int *__ecx,
+                               unsigned int *__edx) {
+    __asm("cpuid" : "=a"(*__eax), "=b" (*__ebx), "=c"(*__ecx), "=d"(*__edx)
+                  : "0"(__level));
     return 1;
 }
