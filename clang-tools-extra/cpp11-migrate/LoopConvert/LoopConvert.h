@@ -24,7 +24,7 @@
 class LoopConvertTransform : public Transform {
 public:
 
-  /// \brief \see Transform::run().
+  /// \see Transform::run().
   virtual int apply(const FileContentsByPath &InputStates,
                     RiskLevel MaxRiskLevel,
                     const clang::tooling::CompilationDatabase &Database,
