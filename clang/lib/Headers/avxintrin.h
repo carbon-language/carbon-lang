@@ -322,7 +322,7 @@ _mm256_blendv_pd(__m256d __a, __m256d __b, __m256d __c)
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_blendv_ps(__m256 __a, __m256 __b, __m256 __c)
 {
-  return (__m256)__builtin_ia32_blendvps256
+  return (__m256)__builtin_ia32_blendvps256(
     (__v8sf)__a, (__v8sf)__b, (__v8sf)__c);
 }
 
