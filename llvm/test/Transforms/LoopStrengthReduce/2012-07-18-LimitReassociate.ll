@@ -5,7 +5,7 @@
 ; PR13361: LSR + SCEV "hangs" on reasonably sized test with sequence of loops
 ;
 ; Without limits on CollectSubexpr, we have thousands of formulae for
-; the use that crosses loops. With limits we have six.
+; the use that crosses loops. With limits we have five.
 ; CHECK: LSR on loop %bb221:
 ; CHECK: After generating reuse formulae:
 ; CHECK: LSR is examining the following uses:
@@ -15,11 +15,8 @@
 ; CHECK: {{.*reg\(\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{}}
 ; CHECK: {{.*reg\(\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{}}
 ; CHECK: {{.*reg\(\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{}}
-; CHECK: {{.*reg\(\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{.*\{}}
 ; CHECK-NOT:reg
 ; CHECK: Filtering for use
-target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64-S128"
-target triple = "x86_64-unknown-freebsd9"
 
 %struct.snork = type { %struct.fuga, i32, i32, i32, i32, i32, i32 }
 %struct.fuga = type { %struct.gork, i64 }
