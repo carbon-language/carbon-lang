@@ -155,6 +155,18 @@ void DirectIvarAssignment::checkASTDecl(const ObjCImplementationDecl *D,
   }
 }
 
+static bool isAnnotatedToAllowDirectAssignment(const ObjCPropertyDecl *D) {
+  for (specific_attr_iterator<AnnotateAttr>
+       AI = D->specific_attr_begin<AnnotateAttr>(),
+       AE = D->specific_attr_end<AnnotateAttr>(); AI != AE; ++AI) {
+    const AnnotateAttr *Ann = *AI;
+    if (Ann->getAnnotation() ==
+        "objc_allow_direct_instance_variable_assignment")
+      return true;
+  }
+  return false;
+}
+
 void DirectIvarAssignment::MethodCrawler::VisitBinaryOperator(
                                                     const BinaryOperator *BO) {
   if (!BO->isAssignmentOp())
@@ -168,8 +180,14 @@ void DirectIvarAssignment::MethodCrawler::VisitBinaryOperator(
 
   if (const ObjCIvarDecl *D = IvarRef->getDecl()) {
     IvarToPropertyMapTy::const_iterator I = IvarToPropMap.find(D);
+
     if (I != IvarToPropMap.end()) {
       const ObjCPropertyDecl *PD = I->second;
+      // Skip warnings on Ivars that correspond to properties, annotated with
+      // objc_allow_direct_instance_variable_assignment. This annotation serves
+      // as a false positive suppression mechanism for the checker.
+      if (isAnnotatedToAllowDirectAssignment(PD))
+        return;
 
       ObjCMethodDecl *GetterMethod =
           InterfD->getInstanceMethod(PD->getGetterName());

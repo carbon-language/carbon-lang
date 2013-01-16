@@ -13,14 +13,14 @@ typedef signed char BOOL;
 @interface MyClass;
 @end
 
-@interface AnnotatedClass :NSObject {
+@interface AnnotatedClass : NSObject {
 }
   - (void) someMethod: (MyClass*)In __attribute__((annotate("objc_no_direct_instance_variable_assignment")));
   - (void) someMethodNotAnnaotated: (MyClass*)In;
 @end
 
 
-@interface TestProperty :AnnotatedClass {
+@interface TestProperty : AnnotatedClass {
   MyClass *_Z;
   id _nonSynth;
 }
@@ -33,6 +33,9 @@ typedef signed char BOOL;
 
   @property (assign, nonatomic) MyClass* Z; // non synthesized ivar, implemented setter
   @property (readonly) id nonSynth;  // non synthesized, explicitly implemented to return ivar with expected name
+
+  @property (assign) MyClass* NotX __attribute__((annotate("objc_allow_direct_instance_variable_assignment")));  // warnings should be suppressed
+
   @end
 
 @implementation TestProperty
@@ -44,6 +47,7 @@ typedef signed char BOOL;
     _Y = In; // expected-warning {{Direct assignment to an instance variable backing a property; use the setter instead}}
     _Z = In; // expected-warning {{Direct assignment to an instance variable backing a property; use the setter instead}}
     _nonSynth = 0; // expected-warning {{Direct assignment to an instance variable backing a property; use the setter instead}}
+    _NotX = 0; // no-warning
   }
   - (void) someMethodNotAnnaotated: (MyClass*)In {
     (__A) = In; 
