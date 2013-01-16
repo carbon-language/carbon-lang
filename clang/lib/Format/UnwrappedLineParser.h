@@ -88,6 +88,7 @@ struct UnwrappedLine {
   UnwrappedLine() : Level(0), InPPDirective(false) {
   }
 
+  // FIXME: Don't use std::list here.
   /// \brief The \c Tokens comprising this \c UnwrappedLine.
   std::list<FormatToken> Tokens;
 

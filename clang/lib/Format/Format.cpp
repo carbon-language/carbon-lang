@@ -86,6 +86,9 @@ public:
 
   bool ClosesTemplateDeclaration;
 
+  /// \brief The total length of the line up to and including this token.
+  unsigned TotalLength;
+
   std::vector<AnnotatedToken> Children;
   AnnotatedToken *Parent;
 };
@@ -207,31 +210,6 @@ static void replacePPWhitespace(
                                        NewLineText + std::string(Spaces, ' ')));
 }
 
-/// \brief Calculates whether the (remaining) \c AnnotatedLine starting with
-/// \p RootToken fits into \p Limit columns on a single line.
-///
-/// If true, sets \p Length to the required length.
-static bool fitsIntoLimit(const AnnotatedToken &RootToken, unsigned Limit,
-                          unsigned *Length = 0) {
-  unsigned Columns = RootToken.FormatTok.TokenLength;
-  if (Columns > Limit) return false;
-  const AnnotatedToken *Tok = &RootToken;
-  while (!Tok->Children.empty()) {
-    Tok = &Tok->Children[0];
-    Columns += (Tok->SpaceRequiredBefore ? 1 : 0) + Tok->FormatTok.TokenLength;
-    // A special case for the colon of a constructor initializer as this only
-    // needs to be put on a new line if the line needs to be split.
-    if (Columns > Limit ||
-        (Tok->MustBreakBefore && Tok->Type != TT_CtorInitializerColon)) {
-      // FIXME: Remove this hack.
-      return false;
-    }
-  }
-  if (Length != 0)
-    *Length = Columns;
-  return true;
-}
-
 /// \brief Returns if a token is an Objective-C selector name.
 ///
 /// For example, "bar" is a selector name in [foo bar:(4 + 5)].
@@ -245,11 +223,10 @@ class UnwrappedLineFormatter {
 public:
   UnwrappedLineFormatter(const FormatStyle &Style, SourceManager &SourceMgr,
                          const AnnotatedLine &Line, unsigned FirstIndent,
-                         bool FitsOnALine, const AnnotatedToken &RootToken,
+                         const AnnotatedToken &RootToken,
                          tooling::Replacements &Replaces, bool StructuralError)
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
-        FirstIndent(FirstIndent), FitsOnALine(FitsOnALine),
-        RootToken(RootToken), Replaces(Replaces) {
+        FirstIndent(FirstIndent), RootToken(RootToken), Replaces(Replaces) {
     Parameters.PenaltyIndentLevel = 15;
     Parameters.PenaltyLevelDecrease = 30;
     Parameters.PenaltyExcessCharacter = 1000000;
@@ -280,7 +257,7 @@ public:
         // cannot continue an top-level implicit string literal on the next
         // line.
         return 0;
-      if (FitsOnALine) {
+      if (Line.Last->TotalLength <= getColumnLimit() - FirstIndent) {
         addTokenToState(false, false, State);
       } else {
         unsigned NoBreak = calcPenalty(State, false, UINT_MAX);
@@ -289,8 +266,7 @@ public:
         if (State.NextToken != NULL &&
             State.NextToken->Parent->Type == TT_CtorInitializerColon) {
           if (Style.ConstructorInitializerAllOnOneLineOrOnePerLine &&
-              !fitsIntoLimit(*State.NextToken,
-                             getColumnLimit() - State.Column - 1))
+              Line.Last->TotalLength > getColumnLimit() - State.Column - 1)
             State.Stack.back().BreakAfterComma = true;
         }
       }
@@ -607,6 +583,8 @@ private:
         State.NextToken->Type != TT_LineComment &&
         State.Stack.back().BreakAfterComma)
       return UINT_MAX;
+    if (!NewLine && State.NextToken->Type == TT_CtorInitializerColon)
+      return UINT_MAX;
 
     unsigned CurrentPenalty = 0;
     if (NewLine) {
@@ -658,7 +636,6 @@ private:
   SourceManager &SourceMgr;
   const AnnotatedLine &Line;
   const unsigned FirstIndent;
-  const bool FitsOnALine;
   const AnnotatedToken &RootToken;
   tooling::Replacements &Replaces;
 
@@ -974,8 +951,7 @@ public:
     } else {
       if (Current.Type == TT_LineComment) {
         Current.MustBreakBefore = Current.FormatTok.NewlinesBefore > 0;
-      } else if (Current.Type == TT_CtorInitializerColon ||
-                 Current.Parent->Type == TT_LineComment ||
+      } else if (Current.Parent->Type == TT_LineComment ||
                  (Current.is(tok::string_literal) &&
                   Current.Parent->is(tok::string_literal))) {
         Current.MustBreakBefore = true;
@@ -984,6 +960,12 @@ public:
       }
     }
     Current.CanBreakBefore = Current.MustBreakBefore || canBreakBefore(Current);
+    if (Current.MustBreakBefore)
+      Current.TotalLength = Current.Parent->TotalLength + Style.ColumnLimit;
+    else
+      Current.TotalLength = Current.Parent->TotalLength +
+                            Current.FormatTok.TokenLength +
+                            (Current.SpaceRequiredBefore ? 1 : 0);
     if (!Current.Children.empty())
       calculateExtraInformation(Current.Children[0]);
   }
@@ -1007,6 +989,7 @@ public:
     Line.First.MustBreakBefore = Line.First.FormatTok.MustBreakBefore;
     Line.First.CanBreakBefore = Line.First.MustBreakBefore;
 
+    Line.First.TotalLength = Line.First.FormatTok.TokenLength;
     if (!Line.First.Children.empty())
       calculateExtraInformation(Line.First.Children[0]);
   }
@@ -1450,9 +1433,9 @@ public:
         unsigned Indent = formatFirstToken(TheLine.First, TheLine.Level,
                                            TheLine.InPPDirective,
                                            PreviousEndOfLineColumn);
-        bool FitsOnALine = tryFitMultipleLinesInOne(Indent, I, E);
+        tryFitMultipleLinesInOne(Indent, I, E);
         UnwrappedLineFormatter Formatter(Style, SourceMgr, TheLine, Indent,
-                                         FitsOnALine, TheLine.First, Replaces,
+                                         TheLine.First, Replaces,
                                          StructuralError);
         PreviousEndOfLineColumn = Formatter.format();
       } else {
@@ -1477,27 +1460,24 @@ private:
   /// if possible; note that \c I will be incremented when lines are merged.
   ///
   /// Returns whether the resulting \c Line can fit in a single line.
-  bool tryFitMultipleLinesInOne(unsigned Indent,
+  void tryFitMultipleLinesInOne(unsigned Indent,
                                 std::vector<AnnotatedLine>::iterator &I,
                                 std::vector<AnnotatedLine>::iterator E) {
     unsigned Limit = Style.ColumnLimit - (I->InPPDirective ? 1 : 0) - Indent;
 
+    // We can never merge stuff if there are trailing line comments.
+    if (I->Last->Type == TT_LineComment)
+      return;
+
     // Check whether the UnwrappedLine can be put onto a single line. If
     // so, this is bound to be the optimal solution (by definition) and we
     // don't need to analyze the entire solution space.
-    unsigned Length = 0;
-    if (!fitsIntoLimit(I->First, Limit, &Length))
-      return false;
+    if (I->Last->TotalLength >= Limit)
+      return;
+    Limit -= I->Last->TotalLength + 1; // One space.
 
-    // We can never merge stuff if there are trailing line comments.
-    if (I->Last->Type == TT_LineComment)
-      return true;
-
-    if (Limit == Length)
-      return true; // Couldn't fit a space.
-    Limit -= Length + 1; // One space.
     if (I + 1 == E)
-      return true;
+      return;
 
     if (I->Last->is(tok::l_brace)) {
       tryMergeSimpleBlock(I, E, Limit);
@@ -1507,7 +1487,7 @@ private:
                                     I->First.FormatTok.IsFirst)) {
       tryMergeSimplePPDirective(I, E, Limit);
     }
-    return true;
+    return;
   }
 
   void tryMergeSimplePPDirective(std::vector<AnnotatedLine>::iterator &I,
@@ -1519,7 +1499,8 @@ private:
     if (I + 2 != E && (I + 2)->InPPDirective &&
         !(I + 2)->First.FormatTok.HasUnescapedNewline)
       return;
-    if (!fitsIntoLimit((I + 1)->First, Limit)) return;
+    if ((I + 1)->Last->TotalLength > Limit)
+      return;
     join(Line, *(++I));
   }
 
@@ -1531,7 +1512,7 @@ private:
     AnnotatedLine &Line = *I;
     if (Line.Last->isNot(tok::r_paren))
       return;
-    if (!fitsIntoLimit((I + 1)->First, Limit))
+    if ((I + 1)->Last->TotalLength > Limit)
       return;
     if ((I + 1)->First.is(tok::kw_if) || (I + 1)->First.Type == TT_LineComment)
       return;
@@ -1594,12 +1575,7 @@ private:
 
   bool nextTwoLinesFitInto(std::vector<AnnotatedLine>::iterator I,
                            unsigned Limit) {
-    unsigned LengthLine1 = 0;
-    unsigned LengthLine2 = 0;
-    if (!fitsIntoLimit((I + 1)->First, Limit, &LengthLine1) ||
-        !fitsIntoLimit((I + 2)->First, Limit, &LengthLine2))
-      return false;
-    return LengthLine1 + LengthLine2 + 1 <= Limit; // One space.
+    return (I + 1)->Last->TotalLength + 1 + (I + 2)->Last->TotalLength <= Limit;
   }
 
   void join(AnnotatedLine &A, const AnnotatedLine &B) {
