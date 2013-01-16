@@ -17,7 +17,7 @@ TOOL_NO_EXPORTS = 1
 
 include $(CLANG_LEVEL)/../../Makefile.config
 
-SOURCES = Cpp11Migrate.cpp Transforms.cpp
+SOURCES = Cpp11Migrate.cpp Transforms.cpp Transform.cpp
 
 # For each Transform subdirectory add to SOURCES and BUILT_SOURCES.
 # BUILT_SOURCES ensures a subdirectory is created to house object files from

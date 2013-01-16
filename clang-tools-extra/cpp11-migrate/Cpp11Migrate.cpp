@@ -27,27 +27,26 @@
 ///
 //===----------------------------------------------------------------------===//
 
+#include "Transforms.h"
+#include "Transform.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
-#include "Transforms.h"
-#include "Transform.h"
 
 namespace cl = llvm::cl;
 using namespace clang::tooling;
 
-static cl::opt<RiskLevel>
-MaxRiskLevel("risk", cl::desc("Select a maximum risk level:"),
-             cl::values(
-               clEnumValN(RL_Safe, "safe", "Only safe transformations"),
-                 clEnumValN(RL_Reasonable, "reasonable",
-                           "Enable transformations that might change "
-                           "semantics (default)"),
-                 clEnumValN(RL_Risky, "risky",
-                           "Enable transformations that are likely to "
-                           "change semantics"),
+static cl::opt<RiskLevel> MaxRiskLevel(
+    "risk", cl::desc("Select a maximum risk level:"),
+    cl::values(clEnumValN(RL_Safe, "safe", "Only safe transformations"),
+               clEnumValN(RL_Reasonable, "reasonable",
+                          "Enable transformations that might change "
+                          "semantics (default)"),
+               clEnumValN(RL_Risky, "risky",
+                          "Enable transformations that are likely to "
+                          "change semantics"),
                clEnumValEnd),
-             cl::init(RL_Reasonable));
+    cl::init(RL_Reasonable));
 
 int main(int argc, const char **argv) {
   Transforms TransformManager;
@@ -74,22 +73,52 @@ int main(int argc, const char **argv) {
     return 1;
   }
 
+  unsigned int NumFiles = OptionsParser.getSourcePathList().size();
+
+  FileContentsByPath FileStates1, FileStates2,
+      *InputFileStates = &FileStates1, *OutputFileStates = &FileStates2;
+  FileStates1.reserve(NumFiles);
+  FileStates2.reserve(NumFiles);
+
   // Apply transforms.
   for (Transforms::const_iterator I = TransformManager.begin(),
-       E = TransformManager.end(); I != E; ++I) {
-    if ((*I)->apply(MaxRiskLevel, OptionsParser.getCompilations(),
-                    OptionsParser.getSourcePathList()) != 0) {
+                                  E = TransformManager.end();
+       I != E; ++I) {
+    if ((*I)->apply(*InputFileStates, MaxRiskLevel,
+                    OptionsParser.getCompilations(),
+                    OptionsParser.getSourcePathList(), *OutputFileStates) !=
+        0) {
+      // FIXME: Improve ClangTool to not abort if just one file fails.
       return 1;
     }
+    std::swap(InputFileStates, OutputFileStates);
+    OutputFileStates->clear();
   }
+
+  // Final state of files is pointed at by InputFileStates.
 
   // Final Syntax check.
   ClangTool EndSyntaxTool(OptionsParser.getCompilations(),
                           OptionsParser.getSourcePathList());
-  if (EndSyntaxTool.run(
-        newFrontendActionFactory<clang::SyntaxOnlyAction>()) != 0) {
-    // FIXME: Revert changes made to files that fail the syntax test.
+  for (FileContentsByPath::const_iterator I = InputFileStates->begin(),
+                                          E = InputFileStates->end();
+       I != E; ++I) {
+    EndSyntaxTool.mapVirtualFile(I->first, I->second);
+  }
+
+  if (EndSyntaxTool.run(newFrontendActionFactory<clang::SyntaxOnlyAction>()) !=
+      0) {
     return 1;
+  }
+
+  // Syntax check passed, write results to file.
+  for (FileContentsByPath::const_iterator I = InputFileStates->begin(),
+                                          E = InputFileStates->end();
+       I != E; ++I) {
+    std::string ErrorInfo;
+    llvm::raw_fd_ostream FileStream(I->first.c_str(), ErrorInfo,
+                                    llvm::raw_fd_ostream::F_Binary);
+    FileStream << I->second;
   }
 
   return 0;

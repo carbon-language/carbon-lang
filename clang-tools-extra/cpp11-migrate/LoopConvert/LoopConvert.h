@@ -17,13 +17,19 @@
 #define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_CONVERT_H
 
 #include "Transform.h"
+#include "llvm/Support/Compiler.h" // For LLVM_OVERRIDE
 
+/// \brief Subclass of Transform that transforms for-loops into range-based
+/// for-loops where possible.
 class LoopConvertTransform : public Transform {
 public:
 
-  virtual int apply(RiskLevel MaxRiskLEvel,
+  /// \brief \see Transform::run().
+  virtual int apply(const FileContentsByPath &InputStates,
+                    RiskLevel MaxRiskLevel,
                     const clang::tooling::CompilationDatabase &Database,
-                    const std::vector<std::string> &SourcePaths) LLVM_OVERRIDE;
+                    const std::vector<std::string> &SourcePaths,
+                    FileContentsByPath &ResultStates) LLVM_OVERRIDE;
 };
 
 #endif // LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_LOOP_CONVERT_H

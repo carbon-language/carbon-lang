@@ -19,15 +19,25 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 
 using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;
 using namespace clang;
 
-int LoopConvertTransform::apply(RiskLevel MaxRisk,
+int LoopConvertTransform::apply(const FileContentsByPath &InputStates,
+                                RiskLevel MaxRisk,
                                 const CompilationDatabase &Database,
-                                const std::vector<std::string> &SourcePaths) {
+                                const std::vector<std::string> &SourcePaths,
+                                FileContentsByPath &ResultStates) {
   RefactoringTool LoopTool(Database, SourcePaths);
+
+  for (FileContentsByPath::const_iterator I = InputStates.begin(),
+       E = InputStates.end();
+       I != E; ++I) {
+    LoopTool.mapVirtualFile(I->first, I->second);
+  }
+
   StmtAncestorASTVisitor ParentFinder;
   StmtGeneratedVarNameMap GeneratedDecls;
   ReplacedVarsMap ReplacedVars;
@@ -53,10 +63,18 @@ int LoopConvertTransform::apply(RiskLevel MaxRisk,
                                   &RejectedChanges,
                                   MaxRisk, LFK_PseudoArray);
   Finder.addMatcher(makePseudoArrayLoopMatcher(), &PseudoarrrayLoopFixer);
-  if (int result = LoopTool.runAndSave(newFrontendActionFactory(&Finder))) {
+
+  if (int result = LoopTool.run(newFrontendActionFactory(&Finder))) {
     llvm::errs() << "Error encountered during translation.\n";
     return result;
   }
+
+  RewriterContainer Rewrite(LoopTool.getFiles());
+
+  // FIXME: Do something if some replacements didn't get applied?
+  LoopTool.applyAllReplacements(Rewrite.getRewriter());
+
+  collectResults(Rewrite.getRewriter(), ResultStates);
 
   if (AcceptedChanges > 0) {
     setChangesMade();
