@@ -488,7 +488,7 @@ weakly-linked declaration may or may not be present a run-time, and a program
 can determine whether the declaration is present by checking whether the
 address of that declaration is non-NULL.
 
-If there a multiple declarations of the same entity, the availability
+If there are multiple declarations of the same entity, the availability
 attributes must either match on a per-platform basis or later
 declarations must not have availability attributes for that
 platform. For example:
