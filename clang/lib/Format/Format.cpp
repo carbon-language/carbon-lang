@@ -92,9 +92,30 @@ public:
 
 class AnnotatedLine {
 public:
-  AnnotatedLine(const FormatToken &FormatTok, unsigned Level,
-                bool InPPDirective)
-      : First(FormatTok), Level(Level), InPPDirective(InPPDirective) {}
+  AnnotatedLine(const UnwrappedLine &Line)
+      : First(Line.Tokens.front()), Level(Line.Level),
+        InPPDirective(Line.InPPDirective) {
+    assert(!Line.Tokens.empty());
+    AnnotatedToken *Current = &First;
+    for (std::list<FormatToken>::const_iterator I = ++Line.Tokens.begin(),
+                                                E = Line.Tokens.end();
+         I != E; ++I) {
+      Current->Children.push_back(*I);
+      Current->Children[0].Parent = Current;
+      Current = &Current->Children[0];
+    }
+    Last = Current;
+  }
+  AnnotatedLine(const AnnotatedLine &Other)
+      : First(Other.First), Type(Other.Type), Level(Other.Level),
+        InPPDirective(Other.InPPDirective) {
+    Last = &First;
+    while (!Last->Children.empty()) {
+      Last->Children[0].Parent = Last;
+      Last = &Last->Children[0];
+    }
+  }
+
   AnnotatedToken First;
   AnnotatedToken *Last;
 
@@ -945,16 +966,6 @@ public:
     bool ColonIsObjCMethodExpr;
   };
 
-  void createAnnotatedTokens(AnnotatedToken &Current) {
-    if (Current.FormatTok.Children.empty()) {
-      Line.Last = &Current;
-    } else {
-      Current.Children.push_back(AnnotatedToken(Current.FormatTok.Children[0]));
-      Current.Children.back().Parent = &Current;
-      createAnnotatedTokens(Current.Children.back());
-    }
-  }
-
   void calculateExtraInformation(AnnotatedToken &Current) {
     Current.SpaceRequiredBefore = spaceRequiredBefore(Current);
 
@@ -978,9 +989,6 @@ public:
   }
 
   void annotate() {
-    Line.Last = &Line.First;
-    createAnnotatedTokens(Line.First);
-
     AnnotatingParser Parser(Line.First);
     Line.Type = Parser.parseLine();
     if (Line.Type == LT_Invalid)
@@ -1619,8 +1627,7 @@ private:
   }
 
   virtual void consumeUnwrappedLine(const UnwrappedLine &TheLine) {
-    AnnotatedLines.push_back(
-        AnnotatedLine(TheLine.RootToken, TheLine.Level, TheLine.InPPDirective));
+    AnnotatedLines.push_back(AnnotatedLine(TheLine));
   }
 
   /// \brief Add a new line and the required indent before the first Token

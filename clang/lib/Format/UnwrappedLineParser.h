@@ -24,7 +24,7 @@
 #include "clang/Format/Format.h"
 #include "clang/Lex/Lexer.h"
 
-#include <vector>
+#include <list>
 
 namespace clang {
 
@@ -76,11 +76,6 @@ struct FormatToken {
   /// This happens for example when a preprocessor directive ended directly
   /// before the token.
   bool MustBreakBefore;
-
-  // FIXME: We currently assume that there is exactly one token in this vector
-  // except for the very last token that does not have any children.
-  /// \brief All tokens that logically follow this token.
-  std::vector<FormatToken> Children;
 };
 
 /// \brief An unwrapped line is a sequence of \c Token, that we would like to
@@ -93,8 +88,8 @@ struct UnwrappedLine {
   UnwrappedLine() : Level(0), InPPDirective(false) {
   }
 
-  /// \brief The \c Token comprising this \c UnwrappedLine.
-  FormatToken RootToken;
+  /// \brief The \c Tokens comprising this \c UnwrappedLine.
+  std::list<FormatToken> Tokens;
 
   /// \brief The indent level of the \c UnwrappedLine.
   unsigned Level;
@@ -160,8 +155,6 @@ private:
   // subtracted from beyond 0. Introduce a method to subtract from Line.Level
   // and use that everywhere in the Parser.
   OwningPtr<UnwrappedLine> Line;
-  bool RootTokenInitialized;
-  FormatToken *LastInCurrentLine;
   FormatToken FormatTok;
   bool MustBreakBeforeNextToken;
 
