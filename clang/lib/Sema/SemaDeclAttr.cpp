@@ -2057,7 +2057,7 @@ AvailabilityAttr *Sema::mergeAvailabilityAttr(NamedDecl *D, SourceRange Range,
           !versionsMatch(Deprecated, OldDeprecated, Override) ||
           !versionsMatch(Obsoleted, OldObsoleted, Override) ||
           !(OldIsUnavailable == IsUnavailable ||
-            (Override && OldIsUnavailable && !IsUnavailable))) {
+            (Override && !OldIsUnavailable && IsUnavailable))) {
         if (Override) {
           int Which = -1;
           VersionTuple FirstVersion;
