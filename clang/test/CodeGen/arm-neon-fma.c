@@ -1,6 +1,9 @@
 // REQUIRES: arm-registered-target
-// RUN: %clang -target thumbv7-none-linux-gnueabihf \
-// RUN:   -mcpu=cortex-a8 -mfloat-abi=hard \
+// RUN: %clang_cc1 -triple thumbv7-none-linux-gnueabihf \
+// RUN:   -target-abi aapcs \
+// RUN:   -target-cpu cortex-a8 \
+// RUN:   -mfloat-abi hard \
+// RUN:   -ffreestanding \
 // RUN:   -O3 -S -emit-llvm -o - %s | FileCheck %s
 
 #include <arm_neon.h>
