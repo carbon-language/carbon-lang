@@ -4470,7 +4470,6 @@ Process::RunThreadPlan (ExecutionContext &exe_ctx,
         bool handle_running_event = true;
         const uint64_t default_one_thread_timeout_usec = 250000;
         uint64_t computed_timeout = 0;
-        bool stopped_by_breakpoint = false;
         
         // This while loop must exit out the bottom, there's cleanup that we need to do when we are done.
         // So don't call return anywhere within it.
