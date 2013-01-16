@@ -3175,7 +3175,7 @@ bool RetainCountChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
 
     // Invalidate the argument region.
     state = state->invalidateRegions(ArgRegion, CE, C.blockCount(), LCtx,
-                                     /*CausedByPointerEscape*/ false);
+                                     /*CausesPointerEscape*/ false);
 
     // Restore the refcount status of the argument.
     if (Binding)
