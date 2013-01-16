@@ -236,6 +236,13 @@ static void setDwarfDebugFlags(int argc, char **argv) {
   }
 }
 
+static std::string DwarfDebugProducer;
+static void setDwarfDebugProducer(void) {
+  if(!getenv("DEBUG_PRODUCER"))
+    return;
+  DwarfDebugProducer += getenv("DEBUG_PRODUCER");
+}
+
 static int AsLexInput(SourceMgr &SrcMgr, MCAsmInfo &MAI, tool_output_file *Out) {
 
   AsmLexer Lexer(MAI);
@@ -353,6 +360,8 @@ int main(int argc, char **argv) {
   TripleName = Triple::normalize(TripleName);
   setDwarfDebugFlags(argc, argv);
 
+  setDwarfDebugProducer();
+
   const char *ProgName = argv[0];
   const Target *TheTarget = GetTarget(ProgName);
   if (!TheTarget)
@@ -393,6 +402,8 @@ int main(int argc, char **argv) {
   Ctx.setGenDwarfForAssembly(GenDwarfForAssembly);
   if (!DwarfDebugFlags.empty())
     Ctx.setDwarfDebugFlags(StringRef(DwarfDebugFlags));
+  if (!DwarfDebugProducer.empty())
+    Ctx.setDwarfDebugProducer(StringRef(DwarfDebugProducer));
   if (!DebugCompilationDir.empty())
     Ctx.setCompilationDir(DebugCompilationDir);
   if (!MainFileName.empty())

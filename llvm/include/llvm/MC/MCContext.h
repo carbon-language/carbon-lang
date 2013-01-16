@@ -129,6 +129,10 @@ namespace llvm {
     /// non-empty.
     StringRef DwarfDebugFlags;
 
+    /// The string to embed in as the dwarf AT_producer for the compile unit, if
+    /// non-empty.
+    StringRef DwarfDebugProducer;
+
     /// Honor temporary labels, this is useful for debugging semantic
     /// differences between temporary and non-temporary labels (primarily on
     /// Darwin).
@@ -345,6 +349,9 @@ namespace llvm {
 
     void setDwarfDebugFlags(StringRef S) { DwarfDebugFlags = S; }
     StringRef getDwarfDebugFlags() { return DwarfDebugFlags; }
+
+    void setDwarfDebugProducer(StringRef S) { DwarfDebugProducer = S; }
+    StringRef getDwarfDebugProducer() { return DwarfDebugProducer; }
 
     /// @}
 
