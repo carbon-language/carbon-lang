@@ -746,6 +746,11 @@ TEST_F(FormatTest, ConstructorInitializers) {
       "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
       "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
       "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}");
+  verifyGoogleFormat(
+      "SomeClass::Constructor()\n"
+      "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa),  // Some comment\n"
+      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
+      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}");
 
   verifyFormat(
       "SomeClass::Constructor()\n"

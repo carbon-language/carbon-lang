@@ -492,7 +492,7 @@ private:
       if (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
           State.NextToken->Parent->Type == TT_TemplateOpener)
         State.Stack[ParenLevel].Indent = State.Column + Spaces;
-      if (Previous.is(tok::comma))
+      if (Previous.is(tok::comma) && Current.Type != TT_LineComment)
         State.Stack[ParenLevel].HasMultiParameterLine = true;
 
 
