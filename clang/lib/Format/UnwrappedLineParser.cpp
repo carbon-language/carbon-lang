@@ -16,14 +16,15 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "UnwrappedLineParser.h"
-#include "clang/Basic/Diagnostic.h"
-#include "llvm/Support/raw_ostream.h"
+#define DEBUG_TYPE "format-parser"
 
-// Uncomment to get debug output from the UnwrappedLineParser.
-// Use in combination with --gtest_filter=*TestName* to limit the output to a
-// single test.
-// #define UNWRAPPED_LINE_PARSER_DEBUG_OUTPUT
+#include "clang/Basic/Diagnostic.h"
+#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
+#include "UnwrappedLineParser.h"
+
+// Uncomment to get debug output from tests:
+// #define DEBUG_WITH_TYPE(T, X) do { X; } while(0)
 
 namespace clang {
 namespace format {
@@ -109,9 +110,7 @@ UnwrappedLineParser::UnwrappedLineParser(
 }
 
 bool UnwrappedLineParser::parse() {
-#ifdef UNWRAPPED_LINE_PARSER_DEBUG_OUTPUT
-  llvm::errs() << "----\n";
-#endif
+  DEBUG(llvm::dbgs() << "----\n");
   readToken();
   return parseFile();
 }
@@ -658,16 +657,16 @@ void UnwrappedLineParser::addUnwrappedLine() {
          FormatTok.Tok.is(tok::comment)) {
     nextToken();
   }
-#ifdef UNWRAPPED_LINE_PARSER_DEBUG_OUTPUT
-  llvm::errs() << "Line: ";
-  for (std::list<FormatToken>::iterator I = Line->Tokens.begin(),
-                                        E = Line->Tokens.end();
-       I != E; ++I) {
-    llvm::errs() << I->Tok.getName() << " ";
+  DEBUG({
+    llvm::dbgs() << "Line: ";
+    for (std::list<FormatToken>::iterator I = Line->Tokens.begin(),
+                                          E = Line->Tokens.end();
+         I != E; ++I) {
+      llvm::dbgs() << I->Tok.getName() << " ";
 
-  }
-  llvm::errs() << "\n";
-#endif
+    }
+    llvm::dbgs() << "\n";
+  });
   Callback.consumeUnwrappedLine(*Line);
   Line->Tokens.clear();
 }
