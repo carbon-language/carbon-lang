@@ -30,3 +30,6 @@
 // CHECK-NONROOT: clang
 // CHECK-NONROOT: "-cc1"
 // CHECK-NONROOT-NOT: "-isysroot"
+//
+// It doesn't make sense on msys bash.
+// REQUIRES: shell-preserves-root
