@@ -4314,10 +4314,17 @@ bool Sema::inferObjCARCLifetime(ValueDecl *decl) {
 
 static void checkAttributesAfterMerging(Sema &S, NamedDecl &ND) {
   // 'weak' only applies to declarations with external linkage.
-  WeakAttr *WA = ND.getAttr<WeakAttr>();
-  if (WA && ND.getLinkage() != ExternalLinkage) {
-    S.Diag(WA->getLocation(), diag::err_attribute_weak_static);
-    ND.dropAttr<WeakAttr>();
+  if (WeakAttr *Attr = ND.getAttr<WeakAttr>()) {
+    if (ND.getLinkage() != ExternalLinkage) {
+      S.Diag(Attr->getLocation(), diag::err_attribute_weak_static);
+      ND.dropAttr<WeakAttr>();
+    }
+  }
+  if (WeakRefAttr *Attr = ND.getAttr<WeakRefAttr>()) {
+    if (ND.getLinkage() == ExternalLinkage) {
+      S.Diag(Attr->getLocation(), diag::err_attribute_weakref_not_static);
+      ND.dropAttr<WeakRefAttr>();
+    }
   }
 }
 

@@ -28,4 +28,7 @@ int a7() __attribute__((weakref ("f1"))); // expected-error {{weakref declaratio
 int a8 __attribute__((weakref ("v1"))); // expected-error {{weakref declaration must have internal linkage}}
 
 // gcc accepts this
-int a9 __attribute__((weakref)); // expected-error {{weakref declaration must have internal linkage}}
+int a9 __attribute__((weakref));  // expected-error {{weakref declaration of 'a9' must also have an alias attribute}}
+
+static int a10();
+int a10() __attribute__((weakref ("foo")));

@@ -1420,11 +1420,6 @@ static void handleWeakRefAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // This looks like a bug in gcc. We reject that for now. We should revisit
   // it if this behaviour is actually used.
 
-  if (nd->getLinkage() == ExternalLinkage) {
-    S.Diag(Attr.getLoc(), diag::err_attribute_weakref_not_static);
-    return;
-  }
-
   // GCC rejects
   // static ((alias ("y"), weakref)).
   // Should we? How to check that weakref is before or after alias?
@@ -4583,7 +4578,8 @@ void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
   // but that looks really pointless. We reject it.
   if (Inheritable && D->hasAttr<WeakRefAttr>() && !D->hasAttr<AliasAttr>()) {
     Diag(AttrList->getLoc(), diag::err_attribute_weakref_without_alias) <<
-    dyn_cast<NamedDecl>(D)->getNameAsString();
+    cast<NamedDecl>(D)->getNameAsString();
+    D->dropAttr<WeakRefAttr>();
     return;
   }
 }
