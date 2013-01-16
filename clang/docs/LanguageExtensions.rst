@@ -439,7 +439,7 @@ succeeds but Clang emits a warning specifying that the function is deprecated.
 Finally, if Clang is instructed to compile code for Mac OS X 10.7, the call
 fails because ``f()`` is no longer available.
 
-The availablility attribute is a comma-separated list starting with the
+The availability attribute is a comma-separated list starting with the
 platform name and then including clauses specifying important milestones in the
 declaration's lifetime (in any order) along with additional information.  Those
 clauses can be:
@@ -487,6 +487,33 @@ as if the ``weak_import`` attribute were added to the declaration.  A
 weakly-linked declaration may or may not be present a run-time, and a program
 can determine whether the declaration is present by checking whether the
 address of that declaration is non-NULL.
+
+If there a multiple declarations of the same entity, the availability
+attributes must either match on a per-platform basis or later
+declarations must not have availability attributes for that
+platform. For example:
+
+.. code-block:: c
+
+  void g(void) __attribute__((availability(macosx,introduced=10.4)));
+  void g(void) __attribute__((availability(macosx,introduced=10.4))); // okay, matches
+  void g(void) __attribute__((availability(ios,introduced=4.0))); // okay, adds a new platform
+  void g(void); // okay, inherits both macosx and ios availability from above.
+  void g(void) __attribute__((availability(macosx,introduced=10.5))); // error: mismatch
+
+When one method overrides another, the overriding method can be more widely available than the overridden method, e.g.,:
+
+.. code-block:: objc
+
+  @interface A
+  - (id)method __attribute__((availability(macosx,introduced=10.4)));
+  - (id)method2 __attribute__((availability(macosx,introduced=10.4)));
+  @end
+
+  @interface B : A
+  - (id)method __attribute__((availability(macosx,introduced=10.3))); // okay: method moved into base class later
+  - (id)method __attribute__((availability(macosx,introduced=10.5))); // error: this method was available via the base class in 10.4
+  @end
 
 Checks for Standard Language Features
 =====================================
