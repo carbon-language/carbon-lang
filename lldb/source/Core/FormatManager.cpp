@@ -910,6 +910,10 @@ FormatManager::LoadLibcxxFormatters()
                                                         TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})")));
     libcxx_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^std::__1::weak_ptr<.+>(( )?&)?$")),
                                                         TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "{${var.__ptr_%S}} (strong=${var.count} weak=${var.weak_count})")));
+    
+    // this summary prevails on the regex std::vector<> because we do exact matches before regex ones
+    libcxx_category_sp->GetSummaryNavigator()->Add(ConstString("std::__1::vector<std::__1::allocator<bool> >"),
+                                                   TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags, "size=${var.__size_}")));
 
 #endif
 }
