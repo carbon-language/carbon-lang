@@ -78,6 +78,11 @@
 # CHECK:  multu  $3, $5          # encoding: [0x19,0x00,0x65,0x00]
 # CHECK:  dsubu   $4, $3, $5      # encoding: [0x2f,0x20,0x65,0x00]
 # CHECK:  daddu    $7, $8, $zero  # encoding: [0x2d,0x38,0x00,0x01]
+# CHECK:  .set    push                                            
+# CHECK:  .set    mips32r2                                        
+# CHECK:  rdhwr   $5, $29                                         
+# CHECK:  .set    pop            # encoding: [0x3b,0xe8,0x05,0x7c]
+
     dadd    $9,$6,$7
     dadd    $9,$6,17767
     daddu   $9,$6,-15001
@@ -92,3 +97,4 @@
     multu  $3,$5
     dsubu   $4,$3,$5
     move   $7,$8
+    rdhwr   $5, $29
