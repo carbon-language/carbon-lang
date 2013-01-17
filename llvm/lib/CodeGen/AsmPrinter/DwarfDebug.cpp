@@ -2443,7 +2443,11 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   // FIXME: This should be the .dwo file.
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name, FN);
 
-  // FIXME: We also need DW_AT_addr_base and DW_AT_dwo_id.
+  // FIXME: We also need DW_AT_dwo_id.
+
+  // FIXME: The addr base should be relative for each compile unit, however,
+  // this one is going to be 0 anyhow.
+  NewCU->addUInt(Die, dwarf::DW_AT_GNU_addr_base, dwarf::DW_FORM_sec_offset, 0);
 
   // 2.17.1 requires that we use DW_AT_low_pc for a single entry point
   // into an entity. We're using 0, or a NULL label for this.

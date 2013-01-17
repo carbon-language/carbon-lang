@@ -173,10 +173,8 @@ DWARFFormValue::extractValue(DataExtractor data, uint32_t *offset_ptr,
       indirect = true;
       break;
     case DW_FORM_sec_offset:
-      if (cu->getAddressByteSize() == 4)
-        Value.uval = data.getU32(offset_ptr);
-      else
-        Value.uval = data.getU64(offset_ptr);
+      // FIXME: This is 64-bit for DWARF64.
+      Value.uval = data.getU32(offset_ptr);
       break;
     case DW_FORM_flag_present:
       Value.uval = 1;

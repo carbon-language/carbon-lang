@@ -193,6 +193,7 @@ void DIEInteger::EmitValue(AsmPrinter *Asm, unsigned Form) const {
   case dwarf::DW_FORM_data1: Size = 1; break;
   case dwarf::DW_FORM_ref2:  // Fall thru
   case dwarf::DW_FORM_data2: Size = 2; break;
+  case dwarf::DW_FORM_sec_offset: // Fall thru
   case dwarf::DW_FORM_ref4:  // Fall thru
   case dwarf::DW_FORM_data4: Size = 4; break;
   case dwarf::DW_FORM_ref8:  // Fall thru
@@ -218,6 +219,7 @@ unsigned DIEInteger::SizeOf(AsmPrinter *AP, unsigned Form) const {
   case dwarf::DW_FORM_data1: return sizeof(int8_t);
   case dwarf::DW_FORM_ref2:  // Fall thru
   case dwarf::DW_FORM_data2: return sizeof(int16_t);
+  case dwarf::DW_FORM_sec_offset: // Fall thru
   case dwarf::DW_FORM_ref4:  // Fall thru
   case dwarf::DW_FORM_data4: return sizeof(int32_t);
   case dwarf::DW_FORM_ref8:  // Fall thru
