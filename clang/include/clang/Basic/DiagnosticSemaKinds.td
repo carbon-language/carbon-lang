@@ -1830,6 +1830,8 @@ def err_attribute_wrong_decl_type : Error<
   "functions, methods, and parameters|classes|variables|methods|"
   "variables, functions and labels|fields and global variables|structs|"
   "variables, functions and tag types|thread-local variables}1">;
+def err_attribute_not_type_attr : Error<
+  "'%0' attribute cannot be applied to types">;
 def warn_function_attribute_wrong_type : Warning<
   "'%0' only applies to function types; type here is %1">,
   InGroup<IgnoredAttributes>;
@@ -5861,6 +5863,10 @@ def warn_falloff_noreturn_function : Warning<
   InGroup<InvalidNoreturn>;
 def err_noreturn_block_has_return_expr : Error<
   "block declared 'noreturn' should not return">;
+def err_noreturn_missing_on_first_decl : Error<
+  "function declared '[[noreturn]]' after its first declaration">;
+def note_noreturn_missing_first_decl : Note<
+  "declaration missing '[[noreturn]]' attribute is here">;
 def err_block_on_nonlocal : Error<
   "__block attribute not allowed, only allowed on local variables">;
 def err_block_on_vm : Error<

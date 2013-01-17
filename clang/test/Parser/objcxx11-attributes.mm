@@ -13,12 +13,12 @@ void f(X *noreturn) {
   int a[ [noreturn getSize] ];
 
   // ... but is interpreted as an attribute where possible.
-  int b[ [noreturn] ]; // expected-warning {{'noreturn' only applies to function types}}
+  int b[ [noreturn] ]; // expected-error {{'noreturn' attribute only applies to functions and methods}}
 
   int c[ [noreturn getSize] + 1 ];
 
   // An array size which is computed by a lambda is not OK.
-  int d[ [noreturn] { return 3; } () ]; // expected-error {{expected ']'}} expected-warning {{'noreturn' only applies}}
+  int d[ [noreturn] { return 3; } () ]; // expected-error {{expected ']'}} expected-error {{'noreturn' attribute only applies}}
 
   // A message send which contains a message send is OK.
   [ [ X alloc ] init ];
@@ -40,7 +40,7 @@ void f(X *noreturn) {
   expected-warning {{unknown attribute 'bitand' ignored}} 
 
   // FIXME: Suppress vexing parse warning
-  [[noreturn]]int(e)(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}} 
+  [[gnu::noreturn]]int(e)(); // expected-warning {{function declaration}} expected-note {{replace parentheses with an initializer}} 
   int e2(); // expected-warning {{interpreted as a function declaration}} expected-note{{}}
 
   // A function taking a noreturn function.

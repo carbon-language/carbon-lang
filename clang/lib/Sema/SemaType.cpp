@@ -4189,24 +4189,43 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
     if (attr.isInvalid())
       continue;
 
-    // [[gnu::...]] attributes are treated as declaration attributes, so may
-    // not appertain to a DeclaratorChunk, even if we handle them as type
-    // attributes.
-    // FIXME: All other C++11 type attributes may *only* appertain to a type,
-    // and should only be considered here if they appertain to a
-    // DeclaratorChunk.
-    if (attr.isCXX11Attribute() && TAL == TAL_DeclChunk &&
-        attr.getScopeName() && attr.getScopeName()->isStr("gnu")) {
-      state.getSema().Diag(attr.getLoc(),
-                           diag::warn_cxx11_gnu_attribute_on_type)
-        << attr.getName();
-      continue;
+    if (attr.isCXX11Attribute()) {
+      // [[gnu::...]] attributes are treated as declaration attributes, so may
+      // not appertain to a DeclaratorChunk, even if we handle them as type
+      // attributes.
+      if (attr.getScopeName() && attr.getScopeName()->isStr("gnu")) {
+        if (TAL == TAL_DeclChunk) {
+          state.getSema().Diag(attr.getLoc(),
+                               diag::warn_cxx11_gnu_attribute_on_type)
+              << attr.getName();
+          continue;
+        }
+      } else if (TAL != TAL_DeclChunk) {
+        // Otherwise, only consider type processing for a C++11 attribute if
+        // it's actually been applied to a type.
+        continue;
+      }
     }
 
     // If this is an attribute we can handle, do so now,
     // otherwise, add it to the FnAttrs list for rechaining.
     switch (attr.getKind()) {
-    default: break;
+    default:
+      // A C++11 attribute on a declarator chunk must appertain to a type.
+      if (attr.isCXX11Attribute() && TAL == TAL_DeclChunk)
+        state.getSema().Diag(attr.getLoc(), diag::err_attribute_not_type_attr)
+          << attr.getName()->getName();
+      break;
+
+    case AttributeList::UnknownAttribute:
+      if (attr.isCXX11Attribute() && TAL == TAL_DeclChunk)
+        state.getSema().Diag(attr.getLoc(),
+                             diag::warn_unknown_attribute_ignored)
+          << attr.getName();
+      break;
+
+    case AttributeList::IgnoredAttribute:
+      break;
 
     case AttributeList::AT_MayAlias:
       // FIXME: This attribute needs to actually be handled, but if we ignore
@@ -4255,7 +4274,7 @@ static void processTypeAttrs(TypeProcessingState &state, QualType &type,
 
     case AttributeList::AT_NSReturnsRetained:
       if (!state.getSema().getLangOpts().ObjCAutoRefCount)
-    break;
+        break;
       // fallthrough into the function attrs
 
     FUNCTION_TYPE_ATTRS_CASELIST:

@@ -2276,6 +2276,18 @@ bool Sema::MergeFunctionDecl(FunctionDecl *New, Decl *OldD, Scope *S) {
       }
     }
 
+    // C++11 [dcl.attr.noreturn]p1:
+    //   The first declaration of a function shall specify the noreturn
+    //   attribute if any declaration of that function specifies the noreturn
+    //   attribute.
+    if (New->hasAttr<CXX11NoReturnAttr>() &&
+        !Old->hasAttr<CXX11NoReturnAttr>()) {
+      Diag(New->getAttr<CXX11NoReturnAttr>()->getLocation(),
+           diag::err_noreturn_missing_on_first_decl);
+      Diag(Old->getFirstDeclaration()->getLocation(),
+           diag::note_noreturn_missing_first_decl);
+    }
+
     // (C++98 8.3.5p3):
     //   All declarations for a function shall agree exactly in both the
     //   return type and the parameter-type-list.

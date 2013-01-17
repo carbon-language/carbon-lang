@@ -501,6 +501,8 @@ def err_cxx11_attribute_forbids_arguments : Error<
   "attribute '%0' cannot have an argument list">;
 def err_cxx11_attribute_forbids_ellipsis : Error<
   "attribute '%0' cannot be used as an attribute pack">;
+def err_cxx11_attribute_repeated : Error<
+  "attribute %0 cannot appear multiple times in an attribute specifier">;
 def err_attributes_not_allowed : Error<"an attribute list cannot appear here">;
 def err_l_square_l_square_not_attribute : Error<
   "C++11 only allows consecutive left square brackets when "

@@ -48,7 +48,7 @@ void NoReturnFunctionChecker::checkPostStmt(const CallExpr *CE,
     if (!FD)
       return;
 
-    if (FD->getAttr<AnalyzerNoReturnAttr>())
+    if (FD->getAttr<AnalyzerNoReturnAttr>() || FD->isNoReturn())
       BuildSinks = true;
     else if (const IdentifierInfo *II = FD->getIdentifier()) {
       // HACK: Some functions are not marked noreturn, and don't return.

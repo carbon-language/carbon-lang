@@ -210,8 +210,11 @@ template<typename...Ts> void variadic() {
 
 // Expression tests
 void bar () {
-  [] () [[noreturn]] { return; } (); // expected-error {{should not return}}
-  [] () [[noreturn]] { throw; } ();
+  // FIXME: GCC accepts [[gnu::noreturn]] on a lambda, even though it appertains
+  // to the operator()'s type, and GCC does not otherwise accept attributes
+  // applied to types. Use that to test this.
+  [] () [[gnu::noreturn]] { return; } (); // expected-warning {{attribute 'noreturn' ignored}} FIXME-error {{should not return}}
+  [] () [[gnu::noreturn]] { throw; } (); // expected-warning {{attribute 'noreturn' ignored}}
   new int[42][[]][5][[]]{};
 }
 

@@ -989,7 +989,8 @@ void CodeGenModule::ConstructAttributeList(const CGFunctionInfo &FI,
         FuncAttrs.addAttribute(llvm::Attribute::NoUnwind);
     }
 
-    if (TargetDecl->hasAttr<NoReturnAttr>())
+    if (TargetDecl->hasAttr<NoReturnAttr>() ||
+        TargetDecl->hasAttr<CXX11NoReturnAttr>())
       FuncAttrs.addAttribute(llvm::Attribute::NoReturn);
 
     if (TargetDecl->hasAttr<ReturnsTwiceAttr>())

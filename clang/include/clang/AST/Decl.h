@@ -1799,6 +1799,10 @@ public:
   /// \brief Determines whether this is a global function.
   bool isGlobal() const;
 
+  /// \brief Determines whether this function is known to be 'noreturn', through
+  /// an attribute on its declaration or its type.
+  bool isNoReturn() const;
+
   /// \brief True if the function was a definition but its body was skipped.
   bool hasSkippedBody() const { return HasSkippedBody; }
   void setHasSkippedBody(bool Skipped = true) { HasSkippedBody = Skipped; }

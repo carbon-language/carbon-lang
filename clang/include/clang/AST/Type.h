@@ -2706,6 +2706,9 @@ public:
 
   bool getHasRegParm() const { return getExtInfo().getHasRegParm(); }
   unsigned getRegParmType() const { return getExtInfo().getRegParm(); }
+  /// \brief Determine whether this function type includes the GNU noreturn
+  /// attribute. The C++11 [[noreturn]] attribute does not affect the function
+  /// type.
   bool getNoReturnAttr() const { return getExtInfo().getNoReturn(); }
   CallingConv getCallConv() const { return getExtInfo().getCC(); }
   ExtInfo getExtInfo() const { return ExtInfo(FunctionTypeBits.ExtInfo); }

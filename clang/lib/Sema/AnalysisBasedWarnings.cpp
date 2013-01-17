@@ -329,8 +329,7 @@ static void CheckFallThroughForBody(Sema &S, const Decl *D, const Stmt *Body,
 
   if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
     ReturnsVoid = FD->getResultType()->isVoidType();
-    HasNoReturn = FD->hasAttr<NoReturnAttr>() ||
-       FD->getType()->getAs<FunctionType>()->getNoReturnAttr();
+    HasNoReturn = FD->isNoReturn();
   }
   else if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D)) {
     ReturnsVoid = MD->getResultType()->isVoidType();

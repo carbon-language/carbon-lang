@@ -807,7 +807,7 @@ void CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
     Ty = Context->getBaseElementType(Ty);
 
     const CXXDestructorDecl *Dtor = Ty->getAsCXXRecordDecl()->getDestructor();
-    if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
+    if (Dtor->isNoReturn())
       Block = createNoReturnBlock();
     else
       autoCreateBlock();
@@ -1402,7 +1402,7 @@ CFGBlock *CFGBuilder::VisitCallExpr(CallExpr *C, AddStmtChoice asc) {
   }
 
   if (FunctionDecl *FD = C->getDirectCallee()) {
-    if (FD->hasAttr<NoReturnAttr>())
+    if (FD->isNoReturn())
       NoReturn = true;
     if (FD->hasAttr<NoThrowAttr>())
       AddEHEdge = false;
@@ -3190,7 +3190,7 @@ CFGBlock *CFGBuilder::VisitCXXBindTemporaryExprForTemporaryDtors(
     // a new block for the destructor which does not have as a successor
     // anything built thus far. Control won't flow out of this block.
     const CXXDestructorDecl *Dtor = E->getTemporary()->getDestructor();
-    if (cast<FunctionType>(Dtor->getType())->getNoReturnAttr())
+    if (Dtor->isNoReturn())
       Block = createNoReturnBlock();
     else
       autoCreateBlock();
@@ -3327,10 +3327,8 @@ CFGImplicitDtor::getDestructorDecl(ASTContext &astContext) const {
 }
 
 bool CFGImplicitDtor::isNoReturn(ASTContext &astContext) const {
-  if (const CXXDestructorDecl *decl = getDestructorDecl(astContext)) {
-    QualType ty = decl->getType();
-    return cast<FunctionType>(ty)->getNoReturnAttr();
-  }
+  if (const CXXDestructorDecl *DD = getDestructorDecl(astContext))
+    return DD->isNoReturn();
   return false;
 }
 

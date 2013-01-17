@@ -5,7 +5,8 @@
 void test_attributes() {
   auto nrl = [](int x) -> int { if (x > 0) return x; }; // expected-warning{{control may reach end of non-void lambda}}
 
-  auto nrl2 = []() [[noreturn]] { return; }; // expected-error{{lambda declared 'noreturn' should not return}}
+  // FIXME: GCC accepts the [[gnu::noreturn]] attribute here.
+  auto nrl2 = []() [[gnu::noreturn]] { return; }; // expected-warning{{attribute 'noreturn' ignored}}
 }
 
 template<typename T>

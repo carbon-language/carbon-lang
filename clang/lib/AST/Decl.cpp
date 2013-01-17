@@ -1808,6 +1808,11 @@ bool FunctionDecl::isGlobal() const {
   return true;
 }
 
+bool FunctionDecl::isNoReturn() const {
+  return hasAttr<NoReturnAttr>() || hasAttr<CXX11NoReturnAttr>() ||
+         getType()->getAs<FunctionType>()->getNoReturnAttr();
+}
+
 void
 FunctionDecl::setPreviousDeclaration(FunctionDecl *PrevDecl) {
   redeclarable_base::setPreviousDeclaration(PrevDecl);

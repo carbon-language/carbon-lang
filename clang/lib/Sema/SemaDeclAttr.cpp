@@ -1684,6 +1684,21 @@ static void handleAnalyzerNoReturnAttr(Sema &S, Decl *D,
   D->addAttr(::new (S.Context) AnalyzerNoReturnAttr(Attr.getRange(), S.Context));
 }
 
+static void handleCXX11NoReturnAttr(Sema &S, Decl *D,
+                                    const AttributeList &Attr) {
+  // C++11 [dcl.attr.noreturn]p1:
+  //   The attribute may be applied to the declarator-id in a function
+  //   declaration.
+  FunctionDecl *FD = dyn_cast<FunctionDecl>(D);
+  if (!FD) {
+    S.Diag(Attr.getLoc(), diag::err_attribute_wrong_decl_type)
+      << Attr.getName() << ExpectedFunctionOrMethod;
+    return;
+  }
+
+  D->addAttr(::new (S.Context) CXX11NoReturnAttr(Attr.getRange(), S.Context));
+}
+
 // PS3 PPU-specific.
 static void handleVecReturnAttr(Sema &S, Decl *D, const AttributeList &Attr) {
 /*
@@ -4272,10 +4287,10 @@ static void ProcessNonInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
 static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
                                        const AttributeList &Attr) {
   switch (Attr.getKind()) {
-    case AttributeList::AT_IBAction:          handleIBAction(S, D, Attr); break;
-    case AttributeList::AT_IBOutlet:          handleIBOutlet(S, D, Attr); break;
-    case AttributeList::AT_IBOutletCollection:
-      handleIBOutletCollection(S, D, Attr); break;
+  case AttributeList::AT_IBAction:    handleIBAction(S, D, Attr); break;
+  case AttributeList::AT_IBOutlet:    handleIBOutlet(S, D, Attr); break;
+  case AttributeList::AT_IBOutletCollection:
+    handleIBOutletCollection(S, D, Attr); break;
   case AttributeList::AT_AddressSpace:
   case AttributeList::AT_OpenCLImageAccess:
   case AttributeList::AT_ObjCGC:
@@ -4306,6 +4321,9 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
   case AttributeList::AT_Common:      handleCommonAttr      (S, D, Attr); break;
   case AttributeList::AT_CUDAConstant:handleConstantAttr    (S, D, Attr); break;
   case AttributeList::AT_Constructor: handleConstructorAttr (S, D, Attr); break;
+  case AttributeList::AT_CXX11NoReturn:
+    handleCXX11NoReturnAttr(S, D, Attr);
+    break;
   case AttributeList::AT_Deprecated:
     handleAttrWithMessage<DeprecatedAttr>(S, D, Attr, "deprecated");
     break;
@@ -4542,11 +4560,11 @@ static void ProcessInheritableDeclAttr(Sema &S, Scope *scope, Decl *D,
 
 /// ProcessDeclAttribute - Apply the specific attribute to the specified decl if
 /// the attribute applies to decls.  If the attribute is a type attribute, just
-/// silently ignore it if a GNU attribute. FIXME: Applying a C++0x attribute to
-/// the wrong thing is illegal (C++0x [dcl.attr.grammar]/4).
+/// silently ignore it if a GNU attribute.
 static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
                                  const AttributeList &Attr,
-                                 bool NonInheritable, bool Inheritable) {
+                                 bool NonInheritable, bool Inheritable,
+                                 bool IncludeCXX11Attributes) {
   if (Attr.isInvalid())
     return;
 
@@ -4555,6 +4573,11 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
   // want to process them, however, because we will simply warn about ignoring 
   // them.  So instead, we will bail out early.
   if (Attr.isMSTypespecAttribute())
+    return;
+
+  // Ignore C++11 attributes on declarator chunks: they appertain to the type
+  // instead.
+  if (Attr.isCXX11Attribute() && !IncludeCXX11Attributes)
     return;
 
   if (NonInheritable)
@@ -4568,10 +4591,11 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
 /// attribute list to the specified decl, ignoring any type attributes.
 void Sema::ProcessDeclAttributeList(Scope *S, Decl *D,
                                     const AttributeList *AttrList,
-                                    bool NonInheritable, bool Inheritable) {
-  for (const AttributeList* l = AttrList; l; l = l->getNext()) {
-    ProcessDeclAttribute(*this, S, D, *l, NonInheritable, Inheritable);
-  }
+                                    bool NonInheritable, bool Inheritable,
+                                    bool IncludeCXX11Attributes) {
+  for (const AttributeList* l = AttrList; l; l = l->getNext())
+    ProcessDeclAttribute(*this, S, D, *l, NonInheritable, Inheritable,
+                         IncludeCXX11Attributes);
 
   // GCC accepts
   // static int a9 __attribute__((weakref));
@@ -4736,7 +4760,8 @@ void Sema::ProcessDeclAttributes(Scope *S, Decl *D, const Declarator &PD,
   // when X is a decl attribute.
   for (unsigned i = 0, e = PD.getNumTypeObjects(); i != e; ++i)
     if (const AttributeList *Attrs = PD.getTypeObject(i).getAttrs())
-      ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable);
+      ProcessDeclAttributeList(S, D, Attrs, NonInheritable, Inheritable,
+                               /*IncludeCXX11Attributes=*/false);
 
   // Finally, apply any attributes on the decl itself.
   if (const AttributeList *Attrs = PD.getAttributes())
