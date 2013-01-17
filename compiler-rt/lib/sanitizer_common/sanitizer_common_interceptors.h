@@ -70,6 +70,51 @@ INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
 # define INIT_PREAD64
 #endif
 
+#if SANITIZER_INTERCEPT_WRITE
+INTERCEPTOR(SSIZE_T, write, int fd, void *ptr, SIZE_T count) {
+  COMMON_INTERCEPTOR_ENTER(read, fd, ptr, count);
+  if (fd >= 0)
+    COMMON_INTERCEPTOR_FD_RELEASE(fd);
+  SSIZE_T res = REAL(write)(fd, ptr, count);
+  if (res > 0)
+    COMMON_INTERCEPTOR_READ_RANGE(ptr, res);
+  return res;
+}
+# define INIT_WRITE INTERCEPT_FUNCTION(write)
+#else
+# define INIT_WRITE
+#endif
+
+#if SANITIZER_INTERCEPT_PWRITE
+INTERCEPTOR(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count) {
+  COMMON_INTERCEPTOR_ENTER(read, fd, ptr, count);
+  if (fd >= 0)
+    COMMON_INTERCEPTOR_FD_RELEASE(fd);
+  SSIZE_T res = REAL(pwrite)(fd, ptr, count);
+  if (res > 0)
+    COMMON_INTERCEPTOR_READ_RANGE(ptr, res);
+  return res;
+}
+# define INIT_PWRITE INTERCEPT_FUNCTION(pwrite)
+#else
+# define INIT_PWRITE
+#endif
+
+#if SANITIZER_INTERCEPT_PWRITE64
+INTERCEPTOR(SSIZE_T, pwrite64, int fd, void *ptr, OFF64_T count) {
+  COMMON_INTERCEPTOR_ENTER(read, fd, ptr, count);
+  if (fd >= 0)
+    COMMON_INTERCEPTOR_FD_RELEASE(fd);
+  SSIZE_T res = REAL(pwrite64)(fd, ptr, count);
+  if (res > 0)
+    COMMON_INTERCEPTOR_READ_RANGE(ptr, res);
+  return res;
+}
+# define INIT_PWRITE64 INTERCEPT_FUNCTION(pwrite64)
+#else
+# define INIT_PWRITE64
+#endif
+
 #if SANITIZER_INTERCEPT_PRCTL
 INTERCEPTOR(int, prctl, int option,
             unsigned long arg2, unsigned long arg3,  // NOLINT
@@ -95,5 +140,6 @@ INTERCEPTOR(int, prctl, int option,
   INIT_PREAD;                              \
   INIT_PREAD64;                            \
   INIT_PRCTL;                              \
+  INIT_WRITE;                              \
 
 #endif  // SANITIZER_COMMON_INTERCEPTORS_H
