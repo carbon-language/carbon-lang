@@ -7689,8 +7689,10 @@ Overview:
 """""""""
 
 The '``llvm.fmuladd.*``' intrinsic functions represent multiply-add
-expressions that can be fused if the code generator determines that the
-fused expression would be legal and efficient.
+expressions that can be fused if the code generator determines that (a) the
+target instruction set has support for a fused operation, and (b) that the
+fused operation is more efficient than the equivalent, separate pair of mul
+and add instructions.
 
 Arguments:
 """"""""""
