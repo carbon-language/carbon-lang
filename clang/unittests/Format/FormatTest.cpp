@@ -899,6 +899,10 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
 TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {
   verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)\n"
                "    GUARDED_BY(aaaaaaaaaaaaa);");
+  verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
+               "    GUARDED_BY(aaaaaaaaaaaaa);");
+  verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
+               "    GUARDED_BY(aaaaaaaaaaaaa) {}");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {

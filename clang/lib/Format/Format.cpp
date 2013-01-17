@@ -1390,6 +1390,13 @@ private:
       // change the "binding" behavior of a comment.
       return false;
 
+    // Allow breaking after a trailing 'const', e.g. after a method declaration,
+    // unless it is follow by ';', '{' or '='.
+    if (Left.is(tok::kw_const) && Left.Parent != NULL &&
+        Left.Parent->is(tok::r_paren))
+      return Right.isNot(tok::l_brace) && Right.isNot(tok::semi) &&
+             Right.isNot(tok::equal);
+
     // We only break before r_brace if there was a corresponding break before
     // the l_brace, which is tracked by BreakBeforeClosingBrace.
     if (Right.is(tok::r_brace))
