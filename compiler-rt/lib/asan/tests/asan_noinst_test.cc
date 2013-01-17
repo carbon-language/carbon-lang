@@ -389,7 +389,8 @@ TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
     // If malloc(0) is not null, this pointer is owned and should have valid
     // allocated size.
     EXPECT_TRUE(__asan_get_ownership(zero_alloc));
-    EXPECT_EQ(0U, __asan_get_allocated_size(zero_alloc));
+    // Allocated size is 0 or 1 depending on the allocator used.
+    EXPECT_LT(__asan_get_allocated_size(zero_alloc), 2);
   }
   free(zero_alloc);
 }
