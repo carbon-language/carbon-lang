@@ -38,25 +38,30 @@ g_option_table[] =
     { LLDB_OPT_SET_2,                  false, "summary-string",  'z', required_argument, NULL, 0, eArgTypeName, "Specify a summary string to use to format the variable output."},
 };
 
+static Error
+ValidateNamedSummary (const char* str, void*)
+{
+    if (!str || !str[0])
+        return Error("must specify a valid named summary");
+    TypeSummaryImplSP summary_sp;
+    if (DataVisualization::NamedSummaryFormats::GetSummaryFormat(ConstString(str), summary_sp) == false)
+        return Error("must specify a valid named summary");
+    return Error();
+}
+
+static Error
+ValidateSummaryString (const char* str, void*)
+{
+    if (!str || !str[0])
+        return Error("must specify a non-empty summary string");
+    return Error();
+}
 
 OptionGroupVariable::OptionGroupVariable (bool show_frame_options) :
     OptionGroup(),
     include_frame_options (show_frame_options),
-    summary([] (const char* str,void*)->Error
-            {
-                if (!str || !str[0])
-                    return Error("must specify a valid named summary");
-                TypeSummaryImplSP summary_sp;
-                if (DataVisualization::NamedSummaryFormats::GetSummaryFormat(ConstString(str), summary_sp) == false)
-                    return Error("must specify a valid named summary");
-                return Error();
-            }),
-    summary_string([] (const char* str, void*)->Error
-           {
-               if (!str || !str[0])
-                   return Error("must specify a non-empty summary string");
-               return Error();
-           })
+    summary(ValidateNamedSummary),
+    summary_string(ValidateSummaryString)
 {
 }
 
