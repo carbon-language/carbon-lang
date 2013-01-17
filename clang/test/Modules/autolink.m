@@ -28,6 +28,8 @@ int use_no_umbrella() {
   return no_umbrella_A;
 }
 
+// NOTE: "autolink_sub" is intentionally not linked.
+
 // CHECK: !llvm.module.flags = !{!0, !1, !2, !3, !4}
 // CHECK: !4 = metadata !{i32 6, metadata !"Linker Options", metadata ![[AUTOLINK_OPTIONS:[0-9]+]]}
 // CHECK: ![[AUTOLINK_OPTIONS]] = metadata !{metadata ![[AUTOLINK_FRAMEWORK:[0-9]+]], metadata ![[AUTOLINK:[0-9]+]], metadata ![[DEPENDSONMODULE:[0-9]+]], metadata ![[MODULE:[0-9]+]], metadata ![[NOUMBRELLA:[0-9]+]]}
