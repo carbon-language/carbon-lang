@@ -5386,8 +5386,8 @@ class SequenceChecker : public EvaluatedExprVisitor<SequenceChecker> {
 
 public:
   SequenceChecker(Sema &S, Expr *E)
-    : EvaluatedExprVisitor(S.Context), SemaRef(S), Region(Tree.root()), 
-      ModAsSideEffect(0) {
+    : EvaluatedExprVisitor<SequenceChecker>(S.Context), SemaRef(S),
+      Region(Tree.root()), ModAsSideEffect(0) {
     Visit(E);
   }
 
@@ -5397,7 +5397,7 @@ public:
 
   void VisitExpr(Expr *E) {
     // By default, just recurse to evaluated subexpressions.
-    EvaluatedExprVisitor::VisitStmt(E);
+    EvaluatedExprVisitor<SequenceChecker>::VisitStmt(E);
   }
 
   void VisitCastExpr(CastExpr *E) {
