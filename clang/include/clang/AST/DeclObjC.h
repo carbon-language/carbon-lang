@@ -932,7 +932,7 @@ public:
 
     friend bool operator==(filtered_category_iterator X,
                            filtered_category_iterator Y) {
-      return X.Current = Y.Current;
+      return X.Current == Y.Current;
     }
 
     friend bool operator!=(filtered_category_iterator X,
