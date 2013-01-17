@@ -5,9 +5,9 @@ import os, sys, subprocess
 def main():
     from optparse import OptionParser, OptionGroup
     parser = OptionParser("usage: %prog [options] <repo> <revision>")
-    parser.add_option("", "--dump-section-data", dest="dumpSectionData",
-                      help="Dump the contents of sections",
-                      action="store_true", default=False)    
+    parser.add_option("", "--branch", dest="branch",
+                      help="Ref for the branch to search [%default]",
+                      action="store", default="git-svn")    
     (opts, args) = parser.parse_args()
 
     if len(args) != 2:
@@ -21,7 +21,7 @@ def main():
         parser.error("invalid revision argument (not an integer)")
 
     os.chdir(repo)
-    p = subprocess.Popen(['git', 'rev-list', 'git-svn', '--pretty'],
+    p = subprocess.Popen(['git', 'rev-list', opts.branch, '--pretty'],
                          stdout=subprocess.PIPE)
 
     bestRev = bestCommit = None
