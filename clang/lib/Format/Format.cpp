@@ -46,7 +46,6 @@ enum TokenType {
   TT_ObjCDecl,
   TT_ObjCMethodSpecifier,
   TT_ObjCMethodExpr,
-  TT_ObjCSelectorStart,
   TT_ObjCProperty,
   TT_OverloadedOperator,
   TT_PointerOrReference,
@@ -152,7 +151,6 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
-  LLVMStyle.ObjCSpaceBeforeReturnType = true;
   return LLVMStyle;
 }
 
@@ -169,7 +167,6 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
-  GoogleStyle.ObjCSpaceBeforeReturnType = false;
   return GoogleStyle;
 }
 
@@ -892,14 +889,8 @@ public:
           Tok->Type = TT_ObjCMethodExpr;
         break;
       case tok::l_paren: {
-        bool ParensWereObjCReturnType = Tok->Parent && Tok->Parent->Type ==
-                                        TT_ObjCMethodSpecifier;
         if (!parseParens())
           return false;
-        if (CurrentToken != NULL && ParensWereObjCReturnType) {
-          CurrentToken->Type = TT_ObjCSelectorStart;
-          next();
-        }
       } break;
       case tok::l_square:
         if (!parseSquare())
@@ -1308,9 +1299,7 @@ private:
       if (Tok.is(tok::colon))
         return false;
       if (Tok.Parent->Type == TT_ObjCMethodSpecifier)
-        return Style.ObjCSpaceBeforeReturnType || Tok.isNot(tok::l_paren);
-      if (Tok.Type == TT_ObjCSelectorStart)
-        return !Style.ObjCSpaceBeforeReturnType;
+        return true;
       if (Tok.Parent->is(tok::r_paren) && Tok.is(tok::identifier))
         // Don't space between ')' and <id>
         return false;
