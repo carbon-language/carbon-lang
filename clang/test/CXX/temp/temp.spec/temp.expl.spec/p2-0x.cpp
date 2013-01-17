@@ -300,3 +300,8 @@ template<> template<typename T>
 void has_inline_namespaces::X0<X4>::mem_func_template(T&) { }
 
 template<> int has_inline_namespaces::X0<X4>::value = 13;
+
+namespace PR12938 {
+  template<typename> [[noreturn]] void func();
+  template<> void func<int>();
+}
