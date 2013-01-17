@@ -153,14 +153,12 @@ typedef std::pair<APInt, APInt> SizeOffsetType;
 class ObjectSizeOffsetVisitor
   : public InstVisitor<ObjectSizeOffsetVisitor, SizeOffsetType> {
 
-  typedef DenseMap<const Value*, SizeOffsetType> CacheMapTy;
-
   const DataLayout *TD;
   const TargetLibraryInfo *TLI;
   bool RoundToAlign;
   unsigned IntTyBits;
   APInt Zero;
-  CacheMapTy CacheMap;
+  SmallPtrSet<Instruction *, 8> SeenInsts;
 
   APInt align(APInt Size, uint64_t Align);
 
