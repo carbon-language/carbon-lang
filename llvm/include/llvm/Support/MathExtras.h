@@ -303,8 +303,6 @@ inline unsigned CountTrailingOnes_64(uint64_t Value) {
 inline unsigned CountPopulation_32(uint32_t Value) {
 #if __GNUC__ >= 4
   return __builtin_popcount(Value);
-#elif defined(_MSC_VER)
-  return __popcnt(Value);
 #else
   uint32_t v = Value - ((Value >> 1) & 0x55555555);
   v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
