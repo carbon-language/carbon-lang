@@ -213,3 +213,14 @@ void test_percent_C() {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-1]]:11-[[@LINE-1]]:13}:"%c"
   // CHECK-NOT: fix-it:"{{.*}}":{[[@LINE-2]]:16-[[@LINE-2]]:22}:"(unichar)"
 }
+
+
+void testSignedness(long i, unsigned long u) {
+  printf("%d", u); // expected-warning{{format specifies type 'int' but the argument has type 'unsigned long'}}
+  printf("%i", u); // expected-warning{{format specifies type 'int' but the argument has type 'unsigned long'}}
+  printf("%u", i); // expected-warning{{format specifies type 'unsigned int' but the argument has type 'long'}}
+
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:13}:"%lu"
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:13}:"%lu"
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:13}:"%ld"
+}

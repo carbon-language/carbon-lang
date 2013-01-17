@@ -118,6 +118,16 @@ void testPreserveHex() {
   // CHECK-64: fix-it:"{{.*}}":{[[@LINE-6]]:16-[[@LINE-6]]:16}:"(unsigned long)"
 }
 
+void testSignedness(NSInteger i, NSUInteger u) {
+  printf("%d", u); // expected-warning{{values of type 'NSUInteger' should not be used as format arguments; add an explicit cast to 'unsigned long' instead}}
+  printf("%i", u); // expected-warning{{values of type 'NSUInteger' should not be used as format arguments; add an explicit cast to 'unsigned long' instead}}
+  printf("%u", i); // expected-warning{{values of type 'NSInteger' should not be used as format arguments; add an explicit cast to 'long' instead}}
+
+  // CHECK-64: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:13}:"%lu"
+  // CHECK-64: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:13}:"%lu"
+  // CHECK-64: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:13}:"%ld"
+}
+
 void testNoWarn() {
   printf("%ld", getNSInteger()); // no-warning
   printf("%lu", getNSUInteger()); // no-warning
@@ -152,6 +162,14 @@ void testNoWarn() {
   printf("%u", getNSUInteger()); // no-warning
   printf("%ld", getSInt32()); // no-warning
   printf("%lu", getUInt32()); // no-warning
+}
+
+void testSignedness(NSInteger i, NSUInteger u) {
+  // It is valid to use a specifier with the opposite signedness as long as
+  // the type is correct.
+  printf("%d", u); // no-warning
+  printf("%i", u); // no-warning
+  printf("%u", i); // no-warning
 }
 
 #endif
