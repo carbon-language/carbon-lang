@@ -2,6 +2,8 @@
 // <rdar://problem/7256886>
 // RUN: touch %t.s
 // RUN: env RC_DEBUG_OPTIONS=1 %clang -### -target i386-apple-darwin9 -c -g %t.s 2>&1 | FileCheck -check-prefix=S %s
+// <rdar://problem/12955296>
+// RUN: %clang -### -target i386-apple-darwin9 -c -g %t.s 2>&1 | FileCheck -check-prefix=P %s
 
 // CHECK: !0 = metadata !{
 // CHECK: -g -Os
@@ -11,3 +13,5 @@
 int x;
 
 // S: "-dwarf-debug-flags"
+
+// P: "-dwarf-debug-producer"

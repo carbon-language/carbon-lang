@@ -83,6 +83,7 @@ struct AssemblerInvocation {
   unsigned SaveTemporaryLabels : 1;
   unsigned GenDwarfForAssembly : 1;
   std::string DwarfDebugFlags;
+  std::string DwarfDebugProducer;
   std::string DebugCompilationDir;
   std::string MainFileName;
 
@@ -183,6 +184,7 @@ bool AssemblerInvocation::CreateFromArgs(AssemblerInvocation &Opts,
   Opts.SaveTemporaryLabels = Args->hasArg(OPT_L);
   Opts.GenDwarfForAssembly = Args->hasArg(OPT_g);
   Opts.DwarfDebugFlags = Args->getLastArgValue(OPT_dwarf_debug_flags);
+  Opts.DwarfDebugProducer = Args->getLastArgValue(OPT_dwarf_debug_producer);
   Opts.DebugCompilationDir = Args->getLastArgValue(OPT_fdebug_compilation_dir);
   Opts.MainFileName = Args->getLastArgValue(OPT_main_file_name);
 
@@ -309,6 +311,8 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
     Ctx.setGenDwarfForAssembly(true);
   if (!Opts.DwarfDebugFlags.empty())
     Ctx.setDwarfDebugFlags(StringRef(Opts.DwarfDebugFlags));
+  if (!Opts.DwarfDebugProducer.empty())
+    Ctx.setDwarfDebugProducer(StringRef(Opts.DwarfDebugProducer));
   if (!Opts.DebugCompilationDir.empty())
     Ctx.setCompilationDir(Opts.DebugCompilationDir);
   if (!Opts.MainFileName.empty())

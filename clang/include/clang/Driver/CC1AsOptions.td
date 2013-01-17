@@ -93,3 +93,6 @@ def fdebug_compilation_dir : Separate<["-"], "fdebug-compilation-dir">,
 
 def dwarf_debug_flags : Separate<["-"], "dwarf-debug-flags">,
   HelpText<"The string to embed in the Dwarf debug flags record.">;
+
+def dwarf_debug_producer : Separate<["-"], "dwarf-debug-producer">,
+  HelpText<"The string to embed in the Dwarf debug AT_producer record.">;

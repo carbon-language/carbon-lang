@@ -18,3 +18,12 @@
 //
 // CHECK: "-cc1as"
 // CHECK: "-g"
+
+// Check to make sure clang with -g on a .s file gets passed -dwarf-debug-producer.
+// rdar://12955296
+// RUN: touch %t.s
+// RUN: %clang -### -c -integrated-as -g %t.s 2>&1 \
+// RUN:   | FileCheck -check-prefix=P %s
+//
+// P: "-cc1as"
+// P: "-dwarf-debug-producer"
