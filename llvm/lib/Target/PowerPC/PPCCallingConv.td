@@ -27,6 +27,7 @@ def RetCC_PPC : CallingConv<[
 
   CCIfType<[i32], CCAssignToReg<[R3, R4, R5, R6, R7, R8, R9, R10]>>,
   CCIfType<[i64], CCAssignToReg<[X3, X4, X5, X6]>>,
+  CCIfType<[i128], CCAssignToReg<[X3, X4, X5, X6]>>,
   
   CCIfType<[f32], CCAssignToReg<[F1, F2]>>,
   CCIfType<[f64], CCAssignToReg<[F1, F2, F3, F4]>>,
