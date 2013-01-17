@@ -170,7 +170,7 @@ namespace {
 
   raw_ostream &operator<<(raw_ostream &OS, const InstructionClass Class)
      LLVM_ATTRIBUTE_USED;
-  raw_ostream &operator<<(raw_ostream &OS, InstructionClass Class) {
+  raw_ostream &operator<<(raw_ostream &OS, const InstructionClass Class) {
     switch (Class) {
     case IC_Retain:
       return OS << "IC_Retain";
