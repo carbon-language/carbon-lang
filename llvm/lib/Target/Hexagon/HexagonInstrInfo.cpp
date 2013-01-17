@@ -2352,7 +2352,9 @@ isValidOffset(const int Opcode, const int Offset) const {
   switch(Opcode) {
 
   case Hexagon::LDriw:
+  case Hexagon::LDriw_indexed:
   case Hexagon::LDriw_f:
+  case Hexagon::STriw_indexed:
   case Hexagon::STriw:
   case Hexagon::STriw_f:
     assert((Offset % 4 == 0) && "Offset has incorrect alignment");
@@ -2360,8 +2362,10 @@ isValidOffset(const int Opcode, const int Offset) const {
       (Offset <= Hexagon_MEMW_OFFSET_MAX);
 
   case Hexagon::LDrid:
+  case Hexagon::LDrid_indexed:
   case Hexagon::LDrid_f:
   case Hexagon::STrid:
+  case Hexagon::STrid_indexed:
   case Hexagon::STrid_f:
     assert((Offset % 8 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMD_OFFSET_MIN) &&
