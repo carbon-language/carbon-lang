@@ -199,6 +199,7 @@ enum StatType {
   StatInt_pipe,
   StatInt_pipe2,
   StatInt_read,
+  StatInt_prctl,
   StatInt_pread,
   StatInt_pread64,
   StatInt_readv,

@@ -24,7 +24,9 @@
 
 #if defined(__linux__) && !defined(ANDROID)
 # define SANITIZER_INTERCEPT_PREAD64 1
+# define SANITIZER_INTERCEPT_PRCTL 1
 #else
+# define SANITIZER_INTERCEPT_PRCTL 0
 # define SANITIZER_INTERCEPT_PREAD64 0
 #endif
 

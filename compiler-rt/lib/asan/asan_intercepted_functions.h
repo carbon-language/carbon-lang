@@ -42,10 +42,8 @@ using __sanitizer::uptr;
 
 #if defined(__linux__)
 # define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 1
-# define ASAN_INTERCEPT_PRCTL 1
 #else
 # define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 0
-# define ASAN_INTERCEPT_PRCTL 0
 #endif
 
 #if !defined(__APPLE__)

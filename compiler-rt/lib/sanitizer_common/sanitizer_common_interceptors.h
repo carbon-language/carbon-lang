@@ -17,6 +17,7 @@
 //   COMMON_INTERCEPTOR_WRITE_RANGE
 //   COMMON_INTERCEPTOR_FD_ACQUIRE
 //   COMMON_INTERCEPTOR_FD_RELEASE
+//   COMMON_INTERCEPTOR_SET_THREAD_NAME
 //===----------------------------------------------------------------------===//
 #ifndef SANITIZER_COMMON_INTERCEPTORS_H
 #define SANITIZER_COMMON_INTERCEPTORS_H
@@ -34,6 +35,9 @@ INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
     COMMON_INTERCEPTOR_FD_ACQUIRE(fd);
   return res;
 }
+# define INIT_READ INTERCEPT_FUNCTION(read)
+#else
+# define INIT_READ
 #endif
 
 #if SANITIZER_INTERCEPT_PREAD
@@ -46,6 +50,9 @@ INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
     COMMON_INTERCEPTOR_FD_ACQUIRE(fd);
   return res;
 }
+# define INIT_PREAD INTERCEPT_FUNCTION(pread)
+#else
+# define INIT_PREAD
 #endif
 
 #if SANITIZER_INTERCEPT_PREAD64
@@ -58,29 +65,35 @@ INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
     COMMON_INTERCEPTOR_FD_ACQUIRE(fd);
   return res;
 }
-#endif
-
-#if SANITIZER_INTERCEPT_READ
-# define INIT_READ INTERCEPT_FUNCTION(read)
-#else
-# define INIT_READ
-#endif
-
-#if SANITIZER_INTERCEPT_PREAD
-# define INIT_PREAD INTERCEPT_FUNCTION(pread)
-#else
-# define INIT_PREAD
-#endif
-
-#if SANITIZER_INTERCEPT_PREAD64
 # define INIT_PREAD64 INTERCEPT_FUNCTION(pread64)
 #else
 # define INIT_PREAD64
 #endif
 
+#if SANITIZER_INTERCEPT_PRCTL
+INTERCEPTOR(int, prctl, int option,
+            unsigned long arg2, unsigned long arg3,  // NOLINT
+            unsigned long arg4, unsigned long arg5) {  // NOLINT
+  COMMON_INTERCEPTOR_ENTER(prctl, option, arg2, arg3, arg4, arg5);
+  static const int PR_SET_NAME = 15;
+  int res = REAL(prctl(option, arg2, arg3, arg4, arg5));
+  if (option == PR_SET_NAME) {
+    char buff[16];
+    internal_strncpy(buff, (char*)arg2, 15);
+    buff[15] = 0;
+    COMMON_INTERCEPTOR_SET_THREAD_NAME(buff);
+  }
+  return res;
+}
+# define INIT_PRCTL INTERCEPT_FUNCTION(prctl)
+#else
+# define INIT_PRCTL
+#endif  // SANITIZER_INTERCEPT_PRCTL
+
 #define SANITIZER_COMMON_INTERCEPTORS_INIT \
   INIT_READ;                               \
   INIT_PREAD;                              \
   INIT_PREAD64;                            \
+  INIT_PRCTL;                              \
 
 #endif  // SANITIZER_COMMON_INTERCEPTORS_H

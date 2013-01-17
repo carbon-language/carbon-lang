@@ -1623,9 +1623,10 @@ TSAN_INTERCEPTOR(int, fork, int fake) {
 #define COMMON_INTERCEPTOR_READ_RANGE(ptr, size)  \
     MemoryAccessRange(thr, pc, (uptr)ptr, size, false)
 #define COMMON_INTERCEPTOR_ENTER(func, ...) \
- SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__)
+  SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__)
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(fd) FdAcquire(thr, pc, fd)
 #define COMMON_INTERCEPTOR_FD_RELEASE(fd) FdRelease(thr, pc, fd)
+#define COMMON_INTERCEPTOR_SET_THREAD_NAME(name) ThreadSetName(thr, name)
 #include "sanitizer_common/sanitizer_common_interceptors.h"
 
 namespace __tsan {
