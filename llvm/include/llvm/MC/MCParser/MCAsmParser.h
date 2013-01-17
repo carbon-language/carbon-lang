@@ -35,7 +35,9 @@ class MCAsmParserSemaCallback {
 public:
   virtual ~MCAsmParserSemaCallback(); 
   virtual void *LookupInlineAsmIdentifier(StringRef Name, void *Loc,
-                                          unsigned &Size, bool &IsVarDecl) = 0;
+                                          unsigned &Length, unsigned &Size, 
+                                          unsigned &Type, bool &IsVarDecl) = 0;
+
   virtual bool LookupInlineAsmField(StringRef Base, StringRef Member,
                                     unsigned &Offset) = 0;
 };

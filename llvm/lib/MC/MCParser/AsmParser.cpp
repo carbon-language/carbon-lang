@@ -3956,10 +3956,10 @@ bool AsmParser::ParseMSInlineAsm(void *AsmLoc, std::string &AsmString,
         }
 
         // Expr/Input or Output.
-        unsigned Size;
         bool IsVarDecl;
+        unsigned Length, Size, Type;
         void *OpDecl = SI.LookupInlineAsmIdentifier(Operand->getName(), AsmLoc,
-                                                    Size, IsVarDecl);
+                                                    Length, Size, Type, IsVarDecl);
         if (OpDecl) {
           bool isOutput = (i == 1) && Desc.mayStore();
           if (Operand->isMem() && Operand->needSizeDirective())
