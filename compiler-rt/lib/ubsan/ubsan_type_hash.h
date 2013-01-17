@@ -55,7 +55,8 @@ const unsigned VptrTypeCacheSize = 128;
 /// \code
 ///   __ubsan_vptr_type_cache[Hash % VptrTypeCacheSize] == Hash
 /// \endcode
-extern "C" HashValue __ubsan_vptr_type_cache[VptrTypeCacheSize];
+extern "C" SANITIZER_INTERFACE_ATTRIBUTE
+HashValue __ubsan_vptr_type_cache[VptrTypeCacheSize];
 
 } // namespace __ubsan
 
