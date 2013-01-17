@@ -203,11 +203,9 @@ bool DWARFDebugInfoEntryMinimal::extractFast(const DWARFCompileUnit *cu,
             form = debug_info_data.getULEB128(&offset);
             break;
 
+            // FIXME: 64-bit for DWARF64
           case DW_FORM_sec_offset:
-            if (cu->getAddressByteSize() == 4)
-              debug_info_data.getU32(offset_ptr);
-            else
-              debug_info_data.getU64(offset_ptr);
+            debug_info_data.getU32(offset_ptr);
             break;
 
           default:
@@ -344,11 +342,9 @@ DWARFDebugInfoEntryMinimal::extract(const DWARFCompileUnit *cu,
                 form_is_indirect = true;
                 break;
 
+                // FIXME: 64-bit for DWARF64.
               case DW_FORM_sec_offset:
-                if (cu->getAddressByteSize() == 4)
-                  debug_info_data.getU32(offset_ptr);
-                else
-                  debug_info_data.getU64(offset_ptr);
+                debug_info_data.getU32(offset_ptr);
                 break;
 
               default:

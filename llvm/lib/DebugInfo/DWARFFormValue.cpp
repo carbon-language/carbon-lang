@@ -72,7 +72,7 @@ static const uint8_t form_sizes_addr8[] = {
   8, // 0x14 DW_FORM_ref8
   0, // 0x15 DW_FORM_ref_udata
   0, // 0x16 DW_FORM_indirect
-  8, // 0x17 DW_FORM_sec_offset
+  4, // 0x17 DW_FORM_sec_offset
   0, // 0x18 DW_FORM_exprloc
   0, // 0x19 DW_FORM_flag_present
   8, // 0x20 DW_FORM_ref_sig8
@@ -299,12 +299,9 @@ DWARFFormValue::skipValue(uint16_t form, DataExtractor debug_info_data,
       form = debug_info_data.getULEB128(offset_ptr);
       break;
 
-    // 4 for DWARF32, 8 for DWARF64.
+    // FIXME: 4 for DWARF32, 8 for DWARF64.
     case DW_FORM_sec_offset:
-      if (cu->getAddressByteSize() == 4)
-        *offset_ptr += 4;
-      else
-        *offset_ptr += 8;
+      *offset_ptr += 4;
       return true;
 
     default:
@@ -427,11 +424,9 @@ DWARFFormValue::dump(raw_ostream &OS, const DWARFCompileUnit *cu) const {
     OS << "DW_FORM_indirect";
     break;
 
+    // Should be formatted to 64-bit for DWARF64.
   case DW_FORM_sec_offset:
-    if (cu->getAddressByteSize() == 4)
-      OS << format("0x%08x", (uint32_t)uvalue);
-    else
-      OS << format("0x%016" PRIx64, uvalue);
+    OS << format("0x%08x", (uint32_t)uvalue);
     break;
 
   default:

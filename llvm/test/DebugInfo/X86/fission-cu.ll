@@ -21,11 +21,15 @@
 
 ; CHECK: .debug_info contents:
 ; CHECK: DW_TAG_compile_unit
-; CHECK: DW_AT_GNU_dwo_name [DW_FORM_strp] ( .debug_str[0x00000000] = "baz.c")
-; CHECK: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x0000000000000000)
+; CHECK: DW_AT_GNU_dwo_name [DW_FORM_strp] ( .debug_str[0x00000000] = "baz.dwo")
+; CHECK: DW_AT_GNU_addr_base [DW_FORM_sec_offset]                   (0x00000000)
 ; CHECK: DW_AT_low_pc [DW_FORM_addr]       (0x0000000000000000)
-; CHECK: DW_AT_stmt_list [DW_FORM_data4]   (0x00000000)
-; CHECK: DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000006] = "/usr/local/google/home/echristo/tmp")
+; CHECK: DW_AT_stmt_list [DW_FORM_sec_offset]   (0x00000000)
+; CHECK: DW_AT_comp_dir [DW_FORM_strp]     ( .debug_str[0x00000008] = "/usr/local/google/home/echristo/tmp")
+
+; CHECK: .debug_str contents:
+; CHECK: 0x00000000: "baz.dwo"
+; CHECK: 0x00000008: "/usr/local/google/home/echristo/tmp"
 
 ; Check that we're using the right forms.
 ; CHECK: .debug_abbrev.dwo contents:

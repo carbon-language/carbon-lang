@@ -2433,14 +2433,16 @@ void DwarfDebug::emitDebugInlineInfo() {
 // DW_AT_low_pc and DW_AT_high_pc are not used, and vice versa.
 CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   DICompileUnit DIUnit(N);
-  StringRef FN = DIUnit.getFilename();
   CompilationDir = DIUnit.getDirectory();
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
   CompileUnit *NewCU = new CompileUnit(GlobalCUIndexCount++,
                                        DIUnit.getLanguage(), Die, Asm,
                                        this, &SkeletonHolder);
-  // FIXME: This should be the .dwo file.
+
+  SmallString<16> T(DIUnit.getFilename());
+  sys::path::replace_extension(T, ".dwo");
+  StringRef FN = sys::path::filename(T);
   NewCU->addLocalString(Die, dwarf::DW_AT_GNU_dwo_name, FN);
 
   // FIXME: We also need DW_AT_dwo_id.
@@ -2456,10 +2458,10 @@ CompileUnit *DwarfDebug::constructSkeletonCU(const MDNode *N) {
   // DW_AT_stmt_list is a offset of line number information for this
   // compile unit in debug_line section.
   if (Asm->MAI->doesDwarfUseRelocationsAcrossSections())
-    NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4,
+    NewCU->addLabel(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_sec_offset,
                     Asm->GetTempSymbol("section_line"));
   else
-    NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_data4, 0);
+    NewCU->addUInt(Die, dwarf::DW_AT_stmt_list, dwarf::DW_FORM_sec_offset, 0);
 
   if (!CompilationDir.empty())
     NewCU->addLocalString(Die, dwarf::DW_AT_comp_dir, CompilationDir);
