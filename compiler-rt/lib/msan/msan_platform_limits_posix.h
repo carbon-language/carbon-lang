@@ -25,6 +25,7 @@ namespace __msan {
   extern unsigned struct_statfs_sz;
   extern unsigned struct_statfs64_sz;
   extern unsigned struct_epoll_event_sz;
+  extern unsigned struct_rusage_sz;
 
   void* __msan_get_msghdr_iov_iov_base(void* msg, int idx);
   uptr __msan_get_msghdr_iov_iov_len(void* msg, int idx);

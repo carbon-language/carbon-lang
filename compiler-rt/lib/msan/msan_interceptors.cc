@@ -247,6 +247,33 @@ INTERCEPTOR(unsigned long long, strtoull, const char *nptr,  // NOLINT
   return res;
 }
 
+INTERCEPTOR(double, strtod, const char *nptr, char **endptr) {  // NOLINT
+  ENSURE_MSAN_INITED();
+  double res = REAL(strtod)(nptr, endptr);  // NOLINT
+  if (!__msan_has_dynamic_component()) {
+    __msan_unpoison(endptr, sizeof(*endptr));
+  }
+  return res;
+}
+
+INTERCEPTOR(float, strtof, const char *nptr, char **endptr) {  // NOLINT
+  ENSURE_MSAN_INITED();
+  float res = REAL(strtof)(nptr, endptr);  // NOLINT
+  if (!__msan_has_dynamic_component()) {
+    __msan_unpoison(endptr, sizeof(*endptr));
+  }
+  return res;
+}
+
+INTERCEPTOR(long double, strtold, const char *nptr, char **endptr) {  // NOLINT
+  ENSURE_MSAN_INITED();
+  long double res = REAL(strtold)(nptr, endptr);  // NOLINT
+  if (!__msan_has_dynamic_component()) {
+    __msan_unpoison(endptr, sizeof(*endptr));
+  }
+  return res;
+}
+
 INTERCEPTOR(int, vsnprintf, char *str, uptr size,
             const char *format, va_list ap) {
   ENSURE_MSAN_INITED();
@@ -703,6 +730,35 @@ INTERCEPTOR(void *, mmap64, void *addr, SIZE_T length, int prot, int flags,
   return res;
 }
 
+struct dlinfo {
+  char *dli_fname;
+  void *dli_fbase;
+  char *dli_sname;
+  void *dli_saddr;
+};
+
+INTERCEPTOR(int, dladdr, void *addr, dlinfo *info) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(dladdr)(addr, info);
+  if (res != 0) {
+    __msan_unpoison(info, sizeof(*info));
+    if (info->dli_fname)
+      __msan_unpoison(info->dli_fname, REAL(strlen)(info->dli_fname) + 1);
+    if (info->dli_sname)
+      __msan_unpoison(info->dli_sname, REAL(strlen)(info->dli_sname) + 1);
+  }
+  return res;
+}
+
+INTERCEPTOR(int, getrusage, int who, void *usage) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(getrusage)(who, usage);
+  if (res == 0) {
+    __msan_unpoison(usage, __msan::struct_rusage_sz);
+  }
+  return res;
+}
+
 // static
 void *fast_memset(void *ptr, int c, SIZE_T n) {
   // hack until we have a really fast internal_memset
@@ -844,6 +900,9 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(strtoll);
   INTERCEPT_FUNCTION(strtoul);
   INTERCEPT_FUNCTION(strtoull);
+  INTERCEPT_FUNCTION(strtod);
+  INTERCEPT_FUNCTION(strtof);
+  INTERCEPT_FUNCTION(strtold);
   INTERCEPT_FUNCTION(vsprintf);
   INTERCEPT_FUNCTION(vsnprintf);
   INTERCEPT_FUNCTION(vswprintf);
@@ -886,6 +945,8 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(recv);
   INTERCEPT_FUNCTION(recvfrom);
   INTERCEPT_FUNCTION(recvmsg);
+  INTERCEPT_FUNCTION(dladdr);
+  INTERCEPT_FUNCTION(getrusage);
   inited = 1;
 }
 }  // namespace __msan

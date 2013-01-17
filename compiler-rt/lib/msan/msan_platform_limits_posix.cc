@@ -20,6 +20,7 @@
 #include <sys/utsname.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/vfs.h>
 #include <sys/epoll.h>
@@ -36,6 +37,7 @@ namespace __msan {
   unsigned struct_statfs_sz = sizeof(struct statfs);
   unsigned struct_statfs64_sz = sizeof(struct statfs64);
   unsigned struct_epoll_event_sz = sizeof(struct epoll_event);
+  unsigned struct_rusage_sz = sizeof(struct rusage);
 
   void* __msan_get_msghdr_iov_iov_base(void* msg, int idx) {
     return ((struct msghdr *)msg)->msg_iov[idx].iov_base;
