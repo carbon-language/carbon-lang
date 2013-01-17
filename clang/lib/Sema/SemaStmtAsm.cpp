@@ -437,10 +437,13 @@ public:
     : SemaRef(Ref), AsmLoc(Loc), AsmToks(Toks), TokOffsets(Offsets) { }
   ~MCAsmParserSemaCallbackImpl() {}
 
-  void *LookupInlineAsmIdentifier(StringRef Name, void *SrcLoc, unsigned &Size,
-                                  bool &IsVarDecl){
+  void *LookupInlineAsmIdentifier(StringRef Name, void *SrcLoc,
+                                  unsigned &Length, unsigned &Size,
+                                  unsigned &Type, bool &IsVarDecl){
     SourceLocation Loc = SourceLocation::getFromPtrEncoding(SrcLoc);
-    NamedDecl *OpDecl = SemaRef.LookupInlineAsmIdentifier(Name, Loc, Size,
+
+    NamedDecl *OpDecl = SemaRef.LookupInlineAsmIdentifier(Name, Loc, Length,
+                                                          Size, Type,
                                                           IsVarDecl);
     return static_cast<void *>(OpDecl);
   }
@@ -484,8 +487,11 @@ public:
 }
 
 NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
-                                           unsigned &Size, bool &IsVarDecl) {
+                                           unsigned &Length, unsigned &Size, 
+                                           unsigned &Type, bool &IsVarDecl) {
+  Length = 1;
   Size = 0;
+  Type = 0;
   IsVarDecl = false;
   LookupResult Result(*this, &Context.Idents.get(Name), Loc,
                       Sema::LookupOrdinaryName);
@@ -504,7 +510,15 @@ NamedDecl *Sema::LookupInlineAsmIdentifier(StringRef Name, SourceLocation Loc,
   NamedDecl *ND = Result.getFoundDecl();
   if (isa<VarDecl>(ND) || isa<FunctionDecl>(ND)) {
     if (VarDecl *Var = dyn_cast<VarDecl>(ND)) {
-      Size = Context.getTypeInfo(Var->getType()).first;
+      Type = Context.getTypeInfo(Var->getType()).first;
+      QualType Ty = Var->getType();
+      if (Ty->isArrayType()) {
+        const ArrayType *ATy = Context.getAsArrayType(Ty);
+        Length = Type / Context.getTypeInfo(ATy->getElementType()).first;
+        Type /= Length; // Type is in terms of a single element.
+      }
+      Type /= 8; // Type is in terms of bits, but we want bytes.
+      Size = Length * Type;
       IsVarDecl = true;
     }
     return ND;
