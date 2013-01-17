@@ -771,13 +771,28 @@ public:
       return false;
     }
 
-    bool parseParens() {
+    bool parseParens(bool LookForDecls = false) {
       if (CurrentToken == NULL)
         return false;
       AnnotatedToken *Left = CurrentToken->Parent;
       if (CurrentToken->is(tok::caret))
         Left->Type = TT_ObjCBlockLParen;
       while (CurrentToken != NULL) {
+        // LookForDecls is set when "if (" has been seen. Check for
+        // 'identifier' '*' 'identifier' followed by not '=' -- this
+        // '*' has to be a binary operator but determineStarAmpUsage() will
+        // categorize it as an unary operator, so set the right type here.
+        if (LookForDecls && !CurrentToken->Children.empty()) {
+          AnnotatedToken &Prev = *CurrentToken->Parent;
+          AnnotatedToken &Next = CurrentToken->Children[0];
+          if (Prev.Parent->is(tok::identifier) &&
+              (Prev.is(tok::star) || Prev.is(tok::amp)) &&
+              CurrentToken->is(tok::identifier) && Next.isNot(tok::equal)) {
+            Prev.Type = TT_BinaryOperator;
+            LookForDecls = false;
+          }
+        }
+
         if (CurrentToken->is(tok::r_paren)) {
           Left->MatchingParen = CurrentToken;
           CurrentToken->MatchingParen = Left;
@@ -895,6 +910,14 @@ public:
           Tok->Type = TT_CtorInitializerColon;
         if (ColonIsObjCMethodExpr)
           Tok->Type = TT_ObjCMethodExpr;
+        break;
+      case tok::kw_if:
+      case tok::kw_while:
+        if (CurrentToken->is(tok::l_paren)) {
+          next();
+          if (!parseParens(/*LookForDecls=*/true))
+            return false;
+        }
         break;
       case tok::l_paren: {
         if (!parseParens())

@@ -1235,6 +1235,14 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
       "  *A, // Operator detection might be confused by the '{'\n"
       "  *BB // Operator detection might be confused by previous comment\n"
       "};");
+
+  verifyFormat("if (int *a = &b)");
+  verifyFormat("if (int &a = *b)");
+  verifyFormat("if (a & b[i])");
+  verifyFormat("if (a::b::c::d & b[i])");
+  verifyFormat("if (*b[i])");
+  verifyFormat("if (int *a = (&b))");
+  verifyFormat("while (int *a = &b)");
 }
 
 TEST_F(FormatTest, FormatsCasts) {
