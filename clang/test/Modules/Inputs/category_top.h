@@ -19,3 +19,5 @@
 @protocol P2
 @end
 
+@protocol P3, P4;
+

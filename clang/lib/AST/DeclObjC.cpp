@@ -66,6 +66,14 @@ ObjCContainerDecl::getIvarDecl(IdentifierInfo *Id) const {
 // Get the local instance/class method declared in this interface.
 ObjCMethodDecl *
 ObjCContainerDecl::getMethod(Selector Sel, bool isInstance) const {
+  // If this context is a hidden protocol definition, don't find any
+  // methods there.
+  if (const ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(this)) {
+    if (const ObjCProtocolDecl *Def = Proto->getDefinition())
+      if (Def->isHidden())
+        return 0;
+  }
+
   // Since instance & class methods can have the same name, the loop below
   // ensures we get the correct method.
   //
@@ -87,6 +95,13 @@ ObjCContainerDecl::getMethod(Selector Sel, bool isInstance) const {
 ObjCPropertyDecl *
 ObjCPropertyDecl::findPropertyDecl(const DeclContext *DC,
                                    IdentifierInfo *propertyID) {
+  // If this context is a hidden protocol definition, don't find any
+  // property.
+  if (const ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(DC)) {
+    if (const ObjCProtocolDecl *Def = Proto->getDefinition())
+      if (Def->isHidden())
+        return 0;
+  }
 
   DeclContext::lookup_const_result R = DC->lookup(propertyID);
   for (DeclContext::lookup_const_iterator I = R.begin(), E = R.end(); I != E;
@@ -111,6 +126,12 @@ ObjCPropertyDecl::getDefaultSynthIvarName(ASTContext &Ctx) const {
 /// in 'PropertyId' and returns it. It returns 0, if not found.
 ObjCPropertyDecl *
 ObjCContainerDecl::FindPropertyDeclaration(IdentifierInfo *PropertyId) const {
+  // Don't find properties within hidden protocol definitions.
+  if (const ObjCProtocolDecl *Proto = dyn_cast<ObjCProtocolDecl>(this)) {
+    if (const ObjCProtocolDecl *Def = Proto->getDefinition())
+      if (Def->isHidden())
+        return 0;
+  }
 
   if (ObjCPropertyDecl *PD =
         ObjCPropertyDecl::findPropertyDecl(cast<DeclContext>(this), PropertyId))
@@ -1342,6 +1363,12 @@ ObjCProtocolDecl *ObjCProtocolDecl::lookupProtocolNamed(IdentifierInfo *Name) {
 ObjCMethodDecl *ObjCProtocolDecl::lookupMethod(Selector Sel,
                                                bool isInstance) const {
   ObjCMethodDecl *MethodDecl = NULL;
+
+  // If there is no definition or the definition is hidden, we don't find
+  // anything.
+  const ObjCProtocolDecl *Def = getDefinition();
+  if (!Def || Def->isHidden())
+    return NULL;
 
   if ((MethodDecl = getMethod(Sel, isInstance)))
     return MethodDecl;

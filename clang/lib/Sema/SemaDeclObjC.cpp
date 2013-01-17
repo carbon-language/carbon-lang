@@ -743,7 +743,9 @@ Sema::FindProtocolDeclaration(bool WarnOnDeclarations,
 
     // If this is a forward declaration and we are supposed to warn in this
     // case, do it.
-    if (WarnOnDeclarations && !PDecl->hasDefinition())
+    // FIXME: Recover nicely in the hidden case.
+    if (WarnOnDeclarations &&
+        (!PDecl->hasDefinition() || PDecl->getDefinition()->isHidden()))
       Diag(ProtocolId[i].second, diag::warn_undef_protocolref)
         << ProtocolId[i].first;
     Protocols.push_back(PDecl);
