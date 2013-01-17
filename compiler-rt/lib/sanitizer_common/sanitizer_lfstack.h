@@ -52,7 +52,7 @@ struct LFStack {
       if (cur == 0)
         return 0;
       T *nxt = cur->next;
-      u64 cnt = (cmp & kCounterBits);
+      u64 cnt = (cmp & kCounterMask);
       u64 xch = (u64)(uptr)nxt | cnt;
       if (atomic_compare_exchange_weak(&head_, &cmp, xch,
                                        memory_order_acquire))
