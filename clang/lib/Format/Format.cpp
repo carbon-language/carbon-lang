@@ -98,6 +98,13 @@ public:
 
   std::vector<AnnotatedToken> Children;
   AnnotatedToken *Parent;
+
+  const AnnotatedToken *getPreviousNoneComment() const {
+    AnnotatedToken *Tok = Parent;
+    while (Tok != NULL && Tok->is(tok::comment))
+      Tok = Tok->Parent;
+    return Tok;
+  }
 };
 
 class AnnotatedLine {
@@ -489,7 +496,8 @@ private:
       if (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
           State.NextToken->Parent->Type == TT_TemplateOpener)
         State.Stack[ParenLevel].Indent = State.Column + Spaces;
-      if (Previous.is(tok::comma) && Current.Type != TT_LineComment)
+      if (Current.getPreviousNoneComment()->is(tok::comma) &&
+          Current.isNot(tok::comment))
         State.Stack[ParenLevel].HasMultiParameterLine = true;
 
 
@@ -648,7 +656,7 @@ private:
         State.LineContainsContinuedForLoopSection)
       return UINT_MAX;
     if (!NewLine && State.NextToken->Parent->is(tok::comma) &&
-        State.NextToken->Type != TT_LineComment &&
+        State.NextToken->isNot(tok::comment) &&
         State.Stack.back().BreakAfterComma)
       return UINT_MAX;
     // Trying to insert a parameter on a new line if there are already more than
@@ -1033,7 +1041,8 @@ public:
     } else {
       if (Current.Type == TT_LineComment) {
         Current.MustBreakBefore = Current.FormatTok.NewlinesBefore > 0;
-      } else if (Current.Parent->Type == TT_LineComment ||
+      } else if ((Current.Parent->is(tok::comment) &&
+                  Current.FormatTok.NewlinesBefore > 0) ||
                  (Current.is(tok::string_literal) &&
                   Current.Parent->is(tok::string_literal))) {
         Current.MustBreakBefore = true;
@@ -1376,7 +1385,7 @@ private:
     if (Left.is(tok::equal) && Line.Type == LT_VirtualFunctionDecl)
       return false;
 
-    if (Right.is(tok::comment))
+    if (Right.Type == TT_LineComment)
       // We rely on MustBreakBefore being set correctly here as we should not
       // change the "binding" behavior of a comment.
       return false;
