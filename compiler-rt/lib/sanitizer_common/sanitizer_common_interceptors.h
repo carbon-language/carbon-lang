@@ -72,7 +72,7 @@ INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
 
 #if SANITIZER_INTERCEPT_WRITE
 INTERCEPTOR(SSIZE_T, write, int fd, void *ptr, SIZE_T count) {
-  COMMON_INTERCEPTOR_ENTER(read, fd, ptr, count);
+  COMMON_INTERCEPTOR_ENTER(write, fd, ptr, count);
   if (fd >= 0)
     COMMON_INTERCEPTOR_FD_RELEASE(fd);
   SSIZE_T res = REAL(write)(fd, ptr, count);
@@ -87,7 +87,7 @@ INTERCEPTOR(SSIZE_T, write, int fd, void *ptr, SIZE_T count) {
 
 #if SANITIZER_INTERCEPT_PWRITE
 INTERCEPTOR(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count) {
-  COMMON_INTERCEPTOR_ENTER(read, fd, ptr, count);
+  COMMON_INTERCEPTOR_ENTER(pwrite, fd, ptr, count);
   if (fd >= 0)
     COMMON_INTERCEPTOR_FD_RELEASE(fd);
   SSIZE_T res = REAL(pwrite)(fd, ptr, count);
@@ -102,7 +102,7 @@ INTERCEPTOR(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count) {
 
 #if SANITIZER_INTERCEPT_PWRITE64
 INTERCEPTOR(SSIZE_T, pwrite64, int fd, void *ptr, OFF64_T count) {
-  COMMON_INTERCEPTOR_ENTER(read, fd, ptr, count);
+  COMMON_INTERCEPTOR_ENTER(pwrite64, fd, ptr, count);
   if (fd >= 0)
     COMMON_INTERCEPTOR_FD_RELEASE(fd);
   SSIZE_T res = REAL(pwrite64)(fd, ptr, count);
