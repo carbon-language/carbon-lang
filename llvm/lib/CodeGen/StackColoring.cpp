@@ -23,7 +23,6 @@
 
 #define DEBUG_TYPE "stackcoloring"
 #include "llvm/CodeGen/Passes.h"
-#include "MachineTraceMetrics.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/PostOrderIterator.h"

@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "machine-trace-metrics"
-#include "MachineTraceMetrics.h"
+#include "llvm/CodeGen/MachineTraceMetrics.h"
 #include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/ADT/SparseSet.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
