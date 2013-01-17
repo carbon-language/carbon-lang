@@ -67,30 +67,6 @@ INTERCEPTOR(SIZE_T, fread_unlocked, void *ptr, SIZE_T size, SIZE_T nmemb,
   return res;
 }
 
-INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
-  ENSURE_MSAN_INITED();
-  SSIZE_T res = REAL(read)(fd, ptr, count);
-  if (res > 0)
-    __msan_unpoison(ptr, res);
-  return res;
-}
-
-INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
-  ENSURE_MSAN_INITED();
-  SSIZE_T res = REAL(pread)(fd, ptr, count, offset);
-  if (res > 0)
-    __msan_unpoison(ptr, res);
-  return res;
-}
-
-INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
-  ENSURE_MSAN_INITED();
-  SSIZE_T res = REAL(pread64)(fd, ptr, count, offset);
-  if (res > 0)
-    __msan_unpoison(ptr, res);
-  return res;
-}
-
 INTERCEPTOR(SSIZE_T, readlink, const char *path, char *buf, SIZE_T bufsiz) {
   ENSURE_MSAN_INITED();
   SSIZE_T res = REAL(readlink)(path, buf, bufsiz);
@@ -759,6 +735,15 @@ INTERCEPTOR(int, getrusage, int who, void *usage) {
   return res;
 }
 
+#define COMMON_INTERCEPTOR_WRITE_RANGE(ptr, size)  \
+    __msan_unpoison(ptr, size)
+#define COMMON_INTERCEPTOR_READ_RANGE(ptr, size) do { } while (false)
+#define COMMON_INTERCEPTOR_ENTER(func, ...) ENSURE_MSAN_INITED()
+#define COMMON_INTERCEPTOR_FD_ACQUIRE(fd) do { } while (false)
+#define COMMON_INTERCEPTOR_FD_RELEASE(fd) do { } while (false)
+#define COMMON_INTERCEPTOR_SET_THREAD_NAME(name) do { } while (false)  // FIXME
+#include "sanitizer_common/sanitizer_common_interceptors.h"
+
 // static
 void *fast_memset(void *ptr, int c, SIZE_T n) {
   // hack until we have a really fast internal_memset
@@ -868,6 +853,8 @@ namespace __msan {
 void InitializeInterceptors() {
   static int inited = 0;
   CHECK_EQ(inited, 0);
+  SANITIZER_COMMON_INTERCEPTORS_INIT;
+
   INTERCEPT_FUNCTION(mmap);
   INTERCEPT_FUNCTION(mmap64);
   INTERCEPT_FUNCTION(posix_memalign);
@@ -877,9 +864,6 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(free);
   INTERCEPT_FUNCTION(fread);
   INTERCEPT_FUNCTION(fread_unlocked);
-  INTERCEPT_FUNCTION(read);
-  INTERCEPT_FUNCTION(pread);
-  INTERCEPT_FUNCTION(pread64);
   INTERCEPT_FUNCTION(readlink);
   INTERCEPT_FUNCTION(readdir);
   INTERCEPT_FUNCTION(memcpy);
