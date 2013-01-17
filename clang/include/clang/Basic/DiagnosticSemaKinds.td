@@ -6066,6 +6066,10 @@ def err_static_kernel : Error<
   "kernel functions cannot be declared static">;
 def err_static_function_scope : Error<
   "variables in function scope cannot be declared static">;
+def err_opencl_bitfields : Error<
+  "bitfields are not supported in OpenCL">;
+def err_opencl_vla : Error<
+  "variable length arrays are not supported in OpenCL">;
 
 } // end of sema category
 
