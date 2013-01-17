@@ -135,7 +135,7 @@ ifeq ($(HOST_OS),Darwin)
     endif
 endif
 
-ifeq ($(HOST_OS),Linux)
+ifeq ($(HOST_OS), $(filter $(HOST_OS), Linux GNU))
     # Include everything from the .a's into the shared library.
     ProjLibsOptions := -Wl,--whole-archive $(ProjLibsOptions) \
                        -Wl,--no-whole-archive
@@ -143,6 +143,7 @@ ifeq ($(HOST_OS),Linux)
     LLVMLibsOptions += -Wl,--no-undefined
     # Link in python
     LLVMLibsOptions += $(PYTHON_BUILD_FLAGS) -lrt
+    LLVMLibsOptions += -Wl,--soname,lib$(LIBRARYNAME)$(SHLIBEXT)
 endif
 
 ifeq ($(HOST_OS),FreeBSD)
