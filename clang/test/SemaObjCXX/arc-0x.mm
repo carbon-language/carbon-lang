@@ -93,3 +93,11 @@ typedef __builtin_va_list va_list;
     __builtin_va_arg(args, id);
 }
 @end
+
+namespace rdar12078752 {
+  void f() {
+    NSObject* o =0;
+    __autoreleasing decltype(o) o2 = o;
+    __autoreleasing auto o3 = o;
+  }
+}
