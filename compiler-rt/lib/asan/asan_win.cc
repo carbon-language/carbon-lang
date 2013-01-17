@@ -102,7 +102,7 @@ void AsanPlatformThreadInit() {
   // Nothing here for now.
 }
 
-void ClearShadowMemoryForContext(void *context) {
+void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   UNIMPLEMENTED();
 }
 

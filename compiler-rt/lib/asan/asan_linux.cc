@@ -120,20 +120,14 @@ void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
 }
 
 #if !ASAN_ANDROID
-void ClearShadowMemoryForContext(void *context) {
+void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
   ucontext_t *ucp = (ucontext_t*)context;
-  uptr sp = (uptr)ucp->uc_stack.ss_sp;
-  uptr size = ucp->uc_stack.ss_size;
-  // Align to page size.
-  uptr PageSize = GetPageSizeCached();
-  uptr bottom = sp & ~(PageSize - 1);
-  size += sp - bottom;
-  size = RoundUpTo(size, PageSize);
-  PoisonShadow(bottom, size, 0);
+  *stack = (uptr)ucp->uc_stack.ss_sp;
+  *ssize = ucp->uc_stack.ss_size;
 }
 #else
-void ClearShadowMemoryForContext(void *context) {
-  UNIMPLEMENTED();
+void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
+  return UNIMPLEMENTED();
 }
 #endif
 

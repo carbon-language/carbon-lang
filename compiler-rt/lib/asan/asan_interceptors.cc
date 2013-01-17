@@ -133,6 +133,18 @@ DEFINE_REAL(int, sigaction, int signum, const struct sigaction *act,
 #endif  // ASAN_INTERCEPT_SIGNAL_AND_SIGACTION
 
 #if ASAN_INTERCEPT_SWAPCONTEXT
+static void ClearShadowMemoryForContextStack(uptr stack, uptr ssize) {
+  // Align to page size.
+  uptr PageSize = GetPageSizeCached();
+  uptr bottom = stack & ~(PageSize - 1);
+  ssize += stack - bottom;
+  ssize = RoundUpTo(ssize, PageSize);
+  static const uptr kMaxSaneContextStackSize = 1 << 22;  // 4 Mb
+  if (ssize <= kMaxSaneContextStackSize) {
+    PoisonShadow(bottom, ssize, 0);
+  }
+}
+
 INTERCEPTOR(int, swapcontext, struct ucontext_t *oucp,
             struct ucontext_t *ucp) {
   static bool reported_warning = false;
@@ -143,16 +155,18 @@ INTERCEPTOR(int, swapcontext, struct ucontext_t *oucp,
   }
   // Clear shadow memory for new context (it may share stack
   // with current context).
-  ClearShadowMemoryForContext(ucp);
+  uptr stack, ssize;
+  ReadContextStack(ucp, &stack, &ssize);
+  ClearShadowMemoryForContextStack(stack, ssize);
   int res = REAL(swapcontext)(oucp, ucp);
   // swapcontext technically does not return, but program may swap context to
   // "oucp" later, that would look as if swapcontext() returned 0.
   // We need to clear shadow for ucp once again, as it may be in arbitrary
   // state.
-  ClearShadowMemoryForContext(ucp);
+  ClearShadowMemoryForContextStack(stack, ssize);
   return res;
 }
-#endif
+#endif  // ASAN_INTERCEPT_SWAPCONTEXT
 
 INTERCEPTOR(void, longjmp, void *env, int val) {
   __asan_handle_no_return();
