@@ -7,9 +7,17 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//  Check that Objective C properties follow the following rules:
-//    - The property should be set with the setter, not though a direct
-//      assignment.
+//  Check that Objective C properties are set with the setter, not though a
+//      direct assignment.
+//
+//  Two versions of a checker exist: one that checks all methods and the other
+//      that only checks the methods annotated with
+//      __attribute__((annotate("objc_no_direct_instance_variable_assignment")))
+//
+//  The checker does not warn about assignments to Ivars, annotated with
+//       __attribute__((objc_allow_direct_instance_variable_assignment"))). This
+//      annotation serves as a false positive suppression mechanism for the
+//      checker. The annotation is allowed on properties and Ivars.
 //
 //===----------------------------------------------------------------------===//
 
@@ -155,7 +163,7 @@ void DirectIvarAssignment::checkASTDecl(const ObjCImplementationDecl *D,
   }
 }
 
-static bool isAnnotatedToAllowDirectAssignment(const ObjCPropertyDecl *D) {
+static bool isAnnotatedToAllowDirectAssignment(const Decl *D) {
   for (specific_attr_iterator<AnnotateAttr>
        AI = D->specific_attr_begin<AnnotateAttr>(),
        AE = D->specific_attr_end<AnnotateAttr>(); AI != AE; ++AI) {
@@ -183,10 +191,12 @@ void DirectIvarAssignment::MethodCrawler::VisitBinaryOperator(
 
     if (I != IvarToPropMap.end()) {
       const ObjCPropertyDecl *PD = I->second;
-      // Skip warnings on Ivars that correspond to properties, annotated with
+      // Skip warnings on Ivars, annotated with
       // objc_allow_direct_instance_variable_assignment. This annotation serves
-      // as a false positive suppression mechanism for the checker.
-      if (isAnnotatedToAllowDirectAssignment(PD))
+      // as a false positive suppression mechanism for the checker. The
+      // annotation is allowed on properties and ivars.
+      if (isAnnotatedToAllowDirectAssignment(PD) ||
+          isAnnotatedToAllowDirectAssignment(D))
         return;
 
       ObjCMethodDecl *GetterMethod =
