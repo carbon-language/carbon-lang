@@ -167,6 +167,59 @@ namespace {
     IC_User,                ///< could "use" a pointer
     IC_None                 ///< anything else
   };
+
+  raw_ostream &operator<<(raw_ostream &OS, const InstructionClass Class)
+     LLVM_ATTRIBUTE_USED;
+  raw_ostream &operator<<(raw_ostream &OS, InstructionClass Class) {
+    switch (Class) {
+    case IC_Retain:
+      return OS << "IC_Retain";
+    case IC_RetainRV:
+      return OS << "IC_RetainRV";
+    case IC_RetainBlock:
+      return OS << "IC_RetainBlock";
+    case IC_Release:
+      return OS << "IC_Release";
+    case IC_Autorelease:
+      return OS << "IC_Autorelease";
+    case IC_AutoreleaseRV:
+      return OS << "IC_AutoreleaseRV";
+    case IC_AutoreleasepoolPush:
+      return OS << "IC_AutoreleasepoolPush";
+    case IC_AutoreleasepoolPop:
+      return OS << "IC_AutoreleasepoolPop";
+    case IC_NoopCast:
+      return OS << "IC_NoopCast";
+    case IC_FusedRetainAutorelease:
+      return OS << "IC_FusedRetainAutorelease";
+    case IC_FusedRetainAutoreleaseRV:
+      return OS << "IC_FusedRetainAutoreleaseRV";
+    case IC_LoadWeakRetained:
+      return OS << "IC_LoadWeakRetained";
+    case IC_StoreWeak:
+      return OS << "IC_StoreWeak";
+    case IC_InitWeak:
+      return OS << "IC_InitWeak";
+    case IC_LoadWeak:
+      return OS << "IC_LoadWeak";
+    case IC_MoveWeak:
+      return OS << "IC_MoveWeak";
+    case IC_CopyWeak:
+      return OS << "IC_CopyWeak";
+    case IC_DestroyWeak:
+      return OS << "IC_DestroyWeak";
+    case IC_StoreStrong:
+      return OS << "IC_StoreStrong";
+    case IC_CallOrUser:
+      return OS << "IC_CallOrUser";
+    case IC_Call:
+      return OS << "IC_Call";
+    case IC_User:
+      return OS << "IC_User";
+    case IC_None:
+      return OS << "IC_None";
+    }
+  }
 }
 
 /// \brief Test whether the given value is possible a reference-counted pointer.
@@ -2387,10 +2440,10 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
   for (inst_iterator I = inst_begin(&F), E = inst_end(&F); I != E; ) {
     Instruction *Inst = &*I++;
 
-    DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Visiting: " <<
-          *Inst << "\n");
-
     InstructionClass Class = GetBasicInstructionClass(Inst);
+
+    DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Visiting: Class: " << Class
+          << "; " << *Inst << "\n");
 
     switch (Class) {
     default: break;
