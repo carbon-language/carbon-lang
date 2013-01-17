@@ -201,24 +201,31 @@ const char *GetEnv(const char *name) {
   return 0;  // Not found.
 }
 
-void ReExec() {
-  static const int kMaxArgv = 100;
-  InternalScopedBuffer<char*> argv(kMaxArgv + 1);
-  static char *buff;
+static void ReadNullSepFileToArray(const char *path, char ***arr,
+                                   int arr_size) {
+  char *buff;
   uptr buff_size = 0;
-  ReadFileToBuffer("/proc/self/cmdline", &buff, &buff_size, 1024 * 1024);
-  argv[0] = buff;
-  int argc, i;
-  for (argc = 1, i = 1; ; i++) {
+  *arr = (char **)MmapOrDie(arr_size * sizeof(char *), "NullSepFileArray");
+  ReadFileToBuffer(path, &buff, &buff_size, 1024 * 1024);
+  (*arr)[0] = buff;
+  int count, i;
+  for (count = 1, i = 1; ; i++) {
     if (buff[i] == 0) {
       if (buff[i+1] == 0) break;
-      argv[argc] = &buff[i+1];
-      CHECK_LE(argc, kMaxArgv);  // FIXME: make this more flexible.
-      argc++;
+      (*arr)[count] = &buff[i+1];
+      CHECK_LE(count, arr_size - 1);  // FIXME: make this more flexible.
+      count++;
     }
   }
-  argv[argc] = 0;
-  execv(argv[0], argv.data());
+  (*arr)[count] = 0;
+}
+
+void ReExec() {
+  static const int kMaxArgv = 100, kMaxEnvp = 1000;
+  char **argv, **envp;
+  ReadNullSepFileToArray("/proc/self/cmdline", &argv, kMaxArgv);
+  ReadNullSepFileToArray("/proc/self/environ", &envp, kMaxEnvp);
+  execve(argv[0], argv, envp);
 }
 
 void PrepareForSandboxing() {
