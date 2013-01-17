@@ -436,6 +436,9 @@ public:
     bool
     GetExpandRegexAliases () const;
     
+    bool
+    GetPromptOnQuit () const;
+
 protected:
     friend class Debugger;
 

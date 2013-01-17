@@ -35,6 +35,9 @@ protected:
     virtual bool
     DoExecute (Args& args,
              CommandReturnObject &result);
+    
+    bool
+    ShouldAskForConfirmation (bool& is_a_detach);
 
 };
 
