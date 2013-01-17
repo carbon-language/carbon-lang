@@ -214,6 +214,8 @@ def warn_use_out_of_scope_declaration : Warning<
   "use of out-of-scope declaration of %0">;
 def err_inline_non_function : Error<
   "'inline' can only appear on functions">;
+def err_noreturn_non_function : Error<
+  "'_Noreturn' can only appear on functions">;
 def warn_qual_return_type : Warning< 
   "'%0' type qualifier%s1 on return type %plural{1:has|:have}1 no effect">,
   InGroup<IgnoredQualifiers>, DefaultIgnore;
@@ -381,11 +383,13 @@ def note_strncat_wrong_size : Note<
   "the terminating null byte">;
 
 /// main()
-// static/inline main() are not errors in C, just in C++.
+// static main() is not an error in C, just in C++.
 def warn_static_main : Warning<"'main' should not be declared static">,
     InGroup<Main>;
 def err_static_main : Error<"'main' is not allowed to be declared static">;
 def err_inline_main : Error<"'main' is not allowed to be declared inline">;
+def ext_noreturn_main : ExtWarn<
+  "'main' is not allowed to be declared _Noreturn">, InGroup<Main>;
 def err_constexpr_main : Error<
   "'main' is not allowed to be declared constexpr">;
 def err_main_template_decl : Error<"'main' cannot be a template">;

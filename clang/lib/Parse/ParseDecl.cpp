@@ -2619,6 +2619,11 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
     case tok::kw_explicit:
       isInvalid = DS.setFunctionSpecExplicit(Loc);
       break;
+    case tok::kw__Noreturn:
+      if (!getLangOpts().C11)
+        Diag(Loc, diag::ext_c11_noreturn);
+      isInvalid = DS.setFunctionSpecNoreturn(Loc);
+      break;
 
     // alignment-specifier
     case tok::kw__Alignas:
@@ -3878,6 +3883,7 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw_inline:
   case tok::kw_virtual:
   case tok::kw_explicit:
+  case tok::kw__Noreturn:
 
     // friend keyword.
   case tok::kw_friend:

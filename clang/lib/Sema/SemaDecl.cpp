@@ -4097,6 +4097,10 @@ void Sema::DiagnoseFunctionSpecifiers(Declarator& D) {
   if (D.getDeclSpec().isExplicitSpecified())
     Diag(D.getDeclSpec().getExplicitSpecLoc(),
          diag::err_explicit_non_function);
+
+  if (D.getDeclSpec().isNoreturnSpecified())
+    Diag(D.getDeclSpec().getNoreturnSpecLoc(),
+         diag::err_noreturn_non_function);
 }
 
 NamedDecl*
@@ -6429,9 +6433,10 @@ static SourceRange getResultSourceRange(const FunctionDecl *FD) {
 void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
   // C++11 [basic.start.main]p3:  A program that declares main to be inline,
   //   static or constexpr is ill-formed.
-  // C99 6.7.4p4:  In a hosted environment, the inline function specifier
-  //   shall not appear in a declaration of main.
+  // C11 6.7.4p4:  In a hosted environment, no function specifier(s) shall
+  //   appear in a declaration of main.
   // static main is not an error under C99, but we should warn about it.
+  // We accept _Noreturn main as an extension.
   if (FD->getStorageClass() == SC_Static)
     Diag(DS.getStorageClassSpecLoc(), getLangOpts().CPlusPlus 
          ? diag::err_static_main : diag::warn_static_main) 
@@ -6439,6 +6444,8 @@ void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
   if (FD->isInlineSpecified())
     Diag(DS.getInlineSpecLoc(), diag::err_inline_main) 
       << FixItHint::CreateRemoval(DS.getInlineSpecLoc());
+  if (DS.isNoreturnSpecified())
+    Diag(DS.getNoreturnSpecLoc(), diag::ext_noreturn_main);
   if (FD->isConstexpr()) {
     Diag(DS.getConstexprSpecLoc(), diag::err_constexpr_main)
       << FixItHint::CreateRemoval(DS.getConstexprSpecLoc());

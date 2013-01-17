@@ -113,6 +113,9 @@ def note_previous_default_assoc : Note<
 def ext_c11_alignment : Extension<
   "%0 is a C11-specific feature">, InGroup<C11>;
 
+def ext_c11_noreturn : Extension<
+  "_Noreturn functions are a C11-specific feature">, InGroup<C11>;
+
 def ext_gnu_indirect_goto : Extension<
   "use of GNU indirect-goto extension">, InGroup<GNU>;
 def ext_gnu_address_of_label : Extension<

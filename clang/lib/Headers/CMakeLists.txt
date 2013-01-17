@@ -27,6 +27,7 @@ set(files
   stdbool.h
   stddef.h
   stdint.h
+  stdnoreturn.h
   tgmath.h
   tmmintrin.h
   varargs.h
