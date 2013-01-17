@@ -382,8 +382,16 @@ TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
   free(array);
   EXPECT_FALSE(__asan_get_ownership(array));
   EXPECT_DEATH(__asan_get_allocated_size(array), kGetAllocatedSizeErrorMsg);
-
   delete int_ptr;
+
+  void *zero_alloc = Ident(malloc(0));
+  if (zero_alloc != 0) {
+    // If malloc(0) is not null, this pointer is owned and should have valid
+    // allocated size.
+    EXPECT_TRUE(__asan_get_ownership(zero_alloc));
+    EXPECT_EQ(0U, __asan_get_allocated_size(zero_alloc));
+  }
+  free(zero_alloc);
 }
 
 TEST(AddressSanitizerInterface, GetCurrentAllocatedBytesTest) {

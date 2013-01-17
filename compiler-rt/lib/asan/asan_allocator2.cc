@@ -675,16 +675,18 @@ uptr __asan_get_estimated_allocated_size(uptr size) {
 }
 
 bool __asan_get_ownership(const void *p) {
-  return AllocationSize(reinterpret_cast<uptr>(p)) > 0;
+  uptr ptr = reinterpret_cast<uptr>(p);
+  return (ptr == kReturnOnZeroMalloc) || (AllocationSize(ptr) > 0);
 }
 
 uptr __asan_get_allocated_size(const void *p) {
   if (p == 0) return 0;
-  uptr allocated_size = AllocationSize(reinterpret_cast<uptr>(p));
+  uptr ptr = reinterpret_cast<uptr>(p);
+  uptr allocated_size = AllocationSize(ptr);
   // Die if p is not malloced or if it is already freed.
-  if (allocated_size == 0) {
+  if (allocated_size == 0 && ptr != kReturnOnZeroMalloc) {
     GET_STACK_TRACE_FATAL_HERE;
-    ReportAsanGetAllocatedSizeNotOwned(reinterpret_cast<uptr>(p), &stack);
+    ReportAsanGetAllocatedSizeNotOwned(ptr, &stack);
   }
   return allocated_size;
 }
