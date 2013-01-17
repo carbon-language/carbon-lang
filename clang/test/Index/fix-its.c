@@ -22,6 +22,6 @@ int printf(const char *restrict, ...);
 void f2() {
   unsigned long index;
   // CHECK: warning: format specifies type 'int' but the argument has type 'unsigned long'
-  // CHECK: FIX-IT: Replace [26:17 - 26:19] with "%ld"
+  // CHECK: FIX-IT: Replace [26:17 - 26:19] with "%lu"
   MACRO(printf("%d", index));
 }

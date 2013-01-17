@@ -218,7 +218,7 @@ Csprintf(pMsgBuf,"\nEnter minimum anagram length (2-%1d): ", Cstrlen(pKeepBuf));
 // CHECK:         {{.*}}:216:62: warning: format specifies type 'int' but the argument has type 'unsigned long'
 // CHECK-NEXT:    Csprintf(pMsgBuf,"\nEnter minimum anagram length (2-%1d): ", Cstrlen(pKeepBuf));
 // CHECK-NEXT: {{^                                                    ~~~      \^}}
-// CHECK-NEXT: {{^                                                    %1ld}}
+// CHECK-NEXT: {{^                                                    %1lu}}
 // CHECK-NEXT:    {{.*}}:213:21: note: expanded from macro 'Cstrlen'
 // CHECK-NEXT:    #define Cstrlen(a)  strlen_test(a)
 // CHECK-NEXT: {{^                    \^}}

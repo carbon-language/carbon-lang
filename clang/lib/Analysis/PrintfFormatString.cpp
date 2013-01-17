@@ -511,7 +511,7 @@ bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
     case ConversionSpecifier::dArg:
     case ConversionSpecifier::DArg:
     case ConversionSpecifier::iArg:
-      if (QT->isUnsignedIntegerType())
+      if (QT->isUnsignedIntegerType() && !HasPlusPrefix)
         CS.setKind(clang::analyze_format_string::ConversionSpecifier::uArg);
       break;
     default:

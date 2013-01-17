@@ -165,7 +165,7 @@ void test2() {
 // Validate the fixes.
 // CHECK: printf("%d", (int) 123);
 // CHECK: printf("abc%s", "testing testing 123");
-// CHECK: printf("%lu", (long) -12);
+// CHECK: printf("%ld", (long) -12);
 // CHECK: printf("%d", 123);
 // CHECK: printf("%s\n", "x");
 // CHECK: printf("%f\n", 1.23);
@@ -193,11 +193,11 @@ void test2() {
 // CHECK: printf("%d", (my_int_type) 42);
 // CHECK: printf("%s", "foo");
 // CHECK: printf("%lo", (long) 42);
-// CHECK: printf("%lu", (long) 42);
+// CHECK: printf("%ld", (long) 42);
 // CHECK: printf("%lx", (long) 42);
 // CHECK: printf("%lX", (long) 42);
-// CHECK: printf("%li", (unsigned long) 42);
-// CHECK: printf("%ld", (unsigned long) 42);
+// CHECK: printf("%lu", (unsigned long) 42);
+// CHECK: printf("%lu", (unsigned long) 42);
 // CHECK: printf("%LF", (long double) 42);
 // CHECK: printf("%Le", (long double) 42);
 // CHECK: printf("%LE", (long double) 42);

@@ -223,4 +223,8 @@ void testSignedness(long i, unsigned long u) {
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:13}:"%lu"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:13}:"%lu"
   // CHECK: fix-it:"{{.*}}":{[[@LINE-4]]:11-[[@LINE-4]]:13}:"%ld"
+
+  printf("%+d", u); // expected-warning{{format specifies type 'int' but the argument has type 'unsigned long'}}
+
+  // CHECK: fix-it:"{{.*}}":{[[@LINE-2]]:11-[[@LINE-2]]:14}:"%+ld"
 }
