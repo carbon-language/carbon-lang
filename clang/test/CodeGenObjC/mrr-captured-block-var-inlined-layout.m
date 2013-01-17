@@ -1,5 +1,8 @@
-// RUN: %clang_cc1 -fblocks -triple x86_64-apple-darwin -O0 -emit-llvm %s -o - | FileCheck %s
-// RUN: %clang_cc1 -fblocks -triple i386-apple-darwin -O0 -emit-llvm %s -o - | FileCheck -check-prefix=CHECK-i386 %s
+// RUN: %clang_cc1 -fblocks -fobjc-runtime-has-weak -triple x86_64-apple-darwin -O0 -print-ivar-layout -emit-llvm -o /dev/null %s > %t-64.layout
+// RUN: FileCheck --input-file=%t-64.layout %s
+// RUN: %clang_cc1 -fblocks -fobjc-runtime-has-weak -triple i386-apple-darwin -O0 -print-ivar-layout -emit-llvm -o /dev/null %s > %t-32.layout
+// RUN: FileCheck -check-prefix=CHECK-i386 --input-file=%t-32.layout %s
+// rdar://12184410
 // rdar://12184410
 
 void x(id y) {}
@@ -17,17 +20,15 @@ void f() {
     __block id bl_var1;
 
 // block variable layout: BL_STRONG:1, BL_OPERATOR:0
-// Inline instruction for block variable layout: 0x0100
-// CHECK: internal constant{{.*}}i64 256
-// CHECK-i386: internal constant{{.*}}i32 256
+// CHECK: Inline instruction for block variable layout: 0x0100
+// CHECK-i386: Inline instruction for block variable layout: 0x0100
     void (^b)() = ^{
         x(bar);
     };    
 
 // block variable layout: BL_STRONG:2, BL_BYREF:1, BL_OPERATOR:0
-// Inline instruction for block variable layout: 0x0210
-// CHECK: internal constant{{.*}}i64 528
-// CHECK-i386: internal constant{{.*}}i32 528
+// CHECK: Inline instruction for block variable layout: 0x0210
+// CHECK-i386: Inline instruction for block variable layout: 0x0210
     void (^c)() = ^{
         x(bar);
         x(baz);
@@ -35,9 +36,8 @@ void f() {
     };    
 
 // block variable layout: BL_STRONG:2, BL_BYREF:3, BL_OPERATOR:0
-// Inline instruction for block variable layout: 0x0230
-// CHECK: internal constant{{.*}}i64 560
-// CHECK-i386: internal constant{{.*}}i32 560
+// CHECK: Inline instruction for block variable layout: 0x0230
+// CHECK-i386: Inline instruction for block variable layout: 0x0230
     void (^d)() = ^{
         x(bar);
         x(baz);
@@ -47,9 +47,8 @@ void f() {
     };
 
 // block variable layout: BL_STRONG:2, BL_BYREF:3, BL_OPERATOR:0
-// Inline instruction for block variable layout: 0x0230
-// CHECK: internal constant{{.*}}i64 560
-// CHECK-i386: internal constant{{.*}}i32 560
+// CHECK: Inline instruction for block variable layout: 0x0230
+// CHECK-i386: Inline instruction for block variable layout: 0x0230
     id (^e)() = ^{
         x(bar);
         x(baz);
@@ -59,9 +58,8 @@ void f() {
         return wid;
     };
 
-// Inline instruction for block variable layout: 0x020
-// CHECK: internal constant{{.*}}i64 32
-// CHECK-i386: internal constant{{.*}}i32 32
+// CHECK: Inline instruction for block variable layout: 0x020
+// CHECK-i386: Inline instruction for block variable layout: 0x020
     void (^ii)() = ^{
        byref_int = 1;
        byref_bab = 0;

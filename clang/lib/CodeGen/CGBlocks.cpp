@@ -182,13 +182,16 @@ namespace {
   struct BlockLayoutChunk {
     CharUnits Alignment;
     CharUnits Size;
+    Qualifiers::ObjCLifetime Lifetime;
     const BlockDecl::Capture *Capture; // null for 'this'
     llvm::Type *Type;
 
     BlockLayoutChunk(CharUnits align, CharUnits size,
+                     Qualifiers::ObjCLifetime lifetime,
                      const BlockDecl::Capture *capture,
                      llvm::Type *type)
-      : Alignment(align), Size(size), Capture(capture), Type(type) {}
+      : Alignment(align), Size(size), Lifetime(lifetime),
+        Capture(capture), Type(type) {}
 
     /// Tell the block info that this chunk has the given field index.
     void setIndex(CGBlockInfo &info, unsigned index) {
@@ -200,9 +203,35 @@ namespace {
     }
   };
 
-  /// Order by descending alignment.
+  /// Order by 1) all __strong together 2) next, all byfref together 3) next,
+  /// all __weak together. Preserve descending alignment in all situations.
   bool operator<(const BlockLayoutChunk &left, const BlockLayoutChunk &right) {
-    return left.Alignment > right.Alignment;
+    CharUnits LeftValue, RightValue;
+    bool LeftByref = left.Capture ? left.Capture->isByRef() : false;
+    bool RightByref = right.Capture ? right.Capture->isByRef() : false;
+    
+    if (left.Lifetime == Qualifiers::OCL_Strong &&
+        left.Alignment >= right.Alignment)
+      LeftValue = CharUnits::fromQuantity(64);
+    else if (LeftByref && left.Alignment >= right.Alignment)
+      LeftValue = CharUnits::fromQuantity(32);
+    else if (left.Lifetime == Qualifiers::OCL_Weak &&
+             left.Alignment >= right.Alignment)
+      LeftValue = CharUnits::fromQuantity(16);
+    else
+      LeftValue = left.Alignment;
+    if (right.Lifetime == Qualifiers::OCL_Strong &&
+        right.Alignment >= left.Alignment)
+      RightValue = CharUnits::fromQuantity(64);
+    else if (RightByref && right.Alignment >= left.Alignment)
+      RightValue = CharUnits::fromQuantity(32);
+    else if (right.Lifetime == Qualifiers::OCL_Weak &&
+             right.Alignment >= left.Alignment)
+      RightValue = CharUnits::fromQuantity(16);
+    else
+      RightValue = right.Alignment;
+    
+      return LeftValue > RightValue;
   }
 }
 
@@ -337,7 +366,9 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
       = CGM.getContext().getTypeInfoInChars(thisType);
     maxFieldAlign = std::max(maxFieldAlign, tinfo.second);
 
-    layout.push_back(BlockLayoutChunk(tinfo.second, tinfo.first, 0, llvmType));
+    layout.push_back(BlockLayoutChunk(tinfo.second, tinfo.first,
+                                      Qualifiers::OCL_None,
+                                      0, llvmType));
   }
 
   // Next, all the block captures.
@@ -358,6 +389,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
       maxFieldAlign = std::max(maxFieldAlign, tinfo.second);
 
       layout.push_back(BlockLayoutChunk(tinfo.second, tinfo.first,
+                                        Qualifiers::OCL_None,
                                         &*ci, llvmType));
       continue;
     }
@@ -371,8 +403,9 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
 
     // If we have a lifetime qualifier, honor it for capture purposes.
     // That includes *not* copying it if it's __unsafe_unretained.
-    if (Qualifiers::ObjCLifetime lifetime 
-          = variable->getType().getObjCLifetime()) {
+    Qualifiers::ObjCLifetime lifetime =
+      variable->getType().getObjCLifetime();
+    if (lifetime) {
       switch (lifetime) {
       case Qualifiers::OCL_None: llvm_unreachable("impossible");
       case Qualifiers::OCL_ExplicitNone:
@@ -387,6 +420,8 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
     // Block pointers require copy/dispose.  So do Objective-C pointers.
     } else if (variable->getType()->isObjCRetainableType()) {
       info.NeedsCopyDispose = true;
+      // used for mrr below.
+      lifetime = Qualifiers::OCL_Strong;
 
     // So do types that require non-trivial copy construction.
     } else if (ci->hasCopyExpr()) {
@@ -413,7 +448,7 @@ static void computeBlockInfo(CodeGenModule &CGM, CodeGenFunction *CGF,
     llvm::Type *llvmType =
       CGM.getTypes().ConvertTypeForMem(VT);
     
-    layout.push_back(BlockLayoutChunk(align, size, &*ci, llvmType));
+    layout.push_back(BlockLayoutChunk(align, size, lifetime, &*ci, llvmType));
   }
 
   // If that was everything, we're done here.

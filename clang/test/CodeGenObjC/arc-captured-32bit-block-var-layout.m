@@ -1,6 +1,7 @@
-// RUN: %clang_cc1 -fblocks -fobjc-arc -fobjc-runtime-has-weak -triple i386-apple-darwin -O0 -emit-llvm %s -o %t-64.s
-// RUN: FileCheck --input-file=%t-64.s %s
+// RUN: %clang_cc1 -fblocks -fobjc-arc -fobjc-runtime-has-weak -triple i386-apple-darwin -O0 -print-ivar-layout -emit-llvm -o /dev/null %s > %t-32.layout
+// RUN: FileCheck --input-file=%t-32.layout %s
 // rdar://12184410
+// rdar://12752901
 
 void x(id y) {}
 void y(int a) {}
@@ -32,8 +33,7 @@ void f() {
 // and a descriptor pointer).
 
 // Test 1
-// block variable layout: BL_BYREF:1, BL_STRONG:3, BL_BYREF:1, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [4 x i8] c"@2@\00" 
+// CHECK: Inline instruction for block variable layout: 0x0320
     void (^b)() = ^{
         byref_int = sh + ch+ch1+ch2 ;
         x(bar);
@@ -44,8 +44,7 @@ void f() {
     b();
 
 // Test 2
-// block variable layout: BL_BYREF:1, BL_STRONG:3, BL_WEAK:1, BL_BYREF:2, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [5 x i8] c"@2PA\00"
+// CHECK: Inline instruction for block variable layout: 0x0331
     void (^c)() = ^{
         byref_int = sh + ch+ch1+ch2 ;
         x(bar);
@@ -66,8 +65,7 @@ void g() {
   unsigned int i;
   NSString *y;
   NSString *z;
-// block variable layout: BL_STRONG:2, BL_WEAK:1, BL_STRONG:2, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [5 x i8] c"!1P1\00"
+// CHECK: Inline instruction for block variable layout: 0x0401
   void (^c)() = ^{
    int j = i + bletch;
    x(foo);
@@ -112,7 +110,7 @@ void h() {
 block variable layout: BL_NON_OBJECT_WORD:1, BL_UNRETAINE:1, BL_NON_OBJECT_WORD:1, 
                        BL_UNRETAINE:1, BL_NON_OBJECT_WORD:3, BL_BYREF:1, BL_OPERATOR:0
 */
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [7 x i8] c" ` `\22@\00"
+// CHECK: block variable layout: BL_BYREF:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_OPERATOR:0
   void (^c)() = ^{
     x(s2.ui.o1);
     x(u2.o1);
@@ -127,8 +125,7 @@ void arr1() {
     __unsafe_unretained id unsafe_unretained_var[4];
  } imported_s;
 
-// block variable layout: BL_UNRETAINE:4, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [2 x i8] c"c\00"
+// CHECK: block variable layout: BL_UNRETAINED:4, BL_OPERATOR:0
     void (^c)() = ^{
         x(imported_s.unsafe_unretained_var[2]);
     };    
@@ -143,8 +140,7 @@ void arr2() {
     __unsafe_unretained id unsafe_unretained_var[4];
  } imported_s;
 
-// block variable layout: BL_NON_OBJECT_WORD:1, BL_UNRETAINE:4, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [3 x i8] c" c\00"
+// CHECK: block variable layout: BL_NON_OBJECT_WORD:1, BL_UNRETAINED:4, BL_OPERATOR:0
     void (^c)() = ^{
         x(imported_s.unsafe_unretained_var[2]);
     };    
@@ -159,8 +155,7 @@ void arr3() {
     __unsafe_unretained id unsafe_unretained_var[0];
  } imported_s;
 
-// block variable layout: BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [1 x i8] zeroinitializer
+// CHECK: block variable layout: BL_OPERATOR:0
     void (^c)() = ^{
       int i = imported_s.a;
     };    
@@ -186,15 +181,7 @@ void arr4() {
     } f4[2][2];
   } captured_s;
 
-/**
-block variable layout: BL_UNRETAINE:3, 
-                       BL_NON_OBJECT_WORD:1, BL_UNRETAINE:1, 
-                       BL_NON_OBJECT_WORD:1, BL_UNRETAINE:1, 
-                       BL_NON_OBJECT_WORD:1, BL_UNRETAINE:1, 
-                       BL_NON_OBJECT_WORD:1, BL_UNRETAINE:1,
-		       BL_OPERATOR:0
-*/
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [10 x i8]
+// CHECK: block variable layout: BL_UNRETAINED:3, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_NON_OBJECT_WORD:1, BL_UNRETAINED:1, BL_OPERATOR:0
   void (^c)() = ^{
       id i = captured_s.f0.s_f1;
   };
@@ -212,8 +199,7 @@ void bf1() {
     int flag4: 24;
   } s;
 
-//  block variable layout: BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [1 x i8] zeroinitializer
+// CHECK:  block variable layout: BL_OPERATOR:0
   int (^c)() = ^{
       return s.flag;
   };
@@ -226,8 +212,7 @@ void bf2() {
     int flag : 1;
   } s;
 
-// block variable layout: BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [1 x i8] zeroinitializer
+// CHECK: block variable layout: BL_OPERATOR:0
   int (^c)() = ^{
       return s.flag;
   };
@@ -258,8 +243,7 @@ void bf3() {
         unsigned int _filler : 32;
     } _flags;
 
-// block variable layout: BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [1 x i8] zeroinitializer
+// CHECK: block variable layout: BL_OPERATOR:0
   unsigned char (^c)() = ^{
       return _flags._draggedNodesAreDeletable;
   };
@@ -294,8 +278,7 @@ void bf4() {
         unsigned int _filler : 32;
     } _flags;
 
-//  block variable layout: BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [1 x i8] zeroinitializer
+// CHECK:  block variable layout: BL_OPERATOR:0
   unsigned char (^c)() = ^{
       return _flags._draggedNodesAreDeletable;
   };
@@ -313,8 +296,7 @@ void bf5() {
         unsigned char flag1 : 1;
     } _flags;
 
-//  block variable layout: BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [1 x i8] zeroinitializer
+// CHECK:  block variable layout: BL_OPERATOR:0
   unsigned char (^c)() = ^{
       return _flags.flag;
   };
@@ -331,8 +313,7 @@ void bf6() {
         unsigned char flag1 : 1;
     } _flags;
 
-// block variable layout: BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [1 x i8] zeroinitializer
+// CHECK: block variable layout: BL_OPERATOR:0
   unsigned char (^c)() = ^{
       return _flags.flag;
   };
@@ -348,8 +329,7 @@ void Test7() {
     __weak id wid9, wid10, wid11, wid12;
     __weak id wid13, wid14, wid15, wid16;
     const id bar = (id) opaque_id();
-//block variable layout: BL_STRONG:1, BL_WEAK:16, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [3 x i8] c"0_\00"
+// CHECK: block variable layout: BL_STRONG:1, BL_WEAK:16, BL_OPERATOR:0
     void (^b)() = ^{
       x(bar);
       x(wid1);
@@ -384,8 +364,7 @@ __weak id wid;
     __weak id w9, w10, w11, w12;
     __weak id w13, w14, w15, w16;
     const id bar = (id) opaque_id();
-// block variable layout: BL_STRONG:1, BL_WEAK:16, BL_WEAK:16, BL_WEAK:1, BL_OPERATOR:0
-// CHECK: @"\01L_OBJC_CLASS_NAME_{{.*}}" = internal global [5 x i8]
+// CHECK: block variable layout: BL_STRONG:1, BL_WEAK:16, BL_WEAK:16, BL_WEAK:1, BL_OPERATOR:0
     void (^b)() = ^{
       x(bar);
       x(wid1);
