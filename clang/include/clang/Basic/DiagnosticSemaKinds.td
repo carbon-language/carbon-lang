@@ -1323,6 +1323,11 @@ def note_uninit_fixit_remove_cond : Note<
   "is always %select{false|true}2">;
 def err_init_incomplete_type : Error<"initialization of incomplete type %0">;
 
+def warn_unsequenced_mod_mod : Warning<
+  "multiple unsequenced modifications to %0">, InGroup<Unsequenced>;
+def warn_unsequenced_mod_use : Warning<
+  "unsequenced modification and access to %0">, InGroup<Unsequenced>;
+
 def err_temp_copy_no_viable : Error<
   "no viable constructor %select{copying variable|copying parameter|"
   "returning object|throwing object|copying member subobject|copying array "

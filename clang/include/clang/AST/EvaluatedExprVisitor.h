@@ -49,6 +49,9 @@ public:
   }
   
   void VisitChooseExpr(ChooseExpr *E) {
+    // Don't visit either child expression if the condition is dependent.
+    if (E->getCond()->isValueDependent())
+      return;
     // Only the selected subexpression matters; the other one is not evaluated.
     return this->Visit(E->getChosenSubExpr(Context));
   }

@@ -18,6 +18,7 @@
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/TypeLoc.h"
@@ -5496,7 +5497,7 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE, SourceLocation CC,
       return ExprError();
   }
 
-  CheckImplicitConversions(FullExpr.get(), CC);
+  CheckCompletedExpr(FullExpr.get(), CC);
   return MaybeCreateExprWithCleanups(FullExpr);
 }
 

@@ -252,7 +252,7 @@ Sema::SetParamDefaultArgument(ParmVarDecl *Param, Expr *Arg,
     return true;
   Arg = Result.takeAs<Expr>();
 
-  CheckImplicitConversions(Arg, EqualLoc);
+  CheckCompletedExpr(Arg, EqualLoc);
   Arg = MaybeCreateExprWithCleanups(Arg);
 
   // Okay: add the default argument to the parameter

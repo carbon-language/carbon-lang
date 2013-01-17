@@ -5171,6 +5171,424 @@ void Sema::CheckImplicitConversions(Expr *E, SourceLocation CC) {
   AnalyzeImplicitConversions(*this, E, CC);
 }
 
+namespace {
+/// \brief Visitor for expressions which looks for unsequenced operations on the
+/// same object.
+class SequenceChecker : public EvaluatedExprVisitor<SequenceChecker> {
+  /// \brief A tree of sequenced regions within an expression. Two regions are
+  /// unsequenced if one is an ancestor or a descendent of the other. When we
+  /// finish processing an expression with sequencing, such as a comma
+  /// expression, we fold its tree nodes into its parent, since they are
+  /// unsequenced with respect to nodes we will visit later.
+  class SequenceTree {
+    struct Value {
+      explicit Value(unsigned Parent) : Parent(Parent), Merged(false) {}
+      unsigned Parent : 31;
+      bool Merged : 1;
+    };
+    llvm::SmallVector<Value, 8> Values;
+
+  public:
+    /// \brief A region within an expression which may be sequenced with respect
+    /// to some other region.
+    class Seq {
+      explicit Seq(unsigned N) : Index(N) {}
+      unsigned Index;
+      friend class SequenceTree;
+    public:
+      Seq() : Index(0) {}
+    };
+
+    SequenceTree() { Values.push_back(Value(0)); }
+    Seq root() const { return Seq(0); }
+
+    /// \brief Create a new sequence of operations, which is an unsequenced
+    /// subset of \p Parent. This sequence of operations is sequenced with
+    /// respect to other children of \p Parent.
+    Seq allocate(Seq Parent) {
+      Values.push_back(Value(Parent.Index));
+      return Seq(Values.size() - 1);
+    }
+
+    /// \brief Merge a sequence of operations into its parent.
+    void merge(Seq S) {
+      Values[S.Index].Merged = true;
+    }
+
+    /// \brief Determine whether two operations are unsequenced. This operation
+    /// is asymmetric: \p Cur should be the more recent sequence, and \p Old
+    /// should have been merged into its parent as appropriate.
+    bool isUnsequenced(Seq Cur, Seq Old) {
+      unsigned C = representative(Cur.Index);
+      unsigned Target = representative(Old.Index);
+      while (C >= Target) {
+        if (C == Target)
+          return true;
+        C = Values[C].Parent;
+      }
+      return false;
+    }
+
+  private:
+    /// \brief Pick a representative for a sequence.
+    unsigned representative(unsigned K) {
+      if (Values[K].Merged)
+        // Perform path compression as we go.
+        return Values[K].Parent = representative(Values[K].Parent);
+      return K;
+    }
+  };
+
+  /// An object for which we can track unsequenced uses.
+  typedef NamedDecl *Object;
+
+  /// Different flavors of object usage which we track. We only track the
+  /// least-sequenced usage of each kind.
+  enum UsageKind {
+    /// A read of an object. Multiple unsequenced reads are OK.
+    UK_Use,
+    /// A modification of an object which is sequenced before the value
+    /// computation of the expression, such as ++n.
+    UK_ModAsValue,
+    /// A modification of an object which is not sequenced before the value
+    /// computation of the expression, such as n++.
+    UK_ModAsSideEffect,
+
+    UK_Count = UK_ModAsSideEffect + 1
+  };
+
+  struct Usage {
+    Usage() : Use(0), Seq() {}
+    Expr *Use;
+    SequenceTree::Seq Seq;
+  };
+
+  struct UsageInfo {
+    UsageInfo() : Diagnosed(false) {}
+    Usage Uses[UK_Count];
+    /// Have we issued a diagnostic for this variable already?
+    bool Diagnosed;
+  };
+  typedef llvm::SmallDenseMap<Object, UsageInfo, 16> UsageInfoMap;
+
+  Sema &SemaRef;
+  /// Sequenced regions within the expression.
+  SequenceTree Tree;
+  /// Declaration modifications and references which we have seen.
+  UsageInfoMap UsageMap;
+  /// The region we are currently within.
+  SequenceTree::Seq Region;
+  /// Filled in with declarations which were modified as a side-effect
+  /// (that is, post-increment operations).
+  llvm::SmallVectorImpl<std::pair<Object, Usage> > *ModAsSideEffect;
+
+  /// RAII object wrapping the visitation of a sequenced subexpression of an
+  /// expression. At the end of this process, the side-effects of the evaluation
+  /// become sequenced with respect to the value computation of the result, so
+  /// we downgrade any UK_ModAsSideEffect within the evaluation to
+  /// UK_ModAsValue.
+  struct SequencedSubexpression {
+    SequencedSubexpression(SequenceChecker &Self)
+      : Self(Self), OldModAsSideEffect(Self.ModAsSideEffect) {
+      Self.ModAsSideEffect = &ModAsSideEffect;
+    }
+    ~SequencedSubexpression() {
+      for (unsigned I = 0, E = ModAsSideEffect.size(); I != E; ++I) {
+        UsageInfo &U = Self.UsageMap[ModAsSideEffect[I].first];
+        U.Uses[UK_ModAsSideEffect] = ModAsSideEffect[I].second;
+        Self.addUsage(U, ModAsSideEffect[I].first,
+                      ModAsSideEffect[I].second.Use, UK_ModAsValue);
+      }
+      Self.ModAsSideEffect = OldModAsSideEffect;
+    }
+
+    SequenceChecker &Self;
+    llvm::SmallVector<std::pair<Object, Usage>, 4> ModAsSideEffect;
+    llvm::SmallVectorImpl<std::pair<Object, Usage> > *OldModAsSideEffect;
+  };
+
+  /// \brief Find the object which is produced by the specified expression,
+  /// if any.
+  Object getObject(Expr *E, bool Mod) const {
+    E = E->IgnoreParenCasts();
+    if (UnaryOperator *UO = dyn_cast<UnaryOperator>(E)) {
+      if (Mod && (UO->getOpcode() == UO_PreInc || UO->getOpcode() == UO_PreDec))
+        return getObject(UO->getSubExpr(), Mod);
+    } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+      if (BO->getOpcode() == BO_Comma)
+        return getObject(BO->getRHS(), Mod);
+      if (Mod && BO->isAssignmentOp())
+        return getObject(BO->getLHS(), Mod);
+    } else if (MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+      // FIXME: Check for more interesting cases, like "x.n = ++x.n".
+      if (isa<CXXThisExpr>(ME->getBase()->IgnoreParenCasts()))
+        return ME->getMemberDecl();
+    } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E))
+      // FIXME: If this is a reference, map through to its value.
+      return DRE->getDecl();
+    return 0;
+  }
+
+  /// \brief Note that an object was modified or used by an expression.
+  void addUsage(UsageInfo &UI, Object O, Expr *Ref, UsageKind UK) {
+    Usage &U = UI.Uses[UK];
+    if (!U.Use || !Tree.isUnsequenced(Region, U.Seq)) {
+      if (UK == UK_ModAsSideEffect && ModAsSideEffect)
+        ModAsSideEffect->push_back(std::make_pair(O, U));
+      U.Use = Ref;
+      U.Seq = Region;
+    }
+  }
+  /// \brief Check whether a modification or use conflicts with a prior usage.
+  void checkUsage(Object O, UsageInfo &UI, Expr *Ref, UsageKind OtherKind,
+                  bool IsModMod) {
+    if (UI.Diagnosed)
+      return;
+
+    const Usage &U = UI.Uses[OtherKind];
+    if (!U.Use || !Tree.isUnsequenced(Region, U.Seq))
+      return;
+
+    Expr *Mod = U.Use;
+    Expr *ModOrUse = Ref;
+    if (OtherKind == UK_Use)
+      std::swap(Mod, ModOrUse);
+
+    SemaRef.Diag(Mod->getExprLoc(),
+                 IsModMod ? diag::warn_unsequenced_mod_mod
+                          : diag::warn_unsequenced_mod_use)
+      << O << SourceRange(ModOrUse->getExprLoc());
+    UI.Diagnosed = true;
+  }
+
+  void notePreUse(Object O, Expr *Use) {
+    UsageInfo &U = UsageMap[O];
+    // Uses conflict with other modifications.
+    checkUsage(O, U, Use, UK_ModAsValue, false);
+  }
+  void notePostUse(Object O, Expr *Use) {
+    UsageInfo &U = UsageMap[O];
+    checkUsage(O, U, Use, UK_ModAsSideEffect, false);
+    addUsage(U, O, Use, UK_Use);
+  }
+
+  void notePreMod(Object O, Expr *Mod) {
+    UsageInfo &U = UsageMap[O];
+    // Modifications conflict with other modifications and with uses.
+    checkUsage(O, U, Mod, UK_ModAsValue, true);
+    checkUsage(O, U, Mod, UK_Use, false);
+  }
+  void notePostMod(Object O, Expr *Use, UsageKind UK) {
+    UsageInfo &U = UsageMap[O];
+    checkUsage(O, U, Use, UK_ModAsSideEffect, true);
+    addUsage(U, O, Use, UK);
+  }
+
+public:
+  SequenceChecker(Sema &S, Expr *E)
+    : EvaluatedExprVisitor(S.Context), SemaRef(S), Region(Tree.root()), 
+      ModAsSideEffect(0) {
+    Visit(E);
+  }
+
+  void VisitStmt(Stmt *S) {
+    // Skip all statements which aren't expressions for now.
+  }
+
+  void VisitExpr(Expr *E) {
+    // By default, just recurse to evaluated subexpressions.
+    EvaluatedExprVisitor::VisitStmt(E);
+  }
+
+  void VisitCastExpr(CastExpr *E) {
+    Object O = Object();
+    if (E->getCastKind() == CK_LValueToRValue)
+      O = getObject(E->getSubExpr(), false);
+
+    if (O)
+      notePreUse(O, E);
+    VisitExpr(E);
+    if (O)
+      notePostUse(O, E);
+  }
+
+  void VisitBinComma(BinaryOperator *BO) {
+    // C++11 [expr.comma]p1:
+    //   Every value computation and side effect associated with the left
+    //   expression is sequenced before every value computation and side
+    //   effect associated with the right expression.
+    SequenceTree::Seq LHS = Tree.allocate(Region);
+    SequenceTree::Seq RHS = Tree.allocate(Region);
+    SequenceTree::Seq OldRegion = Region;
+
+    {
+      SequencedSubexpression SeqLHS(*this);
+      Region = LHS;
+      Visit(BO->getLHS());
+    }
+
+    Region = RHS;
+    Visit(BO->getRHS());
+
+    Region = OldRegion;
+
+    // Forget that LHS and RHS are sequenced. They are both unsequenced
+    // with respect to other stuff.
+    Tree.merge(LHS);
+    Tree.merge(RHS);
+  }
+
+  void VisitBinAssign(BinaryOperator *BO) {
+    // The modification is sequenced after the value computation of the LHS
+    // and RHS, so check it before inspecting the operands and update the
+    // map afterwards.
+    Object O = getObject(BO->getLHS(), true);
+    if (!O)
+      return VisitExpr(BO);
+
+    notePreMod(O, BO);
+
+    // C++11 [expr.ass]p7:
+    //   E1 op= E2 is equivalent to E1 = E1 op E2, except that E1 is evaluated
+    //   only once.
+    //
+    // Therefore, for a compound assignment operator, O is considered used
+    // everywhere except within the evaluation of E1 itself.
+    if (isa<CompoundAssignOperator>(BO))
+      notePreUse(O, BO);
+
+    Visit(BO->getLHS());
+
+    if (isa<CompoundAssignOperator>(BO))
+      notePostUse(O, BO);
+
+    Visit(BO->getRHS());
+
+    notePostMod(O, BO, UK_ModAsValue);
+  }
+  void VisitCompoundAssignOperator(CompoundAssignOperator *CAO) {
+    VisitBinAssign(CAO);
+  }
+
+  void VisitUnaryPreInc(UnaryOperator *UO) { VisitUnaryPreIncDec(UO); }
+  void VisitUnaryPreDec(UnaryOperator *UO) { VisitUnaryPreIncDec(UO); }
+  void VisitUnaryPreIncDec(UnaryOperator *UO) {
+    Object O = getObject(UO->getSubExpr(), true);
+    if (!O)
+      return VisitExpr(UO);
+
+    notePreMod(O, UO);
+    Visit(UO->getSubExpr());
+    notePostMod(O, UO, UK_ModAsValue);
+  }
+
+  void VisitUnaryPostInc(UnaryOperator *UO) { VisitUnaryPostIncDec(UO); }
+  void VisitUnaryPostDec(UnaryOperator *UO) { VisitUnaryPostIncDec(UO); }
+  void VisitUnaryPostIncDec(UnaryOperator *UO) {
+    Object O = getObject(UO->getSubExpr(), true);
+    if (!O)
+      return VisitExpr(UO);
+
+    notePreMod(O, UO);
+    Visit(UO->getSubExpr());
+    notePostMod(O, UO, UK_ModAsSideEffect);
+  }
+
+  /// Don't visit the RHS of '&&' or '||' if it might not be evaluated.
+  void VisitBinLOr(BinaryOperator *BO) {
+    // The side-effects of the LHS of an '&&' are sequenced before the
+    // value computation of the RHS, and hence before the value computation
+    // of the '&&' itself, unless the LHS evaluates to zero. We treat them
+    // as if they were unconditionally sequenced.
+    {
+      SequencedSubexpression Sequenced(*this);
+      Visit(BO->getLHS());
+    }
+
+    bool Result;
+    if (!BO->getLHS()->isValueDependent() &&
+        BO->getLHS()->EvaluateAsBooleanCondition(Result, SemaRef.Context) &&
+        !Result)
+      Visit(BO->getRHS());
+  }
+  void VisitBinLAnd(BinaryOperator *BO) {
+    {
+      SequencedSubexpression Sequenced(*this);
+      Visit(BO->getLHS());
+    }
+
+    bool Result;
+    if (!BO->getLHS()->isValueDependent() &&
+        BO->getLHS()->EvaluateAsBooleanCondition(Result, SemaRef.Context) &&
+        Result)
+      Visit(BO->getRHS());
+  }
+
+  // Only visit the condition, unless we can be sure which subexpression will
+  // be chosen.
+  void VisitAbstractConditionalOperator(AbstractConditionalOperator *CO) {
+    SequencedSubexpression Sequenced(*this);
+    Visit(CO->getCond());
+
+    bool Result;
+    if (!CO->getCond()->isValueDependent() &&
+        CO->getCond()->EvaluateAsBooleanCondition(Result, SemaRef.Context))
+      Visit(Result ? CO->getTrueExpr() : CO->getFalseExpr());
+  }
+
+  void VisitCXXConstructExpr(CXXConstructExpr *CCE) {
+    if (!CCE->isListInitialization())
+      return VisitExpr(CCE);
+
+    // In C++11, list initializations are sequenced.
+    llvm::SmallVector<SequenceTree::Seq, 32> Elts;
+    SequenceTree::Seq Parent = Region;
+    for (CXXConstructExpr::arg_iterator I = CCE->arg_begin(),
+                                        E = CCE->arg_end();
+         I != E; ++I) {
+      Region = Tree.allocate(Parent);
+      Elts.push_back(Region);
+      Visit(*I);
+    }
+
+    // Forget that the initializers are sequenced.
+    Region = Parent;
+    for (unsigned I = 0; I < Elts.size(); ++I)
+      Tree.merge(Elts[I]);
+  }
+
+  void VisitInitListExpr(InitListExpr *ILE) {
+    if (!SemaRef.getLangOpts().CPlusPlus11)
+      return VisitExpr(ILE);
+
+    // In C++11, list initializations are sequenced.
+    llvm::SmallVector<SequenceTree::Seq, 32> Elts;
+    SequenceTree::Seq Parent = Region;
+    for (unsigned I = 0; I < ILE->getNumInits(); ++I) {
+      Expr *E = ILE->getInit(I);
+      if (!E) continue;
+      Region = Tree.allocate(Parent);
+      Elts.push_back(Region);
+      Visit(E);
+    }
+
+    // Forget that the initializers are sequenced.
+    Region = Parent;
+    for (unsigned I = 0; I < Elts.size(); ++I)
+      Tree.merge(Elts[I]);
+  }
+};
+}
+
+void Sema::CheckUnsequencedOperations(Expr *E) {
+  SequenceChecker(*this, E);
+}
+
+void Sema::CheckCompletedExpr(Expr *E, SourceLocation CheckLoc) {
+  CheckImplicitConversions(E, CheckLoc);
+  CheckUnsequencedOperations(E);
+}
+
 void Sema::CheckBitFieldInitialization(SourceLocation InitLoc,
                                        FieldDecl *BitField,
                                        Expr *Init) {

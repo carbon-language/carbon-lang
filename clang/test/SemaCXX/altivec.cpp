@@ -62,7 +62,7 @@ void test2()
   vector float vf;
   vf++;
 
-  ++vi=vi;
+  ++vi=vi; // expected-warning {{unsequenced}}
   (++vi)[1]=1;
   template_f(vi);
 }

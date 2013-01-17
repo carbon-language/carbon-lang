@@ -198,7 +198,6 @@ def SelfAssignment : DiagGroup<"self-assign", [SelfAssignmentField]>;
 def SemiBeforeMethodBody : DiagGroup<"semicolon-before-method-body">;
 def Sentinel : DiagGroup<"sentinel">;
 def MissingMethodReturnType : DiagGroup<"missing-method-return-type">;
-def : DiagGroup<"sequence-point">;
 def Shadow : DiagGroup<"shadow">;
 def Shorten64To32 : DiagGroup<"shorten-64-to-32">;
 def : DiagGroup<"sign-promo">;
@@ -217,6 +216,10 @@ def TautologicalCompare : DiagGroup<"tautological-compare",
 def HeaderHygiene : DiagGroup<"header-hygiene">;
 def DuplicateDeclSpecifier : DiagGroup<"duplicate-decl-specifier">;
 def CompareDistinctPointerType : DiagGroup<"compare-distinct-pointer-types">;
+
+def Unsequenced : DiagGroup<"unsequenced">;
+// GCC name for -Wunsequenced
+def : DiagGroup<"sequence-point", [Unsequenced]>;
 
 // Preprocessor warnings.
 def AmbiguousMacro : DiagGroup<"ambiguous-macro">;
