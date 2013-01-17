@@ -19,4 +19,4 @@
 type = Library
 name = Linker
 parent = Libraries
-required_libraries = Archive BitReader Core Support TransformUtils
+required_libraries = Core Support TransformUtils
