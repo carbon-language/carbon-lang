@@ -153,93 +153,6 @@ class Linker {
     /// @brief Set control flags.
     void setFlags(unsigned flags) { Flags = flags; }
 
-    /// This method is the main interface to the linker. It can be used to
-    /// link a set of linkage items into a module. A linkage item is either a
-    /// file name with fully qualified path, or a library for which the Linker's
-    /// LibraryPath will be utilized to locate the library. The bool value in
-    /// the LinkItemKind should be set to true for libraries.  This function
-    /// allows linking to preserve the order of specification associated with
-    /// the command line, or for other purposes. Each item will be linked in
-    /// turn as it occurs in \p Items.
-    /// @returns true if an error occurred, false otherwise
-    /// @see LinkItemKind
-    /// @see getLastError
-    bool LinkInItems (
-      const ItemList& Items, ///< Set of libraries/files to link in
-      ItemList& NativeItems  ///< Output list of native files/libs
-    );
-
-    /// This function links the bitcode \p Files into the composite module.
-    /// Note that this does not do any linking of unresolved symbols. The \p
-    /// Files are all completely linked into \p HeadModule regardless of
-    /// unresolved symbols. This function just loads each bitcode file and
-    /// calls LinkInModule on them.
-    /// @returns true if an error occurs, false otherwise
-    /// @see getLastError
-    /// @brief Link in multiple files.
-    bool LinkInFiles (
-      const std::vector<sys::Path> & Files ///< Files to link in
-    );
-
-    /// This function links a single bitcode file, \p File, into the composite
-    /// module. Note that this does not attempt to resolve symbols. This method
-    /// just loads the bitcode file and calls LinkInModule on it. If an error
-    /// occurs, the Linker's error string is set.
-    /// @returns true if an error occurs, false otherwise
-    /// @see getLastError
-    /// @brief Link in a single file.
-    bool LinkInFile(
-      const sys::Path& File, ///< File to link in.
-      bool &is_native        ///< Indicates if the file is native object file
-    );
-
-    /// This function provides a way to selectively link in a set of modules,
-    /// found in libraries, based on the unresolved symbols in the composite
-    /// module. Each item in \p Libraries should be the base name of a library,
-    /// as if given with the -l option of a linker tool.  The Linker's LibPaths
-    /// are searched for the \p Libraries and any found will be linked in with
-    /// LinkInArchive.  If an error occurs, the Linker's error string is set.
-    /// @see LinkInArchive
-    /// @see getLastError
-    /// @returns true if an error occurs, false otherwise
-    /// @brief Link libraries into the module
-    bool LinkInLibraries (
-      const std::vector<std::string> & Libraries ///< Libraries to link in
-    );
-
-    /// This function provides a way to selectively link in a set of modules,
-    /// found in one library, based on the unresolved symbols in the composite
-    /// module.The \p Library should be the base name of a library, as if given
-    /// with the -l option of a linker tool. The Linker's LibPaths are searched
-    /// for the \p Library and if found, it will be linked in with via the
-    /// LinkInArchive method. If an error occurs, the Linker's error string is
-    /// set.
-    /// @see LinkInArchive
-    /// @see getLastError
-    /// @returns true if an error occurs, false otherwise
-    /// @brief Link one library into the module
-    bool LinkInLibrary (
-      StringRef Library, ///< The library to link in
-      bool& is_native    ///< Indicates if lib a native library
-    );
-
-    /// This function links one bitcode archive, \p Filename, into the module.
-    /// The archive is searched to resolve outstanding symbols. Any modules in
-    /// the archive that resolve outstanding symbols will be linked in. The
-    /// library is searched repeatedly until no more modules that resolve
-    /// symbols can be found. If an error occurs, the error string is  set.
-    /// To speed up this function, ensure the archive has been processed
-    /// llvm-ranlib or the S option was given to llvm-ar when the archive was
-    /// created. These tools add a symbol table to the archive which makes the
-    /// search for undefined symbols much faster.
-    /// @see getLastError
-    /// @returns true if an error occurs, otherwise false.
-    /// @brief Link in one archive.
-    bool LinkInArchive(
-      const sys::Path& Filename, ///< Filename of the archive to link
-      bool& is_native            ///<  Indicates if archive is a native archive
-    );
-
     /// This method links the \p Src module into the Linker's Composite module
     /// by calling LinkModules.  All the other LinkIn* methods eventually
     /// result in calling this method to link a Module into the Linker's
@@ -267,13 +180,6 @@ class Linker {
     /// @brief Generically link two modules together.
     static bool LinkModules(Module* Dest, Module* Src, unsigned Mode,
                             std::string* ErrorMsg);
-
-    /// This function looks through the Linker's LibPaths to find a library with
-    /// the name \p Filename. If the library cannot be found, the returned path
-    /// will be empty (i.e. sys::Path::isEmpty() will return true).
-    /// @returns A sys::Path to the found library
-    /// @brief Find a library from its short name.
-    sys::Path FindLib(StringRef Filename);
 
   /// @}
   /// @name Implementation

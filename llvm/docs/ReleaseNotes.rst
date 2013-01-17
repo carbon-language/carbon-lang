@@ -500,7 +500,9 @@ LowerInvoke already use the new interface.
 The ``TargetData`` structure has been renamed to ``DataLayout`` and moved to
 ``VMCore`` to remove a dependency on ``Target``.
 
-#. ...
+#. The IR-level extended linker APIs (for example, to link bitcode files out of
+   archives) have been removed. Any existing clients of these features should
+   move to using a linker with integrated LTO support.
 
 Tools Changes
 -------------
