@@ -3220,9 +3220,9 @@ static void *GetKeyForTopLevelField(FieldDecl *Field) {
   // For anonymous unions, use the class declaration as the key.
   if (const RecordType *RT = Field->getType()->getAs<RecordType>()) {
     if (RT->getDecl()->isAnonymousStructOrUnion())
-      return static_cast<void *>(RT->getDecl());
+      return RT->getDecl();
   }
-  return static_cast<void *>(Field);
+  return Field;
 }
 
 static void *GetKeyForBase(ASTContext &Context, QualType BaseType) {
@@ -3250,10 +3250,10 @@ static void *GetKeyForMember(ASTContext &Context,
         break;
     }
       
-    return static_cast<void *>(RD);
+    return RD;
   }
 
-  return static_cast<void *>(Field);
+  return Field;
 }
 
 static void
