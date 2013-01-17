@@ -5507,9 +5507,18 @@ public:
 
     bool Result;
     if (!BO->getLHS()->isValueDependent() &&
-        BO->getLHS()->EvaluateAsBooleanCondition(Result, SemaRef.Context) &&
-        !Result)
-      Visit(BO->getRHS());
+        BO->getLHS()->EvaluateAsBooleanCondition(Result, SemaRef.Context)) {
+      if (!Result)
+        Visit(BO->getRHS());
+    } else {
+      // Check for unsequenced operations in the RHS, treating it as an
+      // entirely separate evaluation.
+      //
+      // FIXME: If there are operations in the RHS which are unsequenced
+      // with respect to operations outside the RHS, and those operations
+      // are unconditionally evaluated, diagnose them.
+      SequenceChecker(SemaRef, BO->getRHS());
+    }
   }
   void VisitBinLAnd(BinaryOperator *BO) {
     {
@@ -5519,9 +5528,12 @@ public:
 
     bool Result;
     if (!BO->getLHS()->isValueDependent() &&
-        BO->getLHS()->EvaluateAsBooleanCondition(Result, SemaRef.Context) &&
-        Result)
-      Visit(BO->getRHS());
+        BO->getLHS()->EvaluateAsBooleanCondition(Result, SemaRef.Context)) {
+      if (Result)
+        Visit(BO->getRHS());
+    } else {
+      SequenceChecker(SemaRef, BO->getRHS());
+    }
   }
 
   // Only visit the condition, unless we can be sure which subexpression will
@@ -5534,6 +5546,10 @@ public:
     if (!CO->getCond()->isValueDependent() &&
         CO->getCond()->EvaluateAsBooleanCondition(Result, SemaRef.Context))
       Visit(Result ? CO->getTrueExpr() : CO->getFalseExpr());
+    else {
+      SequenceChecker(SemaRef, CO->getTrueExpr());
+      SequenceChecker(SemaRef, CO->getFalseExpr());
+    }
   }
 
   void VisitCXXConstructExpr(CXXConstructExpr *CCE) {

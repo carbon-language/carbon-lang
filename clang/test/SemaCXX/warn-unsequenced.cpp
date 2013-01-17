@@ -88,4 +88,11 @@ void test() {
   xs[0] = (a = 1, a); // ok
   (a -= 128) &= 128; // ok
   ++a += 1; // ok
+
+  xs[8] ? ++a + a++ : 0; // expected-warning {{multiple unsequenced modifications}}
+  xs[8] ? 0 : ++a + a++; // expected-warning {{multiple unsequenced modifications}}
+  xs[8] ? ++a : a++; // ok
+
+  xs[8] && (++a + a++); // expected-warning {{multiple unsequenced modifications}}
+  xs[8] || (++a + a++); // expected-warning {{multiple unsequenced modifications}}
 }
