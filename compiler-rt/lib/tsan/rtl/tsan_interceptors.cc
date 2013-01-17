@@ -1241,33 +1241,6 @@ TSAN_INTERCEPTOR(int, pipe2, int *pipefd, int flags) {
   return res;
 }
 
-TSAN_INTERCEPTOR(long_t, read, int fd, void *buf, long_t sz) {
-  SCOPED_TSAN_INTERCEPTOR(read, fd, buf, sz);
-  int res = REAL(read)(fd, buf, sz);
-  if (res >= 0 && fd >= 0) {
-    FdAcquire(thr, pc, fd);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(long_t, pread, int fd, void *buf, long_t sz, unsigned off) {
-  SCOPED_TSAN_INTERCEPTOR(pread, fd, buf, sz, off);
-  int res = REAL(pread)(fd, buf, sz, off);
-  if (res >= 0 && fd >= 0) {
-    FdAcquire(thr, pc, fd);
-  }
-  return res;
-}
-
-TSAN_INTERCEPTOR(long_t, pread64, int fd, void *buf, long_t sz, u64 off) {
-  SCOPED_TSAN_INTERCEPTOR(pread64, fd, buf, sz, off);
-  int res = REAL(pread64)(fd, buf, sz, off);
-  if (res >= 0 && fd >= 0) {
-    FdAcquire(thr, pc, fd);
-  }
-  return res;
-}
-
 TSAN_INTERCEPTOR(long_t, readv, int fd, void *vec, int cnt) {
   SCOPED_TSAN_INTERCEPTOR(readv, fd, vec, cnt);
   int res = REAL(readv)(fd, vec, cnt);
@@ -1645,6 +1618,14 @@ TSAN_INTERCEPTOR(int, fork, int fake) {
   return pid;
 }
 
+#define COMMON_INTERCEPTOR_WRITE_RANGE(ptr, size) // FIXME
+#define COMMON_INTERCEPTOR_READ_RANGE(ptr, size)  // FIXME
+#define COMMON_INTERCEPTOR_ENTER(func, ...) \
+ SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__)
+#define COMMON_INTERCEPTOR_FD_ACQUIRE(fd) FdAcquire(thr, pc, fd)
+#define COMMON_INTERCEPTOR_FD_RELEASE(fd) FdRelease(thr, pc, fd)
+#include "sanitizer_common/sanitizer_common_interceptors.h"
+
 namespace __tsan {
 
 void ProcessPendingSignals(ThreadState *thr) {
@@ -1707,6 +1688,8 @@ void InitializeInterceptors() {
   REAL(memset) = internal_memset;
   REAL(memcpy) = internal_memcpy;
   REAL(memcmp) = internal_memcmp;
+
+  SANITIZER_COMMON_INTERCEPTORS_INIT;
 
   TSAN_INTERCEPT(longjmp);
   TSAN_INTERCEPT(siglongjmp);
@@ -1811,9 +1794,6 @@ void InitializeInterceptors() {
   TSAN_INTERCEPT(pipe);
   TSAN_INTERCEPT(pipe2);
 
-  TSAN_INTERCEPT(read);
-  TSAN_INTERCEPT(pread);
-  TSAN_INTERCEPT(pread64);
   TSAN_INTERCEPT(readv);
   TSAN_INTERCEPT(preadv64);
   TSAN_INTERCEPT(write);

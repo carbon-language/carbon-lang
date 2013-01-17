@@ -15,7 +15,8 @@
 //   COMMON_INTERCEPTOR_ENTER
 //   COMMON_INTERCEPTOR_READ_RANGE
 //   COMMON_INTERCEPTOR_WRITE_RANGE
-//
+//   COMMON_INTERCEPTOR_FD_ACQUIRE
+//   COMMON_INTERCEPTOR_FD_RELEASE
 //===----------------------------------------------------------------------===//
 #ifndef SANITIZER_COMMON_INTERCEPTORS_H
 #define SANITIZER_COMMON_INTERCEPTORS_H
@@ -29,6 +30,8 @@ INTERCEPTOR(SSIZE_T, read, int fd, void *ptr, SIZE_T count) {
   SSIZE_T res = REAL(read)(fd, ptr, count);
   if (res > 0)
     COMMON_INTERCEPTOR_WRITE_RANGE(ptr, res);
+  if (res >= 0 && fd >= 0)
+    COMMON_INTERCEPTOR_FD_ACQUIRE(fd);
   return res;
 }
 #endif
@@ -39,6 +42,8 @@ INTERCEPTOR(SSIZE_T, pread, int fd, void *ptr, SIZE_T count, OFF_T offset) {
   SSIZE_T res = REAL(pread)(fd, ptr, count, offset);
   if (res > 0)
     COMMON_INTERCEPTOR_WRITE_RANGE(ptr, res);
+  if (res >= 0 && fd >= 0)
+    COMMON_INTERCEPTOR_FD_ACQUIRE(fd);
   return res;
 }
 #endif
@@ -49,6 +54,8 @@ INTERCEPTOR(SSIZE_T, pread64, int fd, void *ptr, SIZE_T count, OFF64_T offset) {
   SSIZE_T res = REAL(pread64)(fd, ptr, count, offset);
   if (res > 0)
     COMMON_INTERCEPTOR_WRITE_RANGE(ptr, res);
+  if (res >= 0 && fd >= 0)
+    COMMON_INTERCEPTOR_FD_ACQUIRE(fd);
   return res;
 }
 #endif

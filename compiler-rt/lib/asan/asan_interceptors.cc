@@ -83,6 +83,8 @@ using namespace __asan;  // NOLINT
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ptr, size) ASAN_WRITE_RANGE(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ptr, size) ASAN_READ_RANGE(ptr, size)
 #define COMMON_INTERCEPTOR_ENTER(func, ...) ENSURE_ASAN_INITED()
+#define COMMON_INTERCEPTOR_FD_ACQUIRE(fd)
+#define COMMON_INTERCEPTOR_FD_RELEASE(fd)
 #include "sanitizer_common/sanitizer_common_interceptors.h"
 
 static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
