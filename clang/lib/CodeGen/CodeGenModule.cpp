@@ -723,7 +723,7 @@ void CodeGenModule::EmitLLVMUsed() {
 /// it depends on, using a postorder walk.
 static void addLinkOptionsPostorder(llvm::LLVMContext &Context,
                                     Module *Mod,
-                                    SmallVectorImpl<llvm::MDNode *> &Metadata,
+                                    SmallVectorImpl<llvm::Value *> &Metadata,
                                     llvm::SmallPtrSet<Module *, 16> &Visited) {
   // Import this module's parent.
   if (Mod->Parent && Visited.insert(Mod->Parent)) {
@@ -810,7 +810,7 @@ void CodeGenModule::EmitModuleLinkOptions() {
 
   // Add link options for all of the imported modules in reverse topological
   // order.
-  SmallVector<llvm::MDNode *, 16> MetadataArgs;
+  SmallVector<llvm::Value *, 16> MetadataArgs;
   Visited.clear();
   for (llvm::SetVector<clang::Module *>::iterator M = LinkModules.begin(),
                                                MEnd = LinkModules.end();
@@ -818,15 +818,11 @@ void CodeGenModule::EmitModuleLinkOptions() {
     if (Visited.insert(*M))
       addLinkOptionsPostorder(getLLVMContext(), *M, MetadataArgs, Visited);
   }
+  std::reverse(MetadataArgs.begin(), MetadataArgs.end());
 
-  // Get/create metadata for the link options.
-  llvm::NamedMDNode *Metadata
-    = getModule().getOrInsertNamedMetadata("llvm.module.linkoptions");
-
-  // Add link options in topological order.
-  for (unsigned I = MetadataArgs.size(); I > 0; --I) {
-    Metadata->addOperand(MetadataArgs[I-1]);
-  }
+  // Add the linker options metadata flag.
+  getModule().addModuleFlag(llvm::Module::AppendUnique, "Linker Options",
+                            llvm::MDNode::get(getLLVMContext(), MetadataArgs));
 }
 
 void CodeGenModule::EmitDeferred() {
