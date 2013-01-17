@@ -6397,6 +6397,23 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
   return Redeclaration;
 }
 
+static SourceRange getResultSourceRange(const FunctionDecl *FD) {
+  const TypeSourceInfo *TSI = FD->getTypeSourceInfo();
+  if (!TSI)
+    return SourceRange();
+
+  TypeLoc TL = TSI->getTypeLoc();
+  FunctionTypeLoc *FunctionTL = dyn_cast<FunctionTypeLoc>(&TL);
+  if (!FunctionTL)
+    return SourceRange();
+
+  TypeLoc ResultTL = FunctionTL->getResultLoc();
+  if (isa<BuiltinTypeLoc>(ResultTL.getUnqualifiedLoc()))
+    return ResultTL.getSourceRange();
+
+  return SourceRange();
+}
+
 void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
   // C++11 [basic.start.main]p3:  A program that declares main to be inline,
   //   static or constexpr is ill-formed.
@@ -6433,9 +6450,20 @@ void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
   } else if (getLangOpts().GNUMode && !getLangOpts().CPlusPlus) {
     Diag(FD->getTypeSpecStartLoc(), diag::ext_main_returns_nonint);
 
+    SourceRange ResultRange = getResultSourceRange(FD);
+    if (ResultRange.isValid())
+      Diag(ResultRange.getBegin(), diag::note_main_change_return_type)
+          << FixItHint::CreateReplacement(ResultRange, "int");
+
   // Otherwise, this is just a flat-out error.
   } else {
-    Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint);
+    SourceRange ResultRange = getResultSourceRange(FD);
+    if (ResultRange.isValid())
+      Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint)
+          << FixItHint::CreateReplacement(ResultRange, "int");
+    else
+      Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint);
+
     FD->setInvalidDecl(true);
   }
 
