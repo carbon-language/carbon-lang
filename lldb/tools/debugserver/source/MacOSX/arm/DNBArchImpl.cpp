@@ -2450,6 +2450,8 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
                                     (write ? WCR_STORE : 0) |   // Stop on write access?
                                     WCR_ENABLE;                 // Enable this watchpoint;
 
+            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint() adding watchpoint on address 0x%llx with control register value 0x%x", (uint64_t) m_state.dbg.__wvr[i], (uint32_t) m_state.dbg.__wcr[i]);
+
             kret = SetDBGState();
             //DumpDBGState(m_state.dbg);
 
