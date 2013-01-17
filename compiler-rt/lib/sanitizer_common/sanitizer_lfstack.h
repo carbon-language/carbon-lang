@@ -36,7 +36,7 @@ struct LFStack {
   void Push(T *p) {
     u64 cmp = atomic_load(&head_, memory_order_relaxed);
     for (;;) {
-      u64 cnt = (cmp & kCounterBits) + kCounterInc;
+      u64 cnt = (cmp & kCounterMask) + kCounterInc;
       u64 xch = (u64)(uptr)p | cnt;
       p->next = (T*)(uptr)(cmp & kPtrMask);
       if (atomic_compare_exchange_weak(&head_, &cmp, xch,
