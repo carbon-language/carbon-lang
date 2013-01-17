@@ -5281,6 +5281,9 @@ class SequenceChecker : public EvaluatedExprVisitor<SequenceChecker> {
   /// Filled in with declarations which were modified as a side-effect
   /// (that is, post-increment operations).
   llvm::SmallVectorImpl<std::pair<Object, Usage> > *ModAsSideEffect;
+  /// Expressions to check later. We defer checking these to reduce
+  /// stack usage.
+  llvm::SmallVectorImpl<Expr*> &WorkList;
 
   /// RAII object wrapping the visitation of a sequenced subexpression of an
   /// expression. At the end of this process, the side-effects of the evaluation
@@ -5385,9 +5388,10 @@ class SequenceChecker : public EvaluatedExprVisitor<SequenceChecker> {
   }
 
 public:
-  SequenceChecker(Sema &S, Expr *E)
+  SequenceChecker(Sema &S, Expr *E,
+                  llvm::SmallVectorImpl<Expr*> &WorkList)
     : EvaluatedExprVisitor<SequenceChecker>(S.Context), SemaRef(S),
-      Region(Tree.root()), ModAsSideEffect(0) {
+      Region(Tree.root()), ModAsSideEffect(0), WorkList(WorkList) {
     Visit(E);
   }
 
@@ -5517,7 +5521,7 @@ public:
       // FIXME: If there are operations in the RHS which are unsequenced
       // with respect to operations outside the RHS, and those operations
       // are unconditionally evaluated, diagnose them.
-      SequenceChecker(SemaRef, BO->getRHS());
+      WorkList.push_back(BO->getRHS());
     }
   }
   void VisitBinLAnd(BinaryOperator *BO) {
@@ -5532,7 +5536,7 @@ public:
       if (Result)
         Visit(BO->getRHS());
     } else {
-      SequenceChecker(SemaRef, BO->getRHS());
+      WorkList.push_back(BO->getRHS());
     }
   }
 
@@ -5547,8 +5551,8 @@ public:
         CO->getCond()->EvaluateAsBooleanCondition(Result, SemaRef.Context))
       Visit(Result ? CO->getTrueExpr() : CO->getFalseExpr());
     else {
-      SequenceChecker(SemaRef, CO->getTrueExpr());
-      SequenceChecker(SemaRef, CO->getFalseExpr());
+      WorkList.push_back(CO->getTrueExpr());
+      WorkList.push_back(CO->getFalseExpr());
     }
   }
 
@@ -5597,7 +5601,13 @@ public:
 }
 
 void Sema::CheckUnsequencedOperations(Expr *E) {
-  SequenceChecker(*this, E);
+  llvm::SmallVector<Expr*, 8> WorkList;
+  WorkList.push_back(E);
+  while (!WorkList.empty()) {
+    Expr *Item = WorkList.back();
+    WorkList.pop_back();
+    SequenceChecker(*this, Item, WorkList);
+  }
 }
 
 void Sema::CheckCompletedExpr(Expr *E, SourceLocation CheckLoc) {
