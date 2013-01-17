@@ -436,92 +436,68 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 // in terms of a copy, and just mentioned, we don't use movss/movsd for copies.
 //===----------------------------------------------------------------------===//
 
-class sse12_move_rr<RegisterClass RC, SDNode OpNode, ValueType vt, string asm> :
-      SI<0x10, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, RC:$src2), asm,
-      [(set VR128:$dst, (vt (OpNode VR128:$src1,
-                             (scalar_to_vector RC:$src2))))],
-      IIC_SSE_MOV_S_RR>;
-
-// Loading from memory automatically zeroing upper bits.
-class sse12_move_rm<RegisterClass RC, X86MemOperand x86memop,
-                    PatFrag mem_pat, string OpcodeStr> :
-      SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
-         !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                        [(set RC:$dst, (mem_pat addr:$src))],
-                        IIC_SSE_MOV_S_RM>;
-
-// AVX
-def VMOVSSrr : sse12_move_rr<FR32, X86Movss, v4f32,
-                "movss\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XS, VEX_4V,
-                VEX_LIG;
-def VMOVSDrr : sse12_move_rr<FR64, X86Movsd, v2f64,
-                "movsd\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XD, VEX_4V,
-                VEX_LIG;
-
-// For the disassembler
-let isCodeGenOnly = 1, hasSideEffects = 0 in {
-  def VMOVSSrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
-                        (ins VR128:$src1, FR32:$src2),
-                        "movss\t{$src2, $src1, $dst|$dst, $src1, $src2}", [],
-                        IIC_SSE_MOV_S_RR>,
-                        XS, VEX_4V, VEX_LIG;
-  def VMOVSDrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
-                        (ins VR128:$src1, FR64:$src2),
-                        "movsd\t{$src2, $src1, $dst|$dst, $src1, $src2}", [],
-                        IIC_SSE_MOV_S_RR>,
-                        XD, VEX_4V, VEX_LIG;
-}
-
-let canFoldAsLoad = 1, isReMaterializable = 1 in {
-  def VMOVSSrm : sse12_move_rm<FR32, f32mem, loadf32, "movss">, XS, VEX,
-                 VEX_LIG;
-  let AddedComplexity = 20 in
-    def VMOVSDrm : sse12_move_rm<FR64, f64mem, loadf64, "movsd">, XD, VEX,
-                   VEX_LIG;
-}
-
-def VMOVSSmr : SI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
-                  "movss\t{$src, $dst|$dst, $src}",
-                  [(store FR32:$src, addr:$dst)], IIC_SSE_MOV_S_MR>,
-                  XS, VEX, VEX_LIG;
-def VMOVSDmr : SI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
-                  "movsd\t{$src, $dst|$dst, $src}",
-                  [(store FR64:$src, addr:$dst)], IIC_SSE_MOV_S_MR>,
-                  XD, VEX, VEX_LIG;
-
-// SSE1 & 2
-let Constraints = "$src1 = $dst" in {
-  def MOVSSrr : sse12_move_rr<FR32, X86Movss, v4f32,
-                          "movss\t{$src2, $dst|$dst, $src2}">, XS;
-  def MOVSDrr : sse12_move_rr<FR64, X86Movsd, v2f64,
-                          "movsd\t{$src2, $dst|$dst, $src2}">, XD;
+multiclass sse12_move_rr<RegisterClass RC, SDNode OpNode, ValueType vt,
+                         X86MemOperand x86memop, string base_opc,
+                         string asm_opr> {
+  def rr : SI<0x10, MRMSrcReg, (outs VR128:$dst),
+              (ins VR128:$src1, RC:$src2),
+              !strconcat(base_opc, asm_opr),
+              [(set VR128:$dst, (vt (OpNode VR128:$src1,
+                                 (scalar_to_vector RC:$src2))))],
+              IIC_SSE_MOV_S_RR>;
 
   // For the disassembler
-  let isCodeGenOnly = 1, hasSideEffects = 0 in {
-    def MOVSSrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
-                         (ins VR128:$src1, FR32:$src2),
-                         "movss\t{$src2, $dst|$dst, $src2}", [],
-                         IIC_SSE_MOV_S_RR>, XS;
-    def MOVSDrr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
-                         (ins VR128:$src1, FR64:$src2),
-                         "movsd\t{$src2, $dst|$dst, $src2}", [],
-                         IIC_SSE_MOV_S_RR>, XD;
-  }
+  let isCodeGenOnly = 1, hasSideEffects = 0 in
+  def rr_REV : SI<0x11, MRMDestReg, (outs VR128:$dst),
+                  (ins VR128:$src1, RC:$src2),
+                  !strconcat(base_opc, asm_opr),
+                  [], IIC_SSE_MOV_S_RR>;
 }
+
+multiclass sse12_move<RegisterClass RC, SDNode OpNode, ValueType vt,
+                      X86MemOperand x86memop, string OpcodeStr> {
+  // AVX
+  defm V#NAME : sse12_move_rr<RC, OpNode, vt, x86memop, OpcodeStr,
+                              "\t{$src2, $src1, $dst|$dst, $src1, $src2}">,
+                              VEX_4V, VEX_LIG;
+
+  def V#NAME#mr : SI<0x11, MRMDestMem, (outs), (ins x86memop:$dst, RC:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(store RC:$src, addr:$dst)], IIC_SSE_MOV_S_MR>,
+                     VEX, VEX_LIG;
+  // SSE1 & 2
+  let Constraints = "$src1 = $dst" in {
+    defm NAME : sse12_move_rr<RC, OpNode, vt, x86memop, OpcodeStr,
+                              "\t{$src2, $dst|$dst, $src2}">;
+  }
+
+  def NAME#mr   : SI<0x11, MRMDestMem, (outs), (ins x86memop:$dst, RC:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(store RC:$src, addr:$dst)], IIC_SSE_MOV_S_MR>;
+}
+
+// Loading from memory automatically zeroing upper bits.
+multiclass sse12_move_rm<RegisterClass RC, X86MemOperand x86memop,
+                         PatFrag mem_pat, string OpcodeStr> {
+  def V#NAME#rm : SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(set RC:$dst, (mem_pat addr:$src))],
+                     IIC_SSE_MOV_S_RM>, VEX, VEX_LIG;
+  def NAME#rm   : SI<0x10, MRMSrcMem, (outs RC:$dst), (ins x86memop:$src),
+                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                     [(set RC:$dst, (mem_pat addr:$src))],
+                     IIC_SSE_MOV_S_RM>;
+}
+
+defm MOVSS : sse12_move<FR32, X86Movss, v4f32, f32mem, "movss">, XS;
+defm MOVSD : sse12_move<FR64, X86Movsd, v2f64, f64mem, "movsd">, XD;
 
 let canFoldAsLoad = 1, isReMaterializable = 1 in {
-  def MOVSSrm : sse12_move_rm<FR32, f32mem, loadf32, "movss">, XS;
+  defm MOVSS : sse12_move_rm<FR32, f32mem, loadf32, "movss">, XS;
 
   let AddedComplexity = 20 in
-    def MOVSDrm : sse12_move_rm<FR64, f64mem, loadf64, "movsd">, XD;
+    defm MOVSD : sse12_move_rm<FR64, f64mem, loadf64, "movsd">, XD;
 }
-
-def MOVSSmr : SSI<0x11, MRMDestMem, (outs), (ins f32mem:$dst, FR32:$src),
-                  "movss\t{$src, $dst|$dst, $src}",
-                  [(store FR32:$src, addr:$dst)], IIC_SSE_MOV_S_MR>;
-def MOVSDmr : SDI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
-                  "movsd\t{$src, $dst|$dst, $src}",
-                  [(store FR64:$src, addr:$dst)], IIC_SSE_MOV_S_MR>;
 
 // Patterns
 let Predicates = [HasAVX] in {
