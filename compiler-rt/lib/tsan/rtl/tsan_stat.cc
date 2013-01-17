@@ -204,7 +204,6 @@ void StatOutput(u64 *stat) {
   name[StatInt_pipe]                     = "  pipe                            ";
   name[StatInt_pipe2]                    = "  pipe2                           ";
   name[StatInt_read]                     = "  read                            ";
-  name[StatInt_prctl]                    = "  prctl                           ";
   name[StatInt_pread]                    = "  pread                           ";
   name[StatInt_pread64]                  = "  pread64                         ";
   name[StatInt_readv]                    = "  readv                           ";

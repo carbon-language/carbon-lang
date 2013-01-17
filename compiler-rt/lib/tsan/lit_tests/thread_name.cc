@@ -15,7 +15,8 @@ void *Thread1(void *x) {
 }
 
 void *Thread2(void *x) {
-  pthread_setname_np(pthread_self(), "Thread2");
+  AnnotateThreadName(__FILE__, __LINE__, "Thread2");
+  // TODO: pthread_setname_np(pthread_self(), "Thread2");
   Global--;
   return NULL;
 }
