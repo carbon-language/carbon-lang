@@ -142,3 +142,71 @@ define <8 x i16> @load_sext_test6(<8 x i8> *%ptr) {
  %Y = sext <8 x i8> %X to <8 x i16>
  ret <8 x i16>%Y
 }
+; AVX: sext_1
+; AVX: vpmovsxbd
+; AVX: vpmovsxdq
+; AVX: vpmovsxdq
+; AVX: ret
+define void @sext_1(<4 x i8>* %inbuf, <4 x i64>* %outbuf) {
+  %v0 = load <4 x i8>* %inbuf
+  %r = sext <4 x i8> %v0 to <4 x i64>                                         
+  store <4 x i64> %r, <4 x i64>* %outbuf                                         
+  ret void                                                               
+}
+
+; AVX: sext_2
+; AVX: vpmovsxbd
+; AVX: ret
+define void @sext_2(<4 x i8>* %inbuf, <4 x i32>* %outbuf) {
+  %v0 = load <4 x i8>* %inbuf
+  %r = sext <4 x i8> %v0 to <4 x i32>                                         
+  store <4 x i32> %r, <4 x i32>* %outbuf                                         
+  ret void                                                               
+}
+  
+; AVX: sext_3
+; AVX: vpmovsxwd
+; AVX: ret
+define void @sext_3(<4 x i16>* %inbuf, <4 x i32>* %outbuf) {
+  %v0 = load <4 x i16>* %inbuf
+  %r = sext <4 x i16> %v0 to <4 x i32>                                         
+  store <4 x i32> %r, <4 x i32>* %outbuf                                         
+  ret void                                                               
+}
+  
+; AVX: sext_4
+; AVX: vpmovsxwd
+; AVX: vpmovsxdq
+; AVX: vpmovsxdq
+; AVX: ret
+define void @sext_4(<4 x i16>* %inbuf, <4 x i64>* %outbuf) {
+  %v0 = load <4 x i16>* %inbuf
+  %r = sext <4 x i16> %v0 to <4 x i64>                                         
+  store <4 x i64> %r, <4 x i64>* %outbuf                                         
+  ret void                                                               
+}
+
+; AVX: sext_5
+; AVX: vpmovsxbw
+; AVX: vpmovsxwd
+; AVX: vpmovsxwd
+; AVX: vpmovsxdq
+; AVX: ret
+define void @sext_5(<8 x i8>* %inbuf, <8 x i64>* %outbuf) {
+  %v0 = load <8 x i8>* %inbuf
+  %r = sext <8 x i8> %v0 to <8 x i64>                                         
+  store <8 x i64> %r, <8 x i64>* %outbuf                                         
+  ret void                                                               
+}
+; AVX: sext_6
+; AVX: vpmovsxbw
+; AVX: vpmovsxwd
+; AVX: vpmovsxwd
+; AVX: ret
+define void @sext_6(<8 x i8>* %inbuf, <8 x i32>* %outbuf) {
+  %v0 = load <8 x i8>* %inbuf
+  %r = sext <8 x i8> %v0 to <8 x i32>                                         
+  store <8 x i32> %r, <8 x i32>* %outbuf                                         
+  ret void                                                               
+}
+

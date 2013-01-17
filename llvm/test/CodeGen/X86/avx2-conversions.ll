@@ -107,3 +107,15 @@ define <8 x i32> @load_sext_test5(<8 x i8> *%ptr) {
  %Y = sext <8 x i8> %X to <8 x i32>
  ret <8 x i32>%Y
 }
+
+; CHECK: load_sext_test6
+; CHECK: vpmovsxbd (%r{{[^,]*}}), %ymm{{.*}}
+; CHECK: vpmovsxdq
+; CHECK: vpmovsxdq
+; CHECK: ret 
+define <8 x i64> @load_sext_test6(<8 x i8> *%ptr) {
+ %X = load <8 x i8>* %ptr
+ %Y = sext <8 x i8> %X to <8 x i64>
+ ret <8 x i64>%Y
+}
+
