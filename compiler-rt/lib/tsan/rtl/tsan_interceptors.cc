@@ -1618,8 +1618,10 @@ TSAN_INTERCEPTOR(int, fork, int fake) {
   return pid;
 }
 
-#define COMMON_INTERCEPTOR_WRITE_RANGE(ptr, size) // FIXME
-#define COMMON_INTERCEPTOR_READ_RANGE(ptr, size)  // FIXME
+#define COMMON_INTERCEPTOR_WRITE_RANGE(ptr, size)  \
+    MemoryAccessRange(thr, pc, (uptr)ptr, size, true)
+#define COMMON_INTERCEPTOR_READ_RANGE(ptr, size)  \
+    MemoryAccessRange(thr, pc, (uptr)ptr, size, false)
 #define COMMON_INTERCEPTOR_ENTER(func, ...) \
  SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__)
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(fd) FdAcquire(thr, pc, fd)
