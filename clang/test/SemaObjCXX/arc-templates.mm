@@ -283,3 +283,12 @@ namespace rdar10862386 {
       testing(@"hi");
  }
 }
+
+namespace rdar12367446 {
+  template <class T> class A;
+  template <class R> class A<R()> {};
+
+  void test() {
+    A<id()> value;
+  }
+}

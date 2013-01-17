@@ -67,3 +67,22 @@ typedef void (^T) ();
 - (void)createInferiorTransportAndSetEnvironment:(NSMutableDictionary*)environment error:(__autoreleasing NSError**)error {}
 @end
 
+// <rdar://problem/12367446>
+typedef __strong id strong_id;
+typedef NSObject *NSObject_ptr;
+typedef __strong NSObject *strong_NSObject_ptr;
+
+// Warn
+__strong id f1(); // expected-warning{{ARC __strong lifetime qualifier on return type is ignored}}
+NSObject __unsafe_unretained *f2(int); // expected-warning{{ARC __unsafe_unretained lifetime qualifier on return type is ignored}}
+__autoreleasing NSObject *f3(void); // expected-warning{{ARC __autoreleasing lifetime qualifier on return type is ignored}}
+NSObject * __strong f4(void); // expected-warning{{ARC __strong lifetime qualifier on return type is ignored}}
+NSObject_ptr __strong f5(); // expected-warning{{ARC __strong lifetime qualifier on return type is ignored}}
+
+typedef __strong id (*fptr)(int); // expected-warning{{ARC __strong lifetime qualifier on return type is ignored}}
+typedef __strong id (^block_ptr)(int); // expected-warning{{ARC __strong lifetime qualifier on return type is ignored}}
+
+// Don't warn
+strong_id f6();
+strong_NSObject_ptr f7();
+

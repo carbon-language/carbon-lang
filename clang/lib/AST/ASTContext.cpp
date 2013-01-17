@@ -2602,6 +2602,13 @@ ASTContext::getFunctionNoProtoType(QualType ResultTy,
   return QualType(New, 0);
 }
 
+/// \brief Determine whether \p T is canonical as the result type of a function.
+static bool isCanonicalResultType(QualType T) {
+  return T.isCanonical() &&
+         (T.getObjCLifetime() == Qualifiers::OCL_None ||
+          T.getObjCLifetime() == Qualifiers::OCL_ExplicitNone);
+}
+
 /// getFunctionType - Return a normal function type with a typed argument
 /// list.  isVariadic indicates whether the argument list includes '...'.
 QualType
@@ -2620,7 +2627,7 @@ ASTContext::getFunctionType(QualType ResultTy,
 
   // Determine whether the type being created is already canonical or not.
   bool isCanonical =
-    EPI.ExceptionSpecType == EST_None && ResultTy.isCanonical() &&
+    EPI.ExceptionSpecType == EST_None && isCanonicalResultType(ResultTy) &&
     !EPI.HasTrailingReturn;
   for (unsigned i = 0; i != NumArgs && isCanonical; ++i)
     if (!ArgArray[i].isCanonicalAsParam())
@@ -2646,7 +2653,15 @@ ASTContext::getFunctionType(QualType ResultTy,
     CanonicalEPI.ExtInfo
       = CanonicalEPI.ExtInfo.withCallingConv(getCanonicalCallConv(CallConv));
 
-    Canonical = getFunctionType(getCanonicalType(ResultTy),
+    // Result types do not have ARC lifetime qualifiers.
+    QualType CanResultTy = getCanonicalType(ResultTy);
+    if (ResultTy.getQualifiers().hasObjCLifetime()) {
+      Qualifiers Qs = CanResultTy.getQualifiers();
+      Qs.removeObjCLifetime();
+      CanResultTy = getQualifiedType(CanResultTy.getUnqualifiedType(), Qs);
+    }
+
+    Canonical = getFunctionType(CanResultTy,
                                 CanonicalArgs.data(), NumArgs,
                                 CanonicalEPI);
 

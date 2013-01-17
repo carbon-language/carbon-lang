@@ -2471,6 +2471,44 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                                   S);
       }
 
+      // Objective-C ARC ownership qualifiers are ignored on the function
+      // return type (by type canonicalization). Complain if this attribute
+      // was written here.
+      if (T.getQualifiers().hasObjCLifetime()) {
+        SourceLocation AttrLoc;
+        if (chunkIndex + 1 < D.getNumTypeObjects()) {
+          DeclaratorChunk ReturnTypeChunk = D.getTypeObject(chunkIndex + 1);
+          for (const AttributeList *Attr = ReturnTypeChunk.getAttrs();
+               Attr; Attr = Attr->getNext()) {
+            if (Attr->getKind() == AttributeList::AT_ObjCOwnership) {
+              AttrLoc = Attr->getLoc();
+              break;
+            }
+          }
+        }
+        if (AttrLoc.isInvalid()) {
+          for (const AttributeList *Attr
+                 = D.getDeclSpec().getAttributes().getList();
+               Attr; Attr = Attr->getNext()) {
+            if (Attr->getKind() == AttributeList::AT_ObjCOwnership) {
+              AttrLoc = Attr->getLoc();
+              break;
+            }
+          }
+        }
+
+        if (AttrLoc.isValid()) {
+          // The ownership attributes are almost always written via
+          // the predefined
+          // __strong/__weak/__autoreleasing/__unsafe_unretained.
+          if (AttrLoc.isMacroID())
+            AttrLoc = S.SourceMgr.getImmediateExpansionRange(AttrLoc).first;
+
+          S.Diag(AttrLoc, diag::warn_arc_lifetime_result_type)
+            << T.getQualifiers().getObjCLifetime();
+        }
+      }
+
       if (LangOpts.CPlusPlus && D.getDeclSpec().isTypeSpecOwned()) {
         // C++ [dcl.fct]p6:
         //   Types shall not be defined in return or parameter types.
