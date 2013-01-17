@@ -130,3 +130,14 @@ namespace PR7179 {
     };
   };
 }
+
+namespace test3 {
+  struct foo {
+    struct {
+      int a;
+      int b;
+    };
+    foo() : b(), a() { // expected-warning {{field 'b' will be initialized after field 'a'}}
+    }
+  };
+}

@@ -3214,13 +3214,17 @@ bool Sema::SetCtorInitializers(CXXConstructorDecl *Constructor, bool AnyErrors,
   return HadError;
 }
 
-static void *GetKeyForTopLevelField(FieldDecl *Field) {
-  // For anonymous unions, use the class declaration as the key.
+static void PopulateKeysForFields(FieldDecl *Field, SmallVectorImpl<const void*> &IdealInits) {
   if (const RecordType *RT = Field->getType()->getAs<RecordType>()) {
-    if (RT->getDecl()->isAnonymousStructOrUnion())
-      return RT->getDecl();
+    const RecordDecl *RD = RT->getDecl();
+    if (RD->isAnonymousStructOrUnion()) {
+      for (RecordDecl::field_iterator Field = RD->field_begin(),
+          E = RD->field_end(); Field != E; ++Field)
+        PopulateKeysForFields(*Field, IdealInits);
+      return;
+    }
   }
-  return Field;
+  IdealInits.push_back(Field);
 }
 
 static void *GetKeyForBase(ASTContext &Context, QualType BaseType) {
@@ -3232,26 +3236,7 @@ static void *GetKeyForMember(ASTContext &Context,
   if (!Member->isAnyMemberInitializer())
     return GetKeyForBase(Context, QualType(Member->getBaseClass(), 0));
     
-  // For fields injected into the class via declaration of an anonymous union,
-  // use its anonymous union class declaration as the unique key.
-  FieldDecl *Field = Member->getAnyMember();
- 
-  // If the field is a member of an anonymous struct or union, our key
-  // is the anonymous record decl that's a direct child of the class.
-  RecordDecl *RD = Field->getParent();
-  if (RD->isAnonymousStructOrUnion()) {
-    while (true) {
-      RecordDecl *Parent = cast<RecordDecl>(RD->getDeclContext());
-      if (Parent->isAnonymousStructOrUnion())
-        RD = Parent;
-      else
-        break;
-    }
-      
-    return RD;
-  }
-
-  return Field;
+  return Member->getAnyMember();
 }
 
 static void DiagnoseBaseOrMemInitializerOrder(
@@ -3302,7 +3287,7 @@ static void DiagnoseBaseOrMemInitializerOrder(
     if (Field->isUnnamedBitfield())
       continue;
     
-    IdealInitKeys.push_back(GetKeyForTopLevelField(*Field));
+    PopulateKeysForFields(*Field, IdealInitKeys);
   }
   
   unsigned NumIdealInits = IdealInitKeys.size();
