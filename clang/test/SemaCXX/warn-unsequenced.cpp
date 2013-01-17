@@ -95,4 +95,9 @@ void test() {
 
   xs[8] && (++a + a++); // expected-warning {{multiple unsequenced modifications}}
   xs[8] || (++a + a++); // expected-warning {{multiple unsequenced modifications}}
+
+  (__builtin_classify_type(++a) ? 1 : 0) + ++a; // ok
+  (__builtin_constant_p(++a) ? 1 : 0) + ++a; // ok
+  (__builtin_object_size(&(++a, a), 0) ? 1 : 0) + ++a; // ok
+  (__builtin_expect(++a, 0) ? 1 : 0) + ++a; // expected-warning {{multiple unsequenced modifications}}
 }

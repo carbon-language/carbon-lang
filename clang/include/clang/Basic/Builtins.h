@@ -109,6 +109,12 @@ public:
     return strchr(GetRecord(ID).Attributes, 'j') != 0;
   }
 
+  /// \brief Returns true if this builtin does not perform the side-effects
+  /// of its arguments.
+  bool isUnevaluated(unsigned ID) const {
+    return strchr(GetRecord(ID).Attributes, 'u') != 0;
+  }
+
   /// \brief Return true if this is a builtin for a libc/libm function,
   /// with a "__builtin_" prefix (e.g. __builtin_abs).
   bool isLibFunction(unsigned ID) const {

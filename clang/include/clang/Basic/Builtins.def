@@ -82,6 +82,7 @@
 //          through an ellipsis
 //  e -> const, but only when -fmath-errno=0
 //  j -> returns_twice (like setjmp)
+//  u -> arguments are not evaluated for their side-effects
 //  FIXME: gcc has nonnull
 
 #if defined(BUILTIN) && !defined(LIBBUILTIN)
@@ -395,8 +396,8 @@ BUILTIN(__builtin_bswap32, "UiUi", "nc")
 BUILTIN(__builtin_bswap64, "ULLiULLi", "nc")
 
 // Random GCC builtins
-BUILTIN(__builtin_constant_p, "i.", "nct")
-BUILTIN(__builtin_classify_type, "i.", "nct")
+BUILTIN(__builtin_constant_p, "i.", "nctu")
+BUILTIN(__builtin_classify_type, "i.", "nctu")
 BUILTIN(__builtin___CFStringMakeConstantString, "FC*cC*", "nc")
 BUILTIN(__builtin___NSStringMakeConstantString, "FC*cC*", "nc")
 BUILTIN(__builtin_va_start, "vA.", "nt")
@@ -454,7 +455,7 @@ BUILTIN(__builtin_dwarf_sp_column, "Ui", "n")
 BUILTIN(__builtin_extend_pointer, "ULLiv*", "n") // _Unwind_Word == uint64_t
 
 // GCC Object size checking builtins
-BUILTIN(__builtin_object_size, "zvC*i", "n")
+BUILTIN(__builtin_object_size, "zvC*i", "nu")
 BUILTIN(__builtin___memcpy_chk, "v*v*vC*zz", "nF")
 BUILTIN(__builtin___memccpy_chk, "v*v*vC*izz", "nF")
 BUILTIN(__builtin___memmove_chk, "v*v*vC*zz", "nF")

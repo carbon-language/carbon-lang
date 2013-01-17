@@ -1137,6 +1137,12 @@ unsigned CallExpr::isBuiltinCall() const {
   return FDecl->getBuiltinID();
 }
 
+bool CallExpr::isUnevaluatedBuiltinCall(ASTContext &Ctx) const {
+  if (unsigned BI = isBuiltinCall())
+    return Ctx.BuiltinInfo.isUnevaluated(BI);
+  return false;
+}
+
 QualType CallExpr::getCallReturnType() const {
   QualType CalleeType = getCallee()->getType();
   if (const PointerType *FnTypePtr = CalleeType->getAs<PointerType>())
