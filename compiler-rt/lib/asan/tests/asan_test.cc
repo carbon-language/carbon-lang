@@ -1667,44 +1667,30 @@ TEST(AddressSanitizer, DISABLED_MemIntrinsicCallByPointerTest) {
   CallMemTransferByPointer(&memmove);
 }
 
-#if defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
+#if defined(__linux__) && !defined(ANDROID)
+#define READ_TEST(READ_N_BYTES)                                          \
+  char *x = new char[10];                                                \
+  int fd = open("/proc/self/stat", O_RDONLY);                            \
+  ASSERT_GT(fd, 0);                                                      \
+  EXPECT_DEATH(READ_N_BYTES,                                             \
+               ASAN_PCRE_DOTALL                                          \
+               "AddressSanitizer: heap-buffer-overflow"                  \
+               ".* is located 0 bytes to the right of 10-byte region");  \
+  close(fd);                                                             \
+  delete [] x;                                                           \
+
 TEST(AddressSanitizer, pread) {
-  char *x = new char[10];
-  int fd = open("/proc/self/stat", O_RDONLY);
-  ASSERT_GT(fd, 0);
-  EXPECT_DEATH(pread(fd, x, 15, 0),
-               ASAN_PCRE_DOTALL
-               "AddressSanitizer: heap-buffer-overflow"
-               ".* is located 0 bytes to the right of 10-byte region");
-  close(fd);
-  delete [] x;
+  READ_TEST(pread(fd, x, 15, 0));
 }
 
 TEST(AddressSanitizer, pread64) {
-  char *x = new char[10];
-  int fd = open("/proc/self/stat", O_RDONLY);
-  ASSERT_GT(fd, 0);
-  EXPECT_DEATH(pread64(fd, x, 15, 0),
-               ASAN_PCRE_DOTALL
-               "AddressSanitizer: heap-buffer-overflow"
-               ".* is located 0 bytes to the right of 10-byte region");
-  close(fd);
-  delete [] x;
+  READ_TEST(pread64(fd, x, 15, 0));
 }
 
 TEST(AddressSanitizer, read) {
-  char *x = new char[10];
-  int fd = open("/proc/self/stat", O_RDONLY);
-  ASSERT_GT(fd, 0);
-  EXPECT_DEATH(read(fd, x, 15),
-               ASAN_PCRE_DOTALL
-               "AddressSanitizer: heap-buffer-overflow"
-               ".* is located 0 bytes to the right of 10-byte region");
-  close(fd);
-  delete [] x;
+  READ_TEST(read(fd, x, 15));
 }
-
-#endif  // defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
+#endif  // defined(__linux__) && !defined(ANDROID)
 
 // This test case fails
 // Clang optimizes memcpy/memset calls which lead to unaligned access
