@@ -1,20 +1,21 @@
-// RUN: %clangxx -O0 -g %s -o %t.out
+// RUN: %clangxx -O0 -g %s -o %t -c
+// RUN: %clangxx %t -o %t.out
 // RUN: %test_debuginfo %s %t.out
 
 // DEBUGGER: delete breakpoints
-// DEBUGGER: break main
+// DEBUGGER: break static-member.cpp:33
 // DEBUGGER: r
-// DEBUGGER: n
 // DEBUGGER: ptype C
-// CHECK:      type = class C {
-// CHECK-NEXT: public:
-// CHECK-NEXT: static const int a;
+// CHECK:      type = {{struct|class}} C {
+// CHECK:      static const int a;
 // CHECK-NEXT: static int b;
 // CHECK-NEXT: static int c;
 // CHECK-NEXT: int d;
 // CHECK-NEXT: }
-// DEBUGGER: p instance_C
-// CHECK: $1 = {static a = 4, static b = {{.*}}, static c = 15, d = {{.*}}}
+// DEBUGGER: p C::a
+// CHECK: $1 = 4
+// DEBUGGER: p C::c
+// CHECK: $2 = 15
 
 // PR14471, PR14734
 
