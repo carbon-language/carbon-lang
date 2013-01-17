@@ -238,9 +238,6 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
   substitutePass(&EarlyTailDuplicateID, &TailDuplicateID);
   substitutePass(&PostRAMachineLICMID, &MachineLICMID);
 
-  // Disable early if-conversion. Targets that are ready can enable it.
-  disablePass(&EarlyIfConverterID);
-
   // Temporarily disable experimental passes.
   const TargetSubtargetInfo &ST = TM->getSubtarget<TargetSubtargetInfo>();
   if (!ST.enableMachineScheduler())
@@ -551,7 +548,12 @@ void TargetPassConfig::addMachineSSAOptimization() {
   addPass(&DeadMachineInstructionElimID);
   printAndVerify("After codegen DCE pass");
 
-  addPass(&EarlyIfConverterID);
+  // Allow targets to insert passes that improve instruction level parallelism,
+  // like if-conversion. Such passes will typically need dominator trees and
+  // loop info, just like LICM and CSE below.
+  if (addILPOpts())
+    printAndVerify("After ILP optimizations");
+
   addPass(&MachineLICMID);
   addPass(&MachineCSEID);
   addPass(&MachineSinkingID);

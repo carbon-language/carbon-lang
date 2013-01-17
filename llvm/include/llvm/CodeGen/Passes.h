@@ -181,6 +181,16 @@ protected:
   /// instructions in SSA form.
   virtual void addMachineSSAOptimization();
 
+  /// Add passes that optimize instruction level parallelism for out-of-order
+  /// targets. These passes are run while the machine code is still in SSA
+  /// form, so they can use MachineTraceMetrics to control their heuristics.
+  ///
+  /// All passes added here should preserve the MachineDominatorTree,
+  /// MachineLoopInfo, and MachineTraceMetrics analyses.
+  virtual bool addILPOpts() {
+    return false;
+  }
+
   /// addPreRegAlloc - This method may be implemented by targets that want to
   /// run passes immediately before register allocation. This should return
   /// true if -print-machineinstrs should print after these passes.

@@ -151,6 +151,7 @@ public:
   }
 
   virtual bool addInstSelector();
+  virtual bool addILPOpts();
   virtual bool addPreRegAlloc();
   virtual bool addPostRegAlloc();
   virtual bool addPreEmitPass();
@@ -158,12 +159,7 @@ public:
 } // namespace
 
 TargetPassConfig *X86TargetMachine::createPassConfig(PassManagerBase &PM) {
-  X86PassConfig *PC = new X86PassConfig(this, PM);
-
-  if (X86EarlyIfConv && Subtarget.hasCMov())
-    PC->enablePass(&EarlyIfConverterID);
-
-  return PC;
+  return new X86PassConfig(this, PM);
 }
 
 bool X86PassConfig::addInstSelector() {
@@ -178,6 +174,14 @@ bool X86PassConfig::addInstSelector() {
   if (!getX86Subtarget().is64Bit())
     addPass(createGlobalBaseRegPass());
 
+  return false;
+}
+
+bool X86PassConfig::addILPOpts() {
+  if (X86EarlyIfConv && getX86Subtarget().hasCMov()) {
+    addPass(&EarlyIfConverterID);
+    return true;
+  }
   return false;
 }
 
