@@ -26,7 +26,7 @@ __pragma(comment(linker," bar=" BAR))
 #define MACRO_WITH__PRAGMA { \
   __pragma(warning(push)); \
   __pragma(warning(disable: 10000)); \
-  2+2; \
+  1 + (2 > 3) ? 4 : 5; \
   __pragma(warning(pop)); \
 }
 
@@ -36,7 +36,8 @@ void f()
 
   // If we ever actually *support* __pragma(warning(disable: x)),
   // this warning should go away.
-  MACRO_WITH__PRAGMA // expected-warning {{expression result unused}}
+  MACRO_WITH__PRAGMA // expected-warning {{lower precedence}} \
+                     // expected-note 2 {{place parentheses}}
 }
 
 

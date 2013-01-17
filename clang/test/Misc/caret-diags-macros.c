@@ -10,15 +10,15 @@ void foo() {
   // CHECK: {{.*}}:3:{{[0-9]+}}: note: expanded from macro 'M1'
 }
 
-#define A 1
-#define B A
-#define C B
+#define A(x) x
+#define B(x) A(x)
+#define C(x) B(x)
 void bar() {
-  C;
-  // CHECK: {{.*}}:17:3: warning: expression result unused
-  // CHECK: {{.*}}:15:11: note: expanded from macro 'C'
-  // CHECK: {{.*}}:14:11: note: expanded from macro 'B'
-  // CHECK: {{.*}}:13:11: note: expanded from macro 'A'
+  C(1);
+  // CHECK: {{.*}}:17:5: warning: expression result unused
+  // CHECK: {{.*}}:15:16: note: expanded from macro 'C'
+  // CHECK: {{.*}}:14:16: note: expanded from macro 'B'
+  // CHECK: {{.*}}:13:14: note: expanded from macro 'A'
 }
 
 // rdar://7597492
@@ -174,17 +174,17 @@ int y = Y;
 
 // PR14399
 void iequals(int,int,int);
-void foo_aa()
+void foo_aa(char* s)
 {
-#define /* */ BARC(c, /* */b, a, ...) (a+b+/* */c + __VA_ARGS__ +0)
-  iequals(__LINE__, BARC(4,3,2,6,8), 8);
+#define /* */ BARC(c, /* */b, a) (a + b ? c : c)
+  iequals(__LINE__, BARC(123, (456 < 345), 789), 8);
 }
-// CHECK:         {{.*}}:180:21: warning: expression result unused
-// CHECK-NEXT:      iequals(__LINE__, BARC(4,3,2,6,8), 8);
-// CHECK-NEXT: {{^                    \^~~~~~~~~~~~~~~}}
-// CHECK-NEXT:    {{.*}}:179:51: note: expanded from macro 'BARC'
-// CHECK-NEXT:    #define /* */ BARC(c, /* */b, a, ...) (a+b+/* */c + __VA_ARGS__ +0)
-// CHECK-NEXT: {{^                                       ~~~~~~~~~~ \^}}
+// CHECK:         {{.*}}:180:21: warning: operator '?:' has lower precedence than '+'
+// CHECK-NEXT:      iequals(__LINE__, BARC(123, (456 < 345), 789), 8);
+// CHECK-NEXT: {{^                    \^~~~~~~~~~~~~~~~~~~~~~~~~~~}}
+// CHECK-NEXT:    {{.*}}:179:41: note: expanded from macro 'BARC'
+// CHECK-NEXT:    #define /* */ BARC(c, /* */b, a) (a + b ? c : c)
+// CHECK-NEXT: {{^                                  ~~~~~ \^}}
 
 #define APPEND2(NUM, SUFF) -1 != NUM ## SUFF
 #define APPEND(NUM, SUFF) APPEND2(NUM, SUFF)
