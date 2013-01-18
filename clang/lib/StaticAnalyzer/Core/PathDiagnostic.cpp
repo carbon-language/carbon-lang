@@ -788,51 +788,81 @@ void PathDiagnosticCallPiece::setCallee(const CallEnter &CE,
   callEnter = getLocationForCaller(CalleeCtx, CE.getLocationContext(), SM);
 }
 
+static bool describeCodeDecl(raw_ostream &Out, const Decl *D,
+                             bool ShouldDescribeBlock,
+                             StringRef Prefix = StringRef()) {
+  if (!D)
+    return false;
+
+  if (isa<BlockDecl>(D)) {
+    if (ShouldDescribeBlock)
+      Out << Prefix << "anonymous block";
+    return ShouldDescribeBlock;
+  }
+
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
+    if (isa<CXXConstructorDecl>(MD))
+      Out << Prefix << "constructor for '" << *MD << "'";
+    else if (isa<CXXDestructorDecl>(MD))
+      Out << Prefix << "'" << *MD << "'";
+    else if (MD->getParent()->getIdentifier())
+      Out << Prefix << "'" << *MD->getParent() << "::" << *MD << "'";
+    else
+      Out << Prefix << "'" << *MD << "'";
+
+    return true;
+  }
+
+  Out << Prefix << '\'' << cast<NamedDecl>(*D) << '\'';
+  return true;
+}
+
 IntrusiveRefCntPtr<PathDiagnosticEventPiece>
 PathDiagnosticCallPiece::getCallEnterEvent() const {
   if (!Callee)
     return 0;  
+
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
-  if (isa<BlockDecl>(Callee))
-    Out << "Calling anonymous block";
-  else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Callee))
-    Out << "Calling '" << *ND << "'";
-  StringRef msg = Out.str();
-  if (msg.empty())
-    return 0;
+
+  Out << "Calling ";
+  describeCodeDecl(Out, Callee, /*DescribeBlocks=*/true);
+
   assert(callEnter.asLocation().isValid());
-  return new PathDiagnosticEventPiece(callEnter, msg);
+  return new PathDiagnosticEventPiece(callEnter, Out.str());
 }
 
 IntrusiveRefCntPtr<PathDiagnosticEventPiece>
 PathDiagnosticCallPiece::getCallEnterWithinCallerEvent() const {
   if (!callEnterWithin.asLocation().isValid())
     return 0;
+
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
-  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Caller))
-    Out << "Entered call from '" << *ND << "'";
-  else
-    Out << "Entered call";
-  StringRef msg = Out.str();
-  if (msg.empty())
-    return 0;
-  return new PathDiagnosticEventPiece(callEnterWithin, msg);
+
+  Out << "Entered call";
+  describeCodeDecl(Out, Caller, /*DescribeBlocks=*/false, " from ");
+
+  return new PathDiagnosticEventPiece(callEnterWithin, Out.str());
 }
 
 IntrusiveRefCntPtr<PathDiagnosticEventPiece>
 PathDiagnosticCallPiece::getCallExitEvent() const {
   if (NoExit)
     return 0;
+
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
-  if (!CallStackMessage.empty())
+
+  if (!CallStackMessage.empty()) {
     Out << CallStackMessage;
-  else if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Callee))
-    Out << "Returning from '" << *ND << "'";
-  else
-    Out << "Returning to caller";
+  } else {
+    bool DidDescribe = describeCodeDecl(Out, Callee, /*DescribeBlocks=*/false,
+                                        "Returning from ");
+    if (!DidDescribe)
+      Out << "Returning to caller";
+  }
+
   assert(callReturn.asLocation().isValid());
   return new PathDiagnosticEventPiece(callReturn, Out.str());
 }
