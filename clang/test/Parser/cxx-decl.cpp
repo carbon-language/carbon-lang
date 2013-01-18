@@ -132,6 +132,24 @@ struct S {
   typedef S() : n(1), m(2) { } // expected-error {{function definition declared 'typedef'}}
 };
 
+
+namespace TestIsValidAfterTypeSpecifier {
+struct s {};
+
+namespace a {
+struct s operator++(struct s a)
+{ return a; }
+}
+
+namespace b {
+// The newline after s should make no difference.
+struct s
+operator++(struct s a)
+{ return a; }
+}
+
+}
+
 // PR8380
 extern ""      // expected-error {{unknown linkage language}}
 test6a { ;// expected-error {{C++ requires a type specifier for all declarations}} \

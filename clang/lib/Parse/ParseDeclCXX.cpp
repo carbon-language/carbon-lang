@@ -964,6 +964,7 @@ bool Parser::isValidAfterTypeSpecifier(bool CouldBeBitfield) {
   case tok::annot_template_id:  // struct foo {...} a<int>    ::b;
   case tok::l_paren:            // struct foo {...} (         x);
   case tok::comma:              // __builtin_offsetof(struct foo{...} ,
+  case tok::kw_operator:        // struct foo operator++() {...}
     return true;
   case tok::colon:
     return CouldBeBitfield;     // enum E { ... }   :         2;
