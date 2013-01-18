@@ -533,7 +533,7 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       "static A x = { { { init1, init2, init3, init4 },\n"
       "                 { init1, init2, init3, init4 } } };");
 
-  // FIXME: Fix this in general an verify that it works in LLVM style again.
+  // FIXME: Fix this in general and verify that it works in LLVM style again.
   verifyGoogleFormat(
       "somes Status::global_reps[3] = {\n"
       "  { kGlobalRef, OK_CODE, NULL, NULL, NULL },\n"
@@ -545,7 +545,7 @@ TEST_F(FormatTest, NestedStaticInitializers) {
       "                   { rect.fRight - rect.fLeft, rect.fBottom - rect.fTop"
       " } };");
 
-  // FIXME: We might at some point want to handle this similar to parameters
+  // FIXME: We might at some point want to handle this similar to parameter
   // lists, where we have an option to put each on a single line.
   verifyFormat("struct {\n"
                "  unsigned bit;\n"
@@ -1869,7 +1869,7 @@ TEST_F(FormatTest, ObjCSnippets) {
   verifyFormat("@dynamic textColor;");
   //verifyFormat("char *buf1 = @encode(int **);");
   verifyFormat("Protocol *proto = @protocol(p1);");
-  //verifyFormat("SEL s = @selector(foo:);");
+  verifyFormat("SEL s = @selector(foo:);");
   verifyFormat("@synchronized(self) {\n"
                "  f();\n"
                "}");

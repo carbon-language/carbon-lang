@@ -747,6 +747,25 @@ public:
         : CurrentToken(&RootToken), KeywordVirtualFound(false),
           ColonIsObjCMethodExpr(false) {}
 
+    /// \brief A helper class to manage AnnotatingParser::ColonIsObjCMethodExpr.
+    struct ObjCSelectorRAII {
+      AnnotatingParser &P;
+      bool ColonWasObjCMethodExpr;
+
+      ObjCSelectorRAII(AnnotatingParser &P)
+          : P(P), ColonWasObjCMethodExpr(P.ColonIsObjCMethodExpr) {}
+
+      ~ObjCSelectorRAII() { P.ColonIsObjCMethodExpr = ColonWasObjCMethodExpr; }
+
+      void markStart(AnnotatedToken &Left) {
+        P.ColonIsObjCMethodExpr = true;
+        Left.Type = TT_ObjCMethodExpr;
+      }
+
+      void markEnd(AnnotatedToken &Right) { Right.Type = TT_ObjCMethodExpr; }
+    };
+
+
     bool parseAngle() {
       if (CurrentToken == NULL)
         return false;
@@ -774,9 +793,23 @@ public:
     bool parseParens(bool LookForDecls = false) {
       if (CurrentToken == NULL)
         return false;
+      bool StartsObjCMethodExpr = false;
       AnnotatedToken *Left = CurrentToken->Parent;
-      if (CurrentToken->is(tok::caret))
+      if (CurrentToken->is(tok::caret)) {
+        // ^( starts a block.
         Left->Type = TT_ObjCBlockLParen;
+      } else if (AnnotatedToken *MaybeSel = Left->Parent) {
+        // @selector( starts a selector.
+        if (MaybeSel->isObjCAtKeyword(tok::objc_selector) && MaybeSel->Parent &&
+            MaybeSel->Parent->is(tok::at)) {
+          StartsObjCMethodExpr = true;
+        }
+      }
+
+      ObjCSelectorRAII objCSelector(*this);
+      if (StartsObjCMethodExpr)
+        objCSelector.markStart(*Left);
+
       while (CurrentToken != NULL) {
         // LookForDecls is set when "if (" has been seen. Check for
         // 'identifier' '*' 'identifier' followed by not '=' -- this
@@ -796,6 +829,10 @@ public:
         if (CurrentToken->is(tok::r_paren)) {
           Left->MatchingParen = CurrentToken;
           CurrentToken->MatchingParen = Left;
+
+          if (StartsObjCMethodExpr)
+            objCSelector.markEnd(*CurrentToken);
+
           next();
           return true;
         }
@@ -824,18 +861,14 @@ public:
           getBinOpPrecedence(LSquare->Parent->FormatTok.Tok.getKind(),
                              true, true) > prec::Unknown;
 
-      bool ColonWasObjCMethodExpr = ColonIsObjCMethodExpr;
-      if (StartsObjCMethodExpr) {
-        ColonIsObjCMethodExpr = true;
-        LSquare->Type = TT_ObjCMethodExpr;
-      }
+      ObjCSelectorRAII objCSelector(*this);
+      if (StartsObjCMethodExpr)
+        objCSelector.markStart(*LSquare);
 
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::r_square)) {
-          if (StartsObjCMethodExpr) {
-            ColonIsObjCMethodExpr = ColonWasObjCMethodExpr;
-            CurrentToken->Type = TT_ObjCMethodExpr;
-          }
+          if (StartsObjCMethodExpr)
+            objCSelector.markEnd(*CurrentToken);
           next();
           return true;
         }
