@@ -427,10 +427,7 @@ private:
   bool ParseDirectiveElseIf(SMLoc DirectiveLoc); // ".elseif"
   bool ParseDirectiveElse(SMLoc DirectiveLoc); // ".else"
   bool ParseDirectiveEndIf(SMLoc DirectiveLoc); // .endif
-
-  /// ParseEscapedString - Parse the current token as a string which may include
-  /// escaped characters and return the string contents.
-  bool ParseEscapedString(std::string &Data);
+  virtual bool ParseEscapedString(std::string &Data);
 
   const MCExpr *ApplyModifierToExpr(const MCExpr *E,
                                     MCSymbolRefExpr::VariantKind Variant);

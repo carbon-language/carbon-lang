@@ -135,6 +135,10 @@ public:
   /// will be either the EndOfStatement or EOF.
   virtual StringRef ParseStringToEndOfStatement() = 0;
 
+  /// ParseEscapedString - Parse the current token as a string which may include
+  /// escaped characters and return the string contents.
+  virtual bool ParseEscapedString(std::string &Data) = 0;
+
   /// EatToEndOfStatement - Skip to the end of the current statement, for error
   /// recovery.
   virtual void EatToEndOfStatement() = 0;
