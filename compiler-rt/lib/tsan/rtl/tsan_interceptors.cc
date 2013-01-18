@@ -1259,30 +1259,6 @@ TSAN_INTERCEPTOR(long_t, preadv64, int fd, void *vec, int cnt, u64 off) {
   return res;
 }
 
-TSAN_INTERCEPTOR(long_t, write, int fd, void *buf, long_t sz) {
-  SCOPED_TSAN_INTERCEPTOR(write, fd, buf, sz);
-  if (fd >= 0)
-    FdRelease(thr, pc, fd);
-  int res = REAL(write)(fd, buf, sz);
-  return res;
-}
-
-TSAN_INTERCEPTOR(long_t, pwrite, int fd, void *buf, long_t sz, unsigned off) {
-  SCOPED_TSAN_INTERCEPTOR(pwrite, fd, buf, sz, off);
-  if (fd >= 0)
-    FdRelease(thr, pc, fd);
-  int res = REAL(pwrite)(fd, buf, sz, off);
-  return res;
-}
-
-TSAN_INTERCEPTOR(long_t, pwrite64, int fd, void *buf, long_t sz, u64 off) {
-  SCOPED_TSAN_INTERCEPTOR(pwrite64, fd, buf, sz, off);
-  if (fd >= 0)
-    FdRelease(thr, pc, fd);
-  int res = REAL(pwrite64)(fd, buf, sz, off);
-  return res;
-}
-
 TSAN_INTERCEPTOR(long_t, writev, int fd, void *vec, int cnt) {
   SCOPED_TSAN_INTERCEPTOR(writev, fd, vec, cnt);
   if (fd >= 0)
@@ -1623,9 +1599,10 @@ TSAN_INTERCEPTOR(int, fork, int fake) {
 #define COMMON_INTERCEPTOR_READ_RANGE(ptr, size)  \
     MemoryAccessRange(thr, pc, (uptr)ptr, size, false)
 #define COMMON_INTERCEPTOR_ENTER(func, ...) \
- SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__)
+  SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__)
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(fd) FdAcquire(thr, pc, fd)
 #define COMMON_INTERCEPTOR_FD_RELEASE(fd) FdRelease(thr, pc, fd)
+#define COMMON_INTERCEPTOR_SET_THREAD_NAME(name) ThreadSetName(thr, name)
 #include "sanitizer_common/sanitizer_common_interceptors.h"
 
 namespace __tsan {
@@ -1798,9 +1775,6 @@ void InitializeInterceptors() {
 
   TSAN_INTERCEPT(readv);
   TSAN_INTERCEPT(preadv64);
-  TSAN_INTERCEPT(write);
-  TSAN_INTERCEPT(pwrite);
-  TSAN_INTERCEPT(pwrite64);
   TSAN_INTERCEPT(writev);
   TSAN_INTERCEPT(pwritev64);
   TSAN_INTERCEPT(send);

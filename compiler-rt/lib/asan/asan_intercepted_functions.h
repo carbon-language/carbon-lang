@@ -42,10 +42,8 @@ using __sanitizer::uptr;
 
 #if defined(__linux__)
 # define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 1
-# define ASAN_INTERCEPT_PRCTL 1
 #else
 # define ASAN_USE_ALIAS_ATTRIBUTE_FOR_INDEX 0
-# define ASAN_INTERCEPT_PRCTL 0
 #endif
 
 #if !defined(__APPLE__)
@@ -166,6 +164,13 @@ DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pread, int fd, void *buf,
 DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pread64, int fd, void *buf,
                              SIZE_T count, OFF64_T offset);
 # endif
+
+#if SANITIZER_INTERCEPT_WRITE
+DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, write, int fd, void *ptr, SIZE_T count);
+#endif
+#if SANITIZER_INTERCEPT_PWRITE
+DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count);
+#endif
 
 # if ASAN_INTERCEPT_MLOCKX
 // mlock/munlock

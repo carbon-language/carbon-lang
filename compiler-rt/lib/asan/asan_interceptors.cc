@@ -75,6 +75,12 @@ static inline uptr MaybeRealStrnlen(const char *s, uptr maxlen) {
   return internal_strnlen(s, maxlen);
 }
 
+void SetThreadName(const char *name) {
+  AsanThread *t = asanThreadRegistry().GetCurrent();
+  if (t)
+    t->summary()->set_name(name);
+}
+
 }  // namespace __asan
 
 // ---------------------- Wrappers ---------------- {{{1
@@ -83,8 +89,9 @@ using namespace __asan;  // NOLINT
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ptr, size) ASAN_WRITE_RANGE(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ptr, size) ASAN_READ_RANGE(ptr, size)
 #define COMMON_INTERCEPTOR_ENTER(func, ...) ENSURE_ASAN_INITED()
-#define COMMON_INTERCEPTOR_FD_ACQUIRE(fd)
-#define COMMON_INTERCEPTOR_FD_RELEASE(fd)
+#define COMMON_INTERCEPTOR_FD_ACQUIRE(fd) do { } while (false)
+#define COMMON_INTERCEPTOR_FD_RELEASE(fd) do { } while (false)
+#define COMMON_INTERCEPTOR_SET_THREAD_NAME(name) SetThreadName(name)
 #include "sanitizer_common/sanitizer_common_interceptors.h"
 
 static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
@@ -177,25 +184,6 @@ INTERCEPTOR(void, _longjmp, void *env, int val) {
 INTERCEPTOR(void, siglongjmp, void *env, int val) {
   __asan_handle_no_return();
   REAL(siglongjmp)(env, val);
-}
-#endif
-
-#if ASAN_INTERCEPT_PRCTL
-#define PR_SET_NAME 15
-INTERCEPTOR(int, prctl, int option,
-            unsigned long arg2, unsigned long arg3,  // NOLINT
-            unsigned long arg4, unsigned long arg5) {  // NOLINT
-  int res = REAL(prctl(option, arg2, arg3, arg4, arg5));
-  if (option == PR_SET_NAME) {
-    AsanThread *t = asanThreadRegistry().GetCurrent();
-    if (t) {
-      char buff[17];
-      internal_strncpy(buff, (char*)arg2, 16);
-      buff[16] = 0;
-      t->summary()->set_name(buff);
-    }
-  }
-  return res;
 }
 #endif
 
@@ -744,9 +732,6 @@ void InitializeAsanInterceptors() {
 #endif
 #if ASAN_INTERCEPT_SIGLONGJMP
   ASAN_INTERCEPT_FUNC(siglongjmp);
-#endif
-#if ASAN_INTERCEPT_PRCTL
-  ASAN_INTERCEPT_FUNC(prctl);
 #endif
 
   // Intercept exception handling functions.
