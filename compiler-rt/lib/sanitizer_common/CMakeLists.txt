@@ -54,9 +54,8 @@ if(APPLE)
   # Build universal binary on APPLE.
   add_library(RTSanitizerCommon.osx OBJECT ${SANITIZER_SOURCES})
   set_target_compile_flags(RTSanitizerCommon.osx ${SANITIZER_CFLAGS})
-  filter_available_targets(SANITIZER_TARGETS x86_64 i386)
   set_target_properties(RTSanitizerCommon.osx PROPERTIES
-    OSX_ARCHITECTURES "${SANITIZER_TARGETS}")
+    OSX_ARCHITECTURES "${SANITIZER_COMMON_SUPPORTED_ARCH}")
   list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.osx)
 elseif(ANDROID)
   add_library(RTSanitizerCommon.arm.android OBJECT ${SANITIZER_SOURCES})
@@ -65,16 +64,11 @@ elseif(ANDROID)
   list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.arm.android)
 else()
   # Otherwise, build separate libraries for each target.
-  if(CAN_TARGET_x86_64)
-    add_compiler_rt_object_library(RTSanitizerCommon x86_64
+  foreach(arch ${SANITIZER_COMMON_SUPPORTED_ARCH})
+    add_compiler_rt_object_library(RTSanitizerCommon ${arch}
       SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS})
-    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.x86_64)
-  endif()
-  if(CAN_TARGET_i386)
-    add_compiler_rt_object_library(RTSanitizerCommon i386
-      SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS})
-    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.i386)
-  endif()
+    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.${arch})
+  endforeach()
 endif()
 
 # Unit tests for common sanitizer runtime.

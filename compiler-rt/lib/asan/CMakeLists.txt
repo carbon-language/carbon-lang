@@ -52,6 +52,10 @@ set(ASAN_DYLIB_DEFINITIONS
   MAC_INTERPOSE_FUNCTIONS=1
   )
 
+# Architectures supported by ASan.
+filter_available_targets(ASAN_SUPPORTED_ARCH
+  x86_64 i386)
+
 set(ASAN_RUNTIME_LIBRARIES)
 if(APPLE)
   # Build universal binary on APPLE.
@@ -61,9 +65,8 @@ if(APPLE)
     $<TARGET_OBJECTS:RTSanitizerCommon.osx>
     )
   set_target_compile_flags(clang_rt.asan_osx ${ASAN_CFLAGS})
-  filter_available_targets(ASAN_TARGETS x86_64 i386)
   set_target_properties(clang_rt.asan_osx PROPERTIES
-    OSX_ARCHITECTURES "${ASAN_TARGETS}")
+    OSX_ARCHITECTURES "${ASAN_SUPPORTED_ARCH}")
   list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_osx)
 elseif(ANDROID)
   add_library(clang_rt.asan-arm-android SHARED
@@ -78,28 +81,15 @@ elseif(ANDROID)
   list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-arm-android)
 else()
   # Otherwise, build separate libraries for each target.
-  if(CAN_TARGET_x86_64)
-    add_library(clang_rt.asan-x86_64 STATIC
+  foreach(arch ${ASAN_SUPPORTED_ARCH})
+    add_library(clang_rt.asan-${arch} STATIC
       ${ASAN_SOURCES}
-      $<TARGET_OBJECTS:RTInterception.x86_64>
-      $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
-      )
-    set_target_compile_flags(clang_rt.asan-x86_64
-      ${ASAN_CFLAGS} ${TARGET_x86_64_CFLAGS}
-      )
-    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-x86_64)
-  endif()
-  if(CAN_TARGET_i386)
-    add_library(clang_rt.asan-i386 STATIC
-      ${ASAN_SOURCES}
-      $<TARGET_OBJECTS:RTInterception.i386>
-      $<TARGET_OBJECTS:RTSanitizerCommon.i386>
-      )
-    set_target_compile_flags(clang_rt.asan-i386
-      ${ASAN_CFLAGS} ${TARGET_i386_CFLAGS}
-      )
-    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-i386)
-  endif()
+      $<TARGET_OBJECTS:RTInterception.${arch}>
+      $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>)
+    set_target_compile_flags(clang_rt.asan-${arch}
+      ${ASAN_CFLAGS} ${TARGET_${arch}_CFLAGS})
+    list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch})
+  endforeach()
 endif()
 
 set_property(TARGET ${ASAN_RUNTIME_LIBRARIES} APPEND PROPERTY
@@ -115,10 +105,9 @@ if(APPLE)
     $<TARGET_OBJECTS:RTSanitizerCommon.osx>
     )
   set_target_compile_flags(clang_rt.asan_osx_dynamic ${ASAN_CFLAGS})
-  filter_available_targets(ASAN_TARGETS x86_64 i386)
   set_target_properties(clang_rt.asan_osx_dynamic PROPERTIES
     COMPILE_DEFINITIONS "${ASAN_DYLIB_DEFINITIONS}"
-    OSX_ARCHITECTURES "${ASAN_TARGETS}"
+    OSX_ARCHITECTURES "${ASAN_SUPPORTED_ARCH}"
     LINK_FLAGS "-framework Foundation")
   list(APPEND ASAN_DYNAMIC_RUNTIME_LIBRARIES clang_rt.asan_osx_dynamic)
 endif()

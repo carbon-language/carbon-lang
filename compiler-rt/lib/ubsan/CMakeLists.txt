@@ -12,6 +12,9 @@ include_directories(..)
 
 set(UBSAN_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 
+filter_available_targets(UBSAN_SUPPORTED_ARCH
+  x86_64 i386)
+
 set(UBSAN_RUNTIME_LIBRARIES)
 
 if(APPLE)
@@ -21,32 +24,21 @@ if(APPLE)
     $<TARGET_OBJECTS:RTSanitizerCommon.osx>
     )
   set_target_compile_flags(clang_rt.ubsan_osx ${UBSAN_CFLAGS})
-  filter_available_targets(UBSAN_TARGETS x86_64 i386)
   set_target_properties(clang_rt.ubsan_osx PROPERTIES
-    OSX_ARCHITECTURES "${UBSAN_TARGETS}")
+    OSX_ARCHITECTURES "${UBSAN_SUPPORTED_ARCH}")
   list(APPEND UBSAN_RUNTIME_LIBRARIES clang_rt.ubsan_osx)
 else()
   # Build separate libraries for each target.
-  if(CAN_TARGET_x86_64)
-    add_library(clang_rt.ubsan-x86_64 STATIC
+  foreach(arch ${UBSAN_SUPPORTED_ARCH})
+    add_library(clang_rt.ubsan-${arch} STATIC
       ${UBSAN_SOURCES}
-      $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
+      $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
       )
-    set_target_compile_flags(clang_rt.ubsan-x86_64
-      ${UBSAN_CFLAGS} ${TARGET_x86_64_CFLAGS}
+    set_target_compile_flags(clang_rt.ubsan-${arch}
+      ${UBSAN_CFLAGS} ${TARGET_${arch}_CFLAGS}
       )
-    list(APPEND UBSAN_RUNTIME_LIBRARIES clang_rt.ubsan-x86_64)
-  endif()
-  if(CAN_TARGET_i386)
-    add_library(clang_rt.ubsan-i386 STATIC
-      ${UBSAN_SOURCES}
-      $<TARGET_OBJECTS:RTSanitizerCommon.i386>
-      )
-    set_target_compile_flags(clang_rt.ubsan-i386
-      ${UBSAN_CFLAGS} ${TARGET_i386_CFLAGS}
-      )
-    list(APPEND UBSAN_RUNTIME_LIBRARIES clang_rt.ubsan-i386)
-  endif()
+    list(APPEND UBSAN_RUNTIME_LIBRARIES clang_rt.ubsan-${arch})
+  endforeach()
 endif()
 
 

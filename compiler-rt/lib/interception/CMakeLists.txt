@@ -24,21 +24,16 @@ if(APPLE)
   # Build universal binary on APPLE.
   add_library(RTInterception.osx OBJECT ${INTERCEPTION_SOURCES})
   set_target_compile_flags(RTInterception.osx ${INTERCEPTION_CFLAGS})
-  filter_available_targets(INTERCEPTION_TARGETS x86_64 i386)
   set_target_properties(RTInterception.osx PROPERTIES
-    OSX_ARCHITECTURES "${INTERCEPTION_TARGETS}")
+    OSX_ARCHITECTURES "${SANITIZER_COMMON_SUPPORTED_ARCH}")
 elseif(ANDROID)
   add_library(RTInterception.arm.android OBJECT ${INTERCEPTION_SOURCES})
   set_target_compile_flags(RTInterception.arm.android
     ${INTERCEPTION_CFLAGS})
 else()
   # Otherwise, build separate libraries for each target.
-  if(CAN_TARGET_x86_64)
-    add_compiler_rt_object_library(RTInterception x86_64
+  foreach(arch ${SANITIZER_COMMON_SUPPORTED_ARCH})
+    add_compiler_rt_object_library(RTInterception ${arch}
       SOURCES ${INTERCEPTION_SOURCES} CFLAGS ${INTERCEPTION_CFLAGS})
-  endif()
-  if (CAN_TARGET_i386)
-    add_compiler_rt_object_library(RTInterception i386
-      SOURCES ${INTERCEPTION_SOURCES} CFLAGS ${INTERCEPTION_CFLAGS})
-  endif()
+  endforeach()
 endif()

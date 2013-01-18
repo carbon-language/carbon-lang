@@ -124,6 +124,11 @@ if(APPLE)
   list(APPEND SANITIZER_COMMON_CFLAGS -mmacosx-version-min=10.5)
 endif()
 
+# Architectures supported by Sanitizer runtimes. Specific sanitizers may
+# support only subset of these (e.g. TSan works on x86_64 only).
+filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
+  x86_64 i386)
+
 # Compute the Clang version from the LLVM version.
 # FIXME: We should be able to reuse CLANG_VERSION variable calculated
 #        in Clang cmake files, instead of copying the rules here.
