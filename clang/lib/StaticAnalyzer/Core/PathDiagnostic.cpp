@@ -788,27 +788,68 @@ void PathDiagnosticCallPiece::setCallee(const CallEnter &CE,
   callEnter = getLocationForCaller(CalleeCtx, CE.getLocationContext(), SM);
 }
 
+static inline void describeClass(raw_ostream &Out, const CXXRecordDecl *D,
+                                 StringRef Prefix = StringRef()) {
+  if (!D->getIdentifier())
+    return;
+  Out << Prefix << '\'' << *D << '\'';
+}
+
 static bool describeCodeDecl(raw_ostream &Out, const Decl *D,
-                             bool ShouldDescribeBlock,
+                             bool ExtendedDescription,
                              StringRef Prefix = StringRef()) {
   if (!D)
     return false;
 
   if (isa<BlockDecl>(D)) {
-    if (ShouldDescribeBlock)
+    if (ExtendedDescription)
       Out << Prefix << "anonymous block";
-    return ShouldDescribeBlock;
+    return ExtendedDescription;
   }
 
   if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(D)) {
-    if (isa<CXXConstructorDecl>(MD))
-      Out << Prefix << "constructor for '" << *MD << "'";
-    else if (isa<CXXDestructorDecl>(MD))
-      Out << Prefix << "'" << *MD << "'";
-    else if (MD->getParent()->getIdentifier())
-      Out << Prefix << "'" << *MD->getParent() << "::" << *MD << "'";
-    else
-      Out << Prefix << "'" << *MD << "'";
+    Out << Prefix;
+    if (ExtendedDescription && !MD->isUserProvided()) {
+      if (MD->isExplicitlyDefaulted())
+        Out << "defaulted ";
+      else
+        Out << "implicit ";
+    }
+
+    if (const CXXConstructorDecl *CD = dyn_cast<CXXConstructorDecl>(MD)) {
+      if (CD->isDefaultConstructor())
+        Out << "default ";
+      else if (CD->isCopyConstructor())
+        Out << "copy ";
+      else if (CD->isMoveConstructor())
+        Out << "move ";
+
+      Out << "constructor";
+      describeClass(Out, MD->getParent(), " for ");
+      
+    } else if (isa<CXXDestructorDecl>(MD)) {
+      if (!MD->isUserProvided()) {
+        Out << "destructor";
+        describeClass(Out, MD->getParent(), " for ");
+      } else {
+        // Use ~Foo for explicitly-written destructors.
+        Out << "'" << *MD << "'";
+      }
+
+    } else if (MD->isCopyAssignmentOperator()) {
+        Out << "copy assignment operator";
+        describeClass(Out, MD->getParent(), " for ");
+
+    } else if (MD->isMoveAssignmentOperator()) {
+        Out << "move assignment operator";
+        describeClass(Out, MD->getParent(), " for ");
+
+    } else {
+      if (MD->getParent()->getIdentifier())
+        Out << "'" << *MD->getParent() << "::" << *MD << "'";
+      else
+        Out << "'" << *MD << "'";
+    }
 
     return true;
   }
@@ -826,7 +867,7 @@ PathDiagnosticCallPiece::getCallEnterEvent() const {
   llvm::raw_svector_ostream Out(buf);
 
   Out << "Calling ";
-  describeCodeDecl(Out, Callee, /*DescribeBlocks=*/true);
+  describeCodeDecl(Out, Callee, /*ExtendedDescription=*/true);
 
   assert(callEnter.asLocation().isValid());
   return new PathDiagnosticEventPiece(callEnter, Out.str());
@@ -841,7 +882,7 @@ PathDiagnosticCallPiece::getCallEnterWithinCallerEvent() const {
   llvm::raw_svector_ostream Out(buf);
 
   Out << "Entered call";
-  describeCodeDecl(Out, Caller, /*DescribeBlocks=*/false, " from ");
+  describeCodeDecl(Out, Caller, /*ExtendedDescription=*/false, " from ");
 
   return new PathDiagnosticEventPiece(callEnterWithin, Out.str());
 }
@@ -857,7 +898,8 @@ PathDiagnosticCallPiece::getCallExitEvent() const {
   if (!CallStackMessage.empty()) {
     Out << CallStackMessage;
   } else {
-    bool DidDescribe = describeCodeDecl(Out, Callee, /*DescribeBlocks=*/false,
+    bool DidDescribe = describeCodeDecl(Out, Callee,
+                                        /*ExtendedDescription=*/false,
                                         "Returning from ");
     if (!DidDescribe)
       Out << "Returning to caller";
