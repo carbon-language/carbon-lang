@@ -274,6 +274,32 @@ TEST_F(FormatTest, FormatsSwitchStatement) {
                "  break;\n"
                "}\n"
                "}");
+  verifyFormat("switch (x) {\n"
+               "case 1: {\n"
+               "  f();\n"
+               "  {\n"
+               "    g();\n"
+               "    h();\n"
+               "  }\n"
+               "  break;\n"
+               "}\n"
+               "}");
+  verifyFormat("switch (x) {\n"
+               "case 1: {\n"
+               "  f();\n"
+               "  if (foo) {\n"
+               "    g();\n"
+               "    h();\n"
+               "  }\n"
+               "  break;\n"
+               "}\n"
+               "}");
+  verifyFormat("switch (x) {\n"
+               "case 1: {\n"
+               "  f();\n"
+               "  g();\n"
+               "} break;\n"
+               "}");
   verifyFormat("switch (test)\n"
                "  ;");
   verifyGoogleFormat("switch (x) {\n"

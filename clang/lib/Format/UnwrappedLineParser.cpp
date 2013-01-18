@@ -487,6 +487,8 @@ void UnwrappedLineParser::parseLabel() {
     --Line->Level;
   if (FormatTok.Tok.is(tok::l_brace)) {
     parseBlock();
+    if (FormatTok.Tok.is(tok::kw_break))
+      parseStructuralElement(); // "break;" after "}" goes on the same line.
   }
   addUnwrappedLine();
   Line->Level = OldLineLevel;

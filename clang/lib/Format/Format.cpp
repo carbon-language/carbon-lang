@@ -952,10 +952,10 @@ public:
             return false;
         }
         break;
-      case tok::l_paren: {
+      case tok::l_paren:
         if (!parseParens())
           return false;
-      } break;
+        break;
       case tok::l_square:
         if (!parseSquare())
           return false;
