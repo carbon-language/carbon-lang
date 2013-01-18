@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "LLLexer.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -55,22 +56,12 @@ uint64_t LLLexer::atoull(const char *Buffer, const char *End) {
   return Result;
 }
 
-static char parseHexChar(char C) {
-  if (C >= '0' && C <= '9')
-    return C-'0';
-  if (C >= 'A' && C <= 'F')
-    return C-'A'+10;
-  if (C >= 'a' && C <= 'f')
-    return C-'a'+10;
-  return 0;
-}
-
 uint64_t LLLexer::HexIntToVal(const char *Buffer, const char *End) {
   uint64_t Result = 0;
   for (; Buffer != End; ++Buffer) {
     uint64_t OldRes = Result;
     Result *= 16;
-    Result += parseHexChar(*Buffer);
+    Result += hexDigitValue(*Buffer);
 
     if (Result < OldRes) {   // Uh, oh, overflow detected!!!
       Error("constant bigger than 64 bits detected!");
@@ -86,12 +77,12 @@ void LLLexer::HexToIntPair(const char *Buffer, const char *End,
   for (int i=0; i<16; i++, Buffer++) {
     assert(Buffer != End);
     Pair[0] *= 16;
-    Pair[0] += parseHexChar(*Buffer);
+    Pair[0] += hexDigitValue(*Buffer);
   }
   Pair[1] = 0;
   for (int i=0; i<16 && Buffer != End; i++, Buffer++) {
     Pair[1] *= 16;
-    Pair[1] += parseHexChar(*Buffer);
+    Pair[1] += hexDigitValue(*Buffer);
   }
   if (Buffer != End)
     Error("constant bigger than 128 bits detected!");
@@ -105,12 +96,12 @@ void LLLexer::FP80HexToIntPair(const char *Buffer, const char *End,
   for (int i=0; i<4 && Buffer != End; i++, Buffer++) {
     assert(Buffer != End);
     Pair[1] *= 16;
-    Pair[1] += parseHexChar(*Buffer);
+    Pair[1] += hexDigitValue(*Buffer);
   }
   Pair[0] = 0;
   for (int i=0; i<16; i++, Buffer++) {
     Pair[0] *= 16;
-    Pair[0] += parseHexChar(*Buffer);
+    Pair[0] += hexDigitValue(*Buffer);
   }
   if (Buffer != End)
     Error("constant bigger than 128 bits detected!");
@@ -129,7 +120,7 @@ static void UnEscapeLexed(std::string &Str) {
         *BOut++ = '\\'; // Two \ becomes one
         BIn += 2;
       } else if (BIn < EndBuffer-2 && isxdigit(BIn[1]) && isxdigit(BIn[2])) {
-        *BOut = parseHexChar(BIn[1]) * 16 + parseHexChar(BIn[2]);
+        *BOut = hexDigitValue(BIn[1]) * 16 + hexDigitValue(BIn[2]);
         BIn += 3;                           // Skip over handled chars
         ++BOut;
       } else {
