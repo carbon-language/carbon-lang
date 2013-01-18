@@ -592,7 +592,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
   // Add any function attributes.
   attrs = PAL.getFnAttributes();
-  if (attrs.hasAttributes())
+  if (PAL.hasAttributes(AttributeSet::FunctionIndex))
     AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                     attrs));
 
@@ -722,7 +722,7 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
     // Add any function attributes.
     attrs = CallPAL.getFnAttributes();
-    if (attrs.hasAttributes())
+    if (CallPAL.hasAttributes(AttributeSet::FunctionIndex))
       AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                       attrs));
 

@@ -1176,7 +1176,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   }
 
   Attribute FnAttrs = CallerPAL.getFnAttributes();
-  if (FnAttrs.hasAttributes())
+  if (CallerPAL.hasAttributes(AttributeSet::FunctionIndex))
     attrVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                               FnAttrs));
 
@@ -1320,7 +1320,7 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
 
       // Add any function attributes.
       Attr = Attrs.getFnAttributes();
-      if (Attr.hasAttributes())
+      if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
         NewAttrs.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                    Attr));
 

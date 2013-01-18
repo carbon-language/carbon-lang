@@ -261,6 +261,10 @@ public:
   /// list.
   AttributeSet addAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
 
+  /// \brief Add function attributes to this attribute set. Since attribute sets
+  /// are immutable, this returns a new set.
+  AttributeSet addFnAttributes(LLVMContext &C, AttributeSet Attrs) const;
+
   /// \brief Remove the specified attribute at the specified index from this
   /// attribute list.  Since attribute lists are immutable, this returns the new
   /// list.
@@ -286,9 +290,7 @@ public:
   }
 
   /// \brief Return the alignment for the specified function parameter.
-  unsigned getParamAlignment(unsigned Idx) const {
-    return getAttributes(Idx).getAlignment();
-  }
+  unsigned getParamAlignment(unsigned Idx) const;
 
   /// \brief Return true if the attribute exists at the given index.
   bool hasAttribute(unsigned Index, Attribute::AttrKind Kind) const;

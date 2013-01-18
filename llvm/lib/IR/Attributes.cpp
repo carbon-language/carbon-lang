@@ -255,9 +255,19 @@ AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Idx)
 
   assert(AWI && "Cannot find index in attribute set!");
 
-  /// FIXME: This will be modified in the future. Basically, the
-  /// AttributeWithIndex class will contain the
+  uint64_t Mask = AWI->Attrs.Raw();
 
+  for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
+       I = Attribute::AttrKind(I + 1)) {
+    if (uint64_t A = (Mask & AttributeImpl::getAttrMask(I))) {
+      Attrs.insert(I);
+
+      if (I == Attribute::Alignment)
+        Alignment = 1ULL << ((A >> 16) - 1);
+      else if (I == Attribute::StackAlignment)
+        StackAlignment = 1ULL << ((A >> 26)-1);
+    }
+  }
 }
 
 void AttrBuilder::clear() {
@@ -610,6 +620,10 @@ std::string AttributeSet::getAsString(unsigned Index) const {
   return getAttributes(Index).getAsString();
 }
 
+unsigned AttributeSet::getParamAlignment(unsigned Idx) const {
+  return getAttributes(Idx).getAlignment();
+}
+
 unsigned AttributeSet::getStackAlignment(unsigned Index) const {
   return getAttributes(Index).getStackAlignment();
 }
@@ -644,6 +658,11 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
       return true;
 
   return false;
+}
+
+AttributeSet AttributeSet::addFnAttributes(LLVMContext &C,
+                                           AttributeSet Attrs) const {
+  return addAttr(C, FunctionIndex, getAttributes(FunctionIndex));
 }
 
 AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,

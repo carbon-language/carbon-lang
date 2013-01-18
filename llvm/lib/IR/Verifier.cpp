@@ -739,41 +739,61 @@ void Verifier::VerifyFunctionAttrs(FunctionType *FT,
       Assert1(Attr.Index == 1, "Attribute sret is not on first parameter!", V);
   }
 
-  Attribute FAttrs = Attrs.getFnAttributes();
-  AttrBuilder NotFn(FAttrs);
+  if (!Attrs.hasAttributes(AttributeSet::FunctionIndex))
+    return;
+
+  AttrBuilder NotFn(Attrs, AttributeSet::FunctionIndex);
   NotFn.removeFunctionOnlyAttrs();
   Assert1(!NotFn.hasAttributes(), "Attribute '" +
           Attribute::get(V->getContext(), NotFn).getAsString() +
           "' do not apply to the function!", V);
 
   // Check for mutually incompatible attributes.
-  Assert1(!((FAttrs.hasAttribute(Attribute::ByVal) &&
-             FAttrs.hasAttribute(Attribute::Nest)) ||
-            (FAttrs.hasAttribute(Attribute::ByVal) &&
-             FAttrs.hasAttribute(Attribute::StructRet)) ||
-            (FAttrs.hasAttribute(Attribute::Nest) &&
-             FAttrs.hasAttribute(Attribute::StructRet))), "Attributes "
-          "'byval, nest, and sret' are incompatible!", V);
+  Assert1(!((Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::ByVal) &&
+             Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::Nest)) ||
+            (Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::ByVal) &&
+             Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::StructRet)) ||
+            (Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::Nest) &&
+             Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::StructRet))),
+          "Attributes 'byval, nest, and sret' are incompatible!", V);
 
-  Assert1(!((FAttrs.hasAttribute(Attribute::ByVal) &&
-             FAttrs.hasAttribute(Attribute::Nest)) ||
-            (FAttrs.hasAttribute(Attribute::ByVal) &&
-             FAttrs.hasAttribute(Attribute::InReg)) ||
-            (FAttrs.hasAttribute(Attribute::Nest) &&
-             FAttrs.hasAttribute(Attribute::InReg))), "Attributes "
-          "'byval, nest, and inreg' are incompatible!", V);
+  Assert1(!((Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::ByVal) &&
+             Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::Nest)) ||
+            (Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::ByVal) &&
+             Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::InReg)) ||
+            (Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::Nest) &&
+             Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                                Attribute::InReg))),
+          "Attributes 'byval, nest, and inreg' are incompatible!", V);
 
-  Assert1(!(FAttrs.hasAttribute(Attribute::ZExt) &&
-            FAttrs.hasAttribute(Attribute::SExt)), "Attributes "
-          "'zeroext and signext' are incompatible!", V);
+  Assert1(!(Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                               Attribute::ZExt) &&
+            Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                               Attribute::SExt)),
+          "Attributes 'zeroext and signext' are incompatible!", V);
 
-  Assert1(!(FAttrs.hasAttribute(Attribute::ReadNone) &&
-            FAttrs.hasAttribute(Attribute::ReadOnly)), "Attributes "
-          "'readnone and readonly' are incompatible!", V);
+  Assert1(!(Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                               Attribute::ReadNone) &&
+            Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                               Attribute::ReadOnly)),
+          "Attributes 'readnone and readonly' are incompatible!", V);
 
-  Assert1(!(FAttrs.hasAttribute(Attribute::NoInline) &&
-            FAttrs.hasAttribute(Attribute::AlwaysInline)), "Attributes "
-          "'noinline and alwaysinline' are incompatible!", V);
+  Assert1(!(Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                               Attribute::NoInline) &&
+            Attrs.hasAttribute(AttributeSet::FunctionIndex,
+                               Attribute::AlwaysInline)),
+          "Attributes 'noinline and alwaysinline' are incompatible!", V);
 }
 
 static bool VerifyAttributeCount(const AttributeSet &Attrs, unsigned Params) {

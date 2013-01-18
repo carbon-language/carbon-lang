@@ -277,7 +277,7 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
       for (unsigned i = 0; PAL.getSlot(i).Index <= NumArgs; ++i)
         AttributesVec.push_back(PAL.getSlot(i));
       Attribute FnAttrs = PAL.getFnAttributes();
-      if (FnAttrs.hasAttributes())
+      if (PAL.hasAttributes(AttributeSet::FunctionIndex))
         AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
                                                         FnAttrs));
       PAL = AttributeSet::get(Fn.getContext(), AttributesVec);
