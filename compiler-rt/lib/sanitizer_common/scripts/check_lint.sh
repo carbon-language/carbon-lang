@@ -69,12 +69,14 @@ ${CPPLINT} --filter=${TSAN_LIT_TEST_LINT_FILTER} ${TSAN_RTL}/lit_tests/*.cc
 MSAN_RTL=${COMPILER_RT}/lib/msan
 ${CPPLINT} --filter=${MSAN_RTL_LINT_FILTER} ${MSAN_RTL}/*.{cc,h}
 
+set +e
+
 # Misc files
 FILES=${COMMON_RTL}/*.inc
 for FILE in $FILES; do
-    TMPFILE=$(mktemp --tmpdir $(basename $FILE)_XXXXX.cc)
+    TMPFILE=$(mktemp -u ${FILE}.XXXXX).cc
     echo "Checking $FILE"
-    cp -f $FILE $TMPFILE
-    ${CPPLINT} --filter=${TSAN_RTL_INC_LINT_FILTER} $TMPFILE
+    cp -f $FILE $TMPFILE && \
+        ${CPPLINT} --filter=${TSAN_RTL_INC_LINT_FILTER} $TMPFILE
     rm $TMPFILE
 done
