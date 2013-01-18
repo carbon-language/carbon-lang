@@ -48,6 +48,7 @@ public:
   virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
                                    MCSymbol *EHSymbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
+  virtual void EmitLinkerOptions(ArrayRef<std::string> Options);
   virtual void EmitDataRegion(MCDataRegionType Kind);
   virtual void EmitThumbFunc(MCSymbol *Func);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
@@ -176,6 +177,10 @@ void MCMachOStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
     getAssembler().setSubsectionsViaSymbols(true);
     return;
   }
+}
+
+void MCMachOStreamer::EmitLinkerOptions(ArrayRef<std::string> Options) {
+  getAssembler().getLinkerOptions().push_back(Options);
 }
 
 void MCMachOStreamer::EmitDataRegion(MCDataRegionType Kind) {

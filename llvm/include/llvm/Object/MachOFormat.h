@@ -148,7 +148,8 @@ namespace macho {
     LCT_CodeSignature = 0x1d,
     LCT_SegmentSplitInfo = 0x1e,
     LCT_FunctionStarts = 0x26,
-    LCT_DataInCode = 0x29
+    LCT_DataInCode = 0x29,
+    LCT_LinkerOptions = 0x2D
   };
 
   /// \brief Load command structure.
@@ -234,6 +235,14 @@ namespace macho {
     uint32_t Size;
     uint32_t DataOffset;
     uint32_t DataSize;
+  };
+
+  struct LinkerOptionsLoadCommand {
+    uint32_t Type;
+    uint32_t Size;
+    uint32_t Count;
+    // Load command is followed by Count number of zero-terminated UTF8 strings,
+    // and then zero-filled to be 4-byte aligned.
   };
 
   /// @}

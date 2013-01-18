@@ -849,6 +849,10 @@ private:
   std::vector<IndirectSymbolData> IndirectSymbols;
 
   std::vector<DataRegionData> DataRegions;
+
+  /// The list of linker options to propagate into the object file.
+  std::vector<std::vector<std::string> > LinkerOptions;
+
   /// The set of function symbols for which a .thumb_func directive has
   /// been seen.
   //
@@ -1058,6 +1062,14 @@ public:
   }
 
   size_t indirect_symbol_size() const { return IndirectSymbols.size(); }
+
+  /// @}
+  /// @name Linker Option List Access
+  /// @{
+
+  std::vector<std::vector<std::string> > &getLinkerOptions() {
+    return LinkerOptions;
+  }
 
   /// @}
   /// @name Data Region List Access

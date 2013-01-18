@@ -153,6 +153,9 @@ public:
   void ReadLinkeditDataLoadCommand(
     const LoadCommandInfo &LCI,
     InMemoryStruct<macho::LinkeditDataLoadCommand> &Res) const;
+  void ReadLinkerOptionsLoadCommand(
+    const LoadCommandInfo &LCI,
+    InMemoryStruct<macho::LinkerOptionsLoadCommand> &Res) const;
   void ReadIndirectSymbolTableEntry(
     const macho::DysymtabLoadCommand &DLC,
     unsigned Index,

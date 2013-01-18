@@ -259,6 +259,17 @@ void MachOObject::ReadLinkeditDataLoadCommand(const LoadCommandInfo &LCI,
 }
 
 template<>
+void SwapStruct(macho::LinkerOptionsLoadCommand &Value) {
+  SwapValue(Value.Type);
+  SwapValue(Value.Size);
+  SwapValue(Value.Count);
+}
+void MachOObject::ReadLinkerOptionsLoadCommand(const LoadCommandInfo &LCI,
+                   InMemoryStruct<macho::LinkerOptionsLoadCommand> &Res) const {
+  ReadInMemoryStruct(*this, Buffer->getBuffer(), LCI.Offset, Res);
+}
+
+template<>
 void SwapStruct(macho::IndirectSymbolTableEntry &Value) {
   SwapValue(Value.Index);
 }

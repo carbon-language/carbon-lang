@@ -337,7 +337,7 @@ static int DumpDataInCodeDataCommand(MachOObject &Obj,
   InMemoryStruct<macho::LinkeditDataLoadCommand> LLC;
   Obj.ReadLinkeditDataLoadCommand(LCI, LLC);
   if (!LLC)
-    return Error("unable to read segment load command");
+    return Error("unable to read data-in-code load command");
 
   outs() << "  ('dataoff', " << LLC->DataOffset << ")\n"
          << "  ('datasize', " << LLC->DataSize << ")\n"
@@ -356,6 +356,31 @@ static int DumpDataInCodeDataCommand(MachOObject &Obj,
            << "    ('kind', " << DICE->Kind << ")\n";
   }
 
+  outs() <<"  ])\n";
+
+  return 0;
+}
+
+static int DumpLinkerOptionsCommand(MachOObject &Obj,
+                                    const MachOObject::LoadCommandInfo &LCI) {
+  InMemoryStruct<macho::LinkerOptionsLoadCommand> LOLC;
+  Obj.ReadLinkerOptionsLoadCommand(LCI, LOLC);
+  if (!LOLC)
+    return Error("unable to read linker options load command");
+
+  outs() << "  ('count', " << LOLC->Count << ")\n"
+         << "  ('_strings', [\n";
+
+  uint64_t DataSize = LOLC->Size - sizeof(macho::LinkerOptionsLoadCommand);
+  StringRef Data = Obj.getData(
+    LCI.Offset + sizeof(macho::LinkerOptionsLoadCommand), DataSize);
+  for (unsigned i = 0; i != LOLC->Count; ++i) {
+    std::pair<StringRef,StringRef> Split = Data.split('\0');
+    outs() << "\t\"";
+    outs().write_escaped(Split.first);
+    outs() << "\",\n";
+    Data = Split.second;
+  }
   outs() <<"  ])\n";
 
   return 0;
@@ -389,6 +414,9 @@ static int DumpLoadCommand(MachOObject &Obj, unsigned Index) {
     break;
   case macho::LCT_DataInCode:
     Res = DumpDataInCodeDataCommand(Obj, LCI);
+    break;
+  case macho::LCT_LinkerOptions:
+    Res = DumpLinkerOptionsCommand(Obj, LCI);
     break;
   default:
     Warning("unknown load command: " + Twine(LCI.Command.Type));
