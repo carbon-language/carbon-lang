@@ -1300,7 +1300,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
               .Default(Unknown)) {
 #define SANITIZER(NAME, ID) \
     case ID: \
-      Opts.Sanitize##ID = true; \
+      Opts.Sanitize.ID = true; \
       break;
 #include "clang/Basic/Sanitizers.def"
 

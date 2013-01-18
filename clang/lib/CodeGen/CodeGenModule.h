@@ -30,6 +30,7 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/ValueHandle.h"
+#include "llvm/Transforms/Utils/BlackList.h"
 
 namespace llvm {
   class Module;
@@ -209,7 +210,7 @@ struct ARCEntrypoints {
   /// a call will be immediately retain.
   llvm::InlineAsm *retainAutoreleasedReturnValueMarker;
 };
-  
+
 /// CodeGenModule - This class organizes the cross-function state that is used
 /// while generating LLVM code.
 class CodeGenModule : public CodeGenTypeCache {
@@ -364,8 +365,12 @@ class CodeGenModule : public CodeGenTypeCache {
   struct {
     int GlobalUniqueCount;
   } Block;
-  
+
   GlobalDecl initializedGlobalDecl;
+
+  llvm::BlackList SanitizerBlacklist;
+
+  const SanitizerOptions &SanOpts;
 
   /// @}
 public:
@@ -888,6 +893,12 @@ public:
   /// Add global annotations that are set on D, for the global GV. Those
   /// annotations are emitted during finalization of the LLVM code.
   void AddGlobalAnnotations(const ValueDecl *D, llvm::GlobalValue *GV);
+
+  const llvm::BlackList &getSanitizerBlacklist() const {
+    return SanitizerBlacklist;
+  }
+
+  const SanitizerOptions &getSanOpts() const { return SanOpts; }
 
 private:
   llvm::GlobalValue *GetGlobalValue(StringRef Ref);

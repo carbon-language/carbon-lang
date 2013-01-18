@@ -785,7 +785,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
     Feature = Feature.substr(2, Feature.size() - 4);
 
   return llvm::StringSwitch<bool>(Feature)
-           .Case("address_sanitizer", LangOpts.SanitizeAddress)
+           .Case("address_sanitizer", LangOpts.Sanitize.Address)
            .Case("attribute_analyzer_noreturn", true)
            .Case("attribute_availability", true)
            .Case("attribute_availability_with_message", true)
@@ -807,8 +807,8 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_exceptions", LangOpts.Exceptions)
            .Case("cxx_rtti", LangOpts.RTTI)
            .Case("enumerator_attributes", true)
-           .Case("memory_sanitizer", LangOpts.SanitizeMemory)
-           .Case("thread_sanitizer", LangOpts.SanitizeThread)
+           .Case("memory_sanitizer", LangOpts.Sanitize.Memory)
+           .Case("thread_sanitizer", LangOpts.Sanitize.Thread)
            // Objective-C features
            .Case("objc_arr", LangOpts.ObjCAutoRefCount) // FIXME: REMOVE?
            .Case("objc_arc", LangOpts.ObjCAutoRefCount)

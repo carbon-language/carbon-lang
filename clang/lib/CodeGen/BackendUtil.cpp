@@ -164,11 +164,11 @@ static void addAddressSanitizerPasses(const PassManagerBuilder &Builder,
       static_cast<const PassManagerBuilderWrapper&>(Builder);
   const CodeGenOptions &CGOpts = BuilderWrapper.getCGOpts();
   const LangOptions &LangOpts = BuilderWrapper.getLangOpts();
-  PM.add(createAddressSanitizerFunctionPass(LangOpts.SanitizeInitOrder,
-                                            LangOpts.SanitizeUseAfterReturn,
-                                            LangOpts.SanitizeUseAfterScope,
+  PM.add(createAddressSanitizerFunctionPass(LangOpts.Sanitize.InitOrder,
+                                            LangOpts.Sanitize.UseAfterReturn,
+                                            LangOpts.Sanitize.UseAfterScope,
                                             CGOpts.SanitizerBlacklistFile));
-  PM.add(createAddressSanitizerModulePass(LangOpts.SanitizeInitOrder,
+  PM.add(createAddressSanitizerModulePass(LangOpts.Sanitize.InitOrder,
                                           CGOpts.SanitizerBlacklistFile));
 }
 
@@ -218,28 +218,28 @@ void EmitAssemblyHelper::CreatePasses(TargetMachine *TM) {
                            addObjCARCOptPass);
   }
 
-  if (LangOpts.SanitizeBounds) {
+  if (LangOpts.Sanitize.Bounds) {
     PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
                            addBoundsCheckingPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
                            addBoundsCheckingPass);
   }
 
-  if (LangOpts.SanitizeAddress) {
+  if (LangOpts.Sanitize.Address) {
     PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
                            addAddressSanitizerPasses);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
                            addAddressSanitizerPasses);
   }
 
-  if (LangOpts.SanitizeMemory) {
+  if (LangOpts.Sanitize.Memory) {
     PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
                            addMemorySanitizerPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
                            addMemorySanitizerPass);
   }
 
-  if (LangOpts.SanitizeThread) {
+  if (LangOpts.Sanitize.Thread) {
     PMBuilder.addExtension(PassManagerBuilder::EP_OptimizerLast,
                            addThreadSanitizerPass);
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,

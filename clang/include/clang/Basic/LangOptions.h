@@ -23,6 +23,14 @@
 
 namespace clang {
 
+struct SanitizerOptions {
+#define SANITIZER(NAME, ID) unsigned ID : 1;
+#include "clang/Basic/Sanitizers.def"
+
+  /// \brief Cached set of sanitizer options with all sanitizers disabled.
+  static const SanitizerOptions Disabled;
+};
+
 /// Bitfields of LangOptions, split out from LangOptions in order to ensure that
 /// this large collection of bitfields is a trivial class type.
 class LangOptionsBase {
@@ -32,6 +40,7 @@ public:
 #define ENUM_LANGOPT(Name, Type, Bits, Default, Description)
 #include "clang/Basic/LangOptions.def"
 
+  SanitizerOptions Sanitize;
 protected:
   // Define language options of enumeration type. These are private, and will
   // have accessors (below).

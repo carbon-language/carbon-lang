@@ -487,13 +487,13 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
 
   llvm::Value *Cond = 0;
 
-  if (getLangOpts().SanitizeNull) {
+  if (SanOpts->Null) {
     // The glvalue must not be an empty glvalue.
     Cond = Builder.CreateICmpNE(
         Address, llvm::Constant::getNullValue(Address->getType()));
   }
 
-  if (getLangOpts().SanitizeObjectSize && !Ty->isIncompleteType()) {
+  if (SanOpts->ObjectSize && !Ty->isIncompleteType()) {
     uint64_t Size = getContext().getTypeSizeInChars(Ty).getQuantity();
 
     // The glvalue must refer to a large enough storage region.
@@ -510,7 +510,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
 
   uint64_t AlignVal = 0;
 
-  if (getLangOpts().SanitizeAlignment) {
+  if (SanOpts->Alignment) {
     AlignVal = Alignment.getQuantity();
     if (!Ty->isIncompleteType() && !AlignVal)
       AlignVal = getContext().getTypeAlignInChars(Ty).getQuantity();
@@ -545,7 +545,7 @@ void CodeGenFunction::EmitTypeCheck(TypeCheckKind TCK, SourceLocation Loc,
   //    -- the [pointer or glvalue] is used to access a non-static data member
   //       or call a non-static member function
   CXXRecordDecl *RD = Ty->getAsCXXRecordDecl();
-  if (getLangOpts().SanitizeVptr &&
+  if (SanOpts->Vptr &&
       (TCK == TCK_MemberAccess || TCK == TCK_MemberCall) &&
       RD && RD->hasDefinition() && RD->isDynamicClass()) {
     // Compute a hash of the mangled name of the type.
@@ -1028,8 +1028,8 @@ llvm::Value *CodeGenFunction::EmitLoadOfScalar(llvm::Value *Addr, bool Volatile,
   if (Ty->isAtomicType())
     Load->setAtomic(llvm::SequentiallyConsistent);
 
-  if ((getLangOpts().SanitizeBool && hasBooleanRepresentation(Ty)) ||
-      (getLangOpts().SanitizeEnum && Ty->getAs<EnumType>())) {
+  if ((SanOpts->Bool && hasBooleanRepresentation(Ty)) ||
+      (SanOpts->Enum && Ty->getAs<EnumType>())) {
     llvm::APInt Min, End;
     if (getRangeForType(*this, Ty, Min, End, true)) {
       --End;
@@ -1974,6 +1974,7 @@ void CodeGenFunction::EmitCheck(llvm::Value *Checked, StringRef CheckName,
                                 ArrayRef<llvm::Constant *> StaticArgs,
                                 ArrayRef<llvm::Value *> DynamicArgs,
                                 CheckRecoverableKind RecoverKind) {
+  assert(SanOpts != &SanitizerOptions::Disabled);
   llvm::BasicBlock *Cont = createBasicBlock("cont");
 
   llvm::BasicBlock *Handler = createBasicBlock("handler." + CheckName);

@@ -436,7 +436,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     return RValue::get(Builder.CreateCall(F));
   }
   case Builtin::BI__builtin_unreachable: {
-    if (getLangOpts().SanitizeUnreachable)
+    if (SanOpts->Unreachable)
       EmitCheck(Builder.getFalse(), "builtin_unreachable",
                 EmitCheckSourceLocation(E->getExprLoc()),
                 ArrayRef<llvm::Value *>(), CRK_Unrecoverable);

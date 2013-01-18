@@ -170,11 +170,6 @@ BENIGN_LANGOPT(EmitMicrosoftInlineAsm , 1, 0,
 
 BENIGN_LANGOPT(RetainCommentsFromSystemHeaders, 1, 0, "retain documentation comments from system headers in the AST")
 
-/// Runtime sanitizers.
-#define SANITIZER(NAME, ID) \
-BENIGN_LANGOPT(Sanitize##ID, 1, 0, NAME " sanitizer")
-#include "clang/Basic/Sanitizers.def"
-
 #undef LANGOPT
 #undef VALUE_LANGOPT
 #undef BENIGN_LANGOPT

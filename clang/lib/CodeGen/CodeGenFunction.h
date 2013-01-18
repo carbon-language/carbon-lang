@@ -598,6 +598,9 @@ public:
   /// calls to EmitTypeCheck can be skipped.
   bool SanitizePerformTypeCheck;
 
+  /// \brief Sanitizer options to use for this function.
+  const SanitizerOptions *SanOpts;
+
   /// In ARC, whether we should autorelease the return value.
   bool AutoreleaseResult;
 
@@ -800,7 +803,7 @@ public:
 
   protected:
     CodeGenFunction& CGF;
-    
+
   public:
     /// \brief Enter a new cleanup scope.
     explicit RunCleanupsScope(CodeGenFunction &CGF)
