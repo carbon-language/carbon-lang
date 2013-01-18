@@ -261,6 +261,10 @@ public:
   /// list.
   AttributeSet addAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
 
+  /// \brief Add return attributes to this attribute set. Since attribute sets
+  /// are immutable, this returns a new set.
+  AttributeSet addRetAttributes(LLVMContext &C, AttributeSet Attrs) const;
+
   /// \brief Add function attributes to this attribute set. Since attribute sets
   /// are immutable, this returns a new set.
   AttributeSet addFnAttributes(LLVMContext &C, AttributeSet Attrs) const;

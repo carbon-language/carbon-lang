@@ -1557,9 +1557,8 @@ void AssemblyWriter::printFunction(const Function *F) {
 
   FunctionType *FT = F->getFunctionType();
   const AttributeSet &Attrs = F->getAttributes();
-  Attribute RetAttrs = Attrs.getRetAttributes();
-  if (RetAttrs.hasAttributes())
-    Out <<  Attrs.getRetAttributes().getAsString() << ' ';
+  if (Attrs.hasAttributes(AttributeSet::ReturnIndex))
+    Out <<  Attrs.getAsString(AttributeSet::ReturnIndex) << ' ';
   TypePrinter.print(F->getReturnType(), Out);
   Out << ' ';
   WriteAsOperandInternal(Out, F, &TypePrinter, &Machine, F->getParent());
@@ -1849,8 +1848,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Type *RetTy = FTy->getReturnType();
     const AttributeSet &PAL = CI->getAttributes();
 
-    if (PAL.getRetAttributes().hasAttributes())
-      Out << ' ' << PAL.getRetAttributes().getAsString();
+    if (PAL.hasAttributes(AttributeSet::ReturnIndex))
+      Out << ' ' << PAL.getAsString(AttributeSet::ReturnIndex);
 
     // If possible, print out the short form of the call instruction.  We can
     // only do this if the first argument is a pointer to a nonvararg function,
@@ -1888,8 +1887,8 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       PrintCallingConv(II->getCallingConv(), Out);
     }
 
-    if (PAL.getRetAttributes().hasAttributes())
-      Out << ' ' << PAL.getRetAttributes().getAsString();
+    if (PAL.hasAttributes(AttributeSet::ReturnIndex))
+      Out << ' ' << PAL.getAsString(AttributeSet::ReturnIndex);
 
     // If possible, print out the short form of the invoke instruction. We can
     // only do this if the first argument is a pointer to a nonvararg function,

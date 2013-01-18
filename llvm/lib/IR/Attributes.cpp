@@ -660,6 +660,11 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   return false;
 }
 
+AttributeSet AttributeSet::addRetAttributes(LLVMContext &C,
+                                            AttributeSet Attrs) const {
+  return addAttr(C, ReturnIndex, getAttributes(ReturnIndex));
+}
+
 AttributeSet AttributeSet::addFnAttributes(LLVMContext &C,
                                            AttributeSet Attrs) const {
   return addAttr(C, FunctionIndex, getAttributes(FunctionIndex));
