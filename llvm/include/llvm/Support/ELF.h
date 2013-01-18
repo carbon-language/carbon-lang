@@ -909,6 +909,9 @@ enum {
                                         // this section based on their sizes
   SHT_X86_64_UNWIND       = 0x70000001, // Unwind information
 
+  SHT_MIPS_REGINFO        = 0x70000006, // Register usage information
+  SHT_MIPS_OPTIONS        = 0x7000000d, // General options
+
   SHT_HIPROC        = 0x7fffffff, // Highest processor architecture-specific type.
   SHT_LOUSER        = 0x80000000, // Lowest type reserved for applications.
   SHT_HIUSER        = 0xffffffff  // Highest type reserved for applications.
@@ -975,8 +978,10 @@ enum {
 
   // All sections with the GPREL flag are grouped into a global data area 
   // for faster accesses
-  SHF_HEX_GPREL = 0x10000000
+  SHF_HEX_GPREL = 0x10000000,
 
+  // Do not strip this section. FIXME: We need target specific SHF_ enums.
+  SHF_MIPS_NOSTRIP = 0x8000000
 };
 
 // Section Group Flags

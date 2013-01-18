@@ -14,6 +14,7 @@
 #ifndef MIPSSUBTARGET_H
 #define MIPSSUBTARGET_H
 
+#include "MCTargetDesc/MipsReginfo.h"
 #include "llvm/MC/MCInstrItineraries.h"
 #include "llvm/Target/TargetSubtargetInfo.h"
 #include <string>
@@ -96,6 +97,9 @@ protected:
 
   InstrItineraryData InstrItins;
 
+  // The instance to the register info section object
+  MipsReginfo MRI;
+
 public:
   virtual bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
                                      AntiDepBreakMode& Mode,
@@ -145,6 +149,9 @@ public:
   bool hasSwap()      const { return HasSwap; }
   bool hasBitCount()  const { return HasBitCount; }
   bool hasFPIdx()     const { return HasFPIdx; }
+
+  // Grab MipsRegInfo object
+  const MipsReginfo &getMReginfo() const { return MRI; }
 };
 } // End llvm namespace
 

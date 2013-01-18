@@ -5,6 +5,7 @@ add_llvm_library(LLVMMipsDesc
   MipsMCCodeEmitter.cpp
   MipsMCTargetDesc.cpp
   MipsELFObjectWriter.cpp
+  MipsReginfo.cpp
   )
 
 add_dependencies(LLVMMipsDesc MipsCommonTableGen)

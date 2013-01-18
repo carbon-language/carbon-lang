@@ -1319,6 +1319,8 @@ void ELFObjectWriter::WriteSection(MCAssembler &Asm,
   case ELF::SHT_FINI_ARRAY:
   case ELF::SHT_PREINIT_ARRAY:
   case ELF::SHT_X86_64_UNWIND:
+  case ELF::SHT_MIPS_REGINFO:
+  case ELF::SHT_MIPS_OPTIONS:
     // Nothing to do.
     break;
 
