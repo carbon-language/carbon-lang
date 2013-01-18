@@ -386,7 +386,10 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
       "int bbbbbbbbbbbbbbbbbbbbb;   // comment\n"
       "int ccccccccccccccccccc;     // comment");
 
-
+  verifyFormat("#include \"a\"     // comment\n"
+               "#include \"a/b/c\" // comment");
+  verifyFormat("#include <a>     // comment\n"
+               "#include <a/b/c> // comment");
 
   verifyFormat("enum E {\n"
                "  // comment\n"

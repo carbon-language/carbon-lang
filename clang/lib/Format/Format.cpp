@@ -350,13 +350,15 @@ public:
 
     // Start iterating at 1 as we have correctly formatted of Token #0 above.
     while (State.NextToken != NULL) {
-      if (State.NextToken->Type == TT_ImplicitStringLiteral)
-        // We will not touch the rest of the white space in this
-        // \c UnwrappedLine. The returned value can also not matter, as we
-        // cannot continue an top-level implicit string literal on the next
-        // line.
-        return 0;
-      if (Line.Last->TotalLength <= getColumnLimit() - FirstIndent) {
+      if (State.NextToken->Type == TT_ImplicitStringLiteral) {
+        // Calculating the column is important for aligning trailing comments.
+        // FIXME: This does not seem to happen in conjunction with escaped
+        // newlines. If it does, fix!
+        State.Column += State.NextToken->FormatTok.WhiteSpaceLength +
+                        State.NextToken->FormatTok.TokenLength;
+        State.NextToken = State.NextToken->Children.empty() ? NULL :
+                          &State.NextToken->Children[0];
+      } else if (Line.Last->TotalLength <= getColumnLimit() - FirstIndent) {
         addTokenToState(false, false, State);
       } else {
         unsigned NoBreak = calcPenalty(State, false, UINT_MAX);
@@ -1096,7 +1098,9 @@ public:
       if (CurrentToken != NULL && CurrentToken->is(tok::less)) {
         next();
         while (CurrentToken != NULL) {
-          CurrentToken->Type = TT_ImplicitStringLiteral;
+          if (CurrentToken->isNot(tok::comment) ||
+              !CurrentToken->Children.empty())
+            CurrentToken->Type = TT_ImplicitStringLiteral;
           next();
         }
       } else {
