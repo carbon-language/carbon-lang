@@ -2226,6 +2226,21 @@ void ThreadSafetyAnalyzer::intersectAndWarn(FactSet &FSet1,
 }
 
 
+// Return true if block B never continues to its successors.
+inline bool neverReturns(const CFGBlock* B) {
+  if (B->hasNoReturnElement())
+    return true;
+  if (B->empty())
+    return false;
+
+  CFGElement Last = B->back();
+  if (CFGStmt* S = dyn_cast<CFGStmt>(&Last)) {
+    if (isa<CXXThrowExpr>(S->getStmt()))
+      return true;
+  }
+  return false;
+}
+
 
 /// \brief Check a function's CFG for thread-safety violations.
 ///
@@ -2355,7 +2370,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
       CFGBlockInfo *PrevBlockInfo = &BlockInfo[PrevBlockID];
 
       // Ignore edges from blocks that can't return.
-      if ((*PI)->hasNoReturnElement() || !PrevBlockInfo->Reachable)
+      if (neverReturns(*PI) || !PrevBlockInfo->Reachable)
         continue;
 
       // Okay, we can reach this block from the entry.
@@ -2371,7 +2386,6 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
           continue;
         }
       }
-
 
       FactSet PrevLockset;
       getEdgeLockset(PrevLockset, PrevBlockInfo->ExitSet, *PI, CurrBlock);
