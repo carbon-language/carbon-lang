@@ -1967,7 +1967,7 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
       continue;
 
     llvm::Attribute fnAttrs = oldAttrs.getFnAttributes();
-    if (fnAttrs.hasAttributes())
+    if (oldAttrs.hasAttributes(llvm::AttributeSet::FunctionIndex))
       newAttrs.push_back(llvm::
                        AttributeWithIndex::get(llvm::AttributeSet::FunctionIndex,
                                                fnAttrs));
