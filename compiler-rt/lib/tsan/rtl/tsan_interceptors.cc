@@ -1594,15 +1594,30 @@ TSAN_INTERCEPTOR(int, fork, int fake) {
   return pid;
 }
 
-#define COMMON_INTERCEPTOR_WRITE_RANGE(ptr, size)  \
-    MemoryAccessRange(thr, pc, (uptr)ptr, size, true)
-#define COMMON_INTERCEPTOR_READ_RANGE(ptr, size)  \
-    MemoryAccessRange(thr, pc, (uptr)ptr, size, false)
-#define COMMON_INTERCEPTOR_ENTER(func, ...) \
-  SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__)
-#define COMMON_INTERCEPTOR_FD_ACQUIRE(fd) FdAcquire(thr, pc, fd)
-#define COMMON_INTERCEPTOR_FD_RELEASE(fd) FdRelease(thr, pc, fd)
-#define COMMON_INTERCEPTOR_SET_THREAD_NAME(name) ThreadSetName(thr, name)
+struct TsanInterceptorContext {
+  ThreadState *thr;
+  const uptr caller_pc;
+  const uptr pc;
+};
+
+#define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
+    MemoryAccessRange(((TsanInterceptorContext*)ctx)->thr,  \
+                      ((TsanInterceptorContext*)ctx)->pc,   \
+                      (uptr)ptr, size, true)
+#define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size)       \
+    MemoryAccessRange(((TsanInterceptorContext*)ctx)->thr,  \
+                      ((TsanInterceptorContext*)ctx)->pc,   \
+                      (uptr)ptr, size, false)
+#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...) \
+    SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__) \
+    TsanInterceptorContext _ctx = {thr, caller_pc, pc}; \
+    ctx = (void*)&_ctx; (void)ctx;
+#define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
+    FdAcquire(((TsanInterceptorContext*)ctx)->thr, pc, fd)
+#define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) \
+    FdRelease(((TsanInterceptorContext*)ctx)->thr, pc, fd)
+#define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
+    ThreadSetName(((TsanInterceptorContext*)ctx)->thr, name)
 #include "sanitizer_common/sanitizer_common_interceptors.h"
 
 namespace __tsan {

@@ -236,6 +236,12 @@ void StatOutput(u64 *stat) {
   name[StatInt_nanosleep]                = "  nanosleep                       ";
   name[StatInt_gettimeofday]             = "  gettimeofday                    ";
   name[StatInt_fork]                     = "  fork                            ";
+  name[StatInt_vscanf]                   = "  vscanf                          ";
+  name[StatInt_vsscanf]                  = "  vsscanf                         ";
+  name[StatInt_vfscanf]                  = "  vfscanf                         ";
+  name[StatInt_scanf]                    = "  scanf                           ";
+  name[StatInt_sscanf]                   = "  sscanf                          ";
+  name[StatInt_fscanf]                   = "  fscanf                          ";
 
   name[StatAnnotation]                   = "Dynamic annotations               ";
   name[StatAnnotateHappensBefore]        = "  HappensBefore                   ";

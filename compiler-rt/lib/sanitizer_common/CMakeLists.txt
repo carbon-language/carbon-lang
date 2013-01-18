@@ -30,6 +30,7 @@ set(SANITIZER_HEADERS
   sanitizer_atomic.h
   sanitizer_common.h
   sanitizer_common_interceptors.h
+  sanitizer_common_interceptors_scanf.h
   sanitizer_flags.h
   sanitizer_internal_defs.h
   sanitizer_lfstack.h

@@ -1246,6 +1246,25 @@ TEST(MemorySanitizer, dladdr) {
   v_u8 = (unsigned long)info.dli_saddr;
 }
 
+TEST(MemorySanitizer, scanf) {
+  const char *input = "42 hello";
+  int* d = new int;
+  char* s = new char[7];
+  int res = sscanf(input, "%d %5s", d, s);
+  printf("res %d\n", res);
+  assert(res == 2);
+  v_s4 = *d;
+  v_u1 = s[0];
+  v_u1 = s[1];
+  v_u1 = s[2];
+  v_u1 = s[3];
+  v_u1 = s[4];
+  v_u1 = s[5];
+  EXPECT_POISONED(v_u1 = s[6]);
+  delete s;
+  delete d;
+}
+
 static void* SimpleThread_threadfn(void* data) {
   return new int;
 }

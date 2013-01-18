@@ -25,6 +25,8 @@
 // the standard system types (e.g. SSIZE_T instead of ssize_t)
 typedef __sanitizer::uptr SIZE_T;
 typedef __sanitizer::sptr SSIZE_T;
+typedef __sanitizer::sptr PTRDIFF_T;
+typedef __sanitizer::s64  INTMAX_T;
 typedef __sanitizer::u64  OFF_T;
 typedef __sanitizer::u64  OFF64_T;
 
