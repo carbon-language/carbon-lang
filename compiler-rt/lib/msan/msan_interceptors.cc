@@ -738,7 +738,8 @@ INTERCEPTOR(int, getrusage, int who, void *usage) {
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
     __msan_unpoison(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) do { } while (false)
-#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...) (void)ctx; ENSURE_MSAN_INITED()
+#define COMMON_INTERCEPTOR_ENTER(ctx, func, ...) \
+  do {ctx = 0; (void)ctx; ENSURE_MSAN_INITED();} while (false)
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) do { } while (false)  // FIXME
