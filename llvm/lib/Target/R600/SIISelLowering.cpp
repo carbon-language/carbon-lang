@@ -66,11 +66,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   MachineRegisterInfo & MRI = BB->getParent()->getRegInfo();
   MachineBasicBlock::iterator I = MI;
 
-  if (TII->get(MI->getOpcode()).TSFlags & SIInstrFlags::NEED_WAIT) {
-    AppendS_WAITCNT(MI, *BB, llvm::next(I));
-    return BB;
-  }
-
   switch (MI->getOpcode()) {
   default:
     return AMDGPUTargetLowering::EmitInstrWithCustomInserter(MI, BB);
@@ -140,13 +135,6 @@ MachineBasicBlock * SITargetLowering::EmitInstrWithCustomInserter(
   }
   return BB;
 }
-
-void SITargetLowering::AppendS_WAITCNT(MachineInstr *MI, MachineBasicBlock &BB,
-    MachineBasicBlock::iterator I) const {
-  BuildMI(BB, I, BB.findDebugLoc(I), TII->get(AMDGPU::S_WAITCNT))
-          .addImm(0);
-}
-
 
 void SITargetLowering::LowerSI_WQM(MachineInstr *MI, MachineBasicBlock &BB,
     MachineBasicBlock::iterator I, MachineRegisterInfo & MRI) const {

@@ -55,7 +55,9 @@ public:
 namespace SIInstrFlags {
   enum Flags {
     // First 4 bits are the instruction encoding
-    NEED_WAIT = 1 << 4
+    VM_CNT = 1 << 4,
+    EXP_CNT = 1 << 5,
+    LGKM_CNT = 1 << 6
   };
 }
 

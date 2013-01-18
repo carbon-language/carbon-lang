@@ -42,11 +42,14 @@ class InstSI <dag outs, dag ins, string asm, list<dag> pattern> :
     AMDGPUInst<outs, ins, asm, pattern> {
 
   field bits<4> EncodingType = 0;
-  field bits<1> NeedWait = 0;
+  field bits<1> VM_CNT = 0;
+  field bits<1> EXP_CNT = 0;
+  field bits<1> LGKM_CNT = 0;
 
   let TSFlags{3-0} = EncodingType;
-  let TSFlags{4} = NeedWait;
-
+  let TSFlags{4} = VM_CNT;
+  let TSFlags{5} = EXP_CNT;
+  let TSFlags{6} = LGKM_CNT;
 }
 
 class Enc32 <dag outs, dag ins, string asm, list<dag> pattern> :
@@ -140,8 +143,7 @@ def EXP : Enc64<
   let Inst{63-56} = VSRC3;
   let EncodingType = 0; //SIInstrEncodingType::EXP
 
-  let NeedWait = 1;
-  let usesCustomInserter = 1;
+  let EXP_CNT = 1;
 }
 
 class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -174,11 +176,10 @@ class MIMG <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{47-40} = VDATA;
   let Inst{52-48} = SRSRC;
   let Inst{57-53} = SSAMP;
-
   let EncodingType = 2; //SIInstrEncodingType::MIMG
 
-  let NeedWait = 1;
-  let usesCustomInserter = 1;
+  let VM_CNT = 1;
+  let EXP_CNT = 1;
 }
 
 class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
@@ -215,8 +216,9 @@ class MTBUF <bits<3> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{63-56} = SOFFSET;
   let EncodingType = 3; //SIInstrEncodingType::MTBUF
 
-  let NeedWait = 1;
-  let usesCustomInserter = 1;
+  let VM_CNT = 1;
+  let EXP_CNT = 1;
+
   let neverHasSideEffects = 1;
 }
 
@@ -252,8 +254,9 @@ class MUBUF <bits<7> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{63-56} = SOFFSET;
   let EncodingType = 4; //SIInstrEncodingType::MUBUF
 
-  let NeedWait = 1;
-  let usesCustomInserter = 1;
+  let VM_CNT = 1;
+  let EXP_CNT = 1;
+
   let neverHasSideEffects = 1;
 }
 
@@ -276,8 +279,7 @@ class SMRD <bits<5> op, dag outs, dag ins, string asm, list<dag> pattern> :
   let Inst{31-27} = 0x18; //encoding
   let EncodingType = 5; //SIInstrEncodingType::SMRD
 
-  let NeedWait = 1;
-  let usesCustomInserter = 1;
+  let LGKM_CNT = 1;
 }
 
 class SOP1 <bits<8> op, dag outs, dag ins, string asm, list<dag> pattern> :
