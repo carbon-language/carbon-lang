@@ -1180,7 +1180,7 @@ X86Operand *X86AsmParser::ParseIntelOperator(SMLoc Start, unsigned OpKind) {
     bool IsVarDecl;
     if (!SemaCallback->LookupInlineAsmIdentifier(Sym.getName(), NULL, Length,
                                                  Size, Type, IsVarDecl))
-      return ErrorOperand(Start, "Unable to lookup TYPE of expr!");
+      return ErrorOperand(Start, "Unable to lookup expr!");
   }
   unsigned CVal;
   switch(OpKind) {
