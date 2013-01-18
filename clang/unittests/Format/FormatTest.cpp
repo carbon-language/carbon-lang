@@ -932,9 +932,8 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
       "         aaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)));");
   verifyGoogleFormat(
-      "aaaaaaaaaaaaaaa(aaaaaaaaa,\n"
-      "                aaaaaaaaa,\n"
-      "                aaaaaaaaaaaaaaaaaaaaaaa).aaaaaaaaaaaaaaaaaa();");
+      "aaaaaaaaaaaaaaa(aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaa)\n"
+      "    .aaaaaaaaaaaaaaaaaa();");
   verifyGoogleFormat(
       "somefunction(someotherFunction(ddddddddddddddddddddddddddddddddddd,\n"
       "                               ddddddddddddddddddddddddddddd),\n"
@@ -947,6 +946,15 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
   verifyGoogleFormat("a(\"a\"\n"
                      "  \"a\",\n"
                      "  a);");
+}
+
+TEST_F(FormatTest, FormatsBuilderPattern) {
+  verifyFormat(
+      "return llvm::StringSwitch<Reference::Kind>(name)\n"
+      "       .StartsWith(\".eh_frame_hdr\", ORDER_EH_FRAMEHDR)\n"
+      "       .StartsWith(\".eh_frame\", ORDER_EH_FRAME).StartsWith(\".init\", ORDER_INIT)\n"
+      "       .StartsWith(\".fini\", ORDER_FINI).StartsWith(\".hash\", ORDER_HASH)\n"
+      "       .Default(ORDER_TEXT);\n");
 }
 
 TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {
@@ -1114,8 +1122,9 @@ TEST_F(FormatTest, WrapsTemplateDeclarations) {
   verifyFormat("template <typename T>\n"
                "virtual void loooooooooooongFunction(int Param1, int Param2);");
   verifyFormat(
-      "template <typename T> void f(int Paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaram1,\n"
-      "                             int Paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaram2);");
+      "template <typename T>\n"
+      "void f(int Paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaram1,\n"
+      "       int Paaaaaaaaaaaaaaaaaaaaaaaaaaaaaaram2);");
   verifyFormat(
       "template <typename T>\n"
       "void looooooooooooooooooooongFunction(int Paaaaaaaaaaaaaaaaaaaaram1,\n"

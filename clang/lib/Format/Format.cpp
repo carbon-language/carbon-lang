@@ -322,7 +322,7 @@ public:
       : Style(Style), SourceMgr(SourceMgr), Line(Line),
         FirstIndent(FirstIndent), RootToken(RootToken),
         Whitespaces(Whitespaces) {
-    Parameters.PenaltyIndentLevel = 15;
+    Parameters.PenaltyIndentLevel = 20;
     Parameters.PenaltyLevelDecrease = 30;
     Parameters.PenaltyExcessCharacter = 1000000;
   }
@@ -674,8 +674,7 @@ private:
         (Left.isNot(tok::comma) && Left.isNot(tok::semi)))
       return 20;
 
-    if (Left.is(tok::semi) || Left.is(tok::comma) ||
-        Left.ClosesTemplateDeclaration)
+    if (Left.is(tok::semi) || Left.is(tok::comma))
       return 0;
 
     // In Objective-C method expressions, prefer breaking before "param:" over
@@ -700,8 +699,11 @@ private:
     if (Level != prec::Unknown)
       return Level;
 
-    if (Right.is(tok::arrow) || Right.is(tok::period))
+    if (Right.is(tok::arrow) || Right.is(tok::period)) {
+      if (Left.is(tok::r_paren))
+        return 15; // Should be smaller than breaking at a nested comma.
       return 150;
+    }
 
     return 3;
   }
@@ -746,7 +748,9 @@ private:
     if (NewLine && State.NextToken->Parent->is(tok::comma) &&
         State.Stack.back().HasMultiParameterLine && !Style.BinPackParameters)
       return UINT_MAX;
-    if (!NewLine && State.NextToken->Type == TT_CtorInitializerColon)
+    if (!NewLine && (State.NextToken->Type == TT_CtorInitializerColon ||
+                     (State.NextToken->Parent->ClosesTemplateDeclaration &&
+                      State.Stack.size() == 1)))
       return UINT_MAX;
 
     unsigned CurrentPenalty = 0;
