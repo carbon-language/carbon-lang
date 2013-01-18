@@ -1798,12 +1798,10 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
   // Construct the list of macro definitions that need to be serialized.
   SmallVector<std::pair<const IdentifierInfo *, MacroInfo *>, 2> 
     MacrosToEmit;
-  llvm::SmallPtrSet<const IdentifierInfo*, 4> MacroDefinitionsSeen;
   for (Preprocessor::macro_iterator I = PP.macro_begin(Chain == 0),
                                     E = PP.macro_end(Chain == 0);
        I != E; ++I) {
     if (!IsModule || I->second->isPublic()) {
-      MacroDefinitionsSeen.insert(I->first);
       MacrosToEmit.push_back(std::make_pair(I->first, I->second));
     }
   }
@@ -1823,9 +1821,9 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
 
   for (unsigned I = 0, N = MacrosToEmit.size(); I != N; ++I) {
     const IdentifierInfo *Name = MacrosToEmit[I].first;
+    MacroInfo *HeadMI = MacrosToEmit[I].second;
 
-    for (MacroInfo *MI = MacrosToEmit[I].second; MI;
-         MI = MI->getPreviousDefinition()) {
+    for (MacroInfo *MI = HeadMI; MI; MI = MI->getPreviousDefinition()) {
       MacroID ID = getMacroRef(MI);
       if (!ID)
         continue;
@@ -1856,6 +1854,13 @@ void ASTWriter::WritePreprocessor(const Preprocessor &PP, bool IsModule) {
       Record.push_back(inferSubmoduleIDFromLocation(MI->getDefinitionLoc()));
       AddSourceLocation(MI->getDefinitionLoc(), Record);
       AddSourceLocation(MI->getDefinitionEndLoc(), Record);
+      Record.push_back(MI == HeadMI);
+      MacroInfo *PrevMI = MI->getPreviousDefinition();
+      // Serialize only the part of the definition chain that is local.
+      // The chain will be synthesized across modules by the ASTReader.
+      if (Chain && PrevMI && PrevMI->isFromAST())
+        PrevMI = 0;
+      addMacroRef(PrevMI, Record);
       AddSourceLocation(MI->getUndefLoc(), Record);
       Record.push_back(MI->isUsed());
       Record.push_back(MI->isPublic());
@@ -2737,14 +2742,8 @@ public:
     if (isInterestingIdentifier(II, Macro)) {
       DataLen += 2; // 2 bytes for builtin ID
       DataLen += 2; // 2 bytes for flags
-      if (hadMacroDefinition(II, Macro)) {
-        for (MacroInfo *M = Macro; M; M = M->getPreviousDefinition()) {
-          if (Writer.getMacroRef(M) != 0)
-            DataLen += 4;
-        }
-
+      if (hadMacroDefinition(II, Macro))
         DataLen += 4;
-      }
 
       for (IdentifierResolver::iterator D = IdResolver.begin(II),
                                      DEnd = IdResolver.end();
@@ -2789,13 +2788,8 @@ public:
     clang::io::Emit16(Out, Bits);
 
     if (HadMacroDefinition) {
-      // Write all of the macro IDs associated with this identifier.
-      for (MacroInfo *M = Macro; M; M = M->getPreviousDefinition()) {
-        if (MacroID ID = Writer.getMacroRef(M))
-          clang::io::Emit32(Out, ID);
-      }
-
-      clang::io::Emit32(Out, 0);
+      // Write the macro ID associated with this identifier.
+      clang::io::Emit32(Out, Writer.getMacroRef(Macro));
     }
 
     // Emit the declaration IDs in reverse order, because the
