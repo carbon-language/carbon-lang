@@ -19,4 +19,16 @@ void f() {
   __asm {
     mov eax, 1+++ // expected-error 2 {{unknown token in expression}}
   }
+  f();
+  __asm {
+    mov eax, LENGTH bar // expected-error {{Unable to lookup expr!}}
+  }
+  f();
+  __asm {
+    mov eax, SIZE bar // expected-error {{Unable to lookup expr!}}
+  }
+  f();
+  __asm {
+    mov eax, TYPE bar // expected-error {{Unable to lookup expr!}}
+  }
 }
