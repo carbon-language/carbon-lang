@@ -1104,6 +1104,51 @@ private:
                                         Error &err);
     
     //------------------------------------------------------------------
+    /// Create a temporary buffer in the target process to store the value
+    /// of a persistent variable that would otherwise not be accessible in
+    /// memory (e.g., register values or constants).
+    ///
+    /// @param[in] process
+    ///     The process to use when allocating the memory.
+    ///
+    /// @param[in] expr_var
+    ///     The variable whose live data will hold this buffer.
+    ///
+    /// @param[in] err
+    ///     An Error to populate with any messages related to
+    ///     allocating the memory.
+    ///
+    /// @return
+    ///     True on success; false otherwise.
+    //------------------------------------------------------------------
+    bool
+    CreateLiveMemoryForExpressionVariable (Process &process,
+                                           lldb::ClangExpressionVariableSP &expr_var,
+                                           Error &err);
+    
+    //------------------------------------------------------------------
+    /// Delete a temporary buffer created with
+    /// CreateLiveMemoryForExpressionVariable.
+    ///
+    /// @param[in] process
+    ///     The process to use when deallocating the memory.
+    ///
+    /// @param[in] expr_var
+    ///     The variable whose live data will hold this buffer.
+    ///
+    /// @param[in] err
+    ///     An Error to populate with any messages related to
+    ///     allocating the memory.
+    ///
+    /// @return
+    ///     True on success; false otherwise.
+    //------------------------------------------------------------------
+    bool
+    DeleteLiveMemoryForExpressionVariable (Process &process,
+                                           lldb::ClangExpressionVariableSP &expr_var,
+                                           Error &err);
+    
+    //------------------------------------------------------------------
     /// Actually do the task of materializing or dematerializing a 
     /// variable.
     ///

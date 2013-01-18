@@ -1835,13 +1835,80 @@ ClangExpressionDeclMap::DoMaterializeOnePersistentVariable
     return true;
 }
 
-bool 
+bool
+ClangExpressionDeclMap::CreateLiveMemoryForExpressionVariable
+(
+    Process &process,
+    ClangExpressionVariableSP &expr_var,
+    Error &err
+)
+{
+    Error allocate_error;
+    TypeFromUser type(expr_var->GetTypeFromUser());
+    const ConstString &name(expr_var->GetName());
+    
+    size_t value_bit_size = ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType());
+    size_t value_byte_size = value_bit_size % 8 ? ((value_bit_size + 8) / 8) : (value_bit_size / 8);
+
+    Scalar val_addr (process.AllocateMemory (value_byte_size,
+                                             lldb::ePermissionsReadable | lldb::ePermissionsWritable,
+                                             allocate_error));
+    
+    if (val_addr.ULongLong() == LLDB_INVALID_ADDRESS)
+    {
+        err.SetErrorStringWithFormat ("Couldn't allocate a memory area to store %s: %s",
+                                      name.GetCString(),
+                                      allocate_error.AsCString());
+        return false;
+    }
+    
+    // Put the location of the spare memory into the live data of the ValueObject.
+    
+    expr_var->m_live_sp = ValueObjectConstResult::Create (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope(),
+                                                          type.GetASTContext(),
+                                                          type.GetOpaqueQualType(),
+                                                          name,
+                                                          val_addr.ULongLong(),
+                                                          eAddressTypeLoad,
+                                                          value_byte_size);
+    
+    return true;
+}
+
+bool
+ClangExpressionDeclMap::DeleteLiveMemoryForExpressionVariable
+(
+    Process &process,
+    ClangExpressionVariableSP &expr_var,
+    Error &err
+)
+{
+    const ConstString &name(expr_var->GetName());
+    
+    Scalar &val_addr = expr_var->m_live_sp->GetValue().GetScalar();
+    
+    Error deallocate_error = process.DeallocateMemory(val_addr.ULongLong());
+    
+    if (!deallocate_error.Success())
+    {
+        err.SetErrorStringWithFormat ("Couldn't deallocate spare memory area for %s: %s",
+                                      name.GetCString(),
+                                      deallocate_error.AsCString());
+        return false;
+    }
+    
+    expr_var->m_live_sp.reset();
+    
+    return true;
+}
+
+bool
 ClangExpressionDeclMap::DoMaterializeOneVariable
 (
     bool dematerialize,
     const SymbolContext &sym_ctx,
     ClangExpressionVariableSP &expr_var,
-    lldb::addr_t addr, 
+    lldb::addr_t addr,
     Error &err
 )
 {
@@ -1937,6 +2004,66 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                                           name.GetCString(), 
                                           ss.GetString().c_str());
             return false;
+        }
+        break;
+    case Value::eValueTypeHostAddress:
+        {
+            if (dematerialize)
+            {
+                if (!DeleteLiveMemoryForExpressionVariable(*process, expr_var, err))
+                    return false;
+            }
+            else
+            {                
+                DataExtractor value_data_extractor;
+                
+                if (location_value->GetData(value_data_extractor))
+                {
+                    if (value_byte_size != value_data_extractor.GetByteSize())
+                    {
+                        err.SetErrorStringWithFormat ("Size mismatch for %s: %llu versus %llu",
+                                                      name.GetCString(),
+                                                      (uint64_t)value_data_extractor.GetByteSize(),
+                                                      (uint64_t)value_byte_size);
+                        return false;
+                    }
+                    
+                    if (!CreateLiveMemoryForExpressionVariable(*process, expr_var, err))
+                        return false;
+                    
+                    Scalar &buf_addr = expr_var->m_live_sp->GetValue().GetScalar();
+
+                    Error write_error;
+                    
+                    if (!process->WriteMemory(buf_addr.ULongLong(),
+                                              value_data_extractor.GetDataStart(),
+                                              value_data_extractor.GetByteSize(),
+                                              write_error))
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't write %s to the target: %s",
+                                                      name.GetCString(),
+                                                      write_error.AsCString());
+                        return false;
+                    }
+                    
+                    if (!process->WriteScalarToMemory(addr,
+                                                      buf_addr,
+                                                      process->GetAddressByteSize(),
+                                                      write_error))
+                    {
+                        err.SetErrorStringWithFormat ("Couldn't write the address of %s to the target: %s",
+                                                      name.GetCString(),
+                                                      write_error.AsCString());
+                        return false;
+                    }
+                }
+                else
+                {
+                    err.SetErrorStringWithFormat ("%s is marked as a host address but doesn't contain any data",
+                                                  name.GetCString());
+                    return false;
+                }
+            }
         }
         break;
     case Value::eValueTypeLoadAddress:
@@ -2057,19 +2184,8 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                     return false;
                 }
                 
-                // Deallocate the spare area and clear the variable's live data.
-                
-                Error deallocate_error = process->DeallocateMemory(reg_addr.ULongLong());
-                
-                if (!deallocate_error.Success())
-                {
-                    err.SetErrorStringWithFormat ("Couldn't deallocate spare memory area for %s: %s", 
-                                                  name.GetCString(), 
-                                                  deallocate_error.AsCString());
+                if (!DeleteLiveMemoryForExpressionVariable(*process, expr_var, err))
                     return false;
-                }
-                
-                expr_var->m_live_sp.reset();
             }
             else
             {
@@ -2103,36 +2219,17 @@ ClangExpressionDeclMap::DoMaterializeOneVariable
                     
                     return true;
                 }
-
+                
                 // Allocate a spare memory area to place the register's contents into.  This memory area will be pointed to by the slot in the
                 // struct.
                 
-                Error allocate_error;
-                
-                Scalar reg_addr (process->AllocateMemory (value_byte_size, 
-                                                          lldb::ePermissionsReadable | lldb::ePermissionsWritable, 
-                                                          allocate_error));
-                
-                if (reg_addr.ULongLong() == LLDB_INVALID_ADDRESS)
-                {
-                    err.SetErrorStringWithFormat ("Couldn't allocate a memory area to store %s: %s", 
-                                                  name.GetCString(), 
-                                                  allocate_error.AsCString());
+                if (!CreateLiveMemoryForExpressionVariable (*process, expr_var, err))
                     return false;
-                }
-                
-                // Put the location of the spare memory into the live data of the ValueObject.
-                
-                expr_var->m_live_sp = ValueObjectConstResult::Create (m_parser_vars->m_exe_ctx.GetBestExecutionContextScope(),
-                                                                      type.GetASTContext(),
-                                                                      type.GetOpaqueQualType(),
-                                                                      name,
-                                                                      reg_addr.ULongLong(),
-                                                                      eAddressTypeLoad,
-                                                                      value_byte_size);
                 
                 // Now write the location of the area into the struct.
-                                
+                
+                Scalar &reg_addr = expr_var->m_live_sp->GetValue().GetScalar();
+                
                 if (!process->WriteScalarToMemory (addr, 
                                                    reg_addr, 
                                                    process->GetAddressByteSize(), 
@@ -3055,7 +3152,23 @@ ClangExpressionDeclMap::GetVariableValue
     }
     Error err;
     
-    if (!var_location_expr.Evaluate(&m_parser_vars->m_exe_ctx, ast, NULL, NULL, NULL, loclist_base_load_addr, NULL, *var_location.get(), &err))
+    if (var->GetLocationIsConstantValueData())
+    {
+        DataExtractor const_value_extractor;
+        
+        if (var_location_expr.GetExpressionData(const_value_extractor))
+        {
+            var_location->operator=(Value(const_value_extractor.GetDataStart(), const_value_extractor.GetByteSize()));
+            var_location->SetValueType(Value::eValueTypeHostAddress);
+        }
+        else
+        {
+            if (log)
+                log->Printf("Error evaluating constant variable: %s", err.AsCString());
+            return NULL;
+        }
+    }
+    else if (!var_location_expr.Evaluate(&m_parser_vars->m_exe_ctx, ast, NULL, NULL, NULL, loclist_base_load_addr, NULL, *var_location.get(), &err))
     {
         if (log)
             log->Printf("Error evaluating location: %s", err.AsCString());
