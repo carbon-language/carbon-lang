@@ -25,7 +25,7 @@ void PoisonShadow(uptr addr, uptr size, u8 value) {
   CHECK(AddrIsAlignedByGranularity(addr));
   CHECK(AddrIsAlignedByGranularity(addr + size));
   uptr shadow_beg = MemToShadow(addr);
-  uptr shadow_end = MemToShadow(addr + size);
+  uptr shadow_end = MemToShadow(addr + size - SHADOW_GRANULARITY) + 1;
   CHECK(REAL(memset) != 0);
   REAL(memset)((void*)shadow_beg, value, shadow_end - shadow_beg);
 }

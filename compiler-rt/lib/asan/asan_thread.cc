@@ -74,7 +74,7 @@ void AsanThread::Destroy() {
 void AsanThread::Init() {
   SetThreadStackTopAndBottom();
   CHECK(AddrIsInMem(stack_bottom_));
-  CHECK(AddrIsInMem(stack_top_));
+  CHECK(AddrIsInMem(stack_top_ - 1));
   ClearShadowForThreadStack();
   if (flags()->verbosity >= 1) {
     int local = 0;
