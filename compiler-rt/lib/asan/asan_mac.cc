@@ -270,9 +270,6 @@ void dispatch_barrier_async_f(dispatch_queue_t dq, void *ctxt,
                               dispatch_function_t func);
 void dispatch_group_async_f(dispatch_group_t group, dispatch_queue_t dq,
                             void *ctxt, dispatch_function_t func);
-int pthread_workqueue_additem_np(pthread_workqueue_t workq,
-    void *(*workitem_func)(void *), void * workitem_arg,
-    pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
 }  // extern "C"
 
 static ALWAYS_INLINE
@@ -427,43 +424,6 @@ INTERCEPTOR(void, dispatch_source_set_event_handler,
 }
 #endif
 
-// The following stuff has been extremely helpful while looking for the
-// unhandled functions that spawned jobs on Chromium shutdown. If the verbosity
-// level is 2 or greater, we wrap pthread_workqueue_additem_np() in order to
-// find the points of worker thread creation (each of such threads may be used
-// to run several tasks, that's why this is not enough to support the whole
-// libdispatch API.
-extern "C"
-void *wrap_workitem_func(void *arg) {
-  if (flags()->verbosity >= 2) {
-    Report("wrap_workitem_func: %p, pthread_self: %p\n", arg, pthread_self());
-  }
-  asan_block_context_t *ctxt = (asan_block_context_t*)arg;
-  worker_t fn = (worker_t)(ctxt->func);
-  void *result =  fn(ctxt->block);
-  GET_STACK_TRACE_THREAD;
-  asan_free(arg, &stack, FROM_MALLOC);
-  return result;
-}
-
-INTERCEPTOR(int, pthread_workqueue_additem_np, pthread_workqueue_t workq,
-    void *(*workitem_func)(void *), void * workitem_arg,
-    pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp) {
-  GET_STACK_TRACE_THREAD;
-  asan_block_context_t *asan_ctxt =
-      (asan_block_context_t*) asan_malloc(sizeof(asan_block_context_t), &stack);
-  asan_ctxt->block = workitem_arg;
-  asan_ctxt->func = (dispatch_function_t)workitem_func;
-  asan_ctxt->parent_tid = asanThreadRegistry().GetCurrentTidOrInvalid();
-  if (flags()->verbosity >= 2) {
-    Report("pthread_workqueue_additem_np: %p\n", asan_ctxt);
-    PRINT_CURRENT_STACK();
-  }
-  return REAL(pthread_workqueue_additem_np)(workq, wrap_workitem_func,
-                                            asan_ctxt, itemhandlep,
-                                            gencountp);
-}
-
 // See http://opensource.apple.com/source/CF/CF-635.15/CFString.c
 int __CFStrIsConstant(CFStringRef str) {
   CFRuntimeBase *base = (CFRuntimeBase*)str;
@@ -495,12 +455,6 @@ void InitializeMacInterceptors() {
   CHECK(INTERCEPT_FUNCTION(dispatch_after_f));
   CHECK(INTERCEPT_FUNCTION(dispatch_barrier_async_f));
   CHECK(INTERCEPT_FUNCTION(dispatch_group_async_f));
-  // We don't need to intercept pthread_workqueue_additem_np() to support the
-  // libdispatch API, but it helps us to debug the unsupported functions. Let's
-  // intercept it only during verbose runs.
-  if (flags()->verbosity >= 2) {
-    CHECK(INTERCEPT_FUNCTION(pthread_workqueue_additem_np));
-  }
   // Normally CFStringCreateCopy should not copy constant CF strings.
   // Replacing the default CFAllocator causes constant strings to be copied
   // rather than just returned, which leads to bugs in big applications like
