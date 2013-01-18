@@ -2628,10 +2628,10 @@ For example, the following metadata section specifies two separate sets of
 linker options, presumably to link against ``libz`` and the ``Cocoa``
 framework::
 
-    !0 = metadata !{ i32 6, "Linker Options", 
+    !0 = metadata !{ i32 6, metadata !"Linker Options", 
        metadata !{
-          !metadata { metadata !"-lz" },
-          !metadata { metadata !"-framework", metadata !"Cocoa" } } }
+          metadata !{ metadata !"-lz" },
+          metadata !{ metadata !"-framework", metadata !"Cocoa" } } }
     !llvm.module.flags = !{ !0 }
 
 The metadata encoding as lists of lists of options, as opposed to a collapsed

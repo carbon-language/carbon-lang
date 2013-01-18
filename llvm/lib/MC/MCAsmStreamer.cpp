@@ -383,6 +383,7 @@ void MCAsmStreamer::EmitLinkerOptions(ArrayRef<std::string> Options) {
          ie = Options.end(); it != ie; ++it) {
     OS << ", " << '"' << *it << '"';
   }
+  OS << "\n";
 }
 
 void MCAsmStreamer::EmitDataRegion(MCDataRegionType Kind) {
