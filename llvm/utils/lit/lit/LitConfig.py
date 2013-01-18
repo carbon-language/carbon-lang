@@ -19,7 +19,6 @@ class LitConfig:
 
     def __init__(self, progname, path, quiet,
                  useValgrind, valgrindLeakCheck, valgrindArgs,
-                 useTclAsSh,
                  noExecute, ignoreStdErr, debug, isWindows,
                  params):
         # The name of the test runner.
@@ -30,7 +29,6 @@ class LitConfig:
         self.useValgrind = bool(useValgrind)
         self.valgrindLeakCheck = bool(valgrindLeakCheck)
         self.valgrindUserArgs = list(valgrindArgs)
-        self.useTclAsSh = bool(useTclAsSh)
         self.noExecute = noExecute
         self.ignoreStdErr = ignoreStdErr
         self.debug = debug
@@ -80,7 +78,7 @@ class LitConfig:
                     break
 
         if self.bashPath is None:
-            self.warning("Unable to find 'bash', running Tcl tests internally.")
+            self.warning("Unable to find 'bash'.")
             self.bashPath = ''
 
         return self.bashPath

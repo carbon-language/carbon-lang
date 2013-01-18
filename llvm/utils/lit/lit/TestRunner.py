@@ -269,82 +269,6 @@ def executeScriptInternal(test, litConfig, tmpBase, commands, cwd):
 
     return out, err, exitCode
 
-def executeTclScriptInternal(test, litConfig, tmpBase, commands, cwd):
-    import TclUtil
-    cmds = []
-    for ln in commands:
-        # Given the unfortunate way LLVM's test are written, the line gets
-        # backslash substitution done twice.
-        ln = TclUtil.TclLexer(ln).lex_unquoted(process_all = True)
-
-        try:
-            tokens = list(TclUtil.TclLexer(ln).lex())
-        except:
-            return (Test.FAIL, "Tcl lexer error on: %r" % ln)
-
-        # Validate there are no control tokens.
-        for t in tokens:
-            if not isinstance(t, str):
-                return (Test.FAIL,
-                        "Invalid test line: %r containing %r" % (ln, t))
-
-        try:
-            cmds.append(TclUtil.TclExecCommand(tokens).parse_pipeline())
-        except:
-            return (Test.FAIL, "Tcl 'exec' parse error on: %r" % ln)
-
-    if litConfig.useValgrind:
-        for pipeline in cmds:
-            if pipeline.commands:
-                # Only valgrind the first command in each pipeline, to avoid
-                # valgrinding things like grep, not, and FileCheck.
-                cmd = pipeline.commands[0]
-                cmd.args = litConfig.valgrindArgs + cmd.args
-
-    cmd = cmds[0]
-    for c in cmds[1:]:
-        cmd = ShUtil.Seq(cmd, '&&', c)
-
-    # FIXME: This is lame, we shouldn't need bash. See PR5240.
-    bashPath = litConfig.getBashPath()
-    if litConfig.useTclAsSh and bashPath:
-        script = tmpBase + '.script'
-
-        # Write script file
-        f = open(script,'w')
-        print >>f, 'set -o pipefail'
-        cmd.toShell(f, pipefail = True)
-        f.close()
-
-        if 0:
-            print >>sys.stdout, cmd
-            print >>sys.stdout, open(script).read()
-            print >>sys.stdout
-            return '', '', 0
-
-        command = [litConfig.getBashPath(), script]
-        out,err,exitCode = executeCommand(command, cwd=cwd,
-                                          env=test.config.environment)
-
-        return out,err,exitCode
-    else:
-        results = []
-        try:
-            exitCode = executeShCmd(cmd, test.config, cwd, results)
-        except InternalShellError,e:
-            results.append((e.command, '', e.message + '\n', 255))
-            exitCode = 255
-
-    out = err = ''
-
-    for i,(cmd, cmd_out, cmd_err, res) in enumerate(results):
-        out += 'Command %d: %s\n' % (i, ' '.join('"%s"' % s for s in cmd.args))
-        out += 'Command %d Result: %r\n' % (i, res)
-        out += 'Command %d Output:\n%s\n\n' % (i, cmd_out)
-        out += 'Command %d Stderr:\n%s\n\n' % (i, cmd_err)
-
-    return out, err, exitCode
-
 def executeScript(test, litConfig, tmpBase, commands, cwd):
     bashPath = litConfig.getBashPath();
     isWin32CMDEXE = (litConfig.isWindows and not bashPath)
@@ -429,8 +353,6 @@ def parseIntegratedTestScript(test, normalize_slashes=False,
                           ('%{pathsep}', os.pathsep),
                           ('%t', tmpBase + '.tmp'),
                           ('%T', tmpDir),
-                          # FIXME: Remove this once we kill DejaGNU.
-                          ('%abs_tmp', tmpBase + '.tmp'),
                           ('#_MARKER_#', '%')])
 
     # Collect the test lines from the script.
@@ -528,53 +450,6 @@ def formatTestOutput(status, out, err, exitCode, failDueToStderr, script):
         output.write(err)
         print >>output, "--"
     return (status, output.getvalue())
-
-def executeTclTest(test, litConfig):
-    if test.config.unsupported:
-        return (Test.UNSUPPORTED, 'Test is unsupported')
-
-    # Parse the test script, normalizing slashes in substitutions on Windows
-    # (since otherwise Tcl style lexing will treat them as escapes).
-    res = parseIntegratedTestScript(test, normalize_slashes=kIsWindows)
-    if len(res) == 2:
-        return res
-
-    script, isXFail, tmpBase, execdir = res
-
-    if litConfig.noExecute:
-        return (Test.PASS, '')
-
-    # Create the output directory if it does not already exist.
-    Util.mkdir_p(os.path.dirname(tmpBase))
-
-    res = executeTclScriptInternal(test, litConfig, tmpBase, script, execdir)
-    if len(res) == 2:
-        return res
-
-    # Test for failure. In addition to the exit code, Tcl commands are
-    # considered to fail if there is any standard error output.
-    out,err,exitCode = res
-    if isXFail:
-        ok = exitCode != 0 or err and not litConfig.ignoreStdErr
-        if ok:
-            status = Test.XFAIL
-        else:
-            status = Test.XPASS
-    else:
-        ok = exitCode == 0 and (not err or litConfig.ignoreStdErr)
-        if ok:
-            status = Test.PASS
-        else:
-            status = Test.FAIL
-
-    if ok:
-        return (status,'')
-
-    # Set a flag for formatTestOutput so it can explain why the test was
-    # considered to have failed, despite having an exit code of 0.
-    failDueToStderr = exitCode == 0 and err and not litConfig.ignoreStdErr
-
-    return formatTestOutput(status, out, err, exitCode, failDueToStderr, script)
 
 def executeShTest(test, litConfig, useExternalSh,
                   extra_substitutions=[]):

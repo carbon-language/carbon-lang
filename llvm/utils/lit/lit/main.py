@@ -326,7 +326,6 @@ def load_test_suite(inputs):
                                     useValgrind = False,
                                     valgrindLeakCheck = False,
                                     valgrindArgs = [],
-                                    useTclAsSh = False,
                                     noExecute = False,
                                     ignoreStdErr = False,
                                     debug = False,
@@ -442,9 +441,6 @@ def main(builtinParameters = {}):    # Bump the GIL check interval, its more imp
     group.add_option("", "--show-suites", dest="showSuites",
                       help="Show discovered test suites",
                       action="store_true", default=False)
-    group.add_option("", "--no-tcl-as-sh", dest="useTclAsSh",
-                      help="Don't run Tcl scripts using 'sh'",
-                      action="store_false", default=True)
     group.add_option("", "--repeat", dest="repeatTests", metavar="N",
                       help="Repeat tests N times (for timing)",
                       action="store", default=None, type=int)
@@ -489,7 +485,6 @@ def main(builtinParameters = {}):    # Bump the GIL check interval, its more imp
                                     useValgrind = opts.useValgrind,
                                     valgrindLeakCheck = opts.valgrindLeakCheck,
                                     valgrindArgs = opts.valgrindArgs,
-                                    useTclAsSh = opts.useTclAsSh,
                                     noExecute = opts.noExecute,
                                     ignoreStdErr = False,
                                     debug = opts.debug,
