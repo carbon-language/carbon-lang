@@ -152,6 +152,53 @@ get_thread_identifier_info (thread_t thread)
   return tident;
 }
 
+
+/* Given a mach port # (in the examine-threads mach port namespace) for a thread,
+   find the mach port # in the inferior program's port namespace.  
+   Sets inferior_port if successful.
+   Returns true if successful, false if unable to find the port number.  */
+
+bool
+inferior_namespace_mach_port_num (task_t task, thread_t examine_threads_port, thread_t *inferior_port)
+{
+    kern_return_t retval;
+    mach_port_name_array_t names;
+    mach_msg_type_number_t nameslen;
+    mach_port_type_array_t types;
+    mach_msg_type_number_t typeslen;
+
+    if (inferior_port == NULL)
+        return false;
+
+    retval = mach_port_names (task, &names, &nameslen, &types, &typeslen);
+    if (retval != KERN_SUCCESS)
+    {
+        printf ("Error - unable to get mach port names for inferior.\n");
+        return false;
+    }
+    int i = 0;
+    for (i = 0; i < nameslen; i++)
+    {
+        mach_port_t local_name;
+        mach_msg_type_name_t local_type;
+        retval = mach_port_extract_right (task, names[i], MACH_MSG_TYPE_COPY_SEND, &local_name, &local_type);
+        if (retval == KERN_SUCCESS)
+        {
+            mach_port_deallocate (mach_task_self(), local_name);
+            if (local_name == examine_threads_port)
+            {
+                *inferior_port = names[i];
+                vm_deallocate (mach_task_self (), (vm_address_t) names, nameslen * sizeof (mach_port_t));
+                vm_deallocate (mach_task_self (), (vm_address_t) types, typeslen * sizeof (mach_port_t));
+                return true;
+            }
+        }
+    }
+    vm_deallocate (mach_task_self (), (vm_address_t) names, nameslen * sizeof (mach_port_t));
+    vm_deallocate (mach_task_self (), (vm_address_t) types, typeslen * sizeof (mach_port_t));
+    return false;
+}
+
 /* Get the current pc value for a given thread.  */
 
 uint64_t
@@ -353,7 +400,7 @@ main (int argc, char **argv)
           int wordsize;
           uint64_t pc = get_current_pc (thread_list[i], &wordsize);
 
-          printf ("thread #%d, unique tid %lld, suspend count is %d, ", i,
+          printf ("thread #%d, system-wide-unique-tid %lld, suspend count is %d, ", i,
                   identifier_info.thread_id,
                   basic_info->suspend_count);
           if (wordsize == 8)
@@ -371,18 +418,19 @@ main (int argc, char **argv)
           }
           if (verbose)
             {
-              printf ("           ");
-              printf ("mach thread #0x%4.4x ", (int) thread_list[i]);
-              printf ("pthread handle id 0x%llx ", (uint64_t) identifier_info.thread_handle);
+              printf ("           (examine-threads port namespace) mach port # 0x%4.4x\n", (int) thread_list[i]);
+              thread_t mach_port_inferior_namespace;
+              if (inferior_namespace_mach_port_num (task, thread_list[i], &mach_port_inferior_namespace))
+                  printf ("           (inferior port namepsace) mach port # 0x%4.4x\n", (int) mach_port_inferior_namespace);
+              printf ("           pthread handle id 0x%llx\n", (uint64_t) identifier_info.thread_handle);
 
               struct proc_threadinfo pth;
               int proc_threadinfo_succeeded = get_proc_threadinfo (pid, identifier_info.thread_handle, &pth);
 
               if (proc_threadinfo_succeeded && pth.pth_name[0] != '\0')
-                printf ("thread name '%s' ", pth.pth_name);
+                printf ("           thread name '%s' ", pth.pth_name);
 
-              printf ("\n           ");
-              printf ("user %d.%06ds, system %d.%06ds", 
+              printf ("           user %d.%06ds, system %d.%06ds", 
                               basic_info->user_time.seconds, basic_info->user_time.microseconds, 
                               basic_info->system_time.seconds, basic_info->system_time.microseconds);
               if (basic_info->cpu_usage > 0)
