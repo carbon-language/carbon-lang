@@ -18,6 +18,8 @@
 #include "interception/interception.h"
 #include "sanitizer_common/sanitizer_platform_interceptors.h"
 
+#include <stdarg.h>
+
 using __sanitizer::uptr;
 
 // Use macro to describe if specific function should be
@@ -227,15 +229,15 @@ DECLARE_FUNCTION_AND_WRAPPER(CFStringRef, CFStringCreateCopy,
                              CFAllocatorRef alloc, CFStringRef str);
 DECLARE_FUNCTION_AND_WRAPPER(void, free, void* ptr);
 
-DECLARE_FUNCTION_AND_WRAPPER(int, vscanf, const char *format, va_list ap)
+DECLARE_FUNCTION_AND_WRAPPER(int, vscanf, const char *format, va_list ap);
 DECLARE_FUNCTION_AND_WRAPPER(int, vsscanf, const char *str, const char *format,
-                             va_list ap)
+                             va_list ap);
 DECLARE_FUNCTION_AND_WRAPPER(int, vfscanf, void *stream, const char *format,
-                             va_list ap)
-DECLARE_FUNCTION_AND_WRAPPER(int, scanf, const char *format, ...)
-DECLARE_FUNCTION_AND_WRAPPER(int, fscanf, void* stream, const char *format, ...)
+                             va_list ap);
+DECLARE_FUNCTION_AND_WRAPPER(int, scanf, const char *format, ...);
+DECLARE_FUNCTION_AND_WRAPPER(int, fscanf, void* stream, const char *format, ...);
 DECLARE_FUNCTION_AND_WRAPPER(int, sscanf,
-                             const char *str, const char *format, ...)
+                             const char *str, const char *format, ...);
 
 #if MAC_INTERPOSE_FUNCTIONS && !defined(MISSING_BLOCKS_SUPPORT)
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_group_async,
