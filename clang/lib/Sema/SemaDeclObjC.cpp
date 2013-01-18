@@ -2906,8 +2906,6 @@ Decl *Sema::ActOnMethodDeclaration(
       DI = 0;
     } else {
       ArgType = GetTypeFromParser(ArgInfo[i].Type, &DI);
-      // Perform the default array/function conversions (C99 6.7.5.3p[7,8]).
-      ArgType = Context.getAdjustedParameterType(ArgType);
     }
 
     LookupResult R(*this, ArgInfo[i].Name, ArgInfo[i].NameLoc, 

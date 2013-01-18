@@ -11,7 +11,7 @@ id CFBridgingRelease(CFTypeRef);
 @end
 @class NSFastEnumerationState;
 @protocol NSFastEnumeration
-- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id [])buffer count:(NSUInteger)len;
+- (NSUInteger)countByEnumeratingWithState:(NSFastEnumerationState *)state objects:(id __unsafe_unretained [])buffer count:(NSUInteger)len;
 @end
 @interface NSNumber 
 + (NSNumber *)numberWithInt:(int)value;
@@ -752,3 +752,7 @@ void rdar12569201(id key, id value) {
     e = @(42); // expected-warning {{assigning numeric literal to a weak variable; object will be released after assignment}}
     m = @(41 + 1); // expected-warning {{assigning boxed expression to a weak variable; object will be released after assignment}}
 }
+
+@interface C
+- (void)method:(id[])objects; // expected-error{{must explicitly describe intended ownership of an object array parameter}}
+@end
