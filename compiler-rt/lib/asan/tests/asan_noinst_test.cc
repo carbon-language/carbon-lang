@@ -390,7 +390,7 @@ TEST(AddressSanitizerInterface, GetAllocatedSizeAndOwnershipTest) {
     // allocated size.
     EXPECT_TRUE(__asan_get_ownership(zero_alloc));
     // Allocated size is 0 or 1 depending on the allocator used.
-    EXPECT_LT(__asan_get_allocated_size(zero_alloc), 2);
+    EXPECT_LT(__asan_get_allocated_size(zero_alloc), 2U);
   }
   free(zero_alloc);
 }

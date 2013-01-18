@@ -1667,7 +1667,7 @@ TEST(AddressSanitizer, DISABLED_MemIntrinsicCallByPointerTest) {
   CallMemTransferByPointer(&memmove);
 }
 
-#if defined(__linux__) && !defined(ANDROID)
+#if defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
 #define READ_TEST(READ_N_BYTES)                                          \
   char *x = new char[10];                                                \
   int fd = open("/proc/self/stat", O_RDONLY);                            \
@@ -1690,7 +1690,7 @@ TEST(AddressSanitizer, pread64) {
 TEST(AddressSanitizer, read) {
   READ_TEST(read(fd, x, 15));
 }
-#endif  // defined(__linux__) && !defined(ANDROID)
+#endif  // defined(__linux__) && !defined(ANDROID) && !defined(__ANDROID__)
 
 // This test case fails
 // Clang optimizes memcpy/memset calls which lead to unaligned access

@@ -127,7 +127,7 @@ void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
 }
 #else
 void ReadContextStack(void *context, uptr *stack, uptr *ssize) {
-  return UNIMPLEMENTED();
+  UNIMPLEMENTED();
 }
 #endif
 
