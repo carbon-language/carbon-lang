@@ -352,8 +352,8 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
   verifyFormat("void f() {\n"
                "  // Doesn't do anything\n"
                "}");
-  verifyFormat("void f(int i, // some comment (probably for i)\n"
-               "       int j, // some comment (probably for j)\n"
+  verifyFormat("void f(int i,  // some comment (probably for i)\n"
+               "       int j,  // some comment (probably for j)\n"
                "       int k); // some comment (probably for k)");
   verifyFormat("void f(int i,\n"
                "       // some comment (probably for j)\n"
@@ -361,8 +361,32 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                "       // some comment (probably for k)\n"
                "       int k);");
 
-  verifyFormat("int i // This is a fancy variable\n"
-               "    = 5;");
+  verifyFormat("int i    // This is a fancy variable\n"
+               "    = 5; // with nicely aligned comment.");
+
+  verifyFormat("// Leading comment.\n"
+               "int a; // Trailing comment.");
+  verifyFormat("int a; // Trailing comment\n"
+               "       // on 2\n"
+               "       // or 3 lines.\n"
+               "int b;");
+  verifyFormat("int a; // Trailing comment\n"
+               "\n"
+               "// Leading comment.\n"
+               "int b;");
+  verifyFormat("int a;    // Comment.\n"
+               "          // More details.\n"
+               "int bbbb; // Another comment.");
+  verifyFormat(
+      "int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa; // comment\n"
+      "int bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;   // comment\n"
+      "int cccccccccccccccccccccccccccccc;       // comment\n"
+      "int ddd;                     // looooooooooooooooooooooooong comment\n"
+      "int aaaaaaaaaaaaaaaaaaaaaaa; // comment\n"
+      "int bbbbbbbbbbbbbbbbbbbbb;   // comment\n"
+      "int ccccccccccccccccccc;     // comment");
+
+
 
   verifyFormat("enum E {\n"
                "  // comment\n"
@@ -835,7 +859,7 @@ TEST_F(FormatTest, ConstructorInitializers) {
                "      aaaaaaaaaaaaaaaaaaaaat(aaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}");
 
   verifyGoogleFormat("MyClass::MyClass(int var)\n"
-                     "    : some_var_(var),  // 4 space indent\n"
+                     "    : some_var_(var),             // 4 space indent\n"
                      "      some_other_var_(var + 1) {  // lined up\n"
                      "}");
 
