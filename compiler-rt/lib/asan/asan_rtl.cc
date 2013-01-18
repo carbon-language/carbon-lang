@@ -231,7 +231,6 @@ static NOINLINE void force_interface_symbols() {
     case 8: __asan_report_store4(0); break;
     case 9: __asan_report_store8(0); break;
     case 10: __asan_report_store16(0); break;
-    case 11: __asan_register_global(0, 0, 0); break;
     case 12: __asan_register_globals(0, 0); break;
     case 13: __asan_unregister_globals(0, 0); break;
     case 14: __asan_set_death_callback(0); break;

@@ -55,11 +55,6 @@ void PoisonRedZones(const Global &g)  {
   }
 }
 
-static uptr GetAlignedSize(uptr size) {
-  return ((size + kGlobalAndStackRedzone - 1) / kGlobalAndStackRedzone)
-      * kGlobalAndStackRedzone;
-}
-
 bool DescribeAddressIfGlobal(uptr addr) {
   if (!flags()->report_globals) return false;
   BlockingMutexLock lock(&mu_for_globals);
@@ -141,19 +136,6 @@ static void UnpoisonGlobal(const Global *g) {
 
 // ---------------------- Interface ---------------- {{{1
 using namespace __asan;  // NOLINT
-
-// Register one global with a default redzone.
-void __asan_register_global(uptr addr, uptr size,
-                            const char *name) {
-  if (!flags()->report_globals) return;
-  BlockingMutexLock lock(&mu_for_globals);
-  Global *g = (Global *)allocator_for_globals.Allocate(sizeof(Global));
-  g->beg = addr;
-  g->size = size;
-  g->size_with_redzone = GetAlignedSize(size) + kGlobalAndStackRedzone;
-  g->name = name;
-  RegisterGlobal(g);
-}
 
 // Register an array of globals.
 void __asan_register_globals(__asan_global *globals, uptr n) {

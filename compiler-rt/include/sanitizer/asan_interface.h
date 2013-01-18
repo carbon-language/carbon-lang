@@ -28,11 +28,6 @@ extern "C" {
   // before any instrumented code is executed and before any call to malloc.
   void __asan_init() SANITIZER_INTERFACE_ATTRIBUTE;
 
-  // This function should be called by the instrumented code.
-  // 'addr' is the address of a global variable called 'name' of 'size' bytes.
-  void __asan_register_global(uptr addr, uptr size, const char *name)
-      SANITIZER_INTERFACE_ATTRIBUTE;
-
   // This structure describes an instrumented global variable.
   struct __asan_global {
     uptr beg;                // The address of the global.
