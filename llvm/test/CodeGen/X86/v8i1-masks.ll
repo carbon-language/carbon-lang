@@ -1,7 +1,7 @@
 ; RUN: llc -march=x86-64 -mtriple=x86_64-apple-darwin -mcpu=corei7-avx -o - < %s | FileCheck %s
 
 ;CHECK: and_masks
-;CHECK: vmovups
+;CHECK: vmovaps
 ;CHECK: vcmpltp
 ;CHECK: vcmpltp
 ;CHECK: vandps
