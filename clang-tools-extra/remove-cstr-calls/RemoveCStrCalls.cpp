@@ -47,6 +47,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/system_error.h"
 
@@ -177,6 +178,7 @@ cl::list<std::string> SourcePaths(
   cl::OneOrMore);
 
 int main(int argc, const char **argv) {
+  llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::OwningPtr<CompilationDatabase> Compilations(
     tooling::FixedCompilationDatabase::loadFromCommandLine(argc, argv));
   cl::ParseCommandLineOptions(argc, argv);

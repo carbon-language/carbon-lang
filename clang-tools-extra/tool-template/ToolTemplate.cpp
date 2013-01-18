@@ -45,6 +45,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/Signals.h"
 
 using namespace clang;
 using namespace clang::ast_matchers;
@@ -79,6 +80,7 @@ cl::list<std::string> SourcePaths(
   cl::OneOrMore);
 
 int main(int argc, const char **argv) {
+  llvm::sys::PrintStackTraceOnErrorSignal();
   llvm::OwningPtr<CompilationDatabase> Compilations(
         FixedCompilationDatabase::loadFromCommandLine(argc, argv));
   cl::ParseCommandLineOptions(argc, argv);

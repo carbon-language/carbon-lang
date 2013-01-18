@@ -21,6 +21,7 @@
 #include "clang/Lex/Lexer.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/Support/Signals.h"
 
 using namespace llvm;
 
@@ -114,6 +115,7 @@ static void format() {
 }  // namespace clang
 
 int main(int argc, const char **argv) {
+  llvm::sys::PrintStackTraceOnErrorSignal();
   cl::ParseCommandLineOptions(
       argc, argv,
       "A tool to format C/C++/Obj-C code.\n\n"

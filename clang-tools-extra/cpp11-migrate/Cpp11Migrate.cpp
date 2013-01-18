@@ -32,6 +32,7 @@
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/Tooling/Tooling.h"
+#include "llvm/Support/Signals.h"
 
 namespace cl = llvm::cl;
 using namespace clang::tooling;
@@ -49,6 +50,7 @@ static cl::opt<RiskLevel> MaxRiskLevel(
     cl::init(RL_Reasonable));
 
 int main(int argc, const char **argv) {
+  llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
 
   TransformManager.createTransformOpts();
