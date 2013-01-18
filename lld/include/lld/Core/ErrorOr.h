@@ -208,6 +208,7 @@ public:
       return;
     if (!other.HasError) {
       // Get the other value.
+      IsValid = true;
       new (get()) storage_type(std::move(*other.get()));
       HasError = false;
       // Tell other not to do any destruction.
@@ -228,7 +229,7 @@ public:
       return *this;
 
     this->~ErrorOr();
-    new (this) ErrorOr(other);
+    new (this) ErrorOr(std::move(other));
 
     return *this;
   }
