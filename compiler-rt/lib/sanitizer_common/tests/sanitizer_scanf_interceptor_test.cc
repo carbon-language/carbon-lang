@@ -46,7 +46,6 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   const unsigned C = sizeof(char);
   const unsigned D = sizeof(double);
   const unsigned F = sizeof(float);
-  const unsigned LD = sizeof(long double);
 
   testScanf("%d", 1, I);
   testScanf("%d%d%d", 3, I, I, I);
