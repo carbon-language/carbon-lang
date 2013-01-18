@@ -231,33 +231,21 @@ what you can use in yours. The major differences are:
 -  You can't do ``2>&1``. That will cause :program:`lit` to write to a file
    named ``&1``. Usually this is done to get stderr to go through a pipe. You
    can do that with ``|&`` so replace this idiom:
-   ``... 2>&1 | grep`` with ``... |& grep``
+   ``... 2>&1 | FileCheck`` with ``... |& FileCheck``
 -  You can only redirect to a file, not to another descriptor and not
    from a here document.
 
 There are some quoting rules that you must pay attention to when writing
 your RUN lines. In general nothing needs to be quoted. :program:`lit` won't
 strip off any quote characters so they will get passed to the invoked program.
-For example:
-
-.. code-block:: bash
-
-    ... | grep 'find this string'
-
-This will fail because the ``'`` characters are passed to ``grep``. This would
-make ``grep`` to look for ``'find`` in the files ``this`` and
-``string'``. To avoid this use curly braces to tell :program:`lit` that it
-should treat everything enclosed as one value. So our example would become:
-
-.. code-block:: bash
-
-    ... | grep {find this string}
+To avoid this use curly braces to tell :program:`lit` that it should treat
+everything enclosed as one value.
 
 In general, you should strive to keep your RUN lines as simple as possible,
-using them only to run tools that generate the output you can then examine. The
-recommended way to examine output to figure out if the test passes it using the
-:doc:`FileCheck tool <CommandGuide/FileCheck>`. The usage of ``grep`` in RUN
-lines is discouraged.
+using them only to run tools that generate textual output you can then examine.
+The recommended way to examine output to figure out if the test passes it using
+the :doc:`FileCheck tool <CommandGuide/FileCheck>`. *[The usage of grep in RUN
+lines is deprecated - please do not send or commit patches that use it.]*
 
 Fragile tests
 -------------
@@ -295,24 +283,6 @@ This test will fail if placed into a ``download`` directory.
 
 To make your tests robust, always use ``opt ... < %s`` in the RUN line.
 :program:`opt` does not output a ``ModuleID`` when input comes from stdin.
-
-The FileCheck utility
----------------------
-
-A powerful feature of the RUN lines is that it allows any arbitrary
-commands to be executed as part of the test harness. While standard
-(portable) unix tools like ``grep`` work fine on run lines, as you see
-above, there are a lot of caveats due to interaction with shell syntax,
-and we want to make sure the run lines are portable to a wide range of
-systems. Another major problem is that ``grep`` is not very good at checking
-to verify that the output of a tools contains a series of different
-output in a specific order. The :program:`FileCheck` tool was designed to
-help with these problems.
-
-:program:`FileCheck` is designed to read a file to check from standard input,
-and the set of things to verify from a file specified as a command line
-argument. :program:`FileCheck` is described in :doc:`the FileCheck man page
-<CommandGuide/FileCheck>`.
 
 Variables and substitutions
 ---------------------------
