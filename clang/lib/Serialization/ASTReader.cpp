@@ -6880,7 +6880,6 @@ void ASTReader::finishPendingActions() {
     // Note that new macros may be added while deserializing a macro.
     for (unsigned I = 0; I != PendingMacroIDs.size(); ++I) {
       PendingMacroIDsMap::iterator PMIt = PendingMacroIDs.begin() + I;
-      IdentifierInfo *II = PMIt->first;
       SmallVector<serialization::MacroID, 2> MacroIDs;
       MacroIDs.swap(PMIt->second);
       for (SmallVectorImpl<serialization::MacroID>::iterator
