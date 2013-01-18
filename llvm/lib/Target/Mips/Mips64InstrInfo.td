@@ -117,8 +117,9 @@ def DSRA32 : shift_rotate_imm<"dsra32", shamt, CPU64RegsOpnd>, SRA_FM<0x3f, 0>;
 let Predicates = [HasMips64r2, HasStdEnc],
     DecoderNamespace = "Mips64" in {
   def DROTR  : shift_rotate_imm<"drotr", shamt, CPU64RegsOpnd, rotr, immZExt6>,
-                SRA_FM<0x3a, 1>;
-  def DROTRV : shift_rotate_reg<"drotrv", CPU64RegsOpnd, rotr>, SRLV_FM<0x16, 1>;
+               SRA_FM<0x3a, 1>;
+  def DROTRV : shift_rotate_reg<"drotrv", CPU64RegsOpnd, rotr>,
+               SRLV_FM<0x16, 1>;
 }
 
 let DecoderNamespace = "Mips64" in {
@@ -173,8 +174,10 @@ def TAILCALL64_R : JumpFR<CPU64Regs, MipsTailCall>, MTLO_FM<8>, IsTailCall;
 
 let DecoderNamespace = "Mips64" in {
 /// Multiply and Divide Instructions.
-def DMULT  : Mult<"dmult", IIImul, CPU64RegsOpnd, [HI64, LO64]>, MULT_FM<0, 0x1c>;
-def DMULTu : Mult<"dmultu", IIImul, CPU64RegsOpnd, [HI64, LO64]>, MULT_FM<0, 0x1d>;
+def DMULT  : Mult<"dmult", IIImul, CPU64RegsOpnd, [HI64, LO64]>,
+             MULT_FM<0, 0x1c>;
+def DMULTu : Mult<"dmultu", IIImul, CPU64RegsOpnd, [HI64, LO64]>,
+             MULT_FM<0, 0x1d>;
 def DSDIV  : Div<MipsDivRem, "ddiv", IIIdiv, CPU64RegsOpnd, [HI64, LO64]>,
              MULT_FM<0, 0x1e>;
 def DUDIV  : Div<MipsDivRemU, "ddivu", IIIdiv, CPU64RegsOpnd, [HI64, LO64]>,
@@ -305,20 +308,21 @@ def : MipsPat<(bswap CPU64Regs:$rt), (DSHD (DSBH CPU64Regs:$rt))>;
 //===----------------------------------------------------------------------===//
 // Instruction aliases
 //===----------------------------------------------------------------------===//
-def : InstAlias<"move $dst,$src", (DADDu CPU64RegsOpnd:$dst,
+def : InstAlias<"move $dst, $src", (DADDu CPU64RegsOpnd:$dst,
                                    CPU64RegsOpnd:$src,ZERO_64)>,
-                                   Requires<[HasMips64]>;
+      Requires<[HasMips64]>;
 def : InstAlias<"and $rs, $rt, $imm",
                 (DANDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm)>,
-                Requires<[HasMips64]>;
+      Requires<[HasMips64]>;
 def : InstAlias<"slt $rs, $rt, $imm",
                 (SLTi64 CPURegsOpnd:$rs, CPU64Regs:$rt, simm16_64:$imm)>,
-                Requires<[HasMips64]>;
+      Requires<[HasMips64]>;
 def : InstAlias<"xor $rs, $rt, $imm",
                 (XORi64 CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, uimm16_64:$imm)>,
-                Requires<[HasMips64]>;
-def : InstAlias<"not $rt, $rs", (NOR64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rs, ZERO_64)>,
-                 Requires<[HasMips64]>;
+      Requires<[HasMips64]>;
+def : InstAlias<"not $rt, $rs",
+                (NOR64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rs, ZERO_64)>,
+      Requires<[HasMips64]>;
 def : InstAlias<"j $rs", (JR64 CPU64Regs:$rs)>, Requires<[HasMips64]>;
 def : InstAlias<"daddu $rs, $rt, $imm",
                 (DADDiu CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm)>;
@@ -326,35 +330,29 @@ def : InstAlias<"dadd $rs, $rt, $imm",
                 (DADDi CPU64RegsOpnd:$rs, CPU64RegsOpnd:$rt, simm16_64:$imm)>;
 
 /// Move between CPU and coprocessor registers
+
 let DecoderNamespace = "Mips64" in {
-def MFC0_3OP64 : MFC3OP<(outs CPU64Regs:$rt), (ins CPU64Regs:$rd, uimm16:$sel),
-                        "mfc0\t$rt, $rd, $sel">, MFC3OP_FM<0x10, 0>;
-def MTC0_3OP64 : MFC3OP<(outs CPU64Regs:$rd, uimm16:$sel), (ins CPU64Regs:$rt),
-                        "mtc0\t$rt, $rd, $sel">, MFC3OP_FM<0x10, 4>;
-def MFC2_3OP64 : MFC3OP<(outs CPU64Regs:$rt), (ins CPU64Regs:$rd, uimm16:$sel),
-                        "mfc2\t$rt, $rd, $sel">, MFC3OP_FM<0x12, 0>;
-def MTC2_3OP64 : MFC3OP<(outs CPU64Regs:$rd, uimm16:$sel), (ins CPU64Regs:$rt),
-                        "mtc2\t$rt, $rd, $sel">, MFC3OP_FM<0x12, 4>;
-def DMFC0_3OP64 : MFC3OP<(outs CPU64Regs:$rt), (ins CPU64Regs:$rd, uimm16:$sel),
+def DMFC0_3OP64 : MFC3OP<(outs CPU64RegsOpnd:$rt),
+                         (ins CPU64RegsOpnd:$rd, uimm16:$sel),
                          "dmfc0\t$rt, $rd, $sel">, MFC3OP_FM<0x10, 1>;
-def DMTC0_3OP64 : MFC3OP<(outs CPU64Regs:$rd, uimm16:$sel), (ins CPU64Regs:$rt),
+def DMTC0_3OP64 : MFC3OP<(outs CPU64RegsOpnd:$rd, uimm16:$sel),
+                         (ins CPU64RegsOpnd:$rt),
                          "dmtc0\t$rt, $rd, $sel">, MFC3OP_FM<0x10, 5>;
-def DMFC2_3OP64 : MFC3OP<(outs CPU64Regs:$rt), (ins CPU64Regs:$rd, uimm16:$sel),
+def DMFC2_3OP64 : MFC3OP<(outs CPU64RegsOpnd:$rt),
+                         (ins CPU64RegsOpnd:$rd, uimm16:$sel),
                          "dmfc2\t$rt, $rd, $sel">, MFC3OP_FM<0x12, 1>;
-def DMTC2_3OP64 : MFC3OP<(outs CPU64Regs:$rd, uimm16:$sel), (ins CPU64Regs:$rt),
+def DMTC2_3OP64 : MFC3OP<(outs CPU64RegsOpnd:$rd, uimm16:$sel),
+                         (ins CPU64RegsOpnd:$rt),
                          "dmtc2\t$rt, $rd, $sel">, MFC3OP_FM<0x12, 5>;
 }
+
 // Two operand (implicit 0 selector) versions:
-def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP64 CPU64Regs:$rt, CPU64Regs:$rd, 0)>;
-def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP64 CPU64Regs:$rd, 0, CPU64Regs:$rt)>;
-def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP64 CPU64Regs:$rt, CPU64Regs:$rd, 0)>;
-def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP64 CPU64Regs:$rd, 0, CPU64Regs:$rt)>;
 def : InstAlias<"dmfc0 $rt, $rd",
-                (DMFC0_3OP64 CPU64Regs:$rt, CPU64Regs:$rd, 0)>;
+                (DMFC0_3OP64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rd, 0)>;
 def : InstAlias<"dmtc0 $rt, $rd",
-                (DMTC0_3OP64 CPU64Regs:$rd, 0, CPU64Regs:$rt)>;
+                (DMTC0_3OP64 CPU64RegsOpnd:$rd, 0, CPU64RegsOpnd:$rt)>;
 def : InstAlias<"dmfc2 $rt, $rd",
-                (DMFC2_3OP64 CPU64Regs:$rt, CPU64Regs:$rd, 0)>;
+                (DMFC2_3OP64 CPU64RegsOpnd:$rt, CPU64RegsOpnd:$rd, 0)>;
 def : InstAlias<"dmtc2 $rt, $rd",
-                (DMTC2_3OP64 CPU64Regs:$rd, 0, CPU64Regs:$rt)>;
+                (DMTC2_3OP64 CPU64RegsOpnd:$rd, 0, CPU64RegsOpnd:$rt)>;
 

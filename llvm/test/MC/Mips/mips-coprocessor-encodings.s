@@ -1,4 +1,5 @@
-# RUN: llvm-mc %s -triple=mips64-unknown-freebsd -show-encoding | FileCheck --check-prefix=MIPS64 %s
+# RUN: llvm-mc %s -triple=mips64-unknown-freebsd -show-encoding \
+# RUN:| FileCheck --check-prefix=MIPS64 %s
 
 # MIPS64:	dmtc0	$12, $16, 2             # encoding: [0x40,0xac,0x80,0x02]
 # MIPS64:	dmtc0	$12, $16, 0             # encoding: [0x40,0xac,0x80,0x00]

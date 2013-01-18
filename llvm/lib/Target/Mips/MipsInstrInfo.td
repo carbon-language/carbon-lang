@@ -506,7 +506,8 @@ class SetCC_I<string opstr, PatFrag cond_op, Operand Od, PatLeaf imm_type,
               RegisterClass RC>:
   InstSE<(outs CPURegsOpnd:$rt), (ins RC:$rs, Od:$imm16),
          !strconcat(opstr, "\t$rt, $rs, $imm16"),
-         [(set CPURegsOpnd:$rt, (cond_op RC:$rs, imm_type:$imm16))], IIAlu, FrmI>;
+         [(set CPURegsOpnd:$rt, (cond_op RC:$rs, imm_type:$imm16))],
+         IIAlu, FrmI>;
 
 // Jump
 class JumpFJ<DAGOperand opnd, string opstr, SDPatternOperator operator,
@@ -774,9 +775,12 @@ def ADDiu : ArithLogicI<"addiu", simm16, CPURegsOpnd, immSExt16, add>,
 def ADDi  : ArithLogicI<"addi", simm16, CPURegsOpnd>, ADDI_FM<0x8>;
 def SLTi  : SetCC_I<"slti", setlt, simm16, immSExt16, CPURegs>, SLTI_FM<0xa>;
 def SLTiu : SetCC_I<"sltiu", setult, simm16, immSExt16, CPURegs>, SLTI_FM<0xb>;
-def ANDi  : ArithLogicI<"andi", uimm16, CPURegsOpnd, immZExt16, and>, ADDI_FM<0xc>;
-def ORi   : ArithLogicI<"ori", uimm16, CPURegsOpnd, immZExt16, or>, ADDI_FM<0xd>;
-def XORi  : ArithLogicI<"xori", uimm16, CPURegsOpnd, immZExt16, xor>, ADDI_FM<0xe>;
+def ANDi  : ArithLogicI<"andi", uimm16, CPURegsOpnd, immZExt16, and>,
+            ADDI_FM<0xc>;
+def ORi   : ArithLogicI<"ori", uimm16, CPURegsOpnd, immZExt16, or>,
+            ADDI_FM<0xd>;
+def XORi  : ArithLogicI<"xori", uimm16, CPURegsOpnd, immZExt16, xor>,
+            ADDI_FM<0xe>;
 def LUi   : LoadUpper<"lui", CPURegs, uimm16>, LUI_FM;
 
 /// Arithmetic Instructions (3-Operand, R-Type)
@@ -793,9 +797,12 @@ def XOR  : ArithLogicR<"xor", CPURegsOpnd, 1, IIAlu, xor>, ADD_FM<0, 0x26>;
 def NOR  : LogicNOR<"nor", CPURegsOpnd>, ADD_FM<0, 0x27>;
 
 /// Shift Instructions
-def SLL  : shift_rotate_imm<"sll", shamt, CPURegsOpnd, shl, immZExt5>, SRA_FM<0, 0>;
-def SRL  : shift_rotate_imm<"srl", shamt, CPURegsOpnd, srl, immZExt5>, SRA_FM<2, 0>;
-def SRA  : shift_rotate_imm<"sra", shamt, CPURegsOpnd, sra, immZExt5>, SRA_FM<3, 0>;
+def SLL  : shift_rotate_imm<"sll", shamt, CPURegsOpnd, shl, immZExt5>,
+           SRA_FM<0, 0>;
+def SRL  : shift_rotate_imm<"srl", shamt, CPURegsOpnd, srl, immZExt5>,
+           SRA_FM<2, 0>;
+def SRA  : shift_rotate_imm<"sra", shamt, CPURegsOpnd, sra, immZExt5>,
+           SRA_FM<3, 0>;
 def SLLV : shift_rotate_reg<"sllv", CPURegsOpnd, shl>, SRLV_FM<4, 0>;
 def SRLV : shift_rotate_reg<"srlv", CPURegsOpnd, srl>, SRLV_FM<6, 0>;
 def SRAV : shift_rotate_reg<"srav", CPURegsOpnd, sra>, SRLV_FM<7, 0>;
@@ -863,7 +870,8 @@ def RET : RetBase<CPURegs>, MTLO_FM<8>;
 /// Multiply and Divide Instructions.
 def MULT  : Mult<"mult", IIImul, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x18>;
 def MULTu : Mult<"multu", IIImul, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x19>;
-def SDIV  : Div<MipsDivRem, "div", IIIdiv, CPURegsOpnd, [HI, LO]>, MULT_FM<0, 0x1a>;
+def SDIV  : Div<MipsDivRem, "div", IIIdiv, CPURegsOpnd, [HI, LO]>,
+            MULT_FM<0, 0x1a>;
 def UDIV  : Div<MipsDivRemU, "divu", IIIdiv, CPURegsOpnd, [HI, LO]>,
             MULT_FM<0, 0x1b>;
 
@@ -905,16 +913,20 @@ def EXT : ExtBase<"ext", CPURegsOpnd>, EXT_FM<0>;
 def INS : InsBase<"ins", CPURegsOpnd>, EXT_FM<4>;
 
 /// Move Control Registers From/To CPU Registers
-def MFC0_3OP : MFC3OP<(outs CPURegs:$rt), (ins CPURegs:$rd, uimm16:$sel),
+def MFC0_3OP : MFC3OP<(outs CPURegsOpnd:$rt),
+                      (ins CPURegsOpnd:$rd, uimm16:$sel),
                       "mfc0\t$rt, $rd, $sel">, MFC3OP_FM<0x10, 0>;
 
-def MTC0_3OP : MFC3OP<(outs CPURegs:$rd, uimm16:$sel), (ins CPURegs:$rt),
+def MTC0_3OP : MFC3OP<(outs CPURegsOpnd:$rd, uimm16:$sel),
+                      (ins CPURegsOpnd:$rt),
                       "mtc0\t$rt, $rd, $sel">, MFC3OP_FM<0x10, 4>;
 
-def MFC2_3OP : MFC3OP<(outs CPURegs:$rt), (ins CPURegs:$rd, uimm16:$sel),
+def MFC2_3OP : MFC3OP<(outs CPURegsOpnd:$rt),
+                      (ins CPURegsOpnd:$rd, uimm16:$sel),
                       "mfc2\t$rt, $rd, $sel">, MFC3OP_FM<0x12, 0>;
 
-def MTC2_3OP : MFC3OP<(outs CPURegs:$rd, uimm16:$sel), (ins CPURegs:$rt),
+def MTC2_3OP : MFC3OP<(outs CPURegsOpnd:$rd, uimm16:$sel),
+                      (ins CPURegsOpnd:$rt),
                       "mtc2\t$rt, $rd, $sel">, MFC3OP_FM<0x12, 4>;
 
 //===----------------------------------------------------------------------===//
@@ -939,10 +951,10 @@ def : InstAlias<"slt $rs, $rt, $imm",
 def : InstAlias<"xor $rs, $rt, $imm",
                 (XORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm)>,
                 Requires<[NotMips64]>;
-def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
-def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
-def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP CPURegs:$rt, CPURegs:$rd, 0)>;
-def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegs:$rd, 0, CPURegs:$rt)>;
+def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0)>;
+def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt)>;
+def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0)>;
+def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt)>;
 
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions
