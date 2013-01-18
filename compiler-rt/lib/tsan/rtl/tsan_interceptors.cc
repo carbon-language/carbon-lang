@@ -1618,7 +1618,7 @@ struct TsanInterceptorContext {
     FdRelease(((TsanInterceptorContext*)ctx)->thr, pc, fd)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) \
     ThreadSetName(((TsanInterceptorContext*)ctx)->thr, name)
-#include "sanitizer_common/sanitizer_common_interceptors.h"
+#include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 namespace __tsan {
 

@@ -743,7 +743,7 @@ INTERCEPTOR(int, getrusage, int who, void *usage) {
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) do { } while (false)  // FIXME
-#include "sanitizer_common/sanitizer_common_interceptors.h"
+#include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 // static
 void *fast_memset(void *ptr, int c, SIZE_T n) {

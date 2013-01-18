@@ -1,5 +1,16 @@
-#ifndef SANITIZER_COMMON_INTERCEPTORS_SCANF_H
-#define SANITIZER_COMMON_INTERCEPTORS_SCANF_H
+//===-- sanitizer_common_interceptors_scanf.inc -----------------*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Scanf implementation for use in *Sanitizer interceptors.
+//
+//===----------------------------------------------------------------------===//
+#include <stdarg.h>
 
 struct ScanfSpec {
   char c;
@@ -129,5 +140,3 @@ static void scanf_common(void *ctx, const char *format, va_list ap_const) {
   }
   va_end(aq);
 }
-
-#endif  // SANITIZER_COMMON_INTERCEPTORS_SCANF_H

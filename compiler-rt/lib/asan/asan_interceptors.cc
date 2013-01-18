@@ -93,7 +93,7 @@ using namespace __asan;  // NOLINT
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) SetThreadName(name)
-#include "sanitizer_common/sanitizer_common_interceptors.h"
+#include "sanitizer_common/sanitizer_common_interceptors.inc"
 
 static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
   AsanThread *t = (AsanThread*)arg;

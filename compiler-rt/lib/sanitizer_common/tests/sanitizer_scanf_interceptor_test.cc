@@ -1,3 +1,15 @@
+//===-- sanitizer_scanf_interceptor_test.cc -------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Tests for *scanf interceptors implementation in sanitizer_common.
+//
+//===----------------------------------------------------------------------===//
 #include <vector>
 
 #include "interception/interception.h"
@@ -10,7 +22,7 @@ using namespace __sanitizer;
 #define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
   ((std::vector<unsigned> *)ctx)->push_back(size)
 
-#include "sanitizer_common/sanitizer_common_interceptors_scanf.h"
+#include "sanitizer_common/sanitizer_common_interceptors_scanf.inc"
 
 static void testScanf2(void *ctx, const char *format, ...) {
   va_list ap;

@@ -1,4 +1,4 @@
-//===-- sanitizer_common_interceptors.h -------------------------*- C++ -*-===//
+//===-- sanitizer_common_interceptors.inc -----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,9 +19,6 @@
 //   COMMON_INTERCEPTOR_FD_RELEASE
 //   COMMON_INTERCEPTOR_SET_THREAD_NAME
 //===----------------------------------------------------------------------===//
-#ifndef SANITIZER_COMMON_INTERCEPTORS_H
-#define SANITIZER_COMMON_INTERCEPTORS_H
-
 #include "interception/interception.h"
 #include "sanitizer_platform_interceptors.h"
 
@@ -147,7 +144,7 @@ INTERCEPTOR(int, prctl, int option,
 
 #if SANITIZER_INTERCEPT_SCANF
 
-#include "sanitizer_common_interceptors_scanf.h"
+#include "sanitizer_common_interceptors_scanf.inc"
 
 INTERCEPTOR(int, vscanf, const char *format, va_list ap) {  // NOLINT
   void* ctx;
@@ -224,6 +221,4 @@ INTERCEPTOR(int, sscanf, const char *str, const char *format, ...) {  // NOLINT
   INIT_PREAD64;                            \
   INIT_PRCTL;                              \
   INIT_WRITE;                              \
-  INIT_SCANF;                              \
-
-#endif  // SANITIZER_COMMON_INTERCEPTORS_H
+  INIT_SCANF;
