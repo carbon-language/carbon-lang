@@ -1000,7 +1000,7 @@ error_code ELFObjectFile<ELFT>::getSymbolFileOffset(DataRefImpl Symb,
 
   switch (symb->getType()) {
   case ELF::STT_SECTION:
-    Result = Section ? Section->sh_addr : UnknownAddressOrSize;
+    Result = Section ? Section->sh_offset : UnknownAddressOrSize;
     return object_error::success;
   case ELF::STT_FUNC:
   case ELF::STT_OBJECT:
