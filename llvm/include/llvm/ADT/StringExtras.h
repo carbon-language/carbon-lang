@@ -27,6 +27,17 @@ static inline char hexdigit(unsigned X, bool LowerCase = false) {
   return X < 10 ? '0' + X : HexChar + X - 10;
 }
 
+/// Interpret the given character \p C as a hexadecimal digit and return its
+/// value.
+///
+/// If \p C is not a valid hex digit, -1U is returned.
+static inline unsigned hexDigitValue(char C) {
+  if (C >= '0' && C <= '9') return C-'0';
+  if (C >= 'a' && C <= 'f') return C-'a'+10U;
+  if (C >= 'A' && C <= 'F') return C-'A'+10U;
+  return -1U;
+}
+
 /// utohex_buffer - Emit the specified number into the buffer specified by
 /// BufferEnd, returning a pointer to the start of the string.  This can be used
 /// like this: (note that the buffer must be large enough to handle any number):
