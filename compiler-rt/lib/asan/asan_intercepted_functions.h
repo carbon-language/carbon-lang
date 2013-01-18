@@ -235,8 +235,9 @@ DECLARE_FUNCTION_AND_WRAPPER(int, vsscanf, const char *str, const char *format,
 DECLARE_FUNCTION_AND_WRAPPER(int, vfscanf, void *stream, const char *format,
                              va_list ap);
 DECLARE_FUNCTION_AND_WRAPPER(int, scanf, const char *format, ...);
-DECLARE_FUNCTION_AND_WRAPPER(int, fscanf, void* stream, const char *format, ...);
-DECLARE_FUNCTION_AND_WRAPPER(int, sscanf,
+DECLARE_FUNCTION_AND_WRAPPER(int, fscanf,
+                             void* stream, const char *format, ...);
+DECLARE_FUNCTION_AND_WRAPPER(int, sscanf,  // NOLINT
                              const char *str, const char *format, ...);
 
 #if MAC_INTERPOSE_FUNCTIONS && !defined(MISSING_BLOCKS_SUPPORT)

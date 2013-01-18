@@ -86,10 +86,15 @@ void SetThreadName(const char *name) {
 // ---------------------- Wrappers ---------------- {{{1
 using namespace __asan;  // NOLINT
 
-#define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) ASAN_WRITE_RANGE(ptr, size)
+#define COMMON_INTERCEPTOR_WRITE_RANGE(ctx, ptr, size) \
+  ASAN_WRITE_RANGE(ptr, size)
 #define COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, size) ASAN_READ_RANGE(ptr, size)
 #define COMMON_INTERCEPTOR_ENTER(ctx, func, ...) \
-  do {ctx = 0; (void)ctx; ENSURE_ASAN_INITED();} while (false)
+  do {                                           \
+    ctx = 0;                                     \
+    (void)ctx;                                   \
+    ENSURE_ASAN_INITED();                        \
+  } while (false)
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) do { } while (false)
 #define COMMON_INTERCEPTOR_SET_THREAD_NAME(ctx, name) SetThreadName(name)

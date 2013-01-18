@@ -51,13 +51,13 @@ static void testScanf(const char *format, unsigned n, ...) {
 }
 
 TEST(SanitizerCommonInterceptors, Scanf) {
-  const unsigned I = sizeof(int);
-  const unsigned L = sizeof(long);
-  const unsigned LL = sizeof(long long);
-  const unsigned S = sizeof(short);
-  const unsigned C = sizeof(char);
-  const unsigned D = sizeof(double);
-  const unsigned F = sizeof(float);
+  const unsigned I = sizeof(int);  // NOLINT
+  const unsigned L = sizeof(long);  // NOLINT
+  const unsigned LL = sizeof(long long);  // NOLINT
+  const unsigned S = sizeof(short);  // NOLINT
+  const unsigned C = sizeof(char);  // NOLINT
+  const unsigned D = sizeof(double);  // NOLINT
+  const unsigned F = sizeof(float);  // NOLINT
 
   testScanf("%d", 1, I);
   testScanf("%d%d%d", 3, I, I, I);

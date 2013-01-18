@@ -1611,7 +1611,8 @@ struct TsanInterceptorContext {
 #define COMMON_INTERCEPTOR_ENTER(ctx, func, ...) \
     SCOPED_TSAN_INTERCEPTOR(func, __VA_ARGS__) \
     TsanInterceptorContext _ctx = {thr, caller_pc, pc}; \
-    ctx = (void*)&_ctx; (void)ctx;
+    ctx = (void*)&_ctx; \
+    (void)ctx;
 #define COMMON_INTERCEPTOR_FD_ACQUIRE(ctx, fd) \
     FdAcquire(((TsanInterceptorContext*)ctx)->thr, pc, fd)
 #define COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd) \
