@@ -5,6 +5,9 @@
 // RUN: %clang_cc1 -fsanitize=unsigned-integer-overflow -fsanitize-blacklist=%t-func.blacklist -emit-llvm %s -o - | FileCheck %s --check-prefix=FUNC
 // RUN: %clang_cc1 -fsanitize=unsigned-integer-overflow -fsanitize-blacklist=%t-file.blacklist -emit-llvm %s -o - | FileCheck %s --check-prefix=FILE
 
+// FIXME: %t-file.blacklist contains DOSish paths.
+// REQUIRES: shell
+
 unsigned i;
 
 // DEFAULT: @hash

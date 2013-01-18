@@ -3,6 +3,9 @@
 // RUN: echo "src:%s" > %t
 // RUN: %clang_cc1 -emit-llvm -o - %s -fsanitize=address -fsanitize-blacklist=%t | FileCheck %s
 
+// FIXME: %t is like "src:x:\path\to\clang\test\CodeGen\address-safety-attr.cpp"
+// REQUIRES: shell
+
 // The address_safety attribute should be attached to functions
 // when AddressSanitizer is enabled, unless no_address_safety_analysis attribute
 // is present.
