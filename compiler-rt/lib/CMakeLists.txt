@@ -8,7 +8,7 @@ if(CMAKE_SYSTEM_NAME MATCHES "Darwin|Linux")
   add_subdirectory(sanitizer_common)
   if(NOT ANDROID)
     add_subdirectory(ubsan)
-  endif
+  endif()
 endif()
 if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux" AND NOT ANDROID)
   # ThreadSanitizer and MemorySanitizer are supported on Linux only.
