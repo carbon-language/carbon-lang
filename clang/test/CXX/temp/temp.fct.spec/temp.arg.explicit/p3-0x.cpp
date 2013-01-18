@@ -26,3 +26,24 @@ namespace ParameterPacksWithFunctions {
     unsigned_c<2> uc2 = f<float, double>();
   }
 }
+
+namespace rdar12176336 {
+  typedef void (*vararg_func)(...);
+
+  struct method {
+    vararg_func implementation;
+	
+    method(vararg_func implementation) : implementation(implementation) {}
+	
+    template<typename TReturnType, typename... TArguments, typename TFunctionType = TReturnType (*)(TArguments...)>
+    auto getImplementation() const -> TFunctionType
+    {
+      return reinterpret_cast<TFunctionType>(implementation);
+    }
+  };
+
+  void f() {
+    method m(nullptr);
+    auto imp = m.getImplementation<int, int, int>();
+  }
+}
