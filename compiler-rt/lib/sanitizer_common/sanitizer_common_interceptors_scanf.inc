@@ -103,7 +103,7 @@ static void scanf_common(void *ctx, const char *format, va_list ap_const) {
       ++p;
       continue;
     }
-    
+
     if (*p == 'L' || *p == 'q') {
       ++p;
       size = match_spec(scanf_llspecs, scanf_llspecs_cnt, *p);

@@ -195,7 +195,7 @@ INTERCEPTOR(int, fscanf, void* stream, const char *format, ...) {  // NOLINT
 
 INTERCEPTOR(int, sscanf, const char *str, const char *format, ...) {  // NOLINT
   void* ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, sscanf, str, format);
+  COMMON_INTERCEPTOR_ENTER(ctx, sscanf, str, format);  // NOLINT
   va_list ap;
   va_start(ap, format);
   int res = vsscanf(str, format, ap);  // NOLINT
@@ -204,11 +204,11 @@ INTERCEPTOR(int, sscanf, const char *str, const char *format, ...) {  // NOLINT
 }
 
 #define INIT_SCANF \
-  INTERCEPT_FUNCTION(scanf); \
-  INTERCEPT_FUNCTION(sscanf); \
-  INTERCEPT_FUNCTION(fscanf); \
-  INTERCEPT_FUNCTION(vscanf); \
-  INTERCEPT_FUNCTION(vsscanf); \
+  INTERCEPT_FUNCTION(scanf);                    \
+  INTERCEPT_FUNCTION(sscanf);  /* NOLINT */     \
+  INTERCEPT_FUNCTION(fscanf);                   \
+  INTERCEPT_FUNCTION(vscanf);                   \
+  INTERCEPT_FUNCTION(vsscanf);                  \
   INTERCEPT_FUNCTION(vfscanf)
 
 #else
