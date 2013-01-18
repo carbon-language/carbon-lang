@@ -215,6 +215,11 @@ public:
   ///
   void addLabelAddress(DIE *Die, unsigned Attribute, MCSymbol *Label);
 
+  /// addOpAddress - Add a dwarf op address data and value using the
+  /// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
+  ///
+  void addOpAddress(DIE *Die, MCSymbol *Label);
+
   /// addDelta - Add a label delta attribute data and value.
   ///
   void addDelta(DIE *Die, unsigned Attribute, unsigned Form,

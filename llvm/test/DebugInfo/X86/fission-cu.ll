@@ -66,6 +66,12 @@
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000004) string = "int")
 ; CHECK: DW_TAG_variable
 ; CHECK: DW_AT_name [DW_FORM_GNU_str_index]     ( indexed (00000003) string = "a")
+; CHECK: DW_AT_type [DW_FORM_ref4]       (cu + 0x0016 => {0x00000016})
+; CHECK: DW_AT_external [DW_FORM_flag_present]   (true)
+; CHECK: DW_AT_decl_file [DW_FORM_data1] (0x01)
+; CHECK: DW_AT_decl_line [DW_FORM_data1] (0x01)
+; CHECK: DW_AT_location [DW_FORM_block1] (<0x02> fb 01 )
+
 
 ; CHECK: .debug_str.dwo contents:
 ; CHECK: 0x00000000: "clang version 3.3 (trunk 169021) (llvm/trunk 169020)"

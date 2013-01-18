@@ -190,6 +190,22 @@ void CompileUnit::addLabelAddress(DIE *Die, unsigned Attribute,
   }
 }
 
+/// addOpAddress - Add a dwarf op address data and value using the
+/// form given and an op of either DW_FORM_addr or DW_FORM_GNU_addr_index.
+///
+void CompileUnit::addOpAddress(DIE *Die, MCSymbol *Sym) {
+
+  if (!DD->useSplitDwarf()) {
+    addUInt(Die, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
+    addLabel(Die, 0, dwarf::DW_FORM_udata, Sym);
+  } else {
+    unsigned idx = DU->getAddrPoolIndex(Sym);
+    DIEValue *Value = new (DIEValueAllocator) DIEInteger(idx);
+    addUInt(Die, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_GNU_addr_index);
+    Die->addValue(0, dwarf::DW_FORM_GNU_addr_index, Value);
+  }
+}
+
 /// addDelta - Add a label delta attribute data and value.
 ///
 void CompileUnit::addDelta(DIE *Die, unsigned Attribute, unsigned Form,
@@ -1297,9 +1313,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
   if (isGlobalVariable) {
     addToAccelTable = true;
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-    addLabel(Block, 0, dwarf::DW_FORM_udata,
-             Asm->Mang->getSymbol(GV.getGlobal()));
+    addOpAddress(Block, Asm->Mang->getSymbol(GV.getGlobal()));
     // Do not create specification DIE if context is either compile unit
     // or a subprogram.
     if (GVContext && GV.isDefinition() && !GVContext.isCompileUnit() &&
@@ -1329,9 +1343,7 @@ void CompileUnit::createGlobalVariableDIE(const MDNode *N) {
     // GV is a merged global.
     DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
     Value *Ptr = CE->getOperand(0);
-    addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_addr);
-    addLabel(Block, 0, dwarf::DW_FORM_udata,
-                    Asm->Mang->getSymbol(cast<GlobalValue>(Ptr)));
+    addOpAddress(Block, Asm->Mang->getSymbol(cast<GlobalValue>(Ptr)));
     addUInt(Block, 0, dwarf::DW_FORM_data1, dwarf::DW_OP_constu);
     SmallVector<Value*, 3> Idx(CE->op_begin()+1, CE->op_end());
     addUInt(Block, 0, dwarf::DW_FORM_udata,
