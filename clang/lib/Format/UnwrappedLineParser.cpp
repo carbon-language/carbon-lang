@@ -79,7 +79,11 @@ private:
 
 class ScopedLineState {
 public:
-  ScopedLineState(UnwrappedLineParser &Parser) : Parser(Parser) {
+  ScopedLineState(UnwrappedLineParser &Parser,
+                  bool SwitchToPreprocessorLines = false)
+      : Parser(Parser), SwitchToPreprocessorLines(SwitchToPreprocessorLines) {
+    if (SwitchToPreprocessorLines)
+      Parser.CurrentLines = &Parser.PreprocessorDirectives;
     PreBlockLine = Parser.Line.take();
     Parser.Line.reset(new UnwrappedLine());
     Parser.Line->Level = PreBlockLine->Level;
@@ -93,10 +97,13 @@ public:
     assert(Parser.Line->Tokens.empty());
     Parser.Line.reset(PreBlockLine);
     Parser.MustBreakBeforeNextToken = true;
+    if (SwitchToPreprocessorLines)
+      Parser.CurrentLines = &Parser.Lines;
   }
 
 private:
   UnwrappedLineParser &Parser;
+  const bool SwitchToPreprocessorLines;
 
   UnwrappedLine *PreBlockLine;
 };
@@ -104,14 +111,20 @@ private:
 UnwrappedLineParser::UnwrappedLineParser(
     clang::DiagnosticsEngine &Diag, const FormatStyle &Style,
     FormatTokenSource &Tokens, UnwrappedLineConsumer &Callback)
-    : Line(new UnwrappedLine), MustBreakBeforeNextToken(false), Diag(Diag),
-      Style(Style), Tokens(&Tokens), Callback(Callback) {
-}
+    : Line(new UnwrappedLine), MustBreakBeforeNextToken(false),
+      CurrentLines(&Lines), Diag(Diag), Style(Style), Tokens(&Tokens),
+      Callback(Callback) {}
 
 bool UnwrappedLineParser::parse() {
   DEBUG(llvm::dbgs() << "----\n");
   readToken();
-  return parseFile();
+  bool Error = parseFile();
+  for (std::vector<UnwrappedLine>::iterator I = Lines.begin(),
+                                            E = Lines.end();
+       I != E; ++I) {
+    Callback.consumeUnwrappedLine(*I);
+  }
+  return Error;
 }
 
 bool UnwrappedLineParser::parseFile() {
@@ -668,8 +681,17 @@ void UnwrappedLineParser::addUnwrappedLine() {
     }
     llvm::dbgs() << "\n";
   });
-  Callback.consumeUnwrappedLine(*Line);
+  CurrentLines->push_back(*Line);
   Line->Tokens.clear();
+  if (CurrentLines == &Lines && !PreprocessorDirectives.empty()) {
+    for (std::vector<UnwrappedLine>::iterator I = PreprocessorDirectives
+             .begin(), E = PreprocessorDirectives.end();
+         I != E; ++I) {
+      CurrentLines->push_back(*I);
+    }
+    PreprocessorDirectives.clear();
+  }
+
 }
 
 bool UnwrappedLineParser::eof() const {
@@ -692,7 +714,11 @@ void UnwrappedLineParser::readToken() {
   while (!Line->InPPDirective && FormatTok.Tok.is(tok::hash) &&
          ((FormatTok.NewlinesBefore > 0 && FormatTok.HasUnescapedNewline) ||
           FormatTok.IsFirst)) {
-    ScopedLineState BlockState(*this);
+    // If there is an unfinished unwrapped line, we flush the preprocessor
+    // directives only after that unwrapped line was finished later.
+    bool SwitchToPreprocessorLines = !Line->Tokens.empty() &&
+                                     CurrentLines == &Lines;
+    ScopedLineState BlockState(*this, SwitchToPreprocessorLines);
     parsePPDirective();
   }
 }

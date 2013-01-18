@@ -1537,6 +1537,16 @@ TEST_F(FormatTest, DoNotInterfereWithErrorAndWarning) {
   EXPECT_EQ("#warning 1", format("  #  warning 1"));
 }
 
+TEST_F(FormatTest, MergeHandlingInTheFaceOfPreprocessorDirectives) {
+  FormatStyle AllowsMergedIf = getGoogleStyle();
+  AllowsMergedIf.AllowShortIfStatementsOnASingleLine = true;
+  verifyFormat("void f() { f(); }\n#error E", AllowsMergedIf);
+  verifyFormat("if (true) return 42;\n#error E", AllowsMergedIf);
+
+  // FIXME:
+  // verifyFormat("if (true)\n#error E\n  return 42;", AllowsMergedIf);
+}
+
 // FIXME: This breaks the order of the unwrapped lines:
 // TEST_F(FormatTest, OrderUnwrappedLines) {
 //   verifyFormat("{\n"
