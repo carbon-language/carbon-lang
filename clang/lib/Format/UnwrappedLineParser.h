@@ -159,8 +159,7 @@ private:
   FormatToken FormatTok;
   bool MustBreakBeforeNextToken;
 
-  // The parsed lines. This is a pointer so we can switch it out to parse an
-  // unrelated set of unwrapped lines and put them into place later.
+  // The parsed lines. Only added to through \c CurrentLines.
   std::vector<UnwrappedLine> Lines;
 
   // Preprocessor directives are parsed out-of-order from other unwrapped lines.
