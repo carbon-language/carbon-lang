@@ -2442,8 +2442,8 @@ void ObjCARCOpt::OptimizeIndividualCalls(Function &F) {
 
     InstructionClass Class = GetBasicInstructionClass(Inst);
 
-    DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Visiting: Class: " << Class
-          << "; " << *Inst << "\n");
+    DEBUG(dbgs() << "ObjCARCOpt::OptimizeIndividualCalls: Visiting: Class: "
+          << Class << "; " << *Inst << "\n");
 
     switch (Class) {
     default: break;
