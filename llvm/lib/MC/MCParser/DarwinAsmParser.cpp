@@ -87,6 +87,8 @@ public:
     AddDirectiveHandler<
       &DarwinAsmParser::ParseSectionDirectiveLazySymbolPointers>(
         ".lazy_symbol_pointer");
+    AddDirectiveHandler<&DarwinAsmParser::ParseDirectiveLinkerOption>(
+      ".linker_option");
     AddDirectiveHandler<&DarwinAsmParser::ParseSectionDirectiveLiteral16>(
       ".literal16");
     AddDirectiveHandler<&DarwinAsmParser::ParseSectionDirectiveLiteral4>(
@@ -163,6 +165,7 @@ public:
   bool ParseDirectiveDesc(StringRef, SMLoc);
   bool ParseDirectiveDumpOrLoad(StringRef, SMLoc);
   bool ParseDirectiveLsym(StringRef, SMLoc);
+  bool ParseDirectiveLinkerOption(StringRef, SMLoc);
   bool ParseDirectiveSection(StringRef, SMLoc);
   bool ParseDirectivePushSection(StringRef, SMLoc);
   bool ParseDirectivePopSection(StringRef, SMLoc);
@@ -433,6 +436,33 @@ bool DarwinAsmParser::ParseDirectiveDumpOrLoad(StringRef Directive,
     return Warning(IDLoc, "ignoring directive .dump for now");
   else
     return Warning(IDLoc, "ignoring directive .load for now");
+}
+
+/// ParseDirectiveLinkerOption
+///  ::= .linker_option "string" ( , "string" )*
+bool DarwinAsmParser::ParseDirectiveLinkerOption(StringRef IDVal, SMLoc) {
+  SmallVector<std::string, 4> Args;
+  for (;;) {
+    if (getLexer().isNot(AsmToken::String))
+      return TokError("expected string in '" + Twine(IDVal) + "' directive");
+
+    std::string Data;
+    if (getParser().ParseEscapedString(Data))
+      return true;
+
+    Args.push_back(Data);
+
+    Lex();
+    if (getLexer().is(AsmToken::EndOfStatement))
+      break;
+
+    if (getLexer().isNot(AsmToken::Comma))
+      return TokError("unexpected token in '" + Twine(IDVal) + "' directive");
+    Lex();
+  }
+
+  getStreamer().EmitLinkerOptions(Args);
+  return false;
 }
 
 /// ParseDirectiveLsym

@@ -145,6 +145,7 @@ public:
   virtual void EmitEHSymAttributes(const MCSymbol *Symbol,
                                    MCSymbol *EHSymbol);
   virtual void EmitAssemblerFlag(MCAssemblerFlag Flag);
+  virtual void EmitLinkerOptions(ArrayRef<std::string> Options);
   virtual void EmitDataRegion(MCDataRegionType Kind);
   virtual void EmitThumbFunc(MCSymbol *Func);
 
@@ -373,6 +374,15 @@ void MCAsmStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
   case MCAF_Code64:                OS << '\t'<< MAI.getCode64Directive(); break;
   }
   EmitEOL();
+}
+
+void MCAsmStreamer::EmitLinkerOptions(ArrayRef<std::string> Options) {
+  assert(!Options.empty() && "At least one option is required!");
+  OS << "\t.linker_option \"" << Options[0] << '"';
+  for (ArrayRef<std::string>::iterator it = Options.begin() + 1,
+         ie = Options.end(); it != ie; ++it) {
+    OS << ", " << '"' << *it << '"';
+  }
 }
 
 void MCAsmStreamer::EmitDataRegion(MCDataRegionType Kind) {

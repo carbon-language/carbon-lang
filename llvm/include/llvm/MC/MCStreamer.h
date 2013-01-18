@@ -20,6 +20,7 @@
 #include "llvm/MC/MCDwarf.h"
 #include "llvm/MC/MCWin64EH.h"
 #include "llvm/Support/DataTypes.h"
+#include <string>
 
 namespace llvm {
   class MCAsmBackend;
@@ -254,6 +255,10 @@ namespace llvm {
 
     /// EmitAssemblerFlag - Note in the output the specified @p Flag.
     virtual void EmitAssemblerFlag(MCAssemblerFlag Flag) = 0;
+
+    /// EmitLinkerOptions - Emit the given list @p Options of strings as linker
+    /// options into the output.
+    virtual void EmitLinkerOptions(ArrayRef<std::string> Kind) {}
 
     /// EmitDataRegion - Note in the output the specified region @p Kind.
     virtual void EmitDataRegion(MCDataRegionType Kind) {}
