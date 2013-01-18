@@ -84,19 +84,19 @@ if(COMPILER_RT_CAN_EXECUTE_TESTS)
     add_sanitizer_common_lib("RTSanitizerCommon.test.osx"
                              $<TARGET_OBJECTS:RTSanitizerCommon.osx>)
   else()
-    if(CAN_TARGET_X86_64)
+    if(CAN_TARGET_x86_64)
       add_sanitizer_common_lib("RTSanitizerCommon.test.x86_64"
                                $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>)
     endif()
-    if(CAN_TARGET_I386)
+    if(CAN_TARGET_i386)
       add_sanitizer_common_lib("RTSanitizerCommon.test.i386"
                                $<TARGET_OBJECTS:RTSanitizerCommon.i386>)
     endif()
   endif()
-  if(CAN_TARGET_X86_64)
+  if(CAN_TARGET_x86_64)
     add_sanitizer_tests_for_arch(x86_64)
   endif()
-  if(CAN_TARGET_I386)
+  if(CAN_TARGET_i386)
     add_sanitizer_tests_for_arch(i386)
   endif()
 

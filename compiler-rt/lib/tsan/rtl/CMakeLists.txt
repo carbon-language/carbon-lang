@@ -33,7 +33,7 @@ endif()
 
 set(TSAN_RUNTIME_LIBRARIES)
 # TSan is currently supported on 64-bit Linux only.
-if(CAN_TARGET_X86_64 AND UNIX AND NOT APPLE)
+if(CAN_TARGET_x86_64 AND UNIX AND NOT APPLE)
   set(TSAN_ASM_SOURCES tsan_rtl_amd64.S)
   # Pass ASM file directly to the C++ compiler.
   set_source_files_properties(${TSAN_ASM_SOURCES} PROPERTIES
@@ -46,7 +46,7 @@ if(CAN_TARGET_X86_64 AND UNIX AND NOT APPLE)
     $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
     )
   set_target_compile_flags(clang_rt.tsan-x86_64
-    ${TSAN_CFLAGS} ${TARGET_X86_64_CFLAGS}
+    ${TSAN_CFLAGS} ${TARGET_x86_64_CFLAGS}
     )
   list(APPEND TSAN_RUNTIME_LIBRARIES clang_rt.tsan-x86_64)
 endif()

@@ -150,7 +150,7 @@ set(GENERIC_SOURCES
   umodti3.c
   )
 
-if(CAN_TARGET_X86_64)
+if(CAN_TARGET_x86_64)
   add_library(clang_rt.x86_64 STATIC
     x86_64/floatdidf.c
     x86_64/floatdisf.c
@@ -160,10 +160,10 @@ if(CAN_TARGET_X86_64)
     x86_64/floatundixf.S
     ${GENERIC_SOURCES}
     )
-  set_target_properties(clang_rt.x86_64 PROPERTIES COMPILE_FLAGS "-std=c99 ${TARGET_X86_64_CFLAGS}")
+  set_target_properties(clang_rt.x86_64 PROPERTIES COMPILE_FLAGS "-std=c99 ${TARGET_x86_64_CFLAGS}")
   add_clang_compiler_rt_libraries(clang_rt.x86_64)
 endif()
-if(CAN_TARGET_I386)
+if(CAN_TARGET_i386)
   add_library(clang_rt.i386 STATIC
     i386/ashldi3.S
     i386/ashrdi3.S
@@ -181,6 +181,6 @@ if(CAN_TARGET_I386)
     i386/umoddi3.S
     ${GENERIC_SOURCES}
     )
-  set_target_properties(clang_rt.i386 PROPERTIES COMPILE_FLAGS "-std=c99 ${TARGET_I386_CFLAGS}")
+  set_target_properties(clang_rt.i386 PROPERTIES COMPILE_FLAGS "-std=c99 ${TARGET_i386_CFLAGS}")
   add_clang_compiler_rt_libraries(clang_rt.i386)
 endif()

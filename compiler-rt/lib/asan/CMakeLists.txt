@@ -78,25 +78,25 @@ elseif(ANDROID)
   list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-arm-android)
 else()
   # Otherwise, build separate libraries for each target.
-  if(CAN_TARGET_X86_64)
+  if(CAN_TARGET_x86_64)
     add_library(clang_rt.asan-x86_64 STATIC
       ${ASAN_SOURCES}
       $<TARGET_OBJECTS:RTInterception.x86_64>
       $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
       )
     set_target_compile_flags(clang_rt.asan-x86_64
-      ${ASAN_CFLAGS} ${TARGET_X86_64_CFLAGS}
+      ${ASAN_CFLAGS} ${TARGET_x86_64_CFLAGS}
       )
     list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-x86_64)
   endif()
-  if(CAN_TARGET_I386)
+  if(CAN_TARGET_i386)
     add_library(clang_rt.asan-i386 STATIC
       ${ASAN_SOURCES}
       $<TARGET_OBJECTS:RTInterception.i386>
       $<TARGET_OBJECTS:RTSanitizerCommon.i386>
       )
     set_target_compile_flags(clang_rt.asan-i386
-      ${ASAN_CFLAGS} ${TARGET_I386_CFLAGS}
+      ${ASAN_CFLAGS} ${TARGET_i386_CFLAGS}
       )
     list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-i386)
   endif()

@@ -65,6 +65,7 @@ else()
   # passing -fsanitize=address flag.
   list(APPEND ASAN_LINK_FLAGS -fsanitize=address)
 endif()
+
 # Unit tests on Mac depend on Foundation.
 if(APPLE)
   list(APPEND ASAN_LINK_FLAGS -framework Foundation)
@@ -154,10 +155,10 @@ macro(add_asan_tests_for_arch arch)
 endmacro()
 
 if(COMPILER_RT_CAN_EXECUTE_TESTS)
-  if(CAN_TARGET_X86_64)
+  if(CAN_TARGET_x86_64)
     add_asan_tests_for_arch(x86_64)
   endif()
-  if(CAN_TARGET_I386)
+  if(CAN_TARGET_i386)
     add_asan_tests_for_arch(i386)
   endif()
 endif()

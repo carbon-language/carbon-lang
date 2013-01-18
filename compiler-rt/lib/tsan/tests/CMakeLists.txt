@@ -6,7 +6,7 @@ set_target_properties(TsanUnitTests PROPERTIES
 function(add_tsan_unittest testname)
   # Build unit tests only on 64-bit Linux.
   if(UNIX AND NOT APPLE
-      AND CAN_TARGET_X86_64
+      AND CAN_TARGET_x86_64
       AND CMAKE_SIZEOF_VOID_P EQUAL 8
       AND NOT LLVM_BUILD_32_BITS)
     add_unittest(TsanUnitTests ${testname} ${ARGN})

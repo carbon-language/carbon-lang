@@ -30,21 +30,21 @@ set(COMPILER_RT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 # Detect whether the current target platform is 32-bit or 64-bit, and setup
 # the correct commandline flags needed to attempt to target 32-bit and 64-bit.
 if(CMAKE_SIZEOF_VOID_P EQUAL 4 OR LLVM_BUILD_32_BITS)
-  set(TARGET_X86_64_CFLAGS "-m64")
-  set(TARGET_I386_CFLAGS "")
+  set(TARGET_x86_64_CFLAGS "-m64")
+  set(TARGET_i386_CFLAGS "")
 else()
   if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(FATAL_ERROR "Please use a sane architecture with 4 or 8 byte pointers.")
   endif()
-  set(TARGET_X86_64_CFLAGS "")
-  set(TARGET_I386_CFLAGS "-m32")
+  set(TARGET_x86_64_CFLAGS "")
+  set(TARGET_i386_CFLAGS "-m32")
 endif()
 
 function(get_target_flags_for_arch arch out_var)
   if(${arch} STREQUAL "x86_64")
-    set(${out_var} ${TARGET_X86_64_CFLAGS} PARENT_SCOPE)
+    set(${out_var} ${TARGET_x86_64_CFLAGS} PARENT_SCOPE)
   elseif(${arch} STREQUAL "i386")
-    set(${out_var} ${TARGET_I386_CFLAGS} PARENT_SCOPE)
+    set(${out_var} ${TARGET_i386_CFLAGS} PARENT_SCOPE)
   else()
     message(FATAL_ERROR "Unsupported architecture: ${arch}")
   endif()
@@ -56,15 +56,15 @@ endfunction()
 # abilities.
 set(SIMPLE_SOURCE64 ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/simple64.c)
 file(WRITE ${SIMPLE_SOURCE64} "#include <stdlib.h>\nint main() {}")
-try_compile(CAN_TARGET_X86_64 ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE64}
-            COMPILE_DEFINITIONS "${TARGET_X86_64_CFLAGS}"
-            CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_X86_64_CFLAGS}")
+try_compile(CAN_TARGET_x86_64 ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE64}
+            COMPILE_DEFINITIONS "${TARGET_x86_64_CFLAGS}"
+            CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_x86_64_CFLAGS}")
 
 set(SIMPLE_SOURCE32 ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/simple32.c)
 file(WRITE ${SIMPLE_SOURCE32} "#include <stdlib.h>\nint main() {}")
-try_compile(CAN_TARGET_I386 ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE32}
-            COMPILE_DEFINITIONS "${TARGET_I386_CFLAGS}"
-            CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_I386_CFLAGS}")
+try_compile(CAN_TARGET_i386 ${CMAKE_BINARY_DIR} ${SIMPLE_SOURCE32}
+            COMPILE_DEFINITIONS "${TARGET_i386_CFLAGS}"
+            CMAKE_FLAGS "-DCMAKE_EXE_LINKER_FLAGS:STRING=${TARGET_i386_CFLAGS}")
 
 # We only support running instrumented tests when we're not cross compiling
 # and target a unix-like system. On Android we define the rules for building
@@ -78,9 +78,9 @@ endif()
 function(filter_available_targets out_var)
   set(archs)
   foreach(arch ${ARGN})
-    if(${arch} STREQUAL "x86_64" AND CAN_TARGET_X86_64)
+    if(${arch} STREQUAL "x86_64" AND CAN_TARGET_x86_64)
       list(APPEND archs ${arch})
-    elseif (${arch} STREQUAL "i386" AND CAN_TARGET_I386)
+    elseif (${arch} STREQUAL "i386" AND CAN_TARGET_i386)
       list(APPEND archs ${arch})
     endif()
   endforeach()
