@@ -124,7 +124,7 @@ public:
     void 
     EnableParserVars(uint64_t parser_id)
     {
-        m_parser_vars.emplace(parser_id, ParserVars());
+        m_parser_vars.insert(std::make_pair(parser_id, ParserVars()));
     }
     
     //----------------------------------------------------------------------
@@ -178,7 +178,7 @@ public:
     void 
     EnableJITVars(uint64_t parser_id)
     {
-        m_jit_vars.emplace(parser_id, JITVars());
+        m_jit_vars.insert(std::make_pair(parser_id, JITVars()));
     }
     
     //----------------------------------------------------------------------
