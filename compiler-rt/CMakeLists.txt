@@ -23,30 +23,35 @@ set(CMAKE_MODULE_PATH
 
 set(COMPILER_RT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
-# FIXME: Below we assume that the target build of LLVM/Clang is x86, which is
-# not at all valid. Much of this can be fixed just by switching to use
-# a just-built-clang binary for the compiles.
-
 # Detect whether the current target platform is 32-bit or 64-bit, and setup
 # the correct commandline flags needed to attempt to target 32-bit and 64-bit.
 if(CMAKE_SIZEOF_VOID_P EQUAL 4 OR LLVM_BUILD_32_BITS)
-  set(TARGET_x86_64_CFLAGS "-m64")
-  set(TARGET_i386_CFLAGS "")
+  set(TARGET_64_BIT_CFLAGS "-m64")
+  set(TARGET_32_BIT_CFLAGS "")
 else()
   if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(FATAL_ERROR "Please use a sane architecture with 4 or 8 byte pointers.")
   endif()
-  set(TARGET_x86_64_CFLAGS "")
-  set(TARGET_i386_CFLAGS "-m32")
+  set(TARGET_64_BIT_CFLAGS "")
+  set(TARGET_32_BIT_CFLAGS "-m32")
 endif()
 
+# FIXME: Below we assume that the target build of LLVM/Clang is x86, which is
+# not at all valid. Much of this can be fixed just by switching to use
+# a just-built-clang binary for the compiles.
+
+set(TARGET_x86_64_CFLAGS ${TARGET_64_BIT_CFLAGS})
+set(TARGET_i386_CFLAGS ${TARGET_32_BIT_CFLAGS})
+
+set(COMPILER_RT_SUPPORTED_ARCH
+  x86_64 i386)
+
 function(get_target_flags_for_arch arch out_var)
-  if(${arch} STREQUAL "x86_64")
-    set(${out_var} ${TARGET_x86_64_CFLAGS} PARENT_SCOPE)
-  elseif(${arch} STREQUAL "i386")
-    set(${out_var} ${TARGET_i386_CFLAGS} PARENT_SCOPE)
-  else()
+  list(FIND COMPILER_RT_SUPPORTED_ARCH ${arch} ARCH_INDEX)
+  if(ARCH_INDEX EQUAL -1)
     message(FATAL_ERROR "Unsupported architecture: ${arch}")
+  else()
+    set(${out_var} ${TARGET_${arch}_CFLAGS} PARENT_SCOPE)
   endif()
 endfunction()
 
@@ -78,9 +83,8 @@ endif()
 function(filter_available_targets out_var)
   set(archs)
   foreach(arch ${ARGN})
-    if(${arch} STREQUAL "x86_64" AND CAN_TARGET_x86_64)
-      list(APPEND archs ${arch})
-    elseif (${arch} STREQUAL "i386" AND CAN_TARGET_i386)
+    list(FIND COMPILER_RT_SUPPORTED_ARCH ${arch} ARCH_INDEX)
+    if(NOT (ARCH_INDEX EQUAL -1) AND CAN_TARGET_${arch})
       list(APPEND archs ${arch})
     endif()
   endforeach()
