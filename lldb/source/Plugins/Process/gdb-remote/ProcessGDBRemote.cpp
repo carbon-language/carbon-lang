@@ -3208,7 +3208,13 @@ public:
                 result.SetStatus (eReturnStatusSuccessFinishResult);
                 Stream &output_strm = result.GetOutputStream();
                 output_strm.Printf ("  packet: %s\n", packet_cstr);
-                const std::string &response_str = response.GetStringRef();
+                std::string &response_str = response.GetStringRef();
+                
+                if (strcmp(packet_cstr, "qGetProfileData") == 0)
+                {
+                    response_str = process->GetGDBRemote().HarmonizeThreadIdsForProfileData(process, response);
+                }
+
                 if (response_str.empty())
                     output_strm.PutCString ("response: \nerror: UNIMPLEMENTED\n");
                 else

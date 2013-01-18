@@ -340,6 +340,7 @@ MachTask::GetProfileData ()
         
         for (int i=0; i<num_threads; i++) {
             profile_data_stream << "thread_used_id:" << std::hex << threads_id[i] << std::dec << ';';
+            profile_data_stream << "thread_used_usec:" << threads_used_usec[i] << ';';
             
             profile_data_stream << "thread_used_name:";
             int len = threads_name[i].size();
@@ -356,8 +357,6 @@ MachTask::GetProfileData ()
                 profile_data_stream << DECIMAL;
             }
             profile_data_stream << ';';
-            
-            profile_data_stream << "thread_used_usec:" << threads_used_usec[i] << ';';
         }
         
         profile_data_stream << "wired:" << vm_stats.wire_count * vm_page_size << ';';

@@ -354,6 +354,11 @@ public:
     {
         return m_interrupt_sent;
     }
+    
+    std::string
+    HarmonizeThreadIdsForProfileData (ProcessGDBRemote *process,
+                                      StringExtractorGDBRemote &inputStringExtractor);
+    
 protected:
 
     bool
@@ -407,6 +412,8 @@ protected:
     StringExtractorGDBRemote m_async_response;
     int m_async_signal; // We were asked to deliver a signal to the inferior process.
     bool m_interrupt_sent;
+    std::string m_partial_profile_data;
+    std::map<uint64_t, uint32_t> m_thread_id_to_used_usec_map;
     
     lldb_private::ArchSpec m_host_arch;
     lldb_private::ArchSpec m_process_arch;

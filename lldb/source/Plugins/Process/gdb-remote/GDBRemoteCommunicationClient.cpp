@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <sstream>
+
 // Other libraries and framework includes
 #include "llvm/ADT/Triple.h"
 #include "lldb/Interpreter/Args.h"
@@ -71,6 +73,7 @@ GDBRemoteCommunicationClient::GDBRemoteCommunicationClient(bool is_platform) :
     m_async_packet (),
     m_async_response (),
     m_async_signal (-1),
+    m_thread_id_to_used_usec_map (),
     m_host_arch(),
     m_process_arch(),
     m_os_version_major (UINT32_MAX),
@@ -421,6 +424,99 @@ GDBRemoteCommunicationClient::SendPacketAndWaitForResponse
     return response_len;
 }
 
+static const char *end_delimiter = "--end--;";
+static const int end_delimiter_len = 8;
+
+std::string
+GDBRemoteCommunicationClient::HarmonizeThreadIdsForProfileData
+(   ProcessGDBRemote *process,
+    StringExtractorGDBRemote& profileDataExtractor
+)
+{
+    std::map<uint64_t, uint32_t> new_thread_id_to_used_usec_map;
+    std::stringstream final_output;
+    std::string name, value;
+
+    // Going to assuming thread_used_usec comes first, else bail out.
+    while (profileDataExtractor.GetNameColonValue(name, value))
+    {
+        if (name.compare("thread_used_id") == 0)
+        {
+            StringExtractor threadIDHexExtractor(value.c_str());
+            uint64_t thread_id = threadIDHexExtractor.GetHexMaxU64(false, 0);
+            
+            bool has_used_usec = false;
+            uint32_t curr_used_usec = 0;
+            std::string usec_name, usec_value;
+            uint32_t input_file_pos = profileDataExtractor.GetFilePos();
+            if (profileDataExtractor.GetNameColonValue(usec_name, usec_value))
+            {
+                if (usec_name.compare("thread_used_usec") == 0)
+                {
+                    has_used_usec = true;
+                    curr_used_usec = strtoull(usec_value.c_str(), NULL, 0);
+                }
+                else
+                {
+                    // We didn't find what we want, it is probably
+                    // an older version. Bail out.
+                    profileDataExtractor.SetFilePos(input_file_pos);
+                }
+            }
+
+            if (has_used_usec)
+            {
+                uint32_t prev_used_usec = 0;
+                std::map<uint64_t, uint32_t>::iterator iterator = m_thread_id_to_used_usec_map.find(thread_id);
+                if (iterator != m_thread_id_to_used_usec_map.end())
+                {
+                    prev_used_usec = m_thread_id_to_used_usec_map[thread_id];
+                }
+                
+                uint32_t real_used_usec = curr_used_usec - prev_used_usec;
+                // A good first time record is one that runs for at least 0.25 sec
+                bool good_first_time = (prev_used_usec == 0) && (real_used_usec > 250000);
+                bool good_subsequent_time = (prev_used_usec > 0) &&
+                    ((real_used_usec > 0) || (process->HasAssignedIndexIDToThread(thread_id)));
+                
+                if (good_first_time || good_subsequent_time)
+                {
+                    // We try to avoid doing too many index id reservation,
+                    // resulting in fast increase of index ids.
+                    
+                    final_output << name << ":";
+                    int32_t index_id = process->AssignIndexIDToThread(thread_id);
+                    final_output << index_id << ";";
+                    
+                    final_output << usec_name << ":" << usec_value << ";";
+                }
+                else
+                {
+                    // Skip past 'thread_used_name'.
+                    std::string local_name, local_value;
+                    profileDataExtractor.GetNameColonValue(local_name, local_value);
+                }
+                
+                // Store current time as previous time so that they can be compared later.
+                new_thread_id_to_used_usec_map[thread_id] = curr_used_usec;
+            }
+            else
+            {
+                // Bail out and use old string.
+                final_output << name << ":" << value << ";";
+            }
+        }
+        else
+        {
+            final_output << name << ":" << value << ";";
+        }
+    }
+    final_output << end_delimiter;
+    m_thread_id_to_used_usec_map = new_thread_id_to_used_usec_map;
+    
+    return final_output.str();
+}
+
 StateType
 GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
 (
@@ -654,10 +750,29 @@ GDBRemoteCommunicationClient::SendContinuePacketAndWaitForResponse
                 case 'A':
                     // Async miscellaneous reply. Right now, only profile data is coming through this channel.
                     {
-                        const std::string& profile_data = response.GetStringRef();
-                        const char *data_cstr = profile_data.c_str();
-                        data_cstr++; // Move beyond 'A'
-                        process->BroadcastAsyncProfileData (data_cstr, profile_data.size()-1);
+                        std::string input = response.GetStringRef().substr(1); // '1' to move beyond 'A'
+                        if (m_partial_profile_data.length() > 0)
+                        {
+                            m_partial_profile_data.append(input);
+                            input = m_partial_profile_data;
+                            m_partial_profile_data.clear();
+                        }
+                        
+                        size_t found, pos = 0, len = input.length();
+                        while ((found = input.find(end_delimiter, pos)) != std::string::npos)
+                        {
+                            StringExtractorGDBRemote profileDataExtractor(input.substr(pos, found).c_str());
+                            const std::string& profile_data = HarmonizeThreadIdsForProfileData(process, profileDataExtractor);
+                            process->BroadcastAsyncProfileData (profile_data.c_str(), profile_data.length());
+                            
+                            pos = found + end_delimiter_len;
+                        }
+                        
+                        if (pos < len)
+                        {
+                            // Last incomplete chunk.
+                            m_partial_profile_data = input.substr(pos);
+                        }
                     }
                     break;
 
