@@ -1,7 +1,6 @@
 include(CheckCXXCompilerFlag)
 include(CompilerRTCompile)
 include(CompilerRTLink)
-include(CompilerRTUnittests)
 
 include_directories(..)
 include_directories(../..)

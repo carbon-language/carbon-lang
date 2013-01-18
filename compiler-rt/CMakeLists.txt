@@ -20,6 +20,7 @@ set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules"
   )
+include(AddCompilerRT)
 
 set(COMPILER_RT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -122,23 +123,6 @@ endif()
 if(APPLE)
   list(APPEND SANITIZER_COMMON_CFLAGS -mmacosx-version-min=10.5)
 endif()
-
-# Because compiler-rt spends a lot of time setting up custom compile flags,
-# define a handy helper function for it. The compile flags setting in CMake
-# has serious issues that make its syntax challenging at best.
-function(set_target_compile_flags target)
-  foreach(arg ${ARGN})
-    set(argstring "${argstring} ${arg}")
-  endforeach()
-  set_property(TARGET ${target} PROPERTY COMPILE_FLAGS "${argstring}")
-endfunction()
-
-function(set_target_link_flags target)
-  foreach(arg ${ARGN})
-    set(argstring "${argstring} ${arg}")
-  endforeach()
-  set_property(TARGET ${target} PROPERTY LINK_FLAGS "${argstring}")
-endfunction()
 
 # Compute the Clang version from the LLVM version.
 # FIXME: We should be able to reuse CLANG_VERSION variable calculated

@@ -58,25 +58,22 @@ if(APPLE)
   set_target_properties(RTSanitizerCommon.osx PROPERTIES
     OSX_ARCHITECTURES "${SANITIZER_TARGETS}")
   list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.osx)
+elseif(ANDROID)
+  add_library(RTSanitizerCommon.arm.android OBJECT ${SANITIZER_SOURCES})
+  set_target_compile_flags(RTSanitizerCommon.arm.android
+    ${SANITIZER_CFLAGS})
+  list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.arm.android)
 else()
   # Otherwise, build separate libraries for each target.
   if(CAN_TARGET_x86_64)
-    add_library(RTSanitizerCommon.x86_64 OBJECT ${SANITIZER_SOURCES})
-    set_target_compile_flags(RTSanitizerCommon.x86_64
-      ${SANITIZER_CFLAGS} ${TARGET_x86_64_CFLAGS})
+    add_compiler_rt_object_library(RTSanitizerCommon x86_64
+      SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS})
     list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.x86_64)
   endif()
   if(CAN_TARGET_i386)
-    add_library(RTSanitizerCommon.i386 OBJECT ${SANITIZER_SOURCES})
-    set_target_compile_flags(RTSanitizerCommon.i386
-      ${SANITIZER_CFLAGS} ${TARGET_i386_CFLAGS})
+    add_compiler_rt_object_library(RTSanitizerCommon i386
+      SOURCES ${SANITIZER_SOURCES} CFLAGS ${SANITIZER_CFLAGS})
     list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.i386)
-  endif()
-  if(ANDROID)
-    add_library(RTSanitizerCommon.arm.android OBJECT ${SANITIZER_SOURCES})
-    set_target_compile_flags(RTSanitizerCommon.arm.android
-      ${SANITIZER_CFLAGS})
-    list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.arm.android)
   endif()
 endif()
 

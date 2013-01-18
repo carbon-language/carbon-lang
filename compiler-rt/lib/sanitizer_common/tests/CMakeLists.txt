@@ -1,5 +1,4 @@
 include(CompilerRTCompile)
-include(CompilerRTUnittests)
 
 set(SANITIZER_UNITTESTS
   sanitizer_allocator_test.cc

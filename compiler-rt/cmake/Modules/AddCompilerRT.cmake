@@ -1,6 +1,24 @@
 include(AddLLVM)
 include(LLVMParseArguments)
+include(CompilerRTUtils)
 
+# Tries to add "object library" target for a given architecture
+# with name "<name>.<arch>" if architecture can be targeted.
+# add_compiler_rt_object_library(<name> <arch>
+#                                SOURCES <source files>
+#                                CFLAGS <compile flags>)
+macro(add_compiler_rt_object_library name arch)
+  if(CAN_TARGET_${arch})
+    parse_arguments(LIB "SOURCES;CFLAGS" "" ${ARGN})
+    add_library(${name}.${arch} OBJECT ${LIB_SOURCES})
+    set_target_compile_flags(${name}.${arch}
+      ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
+  else()
+    message(FATAL_ERROR "Archtecture ${arch} can't be targeted")
+  endif()
+endmacro()
+
+# Unittests support.
 set(COMPILER_RT_GTEST_PATH ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest)
 set(COMPILER_RT_GTEST_SOURCE ${COMPILER_RT_GTEST_PATH}/gtest-all.cc)
 set(COMPILER_RT_GTEST_INCLUDE_CFLAGS
