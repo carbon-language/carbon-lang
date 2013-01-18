@@ -263,7 +263,7 @@ no regressions when using either ``clang`` or ``dragonegg`` with the
 Qualify Clang
 ^^^^^^^^^^^^^
 
-``Clang`` is qualified when front-end specific tests in the ``llvm`` dejagnu
+``Clang`` is qualified when front-end specific tests in the ``llvm`` regression
 test suite all pass, clang's own test suite passes cleanly, and there are no
 regressions in the ``test-suite``.
 
@@ -273,26 +273,26 @@ Specific Target Qualification Details
 +--------------+-------------+----------------+-----------------------------+
 | Architecture | OS          | clang baseline | tests                       |
 +==============+=============+================+=============================+
-| x86-32       | Linux       | last release   | llvm dejagnu,               |
-|              |             |                | clang tests,                |
+| x86-32       | Linux       | last release   | llvm regression tests,      |
+|              |             |                | clang regression tests,     |
 |              |             |                | test-suite (including spec) |
 +--------------+-------------+----------------+-----------------------------+
-| x86-32       | FreeBSD     | last release   | llvm dejagnu,               |
-|              |             |                | clang tests,                |
+| x86-32       | FreeBSD     | last release   | llvm regression tests,      |
+|              |             |                | clang regression tests,     |
 |              |             |                | test-suite                  |
 +--------------+-------------+----------------+-----------------------------+
 | x86-32       | mingw       | none           | QT                          |
 +--------------+-------------+----------------+-----------------------------+
-| x86-64       | Mac OS 10.X | last release   | llvm dejagnu,               |
-|              |             |                | clang tests,                |
+| x86-64       | Mac OS 10.X | last release   | llvm regression tests,      |
+|              |             |                | clang regression tests,     |
 |              |             |                | test-suite (including spec) |
 +--------------+-------------+----------------+-----------------------------+
-| x86-64       | Linux       | last release   | llvm dejagnu,               |
-|              |             |                | clang tests,                |
+| x86-64       | Linux       | last release   | llvm regression tests,      |
+|              |             |                | clang regression tests,     |
 |              |             |                | test-suite (including spec) |
 +--------------+-------------+----------------+-----------------------------+
-| x86-64       | FreeBSD     | last release   | llvm dejagnu,               |
-|              |             |                | clang tests,                |
+| x86-64       | FreeBSD     | last release   | llvm regression tests,      |
+|              |             |                | clang regression tests,     |
 |              |             |                | test-suite                  |
 +--------------+-------------+----------------+-----------------------------+
 

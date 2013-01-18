@@ -346,9 +346,9 @@ details.
 This target should be implemented by the ``Makefile`` in the project's ``test``
 directory. It is invoked by the ``check`` target elsewhere.  Each project is
 free to define the actions of ``check-local`` as appropriate for that
-project. The LLVM project itself uses dejagnu to run a suite of feature and
-regression tests. Other projects may choose to use dejagnu or any other testing
-mechanism.
+project. The LLVM project itself uses the :doc:`Lit <CommandGuide/lit>` testing
+tool to run a suite of feature and regression tests. Other projects may choose
+to use :program:`lit` or any other testing mechanism.
 
 ``clean``
 ---------

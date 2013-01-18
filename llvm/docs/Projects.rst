@@ -151,12 +151,10 @@ Underneath your top level directory, you should have the following directories:
     Currently, the LLVM build system provides basic support for tests. The LLVM
     system provides the following:
 
-* LLVM provides a ``tcl`` procedure that is used by ``Dejagnu`` to run tests.
-  It can be found in ``llvm/lib/llvm-dg.exp``.  This test procedure uses ``RUN``
+* LLVM contains regression tests in ``llvm/test``.  These tests are run by the
+  :doc:`Lit <CommandGuide/lit>` testing tool.  This test procedure uses ``RUN``
   lines in the actual test case to determine how to run the test.  See the
-  :doc:`TestingGuide` for more details. You can easily write Makefile
-  support similar to the Makefiles in ``llvm/test`` to use ``Dejagnu`` to
-  run your project's tests.
+  :doc:`TestingGuide` for more details.
 
 * LLVM contains an optional package called ``llvm-test``, which provides
   benchmarks and programs that are known to compile with the Clang front
