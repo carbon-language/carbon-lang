@@ -22,7 +22,7 @@
 #define DEBUG_TYPE "tsan"
 
 #include "llvm/Transforms/Instrumentation.h"
-#include "BlackList.h"
+#include "llvm/Transforms/Utils/BlackList.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"

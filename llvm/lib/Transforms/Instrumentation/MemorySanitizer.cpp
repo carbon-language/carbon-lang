@@ -71,7 +71,7 @@
 #define DEBUG_TYPE "msan"
 
 #include "llvm/Transforms/Instrumentation.h"
-#include "BlackList.h"
+#include "llvm/Transforms/Utils/BlackList.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"

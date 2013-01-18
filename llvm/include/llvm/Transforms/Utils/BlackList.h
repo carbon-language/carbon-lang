@@ -42,17 +42,17 @@ class BlackList {
  public:
   BlackList(const StringRef Path);
   // Returns whether either this function or it's source file are blacklisted.
-  bool isIn(const Function &F);
+  bool isIn(const Function &F) const;
   // Returns whether either this global or it's source file are blacklisted.
-  bool isIn(const GlobalVariable &G);
+  bool isIn(const GlobalVariable &G) const;
   // Returns whether this module is blacklisted by filename.
-  bool isIn(const Module &M);
+  bool isIn(const Module &M) const;
   // Returns whether a global should be excluded from initialization checking.
-  bool isInInit(const GlobalVariable &G);
+  bool isInInit(const GlobalVariable &G) const;
  private:
   StringMap<Regex*> Entries;
 
-  bool inSection(const StringRef Section, const StringRef Query);
+  bool inSection(const StringRef Section, const StringRef Query) const;
 };
 
 }  // namespace llvm
