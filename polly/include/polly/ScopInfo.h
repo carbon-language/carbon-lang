@@ -314,7 +314,7 @@ public:
   /// @brief Get the space of the iteration domain
   ///
   /// @return The space of the iteration domain
-  isl_space *getDomainSpace() const;
+  __isl_give isl_space *getDomainSpace() const;
 
   /// @brief Get the id of the iteration domain space
   ///
