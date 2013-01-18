@@ -1749,6 +1749,10 @@ private:
                         unsigned Limit) {
     if (!Style.AllowShortIfStatementsOnASingleLine)
       return;
+    if ((I + 1)->InPPDirective != I->InPPDirective ||
+        ((I + 1)->InPPDirective &&
+         (I + 1)->First.FormatTok.HasUnescapedNewline))
+      return;
     AnnotatedLine &Line = *I;
     if (Line.Last->isNot(tok::r_paren))
       return;
