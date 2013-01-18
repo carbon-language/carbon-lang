@@ -55,9 +55,11 @@ void Preprocessor::setMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
     II->setChangedSinceDeserialization();
 }
 
-void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
+void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI,
+                                      MacroInfo *Hint) {
   assert(MI && "Missing macro?");
   assert(MI->isFromAST() && "Macro is not from an AST?");
+  assert(!MI->getPreviousDefinition() && "Macro already in chain?");
   
   MacroInfo *&StoredMI = Macros[II];
 
@@ -77,7 +79,7 @@ void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
     // Simple case: if this is the first actual definition, just put it at
     // th beginning.
     if (!StoredMI->isDefined()) {
-      MI->getFirstDefinition()->setPreviousDefinition(StoredMI);
+      MI->setPreviousDefinition(StoredMI);
       StoredMI = MI;
 
       II->setHasMacroDefinition(true);
@@ -110,14 +112,16 @@ void Preprocessor::addLoadedMacroInfo(IdentifierInfo *II, MacroInfo *MI) {
       MI->setAmbiguous(true);
 
     // Wire this macro information into the chain.
-    MI->getFirstDefinition()->setPreviousDefinition(
-                                                 Prev->getPreviousDefinition());
+    MI->setPreviousDefinition(Prev->getPreviousDefinition());
     Prev->setPreviousDefinition(MI);
     return;
   }
 
   // The macro is not a definition; put it at the end of the list.
-  StoredMI->getFirstDefinition()->setPreviousDefinition(MI);
+  MacroInfo *Prev = Hint? Hint : StoredMI;
+  while (Prev->getPreviousDefinition())
+    Prev = Prev->getPreviousDefinition();
+  Prev->setPreviousDefinition(MI);
 }
 
 void Preprocessor::makeLoadedMacroInfoVisible(IdentifierInfo *II,

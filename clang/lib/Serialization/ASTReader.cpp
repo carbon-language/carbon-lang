@@ -525,9 +525,13 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   // If this identifier is a macro, deserialize the macro
   // definition.
   if (hadMacroDefinition) {
+    SmallVector<MacroID, 4> MacroIDs;
+    while (uint32_t LocalID = ReadUnalignedLE32(d)) {
+      MacroIDs.push_back(Reader.getGlobalMacroID(F, LocalID));
+      DataLen -= 4;
+    }
     DataLen -= 4;
-    uint32_t LocalID = ReadUnalignedLE32(d);
-    Reader.addMacroIDForDeserialization(II, Reader.getGlobalMacroID(F,LocalID));
+    Reader.setIdentifierIsMacro(II, MacroIDs);
   }
 
   Reader.SetIdentifierInfo(ID, II);
@@ -1057,7 +1061,8 @@ bool ASTReader::ReadBlockAbbrevs(llvm::BitstreamCursor &Cursor,
   }
 }
 
-void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
+void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
+                                MacroInfo *Hint) {
   llvm::BitstreamCursor &Stream = F.MacroCursor;
 
   // Keep track of where we are in the stream, then jump back there
@@ -1068,6 +1073,24 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
   RecordData Record;
   SmallVector<IdentifierInfo*, 16> MacroArgs;
   MacroInfo *Macro = 0;
+
+  // RAII object to add the loaded macro information once we're done
+  // adding tokens.
+  struct AddLoadedMacroInfoRAII {
+    Preprocessor &PP;
+    MacroInfo *Hint;
+    MacroInfo *MI;
+    IdentifierInfo *II;
+
+    AddLoadedMacroInfoRAII(Preprocessor &PP, MacroInfo *Hint)
+      : PP(PP), Hint(Hint), MI(), II() { }
+    ~AddLoadedMacroInfoRAII( ) {
+      if (MI) {
+        // Finally, install the macro.
+        PP.addLoadedMacroInfo(II, MI, Hint);
+      }
+    }
+  } AddLoadedMacroInfo(PP, Hint);
 
   while (true) {
     unsigned Code = Stream.ReadCode();
@@ -1123,8 +1146,6 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
       SourceLocation Loc = ReadSourceLocation(F, Record, NextIndex);
       MacroInfo *MI = PP.AllocateMacroInfo(Loc);
       MI->setDefinitionEndLoc(ReadSourceLocation(F, Record, NextIndex));
-      MacroInfo *PrevMI = getMacro(getGlobalMacroID(F, Record[NextIndex++]));
-      MI->setPreviousDefinition(PrevMI);
 
       // Record this macro.
       MacrosLoaded[GlobalID - NUM_PREDEF_MACRO_IDS] = MI;
@@ -1208,6 +1229,10 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset) {
         }
       }
       MI->setHidden(Hidden);
+
+      // Make sure we install the macro once we're done.
+      AddLoadedMacroInfo.MI = MI;
+      AddLoadedMacroInfo.II = II;
 
       // Remember that we saw this macro last so that we add the tokens that
       // form its body to it.
@@ -1316,13 +1341,10 @@ HeaderFileInfoTrait::ReadData(const internal_key_type, const unsigned char *d,
   return HFI;
 }
 
-void ASTReader::addMacroIDForDeserialization(IdentifierInfo *II, MacroID ID){
+void ASTReader::setIdentifierIsMacro(IdentifierInfo *II, ArrayRef<MacroID> IDs){
   II->setHadMacroDefinition(true);
   assert(NumCurrentElementsDeserializing > 0 &&"Missing deserialization guard");
-  SmallVector<serialization::MacroID, 2> &MacroIDs = PendingMacroIDs[II];
-  assert(std::find(MacroIDs.begin(), MacroIDs.end(), ID) == MacroIDs.end() &&
-         "Already added the macro ID for deserialization");
-  MacroIDs.push_back(ID);
+  PendingMacroIDs[II].append(IDs.begin(), IDs.end());
 }
 
 void ASTReader::ReadDefinedMacros() {
@@ -6136,7 +6158,7 @@ IdentifierID ASTReader::getGlobalIdentifierID(ModuleFile &M, unsigned LocalID) {
   return LocalID + I->second;
 }
 
-MacroInfo *ASTReader::getMacro(MacroID ID) {
+MacroInfo *ASTReader::getMacro(MacroID ID, MacroInfo *Hint) {
   if (ID == 0)
     return 0;
 
@@ -6152,7 +6174,7 @@ MacroInfo *ASTReader::getMacro(MacroID ID) {
     assert(I != GlobalMacroMap.end() && "Corrupted global macro map");
     ModuleFile *M = I->second;
     unsigned Index = ID - M->BaseMacroID;
-    ReadMacroRecord(*M, M->MacroOffsets[Index]);
+    ReadMacroRecord(*M, M->MacroOffsets[Index], Hint);
   }
 
   return MacrosLoaded[ID];
@@ -6851,16 +6873,13 @@ void ASTReader::finishPendingActions() {
     PendingDeclChains.clear();
 
     // Load any pending macro definitions.
-    // Note that new macros may be added while deserializing a macro.
     for (unsigned I = 0; I != PendingMacroIDs.size(); ++I) {
-      PendingMacroIDsMap::iterator PMIt = PendingMacroIDs.begin() + I;
-      IdentifierInfo *II = PMIt->first;
-      SmallVector<serialization::MacroID, 2> MacroIDs;
-      MacroIDs.swap(PMIt->second);
-      for (SmallVectorImpl<serialization::MacroID>::iterator
-             MIt = MacroIDs.begin(), ME = MacroIDs.end(); MIt != ME; ++MIt) {
-        MacroInfo *MI = getMacro(*MIt);
-        PP.addLoadedMacroInfo(II, MI);
+      // FIXME: std::move here
+      SmallVector<MacroID, 2> GlobalIDs = PendingMacroIDs.begin()[I].second;
+      MacroInfo *Hint = 0;
+      for (unsigned IDIdx = 0, NumIDs = GlobalIDs.size(); IDIdx !=  NumIDs;
+           ++IDIdx) {
+        Hint = getMacro(GlobalIDs[IDIdx], Hint);
       }
     }
     PendingMacroIDs.clear();
