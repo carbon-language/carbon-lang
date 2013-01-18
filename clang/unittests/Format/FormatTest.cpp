@@ -1860,13 +1860,15 @@ TEST_F(FormatTest, ObjCAt) {
 }
 
 TEST_F(FormatTest, ObjCSnippets) {
-  // FIXME: Make the uncommented lines below pass.
   verifyFormat("@autoreleasepool {\n"
                "  foo();\n"
                "}");
   verifyFormat("@class Foo, Bar;");
   verifyFormat("@compatibility_alias AliasName ExistingClass;");
   verifyFormat("@dynamic textColor;");
+  verifyFormat("char *buf1 = @encode(int *);");
+  verifyFormat("char *buf1 = @encode(typeof(4 * 5));");
+  // FIXME: Enable once PR14884 is fixed:
   //verifyFormat("char *buf1 = @encode(int **);");
   verifyFormat("Protocol *proto = @protocol(p1);");
   verifyFormat("SEL s = @selector(foo:);");
