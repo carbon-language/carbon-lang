@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Signals.h"
 #include "gtest/gtest.h"
 
@@ -22,6 +23,7 @@
 int main(int argc, char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   testing::InitGoogleTest(&argc, argv);
+  llvm::cl::ParseCommandLineOptions(argc, argv);
 
 # if defined(LLVM_ON_WIN32)
   // Disable all of the possible ways Windows conspires to make automated
