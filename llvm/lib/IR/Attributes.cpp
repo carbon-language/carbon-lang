@@ -253,7 +253,7 @@ AttrBuilder::AttrBuilder(AttributeSet AS, unsigned Idx)
       break;
     }
 
-  assert(AWI && "Cannot find index in attribute set!");
+  if (!AWI) return;
 
   uint64_t Mask = AWI->Attrs.Raw();
 
