@@ -43,14 +43,6 @@ class Linker {
   /// @name Types
   /// @{
   public:
-    /// This type is used to pass the linkage items (libraries and files) to
-    /// the LinkItems function. It is composed of string/bool pairs. The string
-    /// provides the name of the file or library (as with the -l option). The
-    /// bool should be true for libraries and false for files, signifying
-    /// "isLibrary".
-    /// @brief A list of linkage items
-    typedef std::vector<std::pair<std::string,bool> > ItemList;
-
     /// This enumeration is used to control various optional features of the
     /// linker.
     enum ControlFlags {
