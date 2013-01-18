@@ -114,7 +114,8 @@ bool BlackList::isInInit(const GlobalVariable &G) const {
           inSection("global-init-type", GetGVTypeString(G)));
 }
 
-bool BlackList::inSection(const StringRef Section, const StringRef Query) const {
+bool BlackList::inSection(const StringRef Section,
+                          const StringRef Query) const {
   StringMap<Regex*>::const_iterator I = Entries.find(Section);
   if (I == Entries.end()) return false;
 
