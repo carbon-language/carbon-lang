@@ -20,6 +20,10 @@
 #include <string>
 #include "DNBTimer.h"
 
+#ifdef WITH_LOCKDOWN
+#include "lockdown.h"
+#endif
+
 class RNBSocket
 {
 public:
@@ -29,6 +33,7 @@ public:
         m_fd (-1),
 #ifdef WITH_LOCKDOWN
         m_fd_from_lockdown (false),
+        m_ld_conn (),
 #endif
         m_timer (true)      // Make a thread safe timer
     {
@@ -67,6 +72,7 @@ protected:
 
 #ifdef WITH_LOCKDOWN
     bool m_fd_from_lockdown;
+    lockdown_connection m_ld_conn;
 #endif
 
     DNBTimer m_timer;
