@@ -86,8 +86,7 @@ ISD::CondCode getICmpCondCode(ICmpInst::Predicate Pred);
 /// between it and the return.
 ///
 /// This function only tests target-independent requirements.
-bool isInTailCallPosition(ImmutableCallSite CS, Attribute CalleeRetAttr,
-                          const TargetLowering &TLI);
+bool isInTailCallPosition(ImmutableCallSite CS, const TargetLowering &TLI);
 
 } // End llvm namespace
 

@@ -5277,8 +5277,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
 
   // Check if target-independent constraints permit a tail call here.
   // Target-dependent constraints are checked within TLI.LowerCallTo.
-  if (isTailCall &&
-      !isInTailCallPosition(CS, CS.getAttributes().getRetAttributes(), TLI))
+  if (isTailCall && !isInTailCallPosition(CS, TLI))
     isTailCall = false;
 
   TargetLowering::

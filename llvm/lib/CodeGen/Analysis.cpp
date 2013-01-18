@@ -265,8 +265,7 @@ static const Value *getNoopInput(const Value *V, const TargetLowering &TLI) {
 /// between it and the return.
 ///
 /// This function only tests target-independent requirements.
-bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attribute CalleeRetAttr,
-                                const TargetLowering &TLI) {
+bool llvm::isInTailCallPosition(ImmutableCallSite CS,const TargetLowering &TLI){
   const Instruction *I = CS.getInstruction();
   const BasicBlock *ExitBB = I->getParent();
   const TerminatorInst *Term = ExitBB->getTerminator();
@@ -312,14 +311,16 @@ bool llvm::isInTailCallPosition(ImmutableCallSite CS, Attribute CalleeRetAttr,
   // Conservatively require the attributes of the call to match those of
   // the return. Ignore noalias because it doesn't affect the call sequence.
   const Function *F = ExitBB->getParent();
-  Attribute CallerRetAttr = F->getAttributes().getRetAttributes();
-  if (AttrBuilder(CalleeRetAttr).removeAttribute(Attribute::NoAlias) !=
-      AttrBuilder(CallerRetAttr).removeAttribute(Attribute::NoAlias))
+  AttributeSet CallerAttrs = F->getAttributes();
+  if (AttrBuilder(CallerAttrs, AttributeSet::ReturnIndex).
+        removeAttribute(Attribute::NoAlias) !=
+      AttrBuilder(CallerAttrs, AttributeSet::ReturnIndex).
+        removeAttribute(Attribute::NoAlias))
     return false;
 
   // It's not safe to eliminate the sign / zero extension of the return value.
-  if (CallerRetAttr.hasAttribute(Attribute::ZExt) ||
-      CallerRetAttr.hasAttribute(Attribute::SExt))
+  if (CallerAttrs.hasAttribute(AttributeSet::ReturnIndex, Attribute::ZExt) ||
+      CallerAttrs.hasAttribute(AttributeSet::ReturnIndex, Attribute::SExt))
     return false;
 
   // Otherwise, make sure the unmodified return value of I is the return value.
