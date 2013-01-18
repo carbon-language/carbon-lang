@@ -4130,6 +4130,7 @@ public:
     MipsTargetInfoBase(triple, "o32", "mips32") {
     SizeType = UnsignedInt;
     PtrDiffType = SignedInt;
+    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 32;
   }
   virtual bool setABI(const std::string &Name) {
     if ((Name == "o32") || (Name == "eabi")) {
@@ -4235,6 +4236,7 @@ public:
       LongDoubleFormat = &llvm::APFloat::IEEEdouble;
     }
     SuitableAlign = 128;
+    MaxAtomicPromoteWidth = MaxAtomicInlineWidth = 64;
   }
   virtual bool setABI(const std::string &Name) {
     SetDescriptionString(Name);
