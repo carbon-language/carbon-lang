@@ -1080,13 +1080,6 @@ def SI_INTERP_CONST : InstSI <
                                                  imm:$attr, SReg_32:$params))]
 >;
 
-def SI_KIL : InstSI <
-  (outs),
-  (ins VReg_32:$src),
-  "SI_KIL $src",
-  [(int_AMDGPU_kill VReg_32:$src)]
->;
-
 def SI_WQM : InstSI <
   (outs),
   (ins),
@@ -1157,10 +1150,22 @@ def SI_END_CF : InstSI <
   [(int_SI_end_cf SReg_64:$saved)]
 >;
 
+def SI_KILL : InstSI <
+  (outs),
+  (ins VReg_32:$src),
+  "SI_KIL $src",
+  [(int_AMDGPU_kill VReg_32:$src)]
+>;
+
 } // end mayLoad = 1, mayStore = 1, hasSideEffects = 1
   // Uses = [EXEC], Defs = [EXEC]
 
 } // end IsCodeGenOnly, isPseudo
+
+def : Pat <
+  (int_AMDGPU_kilp),
+  (SI_KILL (V_MOV_IMM_I32 0xbf800000))
+>;
 
 /* int_SI_vs_load_input */
 def : Pat<
@@ -1312,11 +1317,6 @@ def : Pat <
 def : Pat<
   (fdiv AllReg_32:$src0, AllReg_32:$src1),
   (V_MUL_F32_e32 AllReg_32:$src0, (V_RCP_F32_e32 AllReg_32:$src1))
->;
-
-def : Pat <
-  (int_AMDGPU_kilp),
-  (SI_KIL (V_MOV_IMM_I32 0xbf800000))
 >;
 
 def : Pat <
