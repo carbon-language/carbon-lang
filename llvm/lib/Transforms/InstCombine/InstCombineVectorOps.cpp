@@ -604,7 +604,7 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
   // ShuffleVectorInst is equivalent to the original one.
   for (unsigned i = 0; i < VWidth; ++i) {
     int eltMask;
-    if (Mask[i] == -1) {
+    if (Mask[i] < 0) {
       // This element is an undef value.
       eltMask = -1;
     } else if (Mask[i] < (int)LHSWidth) {
