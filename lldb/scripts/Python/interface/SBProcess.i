@@ -164,6 +164,12 @@ public:
     lldb::SBThread
     GetSelectedThread () const;
 
+    %feature("autodoc", "
+    Lazily create a thread on demand through the current OperatingSystem plug-in, if the current OperatingSystem plug-in supports it.
+    ") CreateOSPluginThread;
+    lldb::SBThread
+    CreateOSPluginThread (lldb::tid_t tid, lldb::addr_t context);
+
     bool
     SetSelectedThread (const lldb::SBThread &thread);
 

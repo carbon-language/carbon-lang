@@ -3170,6 +3170,9 @@ public:
     uint32_t
     GetNextThreadIndexID (uint64_t thread_id);
     
+    lldb::ThreadSP
+    CreateOSPluginThread (lldb::tid_t tid, lldb::addr_t context);
+    
     // Returns true if an index id has been assigned to a thread.
     bool
     HasAssignedIndexIDToThread(uint64_t sb_thread_id);

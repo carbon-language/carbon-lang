@@ -76,6 +76,11 @@ public:
     virtual lldb::StopInfoSP
     CreateThreadStopReason (Thread *thread) = 0;
 
+    virtual lldb::ThreadSP
+    CreateThread (lldb::tid_t tid, lldb::addr_t context)
+    {
+        return lldb::ThreadSP();
+    }
 protected:
     //------------------------------------------------------------------
     // Member variables.

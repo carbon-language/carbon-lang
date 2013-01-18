@@ -33,7 +33,7 @@ DynamicRegisterInfo::DynamicRegisterInfo () :
 {
 }
 
-DynamicRegisterInfo::DynamicRegisterInfo (const lldb_private::PythonDataDictionary &dict) :
+DynamicRegisterInfo::DynamicRegisterInfo (const lldb_private::PythonDictionary &dict) :
     m_regs (),
     m_sets (),
     m_set_reg_nums (),
@@ -49,16 +49,19 @@ DynamicRegisterInfo::~DynamicRegisterInfo ()
 
 
 size_t
-DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDataDictionary &dict)
+DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDictionary &dict)
 {
 #ifndef LLDB_DISABLE_PYTHON
-    PythonDataArray sets (dict.GetItemForKey("sets").GetArrayObject());
+    PythonList sets (dict.GetItemForKey("sets"));
     if (sets)
     {
         const uint32_t num_sets = sets.GetSize();
         for (uint32_t i=0; i<num_sets; ++i)
         {
-            ConstString set_name (sets.GetItemAtIndex(i).GetStringObject().GetString());
+            PythonString py_set_name(sets.GetItemAtIndex(i));
+            ConstString set_name;
+            if (py_set_name)
+                set_name.SetCString(py_set_name.GetString());
             if (set_name)
             {
                 RegisterSet new_set = { set_name.AsCString(), NULL, 0, NULL };
@@ -72,23 +75,23 @@ DynamicRegisterInfo::SetRegisterInfo (const lldb_private::PythonDataDictionary &
         }
         m_set_reg_nums.resize(m_sets.size());
     }
-    PythonDataArray regs (dict.GetItemForKey("registers").GetArrayObject());
+    PythonList regs (dict.GetItemForKey("registers"));
     if (regs)
     {
         const uint32_t num_regs = regs.GetSize();
-        PythonDataString name_pystr("name");
-        PythonDataString altname_pystr("alt-name");
-        PythonDataString bitsize_pystr("bitsize");
-        PythonDataString offset_pystr("offset");
-        PythonDataString encoding_pystr("encoding");
-        PythonDataString format_pystr("format");
-        PythonDataString set_pystr("set");
-        PythonDataString gcc_pystr("gcc");
-        PythonDataString dwarf_pystr("dwarf");
-        PythonDataString generic_pystr("generic");
+        PythonString name_pystr("name");
+        PythonString altname_pystr("alt-name");
+        PythonString bitsize_pystr("bitsize");
+        PythonString offset_pystr("offset");
+        PythonString encoding_pystr("encoding");
+        PythonString format_pystr("format");
+        PythonString set_pystr("set");
+        PythonString gcc_pystr("gcc");
+        PythonString dwarf_pystr("dwarf");
+        PythonString generic_pystr("generic");
         for (uint32_t i=0; i<num_regs; ++i)
         {
-            PythonDataDictionary reg_info_dict(regs.GetItemAtIndex(i).GetDictionaryObject());
+            PythonDictionary reg_info_dict(regs.GetItemAtIndex(i));
             if (reg_info_dict)
             {
                 // { 'name':'rcx'       , 'bitsize' :  64, 'offset' :  16, 'encoding':'uint'  , 'format':'hex'         , 'set': 0, 'gcc' : 2, 'dwarf' : 2, 'generic':'arg4', 'alt-name':'arg4', },

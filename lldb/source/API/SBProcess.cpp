@@ -278,6 +278,27 @@ SBProcess::GetSelectedThread () const
     return sb_thread;
 }
 
+SBThread
+SBProcess::CreateOSPluginThread (lldb::tid_t tid, lldb::addr_t context)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    SBThread sb_thread;
+    ThreadSP thread_sp;
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+    {
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        thread_sp = process_sp->CreateOSPluginThread(tid, context);
+        sb_thread.SetThread (thread_sp);
+    }
+    
+    if (log)
+        log->Printf ("SBProcess(%p)::CreateOSPluginThread (tid=0x%" PRIx64 ", context=0x%" PRIx64 ") => SBThread(%p)", process_sp.get(), tid, context, thread_sp.get());
+    
+    return sb_thread;
+}
+
 SBTarget
 SBProcess::GetTarget() const
 {

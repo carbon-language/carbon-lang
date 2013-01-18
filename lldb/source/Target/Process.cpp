@@ -1504,6 +1504,17 @@ Process::UpdateThreadListIfNeeded ()
     }
 }
 
+ThreadSP
+Process::CreateOSPluginThread (lldb::tid_t tid, lldb::addr_t context)
+{
+    OperatingSystem *os = GetOperatingSystem ();
+    if (os)
+        return os->CreateThread(tid, context);
+    return ThreadSP();
+}
+
+
+
 // This is obsoleted. Staged removal for Xcode.
 uint32_t
 Process::GetNextThreadIndexID ()

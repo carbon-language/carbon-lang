@@ -268,31 +268,39 @@ public:
     }
     
     virtual lldb::ScriptInterpreterObjectSP
-    CreateOSPlugin (const char *class_name,
-                    lldb::ProcessSP process_sp)
+    OSPlugin_CreatePluginObject (const char *class_name,
+                                 lldb::ProcessSP process_sp)
     {
         return lldb::ScriptInterpreterObjectSP();
     }
     
     virtual lldb::ScriptInterpreterObjectSP
-    OSPlugin_QueryForRegisterInfo (lldb::ScriptInterpreterObjectSP object)
+    OSPlugin_RegisterInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp)
     {
         return lldb::ScriptInterpreterObjectSP();
     }
     
     virtual lldb::ScriptInterpreterObjectSP
-    OSPlugin_QueryForThreadsInfo (lldb::ScriptInterpreterObjectSP object)
+    OSPlugin_ThreadsInfo (lldb::ScriptInterpreterObjectSP os_plugin_object_sp)
     {
         return lldb::ScriptInterpreterObjectSP();
     }
     
     virtual lldb::ScriptInterpreterObjectSP
-    OSPlugin_QueryForRegisterContextData (lldb::ScriptInterpreterObjectSP object,
-                                          lldb::tid_t thread_id)
+    OSPlugin_RegisterContextData (lldb::ScriptInterpreterObjectSP os_plugin_object_sp,
+                                  lldb::tid_t thread_id)
     {
         return lldb::ScriptInterpreterObjectSP();
     }
-    
+
+    virtual lldb::ScriptInterpreterObjectSP
+    OSPlugin_CreateThread (lldb::ScriptInterpreterObjectSP os_plugin_object_sp,
+                           lldb::tid_t tid,
+                           lldb::addr_t context)
+    {
+        return lldb::ScriptInterpreterObjectSP();
+    }
+
     virtual bool
     GenerateFunction(const char *signature, const StringList &input)
     {

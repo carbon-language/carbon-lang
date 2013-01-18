@@ -23,6 +23,13 @@ class OperatingSystemPlugIn(object):
         # tracks the current target in the LLDB command interpreter which isn't the
         # correct thing to use for this plug-in.
         return self.process.target
+
+    def create_thread(self, tid, context):
+        if tid == 0x444444444:
+            thread_info = { 'tid' : 0x444444444, 'name' : 'four'  , 'queue' : 'queue4', 'state' : 'stopped', 'stop_reason' : 'none' }
+            self.threads.append(thread_info)
+            return thread_info
+        return None
         
     def get_thread_info(self):
         if not self.threads:
@@ -89,4 +96,9 @@ class OperatingSystemPlugIn(object):
             return struct.pack('21Q',11,12,13,14,15,16,17,18,19,110,111,112,113,114,115,116,117,118,119,120,121);
         elif tid == 0x333333333:
             return struct.pack('21Q',21,22,23,24,25,26,27,28,29,210,211,212,213,214,215,216,217,218,219,220,221);
+        elif tid == 0x444444444:
+            return struct.pack('21Q',31,32,33,34,35,36,37,38,39,310,311,312,313,314,315,316,317,318,319,320,321);
+        else:
+            return struct.pack('21Q',41,42,43,44,45,46,47,48,49,410,411,412,413,414,415,416,417,418,419,420,421);
+        return None
     

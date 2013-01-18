@@ -78,19 +78,31 @@ public:
     virtual lldb::StopInfoSP
     CreateThreadStopReason (lldb_private::Thread *thread);
 
+    //------------------------------------------------------------------
+    // Method for lazy creation of threads on demand
+    //------------------------------------------------------------------
+    virtual lldb::ThreadSP
+    CreateThread (lldb::tid_t tid, lldb::addr_t context);
+
 protected:
     
     bool IsValid() const
     {
-        return m_python_object != NULL;
+        return m_python_object_sp && m_python_object_sp->GetObject() != NULL;
     }
+    
+    lldb::ThreadSP
+    CreateThreadFromThreadInfo (lldb_private::PythonDictionary &thread_dict,
+                                lldb_private::ThreadList *old_thread_list_ptr,
+                                bool *did_create_ptr);
+
     DynamicRegisterInfo *
     GetDynamicRegisterInfo ();
 
     lldb::ValueObjectSP m_thread_list_valobj_sp;
     std::auto_ptr<DynamicRegisterInfo> m_register_info_ap;
     lldb_private::ScriptInterpreter *m_interpreter;
-    void* m_python_object;
+    lldb::ScriptInterpreterObjectSP m_python_object_sp;
     
 };
 

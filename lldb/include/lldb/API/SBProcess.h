@@ -122,6 +122,15 @@ public:
     lldb::SBThread
     GetSelectedThread () const;
 
+    //------------------------------------------------------------------
+    // Function for lazily creating a thread using the current OS
+    // plug-in. This function will be removed in the future when there
+    // are APIs to create SBThread objects through the interface and add
+    // them to the process through the SBProcess API.
+    //------------------------------------------------------------------
+    lldb::SBThread
+    CreateOSPluginThread (lldb::tid_t tid, lldb::addr_t context);
+
     bool
     SetSelectedThread (const lldb::SBThread &thread);
 

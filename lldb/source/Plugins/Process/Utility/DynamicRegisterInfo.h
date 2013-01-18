@@ -24,13 +24,13 @@ class DynamicRegisterInfo
 public:
     DynamicRegisterInfo ();
 
-    DynamicRegisterInfo (const lldb_private::PythonDataDictionary &dict);
+    DynamicRegisterInfo (const lldb_private::PythonDictionary &dict);
     
     virtual 
     ~DynamicRegisterInfo ();
 
     size_t
-    SetRegisterInfo (const lldb_private::PythonDataDictionary &dict);
+    SetRegisterInfo (const lldb_private::PythonDictionary &dict);
 
     void
     AddRegister (lldb_private::RegisterInfo &reg_info, 
