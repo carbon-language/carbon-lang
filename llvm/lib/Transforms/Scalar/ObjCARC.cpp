@@ -219,6 +219,7 @@ namespace {
     case IC_None:
       return OS << "IC_None";
     }
+    llvm_unreachable("Unknown instruction class!");
   }
 }
 
