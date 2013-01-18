@@ -27,6 +27,7 @@
 #include "clang/Tooling/Tooling.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/Signals.h"
 
 using namespace clang::driver;
 using namespace clang::tooling;
@@ -142,6 +143,7 @@ public:
 }
 
 int main(int argc, const char **argv) {
+  llvm::sys::PrintStackTraceOnErrorSignal();
   CommonOptionsParser OptionsParser(argc, argv);
   ClangTool Tool(OptionsParser.getCompilations(),
                  OptionsParser.getSourcePathList());
