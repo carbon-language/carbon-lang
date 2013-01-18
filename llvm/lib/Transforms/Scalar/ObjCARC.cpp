@@ -578,8 +578,11 @@ static Value *GetObjCArg(Value *Inst) {
   return StripPointerCastsAndObjCCalls(cast<CallInst>(Inst)->getArgOperand(0));
 }
 
-/// \brief This is similar to AliasAnalysis's isIdentifiedObject, except that it
-/// uses special knowledge of ObjC conventions.
+/// \brief Return true if this value refers to a distinct and identifiable
+/// object.
+///
+/// This is similar to AliasAnalysis's isIdentifiedObject, except that it uses
+/// special knowledge of ObjC conventions.
 static bool IsObjCIdentifiedObject(const Value *V) {
   // Assume that call results and arguments have their own "provenance".
   // Constants (including GlobalVariables) and Allocas are never
