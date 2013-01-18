@@ -1237,6 +1237,10 @@ sub dump_extended_cmd
 	{
 		dump_extended_continue_cmd(splice(@_,5));
 	}
+	elsif (join('', @_[0..7]) eq 'vAttach;')
+	{
+		dump_attach_command (splice(@_,8));
+	}
 	elsif (join('', @_[0..11]) eq 'vAttachWait;')
 	{
 		dump_attach_wait_command (splice(@_,12));
@@ -1267,6 +1271,15 @@ sub dump_attach_wait_command
 	}
 	printf " )\n";
 	
+}
+
+#----------------------------------------------------------------------
+# 'vAttach' command
+#----------------------------------------------------------------------
+sub dump_attach_command
+{
+	printf("attach ( pid = %i )", get_hex(\@_));
+	$extended_rsp_callback = \&dump_stop_reply_packet;
 }
 
 #----------------------------------------------------------------------
