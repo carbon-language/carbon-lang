@@ -795,35 +795,25 @@ bool ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
 
   RecordData Record;
   while (true) {
-    unsigned Code = SLocEntryCursor.ReadCode();
-    if (Code == llvm::bitc::END_BLOCK) {
-      if (SLocEntryCursor.ReadBlockEnd()) {
-        Error("error at end of Source Manager block in AST file");
-        return true;
-      }
+    llvm::BitstreamEntry E = SLocEntryCursor.advanceSkippingSubblocks();
+    
+    switch (E.Kind) {
+    case llvm::BitstreamEntry::SubBlock: // Handled for us already.
+    case llvm::BitstreamEntry::Error:
+      Error("malformed block record in AST file");
+      return true;
+    case llvm::BitstreamEntry::EndBlock:
       return false;
+    case llvm::BitstreamEntry::Record:
+      // The interesting case.
+      break;
     }
-
-    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-      // No known subblocks, always skip them.
-      SLocEntryCursor.ReadSubBlockID();
-      if (SLocEntryCursor.SkipBlock()) {
-        Error("malformed block record in AST file");
-        return true;
-      }
-      continue;
-    }
-
-    if (Code == llvm::bitc::DEFINE_ABBREV) {
-      SLocEntryCursor.ReadAbbrevRecord();
-      continue;
-    }
-
+    
     // Read a record.
     const char *BlobStart;
     unsigned BlobLen;
     Record.clear();
-    switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+    switch (SLocEntryCursor.ReadRecord(E.ID, Record, BlobStart, BlobLen)) {
     default:  // Default behavior: ignore.
       break;
 
@@ -884,18 +874,16 @@ bool ASTReader::ReadSLocEntry(int ID) {
   unsigned BaseOffset = F->SLocEntryBaseOffset;
 
   ++NumSLocEntriesRead;
-  unsigned Code = SLocEntryCursor.ReadCode();
-  if (Code == llvm::bitc::END_BLOCK ||
-      Code == llvm::bitc::ENTER_SUBBLOCK ||
-      Code == llvm::bitc::DEFINE_ABBREV) {
+  llvm::BitstreamEntry Entry = SLocEntryCursor.advance();
+  if (Entry.Kind != llvm::BitstreamEntry::Record) {
     Error("incorrectly-formatted source location entry in AST file");
     return true;
   }
-
+  
   RecordData Record;
   const char *BlobStart;
   unsigned BlobLen;
-  switch (SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+  switch (SLocEntryCursor.ReadRecord(Entry.ID, Record, BlobStart, BlobLen)) {
   default:
     Error("incorrectly-formatted source location entry in AST file");
     return true;
@@ -1364,43 +1352,37 @@ void ASTReader::ReadDefinedMacros() {
 
     RecordData Record;
     while (true) {
-      unsigned Code = Cursor.ReadCode();
-      if (Code == llvm::bitc::END_BLOCK)
-        break;
-
-      if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-        // No known subblocks, always skip them.
-        Cursor.ReadSubBlockID();
-        if (Cursor.SkipBlock()) {
-          Error("malformed block record in AST file");
-          return;
+      llvm::BitstreamEntry E = Cursor.advanceSkippingSubblocks();
+      
+      switch (E.Kind) {
+      case llvm::BitstreamEntry::SubBlock: // Handled for us already.
+      case llvm::BitstreamEntry::Error:
+        Error("malformed block record in AST file");
+        return;
+      case llvm::BitstreamEntry::EndBlock:
+        goto NextCursor;
+        
+      case llvm::BitstreamEntry::Record:
+        const char *BlobStart;
+        unsigned BlobLen;
+        Record.clear();
+        switch (Cursor.ReadRecord(E.ID, Record, BlobStart, BlobLen)) {
+        default:  // Default behavior: ignore.
+          break;
+          
+        case PP_MACRO_OBJECT_LIKE:
+        case PP_MACRO_FUNCTION_LIKE:
+          getLocalIdentifier(**I, Record[0]);
+          break;
+          
+        case PP_TOKEN:
+          // Ignore tokens.
+          break;
         }
-        continue;
-      }
-
-      if (Code == llvm::bitc::DEFINE_ABBREV) {
-        Cursor.ReadAbbrevRecord();
-        continue;
-      }
-
-      // Read a record.
-      const char *BlobStart;
-      unsigned BlobLen;
-      Record.clear();
-      switch (Cursor.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
-      default:  // Default behavior: ignore.
-        break;
-
-      case PP_MACRO_OBJECT_LIKE:
-      case PP_MACRO_FUNCTION_LIKE:
-        getLocalIdentifier(**I, Record[0]);
-        break;
-
-      case PP_TOKEN:
-        // Ignore tokens.
         break;
       }
     }
+    NextCursor:  ;
   }
 }
 
@@ -1493,7 +1475,7 @@ ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
   const char *BlobStart = 0;
   unsigned BlobLen = 0;
   switch ((InputFileRecordTypes)Cursor.ReadRecord(Code, Record,
-                                                  &BlobStart, &BlobLen)) {
+                                                  BlobStart, BlobLen)) {
   case INPUT_FILE: {
     unsigned StoredID = Record[0];
     assert(ID == StoredID && "Bogus stored ID or offset");
@@ -1637,14 +1619,14 @@ ASTReader::ReadControlBlock(ModuleFile &F,
 
   // Read all of the records and blocks in the control block.
   RecordData Record;
-  while (!Stream.AtEndOfStream()) {
-    unsigned Code = Stream.ReadCode();
-    if (Code == llvm::bitc::END_BLOCK) {
-      if (Stream.ReadBlockEnd()) {
-        Error("error at end of control block in AST file");
-        return Failure;
-      }
-
+  while (1) {
+    llvm::BitstreamEntry Entry = Stream.advance();
+    
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::Error:
+      Error("malformed block record in AST file");
+      return Failure;
+    case llvm::BitstreamEntry::EndBlock:
       // Validate all of the input files.
       if (!DisableValidation) {
         bool Complain = (ClientLoadCapabilities & ARR_OutOfDate) == 0;
@@ -1652,12 +1634,10 @@ ASTReader::ReadControlBlock(ModuleFile &F,
           if (!getInputFile(F, I+1, Complain).getPointer())
             return OutOfDate;
       }
-
       return Success;
-    }
-
-    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-      switch (Stream.ReadSubBlockID()) {
+      
+    case llvm::BitstreamEntry::SubBlock:
+      switch (Entry.ID) {
       case INPUT_FILES_BLOCK_ID:
         F.InputFilesCursor = Stream;
         if (Stream.SkipBlock() || // Skip with the main cursor
@@ -1667,28 +1647,26 @@ ASTReader::ReadControlBlock(ModuleFile &F,
           return Failure;
         }
         continue;
-        
+          
       default:
-        if (!Stream.SkipBlock())
-          continue;
-        break;
+        if (Stream.SkipBlock()) {
+          Error("malformed block record in AST file");
+          return Failure;
+        }
+        continue;
       }
-
-      Error("malformed block record in AST file");
-      return Failure;
-    }
-
-    if (Code == llvm::bitc::DEFINE_ABBREV) {
-      Stream.ReadAbbrevRecord();
-      continue;
+      
+    case llvm::BitstreamEntry::Record:
+      // The interesting case.
+      break;
     }
 
     // Read and process a record.
     Record.clear();
     const char *BlobStart = 0;
     unsigned BlobLen = 0;
-    switch ((ControlRecordTypes)Stream.ReadRecord(Code, Record,
-                                                  &BlobStart, &BlobLen)) {
+    switch ((ControlRecordTypes)Stream.ReadRecord(Entry.ID, Record,
+                                                  BlobStart, BlobLen)) {
     case METADATA: {
       if (Record[0] != VERSION_MAJOR && !DisableValidation) {
         if ((ClientLoadCapabilities & ARR_VersionMismatch) == 0)
@@ -1822,9 +1800,6 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       break;
     }
   }
-
-  Error("premature end of bitstream in AST file");
-  return Failure;
 }
 
 bool ASTReader::ReadASTBlock(ModuleFile &F) {
@@ -1837,23 +1812,22 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
 
   // Read all of the records and blocks for the AST file.
   RecordData Record;
-  while (!Stream.AtEndOfStream()) {
-    unsigned Code = Stream.ReadCode();
-    if (Code == llvm::bitc::END_BLOCK) {
-      if (Stream.ReadBlockEnd()) {
-        Error("error at end of module block in AST file");
-        return true;
-      }
-
+  while (1) {
+    llvm::BitstreamEntry Entry = Stream.advance();
+    
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::Error:
+      Error("error at end of module block in AST file");
+      return true;
+    case llvm::BitstreamEntry::EndBlock: {
       DeclContext *DC = Context.getTranslationUnitDecl();
       if (!DC->hasExternalVisibleStorage() && DC->hasExternalLexicalStorage())
         DC->setMustBuildLookupTable();
-
+      
       return false;
     }
-
-    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-      switch (Stream.ReadSubBlockID()) {
+    case llvm::BitstreamEntry::SubBlock:
+      switch (Entry.ID) {
       case DECLTYPES_BLOCK_ID:
         // We lazily load the decls block, but we want to set up the
         // DeclsCursor cursor to point into it.  Clone our current bitcode
@@ -1867,19 +1841,19 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
           return true;
         }
         break;
-
+        
       case DECL_UPDATES_BLOCK_ID:
         if (Stream.SkipBlock()) {
           Error("malformed block record in AST file");
           return true;
         }
         break;
-
+        
       case PREPROCESSOR_BLOCK_ID:
         F.MacroCursor = Stream;
         if (!PP.getExternalSource())
           PP.setExternalSource(this);
-
+        
         if (Stream.SkipBlock() ||
             ReadBlockAbbrevs(F.MacroCursor, PREPROCESSOR_BLOCK_ID)) {
           Error("malformed block record in AST file");
@@ -1887,18 +1861,18 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
         }
         F.MacroStartOffset = F.MacroCursor.GetCurrentBitNo();
         break;
-
+        
       case PREPROCESSOR_DETAIL_BLOCK_ID:
         F.PreprocessorDetailCursor = Stream;
         if (Stream.SkipBlock() ||
-            ReadBlockAbbrevs(F.PreprocessorDetailCursor, 
+            ReadBlockAbbrevs(F.PreprocessorDetailCursor,
                              PREPROCESSOR_DETAIL_BLOCK_ID)) {
-          Error("malformed preprocessor detail record in AST file");
-          return true;
-        }
+              Error("malformed preprocessor detail record in AST file");
+              return true;
+            }
         F.PreprocessorDetailStartOffset
-          = F.PreprocessorDetailCursor.GetCurrentBitNo();
-          
+        = F.PreprocessorDetailCursor.GetCurrentBitNo();
+        
         if (!PP.getPreprocessingRecord())
           PP.createPreprocessingRecord();
         if (!PP.getPreprocessingRecord()->getExternalSource())
@@ -1909,12 +1883,12 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
         if (ReadSourceManagerBlock(F))
           return true;
         break;
-
+        
       case SUBMODULE_BLOCK_ID:
         if (ReadSubmoduleBlock(F))
           return true;
         break;
-
+        
       case COMMENTS_BLOCK_ID: {
         llvm::BitstreamCursor C = Stream;
         if (Stream.SkipBlock() ||
@@ -1925,27 +1899,27 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
         CommentsCursors.push_back(std::make_pair(C, &F));
         break;
       }
-
+        
       default:
-        if (!Stream.SkipBlock())
-          break;
-        Error("malformed block record in AST file");
-        return true;
+        if (Stream.SkipBlock()) {
+          Error("malformed block record in AST file");
+          return true;
+        }
+        break;
       }
       continue;
-    }
-
-    if (Code == llvm::bitc::DEFINE_ABBREV) {
-      Stream.ReadAbbrevRecord();
-      continue;
+    
+    case llvm::BitstreamEntry::Record:
+      // The interesting case.
+      break;
     }
 
     // Read and process a record.
     Record.clear();
     const char *BlobStart = 0;
     unsigned BlobLen = 0;
-    switch ((ASTRecordTypes)Stream.ReadRecord(Code, Record,
-                                              &BlobStart, &BlobLen)) {
+    switch ((ASTRecordTypes)Stream.ReadRecord(Entry.ID, Record,
+                                              BlobStart, BlobLen)) {
     default:  // Default behavior: ignore.
       break;
 
@@ -2565,8 +2539,6 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
     }
     }
   }
-  Error("premature end of bitstream in AST file");
-  return true;
 }
 
 void ASTReader::makeNamesVisible(const HiddenNames &Names) {
@@ -3100,53 +3072,64 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
     return std::string();
   }
 
+  // Scan for the CONTROL_BLOCK_ID block.
+  llvm::BitstreamEntry Entry;
   RecordData Record;
-  while (!Stream.AtEndOfStream()) {
-    unsigned Code = Stream.ReadCode();
 
-    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-      unsigned BlockID = Stream.ReadSubBlockID();
-
-      // We only know the AST subblock ID.
-      switch (BlockID) {
-      case CONTROL_BLOCK_ID:
+  bool FoundControlBlock = false;
+  while (!FoundControlBlock) {
+    Entry = Stream.advance();
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::Error:
+    case llvm::BitstreamEntry::EndBlock:
+      Diags.Report(diag::err_fe_pch_error_at_end_block) << ASTFileName;
+      return std::string();
+    
+    case llvm::BitstreamEntry::Record: {
+      // Ignore top-level records.
+      // FIXME: Should have a skipRecord() method.
+      Record.clear();
+      const char *BlobStart = 0;
+      unsigned BlobLen = 0;
+      Stream.ReadRecord(Entry.ID, Record, BlobStart, BlobLen);
+      break;
+    }
+      
+    case llvm::BitstreamEntry::SubBlock:
+      if (Entry.ID == CONTROL_BLOCK_ID) {
         if (Stream.EnterSubBlock(CONTROL_BLOCK_ID)) {
           Diags.Report(diag::err_fe_pch_malformed_block) << ASTFileName;
           return std::string();
         }
-        break;
-
-      default:
-        if (Stream.SkipBlock()) {
-          Diags.Report(diag::err_fe_pch_malformed_block) << ASTFileName;
-          return std::string();
-        }
+        FoundControlBlock = true;
         break;
       }
-      continue;
-    }
-
-    if (Code == llvm::bitc::END_BLOCK) {
-      if (Stream.ReadBlockEnd()) {
-        Diags.Report(diag::err_fe_pch_error_at_end_block) << ASTFileName;
+      
+      if (Stream.SkipBlock()) {
+        Diags.Report(diag::err_fe_pch_malformed_block) << ASTFileName;
         return std::string();
       }
-      continue;
     }
+  }
 
-    if (Code == llvm::bitc::DEFINE_ABBREV) {
-      Stream.ReadAbbrevRecord();
-      continue;
+  // Scan for ORIGINAL_FILE.
+  while (1) {
+    Entry = Stream.advanceSkippingSubblocks();
+    if (Entry.Kind == llvm::BitstreamEntry::EndBlock)
+      return std::string();
+    
+    if (Entry.Kind != llvm::BitstreamEntry::Record) {
+      Diags.Report(diag::err_fe_pch_malformed_block) << ASTFileName;
+      return std::string();
     }
-
+    
     Record.clear();
     const char *BlobStart = 0;
     unsigned BlobLen = 0;
-    if (Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen) == ORIGINAL_FILE)
+    if (Stream.ReadRecord(Entry.ID, Record, BlobStart, BlobLen)
+          == ORIGINAL_FILE)
       return std::string(BlobStart, BlobLen);
   }
-
-  return std::string();
 }
 
 namespace {
@@ -3254,7 +3237,7 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
     Record.clear();
     const char *BlobStart = 0;
     unsigned BlobLen = 0;
-    unsigned RecCode = Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen);
+    unsigned RecCode = Stream.ReadRecord(Code, Record, BlobStart, BlobLen);
     if (InControlBlock) {
       switch ((ControlRecordTypes)RecCode) {
       case METADATA: {
@@ -3362,7 +3345,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     const char *BlobStart;
     unsigned BlobLen;
     Record.clear();
-    switch (F.Stream.ReadRecord(Code, Record, &BlobStart, &BlobLen)) {
+    switch (F.Stream.ReadRecord(Code, Record, BlobStart, BlobLen)) {
     default:  // Default behavior: ignore.
       break;
       
