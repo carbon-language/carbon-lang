@@ -269,14 +269,19 @@ public:
     return BitStream;
   }
 
+  /// Flags that modify the behavior of advance().
+  enum {
+    AF_DontPopBlockAtEnd = 1
+  };
   
   /// advance - Advance the current bitstream, returning the next entry in the
   /// stream.
-  BitstreamEntry advance() {
+  BitstreamEntry advance(unsigned Flags = 0) {
     while (1) {
       unsigned Code = ReadCode();
       if (Code == bitc::END_BLOCK) {
-        if (ReadBlockEnd())
+        // Pop the end of the block unless Flags tells us not to.
+        if (!(Flags & AF_DontPopBlockAtEnd) && ReadBlockEnd())
           return BitstreamEntry::getError();
         return BitstreamEntry::getEndBlock();
       }
@@ -297,10 +302,10 @@ public:
 
   /// advanceSkippingSubblocks - This is a convenience function for clients that
   /// don't expect any subblocks.  This just skips over them automatically.
-  BitstreamEntry advanceSkippingSubblocks() {
+  BitstreamEntry advanceSkippingSubblocks(unsigned Flags = 0) {
     while (1) {
       // If we found a normal entry, return it.
-      BitstreamEntry Entry = advance();
+      BitstreamEntry Entry = advance(Flags);
       if (Entry.Kind != BitstreamEntry::SubBlock)
         return Entry;
       
