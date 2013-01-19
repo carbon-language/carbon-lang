@@ -163,8 +163,8 @@ private:
 
   /// Add code that checks at runtime if the accessed arrays overlap.
   /// Returns the comparator value or NULL if no check is needed.
-  Value *addRuntimeCheck(LoopVectorizationLegality *Legal,
-                         Instruction *Loc);
+  Instruction *addRuntimeCheck(LoopVectorizationLegality *Legal,
+                               Instruction *Loc);
   /// Create an empty loop, based on the loop ranges of the old loop.
   void createEmptyLoop(LoopVectorizationLegality *Legal);
   /// Copy and widen the instructions from the old loop.
@@ -283,8 +283,8 @@ private:
   BasicBlock *LoopVectorBody;
   ///The scalar loop body.
   BasicBlock *LoopScalarBody;
-  ///The first bypass block.
-  BasicBlock *LoopBypassBlock;
+  /// A list of all bypass blocks. The first block is the entry of the loop.
+  SmallVector<BasicBlock *, 4> LoopBypassBlocks;
 
   /// The new Induction variable which was added to the new block.
   PHINode *Induction;
@@ -868,7 +868,7 @@ void InnerLoopVectorizer::scalarizeInstruction(Instruction *Instr) {
   }
 }
 
-Value*
+Instruction *
 InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
                                      Instruction *Loc) {
   LoopVectorizationLegality::RuntimePointerCheck *PtrRtCheck =
@@ -877,7 +877,7 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
   if (!PtrRtCheck->Need)
     return NULL;
 
-  Value *MemoryRuntimeCheck = 0;
+  Instruction *MemoryRuntimeCheck = 0;
   unsigned NumPointers = PtrRtCheck->Pointers.size();
   SmallVector<Value* , 2> Starts;
   SmallVector<Value* , 2> Ends;
@@ -918,8 +918,9 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
                                     Start0, End1, "bound0", Loc);
       Value *Cmp1 = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_ULE,
                                     Start1, End0, "bound1", Loc);
-      Value *IsConflict = BinaryOperator::Create(Instruction::And, Cmp0, Cmp1,
-                                                 "found.conflict", Loc);
+      Instruction *IsConflict = BinaryOperator::Create(Instruction::And, Cmp0,
+                                                       Cmp1, "found.conflict",
+                                                       Loc);
       if (MemoryRuntimeCheck)
         MemoryRuntimeCheck = BinaryOperator::Create(Instruction::Or,
                                                     MemoryRuntimeCheck,
@@ -941,7 +942,7 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
    the vectorized instructions while the old loop will continue to run the
    scalar remainder.
 
-       [ ] <-- vector loop bypass.
+       [ ] <-- vector loop bypass (may consist of multiple blocks).
      /  |
     /   v
    |   [ ]     <-- vector pre header.
@@ -1002,10 +1003,7 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   ConstantInt::get(IdxTy, 0);
 
   assert(BypassBlock && "Invalid loop structure");
-
-  // Generate the code that checks in runtime if arrays overlap.
-  Value *MemoryRuntimeCheck = addRuntimeCheck(Legal,
-                                              BypassBlock->getTerminator());
+  LoopBypassBlocks.push_back(BypassBlock);
 
   // Split the single block loop into the two loop structure described above.
   BasicBlock *VectorPH =
@@ -1062,10 +1060,24 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
                                StartIdx,
                                "cmp.zero", Loc);
 
-  // If we are using memory runtime checks, include them in.
-  if (MemoryRuntimeCheck)
-    Cmp = BinaryOperator::Create(Instruction::Or, Cmp, MemoryRuntimeCheck,
-                                 "CntOrMem", Loc);
+  // Generate the code that checks in runtime if arrays overlap. We put the
+  // checks into a separate block to make the more common case of few elements
+  // faster.
+  if (Instruction *MemoryRuntimeCheck = addRuntimeCheck(Legal, Loc)) {
+    // Create a new block containing the memory check.
+    BasicBlock *CheckBlock = BypassBlock->splitBasicBlock(MemoryRuntimeCheck,
+                                                          "vector.memcheck");
+    LoopBypassBlocks.push_back(CheckBlock);
+
+    // Replace the branch into the memory check block with a conditional branch
+    // for the "few elements case".
+    Instruction *OldTerm = BypassBlock->getTerminator();
+    BranchInst::Create(MiddleBlock, CheckBlock, Cmp, OldTerm);
+    OldTerm->eraseFromParent();
+
+    Cmp = MemoryRuntimeCheck;
+    assert(Loc == CheckBlock->getTerminator());
+  }
 
   BranchInst::Create(MiddleBlock, VectorPH, Cmp, Loc);
   // Remove the old terminator.
@@ -1109,30 +1121,33 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
       Value *CRD = CountRoundDown;
       if (CRDSize > IISize)
         CRD = CastInst::Create(Instruction::Trunc, CountRoundDown,
-                               II.StartValue->getType(),
-                               "tr.crd", BypassBlock->getTerminator());
+                               II.StartValue->getType(), "tr.crd",
+                               LoopBypassBlocks.back()->getTerminator());
       else if (CRDSize < IISize)
         CRD = CastInst::Create(Instruction::SExt, CountRoundDown,
                                II.StartValue->getType(),
-                               "sext.crd", BypassBlock->getTerminator());
+                               "sext.crd",
+                               LoopBypassBlocks.back()->getTerminator());
       // Handle reverse integer induction counter:
-      EndValue = BinaryOperator::CreateSub(II.StartValue, CRD, "rev.ind.end",
-                                           BypassBlock->getTerminator());
+      EndValue =
+        BinaryOperator::CreateSub(II.StartValue, CRD, "rev.ind.end",
+                                  LoopBypassBlocks.back()->getTerminator());
       break;
     }
     case LoopVectorizationLegality::IK_PtrInduction: {
       // For pointer induction variables, calculate the offset using
       // the end index.
-      EndValue = GetElementPtrInst::Create(II.StartValue, CountRoundDown,
-                                           "ptr.ind.end",
-                                           BypassBlock->getTerminator());
+      EndValue =
+        GetElementPtrInst::Create(II.StartValue, CountRoundDown, "ptr.ind.end",
+                                  LoopBypassBlocks.back()->getTerminator());
       break;
     }
     }// end of case
 
     // The new PHI merges the original incoming value, in case of a bypass,
     // or the value at the end of the vectorized loop.
-    ResumeVal->addIncoming(II.StartValue, BypassBlock);
+    for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+      ResumeVal->addIncoming(II.StartValue, LoopBypassBlocks[I]);
     ResumeVal->addIncoming(EndValue, VecBody);
 
     // Fix the scalar body counter (PHI node).
@@ -1148,7 +1163,8 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
     assert(!ResumeIndex && "Unexpected resume value found");
     ResumeIndex = PHINode::Create(IdxTy, 2, "new.indc.resume.val",
                                   MiddleBlock->getTerminator());
-    ResumeIndex->addIncoming(StartIdx, BypassBlock);
+    for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+      ResumeIndex->addIncoming(StartIdx, LoopBypassBlocks[I]);
     ResumeIndex->addIncoming(IdxEndRoundDown, VecBody);
   }
 
@@ -1188,6 +1204,8 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   // Insert the new loop into the loop nest and register the new basic blocks.
   if (ParentLoop) {
     ParentLoop->addChildLoop(Lp);
+    for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
+      ParentLoop->addBasicBlockToLoop(LoopBypassBlocks[I], LI->getBase());
     ParentLoop->addBasicBlockToLoop(ScalarPH, LI->getBase());
     ParentLoop->addBasicBlockToLoop(VectorPH, LI->getBase());
     ParentLoop->addBasicBlockToLoop(MiddleBlock, LI->getBase());
@@ -1204,7 +1222,6 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
   LoopExitBlock = ExitBlock;
   LoopVectorBody = VecBody;
   LoopScalarBody = OldBasicBlock;
-  LoopBypassBlock = BypassBlock;
 }
 
 /// This function returns the identity element (or neutral element) for
@@ -1344,7 +1361,7 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
     // To do so, we need to generate the 'identity' vector and overide
     // one of the elements with the incoming scalar reduction. We need
     // to do it in the vector-loop preheader.
-    Builder.SetInsertPoint(LoopBypassBlock->getTerminator());
+    Builder.SetInsertPoint(LoopBypassBlocks.back()->getTerminator());
 
     // This is the vector-clone of the value that leaves the loop.
     VectorParts &VectorExit = getVectorValue(RdxDesc.LoopExitInstr);
@@ -1392,7 +1409,8 @@ InnerLoopVectorizer::vectorizeLoop(LoopVectorizationLegality *Legal) {
       VectorParts &RdxExitVal = getVectorValue(RdxDesc.LoopExitInstr);
       PHINode *NewPhi = Builder.CreatePHI(VecTy, 2, "rdx.vec.exit.phi");
       Value *StartVal = (part == 0) ? VectorStart : Identity;
-      NewPhi->addIncoming(StartVal, LoopBypassBlock);
+      for (unsigned I = 0, E = LoopBypassBlocks.size(); I != E; ++I)
+        NewPhi->addIncoming(StartVal, LoopBypassBlocks[I]);
       NewPhi->addIncoming(RdxExitVal[part], LoopVectorBody);
       RdxParts.push_back(NewPhi);
     }
@@ -1925,12 +1943,14 @@ void InnerLoopVectorizer::updateAnalysis() {
   SE->forgetLoop(OrigLoop);
 
   // Update the dominator tree information.
-  assert(DT->properlyDominates(LoopBypassBlock, LoopExitBlock) &&
+  assert(DT->properlyDominates(LoopBypassBlocks.front(), LoopExitBlock) &&
          "Entry does not dominate exit.");
 
-  DT->addNewBlock(LoopVectorPreHeader, LoopBypassBlock);
+  for (unsigned I = 1, E = LoopBypassBlocks.size(); I != E; ++I)
+    DT->addNewBlock(LoopBypassBlocks[I], LoopBypassBlocks[I-1]);
+  DT->addNewBlock(LoopVectorPreHeader, LoopBypassBlocks.back());
   DT->addNewBlock(LoopVectorBody, LoopVectorPreHeader);
-  DT->addNewBlock(LoopMiddleBlock, LoopBypassBlock);
+  DT->addNewBlock(LoopMiddleBlock, LoopBypassBlocks.front());
   DT->addNewBlock(LoopScalarPreHeader, LoopMiddleBlock);
   DT->changeImmediateDominator(LoopScalarBody, LoopScalarPreHeader);
   DT->changeImmediateDominator(LoopExitBlock, LoopMiddleBlock);
