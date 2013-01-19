@@ -49,8 +49,8 @@ define <8 x float> @test4(<8 x double>* %p) nounwind {
 ; CHECK: movlhps
 ; CHECK: ret
 ; AVX:   test4
-; AVX:   vcvtpd2psy {{[0-9]*}}(%{{.*}})
-; AVX:   vcvtpd2psy {{[0-9]*}}(%{{.*}})
+; AVX:   vcvtpd2psy
+; AVX:   vcvtpd2psy
 ; AVX:   vinsertf128
 ; AVX:   ret
   %x = load <8 x double>* %p

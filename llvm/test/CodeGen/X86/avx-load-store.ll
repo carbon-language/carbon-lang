@@ -53,19 +53,24 @@ define void @storev16i16(<16 x i16> %a) nounwind {
   unreachable
 }
 
-; CHECK: vmovups  %ymm
+; CHECK: storev16i16_01
+; CHECK: vextractf128
+; CHECK: vmovaps  %xmm
 define void @storev16i16_01(<16 x i16> %a) nounwind {
   store <16 x i16> %a, <16 x i16>* undef, align 4
   unreachable
 }
 
+; CHECK: storev32i8
 ; CHECK: vmovaps  %ymm
 define void @storev32i8(<32 x i8> %a) nounwind {
   store <32 x i8> %a, <32 x i8>* undef, align 32
   unreachable
 }
 
-; CHECK: vmovups  %ymm
+; CHECK: storev32i8_01
+; CHECK: vextractf128
+; CHECK: vmovups  %xmm
 define void @storev32i8_01(<32 x i8> %a) nounwind {
   store <32 x i8> %a, <32 x i8>* undef, align 4
   unreachable
@@ -76,7 +81,7 @@ define void @storev32i8_01(<32 x i8> %a) nounwind {
 ; CHECK: _double_save
 ; CHECK-NOT: vinsertf128 $1
 ; CHECK-NOT: vinsertf128 $0
-; CHECK: vmovaps %xmm
+; CHECK: vmovups %xmm
 ; CHECK: vmovaps %xmm
 define void @double_save(<4 x i32> %A, <4 x i32> %B, <8 x i32>* %P) nounwind ssp {
 entry:

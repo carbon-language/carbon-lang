@@ -42,7 +42,7 @@ define void @merge_const_store(i32 %count, %struct.A* nocapture %p) nounwind uwt
 
 ; Move the constants using a single vector store.
 ; CHECK: merge_const_store_vec
-; CHECK: vmovups  %ymm0, (%rsi)
+; CHECK: vmovups
 ; CHECK: ret
 define void @merge_const_store_vec(i32 %count, %struct.B* nocapture %p) nounwind uwtable noinline ssp {
   %1 = icmp sgt i32 %count, 0

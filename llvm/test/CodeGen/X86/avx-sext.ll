@@ -186,18 +186,6 @@ define void @sext_4(<4 x i16>* %inbuf, <4 x i64>* %outbuf) {
   ret void                                                               
 }
 
-; AVX: sext_5
-; AVX: vpmovsxbw
-; AVX: vpmovsxwd
-; AVX: vpmovsxwd
-; AVX: vpmovsxdq
-; AVX: ret
-define void @sext_5(<8 x i8>* %inbuf, <8 x i64>* %outbuf) {
-  %v0 = load <8 x i8>* %inbuf
-  %r = sext <8 x i8> %v0 to <8 x i64>                                         
-  store <8 x i64> %r, <8 x i64>* %outbuf                                         
-  ret void                                                               
-}
 ; AVX: sext_6
 ; AVX: vpmovsxbw
 ; AVX: vpmovsxwd
