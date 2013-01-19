@@ -1661,7 +1661,8 @@ TEST_F(CommentLexerTest, HTMLCharacterReferences16) {
   const char *Sources[] = {
     "// &#61;",
     "// &#x3d;",
-    "// &#X3d;"
+    "// &#X3d;",
+    "// &#X3D;"
   };
 
   for (size_t i = 0, e = array_lengthof(Sources); i != e; i++) {
