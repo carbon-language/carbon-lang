@@ -383,7 +383,8 @@ bool DIType::isUnsignedDIType() {
   if (BTy.Verify()) {
     unsigned Encoding = BTy.getEncoding();
     if (Encoding == dwarf::DW_ATE_unsigned ||
-        Encoding == dwarf::DW_ATE_unsigned_char)
+        Encoding == dwarf::DW_ATE_unsigned_char ||
+        Encoding == dwarf::DW_ATE_boolean)
       return true;
   }
   return false;
