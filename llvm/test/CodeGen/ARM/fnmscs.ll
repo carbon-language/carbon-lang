@@ -46,8 +46,8 @@ entry:
 ; NEON: vnmla.f64
 
 ; A8: t3:
-; A8: vnmul.f64 d1{{[67]}}, d1{{[67]}}, d1{{[67]}}
-; A8: vsub.f64 d1{{[67]}}, d1{{[67]}}, d1{{[67]}}
+; A8: vnmul.f64 d
+; A8: vsub.f64 d
 	%0 = fmul double %a, %b
 	%1 = fsub double -0.0, %0
         %2 = fsub double %1, %acc
@@ -63,8 +63,8 @@ entry:
 ; NEON: vnmla.f64
 
 ; A8: t4:
-; A8: vnmul.f64 d1{{[67]}}, d1{{[67]}}, d1{{[67]}}
-; A8: vsub.f64 d1{{[67]}}, d1{{[67]}}, d1{{[67]}}
+; A8: vnmul.f64 d
+; A8: vsub.f64 d
 	%0 = fmul double %a, %b
 	%1 = fmul double -1.0, %0
         %2 = fsub double %1, %acc

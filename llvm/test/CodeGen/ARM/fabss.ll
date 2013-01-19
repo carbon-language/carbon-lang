@@ -14,12 +14,12 @@ entry:
 declare float @fabsf(float)
 
 ; VFP2: test:
-; VFP2: 	vabs.f32	s2, s2
+; VFP2: 	vabs.f32	s
 
 ; NFP1: test:
-; NFP1: 	vabs.f32	d1, d1
+; NFP1: 	vabs.f32	d
 ; NFP0: test:
-; NFP0: 	vabs.f32	s2, s2
+; NFP0: 	vabs.f32	s
 
 ; CORTEXA8: test:
 ; CORTEXA8:     vadd.f32        [[D1:d[0-9]+]]
