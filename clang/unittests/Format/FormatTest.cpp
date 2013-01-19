@@ -10,10 +10,10 @@
 #define DEBUG_TYPE "format-test"
 
 #include "clang/Format/Format.h"
-#include "clang/Lex/Lexer.h"
-#include "gtest/gtest.h"
-#include "llvm/Support/Debug.h"
 #include "../Tooling/RewriterTestContext.h"
+#include "clang/Lex/Lexer.h"
+#include "llvm/Support/Debug.h"
+#include "gtest/gtest.h"
 
 // Uncomment to get debug output from tests:
 // #define DEBUG_WITH_TYPE(T, X) do { X; } while(0)

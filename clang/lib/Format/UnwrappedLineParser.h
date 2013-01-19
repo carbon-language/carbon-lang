@@ -23,7 +23,6 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Format/Format.h"
 #include "clang/Lex/Lexer.h"
-
 #include <list>
 
 namespace clang {

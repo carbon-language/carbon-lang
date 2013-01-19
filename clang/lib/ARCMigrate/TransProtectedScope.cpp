@@ -14,8 +14,8 @@
 
 #include "Transforms.h"
 #include "Internals.h"
-#include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/Sema/SemaDiagnostic.h"
 
 using namespace clang;
 using namespace arcmt;

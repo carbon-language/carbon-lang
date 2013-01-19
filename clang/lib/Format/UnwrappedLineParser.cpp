@@ -18,9 +18,9 @@
 
 #define DEBUG_TYPE "format-parser"
 
+#include "UnwrappedLineParser.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/Debug.h"
-#include "UnwrappedLineParser.h"
 
 // Uncomment to get debug output from tests:
 // #define DEBUG_WITH_TYPE(T, X) do { X; } while(0)

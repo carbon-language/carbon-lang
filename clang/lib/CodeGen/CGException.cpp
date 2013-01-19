@@ -15,8 +15,8 @@
 #include "CGCleanup.h"
 #include "CGObjCRuntime.h"
 #include "TargetInfo.h"
-#include "clang/AST/StmtObjC.h"
 #include "clang/AST/StmtCXX.h"
+#include "clang/AST/StmtObjC.h"
 #include "llvm/IR/Intrinsics.h"
 #include "llvm/Support/CallSite.h"
 

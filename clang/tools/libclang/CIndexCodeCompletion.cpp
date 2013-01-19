@@ -14,10 +14,10 @@
 
 #include "CIndexer.h"
 #include "CIndexDiagnostic.h"
+#include "CLog.h"
 #include "CXCursor.h"
 #include "CXString.h"
 #include "CXTranslationUnit.h"
-#include "CLog.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/Type.h"

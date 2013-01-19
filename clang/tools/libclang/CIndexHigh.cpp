@@ -8,10 +8,10 @@
 //===----------------------------------------------------------------------===//
 
 #include "CursorVisitor.h"
+#include "CLog.h"
 #include "CXCursor.h"
 #include "CXSourceLocation.h"
 #include "CXTranslationUnit.h"
-#include "CLog.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "llvm/Support/Compiler.h"

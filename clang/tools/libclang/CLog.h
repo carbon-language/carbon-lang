@@ -10,6 +10,7 @@
 #ifndef LLVM_LIBCLANG_CLOG_H
 #define LLVM_LIBCLANG_CLOG_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringRef.h"
