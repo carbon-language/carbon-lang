@@ -289,7 +289,9 @@ ImmutablePass *llvm::createNoTargetTransformInfoPass() {
 
 //======================================= COST TABLES ==
 
-CostTable::CostTable(const CostTableEntry *table, const size_t size, unsigned numTypes)
+CostTable::CostTable(const CostTableEntry *table,
+                     const size_t size,
+                     unsigned numTypes)
   : table(table), size(size), numTypes(numTypes) {
   assert(table && "missing cost table");
   assert(size > 0 && "empty cost table");
@@ -297,22 +299,23 @@ CostTable::CostTable(const CostTableEntry *table, const size_t size, unsigned nu
 
 unsigned CostTable::_findCost(int ISD, MVT *Types) const {
   for (unsigned i = 0; i < size; ++i) {
-    if (table[i].ISD == ISD) {
-      bool found = true;
-      for (unsigned t=0; t<numTypes; t++) {
-        if (table[i].Types[t] != Types[t]) {
-          found = false;
-          break;
-        }
+    if (table[i].ISD != ISD)
+      continue;
+    bool found = true;
+    for (unsigned t=0; t<numTypes; t++) {
+      if (table[i].Types[t] != Types[t]) {
+        found = false;
+        break;
       }
-      if (found)
-        return table[i].Cost;
     }
+    if (found)
+      return table[i].Cost;
   }
   return COST_NOT_FOUND;
 }
 
-UnaryCostTable::UnaryCostTable(const CostTableEntry *table, const size_t size)
+UnaryCostTable::UnaryCostTable(const CostTableEntry *table,
+                               const size_t size)
   : CostTable(table, size, 1) { }
 
 unsigned UnaryCostTable::findCost(int ISD, MVT Type) const {
@@ -320,7 +323,8 @@ unsigned UnaryCostTable::findCost(int ISD, MVT Type) const {
   return _findCost(ISD, tys);
 }
 
-BinaryCostTable::BinaryCostTable(const CostTableEntry *table, const size_t size)
+BinaryCostTable::BinaryCostTable(const CostTableEntry *table,
+                                 const size_t size)
   : CostTable(table, size, 2) { }
 
 unsigned BinaryCostTable::findCost(int ISD, MVT Type, MVT SrcType) const {
