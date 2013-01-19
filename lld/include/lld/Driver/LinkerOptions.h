@@ -56,6 +56,13 @@ public:
     , _file(std::move(other._file))
     , _kind(other._kind) {}
 
+  LinkerInput &operator=(LinkerInput &&rhs) {
+    _buffer = std::move(rhs._buffer);
+    _file = std::move(rhs._file);
+    _kind = rhs._kind;
+    return *this;
+  }
+
   ErrorOr<llvm::MemoryBuffer&> getBuffer() const {
     if (!_buffer) {
       llvm::OwningPtr<llvm::MemoryBuffer> buf;
