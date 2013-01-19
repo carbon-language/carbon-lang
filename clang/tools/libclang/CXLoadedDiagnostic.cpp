@@ -1,15 +1,15 @@
-/*===-- CXLoadedDiagnostic.cpp - Handling of persisent diags -*- C++ -*-===*\
-|*                                                                            *|
-|*                     The LLVM Compiler Infrastructure                       *|
-|*                                                                            *|
-|* This file is distributed under the University of Illinois Open Source      *|
-|* License. See LICENSE.TXT for details.                                      *|
-|*                                                                            *|
-|*===----------------------------------------------------------------------===*|
-|*                                                                            *|
-|* Implements handling of persisent diagnostics.                              *|
-|*                                                                            *|
-\*===----------------------------------------------------------------------===*/
+//===-- CXLoadedDiagnostic.cpp - Handling of persisent diags ----*- C++ -*-===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Implements handling of persisent diagnostics.
+//
+//===----------------------------------------------------------------------===//
 
 #include "CXLoadedDiagnostic.h"
 #include "CXString.h"
