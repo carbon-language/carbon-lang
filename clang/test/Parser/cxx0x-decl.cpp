@@ -49,3 +49,28 @@ struct ConstexprTrailingReturn {
   constexpr auto f() -> decltype((n));
 };
 constexpr const int &ConstexprTrailingReturn::f() const { return n; }
+
+namespace TestIsValidAfterTypeSpecifier {
+struct s {} v;
+
+// FIXME: We should accept this once we support thread_local.
+struct s
+thread_local tl; // expected-error {{expected unqualified-id}}
+
+struct s
+&r0 = v;
+
+struct s
+&&r1 = s();
+
+struct s
+bitand r2 = v;
+
+struct s
+and r3 = s();
+
+enum E {};
+enum E
+[[]] e;
+
+}

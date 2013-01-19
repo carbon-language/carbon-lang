@@ -134,7 +134,7 @@ struct S {
 
 
 namespace TestIsValidAfterTypeSpecifier {
-struct s {};
+struct s {} v;
 
 namespace a {
 struct s operator++(struct s a)
@@ -147,6 +147,18 @@ struct s
 operator++(struct s a)
 { return a; }
 }
+
+struct X {
+  struct s
+  friend f();
+  struct s
+  virtual f();
+};
+
+struct s
+&r0 = v;
+struct s
+bitand r2 = v;
 
 }
 
