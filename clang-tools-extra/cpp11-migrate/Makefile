@@ -25,7 +25,7 @@ SOURCES = Cpp11Migrate.cpp Transforms.cpp Transform.cpp
 SOURCES += $(addprefix LoopConvert/,$(notdir $(wildcard $(PROJ_SRC_DIR)/LoopConvert/*.cpp)))
 BUILT_SOURCES = $(ObjDir)/LoopConvert/.objdir
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser support mc
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc
 USEDLIBS = clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
 		   clangRewriteFrontend.a clangRewriteCore.a clangParse.a \
 		   clangSema.a clangAnalysis.a \
