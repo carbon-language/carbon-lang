@@ -1623,8 +1623,15 @@ llvm::DIType CGDebugInfo::CreateType(const RValueReferenceType *Ty,
 
 llvm::DIType CGDebugInfo::CreateType(const MemberPointerType *Ty, 
                                      llvm::DIFile U) {
-  return DBuilder.createMemberPointerType(CreatePointeeType(Ty->getPointeeType(), U),
-                                    getOrCreateType(QualType(Ty->getClass(), 0), U));
+  llvm::DIType ClassType = getOrCreateType(QualType(Ty->getClass(), 0), U);
+  if (!Ty->getPointeeType()->isFunctionType())
+    return DBuilder.createMemberPointerType(
+        CreatePointeeType(Ty->getPointeeType(), U), ClassType);
+  return DBuilder.createMemberPointerType(getOrCreateInstanceMethodType(
+      CGM.getContext().getPointerType(
+          QualType(Ty->getClass(), Ty->getPointeeType().getCVRQualifiers())),
+      Ty->getPointeeType()->getAs<FunctionProtoType>(), U),
+                                          ClassType);
 }
 
 llvm::DIType CGDebugInfo::CreateType(const AtomicType *Ty, 
