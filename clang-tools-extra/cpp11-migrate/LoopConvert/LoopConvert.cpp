@@ -17,9 +17,9 @@
 #include "LoopActions.h"
 #include "LoopMatchers.h"
 #include "clang/Frontend/FrontendActions.h"
+#include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/Tooling.h"
-#include "clang/Rewrite/Core/Rewriter.h"
 
 using clang::ast_matchers::MatchFinder;
 using namespace clang::tooling;

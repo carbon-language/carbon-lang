@@ -15,8 +15,8 @@
 #ifndef LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_TRANSFORM_H
 #define LLVM_TOOLS_CLANG_TOOLS_EXTRA_CPP11_MIGRATE_TRANSFORM_H
 
-#include <vector>
 #include <string>
+#include <vector>
 
 // For RewriterContainer
 #include "clang/Rewrite/Core/Rewriter.h"
