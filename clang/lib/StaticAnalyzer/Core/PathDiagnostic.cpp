@@ -877,6 +877,11 @@ IntrusiveRefCntPtr<PathDiagnosticEventPiece>
 PathDiagnosticCallPiece::getCallEnterWithinCallerEvent() const {
   if (!callEnterWithin.asLocation().isValid())
     return 0;
+  if (Callee->isImplicit())
+    return 0;
+  if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Callee))
+    if (MD->isDefaulted())
+      return 0;
 
   SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
