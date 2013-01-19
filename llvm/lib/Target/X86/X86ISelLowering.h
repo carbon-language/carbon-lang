@@ -852,7 +852,7 @@ namespace llvm {
 
     SDValue LowerVectorAllZeroTest(SDValue Op, SelectionDAG &DAG) const;
 
-    SDValue lowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const;
 
     virtual SDValue
       LowerFormalArguments(SDValue Chain,
