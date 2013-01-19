@@ -1668,9 +1668,13 @@ class CompletionChunk:
         return conf.lib.clang_getCompletionChunkText(self.cs, self.key).spelling
 
     @CachedProperty
-    def kind(self):
+    def __kindNumber(self):
         res = conf.lib.clang_getCompletionChunkKind(self.cs, self.key)
-        return completionChunkKindMap[res]
+	return res
+
+    @CachedProperty
+    def kind(self):
+        return completionChunkKindMap[self.__kindNumber]
 
     @CachedProperty
     def string(self):
@@ -1683,19 +1687,19 @@ class CompletionChunk:
           None
 
     def isKindOptional(self):
-      return self.kind == completionChunkKindMap[0]
+      return self.__kindNumber == 0
 
     def isKindTypedText(self):
-      return self.kind == completionChunkKindMap[1]
+      return self.__kindNumber == 1
 
     def isKindPlaceHolder(self):
-      return self.kind == completionChunkKindMap[3]
+      return self.__kindNumber == 3
 
     def isKindInformative(self):
-      return self.kind == completionChunkKindMap[4]
+      return self.__kindNumber == 4
 
     def isKindResultType(self):
-      return self.kind == completionChunkKindMap[15]
+      return self.__kindNumber == 15
 
 completionChunkKindMap = {
             0: CompletionChunk.Kind("Optional"),
