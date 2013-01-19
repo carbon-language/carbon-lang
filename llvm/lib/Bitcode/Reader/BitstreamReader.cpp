@@ -150,7 +150,7 @@ unsigned BitstreamCursor::ReadRecord(unsigned AbbrevID,
     // the data, do so to avoid copying it.
     if (BlobStart) {
       *BlobStart = (const char*)BitStream->getBitcodeBytes().getPointer(
-                                                                        NextChar, NumElts);
+                                                            NextChar, NumElts);
       *BlobLen = NumElts;
     } else {
       for (; NumElts; ++NextChar, --NumElts)

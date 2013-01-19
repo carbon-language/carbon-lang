@@ -27,6 +27,11 @@ namespace llvm {
 
   class Deserializer;
 
+/// BitstreamReader - This class is used to read from an LLVM bitcode stream,
+/// maintaining information that is global to decoding the entire file.  While
+/// a file is being read, multiple cursors can be independently advanced or
+/// skipped around within the file.  These are represented by the
+/// BitstreamCursor class.
 class BitstreamReader {
 public:
   /// BlockInfo - This contains information emitted to BLOCKINFO_BLOCK blocks.
@@ -119,9 +124,48 @@ public:
     BlockInfoRecords.back().BlockID = BlockID;
     return BlockInfoRecords.back();
   }
-
 };
 
+  
+/// BitstreamEntry - When advancing through a bitstream cursor, each advance can
+/// discover a few different kinds of entries:
+///   Error    - Malformed bitcode was found.
+///   EndBlock - We've reached the end of the current block, (or the end of the
+///              file, which is treated like a series of EndBlock records.
+///   SubBlock - This is the start of a new subblock of a specific ID.
+///   Record   - This is a record with a specific AbbrevID.
+///
+struct BitstreamEntry {
+  enum {
+    Error,
+    EndBlock,
+    SubBlock,
+    Record
+  } Kind;
+  
+  unsigned ID;
+
+  static BitstreamEntry getError() {
+    BitstreamEntry E; E.Kind = Error; return E;
+  }
+  static BitstreamEntry getEndBlock() {
+    BitstreamEntry E; E.Kind = EndBlock; return E;
+  }
+  static BitstreamEntry getSubBlock(unsigned ID) {
+    BitstreamEntry E; E.Kind = SubBlock; E.ID = ID; return E;
+  }
+  static BitstreamEntry getRecord(unsigned AbbrevID) {
+    BitstreamEntry E; E.Kind = Record; E.ID = AbbrevID; return E;
+  }
+};
+
+
+/// BitstreamCursor - This represents a position within a bitcode file.  There
+/// may be multiple independent cursors reading within one bitstream, each
+/// maintaining their own local state.
+///
+/// Unlike iterators, BitstreamCursors are heavy-weight objects that should not
+/// be passed by value.
 class BitstreamCursor {
   friend class Deserializer;
   BitstreamReader *BitStream;
@@ -151,6 +195,7 @@ class BitstreamCursor {
   /// BlockScope - This tracks the codesize of parent blocks.
   SmallVector<Block, 8> BlockScope;
 
+  
 public:
   BitstreamCursor() : BitStream(0), NextChar(0) {
   }
@@ -183,9 +228,6 @@ public:
 
   void freeState();
   
-  /// GetAbbrevIDWidth - Return the number of bits used to encode an abbrev #.
-  unsigned GetAbbrevIDWidth() const { return CurCodeSize; }
-
   bool isEndPos(size_t pos) {
     return BitStream->getBitcodeBytes().isObjectEnd(static_cast<uint64_t>(pos));
   }
@@ -212,6 +254,9 @@ public:
     return isEndPos(NextChar) && BitsInCurWord == 0;
   }
 
+  /// getAbbrevIDWidth - Return the number of bits used to encode an abbrev #.
+  unsigned getAbbrevIDWidth() const { return CurCodeSize; }
+
   /// GetCurrentBitNo - Return the bit # of the bit we are reading.
   uint64_t GetCurrentBitNo() const {
     return NextChar*CHAR_BIT - BitsInCurWord;
@@ -224,6 +269,46 @@ public:
     return BitStream;
   }
 
+  
+  /// advance - Advance the current bitstream, returning the next entry in the
+  /// stream.
+  BitstreamEntry advance() {
+    while (1) {
+      unsigned Code = ReadCode();
+      if (Code == bitc::END_BLOCK) {
+        if (ReadBlockEnd())
+          return BitstreamEntry::getError();
+        return BitstreamEntry::getEndBlock();
+      }
+      
+      if (Code == bitc::ENTER_SUBBLOCK)
+        return BitstreamEntry::getSubBlock(ReadSubBlockID());
+      
+      if (Code == bitc::DEFINE_ABBREV) {
+        // We read and accumulate abbrev's, the client can't do anything with
+        // them anyway.
+        ReadAbbrevRecord();
+        continue;
+      }
+
+      return BitstreamEntry::getRecord(Code);
+    }
+  }
+
+  /// advanceSkippingSubblocks - This is a convenience function for clients that
+  /// don't expect any subblocks.  This just skips over them automatically.
+  BitstreamEntry advanceSkippingSubblocks() {
+    while (1) {
+      // If we found a normal entry, return it.
+      BitstreamEntry Entry = advance();
+      if (Entry.Kind != BitstreamEntry::SubBlock)
+        return Entry;
+      
+      // If we found a sub-block, just skip over it and check the next entry.
+      if (SkipBlock())
+        return BitstreamEntry::getError();
+    }
+  }
 
   /// JumpToBit - Reset the stream to the specified bit number.
   void JumpToBit(uint64_t BitNo) {
@@ -375,12 +460,13 @@ public:
     //    [END_BLOCK, <align4bytes>]
     SkipToWord();
 
-    PopBlockScope();
+    popBlockScope();
     return false;
   }
 
 private:
-  void PopBlockScope() {
+
+  void popBlockScope() {
     CurCodeSize = BlockScope.back().PrevCodeSize;
 
     // Delete abbrevs from popped scope.
@@ -443,7 +529,6 @@ public:
   //===--------------------------------------------------------------------===//
   // Abbrev Processing
   //===--------------------------------------------------------------------===//
-
   void ReadAbbrevRecord();
   
   bool ReadBlockInfoBlock();
