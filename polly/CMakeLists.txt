@@ -131,8 +131,18 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/include
   )
 
-install(DIRECTORY ${POLLY_BINARY_DIR}/include
-  DESTINATION .
+install(DIRECTORY include/
+  DESTINATION include
+  FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN ".svn" EXCLUDE
+  )
+
+install(DIRECTORY ${POLLY_BINARY_DIR}/include/
+  DESTINATION include
+  FILES_MATCHING
+  PATTERN "*.h"
+  PATTERN "CMakeFiles" EXCLUDE
   PATTERN ".svn" EXCLUDE
   )
 
