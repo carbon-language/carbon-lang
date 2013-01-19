@@ -6,10 +6,6 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This header defines the BitcodeReader class.
-//
-//===----------------------------------------------------------------------===//
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "BitcodeReader.h"
