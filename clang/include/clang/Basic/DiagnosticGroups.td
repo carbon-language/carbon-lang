@@ -259,9 +259,7 @@ def UndefinedReinterpretCast : DiagGroup<"undefined-reinterpret-cast">;
 def Unicode  : DiagGroup<"unicode">;
 def UninitializedMaybe : DiagGroup<"conditional-uninitialized">;
 def UninitializedSometimes : DiagGroup<"sometimes-uninitialized">;
-def UninitializedStaticSelfInit : DiagGroup<"static-self-init">;
-def Uninitialized  : DiagGroup<"uninitialized", [UninitializedSometimes,
-                                                 UninitializedStaticSelfInit]>;
+def Uninitialized  : DiagGroup<"uninitialized", [UninitializedSometimes]>;
 def UnknownPragmas : DiagGroup<"unknown-pragmas">;
 def UnknownWarningOption : DiagGroup<"unknown-warning-option">;
 def NSobjectAttribute : DiagGroup<"NSObject-attribute">;
