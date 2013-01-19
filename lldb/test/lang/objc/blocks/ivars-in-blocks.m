@@ -11,7 +11,22 @@ typedef int (^my_block_ptr_type) (int);
 @end
 
 @implementation IAmBlocky
+
++ (int) addend
+{
+  return 3;
+}
  
++ (void) classMethod
+{
+  int (^my_block)(int) = ^(int foo)
+  {
+    int ret = foo + [self addend];
+    return ret; // Break here inside the class method block.
+  };
+  printf("%d\n", my_block(2));
+}
+
 - (void) makeBlockPtr;
 {
   _block_ptr = ^(int inval)
@@ -34,7 +49,9 @@ typedef int (^my_block_ptr_type) (int);
 {
   if (_block_ptr == NULL)
     [self makeBlockPtr];
-  return _block_ptr (block_value);
+  int ret = _block_ptr (block_value);
+  [IAmBlocky classMethod];
+  return ret;
 }
 @end
 

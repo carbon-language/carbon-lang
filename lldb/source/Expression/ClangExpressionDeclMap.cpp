@@ -2758,7 +2758,6 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             if (method_decl)
             {
-
                 ObjCInterfaceDecl* self_interface = method_decl->getClassInterface();
                 
                 if (!self_interface)
@@ -2822,10 +2821,15 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                         return;
                     
                     QualType self_qual_type = QualType::getFromOpaquePtr(self_type->GetClangFullType());
-                    const ObjCObjectPointerType *class_pointer_type = self_qual_type->getAs<ObjCObjectPointerType>();
                     
-                    if (class_pointer_type)
+                    if (self_qual_type->isObjCClassType())
                     {
+                        return;
+                    }
+                    else if (self_qual_type->isObjCObjectPointerType())
+                    {
+                        const ObjCObjectPointerType *class_pointer_type = self_qual_type->getAs<ObjCObjectPointerType>();
+                    
                         QualType class_type = class_pointer_type->getPointeeType();
                         
                         if (log)
@@ -2835,9 +2839,9 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                         }
                         
                         TypeFromUser class_user_type (class_type.getAsOpaquePtr(),
-                                                        self_type->GetClangAST());
+                                                      self_type->GetClangAST());
+                        
                         AddOneType(context, class_user_type, current_id, false);
-                                    
                                     
                         TypeFromUser self_user_type(self_type->GetClangFullType(),
                                                     self_type->GetClangAST());

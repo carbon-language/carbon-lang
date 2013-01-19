@@ -234,13 +234,94 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
             lldb::LanguageType language = metadata->GetObjectPtrLanguage();
             if (language == lldb::eLanguageTypeC_plus_plus)
             {
+                if (m_enforce_valid_object)
+                {
+                    lldb::VariableListSP variable_list_sp (function_block->GetBlockVariableList (true));
+                    
+                    const char *thisErrorString = "Stopped in a context claiming to capture a C++ object pointer, but 'this' isn't available; pretending we are in a generic context";
+                    
+                    if (!variable_list_sp)
+                    {
+                        err.SetErrorString(thisErrorString);
+                        return;
+                    }
+                    
+                    lldb::VariableSP this_var_sp (variable_list_sp->FindVariable(ConstString("this")));
+                    
+                    if (!this_var_sp ||
+                        !this_var_sp->IsInScope(frame) ||
+                        !this_var_sp->LocationIsValidForFrame (frame))
+                    {
+                        err.SetErrorString(thisErrorString);
+                        return;
+                    }
+                }
+                
                 m_cplusplus = true;
                 m_needs_object_ptr = true;
             }
             else if (language == lldb::eLanguageTypeObjC)
             {
-                m_objectivec = true;
-                m_needs_object_ptr = true;
+                if (m_enforce_valid_object)
+                {
+                    lldb::VariableListSP variable_list_sp (function_block->GetBlockVariableList (true));
+                    
+                    const char *selfErrorString = "Stopped in a context claiming to capture an Objective-C object pointer, but 'self' isn't available; pretending we are in a generic context";
+                    
+                    if (!variable_list_sp)
+                    {
+                        err.SetErrorString(selfErrorString);
+                        return;
+                    }
+                    
+                    lldb::VariableSP self_variable_sp = variable_list_sp->FindVariable(ConstString("self"));
+                    
+                    if (!self_variable_sp ||
+                        !self_variable_sp->IsInScope(frame) ||
+                        !self_variable_sp->LocationIsValidForFrame (frame))
+                    {
+                        err.SetErrorString(selfErrorString);
+                        return;
+                    }
+                    
+                    Type *self_type = self_variable_sp->GetType();
+                    
+                    if (!self_type)
+                    {
+                        err.SetErrorString(selfErrorString);
+                        return;
+                    }
+                    
+                    lldb::clang_type_t self_opaque_type = self_type->GetClangForwardType();
+                    
+                    if (!self_opaque_type)
+                    {
+                        err.SetErrorString(selfErrorString);
+                        return;
+                    }
+                    
+                    clang::QualType self_qual_type = clang::QualType::getFromOpaquePtr(self_opaque_type);
+                    
+                    if (self_qual_type->isObjCClassType())
+                    {
+                        return;
+                    }
+                    else if (self_qual_type->isObjCObjectPointerType())
+                    {
+                        m_objectivec = true;
+                        m_needs_object_ptr = true;
+                    }
+                    else
+                    {
+                        err.SetErrorString(selfErrorString);
+                        return;
+                    }
+                }
+                else
+                {
+                    m_objectivec = true;
+                    m_needs_object_ptr = true;
+                }
             }
         }
     }
