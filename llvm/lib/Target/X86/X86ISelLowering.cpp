@@ -3586,7 +3586,7 @@ static bool isMOVLHPSMask(ArrayRef<int> Mask, EVT VT) {
 static
 SDValue Compact8x32ShuffleNode(ShuffleVectorSDNode *SVOp,
                                SelectionDAG &DAG) {
-  EVT VT = SVOp->getValueType(0);
+  MVT VT = SVOp->getValueType(0).getSimpleVT();
   DebugLoc dl = SVOp->getDebugLoc();
 
   if (VT != MVT::v8i32 && VT != MVT::v8f32)
@@ -4207,7 +4207,7 @@ bool X86::isZeroNode(SDValue Elt) {
 /// their permute mask.
 static SDValue CommuteVectorShuffle(ShuffleVectorSDNode *SVOp,
                                     SelectionDAG &DAG) {
-  EVT VT = SVOp->getValueType(0);
+  MVT VT = SVOp->getValueType(0).getSimpleVT();
   unsigned NumElems = VT.getVectorNumElements();
   SmallVector<int, 8> MaskVec;
 
@@ -5656,8 +5656,8 @@ LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   DebugLoc dl = SVOp->getDebugLoc();
-  EVT VT = SVOp->getValueType(0);
-  EVT EltVT = VT.getVectorElementType();
+  MVT VT = SVOp->getValueType(0).getSimpleVT();
+  MVT EltVT = VT.getVectorElementType();
   unsigned NumElems = VT.getVectorNumElements();
 
   if (!Subtarget->hasSSE41() || EltVT == MVT::i8)
@@ -6088,7 +6088,7 @@ static
 SDValue LowerVECTOR_SHUFFLEv32i8(ShuffleVectorSDNode *SVOp,
                                  const X86Subtarget *Subtarget,
                                  SelectionDAG &DAG) {
-  EVT VT = SVOp->getValueType(0);
+  MVT VT = SVOp->getValueType(0).getSimpleVT();
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   DebugLoc dl = SVOp->getDebugLoc();
@@ -6214,14 +6214,14 @@ LowerVECTOR_SHUFFLE_256(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   if (NewOp.getNode())
     return NewOp;
 
-  EVT VT = SVOp->getValueType(0);
+  MVT VT = SVOp->getValueType(0).getSimpleVT();
 
   unsigned NumElems = VT.getVectorNumElements();
   unsigned NumLaneElems = NumElems / 2;
 
   DebugLoc dl = SVOp->getDebugLoc();
-  MVT EltVT = VT.getVectorElementType().getSimpleVT();
-  EVT NVT = MVT::getVectorVT(EltVT, NumLaneElems);
+  MVT EltVT = VT.getVectorElementType();
+  MVT NVT = MVT::getVectorVT(EltVT, NumLaneElems);
   SDValue Output[2];
 
   SmallVector<int, 16> Mask;
@@ -6326,7 +6326,7 @@ LowerVECTOR_SHUFFLE_128v4(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   SDValue V1 = SVOp->getOperand(0);
   SDValue V2 = SVOp->getOperand(1);
   DebugLoc dl = SVOp->getDebugLoc();
-  EVT VT = SVOp->getValueType(0);
+  MVT VT = SVOp->getValueType(0).getSimpleVT();
 
   assert(VT.is128BitVector() && "Unsupported vector size");
 
@@ -6656,7 +6656,7 @@ X86TargetLowering::LowerVectorIntExtend(SDValue Op, SelectionDAG &DAG) const {
 SDValue
 X86TargetLowering::NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
   DebugLoc dl = Op.getDebugLoc();
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
@@ -6701,7 +6701,7 @@ X86TargetLowering::NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const {
     if (ISD::isBuildVectorAllZeros(V2.getNode())) {
       SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG, dl);
       if (NewOp.getNode()) {
-        EVT NewVT = NewOp.getValueType();
+        MVT NewVT = NewOp.getValueType().getSimpleVT();
         if (isCommutedMOVLMask(cast<ShuffleVectorSDNode>(NewOp)->getMask(),
                                NewVT, true, false))
           return getVZextMovL(VT, NewVT, NewOp.getOperand(0),
@@ -6710,7 +6710,7 @@ X86TargetLowering::NormalizeVectorShuffle(SDValue Op, SelectionDAG &DAG) const {
     } else if (ISD::isBuildVectorAllZeros(V1.getNode())) {
       SDValue NewOp = RewriteAsNarrowerShuffle(SVOp, DAG, dl);
       if (NewOp.getNode()) {
-        EVT NewVT = NewOp.getValueType();
+        MVT NewVT = NewOp.getValueType().getSimpleVT();
         if (isMOVLMask(cast<ShuffleVectorSDNode>(NewOp)->getMask(), NewVT))
           return getVZextMovL(VT, NewVT, NewOp.getOperand(1),
                               DAG, Subtarget, dl);
@@ -6725,7 +6725,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(Op);
   SDValue V1 = Op.getOperand(0);
   SDValue V2 = Op.getOperand(1);
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
   DebugLoc dl = Op.getDebugLoc();
   unsigned NumElems = VT.getVectorNumElements();
   bool V1IsUndef = V1.getOpcode() == ISD::UNDEF;
@@ -6816,7 +6816,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (isShift && ShVal.hasOneUse()) {
     // If the shifted value has multiple uses, it may be cheaper to use
     // v_set0 + movlhps or movhlps, etc.
-    EVT EltVT = VT.getVectorElementType();
+    MVT EltVT = VT.getVectorElementType();
     ShAmt *= EltVT.getSizeInBits();
     return getVShift(isLeft, VT, ShVal, ShAmt, DAG, *this, dl);
   }
@@ -6855,7 +6855,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
   if (isShift) {
     // No better options. Use a vshldq / vsrldq.
-    EVT EltVT = VT.getVectorElementType();
+    MVT EltVT = VT.getVectorElementType();
     ShAmt *= EltVT.getSizeInBits();
     return getVShift(isLeft, VT, ShVal, ShAmt, DAG, *this, dl);
   }
