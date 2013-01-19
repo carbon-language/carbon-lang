@@ -1,6 +1,7 @@
 #include "clang/AST/CommentLexer.h"
 #include "clang/AST/CommentCommandTraits.h"
 #include "clang/Basic/ConvertUTF.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -65,12 +66,7 @@ StringRef Lexer::resolveHTMLHexCharacterReference(StringRef Name) const {
     CodePoint *= 16;
     const char C = Name[i];
     assert(isHTMLHexCharacterReferenceCharacter(C));
-    if (C >= '0' && C <= '9')
-      CodePoint += Name[i] - '0';
-    else if (C >= 'a' && C <= 'f')
-      CodePoint += Name[i] - 'a' + 10;
-    else
-      CodePoint += Name[i] - 'A' + 10;
+    CodePoint += llvm::hexDigitValue(C);
   }
 
   char *Resolved = Allocator.Allocate<char>(UNI_MAX_UTF8_BYTES_PER_CODE_POINT);
