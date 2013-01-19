@@ -23,8 +23,6 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Bitcode/BitstreamReader.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include <assert.h>
-
 using namespace clang;
 using namespace clang::cxstring;
 
@@ -216,7 +214,7 @@ class DiagLoader {
   StreamResult readToNextRecordOrBlock(llvm::BitstreamCursor &Stream,
                                        llvm::StringRef errorContext,
                                        unsigned &BlockOrRecordID,
-                                       const bool atTopLevel = false);
+                                       bool atTopLevel = false);
   
   
   LoadResult readString(CXLoadedDiagnosticSetImpl &TopDiags,
@@ -286,8 +284,7 @@ CXDiagnosticSet DiagLoader::load(const char *file) {
     return 0;
   }
 
-  OwningPtr<CXLoadedDiagnosticSetImpl>
-    Diags(new CXLoadedDiagnosticSetImpl());
+  OwningPtr<CXLoadedDiagnosticSetImpl> Diags(new CXLoadedDiagnosticSetImpl());
 
   while (true) {
     unsigned BlockID = 0;
@@ -328,7 +325,7 @@ CXDiagnosticSet DiagLoader::load(const char *file) {
 StreamResult DiagLoader::readToNextRecordOrBlock(llvm::BitstreamCursor &Stream,
                                                  llvm::StringRef errorContext,
                                                  unsigned &blockOrRecordID,
-                                                 const bool atTopLevel) {
+                                                 bool atTopLevel) {
   
   blockOrRecordID = 0;
 
