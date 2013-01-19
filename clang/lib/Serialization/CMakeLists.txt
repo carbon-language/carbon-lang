@@ -1,3 +1,5 @@
+set(LLVM_LINK_COMPONENTS bitreader)
+
 add_clang_library(clangSerialization
   ASTCommon.h
   ASTReaderInternals.h
