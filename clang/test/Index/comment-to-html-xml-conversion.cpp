@@ -559,7 +559,7 @@ void comment_to_html_conversion_31();
 /// &amp; &lt; &gt; &quot; &apos; &#109;&#101;&#111;&#119; &#x6d;&#x65;&#x6F;&#X77;
 void comment_to_html_conversion_32();
 
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_32:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp; &lt; &gt; &quot;</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_32</Name><USR>c:@F@comment_to_html_conversion_32#</USR><Declaration>void comment_to_html_conversion_32()</Declaration><Abstract><Para> &amp; &lt; &gt; &quot; &apos; meow  meow</Para></Abstract></Function>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-2]]:6: FunctionDecl=comment_to_html_conversion_32:{{.*}} FullCommentAsHTML=[<p class="para-brief"> &amp; &lt; &gt; &quot; &#39; meow meow</p>] FullCommentAsXML=[<Function file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-2]]" column="6"><Name>comment_to_html_conversion_32</Name><USR>c:@F@comment_to_html_conversion_32#</USR><Declaration>void comment_to_html_conversion_32()</Declaration><Abstract><Para> &amp; &lt; &gt; &quot; &apos; meow  meow</Para></Abstract></Function>]
 // CHECK-NEXT:  CommentAST=[
 // CHECK-NEXT:    (CXComment_FullComment
 // CHECK-NEXT:       (CXComment_Paragraph
