@@ -358,6 +358,16 @@ static const DeclRefExpr *getSelfInitExpr(VarDecl *VD) {
 }
 
 void ClassifyRefs::classify(const Expr *E, Class C) {
+  // The result of a ?: could also be an lvalue.
+  E = E->IgnoreParens();
+  if (const ConditionalOperator *CO = dyn_cast<ConditionalOperator>(E)) {
+    const Expr *TrueExpr = CO->getTrueExpr();
+    if (!isa<OpaqueValueExpr>(TrueExpr))
+      classify(TrueExpr, C);
+    classify(CO->getFalseExpr(), C);
+    return;
+  }
+
   FindVarResult Var = findVar(E, DC);
   if (const DeclRefExpr *DRE = Var.getDeclRefExpr())
     Classification[DRE] = std::max(Classification[DRE], C);

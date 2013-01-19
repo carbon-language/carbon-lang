@@ -41,8 +41,8 @@ void test_stuff () {
   int j = far(j);
   int k = __alignof__(k);
 
-  int l = k ? l : l;  // FIXME: warn here
-  int m = 1 + (k ? m : m);  // FIXME: warn here
+  int l = k ? l : l;  // expected-warning {{variable 'l' is uninitialized when used within its own initialization}}
+  int m = 1 + (k ? m : m);  // expected-warning {{'m' is uninitialized when used within its own initialization}}
   int n = -n;  // expected-warning {{variable 'n' is uninitialized when used within its own initialization}}
 
   for (;;) {
@@ -61,8 +61,8 @@ void test_stuff () {
     int j = far(j);
     int k = __alignof__(k);
 
-    int l = k ? l : l;  // FIXME: warn here
-    int m = 1 + (k ? m : m);  // FIXME: warn here
+    int l = k ? l : l;  // expected-warning {{variable 'l' is uninitialized when used within its own initialization}}
+    int m = 1 + (k ? m : m);  // expected-warning {{'m' is uninitialized when used within its own initialization}}
     int n = -n;  // expected-warning {{variable 'n' is uninitialized when used within its own initialization}}
   }
 }
