@@ -1659,6 +1659,7 @@ class CompletionChunk:
     def __init__(self, completionString, key):
         self.cs = completionString
         self.key = key
+        self.__kindNumberCache = -1
 
     def __repr__(self):
         return "{'" + self.spelling + "', " + str(self.kind) + "}"
@@ -1667,10 +1668,15 @@ class CompletionChunk:
     def spelling(self):
         return conf.lib.clang_getCompletionChunkText(self.cs, self.key).spelling
 
-    @CachedProperty
+    # We do not use @CachedProperty here, as the manual implementation is
+    # apparently still significantly faster. Please profile carefully if you
+    # would like to add CachedProperty back.
+    @property
     def __kindNumber(self):
-        res = conf.lib.clang_getCompletionChunkKind(self.cs, self.key)
-	return res
+        if self.__kindNumberCache == -1:
+            self.__kindNumberCache = \
+		conf.lib.clang_getCompletionChunkKind(self.cs, self.key)
+        return self.__kindNumberCache
 
     @CachedProperty
     def kind(self):
