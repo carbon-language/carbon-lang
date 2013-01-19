@@ -6683,11 +6683,17 @@ namespace {
     void VisitObjCMessageExpr(ObjCMessageExpr *E) { return; }
 
     void HandleDeclRefExpr(DeclRefExpr *DRE) {
-      Decl* ReferenceDecl = DRE->getDecl(); 
+      Decl* ReferenceDecl = DRE->getDecl();
       if (OrigDecl != ReferenceDecl) return;
-      unsigned diag = isReferenceType
-          ? diag::warn_uninit_self_reference_in_reference_init
-          : diag::warn_uninit_self_reference_in_init;
+      unsigned diag;
+      if (isReferenceType) {
+        diag = diag::warn_uninit_self_reference_in_reference_init;
+      } else if (cast<VarDecl>(OrigDecl)->isStaticLocal()) {
+        diag = diag::warn_static_self_reference_in_init;
+      } else {
+        diag = diag::warn_uninit_self_reference_in_init;
+      }
+
       S.DiagRuntimeBehavior(DRE->getLocStart(), DRE,
                             S.PDiag(diag)
                               << DRE->getNameInfo().getName()
