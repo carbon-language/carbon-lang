@@ -9,7 +9,7 @@ namespace lld {
 /// \brief Relocation References: Defined Atoms may contain references that will
 /// need to be patched before the executable is written.
 template<class ELFT>
-class ELFReference final : public Reference {
+class ELFReference LLVM_FINAL : public Reference {
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 public:
@@ -72,7 +72,7 @@ private:
 /// This atom has no content its address will be used by the writer to fixup
 /// references that point to it.
 template<class ELFT>
-class ELFAbsoluteAtom final : public AbsoluteAtom {
+class ELFAbsoluteAtom LLVM_FINAL : public AbsoluteAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
@@ -117,7 +117,7 @@ private:
 /// \brief ELFUndefinedAtom: These atoms store undefined symbols and are place
 /// holders that will be replaced by defined atoms later in the linking process.
 template<class ELFT>
-class ELFUndefinedAtom final: public UndefinedAtom {
+class ELFUndefinedAtom LLVM_FINAL : public UndefinedAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
@@ -156,7 +156,7 @@ private:
 /// \brief This atom stores defined symbols and will contain either data or
 /// code.
 template<class ELFT>
-class ELFDefinedAtom final: public DefinedAtom {
+class ELFDefinedAtom LLVM_FINAL : public DefinedAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 

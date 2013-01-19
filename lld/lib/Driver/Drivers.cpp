@@ -84,7 +84,7 @@ public:
 };
 }
 
-class LDDriver final : public Driver {
+class LDDriver LLVM_FINAL : public Driver {
 public:
   LDDriver(StringRef defaultTargetTriple) : Driver(defaultTargetTriple) {}
 

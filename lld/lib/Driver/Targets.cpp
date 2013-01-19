@@ -28,7 +28,7 @@
 
 using namespace lld;
 
-class X86LinuxTarget final : public Target {
+class X86LinuxTarget LLVM_FINAL : public Target {
 public:
   X86LinuxTarget(const LinkerOptions &lo) : Target(lo), _woe(lo._entrySymbol) {
     _readerELF.reset(createReaderELF(_roe, _roa));
@@ -93,7 +93,7 @@ private:
   std::unique_ptr<lld::Writer> _writer, _writerYAML;
 };
 
-class X86_64LinuxTarget final : public Target {
+class X86_64LinuxTarget LLVM_FINAL : public Target {
 public:
   X86_64LinuxTarget(const LinkerOptions &lo)
     : Target(lo), _woe(lo._entrySymbol) {
@@ -159,7 +159,7 @@ private:
   std::unique_ptr<lld::Writer> _writer, _writerYAML;
 };
 
-class HexagonTarget final : public Target {
+class HexagonTarget LLVM_FINAL : public Target {
 public:
   HexagonTarget(const LinkerOptions &lo)
     : Target(lo), _woe(lo._entrySymbol) {
