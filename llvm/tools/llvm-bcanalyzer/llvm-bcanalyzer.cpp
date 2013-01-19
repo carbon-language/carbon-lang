@@ -354,7 +354,7 @@ static bool ParseBlock(BitstreamCursor &Stream, unsigned IndentLevel) {
       outs() << " BlockID=" << BlockID;
 
     outs() << " NumWords=" << NumWords
-           << " BlockCodeSize=" << Stream.GetAbbrevIDWidth() << ">\n";
+           << " BlockCodeSize=" << Stream.getAbbrevIDWidth() << ">\n";
   }
 
   SmallVector<uint64_t, 64> Record;
