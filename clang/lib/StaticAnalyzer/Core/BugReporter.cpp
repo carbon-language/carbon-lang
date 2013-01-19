@@ -2137,7 +2137,32 @@ void BugReporter::Register(BugType *BT) {
   BugTypes = F.add(BugTypes, BT);
 }
 
+bool BugReporter::suppressReport(BugReport *R) {
+  const Stmt *S = R->getStmt();
+  if (!S)
+    return false;
+
+  // Here we suppress false positives coming from system macros. This list is
+  // based on known issues.
+
+  // Skip reports within the sys/queue.h macros as we do not have the ability to
+  // reason about data structure shapes.
+  SourceManager &SM = getSourceManager();
+  SourceLocation Loc = S->getLocStart();
+  while (Loc.isMacroID()) {
+    if (SM.isInSystemMacro(Loc) &&
+       (SM.getFilename(SM.getSpellingLoc(Loc)).endswith("sys/queue.h")))
+      return true;
+    Loc = SM.getSpellingLoc(Loc);
+  }
+
+  return false;
+}
+
 void BugReporter::emitReport(BugReport* R) {
+  if (suppressReport(R))
+    return;
+
   // Compute the bug report's hash to determine its equivalence class.
   llvm::FoldingSetNodeID ID;
   R->Profile(ID);
