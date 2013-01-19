@@ -63,7 +63,7 @@
 //
 // This is a clue that the 0x104008000 is a "lldb_private::Process *".
 //===----------------------------------------------------------------------===//
-
+// C includes
 #include <assert.h>
 #include <ctype.h>
 #include <dlfcn.h>
@@ -73,6 +73,9 @@
 #include <objc/objc-runtime.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
+
+// C++ includes
 #include <vector>
 
 //----------------------------------------------------------------------
