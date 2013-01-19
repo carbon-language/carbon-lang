@@ -151,10 +151,6 @@ ADDITIONAL OPTIONS
 
  List the discovered test suites as part of the standard output.
 
-.. option:: --no-tcl-as-sh
-
- Run Tcl scripts internally (instead of converting to shell scripts).
-
 .. option:: --repeat=N
 
  Run each test ``N`` times.  Currently this is primarily useful for timing
@@ -298,14 +294,13 @@ executed, two important global variables are predefined:
  tests in the suite.
 
  **suffixes** For **lit** test formats which scan directories for tests, this
- variable is a list of suffixes to identify test files.  Used by: *ShTest*,
- *TclTest*.
+ variable is a list of suffixes to identify test files.  Used by: *ShTest*.
 
  **substitutions** For **lit** test formats which substitute variables into a test
- script, the list of substitutions to perform.  Used by: *ShTest*, *TclTest*.
+ script, the list of substitutions to perform.  Used by: *ShTest*.
 
  **unsupported** Mark an unsupported directory, all tests within it will be
- reported as unsupported.  Used by: *ShTest*, *TclTest*.
+ reported as unsupported.  Used by: *ShTest*.
 
  **parent** The parent configuration, this is the config object for the directory
  containing the test suite, or None.
