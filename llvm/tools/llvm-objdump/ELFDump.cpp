@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm-objdump.h"
-
 #include "llvm/Object/ELF.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/MathExtras.h"

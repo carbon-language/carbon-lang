@@ -22,7 +22,6 @@
 #define DEBUG_TYPE "tsan"
 
 #include "llvm/Transforms/Instrumentation.h"
-#include "llvm/Transforms/Utils/BlackList.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
@@ -41,6 +40,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/BlackList.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 
 using namespace llvm;

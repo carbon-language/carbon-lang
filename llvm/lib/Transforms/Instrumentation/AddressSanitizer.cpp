@@ -16,7 +16,6 @@
 #define DEBUG_TYPE "asan"
 
 #include "llvm/Transforms/Instrumentation.h"
-#include "llvm/Transforms/Utils/BlackList.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
@@ -43,6 +42,7 @@
 #include "llvm/Support/system_error.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/BlackList.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/ModuleUtils.h"
 #include <algorithm>
