@@ -2249,13 +2249,13 @@ accomplished by the following scheme:
 A bit-encoding in the 2 LSBits (least significant bits) of the ``Use::Prev``
 allows to find the start of the ``User`` object:
 
-* ``00`` –> binary digit 0
+* ``00`` --- binary digit 0
 
-* ``01`` –> binary digit 1
+* ``01`` --- binary digit 1
 
-* ``10`` –> stop and calculate (``s``)
+* ``10`` --- stop and calculate (``s``)
 
-* ``11`` –> full stop (``S``)
+* ``11`` --- full stop (``S``)
 
 Given a ``Use*``, all we have to do is to walk till we get a stop and we either
 have a ``User`` immediately behind or we have to walk to the next stop picking

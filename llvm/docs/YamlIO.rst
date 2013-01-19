@@ -638,8 +638,8 @@ Sequence
 
 To be translated to or from a YAML sequence for your type T you must specialize
 llvm::yaml::SequenceTraits on T and implement two methods:
-“size_t size(IO &io, T&)” and “T::value_type& element(IO &io, T&, size_t indx)”.
-For example:
+``size_t size(IO &io, T&)`` and
+``T::value_type& element(IO &io, T&, size_t indx)``.  For example:
 
 .. code-block:: c++
 

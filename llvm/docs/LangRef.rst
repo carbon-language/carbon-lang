@@ -262,7 +262,7 @@ linkage:
     Some languages allow differing globals to be merged, such as two
     functions with different semantics. Other languages, such as
     ``C++``, ensure that only equivalent globals are ever merged (the
-    "one definition rule" — "ODR"). Such languages can use the
+    "one definition rule" --- "ODR").  Such languages can use the
     ``linkonce_odr`` and ``weak_odr`` linkage types to indicate that the
     global will only be merged with equivalent globals. These linkage
     types are otherwise the same as their non-``odr`` versions.
@@ -821,7 +821,7 @@ example:
     functions.
 ``ssp``
     This attribute indicates that the function should emit a stack
-    smashing protector. It is in the form of a "canary"—a random value
+    smashing protector. It is in the form of a "canary" --- a random value
     placed on the stack before the local variables that's checked upon
     return from the function to see if it has been overwritten. A
     heuristic is used to determine if a function needs stack protectors
@@ -2079,7 +2079,7 @@ Taking the address of the entry block is illegal.
 This value only has defined behavior when used as an operand to the
 ':ref:`indirectbr <i_indirectbr>`' instruction, or for comparisons
 against null. Pointer equality tests between labels addresses results in
-undefined behavior — though, again, comparison against null is ok, and
+undefined behavior --- though, again, comparison against null is ok, and
 no label is equal to the null pointer. This may be passed around as an
 opaque pointer sized value as long as the bits are not inspected. This
 allows ``ptrtoint`` and arithmetic to be performed on these values so
@@ -2450,8 +2450,8 @@ Module Flags Metadata
 Information about the module as a whole is difficult to convey to LLVM's
 subsystems. The LLVM IR isn't sufficient to transmit this information.
 The ``llvm.module.flags`` named metadata exists in order to facilitate
-this. These flags are in the form of key / value pairs — much like a
-dictionary — making it easy for any subsystem who cares about a flag to
+this. These flags are in the form of key / value pairs --- much like a
+dictionary --- making it easy for any subsystem who cares about a flag to
 look it up.
 
 The ``llvm.module.flags`` metadata contains a list of metadata triplets.
@@ -2579,25 +2579,25 @@ following key-value pairs:
      - Value
 
    * - ``Objective-C Version``
-     - **[Required]** — The Objective-C ABI version. Valid values are 1 and 2.
+     - **[Required]** --- The Objective-C ABI version. Valid values are 1 and 2.
 
    * - ``Objective-C Image Info Version``
-     - **[Required]** — The version of the image info section. Currently
+     - **[Required]** --- The version of the image info section. Currently
        always 0.
 
    * - ``Objective-C Image Info Section``
-     - **[Required]** — The section to place the metadata. Valid values are
+     - **[Required]** --- The section to place the metadata. Valid values are
        ``"__OBJC, __image_info, regular"`` for Objective-C ABI version 1, and
        ``"__DATA,__objc_imageinfo, regular, no_dead_strip"`` for
        Objective-C ABI version 2.
 
    * - ``Objective-C Garbage Collection``
-     - **[Required]** — Specifies whether garbage collection is supported or
+     - **[Required]** --- Specifies whether garbage collection is supported or
        not. Valid values are 0, for no garbage collection, and 2, for garbage
        collection supported.
 
    * - ``Objective-C GC Only``
-     - **[Optional]** — Specifies that only garbage collection is supported.
+     - **[Optional]** --- Specifies that only garbage collection is supported.
        If present, its value must be 6. This flag requires that the
        ``Objective-C Garbage Collection`` flag have the value 2.
 
@@ -5830,7 +5830,7 @@ Overview:
 
 The '``landingpad``' instruction is used by `LLVM's exception handling
 system <ExceptionHandling.html#overview>`_ to specify that a basic block
-is a landing pad — one where the exception lands, and corresponds to the
+is a landing pad --- one where the exception lands, and corresponds to the
 code found in the ``catch`` portion of a ``try``/``catch`` sequence. It
 defines values supplied by the personality function (``pers_fn``) upon
 re-entry to the function. The ``resultval`` has the type ``resultty``.
@@ -5842,7 +5842,7 @@ This instruction takes a ``pers_fn`` value. This is the personality
 function associated with the unwinding mechanism. The optional
 ``cleanup`` flag indicates that the landing pad block is a cleanup.
 
-A ``clause`` begins with the clause type — ``catch`` or ``filter`` — and
+A ``clause`` begins with the clause type --- ``catch`` or ``filter`` --- and
 contains the global variable representing the "type" that may be caught
 or filtered respectively. Unlike the ``catch`` clause, the ``filter``
 clause takes an array constant as its argument. Use
@@ -7441,7 +7441,7 @@ Semantics:
 """"""""""
 
 The '``llvm.sadd.with.overflow``' family of intrinsic functions perform
-a signed addition of the two variables. They return a structure — the
+a signed addition of the two variables. They return a structure --- the
 first element of which is the signed summation, and the second element
 of which is a bit specifying if the signed summation resulted in an
 overflow.
@@ -7491,7 +7491,7 @@ Semantics:
 """"""""""
 
 The '``llvm.uadd.with.overflow``' family of intrinsic functions perform
-an unsigned addition of the two arguments. They return a structure — the
+an unsigned addition of the two arguments. They return a structure --- the
 first element of which is the sum, and the second element of which is a
 bit specifying if the unsigned summation resulted in a carry.
 
@@ -7540,7 +7540,7 @@ Semantics:
 """"""""""
 
 The '``llvm.ssub.with.overflow``' family of intrinsic functions perform
-a signed subtraction of the two arguments. They return a structure — the
+a signed subtraction of the two arguments. They return a structure --- the
 first element of which is the subtraction, and the second element of
 which is a bit specifying if the signed subtraction resulted in an
 overflow.
@@ -7590,7 +7590,7 @@ Semantics:
 """"""""""
 
 The '``llvm.usub.with.overflow``' family of intrinsic functions perform
-an unsigned subtraction of the two arguments. They return a structure —
+an unsigned subtraction of the two arguments. They return a structure ---
 the first element of which is the subtraction, and the second element of
 which is a bit specifying if the unsigned subtraction resulted in an
 overflow.
@@ -7640,7 +7640,7 @@ Semantics:
 """"""""""
 
 The '``llvm.smul.with.overflow``' family of intrinsic functions perform
-a signed multiplication of the two arguments. They return a structure —
+a signed multiplication of the two arguments. They return a structure ---
 the first element of which is the multiplication, and the second element
 of which is a bit specifying if the signed multiplication resulted in an
 overflow.
@@ -7690,8 +7690,8 @@ Semantics:
 """"""""""
 
 The '``llvm.umul.with.overflow``' family of intrinsic functions perform
-an unsigned multiplication of the two arguments. They return a structure
-— the first element of which is the multiplication, and the second
+an unsigned multiplication of the two arguments. They return a structure ---
+the first element of which is the multiplication, and the second
 element of which is a bit specifying if the unsigned multiplication
 resulted in an overflow.
 
