@@ -1,4 +1,4 @@
-##===- lib/Target/Mips/Disassembler/Makefile ----------------*- Makefile -*-===##
+##===- lib/Target/Mips/Disassembler/Makefile ---------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #

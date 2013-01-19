@@ -951,10 +951,14 @@ def : InstAlias<"slt $rs, $rt, $imm",
 def : InstAlias<"xor $rs, $rt, $imm",
                 (XORi CPURegsOpnd:$rs, CPURegsOpnd:$rt, simm16:$imm)>,
                 Requires<[NotMips64]>;
-def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0)>;
-def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt)>;
-def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP CPURegsOpnd:$rt, CPURegsOpnd:$rd, 0)>;
-def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegsOpnd:$rd, 0, CPURegsOpnd:$rt)>;
+def : InstAlias<"mfc0 $rt, $rd", (MFC0_3OP CPURegsOpnd:$rt,
+                                  CPURegsOpnd:$rd, 0)>;
+def : InstAlias<"mtc0 $rt, $rd", (MTC0_3OP CPURegsOpnd:$rd, 0,
+                                  CPURegsOpnd:$rt)>;
+def : InstAlias<"mfc2 $rt, $rd", (MFC2_3OP CPURegsOpnd:$rt,
+                                  CPURegsOpnd:$rd, 0)>;
+def : InstAlias<"mtc2 $rt, $rd", (MTC2_3OP CPURegsOpnd:$rd, 0,
+                                  CPURegsOpnd:$rt)>;
 
 //===----------------------------------------------------------------------===//
 // Assembler Pseudo Instructions

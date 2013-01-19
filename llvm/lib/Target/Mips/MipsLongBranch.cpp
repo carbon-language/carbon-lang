@@ -10,10 +10,10 @@
 // This pass expands a branch or jump instruction into a long branch if its
 // offset is too large to fit into its immediate field.
 //
-// FIXME: 
-// 1. Fix pc-region jump instructions which cross 256MB segment boundaries. 
+// FIXME:
+// 1. Fix pc-region jump instructions which cross 256MB segment boundaries.
 // 2. If program has inline assembly statements whose size cannot be
-//    determined accurately, load branch target addresses from the GOT. 
+//    determined accurately, load branch target addresses from the GOT.
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "mips-long-branch"

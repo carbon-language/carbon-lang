@@ -28,7 +28,8 @@ using namespace llvm;
 static cl::opt<bool> NeverUseSaveRestore(
   "mips16-never-use-save-restore",
   cl::init(false),
-  cl::desc("For testing ability to adjust stack pointer without save/restore instruction"),
+  cl::desc("For testing ability to adjust stack pointer "
+           "without save/restore instruction"),
   cl::Hidden);
 
 
@@ -169,15 +170,16 @@ unsigned Mips16InstrInfo::GetOppositeBranchOpc(unsigned Opc) const {
 }
 
 // Adjust SP by FrameSize bytes. Save RA, S0, S1
-void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize, MachineBasicBlock &MBB,
+void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize,
+                    MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator I) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   if (!NeverUseSaveRestore) {
     if (isUInt<11>(FrameSize))
       BuildMI(MBB, I, DL, get(Mips::SaveRaF16)).addImm(FrameSize);
     else {
-      int Base = 2040; // should create template function like isUInt that returns largest
-                       // possible n bit unsigned integer
+      int Base = 2040; // should create template function like isUInt that
+                       // returns largest possible n bit unsigned integer
       int64_t Remainder = FrameSize - Base;
       BuildMI(MBB, I, DL, get(Mips::SaveRaF16)). addImm(Base);
       if (isInt<16>(-Remainder))
@@ -193,13 +195,16 @@ void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize, MachineBasicBloc
     // sw s1, -8[sp]
     // sw s0, -12[sp]
 
-    MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16), Mips::RA);
+    MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16),
+                                       Mips::RA);
     MIB1.addReg(Mips::SP);
     MIB1.addImm(-4);
-    MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16), Mips::S1);
+    MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16),
+                                       Mips::S1);
     MIB2.addReg(Mips::SP);
     MIB2.addImm(-8);
-    MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16), Mips::S0);
+    MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::SwRxSpImmX16),
+                                       Mips::S0);
     MIB3.addReg(Mips::SP);
     MIB3.addImm(-12);
     adjustStackPtrBig(SP, -FrameSize, MBB, I, Mips::V0, Mips::V1);
@@ -207,15 +212,16 @@ void Mips16InstrInfo::makeFrame(unsigned SP, int64_t FrameSize, MachineBasicBloc
 }
 
 // Adjust SP by FrameSize bytes. Restore RA, S0, S1
-void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize, MachineBasicBlock &MBB,
-                    MachineBasicBlock::iterator I) const {
+void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize,
+                                   MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator I) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
   if (!NeverUseSaveRestore) {
     if (isUInt<11>(FrameSize))
       BuildMI(MBB, I, DL, get(Mips::RestoreRaF16)).addImm(FrameSize);
     else {
-      int Base = 2040; // should create template function like isUInt that returns largest
-                       // possible n bit unsigned integer
+      int Base = 2040; // should create template function like isUInt that
+                       // returns largest possible n bit unsigned integer
       int64_t Remainder = FrameSize - Base;
       if (isInt<16>(Remainder))
         BuildMI(MBB, I, DL, get(Mips::AddiuSpImmX16)). addImm(Remainder);
@@ -229,15 +235,19 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize, MachineBasicB
     // lw ra, -4[sp]
     // lw s1, -8[sp]
     // lw s0, -12[sp]
-    MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16), Mips::A0);
+    MachineInstrBuilder MIB1 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16),
+                                       Mips::A0);
     MIB1.addReg(Mips::SP);
     MIB1.addImm(-4);
-    MachineInstrBuilder MIB0 = BuildMI(MBB, I, DL, get(Mips::Move32R16), Mips::RA);
+    MachineInstrBuilder MIB0 = BuildMI(MBB, I, DL, get(Mips::Move32R16),
+                                       Mips::RA);
      MIB0.addReg(Mips::A0);
-    MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16), Mips::S1);
+    MachineInstrBuilder MIB2 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16),
+                                       Mips::S1);
     MIB2.addReg(Mips::SP);
     MIB2.addImm(-8);
-    MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16), Mips::S0);
+    MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::LwRxSpImmX16),
+                                       Mips::S0);
     MIB3.addReg(Mips::SP);
     MIB3.addImm(-12);
   }
@@ -245,10 +255,12 @@ void Mips16InstrInfo::restoreFrame(unsigned SP, int64_t FrameSize, MachineBasicB
 }
 
 // Adjust SP by Amount bytes where bytes can be up to 32bit number.
-// This can only be called at times that we know that there is at least one free register.
+// This can only be called at times that we know that there is at least one free
+// register.
 // This is clearly safe at prologue and epilogue.
 //
-void Mips16InstrInfo::adjustStackPtrBig(unsigned SP, int64_t Amount, MachineBasicBlock &MBB,
+void Mips16InstrInfo::adjustStackPtrBig(unsigned SP, int64_t Amount,
+                                        MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator I,
                                         unsigned Reg1, unsigned Reg2) const {
   DebugLoc DL = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
@@ -269,11 +281,13 @@ void Mips16InstrInfo::adjustStackPtrBig(unsigned SP, int64_t Amount, MachineBasi
   MachineInstrBuilder MIB3 = BuildMI(MBB, I, DL, get(Mips::AdduRxRyRz16), Reg1);
   MIB3.addReg(Reg1);
   MIB3.addReg(Reg2, RegState::Kill);
-  MachineInstrBuilder MIB4 = BuildMI(MBB, I, DL, get(Mips::Move32R16), Mips::SP);
+  MachineInstrBuilder MIB4 = BuildMI(MBB, I, DL, get(Mips::Move32R16),
+                                                     Mips::SP);
   MIB4.addReg(Reg1, RegState::Kill);
 }
 
-void Mips16InstrInfo::adjustStackPtrBigUnrestricted(unsigned SP, int64_t Amount, MachineBasicBlock &MBB,
+void Mips16InstrInfo::adjustStackPtrBigUnrestricted(unsigned SP, int64_t Amount,
+                    MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator I) const {
    assert(false && "adjust stack pointer amount exceeded");
 }
