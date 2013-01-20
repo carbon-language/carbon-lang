@@ -809,7 +809,7 @@ namespace llvm {
     SDValue LowerUINT_TO_FP_i64(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerUINT_TO_FP_i32(SDValue Op, SelectionDAG &DAG) const;
     SDValue lowerUINT_TO_FP_vec(SDValue Op, SelectionDAG &DAG) const;
-    SDValue lowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerZERO_EXTEND(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSIGN_EXTEND(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerANY_EXTEND(SDValue Op, SelectionDAG &DAG) const;

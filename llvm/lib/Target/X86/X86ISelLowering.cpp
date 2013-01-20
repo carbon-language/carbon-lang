@@ -8379,7 +8379,7 @@ SDValue X86TargetLowering::LowerZERO_EXTEND(SDValue Op,
   return DAG.getNode(ISD::CONCAT_VECTORS, DL, MVT::v8i32, Lo, Hi);
 }
 
-SDValue X86TargetLowering::lowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
+SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc DL = Op.getDebugLoc();
   EVT VT = Op.getValueType();
   SDValue In = Op.getOperand(0);
@@ -12024,7 +12024,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::SRL_PARTS:          return LowerShiftParts(Op, DAG);
   case ISD::SINT_TO_FP:         return LowerSINT_TO_FP(Op, DAG);
   case ISD::UINT_TO_FP:         return LowerUINT_TO_FP(Op, DAG);
-  case ISD::TRUNCATE:           return lowerTRUNCATE(Op, DAG);
+  case ISD::TRUNCATE:           return LowerTRUNCATE(Op, DAG);
   case ISD::ZERO_EXTEND:        return LowerZERO_EXTEND(Op, DAG);
   case ISD::SIGN_EXTEND:        return LowerSIGN_EXTEND(Op, DAG);
   case ISD::ANY_EXTEND:         return LowerANY_EXTEND(Op, DAG);
