@@ -1693,8 +1693,8 @@ class CompletionChunk:
 
     @CachedProperty
     def spelling(self):
-	if self.__kindNumber in SpellingCache:
-		return SpellingCache[self.__kindNumber]
+        if self.__kindNumber in SpellingCache:
+                return SpellingCache[self.__kindNumber]
         return conf.lib.clang_getCompletionChunkText(self.cs, self.key).spelling
 
     # We do not use @CachedProperty here, as the manual implementation is
@@ -1704,7 +1704,7 @@ class CompletionChunk:
     def __kindNumber(self):
         if self.__kindNumberCache == -1:
             self.__kindNumberCache = \
-		conf.lib.clang_getCompletionChunkKind(self.cs, self.key)
+                conf.lib.clang_getCompletionChunkKind(self.cs, self.key)
         return self.__kindNumberCache
 
     @CachedProperty
