@@ -128,7 +128,7 @@ static void SetUpDiagnosticLog(DiagnosticOptions *DiagOpts,
                                ErrorInfo, llvm::raw_fd_ostream::F_Append));
     if (!ErrorInfo.empty()) {
       Diags.Report(diag::warn_fe_cc_log_diagnostics_failure)
-        << DiagOpts->DumpBuildInformation << ErrorInfo;
+        << DiagOpts->DiagnosticLogFile << ErrorInfo;
     } else {
       FileOS->SetUnbuffered();
       FileOS->SetUseAtomicWrites(true);
