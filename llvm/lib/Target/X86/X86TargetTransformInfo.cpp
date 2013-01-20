@@ -119,6 +119,44 @@ llvm::createX86TargetTransformInfoPass(const X86TargetMachine *TM) {
 //
 //===----------------------------------------------------------------------===//
 
+namespace {
+struct X86CostTblEntry {
+  int ISD;
+  MVT Type;
+  unsigned Cost;
+};
+}
+
+static int
+FindInTable(const X86CostTblEntry *Tbl, unsigned len, int ISD, MVT Ty) {
+  for (unsigned int i = 0; i < len; ++i)
+    if (Tbl[i].ISD == ISD && Tbl[i].Type == Ty)
+      return i;
+
+  // Could not find an entry.
+  return -1;
+}
+
+namespace {
+struct X86TypeConversionCostTblEntry {
+  int ISD;
+  MVT Dst;
+  MVT Src;
+  unsigned Cost;
+};
+}
+
+static int
+FindInConvertTable(const X86TypeConversionCostTblEntry *Tbl, unsigned len,
+                   int ISD, MVT Dst, MVT Src) {
+  for (unsigned int i = 0; i < len; ++i)
+    if (Tbl[i].ISD == ISD && Tbl[i].Src == Src && Tbl[i].Dst == Dst)
+      return i;
+
+  // Could not find an entry.
+  return -1;
+}
+
 X86TTI::PopcntSupportKind X86TTI::getPopcntSupport(unsigned TyWidth) const {
   assert(isPowerOf2_32(TyWidth) && "Ty width must be power of 2");
   // TODO: Currently the __builtin_popcount() implementation using SSE3
@@ -168,24 +206,24 @@ unsigned X86TTI::getArithmeticInstrCost(unsigned Opcode, Type *Ty) const {
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  // We don't have to scalarize unsupported ops. We can issue two half-sized
-  // operations and we only need to extract the upper YMM half.
-  // Two ops + 1 extract + 1 insert = 4.
-  static const CostTableEntry AVX1CostTable[] = {
-    { ISD::MUL,    { MVT::v8i32 },    4 },
-    { ISD::SUB,    { MVT::v8i32 },    4 },
-    { ISD::ADD,    { MVT::v8i32 },    4 },
-    { ISD::MUL,    { MVT::v4i64 },    4 },
-    { ISD::SUB,    { MVT::v4i64 },    4 },
-    { ISD::ADD,    { MVT::v4i64 },    4 },
-  };
-  UnaryCostTable costTable (AVX1CostTable, array_lengthof(AVX1CostTable));
+  static const X86CostTblEntry AVX1CostTable[] = {
+    // We don't have to scalarize unsupported ops. We can issue two half-sized
+    // operations and we only need to extract the upper YMM half.
+    // Two ops + 1 extract + 1 insert = 4.
+    { ISD::MUL,     MVT::v8i32,    4 },
+    { ISD::SUB,     MVT::v8i32,    4 },
+    { ISD::ADD,     MVT::v8i32,    4 },
+    { ISD::MUL,     MVT::v4i64,    4 },
+    { ISD::SUB,     MVT::v4i64,    4 },
+    { ISD::ADD,     MVT::v4i64,    4 },
+    };
 
   // Look for AVX1 lowering tricks.
   if (ST->hasAVX()) {
-    unsigned cost = costTable.findCost(ISD, LT.second);
-    if (cost != BinaryCostTable::COST_NOT_FOUND)
-      return LT.first * cost;
+    int Idx = FindInTable(AVX1CostTable, array_lengthof(AVX1CostTable), ISD,
+                          LT.second);
+    if (Idx != -1)
+      return LT.first * AVX1CostTable[Idx].Cost;
   }
   // Fallback to the default implementation.
   return TargetTransformInfo::getArithmeticInstrCost(Opcode, Ty);
@@ -216,29 +254,30 @@ unsigned X86TTI::getCastInstrCost(unsigned Opcode, Type *Dst, Type *Src) const {
   if (!SrcTy.isSimple() || !DstTy.isSimple())
     return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
 
-  static const CostTableEntry AVXConversionTbl[] = {
-    { ISD::SIGN_EXTEND, { MVT::v8i32, MVT::v8i16 }, 1 },
-    { ISD::ZERO_EXTEND, { MVT::v8i32, MVT::v8i16 }, 1 },
-    { ISD::SIGN_EXTEND, { MVT::v4i64, MVT::v4i32 }, 1 },
-    { ISD::ZERO_EXTEND, { MVT::v4i64, MVT::v4i32 }, 1 },
-    { ISD::TRUNCATE,    { MVT::v4i32, MVT::v4i64 }, 1 },
-    { ISD::TRUNCATE,    { MVT::v8i16, MVT::v8i32 }, 1 },
-    { ISD::SINT_TO_FP,  { MVT::v8f32, MVT::v8i8  }, 1 },
-    { ISD::SINT_TO_FP,  { MVT::v4f32, MVT::v4i8  }, 1 },
-    { ISD::UINT_TO_FP,  { MVT::v8f32, MVT::v8i8  }, 1 },
-    { ISD::UINT_TO_FP,  { MVT::v4f32, MVT::v4i8  }, 1 },
-    { ISD::FP_TO_SINT,  { MVT::v8i8,  MVT::v8f32 }, 1 },
-    { ISD::FP_TO_SINT,  { MVT::v4i8,  MVT::v4f32 }, 1 },
-    { ISD::ZERO_EXTEND, { MVT::v8i32, MVT::v8i1  }, 6 },
-    { ISD::SIGN_EXTEND, { MVT::v8i32, MVT::v8i1  }, 9 },
-    { ISD::TRUNCATE,    { MVT::v8i32, MVT::v8i64 }, 3 }
+  static const X86TypeConversionCostTblEntry AVXConversionTbl[] = {
+    { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
+    { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i16, 1 },
+    { ISD::SIGN_EXTEND, MVT::v4i64, MVT::v4i32, 1 },
+    { ISD::ZERO_EXTEND, MVT::v4i64, MVT::v4i32, 1 },
+    { ISD::TRUNCATE,    MVT::v4i32, MVT::v4i64, 1 },
+    { ISD::TRUNCATE,    MVT::v8i16, MVT::v8i32, 1 },
+    { ISD::SINT_TO_FP,  MVT::v8f32, MVT::v8i8,  1 },
+    { ISD::SINT_TO_FP,  MVT::v4f32, MVT::v4i8,  1 },
+    { ISD::UINT_TO_FP,  MVT::v8f32, MVT::v8i8,  1 },
+    { ISD::UINT_TO_FP,  MVT::v4f32, MVT::v4i8,  1 },
+    { ISD::FP_TO_SINT,  MVT::v8i8,  MVT::v8f32, 1 },
+    { ISD::FP_TO_SINT,  MVT::v4i8,  MVT::v4f32, 1 },
+    { ISD::ZERO_EXTEND, MVT::v8i32, MVT::v8i1,  6 },
+    { ISD::SIGN_EXTEND, MVT::v8i32, MVT::v8i1,  9 },
+    { ISD::TRUNCATE,    MVT::v8i32, MVT::v8i64, 3 },
   };
-  BinaryCostTable costTable (AVXConversionTbl, array_lengthof(AVXConversionTbl));
 
   if (ST->hasAVX()) {
-    unsigned cost = costTable.findCost(ISD, DstTy.getSimpleVT(), SrcTy.getSimpleVT());
-    if (cost != BinaryCostTable::COST_NOT_FOUND)
-      return cost;
+    int Idx = FindInConvertTable(AVXConversionTbl,
+                                 array_lengthof(AVXConversionTbl),
+                                 ISD, DstTy.getSimpleVT(), SrcTy.getSimpleVT());
+    if (Idx != -1)
+      return AVXConversionTbl[Idx].Cost;
   }
 
   return TargetTransformInfo::getCastInstrCost(Opcode, Dst, Src);
@@ -254,51 +293,48 @@ unsigned X86TTI::getCmpSelInstrCost(unsigned Opcode, Type *ValTy,
   int ISD = TLI->InstructionOpcodeToISD(Opcode);
   assert(ISD && "Invalid opcode");
 
-  static const CostTableEntry SSE42CostTbl[] = {
-    { ISD::SETCC,  { MVT::v2f64 },  1 },
-    { ISD::SETCC,  { MVT::v4f32 },  1 },
-    { ISD::SETCC,  { MVT::v2i64 },  1 },
-    { ISD::SETCC,  { MVT::v4i32 },  1 },
-    { ISD::SETCC,  { MVT::v8i16 },  1 },
-    { ISD::SETCC,  { MVT::v16i8 },  1 },
+  static const X86CostTblEntry SSE42CostTbl[] = {
+    { ISD::SETCC,   MVT::v2f64,   1 },
+    { ISD::SETCC,   MVT::v4f32,   1 },
+    { ISD::SETCC,   MVT::v2i64,   1 },
+    { ISD::SETCC,   MVT::v4i32,   1 },
+    { ISD::SETCC,   MVT::v8i16,   1 },
+    { ISD::SETCC,   MVT::v16i8,   1 },
   };
-  UnaryCostTable costTableSSE4 (SSE42CostTbl, array_lengthof(SSE42CostTbl));
 
-  static const CostTableEntry AVX1CostTbl[] = {
-    { ISD::SETCC,  { MVT::v4f64  },  1 },
-    { ISD::SETCC,  { MVT::v8f32  },  1 },
+  static const X86CostTblEntry AVX1CostTbl[] = {
+    { ISD::SETCC,   MVT::v4f64,   1 },
+    { ISD::SETCC,   MVT::v8f32,   1 },
     // AVX1 does not support 8-wide integer compare.
-    { ISD::SETCC,  { MVT::v4i64  },  4 },
-    { ISD::SETCC,  { MVT::v8i32  },  4 },
-    { ISD::SETCC,  { MVT::v16i16 },  4 },
-    { ISD::SETCC,  { MVT::v32i8  },  4 },
+    { ISD::SETCC,   MVT::v4i64,   4 },
+    { ISD::SETCC,   MVT::v8i32,   4 },
+    { ISD::SETCC,   MVT::v16i16,  4 },
+    { ISD::SETCC,   MVT::v32i8,   4 },
   };
-  UnaryCostTable costTableAVX1 (AVX1CostTbl, array_lengthof(AVX1CostTbl));
 
-  static const CostTableEntry AVX2CostTbl[] = {
-    { ISD::SETCC,  { MVT::v4i64  }, 1 },
-    { ISD::SETCC,  { MVT::v8i32  }, 1 },
-    { ISD::SETCC,  { MVT::v16i16 }, 1 },
-    { ISD::SETCC,  { MVT::v32i8  }, 1 },
+  static const X86CostTblEntry AVX2CostTbl[] = {
+    { ISD::SETCC,   MVT::v4i64,   1 },
+    { ISD::SETCC,   MVT::v8i32,   1 },
+    { ISD::SETCC,   MVT::v16i16,  1 },
+    { ISD::SETCC,   MVT::v32i8,   1 },
   };
-  UnaryCostTable costTableAVX2 (AVX2CostTbl, array_lengthof(AVX2CostTbl));
 
   if (ST->hasAVX2()) {
-    unsigned cost = costTableAVX2.findCost(ISD, MTy);
-    if (cost != BinaryCostTable::COST_NOT_FOUND)
-      return LT.first * cost;
+    int Idx = FindInTable(AVX2CostTbl, array_lengthof(AVX2CostTbl), ISD, MTy);
+    if (Idx != -1)
+      return LT.first * AVX2CostTbl[Idx].Cost;
   }
 
   if (ST->hasAVX()) {
-    unsigned cost = costTableAVX1.findCost(ISD, MTy);
-    if (cost != BinaryCostTable::COST_NOT_FOUND)
-      return LT.first * cost;
+    int Idx = FindInTable(AVX1CostTbl, array_lengthof(AVX1CostTbl), ISD, MTy);
+    if (Idx != -1)
+      return LT.first * AVX1CostTbl[Idx].Cost;
   }
 
   if (ST->hasSSE42()) {
-    unsigned cost = costTableSSE4.findCost(ISD, MTy);
-    if (cost != BinaryCostTable::COST_NOT_FOUND)
-      return LT.first * cost;
+    int Idx = FindInTable(SSE42CostTbl, array_lengthof(SSE42CostTbl), ISD, MTy);
+    if (Idx != -1)
+      return LT.first * SSE42CostTbl[Idx].Cost;
   }
 
   return TargetTransformInfo::getCmpSelInstrCost(Opcode, ValTy, CondTy);
