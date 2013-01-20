@@ -17,8 +17,6 @@ def err_fe_pch_malformed : Error<
     "malformed or corrupted PCH file: '%0'">, DefaultFatal;
 def err_fe_pch_malformed_block : Error<
     "malformed block record in PCH file: '%0'">, DefaultFatal;
-def err_fe_pch_error_at_end_block : Error<
-    "error at end of module block in PCH file: '%0'">, DefaultFatal;
 def err_fe_pch_file_modified : Error<
     "file '%0' has been modified since the precompiled header was built">,
     DefaultFatal;
