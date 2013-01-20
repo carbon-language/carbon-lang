@@ -21,3 +21,10 @@
    ...
    fun:_ZSt11stable_sortIN9__gnu_cxx17__normal_iteratorIPSt4pairIPKN4llvm4TypeEjESt6vectorIS7_SaIS7_EEEEPFbRKS7_SE_EEvT_SH_T0_
 }
+
+# Remove this if clang-vg didn't use "check-all"
+{
+   We don't care of cmp
+   Memcheck:Cond
+   obj:/usr/bin/cmp
+}
