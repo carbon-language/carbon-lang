@@ -156,11 +156,22 @@ representation.
 IRC
 ===
 
-You can probably find help on the unofficial LLVM IRC.
+Users and developers of the LLVM project (including subprojects such as Clang)
+can be found in #llvm on `irc.oftc.net <irc://irc.oftc.net/llvm>`_.
 
-We often are on irc.oftc.net in the #llvm channel.  If you are using the
-mozilla browser, and have chatzilla installed, you can `join #llvm on
-irc.oftc.net <irc://irc.oftc.net/llvm>`_.
+This channel has several bots.
+
+* Buildbot reporters
+
+  * llvmbb - Bot for the main LLVM buildbot master.
+    http://lab.llvm.org:8011/console
+  * bb-chapuni - An individually run buildbot master. http://bb.pgr.jp/console
+  * smooshlab - Apple's internal buildbot master.
+
+* robot - Bugzilla linker. %bug <number>
+
+* clang-bot - A `geordi <http://www.eelis.net/geordi/>`_ instance running
+  near-trunk clang instead of gcc.
 
 Programming Documentation
 =========================
