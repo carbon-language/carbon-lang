@@ -200,30 +200,30 @@ def InlineJT32 : Operand<i32> {
 
 // Three operand short
 
-multiclass F3R_2RUS<bits<5> opc, string OpcStr, SDNode OpNode> {
-  def _3r: _F3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+multiclass F3R_2RUS<bits<5> opc1, bits<5> opc2, string OpcStr, SDNode OpNode> {
+  def _3r: _F3R<opc1, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
                 !strconcat(OpcStr, " $dst, $b, $c"),
                 [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
-  def _2rus : _F2RUS<(outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
+  def _2rus : _F2RUS<opc2, (outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
                      !strconcat(OpcStr, " $dst, $b, $c"),
                      [(set GRRegs:$dst, (OpNode GRRegs:$b, immUs:$c))]>;
 }
 
-multiclass F3R_2RUS_np<bits<5> opc, string OpcStr> {
-  def _3r: _F3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+multiclass F3R_2RUS_np<bits<5> opc1, bits<5> opc2, string OpcStr> {
+  def _3r: _F3R<opc1, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
                 !strconcat(OpcStr, " $dst, $b, $c"), []>;
-  def _2rus : _F2RUS<(outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
+  def _2rus : _F2RUS<opc2, (outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
                      !strconcat(OpcStr, " $dst, $b, $c"), []>;
 }
 
-multiclass F3R_2RBITP<bits<5> opc, string OpcStr, SDNode OpNode> {
-  def _3r: _F3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+multiclass F3R_2RBITP<bits<5> opc1, bits<5> opc2, string OpcStr,
+                      SDNode OpNode> {
+  def _3r: _F3R<opc1, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
                 !strconcat(OpcStr, " $dst, $b, $c"),
                 [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
-  def _2rus : _F2RUS<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 [(set GRRegs:$dst, (OpNode GRRegs:$b, immBitp:$c))]>;
+  def _2rus : _F2RUSBitp<opc2, (outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
+                         !strconcat(OpcStr, " $dst, $b, $c"),
+                         [(set GRRegs:$dst, (OpNode GRRegs:$b, immBitp:$c))]>;
 }
 
 class F3R<bits<5> opc, string OpcStr, SDNode OpNode> :
@@ -382,10 +382,10 @@ let usesCustomInserter = 1 in {
 //===----------------------------------------------------------------------===//
 
 // Three operand short
-defm ADD : F3R_2RUS<0b00010, "add", add>;
-defm SUB : F3R_2RUS<0b00011, "sub", sub>;
+defm ADD : F3R_2RUS<0b00010, 0b10010, "add", add>;
+defm SUB : F3R_2RUS<0b00011, 0b10011, "sub", sub>;
 let neverHasSideEffects = 1 in {
-defm EQ : F3R_2RUS_np<0b00110, "eq">;
+defm EQ : F3R_2RUS_np<0b00110, 0b10110, "eq">;
 def LSS_3r : F3R_np<0b11000, "lss">;
 def LSU_3r : F3R_np<0b11001, "lsu">;
 }
@@ -397,9 +397,9 @@ def LDW_3r : _F3R<0b01001, (outs GRRegs:$dst),
                   (ins GRRegs:$addr, GRRegs:$offset),
                   "ldw $dst, $addr[$offset]", []>;
 
-def LDW_2rus : _F2RUS<(outs GRRegs:$dst), (ins GRRegs:$addr, i32imm:$offset),
-                  "ldw $dst, $addr[$offset]",
-                  []>;
+def LDW_2rus : _F2RUS<0b00001, (outs GRRegs:$dst),
+                      (ins GRRegs:$addr, i32imm:$offset),
+                      "ldw $dst, $addr[$offset]", []>;
 
 def LD16S_3r :  _F3R<0b10000, (outs GRRegs:$dst),
                      (ins GRRegs:$addr, GRRegs:$offset),
@@ -414,12 +414,13 @@ let mayStore=1 in {
 def STW_3r : _FL3R<(outs), (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
                     "stw $val, $addr[$offset]", []>;
 
-def STW_2rus : _F2RUS<(outs), (ins GRRegs:$val, GRRegs:$addr, i32imm:$offset),
-                  "stw $val, $addr[$offset]", []>;
+def STW_2rus : _F2RUS<0b0000, (outs),
+                      (ins GRRegs:$val, GRRegs:$addr, i32imm:$offset),
+                      "stw $val, $addr[$offset]", []>;
 }
 
-defm SHL : F3R_2RBITP<0b00100, "shl", shl>;
-defm SHR : F3R_2RBITP<0b00101, "shr", srl>;
+defm SHL : F3R_2RBITP<0b00100, 0b10100, "shl", shl>;
+defm SHR : F3R_2RBITP<0b00101, 0b10101, "shr", srl>;
 // TODO tsetr
 
 // Three operand long

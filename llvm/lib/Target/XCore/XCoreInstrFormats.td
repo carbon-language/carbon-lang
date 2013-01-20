@@ -43,8 +43,17 @@ class _FL3R<dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<4, outs, ins, asmstr, pattern> {
 }
 
-class _F2RUS<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _F2RUS<bits<5> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<2, outs, ins, asmstr, pattern> {
+  let Inst{15-11} = opc;
+  let DecoderMethod = "Decode2RUSInstruction";
+}
+
+// 2RUS with bitp operand
+class _F2RUSBitp<bits<5> opc, dag outs, dag ins, string asmstr,
+                 list<dag> pattern>
+    : _F2RUS<opc, outs, ins, asmstr, pattern> {
+  let DecoderMethod = "Decode2RUSBitpInstruction";
 }
 
 class _FL2RUS<dag outs, dag ins, string asmstr, list<dag> pattern>

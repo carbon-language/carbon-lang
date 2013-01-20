@@ -234,3 +234,26 @@
 
 # CHECK: sub r4, r2, r5
 0x89 0x1a
+
+# 2rus instructions
+
+# CHECK: add r10, r2, 5
+0xe9 0x92
+
+# CHECK: eq r2, r1, 0
+0x24 0xb0
+
+# CHECK: ldw r5, r6[1]
+0x19 0x09
+
+# CHECK: shl r6, r5, 24
+0xa6 0xa5
+
+# CHECK: shr r3, r8, 5
+0xf1 0xab
+
+# CHECK: stw r3, r2[0]
+0x38 0x00
+
+# CHECK: sub r2, r4, 11
+0x63 0x9d
