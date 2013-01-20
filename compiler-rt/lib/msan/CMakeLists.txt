@@ -18,17 +18,15 @@ set(MSAN_RTL_CFLAGS
 
 # Static runtime library.
 set(MSAN_RUNTIME_LIBRARIES)
-add_library(clang_rt.msan-x86_64 STATIC
-  ${MSAN_RTL_SOURCES}
-  $<TARGET_OBJECTS:RTInterception.x86_64>
-  $<TARGET_OBJECTS:RTSanitizerCommon.x86_64>
-  )
-set_target_compile_flags(clang_rt.msan-x86_64
-  ${MSAN_RTL_CFLAGS} ${TARGET_x86_64_CFLAGS}
-  )
-list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-x86_64)
-
-add_clang_compiler_rt_libraries(${MSAN_RUNTIME_LIBRARIES})
+set(arch "x86_64")
+if(CAN_TARGET_${arch})
+  add_compiler_rt_static_runtime(clang_rt.msan-${arch} ${arch}
+    SOURCES ${MSAN_RTL_SOURCES}
+            $<TARGET_OBJECTS:RTInterception.${arch}>
+            $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+    CFLAGS ${MSAN_RTL_CFLAGS})
+  list(APPEND MSAN_RUNTIME_LIBRARIES clang_rt.msan-${arch})
+endif()
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)
