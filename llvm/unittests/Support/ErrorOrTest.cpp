@@ -56,6 +56,7 @@ struct InvalidArgError {
   std::string ArgName;
 };
 
+#if LLVM_HAS_CXX11_STDLIB
 namespace llvm {
 template<>
 struct ErrorOrUserDataTraits<InvalidArgError> : std::true_type {
@@ -76,3 +77,4 @@ TEST(ErrorOr, UserErrorData) {
   EXPECT_EQ("adena", t4().getError<InvalidArgError>().ArgName);
 }
 } // end anon namespace
+#endif
