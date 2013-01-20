@@ -17000,38 +17000,14 @@ static SDValue PerformVZEXT_MOVLCombine(SDNode *N, SelectionDAG &DAG) {
 static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
                                   TargetLowering::DAGCombinerInfo &DCI,
                                   const X86Subtarget *Subtarget) {
-  EVT VT = N->getValueType(0);
-
-  if (!VT.isVector())
-    return SDValue();
-
-  SDValue In = N->getOperand(0);
-  EVT InVT = In.getValueType();
-  DebugLoc dl = N->getDebugLoc();
-  unsigned ExtendedEltSize = VT.getVectorElementType().getSizeInBits();
-
-  // Split SIGN_EXTEND operation to use vmovsx instruction when possible
-  if (InVT == MVT::v8i8) {
-    if (ExtendedEltSize > 16 && !Subtarget->hasInt256())
-      In = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i16, In);
-    if (ExtendedEltSize > 32)
-      In = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v8i32, In);
-    return DAG.getNode(ISD::SIGN_EXTEND, dl, VT, In);
-  }
-
-  if ((InVT == MVT::v4i8 || InVT == MVT::v4i16) &&
-      ExtendedEltSize > 32 && !Subtarget->hasInt256()) {
-    In = DAG.getNode(ISD::SIGN_EXTEND, dl, MVT::v4i32, In);
-    return DAG.getNode(ISD::SIGN_EXTEND, dl, VT, In);
-  }
-
   if (!DCI.isBeforeLegalizeOps())
     return SDValue();
 
   if (!Subtarget->hasFp256())
     return SDValue();
 
-  if (VT.is256BitVector()) {
+  EVT VT = N->getValueType(0);
+  if (VT.isVector() && VT.getSizeInBits() == 256) {
     SDValue R = WidenMaskArithmetic(N, DAG, DCI, Subtarget);
     if (R.getNode())
       return R;

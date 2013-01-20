@@ -4298,19 +4298,11 @@ SDValue DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if (isa<ConstantSDNode>(N0))
     return DAG.getNode(ISD::SIGN_EXTEND, N->getDebugLoc(), VT, N0);
 
-  // Folding (sext (sext x)) is obvious, but we do it only after the type 
-  // legalization phase. When the sequence is like {(T1->T2), (T2->T3)} and 
-  // T1 or T3 (or the both) are illegal types, the TypeLegalizer may not 
-  // give a good sequence for the (T1->T3) pair.
-  // So we give a chance to target specific combiner to optimize T1->T2 and T2->T3
-  // separately and may be fold them in a preceding of subsequent instruction.
-  if (Level >= AfterLegalizeTypes) {
-    // fold (sext (sext x)) -> (sext x)
-    // fold (sext (aext x)) -> (sext x)
-    if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
-      return DAG.getNode(ISD::SIGN_EXTEND, N->getDebugLoc(), VT,
-                         N0.getOperand(0));
-  }
+  // fold (sext (sext x)) -> (sext x)
+  // fold (sext (aext x)) -> (sext x)
+  if (N0.getOpcode() == ISD::SIGN_EXTEND || N0.getOpcode() == ISD::ANY_EXTEND)
+    return DAG.getNode(ISD::SIGN_EXTEND, N->getDebugLoc(), VT,
+                       N0.getOperand(0));
 
   if (N0.getOpcode() == ISD::TRUNCATE) {
     // fold (sext (truncate (load x))) -> (sext (smaller load x))
