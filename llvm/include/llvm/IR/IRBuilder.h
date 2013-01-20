@@ -1031,27 +1031,29 @@ public:
   }
   /// \brief Create a ZExt or Trunc from the integer value V to DestTy. Return
   /// the value untouched if the type of V is already DestTy.
-  Value *CreateZExtOrTrunc(Value *V, IntegerType *DestTy,
+  Value *CreateZExtOrTrunc(Value *V, Type *DestTy,
                            const Twine &Name = "") {
-    assert(isa<IntegerType>(V->getType()) &&
+    assert(V->getType()->isIntOrIntVectorTy() &&
+           DestTy->isIntOrIntVectorTy() &&
            "Can only zero extend/truncate integers!");
-    IntegerType *IntTy = cast<IntegerType>(V->getType());
-    if (IntTy->getBitWidth() < DestTy->getBitWidth())
+    Type *VTy = V->getType();
+    if (VTy->getScalarSizeInBits() < DestTy->getScalarSizeInBits())
       return CreateZExt(V, DestTy, Name);
-    if (IntTy->getBitWidth() > DestTy->getBitWidth())
+    if (VTy->getScalarSizeInBits() > DestTy->getScalarSizeInBits())
       return CreateTrunc(V, DestTy, Name);
     return V;
   }
   /// \brief Create a SExt or Trunc from the integer value V to DestTy. Return
   /// the value untouched if the type of V is already DestTy.
-  Value *CreateSExtOrTrunc(Value *V, IntegerType *DestTy,
+  Value *CreateSExtOrTrunc(Value *V, Type *DestTy,
                            const Twine &Name = "") {
-    assert(isa<IntegerType>(V->getType()) &&
+    assert(V->getType()->isIntOrIntVectorTy() &&
+           DestTy->isIntOrIntVectorTy() &&
            "Can only sign extend/truncate integers!");
-    IntegerType *IntTy = cast<IntegerType>(V->getType());
-    if (IntTy->getBitWidth() < DestTy->getBitWidth())
+    Type *VTy = V->getType();
+    if (VTy->getScalarSizeInBits() < DestTy->getScalarSizeInBits())
       return CreateSExt(V, DestTy, Name);
-    if (IntTy->getBitWidth() > DestTy->getBitWidth())
+    if (VTy->getScalarSizeInBits() > DestTy->getScalarSizeInBits())
       return CreateTrunc(V, DestTy, Name);
     return V;
   }
@@ -1062,10 +1064,10 @@ public:
     assert(V->getType()->isFPOrFPVectorTy() &&
            DestTy->isFPOrFPVectorTy() &&
            "Can only FPExt/FPTrunc floating point types!");
-    Type *Ty = V->getType();
-    if (Ty->getScalarSizeInBits() < DestTy->getScalarSizeInBits())
+    Type *VTy = V->getType();
+    if (VTy->getScalarSizeInBits() < DestTy->getScalarSizeInBits())
       return CreateFPExt(V, DestTy, Name);
-    if (Ty->getScalarSizeInBits() > DestTy->getScalarSizeInBits())
+    if (VTy->getScalarSizeInBits() > DestTy->getScalarSizeInBits())
       return CreateFPTrunc(V, DestTy, Name);
     return V;
   }
