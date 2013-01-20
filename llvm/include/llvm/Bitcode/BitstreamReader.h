@@ -158,6 +158,7 @@ struct BitstreamEntry {
     BitstreamEntry E; E.Kind = Record; E.ID = AbbrevID; return E;
   }
 };
+  
 
 /// BitstreamCursor - This represents a position within a bitcode file.  There
 /// may be multiple independent cursors reading within one bitstream, each
@@ -515,22 +516,6 @@ public:
   
   unsigned readRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
                       StringRef *Blob = 0);
-
-  unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
-                      const char **BlobStart = 0, unsigned *BlobLen = 0) {
-    if (!BlobStart)
-      return readRecord(AbbrevID, Vals);
-    StringRef S;
-    unsigned X = readRecord(AbbrevID, Vals, &S);
-    *BlobStart = S.data();
-    *BlobLen = S.size();
-    return X;
-  }
-
-  unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
-                      const char *&BlobStart, unsigned &BlobLen) {
-    return ReadRecord(AbbrevID, Vals, &BlobStart, &BlobLen);
-  }
 
   //===--------------------------------------------------------------------===//
   // Abbrev Processing
