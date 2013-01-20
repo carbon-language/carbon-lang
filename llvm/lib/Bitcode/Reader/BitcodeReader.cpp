@@ -796,7 +796,7 @@ bool BitcodeReader::ParseMetadata() {
     default:  // Default behavior: ignore.
       break;
     case bitc::METADATA_NAME: {
-      // Read named of the named metadata.
+      // Read name of the named metadata.
       SmallString<8> Name(Record.begin(), Record.end());
       Record.clear();
       Code = Stream.ReadCode();

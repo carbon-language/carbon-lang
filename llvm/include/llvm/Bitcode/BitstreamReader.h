@@ -158,7 +158,6 @@ struct BitstreamEntry {
     BitstreamEntry E; E.Kind = Record; E.ID = AbbrevID; return E;
   }
 };
-  
 
 /// BitstreamCursor - This represents a position within a bitcode file.  There
 /// may be multiple independent cursors reading within one bitstream, each
@@ -251,7 +250,7 @@ public:
   }
 
   bool AtEndOfStream() {
-    return isEndPos(NextChar) && BitsInCurWord == 0;
+    return BitsInCurWord == 0 && isEndPos(NextChar);
   }
 
   /// getAbbrevIDWidth - Return the number of bits used to encode an abbrev #.
