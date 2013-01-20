@@ -1593,7 +1593,7 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
         // optimizations will clean it up.
         VectorParts Cond = createEdgeMask(P->getIncomingBlock(0),
                                                P->getParent());
-        
+
         for (unsigned part = 0; part < UF; ++part) {
         VectorParts &In0 = getVectorValue(P->getIncomingValue(0));
         VectorParts &In1 = getVectorValue(P->getIncomingValue(1));
@@ -2713,7 +2713,8 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   }
 
   DEBUG(dbgs() << "LV: Selecting VF = : "<< Width << ".\n");
-  return std::make_pair<unsigned, unsigned>(Width, VF * Cost);
+  unsigned LoopCost = VF * Cost;
+  return std::make_pair<unsigned, unsigned>(Width, LoopCost);
 }
 
 unsigned LoopVectorizationCostModel::getWidestType() {
