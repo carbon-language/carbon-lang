@@ -488,31 +488,12 @@ private:
   //===--------------------------------------------------------------------===//
 
 private:
-  void ReadAbbreviatedLiteral(const BitCodeAbbrevOp &Op,
-                              SmallVectorImpl<uint64_t> &Vals) {
-    assert(Op.isLiteral() && "Not a literal");
-    // If the abbrev specifies the literal value to use, use it.
-    Vals.push_back(Op.getLiteralValue());
-  }
-
-  void ReadAbbreviatedField(const BitCodeAbbrevOp &Op,
-                            SmallVectorImpl<uint64_t> &Vals) {
-    assert(!Op.isLiteral() && "Use ReadAbbreviatedLiteral for literals!");
-
-    // Decode the value as we are commanded.
-    switch (Op.getEncoding()) {
-    default: llvm_unreachable("Unknown encoding!");
-    case BitCodeAbbrevOp::Fixed:
-      Vals.push_back(Read((unsigned)Op.getEncodingData()));
-      break;
-    case BitCodeAbbrevOp::VBR:
-      Vals.push_back(ReadVBR64((unsigned)Op.getEncodingData()));
-      break;
-    case BitCodeAbbrevOp::Char6:
-      Vals.push_back(BitCodeAbbrevOp::DecodeChar6(Read(6)));
-      break;
-    }
-  }
+  void readAbbreviatedLiteral(const BitCodeAbbrevOp &Op,
+                              SmallVectorImpl<uint64_t> &Vals);
+  void readAbbreviatedField(const BitCodeAbbrevOp &Op,
+                            SmallVectorImpl<uint64_t> &Vals);
+  void skipAbbreviatedField(const BitCodeAbbrevOp &Op);
+  
 public:
 
   /// getAbbrev - Return the abbreviation for the specified AbbrevId.
@@ -522,6 +503,9 @@ public:
     return CurAbbrevs[AbbrevNo];
   }
 
+  /// skipRecord - Read the current record and discard it.
+  void skipRecord(unsigned AbbrevID);
+  
   unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
                       const char **BlobStart = 0, unsigned *BlobLen = 0);
   
@@ -529,7 +513,6 @@ public:
                       const char *&BlobStart, unsigned &BlobLen) {
     return ReadRecord(AbbrevID, Vals, &BlobStart, &BlobLen);
   }
-
 
   //===--------------------------------------------------------------------===//
   // Abbrev Processing
