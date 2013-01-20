@@ -159,7 +159,6 @@ struct BitstreamEntry {
   }
 };
 
-
 /// BitstreamCursor - This represents a position within a bitcode file.  There
 /// may be multiple independent cursors reading within one bitstream, each
 /// maintaining their own local state.
@@ -271,7 +270,14 @@ public:
 
   /// Flags that modify the behavior of advance().
   enum {
-    AF_DontPopBlockAtEnd = 1
+    /// AF_DontPopBlockAtEnd - If this flag is used, the advance() method does
+    /// not automatically pop the block scope when the end of a block is
+    /// reached.
+    AF_DontPopBlockAtEnd = 1,
+
+    /// AF_DontAutoprocessAbbrevs - If this flag is used, abbrev entries are
+    /// returned just like normal records.
+    AF_DontAutoprocessAbbrevs = 2
   };
   
   /// advance - Advance the current bitstream, returning the next entry in the
@@ -289,7 +295,8 @@ public:
       if (Code == bitc::ENTER_SUBBLOCK)
         return BitstreamEntry::getSubBlock(ReadSubBlockID());
       
-      if (Code == bitc::DEFINE_ABBREV) {
+      if (Code == bitc::DEFINE_ABBREV &&
+          !(Flags & AF_DontAutoprocessAbbrevs)) {
         // We read and accumulate abbrev's, the client can't do anything with
         // them anyway.
         ReadAbbrevRecord();
@@ -483,7 +490,7 @@ private:
     BlockScope.pop_back();
   }
 
- //===--------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
   // Record Processing
   //===--------------------------------------------------------------------===//
 
