@@ -42,6 +42,33 @@
 #define LLVM_HAS_RVALUE_REFERENCE_THIS 0
 #endif
 
+/// \macro LLVM_HAS_CXX11_TYPETRAITS
+/// \brief Does the compiler have the C++11 type traits.
+///
+/// #include <type_traits>
+///
+/// * enable_if
+/// * {true,false}_type
+/// * is_constructible
+/// * etc...
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) \
+    || (defined(_MSC_VER) && _MSC_VER >= 1600)
+#define LLVM_HAS_CXX11_TYPETRAITS 1
+#else
+#define LLVM_HAS_CXX11_TYPETRAITS 0
+#endif
+
+/// \macro LLVM_HAS_CXX11_STDLIB
+/// \brief Does the compiler have the C++11 standard library.
+///
+/// Implies LLVM_HAS_RVALUE_REFERENCES, LLVM_HAS_CXX11_TYPETRAITS
+#if defined(__GXX_EXPERIMENTAL_CXX0X__) \
+    || (defined(_MSC_VER) && _MSC_VER >= 1600)
+#define LLVM_HAS_CXX11_STDLIB 1
+#else
+#define LLVM_HAS_CXX11_STDLIB 0
+#endif
+
 /// llvm_move - Expands to ::std::move if the compiler supports
 /// r-value references; otherwise, expands to the argument.
 #if LLVM_HAS_RVALUE_REFERENCES

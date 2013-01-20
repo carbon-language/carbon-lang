@@ -145,6 +145,10 @@ template <typename T> struct is_pointer<T* const> : true_type {};
 template <typename T> struct is_pointer<T* volatile> : true_type {};
 template <typename T> struct is_pointer<T* const volatile> : true_type {};
 
+/// \brief Metafunction that determines wheather the given type is a reference.
+template <typename T> struct is_reference : false_type {};
+template <typename T> struct is_reference<T&> : true_type {};
+
 /// \brief Metafunction that determines whether the given type is either an
 /// integral type or an enumeration type.
 ///
