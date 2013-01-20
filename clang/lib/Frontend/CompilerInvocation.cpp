@@ -404,8 +404,10 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   Opts.DebugCompilationDir = Args.getLastArgValue(OPT_fdebug_compilation_dir);
   Opts.LinkBitcodeFile = Args.getLastArgValue(OPT_mlink_bitcode_file);
   Opts.SanitizerBlacklistFile = Args.getLastArgValue(OPT_fsanitize_blacklist);
-  Opts.MemorySanitizerTrackOrigins =
+  Opts.SanitizeMemoryTrackOrigins =
     Args.hasArg(OPT_fsanitize_memory_track_origins);
+  Opts.SanitizeAddressZeroBaseShadow =
+    Args.hasArg(OPT_fsanitize_address_zero_base_shadow);
   Opts.SSPBufferSize =
     Args.getLastArgIntValue(OPT_stack_protector_buffer_size, 8, Diags);
   Opts.StackRealignment = Args.hasArg(OPT_mstackrealign);

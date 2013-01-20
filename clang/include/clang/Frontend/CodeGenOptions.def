@@ -61,8 +61,6 @@ CODEGENOPT(InstrumentFunctions , 1, 0) ///< Set when -finstrument-functions is
 CODEGENOPT(InstrumentForProfiling , 1, 0) ///< Set when -pg is enabled.
 CODEGENOPT(LessPreciseFPMAD  , 1, 0) ///< Enable less precise MAD instructions to
                                      ///< be generated.
-CODEGENOPT(MemorySanitizerTrackOrigins , 1, 0) ///< Enable tracking origins in
-                                               ///< MemorySanitizer
 CODEGENOPT(MergeAllConstants , 1, 1) ///< Merge identical constants.
 CODEGENOPT(NoCommon          , 1, 0) ///< Set when -fno-common or C++ is enabled.
 CODEGENOPT(NoDwarf2CFIAsm    , 1, 0) ///< Set when -fno-dwarf2-cfi-asm is enabled.
@@ -85,6 +83,10 @@ VALUE_CODEGENOPT(OptimizeSize, 2, 0) ///< If -Os (==1) or -Oz (==2) is specified
 CODEGENOPT(RelaxAll          , 1, 0) ///< Relax all machine code instructions.
 CODEGENOPT(RelaxedAliasing   , 1, 0) ///< Set when -fno-strict-aliasing is enabled.
 CODEGENOPT(SaveTempLabels    , 1, 0) ///< Save temporary labels.
+CODEGENOPT(SanitizeAddressZeroBaseShadow , 1, 0) ///< Map shadow memory at zero
+                                                 ///< offset in AddressSanitizer.
+CODEGENOPT(SanitizeMemoryTrackOrigins, 1, 0) ///< Enable tracking origins in
+                                             ///< MemorySanitizer
 CODEGENOPT(SimplifyLibCalls  , 1, 1) ///< Set when -fbuiltin is enabled.
 CODEGENOPT(SoftFloat         , 1, 0) ///< -soft-float.
 CODEGENOPT(StrictEnums       , 1, 0) ///< Optimize based on strict enum definition.

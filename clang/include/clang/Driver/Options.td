@@ -392,6 +392,12 @@ def fsanitize_EQ : CommaJoined<["-"], "fsanitize=">, Group<f_clang_Group>,
                             "address (memory errors) | thread (race detection) | "
                             "undefined (miscellaneous undefined behavior)">;
 def fno_sanitize_EQ : CommaJoined<["-"], "fno-sanitize=">, Group<f_clang_Group>;
+def fsanitize_address_zero_base_shadow : Flag<["-"], "fsanitize-address-zero-base-shadow">,
+                                         Group<f_clang_Group>, Flags<[CC1Option]>,
+                                         HelpText<"Make AddressSanitizer map shadow memory"
+                                                  "at zero offset">;
+def fno_sanitize_address_zero_base_shadow : Flag<["-"], "fno-sanitize-address-zero-base-shadow">,
+                                            Group<f_clang_Group>;
 def fsanitize_blacklist : Joined<["-"], "fsanitize-blacklist=">,
                           Group<f_clang_Group>, Flags<[CC1Option]>,
                           HelpText<"Path to blacklist file for sanitizers">;
@@ -402,8 +408,7 @@ def fsanitize_memory_track_origins : Flag<["-"], "fsanitize-memory-track-origins
                                      Group<f_clang_Group>, Flags<[CC1Option]>,
                                      HelpText<"Enable origins tracking in MemorySanitizer">;
 def fno_sanitize_memory_track_origins : Flag<["-"], "fno-sanitize-memory-track-origins">,
-                                        Group<f_clang_Group>,
-                                        HelpText<"Disable origins tracking in MemorySanitizer">;
+                                        Group<f_clang_Group>;
 def fsanitize_recover : Flag<["-"], "fsanitize-recover">,
                         Group<f_clang_Group>;
 def fno_sanitize_recover : Flag<["-"], "fno-sanitize-recover">,

@@ -1444,7 +1444,8 @@ static bool UseRelaxAll(Compilation &C, const ArgList &Args) {
 }
 
 SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
-    : Kind(0), BlacklistFile(""), MsanTrackOrigins(false) {
+    : Kind(0), BlacklistFile(""), MsanTrackOrigins(false),
+      AsanZeroBaseShadow(false) {
 
   for (ArgList::const_iterator I = Args.begin(), E = Args.end(); I != E; ++I) {
     unsigned Add, Remove;
@@ -1493,10 +1494,17 @@ SanitizerArgs::SanitizerArgs(const Driver &D, const ArgList &Args)
   }
 
   // Parse -f(no-)sanitize-memory-track-origins options.
-  if (Kind & Memory)
+  if (NeedsMsan)
     MsanTrackOrigins =
       Args.hasFlag(options::OPT_fsanitize_memory_track_origins,
                    options::OPT_fno_sanitize_memory_track_origins,
+                   /* Default */false);
+
+  // Parse -f(no-)sanitize-address-zero-base-shadow options.
+  if (NeedsAsan)
+    AsanZeroBaseShadow =
+      Args.hasFlag(options::OPT_fsanitize_address_zero_base_shadow,
+                   options::OPT_fno_sanitize_address_zero_base_shadow,
                    /* Default */false);
 }
 
@@ -1517,6 +1525,13 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
     CmdArgs.insert(CmdArgs.begin(), Args.MakeArgString(LibAsan));
   } else {
     if (!Args.hasArg(options::OPT_shared)) {
+      bool ZeroBaseShadow = Args.hasFlag(
+          options::OPT_fsanitize_address_zero_base_shadow,
+          options::OPT_fno_sanitize_address_zero_base_shadow, false);
+      if (ZeroBaseShadow && !Args.hasArg(options::OPT_pie)) {
+        TC.getDriver().Diag(diag::err_drv_argument_only_allowed_with) <<
+            "-fsanitize-address-zero-base-shadow" << "-pie";
+      }
       // LibAsan is "libclang_rt.asan-<ArchName>.a" in the Linux library
       // resource directory.
       SmallString<128> LibAsan(TC.getDriver().ResourceDir);
