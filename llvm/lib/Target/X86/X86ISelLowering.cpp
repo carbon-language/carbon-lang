@@ -8296,9 +8296,9 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned, bool IsReplace) co
 
 static SDValue LowerAVXExtend(SDValue Op, SelectionDAG &DAG,
                               const X86Subtarget *Subtarget) {
-  EVT VT = Op->getValueType(0);
+  MVT VT = Op->getValueType(0).getSimpleVT();
   SDValue In = Op->getOperand(0);
-  EVT InVT = In.getValueType();
+  MVT InVT = In.getValueType().getSimpleVT();
   DebugLoc dl = Op->getDebugLoc();
 
   // Optimize vectors in AVX mode:
@@ -8327,7 +8327,7 @@ static SDValue LowerAVXExtend(SDValue Op, SelectionDAG &DAG,
   SDValue OpLo = getUnpackl(DAG, dl, InVT, In, NeedZero ? ZeroVec : Undef);
   SDValue OpHi = getUnpackh(DAG, dl, InVT, In, NeedZero ? ZeroVec : Undef);
 
-  EVT HVT = EVT::getVectorVT(*DAG.getContext(), VT.getVectorElementType(),
+  MVT HVT = MVT::getVectorVT(VT.getVectorElementType(),
                              VT.getVectorNumElements()/2);
 
   OpLo = DAG.getNode(ISD::BITCAST, dl, HVT, OpLo);
@@ -8349,9 +8349,9 @@ SDValue X86TargetLowering::LowerANY_EXTEND(SDValue Op,
 SDValue X86TargetLowering::LowerZERO_EXTEND(SDValue Op,
                                             SelectionDAG &DAG) const {
   DebugLoc DL = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
   SDValue In = Op.getOperand(0);
-  EVT SVT = In.getValueType();
+  MVT SVT = In.getValueType().getSimpleVT();
 
   if (Subtarget->hasFp256()) {
     SDValue Res = LowerAVXExtend(Op, DAG, Subtarget);
@@ -8381,9 +8381,9 @@ SDValue X86TargetLowering::LowerZERO_EXTEND(SDValue Op,
 
 SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
   DebugLoc DL = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
   SDValue In = Op.getOperand(0);
-  EVT SVT = In.getValueType();
+  MVT SVT = In.getValueType().getSimpleVT();
 
   if ((VT == MVT::v4i32) && (SVT == MVT::v4i64)) {
     // On AVX2, v4i64 -> v4i32 becomes VPERMD.
@@ -8498,9 +8498,10 @@ SDValue X86TargetLowering::LowerTRUNCATE(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op,
                                            SelectionDAG &DAG) const {
-  if (Op.getValueType().isVector()) {
-    if (Op.getValueType() == MVT::v8i16)
-      return DAG.getNode(ISD::TRUNCATE, Op.getDebugLoc(), Op.getValueType(),
+  MVT VT = Op.getValueType().getSimpleVT();
+  if (VT.isVector()) {
+    if (VT == MVT::v8i16)
+      return DAG.getNode(ISD::TRUNCATE, Op.getDebugLoc(), VT,
                          DAG.getNode(ISD::FP_TO_SINT, Op.getDebugLoc(),
                                      MVT::v8i32, Op.getOperand(0)));
     return SDValue();
@@ -8542,9 +8543,9 @@ SDValue X86TargetLowering::LowerFP_TO_UINT(SDValue Op,
 SDValue X86TargetLowering::lowerFP_EXTEND(SDValue Op,
                                           SelectionDAG &DAG) const {
   DebugLoc DL = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
   SDValue In = Op.getOperand(0);
-  EVT SVT = In.getValueType();
+  MVT SVT = In.getValueType().getSimpleVT();
 
   assert(SVT == MVT::v2f32 && "Only customize MVT::v2f32 type legalization!");
 
@@ -8556,8 +8557,8 @@ SDValue X86TargetLowering::lowerFP_EXTEND(SDValue Op,
 SDValue X86TargetLowering::LowerFABS(SDValue Op, SelectionDAG &DAG) const {
   LLVMContext *Context = DAG.getContext();
   DebugLoc dl = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
-  EVT EltVT = VT;
+  MVT VT = Op.getValueType().getSimpleVT();
+  MVT EltVT = VT;
   unsigned NumElts = VT == MVT::f64 ? 2 : 4;
   if (VT.isVector()) {
     EltVT = VT.getVectorElementType();
@@ -8588,8 +8589,8 @@ SDValue X86TargetLowering::LowerFABS(SDValue Op, SelectionDAG &DAG) const {
 SDValue X86TargetLowering::LowerFNEG(SDValue Op, SelectionDAG &DAG) const {
   LLVMContext *Context = DAG.getContext();
   DebugLoc dl = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
-  EVT EltVT = VT;
+  MVT VT = Op.getValueType().getSimpleVT();
+  MVT EltVT = VT;
   unsigned NumElts = VT == MVT::f64 ? 2 : 4;
   if (VT.isVector()) {
     EltVT = VT.getVectorElementType();
@@ -8623,8 +8624,8 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
   SDValue Op0 = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
   DebugLoc dl = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
-  EVT SrcVT = Op1.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
+  MVT SrcVT = Op1.getValueType().getSimpleVT();
 
   // If second operand is smaller, extend it first.
   if (SrcVT.bitsLT(VT)) {
@@ -8694,7 +8695,7 @@ SDValue X86TargetLowering::LowerFCOPYSIGN(SDValue Op, SelectionDAG &DAG) const {
 static SDValue LowerFGETSIGN(SDValue Op, SelectionDAG &DAG) {
   SDValue N0 = Op.getOperand(0);
   DebugLoc dl = Op.getDebugLoc();
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
 
   // Lower ISD::FGETSIGN to (AND (X86ISD::FGETSIGNx86 ...) 1).
   SDValue xFGETSIGN = DAG.getNode(X86ISD::FGETSIGNx86, dl, VT, N0,
@@ -9499,7 +9500,7 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
     SDValue Cmp = Cond.getOperand(1);
     unsigned Opc = Cmp.getOpcode();
-    EVT VT = Op.getValueType();
+    MVT VT = Op.getValueType().getSimpleVT();
 
     bool IllegalFPCMov = false;
     if (VT.isFloatingPoint() && !VT.isVector() &&
@@ -9610,9 +9611,9 @@ SDValue X86TargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue X86TargetLowering::LowerSIGN_EXTEND(SDValue Op,
                                             SelectionDAG &DAG) const {
-  EVT VT = Op->getValueType(0);
+  MVT VT = Op->getValueType(0).getSimpleVT();
   SDValue In = Op->getOperand(0);
-  EVT InVT = In.getValueType();
+  MVT InVT = In.getValueType().getSimpleVT();
   DebugLoc dl = Op->getDebugLoc();
 
   if ((VT != MVT::v4i64 || InVT != MVT::v4i32) &&
@@ -9646,7 +9647,7 @@ SDValue X86TargetLowering::LowerSIGN_EXTEND(SDValue Op,
 
   SDValue OpHi = DAG.getVectorShuffle(InVT, dl, In, Undef, &ShufMask2[0]);
 
-  EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), VT.getScalarType(),
+  MVT HalfVT = MVT::getVectorVT(VT.getScalarType(),
                                 VT.getVectorNumElements()/2);
 
   OpLo = DAG.getNode(X86ISD::VSEXT_MOVL, dl, HalfVT, OpLo);
