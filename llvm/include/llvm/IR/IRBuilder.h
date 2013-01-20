@@ -1028,7 +1028,8 @@ public:
   /// DestTy. Return the value untouched if the type of V is already DestTy.
   Value *CreateZExtOrTrunc(Value *V, IntegerType *DestTy,
                            const Twine &Name = "") {
-    assert(isa<IntegerType>(V->getType()) && "Can only zero extend integers!");
+    assert(isa<IntegerType>(V->getType()) &&
+           "Can only zero extend/truncate integers!");
     IntegerType *IntTy = cast<IntegerType>(V->getType());
     if (IntTy->getBitWidth() < DestTy->getBitWidth())
       return CreateZExt(V, DestTy, Name);
@@ -1040,7 +1041,8 @@ public:
   /// DestTy. Return the value untouched if the type of V is already DestTy.
   Value *CreateSExtOrTrunc(Value *V, IntegerType *DestTy,
                            const Twine &Name = "") {
-    assert(isa<IntegerType>(V->getType()) && "Can only sign extend integers!");
+    assert(isa<IntegerType>(V->getType()) &&
+           "Can only sign extend/truncate integers!");
     IntegerType *IntTy = cast<IntegerType>(V->getType());
     if (IntTy->getBitWidth() < DestTy->getBitWidth())
       return CreateSExt(V, DestTy, Name);
