@@ -673,7 +673,7 @@ bool ASTReader::ReadDeclContextStorage(ModuleFile &M,
     const char *Blob;
     unsigned BlobLen;
     unsigned Code = Cursor.ReadCode();
-    unsigned RecCode = Cursor.ReadRecord(Code, Record, &Blob, &BlobLen);
+    unsigned RecCode = Cursor.ReadRecord(Code, Record, Blob, BlobLen);
     if (RecCode != DECL_CONTEXT_LEXICAL) {
       Error("Expected lexical block");
       return true;
@@ -691,7 +691,7 @@ bool ASTReader::ReadDeclContextStorage(ModuleFile &M,
     const char *Blob;
     unsigned BlobLen;
     unsigned Code = Cursor.ReadCode();
-    unsigned RecCode = Cursor.ReadRecord(Code, Record, &Blob, &BlobLen);
+    unsigned RecCode = Cursor.ReadRecord(Code, Record, Blob, BlobLen);
     if (RecCode != DECL_CONTEXT_VISIBLE) {
       Error("Expected visible lookup table block");
       return true;
@@ -930,7 +930,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
       unsigned Code = SLocEntryCursor.ReadCode();
       Record.clear();
       unsigned RecCode
-        = SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen);
+        = SLocEntryCursor.ReadRecord(Code, Record, BlobStart, BlobLen);
       
       if (RecCode != SM_SLOC_BUFFER_BLOB) {
         Error("AST record has invalid code");
@@ -958,7 +958,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
     unsigned Code = SLocEntryCursor.ReadCode();
     Record.clear();
     unsigned RecCode
-      = SLocEntryCursor.ReadRecord(Code, Record, &BlobStart, &BlobLen);
+      = SLocEntryCursor.ReadRecord(Code, Record, BlobStart, BlobLen);
 
     if (RecCode != SM_SLOC_BUFFER_BLOB) {
       Error("AST record has invalid code");
@@ -1081,24 +1081,22 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
   } AddLoadedMacroInfo(PP, Hint);
 
   while (true) {
-    unsigned Code = Stream.ReadCode();
-    switch (Code) {
-    case llvm::bitc::END_BLOCK:
+    // Advance to the next record, but if we get to the end of the block, don't
+    // pop it (removing all the abbreviations from the cursor) since we want to
+    // be able to reseek within the block and read entries.
+    unsigned Flags = llvm::BitstreamCursor::AF_DontPopBlockAtEnd;
+    llvm::BitstreamEntry Entry = Stream.advanceSkippingSubblocks(Flags);
+    
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::SubBlock: // Handled for us already.
+    case llvm::BitstreamEntry::Error:
+      Error("malformed block record in AST file");
       return;
-
-    case llvm::bitc::ENTER_SUBBLOCK:
-      // No known subblocks, always skip them.
-      Stream.ReadSubBlockID();
-      if (Stream.SkipBlock()) {
-        Error("malformed block record in AST file");
-        return;
-      }
-      continue;
-
-    case llvm::bitc::DEFINE_ABBREV:
-      Stream.ReadAbbrevRecord();
-      continue;
-    default: break;
+    case llvm::BitstreamEntry::EndBlock:
+      return;
+    case llvm::BitstreamEntry::Record:
+      // The interesting case.
+      break;
     }
 
     // Read a record.
@@ -1106,7 +1104,7 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
     unsigned BlobLen = 0;
     Record.clear();
     PreprocessorRecordTypes RecType =
-      (PreprocessorRecordTypes)Stream.ReadRecord(Code, Record, BlobStart,
+      (PreprocessorRecordTypes)Stream.ReadRecord(Entry.ID, Record, BlobStart,
                                                  BlobLen);
     switch (RecType) {
     case PP_MACRO_OBJECT_LIKE:
@@ -2843,18 +2841,22 @@ ASTReader::ReadASTCore(StringRef FileName,
   // This is used for compatibility with older PCH formats.
   bool HaveReadControlBlock = false;
 
-  while (!Stream.AtEndOfStream()) {
-    unsigned Code = Stream.ReadCode();
-
-    if (Code != llvm::bitc::ENTER_SUBBLOCK) {
+  while (1) {
+    llvm::BitstreamEntry Entry = Stream.advance();
+    
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::Error:
+    case llvm::BitstreamEntry::EndBlock:
+    case llvm::BitstreamEntry::Record:
       Error("invalid record at top-level of AST file");
       return Failure;
+        
+    case llvm::BitstreamEntry::SubBlock:
+      break;
     }
 
-    unsigned BlockID = Stream.ReadSubBlockID();
-
     // We only know the control subblock ID.
-    switch (BlockID) {
+    switch (Entry.ID) {
     case llvm::bitc::BLOCKINFO_BLOCK_ID:
       if (Stream.ReadBlockInfoBlock()) {
         Error("malformed BlockInfoBlock in AST file");
@@ -3085,16 +3087,11 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
       Diags.Report(diag::err_fe_pch_error_at_end_block) << ASTFileName;
       return std::string();
     
-    case llvm::BitstreamEntry::Record: {
+    case llvm::BitstreamEntry::Record:
       // Ignore top-level records.
-      // FIXME: Should have a skipRecord() method.
-      Record.clear();
-      const char *BlobStart = 0;
-      unsigned BlobLen = 0;
-      Stream.ReadRecord(Entry.ID, Record, BlobStart, BlobLen);
+      Stream.skipRecord(Entry.ID);
       break;
-    }
-      
+        
     case llvm::BitstreamEntry::SubBlock:
       if (Entry.ID == CONTROL_BLOCK_ID) {
         if (Stream.EnterSubBlock(CONTROL_BLOCK_ID)) {

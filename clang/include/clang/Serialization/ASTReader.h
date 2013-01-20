@@ -1757,7 +1757,7 @@ public:
 /// then restores it when destroyed.
 struct SavedStreamPosition {
   explicit SavedStreamPosition(llvm::BitstreamCursor &Cursor)
-  : Cursor(Cursor), Offset(Cursor.GetCurrentBitNo()) { }
+    : Cursor(Cursor), Offset(Cursor.GetCurrentBitNo()) { }
 
   ~SavedStreamPosition() {
     Cursor.JumpToBit(Offset);
