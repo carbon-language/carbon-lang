@@ -306,17 +306,21 @@ bool BitstreamCursor::ReadBlockInfoBlock() {
   
   // Read all the records for this module.
   while (1) {
-    unsigned Code = ReadCode();
-    if (Code == bitc::END_BLOCK)
-      return ReadBlockEnd();
-    if (Code == bitc::ENTER_SUBBLOCK) {
-      ReadSubBlockID();
-      if (SkipBlock()) return true;
-      continue;
-    }
+    BitstreamEntry Entry = advanceSkippingSubblocks(AF_DontAutoprocessAbbrevs);
     
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::SubBlock: // Handled for us already.
+    case llvm::BitstreamEntry::Error:
+      return true;
+    case llvm::BitstreamEntry::EndBlock:
+      return false;
+    case llvm::BitstreamEntry::Record:
+      // The interesting case.
+      break;
+    }
+
     // Read abbrev records, associate them with CurBID.
-    if (Code == bitc::DEFINE_ABBREV) {
+    if (Entry.ID == bitc::DEFINE_ABBREV) {
       if (!CurBlockInfo) return true;
       ReadAbbrevRecord();
       
@@ -330,7 +334,7 @@ bool BitstreamCursor::ReadBlockInfoBlock() {
     
     // Read a record.
     Record.clear();
-    switch (ReadRecord(Code, Record)) {
+    switch (readRecord(Entry.ID, Record)) {
       default: break;  // Default behavior, ignore unknown content.
       case bitc::BLOCKINFO_CODE_SETBID:
         if (Record.size() < 1) return true;
