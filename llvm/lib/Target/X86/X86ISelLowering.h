@@ -822,7 +822,6 @@ namespace llvm {
     SDValue LowerToBT(SDValue And, ISD::CondCode CC,
                       DebugLoc dl, SelectionDAG &DAG) const;
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerVSETCC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBRCOND(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerMEMSET(SDValue Op, SelectionDAG &DAG) const;

@@ -9136,65 +9136,10 @@ SDValue X86TargetLowering::LowerToBT(SDValue And, ISD::CondCode CC,
   return SDValue();
 }
 
-SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
-
-  if (Op.getValueType().isVector()) return LowerVSETCC(Op, DAG);
-
-  assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
-  SDValue Op0 = Op.getOperand(0);
-  SDValue Op1 = Op.getOperand(1);
-  DebugLoc dl = Op.getDebugLoc();
-  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
-
-  // Optimize to BT if possible.
-  // Lower (X & (1 << N)) == 0 to BT(X, N).
-  // Lower ((X >>u N) & 1) != 0 to BT(X, N).
-  // Lower ((X >>s N) & 1) != 0 to BT(X, N).
-  if (Op0.getOpcode() == ISD::AND && Op0.hasOneUse() &&
-      Op1.getOpcode() == ISD::Constant &&
-      cast<ConstantSDNode>(Op1)->isNullValue() &&
-      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
-    SDValue NewSetCC = LowerToBT(Op0, CC, dl, DAG);
-    if (NewSetCC.getNode())
-      return NewSetCC;
-  }
-
-  // Look for X == 0, X == 1, X != 0, or X != 1.  We can simplify some forms of
-  // these.
-  if (Op1.getOpcode() == ISD::Constant &&
-      (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
-       cast<ConstantSDNode>(Op1)->isNullValue()) &&
-      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
-
-    // If the input is a setcc, then reuse the input setcc or use a new one with
-    // the inverted condition.
-    if (Op0.getOpcode() == X86ISD::SETCC) {
-      X86::CondCode CCode = (X86::CondCode)Op0.getConstantOperandVal(0);
-      bool Invert = (CC == ISD::SETNE) ^
-        cast<ConstantSDNode>(Op1)->isNullValue();
-      if (!Invert) return Op0;
-
-      CCode = X86::GetOppositeBranchCondition(CCode);
-      return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-                         DAG.getConstant(CCode, MVT::i8), Op0.getOperand(1));
-    }
-  }
-
-  bool isFP = Op1.getValueType().isFloatingPoint();
-  unsigned X86CC = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
-  if (X86CC == X86::COND_INVALID)
-    return SDValue();
-
-  SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, DAG);
-  EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
-  return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
-                     DAG.getConstant(X86CC, MVT::i8), EFLAGS);
-}
-
 // Lower256IntVSETCC - Break a VSETCC 256-bit integer VSETCC into two new 128
 // ones, and then concatenate the result back.
 static SDValue Lower256IntVSETCC(SDValue Op, SelectionDAG &DAG) {
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
 
   assert(VT.is256BitVector() && Op.getOpcode() == ISD::SETCC &&
          "Unsupported value type for operation");
@@ -9214,26 +9159,27 @@ static SDValue Lower256IntVSETCC(SDValue Op, SelectionDAG &DAG) {
   SDValue RHS2 = Extract128BitVector(RHS, NumElems/2, DAG, dl);
 
   // Issue the operation on the smaller types and concatenate the result back
-  MVT EltVT = VT.getVectorElementType().getSimpleVT();
-  EVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
+  MVT EltVT = VT.getVectorElementType();
+  MVT NewVT = MVT::getVectorVT(EltVT, NumElems/2);
   return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT,
                      DAG.getNode(Op.getOpcode(), dl, NewVT, LHS1, RHS1, CC),
                      DAG.getNode(Op.getOpcode(), dl, NewVT, LHS2, RHS2, CC));
 }
 
-SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
+static SDValue LowerVSETCC(SDValue Op, const X86Subtarget *Subtarget,
+                           SelectionDAG &DAG) {
   SDValue Cond;
   SDValue Op0 = Op.getOperand(0);
   SDValue Op1 = Op.getOperand(1);
   SDValue CC = Op.getOperand(2);
-  EVT VT = Op.getValueType();
+  MVT VT = Op.getValueType().getSimpleVT();
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
-  bool isFP = Op.getOperand(1).getValueType().isFloatingPoint();
+  bool isFP = Op.getOperand(1).getValueType().getSimpleVT().isFloatingPoint();
   DebugLoc dl = Op.getDebugLoc();
 
   if (isFP) {
 #ifndef NDEBUG
-    EVT EltVT = Op0.getValueType().getVectorElementType();
+    MVT EltVT = Op0.getValueType().getVectorElementType().getSimpleVT();
     assert(EltVT == MVT::f32 || EltVT == MVT::f64);
 #endif
 
@@ -9372,6 +9318,63 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
     Result = DAG.getNOT(dl, Result, VT);
 
   return Result;
+}
+
+SDValue X86TargetLowering::LowerSETCC(SDValue Op, SelectionDAG &DAG) const {
+
+  MVT VT = Op.getValueType().getSimpleVT();
+
+  if (VT.isVector()) return LowerVSETCC(Op, Subtarget, DAG);
+
+  assert(VT == MVT::i8 && "SetCC type must be 8-bit integer");
+  SDValue Op0 = Op.getOperand(0);
+  SDValue Op1 = Op.getOperand(1);
+  DebugLoc dl = Op.getDebugLoc();
+  ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(2))->get();
+
+  // Optimize to BT if possible.
+  // Lower (X & (1 << N)) == 0 to BT(X, N).
+  // Lower ((X >>u N) & 1) != 0 to BT(X, N).
+  // Lower ((X >>s N) & 1) != 0 to BT(X, N).
+  if (Op0.getOpcode() == ISD::AND && Op0.hasOneUse() &&
+      Op1.getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(Op1)->isNullValue() &&
+      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+    SDValue NewSetCC = LowerToBT(Op0, CC, dl, DAG);
+    if (NewSetCC.getNode())
+      return NewSetCC;
+  }
+
+  // Look for X == 0, X == 1, X != 0, or X != 1.  We can simplify some forms of
+  // these.
+  if (Op1.getOpcode() == ISD::Constant &&
+      (cast<ConstantSDNode>(Op1)->getZExtValue() == 1 ||
+       cast<ConstantSDNode>(Op1)->isNullValue()) &&
+      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+
+    // If the input is a setcc, then reuse the input setcc or use a new one with
+    // the inverted condition.
+    if (Op0.getOpcode() == X86ISD::SETCC) {
+      X86::CondCode CCode = (X86::CondCode)Op0.getConstantOperandVal(0);
+      bool Invert = (CC == ISD::SETNE) ^
+        cast<ConstantSDNode>(Op1)->isNullValue();
+      if (!Invert) return Op0;
+
+      CCode = X86::GetOppositeBranchCondition(CCode);
+      return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                         DAG.getConstant(CCode, MVT::i8), Op0.getOperand(1));
+    }
+  }
+
+  bool isFP = Op1.getValueType().getSimpleVT().isFloatingPoint();
+  unsigned X86CC = TranslateX86CC(CC, isFP, Op0, Op1, DAG);
+  if (X86CC == X86::COND_INVALID)
+    return SDValue();
+
+  SDValue EFLAGS = EmitCmp(Op0, Op1, X86CC, DAG);
+  EFLAGS = ConvertCmpIfNecessary(EFLAGS, DAG);
+  return DAG.getNode(X86ISD::SETCC, dl, MVT::i8,
+                     DAG.getConstant(X86CC, MVT::i8), EFLAGS);
 }
 
 // isX86LogicalCmp - Return true if opcode is a X86 logical comparison.
