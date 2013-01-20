@@ -29,10 +29,11 @@ class BlockAddress;
 
 template<> struct ilist_traits<Instruction>
   : public SymbolTableListTraits<Instruction, BasicBlock> {
-  // createSentinel is used to get hold of a node that marks the end of
-  // the list...
-  // The sentinel is relative to this instance, so we use a non-static
-  // method.
+
+  /// \brief Return a node that marks the end of a list.
+  ///
+  /// The sentinel is relative to this instance, so we use a non-static
+  /// method.
   Instruction *createSentinel() const {
     // since i(p)lists always publicly derive from the corresponding
     // traits, placing a data member in this class will augment i(p)list.
@@ -53,6 +54,8 @@ private:
   mutable ilist_half_node<Instruction> Sentinel;
 };
 
+/// \brief LLVM Basic Block Representation
+///
 /// This represents a single basic block in LLVM. A basic block is simply a
 /// container of instructions that execute sequentially. Basic blocks are Values
 /// because they are referenced by instructions such as branches and switch
@@ -66,7 +69,6 @@ private:
 /// occur because it may be useful in the intermediate stage of constructing or
 /// modifying a program. However, the verifier will ensure that basic blocks
 /// are "well formed".
-/// @brief LLVM Basic Block Representation
 class BasicBlock : public Value, // Basic blocks are data objects also
                    public ilist_node<BasicBlock> {
   friend class BlockAddress;
@@ -82,14 +84,15 @@ private:
   BasicBlock(const BasicBlock &) LLVM_DELETED_FUNCTION;
   void operator=(const BasicBlock &) LLVM_DELETED_FUNCTION;
 
-  /// BasicBlock ctor - If the function parameter is specified, the basic block
-  /// is automatically inserted at either the end of the function (if
-  /// InsertBefore is null), or before the specified basic block.
+  /// \brief Constructor.
   ///
+  /// If the function parameter is specified, the basic block is automatically
+  /// inserted at either the end of the function (if InsertBefore is null), or
+  /// before the specified basic block.
   explicit BasicBlock(LLVMContext &C, const Twine &Name = "",
                       Function *Parent = 0, BasicBlock *InsertBefore = 0);
 public:
-  /// getContext - Get the context in which this basic block lives.
+  /// \brief Get the context in which this basic block lives.
   LLVMContext &getContext() const;
 
   /// Instruction iterators...
@@ -98,88 +101,87 @@ public:
   typedef InstListType::reverse_iterator reverse_iterator;
   typedef InstListType::const_reverse_iterator const_reverse_iterator;
 
-  /// Create - Creates a new BasicBlock. If the Parent parameter is specified,
-  /// the basic block is automatically inserted at either the end of the
-  /// function (if InsertBefore is 0), or before the specified basic block.
+  /// \brief Creates a new BasicBlock.
+  ///
+  /// If the Parent parameter is specified, the basic block is automatically
+  /// inserted at either the end of the function (if InsertBefore is 0), or
+  /// before the specified basic block.
   static BasicBlock *Create(LLVMContext &Context, const Twine &Name = "",
                             Function *Parent = 0,BasicBlock *InsertBefore = 0) {
     return new BasicBlock(Context, Name, Parent, InsertBefore);
   }
   ~BasicBlock();
 
-  /// getParent - Return the enclosing method, or null if none
-  ///
+  /// \brief Return the enclosing method, or null if none.
   const Function *getParent() const { return Parent; }
         Function *getParent()       { return Parent; }
 
-  /// getTerminator() - If this is a well formed basic block, then this returns
-  /// a pointer to the terminator instruction.  If it is not, then you get a
-  /// null pointer back.
-  ///
+  /// \brief Returns the terminator instruction if the block is well formed or
+  /// null if the block is not well formed.
   TerminatorInst *getTerminator();
   const TerminatorInst *getTerminator() const;
 
-  /// Returns a pointer to the first instructon in this block that is not a
-  /// PHINode instruction. When adding instruction to the beginning of the
-  /// basic block, they should be added before the returned value, not before
-  /// the first instruction, which might be PHI.
-  /// Returns 0 is there's no non-PHI instruction.
+  /// \brief Returns a pointer to the first instruction in this block that is
+  /// not a PHINode instruction.
+  ///
+  /// When adding instructions to the beginning of the basic block, they should
+  /// be added before the returned value, not before the first instruction,
+  /// which might be PHI. Returns 0 is there's no non-PHI instruction.
   Instruction* getFirstNonPHI();
   const Instruction* getFirstNonPHI() const {
     return const_cast<BasicBlock*>(this)->getFirstNonPHI();
   }
 
-  // Same as above, but also skip debug intrinsics.
+  /// \brief Returns a pointer to the first instruction in this block that is not
+  /// a PHINode or a debug intrinsic.
   Instruction* getFirstNonPHIOrDbg();
   const Instruction* getFirstNonPHIOrDbg() const {
     return const_cast<BasicBlock*>(this)->getFirstNonPHIOrDbg();
   }
 
-  // Same as above, but also skip lifetime intrinsics.
+  /// \brief Returns a pointer to the first instruction in this block that is not
+  /// a PHINode, a debug intrinsic, or a lifetime intrinsic.
   Instruction* getFirstNonPHIOrDbgOrLifetime();
   const Instruction* getFirstNonPHIOrDbgOrLifetime() const {
     return const_cast<BasicBlock*>(this)->getFirstNonPHIOrDbgOrLifetime();
   }
 
-  /// getFirstInsertionPt - Returns an iterator to the first instruction in this
-  /// block that is suitable for inserting a non-PHI instruction. In particular,
-  /// it skips all PHIs and LandingPad instructions.
+  /// \brief Returns an iterator to the first instruction in this block that is
+  /// suitable for inserting a non-PHI instruction.
+  ///
+  /// In particular, it skips all PHIs and LandingPad instructions.
   iterator getFirstInsertionPt();
   const_iterator getFirstInsertionPt() const {
     return const_cast<BasicBlock*>(this)->getFirstInsertionPt();
   }
 
-  /// removeFromParent - This method unlinks 'this' from the containing
-  /// function, but does not delete it.
-  ///
+  /// \brief Unlink 'this' from the containing function, but do not delete it.
   void removeFromParent();
 
-  /// eraseFromParent - This method unlinks 'this' from the containing function
-  /// and deletes it.
-  ///
+  /// \brief Unlink 'this' from the containing function and delete it.
   void eraseFromParent();
 
-  /// moveBefore - Unlink this basic block from its current function and
-  /// insert it into the function that MovePos lives in, right before MovePos.
+  /// \brief Unlink this basic block from its current function and insert it
+  /// into the function that \p MovePos lives in, right before \p MovePos.
   void moveBefore(BasicBlock *MovePos);
 
-  /// moveAfter - Unlink this basic block from its current function and
-  /// insert it into the function that MovePos lives in, right after MovePos.
+  /// \brief Unlink this basic block from its current function and insert it
+  /// right after \p MovePos in the function \p MovePos lives in.
   void moveAfter(BasicBlock *MovePos);
 
 
-  /// getSinglePredecessor - If this basic block has a single predecessor block,
-  /// return the block, otherwise return a null pointer.
+  /// \brief Return this block if it has a single predecessor block. Otherwise
+  /// return a null pointer.
   BasicBlock *getSinglePredecessor();
   const BasicBlock *getSinglePredecessor() const {
     return const_cast<BasicBlock*>(this)->getSinglePredecessor();
   }
 
-  /// getUniquePredecessor - If this basic block has a unique predecessor block,
-  /// return the block, otherwise return a null pointer.
+  /// \brief Return this block if it has a unique predecessor block. Otherwise return a null pointer.
+  ///
   /// Note that unique predecessor doesn't mean single edge, there can be
-  /// multiple edges from the unique predecessor to this block (for example
-  /// a switch statement with multiple cases having the same destination).
+  /// multiple edges from the unique predecessor to this block (for example a
+  /// switch statement with multiple cases having the same destination).
   BasicBlock *getUniquePredecessor();
   const BasicBlock *getUniquePredecessor() const {
     return const_cast<BasicBlock*>(this)->getUniquePredecessor();
@@ -205,49 +207,52 @@ public:
   inline const Instruction       &back() const { return InstList.back();  }
   inline       Instruction       &back()       { return InstList.back();  }
 
-  /// getInstList() - Return the underlying instruction list container.  You
-  /// need to access it directly if you want to modify it currently.
+  /// \brief Return the underlying instruction list container.
   ///
+  /// Currently you need to access the underlying instruction list container
+  /// directly if you want to modify it.
   const InstListType &getInstList() const { return InstList; }
         InstListType &getInstList()       { return InstList; }
 
-  /// getSublistAccess() - returns pointer to member of instruction list
+  /// \brief Returns a pointer to a member of the instruction list.
   static iplist<Instruction> BasicBlock::*getSublistAccess(Instruction*) {
     return &BasicBlock::InstList;
   }
 
-  /// getValueSymbolTable() - returns pointer to symbol table (if any)
+  /// \brief Returns a pointer to the symbol table if one exists.
   ValueSymbolTable *getValueSymbolTable();
 
-  /// Methods for support type inquiry through isa, cast, and dyn_cast:
+  /// \brief Methods for support type inquiry through isa, cast, and dyn_cast.
   static inline bool classof(const Value *V) {
     return V->getValueID() == Value::BasicBlockVal;
   }
 
-  /// dropAllReferences() - This function causes all the subinstructions to "let
-  /// go" of all references that they are maintaining.  This allows one to
-  /// 'delete' a whole class at a time, even though there may be circular
-  /// references... first all references are dropped, and all use counts go to
-  /// zero.  Then everything is delete'd for real.  Note that no operations are
-  /// valid on an object that has "dropped all references", except operator
-  /// delete.
+  /// \brief Cause all subinstructions to "let go" of all the references that
+  /// said subinstructions are maintaining.
   ///
+  /// This allows one to 'delete' a whole class at a time, even though there may
+  /// be circular references... first all references are dropped, and all use
+  /// counts go to zero.  Then everything is delete'd for real.  Note that no
+  /// operations are valid on an object that has "dropped all references",
+  /// except operator delete.
   void dropAllReferences();
 
-  /// removePredecessor - This method is used to notify a BasicBlock that the
-  /// specified Predecessor of the block is no longer able to reach it.  This is
-  /// actually not used to update the Predecessor list, but is actually used to
-  /// update the PHI nodes that reside in the block.  Note that this should be
-  /// called while the predecessor still refers to this block.
+  /// \brief Notify the BasicBlock that the predecessor \p Pred is no longer
+  /// able to reach it.
   ///
+  /// This is actually not used to update the Predecessor list, but is actually
+  /// used to update the PHI nodes that reside in the block.  Note that this
+  /// should be called while the predecessor still refers to this block.
   void removePredecessor(BasicBlock *Pred, bool DontDeleteUselessPHIs = false);
 
-  /// splitBasicBlock - This splits a basic block into two at the specified
-  /// instruction.  Note that all instructions BEFORE the specified iterator
-  /// stay as part of the original basic block, an unconditional branch is added
-  /// to the original BB, and the rest of the instructions in the BB are moved
-  /// to the new BB, including the old terminator.  The newly formed BasicBlock
-  /// is returned.  This function invalidates the specified iterator.
+  /// \brief Split the basic block into two basic blocks at the specified
+  /// instruction.
+  ///
+  /// Note that all instructions BEFORE the specified iterator stay as part of
+  /// the original basic block, an unconditional branch is added to the original
+  /// BB, and the rest of the instructions in the BB are moved to the new BB,
+  /// including the old terminator.  The newly formed BasicBlock is returned.
+  /// This function invalidates the specified iterator.
   ///
   /// Note that this only works on well formed basic blocks (must have a
   /// terminator), and 'I' must not be the end of instruction list (which would
@@ -256,37 +261,39 @@ public:
   ///
   /// Also note that this doesn't preserve any passes. To split blocks while
   /// keeping loop information consistent, use the SplitBlock utility function.
-  ///
   BasicBlock *splitBasicBlock(iterator I, const Twine &BBName = "");
 
-  /// hasAddressTaken - returns true if there are any uses of this basic block
-  /// other than direct branches, switches, etc. to it.
+  /// \brief Returns true if there are any uses of this basic block other than
+  /// direct branches, switches, etc. to it.
   bool hasAddressTaken() const { return getSubclassDataFromValue() != 0; }
 
-  /// replaceSuccessorsPhiUsesWith - Update all phi nodes in all our successors
-  /// to refer to basic block New instead of to us.
+  /// \brief Update all phi nodes in this basic block's successors to refer to
+  /// basic block \p New instead of to it.
   void replaceSuccessorsPhiUsesWith(BasicBlock *New);
 
-  /// isLandingPad - Return true if this basic block is a landing pad. I.e.,
-  /// it's the destination of the 'unwind' edge of an invoke instruction.
+  /// \brief Return true if this basic block is a landing pad.
+  ///
+  /// Being a ``landing pad'' means that the basic block is the destination of
+  /// the 'unwind' edge of an invoke instruction.
   bool isLandingPad() const;
 
-  /// getLandingPadInst() - Return the landingpad instruction associated with
-  /// the landing pad.
+  /// \brief Return the landingpad instruction associated with the landing pad.
   LandingPadInst *getLandingPadInst();
   const LandingPadInst *getLandingPadInst() const;
 
 private:
-  /// AdjustBlockAddressRefCount - BasicBlock stores the number of BlockAddress
-  /// objects using it.  This is almost always 0, sometimes one, possibly but
-  /// almost never 2, and inconceivably 3 or more.
+  /// \brief Increment the internal refcount of the number of BlockAddresses
+  /// referencing this BasicBlock by \p Amt.
+  ///
+  /// This is almost always 0, sometimes one possibly, but almost never 2, and
+  /// inconceivably 3 or more.
   void AdjustBlockAddressRefCount(int Amt) {
     setValueSubclassData(getSubclassDataFromValue()+Amt);
     assert((int)(signed char)getSubclassDataFromValue() >= 0 &&
            "Refcount wrap-around");
   }
-  // Shadow Value::setValueSubclassData with a private forwarding method so that
-  // any future subclasses cannot accidentally use it.
+  // \brief Shadow Value::setValueSubclassData with a private forwarding method
+  // so that any future subclasses cannot accidentally use it.
   void setValueSubclassData(unsigned short D) {
     Value::setValueSubclassData(D);
   }
