@@ -842,11 +842,15 @@ CollectRecordStaticField(const VarDecl *Var,
 
   unsigned LineNumber = getLineNumber(Var->getLocation());
   StringRef VName = Var->getName();
-  llvm::ConstantInt *CI = NULL;
+  llvm::Constant *C = NULL;
   if (Var->getInit()) {
     const APValue *Value = Var->evaluateValue();
-    if (Value && Value->isInt())
-      CI = llvm::ConstantInt::get(CGM.getLLVMContext(), Value->getInt());
+    if (Value) {
+      if (Value->isInt())
+        C = llvm::ConstantInt::get(CGM.getLLVMContext(), Value->getInt());
+      if (Value->isFloat())
+        C = llvm::ConstantFP::get(CGM.getLLVMContext(), Value->getFloat());
+    }
   }
 
   unsigned Flags = 0;
@@ -857,7 +861,7 @@ CollectRecordStaticField(const VarDecl *Var,
     Flags |= llvm::DIDescriptor::FlagProtected;
 
   llvm::DIType GV = DBuilder.createStaticMemberType(RecordTy, VName, VUnit,
-                                                    LineNumber, VTy, Flags, CI);
+                                                    LineNumber, VTy, Flags, C);
   elements.push_back(GV);
   StaticDataMemberCache[Var->getCanonicalDecl()] = llvm::WeakVH(GV);
 }
