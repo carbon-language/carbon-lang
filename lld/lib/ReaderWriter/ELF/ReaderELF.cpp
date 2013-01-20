@@ -15,7 +15,6 @@
 
 #include "lld/ReaderWriter/ReaderELF.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
-#include "lld/Core/ErrorOr.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 
@@ -26,6 +25,7 @@
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/Casting.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"

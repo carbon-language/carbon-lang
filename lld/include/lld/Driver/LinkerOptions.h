@@ -16,12 +16,12 @@
 #ifndef LLD_DRIVER_LINKER_OPTIONS_H
 #define LLD_DRIVER_LINKER_OPTIONS_H
 
-#include "lld/Core/ErrorOr.h"
 #include "lld/Core/LLVM.h"
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/Support/ErrorOr.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
 

@@ -14,6 +14,5 @@ set(LLVM_LINK_COMPONENTS
     )
 
 add_lld_unittest(CoreTests
-  ErrorOrTest.cpp
   RangeTest.cpp
   )
