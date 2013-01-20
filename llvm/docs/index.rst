@@ -24,37 +24,36 @@ Several introductory papers and presentations.
    LangRef
    GetElementPtr
 
-* :doc:`LangRef`
-
+:doc:`LangRef`
   Defines the LLVM intermediate representation.
 
-* `Introduction to the LLVM Compiler <http://llvm.org/pubs/2008-10-04-ACAT-LLVM-Intro.html>`_
-
+`Introduction to the LLVM Compiler`__
   Presentation providing a users introduction to LLVM.
 
-* `Intro to LLVM <http://www.aosabook.org/en/llvm.html>`_
+  .. __: http://llvm.org/pubs/2008-10-04-ACAT-LLVM-Intro.html
 
+`Intro to LLVM`__
   Book chapter providing a compiler hacker's introduction to LLVM.
 
-* `LLVM: A Compilation Framework for Lifelong Program Analysis & Transformation
-  <http://llvm.org/pubs/2004-01-30-CGO-LLVM.html>`_
+  .. __: http://www.aosabook.org/en/llvm.html
 
+
+`LLVM: A Compilation Framework for Lifelong Program Analysis & Transformation`__
   Design overview.
 
-* `LLVM: An Infrastructure for Multi-Stage Optimization
-  <http://llvm.org/pubs/2002-12-LattnerMSThesis.html>`_
+  .. __: http://llvm.org/pubs/2004-01-30-CGO-LLVM.html
 
+`LLVM: An Infrastructure for Multi-Stage Optimization`__
   More details (quite old now).
 
-* :doc:`GetElementPtr`
+  .. __: http://llvm.org/pubs/2002-12-LattnerMSThesis.html
 
+:doc:`GetElementPtr`
   Answers to some very frequent questions about LLVM's most frequently
   misunderstood instruction.
 
-Publications
-============
-
-The list of `publications <http://llvm.org/pubs>`_ based on LLVM.
+`Publications mentioning LLVM <http://llvm.org/pubs>`_
+   ..
 
 User Guides
 ===========
@@ -90,83 +89,68 @@ representation.
    Passes
    YamlIO
 
-* :doc:`GettingStarted`
-
+:doc:`GettingStarted`
    Discusses how to get up and running quickly with the LLVM infrastructure.
    Everything from unpacking and compilation of the distribution to execution
    of some tools.
 
-* :doc:`CMake`
-
+:doc:`CMake`
    An addendum to the main Getting Started guide for those using the `CMake
    build system <http://www.cmake.org>`_.
 
-* :doc:`HowToBuildOnARM`
-
+:doc:`HowToBuildOnARM`
    Notes on building and testing LLVM/Clang on ARM.
 
-* :doc:`GettingStartedVS`
-
+:doc:`GettingStartedVS`
    An addendum to the main Getting Started guide for those using Visual Studio
    on Windows.
 
-* :doc:`tutorial/index`
-
+:doc:`tutorial/index`
    Tutorials about using LLVM. Includes a tutorial about making a custom
    language with LLVM.
 
-* :doc:`DeveloperPolicy`
-
+:doc:`DeveloperPolicy`
    The LLVM project's policy towards developers and their contributions.
 
-* :doc:`LLVM Command Guide <CommandGuide/index>`
-
+:doc:`LLVM Command Guide <CommandGuide/index>`
    A reference manual for the LLVM command line utilities ("man" pages for LLVM
    tools).
 
-* :doc:`Passes`
-
+:doc:`Passes`
    A list of optimizations and analyses implemented in LLVM.
 
-* :doc:`FAQ`
-
+:doc:`FAQ`
    A list of common questions and problems and their solutions.
 
-* :doc:`Release notes for the current release <ReleaseNotes>`
-
+:doc:`Release notes for the current release <ReleaseNotes>`
    This describes new features, known bugs, and other limitations.
 
-* :doc:`HowToSubmitABug`
-
+:doc:`HowToSubmitABug`
    Instructions for properly submitting information about any bugs you run into
    in the LLVM system.
-* :doc:`SphinxQuickstartTemplate`
 
+:doc:`SphinxQuickstartTemplate`
   A template + tutorial for writing new Sphinx documentation. It is meant
   to be read in source form.
 
-* :doc:`LLVM Testing Infrastructure Guide <TestingGuide>`
-
+:doc:`LLVM Testing Infrastructure Guide <TestingGuide>`
    A reference manual for using the LLVM testing infrastructure.
 
-* `How to build the C, C++, ObjC, and ObjC++ front end <http://clang.llvm.org/get_started.html>`_
-
+`How to build the C, C++, ObjC, and ObjC++ front end`__
    Instructions for building the clang front-end from source.
 
-* :doc:`Packaging`
+   .. __: http://clang.llvm.org/get_started.html
 
+:doc:`Packaging`
    Advice on packaging LLVM into a distribution.
 
-* :doc:`Lexicon`
-
+:doc:`Lexicon`
    Definition of acronyms, terms and concepts used in LLVM.
 
-* :doc:`HowToAddABuilder`
-
+:doc:`HowToAddABuilder`
    Instructions for adding new builder to LLVM buildbot master.
 
-* :doc:`YamlIO`
-
+:doc:`YamlIO`
    A reference guide for using LLVM's YAML I/O library.
 
 IRC
@@ -194,47 +178,39 @@ For developers of applications which use LLVM as a library.
    HowToSetUpLLVMStyleRTTI
    ProgrammersManual
 
-* :doc:`LLVM Language Reference Manual <LangRef>`
-
+:doc:`LLVM Language Reference Manual <LangRef>`
   Defines the LLVM intermediate representation and the assembly form of the
   different nodes.
 
-* :doc:`Atomics`
-
+:doc:`Atomics`
   Information about LLVM's concurrency model.
 
-* :doc:`ProgrammersManual`
-
+:doc:`ProgrammersManual`
   Introduction to the general layout of the LLVM sourcebase, important classes
   and APIs, and some tips & tricks.
 
-* :doc:`CommandLine`
-
+:doc:`CommandLine`
   Provides information on using the command line parsing library.
 
-* :doc:`CodingStandards`
-
+:doc:`CodingStandards`
   Details the LLVM coding standards and provides useful information on writing
   efficient C++ code.
 
-* :doc:`HowToSetUpLLVMStyleRTTI`
-
+:doc:`HowToSetUpLLVMStyleRTTI`
   How to make ``isa<>``, ``dyn_cast<>``, etc. available for clients of your
   class hierarchy.
 
-* :doc:`ExtendingLLVM`
-
+:doc:`ExtendingLLVM`
   Look here to see how to add instructions and intrinsics to LLVM.
 
-* `Doxygen generated documentation <http://llvm.org/doxygen/>`_
-
+`Doxygen generated documentation <http://llvm.org/doxygen/>`_
   (`classes <http://llvm.org/doxygen/inherits.html>`_)
   (`tarball <http://llvm.org/doxygen/doxygen.tar.gz>`_)
 
-* `ViewVC Repository Browser <http://llvm.org/viewvc/>`_
+`ViewVC Repository Browser <http://llvm.org/viewvc/>`_
+   ..
 
-* :doc:`CompilerWriterInfo`
-
+:doc:`CompilerWriterInfo`
   A list of helpful links for compiler writers.
 
 Subsystem Documentation
@@ -265,92 +241,73 @@ For API clients and LLVM developers.
    WritingAnLLVMPass
    TableGen/LangRef
 
-* :doc:`WritingAnLLVMPass`
-
+:doc:`WritingAnLLVMPass`
    Information on how to write LLVM transformations and analyses.
 
-* :doc:`WritingAnLLVMBackend`
-
+:doc:`WritingAnLLVMBackend`
    Information on how to write LLVM backends for machine targets.
 
-* :doc:`CodeGenerator`
-
+:doc:`CodeGenerator`
    The design and implementation of the LLVM code generator.  Useful if you are
    working on retargetting LLVM to a new architecture, designing a new codegen
    pass, or enhancing existing components.
 
-* :doc:`TableGenFundamentals`
-
+:doc:`TableGenFundamentals`
    Describes the TableGen tool, which is used heavily by the LLVM code
    generator.
 
-* :doc:`AliasAnalysis`
-
+:doc:`AliasAnalysis`
    Information on how to write a new alias analysis implementation or how to
    use existing analyses.
 
-* :doc:`GarbageCollection`
-
+:doc:`GarbageCollection`
    The interfaces source-language compilers should use for compiling GC'd
    programs.
 
-* :doc:`Source Level Debugging with LLVM <SourceLevelDebugging>`
-
+:doc:`Source Level Debugging with LLVM <SourceLevelDebugging>`
    This document describes the design and philosophy behind the LLVM
    source-level debugger.
 
-* :doc:`Vectorizers`
-
+:doc:`Vectorizers`
    This document describes the current status of vectorization in LLVM.
 
-* :doc:`ExceptionHandling`
-
+:doc:`ExceptionHandling`
    This document describes the design and implementation of exception handling
    in LLVM.
 
-* :doc:`Bugpoint`
-
+:doc:`Bugpoint`
    Automatic bug finder and test-case reducer description and usage
    information.
 
-* :doc:`BitCodeFormat`
-
+:doc:`BitCodeFormat`
    This describes the file format and encoding used for LLVM "bc" files.
 
-* :doc:`System Library <SystemLibrary>`
-
+:doc:`System Library <SystemLibrary>`
    This document describes the LLVM System Library (``lib/System``) and
    how to keep LLVM source code portable
 
-* :doc:`LinkTimeOptimization`
-
+:doc:`LinkTimeOptimization`
    This document describes the interface between LLVM intermodular optimizer
    and the linker and its design
 
-* :doc:`GoldPlugin`
-
+:doc:`GoldPlugin`
    How to build your programs with link-time optimization on Linux.
 
-* :doc:`DebuggingJITedCode`
-
+:doc:`DebuggingJITedCode`
    How to debug JITed code with GDB.
 
-* :doc:`BranchWeightMetadata`
-
+:doc:`BranchWeightMetadata`
    Provides information about Branch Prediction Information.
 
-* :doc:`SegmentedStacks`
-
+:doc:`SegmentedStacks`
    This document describes segmented stacks and how they are used in LLVM.
 
-* :doc:`MarkedUpDisassembly`
-
+:doc:`MarkedUpDisassembly`
    This document describes the optional rich disassembly output syntax.
 
 
 Development Process Documentation
 =================================
-
 
 Information about LLVM's development process.
 
@@ -362,24 +319,20 @@ Information about LLVM's development process.
    LLVMBuild
    HowToReleaseLLVM
 
-* :doc:`Projects`
-
+:doc:`Projects`
   How-to guide and templates for new projects that *use* the LLVM
   infrastructure.  The templates (directory organization, Makefiles, and test
   tree) allow the project code to be located outside (or inside) the ``llvm/``
   tree, while using LLVM header files and libraries.
 
-* :doc:`LLVMBuild`
-
+:doc:`LLVMBuild`
   Describes the LLVMBuild organization and files used by LLVM to specify
   component descriptions.
 
-* :doc:`MakefileGuide`
-
+:doc:`MakefileGuide`
   Describes how the LLVM makefiles work and how to use them.
 
-* :doc:`HowToReleaseLLVM`
-
+:doc:`HowToReleaseLLVM`
   This is a guide to preparing LLVM releases. Most developers can ignore it.
 
 Mailing Lists
@@ -388,36 +341,39 @@ Mailing Lists
 If you can't find what you need in these docs, try consulting the mailing
 lists.
 
-* `LLVM Announcements List
-  <http://lists.cs.uiuc.edu/mailman/listinfo/llvm-announce>`_
-
+`LLVM Announcements List`__
   This is a low volume list that provides important announcements regarding
   LLVM.  It gets email about once a month.
 
-* `Developer's List <http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev>`_
+  .. __: http://lists.cs.uiuc.edu/mailman/listinfo/llvm-announce
 
+`Developer's List`__
   This list is for people who want to be included in technical discussions of
   LLVM. People post to this list when they have questions about writing code
   for or using the LLVM tools. It is relatively low volume.
 
-* `Bugs & Patches Archive <http://lists.cs.uiuc.edu/pipermail/llvmbugs/>`_
+  .. __: http://lists.cs.uiuc.edu/mailman/listinfo/llvmdev
 
+`Bugs & Patches Archive`__
   This list gets emailed every time a bug is opened and closed, and when people
   submit patches to be included in LLVM.  It is higher volume than the LLVMdev
   list.
 
-* `Commits Archive <http://lists.cs.uiuc.edu/pipermail/llvm-commits/>`_
+  .. __: http://lists.cs.uiuc.edu/pipermail/llvmbugs/
 
+`Commits Archive`__
   This list contains all commit messages that are made when LLVM developers
   commit code changes to the repository. It is useful for those who want to
   stay on the bleeding edge of LLVM development. This list is very high volume.
 
-* `Test Results Archive
-  <http://lists.cs.uiuc.edu/pipermail/llvm-testresults/>`_
+  .. __: http://lists.cs.uiuc.edu/pipermail/llvm-commits/
 
+`Test Results Archive`__
   A message is automatically sent to this list by every active nightly tester
   when it completes.  As such, this list gets email several times each day,
   making it a high volume list.
+
+  .. __: http://lists.cs.uiuc.edu/pipermail/llvm-testresults/
 
 Indices and tables
 ==================
