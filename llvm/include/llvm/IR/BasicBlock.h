@@ -35,14 +35,13 @@ template<> struct ilist_traits<Instruction>
   /// The sentinel is relative to this instance, so we use a non-static
   /// method.
   Instruction *createSentinel() const {
-    // since i(p)lists always publicly derive from the corresponding
-    // traits, placing a data member in this class will augment i(p)list.
-    // But since the NodeTy is expected to publicly derive from
-    // ilist_node<NodeTy>, there is a legal viable downcast from it
-    // to NodeTy. We use this trick to superpose i(p)list with a "ghostly"
-    // NodeTy, which becomes the sentinel. Dereferencing the sentinel is
-    // forbidden (save the ilist_node<NodeTy>) so no one will ever notice
-    // the superposition.
+    // Since i(p)lists always publicly derive from their corresponding traits,
+    // placing a data member in this class will augment the i(p)list.  But since
+    // the NodeTy is expected to be publicly derive from ilist_node<NodeTy>,
+    // there is a legal viable downcast from it to NodeTy. We use this trick to
+    // superimpose an i(p)list with a "ghostly" NodeTy, which becomes the
+    // sentinel. Dereferencing the sentinel is forbidden (save the
+    // ilist_node<NodeTy>), so no one will ever notice the superposition.
     return static_cast<Instruction*>(&Sentinel);
   }
   static void destroySentinel(Instruction*) {}
@@ -292,8 +291,8 @@ private:
     assert((int)(signed char)getSubclassDataFromValue() >= 0 &&
            "Refcount wrap-around");
   }
-  // \brief Shadow Value::setValueSubclassData with a private forwarding method
-  // so that any future subclasses cannot accidentally use it.
+  /// \brief Shadow Value::setValueSubclassData with a private forwarding method
+  /// so that any future subclasses cannot accidentally use it.
   void setValueSubclassData(unsigned short D) {
     Value::setValueSubclassData(D);
   }
