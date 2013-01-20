@@ -63,14 +63,14 @@ void NORETURN CheckFailed(const char *file, int line, const char *cond,
 
 static void MaybeOpenReportFile() {
   if (!log_to_file || (report_fd_pid == GetPid())) return;
-  char report_path_full[4096];
-  internal_snprintf(report_path_full, sizeof(report_path_full),
+  InternalScopedBuffer<char> report_path_full(4096);
+  internal_snprintf(report_path_full.data(), report_path_full.size(),
                     "%s.%d", report_path_prefix, GetPid());
-  fd_t fd = internal_open(report_path_full, true);
+  fd_t fd = internal_open(report_path_full.data(), true);
   if (fd == kInvalidFd) {
     report_fd = kStderrFd;
     log_to_file = false;
-    Report("ERROR: Can't open file: %s\n", report_path_full);
+    Report("ERROR: Can't open file: %s\n", report_path_full.data());
     Die();
   }
   if (report_fd != kInvalidFd) {
