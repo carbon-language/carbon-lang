@@ -4807,6 +4807,7 @@ QualType ASTReader::GetType(TypeID ID) {
     case PREDEF_TYPE_IMAGE2D_ID:    T = Context.OCLImage2dTy;       break;
     case PREDEF_TYPE_IMAGE2D_ARR_ID: T = Context.OCLImage2dArrayTy; break;
     case PREDEF_TYPE_IMAGE3D_ID:    T = Context.OCLImage3dTy;       break;
+    case PREDEF_TYPE_EVENT_ID:      T = Context.OCLEventTy;         break;
     case PREDEF_TYPE_AUTO_DEDUCT:   T = Context.getAutoDeductType(); break;
         
     case PREDEF_TYPE_AUTO_RREF_DEDUCT: 

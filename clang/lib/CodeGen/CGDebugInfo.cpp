@@ -426,6 +426,9 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::OCLImage3d:
     return getOrCreateStructPtrType("opencl_image3d_t",
                                     OCLImage3dDITy);
+  case BuiltinType::OCLEvent:
+    return getOrCreateStructPtrType("opencl_event_t",
+                                    OCLEventDITy);
 
   case BuiltinType::UChar:
   case BuiltinType::Char_U: Encoding = llvm::dwarf::DW_ATE_unsigned_char; break;

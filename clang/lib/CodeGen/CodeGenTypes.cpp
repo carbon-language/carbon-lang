@@ -374,6 +374,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     case BuiltinType::OCLImage2d:
     case BuiltinType::OCLImage2dArray:
     case BuiltinType::OCLImage3d:
+    case BuiltinType::OCLEvent:
       ResultType = CGM.getOpenCLRuntime().convertOpenCLSpecificType(Ty);
       break;
     

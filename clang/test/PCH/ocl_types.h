@@ -17,3 +17,6 @@ typedef image2d_array_t img2darr_t;
 
 // image3d_t
 typedef image3d_t img3d_t;
+
+// event_t
+typedef event_t evt_t;

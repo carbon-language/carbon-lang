@@ -2783,6 +2783,10 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
       isInvalid = DS.SetTypeSpecType(DeclSpec::TST_image3d_t, Loc,
                                      PrevSpec, DiagID);
       break;
+    case tok::kw_event_t:
+      isInvalid = DS.SetTypeSpecType(DeclSpec::TST_event_t, Loc,
+                                     PrevSpec, DiagID);
+      break;
     case tok::kw___unknown_anytype:
       isInvalid = DS.SetTypeSpecType(TST_unknown_anytype, Loc,
                                      PrevSpec, DiagID);
@@ -3633,6 +3637,7 @@ bool Parser::isKnownToBeTypeSpecifier(const Token &Tok) const {
   case tok::kw_image2d_t:
   case tok::kw_image2d_array_t:
   case tok::kw_image3d_t:
+  case tok::kw_event_t:
 
     // struct-or-union-specifier (C99) or class-specifier (C++)
   case tok::kw_class:
@@ -3713,6 +3718,7 @@ bool Parser::isTypeSpecifierQualifier() {
   case tok::kw_image2d_t:
   case tok::kw_image2d_array_t:
   case tok::kw_image3d_t:
+  case tok::kw_event_t:
 
     // struct-or-union-specifier (C99) or class-specifier (C++)
   case tok::kw_class:
@@ -3865,6 +3871,7 @@ bool Parser::isDeclarationSpecifier(bool DisambiguatingWithExpression) {
   case tok::kw_image2d_t:
   case tok::kw_image2d_array_t:
   case tok::kw_image3d_t:
+  case tok::kw_event_t:
 
     // struct-or-union-specifier (C99) or class-specifier (C++)
   case tok::kw_class:

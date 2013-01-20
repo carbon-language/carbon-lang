@@ -306,7 +306,8 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_CPointerToObjCPointerCast:
       case CK_BlockPointerToObjCPointerCast:
       case CK_AnyPointerToBlockPointerCast:  
-      case CK_ObjCObjectLValueCast: {
+      case CK_ObjCObjectLValueCast: 
+      case CK_ZeroToOCLEvent: {
         // Delegate to SValBuilder to process.
         SVal V = state->getSVal(Ex, LCtx);
         V = svalBuilder.evalCast(V, T, ExTy);

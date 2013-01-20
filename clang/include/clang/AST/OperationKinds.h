@@ -292,7 +292,10 @@ enum CastKind {
 
   // Convert a builtin function to a function pointer; only allowed in the
   // callee of a call expression.
-  CK_BuiltinFnToFnPtr
+  CK_BuiltinFnToFnPtr,
+
+  // Convert a zero value for OpenCL event_t initialization.
+  CK_ZeroToOCLEvent
 };
 
 static const CastKind CK_Invalid = static_cast<CastKind>(-1);

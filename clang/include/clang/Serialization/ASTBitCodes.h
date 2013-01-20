@@ -715,7 +715,8 @@ namespace clang {
       /// \brief OpenCL 2d image array type.
       PREDEF_TYPE_IMAGE2D_ARR_ID = 42,
       /// \brief OpenCL 3d image type.
-      PREDEF_TYPE_IMAGE3D_ID    = 43
+      PREDEF_TYPE_IMAGE3D_ID    = 43,
+      PREDEF_TYPE_EVENT_ID      = 44
     };
 
     /// \brief The number of predefined type IDs that are reserved for

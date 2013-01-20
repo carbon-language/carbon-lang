@@ -1584,6 +1584,8 @@ public:
 
   bool isImageType() const;                     // Any OpenCL image type
 
+  bool isEventT() const;                        // OpenCL event_t
+
   bool isOpenCLSpecificType() const;            // Any OpenCL specific type
 
   /// Determines if this type, which must satisfy
@@ -4916,6 +4918,10 @@ inline bool Type::isImage2dArrayT() const {
 inline bool Type::isImage3dT() const {
   return isSpecificBuiltinType(BuiltinType::OCLImage3d);
 }
+inline bool Type::isEventT() const {
+  return isSpecificBuiltinType(BuiltinType::OCLEvent);
+}
+
 inline bool Type::isImageType() const {
   return isImage3dT() ||
          isImage2dT() || isImage2dArrayT() ||
@@ -4923,7 +4929,7 @@ inline bool Type::isImageType() const {
 }
 
 inline bool Type::isOpenCLSpecificType() const {
-  return isImageType();
+  return isImageType() || isEventT();
 }
 
 inline bool Type::isTemplateTypeParmType() const {

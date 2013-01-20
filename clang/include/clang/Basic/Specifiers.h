@@ -68,6 +68,7 @@ namespace clang {
     TST_image2d_t,        // OpenCL image2d_t
     TST_image2d_array_t,  // OpenCL image2d_array_t
     TST_image3d_t,        // OpenCL image3d_t
+    TST_event_t,          // OpenCL event_t
     TST_error         // erroneous type
   };
   

@@ -737,6 +737,7 @@ bool Sema::containsUnexpandedParameterPacks(Declarator &D) {
   case TST_image2d_t:
   case TST_image2d_array_t:
   case TST_image3d_t:
+  case TST_event_t:
   case TST_error:
     break;
   }

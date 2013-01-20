@@ -1383,6 +1383,11 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     return EmitComplexToScalarConversion(V, E->getType(), DestTy);
   }
 
+  case CK_ZeroToOCLEvent: {
+    assert(DestTy->isEventT() && "CK_ZeroToOCLEvent cast on non event type");
+    return llvm::Constant::getNullValue(ConvertType(DestTy));
+  }
+
   }
 
   llvm_unreachable("unknown scalar cast");

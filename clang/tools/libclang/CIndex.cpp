@@ -1397,6 +1397,7 @@ bool CursorVisitor::VisitBuiltinTypeLoc(BuiltinTypeLoc TL) {
   case BuiltinType::OCLImage2d:
   case BuiltinType::OCLImage2dArray:
   case BuiltinType::OCLImage3d:
+  case BuiltinType::OCLEvent:
 #define BUILTIN_TYPE(Id, SingletonId)
 #define SIGNED_TYPE(Id, SingletonId) case BuiltinType::Id:
 #define UNSIGNED_TYPE(Id, SingletonId) case BuiltinType::Id:

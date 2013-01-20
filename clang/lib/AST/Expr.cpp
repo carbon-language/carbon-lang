@@ -1400,6 +1400,7 @@ void CastExpr::CheckCastConsistency() const {
   case CK_ARCConsumeObject:
   case CK_ARCReclaimReturnedObject:
   case CK_ARCExtendBlockObject:
+  case CK_ZeroToOCLEvent:
     assert(!getType()->isBooleanType() && "unheralded conversion to bool");
     goto CheckNoBasePath;
 
@@ -1531,6 +1532,8 @@ const char *CastExpr::getCastKindName() const {
     return "CopyAndAutoreleaseBlockObject";
   case CK_BuiltinFnToFnPtr:
     return "BuiltinFnToFnPtr";
+  case CK_ZeroToOCLEvent:
+    return "ZeroToOCLEvent";
   }
 
   llvm_unreachable("Unhandled cast kind!");

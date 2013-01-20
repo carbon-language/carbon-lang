@@ -747,6 +747,7 @@ public:
     case CK_FloatingToIntegral:
     case CK_FloatingToBoolean:
     case CK_FloatingCast:
+    case CK_ZeroToOCLEvent:
       return 0;
     }
     llvm_unreachable("Invalid CastKind");

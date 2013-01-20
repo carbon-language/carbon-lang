@@ -2424,6 +2424,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_PassByIndirectRestore:
   case SK_ProduceObjCObject:
   case SK_StdInitializerList:
+  case SK_OCLZeroEvent:
     break;
 
   case SK_ConversionSequence:
@@ -2648,6 +2649,13 @@ void InitializationSequence::AddProduceObjCObjectStep(QualType T) {
 void InitializationSequence::AddStdInitializerListConstructionStep(QualType T) {
   Step S;
   S.Kind = SK_StdInitializerList;
+  S.Type = T;
+  Steps.push_back(S);
+}
+
+void InitializationSequence::AddOCLZeroEventStep(QualType T) {
+  Step S;
+  S.Kind = SK_OCLZeroEvent;
   S.Type = T;
   Steps.push_back(S);
 }
@@ -4009,6 +4017,27 @@ static bool tryObjCWritebackConversion(Sema &S,
   return true;
 }
 
+//
+// OpenCL 1.2 spec, s6.12.10
+//
+// The event argument can also be used to associate the
+// async_work_group_copy with a previous async copy allowing
+// an event to be shared by multiple async copies; otherwise
+// event should be zero.
+//
+static bool TryOCLZeroEventInitialization(Sema &S,
+                                          InitializationSequence &Sequence,
+                                          QualType DestType,
+                                          Expr *Initializer) {
+  if (!S.getLangOpts().OpenCL || !DestType->isEventT() ||
+      !Initializer->isIntegerConstantExpr(S.getASTContext()) ||
+      (Initializer->EvaluateKnownConstInt(S.getASTContext()) != 0))
+    return false;
+
+  Sequence.AddOCLZeroEventStep(DestType);
+  return true;
+}
+
 InitializationSequence::InitializationSequence(Sema &S,
                                                const InitializedEntity &Entity,
                                                const InitializationKind &Kind,
@@ -4152,6 +4181,10 @@ InitializationSequence::InitializationSequence(Sema &S,
       return;
     }
     
+
+    if (TryOCLZeroEventInitialization(S, *this, DestType, Initializer))
+      return;
+
     // Handle initialization in C
     AddCAssignmentStep(DestType);
     MaybeProduceObjCObject(S, *this, Entity);
@@ -4940,7 +4973,8 @@ InitializationSequence::Perform(Sema &S,
   case SK_PassByIndirectCopyRestore:
   case SK_PassByIndirectRestore:
   case SK_ProduceObjCObject:
-  case SK_StdInitializerList: {
+  case SK_StdInitializerList:
+  case SK_OCLZeroEvent: {
     assert(Args.size() == 1);
     CurInit = Args[0];
     if (!CurInit.get()) return ExprError();
@@ -5451,6 +5485,15 @@ InitializationSequence::Perform(Sema &S,
       Semantic->setType(Dest);
       Semantic->setInitializesStdInitializerList();
       CurInit = S.Owned(Semantic);
+      break;
+    }
+    case SK_OCLZeroEvent: {
+      assert(Step->Type->isEventT() && 
+             "Event initialization on non event type.");
+
+      CurInit = S.ImpCastExprToType(CurInit.take(), Step->Type,
+                                    CK_ZeroToOCLEvent,
+                                    CurInit.get()->getValueKind());
       break;
     }
     }
@@ -6138,6 +6181,10 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case SK_StdInitializerList:
       OS << "std::initializer_list from initializer list";
+      break;
+
+    case SK_OCLZeroEvent:
+      OS << "OpenCL event_t from zero";
       break;
     }
   }

@@ -162,6 +162,9 @@ BUILTIN_TYPE(OCLImage2d, OCLImage2dTy)
 BUILTIN_TYPE(OCLImage2dArray, OCLImage2dArrayTy)
 BUILTIN_TYPE(OCLImage3d, OCLImage3dTy)
 
+// OpenCL event_t.
+BUILTIN_TYPE(OCLEvent, OCLEventTy)
+
 // This represents the type of an expression whose type is
 // totally unknown, e.g. 'T::foo'.  It is permitted for this to
 // appear in situations where the structure of the type is

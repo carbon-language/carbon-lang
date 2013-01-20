@@ -4401,6 +4401,22 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
       SC = SC_OpenCLWorkGroupLocal;
       SCAsWritten = SC_OpenCLWorkGroupLocal;
     }
+
+    // OpenCL 1.2 spec, p6.9 r:
+    // The event type cannot be used to declare a program scope variable.
+    // The event type cannot be used with the __local, __constant and __global
+    // address space qualifiers.
+    if (R->isEventT()) {
+      if (S->getParent() == 0) {
+        Diag(D.getLocStart(), diag::err_event_t_global_var);
+        D.setInvalidType();
+      }
+
+      if (R.getAddressSpace()) {
+        Diag(D.getLocStart(), diag::err_event_t_addr_space_qual);
+        D.setInvalidType();
+      }
+    }
   }
 
   bool isExplicitSpecialization = false;
@@ -6136,12 +6152,26 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     }
   }
 
-  // OpenCL v1.2 s6.8 static is invalid for kernel functions.
-  if ((getLangOpts().OpenCLVersion >= 120)
-      && NewFD->hasAttr<OpenCLKernelAttr>()
-      && (SC == SC_Static)) {
-    Diag(D.getIdentifierLoc(), diag::err_static_kernel);
-    D.setInvalidType();
+  if (NewFD->hasAttr<OpenCLKernelAttr>()) {
+
+    // OpenCL v1.2 s6.8 static is invalid for kernel functions.
+    if ((getLangOpts().OpenCLVersion >= 120)
+        && (SC == SC_Static)) {
+      Diag(D.getIdentifierLoc(), diag::err_static_kernel);
+      D.setInvalidType();
+    }
+
+    // OpenCL v1.2 s6.8 n:
+    // Arguments to kernel functions in a program cannot be declared to be of
+    // type event_t.
+    for (FunctionDecl::param_iterator PI = NewFD->param_begin(),
+         PE = NewFD->param_end(); PI != PE; ++PI) {
+      if ((*PI)->getType()->isEventT()) {
+        Diag((*PI)->getLocation(), diag::err_event_t_kernel_arg);
+        D.setInvalidType();
+      }
+    }
+    
   }
 
   MarkUnusedFileScopedDecl(NewFD);
@@ -9775,6 +9805,14 @@ FieldDecl *Sema::HandleField(Scope *S, RecordDecl *Record,
       TInfo = Context.getTrivialTypeSourceInfo(T, Loc);
     }
   }
+
+  // OpenCL 1.2 spec, s6.9 r:
+  // The event type cannot be used to declare a structure or union field.
+  if (LangOpts.OpenCL && T->isEventT()) {
+    Diag(Loc, diag::err_event_t_struct_field);
+    D.setInvalidType();
+  }
+
 
   DiagnoseFunctionSpecifiers(D);
 

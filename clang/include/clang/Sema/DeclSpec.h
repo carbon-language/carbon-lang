@@ -282,6 +282,7 @@ public:
   static const TST TST_image2d_t = clang::TST_image2d_t;
   static const TST TST_image2d_array_t = clang::TST_image2d_array_t;
   static const TST TST_image3d_t = clang::TST_image3d_t;
+  static const TST TST_event_t = clang::TST_event_t;
   static const TST TST_error = clang::TST_error;
 
   // type-qualifiers

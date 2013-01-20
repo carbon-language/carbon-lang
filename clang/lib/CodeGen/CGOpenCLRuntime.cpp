@@ -55,5 +55,8 @@ llvm::Type *CGOpenCLRuntime::convertOpenCLSpecificType(const Type *T) {
   case BuiltinType::OCLImage3d:
     return llvm::PointerType::get(llvm::StructType::create(
                            CGM.getLLVMContext(), "opencl.image3d_t"), 0);
+  case BuiltinType::OCLEvent:
+    return llvm::PointerType::get(llvm::StructType::create(
+                           CGM.getLLVMContext(), "opencl.event_t"), 0);
   }
 }

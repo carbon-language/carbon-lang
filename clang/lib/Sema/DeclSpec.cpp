@@ -286,6 +286,7 @@ bool Declarator::isDeclarationOfFunction() const {
     case TST_image2d_t:
     case TST_image2d_array_t:
     case TST_image3d_t:
+    case TST_event_t:
       return false;
 
     case TST_decltype:
@@ -427,6 +428,7 @@ const char *DeclSpec::getSpecifierName(DeclSpec::TST T) {
   case DeclSpec::TST_image2d_t:   return "image2d_t";
   case DeclSpec::TST_image2d_array_t: return "image2d_array_t";
   case DeclSpec::TST_image3d_t:   return "image3d_t";
+  case DeclSpec::TST_event_t:     return "event_t";
   case DeclSpec::TST_error:       return "(error)";
   }
   llvm_unreachable("Unknown typespec!");

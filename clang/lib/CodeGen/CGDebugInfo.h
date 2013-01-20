@@ -55,6 +55,7 @@ class CGDebugInfo {
   llvm::DIType OCLImage1dDITy, OCLImage1dArrayDITy, OCLImage1dBufferDITy;
   llvm::DIType OCLImage2dDITy, OCLImage2dArrayDITy;
   llvm::DIType OCLImage3dDITy;
+  llvm::DIType OCLEventDITy;
   
   /// TypeCache - Cache of previously constructed Types.
   llvm::DenseMap<void *, llvm::WeakVH> TypeCache;

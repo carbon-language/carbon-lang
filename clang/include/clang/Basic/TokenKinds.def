@@ -455,6 +455,7 @@ KEYWORD(image1d_buffer_t            , KEYOPENCL)
 KEYWORD(image2d_t                   , KEYOPENCL)
 KEYWORD(image2d_array_t             , KEYOPENCL)
 KEYWORD(image3d_t                   , KEYOPENCL)
+KEYWORD(event_t                     , KEYOPENCL)
 
 // Borland Extensions.
 KEYWORD(__pascal                    , KEYALL)

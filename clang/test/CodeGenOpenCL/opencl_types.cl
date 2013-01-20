@@ -19,4 +19,6 @@ void fnc3(image3d_t img) {}
 // CHECK: @fnc3(%opencl.image3d_t*
 
 kernel void foo(image1d_t img) {
+	event_t evt;
+// CHECK: alloca %opencl.event_t*
 }
