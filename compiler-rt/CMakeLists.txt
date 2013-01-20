@@ -15,6 +15,19 @@ include(LLVMParseArguments)
 # runtime libraries.
 cmake_minimum_required(VERSION 2.8.8)
 
+# Compute the Clang version from the LLVM version.
+# FIXME: We should be able to reuse CLANG_VERSION variable calculated
+#        in Clang cmake files, instead of copying the rules here.
+string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
+       ${PACKAGE_VERSION})
+# Setup the paths where compiler-rt runtimes and headers should be stored.
+set(LIBCLANG_INSTALL_PATH lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION})
+string(TOLOWER ${CMAKE_SYSTEM_NAME} LIBCLANG_OS_DIR)
+set(COMPILER_RT_LIBRARY_OUTPUT_DIR 
+  ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/${LIBCLANG_OS_DIR})
+set(COMPILER_RT_LIBRARY_INSTALL_DIR
+ ${LIBCLANG_INSTALL_PATH}/lib/${LIBCLANG_OS_DIR}) 
+
 # Add path for custom modules
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
@@ -129,15 +142,6 @@ endif()
 filter_available_targets(SANITIZER_COMMON_SUPPORTED_ARCH
   x86_64 i386)
 
-# Compute the Clang version from the LLVM version.
-# FIXME: We should be able to reuse CLANG_VERSION variable calculated
-#        in Clang cmake files, instead of copying the rules here.
-string(REGEX MATCH "[0-9]+\\.[0-9]+(\\.[0-9]+)?" CLANG_VERSION
-       ${PACKAGE_VERSION})
-# Setup the paths where compiler-rt runtimes and headers should be stored.
-set(LIBCLANG_INSTALL_PATH lib${LLVM_LIBDIR_SUFFIX}/clang/${CLANG_VERSION})
-string(TOLOWER ${CMAKE_SYSTEM_NAME} LIBCLANG_OS_DIR)
-
 # Install compiler-rt headers.
 install(DIRECTORY include/
   DESTINATION ${LIBCLANG_INSTALL_PATH}/include
@@ -151,16 +155,12 @@ install(DIRECTORY include/
 macro(add_clang_compiler_rt_libraries)
   # Setup output directories so that clang in build tree works.
   set_target_properties(${ARGN} PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY
-      ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/${LIBCLANG_OS_DIR}
-    LIBRARY_OUTPUT_DIRECTORY
-      ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/lib/${LIBCLANG_OS_DIR}
-    )
+    ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR}
+    LIBRARY_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
   # Add installation command.
   install(TARGETS ${ARGN}
-    ARCHIVE DESTINATION ${LIBCLANG_INSTALL_PATH}/lib/${LIBCLANG_OS_DIR}
-    LIBRARY DESTINATION ${LIBCLANG_INSTALL_PATH}/lib/${LIBCLANG_OS_DIR}
-    )
+    ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR}
+    LIBRARY DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
 endmacro(add_clang_compiler_rt_libraries)
 
 # Add the public header's directory to the includes for all of compiler-rt.

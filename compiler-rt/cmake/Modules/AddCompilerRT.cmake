@@ -18,6 +18,32 @@ macro(add_compiler_rt_object_library name arch)
   endif()
 endmacro()
 
+# Adds static runtime for a given architecture and puts it in the proper
+# directory in the build and install trees.
+# add_compiler_rt_static_runtime(<name> <arch>
+#                                SOURCES <source files>
+#                                CFLAGS <compile flags>
+#                                DEFS <compile definitions>)
+macro(add_compiler_rt_static_runtime name arch)
+  if(CAN_TARGET_${arch})
+    parse_arguments(LIB "SOURCES;CFLAGS;DEFS" "" ${ARGN})
+    add_library(${name} STATIC ${LIB_SOURCES})
+    # Setup compile flags and definitions.
+    set_target_compile_flags(${name}
+      ${TARGET_${arch}_CFLAGS} ${LIB_CFLAGS})
+    set_property(TARGET ${name} APPEND PROPERTY
+      COMPILE_DEFINITIONS ${LIB_DEFS})
+    # Setup correct output directory in the build tree.
+    set_target_properties(${name} PROPERTIES
+            ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
+    # Add installation command.
+    install(TARGETS ${name}
+      ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
+  else()
+    message(FATAL_ERROR "Archtecture ${arch} can't be targeted")
+  endif()
+endmacro()
+
 # Unittests support.
 set(COMPILER_RT_GTEST_PATH ${LLVM_MAIN_SRC_DIR}/utils/unittest/googletest)
 set(COMPILER_RT_GTEST_SOURCE ${COMPILER_RT_GTEST_PATH}/gtest-all.cc)
