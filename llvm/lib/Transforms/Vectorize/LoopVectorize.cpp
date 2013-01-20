@@ -106,9 +106,6 @@ static const unsigned TinyTripCountVectorThreshold = 16;
 /// We don't unroll loops with a known constant trip count below this number.
 static const unsigned TinyTripCountUnrollThreshold = 128;
 
-/// We don't unroll loops that are larget than this threshold.
-static const unsigned MaxLoopSizeThreshold = 32;
-
 /// When performing a runtime memory check, do not check more than this
 /// number of pointers. Notice that the check is quadratic!
 static const unsigned RuntimeMemoryCheckThreshold = 4;
@@ -514,11 +511,12 @@ public:
                              const TargetTransformInfo &TTI)
       : TheLoop(L), SE(SE), LI(LI), Legal(Legal), TTI(TTI) {}
 
-  /// \return The most profitable vectorization factor.
+  /// \return The most profitable vectorization factor and the cost of that VF.
   /// This method checks every power of two up to VF. If UserVF is not ZERO
   /// then this vectorization factor will be selected if vectorization is
   /// possible.
-  unsigned selectVectorizationFactor(bool OptForSize, unsigned UserVF);
+  std::pair<unsigned, unsigned>
+  selectVectorizationFactor(bool OptForSize, unsigned UserVF);
 
   /// \returns The size (in bits) of the widest type in the code that
   /// needs to be vectorized. We ignore values that remain scalar such as
@@ -528,7 +526,10 @@ public:
   /// \return The most profitable unroll factor.
   /// If UserUF is non-zero then this method finds the best unroll-factor
   /// based on register pressure and other parameters.
-  unsigned selectUnrollFactor(bool OptForSize, unsigned UserUF);
+  /// VF and LoopCost are the selected vectorization factor and the cost of the
+  /// selected VF.
+  unsigned selectUnrollFactor(bool OptForSize, unsigned UserUF, unsigned VF,
+                              unsigned LoopCost);
 
   /// \brief A struct that represents some properties of the register usage
   /// of a loop.
@@ -626,8 +627,13 @@ struct LoopVectorize : public LoopPass {
       return false;
     }
 
-    unsigned VF = CM.selectVectorizationFactor(OptForSize, VectorizationFactor);
-    unsigned UF = CM.selectUnrollFactor(OptForSize, VectorizationUnroll);
+    // Select the optimal vectorization factor.
+    std::pair<unsigned, unsigned> VFPair;
+    VFPair = CM.selectVectorizationFactor(OptForSize, VectorizationFactor);
+    // Select the unroll factor.
+    unsigned UF = CM.selectUnrollFactor(OptForSize, VectorizationUnroll,
+                                        VFPair.first, VFPair.second);
+    unsigned VF = VFPair.first;
 
     if (VF == 1) {
       DEBUG(dbgs() << "LV: Vectorization is possible but not beneficial.\n");
@@ -2633,12 +2639,12 @@ bool LoopVectorizationLegality::hasComputableBounds(Value *Ptr) {
   return AR->isAffine();
 }
 
-unsigned
+std::pair<unsigned, unsigned>
 LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
                                                       unsigned UserVF) {
   if (OptForSize && Legal->getRuntimePointerCheck()->Need) {
     DEBUG(dbgs() << "LV: Aborting. Runtime ptr check is required in Os.\n");
-    return 1;
+    return std::make_pair(1U, 0U);
   }
 
   // Find the trip count.
@@ -2657,7 +2663,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   }
 
   assert(MaxVectorSize <= 32 && "Did not expect to pack so many elements"
-         " into one vector.");
+         " into one vector!");
 
   unsigned VF = MaxVectorSize;
 
@@ -2666,7 +2672,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
     // If we are unable to calculate the trip count then don't try to vectorize.
     if (TC < 2) {
       DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
-      return 1;
+      return std::make_pair(1U, 0U);
     }
 
     // Find the maximum SIMD width that can fit within the trip count.
@@ -2679,7 +2685,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
     // zero then we require a tail.
     if (VF < 2) {
       DEBUG(dbgs() << "LV: Aborting. A tail loop is required in Os.\n");
-      return 1;
+      return std::make_pair(1U, 0U);
     }
   }
 
@@ -2687,7 +2693,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
     assert(isPowerOf2_32(UserVF) && "VF needs to be a power of two");
     DEBUG(dbgs() << "LV: Using user VF "<<UserVF<<".\n");
 
-    return UserVF;
+    return std::make_pair(UserVF, 0U);
   }
 
   float Cost = expectedCost(1);
@@ -2707,7 +2713,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
   }
 
   DEBUG(dbgs() << "LV: Selecting VF = : "<< Width << ".\n");
-  return Width;
+  return std::make_pair<unsigned, unsigned>(Width, VF * Cost);
 }
 
 unsigned LoopVectorizationCostModel::getWidestType() {
@@ -2748,7 +2754,24 @@ unsigned LoopVectorizationCostModel::getWidestType() {
 
 unsigned
 LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
-                                               unsigned UserUF) {
+                                               unsigned UserUF,
+                                               unsigned VF,
+                                               unsigned LoopCost) {
+
+  // -- The unroll heuristics --
+  // We unroll the loop in order to expose ILP and reduce the loop overhead.
+  // There are many micro-architectural considerations that we can't predict
+  // at this level. For example frontend pressure (on decode or fetch) due to
+  // code size, or the number and capabilities of the execution ports.
+  //
+  // We use the following heuristics to select the unroll factor:
+  // 1. If the code has reductions the we unroll in order to break the cross
+  // iteration dependency.
+  // 2. If the loop is really small then we unroll in order to reduce the loop
+  // overhead.
+  // 3. We don't unroll if we think that we will spill registers to memory due
+  // to the increased register pressure.
+
   // Use the user preference, unless 'auto' is selected.
   if (UserUF != 0)
     return UserUF;
@@ -2781,19 +2804,39 @@ LoopVectorizationCostModel::selectUnrollFactor(bool OptForSize,
   // fit without causing spills.
   unsigned UF = (TargetVectorRegisters - R.LoopInvariantRegs) / R.MaxLocalUsers;
 
-  // We don't want to unroll the loops to the point where they do not fit into
-  // the decoded cache. Assume that we only allow 32 IR instructions.
-  UF = std::min(UF, (MaxLoopSizeThreshold / R.NumInstructions));
-
   // Clamp the unroll factor ranges to reasonable factors.
   unsigned MaxUnrollSize = TTI.getMaximumUnrollFactor();
-  
+
+  // If we did not calculate the cost for VF (because the user selected the VF)
+  // then we calculate the cost of VF here.
+  if (LoopCost == 0)
+    LoopCost = expectedCost(VF);
+
+  // Clamp the calculated UF to be between the 1 and the max unroll factor
+  // that the target allows.
   if (UF > MaxUnrollSize)
     UF = MaxUnrollSize;
   else if (UF < 1)
     UF = 1;
 
-  return UF;
+  if (Legal->getReductionVars()->size()) {
+    DEBUG(dbgs() << "LV: Unrolling because of reductions. \n");
+    return UF;
+  }
+
+  // We want to unroll tiny loops in order to reduce the loop overhead.
+  // We assume that the cost overhead is 1 and we use the cost model
+  // to estimate the cost of the loop and unroll until the cost of the
+  // loop overhead is about 5% of the cost of the loop.
+  DEBUG(dbgs() << "LV: Loop cost is "<< LoopCost <<" \n");
+  if (LoopCost < 20) {
+    DEBUG(dbgs() << "LV: Unrolling to reduce branch cost. \n");
+    unsigned NewUF = 20/LoopCost + 1;
+    return std::min(NewUF, UF);
+  }
+
+  DEBUG(dbgs() << "LV: Not Unrolling. \n");
+  return 1;
 }
 
 LoopVectorizationCostModel::RegisterUsage
