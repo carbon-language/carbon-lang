@@ -33,8 +33,10 @@ class PseudoInstXCore<dag outs, dag ins, string asmstr, list<dag> pattern>
 // Instruction formats
 //===----------------------------------------------------------------------===//
 
-class _F3R<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _F3R<bits<5> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<2, outs, ins, asmstr, pattern> {
+  let Inst{15-11} = opc;
+  let DecoderMethod = "Decode3RInstruction";
 }
 
 class _FL3R<dag outs, dag ins, string asmstr, list<dag> pattern>

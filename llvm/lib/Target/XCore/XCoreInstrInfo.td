@@ -200,48 +200,40 @@ def InlineJT32 : Operand<i32> {
 
 // Three operand short
 
-multiclass F3R_2RUS<string OpcStr, SDNode OpNode> {
-  def _3r: _F3R<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
-  def _2rus : _F2RUS<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 [(set GRRegs:$dst, (OpNode GRRegs:$b, immUs:$c))]>;
+multiclass F3R_2RUS<bits<5> opc, string OpcStr, SDNode OpNode> {
+  def _3r: _F3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+                !strconcat(OpcStr, " $dst, $b, $c"),
+                [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
+  def _2rus : _F2RUS<(outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
+                     !strconcat(OpcStr, " $dst, $b, $c"),
+                     [(set GRRegs:$dst, (OpNode GRRegs:$b, immUs:$c))]>;
 }
 
-multiclass F3R_2RUS_np<string OpcStr> {
-  def _3r: _F3R<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 []>;
-  def _2rus : _F2RUS<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 []>;
+multiclass F3R_2RUS_np<bits<5> opc, string OpcStr> {
+  def _3r: _F3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+                !strconcat(OpcStr, " $dst, $b, $c"), []>;
+  def _2rus : _F2RUS<(outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
+                     !strconcat(OpcStr, " $dst, $b, $c"), []>;
 }
 
-multiclass F3R_2RBITP<string OpcStr, SDNode OpNode> {
-  def _3r: _F3R<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
+multiclass F3R_2RBITP<bits<5> opc, string OpcStr, SDNode OpNode> {
+  def _3r: _F3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+                !strconcat(OpcStr, " $dst, $b, $c"),
+                [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
   def _2rus : _F2RUS<
                  (outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
                  !strconcat(OpcStr, " $dst, $b, $c"),
                  [(set GRRegs:$dst, (OpNode GRRegs:$b, immBitp:$c))]>;
 }
 
-class F3R<string OpcStr, SDNode OpNode> : _F3R<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
+class F3R<bits<5> opc, string OpcStr, SDNode OpNode> :
+  _F3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+       !strconcat(OpcStr, " $dst, $b, $c"),
+       [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
 
-class F3R_np<string OpcStr> : _F3R<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 []>;
+class F3R_np<bits<5> opc, string OpcStr> :
+  _F3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+       !strconcat(OpcStr, " $dst, $b, $c"), []>;
 // Three operand long
 
 /// FL3R_L2RUS multiclass - Define a normal FL3R/FL2RUS pattern in one shot.
@@ -390,46 +382,44 @@ let usesCustomInserter = 1 in {
 //===----------------------------------------------------------------------===//
 
 // Three operand short
-defm ADD : F3R_2RUS<"add", add>;
-defm SUB : F3R_2RUS<"sub", sub>;
+defm ADD : F3R_2RUS<0b00010, "add", add>;
+defm SUB : F3R_2RUS<0b00011, "sub", sub>;
 let neverHasSideEffects = 1 in {
-defm EQ : F3R_2RUS_np<"eq">;
-def LSS_3r : F3R_np<"lss">;
-def LSU_3r : F3R_np<"lsu">;
+defm EQ : F3R_2RUS_np<0b00110, "eq">;
+def LSS_3r : F3R_np<0b11000, "lss">;
+def LSU_3r : F3R_np<0b11001, "lsu">;
 }
-def AND_3r : F3R<"and", and>;
-def OR_3r : F3R<"or", or>;
+def AND_3r : F3R<0b00111, "and", and>;
+def OR_3r : F3R<0b01000, "or", or>;
 
 let mayLoad=1 in {
-def LDW_3r : _F3R<(outs GRRegs:$dst), (ins GRRegs:$addr, GRRegs:$offset),
-                  "ldw $dst, $addr[$offset]",
-                  []>;
+def LDW_3r : _F3R<0b01001, (outs GRRegs:$dst),
+                  (ins GRRegs:$addr, GRRegs:$offset),
+                  "ldw $dst, $addr[$offset]", []>;
 
 def LDW_2rus : _F2RUS<(outs GRRegs:$dst), (ins GRRegs:$addr, i32imm:$offset),
                   "ldw $dst, $addr[$offset]",
                   []>;
 
-def LD16S_3r :  _F3R<(outs GRRegs:$dst), (ins GRRegs:$addr, GRRegs:$offset),
-                  "ld16s $dst, $addr[$offset]",
-                  []>;
+def LD16S_3r :  _F3R<0b10000, (outs GRRegs:$dst),
+                     (ins GRRegs:$addr, GRRegs:$offset),
+                     "ld16s $dst, $addr[$offset]", []>;
 
-def LD8U_3r :  _F3R<(outs GRRegs:$dst), (ins GRRegs:$addr, GRRegs:$offset),
-                  "ld8u $dst, $addr[$offset]",
-                  []>;
+def LD8U_3r :  _F3R<0b10001, (outs GRRegs:$dst),
+                    (ins GRRegs:$addr, GRRegs:$offset),
+                    "ld8u $dst, $addr[$offset]", []>;
 }
 
 let mayStore=1 in {
-def STW_3r : _F3R<(outs), (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
-                  "stw $val, $addr[$offset]",
-                  []>;
+def STW_3r : _FL3R<(outs), (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
+                    "stw $val, $addr[$offset]", []>;
 
 def STW_2rus : _F2RUS<(outs), (ins GRRegs:$val, GRRegs:$addr, i32imm:$offset),
-                  "stw $val, $addr[$offset]",
-                  []>;
+                  "stw $val, $addr[$offset]", []>;
 }
 
-defm SHL : F3R_2RBITP<"shl", shl>;
-defm SHR : F3R_2RBITP<"shr", srl>;
+defm SHL : F3R_2RBITP<0b00100, "shl", shl>;
+defm SHR : F3R_2RBITP<0b00101, "shr", srl>;
 // TODO tsetr
 
 // Three operand long
