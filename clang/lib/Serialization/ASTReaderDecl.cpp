@@ -1937,7 +1937,7 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   ASTDeclReader Reader(*this, *Loc.F, ID, RawLocation, Record,Idx);
 
   Decl *D = 0;
-  switch ((DeclCode)DeclsCursor.ReadRecord(Code, Record)) {
+  switch ((DeclCode)DeclsCursor.readRecord(Code, Record)) {
   case DECL_CONTEXT_LEXICAL:
   case DECL_CONTEXT_VISIBLE:
     llvm_unreachable("Record cannot be de-serialized with ReadDeclRecord");
@@ -2189,7 +2189,7 @@ void ASTReader::loadDeclUpdateRecords(serialization::DeclID ID, Decl *D) {
       Cursor.JumpToBit(Offset);
       RecordData Record;
       unsigned Code = Cursor.ReadCode();
-      unsigned RecCode = Cursor.ReadRecord(Code, Record);
+      unsigned RecCode = Cursor.readRecord(Code, Record);
       (void)RecCode;
       assert(RecCode == DECL_UPDATES && "Expected DECL_UPDATES record!");
       

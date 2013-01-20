@@ -1595,36 +1595,27 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
   Stmt::EmptyShell Empty;
 
   while (true) {
-    unsigned Code = Cursor.ReadCode();
-    if (Code == llvm::bitc::END_BLOCK) {
-      if (Cursor.ReadBlockEnd()) {
-        Error("error at end of block in AST file");
-        return 0;
-      }
+    llvm::BitstreamEntry Entry = Cursor.advanceSkippingSubblocks();
+    
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::SubBlock: // Handled for us already.
+    case llvm::BitstreamEntry::Error:
+      Error("malformed block record in AST file");
+      return 0;
+    case llvm::BitstreamEntry::EndBlock:
+      goto Done;
+    case llvm::BitstreamEntry::Record:
+      // The interesting case.
       break;
     }
 
-    if (Code == llvm::bitc::ENTER_SUBBLOCK) {
-      // No known subblocks, always skip them.
-      Cursor.ReadSubBlockID();
-      if (Cursor.SkipBlock()) {
-        Error("malformed block record in AST file");
-        return 0;
-      }
-      continue;
-    }
-
-    if (Code == llvm::bitc::DEFINE_ABBREV) {
-      Cursor.ReadAbbrevRecord();
-      continue;
-    }
 
     Stmt *S = 0;
     Idx = 0;
     Record.clear();
     bool Finished = false;
     bool IsStmtReference = false;
-    switch ((StmtCode)Cursor.ReadRecord(Code, Record)) {
+    switch ((StmtCode)Cursor.readRecord(Entry.ID, Record)) {
     case STMT_STOP:
       Finished = true;
       break;
@@ -2249,11 +2240,8 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     assert(Idx == Record.size() && "Invalid deserialization of statement");
     StmtStack.push_back(S);
   }
-
-#ifndef NDEBUG
+Done:
   assert(StmtStack.size() > PrevNumStmts && "Read too many sub stmts!");
   assert(StmtStack.size() == PrevNumStmts + 1 && "Extra expressions on stack!");
-#endif
-
   return StmtStack.pop_back_val();
 }

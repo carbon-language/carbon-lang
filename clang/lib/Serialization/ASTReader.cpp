@@ -671,17 +671,16 @@ bool ASTReader::ReadDeclContextStorage(ModuleFile &M,
     Cursor.JumpToBit(Offsets.first);
 
     RecordData Record;
-    const char *Blob;
-    unsigned BlobLen;
+    StringRef Blob;
     unsigned Code = Cursor.ReadCode();
-    unsigned RecCode = Cursor.ReadRecord(Code, Record, Blob, BlobLen);
+    unsigned RecCode = Cursor.readRecord(Code, Record, &Blob);
     if (RecCode != DECL_CONTEXT_LEXICAL) {
       Error("Expected lexical block");
       return true;
     }
 
-    Info.LexicalDecls = reinterpret_cast<const KindDeclIDPair*>(Blob);
-    Info.NumLexicalDecls = BlobLen / sizeof(KindDeclIDPair);
+    Info.LexicalDecls = reinterpret_cast<const KindDeclIDPair*>(Blob.data());
+    Info.NumLexicalDecls = Blob.size() / sizeof(KindDeclIDPair);
   }
 
   // Now the lookup table.
@@ -689,18 +688,17 @@ bool ASTReader::ReadDeclContextStorage(ModuleFile &M,
     Cursor.JumpToBit(Offsets.second);
 
     RecordData Record;
-    const char *Blob;
-    unsigned BlobLen;
+    StringRef Blob;
     unsigned Code = Cursor.ReadCode();
-    unsigned RecCode = Cursor.ReadRecord(Code, Record, Blob, BlobLen);
+    unsigned RecCode = Cursor.readRecord(Code, Record, &Blob);
     if (RecCode != DECL_CONTEXT_VISIBLE) {
       Error("Expected visible lookup table block");
       return true;
     }
     Info.NameLookupTableData
       = ASTDeclContextNameLookupTable::Create(
-                    (const unsigned char *)Blob + Record[0],
-                    (const unsigned char *)Blob,
+                    (const unsigned char *)Blob.data() + Record[0],
+                    (const unsigned char *)Blob.data(),
                     ASTDeclContextNameLookupTrait(*this, M));
   }
 
@@ -811,10 +809,8 @@ bool ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
     }
     
     // Read a record.
-    const char *BlobStart;
-    unsigned BlobLen;
     Record.clear();
-    switch (SLocEntryCursor.ReadRecord(E.ID, Record, BlobStart, BlobLen)) {
+    switch (SLocEntryCursor.readRecord(E.ID, Record)) {
     default:  // Default behavior: ignore.
       break;
 
@@ -882,9 +878,8 @@ bool ASTReader::ReadSLocEntry(int ID) {
   }
   
   RecordData Record;
-  const char *BlobStart;
-  unsigned BlobLen;
-  switch (SLocEntryCursor.ReadRecord(Entry.ID, Record, BlobStart, BlobLen)) {
+  StringRef Blob;
+  switch (SLocEntryCursor.readRecord(Entry.ID, Record, &Blob)) {
   default:
     Error("incorrectly-formatted source location entry in AST file");
     return true;
@@ -930,8 +925,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
         ContentCache->ContentsEntry == ContentCache->OrigEntry) {
       unsigned Code = SLocEntryCursor.ReadCode();
       Record.clear();
-      unsigned RecCode
-        = SLocEntryCursor.ReadRecord(Code, Record, BlobStart, BlobLen);
+      unsigned RecCode = SLocEntryCursor.readRecord(Code, Record, &Blob);
       
       if (RecCode != SM_SLOC_BUFFER_BLOB) {
         Error("AST record has invalid code");
@@ -939,8 +933,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
       }
       
       llvm::MemoryBuffer *Buffer
-        = llvm::MemoryBuffer::getMemBuffer(StringRef(BlobStart, BlobLen - 1),
-                                           File->getName());
+        = llvm::MemoryBuffer::getMemBuffer(Blob.drop_back(1), File->getName());
       SourceMgr.overrideFileContents(File, Buffer);
     }
 
@@ -948,7 +941,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
   }
 
   case SM_SLOC_BUFFER_ENTRY: {
-    const char *Name = BlobStart;
+    const char *Name = Blob.data();
     unsigned Offset = Record[0];
     SrcMgr::CharacteristicKind
       FileCharacter = (SrcMgr::CharacteristicKind)Record[2];
@@ -959,7 +952,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
     unsigned Code = SLocEntryCursor.ReadCode();
     Record.clear();
     unsigned RecCode
-      = SLocEntryCursor.ReadRecord(Code, Record, BlobStart, BlobLen);
+      = SLocEntryCursor.readRecord(Code, Record, &Blob);
 
     if (RecCode != SM_SLOC_BUFFER_BLOB) {
       Error("AST record has invalid code");
@@ -967,8 +960,7 @@ bool ASTReader::ReadSLocEntry(int ID) {
     }
 
     llvm::MemoryBuffer *Buffer
-      = llvm::MemoryBuffer::getMemBuffer(StringRef(BlobStart, BlobLen - 1),
-                                         Name);
+      = llvm::MemoryBuffer::getMemBuffer(Blob.drop_back(1), Name);
     SourceMgr.createFileIDForMemBuffer(Buffer, FileCharacter, ID,
                                        BaseOffset + Offset, IncludeLoc);
     break;
@@ -1100,12 +1092,9 @@ void ASTReader::ReadMacroRecord(ModuleFile &F, uint64_t Offset,
     }
 
     // Read a record.
-    const char *BlobStart = 0;
-    unsigned BlobLen = 0;
     Record.clear();
     PreprocessorRecordTypes RecType =
-      (PreprocessorRecordTypes)Stream.ReadRecord(Entry.ID, Record, BlobStart,
-                                                 BlobLen);
+      (PreprocessorRecordTypes)Stream.readRecord(Entry.ID, Record);
     switch (RecType) {
     case PP_MACRO_OBJECT_LIKE:
     case PP_MACRO_FUNCTION_LIKE: {
@@ -1361,10 +1350,8 @@ void ASTReader::ReadDefinedMacros() {
         goto NextCursor;
         
       case llvm::BitstreamEntry::Record:
-        const char *BlobStart;
-        unsigned BlobLen;
         Record.clear();
-        switch (Cursor.ReadRecord(E.ID, Record, BlobStart, BlobLen)) {
+        switch (Cursor.readRecord(E.ID, Record)) {
         default:  // Default behavior: ignore.
           break;
           
@@ -1470,10 +1457,8 @@ ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
   
   unsigned Code = Cursor.ReadCode();
   RecordData Record;
-  const char *BlobStart = 0;
-  unsigned BlobLen = 0;
-  switch ((InputFileRecordTypes)Cursor.ReadRecord(Code, Record,
-                                                  BlobStart, BlobLen)) {
+  StringRef Blob;
+  switch ((InputFileRecordTypes)Cursor.readRecord(Code, Record, &Blob)) {
   case INPUT_FILE: {
     unsigned StoredID = Record[0];
     assert(ID == StoredID && "Bogus stored ID or offset");
@@ -1483,7 +1468,7 @@ ASTReader::getInputFile(ModuleFile &F, unsigned ID, bool Complain) {
     bool Overridden = (bool)Record[3];
     
     // Get the file entry for this input file.
-    StringRef OrigFilename(BlobStart, BlobLen);
+    StringRef OrigFilename = Blob;
     std::string Filename = OrigFilename;
     MaybeAddSystemRootToFilename(F, Filename);
     const FileEntry *File 
@@ -1661,10 +1646,8 @@ ASTReader::ReadControlBlock(ModuleFile &F,
 
     // Read and process a record.
     Record.clear();
-    const char *BlobStart = 0;
-    unsigned BlobLen = 0;
-    switch ((ControlRecordTypes)Stream.ReadRecord(Entry.ID, Record,
-                                                  BlobStart, BlobLen)) {
+    StringRef Blob;
+    switch ((ControlRecordTypes)Stream.readRecord(Entry.ID, Record, &Blob)) {
     case METADATA: {
       if (Record[0] != VERSION_MAJOR && !DisableValidation) {
         if ((ClientLoadCapabilities & ARR_VersionMismatch) == 0)
@@ -1682,7 +1665,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       F.RelocatablePCH = Record[4];
 
       const std::string &CurBranch = getClangFullRepositoryVersion();
-      StringRef ASTBranch(BlobStart, BlobLen);
+      StringRef ASTBranch = Blob;
       if (StringRef(CurBranch) != ASTBranch && !DisableValidation) {
         if ((ClientLoadCapabilities & ARR_VersionMismatch) == 0)
           Diag(diag::warn_pch_different_branch) << ASTBranch << CurBranch;
@@ -1779,7 +1762,7 @@ ASTReader::ReadControlBlock(ModuleFile &F,
 
     case ORIGINAL_FILE:
       F.OriginalSourceFileID = FileID::get(Record[0]);
-      F.ActualOriginalSourceFileName.assign(BlobStart, BlobLen);
+      F.ActualOriginalSourceFileName = Blob;
       F.OriginalSourceFileName = F.ActualOriginalSourceFileName;
       MaybeAddSystemRootToFilename(F, F.OriginalSourceFileName);
       break;
@@ -1789,11 +1772,11 @@ ASTReader::ReadControlBlock(ModuleFile &F,
       break;
 
     case ORIGINAL_PCH_DIR:
-      F.OriginalDir.assign(BlobStart, BlobLen);
+      F.OriginalDir = Blob;
       break;
 
     case INPUT_FILE_OFFSETS:
-      F.InputFileOffsets = (const uint32_t *)BlobStart;
+      F.InputFileOffsets = (const uint32_t *)Blob.data();
       F.InputFilesLoaded.resize(Record[0]);
       break;
     }
@@ -1914,10 +1897,8 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
 
     // Read and process a record.
     Record.clear();
-    const char *BlobStart = 0;
-    unsigned BlobLen = 0;
-    switch ((ASTRecordTypes)Stream.ReadRecord(Entry.ID, Record,
-                                              BlobStart, BlobLen)) {
+    StringRef Blob;
+    switch ((ASTRecordTypes)Stream.readRecord(Entry.ID, Record, &Blob)) {
     default:  // Default behavior: ignore.
       break;
 
@@ -1926,7 +1907,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
         Error("duplicate TYPE_OFFSET record in AST file");
         return true;
       }
-      F.TypeOffsets = (const uint32_t *)BlobStart;
+      F.TypeOffsets = (const uint32_t *)Blob.data();
       F.LocalNumTypes = Record[0];
       unsigned LocalBaseTypeIndex = Record[1];
       F.BaseTypeIndex = getTotalNumTypes();
@@ -1950,7 +1931,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
         Error("duplicate DECL_OFFSET record in AST file");
         return true;
       }
-      F.DeclOffsets = (const DeclOffset *)BlobStart;
+      F.DeclOffsets = (const DeclOffset *)Blob.data();
       F.LocalNumDecls = Record[0];
       unsigned LocalBaseDeclID = Record[1];
       F.BaseDeclID = getTotalNumDecls();
@@ -1978,9 +1959,9 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
     case TU_UPDATE_LEXICAL: {
       DeclContext *TU = Context.getTranslationUnitDecl();
       DeclContextInfo &Info = F.DeclContextInfos[TU];
-      Info.LexicalDecls = reinterpret_cast<const KindDeclIDPair *>(BlobStart);
+      Info.LexicalDecls = reinterpret_cast<const KindDeclIDPair *>(Blob.data());
       Info.NumLexicalDecls 
-        = static_cast<unsigned int>(BlobLen / sizeof(KindDeclIDPair));
+        = static_cast<unsigned int>(Blob.size() / sizeof(KindDeclIDPair));
       TU->setHasExternalLexicalStorage(true);
       break;
     }
@@ -1990,8 +1971,8 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       serialization::DeclID ID = ReadDeclID(F, Record, Idx);
       ASTDeclContextNameLookupTable *Table =
         ASTDeclContextNameLookupTable::Create(
-                        (const unsigned char *)BlobStart + Record[Idx++],
-                        (const unsigned char *)BlobStart,
+                        (const unsigned char *)Blob.data() + Record[Idx++],
+                        (const unsigned char *)Blob.data(),
                         ASTDeclContextNameLookupTrait(*this, F));
       if (ID == PREDEF_DECL_TRANSLATION_UNIT_ID) { // Is it the TU?
         DeclContext *TU = Context.getTranslationUnitDecl();
@@ -2003,7 +1984,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
     }
 
     case IDENTIFIER_TABLE:
-      F.IdentifierTableData = BlobStart;
+      F.IdentifierTableData = Blob.data();
       if (Record[0]) {
         F.IdentifierLookupTable
           = ASTIdentifierLookupTable::Create(
@@ -2020,7 +2001,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
         Error("duplicate IDENTIFIER_OFFSET record in AST file");
         return true;
       }
-      F.IdentifierOffsets = (const uint32_t *)BlobStart;
+      F.IdentifierOffsets = (const uint32_t *)Blob.data();
       F.LocalNumIdentifiers = Record[0];
       unsigned LocalBaseIdentifierID = Record[1];
       F.BaseIdentifierID = getTotalNumIdentifiers();
@@ -2098,7 +2079,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       break;
 
     case SELECTOR_OFFSETS: {
-      F.SelectorOffsets = (const uint32_t *)BlobStart;
+      F.SelectorOffsets = (const uint32_t *)Blob.data();
       F.LocalNumSelectors = Record[0];
       unsigned LocalBaseSelectorID = Record[1];
       F.BaseSelectorID = getTotalNumSelectors();
@@ -2120,7 +2101,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
     }
         
     case METHOD_POOL:
-      F.SelectorLookupTableData = (const unsigned char *)BlobStart;
+      F.SelectorLookupTableData = (const unsigned char *)Blob.data();
       if (Record[0])
         F.SelectorLookupTable
           = ASTSelectorLookupTable::Create(
@@ -2147,12 +2128,12 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       break;
       
     case FILE_SORTED_DECLS:
-      F.FileSortedDecls = (const DeclID *)BlobStart;
+      F.FileSortedDecls = (const DeclID *)Blob.data();
       F.NumFileSortedDecls = Record[0];
       break;
 
     case SOURCE_LOCATION_OFFSETS: {
-      F.SLocEntryOffsets = (const uint32_t *)BlobStart;
+      F.SLocEntryOffsets = (const uint32_t *)Blob.data();
       F.LocalNumSLocEntries = Record[0];
       unsigned SLocSpaceSize = Record[1];
       llvm::tie(F.SLocEntryBaseID, F.SLocEntryBaseOffset) =
@@ -2185,8 +2166,8 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
 
     case MODULE_OFFSET_MAP: {
       // Additional remapping information.
-      const unsigned char *Data = (const unsigned char*)BlobStart;
-      const unsigned char *DataEnd = Data + BlobLen;
+      const unsigned char *Data = (const unsigned char*)Blob.data();
+      const unsigned char *DataEnd = Data + Blob.size();
       
       // Continuous range maps we may be updating in our module.
       ContinuousRangeMap<uint32_t, int, 2>::Builder SLocRemap(F.SLocRemap);
@@ -2322,9 +2303,9 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       break;
 
     case PPD_ENTITIES_OFFSETS: {
-      F.PreprocessedEntityOffsets = (const PPEntityOffset *)BlobStart;
-      assert(BlobLen % sizeof(PPEntityOffset) == 0);
-      F.NumPreprocessedEntities = BlobLen / sizeof(PPEntityOffset);
+      F.PreprocessedEntityOffsets = (const PPEntityOffset *)Blob.data();
+      assert(Blob.size() % sizeof(PPEntityOffset) == 0);
+      F.NumPreprocessedEntities = Blob.size() / sizeof(PPEntityOffset);
 
       unsigned LocalBasePreprocessedEntityID = Record[0];
       
@@ -2382,7 +2363,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       }
       
       F.LocalNumObjCCategoriesInMap = Record[0];
-      F.ObjCCategoriesMap = (const ObjCCategoriesInfo *)BlobStart;
+      F.ObjCCategoriesMap = (const ObjCCategoriesInfo *)Blob.data();
       break;
     }
         
@@ -2397,7 +2378,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       }
       
       F.LocalNumCXXBaseSpecifiers = Record[0];
-      F.CXXBaseSpecifiersOffsets = (const uint32_t *)BlobStart;
+      F.CXXBaseSpecifiersOffsets = (const uint32_t *)Blob.data();
       NumCXXBaseSpecifiersLoaded += F.LocalNumCXXBaseSpecifiers;
       break;
     }
@@ -2419,9 +2400,9 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       break;
 
     case HEADER_SEARCH_TABLE: {
-      F.HeaderFileInfoTableData = BlobStart;
+      F.HeaderFileInfoTableData = Blob.data();
       F.LocalNumHeaderFileInfos = Record[1];
-      F.HeaderFileFrameworkStrings = BlobStart + Record[2];
+      F.HeaderFileFrameworkStrings = Blob.data() + Record[2];
       if (Record[0]) {
         F.HeaderFileInfoTable
           = HeaderFileInfoLookupTable::Create(
@@ -2429,7 +2410,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
                    (const unsigned char *)F.HeaderFileInfoTableData,
                    HeaderFileInfoTrait(*this, F, 
                                        &PP.getHeaderSearchInfo(),
-                                       BlobStart + Record[2]));
+                                       Blob.data() + Record[2]));
         
         PP.getHeaderSearchInfo().SetExternalSource(this);
         if (!PP.getHeaderSearchInfo().getExternalLookup())
@@ -2483,7 +2464,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
       }
       
       F.LocalNumRedeclarationsInMap = Record[0];
-      F.RedeclarationsMap = (const LocalRedeclarationsInfo *)BlobStart;
+      F.RedeclarationsMap = (const LocalRedeclarationsInfo *)Blob.data();
       break;
     }
         
@@ -2502,7 +2483,7 @@ bool ASTReader::ReadASTBlock(ModuleFile &F) {
         Error("duplicate MACRO_OFFSET record in AST file");
         return true;
       }
-      F.MacroOffsets = (const uint32_t *)BlobStart;
+      F.MacroOffsets = (const uint32_t *)Blob.data();
       F.LocalNumMacros = Record[0];
       unsigned LocalBaseMacroID = Record[1];
       F.BaseMacroID = getTotalNumMacros();
@@ -3123,11 +3104,9 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
     }
     
     Record.clear();
-    const char *BlobStart = 0;
-    unsigned BlobLen = 0;
-    if (Stream.ReadRecord(Entry.ID, Record, BlobStart, BlobLen)
-          == ORIGINAL_FILE)
-      return std::string(BlobStart, BlobLen);
+    StringRef Blob;
+    if (Stream.readRecord(Entry.ID, Record, &Blob) == ORIGINAL_FILE)
+      return Blob.str();
   }
 }
 
@@ -3208,17 +3187,15 @@ bool ASTReader::readASTFileControlBlock(StringRef Filename,
       return true;
     
     Record.clear();
-    const char *BlobStart = 0;
-    unsigned BlobLen = 0;
-    unsigned RecCode = Stream.ReadRecord(Entry.ID, Record, BlobStart, BlobLen);
+    StringRef Blob;
+    unsigned RecCode = Stream.readRecord(Entry.ID, Record, &Blob);
     switch ((ControlRecordTypes)RecCode) {
     case METADATA: {
       if (Record[0] != VERSION_MAJOR)
         return true;
 
       const std::string &CurBranch = getClangFullRepositoryVersion();
-      StringRef ASTBranch(BlobStart, BlobLen);
-      if (StringRef(CurBranch) != ASTBranch)
+      if (StringRef(CurBranch) != Blob)
         return true;
 
       break;
@@ -3300,10 +3277,9 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
     }
 
     // Read a record.
-    const char *BlobStart;
-    unsigned BlobLen;
+    StringRef Blob;
     Record.clear();
-    switch (F.Stream.ReadRecord(Entry.ID, Record, BlobStart, BlobLen)) {
+    switch (F.Stream.readRecord(Entry.ID, Record, &Blob)) {
     default:  // Default behavior: ignore.
       break;
       
@@ -3318,7 +3294,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         return true;
       }
       
-      StringRef Name(BlobStart, BlobLen);
+      StringRef Name = Blob;
       SubmoduleID GlobalID = getGlobalSubmoduleID(F, Record[0]);
       SubmoduleID Parent = getGlobalSubmoduleID(F, Record[1]);
       bool IsFramework = Record[2];
@@ -3369,8 +3345,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       if (!CurrentModule)
         break;
       
-      StringRef FileName(BlobStart, BlobLen);
-      if (const FileEntry *Umbrella = PP.getFileManager().getFile(FileName)) {
+      if (const FileEntry *Umbrella = PP.getFileManager().getFile(Blob)) {
         if (!CurrentModule->getUmbrellaHeader())
           ModMap.setUmbrellaHeader(CurrentModule, Umbrella);
         else if (CurrentModule->getUmbrellaHeader() != Umbrella) {
@@ -3391,8 +3366,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         break;
       
       // FIXME: Be more lazy about this!
-      StringRef FileName(BlobStart, BlobLen);
-      if (const FileEntry *File = PP.getFileManager().getFile(FileName)) {
+      if (const FileEntry *File = PP.getFileManager().getFile(Blob)) {
         if (std::find(CurrentModule->Headers.begin(), 
                       CurrentModule->Headers.end(), 
                       File) == CurrentModule->Headers.end())
@@ -3411,8 +3385,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         break;
       
       // FIXME: Be more lazy about this!
-      StringRef FileName(BlobStart, BlobLen);
-      if (const FileEntry *File = PP.getFileManager().getFile(FileName)) {
+      if (const FileEntry *File = PP.getFileManager().getFile(Blob)) {
         if (std::find(CurrentModule->Headers.begin(), 
                       CurrentModule->Headers.end(), 
                       File) == CurrentModule->Headers.end())
@@ -3431,8 +3404,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         break;
 
       // FIXME: Be more lazy about this!
-      StringRef FileName(BlobStart, BlobLen);
-      if (const FileEntry *File = PP.getFileManager().getFile(FileName))
+      if (const FileEntry *File = PP.getFileManager().getFile(Blob))
         CurrentModule->TopHeaders.insert(File);
       break;
     }
@@ -3446,9 +3418,8 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       if (!CurrentModule)
         break;
       
-      StringRef DirName(BlobStart, BlobLen);
       if (const DirectoryEntry *Umbrella
-                                  = PP.getFileManager().getDirectory(DirName)) {
+                                  = PP.getFileManager().getDirectory(Blob)) {
         if (!CurrentModule->getUmbrellaDir())
           ModMap.setUmbrellaDir(CurrentModule, Umbrella);
         else if (CurrentModule->getUmbrellaDir() != Umbrella) {
@@ -3539,8 +3510,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       if (!CurrentModule)
         break;
 
-      CurrentModule->addRequirement(StringRef(BlobStart, BlobLen), 
-                                    Context.getLangOpts(),
+      CurrentModule->addRequirement(Blob, Context.getLangOpts(),
                                     Context.getTargetInfo());
       break;
     }
@@ -3555,8 +3525,7 @@ bool ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         break;
 
       CurrentModule->LinkLibraries.push_back(
-         Module::LinkLibrary(StringRef(BlobStart, BlobLen),
-         Record[0]));
+                                         Module::LinkLibrary(Blob, Record[0]));
       break;
     }
   }
@@ -3763,12 +3732,11 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
   SourceRange Range(ReadSourceLocation(M, PPOffs.Begin),
                     ReadSourceLocation(M, PPOffs.End));
   PreprocessingRecord &PPRec = *PP.getPreprocessingRecord();
-  const char *BlobStart = 0;
-  unsigned BlobLen = 0;
+  StringRef Blob;
   RecordData Record;
   PreprocessorDetailRecordTypes RecType =
-    (PreprocessorDetailRecordTypes)M.PreprocessorDetailCursor.ReadRecord(
-                                          Entry.ID, Record, BlobStart, BlobLen);
+    (PreprocessorDetailRecordTypes)M.PreprocessorDetailCursor.readRecord(
+                                          Entry.ID, Record, &Blob);
   switch (RecType) {
   case PPD_MACRO_EXPANSION: {
     bool isBuiltin = Record[0];
@@ -3805,8 +3773,8 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
   }
       
   case PPD_INCLUSION_DIRECTIVE: {
-    const char *FullFileNameStart = BlobStart + Record[0];
-    StringRef FullFileName(FullFileNameStart, BlobLen - Record[0]);
+    const char *FullFileNameStart = Blob.data() + Record[0];
+    StringRef FullFileName(FullFileNameStart, Blob.size() - Record[0]);
     const FileEntry *File = 0;
     if (!FullFileName.empty())
       File = PP.getFileManager().getFile(FullFileName);
@@ -3816,7 +3784,7 @@ PreprocessedEntity *ASTReader::ReadPreprocessedEntity(unsigned Index) {
       = static_cast<InclusionDirective::InclusionKind>(Record[2]);
     InclusionDirective *ID
       = new (PPRec) InclusionDirective(PPRec, Kind,
-                                       StringRef(BlobStart, Record[0]),
+                                       StringRef(Blob.data(), Record[0]),
                                        Record[1], Record[3],
                                        File,
                                        Range);
@@ -4117,7 +4085,7 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
   DeclsCursor.JumpToBit(Loc.Offset);
   RecordData Record;
   unsigned Code = DeclsCursor.ReadCode();
-  switch ((TypeCode)DeclsCursor.ReadRecord(Code, Record)) {
+  switch ((TypeCode)DeclsCursor.readRecord(Code, Record)) {
   case TYPE_EXT_QUAL: {
     if (Record.size() != 2) {
       Error("Incorrect encoding of extended qualifier type");
@@ -4968,7 +4936,7 @@ CXXBaseSpecifier *ASTReader::GetExternalCXXBaseSpecifiers(uint64_t Offset) {
   ReadingKindTracker ReadingKind(Read_Decl, *this);
   RecordData Record;
   unsigned Code = Cursor.ReadCode();
-  unsigned RecCode = Cursor.ReadRecord(Code, Record);
+  unsigned RecCode = Cursor.readRecord(Code, Record);
   if (RecCode != DECL_CXX_BASE_SPECIFIERS) {
     Error("Malformed AST file: missing C++ base specifiers");
     return 0;
@@ -6762,7 +6730,7 @@ void ASTReader::ReadComments() {
 
       // Read a record.
       Record.clear();
-      switch ((CommentRecordTypes)Cursor.ReadRecord(Entry.ID, Record)) {
+      switch ((CommentRecordTypes)Cursor.readRecord(Entry.ID, Record)) {
       case COMMENTS_RAW_COMMENT: {
         unsigned Idx = 0;
         SourceRange SR = ReadSourceRange(F, Record, Idx);
