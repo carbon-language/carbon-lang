@@ -61,8 +61,8 @@ public:
   // Builder configuration methods
   //===--------------------------------------------------------------------===//
 
-  /// ClearInsertionPoint - Clear the insertion point: created instructions will
-  /// not be inserted into a block.
+  /// \brief Clear the insertion point: created instructions will not be
+  /// inserted into a block.
   void ClearInsertionPoint() {
     BB = 0;
   }
@@ -71,30 +71,30 @@ public:
   BasicBlock::iterator GetInsertPoint() const { return InsertPt; }
   LLVMContext &getContext() const { return Context; }
 
-  /// SetInsertPoint - This specifies that created instructions should be
-  /// appended to the end of the specified block.
+  /// \brief This specifies that created instructions should be appended to the
+  /// end of the specified block.
   void SetInsertPoint(BasicBlock *TheBB) {
     BB = TheBB;
     InsertPt = BB->end();
   }
 
-  /// SetInsertPoint - This specifies that created instructions should be
-  /// inserted before the specified instruction.
+  /// \brief This specifies that created instructions should be inserted before
+  /// the specified instruction.
   void SetInsertPoint(Instruction *I) {
     BB = I->getParent();
     InsertPt = I;
     SetCurrentDebugLocation(I->getDebugLoc());
   }
 
-  /// SetInsertPoint - This specifies that created instructions should be
-  /// inserted at the specified point.
+  /// \brief This specifies that created instructions should be inserted at the
+  /// specified point.
   void SetInsertPoint(BasicBlock *TheBB, BasicBlock::iterator IP) {
     BB = TheBB;
     InsertPt = IP;
   }
 
-  /// SetInsertPoint(Use) - Find the nearest point that dominates this use, and
-  /// specify that created instructions should be inserted at this point.
+  /// \brief Find the nearest point that dominates this use, and specify that
+  /// created instructions should be inserted at this point.
   void SetInsertPoint(Use &U) {
     Instruction *UseInst = cast<Instruction>(U.getUser());
     if (PHINode *Phi = dyn_cast<PHINode>(UseInst)) {
@@ -106,25 +106,23 @@ public:
     SetInsertPoint(UseInst);
   }
 
-  /// SetCurrentDebugLocation - Set location information used by debugging
-  /// information.
+  /// \brief Set location information used by debugging information.
   void SetCurrentDebugLocation(const DebugLoc &L) {
     CurDbgLocation = L;
   }
 
-  /// getCurrentDebugLocation - Get location information used by debugging
-  /// information.
+  /// \brief Get location information used by debugging information.
   DebugLoc getCurrentDebugLocation() const { return CurDbgLocation; }
 
-  /// SetInstDebugLocation - If this builder has a current debug location, set
-  /// it on the specified instruction.
+  /// \brief If this builder has a current debug location, set it on the
+  /// specified instruction.
   void SetInstDebugLocation(Instruction *I) const {
     if (!CurDbgLocation.isUnknown())
       I->setDebugLoc(CurDbgLocation);
   }
 
-  /// getCurrentFunctionReturnType - Get the return type of the current function
-  /// that we're emitting into.
+  /// \brief Get the return type of the current function that we're emitting
+  /// into.
   Type *getCurrentFunctionReturnType() const;
 
   /// InsertPoint - A saved insertion point.
@@ -133,35 +131,33 @@ public:
     BasicBlock::iterator Point;
 
   public:
-    /// Creates a new insertion point which doesn't point to anything.
+    /// \brief Creates a new insertion point which doesn't point to anything.
     InsertPoint() : Block(0) {}
 
-    /// Creates a new insertion point at the given location.
+    /// \brief Creates a new insertion point at the given location.
     InsertPoint(BasicBlock *InsertBlock, BasicBlock::iterator InsertPoint)
       : Block(InsertBlock), Point(InsertPoint) {}
 
-    /// isSet - Returns true if this insert point is set.
+    /// \brief Returns true if this insert point is set.
     bool isSet() const { return (Block != 0); }
 
     llvm::BasicBlock *getBlock() const { return Block; }
     llvm::BasicBlock::iterator getPoint() const { return Point; }
   };
 
-  /// saveIP - Returns the current insert point.
+  /// \brief Returns the current insert point.
   InsertPoint saveIP() const {
     return InsertPoint(GetInsertBlock(), GetInsertPoint());
   }
 
-  /// saveAndClearIP - Returns the current insert point, clearing it
-  /// in the process.
+  /// \brief Returns the current insert point, clearing it in the process.
   InsertPoint saveAndClearIP() {
     InsertPoint IP(GetInsertBlock(), GetInsertPoint());
     ClearInsertionPoint();
     return IP;
   }
 
-  /// restoreIP - Sets the current insert point to a previously-saved
-  /// location.
+  /// \brief Sets the current insert point to a previously-saved location.
   void restoreIP(InsertPoint IP) {
     if (IP.isSet())
       SetInsertPoint(IP.getBlock(), IP.getPoint());
@@ -173,49 +169,50 @@ public:
   // Miscellaneous creation methods.
   //===--------------------------------------------------------------------===//
 
-  /// CreateGlobalString - Make a new global variable with an initializer that
-  /// has array of i8 type filled in with the nul terminated string value
-  /// specified.  The new global variable will be marked mergable with any
-  /// others of the same contents.  If Name is specified, it is the name of the
-  /// global variable created.
+  /// \brief Make a new global variable with initializer type i8*
+  ///
+  /// Make a new global variable with an initializer that has array of i8 type
+  /// filled in with the null terminated string value specified.  The new global
+  /// variable will be marked mergable with any others of the same contents.  If
+  /// Name is specified, it is the name of the global variable created.
   Value *CreateGlobalString(StringRef Str, const Twine &Name = "");
 
-  /// getInt1 - Get a constant value representing either true or false.
+  /// \brief Get a constant value representing either true or false.
   ConstantInt *getInt1(bool V) {
     return ConstantInt::get(getInt1Ty(), V);
   }
 
-  /// getTrue - Get the constant value for i1 true.
+  /// \brief Get the constant value for i1 true.
   ConstantInt *getTrue() {
     return ConstantInt::getTrue(Context);
   }
 
-  /// getFalse - Get the constant value for i1 false.
+  /// \brief Get the constant value for i1 false.
   ConstantInt *getFalse() {
     return ConstantInt::getFalse(Context);
   }
 
-  /// getInt8 - Get a constant 8-bit value.
+  /// \brief Get a constant 8-bit value.
   ConstantInt *getInt8(uint8_t C) {
     return ConstantInt::get(getInt8Ty(), C);
   }
 
-  /// getInt16 - Get a constant 16-bit value.
+  /// \brief Get a constant 16-bit value.
   ConstantInt *getInt16(uint16_t C) {
     return ConstantInt::get(getInt16Ty(), C);
   }
 
-  /// getInt32 - Get a constant 32-bit value.
+  /// \brief Get a constant 32-bit value.
   ConstantInt *getInt32(uint32_t C) {
     return ConstantInt::get(getInt32Ty(), C);
   }
 
-  /// getInt64 - Get a constant 64-bit value.
+  /// \brief Get a constant 64-bit value.
   ConstantInt *getInt64(uint64_t C) {
     return ConstantInt::get(getInt64Ty(), C);
   }
 
-  /// getInt - Get a constant integer value.
+  /// \brief Get a constant integer value.
   ConstantInt *getInt(const APInt &AI) {
     return ConstantInt::get(Context, AI);
   }
@@ -224,50 +221,52 @@ public:
   // Type creation methods
   //===--------------------------------------------------------------------===//
 
-  /// getInt1Ty - Fetch the type representing a single bit
+  /// \brief Fetch the type representing a single bit
   IntegerType *getInt1Ty() {
     return Type::getInt1Ty(Context);
   }
 
-  /// getInt8Ty - Fetch the type representing an 8-bit integer.
+  /// \brief Fetch the type representing an 8-bit integer.
   IntegerType *getInt8Ty() {
     return Type::getInt8Ty(Context);
   }
 
-  /// getInt16Ty - Fetch the type representing a 16-bit integer.
+  /// \brief Fetch the type representing a 16-bit integer.
   IntegerType *getInt16Ty() {
     return Type::getInt16Ty(Context);
   }
 
-  /// getInt32Ty - Fetch the type representing a 32-bit integer.
+  /// \brief Fetch the type representing a 32-bit integer.
   IntegerType *getInt32Ty() {
     return Type::getInt32Ty(Context);
   }
 
-  /// getInt64Ty - Fetch the type representing a 64-bit integer.
+  /// \brief Fetch the type representing a 64-bit integer.
   IntegerType *getInt64Ty() {
     return Type::getInt64Ty(Context);
   }
 
-  /// getFloatTy - Fetch the type representing a 32-bit floating point value.
+  /// \brief Fetch the type representing a 32-bit floating point value.
   Type *getFloatTy() {
     return Type::getFloatTy(Context);
   }
 
-  /// getDoubleTy - Fetch the type representing a 64-bit floating point value.
+  /// \brief Fetch the type representing a 64-bit floating point value.
   Type *getDoubleTy() {
     return Type::getDoubleTy(Context);
   }
 
-  /// getVoidTy - Fetch the type representing void.
+  /// \brief Fetch the type representing void.
   Type *getVoidTy() {
     return Type::getVoidTy(Context);
   }
 
+  /// \brief Fetch the type representing a pointer to an 8-bit integer value.
   PointerType *getInt8PtrTy(unsigned AddrSpace = 0) {
     return Type::getInt8PtrTy(Context, AddrSpace);
   }
 
+  /// \brief Fetch the type representing a pointer to an integer value.
   IntegerType* getIntPtrTy(DataLayout *DL, unsigned AddrSpace = 0) {
     return DL->getIntPtrType(Context, AddrSpace);
   }
@@ -276,9 +275,11 @@ public:
   // Intrinsic creation methods
   //===--------------------------------------------------------------------===//
 
-  /// CreateMemSet - Create and insert a memset to the specified pointer and the
-  /// specified value.  If the pointer isn't an i8*, it will be converted.  If a
-  /// TBAA tag is specified, it will be added to the instruction.
+  /// \brief Create and insert a memset to the specified pointer and the
+  /// specified value.
+  ///
+  /// If the pointer isn't an i8*, it will be converted.  If a TBAA tag is
+  /// specified, it will be added to the instruction.
   CallInst *CreateMemSet(Value *Ptr, Value *Val, uint64_t Size, unsigned Align,
                          bool isVolatile = false, MDNode *TBAATag = 0) {
     return CreateMemSet(Ptr, Val, getInt64(Size), Align, isVolatile, TBAATag);
@@ -287,7 +288,8 @@ public:
   CallInst *CreateMemSet(Value *Ptr, Value *Val, Value *Size, unsigned Align,
                          bool isVolatile = false, MDNode *TBAATag = 0);
 
-  /// CreateMemCpy - Create and insert a memcpy between the specified pointers.
+  /// \brief Create and insert a memcpy between the specified pointers.
+  ///
   /// If the pointers aren't i8*, they will be converted.  If a TBAA tag is
   /// specified, it will be added to the instruction.
   CallInst *CreateMemCpy(Value *Dst, Value *Src, uint64_t Size, unsigned Align,
@@ -301,9 +303,11 @@ public:
                          bool isVolatile = false, MDNode *TBAATag = 0,
                          MDNode *TBAAStructTag = 0);
 
-  /// CreateMemMove - Create and insert a memmove between the specified
-  /// pointers.  If the pointers aren't i8*, they will be converted.  If a TBAA
-  /// tag is specified, it will be added to the instruction.
+  /// \brief Create and insert a memmove between the specified
+  /// pointers.
+  ///
+  /// If the pointers aren't i8*, they will be converted.  If a TBAA tag is
+  /// specified, it will be added to the instruction.
   CallInst *CreateMemMove(Value *Dst, Value *Src, uint64_t Size, unsigned Align,
                           bool isVolatile = false, MDNode *TBAATag = 0) {
     return CreateMemMove(Dst, Src, getInt64(Size), Align, isVolatile, TBAATag);
@@ -312,12 +316,14 @@ public:
   CallInst *CreateMemMove(Value *Dst, Value *Src, Value *Size, unsigned Align,
                           bool isVolatile = false, MDNode *TBAATag = 0);
 
-  /// CreateLifetimeStart - Create a lifetime.start intrinsic.  If the pointer
-  /// isn't i8* it will be converted.
+  /// \brief Create a lifetime.start intrinsic.
+  ///
+  /// If the pointer isn't i8* it will be converted.
   CallInst *CreateLifetimeStart(Value *Ptr, ConstantInt *Size = 0);
 
-  /// CreateLifetimeEnd - Create a lifetime.end intrinsic.  If the pointer isn't
-  /// i8* it will be converted.
+  /// \brief Create a lifetime.end intrinsic.
+  ///
+  /// If the pointer isn't i8* it will be converted.
   CallInst *CreateLifetimeEnd(Value *Ptr, ConstantInt *Size = 0);
 
 private:
@@ -396,29 +402,29 @@ public:
     SetInsertPoint(TheBB, IP);
   }
 
-  /// getFolder - Get the constant folder being used.
+  /// \brief Get the constant folder being used.
   const T &getFolder() { return Folder; }
 
-  /// getDefaultFPMathTag - Get the floating point math metadata being used.
+  /// \brief Get the floating point math metadata being used.
   MDNode *getDefaultFPMathTag() const { return DefaultFPMathTag; }
 
-  /// Get the flags to be applied to created floating point ops
+  /// \brief Get the flags to be applied to created floating point ops
   FastMathFlags getFastMathFlags() const { return FMF; }
 
-  /// Clear the fast-math flags.
+  /// \brief Clear the fast-math flags.
   void clearFastMathFlags() { FMF.clear(); }
 
-  /// SetDefaultFPMathTag - Set the floating point math metadata to be used.
+  /// \brief SetDefaultFPMathTag - Set the floating point math metadata to be used.
   void SetDefaultFPMathTag(MDNode *FPMathTag) { DefaultFPMathTag = FPMathTag; }
 
-  /// Set the fast-math flags to be used with generated fp-math operators
+  /// \brief Set the fast-math flags to be used with generated fp-math operators
   void SetFastMathFlags(FastMathFlags NewFMF) { FMF = NewFMF; }
 
-  /// isNamePreserving - Return true if this builder is configured to actually
-  /// add the requested names to IR created through it.
+  /// \brief Return true if this builder is configured to actually add the
+  /// requested names to IR created through it.
   bool isNamePreserving() const { return preserveNames; }
 
-  /// Insert - Insert and return the specified instruction.
+  /// \brief Insert and return the specified instruction.
   template<typename InstTy>
   InstTy *Insert(InstTy *I, const Twine &Name = "") const {
     this->InsertHelper(I, Name, BB, InsertPt);
@@ -427,7 +433,7 @@ public:
     return I;
   }
 
-  /// Insert - No-op overload to handle constants.
+  /// \brief No-op overload to handle constants.
   Constant *Insert(Constant *C, const Twine& = "") const {
     return C;
   }
@@ -447,25 +453,23 @@ private:
   }
 
 public:
-  /// CreateRetVoid - Create a 'ret void' instruction.
+  /// \brief Create a 'ret void' instruction.
   ReturnInst *CreateRetVoid() {
     return Insert(ReturnInst::Create(Context));
   }
 
-  /// @verbatim
-  /// CreateRet - Create a 'ret <val>' instruction.
-  /// @endverbatim
+  /// \brief Create a 'ret <val>' instruction.
   ReturnInst *CreateRet(Value *V) {
     return Insert(ReturnInst::Create(Context, V));
   }
 
-  /// CreateAggregateRet - Create a sequence of N insertvalue instructions,
+  /// \brief Create a sequence of N insertvalue instructions,
   /// with one Value from the retVals array each, that build a aggregate
   /// return value one value at a time, and a ret instruction to return
-  /// the resulting aggregate value. This is a convenience function for
-  /// code that uses aggregate return values as a vehicle for having
-  /// multiple return values.
+  /// the resulting aggregate value.
   ///
+  /// This is a convenience function for code that uses aggregate return values
+  /// as a vehicle for having multiple return values.
   ReturnInst *CreateAggregateRet(Value *const *retVals, unsigned N) {
     Value *V = UndefValue::get(getCurrentFunctionReturnType());
     for (unsigned i = 0; i != N; ++i)
@@ -473,12 +477,12 @@ public:
     return Insert(ReturnInst::Create(Context, V));
   }
 
-  /// CreateBr - Create an unconditional 'br label X' instruction.
+  /// \brief Create an unconditional 'br label X' instruction.
   BranchInst *CreateBr(BasicBlock *Dest) {
     return Insert(BranchInst::Create(Dest));
   }
 
-  /// CreateCondBr - Create a conditional 'br Cond, TrueDest, FalseDest'
+  /// \brief Create a conditional 'br Cond, TrueDest, FalseDest'
   /// instruction.
   BranchInst *CreateCondBr(Value *Cond, BasicBlock *True, BasicBlock *False,
                            MDNode *BranchWeights = 0) {
@@ -486,18 +490,18 @@ public:
                                    BranchWeights));
   }
 
-  /// CreateSwitch - Create a switch instruction with the specified value,
-  /// default dest, and with a hint for the number of cases that will be added
-  /// (for efficient allocation).
+  /// \brief Create a switch instruction with the specified value, default dest,
+  /// and with a hint for the number of cases that will be added (for efficient
+  /// allocation).
   SwitchInst *CreateSwitch(Value *V, BasicBlock *Dest, unsigned NumCases = 10,
                            MDNode *BranchWeights = 0) {
     return Insert(addBranchWeights(SwitchInst::Create(V, Dest, NumCases),
                                    BranchWeights));
   }
 
-  /// CreateIndirectBr - Create an indirect branch instruction with the
-  /// specified address operand, with an optional hint for the number of
-  /// destinations that will be added (for efficient allocation).
+  /// \brief Create an indirect branch instruction with the specified address
+  /// operand, with an optional hint for the number of destinations that will be
+  /// added (for efficient allocation).
   IndirectBrInst *CreateIndirectBr(Value *Addr, unsigned NumDests = 10) {
     return Insert(IndirectBrInst::Create(Addr, NumDests));
   }
@@ -522,7 +526,7 @@ public:
     return Insert(InvokeInst::Create(Callee, NormalDest, UnwindDest, Args),
                   Name);
   }
-  /// CreateInvoke - Create an invoke instruction.
+  /// \brief Create an invoke instruction.
   InvokeInst *CreateInvoke(Value *Callee, BasicBlock *NormalDest,
                            BasicBlock *UnwindDest, ArrayRef<Value *> Args,
                            const Twine &Name = "") {
@@ -825,7 +829,7 @@ public:
                            const Twine &Name = "") {
     return Insert(new AllocaInst(Ty, ArraySize), Name);
   }
-  // Provided to resolve 'CreateLoad(Ptr, "...")' correctly, instead of
+  // \brief Provided to resolve 'CreateLoad(Ptr, "...")' correctly, instead of
   // converting the string to 'bool' for the isVolatile parameter.
   LoadInst *CreateLoad(Value *Ptr, const char *Name) {
     return Insert(new LoadInst(Ptr), Name);
@@ -839,8 +843,9 @@ public:
   StoreInst *CreateStore(Value *Val, Value *Ptr, bool isVolatile = false) {
     return Insert(new StoreInst(Val, Ptr, isVolatile));
   }
-  // Provided to resolve 'CreateAlignedLoad(Ptr, Align, "...")' correctly,
-  // instead of converting the string to 'bool' for the isVolatile parameter.
+  // \brief Provided to resolve 'CreateAlignedLoad(Ptr, Align, "...")'
+  // correctly, instead of converting the string to 'bool' for the isVolatile
+  // parameter.
   LoadInst *CreateAlignedLoad(Value *Ptr, unsigned Align, const char *Name) {
     LoadInst *LI = CreateLoad(Ptr, Name);
     LI->setAlignment(Align);
@@ -1002,8 +1007,8 @@ public:
     return CreateConstInBoundsGEP2_32(Ptr, 0, Idx, Name);
   }
 
-  /// CreateGlobalStringPtr - Same as CreateGlobalString, but return a pointer
-  /// with "i8*" type instead of a pointer to array of i8.
+  /// \brief Same as CreateGlobalString, but return a pointer with "i8*" type
+  /// instead of a pointer to array of i8.
   Value *CreateGlobalStringPtr(StringRef Str, const Twine &Name = "") {
     Value *gv = CreateGlobalString(Str, Name);
     Value *zero = ConstantInt::get(Type::getInt32Ty(Context), 0);
@@ -1024,8 +1029,8 @@ public:
   Value *CreateSExt(Value *V, Type *DestTy, const Twine &Name = "") {
     return CreateCast(Instruction::SExt, V, DestTy, Name);
   }
-  /// CreateZExtOrTrunc - Create a ZExt or Trunc from the integer value V to
-  /// DestTy. Return the value untouched if the type of V is already DestTy.
+  /// \brief Create a ZExt or Trunc from the integer value V to DestTy. Return
+  /// the value untouched if the type of V is already DestTy.
   Value *CreateZExtOrTrunc(Value *V, IntegerType *DestTy,
                            const Twine &Name = "") {
     assert(isa<IntegerType>(V->getType()) &&
@@ -1037,8 +1042,8 @@ public:
       return CreateTrunc(V, DestTy, Name);
     return V;
   }
-  /// CreateSExtOrTrunc - Create a SExt or Trunc from the integer value V to
-  /// DestTy. Return the value untouched if the type of V is already DestTy.
+  /// \brief Create a SExt or Trunc from the integer value V to DestTy. Return
+  /// the value untouched if the type of V is already DestTy.
   Value *CreateSExtOrTrunc(Value *V, IntegerType *DestTy,
                            const Twine &Name = "") {
     assert(isa<IntegerType>(V->getType()) &&
@@ -1050,8 +1055,8 @@ public:
       return CreateTrunc(V, DestTy, Name);
     return V;
   }
-  /// CreateFPExtOrFPTrunc - Create a FPExt or FPTrunc from the float value V to
-  /// DestTy. Return the value untouched if the type of V is already DestTy.
+  /// \brief Create a FPExt or FPTrunc from the float value V to DestTy. Return
+  /// the value untouched if the type of V is already DestTy.
   Value *CreateFPExtOrFPTrunc(Value *V, Type *DestTy,
                            const Twine &Name = "") {
     assert(V->getType()->isFPOrFPVectorTy() &&
@@ -1144,8 +1149,9 @@ public:
     return Insert(CastInst::CreateIntegerCast(V, DestTy, isSigned), Name);
   }
 private:
-  // Provided to resolve 'CreateIntCast(Ptr, Ptr, "...")', giving a compile time
-  // error, instead of converting the string to bool for the isSigned parameter.
+  // \brief Provided to resolve 'CreateIntCast(Ptr, Ptr, "...")', giving a
+  // compile time error, instead of converting the string to bool for the
+  // isSigned parameter.
   Value *CreateIntCast(Value *, Type *, const char *) LLVM_DELETED_FUNCTION;
 public:
   Value *CreateFPCast(Value *V, Type *DestTy, const Twine &Name = "") {
@@ -1355,23 +1361,24 @@ public:
   // Utility creation methods
   //===--------------------------------------------------------------------===//
 
-  /// CreateIsNull - Return an i1 value testing if \p Arg is null.
+  /// \brief Return an i1 value testing if \p Arg is null.
   Value *CreateIsNull(Value *Arg, const Twine &Name = "") {
     return CreateICmpEQ(Arg, Constant::getNullValue(Arg->getType()),
                         Name);
   }
 
-  /// CreateIsNotNull - Return an i1 value testing if \p Arg is not null.
+  /// \brief Return an i1 value testing if \p Arg is not null.
   Value *CreateIsNotNull(Value *Arg, const Twine &Name = "") {
     return CreateICmpNE(Arg, Constant::getNullValue(Arg->getType()),
                         Name);
   }
 
-  /// CreatePtrDiff - Return the i64 difference between two pointer values,
-  /// dividing out the size of the pointed-to objects.  This is intended to
-  /// implement C-style pointer subtraction. As such, the pointers must be
-  /// appropriately aligned for their element types and pointing into the
-  /// same object.
+  /// \brief Return the i64 difference between two pointer values, dividing out
+  /// the size of the pointed-to objects.
+  ///
+  /// This is intended to implement C-style pointer subtraction. As such, the
+  /// pointers must be appropriately aligned for their element types and
+  /// pointing into the same object.
   Value *CreatePtrDiff(Value *LHS, Value *RHS, const Twine &Name = "") {
     assert(LHS->getType() == RHS->getType() &&
            "Pointer subtraction operand types must match!");
@@ -1384,8 +1391,8 @@ public:
                            Name);
   }
 
-  /// CreateVectorSplat - Return a vector value that contains \arg V broadcasted
-  /// to \p NumElts elements.
+  /// \brief Return a vector value that contains \arg V broadcasted to \p
+  /// NumElts elements.
   Value *CreateVectorSplat(unsigned NumElts, Value *V, const Twine &Name = "") {
     assert(NumElts > 0 && "Cannot splat to an empty vector!");
 
