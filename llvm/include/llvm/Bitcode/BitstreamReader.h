@@ -506,9 +506,20 @@ public:
   /// skipRecord - Read the current record and discard it.
   void skipRecord(unsigned AbbrevID);
   
+  unsigned readRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
+                      StringRef *Blob = 0);
+
   unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
-                      const char **BlobStart = 0, unsigned *BlobLen = 0);
-  
+                      const char **BlobStart = 0, unsigned *BlobLen = 0) {
+    if (!BlobStart)
+      return readRecord(AbbrevID, Vals);
+    StringRef S;
+    unsigned X = readRecord(AbbrevID, Vals, &S);
+    *BlobStart = S.data();
+    *BlobLen = S.size();
+    return X;
+  }
+
   unsigned ReadRecord(unsigned AbbrevID, SmallVectorImpl<uint64_t> &Vals,
                       const char *&BlobStart, unsigned &BlobLen) {
     return ReadRecord(AbbrevID, Vals, &BlobStart, &BlobLen);

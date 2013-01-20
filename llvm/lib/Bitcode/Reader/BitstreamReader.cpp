@@ -198,9 +198,9 @@ void BitstreamCursor::skipRecord(unsigned AbbrevID) {
   }
 }
 
-unsigned BitstreamCursor::ReadRecord(unsigned AbbrevID,
+unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
                                      SmallVectorImpl<uint64_t> &Vals,
-                                     const char **BlobStart, unsigned *BlobLen){
+                                     StringRef *Blob) {
   if (AbbrevID == bitc::UNABBREV_RECORD) {
     unsigned Code = ReadVBR(6);
     unsigned NumElts = ReadVBR(6);
@@ -256,10 +256,11 @@ unsigned BitstreamCursor::ReadRecord(unsigned AbbrevID,
     
     // Otherwise, read the number of bytes.  If we can return a reference to
     // the data, do so to avoid copying it.
-    if (BlobStart) {
-      *BlobStart = (const char*)BitStream->getBitcodeBytes().getPointer(
-                                                            NextChar, NumElts);
-      *BlobLen = NumElts;
+    if (Blob) {
+      *Blob =
+        StringRef((const char*)BitStream->getBitcodeBytes().getPointer(
+                                                            NextChar, NumElts),
+                NumElts);
     } else {
       for (; NumElts; ++NextChar, --NumElts)
         Vals.push_back(getByte(NextChar));
