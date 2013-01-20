@@ -628,10 +628,21 @@ bool CompileUnit::addConstantFPValue(DIE *Die, const MachineOperand &MO) {
   return true;
 }
 
+/// addConstantFPValue - Add constant value entry in variable DIE.
+bool CompileUnit::addConstantFPValue(DIE *Die, const ConstantFP *CFP) {
+  return addConstantValue(Die, CFP->getValueAPF().bitcastToAPInt(), false);
+}
+
 /// addConstantValue - Add constant value entry in variable DIE.
 bool CompileUnit::addConstantValue(DIE *Die, const ConstantInt *CI,
                                    bool Unsigned) {
-  unsigned CIBitWidth = CI->getBitWidth();
+  return addConstantValue(Die, CI->getValue(), Unsigned);
+}
+
+// addConstantValue - Add constant value entry in variable DIE.
+bool CompileUnit::addConstantValue(DIE *Die, const APInt &Val,
+                                   bool Unsigned) {
+  unsigned CIBitWidth = Val.getBitWidth();
   if (CIBitWidth <= 64) {
     unsigned form = 0;
     switch (CIBitWidth) {
@@ -643,16 +654,15 @@ bool CompileUnit::addConstantValue(DIE *Die, const ConstantInt *CI,
       form = Unsigned ? dwarf::DW_FORM_udata : dwarf::DW_FORM_sdata;
     }
     if (Unsigned)
-      addUInt(Die, dwarf::DW_AT_const_value, form, CI->getZExtValue());
+      addUInt(Die, dwarf::DW_AT_const_value, form, Val.getZExtValue());
     else
-      addSInt(Die, dwarf::DW_AT_const_value, form, CI->getSExtValue());
+      addSInt(Die, dwarf::DW_AT_const_value, form, Val.getSExtValue());
     return true;
   }
 
   DIEBlock *Block = new (DIEValueAllocator) DIEBlock();
 
   // Get the raw data form of the large APInt.
-  const APInt Val = CI->getValue();
   const uint64_t *Ptr64 = Val.getRawData();
 
   int NumBytes = Val.getBitWidth() / 8; // 8 bits per byte.
@@ -1697,6 +1707,8 @@ DIE *CompileUnit::createStaticMemberDIE(const DIDerivedType DT) {
 
   if (const ConstantInt *CI = dyn_cast_or_null<ConstantInt>(DT.getConstant()))
     addConstantValue(StaticMemberDIE, CI, Ty.isUnsignedDIType());
+  if (const ConstantFP *CFP = dyn_cast_or_null<ConstantFP>(DT.getConstant()))
+    addConstantFPValue(StaticMemberDIE, CFP);
 
   insertDIE(DT, StaticMemberDIE);
   return StaticMemberDIE;
