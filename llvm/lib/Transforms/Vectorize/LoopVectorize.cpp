@@ -2714,7 +2714,7 @@ LoopVectorizationCostModel::selectVectorizationFactor(bool OptForSize,
 
   DEBUG(dbgs() << "LV: Selecting VF = : "<< Width << ".\n");
   unsigned LoopCost = VF * Cost;
-  return std::make_pair<unsigned, unsigned>(Width, LoopCost);
+  return std::make_pair(Width, LoopCost);
 }
 
 unsigned LoopVectorizationCostModel::getWidestType() {
