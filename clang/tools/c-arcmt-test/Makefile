@@ -21,7 +21,7 @@ NO_INSTALL = 1
 # LINK_COMPONENTS before including Makefile.rules
 include $(CLANG_LEVEL)/../../Makefile.config
 
-LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser support mc
+LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc
 
 # Note that 'USEDLIBS' must include all of the core clang libraries
 # as clang.dll is unavailable on cygming yet.
