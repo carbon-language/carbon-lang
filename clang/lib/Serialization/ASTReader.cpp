@@ -51,6 +51,7 @@
 #include "llvm/Support/SaveAndRestore.h"
 #include "llvm/Support/system_error.h"
 #include <algorithm>
+#include <cstdio>
 #include <iterator>
 
 using namespace clang;
