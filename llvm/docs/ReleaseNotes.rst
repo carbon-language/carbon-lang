@@ -47,6 +47,11 @@ Non-comprehensive list of changes in this release
   archives) have been removed. Any existing clients of these features should
   move to using a linker with integrated LTO support.
 
+* LLVM and Clang's documentation has been migrated to the `Sphinx
+  <http://sphinx-doc.org/>`_ documentation generation system which uses
+  easy-to-write reStructuredText. See `llvm/docs/README.txt` for more
+  information.
+
 * ... next change ...
 
 .. NOTE
