@@ -18,6 +18,20 @@ macro(add_compiler_rt_object_library name arch)
   endif()
 endmacro()
 
+# Same as above, but adds universal osx library with name "<name>.osx"
+# targeting multiple architectures.
+# add_compiler_rt_osx_object_library(<name> ARCH <architectures>
+#                                           SOURCES <source files>
+#                                           CFLAGS <compile flags>)
+macro(add_compiler_rt_osx_object_library name)
+  parse_arguments(LIB "ARCH;SOURCES;CFLAGS" "" ${ARGN})
+  set(libname "${name}.osx")
+  add_library(${libname} OBJECT ${LIB_SOURCES})
+  set_target_compile_flags(${libname} ${LIB_CFLAGS})
+  set_target_properties(${libname} PROPERTIES
+    OSX_ARCHITECTURES "${LIB_ARCH}")
+endmacro()
+
 # Adds static runtime for a given architecture and puts it in the proper
 # directory in the build and install trees.
 # add_compiler_rt_static_runtime(<name> <arch>

@@ -52,10 +52,10 @@ set(SANITIZER_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 set(SANITIZER_RUNTIME_LIBRARIES)
 if(APPLE)
   # Build universal binary on APPLE.
-  add_library(RTSanitizerCommon.osx OBJECT ${SANITIZER_SOURCES})
-  set_target_compile_flags(RTSanitizerCommon.osx ${SANITIZER_CFLAGS})
-  set_target_properties(RTSanitizerCommon.osx PROPERTIES
-    OSX_ARCHITECTURES "${SANITIZER_COMMON_SUPPORTED_ARCH}")
+  add_compiler_rt_osx_object_library(RTSanitizerCommon
+    ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES ${SANITIZER_SOURCES}
+    CFLAGS ${SANITIZER_CFLAGS})
   list(APPEND SANITIZER_RUNTIME_LIBRARIES RTSanitizerCommon.osx)
 elseif(ANDROID)
   add_library(RTSanitizerCommon.arm.android OBJECT ${SANITIZER_SOURCES})

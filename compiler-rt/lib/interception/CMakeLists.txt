@@ -22,10 +22,10 @@ set(INTERCEPTION_CFLAGS ${SANITIZER_COMMON_CFLAGS})
 
 if(APPLE)
   # Build universal binary on APPLE.
-  add_library(RTInterception.osx OBJECT ${INTERCEPTION_SOURCES})
-  set_target_compile_flags(RTInterception.osx ${INTERCEPTION_CFLAGS})
-  set_target_properties(RTInterception.osx PROPERTIES
-    OSX_ARCHITECTURES "${SANITIZER_COMMON_SUPPORTED_ARCH}")
+  add_compiler_rt_osx_object_library(RTInterception
+    ARCH ${SANITIZER_COMMON_SUPPORTED_ARCH}
+    SOURCES ${INTERCEPTION_SOURCES}
+    CFLAGS ${INTERCEPTION_CFLAGS})
 elseif(ANDROID)
   add_library(RTInterception.arm.android OBJECT ${INTERCEPTION_SOURCES})
   set_target_compile_flags(RTInterception.arm.android
