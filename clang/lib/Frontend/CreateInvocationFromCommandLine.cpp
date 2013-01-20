@@ -34,9 +34,7 @@ clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
-    Diags = CompilerInstance::createDiagnostics(new DiagnosticOptions,
-                                                ArgList.size(),
-                                                ArgList.begin());
+    Diags = CompilerInstance::createDiagnostics(new DiagnosticOptions);
   }
 
   SmallVector<const char *, 16> Args;

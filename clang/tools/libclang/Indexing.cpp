@@ -543,8 +543,6 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   // Configure the diagnostics.
   IntrusiveRefCntPtr<DiagnosticsEngine>
     Diags(CompilerInstance::createDiagnostics(new DiagnosticOptions,
-                                              num_command_line_args,
-                                              command_line_args,
                                               CaptureDiag,
                                               /*ShouldOwnClient=*/true,
                                               /*ShouldCloneClient=*/false));

@@ -577,7 +577,6 @@ bool clang::ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,
       << Opts.TabStop << DiagnosticOptions::DefaultTabStop;
   }
   Opts.MessageLength = Args.getLastArgIntValue(OPT_fmessage_length, 0, Diags);
-  Opts.DumpBuildInformation = Args.getLastArgValue(OPT_dump_build_information);
   addWarningArgs(Args, Opts.Warnings);
 
   return Success;

@@ -128,7 +128,7 @@ int main(int argc, const char **argv, char * const *envp) {
   Clang.setInvocation(CI.take());
 
   // Create the compilers actual diagnostics engine.
-  Clang.createDiagnostics(int(CCArgs.size()),const_cast<char**>(CCArgs.data()));
+  Clang.createDiagnostics();
   if (!Clang.hasDiagnostics())
     return 1;
 

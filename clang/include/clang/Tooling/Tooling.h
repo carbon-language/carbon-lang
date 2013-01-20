@@ -151,8 +151,7 @@ class ToolInvocation {
 
   bool runInvocation(const char *BinaryName,
                      clang::driver::Compilation *Compilation,
-                     clang::CompilerInvocation *Invocation,
-                     const clang::driver::ArgStringList &CC1Args);
+                     clang::CompilerInvocation *Invocation);
 
   std::vector<std::string> CommandLine;
   OwningPtr<FrontendAction> ToolAction;

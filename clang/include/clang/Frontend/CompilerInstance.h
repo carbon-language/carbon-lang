@@ -479,16 +479,11 @@ public:
   ///
   /// \param ShouldCloneClient If Client is non-NULL, specifies whether that
   /// client should be cloned.
-  void createDiagnostics(int Argc, const char* const *Argv,
-                         DiagnosticConsumer *Client = 0,
+  void createDiagnostics(DiagnosticConsumer *Client = 0,
                          bool ShouldOwnClient = true,
                          bool ShouldCloneClient = true);
 
   /// Create a DiagnosticsEngine object with a the TextDiagnosticPrinter.
-  ///
-  /// The \p Argc and \p Argv arguments are used only for logging purposes,
-  /// when the diagnostic options indicate that the compiler should output
-  /// logging information.
   ///
   /// If no diagnostic client is provided, this creates a
   /// DiagnosticConsumer that is owned by the returned diagnostic
@@ -507,8 +502,7 @@ public:
   ///
   /// \return The new object on success, or null on failure.
   static IntrusiveRefCntPtr<DiagnosticsEngine>
-  createDiagnostics(DiagnosticOptions *Opts, int Argc,
-                    const char* const *Argv,
+  createDiagnostics(DiagnosticOptions *Opts,
                     DiagnosticConsumer *Client = 0,
                     bool ShouldOwnClient = true,
                     bool ShouldCloneClient = true,

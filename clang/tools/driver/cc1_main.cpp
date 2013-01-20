@@ -81,7 +81,7 @@ int cc1_main(const char **ArgBegin, const char **ArgEnd,
       CompilerInvocation::GetResourcesPath(Argv0, MainAddr);
 
   // Create the actual diagnostics engine.
-  Clang->createDiagnostics(ArgEnd - ArgBegin, const_cast<char**>(ArgBegin));
+  Clang->createDiagnostics();
   if (!Clang->hasDiagnostics())
     return 1;
 

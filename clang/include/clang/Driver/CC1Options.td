@@ -215,9 +215,6 @@ def header_include_file : Separate<["-"], "header-include-file">,
 // Diagnostic Options
 //===----------------------------------------------------------------------===//
 
-def dump_build_information : Separate<["-"], "dump-build-information">,
-  MetaVarName<"<filename>">,
-  HelpText<"output a dump of some build information to a file">;
 def diagnostic_log_file : Separate<["-"], "diagnostic-log-file">,
   HelpText<"Filename (or -) to log diagnostics to">;
 def diagnostic_serialized_file : Separate<["-"], "serialize-diagnostic-file">,

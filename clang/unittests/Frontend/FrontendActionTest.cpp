@@ -60,7 +60,7 @@ TEST(ASTFrontendAction, Sanity) {
   invocation->getTargetOpts().Triple = "i386-unknown-linux-gnu";
   CompilerInstance compiler;
   compiler.setInvocation(invocation);
-  compiler.createDiagnostics(0, NULL);
+  compiler.createDiagnostics();
 
   TestASTFrontendAction test_action;
   ASSERT_TRUE(compiler.ExecuteAction(test_action));

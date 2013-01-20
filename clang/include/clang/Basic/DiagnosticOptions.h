@@ -49,10 +49,6 @@ protected:
 #include "clang/Basic/DiagnosticOptions.def"
 
 public:
-  /// If non-empty, a file to log extended build information to, for development
-  /// testing and analysis.
-  std::string DumpBuildInformation;
-
   /// The file to log diagnostic output to.
   std::string DiagnosticLogFile;
   
