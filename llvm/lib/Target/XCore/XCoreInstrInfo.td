@@ -237,11 +237,10 @@ class F3R_np<bits<5> opc, string OpcStr> :
 // Three operand long
 
 /// FL3R_L2RUS multiclass - Define a normal FL3R/FL2RUS pattern in one shot.
-multiclass FL3R_L2RUS<string OpcStr, SDNode OpNode> {
-  def _l3r: _FL3R<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
+multiclass FL3R_L2RUS<bits<9> opc, string OpcStr, SDNode OpNode> {
+  def _l3r: _FL3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+                  !strconcat(OpcStr, " $dst, $b, $c"),
+                  [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
   def _l2rus : _FL2RUS<
                  (outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
                  !strconcat(OpcStr, " $dst, $b, $c"),
@@ -249,21 +248,20 @@ multiclass FL3R_L2RUS<string OpcStr, SDNode OpNode> {
 }
 
 /// FL3R_L2RUS multiclass - Define a normal FL3R/FL2RUS pattern in one shot.
-multiclass FL3R_L2RBITP<string OpcStr, SDNode OpNode> {
-  def _l3r: _FL3R<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
+multiclass FL3R_L2RBITP<bits<9> opc, string OpcStr, SDNode OpNode> {
+  def _l3r: _FL3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+                  !strconcat(OpcStr, " $dst, $b, $c"),
+                  [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
   def _l2rus : _FL2RUS<
                  (outs GRRegs:$dst), (ins GRRegs:$b, i32imm:$c),
                  !strconcat(OpcStr, " $dst, $b, $c"),
                  [(set GRRegs:$dst, (OpNode GRRegs:$b, immBitp:$c))]>;
 }
 
-class FL3R<string OpcStr, SDNode OpNode> : _FL3R<
-                 (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
-                 !strconcat(OpcStr, " $dst, $b, $c"),
-                 [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
+class FL3R<bits<9> opc, string OpcStr, SDNode OpNode> :
+  _FL3R<opc, (outs GRRegs:$dst), (ins GRRegs:$b, GRRegs:$c),
+        !strconcat(OpcStr, " $dst, $b, $c"),
+        [(set GRRegs:$dst, (OpNode GRRegs:$b, GRRegs:$c))]>;
 
 // Register - U6
 // Operand register - U6
@@ -411,8 +409,9 @@ def LD8U_3r :  _F3R<0b10001, (outs GRRegs:$dst),
 }
 
 let mayStore=1 in {
-def STW_3r : _FL3R<(outs), (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
-                    "stw $val, $addr[$offset]", []>;
+def STW_3r : _FL3R<0b000001100, (outs),
+                   (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
+                   "stw $val, $addr[$offset]", []>;
 
 def STW_2rus : _F2RUS<0b0000, (outs),
                       (ins GRRegs:$val, GRRegs:$addr, i32imm:$offset),
@@ -424,9 +423,11 @@ defm SHR : F3R_2RBITP<0b00101, 0b10101, "shr", srl>;
 // TODO tsetr
 
 // Three operand long
-def LDAWF_l3r : _FL3R<(outs GRRegs:$dst), (ins GRRegs:$addr, GRRegs:$offset),
-                  "ldaw $dst, $addr[$offset]",
-                  [(set GRRegs:$dst, (ldawf GRRegs:$addr, GRRegs:$offset))]>;
+def LDAWF_l3r : _FL3R<0b000111100, (outs GRRegs:$dst),
+                      (ins GRRegs:$addr, GRRegs:$offset),
+                      "ldaw $dst, $addr[$offset]",
+                      [(set GRRegs:$dst,
+                         (ldawf GRRegs:$addr, GRRegs:$offset))]>;
 
 let neverHasSideEffects = 1 in
 def LDAWF_l2rus : _FL2RUS<(outs GRRegs:$dst),
@@ -434,9 +435,11 @@ def LDAWF_l2rus : _FL2RUS<(outs GRRegs:$dst),
                     "ldaw $dst, $addr[$offset]",
                     []>;
 
-def LDAWB_l3r : _FL3R<(outs GRRegs:$dst), (ins GRRegs:$addr, GRRegs:$offset),
-                  "ldaw $dst, $addr[-$offset]",
-                  [(set GRRegs:$dst, (ldawb GRRegs:$addr, GRRegs:$offset))]>;
+def LDAWB_l3r : _FL3R<0b001001100, (outs GRRegs:$dst),
+                      (ins GRRegs:$addr, GRRegs:$offset),
+                      "ldaw $dst, $addr[-$offset]",
+                      [(set GRRegs:$dst,
+                         (ldawb GRRegs:$addr, GRRegs:$offset))]>;
 
 let neverHasSideEffects = 1 in
 def LDAWB_l2rus : _FL2RUS<(outs GRRegs:$dst),
@@ -444,42 +447,46 @@ def LDAWB_l2rus : _FL2RUS<(outs GRRegs:$dst),
                     "ldaw $dst, $addr[-$offset]",
                     []>;
 
-def LDA16F_l3r : _FL3R<(outs GRRegs:$dst), (ins GRRegs:$addr, GRRegs:$offset),
-                  "lda16 $dst, $addr[$offset]",
-                  [(set GRRegs:$dst, (lda16f GRRegs:$addr, GRRegs:$offset))]>;
+def LDA16F_l3r : _FL3R<0b001011100, (outs GRRegs:$dst),
+                       (ins GRRegs:$addr, GRRegs:$offset),
+                       "lda16 $dst, $addr[$offset]",
+                       [(set GRRegs:$dst,
+                          (lda16f GRRegs:$addr, GRRegs:$offset))]>;
 
-def LDA16B_l3r : _FL3R<(outs GRRegs:$dst), (ins GRRegs:$addr, GRRegs:$offset),
-                  "lda16 $dst, $addr[-$offset]",
-                  [(set GRRegs:$dst, (lda16b GRRegs:$addr, GRRegs:$offset))]>;
+def LDA16B_l3r : _FL3R<0b001101100, (outs GRRegs:$dst),
+                       (ins GRRegs:$addr, GRRegs:$offset),
+                       "lda16 $dst, $addr[-$offset]",
+                       [(set GRRegs:$dst,
+                          (lda16b GRRegs:$addr, GRRegs:$offset))]>;
 
-def MUL_l3r : FL3R<"mul", mul>;
+def MUL_l3r : FL3R<0b001111100, "mul", mul>;
 // Instructions which may trap are marked as side effecting.
 let hasSideEffects = 1 in {
-def DIVS_l3r : FL3R<"divs", sdiv>;
-def DIVU_l3r : FL3R<"divu", udiv>;
-def REMS_l3r : FL3R<"rems", srem>;
-def REMU_l3r : FL3R<"remu", urem>;
+def DIVS_l3r : FL3R<0b010001100, "divs", sdiv>;
+def DIVU_l3r : FL3R<0b010011100, "divu", udiv>;
+def REMS_l3r : FL3R<0b110001100, "rems", srem>;
+def REMU_l3r : FL3R<0b110011100, "remu", urem>;
 }
-def XOR_l3r : FL3R<"xor", xor>;
-defm ASHR : FL3R_L2RBITP<"ashr", sra>;
+def XOR_l3r : FL3R<0b000011100, "xor", xor>;
+defm ASHR : FL3R_L2RBITP<0b000101100, "ashr", sra>;
 
 let Constraints = "$src1 = $dst" in
-def CRC_l3r : _FL3R<(outs GRRegs:$dst),
-                     (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
-                     "crc32 $dst, $src2, $src3",
-                     [(set GRRegs:$dst,
-                        (int_xcore_crc32 GRRegs:$src1, GRRegs:$src2,
-                                         GRRegs:$src3))]>;
+def CRC_l3r : _FL3RSrcDst<0b101011100, (outs GRRegs:$dst),
+                          (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
+                          "crc32 $dst, $src2, $src3",
+                          [(set GRRegs:$dst,
+                             (int_xcore_crc32 GRRegs:$src1, GRRegs:$src2,
+                                              GRRegs:$src3))]>;
 
 // TODO inpw, outpw
 let mayStore=1 in {
-def ST16_l3r : _FL3R<(outs), (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
-                "st16 $val, $addr[$offset]",
-                []>;
+def ST16_l3r : _FL3R<0b100001100, (outs),
+                     (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
+                     "st16 $val, $addr[$offset]", []>;
 
-def ST8_l3r : _FL3R<(outs), (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
-                "st8 $val, $addr[$offset]",
-                []>;
+def ST8_l3r : _FL3R<0b100011100, (outs),
+                    (ins GRRegs:$val, GRRegs:$addr, GRRegs:$offset),
+                    "st8 $val, $addr[$offset]", []>;
 }
 
 // Four operand long
