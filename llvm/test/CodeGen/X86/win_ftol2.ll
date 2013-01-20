@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=i686-pc-win32 | FileCheck %s -check-prefix=FTOL
+; RUN: llc < %s -mtriple=i686-pc-win32 -mcpu=generic | FileCheck %s -check-prefix=FTOL
 ; RUN: llc < %s -mtriple=i686-pc-mingw32 | FileCheck %s -check-prefix=COMPILERRT
 ; RUN: llc < %s -mtriple=i686-pc-linux | FileCheck %s -check-prefix=COMPILERRT
 ; RUN: llc < %s -mtriple=x86_64-pc-win32 | FileCheck %s -check-prefix=COMPILERRT
