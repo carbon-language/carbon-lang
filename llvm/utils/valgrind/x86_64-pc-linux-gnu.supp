@@ -33,6 +33,12 @@
 }
 
 {
+   We don't care of cmp
+   Memcheck:Cond
+   obj:/usr/bin/cmp
+}
+
+{
    We don't care if grep leaks
    Memcheck:Leak
    obj:/bin/grep
