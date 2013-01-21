@@ -89,7 +89,7 @@ public:
   enum TargetCostConstants {
     TCC_Free = 0,       ///< Expected to fold away in lowering.
     TCC_Basic = 1,      ///< The cost of a typical 'add' instruction.
-    TCC_Expensive = 4,  ///< The cost of a 'div' instruction on x86.
+    TCC_Expensive = 4   ///< The cost of a 'div' instruction on x86.
   };
 
   /// \brief Estimate the cost of a specific operation when lowered.
