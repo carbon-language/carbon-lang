@@ -70,6 +70,9 @@ unsigned ComputeHash(Selector Sel);
 /// multiple definitions.
 const Decl *getDefinitiveDeclContext(const DeclContext *DC);
 
+/// \brief Determine whether the given declaration kind is redeclarable.
+bool isRedeclarableDeclKind(unsigned Kind);
+
 } // namespace serialization
 
 } // namespace clang

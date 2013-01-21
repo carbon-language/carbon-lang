@@ -141,5 +141,68 @@ const Decl *serialization::getDefinitiveDeclContext(const DeclContext *DC) {
   }
   
   return 0;
+}
 
+bool serialization::isRedeclarableDeclKind(unsigned Kind) {
+  switch (static_cast<Decl::Kind>(Kind)) {
+  case Decl::TranslationUnit: // Special case of a "merged" declaration.
+  case Decl::Namespace:
+  case Decl::NamespaceAlias: // FIXME: Not yet redeclarable, but will be.
+  case Decl::Typedef:
+  case Decl::TypeAlias:
+  case Decl::Enum:
+  case Decl::Record:
+  case Decl::CXXRecord:
+  case Decl::ClassTemplateSpecialization:
+  case Decl::ClassTemplatePartialSpecialization:
+  case Decl::Function:
+  case Decl::CXXMethod:
+  case Decl::CXXConstructor:
+  case Decl::CXXDestructor:
+  case Decl::CXXConversion:
+  case Decl::Var:
+  case Decl::FunctionTemplate:
+  case Decl::ClassTemplate:
+  case Decl::TypeAliasTemplate:
+  case Decl::ObjCProtocol:
+  case Decl::ObjCInterface:
+    return true;
+
+  // Never redeclarable.
+  case Decl::UsingDirective:
+  case Decl::Label:
+  case Decl::UnresolvedUsingTypename:
+  case Decl::TemplateTypeParm:
+  case Decl::EnumConstant:
+  case Decl::UnresolvedUsingValue:
+  case Decl::IndirectField:
+  case Decl::Field:
+  case Decl::ObjCIvar:
+  case Decl::ObjCAtDefsField:
+  case Decl::ImplicitParam:
+  case Decl::ParmVar:
+  case Decl::NonTypeTemplateParm:
+  case Decl::TemplateTemplateParm:
+  case Decl::Using:
+  case Decl::UsingShadow:
+  case Decl::ObjCMethod:
+  case Decl::ObjCCategory:
+  case Decl::ObjCCategoryImpl:
+  case Decl::ObjCImplementation:
+  case Decl::ObjCProperty:
+  case Decl::ObjCCompatibleAlias:
+  case Decl::LinkageSpec:
+  case Decl::ObjCPropertyImpl:
+  case Decl::FileScopeAsm:
+  case Decl::AccessSpec:
+  case Decl::Friend:
+  case Decl::FriendTemplate:
+  case Decl::StaticAssert:
+  case Decl::Block:
+  case Decl::ClassScopeFunctionSpecialization:
+  case Decl::Import:
+    return false;
+  }
+
+  llvm_unreachable("Unhandled declaration kind");
 }
