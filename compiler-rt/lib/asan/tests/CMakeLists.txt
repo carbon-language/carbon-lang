@@ -140,7 +140,9 @@ macro(add_asan_tests_for_arch arch)
   asan_compile(ASAN_INST_TEST_OBJECTS asan_test.cc ${arch}
                ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
   if (APPLE)
-    asan_compile(ASAN_INST_TEST_OBJECTS asan_mac_test.mm ${arch}
+    asan_compile(ASAN_INST_TEST_OBJECTS asan_mac_test.cc ${arch}
+                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+    asan_compile(ASAN_INST_TEST_OBJECTS asan_mac_test_helpers.mm ${arch}
                  ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS} -ObjC)
   endif()
   # Uninstrumented tests.
