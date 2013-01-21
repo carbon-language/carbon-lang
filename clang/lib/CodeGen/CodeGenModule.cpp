@@ -1939,9 +1939,10 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
 
     // Collect any return attributes from the call.
     if (oldAttrs.hasAttributes(llvm::AttributeSet::ReturnIndex))
-      newAttrs.push_back(llvm::AttributeWithIndex::get(
-                                llvm::AttributeSet::ReturnIndex,
-                                oldAttrs.getRetAttributes()));
+      newAttrs.push_back(
+        llvm::AttributeWithIndex::get(newFn->getContext(),
+                                      llvm::AttributeSet::ReturnIndex,
+                                      oldAttrs.getRetAttributes()));
 
     // If the function was passed too few arguments, don't transform.
     unsigned newNumArgs = newFn->arg_size();
