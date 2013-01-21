@@ -19,80 +19,80 @@
 #include "llvm/Support/CallSite.h"
 
 namespace llvm {
-  class BasicBlock;
-  class Function;
-  class Instruction;
-  class DataLayout;
-  class Value;
+class BasicBlock;
+class Function;
+class Instruction;
+class DataLayout;
+class Value;
 
-  /// \brief Check whether an instruction is likely to be "free" when lowered.
-  bool isInstructionFree(const Instruction *I, const DataLayout *TD = 0);
+/// \brief Check whether an instruction is likely to be "free" when lowered.
+bool isInstructionFree(const Instruction *I, const DataLayout *TD = 0);
 
-  /// \brief Check whether a call will lower to something small.
+/// \brief Check whether a call will lower to something small.
+///
+/// This tests checks whether this callsite will lower to something
+/// significantly cheaper than a traditional call, often a single
+/// instruction. Note that if isInstructionFree(CS.getInstruction()) would
+/// return true, so will this function.
+bool callIsSmall(ImmutableCallSite CS);
+
+/// \brief Utility to calculate the size and a few similar metrics for a set
+/// of basic blocks.
+struct CodeMetrics {
+  /// \brief True if this function contains a call to setjmp or other functions
+  /// with attribute "returns twice" without having the attribute itself.
+  bool exposesReturnsTwice;
+
+  /// \brief True if this function calls itself.
+  bool isRecursive;
+
+  /// \brief True if this function cannot be duplicated.
   ///
-  /// This tests checks whether this callsite will lower to something
-  /// significantly cheaper than a traditional call, often a single
-  /// instruction. Note that if isInstructionFree(CS.getInstruction()) would
-  /// return true, so will this function.
-  bool callIsSmall(ImmutableCallSite CS);
+  /// True if this function contains one or more indirect branches, or it contains
+  /// one or more 'noduplicate' instructions.
+  bool notDuplicatable;
 
-  /// \brief Utility to calculate the size and a few similar metrics for a set
-  /// of basic blocks.
-  struct CodeMetrics {
-    /// \brief True if this function contains a call to setjmp or other functions
-    /// with attribute "returns twice" without having the attribute itself.
-    bool exposesReturnsTwice;
+  /// \brief True if this function calls alloca (in the C sense).
+  bool usesDynamicAlloca;
 
-    /// \brief True if this function calls itself.
-    bool isRecursive;
+  /// \brief Number of instructions in the analyzed blocks.
+  unsigned NumInsts;
 
-    /// \brief True if this function cannot be duplicated.
-    ///
-    /// True if this function contains one or more indirect branches, or it contains
-    /// one or more 'noduplicate' instructions.
-    bool notDuplicatable;
+  /// \brief Number of analyzed blocks.
+  unsigned NumBlocks;
 
-    /// \brief True if this function calls alloca (in the C sense).
-    bool usesDynamicAlloca;
+  /// \brief Keeps track of basic block code size estimates.
+  DenseMap<const BasicBlock *, unsigned> NumBBInsts;
 
-    /// \brief Number of instructions in the analyzed blocks.
-    unsigned NumInsts;
+  /// \brief Keep track of the number of calls to 'big' functions.
+  unsigned NumCalls;
 
-    /// \brief Number of analyzed blocks.
-    unsigned NumBlocks;
+  /// \brief The number of calls to internal functions with a single caller.
+  ///
+  /// These are likely targets for future inlining, likely exposed by
+  /// interleaved devirtualization.
+  unsigned NumInlineCandidates;
 
-    /// \brief Keeps track of basic block code size estimates.
-    DenseMap<const BasicBlock *, unsigned> NumBBInsts;
+  /// \brief How many instructions produce vector values.
+  ///
+  /// The inliner is more aggressive with inlining vector kernels.
+  unsigned NumVectorInsts;
 
-    /// \brief Keep track of the number of calls to 'big' functions.
-    unsigned NumCalls;
+  /// \brief How many 'ret' instructions the blocks contain.
+  unsigned NumRets;
 
-    /// \brief The number of calls to internal functions with a single caller.
-    ///
-    /// These are likely targets for future inlining, likely exposed by
-    /// interleaved devirtualization.
-    unsigned NumInlineCandidates;
+  CodeMetrics()
+      : exposesReturnsTwice(false), isRecursive(false), notDuplicatable(false),
+        usesDynamicAlloca(false), NumInsts(0), NumBlocks(0), NumCalls(0),
+        NumInlineCandidates(0), NumVectorInsts(0), NumRets(0) {}
 
-    /// \brief How many instructions produce vector values.
-    ///
-    /// The inliner is more aggressive with inlining vector kernels.
-    unsigned NumVectorInsts;
+  /// \brief Add information about a block to the current state.
+  void analyzeBasicBlock(const BasicBlock *BB, const DataLayout *TD = 0);
 
-    /// \brief How many 'ret' instructions the blocks contain.
-    unsigned NumRets;
+  /// \brief Add information about a function to the current state.
+  void analyzeFunction(Function *F, const DataLayout *TD = 0);
+};
 
-    CodeMetrics() : exposesReturnsTwice(false), isRecursive(false),
-                    notDuplicatable(false), usesDynamicAlloca(false),
-                    NumInsts(0), NumBlocks(0), NumCalls(0),
-                    NumInlineCandidates(0), NumVectorInsts(0),
-                    NumRets(0) {}
-
-    /// \brief Add information about a block to the current state.
-    void analyzeBasicBlock(const BasicBlock *BB, const DataLayout *TD = 0);
-
-    /// \brief Add information about a function to the current state.
-    void analyzeFunction(Function *F, const DataLayout *TD = 0);
-  };
 }
 
 #endif
