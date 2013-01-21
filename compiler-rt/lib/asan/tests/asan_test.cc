@@ -1093,6 +1093,15 @@ TEST(AddressSanitizer, StrLenOOBTest) {
   free(heap_string);
 }
 
+static inline char* MallocAndMemsetString(size_t size, char ch) {
+  char *s = Ident((char*)malloc(size));
+  memset(s, ch, size);
+  return s;
+}
+static inline char* MallocAndMemsetString(size_t size) {
+  return MallocAndMemsetString(size, 'z');
+}
+
 #ifndef __APPLE__
 TEST(AddressSanitizer, StrNLenOOBTest) {
   size_t size = Ident(123);
@@ -1112,15 +1121,6 @@ TEST(AddressSanitizer, StrNLenOOBTest) {
   free(str);
 }
 #endif
-
-static inline char* MallocAndMemsetString(size_t size, char ch) {
-  char *s = Ident((char*)malloc(size));
-  memset(s, ch, size);
-  return s;
-}
-static inline char* MallocAndMemsetString(size_t size) {
-  return MallocAndMemsetString(size, 'z');
-}
 
 TEST(AddressSanitizer, StrDupOOBTest) {
   size_t size = Ident(42);
