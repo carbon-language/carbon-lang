@@ -15,6 +15,13 @@ include(CompilerRTCompile)
 include_directories(..)
 include_directories(../..)
 
+# Use zero-based shadow on Linux and Android.
+if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+  set(ASAN_TESTS_USE_ZERO_BASE_SHADOW TRUE)
+else()
+  set(ASAN_TESTS_USE_ZERO_BASE_SHADOW FALSE)
+endif()
+
 set(ASAN_UNITTEST_HEADERS
   asan_mac_test.h
   asan_test_config.h
@@ -32,39 +39,38 @@ set(ASAN_UNITTEST_COMMON_CFLAGS
   -O2
 )
 
+if(ASAN_TESTS_USE_ZERO_BASE_SHADOW)
+  list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -fPIE)
+endif()
 if(SUPPORTS_NO_VARIADIC_MACROS_FLAG)
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS -Wno-variadic-macros)
 endif()
 
 # Use -D instead of definitions to please custom compile command.
+list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
+  -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
+  -DASAN_HAS_BLACKLIST=1
+  -DASAN_HAS_EXCEPTIONS=1
+  -DASAN_UAR=0)
 if(ANDROID)
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
     -DASAN_LOW_MEMORY=1
-    -DASAN_HAS_BLACKLIST=1
-    -DASAN_HAS_EXCEPTIONS=1
-    -DASAN_NEEDS_SEGV=0
-    -DASAN_UAR=0
-    -fPIE
-  )
+    -DASAN_NEEDS_SEGV=0)
 else()
   list(APPEND ASAN_UNITTEST_COMMON_CFLAGS
-    -DASAN_HAS_BLACKLIST=1
-    -DASAN_HAS_EXCEPTIONS=1
-    -DASAN_NEEDS_SEGV=1
-    -DASAN_UAR=0
-  )
+    -DASAN_LOW_MEMORY=0
+    -DASAN_NEEDS_SEGV=1)
 endif()
 
 set(ASAN_LINK_FLAGS)
-if(ANDROID)
-  # On Android, we link with ASan runtime manually
+if(ASAN_TESTS_USE_ZERO_BASE_SHADOW)
   list(APPEND ASAN_LINK_FLAGS -pie)
-else()
-  # On other platforms, we depend on Clang driver behavior,
-  # passing -fsanitize=address flag.
+endif()
+# On Android, we link with ASan runtime manually. On other platforms we depend
+# on Clang driver behavior, passing -fsanitize=address flag.
+if(NOT ANDROID)
   list(APPEND ASAN_LINK_FLAGS -fsanitize=address)
 endif()
-
 # Unit tests on Mac depend on Foundation.
 if(APPLE)
   list(APPEND ASAN_LINK_FLAGS -framework Foundation)
@@ -84,6 +90,10 @@ set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   -mllvm -asan-mapping-offset-log=-1  # default will be used
   -mllvm -asan-use-after-return=0
 )
+if(ASAN_TESTS_USE_ZERO_BASE_SHADOW)
+  list(APPEND ASAN_UNITTEST_INSTRUMENTED_CFLAGS
+    -fsanitize-address-zero-base-shadow)
+endif()
 
 # Compile source for the given architecture, using compiler
 # options in ${ARGN}, and add it to the object list.

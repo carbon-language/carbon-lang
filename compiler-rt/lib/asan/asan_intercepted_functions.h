@@ -255,6 +255,6 @@ DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_source_set_cancel_handler,
 #  endif  // MAC_INTERPOSE_FUNCTIONS
 # endif  // __APPLE__
 }  // extern "C"
-#endif // defined(__APPLE__) || (defined(_WIN32) && !defined(_DLL))
+#endif  // defined(__APPLE__) || (defined(_WIN32) && !defined(_DLL))
 
 #endif  // ASAN_INTERCEPTED_FUNCTIONS_H
