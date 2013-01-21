@@ -586,7 +586,7 @@ protected:
         }
 
         size_t item_count = m_format_options.GetCountValue().GetCurrentValue();
-        const size_t item_byte_size = m_format_options.GetByteSizeValue().GetCurrentValue();
+        size_t item_byte_size = m_format_options.GetByteSizeValue().GetCurrentValue();
         const size_t num_per_line = m_memory_options.m_num_per_line.GetCurrentValue();
 
         if (total_byte_size == 0)
@@ -641,6 +641,8 @@ protected:
             return false;
         }
         
+        
+        
         DataBufferSP data_sp;
         size_t bytes_read = 0;
         if (clang_ast_type.GetOpaqueQualType())
@@ -651,7 +653,7 @@ protected:
 
             bytes_read = clang_ast_type.GetTypeByteSize() * m_format_options.GetCountValue().GetCurrentValue();
         }
-        else
+        else if (m_format_options.GetFormatValue().GetCurrentValue() != eFormatCString)
         {
             data_sp.reset (new DataBufferHeap (total_byte_size, '\0'));
             Address address(addr, NULL);
@@ -673,6 +675,46 @@ protected:
             
             if (bytes_read < total_byte_size)
                 result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%" PRIx64 ".", bytes_read, total_byte_size, addr);
+        }
+        else
+        {
+            // we treat c-strings as a special case because they do not have a fixed size
+            if (m_format_options.GetByteSizeValue().OptionWasSet() && !m_format_options.HasGDBFormat())
+                item_byte_size = m_format_options.GetByteSizeValue().GetCurrentValue();
+            else
+                item_byte_size = target->GetMaximumSizeOfStringSummary();
+            if (!m_format_options.GetCountValue().OptionWasSet())
+                item_count = 1;
+            data_sp.reset (new DataBufferHeap ((item_byte_size+1) * item_count, '\0')); // account for NULLs as necessary
+            uint8_t *data_ptr = data_sp->GetBytes();
+            auto data_addr = addr;
+            auto count = item_count;
+            item_count = 0;
+            while (item_count < count)
+            {
+                std::string buffer;
+                buffer.resize(item_byte_size+1,0);
+                Error error;
+                size_t read = target->ReadCStringFromMemory(data_addr, &buffer[0], item_byte_size+1, error);
+                if (error.Fail())
+                {
+                    result.AppendErrorWithFormat("failed to read memory from 0x%" PRIx64 ".\n", addr);
+                    result.SetStatus(eReturnStatusFailed);
+                    return false;
+                }
+                if (item_byte_size == read)
+                {
+                    result.AppendWarningWithFormat("unable to find a NULL terminated string at 0x%" PRIx64 ".Consider increasing the maximum read length.\n", data_addr);
+                    break;
+                }
+                read+=1; // account for final NULL byte
+                memcpy(data_ptr, &buffer[0], read);
+                data_ptr += read;
+                data_addr += read;
+                bytes_read += read;
+                item_count++; // if we break early we know we only read item_count strings
+            }
+            data_sp.reset(new DataBufferHeap(data_sp->GetBytes(),bytes_read+1));
         }
 
         m_next_addr = addr + bytes_read;

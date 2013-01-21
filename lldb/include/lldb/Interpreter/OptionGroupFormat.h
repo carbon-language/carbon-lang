@@ -97,6 +97,11 @@ public:
         return m_count;
     }
     
+    bool
+    HasGDBFormat () const
+    {
+        return m_has_gdb_format;
+    }
     
     bool
     AnyOptionWasSet () const
@@ -119,6 +124,8 @@ protected:
     OptionValueUInt64 m_count;
     char m_prev_gdb_format;
     char m_prev_gdb_size;
+    
+    bool m_has_gdb_format;
 };
 
 } // namespace lldb_private

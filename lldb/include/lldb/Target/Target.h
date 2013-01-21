@@ -846,7 +846,13 @@ public:
                 size_t dst_len,
                 Error &error,
                 lldb::addr_t *load_addr_ptr = NULL);
-
+    
+    size_t
+    ReadCStringFromMemory (const Address& addr, std::string &out_str, Error &error);
+    
+    size_t
+    ReadCStringFromMemory (const Address& addr, char *dst, size_t dst_max_len, Error &result_error);
+    
     size_t
     ReadScalarIntegerFromMemory (const Address& addr, 
                                  bool prefer_file_cache,

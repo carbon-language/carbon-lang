@@ -205,6 +205,7 @@ OptionGroupFormat::SetOptionValue (CommandInterpreter &interpreter,
 bool
 OptionGroupFormat::ParserGDBFormatLetter (CommandInterpreter &interpreter, char format_letter, Format &format, uint32_t &byte_size)
 {
+    m_has_gdb_format = true;
     switch (format_letter)
     {
         case 'o': format = eFormatOctal;        m_prev_gdb_format = format_letter; return true; 
@@ -242,4 +243,5 @@ OptionGroupFormat::OptionParsingStarting (CommandInterpreter &interpreter)
     m_format.Clear();
     m_byte_size.Clear();
     m_count.Clear();
+    m_has_gdb_format = false;
 }

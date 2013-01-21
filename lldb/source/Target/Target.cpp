@@ -1327,6 +1327,82 @@ Target::ReadMemory (const Address& addr,
 }
 
 size_t
+Target::ReadCStringFromMemory (const Address& addr, std::string &out_str, Error &error)
+{
+    char buf[256];
+    out_str.clear();
+    addr_t curr_addr = addr.GetLoadAddress(this);
+    Address address(addr);
+    while (1)
+    {
+        size_t length = ReadCStringFromMemory (address, buf, sizeof(buf), error);
+        if (length == 0)
+            break;
+        out_str.append(buf, length);
+        // If we got "length - 1" bytes, we didn't get the whole C string, we
+        // need to read some more characters
+        if (length == sizeof(buf) - 1)
+            curr_addr += length;
+        else
+            break;
+        address = Address(curr_addr);
+    }
+    return out_str.size();
+}
+
+
+size_t
+Target::ReadCStringFromMemory (const Address& addr, char *dst, size_t dst_max_len, Error &result_error)
+{
+    size_t total_cstr_len = 0;
+    if (dst && dst_max_len)
+    {
+        result_error.Clear();
+        // NULL out everything just to be safe
+        memset (dst, 0, dst_max_len);
+        Error error;
+        addr_t curr_addr = addr.GetLoadAddress(this);
+        Address address(addr);
+        const size_t cache_line_size = 512;
+        size_t bytes_left = dst_max_len - 1;
+        char *curr_dst = dst;
+        
+        while (bytes_left > 0)
+        {
+            addr_t cache_line_bytes_left = cache_line_size - (curr_addr % cache_line_size);
+            addr_t bytes_to_read = std::min<addr_t>(bytes_left, cache_line_bytes_left);
+            size_t bytes_read = ReadMemory (address, false, curr_dst, bytes_to_read, error);
+            
+            if (bytes_read == 0)
+            {
+                result_error = error;
+                dst[total_cstr_len] = '\0';
+                break;
+            }
+            const size_t len = strlen(curr_dst);
+            
+            total_cstr_len += len;
+            
+            if (len < bytes_to_read)
+                break;
+            
+            curr_dst += bytes_read;
+            curr_addr += bytes_read;
+            bytes_left -= bytes_read;
+            address = Address(curr_addr);
+        }
+    }
+    else
+    {
+        if (dst == NULL)
+            result_error.SetErrorString("invalid arguments");
+        else
+            result_error.Clear();
+    }
+    return total_cstr_len;
+}
+
+size_t
 Target::ReadScalarIntegerFromMemory (const Address& addr, 
                                      bool prefer_file_cache,
                                      uint32_t byte_size, 
