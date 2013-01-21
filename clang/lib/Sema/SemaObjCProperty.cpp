@@ -112,6 +112,33 @@ static unsigned deduceWeakPropertyFromType(Sema &S, QualType T) {
   return 0;
 }
 
+/// \brief Check this Objective-C property against a property declared in the
+/// given protocol.
+static void
+CheckPropertyAgainstProtocol(Sema &S, ObjCPropertyDecl *Prop,
+                             ObjCProtocolDecl *Proto,
+                             llvm::SmallPtrSet<ObjCProtocolDecl *, 16> &Known) {
+  // Have we seen this protocol before?
+  if (!Known.insert(Proto))
+    return;
+
+  // Look for a property with the same name.
+  DeclContext::lookup_result R = Proto->lookup(Prop->getDeclName());
+  for (unsigned I = 0, N = R.size(); I != N; ++I) {
+    if (ObjCPropertyDecl *ProtoProp = dyn_cast<ObjCPropertyDecl>(R[I])) {
+      S.DiagnosePropertyMismatch(Prop, ProtoProp, Proto->getIdentifier());
+      return;
+    }
+  }
+
+  // Check this property against any protocols we inherit.
+  for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
+                                        PEnd = Proto->protocol_end();
+       P != PEnd; ++P) {
+    CheckPropertyAgainstProtocol(S, Prop, *P, Known);
+  }
+}
+
 Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
                           SourceLocation LParenLoc,
                           FieldDeclarator &FD,
@@ -173,13 +200,49 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
   if (getLangOpts().ObjCAutoRefCount)
     checkARCPropertyDecl(*this, Res);
 
-  // Compare this property against the property in our superclass.
+  llvm::SmallPtrSet<ObjCProtocolDecl *, 16> KnownProtos;
   if (ObjCInterfaceDecl *IFace = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
+    // For a class, compare the property against a property in our superclass.
+    bool FoundInSuper = false;
     if (ObjCInterfaceDecl *Super = IFace->getSuperClass()) {
       DeclContext::lookup_result R = Super->lookup(Res->getDeclName());
-      for (unsigned I = 0, N = R.size(); I != N; ++I)
-        if (ObjCPropertyDecl *SuperProp = dyn_cast<ObjCPropertyDecl>(R[I]))
+      for (unsigned I = 0, N = R.size(); I != N; ++I) {
+        if (ObjCPropertyDecl *SuperProp = dyn_cast<ObjCPropertyDecl>(R[I])) {
           DiagnosePropertyMismatch(Res, SuperProp, Super->getIdentifier());
+          FoundInSuper = true;
+          break;
+        }
+      }
+    }
+
+    if (FoundInSuper) {
+      // Also compare the property against a property in our protocols.
+      for (ObjCInterfaceDecl::protocol_iterator P = IFace->protocol_begin(),
+                                             PEnd = IFace->protocol_end();
+           P != PEnd; ++P) {
+        CheckPropertyAgainstProtocol(*this, Res, *P, KnownProtos);
+      }
+    } else {
+      // Slower path: look in all protocols we referenced.
+      for (ObjCInterfaceDecl::all_protocol_iterator
+             P = IFace->all_referenced_protocol_begin(),
+             PEnd = IFace->all_referenced_protocol_end();
+           P != PEnd; ++P) {
+        CheckPropertyAgainstProtocol(*this, Res, *P, KnownProtos);
+      }
+    }
+  } else if (ObjCCategoryDecl *Cat = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
+    for (ObjCCategoryDecl::protocol_iterator P = Cat->protocol_begin(),
+                                          PEnd = Cat->protocol_end();
+         P != PEnd; ++P) {
+      CheckPropertyAgainstProtocol(*this, Res, *P, KnownProtos);
+    }
+  } else {
+    ObjCProtocolDecl *Proto = cast<ObjCProtocolDecl>(ClassDecl);
+    for (ObjCProtocolDecl::protocol_iterator P = Proto->protocol_begin(),
+                                          PEnd = Proto->protocol_end();
+         P != PEnd; ++P) {
+      CheckPropertyAgainstProtocol(*this, Res, *P, KnownProtos);
     }
   }
 
@@ -1333,59 +1396,6 @@ Sema::MatchOneProtocolPropertiesInClass(Decl *CDecl, ObjCProtocolDecl *PDecl) {
         }
       }
     }
-  }
-}
-
-/// CompareProperties - This routine compares properties
-/// declared in 'ClassOrProtocol' objects (which can be a class or an
-/// inherited protocol with the list of properties for class/category 'CDecl'
-///
-void Sema::CompareProperties(Decl *CDecl, Decl *ClassOrProtocol) {
-  Decl *ClassDecl = ClassOrProtocol;
-  ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDecl);
-
-  if (!IDecl) {
-    // Category
-    ObjCCategoryDecl *CatDecl = static_cast<ObjCCategoryDecl*>(CDecl);
-    assert (CatDecl && "CompareProperties");
-    if (ObjCCategoryDecl *MDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
-      for (ObjCCategoryDecl::protocol_iterator P = MDecl->protocol_begin(),
-           E = MDecl->protocol_end(); P != E; ++P)
-      // Match properties of category with those of protocol (*P)
-      MatchOneProtocolPropertiesInClass(CatDecl, *P);
-
-      // Go thru the list of protocols for this category and recursively match
-      // their properties with those in the category.
-      for (ObjCCategoryDecl::protocol_iterator P = CatDecl->protocol_begin(),
-           E = CatDecl->protocol_end(); P != E; ++P)
-        CompareProperties(CatDecl, *P);
-    } else {
-      ObjCProtocolDecl *MD = cast<ObjCProtocolDecl>(ClassDecl);
-      for (ObjCProtocolDecl::protocol_iterator P = MD->protocol_begin(),
-           E = MD->protocol_end(); P != E; ++P)
-        MatchOneProtocolPropertiesInClass(CatDecl, *P);
-    }
-    return;
-  }
-
-  if (ObjCInterfaceDecl *MDecl = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
-    for (ObjCInterfaceDecl::all_protocol_iterator
-          P = MDecl->all_referenced_protocol_begin(),
-          E = MDecl->all_referenced_protocol_end(); P != E; ++P)
-      // Match properties of class IDecl with those of protocol (*P).
-      MatchOneProtocolPropertiesInClass(IDecl, *P);
-
-    // Go thru the list of protocols for this class and recursively match
-    // their properties with those declared in the class.
-    for (ObjCInterfaceDecl::all_protocol_iterator
-          P = IDecl->all_referenced_protocol_begin(),
-          E = IDecl->all_referenced_protocol_end(); P != E; ++P)
-      CompareProperties(IDecl, *P);
-  } else {
-    ObjCProtocolDecl *MD = cast<ObjCProtocolDecl>(ClassDecl);
-    for (ObjCProtocolDecl::protocol_iterator P = MD->protocol_begin(),
-         E = MD->protocol_end(); P != E; ++P)
-      MatchOneProtocolPropertiesInClass(IDecl, *P);
   }
 }
 

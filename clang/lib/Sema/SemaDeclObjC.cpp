@@ -2380,17 +2380,13 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
       }
     }
   }
-  if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
-    // Compares properties declared in this class to those of its
-    // super class.
-    CompareProperties(I, I);
+  if (isa<ObjCInterfaceDecl>(ClassDecl)) {
+    // Nothing to do here.
   } else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
     // Categories are used to extend the class by declaring new methods.
     // By the same token, they are also used to add new properties. No
     // need to compare the added property to those in the class.
 
-    // Compare protocol properties with those in category
-    CompareProperties(C, C);
     if (C->IsClassExtension()) {
       ObjCInterfaceDecl *CCPrimary = C->getClassInterface();
       DiagnoseClassExtensionDupMethods(C, CCPrimary);

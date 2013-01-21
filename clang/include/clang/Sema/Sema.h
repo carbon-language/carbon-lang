@@ -6213,9 +6213,6 @@ public:
                                 ObjCPropertyDecl *SuperProperty,
                                 const IdentifierInfo *Name);
 
-
-  void CompareProperties(Decl *CDecl, Decl *MergeProtocols);
-
   void DiagnoseClassExtensionDupMethods(ObjCCategoryDecl *CAT,
                                         ObjCInterfaceDecl *ID);
 
