@@ -953,6 +953,8 @@ public:
         if (CurrentToken->is(tok::r_square)) {
           if (StartsObjCMethodExpr)
             objCSelector.markEnd(*CurrentToken);
+          Left->MatchingParen = CurrentToken;
+          CurrentToken->MatchingParen = Left;
           next();
           return true;
         }
