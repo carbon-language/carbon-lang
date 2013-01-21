@@ -615,7 +615,9 @@ void UnwrappedLineParser::parseRecord() {
     if (FormatTok.Tok.is(tok::l_paren)) {
       parseParens();
     }
-    if (FormatTok.Tok.is(tok::identifier))
+    // The actual identifier can be a nested name specifier.
+    while (FormatTok.Tok.is(tok::identifier) ||
+           FormatTok.Tok.is(tok::coloncolon))
       nextToken();
 
     if (FormatTok.Tok.is(tok::colon)) {
