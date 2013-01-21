@@ -30,29 +30,34 @@ using namespace llvm;
 
 namespace {
 
-  // AlwaysInliner only inlines functions that are mark as "always inline".
-  class AlwaysInliner : public Inliner {
-    InlineCostAnalyzer CA;
-  public:
-    // Use extremely low threshold.
-    AlwaysInliner() : Inliner(ID, -2000000000, /*InsertLifetime*/true) {
-      initializeAlwaysInlinerPass(*PassRegistry::getPassRegistry());
-    }
-    AlwaysInliner(bool InsertLifetime) : Inliner(ID, -2000000000,
-                                                 InsertLifetime) {
-      initializeAlwaysInlinerPass(*PassRegistry::getPassRegistry());
-    }
-    static char ID; // Pass identification, replacement for typeid
-    virtual InlineCost getInlineCost(CallSite CS);
+/// \brief Inliner pass which only handles "always inline" functions.
+class AlwaysInliner : public Inliner {
+  InlineCostAnalyzer CA;
 
-    using llvm::Pass::doInitialization;
-    using llvm::Pass::doFinalization;
+public:
+  // Use extremely low threshold.
+  AlwaysInliner() : Inliner(ID, -2000000000, /*InsertLifetime*/ true) {
+    initializeAlwaysInlinerPass(*PassRegistry::getPassRegistry());
+  }
 
-    virtual bool doFinalization(CallGraph &CG) {
-      return removeDeadFunctions(CG, /*AlwaysInlineOnly=*/true);
-    }
-    virtual bool doInitialization(CallGraph &CG);
-  };
+  AlwaysInliner(bool InsertLifetime)
+      : Inliner(ID, -2000000000, InsertLifetime) {
+    initializeAlwaysInlinerPass(*PassRegistry::getPassRegistry());
+  }
+
+  static char ID; // Pass identification, replacement for typeid
+
+  virtual InlineCost getInlineCost(CallSite CS);
+
+  using llvm::Pass::doFinalization;
+  virtual bool doFinalization(CallGraph &CG) {
+    return removeDeadFunctions(CG, /*AlwaysInlineOnly=*/ true);
+  }
+
+  using llvm::Pass::doInitialization;
+  virtual bool doInitialization(CallGraph &CG);
+};
+
 }
 
 char AlwaysInliner::ID = 0;
@@ -95,8 +100,6 @@ InlineCost AlwaysInliner::getInlineCost(CallSite CS) {
   return InlineCost::getNever();
 }
 
-// doInitialization - Initializes the vector of functions that have not
-// been annotated with the "always inline" attribute.
 bool AlwaysInliner::doInitialization(CallGraph &CG) {
   CA.setDataLayout(getAnalysisIfAvailable<DataLayout>());
   return false;
