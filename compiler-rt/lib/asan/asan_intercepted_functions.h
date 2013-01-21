@@ -107,7 +107,7 @@ DECLARE_FUNCTION_AND_WRAPPER(void, siglongjmp, void *env, int value);
 # endif
 # if ASAN_INTERCEPT___CXA_THROW
 DECLARE_FUNCTION_AND_WRAPPER(void, __cxa_throw, void *a, void *b, void *c);
-#endif
+# endif
 
 // string.h / strings.h
 DECLARE_FUNCTION_AND_WRAPPER(int, memcmp,
@@ -141,9 +141,9 @@ DECLARE_FUNCTION_AND_WRAPPER(char*, strdup, const char *s);
 # if ASAN_INTERCEPT_STRNLEN
 DECLARE_FUNCTION_AND_WRAPPER(uptr, strnlen, const char *s, uptr maxlen);
 # endif
-#if ASAN_INTERCEPT_INDEX
+# if ASAN_INTERCEPT_INDEX
 DECLARE_FUNCTION_AND_WRAPPER(char*, index, const char *string, int c);
-#endif
+# endif
 
 // stdlib.h
 DECLARE_FUNCTION_AND_WRAPPER(int, atoi, const char *nptr);
@@ -167,12 +167,12 @@ DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pread64, int fd, void *buf,
                              SIZE_T count, OFF64_T offset);
 # endif
 
-#if SANITIZER_INTERCEPT_WRITE
+# if SANITIZER_INTERCEPT_WRITE
 DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, write, int fd, void *ptr, SIZE_T count);
-#endif
-#if SANITIZER_INTERCEPT_PWRITE
+# endif
+# if SANITIZER_INTERCEPT_PWRITE
 DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count);
-#endif
+# endif
 
 # if ASAN_INTERCEPT_MLOCKX
 // mlock/munlock
@@ -195,7 +195,18 @@ DECLARE_FUNCTION_AND_WRAPPER(int, pthread_create,
                              void *(*start_routine)(void*), void *arg);
 # endif
 
-#if defined(__APPLE__)
+DECLARE_FUNCTION_AND_WRAPPER(int, vscanf, const char *format, va_list ap);
+DECLARE_FUNCTION_AND_WRAPPER(int, vsscanf, const char *str, const char *format,
+                             va_list ap);
+DECLARE_FUNCTION_AND_WRAPPER(int, vfscanf, void *stream, const char *format,
+                             va_list ap);
+DECLARE_FUNCTION_AND_WRAPPER(int, scanf, const char *format, ...);
+DECLARE_FUNCTION_AND_WRAPPER(int, fscanf,
+                             void* stream, const char *format, ...);
+DECLARE_FUNCTION_AND_WRAPPER(int, sscanf,  // NOLINT
+                             const char *str, const char *format, ...);
+
+# if defined(__APPLE__)
 typedef void* pthread_workqueue_t;
 typedef void* pthread_workitem_handle_t;
 
@@ -229,18 +240,7 @@ DECLARE_FUNCTION_AND_WRAPPER(CFStringRef, CFStringCreateCopy,
                              CFAllocatorRef alloc, CFStringRef str);
 DECLARE_FUNCTION_AND_WRAPPER(void, free, void* ptr);
 
-DECLARE_FUNCTION_AND_WRAPPER(int, vscanf, const char *format, va_list ap);
-DECLARE_FUNCTION_AND_WRAPPER(int, vsscanf, const char *str, const char *format,
-                             va_list ap);
-DECLARE_FUNCTION_AND_WRAPPER(int, vfscanf, void *stream, const char *format,
-                             va_list ap);
-DECLARE_FUNCTION_AND_WRAPPER(int, scanf, const char *format, ...);
-DECLARE_FUNCTION_AND_WRAPPER(int, fscanf,
-                             void* stream, const char *format, ...);
-DECLARE_FUNCTION_AND_WRAPPER(int, sscanf,  // NOLINT
-                             const char *str, const char *format, ...);
-
-#if MAC_INTERPOSE_FUNCTIONS && !defined(MISSING_BLOCKS_SUPPORT)
+#  if MAC_INTERPOSE_FUNCTIONS && !defined(MISSING_BLOCKS_SUPPORT)
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_group_async,
                              dispatch_group_t dg,
                              dispatch_queue_t dq, void (^work)(void));
@@ -252,9 +252,9 @@ DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_source_set_event_handler,
                              dispatch_source_t ds, void (^work)(void));
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_source_set_cancel_handler,
                              dispatch_source_t ds, void (^work)(void));
-#endif  // MAC_INTERPOSE_FUNCTIONS
-#endif  // __APPLE__
+#  endif  // MAC_INTERPOSE_FUNCTIONS
+# endif  // __APPLE__
 }  // extern "C"
-#endif
+#endif // defined(__APPLE__) || (defined(_WIN32) && !defined(_DLL))
 
 #endif  // ASAN_INTERCEPTED_FUNCTIONS_H
