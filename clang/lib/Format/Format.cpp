@@ -937,19 +937,17 @@ public:
       // A '[' could be an index subscript (after an indentifier or after
       // ')' or ']'), or it could be the start of an Objective-C method
       // expression.
-      AnnotatedToken *LSquare = CurrentToken->Parent;
+      AnnotatedToken *Left = CurrentToken->Parent;
       bool StartsObjCMethodExpr =
-          !LSquare->Parent || LSquare->Parent->is(tok::colon) ||
-          LSquare->Parent->is(tok::l_square) ||
-          LSquare->Parent->is(tok::l_paren) ||
-          LSquare->Parent->is(tok::kw_return) ||
-          LSquare->Parent->is(tok::kw_throw) ||
-          getBinOpPrecedence(LSquare->Parent->FormatTok.Tok.getKind(),
+          !Left->Parent || Left->Parent->is(tok::colon) ||
+          Left->Parent->is(tok::l_square) || Left->Parent->is(tok::l_paren) ||
+          Left->Parent->is(tok::kw_return) || Left->Parent->is(tok::kw_throw) ||
+          getBinOpPrecedence(Left->Parent->FormatTok.Tok.getKind(),
                              true, true) > prec::Unknown;
 
       ObjCSelectorRAII objCSelector(*this);
       if (StartsObjCMethodExpr)
-        objCSelector.markStart(*LSquare);
+        objCSelector.markStart(*Left);
 
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::r_square)) {
