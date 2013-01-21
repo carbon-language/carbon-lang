@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ASTCommon.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
 #include "llvm/ADT/StringExtras.h"
@@ -84,4 +85,61 @@ unsigned serialization::ComputeHash(Selector Sel) {
     if (IdentifierInfo *II = Sel.getIdentifierInfoForSlot(I))
       R = llvm::HashString(II->getName(), R);
   return R;
+}
+
+const Decl *serialization::getDefinitiveDeclContext(const DeclContext *DC) {
+  switch (DC->getDeclKind()) {
+  // These entities may have multiple definitions.
+  case Decl::TranslationUnit:
+  case Decl::Namespace:
+  case Decl::LinkageSpec:
+    return 0;
+
+  // C/C++ tag types can only be defined in one place.
+  case Decl::Enum:
+  case Decl::Record:
+    if (const TagDecl *Def = cast<TagDecl>(DC)->getDefinition())
+      return Def;
+    break;
+
+  // FIXME: These can be defined in one place... except special member
+  // functions and out-of-line definitions.
+  case Decl::CXXRecord:
+  case Decl::ClassTemplateSpecialization:
+  case Decl::ClassTemplatePartialSpecialization:
+    return 0;
+
+  // Each function, method, and block declaration is its own DeclContext.
+  case Decl::Function:
+  case Decl::CXXMethod:
+  case Decl::CXXConstructor:
+  case Decl::CXXDestructor:
+  case Decl::CXXConversion:
+  case Decl::ObjCMethod:
+  case Decl::Block:
+    // Objective C categories, category implementations, and class
+    // implementations can only be defined in one place.
+  case Decl::ObjCCategory:
+  case Decl::ObjCCategoryImpl:
+  case Decl::ObjCImplementation:
+    return cast<Decl>(DC);
+
+  case Decl::ObjCProtocol:
+    if (const ObjCProtocolDecl *Def
+          = cast<ObjCProtocolDecl>(DC)->getDefinition())
+      return Def;
+    break;
+
+  // FIXME: These are defined in one place, but properties in class extensions
+  // end up being back-patched into the main interface. See
+  // Sema::HandlePropertyInClassExtension for the offending code.
+  case Decl::ObjCInterface:
+    break;
+    
+  default:
+    llvm_unreachable("Unhandled DeclContext in AST reader");
+  }
+  
+  return 0;
+
 }

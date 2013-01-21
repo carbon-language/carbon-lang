@@ -4971,7 +4971,7 @@ bool ASTReader::isDeclIDFromModule(serialization::GlobalDeclID ID,
   return &M == I->second;
 }
 
-ModuleFile *ASTReader::getOwningModuleFile(Decl *D) {
+ModuleFile *ASTReader::getOwningModuleFile(const Decl *D) {
   if (!D->isFromASTFile())
     return 0;
   GlobalDeclMapType::const_iterator I = GlobalDeclMap.find(D->getGlobalID());
@@ -5307,6 +5307,27 @@ namespace {
   };
 }
 
+/// \brief Retrieve the "definitive" module file for the definition of the
+/// given declaration context, if there is one.
+///
+/// The "definitive" module file is the only place where we need to look to
+/// find information about the declarations within the given declaration
+/// context. For example, C++ and Objective-C classes, C structs/unions, and
+/// Objective-C protocols, categories, and extensions are all defined in a
+/// single place in the source code, so they have definitive module files
+/// associated with them. C++ namespaces, on the other hand, can have
+/// definitions in multiple different module files.
+///
+/// Note: this needs to be kept in sync with ASTWriter::AddedVisibleDecl's
+/// NDEBUG checking.
+static ModuleFile *getDefinitiveModuleFileFor(const DeclContext *DC,
+                                              ASTReader &Reader) {
+  if (const Decl *D = getDefinitiveDeclContext(DC))
+    return Reader.getOwningModuleFile(D);
+
+  return 0;
+}
+
 DeclContext::lookup_result
 ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
                                           DeclarationName Name) {
@@ -5335,7 +5356,16 @@ ASTReader::FindExternalVisibleDeclsByName(const DeclContext *DC,
   }
   
   DeclContextNameLookupVisitor Visitor(*this, Contexts, Name, Decls);
-  ModuleMgr.visit(&DeclContextNameLookupVisitor::visit, &Visitor);
+
+  // If we can definitively determine which module file to look into,
+  // only look there. Otherwise, look in all module files.
+  ModuleFile *Definitive;
+  if (Contexts.size() == 1 &&
+      (Definitive = getDefinitiveModuleFileFor(DC, *this))) {
+    DeclContextNameLookupVisitor::visit(*Definitive, &Visitor);
+  } else {
+    ModuleMgr.visit(&DeclContextNameLookupVisitor::visit, &Visitor);
+  }
   ++NumVisibleDeclContextsRead;
   SetExternalVisibleDeclsForName(DC, Name, Decls);
   return const_cast<DeclContext*>(DC)->lookup(Name);

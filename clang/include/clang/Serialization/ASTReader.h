@@ -1311,7 +1311,7 @@ public:
 
   /// \brief Retrieve the module file that owns the given declaration, or NULL
   /// if the declaration is not from a module file.
-  ModuleFile *getOwningModuleFile(Decl *D);
+  ModuleFile *getOwningModuleFile(const Decl *D);
   
   /// \brief Returns the source location for the decl \p ID.
   SourceLocation getSourceLocationForDeclID(serialization::GlobalDeclID ID);

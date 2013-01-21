@@ -4780,6 +4780,7 @@ void ASTWriter::AddedVisibleDecl(const DeclContext *DC, const Decl *D) {
   if (!(!D->isFromASTFile() && cast<Decl>(DC)->isFromASTFile()))
     return; // Not a source decl added to a DeclContext from PCH.
 
+  assert(!getDefinitiveDeclContext(DC) && "DeclContext not definitive!");
   AddUpdatedDeclContext(DC);
   UpdatingVisibleDecls.push_back(D);
 }
