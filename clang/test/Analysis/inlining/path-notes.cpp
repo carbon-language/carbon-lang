@@ -91,11 +91,6 @@ namespace defaulted {
   };
 
   class Wrapper {
-    // FIXME: Notes within implicit bodies shouldn't appear at the class name.
-    // expected-note@-2 {{Calling default constructor for 'Dereferencer'}}
-    // expected-note@-3 {{Calling copy constructor for 'Dereferencer'}}
-    // expected-note@-4 {{Calling copy assignment operator for 'Dereferencer'}}
-    // expected-note@-5 {{Calling '~Dereferencer'}}
     Dereferencer d;
   };
 
@@ -116,6 +111,7 @@ namespace defaulted {
     // expected-note@-1 {{Null pointer value stored to 'globalPtr'}}
     Wrapper w;
     // expected-note@-1 {{Calling implicit default constructor for 'Wrapper'}}
+    // expected-note@-2 {{Calling default constructor for 'Dereferencer'}}
   }
 
   void testCopyConstruction(const Wrapper &input) {
@@ -123,6 +119,7 @@ namespace defaulted {
     // expected-note@-1 {{Null pointer value stored to 'globalPtr'}}
     Wrapper w{input};
     // expected-note@-1 {{Calling implicit copy constructor for 'Wrapper'}}
+    // expected-note@-2 {{Calling copy constructor for 'Dereferencer'}}
   }
 
   void testMoveConstruction(MovableWrapper &&input) {
@@ -138,6 +135,7 @@ namespace defaulted {
     // expected-note@-1 {{Null pointer value stored to 'globalPtr'}}
     w = input;
     // expected-note@-1 {{Calling implicit copy assignment operator for 'Wrapper'}}
+    // expected-note@-2 {{Calling copy assignment operator for 'Dereferencer'}}
   }
 
   void testMoveAssignment(MovableWrapper &&input) {
@@ -152,7 +150,9 @@ namespace defaulted {
     Wrapper w;
     globalPtr = 0;
     // expected-note@-1 {{Null pointer value stored to 'globalPtr'}}
-  } // expected-note {{Calling implicit destructor for 'Wrapper'}}
+  }
+  // expected-note@-1 {{Calling implicit destructor for 'Wrapper'}}
+  // expected-note@-2 {{Calling '~Dereferencer'}}
 }
 
 // CHECK:  <key>diagnostics</key>
@@ -971,7 +971,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>115</integer>
+// CHECK-NEXT:       <key>line</key><integer>111</integer>
 // CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -979,12 +979,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>115</integer>
+// CHECK-NEXT:          <key>line</key><integer>111</integer>
 // CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>115</integer>
+// CHECK-NEXT:          <key>line</key><integer>111</integer>
 // CHECK-NEXT:          <key>col</key><integer>17</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1004,12 +1004,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>115</integer>
+// CHECK-NEXT:            <key>line</key><integer>111</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>115</integer>
+// CHECK-NEXT:            <key>line</key><integer>111</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1017,12 +1017,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>117</integer>
+// CHECK-NEXT:            <key>line</key><integer>113</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>117</integer>
+// CHECK-NEXT:            <key>line</key><integer>113</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1034,7 +1034,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>117</integer>
+// CHECK-NEXT:       <key>line</key><integer>113</integer>
 // CHECK-NEXT:       <key>col</key><integer>13</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1042,12 +1042,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>117</integer>
+// CHECK-NEXT:          <key>line</key><integer>113</integer>
 // CHECK-NEXT:          <key>col</key><integer>13</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>117</integer>
+// CHECK-NEXT:          <key>line</key><integer>113</integer>
 // CHECK-NEXT:          <key>col</key><integer>13</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1063,21 +1063,21 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>93</integer>
-// CHECK-NEXT:       <key>col</key><integer>9</integer>
+// CHECK-NEXT:       <key>line</key><integer>113</integer>
+// CHECK-NEXT:       <key>col</key><integer>13</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>93</integer>
-// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>line</key><integer>113</integer>
+// CHECK-NEXT:          <key>col</key><integer>13</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>93</integer>
-// CHECK-NEXT:          <key>col</key><integer>15</integer>
+// CHECK-NEXT:          <key>line</key><integer>113</integer>
+// CHECK-NEXT:          <key>col</key><integer>13</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1184,7 +1184,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>122</integer>
+// CHECK-NEXT:       <key>line</key><integer>119</integer>
 // CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1192,12 +1192,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>122</integer>
+// CHECK-NEXT:          <key>line</key><integer>119</integer>
 // CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>122</integer>
+// CHECK-NEXT:          <key>line</key><integer>119</integer>
 // CHECK-NEXT:          <key>col</key><integer>17</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1217,12 +1217,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>122</integer>
+// CHECK-NEXT:            <key>line</key><integer>119</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>122</integer>
+// CHECK-NEXT:            <key>line</key><integer>119</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1230,12 +1230,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>124</integer>
+// CHECK-NEXT:            <key>line</key><integer>121</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>124</integer>
+// CHECK-NEXT:            <key>line</key><integer>121</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1247,7 +1247,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>124</integer>
+// CHECK-NEXT:       <key>line</key><integer>121</integer>
 // CHECK-NEXT:       <key>col</key><integer>13</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1255,12 +1255,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>124</integer>
+// CHECK-NEXT:          <key>line</key><integer>121</integer>
 // CHECK-NEXT:          <key>col</key><integer>13</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>124</integer>
+// CHECK-NEXT:          <key>line</key><integer>121</integer>
 // CHECK-NEXT:          <key>col</key><integer>19</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1276,21 +1276,21 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>93</integer>
-// CHECK-NEXT:       <key>col</key><integer>9</integer>
+// CHECK-NEXT:       <key>line</key><integer>121</integer>
+// CHECK-NEXT:       <key>col</key><integer>13</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>93</integer>
-// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>line</key><integer>121</integer>
+// CHECK-NEXT:          <key>col</key><integer>13</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>93</integer>
-// CHECK-NEXT:          <key>col</key><integer>15</integer>
+// CHECK-NEXT:          <key>line</key><integer>121</integer>
+// CHECK-NEXT:          <key>col</key><integer>19</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1397,7 +1397,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>129</integer>
+// CHECK-NEXT:       <key>line</key><integer>127</integer>
 // CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1405,12 +1405,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>129</integer>
+// CHECK-NEXT:          <key>line</key><integer>127</integer>
 // CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>129</integer>
+// CHECK-NEXT:          <key>line</key><integer>127</integer>
 // CHECK-NEXT:          <key>col</key><integer>17</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1430,12 +1430,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>129</integer>
+// CHECK-NEXT:            <key>line</key><integer>127</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>129</integer>
+// CHECK-NEXT:            <key>line</key><integer>127</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1443,12 +1443,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>131</integer>
+// CHECK-NEXT:            <key>line</key><integer>129</integer>
 // CHECK-NEXT:            <key>col</key><integer>22</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>131</integer>
+// CHECK-NEXT:            <key>line</key><integer>129</integer>
 // CHECK-NEXT:            <key>col</key><integer>25</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1464,12 +1464,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>131</integer>
+// CHECK-NEXT:            <key>line</key><integer>129</integer>
 // CHECK-NEXT:            <key>col</key><integer>22</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>131</integer>
+// CHECK-NEXT:            <key>line</key><integer>129</integer>
 // CHECK-NEXT:            <key>col</key><integer>25</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1477,12 +1477,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>131</integer>
+// CHECK-NEXT:            <key>line</key><integer>129</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>131</integer>
+// CHECK-NEXT:            <key>line</key><integer>129</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1494,7 +1494,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>131</integer>
+// CHECK-NEXT:       <key>line</key><integer>129</integer>
 // CHECK-NEXT:       <key>col</key><integer>20</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1502,12 +1502,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>131</integer>
+// CHECK-NEXT:          <key>line</key><integer>129</integer>
 // CHECK-NEXT:          <key>col</key><integer>20</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>131</integer>
+// CHECK-NEXT:          <key>line</key><integer>129</integer>
 // CHECK-NEXT:          <key>col</key><integer>32</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1523,7 +1523,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>107</integer>
+// CHECK-NEXT:       <key>line</key><integer>103</integer>
 // CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -1531,12 +1531,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>107</integer>
+// CHECK-NEXT:          <key>line</key><integer>103</integer>
 // CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>107</integer>
+// CHECK-NEXT:          <key>line</key><integer>103</integer>
 // CHECK-NEXT:          <key>col</key><integer>18</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1648,12 +1648,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>136</integer>
+// CHECK-NEXT:            <key>line</key><integer>134</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>136</integer>
+// CHECK-NEXT:            <key>line</key><integer>134</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1661,12 +1661,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>136</integer>
+// CHECK-NEXT:            <key>line</key><integer>134</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>136</integer>
+// CHECK-NEXT:            <key>line</key><integer>134</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1682,12 +1682,75 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>136</integer>
+// CHECK-NEXT:            <key>line</key><integer>134</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>136</integer>
+// CHECK-NEXT:            <key>line</key><integer>134</integer>
+// CHECK-NEXT:            <key>col</key><integer>13</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:         <key>end</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>135</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>135</integer>
+// CHECK-NEXT:            <key>col</key><integer>13</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:          </array>
+// CHECK-NEXT:        </dict>
+// CHECK-NEXT:       </array>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>event</string>
+// CHECK-NEXT:      <key>location</key>
+// CHECK-NEXT:      <dict>
+// CHECK-NEXT:       <key>line</key><integer>135</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
+// CHECK-NEXT:       <key>file</key><integer>0</integer>
+// CHECK-NEXT:      </dict>
+// CHECK-NEXT:      <key>ranges</key>
+// CHECK-NEXT:      <array>
+// CHECK-NEXT:        <array>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>135</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:         <dict>
+// CHECK-NEXT:          <key>line</key><integer>135</integer>
+// CHECK-NEXT:          <key>col</key><integer>17</integer>
+// CHECK-NEXT:          <key>file</key><integer>0</integer>
+// CHECK-NEXT:         </dict>
+// CHECK-NEXT:        </array>
+// CHECK-NEXT:      </array>
+// CHECK-NEXT:      <key>depth</key><integer>0</integer>
+// CHECK-NEXT:      <key>extended_message</key>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;globalPtr&apos;</string>
+// CHECK-NEXT:      <key>message</key>
+// CHECK-NEXT:      <string>Null pointer value stored to &apos;globalPtr&apos;</string>
+// CHECK-NEXT:     </dict>
+// CHECK-NEXT:     <dict>
+// CHECK-NEXT:      <key>kind</key><string>control</string>
+// CHECK-NEXT:      <key>edges</key>
+// CHECK-NEXT:       <array>
+// CHECK-NEXT:        <dict>
+// CHECK-NEXT:         <key>start</key>
+// CHECK-NEXT:          <array>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>135</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
+// CHECK-NEXT:            <key>file</key><integer>0</integer>
+// CHECK-NEXT:           </dict>
+// CHECK-NEXT:           <dict>
+// CHECK-NEXT:            <key>line</key><integer>135</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1701,7 +1764,7 @@ namespace defaulted {
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
 // CHECK-NEXT:            <key>line</key><integer>137</integer>
-// CHECK-NEXT:            <key>col</key><integer>13</integer>
+// CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:          </array>
@@ -1726,69 +1789,6 @@ namespace defaulted {
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
 // CHECK-NEXT:          <key>line</key><integer>137</integer>
-// CHECK-NEXT:          <key>col</key><integer>17</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:        </array>
-// CHECK-NEXT:      </array>
-// CHECK-NEXT:      <key>depth</key><integer>0</integer>
-// CHECK-NEXT:      <key>extended_message</key>
-// CHECK-NEXT:      <string>Null pointer value stored to &apos;globalPtr&apos;</string>
-// CHECK-NEXT:      <key>message</key>
-// CHECK-NEXT:      <string>Null pointer value stored to &apos;globalPtr&apos;</string>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>control</string>
-// CHECK-NEXT:      <key>edges</key>
-// CHECK-NEXT:       <array>
-// CHECK-NEXT:        <dict>
-// CHECK-NEXT:         <key>start</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>137</integer>
-// CHECK-NEXT:            <key>col</key><integer>5</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>137</integer>
-// CHECK-NEXT:            <key>col</key><integer>13</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:         <key>end</key>
-// CHECK-NEXT:          <array>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>139</integer>
-// CHECK-NEXT:            <key>col</key><integer>5</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>139</integer>
-// CHECK-NEXT:            <key>col</key><integer>5</integer>
-// CHECK-NEXT:            <key>file</key><integer>0</integer>
-// CHECK-NEXT:           </dict>
-// CHECK-NEXT:          </array>
-// CHECK-NEXT:        </dict>
-// CHECK-NEXT:       </array>
-// CHECK-NEXT:     </dict>
-// CHECK-NEXT:     <dict>
-// CHECK-NEXT:      <key>kind</key><string>event</string>
-// CHECK-NEXT:      <key>location</key>
-// CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>139</integer>
-// CHECK-NEXT:       <key>col</key><integer>5</integer>
-// CHECK-NEXT:       <key>file</key><integer>0</integer>
-// CHECK-NEXT:      </dict>
-// CHECK-NEXT:      <key>ranges</key>
-// CHECK-NEXT:      <array>
-// CHECK-NEXT:        <array>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>139</integer>
-// CHECK-NEXT:          <key>col</key><integer>5</integer>
-// CHECK-NEXT:          <key>file</key><integer>0</integer>
-// CHECK-NEXT:         </dict>
-// CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>139</integer>
 // CHECK-NEXT:          <key>col</key><integer>13</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -1804,21 +1804,21 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>93</integer>
-// CHECK-NEXT:       <key>col</key><integer>9</integer>
+// CHECK-NEXT:       <key>line</key><integer>137</integer>
+// CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>ranges</key>
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>93</integer>
-// CHECK-NEXT:          <key>col</key><integer>9</integer>
+// CHECK-NEXT:          <key>line</key><integer>137</integer>
+// CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>93</integer>
-// CHECK-NEXT:          <key>col</key><integer>15</integer>
+// CHECK-NEXT:          <key>line</key><integer>137</integer>
+// CHECK-NEXT:          <key>col</key><integer>13</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:        </array>
@@ -1931,12 +1931,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>144</integer>
+// CHECK-NEXT:            <key>line</key><integer>143</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>144</integer>
+// CHECK-NEXT:            <key>line</key><integer>143</integer>
 // CHECK-NEXT:            <key>col</key><integer>18</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1944,12 +1944,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>144</integer>
+// CHECK-NEXT:            <key>line</key><integer>143</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>144</integer>
+// CHECK-NEXT:            <key>line</key><integer>143</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1965,12 +1965,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>144</integer>
+// CHECK-NEXT:            <key>line</key><integer>143</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>144</integer>
+// CHECK-NEXT:            <key>line</key><integer>143</integer>
 // CHECK-NEXT:            <key>col</key><integer>20</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1978,12 +1978,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>145</integer>
+// CHECK-NEXT:            <key>line</key><integer>144</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>145</integer>
+// CHECK-NEXT:            <key>line</key><integer>144</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -1995,7 +1995,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>145</integer>
+// CHECK-NEXT:       <key>line</key><integer>144</integer>
 // CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -2003,12 +2003,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>145</integer>
+// CHECK-NEXT:          <key>line</key><integer>144</integer>
 // CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>145</integer>
+// CHECK-NEXT:          <key>line</key><integer>144</integer>
 // CHECK-NEXT:          <key>col</key><integer>17</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -2028,12 +2028,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>145</integer>
+// CHECK-NEXT:            <key>line</key><integer>144</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>145</integer>
+// CHECK-NEXT:            <key>line</key><integer>144</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2041,12 +2041,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>147</integer>
+// CHECK-NEXT:            <key>line</key><integer>146</integer>
 // CHECK-NEXT:            <key>col</key><integer>9</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>147</integer>
+// CHECK-NEXT:            <key>line</key><integer>146</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2062,12 +2062,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>147</integer>
+// CHECK-NEXT:            <key>line</key><integer>146</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>147</integer>
+// CHECK-NEXT:            <key>line</key><integer>146</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2075,12 +2075,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>147</integer>
+// CHECK-NEXT:            <key>line</key><integer>146</integer>
 // CHECK-NEXT:            <key>col</key><integer>9</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>147</integer>
+// CHECK-NEXT:            <key>line</key><integer>146</integer>
 // CHECK-NEXT:            <key>col</key><integer>12</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2092,7 +2092,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>147</integer>
+// CHECK-NEXT:       <key>line</key><integer>146</integer>
 // CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -2100,12 +2100,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>147</integer>
+// CHECK-NEXT:          <key>line</key><integer>146</integer>
 // CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>147</integer>
+// CHECK-NEXT:          <key>line</key><integer>146</integer>
 // CHECK-NEXT:          <key>col</key><integer>19</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -2125,12 +2125,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>110</integer>
+// CHECK-NEXT:            <key>line</key><integer>106</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>110</integer>
+// CHECK-NEXT:            <key>line</key><integer>106</integer>
 // CHECK-NEXT:            <key>col</key><integer>18</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2138,12 +2138,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>110</integer>
+// CHECK-NEXT:            <key>line</key><integer>106</integer>
 // CHECK-NEXT:            <key>col</key><integer>21</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>110</integer>
+// CHECK-NEXT:            <key>line</key><integer>106</integer>
 // CHECK-NEXT:            <key>col</key><integer>28</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2155,7 +2155,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>110</integer>
+// CHECK-NEXT:       <key>line</key><integer>106</integer>
 // CHECK-NEXT:       <key>col</key><integer>21</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -2163,12 +2163,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>110</integer>
+// CHECK-NEXT:          <key>line</key><integer>106</integer>
 // CHECK-NEXT:          <key>col</key><integer>21</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>110</integer>
+// CHECK-NEXT:          <key>line</key><integer>106</integer>
 // CHECK-NEXT:          <key>col</key><integer>28</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -2282,12 +2282,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>152</integer>
+// CHECK-NEXT:            <key>line</key><integer>151</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>152</integer>
+// CHECK-NEXT:            <key>line</key><integer>151</integer>
 // CHECK-NEXT:            <key>col</key><integer>11</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2295,12 +2295,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>152</integer>
+// CHECK-NEXT:            <key>line</key><integer>151</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>152</integer>
+// CHECK-NEXT:            <key>line</key><integer>151</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2316,12 +2316,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>152</integer>
+// CHECK-NEXT:            <key>line</key><integer>151</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>152</integer>
+// CHECK-NEXT:            <key>line</key><integer>151</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2329,12 +2329,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>153</integer>
+// CHECK-NEXT:            <key>line</key><integer>152</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>153</integer>
+// CHECK-NEXT:            <key>line</key><integer>152</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2346,7 +2346,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>153</integer>
+// CHECK-NEXT:       <key>line</key><integer>152</integer>
 // CHECK-NEXT:       <key>col</key><integer>5</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -2354,12 +2354,12 @@ namespace defaulted {
 // CHECK-NEXT:      <array>
 // CHECK-NEXT:        <array>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>153</integer>
+// CHECK-NEXT:          <key>line</key><integer>152</integer>
 // CHECK-NEXT:          <key>col</key><integer>5</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
 // CHECK-NEXT:         <dict>
-// CHECK-NEXT:          <key>line</key><integer>153</integer>
+// CHECK-NEXT:          <key>line</key><integer>152</integer>
 // CHECK-NEXT:          <key>col</key><integer>17</integer>
 // CHECK-NEXT:          <key>file</key><integer>0</integer>
 // CHECK-NEXT:         </dict>
@@ -2379,12 +2379,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>start</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>153</integer>
+// CHECK-NEXT:            <key>line</key><integer>152</integer>
 // CHECK-NEXT:            <key>col</key><integer>5</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>153</integer>
+// CHECK-NEXT:            <key>line</key><integer>152</integer>
 // CHECK-NEXT:            <key>col</key><integer>13</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2392,12 +2392,12 @@ namespace defaulted {
 // CHECK-NEXT:         <key>end</key>
 // CHECK-NEXT:          <array>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>155</integer>
+// CHECK-NEXT:            <key>line</key><integer>154</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
 // CHECK-NEXT:           <dict>
-// CHECK-NEXT:            <key>line</key><integer>155</integer>
+// CHECK-NEXT:            <key>line</key><integer>154</integer>
 // CHECK-NEXT:            <key>col</key><integer>3</integer>
 // CHECK-NEXT:            <key>file</key><integer>0</integer>
 // CHECK-NEXT:           </dict>
@@ -2409,7 +2409,7 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>155</integer>
+// CHECK-NEXT:       <key>line</key><integer>154</integer>
 // CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
@@ -2423,8 +2423,8 @@ namespace defaulted {
 // CHECK-NEXT:      <key>kind</key><string>event</string>
 // CHECK-NEXT:      <key>location</key>
 // CHECK-NEXT:      <dict>
-// CHECK-NEXT:       <key>line</key><integer>93</integer>
-// CHECK-NEXT:       <key>col</key><integer>9</integer>
+// CHECK-NEXT:       <key>line</key><integer>154</integer>
+// CHECK-NEXT:       <key>col</key><integer>3</integer>
 // CHECK-NEXT:       <key>file</key><integer>0</integer>
 // CHECK-NEXT:      </dict>
 // CHECK-NEXT:      <key>depth</key><integer>1</integer>

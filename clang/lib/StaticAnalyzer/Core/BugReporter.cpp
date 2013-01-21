@@ -264,16 +264,19 @@ static void adjustCallLocations(PathPieces &Pieces,
     }
 
     if (LastCallLocation) {
-      if (!Call->callEnter.asLocation().isValid())
+      if (!Call->callEnter.asLocation().isValid() ||
+          Call->getCaller()->isImplicit())
         Call->callEnter = *LastCallLocation;
-      if (!Call->callReturn.asLocation().isValid())
+      if (!Call->callReturn.asLocation().isValid() ||
+          Call->getCaller()->isImplicit())
         Call->callReturn = *LastCallLocation;
     }
 
     // Recursively clean out the subclass.  Keep this call around if
     // it contains any informative diagnostics.
     PathDiagnosticLocation *ThisCallLocation;
-    if (Call->callEnterWithin.asLocation().isValid())
+    if (Call->callEnterWithin.asLocation().isValid() &&
+        !Call->getCallee()->isImplicit())
       ThisCallLocation = &Call->callEnterWithin;
     else
       ThisCallLocation = &Call->callEnter;
