@@ -308,6 +308,9 @@ void UnwrappedLineParser::parseStructuralElement() {
   case tok::kw_case:
     parseCaseLabel();
     return;
+  case tok::kw_return:
+    parseReturn();
+    return;
   default:
     break;
   }
@@ -372,6 +375,32 @@ void UnwrappedLineParser::parseBracedList() {
       break;
     case tok::r_brace:
       nextToken();
+      return;
+    default:
+      nextToken();
+      break;
+    }
+  } while (!eof());
+}
+
+void UnwrappedLineParser::parseReturn() {
+  nextToken();
+
+  do {
+    switch (FormatTok.Tok.getKind()) {
+    case tok::l_brace:
+      parseBracedList();
+      break;
+    case tok::l_paren:
+      parseParens();
+      break;
+    case tok::r_brace:
+      // Assume missing ';'.
+      addUnwrappedLine();
+      return;
+    case tok::semi:
+      nextToken();
+      addUnwrappedLine();
       return;
     default:
       nextToken();

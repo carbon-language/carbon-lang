@@ -1474,6 +1474,10 @@ TEST_F(FormatTest, LayoutCallsInsideBraceInitializers) {
       "};", getLLVMStyleWithColumns(25));
 }
 
+TEST_F(FormatTest, LayoutBraceInitializersInReturnStatement) {
+  verifyFormat("return (a)(b) { 1, 2, 3 };");
+}
+
 TEST_F(FormatTest, LayoutTokensFollowingBlockInParentheses) {
   verifyFormat(
       "Aaa({\n"

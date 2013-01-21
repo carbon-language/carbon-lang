@@ -131,6 +131,7 @@ private:
   void parseComments();
   void parseStructuralElement();
   void parseBracedList();
+  void parseReturn();
   void parseParens();
   void parseIfThenElse();
   void parseForOrWhileLoop();
