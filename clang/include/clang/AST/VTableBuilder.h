@@ -256,6 +256,7 @@ public:
 
     uint64_t AddressPoint = AddressPoints.lookup(Base);
     assert(AddressPoint != 0 || IsMicrosoftABI);
+    (void)IsMicrosoftABI;
 
     return AddressPoint;
   }
