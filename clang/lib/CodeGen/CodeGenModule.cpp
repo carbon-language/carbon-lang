@@ -1938,10 +1938,10 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
     llvm::AttributeSet oldAttrs = callSite.getAttributes();
 
     // Collect any return attributes from the call.
-    llvm::Attribute returnAttrs = oldAttrs.getRetAttributes();
-    if (returnAttrs.hasAttributes())
+    if (oldAttrs.hasAttributes(llvm::AttributeSet::ReturnIndex))
       newAttrs.push_back(llvm::AttributeWithIndex::get(
-                                llvm::AttributeSet::ReturnIndex, returnAttrs));
+                                llvm::AttributeSet::ReturnIndex,
+                                oldAttrs.getRetAttributes()));
 
     // If the function was passed too few arguments, don't transform.
     unsigned newNumArgs = newFn->arg_size();
@@ -1966,11 +1966,11 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
     if (dontTransform)
       continue;
 
-    llvm::Attribute fnAttrs = oldAttrs.getFnAttributes();
     if (oldAttrs.hasAttributes(llvm::AttributeSet::FunctionIndex))
       newAttrs.push_back(llvm::
-                       AttributeWithIndex::get(llvm::AttributeSet::FunctionIndex,
-                                               fnAttrs));
+                      AttributeWithIndex::get(newFn->getContext(),
+                                              llvm::AttributeSet::FunctionIndex,
+                                              oldAttrs.getFnAttributes()));
 
     // Okay, we can transform this.  Create the new call instruction and copy
     // over the required information.
