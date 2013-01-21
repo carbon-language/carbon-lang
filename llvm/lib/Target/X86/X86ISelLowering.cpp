@@ -5692,17 +5692,16 @@ LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
 
   // Convert i32 vectors to floating point if it is not AVX2.
   // AVX2 introduced VPBLENDD instruction for 128 and 256-bit vectors.
-  EVT BlendVT = VT;
+  MVT BlendVT = VT;
   if (EltVT == MVT::i64 || (EltVT == MVT::i32 && !Subtarget->hasInt256())) {
-    BlendVT = EVT::getVectorVT(*DAG.getContext(),
-                              EVT::getFloatingPointVT(EltVT.getSizeInBits()),
-                              NumElems);
+    BlendVT = MVT::getVectorVT(MVT::getFloatingPointVT(EltVT.getSizeInBits()),
+                               NumElems);
     V1 = DAG.getNode(ISD::BITCAST, dl, VT, V1);
     V2 = DAG.getNode(ISD::BITCAST, dl, VT, V2);
   }
 
-  SDValue Ret =  DAG.getNode(X86ISD::BLENDI, dl, BlendVT, V1, V2,
-                             DAG.getConstant(MaskValue, MVT::i32));
+  SDValue Ret = DAG.getNode(X86ISD::BLENDI, dl, BlendVT, V1, V2,
+                            DAG.getConstant(MaskValue, MVT::i32));
   return DAG.getNode(ISD::BITCAST, dl, VT, Ret);
 }
 
