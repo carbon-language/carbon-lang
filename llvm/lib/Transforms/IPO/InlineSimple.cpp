@@ -34,26 +34,26 @@ namespace {
 /// inliner pass and the always inliner pass. The two passes use different cost
 /// analyses to determine when to inline.
 class SimpleInliner : public Inliner {
-  InlineCostAnalyzer CA;
+  InlineCostAnalysis *ICA;
 
 public:
-  SimpleInliner() : Inliner(ID) {
+  SimpleInliner() : Inliner(ID), ICA(0) {
     initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
   }
 
   SimpleInliner(int Threshold)
-      : Inliner(ID, Threshold, /*InsertLifetime*/ true) {
+      : Inliner(ID, Threshold, /*InsertLifetime*/ true), ICA(0) {
     initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
   }
 
   static char ID; // Pass identification, replacement for typeid
 
   InlineCost getInlineCost(CallSite CS) {
-    return CA.getInlineCost(CS, getInlineThreshold(CS));
+    return ICA->getInlineCost(CS, getInlineThreshold(CS));
   }
 
-  using llvm::Pass::doInitialization;
-  virtual bool doInitialization(CallGraph &CG);
+  virtual bool runOnSCC(CallGraphSCC &SCC);
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 };
 
 } // end anonymous namespace
@@ -62,6 +62,7 @@ char SimpleInliner::ID = 0;
 INITIALIZE_PASS_BEGIN(SimpleInliner, "inline",
                 "Function Integration/Inlining", false, false)
 INITIALIZE_AG_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_DEPENDENCY(InlineCostAnalysis)
 INITIALIZE_PASS_END(SimpleInliner, "inline",
                 "Function Integration/Inlining", false, false)
 
@@ -71,10 +72,12 @@ Pass *llvm::createFunctionInliningPass(int Threshold) {
   return new SimpleInliner(Threshold);
 }
 
-// doInitialization - Initializes the vector of functions that have been
-// annotated with the noinline attribute.
-bool SimpleInliner::doInitialization(CallGraph &CG) {
-  CA.setDataLayout(getAnalysisIfAvailable<DataLayout>());
-  return false;
+bool SimpleInliner::runOnSCC(CallGraphSCC &SCC) {
+  ICA = &getAnalysis<InlineCostAnalysis>();
+  return Inliner::runOnSCC(SCC);
 }
 
+void SimpleInliner::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<InlineCostAnalysis>();
+  Inliner::getAnalysisUsage(AU);
+}

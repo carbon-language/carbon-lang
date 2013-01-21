@@ -32,16 +32,16 @@ namespace {
 
 /// \brief Inliner pass which only handles "always inline" functions.
 class AlwaysInliner : public Inliner {
-  InlineCostAnalyzer CA;
+  InlineCostAnalysis *ICA;
 
 public:
   // Use extremely low threshold.
-  AlwaysInliner() : Inliner(ID, -2000000000, /*InsertLifetime*/ true) {
+  AlwaysInliner() : Inliner(ID, -2000000000, /*InsertLifetime*/ true), ICA(0) {
     initializeAlwaysInlinerPass(*PassRegistry::getPassRegistry());
   }
 
   AlwaysInliner(bool InsertLifetime)
-      : Inliner(ID, -2000000000, InsertLifetime) {
+      : Inliner(ID, -2000000000, InsertLifetime), ICA(0) {
     initializeAlwaysInlinerPass(*PassRegistry::getPassRegistry());
   }
 
@@ -49,13 +49,13 @@ public:
 
   virtual InlineCost getInlineCost(CallSite CS);
 
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+  virtual bool runOnSCC(CallGraphSCC &SCC);
+
   using llvm::Pass::doFinalization;
   virtual bool doFinalization(CallGraph &CG) {
     return removeDeadFunctions(CG, /*AlwaysInlineOnly=*/ true);
   }
-
-  using llvm::Pass::doInitialization;
-  virtual bool doInitialization(CallGraph &CG);
 };
 
 }
@@ -64,6 +64,7 @@ char AlwaysInliner::ID = 0;
 INITIALIZE_PASS_BEGIN(AlwaysInliner, "always-inline",
                 "Inliner for always_inline functions", false, false)
 INITIALIZE_AG_DEPENDENCY(CallGraph)
+INITIALIZE_PASS_DEPENDENCY(InlineCostAnalysis)
 INITIALIZE_PASS_END(AlwaysInliner, "always-inline",
                 "Inliner for always_inline functions", false, false)
 
@@ -94,13 +95,18 @@ InlineCost AlwaysInliner::getInlineCost(CallSite CS) {
   if (Callee && !Callee->isDeclaration() &&
       Callee->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                            Attribute::AlwaysInline) &&
-      CA.isInlineViable(*Callee))
+      ICA->isInlineViable(*Callee))
     return InlineCost::getAlways();
 
   return InlineCost::getNever();
 }
 
-bool AlwaysInliner::doInitialization(CallGraph &CG) {
-  CA.setDataLayout(getAnalysisIfAvailable<DataLayout>());
-  return false;
+bool AlwaysInliner::runOnSCC(CallGraphSCC &SCC) {
+  ICA = &getAnalysis<InlineCostAnalysis>();
+  return Inliner::runOnSCC(SCC);
+}
+
+void AlwaysInliner::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<InlineCostAnalysis>();
+  Inliner::getAnalysisUsage(AU);
 }

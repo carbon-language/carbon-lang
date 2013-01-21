@@ -15,6 +15,7 @@
 #define LLVM_ANALYSIS_INLINECOST_H
 
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/CallGraphSCCPass.h"
 #include <cassert>
 #include <climits>
 
@@ -97,14 +98,18 @@ public:
 };
 
 /// \brief Cost analyzer used by inliner.
-class InlineCostAnalyzer {
-  // DataLayout if available, or null.
+class InlineCostAnalysis : public CallGraphSCCPass {
   const DataLayout *TD;
 
 public:
-  InlineCostAnalyzer() : TD(0) {}
+  static char ID;
 
-  void setDataLayout(const DataLayout *TData) { TD = TData; }
+  InlineCostAnalysis();
+  ~InlineCostAnalysis();
+
+  // Pass interface implementation.
+  void getAnalysisUsage(AnalysisUsage &AU) const;
+  bool runOnSCC(CallGraphSCC &SCC);
 
   /// \brief Get an InlineCost object representing the cost of inlining this
   /// callsite.
@@ -113,6 +118,9 @@ public:
   /// threshold are computed with any accuracy. The threshold can be used to
   /// bound the computation necessary to determine whether the cost is
   /// sufficiently low to warrant inlining.
+  ///
+  /// Also note that calling this function *dynamically* computes the cost of
+  /// inlining the callsite. It is an expensive, heavyweight call.
   InlineCost getInlineCost(CallSite CS, int Threshold);
 
   /// \brief Get an InlineCost with the callee explicitly specified.

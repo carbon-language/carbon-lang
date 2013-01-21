@@ -1132,11 +1132,32 @@ void CallAnalyzer::dump() {
 }
 #endif
 
-InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, int Threshold) {
+INITIALIZE_PASS_BEGIN(InlineCostAnalysis, "inline-cost", "Inline Cost Analysis",
+                      true, true)
+INITIALIZE_PASS_END(InlineCostAnalysis, "inline-cost", "Inline Cost Analysis",
+                    true, true)
+
+char InlineCostAnalysis::ID = 0;
+
+InlineCostAnalysis::InlineCostAnalysis() : CallGraphSCCPass(ID), TD(0) {}
+
+InlineCostAnalysis::~InlineCostAnalysis() {}
+
+void InlineCostAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.setPreservesAll();
+  CallGraphSCCPass::getAnalysisUsage(AU);
+}
+
+bool InlineCostAnalysis::runOnSCC(CallGraphSCC &SCC) {
+  TD = getAnalysisIfAvailable<DataLayout>();
+  return false;
+}
+
+InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, int Threshold) {
   return getInlineCost(CS, CS.getCalledFunction(), Threshold);
 }
 
-InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
+InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
                                              int Threshold) {
   // Cannot inline indirect calls.
   if (!Callee)
@@ -1177,9 +1198,10 @@ InlineCost InlineCostAnalyzer::getInlineCost(CallSite CS, Function *Callee,
   return llvm::InlineCost::get(CA.getCost(), CA.getThreshold());
 }
 
-bool InlineCostAnalyzer::isInlineViable(Function &F) {
-  bool ReturnsTwice =F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                                    Attribute::ReturnsTwice);
+bool InlineCostAnalysis::isInlineViable(Function &F) {
+  bool ReturnsTwice =
+    F.getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                   Attribute::ReturnsTwice);
   for (Function::iterator BI = F.begin(), BE = F.end(); BI != BE; ++BI) {
     // Disallow inlining of functions which contain an indirect branch.
     if (isa<IndirectBrInst>(BI->getTerminator()))
