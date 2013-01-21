@@ -9,6 +9,11 @@
 
 #define DEBUG_TYPE "tti"
 #include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/IR/DataLayout.h"
+#include "llvm/IR/Operator.h"
+#include "llvm/IR/Instruction.h"
+#include "llvm/IR/IntrinsicInst.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
@@ -41,6 +46,20 @@ void TargetTransformInfo::popTTIStack() {
 
 void TargetTransformInfo::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<TargetTransformInfo>();
+}
+
+unsigned TargetTransformInfo::getOperationCost(unsigned Opcode, Type *Ty,
+                                               Type *OpTy) const {
+  return PrevTTI->getOperationCost(Opcode, Ty, OpTy);
+}
+
+unsigned TargetTransformInfo::getGEPCost(
+    const Value *Ptr, ArrayRef<const Value *> Operands) const {
+  return PrevTTI->getGEPCost(Ptr, Operands);
+}
+
+unsigned TargetTransformInfo::getUserCost(const User *U) const {
+  return PrevTTI->getUserCost(U);
 }
 
 bool TargetTransformInfo::isLegalAddImmediate(int64_t Imm) const {
@@ -151,7 +170,9 @@ unsigned TargetTransformInfo::getNumberOfParts(Type *Tp) const {
 namespace {
 
 struct NoTTI : ImmutablePass, TargetTransformInfo {
-  NoTTI() : ImmutablePass(ID) {
+  const DataLayout *DL;
+
+  NoTTI() : ImmutablePass(ID), DL(0) {
     initializeNoTTIPass(*PassRegistry::getPassRegistry());
   }
 
@@ -159,6 +180,7 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
     // Note that this subclass is special, and must *not* call initializeTTI as
     // it does not chain.
     PrevTTI = 0;
+    DL = getAnalysisIfAvailable<DataLayout>();
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -176,6 +198,105 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
     return this;
   }
 
+  unsigned getOperationCost(unsigned Opcode, Type *Ty, Type *OpTy) const {
+    switch (Opcode) {
+    default:
+      // By default, just classify everything as 'basic'.
+      return TCC_Basic;
+
+    case Instruction::GetElementPtr:
+      llvm_unreachable("Use getGEPCost for GEP operations!");
+
+    case Instruction::BitCast:
+      assert(OpTy && "Cast instructions must provide the operand type");
+      if (Ty == OpTy || (Ty->isPointerTy() && OpTy->isPointerTy()))
+        // Identity and pointer-to-pointer casts are free.
+        return TCC_Free;
+
+      // Otherwise, the default basic cost is used.
+      return TCC_Basic;
+
+    case Instruction::IntToPtr:
+      // An inttoptr cast is free so long as the input is a legal integer type
+      // which doesn't contain values outside the range of a pointer.
+      if (DL && DL->isLegalInteger(OpTy->getScalarSizeInBits()) &&
+          OpTy->getScalarSizeInBits() <= DL->getPointerSizeInBits())
+        return TCC_Free;
+
+      // Otherwise it's not a no-op.
+      return TCC_Basic;
+
+    case Instruction::PtrToInt:
+      // A ptrtoint cast is free so long as the result is large enough to store
+      // the pointer, and a legal integer type.
+      if (DL && DL->isLegalInteger(OpTy->getScalarSizeInBits()) &&
+          OpTy->getScalarSizeInBits() >= DL->getPointerSizeInBits())
+        return TCC_Free;
+
+      // Otherwise it's not a no-op.
+      return TCC_Basic;
+
+    case Instruction::Trunc:
+      // trunc to a native type is free (assuming the target has compare and
+      // shift-right of the same width).
+      if (DL && DL->isLegalInteger(DL->getTypeSizeInBits(Ty)))
+        return TCC_Free;
+
+      return TCC_Basic;
+    }
+  }
+
+  unsigned getGEPCost(const Value *Ptr,
+                      ArrayRef<const Value *> Operands) const {
+    // In the basic model, we just assume that all-constant GEPs will be folded
+    // into their uses via addressing modes.
+    for (unsigned Idx = 0, Size = Operands.size(); Idx != Size; ++Idx)
+      if (!isa<Constant>(Operands[Idx]))
+        return TCC_Basic;
+
+    return TCC_Free;
+  }
+
+  unsigned getUserCost(const User *U) const {
+    if (const GEPOperator *GEP = dyn_cast<GEPOperator>(U))
+      // In the basic model we just assume that all-constant GEPs will be
+      // folded into their uses via addressing modes.
+      return GEP->hasAllConstantIndices() ? TCC_Free : TCC_Basic;
+
+    // If we have a call of an intrinsic we can provide more detailed analysis
+    // by inspecting the particular intrinsic called.
+    // FIXME: Hoist this out into a getIntrinsicCost routine.
+    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
+      switch (II->getIntrinsicID()) {
+      default:
+        return TCC_Basic;
+      case Intrinsic::dbg_declare:
+      case Intrinsic::dbg_value:
+      case Intrinsic::invariant_start:
+      case Intrinsic::invariant_end:
+      case Intrinsic::lifetime_start:
+      case Intrinsic::lifetime_end:
+      case Intrinsic::objectsize:
+      case Intrinsic::ptr_annotation:
+      case Intrinsic::var_annotation:
+        // These intrinsics don't count as size.
+        return TCC_Free;
+      }
+    }
+
+    if (const CastInst *CI = dyn_cast<CastInst>(U)) {
+      // Result of a cmp instruction is often extended (to be used by other
+      // cmp instructions, logical or return instructions). These are usually
+      // nop on most sane targets.
+      if (isa<CmpInst>(CI->getOperand(0)))
+        return TCC_Free;
+    }
+
+    // Otherwise delegate to the fully generic implementations.
+    return getOperationCost(Operator::getOpcode(U), U->getType(),
+                            U->getNumOperands() == 1 ?
+                                U->getOperand(0)->getType() : 0);
+  }
 
   bool isLegalAddImmediate(int64_t Imm) const {
     return false;
