@@ -1530,6 +1530,14 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
   // Redefinition from nested context:
   verifyFormat("class A::B::C {} n;");
 
+  // Template definitions.
+  // FIXME: This is still incorrectly handled at the formatter side.
+  verifyFormat("template <> struct X < 15, i < 3 && 42 < 50 && 33<28> {};");
+
+  // FIXME:
+  // This now gets parsed incorrectly as class definition.
+  // verifyFormat("class A<int> f() {}\nint n;");
+
   // Elaborate types where incorrectly parsing the structural element would
   // break the indent.
   verifyFormat("if (true)\n"

@@ -620,7 +620,17 @@ void UnwrappedLineParser::parseRecord() {
            FormatTok.Tok.is(tok::coloncolon))
       nextToken();
 
-    if (FormatTok.Tok.is(tok::colon)) {
+    // Note that parsing away template declarations here leads to incorrectly
+    // accepting function declarations as record declarations.
+    // In general, we cannot solve this problem. Consider:
+    // class A<int> B() {}
+    // which can be a function definition or a class definition when B() is a
+    // macro. If we find enough real-world cases where this is a problem, we
+    // can parse for the 'template' keyword in the beginning of the statement,
+    // and thus rule out the record production in case there is no template
+    // (this would still leave us with an ambiguity between template function
+    // and class declarations).
+    if (FormatTok.Tok.is(tok::colon) || FormatTok.Tok.is(tok::less)) {
       while (FormatTok.Tok.isNot(tok::l_brace)) {
         if (FormatTok.Tok.is(tok::semi))
           return;
@@ -630,6 +640,9 @@ void UnwrappedLineParser::parseRecord() {
   }
   if (FormatTok.Tok.is(tok::l_brace))
     parseBlock();
+  // We fall through to parsing a structural element afterwards, so
+  // class A {} n, m;
+  // will end up in one unwrapped line.
 }
 
 void UnwrappedLineParser::parseObjCProtocolList() {
