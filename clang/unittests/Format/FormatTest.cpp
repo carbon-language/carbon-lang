@@ -526,6 +526,10 @@ TEST_F(FormatTest, FormatsNamespaces) {
                "void f() { f(); }");
 }
 
+TEST_F(FormatTest, FormatsExternC) {
+  verifyFormat("extern \"C\" {\nint a;");
+}
+
 TEST_F(FormatTest, FormatTryCatch) {
   // FIXME: Handle try-catch explicitly in the UnwrappedLineParser, then we'll
   // also not create single-line-blocks.

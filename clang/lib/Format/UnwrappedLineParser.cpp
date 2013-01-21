@@ -311,6 +311,18 @@ void UnwrappedLineParser::parseStructuralElement() {
   case tok::kw_return:
     parseReturn();
     return;
+  case tok::kw_extern:
+    nextToken();
+    if (FormatTok.Tok.is(tok::string_literal)) {
+      nextToken();
+      if (FormatTok.Tok.is(tok::l_brace)) {
+        parseBlock(0);
+        addUnwrappedLine();
+        return;
+      }
+    }
+    // In all other cases, parse the declaration.
+    break;
   default:
     break;
   }
