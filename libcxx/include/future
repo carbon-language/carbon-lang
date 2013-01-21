@@ -1757,7 +1757,7 @@ template<class _Rp, class ..._ArgTypes>
 class __packaged_task_function<_Rp(_ArgTypes...)>
 {
     typedef __packaged_task_base<_Rp(_ArgTypes...)> __base;
-    aligned_storage<3*sizeof(void*)>::type __buf_;
+    typename aligned_storage<3*sizeof(void*)>::type __buf_;
     __base* __f_;
 
 public:

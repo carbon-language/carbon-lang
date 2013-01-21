@@ -1088,7 +1088,7 @@ class _LIBCPP_VISIBLE function<_Rp(_ArgTypes...)>
       public __function::__maybe_derive_from_binary_function<_Rp(_ArgTypes...)>
 {
     typedef __function::__base<_Rp(_ArgTypes...)> __base;
-    aligned_storage<3*sizeof(void*)>::type __buf_;
+    typename aligned_storage<3*sizeof(void*)>::type __buf_;
     __base* __f_;
 
     template <class _Fp>
