@@ -1697,12 +1697,14 @@ llvm::DIType CGDebugInfo::CreateEnumType(const EnumDecl *ED) {
   return DbgTy;
 }
 
-static QualType UnwrapTypeForDebugInfo(QualType T) {
+static QualType UnwrapTypeForDebugInfo(QualType T, const ASTContext &C) {
+  Qualifiers Quals;
   do {
+    Quals += T.getLocalQualifiers();
     QualType LastT = T;
     switch (T->getTypeClass()) {
     default:
-      return T;
+      return C.getQualifiedType(T.getTypePtr(), Quals);
     case Type::TemplateSpecialization:
       T = cast<TemplateSpecializationType>(T)->desugar();
       break;
@@ -1727,13 +1729,8 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
     case Type::Paren:
       T = cast<ParenType>(T)->getInnerType();
       break;
-    case Type::SubstTemplateTypeParm: {
-      // We need to keep the qualifiers handy since getReplacementType()
-      // will strip them away.
-      unsigned Quals = T.getLocalFastQualifiers();
+    case Type::SubstTemplateTypeParm:
       T = cast<SubstTemplateTypeParmType>(T)->getReplacementType();
-      T.addFastQualifiers(Quals);
-    }
       break;
     case Type::Auto:
       T = cast<AutoType>(T)->getDeducedType();
@@ -1741,8 +1738,6 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
     }
     
     assert(T != LastT && "Type unwrapping failed to unwrap!");
-    if (T == LastT)
-      return T;
   } while (true);
 }
 
@@ -1750,7 +1745,7 @@ static QualType UnwrapTypeForDebugInfo(QualType T) {
 llvm::DIType CGDebugInfo::getTypeOrNull(QualType Ty) {
 
   // Unwrap the type as needed for debug information.
-  Ty = UnwrapTypeForDebugInfo(Ty);
+  Ty = UnwrapTypeForDebugInfo(Ty, CGM.getContext());
   
   // Check for existing entry.
   llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
@@ -1769,7 +1764,7 @@ llvm::DIType CGDebugInfo::getTypeOrNull(QualType Ty) {
 llvm::DIType CGDebugInfo::getCompletedTypeOrNull(QualType Ty) {
 
   // Unwrap the type as needed for debug information.
-  Ty = UnwrapTypeForDebugInfo(Ty);
+  Ty = UnwrapTypeForDebugInfo(Ty, CGM.getContext());
 
   // Check for existing entry.
   llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
@@ -1791,7 +1786,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
     return llvm::DIType();
 
   // Unwrap the type as needed for debug information.
-  Ty = UnwrapTypeForDebugInfo(Ty);
+  Ty = UnwrapTypeForDebugInfo(Ty, CGM.getContext());
 
   llvm::DIType T = getCompletedTypeOrNull(Ty);
 
@@ -1903,7 +1898,7 @@ llvm::DIType CGDebugInfo::getOrCreateLimitedType(QualType Ty,
     return llvm::DIType();
 
   // Unwrap the type as needed for debug information.
-  Ty = UnwrapTypeForDebugInfo(Ty);
+  Ty = UnwrapTypeForDebugInfo(Ty, CGM.getContext());
 
   llvm::DIType T = getTypeOrNull(Ty);
 
