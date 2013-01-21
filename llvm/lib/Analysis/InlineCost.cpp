@@ -422,7 +422,7 @@ bool CallAnalyzer::visitPtrToInt(PtrToIntInst &I) {
   if (lookupSROAArgAndCost(I.getOperand(0), SROAArg, CostIt))
     SROAArgValues[&I] = SROAArg;
 
-  return isInstructionFree(&I, TD);
+  return TargetTransformInfo::TCC_Free == TTI.getUserCost(&I);
 }
 
 bool CallAnalyzer::visitIntToPtr(IntToPtrInst &I) {
@@ -452,7 +452,7 @@ bool CallAnalyzer::visitIntToPtr(IntToPtrInst &I) {
   if (lookupSROAArgAndCost(Op, SROAArg, CostIt))
     SROAArgValues[&I] = SROAArg;
 
-  return isInstructionFree(&I, TD);
+  return TargetTransformInfo::TCC_Free == TTI.getUserCost(&I);
 }
 
 bool CallAnalyzer::visitCastInst(CastInst &I) {
@@ -469,7 +469,7 @@ bool CallAnalyzer::visitCastInst(CastInst &I) {
   // Disable SROA in the face of arbitrary casts we don't whitelist elsewhere.
   disableSROA(I.getOperand(0));
 
-  return isInstructionFree(&I, TD);
+  return TargetTransformInfo::TCC_Free == TTI.getUserCost(&I);
 }
 
 bool CallAnalyzer::visitUnaryInstruction(UnaryInstruction &I) {
@@ -782,7 +782,7 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
 bool CallAnalyzer::visitInstruction(Instruction &I) {
   // Some instructions are free. All of the free intrinsics can also be
   // handled by SROA, etc.
-  if (isInstructionFree(&I, TD))
+  if (TargetTransformInfo::TCC_Free == TTI.getUserCost(&I))
     return true;
 
   // We found something we don't understand or can't handle. Mark any SROA-able
