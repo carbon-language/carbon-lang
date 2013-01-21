@@ -1573,6 +1573,13 @@ TEST_F(FormatTest, MergeHandlingInTheFaceOfPreprocessorDirectives) {
                "  f();                  \\\n"
                "  if (true)\n"
                "g();", ShortMergedIf);
+  verifyFormat("{\n"
+               "#ifdef A\n"
+               "  // Comment\n"
+               "  if (true) continue;\n"
+               "#endif\n"
+               "  // Comment\n"
+               "  if (true) continue;", ShortMergedIf);
 }
 
 //===----------------------------------------------------------------------===//
