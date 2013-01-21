@@ -56,15 +56,14 @@ struct InvalidArgError {
   std::string ArgName;
 };
 
-#if LLVM_HAS_CXX11_STDLIB
 namespace llvm {
 template<>
-struct ErrorOrUserDataTraits<InvalidArgError> : std::true_type {
+struct ErrorOrUserDataTraits<InvalidArgError> : true_type {
   static error_code error() {
     return make_error_code(errc::invalid_argument);
   }
 };
-} // end namespace lld
+} // end namespace llvm
 
 ErrorOr<int> t4() {
   return InvalidArgError("adena");
@@ -77,4 +76,3 @@ TEST(ErrorOr, UserErrorData) {
   EXPECT_EQ("adena", t4().getError<InvalidArgError>().ArgName);
 }
 } // end anon namespace
-#endif
