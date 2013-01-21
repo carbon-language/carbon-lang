@@ -182,6 +182,7 @@ def ADDRcpii : ComplexPattern<i32, 2, "SelectADDRcpii", [add, cprelwrapper],
 // Address operands
 def MEMii : Operand<i32> {
   let PrintMethod = "printMemOperand";
+  let DecoderMethod = "DecodeMEMiiOperand";
   let MIOperandInfo = (ops i32imm, i32imm);
 }
 
@@ -265,26 +266,25 @@ class FL3R<bits<9> opc, string OpcStr, SDNode OpNode> :
 
 // Register - U6
 // Operand register - U6
-multiclass FRU6_LRU6_branch<string OpcStr> {
-  def _ru6: _FRU6<
-                 (outs), (ins GRRegs:$cond, brtarget:$dest),
-                 !strconcat(OpcStr, " $cond, $dest"),
-                 []>;
-  def _lru6: _FLRU6<
-                 (outs), (ins GRRegs:$cond, brtarget:$dest),
-                 !strconcat(OpcStr, " $cond, $dest"),
-                 []>;
+multiclass FRU6_LRU6_branch<bits<6> opc, string OpcStr> {
+  def _ru6: _FRU6<opc, (outs), (ins GRRegs:$a, brtarget:$b),
+                  !strconcat(OpcStr, " $a, $b"), []>;
+  def _lru6: _FLRU6<opc, (outs), (ins GRRegs:$a, brtarget:$b),
+                    !strconcat(OpcStr, " $a, $b"), []>;
 }
 
-multiclass FRU6_LRU6_cp<string OpcStr> {
-  def _ru6: _FRU6<
-                 (outs GRRegs:$dst), (ins i32imm:$a),
-                 !strconcat(OpcStr, " $dst, cp[$a]"),
-                 []>;
-  def _lru6: _FLRU6<
-                 (outs GRRegs:$dst), (ins i32imm:$a),
-                 !strconcat(OpcStr, " $dst, cp[$a]"),
-                 []>;
+multiclass FRU6_LRU6_backwards_branch<bits<6> opc, string OpcStr> {
+  def _ru6: _FRU6<opc, (outs), (ins GRRegs:$a, brtarget:$b),
+                  !strconcat(OpcStr, " $a, -$b"), []>;
+  def _lru6: _FLRU6<opc, (outs), (ins GRRegs:$a, brtarget:$b),
+                    !strconcat(OpcStr, " $a, -$b"), []>;
+}
+
+multiclass FRU6_LRU6_cp<bits<6> opc, string OpcStr> {
+  def _ru6: _FRU6<opc, (outs GRRegs:$a), (ins i32imm:$b),
+                  !strconcat(OpcStr, " $a, cp[$b]"), []>;
+  def _lru6: _FLRU6<opc, (outs GRRegs:$a), (ins i32imm:$b),
+                    !strconcat(OpcStr, " $a, cp[$b]"), []>;
 }
 
 // U6
@@ -537,113 +537,92 @@ def LMUL_l6r : _L6R<(outs GRRegs:$dst1, GRRegs:$dst2),
 
 //let Uses = [DP] in ...
 let neverHasSideEffects = 1, isReMaterializable = 1 in
-def LDAWDP_ru6: _FRU6<(outs GRRegs:$dst), (ins MEMii:$a),
-                    "ldaw $dst, dp[$a]",
-                    []>;
+def LDAWDP_ru6: _FRU6<0b011000, (outs GRRegs:$a), (ins MEMii:$b),
+                      "ldaw $a, dp[$b]", []>;
 
 let isReMaterializable = 1 in                    
-def LDAWDP_lru6: _FLRU6<
-                    (outs GRRegs:$dst), (ins MEMii:$a),
-                    "ldaw $dst, dp[$a]",
-                    [(set GRRegs:$dst, ADDRdpii:$a)]>;
+def LDAWDP_lru6: _FLRU6<0b011000, (outs GRRegs:$a), (ins MEMii:$b),
+                        "ldaw $a, dp[$b]",
+                        [(set GRRegs:$a, ADDRdpii:$b)]>;
 
 let mayLoad=1 in
-def LDWDP_ru6: _FRU6<(outs GRRegs:$dst), (ins MEMii:$a),
-                    "ldw $dst, dp[$a]",
-                    []>;
-                    
-def LDWDP_lru6: _FLRU6<
-                    (outs GRRegs:$dst), (ins MEMii:$a),
-                    "ldw $dst, dp[$a]",
-                    [(set GRRegs:$dst, (load ADDRdpii:$a))]>;
+def LDWDP_ru6: _FRU6<0b010110, (outs GRRegs:$a), (ins MEMii:$b),
+                     "ldw $a, dp[$b]", []>;
+
+def LDWDP_lru6: _FLRU6<0b010110, (outs GRRegs:$a), (ins MEMii:$b),
+                       "ldw $a, dp[$b]",
+                       [(set GRRegs:$a, (load ADDRdpii:$b))]>;
 
 let mayStore=1 in
-def STWDP_ru6 : _FRU6<(outs), (ins GRRegs:$val, MEMii:$addr),
-                  "stw $val, dp[$addr]",
-                  []>;
+def STWDP_ru6 : _FRU6<0b010100, (outs), (ins GRRegs:$a, MEMii:$b),
+                      "stw $a, dp[$b]", []>;
 
-def STWDP_lru6 : _FLRU6<(outs), (ins GRRegs:$val, MEMii:$addr),
-                  "stw $val, dp[$addr]",
-                  [(store GRRegs:$val, ADDRdpii:$addr)]>;
+def STWDP_lru6 : _FLRU6<0b010100, (outs), (ins GRRegs:$a, MEMii:$b),
+                        "stw $a, dp[$b]",
+                        [(store GRRegs:$a, ADDRdpii:$b)]>;
 
 //let Uses = [CP] in ..
 let mayLoad = 1, isReMaterializable = 1, neverHasSideEffects = 1 in
-defm LDWCP : FRU6_LRU6_cp<"ldw">;
+defm LDWCP : FRU6_LRU6_cp<0b011011, "ldw">;
 
 let Uses = [SP] in {
 let mayStore=1 in {
-def STWSP_ru6 : _FRU6<
-                 (outs), (ins GRRegs:$val, i32imm:$index),
-                 "stw $val, sp[$index]",
-                 [(XCoreStwsp GRRegs:$val, immU6:$index)]>;
+def STWSP_ru6 : _FRU6<0b010101, (outs), (ins GRRegs:$a, i32imm:$b),
+                      "stw $a, sp[$b]",
+                      [(XCoreStwsp GRRegs:$a, immU6:$b)]>;
 
-def STWSP_lru6 : _FLRU6<
-                 (outs), (ins GRRegs:$val, i32imm:$index),
-                 "stw $val, sp[$index]",
-                 [(XCoreStwsp GRRegs:$val, immU16:$index)]>;
+def STWSP_lru6 : _FLRU6<0b010101, (outs), (ins GRRegs:$a, i32imm:$b),
+                        "stw $a, sp[$b]",
+                        [(XCoreStwsp GRRegs:$a, immU16:$b)]>;
 }
 
 let mayLoad=1 in {
-def LDWSP_ru6 : _FRU6<
-                 (outs GRRegs:$dst), (ins i32imm:$b),
-                 "ldw $dst, sp[$b]",
-                 []>;
+def LDWSP_ru6 : _FRU6<0b010111, (outs GRRegs:$a), (ins i32imm:$b),
+                      "ldw $a, sp[$b]", []>;
 
-def LDWSP_lru6 : _FLRU6<
-                 (outs GRRegs:$dst), (ins i32imm:$b),
-                 "ldw $dst, sp[$b]",
-                 []>;
+def LDWSP_lru6 : _FLRU6<0b010111, (outs GRRegs:$a), (ins i32imm:$b),
+                        "ldw $a, sp[$b]", []>;
 }
 
 let neverHasSideEffects = 1 in {
-def LDAWSP_ru6 : _FRU6<
-                 (outs GRRegs:$dst), (ins i32imm:$b),
-                 "ldaw $dst, sp[$b]",
-                 []>;
+def LDAWSP_ru6 : _FRU6<0b011001, (outs GRRegs:$a), (ins i32imm:$b),
+                       "ldaw $a, sp[$b]", []>;
 
-def LDAWSP_lru6 : _FLRU6<
-                 (outs GRRegs:$dst), (ins i32imm:$b),
-                 "ldaw $dst, sp[$b]",
-                 []>;
+def LDAWSP_lru6 : _FLRU6<0b011001, (outs GRRegs:$a), (ins i32imm:$b),
+                         "ldaw $a, sp[$b]", []>;
 
-def LDAWSP_ru6_RRegs : _FRU6<
-                 (outs RRegs:$dst), (ins i32imm:$b),
-                 "ldaw $dst, sp[$b]",
-                 []>;
+let isCodeGenOnly = 1 in
+def LDAWSP_ru6_RRegs : _FRU6<0b011001, (outs RRegs:$a), (ins i32imm:$b),
+                             "ldaw $a, sp[$b]", []>;
 
-def LDAWSP_lru6_RRegs : _FLRU6<
-                 (outs RRegs:$dst), (ins i32imm:$b),
-                 "ldaw $dst, sp[$b]",
-                 []>;
+let isCodeGenOnly = 1 in
+def LDAWSP_lru6_RRegs : _FLRU6<0b011001, (outs RRegs:$a), (ins i32imm:$b),
+                               "ldaw $a, sp[$b]", []>;
 }
 }
 
 let isReMaterializable = 1 in {
-def LDC_ru6 : _FRU6<
-                 (outs GRRegs:$dst), (ins i32imm:$b),
-                 "ldc $dst, $b",
-                 [(set GRRegs:$dst, immU6:$b)]>;
+def LDC_ru6 : _FRU6<0b011010, (outs GRRegs:$a), (ins i32imm:$b),
+                    "ldc $a, $b", [(set GRRegs:$a, immU6:$b)]>;
 
-def LDC_lru6 : _FLRU6<
-                 (outs GRRegs:$dst), (ins i32imm:$b),
-                 "ldc $dst, $b",
-                 [(set GRRegs:$dst, immU16:$b)]>;
+def LDC_lru6 : _FLRU6<0b011010, (outs GRRegs:$a), (ins i32imm:$b),
+                      "ldc $a, $b", [(set GRRegs:$a, immU16:$b)]>;
 }
 
-def SETC_ru6 : _FRU6<(outs), (ins GRRegs:$r, i32imm:$val),
-                  "setc res[$r], $val",
-                  [(int_xcore_setc GRRegs:$r, immU6:$val)]>;
+def SETC_ru6 : _FRU6<0b111010, (outs), (ins GRRegs:$a, i32imm:$b),
+                     "setc res[$a], $b",
+                     [(int_xcore_setc GRRegs:$a, immU6:$b)]>;
 
-def SETC_lru6 : _FLRU6<(outs), (ins GRRegs:$r, i32imm:$val),
-                  "setc res[$r], $val",
-                  [(int_xcore_setc GRRegs:$r, immU16:$val)]>;
+def SETC_lru6 : _FLRU6<0b111010, (outs), (ins GRRegs:$a, i32imm:$b),
+                       "setc res[$a], $b",
+                       [(int_xcore_setc GRRegs:$a, immU16:$b)]>;
 
 // Operand register - U6
 let isBranch = 1, isTerminator = 1 in {
-defm BRFT: FRU6_LRU6_branch<"bt">;
-defm BRBT: FRU6_LRU6_branch<"bt">;
-defm BRFF: FRU6_LRU6_branch<"bf">;
-defm BRBF: FRU6_LRU6_branch<"bf">;
+defm BRFT: FRU6_LRU6_branch<0b011100, "bt">;
+defm BRBT: FRU6_LRU6_backwards_branch<0b011101, "bt">;
+defm BRFF: FRU6_LRU6_branch<0b011110, "bf">;
+defm BRBF: FRU6_LRU6_backwards_branch<0b011111, "bf">;
 }
 
 // U6

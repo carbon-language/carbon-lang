@@ -92,6 +92,9 @@ static DecodeStatus DecodeGRRegsRegisterClass(MCInst &Inst,
 static DecodeStatus DecodeBitpOperand(MCInst &Inst, unsigned Val,
                                       uint64_t Address, const void *Decoder);
 
+static DecodeStatus DecodeMEMiiOperand(MCInst &Inst, unsigned Val,
+                                       uint64_t Address, const void *Decoder);
+
 static DecodeStatus Decode2RInstruction(MCInst &Inst,
                                         unsigned Insn,
                                         uint64_t Address,
@@ -189,6 +192,13 @@ static DecodeStatus DecodeBitpOperand(MCInst &Inst, unsigned Val,
     32 /*bpw*/, 1, 2, 3, 4, 5, 6, 7, 8, 16, 24, 32
   };
   Inst.addOperand(MCOperand::CreateImm(Values[Val]));
+  return MCDisassembler::Success;
+}
+
+static DecodeStatus DecodeMEMiiOperand(MCInst &Inst, unsigned Val,
+                                       uint64_t Address, const void *Decoder) {
+  Inst.addOperand(MCOperand::CreateImm(Val));
+  Inst.addOperand(MCOperand::CreateImm(0));
   return MCDisassembler::Success;
 }
 

@@ -85,12 +85,26 @@ class _FL2RUSBitp<bits<9> opc, dag outs, dag ins, string asmstr,
   let DecoderMethod = "DecodeL2RUSBitpInstruction";
 }
 
-class _FRU6<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _FRU6<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<2, outs, ins, asmstr, pattern> {
+  bits<4> a;
+  bits<6> b;
+
+  let Inst{15-10} = opc;
+  let Inst{9-6} = a;
+  let Inst{5-0} = b;
 }
 
-class _FLRU6<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _FLRU6<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<4, outs, ins, asmstr, pattern> {
+  bits<4> a;
+  bits<16> b;
+
+  let Inst{31-26} = opc;
+  let Inst{25-22} = a;
+  let Inst{21-16} = b{5-0};
+  let Inst{15-10} = 0b111100;
+  let Inst{9-0} = b{15-6};
 }
 
 class _FU6<dag outs, dag ins, string asmstr, list<dag> pattern>
