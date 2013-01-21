@@ -113,7 +113,7 @@ static inline bool AddrIsInShadow(uptr a) {
 static inline bool AddrIsInShadowGap(uptr a) {
   // In zero-based shadow mode we treat addresses near zero as addresses
   // in shadow gap as well.
-  if (ASAN_FLEXIBLE_MAPPING_AND_OFFSET)
+  if (SHADOW_OFFSET == 0)
     return a <= kShadowGapEnd;
   return a >= kShadowGapBeg && a <= kShadowGapEnd;
 }

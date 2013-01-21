@@ -15,8 +15,8 @@ include(CompilerRTCompile)
 include_directories(..)
 include_directories(../..)
 
-# Use zero-based shadow on Linux and Android.
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+# Use zero-based shadow on Android.
+if(ANDROID)
   set(ASAN_TESTS_USE_ZERO_BASE_SHADOW TRUE)
 else()
   set(ASAN_TESTS_USE_ZERO_BASE_SHADOW FALSE)

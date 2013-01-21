@@ -330,8 +330,8 @@ TEST(AddressSanitizer, MemsetWildAddressTest) {
   // Prevent inlining of memset().
   volatile memset_p libc_memset = (memset_p)memset;
   EXPECT_DEATH(libc_memset((void*)(kLowShadowBeg + 200), 0, 100),
-               ASAN_FLEXIBLE_MAPPING_AND_OFFSET ? "unknown-crash.*shadow gap"
-                                                : "unknown-crash.*low shadow");
+               (kLowShadowEnd == 0) ? "unknown-crash.*shadow gap"
+                                    : "unknown-crash.*low shadow");
   EXPECT_DEATH(libc_memset((void*)(kShadowGapBeg + 200), 0, 100),
                "unknown-crash.*shadow gap");
   EXPECT_DEATH(libc_memset((void*)(kHighShadowBeg + 200), 0, 100),
