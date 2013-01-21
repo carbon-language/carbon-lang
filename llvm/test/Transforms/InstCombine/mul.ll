@@ -138,8 +138,7 @@ define i32 @test16(i32 %b, i1 %c) {
         ; e = b & (a >> 31)
         %e = mul i32 %d, %b             ; <i32> [#uses=1]
         ret i32 %e
-; CHECK: [[TEST16:%.*]] = zext i1 %c to i32
-; CHECK-NEXT: %1 = sub i32 0, [[TEST16]]
+; CHECK: [[TEST16:%.*]] = sext i1 %c to i32
 ; CHECK-NEXT: %e = and i32 %1, %b
 ; CHECK-NEXT: ret i32 %e
 }

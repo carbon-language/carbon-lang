@@ -184,3 +184,12 @@ define i32 @test16(i16 %x) nounwind {
 ; CHECK-NEXT: %ext = sext i16 %sext to i32
 ; CHECK-NEXT: ret i32 %ext
 }
+
+define i32 @test17(i1 %x) nounwind {
+  %c1 = sext i1 %x to i32
+  %c2 = sub i32 0, %c1
+  ret i32 %c2
+; CHECK: @test17
+; CHECK-NEXT: [[TEST17:%.*]] = zext i1 %x to i32
+; CHECK-NEXT: ret i32 [[TEST17]]
+}

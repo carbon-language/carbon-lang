@@ -1250,6 +1250,16 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
 
     if (SimplifyDemandedInstructionBits(I))
       return &I;
+
+    // Fold (sub 0, (zext bool to B)) --> (sext bool to B)
+    if (C->isZero() && match(Op1, m_ZExt(m_Value(X))))
+      if (X->getType()->isIntegerTy(1))
+        return CastInst::CreateSExtOrBitCast(X, Op1->getType());
+
+    // Fold (sub 0, (sext bool to B)) --> (zext bool to B)
+    if (C->isZero() && match(Op1, m_SExt(m_Value(X))))
+      if (X->getType()->isIntegerTy(1))
+        return CastInst::CreateZExtOrBitCast(X, Op1->getType());
   }
 
 
