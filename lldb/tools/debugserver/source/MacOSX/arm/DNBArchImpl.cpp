@@ -2843,13 +2843,28 @@ enum
 // register offset, encoding, format and native register. This ensures that
 // the register state structures are defined correctly and have the correct
 // sizes and offsets.
-#define DEFINE_GPR_IDX(idx, reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_IDX(idx), gcc_##reg, dwarf_##reg, gen, gdb_##reg }
-#define DEFINE_GPR_NAME(reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_NAME(reg), gcc_##reg, dwarf_##reg, gen, gdb_##reg }
+#define DEFINE_GPR_IDX(idx, reg, alt, gen) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_IDX(idx), gcc_##reg, dwarf_##reg, gen, gdb_##reg, NULL, NULL}
+#define DEFINE_GPR_NAME(reg, alt, gen, inval) { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, 4, GPR_OFFSET_NAME(reg), gcc_##reg, dwarf_##reg, gen, gdb_##reg, NULL, inval}
 //#define FLOAT_FORMAT Float
 #define FLOAT_FORMAT Hex
-#define DEFINE_VFP_S_IDX(idx) { e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, FLOAT_FORMAT, 4, VFP_S_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, gdb_s##idx }
+#define DEFINE_VFP_S_IDX(idx) { e_regSetVFP, vfp_s##idx, "s" #idx, NULL, IEEE754, FLOAT_FORMAT, 4, VFP_S_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_s##idx, INVALID_NUB_REGNUM, gdb_s##idx, NULL, NULL}
 //#define DEFINE_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, Float, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, gdb_d##idx }
-#define DEFINE_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, FLOAT_FORMAT, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM }
+#define DEFINE_VFP_D_IDX(idx) { e_regSetVFP, vfp_d##idx, "d" #idx, NULL, IEEE754, FLOAT_FORMAT, 8, VFP_D_OFFSET_IDX(idx), INVALID_NUB_REGNUM, dwarf_d##idx, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL }
+
+// In case we are debugging to a debug target that the ability to
+// change into the protected modes with folded registers (ABT, IRQ,
+// FIQ, SYS, USR, etc..), we should invalidate r8-r14 if the CPSR
+// gets modified.
+
+uint32_t g_invalidate_cpsr[] = {
+    gpr_r8,
+    gpr_r9,
+    gpr_r10,
+    gpr_r11,
+    gpr_r12,
+    gpr_sp,
+    gpr_lr,
+    INVALID_NUB_REGNUM };
 
 // General purpose registers
 const DNBRegisterInfo
@@ -2868,10 +2883,10 @@ DNBArchMachARM::g_gpr_registers[] =
     DEFINE_GPR_IDX (10, r10,  NULL, INVALID_NUB_REGNUM   ),
     DEFINE_GPR_IDX (11, r11,  NULL, INVALID_NUB_REGNUM   ),
     DEFINE_GPR_IDX (12, r12,  NULL, INVALID_NUB_REGNUM   ),
-    DEFINE_GPR_NAME (sp, "r13", GENERIC_REGNUM_SP    ),
-    DEFINE_GPR_NAME (lr, "r14", GENERIC_REGNUM_RA    ),
-    DEFINE_GPR_NAME (pc, "r15", GENERIC_REGNUM_PC    ),
-    DEFINE_GPR_NAME (cpsr, "flags", GENERIC_REGNUM_FLAGS )
+    DEFINE_GPR_NAME (sp, "r13", GENERIC_REGNUM_SP, NULL),
+    DEFINE_GPR_NAME (lr, "r14", GENERIC_REGNUM_RA, NULL),
+    DEFINE_GPR_NAME (pc, "r15", GENERIC_REGNUM_PC, NULL),
+    DEFINE_GPR_NAME (cpsr, "flags", GENERIC_REGNUM_FLAGS, g_invalidate_cpsr)
 };
 
 // Floating point registers
@@ -2942,7 +2957,7 @@ DNBArchMachARM::g_vfp_registers[] =
     DEFINE_VFP_D_IDX (29),
     DEFINE_VFP_D_IDX (30),
     DEFINE_VFP_D_IDX (31),
-    { e_regSetVFP, vfp_fpscr, "fpscr", NULL, Uint, Hex, 4, VFP_OFFSET_NAME(fpscr), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gdb_fpscr }
+    { e_regSetVFP, vfp_fpscr, "fpscr", NULL, Uint, Hex, 4, VFP_OFFSET_NAME(fpscr), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gdb_fpscr, NULL, NULL }
 };
 
 // Exception registers

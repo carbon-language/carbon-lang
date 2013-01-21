@@ -83,6 +83,26 @@ enum
     gpr_es          = 13,
     gpr_fs          = 14,
     gpr_gs          = 15,
+    gpr_ax ,
+    gpr_bx ,
+    gpr_cx ,
+    gpr_dx ,
+    gpr_di ,
+    gpr_si ,
+    gpr_bp ,
+    gpr_sp ,
+    gpr_ah ,
+    gpr_bh ,
+    gpr_ch ,
+    gpr_dh ,
+    gpr_al ,
+    gpr_bl ,
+    gpr_cl ,
+    gpr_dl ,
+    gpr_dil,
+    gpr_sil,
+    gpr_bpl,
+    gpr_spl,
     k_num_gpr_regs
 };
 
@@ -997,6 +1017,10 @@ DNBArchImplI386::EnableHardwareSingleStep (bool enable)
 // Register information defintions
 //----------------------------------------------------------------------
 
+#define DEFINE_GPR_PSEUDO_16(reg16,reg32) { e_regSetGPR, gpr_##reg16, #reg16, NULL, Uint, Hex, 2, GPR_OFFSET(reg32)  ,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }
+#define DEFINE_GPR_PSEUDO_8H(reg8,reg32)  { e_regSetGPR, gpr_##reg8 , #reg8 , NULL, Uint, Hex, 1, GPR_OFFSET(reg32)+1,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }
+#define DEFINE_GPR_PSEUDO_8L(reg8,reg32)  { e_regSetGPR, gpr_##reg8 , #reg8 , NULL, Uint, Hex, 1, GPR_OFFSET(reg32)  ,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg32, g_invalidate_##reg32 }
+
 
 #define GPR_OFFSET(reg) (offsetof (DNBArchImplI386::GPR, __##reg))
 #define FPU_OFFSET(reg) (offsetof (DNBArchImplI386::FPU, __fpu_##reg) + offsetof (DNBArchImplI386::Context, fpu.no_avx))
@@ -1022,110 +1046,148 @@ DNBArchImplI386::EnableHardwareSingleStep (bool enable)
 // the register state structures are defined correctly and have the correct
 // sizes and offsets.
 
+uint32_t g_contained_eax[] = { gpr_eax, INVALID_NUB_REGNUM };
+uint32_t g_contained_ebx[] = { gpr_ebx, INVALID_NUB_REGNUM };
+uint32_t g_contained_ecx[] = { gpr_ecx, INVALID_NUB_REGNUM };
+uint32_t g_contained_edx[] = { gpr_edx, INVALID_NUB_REGNUM };
+uint32_t g_contained_edi[] = { gpr_edi, INVALID_NUB_REGNUM };
+uint32_t g_contained_esi[] = { gpr_esi, INVALID_NUB_REGNUM };
+uint32_t g_contained_ebp[] = { gpr_ebp, INVALID_NUB_REGNUM };
+uint32_t g_contained_esp[] = { gpr_esp, INVALID_NUB_REGNUM };
+
+uint32_t g_invalidate_eax[] = { gpr_eax , gpr_ax  , gpr_ah  , gpr_al, INVALID_NUB_REGNUM };
+uint32_t g_invalidate_ebx[] = { gpr_ebx , gpr_bx  , gpr_bh  , gpr_bl, INVALID_NUB_REGNUM };
+uint32_t g_invalidate_ecx[] = { gpr_ecx , gpr_cx  , gpr_ch  , gpr_cl, INVALID_NUB_REGNUM };
+uint32_t g_invalidate_edx[] = { gpr_edx , gpr_dx  , gpr_dh  , gpr_dl, INVALID_NUB_REGNUM };
+uint32_t g_invalidate_edi[] = { gpr_edi , gpr_di  , gpr_dil , INVALID_NUB_REGNUM };
+uint32_t g_invalidate_esi[] = { gpr_esi , gpr_si  , gpr_sil , INVALID_NUB_REGNUM };
+uint32_t g_invalidate_ebp[] = { gpr_ebp , gpr_bp  , gpr_bpl , INVALID_NUB_REGNUM };
+uint32_t g_invalidate_esp[] = { gpr_esp , gpr_sp  , gpr_spl , INVALID_NUB_REGNUM };
+
 // General purpose registers for 64 bit
 const DNBRegisterInfo
 DNBArchImplI386::g_gpr_registers[] =
 {
-{ e_regSetGPR, gpr_eax,     "eax"   , NULL      , Uint, Hex, GPR_SIZE(eax),     GPR_OFFSET(eax)     , gcc_eax   , dwarf_eax     , -1U                   , gdb_eax   },
-{ e_regSetGPR, gpr_ebx,     "ebx"   , NULL      , Uint, Hex, GPR_SIZE(ebx),     GPR_OFFSET(ebx)     , gcc_ebx   , dwarf_ebx     , -1U                   , gdb_ebx   },
-{ e_regSetGPR, gpr_ecx,     "ecx"   , NULL      , Uint, Hex, GPR_SIZE(ecx),     GPR_OFFSET(ecx)     , gcc_ecx   , dwarf_ecx     , -1U                   , gdb_ecx   },
-{ e_regSetGPR, gpr_edx,     "edx"   , NULL      , Uint, Hex, GPR_SIZE(edx),     GPR_OFFSET(edx)     , gcc_edx   , dwarf_edx     , -1U                   , gdb_edx   },
-{ e_regSetGPR, gpr_edi,     "edi"   , NULL      , Uint, Hex, GPR_SIZE(edi),     GPR_OFFSET(edi)     , gcc_edi   , dwarf_edi     , -1U                   , gdb_edi   },
-{ e_regSetGPR, gpr_esi,     "esi"   , NULL      , Uint, Hex, GPR_SIZE(esi),     GPR_OFFSET(esi)     , gcc_esi   , dwarf_esi     , -1U                   , gdb_esi   },
-{ e_regSetGPR, gpr_ebp,     "ebp"   , "fp"      , Uint, Hex, GPR_SIZE(ebp),     GPR_OFFSET(ebp)     , gcc_ebp   , dwarf_ebp     , GENERIC_REGNUM_FP     , gdb_ebp   },
-{ e_regSetGPR, gpr_esp,     "esp"   , "sp"      , Uint, Hex, GPR_SIZE(esp),     GPR_OFFSET(esp)     , gcc_esp   , dwarf_esp     , GENERIC_REGNUM_SP     , gdb_esp   },
-{ e_regSetGPR, gpr_ss,      "ss"    , NULL      , Uint, Hex, GPR_SIZE(ss),      GPR_OFFSET(ss)      , -1U       , -1U          , -1U                 , gdb_ss    },
-{ e_regSetGPR, gpr_eflags,  "eflags", "flags"   , Uint, Hex, GPR_SIZE(eflags),  GPR_OFFSET(eflags)  , gcc_eflags, dwarf_eflags  , GENERIC_REGNUM_FLAGS  , gdb_eflags},
-{ e_regSetGPR, gpr_eip,     "eip"   , "pc"      , Uint, Hex, GPR_SIZE(eip),     GPR_OFFSET(eip)     , gcc_eip   , dwarf_eip     , GENERIC_REGNUM_PC     , gdb_eip   },
-{ e_regSetGPR, gpr_cs,      "cs"    , NULL      , Uint, Hex, GPR_SIZE(cs),      GPR_OFFSET(cs)      , -1U       , -1U           , -1U                   , gdb_cs    },
-{ e_regSetGPR, gpr_ds,      "ds"    , NULL      , Uint, Hex, GPR_SIZE(ds),      GPR_OFFSET(ds)      , -1U       , -1U           , -1U                   , gdb_ds    },
-{ e_regSetGPR, gpr_es,      "es"    , NULL      , Uint, Hex, GPR_SIZE(es),      GPR_OFFSET(es)      , -1U       , -1U           , -1U                   , gdb_es    },
-{ e_regSetGPR, gpr_fs,      "fs"    , NULL      , Uint, Hex, GPR_SIZE(fs),      GPR_OFFSET(fs)      , -1U       , -1U           , -1U                   , gdb_fs    },
-{ e_regSetGPR, gpr_gs,      "gs"    , NULL      , Uint, Hex, GPR_SIZE(gs),      GPR_OFFSET(gs)      , -1U       , -1U           , -1U                   , gdb_gs    }
+{ e_regSetGPR, gpr_eax,     "eax"   , NULL      , Uint, Hex, GPR_SIZE(eax),     GPR_OFFSET(eax)     , gcc_eax           , dwarf_eax         , INVALID_NUB_REGNUM    , gdb_eax   , NULL, g_invalidate_eax },
+{ e_regSetGPR, gpr_ebx,     "ebx"   , NULL      , Uint, Hex, GPR_SIZE(ebx),     GPR_OFFSET(ebx)     , gcc_ebx           , dwarf_ebx         , INVALID_NUB_REGNUM    , gdb_ebx   , NULL, g_invalidate_ebx },
+{ e_regSetGPR, gpr_ecx,     "ecx"   , NULL      , Uint, Hex, GPR_SIZE(ecx),     GPR_OFFSET(ecx)     , gcc_ecx           , dwarf_ecx         , INVALID_NUB_REGNUM    , gdb_ecx   , NULL, g_invalidate_ecx },
+{ e_regSetGPR, gpr_edx,     "edx"   , NULL      , Uint, Hex, GPR_SIZE(edx),     GPR_OFFSET(edx)     , gcc_edx           , dwarf_edx         , INVALID_NUB_REGNUM    , gdb_edx   , NULL, g_invalidate_edx },
+{ e_regSetGPR, gpr_edi,     "edi"   , NULL      , Uint, Hex, GPR_SIZE(edi),     GPR_OFFSET(edi)     , gcc_edi           , dwarf_edi         , INVALID_NUB_REGNUM    , gdb_edi   , NULL, g_invalidate_edi },
+{ e_regSetGPR, gpr_esi,     "esi"   , NULL      , Uint, Hex, GPR_SIZE(esi),     GPR_OFFSET(esi)     , gcc_esi           , dwarf_esi         , INVALID_NUB_REGNUM    , gdb_esi   , NULL, g_invalidate_esi },
+{ e_regSetGPR, gpr_ebp,     "ebp"   , "fp"      , Uint, Hex, GPR_SIZE(ebp),     GPR_OFFSET(ebp)     , gcc_ebp           , dwarf_ebp         , GENERIC_REGNUM_FP     , gdb_ebp   , NULL, g_invalidate_ebp },
+{ e_regSetGPR, gpr_esp,     "esp"   , "sp"      , Uint, Hex, GPR_SIZE(esp),     GPR_OFFSET(esp)     , gcc_esp           , dwarf_esp         , GENERIC_REGNUM_SP     , gdb_esp   , NULL, g_invalidate_esp },
+{ e_regSetGPR, gpr_ss,      "ss"    , NULL      , Uint, Hex, GPR_SIZE(ss),      GPR_OFFSET(ss)      , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM    , gdb_ss    , NULL, NULL},
+{ e_regSetGPR, gpr_eflags,  "eflags", "flags"   , Uint, Hex, GPR_SIZE(eflags),  GPR_OFFSET(eflags)  , gcc_eflags        , dwarf_eflags      , GENERIC_REGNUM_FLAGS  , gdb_eflags, NULL, NULL},
+{ e_regSetGPR, gpr_eip,     "eip"   , "pc"      , Uint, Hex, GPR_SIZE(eip),     GPR_OFFSET(eip)     , gcc_eip           , dwarf_eip         , GENERIC_REGNUM_PC     , gdb_eip   , NULL, NULL},
+{ e_regSetGPR, gpr_cs,      "cs"    , NULL      , Uint, Hex, GPR_SIZE(cs),      GPR_OFFSET(cs)      , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM    , gdb_cs    , NULL, NULL},
+{ e_regSetGPR, gpr_ds,      "ds"    , NULL      , Uint, Hex, GPR_SIZE(ds),      GPR_OFFSET(ds)      , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM    , gdb_ds    , NULL, NULL},
+{ e_regSetGPR, gpr_es,      "es"    , NULL      , Uint, Hex, GPR_SIZE(es),      GPR_OFFSET(es)      , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM    , gdb_es    , NULL, NULL},
+{ e_regSetGPR, gpr_fs,      "fs"    , NULL      , Uint, Hex, GPR_SIZE(fs),      GPR_OFFSET(fs)      , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM    , gdb_fs    , NULL, NULL},
+{ e_regSetGPR, gpr_gs,      "gs"    , NULL      , Uint, Hex, GPR_SIZE(gs),      GPR_OFFSET(gs)      , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM    , gdb_gs    , NULL, NULL},
+DEFINE_GPR_PSEUDO_16 (ax , eax),
+DEFINE_GPR_PSEUDO_16 (bx , ebx),
+DEFINE_GPR_PSEUDO_16 (cx , ecx),
+DEFINE_GPR_PSEUDO_16 (dx , edx),
+DEFINE_GPR_PSEUDO_16 (di , edi),
+DEFINE_GPR_PSEUDO_16 (si , esi),
+DEFINE_GPR_PSEUDO_16 (bp , ebp),
+DEFINE_GPR_PSEUDO_16 (sp , esp),
+DEFINE_GPR_PSEUDO_8H (ah , eax),
+DEFINE_GPR_PSEUDO_8H (bh , ebx),
+DEFINE_GPR_PSEUDO_8H (ch , ecx),
+DEFINE_GPR_PSEUDO_8H (dh , edx),
+DEFINE_GPR_PSEUDO_8L (al , eax),
+DEFINE_GPR_PSEUDO_8L (bl , ebx),
+DEFINE_GPR_PSEUDO_8L (cl , ecx),
+DEFINE_GPR_PSEUDO_8L (dl , edx),
+DEFINE_GPR_PSEUDO_8L (dil, edi),
+DEFINE_GPR_PSEUDO_8L (sil, esi),
+DEFINE_GPR_PSEUDO_8L (bpl, ebp),
+DEFINE_GPR_PSEUDO_8L (spl, esp)
 };
 
 
 const DNBRegisterInfo
 DNBArchImplI386::g_fpu_registers_no_avx[] =
 {
-{ e_regSetFPU, fpu_fcw      , "fctrl"       , NULL, Uint, Hex, FPU_SIZE_UINT(fcw)       , FPU_OFFSET(fcw)       , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_fsw      , "fstat"       , NULL, Uint, Hex, FPU_SIZE_UINT(fsw)       , FPU_OFFSET(fsw)       , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_ftw      , "ftag"        , NULL, Uint, Hex, FPU_SIZE_UINT(ftw)       , FPU_OFFSET(ftw)       , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_fop      , "fop"         , NULL, Uint, Hex, FPU_SIZE_UINT(fop)       , FPU_OFFSET(fop)       , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_ip       , "fioff"       , NULL, Uint, Hex, FPU_SIZE_UINT(ip)        , FPU_OFFSET(ip)        , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_cs       , "fiseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(cs)        , FPU_OFFSET(cs)        , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_dp       , "fooff"       , NULL, Uint, Hex, FPU_SIZE_UINT(dp)        , FPU_OFFSET(dp)        , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_ds       , "foseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(ds)        , FPU_OFFSET(ds)        , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_mxcsr    , "mxcsr"       , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsr)     , FPU_OFFSET(mxcsr)     , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_mxcsrmask, "mxcsrmask"   , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsrmask) , FPU_OFFSET(mxcsrmask) , -1U, -1U, -1U, -1U },
+{ e_regSetFPU, fpu_fcw      , "fctrl"       , NULL, Uint, Hex, FPU_SIZE_UINT(fcw)       , FPU_OFFSET(fcw)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_fsw      , "fstat"       , NULL, Uint, Hex, FPU_SIZE_UINT(fsw)       , FPU_OFFSET(fsw)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_ftw      , "ftag"        , NULL, Uint, Hex, FPU_SIZE_UINT(ftw)       , FPU_OFFSET(ftw)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_fop      , "fop"         , NULL, Uint, Hex, FPU_SIZE_UINT(fop)       , FPU_OFFSET(fop)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_ip       , "fioff"       , NULL, Uint, Hex, FPU_SIZE_UINT(ip)        , FPU_OFFSET(ip)        , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_cs       , "fiseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(cs)        , FPU_OFFSET(cs)        , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_dp       , "fooff"       , NULL, Uint, Hex, FPU_SIZE_UINT(dp)        , FPU_OFFSET(dp)        , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_ds       , "foseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(ds)        , FPU_OFFSET(ds)        , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_mxcsr    , "mxcsr"       , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsr)     , FPU_OFFSET(mxcsr)     , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_mxcsrmask, "mxcsrmask"   , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsrmask) , FPU_OFFSET(mxcsrmask) , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
 
-{ e_regSetFPU, fpu_stmm0, "stmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm0), FPU_OFFSET(stmm0), -1U, dwarf_stmm0, -1U, gdb_stmm0 },
-{ e_regSetFPU, fpu_stmm1, "stmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm1), FPU_OFFSET(stmm1), -1U, dwarf_stmm1, -1U, gdb_stmm1 },
-{ e_regSetFPU, fpu_stmm2, "stmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm2), FPU_OFFSET(stmm2), -1U, dwarf_stmm2, -1U, gdb_stmm2 },
-{ e_regSetFPU, fpu_stmm3, "stmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm3), FPU_OFFSET(stmm3), -1U, dwarf_stmm3, -1U, gdb_stmm3 },
-{ e_regSetFPU, fpu_stmm4, "stmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm4), FPU_OFFSET(stmm4), -1U, dwarf_stmm4, -1U, gdb_stmm4 },
-{ e_regSetFPU, fpu_stmm5, "stmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm5), FPU_OFFSET(stmm5), -1U, dwarf_stmm5, -1U, gdb_stmm5 },
-{ e_regSetFPU, fpu_stmm6, "stmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm6), FPU_OFFSET(stmm6), -1U, dwarf_stmm6, -1U, gdb_stmm6 },
-{ e_regSetFPU, fpu_stmm7, "stmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm7), FPU_OFFSET(stmm7), -1U, dwarf_stmm7, -1U, gdb_stmm7 },
+{ e_regSetFPU, fpu_stmm0, "stmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm0), FPU_OFFSET(stmm0), INVALID_NUB_REGNUM, dwarf_stmm0, INVALID_NUB_REGNUM, gdb_stmm0, NULL, NULL },
+{ e_regSetFPU, fpu_stmm1, "stmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm1), FPU_OFFSET(stmm1), INVALID_NUB_REGNUM, dwarf_stmm1, INVALID_NUB_REGNUM, gdb_stmm1, NULL, NULL },
+{ e_regSetFPU, fpu_stmm2, "stmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm2), FPU_OFFSET(stmm2), INVALID_NUB_REGNUM, dwarf_stmm2, INVALID_NUB_REGNUM, gdb_stmm2, NULL, NULL },
+{ e_regSetFPU, fpu_stmm3, "stmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm3), FPU_OFFSET(stmm3), INVALID_NUB_REGNUM, dwarf_stmm3, INVALID_NUB_REGNUM, gdb_stmm3, NULL, NULL },
+{ e_regSetFPU, fpu_stmm4, "stmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm4), FPU_OFFSET(stmm4), INVALID_NUB_REGNUM, dwarf_stmm4, INVALID_NUB_REGNUM, gdb_stmm4, NULL, NULL },
+{ e_regSetFPU, fpu_stmm5, "stmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm5), FPU_OFFSET(stmm5), INVALID_NUB_REGNUM, dwarf_stmm5, INVALID_NUB_REGNUM, gdb_stmm5, NULL, NULL },
+{ e_regSetFPU, fpu_stmm6, "stmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm6), FPU_OFFSET(stmm6), INVALID_NUB_REGNUM, dwarf_stmm6, INVALID_NUB_REGNUM, gdb_stmm6, NULL, NULL },
+{ e_regSetFPU, fpu_stmm7, "stmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm7), FPU_OFFSET(stmm7), INVALID_NUB_REGNUM, dwarf_stmm7, INVALID_NUB_REGNUM, gdb_stmm7, NULL, NULL },
 
-{ e_regSetFPU, fpu_xmm0, "xmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm0), FPU_OFFSET(xmm0), -1U, dwarf_xmm0, -1U, gdb_xmm0 },
-{ e_regSetFPU, fpu_xmm1, "xmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm1), FPU_OFFSET(xmm1), -1U, dwarf_xmm1, -1U, gdb_xmm1 },
-{ e_regSetFPU, fpu_xmm2, "xmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm2), FPU_OFFSET(xmm2), -1U, dwarf_xmm2, -1U, gdb_xmm2 },
-{ e_regSetFPU, fpu_xmm3, "xmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm3), FPU_OFFSET(xmm3), -1U, dwarf_xmm3, -1U, gdb_xmm3 },
-{ e_regSetFPU, fpu_xmm4, "xmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm4), FPU_OFFSET(xmm4), -1U, dwarf_xmm4, -1U, gdb_xmm4 },
-{ e_regSetFPU, fpu_xmm5, "xmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm5), FPU_OFFSET(xmm5), -1U, dwarf_xmm5, -1U, gdb_xmm5 },
-{ e_regSetFPU, fpu_xmm6, "xmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm6), FPU_OFFSET(xmm6), -1U, dwarf_xmm6, -1U, gdb_xmm6 },
-{ e_regSetFPU, fpu_xmm7, "xmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm7), FPU_OFFSET(xmm7), -1U, dwarf_xmm7, -1U, gdb_xmm7 }
+{ e_regSetFPU, fpu_xmm0, "xmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm0), FPU_OFFSET(xmm0), INVALID_NUB_REGNUM, dwarf_xmm0, INVALID_NUB_REGNUM, gdb_xmm0, NULL, NULL },
+{ e_regSetFPU, fpu_xmm1, "xmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm1), FPU_OFFSET(xmm1), INVALID_NUB_REGNUM, dwarf_xmm1, INVALID_NUB_REGNUM, gdb_xmm1, NULL, NULL },
+{ e_regSetFPU, fpu_xmm2, "xmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm2), FPU_OFFSET(xmm2), INVALID_NUB_REGNUM, dwarf_xmm2, INVALID_NUB_REGNUM, gdb_xmm2, NULL, NULL },
+{ e_regSetFPU, fpu_xmm3, "xmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm3), FPU_OFFSET(xmm3), INVALID_NUB_REGNUM, dwarf_xmm3, INVALID_NUB_REGNUM, gdb_xmm3, NULL, NULL },
+{ e_regSetFPU, fpu_xmm4, "xmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm4), FPU_OFFSET(xmm4), INVALID_NUB_REGNUM, dwarf_xmm4, INVALID_NUB_REGNUM, gdb_xmm4, NULL, NULL },
+{ e_regSetFPU, fpu_xmm5, "xmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm5), FPU_OFFSET(xmm5), INVALID_NUB_REGNUM, dwarf_xmm5, INVALID_NUB_REGNUM, gdb_xmm5, NULL, NULL },
+{ e_regSetFPU, fpu_xmm6, "xmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm6), FPU_OFFSET(xmm6), INVALID_NUB_REGNUM, dwarf_xmm6, INVALID_NUB_REGNUM, gdb_xmm6, NULL, NULL },
+{ e_regSetFPU, fpu_xmm7, "xmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm7), FPU_OFFSET(xmm7), INVALID_NUB_REGNUM, dwarf_xmm7, INVALID_NUB_REGNUM, gdb_xmm7, NULL, NULL }
 };
 
 const DNBRegisterInfo
 DNBArchImplI386::g_fpu_registers_avx[] =
 {
-{ e_regSetFPU, fpu_fcw      , "fctrl"       , NULL, Uint, Hex, FPU_SIZE_UINT(fcw)       , AVX_OFFSET(fcw)       , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_fsw      , "fstat"       , NULL, Uint, Hex, FPU_SIZE_UINT(fsw)       , AVX_OFFSET(fsw)       , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_ftw      , "ftag"        , NULL, Uint, Hex, FPU_SIZE_UINT(ftw)       , AVX_OFFSET(ftw)       , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_fop      , "fop"         , NULL, Uint, Hex, FPU_SIZE_UINT(fop)       , AVX_OFFSET(fop)       , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_ip       , "fioff"       , NULL, Uint, Hex, FPU_SIZE_UINT(ip)        , AVX_OFFSET(ip)        , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_cs       , "fiseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(cs)        , AVX_OFFSET(cs)        , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_dp       , "fooff"       , NULL, Uint, Hex, FPU_SIZE_UINT(dp)        , AVX_OFFSET(dp)        , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_ds       , "foseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(ds)        , AVX_OFFSET(ds)        , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_mxcsr    , "mxcsr"       , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsr)     , AVX_OFFSET(mxcsr)     , -1U, -1U, -1U, -1U },
-{ e_regSetFPU, fpu_mxcsrmask, "mxcsrmask"   , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsrmask) , AVX_OFFSET(mxcsrmask) , -1U, -1U, -1U, -1U },
+{ e_regSetFPU, fpu_fcw      , "fctrl"       , NULL, Uint, Hex, FPU_SIZE_UINT(fcw)       , AVX_OFFSET(fcw)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_fsw      , "fstat"       , NULL, Uint, Hex, FPU_SIZE_UINT(fsw)       , AVX_OFFSET(fsw)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_ftw      , "ftag"        , NULL, Uint, Hex, FPU_SIZE_UINT(ftw)       , AVX_OFFSET(ftw)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_fop      , "fop"         , NULL, Uint, Hex, FPU_SIZE_UINT(fop)       , AVX_OFFSET(fop)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_ip       , "fioff"       , NULL, Uint, Hex, FPU_SIZE_UINT(ip)        , AVX_OFFSET(ip)        , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_cs       , "fiseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(cs)        , AVX_OFFSET(cs)        , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_dp       , "fooff"       , NULL, Uint, Hex, FPU_SIZE_UINT(dp)        , AVX_OFFSET(dp)        , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_ds       , "foseg"       , NULL, Uint, Hex, FPU_SIZE_UINT(ds)        , AVX_OFFSET(ds)        , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_mxcsr    , "mxcsr"       , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsr)     , AVX_OFFSET(mxcsr)     , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetFPU, fpu_mxcsrmask, "mxcsrmask"   , NULL, Uint, Hex, FPU_SIZE_UINT(mxcsrmask) , AVX_OFFSET(mxcsrmask) , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
 
-{ e_regSetFPU, fpu_stmm0, "stmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm0), AVX_OFFSET(stmm0), -1U, dwarf_stmm0, -1U, gdb_stmm0 },
-{ e_regSetFPU, fpu_stmm1, "stmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm1), AVX_OFFSET(stmm1), -1U, dwarf_stmm1, -1U, gdb_stmm1 },
-{ e_regSetFPU, fpu_stmm2, "stmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm2), AVX_OFFSET(stmm2), -1U, dwarf_stmm2, -1U, gdb_stmm2 },
-{ e_regSetFPU, fpu_stmm3, "stmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm3), AVX_OFFSET(stmm3), -1U, dwarf_stmm3, -1U, gdb_stmm3 },
-{ e_regSetFPU, fpu_stmm4, "stmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm4), AVX_OFFSET(stmm4), -1U, dwarf_stmm4, -1U, gdb_stmm4 },
-{ e_regSetFPU, fpu_stmm5, "stmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm5), AVX_OFFSET(stmm5), -1U, dwarf_stmm5, -1U, gdb_stmm5 },
-{ e_regSetFPU, fpu_stmm6, "stmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm6), AVX_OFFSET(stmm6), -1U, dwarf_stmm6, -1U, gdb_stmm6 },
-{ e_regSetFPU, fpu_stmm7, "stmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm7), AVX_OFFSET(stmm7), -1U, dwarf_stmm7, -1U, gdb_stmm7 },
+{ e_regSetFPU, fpu_stmm0, "stmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm0), AVX_OFFSET(stmm0), INVALID_NUB_REGNUM, dwarf_stmm0, INVALID_NUB_REGNUM, gdb_stmm0, NULL, NULL },
+{ e_regSetFPU, fpu_stmm1, "stmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm1), AVX_OFFSET(stmm1), INVALID_NUB_REGNUM, dwarf_stmm1, INVALID_NUB_REGNUM, gdb_stmm1, NULL, NULL },
+{ e_regSetFPU, fpu_stmm2, "stmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm2), AVX_OFFSET(stmm2), INVALID_NUB_REGNUM, dwarf_stmm2, INVALID_NUB_REGNUM, gdb_stmm2, NULL, NULL },
+{ e_regSetFPU, fpu_stmm3, "stmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm3), AVX_OFFSET(stmm3), INVALID_NUB_REGNUM, dwarf_stmm3, INVALID_NUB_REGNUM, gdb_stmm3, NULL, NULL },
+{ e_regSetFPU, fpu_stmm4, "stmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm4), AVX_OFFSET(stmm4), INVALID_NUB_REGNUM, dwarf_stmm4, INVALID_NUB_REGNUM, gdb_stmm4, NULL, NULL },
+{ e_regSetFPU, fpu_stmm5, "stmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm5), AVX_OFFSET(stmm5), INVALID_NUB_REGNUM, dwarf_stmm5, INVALID_NUB_REGNUM, gdb_stmm5, NULL, NULL },
+{ e_regSetFPU, fpu_stmm6, "stmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm6), AVX_OFFSET(stmm6), INVALID_NUB_REGNUM, dwarf_stmm6, INVALID_NUB_REGNUM, gdb_stmm6, NULL, NULL },
+{ e_regSetFPU, fpu_stmm7, "stmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_MMST(stmm7), AVX_OFFSET(stmm7), INVALID_NUB_REGNUM, dwarf_stmm7, INVALID_NUB_REGNUM, gdb_stmm7, NULL, NULL },
 
-{ e_regSetFPU, fpu_xmm0, "xmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm0), AVX_OFFSET(xmm0), -1U, dwarf_xmm0, -1U, gdb_xmm0 },
-{ e_regSetFPU, fpu_xmm1, "xmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm1), AVX_OFFSET(xmm1), -1U, dwarf_xmm1, -1U, gdb_xmm1 },
-{ e_regSetFPU, fpu_xmm2, "xmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm2), AVX_OFFSET(xmm2), -1U, dwarf_xmm2, -1U, gdb_xmm2 },
-{ e_regSetFPU, fpu_xmm3, "xmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm3), AVX_OFFSET(xmm3), -1U, dwarf_xmm3, -1U, gdb_xmm3 },
-{ e_regSetFPU, fpu_xmm4, "xmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm4), AVX_OFFSET(xmm4), -1U, dwarf_xmm4, -1U, gdb_xmm4 },
-{ e_regSetFPU, fpu_xmm5, "xmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm5), AVX_OFFSET(xmm5), -1U, dwarf_xmm5, -1U, gdb_xmm5 },
-{ e_regSetFPU, fpu_xmm6, "xmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm6), AVX_OFFSET(xmm6), -1U, dwarf_xmm6, -1U, gdb_xmm6 },
-{ e_regSetFPU, fpu_xmm7, "xmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm7), AVX_OFFSET(xmm7), -1U, dwarf_xmm7, -1U, gdb_xmm7 },
+{ e_regSetFPU, fpu_xmm0, "xmm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm0), AVX_OFFSET(xmm0), INVALID_NUB_REGNUM, dwarf_xmm0, INVALID_NUB_REGNUM, gdb_xmm0, NULL, NULL },
+{ e_regSetFPU, fpu_xmm1, "xmm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm1), AVX_OFFSET(xmm1), INVALID_NUB_REGNUM, dwarf_xmm1, INVALID_NUB_REGNUM, gdb_xmm1, NULL, NULL },
+{ e_regSetFPU, fpu_xmm2, "xmm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm2), AVX_OFFSET(xmm2), INVALID_NUB_REGNUM, dwarf_xmm2, INVALID_NUB_REGNUM, gdb_xmm2, NULL, NULL },
+{ e_regSetFPU, fpu_xmm3, "xmm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm3), AVX_OFFSET(xmm3), INVALID_NUB_REGNUM, dwarf_xmm3, INVALID_NUB_REGNUM, gdb_xmm3, NULL, NULL },
+{ e_regSetFPU, fpu_xmm4, "xmm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm4), AVX_OFFSET(xmm4), INVALID_NUB_REGNUM, dwarf_xmm4, INVALID_NUB_REGNUM, gdb_xmm4, NULL, NULL },
+{ e_regSetFPU, fpu_xmm5, "xmm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm5), AVX_OFFSET(xmm5), INVALID_NUB_REGNUM, dwarf_xmm5, INVALID_NUB_REGNUM, gdb_xmm5, NULL, NULL },
+{ e_regSetFPU, fpu_xmm6, "xmm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm6), AVX_OFFSET(xmm6), INVALID_NUB_REGNUM, dwarf_xmm6, INVALID_NUB_REGNUM, gdb_xmm6, NULL, NULL },
+{ e_regSetFPU, fpu_xmm7, "xmm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_XMM(xmm7), AVX_OFFSET(xmm7), INVALID_NUB_REGNUM, dwarf_xmm7, INVALID_NUB_REGNUM, gdb_xmm7, NULL, NULL },
 
-{ e_regSetFPU, fpu_ymm0, "ymm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm0), AVX_OFFSET_YMM(0), -1U, dwarf_ymm0, -1U, gdb_ymm0 },
-{ e_regSetFPU, fpu_ymm1, "ymm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm1), AVX_OFFSET_YMM(1), -1U, dwarf_ymm1, -1U, gdb_ymm1 },
-{ e_regSetFPU, fpu_ymm2, "ymm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm2), AVX_OFFSET_YMM(2), -1U, dwarf_ymm2, -1U, gdb_ymm2 },
-{ e_regSetFPU, fpu_ymm3, "ymm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm3), AVX_OFFSET_YMM(3), -1U, dwarf_ymm3, -1U, gdb_ymm3 },
-{ e_regSetFPU, fpu_ymm4, "ymm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm4), AVX_OFFSET_YMM(4), -1U, dwarf_ymm4, -1U, gdb_ymm4 },
-{ e_regSetFPU, fpu_ymm5, "ymm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm5), AVX_OFFSET_YMM(5), -1U, dwarf_ymm5, -1U, gdb_ymm5 },
-{ e_regSetFPU, fpu_ymm6, "ymm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm6), AVX_OFFSET_YMM(6), -1U, dwarf_ymm6, -1U, gdb_ymm6 },
-{ e_regSetFPU, fpu_ymm7, "ymm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm7), AVX_OFFSET_YMM(7), -1U, dwarf_ymm7, -1U, gdb_ymm7 },
+{ e_regSetFPU, fpu_ymm0, "ymm0", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm0), AVX_OFFSET_YMM(0), INVALID_NUB_REGNUM, dwarf_ymm0, INVALID_NUB_REGNUM, gdb_ymm0, NULL, NULL },
+{ e_regSetFPU, fpu_ymm1, "ymm1", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm1), AVX_OFFSET_YMM(1), INVALID_NUB_REGNUM, dwarf_ymm1, INVALID_NUB_REGNUM, gdb_ymm1, NULL, NULL },
+{ e_regSetFPU, fpu_ymm2, "ymm2", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm2), AVX_OFFSET_YMM(2), INVALID_NUB_REGNUM, dwarf_ymm2, INVALID_NUB_REGNUM, gdb_ymm2, NULL, NULL },
+{ e_regSetFPU, fpu_ymm3, "ymm3", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm3), AVX_OFFSET_YMM(3), INVALID_NUB_REGNUM, dwarf_ymm3, INVALID_NUB_REGNUM, gdb_ymm3, NULL, NULL },
+{ e_regSetFPU, fpu_ymm4, "ymm4", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm4), AVX_OFFSET_YMM(4), INVALID_NUB_REGNUM, dwarf_ymm4, INVALID_NUB_REGNUM, gdb_ymm4, NULL, NULL },
+{ e_regSetFPU, fpu_ymm5, "ymm5", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm5), AVX_OFFSET_YMM(5), INVALID_NUB_REGNUM, dwarf_ymm5, INVALID_NUB_REGNUM, gdb_ymm5, NULL, NULL },
+{ e_regSetFPU, fpu_ymm6, "ymm6", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm6), AVX_OFFSET_YMM(6), INVALID_NUB_REGNUM, dwarf_ymm6, INVALID_NUB_REGNUM, gdb_ymm6, NULL, NULL },
+{ e_regSetFPU, fpu_ymm7, "ymm7", NULL, Vector, VectorOfUInt8, FPU_SIZE_YMM(ymm7), AVX_OFFSET_YMM(7), INVALID_NUB_REGNUM, dwarf_ymm7, INVALID_NUB_REGNUM, gdb_ymm7, NULL, NULL }
 };
 
 const DNBRegisterInfo
 DNBArchImplI386::g_exc_registers[] =
 {
-{ e_regSetEXC, exc_trapno,      "trapno"    , NULL, Uint, Hex, EXC_SIZE (trapno)    , EXC_OFFSET (trapno)       , -1U, -1U, -1U, -1U },
-{ e_regSetEXC, exc_err,         "err"       , NULL, Uint, Hex, EXC_SIZE (err)       , EXC_OFFSET (err)          , -1U, -1U, -1U, -1U },
-{ e_regSetEXC, exc_faultvaddr,  "faultvaddr", NULL, Uint, Hex, EXC_SIZE (faultvaddr), EXC_OFFSET (faultvaddr)   , -1U, -1U, -1U, -1U }
+{ e_regSetEXC, exc_trapno,      "trapno"    , NULL, Uint, Hex, EXC_SIZE (trapno)    , EXC_OFFSET (trapno)       , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetEXC, exc_err,         "err"       , NULL, Uint, Hex, EXC_SIZE (err)       , EXC_OFFSET (err)          , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL },
+{ e_regSetEXC, exc_faultvaddr,  "faultvaddr", NULL, Uint, Hex, EXC_SIZE (faultvaddr), EXC_OFFSET (faultvaddr)   , INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, NULL, NULL }
 };
 
 // Number of registers in each register set

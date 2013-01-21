@@ -1282,10 +1282,11 @@ enum gdb_regnums
 // register offset, encoding, format and native register. This ensures that
 // the register state structures are defined correctly and have the correct
 // sizes and offsets.
-#define DEFINE_GPR(reg)                   { e_regSetGPR, gpr_##reg, #reg, NULL, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), gcc_dwarf_##reg, gcc_dwarf_##reg, INVALID_NUB_REGNUM, gdb_##reg, NULL, NULL }
-#define DEFINE_GPR_ALT(reg, alt, gen)     { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), gcc_dwarf_##reg, gcc_dwarf_##reg, gen, gdb_##reg, NULL, NULL }
+#define DEFINE_GPR(reg)                   { e_regSetGPR, gpr_##reg, #reg, NULL, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), gcc_dwarf_##reg, gcc_dwarf_##reg, INVALID_NUB_REGNUM, gdb_##reg, NULL, g_invalidate_##reg }
+#define DEFINE_GPR_ALT(reg, alt, gen)     { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), gcc_dwarf_##reg, gcc_dwarf_##reg, gen, gdb_##reg, NULL, g_invalidate_##reg }
 #define DEFINE_GPR_ALT2(reg, alt)         { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gdb_##reg, NULL, NULL }
 #define DEFINE_GPR_ALT3(reg, alt, gen)    { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, gen, gdb_##reg, NULL, NULL }
+#define DEFINE_GPR_ALT4(reg, alt, gen)     { e_regSetGPR, gpr_##reg, #reg, alt, Uint, Hex, GPR_SIZE(reg), GPR_OFFSET(reg), gcc_dwarf_##reg, gcc_dwarf_##reg, gen, gdb_##reg, NULL, NULL }
 
 #define DEFINE_GPR_PSEUDO_32(reg32,reg64) { e_regSetGPR, gpr_##reg32, #reg32, NULL, Uint, Hex, 4, GPR_OFFSET(reg64)  ,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg64, g_invalidate_##reg64 }
 #define DEFINE_GPR_PSEUDO_16(reg16,reg64) { e_regSetGPR, gpr_##reg16, #reg16, NULL, Uint, Hex, 2, GPR_OFFSET(reg64)  ,INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, INVALID_NUB_REGNUM, g_contained_##reg64, g_invalidate_##reg64 }
@@ -1347,7 +1348,7 @@ DNBArchImplX86_64::g_gpr_registers[] =
     DEFINE_GPR      (r13),
     DEFINE_GPR      (r14),
     DEFINE_GPR      (r15),
-    DEFINE_GPR_ALT  (rip , "pc", GENERIC_REGNUM_PC),
+    DEFINE_GPR_ALT4 (rip , "pc", GENERIC_REGNUM_PC),
     DEFINE_GPR_ALT3 (rflags, "flags", GENERIC_REGNUM_FLAGS),
     DEFINE_GPR_ALT2 (cs,        NULL),
     DEFINE_GPR_ALT2 (fs,        NULL),
