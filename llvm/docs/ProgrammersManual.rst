@@ -1052,6 +1052,22 @@ SparseSet is useful for algorithms that need very fast clear/find/insert/erase
 and fast iteration over small sets.  It is not intended for building composite
 data structures.
 
+.. _dss_sparsemultiset:
+
+llvm/ADT/SparseMultiSet.h
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+SparseMultiSet adds multiset behavior to SparseSet, while retaining SparseSet's
+desirable attributes. Like SparseSet, it typically uses a lot of memory, but
+provides operations that are almost as fast as a vector.  Typical keys are
+physical registers, virtual registers, or numbered basic blocks.
+
+SparseMultiSet is useful for algorithms that need very fast
+clear/find/insert/erase of the entire collection, and iteration over sets of
+elements sharing a key. It is often a more efficient choice than using composite
+data structures (e.g. vector-of-vectors, map-of-vectors). It is not intended for
+building composite data structures.
+
 .. _dss_FoldingSet:
 
 llvm/ADT/FoldingSet.h
