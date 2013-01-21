@@ -307,18 +307,6 @@ multiclass FU6_LU6_np<bits<10> opc, string OpcStr> {
   def _lu6: _FLU6<opc, (outs), (ins i32imm:$a), !strconcat(OpcStr, " $a"), []>;
 }
 
-// U10
-multiclass FU10_LU10_np<string OpcStr> {
-  def _u10: _FU10<
-                 (outs), (ins i32imm:$b),
-                 !strconcat(OpcStr, " $b"),
-                 []>;
-  def _lu10: _FLU10<
-                 (outs), (ins i32imm:$b),
-                 !strconcat(OpcStr, " $b"),
-                 []>;
-}
-
 // Two operand short
 
 class F2R_np<bits<6> opc, string OpcStr> :
