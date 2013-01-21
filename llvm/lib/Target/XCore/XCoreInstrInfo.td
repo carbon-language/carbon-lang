@@ -688,15 +688,11 @@ def BRFU_lu6 : _FLU6<
 
 //let Uses = [CP] in ...
 let Defs = [R11], neverHasSideEffects = 1, isReMaterializable = 1 in
-def LDAWCP_u6: _FRU6<(outs), (ins MEMii:$a),
-                    "ldaw r11, cp[$a]",
-                    []>;
+def LDAWCP_u6: _FU6<(outs), (ins MEMii:$a), "ldaw r11, cp[$a]", []>;
 
 let Defs = [R11], isReMaterializable = 1 in
-def LDAWCP_lu6: _FLRU6<
-                    (outs), (ins MEMii:$a),
-                    "ldaw r11, cp[$a]",
-                    [(set R11, ADDRcpii:$a)]>;
+def LDAWCP_lu6: _FLU6<(outs), (ins MEMii:$a), "ldaw r11, cp[$a]",
+                      [(set R11, ADDRcpii:$a)]>;
 
 defm SETSR : FU6_LU6_int<"setsr", int_xcore_setsr>;
 
