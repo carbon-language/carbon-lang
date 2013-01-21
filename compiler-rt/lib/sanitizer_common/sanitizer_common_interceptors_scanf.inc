@@ -12,6 +12,10 @@
 //===----------------------------------------------------------------------===//
 #include <stdarg.h>
 
+#ifdef _WIN32
+#define va_copy(dst, src) ((dst) = (src))
+#endif  // _WIN32
+
 struct ScanfSpec {
   char c;
   unsigned size;
