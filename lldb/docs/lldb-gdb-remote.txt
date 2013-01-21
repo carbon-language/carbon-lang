@@ -371,15 +371,15 @@ generic     If the register is a generic register that most CPUs have, classify
                       arguments when the argument fits into a register)
 
 container-regs
-			The value for this key is a comma separated list of decimal register
-			numbers.
+			The value for this key is a comma separated list of raw hex (no 
+			leading "0x") register numbers.
 
 			This specifies that this register is contained in other concrete
 			register values. For example "eax" is in the lower 32 bits of the
 			"rax" register value for x86_64, so "eax" could specify that it is
 			contained in "rax" by specifying the register number for "rax".
 			
-			"container-regs:0,1;"
+			"container-regs:00,0a,3b;"
 			
 			This is handy for defining what GDB used to call "pseudo" registers.
 			These registers are never requested by LLDB via the register read
@@ -387,13 +387,13 @@ container-regs
 			of this register.
 			
 invalidate-regs
-			The value for this key is a comma separated list of decimal register
-			numbers.
+			The value for this key is a comma separated list of raw hex (no 
+			leading "0x") register numbers.
 			
 			This specifies which register values should be invalidated when this
 			register is modified.
 
-			"invalidate-regs:1,2,3;"
+			"invalidate-regs:01,0b,1e;"
 			
 			This is handy when modifying a specific register can cause other
 			register values to change. For example, when debugging an ARM target,

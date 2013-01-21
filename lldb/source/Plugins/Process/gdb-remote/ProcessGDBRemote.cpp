@@ -382,7 +382,9 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                             value_pair = value_pair.second.split(',');
                             if (!value_pair.first.empty())
                             {
-                                value_regs.push_back (Args::StringToUInt32 (value_pair.first.str().c_str()));
+                                uint32_t reg = Args::StringToUInt32 (value_pair.first.str().c_str(), LLDB_INVALID_REGNUM, 16);
+                                if (reg != LLDB_INVALID_REGNUM)
+                                    value_regs.push_back (reg);
                             }
                         } while (!value_pair.second.empty());
                     }
@@ -395,7 +397,9 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                             value_pair = value_pair.second.split(',');
                             if (!value_pair.first.empty())
                             {
-                                invalidate_regs.push_back (Args::StringToUInt32 (value_pair.first.str().c_str()));
+                                uint32_t reg = Args::StringToUInt32 (value_pair.first.str().c_str(), LLDB_INVALID_REGNUM, 16);
+                                if (reg != LLDB_INVALID_REGNUM)
+                                    invalidate_regs.push_back (reg);
                             }
                         } while (!value_pair.second.empty());
                     }
