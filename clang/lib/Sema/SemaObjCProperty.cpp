@@ -653,14 +653,13 @@ DiagnoseClassAndClassExtPropertyMismatch(Sema &S, ObjCInterfaceDecl *ClassDecl,
          ExtEnd = ClassDecl->known_extensions_end();
        Ext != ExtEnd; ++Ext) {
     ObjCPropertyDecl *ClassExtProperty = 0;
-    for (ObjCContainerDecl::prop_iterator P = Ext->prop_begin(),
-                                          E = Ext->prop_end();
-         P != E; ++P) {
-      if ((*P)->getIdentifier() == property->getIdentifier()) {
-        ClassExtProperty = *P;
+    DeclContext::lookup_result R = Ext->lookup(property->getDeclName());
+    for (unsigned I = 0, N = R.size(); I != N; ++I) {
+      ClassExtProperty = dyn_cast<ObjCPropertyDecl>(R[0]);
+      if (ClassExtProperty)
         break;
-      }
     }
+
     if (ClassExtProperty) {
       warn = false;
       unsigned classExtPropertyAttr = 
@@ -1285,17 +1284,18 @@ void Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
   ObjCInterfaceDecl *SDecl = IDecl->getSuperClass();
   if (!SDecl)
     return;
-  // FIXME: O(N^2)
+  // FIXME: We should perform this check when the property in the subclass
+  // is declared.
   for (ObjCInterfaceDecl::prop_iterator S = SDecl->prop_begin(),
        E = SDecl->prop_end(); S != E; ++S) {
     ObjCPropertyDecl *SuperPDecl = *S;
-    // Does property in super class has declaration in current class?
-    for (ObjCInterfaceDecl::prop_iterator I = IDecl->prop_begin(),
-         E = IDecl->prop_end(); I != E; ++I) {
-      ObjCPropertyDecl *PDecl = *I;
-      if (SuperPDecl->getIdentifier() == PDecl->getIdentifier())
-          DiagnosePropertyMismatch(PDecl, SuperPDecl,
-                                   SDecl->getIdentifier());
+    DeclContext::lookup_result Results
+      = IDecl->lookup(SuperPDecl->getDeclName());
+    for (unsigned I = 0, N = Results.size(); I != N; ++I) {
+      if (ObjCPropertyDecl *PDecl = dyn_cast<ObjCPropertyDecl>(Results[I])) {
+        DiagnosePropertyMismatch(PDecl, SuperPDecl,
+                                 SDecl->getIdentifier());
+      }
     }
   }
 }
@@ -1304,40 +1304,53 @@ void Sema::ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl) {
 /// of properties declared in a protocol and compares their attribute against
 /// the same property declared in the class or category.
 void
-Sema::MatchOneProtocolPropertiesInClass(Decl *CDecl,
-                                          ObjCProtocolDecl *PDecl) {
-  ObjCInterfaceDecl *IDecl = dyn_cast_or_null<ObjCInterfaceDecl>(CDecl);
-  if (!IDecl) {
-    // Category
-    ObjCCategoryDecl *CatDecl = static_cast<ObjCCategoryDecl*>(CDecl);
+Sema::MatchOneProtocolPropertiesInClass(Decl *CDecl, ObjCProtocolDecl *PDecl) {
+  if (!CDecl)
+    return;
+
+  // Category case.
+  if (ObjCCategoryDecl *CatDecl = dyn_cast<ObjCCategoryDecl>(CDecl)) {
+    // FIXME: We should perform this check when the property in the category
+    // is declared.
     assert (CatDecl && "MatchOneProtocolPropertiesInClass");
     if (!CatDecl->IsClassExtension())
       for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
            E = PDecl->prop_end(); P != E; ++P) {
-        ObjCPropertyDecl *Pr = *P;
-        ObjCCategoryDecl::prop_iterator CP, CE;
-        // Is this property already in  category's list of properties?
-        for (CP = CatDecl->prop_begin(), CE = CatDecl->prop_end(); CP!=CE; ++CP)
-          if (CP->getIdentifier() == Pr->getIdentifier())
-            break;
-        if (CP != CE)
-          // Property protocol already exist in class. Diagnose any mismatch.
-          DiagnosePropertyMismatch(*CP, Pr, PDecl->getIdentifier());
+        ObjCPropertyDecl *ProtoProp = *P;
+        DeclContext::lookup_result R
+          = CatDecl->lookup(ProtoProp->getDeclName());
+        for (unsigned I = 0, N = R.size(); I != N; ++I) {
+          if (ObjCPropertyDecl *CatProp = dyn_cast<ObjCPropertyDecl>(R[I])) {
+            if (CatProp != ProtoProp) {
+              // Property protocol already exist in class. Diagnose any mismatch.
+              DiagnosePropertyMismatch(CatProp, ProtoProp,
+                                       PDecl->getIdentifier());
+            }
+          }
+        }
       }
     return;
   }
+
+  // Class
+  // FIXME: We should perform this check when the property in the class
+  // is declared.
+  ObjCInterfaceDecl *IDecl = cast<ObjCInterfaceDecl>(CDecl);
   for (ObjCProtocolDecl::prop_iterator P = PDecl->prop_begin(),
-       E = PDecl->prop_end(); P != E; ++P) {
-    ObjCPropertyDecl *Pr = *P;
-    ObjCInterfaceDecl::prop_iterator CP, CE;
-    // Is this property already in  class's list of properties?
-    for (CP = IDecl->prop_begin(), CE = IDecl->prop_end(); CP != CE; ++CP)
-      if (CP->getIdentifier() == Pr->getIdentifier())
-        break;
-    if (CP != CE)
-      // Property protocol already exist in class. Diagnose any mismatch.
-      DiagnosePropertyMismatch(*CP, Pr, PDecl->getIdentifier());
+                                       E = PDecl->prop_end(); P != E; ++P) {
+    ObjCPropertyDecl *ProtoProp = *P;
+    DeclContext::lookup_result R
+    = IDecl->lookup(ProtoProp->getDeclName());
+    for (unsigned I = 0, N = R.size(); I != N; ++I) {
+      if (ObjCPropertyDecl *ClassProp = dyn_cast<ObjCPropertyDecl>(R[I])) {
+        if (ClassProp != ProtoProp) {
+          // Property protocol already exist in class. Diagnose any mismatch.
+          DiagnosePropertyMismatch(ClassProp, ProtoProp,
+                                   PDecl->getIdentifier());
+        }
+      }
     }
+  }
 }
 
 /// CompareProperties - This routine compares properties
@@ -1445,7 +1458,7 @@ bool Sema::isPropertyReadonly(ObjCPropertyDecl *PDecl,
 }
 
 /// CollectImmediateProperties - This routine collects all properties in
-/// the class and its conforming protocols; but not those it its super class.
+/// the class and its conforming protocols; but not those in its super class.
 void Sema::CollectImmediateProperties(ObjCContainerDecl *CDecl,
             ObjCContainerDecl::PropertyMap &PropMap,
             ObjCContainerDecl::PropertyMap &SuperPropMap) {
