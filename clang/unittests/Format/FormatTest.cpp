@@ -404,6 +404,21 @@ TEST_F(FormatTest, UnderstandsSingleLineComments) {
                "    // Comment inside a statement.\n"
                "    bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb;");
 
+  EXPECT_EQ("void f() { // This does something ..\n"
+            "}\n"
+            "int a; // This is unrelated",
+            format("void f()    {     // This does something ..\n"
+                   "  }\n"
+                   "int   a;     // This is unrelated"));
+  EXPECT_EQ("void f() { // This does something ..\n"
+            "}          // awesome..\n"
+            "\n"
+            "int a; // This is unrelated",
+            format("void f()    { // This does something ..\n"
+                   "      } // awesome..\n"
+                   " \n"
+                   "int a;    // This is unrelated"));
+
   EXPECT_EQ("int i; // single line trailing comment",
             format("int i;\\\n// single line trailing comment"));
 

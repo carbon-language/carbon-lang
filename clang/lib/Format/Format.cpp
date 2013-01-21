@@ -202,7 +202,13 @@ public:
   void replaceWhitespace(const AnnotatedToken &Tok, unsigned NewLines,
                          unsigned Spaces, unsigned WhitespaceStartColumn,
                          const FormatStyle &Style) {
-    if (Tok.Type == TT_LineComment && NewLines < 2 &&
+    // 2+ newlines mean an empty line separating logic scopes.
+    if (NewLines >= 2)
+      alignComments();
+
+    // Align line comments if they are trailing or if they continue other
+    // trailing comments.
+    if (Tok.Type == TT_LineComment &&
         (Tok.Parent != NULL || !Comments.empty())) {
       if (Style.ColumnLimit >=
           Spaces + WhitespaceStartColumn + Tok.FormatTok.TokenLength) {
@@ -215,10 +221,11 @@ public:
                                     Spaces - Tok.FormatTok.TokenLength;
         return;
       }
-    } else if (NewLines == 0 && Tok.Children.empty() &&
-               Tok.Type != TT_LineComment) {
-      alignComments();
     }
+
+    // If this line does not have a trailing comment, align the stored comments.
+    if (Tok.Children.empty() && Tok.Type != TT_LineComment)
+      alignComments();
     storeReplacement(Tok.FormatTok,
                      std::string(NewLines, '\n') + std::string(Spaces, ' '));
   }
