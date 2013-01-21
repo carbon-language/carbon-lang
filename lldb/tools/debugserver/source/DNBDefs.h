@@ -230,6 +230,8 @@ struct DNBRegisterInfo
     uint32_t    reg_dwarf;      // DWARF register number (INVALID_NUB_REGNUM when none)
     uint32_t    reg_generic;    // Generic register number (INVALID_NUB_REGNUM when none)
     uint32_t    reg_gdb;        // The GDB register number (INVALID_NUB_REGNUM when none)
+    uint32_t    *pseudo_regs;   // If this register is a part of another register, list the one or more registers
+    uint32_t    *update_regs;   // If modifying this register will invalidate other registers, list them here
 };
 
 struct DNBRegisterSetInfo

@@ -57,6 +57,21 @@ public:
         reg_info.name = reg_name.AsCString();
         assert (reg_info.name);
         reg_info.alt_name = reg_alt_name.AsCString(NULL);
+        uint32_t i;
+        if (reg_info.value_regs)
+        {
+            for (i=0; reg_info.value_regs[i] != LLDB_INVALID_REGNUM; ++i)
+                m_value_regs_map[reg_num].push_back(reg_info.value_regs[i]);
+            m_value_regs_map[reg_num].push_back(LLDB_INVALID_REGNUM);
+            reg_info.value_regs = m_value_regs_map[reg_num].data();
+        }
+        if (reg_info.invalidate_regs)
+        {
+            for (i=0; reg_info.invalidate_regs[i] != LLDB_INVALID_REGNUM; ++i)
+                m_invalidate_regs_map[reg_num].push_back(reg_info.invalidate_regs[i]);
+            m_invalidate_regs_map[reg_num].push_back(LLDB_INVALID_REGNUM);
+            reg_info.invalidate_regs = m_invalidate_regs_map[reg_num].data();
+        }
         m_regs.push_back (reg_info);
         uint32_t set = GetRegisterSetIndexByName (set_name, true);
         assert (set < m_sets.size());
@@ -156,9 +171,6 @@ public:
     void
     HardcodeARMRegisters(bool from_scratch);
 
-    void
-    Addx86_64ConvenienceRegisters();
-
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from GDBRemoteRegisterContext can see and modify these
@@ -168,6 +180,7 @@ protected:
     typedef std::vector <uint32_t> reg_num_collection;
     typedef std::vector <reg_num_collection> set_reg_num_collection;
     typedef std::vector <lldb_private::ConstString> name_collection;
+    typedef std::map<uint32_t, reg_num_collection> reg_to_regs_map;
 
     reg_collection m_regs;
     set_collection m_sets;
@@ -175,6 +188,8 @@ protected:
     name_collection m_reg_names;
     name_collection m_reg_alt_names;
     name_collection m_set_names;
+    reg_to_regs_map m_value_regs_map;
+    reg_to_regs_map m_invalidate_regs_map;
     size_t m_reg_data_byte_size;   // The number of bytes required to store all registers
 };
 
@@ -242,6 +257,34 @@ protected:
     
     void
     SetAllRegisterValid (bool b);
+
+    bool
+    GetRegisterIsValid (uint32_t reg) const
+    {
+#if defined (LLDB_CONFIGURATION_DEBUG)
+        assert (reg < m_reg_valid.size());
+#endif
+        if (reg < m_reg_valid.size())
+            return m_reg_valid[reg];
+        return false;
+    }
+
+    void
+    SetRegisterIsValid (const lldb_private::RegisterInfo *reg_info, bool valid)
+    {
+        if (reg_info)
+            return SetRegisterIsValid (reg_info->kinds[lldb::eRegisterKindLLDB], valid);
+    }
+
+    void
+    SetRegisterIsValid (uint32_t reg, bool valid)
+    {
+#if defined (LLDB_CONFIGURATION_DEBUG)
+        assert (reg < m_reg_valid.size());
+#endif
+        if (reg < m_reg_valid.size())
+            m_reg_valid[reg] = valid;
+    }
 
     void
     SyncThreadState(lldb_private::Process *process);  // Assumes the sequence mutex has already been acquired.

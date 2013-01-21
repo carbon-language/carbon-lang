@@ -1552,6 +1552,30 @@ RNBRemote::HandlePacket_qRegisterInfo (const char *p)
             case GENERIC_REGNUM_ARG8:   ostrm << "generic:arg8;"; break;
             default: break;
         }
+        
+        if (reg_entry->nub_info.pseudo_regs && reg_entry->nub_info.pseudo_regs[0] != INVALID_NUB_REGNUM)
+        {
+            ostrm << "container-regs:";
+            for (unsigned i=0; reg_entry->nub_info.pseudo_regs[i] != INVALID_NUB_REGNUM; ++i)
+            {
+                if (i > 0)
+                    ostrm << ',';
+                ostrm << DECIMAL << reg_entry->nub_info.pseudo_regs[i];
+            }
+            ostrm << ';';
+        }
+
+        if (reg_entry->nub_info.update_regs && reg_entry->nub_info.update_regs[0] != INVALID_NUB_REGNUM)
+        {
+            ostrm << "invalidate-regs:";
+            for (unsigned i=0; reg_entry->nub_info.update_regs[i] != INVALID_NUB_REGNUM; ++i)
+            {
+                if (i > 0)
+                    ostrm << ',';
+                ostrm << DECIMAL << reg_entry->nub_info.update_regs[i];
+            }
+            ostrm << ';';
+        }
 
         return SendPacket (ostrm.str ());
     }

@@ -280,6 +280,8 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                 ConstString reg_name;
                 ConstString alt_name;
                 ConstString set_name;
+                std::vector<uint32_t> value_regs;
+                std::vector<uint32_t> invalidate_regs;
                 RegisterInfo reg_info = { NULL,                 // Name
                     NULL,                 // Alt name
                     0,                    // byte size
@@ -371,11 +373,48 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                     {
                         reg_info.kinds[eRegisterKindGeneric] = Args::StringToGenericRegister (value.c_str());
                     }
+                    else if (name.compare("container-regs") == 0)
+                    {
+                        std::pair<llvm::StringRef, llvm::StringRef> value_pair;
+                        value_pair.second = value;
+                        do
+                        {
+                            value_pair = value_pair.second.split(',');
+                            if (!value_pair.first.empty())
+                            {
+                                value_regs.push_back (Args::StringToUInt32 (value_pair.first.str().c_str()));
+                            }
+                        } while (!value_pair.second.empty());
+                    }
+                    else if (name.compare("invalidate-regs") == 0)
+                    {
+                        std::pair<llvm::StringRef, llvm::StringRef> value_pair;
+                        value_pair.second = value;
+                        do
+                        {
+                            value_pair = value_pair.second.split(',');
+                            if (!value_pair.first.empty())
+                            {
+                                invalidate_regs.push_back (Args::StringToUInt32 (value_pair.first.str().c_str()));
+                            }
+                        } while (!value_pair.second.empty());
+                    }
                 }
 
                 reg_info.byte_offset = reg_offset;
                 assert (reg_info.byte_size != 0);
                 reg_offset += reg_info.byte_size;
+                if (!value_regs.empty())
+                {
+                    value_regs.push_back(LLDB_INVALID_REGNUM);
+                    reg_info.value_regs = value_regs.data();
+                }
+                if (!invalidate_regs.empty())
+                {
+                    invalidate_regs.push_back(LLDB_INVALID_REGNUM);
+                    reg_info.invalidate_regs = invalidate_regs.data();
+                }
+
                 m_register_info.AddRegister(reg_info, reg_name, alt_name, set_name);
             }
         }
@@ -414,11 +453,6 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
     {
         m_register_info.HardcodeARMRegisters(from_scratch);
     }
-
-    // Add some convenience registers (eax, ebx, ecx, edx, esi, edi, ebp, esp) to x86_64.
-    if ((target_arch.IsValid() && target_arch.GetMachine() == llvm::Triple::x86_64)
-        || (remote_arch.IsValid() && remote_arch.GetMachine() == llvm::Triple::x86_64))
-        m_register_info.Addx86_64ConvenienceRegisters();
 
     // At this point, we can finalize our register info.
     m_register_info.Finalize ();
