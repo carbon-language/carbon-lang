@@ -1523,8 +1523,7 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
 
   // Actual definitions...
   verifyFormat("struct {} n;");
-  verifyFormat(
-      "template <template <class T, class Y>, class Z > class X {} n;");
+  verifyFormat("template <template <class T, class Y>, class Z> class X {} n;");
   verifyFormat("union Z {\n  int n;\n} x;");
   verifyFormat("class MACRO Z {} n;");
   verifyFormat("class MACRO(X) Z {} n;");

@@ -1006,7 +1006,6 @@ public:
         if (!parseAngle())
           return false;
         CurrentToken->Parent->ClosesTemplateDeclaration = true;
-        parseLine();
         return true;
       }
       return false;
