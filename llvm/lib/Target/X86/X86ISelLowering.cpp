@@ -8540,8 +8540,7 @@ SDValue X86TargetLowering::LowerFP_TO_UINT(SDValue Op,
   return FIST;
 }
 
-SDValue X86TargetLowering::lowerFP_EXTEND(SDValue Op,
-                                          SelectionDAG &DAG) const {
+static SDValue LowerFP_EXTEND(SDValue Op, SelectionDAG &DAG) {
   DebugLoc DL = Op.getDebugLoc();
   MVT VT = Op.getValueType().getSimpleVT();
   SDValue In = Op.getOperand(0);
@@ -12031,7 +12030,7 @@ SDValue X86TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const {
   case ISD::ANY_EXTEND:         return LowerANY_EXTEND(Op, DAG);
   case ISD::FP_TO_SINT:         return LowerFP_TO_SINT(Op, DAG);
   case ISD::FP_TO_UINT:         return LowerFP_TO_UINT(Op, DAG);
-  case ISD::FP_EXTEND:          return lowerFP_EXTEND(Op, DAG);
+  case ISD::FP_EXTEND:          return LowerFP_EXTEND(Op, DAG);
   case ISD::FABS:               return LowerFABS(Op, DAG);
   case ISD::FNEG:               return LowerFNEG(Op, DAG);
   case ISD::FCOPYSIGN:          return LowerFCOPYSIGN(Op, DAG);
