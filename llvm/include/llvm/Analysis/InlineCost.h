@@ -96,7 +96,7 @@ public:
   int getCostDelta() const { return Threshold - getCost(); }
 };
 
-/// InlineCostAnalyzer - Cost analyzer used by inliner.
+/// \brief Cost analyzer used by inliner.
 class InlineCostAnalyzer {
   // DataLayout if available, or null.
   const DataLayout *TD;
