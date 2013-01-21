@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/SparseSet.h"
+#include "llvm/ADT/SparseMultiSet.h"
 #include "llvm/CodeGen/MachineDominators.h"
 #include "llvm/CodeGen/MachineLoopInfo.h"
 #include "llvm/CodeGen/ScheduleDAG.h"
@@ -48,55 +49,17 @@ namespace llvm {
   struct PhysRegSUOper {
     SUnit *SU;
     int OpIdx;
+    unsigned Reg;
 
-    PhysRegSUOper(SUnit *su, int op): SU(su), OpIdx(op) {}
+    PhysRegSUOper(SUnit *su, int op, unsigned R): SU(su), OpIdx(op), Reg(R) {}
+
+    unsigned getSparseSetIndex() const { return Reg; }
   };
 
-  /// Combine a SparseSet with a 1x1 vector to track physical registers.
-  /// The SparseSet allows iterating over the (few) live registers for quickly
-  /// comparing against a regmask or clearing the set.
-  ///
-  /// Storage for the map is allocated once for the pass. The map can be
-  /// cleared between scheduling regions without freeing unused entries.
-  class Reg2SUnitsMap {
-    SparseSet<unsigned> PhysRegSet;
-    std::vector<std::vector<PhysRegSUOper> > SUnits;
-  public:
-    typedef SparseSet<unsigned>::const_iterator const_iterator;
-
-    // Allow iteration over register numbers (keys) in the map. If needed, we
-    // can provide an iterator over SUnits (values) as well.
-    const_iterator reg_begin() const { return PhysRegSet.begin(); }
-    const_iterator reg_end() const { return PhysRegSet.end(); }
-
-    /// Initialize the map with the number of registers.
-    /// If the map is already large enough, no allocation occurs.
-    /// For simplicity we expect the map to be empty().
-    void setRegLimit(unsigned Limit);
-
-    /// Returns true if the map is empty.
-    bool empty() const { return PhysRegSet.empty(); }
-
-    /// Clear the map without deallocating storage.
-    void clear();
-
-    bool contains(unsigned Reg) const { return PhysRegSet.count(Reg); }
-
-    /// If this register is mapped, return its existing SUnits vector.
-    /// Otherwise map the register and return an empty SUnits vector.
-    std::vector<PhysRegSUOper> &operator[](unsigned Reg) {
-      bool New = PhysRegSet.insert(Reg).second;
-      assert((!New || SUnits[Reg].empty()) && "stale SUnits vector");
-      (void)New;
-      return SUnits[Reg];
-    }
-
-    /// Erase an existing element without freeing memory.
-    void erase(unsigned Reg) {
-      PhysRegSet.erase(Reg);
-      SUnits[Reg].clear();
-    }
-  };
+  /// Use a SparseMultiSet to track physical registers. Storage is only
+  /// allocated once for the pass. It can be cleared in constant time and reused
+  /// without any frees.
+  typedef SparseMultiSet<PhysRegSUOper, llvm::identity<unsigned>, uint16_t> Reg2SUnitsMap;
 
   /// Use SparseSet as a SparseMap by relying on the fact that it never
   /// compares ValueT's, only unsigned keys. This allows the set to be cleared

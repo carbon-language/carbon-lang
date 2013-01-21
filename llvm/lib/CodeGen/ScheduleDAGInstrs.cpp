@@ -168,20 +168,6 @@ void ScheduleDAGInstrs::finishBlock() {
   BB = 0;
 }
 
-/// Initialize the map with the number of registers.
-void Reg2SUnitsMap::setRegLimit(unsigned Limit) {
-  PhysRegSet.setUniverse(Limit);
-  SUnits.resize(Limit);
-}
-
-/// Clear the map without deallocating storage.
-void Reg2SUnitsMap::clear() {
-  for (const_iterator I = reg_begin(), E = reg_end(); I != E; ++I) {
-    SUnits[*I].clear();
-  }
-  PhysRegSet.clear();
-}
-
 /// Initialize the DAG and common scheduler state for the current scheduling
 /// region. This does not actually create the DAG, only clears it. The
 /// scheduling driver may call BuildSchedGraph multiple times per scheduling
@@ -228,7 +214,7 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
       if (Reg == 0) continue;
 
       if (TRI->isPhysicalRegister(Reg))
-        Uses[Reg].push_back(PhysRegSUOper(&ExitSU, -1));
+        Uses.insert(PhysRegSUOper(&ExitSU, -1, Reg));
       else {
         assert(!IsPostRA && "Virtual register encountered after regalloc.");
         if (MO.readsReg()) // ignore undef operands
@@ -245,7 +231,7 @@ void ScheduleDAGInstrs::addSchedBarrierDeps() {
              E = (*SI)->livein_end(); I != E; ++I) {
         unsigned Reg = *I;
         if (!Uses.contains(Reg))
-          Uses[Reg].push_back(PhysRegSUOper(&ExitSU, -1));
+          Uses.insert(PhysRegSUOper(&ExitSU, -1, Reg));
       }
   }
 }
@@ -263,15 +249,14 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU, unsigned OperIdx) {
        Alias.isValid(); ++Alias) {
     if (!Uses.contains(*Alias))
       continue;
-    std::vector<PhysRegSUOper> &UseList = Uses[*Alias];
-    for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
-      SUnit *UseSU = UseList[i].SU;
+    for (Reg2SUnitsMap::iterator I = Uses.find(*Alias); I != Uses.end(); ++I) {
+      SUnit *UseSU = I->SU;
       if (UseSU == SU)
         continue;
 
       // Adjust the dependence latency using operand def/use information,
       // then allow the target to perform its own adjustments.
-      int UseOp = UseList[i].OpIdx;
+      int UseOp = I->OpIdx;
       MachineInstr *RegUse = 0;
       SDep Dep;
       if (UseOp < 0)
@@ -311,9 +296,8 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
        Alias.isValid(); ++Alias) {
     if (!Defs.contains(*Alias))
       continue;
-    std::vector<PhysRegSUOper> &DefList = Defs[*Alias];
-    for (unsigned i = 0, e = DefList.size(); i != e; ++i) {
-      SUnit *DefSU = DefList[i].SU;
+    for (Reg2SUnitsMap::iterator I = Defs.find(*Alias); I != Defs.end(); ++I) {
+      SUnit *DefSU = I->SU;
       if (DefSU == &ExitSU)
         continue;
       if (DefSU != SU &&
@@ -337,33 +321,37 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
     // Either insert a new Reg2SUnits entry with an empty SUnits list, or
     // retrieve the existing SUnits list for this register's uses.
     // Push this SUnit on the use list.
-    Uses[MO.getReg()].push_back(PhysRegSUOper(SU, OperIdx));
+    Uses.insert(PhysRegSUOper(SU, OperIdx, MO.getReg()));
   }
   else {
     addPhysRegDataDeps(SU, OperIdx);
-
-    // Either insert a new Reg2SUnits entry with an empty SUnits list, or
-    // retrieve the existing SUnits list for this register's defs.
-    std::vector<PhysRegSUOper> &DefList = Defs[MO.getReg()];
+    unsigned Reg = MO.getReg();
 
     // clear this register's use list
-    if (Uses.contains(MO.getReg()))
-      Uses[MO.getReg()].clear();
+    if (Uses.contains(Reg))
+      Uses.eraseAll(Reg);
 
-    if (!MO.isDead())
-      DefList.clear();
-
-    // Calls will not be reordered because of chain dependencies (see
-    // below). Since call operands are dead, calls may continue to be added
-    // to the DefList making dependence checking quadratic in the size of
-    // the block. Instead, we leave only one call at the back of the
-    // DefList.
-    if (SU->isCall) {
-      while (!DefList.empty() && DefList.back().SU->isCall)
-        DefList.pop_back();
+    if (!MO.isDead()) {
+      Defs.eraseAll(Reg);
+    } else if (SU->isCall) {
+      // Calls will not be reordered because of chain dependencies (see
+      // below). Since call operands are dead, calls may continue to be added
+      // to the DefList making dependence checking quadratic in the size of
+      // the block. Instead, we leave only one call at the back of the
+      // DefList.
+      Reg2SUnitsMap::RangePair P = Defs.equal_range(Reg);
+      Reg2SUnitsMap::iterator B = P.first;
+      Reg2SUnitsMap::iterator I = P.second;
+      for (bool isBegin = I == B; !isBegin; /* empty */) {
+        isBegin = (--I) == B;
+        if (!I->SU->isCall)
+          break;
+        I = Defs.erase(I);
+      }
     }
+
     // Defs are pushed in the order they are visited and never reordered.
-    DefList.push_back(PhysRegSUOper(SU, OperIdx));
+    Defs.insert(PhysRegSUOper(SU, OperIdx, Reg));
   }
 }
 
@@ -726,8 +714,8 @@ void ScheduleDAGInstrs::buildSchedGraph(AliasAnalysis *AA,
 
   assert(Defs.empty() && Uses.empty() &&
          "Only BuildGraph should update Defs/Uses");
-  Defs.setRegLimit(TRI->getNumRegs());
-  Uses.setRegLimit(TRI->getNumRegs());
+  Defs.setUniverse(TRI->getNumRegs());
+  Uses.setUniverse(TRI->getNumRegs());
 
   assert(VRegDefs.empty() && "Only BuildSchedGraph may access VRegDefs");
   // FIXME: Allow SparseSet to reserve space for the creation of virtual

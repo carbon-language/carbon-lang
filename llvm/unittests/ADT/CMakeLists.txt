@@ -24,6 +24,7 @@ set(ADTSources
   SmallStringTest.cpp
   SmallVectorTest.cpp
   SparseBitVectorTest.cpp
+  SparseMultiSetTest.cpp
   SparseSetTest.cpp
   StringMapTest.cpp
   StringRefTest.cpp
