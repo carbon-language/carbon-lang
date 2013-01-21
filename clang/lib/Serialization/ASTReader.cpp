@@ -398,7 +398,7 @@ ASTSelectorLookupTrait::ReadKey(const unsigned char* d, unsigned) {
   SelectorTable &SelTable = Reader.getContext().Selectors;
   unsigned N = ReadUnalignedLE16(d);
   IdentifierInfo *FirstII
-    = Reader.getLocalIdentifier(F, ReadUnalignedLE32(d));
+    = Reader.getLocalIdentifier(F, ReadUnalignedLE32(d), true);
   if (N == 0)
     return SelTable.getNullarySelector(FirstII);
   else if (N == 1)
@@ -407,7 +407,7 @@ ASTSelectorLookupTrait::ReadKey(const unsigned char* d, unsigned) {
   SmallVector<IdentifierInfo *, 16> Args;
   Args.push_back(FirstII);
   for (unsigned I = 1; I != N; ++I)
-    Args.push_back(Reader.getLocalIdentifier(F, ReadUnalignedLE32(d)));
+    Args.push_back(Reader.getLocalIdentifier(F, ReadUnalignedLE32(d), true));
 
   return SelTable.getSelector(N, Args.data());
 }
@@ -6038,7 +6038,8 @@ ASTReader::SetGloballyVisibleDecls(IdentifierInfo *II,
   }
 }
 
-IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID) {
+IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID,
+                                                bool StartOutOfDate) {
   if (ID == 0)
     return 0;
 
@@ -6063,8 +6064,15 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID) {
     const unsigned char *StrLenPtr = (const unsigned char*) Str - 2;
     unsigned StrLen = (((unsigned) StrLenPtr[0])
                        | (((unsigned) StrLenPtr[1]) << 8)) - 1;
-    IdentifiersLoaded[ID]
-      = &PP.getIdentifierTable().get(StringRef(Str, StrLen));
+
+    StringRef Name(Str, StrLen);
+    if (StartOutOfDate) {
+      IdentifiersLoaded[ID] = &PP.getIdentifierTable().getOwn(Name);
+      IdentifiersLoaded[ID]->setOutOfDate(true);
+    } else {
+      IdentifiersLoaded[ID]
+        = &PP.getIdentifierTable().get(Name);
+    }
     if (DeserializationListener)
       DeserializationListener->IdentifierRead(ID + 1, IdentifiersLoaded[ID]);
   }
@@ -6072,8 +6080,10 @@ IdentifierInfo *ASTReader::DecodeIdentifierInfo(IdentifierID ID) {
   return IdentifiersLoaded[ID];
 }
 
-IdentifierInfo *ASTReader::getLocalIdentifier(ModuleFile &M, unsigned LocalID) {
-  return DecodeIdentifierInfo(getGlobalIdentifierID(M, LocalID));
+IdentifierInfo *ASTReader::getLocalIdentifier(ModuleFile &M, unsigned LocalID,
+                                              bool StartOutOfDate) {
+  return DecodeIdentifierInfo(getGlobalIdentifierID(M, LocalID),
+                              StartOutOfDate);
 }
 
 IdentifierID ASTReader::getGlobalIdentifierID(ModuleFile &M, unsigned LocalID) {
@@ -6209,7 +6219,7 @@ ASTReader::ReadDeclarationName(ModuleFile &F,
   DeclarationName::NameKind Kind = (DeclarationName::NameKind)Record[Idx++];
   switch (Kind) {
   case DeclarationName::Identifier:
-    return DeclarationName(GetIdentifierInfo(F, Record, Idx));
+    return DeclarationName(GetIdentifierInfo(F, Record, Idx, true));
 
   case DeclarationName::ObjCZeroArgSelector:
   case DeclarationName::ObjCOneArgSelector:
