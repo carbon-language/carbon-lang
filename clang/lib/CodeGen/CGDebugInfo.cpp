@@ -1738,6 +1738,7 @@ static QualType UnwrapTypeForDebugInfo(QualType T, const ASTContext &C) {
     }
     
     assert(T != LastT && "Type unwrapping failed to unwrap!");
+    (void)LastT;
   } while (true);
 }
 
