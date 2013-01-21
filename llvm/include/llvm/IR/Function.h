@@ -171,15 +171,7 @@ public:
   /// addFnAttr - Add function attributes to this function.
   ///
   void addFnAttr(Attribute::AttrKind N) {
-    // Function Attribute are stored at ~0 index
     addAttribute(AttributeSet::FunctionIndex, Attribute::get(getContext(), N));
-  }
-
-  /// removeFnAttr - Remove function attributes from this function.
-  ///
-  void removeFnAttr(Attribute N) {
-    // Function Attribute are stored at ~0 index
-    removeAttribute(~0U, N);
   }
 
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
