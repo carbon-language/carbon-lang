@@ -129,10 +129,12 @@ IOSSIM_DEPLOYMENT_ARGS += -isysroot $(ProjSrcRoot)/SDKs/darwin
 CFLAGS.eprintf		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 CFLAGS.10.4		:= $(CFLAGS) $(OSX_DEPLOYMENT_ARGS)
 # FIXME: We can't build ASAN with our stub SDK yet.
-CFLAGS.asan_osx         := $(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin
+CFLAGS.asan_osx         := $(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin \
+                           -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
 CFLAGS.asan_osx_dynamic := \
 	$(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin \
-	-DMAC_INTERPOSE_FUNCTIONS=1
+	-DMAC_INTERPOSE_FUNCTIONS=1 \
+  -DASAN_FLEXIBLE_MAPPING_AND_OFFSET=1
 
 CFLAGS.ubsan_osx	:= $(CFLAGS) -mmacosx-version-min=10.5 -fno-builtin
 
@@ -165,7 +167,7 @@ CFLAGS.profile_ios.armv7s := $(CFLAGS) $(IOS_DEPLOYMENT_ARGS)
 
 # Configure the asan_osx_dynamic library to be built shared.
 SHARED_LIBRARY.asan_osx_dynamic := 1
-LDFLAGS.asan_osx_dynamic := -framework Foundation -lstdc++
+LDFLAGS.asan_osx_dynamic := -framework Foundation -lstdc++ -undefined dynamic_lookup
 
 FUNCTIONS.eprintf := eprintf
 FUNCTIONS.10.4 := eprintf floatundidf floatundisf floatundixf
