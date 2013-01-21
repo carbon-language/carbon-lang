@@ -150,19 +150,6 @@ install(DIRECTORY include/
   PATTERN ".svn" EXCLUDE
   )
 
-# Call add_clang_compiler_rt_libraries to make sure that targets are built
-# and installed in the directories where Clang driver expects to find them.
-macro(add_clang_compiler_rt_libraries)
-  # Setup output directories so that clang in build tree works.
-  set_target_properties(${ARGN} PROPERTIES
-    ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR}
-    LIBRARY_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
-  # Add installation command.
-  install(TARGETS ${ARGN}
-    ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR}
-    LIBRARY DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
-endmacro(add_clang_compiler_rt_libraries)
-
 # Add the public header's directory to the includes for all of compiler-rt.
 include_directories(include)
 

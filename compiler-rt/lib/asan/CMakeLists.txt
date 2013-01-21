@@ -59,14 +59,13 @@ filter_available_targets(ASAN_SUPPORTED_ARCH
 set(ASAN_RUNTIME_LIBRARIES)
 if(APPLE)
   # Build universal binary on APPLE.
-  add_library(clang_rt.asan_osx STATIC
-    ${ASAN_SOURCES}
-    $<TARGET_OBJECTS:RTInterception.osx>
-    $<TARGET_OBJECTS:RTSanitizerCommon.osx>
-    )
-  set_target_compile_flags(clang_rt.asan_osx ${ASAN_CFLAGS})
-  set_target_properties(clang_rt.asan_osx PROPERTIES
-    OSX_ARCHITECTURES "${ASAN_SUPPORTED_ARCH}")
+  add_compiler_rt_osx_static_runtime(clang_rt.asan_osx
+    ARCH ${ASAN_SUPPORTED_ARCH}
+    SOURCES ${ASAN_SOURCES}
+            $<TARGET_OBJECTS:RTInterception.osx>
+            $<TARGET_OBJECTS:RTSanitizerCommon.osx>
+    CFLAGS ${ASAN_CFLAGS}
+    DEFS ${ASAN_COMMON_DEFINITIONS})
   list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_osx)
 elseif(ANDROID)
   add_library(clang_rt.asan-arm-android SHARED
@@ -75,44 +74,37 @@ elseif(ANDROID)
     $<TARGET_OBJECTS:RTSanitizerCommon.arm.android>
     )
   set_target_compile_flags(clang_rt.asan-arm-android
-    ${ASAN_CFLAGS}
-    )
+    ${ASAN_CFLAGS})
+  set_property(TARGET clang_rt.asan-arm-android APPEND PROPERTY
+    COMPILE_DEFINITIONS ${ASAN_COMMON_DEFINITIONS})
   target_link_libraries(clang_rt.asan-arm-android dl)
   list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-arm-android)
 else()
   # Otherwise, build separate libraries for each target.
   foreach(arch ${ASAN_SUPPORTED_ARCH})
-    add_library(clang_rt.asan-${arch} STATIC
-      ${ASAN_SOURCES}
-      $<TARGET_OBJECTS:RTInterception.${arch}>
-      $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>)
-    set_target_compile_flags(clang_rt.asan-${arch}
-      ${ASAN_CFLAGS} ${TARGET_${arch}_CFLAGS})
+    add_compiler_rt_static_runtime(clang_rt.asan-${arch} ${arch}
+      SOURCES ${ASAN_SOURCES}
+              $<TARGET_OBJECTS:RTInterception.${arch}>
+              $<TARGET_OBJECTS:RTSanitizerCommon.${arch}>
+      CFLAGS ${ASAN_CFLAGS}
+      DEFS ${ASAN_COMMON_DEFINITIONS})
     list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch})
   endforeach()
 endif()
 
-set_property(TARGET ${ASAN_RUNTIME_LIBRARIES} APPEND PROPERTY
-  COMPILE_DEFINITIONS ${ASAN_COMMON_DEFINITIONS})
-add_clang_compiler_rt_libraries(${ASAN_RUNTIME_LIBRARIES})
-
 set(ASAN_DYNAMIC_RUNTIME_LIBRARIES)
 if(APPLE)
   # Build universal binary on APPLE.
-  add_library(clang_rt.asan_osx_dynamic SHARED
-    ${ASAN_DYLIB_SOURCES}
-    $<TARGET_OBJECTS:RTInterception.osx>
-    $<TARGET_OBJECTS:RTSanitizerCommon.osx>
-    )
-  set_target_compile_flags(clang_rt.asan_osx_dynamic ${ASAN_CFLAGS})
-  set_target_properties(clang_rt.asan_osx_dynamic PROPERTIES
-    COMPILE_DEFINITIONS "${ASAN_DYLIB_DEFINITIONS}"
-    OSX_ARCHITECTURES "${ASAN_SUPPORTED_ARCH}"
-    LINK_FLAGS "-framework Foundation")
+  add_compiler_rt_osx_dynamic_runtime(clang_rt.asan_osx_dynamic
+    ARCH ${ASAN_SUPPORTED_ARCH}
+    SOURCES ${ASAN_DYLIB_SOURCES}
+            $<TARGET_OBJECTS:RTInterception.osx>
+            $<TARGET_OBJECTS:RTSanitizerCommon.osx>
+    CFLAGS ${ASAN_CFLAGS}
+    DEFS ${ASAN_DYLIB_DEFINITIONS}
+    LINKFLAGS "-framework Foundation")
   list(APPEND ASAN_DYNAMIC_RUNTIME_LIBRARIES clang_rt.asan_osx_dynamic)
 endif()
-add_clang_compiler_rt_libraries(${ASAN_DYNAMIC_RUNTIME_LIBRARIES})
-
 
 if(LLVM_INCLUDE_TESTS)
   add_subdirectory(tests)

@@ -28,8 +28,7 @@ macro(add_compiler_rt_osx_object_library name)
   set(libname "${name}.osx")
   add_library(${libname} OBJECT ${LIB_SOURCES})
   set_target_compile_flags(${libname} ${LIB_CFLAGS})
-  set_target_properties(${libname} PROPERTIES
-    OSX_ARCHITECTURES "${LIB_ARCH}")
+  set_target_properties(${libname} PROPERTIES OSX_ARCHITECTURES "${LIB_ARCH}")
 endmacro()
 
 # Adds static runtime for a given architecture and puts it in the proper
@@ -49,13 +48,52 @@ macro(add_compiler_rt_static_runtime name arch)
       COMPILE_DEFINITIONS ${LIB_DEFS})
     # Setup correct output directory in the build tree.
     set_target_properties(${name} PROPERTIES
-            ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
+      ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
     # Add installation command.
     install(TARGETS ${name}
       ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
   else()
     message(FATAL_ERROR "Archtecture ${arch} can't be targeted")
   endif()
+endmacro()
+
+# Same as add_compiler_rt_static_runtime, but creates a universal library
+# for several architectures.
+# add_compiler_rt_osx_static_runtime(<name> ARCH <architectures>
+#                                    SOURCES <source files>
+#                                    CFLAGS <compile flags>
+#                                    DEFS <compile definitions>)
+macro(add_compiler_rt_osx_static_runtime name)
+  parse_arguments(LIB "ARCH;SOURCES;CFLAGS;DEFS" "" ${ARGN})
+  add_library(${name} STATIC ${LIB_SOURCES})
+  set_target_compile_flags(${name} ${LIB_CFLAGS})
+  set_property(TARGET ${name} APPEND PROPERTY
+    COMPILE_DEFINITIONS ${LIB_DEFS})
+  set_target_properties(${name} PROPERTIES
+    OSX_ARCHITECTURES "${LIB_ARCH}"
+    ARCHIVE_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
+  install(TARGETS ${name}
+    ARCHIVE DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
+endmacro()
+
+# Adds dynamic runtime library on osx, which supports multiple architectures.
+# add_compiler_rt_osx_dynamic_runtime(<name> ARCH <architectures>
+#                                     SOURCES <source files>
+#                                     CFLAGS <compile flags>
+#                                     DEFS <compile definitions>
+#                                     LINKFLAGS <link flags>)
+macro(add_compiler_rt_osx_dynamic_runtime name)
+  parse_arguments(LIB "ARCH;SOURCES;CFLAGS;DEFS;LINKFLAGS" "" ${ARGN})
+  add_library(${name} SHARED ${LIB_SOURCES})
+  set_target_compile_flags(${name} ${LIB_CFLAGS})
+  set_target_link_flags(${name} ${LIB_LINKFLAGS})
+  set_property(TARGET ${name} APPEND PROPERTY
+    COMPILE_DEFINITIONS ${LIB_DEFS})
+  set_target_properties(${name} PROPERTIES
+    OSX_ARCHITECTURES "${LIB_ARCH}"
+    LIBRARY_OUTPUT_DIRECTORY ${COMPILER_RT_LIBRARY_OUTPUT_DIR})
+  install(TARGETS ${name}
+    LIBRARY DESTINATION ${COMPILER_RT_LIBRARY_INSTALL_DIR})
 endmacro()
 
 # Unittests support.
