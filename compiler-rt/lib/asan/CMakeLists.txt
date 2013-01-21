@@ -51,7 +51,7 @@ set(ASAN_DYLIB_DEFINITIONS
 
 # Architectures supported by ASan.
 filter_available_targets(ASAN_SUPPORTED_ARCH
-  x86_64 i386)
+  x86_64 i386 powerpc64 powerpc)
 
 set(ASAN_RUNTIME_LIBRARIES)
 if(APPLE)
