@@ -255,18 +255,17 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
       break;
     }
     
-    // Otherwise, read the number of bytes.  If we can return a reference to
-    // the data, do so to avoid copying it.
+    // Otherwise, inform the streamer that we need these bytes in memory.
+    const char *Ptr = (const char*)
+      BitStream->getBitcodeBytes().getPointer(CurBitPos/8, NumElts);
+    
+    // If we can return a reference to the data, do so to avoid copying it.
     if (Blob) {
-      *Blob =
-        StringRef((const char*)BitStream->getBitcodeBytes().getPointer(
-                                                          CurBitPos/8, NumElts),
-                  NumElts);
+      *Blob = StringRef(Ptr, NumElts);
     } else {
-      // FIXME: This is a brutally inefficient way to do this.  Why isn't this
-      // just using getPointer?      
+      // Otherwise, unpack into Vals with zero extension.
       for (; NumElts; --NumElts)
-        Vals.push_back(Read(8));
+        Vals.push_back((unsigned char)*Ptr++);
     }
     // Skip over tail padding.
     JumpToBit(NewEnd);
