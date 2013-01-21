@@ -1260,16 +1260,18 @@ template<class ELFT>
 error_code ELFObjectFile<ELFT>::getSectionContents(DataRefImpl Sec,
                                                    StringRef &Result) const {
   const Elf_Shdr *sec = reinterpret_cast<const Elf_Shdr *>(Sec.p);
-  const char *start = (const char*)base() + sec->sh_offset;
-  Result = StringRef(start, sec->sh_size);
-  return object_error::success;
+  return getSectionContents(sec, Result);
 }
 
 template<class ELFT>
 error_code ELFObjectFile<ELFT>::getSectionContents(const Elf_Shdr *Sec,
                                                    StringRef &Result) const {
-  const char *start = (const char*)base() + Sec->sh_offset;
-  Result = StringRef(start, Sec->sh_size);
+  if (Sec->sh_type == ELF::SHT_NOBITS)
+    Result = StringRef();
+  else {
+    const char *start = (const char*)base() + Sec->sh_offset;
+    Result = StringRef(start, Sec->sh_size);
+  }
   return object_error::success;
 }
 
