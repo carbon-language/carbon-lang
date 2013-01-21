@@ -28,24 +28,35 @@ using namespace llvm;
 
 namespace {
 
-  class SimpleInliner : public Inliner {
-    InlineCostAnalyzer CA;
-  public:
-    SimpleInliner() : Inliner(ID) {
-      initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
-    }
-    SimpleInliner(int Threshold) : Inliner(ID, Threshold,
-                                           /*InsertLifetime*/true) {
-      initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
-    }
-    static char ID; // Pass identification, replacement for typeid
-    InlineCost getInlineCost(CallSite CS) {
-      return CA.getInlineCost(CS, getInlineThreshold(CS));
-    }
-    using llvm::Pass::doInitialization;
-    virtual bool doInitialization(CallGraph &CG);
-  };
-}
+/// \brief Actaul inliner pass implementation.
+///
+/// The common implementation of the inlining logic is shared between this
+/// inliner pass and the always inliner pass. The two passes use different cost
+/// analyses to determine when to inline.
+class SimpleInliner : public Inliner {
+  InlineCostAnalyzer CA;
+
+public:
+  SimpleInliner() : Inliner(ID) {
+    initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
+  }
+
+  SimpleInliner(int Threshold)
+      : Inliner(ID, Threshold, /*InsertLifetime*/ true) {
+    initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
+  }
+
+  static char ID; // Pass identification, replacement for typeid
+
+  InlineCost getInlineCost(CallSite CS) {
+    return CA.getInlineCost(CS, getInlineThreshold(CS));
+  }
+
+  using llvm::Pass::doInitialization;
+  virtual bool doInitialization(CallGraph &CG);
+};
+
+} // end anonymous namespace
 
 char SimpleInliner::ID = 0;
 INITIALIZE_PASS_BEGIN(SimpleInliner, "inline",
