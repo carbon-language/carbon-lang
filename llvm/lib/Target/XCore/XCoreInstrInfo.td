@@ -649,37 +649,24 @@ defm CLRSR_branch : FU6_LU6_np<0b0111101100, "clrsr">;
 // TODO ldwcpl, blacp
 
 let Defs = [R11], isReMaterializable = 1, neverHasSideEffects = 1 in
-def LDAP_u10 : _FU10<
-                  (outs),
-                  (ins i32imm:$addr),
-                  "ldap r11, $addr",
-                  []>;
+def LDAPF_u10 : _FU10<(outs), (ins i32imm:$addr), "ldap r11, $addr", []>;
 
 let Defs = [R11], isReMaterializable = 1 in
-def LDAP_lu10 : _FLU10<
-                  (outs),
-                  (ins i32imm:$addr),
-                  "ldap r11, $addr",
-                  [(set R11, (pcrelwrapper tglobaladdr:$addr))]>;
+def LDAPF_lu10 : _FLU10<(outs), (ins i32imm:$addr), "ldap r11, $addr",
+                        [(set R11, (pcrelwrapper tglobaladdr:$addr))]>;
 
 let Defs = [R11], isReMaterializable = 1 in
-def LDAP_lu10_ba : _FLU10<(outs),
-                          (ins i32imm:$addr),
-                          "ldap r11, $addr",
-                          [(set R11, (pcrelwrapper tblockaddress:$addr))]>;
+def LDAPF_lu10_ba : _FLU10<(outs), (ins i32imm:$addr), "ldap r11, $addr",
+                           [(set R11, (pcrelwrapper tblockaddress:$addr))]>;
 
 let isCall=1,
 // All calls clobber the link register and the non-callee-saved registers:
 Defs = [R0, R1, R2, R3, R11, LR], Uses = [SP] in {
-def BL_u10 : _FU10<
-                  (outs), (ins calltarget:$target),
-                  "bl $target",
-                  [(XCoreBranchLink immU10:$target)]>;
+def BLRF_u10 : _FU10<(outs), (ins calltarget:$target), "bl $target",
+                     [(XCoreBranchLink immU10:$target)]>;
 
-def BL_lu10 : _FLU10<
-                  (outs), (ins calltarget:$target),
-                  "bl $target",
-                  [(XCoreBranchLink immU20:$target)]>;
+def BLRF_lu10 : _FLU10<(outs), (ins calltarget:$target), "bl $target",
+                       [(XCoreBranchLink immU20:$target)]>;
 }
 
 // Two operand short
@@ -979,8 +966,8 @@ def WAITEU_0R : _F0R<0b0000001100, (outs), (ins),
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
 
-def : Pat<(XCoreBranchLink tglobaladdr:$addr), (BL_lu10 tglobaladdr:$addr)>;
-def : Pat<(XCoreBranchLink texternalsym:$addr), (BL_lu10 texternalsym:$addr)>;
+def : Pat<(XCoreBranchLink tglobaladdr:$addr), (BLRF_lu10 tglobaladdr:$addr)>;
+def : Pat<(XCoreBranchLink texternalsym:$addr), (BLRF_lu10 texternalsym:$addr)>;
 
 /// sext_inreg
 def : Pat<(sext_inreg GRRegs:$b, i1), (SEXT_rus GRRegs:$b, 1)>;
