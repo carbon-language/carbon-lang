@@ -1302,7 +1302,7 @@ namespace just because it was declared there.
 See Also
 ========
 
-A lot of these comments and recommendations have been culled for other sources.
+A lot of these comments and recommendations have been culled from other sources.
 Two particularly important books for our work are:
 
 #. `Effective C++
