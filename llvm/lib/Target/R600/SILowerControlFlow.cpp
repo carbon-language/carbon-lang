@@ -291,9 +291,8 @@ void SILowerControlFlowPass::Kill(MachineInstr &MI) {
   DebugLoc DL = MI.getDebugLoc();
 
   // Kill is only allowed in pixel shaders
-  MachineFunction &MF = *MBB.getParent();
-  SIMachineFunctionInfo *Info = MF.getInfo<SIMachineFunctionInfo>();
-  assert(Info->ShaderType == ShaderType::PIXEL);
+  assert(MBB.getParent()->getInfo<SIMachineFunctionInfo>()->ShaderType ==
+         ShaderType::PIXEL);
 
   // Clear this pixel from the exec mask if the operand is negative
   BuildMI(MBB, &MI, DL, TII->get(AMDGPU::V_CMPX_LE_F32_e32), AMDGPU::VCC)
