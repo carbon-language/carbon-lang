@@ -422,7 +422,7 @@ public:
     }
   }
 
-  void SkipToWord() {
+  void SkipToFourByteBoundary() {
     BitsInCurWord = 0;
     CurWord = 0;
   }
@@ -448,7 +448,7 @@ public:
     // Read and ignore the codelen value.  Since we are skipping this block, we
     // don't care what code widths are used inside of it.
     ReadVBR(bitc::CodeLenWidth);
-    SkipToWord();
+    SkipToFourByteBoundary();
     unsigned NumWords = Read(bitc::BlockSizeWidth);
 
     // Check that the block wasn't partially defined, and that the offset isn't
@@ -470,7 +470,7 @@ public:
 
     // Block tail:
     //    [END_BLOCK, <align4bytes>]
-    SkipToWord();
+    SkipToFourByteBoundary();
 
     popBlockScope();
     return false;

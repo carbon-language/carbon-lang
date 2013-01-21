@@ -78,7 +78,7 @@ bool BitstreamCursor::EnterSubBlock(unsigned BlockID, unsigned *NumWordsP) {
   
   // Get the codesize of this block.
   CurCodeSize = ReadVBR(bitc::CodeLenWidth);
-  SkipToWord();
+  SkipToFourByteBoundary();
   unsigned NumWords = Read(bitc::BlockSizeWidth);
   if (NumWordsP) *NumWordsP = NumWords;
   
@@ -181,7 +181,7 @@ void BitstreamCursor::skipRecord(unsigned AbbrevID) {
     assert(Op.getEncoding() == BitCodeAbbrevOp::Blob);
     // Blob case.  Read the number of bytes as a vbr6.
     unsigned NumElts = ReadVBR(6);
-    SkipToWord();  // 32-bit alignment
+    SkipToFourByteBoundary();  // 32-bit alignment
     
     // Figure out where the end of this blob will be including tail padding.
     size_t NewEnd = NextChar+((NumElts+3)&~3);
@@ -241,7 +241,7 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
     assert(Op.getEncoding() == BitCodeAbbrevOp::Blob);
     // Blob case.  Read the number of bytes as a vbr6.
     unsigned NumElts = ReadVBR(6);
-    SkipToWord();  // 32-bit alignment
+    SkipToFourByteBoundary();  // 32-bit alignment
     
     // Figure out where the end of this blob will be including tail padding.
     size_t NewEnd = NextChar+((NumElts+3)&~3);
