@@ -519,7 +519,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
   // Add any return attributes.
   if (PAL.hasAttributes(AttributeSet::ReturnIndex))
-    AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
+    AttributesVec.push_back(AttributeWithIndex::get(F->getContext(),
+                                                    AttributeSet::ReturnIndex,
                                                     PAL.getRetAttributes()));
 
   // First, determine the new argument list
@@ -639,7 +640,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
     // Add any return attributes.
     if (CallPAL.hasAttributes(AttributeSet::ReturnIndex))
-      AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
+      AttributesVec.push_back(AttributeWithIndex::get(F->getContext(),
+                                                      AttributeSet::ReturnIndex,
                                                       CallPAL.getRetAttributes()));
 
     // Loop over the operands, inserting GEP and loads in the caller as

@@ -1287,10 +1287,10 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
       // mean appending it.  Likewise for attributes.
 
       // Add any result attributes.
-      Attribute Attr = Attrs.getRetAttributes();
       if (Attrs.hasAttributes(AttributeSet::ReturnIndex))
-        NewAttrs.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
-                                                   Attr));
+        NewAttrs.push_back(AttributeWithIndex::get(Caller->getContext(),
+                                                   AttributeSet::ReturnIndex,
+                                                   Attrs.getRetAttributes()));
 
       {
         unsigned Idx = 1;
@@ -1310,7 +1310,7 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
 
           // Add the original argument and attributes.
           NewArgs.push_back(*I);
-          Attr = Attrs.getParamAttributes(Idx);
+          Attribute Attr = Attrs.getParamAttributes(Idx);
           if (Attr.hasAttributes())
             NewAttrs.push_back
               (AttributeWithIndex::get(Idx + (Idx >= NestIdx), Attr));

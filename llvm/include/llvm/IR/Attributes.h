@@ -254,9 +254,7 @@ public:
   }
 
   /// \brief The attributes for the ret value are returned.
-  Attribute getRetAttributes() const {
-    return getAttributes(ReturnIndex);
-  }
+  AttributeSet getRetAttributes() const;
 
   /// \brief The function attributes are returned.
   AttributeSet getFnAttributes() const;

@@ -700,9 +700,6 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
   SmallVector<AttributeWithIndex, 8> AttributesVec;
   const AttributeSet &PAL = F->getAttributes();
 
-  // The existing function return attributes.
-  Attribute RAttrs = PAL.getRetAttributes();
-
   // Find out the new return value.
   Type *RetTy = FTy->getReturnType();
   Type *NRetTy = NULL;
@@ -757,21 +754,26 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
   assert(NRetTy && "No new return type found?");
 
+  // The existing function return attributes.
+  AttributeSet RAttrs = PAL.getRetAttributes();
+
   // Remove any incompatible attributes, but only if we removed all return
   // values. Otherwise, ensure that we don't have any conflicting attributes
   // here. Currently, this should not be possible, but special handling might be
   // required when new return value attributes are added.
   if (NRetTy->isVoidTy())
     RAttrs =
-      Attribute::get(NRetTy->getContext(), AttrBuilder(RAttrs).
-                      removeAttributes(Attribute::typeIncompatible(NRetTy)));
+      AttributeSet::get(NRetTy->getContext(), AttributeSet::ReturnIndex,
+                        AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
+                         removeAttributes(Attribute::typeIncompatible(NRetTy)));
   else
-    assert(!AttrBuilder(RAttrs).
+    assert(!AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
              hasAttributes(Attribute::typeIncompatible(NRetTy)) &&
            "Return attributes no longer compatible?");
 
-  if (RAttrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
+  if (RAttrs.hasAttributes(AttributeSet::ReturnIndex))
+    AttributesVec.push_back(AttributeWithIndex::get(NRetTy->getContext(),
+                                                    AttributeSet::ReturnIndex,
                                                     RAttrs));
 
   // Remember which arguments are still alive.
@@ -835,14 +837,16 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     const AttributeSet &CallPAL = CS.getAttributes();
 
     // The call return attributes.
-    Attribute RAttrs = CallPAL.getRetAttributes();
+    AttributeSet RAttrs = CallPAL.getRetAttributes();
 
     // Adjust in case the function was changed to return void.
     RAttrs =
-      Attribute::get(NF->getContext(), AttrBuilder(RAttrs).
+      AttributeSet::get(NF->getContext(), AttributeSet::ReturnIndex,
+                        AttrBuilder(RAttrs, AttributeSet::ReturnIndex).
            removeAttributes(Attribute::typeIncompatible(NF->getReturnType())));
-    if (RAttrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::ReturnIndex,
+    if (RAttrs.hasAttributes(AttributeSet::ReturnIndex))
+      AttributesVec.push_back(AttributeWithIndex::get(NF->getContext(),
+                                                      AttributeSet::ReturnIndex,
                                                       RAttrs));
 
     // Declare these outside of the loops, so we can reuse them for the second

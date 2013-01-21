@@ -544,9 +544,18 @@ AttributeWithIndex AttributeWithIndex::get(LLVMContext &C, unsigned Idx,
 // AttributeSetImpl Definition
 //===----------------------------------------------------------------------===//
 
+AttributeSet AttributeSet::getRetAttributes() const {
+  // FIXME: Remove.
+  return AttrList && hasAttributes(ReturnIndex) ?
+    AttributeSet::get(AttrList->getContext(),
+                      AttributeWithIndex::get(ReturnIndex,
+                                              getAttributes(ReturnIndex))) :
+    AttributeSet();
+}
+
 AttributeSet AttributeSet::getFnAttributes() const {
   // FIXME: Remove.
-  return AttrList ?
+  return AttrList && hasAttributes(FunctionIndex) ?
     AttributeSet::get(AttrList->getContext(),
                       AttributeWithIndex::get(FunctionIndex,
                                               getAttributes(FunctionIndex))) :
@@ -588,20 +597,22 @@ AttributeSet AttributeSet::get(LLVMContext &C,
 }
 
 AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
-  SmallVector<AttributeWithIndex, 8> Attrs;
-  for (AttrBuilder::iterator I = B.begin(), E = B.end(); I != E; ++I) {
-    Attribute::AttrKind Kind = *I;
-    Attribute A = Attribute::get(C, Kind);
+  // FIXME: This should be implemented as a loop that creates the
+  // AttributeWithIndexes that then are used to create the AttributeSet.
+  if (!B.hasAttributes())
+    return AttributeSet();
 
-    if (Kind == Attribute::Alignment)
-      A.setAlignment(B.getAlignment());
-    else if (Kind == Attribute::StackAlignment)
-      A.setStackAlignment(B.getStackAlignment());
+  uint64_t Mask = 0;
 
-    Attrs.push_back(AttributeWithIndex::get(Idx, A));
-  }
+  for (AttrBuilder::iterator I = B.begin(), E = B.end(); I != E; ++I)
+    Mask |= AttributeImpl::getAttrMask(*I);
 
-  return get(C, Attrs);
+  Attribute A = Attribute::decodeLLVMAttributesForBitcode(C, Mask);
+  if (B.getAlignment())
+    A.setAlignment(B.getAlignment());
+  if (B.getStackAlignment())
+    A.setStackAlignment(B.getStackAlignment());
+  return get(C, AttributeWithIndex::get(Idx, A));
 }
 
 //===----------------------------------------------------------------------===//
