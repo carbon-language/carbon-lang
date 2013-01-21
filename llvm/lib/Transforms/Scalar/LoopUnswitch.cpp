@@ -37,6 +37,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
@@ -101,7 +102,7 @@ namespace {
 
       // Analyze loop. Check its size, calculate is it possible to unswitch
       // it. Returns true if we can unswitch this loop.
-      bool countLoop(const Loop* L);
+      bool countLoop(const Loop* L, const TargetTransformInfo &TTI);
 
       // Clean all data related to given loop.
       void forgetLoop(const Loop* L);
@@ -170,6 +171,7 @@ namespace {
       AU.addPreservedID(LCSSAID);
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<ScalarEvolution>();
+      AU.addRequired<TargetTransformInfo>();
     }
 
   private:
@@ -221,7 +223,7 @@ namespace {
 
 // Analyze loop. Check its size, calculate is it possible to unswitch
 // it. Returns true if we can unswitch this loop.
-bool LUAnalysisCache::countLoop(const Loop* L) {
+bool LUAnalysisCache::countLoop(const Loop *L, const TargetTransformInfo &TTI) {
 
   std::pair<LoopPropsMapIt, bool> InsertRes =
       LoopsProperties.insert(std::make_pair(L, LoopProperties()));
@@ -243,7 +245,7 @@ bool LUAnalysisCache::countLoop(const Loop* L) {
     for (Loop::block_iterator I = L->block_begin(),
            E = L->block_end();
          I != E; ++I)
-      Metrics.analyzeBasicBlock(*I);
+      Metrics.analyzeBasicBlock(*I, TTI);
 
     Props.SizeEstimation = std::min(Metrics.NumInsts, Metrics.NumBlocks * 5);
     Props.CanBeUnswitchedCount = MaxSize / (Props.SizeEstimation);
@@ -334,6 +336,7 @@ void LUAnalysisCache::cloneData(const Loop* NewLoop, const Loop* OldLoop,
 char LoopUnswitch::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopUnswitch, "loop-unswitch", "Unswitch loops",
                       false, false)
+INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
@@ -424,7 +427,7 @@ bool LoopUnswitch::processCurrentLoop() {
 
   // Probably we reach the quota of branches for this loop. If so
   // stop unswitching.
-  if (!BranchesInfo.countLoop(currentLoop))
+  if (!BranchesInfo.countLoop(currentLoop, getAnalysis<TargetTransformInfo>()))
     return false;
 
   // Loop over all of the basic blocks in the loop.  If we find an interior

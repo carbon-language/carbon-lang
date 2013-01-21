@@ -18,6 +18,7 @@
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -51,6 +52,7 @@ namespace {
       AU.addRequiredID(LCSSAID);
       AU.addPreservedID(LCSSAID);
       AU.addPreserved<ScalarEvolution>();
+      AU.addRequired<TargetTransformInfo>();
     }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
@@ -59,11 +61,13 @@ namespace {
 
   private:
     LoopInfo *LI;
+    const TargetTransformInfo *TTI;
   };
 }
 
 char LoopRotate::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopRotate, "loop-rotate", "Rotate Loops", false, false)
+INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
@@ -75,6 +79,7 @@ Pass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 /// the loop is rotated at least once.
 bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
+  TTI = &getAnalysis<TargetTransformInfo>();
 
   // Simplify the loop latch before attempting to rotate the header
   // upward. Rotation may not be needed if the loop tail can be folded into the
@@ -278,7 +283,7 @@ bool LoopRotate::rotateLoop(Loop *L) {
   // duplicate blocks inside it.
   {
     CodeMetrics Metrics;
-    Metrics.analyzeBasicBlock(OrigHeader);
+    Metrics.analyzeBasicBlock(OrigHeader, *TTI);
     if (Metrics.notDuplicatable) {
       DEBUG(dbgs() << "LoopRotation: NOT rotating - contains non duplicatable"
             << " instructions: "; L->dump());

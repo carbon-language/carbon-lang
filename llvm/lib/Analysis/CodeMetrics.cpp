@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/CodeMetrics.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/IntrinsicInst.h"
@@ -54,77 +55,15 @@ bool llvm::callIsSmall(ImmutableCallSite CS) {
   return false;
 }
 
-bool llvm::isInstructionFree(const Instruction *I, const DataLayout *TD) {
-  if (isa<PHINode>(I))
-    return true;
-
-  // If a GEP has all constant indices, it will probably be folded with
-  // a load/store.
-  if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(I))
-    return GEP->hasAllConstantIndices();
-
-  if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I)) {
-    switch (II->getIntrinsicID()) {
-    default:
-      return false;
-    case Intrinsic::dbg_declare:
-    case Intrinsic::dbg_value:
-    case Intrinsic::invariant_start:
-    case Intrinsic::invariant_end:
-    case Intrinsic::lifetime_start:
-    case Intrinsic::lifetime_end:
-    case Intrinsic::objectsize:
-    case Intrinsic::ptr_annotation:
-    case Intrinsic::var_annotation:
-      // These intrinsics don't count as size.
-      return true;
-    }
-  }
-
-  if (const CastInst *CI = dyn_cast<CastInst>(I)) {
-    // Noop casts, including ptr <-> int,  don't count.
-    if (CI->isLosslessCast())
-      return true;
-
-    Value *Op = CI->getOperand(0);
-    // An inttoptr cast is free so long as the input is a legal integer type
-    // which doesn't contain values outside the range of a pointer.
-    if (isa<IntToPtrInst>(CI) && TD &&
-        TD->isLegalInteger(Op->getType()->getScalarSizeInBits()) &&
-        Op->getType()->getScalarSizeInBits() <= TD->getPointerSizeInBits())
-      return true;
-
-    // A ptrtoint cast is free so long as the result is large enough to store
-    // the pointer, and a legal integer type.
-    if (isa<PtrToIntInst>(CI) && TD &&
-        TD->isLegalInteger(Op->getType()->getScalarSizeInBits()) &&
-        Op->getType()->getScalarSizeInBits() >= TD->getPointerSizeInBits())
-      return true;
-
-    // trunc to a native type is free (assuming the target has compare and
-    // shift-right of the same width).
-    if (TD && isa<TruncInst>(CI) &&
-        TD->isLegalInteger(TD->getTypeSizeInBits(CI->getType())))
-      return true;
-    // Result of a cmp instruction is often extended (to be used by other
-    // cmp instructions, logical or return instructions). These are usually
-    // nop on most sane targets.
-    if (isa<CmpInst>(CI->getOperand(0)))
-      return true;
-  }
-
-  return false;
-}
-
 /// analyzeBasicBlock - Fill in the current structure with information gleaned
 /// from the specified block.
 void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
-                                    const DataLayout *TD) {
+                                    const TargetTransformInfo &TTI) {
   ++NumBlocks;
   unsigned NumInstsBeforeThisBB = NumInsts;
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
        II != E; ++II) {
-    if (isInstructionFree(II, TD))
+    if (TargetTransformInfo::TCC_Free == TTI.getUserCost(&*II))
       continue;
 
     // Special handling for calls.
@@ -194,19 +133,4 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
 
   // Remember NumInsts for this BB.
   NumBBInsts[BB] = NumInsts - NumInstsBeforeThisBB;
-}
-
-void CodeMetrics::analyzeFunction(Function *F, const DataLayout *TD) {
-  // If this function contains a call that "returns twice" (e.g., setjmp or
-  // _setjmp) and it isn't marked with "returns twice" itself, never inline it.
-  // This is a hack because we depend on the user marking their local variables
-  // as volatile if they are live across a setjmp call, and they probably
-  // won't do this in callers.
-  exposesReturnsTwice = F->callsFunctionThatReturnsTwice() &&
-    !F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
-                                     Attribute::ReturnsTwice);
-
-  // Look at the size of the callee.
-  for (Function::const_iterator BB = F->begin(), E = F->end(); BB != E; ++BB)
-    analyzeBasicBlock(&*BB, TD);
 }

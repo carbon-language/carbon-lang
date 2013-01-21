@@ -23,10 +23,8 @@ class BasicBlock;
 class Function;
 class Instruction;
 class DataLayout;
+class TargetTransformInfo;
 class Value;
-
-/// \brief Check whether an instruction is likely to be "free" when lowered.
-bool isInstructionFree(const Instruction *I, const DataLayout *TD = 0);
 
 /// \brief Check whether a call will lower to something small.
 ///
@@ -87,10 +85,7 @@ struct CodeMetrics {
         NumInlineCandidates(0), NumVectorInsts(0), NumRets(0) {}
 
   /// \brief Add information about a block to the current state.
-  void analyzeBasicBlock(const BasicBlock *BB, const DataLayout *TD = 0);
-
-  /// \brief Add information about a function to the current state.
-  void analyzeFunction(Function *F, const DataLayout *TD = 0);
+  void analyzeBasicBlock(const BasicBlock *BB, const TargetTransformInfo &TTI);
 };
 
 }

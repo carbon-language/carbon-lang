@@ -258,6 +258,9 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
   }
 
   unsigned getUserCost(const User *U) const {
+    if (isa<PHINode>(U))
+      return TCC_Free; // Model all PHI nodes as free.
+
     if (const GEPOperator *GEP = dyn_cast<GEPOperator>(U))
       // In the basic model we just assume that all-constant GEPs will be
       // folded into their uses via addressing modes.

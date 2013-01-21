@@ -17,6 +17,7 @@
 #include "llvm/Analysis/CodeMetrics.h"
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/Support/CommandLine.h"
@@ -90,6 +91,7 @@ namespace {
       AU.addPreservedID(LCSSAID);
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<ScalarEvolution>();
+      AU.addRequired<TargetTransformInfo>();
       // FIXME: Loop unroll requires LCSSA. And LCSSA requires dom info.
       // If loop unroll does not preserve dom info then LCSSA pass on next
       // loop will receive invalid dom info.
@@ -101,6 +103,7 @@ namespace {
 
 char LoopUnroll::ID = 0;
 INITIALIZE_PASS_BEGIN(LoopUnroll, "loop-unroll", "Unroll loops", false, false)
+INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopInfo)
 INITIALIZE_PASS_DEPENDENCY(LoopSimplify)
 INITIALIZE_PASS_DEPENDENCY(LCSSA)
@@ -113,11 +116,12 @@ Pass *llvm::createLoopUnrollPass(int Threshold, int Count, int AllowPartial) {
 
 /// ApproximateLoopSize - Approximate the size of the loop.
 static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
-                                    bool &NotDuplicatable, const DataLayout *TD) {
+                                    bool &NotDuplicatable,
+                                    const TargetTransformInfo &TTI) {
   CodeMetrics Metrics;
   for (Loop::block_iterator I = L->block_begin(), E = L->block_end();
        I != E; ++I)
-    Metrics.analyzeBasicBlock(*I, TD);
+    Metrics.analyzeBasicBlock(*I, TTI);
   NumCalls = Metrics.NumInlineCandidates;
   NotDuplicatable = Metrics.notDuplicatable;
 
@@ -134,6 +138,7 @@ static unsigned ApproximateLoopSize(const Loop *L, unsigned &NumCalls,
 bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
   LoopInfo *LI = &getAnalysis<LoopInfo>();
   ScalarEvolution *SE = &getAnalysis<ScalarEvolution>();
+  const TargetTransformInfo &TTI = getAnalysis<TargetTransformInfo>();
 
   BasicBlock *Header = L->getHeader();
   DEBUG(dbgs() << "Loop Unroll: F[" << Header->getParent()->getName()
@@ -181,11 +186,10 @@ bool LoopUnroll::runOnLoop(Loop *L, LPPassManager &LPM) {
 
   // Enforce the threshold.
   if (Threshold != NoThreshold) {
-    const DataLayout *TD = getAnalysisIfAvailable<DataLayout>();
     unsigned NumInlineCandidates;
     bool notDuplicatable;
     unsigned LoopSize = ApproximateLoopSize(L, NumInlineCandidates,
-                                            notDuplicatable, TD);
+                                            notDuplicatable, TTI);
     DEBUG(dbgs() << "  Loop Size = " << LoopSize << "\n");
     if (notDuplicatable) {
       DEBUG(dbgs() << "  Not unrolling loop which contains non duplicatable"
