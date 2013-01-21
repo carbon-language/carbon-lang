@@ -810,7 +810,8 @@ bool ASTReader::ReadSourceManagerBlock(ModuleFile &F) {
     
     // Read a record.
     Record.clear();
-    switch (SLocEntryCursor.readRecord(E.ID, Record)) {
+    StringRef Blob;
+    switch (SLocEntryCursor.readRecord(E.ID, Record, &Blob)) {
     default:  // Default behavior: ignore.
       break;
 
