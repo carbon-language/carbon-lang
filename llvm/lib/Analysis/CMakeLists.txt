@@ -18,7 +18,6 @@ add_llvm_library(LLVMAnalysis
   DomPrinter.cpp
   DominanceFrontier.cpp
   IVUsers.cpp
-  InlineCost.cpp
   InstCount.cpp
   InstructionSimplify.cpp
   Interval.cpp
