@@ -99,7 +99,10 @@ if(APPLE)
             $<TARGET_OBJECTS:RTSanitizerCommon.osx>
     CFLAGS ${ASAN_CFLAGS}
     DEFS ${ASAN_DYLIB_DEFINITIONS}
-    LINKFLAGS "-framework Foundation")
+    # Dynamic lookup is needed because shadow scale and offset are
+    # provided by the instrumented modules.
+    LINKFLAGS "-framework Foundation"
+              "-undefined dynamic_lookup")
   list(APPEND ASAN_DYNAMIC_RUNTIME_LIBRARIES clang_rt.asan_osx_dynamic)
 endif()
 
