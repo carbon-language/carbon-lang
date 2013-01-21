@@ -1716,7 +1716,7 @@ private:
       return;
     Limit -= I->Last->TotalLength + 1; // One space.
 
-    if (I + 1 == E)
+    if (I + 1 == E || (I + 1)->Type == LT_Invalid)
       return;
 
     if (I->Last->is(tok::l_brace)) {
@@ -1770,7 +1770,8 @@ private:
                         std::vector<AnnotatedLine>::iterator E,
                         unsigned Limit){
     // Check that we still have three lines and they fit into the limit.
-    if (I + 2 == E || !nextTwoLinesFitInto(I, Limit))
+    if (I + 2 == E || (I + 2)->Type == LT_Invalid ||
+        !nextTwoLinesFitInto(I, Limit))
       return;
 
     // First, check that the current line allows merging. This is the case if
