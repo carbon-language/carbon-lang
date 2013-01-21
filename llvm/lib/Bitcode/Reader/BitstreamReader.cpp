@@ -184,17 +184,17 @@ void BitstreamCursor::skipRecord(unsigned AbbrevID) {
     SkipToFourByteBoundary();  // 32-bit alignment
     
     // Figure out where the end of this blob will be including tail padding.
-    size_t NewEnd = NextChar+((NumElts+3)&~3);
+    size_t NewEnd = GetCurrentBitNo()+((NumElts+3)&~3)*8;
     
     // If this would read off the end of the bitcode file, just set the
     // record to empty and return.
-    if (!canSkipToPos(NewEnd)) {
+    if (!canSkipToPos(NewEnd/8)) {
       NextChar = BitStream->getBitcodeBytes().getExtent();
       break;
     }
     
     // Skip over the blob.
-    NextChar = NewEnd;
+    JumpToBit(NewEnd);
   }
 }
 
@@ -244,11 +244,12 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
     SkipToFourByteBoundary();  // 32-bit alignment
     
     // Figure out where the end of this blob will be including tail padding.
-    size_t NewEnd = NextChar+((NumElts+3)&~3);
+    size_t CurBitPos = GetCurrentBitNo();
+    size_t NewEnd = CurBitPos+((NumElts+3)&~3)*8;
     
     // If this would read off the end of the bitcode file, just set the
     // record to empty and return.
-    if (!canSkipToPos(NewEnd)) {
+    if (!canSkipToPos(NewEnd/8)) {
       Vals.append(NumElts, 0);
       NextChar = BitStream->getBitcodeBytes().getExtent();
       break;
@@ -259,14 +260,16 @@ unsigned BitstreamCursor::readRecord(unsigned AbbrevID,
     if (Blob) {
       *Blob =
         StringRef((const char*)BitStream->getBitcodeBytes().getPointer(
-                                                            NextChar, NumElts),
-                NumElts);
+                                                          CurBitPos/8, NumElts),
+                  NumElts);
     } else {
-      for (; NumElts; ++NextChar, --NumElts)
-        Vals.push_back(getByte(NextChar));
+      // FIXME: This is a brutally inefficient way to do this.  Why isn't this
+      // just using getPointer?      
+      for (; NumElts; --NumElts)
+        Vals.push_back(Read(8));
     }
     // Skip over tail padding.
-    NextChar = NewEnd;
+    JumpToBit(NewEnd);
   }
   
   unsigned Code = (unsigned)Vals[0];
