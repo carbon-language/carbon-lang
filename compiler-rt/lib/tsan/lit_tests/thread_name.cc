@@ -15,7 +15,11 @@ void *Thread1(void *x) {
 }
 
 void *Thread2(void *x) {
+#if defined(__linux__) && __GLIBC_PREREQ(2, 12)
   pthread_setname_np(pthread_self(), "Thread2");
+#else
+  AnnotateThreadName(__FILE__, __LINE__, "Thread2");
+#endif
   Global--;
   return NULL;
 }
