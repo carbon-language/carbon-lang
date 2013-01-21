@@ -499,6 +499,10 @@ TEST_F(FormatTest, FormatsEnum) {
                "};");
   verifyFormat("enum {\n"
                "};");
+  verifyFormat("enum X E {\n} d;");
+  verifyFormat("enum __attribute__((...)) E {\n} d;");
+  verifyFormat("enum __declspec__((...)) E {\n} d;");
+  verifyFormat("enum X f() {\n  a();\n  return 42;\n}");
 }
 
 TEST_F(FormatTest, FormatsBitfields) {

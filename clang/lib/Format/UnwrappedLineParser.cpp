@@ -329,7 +329,7 @@ void UnwrappedLineParser::parseStructuralElement() {
     switch (FormatTok.Tok.getKind()) {
     case tok::kw_enum:
       parseEnum();
-      return;
+      break;
     case tok::kw_struct:
     case tok::kw_union:
     case tok::kw_class:
@@ -580,39 +580,50 @@ void UnwrappedLineParser::parseAccessSpecifier() {
 }
 
 void UnwrappedLineParser::parseEnum() {
-  bool HasContents = false;
-  do {
-    switch (FormatTok.Tok.getKind()) {
-    case tok::l_brace:
-      nextToken();
-      addUnwrappedLine();
-      ++Line->Level;
-      parseComments();
-      break;
-    case tok::l_paren:
+  nextToken();
+  if (FormatTok.Tok.is(tok::identifier) ||
+      FormatTok.Tok.is(tok::kw___attribute) ||
+      FormatTok.Tok.is(tok::kw___declspec)) {
+    nextToken();
+    // We can have macros or attributes in between 'enum' and the enum name.
+    if (FormatTok.Tok.is(tok::l_paren)) {
       parseParens();
-      break;
-    case tok::comma:
-      nextToken();
-      addUnwrappedLine();
-      parseComments();
-      break;
-    case tok::r_brace:
-      if (HasContents)
-        addUnwrappedLine();
-      --Line->Level;
-      nextToken();
-      break;
-    case tok::semi:
-      nextToken();
-      addUnwrappedLine();
-      return;
-    default:
-      HasContents = true;
-      nextToken();
-      break;
     }
-  } while (!eof());
+    if (FormatTok.Tok.is(tok::identifier))
+      nextToken();
+  }
+  if (FormatTok.Tok.is(tok::l_brace)) {
+    nextToken();
+    addUnwrappedLine();
+    ++Line->Level;
+    do {
+      switch (FormatTok.Tok.getKind()) {
+      case tok::comment:
+        // FIXME: Handle comments centrally, instead of special casing
+        // them everywhere.
+        parseComments();
+        break;
+      case tok::l_paren:
+        parseParens();
+        break;
+      case tok::r_brace:
+        addUnwrappedLine();
+        nextToken();
+        --Line->Level;
+        return;
+      case tok::comma:
+        nextToken();
+        addUnwrappedLine();
+        break;
+      default:
+        nextToken();
+        break;
+      }
+    } while (!eof());
+  }
+  // We fall through to parsing a structural element afterwards, so that in
+  // enum A {} n, m;
+  // "} n, m;" will end up in one unwrapped line.
 }
 
 void UnwrappedLineParser::parseRecord() {
