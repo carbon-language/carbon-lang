@@ -52,7 +52,7 @@
 /// * is_constructible
 /// * etc...
 #if defined(__GXX_EXPERIMENTAL_CXX0X__) \
-    || (defined(_MSC_VER) && _MSC_VER >= 1600)
+    || (defined(_MSC_VER) && _MSC_VER >= 1700)
 #define LLVM_HAS_CXX11_TYPETRAITS 1
 #else
 #define LLVM_HAS_CXX11_TYPETRAITS 0
@@ -63,7 +63,7 @@
 ///
 /// Implies LLVM_HAS_RVALUE_REFERENCES, LLVM_HAS_CXX11_TYPETRAITS
 #if defined(__GXX_EXPERIMENTAL_CXX0X__) \
-    || (defined(_MSC_VER) && _MSC_VER >= 1600)
+    || (defined(_MSC_VER) && _MSC_VER >= 1700)
 #define LLVM_HAS_CXX11_STDLIB 1
 #else
 #define LLVM_HAS_CXX11_STDLIB 0
