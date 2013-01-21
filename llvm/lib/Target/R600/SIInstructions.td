@@ -1191,6 +1191,12 @@ def : Pat <
                 SReg_256:$rsrc, SReg_128:$sampler)
 >;
 
+def : Pat <
+  (int_SI_sample imm:$writemask, VReg_128:$coord, SReg_256:$rsrc, SReg_128:$sampler, TEX_RECT),
+  (IMAGE_SAMPLE imm:$writemask, 1, 0, 0, 0, 0, 0, 0, VReg_128:$coord,
+                SReg_256:$rsrc, SReg_128:$sampler)
+>;
+
 /* int_SI_sample_lod */
 def : Pat <
   (int_SI_sample_lod imm:$writemask, VReg_128:$coord, SReg_256:$rsrc, SReg_128:$sampler, imm),

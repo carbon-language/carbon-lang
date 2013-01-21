@@ -342,6 +342,13 @@ def TEX_SHADOW : PatLeaf<
   }]
 >;
 
+def TEX_RECT : PatLeaf<
+  (imm),
+  [{uint32_t TType = (uint32_t)N->getZExtValue();
+    return TType == 5;
+  }]
+>;
+
 class EG_CF_RAT <bits <8> cf_inst, bits <6> rat_inst, bits<4> rat_id, dag outs,
                  dag ins, string asm, list<dag> pattern> :
     InstR600ISA <outs, ins, asm, pattern> {
