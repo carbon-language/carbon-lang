@@ -2406,19 +2406,19 @@ public:
   
   /// Called by ActOnProperty to handle \@property declarations in
   /// class extensions.
-  Decl *HandlePropertyInClassExtension(Scope *S,
-                                       SourceLocation AtLoc,
-                                       SourceLocation LParenLoc,
-                                       FieldDeclarator &FD,
-                                       Selector GetterSel,
-                                       Selector SetterSel,
-                                       const bool isAssign,
-                                       const bool isReadWrite,
-                                       const unsigned Attributes,
-                                       const unsigned AttributesAsWritten,
-                                       bool *isOverridingProperty,
-                                       TypeSourceInfo *T,
-                                       tok::ObjCKeywordKind MethodImplKind);
+  ObjCPropertyDecl *HandlePropertyInClassExtension(Scope *S,
+                      SourceLocation AtLoc,
+                      SourceLocation LParenLoc,
+                      FieldDeclarator &FD,
+                      Selector GetterSel,
+                      Selector SetterSel,
+                      const bool isAssign,
+                      const bool isReadWrite,
+                      const unsigned Attributes,
+                      const unsigned AttributesAsWritten,
+                      bool *isOverridingProperty,
+                      TypeSourceInfo *T,
+                      tok::ObjCKeywordKind MethodImplKind);
 
   /// Called by ActOnProperty and HandlePropertyInClassExtension to
   /// handle creating the ObjcPropertyDecl for a category or \@interface.
@@ -6212,7 +6212,6 @@ public:
   void DiagnosePropertyMismatch(ObjCPropertyDecl *Property,
                                 ObjCPropertyDecl *SuperProperty,
                                 const IdentifierInfo *Name);
-  void ComparePropertiesInBaseAndSuper(ObjCInterfaceDecl *IDecl);
 
 
   void CompareProperties(Decl *CDecl, Decl *MergeProtocols);

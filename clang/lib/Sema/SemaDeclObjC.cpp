@@ -2383,7 +2383,6 @@ Decl *Sema::ActOnAtEnd(Scope *S, SourceRange AtEnd,
   if (ObjCInterfaceDecl *I = dyn_cast<ObjCInterfaceDecl>(ClassDecl)) {
     // Compares properties declared in this class to those of its
     // super class.
-    ComparePropertiesInBaseAndSuper(I);
     CompareProperties(I, I);
   } else if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(ClassDecl)) {
     // Categories are used to extend the class by declaring new methods.
