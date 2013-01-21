@@ -2562,7 +2562,7 @@ LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
   if (!PhiTy->isIntegerTy() && !PhiTy->isPointerTy())
     return IK_NoInduction;
 
-  // Check that the PHI is consecutive and starts at zero.
+  // Check that the PHI is consecutive.
   const SCEV *PhiScev = SE->getSCEV(Phi);
   const SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(PhiScev);
   if (!AR) {
