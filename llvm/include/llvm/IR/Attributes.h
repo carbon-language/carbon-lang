@@ -184,42 +184,12 @@ template<> struct DenseMapInfo<Attribute::AttrKind> {
 };
 
 //===----------------------------------------------------------------------===//
-/// \class
-/// \brief This is just a pair of values to associate a set of attributes with
-/// an index.
-struct AttributeWithIndex {
-  Attribute Attrs;  ///< The attributes that are set, or'd together.
-  Constant *Val;    ///< Value attached to attribute, e.g. alignment.
-  unsigned Index;   ///< Index of the parameter for which the attributes apply.
-                    ///< Index 0 is used for return value attributes.
-                    ///< Index ~0U is used for function attributes.
-
-  static AttributeWithIndex get(LLVMContext &C, unsigned Idx,
-                                ArrayRef<Attribute::AttrKind> Attrs) {
-    return get(Idx, Attribute::get(C, Attrs));
-  }
-  static AttributeWithIndex get(unsigned Idx, Attribute Attrs) {
-    AttributeWithIndex P;
-    P.Index = Idx;
-    P.Attrs = Attrs;
-    P.Val = 0;
-    return P;
-  }
-  static AttributeWithIndex get(unsigned Idx, Attribute Attrs, Constant *Val) {
-    AttributeWithIndex P;
-    P.Index = Idx;
-    P.Attrs = Attrs;
-    P.Val = Val;
-    return P;
-  }
-};
-
-//===----------------------------------------------------------------------===//
 // AttributeSet Smart Pointer
 //===----------------------------------------------------------------------===//
 
 class AttrBuilder;
 class AttributeSetImpl;
+struct AttributeWithIndex;
 
 //===----------------------------------------------------------------------===//
 /// \class
@@ -289,9 +259,7 @@ public:
   }
 
   /// \brief The function attributes are returned.
-  Attribute getFnAttributes() const {
-    return getAttributes(FunctionIndex);
-  }
+  AttributeSet getFnAttributes() const;
 
   /// \brief Return the alignment for the specified function parameter.
   unsigned getParamAlignment(unsigned Idx) const;
@@ -350,6 +318,39 @@ public:
   const AttributeWithIndex &getSlot(unsigned Slot) const;
 
   void dump() const;
+};
+
+//===----------------------------------------------------------------------===//
+/// \class
+/// \brief This is just a pair of values to associate a set of attributes with
+/// an index.
+struct AttributeWithIndex {
+  Attribute Attrs;  ///< The attributes that are set, or'd together.
+  Constant *Val;    ///< Value attached to attribute, e.g. alignment.
+  unsigned Index;   ///< Index of the parameter for which the attributes apply.
+                    ///< Index 0 is used for return value attributes.
+                    ///< Index ~0U is used for function attributes.
+
+  // FIXME: These methods all need to be revised. The first one is temporary.
+  static AttributeWithIndex get(LLVMContext &C, unsigned Idx, AttributeSet AS);
+  static AttributeWithIndex get(LLVMContext &C, unsigned Idx,
+                                ArrayRef<Attribute::AttrKind> Attrs) {
+    return get(Idx, Attribute::get(C, Attrs));
+  }
+  static AttributeWithIndex get(unsigned Idx, Attribute Attrs) {
+    AttributeWithIndex P;
+    P.Index = Idx;
+    P.Attrs = Attrs;
+    P.Val = 0;
+    return P;
+  }
+  static AttributeWithIndex get(unsigned Idx, Attribute Attrs, Constant *Val) {
+    AttributeWithIndex P;
+    P.Index = Idx;
+    P.Attrs = Attrs;
+    P.Val = Val;
+    return P;
+  }
 };
 
 //===----------------------------------------------------------------------===//

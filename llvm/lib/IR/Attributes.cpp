@@ -530,8 +530,28 @@ void AttributeImpl::Profile(FoldingSetNodeID &ID, Constant *Data,
 }
 
 //===----------------------------------------------------------------------===//
+// AttributeWithIndex Definition
+//===----------------------------------------------------------------------===//
+
+AttributeWithIndex AttributeWithIndex::get(LLVMContext &C, unsigned Idx,
+                                           AttributeSet AS) {
+  // FIXME: This is temporary, but necessary for the conversion.
+  AttrBuilder B(AS, Idx);
+  return get(Idx, Attribute::get(C, B));
+}
+
+//===----------------------------------------------------------------------===//
 // AttributeSetImpl Definition
 //===----------------------------------------------------------------------===//
+
+AttributeSet AttributeSet::getFnAttributes() const {
+  // FIXME: Remove.
+  return AttrList ?
+    AttributeSet::get(AttrList->getContext(),
+                      AttributeWithIndex::get(FunctionIndex,
+                                              getAttributes(FunctionIndex))) :
+    AttributeSet();
+}
 
 AttributeSet AttributeSet::get(LLVMContext &C,
                                ArrayRef<AttributeWithIndex> Attrs) {

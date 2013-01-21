@@ -276,10 +276,10 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
       SmallVector<AttributeWithIndex, 8> AttributesVec;
       for (unsigned i = 0; PAL.getSlot(i).Index <= NumArgs; ++i)
         AttributesVec.push_back(PAL.getSlot(i));
-      Attribute FnAttrs = PAL.getFnAttributes();
       if (PAL.hasAttributes(AttributeSet::FunctionIndex))
-        AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
-                                                        FnAttrs));
+        AttributesVec.push_back(AttributeWithIndex::get(Fn.getContext(),
+                                                        AttributeSet::FunctionIndex,
+                                                        PAL.getFnAttributes()));
       PAL = AttributeSet::get(Fn.getContext(), AttributesVec);
     }
 
@@ -702,10 +702,8 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
   // The existing function return attributes.
   Attribute RAttrs = PAL.getRetAttributes();
-  Attribute FnAttrs = PAL.getFnAttributes();
 
   // Find out the new return value.
-
   Type *RetTy = FTy->getReturnType();
   Type *NRetTy = NULL;
   unsigned RetCount = NumRetVals(F);
@@ -801,9 +799,10 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
     }
   }
 
-  if (FnAttrs.hasAttributes())
-    AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
-                                                    FnAttrs));
+  if (PAL.hasAttributes(AttributeSet::FunctionIndex))
+    AttributesVec.push_back(AttributeWithIndex::get(F->getContext(),
+                                                    AttributeSet::FunctionIndex,
+                                                    PAL.getFnAttributes()));
 
   // Reconstruct the AttributesList based on the vector we constructed.
   AttributeSet NewPAL = AttributeSet::get(F->getContext(), AttributesVec);
@@ -837,7 +836,7 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
     // The call return attributes.
     Attribute RAttrs = CallPAL.getRetAttributes();
-    Attribute FnAttrs = CallPAL.getFnAttributes();
+
     // Adjust in case the function was changed to return void.
     RAttrs =
       Attribute::get(NF->getContext(), AttrBuilder(RAttrs).
@@ -869,9 +868,10 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
         AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
     }
 
-    if (FnAttrs.hasAttributes())
-      AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
-                                                      FnAttrs));
+    if (CallPAL.hasAttributes(AttributeSet::FunctionIndex))
+      AttributesVec.push_back(AttributeWithIndex::get(Call->getContext(),
+                                                      AttributeSet::FunctionIndex,
+                                                      CallPAL.getFnAttributes()));
 
     // Reconstruct the AttributesList based on the vector we constructed.
     AttributeSet NewCallPAL = AttributeSet::get(F->getContext(), AttributesVec);

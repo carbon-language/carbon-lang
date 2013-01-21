@@ -591,7 +591,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
   // Add any function attributes.
   if (PAL.hasAttributes(AttributeSet::FunctionIndex))
-    AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
+    AttributesVec.push_back(AttributeWithIndex::get(FTy->getContext(),
+                                                    AttributeSet::FunctionIndex,
                                                     PAL.getFnAttributes()));
 
   Type *RetTy = FTy->getReturnType();
@@ -719,7 +720,8 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
 
     // Add any function attributes.
     if (CallPAL.hasAttributes(AttributeSet::FunctionIndex))
-      AttributesVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
+      AttributesVec.push_back(AttributeWithIndex::get(Call->getContext(),
+                                                      AttributeSet::FunctionIndex,
                                                       CallPAL.getFnAttributes()));
 
     Instruction *New;

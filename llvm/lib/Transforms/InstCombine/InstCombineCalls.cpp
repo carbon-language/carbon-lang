@@ -1175,16 +1175,17 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     }
   }
 
-  Attribute FnAttrs = CallerPAL.getFnAttributes();
+  AttributeSet FnAttrs = CallerPAL.getFnAttributes();
   if (CallerPAL.hasAttributes(AttributeSet::FunctionIndex))
-    attrVec.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
+    attrVec.push_back(AttributeWithIndex::get(Callee->getContext(),
+                                              AttributeSet::FunctionIndex,
                                               FnAttrs));
 
   if (NewRetTy->isVoidTy())
     Caller->setName("");   // Void type should not have a name.
 
   const AttributeSet &NewCallerPAL = AttributeSet::get(Callee->getContext(),
-                                                     attrVec);
+                                                       attrVec);
 
   Instruction *NC;
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
@@ -1319,10 +1320,10 @@ InstCombiner::transformCallThroughTrampoline(CallSite CS,
       }
 
       // Add any function attributes.
-      Attr = Attrs.getFnAttributes();
       if (Attrs.hasAttributes(AttributeSet::FunctionIndex))
-        NewAttrs.push_back(AttributeWithIndex::get(AttributeSet::FunctionIndex,
-                                                   Attr));
+        NewAttrs.push_back(AttributeWithIndex::get(FTy->getContext(),
+                                                   AttributeSet::FunctionIndex,
+                                                   Attrs.getFnAttributes()));
 
       // The trampoline may have been bitcast to a bogus type (FTy).
       // Handle this by synthesizing a new function type, equal to FTy
