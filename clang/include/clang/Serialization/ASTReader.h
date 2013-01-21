@@ -1515,22 +1515,11 @@ public:
   /// \brief Report a diagnostic.
   DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID);
 
-  /// \brief Given the global ID for an identifier, retrieve the
-  /// corresponding identifier information.
-  ///
-  /// \param ID The global ID.
-  ///
-  /// \param StartOutOfDate If true, don't actually read the identifier
-  /// contents (macro definition, etc.). Instead, put the identifier in the
-  /// "out-of-date" state to its contents to be loaded later.
-  IdentifierInfo *DecodeIdentifierInfo(serialization::IdentifierID ID,
-                                       bool StartOutOfDate = false);
+  IdentifierInfo *DecodeIdentifierInfo(serialization::IdentifierID ID);
 
   IdentifierInfo *GetIdentifierInfo(ModuleFile &M, const RecordData &Record,
-                                    unsigned &Idx,
-                                    bool StartOutOfDate = false) {
-    return DecodeIdentifierInfo(getGlobalIdentifierID(M, Record[Idx++]),
-                                StartOutOfDate);
+                                    unsigned &Idx) {
+    return DecodeIdentifierInfo(getGlobalIdentifierID(M, Record[Idx++]));
   }
 
   virtual IdentifierInfo *GetIdentifier(serialization::IdentifierID ID) {
@@ -1540,8 +1529,7 @@ public:
     return DecodeIdentifierInfo(ID);
   }
 
-  IdentifierInfo *getLocalIdentifier(ModuleFile &M, unsigned LocalID,
-                                     bool StartOutOfDate = false);
+  IdentifierInfo *getLocalIdentifier(ModuleFile &M, unsigned LocalID);
 
   serialization::IdentifierID getGlobalIdentifierID(ModuleFile &M,
                                                     unsigned LocalID);
