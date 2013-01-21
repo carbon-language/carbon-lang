@@ -88,7 +88,7 @@ enum e {
   Two,
   Three
 };
-// CHECK: <Declaration>enum e {\n}</Declaration>
+// CHECK: <Declaration>enum e {}</Declaration>
 // CHECK: <Declaration>Two</Declaration>
 
 /**

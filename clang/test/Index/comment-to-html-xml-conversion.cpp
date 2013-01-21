@@ -713,7 +713,7 @@ namespace comment_to_xml_conversion_13 {
 
 /// Aaa.
 enum comment_to_xml_conversion_15 {
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: EnumDecl=comment_to_xml_conversion_15:{{.*}} FullCommentAsXML=[<Enum file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_15</Name><USR>c:@E@comment_to_xml_conversion_15</USR><Declaration>enum comment_to_xml_conversion_15{{( : int)?}} {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Enum>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:6: EnumDecl=comment_to_xml_conversion_15:{{.*}} FullCommentAsXML=[<Enum file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="6"><Name>comment_to_xml_conversion_15</Name><USR>c:@E@comment_to_xml_conversion_15</USR><Declaration>enum comment_to_xml_conversion_15{{( : int)?}} {}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Enum>]
 
   /// Aaa.
   comment_to_xml_conversion_16
@@ -722,7 +722,7 @@ enum comment_to_xml_conversion_15 {
 
 /// Aaa.
 enum class comment_to_xml_conversion_17 {
-// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:12: EnumDecl=comment_to_xml_conversion_17:{{.*}} FullCommentAsXML=[<Enum file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="12"><Name>comment_to_xml_conversion_17</Name><USR>c:@E@comment_to_xml_conversion_17</USR><Declaration>enum class comment_to_xml_conversion_17 : int {\n}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Enum>]
+// CHECK: comment-to-html-xml-conversion.cpp:[[@LINE-1]]:12: EnumDecl=comment_to_xml_conversion_17:{{.*}} FullCommentAsXML=[<Enum file="{{[^"]+}}comment-to-html-xml-conversion.cpp" line="[[@LINE-1]]" column="12"><Name>comment_to_xml_conversion_17</Name><USR>c:@E@comment_to_xml_conversion_17</USR><Declaration>enum class comment_to_xml_conversion_17 : int {}</Declaration><Abstract><Para> Aaa.</Para></Abstract></Enum>]
 
   /// Aaa.
   comment_to_xml_conversion_18

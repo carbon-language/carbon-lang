@@ -170,17 +170,15 @@ bool UnwrappedLineParser::parseBlock(unsigned AddLevels) {
   assert(FormatTok.Tok.is(tok::l_brace) && "'{' expected");
   nextToken();
 
-  if (!FormatTok.Tok.is(tok::r_brace)) {
-    addUnwrappedLine();
+  addUnwrappedLine();
 
-    Line->Level += AddLevels;
-    parseLevel(/*HasOpeningBrace=*/true);
-    Line->Level -= AddLevels;
+  Line->Level += AddLevels;
+  parseLevel(/*HasOpeningBrace=*/true);
+  Line->Level -= AddLevels;
 
-    if (!FormatTok.Tok.is(tok::r_brace))
-      return true;
+  if (!FormatTok.Tok.is(tok::r_brace))
+    return true;
 
-  }
   nextToken();  // Munch the closing brace.
   return false;
 }

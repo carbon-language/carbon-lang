@@ -205,7 +205,7 @@ TEST_F(FormatTest, ParseIfElse) {
 }
 
 TEST_F(FormatTest, ElseIf) {
-  verifyFormat("if (a) {} else if (b) {}");
+  verifyFormat("if (a) {\n} else if (b) {\n}");
   verifyFormat("if (a)\n"
                "  f();\n"
                "else if (b)\n"
@@ -221,7 +221,7 @@ TEST_F(FormatTest, FormatsForLoop) {
       "  ;");
   verifyFormat("for (;;)\n"
                "  f();");
-  verifyFormat("for (;;) {}");
+  verifyFormat("for (;;) {\n}");
   verifyFormat("for (;;) {\n"
                "  f();\n"
                "}");
@@ -229,18 +229,18 @@ TEST_F(FormatTest, FormatsForLoop) {
   verifyFormat(
       "for (std::vector<UnwrappedLine>::iterator I = UnwrappedLines.begin(),\n"
       "                                          E = UnwrappedLines.end();\n"
-      "     I != E; ++I) {}");
+      "     I != E; ++I) {\n}");
 
   verifyFormat(
       "for (MachineFun::iterator IIII = PrevIt, EEEE = F.end(); IIII != EEEE;\n"
-      "     ++IIIII) {}");
+      "     ++IIIII) {\n}");
 }
 
 TEST_F(FormatTest, FormatsWhileLoop) {
-  verifyFormat("while (true) {}");
+  verifyFormat("while (true) {\n}");
   verifyFormat("while (true)\n"
                "  f();");
-  verifyFormat("while () {}");
+  verifyFormat("while () {\n}");
   verifyFormat("while () {\n"
                "  f();\n"
                "}");
@@ -457,7 +457,7 @@ TEST_F(FormatTest, CommentsInStaticInitializers) {
 //===----------------------------------------------------------------------===//
 
 TEST_F(FormatTest, DoesNotBreakSemiAfterClassDecl) {
-  verifyFormat("class A {};");
+  verifyFormat("class A {\n};");
 }
 
 TEST_F(FormatTest, UnderstandsAccessSpecifiers) {
@@ -476,14 +476,14 @@ TEST_F(FormatTest, UnderstandsAccessSpecifiers) {
 }
 
 TEST_F(FormatTest, FormatsDerivedClass) {
-  verifyFormat("class A : public B {};");
-  verifyFormat("class A : public ::B {};");
+  verifyFormat("class A : public B {\n};");
+  verifyFormat("class A : public ::B {\n};");
 }
 
 TEST_F(FormatTest, FormatsVariableDeclarationsAfterStructOrClass) {
-  verifyFormat("class A {} a, b;");
-  verifyFormat("struct A {} a, b;");
-  verifyFormat("union A {} a;");
+  verifyFormat("class A {\n} a, b;");
+  verifyFormat("struct A {\n} a, b;");
+  verifyFormat("union A {\n} a;");
 }
 
 TEST_F(FormatTest, FormatsEnum) {
@@ -510,19 +510,19 @@ TEST_F(FormatTest, FormatsBitfields) {
 
 TEST_F(FormatTest, FormatsNamespaces) {
   verifyFormat("namespace some_namespace {\n"
-               "class A {};\n"
+               "class A {\n};\n"
                "void f() { f(); }\n"
                "}");
   verifyFormat("namespace {\n"
-               "class A {};\n"
+               "class A {\n};\n"
                "void f() { f(); }\n"
                "}");
   verifyFormat("inline namespace X {\n"
-               "class A {};\n"
+               "class A {\n};\n"
                "void f() { f(); }\n"
                "}");
   verifyFormat("using namespace some_namespace;\n"
-               "class A {};\n"
+               "class A {\n};\n"
                "void f() { f(); }");
 }
 
@@ -801,6 +801,12 @@ TEST_F(FormatTest, LayoutNestedBlocks) {
 
 TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {
   EXPECT_EQ("{}", format("{}"));
+
+  // Negative test for enum.
+  verifyFormat("enum E {\n};");
+
+  // Note that when there's a missing ';', we still join...
+  verifyFormat("enum E {}");
 }
 
 //===----------------------------------------------------------------------===//
@@ -810,7 +816,7 @@ TEST_F(FormatTest, PutEmptyBlocksIntoOneLine) {
 TEST_F(FormatTest, FormatsFunctionDefinition) {
   verifyFormat("void f(int a, int b, int c, int d, int e, int f, int g,"
                " int h, int j, int f,\n"
-               "       int c, int ddddddddddddd) {}");
+               "       int c, int ddddddddddddd) {\n}");
 }
 
 TEST_F(FormatTest, FormatsAwesomeMethodCall) {
@@ -824,46 +830,49 @@ TEST_F(FormatTest, ConstructorInitializers) {
   verifyFormat("Constructor() : Initializer(FitsOnTheLine) {}");
   verifyFormat("Constructor() : Inttializer(FitsOnTheLine) {}",
                getLLVMStyleWithColumns(45));
-  verifyFormat("Constructor()\n"
-               "    : Inttializer(FitsOnTheLine) {}",
+  verifyFormat("Constructor() : Inttializer(FitsOnTheLine) {\n}",
                getLLVMStyleWithColumns(44));
+  verifyFormat("Constructor()\n"
+               "    : Inttializer(FitsOnTheLine) {\n}",
+               getLLVMStyleWithColumns(43));
 
   verifyFormat(
       "SomeClass::Constructor()\n"
-      "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaaaa(aaaaaaaaaaaa) {}");
+      "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaaaa(aaaaaaaaaaaa) {\n}");
 
   verifyFormat(
       "SomeClass::Constructor()\n"
       "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa), aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
-      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}");
+      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {\n}");
   verifyGoogleFormat(
       "SomeClass::Constructor()\n"
       "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
       "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
-      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}");
+      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {\n}");
   verifyGoogleFormat(
       "SomeClass::Constructor()\n"
       "    : aaaaaaaaaaaaa(aaaaaaaaaaaaaa),  // Some comment\n"
       "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa),\n"
-      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {}");
+      "      aaaaaaaaaaaaa(aaaaaaaaaaaaaa) {\n}");
 
   verifyFormat(
       "SomeClass::Constructor()\n"
       "    : aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
-      "      aaaaaaaaaaaaaaa(aaaaaaaaaaaa) {}");
+      "      aaaaaaaaaaaaaaa(aaaaaaaaaaaa) {\n}");
 
   verifyFormat("Constructor()\n"
                "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
                "      aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
                "                               aaaaaaaaaaaaaaaaaaaaaaaaaaa),\n"
-               "      aaaaaaaaaaaaaaaaaaaaaaa() {}");
+               "      aaaaaaaaaaaaaaaaaaaaaaa() {\n}");
 
   // Here a line could be saved by splitting the second initializer onto two
   // lines, but that is not desireable.
-  verifyFormat("Constructor()\n"
-               "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaa),\n"
-               "      aaaaaaaaaaa(aaaaaaaaaaa),\n"
-               "      aaaaaaaaaaaaaaaaaaaaat(aaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}");
+  verifyFormat(
+      "Constructor()\n"
+      "    : aaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaa),\n"
+      "      aaaaaaaaaaa(aaaaaaaaaaa),\n"
+      "      aaaaaaaaaaaaaaaaaaaaat(aaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}");
 
   verifyGoogleFormat("MyClass::MyClass(int var)\n"
                      "    : some_var_(var),             // 4 space indent\n"
@@ -876,7 +885,7 @@ TEST_F(FormatTest, ConstructorInitializers) {
   for (unsigned i = 0, e = 80; i != e; ++i) {
     input += "           a,\n";
   }
-  input += "           a) {}";
+  input += "           a) {\n}";
   verifyGoogleFormat(input);
 }
 
@@ -890,11 +899,11 @@ TEST_F(FormatTest, BreaksAsHighAsPossible) {
 TEST_F(FormatTest, BreaksDesireably) {
   verifyFormat("if (aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
                "    aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa) ||\n"
-               "    aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa)) {}");
+               "    aaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaa)) {\n}");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa,\n"
-      "                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}");
+      "                      aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}");
 
   verifyFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
                "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
@@ -967,20 +976,20 @@ TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {
   verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
                "    GUARDED_BY(aaaaaaaaaaaaa);");
   verifyFormat("void aaaaaaaaaaaa(int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) const\n"
-               "    GUARDED_BY(aaaaaaaaaaaaa) {}");
+               "    GUARDED_BY(aaaaaaaaaaaaa) {\n}");
 }
 
 TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
   verifyFormat(
       "if (aaaaaaaaaaaaaaaaaaaaaaaaa ||\n"
-      "    bbbbbbbbbbbbbbbbbbbbbbbbb && ccccccccccccccccccccccccc) {}");
+      "    bbbbbbbbbbbbbbbbbbbbbbbbb && ccccccccccccccccccccccccc) {\n}");
   verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaa && bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
-               "    ccccccccccccccccccccccccc) {}");
+               "    ccccccccccccccccccccccccc) {\n}");
   verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb ||\n"
-               "    ccccccccccccccccccccccccc) {}");
+               "    ccccccccccccccccccccccccc) {\n}");
   verifyFormat(
       "if ((aaaaaaaaaaaaaaaaaaaaaaaaa || bbbbbbbbbbbbbbbbbbbbbbbbb) &&\n"
-      "    ccccccccccccccccccccccccc) {}");
+      "    ccccccccccccccccccccccccc) {\n}");
 }
 
 TEST_F(FormatTest, PrefersNotToBreakAfterAssignments) {
@@ -1077,17 +1086,18 @@ TEST_F(FormatTest, UnderstandsEquals) {
       "    aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa;");
   verifyFormat(
       "if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
-      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}");
+      "        aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}");
   verifyFormat(
       "if (a) {\n"
       "  f();\n"
       "} else if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
-      "               aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}");
+      "               aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n"
+      "}");
 
   verifyFormat(
       // FIXME: Does an expression like this ever make sense? If yes, fix.
       "if (int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = 100000000 +\n"
-      "    10000000) {}");
+      "    10000000) {\n}");
 }
 
 TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
@@ -1115,7 +1125,7 @@ TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {
 
   // Here, it is not necessary to wrap at "." or "->".
   verifyFormat("if (aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(aaaaaaaaaaaa) ||\n"
-               "    aaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {}");
+               "    aaaa.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa) {\n}");
   verifyFormat(
       "aaaaaaaaaaa->aaaaaaaaa(\n"
       "    aaaaaaaaaaaaaaaaaaaaaaaaa,\n"
@@ -1174,15 +1184,15 @@ TEST_F(FormatTest, UnderstandsUnaryOperators) {
   verifyFormat("f(-1, -2, -3);");
   verifyFormat("a[-1] = 5;");
   verifyFormat("int a = 5 + -2;");
-  verifyFormat("if (i == -1) {}");
-  verifyFormat("if (i != -1) {}");
-  verifyFormat("if (i > -1) {}");
-  verifyFormat("if (i < -1) {}");
+  verifyFormat("if (i == -1) {\n}");
+  verifyFormat("if (i != -1) {\n}");
+  verifyFormat("if (i > -1) {\n}");
+  verifyFormat("if (i < -1) {\n}");
   verifyFormat("++(a->f());");
   verifyFormat("--(a->f());");
   verifyFormat("(a->f())++;");
   verifyFormat("a[42]++;");
-  verifyFormat("if (!(a->f())) {}");
+  verifyFormat("if (!(a->f())) {\n}");
 
   verifyFormat("a-- > b;");
   verifyFormat("b ? -a : c;");
@@ -1341,11 +1351,11 @@ TEST_F(FormatTest, FormatsFunctionTypes) {
 
 TEST_F(FormatTest, DoesNotBreakBeforePointerOrReference) {
   verifyFormat("int *someFunction(int LoooooooooooooooongParam1,\n"
-               "                  int LoooooooooooooooongParam2) {}");
+               "                  int LoooooooooooooooongParam2) {\n}");
   verifyFormat(
       "TypeSpecDecl *TypeSpecDecl::Create(ASTContext &C, DeclContext *DC,\n"
       "                                   SourceLocation L, IdentifierIn *II,\n"
-      "                                   Type *T) {}");
+      "                                   Type *T) {\n}");
 }
 
 TEST_F(FormatTest, LineStartsWithSpecialCharacter) {
@@ -1431,10 +1441,10 @@ TEST_F(FormatTest, IncorrectCodeUnbalancedBraces) {
 }
 
 TEST_F(FormatTest, IncorrectCodeDoNoWhile) {
-  verifyFormat("do {}");
-  verifyFormat("do {}\n"
+  verifyFormat("do {\n}");
+  verifyFormat("do {\n}\n"
                "f();");
-  verifyFormat("do {}\n"
+  verifyFormat("do {\n}\n"
                "wheeee(fun);");
   verifyFormat("do {\n"
                "  f();\n"
@@ -1503,6 +1513,12 @@ TEST_F(FormatTest, PullTrivialFunctionDefinitionsIntoSingleLine) {
                "  int a;\n"
                "#error {\n"
                "}");
+
+  verifyFormat("void f() { return 42; }", getLLVMStyleWithColumns(23));
+  verifyFormat("void f() {\n  return 42;\n}", getLLVMStyleWithColumns(22));
+
+  verifyFormat("void f() {}", getLLVMStyleWithColumns(11));
+  verifyFormat("void f() {\n}", getLLVMStyleWithColumns(10));
 }
 
 TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
@@ -1522,24 +1538,25 @@ TEST_F(FormatTest, UnderstandContextOfRecordTypeKeywords) {
   verifyFormat("template <union X> void f() {}\nint n;");
 
   // Actual definitions...
-  verifyFormat("struct {} n;");
-  verifyFormat("template <template <class T, class Y>, class Z> class X {} n;");
+  verifyFormat("struct {\n} n;");
+  verifyFormat(
+      "template <template <class T, class Y>, class Z> class X {\n} n;");
   verifyFormat("union Z {\n  int n;\n} x;");
-  verifyFormat("class MACRO Z {} n;");
-  verifyFormat("class MACRO(X) Z {} n;");
-  verifyFormat("class __attribute__(X) Z {} n;");
-  verifyFormat("class __declspec(X) Z {} n;");
+  verifyFormat("class MACRO Z {\n} n;");
+  verifyFormat("class MACRO(X) Z {\n} n;");
+  verifyFormat("class __attribute__(X) Z {\n} n;");
+  verifyFormat("class __declspec(X) Z {\n} n;");
 
   // Redefinition from nested context:
-  verifyFormat("class A::B::C {} n;");
+  verifyFormat("class A::B::C {\n} n;");
 
   // Template definitions.
   // FIXME: This is still incorrectly handled at the formatter side.
-  verifyFormat("template <> struct X < 15, i < 3 && 42 < 50 && 33<28> {};");
+  verifyFormat("template <> struct X < 15, i < 3 && 42 < 50 && 33<28> {\n};");
 
   // FIXME:
   // This now gets parsed incorrectly as class definition.
-  // verifyFormat("class A<int> f() {}\nint n;");
+  // verifyFormat("class A<int> f() {\n}\nint n;");
 
   // Elaborate types where incorrectly parsing the structural element would
   // break the indent.
@@ -1758,7 +1775,7 @@ TEST_F(FormatTest, FormatObjCImplementation) {
                "@package\n"
                "  int field4;\n"
                "}\n"
-               "+ (id)init {}\n"
+               "+ (id)init {\n}\n"
                "@end");
 
   verifyGoogleFormat("@implementation Foo : NSObject {\n"
@@ -1771,7 +1788,7 @@ TEST_F(FormatTest, FormatObjCImplementation) {
                      " @package\n"
                      "  int field4;\n"
                      "}\n"
-                     "+ (id)init {}\n"
+                     "+ (id)init {\n}\n"
                      "@end");
 
   verifyFormat("@implementation Foo\n"
@@ -1794,24 +1811,24 @@ TEST_F(FormatTest, FormatObjCImplementation) {
                "@end");
 
   verifyFormat("@implementation Foo : Bar\n"
-               "+ (id)init {}\n"
-               "- (void)foo {}\n"
+               "+ (id)init {\n}\n"
+               "- (void)foo {\n}\n"
                "@end");
 
   verifyFormat("@implementation Foo {\n"
                "  int _i;\n"
                "}\n"
-               "+ (id)init {}\n"
+               "+ (id)init {\n}\n"
                "@end");
 
   verifyFormat("@implementation Foo : Bar {\n"
                "  int _i;\n"
                "}\n"
-               "+ (id)init {}\n"
+               "+ (id)init {\n}\n"
                "@end");
 
   verifyFormat("@implementation Foo (HackStuff)\n"
-               "+ (id)init {}\n"
+               "+ (id)init {\n}\n"
                "@end");
 }
 
