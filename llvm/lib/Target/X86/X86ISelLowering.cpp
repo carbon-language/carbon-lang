@@ -5668,25 +5668,25 @@ LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
   // Check the mask for BLEND and build the value.
   unsigned MaskValue = 0;
   // There are 2 lanes if (NumElems > 8), and 1 lane otherwise.
-  unsigned NumLanes = (NumElems-1)/8 + 1; 
+  unsigned NumLanes = (NumElems-1)/8 + 1;
   unsigned NumElemsInLane = NumElems / NumLanes;
 
   // Blend for v16i16 should be symetric for the both lanes.
   for (unsigned i = 0; i < NumElemsInLane; ++i) {
 
-    int SndLaneEltIdx = (NumLanes == 2) ? 
+    int SndLaneEltIdx = (NumLanes == 2) ?
       SVOp->getMaskElt(i + NumElemsInLane) : -1;
     int EltIdx = SVOp->getMaskElt(i);
 
-    if ((EltIdx == -1 || EltIdx == (int)i) && 
+    if ((EltIdx == -1 || EltIdx == (int)i) &&
         (SndLaneEltIdx == -1 || SndLaneEltIdx == (int)(i + NumElemsInLane)))
       continue;
 
-    if (((unsigned)EltIdx == (i + NumElems)) && 
-        (SndLaneEltIdx == -1 || 
+    if (((unsigned)EltIdx == (i + NumElems)) &&
+        (SndLaneEltIdx == -1 ||
          (unsigned)SndLaneEltIdx == i + NumElems + NumElemsInLane))
       MaskValue |= (1<<i);
-    else 
+    else
       return SDValue();
   }
 
@@ -5694,13 +5694,13 @@ LowerVECTOR_SHUFFLEtoBlend(ShuffleVectorSDNode *SVOp,
   // AVX2 introduced VPBLENDD instruction for 128 and 256-bit vectors.
   EVT BlendVT = VT;
   if (EltVT == MVT::i64 || (EltVT == MVT::i32 && !Subtarget->hasInt256())) {
-    BlendVT = EVT::getVectorVT(*DAG.getContext(), 
-                              EVT::getFloatingPointVT(EltVT.getSizeInBits()), 
+    BlendVT = EVT::getVectorVT(*DAG.getContext(),
+                              EVT::getFloatingPointVT(EltVT.getSizeInBits()),
                               NumElems);
     V1 = DAG.getNode(ISD::BITCAST, dl, VT, V1);
     V2 = DAG.getNode(ISD::BITCAST, dl, VT, V2);
   }
-  
+
   SDValue Ret =  DAG.getNode(X86ISD::BLENDI, dl, BlendVT, V1, V2,
                              DAG.getConstant(MaskValue, MVT::i32));
   return DAG.getNode(ISD::BITCAST, dl, VT, Ret);
