@@ -207,7 +207,7 @@ void MicrosoftCXXABI::EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
 }
 
 void MicrosoftCXXABI::EmitVTables(const CXXRecordDecl *Class) {
-  // FIXME: implement
+  CGM.getVTables().GenerateClassData(CGM.getVTableLinkage(Class), Class);
 }
 
 CGCXXABI *clang::CodeGen::CreateMicrosoftCXXABI(CodeGenModule &CGM) {

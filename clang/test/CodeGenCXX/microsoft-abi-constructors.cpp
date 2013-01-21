@@ -22,3 +22,14 @@ void no_contstructor_destructor_infinite_recursion() {
 // CHECK: ret
 }
 
+struct B {
+  virtual ~B();
+  virtual void foo();
+};
+
+void check_vftable_offset() {
+  B b;
+// The vftable pointer should point at the beginning of the vftable.
+// CHECK: [[THIS_PTR:%[0-9]+]] = bitcast %struct.B* {{.*}} to i8***
+// CHECK: store i8** getelementptr inbounds ([2 x i8*]* @"\01??_7B@@6B@", i64 0, i64 0), i8*** [[THIS_PTR]]
+}
