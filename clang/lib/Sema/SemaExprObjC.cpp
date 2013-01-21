@@ -967,24 +967,27 @@ ExprResult Sema::ParseObjCSelectorExpression(Selector Sel,
                                              SourceLocation AtLoc,
                                              SourceLocation SelLoc,
                                              SourceLocation LParenLoc,
-                                             SourceLocation RParenLoc) {
-  ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(Sel,
-                             SourceRange(LParenLoc, RParenLoc), false, false);
-  if (!Method)
-    Method = LookupFactoryMethodInGlobalPool(Sel,
+                                             SourceLocation RParenLoc,
+                                             bool WarnSelector) {
+  if (WarnSelector) {
+    ObjCMethodDecl *Method = LookupInstanceMethodInGlobalPool(Sel,
+                              SourceRange(LParenLoc, RParenLoc), false, false);
+    if (!Method)
+      Method = LookupFactoryMethodInGlobalPool(Sel,
                                           SourceRange(LParenLoc, RParenLoc));
-  if (!Method)
-    Diag(SelLoc, diag::warn_undeclared_selector) << Sel;
+    if (!Method)
+      Diag(SelLoc, diag::warn_undeclared_selector) << Sel;
   
-  if (!Method ||
-      Method->getImplementationControl() != ObjCMethodDecl::Optional) {
-    llvm::DenseMap<Selector, SourceLocation>::iterator Pos
-      = ReferencedSelectors.find(Sel);
-    if (Pos == ReferencedSelectors.end())
-      ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
+    if (!Method ||
+        Method->getImplementationControl() != ObjCMethodDecl::Optional) {
+            llvm::DenseMap<Selector, SourceLocation>::iterator Pos
+          = ReferencedSelectors.find(Sel);
+          if (Pos == ReferencedSelectors.end())
+            ReferencedSelectors.insert(std::make_pair(Sel, SelLoc));
+    }
   }
 
-  // In ARC, forbid the user from using @selector for 
+  // In ARC, forbid the user from using @selector for
   // retain/release/autorelease/dealloc/retainCount.
   if (getLangOpts().ObjCAutoRefCount) {
     switch (Sel.getMethodFamily()) {

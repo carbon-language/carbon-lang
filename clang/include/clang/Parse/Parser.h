@@ -1410,7 +1410,8 @@ private:
   ExprResult ParseObjCDictionaryLiteral(SourceLocation AtLoc);
   ExprResult ParseObjCBoxedExpr(SourceLocation AtLoc);
   ExprResult ParseObjCEncodeExpression(SourceLocation AtLoc);
-  ExprResult ParseObjCSelectorExpression(SourceLocation AtLoc);
+  ExprResult ParseObjCSelectorExpression(SourceLocation AtLoc,
+                                         bool WarnSelector=true);
   ExprResult ParseObjCProtocolExpression(SourceLocation AtLoc);
   bool isSimpleObjCMessageExpression();
   ExprResult ParseObjCMessageExpression();

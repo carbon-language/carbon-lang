@@ -2425,6 +2425,8 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
   ExprVector KeyExprs;
 
   if (Tok.is(tok::colon)) {
+    bool RespondsToSelector =
+           selIdent && selIdent->isStr("respondsToSelector");
     while (1) {
       // Each iteration parses a single keyword argument.
       KeyIdents.push_back(selIdent);
@@ -2463,7 +2465,22 @@ Parser::ParseObjCMessageExpressionBody(SourceLocation LBracLoc,
         return ExprError();
       }
       
-      ExprResult Res(ParseAssignmentExpression());
+      ExprResult Res;
+      if (RespondsToSelector) {
+        if (Tok.is(tok::at)) {
+          // Special handling for 'respondsToSelector:' which must not warn
+          // on use of @selector expression as its sole argument.
+          Token AfterAt = GetLookAheadToken(1);
+          if (AfterAt.isObjCAtKeyword(tok::objc_selector)) {
+            SourceLocation AtLoc = ConsumeToken();
+            Res = ParseObjCSelectorExpression(AtLoc, false);
+          }
+        }
+        RespondsToSelector = false;
+      }
+      if (!Res.get())
+        Res = ParseAssignmentExpression();
+      
       if (Res.isInvalid()) {
         // We must manually skip to a ']', otherwise the expression skipper will
         // stop at the ']' when it skips to the ';'.  We want it to skip beyond
@@ -2797,7 +2814,8 @@ Parser::ParseObjCProtocolExpression(SourceLocation AtLoc) {
 
 ///     objc-selector-expression
 ///       @selector '(' objc-keyword-selector ')'
-ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
+ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc,
+                                               bool WarnSelector) {
   SourceLocation SelectorLoc = ConsumeToken();
 
   if (Tok.isNot(tok::l_paren))
@@ -2855,7 +2873,8 @@ ExprResult Parser::ParseObjCSelectorExpression(SourceLocation AtLoc) {
   Selector Sel = PP.getSelectorTable().getSelector(nColons, &KeyIdents[0]);
   return Actions.ParseObjCSelectorExpression(Sel, AtLoc, SelectorLoc,
                                              T.getOpenLocation(),
-                                             T.getCloseLocation());
+                                             T.getCloseLocation(),
+                                             WarnSelector);
  }
 
 void Parser::ParseLexedObjCMethodDefs(LexedMethod &LM, bool parseMethod) {

@@ -52,3 +52,29 @@ SEL func()
 }
 @end
 
+// rdar://12938616
+@class NSXPCConnection;
+
+@interface NSObject
+@end
+
+@interface INTF : NSObject
+{
+  NSXPCConnection *cnx; // Comes in as a parameter.
+}
+- (void) Meth;
+@end
+
+extern SEL MySelector(SEL s);
+
+@implementation INTF
+- (void) Meth {
+  if( [cnx respondsToSelector:MySelector(@selector( _setQueue: ))] ) // expected-warning {{unimplemented selector '_setQueue:'}} 
+  {
+  }
+
+  if( [cnx respondsToSelector:@selector( _setQueueXX: )] ) // No warning here.
+  {
+  }
+}
+@end
