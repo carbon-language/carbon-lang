@@ -41,10 +41,7 @@
 
 // CHECK-DYN-UBSAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-DYN-UBSAN: "-dylib"
-// CHECK-DYN-UBSAN-NOT: libclang_rt.ubsan_osx.a
-// CHECK-DYN-UBSAN: "-undefined"
-// CHECK-DYN-UBSAN: "dynamic_lookup"
-// CHECK-DYN-UBSAN-NOT: libclang_rt.ubsan_osx.a
+// CHECK-DYN-UBSAN: libclang_rt.ubsan_osx.a
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
 // RUN:   -fPIC -shared -fsanitize=bounds %s -o %t.so 2>&1 \
