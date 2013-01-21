@@ -20,6 +20,7 @@
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/CallingConv.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/GlobalAlias.h"
@@ -43,6 +44,9 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
 
   // DataLayout if available, or null.
   const DataLayout *const TD;
+
+  /// The TargetTransformInfo available for this compilation.
+  const TargetTransformInfo &TTI;
 
   // The called function.
   Function &F;
@@ -130,16 +134,17 @@ class CallAnalyzer : public InstVisitor<CallAnalyzer, bool> {
   bool visitCallSite(CallSite CS);
 
 public:
-  CallAnalyzer(const DataLayout *TD, Function &Callee, int Threshold)
-    : TD(TD), F(Callee), Threshold(Threshold), Cost(0),
-      IsCallerRecursive(false), IsRecursiveCall(false),
-      ExposesReturnsTwice(false), HasDynamicAlloca(false), ContainsNoDuplicateCall(false),
-      AllocatedSize(0), NumInstructions(0), NumVectorInstructions(0),
-      FiftyPercentVectorBonus(0), TenPercentVectorBonus(0), VectorBonus(0),
-      NumConstantArgs(0), NumConstantOffsetPtrArgs(0), NumAllocaArgs(0),
-      NumConstantPtrCmps(0), NumConstantPtrDiffs(0),
-      NumInstructionsSimplified(0), SROACostSavings(0), SROACostSavingsLost(0) {
-  }
+  CallAnalyzer(const DataLayout *TD, const TargetTransformInfo &TTI,
+               Function &Callee, int Threshold)
+      : TD(TD), TTI(TTI), F(Callee), Threshold(Threshold), Cost(0),
+        IsCallerRecursive(false), IsRecursiveCall(false),
+        ExposesReturnsTwice(false), HasDynamicAlloca(false),
+        ContainsNoDuplicateCall(false), AllocatedSize(0), NumInstructions(0),
+        NumVectorInstructions(0), FiftyPercentVectorBonus(0),
+        TenPercentVectorBonus(0), VectorBonus(0), NumConstantArgs(0),
+        NumConstantOffsetPtrArgs(0), NumAllocaArgs(0), NumConstantPtrCmps(0),
+        NumConstantPtrDiffs(0), NumInstructionsSimplified(0),
+        SROACostSavings(0), SROACostSavingsLost(0) {}
 
   bool analyzeCall(CallSite CS);
 
@@ -764,7 +769,7 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
   // during devirtualization and so we want to give it a hefty bonus for
   // inlining, but cap that bonus in the event that inlining wouldn't pan
   // out. Pretend to inline the function, with a custom threshold.
-  CallAnalyzer CA(TD, *F, InlineConstants::IndirectCallThreshold);
+  CallAnalyzer CA(TD, TTI, *F, InlineConstants::IndirectCallThreshold);
   if (CA.analyzeCall(CS)) {
     // We were able to inline the indirect call! Subtract the cost from the
     // bonus we want to apply, but don't go below zero.
@@ -1134,6 +1139,7 @@ void CallAnalyzer::dump() {
 
 INITIALIZE_PASS_BEGIN(InlineCostAnalysis, "inline-cost", "Inline Cost Analysis",
                       true, true)
+INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
 INITIALIZE_PASS_END(InlineCostAnalysis, "inline-cost", "Inline Cost Analysis",
                     true, true)
 
@@ -1145,11 +1151,13 @@ InlineCostAnalysis::~InlineCostAnalysis() {}
 
 void InlineCostAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
+  AU.addRequired<TargetTransformInfo>();
   CallGraphSCCPass::getAnalysisUsage(AU);
 }
 
 bool InlineCostAnalysis::runOnSCC(CallGraphSCC &SCC) {
   TD = getAnalysisIfAvailable<DataLayout>();
+  TTI = &getAnalysis<TargetTransformInfo>();
   return false;
 }
 
@@ -1184,7 +1192,7 @@ InlineCost InlineCostAnalysis::getInlineCost(CallSite CS, Function *Callee,
   DEBUG(llvm::dbgs() << "      Analyzing call of " << Callee->getName()
         << "...\n");
 
-  CallAnalyzer CA(TD, *Callee, Threshold);
+  CallAnalyzer CA(TD, *TTI, *Callee, Threshold);
   bool ShouldInline = CA.analyzeCall(CS);
 
   DEBUG(CA.dump());

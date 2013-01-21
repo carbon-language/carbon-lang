@@ -23,6 +23,7 @@ namespace llvm {
 class CallSite;
 class DataLayout;
 class Function;
+class TargetTransformInfo;
 
 namespace InlineConstants {
   // Various magic constants used to adjust heuristics.
@@ -100,6 +101,7 @@ public:
 /// \brief Cost analyzer used by inliner.
 class InlineCostAnalysis : public CallGraphSCCPass {
   const DataLayout *TD;
+  const TargetTransformInfo *TTI;
 
 public:
   static char ID;
