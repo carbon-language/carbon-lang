@@ -170,17 +170,12 @@ class BitstreamCursor {
   BitstreamReader *BitStream;
   size_t NextChar;
 
-  
-  /// CurWord/word_t - This is the current data we have pulled from the stream
-  /// but have not returned to the client.  This is specifically and
-  /// intentionally defined to follow the word size of the host machine for
-  /// efficiency.  We use word_t in places that are aware of this to make it
-  /// perfectly explicit what is going on.
-  typedef size_t word_t;
-  word_t CurWord;
+  /// CurWord - This is the current data we have pulled from the stream but have
+  /// not returned to the client.
+  uint32_t CurWord;
 
   /// BitsInCurWord - This is the number of bits in CurWord that are valid. This
-  /// is always from [0...31/63] inclusive (depending on word size).
+  /// is always from [0...31] inclusive.
   unsigned BitsInCurWord;
 
   // CurCodeSize - This is the declared size of code values used for the current
@@ -323,8 +318,8 @@ public:
 
   /// JumpToBit - Reset the stream to the specified bit number.
   void JumpToBit(uint64_t BitNo) {
-    uintptr_t ByteNo = uintptr_t(BitNo/8) & ~(sizeof(word_t)-1);
-    unsigned WordBitNo = unsigned(BitNo & (sizeof(word_t)*8-1));
+    uintptr_t ByteNo = uintptr_t(BitNo/8) & ~3;
+    uintptr_t WordBitNo = uintptr_t(BitNo) & 31;
     assert(canSkipToPos(ByteNo) && "Invalid location");
 
     // Move the cursor to the right word.
@@ -333,12 +328,8 @@ public:
     CurWord = 0;
 
     // Skip over any bits that are already consumed.
-    if (WordBitNo) {
-      if (sizeof(word_t) > 4)
-        Read64(WordBitNo);
-      else
-        Read(WordBitNo);
-    }
+    if (WordBitNo)
+      Read(static_cast<unsigned>(WordBitNo));
   }
 
 
@@ -346,7 +337,7 @@ public:
     assert(NumBits <= 32 && "Cannot return more than 32 bits!");
     // If the field is fully contained by CurWord, return it quickly.
     if (BitsInCurWord >= NumBits) {
-      uint32_t R = uint32_t(CurWord) & (~0U >> (32-NumBits));
+      uint32_t R = CurWord & ((1U << NumBits)-1);
       CurWord >>= NumBits;
       BitsInCurWord -= NumBits;
       return R;
@@ -359,32 +350,24 @@ public:
       return 0;
     }
 
-    uint32_t R = uint32_t(CurWord);
+    unsigned R = CurWord;
 
     // Read the next word from the stream.
-    uint8_t buf[sizeof(word_t)] = {0};
-    BitStream->getBitcodeBytes().readBytes(NextChar, sizeof(buf), buf, NULL);
-    
-    typedef support::detail::packed_endian_specific_integral
-       <word_t, support::little, support::unaligned> Endian_T;
-    CurWord = *reinterpret_cast<Endian_T*>(buf);
-
-    NextChar += sizeof(word_t);
+    CurWord = getWord(NextChar);
+    NextChar += 4;
 
     // Extract NumBits-BitsInCurWord from what we just read.
     unsigned BitsLeft = NumBits-BitsInCurWord;
 
-    // Be careful here, BitsLeft is in the range [1..32]/[1..64] inclusive.
-    R |= uint32_t((CurWord & (word_t(~0ULL) >> (sizeof(word_t)*8-BitsLeft)))
-                    << BitsInCurWord);
+    // Be careful here, BitsLeft is in the range [1..32] inclusive.
+    R |= (CurWord & (~0U >> (32-BitsLeft))) << BitsInCurWord;
 
-    // BitsLeft bits have just been used up from CurWord.  BitsLeft is in the
-    // range [1..32]/[1..64] so be careful how we shift.
-    if (BitsLeft != sizeof(word_t)*8)
+    // BitsLeft bits have just been used up from CurWord.
+    if (BitsLeft != 32)
       CurWord >>= BitsLeft;
     else
       CurWord = 0;
-    BitsInCurWord = sizeof(word_t)*8-BitsLeft;
+    BitsInCurWord = 32-BitsLeft;
     return R;
   }
 
@@ -433,21 +416,10 @@ public:
     }
   }
 
-private:
   void SkipToFourByteBoundary() {
-    // If word_t is 64-bits and if we've read less than 32 bits, just dump
-    // the bits we have up to the next 32-bit boundary.
-    if (sizeof(word_t) > 4 &&
-        BitsInCurWord > 32) {
-      CurWord >>= BitsInCurWord-32;
-      BitsInCurWord = 32;
-      return;
-    }
-    
     BitsInCurWord = 0;
     CurWord = 0;
   }
-public:
 
   unsigned ReadCode() {
     return Read(CurCodeSize);
@@ -471,15 +443,15 @@ public:
     // don't care what code widths are used inside of it.
     ReadVBR(bitc::CodeLenWidth);
     SkipToFourByteBoundary();
-    unsigned NumFourBytes = Read(bitc::BlockSizeWidth);
+    unsigned NumWords = Read(bitc::BlockSizeWidth);
 
     // Check that the block wasn't partially defined, and that the offset isn't
     // bogus.
-    size_t SkipTo = GetCurrentBitNo() + NumFourBytes*4*8;
-    if (AtEndOfStream() || !canSkipToPos(SkipTo/8))
+    size_t SkipTo = NextChar + NumWords*4;
+    if (AtEndOfStream() || !canSkipToPos(SkipTo))
       return true;
 
-    JumpToBit(SkipTo);
+    NextChar = SkipTo;
     return false;
   }
 
