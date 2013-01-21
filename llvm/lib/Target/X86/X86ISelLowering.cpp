@@ -7508,8 +7508,7 @@ X86TargetLowering::LowerBlockAddress(SDValue Op, SelectionDAG &DAG) const {
 
 SDValue
 X86TargetLowering::LowerGlobalAddress(const GlobalValue *GV, DebugLoc dl,
-                                      int64_t Offset,
-                                      SelectionDAG &DAG) const {
+                                      int64_t Offset, SelectionDAG &DAG) const {
   // Create the TargetGlobalAddress node, folding in the constant
   // offset if it is legal.
   unsigned char OpFlags =
@@ -7729,7 +7728,7 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
       case TLSModel::LocalExec:
         return LowerToTLSExecModel(GA, DAG, getPointerTy(), model,
                                    Subtarget->is64Bit(),
-                         getTargetMachine().getRelocationModel() == Reloc::PIC_);
+                        getTargetMachine().getRelocationModel() == Reloc::PIC_);
     }
     llvm_unreachable("Unknown TLS model.");
   }
@@ -8108,7 +8107,8 @@ SDValue X86TargetLowering::lowerUINT_TO_FP_vec(SDValue Op,
           SVT == MVT::v8i8 || SVT == MVT::v8i16) &&
          "Custom UINT_TO_FP is not supported!");
 
-  EVT NVT = EVT::getVectorVT(*DAG.getContext(), MVT::i32, SVT.getVectorNumElements());
+  EVT NVT = EVT::getVectorVT(*DAG.getContext(), MVT::i32,
+                             SVT.getVectorNumElements());
   return DAG.getNode(ISD::SINT_TO_FP, dl, Op.getValueType(),
                      DAG.getNode(ISD::ZERO_EXTEND, dl, NVT, N0));
 }
@@ -8201,8 +8201,9 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
   return DAG.getNode(ISD::FP_ROUND, dl, DstVT, Add, DAG.getIntPtrConstant(0));
 }
 
-std::pair<SDValue,SDValue> X86TargetLowering::
-FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned, bool IsReplace) const {
+std::pair<SDValue,SDValue>
+X86TargetLowering:: FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
+                                    bool IsSigned, bool IsReplace) const {
   DebugLoc DL = Op.getDebugLoc();
 
   EVT DstTy = Op.getValueType();
@@ -8704,7 +8705,8 @@ static SDValue LowerFGETSIGN(SDValue Op, SelectionDAG &DAG) {
 
 // LowerVectorAllZeroTest - Check whether an OR'd tree is PTEST-able.
 //
-SDValue X86TargetLowering::LowerVectorAllZeroTest(SDValue Op, SelectionDAG &DAG) const {
+SDValue X86TargetLowering::LowerVectorAllZeroTest(SDValue Op,
+                                                  SelectionDAG &DAG) const {
   assert(Op.getOpcode() == ISD::OR && "Only check OR'd tree.");
 
   if (!Subtarget->hasSSE41())
