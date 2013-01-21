@@ -107,12 +107,22 @@ class _FLRU6<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{9-0} = b{15-6};
 }
 
-class _FU6<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _FU6<bits<10> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<2, outs, ins, asmstr, pattern> {
+  bits<6> a;
+
+  let Inst{15-6} = opc;
+  let Inst{5-0} = a;
 }
 
-class _FLU6<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _FLU6<bits<10> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<4, outs, ins, asmstr, pattern> {
+  bits<16> a;
+
+  let Inst{31-22} = opc;
+  let Inst{21-16} = a{5-0};
+  let Inst{15-10} = 0b111100;
+  let Inst{9-0} = a{15-6};
 }
 
 class _FU10<dag outs, dag ins, string asmstr, list<dag> pattern>

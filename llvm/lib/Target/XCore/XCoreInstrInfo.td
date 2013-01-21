@@ -288,36 +288,23 @@ multiclass FRU6_LRU6_cp<bits<6> opc, string OpcStr> {
 }
 
 // U6
-multiclass FU6_LU6<string OpcStr, SDNode OpNode> {
-  def _u6: _FU6<
-                 (outs), (ins i32imm:$b),
-                 !strconcat(OpcStr, " $b"),
-                 [(OpNode immU6:$b)]>;
-  def _lu6: _FLU6<
-                 (outs), (ins i32imm:$b),
-                 !strconcat(OpcStr, " $b"),
-                 [(OpNode immU16:$b)]>;
-}
-multiclass FU6_LU6_int<string OpcStr, Intrinsic Int> {
-  def _u6: _FU6<
-                 (outs), (ins i32imm:$b),
-                 !strconcat(OpcStr, " $b"),
-                 [(Int immU6:$b)]>;
-  def _lu6: _FLU6<
-                 (outs), (ins i32imm:$b),
-                 !strconcat(OpcStr, " $b"),
-                 [(Int immU16:$b)]>;
+multiclass FU6_LU6<bits<10> opc, string OpcStr, SDNode OpNode> {
+  def _u6: _FU6<opc, (outs), (ins i32imm:$a), !strconcat(OpcStr, " $a"),
+                [(OpNode immU6:$a)]>;
+  def _lu6: _FLU6<opc, (outs), (ins i32imm:$a), !strconcat(OpcStr, " $a"),
+                  [(OpNode immU16:$a)]>;
 }
 
-multiclass FU6_LU6_np<string OpcStr> {
-  def _u6: _FU6<
-                 (outs), (ins i32imm:$b),
-                 !strconcat(OpcStr, " $b"),
-                 []>;
-  def _lu6: _FLU6<
-                 (outs), (ins i32imm:$b),
-                 !strconcat(OpcStr, " $b"),
-                 []>;
+multiclass FU6_LU6_int<bits<10> opc, string OpcStr, Intrinsic Int> {
+  def _u6: _FU6<opc, (outs), (ins i32imm:$a), !strconcat(OpcStr, " $a"),
+                [(Int immU6:$a)]>;
+  def _lu6: _FLU6<opc, (outs), (ins i32imm:$a), !strconcat(OpcStr, " $a"),
+                  [(Int immU16:$a)]>;
+}
+
+multiclass FU6_LU6_np<bits<10> opc, string OpcStr> {
+  def _u6: _FU6<opc, (outs), (ins i32imm:$a), !strconcat(OpcStr, " $a"), []>;
+  def _lu6: _FLU6<opc, (outs), (ins i32imm:$a), !strconcat(OpcStr, " $a"), []>;
 }
 
 // U10
@@ -628,60 +615,46 @@ defm BRBF: FRU6_LRU6_backwards_branch<0b011111, "bf">;
 // U6
 let Defs = [SP], Uses = [SP] in {
 let neverHasSideEffects = 1 in
-defm EXTSP : FU6_LU6_np<"extsp">;
+defm EXTSP : FU6_LU6_np<0b0111011110, "extsp">;
 let mayStore = 1 in
-defm ENTSP : FU6_LU6_np<"entsp">;
+defm ENTSP : FU6_LU6_np<0b0111011101, "entsp">;
 
 let isReturn = 1, isTerminator = 1, mayLoad = 1, isBarrier = 1 in {
-defm RETSP : FU6_LU6<"retsp", XCoreRetsp>;
+defm RETSP : FU6_LU6<0b0111011111, "retsp", XCoreRetsp>;
 }
 }
 
 // TODO extdp, kentsp, krestsp, blat
 // getsr, kalli
 let isBranch = 1, isTerminator = 1, isBarrier = 1 in {
-def BRBU_u6 : _FU6<
-                 (outs),
-                 (ins brtarget:$target),
-                 "bu $target",
-                 []>;
+def BRBU_u6 : _FU6<0b0111011100, (outs), (ins brtarget:$a), "bu -$a", []>;
 
-def BRBU_lu6 : _FLU6<
-                 (outs),
-                 (ins brtarget:$target),
-                 "bu $target",
-                 []>;
+def BRBU_lu6 : _FLU6<0b0111011100, (outs), (ins brtarget:$a), "bu -$a", []>;
 
-def BRFU_u6 : _FU6<
-                 (outs),
-                 (ins brtarget:$target),
-                 "bu $target",
-                 []>;
+def BRFU_u6 : _FU6<0b0111001100, (outs), (ins brtarget:$a), "bu $a", []>;
 
-def BRFU_lu6 : _FLU6<
-                 (outs),
-                 (ins brtarget:$target),
-                 "bu $target",
-                 []>;
+def BRFU_lu6 : _FLU6<0b0111001100, (outs), (ins brtarget:$a), "bu $a", []>;
 }
 
 //let Uses = [CP] in ...
 let Defs = [R11], neverHasSideEffects = 1, isReMaterializable = 1 in
-def LDAWCP_u6: _FU6<(outs), (ins MEMii:$a), "ldaw r11, cp[$a]", []>;
+def LDAWCP_u6: _FU6<0b0111111101, (outs), (ins MEMii:$a), "ldaw r11, cp[$a]",
+                    []>;
 
 let Defs = [R11], isReMaterializable = 1 in
-def LDAWCP_lu6: _FLU6<(outs), (ins MEMii:$a), "ldaw r11, cp[$a]",
+def LDAWCP_lu6: _FLU6<0b0111111101, (outs), (ins MEMii:$a), "ldaw r11, cp[$a]",
                       [(set R11, ADDRcpii:$a)]>;
 
-defm SETSR : FU6_LU6_int<"setsr", int_xcore_setsr>;
+defm SETSR : FU6_LU6_int<0b0111101101, "setsr", int_xcore_setsr>;
 
-defm CLRSR : FU6_LU6_int<"clrsr", int_xcore_clrsr>;
+defm CLRSR : FU6_LU6_int<0b0111101100, "clrsr", int_xcore_clrsr>;
 
 // setsr may cause a branch if it is used to enable events. clrsr may
 // branch if it is executed while events are enabled.
-let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1 in {
-defm SETSR_branch : FU6_LU6_np<"setsr">;
-defm CLRSR_branch : FU6_LU6_np<"clrsr">;
+let isBranch=1, isIndirectBranch=1, isTerminator=1, isBarrier = 1,
+    isCodeGenOnly = 1 in {
+defm SETSR_branch : FU6_LU6_np<0b0111101101, "setsr">;
+defm CLRSR_branch : FU6_LU6_np<0b0111101100, "clrsr">;
 }
 
 // U10
