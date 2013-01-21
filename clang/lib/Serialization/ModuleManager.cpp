@@ -49,6 +49,7 @@ ModuleManager::addModule(StringRef FileName, ModuleKind Type,
   if (!ModuleEntry) {
     // Allocate a new module.
     ModuleFile *New = new ModuleFile(Type, Generation);
+    New->Index = Chain.size();
     New->FileName = FileName.str();
     New->File = Entry;
     New->ImportLoc = ImportLoc;
@@ -155,22 +156,26 @@ void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
   // to seed the queue.
   SmallVector<ModuleFile *, 4> Queue;
   Queue.reserve(N);
-  llvm::DenseMap<ModuleFile *, unsigned> UnusedIncomingEdges; 
+  llvm::SmallVector<unsigned, 4> UnusedIncomingEdges;
+  UnusedIncomingEdges.reserve(size());
   for (ModuleIterator M = begin(), MEnd = end(); M != MEnd; ++M) {
     if (unsigned Size = (*M)->ImportedBy.size())
-      UnusedIncomingEdges[*M] = Size;
-    else
+      UnusedIncomingEdges.push_back(Size);
+    else {
+      UnusedIncomingEdges.push_back(0);
       Queue.push_back(*M);
+    }
   }
-  
-  llvm::SmallPtrSet<ModuleFile *, 4> Skipped;
+
+  llvm::SmallVector<bool, 4> Skipped(size(), false);
   unsigned QueueStart = 0;
   while (QueueStart < Queue.size()) {
     ModuleFile *CurrentModule = Queue[QueueStart++];
     
     // Check whether this module should be skipped.
-    if (Skipped.count(CurrentModule))
+    if (Skipped[CurrentModule->Index])
       continue;
+    Skipped[CurrentModule->Index] = true;
     
     if (Visitor(*CurrentModule, UserData)) {
       // The visitor has requested that cut off visitation of any
@@ -179,7 +184,7 @@ void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
       // incoming edges (which is impossible otherwise).
       SmallVector<ModuleFile *, 4> Stack;
       Stack.push_back(CurrentModule);
-      Skipped.insert(CurrentModule);
+      Skipped[CurrentModule->Index] = true;
       while (!Stack.empty()) {
         ModuleFile *NextModule = Stack.back();
         Stack.pop_back();
@@ -187,11 +192,13 @@ void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
         // For any module that this module depends on, push it on the
         // stack (if it hasn't already been marked as visited).
         for (llvm::SetVector<ModuleFile *>::iterator 
-             M = NextModule->Imports.begin(),
-             MEnd = NextModule->Imports.end();
+               M = NextModule->Imports.begin(),
+               MEnd = NextModule->Imports.end();
              M != MEnd; ++M) {
-          if (Skipped.insert(*M))
+          if (!Skipped[(*M)->Index]) {
             Stack.push_back(*M);
+            Skipped[(*M)->Index] = true;
+          }
         }
       }
       continue;
@@ -199,15 +206,16 @@ void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     
     // For any module that this module depends on, push it on the
     // stack (if it hasn't already been marked as visited).
-    for (llvm::SetVector<ModuleFile *>::iterator M = CurrentModule->Imports.begin(),
-         MEnd = CurrentModule->Imports.end();
+    for (llvm::SetVector<ModuleFile *>::iterator
+           M = CurrentModule->Imports.begin(),
+           MEnd = CurrentModule->Imports.end();
          M != MEnd; ++M) {
       
       // Remove our current module as an impediment to visiting the
       // module we depend on. If we were the last unvisited module
       // that depends on this particular module, push it into the
       // queue to be visited.
-      unsigned &NumUnusedEdges = UnusedIncomingEdges[*M];
+      unsigned &NumUnusedEdges = UnusedIncomingEdges[(*M)->Index];
       if (NumUnusedEdges && (--NumUnusedEdges == 0))
         Queue.push_back(*M);
     }
@@ -219,18 +227,19 @@ static bool visitDepthFirst(ModuleFile &M,
                             bool (*Visitor)(ModuleFile &M, bool Preorder, 
                                             void *UserData), 
                             void *UserData,
-                            llvm::SmallPtrSet<ModuleFile *, 4> &Visited) {
+                            SmallVectorImpl<bool> &Visited) {
   // Preorder visitation
   if (Visitor(M, /*Preorder=*/true, UserData))
     return true;
   
   // Visit children
   for (llvm::SetVector<ModuleFile *>::iterator IM = M.Imports.begin(),
-       IMEnd = M.Imports.end();
+                                            IMEnd = M.Imports.end();
        IM != IMEnd; ++IM) {
-    if (!Visited.insert(*IM))
+    if (Visited[(*IM)->Index])
       continue;
-    
+    Visited[(*IM)->Index] = true;
+
     if (visitDepthFirst(**IM, Visitor, UserData, Visited))
       return true;
   }  
@@ -242,11 +251,12 @@ static bool visitDepthFirst(ModuleFile &M,
 void ModuleManager::visitDepthFirst(bool (*Visitor)(ModuleFile &M, bool Preorder, 
                                                     void *UserData), 
                                     void *UserData) {
-  llvm::SmallPtrSet<ModuleFile *, 4> Visited;
+  SmallVector<bool, 16> Visited(size(), false);
   for (unsigned I = 0, N = Chain.size(); I != N; ++I) {
-    if (!Visited.insert(Chain[I]))
+    if (Visited[Chain[I]->Index])
       continue;
-    
+    Visited[Chain[I]->Index] = true;
+
     if (::visitDepthFirst(*Chain[I], Visitor, UserData, Visited))
       return;
   }

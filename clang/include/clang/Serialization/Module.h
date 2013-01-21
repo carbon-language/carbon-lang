@@ -69,6 +69,9 @@ public:
 
   // === General information ===
 
+  /// \brief The index of this module in the list of modules.
+  unsigned Index;
+
   /// \brief The type of this module.
   ModuleKind Kind;
 
