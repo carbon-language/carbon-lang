@@ -172,7 +172,7 @@ public:
                >::type storage_type;
 
 private:
-  typedef T &reference;
+  typedef typename remove_reference<T>::type &reference;
   typedef typename remove_reference<T>::type *pointer;
 
 public:
