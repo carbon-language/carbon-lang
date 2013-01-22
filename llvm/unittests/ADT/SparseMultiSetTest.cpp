@@ -133,9 +133,9 @@ TEST(SparseMultiSetTest, MultipleEntrySet) {
   Set.insert(8);
 
   // Erase all the 8s
-  EXPECT_EQ(5u, std::distance(Set.getHead(8), Set.end()));
+  EXPECT_EQ(5, std::distance(Set.getHead(8), Set.end()));
   Set.eraseAll(8);
-  EXPECT_EQ(0u, std::distance(Set.getHead(8), Set.end()));
+  EXPECT_EQ(0, std::distance(Set.getHead(8), Set.end()));
 
   // Clear and resize the universe.
   Set.clear();
