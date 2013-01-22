@@ -101,9 +101,19 @@ const interpose_substitution substitutions[]
   INTERPOSE_FUNCTION(signal),
   INTERPOSE_FUNCTION(sigaction),
 
-  INTERPOSE_FUNCTION(__CFInitialize),
-  INTERPOSE_FUNCTION(CFStringCreateCopy),
+  INTERPOSE_FUNCTION(malloc_create_zone),
+  INTERPOSE_FUNCTION(malloc_default_zone),
+  INTERPOSE_FUNCTION(malloc_default_purgeable_zone),
+  INTERPOSE_FUNCTION(malloc_make_purgeable),
+  INTERPOSE_FUNCTION(malloc_make_nonpurgeable),
+  INTERPOSE_FUNCTION(malloc_set_zone_name),
+  INTERPOSE_FUNCTION(malloc),
   INTERPOSE_FUNCTION(free),
+  INTERPOSE_FUNCTION(realloc),
+  INTERPOSE_FUNCTION(calloc),
+  INTERPOSE_FUNCTION(valloc),
+  INTERPOSE_FUNCTION(malloc_good_size),
+  INTERPOSE_FUNCTION(posix_memalign),
 };
 
 }  // namespace __asan

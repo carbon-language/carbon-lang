@@ -216,8 +216,6 @@ typedef void* dispatch_source_t;
 typedef u64 dispatch_time_t;
 typedef void (*dispatch_function_t)(void *block);
 typedef void* (*worker_t)(void *block);
-typedef void* CFStringRef;
-typedef void* CFAllocatorRef;
 
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_async_f,
                              dispatch_queue_t dq,
@@ -235,11 +233,6 @@ DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_group_async_f,
                              dispatch_group_t group, dispatch_queue_t dq,
                              void *ctxt, dispatch_function_t func);
 
-DECLARE_FUNCTION_AND_WRAPPER(void, __CFInitialize, void);
-DECLARE_FUNCTION_AND_WRAPPER(CFStringRef, CFStringCreateCopy,
-                             CFAllocatorRef alloc, CFStringRef str);
-DECLARE_FUNCTION_AND_WRAPPER(void, free, void* ptr);
-
 #  if MAC_INTERPOSE_FUNCTIONS && !defined(MISSING_BLOCKS_SUPPORT)
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_group_async,
                              dispatch_group_t dg,
@@ -253,6 +246,32 @@ DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_source_set_event_handler,
 DECLARE_FUNCTION_AND_WRAPPER(void, dispatch_source_set_cancel_handler,
                              dispatch_source_t ds, void (^work)(void));
 #  endif  // MAC_INTERPOSE_FUNCTIONS
+
+typedef void malloc_zone_t;
+typedef size_t vm_size_t;
+DECLARE_FUNCTION_AND_WRAPPER(malloc_zone_t *, malloc_create_zone,
+                             vm_size_t start_size, unsigned flags);
+DECLARE_FUNCTION_AND_WRAPPER(malloc_zone_t *, malloc_default_zone, void);
+DECLARE_FUNCTION_AND_WRAPPER(
+    malloc_zone_t *, malloc_default_purgeable_zone, void);
+DECLARE_FUNCTION_AND_WRAPPER(void, malloc_make_purgeable, void *ptr);
+DECLARE_FUNCTION_AND_WRAPPER(int, malloc_make_nonpurgeable, void *ptr);
+DECLARE_FUNCTION_AND_WRAPPER(void, malloc_set_zone_name,
+                             malloc_zone_t *zone, const char *name);
+DECLARE_FUNCTION_AND_WRAPPER(void *, malloc, size_t size);
+DECLARE_FUNCTION_AND_WRAPPER(void, free, void *ptr);
+DECLARE_FUNCTION_AND_WRAPPER(void *, realloc, void *ptr, size_t size);
+DECLARE_FUNCTION_AND_WRAPPER(void *, calloc, size_t nmemb, size_t size);
+DECLARE_FUNCTION_AND_WRAPPER(void *, valloc, size_t size);
+DECLARE_FUNCTION_AND_WRAPPER(size_t, malloc_good_size, size_t size);
+DECLARE_FUNCTION_AND_WRAPPER(int, posix_memalign,
+                             void **memptr, size_t alignment, size_t size);
+DECLARE_FUNCTION_AND_WRAPPER(void, _malloc_fork_prepare, void);
+DECLARE_FUNCTION_AND_WRAPPER(void, _malloc_fork_parent, void);
+DECLARE_FUNCTION_AND_WRAPPER(void, _malloc_fork_child, void);
+
+
+
 # endif  // __APPLE__
 }  // extern "C"
 #endif  // defined(__APPLE__) || (defined(_WIN32) && !defined(_DLL))

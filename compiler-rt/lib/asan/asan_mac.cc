@@ -36,7 +36,6 @@
 #include <stdlib.h>  // for free()
 #include <unistd.h>
 #include <libkern/OSAtomic.h>
-#include <CoreFoundation/CFString.h>
 
 namespace __asan {
 
@@ -131,14 +130,6 @@ bool AsanInterceptsSignal(int signum) {
 }
 
 void AsanPlatformThreadInit() {
-  // For the first program thread, we can't replace the allocator before
-  // __CFInitialize() has been called. If it hasn't, we'll call
-  // MaybeReplaceCFAllocator() later on this thread.
-  // For other threads __CFInitialize() has been called before their creation.
-  // See also asan_malloc_mac.cc.
-  if (((CFRuntimeBase*)kCFAllocatorSystemDefault)->_cfisa) {
-    MaybeReplaceCFAllocator();
-  }
 }
 
 void GetStackTrace(StackTrace *stack, uptr max_s, uptr pc, uptr bp, bool fast) {
@@ -424,29 +415,6 @@ INTERCEPTOR(void, dispatch_source_set_event_handler,
 }
 #endif
 
-// See http://opensource.apple.com/source/CF/CF-635.15/CFString.c
-int __CFStrIsConstant(CFStringRef str) {
-  CFRuntimeBase *base = (CFRuntimeBase*)str;
-#if __LP64__
-  return base->_rc == 0;
-#else
-  return (base->_cfinfo[CF_RC_BITS]) == 0;
-#endif
-}
-
-INTERCEPTOR(CFStringRef, CFStringCreateCopy, CFAllocatorRef alloc,
-                                             CFStringRef str) {
-  if (__CFStrIsConstant(str)) {
-    return str;
-  } else {
-    return REAL(CFStringCreateCopy)(alloc, str);
-  }
-}
-
-DECLARE_REAL_AND_INTERCEPTOR(void, free, void *ptr)
-
-DECLARE_REAL_AND_INTERCEPTOR(void, __CFInitialize, void)
-
 namespace __asan {
 
 void InitializeMacInterceptors() {
@@ -455,20 +423,6 @@ void InitializeMacInterceptors() {
   CHECK(INTERCEPT_FUNCTION(dispatch_after_f));
   CHECK(INTERCEPT_FUNCTION(dispatch_barrier_async_f));
   CHECK(INTERCEPT_FUNCTION(dispatch_group_async_f));
-  // Normally CFStringCreateCopy should not copy constant CF strings.
-  // Replacing the default CFAllocator causes constant strings to be copied
-  // rather than just returned, which leads to bugs in big applications like
-  // Chromium and WebKit, see
-  // http://code.google.com/p/address-sanitizer/issues/detail?id=10
-  // Until this problem is fixed we need to check that the string is
-  // non-constant before calling CFStringCreateCopy.
-  CHECK(INTERCEPT_FUNCTION(CFStringCreateCopy));
-  // Some of the library functions call free() directly, so we have to
-  // intercept it.
-  CHECK(INTERCEPT_FUNCTION(free));
-  if (flags()->replace_cfallocator) {
-    CHECK(INTERCEPT_FUNCTION(__CFInitialize));
-  }
 }
 
 }  // namespace __asan

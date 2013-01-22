@@ -65,6 +65,19 @@ if(APPLE)
     CFLAGS ${ASAN_CFLAGS}
     DEFS ${ASAN_COMMON_DEFINITIONS})
   list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_osx)
+
+  add_compiler_rt_osx_dynamic_runtime(clang_rt.asan_osx_dynamic
+    ARCH ${ASAN_SUPPORTED_ARCH}
+    SOURCES ${ASAN_DYLIB_SOURCES}
+            $<TARGET_OBJECTS:RTInterception.osx>
+            $<TARGET_OBJECTS:RTSanitizerCommon.osx>
+    CFLAGS ${ASAN_CFLAGS}
+    DEFS ${ASAN_DYLIB_DEFINITIONS}
+    # Dynamic lookup is needed because shadow scale and offset are
+    # provided by the instrumented modules.
+    LINKFLAGS "-framework Foundation"
+              "-undefined dynamic_lookup")
+  list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan_osx_dynamic)
 elseif(ANDROID)
   add_library(clang_rt.asan-arm-android SHARED
     ${ASAN_SOURCES}
@@ -88,23 +101,6 @@ else()
       DEFS ${ASAN_COMMON_DEFINITIONS})
     list(APPEND ASAN_RUNTIME_LIBRARIES clang_rt.asan-${arch})
   endforeach()
-endif()
-
-set(ASAN_DYNAMIC_RUNTIME_LIBRARIES)
-if(APPLE)
-  # Build universal binary on APPLE.
-  add_compiler_rt_osx_dynamic_runtime(clang_rt.asan_osx_dynamic
-    ARCH ${ASAN_SUPPORTED_ARCH}
-    SOURCES ${ASAN_DYLIB_SOURCES}
-            $<TARGET_OBJECTS:RTInterception.osx>
-            $<TARGET_OBJECTS:RTSanitizerCommon.osx>
-    CFLAGS ${ASAN_CFLAGS}
-    DEFS ${ASAN_DYLIB_DEFINITIONS}
-    # Dynamic lookup is needed because shadow scale and offset are
-    # provided by the instrumented modules.
-    LINKFLAGS "-framework Foundation"
-              "-undefined dynamic_lookup")
-  list(APPEND ASAN_DYNAMIC_RUNTIME_LIBRARIES clang_rt.asan_osx_dynamic)
 endif()
 
 if(LLVM_INCLUDE_TESTS)
