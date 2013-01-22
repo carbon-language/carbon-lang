@@ -24,7 +24,7 @@ include $(CLANG_LEVEL)/../../Makefile.config
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc
 
 # Note that 'USEDLIBS' must include all of the core clang libraries
-# as clang.dll is unavailable on cygming yet.
+# when -static is given to linker on cygming.
 USEDLIBS = clang.a \
 	   clangARCMigrate.a \
 	   clangRewriteFrontend.a \
