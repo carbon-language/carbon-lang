@@ -525,8 +525,10 @@ protected:
         return false;
     }
     
+    // we are separately passing in valobj and type because the valobj is fixed (and is used for ObjC discovery and bitfield size)
+    // but the type can change (e.g. stripping pointers, ...)
     bool Get (ValueObject& valobj,
-              clang::QualType type, // TODO: find out why "type" is passed in the type when it belongs to valobj? Can it ever differ?
+              clang::QualType type,
               MapValueType& entry,
               lldb::DynamicValueType use_dynamic,
               uint32_t& reason)
