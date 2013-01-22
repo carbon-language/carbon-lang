@@ -451,9 +451,7 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
         IRB.CreateAlignedStore(Shadow, ShadowPtr, I.getAlignment());
       DEBUG(dbgs() << "  STORE: " << *NewSI << "\n");
       (void)NewSI;
-      // If the store is volatile, add a check.
-      if (I.isVolatile())
-        insertCheck(Val, &I);
+
       if (ClCheckAccessAddress)
         insertCheck(Addr, &I);
 
@@ -847,7 +845,6 @@ struct MemorySanitizerVisitor : public InstVisitor<MemorySanitizerVisitor> {
   ///
   /// Stores the corresponding shadow and (optionally) origin.
   /// Optionally, checks that the store address is fully defined.
-  /// Volatile stores check that the value being stored is fully defined.
   void visitStoreInst(StoreInst &I) {
     StoreList.push_back(&I);
   }
