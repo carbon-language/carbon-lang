@@ -28,6 +28,11 @@
 #include "llvm/Support/PathV2.h"
 #include "llvm/Support/raw_ostream.h"
 #include <stdlib.h>
+#if defined(LLVM_ON_UNIX)
+#if defined(__linux__)
+#include <linux/limits.h>
+#endif
+#endif
 using namespace clang;
 
 Module::ExportDecl 

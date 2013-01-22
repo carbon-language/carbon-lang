@@ -23,6 +23,11 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/Path.h"
 #include <cstdio>
+#if defined(LLVM_ON_UNIX)
+#if defined(__linux__)
+#include <linux/limits.h>
+#endif
+#endif
 using namespace clang;
 
 const IdentifierInfo *
