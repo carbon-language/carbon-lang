@@ -3576,9 +3576,8 @@ ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
   Changed = true;
   assert(OldCount != 0 && "Unreachable code?");
   NumRRs += OldCount - NewCount;
-
   // Set to true if we completely removed any RR pairs.
-  AnyPairsCompletelyEliminated |= NewCount == 0;
+  AnyPairsCompletelyEliminated = NewCount == 0;
 
   // We can move calls!
   return true;
