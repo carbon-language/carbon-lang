@@ -361,6 +361,9 @@ bool MemorySanitizer::doInitialization(Module &M) {
   new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
                      IRB.getInt32(TrackOrigins), "__msan_track_origins");
 
+  new GlobalVariable(M, IRB.getInt32Ty(), true, GlobalValue::WeakODRLinkage,
+                     IRB.getInt32(ClKeepGoing), "__msan_keep_going");
+
   return true;
 }
 
