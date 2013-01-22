@@ -33,7 +33,7 @@
   #if defined(LIBCXXRT) || defined(_LIBCPPABI_VERSION)
     #define HAVE_DEPENDENT_EH_ABI 1
   #endif
-#else  // __has_include(<cxxabi.h>)
+#elif !defined(__GLIBCXX__) // __has_include(<cxxabi.h>)
   static std::terminate_handler  __terminate_handler;
   static std::unexpected_handler __unexpected_handler;
 #endif // __has_include(<cxxabi.h>)
