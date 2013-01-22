@@ -267,7 +267,7 @@ public:
     bool operator==(const iterator_base &RHS) const {
       // end compares equal
       if (SMS == RHS.SMS && Idx == RHS.Idx) {
-        assert(isEnd() || SparseIdx == RHS.SparseIdx &&
+        assert((isEnd() || SparseIdx == RHS.SparseIdx) &&
                "Same dense entry, but different keys?");
         return true;
       }
@@ -282,7 +282,7 @@ public:
     /// Increment and decrement operators
     iterator_base &operator--() { // predecrement - Back up
       assert(isKeyed() && "Decrementing an invalid iterator");
-      assert(isEnd() || !SMS->isHead(SMS->Dense[Idx]) &&
+      assert((isEnd() || !SMS->isHead(SMS->Dense[Idx])) &&
              "Decrementing head of list");
 
       // If we're at the end, then issue a new find()
