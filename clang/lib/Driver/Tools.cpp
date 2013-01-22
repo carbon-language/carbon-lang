@@ -2715,10 +2715,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    getToolChain().getTriple().getOS() == llvm::Triple::Win32))
     CmdArgs.push_back("-fms-extensions");
 
-  // -fms-inline-asm.
-  if (Args.hasArg(options::OPT_fenable_experimental_ms_inline_asm))
-    CmdArgs.push_back("-fenable-experimental-ms-inline-asm");
-
   // -fms-compatibility=0 is default.
   if (Args.hasFlag(options::OPT_fms_compatibility, 
                    options::OPT_fno_ms_compatibility,

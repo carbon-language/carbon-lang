@@ -1771,21 +1771,6 @@ StmtResult Parser::ParseMicrosoftAsmStatement(SourceLocation AsmLoc) {
     return StmtError();
   }
 
-  // If MS-style inline assembly is disabled, then build an empty asm.
-  if (!getLangOpts().EmitMicrosoftInlineAsm) {
-    Token t;
-    t.setKind(tok::string_literal);
-    t.setLiteralData("\"/*FIXME: not done*/\"");
-    t.clearFlag(Token::NeedsCleaning);
-    t.setLength(21);
-    ExprResult AsmString(Actions.ActOnStringLiteral(&t, 1));
-    ExprVector Constraints;
-    ExprVector Exprs;
-    ExprVector Clobbers;
-    return Actions.ActOnGCCAsmStmt(AsmLoc, true, true, 0, 0, 0, Constraints,
-                                   Exprs, AsmString.take(), Clobbers, EndLoc);
-  }
-
   // FIXME: We should be passing source locations for better diagnostics.
   return Actions.ActOnMSAsmStmt(AsmLoc, LBraceLoc,
                                 llvm::makeArrayRef(AsmToks), EndLoc);

@@ -1265,8 +1265,6 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.FastMath = Args.hasArg(OPT_ffast_math);
   Opts.FiniteMathOnly = Args.hasArg(OPT_ffinite_math_only);
 
-  Opts.EmitMicrosoftInlineAsm = Args.hasArg(OPT_fenable_experimental_ms_inline_asm);
-
   Opts.RetainCommentsFromSystemHeaders =
       Args.hasArg(OPT_fretain_comments_from_system_headers);
 
