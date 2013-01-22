@@ -17,6 +17,8 @@
 // RUN: FileCheck %s < %t/out.c-index-direct
 // RUN: FileCheck %s < %t/out.c-index-pch
 
+// XFAIL: valgrind
+
 #ifndef HEADER
 #define HEADER
 
