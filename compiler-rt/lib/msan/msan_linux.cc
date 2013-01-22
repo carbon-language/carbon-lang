@@ -72,22 +72,6 @@ bool InitShadow(bool prot1, bool prot2, bool map_shadow, bool init_origins) {
   return true;
 }
 
-static void MsanTrap(int, siginfo_t *siginfo, void *context) {
-  ucontext_t *ucontext = (ucontext_t*)context;
-  uptr pc = ucontext->uc_mcontext.gregs[REG_RIP];
-  uptr bp = ucontext->uc_mcontext.gregs[REG_RBP];
-  PrintWarning(pc + 1 /*1 will be subtracted in StackTrace::Print */, bp);
-  ucontext->uc_mcontext.gregs[REG_RIP] += 2;
-}
-
-void InstallTrapHandler() {
-  struct sigaction sigact;
-  internal_memset(&sigact, 0, sizeof(sigact));
-  sigact.sa_sigaction = MsanTrap;
-  sigact.sa_flags = SA_SIGINFO;
-  CHECK_EQ(0, sigaction(SIGILL, &sigact, 0));
-}
-
 void MsanDie() {
   _exit(flags()->exit_code);
 }
