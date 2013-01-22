@@ -1849,6 +1849,19 @@ namespace {
                    SmallVectorImpl<Instruction *> &DeadInsts,
                    Module *M);
 
+    bool ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState> &BBStates,
+                               MapVector<Value *, RRInfo> &Retains,
+                               DenseMap<Value *, RRInfo> &Releases,
+                               Module *M,
+                               SmallVector<Instruction *, 4> &NewRetains,
+                               SmallVector<Instruction *, 4> &NewReleases,
+                               SmallVector<Instruction *, 8> &DeadInsts,
+                               RRInfo &RetainsToMove,
+                               RRInfo &ReleasesToMove,
+                               Value *Arg,
+                               bool KnownSafe,
+                               bool &AnyPairsCompletelyEliminated);
+
     bool PerformCodePlacement(DenseMap<const BasicBlock *, BBState> &BBStates,
                               MapVector<Value *, RRInfo> &Retains,
                               DenseMap<Value *, RRInfo> &Releases,
@@ -3398,6 +3411,179 @@ void ObjCARCOpt::MoveCalls(Value *Arg,
   }
 }
 
+bool
+ObjCARCOpt::ConnectTDBUTraversals(DenseMap<const BasicBlock *, BBState>
+                                    &BBStates,
+                                  MapVector<Value *, RRInfo> &Retains,
+                                  DenseMap<Value *, RRInfo> &Releases,
+                                  Module *M,
+                                  SmallVector<Instruction *, 4> &NewRetains,
+                                  SmallVector<Instruction *, 4> &NewReleases,
+                                  SmallVector<Instruction *, 8> &DeadInsts,
+                                  RRInfo &RetainsToMove,
+                                  RRInfo &ReleasesToMove,
+                                  Value *Arg,
+                                  bool KnownSafe,
+                                  bool &AnyPairsCompletelyEliminated) {
+  // If a pair happens in a region where it is known that the reference count
+  // is already incremented, we can similarly ignore possible decrements.
+  bool KnownSafeTD = true, KnownSafeBU = true;
+
+  // Connect the dots between the top-down-collected RetainsToMove and
+  // bottom-up-collected ReleasesToMove to form sets of related calls.
+  // This is an iterative process so that we connect multiple releases
+  // to multiple retains if needed.
+  unsigned OldDelta = 0;
+  unsigned NewDelta = 0;
+  unsigned OldCount = 0;
+  unsigned NewCount = 0;
+  bool FirstRelease = true;
+  bool FirstRetain = true;
+  for (;;) {
+    for (SmallVectorImpl<Instruction *>::const_iterator
+           NI = NewRetains.begin(), NE = NewRetains.end(); NI != NE; ++NI) {
+      Instruction *NewRetain = *NI;
+      MapVector<Value *, RRInfo>::const_iterator It = Retains.find(NewRetain);
+      assert(It != Retains.end());
+      const RRInfo &NewRetainRRI = It->second;
+      KnownSafeTD &= NewRetainRRI.KnownSafe;
+      for (SmallPtrSet<Instruction *, 2>::const_iterator
+             LI = NewRetainRRI.Calls.begin(),
+             LE = NewRetainRRI.Calls.end(); LI != LE; ++LI) {
+        Instruction *NewRetainRelease = *LI;
+        DenseMap<Value *, RRInfo>::const_iterator Jt =
+          Releases.find(NewRetainRelease);
+        if (Jt == Releases.end())
+          return false;
+        const RRInfo &NewRetainReleaseRRI = Jt->second;
+        assert(NewRetainReleaseRRI.Calls.count(NewRetain));
+        if (ReleasesToMove.Calls.insert(NewRetainRelease)) {
+          OldDelta -=
+            BBStates[NewRetainRelease->getParent()].GetAllPathCount();
+
+          // Merge the ReleaseMetadata and IsTailCallRelease values.
+          if (FirstRelease) {
+            ReleasesToMove.ReleaseMetadata =
+              NewRetainReleaseRRI.ReleaseMetadata;
+            ReleasesToMove.IsTailCallRelease =
+              NewRetainReleaseRRI.IsTailCallRelease;
+            FirstRelease = false;
+          } else {
+            if (ReleasesToMove.ReleaseMetadata !=
+                NewRetainReleaseRRI.ReleaseMetadata)
+              ReleasesToMove.ReleaseMetadata = 0;
+            if (ReleasesToMove.IsTailCallRelease !=
+                NewRetainReleaseRRI.IsTailCallRelease)
+              ReleasesToMove.IsTailCallRelease = false;
+          }
+
+          // Collect the optimal insertion points.
+          if (!KnownSafe)
+            for (SmallPtrSet<Instruction *, 2>::const_iterator
+                   RI = NewRetainReleaseRRI.ReverseInsertPts.begin(),
+                   RE = NewRetainReleaseRRI.ReverseInsertPts.end();
+                 RI != RE; ++RI) {
+              Instruction *RIP = *RI;
+              if (ReleasesToMove.ReverseInsertPts.insert(RIP))
+                NewDelta -= BBStates[RIP->getParent()].GetAllPathCount();
+            }
+          NewReleases.push_back(NewRetainRelease);
+        }
+      }
+    }
+    NewRetains.clear();
+    if (NewReleases.empty()) break;
+
+    // Back the other way.
+    for (SmallVectorImpl<Instruction *>::const_iterator
+           NI = NewReleases.begin(), NE = NewReleases.end(); NI != NE; ++NI) {
+      Instruction *NewRelease = *NI;
+      DenseMap<Value *, RRInfo>::const_iterator It =
+        Releases.find(NewRelease);
+      assert(It != Releases.end());
+      const RRInfo &NewReleaseRRI = It->second;
+      KnownSafeBU &= NewReleaseRRI.KnownSafe;
+      for (SmallPtrSet<Instruction *, 2>::const_iterator
+             LI = NewReleaseRRI.Calls.begin(),
+             LE = NewReleaseRRI.Calls.end(); LI != LE; ++LI) {
+        Instruction *NewReleaseRetain = *LI;
+        MapVector<Value *, RRInfo>::const_iterator Jt =
+          Retains.find(NewReleaseRetain);
+        if (Jt == Retains.end())
+          return false;
+        const RRInfo &NewReleaseRetainRRI = Jt->second;
+        assert(NewReleaseRetainRRI.Calls.count(NewRelease));
+        if (RetainsToMove.Calls.insert(NewReleaseRetain)) {
+          unsigned PathCount =
+            BBStates[NewReleaseRetain->getParent()].GetAllPathCount();
+          OldDelta += PathCount;
+          OldCount += PathCount;
+
+          // Merge the IsRetainBlock values.
+          if (FirstRetain) {
+            RetainsToMove.IsRetainBlock = NewReleaseRetainRRI.IsRetainBlock;
+            FirstRetain = false;
+          } else if (ReleasesToMove.IsRetainBlock !=
+                     NewReleaseRetainRRI.IsRetainBlock)
+            // It's not possible to merge the sequences if one uses
+            // objc_retain and the other uses objc_retainBlock.
+            return false;
+
+          // Collect the optimal insertion points.
+          if (!KnownSafe)
+            for (SmallPtrSet<Instruction *, 2>::const_iterator
+                   RI = NewReleaseRetainRRI.ReverseInsertPts.begin(),
+                   RE = NewReleaseRetainRRI.ReverseInsertPts.end();
+                 RI != RE; ++RI) {
+              Instruction *RIP = *RI;
+              if (RetainsToMove.ReverseInsertPts.insert(RIP)) {
+                PathCount = BBStates[RIP->getParent()].GetAllPathCount();
+                NewDelta += PathCount;
+                NewCount += PathCount;
+              }
+            }
+          NewRetains.push_back(NewReleaseRetain);
+        }
+      }
+    }
+    NewReleases.clear();
+    if (NewRetains.empty()) break;
+  }
+
+  // If the pointer is known incremented or nested, we can safely delete the
+  // pair regardless of what's between them.
+  if (KnownSafeTD || KnownSafeBU) {
+    RetainsToMove.ReverseInsertPts.clear();
+    ReleasesToMove.ReverseInsertPts.clear();
+    NewCount = 0;
+  } else {
+    // Determine whether the new insertion points we computed preserve the
+    // balance of retain and release calls through the program.
+    // TODO: If the fully aggressive solution isn't valid, try to find a
+    // less aggressive solution which is.
+    if (NewDelta != 0)
+      return false;
+  }
+
+  // Determine whether the original call points are balanced in the retain and
+  // release calls through the program. If not, conservatively don't touch
+  // them.
+  // TODO: It's theoretically possible to do code motion in this case, as
+  // long as the existing imbalances are maintained.
+  if (OldDelta != 0)
+    return false;
+
+  Changed = true;
+  assert(OldCount != 0 && "Unreachable code?");
+  NumRRs += OldCount - NewCount;
+
+  // Set to true if we completely removed any RR pairs.
+  AnyPairsCompletelyEliminated |= NewCount == 0;
+
+  // We can move calls!
+  return true;
+}
+
 /// Identify pairings between the retains and releases, and delete and/or move
 /// them.
 bool
@@ -3440,164 +3626,23 @@ ObjCARCOpt::PerformCodePlacement(DenseMap<const BasicBlock *, BBState>
         if (GV->isConstant())
           KnownSafe = true;
 
-    // If a pair happens in a region where it is known that the reference count
-    // is already incremented, we can similarly ignore possible decrements.
-    bool KnownSafeTD = true, KnownSafeBU = true;
-
     // Connect the dots between the top-down-collected RetainsToMove and
     // bottom-up-collected ReleasesToMove to form sets of related calls.
-    // This is an iterative process so that we connect multiple releases
-    // to multiple retains if needed.
-    unsigned OldDelta = 0;
-    unsigned NewDelta = 0;
-    unsigned OldCount = 0;
-    unsigned NewCount = 0;
-    bool FirstRelease = true;
-    bool FirstRetain = true;
     NewRetains.push_back(Retain);
-    for (;;) {
-      for (SmallVectorImpl<Instruction *>::const_iterator
-           NI = NewRetains.begin(), NE = NewRetains.end(); NI != NE; ++NI) {
-        Instruction *NewRetain = *NI;
-        MapVector<Value *, RRInfo>::const_iterator It = Retains.find(NewRetain);
-        assert(It != Retains.end());
-        const RRInfo &NewRetainRRI = It->second;
-        KnownSafeTD &= NewRetainRRI.KnownSafe;
-        for (SmallPtrSet<Instruction *, 2>::const_iterator
-             LI = NewRetainRRI.Calls.begin(),
-             LE = NewRetainRRI.Calls.end(); LI != LE; ++LI) {
-          Instruction *NewRetainRelease = *LI;
-          DenseMap<Value *, RRInfo>::const_iterator Jt =
-            Releases.find(NewRetainRelease);
-          if (Jt == Releases.end())
-            goto next_retain;
-          const RRInfo &NewRetainReleaseRRI = Jt->second;
-          assert(NewRetainReleaseRRI.Calls.count(NewRetain));
-          if (ReleasesToMove.Calls.insert(NewRetainRelease)) {
-            OldDelta -=
-              BBStates[NewRetainRelease->getParent()].GetAllPathCount();
+    bool PerformMoveCalls =
+      ConnectTDBUTraversals(BBStates, Retains, Releases, M, NewRetains,
+                            NewReleases, DeadInsts, RetainsToMove,
+                            ReleasesToMove, Arg, KnownSafe,
+                            AnyPairsCompletelyEliminated);
 
-            // Merge the ReleaseMetadata and IsTailCallRelease values.
-            if (FirstRelease) {
-              ReleasesToMove.ReleaseMetadata =
-                NewRetainReleaseRRI.ReleaseMetadata;
-              ReleasesToMove.IsTailCallRelease =
-                NewRetainReleaseRRI.IsTailCallRelease;
-              FirstRelease = false;
-            } else {
-              if (ReleasesToMove.ReleaseMetadata !=
-                    NewRetainReleaseRRI.ReleaseMetadata)
-                ReleasesToMove.ReleaseMetadata = 0;
-              if (ReleasesToMove.IsTailCallRelease !=
-                    NewRetainReleaseRRI.IsTailCallRelease)
-                ReleasesToMove.IsTailCallRelease = false;
-            }
-
-            // Collect the optimal insertion points.
-            if (!KnownSafe)
-              for (SmallPtrSet<Instruction *, 2>::const_iterator
-                   RI = NewRetainReleaseRRI.ReverseInsertPts.begin(),
-                   RE = NewRetainReleaseRRI.ReverseInsertPts.end();
-                   RI != RE; ++RI) {
-                Instruction *RIP = *RI;
-                if (ReleasesToMove.ReverseInsertPts.insert(RIP))
-                  NewDelta -= BBStates[RIP->getParent()].GetAllPathCount();
-              }
-            NewReleases.push_back(NewRetainRelease);
-          }
-        }
-      }
-      NewRetains.clear();
-      if (NewReleases.empty()) break;
-
-      // Back the other way.
-      for (SmallVectorImpl<Instruction *>::const_iterator
-           NI = NewReleases.begin(), NE = NewReleases.end(); NI != NE; ++NI) {
-        Instruction *NewRelease = *NI;
-        DenseMap<Value *, RRInfo>::const_iterator It =
-          Releases.find(NewRelease);
-        assert(It != Releases.end());
-        const RRInfo &NewReleaseRRI = It->second;
-        KnownSafeBU &= NewReleaseRRI.KnownSafe;
-        for (SmallPtrSet<Instruction *, 2>::const_iterator
-             LI = NewReleaseRRI.Calls.begin(),
-             LE = NewReleaseRRI.Calls.end(); LI != LE; ++LI) {
-          Instruction *NewReleaseRetain = *LI;
-          MapVector<Value *, RRInfo>::const_iterator Jt =
-            Retains.find(NewReleaseRetain);
-          if (Jt == Retains.end())
-            goto next_retain;
-          const RRInfo &NewReleaseRetainRRI = Jt->second;
-          assert(NewReleaseRetainRRI.Calls.count(NewRelease));
-          if (RetainsToMove.Calls.insert(NewReleaseRetain)) {
-            unsigned PathCount =
-              BBStates[NewReleaseRetain->getParent()].GetAllPathCount();
-            OldDelta += PathCount;
-            OldCount += PathCount;
-
-            // Merge the IsRetainBlock values.
-            if (FirstRetain) {
-              RetainsToMove.IsRetainBlock = NewReleaseRetainRRI.IsRetainBlock;
-              FirstRetain = false;
-            } else if (ReleasesToMove.IsRetainBlock !=
-                       NewReleaseRetainRRI.IsRetainBlock)
-              // It's not possible to merge the sequences if one uses
-              // objc_retain and the other uses objc_retainBlock.
-              goto next_retain;
-
-            // Collect the optimal insertion points.
-            if (!KnownSafe)
-              for (SmallPtrSet<Instruction *, 2>::const_iterator
-                   RI = NewReleaseRetainRRI.ReverseInsertPts.begin(),
-                   RE = NewReleaseRetainRRI.ReverseInsertPts.end();
-                   RI != RE; ++RI) {
-                Instruction *RIP = *RI;
-                if (RetainsToMove.ReverseInsertPts.insert(RIP)) {
-                  PathCount = BBStates[RIP->getParent()].GetAllPathCount();
-                  NewDelta += PathCount;
-                  NewCount += PathCount;
-                }
-              }
-            NewRetains.push_back(NewReleaseRetain);
-          }
-        }
-      }
-      NewReleases.clear();
-      if (NewRetains.empty()) break;
+    if (PerformMoveCalls) {
+      // Ok, everything checks out and we're all set. Let's move/delete some
+      // code!
+      MoveCalls(Arg, RetainsToMove, ReleasesToMove,
+                Retains, Releases, DeadInsts, M);
     }
 
-    // If the pointer is known incremented or nested, we can safely delete the
-    // pair regardless of what's between them.
-    if (KnownSafeTD || KnownSafeBU) {
-      RetainsToMove.ReverseInsertPts.clear();
-      ReleasesToMove.ReverseInsertPts.clear();
-      NewCount = 0;
-    } else {
-      // Determine whether the new insertion points we computed preserve the
-      // balance of retain and release calls through the program.
-      // TODO: If the fully aggressive solution isn't valid, try to find a
-      // less aggressive solution which is.
-      if (NewDelta != 0)
-        goto next_retain;
-    }
-
-    // Determine whether the original call points are balanced in the retain and
-    // release calls through the program. If not, conservatively don't touch
-    // them.
-    // TODO: It's theoretically possible to do code motion in this case, as
-    // long as the existing imbalances are maintained.
-    if (OldDelta != 0)
-      goto next_retain;
-
-    // Ok, everything checks out and we're all set. Let's move some code!
-    Changed = true;
-    assert(OldCount != 0 && "Unreachable code?");
-    AnyPairsCompletelyEliminated = NewCount == 0;
-    NumRRs += OldCount - NewCount;
-    MoveCalls(Arg, RetainsToMove, ReleasesToMove,
-              Retains, Releases, DeadInsts, M);
-
-  next_retain:
+    // Clean up state for next retain.
     NewReleases.clear();
     NewRetains.clear();
     RetainsToMove.clear();
