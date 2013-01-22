@@ -150,7 +150,7 @@ uint64_t Attribute::encodeLLVMAttributesForBitcode(Attribute Attrs) {
 /// the LLVM attributes that have been decoded from the given integer.  This
 /// function must stay in sync with 'encodeLLVMAttributesForBitcode'.
 Attribute Attribute::decodeLLVMAttributesForBitcode(LLVMContext &C,
-                                                      uint64_t EncodedAttrs) {
+                                                    uint64_t EncodedAttrs) {
   // The alignment is stored as a 16-bit raw value from bits 31--16.  We shift
   // the bits above 31 down by 11 bits.
   unsigned Alignment = (EncodedAttrs & (0xffffULL << 16)) >> 16;
@@ -318,32 +318,29 @@ AttrBuilder &AttrBuilder::addRawValue(uint64_t Val) {
        I = Attribute::AttrKind(I + 1)) {
     if (uint64_t A = (Val & AttributeImpl::getAttrMask(I))) {
       Attrs.insert(I);
-
+ 
       if (I == Attribute::Alignment)
         Alignment = 1ULL << ((A >> 16) - 1);
       else if (I == Attribute::StackAlignment)
         StackAlignment = 1ULL << ((A >> 26)-1);
     }
   }
-
+ 
   return *this;
 }
 
-AttrBuilder &AttrBuilder::addAttributes(const Attribute &A) {
-  uint64_t Mask = A.Raw();
+AttrBuilder &AttrBuilder::addAttributes(const Attribute &Attr) {
+  uint64_t Mask = Attr.Raw();
 
   for (Attribute::AttrKind I = Attribute::None; I != Attribute::EndAttrKinds;
-       I = Attribute::AttrKind(I + 1)) {
-    if (uint64_t A = (Mask & AttributeImpl::getAttrMask(I))) {
+       I = Attribute::AttrKind(I + 1))
+    if ((Mask & AttributeImpl::getAttrMask(I)) != 0)
       Attrs.insert(I);
 
-      if (I == Attribute::Alignment)
-        Alignment = 1ULL << ((A >> 16) - 1);
-      else if (I == Attribute::StackAlignment)
-        StackAlignment = 1ULL << ((A >> 26)-1);
-    }
-  }
-
+  if (Attr.getAlignment())
+    Alignment = Attr.getAlignment();
+  if (Attr.getStackAlignment())
+    StackAlignment = Attr.getStackAlignment();
   return *this;
 }
 
@@ -601,18 +598,7 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
   // AttributeWithIndexes that then are used to create the AttributeSet.
   if (!B.hasAttributes())
     return AttributeSet();
-
-  uint64_t Mask = 0;
-
-  for (AttrBuilder::iterator I = B.begin(), E = B.end(); I != E; ++I)
-    Mask |= AttributeImpl::getAttrMask(*I);
-
-  Attribute A = Attribute::decodeLLVMAttributesForBitcode(C, Mask);
-  if (B.getAlignment())
-    A.setAlignment(B.getAlignment());
-  if (B.getStackAlignment())
-    A.setStackAlignment(B.getStackAlignment());
-  return get(C, AttributeWithIndex::get(Idx, A));
+  return get(C, AttributeWithIndex::get(Idx, Attribute::get(C, B)));
 }
 
 //===----------------------------------------------------------------------===//
@@ -665,8 +651,6 @@ uint64_t AttributeSet::Raw(unsigned Index) const {
 }
 
 /// getAttributes - The attributes for the specified index are returned.
-/// Attributes for the result are denoted with Idx = 0.  Function attributes are
-/// denoted with Idx = ~0.
 Attribute AttributeSet::getAttributes(unsigned Idx) const {
   if (AttrList == 0) return Attribute();
 
@@ -689,6 +673,11 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
       return true;
 
   return false;
+}
+
+AttributeSet AttributeSet::addAttribute(LLVMContext &C, unsigned Idx,
+                                        Attribute::AttrKind Attr) const {
+  return addAttr(C, Idx, Attribute::get(C, Attr));
 }
 
 AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,

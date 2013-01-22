@@ -333,7 +333,9 @@ CallInst::CallInst(const CallInst &CI)
 
 void CallInst::addAttribute(unsigned i, Attribute attr) {
   AttributeSet PAL = getAttributes();
-  PAL = PAL.addAttr(getContext(), i, attr);
+  AttrBuilder B(attr);
+  PAL = PAL.addAttributes(getContext(), i,
+                          AttributeSet::get(getContext(), i, B));
   setAttributes(PAL);
 }
 
@@ -589,7 +591,9 @@ bool InvokeInst::paramHasAttr(unsigned i, Attribute::AttrKind A) const {
 
 void InvokeInst::addAttribute(unsigned i, Attribute attr) {
   AttributeSet PAL = getAttributes();
-  PAL = PAL.addAttr(getContext(), i, attr);
+  AttrBuilder B(attr);
+  PAL = PAL.addAttributes(getContext(), i,
+                          AttributeSet::get(getContext(), i, B));
   setAttributes(PAL);
 }
 

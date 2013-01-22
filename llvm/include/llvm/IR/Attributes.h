@@ -212,6 +212,11 @@ private:
   /// for the result are denoted with Idx = 0.
   Attribute getAttributes(unsigned Idx) const;
 
+  /// \brief Add the specified attribute at the specified index to this
+  /// attribute list.  Since attribute lists are immutable, this returns the new
+  /// list.
+  AttributeSet addAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
+
   explicit AttributeSet(AttributeSetImpl *LI) : AttrList(LI) {}
 public:
   AttributeSet() : AttrList(0) {}
@@ -226,10 +231,10 @@ public:
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
   static AttributeSet get(LLVMContext &C, unsigned Idx, AttrBuilder &B);
 
-  /// \brief Add the specified attribute at the specified index to this
-  /// attribute list.  Since attribute lists are immutable, this returns the new
-  /// list.
-  AttributeSet addAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
+  /// \brief Add an attribute to the attribute set at the given index. Since
+  /// attribute sets are immutable, this returns a new set.
+  AttributeSet addAttribute(LLVMContext &C, unsigned Idx,
+                            Attribute::AttrKind Attr) const;
 
   /// \brief Add attributes to the attribute set at the given index. Since
   /// attribute sets are immutable, this returns a new set.

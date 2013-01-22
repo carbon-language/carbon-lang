@@ -1914,8 +1914,8 @@ Constant *ObjCARCOpt::getRetainRVCallee(Module *M) {
     Type *Params[] = { I8X };
     FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
     AttributeSet Attribute =
-      AttributeSet().addAttr(M->getContext(), AttributeSet::FunctionIndex,
-                            Attribute::get(C, Attribute::NoUnwind));
+      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
+                                  Attribute::NoUnwind);
     RetainRVCallee =
       M->getOrInsertFunction("objc_retainAutoreleasedReturnValue", FTy,
                              Attribute);
@@ -1930,8 +1930,8 @@ Constant *ObjCARCOpt::getAutoreleaseRVCallee(Module *M) {
     Type *Params[] = { I8X };
     FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
     AttributeSet Attribute =
-      AttributeSet().addAttr(M->getContext(), AttributeSet::FunctionIndex,
-                            Attribute::get(C, Attribute::NoUnwind));
+      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
+                                  Attribute::NoUnwind);
     AutoreleaseRVCallee =
       M->getOrInsertFunction("objc_autoreleaseReturnValue", FTy,
                              Attribute);
@@ -1944,8 +1944,8 @@ Constant *ObjCARCOpt::getReleaseCallee(Module *M) {
     LLVMContext &C = M->getContext();
     Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
     AttributeSet Attribute =
-      AttributeSet().addAttr(M->getContext(), AttributeSet::FunctionIndex,
-                            Attribute::get(C, Attribute::NoUnwind));
+      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
+                                  Attribute::NoUnwind);
     ReleaseCallee =
       M->getOrInsertFunction(
         "objc_release",
@@ -1960,8 +1960,8 @@ Constant *ObjCARCOpt::getRetainCallee(Module *M) {
     LLVMContext &C = M->getContext();
     Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
     AttributeSet Attribute =
-      AttributeSet().addAttr(M->getContext(), AttributeSet::FunctionIndex,
-                            Attribute::get(C, Attribute::NoUnwind));
+      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
+                                  Attribute::NoUnwind);
     RetainCallee =
       M->getOrInsertFunction(
         "objc_retain",
@@ -1991,8 +1991,8 @@ Constant *ObjCARCOpt::getAutoreleaseCallee(Module *M) {
     LLVMContext &C = M->getContext();
     Type *Params[] = { PointerType::getUnqual(Type::getInt8Ty(C)) };
     AttributeSet Attribute =
-      AttributeSet().addAttr(M->getContext(), AttributeSet::FunctionIndex,
-                            Attribute::get(C, Attribute::NoUnwind));
+      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
+                                  Attribute::NoUnwind);
     AutoreleaseCallee =
       M->getOrInsertFunction(
         "objc_autorelease",
@@ -4105,16 +4105,16 @@ Constant *ObjCARCContract::getStoreStrongCallee(Module *M) {
     Type *I8XX = PointerType::getUnqual(I8X);
     Type *Params[] = { I8XX, I8X };
 
-    AttributeSet Attribute = AttributeSet()
-      .addAttr(M->getContext(), AttributeSet::FunctionIndex,
-               Attribute::get(C, Attribute::NoUnwind))
-      .addAttr(M->getContext(), 1, Attribute::get(C, Attribute::NoCapture));
+    AttributeSet Attr = AttributeSet()
+      .addAttribute(M->getContext(), AttributeSet::FunctionIndex,
+                    Attribute::NoUnwind)
+      .addAttribute(M->getContext(), 1, Attribute::NoCapture);
 
     StoreStrongCallee =
       M->getOrInsertFunction(
         "objc_storeStrong",
         FunctionType::get(Type::getVoidTy(C), Params, /*isVarArg=*/false),
-        Attribute);
+        Attr);
   }
   return StoreStrongCallee;
 }
@@ -4126,8 +4126,8 @@ Constant *ObjCARCContract::getRetainAutoreleaseCallee(Module *M) {
     Type *Params[] = { I8X };
     FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
     AttributeSet Attribute =
-      AttributeSet().addAttr(M->getContext(), AttributeSet::FunctionIndex,
-                            Attribute::get(C, Attribute::NoUnwind));
+      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
+                                  Attribute::NoUnwind);
     RetainAutoreleaseCallee =
       M->getOrInsertFunction("objc_retainAutorelease", FTy, Attribute);
   }
@@ -4141,8 +4141,8 @@ Constant *ObjCARCContract::getRetainAutoreleaseRVCallee(Module *M) {
     Type *Params[] = { I8X };
     FunctionType *FTy = FunctionType::get(I8X, Params, /*isVarArg=*/false);
     AttributeSet Attribute =
-      AttributeSet().addAttr(M->getContext(), AttributeSet::FunctionIndex,
-                            Attribute::get(C, Attribute::NoUnwind));
+      AttributeSet().addAttribute(M->getContext(), AttributeSet::FunctionIndex,
+                                  Attribute::NoUnwind);
     RetainAutoreleaseRVCallee =
       M->getOrInsertFunction("objc_retainAutoreleaseReturnValue", FTy,
                              Attribute);
