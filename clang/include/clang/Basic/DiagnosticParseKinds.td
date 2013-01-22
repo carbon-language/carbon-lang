@@ -18,9 +18,6 @@ def w_asm_qualifier_ignored : Warning<"ignored %0 qualifier on asm">,
 def warn_file_asm_volatile : Warning<
   "meaningless 'volatile' on asm outside function">, CatInlineAsm;
 
-def warn_unsupported_msasm : Warning<
-  "MS-style inline assembly is not supported">, InGroup<Microsoft>;
-
 let CategoryName = "Parse Issue" in {
 
 def ext_empty_translation_unit : Extension<
