@@ -830,11 +830,11 @@ __num_get_signed_integral(const char* __a, const char* __a_end,
 {
     if (__a != __a_end)
     {
-        int __save_errno = errno;
+        typename remove_reference<decltype(errno)>::type __save_errno = errno;
         errno = 0;
         char *__p2;
         long long __ll = strtoll_l(__a, &__p2, __base, _LIBCPP_GET_C_LOCALE);
-        int __current_errno = errno;
+        typename remove_reference<decltype(errno)>::type __current_errno = errno;
         if (__current_errno == 0)
             errno = __save_errno;
         if (__p2 != __a_end)
@@ -870,11 +870,11 @@ __num_get_unsigned_integral(const char* __a, const char* __a_end,
             __err = ios_base::failbit;
             return 0;
         }
-        int __save_errno = errno;
+        typename remove_reference<decltype(errno)>::type __save_errno = errno;
         errno = 0;
         char *__p2;
         unsigned long long __ll = strtoull_l(__a, &__p2, __base, _LIBCPP_GET_C_LOCALE);
-        int __current_errno = errno;
+        typename remove_reference<decltype(errno)>::type __current_errno = errno;
         if (__current_errno == 0)
             errno = __save_errno;
         if (__p2 != __a_end)

@@ -31,7 +31,7 @@ stoi(const string& str, size_t* idx, int base)
 {
     char* ptr;
     const char* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     long r = strtol(p, &ptr, base);
     swap(errno, errno_save);
@@ -52,7 +52,7 @@ stoi(const wstring& str, size_t* idx, int base)
 {
     wchar_t* ptr;
     const wchar_t* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     long r = wcstol(p, &ptr, base);
     swap(errno, errno_save);
@@ -73,7 +73,7 @@ stol(const string& str, size_t* idx, int base)
 {
     char* ptr;
     const char* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     long r = strtol(p, &ptr, base);
     swap(errno, errno_save);
@@ -93,7 +93,7 @@ stol(const wstring& str, size_t* idx, int base)
 {
     wchar_t* ptr;
     const wchar_t* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     long r = wcstol(p, &ptr, base);
     swap(errno, errno_save);
@@ -113,7 +113,7 @@ stoul(const string& str, size_t* idx, int base)
 {
     char* ptr;
     const char* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     unsigned long r = strtoul(p, &ptr, base);
     swap(errno, errno_save);
@@ -133,7 +133,7 @@ stoul(const wstring& str, size_t* idx, int base)
 {
     wchar_t* ptr;
     const wchar_t* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     unsigned long r = wcstoul(p, &ptr, base);
     swap(errno, errno_save);
@@ -153,7 +153,7 @@ stoll(const string& str, size_t* idx, int base)
 {
     char* ptr;
     const char* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     long long r = strtoll(p, &ptr, base);
     swap(errno, errno_save);
@@ -173,7 +173,7 @@ stoll(const wstring& str, size_t* idx, int base)
 {
     wchar_t* ptr;
     const wchar_t* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     long long r = wcstoll(p, &ptr, base);
     swap(errno, errno_save);
@@ -193,7 +193,7 @@ stoull(const string& str, size_t* idx, int base)
 {
     char* ptr;
     const char* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     unsigned long long r = strtoull(p, &ptr, base);
     swap(errno, errno_save);
@@ -213,7 +213,7 @@ stoull(const wstring& str, size_t* idx, int base)
 {
     wchar_t* ptr;
     const wchar_t* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     unsigned long long r = wcstoull(p, &ptr, base);
     swap(errno, errno_save);
@@ -233,7 +233,7 @@ stof(const string& str, size_t* idx)
 {
     char* ptr;
     const char* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     float r = strtof(p, &ptr);
     swap(errno, errno_save);
@@ -253,7 +253,7 @@ stof(const wstring& str, size_t* idx)
 {
     wchar_t* ptr;
     const wchar_t* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     float r = wcstof(p, &ptr);
     swap(errno, errno_save);
@@ -273,7 +273,7 @@ stod(const string& str, size_t* idx)
 {
     char* ptr;
     const char* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     double r = strtod(p, &ptr);
     swap(errno, errno_save);
@@ -293,7 +293,7 @@ stod(const wstring& str, size_t* idx)
 {
     wchar_t* ptr;
     const wchar_t* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     double r = wcstod(p, &ptr);
     swap(errno, errno_save);
@@ -313,7 +313,7 @@ stold(const string& str, size_t* idx)
 {
     char* ptr;
     const char* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     long double r = strtold(p, &ptr);
     swap(errno, errno_save);
@@ -333,7 +333,7 @@ stold(const wstring& str, size_t* idx)
 {
     wchar_t* ptr;
     const wchar_t* const p = str.c_str();
-    int errno_save = errno;
+    typename remove_reference<decltype(errno)>::type errno_save = errno;
     errno = 0;
     long double r = wcstold(p, &ptr);
     swap(errno, errno_save);
