@@ -736,7 +736,7 @@ bool CallAnalyzer::visitCallSite(CallSite CS) {
       return false;
     }
 
-    if (!callIsSmall(CS)) {
+    if (TTI.isLoweredToCall(F)) {
       // We account for the average 1 instruction per call argument setup
       // here.
       Cost += CS.arg_size() * InlineConstants::InstrCost;

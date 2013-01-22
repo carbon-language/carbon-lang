@@ -58,6 +58,7 @@
 #include "llvm/Analysis/InlineCost.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/Loads.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/Function.h"
@@ -79,10 +80,14 @@ STATISTIC(NumAccumAdded, "Number of accumulators introduced");
 
 namespace {
   struct TailCallElim : public FunctionPass {
+    const TargetTransformInfo *TTI;
+
     static char ID; // Pass identification, replacement for typeid
     TailCallElim() : FunctionPass(ID) {
       initializeTailCallElimPass(*PassRegistry::getPassRegistry());
     }
+
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
     virtual bool runOnFunction(Function &F);
 
@@ -109,12 +114,19 @@ namespace {
 }
 
 char TailCallElim::ID = 0;
-INITIALIZE_PASS(TailCallElim, "tailcallelim",
-                "Tail Call Elimination", false, false)
+INITIALIZE_PASS_BEGIN(TailCallElim, "tailcallelim",
+                      "Tail Call Elimination", false, false)
+INITIALIZE_AG_DEPENDENCY(TargetTransformInfo)
+INITIALIZE_PASS_END(TailCallElim, "tailcallelim",
+                    "Tail Call Elimination", false, false)
 
 // Public interface to the TailCallElimination pass
 FunctionPass *llvm::createTailCallEliminationPass() {
   return new TailCallElim();
+}
+
+void TailCallElim::getAnalysisUsage(AnalysisUsage &AU) const {
+  AU.addRequired<TargetTransformInfo>();
 }
 
 /// AllocaMightEscapeToCalls - Return true if this alloca may be accessed by
@@ -151,6 +163,7 @@ bool TailCallElim::runOnFunction(Function &F) {
   // right, so don't even try to convert it...
   if (F.getFunctionType()->isVarArg()) return false;
 
+  TTI = &getAnalysis<TargetTransformInfo>();
   BasicBlock *OldEntry = 0;
   bool TailCallsAreMarkedTail = false;
   SmallVector<PHINode*, 8> ArgumentPHIs;
@@ -391,7 +404,8 @@ TailCallElim::FindTRECandidate(Instruction *TI,
   if (BB == &F->getEntryBlock() &&
       FirstNonDbg(BB->front()) == CI &&
       FirstNonDbg(llvm::next(BB->begin())) == TI &&
-      callIsSmall(CI)) {
+      CI->getCalledFunction() &&
+      !TTI->isLoweredToCall(CI->getCalledFunction())) {
     // A single-block function with just a call and a return. Check that
     // the arguments match.
     CallSite::arg_iterator I = CallSite(CI).arg_begin(),

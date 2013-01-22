@@ -117,6 +117,41 @@ public:
   virtual unsigned getGEPCost(const Value *Ptr,
                               ArrayRef<const Value *> Operands) const;
 
+  /// \brief Estimate the cost of a function call when lowered.
+  ///
+  /// The contract for this is the same as \c getOperationCost except that it
+  /// supports an interface that provides extra information specific to call
+  /// instructions.
+  ///
+  /// This is the most basic query for estimating call cost: it only knows the
+  /// function type and (potentially) the number of arguments at the call site.
+  /// The latter is only interesting for varargs function types.
+  virtual unsigned getCallCost(FunctionType *FTy, int NumArgs = -1) const;
+
+  /// \brief Estimate the cost of calling a specific function when lowered.
+  ///
+  /// This overload adds the ability to reason about the particular function
+  /// being called in the event it is a library call with special lowering.
+  virtual unsigned getCallCost(const Function *F, int NumArgs = -1) const;
+
+  /// \brief Estimate the cost of calling a specific function when lowered.
+  ///
+  /// This overload allows specifying a set of candidate argument values.
+  virtual unsigned getCallCost(const Function *F,
+                               ArrayRef<const Value *> Arguments) const;
+
+  /// \brief Estimate the cost of an intrinsic when lowered.
+  ///
+  /// Mirrors the \c getCallCost method but uses an intrinsic identifier.
+  virtual unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                                    ArrayRef<Type *> ParamTys) const;
+
+  /// \brief Estimate the cost of an intrinsic when lowered.
+  ///
+  /// Mirrors the \c getCallCost method but uses an intrinsic identifier.
+  virtual unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                                    ArrayRef<const Value *> Arguments) const;
+
   /// \brief Estimate the cost of a given IR user when lowered.
   ///
   /// This can estimate the cost of either a ConstantExpr or Instruction when
@@ -133,6 +168,20 @@ public:
   /// The returned cost is defined in terms of \c TargetCostConstants, see its
   /// comments for a detailed explanation of the cost values.
   virtual unsigned getUserCost(const User *U) const;
+
+  /// \brief Test whether calls to a function lower to actual program function
+  /// calls.
+  ///
+  /// The idea is to test whether the program is likely to require a 'call'
+  /// instruction or equivalent in order to call the given function.
+  ///
+  /// FIXME: It's not clear that this is a good or useful query API. Client's
+  /// should probably move to simpler cost metrics using the above.
+  /// Alternatively, we could split the cost interface into distinct code-size
+  /// and execution-speed costs. This would allow modelling the core of this
+  /// query more accurately as the a call is a single small instruction, but
+  /// incurs significant execution cost.
+  virtual bool isLoweredToCall(const Function *F) const;
 
   /// @}
 

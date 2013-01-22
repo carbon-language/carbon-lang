@@ -14,6 +14,7 @@
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/IntrinsicInst.h"
 #include "llvm/IR/Instructions.h"
+#include "llvm/Support/CallSite.h"
 #include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
@@ -58,8 +59,37 @@ unsigned TargetTransformInfo::getGEPCost(
   return PrevTTI->getGEPCost(Ptr, Operands);
 }
 
+unsigned TargetTransformInfo::getCallCost(FunctionType *FTy,
+                                          int NumArgs) const {
+  return PrevTTI->getCallCost(FTy, NumArgs);
+}
+
+unsigned TargetTransformInfo::getCallCost(const Function *F,
+                                          int NumArgs) const {
+  return PrevTTI->getCallCost(F, NumArgs);
+}
+
+unsigned TargetTransformInfo::getCallCost(
+    const Function *F, ArrayRef<const Value *> Arguments) const {
+  return PrevTTI->getCallCost(F, Arguments);
+}
+
+unsigned TargetTransformInfo::getIntrinsicCost(
+    Intrinsic::ID IID, Type *RetTy, ArrayRef<Type *> ParamTys) const {
+  return PrevTTI->getIntrinsicCost(IID, RetTy, ParamTys);
+}
+
+unsigned TargetTransformInfo::getIntrinsicCost(
+    Intrinsic::ID IID, Type *RetTy, ArrayRef<const Value *> Arguments) const {
+  return PrevTTI->getIntrinsicCost(IID, RetTy, Arguments);
+}
+
 unsigned TargetTransformInfo::getUserCost(const User *U) const {
   return PrevTTI->getUserCost(U);
+}
+
+bool TargetTransformInfo::isLoweredToCall(const Function *F) const {
+  return PrevTTI->isLoweredToCall(F);
 }
 
 bool TargetTransformInfo::isLegalAddImmediate(int64_t Imm) const {
@@ -179,6 +209,7 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
   virtual void initializePass() {
     // Note that this subclass is special, and must *not* call initializeTTI as
     // it does not chain.
+    TopTTI = this;
     PrevTTI = 0;
     DL = getAnalysisIfAvailable<DataLayout>();
   }
@@ -257,6 +288,84 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
     return TCC_Free;
   }
 
+  unsigned getCallCost(FunctionType *FTy, int NumArgs = -1) const {
+    assert(FTy && "FunctionType must be provided to this routine.");
+
+    // The target-independent implementation just measures the size of the
+    // function by approximating that each argument will take on average one
+    // instruction to prepare.
+
+    if (NumArgs < 0)
+      // Set the argument number to the number of explicit arguments in the
+      // function.
+      NumArgs = FTy->getNumParams();
+
+    return TCC_Basic * (NumArgs + 1);
+  }
+
+  unsigned getCallCost(const Function *F, int NumArgs = -1) const {
+    assert(F && "A concrete function must be provided to this routine.");
+
+    if (NumArgs < 0)
+      // Set the argument number to the number of explicit arguments in the
+      // function.
+      NumArgs = F->arg_size();
+
+    if (Intrinsic::ID IID = (Intrinsic::ID)F->getIntrinsicID()) {
+      FunctionType *FTy = F->getFunctionType();
+      SmallVector<Type *, 8> ParamTys(FTy->param_begin(), FTy->param_end());
+      return TopTTI->getIntrinsicCost(IID, FTy->getReturnType(), ParamTys);
+    }
+
+    if (!TopTTI->isLoweredToCall(F))
+      return TCC_Basic; // Give a basic cost if it will be lowered directly.
+
+    return TopTTI->getCallCost(F->getFunctionType(), NumArgs);
+  }
+
+  unsigned getCallCost(const Function *F,
+                       ArrayRef<const Value *> Arguments) const {
+    // Simply delegate to generic handling of the call.
+    // FIXME: We should use instsimplify or something else to catch calls which
+    // will constant fold with these arguments.
+    return TopTTI->getCallCost(F, Arguments.size());
+  }
+
+  unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                            ArrayRef<Type *> ParamTys) const {
+    switch (IID) {
+    default:
+      // Intrinsics rarely (if ever) have normal argument setup constraints.
+      // Model them as having a basic instruction cost.
+      // FIXME: This is wrong for libc intrinsics.
+      return TCC_Basic;
+
+    case Intrinsic::dbg_declare:
+    case Intrinsic::dbg_value:
+    case Intrinsic::invariant_start:
+    case Intrinsic::invariant_end:
+    case Intrinsic::lifetime_start:
+    case Intrinsic::lifetime_end:
+    case Intrinsic::objectsize:
+    case Intrinsic::ptr_annotation:
+    case Intrinsic::var_annotation:
+      // These intrinsics don't actually represent code after lowering.
+      return TCC_Free;
+    }
+  }
+
+  unsigned getIntrinsicCost(Intrinsic::ID IID, Type *RetTy,
+                            ArrayRef<const Value *> Arguments) const {
+    // Delegate to the generic intrinsic handling code. This mostly provides an
+    // opportunity for targets to (for example) special case the cost of
+    // certain intrinsics based on constants used as arguments.
+    SmallVector<Type *, 8> ParamTys;
+    ParamTys.reserve(Arguments.size());
+    for (unsigned Idx = 0, Size = Arguments.size(); Idx != Size; ++Idx)
+      ParamTys.push_back(Arguments[Idx]->getType());
+    return TopTTI->getIntrinsicCost(IID, RetTy, ParamTys);
+  }
+
   unsigned getUserCost(const User *U) const {
     if (isa<PHINode>(U))
       return TCC_Free; // Model all PHI nodes as free.
@@ -266,25 +375,21 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
       // folded into their uses via addressing modes.
       return GEP->hasAllConstantIndices() ? TCC_Free : TCC_Basic;
 
-    // If we have a call of an intrinsic we can provide more detailed analysis
-    // by inspecting the particular intrinsic called.
-    // FIXME: Hoist this out into a getIntrinsicCost routine.
-    if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(U)) {
-      switch (II->getIntrinsicID()) {
-      default:
-        return TCC_Basic;
-      case Intrinsic::dbg_declare:
-      case Intrinsic::dbg_value:
-      case Intrinsic::invariant_start:
-      case Intrinsic::invariant_end:
-      case Intrinsic::lifetime_start:
-      case Intrinsic::lifetime_end:
-      case Intrinsic::objectsize:
-      case Intrinsic::ptr_annotation:
-      case Intrinsic::var_annotation:
-        // These intrinsics don't count as size.
-        return TCC_Free;
+    if (ImmutableCallSite CS = U) {
+      const Function *F = CS.getCalledFunction();
+      if (!F) {
+        // Just use the called value type.
+        Type *FTy = CS.getCalledValue()->getType()->getPointerElementType();
+        return TopTTI->getCallCost(cast<FunctionType>(FTy), CS.arg_size());
       }
+
+      SmallVector<const Value *, 8> Arguments;
+      for (ImmutableCallSite::arg_iterator AI = CS.arg_begin(),
+                                           AE = CS.arg_end();
+           AI != AE; ++AI)
+        Arguments.push_back(*AI);
+
+      return TopTTI->getCallCost(F, Arguments);
     }
 
     if (const CastInst *CI = dyn_cast<CastInst>(U)) {
@@ -299,6 +404,37 @@ struct NoTTI : ImmutablePass, TargetTransformInfo {
     return getOperationCost(Operator::getOpcode(U), U->getType(),
                             U->getNumOperands() == 1 ?
                                 U->getOperand(0)->getType() : 0);
+  }
+
+  bool isLoweredToCall(const Function *F) const {
+    // FIXME: These should almost certainly not be handled here, and instead
+    // handled with the help of TLI or the target itself. This was largely
+    // ported from existing analysis heuristics here so that such refactorings
+    // can take place in the future.
+
+    if (F->isIntrinsic())
+      return false;
+
+    if (F->hasLocalLinkage() || !F->hasName())
+      return true;
+
+    StringRef Name = F->getName();
+
+    // These will all likely lower to a single selection DAG node.
+    if (Name == "copysign" || Name == "copysignf" || Name == "copysignl" ||
+        Name == "fabs" || Name == "fabsf" || Name == "fabsl" || Name == "sin" ||
+        Name == "sinf" || Name == "sinl" || Name == "cos" || Name == "cosf" ||
+        Name == "cosl" || Name == "sqrt" || Name == "sqrtf" || Name == "sqrtl")
+      return false;
+
+    // These are all likely to be optimized into something smaller.
+    if (Name == "pow" || Name == "powf" || Name == "powl" || Name == "exp2" ||
+        Name == "exp2l" || Name == "exp2f" || Name == "floor" || Name ==
+        "floorf" || Name == "ceil" || Name == "round" || Name == "ffs" ||
+        Name == "ffsl" || Name == "abs" || Name == "labs" || Name == "llabs")
+      return false;
+
+    return true;
   }
 
   bool isLegalAddImmediate(int64_t Imm) const {

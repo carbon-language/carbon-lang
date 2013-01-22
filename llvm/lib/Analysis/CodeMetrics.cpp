@@ -20,41 +20,6 @@
 
 using namespace llvm;
 
-/// callIsSmall - If a call is likely to lower to a single target instruction,
-/// or is otherwise deemed small return true.
-/// TODO: Perhaps calls like memcpy, strcpy, etc?
-bool llvm::callIsSmall(ImmutableCallSite CS) {
-  if (isa<IntrinsicInst>(CS.getInstruction()))
-    return true;
-
-  const Function *F = CS.getCalledFunction();
-  if (!F) return false;
-
-  if (F->hasLocalLinkage()) return false;
-
-  if (!F->hasName()) return false;
-
-  StringRef Name = F->getName();
-
-  // These will all likely lower to a single selection DAG node.
-  if (Name == "copysign" || Name == "copysignf" || Name == "copysignl" ||
-      Name == "fabs" || Name == "fabsf" || Name == "fabsl" ||
-      Name == "sin" || Name == "sinf" || Name == "sinl" ||
-      Name == "cos" || Name == "cosf" || Name == "cosl" ||
-      Name == "sqrt" || Name == "sqrtf" || Name == "sqrtl" )
-    return true;
-
-  // These are all likely to be optimized into something smaller.
-  if (Name == "pow" || Name == "powf" || Name == "powl" ||
-      Name == "exp2" || Name == "exp2l" || Name == "exp2f" ||
-      Name == "floor" || Name == "floorf" || Name == "ceil" ||
-      Name == "round" || Name == "ffs" || Name == "ffsl" ||
-      Name == "abs" || Name == "labs" || Name == "llabs")
-    return true;
-
-  return false;
-}
-
 /// analyzeBasicBlock - Fill in the current structure with information gleaned
 /// from the specified block.
 void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
@@ -63,9 +28,6 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
   unsigned NumInstsBeforeThisBB = NumInsts;
   for (BasicBlock::const_iterator II = BB->begin(), E = BB->end();
        II != E; ++II) {
-    if (TargetTransformInfo::TCC_Free == TTI.getUserCost(&*II))
-      continue;
-
     // Special handling for calls.
     if (isa<CallInst>(II) || isa<InvokeInst>(II)) {
       ImmutableCallSite CS(cast<Instruction>(II));
@@ -83,12 +45,10 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
         // for that case.
         if (F == BB->getParent())
           isRecursive = true;
-      }
 
-      if (!callIsSmall(CS)) {
-        // Each argument to a call takes on average one instruction to set up.
-        NumInsts += CS.arg_size();
-
+        if (TTI.isLoweredToCall(F))
+          ++NumCalls;
+      } else {
         // We don't want inline asm to count as a call - that would prevent loop
         // unrolling. The argument setup cost is still real, though.
         if (!isa<InlineAsm>(CS.getCalledValue()))
@@ -112,7 +72,7 @@ void CodeMetrics::analyzeBasicBlock(const BasicBlock *BB,
       if (InvI->hasFnAttr(Attribute::NoDuplicate))
         notDuplicatable = true;
 
-    ++NumInsts;
+    NumInsts += TTI.getUserCost(&*II);
   }
 
   if (isa<ReturnInst>(BB->getTerminator()))
