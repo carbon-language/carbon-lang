@@ -379,9 +379,7 @@ struct ConstModifier: public Modifier {
         RandomBits[i] = Ran->Rand64();
 
       APInt RandomInt(Ty->getPrimitiveSizeInBits(), makeArrayRef(RandomBits));
-
-      bool isIEEE = !Ty->isX86_FP80Ty() && !Ty->isPPC_FP128Ty();
-      APFloat RandomFloat(RandomInt, isIEEE);
+      APFloat RandomFloat(Ty->getFltSemantics(), RandomInt);
 
       if (Ran->Rand() & 1)
         return PT->push_back(ConstantFP::getNullValue(Ty));
