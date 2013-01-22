@@ -237,6 +237,8 @@ private:
   void EatToEndOfLine();
   bool ParseCppHashLineFilenameComment(const SMLoc &L);
 
+  void CheckForBadMacro(SMLoc DirectiveLoc, StringRef Name, StringRef Body,
+                        MCAsmMacroParameters Parameters);
   bool expandMacro(raw_svector_ostream &OS, StringRef Body,
                    const MCAsmMacroParameters &Parameters,
                    const MCAsmMacroArguments &A,
@@ -3044,8 +3046,110 @@ bool AsmParser::ParseDirectiveMacro(SMLoc DirectiveLoc) {
   const char *BodyStart = StartToken.getLoc().getPointer();
   const char *BodyEnd = EndToken.getLoc().getPointer();
   StringRef Body = StringRef(BodyStart, BodyEnd - BodyStart);
+  CheckForBadMacro(DirectiveLoc, Name, Body, Parameters);
   DefineMacro(Name, MCAsmMacro(Name, Body, Parameters));
   return false;
+}
+
+/// CheckForBadMacro
+///
+/// With the support added for named parameters there may be code out there that
+/// is transitioning from positional parameters.  In versions of gas that did
+/// not support named parameters they would be ignored on the macro defintion.
+/// But to support both styles of parameters this is not possible so if a macro
+/// defintion has named parameters but does not use them and has what appears
+/// to be positional parameters, strings like $1, $2, ... and $n, then issue a
+/// warning that the positional parameter found in body which have no effect.
+/// Hoping the developer will either remove the named parameters from the macro
+/// definiton so the positional parameters get used if that was what was
+/// intended or change the macro to use the named parameters.  It is possible
+/// this warning will trigger when the none of the named parameters are used
+/// and the strings like $1 are infact to simply to be passed trough unchanged.
+void AsmParser::CheckForBadMacro(SMLoc DirectiveLoc, StringRef Name,
+                                 StringRef Body,
+                                 MCAsmMacroParameters Parameters) {
+  // If this macro is not defined with named parameters the warning we are
+  // checking for here doesn't apply.
+  unsigned NParameters = Parameters.size();
+  if (NParameters == 0)
+    return;
+
+  bool NamedParametersFound = false;
+  bool PositionalParametersFound = false;
+
+  // Look at the body of the macro for use of both the named parameters and what
+  // are likely to be positional parameters.  This is what expandMacro() is
+  // doing when it finds the parameters in the body.
+  while (!Body.empty()) {
+    // Scan for the next possible parameter.
+    std::size_t End = Body.size(), Pos = 0;
+    for (; Pos != End; ++Pos) {
+      // Check for a substitution or escape.
+      // This macro is defined with parameters, look for \foo, \bar, etc.
+      if (Body[Pos] == '\\' && Pos + 1 != End)
+        break;
+
+      // This macro should have parameters, but look for $0, $1, ..., $n too.
+      if (Body[Pos] != '$' || Pos + 1 == End)
+        continue;
+      char Next = Body[Pos + 1];
+      if (Next == '$' || Next == 'n' || isdigit(Next))
+        break;
+    }
+
+    // Check if we reached the end.
+    if (Pos == End)
+      break;
+
+    if (Body[Pos] == '$') {
+      switch (Body[Pos+1]) {
+        // $$ => $
+      case '$':
+        break;
+
+        // $n => number of arguments
+      case 'n':
+        PositionalParametersFound = true;
+        break;
+
+        // $[0-9] => argument
+      default: {
+        PositionalParametersFound = true;
+        break;
+        }
+      }
+      Pos += 2;
+    } else {
+      unsigned I = Pos + 1;
+      while (isIdentifierChar(Body[I]) && I + 1 != End)
+        ++I;
+
+      const char *Begin = Body.data() + Pos +1;
+      StringRef Argument(Begin, I - (Pos +1));
+      unsigned Index = 0;
+      for (; Index < NParameters; ++Index)
+        if (Parameters[Index].first == Argument)
+          break;
+
+      if (Index == NParameters) {
+          if (Body[Pos+1] == '(' && Body[Pos+2] == ')')
+            Pos += 3;
+          else {
+            Pos = I;
+          }
+      } else {
+        NamedParametersFound = true;
+        Pos += 1 + Argument.size();
+      }
+    }
+    // Update the scan point.
+    Body = Body.substr(Pos);
+  }
+
+  if (!NamedParametersFound && PositionalParametersFound)
+    Warning(DirectiveLoc, "macro defined with named parameters which are not "
+                          "used in macro body, possible positional parameter "
+                          "found in body which will have no effect");
 }
 
 /// ParseDirectiveEndMacro
