@@ -7,10 +7,13 @@ class P {
 };
 
 namespace foo {
-class A {};
+class A { public: A() {} };
 enum B {};
 typedef int C;
 }
+
+// CHECK: VarDecl {{0x[0-9a-fA-F]+}} <line:16:1, col:36> ImplicitConstrArray 'foo::A [2]'
+static foo::A ImplicitConstrArray[2];
 
 int main() {
   // CHECK: CXXNewExpr {{0x[0-9a-fA-F]+}} <col:19, col:28> 'foo::A *'

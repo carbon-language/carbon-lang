@@ -1206,7 +1206,9 @@ void VarDecl::setStorageClass(StorageClass SC) {
 SourceRange VarDecl::getSourceRange() const {
   if (const Expr *Init = getInit()) {
     SourceLocation InitEnd = Init->getLocEnd();
-    if (InitEnd.isValid())
+    // If Init is implicit, ignore its source range and fallback on 
+    // DeclaratorDecl::getSourceRange() to handle postfix elements.
+    if (InitEnd.isValid() && InitEnd != getLocation())
       return SourceRange(getOuterLocStart(), InitEnd);
   }
   return DeclaratorDecl::getSourceRange();
