@@ -128,6 +128,16 @@ set_target_properties(AsanUnitTests PROPERTIES FOLDER "ASan unit tests")
 add_custom_target(AsanBenchmarks)
 set_target_properties(AsanBenchmarks PROPERTIES FOLDER "Asan benchmarks")
 
+set(ASAN_NOINST_TEST_SOURCES
+  asan_noinst_test.cc
+  asan_test_main.cc)
+set(ASAN_INST_TEST_SOURCES
+  asan_globals_test.cc
+  asan_test.cc
+  asan_oob_test.cc
+  asan_mem_test.cc
+  asan_str_test.cc)
+
 # Adds ASan unit tests and benchmarks for architecture.
 macro(add_asan_tests_for_arch arch)
   # Build gtest instrumented with ASan.
@@ -136,16 +146,11 @@ macro(add_asan_tests_for_arch arch)
                                ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
   # Instrumented tests.
   set(ASAN_INST_TEST_OBJECTS)
-  asan_compile(ASAN_INST_TEST_OBJECTS asan_globals_test.cc ${arch}
-               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
-  asan_compile(ASAN_INST_TEST_OBJECTS asan_test.cc ${arch}
-               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
-  asan_compile(ASAN_INST_TEST_OBJECTS asan_oob_test.cc ${arch}
-               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
-  asan_compile(ASAN_INST_TEST_OBJECTS asan_mem_test.cc ${arch}
-               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
-  asan_compile(ASAN_INST_TEST_OBJECTS asan_str_test.cc ${arch}
-               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+  foreach(src ${ASAN_INST_TEST_SOURCES})
+    asan_compile(ASAN_INST_TEST_OBJECTS ${src} ${arch}
+                 ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+  endforeach()
+  # Add Mac-specific tests.
   if (APPLE)
     asan_compile(ASAN_INST_TEST_OBJECTS asan_mac_test.cc ${arch}
                  ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
@@ -154,10 +159,10 @@ macro(add_asan_tests_for_arch arch)
   endif()
   # Uninstrumented tests.
   set(ASAN_NOINST_TEST_OBJECTS)
-  asan_compile(ASAN_NOINST_TEST_OBJECTS asan_noinst_test.cc ${arch}
-               ${ASAN_UNITTEST_COMMON_CFLAGS})
-  asan_compile(ASAN_NOINST_TEST_OBJECTS asan_test_main.cc ${arch}
-               ${ASAN_UNITTEST_COMMON_CFLAGS})
+  foreach(src ${ASAN_NOINST_TEST_SOURCES})
+    asan_compile(ASAN_NOINST_TEST_OBJECTS ${src} ${arch}
+                 ${ASAN_UNITTEST_COMMON_CFLAGS})
+  endforeach()
   # Link everything together.
   add_asan_test(AsanUnitTests "Asan-${arch}-Test" ${arch}
                 ${ASAN_NOINST_TEST_OBJECTS}
@@ -181,9 +186,6 @@ endif()
 if(ANDROID)
   # We assume that unit tests on Android are built in a build
   # tree with fresh Clang as a host compiler.
-  set(ASAN_NOINST_TEST_SOURCES asan_noinst_test.cc asan_test_main.cc)
-  set(ASAN_INST_TEST_SOURCES asan_globals_test.cc asan_test.cc
-    asan_oob_test.cc asan_mem_test.cc asan_str_test.cc)
   add_library(asan_noinst_test OBJECT ${ASAN_NOINST_TEST_SOURCES})
   set_target_compile_flags(asan_noinst_test ${ASAN_UNITTEST_COMMON_CFLAGS})
   add_library(asan_inst_test OBJECT
