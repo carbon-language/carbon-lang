@@ -53,15 +53,22 @@ typedef   signed long long S8;  // NOLINT
 #define NOINLINE      __attribute__((noinline))
 #define INLINE      __attribute__((always_inline))
 
+static bool TrackingOrigins() {
+  S8 x;
+  __msan_set_origin(&x, sizeof(x), 0x1234);
+  u32 origin = __msan_get_origin(&x);
+  __msan_set_origin(&x, sizeof(x), 0);
+  return origin == 0x1234;
+}
 
-#define EXPECT_POISONED(action) \
+#define EXPECT_UMR(action) \
     do {                        \
       __msan_set_expect_umr(1); \
       action;                   \
       __msan_set_expect_umr(0); \
     } while (0)
 
-#define EXPECT_POISONED_O(action, origin) \
+#define EXPECT_UMR_O(action, origin) \
     do {                                            \
       __msan_set_expect_umr(1);                     \
       action;                                       \
@@ -70,7 +77,7 @@ typedef   signed long long S8;  // NOLINT
         EXPECT_EQ(origin, __msan_get_origin_tls()); \
     } while (0)
 
-#define EXPECT_POISONED_S(action, stack_origin) \
+#define EXPECT_UMR_S(action, stack_origin) \
     do {                                            \
       __msan_set_expect_umr(1);                     \
       action;                                       \
@@ -84,6 +91,44 @@ typedef   signed long long S8;  // NOLINT
       }                                             \
     } while (0)
 
+#define EXPECT_POISONED(x) ExpectPoisoned(x)
+
+template<typename T>
+void ExpectPoisoned(const T& t) {
+  EXPECT_NE(-1, __msan_test_shadow((void*)&t, sizeof(t)));
+}
+
+#define EXPECT_POISONED_O(x, origin) \
+  ExpectPoisonedWithOrigin(x, origin)
+
+template<typename T>
+void ExpectPoisonedWithOrigin(const T& t, unsigned origin) {
+  EXPECT_NE(-1, __msan_test_shadow((void*)&t, sizeof(t)));
+  if (TrackingOrigins())
+    EXPECT_EQ(origin, __msan_get_origin((void*)&t));
+}
+
+#define EXPECT_POISONED_S(x, stack_origin) \
+  ExpectPoisonedWithStackOrigin(x, stack_origin)
+
+template<typename T>
+void ExpectPoisonedWithStackOrigin(const T& t, const char *stack_origin) {
+  EXPECT_NE(-1, __msan_test_shadow((void*)&t, sizeof(t)));
+  u32 id = __msan_get_origin((void*)&t);
+  const char *str = __msan_get_origin_descr_if_stack(id);
+  if (!str || strcmp(str, stack_origin)) {
+    fprintf(stderr, "EXPECT_POISONED_S: id=%u %s, %s",
+        id, stack_origin, str);
+    EXPECT_EQ(1, 0);
+  }
+}
+
+#define EXPECT_NOT_POISONED(x) ExpectNotPoisoned(x)
+
+template<typename T>
+void ExpectNotPoisoned(const T& t) {
+  EXPECT_EQ(-1, __msan_test_shadow((void*)&t, sizeof(t)));
+}
 
 static U8 poisoned_array[100];
 template<class T>
@@ -112,34 +157,12 @@ static T Ident(T t) {
   return ret;
 }
 
-static bool TrackingOrigins() {
-  S8 x;
-  __msan_set_origin(&x, sizeof(x), 0x1234);
-  u32 origin = __msan_get_origin(&x);
-  __msan_set_origin(&x, sizeof(x), 0);
-  return origin == 0x1234;
-}
-
 template<class T> NOINLINE T ReturnPoisoned() { return *GetPoisoned<T>(); }
 
-static volatile S1 v_s1;
-static volatile S2 v_s2;
-static volatile S4 v_s4;
-static volatile S8 v_s8;
-static volatile U1 v_u1;
-static volatile U2 v_u2;
-static volatile U4 v_u4;
-static volatile U8 v_u8;
-static void* volatile v_p;
-static volatile double v_d;
 static volatile int g_one = 1;
 static volatile int g_zero = 0;
 static volatile int g_0 = 0;
 static volatile int g_1 = 1;
-
-#if MSAN_HAS_M128
-static volatile __m128i v_m128;
-#endif
 
 S4 a_s4[100];
 S8 a_s8[100];
@@ -148,45 +171,45 @@ TEST(MemorySanitizer, NegativeTest1) {
   S4 *x = GetPoisoned<S4>();
   if (g_one)
     *x = 0;
-  v_s4 = *x;
+  EXPECT_NOT_POISONED(*x);
 }
 
 TEST(MemorySanitizer, PositiveTest1) {
   // Load to store.
-  EXPECT_POISONED(v_s1 = *GetPoisoned<S1>());
-  EXPECT_POISONED(v_s2 = *GetPoisoned<S2>());
-  EXPECT_POISONED(v_s4 = *GetPoisoned<S4>());
-  EXPECT_POISONED(v_s8 = *GetPoisoned<S8>());
+  EXPECT_POISONED(*GetPoisoned<S1>());
+  EXPECT_POISONED(*GetPoisoned<S2>());
+  EXPECT_POISONED(*GetPoisoned<S4>());
+  EXPECT_POISONED(*GetPoisoned<S8>());
 
   // S->S conversions.
-  EXPECT_POISONED(v_s2 = *GetPoisoned<S1>());
-  EXPECT_POISONED(v_s4 = *GetPoisoned<S1>());
-  EXPECT_POISONED(v_s8 = *GetPoisoned<S1>());
+  EXPECT_POISONED(*GetPoisoned<S1>());
+  EXPECT_POISONED(*GetPoisoned<S1>());
+  EXPECT_POISONED(*GetPoisoned<S1>());
 
-  EXPECT_POISONED(v_s1 = *GetPoisoned<S2>());
-  EXPECT_POISONED(v_s4 = *GetPoisoned<S2>());
-  EXPECT_POISONED(v_s8 = *GetPoisoned<S2>());
+  EXPECT_POISONED(*GetPoisoned<S2>());
+  EXPECT_POISONED(*GetPoisoned<S2>());
+  EXPECT_POISONED(*GetPoisoned<S2>());
 
-  EXPECT_POISONED(v_s1 = *GetPoisoned<S4>());
-  EXPECT_POISONED(v_s2 = *GetPoisoned<S4>());
-  EXPECT_POISONED(v_s8 = *GetPoisoned<S4>());
+  EXPECT_POISONED(*GetPoisoned<S4>());
+  EXPECT_POISONED(*GetPoisoned<S4>());
+  EXPECT_POISONED(*GetPoisoned<S4>());
 
-  EXPECT_POISONED(v_s1 = *GetPoisoned<S8>());
-  EXPECT_POISONED(v_s2 = *GetPoisoned<S8>());
-  EXPECT_POISONED(v_s4 = *GetPoisoned<S8>());
+  EXPECT_POISONED(*GetPoisoned<S8>());
+  EXPECT_POISONED(*GetPoisoned<S8>());
+  EXPECT_POISONED(*GetPoisoned<S8>());
 
   // ZExt
-  EXPECT_POISONED(v_s2 = *GetPoisoned<U1>());
-  EXPECT_POISONED(v_s4 = *GetPoisoned<U1>());
-  EXPECT_POISONED(v_s8 = *GetPoisoned<U1>());
-  EXPECT_POISONED(v_s4 = *GetPoisoned<U2>());
-  EXPECT_POISONED(v_s8 = *GetPoisoned<U2>());
-  EXPECT_POISONED(v_s8 = *GetPoisoned<U4>());
+  EXPECT_POISONED(*GetPoisoned<U1>());
+  EXPECT_POISONED(*GetPoisoned<U1>());
+  EXPECT_POISONED(*GetPoisoned<U1>());
+  EXPECT_POISONED(*GetPoisoned<U2>());
+  EXPECT_POISONED(*GetPoisoned<U2>());
+  EXPECT_POISONED(*GetPoisoned<U4>());
 
   // Unary ops.
-  EXPECT_POISONED(v_s4 = - *GetPoisoned<S4>());
+  EXPECT_POISONED(- *GetPoisoned<S4>());
 
-  EXPECT_POISONED(a_s4[g_zero] = 100 / *GetPoisoned<S4>(0, 1));
+  EXPECT_UMR(a_s4[g_zero] = 100 / *GetPoisoned<S4>(0, 1));
 
 
   a_s4[g_zero] = 1 - *GetPoisoned<S4>();
@@ -201,19 +224,19 @@ TEST(MemorySanitizer, Phi1) {
     __msan_break_optimization(0);
     c = 0;
   }
-  EXPECT_POISONED(v_s4 = c);
+  EXPECT_POISONED(c);
 }
 
 TEST(MemorySanitizer, Phi2) {
   S4 i = *GetPoisoned<S4>();
   S4 n = g_one;
-  EXPECT_POISONED(for (; i < g_one; i++););
-  EXPECT_POISONED(v_s4 = i);
+  EXPECT_UMR(for (; i < g_one; i++););
+  EXPECT_POISONED(i);
 }
 
-NOINLINE void Arg1ExpectUMR(S4 a1) { EXPECT_POISONED(v_s4 = a1); }
-NOINLINE void Arg2ExpectUMR(S4 a1, S4 a2) { EXPECT_POISONED(v_s4 = a2); }
-NOINLINE void Arg3ExpectUMR(S1 a1, S4 a2, S8 a3) { EXPECT_POISONED(v_s8 = a3); }
+NOINLINE void Arg1ExpectUMR(S4 a1) { EXPECT_POISONED(a1); }
+NOINLINE void Arg2ExpectUMR(S4 a1, S4 a2) { EXPECT_POISONED(a2); }
+NOINLINE void Arg3ExpectUMR(S1 a1, S4 a2, S8 a3) { EXPECT_POISONED(a3); }
 
 TEST(MemorySanitizer, ArgTest) {
   Arg1ExpectUMR(*GetPoisoned<S4>());
@@ -229,50 +252,50 @@ TEST(MemorySanitizer, CallAndRet) {
   ReturnPoisoned<S4>();
   ReturnPoisoned<S8>();
 
-  EXPECT_POISONED(v_s1 = ReturnPoisoned<S1>());
-  EXPECT_POISONED(v_s2 = ReturnPoisoned<S2>());
-  EXPECT_POISONED(v_s4 = ReturnPoisoned<S4>());
-  EXPECT_POISONED(v_s8 = ReturnPoisoned<S8>());
+  EXPECT_POISONED(ReturnPoisoned<S1>());
+  EXPECT_POISONED(ReturnPoisoned<S2>());
+  EXPECT_POISONED(ReturnPoisoned<S4>());
+  EXPECT_POISONED(ReturnPoisoned<S8>());
 }
 
 // malloc() in the following test may be optimized to produce a compile-time
 // undef value. Check that we trap on the volatile assignment anyway.
 TEST(MemorySanitizer, DISABLED_MallocNoIdent) {
   S4 *x = (int*)malloc(sizeof(S4));
-  EXPECT_POISONED(v_s4 = *x);
+  EXPECT_POISONED(*x);
   free(x);
 }
 
 TEST(MemorySanitizer, Malloc) {
   S4 *x = (int*)Ident(malloc(sizeof(S4)));
-  EXPECT_POISONED(v_s4 = *x);
+  EXPECT_POISONED(*x);
   free(x);
 }
 
 TEST(MemorySanitizer, Realloc) {
   S4 *x = (int*)Ident(realloc(0, sizeof(S4)));
-  EXPECT_POISONED(v_s4 = x[0]);
+  EXPECT_POISONED(x[0]);
   x[0] = 1;
   x = (int*)Ident(realloc(x, 2 * sizeof(S4)));
-  v_s4 = x[0];  // Ok, was inited before.
-  EXPECT_POISONED(v_s4 = x[1]);
+  EXPECT_NOT_POISONED(x[0]);  // Ok, was inited before.
+  EXPECT_POISONED(x[1]);
   x = (int*)Ident(realloc(x, 3 * sizeof(S4)));
-  v_s4 = x[0];  // Ok, was inited before.
-  EXPECT_POISONED(v_s4 = x[2]);
-  EXPECT_POISONED(v_s4 = x[1]);
+  EXPECT_NOT_POISONED(x[0]);  // Ok, was inited before.
+  EXPECT_POISONED(x[2]);
+  EXPECT_POISONED(x[1]);
   x[2] = 1;  // Init this here. Check that after realloc it is poisoned again.
   x = (int*)Ident(realloc(x, 2 * sizeof(S4)));
-  v_s4 = x[0];  // Ok, was inited before.
-  EXPECT_POISONED(v_s4 = x[1]);
+  EXPECT_NOT_POISONED(x[0]);  // Ok, was inited before.
+  EXPECT_POISONED(x[1]);
   x = (int*)Ident(realloc(x, 3 * sizeof(S4)));
-  EXPECT_POISONED(v_s4 = x[1]);
-  EXPECT_POISONED(v_s4 = x[2]);
+  EXPECT_POISONED(x[1]);
+  EXPECT_POISONED(x[2]);
   free(x);
 }
 
 TEST(MemorySanitizer, Calloc) {
   S4 *x = (int*)Ident(calloc(1, sizeof(S4)));
-  v_s4 = *x;  // Should not be poisoned.
+  EXPECT_NOT_POISONED(*x);  // Should not be poisoned.
   // EXPECT_EQ(0, *x);
   free(x);
 }
@@ -283,83 +306,79 @@ TEST(MemorySanitizer, AndOr) {
   // correct regardless of endianness.
   ((U1*)p)[1] = 0;
   ((U1*)p)[2] = 0xff;
-  v_u4 = *p & 0x00ffff00;
-  v_u4 = *p & 0x00ff0000;
-  v_u4 = *p & 0x0000ff00;
-  EXPECT_POISONED(v_u4 = *p & 0xff000000);
-  EXPECT_POISONED(v_u4 = *p & 0x000000ff);
-  EXPECT_POISONED(v_u4 = *p & 0x0000ffff);
-  EXPECT_POISONED(v_u4 = *p & 0xffff0000);
+  EXPECT_NOT_POISONED(*p & 0x00ffff00);
+  EXPECT_NOT_POISONED(*p & 0x00ff0000);
+  EXPECT_NOT_POISONED(*p & 0x0000ff00);
+  EXPECT_POISONED(*p & 0xff000000);
+  EXPECT_POISONED(*p & 0x000000ff);
+  EXPECT_POISONED(*p & 0x0000ffff);
+  EXPECT_POISONED(*p & 0xffff0000);
 
-  v_u4 = *p | 0xff0000ff;
-  v_u4 = *p | 0xff00ffff;
-  v_u4 = *p | 0xffff00ff;
-  EXPECT_POISONED(v_u4 = *p | 0xff000000);
-  EXPECT_POISONED(v_u4 = *p | 0x000000ff);
-  EXPECT_POISONED(v_u4 = *p | 0x0000ffff);
-  EXPECT_POISONED(v_u4 = *p | 0xffff0000);
+  EXPECT_NOT_POISONED(*p | 0xff0000ff);
+  EXPECT_NOT_POISONED(*p | 0xff00ffff);
+  EXPECT_NOT_POISONED(*p | 0xffff00ff);
+  EXPECT_POISONED(*p | 0xff000000);
+  EXPECT_POISONED(*p | 0x000000ff);
+  EXPECT_POISONED(*p | 0x0000ffff);
+  EXPECT_POISONED(*p | 0xffff0000);
 
-  EXPECT_POISONED(v_u4 = *GetPoisoned<bool>() & *GetPoisoned<bool>());
+  EXPECT_POISONED(*GetPoisoned<bool>() & *GetPoisoned<bool>());
 }
 
 template<class T>
-static void testNot(T value, T shadow) {
+static bool applyNot(T value, T shadow) {
   __msan_partial_poison(&value, &shadow, sizeof(T));
-  volatile bool v_T = !value;
+  return !value;
 }
 
 TEST(MemorySanitizer, Not) {
-  testNot<U4>(0x0, 0x0);
-  testNot<U4>(0xFFFFFFFF, 0x0);
-  EXPECT_POISONED(testNot<U4>(0xFFFFFFFF, 0xFFFFFFFF));
-  testNot<U4>(0xFF000000, 0x0FFFFFFF);
-  testNot<U4>(0xFF000000, 0x00FFFFFF);
-  testNot<U4>(0xFF000000, 0x0000FFFF);
-  testNot<U4>(0xFF000000, 0x00000000);
-  EXPECT_POISONED(testNot<U4>(0xFF000000, 0xFF000000));
-  testNot<U4>(0xFF800000, 0xFF000000);
-  EXPECT_POISONED(testNot<U4>(0x00008000, 0x00008000));
+  EXPECT_NOT_POISONED(applyNot<U4>(0x0, 0x0));
+  EXPECT_NOT_POISONED(applyNot<U4>(0xFFFFFFFF, 0x0));
+  EXPECT_POISONED(applyNot<U4>(0xFFFFFFFF, 0xFFFFFFFF));
+  EXPECT_NOT_POISONED(applyNot<U4>(0xFF000000, 0x0FFFFFFF));
+  EXPECT_NOT_POISONED(applyNot<U4>(0xFF000000, 0x00FFFFFF));
+  EXPECT_NOT_POISONED(applyNot<U4>(0xFF000000, 0x0000FFFF));
+  EXPECT_NOT_POISONED(applyNot<U4>(0xFF000000, 0x00000000));
+  EXPECT_POISONED(applyNot<U4>(0xFF000000, 0xFF000000));
+  EXPECT_NOT_POISONED(applyNot<U4>(0xFF800000, 0xFF000000));
+  EXPECT_POISONED(applyNot<U4>(0x00008000, 0x00008000));
 
-  testNot<U1>(0x0, 0x0);
-  testNot<U1>(0xFF, 0xFE);
-  testNot<U1>(0xFF, 0x0);
-  EXPECT_POISONED(testNot<U1>(0xFF, 0xFF));
+  EXPECT_NOT_POISONED(applyNot<U1>(0x0, 0x0));
+  EXPECT_NOT_POISONED(applyNot<U1>(0xFF, 0xFE));
+  EXPECT_NOT_POISONED(applyNot<U1>(0xFF, 0x0));
+  EXPECT_POISONED(applyNot<U1>(0xFF, 0xFF));
 
-  EXPECT_POISONED(testNot<void*>((void*)0xFFFFFF, (void*)(-1)));
-  testNot<void*>((void*)0xFFFFFF, (void*)(-2));
+  EXPECT_POISONED(applyNot<void*>((void*)0xFFFFFF, (void*)(-1)));
+  EXPECT_NOT_POISONED(applyNot<void*>((void*)0xFFFFFF, (void*)(-2)));
 }
 
 TEST(MemorySanitizer, Shift) {
   U4 *up = GetPoisoned<U4>();
   ((U1*)up)[0] = 0;
   ((U1*)up)[3] = 0xff;
-  v_u4 = *up >> 30;
-  v_u4 = *up >> 24;
-  EXPECT_POISONED(v_u4 = *up >> 23);
-  EXPECT_POISONED(v_u4 = *up >> 10);
+  EXPECT_NOT_POISONED(*up >> 30);
+  EXPECT_NOT_POISONED(*up >> 24);
+  EXPECT_POISONED(*up >> 23);
+  EXPECT_POISONED(*up >> 10);
 
-  v_u4 = *up << 30;
-  v_u4 = *up << 24;
-  EXPECT_POISONED(v_u4 = *up << 23);
-  EXPECT_POISONED(v_u4 = *up << 10);
+  EXPECT_NOT_POISONED(*up << 30);
+  EXPECT_NOT_POISONED(*up << 24);
+  EXPECT_POISONED(*up << 23);
+  EXPECT_POISONED(*up << 10);
 
   S4 *sp = (S4*)up;
-  v_s4 = *sp >> 30;
-  v_s4 = *sp >> 24;
-  EXPECT_POISONED(v_s4 = *sp >> 23);
-  EXPECT_POISONED(v_s4 = *sp >> 10);
+  EXPECT_NOT_POISONED(*sp >> 30);
+  EXPECT_NOT_POISONED(*sp >> 24);
+  EXPECT_POISONED(*sp >> 23);
+  EXPECT_POISONED(*sp >> 10);
 
   sp = GetPoisoned<S4>();
   ((S1*)sp)[1] = 0;
   ((S1*)sp)[2] = 0;
-  EXPECT_POISONED(v_s4 = *sp >> 31);
+  EXPECT_POISONED(*sp >> 31);
 
-  v_s4 = 100;
-  EXPECT_POISONED(v_s4 = v_s4 >> *GetPoisoned<S4>());
-  v_u4 = 100;
-  EXPECT_POISONED(v_u4 = v_u4 >> *GetPoisoned<S4>());
-  v_u4 = 100;
-  EXPECT_POISONED(v_u4 = v_u4 << *GetPoisoned<S4>());
+  EXPECT_POISONED(100 >> *GetPoisoned<S4>());
+  EXPECT_POISONED(100U >> *GetPoisoned<S4>());
 }
 
 NOINLINE static int GetPoisonedZero() {
@@ -374,13 +393,13 @@ NOINLINE static int GetPoisonedZero() {
 TEST(MemorySanitizer, LoadFromDirtyAddress) {
   int *a = new int;
   *a = 0;
-  EXPECT_POISONED(__msan_break_optimization((void*)(U8)a[GetPoisonedZero()]));
+  EXPECT_UMR(__msan_break_optimization((void*)(U8)a[GetPoisonedZero()]));
   delete a;
 }
 
 TEST(MemorySanitizer, StoreToDirtyAddress) {
   int *a = new int;
-  EXPECT_POISONED(a[GetPoisonedZero()] = 0);
+  EXPECT_UMR(a[GetPoisonedZero()] = 0);
   __msan_break_optimization(a);
   delete a;
 }
@@ -400,12 +419,12 @@ NOINLINE void StackTestFunc() {
   __msan_break_optimization(&p1);
   __msan_break_optimization(&ok1);
 
-  EXPECT_POISONED(v_s4 = p4);
-  EXPECT_POISONED(v_s2 = p2);
-  EXPECT_POISONED(v_s1 = p1);
-  v_s1 = ok1;
-  v_s2 = ok2;
-  v_s4 = ok4;
+  EXPECT_POISONED(p4);
+  EXPECT_POISONED(p2);
+  EXPECT_POISONED(p1);
+  EXPECT_NOT_POISONED(ok1);
+  EXPECT_NOT_POISONED(ok2);
+  EXPECT_NOT_POISONED(ok4);
 }
 
 TEST(MemorySanitizer, StackTest) {
@@ -429,9 +448,9 @@ void TestFloatingPoint() {
   __msan_break_optimization(&g);
   T *x = GetPoisoned<T>();
   T *y = GetPoisoned<T>(1);
-  EXPECT_POISONED(v = *x);
-  EXPECT_POISONED(v_s8 = *x);
-  EXPECT_POISONED(v_s4 = *x);
+  EXPECT_POISONED(*x);
+  EXPECT_POISONED((long long)*x);
+  EXPECT_POISONED((int)*x);
   g[0] = *x;
   g[1] = *x + *y;
   g[2] = *x - *y;
@@ -447,7 +466,7 @@ TEST(MemorySanitizer, DynMem) {
   S4 x = 0;
   S4 *y = GetPoisoned<S4>();
   memcpy(y, &x, g_one * sizeof(S4));
-  v_s4 = *y;
+  EXPECT_NOT_POISONED(*y);
 }
 
 static char *DynRetTestStr;
@@ -455,7 +474,7 @@ static char *DynRetTestStr;
 TEST(MemorySanitizer, DynRet) {
   if (!__msan_has_dynamic_component()) return;
   ReturnPoisoned<S8>();
-  v_s4 = clearenv();
+  EXPECT_NOT_POISONED(clearenv());
 }
 
 
@@ -486,8 +505,8 @@ LargeStruct LargeRetTest() {
 
 TEST(MemorySanitizer, LargeRet) {
   LargeStruct a = LargeRetTest();
-  EXPECT_POISONED(v_s4 = a.x[0]);
-  EXPECT_POISONED(v_s4 = a.x[9]);
+  EXPECT_POISONED(a.x[0]);
+  EXPECT_POISONED(a.x[9]);
 }
 
 TEST(MemorySanitizer, fread) {
@@ -495,9 +514,9 @@ TEST(MemorySanitizer, fread) {
   FILE *f = fopen("/proc/self/stat", "r");
   assert(f);
   fread(x, 1, 32, f);
-  v_s1 = x[0];
-  v_s1 = x[16];
-  v_s1 = x[31];
+  EXPECT_NOT_POISONED(x[0]);
+  EXPECT_NOT_POISONED(x[16]);
+  EXPECT_NOT_POISONED(x[31]);
   fclose(f);
   delete x;
 }
@@ -508,9 +527,9 @@ TEST(MemorySanitizer, read) {
   assert(fd > 0);
   int sz = read(fd, x, 32);
   assert(sz == 32);
-  v_s1 = x[0];
-  v_s1 = x[16];
-  v_s1 = x[31];
+  EXPECT_NOT_POISONED(x[0]);
+  EXPECT_NOT_POISONED(x[16]);
+  EXPECT_NOT_POISONED(x[31]);
   close(fd);
   delete x;
 }
@@ -521,9 +540,9 @@ TEST(MemorySanitizer, pread) {
   assert(fd > 0);
   int sz = pread(fd, x, 32, 0);
   assert(sz == 32);
-  v_s1 = x[0];
-  v_s1 = x[16];
-  v_s1 = x[31];
+  EXPECT_NOT_POISONED(x[0]);
+  EXPECT_NOT_POISONED(x[16]);
+  EXPECT_NOT_POISONED(x[31]);
   close(fd);
   delete x;
 }
@@ -532,13 +551,13 @@ TEST(MemorySanitizer, pread) {
 TEST(MemorySanitizer, DISABLED_ioctl) {
   struct winsize ws;
   EXPECT_EQ(ioctl(2, TIOCGWINSZ, &ws), 0);
-  v_s4 = ws.ws_col;
+  EXPECT_NOT_POISONED(ws.ws_col);
 }
 
 TEST(MemorySanitizer, readlink) {
   char *x = new char[1000];
   readlink("/proc/self/exe", x, 1000);
-  v_s1 = x[0];
+  EXPECT_NOT_POISONED(x[0]);
   delete [] x;
 }
 
@@ -547,26 +566,26 @@ TEST(MemorySanitizer, stat) {
   struct stat* st = new struct stat;
   int res = stat("/proc/self/stat", st);
   assert(!res);
-  v_u8 = st->st_dev;
-  v_u8 = st->st_mode;
-  v_u8 = st->st_size;
+  EXPECT_NOT_POISONED(st->st_dev);
+  EXPECT_NOT_POISONED(st->st_mode);
+  EXPECT_NOT_POISONED(st->st_size);
 }
 
 TEST(MemorySanitizer, statfs) {
   struct statfs* st = new struct statfs;
   int res = statfs("/", st);
   assert(!res);
-  v_u8 = st->f_type;
-  v_u8 = st->f_bfree;
-  v_u8 = st->f_namelen;
+  EXPECT_NOT_POISONED(st->f_type);
+  EXPECT_NOT_POISONED(st->f_bfree);
+  EXPECT_NOT_POISONED(st->f_namelen);
 }
 
 TEST(MemorySanitizer, pipe) {
   int* pipefd = new int[2];
   int res = pipe(pipefd);
   assert(!res);
-  v_u8 = pipefd[0];
-  v_u8 = pipefd[1];
+  EXPECT_NOT_POISONED(pipefd[0]);
+  EXPECT_NOT_POISONED(pipefd[1]);
   close(pipefd[0]);
   close(pipefd[1]);
 }
@@ -575,7 +594,7 @@ TEST(MemorySanitizer, getcwd) {
   char path[PATH_MAX + 1];
   char* res = getcwd(path, sizeof(path));
   assert(res);
-  v_s1 = path[0];
+  EXPECT_NOT_POISONED(path[0]);
 }
 
 TEST(MemorySanitizer, realpath) {
@@ -583,7 +602,7 @@ TEST(MemorySanitizer, realpath) {
   char path[PATH_MAX + 1];
   char* res = realpath(relpath, path);
   assert(res);
-  v_s1 = path[0];
+  EXPECT_NOT_POISONED(path[0]);
 }
 
 TEST(MemorySanitizer, memcpy) {
@@ -592,8 +611,8 @@ TEST(MemorySanitizer, memcpy) {
   x[0] = 1;
   x[1] = *GetPoisoned<char>();
   memcpy(y, x, 2);
-  v_s4 = y[0];
-  EXPECT_POISONED(v_s4 = y[1]);
+  EXPECT_NOT_POISONED(y[0]);
+  EXPECT_POISONED(y[1]);
 }
 
 TEST(MemorySanitizer, memmove) {
@@ -602,13 +621,13 @@ TEST(MemorySanitizer, memmove) {
   x[0] = 1;
   x[1] = *GetPoisoned<char>();
   memmove(y, x, 2);
-  v_s4 = y[0];
-  EXPECT_POISONED(v_s4 = y[1]);
+  EXPECT_NOT_POISONED(y[0]);
+  EXPECT_POISONED(y[1]);
 }
 
 TEST(MemorySanitizer, strdup) {
   char *x = strdup("zzz");
-  v_s1 = *x;
+  EXPECT_NOT_POISONED(*x);
   free(x);
 }
 
@@ -618,13 +637,13 @@ void TestOverlapMemmove() {
   assert(size >= 3);
   x[2] = 0;
   memmove(x, x + 1, (size - 1) * sizeof(T));
-  v_s8 = x[1];
+  EXPECT_NOT_POISONED(x[1]);
   if (!__msan_has_dynamic_component()) {
     // FIXME: under DR we will lose this information
     // because accesses in memmove will unpoisin the shadow.
     // We need to use our own memove implementation instead of libc's.
-    EXPECT_POISONED(v_s8 = x[0]);
-    EXPECT_POISONED(v_s8 = x[2]);
+    EXPECT_POISONED(x[0]);
+    EXPECT_POISONED(x[2]);
   }
   delete [] x;
 }
@@ -643,9 +662,9 @@ TEST(MemorySanitizer, strcpy) {  // NOLINT
   x[1] = *GetPoisoned<char>(1, 1);
   x[2] = 0;
   strcpy(y, x);  // NOLINT
-  v_s4 = y[0];
-  EXPECT_POISONED(v_s4 = y[1]);
-  v_s4 = y[2];
+  EXPECT_NOT_POISONED(y[0]);
+  EXPECT_POISONED(y[1]);
+  EXPECT_NOT_POISONED(y[2]);
 }
 
 TEST(MemorySanitizer, strncpy) {  // NOLINT
@@ -655,57 +674,57 @@ TEST(MemorySanitizer, strncpy) {  // NOLINT
   x[1] = *GetPoisoned<char>(1, 1);
   x[2] = 0;
   strncpy(y, x, 2);  // NOLINT
-  v_s4 = y[0];
-  EXPECT_POISONED(v_s4 = y[1]);
-  EXPECT_POISONED(v_s4 = y[2]);
+  EXPECT_NOT_POISONED(y[0]);
+  EXPECT_POISONED(y[1]);
+  EXPECT_POISONED(y[2]);
 }
 
 TEST(MemorySanitizer, strtol) {
   char *e;
   assert(1 == strtol("1", &e, 10));
-  v_s8 = (S8) e;
+  EXPECT_NOT_POISONED((S8) e);
 }
 
 TEST(MemorySanitizer, strtoll) {
   char *e;
   assert(1 == strtoll("1", &e, 10));
-  v_s8 = (S8) e;
+  EXPECT_NOT_POISONED((S8) e);
 }
 
 TEST(MemorySanitizer, strtoul) {
   char *e;
   assert(1 == strtoul("1", &e, 10));
-  v_s8 = (S8) e;
+  EXPECT_NOT_POISONED((S8) e);
 }
 
 TEST(MemorySanitizer, strtoull) {
   char *e;
   assert(1 == strtoull("1", &e, 10));
-  v_s8 = (S8) e;
+  EXPECT_NOT_POISONED((S8) e);
 }
 
 TEST(MemorySanitizer, strtod) {
   char *e;
   assert(0 != strtod("1.5", &e));
-  v_s8 = (S8) e;
+  EXPECT_NOT_POISONED((S8) e);
 }
 
 TEST(MemorySanitizer, strtof) {
   char *e;
   assert(0 != strtof("1.5", &e));
-  v_s8 = (S8) e;
+  EXPECT_NOT_POISONED((S8) e);
 }
 
 TEST(MemorySanitizer, strtold) {
   char *e;
   assert(0 != strtold("1.5", &e));
-  v_s8 = (S8) e;
+  EXPECT_NOT_POISONED((S8) e);
 }
 
 TEST(MemorySanitizer, sprintf) {  // NOLINT
   char buff[10];
   __msan_break_optimization(buff);
-  EXPECT_POISONED(v_s1 = buff[0]);
+  EXPECT_POISONED(buff[0]);
   int res = sprintf(buff, "%d", 1234567);  // NOLINT
   assert(res == 7);
   assert(buff[0] == '1');
@@ -713,13 +732,13 @@ TEST(MemorySanitizer, sprintf) {  // NOLINT
   assert(buff[2] == '3');
   assert(buff[6] == '7');
   assert(buff[7] == 0);
-  EXPECT_POISONED(v_s1 = buff[8]);
+  EXPECT_POISONED(buff[8]);
 }
 
 TEST(MemorySanitizer, snprintf) {
   char buff[10];
   __msan_break_optimization(buff);
-  EXPECT_POISONED(v_s1 = buff[0]);
+  EXPECT_POISONED(buff[0]);
   int res = snprintf(buff, sizeof(buff), "%d", 1234567);
   assert(res == 7);
   assert(buff[0] == '1');
@@ -727,14 +746,14 @@ TEST(MemorySanitizer, snprintf) {
   assert(buff[2] == '3');
   assert(buff[6] == '7');
   assert(buff[7] == 0);
-  EXPECT_POISONED(v_s1 = buff[8]);
+  EXPECT_POISONED(buff[8]);
 }
 
 TEST(MemorySanitizer, swprintf) {
   wchar_t buff[10];
   assert(sizeof(wchar_t) == 4);
   __msan_break_optimization(buff);
-  EXPECT_POISONED(v_s1 = buff[0]);
+  EXPECT_POISONED(buff[0]);
   int res = swprintf(buff, 9, L"%d", 1234567);
   assert(res == 7);
   assert(buff[0] == '1');
@@ -742,7 +761,7 @@ TEST(MemorySanitizer, swprintf) {
   assert(buff[2] == '3');
   assert(buff[6] == '7');
   assert(buff[7] == 0);
-  EXPECT_POISONED(v_s4 = buff[8]);
+  EXPECT_POISONED(buff[8]);
 }
 
 TEST(MemorySanitizer, wcstombs) {
@@ -762,15 +781,15 @@ TEST(MemorySanitizer, gettimeofday) {
   __msan_break_optimization(&tz);
   assert(sizeof(tv) == 16);
   assert(sizeof(tz) == 8);
-  EXPECT_POISONED(v_s8 = tv.tv_sec);
-  EXPECT_POISONED(v_s8 = tv.tv_usec);
-  EXPECT_POISONED(v_s4 = tz.tz_minuteswest);
-  EXPECT_POISONED(v_s4 = tz.tz_dsttime);
+  EXPECT_POISONED(tv.tv_sec);
+  EXPECT_POISONED(tv.tv_usec);
+  EXPECT_POISONED(tz.tz_minuteswest);
+  EXPECT_POISONED(tz.tz_dsttime);
   assert(0 == gettimeofday(&tv, &tz));
-  v_s8 = tv.tv_sec;
-  v_s8 = tv.tv_usec;
-  v_s4 = tz.tz_minuteswest;
-  v_s4 = tz.tz_dsttime;
+  EXPECT_NOT_POISONED(tv.tv_sec);
+  EXPECT_NOT_POISONED(tv.tv_usec);
+  EXPECT_NOT_POISONED(tz.tz_minuteswest);
+  EXPECT_NOT_POISONED(tz.tz_dsttime);
 }
 
 TEST(MemorySanitizer, mmap) {
@@ -787,7 +806,7 @@ TEST(MemorySanitizer, mmap) {
       munmap(p2, size);
   }
   if (p1 == p2) {
-    v_s1 = *(char*)p2;
+    EXPECT_NOT_POISONED(*(char*)p2);
     munmap(p2, size);
   }
 }
@@ -798,19 +817,19 @@ TEST(MemorySanitizer, fcvt) {
   int a, b;
   __msan_break_optimization(&a);
   __msan_break_optimization(&b);
-  EXPECT_POISONED(v_s4 = a);
-  EXPECT_POISONED(v_s4 = b);
+  EXPECT_POISONED(a);
+  EXPECT_POISONED(b);
   char *str = fcvt(12345.6789, 10, &a, &b);
-  v_s4 = a;
-  v_s4 = b;
+  EXPECT_NOT_POISONED(a);
+  EXPECT_NOT_POISONED(b);
 }
 
 TEST(MemorySanitizer, LoadUnpoisoned) {
   S8 s = *GetPoisoned<S8>();
-  EXPECT_POISONED(v_s8 = s);
+  EXPECT_POISONED(s);
   S8 safe = *GetPoisoned<S8>();
   __msan_load_unpoisoned(&s, sizeof(s), &safe);
-  v_s8 = safe;
+  EXPECT_NOT_POISONED(safe);
 }
 
 struct StructWithDtor {
@@ -821,51 +840,46 @@ NOINLINE StructWithDtor::~StructWithDtor() {
   __msan_break_optimization(0);
 }
 
-NOINLINE void ExpectGood(int a) { v_s4 = a; }
-NOINLINE void ExpectPoisoned(int a) {
-  EXPECT_POISONED(v_s4 = a);
-}
-
 TEST(MemorySanitizer, Invoke) {
   StructWithDtor s;  // Will cause the calls to become invokes.
-  ExpectGood(0);
-  ExpectPoisoned(*GetPoisoned<int>());
-  ExpectGood(0);
-  ExpectPoisoned(*GetPoisoned<int>());
-  EXPECT_POISONED(v_s4 = ReturnPoisoned<S4>());
+  EXPECT_NOT_POISONED(0);
+  EXPECT_POISONED(*GetPoisoned<int>());
+  EXPECT_NOT_POISONED(0);
+  EXPECT_POISONED(*GetPoisoned<int>());
+  EXPECT_POISONED(ReturnPoisoned<S4>());
 }
 
 TEST(MemorySanitizer, ptrtoint) {
   // Test that shadow is propagated through pointer-to-integer conversion.
   void* p = (void*)0xABCD;
   __msan_poison(((char*)&p) + 1, sizeof(p));
-  v_u1 = (((uptr)p) & 0xFF) == 0;
+  EXPECT_NOT_POISONED((((uptr)p) & 0xFF) == 0);
 
   void* q = (void*)0xABCD;
   __msan_poison(&q, sizeof(q) - 1);
-  EXPECT_POISONED(v_u1 = (((uptr)q) & 0xFF) == 0);
+  EXPECT_POISONED((((uptr)q) & 0xFF) == 0);
 }
 
 static void vaargsfn2(int guard, ...) {
   va_list vl;
   va_start(vl, guard);
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_d = va_arg(vl, double));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, double));
   va_end(vl);
 }
 
 static void vaargsfn(int guard, ...) {
   va_list vl;
   va_start(vl, guard);
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
   // The following call will overwrite __msan_param_tls.
   // Checks after it test that arg shadow was somehow saved across the call.
   vaargsfn2(1, 2, 3, 4, *GetPoisoned<double>());
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
   va_end(vl);
 }
 
@@ -878,16 +892,16 @@ TEST(MemorySanitizer, VAArgTest) {
 static void vaargsfn_many(int guard, ...) {
   va_list vl;
   va_start(vl, guard);
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
   va_end(vl);
 }
 
@@ -898,15 +912,15 @@ TEST(MemorySanitizer, VAArgManyTest) {
 }
 
 static void vaargsfn_pass2(va_list vl) {
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
 }
 
 static void vaargsfn_pass(int guard, ...) {
   va_list vl;
   va_start(vl, guard);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
   vaargsfn_pass2(vl);
   va_end(vl);
 }
@@ -918,20 +932,20 @@ TEST(MemorySanitizer, VAArgPass) {
 }
 
 static void vaargsfn_copy2(va_list vl) {
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
 }
 
 static void vaargsfn_copy(int guard, ...) {
   va_list vl;
   va_start(vl, guard);
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
   va_list vl2;
   va_copy(vl2, vl);
   vaargsfn_copy2(vl2);
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
   va_end(vl);
 }
 
@@ -944,10 +958,10 @@ TEST(MemorySanitizer, VAArgCopy) {
 static void vaargsfn_ptr(int guard, ...) {
   va_list vl;
   va_start(vl, guard);
-  v_p = va_arg(vl, int*);
-  EXPECT_POISONED(v_p = va_arg(vl, int*));
-  v_p = va_arg(vl, int*);
-  EXPECT_POISONED(v_p = va_arg(vl, double*));
+  EXPECT_NOT_POISONED(va_arg(vl, int*));
+  EXPECT_POISONED(va_arg(vl, int*));
+  EXPECT_NOT_POISONED(va_arg(vl, int*));
+  EXPECT_POISONED(va_arg(vl, double*));
   va_end(vl);
 }
 
@@ -961,33 +975,33 @@ TEST(MemorySanitizer, VAArgPtr) {
 static void vaargsfn_overflow(int guard, ...) {
   va_list vl;
   va_start(vl, guard);
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
-  v_s4 = va_arg(vl, int);
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, int));
 
-  v_d = va_arg(vl, double);
-  v_d = va_arg(vl, double);
-  v_d = va_arg(vl, double);
-  EXPECT_POISONED(v_d = va_arg(vl, double));
-  v_d = va_arg(vl, double);
-  EXPECT_POISONED(v_p = va_arg(vl, int*));
-  v_d = va_arg(vl, double);
-  v_d = va_arg(vl, double);
+  EXPECT_NOT_POISONED(va_arg(vl, double));
+  EXPECT_NOT_POISONED(va_arg(vl, double));
+  EXPECT_NOT_POISONED(va_arg(vl, double));
+  EXPECT_POISONED(va_arg(vl, double));
+  EXPECT_NOT_POISONED(va_arg(vl, double));
+  EXPECT_POISONED(va_arg(vl, int*));
+  EXPECT_NOT_POISONED(va_arg(vl, double));
+  EXPECT_NOT_POISONED(va_arg(vl, double));
 
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
-  EXPECT_POISONED(v_d = va_arg(vl, double));
-  EXPECT_POISONED(v_p = va_arg(vl, int*));
+  EXPECT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, double));
+  EXPECT_POISONED(va_arg(vl, int*));
 
-  v_s4 = va_arg(vl, int);
-  v_d = va_arg(vl, double);
-  v_p = va_arg(vl, int*);
+  EXPECT_NOT_POISONED(va_arg(vl, int));
+  EXPECT_NOT_POISONED(va_arg(vl, double));
+  EXPECT_NOT_POISONED(va_arg(vl, int*));
 
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
-  EXPECT_POISONED(v_d = va_arg(vl, double));
-  EXPECT_POISONED(v_p = va_arg(vl, int*));
+  EXPECT_POISONED(va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, double));
+  EXPECT_POISONED(va_arg(vl, int*));
 
   va_end(vl);
 }
@@ -1009,7 +1023,7 @@ TEST(MemorySanitizer, VAArgOverflow) {
 static void vaargsfn_tlsoverwrite2(int guard, ...) {
   va_list vl;
   va_start(vl, guard);
-  v_s4 = va_arg(vl, int);
+  EXPECT_NOT_POISONED(va_arg(vl, int));
   va_end(vl);
 }
 
@@ -1018,7 +1032,7 @@ static void vaargsfn_tlsoverwrite(int guard, ...) {
   vaargsfn_tlsoverwrite2(2, 42);
   va_list vl;
   va_start(vl, guard);
-  EXPECT_POISONED(v_s4 = va_arg(vl, int));
+  EXPECT_POISONED(va_arg(vl, int));
   va_end(vl);
 }
 
@@ -1032,12 +1046,12 @@ struct StructByVal {
 };
 
 NOINLINE void StructByValTestFunc(struct StructByVal s) {
-  v_s4 = s.a;
-  EXPECT_POISONED(v_s4 = s.b);
-  v_s4 = s.c;
-  EXPECT_POISONED(v_s4 = s.d);
-  v_s4 = s.e;
-  EXPECT_POISONED(v_s4 = s.f);
+  EXPECT_NOT_POISONED(s.a);
+  EXPECT_POISONED(s.b);
+  EXPECT_NOT_POISONED(s.c);
+  EXPECT_POISONED(s.d);
+  EXPECT_NOT_POISONED(s.e);
+  EXPECT_POISONED(s.f);
 }
 
 NOINLINE void StructByValTestFunc1(struct StructByVal s) {
@@ -1069,8 +1083,8 @@ NOINLINE __m128i m128Lt(__m128i *a, __m128i *b) { return *a < *b; }
 TEST(MemorySanitizer, m128) {
   __m128i a = _mm_set1_epi16(0x1234);
   __m128i b = _mm_set1_epi16(0x7890);
-  v_m128 = m128Eq(&a, &b);
-  v_m128 = m128Lt(&a, &b);
+  EXPECT_NOT_POISONED(m128Eq(&a, &b));
+  EXPECT_NOT_POISONED(m128Lt(&a, &b));
 }
 // FIXME: add more tests for __m128i.
 #endif  // MSAN_HAS_M128
@@ -1106,8 +1120,8 @@ NOINLINE T ReturnStruct() {
 template <class T>
 NOINLINE void TestReturnStruct() {
   T s1 = ReturnStruct<T>();
-  v_s4 = s1.a;
-  EXPECT_POISONED(v_s4 = s1.b);
+  EXPECT_NOT_POISONED(s1.a);
+  EXPECT_POISONED(s1.b);
 }
 
 struct SSS1 {
@@ -1177,27 +1191,27 @@ NOINLINE LongStruct ReturnLongStruct2() {
 TEST(MemorySanitizer, LongStruct) {
   LongStruct s1 = ReturnLongStruct1();
   __msan_print_shadow(&s1, sizeof(s1));
-  v_u1 = s1.a1;
-  v_u2 = s1.a2;
-  v_u4 = s1.a4;
-  v_u8 = s1.a8;
+  EXPECT_NOT_POISONED(s1.a1);
+  EXPECT_NOT_POISONED(s1.a2);
+  EXPECT_NOT_POISONED(s1.a4);
+  EXPECT_NOT_POISONED(s1.a8);
 
-  EXPECT_POISONED(v_u1 = s1.b1);
-  EXPECT_POISONED(v_u2 = s1.b2);
-  EXPECT_POISONED(v_u4 = s1.b4);
-  EXPECT_POISONED(v_u8 = s1.b8);
+  EXPECT_POISONED(s1.b1);
+  EXPECT_POISONED(s1.b2);
+  EXPECT_POISONED(s1.b4);
+  EXPECT_POISONED(s1.b8);
 
   LongStruct s2 = ReturnLongStruct2();
   __msan_print_shadow(&s2, sizeof(s2));
-  v_u1 = s2.b1;
-  v_u2 = s2.b2;
-  v_u4 = s2.b4;
-  v_u8 = s2.b8;
+  EXPECT_NOT_POISONED(s2.b1);
+  EXPECT_NOT_POISONED(s2.b2);
+  EXPECT_NOT_POISONED(s2.b4);
+  EXPECT_NOT_POISONED(s2.b8);
 
-  EXPECT_POISONED(v_u1 = s2.a1);
-  EXPECT_POISONED(v_u2 = s2.a2);
-  EXPECT_POISONED(v_u4 = s2.a4);
-  EXPECT_POISONED(v_u8 = s2.a8);
+  EXPECT_POISONED(s2.a1);
+  EXPECT_POISONED(s2.a2);
+  EXPECT_POISONED(s2.a4);
+  EXPECT_POISONED(s2.a8);
 }
 
 TEST(MemorySanitizer, getrlimit) {
@@ -1216,17 +1230,17 @@ TEST(MemorySanitizer, getrusage) {
   int result = getrusage(RUSAGE_SELF, &usage);
   assert(result == 0);
   volatile struct timeval t;
-  v_u8 = usage.ru_utime.tv_sec;
-  v_u8 = usage.ru_utime.tv_usec;
-  v_u8 = usage.ru_stime.tv_sec;
-  v_u8 = usage.ru_stime.tv_usec;
-  v_s8 = usage.ru_maxrss;
-  v_s8 = usage.ru_minflt;
-  v_s8 = usage.ru_majflt;
-  v_s8 = usage.ru_inblock;
-  v_s8 = usage.ru_oublock;
-  v_s8 = usage.ru_nvcsw;
-  v_s8 = usage.ru_nivcsw;
+  EXPECT_NOT_POISONED(usage.ru_utime.tv_sec);
+  EXPECT_NOT_POISONED(usage.ru_utime.tv_usec);
+  EXPECT_NOT_POISONED(usage.ru_stime.tv_sec);
+  EXPECT_NOT_POISONED(usage.ru_stime.tv_usec);
+  EXPECT_NOT_POISONED(usage.ru_maxrss);
+  EXPECT_NOT_POISONED(usage.ru_minflt);
+  EXPECT_NOT_POISONED(usage.ru_majflt);
+  EXPECT_NOT_POISONED(usage.ru_inblock);
+  EXPECT_NOT_POISONED(usage.ru_oublock);
+  EXPECT_NOT_POISONED(usage.ru_nvcsw);
+  EXPECT_NOT_POISONED(usage.ru_nivcsw);
 }
 
 static void dladdr_testfn() {}
@@ -1236,14 +1250,14 @@ TEST(MemorySanitizer, dladdr) {
   __msan_poison(&info, sizeof(info));
   int result = dladdr((const void*)dladdr_testfn, &info);
   assert(result != 0);
-  v_u8 = (unsigned long)info.dli_fname;
+  EXPECT_NOT_POISONED((unsigned long)info.dli_fname);
   if (info.dli_fname)
-    v_u8 = strlen(info.dli_fname);
-  v_u8 = (unsigned long)info.dli_fbase;
-  v_u8 = (unsigned long)info.dli_sname;
+    EXPECT_NOT_POISONED(strlen(info.dli_fname));
+  EXPECT_NOT_POISONED((unsigned long)info.dli_fbase);
+  EXPECT_NOT_POISONED((unsigned long)info.dli_sname);
   if (info.dli_sname)
-    v_u8 = strlen(info.dli_sname);
-  v_u8 = (unsigned long)info.dli_saddr;
+    EXPECT_NOT_POISONED(strlen(info.dli_sname));
+  EXPECT_NOT_POISONED((unsigned long)info.dli_saddr);
 }
 
 TEST(MemorySanitizer, scanf) {
@@ -1253,14 +1267,14 @@ TEST(MemorySanitizer, scanf) {
   int res = sscanf(input, "%d %5s", d, s);
   printf("res %d\n", res);
   assert(res == 2);
-  v_s4 = *d;
-  v_u1 = s[0];
-  v_u1 = s[1];
-  v_u1 = s[2];
-  v_u1 = s[3];
-  v_u1 = s[4];
-  v_u1 = s[5];
-  EXPECT_POISONED(v_u1 = s[6]);
+  EXPECT_NOT_POISONED(*d);
+  EXPECT_NOT_POISONED(s[0]);
+  EXPECT_NOT_POISONED(s[1]);
+  EXPECT_NOT_POISONED(s[2]);
+  EXPECT_NOT_POISONED(s[3]);
+  EXPECT_NOT_POISONED(s[4]);
+  EXPECT_NOT_POISONED(s[5]);
+  EXPECT_POISONED(s[6]);
   delete s;
   delete d;
 }
@@ -1285,52 +1299,38 @@ TEST(MemorySanitizer, uname) {
   struct utsname u;
   int res = uname(&u);
   assert(!res);
-  v_u8 = strlen(u.sysname);
-  v_u8 = strlen(u.nodename);
-  v_u8 = strlen(u.release);
-  v_u8 = strlen(u.version);
-  v_u8 = strlen(u.machine);
+  EXPECT_NOT_POISONED(strlen(u.sysname));
+  EXPECT_NOT_POISONED(strlen(u.nodename));
+  EXPECT_NOT_POISONED(strlen(u.release));
+  EXPECT_NOT_POISONED(strlen(u.version));
+  EXPECT_NOT_POISONED(strlen(u.machine));
 }
 
 template<class T>
-static void testSlt(T value, T shadow) {
+static bool applySlt(T value, T shadow) {
   __msan_partial_poison(&value, &shadow, sizeof(T));
   volatile bool zzz = true;
   // This "|| zzz" trick somehow makes LLVM emit "icmp slt" instead of
   // a shift-and-trunc to get at the highest bit.
-  volatile bool v_T = value < 0 || zzz;
+  volatile bool v = value < 0 || zzz;
+  return v;
 }
 
 TEST(MemorySanitizer, SignedCompareWithZero) {
-  testSlt<S4>(0xF, 0xF);
-  testSlt<S4>(0xF, 0xFF);
-  testSlt<S4>(0xF, 0xFFFFFF);
-  testSlt<S4>(0xF, 0x7FFFFFF);
-  EXPECT_POISONED(testSlt<S4>(0xF, 0x80FFFFFF));
-  EXPECT_POISONED(testSlt<S4>(0xF, 0xFFFFFFFF));
-}
-
-extern "C" {
-NOINLINE void ZZZZZZZZZZZZZZ() {
-  __msan_break_optimization(0);
-
-  // v_s1 = ReturnPoisoned<S1>();
-  // a_s8[g_zero] = *GetPoisoned<S8>() - 1;
-  // v_s4 = a_s4[g_zero];
-  __msan_break_optimization(0);
-}
-}
-
-TEST(MemorySanitizer, ZZZTest) {
-  ZZZZZZZZZZZZZZ();
+  EXPECT_NOT_POISONED(applySlt<S4>(0xF, 0xF));
+  EXPECT_NOT_POISONED(applySlt<S4>(0xF, 0xFF));
+  EXPECT_NOT_POISONED(applySlt<S4>(0xF, 0xFFFFFF));
+  EXPECT_NOT_POISONED(applySlt<S4>(0xF, 0x7FFFFFF));
+  EXPECT_UMR(applySlt<S4>(0xF, 0x80FFFFFF));
+  EXPECT_UMR(applySlt<S4>(0xF, 0xFFFFFFFF));
 }
 
 TEST(MemorySanitizerDr, StoreInDSOTest) {
   if (!__msan_has_dynamic_component()) return;
   char* s = new char[10];
   dso_memfill(s, 9);
-  v_s1 = s[5];
-  EXPECT_POISONED(v_s1 = s[9]);
+  EXPECT_NOT_POISONED(s[5]);
+  EXPECT_POISONED(s[9]);
 }
 
 int return_poisoned_int() {
@@ -1339,20 +1339,20 @@ int return_poisoned_int() {
 
 TEST(MemorySanitizerDr, ReturnFromDSOTest) {
   if (!__msan_has_dynamic_component()) return;
-  v_u8 = dso_callfn(return_poisoned_int);
+  EXPECT_NOT_POISONED(dso_callfn(return_poisoned_int));
 }
 
 NOINLINE int TrashParamTLS(long long x, long long y, long long z) {  //NOLINT
-  EXPECT_POISONED(v_s8 = x);
-  EXPECT_POISONED(v_s8 = y);
-  EXPECT_POISONED(v_s8 = z);
+  EXPECT_POISONED(x);
+  EXPECT_POISONED(y);
+  EXPECT_POISONED(z);
   return 0;
 }
 
 static int CheckParamTLS(long long x, long long y, long long z) {  //NOLINT
-  v_s8 = x;
-  v_s8 = y;
-  v_s8 = z;
+  EXPECT_NOT_POISONED(x);
+  EXPECT_NOT_POISONED(y);
+  EXPECT_NOT_POISONED(z);
   return 0;
 }
 
@@ -1361,13 +1361,13 @@ TEST(MemorySanitizerDr, CallFromDSOTest) {
   S8* x = GetPoisoned<S8>();
   S8* y = GetPoisoned<S8>();
   S8* z = GetPoisoned<S8>();
-  v_s4 = TrashParamTLS(*x, *y, *z);
-  v_u8 = dso_callfn1(CheckParamTLS);
+  EXPECT_NOT_POISONED(TrashParamTLS(*x, *y, *z));
+  EXPECT_NOT_POISONED(dso_callfn1(CheckParamTLS));
 }
 
 static void StackStoreInDSOFn(int* x, int* y) {
-  v_s4 = *x;
-  v_s4 = *y;
+  EXPECT_NOT_POISONED(*x);
+  EXPECT_NOT_POISONED(*y);
 }
 
 TEST(MemorySanitizerDr, StackStoreInDSOTest) {
@@ -1421,7 +1421,7 @@ void BinaryOpOriginTest(BinaryOp op) {
 
   *z = op(*x, *y);
   u32 origin = __msan_get_origin(z);
-  EXPECT_POISONED_O(v_s8 = *z, origin);
+  EXPECT_POISONED_O(*z, origin);
   EXPECT_EQ(true, origin == ox || origin == oy);
 
   // y is poisoned, x is not.
@@ -1430,7 +1430,7 @@ void BinaryOpOriginTest(BinaryOp op) {
   __msan_break_optimization(x);
   __msan_set_origin(z, sizeof(*z), 0);
   *z = op(*x, *y);
-  EXPECT_POISONED_O(v_s8 = *z, oy);
+  EXPECT_POISONED_O(*z, oy);
   EXPECT_EQ(__msan_get_origin(z), oy);
 
   // x is poisoned, y is not.
@@ -1439,7 +1439,7 @@ void BinaryOpOriginTest(BinaryOp op) {
   __msan_break_optimization(y);
   __msan_set_origin(z, sizeof(*z), 0);
   *z = op(*x, *y);
-  EXPECT_POISONED_O(v_s8 = *z, ox);
+  EXPECT_POISONED_O(*z, ox);
   EXPECT_EQ(__msan_get_origin(z), ox);
 }
 
@@ -1466,51 +1466,52 @@ TEST(MemorySanitizerOrigins, BinaryOp) {
 
 TEST(MemorySanitizerOrigins, Unary) {
   if (!TrackingOrigins()) return;
-  EXPECT_POISONED_O(v_s8 = *GetPoisonedO<S8>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s4 = *GetPoisonedO<S8>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s2 = *GetPoisonedO<S8>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s1 = *GetPoisonedO<S8>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S8>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S8>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S8>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S8>(0, __LINE__), __LINE__);
 
-  EXPECT_POISONED_O(v_s8 = *GetPoisonedO<S4>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s4 = *GetPoisonedO<S4>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s2 = *GetPoisonedO<S4>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s1 = *GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
 
-  EXPECT_POISONED_O(v_s8 = *GetPoisonedO<U4>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s4 = *GetPoisonedO<U4>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s2 = *GetPoisonedO<U4>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s1 = *GetPoisonedO<U4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<U4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<U4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<U4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<U4>(0, __LINE__), __LINE__);
 
-  EXPECT_POISONED_O(v_u8 = *GetPoisonedO<S4>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_u4 = *GetPoisonedO<S4>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_u2 = *GetPoisonedO<S4>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_u1 = *GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
 
-  EXPECT_POISONED_O(v_p = (void*)*GetPoisonedO<S8>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_u8 = (U8)*GetPoisonedO<void*>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O((void*)*GetPoisonedO<S8>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O((U8)*GetPoisonedO<void*>(0, __LINE__), __LINE__);
 }
 
 TEST(MemorySanitizerOrigins, EQ) {
   if (!TrackingOrigins()) return;
-  EXPECT_POISONED_O(v_u1 = *GetPoisonedO<S4>(0, __LINE__) <= 11, __LINE__);
-  EXPECT_POISONED_O(v_u1 = *GetPoisonedO<S4>(0, __LINE__) == 11, __LINE__);
-  EXPECT_POISONED_O(v_u1 = *GetPoisonedO<float>(0, __LINE__) == 1.1, __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__) <= 11, __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__) == 11, __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<float>(0, __LINE__) == 1.1, __LINE__);
 }
 
 TEST(MemorySanitizerOrigins, DIV) {
   if (!TrackingOrigins()) return;
-  EXPECT_POISONED_O(v_u8 = *GetPoisonedO<U8>(0, __LINE__) / 100, __LINE__);
-  EXPECT_POISONED_O(v_s4 = 100 / *GetPoisonedO<S4>(0, __LINE__, 1), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<U8>(0, __LINE__) / 100, __LINE__);
+  unsigned o = __LINE__;
+  EXPECT_UMR_O(volatile unsigned y = 100 / *GetPoisonedO<S4>(0, o, 1), o);
 }
 
 TEST(MemorySanitizerOrigins, SHIFT) {
   if (!TrackingOrigins()) return;
-  EXPECT_POISONED_O(v_u8 = *GetPoisonedO<U8>(0, __LINE__) >> 10, __LINE__);
-  EXPECT_POISONED_O(v_s8 = *GetPoisonedO<S8>(0, __LINE__) >> 10, __LINE__);
-  EXPECT_POISONED_O(v_s8 = *GetPoisonedO<S8>(0, __LINE__) << 10, __LINE__);
-  EXPECT_POISONED_O(v_u8 = 10U << *GetPoisonedO<U8>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s8 = -10 >> *GetPoisonedO<S8>(0, __LINE__), __LINE__);
-  EXPECT_POISONED_O(v_s8 = -10 << *GetPoisonedO<S8>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<U8>(0, __LINE__) >> 10, __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S8>(0, __LINE__) >> 10, __LINE__);
+  EXPECT_POISONED_O(*GetPoisonedO<S8>(0, __LINE__) << 10, __LINE__);
+  EXPECT_POISONED_O(10U << *GetPoisonedO<U8>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(-10 >> *GetPoisonedO<S8>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(-10 << *GetPoisonedO<S8>(0, __LINE__), __LINE__);
 }
 
 template<class T, int N>
@@ -1523,16 +1524,16 @@ void MemCpyTest() {
   __msan_set_origin(x, N * sizeof(T), ox);
   __msan_set_origin(y, N * sizeof(T), 777777);
   __msan_set_origin(z, N * sizeof(T), 888888);
-  v_p = x;
-  memcpy(y, v_p, N * sizeof(T));
-  EXPECT_POISONED_O(v_s1 = y[0], ox);
-  EXPECT_POISONED_O(v_s1 = y[N/2], ox);
-  EXPECT_POISONED_O(v_s1 = y[N-1], ox);
-  v_p = x;
-  memmove(z, v_p, N * sizeof(T));
-  EXPECT_POISONED_O(v_s1 = z[0], ox);
-  EXPECT_POISONED_O(v_s1 = z[N/2], ox);
-  EXPECT_POISONED_O(v_s1 = z[N-1], ox);
+  EXPECT_NOT_POISONED(x);
+  memcpy(y, x, N * sizeof(T));
+  EXPECT_POISONED_O(y[0], ox);
+  EXPECT_POISONED_O(y[N/2], ox);
+  EXPECT_POISONED_O(y[N-1], ox);
+  EXPECT_NOT_POISONED(x);
+  memmove(z, x, N * sizeof(T));
+  EXPECT_POISONED_O(z[0], ox);
+  EXPECT_POISONED_O(z[N/2], ox);
+  EXPECT_POISONED_O(z[N-1], ox);
 }
 
 TEST(MemorySanitizerOrigins, LargeMemCpy) {
@@ -1550,37 +1551,37 @@ TEST(MemorySanitizerOrigins, SmallMemCpy) {
 
 TEST(MemorySanitizerOrigins, Select) {
   if (!TrackingOrigins()) return;
-  v_s8 = g_one ? 1 : *GetPoisonedO<S4>(0, __LINE__);
-  EXPECT_POISONED_O(v_s8 = *GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_NOT_POISONED(g_one ? 1 : *GetPoisonedO<S4>(0, __LINE__));
+  EXPECT_POISONED_O(*GetPoisonedO<S4>(0, __LINE__), __LINE__);
   S4 x;
   __msan_break_optimization(&x);
   x = g_1 ? *GetPoisonedO<S4>(0, __LINE__) : 0;
 
-  EXPECT_POISONED_O(v_s8 = g_1 ? *GetPoisonedO<S4>(0, __LINE__) : 1, __LINE__);
-  EXPECT_POISONED_O(v_s8 = g_0 ? 1 : *GetPoisonedO<S4>(0, __LINE__), __LINE__);
+  EXPECT_POISONED_O(g_1 ? *GetPoisonedO<S4>(0, __LINE__) : 1, __LINE__);
+  EXPECT_POISONED_O(g_0 ? 1 : *GetPoisonedO<S4>(0, __LINE__), __LINE__);
 }
 
 extern "C"
-NOINLINE void AllocaTOTest() {
+NOINLINE char AllocaTO() {
   int ar[100];
   __msan_break_optimization(ar);
-  v_s8 = ar[10];
+  return ar[10];
   // fprintf(stderr, "Descr: %s\n",
   //        __msan_get_origin_descr_if_stack(__msan_get_origin_tls()));
 }
 
 TEST(MemorySanitizerOrigins, Alloca) {
   if (!TrackingOrigins()) return;
-  EXPECT_POISONED_S(AllocaTOTest(), "ar@AllocaTOTest");
-  EXPECT_POISONED_S(AllocaTOTest(), "ar@AllocaTOTest");
-  EXPECT_POISONED_S(AllocaTOTest(), "ar@AllocaTOTest");
-  EXPECT_POISONED_S(AllocaTOTest(), "ar@AllocaTOTest");
+  EXPECT_POISONED_S(AllocaTO(), "ar@AllocaTO");
+  EXPECT_POISONED_S(AllocaTO(), "ar@AllocaTO");
+  EXPECT_POISONED_S(AllocaTO(), "ar@AllocaTO");
+  EXPECT_POISONED_S(AllocaTO(), "ar@AllocaTO");
 }
 
 // FIXME: replace with a lit-like test.
 TEST(MemorySanitizerOrigins, DISABLED_AllocaDeath) {
   if (!TrackingOrigins()) return;
-  EXPECT_DEATH(AllocaTOTest(), "ORIGIN: stack allocation: ar@AllocaTOTest");
+  EXPECT_DEATH(AllocaTO(), "ORIGIN: stack allocation: ar@AllocaTO");
 }
 
 NOINLINE int RetvalOriginTest(u32 origin) {
@@ -1594,11 +1595,11 @@ NOINLINE int RetvalOriginTest(u32 origin) {
 
 TEST(MemorySanitizerOrigins, Retval) {
   if (!TrackingOrigins()) return;
-  EXPECT_POISONED_O(v_s4 = RetvalOriginTest(__LINE__), __LINE__);
+  EXPECT_POISONED_O(RetvalOriginTest(__LINE__), __LINE__);
 }
 
 NOINLINE void ParamOriginTest(int param, u32 origin) {
-  EXPECT_POISONED_O(v_s4 = param, origin);
+  EXPECT_POISONED_O(param, origin);
 }
 
 TEST(MemorySanitizerOrigins, Param) {
@@ -1614,7 +1615,7 @@ TEST(MemorySanitizerOrigins, Param) {
 TEST(MemorySanitizerOrigins, Invoke) {
   if (!TrackingOrigins()) return;
   StructWithDtor s;  // Will cause the calls to become invokes.
-  EXPECT_POISONED_O(v_s4 = RetvalOriginTest(__LINE__), __LINE__);
+  EXPECT_POISONED_O(RetvalOriginTest(__LINE__), __LINE__);
 }
 
 TEST(MemorySanitizerOrigins, strlen) {
@@ -1624,7 +1625,7 @@ TEST(MemorySanitizerOrigins, strlen) {
   __msan_poison(&x[2], 1);
   u32 origin = __LINE__;
   __msan_set_origin(x, sizeof(x), origin);
-  EXPECT_POISONED_O(v_s4 = strlen(x), origin);
+  EXPECT_UMR_O(volatile unsigned y = strlen(x), origin);
 }
 
 TEST(MemorySanitizerOrigins, wcslen) {
@@ -1632,7 +1633,7 @@ TEST(MemorySanitizerOrigins, wcslen) {
   u32 origin = __LINE__;
   __msan_set_origin(w, sizeof(w), origin);
   __msan_poison(&w[2], sizeof(wchar_t));
-  EXPECT_POISONED_O(v_s4 = wcslen(w), origin);
+  EXPECT_UMR_O(volatile unsigned y = wcslen(w), origin);
 }
 
 #if MSAN_HAS_M128
@@ -1642,7 +1643,7 @@ TEST(MemorySanitizerOrigins, StoreIntrinsic) {
   __msan_set_origin(&x, sizeof(x), origin);
   __msan_poison(&x, sizeof(x));
   __builtin_ia32_storeups((float*)&y, x);
-  EXPECT_POISONED_O(v_m128 = y, origin);
+  EXPECT_POISONED_O(y, origin);
 }
 #endif
 
