@@ -32,7 +32,7 @@ if( NOT CLANG_BUILT_STANDALONE )
     clang clang-headers
     c-index-test diagtool arcmt-test c-arcmt-test
     clang-check
-    llvm-dis llc opt FileCheck count not
+    llc opt FileCheck count not
     )
   set(CLANG_TEST_PARAMS
     clang_site_config=${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
