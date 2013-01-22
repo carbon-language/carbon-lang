@@ -243,7 +243,7 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     if (m_compiler->getTargetOpts().Triple.find("ios") != std::string::npos)
         m_compiler->getTargetOpts().ABI = "apcs-gnu";
     
-    m_compiler->createDiagnostics(0, 0);
+    m_compiler->createDiagnostics();
     
     // Create the target instance.
     m_compiler->setTarget(TargetInfo::CreateTargetInfo(m_compiler->getDiagnostics(),
