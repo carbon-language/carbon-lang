@@ -1625,6 +1625,47 @@ TEST_F(FormatTest, MergeHandlingInTheFaceOfPreprocessorDirectives) {
                "  if (true) continue;", ShortMergedIf);
 }
 
+TEST_F(FormatTest, BlockCommentsInControlLoops) {
+  verifyFormat("if (0) /* a comment in a strange place */ {\n"
+               "  f();\n"
+               "}");
+  verifyFormat("if (0) /* a comment in a strange place */ {\n"
+               "  f();\n"
+               "} /* another comment */ else /* comment #3 */ {\n"
+               "  g();\n"
+               "}");
+  verifyFormat("while (0) /* a comment in a strange place */ {\n"
+               "  f();\n"
+               "}");
+  verifyFormat("for (;;) /* a comment in a strange place */ {\n"
+               "  f();\n"
+               "}");
+  verifyFormat("do /* a comment in a strange place */ {\n"
+               "  f();\n"
+               "} /* another comment */ while (0);");
+}
+
+TEST_F(FormatTest, BlockComments) {
+  EXPECT_EQ("/* */ /* */ /* */\n/* */ /* */ /* */",
+            format("/* *//* */  /* */\n/* *//* */  /* */"));
+  EXPECT_EQ("/* */ a /* */ b;",
+            format("  /* */  a/* */  b;"));
+  EXPECT_EQ("#define A /*   */\\\n"
+            "  b\n"
+            "/* */\n"
+            "someCall(\n"
+            "    parameter);",
+            format("#define A /*   */ b\n"
+                   "/* */\n"
+                   "someCall(parameter);", getLLVMStyleWithColumns(15)));
+
+  EXPECT_EQ("#define A\n"
+            "/* */ someCall(\n"
+            "    parameter);",
+            format("#define A\n"
+                   "/* */someCall(parameter);", getLLVMStyleWithColumns(15)));
+}
+
 //===----------------------------------------------------------------------===//
 // Objective-C tests.
 //===----------------------------------------------------------------------===//

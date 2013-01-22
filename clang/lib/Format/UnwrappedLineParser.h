@@ -128,7 +128,6 @@ private:
   void parsePPDirective();
   void parsePPDefine();
   void parsePPUnknown();
-  void parseComments();
   void parseStructuralElement();
   void parseBracedList();
   void parseReturn();
@@ -151,11 +150,19 @@ private:
   bool eof() const;
   void nextToken();
   void readToken();
+  void flushComments(bool NewlineBeforeNext);
+  void pushToken(const FormatToken &Tok);
 
   // FIXME: We are constantly running into bugs where Line.Level is incorrectly
   // subtracted from beyond 0. Introduce a method to subtract from Line.Level
   // and use that everywhere in the Parser.
   OwningPtr<UnwrappedLine> Line;
+
+  // Comments are sorted into unwrapped lines by whether they are in the same
+  // line as the previous token, or not. If not, they belong to the next token.
+  // Since the next token might already be in a new unwrapped line, we need to
+  // store the comments belonging to that token.
+  SmallVector<FormatToken, 1> CommentsBeforeNextToken;
   FormatToken FormatTok;
   bool MustBreakBeforeNextToken;
 

@@ -586,7 +586,8 @@ private:
       if (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
           State.NextToken->Parent->Type == TT_TemplateOpener)
         State.Stack[ParenLevel].Indent = State.Column + Spaces;
-      if (Current.getPreviousNoneComment()->is(tok::comma) &&
+      if (Current.getPreviousNoneComment() != NULL &&
+          Current.getPreviousNoneComment()->is(tok::comma) &&
           Current.isNot(tok::comment))
         State.Stack[ParenLevel].HasMultiParameterLine = true;
 
@@ -1639,6 +1640,7 @@ public:
     // FIXME: Add a more explicit test.
     unsigned i = 0;
     while (i + 1 < Text.size() && Text[i] == '\\' && Text[i + 1] == '\n') {
+      // FIXME: ++FormatTok.NewlinesBefore is missing...
       FormatTok.WhiteSpaceLength += 2;
       FormatTok.TokenLength -= 2;
       i += 2;
