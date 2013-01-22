@@ -228,9 +228,6 @@ mach_error_t __interception_deallocate_island(void *ptr) {
 // The implementation details are at
 //   http://libdispatch.macosforge.org/trac/browser/trunk/src/queue.c
 
-typedef void* pthread_workqueue_t;
-typedef void* pthread_workitem_handle_t;
-
 typedef void* dispatch_group_t;
 typedef void* dispatch_queue_t;
 typedef void* dispatch_source_t;
