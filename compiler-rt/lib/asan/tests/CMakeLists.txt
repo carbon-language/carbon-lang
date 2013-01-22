@@ -139,6 +139,8 @@ macro(add_asan_tests_for_arch arch)
                ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
   asan_compile(ASAN_INST_TEST_OBJECTS asan_test.cc ${arch}
                ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
+  asan_compile(ASAN_INST_TEST_OBJECTS asan_oob_test.cc ${arch}
+               ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
   if (APPLE)
     asan_compile(ASAN_INST_TEST_OBJECTS asan_mac_test.cc ${arch}
                  ${ASAN_UNITTEST_INSTRUMENTED_CFLAGS})
@@ -175,7 +177,7 @@ if(ANDROID)
   # We assume that unit tests on Android are built in a build
   # tree with fresh Clang as a host compiler.
   set(ASAN_NOINST_TEST_SOURCES asan_noinst_test.cc asan_test_main.cc)
-  set(ASAN_INST_TEST_SOURCES asan_globals_test.cc asan_test.cc)
+  set(ASAN_INST_TEST_SOURCES asan_globals_test.cc asan_test.cc asan_oob_test.cc)
   add_library(asan_noinst_test OBJECT ${ASAN_NOINST_TEST_SOURCES})
   set_target_compile_flags(asan_noinst_test ${ASAN_UNITTEST_COMMON_CFLAGS})
   add_library(asan_inst_test OBJECT

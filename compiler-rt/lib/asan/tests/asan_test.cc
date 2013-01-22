@@ -10,64 +10,7 @@
 // This file is a part of AddressSanitizer, an address sanity checker.
 //
 //===----------------------------------------------------------------------===//
-#include <stdio.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
-#include <pthread.h>
-#include <stdint.h>
-#include <setjmp.h>
-#include <assert.h>
-#include <algorithm>
-
-#ifdef __linux__
-# include <sys/prctl.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <fcntl.h>
-#include <unistd.h>
-#endif
-
-#if defined(__i386__) || defined(__x86_64__)
-#include <emmintrin.h>
-#endif
-
 #include "asan_test_utils.h"
-
-#ifndef __APPLE__
-#include <malloc.h>
-#endif
-
-#if ASAN_HAS_EXCEPTIONS
-# define ASAN_THROW(x) throw (x)
-#else
-# define ASAN_THROW(x)
-#endif
-
-#include <sys/mman.h>
-
-typedef uint8_t   U1;
-typedef uint16_t  U2;
-typedef uint32_t  U4;
-typedef uint64_t  U8;
-
-static const int kPageSize = 4096;
-
-const size_t kLargeMalloc = 1 << 24;
-
-template<typename T>
-NOINLINE void asan_write(T *a) {
-  *a = 0;
-}
-
-NOINLINE void asan_write_sized_aligned(uint8_t *p, size_t size) {
-  EXPECT_EQ(0U, ((uintptr_t)p % size));
-  if      (size == 1) asan_write((uint8_t*)p);
-  else if (size == 2) asan_write((uint16_t*)p);
-  else if (size == 4) asan_write((uint32_t*)p);
-  else if (size == 8) asan_write((uint64_t*)p);
-}
 
 NOINLINE void *malloc_fff(size_t size) {
   void *res = malloc/**/(size); break_optimization(0); return res;}
@@ -101,15 +44,6 @@ NOINLINE void *memalign_aaa(size_t alignment, size_t size) {
 NOINLINE void free_ccc(void *p) { free(p); break_optimization(0);}
 NOINLINE void free_bbb(void *p) { free_ccc(p); break_optimization(0);}
 NOINLINE void free_aaa(void *p) { free_bbb(p); break_optimization(0);}
-
-template<typename T>
-NOINLINE void oob_test(int size, int off) {
-  char *p = (char*)malloc_aaa(size);
-  // fprintf(stderr, "writing %d byte(s) into [%p,%p) with offset %d\n",
-  //        sizeof(T), p, p + size, off);
-  asan_write((T*)(p + off));
-  free_aaa(p);
-}
 
 
 template<typename T>
@@ -226,88 +160,6 @@ TEST(AddressSanitizer, DISABLED_TSDTest) {
   PTHREAD_JOIN(th, NULL);
   pthread_key_delete(test_key);
 }
-
-template<typename T>
-void OOBTest() {
-  char expected_str[100];
-  for (int size = sizeof(T); size < 20; size += 5) {
-    for (int i = -5; i < 0; i++) {
-      const char *str =
-          "is located.*%d byte.*to the left";
-      sprintf(expected_str, str, abs(i));
-      EXPECT_DEATH(oob_test<T>(size, i), expected_str);
-    }
-
-    for (int i = 0; i < (int)(size - sizeof(T) + 1); i++)
-      oob_test<T>(size, i);
-
-    for (int i = size - sizeof(T) + 1; i <= (int)(size + 2 * sizeof(T)); i++) {
-      const char *str =
-          "is located.*%d byte.*to the right";
-      int off = i >= size ? (i - size) : 0;
-      // we don't catch unaligned partially OOB accesses.
-      if (i % sizeof(T)) continue;
-      sprintf(expected_str, str, off);
-      EXPECT_DEATH(oob_test<T>(size, i), expected_str);
-    }
-  }
-
-  EXPECT_DEATH(oob_test<T>(kLargeMalloc, -1),
-          "is located.*1 byte.*to the left");
-  EXPECT_DEATH(oob_test<T>(kLargeMalloc, kLargeMalloc),
-          "is located.*0 byte.*to the right");
-}
-
-// TODO(glider): the following tests are EXTREMELY slow on Darwin:
-//   AddressSanitizer.OOB_char (125503 ms)
-//   AddressSanitizer.OOB_int (126890 ms)
-//   AddressSanitizer.OOBRightTest (315605 ms)
-//   AddressSanitizer.SimpleStackTest (366559 ms)
-
-TEST(AddressSanitizer, OOB_char) {
-  OOBTest<U1>();
-}
-
-TEST(AddressSanitizer, OOB_int) {
-  OOBTest<U4>();
-}
-
-TEST(AddressSanitizer, OOBRightTest) {
-  for (size_t access_size = 1; access_size <= 8; access_size *= 2) {
-    for (size_t alloc_size = 1; alloc_size <= 8; alloc_size++) {
-      for (size_t offset = 0; offset <= 8; offset += access_size) {
-        void *p = malloc(alloc_size);
-        // allocated: [p, p + alloc_size)
-        // accessed:  [p + offset, p + offset + access_size)
-        uint8_t *addr = (uint8_t*)p + offset;
-        if (offset + access_size <= alloc_size) {
-          asan_write_sized_aligned(addr, access_size);
-        } else {
-          int outside_bytes = offset > alloc_size ? (offset - alloc_size) : 0;
-          const char *str =
-              "is located.%d *byte.*to the right";
-          char expected_str[100];
-          sprintf(expected_str, str, outside_bytes);
-          EXPECT_DEATH(asan_write_sized_aligned(addr, access_size),
-                       expected_str);
-        }
-        free(p);
-      }
-    }
-  }
-}
-
-#if ASAN_ALLOCATOR_VERSION == 2  // Broken with the asan_allocator1
-TEST(AddressSanitizer, LargeOOBRightTest) {
-  size_t large_power_of_two = 1 << 19;
-  for (size_t i = 16; i <= 256; i *= 2) {
-    size_t size = large_power_of_two - i;
-    char *p = Ident(new char[size]);
-    EXPECT_DEATH(p[size] = 0, "is located 0 bytes to the right");
-    delete [] p;
-  }
-}
-#endif  // ASAN_ALLOCATOR_VERSION == 2
 
 TEST(AddressSanitizer, UAF_char) {
   const char *uaf_string = "AddressSanitizer:.*heap-use-after-free";
@@ -2091,22 +1943,6 @@ TEST(AddressSanitizer, DISABLED_DemoUAFLowRight) {
 
 TEST(AddressSanitizer, DISABLED_DemoUAFHigh) {
   uaf_test<U1>(kLargeMalloc, 0);
-}
-
-TEST(AddressSanitizer, DISABLED_DemoOOBLeftLow) {
-  oob_test<U1>(10, -1);
-}
-
-TEST(AddressSanitizer, DISABLED_DemoOOBLeftHigh) {
-  oob_test<U1>(kLargeMalloc, -1);
-}
-
-TEST(AddressSanitizer, DISABLED_DemoOOBRightLow) {
-  oob_test<U1>(10, 10);
-}
-
-TEST(AddressSanitizer, DISABLED_DemoOOBRightHigh) {
-  oob_test<U1>(kLargeMalloc, kLargeMalloc);
 }
 
 TEST(AddressSanitizer, DISABLED_DemoOOM) {
