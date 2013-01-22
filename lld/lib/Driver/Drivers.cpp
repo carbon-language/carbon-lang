@@ -15,7 +15,7 @@
 
 #include "lld/Driver/Driver.h"
 
-#include "lld/Driver/LinkerOptions.h"
+#include "lld/Core/LinkerOptions.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/STLExtras.h"

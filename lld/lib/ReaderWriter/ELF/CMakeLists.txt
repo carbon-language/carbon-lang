@@ -1,4 +1,5 @@
 add_lld_library(lldELF
+  ELFTargetInfo.cpp
   HexagonReference.cpp
   PPCReference.cpp
   ReaderELF.cpp

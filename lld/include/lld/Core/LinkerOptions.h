@@ -1,4 +1,4 @@
-//===- lld/Driver/LinkerOptions.h - Linker Options ------------------------===//
+//===- lld/Core/LinkerOptions.h - Linker Options --------------------------===//
 //
 //                             The LLVM Linker
 //
@@ -13,8 +13,8 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_DRIVER_LINKER_OPTIONS_H
-#define LLD_DRIVER_LINKER_OPTIONS_H
+#ifndef LLD_CORE_LINKER_OPTIONS_H
+#define LLD_CORE_LINKER_OPTIONS_H
 
 #include "lld/Core/LLVM.h"
 
@@ -46,8 +46,9 @@ public:
     : _file(file)
     , _kind(kind) {}
 
-  LinkerInput(llvm::MemoryBuffer *buffer, InputKind kind = InputKind::Unknown)
-    : _buffer(buffer)
+  LinkerInput(std::unique_ptr<llvm::MemoryBuffer> buffer,
+              InputKind kind = InputKind::Unknown)
+    : _buffer(std::move(buffer))
     , _file(_buffer->getBufferIdentifier())
     , _kind(kind) {}
 
@@ -105,37 +106,88 @@ public:
     return _file;
   }
 
+  std::unique_ptr<llvm::MemoryBuffer> takeBuffer() {
+    getBuffer();
+    return std::move(_buffer);
+  }
+
 private:
   mutable std::unique_ptr<llvm::MemoryBuffer> _buffer;
   std::string _file;
   mutable InputKind _kind;
 };
 
+enum class OutputKind {
+  Executable,
+  Relocatable,
+  Shared,
+};
+
 struct LinkerOptions {
-  LinkerOptions() {}
+  LinkerOptions()
+    : _baseAddress(0)
+    , _outputKind(OutputKind::Executable)
+    , _outputCommands(false)
+    , _outputYAML(false)
+    , _noInhibitExec(true)
+    , _deadStrip(false)
+    , _globalsAreDeadStripRoots(false)
+    , _searchArchivesToOverrideTentativeDefinitions(false)
+    , _searchSharedLibrariesToOverrideTentativeDefinitions(false)
+    , _warnIfCoalesableAtomsHaveDifferentCanBeNull(false)
+    , _warnIfCoalesableAtomsHaveDifferentLoadName(false)
+    , _forceLoadArchives(false)
+    , _textRelocations(false)
+    , _relocatable(false) {}
 
   // This exists because MSVC doesn't support = default :(
   LinkerOptions(LinkerOptions &&other)
     : _input(std::move(other._input))
     , _llvmArgs(std::move(other._llvmArgs))
+    , _deadStripRoots(std::move(other._deadStripRoots))
     , _target(std::move(other._target))
     , _outputPath(std::move(other._outputPath))
     , _entrySymbol(std::move(other._entrySymbol))
-    , _relocatable(other._relocatable)
+    , _baseAddress(other._baseAddress)
+    , _outputKind(other._outputKind)
     , _outputCommands(other._outputCommands)
     , _outputYAML(other._outputYAML)
-    , _noInhibitExec(other._noInhibitExec) {}
+    , _noInhibitExec(other._noInhibitExec)
+    , _deadStrip(other._deadStrip)
+    , _globalsAreDeadStripRoots(other._globalsAreDeadStripRoots)
+    , _searchArchivesToOverrideTentativeDefinitions(
+          other._searchArchivesToOverrideTentativeDefinitions)
+    , _searchSharedLibrariesToOverrideTentativeDefinitions(
+          other._searchSharedLibrariesToOverrideTentativeDefinitions)
+    , _warnIfCoalesableAtomsHaveDifferentCanBeNull(
+          other._warnIfCoalesableAtomsHaveDifferentCanBeNull)
+    , _warnIfCoalesableAtomsHaveDifferentLoadName(
+          other._warnIfCoalesableAtomsHaveDifferentLoadName)
+    , _forceLoadArchives(other._forceLoadArchives)
+    , _textRelocations(other._textRelocations)
+    , _relocatable(other._relocatable) {}
 
   std::vector<LinkerInput> _input;
   std::vector<std::string> _llvmArgs;
+  std::vector<std::string> _deadStripRoots;
   std::string _target;
   std::string _outputPath;
   std::string _entrySymbol;
-  unsigned _relocatable : 1;
+  uint64_t _baseAddress;
+  OutputKind _outputKind : 2;
   /// \brief -###
   unsigned _outputCommands : 1;
   unsigned _outputYAML : 1;
   unsigned _noInhibitExec : 1;
+  unsigned _deadStrip : 1;
+  unsigned _globalsAreDeadStripRoots : 1;
+  unsigned _searchArchivesToOverrideTentativeDefinitions : 1;
+  unsigned _searchSharedLibrariesToOverrideTentativeDefinitions : 1;
+  unsigned _warnIfCoalesableAtomsHaveDifferentCanBeNull : 1;
+  unsigned _warnIfCoalesableAtomsHaveDifferentLoadName : 1;
+  unsigned _forceLoadArchives : 1;
+  unsigned _textRelocations : 1;
+  unsigned _relocatable : 1;
 
 private:
   LinkerOptions(const LinkerOptions&) LLVM_DELETED_FUNCTION;

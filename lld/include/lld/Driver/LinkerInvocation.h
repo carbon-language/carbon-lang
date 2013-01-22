@@ -16,7 +16,7 @@
 #ifndef LLD_DRIVER_LINKER_INVOCATION_H
 #define LLD_DRIVER_LINKER_INVOCATION_H
 
-#include "lld/Driver/LinkerOptions.h"
+#include "lld/Core/LinkerOptions.h"
 
 namespace lld {
 class LinkerInvocation {

@@ -7,4 +7,5 @@ add_lld_library(lldCore
   InputFiles.cpp
   Resolver.cpp
   SymbolTable.cpp
+  TargetInfo.cpp
   )

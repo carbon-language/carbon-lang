@@ -15,6 +15,7 @@
 
 #include "lld/Driver/Target.h"
 
+#include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
 #include "lld/ReaderWriter/ReaderELF.h"
 #include "lld/ReaderWriter/ReaderYAML.h"

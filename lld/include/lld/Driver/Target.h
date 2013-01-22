@@ -17,9 +17,9 @@
 #ifndef LLD_DRIVER_TARGET_H
 #define LLD_DRIVER_TARGET_H
 
+#include "lld/Core/LinkerOptions.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/Writer.h"
-#include "lld/Driver/LinkerOptions.h"
 
 namespace lld {
 /// \brief Represents a specific target.
