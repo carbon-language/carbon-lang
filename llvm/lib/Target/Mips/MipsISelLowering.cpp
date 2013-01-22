@@ -2810,7 +2810,7 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
                                         getPointerTy());
 
   // With EABI is it possible to have 16 args on registers.
-  SmallVector<std::pair<unsigned, SDValue>, 16> RegsToPass;
+  std::deque< std::pair<unsigned, SDValue> > RegsToPass;
   SmallVector<SDValue, 8> MemOpChains;
   MipsCC::byval_iterator ByValArg = MipsCCInfo.byval_begin();
 
@@ -2928,23 +2928,16 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
     GlobalOrExternal = true;
   }
 
-  SDValue InFlag;
-
-  // T9 register operand.
-  SDValue T9;
+  SDValue JumpTarget = Callee;
 
   // T9 should contain the address of the callee function if
   // -reloction-model=pic or it is an indirect call.
   if (IsPICCall || !GlobalOrExternal) {
-    // copy to T9
     unsigned T9Reg = IsN64 ? Mips::T9_64 : Mips::T9;
-    Chain = DAG.getCopyToReg(Chain, dl, T9Reg, Callee, SDValue(0, 0));
-    InFlag = Chain.getValue(1);
+    RegsToPass.push_front(std::make_pair(T9Reg, Callee));
 
-    if (Subtarget->inMips16Mode())
-      T9 = DAG.getRegister(T9Reg, getPointerTy());
-    else
-      Callee = DAG.getRegister(T9Reg, getPointerTy());
+    if (!Subtarget->inMips16Mode())
+      JumpTarget = SDValue();
   }
 
   // Insert node "GP copy globalreg" before call to function.
@@ -2962,6 +2955,8 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // chain and flag operands which copy the outgoing args into registers.
   // The InFlag in necessary since all emitted instructions must be
   // stuck together.
+  SDValue InFlag;
+
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
     Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
                              RegsToPass[i].second, InFlag);
@@ -2973,19 +2968,16 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   //
   // Returns a chain & a flag for retval copy to use.
   SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
-  SmallVector<SDValue, 8> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(Callee);
+  SmallVector<SDValue, 8> Ops(1, Chain);
+
+  if (JumpTarget.getNode())
+    Ops.push_back(JumpTarget);
 
   // Add argument registers to the end of the list so that they are
   // known live into the call.
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i)
     Ops.push_back(DAG.getRegister(RegsToPass[i].first,
                                   RegsToPass[i].second.getValueType()));
-
-  // Add T9 register operand.
-  if (T9.getNode())
-    Ops.push_back(T9);
 
   // Add a register mask operand representing the call-preserved registers.
   const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
@@ -3726,7 +3718,7 @@ copyByValRegs(SDValue Chain, DebugLoc DL, std::vector<SDValue> &OutChains,
 // Copy byVal arg to registers and stack.
 void MipsTargetLowering::
 passByValArg(SDValue Chain, DebugLoc DL,
-             SmallVector<std::pair<unsigned, SDValue>, 16> &RegsToPass,
+             std::deque< std::pair<unsigned, SDValue> > &RegsToPass,
              SmallVector<SDValue, 8> &MemOpChains, SDValue StackPtr,
              MachineFrameInfo *MFI, SelectionDAG &DAG, SDValue Arg,
              const MipsCC &CC, const ByValArgInfo &ByVal,
