@@ -93,6 +93,15 @@ both as a user tool (ideally with powerful IDE integrations) and part of other
 refactoring tools, e.g. to do a reformatting of all the lines changed during a
 renaming.
 
+``cpp11-migrate``
+~~~~~~~~~~~~~~~~~
+``cpp11-migrate`` migrates C++ code to use C++11 features where appropriate.
+Currently it can:
+
+* convert loops to range-based for loops;
+
+* convert null pointer constants (like ``NULL`` or ``0``) to C++11 ``nullptr``.
+
 Extra Clang Tools
 =================
 
@@ -103,9 +112,6 @@ provide its own user-focused documentation.
 
 Ideas for new Tools
 ===================
-
-* C++11 null pointer conversion tool.  Will convert all null pointer constants
-  (like ``NULL`` or ``0``) to C++11 ``nullptr``.
 
 * C++ cast conversion tool.  Will convert C-style casts (``(type) value``) to
   appropriate C++ cast (``static_cast``, ``const_cast`` or
