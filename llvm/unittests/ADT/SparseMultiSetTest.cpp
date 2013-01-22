@@ -175,7 +175,7 @@ TEST(SparseMultiSetTest, Iterators) {
   USet::iterator E = RangePair.second;
 
   // Move the iterators around, going to end and coming back.
-  EXPECT_EQ(3u, std::distance(B, E));
+  EXPECT_EQ(3, std::distance(B, E));
   EXPECT_EQ(B, --(--(--E)));
   EXPECT_EQ(++(++(++E)), Set.end());
   EXPECT_EQ(B, --(--(--E)));
