@@ -76,5 +76,8 @@ extern SEL MySelector(SEL s);
   if( [cnx respondsToSelector:@selector( _setQueueXX: )] ) // No warning here.
   {
   }
+  if( [cnx respondsToSelector:(@selector( _setQueueXX: ))] ) // No warning here.
+  {
+  }
 }
 @end
