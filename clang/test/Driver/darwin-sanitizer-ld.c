@@ -5,9 +5,8 @@
 // RUN:   | FileCheck --check-prefix=CHECK-ASAN %s
 
 // CHECK-ASAN: "{{.*}}ld{{(.exe)?}}"
-// CHECK-ASAN: libclang_rt.asan_osx.a"
+// CHECK-ASAN: libclang_rt.asan_osx_dynamic.dylib"
 // CHECK-ASAN: stdc++
-// CHECK-ASAN: "-framework" "CoreFoundation"
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
 // RUN:   -fPIC -shared -fsanitize=address %s -o %t.so 2>&1 \
@@ -15,10 +14,10 @@
 
 // CHECK-DYN-ASAN: "{{.*}}ld{{(.exe)?}}"
 // CHECK-DYN-ASAN: "-dylib"
-// CHECK-DYN-ASAN-NOT: libclang_rt.asan_osx.a
+// CHECK-DYN-ASAN-NOT: libclang_rt.asan_osx_dynamic.dylib
 // CHECK-DYN-ASAN: "-undefined"
 // CHECK-DYN-ASAN: "dynamic_lookup"
-// CHECK-DYN-ASAN-NOT: libclang_rt.asan_osx.a
+// CHECK-DYN-ASAN-NOT: libclang_rt.asan_osx_dynamic.dylib
 
 // RUN: %clang -no-canonical-prefixes -### -target x86_64-darwin \
 // RUN:   -fsanitize=undefined %s -o %t.o 2>&1 \
