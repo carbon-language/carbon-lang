@@ -24,12 +24,20 @@
 ; CHECK-OBJ: 	"-framework",
 ; CHECK-OBJ: 	"Cocoa",
 ; CHECK-OBJ:   ])
+; CHECK-OBJ:   # Load Command 3
+; CHECK-OBJ:  (('command', 45)
+; CHECK-OBJ:   ('size', 24)
+; CHECK-OBJ:   ('count', 1)
+; CHECK-OBJ:   ('_strings', [
+; CHECK-OBJ: 	"-lmath",
+; CHECK-OBJ:   ])
 ; CHECK-OBJ:  ),
 ; CHECK-OBJ: ])
 
 !0 = metadata !{ i32 6, metadata !"Linker Options", 
    metadata !{
       metadata !{ metadata !"-lz" },
-      metadata !{ metadata !"-framework", metadata !"Cocoa" } } }
+      metadata !{ metadata !"-framework", metadata !"Cocoa" },
+      metadata !{ metadata !"-lmath" } } }
 
 !llvm.module.flags = !{ !0 }

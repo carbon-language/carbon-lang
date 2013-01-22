@@ -377,25 +377,25 @@ void MachObjectWriter::WriteLinkeditLoadCommand(uint32_t Type,
 }
 
 static unsigned ComputeLinkerOptionsLoadCommandSize(
-  const std::vector<std::string> &Options)
+  const std::vector<std::string> &Options, bool is64Bit)
 {
   unsigned Size = sizeof(macho::LinkerOptionsLoadCommand);
   for (unsigned i = 0, e = Options.size(); i != e; ++i)
     Size += Options[i].size() + 1;
-  return RoundUpToAlignment(Size, 4);
+  return RoundUpToAlignment(Size, is64Bit ? 8 : 4);
 }
 
 void MachObjectWriter::WriteLinkerOptionsLoadCommand(
   const std::vector<std::string> &Options)
 {
-  unsigned Size = ComputeLinkerOptionsLoadCommandSize(Options);
+  unsigned Size = ComputeLinkerOptionsLoadCommandSize(Options, is64Bit());
   uint64_t Start = OS.tell();
   (void) Start;
 
   Write32(macho::LCT_LinkerOptions);
   Write32(Size);
   Write32(Options.size());
-  uint64_t BytesWritten = 0;
+  uint64_t BytesWritten = sizeof(macho::LinkerOptionsLoadCommand);
   for (unsigned i = 0, e = Options.size(); i != e; ++i) {
     // Write each string, including the null byte.
     const std::string &Option = Options[i];
@@ -403,8 +403,8 @@ void MachObjectWriter::WriteLinkerOptionsLoadCommand(
     BytesWritten += Option.size() + 1;
   }
 
-  // Pad to a multiple of 4.
-  WriteBytes("", OffsetToAlignment(BytesWritten, 4));
+  // Pad to a multiple of the pointer size.
+  WriteBytes("", OffsetToAlignment(BytesWritten, is64Bit() ? 8 : 4));
 
   assert(OS.tell() - Start == Size);
 }
@@ -747,7 +747,8 @@ void MachObjectWriter::WriteObject(MCAssembler &Asm,
     Asm.getLinkerOptions();
   for (unsigned i = 0, e = LinkerOptions.size(); i != e; ++i) {
     ++NumLoadCommands;
-    LoadCommandsSize += ComputeLinkerOptionsLoadCommandSize(LinkerOptions[i]);
+    LoadCommandsSize += ComputeLinkerOptionsLoadCommandSize(LinkerOptions[i],
+                                                            is64Bit());
   }
   
   // Compute the total size of the section data, as well as its file size and vm
