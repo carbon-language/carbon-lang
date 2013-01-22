@@ -68,7 +68,7 @@ unsigned ComputeHash(Selector Sel);
 /// single place in the source code, so they have definitive declarations
 /// associated with them. C++ namespaces, on the other hand, can have
 /// multiple definitions.
-const Decl *getDefinitiveDeclContext(const DeclContext *DC);
+const DeclContext *getDefinitiveDeclContext(const DeclContext *DC);
 
 /// \brief Determine whether the given declaration kind is redeclarable.
 bool isRedeclarableDeclKind(unsigned Kind);

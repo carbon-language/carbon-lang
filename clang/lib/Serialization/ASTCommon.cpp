@@ -87,7 +87,8 @@ unsigned serialization::ComputeHash(Selector Sel) {
   return R;
 }
 
-const Decl *serialization::getDefinitiveDeclContext(const DeclContext *DC) {
+const DeclContext *
+serialization::getDefinitiveDeclContext(const DeclContext *DC) {
   switch (DC->getDeclKind()) {
   // These entities may have multiple definitions.
   case Decl::TranslationUnit:
@@ -100,7 +101,7 @@ const Decl *serialization::getDefinitiveDeclContext(const DeclContext *DC) {
   case Decl::Record:
     if (const TagDecl *Def = cast<TagDecl>(DC)->getDefinition())
       return Def;
-    break;
+    return 0;
 
   // FIXME: These can be defined in one place... except special member
   // functions and out-of-line definitions.
@@ -122,25 +123,25 @@ const Decl *serialization::getDefinitiveDeclContext(const DeclContext *DC) {
   case Decl::ObjCCategory:
   case Decl::ObjCCategoryImpl:
   case Decl::ObjCImplementation:
-    return cast<Decl>(DC);
+    return DC;
 
   case Decl::ObjCProtocol:
     if (const ObjCProtocolDecl *Def
           = cast<ObjCProtocolDecl>(DC)->getDefinition())
       return Def;
-    break;
+    return 0;
 
   // FIXME: These are defined in one place, but properties in class extensions
   // end up being back-patched into the main interface. See
   // Sema::HandlePropertyInClassExtension for the offending code.
   case Decl::ObjCInterface:
-    break;
+    return 0;
     
   default:
     llvm_unreachable("Unhandled DeclContext in AST reader");
   }
   
-  return 0;
+  llvm_unreachable("Unhandled decl kind");
 }
 
 bool serialization::isRedeclarableDeclKind(unsigned Kind) {

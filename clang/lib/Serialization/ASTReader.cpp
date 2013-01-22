@@ -5323,8 +5323,8 @@ namespace {
 /// NDEBUG checking.
 static ModuleFile *getDefinitiveModuleFileFor(const DeclContext *DC,
                                               ASTReader &Reader) {
-  if (const Decl *D = getDefinitiveDeclContext(DC))
-    return Reader.getOwningModuleFile(D);
+  if (const DeclContext *DefDC = getDefinitiveDeclContext(DC))
+    return Reader.getOwningModuleFile(cast<Decl>(DefDC));
 
   return 0;
 }
