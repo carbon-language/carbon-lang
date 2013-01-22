@@ -1,3 +1,4 @@
+// REQUIRES: x86-64-registered-target
 // RUN: %clang_cc1 %s -verify -fasm-blocks
 
 #define M __asm int 0x2c
