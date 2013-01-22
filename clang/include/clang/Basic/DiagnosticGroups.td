@@ -124,7 +124,11 @@ def DanglingField : DiagGroup<"dangling-field">;
 def DistributedObjectModifiers : DiagGroup<"distributed-object-modifiers">;
 def IgnoredQualifiers : DiagGroup<"ignored-qualifiers">;
 def : DiagGroup<"import">;
-def IncompatiblePointerTypes : DiagGroup<"incompatible-pointer-types">;
+def IncompatiblePointerTypesDiscardsQualifiers 
+  : DiagGroup<"incompatible-pointer-types-discards-qualifiers">;
+def IncompatiblePointerTypes
+  : DiagGroup<"incompatible-pointer-types",
+    [IncompatiblePointerTypesDiscardsQualifiers]>;
 def IncompleteUmbrella : DiagGroup<"incomplete-umbrella">;
 def InvalidNoreturn : DiagGroup<"invalid-noreturn">;
 def InvalidSourceEncoding : DiagGroup<"invalid-source-encoding">;

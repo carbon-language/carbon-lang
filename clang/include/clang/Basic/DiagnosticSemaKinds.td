@@ -4902,7 +4902,7 @@ def ext_typecheck_convert_discards_qualifiers : ExtWarn<
   "sending to parameter of different type}0,1"
   "|%diff{casting $ to type $|casting between types}0,1}2"
   " discards qualifiers">,
-  InGroup<IncompatiblePointerTypes>;
+  InGroup<IncompatiblePointerTypesDiscardsQualifiers>;
 def ext_nested_pointer_qualifier_mismatch : ExtWarn<
   "%select{%diff{assigning to $ from $|assigning to different types}0,1"
   "|%diff{passing $ to parameter of type $|"
@@ -4916,7 +4916,7 @@ def ext_nested_pointer_qualifier_mismatch : ExtWarn<
   "sending to parameter of different type}0,1"
   "|%diff{casting $ to type $|casting between types}0,1}2"
   " discards qualifiers in nested pointer types">,
-  InGroup<IncompatiblePointerTypes>;
+  InGroup<IncompatiblePointerTypesDiscardsQualifiers>;
 def warn_incompatible_vectors : Warning<
   "incompatible vector types "
   "%select{%diff{assigning to $ from $|assigning to different types}0,1"
