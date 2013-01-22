@@ -25,6 +25,8 @@
 // ACHTUNG! No other system header includes in this file.
 // Ideally, we should get rid of stdarg.h as well.
 
+extern "C" const int __msan_keep_going;
+
 using namespace __msan;
 
 #define ENSURE_MSAN_INITED() do { \
@@ -44,6 +46,10 @@ using namespace __msan;
              __FUNCTION__, offset, x, n);                   \
       __msan::PrintWarningWithOrigin(                       \
         pc, bp, __msan_get_origin((char*)x + offset));      \
+      if (!__msan_keep_going) {                             \
+        Printf("Exiting\n");                                \
+        Die();                                              \
+      }                                                     \
     }                                                       \
   } while (0)
 
