@@ -734,7 +734,9 @@ bool AsmParser::ParseBracketExpr(const MCExpr *&Res, SMLoc &EndLoc) {
 ///  primaryexpr ::= '.'
 ///  primaryexpr ::= ~,+,- primaryexpr
 bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
-  switch (Lexer.getKind()) {
+  SMLoc FirstTokenLoc = getLexer().getLoc();
+  AsmToken::TokenKind FirstTokenKind = Lexer.getKind();
+  switch (FirstTokenKind) {
   default:
     return TokError("unknown token in expression");
   // If we have an error assume that we've already handled it.
@@ -750,8 +752,11 @@ bool AsmParser::ParsePrimaryExpr(const MCExpr *&Res, SMLoc &EndLoc) {
   case AsmToken::String:
   case AsmToken::Identifier: {
     StringRef Identifier;
-    if (ParseIdentifier(Identifier))
+    if (ParseIdentifier(Identifier)) {
+      if (FirstTokenKind == AsmToken::Dollar)
+        return Error(FirstTokenLoc, "invalid token in expression");
       return true;
+    }
 
     EndLoc = SMLoc::getFromPointer(Identifier.end());
 
