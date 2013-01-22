@@ -649,24 +649,24 @@ defm CLRSR_branch : FU6_LU6_np<0b0111101100, "clrsr">;
 // TODO ldwcpl, blacp
 
 let Defs = [R11], isReMaterializable = 1, neverHasSideEffects = 1 in
-def LDAPF_u10 : _FU10<(outs), (ins i32imm:$addr), "ldap r11, $addr", []>;
+def LDAPF_u10 : _FU10<0b110110, (outs), (ins i32imm:$a), "ldap r11, $a", []>;
 
 let Defs = [R11], isReMaterializable = 1 in
-def LDAPF_lu10 : _FLU10<(outs), (ins i32imm:$addr), "ldap r11, $addr",
-                        [(set R11, (pcrelwrapper tglobaladdr:$addr))]>;
+def LDAPF_lu10 : _FLU10<0b110110, (outs), (ins i32imm:$a), "ldap r11, $a",
+                        [(set R11, (pcrelwrapper tglobaladdr:$a))]>;
 
-let Defs = [R11], isReMaterializable = 1 in
-def LDAPF_lu10_ba : _FLU10<(outs), (ins i32imm:$addr), "ldap r11, $addr",
-                           [(set R11, (pcrelwrapper tblockaddress:$addr))]>;
+let Defs = [R11], isReMaterializable = 1, isCodeGenOnly = 1 in
+def LDAPF_lu10_ba : _FLU10<0b110110, (outs), (ins i32imm:$a), "ldap r11, $a",
+                           [(set R11, (pcrelwrapper tblockaddress:$a))]>;
 
 let isCall=1,
 // All calls clobber the link register and the non-callee-saved registers:
 Defs = [R0, R1, R2, R3, R11, LR], Uses = [SP] in {
-def BLRF_u10 : _FU10<(outs), (ins calltarget:$target), "bl $target",
-                     [(XCoreBranchLink immU10:$target)]>;
+def BLRF_u10 : _FU10<0b110100, (outs), (ins calltarget:$a), "bl $a",
+                     [(XCoreBranchLink immU10:$a)]>;
 
-def BLRF_lu10 : _FLU10<(outs), (ins calltarget:$target), "bl $target",
-                       [(XCoreBranchLink immU20:$target)]>;
+def BLRF_lu10 : _FLU10<0b110100, (outs), (ins calltarget:$a), "bl $a",
+                       [(XCoreBranchLink immU20:$a)]>;
 }
 
 // Two operand short

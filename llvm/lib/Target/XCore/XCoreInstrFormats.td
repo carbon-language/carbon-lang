@@ -125,12 +125,22 @@ class _FLU6<bits<10> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
   let Inst{9-0} = a{15-6};
 }
 
-class _FU10<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _FU10<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<2, outs, ins, asmstr, pattern> {
+  bits<10> a;
+
+  let Inst{15-10} = opc;
+  let Inst{9-0} = a;
 }
 
-class _FLU10<dag outs, dag ins, string asmstr, list<dag> pattern>
+class _FLU10<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
     : InstXCore<4, outs, ins, asmstr, pattern> {
+  bits<20> a;
+
+  let Inst{31-26} = opc;
+  let Inst{25-16} = a{9-0};
+  let Inst{15-10} = 0b111100;
+  let Inst{9-0} = a{19-10};
 }
 
 class _F2R<bits<6> opc, dag outs, dag ins, string asmstr, list<dag> pattern>
