@@ -84,7 +84,7 @@ set(ASAN_BLACKLIST_FILE "${CMAKE_CURRENT_SOURCE_DIR}/asan_test.ignore")
 set(ASAN_UNITTEST_INSTRUMENTED_CFLAGS
   ${ASAN_UNITTEST_COMMON_CFLAGS}
   -fsanitize=address
-  -mllvm "-asan-blacklist=${ASAN_BLACKLIST_FILE}"
+  "-fsanitize-blacklist=${ASAN_BLACKLIST_FILE}"
   -mllvm -asan-stack=1
   -mllvm -asan-globals=1
   -mllvm -asan-mapping-scale=0        # default will be used
