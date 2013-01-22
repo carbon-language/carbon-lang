@@ -12840,7 +12840,7 @@ X86TargetLowering::EmitAtomicLoadArith(MachineInstr *MI,
   MachineFunction::iterator I = MBB;
   ++I;
 
-  assert(MI->getNumOperands() <= X86::AddrNumOperands + 2 &&
+  assert(MI->getNumOperands() <= X86::AddrNumOperands + 4 &&
          "Unexpected number of operands");
 
   assert(MI->hasOneMemOperand() &&
@@ -13072,7 +13072,7 @@ X86TargetLowering::EmitAtomicLoadArith6432(MachineInstr *MI,
   MachineFunction::iterator I = MBB;
   ++I;
 
-  assert(MI->getNumOperands() <= X86::AddrNumOperands + 4 &&
+  assert(MI->getNumOperands() <= X86::AddrNumOperands + 7 &&
          "Unexpected number of operands");
 
   assert(MI->hasOneMemOperand() &&
