@@ -8,9 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "lld/Core/Atom.h"
+#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Resolver.h"
+#include "lld/Core/TargetInfo.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
 #include "lld/ReaderWriter/ReaderNative.h"
@@ -154,19 +156,50 @@ endianSelected("endian",
                "output little endian format"),
     clEnumValEnd));
     
-
-class TestingResolverOptions : public ResolverOptions {
+class TestingTargetInfo LLVM_FINAL : public TargetInfo {
 public:
-  TestingResolverOptions() {
-    _undefinesAreErrors = cmdLineUndefinesIsError;
-    _searchArchivesToOverrideTentativeDefinitions = cmdLineCommonsSearchArchives;
-    _deadCodeStrip = cmdLineDeadStrip;
-    _globalsAreDeadStripRoots = cmdLineGlobalsNotDeadStrip;
+  TestingTargetInfo(const LinkerOptions &lo, bool stubs, bool got)
+      : TargetInfo(lo), _doStubs(stubs), _doGOT(got) {}
+
+  virtual uint64_t getPageSize() const { return 0x1000; }
+
+  virtual StubsPass *getStubPass() const {
+    if (_doStubs)
+      return const_cast<TestingStubsPass*>(&_stubsPass);
+    else
+      return nullptr;
   }
 
+  virtual GOTPass *getGOTPass() const {
+     if (_doGOT)
+      return const_cast<TestingGOTPass*>(&_gotPass);
+    else
+      return nullptr;
+  }
+
+  virtual ErrorOr<uint32_t> relocKindFromString(StringRef str) const {
+    // Try parsing as a number.
+    if (auto kind = TargetInfo::relocKindFromString(str))
+      return kind;
+    for (const auto *kinds = sKinds; kinds->string; ++kinds)
+      if (str == kinds->string)
+        return kinds->value;
+    return llvm::make_error_code(llvm::errc::invalid_argument);
+  }
+
+  virtual ErrorOr<std::string> stringFromRelocKind(uint32_t kind) const {
+    for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
+      if (kind == static_cast<uint32_t>(p->value))
+        return std::string(p->string);
+    }
+    return llvm::make_error_code(llvm::errc::invalid_argument);
+  }
+private:
+  bool              _doStubs;
+  bool              _doGOT;
+  TestingStubsPass  _stubsPass;
+  TestingGOTPass    _gotPass;
 };
-
-
 
 int main(int argc, char *argv[]) {
   // Print a stack trace if we signal out.
@@ -184,6 +217,32 @@ int main(int argc, char *argv[]) {
   // if no output path specified, write to stdout
   if (cmdLineOutputFilePath.empty())
     cmdLineOutputFilePath.assign("-");
+
+  LinkerOptions lo;
+  lo._noInhibitExec = !cmdLineUndefinesIsError;
+  lo._searchArchivesToOverrideTentativeDefinitions =
+      cmdLineCommonsSearchArchives;
+  lo._deadStrip = cmdLineDeadStrip;
+  lo._globalsAreDeadStripRoots = cmdLineGlobalsNotDeadStrip;
+  lo._forceLoadArchives = cmdLineForceLoad;
+  lo._outputKind = OutputKind::Executable;
+
+  switch (archSelected) {
+  case i386:
+    lo._target = "i386";
+    break;
+  case x86_64:
+    lo._target = "x86_64";
+    break;
+  case hexagon:
+    lo._target = "hexagon";
+    break;
+  case ppc:
+    lo._target = "powerpc";
+    break;
+  }
+
+  TestingTargetInfo tti(lo, cmdLineDoStubsPass, cmdLineDoGotPass);
 
   // create writer for final output, default to i386 if none selected
   WriterOptionsELF writerOptionsELF(false,
@@ -257,11 +316,8 @@ int main(int argc, char *argv[]) {
   // given writer a chance to add files
   writer->addFiles(inputFiles);
 
-  // create options for resolving
-  TestingResolverOptions options;
-
   // merge all atom graphs
-  Resolver resolver(options, inputFiles);
+  Resolver resolver(tti, inputFiles);
   resolver.resolve();
   MutableFile &mergedMasterFile = resolver.resultFile();
 

@@ -9,17 +9,18 @@
 
 #include "lld/Core/Atom.h"
 #include "lld/Core/File.h"
-#include "lld/Core/LLVM.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Core/SymbolTable.h"
+#include "lld/Core/TargetInfo.h"
 #include "lld/Core/UndefinedAtom.h"
 
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/Support/ErrorHandling.h"
 
 #include <algorithm>
 #include <cassert>
@@ -113,7 +114,7 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   // tell symbol table 
   _symbolTable.add(atom);
 
-  if (_options.deadCodeStripping()) {
+  if (_targetInfo.getLinkerOptions()._deadStrip) {
     // add to set of dead-strip-roots, all symbols that
     // the compiler marks as don't strip
     if (atom.deadStrip() == DefinedAtom::deadStripNever)
@@ -166,10 +167,10 @@ void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
 // ask symbol table if any definitionUndefined atoms still exist
 // if so, keep searching libraries until no more atoms being added
 void Resolver::resolveUndefines() {
-  const bool searchArchives =
-    _options.searchArchivesToOverrideTentativeDefinitions();
-  const bool searchSharedLibs =
-    _options.searchSharedLibrariesToOverrideTentativeDefinitions();
+  const bool searchArchives = _targetInfo.getLinkerOptions().
+      _searchArchivesToOverrideTentativeDefinitions;
+  const bool searchSharedLibs = _targetInfo.getLinkerOptions().
+      _searchSharedLibrariesToOverrideTentativeDefinitions;
 
   // keep looping until no more undefines were added in last loop
   unsigned int undefineGenCount = 0xFFFFFFFF;
@@ -243,14 +244,14 @@ void Resolver::markLive(const Atom &atom) {
 // remove all atoms not actually used
 void Resolver::deadStripOptimize() {
   // only do this optimization with -dead_strip
-  if (!_options.deadCodeStripping())
+  if (!_targetInfo.getLinkerOptions()._deadStrip)
     return;
 
   // clear liveness on all atoms
   _liveAtoms.clear();
 
   // By default, shared libraries are built with all globals as dead strip roots
-  if ( _options.allGlobalsAreDeadStripRoots() ) {
+  if (_targetInfo.getLinkerOptions()._globalsAreDeadStripRoots) {
     for ( const Atom *atom : _atoms ) {
       const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(atom);
       if (defAtom == nullptr)
@@ -261,8 +262,7 @@ void Resolver::deadStripOptimize() {
   }
 
   // Or, use list of names that are dead stip roots.
-  const std::vector<StringRef> &names = _options.deadStripRootNames();
-  for ( const StringRef &name : names ) {
+  for (const StringRef &name : _targetInfo.getLinkerOptions()._deadStripRoots) {
     const Atom *symAtom = _symbolTable.findByName(name);
     assert(symAtom->definition() != Atom::definitionUndefined);
     _deadStripRoots.insert(symAtom);
@@ -288,7 +288,7 @@ void Resolver::checkUndefines(bool final) {
   // build vector of remaining undefined symbols
   std::vector<const Atom *> undefinedAtoms;
   _symbolTable.undefines(undefinedAtoms);
-  if (_options.deadCodeStripping()) {
+  if (_targetInfo.getLinkerOptions()._deadStrip) {
     // When dead code stripping, we don't care if dead atoms are undefined.
     undefinedAtoms.erase(std::remove_if(
                            undefinedAtoms.begin(), undefinedAtoms.end(),
@@ -296,7 +296,9 @@ void Resolver::checkUndefines(bool final) {
   }
 
   // error message about missing symbols
-  if ( (undefinedAtoms.size() != 0) && _options.undefinesAreErrors() ) {
+  if (!undefinedAtoms.empty() &&
+      (!_targetInfo.getLinkerOptions()._noInhibitExec ||
+       _targetInfo.getLinkerOptions()._outputKind == OutputKind::Relocatable)) {
     // FIXME: need diagonstics interface for writing error messages
     llvm::errs() << "Undefined symbols:\n";
     for ( const Atom *undefAtom : undefinedAtoms ) {
