@@ -1337,7 +1337,7 @@ llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
       case Intrinsic::ctpop:
         return ConstantInt::get(Ty, Op->getValue().countPopulation());
       case Intrinsic::convert_from_fp16: {
-        APFloat Val(Op->getValue());
+        APFloat Val(APFloat::IEEEhalf, Op->getValue());
 
         bool lost = false;
         APFloat::opStatus status =

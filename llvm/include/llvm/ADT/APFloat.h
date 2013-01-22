@@ -184,9 +184,9 @@ namespace llvm {
     APFloat(const fltSemantics &, integerPart);
     APFloat(const fltSemantics &, fltCategory, bool negative);
     APFloat(const fltSemantics &, uninitializedTag);
+    APFloat(const fltSemantics &, const APInt &);
     explicit APFloat(double d);
     explicit APFloat(float f);
-    explicit APFloat(const APInt &, bool isIEEE = false);
     APFloat(const APFloat &);
     ~APFloat();
 
@@ -423,7 +423,7 @@ namespace llvm {
     APInt convertQuadrupleAPFloatToAPInt() const;
     APInt convertF80LongDoubleAPFloatToAPInt() const;
     APInt convertPPCDoubleDoubleAPFloatToAPInt() const;
-    void initFromAPInt(const APInt& api, bool isIEEE = false);
+    void initFromAPInt(const fltSemantics *Sem, const APInt& api);
     void initFromHalfAPInt(const APInt& api);
     void initFromFloatAPInt(const APInt& api);
     void initFromDoubleAPInt(const APInt& api);

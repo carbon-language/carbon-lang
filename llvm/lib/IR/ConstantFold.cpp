@@ -168,8 +168,8 @@ static Constant *FoldBitCast(Constant *V, Type *DestTy) {
 
     if (DestTy->isFloatingPointTy())
       return ConstantFP::get(DestTy->getContext(),
-                             APFloat(CI->getValue(),
-                                     !DestTy->isPPC_FP128Ty()));
+                             APFloat(DestTy->getFltSemantics(),
+                                     CI->getValue()));
 
     // Otherwise, can't fold this (vector?)
     return 0;
@@ -647,8 +647,8 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
   case Instruction::SIToFP:
     if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
       APInt api = CI->getValue();
-      APFloat apf(APInt::getNullValue(DestTy->getPrimitiveSizeInBits()),
-                  !DestTy->isPPC_FP128Ty() /* isEEEE */);
+      APFloat apf(DestTy->getFltSemantics(),
+                  APInt::getNullValue(DestTy->getPrimitiveSizeInBits()));
       (void)apf.convertFromAPInt(api, 
                                  opc==Instruction::SIToFP,
                                  APFloat::rmNearestTiesToEven);

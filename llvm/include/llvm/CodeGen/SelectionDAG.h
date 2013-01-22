@@ -935,6 +935,20 @@ public:
     }
   }
 
+  /// Returns an APFloat semantics tag appropriate for the given type. If VT is
+  /// a vector type, the element semantics are returned.
+  static const fltSemantics &EVTToAPFloatSemantics(EVT VT) {
+    switch (VT.getScalarType().getSimpleVT().SimpleTy) {
+    default: llvm_unreachable("Unknown FP format");
+    case MVT::f16:     return APFloat::IEEEhalf;
+    case MVT::f32:     return APFloat::IEEEsingle;
+    case MVT::f64:     return APFloat::IEEEdouble;
+    case MVT::f80:     return APFloat::x87DoubleExtended;
+    case MVT::f128:    return APFloat::IEEEquad;
+    case MVT::ppcf128: return APFloat::PPCDoubleDouble;
+    }
+  }
+
   /// AssignOrdering - Assign an order to the SDNode.
   void AssignOrdering(const SDNode *SD, unsigned Order);
 

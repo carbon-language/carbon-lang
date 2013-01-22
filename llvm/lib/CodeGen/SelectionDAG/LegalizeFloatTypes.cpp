@@ -813,9 +813,11 @@ void DAGTypeLegalizer::ExpandFloatRes_ConstantFP(SDNode *N, SDValue &Lo,
   assert(NVT.getSizeInBits() == integerPartWidth &&
          "Do not know how to expand this float constant!");
   APInt C = cast<ConstantFPSDNode>(N)->getValueAPF().bitcastToAPInt();
-  Lo = DAG.getConstantFP(APFloat(APInt(integerPartWidth, C.getRawData()[1])),
+  Lo = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
+                                 APInt(integerPartWidth, C.getRawData()[1])),
                          NVT);
-  Hi = DAG.getConstantFP(APFloat(APInt(integerPartWidth, C.getRawData()[0])),
+  Hi = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
+                                 APInt(integerPartWidth, C.getRawData()[0])),
                          NVT);
 }
 
@@ -987,7 +989,8 @@ void DAGTypeLegalizer::ExpandFloatRes_FP_EXTEND(SDNode *N, SDValue &Lo,
                                                 SDValue &Hi) {
   EVT NVT = TLI.getTypeToTransformTo(*DAG.getContext(), N->getValueType(0));
   Hi = DAG.getNode(ISD::FP_EXTEND, N->getDebugLoc(), NVT, N->getOperand(0));
-  Lo = DAG.getConstantFP(APFloat(APInt(NVT.getSizeInBits(), 0)), NVT);
+  Lo = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
+                                 APInt(NVT.getSizeInBits(), 0)), NVT);
 }
 
 void DAGTypeLegalizer::ExpandFloatRes_FPOW(SDNode *N,
@@ -1082,7 +1085,8 @@ void DAGTypeLegalizer::ExpandFloatRes_LOAD(SDNode *N, SDValue &Lo,
   Chain = Hi.getValue(1);
 
   // The low part is zero.
-  Lo = DAG.getConstantFP(APFloat(APInt(NVT.getSizeInBits(), 0)), NVT);
+  Lo = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
+                                 APInt(NVT.getSizeInBits(), 0)), NVT);
 
   // Modified the chain - switch anything that used the old chain to use the
   // new one.
@@ -1106,7 +1110,8 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
     // The integer can be represented exactly in an f64.
     Src = DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND, dl,
                       MVT::i32, Src);
-    Lo = DAG.getConstantFP(APFloat(APInt(NVT.getSizeInBits(), 0)), NVT);
+    Lo = DAG.getConstantFP(APFloat(DAG.EVTToAPFloatSemantics(NVT),
+                                   APInt(NVT.getSizeInBits(), 0)), NVT);
     Hi = DAG.getNode(ISD::SINT_TO_FP, dl, NVT, Src);
   } else {
     RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
@@ -1152,7 +1157,8 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
   }
 
   Lo = DAG.getNode(ISD::FADD, dl, VT, Hi,
-                   DAG.getConstantFP(APFloat(APInt(128, Parts)),
+                   DAG.getConstantFP(APFloat(APFloat::PPCDoubleDouble,
+                                             APInt(128, Parts)),
                                      MVT::ppcf128));
   Lo = DAG.getNode(ISD::SELECT_CC, dl, VT, Src, DAG.getConstant(0, SrcVT),
                    Lo, Hi, DAG.getCondCode(ISD::SETLT));
@@ -1304,7 +1310,7 @@ SDValue DAGTypeLegalizer::ExpandFloatOp_FP_TO_UINT(SDNode *N) {
     assert(N->getOperand(0).getValueType() == MVT::ppcf128 &&
            "Logic only correct for ppcf128!");
     const uint64_t TwoE31[] = {0x41e0000000000000LL, 0};
-    APFloat APF = APFloat(APInt(128, TwoE31));
+    APFloat APF = APFloat(APFloat::PPCDoubleDouble, APInt(128, TwoE31));
     SDValue Tmp = DAG.getConstantFP(APF, MVT::ppcf128);
     //  X>=2^31 ? (int)(X-2^31)+0x80000000 : (int)X
     // FIXME: generated code sucks.

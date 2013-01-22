@@ -522,7 +522,8 @@ GenericValue JIT::runFunction(Function *F,
     case Type::PPC_FP128TyID:
     case Type::X86_FP80TyID:
     case Type::FP128TyID:
-        C = ConstantFP::get(F->getContext(), APFloat(AV.IntVal));
+        C = ConstantFP::get(F->getContext(), APFloat(ArgTy->getFltSemantics(),
+                                                     AV.IntVal));
         break;
     case Type::PointerTyID:
       void *ArgPtr = GVTOP(AV);

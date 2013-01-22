@@ -119,7 +119,8 @@ Constant *Constant::getNullValue(Type *Ty) {
                            APFloat::getZero(APFloat::IEEEquad));
   case Type::PPC_FP128TyID:
     return ConstantFP::get(Ty->getContext(),
-                           APFloat(APInt::getNullValue(128)));
+                           APFloat(APFloat::PPCDoubleDouble,
+                                   APInt::getNullValue(128)));
   case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
   case Type::StructTyID:

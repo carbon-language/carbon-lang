@@ -3694,7 +3694,8 @@ GetExponent(SelectionDAG &DAG, SDValue Op, const TargetLowering &TLI,
 /// getF32Constant - Get 32-bit floating point constant.
 static SDValue
 getF32Constant(SelectionDAG &DAG, unsigned Flt) {
-  return DAG.getConstantFP(APFloat(APInt(32, Flt)), MVT::f32);
+  return DAG.getConstantFP(APFloat(APFloat::IEEEsingle, APInt(32, Flt)),
+                           MVT::f32);
 }
 
 /// expandExp - Lower an exp intrinsic. Handles the special sequences for

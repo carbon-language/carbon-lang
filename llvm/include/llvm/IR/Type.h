@@ -15,8 +15,10 @@
 #ifndef LLVM_IR_TYPE_H
 #define LLVM_IR_TYPE_H
 
+#include "llvm/ADT/APFloat.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 
@@ -160,6 +162,18 @@ public:
            getTypeID() == DoubleTyID ||
            getTypeID() == X86_FP80TyID || getTypeID() == FP128TyID ||
            getTypeID() == PPC_FP128TyID;
+  }
+
+  const fltSemantics &getFltSemantics() const {
+    switch (getTypeID()) {
+    case HalfTyID: return APFloat::IEEEhalf;
+    case FloatTyID: return APFloat::IEEEsingle;
+    case DoubleTyID: return APFloat::IEEEdouble;
+    case X86_FP80TyID: return APFloat::x87DoubleExtended;
+    case FP128TyID: return APFloat::IEEEquad;
+    case PPC_FP128TyID: return APFloat::PPCDoubleDouble;
+    default: llvm_unreachable("Invalid floating type");
+    }
   }
 
   /// isX86_MMXTy - Return true if this is X86 MMX.

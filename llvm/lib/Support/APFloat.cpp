@@ -3013,7 +3013,7 @@ APFloat::initFromPPCDoubleDoubleAPInt(const APInt &api)
 
   // Unless we have a special case, add in second double.
   if (category == fcNormal) {
-    APFloat v(APInt(64, i2));
+    APFloat v(IEEEdouble, APInt(64, i2));
     fs = v.convert(PPCDoubleDouble, rmNearestTiesToEven, &losesInfo);
     assert(fs == opOK && !losesInfo);
     (void)fs;
@@ -3166,27 +3166,43 @@ APFloat::initFromHalfAPInt(const APInt & api)
 /// isIEEE argument distinguishes between PPC128 and IEEE128 (not meaningful
 /// when the size is anything else).
 void
-APFloat::initFromAPInt(const APInt& api, bool isIEEE)
+APFloat::initFromAPInt(const fltSemantics* Sem, const APInt& api)
 {
-  if (api.getBitWidth() == 16)
+  if (Sem == &IEEEhalf)
     return initFromHalfAPInt(api);
-  else if (api.getBitWidth() == 32)
+  if (Sem == &IEEEsingle)
     return initFromFloatAPInt(api);
-  else if (api.getBitWidth()==64)
+  if (Sem == &IEEEdouble)
     return initFromDoubleAPInt(api);
-  else if (api.getBitWidth()==80)
+  if (Sem == &x87DoubleExtended)
     return initFromF80LongDoubleAPInt(api);
-  else if (api.getBitWidth()==128)
-    return (isIEEE ?
-            initFromQuadrupleAPInt(api) : initFromPPCDoubleDoubleAPInt(api));
-  else
-    llvm_unreachable(0);
+  if (Sem == &IEEEquad)
+    return initFromQuadrupleAPInt(api);
+  if (Sem == &PPCDoubleDouble)
+    return initFromPPCDoubleDoubleAPInt(api);
+
+  llvm_unreachable(0);
 }
 
 APFloat
 APFloat::getAllOnesValue(unsigned BitWidth, bool isIEEE)
 {
-  return APFloat(APInt::getAllOnesValue(BitWidth), isIEEE);
+  switch (BitWidth) {
+  case 16:
+    return APFloat(IEEEhalf, APInt::getAllOnesValue(BitWidth));
+  case 32:
+    return APFloat(IEEEsingle, APInt::getAllOnesValue(BitWidth));
+  case 64:
+    return APFloat(IEEEdouble, APInt::getAllOnesValue(BitWidth));
+  case 80:
+    return APFloat(x87DoubleExtended, APInt::getAllOnesValue(BitWidth));
+  case 128:
+    if (isIEEE)
+      return APFloat(IEEEquad, APInt::getAllOnesValue(BitWidth));
+    return APFloat(PPCDoubleDouble, APInt::getAllOnesValue(BitWidth));
+  default:
+    llvm_unreachable("Unknown floating bit width");
+  }
 }
 
 APFloat APFloat::getLargest(const fltSemantics &Sem, bool Negative) {
@@ -3244,16 +3260,16 @@ APFloat APFloat::getSmallestNormalized(const fltSemantics &Sem, bool Negative) {
   return Val;
 }
 
-APFloat::APFloat(const APInt& api, bool isIEEE) {
-  initFromAPInt(api, isIEEE);
+APFloat::APFloat(const fltSemantics &Sem, const APInt &API) {
+  initFromAPInt(&Sem, API);
 }
 
 APFloat::APFloat(float f) {
-  initFromAPInt(APInt::floatToBits(f));
+  initFromAPInt(&IEEEsingle, APInt::floatToBits(f));
 }
 
 APFloat::APFloat(double d) {
-  initFromAPInt(APInt::doubleToBits(d));
+  initFromAPInt(&IEEEdouble, APInt::doubleToBits(d));
 }
 
 namespace {

@@ -713,20 +713,21 @@ lltok::Kind LLLexer::Lex0x() {
   case 'K':
     // F80HexFPConstant - x87 long double in hexadecimal format (10 bytes)
     FP80HexToIntPair(TokStart+3, CurPtr, Pair);
-    APFloatVal = APFloat(APInt(80, Pair));
+    APFloatVal = APFloat(APFloat::x87DoubleExtended, APInt(80, Pair));
     return lltok::APFloat;
   case 'L':
     // F128HexFPConstant - IEEE 128-bit in hexadecimal format (16 bytes)
     HexToIntPair(TokStart+3, CurPtr, Pair);
-    APFloatVal = APFloat(APInt(128, Pair), true);
+    APFloatVal = APFloat(APFloat::IEEEquad, APInt(128, Pair));
     return lltok::APFloat;
   case 'M':
     // PPC128HexFPConstant - PowerPC 128-bit in hexadecimal format (16 bytes)
     HexToIntPair(TokStart+3, CurPtr, Pair);
-    APFloatVal = APFloat(APInt(128, Pair));
+    APFloatVal = APFloat(APFloat::PPCDoubleDouble, APInt(128, Pair));
     return lltok::APFloat;
   case 'H':
-    APFloatVal = APFloat(APInt(16,HexIntToVal(TokStart+3, CurPtr)));
+    APFloatVal = APFloat(APFloat::IEEEhalf,
+                         APInt(16,HexIntToVal(TokStart+3, CurPtr)));
     return lltok::APFloat;
   }
 }
