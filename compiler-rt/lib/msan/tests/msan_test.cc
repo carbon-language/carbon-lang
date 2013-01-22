@@ -1335,10 +1335,8 @@ struct VolatileBitfieldStruct {
 TEST(MemorySanitizer, VolatileBitfield) {
   VolatileBitfieldStruct *S = new VolatileBitfieldStruct;
   S->x = 1;
-  unsigned tmp = S->x;
-  EXPECT_NOT_POISONED(tmp);
-  tmp = S->y;
-  EXPECT_POISONED(S->y);
+  EXPECT_NOT_POISONED((unsigned)S->x);
+  EXPECT_POISONED((unsigned)S->y);
 }
 
 TEST(MemorySanitizerDr, StoreInDSOTest) {
