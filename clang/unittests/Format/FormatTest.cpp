@@ -1725,7 +1725,6 @@ TEST_F(FormatTest, FormatObjCBlocks) {
 }
 
 TEST_F(FormatTest, FormatObjCInterface) {
-  // FIXME: Handle comments like in "@interface /* wait for it */ Foo", PR14875
   verifyFormat("@interface Foo : NSObject <NSSomeDelegate> {\n"
                "@public\n"
                "  int field1;\n"
@@ -1752,7 +1751,7 @@ TEST_F(FormatTest, FormatObjCInterface) {
                      "+ (id)init;\n"
                      "@end");
 
-  verifyFormat("@interface Foo\n"
+  verifyFormat("@interface /* wait for it */ Foo\n"
                "+ (id)init;\n"
                "// Look, a comment!\n"
                "- (int)answerWith:(int)i;\n"
@@ -1767,7 +1766,7 @@ TEST_F(FormatTest, FormatObjCInterface) {
                "+ (id)init;\n"
                "@end");
 
-  verifyFormat("@interface Foo : Bar <Baz, Quux>\n"
+  verifyFormat("@interface Foo : /**/ Bar /**/ <Baz, /**/ Quux>\n"
                "+ (id)init;\n"
                "@end");
 
