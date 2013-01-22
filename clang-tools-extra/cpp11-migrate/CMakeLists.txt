@@ -12,6 +12,9 @@ set (Cpp11MigrateSources
 file(GLOB_RECURSE LoopConvertSources "LoopConvert/*.cpp")
 list(APPEND Cpp11MigrateSources ${LoopConvertSources})
 
+file(GLOB_RECURSE UseNullptrSources "UseNullptr/*.cpp")
+list(APPEND Cpp11MigrateSources ${UseNullptrSources})
+
 add_clang_executable(cpp11-migrate
   ${Cpp11MigrateSources}
   )

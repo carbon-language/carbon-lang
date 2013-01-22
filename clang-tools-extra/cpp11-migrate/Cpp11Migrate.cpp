@@ -49,6 +49,15 @@ static cl::opt<RiskLevel> MaxRiskLevel(
                clEnumValEnd),
     cl::init(RL_Reasonable));
 
+class EndSyntaxArgumentsAdjuster : public ArgumentsAdjuster {
+  CommandLineArguments Adjust(const CommandLineArguments &Args) {
+    CommandLineArguments AdjustedArgs = Args;
+    AdjustedArgs.push_back("-fsyntax-only");
+    AdjustedArgs.push_back("-std=c++11");
+    return AdjustedArgs;
+  }
+};
+
 int main(int argc, const char **argv) {
   llvm::sys::PrintStackTraceOnErrorSignal();
   Transforms TransformManager;
@@ -102,6 +111,10 @@ int main(int argc, const char **argv) {
   // Final Syntax check.
   ClangTool EndSyntaxTool(OptionsParser.getCompilations(),
                           OptionsParser.getSourcePathList());
+
+  // Add c++11 support to clang.
+  EndSyntaxTool.setArgumentsAdjuster(new EndSyntaxArgumentsAdjuster);
+
   for (FileContentsByPath::const_iterator I = InputFileStates->begin(),
                                           E = InputFileStates->end();
        I != E; ++I) {

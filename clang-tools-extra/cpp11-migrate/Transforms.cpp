@@ -14,6 +14,7 @@
 
 #include "Transforms.h"
 #include "LoopConvert/LoopConvert.h"
+#include "UseNullptr/UseNullptr.h"
 
 namespace cl = llvm::cl;
 
@@ -39,6 +40,12 @@ void Transforms::createTransformOpts() {
       new cl::opt<bool>("loop-convert",
         cl::desc("Make use of range-based for loops where possible")),
       &ConstructTransform<LoopConvertTransform>));
+
+  Options.push_back(
+    OptionVec::value_type(
+      new cl::opt<bool>("use-nullptr",
+        cl::desc("Make use of nullptr keyword where possible")),
+      &ConstructTransform<UseNullptrTransform>));
 
   // Add more transform options here.
 }

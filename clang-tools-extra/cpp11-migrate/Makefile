@@ -24,6 +24,8 @@ SOURCES = Cpp11Migrate.cpp Transforms.cpp Transform.cpp
 # transform subdirectories. See below for more on .objdir.
 SOURCES += $(addprefix LoopConvert/,$(notdir $(wildcard $(PROJ_SRC_DIR)/LoopConvert/*.cpp)))
 BUILT_SOURCES = $(ObjDir)/LoopConvert/.objdir
+SOURCES += $(addprefix UseNullptr/,$(notdir $(wildcard $(PROJ_SRC_DIR)/UseNullptr/*.cpp)))
+BUILT_SOURCES += $(ObjDir)/UseNullptr/.objdir
 
 LINK_COMPONENTS := $(TARGETS_TO_BUILD) asmparser bitreader support mc
 USEDLIBS = clangTooling.a clangFrontend.a clangSerialization.a clangDriver.a \
