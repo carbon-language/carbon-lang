@@ -2485,8 +2485,12 @@ ExprResult Sema::ActOnInstanceMessage(Scope *S,
                                       MultiExprArg Args) {
   if (!Receiver)
     return ExprError();
-  IdentifierInfo *SelectorId = &Context.Idents.get("respondsToSelector");
-  if (Sel == Context.Selectors.getUnarySelector(SelectorId))
+  
+  if (RespondsToSelectorSel.isNull()) {
+    IdentifierInfo *SelectorId = &Context.Idents.get("respondsToSelector");
+    RespondsToSelectorSel = Context.Selectors.getUnarySelector(SelectorId);
+  }
+  if (Sel == RespondsToSelectorSel)
     RemoveSelectorFromWarningCache(*this, Args[0]);
     
   return BuildInstanceMessage(Receiver, Receiver->getType(),

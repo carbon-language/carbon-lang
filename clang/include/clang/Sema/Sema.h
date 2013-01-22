@@ -575,6 +575,9 @@ public:
   /// \brief id<NSCopying> type.
   QualType QIDNSCopying;
 
+  /// \brief will hold 'respondsToSelector:'
+  Selector RespondsToSelectorSel;
+  
   /// A flag to remember whether the implicit forms of operator new and delete
   /// have been declared.
   bool GlobalNewDeleteDeclared;
