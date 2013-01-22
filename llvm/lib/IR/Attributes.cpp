@@ -691,14 +691,9 @@ bool AttributeSet::hasAttrSomewhere(Attribute::AttrKind Attr) const {
   return false;
 }
 
-AttributeSet AttributeSet::addRetAttributes(LLVMContext &C,
-                                            AttributeSet Attrs) const {
-  return addAttr(C, ReturnIndex, Attrs.getAttributes(ReturnIndex));
-}
-
-AttributeSet AttributeSet::addFnAttributes(LLVMContext &C,
-                                           AttributeSet Attrs) const {
-  return addAttr(C, FunctionIndex, Attrs.getAttributes(FunctionIndex));
+AttributeSet AttributeSet::addAttributes(LLVMContext &C, unsigned Idx,
+                                         AttributeSet Attrs) const {
+  return addAttr(C, Idx, Attrs.getAttributes(Idx));
 }
 
 AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
