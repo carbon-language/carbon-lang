@@ -1,5 +1,4 @@
-// REQUIRES: x86-registered-target
-// RUN: %clang_cc1 %s -verify -fasm-blocks
+// RUN: %clang_cc1 %s -triple i386-apple-darwin10 -verify -fasm-blocks
 
 #define M __asm int 0x2c
 #define M2 int
