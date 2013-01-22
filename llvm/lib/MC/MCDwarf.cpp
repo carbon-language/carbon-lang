@@ -792,7 +792,7 @@ void MCGenDwarfLabelEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
 static int getDataAlignmentFactor(MCStreamer &streamer) {
   MCContext &context = streamer.getContext();
   const MCAsmInfo &asmInfo = context.getAsmInfo();
-  int size = asmInfo.getPointerSize();
+  int size = asmInfo.getCalleeSaveStackSlotSize();
   if (asmInfo.isStackGrowthDirectionUp())
     return size;
   else
