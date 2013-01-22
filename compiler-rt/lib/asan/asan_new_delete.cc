@@ -27,8 +27,9 @@ void ReplaceOperatorsNewAndDelete() { }
 
 using namespace __asan;  // NOLINT
 
-// On Android new() goes through malloc interceptors.
-#if !ASAN_ANDROID
+// On Mac and Android new() goes through malloc interceptors.
+// See also https://code.google.com/p/address-sanitizer/issues/detail?id=131.
+#if !ASAN_ANDROID && !ASAN_MAC
 
 // Fake std::nothrow_t to avoid including <new>.
 namespace std {
