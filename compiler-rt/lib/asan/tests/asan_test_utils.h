@@ -76,4 +76,14 @@ NOINLINE void asan_write(T *a) {
   *a = 0;
 }
 
+string RightOOBErrorMessage(int oob_distance, bool is_write);
+string RightOOBWriteMessage(int oob_distance);
+string RightOOBReadMessage(int oob_distance);
+string LeftOOBErrorMessage(int oob_distance, bool is_write);
+string LeftOOBWriteMessage(int oob_distance);
+string LeftOOBReadMessage(int oob_distance);
+string LeftOOBAccessMessage(int oob_distance);
+char* MallocAndMemsetString(size_t size, char ch);
+char* MallocAndMemsetString(size_t size);
+
 #endif  // ASAN_TEST_UTILS_H
