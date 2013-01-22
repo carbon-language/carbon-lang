@@ -1,6 +1,6 @@
 // PR691
-// RUN: %clang_cc1 %s -emit-llvm -o - | opt -std-compile-opts | \
-// RUN:    llvm-dis | grep llvm.stacksave
+// RUN: %clang_cc1 %s -emit-llvm -o - | FileCheck %s
+// CHECK: call i8* @llvm.stacksave()
 
 void test(int N) {
   int i;
