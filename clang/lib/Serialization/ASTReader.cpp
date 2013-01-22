@@ -6669,8 +6669,10 @@ llvm::APSInt ASTReader::ReadAPSInt(const RecordData &Record, unsigned &Idx) {
 }
 
 /// \brief Read a floating-point value
-llvm::APFloat ASTReader::ReadAPFloat(const RecordData &Record, unsigned &Idx) {
-  return llvm::APFloat(ReadAPInt(Record, Idx));
+llvm::APFloat ASTReader::ReadAPFloat(const RecordData &Record,
+                                     const llvm::fltSemantics &Sem,
+                                     unsigned &Idx) {
+  return llvm::APFloat(Sem, ReadAPInt(Record, Idx));
 }
 
 // \brief Read a string

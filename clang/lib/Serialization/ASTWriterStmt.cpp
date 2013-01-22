@@ -324,8 +324,9 @@ void ASTStmtWriter::VisitIntegerLiteral(IntegerLiteral *E) {
 
 void ASTStmtWriter::VisitFloatingLiteral(FloatingLiteral *E) {
   VisitExpr(E);
-  Writer.AddAPFloat(E->getValue(), Record);
+  Record.push_back(E->getRawSemantics());
   Record.push_back(E->isExact());
+  Writer.AddAPFloat(E->getValue(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
   Code = serialization::EXPR_FLOATING_LITERAL;
 }

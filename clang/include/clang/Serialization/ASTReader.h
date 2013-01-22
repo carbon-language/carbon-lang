@@ -1658,7 +1658,8 @@ public:
   llvm::APSInt ReadAPSInt(const RecordData &Record, unsigned &Idx);
 
   /// \brief Read a floating-point value
-  llvm::APFloat ReadAPFloat(const RecordData &Record, unsigned &Idx);
+  llvm::APFloat ReadAPFloat(const RecordData &Record,
+                            const llvm::fltSemantics &Sem, unsigned &Idx);
 
   // \brief Read a string
   static std::string ReadString(const RecordData &Record, unsigned &Idx);

@@ -1214,8 +1214,8 @@ public:
 
 class APFloatStorage : private APNumericStorage {
 public:
-  llvm::APFloat getValue(bool IsIEEE) const {
-    return llvm::APFloat(getIntValue(), IsIEEE);
+  llvm::APFloat getValue(const llvm::fltSemantics &Semantics) const {
+    return llvm::APFloat(Semantics, getIntValue());
   }
   void setValue(ASTContext &C, const llvm::APFloat &Val) {
     setIntValue(C, Val.bitcastToAPInt());
@@ -1322,11 +1322,30 @@ public:
   static FloatingLiteral *Create(ASTContext &C, EmptyShell Empty);
 
   llvm::APFloat getValue() const {
-    return APFloatStorage::getValue(FloatingLiteralBits.IsIEEE);
+    return APFloatStorage::getValue(getSemantics());
   }
   void setValue(ASTContext &C, const llvm::APFloat &Val) {
+    assert(&getSemantics() == &Val.getSemantics() && "Inconsistent semantics");
     APFloatStorage::setValue(C, Val);
   }
+
+  /// Get a raw enumeration value representing the floating-point semantics of
+  /// this literal (32-bit IEEE, x87, ...), suitable for serialisation.
+  APFloatSemantics getRawSemantics() const {
+    return static_cast<APFloatSemantics>(FloatingLiteralBits.Semantics);
+  }
+
+  /// Set the raw enumeration value representing the floating-point semantics of
+  /// this literal (32-bit IEEE, x87, ...), suitable for serialisation.
+  void setRawSemantics(APFloatSemantics Sem) {
+    FloatingLiteralBits.Semantics = Sem;
+  }
+
+  /// Return the APFloat semantics this literal uses.
+  const llvm::fltSemantics &getSemantics() const;
+
+  /// Set the APFloat semantics this literal uses.
+  void setSemantics(const llvm::fltSemantics &Sem);
 
   bool isExact() const { return FloatingLiteralBits.IsExact; }
   void setExact(bool E) { FloatingLiteralBits.IsExact = E; }

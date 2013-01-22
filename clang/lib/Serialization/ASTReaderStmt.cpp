@@ -378,8 +378,10 @@ void ASTStmtReader::VisitIntegerLiteral(IntegerLiteral *E) {
 
 void ASTStmtReader::VisitFloatingLiteral(FloatingLiteral *E) {
   VisitExpr(E);
-  E->setValue(Reader.getContext(), Reader.ReadAPFloat(Record, Idx));
+  E->setRawSemantics(static_cast<Stmt::APFloatSemantics>(Record[Idx++]));
   E->setExact(Record[Idx++]);
+  E->setValue(Reader.getContext(),
+              Reader.ReadAPFloat(Record, E->getSemantics(), Idx));
   E->setLocation(ReadSourceLocation(Record, Idx));
 }
 

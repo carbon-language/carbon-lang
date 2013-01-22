@@ -646,16 +646,14 @@ FloatingLiteral::FloatingLiteral(ASTContext &C, const llvm::APFloat &V,
                                  bool isexact, QualType Type, SourceLocation L)
   : Expr(FloatingLiteralClass, Type, VK_RValue, OK_Ordinary, false, false,
          false, false), Loc(L) {
-  FloatingLiteralBits.IsIEEE =
-    &C.getTargetInfo().getLongDoubleFormat() == &llvm::APFloat::IEEEquad;
+  setSemantics(V.getSemantics());
   FloatingLiteralBits.IsExact = isexact;
   setValue(C, V);
 }
 
 FloatingLiteral::FloatingLiteral(ASTContext &C, EmptyShell Empty)
   : Expr(FloatingLiteralClass, Empty) {
-  FloatingLiteralBits.IsIEEE =
-    &C.getTargetInfo().getLongDoubleFormat() == &llvm::APFloat::IEEEquad;
+  setRawSemantics(IEEEhalf);
   FloatingLiteralBits.IsExact = false;
 }
 
@@ -668,6 +666,41 @@ FloatingLiteral::Create(ASTContext &C, const llvm::APFloat &V,
 FloatingLiteral *
 FloatingLiteral::Create(ASTContext &C, EmptyShell Empty) {
   return new (C) FloatingLiteral(C, Empty);
+}
+
+const llvm::fltSemantics &FloatingLiteral::getSemantics() const {
+  switch(FloatingLiteralBits.Semantics) {
+  case IEEEhalf:
+    return llvm::APFloat::IEEEhalf;
+  case IEEEsingle:
+    return llvm::APFloat::IEEEsingle;
+  case IEEEdouble:
+    return llvm::APFloat::IEEEdouble;
+  case x87DoubleExtended:
+    return llvm::APFloat::x87DoubleExtended;
+  case IEEEquad:
+    return llvm::APFloat::IEEEquad;
+  case PPCDoubleDouble:
+    return llvm::APFloat::PPCDoubleDouble;
+  }
+  llvm_unreachable("Unrecognised floating semantics");
+}
+
+void FloatingLiteral::setSemantics(const llvm::fltSemantics &Sem) {
+  if (&Sem == &llvm::APFloat::IEEEhalf)
+    FloatingLiteralBits.Semantics = IEEEhalf;
+  else if (&Sem == &llvm::APFloat::IEEEsingle)
+    FloatingLiteralBits.Semantics = IEEEsingle;
+  else if (&Sem == &llvm::APFloat::IEEEdouble)
+    FloatingLiteralBits.Semantics = IEEEdouble;
+  else if (&Sem == &llvm::APFloat::x87DoubleExtended)
+    FloatingLiteralBits.Semantics = x87DoubleExtended;
+  else if (&Sem == &llvm::APFloat::IEEEquad)
+    FloatingLiteralBits.Semantics = IEEEquad;
+  else if (&Sem == &llvm::APFloat::PPCDoubleDouble)
+    FloatingLiteralBits.Semantics = PPCDoubleDouble;
+  else
+    llvm_unreachable("Unknown floating semantics");
 }
 
 /// getValueAsApproximateDouble - This returns the value as an inaccurate
