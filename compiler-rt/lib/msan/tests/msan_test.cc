@@ -1325,6 +1325,22 @@ TEST(MemorySanitizer, SignedCompareWithZero) {
   EXPECT_UMR(applySlt<S4>(0xF, 0xFFFFFFFF));
 }
 
+// Volatile bitfield store is implemented as load-mask-store
+// Test that we don't warn on the store of (uninitialized) padding.
+struct VolatileBitfieldStruct {
+  volatile unsigned x : 1;
+  unsigned y : 1;
+};
+
+TEST(MemorySanitizer, VolatileBitfield) {
+  VolatileBitfieldStruct *S = new VolatileBitfieldStruct;
+  S->x = 1;
+  unsigned tmp = S->x;
+  EXPECT_NOT_POISONED(tmp);
+  tmp = S->y;
+  EXPECT_POISONED(S->y);
+}
+
 TEST(MemorySanitizerDr, StoreInDSOTest) {
   if (!__msan_has_dynamic_component()) return;
   char* s = new char[10];
