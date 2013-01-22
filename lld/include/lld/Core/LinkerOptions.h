@@ -117,7 +117,7 @@ private:
   mutable InputKind _kind;
 };
 
-enum class OutputKind {
+enum OutputKind {
   Executable,
   Relocatable,
   Shared,
@@ -174,7 +174,7 @@ struct LinkerOptions {
   std::string _outputPath;
   std::string _entrySymbol;
   uint64_t _baseAddress;
-  OutputKind _outputKind;
+  OutputKind _outputKind:2;
   /// \brief -###
   unsigned _outputCommands : 1;
   unsigned _outputYAML : 1;
