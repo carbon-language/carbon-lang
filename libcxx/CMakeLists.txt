@@ -67,6 +67,7 @@ get_target_triple(LIBCXX_TARGET_TRIPLE
 set(LIBCXX_TARGET_TRIPLE ${LIBCXX_TARGET_TRIPLE} CACHE STRING "Target triple.")
 
 if ("${LIBCXX_CXX_ABI}" STREQUAL "libsupc++")
+  add_definitions(-D__GLIBCXX__)
   set(LIBCXX_LIBSUPCXX_INCLUDE_PATHS "${LIBCXX_LIBSUPCXX_INCLUDE_PATHS}"
       CACHE STRINGS
       "Paths to libsupc++ include directories separate by ';'.")
