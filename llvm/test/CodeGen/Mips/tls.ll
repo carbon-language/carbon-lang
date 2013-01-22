@@ -21,9 +21,9 @@ entry:
 ; PIC:   jalr    $25
 ; PIC:   lw      $2, 0($2)
 
-; STATIC:   rdhwr   $3, $29
 ; STATIC:   lui     $[[R0:[0-9]+]], %tprel_hi(t1)
 ; STATIC:   addiu   $[[R1:[0-9]+]], $[[R0]], %tprel_lo(t1)
+; STATIC:   rdhwr   $3, $29
 ; STATIC:   addu    $[[R2:[0-9]+]], $3, $[[R1]]
 ; STATIC:   lw      $2, 0($[[R2]])
 }

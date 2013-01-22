@@ -47,6 +47,28 @@ MipsRegisterInfo::MipsRegisterInfo(const MipsSubtarget &ST)
 
 unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 
+
+unsigned
+MipsRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
+                                      MachineFunction &MF) const {
+  switch (RC->getID()) {
+  default:
+    return 0;
+  case Mips::CPURegsRegClassID:
+  case Mips::CPU64RegsRegClassID:
+  case Mips::DSPRegsRegClassID: {
+    const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
+    return 28 - TFI->hasFP(MF);
+  }
+  case Mips::FGR32RegClassID:
+    return 32;
+  case Mips::AFGR64RegClassID:
+    return 16;
+  case Mips::FGR64RegClassID:
+    return 32;
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Callee Saved Registers methods
 //===----------------------------------------------------------------------===//
