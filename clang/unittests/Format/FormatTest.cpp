@@ -1338,6 +1338,9 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("if (*b[i])");
   verifyFormat("if (int *a = (&b))");
   verifyFormat("while (int *a = &b)");
+
+  verifyFormat("A = new SomeType *[Length]();");
+  verifyGoogleFormat("A = new SomeType* [Length]();");
 }
 
 TEST_F(FormatTest, FormatsCasts) {

@@ -958,6 +958,13 @@ public:
 
       while (CurrentToken != NULL) {
         if (CurrentToken->is(tok::r_square)) {
+          if (!CurrentToken->Children.empty() &&
+              CurrentToken->Children[0].is(tok::l_paren)) {
+            // An ObjC method call can't be followed by an open parenthesis.
+            // FIXME: Do we incorrectly label ":" with this?
+            StartsObjCMethodExpr = false;
+            Left->Type = TT_Unknown;
+	  }
           if (StartsObjCMethodExpr)
             objCSelector.markEnd(*CurrentToken);
           Left->MatchingParen = CurrentToken;
@@ -1324,6 +1331,9 @@ private:
     const AnnotatedToken *NextToken = getNextToken(Tok);
     if (NextToken == NULL)
       return TT_Unknown;
+
+    if (NextToken->is(tok::l_square) && NextToken->Type != TT_ObjCMethodExpr)
+      return TT_PointerOrReference;
 
     if (PrevToken->is(tok::l_paren) || PrevToken->is(tok::l_square) ||
         PrevToken->is(tok::l_brace) || PrevToken->is(tok::comma) ||
