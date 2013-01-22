@@ -60,6 +60,7 @@ enum TokenType {
 enum LineType {
   LT_Invalid,
   LT_Other,
+  LT_BuilderTypeCall,
   LT_PreprocessorDirective,
   LT_VirtualFunctionDecl,
   LT_ObjCDecl, // An @interface, @implementation, or @protocol line.
@@ -707,7 +708,7 @@ private:
       return Level;
 
     if (Right.is(tok::arrow) || Right.is(tok::period)) {
-      if (Left.is(tok::r_paren))
+      if (Left.is(tok::r_paren) && Line.Type == LT_BuilderTypeCall)
         return 15; // Should be smaller than breaking at a nested comma.
       return 150;
     }
@@ -1162,18 +1163,27 @@ public:
     }
 
     LineType parseLine() {
+      int PeriodsAndArrows = 0;
       if (CurrentToken->is(tok::hash)) {
         parsePreprocessorDirective();
         return LT_PreprocessorDirective;
       }
       while (CurrentToken != NULL) {
+        
         if (CurrentToken->is(tok::kw_virtual))
           KeywordVirtualFound = true;
+        if (CurrentToken->is(tok::period) || CurrentToken->is(tok::arrow))
+          ++PeriodsAndArrows;
         if (!consumeToken())
           return LT_Invalid;
       }
       if (KeywordVirtualFound)
         return LT_VirtualFunctionDecl;
+
+      // Assume a builder-type call if there are 2 or more "." and "->".
+      if (PeriodsAndArrows >= 2)
+        return LT_BuilderTypeCall;
+
       return LT_Other;
     }
 

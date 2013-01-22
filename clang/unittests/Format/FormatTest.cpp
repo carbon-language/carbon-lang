@@ -964,8 +964,9 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
       "         aaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)));");
   verifyGoogleFormat(
-      "aaaaaaaaaaaaaaa(aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaaaa)\n"
-      "    .aaaaaaaaaaaaaaaaaa();");
+      "aaaaaaaaaaaaaaa(aaaaaaaaa,\n"
+      "                aaaaaaaaa,\n"
+      "                aaaaaaaaaaaaaaaaaaaaaaa).aaaaaaaaaaaaaaaaaa();");
   verifyGoogleFormat(
       "somefunction(someotherFunction(ddddddddddddddddddddddddddddddddddd,\n"
       "                               ddddddddddddddddddddddddddddd),\n"
