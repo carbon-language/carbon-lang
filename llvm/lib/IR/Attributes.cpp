@@ -73,7 +73,7 @@ bool Attribute::hasAttributes() const {
 unsigned Attribute::getAlignment() const {
   if (!hasAttribute(Attribute::Alignment))
     return 0;
-  return 1U << ((pImpl->getAlignment() >> 16) - 1);
+  return pImpl->getAlignment();
 }
 
 /// This returns the stack alignment field of an attribute as a byte alignment
@@ -81,7 +81,7 @@ unsigned Attribute::getAlignment() const {
 unsigned Attribute::getStackAlignment() const {
   if (!hasAttribute(Attribute::StackAlignment))
     return 0;
-  return 1U << ((pImpl->getStackAlignment() >> 26) - 1);
+  return pImpl->getStackAlignment();
 }
 
 bool Attribute::operator==(AttrKind K) const {
@@ -491,11 +491,13 @@ bool AttributeImpl::hasAttributes() const {
 }
 
 uint64_t AttributeImpl::getAlignment() const {
-  return Raw() & getAttrMask(Attribute::Alignment);
+  uint64_t Mask = Raw() & getAttrMask(Attribute::Alignment);
+  return 1U << ((Mask >> 16) - 1);
 }
 
 uint64_t AttributeImpl::getStackAlignment() const {
-  return Raw() & getAttrMask(Attribute::StackAlignment);
+  uint64_t Mask = Raw() & getAttrMask(Attribute::StackAlignment);
+  return 1U << ((Mask >> 26) - 1);
 }
 
 void AttributeImpl::Profile(FoldingSetNodeID &ID, Constant *Data,
