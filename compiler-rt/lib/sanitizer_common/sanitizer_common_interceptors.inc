@@ -221,4 +221,6 @@ INTERCEPTOR(int, sscanf, const char *str, const char *format, ...) {  // NOLINT
   INIT_PREAD64;                            \
   INIT_PRCTL;                              \
   INIT_WRITE;                              \
+  INIT_PWRITE;                             \
+  INIT_PWRITE64;                           \
   INIT_SCANF;
