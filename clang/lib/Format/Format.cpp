@@ -604,10 +604,14 @@ private:
           Current.isNot(tok::comment))
         State.Stack[ParenLevel].HasMultiParameterLine = true;
 
-      // Top-level spaces are exempt as that mostly leads to better results.
       State.Column += Spaces;
-      if (Spaces > 0 && ParenLevel != 0)
-        State.Stack[ParenLevel].LastSpace = State.Column;
+      if (Current.is(tok::l_paren) && Previous.is(tok::kw_if))
+        // Treat the condition inside an if as if it was a second function
+        // parameter, i.e. let nested calls have an indent of 4.
+        State.Stack.back().LastSpace = State.Column + 1; // 1 is length of "(".
+      else if (Spaces > 0 && ParenLevel != 0)
+        // Top-level spaces are exempt as that mostly leads to better results.
+        State.Stack.back().LastSpace = State.Column;
     }
 
     // If we break after an {, we should also break before the corresponding }.
