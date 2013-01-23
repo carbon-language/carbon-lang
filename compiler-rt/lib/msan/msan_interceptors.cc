@@ -512,6 +512,8 @@ INTERCEPTOR(int, wait, int *status) {
 }
 
 INTERCEPTOR(int, waitpid, int pid, int *status, int options) {
+  if (msan_init_is_running)
+    return REAL(waitpid)(pid, status, options);
   ENSURE_MSAN_INITED();
   int res = REAL(waitpid)(pid, status, options);
   if (status)
