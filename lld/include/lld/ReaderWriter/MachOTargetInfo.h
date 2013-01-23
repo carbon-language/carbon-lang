@@ -23,6 +23,9 @@ public:
   uint32_t getCPUType() const;
   uint32_t getCPUSubType() const;
 
+  bool addEntryPointLoadCommand() const;
+  bool addUnixThreadLoadCommand() const;
+
   virtual uint64_t getPageZeroSize() const = 0;
 
   static std::unique_ptr<MachOTargetInfo> create(const LinkerOptions &lo);

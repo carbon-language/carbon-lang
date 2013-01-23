@@ -228,7 +228,8 @@ LinkerOptions lld::generateOptions(const llvm::opt::ArgList &args) {
   ret._target = llvm::Triple::normalize(args.getLastArgValue(core::OPT_target));
   ret._outputPath = args.getLastArgValue(core::OPT_output);
   ret._entrySymbol = args.getLastArgValue(core::OPT_entry);
-  ret._relocatable = args.hasArg(core::OPT_relocatable);
+  if (args.hasArg(core::OPT_relocatable))
+    ret._outputKind = OutputKind::Relocatable;
   ret._outputCommands = args.hasArg(core::OPT_OCTOTHORPE_OCTOTHORPE_OCTOTHORPE);
   ret._outputYAML = args.hasArg(core::OPT_emit_yaml);
   ret._noInhibitExec = args.hasArg(core::OPT_noinhibit_exec);

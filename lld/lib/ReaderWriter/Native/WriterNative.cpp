@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/WriterNative.h"
+#include "lld/ReaderWriter/Writer.h"
 #include "lld/Core/File.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -28,7 +28,7 @@ namespace native {
 ///
 class Writer : public lld::Writer {
 public:
-  Writer(const WriterOptionsNative &options) {}
+  Writer(const TargetInfo &ti) {}
   
   virtual error_code writeFile(const lld::File &file, StringRef outPath) {
     // reserve first byte for unnamed atoms
@@ -576,21 +576,9 @@ private:
   NameToOffsetVector                      _sectionNames;
   NameToOffsetVector                      _sharedLibraryNames;
 };
+} // end namespace native
 
-
-} // namespace native
-
-Writer* createWriterNative(const WriterOptionsNative &options) {
-  return new lld::native::Writer(options);
+std::unique_ptr<Writer> createWriterNative(const TargetInfo &ti) {
+  return std::unique_ptr<Writer>(new native::Writer(ti));
 }
-
-WriterOptionsNative::WriterOptionsNative() {
-}
-
-WriterOptionsNative::~WriterOptionsNative() {
-}
-
-
-} // namespace lld
-
-
+} // end namespace lld

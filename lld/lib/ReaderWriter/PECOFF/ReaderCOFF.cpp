@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/ReaderPECOFF.h"
+#include "lld/ReaderWriter/Reader.h"
 #include "lld/Core/File.h"
 
 #include "llvm/ADT/ArrayRef.h"
@@ -359,7 +359,7 @@ private:
 
 class ReaderCOFF : public Reader {
 public:
-  ReaderCOFF(const ReaderOptionsPECOFF &options) {}
+  ReaderCOFF(const TargetInfo &ti) : Reader(ti) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
                        std::vector<std::unique_ptr<File>> &result) {
@@ -373,22 +373,11 @@ public:
     return error_code::success();
   }
 };
-
-} // namespace anonymous
-
+} // end namespace anonymous
 
 namespace lld {
-
-Reader *createReaderPECOFF(const ReaderOptionsPECOFF &options) {
-  return new ReaderCOFF(options);
+std::unique_ptr<Reader> createReaderPECOFF(const TargetInfo & ti,
+                                           std::function<ReaderFunc>) {
+  return std::unique_ptr<Reader>(new ReaderCOFF(ti));
 }
-
-ReaderOptionsPECOFF::ReaderOptionsPECOFF() {
 }
-
-ReaderOptionsPECOFF::~ReaderOptionsPECOFF() {
-}
-
-} // namespace lld
-
-

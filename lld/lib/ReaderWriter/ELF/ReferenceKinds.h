@@ -9,9 +9,12 @@
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
-#include "lld/ReaderWriter/WriterELF.h"
+#include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/Support/ELF.h"
+#include "llvm/Support/Endian.h"
 
 #include <functional>
 #include <map>
@@ -32,8 +35,8 @@ class KindHandler {
 public:
   typedef Reference::Kind Kind;
 
-  static std::unique_ptr<KindHandler> makeHandler(uint16_t arch,
-                                      llvm::support::endianness endian);
+  static std::unique_ptr<KindHandler> makeHandler(llvm::Triple::ArchType arch,
+                                                  bool isLittleEndian);
   virtual             ~KindHandler();
   virtual Kind        stringToKind(StringRef str) = 0;
   virtual StringRef   kindToString(Kind) = 0;

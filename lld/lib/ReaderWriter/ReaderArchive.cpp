@@ -9,7 +9,11 @@
 
 #include "lld/ReaderWriter/ReaderArchive.h"
 
+#include "lld/Core/ArchiveLibraryFile.h"
+#include "lld/Core/LinkerOptions.h"
+
 #include "llvm/ADT/Hashing.h"
+#include "llvm/Object/ObjectFile.h"
 
 #include <unordered_map>
 
@@ -46,8 +50,8 @@ public:
     
     std::vector<std::unique_ptr<File>> result;
 
-    if ((ec = _options.reader()->parseFile(std::unique_ptr<MemoryBuffer>
-                                           (ci->getBuffer()), result)))
+    LinkerInput li(std::unique_ptr<MemoryBuffer>(ci->getBuffer()));
+    if ((ec = _getReader(li)->parseFile(li.takeBuffer(), result)))
       return nullptr;
 
     assert(result.size() == 1);
@@ -109,8 +113,8 @@ protected:
   }
 
 private:
+  std::function<ErrorOr<Reader&> (const LinkerInput &)> _getReader;
   std::unique_ptr<llvm::object::Archive> _archive;
-  const ReaderOptionsArchive _options;
   atom_collection_vector<DefinedAtom>       _definedAtoms;
   atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
@@ -118,13 +122,13 @@ private:
 
 public:
   /// only subclasses of ArchiveLibraryFile can be instantiated 
-  explicit FileArchive(llvm::MemoryBuffer *mb, 
-                       const ReaderOptionsArchive &options, 
-                       error_code &ec)
-                      :ArchiveLibraryFile(mb->getBufferIdentifier()),
-                       _options(options) { 
+  FileArchive(const TargetInfo &ti,
+              std::function<ErrorOr<Reader&> (const LinkerInput &)> getReader,
+              std::unique_ptr<llvm::MemoryBuffer> mb,
+              error_code &ec)
+      : ArchiveLibraryFile(mb->getBufferIdentifier()), _getReader(getReader) {
     std::unique_ptr<llvm::object::Archive> archive_obj(
-      new llvm::object::Archive(mb, ec));
+        new llvm::object::Archive(mb.release(), ec));
     if (ec)
       return;
     _archive.swap(archive_obj);
@@ -148,23 +152,23 @@ public:
 // Returns a vector of Files that are contained in the archive file 
 // pointed to by the MemoryBuffer
 error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
-		std::vector<std::unique_ptr<File>> &result) {
+                                    std::vector<std::unique_ptr<File>> &result){
   error_code ec;
   
-  if (_options.isForceLoad()) {
+  if (_options._forceLoadArchives) {
     _archive.reset(new llvm::object::Archive(mb.release(), ec));
     if (ec)
       return ec;
     
     for (auto mf = _archive->begin_children(), 
               me = _archive->end_children(); mf != me; ++mf) {
-    	if ((ec = _options.reader()->parseFile(std::unique_ptr<MemoryBuffer>
-                                             (mf->getBuffer()), result)))
+      LinkerInput li(std::unique_ptr<MemoryBuffer>(mf->getBuffer()));
+      if ((ec = _getReader(li)->parseFile(li.takeBuffer(), result)))
         return ec;
     }
   } else {
     std::unique_ptr<File> f;
-    f.reset(new FileArchive(mb.release(), _options, ec));
+    f.reset(new FileArchive(_targetInfo, _getReader, std::move(mb), ec));
     if (ec)
       return ec;
 
@@ -172,5 +176,4 @@ error_code ReaderArchive::parseFile(std::unique_ptr<llvm::MemoryBuffer> mb,
   }
   return llvm::error_code::success();
 }
-
-} // namespace lld
+} // end namespace lld

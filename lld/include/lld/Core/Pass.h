@@ -61,7 +61,7 @@ public:
 
   /// Returns whether the Reference kind is for a call site.  The pass
   /// uses this to find calls that need to be indirected through a stub.
-  virtual bool isCallSite(Reference::Kind) = 0;
+  virtual bool isCallSite(int32_t) = 0;
 
   /// Returns a file format specific atom for a stub/PLT entry which contains
   /// instructions which jump to the specified atom.  May be called multiple
@@ -96,7 +96,7 @@ public:
   /// Returns whether the Reference kind is a pre-instantiated GOT access.
   /// The default implementation of perform() uses this to figure out
   /// what GOT entries to instantiate.
-  virtual bool isGOTAccess(Reference::Kind, bool &canBypassGOT) = 0;
+  virtual bool isGOTAccess(int32_t, bool &canBypassGOT) = 0;
 
   /// The file format Writer needs to alter the reference kind from a
   /// pre-instantiated GOT access to an actual access.  If targetIsNowGOT is

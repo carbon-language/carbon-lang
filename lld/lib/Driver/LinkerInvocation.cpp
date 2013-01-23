@@ -11,8 +11,9 @@
 
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/Resolver.h"
-#include "lld/Core/TargetInfo.h"
 #include "lld/Driver/Target.h"
+#include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
@@ -67,19 +68,12 @@ void LinkerInvocation::operator()() {
     inputs.appendFiles(files);
   }
 
-  class TestingTargetInfo LLVM_FINAL : public TargetInfo {
-  public:
-    TestingTargetInfo(const LinkerOptions &lo) : TargetInfo(lo) {}
-
-    virtual uint64_t getPageSize() const { return 0x1000; }
-  } tti(_options);
-
   auto writer = target->getWriter();
 
   // Give writer a chance to add files
   writer->addFiles(inputs);
 
-  Resolver resolver(tti, inputs);
+  Resolver resolver(target->getTargetInfo(), inputs);
   resolver.resolve();
   File &merged = resolver.resultFile();
 

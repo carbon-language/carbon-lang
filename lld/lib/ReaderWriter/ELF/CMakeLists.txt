@@ -5,7 +5,6 @@ add_lld_library(lldELF
   ReaderELF.cpp
   ReferenceKinds.cpp
   WriterELF.cpp
-  WriterOptionsELF.cpp
   X86Reference.cpp
   X86_64Reference.cpp
   )

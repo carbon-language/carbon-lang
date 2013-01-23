@@ -7,29 +7,14 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/WriterPECOFF.h"
+#include "lld/ReaderWriter/Writer.h"
 
-#include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 
 
 namespace lld {
-namespace pe_coff {
-
-// define PE/COFF writer class here
-
-
-} // namespace pe_coff
-
-Writer* createWriterPECOFF(const WriterOptionsPECOFF &options) {
-  assert(0 && "PE/COFF support not implemented yet");
+std::unique_ptr<Writer> createWriterPECOFF(const TargetInfo &) {
+  llvm_unreachable("PE/COFF support not implemented yet");
   return nullptr;
 }
-
-WriterOptionsPECOFF::WriterOptionsPECOFF() {
-}
-
-WriterOptionsPECOFF::~WriterOptionsPECOFF() {
-}
-
-} // namespace lld
-
+} // end namespace lld

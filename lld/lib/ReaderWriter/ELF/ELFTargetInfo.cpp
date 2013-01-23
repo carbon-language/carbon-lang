@@ -23,6 +23,13 @@ uint16_t ELFTargetInfo::getOutputType() const {
     return llvm::ELF::ET_REL;
   case OutputKind::Shared:
     return llvm::ELF::ET_DYN;
+  case OutputKind::Core:
+    return llvm::ELF::ET_CORE;
+  case OutputKind::SharedStubs:
+  case OutputKind::DebugSymbols:
+  case OutputKind::Bundle:
+  case OutputKind::Preload:
+    break;
   }
   llvm_unreachable("Unhandled OutputKind");
 }
@@ -42,21 +49,21 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
   }
 }
 
-class X86ELFTargetInfo final : public ELFTargetInfo {
+class X86ELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   X86ELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {}
 
   virtual uint64_t getPageSize() const { return 0x1000; }
 };
 
-class HexagonELFTargetInfo final : public ELFTargetInfo {
+class HexagonELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   HexagonELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {}
 
   virtual uint64_t getPageSize() const { return 0x1000; }
 };
 
-class PPCELFTargetInfo final : public ELFTargetInfo {
+class PPCELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
 public:
   PPCELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {}
 

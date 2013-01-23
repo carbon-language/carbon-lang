@@ -12,22 +12,15 @@
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Resolver.h"
-#include "lld/Core/TargetInfo.h"
+#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/MachOTargetInfo.h"
 #include "lld/ReaderWriter/Reader.h"
 #include "lld/ReaderWriter/ReaderArchive.h"
-#include "lld/ReaderWriter/ReaderNative.h"
-#include "lld/ReaderWriter/ReaderYAML.h"
-#include "lld/ReaderWriter/ReaderELF.h"
-#include "lld/ReaderWriter/ReaderPECOFF.h"
-#include "lld/ReaderWriter/ReaderMachO.h"
 #include "lld/ReaderWriter/Writer.h"
-#include "lld/ReaderWriter/WriterELF.h"
-#include "lld/ReaderWriter/WriterMachO.h"
-#include "lld/ReaderWriter/WriterNative.h"
-#include "lld/ReaderWriter/WriterPECOFF.h"
-#include "lld/ReaderWriter/WriterYAML.h"
 
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/Triple.h"
+#include "llvm/Support/ELF.h"
 #include "llvm/Support/Endian.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FileSystem.h"
@@ -107,7 +100,8 @@ writeSelected("writer",
     clEnumValN(writeMachO,  "mach-o", "link as darwin would"),
     clEnumValN(writePECOFF, "PECOFF", "link as windows would"),
     clEnumValN(writeELF,    "ELF",    "link as linux would"),
-    clEnumValEnd));
+    clEnumValEnd),
+  llvm::cl::init(writeYAML));
 
 enum ReaderChoice {
   readerYAML, readerMachO, readerPECOFF, readerELF
@@ -120,7 +114,8 @@ readerSelected("reader",
     clEnumValN(readerMachO,  "mach-o", "read as darwin would"),
     clEnumValN(readerPECOFF, "PECOFF", "read as windows would"),
     clEnumValN(readerELF,    "ELF",    "read as linux would"),
-    clEnumValEnd));
+    clEnumValEnd),
+  llvm::cl::init(readerYAML));
     
 enum ArchChoice {
   i386 = llvm::ELF::EM_386,
@@ -140,7 +135,8 @@ archSelected("arch",
                "hexagon", "output Hexagon, EM_HEXAGON file"),
     clEnumValN(ppc, 
                "ppc", "output PowerPC, EM_PPC file"),
-    clEnumValEnd));
+    clEnumValEnd),
+  llvm::cl::init(i386));
 
 
 enum endianChoice {
@@ -156,7 +152,7 @@ endianSelected("endian",
                "output little endian format"),
     clEnumValEnd));
     
-class TestingTargetInfo LLVM_FINAL : public TargetInfo {
+class TestingTargetInfo : public TargetInfo {
 public:
   TestingTargetInfo(const LinkerOptions &lo, bool stubs, bool got)
       : TargetInfo(lo), _doStubs(stubs), _doGOT(got) {}
@@ -177,7 +173,7 @@ public:
       return nullptr;
   }
 
-  virtual ErrorOr<uint32_t> relocKindFromString(StringRef str) const {
+  virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const {
     // Try parsing as a number.
     if (auto kind = TargetInfo::relocKindFromString(str))
       return kind;
@@ -187,9 +183,9 @@ public:
     return llvm::make_error_code(llvm::errc::invalid_argument);
   }
 
-  virtual ErrorOr<std::string> stringFromRelocKind(uint32_t kind) const {
+  virtual ErrorOr<std::string> stringFromRelocKind(int32_t kind) const {
     for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
-      if (kind == static_cast<uint32_t>(p->value))
+      if (kind == p->value)
         return std::string(p->string);
     }
     return llvm::make_error_code(llvm::errc::invalid_argument);
@@ -244,49 +240,32 @@ int main(int argc, char *argv[]) {
 
   TestingTargetInfo tti(lo, cmdLineDoStubsPass, cmdLineDoGotPass);
 
-  // create writer for final output, default to i386 if none selected
-  WriterOptionsELF writerOptionsELF(false,
-                                    endianSelected == big
-                                    ? llvm::support::big
-                                    : llvm::support::little,
-                                    llvm::ELF::ET_EXEC,
-                                    archSelected.getValue() == 0
-                                    ? i386
-                                    : archSelected);
-
-  TestingWriterOptionsYAML  writerOptionsYAML(cmdLineDoStubsPass, 
-                                              cmdLineDoGotPass);
-  WriterOptionsMachO        writerOptionsMachO;
-  WriterOptionsPECOFF       writerOptionsPECOFF;
-
-  Writer* writer = nullptr;
+  std::unique_ptr<ELFTargetInfo> eti = ELFTargetInfo::create(lo);
+  std::unique_ptr<MachOTargetInfo> mti = MachOTargetInfo::create(lo);
+  std::unique_ptr<Writer> writer;
   switch ( writeSelected ) {
     case writeYAML:
-      writer = createWriterYAML(writerOptionsYAML);
+      writer = createWriterYAML(tti);
       break;
     case writeMachO:
-      writer = createWriterMachO(writerOptionsMachO);
+      writer = createWriterMachO(*mti);
       break;
     case writePECOFF:
-      writer = createWriterPECOFF(writerOptionsPECOFF);
+      writer = createWriterPECOFF(tti);
       break;
     case writeELF:
-      writer = createWriterELF(writerOptionsELF);
+      writer = createWriterELF(*eti);
       break;
   }
   
   // create object to mange input files
   InputFiles inputFiles;
 
-  ReaderOptionsArchive readerOptionsArchive(cmdLineForceLoad);
-
   // read input files into in-memory File objects
-
-  TestingReaderOptionsYAML  readerOptionsYAML;
-  Reader *reader = nullptr;
+  std::unique_ptr<Reader> reader;
   switch ( readerSelected ) {
     case readerYAML:
-      reader = createReaderYAML(readerOptionsYAML);
+      reader = createReaderYAML(tti);
       break;
 #if 0
     case readerMachO:
@@ -294,15 +273,19 @@ int main(int argc, char *argv[]) {
       break;
 #endif
     case readerPECOFF:
-      reader = createReaderPECOFF(lld::ReaderOptionsPECOFF());
+      reader = createReaderPECOFF(tti,
+      [&] (const LinkerInput &) -> ErrorOr<Reader&> {
+        return *reader;
+      });
       break;
     case readerELF:
-      reader = createReaderELF(lld::ReaderOptionsELF(),
-                               readerOptionsArchive);
-
+      reader = createReaderELF(*eti,
+      [&] (const LinkerInput &) -> ErrorOr<Reader&> {
+        return *reader;
+      });
       break;
     default:
-      reader = createReaderYAML(readerOptionsYAML);
+      reader = createReaderYAML(tti);
       break;
   }
 
@@ -342,14 +325,12 @@ int main(int argc, char *argv[]) {
   }
   
   // write as native file
-  WriterOptionsNative  optionsNativeWriter;
-  Writer *natWriter = createWriterNative(optionsNativeWriter);
+  std::unique_ptr<Writer> natWriter = createWriterNative(tti);
   if (error(natWriter->writeFile(mergedMasterFile, tmpNativePath.c_str())))
     return 1;
   
   // read as native file
-  ReaderOptionsNative  optionsNativeReader;
-  Reader *natReader = createReaderNative(optionsNativeReader);
+  std::unique_ptr<Reader> natReader = createReaderNative(tti);
   std::vector<std::unique_ptr<File>> readNativeFiles;
   if (error(natReader->readFile(tmpNativePath.c_str(), readNativeFiles)))
     return 1;

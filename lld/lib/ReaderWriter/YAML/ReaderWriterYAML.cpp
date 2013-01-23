@@ -8,14 +8,15 @@
 //===----------------------------------------------------------------------===//
 
 
+#include "lld/ReaderWriter/Reader.h"
+#include "lld/ReaderWriter/Writer.h"
+
 #include "lld/Core/ArchiveLibraryFile.h"
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/File.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
-#include "lld/ReaderWriter/ReaderYAML.h"
-#include "lld/ReaderWriter/WriterYAML.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -38,6 +39,7 @@ using llvm::yaml::IO;
 using llvm::yaml::SequenceTraits;
 using llvm::yaml::DocumentListTraits;
 
+using namespace lld;
 
 /// The conversion of Atoms to and from YAML uses LLVM's YAML I/O.  This
 /// file just defines template specializations on the lld types which control
@@ -51,16 +53,11 @@ namespace {
 /// supplies contextual information.
 class ContextInfo {
 public:
-  ContextInfo(const lld::ReaderOptionsYAML &ro)
-    : _currentFile(nullptr), _readerOptions(&ro), _writerOptions(nullptr) { }
-  ContextInfo(const lld::WriterOptionsYAML &wo)
-    : _currentFile(nullptr), _readerOptions(nullptr), _writerOptions(&wo) { }
+  ContextInfo(const TargetInfo &ti) : _currentFile(nullptr), _targetInfo(ti) {}
 
-  lld::File                     *_currentFile;
-  const lld::ReaderOptionsYAML  *_readerOptions;
-  const lld::WriterOptionsYAML  *_writerOptions;
+  lld::File       *_currentFile;
+  const TargetInfo &_targetInfo;
 };
-
 
 /// Used when writing yaml files.
 /// In most cases, atoms names are unambiguous, so references can just
@@ -293,13 +290,17 @@ struct ScalarTraits<RefKind> {
                                                       llvm::raw_ostream &out) {
     assert(ctxt != nullptr);
     ContextInfo *info = reinterpret_cast<ContextInfo*>(ctxt);
-    out << info->_writerOptions->kindToString(value);
+    auto relocStr = info->_targetInfo.stringFromRelocKind(value);
+    out << (relocStr ? *relocStr : "<unknown>");
   }
 
   static StringRef input(StringRef scalar, void *ctxt, RefKind &value) {
     assert(ctxt != nullptr);
     ContextInfo *info = reinterpret_cast<ContextInfo*>(ctxt);
-    value = info->_readerOptions->kindFromString(scalar);
+    auto relocKind = info->_targetInfo.relocKindFromString(scalar);
+    if (!relocKind)
+      return "Invalid relocation kind";
+    value = *relocKind;
     return StringRef();
   }
 };
@@ -1260,8 +1261,7 @@ namespace yaml {
 
 class Writer : public lld::Writer {
 public:
-  Writer(const WriterOptionsYAML &options) : _options(options) {
-  }
+  Writer(const TargetInfo &ti) : _targetInfo(ti) {}
   
   virtual error_code writeFile(const lld::File &file, StringRef outPath) {
     // Create stream to path.
@@ -1271,7 +1271,7 @@ public:
       return llvm::make_error_code(llvm::errc::no_such_file_or_directory);
 
     // Create yaml Output writer, using yaml options for context.
-    ContextInfo context(_options);
+    ContextInfo context(_targetInfo);
     llvm::yaml::Output yout(out, &context);
     
     // Write yaml output.
@@ -1282,24 +1282,21 @@ public:
   }
   
   virtual StubsPass *stubPass() {
-    return _options.stubPass();
+    return _targetInfo.getStubPass();
   }
   
   virtual GOTPass *gotPass() {
-    return _options.gotPass();
+    return _targetInfo.getGOTPass();
   }
   
   
 private:
-  const WriterOptionsYAML &_options;
+  const TargetInfo &_targetInfo;
 };
-
-
 
 class ReaderYAML : public Reader {
 public:
-  ReaderYAML(const ReaderOptionsYAML &options) : _options(options) {
-  }
+  ReaderYAML(const TargetInfo &ti) : Reader(ti) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
                        std::vector<std::unique_ptr<File>> &result) {
@@ -1311,7 +1308,7 @@ public:
     // is deallocated.
 
     // Create YAML Input parser.
-    ContextInfo context(_options);
+    ContextInfo context(_targetInfo);
     llvm::yaml::Input yin(mb->getBuffer(), &context);
     
     // Fill vector with File objects created by parsing yaml.
@@ -1329,38 +1326,14 @@ public:
     }
     return make_error_code(lld::yaml_reader_error::success);
   }
-
-private:
-  const ReaderOptionsYAML       &_options;
 };
+} // end namespace yaml
 
-
-
-} // namespace yaml
-
-
-Writer *createWriterYAML(const WriterOptionsYAML &options) {
-  return new lld::yaml::Writer(options);
+std::unique_ptr<Writer> createWriterYAML(const TargetInfo &ti) {
+  return std::unique_ptr<Writer>(new lld::yaml::Writer(ti));
 }
 
-WriterOptionsYAML::WriterOptionsYAML() {
+std::unique_ptr<Reader> createReaderYAML(const TargetInfo &ti) {
+  return std::unique_ptr<Reader>(new lld::yaml::ReaderYAML(ti));
 }
-
-WriterOptionsYAML::~WriterOptionsYAML() {
-}
-
-
-
-Reader *createReaderYAML(const ReaderOptionsYAML &options) {
-  return new lld::yaml::ReaderYAML(options);
-}
-
-ReaderOptionsYAML::ReaderOptionsYAML() {
-}
-
-ReaderOptionsYAML::~ReaderOptionsYAML() {
-}
-
-
-} // namespace lld
-
+} // end namespace lld

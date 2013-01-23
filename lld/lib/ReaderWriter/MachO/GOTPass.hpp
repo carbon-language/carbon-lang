@@ -29,7 +29,7 @@ public:
     return true;
   }
 
-  virtual bool isGOTAccess(Reference::Kind, bool& canBypassGOT) {
+  virtual bool isGOTAccess(int32_t, bool& canBypassGOT) {
     return false;
   }
 

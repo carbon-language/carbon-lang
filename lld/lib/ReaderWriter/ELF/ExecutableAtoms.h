@@ -15,7 +15,7 @@
 #include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
-#include "lld/ReaderWriter/WriterELF.h"
+#include "lld/ReaderWriter/Writer.h"
 #include "AtomsELF.h"
 
 namespace lld {
@@ -30,9 +30,7 @@ template<class ELFT>
 class CRuntimeFile : public File {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  CRuntimeFile(const WriterOptionsELF &options) 
-    : File("C runtime") 
-  { }
+  CRuntimeFile(const ELFTargetInfo &) : File("C runtime") {}
   
   /// \brief add a global absolute atom
   void addAbsoluteAtom(const StringRef symbolName) {

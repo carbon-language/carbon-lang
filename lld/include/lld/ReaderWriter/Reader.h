@@ -1,4 +1,4 @@
-//===- ReaderWriter/Reader.h - Abstract File Format Reading Interface -----===//
+//===- lld/ReaderWriter/Reader.h - Abstract File Format Reading Interface -===//
 //
 //                             The LLVM Linker
 //
@@ -7,68 +7,60 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLD_READERWRITER_READER_H_
-#define LLD_READERWRITER_READER_H_
+#ifndef LLD_READERWRITER_READER_H
+#define LLD_READERWRITER_READER_H
 
 #include "lld/Core/LLVM.h"
+#include "lld/Core/TargetInfo.h"
+
+#include <functional>
 #include <memory>
 #include <vector>
 
 namespace lld {
 class File;
+class LinkerInput;
+struct LinkerOptions;
 
+/// \brief An abstract class for reading object files, library files, and
+/// executable files.
 ///
-/// The Reader is an abstract class for reading object files, 
-/// library files, and executable files.  Each file format
-/// (e.g. ELF, mach-o, PECOFF, native, etc) have a concrete subclass
-/// of Reader.  
-///
+/// Each file format (e.g. ELF, mach-o, PECOFF, native, etc) have a concrete
+/// subclass of Reader.  
 class Reader {
 public:
   virtual ~Reader();
-  
  
-  /// Parse a file given its file system path and create a File object. 
+  /// \brief Parse a file given its file system path and create a File object.
   virtual error_code readFile(StringRef path,
                               std::vector<std::unique_ptr<File>> &result);
 
-  /// Parse a supplied buffer (already filled with the contents of a file)
-  /// and create a File object. 
-  /// On success, the resulting File object takes ownership of 
-  /// the MemoryBuffer.
+  /// \brief Parse a supplied buffer (already filled with the contents of a
+  /// file) and create a File object. 
+  ///
+  /// On success, the resulting File object takes ownership of the MemoryBuffer.
   virtual error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
                                std::vector<std::unique_ptr<File>> &result) = 0;
   
 protected:
   // only concrete subclasses can be instantiated
-  Reader();
+  Reader(const TargetInfo &ti)
+      : _targetInfo(ti), _options(ti.getLinkerOptions()) {}
+
+  const TargetInfo &_targetInfo;
+  const LinkerOptions &_options;
 };
 
+typedef ErrorOr<Reader&> ReaderFunc(const LinkerInput &);
 
+std::unique_ptr<Reader> createReaderELF(const TargetInfo &,
+                                        std::function<ReaderFunc>);
+std::unique_ptr<Reader> createReaderMachO(const TargetInfo &,
+                                          std::function<ReaderFunc>);
+std::unique_ptr<Reader> createReaderNative(const TargetInfo &);
+std::unique_ptr<Reader> createReaderPECOFF(const TargetInfo &,
+                                           std::function<ReaderFunc>);
+std::unique_ptr<Reader> createReaderYAML(const TargetInfo &);
+} // end namespace lld
 
-///
-/// The ReaderOptions encapsulates the options used by all Readers.  
-/// Each file format defines a subclass of ReaderOptions
-/// to hold file format specific options.  The option objects are the only
-/// way to control the behaviour of Readers.
-///
-class ReaderOptions {
-public:
-  // Any options common to all file format Readers will go here.
-
-protected:
-  // only concrete subclasses can be instantiated
-  ReaderOptions();
-};
-
-
-
-
-
-} // namespace lld
-
-#endif // LLD_READERWRITER_READER_H_
-
-
-
-
+#endif

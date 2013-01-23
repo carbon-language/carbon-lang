@@ -1,7 +1,6 @@
 add_lld_library(lldMachO
   MachOTargetInfo.cpp
   WriterMachO.cpp
-  WriterOptionsMachO.cpp
   ReferenceKinds.cpp
   )
 

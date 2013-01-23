@@ -11,7 +11,7 @@
 #define LLD_READER_WRITER_ELF_SEGMENT_CHUNKS_H_
 
 #include "lld/Core/range.h"
-#include "lld/ReaderWriter/WriterELF.h"
+#include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/OwningPtr.h"
@@ -113,7 +113,7 @@ public:
 
   Segment(const StringRef name,
           const ELFLayout::SegmentType type,
-          const WriterOptionsELF &options);
+          const ELFTargetInfo &ti);
 
   /// append a section to a segment
   void append(Section<ELFT> *section);
@@ -168,7 +168,7 @@ public:
 
   inline ELFLayout::SegmentType segmentType() { return _segmentType; }
 
-  inline int pageSize() const { return _options.pageSize(); }
+  inline int pageSize() const { return _targetInfo.getPageSize(); }
 
   inline int64_t atomflags() const { return _atomflags; }
 
@@ -195,19 +195,19 @@ protected:
   ELFLayout::SegmentType _segmentType;
   int64_t _flags;
   int64_t _atomflags;
-  const WriterOptionsELF _options;
+  const ELFTargetInfo &_targetInfo;
   llvm::BumpPtrAllocator _segmentAllocate;
 };
 
 template<class ELFT>
 Segment<ELFT>::Segment(const StringRef name,
                        const ELFLayout::SegmentType type,
-                       const WriterOptionsELF &options)
+                       const ELFTargetInfo &ti)
   : Chunk<ELFT>(name, Chunk<ELFT>::K_ELFSegment)
   , _segmentType(type)
   , _flags(0)
   , _atomflags(0)
-  , _options(options) {
+  , _targetInfo(ti) {
   this->_align2 = 0;
   this->_fsize = 0;
 }
@@ -268,7 +268,7 @@ Segment<ELFT>::assignOffsets(uint64_t startOffset) {
       SegmentSlice<ELFT> *slice = nullptr;
       // If the newOffset computed is more than a page away, lets create
       // a seperate segment, so that memory is not used up while running
-      if ((newOffset - curOffset) > _options.pageSize()) {
+      if ((newOffset - curOffset) > _targetInfo.getPageSize()) {
         // TODO: use std::find here
         for (auto s : slices()) {
           if (s->startSection() == startSection) {
@@ -286,7 +286,7 @@ Segment<ELFT>::assignOffsets(uint64_t startOffset) {
         slice->setSize(curSliceSize);
         slice->setAlign(sliceAlign);
         uint64_t newPageOffset =
-          llvm::RoundUpToAlignment(curOffset, _options.pageSize());
+          llvm::RoundUpToAlignment(curOffset, _targetInfo.getPageSize());
         newOffset = llvm::RoundUpToAlignment(newPageOffset, (*si)->align2());
         curSliceFileOffset = newOffset;
         startSectionIter = endSectionIter;
@@ -332,7 +332,7 @@ void
 Segment<ELFT>::assignVirtualAddress(uint64_t &addr) {
   for (auto slice : slices()) {
     // Align to a page
-    addr = llvm::RoundUpToAlignment(addr, _options.pageSize());
+    addr = llvm::RoundUpToAlignment(addr, _targetInfo.getPageSize());
     // Align to the slice alignment
     addr = llvm::RoundUpToAlignment(addr, slice->align2());
 

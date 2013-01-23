@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "lld/ReaderWriter/ELFTargetInfo.h"
+
 #include "DefaultELFLayout.h"
 #include "ExecutableAtoms.h"
 
@@ -26,7 +28,7 @@ public:
   typedef Elf_Shdr_Impl<ELFT> Elf_Shdr;
   typedef Elf_Sym_Impl<ELFT> Elf_Sym;
 
-  ELFExecutableWriter(const WriterOptionsELF &options);
+  ELFExecutableWriter(const ELFTargetInfo &ti);
 
 private:
   // build the sections that need to be created
@@ -49,7 +51,7 @@ private:
 
   void createDefaultSections();
 
-  const WriterOptionsELF &_options;
+  const ELFTargetInfo &_targetInfo;
 
   typedef llvm::DenseMap<const Atom*, uint64_t> AtomToAddress;
   std::unique_ptr<KindHandler> _referenceKindHandler;
@@ -69,12 +71,12 @@ private:
 //  ELFExecutableWriter
 //===----------------------------------------------------------------------===//
 template<class ELFT>
-ELFExecutableWriter<ELFT>::ELFExecutableWriter(const WriterOptionsELF &options)
-  : _options(options)
+ELFExecutableWriter<ELFT>::ELFExecutableWriter(const ELFTargetInfo &ti)
+  : _targetInfo(ti)
   , _referenceKindHandler(KindHandler::makeHandler(
-      _options.machine(), (endianness)ELFT::TargetEndianness))
-  , _runtimeFile(options) {
-  _layout =new DefaultELFLayout<ELFT>(options);
+                              ti.getTriple().getArch(), ti.isLittleEndian()))
+  , _runtimeFile(ti) {
+  _layout = new DefaultELFLayout<ELFT>(ti);
 }
 
 template<class ELFT>
@@ -248,14 +250,14 @@ ELFExecutableWriter<ELFT>::writeFile(const lld::File &file, StringRef path) {
   if (ec)
     return ec;
 
-  _elfHeader->e_ident(ELF::EI_CLASS, (_options.is64Bit() ? ELF::ELFCLASS64
-                                                        : ELF::ELFCLASS32));
-  _elfHeader->e_ident(ELF::EI_DATA, _options.endianness() == llvm::support::big
-                                    ? ELF::ELFDATA2MSB : ELF::ELFDATA2LSB);
+  _elfHeader->e_ident(ELF::EI_CLASS, _targetInfo.is64Bits() ? ELF::ELFCLASS64
+                                                            : ELF::ELFCLASS32);
+  _elfHeader->e_ident(ELF::EI_DATA, _targetInfo.isLittleEndian()
+                                    ? ELF::ELFDATA2LSB : ELF::ELFDATA2MSB);
   _elfHeader->e_ident(ELF::EI_VERSION, 1);
   _elfHeader->e_ident(ELF::EI_OSABI, 0);
-  _elfHeader->e_type(_options.type());
-  _elfHeader->e_machine(_options.machine());
+  _elfHeader->e_type(_targetInfo.getOutputType());
+  _elfHeader->e_machine(_targetInfo.getOutputMachine());
   _elfHeader->e_version(1);
   _elfHeader->e_entry(0ULL);
   _elfHeader->e_phoff(_programHeader->fileOffset());
@@ -305,24 +307,24 @@ void ELFExecutableWriter<ELFT>::createDefaultSections() {
 }
 } // namespace elf
 
-Writer *createWriterELF(const WriterOptionsELF &options) {
+std::unique_ptr<Writer> createWriterELF(const ELFTargetInfo &TI) {
   using llvm::object::ELFType;
   // Set the default layout to be the static executable layout
   // We would set the layout to a dynamic executable layout
   // if we came across any shared libraries in the process
 
-  if (!options.is64Bit() && options.endianness() == llvm::support::little)
-    return
-      new elf::ELFExecutableWriter<ELFType<support::little, 4, false>>(options);
-  else if (options.is64Bit() && options.endianness() == llvm::support::little)
-    return
-      new elf::ELFExecutableWriter<ELFType<support::little, 8, true>>(options);
-  else if (!options.is64Bit() && options.endianness() == llvm::support::big)
-    return
-      new elf::ELFExecutableWriter<ELFType<support::big, 4, false>>(options);
-  else if (options.is64Bit() && options.endianness() == llvm::support::big)
-    return
-      new elf::ELFExecutableWriter<ELFType<support::big, 8, true>>(options);
+  if (!TI.is64Bits() && TI.isLittleEndian())
+    return std::unique_ptr<Writer>(new
+        elf::ELFExecutableWriter<ELFType<support::little, 4, false>>(TI));
+  else if (TI.is64Bits() && TI.isLittleEndian())
+    return std::unique_ptr<Writer>(new
+        elf::ELFExecutableWriter<ELFType<support::little, 8, true>>(TI));
+  else if (!TI.is64Bits() && !TI.isLittleEndian())
+    return std::unique_ptr<Writer>(new
+        elf::ELFExecutableWriter<ELFType<support::big, 4, false>>(TI));
+  else if (TI.is64Bits() && !TI.isLittleEndian())
+    return std::unique_ptr<Writer>(new
+        elf::ELFExecutableWriter<ELFType<support::big, 8, true>>(TI));
 
   llvm_unreachable("Invalid Options!");
 }

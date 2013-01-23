@@ -13,10 +13,12 @@
 ///
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/ReaderELF.h"
-#include "lld/ReaderWriter/ReaderArchive.h"
+#include "lld/ReaderWriter/Reader.h"
+
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
+#include "lld/ReaderWriter/ELFTargetInfo.h"
+#include "lld/ReaderWriter/ReaderArchive.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/SmallString.h"
@@ -326,12 +328,9 @@ private:
 /// memory buffer for ELF class and bit width
 class ReaderELF : public Reader {
 public:
-  ReaderELF(const ReaderOptionsELF &,
-            ReaderOptionsArchive &readerOptionsArchive)
-      : _readerOptionsArchive(readerOptionsArchive),
-        _readerArchive(_readerOptionsArchive) {
-    _readerOptionsArchive.setReader(this);
-  }
+  ReaderELF(const TargetInfo & ti, std::function<ReaderFunc> read)
+      : Reader(ti),
+        _readerArchive(ti, read) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
                        std::vector<std::unique_ptr<File>> &result) {
@@ -411,18 +410,13 @@ public:
   }
 
 private:
-  ReaderOptionsArchive &_readerOptionsArchive;
   ReaderArchive _readerArchive;
 };
 } // end anon namespace.
 
 namespace lld {
-ReaderOptionsELF::ReaderOptionsELF() {}
-
-ReaderOptionsELF::~ReaderOptionsELF() {}
-
-Reader *createReaderELF(const ReaderOptionsELF &options,
-                        ReaderOptionsArchive &optionsArchive) {
-  return new ReaderELF(options, optionsArchive);
+std::unique_ptr<Reader> createReaderELF(const TargetInfo & ti,
+                                        std::function<ReaderFunc> read) {
+  return std::unique_ptr<Reader>(new ReaderELF(ti, std::move(read)));
 }
 } // end namespace lld

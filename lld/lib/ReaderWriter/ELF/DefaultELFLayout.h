@@ -10,6 +10,8 @@
 #ifndef LLD_READER_WRITER_DEFAULT_ELF_LAYOUT_H_
 #define LLD_READER_WRITER_DEFAULT_ELF_LAYOUT_H_
 
+#include "lld/Core/LinkerOptions.h"
+
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/Hashing.h"
@@ -150,7 +152,7 @@ public:
 
   typedef typename std::vector<AbsoluteAtomPair>::iterator AbsoluteAtomIterT;
 
-  DefaultELFLayout(const WriterOptionsELF &options) : _options(options) {}
+  DefaultELFLayout(const ELFTargetInfo &ti) : _targetInfo(ti) {}
 
   /// \brief Return the section order for a input section
   virtual SectionOrder getSectionOrder
@@ -250,7 +252,7 @@ private:
   ELFProgramHeader<ELFT> *_programHeader;
   std::vector<AbsoluteAtomPair> _absoluteAtoms;
   llvm::BumpPtrAllocator _allocator;
-  const WriterOptionsELF _options;
+  const ELFTargetInfo &_targetInfo;
 };
 
 template<class ELFT>
@@ -483,7 +485,7 @@ DefaultELFLayout<ELFT>::assignSectionsToSegments() {
           segment = segmentInsert.first->second;
         } else {
           segment = new (_allocator.Allocate<Segment<ELFT>>()) Segment<ELFT>(
-            segmentName, getSegmentType(section), _options);
+            segmentName, getSegmentType(section), _targetInfo);
           segmentInsert.first->second = segment;
           _segments.push_back(segment);
         }
@@ -516,7 +518,7 @@ DefaultELFLayout<ELFT>::assignVirtualAddress() {
   if (_segments.empty())
     return;
   
-  uint64_t virtualAddress = _options.baseAddress();
+  uint64_t virtualAddress = _targetInfo.getLinkerOptions()._baseAddress;
   
   // HACK: This is a super dirty hack. The elf header and program header are
   // not part of a section, but we need them to be loaded at the base address
@@ -539,7 +541,7 @@ DefaultELFLayout<ELFT>::assignVirtualAddress() {
     for (auto &si : _segments) {
       // Align the segment to a page boundary
       fileoffset = llvm::RoundUpToAlignment(fileoffset,
-                                            _options.pageSize());
+                                            _targetInfo.getPageSize());
       si->assignOffsets(fileoffset);
       fileoffset = si->fileOffset() + si->fileSize();
     }
@@ -552,7 +554,7 @@ DefaultELFLayout<ELFT>::assignVirtualAddress() {
       (*si)->assignVirtualAddress(address);
       (*si)->setMemSize(address - virtualAddress);
       virtualAddress = llvm::RoundUpToAlignment(address,
-                                                _options.pageSize());
+                                                _targetInfo.getPageSize());
     }
     _programHeader->resetProgramHeaders();
   }

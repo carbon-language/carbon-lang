@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/ReaderNative.h"
+#include "lld/ReaderWriter/Reader.h"
 
 #include "lld/Core/Atom.h"
 #include "lld/Core/Error.h"
@@ -914,39 +914,24 @@ inline void NativeReferenceV1::setTarget(const Atom* newAtom) {
 
 inline void NativeReferenceV1::setAddend(Addend a) {
   // Do nothing if addend value is not being changed.
-  if ( this->addend() == a )
+  if (addend() == a)
     return;
-  assert(0 && "setAddend() not supported");
+  llvm_unreachable("setAddend() not supported");
 }
-
 
 class Reader : public lld::Reader {
 public:
-  Reader(const ReaderOptionsNative &options) {}
+  Reader(const TargetInfo &ti)
+   : lld::Reader(ti) {}
   
   virtual error_code parseFile(std::unique_ptr<MemoryBuffer> mb, 
                                std::vector<std::unique_ptr<lld::File>> &result) {
     return File::make(mb, mb->getBufferIdentifier(), result);
   }
 };
+} // end namespace native
 
-
-
-} // namespace native
-
-Reader* createReaderNative(const ReaderOptionsNative &options) {
-  return new lld::native::Reader(options);
+std::unique_ptr<Reader> createReaderNative(const TargetInfo &ti) {
+  return std::unique_ptr<Reader>(new lld::native::Reader(ti));
 }
-
-ReaderOptionsNative::ReaderOptionsNative() {
-}
-
-ReaderOptionsNative::~ReaderOptionsNative() {
-}
-
-
-} // namespace lld
-
-
-
-
+} // end namespace lld

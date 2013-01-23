@@ -14,7 +14,7 @@
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
 #include "lld/Core/Resolver.h"
-#include "lld/ReaderWriter/WriterYAML.h"
+#include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/Support/CommandLine.h"
@@ -246,7 +246,7 @@ private:
 
 struct TestingKindMapping {
   const char     *string;
-  Reference::Kind value;
+  int32_t         value;
   bool            isBranch;
   bool            isGotLoad;
   bool            isGotUse;
@@ -270,7 +270,7 @@ public:
     return true;
   }
 
-  virtual bool isCallSite(Reference::Kind kind) {
+  virtual bool isCallSite(int32_t kind) {
     for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
       if (kind == p->value)
         return p->isBranch;
@@ -300,7 +300,7 @@ public:
     return true;
   }
 
-  virtual bool isGOTAccess(Reference::Kind kind, bool &canBypassGOT) {
+  virtual bool isGOTAccess(int32_t kind, bool &canBypassGOT) {
     for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
       if (kind == p->value) {
         canBypassGOT = p->isGotLoad;
@@ -323,53 +323,6 @@ public:
 
 private:
   TestingPassFile _file;
-};
-
-class TestingWriterOptionsYAML : public lld::WriterOptionsYAML {
-public:
-  TestingWriterOptionsYAML(bool stubs, bool got)
-    : _doStubs(stubs), _doGOT(got) {
-  }
-
-  virtual StubsPass *stubPass() const {
-    if (_doStubs)
-      return const_cast<TestingStubsPass*>(&_stubsPass);
-    else
-      return nullptr;
-  }
-
-  virtual GOTPass *gotPass() const {
-     if (_doGOT)
-      return const_cast<TestingGOTPass*>(&_gotPass);
-    else
-      return nullptr;
-  }
-
-  virtual StringRef kindToString(Reference::Kind value) const {
-    for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
-      if (value == p->value)
-        return p->string;
-    }
-    return StringRef("???");
-  }
-private:
-  bool              _doStubs;
-  bool              _doGOT;
-  TestingStubsPass  _stubsPass;
-  TestingGOTPass    _gotPass;
-};
-
-class TestingReaderOptionsYAML : public lld::ReaderOptionsYAML {
-  virtual Reference::Kind kindFromString(StringRef kindName) const {
-    for (const TestingKindMapping *p = sKinds; p->string != nullptr; ++p) {
-      if (kindName.equals(p->string))
-        return p->value;
-    }
-    int k;
-    if (kindName.getAsInteger(0, k))
-      k = 0;
-    return k;
-  }
 };
 
 #endif // LLD_TOOLS_TESTING_HELPERS_H_

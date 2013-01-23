@@ -41,7 +41,25 @@ uint32_t MachOTargetInfo::getCPUSubType() const {
   }
 }
 
-class GenericMachOTargetInfo final : public MachOTargetInfo {
+bool MachOTargetInfo::addEntryPointLoadCommand() const {
+  switch (_options._outputKind) {
+  case OutputKind::Executable:
+    return true;
+  default:
+    return false;
+  }
+}
+
+bool MachOTargetInfo::addUnixThreadLoadCommand() const {
+  switch (_options._outputKind) {
+  case OutputKind::Executable:
+    return true;
+  default:
+    return false;
+  }
+}
+
+class GenericMachOTargetInfo LLVM_FINAL : public MachOTargetInfo {
 public:
   GenericMachOTargetInfo(const LinkerOptions &lo) : MachOTargetInfo(lo) {}
 
@@ -49,6 +67,8 @@ public:
   virtual uint64_t getPageZeroSize() const { return getPageSize(); }
 
   virtual StringRef getEntry() const {
+    if (_options._outputKind != OutputKind::Executable)
+      return "";
     if (!_options._entrySymbol.empty())
       return _options._entrySymbol;
     return "_main";

@@ -28,19 +28,19 @@ namespace mach_o {
 
 class StubsPass : public lld::StubsPass {
 public:
-  StubsPass(const WriterOptionsMachO &options) 
-    : _options(options), 
-      _kindHandler(KindHandler::makeHandler(options.architecture())),
+  StubsPass(const MachOTargetInfo &ti) 
+    : _targetInfo(ti),
+      _kindHandler(KindHandler::makeHandler(_targetInfo.getTriple().getArch())),
       _helperCommonAtom(nullptr),
       _helperCacheAtom(nullptr),
       _helperBinderAtom(nullptr) {
   }
 
   virtual bool noTextRelocs() {
-    return _options.noTextRelocations();
+    return !_targetInfo.getLinkerOptions()._textRelocations;
   }
 
-  virtual bool isCallSite(Reference::Kind kind) {
+  virtual bool isCallSite(int32_t kind) {
     return _kindHandler->isCallSite(kind);
   }
 
@@ -58,16 +58,15 @@ public:
   }
 
   const DefinedAtom* makeStub(const Atom& target) {
-    switch ( _options.architecture() ) {
-      case WriterOptionsMachO::arch_x86_64:
+    switch (_targetInfo.getTriple().getArch()) {
+      case llvm::Triple::x86_64:
         return makeStub_x86_64(target);
-
-      case WriterOptionsMachO::arch_x86:
+      case llvm::Triple::x86:
         return makeStub_x86(target);
-
-      case WriterOptionsMachO::arch_armv6:
-      case WriterOptionsMachO::arch_armv7:
+      case llvm::Triple::arm:
         return makeStub_arm(target);
+      default:
+        llvm_unreachable("Unknown arch");
     }
   }
 
@@ -151,7 +150,7 @@ private:
       }
   };
 
-  const WriterOptionsMachO                       &_options;
+  const MachOTargetInfo                          &_targetInfo;
   KindHandler                                    *_kindHandler;
   File                                            _file;
   llvm::DenseMap<const Atom*, const DefinedAtom*> _targetToStub;

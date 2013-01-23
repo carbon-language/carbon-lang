@@ -17,16 +17,28 @@
 #ifndef LLD_DRIVER_TARGET_H
 #define LLD_DRIVER_TARGET_H
 
-#include "lld/Core/LinkerOptions.h"
-#include "lld/ReaderWriter/Reader.h"
-#include "lld/ReaderWriter/Writer.h"
+#include "lld/Core/TargetInfo.h"
+
+#include "llvm/Support/ErrorOr.h"
+
+#include <memory>
 
 namespace lld {
+class LinkerInput;
+struct LinkerOptions;
+class Reader;
+class TargetInfo;
+class Writer;
+
 /// \brief Represents a specific target.
 class Target {
+protected:
+  Target(std::unique_ptr<TargetInfo> ti) : _targetInfo(std::move(ti)) {}
+
 public:
-  Target(const LinkerOptions &lo) : _options(lo) {}
   virtual ~Target();
+
+  const TargetInfo &getTargetInfo() const { return *_targetInfo; };
 
   /// \brief Get a reference to a Reader for the given input.
   ///
@@ -39,7 +51,7 @@ public:
   static std::unique_ptr<Target> create(const LinkerOptions&);
 
 protected:
-  const LinkerOptions &_options;
+  std::unique_ptr<TargetInfo> _targetInfo;
 };
 }
 

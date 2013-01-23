@@ -11,29 +11,30 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/StringSwitch.h"
+#include "llvm/ADT/Triple.h"
 
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/ELF.h"
 
 namespace lld {
 namespace elf {
-KindHandler::KindHandler() {
-}
+KindHandler::KindHandler() {}
 
-KindHandler::~KindHandler() {
-}
+KindHandler::~KindHandler() {}
 
 std::unique_ptr<KindHandler>
-KindHandler::makeHandler(uint16_t arch, llvm::support::endianness endian) {
+KindHandler::makeHandler(llvm::Triple::ArchType arch, bool isLittleEndian) {
   switch(arch) {
-  case llvm::ELF::EM_HEXAGON:
+  case llvm::Triple::hexagon:
     return std::unique_ptr<KindHandler>(new HexagonKindHandler());
-  case llvm::ELF::EM_386:
+  case llvm::Triple::x86:
     return std::unique_ptr<KindHandler>(new X86KindHandler());
-  case llvm::ELF::EM_X86_64:
+  case llvm::Triple::x86_64:
     return std::unique_ptr<KindHandler>(new X86_64KindHandler());
-  case llvm::ELF::EM_PPC:
-    return std::unique_ptr<KindHandler>(new PPCKindHandler(endian));
+  case llvm::Triple::ppc:
+    return std::unique_ptr<KindHandler>(
+        new PPCKindHandler(isLittleEndian ? llvm::support::little
+                                          : llvm::support::big));
   default:
     llvm_unreachable("arch not supported");
   }

@@ -12,7 +12,7 @@
 
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
-#include "lld/ReaderWriter/WriterELF.h"
+#include "lld/ReaderWriter/Writer.h"
 #include "ReferenceKinds.h"
 
 namespace lld {

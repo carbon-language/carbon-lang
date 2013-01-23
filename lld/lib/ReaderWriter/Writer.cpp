@@ -9,17 +9,10 @@
 
 #include "lld/ReaderWriter/Writer.h"
 
-
 namespace lld {
-
 Writer::Writer() {
 }
 
 Writer::~Writer() {
 }
-
-WriterOptions::WriterOptions() {
-}
-
-} // namespace lld
-
+} // end namespace lld

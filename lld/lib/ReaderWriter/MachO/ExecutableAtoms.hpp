@@ -15,8 +15,7 @@
 #include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
-
-#include "lld/ReaderWriter/WriterMachO.h"
+#include "lld/Core/TargetInfo.h"
 
 #include "SimpleAtoms.hpp"
 
@@ -30,10 +29,10 @@ namespace mach_o {
 //
 class CRuntimeFile : public SimpleFile {
 public:
-    CRuntimeFile(const WriterOptionsMachO &options) 
+    CRuntimeFile(const MachOTargetInfo &ti) 
       : SimpleFile("C runtime"), _undefMain(*this, "_main") {
       // only main executables need _main
-      if ( options.outputKind() == WriterOptionsMachO::outputDynamicExecutable)
+      if (ti.getLinkerOptions()._outputKind == OutputKind::Executable)
         this->addAtom(_undefMain);
    }
         

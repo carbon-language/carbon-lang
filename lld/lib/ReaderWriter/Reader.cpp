@@ -14,29 +14,17 @@
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/system_error.h"
 
-
 namespace lld {
-
-Reader::Reader() {
-}
-
 Reader::~Reader() {
 }
 
 error_code Reader::readFile(StringRef path,
-                                  std::vector<std::unique_ptr<File>> &result) {
+                            std::vector<std::unique_ptr<File>> &result) {
   OwningPtr<llvm::MemoryBuffer> opmb;
-  if ( error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, opmb) )
+  if (error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, opmb))
     return ec;
  
   std::unique_ptr<MemoryBuffer> mb(opmb.take());
   return this->parseFile(std::move(mb), result);
 }
-
-
-
-ReaderOptions::ReaderOptions() {
-}
-
-} // namespace lld 
-
+} // end namespace lld 

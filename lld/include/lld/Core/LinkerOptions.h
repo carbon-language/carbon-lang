@@ -121,6 +121,11 @@ enum OutputKind {
   Executable,
   Relocatable,
   Shared,
+  SharedStubs,
+  Core,
+  DebugSymbols,
+  Bundle,
+  Preload,
 };
 
 struct LinkerOptions {

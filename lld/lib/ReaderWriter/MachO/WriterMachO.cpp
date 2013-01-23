@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "lld/ReaderWriter/WriterMachO.h"
+#include "lld/ReaderWriter/Writer.h"
 
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -23,12 +23,15 @@
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/Triple.h"
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/LinkerOptions.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/SharedLibraryAtom.h"
+#include "lld/ReaderWriter/MachOTargetInfo.h"
 
 #include <vector>
 #include <map>
@@ -104,7 +107,7 @@ protected:
 class SectionChunk : public Chunk {
 public:
   static SectionChunk*  make(DefinedAtom::ContentType,
-                             const WriterOptionsMachO &options,
+                             const MachOTargetInfo &ti,
                              class MachOWriter &writer);
   virtual StringRef     segmentName() const;
   virtual bool          occupiesNoDiskSpace();
@@ -126,12 +129,12 @@ private:
                 SectionChunk(StringRef seg,
                              StringRef sect,
                              uint32_t flags,
-                             const WriterOptionsMachO &options,
+                             const MachOTargetInfo &ti,
                              class MachOWriter &writer);
 
   StringRef                 _segmentName;
   StringRef                 _sectionName;
-  const WriterOptionsMachO &_options;
+  const MachOTargetInfo    &_targetInfo;
   class MachOWriter        &_writer;
   uint32_t                  _flags;
   uint32_t                  _permissions;
@@ -146,7 +149,7 @@ private:
 //
 class MachHeaderChunk : public Chunk {
 public:
-                MachHeaderChunk(const WriterOptionsMachO &options,
+                MachHeaderChunk(const MachOTargetInfo &ti,
                                 const File &file);
   virtual StringRef     segmentName() const;
   virtual void          write(uint8_t *fileBuffer);
@@ -155,7 +158,7 @@ public:
   uint64_t              loadCommandsSize();
 
 private:
-  uint32_t              filetype(WriterOptionsMachO::OutputKind kind);
+  uint32_t              filetype(OutputKind);
   uint32_t              magic(uint32_t cpuType);
 
   mach_header               _mh;
@@ -171,7 +174,7 @@ private:
 class LoadCommandsChunk : public Chunk {
 public:
                       LoadCommandsChunk(MachHeaderChunk&,
-                                        const WriterOptionsMachO &options,
+                                        const MachOTargetInfo &,
                                         class MachOWriter&);
   virtual StringRef   segmentName() const;
   virtual void        write(uint8_t *fileBuffer);
@@ -197,7 +200,7 @@ private:
   };
 
   MachHeaderChunk             &_mh;
-  const WriterOptionsMachO    &_options;
+  const MachOTargetInfo       &_targetInfo;
   class MachOWriter           &_writer;
   segment_command             *_linkEditSegment;
   symtab_command              *_symbolTableLoadCommand;
@@ -340,7 +343,7 @@ private:
 //
 class MachOWriter : public Writer {
 public:
-              MachOWriter(const WriterOptionsMachO &options);
+              MachOWriter(const MachOTargetInfo &ti);
 
   virtual error_code  writeFile(const lld::File &file, StringRef path);
   virtual StubsPass  *stubPass();  
@@ -373,7 +376,7 @@ private:
 
   typedef llvm::DenseMap<const Atom*, uint64_t> AtomToAddress;
 
-  const WriterOptionsMachO   &_options;
+  const MachOTargetInfo      &_targetInfo;
   KindHandler                *_referenceKindHandler;
   StubsPass                   _stubsPass;
   GOTPass                     _gotPass;
@@ -459,46 +462,46 @@ void Chunk::assignFileOffset(uint64_t &curOffset, uint64_t &curAddress) {
 //===----------------------------------------------------------------------===//
 
 SectionChunk::SectionChunk(StringRef seg, StringRef sect,
-                           uint32_t flags, const WriterOptionsMachO &options,
+                           uint32_t flags, const MachOTargetInfo &ti,
                                                 MachOWriter &writer)
- : _segmentName(seg), _sectionName(sect), _options(options),
+ : _segmentName(seg), _sectionName(sect), _targetInfo(ti),
    _writer(writer), _flags(flags), _permissions(0) {
 
 }
 
 SectionChunk* SectionChunk::make(DefinedAtom::ContentType type,
-                                 const WriterOptionsMachO &options,
+                                 const MachOTargetInfo &ti,
                                  MachOWriter &writer) {
   switch ( type ) {
     case DefinedAtom::typeCode:
       return new SectionChunk("__TEXT", "__text",
                               S_REGULAR | S_ATTR_PURE_INSTRUCTIONS,
-                              options, writer);
+                              ti, writer);
       break;
     case DefinedAtom::typeCString:
        return new SectionChunk("__TEXT", "__cstring",
                                S_CSTRING_LITERALS,
-                              options, writer);
+                              ti, writer);
        break;
     case DefinedAtom::typeStub:
       return new SectionChunk("__TEXT", "__stubs",
                               S_SYMBOL_STUBS | S_ATTR_PURE_INSTRUCTIONS,
-                              options, writer);
+                              ti, writer);
       break;
     case DefinedAtom::typeStubHelper:
       return new SectionChunk("__TEXT", "__stub_helper",
                               S_REGULAR | S_ATTR_PURE_INSTRUCTIONS,
-                              options, writer);
+                              ti, writer);
       break;
     case DefinedAtom::typeLazyPointer:
       return new SectionChunk("__DATA", "__la_symbol_ptr",
                               S_LAZY_SYMBOL_POINTERS,
-                              options, writer);
+                              ti, writer);
       break;
     case DefinedAtom::typeGOT:
       return new SectionChunk("__DATA", "__got",
                               S_NON_LAZY_SYMBOL_POINTERS,
-                              options, writer);
+                              ti, writer);
       break;
     default:
       assert(0 && "TO DO: add support for more sections");
@@ -595,13 +598,12 @@ void SectionChunk::write(uint8_t *chunkBuffer) {
 //  MachHeaderChunk
 //===----------------------------------------------------------------------===//
 
-MachHeaderChunk::MachHeaderChunk(const WriterOptionsMachO &options,
-                                                            const File &file) {
+MachHeaderChunk::MachHeaderChunk(const MachOTargetInfo &ti, const File &file) {
   // Set up mach_header based on options
-  _mh.magic      = this->magic(options.cpuType());
-  _mh.cputype    = options.cpuType();
-  _mh.cpusubtype = options.cpuSubtype();
-  _mh.filetype   = this->filetype(options.outputKind());
+  _mh.magic      = this->magic(ti.getCPUType());
+  _mh.cputype    = ti.getCPUType();
+  _mh.cpusubtype = ti.getCPUSubType();
+  _mh.filetype   = this->filetype(ti.getLinkerOptions()._outputKind);
   _mh.ncmds      = 0;
   _mh.sizeofcmds = 0;
   _mh.flags      = 0;
@@ -639,22 +641,29 @@ uint32_t MachHeaderChunk::magic(uint32_t cpuType) {
     case CPU_TYPE_X86_64:
       return MH_MAGIC_64;
   }
-  assert(0 && "file cpu type not supported");
+  llvm_unreachable("file CPU type not supported");
   return 0;
 }
 
-uint32_t MachHeaderChunk::filetype(WriterOptionsMachO::OutputKind kind) {
+uint32_t MachHeaderChunk::filetype(OutputKind kind) {
   switch ( kind ) {
-    case WriterOptionsMachO::outputDynamicExecutable:
-      return MH_EXECUTE;
-    case WriterOptionsMachO::outputDylib:
-      return MH_DYLIB;
-    case WriterOptionsMachO::outputBundle:
-      return MH_BUNDLE;
-    case WriterOptionsMachO::outputObjectFile:
-      return MH_OBJECT;
+  case OutputKind::Executable:
+    return MH_EXECUTE;
+  case OutputKind::Relocatable:
+    return MH_OBJECT;
+  case OutputKind::Shared:
+    return MH_DYLIB;
+  case OutputKind::SharedStubs:
+    return MH_DYLIB_STUB;
+  case OutputKind::Bundle:
+    return MH_BUNDLE;
+  case OutputKind::Preload:
+  case OutputKind::DebugSymbols:
+  case OutputKind::Core:
+    break;
   }
-  assert(0 && "file outputkind not supported");
+  llvm_unreachable("file OutputKind not supported");
+  return 0;
 }
 
 
@@ -664,9 +673,9 @@ uint32_t MachHeaderChunk::filetype(WriterOptionsMachO::OutputKind kind) {
 //===----------------------------------------------------------------------===//
 
 LoadCommandsChunk::LoadCommandsChunk(MachHeaderChunk &mh,
-                                     const WriterOptionsMachO &options,
+                                     const MachOTargetInfo &ti,
                                      MachOWriter& writer)
- : _mh(mh), _options(options), _writer(writer),
+ : _mh(mh), _targetInfo(ti), _writer(writer),
    _linkEditSegment(nullptr), _symbolTableLoadCommand(nullptr),
    _entryPointLoadCommand(nullptr), _threadLoadCommand(nullptr), 
    _dyldInfoLoadCommand(nullptr) {
@@ -714,7 +723,7 @@ uint32_t LoadCommandsChunk::permissionsFromSections(
 void LoadCommandsChunk::computeSize(const lld::File &file) {
   const bool is64 = _writer.use64BitMachO();
   // Main executables have a __PAGEZERO segment.
-  uint64_t pageZeroSize = _options.pageZeroSize();
+  uint64_t pageZeroSize = _targetInfo.getPageZeroSize();
   if ( pageZeroSize != 0 ) {
     assert(is64 || (pageZeroSize < 0xFFFFFFFF));
     segment_command* pzSegCmd = new segment_command(0, is64);
@@ -796,12 +805,11 @@ void LoadCommandsChunk::computeSize(const lld::File &file) {
   this->addLoadCommand(_dyldInfoLoadCommand);
 
   // Add entry point load command to main executables
-  if ( _options.addEntryPointLoadCommand() ) {
+  if (_targetInfo.addEntryPointLoadCommand()) {
     _entryPointLoadCommand = new entry_point_command(is64);
     this->addLoadCommand(_entryPointLoadCommand);
-  }
-  else if ( _options.addUnixThreadLoadCommand() ) {
-    _threadLoadCommand = new thread_command(_options.cpuType(), is64);
+  } else if (_targetInfo.addUnixThreadLoadCommand()) {
+    _threadLoadCommand = new thread_command(_targetInfo.getCPUType(), is64);
     this->addLoadCommand(_threadLoadCommand);
   }
   
@@ -1295,10 +1303,10 @@ uint32_t SymbolStringsChunk::stringIndex(StringRef str) {
 //  MachOWriter
 //===----------------------------------------------------------------------===//
 
-MachOWriter::MachOWriter(const WriterOptionsMachO &options)
-  : _options(options), 
-    _referenceKindHandler(KindHandler::makeHandler(_options.architecture())), 
-    _stubsPass(options), _cRuntimeFile(options), 
+MachOWriter::MachOWriter(const MachOTargetInfo &ti)
+  : _targetInfo(ti),
+    _referenceKindHandler(KindHandler::makeHandler(ti.getTriple().getArch())),
+    _stubsPass(ti), _cRuntimeFile(ti),
     _bindingInfo(nullptr), _lazyBindingInfo(nullptr),
     _symbolTableChunk(nullptr), _stringsChunk(nullptr), _entryAtom(nullptr),
     _linkEditStartOffset(0), _linkEditStartAddress(0) {
@@ -1339,7 +1347,7 @@ void MachOWriter::createChunks(const lld::File &file) {
     DefinedAtom::ContentType type = atom->contentType();
     auto pos = map.find(type);
     if ( pos == map.end() ) {
-      SectionChunk *chunk = SectionChunk::make(type, _options, *this);
+      SectionChunk *chunk = SectionChunk::make(type, _targetInfo, *this);
       map[type] = chunk;
       chunk->appendAtom(atom);
     }
@@ -1352,10 +1360,10 @@ void MachOWriter::createChunks(const lld::File &file) {
 
 
   // Make chunks in __TEXT for mach_header and load commands at start.
-  MachHeaderChunk *mhc = new MachHeaderChunk(_options, file);
+  MachHeaderChunk *mhc = new MachHeaderChunk(_targetInfo, file);
   _chunks.push_back(mhc);
 
-  _loadCommandsChunk = new LoadCommandsChunk(*mhc, _options, *this);
+  _loadCommandsChunk = new LoadCommandsChunk(*mhc, _targetInfo, *this);
   _chunks.push_back(_loadCommandsChunk);
 
   _paddingChunk = new LoadCommandPaddingChunk(*_loadCommandsChunk);
@@ -1388,15 +1396,15 @@ void MachOWriter::addLinkEditChunk(LinkEditChunk *chunk) {
 void MachOWriter::buildAtomToAddressMap() {
   DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs() 
                    << "assign atom addresses:\n");
-  const bool lookForEntry = 
-      (_options.outputKind() == WriterOptionsMachO::outputDynamicExecutable);
+  const bool lookForEntry = _targetInfo.getLinkerOptions()._outputKind ==
+                            OutputKind::Executable;
   for (SectionChunk *chunk : _sectionChunks ) {
     for (const SectionChunk::AtomInfo &info : chunk->atoms() ) {
       _atomToAddress[info.atom] = chunk->address() + info.offsetInSection;
       if (       lookForEntry
               && (info.atom->contentType() == DefinedAtom::typeCode)
               && (info.atom->size() != 0)
-              &&  info.atom->name().equals(_options.entryPointName()) ) {
+              &&  info.atom->name() == _targetInfo.getEntry()) {
         _entryAtom = info.atom;
       }
       DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs()  
@@ -1419,7 +1427,7 @@ void MachOWriter::assignFileOffsets() {
   DEBUG_WITH_TYPE("WriterMachO-layout", llvm::dbgs() 
                     << "assign file offsets:\n");
   uint64_t offset = 0;
-  uint64_t address = _options.pageZeroSize();
+  uint64_t address = _targetInfo.getPageZeroSize();
   for ( Chunk *chunk : _chunks ) {
     if ( chunk->segmentName().equals("__LINKEDIT") ) {
       _linkEditStartOffset  = Chunk::alignTo(offset, 12);
@@ -1457,7 +1465,7 @@ void MachOWriter::findSegment(StringRef segmentName, uint32_t *segIndex,
   const uint64_t kInvalidAddress = (uint64_t)(-1);
   StringRef lastSegName("__TEXT");
   *segIndex = 0;
-  if ( _options.pageZeroSize() != 0 ) {
+  if ( _targetInfo.getPageZeroSize() != 0 ) {
       *segIndex = 1;
   }
   *segStartAddr = kInvalidAddress;
@@ -1481,15 +1489,7 @@ void MachOWriter::findSegment(StringRef segmentName, uint32_t *segIndex,
 }
 
 bool MachOWriter::use64BitMachO() const {
-  switch ( _options.cpuType() ) {
-    case CPU_TYPE_ARM:
-    case CPU_TYPE_I386:
-      return false;
-    case CPU_TYPE_X86_64:
-      return true;
-  }
-  assert(0 && "unknown cpu type");
-  return false;
+  return _targetInfo.getTriple().isArch64Bit();
 }
 
 
@@ -1542,8 +1542,8 @@ void MachOWriter::addFiles(InputFiles &inputFiles) {
 } // namespace mach_o
 
 
-Writer* createWriterMachO(const WriterOptionsMachO &options) {
-  return new lld::mach_o::MachOWriter(options);
+std::unique_ptr<Writer> createWriterMachO(const MachOTargetInfo &ti) {
+  return std::unique_ptr<Writer>(new lld::mach_o::MachOWriter(ti));
 }
 
 } // namespace lld

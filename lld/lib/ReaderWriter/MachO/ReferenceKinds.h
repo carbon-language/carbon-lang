@@ -10,7 +10,8 @@
 
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Reference.h"
-#include "lld/ReaderWriter/WriterMachO.h"
+
+#include "llvm/ADT/Triple.h"
 
 #ifndef LLD_READER_WRITER_MACHO_REFERENCE_KINDS_H_
 #define LLD_READER_WRITER_MACHO_REFERENCE_KINDS_H_
@@ -28,7 +29,7 @@ class KindHandler {
 public:
   typedef Reference::Kind Kind;
   
-  static KindHandler *makeHandler(WriterOptionsMachO::Architecture arch);
+  static KindHandler *makeHandler(llvm::Triple::ArchType arch);
   virtual             ~KindHandler();
   virtual Kind        stringToKind(StringRef str) = 0;
   virtual StringRef   kindToString(Kind) = 0;

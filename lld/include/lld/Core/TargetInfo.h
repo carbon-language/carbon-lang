@@ -56,14 +56,14 @@ public:
   virtual GOTPass *getGOTPass() const { return nullptr; }
 
   // TODO: Split out to TargetRelocationInfo.
-  virtual ErrorOr<uint32_t> relocKindFromString(StringRef str) const {
-    uint32_t val;
+  virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const {
+    int32_t val;
     if (str.getAsInteger(10, val))
       return llvm::make_error_code(llvm::errc::invalid_argument);
     return val;
   }
 
-  virtual ErrorOr<std::string> stringFromRelocKind(uint32_t kind) const {
+  virtual ErrorOr<std::string> stringFromRelocKind(int32_t kind) const {
     std::string s;
     llvm::raw_string_ostream str(s);
     str << kind;
