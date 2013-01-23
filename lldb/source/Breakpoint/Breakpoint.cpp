@@ -242,7 +242,8 @@ Breakpoint::GetThreadIndex() const
 void
 Breakpoint::SetThreadName (const char *thread_name)
 {
-    if (::strcmp (m_options.GetThreadSpec()->GetName(), thread_name) == 0)
+    if (m_options.GetThreadSpec()->GetName() != NULL
+        && ::strcmp (m_options.GetThreadSpec()->GetName(), thread_name) == 0)
         return;
         
     m_options.GetThreadSpec()->SetName (thread_name);
@@ -261,7 +262,8 @@ Breakpoint::GetThreadName () const
 void 
 Breakpoint::SetQueueName (const char *queue_name)
 {
-    if (::strcmp (m_options.GetThreadSpec()->GetQueueName(), queue_name) == 0)
+    if (m_options.GetThreadSpec()->GetQueueName() != NULL
+        && ::strcmp (m_options.GetThreadSpec()->GetQueueName(), queue_name) == 0)
         return;
         
     m_options.GetThreadSpec()->SetQueueName (queue_name);
