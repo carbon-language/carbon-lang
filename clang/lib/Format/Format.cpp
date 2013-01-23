@@ -421,9 +421,9 @@ private:
 
   struct ParenState {
     ParenState(unsigned Indent, unsigned LastSpace)
-        : Indent(Indent), LastSpace(LastSpace), FirstLessLess(0),
-          BreakBeforeClosingBrace(false), BreakAfterComma(false),
-          HasMultiParameterLine(false) {}
+        : Indent(Indent), LastSpace(LastSpace), AssignmentColumn(0),
+          FirstLessLess(0), BreakBeforeClosingBrace(false),
+          BreakAfterComma(false), HasMultiParameterLine(false) {}
 
     /// \brief The position to which a specific parenthesis level needs to be
     /// indented.
@@ -435,6 +435,9 @@ private:
     /// functionCall(Parameter, otherCall(
     ///                             OtherParameter));
     unsigned LastSpace;
+
+    /// \brief This is the column of the first token after an assignment.
+    unsigned AssignmentColumn;
 
     /// \brief The position the first "<<" operator encountered on each level.
     ///
@@ -457,6 +460,8 @@ private:
         return Indent < Other.Indent;
       if (LastSpace != Other.LastSpace)
         return LastSpace < Other.LastSpace;
+      if (AssignmentColumn != Other.AssignmentColumn)
+        return AssignmentColumn < Other.AssignmentColumn;
       if (FirstLessLess != Other.FirstLessLess)
         return FirstLessLess < Other.FirstLessLess;
       if (BreakBeforeClosingBrace != Other.BreakBeforeClosingBrace)
@@ -547,6 +552,9 @@ private:
         State.Column = State.ForLoopVariablePos;
       } else if (State.NextToken->Parent->ClosesTemplateDeclaration) {
         State.Column = State.Stack[ParenLevel].Indent - 4;
+      } else if (Previous.Type == TT_BinaryOperator &&
+                 State.Stack.back().AssignmentColumn != 0) {
+        State.Column = State.Stack.back().AssignmentColumn;
       } else {
         State.Column = State.Stack[ParenLevel].Indent;
       }
@@ -587,7 +595,7 @@ private:
       if (RootToken.isNot(tok::kw_for) && ParenLevel == 0 &&
           (getPrecedence(Previous) == prec::Assignment ||
            Previous.is(tok::kw_return)))
-        State.Stack[ParenLevel].Indent = State.Column + Spaces;
+        State.Stack.back().AssignmentColumn = State.Column + Spaces;
       if (Previous.is(tok::l_paren) || Previous.is(tok::l_brace) ||
           State.NextToken->Parent->Type == TT_TemplateOpener)
         State.Stack[ParenLevel].Indent = State.Column + Spaces;

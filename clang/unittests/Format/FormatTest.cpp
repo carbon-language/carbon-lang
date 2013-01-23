@@ -1006,10 +1006,10 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
 TEST_F(FormatTest, FormatsBuilderPattern) {
   verifyFormat(
       "return llvm::StringSwitch<Reference::Kind>(name)\n"
-      "       .StartsWith(\".eh_frame_hdr\", ORDER_EH_FRAMEHDR)\n"
-      "       .StartsWith(\".eh_frame\", ORDER_EH_FRAME).StartsWith(\".init\", ORDER_INIT)\n"
-      "       .StartsWith(\".fini\", ORDER_FINI).StartsWith(\".hash\", ORDER_HASH)\n"
-      "       .Default(ORDER_TEXT);\n");
+      "    .StartsWith(\".eh_frame_hdr\", ORDER_EH_FRAMEHDR)\n"
+      "    .StartsWith(\".eh_frame\", ORDER_EH_FRAME).StartsWith(\".init\", ORDER_INIT)\n"
+      "    .StartsWith(\".fini\", ORDER_FINI).StartsWith(\".hash\", ORDER_HASH)\n"
+      "    .Default(ORDER_TEXT);\n");
 }
 
 TEST_F(FormatTest, DoesNotBreakTrailingAnnotation) {
@@ -1042,6 +1042,10 @@ TEST_F(FormatTest, BreaksAfterAssignments) {
   verifyFormat(
       "CharSourceRange LineRange = CharSourceRange::getTokenRange(\n"
       "    Line.Tokens.front().Tok.getLo(), Line.Tokens.back().Tok.getLoc());");
+
+  verifyFormat(
+      "aaaaaaaaaaaaaaaaaaaaaaaaaa aaaa = aaaaaaaaaaaaaa(0).aaaa()\n"
+      "    .aaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaa::aaaaaaaaaaaaaaaaaaaaa);");
 }
 
 TEST_F(FormatTest, AlignsAfterAssignments) {
