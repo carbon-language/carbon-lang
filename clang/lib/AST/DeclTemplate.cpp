@@ -128,12 +128,12 @@ static void AdoptTemplateParameterList(TemplateParameterList *Params,
 // RedeclarableTemplateDecl Implementation
 //===----------------------------------------------------------------------===//
 
-RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() {
+RedeclarableTemplateDecl::CommonBase *RedeclarableTemplateDecl::getCommonPtr() const {
   if (!Common) {
     // Walk the previous-declaration chain until we either find a declaration
     // with a common pointer or we run out of previous declarations.
-    SmallVector<RedeclarableTemplateDecl *, 2> PrevDecls;
-    for (RedeclarableTemplateDecl *Prev = getPreviousDecl(); Prev;
+    SmallVector<const RedeclarableTemplateDecl *, 2> PrevDecls;
+    for (const RedeclarableTemplateDecl *Prev = getPreviousDecl(); Prev;
          Prev = Prev->getPreviousDecl()) {
       if (Prev->Common) {
         Common = Prev->Common;
@@ -241,7 +241,7 @@ FunctionTemplateDecl *FunctionTemplateDecl::CreateDeserialized(ASTContext &C,
 }
 
 RedeclarableTemplateDecl::CommonBase *
-FunctionTemplateDecl::newCommon(ASTContext &C) {
+FunctionTemplateDecl::newCommon(ASTContext &C) const {
   Common *CommonPtr = new (C) Common;
   C.AddDeallocation(DeallocateCommon, CommonPtr);
   return CommonPtr;
@@ -328,7 +328,7 @@ ClassTemplateDecl::getPartialSpecializations() {
 }  
 
 RedeclarableTemplateDecl::CommonBase *
-ClassTemplateDecl::newCommon(ASTContext &C) {
+ClassTemplateDecl::newCommon(ASTContext &C) const {
   Common *CommonPtr = new (C) Common;
   C.AddDeallocation(DeallocateCommon, CommonPtr);
   return CommonPtr;
@@ -919,7 +919,7 @@ void TypeAliasTemplateDecl::DeallocateCommon(void *Ptr) {
   static_cast<Common *>(Ptr)->~Common();
 }
 RedeclarableTemplateDecl::CommonBase *
-TypeAliasTemplateDecl::newCommon(ASTContext &C) {
+TypeAliasTemplateDecl::newCommon(ASTContext &C) const {
   Common *CommonPtr = new (C) Common;
   C.AddDeallocation(DeallocateCommon, CommonPtr);
   return CommonPtr;
