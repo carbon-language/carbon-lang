@@ -327,7 +327,8 @@ public:
     IK_NoInduction,         ///< Not an induction variable.
     IK_IntInduction,        ///< Integer induction variable. Step = 1.
     IK_ReverseIntInduction, ///< Reverse int induction variable. Step = -1.
-    IK_PtrInduction         ///< Pointer induction variable. Step = sizeof(elem).
+    IK_PtrInduction,        ///< Pointer induction var. Step = sizeof(elem).
+    IK_ReversePtrInduction  ///< Reverse ptr indvar. Step = - sizeof(elem).
   };
 
   /// This POD struct holds information about reduction variables.
@@ -734,6 +735,9 @@ Value *InnerLoopVectorizer::getConsecutiveVector(Value* Val, unsigned StartIdx,
 
 int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
   assert(Ptr->getType()->isPointerTy() && "Unexpected non ptr");
+  // Make sure that the pointer does not point to structs.
+  if (cast<PointerType>(Ptr->getType())->getElementType()->isAggregateType())
+    return 0;
 
   // If this value is a pointer induction variable we know it is consecutive.
   PHINode *Phi = dyn_cast_or_null<PHINode>(Ptr);
@@ -741,6 +745,8 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
     InductionInfo II = Inductions[Phi];
     if (IK_PtrInduction == II.IK)
       return 1;
+    else if (IK_ReversePtrInduction == II.IK)
+      return -1;
   }
 
   GetElementPtrInst *Gep = dyn_cast_or_null<GetElementPtrInst>(Ptr);
@@ -749,6 +755,29 @@ int LoopVectorizationLegality::isConsecutivePtr(Value *Ptr) {
 
   unsigned NumOperands = Gep->getNumOperands();
   Value *LastIndex = Gep->getOperand(NumOperands - 1);
+
+  Value *GpPtr = Gep->getPointerOperand();
+  // If this GEP value is a consecutive pointer induction variable and all of
+  // the indices are constant then we know it is consecutive. We can
+  Phi = dyn_cast<PHINode>(GpPtr);
+  if (Phi && Inductions.count(Phi)) {
+
+    // Make sure that the pointer does not point to structs.
+    PointerType *GepPtrType = cast<PointerType>(GpPtr->getType());
+    if (GepPtrType->getElementType()->isAggregateType())
+      return 0;
+
+    // Make sure that all of the index operands are loop invariant.
+    for (unsigned i = 1; i < NumOperands; ++i)
+      if (!SE->isLoopInvariant(SE->getSCEV(Gep->getOperand(i)), TheLoop))
+        return 0;
+
+    InductionInfo II = Inductions[Phi];
+    if (IK_PtrInduction == II.IK)
+      return 1;
+    else if (IK_ReversePtrInduction == II.IK)
+      return -1;
+  }
 
   // Check that all of the gep indices are uniform except for the last.
   for (unsigned i = 0; i < NumOperands - 1; ++i)
@@ -1145,6 +1174,18 @@ InnerLoopVectorizer::createEmptyLoop(LoopVectorizationLegality *Legal) {
       // the end index.
       EndValue =
         GetElementPtrInst::Create(II.StartValue, CountRoundDown, "ptr.ind.end",
+                                  LoopBypassBlocks.back()->getTerminator());
+      break;
+    }
+    case LoopVectorizationLegality::IK_ReversePtrInduction: {
+      // The value at the end of the loop for the reverse pointer is calculated
+      // by creating a GEP with a negative index starting from the start value.
+      Value *Zero = ConstantInt::get(CountRoundDown->getType(), 0);
+      Value *NegIdx = BinaryOperator::CreateSub(Zero, CountRoundDown,
+                                  "rev.ind.end",
+                                  LoopBypassBlocks.back()->getTerminator());
+      EndValue = GetElementPtrInst::Create(II.StartValue, NegIdx,
+                                  "rev.ptr.ind.end",
                                   LoopBypassBlocks.back()->getTerminator());
       break;
     }
@@ -1625,6 +1666,7 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       }
       case LoopVectorizationLegality::IK_ReverseIntInduction:
       case LoopVectorizationLegality::IK_PtrInduction:
+      case LoopVectorizationLegality::IK_ReversePtrInduction:
         // Handle reverse integer and pointer inductions.
         Value *StartIdx = 0;
         // If we have a single integer induction variable then use it.
@@ -1660,15 +1702,23 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
         // Handle the pointer induction variable case.
         assert(P->getType()->isPointerTy() && "Unexpected type.");
 
+        // Is this a reverse induction ptr or a consecutive induction ptr.
+        bool Reverse = (LoopVectorizationLegality::IK_ReversePtrInduction ==
+                        II.IK);
+
         // This is the vector of results. Notice that we don't generate
         // vector geps because scalar geps result in better code.
         for (unsigned part = 0; part < UF; ++part) {
           Value *VecVal = UndefValue::get(VectorType::get(P->getType(), VF));
           for (unsigned int i = 0; i < VF; ++i) {
-            Constant *Idx = ConstantInt::get(Induction->getType(),
-                                             i + part * VF);
-            Value *GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx,
-                                                 "gep.idx");
+            int EltIndex = (i + part * VF) * (Reverse ? -1 : 1);
+            Constant *Idx = ConstantInt::get(Induction->getType(), EltIndex);
+            Value *GlobalIdx;
+            if (!Reverse)
+              GlobalIdx = Builder.CreateAdd(NormalizedIdx, Idx, "gep.idx");
+            else
+              GlobalIdx = Builder.CreateSub(Idx, NormalizedIdx, "gep.ridx");
+
             Value *SclrGep = Builder.CreateGEP(II.StartValue, GlobalIdx,
                                                "next.gep");
             VecVal = Builder.CreateInsertElement(VecVal, SclrGep,
@@ -1786,7 +1836,19 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       // Handle consecutive stores.
 
       GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
-      if (Gep) {
+      if (Gep && Legal->isInductionVariable(Gep->getPointerOperand())) {
+        Value *PtrOperand = Gep->getPointerOperand();
+        Value *FirstBasePtr = getVectorValue(PtrOperand)[0];
+        FirstBasePtr = Builder.CreateExtractElement(FirstBasePtr, Zero);
+
+        // Create the new GEP with the new induction variable.
+        GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
+        Gep2->setOperand(0, FirstBasePtr);
+        Ptr = Builder.Insert(Gep2);
+      } else if (Gep) {
+        assert(SE->isLoopInvariant(SE->getSCEV(Gep->getPointerOperand()),
+               OrigLoop) && "Base ptr must be invariant");
+
         // The last index does not have to be the induction. It can be
         // consecutive and be a function of the index. For example A[I+1];
         unsigned NumOperands = Gep->getNumOperands();
@@ -1844,7 +1906,18 @@ InnerLoopVectorizer::vectorizeBlockInLoop(LoopVectorizationLegality *Legal,
       }
 
       GetElementPtrInst *Gep = dyn_cast<GetElementPtrInst>(Ptr);
-      if (Gep) {
+      if (Gep && Legal->isInductionVariable(Gep->getPointerOperand())) {
+        Value *PtrOperand = Gep->getPointerOperand();
+        Value *FirstBasePtr = getVectorValue(PtrOperand)[0];
+        FirstBasePtr = Builder.CreateExtractElement(FirstBasePtr, Zero);
+        // Create the new GEP with the new induction variable.
+        GetElementPtrInst *Gep2 = cast<GetElementPtrInst>(Gep->clone());
+        Gep2->setOperand(0, FirstBasePtr);
+        Ptr = Builder.Insert(Gep2);
+      } else if (Gep) {
+        assert(SE->isLoopInvariant(SE->getSCEV(Gep->getPointerOperand()),
+                                   OrigLoop) && "Base ptr must be invariant");
+
         // The last index does not have to be the induction. It can be
         // consecutive and be a function of the index. For example A[I+1];
         unsigned NumOperands = Gep->getNumOperands();
@@ -2589,6 +2662,8 @@ LoopVectorizationLegality::isInductionVariable(PHINode *Phi) {
   uint64_t Size = DL->getTypeAllocSize(PhiTy->getPointerElementType());
   if (C->getValue()->equalsInt(Size))
     return IK_PtrInduction;
+  else if (C->getValue()->equalsInt(0 - Size))
+    return IK_ReversePtrInduction;
 
   return IK_NoInduction;
 }
