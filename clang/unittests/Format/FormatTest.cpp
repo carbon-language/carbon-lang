@@ -1030,15 +1030,15 @@ TEST_F(FormatTest, BreaksAccordingToOperatorPrecedence) {
       "    ccccccccccccccccccccccccc) {\n}");
 }
 
-TEST_F(FormatTest, PrefersNotToBreakAfterAssignments) {
+TEST_F(FormatTest, BreaksAfterAssignments) {
   verifyFormat(
-      "unsigned Cost = TTI.getMemoryOpCost(I->getOpcode(), VectorTy,\n"
-      "                                    SI->getAlignment(),\n"
-      "                                    SI->getPointerAddressSpaceee());\n");
+      "unsigned Cost =\n"
+      "    TTI.getMemoryOpCost(I->getOpcode(), VectorTy, SI->getAlignment(),\n"
+      "                        SI->getPointerAddressSpaceee());\n");
   verifyFormat(
-      "CharSourceRange LineRange = CharSourceRange::getTokenRange(\n"
-      "                                Line.Tokens.front().Tok.getLocation(),\n"
-      "                                Line.Tokens.back().Tok.getLocation());");
+      "CharSourceRange LineRange =\n"
+      "    CharSourceRange::getTokenRange(Line.Tokens.front().Tok.getLoc(),\n"
+      "                                   Line.Tokens.back().Tok.getLoc());");
 }
 
 TEST_F(FormatTest, AlignsAfterAssignments) {
@@ -1055,9 +1055,9 @@ TEST_F(FormatTest, AlignsAfterAssignments) {
       "int Result = (aaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaa +\n"
       "              aaaaaaaaaaaaaaaaaaaaaaaaa);");
   verifyFormat(
-      "double LooooooooooooooooooooooooongResult = aaaaaaaaaaaaaaaaaaaaaaaa +\n"
-      "                                            aaaaaaaaaaaaaaaaaaaaaaaa +\n"
-      "                                            aaaaaaaaaaaaaaaaaaaaaaaa;");
+      "double LooooooooooooooooooooooooongResult =\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaa +\n"
+      "    aaaaaaaaaaaaaaaaaaaaaaaa;");
 }
 
 TEST_F(FormatTest, AlignsAfterReturn) {
@@ -1133,9 +1133,8 @@ TEST_F(FormatTest, UnderstandsEquals) {
       "}");
 
   verifyFormat(
-      // FIXME: Does an expression like this ever make sense? If yes, fix.
-      "if (int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = 100000000 +\n"
-      "    10000000) {\n}");
+      "if (int aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa =\n"
+      "        100000000 + 10000000) {\n}");
 }
 
 TEST_F(FormatTest, WrapsAtFunctionCallsIfNecessary) {

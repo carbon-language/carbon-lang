@@ -702,11 +702,6 @@ private:
       return prec::Assignment;
     prec::Level Level = getPrecedence(Left);
 
-    // Breaking after an assignment leads to a bad result as the two sides of
-    // the assignment are visually very close together.
-    if (Level == prec::Assignment)
-      return 50;
-
     if (Level != prec::Unknown)
       return Level;
 
