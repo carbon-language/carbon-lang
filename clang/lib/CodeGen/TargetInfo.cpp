@@ -1019,8 +1019,10 @@ void X86_32TargetCodeGenInfo::SetTargetAttributes(const Decl *D,
       // Now add the 'alignstack' attribute with a value of 16.
       llvm::AttrBuilder B;
       B.addStackAlignmentAttr(16);
-      Fn->addAttribute(llvm::AttributeSet::FunctionIndex,
-                       llvm::Attribute::get(CGM.getLLVMContext(), B));
+      Fn->addAttributes(llvm::AttributeSet::FunctionIndex,
+                      llvm::AttributeSet::get(CGM.getLLVMContext(),
+                                              llvm::AttributeSet::FunctionIndex,
+                                              B));
     }
   }
 }

@@ -1257,8 +1257,13 @@ CodeGenModule::GetOrCreateLLVMFunction(StringRef MangledName,
   assert(F->getName() == MangledName && "name was uniqued!");
   if (D.getDecl())
     SetFunctionAttributes(D, F, IsIncompleteFunction);
-  if (ExtraAttrs.hasAttributes())
-    F->addAttribute(llvm::AttributeSet::FunctionIndex, ExtraAttrs);
+  if (ExtraAttrs.hasAttributes()) {
+    llvm::AttrBuilder B(ExtraAttrs);
+    F->addAttributes(llvm::AttributeSet::FunctionIndex,
+                     llvm::AttributeSet::get(VMContext,
+                                             llvm::AttributeSet::FunctionIndex,
+                                             B));
+  }
 
   // This is the first use or definition of a mangled name.  If there is a
   // deferred decl with this name, remember that we need to emit it at the end
