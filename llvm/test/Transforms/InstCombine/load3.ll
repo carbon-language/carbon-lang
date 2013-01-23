@@ -1,6 +1,6 @@
 ; RUN: opt < %s -instcombine -S | FileCheck %s
-target datalayout = "e-p:64:64:64-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:128:128-a0:0:64-s0:64:64-f80:128:128-n8:16:32:64"
-target triple = "x86_64-apple-darwin10.0.0"
+target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:32:64-f32:32:32-f64:32:64-v64:64:64-v128:128:128-a0:0:64-f80:128:128-n8:16:32-S128"
+target triple = "i386-apple-macosx10.0.0"
 
 ; Instcombine should be able to do trivial CSE of loads.
 
@@ -24,4 +24,23 @@ define float @test2() {
   
 ; CHECK: @test2
 ; CHECK: ret float 0x3806965600000000
+}
+
+@rslts32 = global [36 x i32] zeroinitializer, align 4
+
+@expect32 = internal constant [36 x i32][ i32 1, i32 2, i32 0, i32 100, i32 3,
+i32 4, i32 0, i32 -7, i32 4, i32 4, i32 8, i32 8, i32 1, i32 3, i32 8, i32 3,
+i32 4, i32 -2, i32 2, i32 8, i32 83, i32 77, i32 8, i32 17, i32 77, i32 88, i32
+22, i32 33, i32 44, i32 88, i32 77, i32 4, i32 4, i32 7, i32 -7, i32 -8] ,
+align 4
+
+; PR14986
+define void @test3() nounwind {
+; This is a weird way of computing zero.
+  %l = load i32* getelementptr ([36 x i32]* @expect32, i32 29826161, i32 28), align 4
+  store i32 %l, i32* getelementptr ([36 x i32]* @rslts32, i32 29826161, i32 28), align 4
+  ret void
+
+; CHECK: @test3
+; CHECK: store i32 1, i32* getelementptr inbounds ([36 x i32]* @rslts32, i32 0, i32 0)
 }

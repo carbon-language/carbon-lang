@@ -254,13 +254,22 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
       if (!CI) return false;  // Index isn't a simple constant?
       if (CI->isZero()) continue;  // Not adding anything.
 
+      // Evaluate offsets in the index type.
+      APInt APOffset(CI->getBitWidth(), Offset);
+
       if (StructType *ST = dyn_cast<StructType>(*GTI)) {
         // N = N + Offset
-        Offset += TD.getStructLayout(ST)->getElementOffset(CI->getZExtValue());
+        APOffset +=
+          APInt(CI->getBitWidth(),
+                TD.getStructLayout(ST)->getElementOffset(CI->getZExtValue()));
       } else {
         SequentialType *SQT = cast<SequentialType>(*GTI);
-        Offset += TD.getTypeAllocSize(SQT->getElementType())*CI->getSExtValue();
+        APOffset +=
+          APInt(CI->getBitWidth(),
+                TD.getTypeAllocSize(SQT->getElementType())*CI->getSExtValue());
       }
+
+      Offset = APOffset.getSExtValue();
     }
     return true;
   }
