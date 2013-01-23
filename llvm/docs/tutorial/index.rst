@@ -25,7 +25,7 @@ Kaleidoscope: Implementing a Language with LLVM in Objective Caml
 External Tutorials
 ==================
 
-`Write An LLVM Backend Tutorial For Cpu0 <http://jonathan2251.github.com/lbd/>`_
+`Tutorial: Creating an LLVM Backend for the Cpu0 Architecture <http://jonathan2251.github.com/lbd/>`_
    A step-by-step tutorial for developing an LLVM backend. Under
    active development at `<https://github.com/Jonathan2251/lbd>`_ (please
    contribute!).
