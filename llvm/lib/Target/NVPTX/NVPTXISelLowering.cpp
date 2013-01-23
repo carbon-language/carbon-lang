@@ -1027,9 +1027,11 @@ NVPTXTargetLowering::LowerFormalArguments(SDValue Chain,
       if (isABI || isKernel) {
         // If ABI, load from the param symbol
         SDValue Arg = getParamSymbol(DAG, idx);
-        Value *srcValue = new Argument(PointerType::get(ObjectVT.getTypeForEVT(
-            F->getContext()),
-            llvm::ADDRESS_SPACE_PARAM));
+        // Conjure up a value that we can get the address space from.
+        // FIXME: Using a constant here is a hack.
+        Value *srcValue = Constant::getNullValue(PointerType::get(
+                              ObjectVT.getTypeForEVT(F->getContext()),
+                              llvm::ADDRESS_SPACE_PARAM));
         SDValue p = DAG.getLoad(ObjectVT, dl, Root, Arg,
                                 MachinePointerInfo(srcValue), false, false,
                                 false,
