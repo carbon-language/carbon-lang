@@ -336,9 +336,9 @@ protected:
 template <>
 class ErrorOr<void> {
 public:
-  ErrorOr() : Error(nullptr, 0) {}
+  ErrorOr() : Error(0, 0) {}
 
-  ErrorOr(llvm::error_code EC) : Error(nullptr, 0) {
+  ErrorOr(llvm::error_code EC) : Error(0, 0) {
     if (EC == errc::success) {
       Error.setInt(1);
       return;
@@ -352,14 +352,14 @@ public:
   template<class UserDataT>
   ErrorOr(UserDataT UD, typename
           enable_if_c<ErrorOrUserDataTraits<UserDataT>::value>::type* = 0)
-      : Error(nullptr, 0) {
+      : Error(0, 0) {
     ErrorHolderBase *E = new ErrorHolder<UserDataT>(llvm_move(UD));
     E->Error = ErrorOrUserDataTraits<UserDataT>::error();
     E->HasUserData = true;
     Error.setPointer(E);
   }
 
-  ErrorOr(const ErrorOr &Other) : Error(nullptr, 0) {
+  ErrorOr(const ErrorOr &Other) : Error(0, 0) {
     Error = Other.Error;
     if (Other.Error.getPointer()->Error) {
       Error.getPointer()->aquire();
@@ -377,11 +377,11 @@ public:
   }
 
 #if LLVM_HAS_RVALUE_REFERENCES
-  ErrorOr(ErrorOr &&Other) : Error(nullptr) {
+  ErrorOr(ErrorOr &&Other) : Error(0) {
     // Get other's error.
     Error = Other.Error;
     // Tell other not to do any destruction.
-    Other.Error.setPointer(nullptr);
+    Other.Error.setPointer(0);
   }
 
   ErrorOr &operator =(ErrorOr &&Other) {
