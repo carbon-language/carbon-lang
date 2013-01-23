@@ -101,6 +101,13 @@ static bool END_WITH_NULL isMultiArgSelector(const Selector *Sel, ...) {
 
 void NoReturnFunctionChecker::checkPostObjCMessage(const ObjCMethodCall &Msg,
                                                    CheckerContext &C) const {
+  // Check if the method is annotated with analyzer_noreturn.
+  const ObjCMethodDecl *MD = Msg.getDecl()->getCanonicalDecl();
+  if (MD->hasAttr<AnalyzerNoReturnAttr>()) {
+    C.generateSink();
+    return;
+  }
+
   // HACK: This entire check is to handle two messages in the Cocoa frameworks:
   // -[NSAssertionHandler
   //    handleFailureInMethod:object:file:lineNumber:description:]
