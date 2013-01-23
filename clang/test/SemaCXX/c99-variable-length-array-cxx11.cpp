@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wvla %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 -Wvla-extension %s
 struct StillPOD {
   StillPOD() = default;
 };

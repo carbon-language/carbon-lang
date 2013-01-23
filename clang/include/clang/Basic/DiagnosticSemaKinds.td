@@ -75,7 +75,9 @@ def warn_double_const_requires_fp64 : Warning<
 
 // C99 variable-length arrays
 def ext_vla : Extension<"variable length arrays are a C99 feature">,
-  InGroup<VLA>;
+  InGroup<VLAExtension>;
+def warn_vla_used : Warning<"variable length array used">,
+  InGroup<VLA>, DefaultIgnore;
 def err_vla_non_pod : Error<"variable length array of non-POD element type %0">;
 def err_vla_in_sfinae : Error<
   "variable length array cannot be formed during template argument deduction">;

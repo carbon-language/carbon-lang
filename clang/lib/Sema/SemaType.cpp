@@ -1496,6 +1496,11 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
                                      : diag::ext_c99_array_usage) << ASM;
   }
 
+  if (T->isVariableArrayType()) {
+    // Warn about VLAs for -Wvla.
+    Diag(Loc, diag::warn_vla_used);
+  }
+
   return T;
 }
 
