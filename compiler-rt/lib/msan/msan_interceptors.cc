@@ -612,6 +612,18 @@ INTERCEPTOR(int, uname, void *utsname) {
   return res;
 }
 
+INTERCEPTOR(int, gethostname, char *name, SIZE_T len) {
+  ENSURE_MSAN_INITED();
+  int res = REAL(gethostname)(name, len);
+  if (!res) {
+    SIZE_T real_len = REAL(strnlen)(name, len);
+    if (real_len < len)
+      ++real_len;
+    __msan_unpoison(name, real_len);
+  }
+  return res;
+}
+
 INTERCEPTOR(int, epoll_wait, int epfd, void *events, int maxevents,
     int timeout) {
   ENSURE_MSAN_INITED();
@@ -936,6 +948,7 @@ void InitializeInterceptors() {
   INTERCEPT_FUNCTION(statfs64);
   INTERCEPT_FUNCTION(fstatfs64);
   INTERCEPT_FUNCTION(uname);
+  INTERCEPT_FUNCTION(gethostname);
   INTERCEPT_FUNCTION(epoll_wait);
   INTERCEPT_FUNCTION(epoll_pwait);
   INTERCEPT_FUNCTION(recv);

@@ -1306,6 +1306,13 @@ TEST(MemorySanitizer, uname) {
   EXPECT_NOT_POISONED(strlen(u.machine));
 }
 
+TEST(MemorySanitizer, gethostname) {
+  char buf[100];
+  int res = gethostname(buf, 100);
+  assert(!res);
+  EXPECT_NOT_POISONED(strlen(buf));
+}
+
 template<class T>
 static bool applySlt(T value, T shadow) {
   __msan_partial_poison(&value, &shadow, sizeof(T));
