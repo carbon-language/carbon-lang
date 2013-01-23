@@ -1260,6 +1260,8 @@ private:
     if (getPrecedence(Current) == prec::Assignment ||
         Current.is(tok::kw_return) || Current.is(tok::kw_throw))
       IsRHS = true;
+    if (Current.is(tok::l_paren) && !Line.MustBeDeclaration)
+      IsRHS = true;
 
     if (Current.Type == TT_Unknown) {
       if (Current.is(tok::star) || Current.is(tok::amp)) {
@@ -1370,7 +1372,7 @@ private:
 
     // It is very unlikely that we are going to find a pointer or reference type
     // definition on the RHS of an assignment.
-    if (IsRHS || !Line.MustBeDeclaration)
+    if (IsRHS)
       return TT_BinaryOperator;
 
     return TT_PointerOrReference;

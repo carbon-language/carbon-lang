@@ -1288,6 +1288,7 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("int a = *b;");
   verifyFormat("int a = *b * c;");
   verifyFormat("int a = b * *c;");
+  verifyFormat("void f() { int *a = b * c; }");
   verifyFormat("int main(int argc, char **argv) {}");
   verifyFormat("return 10 * b;");
   verifyFormat("return *b * *c;");
