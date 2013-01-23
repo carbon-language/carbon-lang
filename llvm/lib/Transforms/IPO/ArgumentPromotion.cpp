@@ -537,9 +537,13 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     } else if (!ArgsToPromote.count(I)) {
       // Unchanged argument
       Params.push_back(I->getType());
-      Attribute attrs = PAL.getParamAttributes(ArgIndex);
-      if (attrs.hasAttributes())
-        AttributesVec.push_back(AttributeWithIndex::get(Params.size(), attrs));
+      AttributeSet attrs = PAL.getParamAttributes(ArgIndex);
+      if (attrs.hasAttributes(ArgIndex)) {
+        AttributesVec.
+          push_back(AttributeWithIndex::get(F->getContext(),
+                                            ArgIndex, attrs));
+        AttributesVec.back().Index = Params.size();
+      }
     } else if (I->use_empty()) {
       // Dead argument (which are always marked as promotable)
       ++NumArgumentsDead;
@@ -653,10 +657,12 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
       if (!ArgsToPromote.count(I) && !ByValArgsToTransform.count(I)) {
         Args.push_back(*AI);          // Unmodified argument
 
-        Attribute Attrs = CallPAL.getParamAttributes(ArgIndex);
-        if (Attrs.hasAttributes())
-          AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
-
+        if (CallPAL.hasAttributes(ArgIndex)) {
+          AttributesVec.
+            push_back(AttributeWithIndex::get(F->getContext(), ArgIndex,
+                                         CallPAL.getParamAttributes(ArgIndex)));
+          AttributesVec.back().Index = Args.size();
+        }
       } else if (ByValArgsToTransform.count(I)) {
         // Emit a GEP and load for each element of the struct.
         Type *AgTy = cast<PointerType>(I->getType())->getElementType();
@@ -715,9 +721,12 @@ CallGraphNode *ArgPromotion::DoPromotion(Function *F,
     // Push any varargs arguments on the list.
     for (; AI != CS.arg_end(); ++AI, ++ArgIndex) {
       Args.push_back(*AI);
-      Attribute Attrs = CallPAL.getParamAttributes(ArgIndex);
-      if (Attrs.hasAttributes())
-        AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
+      if (CallPAL.hasAttributes(ArgIndex)) {
+        AttributesVec.
+          push_back(AttributeWithIndex::get(F->getContext(), ArgIndex,
+                                         CallPAL.getParamAttributes(ArgIndex)));
+        AttributesVec.back().Index = Args.size();
+      }
     }
 
     // Add any function attributes.

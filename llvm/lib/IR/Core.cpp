@@ -1467,13 +1467,13 @@ LLVMValueRef LLVMGetPreviousParam(LLVMValueRef Arg) {
 void LLVMAddAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
   Argument *A = unwrap<Argument>(Arg);
   AttrBuilder B(PA);
-  A->addAttr(Attribute::get(A->getContext(), B));
+  A->addAttr(AttributeSet::get(A->getContext(), A->getArgNo() + 1,  B));
 }
 
 void LLVMRemoveAttribute(LLVMValueRef Arg, LLVMAttribute PA) {
   Argument *A = unwrap<Argument>(Arg);
   AttrBuilder B(PA);
-  A->removeAttr(Attribute::get(A->getContext(), B));
+  A->removeAttr(AttributeSet::get(A->getContext(), A->getArgNo() + 1,  B));
 }
 
 LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
@@ -1484,10 +1484,10 @@ LLVMAttribute LLVMGetAttribute(LLVMValueRef Arg) {
   
 
 void LLVMSetParamAlignment(LLVMValueRef Arg, unsigned align) {
+  Argument *A = unwrap<Argument>(Arg);
   AttrBuilder B;
   B.addAlignmentAttr(align);
-  unwrap<Argument>(Arg)->addAttr(Attribute::
-                                 get(unwrap<Argument>(Arg)->getContext(), B));
+  A->addAttr(AttributeSet::get(A->getContext(),A->getArgNo() + 1, B));
 }
 
 /*--.. Operations on basic blocks ..........................................--*/

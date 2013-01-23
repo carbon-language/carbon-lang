@@ -791,9 +791,12 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
 
       // Get the original parameter attributes (skipping the first one, that is
       // for the return value.
-      Attribute Attrs = PAL.getParamAttributes(i + 1);
-      if (Attrs.hasAttributes())
-        AttributesVec.push_back(AttributeWithIndex::get(Params.size(), Attrs));
+      if (PAL.hasAttributes(i + 1)) {
+        AttributesVec.
+          push_back(AttributeWithIndex::get(F->getContext(), i + 1,
+                                            PAL.getParamAttributes(i + 1)));
+        AttributesVec.back().Index = Params.size();
+      }
     } else {
       ++NumArgumentsEliminated;
       DEBUG(dbgs() << "DAE - Removing argument " << i << " (" << I->getName()
@@ -859,17 +862,23 @@ bool DAE::RemoveDeadStuffFromFunction(Function *F) {
       if (ArgAlive[i]) {
         Args.push_back(*I);
         // Get original parameter attributes, but skip return attributes.
-        Attribute Attrs = CallPAL.getParamAttributes(i + 1);
-        if (Attrs.hasAttributes())
-          AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
+        if (CallPAL.hasAttributes(i + 1)) {
+          AttributesVec.
+            push_back(AttributeWithIndex::get(F->getContext(), i + 1,
+                                            CallPAL.getParamAttributes(i + 1)));
+          AttributesVec.back().Index = Args.size();
+        }
       }
 
     // Push any varargs arguments on the list. Don't forget their attributes.
     for (CallSite::arg_iterator E = CS.arg_end(); I != E; ++I, ++i) {
       Args.push_back(*I);
-      Attribute Attrs = CallPAL.getParamAttributes(i + 1);
-      if (Attrs.hasAttributes())
-        AttributesVec.push_back(AttributeWithIndex::get(Args.size(), Attrs));
+      if (CallPAL.hasAttributes(i + 1)) {
+        AttributesVec.
+          push_back(AttributeWithIndex::get(F->getContext(), i + 1,
+                                            CallPAL.getParamAttributes(i + 1)));
+        AttributesVec.back().Index = Args.size();
+      }
     }
 
     if (CallPAL.hasAttributes(AttributeSet::FunctionIndex))

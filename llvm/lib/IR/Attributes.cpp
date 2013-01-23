@@ -541,6 +541,14 @@ AttributeWithIndex AttributeWithIndex::get(LLVMContext &C, unsigned Idx,
 // AttributeSetImpl Definition
 //===----------------------------------------------------------------------===//
 
+AttributeSet AttributeSet::getParamAttributes(unsigned Idx) const {
+  // FIXME: Remove.
+  return AttrList && hasAttributes(Idx) ?
+    AttributeSet::get(AttrList->getContext(),
+                      AttributeWithIndex::get(Idx, getAttributes(Idx))) :
+    AttributeSet();
+}
+
 AttributeSet AttributeSet::getRetAttributes() const {
   // FIXME: Remove.
   return AttrList && hasAttributes(ReturnIndex) ?
@@ -599,6 +607,11 @@ AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx, AttrBuilder &B) {
   if (!B.hasAttributes())
     return AttributeSet();
   return get(C, AttributeWithIndex::get(Idx, Attribute::get(C, B)));
+}
+
+AttributeSet AttributeSet::get(LLVMContext &C, unsigned Idx,
+                               Attribute::AttrKind Kind) {
+  return get(C, AttributeWithIndex::get(Idx, Attribute::get(C, Kind)));
 }
 
 //===----------------------------------------------------------------------===//

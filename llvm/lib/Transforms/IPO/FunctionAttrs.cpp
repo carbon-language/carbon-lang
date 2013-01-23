@@ -380,7 +380,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
       for (Function::arg_iterator A = F->arg_begin(), E = F->arg_end();
            A != E; ++A) {
         if (A->getType()->isPointerTy() && !A->hasNoCaptureAttr()) {
-          A->addAttr(Attribute::get(F->getContext(), B));
+          A->addAttr(AttributeSet::get(F->getContext(), A->getArgNo() + 1, B));
           ++NumNoCapture;
           Changed = true;
         }
@@ -395,7 +395,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
         if (!Tracker.Captured) {
           if (Tracker.Uses.empty()) {
             // If it's trivially not captured, mark it nocapture now.
-            A->addAttr(Attribute::get(F->getContext(), B));
+            A->addAttr(AttributeSet::get(F->getContext(), A->getArgNo()+1, B));
             ++NumNoCapture;
             Changed = true;
           } else {
@@ -430,7 +430,9 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
           ArgumentSCC[0]->Uses[0] == ArgumentSCC[0]) {
         ArgumentSCC[0]->
           Definition->
-          addAttr(Attribute::get(ArgumentSCC[0]->Definition->getContext(), B));
+          addAttr(AttributeSet::get(ArgumentSCC[0]->Definition->getContext(),
+                                    ArgumentSCC[0]->Definition->getArgNo() + 1,
+                                    B));
         ++NumNoCapture;
         Changed = true;
       }
@@ -472,7 +474,7 @@ bool FunctionAttrs::AddNoCaptureAttrs(const CallGraphSCC &SCC) {
 
     for (unsigned i = 0, e = ArgumentSCC.size(); i != e; ++i) {
       Argument *A = ArgumentSCC[i]->Definition;
-      A->addAttr(Attribute::get(A->getContext(), B));
+      A->addAttr(AttributeSet::get(A->getContext(), A->getArgNo() + 1, B));
       ++NumNoCapture;
       Changed = true;
     }

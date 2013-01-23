@@ -123,22 +123,15 @@ bool Argument::hasStructRetAttr() const {
     hasAttribute(1, Attribute::StructRet);
 }
 
-/// addAttr - Add a Attribute to an argument
-void Argument::addAttr(Attribute attr) {
-  AttrBuilder B(attr);
-  getParent()->addAttributes(getArgNo() + 1,
-                             AttributeSet::get(getParent()->getContext(),
-                                               getArgNo() + 1, B));
+/// addAttr - Add attributes to an argument.
+void Argument::addAttr(AttributeSet AS) {
+  getParent()->addAttributes(getArgNo() + 1, AS);
 }
 
-/// removeAttr - Remove a Attribute from an argument
-void Argument::removeAttr(Attribute attr) {
-  AttrBuilder B(attr);
-  getParent()->removeAttributes(getArgNo() + 1,
-                                AttributeSet::get(getParent()->getContext(),
-                                                  getArgNo() + 1, B));
+/// removeAttr - Remove attributes from an argument.
+void Argument::removeAttr(AttributeSet AS) {
+  getParent()->removeAttributes(getArgNo() + 1, AS);
 }
-
 
 //===----------------------------------------------------------------------===//
 // Helper Methods in Function

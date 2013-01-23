@@ -234,6 +234,8 @@ public:
 
   /// \brief Return an AttributeSet with the specified parameters in it.
   static AttributeSet get(LLVMContext &C, ArrayRef<AttributeWithIndex> Attrs);
+  static AttributeSet get(LLVMContext &C, unsigned Idx,
+                          Attribute::AttrKind Kind);
   static AttributeSet get(LLVMContext &C, unsigned Idx, AttrBuilder &B);
 
   /// \brief Add an attribute to the attribute set at the given index. Since
@@ -275,9 +277,7 @@ public:
   //===--------------------------------------------------------------------===//
 
   /// \brief The attributes for the specified index are returned.
-  Attribute getParamAttributes(unsigned Idx) const {
-    return getAttributes(Idx);
-  }
+  AttributeSet getParamAttributes(unsigned Idx) const;
 
   /// \brief The attributes for the ret value are returned.
   AttributeSet getRetAttributes() const;

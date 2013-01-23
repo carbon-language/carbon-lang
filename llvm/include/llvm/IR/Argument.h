@@ -79,10 +79,10 @@ public:
   bool hasStructRetAttr() const;
 
   /// \brief Add a Attribute to an argument.
-  void addAttr(Attribute);
+  void addAttr(AttributeSet AS);
 
   /// \brief Remove a Attribute from an argument.
-  void removeAttr(Attribute);
+  void removeAttr(AttributeSet AS);
 
   /// \brief Method for support type inquiry through isa, cast, and
   /// dyn_cast.
