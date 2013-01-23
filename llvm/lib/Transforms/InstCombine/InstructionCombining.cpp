@@ -758,12 +758,7 @@ Type *InstCombiner::FindElementAtOffset(Type *Ty, int64_t Offset,
     FirstIdx = Offset/TySize;
     Offset -= FirstIdx*TySize;
 
-    // Handle hosts where % returns negative instead of values [0..TySize).
-    if (Offset < 0) {
-      --FirstIdx;
-      Offset += TySize;
-      assert(Offset >= 0);
-    }
+    assert(Offset >= 0 && "Offset should never be negative!");
     assert((uint64_t)Offset < (uint64_t)TySize && "Out of range offset");
   }
 
