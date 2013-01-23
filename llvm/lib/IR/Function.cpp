@@ -133,7 +133,10 @@ void Argument::addAttr(Attribute attr) {
 
 /// removeAttr - Remove a Attribute from an argument
 void Argument::removeAttr(Attribute attr) {
-  getParent()->removeAttribute(getArgNo() + 1, attr);
+  AttrBuilder B(attr);
+  getParent()->removeAttributes(getArgNo() + 1,
+                                AttributeSet::get(getParent()->getContext(),
+                                                  getArgNo() + 1, B));
 }
 
 
@@ -263,9 +266,9 @@ void Function::addAttributes(unsigned i, AttributeSet attrs) {
   setAttributes(PAL);
 }
 
-void Function::removeAttribute(unsigned i, Attribute attrs) {
+void Function::removeAttributes(unsigned i, AttributeSet attrs) {
   AttributeSet PAL = getAttributes();
-  PAL = PAL.removeAttr(getContext(), i, attrs);
+  PAL = PAL.removeAttributes(getContext(), i, attrs);
   setAttributes(PAL);
 }
 

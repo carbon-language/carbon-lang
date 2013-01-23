@@ -1394,8 +1394,9 @@ void LLVMRemoveFunctionAttr(LLVMValueRef Fn, LLVMAttribute PA) {
   const AttributeSet PAL = Func->getAttributes();
   AttrBuilder B(PA);
   const AttributeSet PALnew =
-    PAL.removeAttr(Func->getContext(), AttributeSet::FunctionIndex,
-                   Attribute::get(Func->getContext(), B));
+    PAL.removeAttributes(Func->getContext(), AttributeSet::FunctionIndex,
+                         AttributeSet::get(Func->getContext(),
+                                           AttributeSet::FunctionIndex, B));
   Func->setAttributes(PALnew);
 }
 
@@ -1686,9 +1687,10 @@ void LLVMRemoveInstrAttribute(LLVMValueRef Instr, unsigned index,
                               LLVMAttribute PA) {
   CallSite Call = CallSite(unwrap<Instruction>(Instr));
   AttrBuilder B(PA);
-  Call.setAttributes(
-    Call.getAttributes().removeAttr(Call->getContext(), index,
-                                    Attribute::get(Call->getContext(), B)));
+  Call.setAttributes(Call.getAttributes()
+                       .removeAttributes(Call->getContext(), index,
+                                         AttributeSet::get(Call->getContext(),
+                                                           index, B)));
 }
 
 void LLVMSetInstrParamAlignment(LLVMValueRef Instr, unsigned index, 

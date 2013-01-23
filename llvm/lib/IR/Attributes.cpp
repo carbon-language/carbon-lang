@@ -730,6 +730,16 @@ AttributeSet AttributeSet::addAttr(LLVMContext &C, unsigned Idx,
   return get(C, NewAttrList);
 }
 
+AttributeSet AttributeSet::removeAttribute(LLVMContext &C, unsigned Idx,
+                                           Attribute::AttrKind Attr) const {
+  return removeAttr(C, Idx, Attribute::get(C, Attr));
+}
+
+AttributeSet AttributeSet::removeAttributes(LLVMContext &C, unsigned Idx,
+                                            AttributeSet Attrs) const {
+  return removeAttr(C, Idx, Attrs.getAttributes(Idx));
+}
+
 AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
                                       Attribute Attrs) const {
 #ifndef NDEBUG

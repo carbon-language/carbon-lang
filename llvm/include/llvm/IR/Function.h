@@ -189,7 +189,7 @@ public:
   void addAttributes(unsigned i, AttributeSet attrs);
 
   /// @brief removes the attributes from the list of attributes.
-  void removeAttribute(unsigned i, Attribute attr);
+  void removeAttributes(unsigned i, AttributeSet attr);
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
   unsigned getParamAlignment(unsigned i) const {

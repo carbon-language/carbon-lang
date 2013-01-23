@@ -217,6 +217,11 @@ private:
   /// list.
   AttributeSet addAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
 
+  /// \brief Remove the specified attribute at the specified index from this
+  /// attribute list.  Since attribute lists are immutable, this returns the new
+  /// list.
+  AttributeSet removeAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
+
   explicit AttributeSet(AttributeSetImpl *LI) : AttrList(LI) {}
 public:
   AttributeSet() : AttrList(0) {}
@@ -254,9 +259,16 @@ public:
   }
 
   /// \brief Remove the specified attribute at the specified index from this
-  /// attribute list.  Since attribute lists are immutable, this returns the new
+  /// attribute list. Since attribute lists are immutable, this returns the new
   /// list.
-  AttributeSet removeAttr(LLVMContext &C, unsigned Idx, Attribute Attrs) const;
+  AttributeSet removeAttribute(LLVMContext &C, unsigned Idx, 
+                               Attribute::AttrKind Attr) const;
+
+  /// \brief Remove the specified attributes at the specified index from this
+  /// attribute list. Since attribute lists are immutable, this returns the new
+  /// list.
+  AttributeSet removeAttributes(LLVMContext &C, unsigned Idx, 
+                                AttributeSet Attrs) const;
 
   //===--------------------------------------------------------------------===//
   // Attribute List Accessors
