@@ -206,6 +206,8 @@ std::string Attribute::getAsString() const {
     Result += "ssp ";
   if (hasAttribute(Attribute::StackProtectReq))
     Result += "sspreq ";
+  if (hasAttribute(Attribute::StackProtectStrong))
+    Result += "sspstrong ";
   if (hasAttribute(Attribute::NoRedZone))
     Result += "noredzone ";
   if (hasAttribute(Attribute::NoImplicitFloat))
@@ -487,6 +489,7 @@ uint64_t AttributeImpl::getAttrMask(Attribute::AttrKind Val) {
   case Attribute::AddressSafety:   return 1ULL << 32;
   case Attribute::MinSize:         return 1ULL << 33;
   case Attribute::NoDuplicate:     return 1ULL << 34;
+  case Attribute::StackProtectStrong: return 1ULL << 35;
   }
   llvm_unreachable("Unsupported attribute type");
 }

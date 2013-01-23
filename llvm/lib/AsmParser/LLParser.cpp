@@ -956,6 +956,7 @@ bool LLParser::ParseOptionalFuncAttrs(AttrBuilder &B) {
     case lltok::kw_returns_twice:   B.addAttribute(Attribute::ReturnsTwice); break;
     case lltok::kw_ssp:             B.addAttribute(Attribute::StackProtect); break;
     case lltok::kw_sspreq:          B.addAttribute(Attribute::StackProtectReq); break;
+    case lltok::kw_sspstrong:       B.addAttribute(Attribute::StackProtectStrong); break;
     case lltok::kw_uwtable:         B.addAttribute(Attribute::UWTable); break;
     case lltok::kw_noduplicate:     B.addAttribute(Attribute::NoDuplicate); break;
 
@@ -1050,11 +1051,11 @@ bool LLParser::ParseOptionalReturnAttrs(AttrBuilder &B) {
     case lltok::kw_readonly:       case lltok::kw_inlinehint:
     case lltok::kw_alwaysinline:   case lltok::kw_optsize:
     case lltok::kw_ssp:            case lltok::kw_sspreq:
-    case lltok::kw_noredzone:      case lltok::kw_noimplicitfloat:
-    case lltok::kw_naked:          case lltok::kw_nonlazybind:
-    case lltok::kw_address_safety: case lltok::kw_minsize:
-    case lltok::kw_alignstack:     case lltok::kw_align:
-    case lltok::kw_noduplicate:
+    case lltok::kw_sspstrong:      case lltok::kw_noimplicitfloat:
+    case lltok::kw_noredzone:      case lltok::kw_naked:
+    case lltok::kw_nonlazybind:    case lltok::kw_address_safety:
+    case lltok::kw_minsize:        case lltok::kw_alignstack:
+    case lltok::kw_align:          case lltok::kw_noduplicate:
       HaveError |= Error(Lex.getLoc(), "invalid use of function-only attribute");
       break;
     }

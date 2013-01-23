@@ -110,6 +110,7 @@ namespace lltok {
     kw_optsize,
     kw_ssp,
     kw_sspreq,
+    kw_sspstrong,
     kw_noredzone,
     kw_noimplicitfloat,
     kw_naked,

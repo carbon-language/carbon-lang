@@ -51,10 +51,10 @@ syn keyword llvmKeyword noimplicitfloat noinline nonlazybind noredzone noreturn
 syn keyword llvmKeyword nounwind optsize personality private protected
 syn keyword llvmKeyword ptx_device ptx_kernel readnone readonly release
 syn keyword llvmKeyword returns_twice section seq_cst sideeffect signext
-syn keyword llvmKeyword singlethread spir_func spir_kernel sret ssp sspreq tail
-syn keyword llvmKeyword target thread_local to triple unnamed_addr unordered
-syn keyword llvmKeyword uwtable volatile weak weak_odr x86_fastcallcc
-syn keyword llvmKeyword x86_stdcallcc x86_thiscallcc zeroext
+syn keyword llvmKeyword singlethread spir_func spir_kernel sret ssp sspreq
+syn keyword llvmKeyword sspstrong tail target thread_local to triple
+syn keyword llvmKeyword unnamed_addr unordered uwtable volatile weak weak_odr
+syn keyword llvmKeyword x86_fastcallcc x86_stdcallcc x86_thiscallcc zeroext
 
 " Obsolete keywords.
 syn keyword llvmError  getresult begin end

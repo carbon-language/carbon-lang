@@ -90,6 +90,7 @@ public:
                            ///< alignstack=(1))
     StackProtect,          ///< Stack protection.
     StackProtectReq,       ///< Stack protection required.
+    StackProtectStrong,    ///< Strong Stack protection.
     StructRet,             ///< Hidden pointer to structure to return
     UWTable,               ///< Function must be in a unwind table
     ZExt,                  ///< Zero extended before/after call
@@ -463,6 +464,7 @@ public:
       .removeAttribute(Attribute::OptimizeForSize)
       .removeAttribute(Attribute::StackProtect)
       .removeAttribute(Attribute::StackProtectReq)
+      .removeAttribute(Attribute::StackProtectStrong)
       .removeAttribute(Attribute::NoRedZone)
       .removeAttribute(Attribute::NoImplicitFloat)
       .removeAttribute(Attribute::Naked)

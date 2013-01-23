@@ -141,6 +141,12 @@ bool StackProtector::RequiresStackProtector() const {
                                       Attribute::StackProtectReq))
     return true;
 
+  // FIXME: Dummy SSP-strong implementation.  Default to required until
+  // strong heuristic is implemented.
+  if (F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
+                                        Attribute::StackProtectStrong))
+    return true;
+
   if (!F->getAttributes().hasAttribute(AttributeSet::FunctionIndex,
                                        Attribute::StackProtect))
     return false;

@@ -837,8 +837,16 @@ example:
 
     If a function that has an ``sspreq`` attribute is inlined into a
     function that doesn't have an ``sspreq`` attribute or which has an
-    ``ssp`` attribute, then the resulting function will have an
-    ``sspreq`` attribute.
+    ``ssp`` or ``sspstrong`` attribute, then the resulting function will have
+    an ``sspreq`` attribute.
+``sspstrong``
+    This attribute indicates that the function should emit a stack smashing
+    protector. Currently this attribute has the same effect as
+    ``sspreq``. This overrides the ``ssp`` function attribute.
+
+    If a function that has an ``sspstrong`` attribute is inlined into a
+    function that doesn't have an ``sspstrong`` attribute, then the
+    resulting function will have an ``sspstrong`` attribute.
 ``uwtable``
     This attribute indicates that the ABI being targeted requires that
     an unwind table entry be produce for this function even if we can

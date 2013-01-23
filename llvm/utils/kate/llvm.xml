@@ -90,6 +90,7 @@
       <item> readonly </item>
       <item> ssp </item>
       <item> sspreq </item>
+      <item> sspstrong </item>
     </list>
     <list name="types">
       <item> float </item>
