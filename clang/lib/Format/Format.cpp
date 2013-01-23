@@ -159,6 +159,7 @@ FormatStyle getLLVMStyle() {
   LLVMStyle.IndentCaseLabels = false;
   LLVMStyle.SpacesBeforeTrailingComments = 1;
   LLVMStyle.BinPackParameters = true;
+  LLVMStyle.AllowAllParametersOnNextLine = true;
   LLVMStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = false;
   LLVMStyle.AllowShortIfStatementsOnASingleLine = false;
   LLVMStyle.ObjCSpaceBeforeProtocolList = true;
@@ -175,6 +176,7 @@ FormatStyle getGoogleStyle() {
   GoogleStyle.IndentCaseLabels = true;
   GoogleStyle.SpacesBeforeTrailingComments = 2;
   GoogleStyle.BinPackParameters = false;
+  GoogleStyle.AllowAllParametersOnNextLine = true;
   GoogleStyle.ConstructorInitializerAllOnOneLineOrOnePerLine = true;
   GoogleStyle.AllowShortIfStatementsOnASingleLine = false;
   GoogleStyle.ObjCSpaceBeforeProtocolList = false;
@@ -183,7 +185,7 @@ FormatStyle getGoogleStyle() {
 
 FormatStyle getChromiumStyle() {
   FormatStyle ChromiumStyle = getGoogleStyle();
-  ChromiumStyle.AllowShortIfStatementsOnASingleLine = false;
+  ChromiumStyle.AllowAllParametersOnNextLine = false;
   return ChromiumStyle;
 }
 
@@ -607,12 +609,20 @@ private:
     if (Newline && Previous.is(tok::l_brace))
       State.Stack.back().BreakBeforeClosingBrace = true;
 
-    // If we are breaking after '(', '{', '<' or ',', we need to break after
-    // future commas as well to avoid bin packing.
-    if (!Style.BinPackParameters && Newline &&
-        (Previous.is(tok::comma) || Previous.is(tok::l_paren) ||
-         Previous.is(tok::l_brace) || Previous.Type == TT_TemplateOpener))
-      State.Stack.back().BreakAfterComma = true;
+    if (!Style.BinPackParameters && Newline) {
+      // If we are breaking after '(', '{', '<', this is not bin packing unless
+      // AllowAllParametersOnNextLine is false.
+      if ((Previous.isNot(tok::l_paren) && Previous.isNot(tok::l_brace) &&
+           Previous.Type != TT_TemplateOpener) ||
+          !Style.AllowAllParametersOnNextLine)
+        State.Stack.back().BreakAfterComma = true;
+      
+      // Any break on this level means that the parent level has been broken
+      // and we need to avoid bin packing there.
+      for (unsigned i = 0, e = State.Stack.size() - 1; i != e; ++i) {
+        State.Stack[i].BreakAfterComma = true;
+      }
+    }
 
     moveStateToNextToken(State);
   }
@@ -642,17 +652,6 @@ private:
       }
       State.Stack.push_back(
           ParenState(NewIndent, State.Stack.back().LastSpace));
-
-      // If the entire set of parameters will not fit on the current line, we
-      // will need to break after commas on this level to avoid bin-packing.
-      if (!Style.BinPackParameters && Current.MatchingParen != NULL &&
-          !Current.Children.empty()) {
-        if (getColumnLimit() < State.Column + Current.FormatTok.TokenLength +
-            Current.MatchingParen->TotalLength -
-            Current.Children[0].TotalLength) {
-          State.Stack.back().BreakAfterComma = true;
-        }
-      }
     }
 
     // If we encounter a closing ), ], } or >, we can remove a level from our

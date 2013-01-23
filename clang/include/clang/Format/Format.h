@@ -61,6 +61,10 @@ struct FormatStyle {
   /// will either all be on the same line or will have one line each.
   bool BinPackParameters;
 
+  /// \brief Allow putting all parameters of a function declaration/call onto
+  /// the next line without calling this bin-packing.
+  bool AllowAllParametersOnNextLine;
+
   /// \brief If the constructor initializers don't fit on a line, put each
   /// initializer on its own line.
   bool ConstructorInitializerAllOnOneLineOrOnePerLine;

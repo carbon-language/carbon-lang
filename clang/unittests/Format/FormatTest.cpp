@@ -964,9 +964,15 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
       "         aaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
       "             aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa)));");
   verifyGoogleFormat(
-      "aaaaaaaaaaaaaaa(aaaaaaaaa,\n"
-      "                aaaaaaaaa,\n"
-      "                aaaaaaaaaaaaaaaaaaaaaaa).aaaaaaaaaaaaaaaaaa();");
+      "aaaaaaaaaaaaaaa(\n"
+      "    aaaaaaaaa, aaaaaaaaa, aaaaaaaaaaaaaaaaaaaaa).aaaaaaaaaaaaaaaaaa();");
+  verifyGoogleFormat("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
+                     "    aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaa, aaaaaaaaaaa);");
+  
+  verifyGoogleFormat(
+      "aaaaaaaaaaaa(aaaaaaaaaaaaaaaaaaaaaaaaaaaa + aaaaaaaaaaaaaaaaaaaaaaaaa,\n"
+      "             aaaaaaaaaaaa,\n"
+      "             aaaaaaaaaaaa);");
   verifyGoogleFormat(
       "somefunction(someotherFunction(ddddddddddddddddddddddddddddddddddd,\n"
       "                               ddddddddddddddddddddddddddddd),\n"
@@ -979,6 +985,13 @@ TEST_F(FormatTest, FormatsOneParameterPerLineIfNecessary) {
   verifyGoogleFormat("a(\"a\"\n"
                      "  \"a\",\n"
                      "  a);");
+
+  FormatStyle Style = getGoogleStyle();
+  Style.AllowAllParametersOnNextLine = false;
+  verifyFormat("aaaaaaaaaaaaaaa(aaaaaaaaa,\n"
+               "                aaaaaaaaa,\n"
+               "                aaaaaaaaaaaaaaaaaaaaa).aaaaaaaaaaaaaaaaaa();",
+               Style);
 }
 
 TEST_F(FormatTest, FormatsBuilderPattern) {
