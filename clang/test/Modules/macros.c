@@ -1,3 +1,4 @@
+// XFAIL: *
 // RUN: rm -rf %t
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=macros_top %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -x objective-c -emit-module -fmodule-cache-path %t -fmodule-name=macros_left %S/Inputs/module.map

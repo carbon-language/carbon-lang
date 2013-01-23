@@ -377,6 +377,9 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
     }
   }
 
+  // FIXME: Temporarily disable this warning that is currently bogus with a PCH
+  // that redefined a macro without undef'ing it first (test/PCH/macro-redef.c).
+#if 0
   // If the macro definition is ambiguous, complain.
   if (MI->isAmbiguous()) {
     Diag(Identifier, diag::warn_pp_ambiguous_macro)
@@ -392,6 +395,7 @@ bool Preprocessor::HandleMacroExpandedIdentifier(Token &Identifier,
       }
     }
   }
+#endif
 
   // If we started lexing a macro, enter the macro expansion body.
 
