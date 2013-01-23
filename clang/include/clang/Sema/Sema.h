@@ -4013,7 +4013,7 @@ public:
   bool ActOnCXXGlobalScopeSpecifier(Scope *S, SourceLocation CCLoc,
                                     CXXScopeSpec &SS);
 
-  bool isAcceptableNestedNameSpecifier(NamedDecl *SD);
+  bool isAcceptableNestedNameSpecifier(const NamedDecl *SD);
   NamedDecl *FindFirstQualifierInScope(Scope *S, NestedNameSpecifier *NNS);
 
   bool isNonTypeNestedNameSpecifier(Scope *S, CXXScopeSpec &SS,
@@ -5557,13 +5557,14 @@ public:
                                   bool OnlyDeduced,
                                   unsigned Depth,
                                   llvm::SmallBitVector &Used);
-  void MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
-                                     llvm::SmallBitVector &Deduced) {
+  void MarkDeducedTemplateParameters(
+                                  const FunctionTemplateDecl *FunctionTemplate,
+                                  llvm::SmallBitVector &Deduced) {
     return MarkDeducedTemplateParameters(Context, FunctionTemplate, Deduced);
   }
   static void MarkDeducedTemplateParameters(ASTContext &Ctx,
-                                         FunctionTemplateDecl *FunctionTemplate,
-                                         llvm::SmallBitVector &Deduced);
+                                  const FunctionTemplateDecl *FunctionTemplate,
+                                  llvm::SmallBitVector &Deduced);
 
   //===--------------------------------------------------------------------===//
   // C++ Template Instantiation

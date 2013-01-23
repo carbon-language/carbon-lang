@@ -263,7 +263,7 @@ bool Sema::ActOnCXXGlobalScopeSpecifier(Scope *S, SourceLocation CCLoc,
 
 /// \brief Determines whether the given declaration is an valid acceptable
 /// result for name lookup of a nested-name-specifier.
-bool Sema::isAcceptableNestedNameSpecifier(NamedDecl *SD) {
+bool Sema::isAcceptableNestedNameSpecifier(const NamedDecl *SD) {
   if (!SD)
     return false;
 
@@ -279,7 +279,7 @@ bool Sema::isAcceptableNestedNameSpecifier(NamedDecl *SD) {
   QualType T = Context.getTypeDeclType(cast<TypeDecl>(SD));
   if (T->isDependentType())
     return true;
-  else if (TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
+  else if (const TypedefNameDecl *TD = dyn_cast<TypedefNameDecl>(SD)) {
     if (TD->getUnderlyingType()->isRecordType() ||
         (Context.getLangOpts().CPlusPlus11 &&
          TD->getUnderlyingType()->isEnumeralType()))

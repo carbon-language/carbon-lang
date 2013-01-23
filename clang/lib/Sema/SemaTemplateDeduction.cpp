@@ -4604,7 +4604,7 @@ Sema::MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
 /// call to the given function template.
 void
 Sema::MarkDeducedTemplateParameters(ASTContext &Ctx,
-                                    FunctionTemplateDecl *FunctionTemplate,
+                                    const FunctionTemplateDecl *FunctionTemplate,
                                     llvm::SmallBitVector &Deduced) {
   TemplateParameterList *TemplateParams
     = FunctionTemplate->getTemplateParameters();

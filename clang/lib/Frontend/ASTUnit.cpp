@@ -270,7 +270,7 @@ void ASTUnit::setPreprocessor(Preprocessor *pp) { PP = pp; }
 
 /// \brief Determine the set of code-completion contexts in which this 
 /// declaration should be shown.
-static unsigned getDeclShowContexts(NamedDecl *ND,
+static unsigned getDeclShowContexts(const NamedDecl *ND,
                                     const LangOptions &LangOpts,
                                     bool &IsNestedNameSpecifier) {
   IsNestedNameSpecifier = false;
@@ -312,7 +312,7 @@ static unsigned getDeclShowContexts(NamedDecl *ND,
       // Part of the nested-name-specifier in C++0x.
       if (LangOpts.CPlusPlus11)
         IsNestedNameSpecifier = true;
-    } else if (RecordDecl *Record = dyn_cast<RecordDecl>(ND)) {
+    } else if (const RecordDecl *Record = dyn_cast<RecordDecl>(ND)) {
       if (Record->isUnion())
         Contexts |= (1LL << CodeCompletionContext::CCC_UnionTag);
       else
