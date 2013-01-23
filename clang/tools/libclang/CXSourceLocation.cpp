@@ -346,7 +346,7 @@ void clang_getFileLocation(CXSourceLocation location,
     return createNullLocation(file, line, column, offset);
 
   if (file)
-    *file = static_cast<void*>(const_cast<FileEntry*>(SM.getFileEntryForID(FID)));
+    *file = const_cast<FileEntry *>(SM.getFileEntryForID(FID));
   if (line)
     *line = SM.getLineNumber(FID, FileOffset);
   if (column)
