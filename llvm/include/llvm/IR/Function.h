@@ -171,7 +171,8 @@ public:
   /// addFnAttr - Add function attributes to this function.
   ///
   void addFnAttr(Attribute::AttrKind N) {
-    addAttribute(AttributeSet::FunctionIndex, Attribute::get(getContext(), N));
+    setAttributes(AttributeList.addAttribute(getContext(),
+                                             AttributeSet::FunctionIndex, N));
   }
 
   /// hasGC/getGC/setGC/clearGC - The name of the garbage collection algorithm
@@ -181,10 +182,13 @@ public:
   void setGC(const char *Str);
   void clearGC();
 
-  /// addAttribute - adds the attribute to the list of attributes.
-  void addAttribute(unsigned i, Attribute attr);
+  /// @brief adds the attribute to the list of attributes.
+  void addAttribute(unsigned i, Attribute::AttrKind attr);
 
-  /// removeAttribute - removes the attribute from the list of attributes.
+  /// @brief adds the attributes to the list of attributes.
+  void addAttributes(unsigned i, AttributeSet attrs);
+
+  /// @brief removes the attributes from the list of attributes.
   void removeAttribute(unsigned i, Attribute attr);
 
   /// @brief Extract the alignment for a call or parameter (0=unknown).
@@ -265,7 +269,7 @@ public:
     return AttributeList.hasAttribute(n, Attribute::NoAlias);
   }
   void setDoesNotAlias(unsigned n) {
-    addAttribute(n, Attribute::get(getContext(), Attribute::NoAlias));
+    addAttribute(n, Attribute::NoAlias);
   }
 
   /// @brief Determine if the parameter can be captured.
@@ -274,7 +278,7 @@ public:
     return AttributeList.hasAttribute(n, Attribute::NoCapture);
   }
   void setDoesNotCapture(unsigned n) {
-    addAttribute(n, Attribute::get(getContext(), Attribute::NoCapture));
+    addAttribute(n, Attribute::NoCapture);
   }
 
   /// copyAttributesFrom - copy all additional attributes (those not needed to
