@@ -778,7 +778,7 @@ cxcursor::getCursorOverloadedDeclRef(CXCursor C) {
 }
 
 Decl *cxcursor::getCursorDecl(CXCursor Cursor) {
-  return (Decl *)Cursor.data[0];
+  return static_cast<Decl*>(const_cast<void*>(Cursor.data[0]));
 }
 
 Expr *cxcursor::getCursorExpr(CXCursor Cursor) {
@@ -791,15 +791,15 @@ Stmt *cxcursor::getCursorStmt(CXCursor Cursor) {
       Cursor.kind == CXCursor_ObjCClassRef)
     return 0;
 
-  return (Stmt *)Cursor.data[1];
+  return static_cast<Stmt*>(const_cast<void*>(Cursor.data[1]));
 }
 
 Attr *cxcursor::getCursorAttr(CXCursor Cursor) {
-  return (Attr *)Cursor.data[1];
+  return static_cast<Attr*>(const_cast<void*>(Cursor.data[1]));
 }
 
 Decl *cxcursor::getCursorParentDecl(CXCursor Cursor) {
-  return (Decl *)Cursor.data[0];
+  return static_cast<Decl*>(const_cast<void*>(Cursor.data[0]));
 }
 
 ASTContext &cxcursor::getCursorContext(CXCursor Cursor) {
