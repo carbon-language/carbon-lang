@@ -41,7 +41,7 @@ for your system.  To see these options, run:
   $ clang -### -c hello.c
 
 Some clang command line options are driver-only options, some are frontend-only
-options.  Frontend-only options are intended to be used only by developers.
+options.  Frontend-only options are intended to be used only by clang developers.
 Users should not run ``clang -cc1`` directly, because ``-cc1`` options are not
 guaranteed to be stable.
 
