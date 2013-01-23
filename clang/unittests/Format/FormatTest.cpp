@@ -1365,6 +1365,13 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat("A = new SomeType* [Length]();");
 }
 
+TEST_F(FormatTest, FormatsBinaryOperatorsPrecedingEquals) {
+  verifyFormat("void f() {\n"
+               "  x[aaaaaaaaa -\n"
+               "      b] = 23;\n"
+               "}", getLLVMStyleWithColumns(15));
+}
+
 TEST_F(FormatTest, FormatsCasts) {
   verifyFormat("Type *A = static_cast<Type *>(P);");
   verifyFormat("Type *A = (Type *)P;");

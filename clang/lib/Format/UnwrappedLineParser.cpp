@@ -38,7 +38,10 @@ public:
   }
   ~ScopedDeclarationState() {
     Stack.pop_back();
-    Line.MustBeDeclaration = Stack.back();
+    if (!Stack.empty())
+      Line.MustBeDeclaration = Stack.back();
+    else
+      Line.MustBeDeclaration = true;
   }
 private:
   UnwrappedLine &Line;

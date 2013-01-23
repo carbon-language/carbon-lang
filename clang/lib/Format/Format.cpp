@@ -1256,8 +1256,10 @@ private:
       IsExpression = true;
       AnnotatedToken *Previous = Current.Parent;
       while (Previous != NULL) {
-        if (Previous->Type == TT_BinaryOperator)
+        if (Previous->Type == TT_BinaryOperator &&
+            (Previous->is(tok::star) || Previous->is(tok::amp))) {
           Previous->Type = TT_PointerOrReference;
+        }
         Previous = Previous->Parent;
       }
     }
