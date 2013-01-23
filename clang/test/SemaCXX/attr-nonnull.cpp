@@ -31,3 +31,12 @@ namespace rdar8769025 {
     f2(0, 0); // expected-warning{{null passed to a callee which requires a non-null argument}}
   }
 }
+
+namespace test3 {
+__attribute__((nonnull(1))) void f(void *ptr);
+
+void g() {
+  f(static_cast<char*>((void*)0));  // expected-warning{{null passed}}
+  f(static_cast<char*>(0));  // expected-warning{{null passed}}
+}
+}

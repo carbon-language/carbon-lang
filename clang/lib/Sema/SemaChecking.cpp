@@ -1837,8 +1837,20 @@ Sema::CheckNonNullArguments(const NonNullAttr *NonNull,
                                   e = NonNull->args_end();
        i != e; ++i) {
     const Expr *ArgExpr = ExprArgs[*i];
-    if (ArgExpr->isNullPointerConstant(Context,
-                                       Expr::NPC_ValueDependentIsNotNull))
+
+    // As a special case, transparent unions initialized with zero are
+    // considered null for the purposes of the nonnull attribute.
+    if (const RecordType *UT = ArgExpr->getType()->getAsUnionType()) {
+      if (UT->getDecl()->hasAttr<TransparentUnionAttr>())
+        if (const CompoundLiteralExpr *CLE =
+            dyn_cast<CompoundLiteralExpr>(ArgExpr))
+          if (const InitListExpr *ILE =
+              dyn_cast<InitListExpr>(CLE->getInitializer()))
+            ArgExpr = ILE->getInit(0);
+    }
+
+    bool Result;
+    if (ArgExpr->EvaluateAsBooleanCondition(Result, Context) && !Result)
       Diag(CallSiteLoc, diag::warn_null_arg) << ArgExpr->getSourceRange();
   }
 }
