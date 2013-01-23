@@ -13,9 +13,9 @@
 #ifndef LLVM_CLANG_SERIALIZATION_ASTREADER_INTERNALS_H
 #define LLVM_CLANG_SERIALIZATION_ASTREADER_INTERNALS_H
 
-#include "ASTReaderInternals.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/Basic/OnDiskHashTable.h"
+#include "clang/Serialization/ASTBitCodes.h"
 #include "llvm/Support/Endian.h"
 #include <sys/stat.h>
 #include <utility>
@@ -78,8 +78,43 @@ public:
                      unsigned DataLen);
 };
 
+/// \brief Base class for the trait describing the on-disk hash table for the
+/// identifiers in an AST file.
+///
+/// This class is not useful by itself; rather, it provides common
+/// functionality for accessing the on-disk hash table of identifiers
+/// in an AST file. Different subclasses customize that functionality
+/// based on what information they are interested in. Those subclasses
+/// must provide the \c data_type typedef and the ReadData operation,
+/// only.
+class ASTIdentifierLookupTraitBase {
+public:
+  typedef StringRef external_key_type;
+  typedef StringRef internal_key_type;
+  
+
+  static bool EqualKey(const internal_key_type& a, const internal_key_type& b) {
+    return a == b;
+  }
+
+  static unsigned ComputeHash(const internal_key_type& a);
+ 
+  static std::pair<unsigned, unsigned>
+  ReadKeyDataLength(const unsigned char*& d);
+
+  // This hopefully will just get inlined and removed by the optimizer.
+  static const internal_key_type&
+  GetInternalKey(const external_key_type& x) { return x; }
+  
+  // This hopefully will just get inlined and removed by the optimizer.
+  static const external_key_type&
+  GetExternalKey(const internal_key_type& x) { return x; }
+
+  static internal_key_type ReadKey(const unsigned char* d, unsigned n); 
+};
+
 /// \brief Class that performs lookup for an identifier stored in an AST file.
-class ASTIdentifierLookupTrait {
+class ASTIdentifierLookupTrait : public ASTIdentifierLookupTraitBase {
   ASTReader &Reader;
   ModuleFile &F;
   
@@ -91,42 +126,15 @@ class ASTIdentifierLookupTrait {
 public:
   typedef IdentifierInfo * data_type;
   
-  typedef const std::pair<const char*, unsigned> external_key_type;
-  
-  typedef external_key_type internal_key_type;
-  
   ASTIdentifierLookupTrait(ASTReader &Reader, ModuleFile &F,
                            IdentifierInfo *II = 0)
     : Reader(Reader), F(F), KnownII(II) { }
-  
-  static bool EqualKey(const internal_key_type& a,
-                       const internal_key_type& b) {
-    return (a.second == b.second) ? memcmp(a.first, b.first, a.second) == 0
-    : false;
-  }
-  
-  static unsigned ComputeHash(const internal_key_type& a);
-  
-  // This hopefully will just get inlined and removed by the optimizer.
-  static const internal_key_type&
-  GetInternalKey(const external_key_type& x) { return x; }
-  
-  // This hopefully will just get inlined and removed by the optimizer.
-  static const external_key_type&
-  GetExternalKey(const internal_key_type& x) { return x; }
- 
-  static std::pair<unsigned, unsigned>
-  ReadKeyDataLength(const unsigned char*& d);
-
-  static std::pair<const char*, unsigned>
-  ReadKey(const unsigned char* d, unsigned n);
-  
-  IdentifierInfo *ReadData(const internal_key_type& k,
-                           const unsigned char* d,
-                           unsigned DataLen);
+       
+  data_type ReadData(const internal_key_type& k,
+                     const unsigned char* d,
+                     unsigned DataLen);
   
   ASTReader &getReader() const { return Reader; }
-  
 };
   
 /// \brief The on-disk hash table used to contain information about

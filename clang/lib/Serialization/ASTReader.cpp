@@ -440,22 +440,22 @@ ASTSelectorLookupTrait::ReadData(Selector, const unsigned char* d,
   return Result;
 }
 
-unsigned ASTIdentifierLookupTrait::ComputeHash(const internal_key_type& a) {
-  return llvm::HashString(StringRef(a.first, a.second));
+unsigned ASTIdentifierLookupTraitBase::ComputeHash(const internal_key_type& a) {
+  return llvm::HashString(a);
 }
 
 std::pair<unsigned, unsigned>
-ASTIdentifierLookupTrait::ReadKeyDataLength(const unsigned char*& d) {
+ASTIdentifierLookupTraitBase::ReadKeyDataLength(const unsigned char*& d) {
   using namespace clang::io;
   unsigned DataLen = ReadUnalignedLE16(d);
   unsigned KeyLen = ReadUnalignedLE16(d);
   return std::make_pair(KeyLen, DataLen);
 }
 
-std::pair<const char*, unsigned>
-ASTIdentifierLookupTrait::ReadKey(const unsigned char* d, unsigned n) {
+ASTIdentifierLookupTraitBase::internal_key_type
+ASTIdentifierLookupTraitBase::ReadKey(const unsigned char* d, unsigned n) {
   assert(n >= 2 && d[n-1] == '\0');
-  return std::make_pair((const char*) d, n-1);
+  return StringRef((const char*) d, n-1);
 }
 
 IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
@@ -474,7 +474,7 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
     // and associate it with the persistent ID.
     IdentifierInfo *II = KnownII;
     if (!II) {
-      II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
+      II = &Reader.getIdentifierTable().getOwn(k);
       KnownII = II;
     }
     Reader.SetIdentifierInfo(ID, II);
@@ -503,7 +503,7 @@ IdentifierInfo *ASTIdentifierLookupTrait::ReadData(const internal_key_type& k,
   // the new IdentifierInfo.
   IdentifierInfo *II = KnownII;
   if (!II) {
-    II = &Reader.getIdentifierTable().getOwn(StringRef(k.first, k.second));
+    II = &Reader.getIdentifierTable().getOwn(StringRef(k));
     KnownII = II;
   }
   Reader.markIdentifierUpToDate(II);
@@ -1398,9 +1398,7 @@ namespace {
       ASTIdentifierLookupTrait Trait(IdTable->getInfoObj().getReader(),
                                      M, This->Found);
                                      
-      std::pair<const char*, unsigned> Key(This->Name.begin(), 
-                                           This->Name.size());
-      ASTIdentifierLookupTable::iterator Pos = IdTable->find(Key, &Trait);
+      ASTIdentifierLookupTable::iterator Pos = IdTable->find(This->Name, &Trait);
       if (Pos == IdTable->end())
         return false;
       
@@ -5745,9 +5743,9 @@ StringRef ASTIdentifierIterator::Next() {
 
   // We have any identifiers remaining in the current AST file; return
   // the next one.
-  std::pair<const char*, unsigned> Key = *Current;
+  StringRef Result = *Current;
   ++Current;
-  return StringRef(Key.first, Key.second);
+  return Result;
 }
 
 IdentifierIterator *ASTReader::getIdentifiers() const {
