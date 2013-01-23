@@ -989,6 +989,7 @@ void CompilerInvocation::setLangDefaults(LangOptions &Opts, InputKind IK,
     Opts.CXXOperatorNames = 1;
     Opts.LaxVectorConversions = 0;
     Opts.DefaultFPContract = 1;
+    Opts.NativeHalfType = 1;
   }
 
   if (LangStd == LangStandard::lang_cuda)

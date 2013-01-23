@@ -2441,10 +2441,16 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
       // Do not allow returning half FP value.
       // FIXME: This really should be in BuildFunctionType.
       if (T->isHalfType()) {
-        S.Diag(D.getIdentifierLoc(),
-             diag::err_parameters_retval_cannot_have_fp16_type) << 1
-          << FixItHint::CreateInsertion(D.getIdentifierLoc(), "*");
-        D.setInvalidType(true);
+        if (S.getLangOpts().OpenCL) {
+          if (!S.getOpenCLOptions().cl_khr_fp16) {
+            S.Diag(D.getIdentifierLoc(), diag::err_opencl_half_return) << T;
+            D.setInvalidType(true);
+          } 
+        } else {
+          S.Diag(D.getIdentifierLoc(),
+            diag::err_parameters_retval_cannot_have_fp16_type) << 1;
+          D.setInvalidType(true);
+        }
       }
 
       // cv-qualifiers on return types are pointless except when the type is a
@@ -2617,10 +2623,17 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
           } else if (ArgTy->isHalfType()) {
             // Disallow half FP arguments.
             // FIXME: This really should be in BuildFunctionType.
-            S.Diag(Param->getLocation(),
-               diag::err_parameters_retval_cannot_have_fp16_type) << 0
-            << FixItHint::CreateInsertion(Param->getLocation(), "*");
-            D.setInvalidType();
+            if (S.getLangOpts().OpenCL) {
+              if (!S.getOpenCLOptions().cl_khr_fp16) {
+                S.Diag(Param->getLocation(),
+                  diag::err_opencl_half_argument) << ArgTy;
+                D.setInvalidType();
+              }
+            } else {
+              S.Diag(Param->getLocation(),
+                diag::err_parameters_retval_cannot_have_fp16_type) << 0;
+              D.setInvalidType();
+            }
           } else if (!FTI.hasPrototype) {
             if (ArgTy->isPromotableIntegerType()) {
               ArgTy = Context.getPromotedIntegerType(ArgTy);

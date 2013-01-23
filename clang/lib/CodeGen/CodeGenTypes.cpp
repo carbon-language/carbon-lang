@@ -263,9 +263,14 @@ void CodeGenTypes::UpdateCompletedType(const TagDecl *TD) {
 }
 
 static llvm::Type *getTypeForFormat(llvm::LLVMContext &VMContext,
-                                    const llvm::fltSemantics &format) {
-  if (&format == &llvm::APFloat::IEEEhalf)
-    return llvm::Type::getInt16Ty(VMContext);
+                                    const llvm::fltSemantics &format,
+                                    bool UseNativeHalf = false) {
+  if (&format == &llvm::APFloat::IEEEhalf) {
+    if (UseNativeHalf)
+      return llvm::Type::getHalfTy(VMContext);
+    else
+      return llvm::Type::getInt16Ty(VMContext);
+  }
   if (&format == &llvm::APFloat::IEEEsingle)
     return llvm::Type::getFloatTy(VMContext);
   if (&format == &llvm::APFloat::IEEEdouble)
@@ -344,18 +349,17 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
       break;
 
     case BuiltinType::Half:
-      // Half is special: it might be lowered to i16 (and will be storage-only
-      // type),. or can be represented as a set of native operations.
-
-      // FIXME: Ask target which kind of half FP it prefers (storage only vs
-      // native).
-      ResultType = llvm::Type::getInt16Ty(getLLVMContext());
+      // Half FP can either be storage-only (lowered to i16) or native.
+      ResultType = getTypeForFormat(getLLVMContext(),
+          Context.getFloatTypeSemantics(T),
+          Context.getLangOpts().NativeHalfType);
       break;
     case BuiltinType::Float:
     case BuiltinType::Double:
     case BuiltinType::LongDouble:
       ResultType = getTypeForFormat(getLLVMContext(),
-                                    Context.getFloatTypeSemantics(T));
+                                    Context.getFloatTypeSemantics(T),
+                                    /* UseNativeHalf = */ false);
       break;
 
     case BuiltinType::NullPtr:

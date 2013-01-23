@@ -1840,7 +1840,8 @@ bool Sema::IsFloatingPointPromotion(QualType FromType, QualType ToType) {
         return true;
 
       // Half can be promoted to float.
-      if (FromBuiltin->getKind() == BuiltinType::Half &&
+      if (!getLangOpts().NativeHalfType &&
+           FromBuiltin->getKind() == BuiltinType::Half &&
           ToBuiltin->getKind() == BuiltinType::Float)
         return true;
     }
