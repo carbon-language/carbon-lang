@@ -269,8 +269,24 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
 
   case AMDGPU::EG_ExportSwz:
   case AMDGPU::R600_ExportSwz: {
+    // Instruction is left unmodified if its not the last one of its type
+    bool isLastInstructionOfItsType = true;
+    unsigned InstExportType = MI->getOperand(1).getImm();
+    for (MachineBasicBlock::iterator NextExportInst = llvm::next(I),
+         EndBlock = BB->end(); NextExportInst != EndBlock;
+         NextExportInst = llvm::next(NextExportInst)) {
+      if (NextExportInst->getOpcode() == AMDGPU::EG_ExportSwz ||
+          NextExportInst->getOpcode() == AMDGPU::R600_ExportSwz) {
+        unsigned CurrentInstExportType = NextExportInst->getOperand(1)
+            .getImm();
+        if (CurrentInstExportType == InstExportType) {
+          isLastInstructionOfItsType = false;
+          break;
+        }
+      }
+    }
     bool EOP = (llvm::next(I)->getOpcode() == AMDGPU::RETURN)? 1 : 0;
-    if (!EOP)
+    if (!EOP && !isLastInstructionOfItsType)
       return BB;
     unsigned CfInst = (MI->getOpcode() == AMDGPU::EG_ExportSwz)? 84 : 40;
     BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(MI->getOpcode()))
@@ -282,7 +298,7 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
             .addOperand(MI->getOperand(5))
             .addOperand(MI->getOperand(6))
             .addImm(CfInst)
-            .addImm(1);
+            .addImm(EOP);
     break;
   }
   }

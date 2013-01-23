@@ -599,6 +599,17 @@ multiclass ExportPattern<Instruction ExportInst, bits<8> cf_inst> {
         (ExportInst R600_Reg128:$src, imm:$type, imm:$arraybase,
         0, 1, 2, 3, cf_inst, 0)
   >;
+  def : Pat<(EXPORT (v4f32 R600_Reg128:$src), (i32 1),
+    (i32 imm:$type), (i32 imm:$arraybase), (i32 imm)),
+        (ExportInst R600_Reg128:$src, imm:$type, imm:$arraybase,
+        0, 1, 2, 3, cf_inst, 0)
+  >;
+
+  def : Pat<(int_R600_store_swizzle (v4f32 R600_Reg128:$src), imm:$arraybase,
+      imm:$type),
+    (ExportInst R600_Reg128:$src, imm:$type, imm:$arraybase,
+        0, 1, 2, 3, cf_inst, 0)
+  >;
 }
 
 multiclass SteamOutputExportPattern<Instruction ExportInst,
