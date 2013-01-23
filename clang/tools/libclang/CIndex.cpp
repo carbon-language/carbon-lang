@@ -130,9 +130,12 @@ CXSourceRange cxloc::translateSourceRange(const SourceManager &SM,
     EndLoc = EndLoc.getLocWithOffset(Length);
   }
 
-  CXSourceRange Result = { { (void *)&SM, (void *)&LangOpts },
-                           R.getBegin().getRawEncoding(),
-                           EndLoc.getRawEncoding() };
+  CXSourceRange Result = {
+    { static_cast<void*>(const_cast<SourceManager*>(&SM)),
+      static_cast<void*>(const_cast<LangOptions*>(&LangOpts)) },
+    R.getBegin().getRawEncoding(),
+    EndLoc.getRawEncoding()
+  };
   return Result;
 }
 
@@ -4841,7 +4844,8 @@ static void getTokens(ASTUnit *CXXUnit, SourceRange Range,
     //   - Kind-specific fields
     if (Tok.isLiteral()) {
       CXTok.int_data[0] = CXToken_Literal;
-      CXTok.ptr_data = (void *)Tok.getLiteralData();
+      CXTok.ptr_data =
+        static_cast<void*>(const_cast<char*>(Tok.getLiteralData()));
     } else if (Tok.is(tok::raw_identifier)) {
       // Lookup the identifier to determine whether we have a keyword.
       IdentifierInfo *II
@@ -5829,7 +5833,7 @@ CXFile clang_getIncludedFile(CXCursor cursor) {
     return 0;
   
   const InclusionDirective *ID = getCursorInclusionDirective(cursor);
-  return (void *)ID->getFile();
+  return static_cast<void*>(const_cast<FileEntry*>(ID->getFile()));
 }
 
 CXSourceRange clang_Cursor_getCommentRange(CXCursor C) {
