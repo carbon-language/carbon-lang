@@ -604,24 +604,24 @@ multiclass ExportPattern<Instruction ExportInst, bits<8> cf_inst> {
 multiclass SteamOutputExportPattern<Instruction ExportInst,
     bits<8> buf0inst, bits<8> buf1inst, bits<8> buf2inst, bits<8> buf3inst> {
 // Stream0
-  def : Pat<(EXPORT (v4f32 R600_Reg128:$src), (i32 1),
-      (i32 imm:$type), (i32 imm:$arraybase), (i32 imm:$mask)),
-      (ExportInst R600_Reg128:$src, imm:$type, imm:$arraybase,
+  def : Pat<(int_R600_store_stream_output (v4f32 R600_Reg128:$src),
+      (i32 imm:$arraybase), (i32 0), (i32 imm:$mask)),
+      (ExportInst R600_Reg128:$src, 0, imm:$arraybase,
       4095, imm:$mask, buf0inst, 0)>;
 // Stream1
-  def : Pat<(EXPORT (v4f32 R600_Reg128:$src), (i32 2),
-      (i32 imm:$type), (i32 imm:$arraybase), (i32 imm:$mask)),
-      (ExportInst R600_Reg128:$src, imm:$type, imm:$arraybase,
+  def : Pat<(int_R600_store_stream_output (v4f32 R600_Reg128:$src),
+      (i32 imm:$arraybase), (i32 1), (i32 imm:$mask)),
+      (ExportInst R600_Reg128:$src, 0, imm:$arraybase,
       4095, imm:$mask, buf1inst, 0)>;
 // Stream2
-  def : Pat<(EXPORT (v4f32 R600_Reg128:$src), (i32 3),
-      (i32 imm:$type), (i32 imm:$arraybase), (i32 imm:$mask)),
-      (ExportInst R600_Reg128:$src, imm:$type, imm:$arraybase,
+  def : Pat<(int_R600_store_stream_output (v4f32 R600_Reg128:$src),
+      (i32 imm:$arraybase), (i32 2), (i32 imm:$mask)),
+      (ExportInst R600_Reg128:$src, 0, imm:$arraybase,
       4095, imm:$mask, buf2inst, 0)>;
 // Stream3
-  def : Pat<(EXPORT (v4f32 R600_Reg128:$src), (i32 4),
-      (i32 imm:$type), (i32 imm:$arraybase), (i32 imm:$mask)),
-      (ExportInst R600_Reg128:$src, imm:$type, imm:$arraybase,
+  def : Pat<(int_R600_store_stream_output (v4f32 R600_Reg128:$src),
+      (i32 imm:$arraybase), (i32 3), (i32 imm:$mask)),
+      (ExportInst R600_Reg128:$src, 0, imm:$arraybase,
       4095, imm:$mask, buf3inst, 0)>;
 }
 

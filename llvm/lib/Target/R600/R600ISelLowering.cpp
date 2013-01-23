@@ -386,39 +386,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
           Chain);
 
     }
-    case AMDGPUIntrinsic::R600_store_stream_output : {
-      MachineFunction &MF = DAG.getMachineFunction();
-      R600MachineFunctionInfo *MFI = MF.getInfo<R600MachineFunctionInfo>();
-      int64_t RegIndex = cast<ConstantSDNode>(Op.getOperand(3))->getZExtValue();
-      int64_t BufIndex = cast<ConstantSDNode>(Op.getOperand(4))->getZExtValue();
 
-      SDNode **OutputsMap = MFI->StreamOutputs[BufIndex];
-      unsigned Inst;
-      switch (cast<ConstantSDNode>(Op.getOperand(4))->getZExtValue()  ) {
-      // STREAM3
-      case 3:
-        Inst = 4;
-        break;
-      // STREAM2
-      case 2:
-        Inst = 3;
-        break;
-      // STREAM1
-      case 1:
-        Inst = 2;
-        break;
-      // STREAM0
-      case 0:
-        Inst = 1;
-        break;
-      default:
-        llvm_unreachable("Wrong buffer id for stream outputs !");
-      }
-
-      return InsertScalarToRegisterExport(DAG, Op.getDebugLoc(), OutputsMap,
-          RegIndex / 4, RegIndex % 4, Inst, 0, Op.getOperand(2),
-          Chain);
-    }
     // default for switch(IntrinsicID)
     default: break;
     }

@@ -25,7 +25,6 @@ public:
   R600MachineFunctionInfo(const MachineFunction &MF);
   std::vector<unsigned> ReservedRegs;
   SDNode *Outputs[16];
-  SDNode *StreamOutputs[64][4];
   bool HasLinearInterpolation;
   bool HasPerspectiveInterpolation;
 
