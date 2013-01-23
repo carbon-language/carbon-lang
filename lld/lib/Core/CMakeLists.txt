@@ -5,6 +5,7 @@ add_lld_library(lldCore
   Error.cpp
   File.cpp
   InputFiles.cpp
+  PassManager.cpp
   Resolver.cpp
   SymbolTable.cpp
   TargetInfo.cpp

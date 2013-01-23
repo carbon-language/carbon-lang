@@ -17,10 +17,8 @@
 namespace lld {
 class ELFTargetInfo;
 class File;
-class GOTPass;
 class InputFiles;
 class MachOTargetInfo;
-class StubsPass;
 class TargetInfo;
 
 /// \brief The Writer is an abstract class for writing object files, shared
@@ -32,16 +30,6 @@ public:
   
   /// \brief Write a file from the supplied File object 
   virtual error_code writeFile(const File &linkedFile, StringRef path) = 0;
-  
-  /// \brief Return a Pass object for creating stubs/PLT entries
-  virtual StubsPass *stubPass() {
-    return nullptr;
-  }
-  
-  /// \brief Return a Pass object for creating GOT entries
-  virtual GOTPass *gotPass() {
-    return nullptr;
-  }
   
   /// \brief This method is called by Core Linking to give the Writer a chance
   /// to add file format specific "files" to set of files to be linked. This is

@@ -32,8 +32,7 @@ namespace llvm {
 
 namespace lld {
 struct LinkerOptions;
-class GOTPass;
-class StubsPass;
+class PassManager;
 
 class TargetInfo {
 protected:
@@ -52,8 +51,7 @@ public:
 
   virtual StringRef getEntry() const;
 
-  virtual StubsPass *getStubPass() const { return nullptr; }
-  virtual GOTPass *getGOTPass() const { return nullptr; }
+  virtual void addPasses(PassManager &pm) const {}
 
   // TODO: Split out to TargetRelocationInfo.
   virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const {

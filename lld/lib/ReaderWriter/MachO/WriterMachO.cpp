@@ -40,9 +40,6 @@
 #include "MachOFormat.hpp"
 #include "ReferenceKinds.h"
 #include "ExecutableAtoms.hpp"
-#include "GOTPass.hpp"
-#include "StubsPass.hpp"
-
 
 namespace lld {
 namespace mach_o {
@@ -346,8 +343,6 @@ public:
               MachOWriter(const MachOTargetInfo &ti);
 
   virtual error_code  writeFile(const lld::File &file, StringRef path);
-  virtual StubsPass  *stubPass();  
-  virtual GOTPass    *gotPass();  
   virtual void        addFiles(InputFiles&);
 
   uint64_t    addressOfAtom(const Atom *atom);
@@ -378,8 +373,6 @@ private:
 
   const MachOTargetInfo      &_targetInfo;
   KindHandler                *_referenceKindHandler;
-  StubsPass                   _stubsPass;
-  GOTPass                     _gotPass;
   CRuntimeFile                _cRuntimeFile;
   LoadCommandsChunk          *_loadCommandsChunk;
   LoadCommandPaddingChunk    *_paddingChunk;
@@ -1306,7 +1299,7 @@ uint32_t SymbolStringsChunk::stringIndex(StringRef str) {
 MachOWriter::MachOWriter(const MachOTargetInfo &ti)
   : _targetInfo(ti),
     _referenceKindHandler(KindHandler::makeHandler(ti.getTriple().getArch())),
-    _stubsPass(ti), _cRuntimeFile(ti),
+    _cRuntimeFile(ti),
     _bindingInfo(nullptr), _lazyBindingInfo(nullptr),
     _symbolTableChunk(nullptr), _stringsChunk(nullptr), _entryAtom(nullptr),
     _linkEditStartOffset(0), _linkEditStartAddress(0) {
@@ -1523,15 +1516,6 @@ error_code MachOWriter::writeFile(const lld::File &file, StringRef path) {
   
   return buffer->commit();
   return error_code::success();
-}
-
-
-StubsPass *MachOWriter::stubPass() {
-  return &_stubsPass;
-}
- 
-GOTPass *MachOWriter::gotPass() {
-  return &_gotPass;
 }
 
 void MachOWriter::addFiles(InputFiles &inputFiles) {

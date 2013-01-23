@@ -11,6 +11,7 @@
 #include "lld/Core/LinkerOptions.h"
 #include "lld/Core/LLVM.h"
 #include "lld/Core/Pass.h"
+#include "lld/Core/PassManager.h"
 #include "lld/Core/Resolver.h"
 #include "lld/ReaderWriter/ELFTargetInfo.h"
 #include "lld/ReaderWriter/MachOTargetInfo.h"
@@ -159,18 +160,11 @@ public:
 
   virtual uint64_t getPageSize() const { return 0x1000; }
 
-  virtual StubsPass *getStubPass() const {
+  virtual void addPasses(PassManager &pm) const {
     if (_doStubs)
-      return const_cast<TestingStubsPass*>(&_stubsPass);
-    else
-      return nullptr;
-  }
-
-  virtual GOTPass *getGOTPass() const {
-     if (_doGOT)
-      return const_cast<TestingGOTPass*>(&_gotPass);
-    else
-      return nullptr;
+      pm.add(std::unique_ptr<Pass>(new TestingStubsPass));
+    if (_doGOT)
+      pm.add(std::unique_ptr<Pass>(new TestingGOTPass));
   }
 
   virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const {
@@ -193,8 +187,6 @@ public:
 private:
   bool              _doStubs;
   bool              _doGOT;
-  TestingStubsPass  _stubsPass;
-  TestingGOTPass    _gotPass;
 };
 
 int main(int argc, char *argv[]) {
@@ -243,18 +235,23 @@ int main(int argc, char *argv[]) {
   std::unique_ptr<ELFTargetInfo> eti = ELFTargetInfo::create(lo);
   std::unique_ptr<MachOTargetInfo> mti = MachOTargetInfo::create(lo);
   std::unique_ptr<Writer> writer;
+  const TargetInfo *ti = 0;
   switch ( writeSelected ) {
     case writeYAML:
       writer = createWriterYAML(tti);
+      ti = &tti;
       break;
     case writeMachO:
       writer = createWriterMachO(*mti);
+      ti = mti.get();
       break;
     case writePECOFF:
       writer = createWriterPECOFF(tti);
+      ti = &tti;
       break;
     case writeELF:
       writer = createWriterELF(*eti);
+      ti = eti.get();
       break;
   }
   
@@ -304,13 +301,10 @@ int main(int argc, char *argv[]) {
   resolver.resolve();
   MutableFile &mergedMasterFile = resolver.resultFile();
 
-  // run passes
-  if ( GOTPass *pass = writer->gotPass() ) {
-    pass->perform(mergedMasterFile);
-  }
-  if ( StubsPass *pass = writer->stubPass() ) {
-    pass->perform(mergedMasterFile);
-  }
+  PassManager pm;
+  if (ti)
+    ti->addPasses(pm);
+  pm.runOnFile(mergedMasterFile);
 
   // showing yaml at this stage can help when debugging
   const bool dumpIntermediateYAML = false;

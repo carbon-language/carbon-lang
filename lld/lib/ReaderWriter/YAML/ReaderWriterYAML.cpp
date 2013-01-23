@@ -1281,15 +1281,6 @@ public:
     return error_code::success();
   }
   
-  virtual StubsPass *stubPass() {
-    return _targetInfo.getStubPass();
-  }
-  
-  virtual GOTPass *gotPass() {
-    return _targetInfo.getGOTPass();
-  }
-  
-  
 private:
   const TargetInfo &_targetInfo;
 };
