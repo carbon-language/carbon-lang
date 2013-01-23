@@ -825,7 +825,11 @@ example:
     placed on the stack before the local variables that's checked upon
     return from the function to see if it has been overwritten. A
     heuristic is used to determine if a function needs stack protectors
-    or not.
+    or not. The heuristic used will enable protectors for functions with:
+    - Character arrays larger than ``ssp-buffer-size`` (default 8).
+    - Aggregates containing character arrays larger than ``ssp-buffer-size``.
+    - Calls to alloca() with variable sizes or constant sizes greater than
+      ``ssp-buffer-size``.
 
     If a function that has an ``ssp`` attribute is inlined into a
     function that doesn't have an ``ssp`` attribute, then the resulting
@@ -841,8 +845,15 @@ example:
     an ``sspreq`` attribute.
 ``sspstrong``
     This attribute indicates that the function should emit a stack smashing
-    protector. Currently this attribute has the same effect as
-    ``sspreq``. This overrides the ``ssp`` function attribute.
+    protector. This attribute causes a strong heuristic to be used when
+    determining if a function needs stack protectors.  The strong heuristic
+    will enable protectors for functions with:
+    - Arrays of any size and type
+    - Aggregates containing an array of any size and type.
+    - Calls to alloca().
+    - Local variables that have had their address taken.
+
+    This overrides the ``ssp`` function attribute.
 
     If a function that has an ``sspstrong`` attribute is inlined into a
     function that doesn't have an ``sspstrong`` attribute, then the
