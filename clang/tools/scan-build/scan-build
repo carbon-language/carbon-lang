@@ -1563,7 +1563,7 @@ if (defined $OutputFormat) {
     Diag "Analysis run complete.\n";
     Diag "Analysis results (plist files) deposited in '$HtmlDir'\n";
   }
-  elsif ($OutputFormat =~ /html/) {
+  if ($OutputFormat =~ /html/) {
     # Postprocess the HTML directory.
     my $NumBugs = Postprocess($HtmlDir, $BaseDir, $AnalyzerStats);
 
