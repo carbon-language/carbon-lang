@@ -1262,7 +1262,8 @@ private:
       }
     }
     if (Current.is(tok::kw_return) || Current.is(tok::kw_throw) ||
-        (Current.is(tok::l_paren) && !Line.MustBeDeclaration))
+        (Current.is(tok::l_paren) && !Line.MustBeDeclaration &&
+         (Current.Parent == NULL || Current.Parent->isNot(tok::kw_for))))
       IsExpression = true;
 
     if (Current.Type == TT_Unknown) {
