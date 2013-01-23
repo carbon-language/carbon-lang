@@ -326,6 +326,7 @@ TEST(AddressSanitizer, ThreadedOneSizeMallocStressTest) {
 }
 
 TEST(AddressSanitizer, MemsetWildAddressTest) {
+  using __asan::kHighMemEnd;
   typedef void*(*memset_p)(void*, int, size_t);
   // Prevent inlining of memset().
   volatile memset_p libc_memset = (memset_p)memset;

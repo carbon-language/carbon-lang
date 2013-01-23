@@ -164,6 +164,7 @@ void InitializeFlags(Flags *f, const char *env) {
 int asan_inited;
 bool asan_init_is_running;
 void (*death_callback)(void);
+uptr kHighMemEnd;
 
 // -------------------------- Misc ---------------- {{{1
 void ShowStatsAndAbort() {
@@ -263,6 +264,24 @@ static void asan_atexit() {
   __asan_print_accumulated_stats();
 }
 
+static void InitializeHighMemEnd() {
+#if SANITIZER_WORDSIZE == 64
+# if defined(__powerpc64__)
+  // FIXME:
+  // On PowerPC64 we have two different address space layouts: 44- and 46-bit.
+  // We somehow need to figure our which one we are using now and choose
+  // one of 0x00000fffffffffffUL and 0x00003fffffffffffUL.
+  // Note that with 'ulimit -s unlimited' the stack is moved away from the top
+  // of the address space, so simply checking the stack address is not enough.
+  kHighMemEnd = (1ULL << 44) - 1;  // 0x00000fffffffffffUL
+# else
+  kHighMemEnd = (1ULL << 47) - 1;  // 0x00007fffffffffffUL;
+# endif
+#else  // SANITIZER_WORDSIZE == 32
+  kHighMemEnd = (1ULL << 32) - 1;  // 0xffffffff;
+#endif  // SANITIZER_WORDSIZE
+}
+
 }  // namespace __asan
 
 // ---------------------- Interface ---------------- {{{1
@@ -299,6 +318,7 @@ void __asan_init() {
   if (asan_inited) return;
   CHECK(!asan_init_is_running && "ASan init calls itself!");
   asan_init_is_running = true;
+  InitializeHighMemEnd();
 
   // Make sure we are not statically linked.
   AsanDoesNotSupportStaticLinkage();
