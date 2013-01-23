@@ -160,6 +160,11 @@ public:
   virtual StringRef customSectionName() const {
     return StringRef();
   }
+
+  virtual SectionPosition sectionPosition() const {
+    return DefinedAtom::sectionPositionAny;
+  }
+
   virtual DeadStripKind deadStrip() const {
     return DefinedAtom::deadStripNormal;
   }

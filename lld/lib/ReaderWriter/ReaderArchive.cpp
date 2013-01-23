@@ -56,8 +56,19 @@ public:
 
     assert(result.size() == 1);
 
+    // TO DO: set ordinal of child just loaded
+    
     // give up the pointer so that this object no longer manages it
     return result[0].release();
+  }
+
+  virtual void setOrdinalAndIncrement(uint64_t &ordinal) const {
+    _ordinal = ordinal++;
+    // Leave space in ordinal range for all children
+    for (auto mf = _archive->begin_children(), 
+              me = _archive->end_children(); mf != me; ++mf) {
+        ordinal++;
+    }
   }
 
   virtual const atom_collection<DefinedAtom> &defined() const {

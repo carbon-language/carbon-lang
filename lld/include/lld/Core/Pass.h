@@ -110,6 +110,17 @@ public:
   /// the specified atom.
   virtual const DefinedAtom *makeGOTEntry(const Atom &target) = 0;
 };
+
+/// Pass for sorting atoms.
+class OrderPass : public Pass {
+public:
+  OrderPass() : Pass() {}
+  
+  /// Sorts atoms in mergedFile by content type then by command line order.
+  virtual void perform(MutableFile &mergedFile);
+};
+
+
 } // namespace lld
 
 #endif // LLD_CORE_PASS_H_

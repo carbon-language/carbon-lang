@@ -75,11 +75,17 @@ public:
   }
 
   virtual DefinedAtom::SectionChoice sectionChoice() const {
-    return (DefinedAtom::SectionChoice)(attributes().sectionChoice);
+    return (DefinedAtom::SectionChoice)(
+        attributes().sectionChoiceAndPosition >> 4);
   }
 
   virtual StringRef customSectionName() const;
 
+  virtual SectionPosition sectionPosition() const {
+     return (DefinedAtom::SectionPosition)(
+        attributes().sectionChoiceAndPosition & 0xF);
+  }
+  
   virtual DefinedAtom::DeadStripKind deadStrip() const {
      return (DefinedAtom::DeadStripKind)(attributes().deadStrip);
   }

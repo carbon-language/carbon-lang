@@ -86,6 +86,7 @@ private:
   void addAtoms(std::vector<const Atom*>& atoms);
 
   virtual void addAtom(const Atom& atom);
+  virtual DefinedAtomRange definedAtoms();
 
   private:
     friend class Resolver;

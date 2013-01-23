@@ -335,6 +335,16 @@ struct ScalarEnumerationTraits<lld::DefinedAtom::SectionChoice> {
 };
 
 template <>
+struct ScalarEnumerationTraits<lld::DefinedAtom::SectionPosition> {
+  static void enumeration(IO &io, lld::DefinedAtom::SectionPosition &value) {
+    io.enumCase(value, "start",   lld::DefinedAtom::sectionPositionStart);
+    io.enumCase(value, "early",   lld::DefinedAtom::sectionPositionEarly);
+    io.enumCase(value, "any",     lld::DefinedAtom::sectionPositionAny);
+    io.enumCase(value, "end",     lld::DefinedAtom::sectionPositionEnd);
+  }
+};
+
+template <>
 struct ScalarEnumerationTraits<lld::DefinedAtom::Interposable> {
   static void enumeration(IO &io, lld::DefinedAtom::Interposable &value) {
     io.enumCase(value, "no",  lld::DefinedAtom::interposeNo);
@@ -451,10 +461,6 @@ struct ScalarEnumerationTraits<lld::DefinedAtom::ContentType> {
                           lld::DefinedAtom::typeTLVInitialZeroFill);
     io.enumCase(value, "tlv-initializer-ptr", 
                           lld::DefinedAtom::typeTLVInitializerPtr);
-    io.enumCase(value, "first-in-section",    
-                          lld::DefinedAtom::typeFirstInSection);
-    io.enumCase(value, "last-in-section",     
-                          lld::DefinedAtom::typeLastInSection);
   }
 };
 
@@ -617,6 +623,14 @@ struct MappingTraits<const lld::File*> {
       return this;
     }
 
+    virtual void setOrdinalAndIncrement(uint64_t &ordinal) const {
+      _ordinal = ordinal++;
+      // Assign sequential ordinals to member files
+      for (const ArchMember &member : _members) {
+        member._content->setOrdinalAndIncrement(ordinal);
+      }
+    }
+    
     virtual const atom_collection<lld::DefinedAtom> &defined() const {
       return _noDefinedAtoms;
     }
@@ -824,6 +838,8 @@ struct MappingTraits<const lld::DefinedAtom*> {
     NormalizedAtom(IO &io)
       : _file(fileFromContext(io)), _name(), _refName(), 
         _alignment(0), _content(), _references() {
+      static uint32_t ordinalCounter = 1;
+      _ordinal = ordinalCounter++;
     }
     NormalizedAtom(IO &io, const lld::DefinedAtom *atom)
       : _file(fileFromContext(io)),
@@ -835,6 +851,7 @@ struct MappingTraits<const lld::DefinedAtom*> {
         _contentType(atom->contentType()),
         _alignment(atom->alignment()),
         _sectionChoice(atom->sectionChoice()),
+        _sectionPosition(atom->sectionPosition()),
         _deadStrip(atom->deadStrip()),
         _permissions(atom->permissions()),
         _size(atom->size()),
@@ -882,6 +899,7 @@ struct MappingTraits<const lld::DefinedAtom*> {
     virtual Alignment          alignment() const     { return _alignment; }
     virtual SectionChoice      sectionChoice() const { return _sectionChoice; }
     virtual StringRef          customSectionName() const { return _sectionName;}
+    virtual SectionPosition    sectionPosition() const{return _sectionPosition;}
     virtual DeadStripKind      deadStrip() const     { return _deadStrip;  }
     virtual ContentPermissions permissions() const   { return _permissions; }
     virtual bool               isThumb() const       { return false; }
@@ -891,7 +909,7 @@ struct MappingTraits<const lld::DefinedAtom*> {
         reinterpret_cast<const uint8_t *>(_content.data()), _content.size());
     }
 
-    virtual uint64_t           ordinal() const       { return 0; }
+    virtual uint64_t           ordinal() const       { return _ordinal; }
     
     reference_iterator begin() const { 
       uintptr_t index = 0;
@@ -923,8 +941,10 @@ struct MappingTraits<const lld::DefinedAtom*> {
     ContentType               _contentType;
     Alignment                 _alignment;
     SectionChoice             _sectionChoice;
+    SectionPosition           _sectionPosition;
     DeadStripKind             _deadStrip;
     ContentPermissions        _permissions;
+    uint32_t                  _ordinal;
     std::vector<ImplicitHex8> _content;
     uint64_t                  _size;
     StringRef                 _sectionName;
@@ -968,6 +988,8 @@ struct MappingTraits<const lld::DefinedAtom*> {
                                         lld::DefinedAtom::sectionBasedOnContent);
     io.mapOptional("section-name",   keys->_sectionName,   
                                         StringRef());
+    io.mapOptional("section-position",keys->_sectionPosition,   
+                                        lld::DefinedAtom::sectionPositionAny);
     io.mapOptional("dead-strip",     keys->_deadStrip,     
                                         lld::DefinedAtom::deadStripNormal);
     // default permissions based on content type
@@ -1036,6 +1058,7 @@ struct MappingTraits<const lld::UndefinedAtom*> {
                                        lld::UndefinedAtom::canBeNullNever);
   }
 };
+
 
 
 // YAML conversion for const lld::SharedLibraryAtom*

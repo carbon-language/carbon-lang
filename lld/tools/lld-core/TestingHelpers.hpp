@@ -81,6 +81,11 @@ public:
   virtual StringRef customSectionName() const {
     return StringRef();
   }
+  
+  virtual SectionPosition sectionPosition() const {
+    return sectionPositionAny;
+  }
+  
   virtual DeadStripKind deadStrip() const {
     return DefinedAtom::deadStripNormal;
   }
@@ -173,6 +178,10 @@ public:
     return StringRef();
   }
 
+  virtual SectionPosition sectionPosition() const {
+    return sectionPositionAny;
+  }
+
   virtual DeadStripKind deadStrip() const {
     return DefinedAtom::deadStripNormal;
   }
@@ -224,6 +233,11 @@ public:
       llvm_unreachable("atom has unknown definition kind");
   }
 
+  virtual DefinedAtomRange definedAtoms() {
+    return range<std::vector<const DefinedAtom*>::iterator>(
+                  _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
+  }
+    
   virtual const atom_collection<DefinedAtom> &defined() const {
     return _definedAtoms;
   }

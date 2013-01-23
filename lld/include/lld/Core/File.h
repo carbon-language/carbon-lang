@@ -12,6 +12,7 @@
 
 #include "lld/Core/AbsoluteAtom.h"
 #include "lld/Core/DefinedAtom.h"
+#include "lld/Core/range.h"
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/Core/UndefinedAtom.h"
 
@@ -60,6 +61,19 @@ public:
   /// parsed out of the DWARF debug information. If the source file cannot
   /// be ascertained, this method returns the empty string.
   virtual StringRef translationUnitSource() const;
+
+  /// Returns the command line order of the file.
+  uint64_t ordinal() const { 
+    assert(_ordinal != UINT64_MAX);
+    return _ordinal; 
+  }
+  
+  /// Sets the command line order of the file.  The parameter must
+  /// also be incremented to the next available ordinal number.
+  virtual void setOrdinalAndIncrement(uint64_t &ordinal) const {
+    _ordinal = ordinal;
+    ++ordinal;
+  }
 
 public:
   template <typename T> class atom_iterator; // forward reference
@@ -140,7 +154,7 @@ public:
 
 protected:
   /// \brief only subclasses of File can be instantiated 
-  File(StringRef p) : _path(p) {}
+  File(StringRef p) : _path(p), _ordinal(UINT64_MAX) {}
 
 
   /// \brief This is a convenience class for File subclasses which manage their
@@ -193,7 +207,8 @@ protected:
   static atom_collection_empty<SharedLibraryAtom> _noSharedLibaryAtoms;
   static atom_collection_empty<AbsoluteAtom>      _noAbsoluteAtoms;
 
-  StringRef _path;
+  StringRef         _path;
+  mutable uint64_t  _ordinal;
 };
 
 /// \brief A mutable File.
@@ -202,6 +217,10 @@ public:
   /// \brief Add an atom to the file. Invalidates iterators for all returned
   /// containters.
   virtual void addAtom(const Atom&) = 0;
+  
+  typedef range<std::vector<const DefinedAtom*>::iterator>  DefinedAtomRange;
+  virtual DefinedAtomRange definedAtoms() = 0;
+  
 
 protected:
   /// \brief only subclasses of MutableFile can be instantiated 

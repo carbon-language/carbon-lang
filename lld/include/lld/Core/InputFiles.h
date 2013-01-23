@@ -46,6 +46,9 @@ public:
  
  /// Transfers ownership of a vector of Files to this InputFile object.
   virtual void appendFiles(std::vector<std::unique_ptr<File>> &files);
+  
+  /// Assigns an ordinal to each File for use by sort().
+  virtual void assignFileOrdinals();
 
   /// @brief iterates all atoms in initial files
   virtual void forEachInitialAtom(Handler &) const;

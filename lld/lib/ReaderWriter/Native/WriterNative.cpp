@@ -436,7 +436,8 @@ private:
     attrs.interposable      = atom.interposable();
     attrs.merge             = atom.merge();
     attrs.contentType       = atom.contentType();
-    attrs.sectionChoice     = atom.sectionChoice();
+    attrs.sectionChoiceAndPosition 
+                          = atom.sectionChoice() << 4 | atom.sectionPosition();
     attrs.deadStrip         = atom.deadStrip();
     attrs.permissions       = atom.permissions();
     //attrs.thumb             = atom.isThumb();

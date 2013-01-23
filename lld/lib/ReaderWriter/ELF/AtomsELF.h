@@ -305,6 +305,10 @@ public:
     return _sectionName;
   }
 
+  virtual SectionPosition sectionPosition() const {
+    return sectionPositionAny;
+  }
+
   // It isn't clear that __attribute__((used)) is transmitted to the ELF object
   // file.
   virtual DeadStripKind deadStrip() const {

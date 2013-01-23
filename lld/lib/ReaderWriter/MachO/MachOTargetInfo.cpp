@@ -80,6 +80,7 @@ public:
   virtual void addPasses(PassManager &pm) const {
     pm.add(std::unique_ptr<Pass>(new mach_o::GOTPass));
     pm.add(std::unique_ptr<Pass>(new mach_o::StubsPass(*this)));
+    pm.add(std::unique_ptr<Pass>(new OrderPass()));
   }
 };
 

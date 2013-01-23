@@ -104,9 +104,24 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   DEBUG_WITH_TYPE("resolver", llvm::dbgs()
                     << "         DefinedAtom: "
                     << llvm::format("0x%09lX", &atom)
+                    << ", file=#"
+                    << atom.file().ordinal()
+                    << ", atom=#"
+                    << atom.ordinal()
                     << ", name="
                     << atom.name()
                     << "\n");
+
+  // Verify on zero-size atoms are pinned to start or end of section.
+  switch ( atom.sectionPosition() ) {
+  case DefinedAtom::sectionPositionStart: 
+  case DefinedAtom::sectionPositionEnd:
+    assert(atom.size() == 0);
+    break;
+  case DefinedAtom::sectionPositionEarly: 
+  case DefinedAtom::sectionPositionAny: 
+    break;
+  }
 
   // add to list of known atoms
   _atoms.push_back(&atom);
@@ -363,6 +378,14 @@ void Resolver::MergedFile::addAtom(const Atom& atom) {
     llvm_unreachable("atom has unknown definition kind");
   }
 }
+
+
+MutableFile::DefinedAtomRange Resolver::MergedFile::definedAtoms() {
+  return range<std::vector<const DefinedAtom*>::iterator>(
+                    _definedAtoms._atoms.begin(), _definedAtoms._atoms.end());
+}
+
+
 
 void Resolver::MergedFile::addAtoms(std::vector<const Atom*>& all) {
   DEBUG_WITH_TYPE("resolver", llvm::dbgs() << "Resolver final atom list:\n");

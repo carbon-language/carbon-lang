@@ -153,6 +153,10 @@ public:
     return "";
   }
 
+  virtual SectionPosition sectionPosition() const {
+    return sectionPositionAny;
+  }
+
   virtual DeadStripKind deadStrip() const {
     return deadStripNormal;
   }

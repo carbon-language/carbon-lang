@@ -142,8 +142,6 @@ public:
     typeTLVInitialData,     // initial data for a TLV [Darwin]
     typeTLVInitialZeroFill, // TLV initial zero fill data [Darwin]
     typeTLVInitializerPtr,  // pointer to thread local initializer [Darwin]
-    typeFirstInSection,     // label for boundary of section [Darwin]
-    typeLastInSection,      // label for boundary of section [Darwin]
   };
 
   enum ContentPermissions {
@@ -161,6 +159,13 @@ public:
     sectionBasedOnContent,  // linker infers final section based on content
     sectionCustomPreferred, // linker may place in specific section
     sectionCustomRequired   // linker must place in specific section
+  };
+
+  enum SectionPosition {
+    sectionPositionStart,   // atom must be at start of section (and zero size)
+    sectionPositionEarly,   // atom should be near start of section
+    sectionPositionAny,     // atom can be anywhere in section
+    sectionPositionEnd      // atom must be at end of section (and zero size)
   };
 
   enum DeadStripKind {
@@ -225,6 +230,9 @@ public:
   /// name of the section the atom should be placed into.
   virtual StringRef customSectionName() const = 0;
 
+  /// \brief constraints on whether the linker may dead strip away this atom.
+  virtual SectionPosition sectionPosition() const = 0; 
+   
   /// \brief constraints on whether the linker may dead strip away this atom.
   virtual DeadStripKind deadStrip() const = 0;
 

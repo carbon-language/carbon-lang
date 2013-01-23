@@ -41,6 +41,13 @@ void InputFiles::appendFiles(std::vector<std::unique_ptr<File>> &files) {
   }
 }
 
+void InputFiles::assignFileOrdinals() {
+  uint64_t i = 0;
+  for ( const File *file : _files ) {
+    file->setOrdinalAndIncrement(i);
+  }
+}
+
 
 bool InputFiles::searchLibraries(StringRef name, bool searchSharedLibs,
                                bool searchArchives, bool dataSymbolOnly,

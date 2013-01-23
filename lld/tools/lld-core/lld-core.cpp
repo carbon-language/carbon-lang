@@ -69,6 +69,10 @@ cmdLineDoGotPass("got-pass",
           llvm::cl::desc("Run pass to create GOT atoms"));
 
 llvm::cl::opt<bool> 
+cmdLineDoOrderPass("order-pass", 
+          llvm::cl::desc("Run pass to sort atoms"));
+
+llvm::cl::opt<bool> 
 cmdLineUndefinesIsError("undefines-are-errors", 
           llvm::cl::desc("Any undefined symbols at end is an error"));
 
@@ -155,8 +159,8 @@ endianSelected("endian",
     
 class TestingTargetInfo : public TargetInfo {
 public:
-  TestingTargetInfo(const LinkerOptions &lo, bool stubs, bool got)
-      : TargetInfo(lo), _doStubs(stubs), _doGOT(got) {}
+  TestingTargetInfo(const LinkerOptions &lo, bool stubs, bool got, bool order)
+      : TargetInfo(lo), _doStubs(stubs), _doGOT(got), _doOrder(order) {}
 
   virtual uint64_t getPageSize() const { return 0x1000; }
 
@@ -165,6 +169,8 @@ public:
       pm.add(std::unique_ptr<Pass>(new TestingStubsPass));
     if (_doGOT)
       pm.add(std::unique_ptr<Pass>(new TestingGOTPass));
+    if (_doOrder)
+      pm.add(std::unique_ptr<Pass>(new OrderPass));
   }
 
   virtual ErrorOr<int32_t> relocKindFromString(StringRef str) const {
@@ -187,6 +193,7 @@ public:
 private:
   bool              _doStubs;
   bool              _doGOT;
+  bool              _doOrder;
 };
 
 int main(int argc, char *argv[]) {
@@ -230,7 +237,8 @@ int main(int argc, char *argv[]) {
     break;
   }
 
-  TestingTargetInfo tti(lo, cmdLineDoStubsPass, cmdLineDoGotPass);
+  TestingTargetInfo tti(lo, cmdLineDoStubsPass, cmdLineDoGotPass, 
+                                                          cmdLineDoOrderPass);
 
   std::unique_ptr<ELFTargetInfo> eti = ELFTargetInfo::create(lo);
   std::unique_ptr<MachOTargetInfo> mti = MachOTargetInfo::create(lo);
@@ -295,6 +303,9 @@ int main(int argc, char *argv[]) {
 
   // given writer a chance to add files
   writer->addFiles(inputFiles);
+
+  // assign an ordinal to each file so sort() can preserve command line order
+  inputFiles.assignFileOrdinals();
 
   // merge all atom graphs
   Resolver resolver(tti, inputFiles);
