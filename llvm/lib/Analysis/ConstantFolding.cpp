@@ -218,10 +218,10 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
 /// from a global, return the global and the constant.  Because of
 /// constantexprs, this function is recursive.
 static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
-                                       int64_t &Offset, const DataLayout &TD) {
+                                       APInt &Offset, const DataLayout &TD) {
   // Trivial case, constant is the global.
   if ((GV = dyn_cast<GlobalValue>(C))) {
-    Offset = 0;
+    Offset.clearAllBits();
     return true;
   }
 
@@ -254,22 +254,17 @@ static bool IsConstantOffsetFromGlobal(Constant *C, GlobalValue *&GV,
       if (!CI) return false;  // Index isn't a simple constant?
       if (CI->isZero()) continue;  // Not adding anything.
 
-      // Evaluate offsets in the index type.
-      APInt APOffset(CI->getBitWidth(), Offset);
-
       if (StructType *ST = dyn_cast<StructType>(*GTI)) {
         // N = N + Offset
-        APOffset +=
-          APInt(CI->getBitWidth(),
-                TD.getStructLayout(ST)->getElementOffset(CI->getZExtValue()));
+        Offset +=
+            APInt(Offset.getBitWidth(),
+                  TD.getStructLayout(ST)->getElementOffset(CI->getZExtValue()));
       } else {
         SequentialType *SQT = cast<SequentialType>(*GTI);
-        APOffset +=
-          APInt(CI->getBitWidth(),
-                TD.getTypeAllocSize(SQT->getElementType())*CI->getSExtValue());
+        Offset += APInt(Offset.getBitWidth(),
+                        TD.getTypeAllocSize(SQT->getElementType()) *
+                        CI->getSExtValue());
       }
-
-      Offset = APOffset.getSExtValue();
     }
     return true;
   }
@@ -432,7 +427,7 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
   if (BytesLoaded > 32 || BytesLoaded == 0) return 0;
 
   GlobalValue *GVal;
-  int64_t Offset;
+  APInt Offset(TD.getPointerSizeInBits(), 0);
   if (!IsConstantOffsetFromGlobal(C, GVal, Offset, TD))
     return 0;
 
@@ -443,14 +438,15 @@ static Constant *FoldReinterpretLoadFromConstPtr(Constant *C,
 
   // If we're loading off the beginning of the global, some bytes may be valid,
   // but we don't try to handle this.
-  if (Offset < 0) return 0;
+  if (Offset.isNegative()) return 0;
 
   // If we're not accessing anything in this constant, the result is undefined.
-  if (uint64_t(Offset) >= TD.getTypeAllocSize(GV->getInitializer()->getType()))
+  if (Offset.getZExtValue() >=
+      TD.getTypeAllocSize(GV->getInitializer()->getType()))
     return UndefValue::get(IntType);
 
   unsigned char RawBytes[32] = {0};
-  if (!ReadDataFromGlobal(GV->getInitializer(), Offset, RawBytes,
+  if (!ReadDataFromGlobal(GV->getInitializer(), Offset.getZExtValue(), RawBytes,
                           BytesLoaded, TD))
     return 0;
 
@@ -574,7 +570,8 @@ static Constant *SymbolicallyEvaluateBinop(unsigned Opc, Constant *Op0,
   // constant.  This happens frequently when iterating over a global array.
   if (Opc == Instruction::Sub && TD) {
     GlobalValue *GV1, *GV2;
-    int64_t Offs1, Offs2;
+    APInt Offs1(TD->getPointerSizeInBits(), 0),
+          Offs2(TD->getPointerSizeInBits(), 0);
 
     if (IsConstantOffsetFromGlobal(Op0, GV1, Offs1, *TD))
       if (IsConstantOffsetFromGlobal(Op1, GV2, Offs2, *TD) &&
