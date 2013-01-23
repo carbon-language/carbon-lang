@@ -48,7 +48,8 @@
 using namespace clang;
 
 CompilerInstance::CompilerInstance()
-  : Invocation(new CompilerInvocation()), ModuleManager(0) {
+  : Invocation(new CompilerInvocation()), ModuleManager(0),
+    BuildGlobalModuleIndex(false) {
 }
 
 CompilerInstance::~CompilerInstance() {
@@ -785,6 +786,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
   FrontendOptions &FrontendOpts = Invocation->getFrontendOpts();
   FrontendOpts.OutputFile = ModuleFileName.str();
   FrontendOpts.DisableFree = false;
+  FrontendOpts.GenerateModuleIndex = false;
   FrontendOpts.Inputs.clear();
   InputKind IK = getSourceInputKindFromOptions(*Invocation->getLangOpts());
 
@@ -858,6 +860,12 @@ static void compileModule(CompilerInstance &ImportingInstance,
   Instance.clearOutputFiles(/*EraseFiles=*/true);
   if (!TempModuleMapFileName.empty())
     llvm::sys::Path(TempModuleMapFileName).eraseFromDisk();
+
+  // We've rebuilt a module. If we're allowed to generate or update the global
+  // module index, record that fact in the importing compiler instance.
+  if (ImportingInstance.getFrontendOpts().GenerateModuleIndex) {
+    ImportingInstance.setBuildGlobalModuleIndex(true);
+  }
 }
 
 ModuleLoadResult

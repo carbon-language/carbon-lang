@@ -137,7 +137,9 @@ public:
                                            /// speed up parsing in cases you do
                                            /// not need them (e.g. with code
                                            /// completion).
-
+  unsigned GenerateModuleIndex : 1;        ///< Whether to auto-generate a
+                                           ///< global module index when a new
+                                           ///< module has been built.
   CodeCompleteOptions CodeCompleteOpts;
 
   enum {
@@ -209,8 +211,9 @@ public:
     ShowStats(false), ShowTimers(false), ShowVersion(false),
     FixWhatYouCan(false), FixOnlyWarnings(false), FixAndRecompile(false),
     FixToTemporaries(false), ARCMTMigrateEmitARCErrors(false),
-    SkipFunctionBodies(false), ARCMTAction(ARCMT_None),
-    ObjCMTAction(ObjCMT_None), ProgramAction(frontend::ParseSyntaxOnly)
+    SkipFunctionBodies(false), GenerateModuleIndex(false),
+    ARCMTAction(ARCMT_None), ObjCMTAction(ObjCMT_None),
+    ProgramAction(frontend::ParseSyntaxOnly)
   {}
 
   /// getInputKindForExtension - Return the appropriate input kind for a file

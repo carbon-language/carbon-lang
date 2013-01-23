@@ -5411,8 +5411,9 @@ namespace {
         Info->second.NameLookupTableData;
       bool FoundAnything = false;
       for (ASTDeclContextNameLookupTable::data_iterator
-	     I = LookupTable->data_begin(), E = LookupTable->data_end();
-	   I != E; ++I) {
+             I = LookupTable->data_begin(), E = LookupTable->data_end();
+           I != E;
+           ++I) {
         ASTDeclContextNameLookupTrait::data_type Data = *I;
         for (; Data.first != Data.second; ++Data.first) {
           NamedDecl *ND = This->Reader.GetLocalDeclAs<NamedDecl>(M,

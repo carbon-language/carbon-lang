@@ -112,7 +112,11 @@ class CompilerInstance : public ModuleLoader {
   /// \brief The result of the last module import.
   ///
   ModuleLoadResult LastModuleImportResult;
-  
+
+  /// \brief Whether we should (re)build the global module index once we
+  /// have finished with this translation unit.
+  bool BuildGlobalModuleIndex;
+
   /// \brief Holds information about the output file.
   ///
   /// If TempFilename is not empty we must rename it to Filename at the end.
@@ -185,6 +189,15 @@ public:
 
   /// setInvocation - Replace the current invocation.
   void setInvocation(CompilerInvocation *Value);
+
+  /// \brief Indicates whether we should (re)build the global module index.
+  bool getBuildGlobalModuleIndex() const { return BuildGlobalModuleIndex; }
+
+  /// \brief Set the flag indicating whether we should (re)build the global
+  /// module index.
+  void setBuildGlobalModuleIndex(bool Build) {
+    BuildGlobalModuleIndex = Build;
+  }
 
   /// }
   /// @name Forwarding Methods

@@ -23,6 +23,7 @@
 #include "clang/Parse/ParseAST.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
 #include "clang/Serialization/ASTReader.h"
+#include "clang/Serialization/GlobalModuleIndex.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -379,6 +380,16 @@ bool FrontendAction::Execute() {
     ExecuteAction();
   }
   else ExecuteAction();
+
+  // If we are supposed to rebuild the global module index, do so now unless
+  // an error occurred.
+  if (CI.getBuildGlobalModuleIndex() && CI.hasFileManager() &&
+      CI.hasPreprocessor() &&
+      (!CI.hasDiagnostics() || !CI.getDiagnostics().hasErrorOccurred())) {
+    GlobalModuleIndex::writeIndex(
+      CI.getFileManager(),
+      CI.getPreprocessor().getHeaderSearchInfo().getModuleCachePath());
+  }
 
   return true;
 }

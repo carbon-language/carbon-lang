@@ -11,6 +11,7 @@ add_clang_library(clangSerialization
   ASTWriterDecl.cpp
   ASTWriterStmt.cpp
   GeneratePCH.cpp
+  GlobalModuleIndex.cpp
   Module.cpp
   ModuleManager.cpp
   )
