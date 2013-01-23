@@ -1049,7 +1049,7 @@ public:
         break;
       case tok::kw_if:
       case tok::kw_while:
-        if (CurrentToken->is(tok::l_paren)) {
+        if (CurrentToken != NULL && CurrentToken->is(tok::l_paren)) {
           next();
           if (!parseParens(/*LookForDecls=*/true))
             return false;
@@ -1088,7 +1088,7 @@ public:
         Tok->Type = TT_BinaryOperator;
         break;
       case tok::kw_operator:
-        if (CurrentToken->is(tok::l_paren)) {
+        if (CurrentToken != NULL && CurrentToken->is(tok::l_paren)) {
           CurrentToken->Type = TT_OverloadedOperator;
           next();
           if (CurrentToken != NULL && CurrentToken->is(tok::r_paren)) {

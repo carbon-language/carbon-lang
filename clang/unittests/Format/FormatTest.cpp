@@ -1679,9 +1679,14 @@ TEST_F(FormatTest, BlockComments) {
                    "/* */someCall(parameter);", getLLVMStyleWithColumns(15)));
 }
 
-TEST_F(FormatTest, Fuck) {
+TEST_F(FormatTest, FormatStarDependingOnContext) {
   verifyFormat("void f(int *a);");
   verifyFormat("void f() { f(fint * b); }");
+}
+
+TEST_F(FormatTest, SpecialTokensAtEndOfLine) {
+  verifyFormat("while");
+  verifyFormat("operator");
 }
 
 //===----------------------------------------------------------------------===//
