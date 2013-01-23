@@ -121,15 +121,9 @@ public:
   /// value.
   unsigned getAlignment() const;
 
-  /// \brief Set the alignment field of an attribute.
-  void setAlignment(unsigned Align);
-
   /// \brief Returns the stack alignment field of an attribute as a byte
   /// alignment value.
   unsigned getStackAlignment() const;
-
-  /// \brief Set the stack alignment field of an attribute.
-  void setStackAlignment(unsigned Align);
 
   /// \brief Equality and non-equality query methods.
   bool operator==(AttrKind K) const;

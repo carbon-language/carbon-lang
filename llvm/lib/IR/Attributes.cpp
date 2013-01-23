@@ -76,24 +76,12 @@ unsigned Attribute::getAlignment() const {
   return 1U << ((pImpl->getAlignment() >> 16) - 1);
 }
 
-void Attribute::setAlignment(unsigned Align) {
-  assert(hasAttribute(Attribute::Alignment) &&
-         "Trying to set the alignment on a non-alignment attribute!");
-  pImpl->setAlignment(Align);
-}
-
 /// This returns the stack alignment field of an attribute as a byte alignment
 /// value.
 unsigned Attribute::getStackAlignment() const {
   if (!hasAttribute(Attribute::StackAlignment))
     return 0;
   return 1U << ((pImpl->getStackAlignment() >> 26) - 1);
-}
-
-void Attribute::setStackAlignment(unsigned Align) {
-  assert(hasAttribute(Attribute::StackAlignment) &&
-         "Trying to set the stack alignment on a non-alignment attribute!");
-  pImpl->setStackAlignment(Align);
 }
 
 bool Attribute::operator==(AttrKind K) const {
@@ -506,16 +494,8 @@ uint64_t AttributeImpl::getAlignment() const {
   return Raw() & getAttrMask(Attribute::Alignment);
 }
 
-void AttributeImpl::setAlignment(unsigned Align) {
-  Vals.push_back(ConstantInt::get(Type::getInt64Ty(Context), Align));
-}
-
 uint64_t AttributeImpl::getStackAlignment() const {
   return Raw() & getAttrMask(Attribute::StackAlignment);
-}
-
-void AttributeImpl::setStackAlignment(unsigned Align) {
-  Vals.push_back(ConstantInt::get(Type::getInt64Ty(Context), Align));
 }
 
 void AttributeImpl::Profile(FoldingSetNodeID &ID, Constant *Data,

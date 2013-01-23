@@ -48,10 +48,7 @@ public:
   bool hasAttributes() const;
 
   uint64_t getAlignment() const;
-  void setAlignment(unsigned Align);
-
   uint64_t getStackAlignment() const;
-  void setStackAlignment(unsigned Align);
 
   bool operator==(Attribute::AttrKind Kind) const;
   bool operator!=(Attribute::AttrKind Kind) const;
