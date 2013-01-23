@@ -53,6 +53,7 @@ using namespace llvm;
 static const uint64_t kDefaultShadowScale = 3;
 static const uint64_t kDefaultShadowOffset32 = 1ULL << 29;
 static const uint64_t kDefaultShadowOffset64 = 1ULL << 44;
+static const uint64_t kPPC64_ShadowOffset64 = 1ULL << 41;
 
 static const size_t kMaxStackMallocSize = 1 << 16;  // 64K
 static const uintptr_t kCurrentStackFrameMagic = 0x41B58AB3;
@@ -186,21 +187,29 @@ class SetOfDynamicallyInitializedGlobals {
 };
 
 /// This struct defines the shadow mapping using the rule:
-///   shadow = (mem >> Scale) + Offset.
+///   shadow = (mem >> Scale) ADD-or-OR Offset.
 struct ShadowMapping {
   int Scale;
   uint64_t Offset;
+  bool OrShadowOffset;
 };
 
 static ShadowMapping getShadowMapping(const Module &M, int LongSize,
                                       bool ZeroBaseShadow) {
   llvm::Triple TargetTriple(M.getTargetTriple());
   bool IsAndroid = TargetTriple.getEnvironment() == llvm::Triple::Android;
+  bool IsPPC64 = TargetTriple.getArch() == llvm::Triple::ppc64;
 
   ShadowMapping Mapping;
 
+  // OR-ing shadow offset if more efficient (at least on x86),
+  // but on ppc64 we have to use add since the shadow offset is not neccesary
+  // 1/8-th of the address space.
+  Mapping.OrShadowOffset = !IsPPC64;
+
   Mapping.Offset = (IsAndroid || ZeroBaseShadow) ? 0 :
-      (LongSize == 32 ? kDefaultShadowOffset32 : kDefaultShadowOffset64);
+      (LongSize == 32 ? kDefaultShadowOffset32 :
+       IsPPC64 ? kPPC64_ShadowOffset64 : kDefaultShadowOffset64);
   if (ClMappingOffsetLog >= 0) {
     // Zero offset log is the special case.
     Mapping.Offset = (ClMappingOffsetLog == 0) ? 0 : 1ULL << ClMappingOffsetLog;
@@ -520,8 +529,10 @@ Value *AddressSanitizer::memToShadow(Value *Shadow, IRBuilder<> &IRB) {
   if (Mapping.Offset == 0)
     return Shadow;
   // (Shadow >> scale) | offset
-  return IRB.CreateOr(Shadow, ConstantInt::get(IntptrTy,
-                                               Mapping.Offset));
+  if (Mapping.OrShadowOffset)
+    return IRB.CreateOr(Shadow, ConstantInt::get(IntptrTy, Mapping.Offset));
+  else
+    return IRB.CreateAdd(Shadow, ConstantInt::get(IntptrTy, Mapping.Offset));
 }
 
 void AddressSanitizer::instrumentMemIntrinsicParam(
