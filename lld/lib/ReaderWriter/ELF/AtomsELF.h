@@ -236,6 +236,9 @@ public:
     ContentType ret = typeUnknown;
     uint64_t flags = _section->sh_flags;
 
+    if (_symbol->getType() == llvm::ELF::STT_GNU_IFUNC)
+      return typeResolver;
+
     if (_symbol->st_shndx == llvm::ELF::SHN_COMMON)
       return typeZeroFill;
 

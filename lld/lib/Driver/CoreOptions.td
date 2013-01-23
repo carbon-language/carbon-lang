@@ -1,5 +1,6 @@
 include "llvm/Option/OptParser.td"
 
+def core : Flag<["-"], "core">;
 def flavor : Separate<["-"], "flavor">;
 def target : Separate<["-"], "target">, HelpText<"Target triple to link for">;
 def mllvm : Separate<["-"], "mllvm">, HelpText<"Options to pass to LLVM">;
