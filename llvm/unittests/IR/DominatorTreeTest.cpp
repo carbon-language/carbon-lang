@@ -191,7 +191,7 @@ namespace llvm {
 
     TEST(DominatorTree, Unreachable) {
       DPass *P = new DPass();
-      Module *M = makeLLVMModule(P);
+      OwningPtr<Module> M(makeLLVMModule(P));
       PassManager Passes;
       Passes.add(P);
       Passes.run(*M);
