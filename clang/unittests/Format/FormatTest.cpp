@@ -742,6 +742,10 @@ TEST_F(FormatTest, HashInMacroDefinition) {
   verifyFormat("#define A void # ## #", getLLVMStyleWithColumns(22));
 }
 
+TEST_F(FormatTest, RespectWhitespaceInMacroDefinitions) {
+  verifyFormat("#define A (1)");
+}
+
 TEST_F(FormatTest, IndentPreprocessorDirectivesAtZero) {
   EXPECT_EQ("{\n  {\n#define A\n  }\n}", format("{{\n#define A\n}}"));
 }
