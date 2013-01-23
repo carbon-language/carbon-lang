@@ -502,11 +502,10 @@ def LDIV_l5r : _L5R<(outs GRRegs:$dst1, GRRegs:$dst2),
 
 // Six operand long
 
-def LMUL_l6r : _L6R<(outs GRRegs:$dst1, GRRegs:$dst2),
-                    (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3,
-                      GRRegs:$src4),
-                    "lmul $dst1, $dst2, $src1, $src2, $src3, $src4",
-                    []>;
+def LMUL_l6r : _FL6R<
+  0b00000, (outs GRRegs:$dst1, GRRegs:$dst2),
+  (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3, GRRegs:$src4),
+  "lmul $dst1, $dst2, $src1, $src2, $src3, $src4", []>;
 
 // Register - U6
 

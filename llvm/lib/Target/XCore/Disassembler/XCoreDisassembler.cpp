@@ -170,6 +170,11 @@ static DecodeStatus DecodeL2RUSBitpInstruction(MCInst &Inst,
                                                uint64_t Address,
                                                const void *Decoder);
 
+static DecodeStatus DecodeL6RInstruction(MCInst &Inst,
+                                         unsigned Insn,
+                                         uint64_t Address,
+                                         const void *Decoder);
+
 #include "XCoreGenDisassemblerTables.inc"
 
 static DecodeStatus DecodeGRRegsRegisterClass(MCInst &Inst,
@@ -569,6 +574,26 @@ DecodeL2RUSBitpInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
     DecodeGRRegsRegisterClass(Inst, Op2, Address, Decoder);
     DecodeBitpOperand(Inst, Op3, Address, Decoder);
   }
+  return S;
+}
+
+static DecodeStatus
+DecodeL6RInstruction(MCInst &Inst, unsigned Insn, uint64_t Address,
+                     const void *Decoder) {
+  unsigned Op1, Op2, Op3, Op4, Op5, Op6;
+  DecodeStatus S =
+    Decode3OpInstruction(fieldFromInstruction(Insn, 0, 16), Op1, Op2, Op3);
+  if (S != MCDisassembler::Success)
+    return S;
+  S = Decode3OpInstruction(fieldFromInstruction(Insn, 16, 16), Op4, Op5, Op6);
+  if (S != MCDisassembler::Success)
+    return S;
+  DecodeGRRegsRegisterClass(Inst, Op1, Address, Decoder);
+  DecodeGRRegsRegisterClass(Inst, Op4, Address, Decoder);
+  DecodeGRRegsRegisterClass(Inst, Op2, Address, Decoder);
+  DecodeGRRegsRegisterClass(Inst, Op3, Address, Decoder);
+  DecodeGRRegsRegisterClass(Inst, Op5, Address, Decoder);
+  DecodeGRRegsRegisterClass(Inst, Op6, Address, Decoder);
   return S;
 }
 
