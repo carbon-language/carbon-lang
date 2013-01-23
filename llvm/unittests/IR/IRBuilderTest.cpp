@@ -30,8 +30,8 @@ protected:
                                           /*isVarArg=*/false);
     F = Function::Create(FTy, Function::ExternalLinkage, "", M.get());
     BB = BasicBlock::Create(getGlobalContext(), "", F);
-    GV = new GlobalVariable(Type::getFloatTy(getGlobalContext()), true,
-                            GlobalValue::ExternalLinkage);
+    GV = new GlobalVariable(*M, Type::getFloatTy(getGlobalContext()), true,
+                            GlobalValue::ExternalLinkage, 0);
   }
 
   virtual void TearDown() {
