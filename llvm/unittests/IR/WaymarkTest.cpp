@@ -38,6 +38,7 @@ TEST(WaymarkTest, NativeArray) {
   {
     EXPECT_EQ(A, U->getUser());
   }
+  delete A;
 }
 
 TEST(WaymarkTest, TwoBit) {
@@ -48,6 +49,7 @@ TEST(WaymarkTest, TwoBit) {
   {
     EXPECT_EQ(reinterpret_cast<User *>(Ue + 1), U->getUser());
   }
+  free(many);
 }
 
 }  // end anonymous namespace
