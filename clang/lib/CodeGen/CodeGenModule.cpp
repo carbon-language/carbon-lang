@@ -1965,9 +1965,12 @@ static void replaceUsesOfNonProtoConstant(llvm::Constant *old,
       }
 
       // Add any parameter attributes.
-      llvm::Attribute pAttrs = oldAttrs.getParamAttributes(argNo + 1);
-      if (pAttrs.hasAttributes())
-        newAttrs.push_back(llvm::AttributeWithIndex::get(argNo + 1, pAttrs));
+      if (oldAttrs.hasAttributes(argNo + 1))
+        newAttrs.
+          push_back(llvm::AttributeWithIndex::
+                    get(newFn->getContext(),
+                        argNo + 1,
+                        oldAttrs.getParamAttributes(argNo + 1)));
     }
     if (dontTransform)
       continue;

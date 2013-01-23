@@ -1191,8 +1191,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   // Name the struct return argument.
   if (CGM.ReturnTypeUsesSRet(FI)) {
     AI->setName("agg.result");
-    AI->addAttr(llvm::Attribute::get(getLLVMContext(),
-                                      llvm::Attribute::NoAlias));
+    AI->addAttr(llvm::AttributeSet::get(getLLVMContext(),
+                                        AI->getArgNo() + 1,
+                                        llvm::Attribute::NoAlias));
     ++AI;
   }
 
@@ -1263,8 +1264,9 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         llvm::Value *V = AI;
 
         if (Arg->getType().isRestrictQualified())
-          AI->addAttr(llvm::Attribute::get(getLLVMContext(),
-                                            llvm::Attribute::NoAlias));
+          AI->addAttr(llvm::AttributeSet::get(getLLVMContext(),
+                                              AI->getArgNo() + 1,
+                                              llvm::Attribute::NoAlias));
 
         // Ensure the argument is the correct type.
         if (V->getType() != ArgI.getCoerceToType())
