@@ -179,7 +179,7 @@ struct LinkerOptions {
   std::string _outputPath;
   std::string _entrySymbol;
   uint64_t _baseAddress;
-  OutputKind _outputKind:2;
+  OutputKind _outputKind:4;
   /// \brief -###
   unsigned _outputCommands : 1;
   unsigned _outputYAML : 1;
