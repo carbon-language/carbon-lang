@@ -3382,7 +3382,8 @@ SwitchLookupTable::SwitchLookupTable(Module &M,
                                      ConstantInt *Offset,
                const SmallVector<std::pair<ConstantInt*, Constant*>, 4>& Values,
                                      Constant *DefaultValue,
-                                     const DataLayout *TD) {
+                                     const DataLayout *TD)
+    : SingleValue(0), BitMap(0), BitMapElementTy(0), Array(0) {
   assert(Values.size() && "Can't build lookup table without values!");
   assert(TableSize >= Values.size() && "Can't fit values in table!");
 
