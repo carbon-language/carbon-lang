@@ -1682,6 +1682,16 @@ TEST_F(FormatTest, BlockComments) {
 TEST_F(FormatTest, FormatStarDependingOnContext) {
   verifyFormat("void f(int *a);");
   verifyFormat("void f() { f(fint * b); }");
+  verifyFormat("class A {\n  void f(int *a);\n};");
+  verifyFormat("class A {\n  int *a;\n};");
+  verifyFormat("namespace a {\n"
+               "namespace b {\n"
+               "class A {\n"
+               "  void f() {}\n"
+               "  int *a;\n"
+               "};\n"
+               "}\n"
+               "}");
 }
 
 TEST_F(FormatTest, SpecialTokensAtEndOfLine) {

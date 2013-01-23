@@ -33,12 +33,12 @@ public:
   ScopedDeclarationState(UnwrappedLine &Line, std::vector<bool> &Stack,
                          bool MustBeDeclaration)
       : Line(Line), Stack(Stack) {
-    Stack.push_back(MustBeDeclaration);
     Line.MustBeDeclaration = MustBeDeclaration;
+    Stack.push_back(MustBeDeclaration);
   }
   ~ScopedDeclarationState() {
-    Line.MustBeDeclaration = Stack.back();
     Stack.pop_back();
+    Line.MustBeDeclaration = Stack.back();
   }
 private:
   UnwrappedLine &Line;
