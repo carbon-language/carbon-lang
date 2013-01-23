@@ -198,7 +198,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
     if (!BeginSourceFileAction(CI, InputFile))
       goto failure;
 
-    /// Create the AST consumer.
+    // Create the AST consumer.
     CI.setASTConsumer(CreateWrappedASTConsumer(CI, InputFile));
     if (!CI.hasASTConsumer())
       goto failure;
@@ -279,8 +279,8 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   if (!BeginSourceFileAction(CI, InputFile))
     goto failure;
 
-  /// Create the AST context and consumer unless this is a preprocessor only
-  /// action.
+  // Create the AST context and consumer unless this is a preprocessor only
+  // action.
   if (!usesPreprocessorOnly()) {
     CI.createASTContext();
 
