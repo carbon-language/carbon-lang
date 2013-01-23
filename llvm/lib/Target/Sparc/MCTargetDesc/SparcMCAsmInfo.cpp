@@ -21,8 +21,9 @@ void SparcELFMCAsmInfo::anchor() { }
 SparcELFMCAsmInfo::SparcELFMCAsmInfo(const Target &T, StringRef TT) {
   IsLittleEndian = false;
   Triple TheTriple(TT);
-  if (TheTriple.getArch() == Triple::sparcv9)
-    PointerSize = 8;
+  if (TheTriple.getArch() == Triple::sparcv9) {
+    PointerSize = CalleeSaveStackSlotSize = 8;
+  }
 
   Data16bitsDirective = "\t.half\t";
   Data32bitsDirective = "\t.word\t";

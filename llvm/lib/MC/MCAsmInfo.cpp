@@ -24,7 +24,7 @@ using namespace llvm;
 
 MCAsmInfo::MCAsmInfo() {
   PointerSize = 4;
-  CalleeSaveStackSlotSize = 0; // 0 means PointerSize is used in getter.
+  CalleeSaveStackSlotSize = 4;
 
   IsLittleEndian = true;
   StackGrowsUp = false;

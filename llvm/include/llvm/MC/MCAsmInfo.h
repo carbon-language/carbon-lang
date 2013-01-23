@@ -351,12 +351,7 @@ namespace llvm {
     /// getCalleeSaveStackSlotSize - Get the callee-saved register stack slot
     /// size in bytes.
     unsigned getCalleeSaveStackSlotSize() const {
-      // If a target doesn't explicitly initialize this member, PointerSize is
-      // used by default.
-      if (CalleeSaveStackSlotSize == 0)
-        return PointerSize;
-      else
-        return CalleeSaveStackSlotSize;
+      return CalleeSaveStackSlotSize;
     }
 
     /// isLittleEndian - True if the target is little endian.

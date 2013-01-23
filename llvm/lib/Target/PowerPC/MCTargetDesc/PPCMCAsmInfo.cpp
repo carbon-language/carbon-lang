@@ -17,8 +17,9 @@ using namespace llvm;
 void PPCMCAsmInfoDarwin::anchor() { }
 
 PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
-  if (is64Bit)
-    PointerSize = 8;
+  if (is64Bit) {
+    PointerSize = CalleeSaveStackSlotSize = 8;
+  }
   IsLittleEndian = false;
 
   PCSymbol = ".";

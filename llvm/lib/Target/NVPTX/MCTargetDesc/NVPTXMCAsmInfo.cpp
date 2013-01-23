@@ -30,8 +30,9 @@ void NVPTXMCAsmInfo::anchor() { }
 
 NVPTXMCAsmInfo::NVPTXMCAsmInfo(const Target &T, const StringRef &TT) {
   Triple TheTriple(TT);
-  if (TheTriple.getArch() == Triple::nvptx64)
-    PointerSize = 8;
+  if (TheTriple.getArch() == Triple::nvptx64) {
+    PointerSize = CalleeSaveStackSlotSize = 8;
+  }
 
   CommentString = "//";
 
