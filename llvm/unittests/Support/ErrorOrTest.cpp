@@ -45,6 +45,9 @@ TEST(ErrorOr, Types) {
   *a = 42;
   EXPECT_EQ(42, x);
 
+  EXPECT_FALSE(ErrorOr<void>(make_error_code(errc::broken_pipe)));
+  EXPECT_TRUE(ErrorOr<void>(make_error_code(errc::success)));
+
 #if LLVM_HAS_CXX11_STDLIB
   // Move only types.
   EXPECT_EQ(3, **t3());
@@ -71,10 +74,18 @@ ErrorOr<int> t4() {
   return InvalidArgError("adena");
 }
 
+ErrorOr<void> t5() {
+  return InvalidArgError("pie");
+}
+
 namespace {
 TEST(ErrorOr, UserErrorData) {
   ErrorOr<int> a = t4();
   EXPECT_EQ(errc::invalid_argument, a);
   EXPECT_EQ("adena", t4().getError<InvalidArgError>().ArgName);
+  
+  ErrorOr<void> b = t5();
+  EXPECT_EQ(errc::invalid_argument, b);
+  EXPECT_EQ("pie", b.getError<InvalidArgError>().ArgName);
 }
 } // end anon namespace

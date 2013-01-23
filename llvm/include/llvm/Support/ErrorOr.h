@@ -16,6 +16,7 @@
 #ifndef LLVM_SUPPORT_ERROR_OR_H
 #define LLVM_SUPPORT_ERROR_OR_H
 
+#include "llvm/ADT/PointerIntPair.h"
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Support/type_traits.h"
@@ -257,6 +258,7 @@ public:
 
     return *this;
   }
+#endif
 
   ~ErrorOr() {
     if (!IsValid)
@@ -266,7 +268,6 @@ public:
     else
       get()->~storage_type();
   }
-#endif
 
   template<class ET>
   ET getError() const {
@@ -329,6 +330,102 @@ protected:
   };
   bool HasError : 1;
   bool IsValid : 1;
+};
+
+// ErrorOr specialization for void.
+template <>
+class ErrorOr<void> {
+public:
+  ErrorOr() : Error(nullptr, 0) {}
+
+  ErrorOr(llvm::error_code EC) : Error(nullptr, 0) {
+    if (EC == errc::success) {
+      Error.setInt(1);
+      return;
+    }
+    ErrorHolderBase *E = new ErrorHolderBase;
+    E->Error = EC;
+    E->HasUserData = false;
+    Error.setPointer(E);
+  }
+
+  template<class UserDataT>
+  ErrorOr(UserDataT UD, typename
+          enable_if_c<ErrorOrUserDataTraits<UserDataT>::value>::type* = 0)
+      : Error(nullptr, 0) {
+    ErrorHolderBase *E = new ErrorHolder<UserDataT>(llvm_move(UD));
+    E->Error = ErrorOrUserDataTraits<UserDataT>::error();
+    E->HasUserData = true;
+    Error.setPointer(E);
+  }
+
+  ErrorOr(const ErrorOr &Other) : Error(nullptr, 0) {
+    Error = Other.Error;
+    if (Other.Error.getPointer()->Error) {
+      Error.getPointer()->aquire();
+    }
+  }
+
+  ErrorOr &operator =(const ErrorOr &Other) {
+    if (this == &Other)
+      return *this;
+
+    this->~ErrorOr();
+    new (this) ErrorOr(Other);
+
+    return *this;
+  }
+
+#if LLVM_HAS_RVALUE_REFERENCES
+  ErrorOr(ErrorOr &&Other) : Error(nullptr) {
+    // Get other's error.
+    Error = Other.Error;
+    // Tell other not to do any destruction.
+    Other.Error.setPointer(nullptr);
+  }
+
+  ErrorOr &operator =(ErrorOr &&Other) {
+    if (this == &Other)
+      return *this;
+
+    this->~ErrorOr();
+    new (this) ErrorOr(std::move(Other));
+
+    return *this;
+  }
+#endif
+
+  ~ErrorOr() {
+    if (Error.getPointer())
+      Error.getPointer()->release();
+  }
+
+  template<class ET>
+  ET getError() const {
+    assert(ErrorOrUserDataTraits<ET>::error() == *this &&
+           "Incorrect user error data type for error!");
+    if (!Error.getPointer()->HasUserData)
+      return ET();
+    return reinterpret_cast<const ErrorHolder<ET> *>(
+        Error.getPointer())->UserData;
+  }
+
+  typedef void (*unspecified_bool_type)();
+  static void unspecified_bool_true() {}
+
+  /// \brief Return false if there is an error.
+  operator unspecified_bool_type() const {
+    return Error.getInt() ? unspecified_bool_true : 0;
+  }
+
+  operator llvm::error_code() const {
+    return Error.getInt() ? make_error_code(errc::success)
+                          : Error.getPointer()->Error;
+  }
+
+private:
+  // If the bit is 1, the error is success.
+  llvm::PointerIntPair<ErrorHolderBase *, 1> Error;
 };
 
 template<class T, class E>
