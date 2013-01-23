@@ -900,11 +900,9 @@ TEST(AddressSanitizer, StrDupTest) {
 }
 
 // Currently we create and poison redzone at right of global variables.
-char glob5[5];
 static char static110[110];
 const char ConstGlob[7] = {1, 2, 3, 4, 5, 6, 7};
 static const char StaticConstGlob[3] = {9, 8, 7};
-extern int GlobalsTest(int x);
 
 TEST(AddressSanitizer, GlobalTest) {
   static char func_static15[15];

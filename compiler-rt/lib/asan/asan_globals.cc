@@ -36,22 +36,16 @@ static ListOfGlobals *list_of_all_globals;
 static ListOfGlobals *list_of_dynamic_init_globals;
 
 void PoisonRedZones(const Global &g)  {
-  uptr shadow_rz_size = kGlobalAndStackRedzone >> SHADOW_SCALE;
-  CHECK(shadow_rz_size == 1 || shadow_rz_size == 2 || shadow_rz_size == 4);
-  // full right redzone
-  uptr g_aligned_size = kGlobalAndStackRedzone *
-      ((g.size + kGlobalAndStackRedzone - 1) / kGlobalAndStackRedzone);
-  PoisonShadow(g.beg + g_aligned_size,
-               kGlobalAndStackRedzone, kAsanGlobalRedzoneMagic);
-  if ((g.size % kGlobalAndStackRedzone) != 0) {
+  uptr aligned_size = RoundUpTo(g.size, SHADOW_GRANULARITY);
+  PoisonShadow(g.beg + aligned_size, g.size_with_redzone - aligned_size,
+               kAsanGlobalRedzoneMagic);
+  if (g.size != aligned_size) {
     // partial right redzone
-    u64 g_aligned_down_size = kGlobalAndStackRedzone *
-        (g.size / kGlobalAndStackRedzone);
-    CHECK(g_aligned_down_size == g_aligned_size - kGlobalAndStackRedzone);
-    PoisonShadowPartialRightRedzone(g.beg + g_aligned_down_size,
-                                    g.size % kGlobalAndStackRedzone,
-                                    kGlobalAndStackRedzone,
-                                    kAsanGlobalRedzoneMagic);
+    PoisonShadowPartialRightRedzone(
+        g.beg + RoundDownTo(g.size, SHADOW_GRANULARITY),
+        g.size % SHADOW_GRANULARITY,
+        SHADOW_GRANULARITY,
+        kAsanGlobalRedzoneMagic);
   }
 }
 

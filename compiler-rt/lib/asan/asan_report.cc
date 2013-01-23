@@ -186,7 +186,8 @@ static void PrintGlobalNameIfASCII(const __asan_global &g) {
 }
 
 bool DescribeAddressRelativeToGlobal(uptr addr, const __asan_global &g) {
-  if (addr < g.beg - kGlobalAndStackRedzone) return false;
+  static const uptr kMinimalDistanceFromAnotherGlobal = 64;
+  if (addr <= g.beg - kMinimalDistanceFromAnotherGlobal) return false;
   if (addr >= g.beg + g.size_with_redzone) return false;
   Decorator d;
   Printf("%s", d.Location());

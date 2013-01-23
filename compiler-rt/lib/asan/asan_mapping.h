@@ -76,9 +76,6 @@ extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_offset;
                                        : kZeroBaseShadowStart)
 #define kShadowGapEnd   (kHighShadowBeg - 1)
 
-#define kGlobalAndStackRedzone \
-      (SHADOW_GRANULARITY < 32 ? 32 : SHADOW_GRANULARITY)
-
 namespace __asan {
 
 static inline bool AddrIsInLowMem(uptr a) {

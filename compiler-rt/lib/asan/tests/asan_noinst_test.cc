@@ -632,6 +632,44 @@ TEST(AddressSanitizerInterface, PushAndPopWithPoisoningTest) {
   free(vec);
 }
 
+TEST(AddressSanitizerInterface, GlobalRedzones) {
+  GOOD_ACCESS(glob1, 1 - 1);
+  GOOD_ACCESS(glob2, 2 - 1);
+  GOOD_ACCESS(glob3, 3 - 1);
+  GOOD_ACCESS(glob4, 4 - 1);
+  GOOD_ACCESS(glob5, 5 - 1);
+  GOOD_ACCESS(glob6, 6 - 1);
+  GOOD_ACCESS(glob7, 7 - 1);
+  GOOD_ACCESS(glob8, 8 - 1);
+  GOOD_ACCESS(glob9, 9 - 1);
+  GOOD_ACCESS(glob10, 10 - 1);
+  GOOD_ACCESS(glob11, 11 - 1);
+  GOOD_ACCESS(glob12, 12 - 1);
+  GOOD_ACCESS(glob13, 13 - 1);
+  GOOD_ACCESS(glob14, 14 - 1);
+  GOOD_ACCESS(glob15, 15 - 1);
+  GOOD_ACCESS(glob16, 16 - 1);
+  GOOD_ACCESS(glob17, 17 - 1);
+
+  BAD_ACCESS(glob1, 1);
+  BAD_ACCESS(glob2, 2);
+  BAD_ACCESS(glob3, 3);
+  BAD_ACCESS(glob4, 4);
+  BAD_ACCESS(glob5, 5);
+  BAD_ACCESS(glob6, 6);
+  BAD_ACCESS(glob7, 7);
+  BAD_ACCESS(glob8, 8);
+  BAD_ACCESS(glob9, 9);
+  BAD_ACCESS(glob10, 10);
+  BAD_ACCESS(glob11, 11);
+  BAD_ACCESS(glob12, 12);
+  BAD_ACCESS(glob13, 13);
+  BAD_ACCESS(glob14, 14);
+  BAD_ACCESS(glob15, 15);
+  BAD_ACCESS(glob16, 16);
+  BAD_ACCESS(glob17, 17);
+}
+
 // Make sure that each aligned block of size "2^granularity" doesn't have
 // "true" value before "false" value.
 static void MakeShadowValid(bool *shadow, int length, int granularity) {

@@ -86,4 +86,23 @@ string LeftOOBAccessMessage(int oob_distance);
 char* MallocAndMemsetString(size_t size, char ch);
 char* MallocAndMemsetString(size_t size);
 
+extern char glob1[1];
+extern char glob2[2];
+extern char glob3[3];
+extern char glob4[4];
+extern char glob5[5];
+extern char glob6[6];
+extern char glob7[7];
+extern char glob8[8];
+extern char glob9[9];
+extern char glob10[10];
+extern char glob11[11];
+extern char glob12[12];
+extern char glob13[13];
+extern char glob14[14];
+extern char glob15[15];
+extern char glob16[16];
+extern char glob17[17];
+extern int GlobalsTest(int x);
+
 #endif  // ASAN_TEST_UTILS_H
