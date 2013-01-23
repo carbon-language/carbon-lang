@@ -100,6 +100,11 @@ protected:
   void verifyGoogleFormat(llvm::StringRef Code) {
     verifyFormat(Code, getGoogleStyle());
   }
+
+  void verifyIndependentOfContext(llvm::StringRef text) {
+    verifyFormat(text);
+    verifyFormat(llvm::Twine("void f() { " + text + " }").str());
+  }
 };
 
 TEST_F(FormatTest, MessUp) {
@@ -1276,45 +1281,44 @@ TEST_F(FormatTest, UnderstandsNewAndDelete) {
 
 TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyFormat("int *f(int *a) {}");
-  verifyFormat("f(a, *a);");
-  verifyFormat("f(*a);");
-  verifyFormat("int a = b * 10;");
-  verifyFormat("int a = 10 * b;");
-  verifyFormat("int a = b * c;");
-  verifyFormat("int a += b * c;");
-  verifyFormat("int a -= b * c;");
-  verifyFormat("int a *= b * c;");
-  verifyFormat("int a /= b * c;");
-  verifyFormat("int a = *b;");
-  verifyFormat("int a = *b * c;");
-  verifyFormat("int a = b * *c;");
-  verifyFormat("void f() { int *a = b * c; }");
   verifyFormat("int main(int argc, char **argv) {}");
-  verifyFormat("return 10 * b;");
-  verifyFormat("return *b * *c;");
-  verifyFormat("return a & ~b;");
-  verifyFormat("f(b ? *c : *d);");
-  verifyFormat("int a = b ? *c : *d;");
-  verifyFormat("*b = a;");
-  verifyFormat("a * ~b;");
-  verifyFormat("a * !b;");
-  verifyFormat("a * +b;");
-  verifyFormat("a * -b;");
-  verifyFormat("a * ++b;");
-  verifyFormat("a * --b;");
-  verifyFormat("a[4] * b;");
-  verifyFormat("f() * b;");
-  verifyFormat("a * [self dostuff];");
-  verifyFormat("a * (a + b);");
-  verifyFormat("(a *)(a + b);");
-  verifyFormat("int *pa = (int *)&a;");
+  verifyIndependentOfContext("f(a, *a);");
+  verifyIndependentOfContext("f(*a);");
+  verifyIndependentOfContext("int a = b * 10;");
+  verifyIndependentOfContext("int a = 10 * b;");
+  verifyIndependentOfContext("int a = b * c;");
+  verifyIndependentOfContext("int a += b * c;");
+  verifyIndependentOfContext("int a -= b * c;");
+  verifyIndependentOfContext("int a *= b * c;");
+  verifyIndependentOfContext("int a /= b * c;");
+  verifyIndependentOfContext("int a = *b;");
+  verifyIndependentOfContext("int a = *b * c;");
+  verifyIndependentOfContext("int a = b * *c;");
+  verifyIndependentOfContext("return 10 * b;");
+  verifyIndependentOfContext("return *b * *c;");
+  verifyIndependentOfContext("return a & ~b;");
+  verifyIndependentOfContext("f(b ? *c : *d);");
+  verifyIndependentOfContext("int a = b ? *c : *d;");
+  verifyIndependentOfContext("*b = a;");
+  verifyIndependentOfContext("a * ~b;");
+  verifyIndependentOfContext("a * !b;");
+  verifyIndependentOfContext("a * +b;");
+  verifyIndependentOfContext("a * -b;");
+  verifyIndependentOfContext("a * ++b;");
+  verifyIndependentOfContext("a * --b;");
+  verifyIndependentOfContext("a[4] * b;");
+  verifyIndependentOfContext("f() * b;");
+  verifyIndependentOfContext("a * [self dostuff];");
+  verifyIndependentOfContext("a * (a + b);");
+  verifyIndependentOfContext("(a *)(a + b);");
+  verifyIndependentOfContext("int *pa = (int *)&a;");
 
-  verifyFormat("InvalidRegions[*R] = 0;");
+  verifyIndependentOfContext("InvalidRegions[*R] = 0;");
 
-  verifyFormat("A<int *> a;");
-  verifyFormat("A<int **> a;");
-  verifyFormat("A<int *, int *> a;");
-  verifyFormat("A<int **, int **> a;");
+  verifyIndependentOfContext("A<int *> a;");
+  verifyIndependentOfContext("A<int **> a;");
+  verifyIndependentOfContext("A<int *, int *> a;");
+  verifyIndependentOfContext("A<int **, int **> a;");
 
   verifyFormat(
       "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa(\n"
@@ -1333,28 +1337,28 @@ TEST_F(FormatTest, UnderstandsUsesOfStarAndAmp) {
   verifyGoogleFormat("Type* t = const_cast<T*>(&*x);");
   verifyGoogleFormat("Type* t = x++ * y;");
 
-  verifyFormat("a = *(x + y);");
-  verifyFormat("a = &(x + y);");
-  verifyFormat("*(x + y).call();");
-  verifyFormat("&(x + y)->call();");
-  verifyFormat("&(*I).first");
+  verifyIndependentOfContext("a = *(x + y);");
+  verifyIndependentOfContext("a = &(x + y);");
+  verifyIndependentOfContext("*(x + y).call();");
+  verifyIndependentOfContext("&(x + y)->call();");
+  verifyIndependentOfContext("&(*I).first");
 
-  verifyFormat("f(b * /* confusing comment */ ++c);");
+  verifyIndependentOfContext("f(b * /* confusing comment */ ++c);");
   verifyFormat(
       "int *MyValues = {\n"
       "  *A, // Operator detection might be confused by the '{'\n"
       "  *BB // Operator detection might be confused by previous comment\n"
       "};");
 
-  verifyFormat("if (int *a = &b)");
-  verifyFormat("if (int &a = *b)");
-  verifyFormat("if (a & b[i])");
-  verifyFormat("if (a::b::c::d & b[i])");
-  verifyFormat("if (*b[i])");
-  verifyFormat("if (int *a = (&b))");
-  verifyFormat("while (int *a = &b)");
+  verifyIndependentOfContext("if (int *a = &b)");
+  verifyIndependentOfContext("if (int &a = *b)");
+  verifyIndependentOfContext("if (a & b[i])");
+  verifyIndependentOfContext("if (a::b::c::d & b[i])");
+  verifyIndependentOfContext("if (*b[i])");
+  verifyIndependentOfContext("if (int *a = (&b))");
+  verifyIndependentOfContext("while (int *a = &b)");
 
-  verifyFormat("A = new SomeType *[Length]();");
+  verifyIndependentOfContext("A = new SomeType *[Length]();");
   verifyGoogleFormat("A = new SomeType* [Length]();");
 }
 

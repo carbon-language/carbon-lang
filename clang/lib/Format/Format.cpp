@@ -1237,7 +1237,7 @@ public:
     if (Line.Type == LT_Invalid)
       return;
 
-    determineTokenTypes(Line.First, /*IsRHS=*/false);
+    determineTokenTypes(Line.First, /*IsExpression=*/ false);
 
     if (Line.First.Type == TT_ObjCMethodSpecifier)
       Line.Type = LT_ObjCMethodDecl;
@@ -1256,16 +1256,23 @@ public:
   }
 
 private:
-  void determineTokenTypes(AnnotatedToken &Current, bool IsRHS) {
-    if (getPrecedence(Current) == prec::Assignment ||
-        Current.is(tok::kw_return) || Current.is(tok::kw_throw))
-      IsRHS = true;
-    if (Current.is(tok::l_paren) && !Line.MustBeDeclaration)
-      IsRHS = true;
+  void determineTokenTypes(AnnotatedToken &Current, bool IsExpression) {
+    if (getPrecedence(Current) == prec::Assignment) {
+      IsExpression = true;
+      AnnotatedToken *Previous = Current.Parent;
+      while (Previous != NULL) {
+        if (Previous->Type == TT_BinaryOperator)
+          Previous->Type = TT_PointerOrReference;
+        Previous = Previous->Parent;
+      }
+    }
+    if (Current.is(tok::kw_return) || Current.is(tok::kw_throw) ||
+        (Current.is(tok::l_paren) && !Line.MustBeDeclaration))
+      IsExpression = true;
 
     if (Current.Type == TT_Unknown) {
       if (Current.is(tok::star) || Current.is(tok::amp)) {
-        Current.Type = determineStarAmpUsage(Current, IsRHS);
+        Current.Type = determineStarAmpUsage(Current, IsExpression);
       } else if (Current.is(tok::minus) || Current.is(tok::plus) ||
                  Current.is(tok::caret)) {
         Current.Type = determinePlusMinusCaretUsage(Current);
@@ -1308,7 +1315,7 @@ private:
     }
 
     if (!Current.Children.empty())
-      determineTokenTypes(Current.Children[0], IsRHS);
+      determineTokenTypes(Current.Children[0], IsExpression);
   }
 
   bool isBinaryOperator(const AnnotatedToken &Tok) {
@@ -1338,7 +1345,8 @@ private:
   }
 
   /// \brief Return the type of the given token assuming it is * or &.
-  TokenType determineStarAmpUsage(const AnnotatedToken &Tok, bool IsRHS) {
+  TokenType determineStarAmpUsage(const AnnotatedToken &Tok,
+                                  bool IsExpression) {
     const AnnotatedToken *PrevToken = getPreviousToken(Tok);
     if (PrevToken == NULL)
       return TT_UnaryOperator;
@@ -1372,7 +1380,7 @@ private:
 
     // It is very unlikely that we are going to find a pointer or reference type
     // definition on the RHS of an assignment.
-    if (IsRHS)
+    if (IsExpression)
       return TT_BinaryOperator;
 
     return TT_PointerOrReference;
