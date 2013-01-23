@@ -48,10 +48,10 @@ namespace llvm {
           UseSoftFloat(false), NoZerosInBSS(false), JITExceptionHandling(false),
           JITEmitDebugInfo(false), JITEmitDebugInfoToDisk(false),
           GuaranteedTailCallOpt(false), DisableTailCalls(false),
-          StackAlignmentOverride(0), RealignStack(true), EnableFastISel(false),
-          PositionIndependentExecutable(false), EnableSegmentedStacks(false),
-          UseInitArray(false), TrapFuncName(""),FloatABIType(FloatABI::Default),
-          AllowFPOpFusion(FPOpFusion::Standard)
+          StackAlignmentOverride(0), RealignStack(true), SSPBufferSize(0),
+          EnableFastISel(false), PositionIndependentExecutable(false),
+          EnableSegmentedStacks(false), UseInitArray(false), TrapFuncName(""),
+          FloatABIType(FloatABI::Default), AllowFPOpFusion(FPOpFusion::Standard)
     {}
 
     /// PrintMachineCode - This flag is enabled when the -print-machineinstrs
