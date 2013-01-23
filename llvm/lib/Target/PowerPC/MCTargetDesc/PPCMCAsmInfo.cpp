@@ -36,8 +36,9 @@ PPCMCAsmInfoDarwin::PPCMCAsmInfoDarwin(bool is64Bit) {
 void PPCLinuxMCAsmInfo::anchor() { }
 
 PPCLinuxMCAsmInfo::PPCLinuxMCAsmInfo(bool is64Bit) {
-  if (is64Bit)
-    PointerSize = 8;
+  if (is64Bit) {
+    PointerSize = CalleeSaveStackSlotSize = 8;
+  }
   IsLittleEndian = false;
 
   // ".comm align is in bytes but .align is pow-2."
