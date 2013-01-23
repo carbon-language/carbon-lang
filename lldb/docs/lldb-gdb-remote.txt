@@ -371,50 +371,50 @@ generic     If the register is a generic register that most CPUs have, classify
                       arguments when the argument fits into a register)
 
 container-regs
-			The value for this key is a comma separated list of raw hex (no 
-			leading "0x") register numbers.
+            The value for this key is a comma separated list of raw hex (no 
+            leading "0x") register numbers.
 
-			This specifies that this register is contained in other concrete
-			register values. For example "eax" is in the lower 32 bits of the
-			"rax" register value for x86_64, so "eax" could specify that it is
-			contained in "rax" by specifying the register number for "rax" (whose
-			register number is 0x00)
-			
-			"container-regs:00;"
-			
-			If a register is comprised of one or more registers, like "d0" is ARM
-			which is a 64 bit register, it might be made up of "s0" and "s1". If
-			the register number for "s0" is 0x20, and the register number of "s1"
-			is "0x21", the "container-regs" key/value pair would be:
-			
-			"container-regs:20,21;"
-			
-			This is handy for defining what GDB used to call "pseudo" registers.
-			These registers are never requested by LLDB via the register read
-			or write packets, the container registers will be requested on behalf
-			of this register.
-			
+            This specifies that this register is contained in other concrete
+            register values. For example "eax" is in the lower 32 bits of the
+            "rax" register value for x86_64, so "eax" could specify that it is
+            contained in "rax" by specifying the register number for "rax" (whose
+            register number is 0x00)
+            
+            "container-regs:00;"
+            
+            If a register is comprised of one or more registers, like "d0" is ARM
+            which is a 64 bit register, it might be made up of "s0" and "s1". If
+            the register number for "s0" is 0x20, and the register number of "s1"
+            is "0x21", the "container-regs" key/value pair would be:
+            
+            "container-regs:20,21;"
+            
+            This is handy for defining what GDB used to call "pseudo" registers.
+            These registers are never requested by LLDB via the register read
+            or write packets, the container registers will be requested on behalf
+            of this register.
+            
 invalidate-regs
-			The value for this key is a comma separated list of raw hex (no 
-			leading "0x") register numbers.
-			
-			This specifies which register values should be invalidated when this
-			register is modified. For example if modifying "eax" would cause "rax",
-			"eax", "ax", "ah", and "al" to be modified  where rax is 0x0, eax is 15,
-			ax is 0x25, ah is 0x35, and al is 0x39, the "invalidate-regs" key/value
-			pair would be:
+            The value for this key is a comma separated list of raw hex (no 
+            leading "0x") register numbers.
+            
+            This specifies which register values should be invalidated when this
+            register is modified. For example if modifying "eax" would cause "rax",
+            "eax", "ax", "ah", and "al" to be modified where rax is 0x0, eax is 0x15,
+            ax is 0x25, ah is 0x35, and al is 0x39, the "invalidate-regs" key/value
+            pair would be:
 
-			"invalidate-regs:0,15,25,35,39;"
-			
-			If there is a single register that gets invalidated, then omit the comma
-			and just list a single register:
-			
-			"invalidate-regs:0;"
-			
-			This is handy when modifying a specific register can cause other
-			register values to change. For example, when debugging an ARM target,
-			modifying the CPSR register can cause the r8 - r14 and cpsr value to
-			change depending on if the mode has changed. 
+            "invalidate-regs:0,15,25,35,39;"
+            
+            If there is a single register that gets invalidated, then omit the comma
+            and just list a single register:
+            
+            "invalidate-regs:0;"
+            
+            This is handy when modifying a specific register can cause other
+            register values to change. For example, when debugging an ARM target,
+            modifying the CPSR register can cause the r8 - r14 and cpsr value to
+            change depending on if the mode has changed. 
 
 //----------------------------------------------------------------------
 // "qHostInfo"

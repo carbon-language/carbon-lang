@@ -1560,7 +1560,7 @@ RNBRemote::HandlePacket_qRegisterInfo (const char *p)
             {
                 if (i > 0)
                     ostrm << ',';
-                ostrm << DECIMAL << reg_entry->nub_info.pseudo_regs[i];
+                ostrm << RAW_HEXBASE << reg_entry->nub_info.pseudo_regs[i];
             }
             ostrm << ';';
         }
