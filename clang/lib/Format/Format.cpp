@@ -112,7 +112,8 @@ class AnnotatedLine {
 public:
   AnnotatedLine(const UnwrappedLine &Line)
       : First(Line.Tokens.front()), Level(Line.Level),
-        InPPDirective(Line.InPPDirective) {
+        InPPDirective(Line.InPPDirective),
+        MustBeDeclaration(Line.MustBeDeclaration) {
     assert(!Line.Tokens.empty());
     AnnotatedToken *Current = &First;
     for (std::list<FormatToken>::const_iterator I = ++Line.Tokens.begin(),
@@ -126,7 +127,8 @@ public:
   }
   AnnotatedLine(const AnnotatedLine &Other)
       : First(Other.First), Type(Other.Type), Level(Other.Level),
-        InPPDirective(Other.InPPDirective) {
+        InPPDirective(Other.InPPDirective),
+        MustBeDeclaration(Other.MustBeDeclaration) {
     Last = &First;
     while (!Last->Children.empty()) {
       Last->Children[0].Parent = Last;
@@ -140,6 +142,7 @@ public:
   LineType Type;
   unsigned Level;
   bool InPPDirective;
+  bool MustBeDeclaration;
 };
 
 static prec::Level getPrecedence(const AnnotatedToken &Tok) {
@@ -1368,7 +1371,7 @@ private:
 
     // It is very unlikely that we are going to find a pointer or reference type
     // definition on the RHS of an assignment.
-    if (IsRHS)
+    if (IsRHS || !Line.MustBeDeclaration)
       return TT_BinaryOperator;
 
     return TT_PointerOrReference;

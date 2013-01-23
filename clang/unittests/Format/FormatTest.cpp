@@ -1666,6 +1666,11 @@ TEST_F(FormatTest, BlockComments) {
                    "/* */someCall(parameter);", getLLVMStyleWithColumns(15)));
 }
 
+TEST_F(FormatTest, Fuck) {
+  verifyFormat("void f(int *a);");
+  verifyFormat("void f() { f(fint * b); }");
+}
+
 //===----------------------------------------------------------------------===//
 // Objective-C tests.
 //===----------------------------------------------------------------------===//

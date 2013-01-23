@@ -84,7 +84,7 @@ struct FormatToken {
 /// \c UnwrappedLineFormatter. The key property is that changing the formatting
 /// within an unwrapped line does not affect any other unwrapped lines.
 struct UnwrappedLine {
-  UnwrappedLine() : Level(0), InPPDirective(false) {
+  UnwrappedLine() : Level(0), InPPDirective(false), MustBeDeclaration(false) {
   }
 
   // FIXME: Don't use std::list here.
@@ -96,6 +96,8 @@ struct UnwrappedLine {
 
   /// \brief Whether this \c UnwrappedLine is part of a preprocessor directive.
   bool InPPDirective;
+
+  bool MustBeDeclaration;
 };
 
 class UnwrappedLineConsumer {
@@ -124,7 +126,7 @@ public:
 private:
   bool parseFile();
   bool parseLevel(bool HasOpeningBrace);
-  bool parseBlock(unsigned AddLevels = 1);
+  bool parseBlock(bool MustBeDeclaration, unsigned AddLevels = 1);
   void parsePPDirective();
   void parsePPDefine();
   void parsePPUnknown();
@@ -179,6 +181,10 @@ private:
   // there is an unfinished previous unwrapped line, will point to
   // \c &PreprocessorDirectives.
   std::vector<UnwrappedLine> *CurrentLines;
+
+  // We store for each line whether it must be a declaration depending on
+  // whether we are in a compound statement or not.
+  std::vector<bool> DeclarationScopeStack;
 
   clang::DiagnosticsEngine &Diag;
   const FormatStyle &Style;
