@@ -67,6 +67,7 @@ extern SANITIZER_INTERFACE_ATTRIBUTE uptr __asan_mapping_offset;
 
 namespace __asan {
 
+SANITIZER_INTERFACE_ATTRIBUTE
 extern uptr kHighMemEnd;  // Initialized in __asan_init.
 
 static inline bool AddrIsInLowMem(uptr a) {
