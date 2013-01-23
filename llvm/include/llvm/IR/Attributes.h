@@ -351,10 +351,7 @@ public:
 /// an index.
 struct AttributeWithIndex {
   Attribute Attrs;  ///< The attributes that are set, or'd together.
-  Constant *Val;    ///< Value attached to attribute, e.g. alignment.
   unsigned Index;   ///< Index of the parameter for which the attributes apply.
-                    ///< Index 0 is used for return value attributes.
-                    ///< Index ~0U is used for function attributes.
 
   // FIXME: These methods all need to be revised. The first one is temporary.
   static AttributeWithIndex get(LLVMContext &C, unsigned Idx, AttributeSet AS);
@@ -366,14 +363,6 @@ struct AttributeWithIndex {
     AttributeWithIndex P;
     P.Index = Idx;
     P.Attrs = Attrs;
-    P.Val = 0;
-    return P;
-  }
-  static AttributeWithIndex get(unsigned Idx, Attribute Attrs, Constant *Val) {
-    AttributeWithIndex P;
-    P.Index = Idx;
-    P.Attrs = Attrs;
-    P.Val = Val;
     return P;
   }
 };
