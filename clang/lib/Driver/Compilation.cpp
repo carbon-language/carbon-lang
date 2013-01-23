@@ -210,9 +210,9 @@ bool Compilation::CleanupFileList(const ArgStringList &Files,
     std::string Error;
 
     // Don't try to remove files which we don't have write access to (but may be
-    // able to remove). Underlying tools may have intentionally not overwritten
-    // them.
-    if (!P.canWrite())
+    // able to remove), or non-regular files. Underlying tools may have
+    // intentionally not overwritten them.
+    if (!P.canWrite() || !P.isRegularFile())
       continue;
 
     if (P.eraseFromDisk(false, &Error)) {
