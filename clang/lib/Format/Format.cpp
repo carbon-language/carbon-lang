@@ -596,12 +596,9 @@ private:
           Current.isNot(tok::comment))
         State.Stack[ParenLevel].HasMultiParameterLine = true;
 
-
-      // Top-level spaces that are not part of assignments are exempt as that
-      // mostly leads to better results.
+      // Top-level spaces are exempt as that mostly leads to better results.
       State.Column += Spaces;
-      if (Spaces > 0 &&
-          (ParenLevel != 0 || getPrecedence(Previous) == prec::Assignment))
+      if (Spaces > 0 && ParenLevel != 0)
         State.Stack[ParenLevel].LastSpace = State.Column;
     }
 

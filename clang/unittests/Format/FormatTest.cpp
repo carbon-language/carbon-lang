@@ -1040,9 +1040,8 @@ TEST_F(FormatTest, BreaksAfterAssignments) {
       "    TTI.getMemoryOpCost(I->getOpcode(), VectorTy, SI->getAlignment(),\n"
       "                        SI->getPointerAddressSpaceee());\n");
   verifyFormat(
-      "CharSourceRange LineRange =\n"
-      "    CharSourceRange::getTokenRange(Line.Tokens.front().Tok.getLoc(),\n"
-      "                                   Line.Tokens.back().Tok.getLoc());");
+      "CharSourceRange LineRange = CharSourceRange::getTokenRange(\n"
+      "    Line.Tokens.front().Tok.getLo(), Line.Tokens.back().Tok.getLoc());");
 }
 
 TEST_F(FormatTest, AlignsAfterAssignments) {
