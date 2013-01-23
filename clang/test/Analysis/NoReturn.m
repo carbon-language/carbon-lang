@@ -112,4 +112,14 @@ void test_rdar11634353_positive() {
   *p = 0xDEADBEEF; // expected-warning {{null pointer}}
 }
 
+// Test analyzer_noreturn on category methods.
+@interface NSException (OBExtensions)
++ (void)raise:(NSString *)name reason:(NSString *)reason __attribute__((analyzer_noreturn));
+@end
+
+void PR11959(int *p) {
+  if (!p)
+    [NSException raise:@"Bad Pointer" reason:@"Who knows?"];
+  *p = 0xDEADBEEF; // no-warning
+}
 
