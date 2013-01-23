@@ -173,6 +173,55 @@ class R600ALU_Word1_OP3 <bits<5> alu_inst> : R600ALU_Word1{
   let Word1{17-13} = alu_inst;
 }
 
+class VTX_WORD0 {
+  field bits<32> Word0;
+  bits<7> SRC_GPR;
+  bits<5> VC_INST;
+  bits<2> FETCH_TYPE;
+  bits<1> FETCH_WHOLE_QUAD;
+  bits<8> BUFFER_ID;
+  bits<1> SRC_REL;
+  bits<2> SRC_SEL_X;
+  bits<6> MEGA_FETCH_COUNT;
+
+  let Word0{4-0}   = VC_INST;
+  let Word0{6-5}   = FETCH_TYPE;
+  let Word0{7}     = FETCH_WHOLE_QUAD;
+  let Word0{15-8}  = BUFFER_ID;
+  let Word0{22-16} = SRC_GPR;
+  let Word0{23}    = SRC_REL;
+  let Word0{25-24} = SRC_SEL_X;
+  let Word0{31-26} = MEGA_FETCH_COUNT;
+}
+
+class VTX_WORD1_GPR {
+  field bits<32> Word1;
+  bits<7> DST_GPR;
+  bits<1> DST_REL;
+  bits<3> DST_SEL_X;
+  bits<3> DST_SEL_Y;
+  bits<3> DST_SEL_Z;
+  bits<3> DST_SEL_W;
+  bits<1> USE_CONST_FIELDS;
+  bits<6> DATA_FORMAT;
+  bits<2> NUM_FORMAT_ALL;
+  bits<1> FORMAT_COMP_ALL;
+  bits<1> SRF_MODE_ALL;
+
+  let Word1{6-0} = DST_GPR;
+  let Word1{7}    = DST_REL;
+  let Word1{8}    = 0; // Reserved
+  let Word1{11-9} = DST_SEL_X;
+  let Word1{14-12} = DST_SEL_Y;
+  let Word1{17-15} = DST_SEL_Z;
+  let Word1{20-18} = DST_SEL_W;
+  let Word1{21}    = USE_CONST_FIELDS;
+  let Word1{27-22} = DATA_FORMAT;
+  let Word1{29-28} = NUM_FORMAT_ALL;
+  let Word1{30}    = FORMAT_COMP_ALL;
+  let Word1{31}    = SRF_MODE_ALL;
+}
+
 /*
 XXX: R600 subtarget uses a slightly different encoding than the other
 subtargets.  We currently handle this in R600MCCodeEmitter, but we may
@@ -1235,37 +1284,30 @@ def RAT_WRITE_CACHELESS_128_eg : RAT_WRITE_CACHELESS_eg <
 >;
 
 class VTX_READ_eg <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
-    : InstR600ISA <outs, (ins MEMxi:$ptr), name#" $dst, $ptr", pattern> {
-
-  // Operands
-  bits<7> DST_GPR;
-  bits<7> SRC_GPR;
+    : InstR600ISA <outs, (ins MEMxi:$ptr), name#" $dst, $ptr", pattern>,
+      VTX_WORD1_GPR, VTX_WORD0 {
 
   // Static fields
-  bits<5> VC_INST = 0;
-  bits<2> FETCH_TYPE = 2;
-  bits<1> FETCH_WHOLE_QUAD = 0;
-  bits<8> BUFFER_ID = buffer_id;
-  bits<1> SRC_REL = 0;
+  let VC_INST = 0;
+  let FETCH_TYPE = 2;
+  let FETCH_WHOLE_QUAD = 0;
+  let BUFFER_ID = buffer_id;
+  let SRC_REL = 0;
   // XXX: We can infer this field based on the SRC_GPR.  This would allow us
   // to store vertex addresses in any channel, not just X.
-  bits<2> SRC_SEL_X = 0;
-  bits<6> MEGA_FETCH_COUNT;
-  bits<1> DST_REL = 0;
-  bits<3> DST_SEL_X;
-  bits<3> DST_SEL_Y;
-  bits<3> DST_SEL_Z;
-  bits<3> DST_SEL_W;
+  let SRC_SEL_X = 0;
+  let DST_REL = 0;
   // The docs say that if this bit is set, then DATA_FORMAT, NUM_FORMAT_ALL,
   // FORMAT_COMP_ALL, SRF_MODE_ALL, and ENDIAN_SWAP fields will be ignored,
   // however, based on my testing if USE_CONST_FIELDS is set, then all
   // these fields need to be set to 0.
-  bits<1> USE_CONST_FIELDS = 0;
-  bits<6> DATA_FORMAT;
-  bits<2> NUM_FORMAT_ALL = 1;
-  bits<1> FORMAT_COMP_ALL = 0;
-  bits<1> SRF_MODE_ALL = 0;
+  let USE_CONST_FIELDS = 0;
+  let NUM_FORMAT_ALL = 1;
+  let FORMAT_COMP_ALL = 0;
+  let SRF_MODE_ALL = 0;
 
+  let Inst{31-0} = Word0;
+  let Inst{63-32} = Word1;
   // LLVM can only encode 64-bit instructions, so these fields are manually
   // encoded in R600CodeEmitter
   //
@@ -1276,29 +1318,7 @@ class VTX_READ_eg <string name, bits<8> buffer_id, dag outs, list<dag> pattern>
   // bits<1>  ALT_CONST = 0;
   // bits<2>  BUFFER_INDEX_MODE = 0;
 
-  // VTX_WORD0
-  let Inst{4-0}   = VC_INST;
-  let Inst{6-5}   = FETCH_TYPE;
-  let Inst{7}     = FETCH_WHOLE_QUAD;
-  let Inst{15-8}  = BUFFER_ID;
-  let Inst{22-16} = SRC_GPR;
-  let Inst{23}    = SRC_REL;
-  let Inst{25-24} = SRC_SEL_X;
-  let Inst{31-26} = MEGA_FETCH_COUNT;
 
-  // VTX_WORD1_GPR
-  let Inst{38-32} = DST_GPR;
-  let Inst{39}    = DST_REL;
-  let Inst{40}    = 0; // Reserved
-  let Inst{43-41} = DST_SEL_X;
-  let Inst{46-44} = DST_SEL_Y;
-  let Inst{49-47} = DST_SEL_Z;
-  let Inst{52-50} = DST_SEL_W;
-  let Inst{53}    = USE_CONST_FIELDS;
-  let Inst{59-54} = DATA_FORMAT;
-  let Inst{61-60} = NUM_FORMAT_ALL;
-  let Inst{62}    = FORMAT_COMP_ALL;
-  let Inst{63}    = SRF_MODE_ALL;
 
   // VTX_WORD2 (LLVM can only encode 64-bit instructions, so WORD2 encoding
   // is done in R600CodeEmitter
