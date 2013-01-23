@@ -492,3 +492,19 @@ define void @three_gep_f(%three_gep_t2* %x) {
 
 declare void @three_gep_g(i32*)
 declare void @three_gep_h(%three_gep_t2*)
+
+%struct.ham = type { i32, %struct.zot*, %struct.zot*, %struct.zot* }
+%struct.zot = type { i64, i8 }
+
+define void @test39(%struct.ham* %arg, i8 %arg1) nounwind {
+  %tmp = getelementptr inbounds %struct.ham* %arg, i64 0, i32 2
+  %tmp2 = load %struct.zot** %tmp, align 8
+  %tmp3 = bitcast %struct.zot* %tmp2 to i8*
+  %tmp4 = getelementptr inbounds i8* %tmp3, i64 -8
+  store i8 %arg1, i8* %tmp4, align 8
+  ret void
+
+; CHECK: @test39
+; CHECK: getelementptr inbounds %struct.ham* %arg, i64 0, i32 2
+; CHECK: getelementptr inbounds i8* %tmp3, i64 -8
+}
