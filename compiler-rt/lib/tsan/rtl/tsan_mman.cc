@@ -164,3 +164,35 @@ void internal_free(void *p) {
 }
 
 }  // namespace __tsan
+
+using namespace __tsan;
+
+extern "C" {
+uptr __tsan_get_current_allocated_bytes() {
+  return 0;
+}
+
+uptr __tsan_get_heap_size() {
+  return 1;
+}
+
+uptr __tsan_get_free_bytes() {
+  return 1;
+}
+
+uptr __tsan_get_unmapped_bytes() {
+  return 1;
+}
+
+uptr __tsan_get_estimated_allocated_size(uptr size) {
+  return size;
+}
+
+bool __tsan_get_ownership(const void *p) {
+  return true;
+}
+
+uptr __tsan_get_allocated_size(const void *p) {
+  return 0;
+}
+}  // extern "C"
