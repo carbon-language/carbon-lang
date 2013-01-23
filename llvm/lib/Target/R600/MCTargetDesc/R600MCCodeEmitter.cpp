@@ -63,8 +63,8 @@ private:
   void EmitALUInstr(const MCInst &MI, SmallVectorImpl<MCFixup> &Fixups,
                     raw_ostream &OS) const;
   void EmitSrc(const MCInst &MI, unsigned OpIdx, raw_ostream &OS) const;
-  void EmitSrcISA(const MCInst &MI, unsigned OpIdx, uint64_t &Value,
-                  raw_ostream &OS) const;
+  void EmitSrcISA(const MCInst &MI, unsigned RegOpIdx, unsigned SelOpIdx,
+                    raw_ostream &OS) const;
   void EmitDst(const MCInst &MI, raw_ostream &OS) const;
   void EmitTexInstr(const MCInst &MI, SmallVectorImpl<MCFixup> &Fixups,
                     raw_ostream &OS) const;
@@ -163,7 +163,8 @@ void R600MCCodeEmitter::EncodeInstruction(const MCInst &MI, raw_ostream &OS,
     case AMDGPU::VTX_READ_PARAM_32_eg:
     case AMDGPU::VTX_READ_GLOBAL_8_eg:
     case AMDGPU::VTX_READ_GLOBAL_32_eg:
-    case AMDGPU::VTX_READ_GLOBAL_128_eg: {
+    case AMDGPU::VTX_READ_GLOBAL_128_eg:
+    case AMDGPU::TEX_VTX_CONSTBUF: {
       uint64_t InstWord01 = getBinaryCodeForInstr(MI, Fixups);
       uint32_t InstWord2 = MI.getOperand(2).getImm(); // Offset
 
@@ -193,7 +194,6 @@ void R600MCCodeEmitter::EmitALUInstr(const MCInst &MI,
                                      SmallVectorImpl<MCFixup> &Fixups,
                                      raw_ostream &OS) const {
   const MCInstrDesc &MCDesc = MCII.get(MI.getOpcode());
-  unsigned NumOperands = MI.getNumOperands();
 
   // Emit instruction type
   EmitByte(INSTR_ALU, OS);
@@ -209,19 +209,21 @@ void R600MCCodeEmitter::EmitALUInstr(const MCInst &MI,
     InstWord01 |= ISAOpCode << 1;
   }
 
-  unsigned SrcIdx = 0;
-  for (unsigned int OpIdx = 1; OpIdx < NumOperands; ++OpIdx) {
-    if (MI.getOperand(OpIdx).isImm() || MI.getOperand(OpIdx).isFPImm() ||
-        OpIdx == (unsigned)MCDesc.findFirstPredOperandIdx()) {
-      continue;
-    }
-    EmitSrcISA(MI, OpIdx, InstWord01, OS);
-    SrcIdx++;
-  }
+  unsigned SrcNum = MCDesc.TSFlags & R600_InstFlag::OP3 ? 3 :
+      MCDesc.TSFlags & R600_InstFlag::OP2 ? 2 : 1;
 
-  // Emit zeros for unused sources
-  for ( ; SrcIdx < 3; SrcIdx++) {
-    EmitNullBytes(SRC_BYTE_COUNT - 6, OS);
+  EmitByte(SrcNum, OS);
+
+  const unsigned SrcOps[3][2] = {
+      {R600Operands::SRC0, R600Operands::SRC0_SEL},
+      {R600Operands::SRC1, R600Operands::SRC1_SEL},
+      {R600Operands::SRC2, R600Operands::SRC2_SEL}
+  };
+
+  for (unsigned SrcIdx = 0; SrcIdx < SrcNum; ++SrcIdx) {
+    unsigned RegOpIdx = R600Operands::ALUOpTable[SrcNum-1][SrcOps[SrcIdx][0]];
+    unsigned SelOpIdx = R600Operands::ALUOpTable[SrcNum-1][SrcOps[SrcIdx][1]];
+    EmitSrcISA(MI, RegOpIdx, SelOpIdx, OS);
   }
 
   Emit(InstWord01, OS);
@@ -292,34 +294,37 @@ void R600MCCodeEmitter::EmitSrc(const MCInst &MI, unsigned OpIdx,
 
 }
 
-void R600MCCodeEmitter::EmitSrcISA(const MCInst &MI, unsigned OpIdx,
-                                   uint64_t &Value, raw_ostream &OS) const {
-  const MCOperand &MO = MI.getOperand(OpIdx);
+void R600MCCodeEmitter::EmitSrcISA(const MCInst &MI, unsigned RegOpIdx,
+                                   unsigned SelOpIdx, raw_ostream &OS) const {
+  const MCOperand &RegMO = MI.getOperand(RegOpIdx);
+  const MCOperand &SelMO = MI.getOperand(SelOpIdx);
+
   union {
     float f;
     uint32_t i;
   } InlineConstant;
   InlineConstant.i = 0;
-  // Emit the source select (2 bytes).  For GPRs, this is the register index.
-  // For other potential instruction operands, (e.g. constant registers) the
-  // value of the source select is defined in the r600isa docs.
-  if (MO.isReg()) {
-    unsigned Reg = MO.getReg();
-    if (AMDGPUMCRegisterClasses[AMDGPU::R600_CReg32RegClassID].contains(Reg)) {
-      EmitByte(1, OS);
-    } else {
-      EmitByte(0, OS);
-    }
+  // Emit source type (1 byte) and source select (4 bytes). For GPRs type is 0
+  // and select is 0 (GPR index is encoded in the instr encoding. For constants
+  // type is 1 and select is the original const select passed from the driver.
+  unsigned Reg = RegMO.getReg();
+  if (Reg == AMDGPU::ALU_CONST) {
+    EmitByte(1, OS);
+    uint32_t Sel = SelMO.getImm();
+    Emit(Sel, OS);
+  } else {
+    EmitByte(0, OS);
+    Emit((uint32_t)0, OS);
+  }
 
-    if (Reg == AMDGPU::ALU_LITERAL_X) {
-      unsigned ImmOpIndex = MI.getNumOperands() - 1;
-      MCOperand ImmOp = MI.getOperand(ImmOpIndex);
-      if (ImmOp.isFPImm()) {
-        InlineConstant.f = ImmOp.getFPImm();
-      } else {
-        assert(ImmOp.isImm());
-        InlineConstant.i = ImmOp.getImm();
-      }
+  if (Reg == AMDGPU::ALU_LITERAL_X) {
+    unsigned ImmOpIndex = MI.getNumOperands() - 1;
+    MCOperand ImmOp = MI.getOperand(ImmOpIndex);
+    if (ImmOp.isFPImm()) {
+      InlineConstant.f = ImmOp.getFPImm();
+    } else {
+      assert(ImmOp.isImm());
+      InlineConstant.i = ImmOp.getImm();
     }
   }
 

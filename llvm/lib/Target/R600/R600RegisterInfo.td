@@ -27,10 +27,6 @@ foreach Index = 0-127 in {
   foreach Chan = [ "X", "Y", "Z", "W" ] in {
     // 32-bit Temporary Registers
     def T#Index#_#Chan : R600RegWithChan <"T"#Index#"."#Chan, Index, Chan>;
-
-    // 32-bit Constant Registers (There are more than 128, this the number
-    // that is currently supported.
-    def C#Index#_#Chan : R600RegWithChan <"C"#Index#"."#Chan, Index, Chan>;
   }
   // 128-bit Temporary Registers
   def T#Index#_XYZW : R600Reg_128 <"T"#Index#".XYZW",
@@ -64,13 +60,11 @@ def PRED_SEL_ONE : R600Reg<"Pred_sel_one", 3>;
 
 def R600_ArrayBase : RegisterClass <"AMDGPU", [f32, i32], 32,
                           (add (sequence "ArrayBase%u", 448, 464))>;
-
-def R600_CReg32 : RegisterClass <"AMDGPU", [f32, i32], 32,
-                          (add (interleave
-                                  (interleave (sequence "C%u_X", 0, 127),
-                                              (sequence "C%u_Z", 0, 127)),
-                                  (interleave (sequence "C%u_Y", 0, 127),
-                                              (sequence "C%u_W", 0, 127))))>;
+// special registers for ALU src operands
+// const buffer reference, SRCx_SEL contains index
+def ALU_CONST : R600Reg<"CBuf", 0>;
+// interpolation param reference, SRCx_SEL contains index
+def ALU_PARAM : R600Reg<"Param", 0>;
 
 def R600_TReg32_X : RegisterClass <"AMDGPU", [f32, i32], 32,
                                    (add (sequence "T%u_X", 0, 127))>;
@@ -85,15 +79,15 @@ def R600_TReg32_W : RegisterClass <"AMDGPU", [f32, i32], 32,
                                    (add (sequence "T%u_W", 0, 127))>;
 
 def R600_TReg32 : RegisterClass <"AMDGPU", [f32, i32], 32,
-                          (add (interleave
-                                 (interleave R600_TReg32_X, R600_TReg32_Z),
-                                 (interleave R600_TReg32_Y, R600_TReg32_W)))>;
+                                   (interleave R600_TReg32_X, R600_TReg32_Y,
+                                               R600_TReg32_Z, R600_TReg32_W)>;
 
 def R600_Reg32 : RegisterClass <"AMDGPU", [f32, i32], 32, (add
     R600_TReg32,
-    R600_CReg32,
     R600_ArrayBase,
-    ZERO, HALF, ONE, ONE_INT, PV_X, ALU_LITERAL_X, NEG_ONE, NEG_HALF)>;
+    ZERO, HALF, ONE, ONE_INT, PV_X, ALU_LITERAL_X, NEG_ONE, NEG_HALF,
+    ALU_CONST, ALU_PARAM
+    )>;
 
 def R600_Predicate : RegisterClass <"AMDGPU", [i32], 32, (add
     PRED_SEL_OFF, PRED_SEL_ZERO, PRED_SEL_ONE)>;

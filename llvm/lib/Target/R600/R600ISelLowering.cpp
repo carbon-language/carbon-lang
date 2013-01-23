@@ -74,7 +74,10 @@ R600TargetLowering::R600TargetLowering(TargetMachine &TM) :
   setOperationAction(ISD::STORE, MVT::i32, Custom);
   setOperationAction(ISD::STORE, MVT::v4i32, Custom);
 
+  setOperationAction(ISD::LOAD, MVT::i32, Custom);
+  setOperationAction(ISD::LOAD, MVT::v4i32, Custom);
   setTargetDAGCombine(ISD::FP_ROUND);
+  setTargetDAGCombine(ISD::EXTRACT_VECTOR_ELT);
 
   setSchedulingPreference(Sched::VLIW);
 }
@@ -112,15 +115,6 @@ MachineBasicBlock * R600TargetLowering::EmitInstrWithCustomInserter(
                                                     MI->getOperand(0).getReg(),
                                                     MI->getOperand(1).getReg());
     TII->addFlag(NewMI, 0, MO_FLAG_NEG);
-    break;
-  }
-
-  case AMDGPU::R600_LOAD_CONST: {
-    int64_t RegIndex = MI->getOperand(1).getImm();
-    unsigned ConstantReg = AMDGPU::R600_CReg32RegClass.getRegister(RegIndex);
-    BuildMI(*BB, I, BB->findDebugLoc(I), TII->get(AMDGPU::COPY))
-                .addOperand(MI->getOperand(0))
-                .addReg(ConstantReg);
     break;
   }
 
@@ -364,6 +358,7 @@ SDValue R600TargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) const 
   case ISD::SELECT: return LowerSELECT(Op, DAG);
   case ISD::SETCC: return LowerSETCC(Op, DAG);
   case ISD::STORE: return LowerSTORE(Op, DAG);
+  case ISD::LOAD: return LowerLOAD(Op, DAG);
   case ISD::FPOW: return LowerFPOW(Op, DAG);
   case ISD::INTRINSIC_VOID: {
     SDValue Chain = Op.getOperand(0);
@@ -527,6 +522,16 @@ void R600TargetLowering::ReplaceNodeResults(SDNode *N,
   switch (N->getOpcode()) {
   default: return;
   case ISD::FP_TO_UINT: Results.push_back(LowerFPTOUINT(N->getOperand(0), DAG));
+    return;
+  case ISD::LOAD: {
+    SDNode *Node = LowerLOAD(SDValue(N, 0), DAG).getNode();
+    Results.push_back(SDValue(Node, 0));
+    Results.push_back(SDValue(Node, 1));
+    // XXX: LLVM seems not to replace Chain Value inside CustomWidenLowerNode
+    // function
+    DAG.ReplaceAllUsesOfValueWith(SDValue(N,1), SDValue(Node, 1));
+    return;
+  }
   }
 }
 
@@ -832,6 +837,94 @@ SDValue R600TargetLowering::LowerSTORE(SDValue Op, SelectionDAG &DAG) const {
   return SDValue();
 }
 
+// return (512 + (kc_bank << 12)
+static int
+ConstantAddressBlock(unsigned AddressSpace) {
+  switch (AddressSpace) {
+  case AMDGPUAS::CONSTANT_BUFFER_0:
+    return 512;
+  case AMDGPUAS::CONSTANT_BUFFER_1:
+    return 512 + 4096;
+  case AMDGPUAS::CONSTANT_BUFFER_2:
+    return 512 + 4096 * 2;
+  case AMDGPUAS::CONSTANT_BUFFER_3:
+    return 512 + 4096 * 3;
+  case AMDGPUAS::CONSTANT_BUFFER_4:
+    return 512 + 4096 * 4;
+  case AMDGPUAS::CONSTANT_BUFFER_5:
+    return 512 + 4096 * 5;
+  case AMDGPUAS::CONSTANT_BUFFER_6:
+    return 512 + 4096 * 6;
+  case AMDGPUAS::CONSTANT_BUFFER_7:
+    return 512 + 4096 * 7;
+  case AMDGPUAS::CONSTANT_BUFFER_8:
+    return 512 + 4096 * 8;
+  case AMDGPUAS::CONSTANT_BUFFER_9:
+    return 512 + 4096 * 9;
+  case AMDGPUAS::CONSTANT_BUFFER_10:
+    return 512 + 4096 * 10;
+  case AMDGPUAS::CONSTANT_BUFFER_11:
+    return 512 + 4096 * 11;
+  case AMDGPUAS::CONSTANT_BUFFER_12:
+    return 512 + 4096 * 12;
+  case AMDGPUAS::CONSTANT_BUFFER_13:
+    return 512 + 4096 * 13;
+  case AMDGPUAS::CONSTANT_BUFFER_14:
+    return 512 + 4096 * 14;
+  case AMDGPUAS::CONSTANT_BUFFER_15:
+    return 512 + 4096 * 15;
+  default:
+    return -1;
+  }
+}
+
+SDValue R600TargetLowering::LowerLOAD(SDValue Op, SelectionDAG &DAG) const
+{
+  EVT VT = Op.getValueType();
+  DebugLoc DL = Op.getDebugLoc();
+  LoadSDNode *LoadNode = cast<LoadSDNode>(Op);
+  SDValue Chain = Op.getOperand(0);
+  SDValue Ptr = Op.getOperand(1);
+  SDValue LoweredLoad;
+
+  int ConstantBlock = ConstantAddressBlock(LoadNode->getAddressSpace());
+  if (ConstantBlock > -1) {
+    SDValue Result;
+    if (dyn_cast<ConstantExpr>(LoadNode->getSrcValue()) ||
+        dyn_cast<Constant>(LoadNode->getSrcValue())) {
+      SDValue Slots[4];
+      for (unsigned i = 0; i < 4; i++) {
+        // We want Const position encoded with the following formula :
+        // (((512 + (kc_bank << 12) + const_index) << 2) + chan)
+        // const_index is Ptr computed by llvm using an alignment of 16.
+        // Thus we add (((512 + (kc_bank << 12)) + chan ) * 4 here and
+        // then div by 4 at the ISel step
+        SDValue NewPtr = DAG.getNode(ISD::ADD, DL, Ptr.getValueType(), Ptr,
+            DAG.getConstant(4 * i + ConstantBlock * 16, MVT::i32));
+        Slots[i] = DAG.getNode(AMDGPUISD::CONST_ADDRESS, DL, MVT::i32, NewPtr);
+      }
+      Result = DAG.getNode(ISD::BUILD_VECTOR, DL, MVT::v4i32, Slots, 4);
+    } else {
+      // non constant ptr cant be folded, keeps it as a v4f32 load
+      Result = DAG.getNode(AMDGPUISD::CONST_ADDRESS, DL, MVT::v4i32,
+          DAG.getNode(ISD::SRL, DL, MVT::i32, Ptr, DAG.getConstant(4, MVT::i32))
+          );
+    }
+
+    if (!VT.isVector()) {
+      Result = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, MVT::i32, Result,
+          DAG.getConstant(0, MVT::i32));
+    }
+
+    SDValue MergedValues[2] = {
+        Result,
+        Chain
+    };
+    return DAG.getMergeValues(MergedValues, 2, DL);
+  }
+
+  return SDValue();
+}
 
 SDValue R600TargetLowering::LowerFPOW(SDValue Op,
     SelectionDAG &DAG) const {
@@ -904,6 +997,17 @@ SDValue R600TargetLowering::PerformDAGCombine(SDNode *N,
       }
       break;
     }
+  // Extract_vec (Build_vector) generated by custom lowering
+  // also needs to be customly combined
+  case ISD::EXTRACT_VECTOR_ELT: {
+    SDValue Arg = N->getOperand(0);
+    if (Arg.getOpcode() == ISD::BUILD_VECTOR) {
+      if (ConstantSDNode *Const = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
+        unsigned Element = Const->getZExtValue();
+        return Arg->getOperand(Element);
+      }
+    }
+  }
   }
   return SDValue();
 }

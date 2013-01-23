@@ -90,14 +90,30 @@ namespace AMDGPUAS {
 enum AddressSpaces {
   PRIVATE_ADDRESS  = 0, ///< Address space for private memory.
   GLOBAL_ADDRESS   = 1, ///< Address space for global memory (RAT0, VTX0).
-  CONSTANT_ADDRESS = 2, ///< Address space for constant memory.
+  CONSTANT_ADDRESS = 2, ///< Address space for constant memory
   LOCAL_ADDRESS    = 3, ///< Address space for local memory.
   REGION_ADDRESS   = 4, ///< Address space for region memory.
   ADDRESS_NONE     = 5, ///< Address space for unknown memory.
   PARAM_D_ADDRESS  = 6, ///< Address space for direct addressible parameter memory (CONST0)
   PARAM_I_ADDRESS  = 7, ///< Address space for indirect addressible parameter memory (VTX1)
   USER_SGPR_ADDRESS = 8, ///< Address space for USER_SGPRS on SI
-  LAST_ADDRESS     = 9
+  CONSTANT_BUFFER_0 = 9,
+  CONSTANT_BUFFER_1 = 10,
+  CONSTANT_BUFFER_2 = 11,
+  CONSTANT_BUFFER_3 = 12,
+  CONSTANT_BUFFER_4 = 13,
+  CONSTANT_BUFFER_5 = 14,
+  CONSTANT_BUFFER_6 = 15,
+  CONSTANT_BUFFER_7 = 16,
+  CONSTANT_BUFFER_8 = 17,
+  CONSTANT_BUFFER_9 = 18,
+  CONSTANT_BUFFER_10 = 19,
+  CONSTANT_BUFFER_11 = 20,
+  CONSTANT_BUFFER_12 = 21,
+  CONSTANT_BUFFER_13 = 22,
+  CONSTANT_BUFFER_14 = 23,
+  CONSTANT_BUFFER_15 = 24,
+  LAST_ADDRESS     = 25
 };
 
 } // namespace AMDGPUAS

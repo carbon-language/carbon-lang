@@ -70,6 +70,11 @@ class InstFlag<string PM = "printOperand", int Default = 0>
   let PrintMethod = PM;
 }
 
+// src_sel for ALU src operands, see also ALU_CONST, ALU_PARAM registers 
+def SEL : OperandWithDefaultOps <i32, (ops (i32 -1))> {
+  let PrintMethod = "printSel";
+}
+
 def LITERAL : InstFlag<"printLiteral">;
 
 def WRITE : InstFlag <"printWrite", 1>;
@@ -89,6 +94,8 @@ def LAST : InstFlag<"printLast", 1>;
 def ADDRParam : ComplexPattern<i32, 2, "SelectADDRParam", [], []>;
 def ADDRDWord : ComplexPattern<i32, 1, "SelectADDRDWord", [], []>;
 def ADDRVTX_READ : ComplexPattern<i32, 2, "SelectADDRVTX_READ", [], []>;
+def ADDRGA_CONST_OFFSET : ComplexPattern<i32, 1, "SelectGlobalValueConstantOffset", [], []>;
+def ADDRGA_VAR_OFFSET : ComplexPattern<i32, 2, "SelectGlobalValueVariableOffset", [], []>;
 
 class R600ALU_Word0 {
   field bits<32> Word0;
@@ -263,11 +270,11 @@ class R600_1OP <bits<11> inst, string opName, list<dag> pattern,
     InstR600 <0,
               (outs R600_Reg32:$dst),
               (ins WRITE:$write, OMOD:$omod, REL:$dst_rel, CLAMP:$clamp,
-                   R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs,
+                   R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs, SEL:$src0_sel,
                    LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
               !strconcat(opName,
                    "$clamp $dst$write$dst_rel$omod, "
-                   "$src0_neg$src0_abs$src0$src0_abs$src0_rel, "
+                   "$src0_neg$src0_abs$src0$src0_sel$src0_abs$src0_rel, "
                    "$literal $pred_sel$last"),
               pattern,
               itin>,
@@ -303,13 +310,13 @@ class R600_2OP <bits<11> inst, string opName, list<dag> pattern,
           (outs R600_Reg32:$dst),
           (ins UEM:$update_exec_mask, UP:$update_pred, WRITE:$write,
                OMOD:$omod, REL:$dst_rel, CLAMP:$clamp,
-               R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs,
-               R600_Reg32:$src1, NEG:$src1_neg, REL:$src1_rel, ABS:$src1_abs,
+               R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, ABS:$src0_abs, SEL:$src0_sel,
+               R600_Reg32:$src1, NEG:$src1_neg, REL:$src1_rel, ABS:$src1_abs, SEL:$src1_sel,
                LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
           !strconcat(opName,
                 "$clamp $update_exec_mask$update_pred$dst$write$dst_rel$omod, "
-                "$src0_neg$src0_abs$src0$src0_abs$src0_rel, "
-                "$src1_neg$src1_abs$src1$src1_abs$src1_rel, "
+                "$src0_neg$src0_abs$src0$src0_sel$src0_abs$src0_rel, "
+                "$src1_neg$src1_abs$src1$src1_sel$src1_abs$src1_rel, "
                 "$literal $pred_sel$last"),
           pattern,
           itin>,
@@ -340,14 +347,14 @@ class R600_3OP <bits<5> inst, string opName, list<dag> pattern,
   InstR600 <0,
           (outs R600_Reg32:$dst),
           (ins REL:$dst_rel, CLAMP:$clamp,
-               R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel,
-               R600_Reg32:$src1, NEG:$src1_neg, REL:$src1_rel,
-               R600_Reg32:$src2, NEG:$src2_neg, REL:$src2_rel,
+               R600_Reg32:$src0, NEG:$src0_neg, REL:$src0_rel, SEL:$src0_sel,
+               R600_Reg32:$src1, NEG:$src1_neg, REL:$src1_rel, SEL:$src1_sel,
+               R600_Reg32:$src2, NEG:$src2_neg, REL:$src2_rel, SEL:$src2_sel,
                LAST:$last, R600_Pred:$pred_sel, LITERAL:$literal),
           !strconcat(opName, "$clamp $dst$dst_rel, "
-                             "$src0_neg$src0$src0_rel, "
-                             "$src1_neg$src1$src1_rel, "
-                             "$src2_neg$src2$src2_rel, "
+                             "$src0_neg$src0$src0_sel$src0_rel, "
+                             "$src1_neg$src1$src1_sel$src1_rel, "
+                             "$src2_neg$src2$src2_sel$src2_rel, "
                              "$literal $pred_sel$last"),
           pattern,
           itin>,
@@ -482,7 +489,7 @@ def INTERP_P0: SDNode<"AMDGPUISD::INTERP_P0",
   >;
 
 def CONST_ADDRESS: SDNode<"AMDGPUISD::CONST_ADDRESS",
-  SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisPtrTy<1>]>,
+  SDTypeProfile<1, 1, [SDTCisInt<0>, SDTCisPtrTy<1>]>,
   [SDNPMayLoad]
 >;
 
@@ -1538,12 +1545,6 @@ def MASK_WRITE : AMDGPUShaderInst <
 
 } // End mayLoad = 0, mayStore = 0, hasSideEffects = 1
 
-def R600_LOAD_CONST : AMDGPUShaderInst <
-  (outs R600_Reg32:$dst),
-  (ins i32imm:$src0),
-  "R600_LOAD_CONST $dst, $src0",
-  [(set R600_Reg32:$dst, (int_AMDGPU_load_const imm:$src0))]
->;
 
 def RESERVE_REG : AMDGPUShaderInst <
   (outs),
@@ -1551,7 +1552,6 @@ def RESERVE_REG : AMDGPUShaderInst <
   "RESERVE_REG $src",
   [(int_AMDGPU_reserve_reg imm:$src)]
 >;
-
 def TXD: AMDGPUShaderInst <
   (outs R600_Reg128:$dst),
   (ins R600_Reg128:$src0, R600_Reg128:$src1, R600_Reg128:$src2, i32imm:$resourceId, i32imm:$samplerId, i32imm:$textureTarget),
@@ -1580,6 +1580,78 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in {
   def RETURN          : ILFormat<(outs), (ins variable_ops),
       "RETURN", [(IL_retflag)]>;
 }
+
+
+//===----------------------------------------------------------------------===//
+// Constant Buffer Addressing Support
+//===----------------------------------------------------------------------===//
+
+let isCodeGenOnly = 1, isPseudo = 1, Namespace = "AMDGPU"  in {
+def CONST_COPY : Instruction {
+  let OutOperandList = (outs R600_Reg32:$dst);
+  let InOperandList = (ins i32imm:$src);
+  let Pattern = [(set R600_Reg32:$dst, (CONST_ADDRESS ADDRGA_CONST_OFFSET:$src))];
+  let AsmString = "CONST_COPY";
+  let neverHasSideEffects = 1;
+  let isAsCheapAsAMove = 1;
+  let Itinerary = NullALU;
+}
+} // end isCodeGenOnly = 1, isPseudo = 1, Namespace = "AMDGPU"
+
+def TEX_VTX_CONSTBUF :
+  InstR600ISA <(outs R600_Reg128:$dst), (ins MEMxi:$ptr), "VTX_READ_eg $dst, $ptr",
+      [(set R600_Reg128:$dst, (CONST_ADDRESS ADDRGA_VAR_OFFSET:$ptr))]>,
+  VTX_WORD1_GPR, VTX_WORD0 {
+
+  let VC_INST = 0;
+  let FETCH_TYPE = 2;
+  let FETCH_WHOLE_QUAD = 0;
+  let BUFFER_ID = 0;
+  let SRC_REL = 0;
+  let SRC_SEL_X = 0;
+  let DST_REL = 0;
+  let USE_CONST_FIELDS = 0;
+  let NUM_FORMAT_ALL = 2;
+  let FORMAT_COMP_ALL = 1;
+  let SRF_MODE_ALL = 1;
+  let MEGA_FETCH_COUNT = 16;
+  let DST_SEL_X        = 0;
+  let DST_SEL_Y        = 1;
+  let DST_SEL_Z        = 2;
+  let DST_SEL_W        = 3;
+  let DATA_FORMAT      = 35;
+
+  let Inst{31-0} = Word0;
+  let Inst{63-32} = Word1;
+
+// LLVM can only encode 64-bit instructions, so these fields are manually
+// encoded in R600CodeEmitter
+//
+// bits<16> OFFSET;
+// bits<2>  ENDIAN_SWAP = 0;
+// bits<1>  CONST_BUF_NO_STRIDE = 0;
+// bits<1>  MEGA_FETCH = 0;
+// bits<1>  ALT_CONST = 0;
+// bits<2>  BUFFER_INDEX_MODE = 0;
+
+
+
+// VTX_WORD2 (LLVM can only encode 64-bit instructions, so WORD2 encoding
+// is done in R600CodeEmitter
+//
+// Inst{79-64} = OFFSET;
+// Inst{81-80} = ENDIAN_SWAP;
+// Inst{82}    = CONST_BUF_NO_STRIDE;
+// Inst{83}    = MEGA_FETCH;
+// Inst{84}    = ALT_CONST;
+// Inst{86-85} = BUFFER_INDEX_MODE;
+// Inst{95-86} = 0; Reserved
+
+// VTX_WORD3 (Padding)
+//
+// Inst{127-96} = 0;
+}
+
 
 //===--------------------------------------------------------------------===//
 // Instructions support

@@ -45,6 +45,7 @@ private:
   void printUpdateExecMask(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printUpdatePred(const MCInst *MI, unsigned OpNo, raw_ostream &O);
   void printWrite(const MCInst *MI, unsigned OpNo, raw_ostream &O);
+  void printSel(const MCInst *MI, unsigned OpNo, raw_ostream &O);
 };
 
 } // End namespace llvm

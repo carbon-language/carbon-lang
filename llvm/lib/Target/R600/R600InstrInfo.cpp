@@ -486,13 +486,15 @@ MachineInstrBuilder R600InstrInfo::buildDefaultInstruction(MachineBasicBlock &MB
      .addReg(Src0Reg)  // $src0
      .addImm(0)        // $src0_neg
      .addImm(0)        // $src0_rel
-     .addImm(0);       // $src0_abs
+     .addImm(0)        // $src0_abs
+     .addImm(-1);       // $src0_sel
 
   if (Src1Reg) {
     MIB.addReg(Src1Reg) // $src1
        .addImm(0)       // $src1_neg
        .addImm(0)       // $src1_rel
-       .addImm(0);       // $src1_abs
+       .addImm(0)       // $src1_abs
+       .addImm(-1);      // $src1_sel
   }
 
   //XXX: The r600g finalizer expects this to be 1, once we've moved the
@@ -521,16 +523,6 @@ int R600InstrInfo::getOperandIdx(const MachineInstr &MI,
 
 int R600InstrInfo::getOperandIdx(unsigned Opcode,
                                  R600Operands::Ops Op) const {
-  const static int OpTable[3][R600Operands::COUNT] = {
-//            W        C     S  S  S     S  S  S     S  S
-//            R  O  D  L  S  R  R  R  S  R  R  R  S  R  R  L  P
-//   D  U     I  M  R  A  R  C  C  C  C  C  C  C  R  C  C  A  R  I
-//   S  E  U  T  O  E  M  C  0  0  0  C  1  1  1  C  2  2  S  E  M
-//   T  M  P  E  D  L  P  0  N  R  A  1  N  R  A  2  N  R  T  D  M
-    {0,-1,-1, 1, 2, 3, 4, 5, 6, 7, 8,-1,-1,-1,-1,-1,-1,-1, 9,10,11},
-    {0, 1, 2, 3, 4 ,5 ,6 ,7, 8, 9,10,11,12,-1,-1,-1,13,14,15,16,17},
-    {0,-1,-1,-1,-1, 1, 2, 3, 4, 5,-1, 6, 7, 8,-1, 9,10,11,12,13,14}
-  };
   unsigned TargetFlags = get(Opcode).TSFlags;
   unsigned OpTableIdx;
 
@@ -556,7 +548,7 @@ int R600InstrInfo::getOperandIdx(unsigned Opcode,
     OpTableIdx = 2;
   }
 
-  return OpTable[OpTableIdx][Op];
+  return R600Operands::ALUOpTable[OpTableIdx][Op];
 }
 
 void R600InstrInfo::setImmOperand(MachineInstr *MI, R600Operands::Ops Op,

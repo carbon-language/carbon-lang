@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Support/Compiler.h"
+#include "llvm/CodeGen/SelectionDAG.h"
 #include <list>
 #include <queue>
 
@@ -45,6 +46,7 @@ public:
 
 private:
   inline SDValue getSmallIPtrImm(unsigned Imm);
+  bool FoldOperands(unsigned, const R600InstrInfo *, std::vector<SDValue> &);
 
   // Complex pattern selectors
   bool SelectADDRParam(SDValue Addr, SDValue& R1, SDValue& R2);
@@ -67,6 +69,9 @@ private:
   static bool isLocalLoad(const LoadSDNode *N);
   static bool isRegionLoad(const LoadSDNode *N);
 
+  bool SelectGlobalValueConstantOffset(SDValue Addr, SDValue& IntPtr);
+  bool SelectGlobalValueVariableOffset(SDValue Addr,
+      SDValue &BaseReg, SDValue& Offset);
   bool SelectADDR8BitOffset(SDValue Addr, SDValue& Base, SDValue& Offset);
   bool SelectADDRReg(SDValue Addr, SDValue& Base, SDValue& Offset);
   bool SelectADDRVTX_READ(SDValue Addr, SDValue &Base, SDValue &Offset);
@@ -259,7 +264,65 @@ SDNode *AMDGPUDAGToDAGISel::Select(SDNode *N) {
     break;
   }
   }
-  return SelectCode(N);
+  SDNode *Result = SelectCode(N);
+
+  // Fold operands of selected node
+
+  const AMDGPUSubtarget &ST = TM.getSubtarget<AMDGPUSubtarget>();
+  if (ST.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX) {
+    const R600InstrInfo *TII =
+        static_cast<const R600InstrInfo*>(TM.getInstrInfo());
+    if (Result && TII->isALUInstr(Result->getMachineOpcode())) {
+      bool IsModified = false;
+      do {
+        std::vector<SDValue> Ops;
+        for(SDNode::op_iterator I = Result->op_begin(), E = Result->op_end();
+            I != E; ++I)
+          Ops.push_back(*I);
+        IsModified = FoldOperands(Result->getMachineOpcode(), TII, Ops);
+        if (IsModified) {
+          Result = CurDAG->MorphNodeTo(Result, Result->getOpcode(),
+              Result->getVTList(), Ops.data(), Ops.size());
+        }
+      } while (IsModified);
+    }
+  }
+
+  return Result;
+}
+
+bool AMDGPUDAGToDAGISel::FoldOperands(unsigned Opcode,
+    const R600InstrInfo *TII, std::vector<SDValue> &Ops) {
+  int OperandIdx[] = {
+    TII->getOperandIdx(Opcode, R600Operands::SRC0),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1),
+    TII->getOperandIdx(Opcode, R600Operands::SRC2)
+  };
+  int SelIdx[] = {
+    TII->getOperandIdx(Opcode, R600Operands::SRC0_SEL),
+    TII->getOperandIdx(Opcode, R600Operands::SRC1_SEL),
+    TII->getOperandIdx(Opcode, R600Operands::SRC2_SEL)
+  };
+  for (unsigned i = 0; i < 3; i++) {
+    if (OperandIdx[i] < 0)
+      return false;
+    SDValue Operand = Ops[OperandIdx[i] - 1];
+    switch (Operand.getOpcode()) {
+    case AMDGPUISD::CONST_ADDRESS: {
+      SDValue CstOffset;
+      if (!Operand.getValueType().isVector() &&
+          SelectGlobalValueConstantOffset(Operand.getOperand(0), CstOffset)) {
+        Ops[OperandIdx[i] - 1] = CurDAG->getRegister(AMDGPU::ALU_CONST, MVT::f32);
+        Ops[SelIdx[i] - 1] = CstOffset;
+        return true;
+      }
+      }
+      break;
+    default:
+      break;
+    }
+  }
+  return false;
 }
 
 bool AMDGPUDAGToDAGISel::checkType(const Value *ptr, unsigned int addrspace) {
@@ -405,6 +468,25 @@ const char *AMDGPUDAGToDAGISel::getPassName() const {
 #undef DEBUGTMP
 
 ///==== AMDGPU Functions ====///
+
+bool AMDGPUDAGToDAGISel::SelectGlobalValueConstantOffset(SDValue Addr,
+    SDValue& IntPtr) {
+  if (ConstantSDNode *Cst = dyn_cast<ConstantSDNode>(Addr)) {
+    IntPtr = CurDAG->getIntPtrConstant(Cst->getZExtValue() / 4, true);
+    return true;
+  }
+  return false;
+}
+
+bool AMDGPUDAGToDAGISel::SelectGlobalValueVariableOffset(SDValue Addr,
+    SDValue& BaseReg, SDValue &Offset) {
+  if (!dyn_cast<ConstantSDNode>(Addr)) {
+    BaseReg = Addr;
+    Offset = CurDAG->getIntPtrConstant(0, true);
+    return true;
+  }
+  return false;
+}
 
 bool AMDGPUDAGToDAGISel::SelectADDR8BitOffset(SDValue Addr, SDValue& Base,
                                              SDValue& Offset) {

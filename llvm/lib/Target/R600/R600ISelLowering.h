@@ -63,6 +63,7 @@ private:
   SDValue LowerSTORE(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFPTOUINT(SDValue Op, SelectionDAG &DAG) const;
   SDValue LowerFPOW(SDValue Op, SelectionDAG &DAG) const;
+  SDValue LowerLOAD(SDValue Op, SelectionDAG &DAG) const;
   
   bool isZero(SDValue Op) const;
 };

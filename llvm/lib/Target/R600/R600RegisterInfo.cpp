@@ -38,15 +38,11 @@ BitVector R600RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
   Reserved.set(AMDGPU::NEG_ONE);
   Reserved.set(AMDGPU::PV_X);
   Reserved.set(AMDGPU::ALU_LITERAL_X);
+  Reserved.set(AMDGPU::ALU_CONST);
   Reserved.set(AMDGPU::PREDICATE_BIT);
   Reserved.set(AMDGPU::PRED_SEL_OFF);
   Reserved.set(AMDGPU::PRED_SEL_ZERO);
   Reserved.set(AMDGPU::PRED_SEL_ONE);
-
-  for (TargetRegisterClass::iterator I = AMDGPU::R600_CReg32RegClass.begin(),
-                        E = AMDGPU::R600_CReg32RegClass.end(); I != E; ++I) {
-    Reserved.set(*I);
-  }
 
   for (std::vector<unsigned>::const_iterator I = MFI->ReservedRegs.begin(),
                                     E = MFI->ReservedRegs.end(); I != E; ++I) {
