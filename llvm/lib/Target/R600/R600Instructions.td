@@ -470,7 +470,7 @@ def isR600toCayman : Predicate<
                      "Subtarget.device()->getGeneration() <= AMDGPUDeviceInfo::HD6XXX">;
 
 //===----------------------------------------------------------------------===//
-// Interpolation Instructions
+// R600 SDNodes
 //===----------------------------------------------------------------------===//
 
 def INTERP: SDNode<"AMDGPUISD::INTERP",
@@ -480,6 +480,15 @@ def INTERP: SDNode<"AMDGPUISD::INTERP",
 def INTERP_P0: SDNode<"AMDGPUISD::INTERP_P0",
   SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisInt<1>]>
   >;
+
+def CONST_ADDRESS: SDNode<"AMDGPUISD::CONST_ADDRESS",
+  SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisPtrTy<1>]>,
+  [SDNPMayLoad]
+>;
+
+//===----------------------------------------------------------------------===//
+// Interpolation Instructions
+//===----------------------------------------------------------------------===//
 
 let usesCustomInserter = 1 in {
 def input_perspective :  AMDGPUShaderInst <
