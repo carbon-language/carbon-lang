@@ -117,7 +117,7 @@ public:
   /// \brief Builds a nested name specifier that names a namespace.
   static NestedNameSpecifier *Create(const ASTContext &Context,
                                      NestedNameSpecifier *Prefix,
-                                     NamespaceDecl *NS);
+                                     const NamespaceDecl *NS);
 
   /// \brief Builds a nested name specifier that names a namespace alias.
   static NestedNameSpecifier *Create(const ASTContext &Context,

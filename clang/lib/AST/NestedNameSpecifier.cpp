@@ -57,7 +57,8 @@ NestedNameSpecifier::Create(const ASTContext &Context,
 
 NestedNameSpecifier *
 NestedNameSpecifier::Create(const ASTContext &Context,
-                            NestedNameSpecifier *Prefix, NamespaceDecl *NS) {
+                            NestedNameSpecifier *Prefix,
+                            const NamespaceDecl *NS) {
   assert(NS && "Namespace cannot be NULL");
   assert((!Prefix ||
           (Prefix->getAsType() == 0 && Prefix->getAsIdentifier() == 0)) &&
@@ -65,7 +66,7 @@ NestedNameSpecifier::Create(const ASTContext &Context,
   NestedNameSpecifier Mockup;
   Mockup.Prefix.setPointer(Prefix);
   Mockup.Prefix.setInt(StoredNamespaceOrAlias);
-  Mockup.Specifier = NS;
+  Mockup.Specifier = const_cast<NamespaceDecl *>(NS);
   return FindOrInsert(Context, Mockup);
 }
 
