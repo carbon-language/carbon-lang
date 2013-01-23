@@ -59,6 +59,8 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
     // start of the value object which holds the dynamic type.
     //
     
+    class_type_or_name.Clear();
+    
     // Only a pointer or reference type can have a different dynamic and static type:
     if (CouldHaveDynamicValue (in_value))
     {
@@ -271,7 +273,7 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
         }
     }
     
-    return false;
+    return class_type_or_name.IsEmpty() == false;
 }
 
 bool

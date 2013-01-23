@@ -3336,38 +3336,7 @@ DumpValueObject_Impl (Stream &s,
                 show_type = options.m_show_types || (curr_depth == 0 && !options.m_flat_output);
             
             if (show_type)
-            {
-                const char* typeName = valobj->GetQualifiedTypeName().AsCString("<invalid type>");
-                //const char* typeName = valobj->GetTypeName().AsCString("<invalid type>");
-                s.Printf("(%s", typeName);
-                // only show dynamic types if the user really wants to see types
-                if (options.m_show_types && options.m_use_dynamic != eNoDynamicValues &&
-                    (/*strstr(typeName, "id") == typeName ||*/
-                     ClangASTType::GetMinimumLanguage(valobj->GetClangAST(), valobj->GetClangType()) == eLanguageTypeObjC))
-                {
-                    ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
-                    Process *process = exe_ctx.GetProcessPtr();
-                    if (process == NULL)
-                        s.Printf(", dynamic type: unknown) ");
-                    else
-                    {
-                        ObjCLanguageRuntime *runtime = process->GetObjCLanguageRuntime();
-                        if (runtime == NULL)
-                            s.Printf(", dynamic type: unknown) ");
-                        else
-                        {
-                            ObjCLanguageRuntime::ClassDescriptorSP objc_class_sp (runtime->GetNonKVOClassDescriptor(*valobj));
-                            if (objc_class_sp)
-                                s.Printf(", dynamic type: %s) ", objc_class_sp->GetClassName().GetCString());
-                            else
-                                s.Printf(", dynamic type: unknown) ");
-                        }
-                    }
-                }
-                else
-                    s.Printf(") ");
-            }
-
+                s.Printf("(%s) ", valobj->GetQualifiedTypeName().AsCString("<invalid type>"));
 
             if (options.m_flat_output)
             {

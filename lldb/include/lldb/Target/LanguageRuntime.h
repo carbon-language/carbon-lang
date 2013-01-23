@@ -44,6 +44,7 @@ public:
     virtual bool
     GetObjectDescription (Stream &str, Value &value, ExecutionContextScope *exe_scope) = 0;
     
+    // this call should return true if it could set the name and/or the type
     virtual bool
     GetDynamicTypeAndAddress (ValueObject &in_value, 
                               lldb::DynamicValueType use_dynamic, 

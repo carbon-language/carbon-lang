@@ -828,6 +828,26 @@ TypeAndOrName::operator= (const TypeAndOrName &rhs)
     return *this;
 }
 
+bool
+TypeAndOrName::operator==(const TypeAndOrName &other) const
+{
+    if (m_type_sp != other.m_type_sp)
+        return false;
+    if (m_type_name != other.m_type_name)
+        return false;
+    return true;
+}
+
+bool
+TypeAndOrName::operator!=(const TypeAndOrName &other) const
+{
+    if (m_type_sp != other.m_type_sp)
+        return true;
+    if (m_type_name != other.m_type_name)
+        return true;
+    return false;
+}
+
 ConstString
 TypeAndOrName::GetName () const
 {    
@@ -864,6 +884,25 @@ TypeAndOrName::IsEmpty()
         return false;
     else
         return true;
+}
+
+void
+TypeAndOrName::Clear ()
+{
+    m_type_name.Clear();
+    m_type_sp.reset();
+}
+
+bool
+TypeAndOrName::HasName ()
+{
+    return (bool)m_type_name;
+}
+
+bool
+TypeAndOrName::HasTypeSP ()
+{
+    return m_type_sp.get() != NULL;
 }
 
 TypeImpl::TypeImpl(const lldb_private::ClangASTType& clang_ast_type) :

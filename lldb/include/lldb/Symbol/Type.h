@@ -340,6 +340,12 @@ public:
     TypeAndOrName &
     operator= (const TypeAndOrName &rhs);
     
+    bool
+    operator==(const TypeAndOrName &other) const;
+    
+    bool
+    operator!=(const TypeAndOrName &other) const;
+    
     ConstString GetName () const;
 
     lldb::TypeSP
@@ -359,6 +365,21 @@ public:
     
     bool
     IsEmpty ();
+    
+    bool
+    HasName ();
+    
+    bool
+    HasTypeSP ();
+    
+    void
+    Clear ();
+    
+    operator
+    bool ()
+    {
+        return !IsEmpty();
+    }
     
 private:
     lldb::TypeSP m_type_sp;
