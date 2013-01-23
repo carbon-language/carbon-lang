@@ -69,7 +69,7 @@ private:
 
   /// \brief The declaration that serves at the parent of any statement or
   /// expression nodes.
-  Decl *StmtParent;
+  const Decl *StmtParent;
 
   /// \brief The visitor function.
   CXCursorVisitor Visitor;
@@ -119,11 +119,12 @@ private:
 
   class SetParentRAII {
     CXCursor &Parent;
-    Decl *&StmtParent;
+    const Decl *&StmtParent;
     CXCursor OldParent;
 
   public:
-    SetParentRAII(CXCursor &Parent, Decl *&StmtParent, CXCursor NewParent)
+    SetParentRAII(CXCursor &Parent, const Decl *&StmtParent,
+                  CXCursor NewParent)
       : Parent(Parent), StmtParent(StmtParent), OldParent(Parent)
     {
       Parent = NewParent;

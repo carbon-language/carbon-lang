@@ -165,7 +165,7 @@ bool CursorVisitor::Visit(CXCursor Cursor, bool CheckedRegionOfInterest) {
     return false;
 
   if (clang_isDeclaration(Cursor.kind)) {
-    Decl *D = getCursorDecl(Cursor);
+    const Decl *D = getCursorDecl(Cursor);
     if (!D) {
       assert(0 && "Invalid declaration cursor");
       return true; // abort.
@@ -463,7 +463,7 @@ bool CursorVisitor::VisitChildren(CXCursor Cursor) {
   SetParentRAII SetParent(Parent, StmtParent, Cursor);
 
   if (clang_isDeclaration(Cursor.kind)) {
-    Decl *D = getCursorDecl(Cursor);
+    Decl *D = const_cast<Decl *>(getCursorDecl(Cursor));
     if (!D)
       return false;
 
@@ -2966,17 +2966,17 @@ unsigned clang_isFileMultipleIncludeGuarded(CXTranslationUnit tu, CXFile file) {
 // CXCursor Operations.
 //===----------------------------------------------------------------------===//
 
-static Decl *getDeclFromExpr(Stmt *E) {
-  if (ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(E))
+static const Decl *getDeclFromExpr(const Stmt *E) {
+  if (const ImplicitCastExpr *CE = dyn_cast<ImplicitCastExpr>(E))
     return getDeclFromExpr(CE->getSubExpr());
 
-  if (DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(E))
+  if (const DeclRefExpr *RefExpr = dyn_cast<DeclRefExpr>(E))
     return RefExpr->getDecl();
-  if (MemberExpr *ME = dyn_cast<MemberExpr>(E))
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E))
     return ME->getMemberDecl();
-  if (ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(E))
+  if (const ObjCIvarRefExpr *RE = dyn_cast<ObjCIvarRefExpr>(E))
     return RE->getDecl();
-  if (ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(E)) {
+  if (const ObjCPropertyRefExpr *PRE = dyn_cast<ObjCPropertyRefExpr>(E)) {
     if (PRE->isExplicitProperty())
       return PRE->getExplicitProperty();
     // It could be messaging both getter and setter as in:
@@ -2987,26 +2987,26 @@ static Decl *getDeclFromExpr(Stmt *E) {
       return PRE->getImplicitPropertySetter();
     return PRE->getImplicitPropertyGetter();
   }
-  if (PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(E))
+  if (const PseudoObjectExpr *POE = dyn_cast<PseudoObjectExpr>(E))
     return getDeclFromExpr(POE->getSyntacticForm());
-  if (OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(E))
+  if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(E))
     if (Expr *Src = OVE->getSourceExpr())
       return getDeclFromExpr(Src);
       
-  if (CallExpr *CE = dyn_cast<CallExpr>(E))
+  if (const CallExpr *CE = dyn_cast<CallExpr>(E))
     return getDeclFromExpr(CE->getCallee());
-  if (CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(E))
+  if (const CXXConstructExpr *CE = dyn_cast<CXXConstructExpr>(E))
     if (!CE->isElidable())
     return CE->getConstructor();
-  if (ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(E))
+  if (const ObjCMessageExpr *OME = dyn_cast<ObjCMessageExpr>(E))
     return OME->getMethodDecl();
 
-  if (ObjCProtocolExpr *PE = dyn_cast<ObjCProtocolExpr>(E))
+  if (const ObjCProtocolExpr *PE = dyn_cast<ObjCProtocolExpr>(E))
     return PE->getProtocol();
-  if (SubstNonTypeTemplateParmPackExpr *NTTP 
+  if (const SubstNonTypeTemplateParmPackExpr *NTTP
                               = dyn_cast<SubstNonTypeTemplateParmPackExpr>(E))
     return NTTP->getParameterPack();
-  if (SizeOfPackExpr *SizeOfPack = dyn_cast<SizeOfPackExpr>(E))
+  if (const SizeOfPackExpr *SizeOfPack = dyn_cast<SizeOfPackExpr>(E))
     if (isa<NonTypeTemplateParmDecl>(SizeOfPack->getPack()) || 
         isa<ParmVarDecl>(SizeOfPack->getPack()))
       return SizeOfPack->getPack();
@@ -3081,27 +3081,28 @@ unsigned clang_visitChildrenWithBlock(CXCursor parent,
   return clang_visitChildren(parent, visitWithBlock, block);
 }
 
-static CXString getDeclSpelling(Decl *D) {
+static CXString getDeclSpelling(const Decl *D) {
   if (!D)
     return createCXString("");
 
-  NamedDecl *ND = dyn_cast<NamedDecl>(D);
+  const NamedDecl *ND = dyn_cast<NamedDecl>(D);
   if (!ND) {
-    if (ObjCPropertyImplDecl *PropImpl =dyn_cast<ObjCPropertyImplDecl>(D))
+    if (const ObjCPropertyImplDecl *PropImpl =
+            dyn_cast<ObjCPropertyImplDecl>(D))
       if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
         return createCXString(Property->getIdentifier()->getName());
     
-    if (ImportDecl *ImportD = dyn_cast<ImportDecl>(D))
+    if (const ImportDecl *ImportD = dyn_cast<ImportDecl>(D))
       if (Module *Mod = ImportD->getImportedModule())
         return createCXString(Mod->getFullModuleName());
 
     return createCXString("");
   }
   
-  if (ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
+  if (const ObjCMethodDecl *OMD = dyn_cast<ObjCMethodDecl>(ND))
     return createCXString(OMD->getSelector().getAsString());
 
-  if (ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
+  if (const ObjCCategoryImplDecl *CIMP = dyn_cast<ObjCCategoryImplDecl>(ND))
     // No, this isn't the same as the code below. getIdentifier() is non-virtual
     // and returns different names. NamedDecl returns the class name and
     // ObjCCategoryImplDecl returns the category name.
@@ -3177,12 +3178,12 @@ CXString clang_getCursorSpelling(CXCursor C) {
 
     case CXCursor_OverloadedDeclRef: {
       OverloadedDeclRefStorage Storage = getCursorOverloadedDeclRef(C).first;
-      if (Decl *D = Storage.dyn_cast<Decl *>()) {
-        if (NamedDecl *ND = dyn_cast<NamedDecl>(D))
+      if (const Decl *D = Storage.dyn_cast<const Decl *>()) {
+        if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
           return createCXString(ND->getNameAsString());
         return createCXString("");
       }
-      if (OverloadExpr *E = Storage.dyn_cast<OverloadExpr *>())
+      if (const OverloadExpr *E = Storage.dyn_cast<const OverloadExpr *>())
         return createCXString(E->getName().getAsString());
       OverloadedTemplateStorage *Ovl
         = Storage.get<OverloadedTemplateStorage*>();
@@ -3204,7 +3205,7 @@ CXString clang_getCursorSpelling(CXCursor C) {
   }
 
   if (clang_isExpression(C.kind)) {
-    Decl *D = getDeclFromExpr(getCursorExpr(C));
+    const Decl *D = getDeclFromExpr(getCursorExpr(C));
     if (D)
       return getDeclSpelling(D);
     return createCXString("");
@@ -3275,7 +3276,7 @@ CXSourceRange clang_Cursor_getSpellingNameRange(CXCursor C,
 
   if (C.kind == CXCursor_ObjCInstanceMethodDecl ||
       C.kind == CXCursor_ObjCClassMethodDecl) {
-    if (ObjCMethodDecl *
+    if (const ObjCMethodDecl *
           MD = dyn_cast_or_null<ObjCMethodDecl>(getCursorDecl(C))) {
       if (pieceIndex >= MD->getNumSelectorLocs())
         return clang_getNullRange();
@@ -3287,10 +3288,10 @@ CXSourceRange clang_Cursor_getSpellingNameRange(CXCursor C,
       C.kind == CXCursor_ObjCCategoryImplDecl) {
     if (pieceIndex > 0)
       return clang_getNullRange();
-    if (ObjCCategoryDecl *
+    if (const ObjCCategoryDecl *
           CD = dyn_cast_or_null<ObjCCategoryDecl>(getCursorDecl(C)))
       return cxloc::translateSourceRange(Ctx, CD->getCategoryNameLoc());
-    if (ObjCCategoryImplDecl *
+    if (const ObjCCategoryImplDecl *
           CID = dyn_cast_or_null<ObjCCategoryImplDecl>(getCursorDecl(C)))
       return cxloc::translateSourceRange(Ctx, CID->getCategoryNameLoc());
   }
@@ -3298,7 +3299,8 @@ CXSourceRange clang_Cursor_getSpellingNameRange(CXCursor C,
   if (C.kind == CXCursor_ModuleImportDecl) {
     if (pieceIndex > 0)
       return clang_getNullRange();
-    if (ImportDecl *ImportD = dyn_cast_or_null<ImportDecl>(getCursorDecl(C))) {
+    if (const ImportDecl *ImportD =
+            dyn_cast_or_null<ImportDecl>(getCursorDecl(C))) {
       ArrayRef<SourceLocation> Locs = ImportD->getIdentifierLocs();
       if (!Locs.empty())
         return cxloc::translateSourceRange(Ctx,
@@ -3330,15 +3332,15 @@ CXString clang_getCursorDisplayName(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return clang_getCursorSpelling(C);
   
-  Decl *D = getCursorDecl(C);
+  const Decl *D = getCursorDecl(C);
   if (!D)
     return createCXString("");
 
   PrintingPolicy Policy = getCursorContext(C).getPrintingPolicy();
-  if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
+  if (const FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(D))
     D = FunTmpl->getTemplatedDecl();
   
-  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+  if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     SmallString<64> Str;
     llvm::raw_svector_ostream OS(Str);
     OS << *Function;
@@ -3360,7 +3362,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
     return createCXString(OS.str());
   }
   
-  if (ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(D)) {
+  if (const ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(D)) {
     SmallString<64> Str;
     llvm::raw_svector_ostream OS(Str);
     OS << *ClassTemplate;
@@ -3391,7 +3393,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
     return createCXString(OS.str());
   }
   
-  if (ClassTemplateSpecializationDecl *ClassSpec
+  if (const ClassTemplateSpecializationDecl *ClassSpec
                               = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
     // If the type was explicitly written, use that.
     if (TypeSourceInfo *TSInfo = ClassSpec->getTypeAsWritten())
@@ -3738,12 +3740,12 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
   
   if (clang_isDeclaration(cursor.kind)) {
     // Avoid having the implicit methods override the property decls.
-    if (ObjCMethodDecl *MD
+    if (const ObjCMethodDecl *MD
           = dyn_cast_or_null<ObjCMethodDecl>(getCursorDecl(cursor))) {
       if (MD->isImplicit())
         return CXChildVisit_Break;
 
-    } else if (ObjCInterfaceDecl *ID
+    } else if (const ObjCInterfaceDecl *ID
                  = dyn_cast_or_null<ObjCInterfaceDecl>(getCursorDecl(cursor))) {
       // Check that when we have multiple @class references in the same line,
       // that later ones do not override the previous ones.
@@ -3753,7 +3755,7 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
       // 'Foo' even though the cursor location was at 'Foo'.
       if (BestCursor->kind == CXCursor_ObjCInterfaceDecl ||
           BestCursor->kind == CXCursor_ObjCClassRef)
-        if (ObjCInterfaceDecl *PrevID
+        if (const ObjCInterfaceDecl *PrevID
              = dyn_cast_or_null<ObjCInterfaceDecl>(getCursorDecl(*BestCursor))){
          if (PrevID != ID &&
              !PrevID->isThisDeclarationADefinition() &&
@@ -3761,7 +3763,7 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
            return CXChildVisit_Break;
         }
 
-    } else if (DeclaratorDecl *DD
+    } else if (const DeclaratorDecl *DD
                     = dyn_cast_or_null<DeclaratorDecl>(getCursorDecl(cursor))) {
       SourceLocation StartLoc = DD->getSourceRange().getBegin();
       // Check that when we have multiple declarators in the same line,
@@ -3774,7 +3776,7 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
         return CXChildVisit_Break;
       Data->VisitedDeclaratorDeclStartLoc = StartLoc;
 
-    } else if (ObjCPropertyImplDecl *PropImp
+    } else if (const ObjCPropertyImplDecl *PropImp
               = dyn_cast_or_null<ObjCPropertyImplDecl>(getCursorDecl(cursor))) {
       (void)PropImp;
       // Check that when we have multiple @synthesize in the same line,
@@ -3791,7 +3793,7 @@ static enum CXChildVisitResult GetCursorVisitor(CXCursor cursor,
 
   if (clang_isExpression(cursor.kind) &&
       clang_isDeclaration(BestCursor->kind)) {
-    if (Decl *D = getCursorDecl(*BestCursor)) {
+    if (const Decl *D = getCursorDecl(*BestCursor)) {
       // Avoid having the cursor of an expression replace the declaration cursor
       // when the expression source range overlaps the declaration range.
       // This can happen for C++ constructor expressions whose range generally
@@ -4064,7 +4066,7 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return clang_getNullLocation();
 
-  Decl *D = getCursorDecl(C);
+  const Decl *D = getCursorDecl(C);
   if (!D)
     return clang_getNullLocation();
 
@@ -4074,13 +4076,13 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
   // ranges when accounting for the type-specifier.  We use context
   // stored in the CXCursor to determine if the VarDecl is in a DeclGroup,
   // and if so, whether it is the first decl.
-  if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+  if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
     if (!cxcursor::isFirstInDeclGroup(C))
       Loc = VD->getLocation();
   }
 
   // For ObjC methods, give the start location of the method name.
-  if (ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
+  if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(D))
     Loc = MD->getSelectorStartLoc();
 
   return cxloc::translateSourceLocation(getCursorContext(C), Loc);
@@ -4197,7 +4199,7 @@ static SourceRange getRawCursorExtent(CXCursor C) {
   }
 
   if (clang_isDeclaration(C.kind)) {
-    Decl *D = cxcursor::getCursorDecl(C);
+    const Decl *D = cxcursor::getCursorDecl(C);
     if (!D)
       return SourceRange();
 
@@ -4207,7 +4209,7 @@ static SourceRange getRawCursorExtent(CXCursor C) {
     // ranges when accounting for the type-specifier.  We use context
     // stored in the CXCursor to determine if the VarDecl is in a DeclGroup,
     // and if so, whether it is the first decl.
-    if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       if (!cxcursor::isFirstInDeclGroup(C))
         R.setBegin(VD->getLocation());
     }
@@ -4220,7 +4222,7 @@ static SourceRange getRawCursorExtent(CXCursor C) {
 /// the decl-specifier-seq for declarations.
 static SourceRange getFullCursorExtent(CXCursor C, SourceManager &SrcMgr) {
   if (clang_isDeclaration(C.kind)) {
-    Decl *D = cxcursor::getCursorDecl(C);
+    const Decl *D = cxcursor::getCursorDecl(C);
     if (!D)
       return SourceRange();
 
@@ -4232,7 +4234,7 @@ static SourceRange getFullCursorExtent(CXCursor C, SourceManager &SrcMgr) {
     if (const DeclaratorDecl *DD = dyn_cast<DeclaratorDecl>(D)) {
       if (TypeSourceInfo *TI = DD->getTypeSourceInfo())
         StartLoc = TI->getTypeLoc().getLocStart();
-    } else if (TypedefDecl *Typedef = dyn_cast<TypedefDecl>(D)) {
+    } else if (const TypedefDecl *Typedef = dyn_cast<TypedefDecl>(D)) {
       if (TypeSourceInfo *TI = Typedef->getTypeSourceInfo())
         StartLoc = TI->getTypeLoc().getLocStart();
     }
@@ -4246,7 +4248,7 @@ static SourceRange getFullCursorExtent(CXCursor C, SourceManager &SrcMgr) {
     // ranges when accounting for the type-specifier.  We use context
     // stored in the CXCursor to determine if the VarDecl is in a DeclGroup,
     // and if so, whether it is the first decl.
-    if (VarDecl *VD = dyn_cast<VarDecl>(D)) {
+    if (const VarDecl *VD = dyn_cast<VarDecl>(D)) {
       if (!cxcursor::isFirstInDeclGroup(C))
         R.setBegin(VD->getLocation());
     }
@@ -4273,12 +4275,13 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
 
   CXTranslationUnit tu = getCursorTU(C);
   if (clang_isDeclaration(C.kind)) {
-    Decl *D = getCursorDecl(C);
+    const Decl *D = getCursorDecl(C);
     if (!D)
       return clang_getNullCursor();
-    if (UsingDecl *Using = dyn_cast<UsingDecl>(D))
+    if (const UsingDecl *Using = dyn_cast<UsingDecl>(D))
       return MakeCursorOverloadedDeclRef(Using, D->getLocation(), tu);
-    if (ObjCPropertyImplDecl *PropImpl =dyn_cast<ObjCPropertyImplDecl>(D))
+    if (const ObjCPropertyImplDecl *PropImpl =
+            dyn_cast<ObjCPropertyImplDecl>(D))
       if (ObjCPropertyDecl *Property = PropImpl->getPropertyDecl())
         return MakeCXCursor(Property, tu);
     
@@ -4286,8 +4289,8 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
   }
   
   if (clang_isExpression(C.kind)) {
-    Expr *E = getCursorExpr(C);
-    Decl *D = getDeclFromExpr(E);
+    const Expr *E = getCursorExpr(C);
+    const Decl *D = getDeclFromExpr(E);
     if (D) {
       CXCursor declCursor = MakeCXCursor(D, tu);
       declCursor = getSelectorIdentifierCursor(getSelectorIdentifierIndex(C),
@@ -4295,7 +4298,7 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
       return declCursor;
     }
     
-    if (OverloadExpr *Ovl = dyn_cast_or_null<OverloadExpr>(E))
+    if (const OverloadExpr *Ovl = dyn_cast_or_null<OverloadExpr>(E))
       return MakeCursorOverloadedDeclRef(Ovl, tu);
         
     return clang_getNullCursor();
@@ -4395,7 +4398,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return clang_getNullCursor();
 
-  Decl *D = getCursorDecl(C);
+  const Decl *D = getCursorDecl(C);
   if (!D)
     return clang_getNullCursor();
 
@@ -4468,7 +4471,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
 
   case Decl::Var: {
     // Ask the variable if it has a definition.
-    if (VarDecl *Def = cast<VarDecl>(D)->getDefinition())
+    if (const VarDecl *Def = cast<VarDecl>(D)->getDefinition())
       return MakeCXCursor(Def, TU);
     return clang_getNullCursor();
   }
@@ -4498,14 +4501,14 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
                                     TU));
 
   case Decl::ObjCMethod: {
-    ObjCMethodDecl *Method = cast<ObjCMethodDecl>(D);
+    const ObjCMethodDecl *Method = cast<ObjCMethodDecl>(D);
     if (Method->isThisDeclarationADefinition())
       return C;
 
     // Dig out the method definition in the associated
     // @implementation, if we have it.
     // FIXME: The ASTs should make finding the definition easier.
-    if (ObjCInterfaceDecl *Class
+    if (const ObjCInterfaceDecl *Class
                        = dyn_cast<ObjCInterfaceDecl>(Method->getDeclContext()))
       if (ObjCImplementationDecl *ClassImpl = Class->getImplementation())
         if (ObjCMethodDecl *Def = ClassImpl->getMethod(Method->getSelector(),
@@ -4523,7 +4526,7 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     return clang_getNullCursor();
 
   case Decl::ObjCProtocol:
-    if (ObjCProtocolDecl *Def = cast<ObjCProtocolDecl>(D)->getDefinition())
+    if (const ObjCProtocolDecl *Def = cast<ObjCProtocolDecl>(D)->getDefinition())
       return MakeCXCursor(Def, TU);
     return clang_getNullCursor();
 
@@ -4533,9 +4536,9 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     // reference to an Objective-C class, produce the @interface as
     // the definition; when we were provided with the interface,
     // produce the @implementation as the definition.
-    ObjCInterfaceDecl *IFace = cast<ObjCInterfaceDecl>(D);
+    const ObjCInterfaceDecl *IFace = cast<ObjCInterfaceDecl>(D);
     if (WasReference) {
-      if (ObjCInterfaceDecl *Def = IFace->getDefinition())
+      if (const ObjCInterfaceDecl *Def = IFace->getDefinition())
         return MakeCXCursor(Def, TU);
     } else if (ObjCImplementationDecl *Impl = IFace->getImplementation())
       return MakeCXCursor(Impl, TU);
@@ -4548,9 +4551,9 @@ CXCursor clang_getCursorDefinition(CXCursor C) {
     return clang_getNullCursor();
 
   case Decl::ObjCCompatibleAlias:
-    if (ObjCInterfaceDecl *Class
+    if (const ObjCInterfaceDecl *Class
           = cast<ObjCCompatibleAliasDecl>(D)->getClassInterface())
-      if (ObjCInterfaceDecl *Def = Class->getDefinition())
+      if (const ObjCInterfaceDecl *Def = Class->getDefinition())
         return MakeCXCursor(Def, TU);
 
     return clang_getNullCursor();
@@ -4580,13 +4583,13 @@ CXCursor clang_getCanonicalCursor(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return C;
   
-  if (Decl *D = getCursorDecl(C)) {
-    if (ObjCCategoryImplDecl *CatImplD = dyn_cast<ObjCCategoryImplDecl>(D))
+  if (const Decl *D = getCursorDecl(C)) {
+    if (const ObjCCategoryImplDecl *CatImplD = dyn_cast<ObjCCategoryImplDecl>(D))
       if (ObjCCategoryDecl *CatD = CatImplD->getCategoryDecl())
         return MakeCXCursor(CatD, getCursorTU(C));
 
-    if (ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(D))
-      if (ObjCInterfaceDecl *IFD = ImplD->getClassInterface())
+    if (const ObjCImplDecl *ImplD = dyn_cast<ObjCImplDecl>(D))
+      if (const ObjCInterfaceDecl *IFD = ImplD->getClassInterface())
         return MakeCXCursor(IFD, getCursorTU(C));
 
     return MakeCXCursor(D->getCanonicalDecl(), getCursorTU(C));
@@ -4604,15 +4607,15 @@ unsigned clang_getNumOverloadedDecls(CXCursor C) {
     return 0;
   
   OverloadedDeclRefStorage Storage = getCursorOverloadedDeclRef(C).first;
-  if (OverloadExpr *E = Storage.dyn_cast<OverloadExpr *>())
+  if (const OverloadExpr *E = Storage.dyn_cast<const OverloadExpr *>())
     return E->getNumDecls();
   
   if (OverloadedTemplateStorage *S
                               = Storage.dyn_cast<OverloadedTemplateStorage*>())
     return S->size();
   
-  Decl *D = Storage.get<Decl*>();
-  if (UsingDecl *Using = dyn_cast<UsingDecl>(D))
+  const Decl *D = Storage.get<const Decl *>();
+  if (const UsingDecl *Using = dyn_cast<UsingDecl>(D))
     return Using->shadow_size();
   
   return 0;
@@ -4627,15 +4630,15 @@ CXCursor clang_getOverloadedDecl(CXCursor cursor, unsigned index) {
   
   CXTranslationUnit TU = getCursorTU(cursor);
   OverloadedDeclRefStorage Storage = getCursorOverloadedDeclRef(cursor).first;
-  if (OverloadExpr *E = Storage.dyn_cast<OverloadExpr *>())
+  if (const OverloadExpr *E = Storage.dyn_cast<const OverloadExpr *>())
     return MakeCXCursor(E->decls_begin()[index], TU);
   
   if (OverloadedTemplateStorage *S
                               = Storage.dyn_cast<OverloadedTemplateStorage*>())
     return MakeCXCursor(S->begin()[index], TU);
   
-  Decl *D = Storage.get<Decl*>();
-  if (UsingDecl *Using = dyn_cast<UsingDecl>(D)) {
+  const Decl *D = Storage.get<const Decl *>();
+  if (const UsingDecl *Using = dyn_cast<UsingDecl>(D)) {
     // FIXME: This is, unfortunately, linear time.
     UsingDecl::shadow_iterator Pos = Using->shadow_begin();
     std::advance(Pos, index);
@@ -4653,8 +4656,7 @@ void clang_getDefinitionSpellingAndExtent(CXCursor C,
                                           unsigned *endLine,
                                           unsigned *endColumn) {
   assert(getCursorDecl(C) && "CXCursor has null decl");
-  NamedDecl *ND = static_cast<NamedDecl *>(getCursorDecl(C));
-  FunctionDecl *FD = dyn_cast<FunctionDecl>(ND);
+  const FunctionDecl *FD = dyn_cast<FunctionDecl>(getCursorDecl(C));
   CompoundStmt *Body = dyn_cast<CompoundStmt>(FD->getBody());
 
   SourceManager &SM = FD->getASTContext().getSourceManager();
@@ -5067,20 +5069,20 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
   if (!HasContextSensitiveKeywords) {
     // Objective-C properties can have context-sensitive keywords.
     if (cursor.kind == CXCursor_ObjCPropertyDecl) {
-      if (ObjCPropertyDecl *Property 
+      if (const ObjCPropertyDecl *Property
                   = dyn_cast_or_null<ObjCPropertyDecl>(getCursorDecl(cursor)))
         HasContextSensitiveKeywords = Property->getPropertyAttributesAsWritten() != 0;
     }
     // Objective-C methods can have context-sensitive keywords.
     else if (cursor.kind == CXCursor_ObjCInstanceMethodDecl ||
              cursor.kind == CXCursor_ObjCClassMethodDecl) {
-      if (ObjCMethodDecl *Method
+      if (const ObjCMethodDecl *Method
             = dyn_cast_or_null<ObjCMethodDecl>(getCursorDecl(cursor))) {
         if (Method->getObjCDeclQualifier())
           HasContextSensitiveKeywords = true;
         else {
-          for (ObjCMethodDecl::param_iterator P = Method->param_begin(),
-                                           PEnd = Method->param_end();
+          for (ObjCMethodDecl::param_const_iterator P = Method->param_begin(),
+                                                 PEnd = Method->param_end();
                P != PEnd; ++P) {
             if ((*P)->getObjCDeclQualifier()) {
               HasContextSensitiveKeywords = true;
@@ -5092,7 +5094,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
     }    
     // C++ methods can have context-sensitive keywords.
     else if (cursor.kind == CXCursor_CXXMethod) {
-      if (CXXMethodDecl *Method
+      if (const CXXMethodDecl *Method
                   = dyn_cast_or_null<CXXMethodDecl>(getCursorDecl(cursor))) {
         if (Method->hasAttr<FinalAttr>() || Method->hasAttr<OverrideAttr>())
           HasContextSensitiveKeywords = true;
@@ -5103,7 +5105,7 @@ AnnotateTokensWorker::Visit(CXCursor cursor, CXCursor parent) {
              cursor.kind == CXCursor_ClassDecl ||
              cursor.kind == CXCursor_ClassTemplate ||
              cursor.kind == CXCursor_ClassTemplatePartialSpecialization) {
-      if (Decl *D = getCursorDecl(cursor))
+      if (const Decl *D = getCursorDecl(cursor))
         if (D->hasAttr<FinalAttr>())
           HasContextSensitiveKeywords = true;
     }
@@ -5497,7 +5499,7 @@ static void clang_annotateTokensImpl(void *UserData) {
       
       if (Cursors[I].kind == CXCursor_ObjCPropertyDecl) {
         IdentifierInfo *II = static_cast<IdentifierInfo *>(Tokens[I].ptr_data);
-        if (ObjCPropertyDecl *Property
+        if (const ObjCPropertyDecl *Property
             = dyn_cast_or_null<ObjCPropertyDecl>(getCursorDecl(Cursors[I]))) {
           if (Property->getPropertyAttributesAsWritten() != 0 &&
               llvm::StringSwitch<bool>(II->getName())
@@ -5590,8 +5592,8 @@ CXLinkageKind clang_getCursorLinkage(CXCursor cursor) {
   if (!clang_isDeclaration(cursor.kind))
     return CXLinkage_Invalid;
 
-  Decl *D = cxcursor::getCursorDecl(cursor);
-  if (NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D))
+  const Decl *D = cxcursor::getCursorDecl(cursor);
+  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(D))
     switch (ND->getLinkage()) {
       case NoLinkage: return CXLinkage_NoLinkage;
       case InternalLinkage: return CXLinkage_Internal;
@@ -5660,7 +5662,7 @@ extern "C" {
   
 enum CXAvailabilityKind clang_getCursorAvailability(CXCursor cursor) {
   if (clang_isDeclaration(cursor.kind))
-    if (Decl *D = cxcursor::getCursorDecl(cursor)) {
+    if (const Decl *D = cxcursor::getCursorDecl(cursor)) {
       if (isa<FunctionDecl>(D) && cast<FunctionDecl>(D)->isDeleted())
         return CXAvailability_Available;
       
@@ -5717,7 +5719,7 @@ int clang_getCursorPlatformAvailability(CXCursor cursor,
   if (!clang_isDeclaration(cursor.kind))
     return 0;
   
-  Decl *D = cxcursor::getCursorDecl(cursor);
+  const Decl *D = cxcursor::getCursorDecl(cursor);
   if (!D)
     return 0;
   
@@ -5774,15 +5776,15 @@ CXLanguageKind clang_getCursorLanguage(CXCursor cursor) {
  /// \brief If the given cursor is the "templated" declaration
  /// descibing a class or function template, return the class or
  /// function template.
-static Decl *maybeGetTemplateCursor(Decl *D) {
+static const Decl *maybeGetTemplateCursor(const Decl *D) {
   if (!D)
     return 0;
 
-  if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
     if (FunctionTemplateDecl *FunTmpl = FD->getDescribedFunctionTemplate())
       return FunTmpl;
 
-  if (CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D))
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D))
     if (ClassTemplateDecl *ClassTmpl = RD->getDescribedClassTemplate())
       return ClassTmpl;
 
@@ -5791,8 +5793,8 @@ static Decl *maybeGetTemplateCursor(Decl *D) {
 
 CXCursor clang_getCursorSemanticParent(CXCursor cursor) {
   if (clang_isDeclaration(cursor.kind)) {
-    if (Decl *D = getCursorDecl(cursor)) {
-      DeclContext *DC = D->getDeclContext();
+    if (const Decl *D = getCursorDecl(cursor)) {
+      const DeclContext *DC = D->getDeclContext();
       if (!DC)
         return clang_getNullCursor();
 
@@ -5802,7 +5804,7 @@ CXCursor clang_getCursorSemanticParent(CXCursor cursor) {
   }
   
   if (clang_isStatement(cursor.kind) || clang_isExpression(cursor.kind)) {
-    if (Decl *D = getCursorDecl(cursor))
+    if (const Decl *D = getCursorDecl(cursor))
       return MakeCXCursor(D, getCursorTU(cursor));
   }
   
@@ -5811,8 +5813,8 @@ CXCursor clang_getCursorSemanticParent(CXCursor cursor) {
 
 CXCursor clang_getCursorLexicalParent(CXCursor cursor) {
   if (clang_isDeclaration(cursor.kind)) {
-    if (Decl *D = getCursorDecl(cursor)) {
-      DeclContext *DC = D->getLexicalDeclContext();
+    if (const Decl *D = getCursorDecl(cursor)) {
+      const DeclContext *DC = D->getLexicalDeclContext();
       if (!DC)
         return clang_getNullCursor();
 
@@ -5894,7 +5896,8 @@ CXComment clang_Cursor_getParsedComment(CXCursor C) {
 
 CXModule clang_Cursor_getModule(CXCursor C) {
   if (C.kind == CXCursor_ModuleImportDecl) {
-    if (ImportDecl *ImportD = dyn_cast_or_null<ImportDecl>(getCursorDecl(C)))
+    if (const ImportDecl *ImportD =
+            dyn_cast_or_null<ImportDecl>(getCursorDecl(C)))
       return ImportD->getImportedModule();
   }
 
@@ -5951,9 +5954,10 @@ unsigned clang_CXXMethod_isStatic(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return 0;
   
-  CXXMethodDecl *Method = 0;
-  Decl *D = cxcursor::getCursorDecl(C);
-  if (FunctionTemplateDecl *FunTmpl = dyn_cast_or_null<FunctionTemplateDecl>(D))
+  const CXXMethodDecl *Method = 0;
+  const Decl *D = cxcursor::getCursorDecl(C);
+  if (const FunctionTemplateDecl *FunTmpl =
+          dyn_cast_or_null<FunctionTemplateDecl>(D))
     Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
   else
     Method = dyn_cast_or_null<CXXMethodDecl>(D);
@@ -5964,9 +5968,10 @@ unsigned clang_CXXMethod_isVirtual(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return 0;
   
-  CXXMethodDecl *Method = 0;
-  Decl *D = cxcursor::getCursorDecl(C);
-  if (FunctionTemplateDecl *FunTmpl = dyn_cast_or_null<FunctionTemplateDecl>(D))
+  const CXXMethodDecl *Method = 0;
+  const Decl *D = cxcursor::getCursorDecl(C);
+  if (const FunctionTemplateDecl *FunTmpl =
+          dyn_cast_or_null<FunctionTemplateDecl>(D))
     Method = dyn_cast<CXXMethodDecl>(FunTmpl->getTemplatedDecl());
   else
     Method = dyn_cast_or_null<CXXMethodDecl>(D);

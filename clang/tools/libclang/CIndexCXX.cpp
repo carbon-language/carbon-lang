@@ -56,13 +56,13 @@ enum CXCursorKind clang_getTemplateCursorKind(CXCursor C) {
   switch (C.kind) {
   case CXCursor_ClassTemplate: 
   case CXCursor_FunctionTemplate:
-    if (TemplateDecl *Template
+    if (const TemplateDecl *Template
                            = dyn_cast_or_null<TemplateDecl>(getCursorDecl(C)))
       return MakeCXCursor(Template->getTemplatedDecl(), getCursorTU(C)).kind;
     break;
       
   case CXCursor_ClassTemplatePartialSpecialization:
-    if (ClassTemplateSpecializationDecl *PartialSpec
+    if (const ClassTemplateSpecializationDecl *PartialSpec
           = dyn_cast_or_null<ClassTemplatePartialSpecializationDecl>(
                                                             getCursorDecl(C))) {
       switch (PartialSpec->getTagKind()) {
@@ -86,16 +86,16 @@ CXCursor clang_getSpecializedCursorTemplate(CXCursor C) {
   if (!clang_isDeclaration(C.kind))
     return clang_getNullCursor();
     
-  Decl *D = getCursorDecl(C);
+  const Decl *D = getCursorDecl(C);
   if (!D)
     return clang_getNullCursor();
   
   Decl *Template = 0;
-  if (CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(D)) {
-    if (ClassTemplatePartialSpecializationDecl *PartialSpec
+  if (const CXXRecordDecl *CXXRecord = dyn_cast<CXXRecordDecl>(D)) {
+    if (const ClassTemplatePartialSpecializationDecl *PartialSpec
           = dyn_cast<ClassTemplatePartialSpecializationDecl>(CXXRecord))
       Template = PartialSpec->getSpecializedTemplate();
-    else if (ClassTemplateSpecializationDecl *ClassSpec 
+    else if (const ClassTemplateSpecializationDecl *ClassSpec 
                = dyn_cast<ClassTemplateSpecializationDecl>(CXXRecord)) {
       llvm::PointerUnion<ClassTemplateDecl *,
                          ClassTemplatePartialSpecializationDecl *> Result
@@ -107,14 +107,14 @@ CXCursor clang_getSpecializedCursorTemplate(CXCursor C) {
       
     } else 
       Template = CXXRecord->getInstantiatedFromMemberClass();
-  } else if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
+  } else if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     Template = Function->getPrimaryTemplate();
     if (!Template)
       Template = Function->getInstantiatedFromMemberFunction();
-  } else if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+  } else if (const VarDecl *Var = dyn_cast<VarDecl>(D)) {
     if (Var->isStaticDataMember())
       Template = Var->getInstantiatedFromStaticDataMember();
-  } else if (RedeclarableTemplateDecl *Tmpl
+  } else if (const RedeclarableTemplateDecl *Tmpl
                                         = dyn_cast<RedeclarableTemplateDecl>(D))
     Template = Tmpl->getInstantiatedFromMemberTemplate();
   
