@@ -72,13 +72,23 @@ namespace {
 
       // Rename all aliases
       for (Module::alias_iterator AI = M.alias_begin(), AE = M.alias_end();
-           AI != AE; ++AI)
-        AI->setName("alias");
+           AI != AE; ++AI) {
+        StringRef Name = AI->getName();
+        if (Name.startswith("llvm.") || (!Name.empty() && Name[0] == 1))
+          continue;
 
+        AI->setName("alias");
+      }
+      
       // Rename all global variables
       for (Module::global_iterator GI = M.global_begin(), GE = M.global_end();
-           GI != GE; ++GI)
+           GI != GE; ++GI) {
+        StringRef Name = GI->getName();
+        if (Name.startswith("llvm.") || (!Name.empty() && Name[0] == 1))
+          continue;
+
         GI->setName("global");
+      }
 
       // Rename all struct types
       TypeFinder StructTypes;
@@ -95,6 +105,10 @@ namespace {
       // Rename all functions
       for (Module::iterator FI = M.begin(), FE = M.end();
            FI != FE; ++FI) {
+        StringRef Name = FI->getName();
+        if (Name.startswith("llvm.") || (!Name.empty() && Name[0] == 1))
+          continue;
+
         FI->setName(metaNames[prng.rand() % array_lengthof(metaNames)]);
         runOnFunction(*FI);
       }
