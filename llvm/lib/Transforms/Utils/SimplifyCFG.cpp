@@ -1387,34 +1387,31 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
   }
   assert(EndBB == BI->getSuccessor(!Invert) && "No edge from to end block");
 
-  // Only speculatively execution a single instruction (not counting the
-  // terminator) for now.
-  Instruction *HInst = NULL;
-  Instruction *Term = ThenBB->getTerminator();
-  for (BasicBlock::iterator BBI = ThenBB->begin(), BBE = ThenBB->end();
+  unsigned SpeculationCost = 0;
+  for (BasicBlock::iterator BBI = ThenBB->begin(),
+                            BBE = llvm::prior(ThenBB->end());
        BBI != BBE; ++BBI) {
     Instruction *I = BBI;
     // Skip debug info.
-    if (isa<DbgInfoIntrinsic>(I)) continue;
-    if (I == Term) break;
+    if (isa<DbgInfoIntrinsic>(I))
+      continue;
 
-    if (HInst)
+    // Only speculatively execution a single instruction (not counting the
+    // terminator) for now.
+    ++SpeculationCost;
+    if (SpeculationCost > 1)
       return false;
-    HInst = I;
-  }
 
-  // Check the instruction to be hoisted, if there is one.
-  if (HInst) {
     // Don't hoist the instruction if it's unsafe or expensive.
-    if (!isSafeToSpeculativelyExecute(HInst))
+    if (!isSafeToSpeculativelyExecute(I))
       return false;
-    if (ComputeSpeculationCost(HInst) > PHINodeFoldingThreshold)
+    if (ComputeSpeculationCost(I) > PHINodeFoldingThreshold)
       return false;
 
     // Do not hoist the instruction if any of its operands are defined but not
     // used in this BB. The transformation will prevent the operand from
     // being sunk into the use block.
-    for (User::op_iterator i = HInst->op_begin(), e = HInst->op_end();
+    for (User::op_iterator i = I->op_begin(), e = I->op_end();
          i != e; ++i) {
       Instruction *OpI = dyn_cast<Instruction>(*i);
       if (OpI && OpI->getParent() == BB &&
@@ -1445,7 +1442,7 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
     // An unfolded ConstantExpr could end up getting expanded into
     // Instructions. Don't speculate this and another instruction at
     // the same time.
-    if (HInst)
+    if (SpeculationCost > 0)
       return false;
     if (!isSafeToSpeculativelyExecute(CE))
       return false;
@@ -1461,9 +1458,9 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
   // If we get here, we can hoist the instruction and if-convert.
   DEBUG(dbgs() << "SPECULATIVELY EXECUTING BB" << *ThenBB << "\n";);
 
-  // Hoist the instruction.
-  if (HInst)
-    BB->getInstList().splice(BI, ThenBB->getInstList(), HInst);
+  // Hoist the instructions.
+  BB->getInstList().splice(BI, ThenBB->getInstList(), ThenBB->begin(),
+                           llvm::prior(ThenBB->end()));
 
   // Insert selects and rewrite the PHI operands.
   IRBuilder<true, NoFolder> Builder(BI);
