@@ -20,12 +20,34 @@
 using namespace clang;
 using namespace llvm;
 
+AnalyzerOptions::UserModeKind AnalyzerOptions::getUserMode() {
+  if (UserMode == UMK_NotSet) {
+    StringRef ModeStr(Config.GetOrCreateValue("mode", "deep").getValue());
+    UserMode = llvm::StringSwitch<UserModeKind>(ModeStr)
+      .Case("shallow", UMK_Shallow)
+      .Case("deep", UMK_Deep)
+      .Default(UMK_NotSet);
+    assert(UserMode != UMK_NotSet && "User mode is not set or invalid.");
+  }
+  return UserMode;
+}
+
 IPAKind AnalyzerOptions::getIPAMode() {
   if (IPAMode == IPAK_NotSet) {
 
+    // Use the User Mode to set the default IPA value.
+    // Note, we have to add the string to the Config map for the ConfigDumper
+    // checker to function properly.
+    const char *DefaultIPA = 0;
+    UserModeKind HighLevelMode = getUserMode();
+    if (HighLevelMode == UMK_Shallow)
+      DefaultIPA = "basic-inlining";
+    else if (HighLevelMode == UMK_Deep)
+      DefaultIPA = "dynamic-bifurcate";
+    assert(DefaultIPA);
+
     // Lookup the ipa configuration option, use the default from User Mode.
-    StringRef ModeStr(Config.GetOrCreateValue("ipa", 
-                                              "dynamic-bifurcate").getValue());
+    StringRef ModeStr(Config.GetOrCreateValue("ipa", DefaultIPA).getValue());
     IPAKind IPAConfig = llvm::StringSwitch<IPAKind>(ModeStr)
             .Case("none", IPAK_None)
             .Case("basic-inlining", IPAK_BasicInlining)

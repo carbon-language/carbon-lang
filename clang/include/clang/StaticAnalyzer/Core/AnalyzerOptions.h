@@ -105,8 +105,7 @@ enum IPAKind {
   /// Inline C functions and blocks when their definitions are available.
   IPAK_BasicInlining = 2,
 
-  /// Inline callees when their definitions are available.
-  // TODO: How is this different from BasicInlining?
+  /// Inline callees(C, C++, ObjC) when their definitions are available.
   IPAK_Inlining = 3,
 
   /// Enable inlining of dynamically dispatched methods.
@@ -176,6 +175,20 @@ public:
   AnalysisInliningMode InliningMode;
 
 private:
+  /// \brief Describes the kinds for high-level analyzer mode.
+  enum UserModeKind {
+    UMK_NotSet = 0,
+    /// Perform shallow but fast analyzes.
+    UMK_Shallow = 1,
+    /// Perform deep analyzes.
+    UMK_Deep = 2
+  };
+
+  /// Controls the high-level analyzer mode, which influences the default 
+  /// settings for some of the lower-level config options (such as IPAMode).
+  /// \sa getUserMode
+  UserModeKind UserMode;
+
   /// Controls the mode of inter-procedural analysis.
   IPAKind IPAMode;
 
@@ -224,6 +237,11 @@ private:
   int getOptionAsInteger(StringRef Name, int DefaultVal);
 
 public:
+  /// \brief Retrieves and sets the UserMode. This is a high-level option,
+  /// which is used to set other low-level options. It is not accessible
+  /// outside of AnalyzerOptions.
+  UserModeKind getUserMode();
+
   /// \brief Returns the inter-procedural analysis mode.
   IPAKind getIPAMode();
 
