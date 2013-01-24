@@ -66,3 +66,45 @@ end:
 
   ret i8* %x
 }
+
+define i8* @test4(i1* %dummy, i8* %a, i8* %b) {
+; Test that we don't speculate an arbitrarily large number of unfolded constant
+; expressions.
+; CHECK: @test4
+
+entry:
+  %cond1 = load volatile i1* %dummy
+  br i1 %cond1, label %if, label %end
+
+if:
+  %cond2 = load volatile i1* %dummy
+  br i1 %cond2, label %then, label %end
+
+then:
+  br label %end
+
+end:
+  %x1 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 1 to i8*), %then ]
+  %x2 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 2 to i8*), %then ]
+  %x3 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 3 to i8*), %then ]
+  %x4 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 4 to i8*), %then ]
+  %x5 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 5 to i8*), %then ]
+  %x6 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 6 to i8*), %then ]
+  %x7 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 7 to i8*), %then ]
+  %x8 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 8 to i8*), %then ]
+  %x9 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 9 to i8*), %then ]
+  %x10 = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 10 to i8*), %then ]
+; CHECK-NOT: select
+; CHECK: phi i8*
+; CHECK: phi i8*
+; CHECK: phi i8*
+; CHECK: phi i8*
+; CHECK: phi i8*
+; CHECK: phi i8*
+; CHECK: phi i8*
+; CHECK: phi i8*
+; CHECK: phi i8*
+; CHECK: phi i8*
+
+  ret i8* %x10
+}

@@ -1446,14 +1446,12 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
     if (Operator::getOpcode(CE) == Instruction::Select)
       return false;
 
-    // An unfolded ConstantExpr could end up getting expanded into
-    // Instructions. Don't speculate this and another instruction at
-    // the same time.
-    // FIXME: This is strange because provided we haven't already hit the cost
-    // of 1, this code will speculate an arbitrary number of complex constant
-    // expression PHI nodes. Also, this doesn't account for how complex the
-    // constant expression is.
-    if (SpeculationCost > 0)
+    // Account for the cost of an unfolded ConstantExpr which could end up
+    // getting expanded into Instructions.
+    // FIXME: This doesn't account for how many operations are combined in the
+    // constant expression.
+    ++SpeculationCost;
+    if (SpeculationCost > 1)
       return false;
   }
 
