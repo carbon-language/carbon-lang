@@ -485,8 +485,9 @@ void Driver::generateCompilationDiagnostics(Compilation &C,
       << "\n\n********************";
   } else {
     // Failure, remove preprocessed files.
-    if (!C.getArgs().hasArg(options::OPT_save_temps))
+    if (!C.getArgs().hasArg(options::OPT_save_temps)) {
       C.CleanupFileList(C.getTempFiles(), true);
+    }
 
     Diag(clang::diag::note_drv_command_failed_diag_msg)
       << "Error generating preprocessed source(s).";
@@ -516,11 +517,12 @@ int Driver::ExecuteCompilation(const Compilation &C,
 
   // Otherwise, remove result files as well.
   if (!C.getArgs().hasArg(options::OPT_save_temps)) {
-    C.CleanupFileList(C.getResultFiles(), true);
+    const JobAction *JA = cast<JobAction>(&FailingCommand->getSource());
+    C.CleanupFileMap(C.getResultFiles(), JA, true);
 
     // Failure result files are valid unless we crashed.
     if (Res < 0)
-      C.CleanupFileList(C.getFailureResultFiles(), true);
+      C.CleanupFileMap(C.getFailureResultFiles(), JA, true);
   }
 
   // Print extra information about abnormal failures, if possible.
@@ -1417,7 +1419,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
   if (AtTopLevel && !isa<DsymutilJobAction>(JA) &&
       !isa<VerifyJobAction>(JA)) {
     if (Arg *FinalOutput = C.getArgs().getLastArg(options::OPT_o))
-      return C.addResultFile(FinalOutput->getValue());
+      return C.addResultFile(FinalOutput->getValue(), &JA);
   }
 
   // Default to writing to stdout?
@@ -1487,9 +1489,9 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
       BasePath = NamedOutput;
     else
       llvm::sys::path::append(BasePath, NamedOutput);
-    return C.addResultFile(C.getArgs().MakeArgString(BasePath.c_str()));
+    return C.addResultFile(C.getArgs().MakeArgString(BasePath.c_str()), &JA);
   } else {
-    return C.addResultFile(NamedOutput);
+    return C.addResultFile(NamedOutput, &JA);
   }
 }
 

@@ -40,6 +40,7 @@ namespace tools {
 
   private:
     void AddPreprocessingOptions(Compilation &C,
+                                 const JobAction &JA,
                                  const Driver &D,
                                  const ArgList &Args,
                                  ArgStringList &CmdArgs,

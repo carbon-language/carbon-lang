@@ -228,6 +228,7 @@ static bool forwardToGCC(const Option &O) {
 }
 
 void Clang::AddPreprocessingOptions(Compilation &C,
+                                    const JobAction &JA,
                                     const Driver &D,
                                     const ArgList &Args,
                                     ArgStringList &CmdArgs,
@@ -248,7 +249,7 @@ void Clang::AddPreprocessingOptions(Compilation &C,
     const char *DepFile;
     if (Arg *MF = Args.getLastArg(options::OPT_MF)) {
       DepFile = MF->getValue();
-      C.addFailureResultFile(DepFile);
+      C.addFailureResultFile(DepFile, &JA);
     } else if (Output.getType() == types::TY_Dependencies) {
       DepFile = Output.getFilename();
     } else if (A->getOption().matches(options::OPT_M) ||
@@ -256,7 +257,7 @@ void Clang::AddPreprocessingOptions(Compilation &C,
       DepFile = "-";
     } else {
       DepFile = getDependencyFileName(Args, Inputs);
-      C.addFailureResultFile(DepFile);
+      C.addFailureResultFile(DepFile, &JA);
     }
     CmdArgs.push_back("-dependency-file");
     CmdArgs.push_back(DepFile);
@@ -2300,7 +2301,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   //
   // FIXME: Support -fpreprocessed
   if (types::getPreprocessedType(InputType) != types::TY_INVALID)
-    AddPreprocessingOptions(C, D, Args, CmdArgs, Output, Inputs);
+    AddPreprocessingOptions(C, JA, D, Args, CmdArgs, Output, Inputs);
 
   // Don't warn about "clang -c -DPIC -fPIC test.i" because libtool.m4 assumes
   // that "The compiler can only warn and ignore the option if not recognized".
