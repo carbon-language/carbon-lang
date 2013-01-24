@@ -503,7 +503,8 @@ void InitializeDynamicAnnotations();
 void ReportRace(ThreadState *thr);
 bool OutputReport(Context *ctx,
                   const ScopedReport &srep,
-                  const ReportStack *suppress_stack = 0);
+                  const ReportStack *suppress_stack1 = 0,
+                  const ReportStack *suppress_stack2 = 0);
 bool IsFiredSuppression(Context *ctx,
                         const ScopedReport &srep,
                         const StackTrace &trace);

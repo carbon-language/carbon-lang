@@ -460,9 +460,12 @@ static void AddRacyStacks(ThreadState *thr, const StackTrace (&traces)[2],
 
 bool OutputReport(Context *ctx,
                   const ScopedReport &srep,
-                  const ReportStack *suppress_stack) {
+                  const ReportStack *suppress_stack1,
+                  const ReportStack *suppress_stack2) {
   const ReportDesc *rep = srep.GetReport();
-  const uptr suppress_pc = IsSuppressed(rep->typ, suppress_stack);
+  uptr suppress_pc = IsSuppressed(rep->typ, suppress_stack1);
+  if (suppress_pc == 0)
+    suppress_pc = IsSuppressed(rep->typ, suppress_stack2);
   if (suppress_pc != 0) {
     FiredSuppression supp = {srep.GetReport()->typ, suppress_pc};
     ctx->fired_suppressions.PushBack(supp);
@@ -500,15 +503,14 @@ static bool IsJavaNonsense(const ReportDesc *rep) {
   for (uptr i = 0; i < rep->mops.Size(); i++) {
     ReportMop *mop = rep->mops[i];
     ReportStack *frame = mop->stack;
-    if (frame != 0 && frame->func != 0
-        && (internal_strcmp(frame->func, "memset") == 0
-        || internal_strcmp(frame->func, "memcpy") == 0
-        || internal_strcmp(frame->func, "memmove") == 0
-        || internal_strcmp(frame->func, "strcmp") == 0
-        || internal_strcmp(frame->func, "strncpy") == 0
-        || internal_strcmp(frame->func, "strlen") == 0
-        || internal_strcmp(frame->func, "free") == 0
-        || internal_strcmp(frame->func, "pthread_mutex_lock") == 0)) {
+    if (frame == 0
+        || (frame->func == 0 && frame->file == 0 && frame->line == 0
+          && frame->module == 0)) {
+      return true;
+    }
+    if (frame != 0 && frame->file != 0
+        && (internal_strstr(frame->file, "tsan_interceptors.cc") ||
+           internal_strstr(frame->file, "sanitizer_common_interceptors.inc"))) {
       frame = frame->next;
       if (frame == 0
           || (frame->func == 0 && frame->file == 0 && frame->line == 0
@@ -599,7 +601,8 @@ void ReportRace(ThreadState *thr) {
   }
 #endif
 
-  if (!OutputReport(ctx, rep, rep.GetReport()->mops[0]->stack))
+  if (!OutputReport(ctx, rep, rep.GetReport()->mops[0]->stack,
+                              rep.GetReport()->mops[1]->stack))
     return;
 
   AddRacyStacks(thr, traces, addr_min, addr_max);
