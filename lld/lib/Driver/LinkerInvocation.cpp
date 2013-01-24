@@ -10,6 +10,7 @@
 #include "lld/Driver/LinkerInvocation.h"
 
 #include "lld/Core/InputFiles.h"
+#include "lld/Core/PassManager.h"
 #include "lld/Core/Resolver.h"
 #include "lld/Driver/Target.h"
 #include "lld/ReaderWriter/Reader.h"
@@ -75,7 +76,11 @@ void LinkerInvocation::operator()() {
 
   Resolver resolver(target->getTargetInfo(), inputs);
   resolver.resolve();
-  File &merged = resolver.resultFile();
+  MutableFile &merged = resolver.resultFile();
+
+  PassManager pm;
+  target->getTargetInfo().addPasses(pm);
+  pm.runOnFile(merged);
 
   if (error_code ec = writer) {
     llvm::errs() << "Failed to get writer: " << ec.message() << ".\n";
