@@ -99,8 +99,7 @@ def ext_four_char_character_literal : Extension<
 def ext_nonstandard_escape : Extension<
   "use of non-standard escape character '\\%0'">;
 def ext_unknown_escape : ExtWarn<"unknown escape sequence '\\%0'">;
-def err_hex_escape_no_digits : Error<"\\x used with no following hex digits">;
-def err_ucn_escape_no_digits : Error<"\\u used with no following hex digits">;
+def err_hex_escape_no_digits : Error<"\\%0 used with no following hex digits">;
 def err_ucn_escape_invalid : Error<"invalid universal character">;
 def err_ucn_escape_incomplete : Error<"incomplete universal character name">;
 def err_ucn_escape_basic_scs : Error<
