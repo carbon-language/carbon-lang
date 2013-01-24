@@ -1424,8 +1424,8 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
     }
   }
 
-  // Collect interesting PHIs, and scan for hazards.
-  SmallSetVector<std::pair<Value *, Value *>, 4> PHIs;
+  // Check that the PHI nodes can be converted to selects.
+  bool HaveRewritablePHIs = false;
   for (BasicBlock::iterator I = EndBB->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I) {
     Value *OrigV = PN->getIncomingValueForBlock(BB);
@@ -1435,26 +1435,27 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
     if (ThenV == OrigV)
       continue;
 
-    // Check for safety.
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(ThenV)) {
-      // An unfolded ConstantExpr could end up getting expanded into
-      // Instructions. Don't speculate this and another instruction at
-      // the same time.
-      if (HInst)
-        return false;
-      if (!isSafeToSpeculativelyExecute(CE))
-        return false;
-      if (ComputeSpeculationCost(CE) > PHINodeFoldingThreshold)
-        return false;
-    }
+    HaveRewritablePHIs = true;
 
-    // Ok, we may insert a select for this PHI.
-    PHIs.insert(std::make_pair(ThenV, OrigV));
+    // Check for safety.
+    ConstantExpr *CE = dyn_cast<ConstantExpr>(ThenV);
+    if (!CE)
+      continue; // Known safe.
+
+    // An unfolded ConstantExpr could end up getting expanded into
+    // Instructions. Don't speculate this and another instruction at
+    // the same time.
+    if (HInst)
+      return false;
+    if (!isSafeToSpeculativelyExecute(CE))
+      return false;
+    if (ComputeSpeculationCost(CE) > PHINodeFoldingThreshold)
+      return false;
   }
 
   // If there are no PHIs to process, bail early. This helps ensure idempotence
   // as well.
-  if (PHIs.empty())
+  if (!HaveRewritablePHIs)
     return false;
 
   // If we get here, we can hoist the instruction and if-convert.
@@ -1466,35 +1467,27 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
 
   // Insert selects and rewrite the PHI operands.
   IRBuilder<true, NoFolder> Builder(BI);
-  for (unsigned i = 0, e = PHIs.size(); i != e; ++i) {
-    Value *TrueV = PHIs[i].first;
-    Value *FalseV = PHIs[i].second;
+  for (BasicBlock::iterator I = EndBB->begin();
+       PHINode *PN = dyn_cast<PHINode>(I); ++I) {
+    unsigned OrigI = PN->getBasicBlockIndex(BB);
+    unsigned ThenI = PN->getBasicBlockIndex(ThenBB);
+    Value *OrigV = PN->getIncomingValue(OrigI);
+    Value *ThenV = PN->getIncomingValue(ThenI);
+
+    // Skip PHIs which are trivial.
+    if (OrigV == ThenV)
+      continue;
 
     // Create a select whose true value is the speculatively executed value and
-    // false value is the previously determined FalseV.
-    SelectInst *SI;
+    // false value is the preexisting value. Swap them if the branch
+    // destinations were inverted.
+    Value *TrueV = ThenV, *FalseV = OrigV;
     if (Invert)
-      SI = cast<SelectInst>
-        (Builder.CreateSelect(BrCond, FalseV, TrueV,
-                              FalseV->getName() + "." + TrueV->getName()));
-    else
-      SI = cast<SelectInst>
-        (Builder.CreateSelect(BrCond, TrueV, FalseV,
-                              TrueV->getName() + "." + FalseV->getName()));
-
-    // Make the PHI node use the select for all incoming values for "then" and
-    // "if" blocks.
-    for (BasicBlock::iterator I = EndBB->begin();
-         PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-      unsigned ThenI = PN->getBasicBlockIndex(ThenBB);
-      unsigned OrigI = PN->getBasicBlockIndex(BB);
-      Value *ThenV = PN->getIncomingValue(ThenI);
-      Value *OrigV = PN->getIncomingValue(OrigI);
-      if (TrueV == ThenV && FalseV == OrigV) {
-        PN->setIncomingValue(ThenI, SI);
-        PN->setIncomingValue(OrigI, SI);
-      }
-    }
+      std::swap(TrueV, FalseV);
+    Value *V = Builder.CreateSelect(BrCond, TrueV, FalseV,
+                                    TrueV->getName() + "." + FalseV->getName());
+    PN->setIncomingValue(OrigI, V);
+    PN->setIncomingValue(ThenI, V);
   }
 
   ++NumSpeculations;
