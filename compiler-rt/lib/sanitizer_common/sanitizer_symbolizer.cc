@@ -185,28 +185,23 @@ SANITIZER_WEAK_ATTRIBUTE SANITIZER_INTERFACE_ATTRIBUTE
 bool __sanitizer_symbolize_data(const char *ModuleName, u64 ModuleOffset,
                                 char *Buffer, int MaxLength);
 }  // extern "C"
-#endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
 
 class InternalSymbolizer {
  public:
   typedef bool (*SanitizerSymbolizeFn)(const char*, u64, char*, int);
   static InternalSymbolizer *get() {
-#if SANITIZER_SUPPORTS_WEAK_HOOKS
     if (__sanitizer_symbolize_code != 0 &&
         __sanitizer_symbolize_data != 0) {
       void *mem = symbolizer_allocator.Allocate(sizeof(InternalSymbolizer));
       return new(mem) InternalSymbolizer();
     }
-#endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
     return 0;
   }
   char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
-#if SANITIZER_SUPPORTS_WEAK_HOOKS
     SanitizerSymbolizeFn symbolize_fn = is_data ? __sanitizer_symbolize_data
                                                 : __sanitizer_symbolize_code;
     if (symbolize_fn(module_name, module_offset, buffer_, kBufferSize))
       return buffer_;
-#endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
     return 0;
   }
 
@@ -216,6 +211,17 @@ class InternalSymbolizer {
   static const int kBufferSize = 16 * 1024;
   char buffer_[kBufferSize];
 };
+#else  // SANITIZER_SUPPORTS_WEAK_HOOKS
+
+class InternalSymbolizer {
+ public:
+  static InternalSymbolizer *get() { return 0; }
+  char *SendCommand(bool is_data, const char *module_name, uptr module_offset) {
+    return 0;
+  }
+};
+
+#endif  // SANITIZER_SUPPORTS_WEAK_HOOKS
 
 class Symbolizer {
  public:
