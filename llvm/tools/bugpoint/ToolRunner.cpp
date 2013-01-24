@@ -531,12 +531,12 @@ LLC *AbstractInterpreter::createLLC(const char *Argv0,
     return 0;
   }
 
-  Message = "Found llc: " + LLCPath + "\n";
   GCC *gcc = GCC::create(Message, GCCBinary, GCCArgs);
   if (!gcc) {
     errs() << Message << "\n";
     exit(1);
   }
+  Message = "Found llc: " + LLCPath + "\n";
   return new LLC(LLCPath, gcc, Args, UseIntegratedAssembler);
 }
 
