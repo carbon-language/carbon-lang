@@ -340,6 +340,8 @@ public:
     InlineMaxStackDepth(5),
     InlineMaxFunctionSize(50),
     InliningMode(NoRedundancy),
+    UserMode(UMK_NotSet),
+    IPAMode(IPAK_NotSet),
     CXXMemberInliningMode() {}
 
 };
