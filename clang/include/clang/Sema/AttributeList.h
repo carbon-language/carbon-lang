@@ -340,6 +340,11 @@ public:
            "Not a type_tag_for_datatype attribute");
     return getTypeTagForDatatypeDataSlot().MustBeNull;
   }
+
+  /// \brief Get an index into the attribute spelling list
+  /// defined in Attr.td. This index is used by an attribute
+  /// to pretty print itself.
+  unsigned getAttributeSpellingListIndex() const;
 };
 
 /// A factory, from which one makes pools, from which one creates

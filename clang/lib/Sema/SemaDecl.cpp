@@ -1825,22 +1825,29 @@ DeclHasAttr(const Decl *D, const Attr *A) {
 bool Sema::mergeDeclAttribute(NamedDecl *D, InheritableAttr *Attr,
                               bool Override) {
   InheritableAttr *NewAttr = NULL;
+  unsigned AttrSpellingListIndex = Attr->getSpellingListIndex();
   if (AvailabilityAttr *AA = dyn_cast<AvailabilityAttr>(Attr))
     NewAttr = mergeAvailabilityAttr(D, AA->getRange(), AA->getPlatform(),
                                     AA->getIntroduced(), AA->getDeprecated(),
                                     AA->getObsoleted(), AA->getUnavailable(),
-                                    AA->getMessage(), Override);
+                                    AA->getMessage(), Override,
+                                    AttrSpellingListIndex);
   else if (VisibilityAttr *VA = dyn_cast<VisibilityAttr>(Attr))
-    NewAttr = mergeVisibilityAttr(D, VA->getRange(), VA->getVisibility());
+    NewAttr = mergeVisibilityAttr(D, VA->getRange(), VA->getVisibility(),
+                                  AttrSpellingListIndex);
   else if (DLLImportAttr *ImportA = dyn_cast<DLLImportAttr>(Attr))
-    NewAttr = mergeDLLImportAttr(D, ImportA->getRange());
+    NewAttr = mergeDLLImportAttr(D, ImportA->getRange(),
+                                 AttrSpellingListIndex);
   else if (DLLExportAttr *ExportA = dyn_cast<DLLExportAttr>(Attr))
-    NewAttr = mergeDLLExportAttr(D, ExportA->getRange());
+    NewAttr = mergeDLLExportAttr(D, ExportA->getRange(),
+                                 AttrSpellingListIndex);
   else if (FormatAttr *FA = dyn_cast<FormatAttr>(Attr))
     NewAttr = mergeFormatAttr(D, FA->getRange(), FA->getType(),
-                              FA->getFormatIdx(), FA->getFirstArg());
+                              FA->getFormatIdx(), FA->getFirstArg(),
+                              AttrSpellingListIndex);
   else if (SectionAttr *SA = dyn_cast<SectionAttr>(Attr))
-    NewAttr = mergeSectionAttr(D, SA->getRange(), SA->getName());
+    NewAttr = mergeSectionAttr(D, SA->getRange(), SA->getName(),
+                               AttrSpellingListIndex);
   else if (!DeclHasAttr(D, Attr))
     NewAttr = cast<InheritableAttr>(Attr->clone(Context));
 

@@ -125,3 +125,14 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo *Name,
 
   return ::getAttrKind(Buf);
 }
+
+unsigned AttributeList::getAttributeSpellingListIndex() const {
+  // Both variables will be used in tablegen generated
+  // attribute spell list index matching code.
+  StringRef Name = AttrName->getName();
+  StringRef Scope = ScopeName ? ScopeName->getName() : "";
+
+#include "clang/Sema/AttrSpellingListIndex.inc"
+
+}
+

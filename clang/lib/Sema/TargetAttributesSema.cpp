@@ -151,7 +151,8 @@ static void HandleX86ForceAlignArgPointerAttr(Decl *D,
                                                            S.Context));
 }
 
-DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range) {
+DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range,
+                                        unsigned AttrSpellingListIndex) {
   if (D->hasAttr<DLLExportAttr>()) {
     Diag(Range.getBegin(), diag::warn_attribute_ignored) << "dllimport";
     return NULL;
@@ -160,7 +161,8 @@ DLLImportAttr *Sema::mergeDLLImportAttr(Decl *D, SourceRange Range) {
   if (D->hasAttr<DLLImportAttr>())
     return NULL;
 
-  return ::new (Context) DLLImportAttr(Range, Context);
+  return ::new (Context) DLLImportAttr(Range, Context,
+                                       AttrSpellingListIndex);
 }
 
 static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -189,12 +191,14 @@ static void HandleDLLImportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  DLLImportAttr *NewAttr = S.mergeDLLImportAttr(D, Attr.getRange());
+  unsigned Index = Attr.getAttributeSpellingListIndex();
+  DLLImportAttr *NewAttr = S.mergeDLLImportAttr(D, Attr.getRange(), Index);
   if (NewAttr)
     D->addAttr(NewAttr);
 }
 
-DLLExportAttr *Sema::mergeDLLExportAttr(Decl *D, SourceRange Range) {
+DLLExportAttr *Sema::mergeDLLExportAttr(Decl *D, SourceRange Range,
+                                        unsigned AttrSpellingListIndex) {
   if (DLLImportAttr *Import = D->getAttr<DLLImportAttr>()) {
     Diag(Import->getLocation(), diag::warn_attribute_ignored) << "dllimport";
     D->dropAttr<DLLImportAttr>();
@@ -203,7 +207,8 @@ DLLExportAttr *Sema::mergeDLLExportAttr(Decl *D, SourceRange Range) {
   if (D->hasAttr<DLLExportAttr>())
     return NULL;
 
-  return ::new (Context) DLLExportAttr(Range, Context);
+  return ::new (Context) DLLExportAttr(Range, Context,
+                                       AttrSpellingListIndex);
 }
 
 static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -229,7 +234,8 @@ static void HandleDLLExportAttr(Decl *D, const AttributeList &Attr, Sema &S) {
     return;
   }
 
-  DLLExportAttr *NewAttr = S.mergeDLLExportAttr(D, Attr.getRange());
+  unsigned Index = Attr.getAttributeSpellingListIndex();
+  DLLExportAttr *NewAttr = S.mergeDLLExportAttr(D, Attr.getRange(), Index);
   if (NewAttr)
     D->addAttr(NewAttr);
 }
@@ -274,7 +280,8 @@ static void HandleMips16Attr(Decl *D, const AttributeList &Attr, Sema &S) {
       << Attr.getName() << /* function */0;
     return;
   }
-  D->addAttr(::new (S.Context) Mips16Attr(Attr.getRange(), S.Context));
+  D->addAttr(::new (S.Context) Mips16Attr(Attr.getRange(), S.Context,
+                                          Attr.getAttributeSpellingListIndex()));
 }
 
 static void HandleNoMips16Attr(Decl *D, const AttributeList &Attr, Sema &S) {
@@ -289,7 +296,9 @@ static void HandleNoMips16Attr(Decl *D, const AttributeList &Attr, Sema &S) {
       << Attr.getName() << /* function */0;
     return;
   }
-  D->addAttr(::new (S.Context) NoMips16Attr(Attr.getRange(), S.Context));
+  D->addAttr(::new (S.Context)
+             NoMips16Attr(Attr.getRange(), S.Context,
+                          Attr.getAttributeSpellingListIndex()));
 }
 
 namespace {

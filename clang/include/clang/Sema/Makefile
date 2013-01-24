@@ -1,6 +1,7 @@
 CLANG_LEVEL := ../../..
 TD_SRC_DIR = $(PROJ_SRC_DIR)/../Basic
-BUILT_SOURCES = AttrTemplateInstantiate.inc AttrParsedAttrList.inc AttrParsedAttrKinds.inc
+BUILT_SOURCES = AttrTemplateInstantiate.inc AttrParsedAttrList.inc AttrParsedAttrKinds.inc \
+        AttrSpellingListIndex.inc
 
 TABLEGEN_INC_FILES_COMMON = 1
 
@@ -22,6 +23,12 @@ $(ObjDir)/AttrParsedAttrKinds.inc.tmp : $(TD_SRC_DIR)/Attr.td \
                                        $(CLANG_TBLGEN) $(ObjDir)/.dir
 	$(Echo) "Building Clang parsed attribute kinds with tablegen"
 	$(Verb) $(ClangTableGen) -gen-clang-attr-parsed-attr-kinds -o \
+	  $(call SYSPATH, $@) -I $(PROJ_SRC_DIR)/../../ $<
+
+$(ObjDir)/AttrSpellingListIndex.inc.tmp : $(TD_SRC_DIR)/Attr.td \
+                                       $(CLANG_TBLGEN) $(ObjDir)/.dir
+	$(Echo) "Building Clang attribute spelling list index with tablegen"
+	$(Verb) $(ClangTableGen) -gen-clang-attr-spelling-index -o \
 	  $(call SYSPATH, $@) -I $(PROJ_SRC_DIR)/../../ $<
 
 
