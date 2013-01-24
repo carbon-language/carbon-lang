@@ -2892,11 +2892,13 @@ const char* MipsTargetLowering::
   getMips16HelperFunction
     (Type* RetTy, ArgListTy &Args, bool &needHelper) const {
   const unsigned int maxStubNum = 10;
-  const bool validStubNum[maxStubNum+1] =
-    {true, true, true, false, false, true, true, false, false, true, true};
   const unsigned int stubNum = getMips16HelperFunctionStubNumber(Args);
   assert(stubNum <= maxStubNum);
-  assert (validStubNum[stubNum]);
+#ifdef NDEBUG
+  const bool validStubNum[maxStubNum+1] =
+    {true, true, true, false, false, true, true, false, false, true, true};
+  assert(validStubNum[stubNum]);
+#endif
   const char *result;
   if (RetTy->isFloatTy()) {
     result = sfMips16Helper[stubNum];
