@@ -1,5 +1,10 @@
-// RUN: %clang_cc1 -emit-llvm -g < %s | grep  lexical | count 5
+// RUN: %clang_cc1 -emit-llvm -g < %s | FileCheck %s
 // Test to check number of lexical scope identified in debug info.
+// CHECK: DW_TAG_lexical_block
+// CHECK: DW_TAG_lexical_block
+// CHECK: DW_TAG_lexical_block
+// CHECK: DW_TAG_lexical_block
+// CHECK: DW_TAG_lexical_block
 
 extern int bar();
 extern void foobar();
