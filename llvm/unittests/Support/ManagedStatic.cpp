@@ -32,7 +32,9 @@ namespace test1 {
   void *allocate_stack(pthread_attr_t &a, size_t n = 65536) {
     void *stack = malloc(n);
     pthread_attr_init(&a);
+#if defined(__linux__)
     pthread_attr_setstack(&a, stack, n);
+#endif
     return stack;
   }
 }
