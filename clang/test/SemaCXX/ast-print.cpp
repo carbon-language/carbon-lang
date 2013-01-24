@@ -81,3 +81,21 @@ struct test9
         E a = A;
     }
 };
+
+namespace test10 {
+  namespace M {
+    template<typename T>
+    struct X {
+      enum { value };
+    };
+  }
+}
+
+typedef int INT;
+
+// CHECK: test11
+// CHECK-NEXT: return test10::M::X<INT>::value;
+int test11() {
+  return test10::M::X<INT>::value;
+}
+
