@@ -161,16 +161,6 @@ Boolean isLegalUTF8String(const UTF8 **source, const UTF8 *sourceEnd);
 
 unsigned getNumBytesForUTF8(UTF8 firstByte);
 
-static inline ConversionResult convertUTF8Sequence(const UTF8 **source,
-                                                   const UTF8 *sourceEnd,
-                                                   UTF32 *target,
-                                                   ConversionFlags flags) {
-  unsigned size = getNumBytesForUTF8(**source);
-  if (size > sourceEnd - *source)
-    return sourceExhausted;
-  return ConvertUTF8toUTF32(source, *source + size, &target, target + 1, flags);
-}
-
 #ifdef __cplusplus
 }
 
@@ -205,6 +195,32 @@ bool ConvertUTF8toWide(unsigned WideCharWidth, llvm::StringRef Source,
  */
 bool ConvertCodePointToUTF8(unsigned Source, char *&ResultPtr);
 
+/**
+ * Convert the first UTF8 sequence in the given source buffer to a UTF32
+ * code point.
+ *
+ * \param [in,out] source A pointer to the source buffer. If the conversion
+ * succeeds, this pointer will be updated to point to the byte just past the
+ * end of the converted sequence.
+ * \param sourceEnd A pointer just past the end of the source buffer.
+ * \param [out] target The converted code
+ * \param flags Whether the conversion is strict or lenient.
+ *
+ * \returns conversionOK on success
+ *
+ * \sa ConvertUTF8toUTF32
+ */
+static inline ConversionResult convertUTF8Sequence(const UTF8 **source,
+                                                   const UTF8 *sourceEnd,
+                                                   UTF32 *target,
+                                                   ConversionFlags flags) {
+  if (*source == sourceEnd)
+    return sourceExhausted;
+  unsigned size = getNumBytesForUTF8(**source);
+  if (size > sourceEnd - *source)
+    return sourceExhausted;
+  return ConvertUTF8toUTF32(source, *source + size, &target, target + 1, flags);
+}
 }
 
 #endif
