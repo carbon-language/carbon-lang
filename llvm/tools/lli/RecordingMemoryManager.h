@@ -33,7 +33,7 @@ private:
 
 public:
   RecordingMemoryManager() {}
-  virtual ~RecordingMemoryManager() {}
+  virtual ~RecordingMemoryManager();
 
   typedef SmallVectorImpl<Allocation>::const_iterator const_data_iterator;
   typedef SmallVectorImpl<Allocation>::const_iterator const_code_iterator;

@@ -15,6 +15,17 @@
 #include "RecordingMemoryManager.h"
 using namespace llvm;
 
+RecordingMemoryManager::~RecordingMemoryManager() {
+  for (SmallVectorImpl<Allocation>::iterator
+         I = AllocatedCodeMem.begin(), E = AllocatedCodeMem.end();
+       I != E; ++I)
+    free(I->first.base());
+  for (SmallVectorImpl<Allocation>::iterator
+         I = AllocatedDataMem.begin(), E = AllocatedDataMem.end();
+       I != E; ++I)
+    free(I->first.base());
+}
+
 uint8_t *RecordingMemoryManager::
 allocateCodeSection(uintptr_t Size, unsigned Alignment, unsigned SectionID) {
   // The recording memory manager is just a local copy of the remote target.
