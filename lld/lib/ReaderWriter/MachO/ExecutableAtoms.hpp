@@ -16,8 +16,7 @@
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/TargetInfo.h"
-
-#include "SimpleAtoms.hpp"
+#include "lld/ReaderWriter/Simple.h"
 
 namespace lld {
 namespace mach_o {

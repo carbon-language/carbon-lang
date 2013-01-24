@@ -16,9 +16,9 @@
 #include "lld/Core/SharedLibraryAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
+#include "lld/ReaderWriter/Simple.h"
 
 #include "ReferenceKinds.h"
-#include "SimpleAtoms.hpp"
 #include "StubAtoms_x86_64.hpp"
 #include "StubAtoms_x86.hpp"
 

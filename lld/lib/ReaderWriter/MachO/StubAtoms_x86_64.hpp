@@ -18,7 +18,6 @@
 #include "lld/Core/Reference.h"
 
 #include "ReferenceKinds.h"
-#include "SimpleAtoms.hpp"
 
 namespace lld {
 namespace mach_o {

@@ -18,9 +18,9 @@
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 #include "lld/Core/Pass.h"
+#include "lld/ReaderWriter/Simple.h"
 
 #include "ReferenceKinds.h"
-#include "SimpleAtoms.hpp"
 #include "StubAtoms.hpp"
 
 namespace lld {
