@@ -16,7 +16,8 @@ void test1() {
 // CHECK: {{^              \^}}
 // CHECK: {{^              ;}}
 
-// CHECK-MACHINE: fix-it:"{{.*}}fixit-unicode.c":{[[@LINE-8]]:15-[[@LINE-8]]:15}:";"
+// CHECK-MACHINE: fix-it:"{{.*}}fixit-unicode.c":{[[@LINE-8]]:15-[[@LINE-8]]:18}:""
+// CHECK-MACHINE: fix-it:"{{.*}}fixit-unicode.c":{[[@LINE-9]]:15-[[@LINE-9]]:15}:";"
 }
 
 
