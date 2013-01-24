@@ -1135,15 +1135,13 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // In C++ the implicit 'this' function parameter also counts, and they are
   // counted from one.
   bool HasImplicitThisParam = isInstanceMethod(D);
-  unsigned NumArgs  = getFunctionOrMethodNumArgs(D) + HasImplicitThisParam;
+  unsigned NumArgs = getFunctionOrMethodNumArgs(D) + HasImplicitThisParam;
 
   // The nonnull attribute only applies to pointers.
   SmallVector<unsigned, 10> NonNullArgs;
 
-  for (AttributeList::arg_iterator I=Attr.arg_begin(),
-                                   E=Attr.arg_end(); I!=E; ++I) {
-
-
+  for (AttributeList::arg_iterator I = Attr.arg_begin(),
+                                   E = Attr.arg_end(); I != E; ++I) {
     // The argument must be an integer constant expression.
     Expr *Ex = *I;
     llvm::APSInt ArgNum(32);
@@ -1190,11 +1188,11 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   // If no arguments were specified to __attribute__((nonnull)) then all pointer
   // arguments have a nonnull attribute.
   if (NonNullArgs.empty()) {
-    for (unsigned I = 0, E = getFunctionOrMethodNumArgs(D); I != E; ++I) {
-      QualType T = getFunctionOrMethodArgType(D, I).getNonReferenceType();
+    for (unsigned i = 0, e = getFunctionOrMethodNumArgs(D); i != e; ++i) {
+      QualType T = getFunctionOrMethodArgType(D, i).getNonReferenceType();
       possibleTransparentUnionPointerType(T);
       if (T->isAnyPointerType() || T->isBlockPointerType())
-        NonNullArgs.push_back(I);
+        NonNullArgs.push_back(i);
     }
 
     // No pointer arguments?
@@ -1207,7 +1205,7 @@ static void handleNonNullAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     }
   }
 
-  unsigned* start = &NonNullArgs[0];
+  unsigned *start = &NonNullArgs[0];
   unsigned size = NonNullArgs.size();
   llvm::array_pod_sort(start, start + size);
   D->addAttr(::new (S.Context) NonNullAttr(Attr.getRange(), S.Context, start,

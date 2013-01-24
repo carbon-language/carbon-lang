@@ -1,4 +1,4 @@
-//===--- SemaOverload.cpp - C++ Overloading ---------------------*- C++ -*-===//
+//===--- SemaOverload.cpp - C++ Overloading -------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
