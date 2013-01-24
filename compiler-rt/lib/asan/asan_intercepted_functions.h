@@ -171,7 +171,8 @@ DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pread64, int fd, void *buf,
 DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, write, int fd, void *ptr, SIZE_T count);
 # endif
 # if SANITIZER_INTERCEPT_PWRITE
-DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count);
+DECLARE_FUNCTION_AND_WRAPPER(SSIZE_T, pwrite,
+                             int fd, void *ptr, SIZE_T count, OFF_T offset);
 # endif
 
 # if ASAN_INTERCEPT_MLOCKX
