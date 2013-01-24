@@ -255,6 +255,11 @@ int Finalize(ThreadState *thr) {
   ctx->report_mtx.Lock();
   ctx->report_mtx.Unlock();
 
+#ifndef TSAN_GO
+  if (ctx->flags.verbosity)
+    AllocatorPrintStats();
+#endif
+
   ThreadFinalize(thr);
 
   if (ctx->nreported) {

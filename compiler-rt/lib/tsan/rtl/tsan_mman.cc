@@ -38,8 +38,16 @@ void InitializeAllocator() {
   allocator()->Init();
 }
 
-void AlloctorThreadFinish(ThreadState *thr) {
-  allocator()->SwallowCache(&thr->alloc_cache);
+void AllocatorThreadStart(ThreadState *thr) {
+  allocator()->InitCache(&thr->alloc_cache);
+}
+
+void AllocatorThreadFinish(ThreadState *thr) {
+  allocator()->DestroyCache(&thr->alloc_cache);
+}
+
+void AllocatorPrintStats() {
+  allocator()->PrintStats();
 }
 
 static void SignalUnsafeCall(ThreadState *thr, uptr pc) {
@@ -169,30 +177,44 @@ using namespace __tsan;
 
 extern "C" {
 uptr __tsan_get_current_allocated_bytes() {
-  return 0;
+  u64 stats[AllocatorStatCount];
+  allocator()->GetStats(stats);
+  u64 m = stats[AllocatorStatMalloced];
+  u64 f = stats[AllocatorStatFreed];
+  return m >= f ? m - f : 1;
 }
 
 uptr __tsan_get_heap_size() {
-  return 1;
+  u64 stats[AllocatorStatCount];
+  allocator()->GetStats(stats);
+  u64 m = stats[AllocatorStatMmapped];
+  u64 f = stats[AllocatorStatUnmapped];
+  return m >= f ? m - f : 1;
 }
 
 uptr __tsan_get_free_bytes() {
-  return 1;
+  return 0;
 }
 
 uptr __tsan_get_unmapped_bytes() {
-  return 1;
+  return 0;
 }
 
 uptr __tsan_get_estimated_allocated_size(uptr size) {
   return size;
 }
 
-bool __tsan_get_ownership(const void *p) {
-  return true;
+bool __tsan_get_ownership(void *p) {
+  return allocator()->GetBlockBegin(p) != 0;
 }
 
-uptr __tsan_get_allocated_size(const void *p) {
-  return 0;
+uptr __tsan_get_allocated_size(void *p) {
+  if (p == 0)
+    return 0;
+  p = allocator()->GetBlockBegin(p);
+  if (p == 0)
+    return 0;
+  MBlock *b = (MBlock*)allocator()->GetMetaData(p);
+  return b->size;
 }
 }  // extern "C"

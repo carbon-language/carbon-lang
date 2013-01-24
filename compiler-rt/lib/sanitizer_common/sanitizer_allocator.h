@@ -180,6 +180,86 @@ typedef SizeClassMap<17, 64, 14, FIRST_32_SECOND_64(25, 28)>
     CompactSizeClassMap;
 template<class SizeClassAllocator> struct SizeClassAllocatorLocalCache;
 
+// Memory allocator statistics
+enum AllocatorStat {
+  AllocatorStatMalloced,
+  AllocatorStatFreed,
+  AllocatorStatMmapped,
+  AllocatorStatUnmapped,
+  AllocatorStatCount
+};
+
+typedef u64 AllocatorStatCounters[AllocatorStatCount];
+
+// Per-thread stats, live in per-thread cache.
+class AllocatorStats {
+ public:
+  void Init() {
+    internal_memset(this, 0, sizeof(*this));
+  }
+
+  void Add(AllocatorStat i, u64 v) {
+    v += atomic_load(&stats_[i], memory_order_relaxed);
+    atomic_store(&stats_[i], v, memory_order_relaxed);
+  }
+
+  void Set(AllocatorStat i, u64 v) {
+    atomic_store(&stats_[i], v, memory_order_relaxed);
+  }
+
+  u64 Get(AllocatorStat i) const {
+    return atomic_load(&stats_[i], memory_order_relaxed);
+  }
+
+ private:
+  friend class AllocatorGlobalStats;
+  AllocatorStats *next_;
+  AllocatorStats *prev_;
+  atomic_uint64_t stats_[AllocatorStatCount];
+};
+
+// Global stats, used for aggregation and querying.
+class AllocatorGlobalStats : public AllocatorStats {
+ public:
+  void Init() {
+    internal_memset(this, 0, sizeof(*this));
+    next_ = this;
+    prev_ = this;
+  }
+
+  void Register(AllocatorStats *s) {
+    SpinMutexLock l(&mu_);
+    s->next_ = next_;
+    s->prev_ = this;
+    next_->prev_ = s;
+    next_ = s;
+  }
+
+  void Unregister(AllocatorStats *s) {
+    SpinMutexLock l(&mu_);
+    s->prev_->next_ = s->next_;
+    s->next_->prev_ = s->prev_;
+    for (int i = 0; i < AllocatorStatCount; i++)
+      Add(AllocatorStat(i), s->Get(AllocatorStat(i)));
+  }
+
+  void Get(AllocatorStatCounters s) const {
+    internal_memset(s, 0, AllocatorStatCount * sizeof(u64));
+    SpinMutexLock l(&mu_);
+    const AllocatorStats *stats = this;
+    for (;;) {
+      for (int i = 0; i < AllocatorStatCount; i++)
+        s[i] += stats->Get(AllocatorStat(i));
+      stats = stats->next_;
+      if (stats == this)
+        break;
+    }
+  }
+
+ private:
+  mutable SpinMutex mu_;
+};
+
 // Allocators call these callbacks on mmap/munmap.
 struct NoOpMapUnmapCallback {
   void OnMap(uptr p, uptr size) const { }
@@ -233,17 +313,18 @@ class SizeClassAllocator64 {
       alignment <= SizeClassMap::kMaxSize;
   }
 
-  Batch *NOINLINE AllocateBatch(AllocatorCache *c, uptr class_id) {
+  Batch *NOINLINE AllocateBatch(AllocatorStats *stat, AllocatorCache *c,
+                                uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     RegionInfo *region = GetRegionInfo(class_id);
     Batch *b = region->free_list.Pop();
     if (b == 0)
-      b = PopulateFreeList(c, class_id, region);
+      b = PopulateFreeList(stat, c, class_id, region);
     region->n_allocated += b->count;
     return b;
   }
 
-  void NOINLINE DeallocateBatch(uptr class_id, Batch *b) {
+  void NOINLINE DeallocateBatch(AllocatorStats *stat, uptr class_id, Batch *b) {
     RegionInfo *region = GetRegionInfo(class_id);
     region->free_list.Push(b);
     region->n_freed += b->count;
@@ -370,8 +451,8 @@ class SizeClassAllocator64 {
     return offset / (u32)size;
   }
 
-  Batch *NOINLINE PopulateFreeList(AllocatorCache *c, uptr class_id,
-                                   RegionInfo *region) {
+  Batch *NOINLINE PopulateFreeList(AllocatorStats *stat, AllocatorCache *c,
+                                   uptr class_id, RegionInfo *region) {
     BlockingMutexLock l(&region->mutex);
     Batch *b = region->free_list.Pop();
     if (b)
@@ -388,6 +469,7 @@ class SizeClassAllocator64 {
         map_size += kUserMapSize;
       CHECK_GE(region->mapped_user + map_size, end_idx);
       MapWithCallback(region_beg + region->mapped_user, map_size);
+      stat->Add(AllocatorStatMmapped, map_size);
       region->mapped_user += map_size;
     }
     uptr total_count = (region->mapped_user - beg_idx - size)
@@ -469,6 +551,7 @@ class SizeClassAllocator32 {
     MapUnmapCallback().OnMap((uptr)res, size);
     return res;
   }
+
   void UnmapWithCallback(uptr beg, uptr size) {
     MapUnmapCallback().OnUnmap(beg, size);
     UnmapOrDie(reinterpret_cast<void *>(beg), size);
@@ -490,19 +573,20 @@ class SizeClassAllocator32 {
     return reinterpret_cast<void*>(meta);
   }
 
-  Batch *NOINLINE AllocateBatch(AllocatorCache *c, uptr class_id) {
+  Batch *NOINLINE AllocateBatch(AllocatorStats *stat, AllocatorCache *c,
+                                uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     SizeClassInfo *sci = GetSizeClassInfo(class_id);
     SpinMutexLock l(&sci->mutex);
     if (sci->free_list.empty())
-      PopulateFreeList(c, sci, class_id);
+      PopulateFreeList(stat, c, sci, class_id);
     CHECK(!sci->free_list.empty());
     Batch *b = sci->free_list.front();
     sci->free_list.pop_front();
     return b;
   }
 
-  void NOINLINE DeallocateBatch(uptr class_id, Batch *b) {
+  void NOINLINE DeallocateBatch(AllocatorStats *stat, uptr class_id, Batch *b) {
     CHECK_LT(class_id, kNumClasses);
     SizeClassInfo *sci = GetSizeClassInfo(class_id);
     SpinMutexLock l(&sci->mutex);
@@ -579,11 +663,12 @@ class SizeClassAllocator32 {
     return mem & ~(kRegionSize - 1);
   }
 
-  uptr AllocateRegion(uptr class_id) {
+  uptr AllocateRegion(AllocatorStats *stat, uptr class_id) {
     CHECK_LT(class_id, kNumClasses);
     uptr res = reinterpret_cast<uptr>(MmapAlignedOrDie(kRegionSize, kRegionSize,
                                       "SizeClassAllocator32"));
     MapUnmapCallback().OnMap(res, kRegionSize);
+    stat->Add(AllocatorStatMmapped, kRegionSize);
     CHECK_EQ(0U, (res & (kRegionSize - 1)));
     CHECK_EQ(0U, state_->possible_regions[ComputeRegionId(res)]);
     state_->possible_regions[ComputeRegionId(res)] = class_id;
@@ -595,9 +680,10 @@ class SizeClassAllocator32 {
     return &state_->size_class_info_array[class_id];
   }
 
-  void PopulateFreeList(AllocatorCache *c, SizeClassInfo *sci, uptr class_id) {
+  void PopulateFreeList(AllocatorStats *stat, AllocatorCache *c,
+                        SizeClassInfo *sci, uptr class_id) {
     uptr size = SizeClassMap::Size(class_id);
-    uptr reg = AllocateRegion(class_id);
+    uptr reg = AllocateRegion(stat, class_id);
     uptr n_chunks = kRegionSize / (size + kMetadataSize);
     uptr max_count = SizeClassMap::MaxCached(class_id);
     Batch *b = 0;
@@ -634,14 +720,22 @@ struct SizeClassAllocatorLocalCache {
   typedef SizeClassAllocator Allocator;
   static const uptr kNumClasses = SizeClassAllocator::kNumClasses;
 
-  // Don't need to call Init if the object is a global (i.e. zero-initialized).
-  void Init() {
-    internal_memset(this, 0, sizeof(*this));
+  void Init(AllocatorGlobalStats *s) {
+    stats_.Init();
+    if (s)
+      s->Register(&stats_);
+  }
+
+  void Destroy(SizeClassAllocator *allocator, AllocatorGlobalStats *s) {
+    Drain(allocator);
+    if (s)
+      s->Unregister(&stats_);
   }
 
   void *Allocate(SizeClassAllocator *allocator, uptr class_id) {
     CHECK_NE(class_id, 0UL);
     CHECK_LT(class_id, kNumClasses);
+    stats_.Add(AllocatorStatMalloced, SizeClassMap::Size(class_id));
     PerClass *c = &per_class_[class_id];
     if (UNLIKELY(c->count == 0))
       Refill(allocator, class_id);
@@ -653,6 +747,7 @@ struct SizeClassAllocatorLocalCache {
   void Deallocate(SizeClassAllocator *allocator, uptr class_id, void *p) {
     CHECK_NE(class_id, 0UL);
     CHECK_LT(class_id, kNumClasses);
+    stats_.Add(AllocatorStatFreed, SizeClassMap::Size(class_id));
     PerClass *c = &per_class_[class_id];
     if (UNLIKELY(c->count == c->max_count))
       Drain(allocator, class_id);
@@ -676,6 +771,7 @@ struct SizeClassAllocatorLocalCache {
     void *batch[2 * SizeClassMap::kMaxNumCached];
   };
   PerClass per_class_[kNumClasses];
+  AllocatorStats stats_;
 
   void InitCache() {
     if (per_class_[0].max_count)
@@ -689,7 +785,8 @@ struct SizeClassAllocatorLocalCache {
   void NOINLINE Refill(SizeClassAllocator *allocator, uptr class_id) {
     InitCache();
     PerClass *c = &per_class_[class_id];
-    Batch *b = allocator->AllocateBatch(this, class_id);
+    Batch *b = allocator->AllocateBatch(&stats_, this, class_id);
+    CHECK_GT(b->count, 0);
     for (uptr i = 0; i < b->count; i++)
       c->batch[i] = b->batch[i];
     c->count = b->count;
@@ -712,7 +809,7 @@ struct SizeClassAllocatorLocalCache {
     }
     b->count = cnt;
     c->count -= cnt;
-    allocator->DeallocateBatch(class_id, b);
+    allocator->DeallocateBatch(&stats_, class_id, b);
   }
 };
 
@@ -727,7 +824,7 @@ class LargeMmapAllocator {
     page_size_ = GetPageSizeCached();
   }
 
-  void *Allocate(uptr size, uptr alignment) {
+  void *Allocate(AllocatorStats *stat, uptr size, uptr alignment) {
     CHECK(IsPowerOfTwo(alignment));
     uptr map_size = RoundUpMapSize(size);
     if (alignment > page_size_)
@@ -758,11 +855,13 @@ class LargeMmapAllocator {
       stats.currently_allocated += map_size;
       stats.max_allocated = Max(stats.max_allocated, stats.currently_allocated);
       stats.by_size_log[size_log]++;
+      stat->Add(AllocatorStatMalloced, map_size);
+      stat->Add(AllocatorStatMmapped, map_size);
     }
     return reinterpret_cast<void*>(res);
   }
 
-  void Deallocate(void *p) {
+  void Deallocate(AllocatorStats *stat, void *p) {
     Header *h = GetHeader(p);
     {
       SpinMutexLock l(&mutex_);
@@ -774,6 +873,8 @@ class LargeMmapAllocator {
       n_chunks_--;
       stats.n_frees++;
       stats.currently_allocated -= h->map_size;
+      stat->Add(AllocatorStatFreed, h->map_size);
+      stat->Add(AllocatorStatUnmapped, h->map_size);
     }
     MapUnmapCallback().OnUnmap(h->map_beg, h->map_size);
     UnmapOrDie(reinterpret_cast<void*>(h->map_beg), h->map_size);
@@ -886,6 +987,7 @@ class CombinedAllocator {
   void Init() {
     primary_.Init();
     secondary_.Init();
+    stats_.Init();
   }
 
   void *Allocate(AllocatorCache *cache, uptr size, uptr alignment,
@@ -901,7 +1003,7 @@ class CombinedAllocator {
     if (primary_.CanAllocate(size, alignment))
       res = cache->Allocate(&primary_, primary_.ClassID(size));
     else
-      res = secondary_.Allocate(size, alignment);
+      res = secondary_.Allocate(&stats_, size, alignment);
     if (alignment > 8)
       CHECK_EQ(reinterpret_cast<uptr>(res) & (alignment - 1), 0);
     if (cleared && res)
@@ -914,7 +1016,7 @@ class CombinedAllocator {
     if (primary_.PointerIsMine(p))
       cache->Deallocate(&primary_, primary_.GetSizeClass(p), p);
     else
-      secondary_.Deallocate(p);
+      secondary_.Deallocate(&stats_, p);
   }
 
   void *Reallocate(AllocatorCache *cache, void *p, uptr new_size,
@@ -969,8 +1071,20 @@ class CombinedAllocator {
 
   void TestOnlyUnmap() { primary_.TestOnlyUnmap(); }
 
+  void InitCache(AllocatorCache *cache) {
+    cache->Init(&stats_);
+  }
+
+  void DestroyCache(AllocatorCache *cache) {
+    cache->Destroy(&primary_, &stats_);
+  }
+
   void SwallowCache(AllocatorCache *cache) {
     cache->Drain(&primary_);
+  }
+
+  void GetStats(AllocatorStatCounters s) const {
+    stats_.Get(s);
   }
 
   void PrintStats() {
@@ -981,6 +1095,7 @@ class CombinedAllocator {
  private:
   PrimaryAllocator primary_;
   SecondaryAllocator secondary_;
+  AllocatorGlobalStats stats_;
 };
 
 }  // namespace __sanitizer

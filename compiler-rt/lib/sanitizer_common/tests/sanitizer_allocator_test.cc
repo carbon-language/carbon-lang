@@ -63,7 +63,8 @@ void TestSizeClassAllocator() {
   Allocator *a = new Allocator;
   a->Init();
   SizeClassAllocatorLocalCache<Allocator> cache;
-  cache.Init();
+  memset(&cache, 0, sizeof(cache));
+  cache.Init(0);
 
   static const uptr sizes[] = {1, 16, 30, 40, 100, 1000, 10000,
     50000, 60000, 100000, 120000, 300000, 500000, 1000000, 2000000};
@@ -137,7 +138,8 @@ void SizeClassAllocatorMetadataStress() {
   Allocator *a = new Allocator;
   a->Init();
   SizeClassAllocatorLocalCache<Allocator> cache;
-  cache.Init();
+  memset(&cache, 0, sizeof(cache));
+  cache.Init(0);
   static volatile void *sink;
 
   const uptr kNumAllocs = 10000;
@@ -191,8 +193,11 @@ TEST(SanitizerCommon, SizeClassAllocator64MapUnmapCallback) {
   a->Init();
   EXPECT_EQ(TestMapUnmapCallback::map_count, 1);  // Allocator state.
   SizeClassAllocatorLocalCache<Allocator64WithCallBack> cache;
-  cache.Init();
-  a->AllocateBatch(&cache, 64);
+  memset(&cache, 0, sizeof(cache));
+  cache.Init(0);
+  AllocatorStats stats;
+  stats.Init();
+  a->AllocateBatch(&stats, &cache, 64);
   EXPECT_EQ(TestMapUnmapCallback::map_count, 3);  // State + alloc + metadata.
   a->TestOnlyUnmap();
   EXPECT_EQ(TestMapUnmapCallback::unmap_count, 1);  // The whole thing.
@@ -210,8 +215,11 @@ TEST(SanitizerCommon, SizeClassAllocator32MapUnmapCallback) {
   a->Init();
   EXPECT_EQ(TestMapUnmapCallback::map_count, 1);  // Allocator state.
   SizeClassAllocatorLocalCache<Allocator32WithCallBack>  cache;
-  cache.Init();
-  a->AllocateBatch(&cache, 64);
+  memset(&cache, 0, sizeof(cache));
+  cache.Init(0);
+  AllocatorStats stats;
+  stats.Init();
+  a->AllocateBatch(&stats, &cache, 64);
   EXPECT_EQ(TestMapUnmapCallback::map_count, 2);  // alloc.
   a->TestOnlyUnmap();
   EXPECT_EQ(TestMapUnmapCallback::unmap_count, 2);  // The whole thing + alloc.
@@ -226,9 +234,11 @@ TEST(SanitizerCommon, LargeMmapAllocatorMapUnmapCallback) {
   TestMapUnmapCallback::unmap_count = 0;
   LargeMmapAllocator<TestMapUnmapCallback> a;
   a.Init();
-  void *x = a.Allocate(1 << 20, 1);
+  AllocatorStats stats;
+  stats.Init();
+  void *x = a.Allocate(&stats, 1 << 20, 1);
   EXPECT_EQ(TestMapUnmapCallback::map_count, 1);
-  a.Deallocate(x);
+  a.Deallocate(&stats, x);
   EXPECT_EQ(TestMapUnmapCallback::unmap_count, 1);
 }
 
@@ -237,9 +247,12 @@ void FailInAssertionOnOOM() {
   Allocator a;
   a.Init();
   SizeClassAllocatorLocalCache<Allocator> cache;
-  cache.Init();
+  memset(&cache, 0, sizeof(cache));
+  cache.Init(0);
+  AllocatorStats stats;
+  stats.Init();
   for (int i = 0; i < 1000000; i++) {
-    a.AllocateBatch(&cache, 64);
+    a.AllocateBatch(&stats, &cache, 64);
   }
 
   a.TestOnlyUnmap();
@@ -254,13 +267,15 @@ TEST(SanitizerCommon, SizeClassAllocator64Overflow) {
 TEST(SanitizerCommon, LargeMmapAllocator) {
   LargeMmapAllocator<> a;
   a.Init();
+  AllocatorStats stats;
+  stats.Init();
 
   static const int kNumAllocs = 1000;
   char *allocated[kNumAllocs];
   static const uptr size = 4000;
   // Allocate some.
   for (int i = 0; i < kNumAllocs; i++) {
-    allocated[i] = (char *)a.Allocate(size, 1);
+    allocated[i] = (char *)a.Allocate(&stats, size, 1);
     CHECK(a.PointerIsMine(allocated[i]));
   }
   // Deallocate all.
@@ -268,14 +283,14 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
   for (int i = 0; i < kNumAllocs; i++) {
     char *p = allocated[i];
     CHECK(a.PointerIsMine(p));
-    a.Deallocate(p);
+    a.Deallocate(&stats, p);
   }
   // Check that non left.
   CHECK_EQ(a.TotalMemoryUsed(), 0);
 
   // Allocate some more, also add metadata.
   for (int i = 0; i < kNumAllocs; i++) {
-    char *x = (char *)a.Allocate(size, 1);
+    char *x = (char *)a.Allocate(&stats, size, 1);
     CHECK_GE(a.GetActuallyAllocatedSize(x), size);
     uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(x));
     *meta = i;
@@ -294,7 +309,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
     uptr *meta = reinterpret_cast<uptr*>(a.GetMetaData(p));
     CHECK_EQ(*meta, idx);
     CHECK(a.PointerIsMine(p));
-    a.Deallocate(p);
+    a.Deallocate(&stats, p);
   }
   CHECK_EQ(a.TotalMemoryUsed(), 0);
 
@@ -304,7 +319,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
     const uptr kNumAlignedAllocs = 100;
     for (uptr i = 0; i < kNumAlignedAllocs; i++) {
       uptr size = ((i % 10) + 1) * 4096;
-      char *p = allocated[i] = (char *)a.Allocate(size, alignment);
+      char *p = allocated[i] = (char *)a.Allocate(&stats, size, alignment);
       CHECK_EQ(p, a.GetBlockBegin(p));
       CHECK_EQ(p, a.GetBlockBegin(p + size - 1));
       CHECK_EQ(p, a.GetBlockBegin(p + size / 2));
@@ -312,7 +327,7 @@ TEST(SanitizerCommon, LargeMmapAllocator) {
       p[0] = p[size - 1] = 0;
     }
     for (uptr i = 0; i < kNumAlignedAllocs; i++) {
-      a.Deallocate(allocated[i]);
+      a.Deallocate(&stats, allocated[i]);
     }
   }
 }
@@ -327,7 +342,8 @@ void TestCombinedAllocator() {
   a->Init();
 
   AllocatorCache cache;
-  cache.Init();
+  memset(&cache, 0, sizeof(cache));
+  a->InitCache(&cache);
 
   EXPECT_EQ(a->Allocate(&cache, -1, 1), (void*)0);
   EXPECT_EQ(a->Allocate(&cache, -1, 1024), (void*)0);
@@ -363,6 +379,7 @@ void TestCombinedAllocator() {
     allocated.clear();
     a->SwallowCache(&cache);
   }
+  a->DestroyCache(&cache);
   a->TestOnlyUnmap();
 }
 
@@ -388,14 +405,13 @@ TEST(SanitizerCommon, CombinedAllocator32Compact) {
 
 template <class AllocatorCache>
 void TestSizeClassAllocatorLocalCache() {
-  static AllocatorCache static_allocator_cache;
-  static_allocator_cache.Init();
   AllocatorCache cache;
   typedef typename AllocatorCache::Allocator Allocator;
   Allocator *a = new Allocator();
 
   a->Init();
-  cache.Init();
+  memset(&cache, 0, sizeof(cache));
+  cache.Init(0);
 
   const uptr kNumAllocs = 10000;
   const int kNumIter = 100;

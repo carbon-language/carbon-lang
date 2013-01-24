@@ -14,6 +14,16 @@
 #include "tsan_rtl.h"
 #include "gtest/gtest.h"
 
+extern "C" {
+uptr __tsan_get_current_allocated_bytes();
+uptr __tsan_get_heap_size();
+uptr __tsan_get_free_bytes();
+uptr __tsan_get_unmapped_bytes();
+uptr __tsan_get_estimated_allocated_size(uptr size);
+bool __tsan_get_ownership(void *p);
+uptr __tsan_get_allocated_size(void *p);
+}
+
 namespace __tsan {
 
 TEST(Mman, Internal) {
@@ -106,4 +116,33 @@ TEST(Mman, UserRealloc) {
   }
 }
 
+TEST(Mman, Stats) {
+  ScopedInRtl in_rtl;
+  ThreadState *thr = cur_thread();
+
+  uptr alloc0 = __tsan_get_current_allocated_bytes();
+  uptr heap0 = __tsan_get_heap_size();
+  uptr free0 = __tsan_get_free_bytes();
+  uptr unmapped0 = __tsan_get_unmapped_bytes();
+
+  EXPECT_EQ(__tsan_get_estimated_allocated_size(10), (uptr)10);
+  EXPECT_EQ(__tsan_get_estimated_allocated_size(20), (uptr)20);
+  EXPECT_EQ(__tsan_get_estimated_allocated_size(100), (uptr)100);
+
+  char *p = (char*)user_alloc(thr, 0, 10);
+  EXPECT_EQ(__tsan_get_ownership(p), true);
+  EXPECT_EQ(__tsan_get_allocated_size(p), (uptr)10);
+
+  EXPECT_EQ(__tsan_get_current_allocated_bytes(), alloc0 + 16);
+  EXPECT_GE(__tsan_get_heap_size(), heap0);
+  EXPECT_EQ(__tsan_get_free_bytes(), free0);
+  EXPECT_EQ(__tsan_get_unmapped_bytes(), unmapped0);
+
+  user_free(thr, 0, p);
+
+  EXPECT_EQ(__tsan_get_current_allocated_bytes(), alloc0);
+  EXPECT_GE(__tsan_get_heap_size(), heap0);
+  EXPECT_EQ(__tsan_get_free_bytes(), free0);
+  EXPECT_EQ(__tsan_get_unmapped_bytes(), unmapped0);
+}
 }  // namespace __tsan

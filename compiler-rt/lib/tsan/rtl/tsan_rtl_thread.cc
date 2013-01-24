@@ -209,6 +209,9 @@ void ThreadStart(ThreadState *thr, int tid, uptr os_id) {
   thr->shadow_stack_pos = thr->shadow_stack;
   thr->shadow_stack_end = thr->shadow_stack + kInitStackSize;
 #endif
+#ifndef TSAN_GO
+  AllocatorThreadStart(thr);
+#endif
   tctx->thr = thr;
   thr->fast_synch_epoch = tctx->epoch0;
   thr->clock.set(tid, tctx->epoch0);
@@ -269,7 +272,7 @@ void ThreadFinish(ThreadState *thr) {
   tctx->epoch1 = thr->fast_state.epoch();
 
 #ifndef TSAN_GO
-  AlloctorThreadFinish(thr);
+  AllocatorThreadFinish(thr);
 #endif
   thr->~ThreadState();
   StatAggregate(ctx->stat, thr->stat);
