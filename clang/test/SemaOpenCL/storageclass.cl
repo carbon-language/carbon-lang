@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 %s -verify -pedantic -fsyntax-only -cl-std=CL1.2
 
-static int A;
+static constant int A = 0;
 
 // static is not allowed at local scope.
 void kernel foo() {
