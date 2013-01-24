@@ -437,6 +437,11 @@ private:
   ///
   void LexTokenInternal(Token &Result);
 
+  /// Given that a token begins with the Unicode character \p C, figure out
+  /// what kind of token it is and dispatch to the appropriate lexing helper
+  /// function.
+  void LexUnicode(Token &Result, uint32_t C, const char *CurPtr);
+
   /// FormTokenWithChars - When we lex a token, we have identified a span
   /// starting at BufferPtr, going to TokEnd that forms the token.  This method
   /// takes that range and assigns it to the token as its location and size.  In
@@ -579,6 +584,21 @@ private:
   void cutOffLexing() { BufferPtr = BufferEnd; }
 
   bool isHexaLiteral(const char *Start, const LangOptions &LangOpts);
+
+
+  /// Read a universal character name.
+  ///
+  /// \param CurPtr The position in the source buffer after the initial '\'.
+  ///               If the UCN is syntactically well-formed (but not necessarily
+  ///               valid), this parameter will be updated to point to the
+  ///               character after the UCN.
+  /// \param SlashLoc The position in the source buffer of the '\'.
+  /// \param Tok The token being formed. Pass \c NULL to suppress diagnostics
+  ///            and handle token formation in the caller.
+  ///
+  /// \return The Unicode codepoint specified by the UCN, or 0 if the UCN is
+  ///         invalid.
+  uint32_t tryReadUCN(const char *&CurPtr, const char *SlashLoc, Token *Tok);
 };
 
 

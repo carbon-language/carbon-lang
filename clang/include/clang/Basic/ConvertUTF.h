@@ -161,6 +161,16 @@ Boolean isLegalUTF8String(const UTF8 **source, const UTF8 *sourceEnd);
 
 unsigned getNumBytesForUTF8(UTF8 firstByte);
 
+static inline ConversionResult convertUTF8Sequence(const UTF8 **source,
+                                                   const UTF8 *sourceEnd,
+                                                   UTF32 *target,
+                                                   ConversionFlags flags) {
+  unsigned size = getNumBytesForUTF8(**source);
+  if (size > sourceEnd - *source)
+    return sourceExhausted;
+  return ConvertUTF8toUTF32(source, *source + size, &target, target + 1, flags);
+}
+
 #ifdef __cplusplus
 }
 

@@ -25,11 +25,13 @@
 //===----------------------------------------------------------------------===//
 
 #include "clang/Lex/Lexer.h"
+#include "clang/Basic/ConvertUTF.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/CodeCompletionHandler.h"
 #include "clang/Lex/LexDiagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -371,10 +373,12 @@ unsigned Lexer::getSpelling(const Token &Tok, const char *&Buffer,
   // NOTE: this has to be checked *before* testing for an IdentifierInfo.
   if (Tok.is(tok::raw_identifier))
     TokStart = Tok.getRawIdentifierData();
-  else if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
-    // Just return the string from the identifier table, which is very quick.
-    Buffer = II->getNameStart();
-    return II->getLength();
+  else if (!Tok.hasUCN()) {
+    if (const IdentifierInfo *II = Tok.getIdentifierInfo()) {
+      // Just return the string from the identifier table, which is very quick.
+      Buffer = II->getNameStart();
+      return II->getLength();
+    }
   }
 
   // NOTE: this can be checked even after testing for an IdentifierInfo.
@@ -1376,7 +1380,6 @@ SourceLocation Lexer::findLocationAfterToken(SourceLocation Loc,
 ///   2. If this is an escaped newline (potentially with whitespace between
 ///      the backslash and newline), implicitly skip the newline and return
 ///      the char after it.
-///   3. If this is a UCN, return it.  FIXME: C++ UCN's?
 ///
 /// This handles the slow/uncommon case of the getCharAndSize method.  Here we
 /// know that we can accumulate into Size, and that we have already incremented
@@ -1509,6 +1512,77 @@ void Lexer::SkipBytes(unsigned Bytes, bool StartOfLine) {
   IsAtStartOfLine = StartOfLine;
 }
 
+namespace {
+  struct UCNCharRange {
+    uint32_t Lower;
+    uint32_t Upper;
+  };
+  
+  // C11 D.1, C++11 [charname.allowed]
+  // FIXME: C99 and C++03 each have a different set of allowed UCNs.
+  const UCNCharRange UCNAllowedCharRanges[] = {
+    // 1
+    { 0x00A8, 0x00A8 }, { 0x00AA, 0x00AA }, { 0x00AD, 0x00AD },
+    { 0x00AF, 0x00AF }, { 0x00B2, 0x00B5 }, { 0x00B7, 0x00BA },
+    { 0x00BC, 0x00BE }, { 0x00C0, 0x00D6 }, { 0x00D8, 0x00F6 },
+    { 0x00F8, 0x00FF },
+    // 2
+    { 0x0100, 0x167F }, { 0x1681, 0x180D }, { 0x180F, 0x1FFF },
+    // 3
+    { 0x200B, 0x200D }, { 0x202A, 0x202E }, { 0x203F, 0x2040 },
+    { 0x2054, 0x2054 }, { 0x2060, 0x206F },
+    // 4
+    { 0x2070, 0x218F }, { 0x2460, 0x24FF }, { 0x2776, 0x2793 },
+    { 0x2C00, 0x2DFF }, { 0x2E80, 0x2FFF },
+    // 5
+    { 0x3004, 0x3007 }, { 0x3021, 0x302F }, { 0x3031, 0x303F },
+    // 6
+    { 0x3040, 0xD7FF },
+    // 7
+    { 0xF900, 0xFD3D }, { 0xFD40, 0xFDCF }, { 0xFDF0, 0xFE44 },
+    { 0xFE47, 0xFFFD },
+    // 8
+    { 0x10000, 0x1FFFD }, { 0x20000, 0x2FFFD }, { 0x30000, 0x3FFFD },
+    { 0x40000, 0x4FFFD }, { 0x50000, 0x5FFFD }, { 0x60000, 0x6FFFD },
+    { 0x70000, 0x7FFFD }, { 0x80000, 0x8FFFD }, { 0x90000, 0x9FFFD },
+    { 0xA0000, 0xAFFFD }, { 0xB0000, 0xBFFFD }, { 0xC0000, 0xCFFFD },
+    { 0xD0000, 0xDFFFD }, { 0xE0000, 0xEFFFD }
+  };
+}
+
+static bool isAllowedIDChar(uint32_t c) {
+  unsigned LowPoint = 0;
+  unsigned HighPoint = llvm::array_lengthof(UCNAllowedCharRanges);
+
+  // Binary search the UCNAllowedCharRanges set.
+  while (HighPoint != LowPoint) {
+    unsigned MidPoint = (HighPoint + LowPoint) / 2;
+    if (c < UCNAllowedCharRanges[MidPoint].Lower)
+      HighPoint = MidPoint;
+    else if (c > UCNAllowedCharRanges[MidPoint].Upper)
+      LowPoint = MidPoint + 1;
+    else
+      return true;
+  }
+
+  return false;
+}
+
+static bool isAllowedInitiallyIDChar(uint32_t c) {
+  // C11 D.2, C++11 [charname.disallowed]
+  // FIXME: C99 only forbids "digits", presumably as described in C99 Annex D.
+  // FIXME: C++03 does not forbid any initial characters.
+  return !(0x0300 <= c && c <= 0x036F) &&
+         !(0x1DC0 <= c && c <= 0x1DFF) &&
+         !(0x20D0 <= c && c <= 0x20FF) &&
+         !(0xFE20 <= c && c <= 0xFE2F);
+}
+
+static inline bool isASCII(char C) {
+  return static_cast<signed char>(C) >= 0;
+}
+
+
 void Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
   // Match [_A-Za-z0-9]*, we have already matched [_A-Za-z$]
   unsigned Size;
@@ -1520,11 +1594,11 @@ void Lexer::LexIdentifier(Token &Result, const char *CurPtr) {
 
   // Fast path, no $,\,? in identifier found.  '\' might be an escaped newline
   // or UCN, and ? might be a trigraph for '\', an escaped newline or UCN.
-  // FIXME: UCNs.
   //
   // TODO: Could merge these checks into a CharInfo flag to make the comparison
   // cheaper
-  if (C != '\\' && C != '?' && (C != '$' || !LangOpts.DollarIdents)) {
+  if (isASCII(C) && C != '\\' && C != '?' &&
+      (C != '$' || !LangOpts.DollarIdents)) {
 FinishIdentifier:
     const char *IdStart = BufferPtr;
     FormTokenWithChars(Result, CurPtr, tok::raw_identifier);
@@ -1561,8 +1635,38 @@ FinishIdentifier:
       CurPtr = ConsumeChar(CurPtr, Size, Result);
       C = getCharAndSize(CurPtr, Size);
       continue;
-    } else if (!isIdentifierBody(C)) { // FIXME: UCNs.
-      // Found end of identifier.
+
+    } else if (C == '\\') {
+      const char *UCNPtr = CurPtr + Size;
+      uint32_t CodePoint = tryReadUCN(UCNPtr, CurPtr, /*Token=*/0);
+      if (CodePoint == 0 || !isAllowedIDChar(CodePoint))
+        goto FinishIdentifier;
+
+      Result.setFlag(Token::HasUCN);
+      if ((UCNPtr - CurPtr ==  6 && CurPtr[1] == 'u') ||
+          (UCNPtr - CurPtr == 10 && CurPtr[1] == 'U'))
+        CurPtr = UCNPtr;
+      else
+        while (CurPtr != UCNPtr)
+          (void)getAndAdvanceChar(CurPtr, Result);
+
+      C = getCharAndSize(CurPtr, Size);
+      continue;
+    } else if (!isASCII(C)) {
+      const char *UnicodePtr = CurPtr;
+      UTF32 CodePoint;
+      ConversionResult Result = convertUTF8Sequence((const UTF8 **)&UnicodePtr,
+                                                    (const UTF8 *)BufferEnd,
+                                                    &CodePoint,
+                                                    strictConversion);
+      if (Result != conversionOK ||
+          !isAllowedIDChar(static_cast<uint32_t>(CodePoint)))
+        goto FinishIdentifier;
+
+      CurPtr = UnicodePtr;
+      C = getCharAndSize(CurPtr, Size);
+      continue;
+    } else if (!isIdentifierBody(C)) {
       goto FinishIdentifier;
     }
 
@@ -1570,7 +1674,7 @@ FinishIdentifier:
     CurPtr = ConsumeChar(CurPtr, Size, Result);
 
     C = getCharAndSize(CurPtr, Size);
-    while (isIdentifierBody(C)) { // FIXME: UCNs.
+    while (isIdentifierBody(C)) {
       CurPtr = ConsumeChar(CurPtr, Size, Result);
       C = getCharAndSize(CurPtr, Size);
     }
@@ -2592,6 +2696,135 @@ bool Lexer::isCodeCompletionPoint(const char *CurPtr) const {
   return false;
 }
 
+uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
+                           Token *Result) {
+  assert(LangOpts.CPlusPlus || LangOpts.C99);
+
+  unsigned CharSize;
+  char Kind = getCharAndSize(StartPtr, CharSize);
+
+  unsigned NumHexDigits;
+  if (Kind == 'u')
+    NumHexDigits = 4;
+  else if (Kind == 'U')
+    NumHexDigits = 8;
+  else
+    return 0;
+
+  const char *CurPtr = StartPtr + CharSize;
+  const char *KindLoc = &CurPtr[-1];
+
+  uint32_t CodePoint = 0;
+  for (unsigned i = 0; i < NumHexDigits; ++i) {
+    char C = getCharAndSize(CurPtr, CharSize);
+
+    unsigned Value = llvm::hexDigitValue(C);
+    if (Value == -1U) {
+      if (Result && !isLexingRawMode()) {
+        if (i == 0) {
+          Diag(BufferPtr, diag::warn_ucn_escape_no_digits)
+            << StringRef(KindLoc, 1);
+        } else {
+          // FIXME: if i == 4 and NumHexDigits == 8, suggest a fixit to \u.
+          Diag(BufferPtr, diag::warn_ucn_escape_incomplete);
+        }
+      }
+      
+      return 0;
+    }
+
+    CodePoint <<= 4;
+    CodePoint += Value;
+
+    CurPtr += CharSize;
+  }
+
+  if (Result) {
+    Result->setFlag(Token::HasUCN);
+    if (CurPtr - StartPtr == NumHexDigits + 2)
+      StartPtr = CurPtr;
+    else
+      while (StartPtr != CurPtr)
+        (void)getAndAdvanceChar(StartPtr, *Result);
+  } else {
+    StartPtr = CurPtr;
+  }
+
+  // C99 6.4.3p2: A universal character name shall not specify a character whose
+  //   short identifier is less than 00A0 other than 0024 ($), 0040 (@), or
+  //   0060 (`), nor one in the range D800 through DFFF inclusive.)
+  // C++11 [lex.charset]p2: If the hexadecimal value for a
+  //   universal-character-name corresponds to a surrogate code point (in the
+  //   range 0xD800-0xDFFF, inclusive), the program is ill-formed. Additionally,
+  //   if the hexadecimal value for a universal-character-name outside the
+  //   c-char-sequence, s-char-sequence, or r-char-sequence of a character or
+  //   string literal corresponds to a control character (in either of the
+  //   ranges 0x00-0x1F or 0x7F-0x9F, both inclusive) or to a character in the
+  //   basic source character set, the program is ill-formed.
+  if (CodePoint < 0xA0) {
+    if (CodePoint == 0x24 || CodePoint == 0x40 || CodePoint == 0x60)
+      return CodePoint;
+
+    // We don't use isLexingRawMode() here because we need to warn about bad
+    // UCNs even when skipping preprocessing tokens in a #if block.
+    if (Result && PP) {
+      if (CodePoint < 0x20 || CodePoint >= 0x7F)
+        Diag(BufferPtr, diag::err_ucn_control_character);
+      else {
+        char C = static_cast<char>(CodePoint);
+        Diag(BufferPtr, diag::err_ucn_escape_basic_scs) << StringRef(&C, 1);
+      }
+    }
+
+    return 0;
+    
+  } else if ((!LangOpts.CPlusPlus || LangOpts.CPlusPlus11) &&
+             (CodePoint >= 0xD800 && CodePoint <= 0xDFFF)) {
+    // C++03 allows UCNs representing surrogate characters. C99 and C++11 don't.
+    // We don't use isLexingRawMode() here because we need to warn about bad
+    // UCNs even when skipping preprocessing tokens in a #if block.
+    if (Result && PP)
+      Diag(BufferPtr, diag::err_ucn_escape_invalid);
+    return 0;
+  }
+
+  return CodePoint;
+}
+
+void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
+  if (isAllowedIDChar(C) && isAllowedInitiallyIDChar(C)) {
+    MIOpt.ReadToken();
+    return LexIdentifier(Result, CurPtr);
+  }
+
+  if (!isASCII(*BufferPtr) && !isAllowedIDChar(C)) {
+    // Non-ASCII characters tend to creep into source code unintentionally.
+    // Instead of letting the parser complain about the unknown token,
+    // just drop the character.
+    // Note that we can /only/ do this when the non-ASCII character is actually
+    // spelled as Unicode, not written as a UCN. The standard requires that
+    // we not throw away any possible preprocessor tokens, but there's a
+    // loophole in the mapping of Unicode characters to basic character set
+    // characters that allows us to map these particular characters to, say,
+    // whitespace.
+    if (!isLexingRawMode()) {
+      CharSourceRange CharRange =
+        CharSourceRange::getCharRange(getSourceLocation(),
+                                      getSourceLocation(CurPtr));
+      Diag(BufferPtr, diag::err_non_ascii)
+        << FixItHint::CreateRemoval(CharRange);
+    }
+
+    BufferPtr = CurPtr;
+    return LexTokenInternal(Result);
+  }
+
+  // Otherwise, we have an explicit UCN or a character that's unlikely to show
+  // up by accident.
+  MIOpt.ReadToken();
+  FormTokenWithChars(Result, CurPtr, tok::unknown);
+}
+
 
 /// LexTokenInternal - This implements a simple C family lexer.  It is an
 /// extremely performance critical piece of code.  This assumes that the buffer
@@ -3243,12 +3476,41 @@ LexNextToken:
       Kind = tok::unknown;
     break;
 
+  // UCNs (C99 6.4.3, C++11 [lex.charset]p2)
   case '\\':
-    // FIXME: UCN's.
-    // FALL THROUGH.
-  default:
+    if (uint32_t CodePoint = tryReadUCN(CurPtr, BufferPtr, &Result))
+      return LexUnicode(Result, CodePoint, CurPtr);
+
     Kind = tok::unknown;
     break;
+
+  default: {
+    if (isASCII(Char)) {
+      Kind = tok::unknown;
+      break;
+    }
+
+    UTF32 CodePoint;
+
+    // We can't just reset CurPtr to BufferPtr because BufferPtr may point to
+    // an escaped newline.
+    --CurPtr;
+    ConversionResult Status = convertUTF8Sequence((const UTF8 **)&CurPtr,
+                                                  (const UTF8 *)BufferEnd,
+                                                  &CodePoint,
+                                                  strictConversion);
+    if (Status == conversionOK)
+      return LexUnicode(Result, CodePoint, CurPtr);
+    
+    // Non-ASCII characters tend to creep into source code unintentionally.
+    // Instead of letting the parser complain about the unknown token,
+    // just warn that we don't have valid UTF-8, then drop the character.
+    if (!isLexingRawMode())
+      Diag(CurPtr, diag::err_invalid_utf8);
+
+    BufferPtr = CurPtr+1;
+    goto LexNextToken;
+  }
   }
 
   // Notify MIOpt that we read a non-whitespace/non-comment token.

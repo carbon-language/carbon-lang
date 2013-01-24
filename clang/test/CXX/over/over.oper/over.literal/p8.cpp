@@ -7,8 +7,7 @@ namespace std {
 
 void operator "" _km(long double); // ok
 string operator "" _i18n(const char*, std::size_t); // ok
-// FIXME: This should be accepted once we support UCNs
-template<char...> int operator "" \u03C0(); // ok, UCN for lowercase pi // expected-error {{expected identifier}}
+template<char...> int operator "" \u03C0(); // ok, UCN for lowercase pi // expected-warning {{reserved}}
 float operator ""E(const char *); // expected-error {{invalid suffix on literal}} expected-warning {{reserved}}
 float operator " " B(const char *); // expected-error {{must be '""'}} expected-warning {{reserved}}
 string operator "" 5X(const char *, std::size_t); // expected-error {{expected identifier}}
