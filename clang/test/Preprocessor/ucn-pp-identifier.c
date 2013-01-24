@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 %s -fsyntax-only -std=c99 -pedantic -verify -Wundef
 // RUN: %clang_cc1 %s -fsyntax-only -x c++ -pedantic -verify -Wundef
+// RUN: %clang_cc1 %s -fsyntax-only -std=c99 -pedantic -fdiagnostics-parseable-fixits -Wundef 2>&1 | FileCheck -strict-whitespace %s
 
 #define \u00FC
 #define a\u00FD() 0
@@ -95,3 +96,11 @@ C 1
 #else
 #error "Line splicing failed to produce UCNs"
 #endif
+
+
+#define capital_u_\U00FC
+// expected-warning@-1 {{incomplete universal character name}} expected-note@-1 {{did you mean to use '\u'?}} expected-warning@-1 {{whitespace}}
+// CHECK: note: did you mean to use '\u'?
+// CHECK-NEXT:   #define capital_u_\U00FC
+// CHECK-NEXT: {{^                   \^}}
+// CHECK-NEXT: {{^                   u}}

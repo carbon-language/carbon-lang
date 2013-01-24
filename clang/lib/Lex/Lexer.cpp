@@ -2725,8 +2725,16 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
           Diag(BufferPtr, diag::warn_ucn_escape_no_digits)
             << StringRef(KindLoc, 1);
         } else {
-          // FIXME: if i == 4 and NumHexDigits == 8, suggest a fixit to \u.
           Diag(BufferPtr, diag::warn_ucn_escape_incomplete);
+
+          // If the user wrote \U1234, suggest a fixit to \u.
+          if (i == 4 && NumHexDigits == 8) {
+            CharSourceRange URange =
+              CharSourceRange::getCharRange(getSourceLocation(KindLoc),
+                                            getSourceLocation(KindLoc + 1));
+            Diag(KindLoc, diag::note_ucn_four_not_eight)
+              << FixItHint::CreateReplacement(URange, "u");
+          }
         }
       }
       

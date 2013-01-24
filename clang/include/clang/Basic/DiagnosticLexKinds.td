@@ -114,12 +114,13 @@ def err_ucn_escape_incomplete : Error<
 def warn_ucn_escape_incomplete : Warning<
   "incomplete universal character name; "
   "treating as '\\' followed by identifier">, InGroup<Unicode>;
-def err_ucn_escape_invalid : Error<"invalid universal character">;
+def note_ucn_four_not_eight : Note<"did you mean to use '\\u'?">;
 
 def err_ucn_escape_basic_scs : Error<
   "character '%0' cannot be specified by a universal character name">;
 def err_ucn_control_character : Error<
   "universal character name refers to a control character">;
+def err_ucn_escape_invalid : Error<"invalid universal character">;
 def warn_cxx98_compat_literal_ucn_escape_basic_scs : Warning<
   "specifying character '%0' with a universal character name "
   "is incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
