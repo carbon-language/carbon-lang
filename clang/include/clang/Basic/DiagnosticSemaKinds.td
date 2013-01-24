@@ -5241,6 +5241,8 @@ let CategoryName = "Inline Assembly Issue" in {
     "invalid use of a cast in a inline asm context requiring an l-value: "
     "remove the cast or build with -fheinous-gnu-extensions">;
   def err_inline_ms_asm_parsing : Error<"%0">;
+  def err_msasm_unsupported_arch : Error<
+    "Unsupported architecture '%0' for MS-style inline assembly">;
 
   def warn_asm_label_on_auto_decl : Warning<
     "ignored asm label '%0' on automatic variable">;
