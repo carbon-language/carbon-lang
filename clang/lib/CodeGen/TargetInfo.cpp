@@ -4022,7 +4022,8 @@ MipsABIInfo::classifyArgumentType(QualType Ty, uint64_t &Offset) const {
   if (Ty->isPromotableIntegerType())
     return ABIArgInfo::getExtend();
 
-  return ABIArgInfo::getDirect(0, 0, getPaddingType(Align, OrigOffset));
+  return ABIArgInfo::getDirect(0, 0,
+                               IsO32 ? 0 : getPaddingType(Align, OrigOffset));
 }
 
 llvm::Type*
