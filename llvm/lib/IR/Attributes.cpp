@@ -99,11 +99,6 @@ bool Attribute::operator<(Attribute A) const {
   return *pImpl < *A.pImpl;
 }
 
-
-void Attribute::Profile(FoldingSetNodeID &ID) const {
-  ID.AddPointer(pImpl);
-}
-
 uint64_t Attribute::Raw() const {
   return pImpl ? pImpl->Raw() : 0;
 }

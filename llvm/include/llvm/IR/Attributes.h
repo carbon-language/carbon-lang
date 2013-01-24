@@ -132,7 +132,9 @@ public:
 
   bool operator<(Attribute A) const;
 
-  void Profile(FoldingSetNodeID &ID) const;
+  void Profile(FoldingSetNodeID &ID) const {
+    ID.AddPointer(pImpl);
+  }
 
   // FIXME: Remove these 'operator' methods.
   bool operator==(const Attribute &A) const {

@@ -107,12 +107,17 @@ class AttributeSetImpl : public FoldingSetNode {
   LLVMContext &Context;
   SmallVector<AttributeWithIndex, 4> AttrList;
 
+  SmallVector<std::pair<uint64_t, AttributeSetNode*>, 4> AttrNodes;
+
   // AttributesSet is uniqued, these should not be publicly available.
   void operator=(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
   AttributeSetImpl(const AttributeSetImpl &) LLVM_DELETED_FUNCTION;
 public:
   AttributeSetImpl(LLVMContext &C, ArrayRef<AttributeWithIndex> attrs)
     : Context(C), AttrList(attrs.begin(), attrs.end()) {}
+  AttributeSetImpl(LLVMContext &C,
+                   ArrayRef<std::pair<uint64_t, AttributeSetNode*> > attrs)
+    : Context(C), AttrNodes(attrs.begin(), attrs.end()) {}
 
   LLVMContext &getContext() { return Context; }
   ArrayRef<AttributeWithIndex> getAttributes() const { return AttrList; }
@@ -122,10 +127,18 @@ public:
     Profile(ID, AttrList);
   }
   static void Profile(FoldingSetNodeID &ID,
-                      ArrayRef<AttributeWithIndex> AttrList){
+                      ArrayRef<AttributeWithIndex> AttrList) {
     for (unsigned i = 0, e = AttrList.size(); i != e; ++i) {
       ID.AddInteger(AttrList[i].Index);
       ID.AddInteger(AttrList[i].Attrs.Raw());
+    }
+  }
+
+  static void Profile(FoldingSetNodeID &ID,
+                      ArrayRef<std::pair<uint64_t, AttributeSetNode*> > Nodes) {
+    for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
+      ID.AddInteger(Nodes[i].first);
+      ID.AddPointer(Nodes[i].second);
     }
   }
 };
