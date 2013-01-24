@@ -22,6 +22,7 @@ class ChangeValueAPITestCase(TestBase):
         self.setTearDownCleanup(dictionary=d)
         self.change_value_api(self.exe_name)
 
+    @expectedFailureLinux # bugzilla 15039: SBProcess.GetSTDOUT() returns an empty buffer
     @python_api_test
     @dwarf_test
     def test_change_value_with_dwarf(self):

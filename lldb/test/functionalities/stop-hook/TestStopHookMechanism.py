@@ -19,6 +19,7 @@ class StopHookMechanismTestCase(TestBase):
         self.buildDsym()
         self.stop_hook_firing()
 
+    @expectedFailureLinux # bugzilla 15037: stop-hooks sometimes fail to fire on Linux
     @dwarf_test
     def test_with_dwarf(self):
         """Test the stop-hook mechanism."""
