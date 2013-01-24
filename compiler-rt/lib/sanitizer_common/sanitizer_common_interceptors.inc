@@ -89,12 +89,12 @@ INTERCEPTOR(SSIZE_T, write, int fd, void *ptr, SIZE_T count) {
 #endif
 
 #if SANITIZER_INTERCEPT_PWRITE
-INTERCEPTOR(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count) {
+INTERCEPTOR(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count, OFF_T offset) {
   void* ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, pwrite, fd, ptr, count);
+  COMMON_INTERCEPTOR_ENTER(ctx, pwrite, fd, ptr, count, offset);
   if (fd >= 0)
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
-  SSIZE_T res = REAL(pwrite)(fd, ptr, count);
+  SSIZE_T res = REAL(pwrite)(fd, ptr, count, offset);
   if (res > 0)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, res);
   return res;
@@ -105,12 +105,13 @@ INTERCEPTOR(SSIZE_T, pwrite, int fd, void *ptr, SIZE_T count) {
 #endif
 
 #if SANITIZER_INTERCEPT_PWRITE64
-INTERCEPTOR(SSIZE_T, pwrite64, int fd, void *ptr, OFF64_T count) {
+INTERCEPTOR(SSIZE_T, pwrite64, int fd, void *ptr, OFF64_T count,
+            OFF64_T offset) {
   void* ctx;
-  COMMON_INTERCEPTOR_ENTER(ctx, pwrite64, fd, ptr, count);
+  COMMON_INTERCEPTOR_ENTER(ctx, pwrite64, fd, ptr, count, offset);
   if (fd >= 0)
     COMMON_INTERCEPTOR_FD_RELEASE(ctx, fd);
-  SSIZE_T res = REAL(pwrite64)(fd, ptr, count);
+  SSIZE_T res = REAL(pwrite64)(fd, ptr, count, offset);
   if (res > 0)
     COMMON_INTERCEPTOR_READ_RANGE(ctx, ptr, res);
   return res;
