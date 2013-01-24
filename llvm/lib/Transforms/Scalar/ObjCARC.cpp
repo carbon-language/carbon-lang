@@ -1222,6 +1222,12 @@ namespace {
   /// \brief This is similar to BasicAliasAnalysis, and it uses many of the same
   /// techniques, except it uses special ObjC-specific reasoning about pointer
   /// relationships.
+  ///
+  /// In this context ``Provenance'' is defined as the history of an object's
+  /// ownership. Thus ``Provenance Analysis'' is defined by using the notion of
+  /// an ``independent provenance source'' of a pointer to determine whether or
+  /// not two pointers have the same provenance source and thus could
+  /// potentially be related.
   class ProvenanceAnalysis {
     AliasAnalysis *AA;
 
