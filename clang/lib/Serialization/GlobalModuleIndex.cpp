@@ -507,9 +507,7 @@ GlobalModuleIndex::writeIndex(FileManager &FileMgr, StringRef Path) {
     return EC_IOError;
 
   // Open the temporary global index file for output.
-  std::string ErrorInfo;
-  llvm::raw_fd_ostream Out(IndexTmpPath.c_str(), ErrorInfo,
-                           llvm::raw_fd_ostream::F_Binary);
+  llvm::raw_fd_ostream Out(TmpFD, true);
   if (Out.has_error())
     return EC_IOError;
 
