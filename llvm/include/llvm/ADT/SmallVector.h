@@ -145,16 +145,20 @@ public:
   }
 
   reference front() {
+    assert(!empty());
     return begin()[0];
   }
   const_reference front() const {
+    assert(!empty());
     return begin()[0];
   }
 
   reference back() {
+    assert(!empty());
     return end()[-1];
   }
   const_reference back() const {
+    assert(!empty());
     return end()[-1];
   }
 };
