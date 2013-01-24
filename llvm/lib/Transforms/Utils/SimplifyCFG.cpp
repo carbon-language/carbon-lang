@@ -1370,6 +1370,11 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
 ///
 /// \returns true if the conditional block is removed.
 static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
+  // Be conservative for now. FP select instruction can often be expensive.
+  Value *BrCond = BI->getCondition();
+  if (isa<FCmpInst>(BrCond))
+    return false;
+
   // Only speculatively execution a single instruction (not counting the
   // terminator) for now.
   Instruction *HInst = NULL;
@@ -1408,11 +1413,6 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
         return false;
     }
   }
-
-  // Be conservative for now. FP select instruction can often be expensive.
-  Value *BrCond = BI->getCondition();
-  if (isa<FCmpInst>(BrCond))
-    return false;
 
   // If BB1 is actually on the false edge of the conditional branch, remember
   // to swap the select operands later.
