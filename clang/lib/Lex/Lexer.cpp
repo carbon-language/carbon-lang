@@ -2791,7 +2791,30 @@ uint32_t Lexer::tryReadUCN(const char *&StartPtr, const char *SlashLoc,
   return CodePoint;
 }
 
+static bool isUnicodeWhitespace(uint32_t C) {
+  return (C == 0x0085 || C == 0x00A0 || C == 0x1680 ||
+          C == 0x180E || (C >= 0x2000 && C <= 0x200A) ||
+          C == 0x2028 || C == 0x2029 || C == 0x202F ||
+          C == 0x205F || C == 0x3000);
+}
+
 void Lexer::LexUnicode(Token &Result, uint32_t C, const char *CurPtr) {
+  if (isUnicodeWhitespace(C)) {
+    if (!isLexingRawMode()) {
+      CharSourceRange CharRange =
+        CharSourceRange::getCharRange(getSourceLocation(),
+                                      getSourceLocation(CurPtr));
+      Diag(BufferPtr, diag::ext_unicode_whitespace)
+        << CharRange;
+    }
+
+    Result.setFlag(Token::LeadingSpace);
+    if (SkipWhitespace(Result, CurPtr))
+      return; // KeepWhitespaceMode
+
+    return LexTokenInternal(Result);
+  }
+
   if (isAllowedIDChar(C) && isAllowedInitiallyIDChar(C)) {
     MIOpt.ReadToken();
     return LexIdentifier(Result, CurPtr);
