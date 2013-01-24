@@ -108,3 +108,32 @@ end:
 
   ret i8* %x10
 }
+
+define i16 @test5(i1* %dummy, i16 %a, i16 %b) {
+; Test that we speculate no-op instructions.
+; CHECK: @test5
+
+entry:
+  %cond1 = load volatile i1* %dummy
+  br i1 %cond1, label %if, label %end
+
+if:
+  %cond2 = load volatile i1* %dummy
+  %a.conv = sext i16 %a to i32
+  %b.conv = sext i16 %b to i32
+  %cmp = icmp ult i32 %a.conv, %b.conv
+  br i1 %cond2, label %then, label %end
+
+then:
+  %sub = sub i32 %a.conv, %b.conv
+  %sub.conv = trunc i32 %sub to i16
+  br label %end
+
+end:
+  %x = phi i16 [ %a, %entry ], [ %b, %if ], [ %sub.conv, %then ]
+; CHECK-NOT: phi
+; CHECK: select i1
+
+  ret i16 %x
+}
+
