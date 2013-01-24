@@ -230,7 +230,7 @@ bool BugDriver::initializeExecutionEnvironment() {
     }
     if (!SafeInterpreter) {
       SafeInterpreterSel = AutoPick;
-      Message = "Sorry, I can't automatically select an interpreter!\n";
+      Message = "Sorry, I can't automatically select a safe interpreter!\n";
     }
     break;
   case RunLLC:
