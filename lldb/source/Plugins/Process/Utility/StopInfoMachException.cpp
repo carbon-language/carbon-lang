@@ -210,6 +210,12 @@ StopInfoMachException::GetDescription ()
         case 10:
             exc_desc = "EXC_CRASH";
             break;
+        case 11:
+            exc_desc = "EXC_RESOURCE";
+            break;
+        case 12:
+            exc_desc = "EXC_GUARD";
+            break;
         }
         
         StreamString strm;
