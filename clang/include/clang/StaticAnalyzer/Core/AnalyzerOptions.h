@@ -210,6 +210,10 @@ private:
   int getOptionAsInteger(StringRef Name, int DefaultVal);
 
 public:
+  AnalysisIPAMode getIPAMode() const {
+    return IPAMode;
+  }
+
   /// Returns the option controlling which C++ member functions will be
   /// considered for inlining.
   ///

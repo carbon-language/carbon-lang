@@ -22,7 +22,7 @@ using namespace llvm;
 
 bool
 AnalyzerOptions::mayInlineCXXMemberFunction(CXXInlineableMemberKind K) {
-  if (IPAMode < Inlining)
+  if (getIPAMode() < Inlining)
     return false;
 
   if (!CXXMemberInliningMode) {
