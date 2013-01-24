@@ -206,6 +206,7 @@ def runScanBuild(Dir, SBOutputDir, PBuildLogFile):
     SBOptions = "--use-analyzer " + Clang + " "
     SBOptions += "-plist-html -o " + SBOutputDir + " "
     SBOptions += "-enable-checker " + Checkers + " "  
+    SBOptions += "--keep-empty "
     try:
         SBCommandFile = open(BuildScriptPath, "r")
         SBPrefix = "scan-build " + SBOptions + " "

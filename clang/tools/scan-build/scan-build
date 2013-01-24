@@ -475,6 +475,7 @@ sub Postprocess {
   my $Dir           = shift;
   my $BaseDir       = shift;
   my $AnalyzerStats = shift;
+  my $KeepEmpty     = shift;
   
   die "No directory specified." if (!defined $Dir);
   
@@ -488,8 +489,10 @@ sub Postprocess {
   closedir(DIR);
 
   if (scalar(@files) == 0 and ! -e "$Dir/failures") {
-    Diag("Removing directory '$Dir' because it contains no reports.\n");
-    system ("rm", "-fR", $Dir);
+    if (! $KeepEmpty) {
+      Diag("Removing directory '$Dir' because it contains no reports.\n");
+      system ("rm", "-fR", $Dir);
+    }
     return 0;
   }
   
@@ -1081,7 +1084,11 @@ ADVANCED OPTIONS:
    scan-build uses the 'clang' executable relative to itself for static
    analysis. One can override this behavior with this option by using the
    'clang' packaged with Xcode (on OS X) or from the PATH.
-  
+
+ --keep-empty
+
+   Don't remove the build results directory even if no issues were reported.
+
 CONTROLLING CHECKERS:
 
  A default group of checkers are always run unless explicitly disabled.
@@ -1248,6 +1255,7 @@ my $HtmlDir;           # Parent directory to store HTML files.
 my $IgnoreErrors = 0;  # Ignore build errors.
 my $ViewResults  = 0;  # View results when the build terminates.
 my $ExitStatusFoundBugs = 0; # Exit status reflects whether bugs were found
+my $KeepEmpty    = 0;  # Don't remove output directory even with 0 results.
 my @AnalysesToRun;
 my $StoreModel;
 my $ConstraintsModel;
@@ -1441,6 +1449,11 @@ while (@ARGV) {
 	$AnalyzerDiscoveryMethod = $1;
 	next;
   }
+  if ($arg eq "--keep-empty") {
+    shift @ARGV;
+    $KeepEmpty = 1;
+    next;
+  }
   
   DieDiag("unrecognized option '$arg'\n") if ($arg =~ /^-/);
   
@@ -1565,7 +1578,7 @@ if (defined $OutputFormat) {
   }
   if ($OutputFormat =~ /html/) {
     # Postprocess the HTML directory.
-    my $NumBugs = Postprocess($HtmlDir, $BaseDir, $AnalyzerStats);
+    my $NumBugs = Postprocess($HtmlDir, $BaseDir, $AnalyzerStats, $KeepEmpty);
 
     if ($ViewResults and -r "$HtmlDir/index.html") {
       Diag "Analysis run complete.\n";
