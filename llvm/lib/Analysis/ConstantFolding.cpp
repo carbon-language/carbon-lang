@@ -1474,12 +1474,12 @@ llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
           return ConstantStruct::get(cast<StructType>(F->getReturnType()), Ops);
         }
         case Intrinsic::cttz:
-          // FIXME: This should check for Op2 == 1, and become unreachable if
-          // Op1 == 0.
+          if (Op2->isOne() && Op1->isZero()) // cttz(0, 1) is undef.
+            return UndefValue::get(Ty);
           return ConstantInt::get(Ty, Op1->getValue().countTrailingZeros());
         case Intrinsic::ctlz:
-          // FIXME: This should check for Op2 == 1, and become unreachable if
-          // Op1 == 0.
+          if (Op2->isOne() && Op1->isZero()) // ctlz(0, 1) is undef.
+            return UndefValue::get(Ty);
           return ConstantInt::get(Ty, Op1->getValue().countLeadingZeros());
         }
       }

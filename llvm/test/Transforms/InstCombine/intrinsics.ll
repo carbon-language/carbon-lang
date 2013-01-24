@@ -220,3 +220,39 @@ define i32 @cttz_simplify1b(i32 %x) nounwind readnone ssp {
 ; CHECK: @cttz_simplify1b
 ; CHECK-NEXT: ret i32 0
 }
+
+define i32 @ctlz_undef(i32 %Value) nounwind {
+  %ctlz = call i32 @llvm.ctlz.i32(i32 0, i1 true)
+  ret i32 %ctlz
+
+; CHECK: @ctlz_undef
+; CHECK-NEXT: ret i32 undef
+}
+
+define i32 @cttz_undef(i32 %Value) nounwind {
+  %cttz = call i32 @llvm.cttz.i32(i32 0, i1 true)
+  ret i32 %cttz
+
+; CHECK: @cttz_undef
+; CHECK-NEXT: ret i32 undef
+}
+
+define i32 @ctlz_select(i32 %Value) nounwind {
+  %tobool = icmp ne i32 %Value, 0
+  %ctlz = call i32 @llvm.ctlz.i32(i32 %Value, i1 true)
+  %s = select i1 %tobool, i32 %ctlz, i32 32
+  ret i32 %s
+
+; CHECK: @ctlz_select
+; CHECK: select i1 %tobool, i32 %ctlz, i32 32
+}
+
+define i32 @cttz_select(i32 %Value) nounwind {
+  %tobool = icmp ne i32 %Value, 0
+  %cttz = call i32 @llvm.cttz.i32(i32 %Value, i1 true)
+  %s = select i1 %tobool, i32 %cttz, i32 32
+  ret i32 %s
+
+; CHECK: @cttz_select
+; CHECK: select i1 %tobool, i32 %cttz, i32 32
+}
