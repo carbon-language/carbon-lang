@@ -1332,24 +1332,43 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
   return Changed;
 }
 
-/// SpeculativelyExecuteBB - Given a conditional branch that goes to BB1
-/// and an BB2 and the only successor of BB1 is BB2, hoist simple code
-/// (for now, restricted to a single instruction that's side effect free) from
-/// the BB1 into the branch block to speculatively execute it.
+/// \brief Speculate a conditional basic block flattening the CFG.
 ///
-/// Turn
-/// BB:
-///     %t1 = icmp
-///     br i1 %t1, label %BB1, label %BB2
-/// BB1:
-///     %t3 = add %t2, c
+/// Note that this is a very risky transform currently. Speculating
+/// instructions like this is most often not desirable. Instead, there is an MI
+/// pass which can do it with full awareness of the resource constraints.
+/// However, some cases are "obvious" and we should do directly. An example of
+/// this is speculating a single, reasonably cheap instruction.
+///
+/// There is only one distinct advantage to flattening the CFG at the IR level:
+/// it makes very common but simplistic optimizations such as are common in
+/// instcombine and the DAG combiner more powerful by removing CFG edges and
+/// modeling their effects with easier to reason about SSA value graphs.
+///
+///
+/// An illustration of this transform is turning this IR:
+/// \code
+///   BB:
+///     %cmp = icmp ult %x, %y
+///     br i1 %cmp, label %EndBB, label %ThenBB
+///   ThenBB:
+///     %sub = sub %x, %y
 ///     br label BB2
-/// BB2:
-/// =>
-/// BB:
-///     %t1 = icmp
-///     %t4 = add %t2, c
-///     %t3 = select i1 %t1, %t2, %t3
+///   EndBB:
+///     %phi = phi [ %sub, %ThenBB ], [ 0, %EndBB ]
+///     ...
+/// \endcode
+///
+/// Into this IR:
+/// \code
+///   BB:
+///     %cmp = icmp ult %x, %y
+///     %sub = sub %x, %y
+///     %cond = select i1 %cmp, 0, %sub
+///     ...
+/// \endcode
+///
+/// \returns true if the conditional block is removed.
 static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
   // Only speculatively execution a single instruction (not counting the
   // terminator) for now.
