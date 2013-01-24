@@ -1,3 +1,4 @@
+// REQUIRES: disabled
 // RUN: %clang_cc1 -triple i386-mingw32 -fsyntax-only -verify -fms-extensions  -Wno-missing-declarations -x objective-c++ %s
 __stdcall int func0();
 int __stdcall func();
