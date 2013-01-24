@@ -1369,17 +1369,29 @@ static bool SinkThenElseCodeToEnd(BranchInst *BI1) {
 /// \endcode
 ///
 /// \returns true if the conditional block is removed.
-static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
+static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
   // Be conservative for now. FP select instruction can often be expensive.
   Value *BrCond = BI->getCondition();
   if (isa<FCmpInst>(BrCond))
     return false;
 
+  BasicBlock *BB = BI->getParent();
+  BasicBlock *EndBB = ThenBB->getTerminator()->getSuccessor(0);
+
+  // If ThenBB is actually on the false edge of the conditional branch, remember
+  // to swap the select operands later.
+  bool Invert = false;
+  if (ThenBB != BI->getSuccessor(0)) {
+    assert(ThenBB == BI->getSuccessor(1) && "No edge from 'if' block?");
+    Invert = true;
+  }
+  assert(EndBB == BI->getSuccessor(!Invert) && "No edge from to end block");
+
   // Only speculatively execution a single instruction (not counting the
   // terminator) for now.
   Instruction *HInst = NULL;
-  Instruction *Term = BB1->getTerminator();
-  for (BasicBlock::iterator BBI = BB1->begin(), BBE = BB1->end();
+  Instruction *Term = ThenBB->getTerminator();
+  for (BasicBlock::iterator BBI = ThenBB->begin(), BBE = ThenBB->end();
        BBI != BBE; ++BBI) {
     Instruction *I = BBI;
     // Skip debug info.
@@ -1390,8 +1402,6 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
       return false;
     HInst = I;
   }
-
-  BasicBlock *BIParent = BI->getParent();
 
   // Check the instruction to be hoisted, if there is one.
   if (HInst) {
@@ -1407,35 +1417,26 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
     for (User::op_iterator i = HInst->op_begin(), e = HInst->op_end();
          i != e; ++i) {
       Instruction *OpI = dyn_cast<Instruction>(*i);
-      if (OpI && OpI->getParent() == BIParent &&
+      if (OpI && OpI->getParent() == BB &&
           !OpI->mayHaveSideEffects() &&
-          !OpI->isUsedInBasicBlock(BIParent))
+          !OpI->isUsedInBasicBlock(BB))
         return false;
     }
   }
 
-  // If BB1 is actually on the false edge of the conditional branch, remember
-  // to swap the select operands later.
-  bool Invert = false;
-  if (BB1 != BI->getSuccessor(0)) {
-    assert(BB1 == BI->getSuccessor(1) && "No edge from 'if' block?");
-    Invert = true;
-  }
-
   // Collect interesting PHIs, and scan for hazards.
   SmallSetVector<std::pair<Value *, Value *>, 4> PHIs;
-  BasicBlock *BB2 = BB1->getTerminator()->getSuccessor(0);
-  for (BasicBlock::iterator I = BB2->begin();
+  for (BasicBlock::iterator I = EndBB->begin();
        PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-    Value *BB1V = PN->getIncomingValueForBlock(BB1);
-    Value *BIParentV = PN->getIncomingValueForBlock(BIParent);
+    Value *OrigV = PN->getIncomingValueForBlock(BB);
+    Value *ThenV = PN->getIncomingValueForBlock(ThenBB);
 
     // Skip PHIs which are trivial.
-    if (BB1V == BIParentV)
+    if (ThenV == OrigV)
       continue;
 
     // Check for safety.
-    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(BB1V)) {
+    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(ThenV)) {
       // An unfolded ConstantExpr could end up getting expanded into
       // Instructions. Don't speculate this and another instruction at
       // the same time.
@@ -1448,7 +1449,7 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
     }
 
     // Ok, we may insert a select for this PHI.
-    PHIs.insert(std::make_pair(BB1V, BIParentV));
+    PHIs.insert(std::make_pair(ThenV, OrigV));
   }
 
   // If there are no PHIs to process, bail early. This helps ensure idempotence
@@ -1457,11 +1458,11 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
     return false;
 
   // If we get here, we can hoist the instruction and if-convert.
-  DEBUG(dbgs() << "SPECULATIVELY EXECUTING BB" << *BB1 << "\n";);
+  DEBUG(dbgs() << "SPECULATIVELY EXECUTING BB" << *ThenBB << "\n";);
 
   // Hoist the instruction.
   if (HInst)
-    BIParent->getInstList().splice(BI, BB1->getInstList(), HInst);
+    BB->getInstList().splice(BI, ThenBB->getInstList(), HInst);
 
   // Insert selects and rewrite the PHI operands.
   IRBuilder<true, NoFolder> Builder(BI);
@@ -1483,15 +1484,15 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *BB1) {
 
     // Make the PHI node use the select for all incoming values for "then" and
     // "if" blocks.
-    for (BasicBlock::iterator I = BB2->begin();
+    for (BasicBlock::iterator I = EndBB->begin();
          PHINode *PN = dyn_cast<PHINode>(I); ++I) {
-      unsigned BB1I = PN->getBasicBlockIndex(BB1);
-      unsigned BIParentI = PN->getBasicBlockIndex(BIParent);
-      Value *BB1V = PN->getIncomingValue(BB1I);
-      Value *BIParentV = PN->getIncomingValue(BIParentI);
-      if (TrueV == BB1V && FalseV == BIParentV) {
-        PN->setIncomingValue(BB1I, SI);
-        PN->setIncomingValue(BIParentI, SI);
+      unsigned ThenI = PN->getBasicBlockIndex(ThenBB);
+      unsigned OrigI = PN->getBasicBlockIndex(BB);
+      Value *ThenV = PN->getIncomingValue(ThenI);
+      Value *OrigV = PN->getIncomingValue(OrigI);
+      if (TrueV == ThenV && FalseV == OrigV) {
+        PN->setIncomingValue(ThenI, SI);
+        PN->setIncomingValue(OrigI, SI);
       }
     }
   }
