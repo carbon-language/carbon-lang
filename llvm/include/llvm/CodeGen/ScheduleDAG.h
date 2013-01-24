@@ -455,6 +455,10 @@ namespace llvm {
       return NumSuccsLeft == 0;
     }
 
+    /// \brief Order this node's predecessor edges such that the critical path
+    /// edge occurs first.
+    void biasCriticalPath();
+
     void dump(const ScheduleDAG *G) const;
     void dumpAll(const ScheduleDAG *G) const;
     void print(raw_ostream &O, const ScheduleDAG *G) const;

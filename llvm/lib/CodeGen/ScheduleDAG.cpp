@@ -301,6 +301,21 @@ void SUnit::ComputeHeight() {
   } while (!WorkList.empty());
 }
 
+void SUnit::biasCriticalPath() {
+  if (NumPreds < 2)
+    return;
+
+  SUnit::pred_iterator BestI = Preds.begin();
+  unsigned MaxDepth = BestI->getSUnit()->getDepth();
+  for (SUnit::pred_iterator
+         I = llvm::next(BestI), E = Preds.end(); I != E; ++I) {
+    if (I->getKind() == SDep::Data && I->getSUnit()->getDepth() > MaxDepth)
+      BestI = I;
+  }
+  if (BestI != Preds.begin())
+    std::swap(*Preds.begin(), *BestI);
+}
+
 #if !defined(NDEBUG) || defined(LLVM_ENABLE_DUMP)
 /// SUnit - Scheduling unit. It's an wrapper around either a single SDNode or
 /// a group of nodes flagged together.
