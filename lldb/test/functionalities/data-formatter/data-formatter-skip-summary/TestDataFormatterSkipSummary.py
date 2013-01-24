@@ -19,6 +19,7 @@ class SkipSummaryDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
+    @skipIfGcc # bugzilla 15036: if compiled with GCC 4.6 (but not 4.4) lldb crashes with assertion in RecordLayoutBuilder: "field does not have external offset"
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""

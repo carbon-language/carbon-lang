@@ -19,6 +19,8 @@ class StdMapDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.data_formatter_commands()
 
+    @skipIfGcc # bugzilla 15036: When built with GCC, this test causes lldb to crash with
+               # assert DeclCXX.h:554 queried property of class with no definition
     @dwarf_test
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""

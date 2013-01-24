@@ -446,6 +446,22 @@ def skipOnLinux(func):
             func(*args, **kwargs)
     return wrapper
 
+def skipIfGcc(func):
+    """Decorate the item to skip tests that should be skipped if building with gcc ."""
+    if isinstance(func, type) and issubclass(func, unittest2.TestCase):
+        raise Exception("@skipOnLinux can only be used to decorate a test method")
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        from unittest2 import case
+        self = args[0]
+        compiler = self.getCompiler()
+        if "gcc" in compiler:
+            self.skipTest("skipping because gcc is the test compiler")
+        else:
+            func(*args, **kwargs)
+    return wrapper
+
+
 class Base(unittest2.TestCase):
     """
     Abstract base for performing lldb (see TestBase) or other generic tests (see

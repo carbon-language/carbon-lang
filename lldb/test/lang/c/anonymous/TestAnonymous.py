@@ -15,6 +15,7 @@ class AnonymousTestCase(TestBase):
         self.buildDsym()
         self.expr()
 
+    @skipIfGcc # bugzilla 15036: When built with GCC, causes linux crash in RecordLayoutBuilder.cpp:2272: "Field does not have an external offset"
     @dwarf_test
     def test_expr_with_dwarf(self):
         self.buildDwarf()
