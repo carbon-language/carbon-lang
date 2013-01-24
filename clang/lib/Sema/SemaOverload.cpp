@@ -10336,6 +10336,13 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
                                 FnDecl))
           return ExprError();
 
+        ArrayRef<const Expr *> ArgsArray(Args, 2);
+        // Cut off the implicit 'this'.
+        if (isa<CXXMethodDecl>(FnDecl))
+          ArgsArray = ArgsArray.slice(1);
+        checkCall(FnDecl, ArgsArray, 0, isa<CXXMethodDecl>(FnDecl), OpLoc, 
+                  TheCall->getSourceRange(), VariadicDoesNotApply);
+
         return MaybeBindToTemporary(TheCall);
       } else {
         // We matched a built-in operator. Convert the arguments, then

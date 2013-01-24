@@ -40,3 +40,15 @@ void g() {
   f(static_cast<char*>(0));  // expected-warning{{null passed}}
 }
 }
+
+namespace test4 {
+struct X {
+  bool operator!=(const void *) const __attribute__((nonnull(2)));
+};
+bool operator==(const X&, const void *) __attribute__((nonnull(2)));
+
+void test(const X& x) {
+  (void)(x == 0);  // expected-warning{{null passed}}
+  (void)(x != 0);  // expected-warning{{null passed}}
+}
+}
