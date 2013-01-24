@@ -21,8 +21,8 @@ class SBDirCheckerCase(TestBase):
     def test_sb_api_directory(self):
         """Test the SB API directory and make sure there's no unwanted stuff."""
 
-        if sys.platform.startswith("darwin") and self.getArchitecture() == "i386":
-            self.skipTest("LLDB.framework built 64-bit")
+        if self.getArchitecture() == "i386":
+            self.skipTest("LLDB is 64-bit and cannot be linked to 32-bit test program.")
 
         # Call the program generator to produce main.cpp.
         self.generate_main_cpp()
