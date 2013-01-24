@@ -366,7 +366,8 @@ enum {
   R_X86_64_SIZE64     = 33,
   R_X86_64_GOTPC32_TLSDESC = 34,
   R_X86_64_TLSDESC_CALL    = 35,
-  R_X86_64_TLSDESC    = 36
+  R_X86_64_TLSDESC    = 36,
+  R_X86_64_IRELATIVE  = 37
 };
 
 // i386 relocations.
