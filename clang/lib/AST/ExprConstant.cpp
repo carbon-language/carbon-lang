@@ -514,7 +514,6 @@ namespace {
     bool keepEvaluatingAfterFailure() {
       // Should return true in IntOverflowCheckMode, so that we check for
       // overflow even if some subexpressions can't be evaluated as constants.
-      // subexpressions can't be evaluated as constants.
       return IntOverflowCheckMode ||
              (CheckingPotentialConstantExpression &&
               EvalStatus.Diag && EvalStatus.Diag->empty());
