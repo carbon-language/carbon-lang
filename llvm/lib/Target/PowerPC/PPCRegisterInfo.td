@@ -63,74 +63,16 @@ class CRBIT<bits<5> num, string n> : PPCReg<n> {
   field bits<5> Num = num;
 }
 
-
 // General-purpose registers
-def R0  : GPR< 0,  "r0">, DwarfRegNum<[-2, 0]>;
-def R1  : GPR< 1,  "r1">, DwarfRegNum<[-2, 1]>;
-def R2  : GPR< 2,  "r2">, DwarfRegNum<[-2, 2]>;
-def R3  : GPR< 3,  "r3">, DwarfRegNum<[-2, 3]>;
-def R4  : GPR< 4,  "r4">, DwarfRegNum<[-2, 4]>;
-def R5  : GPR< 5,  "r5">, DwarfRegNum<[-2, 5]>;
-def R6  : GPR< 6,  "r6">, DwarfRegNum<[-2, 6]>;
-def R7  : GPR< 7,  "r7">, DwarfRegNum<[-2, 7]>;
-def R8  : GPR< 8,  "r8">, DwarfRegNum<[-2, 8]>;
-def R9  : GPR< 9,  "r9">, DwarfRegNum<[-2, 9]>;
-def R10 : GPR<10, "r10">, DwarfRegNum<[-2, 10]>;
-def R11 : GPR<11, "r11">, DwarfRegNum<[-2, 11]>;
-def R12 : GPR<12, "r12">, DwarfRegNum<[-2, 12]>;
-def R13 : GPR<13, "r13">, DwarfRegNum<[-2, 13]>;
-def R14 : GPR<14, "r14">, DwarfRegNum<[-2, 14]>;
-def R15 : GPR<15, "r15">, DwarfRegNum<[-2, 15]>;
-def R16 : GPR<16, "r16">, DwarfRegNum<[-2, 16]>;
-def R17 : GPR<17, "r17">, DwarfRegNum<[-2, 17]>;
-def R18 : GPR<18, "r18">, DwarfRegNum<[-2, 18]>;
-def R19 : GPR<19, "r19">, DwarfRegNum<[-2, 19]>;
-def R20 : GPR<20, "r20">, DwarfRegNum<[-2, 20]>;
-def R21 : GPR<21, "r21">, DwarfRegNum<[-2, 21]>;
-def R22 : GPR<22, "r22">, DwarfRegNum<[-2, 22]>;
-def R23 : GPR<23, "r23">, DwarfRegNum<[-2, 23]>;
-def R24 : GPR<24, "r24">, DwarfRegNum<[-2, 24]>;
-def R25 : GPR<25, "r25">, DwarfRegNum<[-2, 25]>;
-def R26 : GPR<26, "r26">, DwarfRegNum<[-2, 26]>;
-def R27 : GPR<27, "r27">, DwarfRegNum<[-2, 27]>;
-def R28 : GPR<28, "r28">, DwarfRegNum<[-2, 28]>;
-def R29 : GPR<29, "r29">, DwarfRegNum<[-2, 29]>;
-def R30 : GPR<30, "r30">, DwarfRegNum<[-2, 30]>;
-def R31 : GPR<31, "r31">, DwarfRegNum<[-2, 31]>;
+foreach Index = 0-31 in {
+  def R#Index : GPR<Index, "r"#Index>, DwarfRegNum<[-2, Index]>;
+}
 
 // 64-bit General-purpose registers
-def X0  : GP8< R0,  "r0">, DwarfRegNum<[0, -2]>;
-def X1  : GP8< R1,  "r1">, DwarfRegNum<[1, -2]>;
-def X2  : GP8< R2,  "r2">, DwarfRegNum<[2, -2]>;
-def X3  : GP8< R3,  "r3">, DwarfRegNum<[3, -2]>;
-def X4  : GP8< R4,  "r4">, DwarfRegNum<[4, -2]>;
-def X5  : GP8< R5,  "r5">, DwarfRegNum<[5, -2]>;
-def X6  : GP8< R6,  "r6">, DwarfRegNum<[6, -2]>;
-def X7  : GP8< R7,  "r7">, DwarfRegNum<[7, -2]>;
-def X8  : GP8< R8,  "r8">, DwarfRegNum<[8, -2]>;
-def X9  : GP8< R9,  "r9">, DwarfRegNum<[9, -2]>;
-def X10 : GP8<R10, "r10">, DwarfRegNum<[10, -2]>;
-def X11 : GP8<R11, "r11">, DwarfRegNum<[11, -2]>;
-def X12 : GP8<R12, "r12">, DwarfRegNum<[12, -2]>;
-def X13 : GP8<R13, "r13">, DwarfRegNum<[13, -2]>;
-def X14 : GP8<R14, "r14">, DwarfRegNum<[14, -2]>;
-def X15 : GP8<R15, "r15">, DwarfRegNum<[15, -2]>;
-def X16 : GP8<R16, "r16">, DwarfRegNum<[16, -2]>;
-def X17 : GP8<R17, "r17">, DwarfRegNum<[17, -2]>;
-def X18 : GP8<R18, "r18">, DwarfRegNum<[18, -2]>;
-def X19 : GP8<R19, "r19">, DwarfRegNum<[19, -2]>;
-def X20 : GP8<R20, "r20">, DwarfRegNum<[20, -2]>;
-def X21 : GP8<R21, "r21">, DwarfRegNum<[21, -2]>;
-def X22 : GP8<R22, "r22">, DwarfRegNum<[22, -2]>;
-def X23 : GP8<R23, "r23">, DwarfRegNum<[23, -2]>;
-def X24 : GP8<R24, "r24">, DwarfRegNum<[24, -2]>;
-def X25 : GP8<R25, "r25">, DwarfRegNum<[25, -2]>;
-def X26 : GP8<R26, "r26">, DwarfRegNum<[26, -2]>;
-def X27 : GP8<R27, "r27">, DwarfRegNum<[27, -2]>;
-def X28 : GP8<R28, "r28">, DwarfRegNum<[28, -2]>;
-def X29 : GP8<R29, "r29">, DwarfRegNum<[29, -2]>;
-def X30 : GP8<R30, "r30">, DwarfRegNum<[30, -2]>;
-def X31 : GP8<R31, "r31">, DwarfRegNum<[31, -2]>;
+foreach Index = 0-31 in {
+  def X#Index : GP8<!cast<GPR>("R"#Index), "r"#Index>,
+                    DwarfRegNum<[Index, -2]>;
+}
 
 // Floating-point registers
 def F0  : FPR< 0,  "f0">, DwarfRegNum<[32, 32]>;
