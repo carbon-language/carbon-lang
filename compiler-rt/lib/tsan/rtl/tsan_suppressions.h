@@ -35,7 +35,7 @@ struct Suppression {
   char *templ;
 };
 
-Suppression *SuppressionParse(const char* supp);
+Suppression *SuppressionParse(Suppression *head, const char* supp);
 bool SuppressionMatch(char *templ, const char *str);
 
 }  // namespace __tsan

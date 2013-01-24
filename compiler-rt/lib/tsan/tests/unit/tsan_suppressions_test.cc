@@ -20,7 +20,7 @@ namespace __tsan {
 
 TEST(Suppressions, Parse) {
   ScopedInRtl in_rtl;
-  Suppression *supp0 = SuppressionParse(
+  Suppression *supp0 = SuppressionParse(0,
     "race:foo\n"
     " 	race:bar\n"  // NOLINT
     "race:baz	 \n"  // NOLINT
@@ -45,7 +45,7 @@ TEST(Suppressions, Parse) {
 
 TEST(Suppressions, Parse2) {
   ScopedInRtl in_rtl;
-  Suppression *supp0 = SuppressionParse(
+  Suppression *supp0 = SuppressionParse(0,
     "  	# first line comment\n"  // NOLINT
     " 	race:bar 	\n"  // NOLINT
     "race:baz* *baz\n"
@@ -64,7 +64,7 @@ TEST(Suppressions, Parse2) {
 
 TEST(Suppressions, Parse3) {
   ScopedInRtl in_rtl;
-  Suppression *supp0 = SuppressionParse(
+  Suppression *supp0 = SuppressionParse(0,
     "# last suppression w/o line-feed\n"
     "race:foo\n"
     "race:bar"
@@ -81,7 +81,7 @@ TEST(Suppressions, Parse3) {
 
 TEST(Suppressions, ParseType) {
   ScopedInRtl in_rtl;
-  Suppression *supp0 = SuppressionParse(
+  Suppression *supp0 = SuppressionParse(0,
     "race:foo\n"
     "thread:bar\n"
     "mutex:baz\n"
