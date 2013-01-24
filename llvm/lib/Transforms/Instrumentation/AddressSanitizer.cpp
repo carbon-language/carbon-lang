@@ -875,12 +875,22 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   Value *FirstDynamic = 0, *LastDynamic = 0;
 
   for (size_t i = 0; i < n; i++) {
+    static const size_t kMaxGlobalRedzone = 1 << 18;
     GlobalVariable *G = GlobalsToChange[i];
     PointerType *PtrTy = cast<PointerType>(G->getType());
     Type *Ty = PtrTy->getElementType();
     uint64_t SizeInBytes = TD->getTypeAllocSize(Ty);
-    size_t RZ = RedzoneSize();
-    uint64_t RightRedzoneSize = RZ + (RZ - (SizeInBytes % RZ));
+    size_t MinRZ = RedzoneSize();
+    // MinRZ <= RZ <= kMaxGlobalRedzone
+    // and trying to make RZ to be ~ 1/4 of SizeInBytes.
+    size_t RZ = std::max(MinRZ,
+                         std::min(kMaxGlobalRedzone,
+                                  (SizeInBytes / MinRZ / 4) * MinRZ));
+    uint64_t RightRedzoneSize = RZ;
+    // Round up to MinRZ
+    if (SizeInBytes % MinRZ)
+      RightRedzoneSize += MinRZ - (SizeInBytes % MinRZ);
+    assert(((RightRedzoneSize + SizeInBytes) % MinRZ) == 0);
     Type *RightRedZoneTy = ArrayType::get(IRB.getInt8Ty(), RightRedzoneSize);
     // Determine whether this global should be poisoned in initialization.
     bool GlobalHasDynamicInitializer =
@@ -904,7 +914,7 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
         M, NewTy, G->isConstant(), G->getLinkage(),
         NewInitializer, "", G, G->getThreadLocalMode());
     NewGlobal->copyAttributesFrom(G);
-    NewGlobal->setAlignment(RZ);
+    NewGlobal->setAlignment(MinRZ);
 
     Value *Indices2[2];
     Indices2[0] = IRB.getInt32(0);
