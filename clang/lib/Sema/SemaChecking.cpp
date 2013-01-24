@@ -5183,6 +5183,18 @@ void Sema::CheckImplicitConversions(Expr *E, SourceLocation CC) {
   AnalyzeImplicitConversions(*this, E, CC);
 }
 
+/// Diagnose when expression is an integer constant expression and its evaluation
+/// results in integer overflow
+void Sema::CheckForIntOverflow (Expr *E) {
+  if (const BinaryOperator *BExpr = dyn_cast<BinaryOperator>(E->IgnoreParens())) {
+    unsigned Opc = BExpr->getOpcode();
+    if (Opc != BO_Add && Opc != BO_Sub && Opc != BO_Mul)
+      return;
+    llvm::SmallVector<PartialDiagnosticAt, 4> Diags;
+    E->EvaluateForOverflow(Context, &Diags);
+  }
+}
+
 namespace {
 /// \brief Visitor for expressions which looks for unsequenced operations on the
 /// same object.
@@ -5622,9 +5634,12 @@ void Sema::CheckUnsequencedOperations(Expr *E) {
   }
 }
 
-void Sema::CheckCompletedExpr(Expr *E, SourceLocation CheckLoc) {
+void Sema::CheckCompletedExpr(Expr *E, SourceLocation CheckLoc,
+                              bool IsConstexpr) {
   CheckImplicitConversions(E, CheckLoc);
   CheckUnsequencedOperations(E);
+  if (!IsConstexpr && !E->isValueDependent())
+    CheckForIntOverflow(E);
 }
 
 void Sema::CheckBitFieldInitialization(SourceLocation InitLoc,

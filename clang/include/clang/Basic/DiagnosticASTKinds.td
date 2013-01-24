@@ -106,6 +106,9 @@ def note_constexpr_calls_suppressed : Note<
   "(skipping %0 call%s0 in backtrace; use -fconstexpr-backtrace-limit=0 to "
   "see all)">;
 def note_constexpr_call_here : Note<"in call to '%0'">;
+def warn_integer_constant_overflow : Warning<
+  "overflow in case constant expression results in value %0 of type %1">,
+  InGroup<DiagGroup<"integer-overflow">>;
 
 // inline asm related.
 let CategoryName = "Inline Assembly Issue" in {

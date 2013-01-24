@@ -384,13 +384,17 @@ namespace {
     /// expression is a potential constant expression? If so, some diagnostics
     /// are suppressed.
     bool CheckingPotentialConstantExpression;
+    
+    bool IntOverflowCheckMode;
 
-    EvalInfo(const ASTContext &C, Expr::EvalStatus &S)
+    EvalInfo(const ASTContext &C, Expr::EvalStatus &S,
+             bool OverflowCheckMode=false)
       : Ctx(const_cast<ASTContext&>(C)), EvalStatus(S), CurrentCall(0),
         CallStackDepth(0), NextCallIndex(1),
         BottomFrame(*this, SourceLocation(), 0, 0, 0),
         EvaluatingDecl(0), EvaluatingDeclValue(0), HasActiveDiagnostic(false),
-        CheckingPotentialConstantExpression(false) {}
+        CheckingPotentialConstantExpression(false),
+        IntOverflowCheckMode(OverflowCheckMode) {}
 
     void setEvaluatingDecl(const VarDecl *VD, APValue &Value) {
       EvaluatingDecl = VD;
@@ -474,6 +478,8 @@ namespace {
       return OptionalDiagnostic();
     }
 
+    bool getIntOverflowCheckMode() { return IntOverflowCheckMode; }
+    
     /// Diagnose that the evaluation does not produce a C++11 core constant
     /// expression.
     template<typename LocArg>
@@ -506,8 +512,12 @@ namespace {
     /// Should we continue evaluation as much as possible after encountering a
     /// construct which can't be folded?
     bool keepEvaluatingAfterFailure() {
-      return CheckingPotentialConstantExpression &&
-             EvalStatus.Diag && EvalStatus.Diag->empty();
+      // Should return true in IntOverflowCheckMode, so that we check for
+      // overflow even if some subexpressions can't be evaluated as constants.
+      // subexpressions can't be evaluated as constants.
+      return IntOverflowCheckMode ||
+             (CheckingPotentialConstantExpression &&
+              EvalStatus.Diag && EvalStatus.Diag->empty());
     }
   };
 
@@ -4418,8 +4428,14 @@ static APSInt CheckedIntArithmetic(EvalInfo &Info, const Expr *E,
 
   APSInt Value(Op(LHS.extend(BitWidth), RHS.extend(BitWidth)), false);
   APSInt Result = Value.trunc(LHS.getBitWidth());
-  if (Result.extend(BitWidth) != Value)
-    HandleOverflow(Info, E, Value, E->getType());
+  if (Result.extend(BitWidth) != Value) {
+    if (Info.getIntOverflowCheckMode())
+      Info.Ctx.getDiagnostics().Report(E->getExprLoc(),
+        diag::warn_integer_constant_overflow)
+          << Result.toString(10) << E->getType();
+    else
+      HandleOverflow(Info, E, Value, E->getType());
+  }
   return Result;
 }
 
@@ -6260,26 +6276,39 @@ static bool EvaluateAsRValue(EvalInfo &Info, const Expr *E, APValue &Result) {
   return CheckConstantExpression(Info, E->getExprLoc(), E->getType(), Result);
 }
 
+static bool FastEvaluateAsRValue(const Expr *Exp, Expr::EvalResult &Result,
+                                 const ASTContext &Ctx, bool &IsConst) {
+  // Fast-path evaluations of integer literals, since we sometimes see files
+  // containing vast quantities of these.
+  if (const IntegerLiteral *L = dyn_cast<IntegerLiteral>(Exp)) {
+    Result.Val = APValue(APSInt(L->getValue(),
+                                L->getType()->isUnsignedIntegerType()));
+    IsConst = true;
+    return true;
+  }
+  
+  // FIXME: Evaluating values of large array and record types can cause
+  // performance problems. Only do so in C++11 for now.
+  if (Exp->isRValue() && (Exp->getType()->isArrayType() ||
+                          Exp->getType()->isRecordType()) &&
+      !Ctx.getLangOpts().CPlusPlus11) {
+    IsConst = false;
+    return true;
+  }
+  return false;
+}
+
+
 /// EvaluateAsRValue - Return true if this is a constant which we can fold using
 /// any crazy technique (that has nothing to do with language standards) that
 /// we want to.  If this function returns true, it returns the folded constant
 /// in Result. If this expression is a glvalue, an lvalue-to-rvalue conversion
 /// will be applied to the result.
 bool Expr::EvaluateAsRValue(EvalResult &Result, const ASTContext &Ctx) const {
-  // Fast-path evaluations of integer literals, since we sometimes see files
-  // containing vast quantities of these.
-  if (const IntegerLiteral *L = dyn_cast<IntegerLiteral>(this)) {
-    Result.Val = APValue(APSInt(L->getValue(),
-                                L->getType()->isUnsignedIntegerType()));
-    return true;
-  }
-
-  // FIXME: Evaluating values of large array and record types can cause
-  // performance problems. Only do so in C++11 for now.
-  if (isRValue() && (getType()->isArrayType() || getType()->isRecordType()) &&
-      !Ctx.getLangOpts().CPlusPlus11)
-    return false;
-
+  bool IsConst;
+  if (FastEvaluateAsRValue(this, Result, Ctx, IsConst))
+    return IsConst;
+  
   EvalInfo Info(Ctx, Result);
   return ::EvaluateAsRValue(Info, this, Result.Val);
 }
@@ -6374,6 +6403,17 @@ APSInt Expr::EvaluateKnownConstInt(const ASTContext &Ctx,
   assert(EvalResult.Val.isInt() && "Expression did not evaluate to integer");
 
   return EvalResult.Val.getInt();
+}
+
+void Expr::EvaluateForOverflow(const ASTContext &Ctx,
+                    SmallVectorImpl<PartialDiagnosticAt> *Diags) const {
+  bool IsConst;
+  EvalResult EvalResult;
+  EvalResult.Diag = Diags;
+  if (!FastEvaluateAsRValue(this, EvalResult, Ctx, IsConst)) {
+    EvalInfo Info(Ctx, EvalResult, true);
+    (void)::EvaluateAsRValue(Info, this, EvalResult.Val);
+  }
 }
 
  bool Expr::EvalResult::isGlobalLValue() const {

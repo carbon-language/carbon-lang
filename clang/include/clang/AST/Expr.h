@@ -570,6 +570,9 @@ public:
   /// integer.
   llvm::APSInt EvaluateKnownConstInt(const ASTContext &Ctx,
                           SmallVectorImpl<PartialDiagnosticAt> *Diag=0) const;
+  
+  void EvaluateForOverflow(const ASTContext &Ctx,
+                           SmallVectorImpl<PartialDiagnosticAt> *Diag) const;
 
   /// EvaluateAsLValue - Evaluate an expression to see if we can fold it to an
   /// lvalue with link time known address, with no side-effects.
