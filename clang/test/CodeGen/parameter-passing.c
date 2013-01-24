@@ -5,14 +5,10 @@
 // We also check _Bool and empty structures, as these can have annoying
 // corner cases.
 
-// RUN: %clang_cc1 %s -triple i386-unknown-unknown -O3 -emit-llvm -o %t
-// RUN: not grep '@g0' %t
-
-// RUN: %clang_cc1 %s -triple x86_64-unknown-unknown -O3 -emit-llvm -o %t
-// RUN: not grep '@g0' %t
-
-// RUN: %clang_cc1 %s -triple powerpc-unknown-unknown -O3 -emit-llvm -o %t
-// RUN: not grep '@g0' %t
+// RUN: %clang_cc1 %s -triple i386-unknown-unknown -O3 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple x86_64-unknown-unknown -O3 -emit-llvm -o - | FileCheck %s
+// RUN: %clang_cc1 %s -triple powerpc-unknown-unknown -O3 -emit-llvm -o - | FileCheck %s
+// CHECK-NOT: @g0
 
 typedef _Bool BoolTy;
 typedef int ScalarTy;
