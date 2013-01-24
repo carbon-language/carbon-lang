@@ -875,15 +875,15 @@ bool AddressSanitizerModule::runOnModule(Module &M) {
   Value *FirstDynamic = 0, *LastDynamic = 0;
 
   for (size_t i = 0; i < n; i++) {
-    static const size_t kMaxGlobalRedzone = 1 << 18;
+    static const uint64_t kMaxGlobalRedzone = 1 << 18;
     GlobalVariable *G = GlobalsToChange[i];
     PointerType *PtrTy = cast<PointerType>(G->getType());
     Type *Ty = PtrTy->getElementType();
     uint64_t SizeInBytes = TD->getTypeAllocSize(Ty);
-    size_t MinRZ = RedzoneSize();
+    uint64_t MinRZ = RedzoneSize();
     // MinRZ <= RZ <= kMaxGlobalRedzone
     // and trying to make RZ to be ~ 1/4 of SizeInBytes.
-    size_t RZ = std::max(MinRZ,
+    uint64_t RZ = std::max(MinRZ,
                          std::min(kMaxGlobalRedzone,
                                   (SizeInBytes / MinRZ / 4) * MinRZ));
     uint64_t RightRedzoneSize = RZ;
