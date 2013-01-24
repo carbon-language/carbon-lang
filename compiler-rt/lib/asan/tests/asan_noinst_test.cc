@@ -651,6 +651,9 @@ TEST(AddressSanitizerInterface, GlobalRedzones) {
   GOOD_ACCESS(glob15, 15 - 1);
   GOOD_ACCESS(glob16, 16 - 1);
   GOOD_ACCESS(glob17, 17 - 1);
+  GOOD_ACCESS(glob1000, 1000 - 1);
+  GOOD_ACCESS(glob10000, 10000 - 1);
+  GOOD_ACCESS(glob100000, 100000 - 1);
 
   BAD_ACCESS(glob1, 1);
   BAD_ACCESS(glob2, 2);
@@ -669,6 +672,12 @@ TEST(AddressSanitizerInterface, GlobalRedzones) {
   BAD_ACCESS(glob15, 15);
   BAD_ACCESS(glob16, 16);
   BAD_ACCESS(glob17, 17);
+  BAD_ACCESS(glob1000, 1000);
+  BAD_ACCESS(glob1000, 1100);  // Redzone is at least 101 bytes.
+  BAD_ACCESS(glob10000, 10000);
+  BAD_ACCESS(glob10000, 11000);  // Redzone is at least 1001 bytes.
+  BAD_ACCESS(glob100000, 100000);
+  BAD_ACCESS(glob100000, 110000);  // Redzone is at least 10001 bytes.
 }
 
 // Make sure that each aligned block of size "2^granularity" doesn't have

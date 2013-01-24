@@ -30,6 +30,9 @@ char glob14[14];
 char glob15[15];
 char glob16[16];
 char glob17[17];
+char glob1000[1000];
+char glob10000[10000];
+char glob100000[100000];
 
 static char static10[10];
 

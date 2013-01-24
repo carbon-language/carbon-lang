@@ -103,6 +103,9 @@ extern char glob14[14];
 extern char glob15[15];
 extern char glob16[16];
 extern char glob17[17];
+extern char glob1000[1000];
+extern char glob10000[10000];
+extern char glob100000[100000];
 extern int GlobalsTest(int x);
 
 #endif  // ASAN_TEST_UTILS_H
