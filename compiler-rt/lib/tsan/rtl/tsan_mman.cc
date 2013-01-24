@@ -193,11 +193,11 @@ uptr __tsan_get_heap_size() {
 }
 
 uptr __tsan_get_free_bytes() {
-  return 0;
+  return 1;
 }
 
 uptr __tsan_get_unmapped_bytes() {
-  return 0;
+  return 1;
 }
 
 uptr __tsan_get_estimated_allocated_size(uptr size) {
