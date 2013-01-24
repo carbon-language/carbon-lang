@@ -2891,10 +2891,10 @@ static char const * dcMips16Helper[MAX_STUB_NUMBER+1] =
 const char* MipsTargetLowering::
   getMips16HelperFunction
     (Type* RetTy, ArgListTy &Args, bool &needHelper) const {
-  const unsigned int maxStubNum = 10;
   const unsigned int stubNum = getMips16HelperFunctionStubNumber(Args);
+#ifndef NDEBUG
+  const unsigned int maxStubNum = 10;
   assert(stubNum <= maxStubNum);
-#ifdef NDEBUG
   const bool validStubNum[maxStubNum+1] =
     {true, true, true, false, false, true, true, false, false, true, true};
   assert(validStubNum[stubNum]);
