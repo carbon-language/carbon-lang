@@ -18,6 +18,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <string>
@@ -128,6 +129,10 @@ public:
   /// \brief Equality and non-equality query methods.
   bool operator==(AttrKind K) const;
   bool operator!=(AttrKind K) const;
+
+  bool operator<(Attribute A) const;
+
+  void Profile(FoldingSetNodeID &ID) const;
 
   // FIXME: Remove these 'operator' methods.
   bool operator==(const Attribute &A) const {

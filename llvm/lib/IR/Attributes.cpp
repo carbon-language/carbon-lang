@@ -23,6 +23,7 @@
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/Mutex.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -89,6 +90,18 @@ bool Attribute::operator==(AttrKind K) const {
 }
 bool Attribute::operator!=(AttrKind K) const {
   return !(*this == K);
+}
+
+bool Attribute::operator<(Attribute A) const {
+  if (!pImpl && !A.pImpl) return false;
+  if (!pImpl) return true;
+  if (!A.pImpl) return false;
+  return *pImpl < *A.pImpl;
+}
+
+
+void Attribute::Profile(FoldingSetNodeID &ID) const {
+  ID.AddPointer(pImpl);
 }
 
 uint64_t Attribute::Raw() const {
@@ -431,8 +444,32 @@ bool AttributeImpl::operator==(StringRef Kind) const {
       return CDA->getAsString() == Kind;
   return false;
 }
+
 bool AttributeImpl::operator!=(StringRef Kind) const {
   return !(*this == Kind);
+}
+
+bool AttributeImpl::operator<(const AttributeImpl &AI) const {
+  if (!Data && !AI.Data) return false;
+  if (!Data && AI.Data) return true;
+  if (Data && !AI.Data) return false;
+
+  ConstantInt *ThisCI = dyn_cast<ConstantInt>(Data);
+  ConstantInt *ThatCI = dyn_cast<ConstantInt>(AI.Data);
+
+  ConstantDataArray *ThisCDA = dyn_cast<ConstantDataArray>(Data);
+  ConstantDataArray *ThatCDA = dyn_cast<ConstantDataArray>(AI.Data);
+
+  if (ThisCI && ThatCI)
+    return ThisCI->getZExtValue() < ThatCI->getZExtValue();
+
+  if (ThisCI && ThatCDA)
+    return true;
+
+  if (ThisCDA && ThatCI)
+    return false;
+
+  return ThisCDA->getAsString() < ThatCDA->getAsString();
 }
 
 uint64_t AttributeImpl::Raw() const {
@@ -520,6 +557,41 @@ AttributeWithIndex AttributeWithIndex::get(LLVMContext &C, unsigned Idx,
   // FIXME: This is temporary, but necessary for the conversion.
   AttrBuilder B(AS, Idx);
   return get(Idx, Attribute::get(C, B));
+}
+
+//===----------------------------------------------------------------------===//
+// AttributeSetNode Definition
+//===----------------------------------------------------------------------===//
+
+AttributeSetNode *AttributeSetNode::get(LLVMContext &C,
+                                        ArrayRef<Attribute> Attrs) {
+  if (Attrs.empty())
+    return 0;
+
+  // Otherwise, build a key to look up the existing attributes.
+  LLVMContextImpl *pImpl = C.pImpl;
+  FoldingSetNodeID ID;
+
+  SmallVector<Attribute, 8> SortedAttrs(Attrs.begin(), Attrs.end());
+  std::sort(SortedAttrs.begin(), SortedAttrs.end());
+
+  for (SmallVectorImpl<Attribute>::iterator I = SortedAttrs.begin(),
+         E = SortedAttrs.end(); I != E; ++I)
+    I->Profile(ID);
+
+  void *InsertPoint;
+  AttributeSetNode *PA =
+    pImpl->AttrsSetNodes.FindNodeOrInsertPos(ID, InsertPoint);
+
+  // If we didn't find any existing attributes of the same shape then create a
+  // new one and insert it.
+  if (!PA) {
+    PA = new AttributeSetNode(SortedAttrs);
+    pImpl->AttrsSetNodes.InsertNode(PA, InsertPoint);
+  }
+
+  // Return the AttributesListNode that we found or created.
+  return PA;
 }
 
 //===----------------------------------------------------------------------===//

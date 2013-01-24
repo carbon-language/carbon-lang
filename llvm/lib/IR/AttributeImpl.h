@@ -56,6 +56,8 @@ public:
   bool operator==(StringRef Kind) const;
   bool operator!=(StringRef Kind) const;
 
+  bool operator<(const AttributeImpl &AI) const;
+
   uint64_t Raw() const;         // FIXME: Remove.
 
   static uint64_t getAttrMask(Attribute::AttrKind Val);
@@ -69,7 +71,38 @@ public:
 
 //===----------------------------------------------------------------------===//
 /// \class
-/// \brief This class represents a set of attributes.
+/// \brief This class represents a group of attributes that apply to one
+/// element: function, return type, or parameter.
+class AttributeSetNode : public FoldingSetNode {
+  SmallVector<Attribute, 4> AttrList;
+
+  AttributeSetNode(ArrayRef<Attribute> Attrs)
+    : AttrList(Attrs.begin(), Attrs.end()) {}
+public:
+  static AttributeSetNode *get(LLVMContext &C, ArrayRef<Attribute> Attrs);
+
+  typedef SmallVectorImpl<Attribute>::iterator       iterator;
+  typedef SmallVectorImpl<Attribute>::const_iterator const_iterator;
+
+  iterator begin() { return AttrList.begin(); }
+  iterator end()   { return AttrList.end(); }
+
+  const_iterator begin() const { return AttrList.begin(); }
+  const_iterator end() const   { return AttrList.end(); }
+
+  void Profile(FoldingSetNodeID &ID) const {
+    Profile(ID, AttrList);
+  }
+  static void Profile(FoldingSetNodeID &ID, ArrayRef<Attribute> AttrList) {
+    for (unsigned I = 0, E = AttrList.size(); I != E; ++I)
+      AttrList[I].Profile(ID);
+  }
+};
+
+//===----------------------------------------------------------------------===//
+/// \class
+/// \brief This class represents a set of attributes that apply to the function,
+/// return type, and parameters.
 class AttributeSetImpl : public FoldingSetNode {
   LLVMContext &Context;
   SmallVector<AttributeWithIndex, 4> AttrList;
