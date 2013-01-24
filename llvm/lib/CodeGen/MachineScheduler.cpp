@@ -563,6 +563,10 @@ void ScheduleDAGMI::releaseRoots() {
   for (std::vector<SUnit>::iterator
          I = SUnits.begin(), E = SUnits.end(); I != E; ++I) {
     SUnit *SU = &(*I);
+
+    // Order predecessors so DFSResult follows the critical path.
+    SU->biasCriticalPath();
+
     // A SUnit is ready to top schedule if it has no predecessors.
     if (!I->NumPredsLeft && SU != &EntrySU)
       SchedImpl->releaseTopNode(SU);
