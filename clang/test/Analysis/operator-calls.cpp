@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core,debug.ExprInspection -analyzer-ipa=inlining -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,alpha.core,debug.ExprInspection -verify %s
 void clang_analyzer_eval(bool);
 
 struct X0 { };

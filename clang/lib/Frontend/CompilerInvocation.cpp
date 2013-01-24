@@ -188,22 +188,6 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
     }
   }
 
-  if (Arg *A = Args.getLastArg(OPT_analyzer_ipa)) {
-    StringRef Name = A->getValue();
-    AnalysisIPAMode Value = llvm::StringSwitch<AnalysisIPAMode>(Name)
-#define ANALYSIS_IPA(NAME, CMDFLAG, DESC) \
-      .Case(CMDFLAG, NAME)
-#include "clang/StaticAnalyzer/Core/Analyses.def"
-      .Default(NumIPAModes);
-    if (Value == NumIPAModes) {
-      Diags.Report(diag::err_drv_invalid_value)
-        << A->getAsString(Args) << Name;
-      Success = false;
-    } else {
-      Opts.IPAMode = Value;
-    }
-  }
-
   if (Arg *A = Args.getLastArg(OPT_analyzer_inlining_mode)) {
     StringRef Name = A->getValue();
     AnalysisInliningMode Value = llvm::StringSwitch<AnalysisInliningMode>(Name)

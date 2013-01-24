@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount -analyzer-ipa=dynamic-bifurcate -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx.cocoa.RetainCount -analyzer-config ipa=dynamic-bifurcate -verify %s
 
 typedef signed char BOOL;
 typedef struct objc_class *Class;

@@ -559,8 +559,8 @@ bool ExprEngine::inlineCall(const CallEvent &Call, const Decl *D,
     if (!Opts.mayInlineObjCMethod())
       return false;
     AnalyzerOptions &Options = getAnalysisManager().options;
-    if (!(Options.getIPAMode() == DynamicDispatch ||
-          Options.getIPAMode() == DynamicDispatchBifurcate))
+    if (!(Options.getIPAMode() == IPAK_DynamicDispatch ||
+          Options.getIPAMode() == IPAK_DynamicDispatchBifurcate))
       return false;
     break;
   }
@@ -741,13 +741,13 @@ void ExprEngine::defaultEvalCall(NodeBuilder &Bldr, ExplodedNode *Pred,
         AnalyzerOptions &Options = getAnalysisManager().options;
 
         // Explore with and without inlining the call.
-        if (Options.getIPAMode() == DynamicDispatchBifurcate) {
+        if (Options.getIPAMode() == IPAK_DynamicDispatchBifurcate) {
           BifurcateCall(RD.getDispatchRegion(), *Call, D, Bldr, Pred);
           return;
         }
 
         // Don't inline if we're not in any dynamic dispatch mode.
-        if (Options.getIPAMode() != DynamicDispatch) {
+        if (Options.getIPAMode() != IPAK_DynamicDispatch) {
           conservativeEvalCall(*Call, Bldr, Pred, State);
           return;
         }

@@ -41,16 +41,6 @@ ANALYSIS_PURGE(PurgeStmt,  "statement", "Purge symbols, bindings, and constraint
 ANALYSIS_PURGE(PurgeBlock, "block", "Purge symbols, bindings, and constraints before every basic block")
 ANALYSIS_PURGE(PurgeNone,  "none", "Do not purge symbols, bindings, or constraints")
 
-#ifndef ANALYSIS_IPA
-#define ANALYSIS_IPA(NAME, CMDFLAG, DESC)
-#endif
-
-ANALYSIS_IPA(None, "none", "Perform only intra-procedural analysis")
-ANALYSIS_IPA(BasicInlining, "basic-inlining", "Inline C functions and blocks when their definitions are available")
-ANALYSIS_IPA(Inlining, "inlining", "Inline callees when their definitions are available")
-ANALYSIS_IPA(DynamicDispatch, "dynamic", "Experimental: Enable inlining of dynamically dispatched methods")
-ANALYSIS_IPA(DynamicDispatchBifurcate, "dynamic-bifurcate", "Experimental: Enable inlining of dynamically dispatched methods, bifurcate paths when exact type info is unavailable")
-
 #ifndef ANALYSIS_INLINING_MODE
 #define ANALYSIS_INLINING_MODE(NAME, CMDFLAG, DESC)
 #endif

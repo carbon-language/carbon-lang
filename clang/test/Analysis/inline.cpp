@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-ipa=inlining -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,unix.Malloc,debug.ExprInspection -analyzer-config ipa=inlining -verify %s
 
 void clang_analyzer_eval(bool);
 void clang_analyzer_checkInlined(bool);
@@ -192,7 +192,7 @@ namespace Invalidation {
     virtual void touchV2(int &x) const;
 
     int test() const {
-      // We were accidentally not invalidating under -analyzer-ipa=inlining
+      // We were accidentally not invalidating under inlining
       // at one point for virtual methods with visible definitions.
       int a, b, c, d;
       touch(a);

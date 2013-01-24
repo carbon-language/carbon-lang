@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -analyzer-ipa=inlining -verify -w %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,debug.ExprInspection -verify -w %s
 
 struct Trivial {
   Trivial(int x) : value(x) {}

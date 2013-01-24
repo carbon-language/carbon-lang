@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify -fblocks -analyzer-ipa=inlining -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
-// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify -fblocks -analyzer-ipa=inlining -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
+// RUN: %clang_cc1 -triple i386-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
+// RUN: %clang_cc1 -triple x86_64-apple-darwin9 -analyze -analyzer-checker=core,alpha.core -analyzer-store=region -verify -fblocks -analyzer-opt-analyze-nested-blocks %s -fexceptions -fcxx-exceptions
 
 // Test basic handling of references.
 char &test1_aux();

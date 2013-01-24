@@ -100,7 +100,7 @@ public:
   }
 
   bool shouldInlineCall() const {
-    return options.IPAMode != None;
+    return options.getIPAMode() != IPAK_None;
   }
 
   CFG *getCFG(Decl const *D) {

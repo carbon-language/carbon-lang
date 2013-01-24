@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-ipa=dynamic-bifurcate -analyzer-checker=core,osx -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core,osx -verify %s
 
 typedef signed char BOOL;
 

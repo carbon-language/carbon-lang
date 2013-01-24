@@ -17,7 +17,8 @@ public:
 // CHECK-NEXT: cfg-temporary-dtors = false
 // CHECK-NEXT: faux-bodies = true
 // CHECK-NEXT: graph-trim-interval = 1000
+// CHECK-NEXT: ipa = dynamic-bifurcate
 // CHECK-NEXT: ipa-always-inline-size = 3
 // CHECK-NEXT: max-times-inline-large = 32
 // CHECK-NEXT: [stats]
-// CHECK-NEXT: num-entries = 8
+// CHECK-NEXT: num-entries = 9

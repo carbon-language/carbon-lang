@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-ipa=dynamic-bifurcate -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-config ipa=dynamic-bifurcate -verify %s
 
 // Test inlining of ObjC class methods.
 

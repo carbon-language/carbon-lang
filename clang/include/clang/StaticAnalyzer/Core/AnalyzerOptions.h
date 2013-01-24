@@ -64,13 +64,6 @@ enum AnalysisPurgeMode {
 NumPurgeModes
 };
 
-/// AnalysisIPAMode - Set of inter-procedural modes.
-enum AnalysisIPAMode {
-#define ANALYSIS_IPA(NAME, CMDFLAG, DESC) NAME,
-#include "clang/StaticAnalyzer/Core/Analyses.def"
-NumIPAModes
-};
-
 /// AnalysisInlineFunctionSelection - Set of inlining function selection heuristics.
 enum AnalysisInliningMode {
 #define ANALYSIS_INLINING_MODE(NAME, CMDFLAG, DESC) NAME,
@@ -102,6 +95,27 @@ enum CXXInlineableMemberKind {
   CIMK_Destructors
 };
 
+/// \brief Describes the different modes of inter-procedural analysis.
+enum IPAKind {
+  IPAK_NotSet = 0,
+
+  /// Perform only intra-procedural analysis.
+  IPAK_None = 1,
+
+  /// Inline C functions and blocks when their definitions are available.
+  IPAK_BasicInlining = 2,
+
+  /// Inline callees when their definitions are available.
+  // TODO: How is this different from BasicInlining?
+  IPAK_Inlining = 3,
+
+  /// Enable inlining of dynamically dispatched methods.
+  IPAK_DynamicDispatch = 4,
+
+  /// Enable inlining of dynamically dispatched methods, bifurcate paths when
+  /// exact type info is unavailable.
+  IPAK_DynamicDispatchBifurcate = 5
+};
 
 class AnalyzerOptions : public RefCountedBase<AnalyzerOptions> {
 public:
@@ -116,9 +130,6 @@ public:
   AnalysisConstraints AnalysisConstraintsOpt;
   AnalysisDiagClients AnalysisDiagOpt;
   AnalysisPurgeMode AnalysisPurgeOpt;
-  
-  // \brief The interprocedural analysis mode.
-  AnalysisIPAMode IPAMode;
   
   std::string AnalyzeSpecificFunction;
   
@@ -165,6 +176,9 @@ public:
   AnalysisInliningMode InliningMode;
 
 private:
+  /// Controls the mode of inter-procedural analysis.
+  IPAKind IPAMode;
+
   /// Controls which C++ member functions will be considered for inlining.
   CXXInlineableMemberKind CXXMemberInliningMode;
   
@@ -210,9 +224,8 @@ private:
   int getOptionAsInteger(StringRef Name, int DefaultVal);
 
 public:
-  AnalysisIPAMode getIPAMode() const {
-    return IPAMode;
-  }
+  /// \brief Returns the inter-procedural analysis mode.
+  IPAKind getIPAMode();
 
   /// Returns the option controlling which C++ member functions will be
   /// considered for inlining.
@@ -289,28 +302,28 @@ public:
   unsigned getMaxTimesInlineLarge();
 
 public:
-  AnalyzerOptions() : CXXMemberInliningMode() {
-    AnalysisStoreOpt = RegionStoreModel;
-    AnalysisConstraintsOpt = RangeConstraintsModel;
-    AnalysisDiagOpt = PD_HTML;
-    AnalysisPurgeOpt = PurgeStmt;
-    IPAMode = DynamicDispatchBifurcate;
-    ShowCheckerHelp = 0;
-    AnalyzeAll = 0;
-    AnalyzerDisplayProgress = 0;
-    AnalyzeNestedBlocks = 0;
-    eagerlyAssumeBinOpBifurcation = 0;
-    TrimGraph = 0;
-    visualizeExplodedGraphWithGraphViz = 0;
-    visualizeExplodedGraphWithUbiGraph = 0;
-    UnoptimizedCFG = 0;
-    PrintStats = 0;
-    NoRetryExhausted = 0;
+  AnalyzerOptions() :
+    AnalysisStoreOpt(RegionStoreModel),
+    AnalysisConstraintsOpt(RangeConstraintsModel),
+    AnalysisDiagOpt(PD_HTML),
+    AnalysisPurgeOpt(PurgeStmt),
+    ShowCheckerHelp(0),
+    AnalyzeAll(0),
+    AnalyzerDisplayProgress(0),
+    AnalyzeNestedBlocks(0),
+    eagerlyAssumeBinOpBifurcation(0),
+    TrimGraph(0),
+    visualizeExplodedGraphWithGraphViz(0),
+    visualizeExplodedGraphWithUbiGraph(0),
+    UnoptimizedCFG(0),
+    PrintStats(0),
+    NoRetryExhausted(0),
     // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).
-    InlineMaxStackDepth = 5;
-    InlineMaxFunctionSize = 50;
-    InliningMode = NoRedundancy;
-  }
+    InlineMaxStackDepth(5),
+    InlineMaxFunctionSize(50),
+    InliningMode(NoRedundancy),
+    CXXMemberInliningMode() {}
+
 };
   
 typedef IntrusiveRefCntPtr<AnalyzerOptions> AnalyzerOptionsRef;

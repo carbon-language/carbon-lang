@@ -20,9 +20,31 @@
 using namespace clang;
 using namespace llvm;
 
+IPAKind AnalyzerOptions::getIPAMode() {
+  if (IPAMode == IPAK_NotSet) {
+
+    // Lookup the ipa configuration option, use the default from User Mode.
+    StringRef ModeStr(Config.GetOrCreateValue("ipa", 
+                                              "dynamic-bifurcate").getValue());
+    IPAKind IPAConfig = llvm::StringSwitch<IPAKind>(ModeStr)
+            .Case("none", IPAK_None)
+            .Case("basic-inlining", IPAK_BasicInlining)
+            .Case("inlining", IPAK_Inlining)
+            .Case("dynamic", IPAK_DynamicDispatch)
+            .Case("dynamic-bifurcate", IPAK_DynamicDispatchBifurcate)
+            .Default(IPAK_NotSet);
+    assert(IPAConfig != IPAK_NotSet && "IPA Mode is not set or invalid.");
+
+    // Set the member variable.
+    IPAMode = IPAConfig;
+  }
+  
+  return IPAMode;
+}
+
 bool
 AnalyzerOptions::mayInlineCXXMemberFunction(CXXInlineableMemberKind K) {
-  if (getIPAMode() < Inlining)
+  if (getIPAMode() < IPAK_Inlining)
     return false;
 
   if (!CXXMemberInliningMode) {
