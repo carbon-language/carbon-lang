@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -emit-llvm -o %t %s
-// RUN: grep '@unreachable' %t | count 0
+// RUN: %clang_cc1 -emit-llvm -o - %s | FileCheck %s
+// CHECK-NOT: @unreachable
 
 extern void abort() __attribute__((noreturn));
 extern int unreachable();
