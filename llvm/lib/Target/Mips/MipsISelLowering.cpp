@@ -11,8 +11,8 @@
 // selection DAG.
 //
 //===----------------------------------------------------------------------===//
-
 #define DEBUG_TYPE "mips-lower"
+#include <set>
 #include "MipsISelLowering.h"
 #include "InstPrinter/MipsInstPrinter.h"
 #include "MCTargetDesc/MipsBaseInfo.h"
@@ -205,39 +205,64 @@ const char *MipsTargetLowering::getTargetNodeName(unsigned Opcode) const {
   }
 }
 
+namespace {
+  struct eqstr {
+    bool operator()(const char *s1, const char *s2) const
+    {
+      return strcmp(s1, s2) == 0;
+    }
+  };
+
+  std::set<const char*, eqstr> noHelperNeeded;
+
+  const char* addToNoHelperNeeded(const char* s) {
+    noHelperNeeded.insert(s);
+    return s;
+  }
+
+}
+
 void MipsTargetLowering::setMips16HardFloatLibCalls() {
-  setLibcallName(RTLIB::ADD_F32, "__mips16_addsf3");
-  setLibcallName(RTLIB::ADD_F64, "__mips16_adddf3");
-  setLibcallName(RTLIB::SUB_F32, "__mips16_subsf3");
-  setLibcallName(RTLIB::SUB_F64, "__mips16_subdf3");
-  setLibcallName(RTLIB::MUL_F32, "__mips16_mulsf3");
-  setLibcallName(RTLIB::MUL_F64, "__mips16_muldf3");
-  setLibcallName(RTLIB::DIV_F32, "__mips16_divsf3");
-  setLibcallName(RTLIB::DIV_F64, "__mips16_divdf3");
-  setLibcallName(RTLIB::FPEXT_F32_F64, "__mips16_extendsfdf2");
-  setLibcallName(RTLIB::FPROUND_F64_F32, "__mips16_truncdfsf2");
-  setLibcallName(RTLIB::FPTOSINT_F32_I32, "__mips16_fix_truncsfsi");
-  setLibcallName(RTLIB::FPTOSINT_F64_I32, "__mips16_fix_truncdfsi");
-  setLibcallName(RTLIB::SINTTOFP_I32_F32, "__mips16_floatsisf");
-  setLibcallName(RTLIB::SINTTOFP_I32_F64, "__mips16_floatsidf");
-  setLibcallName(RTLIB::UINTTOFP_I32_F32, "__mips16_floatunsisf");
-  setLibcallName(RTLIB::UINTTOFP_I32_F64, "__mips16_floatunsidf");
-  setLibcallName(RTLIB::OEQ_F32, "__mips16_eqsf2");
-  setLibcallName(RTLIB::OEQ_F64, "__mips16_eqdf2");
-  setLibcallName(RTLIB::UNE_F32, "__mips16_nesf2");
-  setLibcallName(RTLIB::UNE_F64, "__mips16_nedf2");
-  setLibcallName(RTLIB::OGE_F32, "__mips16_gesf2");
-  setLibcallName(RTLIB::OGE_F64, "__mips16_gedf2");
-  setLibcallName(RTLIB::OLT_F32, "__mips16_ltsf2");
-  setLibcallName(RTLIB::OLT_F64, "__mips16_ltdf2");
-  setLibcallName(RTLIB::OLE_F32, "__mips16_lesf2");
-  setLibcallName(RTLIB::OLE_F64, "__mips16_ledf2");
-  setLibcallName(RTLIB::OGT_F32, "__mips16_gtsf2");
-  setLibcallName(RTLIB::OGT_F64, "__mips16_gtdf2");
-  setLibcallName(RTLIB::UO_F32, "__mips16_unordsf2");
-  setLibcallName(RTLIB::UO_F64, "__mips16_unorddf2");
-  setLibcallName(RTLIB::O_F32, "__mips16_unordsf2");
-  setLibcallName(RTLIB::O_F64, "__mips16_unorddf2");
+  setLibcallName(RTLIB::ADD_F32, addToNoHelperNeeded("__mips16_addsf3"));
+  setLibcallName(RTLIB::ADD_F64, addToNoHelperNeeded("__mips16_adddf3"));
+  setLibcallName(RTLIB::SUB_F32, addToNoHelperNeeded("__mips16_subsf3"));
+  setLibcallName(RTLIB::SUB_F64, addToNoHelperNeeded("__mips16_subdf3"));
+  setLibcallName(RTLIB::MUL_F32, addToNoHelperNeeded("__mips16_mulsf3"));
+  setLibcallName(RTLIB::MUL_F64, addToNoHelperNeeded("__mips16_muldf3"));
+  setLibcallName(RTLIB::DIV_F32, addToNoHelperNeeded("__mips16_divsf3"));
+  setLibcallName(RTLIB::DIV_F64, addToNoHelperNeeded("__mips16_divdf3"));
+  setLibcallName(RTLIB::FPEXT_F32_F64,
+                 addToNoHelperNeeded("__mips16_extendsfdf2"));
+  setLibcallName(RTLIB::FPROUND_F64_F32,
+                 addToNoHelperNeeded("__mips16_truncdfsf2"));
+  setLibcallName(RTLIB::FPTOSINT_F32_I32,
+                 addToNoHelperNeeded("__mips16_fix_truncsfsi"));
+  setLibcallName(RTLIB::FPTOSINT_F64_I32,
+                 addToNoHelperNeeded("__mips16_fix_truncdfsi"));
+  setLibcallName(RTLIB::SINTTOFP_I32_F32,
+                 addToNoHelperNeeded("__mips16_floatsisf"));
+  setLibcallName(RTLIB::SINTTOFP_I32_F64,
+                 addToNoHelperNeeded("__mips16_floatsidf"));
+  setLibcallName(RTLIB::UINTTOFP_I32_F32,
+                 addToNoHelperNeeded("__mips16_floatunsisf"));
+  setLibcallName(RTLIB::UINTTOFP_I32_F64,
+                 addToNoHelperNeeded("__mips16_floatunsidf"));
+  setLibcallName(RTLIB::OEQ_F32, addToNoHelperNeeded("__mips16_eqsf2"));
+  setLibcallName(RTLIB::OEQ_F64, addToNoHelperNeeded("__mips16_eqdf2"));
+  setLibcallName(RTLIB::UNE_F32, addToNoHelperNeeded("__mips16_nesf2"));
+  setLibcallName(RTLIB::UNE_F64, addToNoHelperNeeded("__mips16_nedf2"));
+  setLibcallName(RTLIB::OGE_F32, addToNoHelperNeeded("__mips16_gesf2"));
+  setLibcallName(RTLIB::OGE_F64, addToNoHelperNeeded("__mips16_gedf2"));
+  setLibcallName(RTLIB::OLT_F32, addToNoHelperNeeded("__mips16_ltsf2"));
+  setLibcallName(RTLIB::OLT_F64, addToNoHelperNeeded("__mips16_ltdf2"));
+  setLibcallName(RTLIB::OLE_F32, addToNoHelperNeeded("__mips16_lesf2"));
+  setLibcallName(RTLIB::OLE_F64, addToNoHelperNeeded("__mips16_ledf2"));
+  setLibcallName(RTLIB::OGT_F32, addToNoHelperNeeded("__mips16_gtsf2"));
+  setLibcallName(RTLIB::OGT_F64, addToNoHelperNeeded("__mips16_gtdf2"));
+  setLibcallName(RTLIB::UO_F32, addToNoHelperNeeded("__mips16_unordsf2"));
+  setLibcallName(RTLIB::UO_F64, addToNoHelperNeeded("__mips16_unorddf2"));
+  setLibcallName(RTLIB::O_F32, addToNoHelperNeeded("__mips16_unordsf2"));
+  setLibcallName(RTLIB::O_F64, addToNoHelperNeeded("__mips16_unorddf2"));
 }
 
 MipsTargetLowering::
@@ -2754,6 +2779,155 @@ MipsTargetLowering::passArgOnStack(SDValue StackPtr, unsigned Offset,
                       /*isVolatile=*/ true, false, 0);
 }
 
+//
+// The Mips16 hard float is a crazy quilt inherited from gcc. I have a much
+// cleaner way to do all of this but it will have to wait until the traditional
+// gcc mechanism is completed.
+//
+// For Pic, in order for Mips16 code to call Mips32 code which according the abi
+// have either arguments or returned values placed in floating point registers,
+// we use a set of helper functions. (This includes functions which return type
+//  complex which on Mips are returned in a pair of floating point registers).
+//
+// This is an encoding that we inherited from gcc.
+// In Mips traditional O32, N32 ABI, floating point numbers are passed in
+// floating point argument registers 1,2 only when the first and optionally
+// the second arguments are float (sf) or double (df).
+// For Mips16 we are only concerned with the situations where floating point
+// arguments are being passed in floating point registers by the ABI, because
+// Mips16 mode code cannot execute floating point instructions to load those
+// values and hence helper functions are needed.
+// The possibilities are (), (sf), (sf, sf), (sf, df), (df), (df, sf), (df, df)
+// the helper function suffixs for these are:
+//                        0,  1,    5,        9,         2,   6,        10
+// this suffix can then be calculated as follows:
+// for a given argument Arg:
+//     Arg1x, Arg2x = 1 :  Arg is sf
+//                    2 :  Arg is df
+//                    0:   Arg is neither sf or df
+// So this stub is the string for number Arg1x + Arg2x*4.
+// However not all numbers between 0 and 10 are possible, we check anyway and
+// assert if the impossible exists.
+//
+
+unsigned int MipsTargetLowering::getMips16HelperFunctionStubNumber
+  (ArgListTy &Args) const {
+  unsigned int resultNum = 0;
+  if (Args.size() >= 1) {
+    Type *t = Args[0].Ty;
+    if (t->isFloatTy()) {
+      resultNum = 1;
+    }
+    else if (t->isDoubleTy()) {
+      resultNum = 2;
+    }
+  }
+  if (resultNum) {
+    if (Args.size() >=2) {
+      Type *t = Args[1].Ty;
+      if (t->isFloatTy()) {
+        resultNum += 4;
+      }
+      else if (t->isDoubleTy()) {
+        resultNum += 8;
+      }
+    }
+  }
+  return resultNum;
+}
+
+//
+// prefixs are attached to stub numbers depending on the return type .
+// return type: float  sf_
+//              double df_
+//              single complex sc_
+//              double complext dc_
+//              others  NO PREFIX
+//
+//
+// The full name of a helper function is__mips16_call_stub +
+//    return type dependent prefix + stub number
+//
+//
+// This is something that probably should be in a different source file and
+// perhaps done differently but my main purpose is to not waste runtime
+// on something that we can enumerate in the source. Another possibility is
+// to have a python script to generate these mapping tables. This will do
+// for now. There are a whole series of helper function mapping arrays, one
+// for each return type class as outlined above. There there are 11 possible
+//  entries. Ones with 0 are ones which should never be selected
+//
+// All the arrays are similar except for ones which return neither
+// sf, df, sc, dc, in which only care about ones which have sf or df as a
+// first parameter.
+//
+#define P_ "__mips16_call_stub_"
+#define MAX_STUB_NUMBER 10
+#define T1 P "1", P "2", 0, 0, P "5", P "6", 0, 0, P "9", P "10"
+#define T P "0" , T1
+#define P P_
+static char const * vMips16Helper[MAX_STUB_NUMBER+1] =
+  {0, T1 };
+#undef P
+#define P P_ "sf_"
+static char const * sfMips16Helper[MAX_STUB_NUMBER+1] =
+  { T };
+#undef P
+#define P P_ "df_"
+static char const * dfMips16Helper[MAX_STUB_NUMBER+1] =
+  { T };
+#undef P
+#define P P_ "sc_"
+static char const * scMips16Helper[MAX_STUB_NUMBER+1] =
+  { T };
+#undef P
+#define P P_ "dc_"
+static char const * dcMips16Helper[MAX_STUB_NUMBER+1] =
+  { T };
+#undef P
+#undef P_
+
+
+const char* MipsTargetLowering::
+  getMips16HelperFunction
+    (Type* RetTy, ArgListTy &Args, bool &needHelper) const {
+  const unsigned int maxStubNum = 10;
+  const bool validStubNum[maxStubNum+1] =
+    {true, true, true, false, false, true, true, false, false, true, true};
+  const unsigned int stubNum = getMips16HelperFunctionStubNumber(Args);
+  assert(stubNum <= maxStubNum);
+  assert (validStubNum[stubNum]);
+  const char *result;
+  if (RetTy->isFloatTy()) {
+    result = sfMips16Helper[stubNum];
+  }
+  else if (RetTy ->isDoubleTy()) {
+    result = dfMips16Helper[stubNum];
+  }
+  else if (RetTy->isStructTy()) {
+    // check if it's complex
+    if (RetTy->getNumContainedTypes() == 2) {
+      if ((RetTy->getContainedType(0)->isFloatTy()) &&
+          (RetTy->getContainedType(1)->isFloatTy())) {
+        result = scMips16Helper[stubNum];
+      }
+      else if ((RetTy->getContainedType(0)->isDoubleTy()) &&
+               (RetTy->getContainedType(1)->isDoubleTy())) {
+        result = dcMips16Helper[stubNum];
+      }
+    }
+  }
+  else {
+    if (stubNum == 0) {
+      needHelper = false;
+      return "";
+    }
+    result = vMips16Helper[stubNum];
+  }
+  needHelper = true;
+  return result;
+}
+
 /// LowerCall - functions arguments are copied from virtual regs to
 /// (physical regs)/(stack frame), CALLSEQ_START and CALLSEQ_END are emitted.
 SDValue
@@ -2770,6 +2944,26 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   CallingConv::ID CallConv              = CLI.CallConv;
   bool isVarArg                         = CLI.IsVarArg;
 
+  const char* mips16HelperFunction = 0;
+  bool needMips16Helper = false;
+
+  if (Subtarget->inMips16Mode() && getTargetMachine().Options.UseSoftFloat &&
+      Mips16HardFloat) {
+    //
+    // currently we don't have symbols tagged with the mips16 or mips32
+    // qualifier so we will assume that we don't know what kind it is.
+    // and generate the helper
+    //
+    bool lookupHelper = true;
+    if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee)) {
+      if (noHelperNeeded.find(S->getSymbol()) != noHelperNeeded.end()) {
+        lookupHelper = false;
+      }
+    }
+    if (lookupHelper) mips16HelperFunction =
+      getMips16HelperFunction(CLI.RetTy, CLI.Args, needMips16Helper);
+
+  }
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   const TargetFrameLowering *TFL = MF.getTarget().getFrameLowering();
@@ -2934,10 +3128,19 @@ MipsTargetLowering::LowerCall(TargetLowering::CallLoweringInfo &CLI,
   // -reloction-model=pic or it is an indirect call.
   if (IsPICCall || !GlobalOrExternal) {
     unsigned T9Reg = IsN64 ? Mips::T9_64 : Mips::T9;
-    RegsToPass.push_front(std::make_pair(T9Reg, Callee));
+    unsigned V0Reg = Mips::V0;
+    if (needMips16Helper) {
+      RegsToPass.push_front(std::make_pair(V0Reg, Callee));
+      JumpTarget = DAG.getExternalSymbol(
+        mips16HelperFunction, getPointerTy());
+      JumpTarget = getAddrGlobal(JumpTarget, DAG, MipsII::MO_GOT);
+    }
+    else {
+      RegsToPass.push_front(std::make_pair(T9Reg, Callee));
 
-    if (!Subtarget->inMips16Mode())
-      JumpTarget = SDValue();
+      if (!Subtarget->inMips16Mode())
+        JumpTarget = SDValue();
+    }
   }
 
   // Insert node "GP copy globalreg" before call to function.

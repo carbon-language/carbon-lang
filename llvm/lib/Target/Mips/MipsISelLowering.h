@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetLowering.h"
 #include <deque>
+#include <string>
 
 namespace llvm {
   namespace MipsISD {
@@ -176,6 +177,12 @@ namespace llvm {
   private:
 
     void setMips16HardFloatLibCalls();
+
+    unsigned int
+      getMips16HelperFunctionStubNumber(ArgListTy &Args) const;
+
+    const char *getMips16HelperFunction
+      (Type* RetTy, ArgListTy &Args, bool &needHelper) const;
 
     /// ByValArgInfo - Byval argument information.
     struct ByValArgInfo {
