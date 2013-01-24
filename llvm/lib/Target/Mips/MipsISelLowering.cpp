@@ -2917,6 +2917,12 @@ const char* MipsTargetLowering::
                (RetTy->getContainedType(1)->isDoubleTy())) {
         result = dcMips16Helper[stubNum];
       }
+      else {
+        llvm_unreachable("Uncovered condition");
+      }
+    }
+    else {
+      llvm_unreachable("Uncovered condition");
     }
   }
   else {
