@@ -1433,20 +1433,27 @@ static bool SpeculativelyExecuteBB(BranchInst *BI, BasicBlock *ThenBB) {
       continue;
 
     HaveRewritablePHIs = true;
-
-    // Check for safety.
     ConstantExpr *CE = dyn_cast<ConstantExpr>(ThenV);
     if (!CE)
-      continue; // Known safe.
+      continue; // Known safe and cheap.
+
+    if (!isSafeToSpeculativelyExecute(CE))
+      return false;
+
+    // Don't speculate into a select with a constant select expression operand.
+    // FIXME: This should really be a cost metric, but our cost model doesn't
+    // accurately model the expense of select.
+    if (Operator::getOpcode(CE) == Instruction::Select)
+      return false;
 
     // An unfolded ConstantExpr could end up getting expanded into
     // Instructions. Don't speculate this and another instruction at
     // the same time.
+    // FIXME: This is strange because provided we haven't already hit the cost
+    // of 1, this code will speculate an arbitrary number of complex constant
+    // expression PHI nodes. Also, this doesn't account for how complex the
+    // constant expression is.
     if (SpeculationCost > 0)
-      return false;
-    if (!isSafeToSpeculativelyExecute(CE))
-      return false;
-    if (ComputeSpeculationCost(CE) > PHINodeFoldingThreshold)
       return false;
   }
 

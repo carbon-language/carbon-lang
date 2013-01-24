@@ -44,3 +44,25 @@ join:
   ret i8 %c
 }
 
+define i8* @test3(i1* %dummy, i8* %a, i8* %b) {
+; Test that a weird, unfolded constant cast in the PHI don't block speculation.
+; CHECK: @test3
+
+entry:
+  %cond1 = load volatile i1* %dummy
+  br i1 %cond1, label %if, label %end
+
+if:
+  %cond2 = load volatile i1* %dummy
+  br i1 %cond2, label %then, label %end
+
+then:
+  br label %end
+
+end:
+  %x = phi i8* [ %a, %entry ], [ %b, %if ], [ inttoptr (i64 42 to i8*), %then ]
+; CHECK-NOT: phi
+; CHECK: select i1 %cond2, i8* inttoptr
+
+  ret i8* %x
+}
