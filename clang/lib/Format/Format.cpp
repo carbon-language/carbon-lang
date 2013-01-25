@@ -688,6 +688,8 @@ private:
       return 50;
     if (Left.is(tok::equal) && Right.is(tok::l_brace))
       return 150;
+    if (Left.is(tok::coloncolon))
+      return 500;
 
     // In for-loops, prefer breaking at ',' and ';'.
     if (RootToken.is(tok::kw_for) &&
@@ -1597,10 +1599,11 @@ private:
     return (isBinaryOperator(Left) && Left.isNot(tok::lessless)) ||
            Left.is(tok::comma) || Right.is(tok::lessless) ||
            Right.is(tok::arrow) || Right.is(tok::period) ||
-           Right.is(tok::colon) || Left.is(tok::semi) ||
-           Left.is(tok::l_brace) || Left.is(tok::question) || Left.Type ==
-           TT_ConditionalExpr || (Left.is(tok::r_paren) && Left.Type !=
-                                  TT_CastRParen && Right.is(tok::identifier)) ||
+           Right.is(tok::colon) || Left.is(tok::coloncolon) ||
+           Left.is(tok::semi) || Left.is(tok::l_brace) ||
+           Left.is(tok::question) || Left.Type == TT_ConditionalExpr ||
+           (Left.is(tok::r_paren) && Left.Type != TT_CastRParen &&
+            Right.is(tok::identifier)) ||
            (Left.is(tok::l_paren) && !Right.is(tok::r_paren));
   }
 
