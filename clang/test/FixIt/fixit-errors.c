@@ -1,7 +1,7 @@
+// RUN: %clang_cc1 -fsyntax-only -pedantic -verify %s
 // RUN: cp %s %t
-// RUN: %clang_cc1 -pedantic -verify -fixit -x c %t
+// RUN: not %clang_cc1 -pedantic -fixit -x c %t
 // RUN: %clang_cc1 -pedantic -Werror -x c %t
-// XFAIL: *
 
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. All of the
@@ -19,5 +19,5 @@ struct Point {
 struct Point *get_origin();
 
 void test_point() {
-  (void)get_origin->x;
+  (void)get_origin->x; // expected-error {{base of member reference is a function; perhaps you meant to call it with no arguments?}}
 }
