@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; Checks that we emit debug info for the block variable declare.
 ; CHECK: 0x00000030:   DW_TAG_subprogram [3]

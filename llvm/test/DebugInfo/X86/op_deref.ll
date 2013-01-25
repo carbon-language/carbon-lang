@@ -1,5 +1,5 @@
 ; RUN: llc -O0 -mtriple=x86_64-apple-darwin %s -o %t -filetype=obj
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; CHECK: DW_AT_name [DW_FORM_strp]  ( .debug_str[0x00000067] = "vla")
 ; FIXME: The location here needs to be fixed, but llvm-dwarfdump doesn't handle

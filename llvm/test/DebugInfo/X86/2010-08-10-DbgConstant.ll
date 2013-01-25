@@ -1,5 +1,5 @@
 ; RUN: llc  -mtriple=i686-linux -O0 -filetype=obj -o %t %s
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 ; CHECK: DW_TAG_constant [4]
 ; CHECK-NEXT: DW_AT_name [DW_FORM_strp] ( .debug_str[0x0000002c] = "ro")
 

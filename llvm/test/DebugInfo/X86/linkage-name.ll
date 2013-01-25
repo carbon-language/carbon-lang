@@ -1,5 +1,5 @@
 ; RUN: llc -mtriple=x86_64-macosx -darwin-gdb-compat=Disable %s -o %t -filetype=obj
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ; CHECK: DW_TAG_subprogram [9] *
 ; CHECK-NOT: DW_AT_MIPS_linkage_name

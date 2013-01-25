@@ -1,7 +1,7 @@
 ; RUN: llc -mtriple=x86_64-apple-darwin %s -filetype=obj -o %t
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 ; RUN: llc -mtriple=x86_64-apple-darwin -regalloc=basic %s -filetype=obj -o %t
-; RUN: llvm-dwarfdump %t | FileCheck %s
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s
 
 ;CHECK: DW_TAG_inlined_subroutine [12]
 ;CHECK-NEXT: DW_AT_abstract_origin

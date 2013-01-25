@@ -1,6 +1,6 @@
 ; RUN: llc %s -o %t -filetype=obj -O0 -mtriple=x86_64-unknown-linux-gnu
-; RUN: llvm-dwarfdump %t | FileCheck %s -check-prefix=PRESENT
-; RUN: llvm-dwarfdump %t | FileCheck %s -check-prefix=ABSENT
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=PRESENT
+; RUN: llvm-dwarfdump -debug-dump=info %t | FileCheck %s -check-prefix=ABSENT
 ; Verify that attributes we do want are PRESENT;
 ; verify that attributes we don't want are ABSENT.
 ; It's a lot easier to do this in two passes than in one.
