@@ -26,6 +26,7 @@
 #include "llvm/Support/LockFileManager.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/PathV2.h"
+#include <cstdio>
 using namespace clang;
 using namespace serialization;
 
