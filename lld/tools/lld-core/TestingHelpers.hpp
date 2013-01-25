@@ -224,7 +224,7 @@ private:
 
 class TestingPassFile : public MutableFile {
 public:
-  TestingPassFile() : MutableFile("Testing pass") {}
+  TestingPassFile(const TargetInfo &ti) : MutableFile(ti, "Testing pass") {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom))
@@ -280,6 +280,9 @@ const TestingKindMapping sKinds[] = {
 
 class TestingStubsPass : public StubsPass {
 public:
+  TestingStubsPass(const TargetInfo &ti) : _file(TestingPassFile(ti))
+  {}
+
   virtual bool noTextRelocs() {
     return true;
   }
@@ -310,6 +313,9 @@ private:
 
 class TestingGOTPass : public GOTPass {
 public:
+  TestingGOTPass(const TargetInfo &ti) : _file(TestingPassFile(ti))
+  {}
+
   virtual bool noTextRelocs() {
     return true;
   }

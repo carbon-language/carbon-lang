@@ -10,13 +10,13 @@
 #ifndef LLD_READER_WRITER_ELF_EXECUTABLE_ATOM_H_
 #define LLD_READER_WRITER_ELF_EXECUTABLE_ATOM_H_
 
-
 #include "lld/Core/DefinedAtom.h"
-#include "lld/Core/UndefinedAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
+#include "lld/Core/UndefinedAtom.h"
 #include "lld/ReaderWriter/Writer.h"
 #include "AtomsELF.h"
+#include "FileELF.h"
 
 namespace lld {
 namespace elf {
@@ -26,12 +26,11 @@ namespace elf {
 /// are basically additional symbols required by libc and other runtime 
 /// libraries part of executing a program. This class provides support
 /// for adding absolute symbols and undefined symbols
-template<class ELFT>
-class CRuntimeFile : public File {
+template <class ELFT> class CRuntimeFileELF : public FileELF<ELFT> {
 public:
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
-  CRuntimeFile(const ELFTargetInfo &) : File("C runtime") {}
-  
+  CRuntimeFileELF(const ELFTargetInfo &ti) : FileELF<ELFT>(ti, "C runtime") {}
+
   /// \brief add a global absolute atom
   void addAbsoluteAtom(const StringRef symbolName) {
     Elf_Sym *symbol = new(_allocator.Allocate<Elf_Sym>()) Elf_Sym;
@@ -64,19 +63,19 @@ public:
     _undefinedAtoms._atoms.push_back(newAtom);
   }
 
-  const atom_collection<DefinedAtom> &defined() const {
+  const File::atom_collection<DefinedAtom> &defined() const {
     return _definedAtoms;
   }
 
-  const atom_collection<UndefinedAtom> &undefined() const {
+  const File::atom_collection<UndefinedAtom> &undefined() const {
     return _undefinedAtoms;
   }
 
-  const atom_collection<SharedLibraryAtom> &sharedLibrary() const {
+  const File::atom_collection<SharedLibraryAtom> &sharedLibrary() const {
     return _sharedLibraryAtoms;
   }
 
-  const atom_collection<AbsoluteAtom> &absolute() const {
+  const File::atom_collection<AbsoluteAtom> &absolute() const {
     return _absoluteAtoms;
   }
 
@@ -87,10 +86,10 @@ public:
 
 private:
   llvm::BumpPtrAllocator _allocator;
-  atom_collection_vector<DefinedAtom>       _definedAtoms;
-  atom_collection_vector<UndefinedAtom>     _undefinedAtoms;
-  atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom>      _absoluteAtoms;
+  File::atom_collection_vector<DefinedAtom> _definedAtoms;
+  File::atom_collection_vector<UndefinedAtom> _undefinedAtoms;
+  File::atom_collection_vector<SharedLibraryAtom> _sharedLibraryAtoms;
+  File::atom_collection_vector<AbsoluteAtom> _absoluteAtoms;
 };
 
 } // namespace elf

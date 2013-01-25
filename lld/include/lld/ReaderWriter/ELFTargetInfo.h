@@ -11,10 +11,20 @@
 #define LLD_READER_WRITER_ELF_TARGET_INFO_H
 
 #include "lld/Core/TargetInfo.h"
+#include "llvm/Object/ELF.h"
+#include "llvm/Support/ELF.h"
 
 #include <memory>
 
 namespace lld {
+
+namespace elf { template <typename ELFT> class ELFTargetHandler; }
+
+class ELFTargetHandlerBase {
+public:
+  virtual ~ELFTargetHandlerBase() {}
+};
+
 class ELFTargetInfo : public TargetInfo {
 protected:
   ELFTargetInfo(const LinkerOptions &lo) : TargetInfo(lo) {}
@@ -24,6 +34,15 @@ public:
   uint16_t getOutputMachine() const;
 
   static std::unique_ptr<ELFTargetInfo> create(const LinkerOptions &lo);
+
+  template <typename ELFT>
+  lld::elf::ELFTargetHandler<ELFT> &getTargetHandler() const {
+    return static_cast<
+        lld::elf::ELFTargetHandler<ELFT> &>(*_targetHandler.get());
+  }
+
+protected:
+  std::unique_ptr<ELFTargetHandlerBase> _targetHandler;
 };
 } // end namespace lld
 

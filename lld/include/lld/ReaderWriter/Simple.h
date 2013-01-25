@@ -23,7 +23,7 @@
 namespace lld {
 class SimpleFile : public MutableFile {
 public:
-  SimpleFile(StringRef path) : MutableFile(path) {}
+  SimpleFile(const TargetInfo &ti, StringRef path) : MutableFile(ti, path) {}
 
   virtual void addAtom(const Atom &atom) {
     if (const DefinedAtom *defAtom = dyn_cast<DefinedAtom>(&atom)) {

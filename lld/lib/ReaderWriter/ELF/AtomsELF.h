@@ -1,15 +1,20 @@
-#ifndef LLD_ELFATOMS_H_
-#define LLD_ELFATOMS_H_
+#ifndef LLD_ELFATOMS_H
+#define LLD_ELFATOMS_H
 
 #include "lld/Core/LLVM.h"
+#include "ELFTargetHandler.h"
+
 #include <memory>
 #include <vector>
 
 namespace lld {
+
+template <typename ELFT> class FileELF;
+
+namespace elf { template <typename ELFT> class ELFTargetAtomHandler; }
 /// \brief Relocation References: Defined Atoms may contain references that will
 /// need to be patched before the executable is written.
-template<class ELFT>
-class ELFReference LLVM_FINAL : public Reference {
+template <class ELFT> class ELFReference LLVM_FINAL : public Reference {
   typedef llvm::object::Elf_Rel_Impl<ELFT, false> Elf_Rel;
   typedef llvm::object::Elf_Rel_Impl<ELFT, true> Elf_Rela;
 public:
@@ -76,21 +81,14 @@ class ELFAbsoluteAtom LLVM_FINAL : public AbsoluteAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
-  ELFAbsoluteAtom(const File &file,
-                  llvm::StringRef name,
-                  const Elf_Sym *symbol,
-                  uint64_t value)
-    : _owningFile(file)
-    , _name(name)
-    , _symbol(symbol)
-    , _value(value)
-  {}
-
-  virtual const class File &file() const {
-    return _owningFile;
+  ELFAbsoluteAtom(const FileELF<ELFT> &file, llvm::StringRef name,
+                  const Elf_Sym *symbol, uint64_t value)
+      : _owningFile(file), _name(name), _symbol(symbol), _value(value) {
   }
 
-  virtual Scope scope() const {
+  virtual const class FileELF<ELFT> &file() const {
+    return _owningFile;
+  } virtual Scope scope() const {
     if (_symbol->st_other == llvm::ELF::STV_HIDDEN)
       return scopeLinkageUnit;
     if (_symbol->getBinding() == llvm::ELF::STB_LOCAL)
@@ -108,7 +106,7 @@ public:
   }
 
 private:
-  const File &_owningFile;
+  const FileELF<ELFT> &_owningFile;
   llvm::StringRef _name;
   const Elf_Sym *_symbol;
   uint64_t _value;
@@ -121,13 +119,9 @@ class ELFUndefinedAtom LLVM_FINAL : public UndefinedAtom {
   typedef llvm::object::Elf_Sym_Impl<ELFT> Elf_Sym;
 
 public:
-  ELFUndefinedAtom(const File &file,
-                   llvm::StringRef name,
+  ELFUndefinedAtom(const FileELF<ELFT> &file, llvm::StringRef name,
                    const Elf_Sym *symbol)
-    : _owningFile(file)
-    , _name(name)
-    , _symbol(symbol)
-  {}
+      : _owningFile(file), _name(name), _symbol(symbol) {}
 
   virtual const class File &file() const {
     return _owningFile;
@@ -235,6 +229,17 @@ public:
   virtual ContentType contentType() const {
     ContentType ret = typeUnknown;
     uint64_t flags = _section->sh_flags;
+
+    if (_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
+        _symbol->st_shndx < llvm::ELF::SHN_HIPROC) {
+      const ELFTargetInfo &eti =
+          static_cast<const ELFTargetInfo &>(_owningFile.getTargetInfo());
+      elf::ELFTargetHandler<ELFT> &elfTargetHandler =
+          eti.getTargetHandler<ELFT>();
+      elf::ELFTargetAtomHandler<ELFT> &elfAtomHandler =
+          elfTargetHandler.targetAtomHandler();
+      return elfAtomHandler.contentType(this);
+    }
 
     if (_symbol->getType() == llvm::ELF::STT_GNU_IFUNC)
       return typeResolver;

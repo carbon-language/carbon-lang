@@ -166,9 +166,9 @@ public:
 
   virtual void addPasses(PassManager &pm) const {
     if (_doStubs)
-      pm.add(std::unique_ptr<Pass>(new TestingStubsPass));
+      pm.add(std::unique_ptr<Pass>(new TestingStubsPass(*this)));
     if (_doGOT)
-      pm.add(std::unique_ptr<Pass>(new TestingGOTPass));
+      pm.add(std::unique_ptr<Pass>(new TestingGOTPass(*this)));
     if (_doOrder)
       pm.add(std::unique_ptr<Pass>(new OrderPass));
   }

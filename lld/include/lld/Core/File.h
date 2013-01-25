@@ -14,6 +14,7 @@
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/range.h"
 #include "lld/Core/SharedLibraryAtom.h"
+#include "lld/Core/TargetInfo.h"
 #include "lld/Core/UndefinedAtom.h"
 
 #include "llvm/ADT/StringRef.h"
@@ -152,10 +153,11 @@ public:
   /// all AbsoluteAtoms in this File.
   virtual const atom_collection<AbsoluteAtom> &absolute() const = 0;
 
+  virtual const TargetInfo &getTargetInfo() const = 0;
+
 protected:
   /// \brief only subclasses of File can be instantiated 
   File(StringRef p) : _path(p), _ordinal(UINT64_MAX) {}
-
 
   /// \brief This is a convenience class for File subclasses which manage their
   /// atoms as a simple std::vector<>.
@@ -217,14 +219,18 @@ public:
   /// \brief Add an atom to the file. Invalidates iterators for all returned
   /// containters.
   virtual void addAtom(const Atom&) = 0;
-  
-  typedef range<std::vector<const DefinedAtom*>::iterator>  DefinedAtomRange;
+
+  typedef range<std::vector<const DefinedAtom *>::iterator> DefinedAtomRange;
   virtual DefinedAtomRange definedAtoms() = 0;
-  
+
+  virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
 
 protected:
   /// \brief only subclasses of MutableFile can be instantiated 
-  MutableFile(StringRef p) : File(p) {}
+  MutableFile(const TargetInfo &ti, StringRef p) : File(p), _targetInfo(ti) {}
+
+private:
+  const TargetInfo &_targetInfo;
 };
 } // end namespace lld
 

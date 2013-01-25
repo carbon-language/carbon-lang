@@ -33,12 +33,12 @@ class ELFTarget : public Target {
 public:
   ELFTarget(std::unique_ptr<ELFTargetInfo> ti)
       : Target(std::unique_ptr<TargetInfo>(ti.get())),
-        _elfTargetInfo(*ti.release()),
-        _readerELF(createReaderELF(
-            *_targetInfo, std::bind(&ELFTarget::getReader, this, _1))),
+        _elfTargetInfo(*ti.release()), _readerELF(createReaderELF(
+            _elfTargetInfo, std::bind(&ELFTarget::getReader, this, _1))),
         _readerYAML(createReaderYAML(*_targetInfo)),
         _writer(createWriterELF(_elfTargetInfo)),
-        _writerYAML(createWriterYAML(*_targetInfo)) {}
+        _writerYAML(createWriterYAML(*_targetInfo)) {
+  }
 
   virtual ErrorOr<lld::Reader&> getReader(const LinkerInput &input) {
     auto kind = input.getKind();

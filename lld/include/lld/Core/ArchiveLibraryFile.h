@@ -39,9 +39,16 @@ public:
   /// specified name and return the File object for that member, or nullptr.
   virtual const File *find(StringRef name, bool dataSymbolOnly) const = 0;
 
+  virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
+
 protected:
   /// only subclasses of ArchiveLibraryFile can be instantiated 
-  ArchiveLibraryFile(StringRef path) : File(path) { }
+  ArchiveLibraryFile(const TargetInfo &ti, StringRef path)
+      : File(path), _targetInfo(ti) {
+  }
+
+private:
+  const TargetInfo &_targetInfo;
 };
 
 } // namespace lld

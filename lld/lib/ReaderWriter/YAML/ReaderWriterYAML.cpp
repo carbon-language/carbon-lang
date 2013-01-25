@@ -269,19 +269,15 @@ LLVM_YAML_STRONG_TYPEDEF(bool, ShlibCanBeNull)
 // type to make template matching work, so invent RefKind.
 LLVM_YAML_STRONG_TYPEDEF(lld::Reference::Kind, RefKind)
 
-
 } // namespace anon
 
-
-LLVM_YAML_IS_SEQUENCE_VECTOR(ArchMember);
-LLVM_YAML_IS_SEQUENCE_VECTOR(const lld::Reference*)
-
-// Always write DefinedAtoms content bytes as a flow sequence.
-LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(ImplicitHex8);
-
-// for compatibility with gcc-4.7 in C++11 mode, add extra namespace
-namespace llvm {
-namespace yaml { 
+LLVM_YAML_IS_SEQUENCE_VECTOR(ArchMember)
+    LLVM_YAML_IS_SEQUENCE_VECTOR(const lld::Reference *)
+    // Always write DefinedAtoms content bytes as a flow sequence.
+    LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(ImplicitHex8)
+    // for compatibility with gcc-4.7 in C++11 mode, add extra namespace
+    namespace llvm {
+  namespace yaml { 
 
 // This is a custom formatter for RefKind
 template<>
@@ -607,17 +603,21 @@ struct DocumentListTraits< std::vector<const lld::File*> > {
 // YAML conversion for const lld::File*
 template <>
 struct MappingTraits<const lld::File*> {
-  
-  class NormArchiveFile : public lld::ArchiveLibraryFile {
-  public:
-    NormArchiveFile(IO &io) : ArchiveLibraryFile(""), _path() {
-    }
-    NormArchiveFile(IO &io, const lld::File *file) 
-      : ArchiveLibraryFile(file->path()), 
-        _path(file->path()) {
+
+    class NormArchiveFile : public lld::ArchiveLibraryFile {
+    public:
+      NormArchiveFile(IO &io)
+          : ArchiveLibraryFile(((ContextInfo *)io.getContext())->_targetInfo,
+                               ""),
+            _path() {
+      }
+      NormArchiveFile(IO &io, const lld::File *file)
+          : ArchiveLibraryFile(((ContextInfo *)io.getContext())->_targetInfo,
+                               file->path()),
+            _path(file->path()) {
         // If we want to support writing archives, this constructor would
         // need to populate _members.
-    }
+      }
 
     const lld::File *denormalize(IO &io) {
       return this;
@@ -665,19 +665,16 @@ struct MappingTraits<const lld::File*> {
     StringRef                _path;
     std::vector<ArchMember>  _members;
   };
-  
-  
-  class NormalizedFile : public lld::File {
-  public:
-    NormalizedFile(IO &io) : File(""), _rnb(nullptr) {
-    }
-    NormalizedFile(IO &io, const lld::File *file) 
-      : File(file->path()), 
-        _rnb(new RefNameBuilder(*file)),
-        _path(file->path()) {
-      for (const lld::DefinedAtom *a : file->defined())
-        _definedAtoms.push_back(a);
-      for (const lld::UndefinedAtom *a : file->undefined())
+
+    class NormalizedFile : public lld::File {
+    public:
+      NormalizedFile(IO &io) : File(""), _IO(io), _rnb(nullptr) {}
+      NormalizedFile(IO &io, const lld::File *file)
+          : File(file->path()), _IO(io), _rnb(new RefNameBuilder(*file)),
+            _path(file->path()) {
+        for (const lld::DefinedAtom *a : file->defined())
+          _definedAtoms.push_back(a);
+        for (const lld::UndefinedAtom *a : file->undefined())
         _undefinedAtoms.push_back(a);
       for (const lld::SharedLibraryAtom *a : file->sharedLibrary())
         _sharedLibraryAtoms.push_back(a);
@@ -695,12 +692,16 @@ struct MappingTraits<const lld::File*> {
     virtual const atom_collection<lld::SharedLibraryAtom> &sharedLibrary()const{
       return _sharedLibraryAtoms;
     }
-    virtual const atom_collection<lld::AbsoluteAtom> &absolute() const {
-      return _absoluteAtoms;
-    }
-    
-    // Allocate a new copy of this string and keep track of allocations
-    // in _stringCopies, so they can be freed when File is destroyed.
+      virtual const atom_collection<lld::AbsoluteAtom> &absolute() const {
+        return _absoluteAtoms;
+      }
+
+      virtual const TargetInfo &getTargetInfo() const {
+        return ((ContextInfo *)_IO.getContext())->_targetInfo;
+      }
+
+      // Allocate a new copy of this string and keep track of allocations
+      // in _stringCopies, so they can be freed when File is destroyed.
     StringRef copyString(StringRef str) {
       // We want _stringCopies to own the string memory so it is deallocated
       // when the File object is destroyed.  But we need a StringRef that
@@ -709,12 +710,13 @@ struct MappingTraits<const lld::File*> {
       memcpy(s.get(), str.data(), str.size());
       llvm::StringRef r = llvm::StringRef(s.get(), str.size());
       _stringCopies.push_back(std::move(s));
-      return r;
-    }
-    
-    RefNameBuilder                    *_rnb;
-    StringRef                          _path;
-    AtomList<lld::DefinedAtom>         _definedAtoms;
+        return r;
+      }
+
+      IO &_IO;
+      RefNameBuilder *_rnb;
+      StringRef _path;
+      AtomList<lld::DefinedAtom> _definedAtoms;
     AtomList<lld::UndefinedAtom>       _undefinedAtoms;
     AtomList<lld::SharedLibraryAtom>   _sharedLibraryAtoms;
     AtomList<lld::AbsoluteAtom>        _absoluteAtoms;

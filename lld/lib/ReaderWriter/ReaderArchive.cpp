@@ -134,10 +134,10 @@ private:
 public:
   /// only subclasses of ArchiveLibraryFile can be instantiated 
   FileArchive(const TargetInfo &ti,
-              std::function<ErrorOr<Reader&> (const LinkerInput &)> getReader,
-              std::unique_ptr<llvm::MemoryBuffer> mb,
-              error_code &ec)
-      : ArchiveLibraryFile(mb->getBufferIdentifier()), _getReader(getReader) {
+              std::function<ErrorOr<Reader &>(const LinkerInput &)> getReader,
+              std::unique_ptr<llvm::MemoryBuffer> mb, error_code &ec)
+      : ArchiveLibraryFile(ti, mb->getBufferIdentifier()),
+        _getReader(getReader) {
     std::unique_ptr<llvm::object::Archive> archive_obj(
         new llvm::object::Archive(mb.release(), ec));
     if (ec)

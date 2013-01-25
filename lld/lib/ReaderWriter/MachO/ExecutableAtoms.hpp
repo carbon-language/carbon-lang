@@ -29,7 +29,7 @@ namespace mach_o {
 class CRuntimeFile : public SimpleFile {
 public:
     CRuntimeFile(const MachOTargetInfo &ti) 
-      : SimpleFile("C runtime"), _undefMain(*this, "_main") {
+      : SimpleFile(ti, "C runtime"), _undefMain(*this, "_main") {
       // only main executables need _main
       if (ti.getLinkerOptions()._outputKind == OutputKind::Executable)
         this->addAtom(_undefMain);

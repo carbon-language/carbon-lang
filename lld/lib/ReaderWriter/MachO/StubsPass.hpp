@@ -30,11 +30,12 @@ namespace mach_o {
 class StubsPass : public lld::StubsPass {
 public:
   StubsPass(const MachOTargetInfo &ti) 
-    : _targetInfo(ti),
-      _kindHandler(KindHandler::makeHandler(_targetInfo.getTriple().getArch())),
-      _helperCommonAtom(nullptr),
-      _helperCacheAtom(nullptr),
-      _helperBinderAtom(nullptr) {
+    : _targetInfo(ti)
+    , _kindHandler(KindHandler::makeHandler(_targetInfo.getTriple().getArch()))
+    , _file(ti)
+    , _helperCommonAtom(nullptr)
+    , _helperCacheAtom(nullptr)
+    , _helperBinderAtom(nullptr) {
   }
 
   virtual bool noTextRelocs() {
@@ -147,8 +148,8 @@ private:
 
   class File : public SimpleFile {
   public:
-      File() : SimpleFile("MachO Stubs pass") {
-      }
+    File(const MachOTargetInfo &ti) : SimpleFile(ti, "MachO Stubs pass") {
+    }
   };
 
   const MachOTargetInfo                          &_targetInfo;

@@ -211,8 +211,9 @@ private:
 
 class FileCOFF : public File {
 public:
-  FileCOFF(std::unique_ptr<llvm::MemoryBuffer> MB, llvm::error_code &EC)
-    : File(MB->getBufferIdentifier()) {
+  FileCOFF(const TargetInfo &ti, std::unique_ptr<llvm::MemoryBuffer> MB,
+           llvm::error_code &EC)
+      : File(MB->getBufferIdentifier()), _targetInfo(ti) {
     llvm::OwningPtr<llvm::object::Binary> Bin;
     EC = llvm::object::createBinary(MB.release(), Bin);
     if (EC)
@@ -350,13 +351,16 @@ public:
     return AbsoluteAtoms;
   }
 
+  virtual const TargetInfo &getTargetInfo() const { return _targetInfo; }
+
 private:
   std::unique_ptr<const llvm::object::COFFObjectFile> Obj;
-  atom_collection_vector<DefinedAtom>       DefinedAtoms;
+  atom_collection_vector<DefinedAtom> DefinedAtoms;
   atom_collection_vector<UndefinedAtom>     UndefinedAtoms;
   atom_collection_vector<SharedLibraryAtom> SharedLibraryAtoms;
-  atom_collection_vector<AbsoluteAtom>      AbsoluteAtoms;
+  atom_collection_vector<AbsoluteAtom> AbsoluteAtoms;
   llvm::BumpPtrAllocator AtomStorage;
+  const TargetInfo &_targetInfo;
 };
 
 
@@ -366,9 +370,9 @@ public:
   ReaderCOFF(const TargetInfo &ti) : Reader(ti) {}
 
   error_code parseFile(std::unique_ptr<MemoryBuffer> mb,
-                       std::vector<std::unique_ptr<File>> &result) {
+                       std::vector<std::unique_ptr<File> > &result) {
     llvm::error_code ec;
-    std::unique_ptr<File> f(new FileCOFF(std::move(mb), ec));
+    std::unique_ptr<File> f(new FileCOFF(_targetInfo, std::move(mb), ec));
     if (ec) {
       return ec;
     }

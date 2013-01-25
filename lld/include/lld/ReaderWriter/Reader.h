@@ -18,6 +18,7 @@
 #include <vector>
 
 namespace lld {
+class ELFTargetInfo;
 class File;
 class LinkerInput;
 struct LinkerOptions;
@@ -51,9 +52,9 @@ protected:
   const LinkerOptions &_options;
 };
 
-typedef ErrorOr<Reader&> ReaderFunc(const LinkerInput &);
+typedef ErrorOr<Reader &> ReaderFunc(const LinkerInput &);
 
-std::unique_ptr<Reader> createReaderELF(const TargetInfo &,
+std::unique_ptr<Reader> createReaderELF(const ELFTargetInfo &,
                                         std::function<ReaderFunc>);
 std::unique_ptr<Reader> createReaderMachO(const TargetInfo &,
                                           std::function<ReaderFunc>);

@@ -64,7 +64,7 @@ private:
   ELFStringTable<ELFT> *_strtab;
   ELFStringTable<ELFT> *_shstrtab;
   ELFSectionHeader<ELFT> *_shdrtab;
-  CRuntimeFile<ELFT> _runtimeFile;
+  CRuntimeFileELF<ELFT> _runtimeFile;
 };
 
 //===----------------------------------------------------------------------===//

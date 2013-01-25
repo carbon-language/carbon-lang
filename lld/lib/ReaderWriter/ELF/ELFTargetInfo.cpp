@@ -14,6 +14,9 @@
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/ELF.h"
 
+#include "ELFTargetHandler.h"
+#include "ELFTargets.h"
+
 namespace lld {
 uint16_t ELFTargetInfo::getOutputType() const {
   switch (_options._outputKind) {
@@ -49,38 +52,18 @@ uint16_t ELFTargetInfo::getOutputMachine() const {
   }
 }
 
-class X86ELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
-public:
-  X86ELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {}
-
-  virtual uint64_t getPageSize() const { return 0x1000; }
-};
-
-class HexagonELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
-public:
-  HexagonELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {}
-
-  virtual uint64_t getPageSize() const { return 0x1000; }
-};
-
-class PPCELFTargetInfo LLVM_FINAL : public ELFTargetInfo {
-public:
-  PPCELFTargetInfo(const LinkerOptions &lo) : ELFTargetInfo(lo) {}
-
-  virtual bool isLittleEndian() const { return false; }
-
-  virtual uint64_t getPageSize() const { return 0x1000; }
-};
-
 std::unique_ptr<ELFTargetInfo> ELFTargetInfo::create(const LinkerOptions &lo) {
   switch (llvm::Triple(llvm::Triple::normalize(lo._target)).getArch()) {
   case llvm::Triple::x86:
+    return std::unique_ptr<ELFTargetInfo>(new lld::elf::X86ELFTargetInfo(lo));
   case llvm::Triple::x86_64:
-    return std::unique_ptr<ELFTargetInfo>(new X86ELFTargetInfo(lo));
+    return std::unique_ptr<
+        ELFTargetInfo>(new lld::elf::X86_64ELFTargetInfo(lo));
   case llvm::Triple::hexagon:
-    return std::unique_ptr<ELFTargetInfo>(new HexagonELFTargetInfo(lo));
+    return std::unique_ptr<
+        ELFTargetInfo>(new lld::elf::HexagonELFTargetInfo(lo));
   case llvm::Triple::ppc:
-    return std::unique_ptr<ELFTargetInfo>(new PPCELFTargetInfo(lo));
+    return std::unique_ptr<ELFTargetInfo>(new lld::elf::PPCELFTargetInfo(lo));
   default:
     return std::unique_ptr<ELFTargetInfo>();
   }

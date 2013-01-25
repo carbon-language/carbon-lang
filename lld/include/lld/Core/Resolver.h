@@ -29,12 +29,10 @@ class TargetInfo;
 class Resolver : public InputFiles::Handler {
 public:
   Resolver(const TargetInfo &ti, const InputFiles &inputs)
-    : _targetInfo(ti)
-    , _inputFiles(inputs)
-    , _symbolTable(ti)
-    , _haveLLVMObjs(false)
-    , _addToFinalSection(false)
-    , _completedInitialObjectFiles(false) {}
+      : _targetInfo(ti), _inputFiles(inputs), _symbolTable(ti), _result(ti),
+        _haveLLVMObjs(false), _addToFinalSection(false),
+        _completedInitialObjectFiles(false) {
+  }
 
   // InputFiles::Handler methods
   virtual void doDefinedAtom(const class DefinedAtom&);
@@ -65,13 +63,12 @@ private:
   void markLive(const Atom &atom);
   void addAtoms(const std::vector<const DefinedAtom *>&);
 
-
   class MergedFile : public MutableFile {
   public:
-    MergedFile() : MutableFile("<linker-internal>") { }
+    MergedFile(const TargetInfo &ti) : MutableFile(ti, "<linker-internal>") {}
 
-  virtual const atom_collection<DefinedAtom>& defined() const {
-    return _definedAtoms;
+    virtual const atom_collection<DefinedAtom> &defined() const {
+      return _definedAtoms;
   }
   virtual const atom_collection<UndefinedAtom>& undefined() const {
       return _undefinedAtoms;
