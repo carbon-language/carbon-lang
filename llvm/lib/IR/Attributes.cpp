@@ -853,8 +853,8 @@ AttributeSet AttributeSet::removeAttr(LLVMContext &C, unsigned Idx,
 void AttributeSet::dump() const {
   dbgs() << "PAL[ ";
   for (unsigned i = 0; i < getNumSlots(); ++i) {
-    const AttributeWithIndex &PAWI = getSlot(i);
-    dbgs() << "{ " << PAWI.Index << ", " << PAWI.Attrs.getAsString() << " } ";
+    unsigned Index = getSlotIndex(i);
+    dbgs() << "{ " << Index << " => " << getAsString(Index) << " } ";
   }
 
   dbgs() << "]\n";

@@ -2072,7 +2072,7 @@ static AttributeSet StripNest(LLVMContext &C, const AttributeSet &Attrs) {
       continue;
 
     // There can be only one.
-    return Attrs.removeAttribute(C, Attrs.getSlot(i).Index, Attribute::Nest);
+    return Attrs.removeAttribute(C, Attrs.getSlotIndex(i), Attribute::Nest);
   }
 
   return Attrs;

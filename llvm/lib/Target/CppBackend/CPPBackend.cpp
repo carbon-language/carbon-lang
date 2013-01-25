@@ -473,7 +473,7 @@ void CppWriter::printAttributes(const AttributeSet &PAL,
     Out << "SmallVector<AttributeWithIndex, 4> Attrs;"; nl(Out);
     Out << "AttributeWithIndex PAWI;"; nl(Out);
     for (unsigned i = 0; i < PAL.getNumSlots(); ++i) {
-      unsigned index = PAL.getSlot(i).Index;
+      unsigned index = PAL.getSlotIndex(i);
       AttrBuilder attrs(PAL.getSlot(i).Attrs);
       Out << "PAWI.Index = " << index << "U;\n";
       Out << " {\n    AttrBuilder B;\n";

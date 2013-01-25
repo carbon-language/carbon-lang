@@ -174,7 +174,7 @@ static void WriteAttributeTable(const ValueEnumerator &VE,
     const AttributeSet &A = Attrs[i];
     for (unsigned i = 0, e = A.getNumSlots(); i != e; ++i) {
       const AttributeWithIndex &PAWI = A.getSlot(i);
-      Record.push_back(PAWI.Index);
+      Record.push_back(A.getSlotIndex(i));
       Record.push_back(Attribute::encodeLLVMAttributesForBitcode(PAWI.Attrs));
     }
 

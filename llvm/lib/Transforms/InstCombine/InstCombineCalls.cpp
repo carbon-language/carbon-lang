@@ -1101,7 +1101,7 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     // won't be dropping them.  Check that these extra arguments have attributes
     // that are compatible with being a vararg call argument.
     for (unsigned i = CallerPAL.getNumSlots(); i; --i) {
-      if (CallerPAL.getSlot(i - 1).Index <= FT->getNumParams())
+      if (CallerPAL.getSlotIndex(i - 1) <= FT->getNumParams())
         break;
       Attribute PAttrs = CallerPAL.getSlot(i - 1).Attrs;
       // Check if it has an attribute that's incompatible with varargs.

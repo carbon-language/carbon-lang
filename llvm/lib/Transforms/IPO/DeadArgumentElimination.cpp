@@ -272,9 +272,9 @@ bool DAE::DeleteDeadVarargs(Function &Fn) {
 
     // Drop any attributes that were on the vararg arguments.
     AttributeSet PAL = CS.getAttributes();
-    if (!PAL.isEmpty() && PAL.getSlot(PAL.getNumSlots() - 1).Index > NumArgs) {
+    if (!PAL.isEmpty() && PAL.getSlotIndex(PAL.getNumSlots() - 1) > NumArgs) {
       SmallVector<AttributeWithIndex, 8> AttributesVec;
-      for (unsigned i = 0; PAL.getSlot(i).Index <= NumArgs; ++i)
+      for (unsigned i = 0; PAL.getSlotIndex(i) <= NumArgs; ++i)
         AttributesVec.push_back(PAL.getSlot(i));
       if (PAL.hasAttributes(AttributeSet::FunctionIndex))
         AttributesVec.push_back(AttributeWithIndex::get(Fn.getContext(),
