@@ -133,6 +133,8 @@ class MipsAsmParser : public MCTargetAsmParser {
   bool parseSetReorderDirective();
   bool parseSetNoReorderDirective();
 
+  bool parseDirectiveWord(unsigned Size, SMLoc L);
+
   MCSymbolRefExpr::VariantKind getVariantKind(StringRef Symbol);
 
   bool isMips64() const {
@@ -1451,48 +1453,81 @@ bool MipsAsmParser::parseDirectiveSet() {
     Parser.EatToEndOfStatement();
     return false;
   }
+
   return true;
+}
+
+/// parseDirectiveWord
+///  ::= .word [ expression (, expression)* ]
+bool MipsAsmParser::parseDirectiveWord(unsigned Size, SMLoc L) {
+  if (getLexer().isNot(AsmToken::EndOfStatement)) {
+    for (;;) {
+      const MCExpr *Value;
+      if (getParser().ParseExpression(Value))
+        return true;
+
+      getParser().getStreamer().EmitValue(Value, Size);
+
+      if (getLexer().is(AsmToken::EndOfStatement))
+        break;
+
+      // FIXME: Improve diagnostic.
+      if (getLexer().isNot(AsmToken::Comma))
+        return Error(L, "unexpected token in directive");
+      Parser.Lex();
+    }
+  }
+
+  Parser.Lex();
+  return false;
 }
 
 bool MipsAsmParser::ParseDirective(AsmToken DirectiveID) {
 
-  if (DirectiveID.getString() == ".ent") {
+  StringRef IDVal = DirectiveID.getString();
+
+  if ( IDVal == ".ent") {
     // ignore this directive for now
     Parser.Lex();
     return false;
   }
 
-  if (DirectiveID.getString() == ".end") {
+  if (IDVal == ".end") {
     // ignore this directive for now
     Parser.Lex();
     return false;
   }
 
-  if (DirectiveID.getString() == ".frame") {
+  if (IDVal == ".frame") {
     // ignore this directive for now
     Parser.EatToEndOfStatement();
     return false;
   }
 
-  if (DirectiveID.getString() == ".set") {
+  if (IDVal == ".set") {
     return parseDirectiveSet();
   }
 
-  if (DirectiveID.getString() == ".fmask") {
+  if (IDVal == ".fmask") {
     // ignore this directive for now
     Parser.EatToEndOfStatement();
     return false;
   }
 
-  if (DirectiveID.getString() == ".mask") {
+  if (IDVal == ".mask") {
     // ignore this directive for now
     Parser.EatToEndOfStatement();
     return false;
   }
 
-  if (DirectiveID.getString() == ".gpword") {
+  if (IDVal == ".gpword") {
     // ignore this directive for now
     Parser.EatToEndOfStatement();
+    return false;
+  }
+
+  if (IDVal == ".word") {
+    parseDirectiveWord(4, DirectiveID.getLoc());
     return false;
   }
 

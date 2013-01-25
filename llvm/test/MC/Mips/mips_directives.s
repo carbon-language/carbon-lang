@@ -1,4 +1,4 @@
-# RUN: llvm-mc -triple mips-unknown-unknown %s
+# RUN: llvm-mc -triple mips-unknown-unknown %s | FileCheck %s
 #this test produces no output so there isS no FileCheck call
 $BB0_2:
   .ent directives_test
@@ -10,6 +10,9 @@ $BB0_2:
 	.set	noat
 $JTI0_0:
 	.gpword	($BB0_2)
+	.word 0x77fffffc
+# CHECK: $JTI0_0:
+# CHECK-NEXT: 	.4byte	2013265916
 	.set  at=$12
 	.set macro
 	.set reorder
