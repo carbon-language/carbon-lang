@@ -463,25 +463,20 @@ def ST8_l3r : _FL3R<0b100011100, (outs),
 }
 
 // Four operand long
-let Constraints = "$src1 = $dst1,$src2 = $dst2" in {
-def MACCU_l4r : _L4R<(outs GRRegs:$dst1, GRRegs:$dst2),
-                    (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3,
-                      GRRegs:$src4),
-                    "maccu $dst1, $dst2, $src3, $src4",
-                    []>;
+let Constraints = "$e = $a,$f = $b" in {
+def MACCU_l4r : _FL4RSrcDstSrcDst<
+  0b000001, (outs GRRegs:$a, GRRegs:$b),
+  (ins GRRegs:$e, GRRegs:$f, GRRegs:$c, GRRegs:$d), "maccu $a, $b, $c, $d", []>;
 
-def MACCS_l4r : _L4R<(outs GRRegs:$dst1, GRRegs:$dst2),
-                    (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3,
-                      GRRegs:$src4),
-                    "maccs $dst1, $dst2, $src3, $src4",
-                    []>;
+def MACCS_l4r : _FL4RSrcDstSrcDst<
+  0b000010, (outs GRRegs:$a, GRRegs:$b),
+  (ins GRRegs:$e, GRRegs:$f, GRRegs:$c, GRRegs:$d), "maccs $a, $b, $c, $d", []>;
 }
 
-let Constraints = "$src1 = $dst2" in
-def CRC8_l4r : _L4R<(outs GRRegs:$dst1, GRRegs:$dst2),
-                    (ins GRRegs:$src1, GRRegs:$src2, GRRegs:$src3),
-                    "crc8 $dst2, $dst1, $src2, $src3",
-                    []>;
+let Constraints = "$e = $b" in
+def CRC8_l4r : _FL4RSrcDst<0b000000, (outs GRRegs:$a, GRRegs:$b),
+                           (ins GRRegs:$e, GRRegs:$c, GRRegs:$d),
+                           "crc8 $b, $a, $c, $d", []>;
 
 // Five operand long
 
