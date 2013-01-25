@@ -434,6 +434,16 @@ comments::FullComment *ASTContext::getCommentForDecl(
         }
       }
     }
+    else if (const TypedefDecl *TD = dyn_cast<TypedefDecl>(D)) {
+      QualType QT = TD->getUnderlyingType();
+      if (const EnumType *ET = QT->getAs<EnumType>()) {
+        if (const EnumDecl *ED = ET->getDecl())
+          if (comments::FullComment *FC = getCommentForDecl(ED, PP)) {
+            comments::FullComment *CFC = cloneFullComment(FC, D);
+            return CFC;
+          }
+      }
+    }
     return NULL;
   }
   
