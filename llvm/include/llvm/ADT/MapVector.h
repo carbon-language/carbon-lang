@@ -19,6 +19,7 @@
 
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/STLExtras.h"
 #include <vector>
 
 namespace llvm {
@@ -82,6 +83,18 @@ public:
   ValueT lookup(const KeyT &Key) const {
     typename MapType::const_iterator Pos = Map.find(Key);
     return Pos == Map.end()? ValueT() : Vector[Pos->second].second;
+  }
+
+  std::pair<iterator, bool> insert(const std::pair<KeyT, ValueT> &KV) {
+    std::pair<KeyT, unsigned> Pair = std::make_pair(KV.first, 0);
+    std::pair<typename MapType::iterator, bool> Result = Map.insert(Pair);
+    unsigned &I = Result.first->second;
+    if (Result.second) {
+      Vector.push_back(std::make_pair(KV.first, KV.second));
+      I = Vector.size() - 1;
+      return std::make_pair(llvm::prior(end()), true);
+    }
+    return std::make_pair(begin() + I, false);
   }
 
   unsigned count(const KeyT &Key) const {
