@@ -164,6 +164,9 @@ if [ "$ARM_HOSTED_BUILD" = yes ]; then
 else
 # not $ARM_HOSTED_BUILD
 
+  export CC=`xcrun -find clang`
+  export CXX=`xcrun -find clang++`
+
   if [ "$IOS_SIM_BUILD" = yes ]; then
     # Use a non-standard "darwin_sim" host triple to trigger a cross-build.
     configure_opts="--enable-targets=x86 --host=i686-apple-darwin_sim \
