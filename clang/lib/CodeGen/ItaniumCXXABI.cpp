@@ -174,11 +174,20 @@ private:
 }
 
 CodeGen::CGCXXABI *CodeGen::CreateItaniumCXXABI(CodeGenModule &CGM) {
-  return new ItaniumCXXABI(CGM);
-}
+  switch (CGM.getContext().getTargetInfo().getCXXABI().getKind()) {
+  // For IR-generation purposes, there's no significant difference
+  // between the ARM and iOS ABIs.
+  case TargetCXXABI::GenericARM:
+  case TargetCXXABI::iOS:
+    return new ARMCXXABI(CGM);
 
-CodeGen::CGCXXABI *CodeGen::CreateARMCXXABI(CodeGenModule &CGM) {
-  return new ARMCXXABI(CGM);
+  case TargetCXXABI::GenericItanium:
+    return new ItaniumCXXABI(CGM);
+
+  case TargetCXXABI::Microsoft:
+    llvm_unreachable("Microsoft ABI is not Itanium-based");
+  }
+  llvm_unreachable("bad ABI kind");
 }
 
 llvm::Type *
