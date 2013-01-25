@@ -232,7 +232,7 @@ MachTask::GetMemoryRegionInfo (nub_addr_t addr, DNBRegionInfo *region_info)
 } while (0)
 
 // We should consider moving this into each MacThread.
-static void get_threads_profile_data(task_t task, nub_process_t pid, int &num_threads, std::vector<uint64_t> &threads_id, std::vector<std::string> &threads_name, std::vector<uint64_t> &threads_used_usec)
+static void get_threads_profile_data(task_t task, nub_process_t pid, std::vector<uint64_t> &threads_id, std::vector<std::string> &threads_name, std::vector<uint64_t> &threads_used_usec)
 {
     kern_return_t kr;
     thread_act_array_t threads;
@@ -242,7 +242,6 @@ static void get_threads_profile_data(task_t task, nub_process_t pid, int &num_th
     if (kr != KERN_SUCCESS)
         return;
     
-    num_threads = tcnt;
     for (int i = 0; i < tcnt; i++) {
         thread_identifier_info_data_t identifier_info;
         mach_msg_type_number_t count = THREAD_IDENTIFIER_INFO_COUNT;
@@ -303,7 +302,6 @@ MachTask::GetProfileData ()
     
     uint64_t elapsed_usec = 0;
     uint64_t task_used_usec = 0;
-    int num_threads = 0;
     std::vector<uint64_t> threads_id;
     std::vector<std::string> threads_name;
     std::vector<uint64_t> threads_used_usec;
@@ -315,7 +313,7 @@ MachTask::GetProfileData ()
     TIME_VALUE_TO_TIMEVAL(&task_info.system_time, &tv);
     timeradd(&current_used_time, &tv, &current_used_time);
     task_used_usec = current_used_time.tv_sec * 1000000ULL + current_used_time.tv_usec;
-    get_threads_profile_data(task, m_process->ProcessID(), num_threads, threads_id, threads_name, threads_used_usec);
+    get_threads_profile_data(task, m_process->ProcessID(), threads_id, threads_name, threads_used_usec);
     
     struct timeval current_elapsed_time;
     int res = gettimeofday(&current_elapsed_time, NULL);
@@ -338,6 +336,7 @@ MachTask::GetProfileData ()
         profile_data_stream << "elapsed_usec:" << elapsed_usec << ';';
         profile_data_stream << "task_used_usec:" << task_used_usec << ';';
         
+        int num_threads = threads_id.size();
         for (int i=0; i<num_threads; i++) {
             profile_data_stream << "thread_used_id:" << std::hex << threads_id[i] << std::dec << ';';
             profile_data_stream << "thread_used_usec:" << threads_used_usec[i] << ';';
@@ -349,9 +348,9 @@ MachTask::GetProfileData ()
                 // Make sure that thread name doesn't interfere with our delimiter.
                 profile_data_stream << RAW_HEXBASE << std::setw(2);
                 const uint8_t *ubuf8 = (const uint8_t *)(thread_name);
-                for (int i=0; i<len; i++)
+                for (int j=0; j<len; j++)
                 {
-                    profile_data_stream << (uint32_t)(ubuf8[i]);
+                    profile_data_stream << (uint32_t)(ubuf8[j]);
                 }
                 // Reset back to DECIMAL.
                 profile_data_stream << DECIMAL;
