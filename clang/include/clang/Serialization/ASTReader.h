@@ -726,6 +726,12 @@ private:
   /// \brief The total number of macros stored in the chain.
   unsigned TotalNumMacros;
 
+  /// \brief The number of lookups into identifier tables.
+  unsigned NumIdentifierLookups;
+
+  /// \brief The number of lookups into identifier tables that succeed.
+  unsigned NumIdentifierLookupHits;
+
   /// \brief The number of selectors that have been read.
   unsigned NumSelectorsRead;
 

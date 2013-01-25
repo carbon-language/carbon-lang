@@ -1377,10 +1377,20 @@ namespace {
   class IdentifierLookupVisitor {
     StringRef Name;
     unsigned PriorGeneration;
+    unsigned &NumIdentifierLookups;
+    unsigned &NumIdentifierLookupHits;
     IdentifierInfo *Found;
+
   public:
-    IdentifierLookupVisitor(StringRef Name, unsigned PriorGeneration) 
-      : Name(Name), PriorGeneration(PriorGeneration), Found() { }
+    IdentifierLookupVisitor(StringRef Name, unsigned PriorGeneration,
+                            unsigned &NumIdentifierLookups,
+                            unsigned &NumIdentifierLookupHits)
+      : Name(Name), PriorGeneration(PriorGeneration),
+        NumIdentifierLookups(NumIdentifierLookups),
+        NumIdentifierLookupHits(NumIdentifierLookupHits),
+        Found()
+    {
+    }
     
     static bool visit(ModuleFile &M, void *UserData) {
       IdentifierLookupVisitor *This
@@ -1397,14 +1407,15 @@ namespace {
       
       ASTIdentifierLookupTrait Trait(IdTable->getInfoObj().getReader(),
                                      M, This->Found);
-                                     
-      ASTIdentifierLookupTable::iterator Pos = IdTable->find(This->Name, &Trait);
+      ++This->NumIdentifierLookups;
+      ASTIdentifierLookupTable::iterator Pos = IdTable->find(This->Name,&Trait);
       if (Pos == IdTable->end())
         return false;
       
       // Dereferencing the iterator has the effect of building the
       // IdentifierInfo node and populating it with the various
       // declarations it needs.
+      ++This->NumIdentifierLookupHits;
       This->Found = *Pos;
       return true;
     }
@@ -1423,7 +1434,9 @@ void ASTReader::updateOutOfDateIdentifier(IdentifierInfo &II) {
   if (getContext().getLangOpts().Modules)
     PriorGeneration = IdentifierGeneration[&II];
   
-  IdentifierLookupVisitor Visitor(II.getName(), PriorGeneration);
+  IdentifierLookupVisitor Visitor(II.getName(), PriorGeneration,
+                                  NumIdentifierLookups,
+                                  NumIdentifierLookupHits);
   ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
   markIdentifierUpToDate(&II);
 }
@@ -5585,6 +5598,13 @@ void ASTReader::PrintStats() {
                   * 100));
     std::fprintf(stderr, "  %u method pool misses\n", NumMethodPoolMisses);
   }
+  if (NumIdentifierLookupHits) {
+    std::fprintf(stderr,
+                 "  %u / %u identifier table lookups succeeded (%f%%)\n",
+                 NumIdentifierLookupHits, NumIdentifierLookups,
+                 (double)NumIdentifierLookupHits*100.0/NumIdentifierLookups);
+  }
+
   std::fprintf(stderr, "\n");
   dump();
   std::fprintf(stderr, "\n");
@@ -5687,7 +5707,9 @@ IdentifierInfo* ASTReader::get(const char *NameStart, const char *NameEnd) {
   Deserializing AnIdentifier(this);
   
   IdentifierLookupVisitor Visitor(StringRef(NameStart, NameEnd - NameStart),
-                                  /*PriorGeneration=*/0);
+                                  /*PriorGeneration=*/0,
+                                  NumIdentifierLookups,
+                                  NumIdentifierLookupHits);
   ModuleMgr.visit(IdentifierLookupVisitor::visit, &Visitor);
   IdentifierInfo *II = Visitor.getIdentifierInfo();
   markIdentifierUpToDate(II);
@@ -6925,11 +6947,12 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
     Diags(PP.getDiagnostics()), SemaObj(0), PP(PP), Context(Context),
     Consumer(0), ModuleMgr(PP.getFileManager()),
     isysroot(isysroot), DisableValidation(DisableValidation),
-    AllowASTWithCompilerErrors(AllowASTWithCompilerErrors), 
+    AllowASTWithCompilerErrors(AllowASTWithCompilerErrors),
     CurrentGeneration(0), CurrSwitchCaseStmts(&SwitchCaseStmts),
     NumSLocEntriesRead(0), TotalNumSLocEntries(0), 
-    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0), 
-    TotalNumMacros(0), NumSelectorsRead(0), NumMethodPoolEntriesRead(0), 
+    NumStatementsRead(0), TotalNumStatements(0), NumMacrosRead(0),
+    TotalNumMacros(0), NumIdentifierLookups(0), NumIdentifierLookupHits(0),
+    NumSelectorsRead(0), NumMethodPoolEntriesRead(0),
     NumMethodPoolMisses(0), TotalNumMethodPoolEntries(0), 
     NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0), 
     NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
