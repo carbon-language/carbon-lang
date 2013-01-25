@@ -835,7 +835,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
     IsIndexHeaderMap = false;
   }
 
-  // Add -iprefix/-iwith-prefix/-iwithprefixbefore options.
+  // Add -iprefix/-iwithprefix/-iwithprefixbefore options.
   StringRef Prefix = ""; // FIXME: This isn't the correct default prefix.
   for (arg_iterator it = Args.filtered_begin(OPT_iprefix, OPT_iwithprefix,
                                              OPT_iwithprefixbefore),
@@ -845,7 +845,7 @@ static void ParseHeaderSearchArgs(HeaderSearchOptions &Opts, ArgList &Args) {
       Prefix = A->getValue();
     else if (A->getOption().matches(OPT_iwithprefix))
       Opts.AddPath(Prefix.str() + A->getValue(),
-                   frontend::System, false, false, false);
+                   frontend::After, false, false, false);
     else
       Opts.AddPath(Prefix.str() + A->getValue(),
                    frontend::Angled, false, false, false);
