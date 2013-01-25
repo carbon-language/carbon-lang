@@ -583,12 +583,13 @@ ASTContext::getCanonicalTemplateTemplateParmDecl(
 CXXABI *ASTContext::createCXXABI(const TargetInfo &T) {
   if (!LangOpts.CPlusPlus) return 0;
 
-  switch (T.getCXXABI()) {
-  case CXXABI_ARM:
+  switch (T.getCXXABI().getKind()) {
+  case TargetCXXABI::GenericARM:
+  case TargetCXXABI::iOS:
     return CreateARMCXXABI(*this);
-  case CXXABI_Itanium:
+  case TargetCXXABI::GenericItanium:
     return CreateItaniumCXXABI(*this);
-  case CXXABI_Microsoft:
+  case TargetCXXABI::Microsoft:
     return CreateMicrosoftCXXABI(*this);
   }
   llvm_unreachable("Invalid CXXABI type!");
@@ -7607,7 +7608,8 @@ CallingConv ASTContext::getDefaultCXXMethodCallConv(bool isVariadic) {
 }
 
 CallingConv ASTContext::getCanonicalCallConv(CallingConv CC) const {
-  if (CC == CC_C && !LangOpts.MRTD && getTargetInfo().getCXXABI() != CXXABI_Microsoft)
+  if (CC == CC_C && !LangOpts.MRTD &&
+      getTargetInfo().getCXXABI().isMemberFunctionCCDefault())
     return CC_Default;
   return CC;
 }
@@ -7618,11 +7620,12 @@ bool ASTContext::isNearlyEmpty(const CXXRecordDecl *RD) const {
 }
 
 MangleContext *ASTContext::createMangleContext() {
-  switch (Target->getCXXABI()) {
-  case CXXABI_ARM:
-  case CXXABI_Itanium:
+  switch (Target->getCXXABI().getKind()) {
+  case TargetCXXABI::GenericItanium:
+  case TargetCXXABI::GenericARM:
+  case TargetCXXABI::iOS:
     return createItaniumMangleContext(*this, getDiagnostics());
-  case CXXABI_Microsoft:
+  case TargetCXXABI::Microsoft:
     return createMicrosoftMangleContext(*this, getDiagnostics());
   }
   llvm_unreachable("Unsupported ABI");

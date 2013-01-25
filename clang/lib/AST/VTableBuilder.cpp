@@ -2197,7 +2197,8 @@ VTableLayout::~VTableLayout() { }
 
 VTableContext::VTableContext(ASTContext &Context)
   : Context(Context),
-  IsMicrosoftABI(Context.getTargetInfo().getCXXABI() == CXXABI_Microsoft) { }
+    IsMicrosoftABI(Context.getTargetInfo().getCXXABI().isMicrosoft()) {
+}
 
 VTableContext::~VTableContext() {
   llvm::DeleteContainerSeconds(VTableLayouts);

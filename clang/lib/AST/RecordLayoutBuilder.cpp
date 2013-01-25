@@ -676,8 +676,12 @@ protected:
                           bool FieldPacked, const FieldDecl *D);
   void LayoutBitField(const FieldDecl *D);
 
+  TargetCXXABI getCXXABI() const {
+    return Context.getTargetInfo().getCXXABI();
+  }
+
   bool isMicrosoftCXXABI() const {
-    return Context.getTargetInfo().getCXXABI() == CXXABI_Microsoft;
+    return getCXXABI().isMicrosoft();
   }
 
   void MSLayoutVirtualBases(const CXXRecordDecl *RD);
@@ -2606,7 +2610,7 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
 
   // Vtable pointer.
   if (RD->isDynamicClass() && !PrimaryBase &&
-      C.getTargetInfo().getCXXABI() != CXXABI_Microsoft) {
+      !C.getTargetInfo().getCXXABI().isMicrosoft()) {
     PrintOffset(OS, Offset, IndentLevel);
     OS << '(' << *RD << " vtable pointer)\n";
   }

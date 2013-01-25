@@ -84,7 +84,7 @@ TargetInfo::TargetInfo(const std::string &T) : TargetOpts(), Triple(T)
   ComplexLongDoubleUsesFP2Ret = false;
 
   // Default to using the Itanium ABI.
-  CXXABI = CXXABI_Itanium;
+  TheCXXABI.set(TargetCXXABI::GenericItanium);
 
   // Default to an empty address space map.
   AddrSpaceMap = &DefaultAddrSpaceMap;
@@ -494,5 +494,19 @@ bool TargetInfo::validateInputConstraint(ConstraintInfo *OutputConstraints,
     Name++;
   }
 
+  return true;
+}
+
+bool TargetCXXABI::tryParse(llvm::StringRef name) {
+  const Kind unknown = static_cast<Kind>(-1);
+  Kind kind = llvm::StringSwitch<Kind>(name)
+    .Case("arm", GenericARM)
+    .Case("ios", iOS)
+    .Case("itanium", GenericItanium)
+    .Case("microsoft", Microsoft)
+    .Default(unknown);
+  if (kind == unknown) return false;
+
+  set(kind);
   return true;
 }

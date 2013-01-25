@@ -52,10 +52,13 @@ using namespace CodeGen;
 static const char AnnotationSection[] = "llvm.metadata";
 
 static CGCXXABI &createCXXABI(CodeGenModule &CGM) {
-  switch (CGM.getContext().getTargetInfo().getCXXABI()) {
-  case CXXABI_ARM: return *CreateARMCXXABI(CGM);
-  case CXXABI_Itanium: return *CreateItaniumCXXABI(CGM);
-  case CXXABI_Microsoft: return *CreateMicrosoftCXXABI(CGM);
+  switch (CGM.getContext().getTargetInfo().getCXXABI().getKind()) {
+  // For IR-generation purposes, there's no significant difference
+  // between the ARM and iOS ABIs.
+  case TargetCXXABI::GenericARM: return *CreateARMCXXABI(CGM);
+  case TargetCXXABI::iOS: return *CreateARMCXXABI(CGM);
+  case TargetCXXABI::GenericItanium: return *CreateItaniumCXXABI(CGM);
+  case TargetCXXABI::Microsoft: return *CreateMicrosoftCXXABI(CGM);
   }
 
   llvm_unreachable("invalid C++ ABI kind");
