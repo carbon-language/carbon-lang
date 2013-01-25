@@ -123,7 +123,7 @@ public:
                    const Elf_Sym *symbol)
       : _owningFile(file), _name(name), _symbol(symbol) {}
 
-  virtual const class File &file() const {
+  virtual const class FileELF<ELFT> &file() const {
     return _owningFile;
   }
 
@@ -142,7 +142,7 @@ public:
   }
 
 private:
-  const File &_owningFile;
+  const FileELF<ELFT> &_owningFile;
   llvm::StringRef _name;
   const Elf_Sym *_symbol;
 };
@@ -155,7 +155,7 @@ class ELFDefinedAtom LLVM_FINAL : public DefinedAtom {
   typedef llvm::object::Elf_Shdr_Impl<ELFT> Elf_Shdr;
 
 public:
-  ELFDefinedAtom(const File &file,
+  ELFDefinedAtom(const FileELF<ELFT> &file,
                  llvm::StringRef symbolName,
                  llvm::StringRef sectionName,
                  const Elf_Sym *symbol,
@@ -178,7 +178,7 @@ public:
     _ordinal = ++orderNumber;
   }
 
-  virtual const class File &file() const {
+  virtual const class FileELF<ELFT> &file() const {
     return _owningFile;
   }
 
@@ -233,7 +233,7 @@ public:
     if (_symbol->st_shndx > llvm::ELF::SHN_LOPROC &&
         _symbol->st_shndx < llvm::ELF::SHN_HIPROC) {
       const ELFTargetInfo &eti =
-          static_cast<const ELFTargetInfo &>(_owningFile.getTargetInfo());
+          (_owningFile.getTargetInfo());
       elf::ELFTargetHandler<ELFT> &elfTargetHandler =
           eti.getTargetHandler<ELFT>();
       elf::ELFTargetAtomHandler<ELFT> &elfAtomHandler =
@@ -406,7 +406,7 @@ public:
 
 private:
 
-  const File &_owningFile;
+  const FileELF<ELFT> &_owningFile;
   llvm::StringRef _symbolName;
   llvm::StringRef _sectionName;
   const Elf_Sym *_symbol;
