@@ -149,77 +149,94 @@ ModuleManager::~ModuleManager() {
 
 void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData), 
                           void *UserData) {
-  unsigned N = size();
-  
-  // Record the number of incoming edges for each module. When we
-  // encounter a module with no incoming edges, push it into the queue
-  // to seed the queue.
-  SmallVector<ModuleFile *, 4> Queue;
-  Queue.reserve(N);
-  llvm::SmallVector<unsigned, 4> UnusedIncomingEdges;
-  UnusedIncomingEdges.reserve(size());
-  for (ModuleIterator M = begin(), MEnd = end(); M != MEnd; ++M) {
-    if (unsigned Size = (*M)->ImportedBy.size())
-      UnusedIncomingEdges.push_back(Size);
-    else {
-      UnusedIncomingEdges.push_back(0);
-      Queue.push_back(*M);
+  // If the visitation number array is the wrong size, resize it and recompute
+  // an order.
+  if (VisitOrder.size() != Chain.size()) {
+    unsigned N = size();
+    VisitOrder.clear();
+    VisitOrder.reserve(N);
+    
+    // Record the number of incoming edges for each module. When we
+    // encounter a module with no incoming edges, push it into the queue
+    // to seed the queue.
+    SmallVector<ModuleFile *, 4> Queue;
+    Queue.reserve(N);
+    llvm::SmallVector<unsigned, 4> UnusedIncomingEdges;
+    UnusedIncomingEdges.reserve(size());
+    for (ModuleIterator M = begin(), MEnd = end(); M != MEnd; ++M) {
+      if (unsigned Size = (*M)->ImportedBy.size())
+        UnusedIncomingEdges.push_back(Size);
+      else {
+        UnusedIncomingEdges.push_back(0);
+        Queue.push_back(*M);
+      }
     }
+
+    // Traverse the graph, making sure to visit a module before visiting any
+    // of its dependencies.
+    unsigned QueueStart = 0;
+    while (QueueStart < Queue.size()) {
+      ModuleFile *CurrentModule = Queue[QueueStart++];
+      VisitOrder.push_back(CurrentModule);
+
+      // For any module that this module depends on, push it on the
+      // stack (if it hasn't already been marked as visited).
+      for (llvm::SetVector<ModuleFile *>::iterator
+             M = CurrentModule->Imports.begin(),
+             MEnd = CurrentModule->Imports.end();
+           M != MEnd; ++M) {
+        // Remove our current module as an impediment to visiting the
+        // module we depend on. If we were the last unvisited module
+        // that depends on this particular module, push it into the
+        // queue to be visited.
+        unsigned &NumUnusedEdges = UnusedIncomingEdges[(*M)->Index];
+        if (NumUnusedEdges && (--NumUnusedEdges == 0))
+          Queue.push_back(*M);
+      }
+    }
+
+    assert(VisitOrder.size() == N && "Visitation order is wrong?");
   }
 
-  llvm::SmallVector<bool, 4> Skipped(size(), false);
-  unsigned QueueStart = 0;
-  while (QueueStart < Queue.size()) {
-    ModuleFile *CurrentModule = Queue[QueueStart++];
-    
-    // Check whether this module should be skipped.
-    if (Skipped[CurrentModule->Index])
+  SmallVector<ModuleFile *, 4> Stack;
+  SmallVector<bool, 4> Visited(size(), false);
+
+  for (unsigned I = 0, N = VisitOrder.size(); I != N; ++I) {
+    ModuleFile *CurrentModule = VisitOrder[I];
+    // Should we skip this module file?
+    if (Visited[CurrentModule->Index])
       continue;
-    Skipped[CurrentModule->Index] = true;
-    
-    if (Visitor(*CurrentModule, UserData)) {
-      // The visitor has requested that cut off visitation of any
-      // module that the current module depends on. To indicate this
-      // behavior, we mark all of the reachable modules as "skipped".
-      SmallVector<ModuleFile *, 4> Stack;
-      Stack.push_back(CurrentModule);
-      Skipped[CurrentModule->Index] = true;
-      while (!Stack.empty()) {
-        ModuleFile *NextModule = Stack.back();
-        Stack.pop_back();
-        
-        // For any module that this module depends on, push it on the
-        // stack (if it hasn't already been marked as visited).
-        for (llvm::SetVector<ModuleFile *>::iterator 
-               M = NextModule->Imports.begin(),
-               MEnd = NextModule->Imports.end();
-             M != MEnd; ++M) {
-          if (!Skipped[(*M)->Index]) {
-            Stack.push_back(*M);
-            Skipped[(*M)->Index] = true;
-          }
+
+    // Visit the module.
+    Visited[CurrentModule->Index] = true;
+    if (!Visitor(*CurrentModule, UserData))
+      continue;
+
+    // The visitor has requested that cut off visitation of any
+    // module that the current module depends on. To indicate this
+    // behavior, we mark all of the reachable modules as having been visited.
+    ModuleFile *NextModule = CurrentModule;
+    Stack.reserve(size());
+    do {
+      // For any module that this module depends on, push it on the
+      // stack (if it hasn't already been marked as visited).
+      for (llvm::SetVector<ModuleFile *>::iterator
+             M = NextModule->Imports.begin(),
+             MEnd = NextModule->Imports.end();
+           M != MEnd; ++M) {
+        if (!Visited[(*M)->Index]) {
+          Stack.push_back(*M);
+          Visited[(*M)->Index] = true;
         }
       }
-      continue;
-    }
-    
-    // For any module that this module depends on, push it on the
-    // stack (if it hasn't already been marked as visited).
-    for (llvm::SetVector<ModuleFile *>::iterator
-           M = CurrentModule->Imports.begin(),
-           MEnd = CurrentModule->Imports.end();
-         M != MEnd; ++M) {
-      if (Skipped[(*M)->Index])
-        continue;
-      
-      // Remove our current module as an impediment to visiting the
-      // module we depend on. If we were the last unvisited module
-      // that depends on this particular module, push it into the
-      // queue to be visited.
-      unsigned &NumUnusedEdges = UnusedIncomingEdges[(*M)->Index];
-      if (NumUnusedEdges && (--NumUnusedEdges == 0))
-        Queue.push_back(*M);
-    }
+
+      if (Stack.empty())
+        break;
+
+      // Pop the next module off the stack.
+      NextModule = Stack.back();
+      Stack.pop_back();
+    } while (true);
   }
 }
 

@@ -38,7 +38,10 @@ class ModuleManager {
   
   /// \brief A lookup of in-memory (virtual file) buffers
   llvm::DenseMap<const FileEntry *, llvm::MemoryBuffer *> InMemoryBuffers;
-  
+
+  /// \brief The visitation order.
+  SmallVector<ModuleFile *, 4> VisitOrder;
+
 public:
   typedef SmallVector<ModuleFile*, 2>::iterator ModuleIterator;
   typedef SmallVector<ModuleFile*, 2>::const_iterator ModuleConstIterator;
