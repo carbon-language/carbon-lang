@@ -50,6 +50,8 @@ public:
 
   virtual StringRef getData() const = 0;
 
+  virtual object::ObjectFile* getObjectFile() const = 0;
+
   // Subclasses can override these methods to provide JIT debugging support
   virtual void registerWithDebugger() = 0;
   virtual void deregisterWithDebugger() = 0;

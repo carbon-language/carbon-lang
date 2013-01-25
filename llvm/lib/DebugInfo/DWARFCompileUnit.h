@@ -13,6 +13,7 @@
 #include "DWARFDebugAbbrev.h"
 #include "DWARFDebugInfoEntry.h"
 #include "DWARFDebugRangeList.h"
+#include "DWARFRelocMap.h"
 #include <vector>
 
 namespace llvm {
@@ -20,7 +21,6 @@ namespace llvm {
 class DWARFDebugAbbrev;
 class StringRef;
 class raw_ostream;
-typedef DenseMap<uint64_t, std::pair<uint8_t, int64_t> > RelocAddrMap;
 
 class DWARFCompileUnit {
   const DWARFDebugAbbrev *Abbrev;

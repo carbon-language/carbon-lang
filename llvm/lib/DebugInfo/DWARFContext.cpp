@@ -53,7 +53,7 @@ void DWARFContext::dump(raw_ostream &OS, DIDumpType DumpType) {
         DataExtractor lineData(getLineSection(), isLittleEndian(),
                                savedAddressByteSize);
         DWARFDebugLine::DumpingState state(OS);
-        DWARFDebugLine::parseStatementTable(lineData, &stmtOffset, state);
+        DWARFDebugLine::parseStatementTable(lineData, &lineRelocMap(), &stmtOffset, state);
       }
     }
   }
@@ -155,7 +155,7 @@ const DWARFDebugAranges *DWARFContext::getDebugAranges() {
 const DWARFLineTable *
 DWARFContext::getLineTableForCompileUnit(DWARFCompileUnit *cu) {
   if (!Line)
-    Line.reset(new DWARFDebugLine());
+    Line.reset(new DWARFDebugLine(&lineRelocMap()));
 
   unsigned stmtOffset =
     cu->getCompileUnitDIE()->getAttributeValueAsUnsigned(cu, DW_AT_stmt_list,
@@ -422,12 +422,15 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
     else
       continue;
 
-    // TODO: For now only handle relocations for the debug_info section.
+    // TODO: Add support for relocations in other sections as needed.
+    // Record relocations for the debug_info and debug_line sections.
     RelocAddrMap *Map;
     if (name == "debug_info")
       Map = &InfoRelocMap;
     else if (name == "debug_info.dwo")
       Map = &InfoDWORelocMap;
+    else if (name == "debug_line")
+      Map = &LineRelocMap;
     else
       continue;
 
@@ -441,10 +444,17 @@ DWARFContextInMemory::DWARFContextInMemory(object::ObjectFile *Obj) :
         reloc_i->getAddress(Address);
         uint64_t Type;
         reloc_i->getType(Type);
+        uint64_t SymAddr = 0;
+        // ELF relocations may need the symbol address
+        if (Obj->isELF()) {
+          object::SymbolRef Sym;
+          reloc_i->getSymbol(Sym);
+          Sym.getAddress(SymAddr);
+        }
 
         object::RelocVisitor V(Obj->getFileFormatName());
         // The section address is always 0 for debug sections.
-        object::RelocToApply R(V.visit(Type, *reloc_i));
+        object::RelocToApply R(V.visit(Type, *reloc_i, 0, SymAddr));
         if (V.error()) {
           SmallString<32> Name;
           error_code ec(reloc_i->getTypeName(Name));

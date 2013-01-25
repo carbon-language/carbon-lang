@@ -155,7 +155,7 @@ DWARFDebugLine::getOrParseLineTable(DataExtractor debug_line_data,
   if (pos.second) {
     // Parse and cache the line table for at this offset.
     State state;
-    if (!parseStatementTable(debug_line_data, &offset, state))
+    if (!parseStatementTable(debug_line_data, RelocMap, &offset, state))
       return 0;
     pos.first->second = state;
   }
@@ -219,7 +219,8 @@ DWARFDebugLine::parsePrologue(DataExtractor debug_line_data,
 }
 
 bool
-DWARFDebugLine::parseStatementTable(DataExtractor debug_line_data,
+DWARFDebugLine::parseStatementTable(DataExtractor debug_line_data, 
+                                    const RelocAddrMap *RMap,
                                     uint32_t *offset_ptr, State &state) {
   const uint32_t debug_line_offset = *offset_ptr;
 
@@ -268,7 +269,15 @@ DWARFDebugLine::parseStatementTable(DataExtractor debug_line_data,
         // relocatable address. All of the other statement program opcodes
         // that affect the address register add a delta to it. This instruction
         // stores a relocatable value into it instead.
-        state.Address = debug_line_data.getAddress(offset_ptr);
+        {
+          // If this address is in our relocation map, apply the relocation.
+          RelocAddrMap::const_iterator AI = RMap->find(*offset_ptr);
+          if (AI != RMap->end()) {
+             const std::pair<uint8_t, int64_t> &R = AI->second;
+             state.Address = debug_line_data.getAddress(offset_ptr) + R.second;
+          } else
+            state.Address = debug_line_data.getAddress(offset_ptr);
+        }
         break;
 
       case DW_LNE_define_file:

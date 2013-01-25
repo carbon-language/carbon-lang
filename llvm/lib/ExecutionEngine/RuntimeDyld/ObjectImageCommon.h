@@ -58,6 +58,8 @@ public:
 
   virtual StringRef getData() const { return ObjFile->getData(); }
 
+  virtual object::ObjectFile* getObjectFile() const { return ObjFile; }
+
   // Subclasses can override these methods to update the image with loaded
   // addresses for sections and common symbols
   virtual void updateSectionAddress(const object::SectionRef &Sec,

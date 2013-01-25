@@ -1,0 +1,15 @@
+RUN: llvm-rtdyld -printline %p/Inputs/test-inline.o \
+RUN:   | FileCheck %s -check-prefix TEST_INLINE
+
+; This test verifies that relocations are correctly applied to the
+; .debug_line section.  If relocations are not applied the first two
+; functions will be reported as both starting at address zero in the
+; line number table.
+TEST_INLINE:      Function: _Z15test_parametersPfPA2_dR11char_structPPitm, Size = 170
+TEST_INLINE-NEXT: Line info:test-inline.cpp, line:33
+TEST_INLINE-NEXT: Function: _Z3foov, Size = 3
+TEST_INLINE-NEXT: Line info:test-inline.cpp, line:28
+TEST_INLINE-NEXT: Function: main, Size = 146
+TEST_INLINE-NEXT: Line info:test-inline.cpp, line:39
+
+
