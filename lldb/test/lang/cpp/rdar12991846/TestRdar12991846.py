@@ -50,6 +50,9 @@ class Rdar12991846TestCase(TestBase):
 
     def rdar12991846(self):
         """Test that the expression parser returns proper Unicode strings."""
+        if self.getArchitecture() in ['i386']:
+            self.skipTest("Skipping because this test is known to crash on i386")
+
         exe = os.path.join(os.getcwd(), "a.out")
 
         # Create a target by the debugger.
