@@ -61,7 +61,9 @@ void CompilerInstance::setInvocation(CompilerInvocation *Value) {
 }
 
 bool CompilerInstance::shouldBuildGlobalModuleIndex() const {
-  return BuildGlobalModuleIndex && !ModuleBuildFailed;
+  return (BuildGlobalModuleIndex ||
+          (ModuleManager && ModuleManager->isGlobalIndexUnavailable())) &&
+         !ModuleBuildFailed;
 }
 
 void CompilerInstance::setDiagnostics(DiagnosticsEngine *Value) {

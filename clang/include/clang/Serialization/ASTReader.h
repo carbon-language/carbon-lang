@@ -68,6 +68,7 @@ class NestedNameSpecifier;
 class CXXBaseSpecifier;
 class CXXConstructorDecl;
 class CXXCtorInitializer;
+class GlobalModuleIndex;
 class GotoStmt;
 class MacroDefinition;
 class NamedDecl;
@@ -291,6 +292,9 @@ private:
 
   /// \brief The module manager which manages modules and their dependencies
   ModuleManager ModuleMgr;
+
+  /// \brief The global module index, if loaded.
+  llvm::OwningPtr<GlobalModuleIndex> GlobalIndex;
 
   /// \brief A map of global bit offsets to the module that stores entities
   /// at those bit offsets.
@@ -1157,6 +1161,18 @@ public:
   /// \brief Set the AST deserialization listener.
   void setDeserializationListener(ASTDeserializationListener *Listener);
 
+  /// \brief Determine whether this AST reader has a global index.
+  bool hasGlobalIndex() const { return GlobalIndex; }
+
+  /// \brief Attempts to load the global index.
+  ///
+  /// \returns true if loading the global index has failed for any reason.
+  bool loadGlobalIndex();
+
+  /// \brief Determine whether we tried to load the global index, but failed,
+  /// e.g., because it is out-of-date or does not exist.
+  bool isGlobalIndexUnavailable() const;
+  
   /// \brief Initializes the ASTContext
   void InitializeContext();
 

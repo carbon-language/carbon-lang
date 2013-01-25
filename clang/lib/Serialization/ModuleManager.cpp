@@ -180,8 +180,7 @@ void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
     if (Visitor(*CurrentModule, UserData)) {
       // The visitor has requested that cut off visitation of any
       // module that the current module depends on. To indicate this
-      // behavior, we mark all of the reachable modules as having N
-      // incoming edges (which is impossible otherwise).
+      // behavior, we mark all of the reachable modules as "skipped".
       SmallVector<ModuleFile *, 4> Stack;
       Stack.push_back(CurrentModule);
       Skipped[CurrentModule->Index] = true;
@@ -210,6 +209,8 @@ void ModuleManager::visit(bool (*Visitor)(ModuleFile &M, void *UserData),
            M = CurrentModule->Imports.begin(),
            MEnd = CurrentModule->Imports.end();
          M != MEnd; ++M) {
+      if (Skipped[(*M)->Index])
+        continue;
       
       // Remove our current module as an impediment to visiting the
       // module we depend on. If we were the last unvisited module

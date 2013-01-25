@@ -18,13 +18,20 @@
 #ifndef LLVM_CLANG_SERIALIZATION_GLOBAL_MODULE_INDEX_H
 #define LLVM_CLANG_SERIALIZATION_GLOBAL_MODULE_INDEX_H
 
+#include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include <utility>
 
+namespace llvm {
+class BitstreamCursor;
+class MemoryBuffer;
+}
+
 namespace clang {
 
-class DeclarationName;
 class DirectoryEntry;
 class FileEntry;
 class FileManager;
@@ -46,20 +53,63 @@ using llvm::StringRef;
 /// can be queried to determine which modules the currently translation could
 /// or should load to fix a problem.
 class GlobalModuleIndex {
+  /// \brief Buffer containing the index file, which is lazily accessed so long
+  /// as the global module index is live.
+  llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+
+  /// \brief The hash table.
+  ///
+  /// This pointer actually points to a IdentifierIndexTable object,
+  /// but that type is only accessible within the implementation of
+  /// GlobalModuleIndex.
+  void *IdentifierIndex;
+
+  /// \brief Information about a given module file.
+  struct ModuleInfo {
+    ModuleInfo() : File() { }
+
+    /// \brief The module file entry.
+    const FileEntry *File;
+
+    /// \brief The module files on which this module directly depends.
+    llvm::SmallVector<const FileEntry *, 4> Dependencies;
+  };
+
+  /// \brief A mapping from module IDs to information about each module.
+  ///
+  /// This vector may have gaps, if module files have been removed or have
+  /// been updated since the index was built. A gap is indicated by an empty
+  /// \c File pointer.
+  llvm::SmallVector<ModuleInfo, 16> Modules;
+
+  /// \brief Lazily-populated mapping from module file entries to their
+  /// corresponding index into the \c Modules vector.
+  llvm::DenseMap<const FileEntry *, unsigned> ModulesByFile;
+
+  /// \brief The number of identifier lookups we performed.
+  unsigned NumIdentifierLookups;
+
+  /// \brief The number of identifier lookup hits, where we recognize the
+  /// identifier.
+  unsigned NumIdentifierLookupHits;
+
+  /// \brief The number of modules provided via skip sets.
+  unsigned NumIdentifierModulesSkipped;
+
   /// \brief Internal constructor. Use \c readIndex() to read an index.
-  explicit GlobalModuleIndex(FileManager &FileMgr);
+  explicit GlobalModuleIndex(FileManager &FileMgr, llvm::MemoryBuffer *Buffer,
+                             llvm::BitstreamCursor Cursor);
+
+  GlobalModuleIndex(const GlobalModuleIndex &); // DO NOT IMPLEMENT
+  GlobalModuleIndex &operator=(const GlobalModuleIndex &); // DO NOT IMPLEMENT
 
 public:
+  ~GlobalModuleIndex();
+
   /// \brief An error code returned when trying to read an index.
   enum ErrorCode {
     /// \brief No error occurred.
     EC_None,
-    /// \brief The index found was out-of-date, meaning that some of the
-    /// module files are newer than the index.
-    ///
-    /// This error code is not actually fatal, because if the index is
-    /// up-to-date for any module files, it is 
-    EC_OutOfDate,
     /// \brief No index was found.
     EC_NotFound,
     /// \brief Some other process is currently building the index; it is not
@@ -93,17 +143,33 @@ public:
                              SmallVectorImpl<const FileEntry *> &Dependencies);
 
   /// \brief Look for all of the module files with a namespace-scope binding
-  /// for the given name, e.g., a global function, variable, or type with that
-  /// name, or declare a method with the selector.
+  /// for the given identifier, e.g., a global function, variable, or type with
+  /// that name, or declare a method with the selector.
   ///
-  /// \param Name The name or selector to look for.
+  /// \param Name The identifier to look for.
   ///
-  /// \param DeclaringModuleFiles Will be populated with the list of module
+  /// \param ModuleFiles Will be populated with the list of module
   /// files that declare entities with the given name.
   ///
   /// \returns true if any module files were found, false otherwise.
-  bool lookupName(DeclarationName Name,
-                  SmallVectorImpl<const FileEntry *> &DeclaringModuleFiles);
+  bool lookupIdentifier(StringRef Name,
+                        SmallVectorImpl<const FileEntry *> &ModuleFiles);
+
+  /// \brief A set of module files into which name lookup can be skipped,
+  /// because they are known not to contain any bindings for the given name.
+  typedef llvm::SmallPtrSet<const FileEntry *, 16> SkipSet;
+
+  /// \brief Compute the "skip set", meaning those known modules that do not
+  /// have some particular property.
+  ///
+  /// \param ModuleFiles The set of module files that has some property.
+  ///
+  /// \returns The set of known modules that do not have the property exhibited
+  /// by the files in \p ModuleFiles.
+  SkipSet computeSkipSet(const SmallVectorImpl<const FileEntry *> &ModuleFiles);
+
+  /// \brief Print statistics to standard error.
+  void printStats();
 
   /// \brief Write a global index into the given
   ///

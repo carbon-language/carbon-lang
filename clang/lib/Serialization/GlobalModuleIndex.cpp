@@ -42,7 +42,7 @@ namespace {
   enum IndexRecordTypes {
     /// \brief Contains version information and potentially other metadata,
     /// used to determine if we can read this global index file.
-    METADATA,
+    INDEX_METADATA,
     /// \brief Describes a module, including its file name and dependencies.
     MODULE,
     /// \brief The index for identifiers.
@@ -55,6 +55,378 @@ static const char * const IndexFileName = "modules.idx";
 
 /// \brief The global index file version.
 static const unsigned CurrentVersion = 1;
+
+//----------------------------------------------------------------------------//
+// Global module index reader.
+//----------------------------------------------------------------------------//
+
+namespace {
+
+/// \brief Trait used to read the identifier index from the on-disk hash
+/// table.
+class IdentifierIndexReaderTrait {
+public:
+  typedef StringRef external_key_type;
+  typedef StringRef internal_key_type;
+  typedef SmallVector<unsigned, 2> data_type;
+
+  static bool EqualKey(const internal_key_type& a, const internal_key_type& b) {
+    return a == b;
+  }
+
+  static unsigned ComputeHash(const internal_key_type& a) {
+    return llvm::HashString(a);
+  }
+
+  static std::pair<unsigned, unsigned>
+  ReadKeyDataLength(const unsigned char*& d) {
+    using namespace clang::io;
+    unsigned KeyLen = ReadUnalignedLE16(d);
+    unsigned DataLen = ReadUnalignedLE16(d);
+    return std::make_pair(KeyLen, DataLen);
+  }
+
+  static const internal_key_type&
+  GetInternalKey(const external_key_type& x) { return x; }
+
+  static const external_key_type&
+  GetExternalKey(const internal_key_type& x) { return x; }
+
+  static internal_key_type ReadKey(const unsigned char* d, unsigned n) {
+    return StringRef((const char *)d, n);
+  }
+
+  static data_type ReadData(const internal_key_type& k,
+                            const unsigned char* d,
+                            unsigned DataLen) {
+    using namespace clang::io;
+
+    data_type Result;
+    while (DataLen > 0) {
+      unsigned ID = ReadUnalignedLE32(d);
+      Result.push_back(ID);
+      DataLen -= 4;
+    }
+
+    return Result;
+  }
+};
+
+typedef OnDiskChainedHashTable<IdentifierIndexReaderTrait> IdentifierIndexTable;
+
+/// \brief Module information as it was loaded from the index file.
+struct LoadedModuleInfo {
+  const FileEntry *File;
+  SmallVector<unsigned, 2> Dependencies;
+  SmallVector<unsigned, 2> ImportedBy;
+};
+
+}
+
+GlobalModuleIndex::GlobalModuleIndex(FileManager &FileMgr,
+                                     llvm::MemoryBuffer *Buffer,
+                                     llvm::BitstreamCursor Cursor)
+  : Buffer(Buffer), IdentifierIndex()
+{
+  typedef llvm::DenseMap<unsigned, LoadedModuleInfo> LoadedModulesMap;
+  LoadedModulesMap LoadedModules;
+  
+  // Read the global index.
+  unsigned LargestID = 0;
+  bool InGlobalIndexBlock = false;
+  bool Done = false;
+  bool AnyOutOfDate = false;
+  while (!Done) {
+    llvm::BitstreamEntry Entry = Cursor.advance();
+
+    switch (Entry.Kind) {
+    case llvm::BitstreamEntry::Error:
+      return;
+
+    case llvm::BitstreamEntry::EndBlock:
+      if (InGlobalIndexBlock) {
+        InGlobalIndexBlock = false;
+        Done = true;
+        continue;
+      }
+      return;
+
+
+    case llvm::BitstreamEntry::Record:
+      // Entries in the global index block are handled below.
+      if (InGlobalIndexBlock)
+        break;
+
+      return;
+
+    case llvm::BitstreamEntry::SubBlock:
+      if (!InGlobalIndexBlock && Entry.ID == GLOBAL_INDEX_BLOCK_ID) {
+        if (Cursor.EnterSubBlock(GLOBAL_INDEX_BLOCK_ID))
+          return;
+
+        InGlobalIndexBlock = true;
+      } else if (Cursor.SkipBlock()) {
+        return;
+      }
+      continue;
+    }
+
+    SmallVector<uint64_t, 64> Record;
+    StringRef Blob;
+    switch ((IndexRecordTypes)Cursor.readRecord(Entry.ID, Record, &Blob)) {
+    case INDEX_METADATA:
+      // Make sure that the version matches.
+      if (Record.size() < 1 || Record[0] != CurrentVersion)
+        return;
+      break;
+
+    case MODULE: {
+      unsigned Idx = 0;
+      unsigned ID = Record[Idx++];
+      if (ID > LargestID)
+        LargestID = ID;
+      
+      off_t Size = Record[Idx++];
+      time_t ModTime = Record[Idx++];
+
+      // File name.
+      unsigned NameLen = Record[Idx++];
+      llvm::SmallString<64> FileName(Record.begin() + Idx,
+                                     Record.begin() + Idx + NameLen);
+      Idx += NameLen;
+
+      // Dependencies
+      unsigned NumDeps = Record[Idx++];
+      llvm::SmallVector<unsigned, 2>
+        Dependencies(Record.begin() + Idx, Record.begin() + Idx + NumDeps);
+
+      // Find the file. If we can't find it, ignore it.
+      const FileEntry *File = FileMgr.getFile(FileName);
+      if (!File) {
+        AnyOutOfDate = true;
+        break;
+      }
+
+      // If the module file is newer than the index, ignore it.
+      if (File->getSize() != Size || File->getModificationTime() != ModTime) {
+        AnyOutOfDate = true;
+        break;
+      }
+
+      // Record this module. The dependencies will be resolved later.
+      LoadedModuleInfo &Info = LoadedModules[ID];
+      Info.File = File;
+      Info.Dependencies.swap(Dependencies);
+      break;
+    }
+
+    case IDENTIFIER_INDEX:
+      // Wire up the identifier index.
+      if (Record[0]) {
+        IdentifierIndex = IdentifierIndexTable::Create(
+                            (const unsigned char *)Blob.data() + Record[0],
+                            (const unsigned char *)Blob.data(),
+                            IdentifierIndexReaderTrait());
+      }
+      break;
+    }
+  }
+
+  // If there are any modules that have gone out-of-date, prune out any modules
+  // that depend on them.
+  if (AnyOutOfDate) {
+    // First, build back links in the module dependency graph.
+    SmallVector<unsigned, 4> Stack;
+    for (LoadedModulesMap::iterator LM = LoadedModules.begin(),
+                                    LMEnd = LoadedModules.end();
+         LM != LMEnd; ++LM) {
+      unsigned ID = LM->first;
+
+      // If this module is out-of-date, push it onto the stack.
+      if (LM->second.File == 0)
+        Stack.push_back(ID);
+
+      for (unsigned I = 0, N = LM->second.Dependencies.size(); I != N; ++I) {
+        unsigned DepID = LM->second.Dependencies[I];
+        LoadedModulesMap::iterator Known = LoadedModules.find(DepID);
+        if (Known == LoadedModules.end() || !Known->second.File) {
+          // The dependency was out-of-date, so mark us as out of date.
+          // This is just an optimization.
+          if (LM->second.File)
+            Stack.push_back(ID);
+
+          LM->second.File = 0;
+          continue;
+        }
+
+        // Record this reverse dependency.
+        Known->second.ImportedBy.push_back(ID);
+      }
+    }
+
+    // Second, walk the back links from out-of-date modules to those modules
+    // that depend on them, making those modules out-of-date as well.
+    while (!Stack.empty()) {
+      unsigned ID = Stack.back();
+      Stack.pop_back();
+
+      LoadedModuleInfo &Info = LoadedModules[ID];
+      for (unsigned I = 0, N = Info.ImportedBy.size(); I != N; ++I) {
+        unsigned FromID = Info.ImportedBy[I];
+        if (LoadedModules[FromID].File) {
+          LoadedModules[FromID].File = 0;
+          Stack.push_back(FromID);
+        }
+      }
+    }
+  }
+
+  // Allocate the vector containing information about all of the modules.
+  Modules.resize(LargestID + 1);
+  for (LoadedModulesMap::iterator LM = LoadedModules.begin(),
+                                  LMEnd = LoadedModules.end();
+       LM != LMEnd; ++LM) {
+    if (!LM->second.File)
+      continue;
+    
+    Modules[LM->first].File = LM->second.File;
+
+    // Resolve dependencies. Drop any we can't resolve due to out-of-date
+    // module files.
+    for (unsigned I = 0, N = LM->second.Dependencies.size(); I != N; ++I) {
+      unsigned DepID = LM->second.Dependencies[I];
+      LoadedModulesMap::iterator Known = LoadedModules.find(DepID);
+      if (Known == LoadedModules.end() || !Known->second.File)
+        continue;
+
+      Modules[LM->first].Dependencies.push_back(Known->second.File);
+    }
+  }
+}
+
+GlobalModuleIndex::~GlobalModuleIndex() { }
+
+std::pair<GlobalModuleIndex *, GlobalModuleIndex::ErrorCode>
+GlobalModuleIndex::readIndex(FileManager &FileMgr, StringRef Path) {
+  // Load the index file, if it's there.
+  llvm::SmallString<128> IndexPath;
+  IndexPath += Path;
+  llvm::sys::path::append(IndexPath, IndexFileName);
+
+  llvm::OwningPtr<llvm::MemoryBuffer> Buffer(
+                                        FileMgr.getBufferForFile(IndexPath));
+  if (!Buffer)
+    return std::make_pair((GlobalModuleIndex *)0, EC_NotFound);
+
+  /// \brief The bitstream reader from which we'll read the AST file.
+  llvm::BitstreamReader Reader((const unsigned char *)Buffer->getBufferStart(),
+                               (const unsigned char *)Buffer->getBufferEnd());
+
+  /// \brief The main bitstream cursor for the main block.
+  llvm::BitstreamCursor Cursor(Reader);
+
+  // Sniff for the signature.
+  if (Cursor.Read(8) != 'B' ||
+      Cursor.Read(8) != 'C' ||
+      Cursor.Read(8) != 'G' ||
+      Cursor.Read(8) != 'I') {
+    return std::make_pair((GlobalModuleIndex *)0, EC_IOError);
+  }
+  
+  return std::make_pair(new GlobalModuleIndex(FileMgr, Buffer.take(), Cursor),
+                        EC_None);
+}
+
+void GlobalModuleIndex::getKnownModules(
+       SmallVectorImpl<const FileEntry *> &ModuleFiles) {
+  ModuleFiles.clear();
+  for (unsigned I = 0, N = Modules.size(); I != N; ++I) {
+    if (Modules[I].File)
+      ModuleFiles.push_back(Modules[I].File);
+  }
+}
+
+void GlobalModuleIndex::getModuleDependencies(
+       const clang::FileEntry *ModuleFile,
+       SmallVectorImpl<const clang::FileEntry *> &Dependencies) {
+  // If the file -> index mapping is empty, populate it now.
+  if (ModulesByFile.empty()) {
+    for (unsigned I = 0, N = Modules.size(); I != N; ++I) {
+      if (Modules[I].File)
+        ModulesByFile[Modules[I].File] = I;
+    }
+  }
+
+  // Look for information about this module file.
+  llvm::DenseMap<const FileEntry *, unsigned>::iterator Known
+    = ModulesByFile.find(ModuleFile);
+  if (Known == ModulesByFile.end())
+    return;
+
+  // Record dependencies.
+  Dependencies = Modules[Known->second].Dependencies;
+}
+
+bool GlobalModuleIndex::lookupIdentifier(
+       StringRef Name,
+       SmallVectorImpl<const FileEntry *> &ModuleFiles) {
+  ModuleFiles.clear();
+  
+  // If there's no identifier index, there is nothing we can do.
+  if (!IdentifierIndex)
+    return false;
+
+  // Look into the identifier index.
+  ++NumIdentifierLookups;
+  IdentifierIndexTable &Table
+    = *static_cast<IdentifierIndexTable *>(IdentifierIndex);
+  IdentifierIndexTable::iterator Known = Table.find(Name);
+  if (Known == Table.end()) {
+    return true;
+  }
+
+  SmallVector<unsigned, 2> ModuleIDs = *Known;
+  for (unsigned I = 0, N = ModuleIDs.size(); I != N; ++I) {
+    unsigned ID = ModuleIDs[I];
+    if (ID >= Modules.size() || !Modules[ID].File)
+      continue;
+
+    ModuleFiles.push_back(Modules[ID].File);
+  }
+
+  ++NumIdentifierLookupHits;
+  return true;
+}
+
+GlobalModuleIndex::SkipSet
+GlobalModuleIndex::computeSkipSet(
+  const SmallVectorImpl<const FileEntry *> &ModuleFiles) {
+  llvm::SmallPtrSet<const FileEntry *, 8> Found(ModuleFiles.begin(),
+                                                ModuleFiles.end());
+
+  SkipSet Result;
+  for (unsigned I = 0, N = Modules.size(); I != N; ++I) {
+    if (Modules[I].File && !Found.count(Modules[I].File))
+      Result.insert(Modules[I].File);
+  }
+
+  NumIdentifierModulesSkipped += Result.size();
+  return Result;
+}
+
+void GlobalModuleIndex::printStats() {
+  std::fprintf(stderr, "*** Global Module Index Statistics:\n");
+  if (NumIdentifierLookups) {
+    fprintf(stderr, "  %u / %u identifier lookups succeeded (%f%%)\n",
+            NumIdentifierLookupHits, NumIdentifierLookups,
+            (double)NumIdentifierLookupHits*100.0/NumIdentifierLookups);
+  }
+  if (NumIdentifierLookups && NumIdentifierModulesSkipped) {
+    fprintf(stderr, "  %f modules skipped per lookup (on average)\n",
+            (double)NumIdentifierModulesSkipped/NumIdentifierLookups);
+  }
+  std::fprintf(stderr, "\n");
+}
 
 //----------------------------------------------------------------------------//
 // Global module index writer.
@@ -151,7 +523,7 @@ GlobalModuleIndexBuilder::emitBlockInfoBlock(llvm::BitstreamWriter &Stream) {
 #define BLOCK(X) emitBlockID(X ## _ID, #X, Stream, Record)
 #define RECORD(X) emitRecordID(X, #X, Stream, Record)
   BLOCK(GLOBAL_INDEX_BLOCK);
-  RECORD(METADATA);
+  RECORD(INDEX_METADATA);
   RECORD(MODULE);
   RECORD(IDENTIFIER_INDEX);
 #undef RECORD
@@ -160,7 +532,7 @@ GlobalModuleIndexBuilder::emitBlockInfoBlock(llvm::BitstreamWriter &Stream) {
   Stream.ExitBlock();
 }
 
-namespace clang {
+namespace {
   class InterestingASTIdentifierLookupTrait
     : public serialization::reader::ASTIdentifierLookupTraitBase {
 
@@ -209,18 +581,18 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
   unsigned ID = getModuleFileInfo(File).ID;
 
   // Search for the blocks and records we care about.
-  enum { Outer, ControlBlock, ASTBlock } State = Outer;
+  enum { Other, ControlBlock, ASTBlock } State = Other;
   bool Done = false;
   while (!Done) {
-    const unsigned Flags = llvm::BitstreamCursor::AF_DontPopBlockAtEnd;
-    llvm::BitstreamEntry Entry = InStream.advance(Flags);
+    llvm::BitstreamEntry Entry = InStream.advance();
     switch (Entry.Kind) {
     case llvm::BitstreamEntry::Error:
-      return true;
+      Done = true;
+      continue;
 
     case llvm::BitstreamEntry::Record:
-      // In the outer state, just skip the record. We don't care.
-      if (State == Outer) {
+      // In the 'other' state, just skip the record. We don't care.
+      if (State == Other) {
         InStream.skipRecord(Entry.ID);
         continue;
       }
@@ -229,7 +601,7 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
       break;
 
     case llvm::BitstreamEntry::SubBlock:
-      if (State == Outer && Entry.ID == CONTROL_BLOCK_ID) {
+      if (Entry.ID == CONTROL_BLOCK_ID) {
         if (InStream.EnterSubBlock(CONTROL_BLOCK_ID))
           return true;
 
@@ -238,14 +610,13 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
         continue;
       }
 
-      if (State == Outer && Entry.ID == AST_BLOCK_ID) {
+      if (Entry.ID == AST_BLOCK_ID) {
         if (InStream.EnterSubBlock(AST_BLOCK_ID))
           return true;
 
         // Found the AST block.
         State = ASTBlock;
         continue;
-
       }
 
       if (InStream.SkipBlock())
@@ -254,10 +625,7 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
       continue;
 
     case llvm::BitstreamEntry::EndBlock:
-      if (State == Outer) {
-        Done = true;
-      }
-      State = Outer;
+      State = Other;
       continue;
     }
 
@@ -312,6 +680,8 @@ bool GlobalModuleIndexBuilder::loadModuleFile(const FileEntry *File) {
         std::pair<StringRef, bool> Ident = *D;
         if (Ident.second)
           InterestingIdentifiers[Ident.first].push_back(ID);
+        else
+          (void)InterestingIdentifiers[Ident.first];
       }
     }
 
@@ -378,7 +748,7 @@ void GlobalModuleIndexBuilder::writeIndex(llvm::BitstreamWriter &Stream) {
   // Write the metadata.
   SmallVector<uint64_t, 2> Record;
   Record.push_back(CurrentVersion);
-  Stream.EmitRecord(METADATA, Record);
+  Stream.EmitRecord(INDEX_METADATA, Record);
 
   // Write the set of known module files.
   for (ModuleFilesMap::iterator M = ModuleFiles.begin(),
