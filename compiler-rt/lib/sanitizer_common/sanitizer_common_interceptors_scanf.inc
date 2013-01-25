@@ -23,6 +23,8 @@ struct ScanfSpec {
 
 // One-letter specs.
 static const ScanfSpec scanf_specs[] = {
+  {'s', 1},  // FIXME: This is incorrect, we should check the actual number
+             // of bytes written to the string.
   {'c', sizeof(char)},
   {'p', sizeof(void *)},
   {'e', sizeof(float)},
@@ -98,6 +100,8 @@ static void scanf_common(void *ctx, const char *format, va_list ap_const) {
     }
     ++p;
     if (*p == '*' || *p == '%' || *p == '\0') {
+      // FIXME: Bailing out for (p == "*") is wrong, we should parse the
+      // directive to the end.
       if (*p != '\0')
         ++p;
       continue;
@@ -118,6 +122,23 @@ static void scanf_common(void *ctx, const char *format, va_list ap_const) {
         ++p;
         continue;
       }
+    }
+
+    if (*p == '[') {
+      // Search for the closing bracket. It is ignored if it goes right after
+      // the opening bracket or after ^.
+      p++;
+      if (*p == ']') {
+        p++;
+      } else if (*p == '^' && *(p+1) == ']') {
+        p += 2;
+      }
+      while (*p != ']')
+        p++;
+      // +1 for the \0 at the end.
+      field_width++;
+      COMMON_INTERCEPTOR_WRITE_RANGE(ctx, va_arg(aq, void*), field_width);
+      continue;
     }
 
     if (*p == 'L' || *p == 'q') {

@@ -86,4 +86,11 @@ TEST(SanitizerCommonInterceptors, Scanf) {
   testScanf("%*d", 0);
 
   testScanf("%4d%8f%c", 3, I, F, C);
+  testScanf("%s%d", 2, 1, I);
+  testScanf("%[abc]", 1, 1);
+  testScanf("%4[bcdef]", 1, 5);
+  testScanf("%[]]", 1, 1);
+  testScanf("%8[^]%d0-9-]%c", 2, 9, C);
+
+  testScanf("%*[^:]%n:%d:%1[ ]%n", 4, I, I, 2, I);
 }
