@@ -674,7 +674,7 @@ protected:
             }
             
             if (bytes_read < total_byte_size)
-                result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%" PRIx64 ".", bytes_read, total_byte_size, addr);
+                result.AppendWarningWithFormat("Not all bytes (%lu/%lu) were able to be read from 0x%" PRIx64 ".\n", bytes_read, total_byte_size, addr);
         }
         else
         {
