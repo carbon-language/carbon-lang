@@ -1,7 +1,6 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: remove-cstr-calls . %t.cpp --
 // RUN: FileCheck -input-file=%t.cpp %s
-// REQUIRES: shell
 
 namespace std {
 template<typename T> class allocator {};

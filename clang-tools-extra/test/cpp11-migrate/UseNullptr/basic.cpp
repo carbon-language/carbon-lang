@@ -3,7 +3,6 @@
 // RUN: cpp11-migrate -use-nullptr %t.cpp -- -I %S
 // RUN: FileCheck -input-file=%t.cpp %s
 // RUN: FileCheck -input-file=%T/basic.h %S/Inputs/basic.h
-// REQUIRES: shell
 
 #include "Inputs/basic.h"
 

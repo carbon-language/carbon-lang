@@ -1,7 +1,6 @@
 // RUN: grep -Ev "// *[A-Z-]+:" %s > %t.cpp
 // RUN: cpp11-migrate -use-nullptr %t.cpp -- -I %S
 // RUN: FileCheck -input-file=%t.cpp %s
-// REQUIRES: shell
 // XFAIL: *
 
 #define NULL 0
