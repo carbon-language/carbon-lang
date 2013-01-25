@@ -69,13 +69,13 @@ static void DumpInput(const StringRef &Filename) {
   }
 
   OwningPtr<ObjectFile> Obj(ObjectFile::createObjectFile(Buff.take()));
-  OwningPtr<DIContext> dictx(DIContext::getDWARFContext(Obj.get()));
+  OwningPtr<DIContext> DICtx(DIContext::getDWARFContext(Obj.get()));
 
   if (Address == -1ULL) {
     outs() << Filename
            << ":\tfile format " << Obj->getFileFormatName() << "\n\n";
     // Dump the complete DWARF structure.
-    dictx->dump(outs());
+    DICtx->dump(outs());
   } else {
     // Print line info for the specified address.
     int SpecFlags = DILineInfoSpecifier::FileLineInfo |
@@ -84,7 +84,7 @@ static void DumpInput(const StringRef &Filename) {
       SpecFlags |= DILineInfoSpecifier::FunctionName;
     if (PrintInlining) {
       DIInliningInfo InliningInfo =
-        dictx->getInliningInfoForAddress(Address, SpecFlags);
+        DICtx->getInliningInfoForAddress(Address, SpecFlags);
       uint32_t n = InliningInfo.getNumberOfFrames();
       if (n == 0) {
         // Print one empty debug line info in any case.
@@ -96,7 +96,7 @@ static void DumpInput(const StringRef &Filename) {
         }
       }
     } else {
-      DILineInfo dli = dictx->getLineInfoForAddress(Address, SpecFlags);
+      DILineInfo dli = DICtx->getLineInfoForAddress(Address, SpecFlags);
       PrintDILineInfo(dli);
     }
   }
