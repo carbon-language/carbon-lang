@@ -10484,6 +10484,8 @@ void Sema::ActOnFields(Scope* S,
       }
       if (Record && FDTTy->getDecl()->hasObjectMember())
         Record->setHasObjectMember(true);
+      if (Record && FDTTy->getDecl()->hasVolatileMember())
+        Record->setHasVolatileMember(true);
     } else if (FDTy->isObjCObjectType()) {
       /// A field cannot be an Objective-c object
       Diag(FD->getLocation(), diag::err_statically_allocated_object)
@@ -10530,6 +10532,8 @@ void Sema::ActOnFields(Scope* S,
         }
       }
     }
+    if (Record && FD->getType().isVolatileQualified())
+      Record->setHasVolatileMember(true);
     // Keep track of the number of named members.
     if (FD->getIdentifier())
       ++NumNamedMembers;

@@ -475,6 +475,7 @@ void ASTDeclReader::VisitRecordDecl(RecordDecl *RD) {
   RD->setHasFlexibleArrayMember(Record[Idx++]);
   RD->setAnonymousStructOrUnion(Record[Idx++]);
   RD->setHasObjectMember(Record[Idx++]);
+  RD->setHasVolatileMember(Record[Idx++]);
 }
 
 void ASTDeclReader::VisitValueDecl(ValueDecl *VD) {

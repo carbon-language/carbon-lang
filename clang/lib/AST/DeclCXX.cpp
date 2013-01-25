@@ -301,6 +301,9 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     // has an Objective-C object member.
     if (BaseClassDecl->hasObjectMember())
       setHasObjectMember(true);
+    
+    if (BaseClassDecl->hasVolatileMember())
+      setHasVolatileMember(true);
 
     // Keep track of the presence of mutable fields.
     if (BaseClassDecl->hasMutableFields())
@@ -751,6 +754,8 @@ void CXXRecordDecl::addedMember(Decl *D) {
           data().HasIrrelevantDestructor = false;
         if (FieldRec->hasObjectMember())
           setHasObjectMember(true);
+        if (FieldRec->hasVolatileMember())
+          setHasVolatileMember(true);
 
         // C++0x [class]p7:
         //   A standard-layout class is a class that:

@@ -2734,6 +2734,7 @@ RecordDecl::RecordDecl(Kind DK, TagKind TK, DeclContext *DC,
   HasFlexibleArrayMember = false;
   AnonymousStructOrUnion = false;
   HasObjectMember = false;
+  HasVolatileMember = false;
   LoadedFieldsFromExternalStorage = false;
   assert(classof(static_cast<Decl*>(this)) && "Invalid Kind!");
 }

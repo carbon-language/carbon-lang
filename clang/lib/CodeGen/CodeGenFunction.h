@@ -1665,14 +1665,24 @@ public:
   void EmitExprAsInit(const Expr *init, const ValueDecl *D,
                       LValue lvalue, bool capturedByInit);
 
+  /// hasVolatileMember - returns true if aggregate type has a volatile
+  /// member.
+  bool hasVolatileMember(QualType T) {
+    if (const RecordType *RT = T->getAs<RecordType>()) {
+      const RecordDecl *RD = cast<RecordDecl>(RT->getDecl());
+      return RD->hasVolatileMember();
+    }
+    return false;
+  }
   /// EmitAggregateCopy - Emit an aggrate assignment.
   ///
   /// The difference to EmitAggregateCopy is that tail padding is not copied.
   /// This is required for correctness when assigning non-POD structures in C++.
   void EmitAggregateAssign(llvm::Value *DestPtr, llvm::Value *SrcPtr,
-                           QualType EltTy, bool isVolatile=false,
-                           CharUnits Alignment = CharUnits::Zero()) {
-    EmitAggregateCopy(DestPtr, SrcPtr, EltTy, isVolatile, Alignment, true);
+                           QualType EltTy) {
+    bool IsVolatile = hasVolatileMember(EltTy);
+    EmitAggregateCopy(DestPtr, SrcPtr, EltTy, IsVolatile, CharUnits::Zero(),
+                      true);
   }
 
   /// EmitAggregateCopy - Emit an aggrate copy.

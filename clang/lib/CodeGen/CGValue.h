@@ -412,6 +412,10 @@ public:
     return Quals.hasVolatile();
   }
 
+  void setVolatile(bool flag) {
+    Quals.setVolatile(flag);
+  }
+  
   Qualifiers::ObjCLifetime getObjCLifetime() const {
     return Quals.getObjCLifetime();
   }
