@@ -941,29 +941,30 @@ InnerLoopVectorizer::addRuntimeCheck(LoopVectorizationLegality *Legal,
     }
   }
 
+  IRBuilder<> ChkBuilder(Loc->getContext());
+  ChkBuilder.SetInsertPoint(Loc);
+
   for (unsigned i = 0; i < NumPointers; ++i) {
     for (unsigned j = i+1; j < NumPointers; ++j) {
       Instruction::CastOps Op = Instruction::BitCast;
-      Value *Start0 = CastInst::Create(Op, Starts[i], PtrArithTy, "bc", Loc);
-      Value *Start1 = CastInst::Create(Op, Starts[j], PtrArithTy, "bc", Loc);
-      Value *End0 =   CastInst::Create(Op, Ends[i],   PtrArithTy, "bc", Loc);
-      Value *End1 =   CastInst::Create(Op, Ends[j],   PtrArithTy, "bc", Loc);
+      Value *Start0 = ChkBuilder.CreateCast(Op, Starts[i], PtrArithTy, "bc");
+      Value *Start1 = ChkBuilder.CreateCast(Op, Starts[j], PtrArithTy, "bc");
+      Value *End0 =   ChkBuilder.CreateCast(Op, Ends[i],   PtrArithTy, "bc");
+      Value *End1 =   ChkBuilder.CreateCast(Op, Ends[j],   PtrArithTy, "bc");
 
-      Value *Cmp0 = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_ULE,
-                                    Start0, End1, "bound0", Loc);
-      Value *Cmp1 = CmpInst::Create(Instruction::ICmp, CmpInst::ICMP_ULE,
-                                    Start1, End0, "bound1", Loc);
-      Instruction *IsConflict = BinaryOperator::Create(Instruction::And, Cmp0,
-                                                       Cmp1, "found.conflict",
-                                                       Loc);
-      if (MemoryRuntimeCheck)
-        MemoryRuntimeCheck = BinaryOperator::Create(Instruction::Or,
-                                                    MemoryRuntimeCheck,
-                                                    IsConflict,
-                                                    "conflict.rdx", Loc);
-      else
-        MemoryRuntimeCheck = IsConflict;
-
+      Value *Cmp0 = ChkBuilder.CreateICmp(CmpInst::ICMP_ULE,
+                                          Start0, End1, "bound0");
+      Value *Cmp1 = ChkBuilder.CreateICmp(CmpInst::ICMP_ULE,
+                                          Start1, End0, "bound1");
+      Value *IsConflict = ChkBuilder.CreateBinOp(Instruction::And, Cmp0, Cmp1,
+                                                 "found.conflict");
+      if (MemoryRuntimeCheck) {
+        Value *B = ChkBuilder.CreateBinOp(Instruction::Or, MemoryRuntimeCheck,
+                               IsConflict, "conflict.rdx");
+        MemoryRuntimeCheck = cast<Instruction>(B);
+      } else {
+        MemoryRuntimeCheck = cast<Instruction>(IsConflict);
+      }
     }
   }
 
